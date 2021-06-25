@@ -1,93 +1,94 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  ARM IOC/IOMD i2c driver.
  *
  *  Copyright (C) 2000 Russell King
  *
  *  On Acorn machines, the following i2c devices are on the bus:
- *	- PCF8583 real time clock & static RAM
+ *	- PCF8583 real समय घड़ी & अटल RAM
  */
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/i2c-algo-bit.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/i2c-algo-bit.h>
+#समावेश <linux/पन.स>
 
-#include <mach/hardware.h>
-#include <asm/hardware/ioc.h>
+#समावेश <mach/hardware.h>
+#समावेश <यंत्र/hardware/ioc.h>
 
-#define FORCE_ONES	0xdc
-#define SCL		0x02
-#define SDA		0x01
+#घोषणा FORCE_ONES	0xdc
+#घोषणा SCL		0x02
+#घोषणा SDA		0x01
 
 /*
  * We must preserve all non-i2c output bits in IOC_CONTROL.
  * Note also that we need to preserve the value of SCL and
- * SDA outputs as well (which may be different from the
- * values read back from IOC_CONTROL).
+ * SDA outमाला_दो as well (which may be dअगरferent from the
+ * values पढ़ो back from IOC_CONTROL).
  */
-static u_int force_ones;
+अटल u_पूर्णांक क्रमce_ones;
 
-static void ioc_setscl(void *data, int state)
-{
-	u_int ioc_control = ioc_readb(IOC_CONTROL) & ~(SCL | SDA);
-	u_int ones = force_ones;
+अटल व्योम ioc_setscl(व्योम *data, पूर्णांक state)
+अणु
+	u_पूर्णांक ioc_control = ioc_पढ़ोb(IOC_CONTROL) & ~(SCL | SDA);
+	u_पूर्णांक ones = क्रमce_ones;
 
-	if (state)
+	अगर (state)
 		ones |= SCL;
-	else
+	अन्यथा
 		ones &= ~SCL;
 
-	force_ones = ones;
+	क्रमce_ones = ones;
 
- 	ioc_writeb(ioc_control | ones, IOC_CONTROL);
-}
+ 	ioc_ग_लिखोb(ioc_control | ones, IOC_CONTROL);
+पूर्ण
 
-static void ioc_setsda(void *data, int state)
-{
-	u_int ioc_control = ioc_readb(IOC_CONTROL) & ~(SCL | SDA);
-	u_int ones = force_ones;
+अटल व्योम ioc_setsda(व्योम *data, पूर्णांक state)
+अणु
+	u_पूर्णांक ioc_control = ioc_पढ़ोb(IOC_CONTROL) & ~(SCL | SDA);
+	u_पूर्णांक ones = क्रमce_ones;
 
-	if (state)
+	अगर (state)
 		ones |= SDA;
-	else
+	अन्यथा
 		ones &= ~SDA;
 
-	force_ones = ones;
+	क्रमce_ones = ones;
 
- 	ioc_writeb(ioc_control | ones, IOC_CONTROL);
-}
+ 	ioc_ग_लिखोb(ioc_control | ones, IOC_CONTROL);
+पूर्ण
 
-static int ioc_getscl(void *data)
-{
-	return (ioc_readb(IOC_CONTROL) & SCL) != 0;
-}
+अटल पूर्णांक ioc_माला_लोcl(व्योम *data)
+अणु
+	वापस (ioc_पढ़ोb(IOC_CONTROL) & SCL) != 0;
+पूर्ण
 
-static int ioc_getsda(void *data)
-{
-	return (ioc_readb(IOC_CONTROL) & SDA) != 0;
-}
+अटल पूर्णांक ioc_माला_लोda(व्योम *data)
+अणु
+	वापस (ioc_पढ़ोb(IOC_CONTROL) & SDA) != 0;
+पूर्ण
 
-static struct i2c_algo_bit_data ioc_data = {
+अटल काष्ठा i2c_algo_bit_data ioc_data = अणु
 	.setsda		= ioc_setsda,
 	.setscl		= ioc_setscl,
-	.getsda		= ioc_getsda,
-	.getscl		= ioc_getscl,
+	.माला_लोda		= ioc_माला_लोda,
+	.माला_लोcl		= ioc_माला_लोcl,
 	.udelay		= 80,
-	.timeout	= HZ,
-};
+	.समयout	= HZ,
+पूर्ण;
 
-static struct i2c_adapter ioc_ops = {
+अटल काष्ठा i2c_adapter ioc_ops = अणु
 	.nr			= 0,
 	.name			= "ioc",
 	.algo_data		= &ioc_data,
-};
+पूर्ण;
 
-static int __init i2c_ioc_init(void)
-{
-	force_ones = FORCE_ONES | SCL | SDA;
+अटल पूर्णांक __init i2c_ioc_init(व्योम)
+अणु
+	क्रमce_ones = FORCE_ONES | SCL | SDA;
 
-	return i2c_bit_add_numbered_bus(&ioc_ops);
-}
+	वापस i2c_bit_add_numbered_bus(&ioc_ops);
+पूर्ण
 
 module_init(i2c_ioc_init);
 

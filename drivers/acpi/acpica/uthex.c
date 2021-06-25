@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: uthex -- Hex/ASCII support functions
@@ -7,100 +8,100 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
 
-#define _COMPONENT          ACPI_COMPILER
+#घोषणा _COMPONENT          ACPI_COMPILER
 ACPI_MODULE_NAME("uthex")
 
 /* Hex to ASCII conversion table */
-static const char acpi_gbl_hex_to_ascii[] = {
+अटल स्थिर अक्षर acpi_gbl_hex_to_ascii[] = अणु
 	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
 	    'E', 'F'
-};
+पूर्ण;
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_hex_to_ascii_char
+ * FUNCTION:    acpi_ut_hex_to_ascii_अक्षर
  *
- * PARAMETERS:  integer             - Contains the hex digit
+ * PARAMETERS:  पूर्णांकeger             - Contains the hex digit
  *              position            - bit position of the digit within the
- *                                    integer (multiple of 4)
+ *                                    पूर्णांकeger (multiple of 4)
  *
- * RETURN:      The converted Ascii character
+ * RETURN:      The converted Ascii अक्षरacter
  *
- * DESCRIPTION: Convert a hex digit to an Ascii character
+ * DESCRIPTION: Convert a hex digit to an Ascii अक्षरacter
  *
  ******************************************************************************/
 
-char acpi_ut_hex_to_ascii_char(u64 integer, u32 position)
-{
+अक्षर acpi_ut_hex_to_ascii_अक्षर(u64 पूर्णांकeger, u32 position)
+अणु
 	u64 index;
 
-	acpi_ut_short_shift_right(integer, position, &index);
-	return (acpi_gbl_hex_to_ascii[index & 0xF]);
-}
+	acpi_ut_लघु_shअगरt_right(पूर्णांकeger, position, &index);
+	वापस (acpi_gbl_hex_to_ascii[index & 0xF]);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_ascii_to_hex_byte
  *
- * PARAMETERS:  two_ascii_chars             - Pointer to two ASCII characters
- *              return_byte                 - Where converted byte is returned
+ * PARAMETERS:  two_ascii_अक्षरs             - Poपूर्णांकer to two ASCII अक्षरacters
+ *              वापस_byte                 - Where converted byte is वापसed
  *
  * RETURN:      Status and converted hex byte
  *
- * DESCRIPTION: Perform ascii-to-hex translation, exactly two ASCII characters
+ * DESCRIPTION: Perक्रमm ascii-to-hex translation, exactly two ASCII अक्षरacters
  *              to a single converted byte value.
  *
  ******************************************************************************/
 
-acpi_status acpi_ut_ascii_to_hex_byte(char *two_ascii_chars, u8 *return_byte)
-{
+acpi_status acpi_ut_ascii_to_hex_byte(अक्षर *two_ascii_अक्षरs, u8 *वापस_byte)
+अणु
 
-	/* Both ASCII characters must be valid hex digits */
+	/* Both ASCII अक्षरacters must be valid hex digits */
 
-	if (!isxdigit((int)two_ascii_chars[0]) ||
-	    !isxdigit((int)two_ascii_chars[1])) {
-		return (AE_BAD_HEX_CONSTANT);
-	}
+	अगर (!है_षष्ठादशक((पूर्णांक)two_ascii_अक्षरs[0]) ||
+	    !है_षष्ठादशक((पूर्णांक)two_ascii_अक्षरs[1])) अणु
+		वापस (AE_BAD_HEX_CONSTANT);
+	पूर्ण
 
-	*return_byte =
-	    acpi_ut_ascii_char_to_hex(two_ascii_chars[1]) |
-	    (acpi_ut_ascii_char_to_hex(two_ascii_chars[0]) << 4);
+	*वापस_byte =
+	    acpi_ut_ascii_अक्षर_to_hex(two_ascii_अक्षरs[1]) |
+	    (acpi_ut_ascii_अक्षर_to_hex(two_ascii_अक्षरs[0]) << 4);
 
-	return (AE_OK);
-}
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_ascii_char_to_hex
+ * FUNCTION:    acpi_ut_ascii_अक्षर_to_hex
  *
- * PARAMETERS:  hex_char                - Hex character in Ascii. Must be:
+ * PARAMETERS:  hex_अक्षर                - Hex अक्षरacter in Ascii. Must be:
  *                                        0-9 or A-F or a-f
  *
- * RETURN:      The binary value of the ascii/hex character
+ * RETURN:      The binary value of the ascii/hex अक्षरacter
  *
- * DESCRIPTION: Perform ascii-to-hex translation
+ * DESCRIPTION: Perक्रमm ascii-to-hex translation
  *
  ******************************************************************************/
 
-u8 acpi_ut_ascii_char_to_hex(int hex_char)
-{
+u8 acpi_ut_ascii_अक्षर_to_hex(पूर्णांक hex_अक्षर)
+अणु
 
 	/* Values 0-9 */
 
-	if (hex_char <= '9') {
-		return ((u8)(hex_char - '0'));
-	}
+	अगर (hex_अक्षर <= '9') अणु
+		वापस ((u8)(hex_अक्षर - '0'));
+	पूर्ण
 
-	/* Upper case A-F */
+	/* Upper हाल A-F */
 
-	if (hex_char <= 'F') {
-		return ((u8)(hex_char - 0x37));
-	}
+	अगर (hex_अक्षर <= 'F') अणु
+		वापस ((u8)(hex_अक्षर - 0x37));
+	पूर्ण
 
-	/* Lower case a-f */
+	/* Lower हाल a-f */
 
-	return ((u8)(hex_char - 0x57));
-}
+	वापस ((u8)(hex_अक्षर - 0x57));
+पूर्ण

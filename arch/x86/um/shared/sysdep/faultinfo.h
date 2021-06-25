@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifdef __i386__
-#include "faultinfo_32.h"
-#else
-#include "faultinfo_64.h"
-#endif
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_घोषित __i386__
+#समावेश "faultinfo_32.h"
+#अन्यथा
+#समावेश "faultinfo_64.h"
+#पूर्ण_अगर

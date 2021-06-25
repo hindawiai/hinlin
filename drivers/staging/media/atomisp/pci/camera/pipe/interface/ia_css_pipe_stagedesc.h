@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __IA_CSS_PIPE_STAGEDESC_H__
-#define __IA_CSS_PIPE_STAGEDESC_H__
+#अगर_अघोषित __IA_CSS_PIPE_STAGEDESC_H__
+#घोषणा __IA_CSS_PIPE_STAGEDESC_H__
 
-#include <ia_css_acc_types.h> /* ia_css_fw_info */
-#include <ia_css_frame_public.h>
-#include <ia_css_binary.h>
-#include "ia_css_pipeline.h"
-#include "ia_css_pipeline_common.h"
+#समावेश <ia_css_acc_types.h> /* ia_css_fw_info */
+#समावेश <ia_css_frame_खुला.h>
+#समावेश <ia_css_binary.h>
+#समावेश "ia_css_pipeline.h"
+#समावेश "ia_css_pipeline_common.h"
 
-void ia_css_pipe_get_generic_stage_desc(
-    struct ia_css_pipeline_stage_desc *stage_desc,
-    struct ia_css_binary *binary,
-    struct ia_css_frame *out_frame[],
-    struct ia_css_frame *in_frame,
-    struct ia_css_frame *vf_frame);
+व्योम ia_css_pipe_get_generic_stage_desc(
+    काष्ठा ia_css_pipeline_stage_desc *stage_desc,
+    काष्ठा ia_css_binary *binary,
+    काष्ठा ia_css_frame *out_frame[],
+    काष्ठा ia_css_frame *in_frame,
+    काष्ठा ia_css_frame *vf_frame);
 
-void ia_css_pipe_get_firmwares_stage_desc(
-    struct ia_css_pipeline_stage_desc *stage_desc,
-    struct ia_css_binary *binary,
-    struct ia_css_frame *out_frame[],
-    struct ia_css_frame *in_frame,
-    struct ia_css_frame *vf_frame,
-    const struct ia_css_fw_info *fw,
-    unsigned int mode);
+व्योम ia_css_pipe_get_firmwares_stage_desc(
+    काष्ठा ia_css_pipeline_stage_desc *stage_desc,
+    काष्ठा ia_css_binary *binary,
+    काष्ठा ia_css_frame *out_frame[],
+    काष्ठा ia_css_frame *in_frame,
+    काष्ठा ia_css_frame *vf_frame,
+    स्थिर काष्ठा ia_css_fw_info *fw,
+    अचिन्हित पूर्णांक mode);
 
-void ia_css_pipe_get_acc_stage_desc(
-    struct ia_css_pipeline_stage_desc *stage_desc,
-    struct ia_css_binary *binary,
-    struct ia_css_fw_info *fw);
+व्योम ia_css_pipe_get_acc_stage_desc(
+    काष्ठा ia_css_pipeline_stage_desc *stage_desc,
+    काष्ठा ia_css_binary *binary,
+    काष्ठा ia_css_fw_info *fw);
 
-void ia_css_pipe_get_sp_func_stage_desc(
-    struct ia_css_pipeline_stage_desc *stage_desc,
-    struct ia_css_frame *out_frame,
-    enum ia_css_pipeline_stage_sp_func sp_func,
-    unsigned int max_input_width);
+व्योम ia_css_pipe_get_sp_func_stage_desc(
+    काष्ठा ia_css_pipeline_stage_desc *stage_desc,
+    काष्ठा ia_css_frame *out_frame,
+    क्रमागत ia_css_pipeline_stage_sp_func sp_func,
+    अचिन्हित पूर्णांक max_input_width);
 
-#endif /*__IA_CSS_PIPE_STAGEDESC__H__ */
+#पूर्ण_अगर /*__IA_CSS_PIPE_STAGEDESC__H__ */

@@ -1,62 +1,63 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NFSD_BLOCKLAYOUTXDR_H
-#define _NFSD_BLOCKLAYOUTXDR_H 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NFSD_BLOCKLAYOUTXDR_H
+#घोषणा _NFSD_BLOCKLAYOUTXDR_H 1
 
-#include <linux/blkdev.h>
-#include "xdr4.h"
+#समावेश <linux/blkdev.h>
+#समावेश "xdr4.h"
 
-struct iomap;
-struct xdr_stream;
+काष्ठा iomap;
+काष्ठा xdr_stream;
 
-struct pnfs_block_extent {
-	struct nfsd4_deviceid		vol_id;
+काष्ठा pnfs_block_extent अणु
+	काष्ठा nfsd4_deviceid		vol_id;
 	u64				foff;
 	u64				len;
 	u64				soff;
-	enum pnfs_block_extent_state	es;
-};
+	क्रमागत pnfs_block_extent_state	es;
+पूर्ण;
 
-struct pnfs_block_range {
+काष्ठा pnfs_block_range अणु
 	u64				foff;
 	u64				len;
-};
+पूर्ण;
 
 /*
- * Random upper cap for the uuid length to avoid unbounded allocation.
+ * Ranकरोm upper cap क्रम the uuid length to aव्योम unbounded allocation.
  * Not actually limited by the protocol.
  */
-#define PNFS_BLOCK_UUID_LEN	128
+#घोषणा PNFS_BLOCK_UUID_LEN	128
 
-struct pnfs_block_volume {
-	enum pnfs_block_volume_type	type;
-	union {
-		struct {
+काष्ठा pnfs_block_volume अणु
+	क्रमागत pnfs_block_volume_type	type;
+	जोड़ अणु
+		काष्ठा अणु
 			u64		offset;
 			u32		sig_len;
 			u8		sig[PNFS_BLOCK_UUID_LEN];
-		} simple;
-		struct {
-			enum scsi_code_set		code_set;
-			enum scsi_designator_type	designator_type;
-			int				designator_len;
+		पूर्ण simple;
+		काष्ठा अणु
+			क्रमागत scsi_code_set		code_set;
+			क्रमागत scsi_designator_type	designator_type;
+			पूर्णांक				designator_len;
 			u8				designator[256];
 			u64				pr_key;
-		} scsi;
-	};
-};
+		पूर्ण scsi;
+	पूर्ण;
+पूर्ण;
 
-struct pnfs_block_deviceaddr {
+काष्ठा pnfs_block_deviceaddr अणु
 	u32				nr_volumes;
-	struct pnfs_block_volume	volumes[];
-};
+	काष्ठा pnfs_block_volume	volumes[];
+पूर्ण;
 
-__be32 nfsd4_block_encode_getdeviceinfo(struct xdr_stream *xdr,
-		struct nfsd4_getdeviceinfo *gdp);
-__be32 nfsd4_block_encode_layoutget(struct xdr_stream *xdr,
-		struct nfsd4_layoutget *lgp);
-int nfsd4_block_decode_layoutupdate(__be32 *p, u32 len, struct iomap **iomapp,
+__be32 nfsd4_block_encode_getdeviceinfo(काष्ठा xdr_stream *xdr,
+		काष्ठा nfsd4_getdeviceinfo *gdp);
+__be32 nfsd4_block_encode_layoutget(काष्ठा xdr_stream *xdr,
+		काष्ठा nfsd4_layoutget *lgp);
+पूर्णांक nfsd4_block_decode_layoutupdate(__be32 *p, u32 len, काष्ठा iomap **iomapp,
 		u32 block_size);
-int nfsd4_scsi_decode_layoutupdate(__be32 *p, u32 len, struct iomap **iomapp,
+पूर्णांक nfsd4_scsi_decode_layoutupdate(__be32 *p, u32 len, काष्ठा iomap **iomapp,
 		u32 block_size);
 
-#endif /* _NFSD_BLOCKLAYOUTXDR_H */
+#पूर्ण_अगर /* _NFSD_BLOCKLAYOUTXDR_H */

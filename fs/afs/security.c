@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* AFS security handling
  *
  * Copyright (C) 2007, 2017 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include <linux/ctype.h>
-#include <linux/sched.h>
-#include <linux/hashtable.h>
-#include <keys/rxrpc-type.h>
-#include "internal.h"
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/hashtable.h>
+#समावेश <keys/rxrpc-type.h>
+#समावेश "internal.h"
 
-static DEFINE_HASHTABLE(afs_permits_cache, 10);
-static DEFINE_SPINLOCK(afs_permits_lock);
+अटल DEFINE_HASHTABLE(afs_permits_cache, 10);
+अटल DEFINE_SPINLOCK(afs_permits_lock);
 
 /*
  * get a key
  */
-struct key *afs_request_key(struct afs_cell *cell)
-{
-	struct key *key;
+काष्ठा key *afs_request_key(काष्ठा afs_cell *cell)
+अणु
+	काष्ठा key *key;
 
 	_enter("{%x}", key_serial(cell->anonymous_key));
 
 	_debug("key %s", cell->anonymous_key->description);
 	key = request_key_net(&key_type_rxrpc, cell->anonymous_key->description,
-			      cell->net->net, NULL);
-	if (IS_ERR(key)) {
-		if (PTR_ERR(key) != -ENOKEY) {
+			      cell->net->net, शून्य);
+	अगर (IS_ERR(key)) अणु
+		अगर (PTR_ERR(key) != -ENOKEY) अणु
 			_leave(" = %ld", PTR_ERR(key));
-			return key;
-		}
+			वापस key;
+		पूर्ण
 
 		/* act as anonymous user */
 		_leave(" = {%x} [anon]", key_serial(cell->anonymous_key));
-		return key_get(cell->anonymous_key);
-	} else {
+		वापस key_get(cell->anonymous_key);
+	पूर्ण अन्यथा अणु
 		/* act as authorised user */
 		_leave(" = {%x} [auth]", key_serial(key));
-		return key;
-	}
-}
+		वापस key;
+	पूर्ण
+पूर्ण
 
 /*
  * Get a key when pathwalk is in rcuwalk mode.
  */
-struct key *afs_request_key_rcu(struct afs_cell *cell)
-{
-	struct key *key;
+काष्ठा key *afs_request_key_rcu(काष्ठा afs_cell *cell)
+अणु
+	काष्ठा key *key;
 
 	_enter("{%x}", key_serial(cell->anonymous_key));
 
@@ -58,431 +59,431 @@ struct key *afs_request_key_rcu(struct afs_cell *cell)
 	key = request_key_net_rcu(&key_type_rxrpc,
 				  cell->anonymous_key->description,
 				  cell->net->net);
-	if (IS_ERR(key)) {
-		if (PTR_ERR(key) != -ENOKEY) {
+	अगर (IS_ERR(key)) अणु
+		अगर (PTR_ERR(key) != -ENOKEY) अणु
 			_leave(" = %ld", PTR_ERR(key));
-			return key;
-		}
+			वापस key;
+		पूर्ण
 
 		/* act as anonymous user */
 		_leave(" = {%x} [anon]", key_serial(cell->anonymous_key));
-		return key_get(cell->anonymous_key);
-	} else {
+		वापस key_get(cell->anonymous_key);
+	पूर्ण अन्यथा अणु
 		/* act as authorised user */
 		_leave(" = {%x} [auth]", key_serial(key));
-		return key;
-	}
-}
+		वापस key;
+	पूर्ण
+पूर्ण
 
 /*
  * Dispose of a list of permits.
  */
-static void afs_permits_rcu(struct rcu_head *rcu)
-{
-	struct afs_permits *permits =
-		container_of(rcu, struct afs_permits, rcu);
-	int i;
+अटल व्योम afs_permits_rcu(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा afs_permits *permits =
+		container_of(rcu, काष्ठा afs_permits, rcu);
+	पूर्णांक i;
 
-	for (i = 0; i < permits->nr_permits; i++)
+	क्रम (i = 0; i < permits->nr_permits; i++)
 		key_put(permits->permits[i].key);
-	kfree(permits);
-}
+	kमुक्त(permits);
+पूर्ण
 
 /*
  * Discard a permission cache.
  */
-void afs_put_permits(struct afs_permits *permits)
-{
-	if (permits && refcount_dec_and_test(&permits->usage)) {
+व्योम afs_put_permits(काष्ठा afs_permits *permits)
+अणु
+	अगर (permits && refcount_dec_and_test(&permits->usage)) अणु
 		spin_lock(&afs_permits_lock);
 		hash_del_rcu(&permits->hash_node);
 		spin_unlock(&afs_permits_lock);
 		call_rcu(&permits->rcu, afs_permits_rcu);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Clear a permit cache on callback break.
+ * Clear a permit cache on callback अवरोध.
  */
-void afs_clear_permits(struct afs_vnode *vnode)
-{
-	struct afs_permits *permits;
+व्योम afs_clear_permits(काष्ठा afs_vnode *vnode)
+अणु
+	काष्ठा afs_permits *permits;
 
 	spin_lock(&vnode->lock);
-	permits = rcu_dereference_protected(vnode->permit_cache,
+	permits = rcu_dereference_रक्षित(vnode->permit_cache,
 					    lockdep_is_held(&vnode->lock));
-	RCU_INIT_POINTER(vnode->permit_cache, NULL);
+	RCU_INIT_POINTER(vnode->permit_cache, शून्य);
 	spin_unlock(&vnode->lock);
 
 	afs_put_permits(permits);
-}
+पूर्ण
 
 /*
  * Hash a list of permits.  Use simple addition to make it easy to add an extra
  * one at an as-yet indeterminate position in the list.
  */
-static void afs_hash_permits(struct afs_permits *permits)
-{
-	unsigned long h = permits->nr_permits;
-	int i;
+अटल व्योम afs_hash_permits(काष्ठा afs_permits *permits)
+अणु
+	अचिन्हित दीर्घ h = permits->nr_permits;
+	पूर्णांक i;
 
-	for (i = 0; i < permits->nr_permits; i++) {
-		h += (unsigned long)permits->permits[i].key / sizeof(void *);
+	क्रम (i = 0; i < permits->nr_permits; i++) अणु
+		h += (अचिन्हित दीर्घ)permits->permits[i].key / माप(व्योम *);
 		h += permits->permits[i].access;
-	}
+	पूर्ण
 
 	permits->h = h;
-}
+पूर्ण
 
 /*
- * Cache the CallerAccess result obtained from doing a fileserver operation
- * that returned a vnode status for a particular key.  If a callback break
+ * Cache the CallerAccess result obtained from करोing a fileserver operation
+ * that वापसed a vnode status क्रम a particular key.  If a callback अवरोध
  * occurs whilst the operation was in progress then we have to ditch the cache
  * as the ACL *may* have changed.
  */
-void afs_cache_permit(struct afs_vnode *vnode, struct key *key,
-		      unsigned int cb_break, struct afs_status_cb *scb)
-{
-	struct afs_permits *permits, *xpermits, *replacement, *zap, *new = NULL;
+व्योम afs_cache_permit(काष्ठा afs_vnode *vnode, काष्ठा key *key,
+		      अचिन्हित पूर्णांक cb_अवरोध, काष्ठा afs_status_cb *scb)
+अणु
+	काष्ठा afs_permits *permits, *xpermits, *replacement, *zap, *new = शून्य;
 	afs_access_t caller_access = scb->status.caller_access;
-	size_t size = 0;
+	माप_प्रकार size = 0;
 	bool changed = false;
-	int i, j;
+	पूर्णांक i, j;
 
 	_enter("{%llx:%llu},%x,%x",
 	       vnode->fid.vid, vnode->fid.vnode, key_serial(key), caller_access);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	/* Check for the common case first: We got back the same access as last
-	 * time we tried and already have it recorded.
+	/* Check क्रम the common हाल first: We got back the same access as last
+	 * समय we tried and alपढ़ोy have it recorded.
 	 */
 	permits = rcu_dereference(vnode->permit_cache);
-	if (permits) {
-		if (!permits->invalidated) {
-			for (i = 0; i < permits->nr_permits; i++) {
-				if (permits->permits[i].key < key)
-					continue;
-				if (permits->permits[i].key > key)
-					break;
-				if (permits->permits[i].access != caller_access) {
+	अगर (permits) अणु
+		अगर (!permits->invalidated) अणु
+			क्रम (i = 0; i < permits->nr_permits; i++) अणु
+				अगर (permits->permits[i].key < key)
+					जारी;
+				अगर (permits->permits[i].key > key)
+					अवरोध;
+				अगर (permits->permits[i].access != caller_access) अणु
 					changed = true;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
-				if (afs_cb_is_broken(cb_break, vnode)) {
+				अगर (afs_cb_is_broken(cb_अवरोध, vnode)) अणु
 					changed = true;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				/* The cache is still good. */
-				rcu_read_unlock();
-				return;
-			}
-		}
+				rcu_पढ़ो_unlock();
+				वापस;
+			पूर्ण
+		पूर्ण
 
 		changed |= permits->invalidated;
 		size = permits->nr_permits;
 
 		/* If this set of permits is now wrong, clear the permits
-		 * pointer so that no one tries to use the stale information.
+		 * poपूर्णांकer so that no one tries to use the stale inक्रमmation.
 		 */
-		if (changed) {
+		अगर (changed) अणु
 			spin_lock(&vnode->lock);
-			if (permits != rcu_access_pointer(vnode->permit_cache))
-				goto someone_else_changed_it_unlock;
-			RCU_INIT_POINTER(vnode->permit_cache, NULL);
+			अगर (permits != rcu_access_poपूर्णांकer(vnode->permit_cache))
+				जाओ someone_अन्यथा_changed_it_unlock;
+			RCU_INIT_POINTER(vnode->permit_cache, शून्य);
 			spin_unlock(&vnode->lock);
 
 			afs_put_permits(permits);
-			permits = NULL;
+			permits = शून्य;
 			size = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (afs_cb_is_broken(cb_break, vnode))
-		goto someone_else_changed_it;
+	अगर (afs_cb_is_broken(cb_अवरोध, vnode))
+		जाओ someone_अन्यथा_changed_it;
 
 	/* We need a ref on any permits list we want to copy as we'll have to
-	 * drop the lock to do memory allocation.
+	 * drop the lock to करो memory allocation.
 	 */
-	if (permits && !refcount_inc_not_zero(&permits->usage))
-		goto someone_else_changed_it;
+	अगर (permits && !refcount_inc_not_zero(&permits->usage))
+		जाओ someone_अन्यथा_changed_it;
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	/* Speculatively create a new list with the revised permission set.  We
-	 * discard this if we find an extant match already in the hash, but
-	 * it's easier to compare with memcmp this way.
+	 * discard this अगर we find an extant match alपढ़ोy in the hash, but
+	 * it's easier to compare with स_भेद this way.
 	 *
-	 * We fill in the key pointers at this time, but we don't get the refs
+	 * We fill in the key poपूर्णांकers at this समय, but we करोn't get the refs
 	 * yet.
 	 */
 	size++;
-	new = kzalloc(sizeof(struct afs_permits) +
-		      sizeof(struct afs_permit) * size, GFP_NOFS);
-	if (!new)
-		goto out_put;
+	new = kzalloc(माप(काष्ठा afs_permits) +
+		      माप(काष्ठा afs_permit) * size, GFP_NOFS);
+	अगर (!new)
+		जाओ out_put;
 
 	refcount_set(&new->usage, 1);
 	new->nr_permits = size;
 	i = j = 0;
-	if (permits) {
-		for (i = 0; i < permits->nr_permits; i++) {
-			if (j == i && permits->permits[i].key > key) {
+	अगर (permits) अणु
+		क्रम (i = 0; i < permits->nr_permits; i++) अणु
+			अगर (j == i && permits->permits[i].key > key) अणु
 				new->permits[j].key = key;
 				new->permits[j].access = caller_access;
 				j++;
-			}
+			पूर्ण
 			new->permits[j].key = permits->permits[i].key;
 			new->permits[j].access = permits->permits[i].access;
 			j++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (j == i) {
+	अगर (j == i) अणु
 		new->permits[j].key = key;
 		new->permits[j].access = caller_access;
-	}
+	पूर्ण
 
 	afs_hash_permits(new);
 
-	/* Now see if the permit list we want is actually already available */
+	/* Now see अगर the permit list we want is actually alपढ़ोy available */
 	spin_lock(&afs_permits_lock);
 
-	hash_for_each_possible(afs_permits_cache, xpermits, hash_node, new->h) {
-		if (xpermits->h != new->h ||
+	hash_क्रम_each_possible(afs_permits_cache, xpermits, hash_node, new->h) अणु
+		अगर (xpermits->h != new->h ||
 		    xpermits->invalidated ||
 		    xpermits->nr_permits != new->nr_permits ||
-		    memcmp(xpermits->permits, new->permits,
-			   new->nr_permits * sizeof(struct afs_permit)) != 0)
-			continue;
+		    स_भेद(xpermits->permits, new->permits,
+			   new->nr_permits * माप(काष्ठा afs_permit)) != 0)
+			जारी;
 
-		if (refcount_inc_not_zero(&xpermits->usage)) {
+		अगर (refcount_inc_not_zero(&xpermits->usage)) अणु
 			replacement = xpermits;
-			goto found;
-		}
+			जाओ found;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	for (i = 0; i < new->nr_permits; i++)
+	क्रम (i = 0; i < new->nr_permits; i++)
 		key_get(new->permits[i].key);
 	hash_add_rcu(afs_permits_cache, &new->hash_node, new->h);
 	replacement = new;
-	new = NULL;
+	new = शून्य;
 
 found:
 	spin_unlock(&afs_permits_lock);
 
-	kfree(new);
+	kमुक्त(new);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	spin_lock(&vnode->lock);
-	zap = rcu_access_pointer(vnode->permit_cache);
-	if (!afs_cb_is_broken(cb_break, vnode) && zap == permits)
-		rcu_assign_pointer(vnode->permit_cache, replacement);
-	else
+	zap = rcu_access_poपूर्णांकer(vnode->permit_cache);
+	अगर (!afs_cb_is_broken(cb_अवरोध, vnode) && zap == permits)
+		rcu_assign_poपूर्णांकer(vnode->permit_cache, replacement);
+	अन्यथा
 		zap = replacement;
 	spin_unlock(&vnode->lock);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	afs_put_permits(zap);
 out_put:
 	afs_put_permits(permits);
-	return;
+	वापस;
 
-someone_else_changed_it_unlock:
+someone_अन्यथा_changed_it_unlock:
 	spin_unlock(&vnode->lock);
-someone_else_changed_it:
-	/* Someone else changed the cache under us - don't recheck at this
-	 * time.
+someone_अन्यथा_changed_it:
+	/* Someone अन्यथा changed the cache under us - करोn't recheck at this
+	 * समय.
 	 */
-	rcu_read_unlock();
-	return;
-}
+	rcu_पढ़ो_unlock();
+	वापस;
+पूर्ण
 
-static bool afs_check_permit_rcu(struct afs_vnode *vnode, struct key *key,
+अटल bool afs_check_permit_rcu(काष्ठा afs_vnode *vnode, काष्ठा key *key,
 				 afs_access_t *_access)
-{
-	const struct afs_permits *permits;
-	int i;
+अणु
+	स्थिर काष्ठा afs_permits *permits;
+	पूर्णांक i;
 
 	_enter("{%llx:%llu},%x",
 	       vnode->fid.vid, vnode->fid.vnode, key_serial(key));
 
-	/* check the permits to see if we've got one yet */
-	if (key == vnode->volume->cell->anonymous_key) {
+	/* check the permits to see अगर we've got one yet */
+	अगर (key == vnode->volume->cell->anonymous_key) अणु
 		*_access = vnode->status.anon_access;
 		_leave(" = t [anon %x]", *_access);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	permits = rcu_dereference(vnode->permit_cache);
-	if (permits) {
-		for (i = 0; i < permits->nr_permits; i++) {
-			if (permits->permits[i].key < key)
-				continue;
-			if (permits->permits[i].key > key)
-				break;
+	अगर (permits) अणु
+		क्रम (i = 0; i < permits->nr_permits; i++) अणु
+			अगर (permits->permits[i].key < key)
+				जारी;
+			अगर (permits->permits[i].key > key)
+				अवरोध;
 
 			*_access = permits->permits[i].access;
 			_leave(" = %u [perm %x]", !permits->invalidated, *_access);
-			return !permits->invalidated;
-		}
-	}
+			वापस !permits->invalidated;
+		पूर्ण
+	पूर्ण
 
 	_leave(" = f");
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * check with the fileserver to see if the directory or parent directory is
- * permitted to be accessed with this authorisation, and if so, what access it
+ * check with the fileserver to see अगर the directory or parent directory is
+ * permitted to be accessed with this authorisation, and अगर so, what access it
  * is granted
  */
-int afs_check_permit(struct afs_vnode *vnode, struct key *key,
+पूर्णांक afs_check_permit(काष्ठा afs_vnode *vnode, काष्ठा key *key,
 		     afs_access_t *_access)
-{
-	struct afs_permits *permits;
+अणु
+	काष्ठा afs_permits *permits;
 	bool valid = false;
-	int i, ret;
+	पूर्णांक i, ret;
 
 	_enter("{%llx:%llu},%x",
 	       vnode->fid.vid, vnode->fid.vnode, key_serial(key));
 
-	/* check the permits to see if we've got one yet */
-	if (key == vnode->volume->cell->anonymous_key) {
+	/* check the permits to see अगर we've got one yet */
+	अगर (key == vnode->volume->cell->anonymous_key) अणु
 		_debug("anon");
 		*_access = vnode->status.anon_access;
 		valid = true;
-	} else {
-		rcu_read_lock();
+	पूर्ण अन्यथा अणु
+		rcu_पढ़ो_lock();
 		permits = rcu_dereference(vnode->permit_cache);
-		if (permits) {
-			for (i = 0; i < permits->nr_permits; i++) {
-				if (permits->permits[i].key < key)
-					continue;
-				if (permits->permits[i].key > key)
-					break;
+		अगर (permits) अणु
+			क्रम (i = 0; i < permits->nr_permits; i++) अणु
+				अगर (permits->permits[i].key < key)
+					जारी;
+				अगर (permits->permits[i].key > key)
+					अवरोध;
 
 				*_access = permits->permits[i].access;
 				valid = !permits->invalidated;
-				break;
-			}
-		}
-		rcu_read_unlock();
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	if (!valid) {
-		/* Check the status on the file we're actually interested in
+	अगर (!valid) अणु
+		/* Check the status on the file we're actually पूर्णांकerested in
 		 * (the post-processing will cache the result).
 		 */
 		_debug("no valid permit");
 
 		ret = afs_fetch_status(vnode, key, false, _access);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			*_access = 0;
 			_leave(" = %d", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	_leave(" = 0 [access %x]", *_access);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * check the permissions on an AFS file
  * - AFS ACLs are attached to directories only, and a file is controlled by its
  *   parent directory's ACL
  */
-int afs_permission(struct user_namespace *mnt_userns, struct inode *inode,
-		   int mask)
-{
-	struct afs_vnode *vnode = AFS_FS_I(inode);
+पूर्णांक afs_permission(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		   पूर्णांक mask)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(inode);
 	afs_access_t access;
-	struct key *key;
-	int ret = 0;
+	काष्ठा key *key;
+	पूर्णांक ret = 0;
 
 	_enter("{{%llx:%llu},%lx},%x,",
 	       vnode->fid.vid, vnode->fid.vnode, vnode->flags, mask);
 
-	if (mask & MAY_NOT_BLOCK) {
+	अगर (mask & MAY_NOT_BLOCK) अणु
 		key = afs_request_key_rcu(vnode->volume->cell);
-		if (IS_ERR(key))
-			return -ECHILD;
+		अगर (IS_ERR(key))
+			वापस -ECHILD;
 
 		ret = -ECHILD;
-		if (!afs_check_validity(vnode) ||
+		अगर (!afs_check_validity(vnode) ||
 		    !afs_check_permit_rcu(vnode, key, &access))
-			goto error;
-	} else {
+			जाओ error;
+	पूर्ण अन्यथा अणु
 		key = afs_request_key(vnode->volume->cell);
-		if (IS_ERR(key)) {
+		अगर (IS_ERR(key)) अणु
 			_leave(" = %ld [key]", PTR_ERR(key));
-			return PTR_ERR(key);
-		}
+			वापस PTR_ERR(key);
+		पूर्ण
 
 		ret = afs_validate(vnode, key);
-		if (ret < 0)
-			goto error;
+		अगर (ret < 0)
+			जाओ error;
 
-		/* check the permits to see if we've got one yet */
+		/* check the permits to see अगर we've got one yet */
 		ret = afs_check_permit(vnode, key, &access);
-		if (ret < 0)
-			goto error;
-	}
+		अगर (ret < 0)
+			जाओ error;
+	पूर्ण
 
-	/* interpret the access mask */
+	/* पूर्णांकerpret the access mask */
 	_debug("REQ %x ACC %x on %s",
-	       mask, access, S_ISDIR(inode->i_mode) ? "dir" : "file");
+	       mask, access, S_ISसूची(inode->i_mode) ? "dir" : "file");
 
 	ret = 0;
-	if (S_ISDIR(inode->i_mode)) {
-		if (mask & (MAY_EXEC | MAY_READ | MAY_CHDIR)) {
-			if (!(access & AFS_ACE_LOOKUP))
-				goto permission_denied;
-		}
-		if (mask & MAY_WRITE) {
-			if (!(access & (AFS_ACE_DELETE | /* rmdir, unlink, rename from */
-					AFS_ACE_INSERT))) /* create, mkdir, symlink, rename to */
-				goto permission_denied;
-		}
-	} else {
-		if (!(access & AFS_ACE_LOOKUP))
-			goto permission_denied;
-		if ((mask & MAY_EXEC) && !(inode->i_mode & S_IXUSR))
-			goto permission_denied;
-		if (mask & (MAY_EXEC | MAY_READ)) {
-			if (!(access & AFS_ACE_READ))
-				goto permission_denied;
-			if (!(inode->i_mode & S_IRUSR))
-				goto permission_denied;
-		} else if (mask & MAY_WRITE) {
-			if (!(access & AFS_ACE_WRITE))
-				goto permission_denied;
-			if (!(inode->i_mode & S_IWUSR))
-				goto permission_denied;
-		}
-	}
+	अगर (S_ISसूची(inode->i_mode)) अणु
+		अगर (mask & (MAY_EXEC | MAY_READ | MAY_CHसूची)) अणु
+			अगर (!(access & AFS_ACE_LOOKUP))
+				जाओ permission_denied;
+		पूर्ण
+		अगर (mask & MAY_WRITE) अणु
+			अगर (!(access & (AFS_ACE_DELETE | /* सूची_हटाओ, unlink, नाम from */
+					AFS_ACE_INSERT))) /* create, सूची_गढ़ो, symlink, नाम to */
+				जाओ permission_denied;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!(access & AFS_ACE_LOOKUP))
+			जाओ permission_denied;
+		अगर ((mask & MAY_EXEC) && !(inode->i_mode & S_IXUSR))
+			जाओ permission_denied;
+		अगर (mask & (MAY_EXEC | MAY_READ)) अणु
+			अगर (!(access & AFS_ACE_READ))
+				जाओ permission_denied;
+			अगर (!(inode->i_mode & S_IRUSR))
+				जाओ permission_denied;
+		पूर्ण अन्यथा अगर (mask & MAY_WRITE) अणु
+			अगर (!(access & AFS_ACE_WRITE))
+				जाओ permission_denied;
+			अगर (!(inode->i_mode & S_IWUSR))
+				जाओ permission_denied;
+		पूर्ण
+	पूर्ण
 
 	key_put(key);
 	_leave(" = %d", ret);
-	return ret;
+	वापस ret;
 
 permission_denied:
 	ret = -EACCES;
 error:
 	key_put(key);
 	_leave(" = %d", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void __exit afs_clean_up_permit_cache(void)
-{
-	int i;
+व्योम __निकास afs_clean_up_permit_cache(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < HASH_SIZE(afs_permits_cache); i++)
+	क्रम (i = 0; i < HASH_SIZE(afs_permits_cache); i++)
 		WARN_ON_ONCE(!hlist_empty(&afs_permits_cache[i]));
 
-}
+पूर्ण

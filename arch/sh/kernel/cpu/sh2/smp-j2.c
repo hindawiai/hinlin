@@ -1,128 +1,129 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * SMP support for J2 processor
+ * SMP support क्रम J2 processor
  *
  * Copyright (C) 2015-2016 Smart Energy Instruments, Inc.
  */
 
-#include <linux/smp.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <asm/cmpxchg.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <यंत्र/cmpxchg.h>
 
-DEFINE_PER_CPU(unsigned, j2_ipi_messages);
+DEFINE_PER_CPU(अचिन्हित, j2_ipi_messages);
 
-extern u32 *sh2_cpuid_addr;
-static u32 *j2_ipi_trigger;
-static int j2_ipi_irq;
+बाह्य u32 *sh2_cpuid_addr;
+अटल u32 *j2_ipi_trigger;
+अटल पूर्णांक j2_ipi_irq;
 
-static irqreturn_t j2_ipi_interrupt_handler(int irq, void *arg)
-{
-	unsigned cpu = hard_smp_processor_id();
-	volatile unsigned *pmsg = &per_cpu(j2_ipi_messages, cpu);
-	unsigned messages, i;
+अटल irqवापस_t j2_ipi_पूर्णांकerrupt_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	अचिन्हित cpu = hard_smp_processor_id();
+	अस्थिर अचिन्हित *pmsg = &per_cpu(j2_ipi_messages, cpu);
+	अचिन्हित messages, i;
 
-	do messages = *pmsg;
-	while (cmpxchg(pmsg, messages, 0) != messages);
+	करो messages = *pmsg;
+	जबतक (cmpxchg(pmsg, messages, 0) != messages);
 
-	if (!messages) return IRQ_NONE;
+	अगर (!messages) वापस IRQ_NONE;
 
-	for (i=0; i<SMP_MSG_NR; i++)
-		if (messages & (1U<<i))
+	क्रम (i=0; i<SMP_MSG_NR; i++)
+		अगर (messages & (1U<<i))
 			smp_message_recv(i);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void j2_smp_setup(void)
-{
-}
+अटल व्योम j2_smp_setup(व्योम)
+अणु
+पूर्ण
 
-static void j2_prepare_cpus(unsigned int max_cpus)
-{
-	struct device_node *np;
-	unsigned i, max = 1;
+अटल व्योम j2_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
+	काष्ठा device_node *np;
+	अचिन्हित i, max = 1;
 
-	np = of_find_compatible_node(NULL, NULL, "jcore,ipi-controller");
-	if (!np)
-		goto out;
+	np = of_find_compatible_node(शून्य, शून्य, "jcore,ipi-controller");
+	अगर (!np)
+		जाओ out;
 
 	j2_ipi_irq = irq_of_parse_and_map(np, 0);
 	j2_ipi_trigger = of_iomap(np, 0);
-	if (!j2_ipi_irq || !j2_ipi_trigger)
-		goto out;
+	अगर (!j2_ipi_irq || !j2_ipi_trigger)
+		जाओ out;
 
-	np = of_find_compatible_node(NULL, NULL, "jcore,cpuid-mmio");
-	if (!np)
-		goto out;
+	np = of_find_compatible_node(शून्य, शून्य, "jcore,cpuid-mmio");
+	अगर (!np)
+		जाओ out;
 
 	sh2_cpuid_addr = of_iomap(np, 0);
-	if (!sh2_cpuid_addr)
-		goto out;
+	अगर (!sh2_cpuid_addr)
+		जाओ out;
 
-	if (request_irq(j2_ipi_irq, j2_ipi_interrupt_handler, IRQF_PERCPU,
-			"ipi", (void *)j2_ipi_interrupt_handler) != 0)
-		goto out;
+	अगर (request_irq(j2_ipi_irq, j2_ipi_पूर्णांकerrupt_handler, IRQF_PERCPU,
+			"ipi", (व्योम *)j2_ipi_पूर्णांकerrupt_handler) != 0)
+		जाओ out;
 
 	max = max_cpus;
 out:
-	/* Disable any cpus past max_cpus, or all secondaries if we didn't
+	/* Disable any cpus past max_cpus, or all secondaries अगर we didn't
 	 * get the necessary resources to support SMP. */
-	for (i=max; i<NR_CPUS; i++) {
+	क्रम (i=max; i<NR_CPUS; i++) अणु
 		set_cpu_possible(i, false);
 		set_cpu_present(i, false);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void j2_start_cpu(unsigned int cpu, unsigned long entry_point)
-{
-	struct device_node *np;
+अटल व्योम j2_start_cpu(अचिन्हित पूर्णांक cpu, अचिन्हित दीर्घ entry_poपूर्णांक)
+अणु
+	काष्ठा device_node *np;
 	u32 regs[2];
-	void __iomem *release, *initpc;
+	व्योम __iomem *release, *initpc;
 
-	if (!cpu) return;
+	अगर (!cpu) वापस;
 
-	np = of_get_cpu_node(cpu, NULL);
-	if (!np) return;
+	np = of_get_cpu_node(cpu, शून्य);
+	अगर (!np) वापस;
 
-	if (of_property_read_u32_array(np, "cpu-release-addr", regs, 2)) return;
-	release = ioremap(regs[0], sizeof(u32));
-	initpc = ioremap(regs[1], sizeof(u32));
+	अगर (of_property_पढ़ो_u32_array(np, "cpu-release-addr", regs, 2)) वापस;
+	release = ioremap(regs[0], माप(u32));
+	initpc = ioremap(regs[1], माप(u32));
 
-	__raw_writel(entry_point, initpc);
-	__raw_writel(1, release);
+	__raw_ग_लिखोl(entry_poपूर्णांक, initpc);
+	__raw_ग_लिखोl(1, release);
 
 	iounmap(initpc);
 	iounmap(release);
 
 	pr_info("J2 SMP: requested start of cpu %u\n", cpu);
-}
+पूर्ण
 
-static unsigned int j2_smp_processor_id(void)
-{
-	return __raw_readl(sh2_cpuid_addr);
-}
+अटल अचिन्हित पूर्णांक j2_smp_processor_id(व्योम)
+अणु
+	वापस __raw_पढ़ोl(sh2_cpuid_addr);
+पूर्ण
 
-static void j2_send_ipi(unsigned int cpu, unsigned int message)
-{
-	volatile unsigned *pmsg;
-	unsigned old;
-	unsigned long val;
+अटल व्योम j2_send_ipi(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक message)
+अणु
+	अस्थिर अचिन्हित *pmsg;
+	अचिन्हित old;
+	अचिन्हित दीर्घ val;
 
-	/* There is only one IPI interrupt shared by all messages, so
-	 * we keep a separate interrupt flag per message type in sw. */
+	/* There is only one IPI पूर्णांकerrupt shared by all messages, so
+	 * we keep a separate पूर्णांकerrupt flag per message type in sw. */
 	pmsg = &per_cpu(j2_ipi_messages, cpu);
-	do old = *pmsg;
-	while (cmpxchg(pmsg, old, old|(1U<<message)) != old);
+	करो old = *pmsg;
+	जबतक (cmpxchg(pmsg, old, old|(1U<<message)) != old);
 
-	/* Generate the actual interrupt by writing to CCRn bit 28. */
-	val = __raw_readl(j2_ipi_trigger + cpu);
-	__raw_writel(val | (1U<<28), j2_ipi_trigger + cpu);
-}
+	/* Generate the actual पूर्णांकerrupt by writing to CCRn bit 28. */
+	val = __raw_पढ़ोl(j2_ipi_trigger + cpu);
+	__raw_ग_लिखोl(val | (1U<<28), j2_ipi_trigger + cpu);
+पूर्ण
 
-static struct plat_smp_ops j2_smp_ops = {
+अटल काष्ठा plat_smp_ops j2_smp_ops = अणु
 	.smp_setup		= j2_smp_setup,
 	.prepare_cpus		= j2_prepare_cpus,
 	.start_cpu		= j2_start_cpu,
@@ -131,6 +132,6 @@ static struct plat_smp_ops j2_smp_ops = {
 	.cpu_die		= native_cpu_die,
 	.cpu_disable		= native_cpu_disable,
 	.play_dead		= native_play_dead,
-};
+पूर्ण;
 
 CPU_METHOD_OF_DECLARE(j2_cpu_method, "jcore,spin-table", &j2_smp_ops);

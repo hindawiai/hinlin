@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _ASM_RISCV_SPARSEMEM_H
-#define _ASM_RISCV_SPARSEMEM_H
+#अगर_अघोषित _ASM_RISCV_SPARSEMEM_H
+#घोषणा _ASM_RISCV_SPARSEMEM_H
 
-#ifdef CONFIG_SPARSEMEM
-#define MAX_PHYSMEM_BITS	CONFIG_PA_BITS
-#define SECTION_SIZE_BITS	27
-#endif /* CONFIG_SPARSEMEM */
+#अगर_घोषित CONFIG_SPARSEMEM
+#घोषणा MAX_PHYSMEM_BITS	CONFIG_PA_BITS
+#घोषणा SECTION_SIZE_BITS	27
+#पूर्ण_अगर /* CONFIG_SPARSEMEM */
 
-#endif /* _ASM_RISCV_SPARSEMEM_H */
+#पूर्ण_अगर /* _ASM_RISCV_SPARSEMEM_H */

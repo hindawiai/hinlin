@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM page_ref
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM page_ref
 
-#if !defined(_TRACE_PAGE_REF_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_PAGE_REF_H
+#अगर !defined(_TRACE_PAGE_REF_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_PAGE_REF_H
 
-#include <linux/types.h>
-#include <linux/page_ref.h>
-#include <linux/tracepoint.h>
-#include <trace/events/mmflags.h>
+#समावेश <linux/types.h>
+#समावेश <linux/page_ref.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <trace/events/mmflags.h>
 
-DECLARE_EVENT_CLASS(page_ref_mod_template,
+DECLARE_EVENT_CLASS(page_ref_mod_ढाँचा,
 
-	TP_PROTO(struct page *page, int v),
+	TP_PROTO(काष्ठा page *page, पूर्णांक v),
 
 	TP_ARGS(page, v),
 
 	TP_STRUCT__entry(
-		__field(unsigned long, pfn)
-		__field(unsigned long, flags)
-		__field(int, count)
-		__field(int, mapcount)
-		__field(void *, mapping)
-		__field(int, mt)
-		__field(int, val)
+		__field(अचिन्हित दीर्घ, pfn)
+		__field(अचिन्हित दीर्घ, flags)
+		__field(पूर्णांक, count)
+		__field(पूर्णांक, mapcount)
+		__field(व्योम *, mapping)
+		__field(पूर्णांक, mt)
+		__field(पूर्णांक, val)
 	),
 
 	TP_fast_assign(
@@ -36,7 +37,7 @@ DECLARE_EVENT_CLASS(page_ref_mod_template,
 		__entry->val = v;
 	),
 
-	TP_printk("pfn=0x%lx flags=%s count=%d mapcount=%d mapping=%p mt=%d val=%d",
+	TP_prपूर्णांकk("pfn=0x%lx flags=%s count=%d mapcount=%d mapping=%p mt=%d val=%d",
 		__entry->pfn,
 		show_page_flags(__entry->flags & ((1UL << NR_PAGEFLAGS) - 1)),
 		__entry->count,
@@ -44,35 +45,35 @@ DECLARE_EVENT_CLASS(page_ref_mod_template,
 		__entry->val)
 );
 
-DEFINE_EVENT(page_ref_mod_template, page_ref_set,
+DEFINE_EVENT(page_ref_mod_ढाँचा, page_ref_set,
 
-	TP_PROTO(struct page *page, int v),
-
-	TP_ARGS(page, v)
-);
-
-DEFINE_EVENT(page_ref_mod_template, page_ref_mod,
-
-	TP_PROTO(struct page *page, int v),
+	TP_PROTO(काष्ठा page *page, पूर्णांक v),
 
 	TP_ARGS(page, v)
 );
 
-DECLARE_EVENT_CLASS(page_ref_mod_and_test_template,
+DEFINE_EVENT(page_ref_mod_ढाँचा, page_ref_mod,
 
-	TP_PROTO(struct page *page, int v, int ret),
+	TP_PROTO(काष्ठा page *page, पूर्णांक v),
+
+	TP_ARGS(page, v)
+);
+
+DECLARE_EVENT_CLASS(page_ref_mod_and_test_ढाँचा,
+
+	TP_PROTO(काष्ठा page *page, पूर्णांक v, पूर्णांक ret),
 
 	TP_ARGS(page, v, ret),
 
 	TP_STRUCT__entry(
-		__field(unsigned long, pfn)
-		__field(unsigned long, flags)
-		__field(int, count)
-		__field(int, mapcount)
-		__field(void *, mapping)
-		__field(int, mt)
-		__field(int, val)
-		__field(int, ret)
+		__field(अचिन्हित दीर्घ, pfn)
+		__field(अचिन्हित दीर्घ, flags)
+		__field(पूर्णांक, count)
+		__field(पूर्णांक, mapcount)
+		__field(व्योम *, mapping)
+		__field(पूर्णांक, mt)
+		__field(पूर्णांक, val)
+		__field(पूर्णांक, ret)
 	),
 
 	TP_fast_assign(
@@ -86,7 +87,7 @@ DECLARE_EVENT_CLASS(page_ref_mod_and_test_template,
 		__entry->ret = ret;
 	),
 
-	TP_printk("pfn=0x%lx flags=%s count=%d mapcount=%d mapping=%p mt=%d val=%d ret=%d",
+	TP_prपूर्णांकk("pfn=0x%lx flags=%s count=%d mapcount=%d mapping=%p mt=%d val=%d ret=%d",
 		__entry->pfn,
 		show_page_flags(__entry->flags & ((1UL << NR_PAGEFLAGS) - 1)),
 		__entry->count,
@@ -94,42 +95,42 @@ DECLARE_EVENT_CLASS(page_ref_mod_and_test_template,
 		__entry->val, __entry->ret)
 );
 
-DEFINE_EVENT(page_ref_mod_and_test_template, page_ref_mod_and_test,
+DEFINE_EVENT(page_ref_mod_and_test_ढाँचा, page_ref_mod_and_test,
 
-	TP_PROTO(struct page *page, int v, int ret),
-
-	TP_ARGS(page, v, ret)
-);
-
-DEFINE_EVENT(page_ref_mod_and_test_template, page_ref_mod_and_return,
-
-	TP_PROTO(struct page *page, int v, int ret),
+	TP_PROTO(काष्ठा page *page, पूर्णांक v, पूर्णांक ret),
 
 	TP_ARGS(page, v, ret)
 );
 
-DEFINE_EVENT(page_ref_mod_and_test_template, page_ref_mod_unless,
+DEFINE_EVENT(page_ref_mod_and_test_ढाँचा, page_ref_mod_and_वापस,
 
-	TP_PROTO(struct page *page, int v, int ret),
-
-	TP_ARGS(page, v, ret)
-);
-
-DEFINE_EVENT(page_ref_mod_and_test_template, page_ref_freeze,
-
-	TP_PROTO(struct page *page, int v, int ret),
+	TP_PROTO(काष्ठा page *page, पूर्णांक v, पूर्णांक ret),
 
 	TP_ARGS(page, v, ret)
 );
 
-DEFINE_EVENT(page_ref_mod_template, page_ref_unfreeze,
+DEFINE_EVENT(page_ref_mod_and_test_ढाँचा, page_ref_mod_unless,
 
-	TP_PROTO(struct page *page, int v),
+	TP_PROTO(काष्ठा page *page, पूर्णांक v, पूर्णांक ret),
+
+	TP_ARGS(page, v, ret)
+);
+
+DEFINE_EVENT(page_ref_mod_and_test_ढाँचा, page_ref_मुक्तze,
+
+	TP_PROTO(काष्ठा page *page, पूर्णांक v, पूर्णांक ret),
+
+	TP_ARGS(page, v, ret)
+);
+
+DEFINE_EVENT(page_ref_mod_ढाँचा, page_ref_unमुक्तze,
+
+	TP_PROTO(काष्ठा page *page, पूर्णांक v),
 
 	TP_ARGS(page, v)
 );
 
-#endif /* _TRACE_PAGE_COUNT_H */
+#पूर्ण_अगर /* _TRACE_PAGE_COUNT_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

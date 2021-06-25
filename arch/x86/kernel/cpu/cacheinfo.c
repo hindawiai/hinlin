@@ -1,208 +1,209 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *	Routines to identify caches on Intel CPU.
+ *	Routines to identअगरy caches on Intel CPU.
  *
  *	Changes:
- *	Venkatesh Pallipadi	: Adding cache identification through cpuid(4)
- *	Ashok Raj <ashok.raj@intel.com>: Work with CPU hotplug infrastructure.
+ *	Venkatesh Pallipadi	: Adding cache identअगरication through cpuid(4)
+ *	Ashok Raj <ashok.raj@पूर्णांकel.com>: Work with CPU hotplug infraकाष्ठाure.
  *	Andi Kleen / Andreas Herrmann	: CPUID4 emulation on AMD.
  */
 
-#include <linux/slab.h>
-#include <linux/cacheinfo.h>
-#include <linux/cpu.h>
-#include <linux/sched.h>
-#include <linux/capability.h>
-#include <linux/sysfs.h>
-#include <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cacheinfo.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/pci.h>
 
-#include <asm/cpufeature.h>
-#include <asm/cacheinfo.h>
-#include <asm/amd_nb.h>
-#include <asm/smp.h>
+#समावेश <यंत्र/cpufeature.h>
+#समावेश <यंत्र/cacheinfo.h>
+#समावेश <यंत्र/amd_nb.h>
+#समावेश <यंत्र/smp.h>
 
-#include "cpu.h"
+#समावेश "cpu.h"
 
-#define LVL_1_INST	1
-#define LVL_1_DATA	2
-#define LVL_2		3
-#define LVL_3		4
-#define LVL_TRACE	5
+#घोषणा LVL_1_INST	1
+#घोषणा LVL_1_DATA	2
+#घोषणा LVL_2		3
+#घोषणा LVL_3		4
+#घोषणा LVL_TRACE	5
 
-struct _cache_table {
-	unsigned char descriptor;
-	char cache_type;
-	short size;
-};
+काष्ठा _cache_table अणु
+	अचिन्हित अक्षर descriptor;
+	अक्षर cache_type;
+	लघु size;
+पूर्ण;
 
-#define MB(x)	((x) * 1024)
+#घोषणा MB(x)	((x) * 1024)
 
 /* All the cache descriptor types we care about (no TLB or
    trace cache entries) */
 
-static const struct _cache_table cache_table[] =
-{
-	{ 0x06, LVL_1_INST, 8 },	/* 4-way set assoc, 32 byte line size */
-	{ 0x08, LVL_1_INST, 16 },	/* 4-way set assoc, 32 byte line size */
-	{ 0x09, LVL_1_INST, 32 },	/* 4-way set assoc, 64 byte line size */
-	{ 0x0a, LVL_1_DATA, 8 },	/* 2 way set assoc, 32 byte line size */
-	{ 0x0c, LVL_1_DATA, 16 },	/* 4-way set assoc, 32 byte line size */
-	{ 0x0d, LVL_1_DATA, 16 },	/* 4-way set assoc, 64 byte line size */
-	{ 0x0e, LVL_1_DATA, 24 },	/* 6-way set assoc, 64 byte line size */
-	{ 0x21, LVL_2,      256 },	/* 8-way set assoc, 64 byte line size */
-	{ 0x22, LVL_3,      512 },	/* 4-way set assoc, sectored cache, 64 byte line size */
-	{ 0x23, LVL_3,      MB(1) },	/* 8-way set assoc, sectored cache, 64 byte line size */
-	{ 0x25, LVL_3,      MB(2) },	/* 8-way set assoc, sectored cache, 64 byte line size */
-	{ 0x29, LVL_3,      MB(4) },	/* 8-way set assoc, sectored cache, 64 byte line size */
-	{ 0x2c, LVL_1_DATA, 32 },	/* 8-way set assoc, 64 byte line size */
-	{ 0x30, LVL_1_INST, 32 },	/* 8-way set assoc, 64 byte line size */
-	{ 0x39, LVL_2,      128 },	/* 4-way set assoc, sectored cache, 64 byte line size */
-	{ 0x3a, LVL_2,      192 },	/* 6-way set assoc, sectored cache, 64 byte line size */
-	{ 0x3b, LVL_2,      128 },	/* 2-way set assoc, sectored cache, 64 byte line size */
-	{ 0x3c, LVL_2,      256 },	/* 4-way set assoc, sectored cache, 64 byte line size */
-	{ 0x3d, LVL_2,      384 },	/* 6-way set assoc, sectored cache, 64 byte line size */
-	{ 0x3e, LVL_2,      512 },	/* 4-way set assoc, sectored cache, 64 byte line size */
-	{ 0x3f, LVL_2,      256 },	/* 2-way set assoc, 64 byte line size */
-	{ 0x41, LVL_2,      128 },	/* 4-way set assoc, 32 byte line size */
-	{ 0x42, LVL_2,      256 },	/* 4-way set assoc, 32 byte line size */
-	{ 0x43, LVL_2,      512 },	/* 4-way set assoc, 32 byte line size */
-	{ 0x44, LVL_2,      MB(1) },	/* 4-way set assoc, 32 byte line size */
-	{ 0x45, LVL_2,      MB(2) },	/* 4-way set assoc, 32 byte line size */
-	{ 0x46, LVL_3,      MB(4) },	/* 4-way set assoc, 64 byte line size */
-	{ 0x47, LVL_3,      MB(8) },	/* 8-way set assoc, 64 byte line size */
-	{ 0x48, LVL_2,      MB(3) },	/* 12-way set assoc, 64 byte line size */
-	{ 0x49, LVL_3,      MB(4) },	/* 16-way set assoc, 64 byte line size */
-	{ 0x4a, LVL_3,      MB(6) },	/* 12-way set assoc, 64 byte line size */
-	{ 0x4b, LVL_3,      MB(8) },	/* 16-way set assoc, 64 byte line size */
-	{ 0x4c, LVL_3,      MB(12) },	/* 12-way set assoc, 64 byte line size */
-	{ 0x4d, LVL_3,      MB(16) },	/* 16-way set assoc, 64 byte line size */
-	{ 0x4e, LVL_2,      MB(6) },	/* 24-way set assoc, 64 byte line size */
-	{ 0x60, LVL_1_DATA, 16 },	/* 8-way set assoc, sectored cache, 64 byte line size */
-	{ 0x66, LVL_1_DATA, 8 },	/* 4-way set assoc, sectored cache, 64 byte line size */
-	{ 0x67, LVL_1_DATA, 16 },	/* 4-way set assoc, sectored cache, 64 byte line size */
-	{ 0x68, LVL_1_DATA, 32 },	/* 4-way set assoc, sectored cache, 64 byte line size */
-	{ 0x70, LVL_TRACE,  12 },	/* 8-way set assoc */
-	{ 0x71, LVL_TRACE,  16 },	/* 8-way set assoc */
-	{ 0x72, LVL_TRACE,  32 },	/* 8-way set assoc */
-	{ 0x73, LVL_TRACE,  64 },	/* 8-way set assoc */
-	{ 0x78, LVL_2,      MB(1) },	/* 4-way set assoc, 64 byte line size */
-	{ 0x79, LVL_2,      128 },	/* 8-way set assoc, sectored cache, 64 byte line size */
-	{ 0x7a, LVL_2,      256 },	/* 8-way set assoc, sectored cache, 64 byte line size */
-	{ 0x7b, LVL_2,      512 },	/* 8-way set assoc, sectored cache, 64 byte line size */
-	{ 0x7c, LVL_2,      MB(1) },	/* 8-way set assoc, sectored cache, 64 byte line size */
-	{ 0x7d, LVL_2,      MB(2) },	/* 8-way set assoc, 64 byte line size */
-	{ 0x7f, LVL_2,      512 },	/* 2-way set assoc, 64 byte line size */
-	{ 0x80, LVL_2,      512 },	/* 8-way set assoc, 64 byte line size */
-	{ 0x82, LVL_2,      256 },	/* 8-way set assoc, 32 byte line size */
-	{ 0x83, LVL_2,      512 },	/* 8-way set assoc, 32 byte line size */
-	{ 0x84, LVL_2,      MB(1) },	/* 8-way set assoc, 32 byte line size */
-	{ 0x85, LVL_2,      MB(2) },	/* 8-way set assoc, 32 byte line size */
-	{ 0x86, LVL_2,      512 },	/* 4-way set assoc, 64 byte line size */
-	{ 0x87, LVL_2,      MB(1) },	/* 8-way set assoc, 64 byte line size */
-	{ 0xd0, LVL_3,      512 },	/* 4-way set assoc, 64 byte line size */
-	{ 0xd1, LVL_3,      MB(1) },	/* 4-way set assoc, 64 byte line size */
-	{ 0xd2, LVL_3,      MB(2) },	/* 4-way set assoc, 64 byte line size */
-	{ 0xd6, LVL_3,      MB(1) },	/* 8-way set assoc, 64 byte line size */
-	{ 0xd7, LVL_3,      MB(2) },	/* 8-way set assoc, 64 byte line size */
-	{ 0xd8, LVL_3,      MB(4) },	/* 12-way set assoc, 64 byte line size */
-	{ 0xdc, LVL_3,      MB(2) },	/* 12-way set assoc, 64 byte line size */
-	{ 0xdd, LVL_3,      MB(4) },	/* 12-way set assoc, 64 byte line size */
-	{ 0xde, LVL_3,      MB(8) },	/* 12-way set assoc, 64 byte line size */
-	{ 0xe2, LVL_3,      MB(2) },	/* 16-way set assoc, 64 byte line size */
-	{ 0xe3, LVL_3,      MB(4) },	/* 16-way set assoc, 64 byte line size */
-	{ 0xe4, LVL_3,      MB(8) },	/* 16-way set assoc, 64 byte line size */
-	{ 0xea, LVL_3,      MB(12) },	/* 24-way set assoc, 64 byte line size */
-	{ 0xeb, LVL_3,      MB(18) },	/* 24-way set assoc, 64 byte line size */
-	{ 0xec, LVL_3,      MB(24) },	/* 24-way set assoc, 64 byte line size */
-	{ 0x00, 0, 0}
-};
+अटल स्थिर काष्ठा _cache_table cache_table[] =
+अणु
+	अणु 0x06, LVL_1_INST, 8 पूर्ण,	/* 4-way set assoc, 32 byte line size */
+	अणु 0x08, LVL_1_INST, 16 पूर्ण,	/* 4-way set assoc, 32 byte line size */
+	अणु 0x09, LVL_1_INST, 32 पूर्ण,	/* 4-way set assoc, 64 byte line size */
+	अणु 0x0a, LVL_1_DATA, 8 पूर्ण,	/* 2 way set assoc, 32 byte line size */
+	अणु 0x0c, LVL_1_DATA, 16 पूर्ण,	/* 4-way set assoc, 32 byte line size */
+	अणु 0x0d, LVL_1_DATA, 16 पूर्ण,	/* 4-way set assoc, 64 byte line size */
+	अणु 0x0e, LVL_1_DATA, 24 पूर्ण,	/* 6-way set assoc, 64 byte line size */
+	अणु 0x21, LVL_2,      256 पूर्ण,	/* 8-way set assoc, 64 byte line size */
+	अणु 0x22, LVL_3,      512 पूर्ण,	/* 4-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x23, LVL_3,      MB(1) पूर्ण,	/* 8-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x25, LVL_3,      MB(2) पूर्ण,	/* 8-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x29, LVL_3,      MB(4) पूर्ण,	/* 8-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x2c, LVL_1_DATA, 32 पूर्ण,	/* 8-way set assoc, 64 byte line size */
+	अणु 0x30, LVL_1_INST, 32 पूर्ण,	/* 8-way set assoc, 64 byte line size */
+	अणु 0x39, LVL_2,      128 पूर्ण,	/* 4-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x3a, LVL_2,      192 पूर्ण,	/* 6-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x3b, LVL_2,      128 पूर्ण,	/* 2-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x3c, LVL_2,      256 पूर्ण,	/* 4-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x3d, LVL_2,      384 पूर्ण,	/* 6-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x3e, LVL_2,      512 पूर्ण,	/* 4-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x3f, LVL_2,      256 पूर्ण,	/* 2-way set assoc, 64 byte line size */
+	अणु 0x41, LVL_2,      128 पूर्ण,	/* 4-way set assoc, 32 byte line size */
+	अणु 0x42, LVL_2,      256 पूर्ण,	/* 4-way set assoc, 32 byte line size */
+	अणु 0x43, LVL_2,      512 पूर्ण,	/* 4-way set assoc, 32 byte line size */
+	अणु 0x44, LVL_2,      MB(1) पूर्ण,	/* 4-way set assoc, 32 byte line size */
+	अणु 0x45, LVL_2,      MB(2) पूर्ण,	/* 4-way set assoc, 32 byte line size */
+	अणु 0x46, LVL_3,      MB(4) पूर्ण,	/* 4-way set assoc, 64 byte line size */
+	अणु 0x47, LVL_3,      MB(8) पूर्ण,	/* 8-way set assoc, 64 byte line size */
+	अणु 0x48, LVL_2,      MB(3) पूर्ण,	/* 12-way set assoc, 64 byte line size */
+	अणु 0x49, LVL_3,      MB(4) पूर्ण,	/* 16-way set assoc, 64 byte line size */
+	अणु 0x4a, LVL_3,      MB(6) पूर्ण,	/* 12-way set assoc, 64 byte line size */
+	अणु 0x4b, LVL_3,      MB(8) पूर्ण,	/* 16-way set assoc, 64 byte line size */
+	अणु 0x4c, LVL_3,      MB(12) पूर्ण,	/* 12-way set assoc, 64 byte line size */
+	अणु 0x4d, LVL_3,      MB(16) पूर्ण,	/* 16-way set assoc, 64 byte line size */
+	अणु 0x4e, LVL_2,      MB(6) पूर्ण,	/* 24-way set assoc, 64 byte line size */
+	अणु 0x60, LVL_1_DATA, 16 पूर्ण,	/* 8-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x66, LVL_1_DATA, 8 पूर्ण,	/* 4-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x67, LVL_1_DATA, 16 पूर्ण,	/* 4-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x68, LVL_1_DATA, 32 पूर्ण,	/* 4-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x70, LVL_TRACE,  12 पूर्ण,	/* 8-way set assoc */
+	अणु 0x71, LVL_TRACE,  16 पूर्ण,	/* 8-way set assoc */
+	अणु 0x72, LVL_TRACE,  32 पूर्ण,	/* 8-way set assoc */
+	अणु 0x73, LVL_TRACE,  64 पूर्ण,	/* 8-way set assoc */
+	अणु 0x78, LVL_2,      MB(1) पूर्ण,	/* 4-way set assoc, 64 byte line size */
+	अणु 0x79, LVL_2,      128 पूर्ण,	/* 8-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x7a, LVL_2,      256 पूर्ण,	/* 8-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x7b, LVL_2,      512 पूर्ण,	/* 8-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x7c, LVL_2,      MB(1) पूर्ण,	/* 8-way set assoc, sectored cache, 64 byte line size */
+	अणु 0x7d, LVL_2,      MB(2) पूर्ण,	/* 8-way set assoc, 64 byte line size */
+	अणु 0x7f, LVL_2,      512 पूर्ण,	/* 2-way set assoc, 64 byte line size */
+	अणु 0x80, LVL_2,      512 पूर्ण,	/* 8-way set assoc, 64 byte line size */
+	अणु 0x82, LVL_2,      256 पूर्ण,	/* 8-way set assoc, 32 byte line size */
+	अणु 0x83, LVL_2,      512 पूर्ण,	/* 8-way set assoc, 32 byte line size */
+	अणु 0x84, LVL_2,      MB(1) पूर्ण,	/* 8-way set assoc, 32 byte line size */
+	अणु 0x85, LVL_2,      MB(2) पूर्ण,	/* 8-way set assoc, 32 byte line size */
+	अणु 0x86, LVL_2,      512 पूर्ण,	/* 4-way set assoc, 64 byte line size */
+	अणु 0x87, LVL_2,      MB(1) पूर्ण,	/* 8-way set assoc, 64 byte line size */
+	अणु 0xd0, LVL_3,      512 पूर्ण,	/* 4-way set assoc, 64 byte line size */
+	अणु 0xd1, LVL_3,      MB(1) पूर्ण,	/* 4-way set assoc, 64 byte line size */
+	अणु 0xd2, LVL_3,      MB(2) पूर्ण,	/* 4-way set assoc, 64 byte line size */
+	अणु 0xd6, LVL_3,      MB(1) पूर्ण,	/* 8-way set assoc, 64 byte line size */
+	अणु 0xd7, LVL_3,      MB(2) पूर्ण,	/* 8-way set assoc, 64 byte line size */
+	अणु 0xd8, LVL_3,      MB(4) पूर्ण,	/* 12-way set assoc, 64 byte line size */
+	अणु 0xdc, LVL_3,      MB(2) पूर्ण,	/* 12-way set assoc, 64 byte line size */
+	अणु 0xdd, LVL_3,      MB(4) पूर्ण,	/* 12-way set assoc, 64 byte line size */
+	अणु 0xde, LVL_3,      MB(8) पूर्ण,	/* 12-way set assoc, 64 byte line size */
+	अणु 0xe2, LVL_3,      MB(2) पूर्ण,	/* 16-way set assoc, 64 byte line size */
+	अणु 0xe3, LVL_3,      MB(4) पूर्ण,	/* 16-way set assoc, 64 byte line size */
+	अणु 0xe4, LVL_3,      MB(8) पूर्ण,	/* 16-way set assoc, 64 byte line size */
+	अणु 0xea, LVL_3,      MB(12) पूर्ण,	/* 24-way set assoc, 64 byte line size */
+	अणु 0xeb, LVL_3,      MB(18) पूर्ण,	/* 24-way set assoc, 64 byte line size */
+	अणु 0xec, LVL_3,      MB(24) पूर्ण,	/* 24-way set assoc, 64 byte line size */
+	अणु 0x00, 0, 0पूर्ण
+पूर्ण;
 
 
-enum _cache_type {
-	CTYPE_NULL = 0,
+क्रमागत _cache_type अणु
+	CTYPE_शून्य = 0,
 	CTYPE_DATA = 1,
 	CTYPE_INST = 2,
 	CTYPE_UNIFIED = 3
-};
+पूर्ण;
 
-union _cpuid4_leaf_eax {
-	struct {
-		enum _cache_type	type:5;
-		unsigned int		level:3;
-		unsigned int		is_self_initializing:1;
-		unsigned int		is_fully_associative:1;
-		unsigned int		reserved:4;
-		unsigned int		num_threads_sharing:12;
-		unsigned int		num_cores_on_die:6;
-	} split;
+जोड़ _cpuid4_leaf_eax अणु
+	काष्ठा अणु
+		क्रमागत _cache_type	type:5;
+		अचिन्हित पूर्णांक		level:3;
+		अचिन्हित पूर्णांक		is_self_initializing:1;
+		अचिन्हित पूर्णांक		is_fully_associative:1;
+		अचिन्हित पूर्णांक		reserved:4;
+		अचिन्हित पूर्णांक		num_thपढ़ोs_sharing:12;
+		अचिन्हित पूर्णांक		num_cores_on_die:6;
+	पूर्ण split;
 	u32 full;
-};
+पूर्ण;
 
-union _cpuid4_leaf_ebx {
-	struct {
-		unsigned int		coherency_line_size:12;
-		unsigned int		physical_line_partition:10;
-		unsigned int		ways_of_associativity:10;
-	} split;
+जोड़ _cpuid4_leaf_ebx अणु
+	काष्ठा अणु
+		अचिन्हित पूर्णांक		coherency_line_size:12;
+		अचिन्हित पूर्णांक		physical_line_partition:10;
+		अचिन्हित पूर्णांक		ways_of_associativity:10;
+	पूर्ण split;
 	u32 full;
-};
+पूर्ण;
 
-union _cpuid4_leaf_ecx {
-	struct {
-		unsigned int		number_of_sets:32;
-	} split;
+जोड़ _cpuid4_leaf_ecx अणु
+	काष्ठा अणु
+		अचिन्हित पूर्णांक		number_of_sets:32;
+	पूर्ण split;
 	u32 full;
-};
+पूर्ण;
 
-struct _cpuid4_info_regs {
-	union _cpuid4_leaf_eax eax;
-	union _cpuid4_leaf_ebx ebx;
-	union _cpuid4_leaf_ecx ecx;
-	unsigned int id;
-	unsigned long size;
-	struct amd_northbridge *nb;
-};
+काष्ठा _cpuid4_info_regs अणु
+	जोड़ _cpuid4_leaf_eax eax;
+	जोड़ _cpuid4_leaf_ebx ebx;
+	जोड़ _cpuid4_leaf_ecx ecx;
+	अचिन्हित पूर्णांक id;
+	अचिन्हित दीर्घ size;
+	काष्ठा amd_northbridge *nb;
+पूर्ण;
 
-static unsigned short num_cache_leaves;
+अटल अचिन्हित लघु num_cache_leaves;
 
-/* AMD doesn't have CPUID4. Emulate it here to report the same
-   information to the user.  This makes some assumptions about the machine:
+/* AMD करोesn't have CPUID4. Emulate it here to report the same
+   inक्रमmation to the user.  This makes some assumptions about the machine:
    L2 not shared, no SMT etc. that is currently true on AMD CPUs.
 
    In theory the TLBs could be reported as fake type (they are in "dummy").
    Maybe later */
-union l1_cache {
-	struct {
-		unsigned line_size:8;
-		unsigned lines_per_tag:8;
-		unsigned assoc:8;
-		unsigned size_in_kb:8;
-	};
-	unsigned val;
-};
+जोड़ l1_cache अणु
+	काष्ठा अणु
+		अचिन्हित line_size:8;
+		अचिन्हित lines_per_tag:8;
+		अचिन्हित assoc:8;
+		अचिन्हित size_in_kb:8;
+	पूर्ण;
+	अचिन्हित val;
+पूर्ण;
 
-union l2_cache {
-	struct {
-		unsigned line_size:8;
-		unsigned lines_per_tag:4;
-		unsigned assoc:4;
-		unsigned size_in_kb:16;
-	};
-	unsigned val;
-};
+जोड़ l2_cache अणु
+	काष्ठा अणु
+		अचिन्हित line_size:8;
+		अचिन्हित lines_per_tag:4;
+		अचिन्हित assoc:4;
+		अचिन्हित size_in_kb:16;
+	पूर्ण;
+	अचिन्हित val;
+पूर्ण;
 
-union l3_cache {
-	struct {
-		unsigned line_size:8;
-		unsigned lines_per_tag:4;
-		unsigned assoc:4;
-		unsigned res:2;
-		unsigned size_encoded:14;
-	};
-	unsigned val;
-};
+जोड़ l3_cache अणु
+	काष्ठा अणु
+		अचिन्हित line_size:8;
+		अचिन्हित lines_per_tag:4;
+		अचिन्हित assoc:4;
+		अचिन्हित res:2;
+		अचिन्हित size_encoded:14;
+	पूर्ण;
+	अचिन्हित val;
+पूर्ण;
 
-static const unsigned short assocs[] = {
+अटल स्थिर अचिन्हित लघु assocs[] = अणु
 	[1] = 1,
 	[2] = 2,
 	[4] = 4,
@@ -214,29 +215,29 @@ static const unsigned short assocs[] = {
 	[0xd] = 96,
 	[0xe] = 128,
 	[0xf] = 0xffff /* fully associative - no way to show this currently */
-};
+पूर्ण;
 
-static const unsigned char levels[] = { 1, 1, 2, 3 };
-static const unsigned char types[] = { 1, 2, 3, 3 };
+अटल स्थिर अचिन्हित अक्षर levels[] = अणु 1, 1, 2, 3 पूर्ण;
+अटल स्थिर अचिन्हित अक्षर types[] = अणु 1, 2, 3, 3 पूर्ण;
 
-static const enum cache_type cache_type_map[] = {
-	[CTYPE_NULL] = CACHE_TYPE_NOCACHE,
+अटल स्थिर क्रमागत cache_type cache_type_map[] = अणु
+	[CTYPE_शून्य] = CACHE_TYPE_NOCACHE,
 	[CTYPE_DATA] = CACHE_TYPE_DATA,
 	[CTYPE_INST] = CACHE_TYPE_INST,
 	[CTYPE_UNIFIED] = CACHE_TYPE_UNIFIED,
-};
+पूर्ण;
 
-static void
-amd_cpuid4(int leaf, union _cpuid4_leaf_eax *eax,
-		     union _cpuid4_leaf_ebx *ebx,
-		     union _cpuid4_leaf_ecx *ecx)
-{
-	unsigned dummy;
-	unsigned line_size, lines_per_tag, assoc, size_in_kb;
-	union l1_cache l1i, l1d;
-	union l2_cache l2;
-	union l3_cache l3;
-	union l1_cache *l1 = &l1d;
+अटल व्योम
+amd_cpuid4(पूर्णांक leaf, जोड़ _cpuid4_leaf_eax *eax,
+		     जोड़ _cpuid4_leaf_ebx *ebx,
+		     जोड़ _cpuid4_leaf_ecx *ecx)
+अणु
+	अचिन्हित dummy;
+	अचिन्हित line_size, lines_per_tag, assoc, size_in_kb;
+	जोड़ l1_cache l1i, l1d;
+	जोड़ l2_cache l2;
+	जोड़ l3_cache l3;
+	जोड़ l1_cache *l1 = &l1d;
 
 	eax->full = 0;
 	ebx->full = 0;
@@ -245,160 +246,160 @@ amd_cpuid4(int leaf, union _cpuid4_leaf_eax *eax,
 	cpuid(0x80000005, &dummy, &dummy, &l1d.val, &l1i.val);
 	cpuid(0x80000006, &dummy, &dummy, &l2.val, &l3.val);
 
-	switch (leaf) {
-	case 1:
+	चयन (leaf) अणु
+	हाल 1:
 		l1 = &l1i;
 		fallthrough;
-	case 0:
-		if (!l1->val)
-			return;
+	हाल 0:
+		अगर (!l1->val)
+			वापस;
 		assoc = assocs[l1->assoc];
 		line_size = l1->line_size;
 		lines_per_tag = l1->lines_per_tag;
 		size_in_kb = l1->size_in_kb;
-		break;
-	case 2:
-		if (!l2.val)
-			return;
+		अवरोध;
+	हाल 2:
+		अगर (!l2.val)
+			वापस;
 		assoc = assocs[l2.assoc];
 		line_size = l2.line_size;
 		lines_per_tag = l2.lines_per_tag;
-		/* cpu_data has errata corrections for K7 applied */
-		size_in_kb = __this_cpu_read(cpu_info.x86_cache_size);
-		break;
-	case 3:
-		if (!l3.val)
-			return;
+		/* cpu_data has errata corrections क्रम K7 applied */
+		size_in_kb = __this_cpu_पढ़ो(cpu_info.x86_cache_size);
+		अवरोध;
+	हाल 3:
+		अगर (!l3.val)
+			वापस;
 		assoc = assocs[l3.assoc];
 		line_size = l3.line_size;
 		lines_per_tag = l3.lines_per_tag;
 		size_in_kb = l3.size_encoded * 512;
-		if (boot_cpu_has(X86_FEATURE_AMD_DCM)) {
+		अगर (boot_cpu_has(X86_FEATURE_AMD_DCM)) अणु
 			size_in_kb = size_in_kb >> 1;
 			assoc = assoc >> 1;
-		}
-		break;
-	default:
-		return;
-	}
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
 	eax->split.is_self_initializing = 1;
 	eax->split.type = types[leaf];
 	eax->split.level = levels[leaf];
-	eax->split.num_threads_sharing = 0;
-	eax->split.num_cores_on_die = __this_cpu_read(cpu_info.x86_max_cores) - 1;
+	eax->split.num_thपढ़ोs_sharing = 0;
+	eax->split.num_cores_on_die = __this_cpu_पढ़ो(cpu_info.x86_max_cores) - 1;
 
 
-	if (assoc == 0xffff)
+	अगर (assoc == 0xffff)
 		eax->split.is_fully_associative = 1;
 	ebx->split.coherency_line_size = line_size - 1;
 	ebx->split.ways_of_associativity = assoc - 1;
 	ebx->split.physical_line_partition = lines_per_tag - 1;
 	ecx->split.number_of_sets = (size_in_kb * 1024) / line_size /
 		(ebx->split.ways_of_associativity + 1) - 1;
-}
+पूर्ण
 
-#if defined(CONFIG_AMD_NB) && defined(CONFIG_SYSFS)
+#अगर defined(CONFIG_AMD_NB) && defined(CONFIG_SYSFS)
 
 /*
  * L3 cache descriptors
  */
-static void amd_calc_l3_indices(struct amd_northbridge *nb)
-{
-	struct amd_l3_cache *l3 = &nb->l3_cache;
-	unsigned int sc0, sc1, sc2, sc3;
+अटल व्योम amd_calc_l3_indices(काष्ठा amd_northbridge *nb)
+अणु
+	काष्ठा amd_l3_cache *l3 = &nb->l3_cache;
+	अचिन्हित पूर्णांक sc0, sc1, sc2, sc3;
 	u32 val = 0;
 
-	pci_read_config_dword(nb->misc, 0x1C4, &val);
+	pci_पढ़ो_config_dword(nb->misc, 0x1C4, &val);
 
 	/* calculate subcache sizes */
 	l3->subcaches[0] = sc0 = !(val & BIT(0));
 	l3->subcaches[1] = sc1 = !(val & BIT(4));
 
-	if (boot_cpu_data.x86 == 0x15) {
+	अगर (boot_cpu_data.x86 == 0x15) अणु
 		l3->subcaches[0] = sc0 += !(val & BIT(1));
 		l3->subcaches[1] = sc1 += !(val & BIT(5));
-	}
+	पूर्ण
 
 	l3->subcaches[2] = sc2 = !(val & BIT(8))  + !(val & BIT(9));
 	l3->subcaches[3] = sc3 = !(val & BIT(12)) + !(val & BIT(13));
 
 	l3->indices = (max(max3(sc0, sc1, sc2), sc3) << 10) - 1;
-}
+पूर्ण
 
 /*
- * check whether a slot used for disabling an L3 index is occupied.
+ * check whether a slot used क्रम disabling an L3 index is occupied.
  * @l3: L3 cache descriptor
  * @slot: slot number (0..1)
  *
- * @returns: the disabled index if used or negative value if slot free.
+ * @वापसs: the disabled index अगर used or negative value अगर slot मुक्त.
  */
-static int amd_get_l3_disable_slot(struct amd_northbridge *nb, unsigned slot)
-{
-	unsigned int reg = 0;
+अटल पूर्णांक amd_get_l3_disable_slot(काष्ठा amd_northbridge *nb, अचिन्हित slot)
+अणु
+	अचिन्हित पूर्णांक reg = 0;
 
-	pci_read_config_dword(nb->misc, 0x1BC + slot * 4, &reg);
+	pci_पढ़ो_config_dword(nb->misc, 0x1BC + slot * 4, &reg);
 
-	/* check whether this slot is activated already */
-	if (reg & (3UL << 30))
-		return reg & 0xfff;
+	/* check whether this slot is activated alपढ़ोy */
+	अगर (reg & (3UL << 30))
+		वापस reg & 0xfff;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static ssize_t show_cache_disable(struct cacheinfo *this_leaf, char *buf,
-				  unsigned int slot)
-{
-	int index;
-	struct amd_northbridge *nb = this_leaf->priv;
+अटल sमाप_प्रकार show_cache_disable(काष्ठा cacheinfo *this_leaf, अक्षर *buf,
+				  अचिन्हित पूर्णांक slot)
+अणु
+	पूर्णांक index;
+	काष्ठा amd_northbridge *nb = this_leaf->priv;
 
 	index = amd_get_l3_disable_slot(nb, slot);
-	if (index >= 0)
-		return sprintf(buf, "%d\n", index);
+	अगर (index >= 0)
+		वापस प्र_लिखो(buf, "%d\n", index);
 
-	return sprintf(buf, "FREE\n");
-}
+	वापस प्र_लिखो(buf, "FREE\n");
+पूर्ण
 
-#define SHOW_CACHE_DISABLE(slot)					\
-static ssize_t								\
-cache_disable_##slot##_show(struct device *dev,				\
-			    struct device_attribute *attr, char *buf)	\
-{									\
-	struct cacheinfo *this_leaf = dev_get_drvdata(dev);		\
-	return show_cache_disable(this_leaf, buf, slot);		\
-}
+#घोषणा SHOW_CACHE_DISABLE(slot)					\
+अटल sमाप_प्रकार								\
+cache_disable_##slot##_show(काष्ठा device *dev,				\
+			    काष्ठा device_attribute *attr, अक्षर *buf)	\
+अणु									\
+	काष्ठा cacheinfo *this_leaf = dev_get_drvdata(dev);		\
+	वापस show_cache_disable(this_leaf, buf, slot);		\
+पूर्ण
 SHOW_CACHE_DISABLE(0)
 SHOW_CACHE_DISABLE(1)
 
-static void amd_l3_disable_index(struct amd_northbridge *nb, int cpu,
-				 unsigned slot, unsigned long idx)
-{
-	int i;
+अटल व्योम amd_l3_disable_index(काष्ठा amd_northbridge *nb, पूर्णांक cpu,
+				 अचिन्हित slot, अचिन्हित दीर्घ idx)
+अणु
+	पूर्णांक i;
 
 	idx |= BIT(30);
 
 	/*
 	 *  disable index in all 4 subcaches
 	 */
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		u32 reg = idx | (i << 20);
 
-		if (!nb->l3_cache.subcaches[i])
-			continue;
+		अगर (!nb->l3_cache.subcaches[i])
+			जारी;
 
-		pci_write_config_dword(nb->misc, 0x1BC + slot * 4, reg);
+		pci_ग_लिखो_config_dword(nb->misc, 0x1BC + slot * 4, reg);
 
 		/*
 		 * We need to WBINVD on a core on the node containing the L3
-		 * cache which indices we disable therefore a simple wbinvd()
+		 * cache which indices we disable thereक्रमe a simple wbinvd()
 		 * is not sufficient.
 		 */
 		wbinvd_on_cpu(cpu);
 
 		reg |= BIT(31);
-		pci_write_config_dword(nb->misc, 0x1BC + slot * 4, reg);
-	}
-}
+		pci_ग_लिखो_config_dword(nb->misc, 0x1BC + slot * 4, reg);
+	पूर्ण
+पूर्ण
 
 /*
  * disable a L3 cache index by using a disable-slot
@@ -408,212 +409,212 @@ static void amd_l3_disable_index(struct amd_northbridge *nb, int cpu,
  * @slot:  slot number (0..1)
  * @index: index to disable
  *
- * @return: 0 on success, error status on failure
+ * @वापस: 0 on success, error status on failure
  */
-static int amd_set_l3_disable_slot(struct amd_northbridge *nb, int cpu,
-			    unsigned slot, unsigned long index)
-{
-	int ret = 0;
+अटल पूर्णांक amd_set_l3_disable_slot(काष्ठा amd_northbridge *nb, पूर्णांक cpu,
+			    अचिन्हित slot, अचिन्हित दीर्घ index)
+अणु
+	पूर्णांक ret = 0;
 
-	/*  check if @slot is already used or the index is already disabled */
+	/*  check अगर @slot is alपढ़ोy used or the index is alपढ़ोy disabled */
 	ret = amd_get_l3_disable_slot(nb, slot);
-	if (ret >= 0)
-		return -EEXIST;
+	अगर (ret >= 0)
+		वापस -EEXIST;
 
-	if (index > nb->l3_cache.indices)
-		return -EINVAL;
+	अगर (index > nb->l3_cache.indices)
+		वापस -EINVAL;
 
-	/* check whether the other slot has disabled the same index already */
-	if (index == amd_get_l3_disable_slot(nb, !slot))
-		return -EEXIST;
+	/* check whether the other slot has disabled the same index alपढ़ोy */
+	अगर (index == amd_get_l3_disable_slot(nb, !slot))
+		वापस -EEXIST;
 
 	amd_l3_disable_index(nb, cpu, slot, index);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t store_cache_disable(struct cacheinfo *this_leaf,
-				   const char *buf, size_t count,
-				   unsigned int slot)
-{
-	unsigned long val = 0;
-	int cpu, err = 0;
-	struct amd_northbridge *nb = this_leaf->priv;
+अटल sमाप_प्रकार store_cache_disable(काष्ठा cacheinfo *this_leaf,
+				   स्थिर अक्षर *buf, माप_प्रकार count,
+				   अचिन्हित पूर्णांक slot)
+अणु
+	अचिन्हित दीर्घ val = 0;
+	पूर्णांक cpu, err = 0;
+	काष्ठा amd_northbridge *nb = this_leaf->priv;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
 	cpu = cpumask_first(&this_leaf->shared_cpu_map);
 
-	if (kstrtoul(buf, 10, &val) < 0)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 10, &val) < 0)
+		वापस -EINVAL;
 
 	err = amd_set_l3_disable_slot(nb, cpu, slot, val);
-	if (err) {
-		if (err == -EEXIST)
+	अगर (err) अणु
+		अगर (err == -EEXIST)
 			pr_warn("L3 slot %d in use/index already disabled!\n",
 				   slot);
-		return err;
-	}
-	return count;
-}
+		वापस err;
+	पूर्ण
+	वापस count;
+पूर्ण
 
-#define STORE_CACHE_DISABLE(slot)					\
-static ssize_t								\
-cache_disable_##slot##_store(struct device *dev,			\
-			     struct device_attribute *attr,		\
-			     const char *buf, size_t count)		\
-{									\
-	struct cacheinfo *this_leaf = dev_get_drvdata(dev);		\
-	return store_cache_disable(this_leaf, buf, count, slot);	\
-}
+#घोषणा STORE_CACHE_DISABLE(slot)					\
+अटल sमाप_प्रकार								\
+cache_disable_##slot##_store(काष्ठा device *dev,			\
+			     काष्ठा device_attribute *attr,		\
+			     स्थिर अक्षर *buf, माप_प्रकार count)		\
+अणु									\
+	काष्ठा cacheinfo *this_leaf = dev_get_drvdata(dev);		\
+	वापस store_cache_disable(this_leaf, buf, count, slot);	\
+पूर्ण
 STORE_CACHE_DISABLE(0)
 STORE_CACHE_DISABLE(1)
 
-static ssize_t subcaches_show(struct device *dev,
-			      struct device_attribute *attr, char *buf)
-{
-	struct cacheinfo *this_leaf = dev_get_drvdata(dev);
-	int cpu = cpumask_first(&this_leaf->shared_cpu_map);
+अटल sमाप_प्रकार subcaches_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा cacheinfo *this_leaf = dev_get_drvdata(dev);
+	पूर्णांक cpu = cpumask_first(&this_leaf->shared_cpu_map);
 
-	return sprintf(buf, "%x\n", amd_get_subcaches(cpu));
-}
+	वापस प्र_लिखो(buf, "%x\n", amd_get_subcaches(cpu));
+पूर्ण
 
-static ssize_t subcaches_store(struct device *dev,
-			       struct device_attribute *attr,
-			       const char *buf, size_t count)
-{
-	struct cacheinfo *this_leaf = dev_get_drvdata(dev);
-	int cpu = cpumask_first(&this_leaf->shared_cpu_map);
-	unsigned long val;
+अटल sमाप_प्रकार subcaches_store(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा cacheinfo *this_leaf = dev_get_drvdata(dev);
+	पूर्णांक cpu = cpumask_first(&this_leaf->shared_cpu_map);
+	अचिन्हित दीर्घ val;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	if (kstrtoul(buf, 16, &val) < 0)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 16, &val) < 0)
+		वापस -EINVAL;
 
-	if (amd_set_subcaches(cpu, val))
-		return -EINVAL;
+	अगर (amd_set_subcaches(cpu, val))
+		वापस -EINVAL;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(cache_disable_0);
-static DEVICE_ATTR_RW(cache_disable_1);
-static DEVICE_ATTR_RW(subcaches);
+अटल DEVICE_ATTR_RW(cache_disable_0);
+अटल DEVICE_ATTR_RW(cache_disable_1);
+अटल DEVICE_ATTR_RW(subcaches);
 
-static umode_t
-cache_private_attrs_is_visible(struct kobject *kobj,
-			       struct attribute *attr, int unused)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct cacheinfo *this_leaf = dev_get_drvdata(dev);
+अटल umode_t
+cache_निजी_attrs_is_visible(काष्ठा kobject *kobj,
+			       काष्ठा attribute *attr, पूर्णांक unused)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा cacheinfo *this_leaf = dev_get_drvdata(dev);
 	umode_t mode = attr->mode;
 
-	if (!this_leaf->priv)
-		return 0;
+	अगर (!this_leaf->priv)
+		वापस 0;
 
-	if ((attr == &dev_attr_subcaches.attr) &&
+	अगर ((attr == &dev_attr_subcaches.attr) &&
 	    amd_nb_has_feature(AMD_NB_L3_PARTITIONING))
-		return mode;
+		वापस mode;
 
-	if ((attr == &dev_attr_cache_disable_0.attr ||
+	अगर ((attr == &dev_attr_cache_disable_0.attr ||
 	     attr == &dev_attr_cache_disable_1.attr) &&
 	    amd_nb_has_feature(AMD_NB_L3_INDEX_DISABLE))
-		return mode;
+		वापस mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct attribute_group cache_private_group = {
-	.is_visible = cache_private_attrs_is_visible,
-};
+अटल काष्ठा attribute_group cache_निजी_group = अणु
+	.is_visible = cache_निजी_attrs_is_visible,
+पूर्ण;
 
-static void init_amd_l3_attrs(void)
-{
-	int n = 1;
-	static struct attribute **amd_l3_attrs;
+अटल व्योम init_amd_l3_attrs(व्योम)
+अणु
+	पूर्णांक n = 1;
+	अटल काष्ठा attribute **amd_l3_attrs;
 
-	if (amd_l3_attrs) /* already initialized */
-		return;
+	अगर (amd_l3_attrs) /* alपढ़ोy initialized */
+		वापस;
 
-	if (amd_nb_has_feature(AMD_NB_L3_INDEX_DISABLE))
+	अगर (amd_nb_has_feature(AMD_NB_L3_INDEX_DISABLE))
 		n += 2;
-	if (amd_nb_has_feature(AMD_NB_L3_PARTITIONING))
+	अगर (amd_nb_has_feature(AMD_NB_L3_PARTITIONING))
 		n += 1;
 
-	amd_l3_attrs = kcalloc(n, sizeof(*amd_l3_attrs), GFP_KERNEL);
-	if (!amd_l3_attrs)
-		return;
+	amd_l3_attrs = kसुस्मृति(n, माप(*amd_l3_attrs), GFP_KERNEL);
+	अगर (!amd_l3_attrs)
+		वापस;
 
 	n = 0;
-	if (amd_nb_has_feature(AMD_NB_L3_INDEX_DISABLE)) {
+	अगर (amd_nb_has_feature(AMD_NB_L3_INDEX_DISABLE)) अणु
 		amd_l3_attrs[n++] = &dev_attr_cache_disable_0.attr;
 		amd_l3_attrs[n++] = &dev_attr_cache_disable_1.attr;
-	}
-	if (amd_nb_has_feature(AMD_NB_L3_PARTITIONING))
+	पूर्ण
+	अगर (amd_nb_has_feature(AMD_NB_L3_PARTITIONING))
 		amd_l3_attrs[n++] = &dev_attr_subcaches.attr;
 
-	cache_private_group.attrs = amd_l3_attrs;
-}
+	cache_निजी_group.attrs = amd_l3_attrs;
+पूर्ण
 
-const struct attribute_group *
-cache_get_priv_group(struct cacheinfo *this_leaf)
-{
-	struct amd_northbridge *nb = this_leaf->priv;
+स्थिर काष्ठा attribute_group *
+cache_get_priv_group(काष्ठा cacheinfo *this_leaf)
+अणु
+	काष्ठा amd_northbridge *nb = this_leaf->priv;
 
-	if (this_leaf->level < 3 || !nb)
-		return NULL;
+	अगर (this_leaf->level < 3 || !nb)
+		वापस शून्य;
 
-	if (nb && nb->l3_cache.indices)
+	अगर (nb && nb->l3_cache.indices)
 		init_amd_l3_attrs();
 
-	return &cache_private_group;
-}
+	वापस &cache_निजी_group;
+पूर्ण
 
-static void amd_init_l3_cache(struct _cpuid4_info_regs *this_leaf, int index)
-{
-	int node;
+अटल व्योम amd_init_l3_cache(काष्ठा _cpuid4_info_regs *this_leaf, पूर्णांक index)
+अणु
+	पूर्णांक node;
 
-	/* only for L3, and not in virtualized environments */
-	if (index < 3)
-		return;
+	/* only क्रम L3, and not in भवized environments */
+	अगर (index < 3)
+		वापस;
 
 	node = topology_die_id(smp_processor_id());
 	this_leaf->nb = node_to_amd_nb(node);
-	if (this_leaf->nb && !this_leaf->nb->l3_cache.indices)
+	अगर (this_leaf->nb && !this_leaf->nb->l3_cache.indices)
 		amd_calc_l3_indices(this_leaf->nb);
-}
-#else
-#define amd_init_l3_cache(x, y)
-#endif  /* CONFIG_AMD_NB && CONFIG_SYSFS */
+पूर्ण
+#अन्यथा
+#घोषणा amd_init_l3_cache(x, y)
+#पूर्ण_अगर  /* CONFIG_AMD_NB && CONFIG_SYSFS */
 
-static int
-cpuid4_cache_lookup_regs(int index, struct _cpuid4_info_regs *this_leaf)
-{
-	union _cpuid4_leaf_eax	eax;
-	union _cpuid4_leaf_ebx	ebx;
-	union _cpuid4_leaf_ecx	ecx;
-	unsigned		edx;
+अटल पूर्णांक
+cpuid4_cache_lookup_regs(पूर्णांक index, काष्ठा _cpuid4_info_regs *this_leaf)
+अणु
+	जोड़ _cpuid4_leaf_eax	eax;
+	जोड़ _cpuid4_leaf_ebx	ebx;
+	जोड़ _cpuid4_leaf_ecx	ecx;
+	अचिन्हित		edx;
 
-	if (boot_cpu_data.x86_vendor == X86_VENDOR_AMD) {
-		if (boot_cpu_has(X86_FEATURE_TOPOEXT))
+	अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_AMD) अणु
+		अगर (boot_cpu_has(X86_FEATURE_TOPOEXT))
 			cpuid_count(0x8000001d, index, &eax.full,
 				    &ebx.full, &ecx.full, &edx);
-		else
+		अन्यथा
 			amd_cpuid4(index, &eax, &ebx, &ecx);
 		amd_init_l3_cache(this_leaf, index);
-	} else if (boot_cpu_data.x86_vendor == X86_VENDOR_HYGON) {
+	पूर्ण अन्यथा अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_HYGON) अणु
 		cpuid_count(0x8000001d, index, &eax.full,
 			    &ebx.full, &ecx.full, &edx);
 		amd_init_l3_cache(this_leaf, index);
-	} else {
+	पूर्ण अन्यथा अणु
 		cpuid_count(4, index, &eax.full, &ebx.full, &ecx.full, &edx);
-	}
+	पूर्ण
 
-	if (eax.split.type == CTYPE_NULL)
-		return -EIO; /* better error ? */
+	अगर (eax.split.type == CTYPE_शून्य)
+		वापस -EIO; /* better error ? */
 
 	this_leaf->eax = eax;
 	this_leaf->ebx = ebx;
@@ -622,354 +623,354 @@ cpuid4_cache_lookup_regs(int index, struct _cpuid4_info_regs *this_leaf)
 			  (ebx.split.coherency_line_size     + 1) *
 			  (ebx.split.physical_line_partition + 1) *
 			  (ebx.split.ways_of_associativity   + 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int find_num_cache_leaves(struct cpuinfo_x86 *c)
-{
-	unsigned int		eax, ebx, ecx, edx, op;
-	union _cpuid4_leaf_eax	cache_eax;
-	int 			i = -1;
+अटल पूर्णांक find_num_cache_leaves(काष्ठा cpuinfo_x86 *c)
+अणु
+	अचिन्हित पूर्णांक		eax, ebx, ecx, edx, op;
+	जोड़ _cpuid4_leaf_eax	cache_eax;
+	पूर्णांक 			i = -1;
 
-	if (c->x86_vendor == X86_VENDOR_AMD ||
-	    c->x86_vendor == X86_VENDOR_HYGON)
+	अगर (c->x86_venकरोr == X86_VENDOR_AMD ||
+	    c->x86_venकरोr == X86_VENDOR_HYGON)
 		op = 0x8000001d;
-	else
+	अन्यथा
 		op = 4;
 
-	do {
+	करो अणु
 		++i;
 		/* Do cpuid(op) loop to find out num_cache_leaves */
 		cpuid_count(op, i, &eax, &ebx, &ecx, &edx);
 		cache_eax.full = eax;
-	} while (cache_eax.split.type != CTYPE_NULL);
-	return i;
-}
+	पूर्ण जबतक (cache_eax.split.type != CTYPE_शून्य);
+	वापस i;
+पूर्ण
 
-void cacheinfo_amd_init_llc_id(struct cpuinfo_x86 *c, int cpu)
-{
+व्योम cacheinfo_amd_init_llc_id(काष्ठा cpuinfo_x86 *c, पूर्णांक cpu)
+अणु
 	/*
-	 * We may have multiple LLCs if L3 caches exist, so check if we
+	 * We may have multiple LLCs अगर L3 caches exist, so check अगर we
 	 * have an L3 cache by looking at the L3 cache CPUID leaf.
 	 */
-	if (!cpuid_edx(0x80000006))
-		return;
+	अगर (!cpuid_edx(0x80000006))
+		वापस;
 
-	if (c->x86 < 0x17) {
+	अगर (c->x86 < 0x17) अणु
 		/* LLC is at the node level. */
 		per_cpu(cpu_llc_id, cpu) = c->cpu_die_id;
-	} else if (c->x86 == 0x17 && c->x86_model <= 0x1F) {
+	पूर्ण अन्यथा अगर (c->x86 == 0x17 && c->x86_model <= 0x1F) अणु
 		/*
 		 * LLC is at the core complex level.
-		 * Core complex ID is ApicId[3] for these processors.
+		 * Core complex ID is ApicId[3] क्रम these processors.
 		 */
 		per_cpu(cpu_llc_id, cpu) = c->apicid >> 3;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * LLC ID is calculated from the number of threads sharing the
+		 * LLC ID is calculated from the number of thपढ़ोs sharing the
 		 * cache.
 		 * */
 		u32 eax, ebx, ecx, edx, num_sharing_cache = 0;
 		u32 llc_index = find_num_cache_leaves(c) - 1;
 
 		cpuid_count(0x8000001d, llc_index, &eax, &ebx, &ecx, &edx);
-		if (eax)
+		अगर (eax)
 			num_sharing_cache = ((eax >> 14) & 0xfff) + 1;
 
-		if (num_sharing_cache) {
-			int bits = get_count_order(num_sharing_cache);
+		अगर (num_sharing_cache) अणु
+			पूर्णांक bits = get_count_order(num_sharing_cache);
 
 			per_cpu(cpu_llc_id, cpu) = c->apicid >> bits;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void cacheinfo_hygon_init_llc_id(struct cpuinfo_x86 *c, int cpu)
-{
+व्योम cacheinfo_hygon_init_llc_id(काष्ठा cpuinfo_x86 *c, पूर्णांक cpu)
+अणु
 	/*
-	 * We may have multiple LLCs if L3 caches exist, so check if we
+	 * We may have multiple LLCs अगर L3 caches exist, so check अगर we
 	 * have an L3 cache by looking at the L3 cache CPUID leaf.
 	 */
-	if (!cpuid_edx(0x80000006))
-		return;
+	अगर (!cpuid_edx(0x80000006))
+		वापस;
 
 	/*
 	 * LLC is at the core complex level.
-	 * Core complex ID is ApicId[3] for these processors.
+	 * Core complex ID is ApicId[3] क्रम these processors.
 	 */
 	per_cpu(cpu_llc_id, cpu) = c->apicid >> 3;
-}
+पूर्ण
 
-void init_amd_cacheinfo(struct cpuinfo_x86 *c)
-{
+व्योम init_amd_cacheinfo(काष्ठा cpuinfo_x86 *c)
+अणु
 
-	if (boot_cpu_has(X86_FEATURE_TOPOEXT)) {
+	अगर (boot_cpu_has(X86_FEATURE_TOPOEXT)) अणु
 		num_cache_leaves = find_num_cache_leaves(c);
-	} else if (c->extended_cpuid_level >= 0x80000006) {
-		if (cpuid_edx(0x80000006) & 0xf000)
+	पूर्ण अन्यथा अगर (c->extended_cpuid_level >= 0x80000006) अणु
+		अगर (cpuid_edx(0x80000006) & 0xf000)
 			num_cache_leaves = 4;
-		else
+		अन्यथा
 			num_cache_leaves = 3;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void init_hygon_cacheinfo(struct cpuinfo_x86 *c)
-{
+व्योम init_hygon_cacheinfo(काष्ठा cpuinfo_x86 *c)
+अणु
 	num_cache_leaves = find_num_cache_leaves(c);
-}
+पूर्ण
 
-void init_intel_cacheinfo(struct cpuinfo_x86 *c)
-{
+व्योम init_पूर्णांकel_cacheinfo(काष्ठा cpuinfo_x86 *c)
+अणु
 	/* Cache sizes */
-	unsigned int trace = 0, l1i = 0, l1d = 0, l2 = 0, l3 = 0;
-	unsigned int new_l1d = 0, new_l1i = 0; /* Cache sizes from cpuid(4) */
-	unsigned int new_l2 = 0, new_l3 = 0, i; /* Cache sizes from cpuid(4) */
-	unsigned int l2_id = 0, l3_id = 0, num_threads_sharing, index_msb;
-#ifdef CONFIG_SMP
-	unsigned int cpu = c->cpu_index;
-#endif
+	अचिन्हित पूर्णांक trace = 0, l1i = 0, l1d = 0, l2 = 0, l3 = 0;
+	अचिन्हित पूर्णांक new_l1d = 0, new_l1i = 0; /* Cache sizes from cpuid(4) */
+	अचिन्हित पूर्णांक new_l2 = 0, new_l3 = 0, i; /* Cache sizes from cpuid(4) */
+	अचिन्हित पूर्णांक l2_id = 0, l3_id = 0, num_thपढ़ोs_sharing, index_msb;
+#अगर_घोषित CONFIG_SMP
+	अचिन्हित पूर्णांक cpu = c->cpu_index;
+#पूर्ण_अगर
 
-	if (c->cpuid_level > 3) {
-		static int is_initialized;
+	अगर (c->cpuid_level > 3) अणु
+		अटल पूर्णांक is_initialized;
 
-		if (is_initialized == 0) {
+		अगर (is_initialized == 0) अणु
 			/* Init num_cache_leaves from boot CPU */
 			num_cache_leaves = find_num_cache_leaves(c);
 			is_initialized++;
-		}
+		पूर्ण
 
 		/*
 		 * Whenever possible use cpuid(4), deterministic cache
 		 * parameters cpuid leaf to find the cache details
 		 */
-		for (i = 0; i < num_cache_leaves; i++) {
-			struct _cpuid4_info_regs this_leaf = {};
-			int retval;
+		क्रम (i = 0; i < num_cache_leaves; i++) अणु
+			काष्ठा _cpuid4_info_regs this_leaf = अणुपूर्ण;
+			पूर्णांक retval;
 
 			retval = cpuid4_cache_lookup_regs(i, &this_leaf);
-			if (retval < 0)
-				continue;
+			अगर (retval < 0)
+				जारी;
 
-			switch (this_leaf.eax.split.level) {
-			case 1:
-				if (this_leaf.eax.split.type == CTYPE_DATA)
+			चयन (this_leaf.eax.split.level) अणु
+			हाल 1:
+				अगर (this_leaf.eax.split.type == CTYPE_DATA)
 					new_l1d = this_leaf.size/1024;
-				else if (this_leaf.eax.split.type == CTYPE_INST)
+				अन्यथा अगर (this_leaf.eax.split.type == CTYPE_INST)
 					new_l1i = this_leaf.size/1024;
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				new_l2 = this_leaf.size/1024;
-				num_threads_sharing = 1 + this_leaf.eax.split.num_threads_sharing;
-				index_msb = get_count_order(num_threads_sharing);
+				num_thपढ़ोs_sharing = 1 + this_leaf.eax.split.num_thपढ़ोs_sharing;
+				index_msb = get_count_order(num_thपढ़ोs_sharing);
 				l2_id = c->apicid & ~((1 << index_msb) - 1);
-				break;
-			case 3:
+				अवरोध;
+			हाल 3:
 				new_l3 = this_leaf.size/1024;
-				num_threads_sharing = 1 + this_leaf.eax.split.num_threads_sharing;
-				index_msb = get_count_order(num_threads_sharing);
+				num_thपढ़ोs_sharing = 1 + this_leaf.eax.split.num_thपढ़ोs_sharing;
+				index_msb = get_count_order(num_thपढ़ोs_sharing);
 				l3_id = c->apicid & ~((1 << index_msb) - 1);
-				break;
-			default:
-				break;
-			}
-		}
-	}
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	/*
-	 * Don't use cpuid2 if cpuid4 is supported. For P4, we use cpuid2 for
+	 * Don't use cpuid2 अगर cpuid4 is supported. For P4, we use cpuid2 क्रम
 	 * trace cache
 	 */
-	if ((num_cache_leaves == 0 || c->x86 == 15) && c->cpuid_level > 1) {
+	अगर ((num_cache_leaves == 0 || c->x86 == 15) && c->cpuid_level > 1) अणु
 		/* supports eax=2  call */
-		int j, n;
-		unsigned int regs[4];
-		unsigned char *dp = (unsigned char *)regs;
-		int only_trace = 0;
+		पूर्णांक j, n;
+		अचिन्हित पूर्णांक regs[4];
+		अचिन्हित अक्षर *dp = (अचिन्हित अक्षर *)regs;
+		पूर्णांक only_trace = 0;
 
-		if (num_cache_leaves != 0 && c->x86 == 15)
+		अगर (num_cache_leaves != 0 && c->x86 == 15)
 			only_trace = 1;
 
-		/* Number of times to iterate */
+		/* Number of बार to iterate */
 		n = cpuid_eax(2) & 0xFF;
 
-		for (i = 0 ; i < n ; i++) {
+		क्रम (i = 0 ; i < n ; i++) अणु
 			cpuid(2, &regs[0], &regs[1], &regs[2], &regs[3]);
 
-			/* If bit 31 is set, this is an unknown format */
-			for (j = 0 ; j < 3 ; j++)
-				if (regs[j] & (1 << 31))
+			/* If bit 31 is set, this is an unknown क्रमmat */
+			क्रम (j = 0 ; j < 3 ; j++)
+				अगर (regs[j] & (1 << 31))
 					regs[j] = 0;
 
 			/* Byte 0 is level count, not a descriptor */
-			for (j = 1 ; j < 16 ; j++) {
-				unsigned char des = dp[j];
-				unsigned char k = 0;
+			क्रम (j = 1 ; j < 16 ; j++) अणु
+				अचिन्हित अक्षर des = dp[j];
+				अचिन्हित अक्षर k = 0;
 
 				/* look up this descriptor in the table */
-				while (cache_table[k].descriptor != 0) {
-					if (cache_table[k].descriptor == des) {
-						if (only_trace && cache_table[k].cache_type != LVL_TRACE)
-							break;
-						switch (cache_table[k].cache_type) {
-						case LVL_1_INST:
+				जबतक (cache_table[k].descriptor != 0) अणु
+					अगर (cache_table[k].descriptor == des) अणु
+						अगर (only_trace && cache_table[k].cache_type != LVL_TRACE)
+							अवरोध;
+						चयन (cache_table[k].cache_type) अणु
+						हाल LVL_1_INST:
 							l1i += cache_table[k].size;
-							break;
-						case LVL_1_DATA:
+							अवरोध;
+						हाल LVL_1_DATA:
 							l1d += cache_table[k].size;
-							break;
-						case LVL_2:
+							अवरोध;
+						हाल LVL_2:
 							l2 += cache_table[k].size;
-							break;
-						case LVL_3:
+							अवरोध;
+						हाल LVL_3:
 							l3 += cache_table[k].size;
-							break;
-						case LVL_TRACE:
+							अवरोध;
+						हाल LVL_TRACE:
 							trace += cache_table[k].size;
-							break;
-						}
+							अवरोध;
+						पूर्ण
 
-						break;
-					}
+						अवरोध;
+					पूर्ण
 
 					k++;
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (new_l1d)
+	अगर (new_l1d)
 		l1d = new_l1d;
 
-	if (new_l1i)
+	अगर (new_l1i)
 		l1i = new_l1i;
 
-	if (new_l2) {
+	अगर (new_l2) अणु
 		l2 = new_l2;
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 		per_cpu(cpu_llc_id, cpu) = l2_id;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	if (new_l3) {
+	अगर (new_l3) अणु
 		l3 = new_l3;
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 		per_cpu(cpu_llc_id, cpu) = l3_id;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	/*
 	 * If cpu_llc_id is not yet set, this means cpuid_level < 4 which in
 	 * turns means that the only possibility is SMT (as indicated in
-	 * cpuid1). Since cpuid2 doesn't specify shared caches, and we know
+	 * cpuid1). Since cpuid2 करोesn't specअगरy shared caches, and we know
 	 * that SMT shares all caches, we can unconditionally set cpu_llc_id to
 	 * c->phys_proc_id.
 	 */
-	if (per_cpu(cpu_llc_id, cpu) == BAD_APICID)
+	अगर (per_cpu(cpu_llc_id, cpu) == BAD_APICID)
 		per_cpu(cpu_llc_id, cpu) = c->phys_proc_id;
-#endif
+#पूर्ण_अगर
 
 	c->x86_cache_size = l3 ? l3 : (l2 ? l2 : (l1i+l1d));
 
-	if (!l2)
+	अगर (!l2)
 		cpu_detect_cache_sizes(c);
-}
+पूर्ण
 
-static int __cache_amd_cpumap_setup(unsigned int cpu, int index,
-				    struct _cpuid4_info_regs *base)
-{
-	struct cpu_cacheinfo *this_cpu_ci;
-	struct cacheinfo *this_leaf;
-	int i, sibling;
+अटल पूर्णांक __cache_amd_cpumap_setup(अचिन्हित पूर्णांक cpu, पूर्णांक index,
+				    काष्ठा _cpuid4_info_regs *base)
+अणु
+	काष्ठा cpu_cacheinfo *this_cpu_ci;
+	काष्ठा cacheinfo *this_leaf;
+	पूर्णांक i, sibling;
 
 	/*
 	 * For L3, always use the pre-calculated cpu_llc_shared_mask
 	 * to derive shared_cpu_map.
 	 */
-	if (index == 3) {
-		for_each_cpu(i, cpu_llc_shared_mask(cpu)) {
+	अगर (index == 3) अणु
+		क्रम_each_cpu(i, cpu_llc_shared_mask(cpu)) अणु
 			this_cpu_ci = get_cpu_cacheinfo(i);
-			if (!this_cpu_ci->info_list)
-				continue;
+			अगर (!this_cpu_ci->info_list)
+				जारी;
 			this_leaf = this_cpu_ci->info_list + index;
-			for_each_cpu(sibling, cpu_llc_shared_mask(cpu)) {
-				if (!cpu_online(sibling))
-					continue;
+			क्रम_each_cpu(sibling, cpu_llc_shared_mask(cpu)) अणु
+				अगर (!cpu_online(sibling))
+					जारी;
 				cpumask_set_cpu(sibling,
 						&this_leaf->shared_cpu_map);
-			}
-		}
-	} else if (boot_cpu_has(X86_FEATURE_TOPOEXT)) {
-		unsigned int apicid, nshared, first, last;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (boot_cpu_has(X86_FEATURE_TOPOEXT)) अणु
+		अचिन्हित पूर्णांक apicid, nshared, first, last;
 
-		nshared = base->eax.split.num_threads_sharing + 1;
+		nshared = base->eax.split.num_thपढ़ोs_sharing + 1;
 		apicid = cpu_data(cpu).apicid;
 		first = apicid - (apicid % nshared);
 		last = first + nshared - 1;
 
-		for_each_online_cpu(i) {
+		क्रम_each_online_cpu(i) अणु
 			this_cpu_ci = get_cpu_cacheinfo(i);
-			if (!this_cpu_ci->info_list)
-				continue;
+			अगर (!this_cpu_ci->info_list)
+				जारी;
 
 			apicid = cpu_data(i).apicid;
-			if ((apicid < first) || (apicid > last))
-				continue;
+			अगर ((apicid < first) || (apicid > last))
+				जारी;
 
 			this_leaf = this_cpu_ci->info_list + index;
 
-			for_each_online_cpu(sibling) {
+			क्रम_each_online_cpu(sibling) अणु
 				apicid = cpu_data(sibling).apicid;
-				if ((apicid < first) || (apicid > last))
-					continue;
+				अगर ((apicid < first) || (apicid > last))
+					जारी;
 				cpumask_set_cpu(sibling,
 						&this_leaf->shared_cpu_map);
-			}
-		}
-	} else
-		return 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void __cache_cpumap_setup(unsigned int cpu, int index,
-				 struct _cpuid4_info_regs *base)
-{
-	struct cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
-	struct cacheinfo *this_leaf, *sibling_leaf;
-	unsigned long num_threads_sharing;
-	int index_msb, i;
-	struct cpuinfo_x86 *c = &cpu_data(cpu);
+अटल व्योम __cache_cpumap_setup(अचिन्हित पूर्णांक cpu, पूर्णांक index,
+				 काष्ठा _cpuid4_info_regs *base)
+अणु
+	काष्ठा cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
+	काष्ठा cacheinfo *this_leaf, *sibling_leaf;
+	अचिन्हित दीर्घ num_thपढ़ोs_sharing;
+	पूर्णांक index_msb, i;
+	काष्ठा cpuinfo_x86 *c = &cpu_data(cpu);
 
-	if (c->x86_vendor == X86_VENDOR_AMD ||
-	    c->x86_vendor == X86_VENDOR_HYGON) {
-		if (__cache_amd_cpumap_setup(cpu, index, base))
-			return;
-	}
+	अगर (c->x86_venकरोr == X86_VENDOR_AMD ||
+	    c->x86_venकरोr == X86_VENDOR_HYGON) अणु
+		अगर (__cache_amd_cpumap_setup(cpu, index, base))
+			वापस;
+	पूर्ण
 
 	this_leaf = this_cpu_ci->info_list + index;
-	num_threads_sharing = 1 + base->eax.split.num_threads_sharing;
+	num_thपढ़ोs_sharing = 1 + base->eax.split.num_thपढ़ोs_sharing;
 
 	cpumask_set_cpu(cpu, &this_leaf->shared_cpu_map);
-	if (num_threads_sharing == 1)
-		return;
+	अगर (num_thपढ़ोs_sharing == 1)
+		वापस;
 
-	index_msb = get_count_order(num_threads_sharing);
+	index_msb = get_count_order(num_thपढ़ोs_sharing);
 
-	for_each_online_cpu(i)
-		if (cpu_data(i).apicid >> index_msb == c->apicid >> index_msb) {
-			struct cpu_cacheinfo *sib_cpu_ci = get_cpu_cacheinfo(i);
+	क्रम_each_online_cpu(i)
+		अगर (cpu_data(i).apicid >> index_msb == c->apicid >> index_msb) अणु
+			काष्ठा cpu_cacheinfo *sib_cpu_ci = get_cpu_cacheinfo(i);
 
-			if (i == cpu || !sib_cpu_ci->info_list)
-				continue;/* skip if itself or no cacheinfo */
+			अगर (i == cpu || !sib_cpu_ci->info_list)
+				जारी;/* skip अगर itself or no cacheinfo */
 			sibling_leaf = sib_cpu_ci->info_list + index;
 			cpumask_set_cpu(i, &this_leaf->shared_cpu_map);
 			cpumask_set_cpu(cpu, &sibling_leaf->shared_cpu_map);
-		}
-}
+		पूर्ण
+पूर्ण
 
-static void ci_leaf_init(struct cacheinfo *this_leaf,
-			 struct _cpuid4_info_regs *base)
-{
+अटल व्योम ci_leaf_init(काष्ठा cacheinfo *this_leaf,
+			 काष्ठा _cpuid4_info_regs *base)
+अणु
 	this_leaf->id = base->id;
 	this_leaf->attributes = CACHE_ID;
 	this_leaf->level = base->eax.split.level;
@@ -983,56 +984,56 @@ static void ci_leaf_init(struct cacheinfo *this_leaf,
 	this_leaf->physical_line_partition =
 				base->ebx.split.physical_line_partition + 1;
 	this_leaf->priv = base->nb;
-}
+पूर्ण
 
-static int __init_cache_level(unsigned int cpu)
-{
-	struct cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
+अटल पूर्णांक __init_cache_level(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
 
-	if (!num_cache_leaves)
-		return -ENOENT;
-	if (!this_cpu_ci)
-		return -EINVAL;
+	अगर (!num_cache_leaves)
+		वापस -ENOENT;
+	अगर (!this_cpu_ci)
+		वापस -EINVAL;
 	this_cpu_ci->num_levels = 3;
 	this_cpu_ci->num_leaves = num_cache_leaves;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The max shared threads number comes from CPUID.4:EAX[25-14] with input
- * ECX as cache index. Then right shift apicid by the number's order to get
- * cache id for this cache node.
+ * The max shared thपढ़ोs number comes from CPUID.4:EAX[25-14] with input
+ * ECX as cache index. Then right shअगरt apicid by the number's order to get
+ * cache id क्रम this cache node.
  */
-static void get_cache_id(int cpu, struct _cpuid4_info_regs *id4_regs)
-{
-	struct cpuinfo_x86 *c = &cpu_data(cpu);
-	unsigned long num_threads_sharing;
-	int index_msb;
+अटल व्योम get_cache_id(पूर्णांक cpu, काष्ठा _cpuid4_info_regs *id4_regs)
+अणु
+	काष्ठा cpuinfo_x86 *c = &cpu_data(cpu);
+	अचिन्हित दीर्घ num_thपढ़ोs_sharing;
+	पूर्णांक index_msb;
 
-	num_threads_sharing = 1 + id4_regs->eax.split.num_threads_sharing;
-	index_msb = get_count_order(num_threads_sharing);
+	num_thपढ़ोs_sharing = 1 + id4_regs->eax.split.num_thपढ़ोs_sharing;
+	index_msb = get_count_order(num_thपढ़ोs_sharing);
 	id4_regs->id = c->apicid >> index_msb;
-}
+पूर्ण
 
-static int __populate_cache_leaves(unsigned int cpu)
-{
-	unsigned int idx, ret;
-	struct cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
-	struct cacheinfo *this_leaf = this_cpu_ci->info_list;
-	struct _cpuid4_info_regs id4_regs = {};
+अटल पूर्णांक __populate_cache_leaves(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित पूर्णांक idx, ret;
+	काष्ठा cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
+	काष्ठा cacheinfo *this_leaf = this_cpu_ci->info_list;
+	काष्ठा _cpuid4_info_regs id4_regs = अणुपूर्ण;
 
-	for (idx = 0; idx < this_cpu_ci->num_leaves; idx++) {
+	क्रम (idx = 0; idx < this_cpu_ci->num_leaves; idx++) अणु
 		ret = cpuid4_cache_lookup_regs(idx, &id4_regs);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		get_cache_id(cpu, &id4_regs);
 		ci_leaf_init(this_leaf++, &id4_regs);
 		__cache_cpumap_setup(cpu, idx, &id4_regs);
-	}
+	पूर्ण
 	this_cpu_ci->cpu_map_populated = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SMP_CALL_CACHE_FUNCTION(init_cache_level)
 DEFINE_SMP_CALL_CACHE_FUNCTION(populate_cache_leaves)

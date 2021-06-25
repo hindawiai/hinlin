@@ -1,3 +1,4 @@
-#include "core_reloc_types.h"
+<शैली गुरु>
+#समावेश "core_reloc_types.h"
 
-void f(struct core_reloc_size___diff_sz x) {}
+व्योम f(काष्ठा core_reloc_size___dअगरf_sz x) अणुपूर्ण

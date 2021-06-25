@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * rWTM BIU Mailbox driver for Armada 37xx
+ * rWTM BIU Mailbox driver क्रम Armada 37xx
  *
- * Author: Marek Behún <kabel@kernel.org>
+ * Author: Marek Behथजn <kabel@kernel.org>
  */
 
-#ifndef _LINUX_ARMADA_37XX_RWTM_MAILBOX_H_
-#define _LINUX_ARMADA_37XX_RWTM_MAILBOX_H_
+#अगर_अघोषित _LINUX_ARMADA_37XX_RWTM_MAILBOX_H_
+#घोषणा _LINUX_ARMADA_37XX_RWTM_MAILBOX_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct armada_37xx_rwtm_tx_msg {
+काष्ठा armada_37xx_rwपंचांग_tx_msg अणु
 	u16 command;
 	u32 args[16];
-};
+पूर्ण;
 
-struct armada_37xx_rwtm_rx_msg {
+काष्ठा armada_37xx_rwपंचांग_rx_msg अणु
 	u32 retval;
 	u32 status[16];
-};
+पूर्ण;
 
-#endif /* _LINUX_ARMADA_37XX_RWTM_MAILBOX_H_ */
+#पूर्ण_अगर /* _LINUX_ARMADA_37XX_RWTM_MAILBOX_H_ */

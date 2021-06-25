@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* SocketCAN driver for Microchip CAN BUS Analyzer Tool
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* SocketCAN driver क्रम Microchip CAN BUS Analyzer Tool
  *
  * Copyright (C) 2017 Mobica Limited
  *
  * This driver is inspired by the 4.6.2 version of net/can/usb/usb_8dev.c
  */
 
-#include <asm/unaligned.h>
-#include <linux/can.h>
-#include <linux/can/dev.h>
-#include <linux/can/error.h>
-#include <linux/can/led.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/signal.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/can.h>
+#समावेश <linux/can/dev.h>
+#समावेश <linux/can/error.h>
+#समावेश <linux/can/led.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/usb.h>
 
-/* vendor and product id */
-#define MCBA_MODULE_NAME "mcba_usb"
-#define MCBA_VENDOR_ID 0x04d8
-#define MCBA_PRODUCT_ID 0x0a30
+/* venकरोr and product id */
+#घोषणा MCBA_MODULE_NAME "mcba_usb"
+#घोषणा MCBA_VENDOR_ID 0x04d8
+#घोषणा MCBA_PRODUCT_ID 0x0a30
 
-/* driver constants */
-#define MCBA_MAX_RX_URBS 20
-#define MCBA_MAX_TX_URBS 20
-#define MCBA_CTX_FREE MCBA_MAX_TX_URBS
+/* driver स्थिरants */
+#घोषणा MCBA_MAX_RX_URBS 20
+#घोषणा MCBA_MAX_TX_URBS 20
+#घोषणा MCBA_CTX_FREE MCBA_MAX_TX_URBS
 
 /* RX buffer must be bigger than msg size since at the
  * beginning USB messages are stacked.
  */
-#define MCBA_USB_RX_BUFF_SIZE 64
-#define MCBA_USB_TX_BUFF_SIZE (sizeof(struct mcba_usb_msg))
+#घोषणा MCBA_USB_RX_BUFF_SIZE 64
+#घोषणा MCBA_USB_TX_BUFF_SIZE (माप(काष्ठा mcba_usb_msg))
 
-/* MCBA endpoint numbers */
-#define MCBA_USB_EP_IN 1
-#define MCBA_USB_EP_OUT 1
+/* MCBA endpoपूर्णांक numbers */
+#घोषणा MCBA_USB_EP_IN 1
+#घोषणा MCBA_USB_EP_OUT 1
 
 /* Microchip command id */
-#define MBCA_CMD_RECEIVE_MESSAGE 0xE3
-#define MBCA_CMD_I_AM_ALIVE_FROM_CAN 0xF5
-#define MBCA_CMD_I_AM_ALIVE_FROM_USB 0xF7
-#define MBCA_CMD_CHANGE_BIT_RATE 0xA1
-#define MBCA_CMD_TRANSMIT_MESSAGE_EV 0xA3
-#define MBCA_CMD_SETUP_TERMINATION_RESISTANCE 0xA8
-#define MBCA_CMD_READ_FW_VERSION 0xA9
-#define MBCA_CMD_NOTHING_TO_SEND 0xFF
-#define MBCA_CMD_TRANSMIT_MESSAGE_RSP 0xE2
+#घोषणा MBCA_CMD_RECEIVE_MESSAGE 0xE3
+#घोषणा MBCA_CMD_I_AM_ALIVE_FROM_CAN 0xF5
+#घोषणा MBCA_CMD_I_AM_ALIVE_FROM_USB 0xF7
+#घोषणा MBCA_CMD_CHANGE_BIT_RATE 0xA1
+#घोषणा MBCA_CMD_TRANSMIT_MESSAGE_EV 0xA3
+#घोषणा MBCA_CMD_SETUP_TERMINATION_RESISTANCE 0xA8
+#घोषणा MBCA_CMD_READ_FW_VERSION 0xA9
+#घोषणा MBCA_CMD_NOTHING_TO_SEND 0xFF
+#घोषणा MBCA_CMD_TRANSMIT_MESSAGE_RSP 0xE2
 
-#define MCBA_VER_REQ_USB 1
-#define MCBA_VER_REQ_CAN 2
+#घोषणा MCBA_VER_REQ_USB 1
+#घोषणा MCBA_VER_REQ_CAN 2
 
-#define MCBA_SIDL_EXID_MASK 0x8
-#define MCBA_DLC_MASK 0xf
-#define MCBA_DLC_RTR_MASK 0x40
+#घोषणा MCBA_SIDL_EXID_MASK 0x8
+#घोषणा MCBA_DLC_MASK 0xf
+#घोषणा MCBA_DLC_RTR_MASK 0x40
 
-#define MCBA_CAN_STATE_WRN_TH 95
-#define MCBA_CAN_STATE_ERR_PSV_TH 127
+#घोषणा MCBA_CAN_STATE_WRN_TH 95
+#घोषणा MCBA_CAN_STATE_ERR_PSV_TH 127
 
-#define MCBA_TERMINATION_DISABLED CAN_TERMINATION_DISABLED
-#define MCBA_TERMINATION_ENABLED 120
+#घोषणा MCBA_TERMINATION_DISABLED CAN_TERMINATION_DISABLED
+#घोषणा MCBA_TERMINATION_ENABLED 120
 
-struct mcba_usb_ctx {
-	struct mcba_priv *priv;
+काष्ठा mcba_usb_ctx अणु
+	काष्ठा mcba_priv *priv;
 	u32 ndx;
 	u8 dlc;
 	bool can;
-};
+पूर्ण;
 
-/* Structure to hold all of our device specific stuff */
-struct mcba_priv {
-	struct can_priv can; /* must be the first member */
-	struct sk_buff *echo_skb[MCBA_MAX_TX_URBS];
-	struct mcba_usb_ctx tx_context[MCBA_MAX_TX_URBS];
-	struct usb_device *udev;
-	struct net_device *netdev;
-	struct usb_anchor tx_submitted;
-	struct usb_anchor rx_submitted;
-	struct can_berr_counter bec;
+/* Structure to hold all of our device specअगरic stuff */
+काष्ठा mcba_priv अणु
+	काष्ठा can_priv can; /* must be the first member */
+	काष्ठा sk_buff *echo_skb[MCBA_MAX_TX_URBS];
+	काष्ठा mcba_usb_ctx tx_context[MCBA_MAX_TX_URBS];
+	काष्ठा usb_device *udev;
+	काष्ठा net_device *netdev;
+	काष्ठा usb_anchor tx_submitted;
+	काष्ठा usb_anchor rx_submitted;
+	काष्ठा can_berr_counter bec;
 	bool usb_ka_first_pass;
 	bool can_ka_first_pass;
 	bool can_speed_check;
-	atomic_t free_ctx_cnt;
-	void *rxbuf[MCBA_MAX_RX_URBS];
+	atomic_t मुक्त_ctx_cnt;
+	व्योम *rxbuf[MCBA_MAX_RX_URBS];
 	dma_addr_t rxbuf_dma[MCBA_MAX_RX_URBS];
-};
+पूर्ण;
 
 /* CAN frame */
-struct __packed mcba_usb_msg_can {
+काष्ठा __packed mcba_usb_msg_can अणु
 	u8 cmd_id;
 	__be16 eid;
 	__be16 sid;
 	u8 dlc;
 	u8 data[8];
-	u8 timestamp[4];
+	u8 बारtamp[4];
 	u8 checksum;
-};
+पूर्ण;
 
 /* command frame */
-struct __packed mcba_usb_msg {
+काष्ठा __packed mcba_usb_msg अणु
 	u8 cmd_id;
 	u8 unused[18];
-};
+पूर्ण;
 
-struct __packed mcba_usb_msg_ka_usb {
+काष्ठा __packed mcba_usb_msg_ka_usb अणु
 	u8 cmd_id;
 	u8 termination_state;
 	u8 soft_ver_major;
 	u8 soft_ver_minor;
 	u8 unused[15];
-};
+पूर्ण;
 
-struct __packed mcba_usb_msg_ka_can {
+काष्ठा __packed mcba_usb_msg_ka_can अणु
 	u8 cmd_id;
 	u8 tx_err_cnt;
 	u8 rx_err_cnt;
@@ -126,209 +127,209 @@ struct __packed mcba_usb_msg_ka_can {
 	u8 test_complete;
 	u8 test_result;
 	u8 unused[4];
-};
+पूर्ण;
 
-struct __packed mcba_usb_msg_change_bitrate {
+काष्ठा __packed mcba_usb_msg_change_bitrate अणु
 	u8 cmd_id;
 	__be16 bitrate;
 	u8 unused[16];
-};
+पूर्ण;
 
-struct __packed mcba_usb_msg_termination {
+काष्ठा __packed mcba_usb_msg_termination अणु
 	u8 cmd_id;
 	u8 termination;
 	u8 unused[17];
-};
+पूर्ण;
 
-struct __packed mcba_usb_msg_fw_ver {
+काष्ठा __packed mcba_usb_msg_fw_ver अणु
 	u8 cmd_id;
 	u8 pic;
 	u8 unused[17];
-};
+पूर्ण;
 
-static const struct usb_device_id mcba_usb_table[] = {
-	{ USB_DEVICE(MCBA_VENDOR_ID, MCBA_PRODUCT_ID) },
-	{} /* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id mcba_usb_table[] = अणु
+	अणु USB_DEVICE(MCBA_VENDOR_ID, MCBA_PRODUCT_ID) पूर्ण,
+	अणुपूर्ण /* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, mcba_usb_table);
 
-static const u16 mcba_termination[] = { MCBA_TERMINATION_DISABLED,
-					MCBA_TERMINATION_ENABLED };
+अटल स्थिर u16 mcba_termination[] = अणु MCBA_TERMINATION_DISABLED,
+					MCBA_TERMINATION_ENABLED पूर्ण;
 
-static const u32 mcba_bitrate[] = { 20000,  33333,  50000,  80000,  83333,
+अटल स्थिर u32 mcba_bitrate[] = अणु 20000,  33333,  50000,  80000,  83333,
 				    100000, 125000, 150000, 175000, 200000,
 				    225000, 250000, 275000, 300000, 500000,
-				    625000, 800000, 1000000 };
+				    625000, 800000, 1000000 पूर्ण;
 
-static inline void mcba_init_ctx(struct mcba_priv *priv)
-{
-	int i = 0;
+अटल अंतरभूत व्योम mcba_init_ctx(काष्ठा mcba_priv *priv)
+अणु
+	पूर्णांक i = 0;
 
-	for (i = 0; i < MCBA_MAX_TX_URBS; i++) {
+	क्रम (i = 0; i < MCBA_MAX_TX_URBS; i++) अणु
 		priv->tx_context[i].ndx = MCBA_CTX_FREE;
 		priv->tx_context[i].priv = priv;
-	}
+	पूर्ण
 
-	atomic_set(&priv->free_ctx_cnt, ARRAY_SIZE(priv->tx_context));
-}
+	atomic_set(&priv->मुक्त_ctx_cnt, ARRAY_SIZE(priv->tx_context));
+पूर्ण
 
-static inline struct mcba_usb_ctx *mcba_usb_get_free_ctx(struct mcba_priv *priv,
-							 struct can_frame *cf)
-{
-	int i = 0;
-	struct mcba_usb_ctx *ctx = NULL;
+अटल अंतरभूत काष्ठा mcba_usb_ctx *mcba_usb_get_मुक्त_ctx(काष्ठा mcba_priv *priv,
+							 काष्ठा can_frame *cf)
+अणु
+	पूर्णांक i = 0;
+	काष्ठा mcba_usb_ctx *ctx = शून्य;
 
-	for (i = 0; i < MCBA_MAX_TX_URBS; i++) {
-		if (priv->tx_context[i].ndx == MCBA_CTX_FREE) {
+	क्रम (i = 0; i < MCBA_MAX_TX_URBS; i++) अणु
+		अगर (priv->tx_context[i].ndx == MCBA_CTX_FREE) अणु
 			ctx = &priv->tx_context[i];
 			ctx->ndx = i;
 
-			if (cf) {
+			अगर (cf) अणु
 				ctx->can = true;
 				ctx->dlc = cf->len;
-			} else {
+			पूर्ण अन्यथा अणु
 				ctx->can = false;
 				ctx->dlc = 0;
-			}
+			पूर्ण
 
-			atomic_dec(&priv->free_ctx_cnt);
-			break;
-		}
-	}
+			atomic_dec(&priv->मुक्त_ctx_cnt);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!atomic_read(&priv->free_ctx_cnt))
-		/* That was the last free ctx. Slow down tx path */
-		netif_stop_queue(priv->netdev);
+	अगर (!atomic_पढ़ो(&priv->मुक्त_ctx_cnt))
+		/* That was the last मुक्त ctx. Slow करोwn tx path */
+		netअगर_stop_queue(priv->netdev);
 
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
-/* mcba_usb_free_ctx and mcba_usb_get_free_ctx are executed by different
- * threads. The order of execution in below function is important.
+/* mcba_usb_मुक्त_ctx and mcba_usb_get_मुक्त_ctx are executed by dअगरferent
+ * thपढ़ोs. The order of execution in below function is important.
  */
-static inline void mcba_usb_free_ctx(struct mcba_usb_ctx *ctx)
-{
-	/* Increase number of free ctxs before freeing ctx */
-	atomic_inc(&ctx->priv->free_ctx_cnt);
+अटल अंतरभूत व्योम mcba_usb_मुक्त_ctx(काष्ठा mcba_usb_ctx *ctx)
+अणु
+	/* Increase number of मुक्त ctxs beक्रमe मुक्तing ctx */
+	atomic_inc(&ctx->priv->मुक्त_ctx_cnt);
 
 	ctx->ndx = MCBA_CTX_FREE;
 
-	/* Wake up the queue once ctx is marked free */
-	netif_wake_queue(ctx->priv->netdev);
-}
+	/* Wake up the queue once ctx is marked मुक्त */
+	netअगर_wake_queue(ctx->priv->netdev);
+पूर्ण
 
-static void mcba_usb_write_bulk_callback(struct urb *urb)
-{
-	struct mcba_usb_ctx *ctx = urb->context;
-	struct net_device *netdev;
+अटल व्योम mcba_usb_ग_लिखो_bulk_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा mcba_usb_ctx *ctx = urb->context;
+	काष्ठा net_device *netdev;
 
 	WARN_ON(!ctx);
 
 	netdev = ctx->priv->netdev;
 
-	/* free up our allocated buffer */
-	usb_free_coherent(urb->dev, urb->transfer_buffer_length,
+	/* मुक्त up our allocated buffer */
+	usb_मुक्त_coherent(urb->dev, urb->transfer_buffer_length,
 			  urb->transfer_buffer, urb->transfer_dma);
 
-	if (ctx->can) {
-		if (!netif_device_present(netdev))
-			return;
+	अगर (ctx->can) अणु
+		अगर (!netअगर_device_present(netdev))
+			वापस;
 
 		netdev->stats.tx_packets++;
 		netdev->stats.tx_bytes += ctx->dlc;
 
 		can_led_event(netdev, CAN_LED_EVENT_TX);
-		can_get_echo_skb(netdev, ctx->ndx, NULL);
-	}
+		can_get_echo_skb(netdev, ctx->ndx, शून्य);
+	पूर्ण
 
-	if (urb->status)
+	अगर (urb->status)
 		netdev_info(netdev, "Tx URB aborted (%d)\n", urb->status);
 
 	/* Release the context */
-	mcba_usb_free_ctx(ctx);
-}
+	mcba_usb_मुक्त_ctx(ctx);
+पूर्ण
 
 /* Send data to device */
-static netdev_tx_t mcba_usb_xmit(struct mcba_priv *priv,
-				 struct mcba_usb_msg *usb_msg,
-				 struct mcba_usb_ctx *ctx)
-{
-	struct urb *urb;
+अटल netdev_tx_t mcba_usb_xmit(काष्ठा mcba_priv *priv,
+				 काष्ठा mcba_usb_msg *usb_msg,
+				 काष्ठा mcba_usb_ctx *ctx)
+अणु
+	काष्ठा urb *urb;
 	u8 *buf;
-	int err;
+	पूर्णांक err;
 
-	/* create a URB, and a buffer for it, and copy the data to the URB */
+	/* create a URB, and a buffer क्रम it, and copy the data to the URB */
 	urb = usb_alloc_urb(0, GFP_ATOMIC);
-	if (!urb)
-		return -ENOMEM;
+	अगर (!urb)
+		वापस -ENOMEM;
 
 	buf = usb_alloc_coherent(priv->udev, MCBA_USB_TX_BUFF_SIZE, GFP_ATOMIC,
 				 &urb->transfer_dma);
-	if (!buf) {
+	अगर (!buf) अणु
 		err = -ENOMEM;
-		goto nomembuf;
-	}
+		जाओ nomembuf;
+	पूर्ण
 
-	memcpy(buf, usb_msg, MCBA_USB_TX_BUFF_SIZE);
+	स_नकल(buf, usb_msg, MCBA_USB_TX_BUFF_SIZE);
 
 	usb_fill_bulk_urb(urb, priv->udev,
 			  usb_sndbulkpipe(priv->udev, MCBA_USB_EP_OUT), buf,
-			  MCBA_USB_TX_BUFF_SIZE, mcba_usb_write_bulk_callback,
+			  MCBA_USB_TX_BUFF_SIZE, mcba_usb_ग_लिखो_bulk_callback,
 			  ctx);
 
 	urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 	usb_anchor_urb(urb, &priv->tx_submitted);
 
 	err = usb_submit_urb(urb, GFP_ATOMIC);
-	if (unlikely(err))
-		goto failed;
+	अगर (unlikely(err))
+		जाओ failed;
 
-	/* Release our reference to this URB, the USB core will eventually free
+	/* Release our reference to this URB, the USB core will eventually मुक्त
 	 * it entirely.
 	 */
-	usb_free_urb(urb);
+	usb_मुक्त_urb(urb);
 
-	return 0;
+	वापस 0;
 
 failed:
 	usb_unanchor_urb(urb);
-	usb_free_coherent(priv->udev, MCBA_USB_TX_BUFF_SIZE, buf,
+	usb_मुक्त_coherent(priv->udev, MCBA_USB_TX_BUFF_SIZE, buf,
 			  urb->transfer_dma);
 
-	if (err == -ENODEV)
-		netif_device_detach(priv->netdev);
-	else
+	अगर (err == -ENODEV)
+		netअगर_device_detach(priv->netdev);
+	अन्यथा
 		netdev_warn(priv->netdev, "failed tx_urb %d\n", err);
 
 nomembuf:
-	usb_free_urb(urb);
+	usb_मुक्त_urb(urb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Send data to device */
-static netdev_tx_t mcba_usb_start_xmit(struct sk_buff *skb,
-				       struct net_device *netdev)
-{
-	struct mcba_priv *priv = netdev_priv(netdev);
-	struct can_frame *cf = (struct can_frame *)skb->data;
-	struct mcba_usb_ctx *ctx = NULL;
-	struct net_device_stats *stats = &priv->netdev->stats;
+अटल netdev_tx_t mcba_usb_start_xmit(काष्ठा sk_buff *skb,
+				       काष्ठा net_device *netdev)
+अणु
+	काष्ठा mcba_priv *priv = netdev_priv(netdev);
+	काष्ठा can_frame *cf = (काष्ठा can_frame *)skb->data;
+	काष्ठा mcba_usb_ctx *ctx = शून्य;
+	काष्ठा net_device_stats *stats = &priv->netdev->stats;
 	u16 sid;
-	int err;
-	struct mcba_usb_msg_can usb_msg = {
+	पूर्णांक err;
+	काष्ठा mcba_usb_msg_can usb_msg = अणु
 		.cmd_id = MBCA_CMD_TRANSMIT_MESSAGE_EV
-	};
+	पूर्ण;
 
-	if (can_dropped_invalid_skb(netdev, skb))
-		return NETDEV_TX_OK;
+	अगर (can_dropped_invalid_skb(netdev, skb))
+		वापस NETDEV_TX_OK;
 
-	ctx = mcba_usb_get_free_ctx(priv, cf);
-	if (!ctx)
-		return NETDEV_TX_BUSY;
+	ctx = mcba_usb_get_मुक्त_ctx(priv, cf);
+	अगर (!ctx)
+		वापस NETDEV_TX_BUSY;
 
-	if (cf->can_id & CAN_EFF_FLAG) {
+	अगर (cf->can_id & CAN_EFF_FLAG) अणु
 		/* SIDH    | SIDL                 | EIDH   | EIDL
 		 * 28 - 21 | 20 19 18 x x x 17 16 | 15 - 8 | 7 - 0
 		 */
@@ -341,97 +342,97 @@ static netdev_tx_t mcba_usb_start_xmit(struct sk_buff *skb,
 
 		/* store 15-0 bits */
 		put_unaligned_be16(cf->can_id & 0xffff, &usb_msg.eid);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* SIDH   | SIDL
 		 * 10 - 3 | 2 1 0 x x x x x
 		 */
 		put_unaligned_be16((cf->can_id & CAN_SFF_MASK) << 5,
 				   &usb_msg.sid);
 		usb_msg.eid = 0;
-	}
+	पूर्ण
 
 	usb_msg.dlc = cf->len;
 
-	memcpy(usb_msg.data, cf->data, usb_msg.dlc);
+	स_नकल(usb_msg.data, cf->data, usb_msg.dlc);
 
-	if (cf->can_id & CAN_RTR_FLAG)
+	अगर (cf->can_id & CAN_RTR_FLAG)
 		usb_msg.dlc |= MCBA_DLC_RTR_MASK;
 
 	can_put_echo_skb(skb, priv->netdev, ctx->ndx, 0);
 
-	err = mcba_usb_xmit(priv, (struct mcba_usb_msg *)&usb_msg, ctx);
-	if (err)
-		goto xmit_failed;
+	err = mcba_usb_xmit(priv, (काष्ठा mcba_usb_msg *)&usb_msg, ctx);
+	अगर (err)
+		जाओ xmit_failed;
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 xmit_failed:
-	can_free_echo_skb(priv->netdev, ctx->ndx, NULL);
-	mcba_usb_free_ctx(ctx);
-	dev_kfree_skb(skb);
+	can_मुक्त_echo_skb(priv->netdev, ctx->ndx, शून्य);
+	mcba_usb_मुक्त_ctx(ctx);
+	dev_kमुक्त_skb(skb);
 	stats->tx_dropped++;
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 /* Send cmd to device */
-static void mcba_usb_xmit_cmd(struct mcba_priv *priv,
-			      struct mcba_usb_msg *usb_msg)
-{
-	struct mcba_usb_ctx *ctx = NULL;
-	int err;
+अटल व्योम mcba_usb_xmit_cmd(काष्ठा mcba_priv *priv,
+			      काष्ठा mcba_usb_msg *usb_msg)
+अणु
+	काष्ठा mcba_usb_ctx *ctx = शून्य;
+	पूर्णांक err;
 
-	ctx = mcba_usb_get_free_ctx(priv, NULL);
-	if (!ctx) {
+	ctx = mcba_usb_get_मुक्त_ctx(priv, शून्य);
+	अगर (!ctx) अणु
 		netdev_err(priv->netdev,
 			   "Lack of free ctx. Sending (%d) cmd aborted",
 			   usb_msg->cmd_id);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	err = mcba_usb_xmit(priv, usb_msg, ctx);
-	if (err)
+	अगर (err)
 		netdev_err(priv->netdev, "Failed to send cmd (%d)",
 			   usb_msg->cmd_id);
-}
+पूर्ण
 
-static void mcba_usb_xmit_change_bitrate(struct mcba_priv *priv, u16 bitrate)
-{
-	struct mcba_usb_msg_change_bitrate usb_msg = {
+अटल व्योम mcba_usb_xmit_change_bitrate(काष्ठा mcba_priv *priv, u16 bitrate)
+अणु
+	काष्ठा mcba_usb_msg_change_bitrate usb_msg = अणु
 		.cmd_id = MBCA_CMD_CHANGE_BIT_RATE
-	};
+	पूर्ण;
 
 	put_unaligned_be16(bitrate, &usb_msg.bitrate);
 
-	mcba_usb_xmit_cmd(priv, (struct mcba_usb_msg *)&usb_msg);
-}
+	mcba_usb_xmit_cmd(priv, (काष्ठा mcba_usb_msg *)&usb_msg);
+पूर्ण
 
-static void mcba_usb_xmit_read_fw_ver(struct mcba_priv *priv, u8 pic)
-{
-	struct mcba_usb_msg_fw_ver usb_msg = {
+अटल व्योम mcba_usb_xmit_पढ़ो_fw_ver(काष्ठा mcba_priv *priv, u8 pic)
+अणु
+	काष्ठा mcba_usb_msg_fw_ver usb_msg = अणु
 		.cmd_id = MBCA_CMD_READ_FW_VERSION,
 		.pic = pic
-	};
+	पूर्ण;
 
-	mcba_usb_xmit_cmd(priv, (struct mcba_usb_msg *)&usb_msg);
-}
+	mcba_usb_xmit_cmd(priv, (काष्ठा mcba_usb_msg *)&usb_msg);
+पूर्ण
 
-static void mcba_usb_process_can(struct mcba_priv *priv,
-				 struct mcba_usb_msg_can *msg)
-{
-	struct can_frame *cf;
-	struct sk_buff *skb;
-	struct net_device_stats *stats = &priv->netdev->stats;
+अटल व्योम mcba_usb_process_can(काष्ठा mcba_priv *priv,
+				 काष्ठा mcba_usb_msg_can *msg)
+अणु
+	काष्ठा can_frame *cf;
+	काष्ठा sk_buff *skb;
+	काष्ठा net_device_stats *stats = &priv->netdev->stats;
 	u16 sid;
 
 	skb = alloc_can_skb(priv->netdev, &cf);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
 	sid = get_unaligned_be16(&msg->sid);
 
-	if (sid & MCBA_SIDL_EXID_MASK) {
+	अगर (sid & MCBA_SIDL_EXID_MASK) अणु
 		/* SIDH    | SIDL                 | EIDH   | EIDL
 		 * 28 - 21 | 20 19 18 x x x 17 16 | 15 - 8 | 7 - 0
 		 */
@@ -443,377 +444,377 @@ static void mcba_usb_process_can(struct mcba_priv *priv,
 		cf->can_id |= (sid & 3) << 16;
 		/* store 15-0 bits */
 		cf->can_id |= get_unaligned_be16(&msg->eid);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* SIDH   | SIDL
 		 * 10 - 3 | 2 1 0 x x x x x
 		 */
 		cf->can_id = (sid & 0xffe0) >> 5;
-	}
+	पूर्ण
 
-	if (msg->dlc & MCBA_DLC_RTR_MASK)
+	अगर (msg->dlc & MCBA_DLC_RTR_MASK)
 		cf->can_id |= CAN_RTR_FLAG;
 
 	cf->len = can_cc_dlc2len(msg->dlc & MCBA_DLC_MASK);
 
-	memcpy(cf->data, msg->data, cf->len);
+	स_नकल(cf->data, msg->data, cf->len);
 
 	stats->rx_packets++;
 	stats->rx_bytes += cf->len;
 
 	can_led_event(priv->netdev, CAN_LED_EVENT_RX);
-	netif_rx(skb);
-}
+	netअगर_rx(skb);
+पूर्ण
 
-static void mcba_usb_process_ka_usb(struct mcba_priv *priv,
-				    struct mcba_usb_msg_ka_usb *msg)
-{
-	if (unlikely(priv->usb_ka_first_pass)) {
+अटल व्योम mcba_usb_process_ka_usb(काष्ठा mcba_priv *priv,
+				    काष्ठा mcba_usb_msg_ka_usb *msg)
+अणु
+	अगर (unlikely(priv->usb_ka_first_pass)) अणु
 		netdev_info(priv->netdev, "PIC USB version %u.%u\n",
 			    msg->soft_ver_major, msg->soft_ver_minor);
 
 		priv->usb_ka_first_pass = false;
-	}
+	पूर्ण
 
-	if (msg->termination_state)
+	अगर (msg->termination_state)
 		priv->can.termination = MCBA_TERMINATION_ENABLED;
-	else
+	अन्यथा
 		priv->can.termination = MCBA_TERMINATION_DISABLED;
-}
+पूर्ण
 
-static u32 convert_can2host_bitrate(struct mcba_usb_msg_ka_can *msg)
-{
-	const u32 bitrate = get_unaligned_be16(&msg->can_bitrate);
+अटल u32 convert_can2host_bitrate(काष्ठा mcba_usb_msg_ka_can *msg)
+अणु
+	स्थिर u32 bitrate = get_unaligned_be16(&msg->can_bitrate);
 
-	if ((bitrate == 33) || (bitrate == 83))
-		return bitrate * 1000 + 333;
-	else
-		return bitrate * 1000;
-}
+	अगर ((bitrate == 33) || (bitrate == 83))
+		वापस bitrate * 1000 + 333;
+	अन्यथा
+		वापस bitrate * 1000;
+पूर्ण
 
-static void mcba_usb_process_ka_can(struct mcba_priv *priv,
-				    struct mcba_usb_msg_ka_can *msg)
-{
-	if (unlikely(priv->can_ka_first_pass)) {
+अटल व्योम mcba_usb_process_ka_can(काष्ठा mcba_priv *priv,
+				    काष्ठा mcba_usb_msg_ka_can *msg)
+अणु
+	अगर (unlikely(priv->can_ka_first_pass)) अणु
 		netdev_info(priv->netdev, "PIC CAN version %u.%u\n",
 			    msg->soft_ver_major, msg->soft_ver_minor);
 
 		priv->can_ka_first_pass = false;
-	}
+	पूर्ण
 
-	if (unlikely(priv->can_speed_check)) {
-		const u32 bitrate = convert_can2host_bitrate(msg);
+	अगर (unlikely(priv->can_speed_check)) अणु
+		स्थिर u32 bitrate = convert_can2host_bitrate(msg);
 
 		priv->can_speed_check = false;
 
-		if (bitrate != priv->can.bittiming.bitrate)
+		अगर (bitrate != priv->can.bittiming.bitrate)
 			netdev_err(
 			    priv->netdev,
 			    "Wrong bitrate reported by the device (%u). Expected %u",
 			    bitrate, priv->can.bittiming.bitrate);
-	}
+	पूर्ण
 
 	priv->bec.txerr = msg->tx_err_cnt;
 	priv->bec.rxerr = msg->rx_err_cnt;
 
-	if (msg->tx_bus_off)
+	अगर (msg->tx_bus_off)
 		priv->can.state = CAN_STATE_BUS_OFF;
 
-	else if ((priv->bec.txerr > MCBA_CAN_STATE_ERR_PSV_TH) ||
+	अन्यथा अगर ((priv->bec.txerr > MCBA_CAN_STATE_ERR_PSV_TH) ||
 		 (priv->bec.rxerr > MCBA_CAN_STATE_ERR_PSV_TH))
 		priv->can.state = CAN_STATE_ERROR_PASSIVE;
 
-	else if ((priv->bec.txerr > MCBA_CAN_STATE_WRN_TH) ||
+	अन्यथा अगर ((priv->bec.txerr > MCBA_CAN_STATE_WRN_TH) ||
 		 (priv->bec.rxerr > MCBA_CAN_STATE_WRN_TH))
 		priv->can.state = CAN_STATE_ERROR_WARNING;
-}
+पूर्ण
 
-static void mcba_usb_process_rx(struct mcba_priv *priv,
-				struct mcba_usb_msg *msg)
-{
-	switch (msg->cmd_id) {
-	case MBCA_CMD_I_AM_ALIVE_FROM_CAN:
+अटल व्योम mcba_usb_process_rx(काष्ठा mcba_priv *priv,
+				काष्ठा mcba_usb_msg *msg)
+अणु
+	चयन (msg->cmd_id) अणु
+	हाल MBCA_CMD_I_AM_ALIVE_FROM_CAN:
 		mcba_usb_process_ka_can(priv,
-					(struct mcba_usb_msg_ka_can *)msg);
-		break;
+					(काष्ठा mcba_usb_msg_ka_can *)msg);
+		अवरोध;
 
-	case MBCA_CMD_I_AM_ALIVE_FROM_USB:
+	हाल MBCA_CMD_I_AM_ALIVE_FROM_USB:
 		mcba_usb_process_ka_usb(priv,
-					(struct mcba_usb_msg_ka_usb *)msg);
-		break;
+					(काष्ठा mcba_usb_msg_ka_usb *)msg);
+		अवरोध;
 
-	case MBCA_CMD_RECEIVE_MESSAGE:
-		mcba_usb_process_can(priv, (struct mcba_usb_msg_can *)msg);
-		break;
+	हाल MBCA_CMD_RECEIVE_MESSAGE:
+		mcba_usb_process_can(priv, (काष्ठा mcba_usb_msg_can *)msg);
+		अवरोध;
 
-	case MBCA_CMD_NOTHING_TO_SEND:
+	हाल MBCA_CMD_NOTHING_TO_SEND:
 		/* Side effect of communication between PIC_USB and PIC_CAN.
 		 * PIC_CAN is telling us that it has nothing to send
 		 */
-		break;
+		अवरोध;
 
-	case MBCA_CMD_TRANSMIT_MESSAGE_RSP:
-		/* Transmission response from the device containing timestamp */
-		break;
+	हाल MBCA_CMD_TRANSMIT_MESSAGE_RSP:
+		/* Transmission response from the device containing बारtamp */
+		अवरोध;
 
-	default:
+	शेष:
 		netdev_warn(priv->netdev, "Unsupported msg (0x%X)",
 			    msg->cmd_id);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-/* Callback for reading data from device
+/* Callback क्रम पढ़ोing data from device
  *
- * Check urb status, call read function and resubmit urb read operation.
+ * Check urb status, call पढ़ो function and resubmit urb पढ़ो operation.
  */
-static void mcba_usb_read_bulk_callback(struct urb *urb)
-{
-	struct mcba_priv *priv = urb->context;
-	struct net_device *netdev;
-	int retval;
-	int pos = 0;
+अटल व्योम mcba_usb_पढ़ो_bulk_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा mcba_priv *priv = urb->context;
+	काष्ठा net_device *netdev;
+	पूर्णांक retval;
+	पूर्णांक pos = 0;
 
 	netdev = priv->netdev;
 
-	if (!netif_device_present(netdev))
-		return;
+	अगर (!netअगर_device_present(netdev))
+		वापस;
 
-	switch (urb->status) {
-	case 0: /* success */
-		break;
+	चयन (urb->status) अणु
+	हाल 0: /* success */
+		अवरोध;
 
-	case -ENOENT:
-	case -EPIPE:
-	case -EPROTO:
-	case -ESHUTDOWN:
-		return;
+	हाल -ENOENT:
+	हाल -EPIPE:
+	हाल -EPROTO:
+	हाल -ESHUTDOWN:
+		वापस;
 
-	default:
+	शेष:
 		netdev_info(netdev, "Rx URB aborted (%d)\n", urb->status);
 
-		goto resubmit_urb;
-	}
+		जाओ resubmit_urb;
+	पूर्ण
 
-	while (pos < urb->actual_length) {
-		struct mcba_usb_msg *msg;
+	जबतक (pos < urb->actual_length) अणु
+		काष्ठा mcba_usb_msg *msg;
 
-		if (pos + sizeof(struct mcba_usb_msg) > urb->actual_length) {
+		अगर (pos + माप(काष्ठा mcba_usb_msg) > urb->actual_length) अणु
 			netdev_err(priv->netdev, "format error\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		msg = (struct mcba_usb_msg *)(urb->transfer_buffer + pos);
+		msg = (काष्ठा mcba_usb_msg *)(urb->transfer_buffer + pos);
 		mcba_usb_process_rx(priv, msg);
 
-		pos += sizeof(struct mcba_usb_msg);
-	}
+		pos += माप(काष्ठा mcba_usb_msg);
+	पूर्ण
 
 resubmit_urb:
 
 	usb_fill_bulk_urb(urb, priv->udev,
 			  usb_rcvbulkpipe(priv->udev, MCBA_USB_EP_OUT),
 			  urb->transfer_buffer, MCBA_USB_RX_BUFF_SIZE,
-			  mcba_usb_read_bulk_callback, priv);
+			  mcba_usb_पढ़ो_bulk_callback, priv);
 
 	retval = usb_submit_urb(urb, GFP_ATOMIC);
 
-	if (retval == -ENODEV)
-		netif_device_detach(netdev);
-	else if (retval)
+	अगर (retval == -ENODEV)
+		netअगर_device_detach(netdev);
+	अन्यथा अगर (retval)
 		netdev_err(netdev, "failed resubmitting read bulk urb: %d\n",
 			   retval);
-}
+पूर्ण
 
 /* Start USB device */
-static int mcba_usb_start(struct mcba_priv *priv)
-{
-	struct net_device *netdev = priv->netdev;
-	int err, i;
+अटल पूर्णांक mcba_usb_start(काष्ठा mcba_priv *priv)
+अणु
+	काष्ठा net_device *netdev = priv->netdev;
+	पूर्णांक err, i;
 
 	mcba_init_ctx(priv);
 
-	for (i = 0; i < MCBA_MAX_RX_URBS; i++) {
-		struct urb *urb = NULL;
+	क्रम (i = 0; i < MCBA_MAX_RX_URBS; i++) अणु
+		काष्ठा urb *urb = शून्य;
 		u8 *buf;
 		dma_addr_t buf_dma;
 
-		/* create a URB, and a buffer for it */
+		/* create a URB, and a buffer क्रम it */
 		urb = usb_alloc_urb(0, GFP_KERNEL);
-		if (!urb) {
+		अगर (!urb) अणु
 			err = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		buf = usb_alloc_coherent(priv->udev, MCBA_USB_RX_BUFF_SIZE,
 					 GFP_KERNEL, &buf_dma);
-		if (!buf) {
+		अगर (!buf) अणु
 			netdev_err(netdev, "No memory left for USB buffer\n");
-			usb_free_urb(urb);
+			usb_मुक्त_urb(urb);
 			err = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		usb_fill_bulk_urb(urb, priv->udev,
 				  usb_rcvbulkpipe(priv->udev, MCBA_USB_EP_IN),
 				  buf, MCBA_USB_RX_BUFF_SIZE,
-				  mcba_usb_read_bulk_callback, priv);
+				  mcba_usb_पढ़ो_bulk_callback, priv);
 		urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 		usb_anchor_urb(urb, &priv->rx_submitted);
 
 		err = usb_submit_urb(urb, GFP_KERNEL);
-		if (err) {
+		अगर (err) अणु
 			usb_unanchor_urb(urb);
-			usb_free_coherent(priv->udev, MCBA_USB_RX_BUFF_SIZE,
+			usb_मुक्त_coherent(priv->udev, MCBA_USB_RX_BUFF_SIZE,
 					  buf, buf_dma);
-			usb_free_urb(urb);
-			break;
-		}
+			usb_मुक्त_urb(urb);
+			अवरोध;
+		पूर्ण
 
 		priv->rxbuf[i] = buf;
 		priv->rxbuf_dma[i] = buf_dma;
 
-		/* Drop reference, USB core will take care of freeing it */
-		usb_free_urb(urb);
-	}
+		/* Drop reference, USB core will take care of मुक्तing it */
+		usb_मुक्त_urb(urb);
+	पूर्ण
 
 	/* Did we submit any URBs */
-	if (i == 0) {
+	अगर (i == 0) अणु
 		netdev_warn(netdev, "couldn't setup read URBs\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* Warn if we've couldn't transmit all the URBs */
-	if (i < MCBA_MAX_RX_URBS)
+	/* Warn अगर we've couldn't transmit all the URBs */
+	अगर (i < MCBA_MAX_RX_URBS)
 		netdev_warn(netdev, "rx performance may be slow\n");
 
-	mcba_usb_xmit_read_fw_ver(priv, MCBA_VER_REQ_USB);
-	mcba_usb_xmit_read_fw_ver(priv, MCBA_VER_REQ_CAN);
+	mcba_usb_xmit_पढ़ो_fw_ver(priv, MCBA_VER_REQ_USB);
+	mcba_usb_xmit_पढ़ो_fw_ver(priv, MCBA_VER_REQ_CAN);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Open USB device */
-static int mcba_usb_open(struct net_device *netdev)
-{
-	struct mcba_priv *priv = netdev_priv(netdev);
-	int err;
+अटल पूर्णांक mcba_usb_खोलो(काष्ठा net_device *netdev)
+अणु
+	काष्ठा mcba_priv *priv = netdev_priv(netdev);
+	पूर्णांक err;
 
-	/* common open */
-	err = open_candev(netdev);
-	if (err)
-		return err;
+	/* common खोलो */
+	err = खोलो_candev(netdev);
+	अगर (err)
+		वापस err;
 
 	priv->can_speed_check = true;
 	priv->can.state = CAN_STATE_ERROR_ACTIVE;
 
 	can_led_event(netdev, CAN_LED_EVENT_OPEN);
-	netif_start_queue(netdev);
+	netअगर_start_queue(netdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mcba_urb_unlink(struct mcba_priv *priv)
-{
-	int i;
+अटल व्योम mcba_urb_unlink(काष्ठा mcba_priv *priv)
+अणु
+	पूर्णांक i;
 
-	usb_kill_anchored_urbs(&priv->rx_submitted);
+	usb_समाप्त_anchored_urbs(&priv->rx_submitted);
 
-	for (i = 0; i < MCBA_MAX_RX_URBS; ++i)
-		usb_free_coherent(priv->udev, MCBA_USB_RX_BUFF_SIZE,
+	क्रम (i = 0; i < MCBA_MAX_RX_URBS; ++i)
+		usb_मुक्त_coherent(priv->udev, MCBA_USB_RX_BUFF_SIZE,
 				  priv->rxbuf[i], priv->rxbuf_dma[i]);
 
-	usb_kill_anchored_urbs(&priv->tx_submitted);
-}
+	usb_समाप्त_anchored_urbs(&priv->tx_submitted);
+पूर्ण
 
 /* Close USB device */
-static int mcba_usb_close(struct net_device *netdev)
-{
-	struct mcba_priv *priv = netdev_priv(netdev);
+अटल पूर्णांक mcba_usb_बंद(काष्ठा net_device *netdev)
+अणु
+	काष्ठा mcba_priv *priv = netdev_priv(netdev);
 
 	priv->can.state = CAN_STATE_STOPPED;
 
-	netif_stop_queue(netdev);
+	netअगर_stop_queue(netdev);
 
 	/* Stop polling */
 	mcba_urb_unlink(priv);
 
-	close_candev(netdev);
+	बंद_candev(netdev);
 	can_led_event(netdev, CAN_LED_EVENT_STOP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Set network device mode
  *
  * Maybe we should leave this function empty, because the device
- * set mode variable with open command.
+ * set mode variable with खोलो command.
  */
-static int mcba_net_set_mode(struct net_device *netdev, enum can_mode mode)
-{
-	return 0;
-}
+अटल पूर्णांक mcba_net_set_mode(काष्ठा net_device *netdev, क्रमागत can_mode mode)
+अणु
+	वापस 0;
+पूर्ण
 
-static int mcba_net_get_berr_counter(const struct net_device *netdev,
-				     struct can_berr_counter *bec)
-{
-	struct mcba_priv *priv = netdev_priv(netdev);
+अटल पूर्णांक mcba_net_get_berr_counter(स्थिर काष्ठा net_device *netdev,
+				     काष्ठा can_berr_counter *bec)
+अणु
+	काष्ठा mcba_priv *priv = netdev_priv(netdev);
 
 	bec->txerr = priv->bec.txerr;
 	bec->rxerr = priv->bec.rxerr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops mcba_netdev_ops = {
-	.ndo_open = mcba_usb_open,
-	.ndo_stop = mcba_usb_close,
-	.ndo_start_xmit = mcba_usb_start_xmit,
-};
+अटल स्थिर काष्ठा net_device_ops mcba_netdev_ops = अणु
+	.nकरो_खोलो = mcba_usb_खोलो,
+	.nकरो_stop = mcba_usb_बंद,
+	.nकरो_start_xmit = mcba_usb_start_xmit,
+पूर्ण;
 
-/* Microchip CANBUS has hardcoded bittiming values by default.
+/* Microchip CANBUS has hardcoded bittiming values by शेष.
  * This function sends request via USB to change the speed and align bittiming
- * values for presentation purposes only
+ * values क्रम presentation purposes only
  */
-static int mcba_net_set_bittiming(struct net_device *netdev)
-{
-	struct mcba_priv *priv = netdev_priv(netdev);
-	const u16 bitrate_kbps = priv->can.bittiming.bitrate / 1000;
+अटल पूर्णांक mcba_net_set_bittiming(काष्ठा net_device *netdev)
+अणु
+	काष्ठा mcba_priv *priv = netdev_priv(netdev);
+	स्थिर u16 bitrate_kbps = priv->can.bittiming.bitrate / 1000;
 
 	mcba_usb_xmit_change_bitrate(priv, bitrate_kbps);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mcba_set_termination(struct net_device *netdev, u16 term)
-{
-	struct mcba_priv *priv = netdev_priv(netdev);
-	struct mcba_usb_msg_termination usb_msg = {
+अटल पूर्णांक mcba_set_termination(काष्ठा net_device *netdev, u16 term)
+अणु
+	काष्ठा mcba_priv *priv = netdev_priv(netdev);
+	काष्ठा mcba_usb_msg_termination usb_msg = अणु
 		.cmd_id = MBCA_CMD_SETUP_TERMINATION_RESISTANCE
-	};
+	पूर्ण;
 
-	if (term == MCBA_TERMINATION_ENABLED)
+	अगर (term == MCBA_TERMINATION_ENABLED)
 		usb_msg.termination = 1;
-	else
+	अन्यथा
 		usb_msg.termination = 0;
 
-	mcba_usb_xmit_cmd(priv, (struct mcba_usb_msg *)&usb_msg);
+	mcba_usb_xmit_cmd(priv, (काष्ठा mcba_usb_msg *)&usb_msg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mcba_usb_probe(struct usb_interface *intf,
-			  const struct usb_device_id *id)
-{
-	struct net_device *netdev;
-	struct mcba_priv *priv;
-	int err;
-	struct usb_device *usbdev = interface_to_usbdev(intf);
+अटल पूर्णांक mcba_usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			  स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा net_device *netdev;
+	काष्ठा mcba_priv *priv;
+	पूर्णांक err;
+	काष्ठा usb_device *usbdev = पूर्णांकerface_to_usbdev(पूर्णांकf);
 
-	netdev = alloc_candev(sizeof(struct mcba_priv), MCBA_MAX_TX_URBS);
-	if (!netdev) {
-		dev_err(&intf->dev, "Couldn't alloc candev\n");
-		return -ENOMEM;
-	}
+	netdev = alloc_candev(माप(काष्ठा mcba_priv), MCBA_MAX_TX_URBS);
+	अगर (!netdev) अणु
+		dev_err(&पूर्णांकf->dev, "Couldn't alloc candev\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	priv = netdev_priv(netdev);
 
@@ -826,82 +827,82 @@ static int mcba_usb_probe(struct usb_interface *intf,
 	init_usb_anchor(&priv->rx_submitted);
 	init_usb_anchor(&priv->tx_submitted);
 
-	usb_set_intfdata(intf, priv);
+	usb_set_पूर्णांकfdata(पूर्णांकf, priv);
 
 	/* Init CAN device */
 	priv->can.state = CAN_STATE_STOPPED;
-	priv->can.termination_const = mcba_termination;
-	priv->can.termination_const_cnt = ARRAY_SIZE(mcba_termination);
-	priv->can.bitrate_const = mcba_bitrate;
-	priv->can.bitrate_const_cnt = ARRAY_SIZE(mcba_bitrate);
+	priv->can.termination_स्थिर = mcba_termination;
+	priv->can.termination_स्थिर_cnt = ARRAY_SIZE(mcba_termination);
+	priv->can.bitrate_स्थिर = mcba_bitrate;
+	priv->can.bitrate_स्थिर_cnt = ARRAY_SIZE(mcba_bitrate);
 
-	priv->can.do_set_termination = mcba_set_termination;
-	priv->can.do_set_mode = mcba_net_set_mode;
-	priv->can.do_get_berr_counter = mcba_net_get_berr_counter;
-	priv->can.do_set_bittiming = mcba_net_set_bittiming;
+	priv->can.करो_set_termination = mcba_set_termination;
+	priv->can.करो_set_mode = mcba_net_set_mode;
+	priv->can.करो_get_berr_counter = mcba_net_get_berr_counter;
+	priv->can.करो_set_bittiming = mcba_net_set_bittiming;
 
 	netdev->netdev_ops = &mcba_netdev_ops;
 
 	netdev->flags |= IFF_ECHO; /* we support local echo */
 
-	SET_NETDEV_DEV(netdev, &intf->dev);
+	SET_NETDEV_DEV(netdev, &पूर्णांकf->dev);
 
-	err = register_candev(netdev);
-	if (err) {
+	err = रेजिस्टर_candev(netdev);
+	अगर (err) अणु
 		netdev_err(netdev, "couldn't register CAN device: %d\n", err);
 
-		goto cleanup_free_candev;
-	}
+		जाओ cleanup_मुक्त_candev;
+	पूर्ण
 
 	devm_can_led_init(netdev);
 
-	/* Start USB dev only if we have successfully registered CAN device */
+	/* Start USB dev only अगर we have successfully रेजिस्टरed CAN device */
 	err = mcba_usb_start(priv);
-	if (err) {
-		if (err == -ENODEV)
-			netif_device_detach(priv->netdev);
+	अगर (err) अणु
+		अगर (err == -ENODEV)
+			netअगर_device_detach(priv->netdev);
 
 		netdev_warn(netdev, "couldn't start device: %d\n", err);
 
-		goto cleanup_unregister_candev;
-	}
+		जाओ cleanup_unरेजिस्टर_candev;
+	पूर्ण
 
-	dev_info(&intf->dev, "Microchip CAN BUS Analyzer connected\n");
+	dev_info(&पूर्णांकf->dev, "Microchip CAN BUS Analyzer connected\n");
 
-	return 0;
+	वापस 0;
 
-cleanup_unregister_candev:
-	unregister_candev(priv->netdev);
+cleanup_unरेजिस्टर_candev:
+	unरेजिस्टर_candev(priv->netdev);
 
-cleanup_free_candev:
-	free_candev(netdev);
+cleanup_मुक्त_candev:
+	मुक्त_candev(netdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Called by the usb core when driver is unloaded or device is removed */
-static void mcba_usb_disconnect(struct usb_interface *intf)
-{
-	struct mcba_priv *priv = usb_get_intfdata(intf);
+/* Called by the usb core when driver is unloaded or device is हटाओd */
+अटल व्योम mcba_usb_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा mcba_priv *priv = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	usb_set_intfdata(intf, NULL);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
 
 	netdev_info(priv->netdev, "device disconnected\n");
 
-	unregister_candev(priv->netdev);
+	unरेजिस्टर_candev(priv->netdev);
 	mcba_urb_unlink(priv);
-	free_candev(priv->netdev);
-}
+	मुक्त_candev(priv->netdev);
+पूर्ण
 
-static struct usb_driver mcba_usb_driver = {
+अटल काष्ठा usb_driver mcba_usb_driver = अणु
 	.name = MCBA_MODULE_NAME,
 	.probe = mcba_usb_probe,
 	.disconnect = mcba_usb_disconnect,
 	.id_table = mcba_usb_table,
-};
+पूर्ण;
 
 module_usb_driver(mcba_usb_driver);
 
-MODULE_AUTHOR("Remigiusz Kołłątaj <remigiusz.kollataj@mobica.com>");
+MODULE_AUTHOR("Remigiusz Koधधदtaj <remigiusz.kollataj@mobica.com>");
 MODULE_DESCRIPTION("SocketCAN driver for Microchip CAN BUS Analyzer Tool");
 MODULE_LICENSE("GPL v2");

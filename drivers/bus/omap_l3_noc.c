@@ -1,138 +1,139 @@
+<शैली गुरु>
 /*
  * OMAP L3 Interconnect error handling driver
  *
  * Copyright (C) 2011-2015 Texas Instruments Incorporated - http://www.ti.com/
  *	Santosh Shilimkar <santosh.shilimkar@ti.com>
- *	Sricharan <r.sricharan@ti.com>
+ *	Sriअक्षरan <r.sriअक्षरan@ti.com>
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "omap_l3_noc.h"
+#समावेश "omap_l3_noc.h"
 
 /**
- * l3_handle_target() - Handle Target specific parse and reporting
- * @l3:		pointer to l3 struct
+ * l3_handle_target() - Handle Target specअगरic parse and reporting
+ * @l3:		poपूर्णांकer to l3 काष्ठा
  * @base:	base address of clkdm
  * @flag_mux:	flagmux corresponding to the event
  * @err_src:	error source index of the slave (target)
  *
- * This does the second part of the error interrupt handling:
- *	3) Parse in the slave information
- *	4) Print the logged information.
+ * This करोes the second part of the error पूर्णांकerrupt handling:
+ *	3) Parse in the slave inक्रमmation
+ *	4) Prपूर्णांक the logged inक्रमmation.
  *	5) Add dump stack to provide kernel trace.
- *	6) Clear the source if known.
+ *	6) Clear the source अगर known.
  *
  * This handles two types of errors:
  *	1) Custom errors in L3 :
  *		Target like DMM/FW/EMIF generates SRESP=ERR error
  *	2) Standard L3 error:
  *		- Unsupported CMD.
- *			L3 tries to access target while it is idle
+ *			L3 tries to access target जबतक it is idle
  *		- OCP disconnect.
  *		- Address hole error:
  *			If DSS/ISS/FDIF/USBHOSTFS access a target where they
- *			do not have connectivity, the error is logged in
- *			their default target which is DMM2.
+ *			करो not have connectivity, the error is logged in
+ *			their शेष target which is DMM2.
  *
  *	On High Secure devices, firewall errors are possible and those
  *	can be trapped as well. But the trapping is implemented as part
  *	secure software and hence need not be implemented here.
  */
-static int l3_handle_target(struct omap_l3 *l3, void __iomem *base,
-			    struct l3_flagmux_data *flag_mux, int err_src)
-{
-	int k;
-	u32 std_err_main, clear, masterid;
+अटल पूर्णांक l3_handle_target(काष्ठा omap_l3 *l3, व्योम __iomem *base,
+			    काष्ठा l3_flagmux_data *flag_mux, पूर्णांक err_src)
+अणु
+	पूर्णांक k;
+	u32 std_err_मुख्य, clear, masterid;
 	u8 op_code, m_req_info;
-	void __iomem *l3_targ_base;
-	void __iomem *l3_targ_stderr, *l3_targ_slvofslsb, *l3_targ_mstaddr;
-	void __iomem *l3_targ_hdr, *l3_targ_info;
-	struct l3_target_data *l3_targ_inst;
-	struct l3_masters_data *master;
-	char *target_name, *master_name = "UN IDENTIFIED";
-	char *err_description;
-	char err_string[30] = { 0 };
-	char info_string[60] = { 0 };
+	व्योम __iomem *l3_targ_base;
+	व्योम __iomem *l3_targ_मानक_त्रुटि, *l3_targ_slvofslsb, *l3_targ_mstaddr;
+	व्योम __iomem *l3_targ_hdr, *l3_targ_info;
+	काष्ठा l3_target_data *l3_targ_inst;
+	काष्ठा l3_masters_data *master;
+	अक्षर *target_name, *master_name = "UN IDENTIFIED";
+	अक्षर *err_description;
+	अक्षर err_string[30] = अणु 0 पूर्ण;
+	अक्षर info_string[60] = अणु 0 पूर्ण;
 
 	/* We DONOT expect err_src to go out of bounds */
 	BUG_ON(err_src > MAX_CLKDM_TARGETS);
 
-	if (err_src < flag_mux->num_targ_data) {
+	अगर (err_src < flag_mux->num_targ_data) अणु
 		l3_targ_inst = &flag_mux->l3_targ[err_src];
 		target_name = l3_targ_inst->name;
 		l3_targ_base = base + l3_targ_inst->offset;
-	} else {
+	पूर्ण अन्यथा अणु
 		target_name = L3_TARGET_NOT_SUPPORTED;
-	}
+	पूर्ण
 
-	if (target_name == L3_TARGET_NOT_SUPPORTED)
-		return -ENODEV;
+	अगर (target_name == L3_TARGET_NOT_SUPPORTED)
+		वापस -ENODEV;
 
-	/* Read the stderrlog_main_source from clk domain */
-	l3_targ_stderr = l3_targ_base + L3_TARG_STDERRLOG_MAIN;
+	/* Read the मानक_त्रुटिlog_मुख्य_source from clk करोमुख्य */
+	l3_targ_मानक_त्रुटि = l3_targ_base + L3_TARG_STDERRLOG_MAIN;
 	l3_targ_slvofslsb = l3_targ_base + L3_TARG_STDERRLOG_SLVOFSLSB;
 
-	std_err_main = readl_relaxed(l3_targ_stderr);
+	std_err_मुख्य = पढ़ोl_relaxed(l3_targ_मानक_त्रुटि);
 
-	switch (std_err_main & CUSTOM_ERROR) {
-	case STANDARD_ERROR:
+	चयन (std_err_मुख्य & CUSTOM_ERROR) अणु
+	हाल STANDARD_ERROR:
 		err_description = "Standard";
-		snprintf(err_string, sizeof(err_string),
+		snम_लिखो(err_string, माप(err_string),
 			 ": At Address: 0x%08X ",
-			 readl_relaxed(l3_targ_slvofslsb));
+			 पढ़ोl_relaxed(l3_targ_slvofslsb));
 
 		l3_targ_mstaddr = l3_targ_base + L3_TARG_STDERRLOG_MSTADDR;
 		l3_targ_hdr = l3_targ_base + L3_TARG_STDERRLOG_HDR;
 		l3_targ_info = l3_targ_base + L3_TARG_STDERRLOG_INFO;
-		break;
+		अवरोध;
 
-	case CUSTOM_ERROR:
+	हाल CUSTOM_ERROR:
 		err_description = "Custom";
 
 		l3_targ_mstaddr = l3_targ_base +
 				  L3_TARG_STDERRLOG_CINFO_MSTADDR;
 		l3_targ_hdr = l3_targ_base + L3_TARG_STDERRLOG_CINFO_OPCODE;
 		l3_targ_info = l3_targ_base + L3_TARG_STDERRLOG_CINFO_INFO;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* Nothing to be handled here as of now */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* STDERRLOG_MSTADDR Stores the NTTP master address. */
-	masterid = (readl_relaxed(l3_targ_mstaddr) &
+	masterid = (पढ़ोl_relaxed(l3_targ_mstaddr) &
 		    l3->mst_addr_mask) >> __ffs(l3->mst_addr_mask);
 
-	for (k = 0, master = l3->l3_masters; k < l3->num_masters;
-	     k++, master++) {
-		if (masterid == master->id) {
+	क्रम (k = 0, master = l3->l3_masters; k < l3->num_masters;
+	     k++, master++) अणु
+		अगर (masterid == master->id) अणु
 			master_name = master->name;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	op_code = readl_relaxed(l3_targ_hdr) & 0x7;
+	op_code = पढ़ोl_relaxed(l3_targ_hdr) & 0x7;
 
-	m_req_info = readl_relaxed(l3_targ_info) & 0xF;
-	snprintf(info_string, sizeof(info_string),
+	m_req_info = पढ़ोl_relaxed(l3_targ_info) & 0xF;
+	snम_लिखो(info_string, माप(info_string),
 		 ": %s in %s mode during %s access",
 		 (m_req_info & BIT(0)) ? "Opcode Fetch" : "Data Access",
 		 (m_req_info & BIT(1)) ? "Supervisor" : "User",
@@ -147,234 +148,234 @@ static int l3_handle_target(struct omap_l3 *l3, void __iomem *base,
 	     err_string, info_string);
 
 	/* clear the std error log*/
-	clear = std_err_main | CLEAR_STDERR_LOG;
-	writel_relaxed(clear, l3_targ_stderr);
+	clear = std_err_मुख्य | CLEAR_STDERR_LOG;
+	ग_लिखोl_relaxed(clear, l3_targ_मानक_त्रुटि);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * l3_interrupt_handler() - interrupt handler for l3 events
+ * l3_पूर्णांकerrupt_handler() - पूर्णांकerrupt handler क्रम l3 events
  * @irq:	irq number
- * @_l3:	pointer to l3 structure
+ * @_l3:	poपूर्णांकer to l3 काष्ठाure
  *
- * Interrupt Handler for L3 error detection.
- *	1) Identify the L3 clockdomain partition to which the error belongs to.
- *	2) Identify the slave where the error information is logged
+ * Interrupt Handler क्रम L3 error detection.
+ *	1) Identअगरy the L3 घड़ीकरोमुख्य partition to which the error beदीर्घs to.
+ *	2) Identअगरy the slave where the error inक्रमmation is logged
  *	... handle the slave event..
- *	7) if the slave is unknown, mask out the slave.
+ *	7) अगर the slave is unknown, mask out the slave.
  */
-static irqreturn_t l3_interrupt_handler(int irq, void *_l3)
-{
-	struct omap_l3 *l3 = _l3;
-	int inttype, i, ret;
-	int err_src = 0;
+अटल irqवापस_t l3_पूर्णांकerrupt_handler(पूर्णांक irq, व्योम *_l3)
+अणु
+	काष्ठा omap_l3 *l3 = _l3;
+	पूर्णांक पूर्णांकtype, i, ret;
+	पूर्णांक err_src = 0;
 	u32 err_reg, mask_val;
-	void __iomem *base, *mask_reg;
-	struct l3_flagmux_data *flag_mux;
+	व्योम __iomem *base, *mask_reg;
+	काष्ठा l3_flagmux_data *flag_mux;
 
-	/* Get the Type of interrupt */
-	inttype = irq == l3->app_irq ? L3_APPLICATION_ERROR : L3_DEBUG_ERROR;
+	/* Get the Type of पूर्णांकerrupt */
+	पूर्णांकtype = irq == l3->app_irq ? L3_APPLICATION_ERROR : L3_DEBUG_ERROR;
 
-	for (i = 0; i < l3->num_modules; i++) {
+	क्रम (i = 0; i < l3->num_modules; i++) अणु
 		/*
-		 * Read the regerr register of the clock domain
+		 * Read the regerr रेजिस्टर of the घड़ी करोमुख्य
 		 * to determine the source
 		 */
 		base = l3->l3_base[i];
 		flag_mux = l3->l3_flagmux[i];
-		err_reg = readl_relaxed(base + flag_mux->offset +
-					L3_FLAGMUX_REGERR0 + (inttype << 3));
+		err_reg = पढ़ोl_relaxed(base + flag_mux->offset +
+					L3_FLAGMUX_REGERR0 + (पूर्णांकtype << 3));
 
-		err_reg &= ~(inttype ? flag_mux->mask_app_bits :
+		err_reg &= ~(पूर्णांकtype ? flag_mux->mask_app_bits :
 				flag_mux->mask_dbg_bits);
 
 		/* Get the corresponding error and analyse */
-		if (err_reg) {
-			/* Identify the source from control status register */
+		अगर (err_reg) अणु
+			/* Identअगरy the source from control status रेजिस्टर */
 			err_src = __ffs(err_reg);
 
 			ret = l3_handle_target(l3, base, flag_mux, err_src);
 
 			/*
-			 * Certain plaforms may have "undocumented" status
-			 * pending on boot. So dont generate a severe warning
+			 * Certain plaक्रमms may have "undocumented" status
+			 * pending on boot. So करोnt generate a severe warning
 			 * here. Just mask it off to prevent the error from
-			 * reoccuring and locking up the system.
+			 * reoccuring and locking up the प्रणाली.
 			 */
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(l3->dev,
 					"L3 %s error: target %d mod:%d %s\n",
-					inttype ? "debug" : "application",
+					पूर्णांकtype ? "debug" : "application",
 					err_src, i, "(unclearable)");
 
 				mask_reg = base + flag_mux->offset +
-					   L3_FLAGMUX_MASK0 + (inttype << 3);
-				mask_val = readl_relaxed(mask_reg);
+					   L3_FLAGMUX_MASK0 + (पूर्णांकtype << 3);
+				mask_val = पढ़ोl_relaxed(mask_reg);
 				mask_val &= ~(1 << err_src);
-				writel_relaxed(mask_val, mask_reg);
+				ग_लिखोl_relaxed(mask_val, mask_reg);
 
 				/* Mark these bits as to be ignored */
-				if (inttype)
+				अगर (पूर्णांकtype)
 					flag_mux->mask_app_bits |= 1 << err_src;
-				else
+				अन्यथा
 					flag_mux->mask_dbg_bits |= 1 << err_src;
-			}
+			पूर्ण
 
-			/* Error found so break the for loop */
-			return IRQ_HANDLED;
-		}
-	}
+			/* Error found so अवरोध the क्रम loop */
+			वापस IRQ_HANDLED;
+		पूर्ण
+	पूर्ण
 
 	dev_err(l3->dev, "L3 %s IRQ not handled!!\n",
-		inttype ? "debug" : "application");
+		पूर्णांकtype ? "debug" : "application");
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static const struct of_device_id l3_noc_match[] = {
-	{.compatible = "ti,omap4-l3-noc", .data = &omap4_l3_data},
-	{.compatible = "ti,omap5-l3-noc", .data = &omap5_l3_data},
-	{.compatible = "ti,dra7-l3-noc", .data = &dra_l3_data},
-	{.compatible = "ti,am4372-l3-noc", .data = &am4372_l3_data},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id l3_noc_match[] = अणु
+	अणु.compatible = "ti,omap4-l3-noc", .data = &omap4_l3_dataपूर्ण,
+	अणु.compatible = "ti,omap5-l3-noc", .data = &omap5_l3_dataपूर्ण,
+	अणु.compatible = "ti,dra7-l3-noc", .data = &dra_l3_dataपूर्ण,
+	अणु.compatible = "ti,am4372-l3-noc", .data = &am4372_l3_dataपूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, l3_noc_match);
 
-static int omap_l3_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *of_id;
-	static struct omap_l3 *l3;
-	int ret, i, res_idx;
+अटल पूर्णांक omap_l3_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *of_id;
+	अटल काष्ठा omap_l3 *l3;
+	पूर्णांक ret, i, res_idx;
 
 	of_id = of_match_device(l3_noc_match, &pdev->dev);
-	if (!of_id) {
+	अगर (!of_id) अणु
 		dev_err(&pdev->dev, "OF data missing\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	l3 = devm_kzalloc(&pdev->dev, sizeof(*l3), GFP_KERNEL);
-	if (!l3)
-		return -ENOMEM;
+	l3 = devm_kzalloc(&pdev->dev, माप(*l3), GFP_KERNEL);
+	अगर (!l3)
+		वापस -ENOMEM;
 
-	memcpy(l3, of_id->data, sizeof(*l3));
+	स_नकल(l3, of_id->data, माप(*l3));
 	l3->dev = &pdev->dev;
-	platform_set_drvdata(pdev, l3);
+	platक्रमm_set_drvdata(pdev, l3);
 
 	/* Get mem resources */
-	for (i = 0, res_idx = 0; i < l3->num_modules; i++) {
-		struct resource	*res;
+	क्रम (i = 0, res_idx = 0; i < l3->num_modules; i++) अणु
+		काष्ठा resource	*res;
 
-		if (l3->l3_base[i] == L3_BASE_IS_SUBMODULE) {
+		अगर (l3->l3_base[i] == L3_BASE_IS_SUBMODULE) अणु
 			/* First entry cannot be submodule */
 			BUG_ON(i == 0);
 			l3->l3_base[i] = l3->l3_base[i - 1];
-			continue;
-		}
-		res = platform_get_resource(pdev, IORESOURCE_MEM, res_idx);
+			जारी;
+		पूर्ण
+		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, res_idx);
 		l3->l3_base[i] = devm_ioremap_resource(&pdev->dev, res);
-		if (IS_ERR(l3->l3_base[i])) {
+		अगर (IS_ERR(l3->l3_base[i])) अणु
 			dev_err(l3->dev, "ioremap %d failed\n", i);
-			return PTR_ERR(l3->l3_base[i]);
-		}
+			वापस PTR_ERR(l3->l3_base[i]);
+		पूर्ण
 		res_idx++;
-	}
+	पूर्ण
 
 	/*
-	 * Setup interrupt Handlers
+	 * Setup पूर्णांकerrupt Handlers
 	 */
-	l3->debug_irq = platform_get_irq(pdev, 0);
-	ret = devm_request_irq(l3->dev, l3->debug_irq, l3_interrupt_handler,
+	l3->debug_irq = platक्रमm_get_irq(pdev, 0);
+	ret = devm_request_irq(l3->dev, l3->debug_irq, l3_पूर्णांकerrupt_handler,
 			       IRQF_NO_THREAD, "l3-dbg-irq", l3);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(l3->dev, "request_irq failed for %d\n",
 			l3->debug_irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	l3->app_irq = platform_get_irq(pdev, 1);
-	ret = devm_request_irq(l3->dev, l3->app_irq, l3_interrupt_handler,
+	l3->app_irq = platक्रमm_get_irq(pdev, 1);
+	ret = devm_request_irq(l3->dev, l3->app_irq, l3_पूर्णांकerrupt_handler,
 			       IRQF_NO_THREAD, "l3-app-irq", l3);
-	if (ret)
+	अगर (ret)
 		dev_err(l3->dev, "request_irq failed for %d\n", l3->app_irq);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef	CONFIG_PM_SLEEP
+#अगर_घोषित	CONFIG_PM_SLEEP
 
 /**
- * l3_resume_noirq() - resume function for l3_noc
- * @dev:	pointer to l3_noc device structure
+ * l3_resume_noirq() - resume function क्रम l3_noc
+ * @dev:	poपूर्णांकer to l3_noc device काष्ठाure
  *
  * We only have the resume handler only since we
- * have already maintained the delta register
- * configuration as part of configuring the system
+ * have alपढ़ोy मुख्यtained the delta रेजिस्टर
+ * configuration as part of configuring the प्रणाली
  */
-static int l3_resume_noirq(struct device *dev)
-{
-	struct omap_l3 *l3 = dev_get_drvdata(dev);
-	int i;
-	struct l3_flagmux_data *flag_mux;
-	void __iomem *base, *mask_regx = NULL;
+अटल पूर्णांक l3_resume_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा omap_l3 *l3 = dev_get_drvdata(dev);
+	पूर्णांक i;
+	काष्ठा l3_flagmux_data *flag_mux;
+	व्योम __iomem *base, *mask_regx = शून्य;
 	u32 mask_val;
 
-	for (i = 0; i < l3->num_modules; i++) {
+	क्रम (i = 0; i < l3->num_modules; i++) अणु
 		base = l3->l3_base[i];
 		flag_mux = l3->l3_flagmux[i];
-		if (!flag_mux->mask_app_bits && !flag_mux->mask_dbg_bits)
-			continue;
+		अगर (!flag_mux->mask_app_bits && !flag_mux->mask_dbg_bits)
+			जारी;
 
 		mask_regx = base + flag_mux->offset + L3_FLAGMUX_MASK0 +
 			   (L3_APPLICATION_ERROR << 3);
-		mask_val = readl_relaxed(mask_regx);
+		mask_val = पढ़ोl_relaxed(mask_regx);
 		mask_val &= ~(flag_mux->mask_app_bits);
 
-		writel_relaxed(mask_val, mask_regx);
+		ग_लिखोl_relaxed(mask_val, mask_regx);
 		mask_regx = base + flag_mux->offset + L3_FLAGMUX_MASK0 +
 			   (L3_DEBUG_ERROR << 3);
-		mask_val = readl_relaxed(mask_regx);
+		mask_val = पढ़ोl_relaxed(mask_regx);
 		mask_val &= ~(flag_mux->mask_dbg_bits);
 
-		writel_relaxed(mask_val, mask_regx);
-	}
+		ग_लिखोl_relaxed(mask_val, mask_regx);
+	पूर्ण
 
-	/* Dummy read to force OCP barrier */
-	if (mask_regx)
-		(void)readl(mask_regx);
+	/* Dummy पढ़ो to क्रमce OCP barrier */
+	अगर (mask_regx)
+		(व्योम)पढ़ोl(mask_regx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops l3_dev_pm_ops = {
-	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(NULL, l3_resume_noirq)
-};
+अटल स्थिर काष्ठा dev_pm_ops l3_dev_pm_ops = अणु
+	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(शून्य, l3_resume_noirq)
+पूर्ण;
 
-#define L3_DEV_PM_OPS (&l3_dev_pm_ops)
-#else
-#define L3_DEV_PM_OPS NULL
-#endif
+#घोषणा L3_DEV_PM_OPS (&l3_dev_pm_ops)
+#अन्यथा
+#घोषणा L3_DEV_PM_OPS शून्य
+#पूर्ण_अगर
 
-static struct platform_driver omap_l3_driver = {
+अटल काष्ठा platक्रमm_driver omap_l3_driver = अणु
 	.probe		= omap_l3_probe,
-	.driver		= {
+	.driver		= अणु
 		.name		= "omap_l3_noc",
 		.pm		= L3_DEV_PM_OPS,
 		.of_match_table = of_match_ptr(l3_noc_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init omap_l3_init(void)
-{
-	return platform_driver_register(&omap_l3_driver);
-}
+अटल पूर्णांक __init omap_l3_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&omap_l3_driver);
+पूर्ण
 postcore_initcall_sync(omap_l3_init);
 
-static void __exit omap_l3_exit(void)
-{
-	platform_driver_unregister(&omap_l3_driver);
-}
-module_exit(omap_l3_exit);
+अटल व्योम __निकास omap_l3_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&omap_l3_driver);
+पूर्ण
+module_निकास(omap_l3_निकास);
 
 MODULE_AUTHOR("Santosh Shilimkar");
 MODULE_AUTHOR("Sricharan R");

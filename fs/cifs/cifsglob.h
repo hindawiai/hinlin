@@ -1,11 +1,12 @@
+<शैली गुरु>
 /*
- *   fs/cifs/cifsglob.h
+ *   fs/cअगरs/cअगरsglob.h
  *
  *   Copyright (C) International Business Machines  Corp., 2002,2008
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *              Jeremy Allison (jra@samba.org)
  *
- *   This library is free software; you can redistribute it and/or modify
+ *   This library is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -13,532 +14,532 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License for more details.
+ *   the GNU Lesser General Public License क्रम more details.
  *
  */
-#ifndef _CIFS_GLOB_H
-#define _CIFS_GLOB_H
+#अगर_अघोषित _CIFS_GLOB_H
+#घोषणा _CIFS_GLOB_H
 
-#include <linux/in.h>
-#include <linux/in6.h>
-#include <linux/inet.h>
-#include <linux/slab.h>
-#include <linux/mempool.h>
-#include <linux/workqueue.h>
-#include "cifs_fs_sb.h"
-#include "cifsacl.h"
-#include <crypto/internal/hash.h>
-#include <linux/scatterlist.h>
-#include <uapi/linux/cifs/cifs_mount.h>
-#include "smb2pdu.h"
+#समावेश <linux/in.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/workqueue.h>
+#समावेश "cifs_fs_sb.h"
+#समावेश "cifsacl.h"
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <uapi/linux/cअगरs/cअगरs_mount.h>
+#समावेश "smb2pdu.h"
 
-#define CIFS_MAGIC_NUMBER 0xFF534D42      /* the first four bytes of SMB PDUs */
+#घोषणा CIFS_MAGIC_NUMBER 0xFF534D42      /* the first four bytes of SMB PDUs */
 
-#define SMB_PATH_MAX 260
-#define CIFS_PORT 445
-#define RFC1001_PORT 139
-
-/*
- * The sizes of various internal tables and strings
- */
-#define MAX_UID_INFO 16
-#define MAX_SES_INFO 2
-#define MAX_TCON_INFO 4
-
-#define MAX_TREE_SIZE (2 + CIFS_NI_MAXHOST + 1 + CIFS_MAX_SHARE_LEN + 1)
-
-#define CIFS_MIN_RCV_POOL 4
-
-#define MAX_REOPEN_ATT	5 /* these many maximum attempts to reopen a file */
-/*
- * default attribute cache timeout (jiffies)
- */
-#define CIFS_DEF_ACTIMEO (1 * HZ)
+#घोषणा SMB_PATH_MAX 260
+#घोषणा CIFS_PORT 445
+#घोषणा RFC1001_PORT 139
 
 /*
- * max attribute cache timeout (jiffies) - 2^30
+ * The sizes of various पूर्णांकernal tables and strings
  */
-#define CIFS_MAX_ACTIMEO (1 << 30)
+#घोषणा MAX_UID_INFO 16
+#घोषणा MAX_SES_INFO 2
+#घोषणा MAX_TCON_INFO 4
+
+#घोषणा MAX_TREE_SIZE (2 + CIFS_NI_MAXHOST + 1 + CIFS_MAX_SHARE_LEN + 1)
+
+#घोषणा CIFS_MIN_RCV_POOL 4
+
+#घोषणा MAX_REOPEN_ATT	5 /* these many maximum attempts to reखोलो a file */
+/*
+ * शेष attribute cache समयout (jअगरfies)
+ */
+#घोषणा CIFS_DEF_ACTIMEO (1 * HZ)
 
 /*
- * Max persistent and resilient handle timeout (milliseconds).
- * Windows durable max was 960000 (16 minutes)
+ * max attribute cache समयout (jअगरfies) - 2^30
  */
-#define SMB3_MAX_HANDLE_TIMEOUT 960000
+#घोषणा CIFS_MAX_ACTIMEO (1 << 30)
+
+/*
+ * Max persistent and resilient handle समयout (milliseconds).
+ * Winकरोws durable max was 960000 (16 minutes)
+ */
+#घोषणा SMB3_MAX_HANDLE_TIMEOUT 960000
 
 /*
  * MAX_REQ is the maximum number of requests that WE will send
  * on one socket concurrently.
  */
-#define CIFS_MAX_REQ 32767
+#घोषणा CIFS_MAX_REQ 32767
 
-#define RFC1001_NAME_LEN 15
-#define RFC1001_NAME_LEN_WITH_NULL (RFC1001_NAME_LEN + 1)
+#घोषणा RFC1001_NAME_LEN 15
+#घोषणा RFC1001_NAME_LEN_WITH_शून्य (RFC1001_NAME_LEN + 1)
 
 /* maximum length of ip addr as a string (including ipv6 and sctp) */
-#define SERVER_NAME_LENGTH 80
-#define SERVER_NAME_LEN_WITH_NULL     (SERVER_NAME_LENGTH + 1)
+#घोषणा SERVER_NAME_LENGTH 80
+#घोषणा SERVER_NAME_LEN_WITH_शून्य     (SERVER_NAME_LENGTH + 1)
 
-/* echo interval in seconds */
-#define SMB_ECHO_INTERVAL_MIN 1
-#define SMB_ECHO_INTERVAL_MAX 600
-#define SMB_ECHO_INTERVAL_DEFAULT 60
+/* echo पूर्णांकerval in seconds */
+#घोषणा SMB_ECHO_INTERVAL_MIN 1
+#घोषणा SMB_ECHO_INTERVAL_MAX 600
+#घोषणा SMB_ECHO_INTERVAL_DEFAULT 60
 
 /* maximum number of PDUs in one compound */
-#define MAX_COMPOUND 5
+#घोषणा MAX_COMPOUND 5
 
 /*
- * Default number of credits to keep available for SMB3.
- * This value is chosen somewhat arbitrarily. The Windows client
- * defaults to 128 credits, the Windows server allows clients up to
- * 512 credits (or 8K for later versions), and the NetApp server
- * does not limit clients at all.  Choose a high enough default value
- * such that the client shouldn't limit performance, but allow mount
+ * Default number of credits to keep available क्रम SMB3.
+ * This value is chosen somewhat arbitrarily. The Winकरोws client
+ * शेषs to 128 credits, the Winकरोws server allows clients up to
+ * 512 credits (or 8K क्रम later versions), and the NetApp server
+ * करोes not limit clients at all.  Choose a high enough शेष value
+ * such that the client shouldn't limit perक्रमmance, but allow mount
  * to override (until you approach 64K, where we limit credits to 65000
  * to reduce possibility of seeing more server credit overflow bugs.
  */
-#define SMB2_MAX_CREDITS_AVAILABLE 32000
+#घोषणा SMB2_MAX_CREDITS_AVAILABLE 32000
 
-#include "cifspdu.h"
+#समावेश "cifspdu.h"
 
-#ifndef XATTR_DOS_ATTRIB
-#define XATTR_DOS_ATTRIB "user.DOSATTRIB"
-#endif
+#अगर_अघोषित XATTR_DOS_ATTRIB
+#घोषणा XATTR_DOS_ATTRIB "user.DOSATTRIB"
+#पूर्ण_अगर
 
 /*
- * CIFS vfs client Status information (based on what we know.)
+ * CIFS vfs client Status inक्रमmation (based on what we know.)
  */
 
 /* associated with each tcp and smb session */
-enum statusEnum {
-	CifsNew = 0,
-	CifsGood,
-	CifsExiting,
-	CifsNeedReconnect,
-	CifsNeedNegotiate
-};
+क्रमागत statusEnum अणु
+	CअगरsNew = 0,
+	CअगरsGood,
+	CअगरsExiting,
+	CअगरsNeedReconnect,
+	CअगरsNeedNegotiate
+पूर्ण;
 
-enum securityEnum {
-	Unspecified = 0,	/* not specified */
+क्रमागत securityEnum अणु
+	Unspecअगरied = 0,	/* not specअगरied */
 	LANMAN,			/* Legacy LANMAN auth */
 	NTLM,			/* Legacy NTLM012 auth with NTLM hash */
 	NTLMv2,			/* Legacy NTLM auth with NTLMv2 hash */
 	RawNTLMSSP,		/* NTLMSSP without SPNEGO, NTLMv2 hash */
 	Kerberos,		/* Kerberos via SPNEGO */
-};
+पूर्ण;
 
-struct session_key {
-	unsigned int len;
-	char *response;
-};
+काष्ठा session_key अणु
+	अचिन्हित पूर्णांक len;
+	अक्षर *response;
+पूर्ण;
 
 /* crypto security descriptor definition */
-struct sdesc {
-	struct shash_desc shash;
-	char ctx[];
-};
+काष्ठा sdesc अणु
+	काष्ठा shash_desc shash;
+	अक्षर ctx[];
+पूर्ण;
 
-/* crypto hashing related structure/fields, not specific to a sec mech */
-struct cifs_secmech {
-	struct crypto_shash *hmacmd5; /* hmac-md5 hash function */
-	struct crypto_shash *md5; /* md5 hash function */
-	struct crypto_shash *hmacsha256; /* hmac-sha256 hash function */
-	struct crypto_shash *cmacaes; /* block-cipher based MAC function */
-	struct crypto_shash *sha512; /* sha512 hash function */
-	struct sdesc *sdeschmacmd5;  /* ctxt to generate ntlmv2 hash, CR1 */
-	struct sdesc *sdescmd5; /* ctxt to generate cifs/smb signature */
-	struct sdesc *sdeschmacsha256;  /* ctxt to generate smb2 signature */
-	struct sdesc *sdesccmacaes;  /* ctxt to generate smb3 signature */
-	struct sdesc *sdescsha512; /* ctxt to generate smb3.11 signing key */
-	struct crypto_aead *ccmaesencrypt; /* smb3 encryption aead */
-	struct crypto_aead *ccmaesdecrypt; /* smb3 decryption aead */
-};
+/* crypto hashing related काष्ठाure/fields, not specअगरic to a sec mech */
+काष्ठा cअगरs_secmech अणु
+	काष्ठा crypto_shash *hmacmd5; /* hmac-md5 hash function */
+	काष्ठा crypto_shash *md5; /* md5 hash function */
+	काष्ठा crypto_shash *hmacsha256; /* hmac-sha256 hash function */
+	काष्ठा crypto_shash *cmacaes; /* block-cipher based MAC function */
+	काष्ठा crypto_shash *sha512; /* sha512 hash function */
+	काष्ठा sdesc *sdeschmacmd5;  /* ctxt to generate ntlmv2 hash, CR1 */
+	काष्ठा sdesc *sdescmd5; /* ctxt to generate cअगरs/smb signature */
+	काष्ठा sdesc *sdeschmacsha256;  /* ctxt to generate smb2 signature */
+	काष्ठा sdesc *sdesccmacaes;  /* ctxt to generate smb3 signature */
+	काष्ठा sdesc *sdescsha512; /* ctxt to generate smb3.11 signing key */
+	काष्ठा crypto_aead *ccmaesencrypt; /* smb3 encryption aead */
+	काष्ठा crypto_aead *ccmaesdecrypt; /* smb3 decryption aead */
+पूर्ण;
 
-/* per smb session structure/fields */
-struct ntlmssp_auth {
+/* per smb session काष्ठाure/fields */
+काष्ठा ntlmssp_auth अणु
 	bool sesskey_per_smbsess; /* whether session key is per smb session */
 	__u32 client_flags; /* sent by client in type 1 ntlmsssp exchange */
 	__u32 server_flags; /* sent by server in type 2 ntlmssp exchange */
-	unsigned char ciphertext[CIFS_CPHTXT_SIZE]; /* sent to server */
-	char cryptkey[CIFS_CRYPTO_KEY_SIZE]; /* used by ntlmssp */
-};
+	अचिन्हित अक्षर ciphertext[CIFS_CPHTXT_SIZE]; /* sent to server */
+	अक्षर cryptkey[CIFS_CRYPTO_KEY_SIZE]; /* used by ntlmssp */
+पूर्ण;
 
-struct cifs_cred {
-	int uid;
-	int gid;
-	int mode;
-	int cecount;
-	struct cifs_sid osid;
-	struct cifs_sid gsid;
-	struct cifs_ntace *ntaces;
-	struct cifs_ace *aces;
-};
+काष्ठा cअगरs_cred अणु
+	पूर्णांक uid;
+	पूर्णांक gid;
+	पूर्णांक mode;
+	पूर्णांक cecount;
+	काष्ठा cअगरs_sid osid;
+	काष्ठा cअगरs_sid gsid;
+	काष्ठा cअगरs_ntace *ntaces;
+	काष्ठा cअगरs_ace *aces;
+पूर्ण;
 
 /*
  *****************************************************************
  * Except the CIFS PDUs themselves all the
- * globally interesting structs should go here
+ * globally पूर्णांकeresting काष्ठाs should go here
  *****************************************************************
  */
 
 /*
  * A smb_rqst represents a complete request to be issued to a server. It's
- * formed by a kvec array, followed by an array of pages. Page data is assumed
+ * क्रमmed by a kvec array, followed by an array of pages. Page data is assumed
  * to start at the beginning of the first page.
  */
-struct smb_rqst {
-	struct kvec	*rq_iov;	/* array of kvecs */
-	unsigned int	rq_nvec;	/* number of kvecs in array */
-	struct page	**rq_pages;	/* pointer to array of page ptrs */
-	unsigned int	rq_offset;	/* the offset to the 1st page */
-	unsigned int	rq_npages;	/* number pages in array */
-	unsigned int	rq_pagesz;	/* page size to use */
-	unsigned int	rq_tailsz;	/* length of last page */
-};
+काष्ठा smb_rqst अणु
+	काष्ठा kvec	*rq_iov;	/* array of kvecs */
+	अचिन्हित पूर्णांक	rq_nvec;	/* number of kvecs in array */
+	काष्ठा page	**rq_pages;	/* poपूर्णांकer to array of page ptrs */
+	अचिन्हित पूर्णांक	rq_offset;	/* the offset to the 1st page */
+	अचिन्हित पूर्णांक	rq_npages;	/* number pages in array */
+	अचिन्हित पूर्णांक	rq_pagesz;	/* page size to use */
+	अचिन्हित पूर्णांक	rq_tailsz;	/* length of last page */
+पूर्ण;
 
-struct mid_q_entry;
-struct TCP_Server_Info;
-struct cifsFileInfo;
-struct cifs_ses;
-struct cifs_tcon;
-struct dfs_info3_param;
-struct cifs_fattr;
-struct smb3_fs_context;
-struct cifs_fid;
-struct cifs_readdata;
-struct cifs_writedata;
-struct cifs_io_parms;
-struct cifs_search_info;
-struct cifsInodeInfo;
-struct cifs_open_parms;
-struct cifs_credits;
+काष्ठा mid_q_entry;
+काष्ठा TCP_Server_Info;
+काष्ठा cअगरsFileInfo;
+काष्ठा cअगरs_ses;
+काष्ठा cअगरs_tcon;
+काष्ठा dfs_info3_param;
+काष्ठा cअगरs_fattr;
+काष्ठा smb3_fs_context;
+काष्ठा cअगरs_fid;
+काष्ठा cअगरs_पढ़ोdata;
+काष्ठा cअगरs_ग_लिखोdata;
+काष्ठा cअगरs_io_parms;
+काष्ठा cअगरs_search_info;
+काष्ठा cअगरsInodeInfo;
+काष्ठा cअगरs_खोलो_parms;
+काष्ठा cअगरs_credits;
 
-struct smb_version_operations {
-	int (*send_cancel)(struct TCP_Server_Info *, struct smb_rqst *,
-			   struct mid_q_entry *);
-	bool (*compare_fids)(struct cifsFileInfo *, struct cifsFileInfo *);
+काष्ठा smb_version_operations अणु
+	पूर्णांक (*send_cancel)(काष्ठा TCP_Server_Info *, काष्ठा smb_rqst *,
+			   काष्ठा mid_q_entry *);
+	bool (*compare_fids)(काष्ठा cअगरsFileInfo *, काष्ठा cअगरsFileInfo *);
 	/* setup request: allocate mid, sign message */
-	struct mid_q_entry *(*setup_request)(struct cifs_ses *,
-					     struct TCP_Server_Info *,
-					     struct smb_rqst *);
+	काष्ठा mid_q_entry *(*setup_request)(काष्ठा cअगरs_ses *,
+					     काष्ठा TCP_Server_Info *,
+					     काष्ठा smb_rqst *);
 	/* setup async request: allocate mid, sign message */
-	struct mid_q_entry *(*setup_async_request)(struct TCP_Server_Info *,
-						struct smb_rqst *);
-	/* check response: verify signature, map error */
-	int (*check_receive)(struct mid_q_entry *, struct TCP_Server_Info *,
+	काष्ठा mid_q_entry *(*setup_async_request)(काष्ठा TCP_Server_Info *,
+						काष्ठा smb_rqst *);
+	/* check response: verअगरy signature, map error */
+	पूर्णांक (*check_receive)(काष्ठा mid_q_entry *, काष्ठा TCP_Server_Info *,
 			     bool);
-	void (*add_credits)(struct TCP_Server_Info *server,
-			    const struct cifs_credits *credits,
-			    const int optype);
-	void (*set_credits)(struct TCP_Server_Info *, const int);
-	int * (*get_credits_field)(struct TCP_Server_Info *, const int);
-	unsigned int (*get_credits)(struct mid_q_entry *);
-	__u64 (*get_next_mid)(struct TCP_Server_Info *);
-	void (*revert_current_mid)(struct TCP_Server_Info *server,
-				   const unsigned int val);
-	/* data offset from read response message */
-	unsigned int (*read_data_offset)(char *);
+	व्योम (*add_credits)(काष्ठा TCP_Server_Info *server,
+			    स्थिर काष्ठा cअगरs_credits *credits,
+			    स्थिर पूर्णांक optype);
+	व्योम (*set_credits)(काष्ठा TCP_Server_Info *, स्थिर पूर्णांक);
+	पूर्णांक * (*get_credits_field)(काष्ठा TCP_Server_Info *, स्थिर पूर्णांक);
+	अचिन्हित पूर्णांक (*get_credits)(काष्ठा mid_q_entry *);
+	__u64 (*get_next_mid)(काष्ठा TCP_Server_Info *);
+	व्योम (*revert_current_mid)(काष्ठा TCP_Server_Info *server,
+				   स्थिर अचिन्हित पूर्णांक val);
+	/* data offset from पढ़ो response message */
+	अचिन्हित पूर्णांक (*पढ़ो_data_offset)(अक्षर *);
 	/*
-	 * Data length from read response message
-	 * When in_remaining is true, the returned data length is in
-	 * message field DataRemaining for out-of-band data read (e.g through
-	 * Memory Registration RDMA write in SMBD).
-	 * Otherwise, the returned data length is in message field DataLength.
+	 * Data length from पढ़ो response message
+	 * When in_reमुख्यing is true, the वापसed data length is in
+	 * message field DataReमुख्यing क्रम out-of-band data पढ़ो (e.g through
+	 * Memory Registration RDMA ग_लिखो in SMBD).
+	 * Otherwise, the वापसed data length is in message field DataLength.
 	 */
-	unsigned int (*read_data_length)(char *, bool in_remaining);
+	अचिन्हित पूर्णांक (*पढ़ो_data_length)(अक्षर *, bool in_reमुख्यing);
 	/* map smb to linux error */
-	int (*map_error)(char *, bool);
+	पूर्णांक (*map_error)(अक्षर *, bool);
 	/* find mid corresponding to the response message */
-	struct mid_q_entry * (*find_mid)(struct TCP_Server_Info *, char *);
-	void (*dump_detail)(void *buf, struct TCP_Server_Info *ptcp_info);
-	void (*clear_stats)(struct cifs_tcon *);
-	void (*print_stats)(struct seq_file *m, struct cifs_tcon *);
-	void (*dump_share_caps)(struct seq_file *, struct cifs_tcon *);
-	/* verify the message */
-	int (*check_message)(char *, unsigned int, struct TCP_Server_Info *);
-	bool (*is_oplock_break)(char *, struct TCP_Server_Info *);
-	int (*handle_cancelled_mid)(struct mid_q_entry *, struct TCP_Server_Info *);
-	void (*downgrade_oplock)(struct TCP_Server_Info *server,
-				 struct cifsInodeInfo *cinode, __u32 oplock,
-				 unsigned int epoch, bool *purge_cache);
+	काष्ठा mid_q_entry * (*find_mid)(काष्ठा TCP_Server_Info *, अक्षर *);
+	व्योम (*dump_detail)(व्योम *buf, काष्ठा TCP_Server_Info *ptcp_info);
+	व्योम (*clear_stats)(काष्ठा cअगरs_tcon *);
+	व्योम (*prपूर्णांक_stats)(काष्ठा seq_file *m, काष्ठा cअगरs_tcon *);
+	व्योम (*dump_share_caps)(काष्ठा seq_file *, काष्ठा cअगरs_tcon *);
+	/* verअगरy the message */
+	पूर्णांक (*check_message)(अक्षर *, अचिन्हित पूर्णांक, काष्ठा TCP_Server_Info *);
+	bool (*is_oplock_अवरोध)(अक्षर *, काष्ठा TCP_Server_Info *);
+	पूर्णांक (*handle_cancelled_mid)(काष्ठा mid_q_entry *, काष्ठा TCP_Server_Info *);
+	व्योम (*करोwngrade_oplock)(काष्ठा TCP_Server_Info *server,
+				 काष्ठा cअगरsInodeInfo *cinode, __u32 oplock,
+				 अचिन्हित पूर्णांक epoch, bool *purge_cache);
 	/* process transaction2 response */
-	bool (*check_trans2)(struct mid_q_entry *, struct TCP_Server_Info *,
-			     char *, int);
-	/* check if we need to negotiate */
-	bool (*need_neg)(struct TCP_Server_Info *);
+	bool (*check_trans2)(काष्ठा mid_q_entry *, काष्ठा TCP_Server_Info *,
+			     अक्षर *, पूर्णांक);
+	/* check अगर we need to negotiate */
+	bool (*need_neg)(काष्ठा TCP_Server_Info *);
 	/* negotiate to the server */
-	int (*negotiate)(const unsigned int, struct cifs_ses *);
-	/* set negotiated write size */
-	unsigned int (*negotiate_wsize)(struct cifs_tcon *tcon, struct smb3_fs_context *ctx);
-	/* set negotiated read size */
-	unsigned int (*negotiate_rsize)(struct cifs_tcon *tcon, struct smb3_fs_context *ctx);
+	पूर्णांक (*negotiate)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_ses *);
+	/* set negotiated ग_लिखो size */
+	अचिन्हित पूर्णांक (*negotiate_wsize)(काष्ठा cअगरs_tcon *tcon, काष्ठा smb3_fs_context *ctx);
+	/* set negotiated पढ़ो size */
+	अचिन्हित पूर्णांक (*negotiate_rsize)(काष्ठा cअगरs_tcon *tcon, काष्ठा smb3_fs_context *ctx);
 	/* setup smb sessionn */
-	int (*sess_setup)(const unsigned int, struct cifs_ses *,
-			  const struct nls_table *);
-	/* close smb session */
-	int (*logoff)(const unsigned int, struct cifs_ses *);
+	पूर्णांक (*sess_setup)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_ses *,
+			  स्थिर काष्ठा nls_table *);
+	/* बंद smb session */
+	पूर्णांक (*logoff)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_ses *);
 	/* connect to a server share */
-	int (*tree_connect)(const unsigned int, struct cifs_ses *, const char *,
-			    struct cifs_tcon *, const struct nls_table *);
-	/* close tree connecion */
-	int (*tree_disconnect)(const unsigned int, struct cifs_tcon *);
+	पूर्णांक (*tree_connect)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_ses *, स्थिर अक्षर *,
+			    काष्ठा cअगरs_tcon *, स्थिर काष्ठा nls_table *);
+	/* बंद tree connecion */
+	पूर्णांक (*tree_disconnect)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *);
 	/* get DFS referrals */
-	int (*get_dfs_refer)(const unsigned int, struct cifs_ses *,
-			     const char *, struct dfs_info3_param **,
-			     unsigned int *, const struct nls_table *, int);
-	/* informational QFS call */
-	void (*qfs_tcon)(const unsigned int, struct cifs_tcon *,
-			 struct cifs_sb_info *);
-	/* check if a path is accessible or not */
-	int (*is_path_accessible)(const unsigned int, struct cifs_tcon *,
-				  struct cifs_sb_info *, const char *);
+	पूर्णांक (*get_dfs_refer)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_ses *,
+			     स्थिर अक्षर *, काष्ठा dfs_info3_param **,
+			     अचिन्हित पूर्णांक *, स्थिर काष्ठा nls_table *, पूर्णांक);
+	/* inक्रमmational QFS call */
+	व्योम (*qfs_tcon)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+			 काष्ठा cअगरs_sb_info *);
+	/* check अगर a path is accessible or not */
+	पूर्णांक (*is_path_accessible)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+				  काष्ठा cअगरs_sb_info *, स्थिर अक्षर *);
 	/* query path data from the server */
-	int (*query_path_info)(const unsigned int, struct cifs_tcon *,
-			       struct cifs_sb_info *, const char *,
-			       FILE_ALL_INFO *, bool *, bool *);
+	पूर्णांक (*query_path_info)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+			       काष्ठा cअगरs_sb_info *, स्थिर अक्षर *,
+			       खाता_ALL_INFO *, bool *, bool *);
 	/* query file data from the server */
-	int (*query_file_info)(const unsigned int, struct cifs_tcon *,
-			       struct cifs_fid *, FILE_ALL_INFO *);
+	पूर्णांक (*query_file_info)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+			       काष्ठा cअगरs_fid *, खाता_ALL_INFO *);
 	/* query reparse tag from srv to determine which type of special file */
-	int (*query_reparse_tag)(const unsigned int xid, struct cifs_tcon *tcon,
-				struct cifs_sb_info *cifs_sb, const char *path,
+	पूर्णांक (*query_reparse_tag)(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+				काष्ठा cअगरs_sb_info *cअगरs_sb, स्थिर अक्षर *path,
 				__u32 *reparse_tag);
 	/* get server index number */
-	int (*get_srv_inum)(const unsigned int, struct cifs_tcon *,
-			    struct cifs_sb_info *, const char *,
-			    u64 *uniqueid, FILE_ALL_INFO *);
+	पूर्णांक (*get_srv_inum)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+			    काष्ठा cअगरs_sb_info *, स्थिर अक्षर *,
+			    u64 *uniqueid, खाता_ALL_INFO *);
 	/* set size by path */
-	int (*set_path_size)(const unsigned int, struct cifs_tcon *,
-			     const char *, __u64, struct cifs_sb_info *, bool);
+	पूर्णांक (*set_path_size)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+			     स्थिर अक्षर *, __u64, काष्ठा cअगरs_sb_info *, bool);
 	/* set size by file handle */
-	int (*set_file_size)(const unsigned int, struct cifs_tcon *,
-			     struct cifsFileInfo *, __u64, bool);
+	पूर्णांक (*set_file_size)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+			     काष्ठा cअगरsFileInfo *, __u64, bool);
 	/* set attributes */
-	int (*set_file_info)(struct inode *, const char *, FILE_BASIC_INFO *,
-			     const unsigned int);
-	int (*set_compression)(const unsigned int, struct cifs_tcon *,
-			       struct cifsFileInfo *);
-	/* check if we can send an echo or nor */
-	bool (*can_echo)(struct TCP_Server_Info *);
+	पूर्णांक (*set_file_info)(काष्ठा inode *, स्थिर अक्षर *, खाता_BASIC_INFO *,
+			     स्थिर अचिन्हित पूर्णांक);
+	पूर्णांक (*set_compression)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+			       काष्ठा cअगरsFileInfo *);
+	/* check अगर we can send an echo or nor */
+	bool (*can_echo)(काष्ठा TCP_Server_Info *);
 	/* send echo request */
-	int (*echo)(struct TCP_Server_Info *);
+	पूर्णांक (*echo)(काष्ठा TCP_Server_Info *);
 	/* create directory */
-	int (*posix_mkdir)(const unsigned int xid, struct inode *inode,
-			umode_t mode, struct cifs_tcon *tcon,
-			const char *full_path,
-			struct cifs_sb_info *cifs_sb);
-	int (*mkdir)(const unsigned int xid, struct inode *inode, umode_t mode,
-		     struct cifs_tcon *tcon, const char *name,
-		     struct cifs_sb_info *sb);
+	पूर्णांक (*posix_सूची_गढ़ो)(स्थिर अचिन्हित पूर्णांक xid, काष्ठा inode *inode,
+			umode_t mode, काष्ठा cअगरs_tcon *tcon,
+			स्थिर अक्षर *full_path,
+			काष्ठा cअगरs_sb_info *cअगरs_sb);
+	पूर्णांक (*सूची_गढ़ो)(स्थिर अचिन्हित पूर्णांक xid, काष्ठा inode *inode, umode_t mode,
+		     काष्ठा cअगरs_tcon *tcon, स्थिर अक्षर *name,
+		     काष्ठा cअगरs_sb_info *sb);
 	/* set info on created directory */
-	void (*mkdir_setinfo)(struct inode *, const char *,
-			      struct cifs_sb_info *, struct cifs_tcon *,
-			      const unsigned int);
-	/* remove directory */
-	int (*rmdir)(const unsigned int, struct cifs_tcon *, const char *,
-		     struct cifs_sb_info *);
+	व्योम (*सूची_गढ़ो_setinfo)(काष्ठा inode *, स्थिर अक्षर *,
+			      काष्ठा cअगरs_sb_info *, काष्ठा cअगरs_tcon *,
+			      स्थिर अचिन्हित पूर्णांक);
+	/* हटाओ directory */
+	पूर्णांक (*सूची_हटाओ)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *, स्थिर अक्षर *,
+		     काष्ठा cअगरs_sb_info *);
 	/* unlink file */
-	int (*unlink)(const unsigned int, struct cifs_tcon *, const char *,
-		      struct cifs_sb_info *);
-	/* open, rename and delete file */
-	int (*rename_pending_delete)(const char *, struct dentry *,
-				     const unsigned int);
-	/* send rename request */
-	int (*rename)(const unsigned int, struct cifs_tcon *, const char *,
-		      const char *, struct cifs_sb_info *);
+	पूर्णांक (*unlink)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *, स्थिर अक्षर *,
+		      काष्ठा cअगरs_sb_info *);
+	/* खोलो, नाम and delete file */
+	पूर्णांक (*नाम_pending_delete)(स्थिर अक्षर *, काष्ठा dentry *,
+				     स्थिर अचिन्हित पूर्णांक);
+	/* send नाम request */
+	पूर्णांक (*नाम)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *, स्थिर अक्षर *,
+		      स्थिर अक्षर *, काष्ठा cअगरs_sb_info *);
 	/* send create hardlink request */
-	int (*create_hardlink)(const unsigned int, struct cifs_tcon *,
-			       const char *, const char *,
-			       struct cifs_sb_info *);
+	पूर्णांक (*create_hardlink)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+			       स्थिर अक्षर *, स्थिर अक्षर *,
+			       काष्ठा cअगरs_sb_info *);
 	/* query symlink target */
-	int (*query_symlink)(const unsigned int, struct cifs_tcon *,
-			     struct cifs_sb_info *, const char *,
-			     char **, bool);
-	/* open a file for non-posix mounts */
-	int (*open)(const unsigned int, struct cifs_open_parms *,
-		    __u32 *, FILE_ALL_INFO *);
-	/* set fid protocol-specific info */
-	void (*set_fid)(struct cifsFileInfo *, struct cifs_fid *, __u32);
-	/* close a file */
-	void (*close)(const unsigned int, struct cifs_tcon *,
-		      struct cifs_fid *);
-	/* close a file, returning file attributes and timestamps */
-	void (*close_getattr)(const unsigned int xid, struct cifs_tcon *tcon,
-		      struct cifsFileInfo *pfile_info);
+	पूर्णांक (*query_symlink)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+			     काष्ठा cअगरs_sb_info *, स्थिर अक्षर *,
+			     अक्षर **, bool);
+	/* खोलो a file क्रम non-posix mounts */
+	पूर्णांक (*खोलो)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_खोलो_parms *,
+		    __u32 *, खाता_ALL_INFO *);
+	/* set fid protocol-specअगरic info */
+	व्योम (*set_fid)(काष्ठा cअगरsFileInfo *, काष्ठा cअगरs_fid *, __u32);
+	/* बंद a file */
+	व्योम (*बंद)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+		      काष्ठा cअगरs_fid *);
+	/* बंद a file, वापसing file attributes and बारtamps */
+	व्योम (*बंद_getattr)(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+		      काष्ठा cअगरsFileInfo *pfile_info);
 	/* send a flush request to the server */
-	int (*flush)(const unsigned int, struct cifs_tcon *, struct cifs_fid *);
-	/* async read from the server */
-	int (*async_readv)(struct cifs_readdata *);
-	/* async write to the server */
-	int (*async_writev)(struct cifs_writedata *,
-			    void (*release)(struct kref *));
-	/* sync read from the server */
-	int (*sync_read)(const unsigned int, struct cifs_fid *,
-			 struct cifs_io_parms *, unsigned int *, char **,
-			 int *);
-	/* sync write to the server */
-	int (*sync_write)(const unsigned int, struct cifs_fid *,
-			  struct cifs_io_parms *, unsigned int *, struct kvec *,
-			  unsigned long);
-	/* open dir, start readdir */
-	int (*query_dir_first)(const unsigned int, struct cifs_tcon *,
-			       const char *, struct cifs_sb_info *,
-			       struct cifs_fid *, __u16,
-			       struct cifs_search_info *);
-	/* continue readdir */
-	int (*query_dir_next)(const unsigned int, struct cifs_tcon *,
-			      struct cifs_fid *,
-			      __u16, struct cifs_search_info *srch_inf);
-	/* close dir */
-	int (*close_dir)(const unsigned int, struct cifs_tcon *,
-			 struct cifs_fid *);
+	पूर्णांक (*flush)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *, काष्ठा cअगरs_fid *);
+	/* async पढ़ो from the server */
+	पूर्णांक (*async_पढ़ोv)(काष्ठा cअगरs_पढ़ोdata *);
+	/* async ग_लिखो to the server */
+	पूर्णांक (*async_ग_लिखोv)(काष्ठा cअगरs_ग_लिखोdata *,
+			    व्योम (*release)(काष्ठा kref *));
+	/* sync पढ़ो from the server */
+	पूर्णांक (*sync_पढ़ो)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_fid *,
+			 काष्ठा cअगरs_io_parms *, अचिन्हित पूर्णांक *, अक्षर **,
+			 पूर्णांक *);
+	/* sync ग_लिखो to the server */
+	पूर्णांक (*sync_ग_लिखो)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_fid *,
+			  काष्ठा cअगरs_io_parms *, अचिन्हित पूर्णांक *, काष्ठा kvec *,
+			  अचिन्हित दीर्घ);
+	/* खोलो dir, start सूची_पढ़ो */
+	पूर्णांक (*query_dir_first)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+			       स्थिर अक्षर *, काष्ठा cअगरs_sb_info *,
+			       काष्ठा cअगरs_fid *, __u16,
+			       काष्ठा cअगरs_search_info *);
+	/* जारी सूची_पढ़ो */
+	पूर्णांक (*query_dir_next)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+			      काष्ठा cअगरs_fid *,
+			      __u16, काष्ठा cअगरs_search_info *srch_inf);
+	/* बंद dir */
+	पूर्णांक (*बंद_dir)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+			 काष्ठा cअगरs_fid *);
 	/* calculate a size of SMB message */
-	unsigned int (*calc_smb_size)(void *buf, struct TCP_Server_Info *ptcpi);
-	/* check for STATUS_PENDING and process the response if yes */
-	bool (*is_status_pending)(char *buf, struct TCP_Server_Info *server);
-	/* check for STATUS_NETWORK_SESSION_EXPIRED */
-	bool (*is_session_expired)(char *);
-	/* send oplock break response */
-	int (*oplock_response)(struct cifs_tcon *, struct cifs_fid *,
-			       struct cifsInodeInfo *);
-	/* query remote filesystem */
-	int (*queryfs)(const unsigned int, struct cifs_tcon *,
-		       struct cifs_sb_info *, struct kstatfs *);
+	अचिन्हित पूर्णांक (*calc_smb_size)(व्योम *buf, काष्ठा TCP_Server_Info *ptcpi);
+	/* check क्रम STATUS_PENDING and process the response अगर yes */
+	bool (*is_status_pending)(अक्षर *buf, काष्ठा TCP_Server_Info *server);
+	/* check क्रम STATUS_NETWORK_SESSION_EXPIRED */
+	bool (*is_session_expired)(अक्षर *);
+	/* send oplock अवरोध response */
+	पूर्णांक (*oplock_response)(काष्ठा cअगरs_tcon *, काष्ठा cअगरs_fid *,
+			       काष्ठा cअगरsInodeInfo *);
+	/* query remote fileप्रणाली */
+	पूर्णांक (*queryfs)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+		       काष्ठा cअगरs_sb_info *, काष्ठा kstatfs *);
 	/* send mandatory brlock to the server */
-	int (*mand_lock)(const unsigned int, struct cifsFileInfo *, __u64,
-			 __u64, __u32, int, int, bool);
+	पूर्णांक (*mand_lock)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरsFileInfo *, __u64,
+			 __u64, __u32, पूर्णांक, पूर्णांक, bool);
 	/* unlock range of mandatory locks */
-	int (*mand_unlock_range)(struct cifsFileInfo *, struct file_lock *,
-				 const unsigned int);
+	पूर्णांक (*mand_unlock_range)(काष्ठा cअगरsFileInfo *, काष्ठा file_lock *,
+				 स्थिर अचिन्हित पूर्णांक);
 	/* push brlocks from the cache to the server */
-	int (*push_mand_locks)(struct cifsFileInfo *);
+	पूर्णांक (*push_mand_locks)(काष्ठा cअगरsFileInfo *);
 	/* get lease key of the inode */
-	void (*get_lease_key)(struct inode *, struct cifs_fid *);
+	व्योम (*get_lease_key)(काष्ठा inode *, काष्ठा cअगरs_fid *);
 	/* set lease key of the inode */
-	void (*set_lease_key)(struct inode *, struct cifs_fid *);
+	व्योम (*set_lease_key)(काष्ठा inode *, काष्ठा cअगरs_fid *);
 	/* generate new lease key */
-	void (*new_lease_key)(struct cifs_fid *);
-	int (*generate_signingkey)(struct cifs_ses *);
-	int (*calc_signature)(struct smb_rqst *, struct TCP_Server_Info *,
+	व्योम (*new_lease_key)(काष्ठा cअगरs_fid *);
+	पूर्णांक (*generate_signingkey)(काष्ठा cअगरs_ses *);
+	पूर्णांक (*calc_signature)(काष्ठा smb_rqst *, काष्ठा TCP_Server_Info *,
 				bool allocate_crypto);
-	int (*set_integrity)(const unsigned int, struct cifs_tcon *tcon,
-			     struct cifsFileInfo *src_file);
-	int (*enum_snapshots)(const unsigned int xid, struct cifs_tcon *tcon,
-			     struct cifsFileInfo *src_file, void __user *);
-	int (*notify)(const unsigned int xid, struct file *pfile,
-			     void __user *pbuf);
-	int (*query_mf_symlink)(unsigned int, struct cifs_tcon *,
-				struct cifs_sb_info *, const unsigned char *,
-				char *, unsigned int *);
-	int (*create_mf_symlink)(unsigned int, struct cifs_tcon *,
-				 struct cifs_sb_info *, const unsigned char *,
-				 char *, unsigned int *);
-	/* if we can do cache read operations */
-	bool (*is_read_op)(__u32);
-	/* set oplock level for the inode */
-	void (*set_oplock_level)(struct cifsInodeInfo *, __u32, unsigned int,
+	पूर्णांक (*set_पूर्णांकegrity)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *tcon,
+			     काष्ठा cअगरsFileInfo *src_file);
+	पूर्णांक (*क्रमागत_snapshots)(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+			     काष्ठा cअगरsFileInfo *src_file, व्योम __user *);
+	पूर्णांक (*notअगरy)(स्थिर अचिन्हित पूर्णांक xid, काष्ठा file *pfile,
+			     व्योम __user *pbuf);
+	पूर्णांक (*query_mf_symlink)(अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+				काष्ठा cअगरs_sb_info *, स्थिर अचिन्हित अक्षर *,
+				अक्षर *, अचिन्हित पूर्णांक *);
+	पूर्णांक (*create_mf_symlink)(अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+				 काष्ठा cअगरs_sb_info *, स्थिर अचिन्हित अक्षर *,
+				 अक्षर *, अचिन्हित पूर्णांक *);
+	/* अगर we can करो cache पढ़ो operations */
+	bool (*is_पढ़ो_op)(__u32);
+	/* set oplock level क्रम the inode */
+	व्योम (*set_oplock_level)(काष्ठा cअगरsInodeInfo *, __u32, अचिन्हित पूर्णांक,
 				 bool *);
-	/* create lease context buffer for CREATE request */
-	char * (*create_lease_buf)(u8 *lease_key, u8 oplock);
-	/* parse lease context buffer and return oplock/epoch info */
-	__u8 (*parse_lease_buf)(void *buf, unsigned int *epoch, char *lkey);
-	ssize_t (*copychunk_range)(const unsigned int,
-			struct cifsFileInfo *src_file,
-			struct cifsFileInfo *target_file,
+	/* create lease context buffer क्रम CREATE request */
+	अक्षर * (*create_lease_buf)(u8 *lease_key, u8 oplock);
+	/* parse lease context buffer and वापस oplock/epoch info */
+	__u8 (*parse_lease_buf)(व्योम *buf, अचिन्हित पूर्णांक *epoch, अक्षर *lkey);
+	sमाप_प्रकार (*copychunk_range)(स्थिर अचिन्हित पूर्णांक,
+			काष्ठा cअगरsFileInfo *src_file,
+			काष्ठा cअगरsFileInfo *target_file,
 			u64 src_off, u64 len, u64 dest_off);
-	int (*duplicate_extents)(const unsigned int, struct cifsFileInfo *src,
-			struct cifsFileInfo *target_file, u64 src_off, u64 len,
+	पूर्णांक (*duplicate_extents)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरsFileInfo *src,
+			काष्ठा cअगरsFileInfo *target_file, u64 src_off, u64 len,
 			u64 dest_off);
-	int (*validate_negotiate)(const unsigned int, struct cifs_tcon *);
-	ssize_t (*query_all_EAs)(const unsigned int, struct cifs_tcon *,
-			const unsigned char *, const unsigned char *, char *,
-			size_t, struct cifs_sb_info *);
-	int (*set_EA)(const unsigned int, struct cifs_tcon *, const char *,
-			const char *, const void *, const __u16,
-			const struct nls_table *, struct cifs_sb_info *);
-	struct cifs_ntsd * (*get_acl)(struct cifs_sb_info *, struct inode *,
-			const char *, u32 *, u32);
-	struct cifs_ntsd * (*get_acl_by_fid)(struct cifs_sb_info *,
-			const struct cifs_fid *, u32 *, u32);
-	int (*set_acl)(struct cifs_ntsd *, __u32, struct inode *, const char *,
-			int);
-	/* writepages retry size */
-	unsigned int (*wp_retry_size)(struct inode *);
+	पूर्णांक (*validate_negotiate)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *);
+	sमाप_प्रकार (*query_all_EAs)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *,
+			स्थिर अचिन्हित अक्षर *, स्थिर अचिन्हित अक्षर *, अक्षर *,
+			माप_प्रकार, काष्ठा cअगरs_sb_info *);
+	पूर्णांक (*set_EA)(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *, स्थिर अक्षर *,
+			स्थिर अक्षर *, स्थिर व्योम *, स्थिर __u16,
+			स्थिर काष्ठा nls_table *, काष्ठा cअगरs_sb_info *);
+	काष्ठा cअगरs_ntsd * (*get_acl)(काष्ठा cअगरs_sb_info *, काष्ठा inode *,
+			स्थिर अक्षर *, u32 *, u32);
+	काष्ठा cअगरs_ntsd * (*get_acl_by_fid)(काष्ठा cअगरs_sb_info *,
+			स्थिर काष्ठा cअगरs_fid *, u32 *, u32);
+	पूर्णांक (*set_acl)(काष्ठा cअगरs_ntsd *, __u32, काष्ठा inode *, स्थिर अक्षर *,
+			पूर्णांक);
+	/* ग_लिखोpages retry size */
+	अचिन्हित पूर्णांक (*wp_retry_size)(काष्ठा inode *);
 	/* get mtu credits */
-	int (*wait_mtu_credits)(struct TCP_Server_Info *, unsigned int,
-				unsigned int *, struct cifs_credits *);
+	पूर्णांक (*रुको_mtu_credits)(काष्ठा TCP_Server_Info *, अचिन्हित पूर्णांक,
+				अचिन्हित पूर्णांक *, काष्ठा cअगरs_credits *);
 	/* adjust previously taken mtu credits to request size */
-	int (*adjust_credits)(struct TCP_Server_Info *server,
-			      struct cifs_credits *credits,
-			      const unsigned int payload_size);
-	/* check if we need to issue closedir */
-	bool (*dir_needs_close)(struct cifsFileInfo *);
-	long (*fallocate)(struct file *, struct cifs_tcon *, int, loff_t,
+	पूर्णांक (*adjust_credits)(काष्ठा TCP_Server_Info *server,
+			      काष्ठा cअगरs_credits *credits,
+			      स्थिर अचिन्हित पूर्णांक payload_size);
+	/* check अगर we need to issue बंद_सूची */
+	bool (*dir_needs_बंद)(काष्ठा cअगरsFileInfo *);
+	दीर्घ (*fallocate)(काष्ठा file *, काष्ठा cअगरs_tcon *, पूर्णांक, loff_t,
 			  loff_t);
-	/* init transform request - used for encryption for now */
-	int (*init_transform_rq)(struct TCP_Server_Info *, int num_rqst,
-				 struct smb_rqst *, struct smb_rqst *);
-	int (*is_transform_hdr)(void *buf);
-	int (*receive_transform)(struct TCP_Server_Info *,
-				 struct mid_q_entry **, char **, int *);
-	enum securityEnum (*select_sectype)(struct TCP_Server_Info *,
-			    enum securityEnum);
-	int (*next_header)(char *);
-	/* ioctl passthrough for query_info */
-	int (*ioctl_query_info)(const unsigned int xid,
-				struct cifs_tcon *tcon,
-				struct cifs_sb_info *cifs_sb,
-				__le16 *path, int is_dir,
-				unsigned long p);
-	/* make unix special files (block, char, fifo, socket) */
-	int (*make_node)(unsigned int xid,
-			 struct inode *inode,
-			 struct dentry *dentry,
-			 struct cifs_tcon *tcon,
-			 const char *full_path,
+	/* init transक्रमm request - used क्रम encryption क्रम now */
+	पूर्णांक (*init_transक्रमm_rq)(काष्ठा TCP_Server_Info *, पूर्णांक num_rqst,
+				 काष्ठा smb_rqst *, काष्ठा smb_rqst *);
+	पूर्णांक (*is_transक्रमm_hdr)(व्योम *buf);
+	पूर्णांक (*receive_transक्रमm)(काष्ठा TCP_Server_Info *,
+				 काष्ठा mid_q_entry **, अक्षर **, पूर्णांक *);
+	क्रमागत securityEnum (*select_sectype)(काष्ठा TCP_Server_Info *,
+			    क्रमागत securityEnum);
+	पूर्णांक (*next_header)(अक्षर *);
+	/* ioctl passthrough क्रम query_info */
+	पूर्णांक (*ioctl_query_info)(स्थिर अचिन्हित पूर्णांक xid,
+				काष्ठा cअगरs_tcon *tcon,
+				काष्ठा cअगरs_sb_info *cअगरs_sb,
+				__le16 *path, पूर्णांक is_dir,
+				अचिन्हित दीर्घ p);
+	/* make unix special files (block, अक्षर, fअगरo, socket) */
+	पूर्णांक (*make_node)(अचिन्हित पूर्णांक xid,
+			 काष्ठा inode *inode,
+			 काष्ठा dentry *dentry,
+			 काष्ठा cअगरs_tcon *tcon,
+			 स्थिर अक्षर *full_path,
 			 umode_t mode,
 			 dev_t device_number);
-	/* version specific fiemap implementation */
-	int (*fiemap)(struct cifs_tcon *tcon, struct cifsFileInfo *,
-		      struct fiemap_extent_info *, u64, u64);
-	/* version specific llseek implementation */
-	loff_t (*llseek)(struct file *, struct cifs_tcon *, loff_t, int);
-	/* Check for STATUS_IO_TIMEOUT */
-	bool (*is_status_io_timeout)(char *buf);
-	/* Check for STATUS_NETWORK_NAME_DELETED */
-	void (*is_network_name_deleted)(char *buf, struct TCP_Server_Info *srv);
-};
+	/* version specअगरic fiemap implementation */
+	पूर्णांक (*fiemap)(काष्ठा cअगरs_tcon *tcon, काष्ठा cअगरsFileInfo *,
+		      काष्ठा fiemap_extent_info *, u64, u64);
+	/* version specअगरic llseek implementation */
+	loff_t (*llseek)(काष्ठा file *, काष्ठा cअगरs_tcon *, loff_t, पूर्णांक);
+	/* Check क्रम STATUS_IO_TIMEOUT */
+	bool (*is_status_io_समयout)(अक्षर *buf);
+	/* Check क्रम STATUS_NETWORK_NAME_DELETED */
+	व्योम (*is_network_name_deleted)(अक्षर *buf, काष्ठा TCP_Server_Info *srv);
+पूर्ण;
 
-struct smb_version_values {
-	char		*version_string;
+काष्ठा smb_version_values अणु
+	अक्षर		*version_string;
 	__u16		protocol_id;
 	__u32		req_capabilities;
 	__u32		large_lock_type;
 	__u32		exclusive_lock_type;
 	__u32		shared_lock_type;
 	__u32		unlock_lock_type;
-	size_t		header_preamble_size;
-	size_t		header_size;
-	size_t		max_header_size;
-	size_t		read_rsp_size;
+	माप_प्रकार		header_preamble_size;
+	माप_प्रकार		header_size;
+	माप_प्रकार		max_header_size;
+	माप_प्रकार		पढ़ो_rsp_size;
 	__le16		lock_cmd;
-	unsigned int	cap_unix;
-	unsigned int	cap_nt_find;
-	unsigned int	cap_large_files;
+	अचिन्हित पूर्णांक	cap_unix;
+	अचिन्हित पूर्णांक	cap_nt_find;
+	अचिन्हित पूर्णांक	cap_large_files;
 	__u16		signing_enabled;
 	__u16		signing_required;
-	size_t		create_lease_size;
-};
+	माप_प्रकार		create_lease_size;
+पूर्ण;
 
-#define HEADER_SIZE(server) (server->vals->header_size)
-#define MAX_HEADER_SIZE(server) (server->vals->max_header_size)
+#घोषणा HEADER_SIZE(server) (server->vals->header_size)
+#घोषणा MAX_HEADER_SIZE(server) (server->vals->max_header_size)
 
 /**
- * CIFS superblock mount flags (mnt_cifs_flags) to consider when
- * trying to reuse existing superblock for a new mount
+ * CIFS superblock mount flags (mnt_cअगरs_flags) to consider when
+ * trying to reuse existing superblock क्रम a new mount
  */
-#define CIFS_MOUNT_MASK (CIFS_MOUNT_NO_PERM | CIFS_MOUNT_SET_UID | \
-			 CIFS_MOUNT_SERVER_INUM | CIFS_MOUNT_DIRECT_IO | \
+#घोषणा CIFS_MOUNT_MASK (CIFS_MOUNT_NO_PERM | CIFS_MOUNT_SET_UID | \
+			 CIFS_MOUNT_SERVER_INUM | CIFS_MOUNT_सूचीECT_IO | \
 			 CIFS_MOUNT_NO_XATTR | CIFS_MOUNT_MAP_SPECIAL_CHR | \
 			 CIFS_MOUNT_MAP_SFM_CHR | \
 			 CIFS_MOUNT_UNX_EMUL | CIFS_MOUNT_NO_BRL | \
@@ -554,95 +555,95 @@ struct smb_version_values {
 
 /**
  * Generic VFS superblock mount flags (s_flags) to consider when
- * trying to reuse existing superblock for a new mount
+ * trying to reuse existing superblock क्रम a new mount
  */
-#define CIFS_MS_MASK (SB_RDONLY | SB_MANDLOCK | SB_NOEXEC | SB_NOSUID | \
+#घोषणा CIFS_MS_MASK (SB_RDONLY | SB_MANDLOCK | SB_NOEXEC | SB_NOSUID | \
 		      SB_NODEV | SB_SYNCHRONOUS)
 
-struct cifs_mnt_data {
-	struct cifs_sb_info *cifs_sb;
-	struct smb3_fs_context *ctx;
-	int flags;
-};
+काष्ठा cअगरs_mnt_data अणु
+	काष्ठा cअगरs_sb_info *cअगरs_sb;
+	काष्ठा smb3_fs_context *ctx;
+	पूर्णांक flags;
+पूर्ण;
 
-static inline unsigned int
-get_rfc1002_length(void *buf)
-{
-	return be32_to_cpu(*((__be32 *)buf)) & 0xffffff;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक
+get_rfc1002_length(व्योम *buf)
+अणु
+	वापस be32_to_cpu(*((__be32 *)buf)) & 0xffffff;
+पूर्ण
 
-static inline void
-inc_rfc1001_len(void *buf, int count)
-{
+अटल अंतरभूत व्योम
+inc_rfc1001_len(व्योम *buf, पूर्णांक count)
+अणु
 	be32_add_cpu((__be32 *)buf, count);
-}
+पूर्ण
 
-struct TCP_Server_Info {
-	struct list_head tcp_ses_list;
-	struct list_head smb_ses_list;
-	__u64 conn_id; /* connection identifier (useful for debugging) */
-	int srv_count; /* reference counter */
-	/* 15 character server name + 0x20 16th byte indicating type = srv */
-	char server_RFC1001_name[RFC1001_NAME_LEN_WITH_NULL];
-	struct smb_version_operations	*ops;
-	struct smb_version_values	*vals;
-	enum statusEnum tcpStatus; /* what we think the status is */
-	char *hostname; /* hostname portion of UNC string */
-	struct socket *ssocket;
-	struct sockaddr_storage dstaddr;
-	struct sockaddr_storage srcaddr; /* locally bind to this IP */
-#ifdef CONFIG_NET_NS
-	struct net *net;
-#endif
-	wait_queue_head_t response_q;
-	wait_queue_head_t request_q; /* if more than maxmpx to srvr must block*/
-	struct list_head pending_mid_q;
+काष्ठा TCP_Server_Info अणु
+	काष्ठा list_head tcp_ses_list;
+	काष्ठा list_head smb_ses_list;
+	__u64 conn_id; /* connection identअगरier (useful क्रम debugging) */
+	पूर्णांक srv_count; /* reference counter */
+	/* 15 अक्षरacter server name + 0x20 16th byte indicating type = srv */
+	अक्षर server_RFC1001_name[RFC1001_NAME_LEN_WITH_शून्य];
+	काष्ठा smb_version_operations	*ops;
+	काष्ठा smb_version_values	*vals;
+	क्रमागत statusEnum tcpStatus; /* what we think the status is */
+	अक्षर *hostname; /* hostname portion of UNC string */
+	काष्ठा socket *ssocket;
+	काष्ठा sockaddr_storage dstaddr;
+	काष्ठा sockaddr_storage srcaddr; /* locally bind to this IP */
+#अगर_घोषित CONFIG_NET_NS
+	काष्ठा net *net;
+#पूर्ण_अगर
+	रुको_queue_head_t response_q;
+	रुको_queue_head_t request_q; /* अगर more than maxmpx to srvr must block*/
+	काष्ठा list_head pending_mid_q;
 	bool noblocksnd;		/* use blocking sendmsg */
-	bool noautotune;		/* do not autotune send buf sizes */
+	bool noस्वतःtune;		/* करो not स्वतःtune send buf sizes */
 	bool tcp_nodelay;
-	unsigned int credits;  /* send no more requests at once */
-	unsigned int max_credits; /* can override large 32000 default at mnt */
-	unsigned int in_flight;  /* number of requests on the wire to server */
-	unsigned int max_in_flight; /* max number of requests that were on wire */
+	अचिन्हित पूर्णांक credits;  /* send no more requests at once */
+	अचिन्हित पूर्णांक max_credits; /* can override large 32000 शेष at mnt */
+	अचिन्हित पूर्णांक in_flight;  /* number of requests on the wire to server */
+	अचिन्हित पूर्णांक max_in_flight; /* max number of requests that were on wire */
 	spinlock_t req_lock;  /* protect the two values above */
-	struct mutex srv_mutex;
-	struct task_struct *tsk;
-	char server_GUID[16];
+	काष्ठा mutex srv_mutex;
+	काष्ठा task_काष्ठा *tsk;
+	अक्षर server_GUID[16];
 	__u16 sec_mode;
 	bool sign; /* is signing enabled on this connection? */
 	bool ignore_signature:1; /* skip validation of signatures in SMB2/3 rsp */
 	bool session_estab; /* mark when very first sess is established */
-	int echo_credits;  /* echo reserved slots */
-	int oplock_credits;  /* oplock break reserved slots */
+	पूर्णांक echo_credits;  /* echo reserved slots */
+	पूर्णांक oplock_credits;  /* oplock अवरोध reserved slots */
 	bool echoes:1; /* enable echoes */
 	__u8 client_guid[SMB2_CLIENT_GUID_SIZE]; /* Client GUID */
 	u16 dialect; /* dialect index that server chose */
 	bool oplocks:1; /* enable oplocks */
-	unsigned int maxReq;	/* Clients should submit no more */
+	अचिन्हित पूर्णांक maxReq;	/* Clients should submit no more */
 	/* than maxReq distinct unanswered SMBs to the server when using  */
-	/* multiplexed reads or writes (for SMB1/CIFS only, not SMB2/SMB3) */
-	unsigned int maxBuf;	/* maxBuf specifies the maximum */
-	/* message size the server can send or receive for non-raw SMBs */
-	/* maxBuf is returned by SMB NegotiateProtocol so maxBuf is only 0 */
-	/* when socket is setup (and during reconnect) before NegProt sent */
-	unsigned int max_rw;	/* maxRw specifies the maximum */
-	/* message size the server can send or receive for */
+	/* multiplexed पढ़ोs or ग_लिखोs (क्रम SMB1/CIFS only, not SMB2/SMB3) */
+	अचिन्हित पूर्णांक maxBuf;	/* maxBuf specअगरies the maximum */
+	/* message size the server can send or receive क्रम non-raw SMBs */
+	/* maxBuf is वापसed by SMB NegotiateProtocol so maxBuf is only 0 */
+	/* when socket is setup (and during reconnect) beक्रमe NegProt sent */
+	अचिन्हित पूर्णांक max_rw;	/* maxRw specअगरies the maximum */
+	/* message size the server can send or receive क्रम */
 	/* SMB_COM_WRITE_RAW or SMB_COM_READ_RAW. */
-	unsigned int capabilities; /* selective disabling of caps by smb sess */
-	int timeAdj;  /* Adjust for difference in server time zone in sec */
+	अचिन्हित पूर्णांक capabilities; /* selective disabling of caps by smb sess */
+	पूर्णांक समयAdj;  /* Adjust क्रम dअगरference in server समय zone in sec */
 	__u64 CurrentMid;         /* multiplex id - rotating counter */
-	char cryptkey[CIFS_CRYPTO_KEY_SIZE]; /* used by ntlm, ntlmv2 etc */
+	अक्षर cryptkey[CIFS_CRYPTO_KEY_SIZE]; /* used by ntlm, ntlmv2 etc */
 	/* 16th byte of RFC1001 workstation name is always null */
-	char workstation_RFC1001_name[RFC1001_NAME_LEN_WITH_NULL];
-	__u32 sequence_number; /* for signing, protected by srv_mutex */
+	अक्षर workstation_RFC1001_name[RFC1001_NAME_LEN_WITH_शून्य];
+	__u32 sequence_number; /* क्रम signing, रक्षित by srv_mutex */
 	__u32 reconnect_instance; /* incremented on each reconnect */
-	struct session_key session_key;
-	unsigned long lstrp; /* when we got last response from this server */
-	struct cifs_secmech secmech; /* crypto sec mech functs, descriptors */
-#define	CIFS_NEGFLAVOR_LANMAN	0	/* wct == 13, LANMAN */
-#define	CIFS_NEGFLAVOR_UNENCAP	1	/* wct == 17, but no ext_sec */
-#define	CIFS_NEGFLAVOR_EXTENDED	2	/* wct == 17, ext_sec bit set */
-	char	negflavor;	/* NEGOTIATE response flavor */
+	काष्ठा session_key session_key;
+	अचिन्हित दीर्घ lstrp; /* when we got last response from this server */
+	काष्ठा cअगरs_secmech secmech; /* crypto sec mech functs, descriptors */
+#घोषणा	CIFS_NEGFLAVOR_LANMAN	0	/* wct == 13, LANMAN */
+#घोषणा	CIFS_NEGFLAVOR_UNENCAP	1	/* wct == 17, but no ext_sec */
+#घोषणा	CIFS_NEGFLAVOR_EXTENDED	2	/* wct == 17, ext_sec bit set */
+	अक्षर	negflavor;	/* NEGOTIATE response flavor */
 	/* extended security flavors that server supports */
 	bool	sec_ntlmssp;		/* supports NTLMSSP */
 	bool	sec_kerberosu2u;	/* supports U2U Kerberos */
@@ -651,271 +652,271 @@ struct TCP_Server_Info {
 	bool	large_buf;		/* is current buffer large? */
 	/* use SMBD connection instead of socket */
 	bool	rdma;
-	/* point to the SMBD connection if RDMA is used instead of socket */
-	struct smbd_connection *smbd_conn;
-	struct delayed_work	echo; /* echo ping workqueue job */
-	char	*smallbuf;	/* pointer to current "small" buffer */
-	char	*bigbuf;	/* pointer to current "big" buffer */
-	/* Total size of this PDU. Only valid from cifs_demultiplex_thread */
-	unsigned int pdu_size;
-	unsigned int total_read; /* total amount of data read in this pass */
+	/* poपूर्णांक to the SMBD connection अगर RDMA is used instead of socket */
+	काष्ठा smbd_connection *smbd_conn;
+	काष्ठा delayed_work	echo; /* echo ping workqueue job */
+	अक्षर	*smallbuf;	/* poपूर्णांकer to current "small" buffer */
+	अक्षर	*bigbuf;	/* poपूर्णांकer to current "big" buffer */
+	/* Total size of this PDU. Only valid from cअगरs_demultiplex_thपढ़ो */
+	अचिन्हित पूर्णांक pdu_size;
+	अचिन्हित पूर्णांक total_पढ़ो; /* total amount of data पढ़ो in this pass */
 	atomic_t in_send; /* requests trying to send */
-	atomic_t num_waiters;   /* blocked waiting to get in sendrecv */
-#ifdef CONFIG_CIFS_FSCACHE
-	struct fscache_cookie   *fscache; /* client index cache cookie */
-#endif
-#ifdef CONFIG_CIFS_STATS2
+	atomic_t num_रुकोers;   /* blocked रुकोing to get in sendrecv */
+#अगर_घोषित CONFIG_CIFS_FSCACHE
+	काष्ठा fscache_cookie   *fscache; /* client index cache cookie */
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_CIFS_STATS2
 	atomic_t num_cmds[NUMBER_OF_SMB2_COMMANDS]; /* total requests by cmd */
 	atomic_t smb2slowcmd[NUMBER_OF_SMB2_COMMANDS]; /* count resps > 1 sec */
-	__u64 time_per_cmd[NUMBER_OF_SMB2_COMMANDS]; /* total time per cmd */
+	__u64 समय_per_cmd[NUMBER_OF_SMB2_COMMANDS]; /* total समय per cmd */
 	__u32 slowest_cmd[NUMBER_OF_SMB2_COMMANDS];
 	__u32 fastest_cmd[NUMBER_OF_SMB2_COMMANDS];
-#endif /* STATS2 */
-	unsigned int	max_read;
-	unsigned int	max_write;
-	unsigned int	min_offload;
+#पूर्ण_अगर /* STATS2 */
+	अचिन्हित पूर्णांक	max_पढ़ो;
+	अचिन्हित पूर्णांक	max_ग_लिखो;
+	अचिन्हित पूर्णांक	min_offload;
 	__le16	compress_algorithm;
 	__le16	cipher_type;
 	 /* save initital negprot hash */
 	__u8	preauth_sha_hash[SMB2_PREAUTH_HASH_SIZE];
 	bool	posix_ext_supported;
-	struct delayed_work reconnect; /* reconnect workqueue job */
-	struct mutex reconnect_mutex; /* prevent simultaneous reconnects */
-	unsigned long echo_interval;
+	काष्ठा delayed_work reconnect; /* reconnect workqueue job */
+	काष्ठा mutex reconnect_mutex; /* prevent simultaneous reconnects */
+	अचिन्हित दीर्घ echo_पूर्णांकerval;
 
 	/*
-	 * Number of targets available for reconnect. The more targets
-	 * the more tasks have to wait to let the demultiplex thread
+	 * Number of tarमाला_लो available क्रम reconnect. The more tarमाला_लो
+	 * the more tasks have to रुको to let the demultiplex thपढ़ो
 	 * reconnect.
 	 */
-	int nr_targets;
+	पूर्णांक nr_tarमाला_लो;
 	bool noblockcnt; /* use non-blocking connect() */
-	bool is_channel; /* if a session channel */
-#ifdef CONFIG_CIFS_SWN_UPCALL
+	bool is_channel; /* अगर a session channel */
+#अगर_घोषित CONFIG_CIFS_SWN_UPCALL
 	bool use_swn_dstaddr;
-	struct sockaddr_storage swn_dstaddr;
-#endif
-};
+	काष्ठा sockaddr_storage swn_dstaddr;
+#पूर्ण_अगर
+पूर्ण;
 
-struct cifs_credits {
-	unsigned int value;
-	unsigned int instance;
-};
+काष्ठा cअगरs_credits अणु
+	अचिन्हित पूर्णांक value;
+	अचिन्हित पूर्णांक instance;
+पूर्ण;
 
-static inline unsigned int
-in_flight(struct TCP_Server_Info *server)
-{
-	unsigned int num;
+अटल अंतरभूत अचिन्हित पूर्णांक
+in_flight(काष्ठा TCP_Server_Info *server)
+अणु
+	अचिन्हित पूर्णांक num;
 	spin_lock(&server->req_lock);
 	num = server->in_flight;
 	spin_unlock(&server->req_lock);
-	return num;
-}
+	वापस num;
+पूर्ण
 
-static inline bool
-has_credits(struct TCP_Server_Info *server, int *credits, int num_credits)
-{
-	int num;
+अटल अंतरभूत bool
+has_credits(काष्ठा TCP_Server_Info *server, पूर्णांक *credits, पूर्णांक num_credits)
+अणु
+	पूर्णांक num;
 	spin_lock(&server->req_lock);
 	num = *credits;
 	spin_unlock(&server->req_lock);
-	return num >= num_credits;
-}
+	वापस num >= num_credits;
+पूर्ण
 
-static inline void
-add_credits(struct TCP_Server_Info *server, const struct cifs_credits *credits,
-	    const int optype)
-{
+अटल अंतरभूत व्योम
+add_credits(काष्ठा TCP_Server_Info *server, स्थिर काष्ठा cअगरs_credits *credits,
+	    स्थिर पूर्णांक optype)
+अणु
 	server->ops->add_credits(server, credits, optype);
-}
+पूर्ण
 
-static inline void
-add_credits_and_wake_if(struct TCP_Server_Info *server,
-			const struct cifs_credits *credits, const int optype)
-{
-	if (credits->value) {
+अटल अंतरभूत व्योम
+add_credits_and_wake_अगर(काष्ठा TCP_Server_Info *server,
+			स्थिर काष्ठा cअगरs_credits *credits, स्थिर पूर्णांक optype)
+अणु
+	अगर (credits->value) अणु
 		server->ops->add_credits(server, credits, optype);
 		wake_up(&server->request_q);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void
-set_credits(struct TCP_Server_Info *server, const int val)
-{
+अटल अंतरभूत व्योम
+set_credits(काष्ठा TCP_Server_Info *server, स्थिर पूर्णांक val)
+अणु
 	server->ops->set_credits(server, val);
-}
+पूर्ण
 
-static inline int
-adjust_credits(struct TCP_Server_Info *server, struct cifs_credits *credits,
-	       const unsigned int payload_size)
-{
-	return server->ops->adjust_credits ?
+अटल अंतरभूत पूर्णांक
+adjust_credits(काष्ठा TCP_Server_Info *server, काष्ठा cअगरs_credits *credits,
+	       स्थिर अचिन्हित पूर्णांक payload_size)
+अणु
+	वापस server->ops->adjust_credits ?
 		server->ops->adjust_credits(server, credits, payload_size) : 0;
-}
+पूर्ण
 
-static inline __le64
-get_next_mid64(struct TCP_Server_Info *server)
-{
-	return cpu_to_le64(server->ops->get_next_mid(server));
-}
+अटल अंतरभूत __le64
+get_next_mid64(काष्ठा TCP_Server_Info *server)
+अणु
+	वापस cpu_to_le64(server->ops->get_next_mid(server));
+पूर्ण
 
-static inline __le16
-get_next_mid(struct TCP_Server_Info *server)
-{
+अटल अंतरभूत __le16
+get_next_mid(काष्ठा TCP_Server_Info *server)
+अणु
 	__u16 mid = server->ops->get_next_mid(server);
 	/*
-	 * The value in the SMB header should be little endian for easy
+	 * The value in the SMB header should be little endian क्रम easy
 	 * on-the-wire decoding.
 	 */
-	return cpu_to_le16(mid);
-}
+	वापस cpu_to_le16(mid);
+पूर्ण
 
-static inline void
-revert_current_mid(struct TCP_Server_Info *server, const unsigned int val)
-{
-	if (server->ops->revert_current_mid)
+अटल अंतरभूत व्योम
+revert_current_mid(काष्ठा TCP_Server_Info *server, स्थिर अचिन्हित पूर्णांक val)
+अणु
+	अगर (server->ops->revert_current_mid)
 		server->ops->revert_current_mid(server, val);
-}
+पूर्ण
 
-static inline void
-revert_current_mid_from_hdr(struct TCP_Server_Info *server,
-			    const struct smb2_sync_hdr *shdr)
-{
-	unsigned int num = le16_to_cpu(shdr->CreditCharge);
+अटल अंतरभूत व्योम
+revert_current_mid_from_hdr(काष्ठा TCP_Server_Info *server,
+			    स्थिर काष्ठा smb2_sync_hdr *shdr)
+अणु
+	अचिन्हित पूर्णांक num = le16_to_cpu(shdr->CreditCharge);
 
-	return revert_current_mid(server, num > 0 ? num : 1);
-}
+	वापस revert_current_mid(server, num > 0 ? num : 1);
+पूर्ण
 
-static inline __u16
-get_mid(const struct smb_hdr *smb)
-{
-	return le16_to_cpu(smb->Mid);
-}
+अटल अंतरभूत __u16
+get_mid(स्थिर काष्ठा smb_hdr *smb)
+अणु
+	वापस le16_to_cpu(smb->Mid);
+पूर्ण
 
-static inline bool
-compare_mid(__u16 mid, const struct smb_hdr *smb)
-{
-	return mid == le16_to_cpu(smb->Mid);
-}
+अटल अंतरभूत bool
+compare_mid(__u16 mid, स्थिर काष्ठा smb_hdr *smb)
+अणु
+	वापस mid == le16_to_cpu(smb->Mid);
+पूर्ण
 
 /*
- * When the server supports very large reads and writes via POSIX extensions,
+ * When the server supports very large पढ़ोs and ग_लिखोs via POSIX extensions,
  * we can allow up to 2^24-1, minus the size of a READ/WRITE_AND_X header, not
  * including the RFC1001 length.
  *
- * Note that this might make for "interesting" allocation problems during
- * writeback however as we have to allocate an array of pointers for the
- * pages. A 16M write means ~32kb page array with PAGE_SIZE == 4096.
+ * Note that this might make क्रम "interesting" allocation problems during
+ * ग_लिखोback however as we have to allocate an array of poपूर्णांकers क्रम the
+ * pages. A 16M ग_लिखो means ~32kb page array with PAGE_SIZE == 4096.
  *
- * For reads, there is a similar problem as we need to allocate an array
- * of kvecs to handle the receive, though that should only need to be done
+ * For पढ़ोs, there is a similar problem as we need to allocate an array
+ * of kvecs to handle the receive, though that should only need to be करोne
  * once.
  */
-#define CIFS_MAX_WSIZE ((1<<24) - 1 - sizeof(WRITE_REQ) + 4)
-#define CIFS_MAX_RSIZE ((1<<24) - sizeof(READ_RSP) + 4)
+#घोषणा CIFS_MAX_WSIZE ((1<<24) - 1 - माप(WRITE_REQ) + 4)
+#घोषणा CIFS_MAX_RSIZE ((1<<24) - माप(READ_RSP) + 4)
 
 /*
- * When the server doesn't allow large posix writes, only allow a rsize/wsize
- * of 2^17-1 minus the size of the call header. That allows for a read or
- * write up to the maximum size described by RFC1002.
+ * When the server करोesn't allow large posix ग_लिखोs, only allow a rsize/wsize
+ * of 2^17-1 minus the size of the call header. That allows क्रम a पढ़ो or
+ * ग_लिखो up to the maximum size described by RFC1002.
  */
-#define CIFS_MAX_RFC1002_WSIZE ((1<<17) - 1 - sizeof(WRITE_REQ) + 4)
-#define CIFS_MAX_RFC1002_RSIZE ((1<<17) - 1 - sizeof(READ_RSP) + 4)
+#घोषणा CIFS_MAX_RFC1002_WSIZE ((1<<17) - 1 - माप(WRITE_REQ) + 4)
+#घोषणा CIFS_MAX_RFC1002_RSIZE ((1<<17) - 1 - माप(READ_RSP) + 4)
 
 /*
- * The default wsize is 1M. find_get_pages seems to return a maximum of 256
+ * The शेष wsize is 1M. find_get_pages seems to वापस a maximum of 256
  * pages in a single call. With PAGE_SIZE == 4k, this means we can fill
  * a single wsize request with a single call.
  */
-#define CIFS_DEFAULT_IOSIZE (1024 * 1024)
-#define SMB3_DEFAULT_IOSIZE (4 * 1024 * 1024)
+#घोषणा CIFS_DEFAULT_IOSIZE (1024 * 1024)
+#घोषणा SMB3_DEFAULT_IOSIZE (4 * 1024 * 1024)
 
 /*
- * Windows only supports a max of 60kb reads and 65535 byte writes. Default to
- * those values when posix extensions aren't in force. In actuality here, we
- * use 65536 to allow for a write that is a multiple of 4k. Most servers seem
- * to be ok with the extra byte even though Windows doesn't send writes that
+ * Winकरोws only supports a max of 60kb पढ़ोs and 65535 byte ग_लिखोs. Default to
+ * those values when posix extensions aren't in क्रमce. In actuality here, we
+ * use 65536 to allow क्रम a ग_लिखो that is a multiple of 4k. Most servers seem
+ * to be ok with the extra byte even though Winकरोws करोesn't send ग_लिखोs that
  * are that large.
  *
  * Citation:
  *
- * https://blogs.msdn.com/b/openspecification/archive/2009/04/10/smb-maximum-transmit-buffer-size-and-performance-tuning.aspx
+ * https://blogs.msdn.com/b/खोलोspecअगरication/archive/2009/04/10/smb-maximum-transmit-buffer-size-and-perक्रमmance-tuning.aspx
  */
-#define CIFS_DEFAULT_NON_POSIX_RSIZE (60 * 1024)
-#define CIFS_DEFAULT_NON_POSIX_WSIZE (65536)
+#घोषणा CIFS_DEFAULT_NON_POSIX_RSIZE (60 * 1024)
+#घोषणा CIFS_DEFAULT_NON_POSIX_WSIZE (65536)
 
 /*
  * Macros to allow the TCP_Server_Info->net field and related code to drop out
  * when CONFIG_NET_NS isn't set.
  */
 
-#ifdef CONFIG_NET_NS
+#अगर_घोषित CONFIG_NET_NS
 
-static inline struct net *cifs_net_ns(struct TCP_Server_Info *srv)
-{
-	return srv->net;
-}
+अटल अंतरभूत काष्ठा net *cअगरs_net_ns(काष्ठा TCP_Server_Info *srv)
+अणु
+	वापस srv->net;
+पूर्ण
 
-static inline void cifs_set_net_ns(struct TCP_Server_Info *srv, struct net *net)
-{
+अटल अंतरभूत व्योम cअगरs_set_net_ns(काष्ठा TCP_Server_Info *srv, काष्ठा net *net)
+अणु
 	srv->net = net;
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline struct net *cifs_net_ns(struct TCP_Server_Info *srv)
-{
-	return &init_net;
-}
+अटल अंतरभूत काष्ठा net *cअगरs_net_ns(काष्ठा TCP_Server_Info *srv)
+अणु
+	वापस &init_net;
+पूर्ण
 
-static inline void cifs_set_net_ns(struct TCP_Server_Info *srv, struct net *net)
-{
-}
+अटल अंतरभूत व्योम cअगरs_set_net_ns(काष्ठा TCP_Server_Info *srv, काष्ठा net *net)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-struct cifs_server_iface {
-	size_t speed;
-	unsigned int rdma_capable : 1;
-	unsigned int rss_capable : 1;
-	struct sockaddr_storage sockaddr;
-};
+काष्ठा cअगरs_server_अगरace अणु
+	माप_प्रकार speed;
+	अचिन्हित पूर्णांक rdma_capable : 1;
+	अचिन्हित पूर्णांक rss_capable : 1;
+	काष्ठा sockaddr_storage sockaddr;
+पूर्ण;
 
-struct cifs_chan {
-	struct TCP_Server_Info *server;
+काष्ठा cअगरs_chan अणु
+	काष्ठा TCP_Server_Info *server;
 	__u8 signkey[SMB3_SIGN_KEY_SIZE];
-};
+पूर्ण;
 
 /*
- * Session structure.  One of these for each uid session with a particular host
+ * Session काष्ठाure.  One of these क्रम each uid session with a particular host
  */
-struct cifs_ses {
-	struct list_head smb_ses_list;
-	struct list_head tcon_list;
-	struct cifs_tcon *tcon_ipc;
-	struct mutex session_mutex;
-	struct TCP_Server_Info *server;	/* pointer to server info */
-	int ses_count;		/* reference counter */
-	enum statusEnum status;
-	unsigned overrideSecFlg;  /* if non-zero override global sec flags */
-	char *serverOS;		/* name of operating system underlying server */
-	char *serverNOS;	/* name of network operating system of server */
-	char *serverDomain;	/* security realm of server */
+काष्ठा cअगरs_ses अणु
+	काष्ठा list_head smb_ses_list;
+	काष्ठा list_head tcon_list;
+	काष्ठा cअगरs_tcon *tcon_ipc;
+	काष्ठा mutex session_mutex;
+	काष्ठा TCP_Server_Info *server;	/* poपूर्णांकer to server info */
+	पूर्णांक ses_count;		/* reference counter */
+	क्रमागत statusEnum status;
+	अचिन्हित overrideSecFlg;  /* अगर non-zero override global sec flags */
+	अक्षर *serverOS;		/* name of operating प्रणाली underlying server */
+	अक्षर *serverNOS;	/* name of network operating प्रणाली of server */
+	अक्षर *serverDoमुख्य;	/* security realm of server */
 	__u64 Suid;		/* remote smb uid  */
 	kuid_t linux_uid;	/* overriding owner of files on the mount */
 	kuid_t cred_uid;	/* owner of credentials */
-	unsigned int capabilities;
-	char ip_addr[INET6_ADDRSTRLEN + 1]; /* Max ipv6 (or v4) addr string len */
-	char *user_name;	/* must not be null except during init of sess
+	अचिन्हित पूर्णांक capabilities;
+	अक्षर ip_addr[INET6_ADDRSTRLEN + 1]; /* Max ipv6 (or v4) addr string len */
+	अक्षर *user_name;	/* must not be null except during init of sess
 				   and after mount option parsing we fill it */
-	char *domainName;
-	char *password;
-	struct session_key auth_key;
-	struct ntlmssp_auth *ntlmssp; /* ciphertext, flags, server challenge */
-	enum securityEnum sectype; /* what security flavor was specified? */
+	अक्षर *करोमुख्यName;
+	अक्षर *password;
+	काष्ठा session_key auth_key;
+	काष्ठा ntlmssp_auth *ntlmssp; /* ciphertext, flags, server challenge */
+	क्रमागत securityEnum sectype; /* what security flavor was specअगरied? */
 	bool sign;		/* is signing required? */
 	bool need_reconnect:1; /* connection reset, uid now invalid */
-	bool domainAuto:1;
+	bool करोमुख्यAuto:1;
 	bool binding:1; /* are we binding the session? */
 	__u16 session_flags;
 	__u8 smb3signingkey[SMB3_SIGN_KEY_SIZE];
@@ -926,149 +927,149 @@ struct cifs_ses {
 	__u8 binding_preauth_sha_hash[SMB2_PREAUTH_HASH_SIZE];
 
 	/*
-	 * Network interfaces available on the server this session is
+	 * Network पूर्णांकerfaces available on the server this session is
 	 * connected to.
 	 *
-	 * Other channels can be opened by connecting and binding this
-	 * session to interfaces from this list.
+	 * Other channels can be खोलोed by connecting and binding this
+	 * session to पूर्णांकerfaces from this list.
 	 *
-	 * iface_lock should be taken when accessing any of these fields
+	 * अगरace_lock should be taken when accessing any of these fields
 	 */
-	spinlock_t iface_lock;
-	struct cifs_server_iface *iface_list;
-	size_t iface_count;
-	unsigned long iface_last_update; /* jiffies */
+	spinlock_t अगरace_lock;
+	काष्ठा cअगरs_server_अगरace *अगरace_list;
+	माप_प्रकार अगरace_count;
+	अचिन्हित दीर्घ अगरace_last_update; /* jअगरfies */
 
-#define CIFS_MAX_CHANNELS 16
-	struct cifs_chan chans[CIFS_MAX_CHANNELS];
-	struct cifs_chan *binding_chan;
-	size_t chan_count;
-	size_t chan_max;
+#घोषणा CIFS_MAX_CHANNELS 16
+	काष्ठा cअगरs_chan chans[CIFS_MAX_CHANNELS];
+	काष्ठा cअगरs_chan *binding_chan;
+	माप_प्रकार chan_count;
+	माप_प्रकार chan_max;
 	atomic_t chan_seq; /* round robin state */
-};
+पूर्ण;
 
 /*
  * When binding a new channel, we need to access the channel which isn't fully
  * established yet.
  */
 
-static inline
-struct cifs_chan *cifs_ses_binding_channel(struct cifs_ses *ses)
-{
-	if (ses->binding)
-		return ses->binding_chan;
-	else
-		return NULL;
-}
+अटल अंतरभूत
+काष्ठा cअगरs_chan *cअगरs_ses_binding_channel(काष्ठा cअगरs_ses *ses)
+अणु
+	अगर (ses->binding)
+		वापस ses->binding_chan;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
 /*
- * Returns the server pointer of the session. When binding a new
- * channel this returns the last channel which isn't fully established
+ * Returns the server poपूर्णांकer of the session. When binding a new
+ * channel this वापसs the last channel which isn't fully established
  * yet.
  *
- * This function should be use for negprot/sess.setup codepaths. For
- * the other requests see cifs_pick_channel().
+ * This function should be use क्रम negprot/sess.setup codepaths. For
+ * the other requests see cअगरs_pick_channel().
  */
-static inline
-struct TCP_Server_Info *cifs_ses_server(struct cifs_ses *ses)
-{
-	if (ses->binding)
-		return ses->binding_chan->server;
-	else
-		return ses->server;
-}
+अटल अंतरभूत
+काष्ठा TCP_Server_Info *cअगरs_ses_server(काष्ठा cअगरs_ses *ses)
+अणु
+	अगर (ses->binding)
+		वापस ses->binding_chan->server;
+	अन्यथा
+		वापस ses->server;
+पूर्ण
 
-static inline bool
-cap_unix(struct cifs_ses *ses)
-{
-	return ses->server->vals->cap_unix & ses->capabilities;
-}
+अटल अंतरभूत bool
+cap_unix(काष्ठा cअगरs_ses *ses)
+अणु
+	वापस ses->server->vals->cap_unix & ses->capabilities;
+पूर्ण
 
-struct cached_fid {
+काष्ठा cached_fid अणु
 	bool is_valid:1;	/* Do we have a useable root fid */
 	bool file_all_info_is_valid:1;
 	bool has_lease:1;
-	unsigned long time; /* jiffies of when lease was taken */
-	struct kref refcount;
-	struct cifs_fid *fid;
-	struct mutex fid_mutex;
-	struct cifs_tcon *tcon;
-	struct dentry *dentry;
-	struct work_struct lease_break;
-	struct smb2_file_all_info file_all_info;
-};
+	अचिन्हित दीर्घ समय; /* jअगरfies of when lease was taken */
+	काष्ठा kref refcount;
+	काष्ठा cअगरs_fid *fid;
+	काष्ठा mutex fid_mutex;
+	काष्ठा cअगरs_tcon *tcon;
+	काष्ठा dentry *dentry;
+	काष्ठा work_काष्ठा lease_अवरोध;
+	काष्ठा smb2_file_all_info file_all_info;
+पूर्ण;
 
 /*
- * there is one of these for each connection to a resource on a particular
+ * there is one of these क्रम each connection to a resource on a particular
  * session
  */
-struct cifs_tcon {
-	struct list_head tcon_list;
-	int tc_count;
-	struct list_head rlist; /* reconnect list */
-	atomic_t num_local_opens;  /* num of all opens including disconnected */
-	atomic_t num_remote_opens; /* num of all network opens on server */
-	struct list_head openFileList;
-	spinlock_t open_file_lock; /* protects list above */
-	struct cifs_ses *ses;	/* pointer to session associated with */
-	char treeName[MAX_TREE_SIZE + 1]; /* UNC name of resource in ASCII */
-	char *nativeFileSystem;
-	char *password;		/* for share-level security */
+काष्ठा cअगरs_tcon अणु
+	काष्ठा list_head tcon_list;
+	पूर्णांक tc_count;
+	काष्ठा list_head rlist; /* reconnect list */
+	atomic_t num_local_खोलोs;  /* num of all खोलोs including disconnected */
+	atomic_t num_remote_खोलोs; /* num of all network खोलोs on server */
+	काष्ठा list_head खोलोFileList;
+	spinlock_t खोलो_file_lock; /* protects list above */
+	काष्ठा cअगरs_ses *ses;	/* poपूर्णांकer to session associated with */
+	अक्षर treeName[MAX_TREE_SIZE + 1]; /* UNC name of resource in ASCII */
+	अक्षर *nativeFileSystem;
+	अक्षर *password;		/* क्रम share-level security */
 	__u32 tid;		/* The 4 byte tree id */
 	__u16 Flags;		/* optional support bits */
-	enum statusEnum tidStatus;
+	क्रमागत statusEnum tidStatus;
 	atomic_t num_smbs_sent;
-	union {
-		struct {
-			atomic_t num_writes;
-			atomic_t num_reads;
+	जोड़ अणु
+		काष्ठा अणु
+			atomic_t num_ग_लिखोs;
+			atomic_t num_पढ़ोs;
 			atomic_t num_flushes;
 			atomic_t num_oplock_brks;
-			atomic_t num_opens;
-			atomic_t num_closes;
+			atomic_t num_खोलोs;
+			atomic_t num_बंदs;
 			atomic_t num_deletes;
-			atomic_t num_mkdirs;
-			atomic_t num_posixopens;
-			atomic_t num_posixmkdirs;
-			atomic_t num_rmdirs;
-			atomic_t num_renames;
-			atomic_t num_t2renames;
+			atomic_t num_सूची_गढ़ोs;
+			atomic_t num_posixखोलोs;
+			atomic_t num_posixसूची_गढ़ोs;
+			atomic_t num_सूची_हटाओs;
+			atomic_t num_नामs;
+			atomic_t num_t2नामs;
 			atomic_t num_ffirst;
 			atomic_t num_fnext;
-			atomic_t num_fclose;
+			atomic_t num_ख_बंद;
 			atomic_t num_hardlinks;
 			atomic_t num_symlinks;
 			atomic_t num_locks;
 			atomic_t num_acl_get;
 			atomic_t num_acl_set;
-		} cifs_stats;
-		struct {
+		पूर्ण cअगरs_stats;
+		काष्ठा अणु
 			atomic_t smb2_com_sent[NUMBER_OF_SMB2_COMMANDS];
 			atomic_t smb2_com_failed[NUMBER_OF_SMB2_COMMANDS];
-		} smb2_stats;
-	} stats;
-	__u64    bytes_read;
+		पूर्ण smb2_stats;
+	पूर्ण stats;
+	__u64    bytes_पढ़ो;
 	__u64    bytes_written;
 	spinlock_t stat_lock;  /* protects the two fields above */
-	FILE_SYSTEM_DEVICE_INFO fsDevInfo;
-	FILE_SYSTEM_ATTRIBUTE_INFO fsAttrInfo; /* ok if fs name truncated */
-	FILE_SYSTEM_UNIX_INFO fsUnixInfo;
-	bool ipc:1;   /* set if connection to IPC$ share (always also pipe) */
-	bool pipe:1;  /* set if connection to pipe share */
-	bool print:1; /* set if connection to printer share */
+	खाता_SYSTEM_DEVICE_INFO fsDevInfo;
+	खाता_SYSTEM_ATTRIBUTE_INFO fsAttrInfo; /* ok अगर fs name truncated */
+	खाता_SYSTEM_UNIX_INFO fsUnixInfo;
+	bool ipc:1;   /* set अगर connection to IPC$ share (always also pipe) */
+	bool pipe:1;  /* set अगर connection to pipe share */
+	bool prपूर्णांक:1; /* set अगर connection to prपूर्णांकer share */
 	bool retry:1;
-	bool nocase:1;
-	bool nohandlecache:1; /* if strange server resource prob can turn off */
+	bool noहाल:1;
+	bool nohandlecache:1; /* अगर strange server resource prob can turn off */
 	bool nodelete:1;
-	bool seal:1;      /* transport encryption for this mounted share */
-	bool unix_ext:1;  /* if false disable Linux extensions to CIFS protocol
-				for this mount even if server would support */
-	bool posix_extensions; /* if true SMB3.11 posix extensions enabled */
-	bool local_lease:1; /* check leases (only) on local system not remote */
-	bool broken_posix_open; /* e.g. Samba server versions < 3.3.2, 3.2.9 */
-	bool broken_sparse_sup; /* if server or share does not support sparse */
+	bool seal:1;      /* transport encryption क्रम this mounted share */
+	bool unix_ext:1;  /* अगर false disable Linux extensions to CIFS protocol
+				क्रम this mount even अगर server would support */
+	bool posix_extensions; /* अगर true SMB3.11 posix extensions enabled */
+	bool local_lease:1; /* check leases (only) on local प्रणाली not remote */
+	bool broken_posix_खोलो; /* e.g. Samba server versions < 3.3.2, 3.2.9 */
+	bool broken_sparse_sup; /* अगर server or share करोes not support sparse */
 	bool need_reconnect:1; /* connection reset, tid now invalid */
-	bool need_reopen_files:1; /* need to reopen tcon file handles */
+	bool need_reखोलो_files:1; /* need to reखोलो tcon file handles */
 	bool use_resilient:1; /* use resilient instead of durable handles */
 	bool use_persistent:1; /* use persistent instead of durable handles */
 	bool no_lease:1;    /* Do not request leases on files or directories */
@@ -1077,708 +1078,708 @@ struct cifs_tcon {
 	__u32 share_flags;
 	__u32 maximal_access;
 	__u32 vol_serial_number;
-	__le64 vol_create_time;
-	__u64 snapshot_time; /* for timewarp tokens - timestamp of snapshot */
-	__u32 handle_timeout; /* persistent and durable handle timeout in ms */
+	__le64 vol_create_समय;
+	__u64 snapshot_समय; /* क्रम समयwarp tokens - बारtamp of snapshot */
+	__u32 handle_समयout; /* persistent and durable handle समयout in ms */
 	__u32 ss_flags;		/* sector size flags */
-	__u32 perf_sector_size; /* best sector size for perf */
+	__u32 perf_sector_size; /* best sector size क्रम perf */
 	__u32 max_chunks;
 	__u32 max_bytes_chunk;
 	__u32 max_bytes_copy;
-#ifdef CONFIG_CIFS_FSCACHE
+#अगर_घोषित CONFIG_CIFS_FSCACHE
 	u64 resource_id;		/* server resource id */
-	struct fscache_cookie *fscache;	/* cookie for share */
-#endif
-	struct list_head pending_opens;	/* list of incomplete opens */
-	struct cached_fid crfid; /* Cached root fid */
-	/* BB add field for back pointer to sb struct(s)? */
-#ifdef CONFIG_CIFS_DFS_UPCALL
-	char *dfs_path;
-	int remap:2;
-	struct list_head ulist; /* cache update list */
-#endif
-};
+	काष्ठा fscache_cookie *fscache;	/* cookie क्रम share */
+#पूर्ण_अगर
+	काष्ठा list_head pending_खोलोs;	/* list of incomplete खोलोs */
+	काष्ठा cached_fid crfid; /* Cached root fid */
+	/* BB add field क्रम back poपूर्णांकer to sb काष्ठा(s)? */
+#अगर_घोषित CONFIG_CIFS_DFS_UPCALL
+	अक्षर *dfs_path;
+	पूर्णांक remap:2;
+	काष्ठा list_head ulist; /* cache update list */
+#पूर्ण_अगर
+पूर्ण;
 
 /*
- * This is a refcounted and timestamped container for a tcon pointer. The
- * container holds a tcon reference. It is considered safe to free one of
- * these when the tl_count goes to 0. The tl_time is the time of the last
+ * This is a refcounted and बारtamped container क्रम a tcon poपूर्णांकer. The
+ * container holds a tcon reference. It is considered safe to मुक्त one of
+ * these when the tl_count goes to 0. The tl_समय is the समय of the last
  * "get" on the container.
  */
-struct tcon_link {
-	struct rb_node		tl_rbnode;
+काष्ठा tcon_link अणु
+	काष्ठा rb_node		tl_rbnode;
 	kuid_t			tl_uid;
-	unsigned long		tl_flags;
-#define TCON_LINK_MASTER	0
-#define TCON_LINK_PENDING	1
-#define TCON_LINK_IN_TREE	2
-	unsigned long		tl_time;
+	अचिन्हित दीर्घ		tl_flags;
+#घोषणा TCON_LINK_MASTER	0
+#घोषणा TCON_LINK_PENDING	1
+#घोषणा TCON_LINK_IN_TREE	2
+	अचिन्हित दीर्घ		tl_समय;
 	atomic_t		tl_count;
-	struct cifs_tcon	*tl_tcon;
-};
+	काष्ठा cअगरs_tcon	*tl_tcon;
+पूर्ण;
 
-extern struct tcon_link *cifs_sb_tlink(struct cifs_sb_info *cifs_sb);
-extern void smb3_free_compound_rqst(int num_rqst, struct smb_rqst *rqst);
+बाह्य काष्ठा tcon_link *cअगरs_sb_tlink(काष्ठा cअगरs_sb_info *cअगरs_sb);
+बाह्य व्योम smb3_मुक्त_compound_rqst(पूर्णांक num_rqst, काष्ठा smb_rqst *rqst);
 
-static inline struct cifs_tcon *
-tlink_tcon(struct tcon_link *tlink)
-{
-	return tlink->tl_tcon;
-}
+अटल अंतरभूत काष्ठा cअगरs_tcon *
+tlink_tcon(काष्ठा tcon_link *tlink)
+अणु
+	वापस tlink->tl_tcon;
+पूर्ण
 
-static inline struct tcon_link *
-cifs_sb_master_tlink(struct cifs_sb_info *cifs_sb)
-{
-	return cifs_sb->master_tlink;
-}
+अटल अंतरभूत काष्ठा tcon_link *
+cअगरs_sb_master_tlink(काष्ठा cअगरs_sb_info *cअगरs_sb)
+अणु
+	वापस cअगरs_sb->master_tlink;
+पूर्ण
 
-extern void cifs_put_tlink(struct tcon_link *tlink);
+बाह्य व्योम cअगरs_put_tlink(काष्ठा tcon_link *tlink);
 
-static inline struct tcon_link *
-cifs_get_tlink(struct tcon_link *tlink)
-{
-	if (tlink && !IS_ERR(tlink))
+अटल अंतरभूत काष्ठा tcon_link *
+cअगरs_get_tlink(काष्ठा tcon_link *tlink)
+अणु
+	अगर (tlink && !IS_ERR(tlink))
 		atomic_inc(&tlink->tl_count);
-	return tlink;
-}
+	वापस tlink;
+पूर्ण
 
 /* This function is always expected to succeed */
-extern struct cifs_tcon *cifs_sb_master_tcon(struct cifs_sb_info *cifs_sb);
+बाह्य काष्ठा cअगरs_tcon *cअगरs_sb_master_tcon(काष्ठा cअगरs_sb_info *cअगरs_sb);
 
-#define CIFS_OPLOCK_NO_CHANGE 0xfe
+#घोषणा CIFS_OPLOCK_NO_CHANGE 0xfe
 
-struct cifs_pending_open {
-	struct list_head olist;
-	struct tcon_link *tlink;
+काष्ठा cअगरs_pending_खोलो अणु
+	काष्ठा list_head olist;
+	काष्ठा tcon_link *tlink;
 	__u8 lease_key[16];
 	__u32 oplock;
-};
+पूर्ण;
 
-struct cifs_deferred_close {
-	struct list_head dlist;
-	struct tcon_link *tlink;
+काष्ठा cअगरs_deferred_बंद अणु
+	काष्ठा list_head dlist;
+	काष्ठा tcon_link *tlink;
 	__u16  netfid;
 	__u64  persistent_fid;
-	__u64  volatile_fid;
-};
+	__u64  अस्थिर_fid;
+पूर्ण;
 
 /*
- * This info hangs off the cifsFileInfo structure, pointed to by llist.
+ * This info hangs off the cअगरsFileInfo काष्ठाure, poपूर्णांकed to by llist.
  * This is used to track byte stream locks on the file
  */
-struct cifsLockInfo {
-	struct list_head llist;	/* pointer to next cifsLockInfo */
-	struct list_head blist; /* pointer to locks blocked on this */
-	wait_queue_head_t block_q;
+काष्ठा cअगरsLockInfo अणु
+	काष्ठा list_head llist;	/* poपूर्णांकer to next cअगरsLockInfo */
+	काष्ठा list_head blist; /* poपूर्णांकer to locks blocked on this */
+	रुको_queue_head_t block_q;
 	__u64 offset;
 	__u64 length;
 	__u32 pid;
 	__u16 type;
 	__u16 flags;
-};
+पूर्ण;
 
 /*
- * One of these for each open instance of a file
+ * One of these क्रम each खोलो instance of a file
  */
-struct cifs_search_info {
+काष्ठा cअगरs_search_info अणु
 	loff_t index_of_last_entry;
 	__u16 entries_in_buffer;
 	__u16 info_level;
 	__u32 resume_key;
-	char *ntwrk_buf_start;
-	char *srch_entries_start;
-	char *last_entry;
-	const char *presume_name;
-	unsigned int resume_name_len;
+	अक्षर *ntwrk_buf_start;
+	अक्षर *srch_entries_start;
+	अक्षर *last_entry;
+	स्थिर अक्षर *presume_name;
+	अचिन्हित पूर्णांक resume_name_len;
 	bool endOfSearch:1;
 	bool emptyDir:1;
 	bool unicode:1;
 	bool smallBuf:1; /* so we know which buf_release function to call */
-};
+पूर्ण;
 
-#define ACL_NO_MODE	((umode_t)(-1))
-struct cifs_open_parms {
-	struct cifs_tcon *tcon;
-	struct cifs_sb_info *cifs_sb;
-	int disposition;
-	int desired_access;
-	int create_options;
-	const char *path;
-	struct cifs_fid *fid;
+#घोषणा ACL_NO_MODE	((umode_t)(-1))
+काष्ठा cअगरs_खोलो_parms अणु
+	काष्ठा cअगरs_tcon *tcon;
+	काष्ठा cअगरs_sb_info *cअगरs_sb;
+	पूर्णांक disposition;
+	पूर्णांक desired_access;
+	पूर्णांक create_options;
+	स्थिर अक्षर *path;
+	काष्ठा cअगरs_fid *fid;
 	umode_t mode;
 	bool reconnect:1;
-};
+पूर्ण;
 
-struct cifs_fid {
+काष्ठा cअगरs_fid अणु
 	__u16 netfid;
-	__u64 persistent_fid;	/* persist file id for smb2 */
-	__u64 volatile_fid;	/* volatile file id for smb2 */
-	__u8 lease_key[SMB2_LEASE_KEY_SIZE];	/* lease key for smb2 */
+	__u64 persistent_fid;	/* persist file id क्रम smb2 */
+	__u64 अस्थिर_fid;	/* अस्थिर file id क्रम smb2 */
+	__u8 lease_key[SMB2_LEASE_KEY_SIZE];	/* lease key क्रम smb2 */
 	__u8 create_guid[16];
 	__u32 access;
-	struct cifs_pending_open *pending_open;
-	unsigned int epoch;
-#ifdef CONFIG_CIFS_DEBUG2
+	काष्ठा cअगरs_pending_खोलो *pending_खोलो;
+	अचिन्हित पूर्णांक epoch;
+#अगर_घोषित CONFIG_CIFS_DEBUG2
 	__u64 mid;
-#endif /* CIFS_DEBUG2 */
+#पूर्ण_अगर /* CIFS_DEBUG2 */
 	bool purge_cache;
-};
+पूर्ण;
 
-struct cifs_fid_locks {
-	struct list_head llist;
-	struct cifsFileInfo *cfile;	/* fid that owns locks */
-	struct list_head locks;		/* locks held by fid above */
-};
+काष्ठा cअगरs_fid_locks अणु
+	काष्ठा list_head llist;
+	काष्ठा cअगरsFileInfo *cfile;	/* fid that owns locks */
+	काष्ठा list_head locks;		/* locks held by fid above */
+पूर्ण;
 
-struct cifsFileInfo {
-	/* following two lists are protected by tcon->open_file_lock */
-	struct list_head tlist;	/* pointer to next fid owned by tcon */
-	struct list_head flist;	/* next fid (file instance) for this inode */
-	/* lock list below protected by cifsi->lock_sem */
-	struct cifs_fid_locks *llist;	/* brlocks held by this fid */
-	kuid_t uid;		/* allows finding which FileInfo structure */
-	__u32 pid;		/* process id who opened file */
-	struct cifs_fid fid;	/* file id from remote */
-	struct list_head rlist; /* reconnect list */
-	/* BB add lock scope info here if needed */ ;
-	/* lock scope id (0 if none) */
-	struct dentry *dentry;
-	struct tcon_link *tlink;
-	unsigned int f_flags;
-	bool invalidHandle:1;	/* file closed via session abend */
+काष्ठा cअगरsFileInfo अणु
+	/* following two lists are रक्षित by tcon->खोलो_file_lock */
+	काष्ठा list_head tlist;	/* poपूर्णांकer to next fid owned by tcon */
+	काष्ठा list_head flist;	/* next fid (file instance) क्रम this inode */
+	/* lock list below रक्षित by cअगरsi->lock_sem */
+	काष्ठा cअगरs_fid_locks *llist;	/* brlocks held by this fid */
+	kuid_t uid;		/* allows finding which FileInfo काष्ठाure */
+	__u32 pid;		/* process id who खोलोed file */
+	काष्ठा cअगरs_fid fid;	/* file id from remote */
+	काष्ठा list_head rlist; /* reconnect list */
+	/* BB add lock scope info here अगर needed */ ;
+	/* lock scope id (0 अगर none) */
+	काष्ठा dentry *dentry;
+	काष्ठा tcon_link *tlink;
+	अचिन्हित पूर्णांक f_flags;
+	bool invalidHandle:1;	/* file बंदd via session abend */
 	bool swapfile:1;
-	bool oplock_break_cancelled:1;
-	unsigned int oplock_epoch; /* epoch from the lease break */
-	__u32 oplock_level; /* oplock/lease level from the lease break */
-	int count;
+	bool oplock_अवरोध_cancelled:1;
+	अचिन्हित पूर्णांक oplock_epoch; /* epoch from the lease अवरोध */
+	__u32 oplock_level; /* oplock/lease level from the lease अवरोध */
+	पूर्णांक count;
 	spinlock_t file_info_lock; /* protects four flag/count fields above */
-	struct mutex fh_mutex; /* prevents reopen race after dead ses*/
-	struct cifs_search_info srch_inf;
-	struct work_struct oplock_break; /* work for oplock breaks */
-	struct work_struct put; /* work for the final part of _put */
-	struct delayed_work deferred;
-	bool deferred_close_scheduled; /* Flag to indicate close is scheduled */
-};
+	काष्ठा mutex fh_mutex; /* prevents reखोलो race after dead ses*/
+	काष्ठा cअगरs_search_info srch_inf;
+	काष्ठा work_काष्ठा oplock_अवरोध; /* work क्रम oplock अवरोधs */
+	काष्ठा work_काष्ठा put; /* work क्रम the final part of _put */
+	काष्ठा delayed_work deferred;
+	bool deferred_बंद_scheduled; /* Flag to indicate बंद is scheduled */
+पूर्ण;
 
-struct cifs_io_parms {
+काष्ठा cअगरs_io_parms अणु
 	__u16 netfid;
-	__u64 persistent_fid;	/* persist file id for smb2 */
-	__u64 volatile_fid;	/* volatile file id for smb2 */
+	__u64 persistent_fid;	/* persist file id क्रम smb2 */
+	__u64 अस्थिर_fid;	/* अस्थिर file id क्रम smb2 */
 	__u32 pid;
 	__u64 offset;
-	unsigned int length;
-	struct cifs_tcon *tcon;
-	struct TCP_Server_Info *server;
-};
+	अचिन्हित पूर्णांक length;
+	काष्ठा cअगरs_tcon *tcon;
+	काष्ठा TCP_Server_Info *server;
+पूर्ण;
 
-struct cifs_aio_ctx {
-	struct kref		refcount;
-	struct list_head	list;
-	struct mutex		aio_mutex;
-	struct completion	done;
-	struct iov_iter		iter;
-	struct kiocb		*iocb;
-	struct cifsFileInfo	*cfile;
-	struct bio_vec		*bv;
+काष्ठा cअगरs_aio_ctx अणु
+	काष्ठा kref		refcount;
+	काष्ठा list_head	list;
+	काष्ठा mutex		aio_mutex;
+	काष्ठा completion	करोne;
+	काष्ठा iov_iter		iter;
+	काष्ठा kiocb		*iocb;
+	काष्ठा cअगरsFileInfo	*cfile;
+	काष्ठा bio_vec		*bv;
 	loff_t			pos;
-	unsigned int		npages;
-	ssize_t			rc;
-	unsigned int		len;
-	unsigned int		total_len;
+	अचिन्हित पूर्णांक		npages;
+	sमाप_प्रकार			rc;
+	अचिन्हित पूर्णांक		len;
+	अचिन्हित पूर्णांक		total_len;
 	bool			should_dirty;
 	/*
-	 * Indicates if this aio_ctx is for direct_io,
+	 * Indicates अगर this aio_ctx is क्रम direct_io,
 	 * If yes, iter is a copy of the user passed iov_iter
 	 */
 	bool			direct_io;
-};
+पूर्ण;
 
-/* asynchronous read support */
-struct cifs_readdata {
-	struct kref			refcount;
-	struct list_head		list;
-	struct completion		done;
-	struct cifsFileInfo		*cfile;
-	struct address_space		*mapping;
-	struct cifs_aio_ctx		*ctx;
+/* asynchronous पढ़ो support */
+काष्ठा cअगरs_पढ़ोdata अणु
+	काष्ठा kref			refcount;
+	काष्ठा list_head		list;
+	काष्ठा completion		करोne;
+	काष्ठा cअगरsFileInfo		*cfile;
+	काष्ठा address_space		*mapping;
+	काष्ठा cअगरs_aio_ctx		*ctx;
 	__u64				offset;
-	unsigned int			bytes;
-	unsigned int			got_bytes;
+	अचिन्हित पूर्णांक			bytes;
+	अचिन्हित पूर्णांक			got_bytes;
 	pid_t				pid;
-	int				result;
-	struct work_struct		work;
-	int (*read_into_pages)(struct TCP_Server_Info *server,
-				struct cifs_readdata *rdata,
-				unsigned int len);
-	int (*copy_into_pages)(struct TCP_Server_Info *server,
-				struct cifs_readdata *rdata,
-				struct iov_iter *iter);
-	struct kvec			iov[2];
-	struct TCP_Server_Info		*server;
-#ifdef CONFIG_CIFS_SMB_DIRECT
-	struct smbd_mr			*mr;
-#endif
-	unsigned int			pagesz;
-	unsigned int			page_offset;
-	unsigned int			tailsz;
-	struct cifs_credits		credits;
-	unsigned int			nr_pages;
-	struct page			**pages;
-};
+	पूर्णांक				result;
+	काष्ठा work_काष्ठा		work;
+	पूर्णांक (*पढ़ो_पूर्णांकo_pages)(काष्ठा TCP_Server_Info *server,
+				काष्ठा cअगरs_पढ़ोdata *rdata,
+				अचिन्हित पूर्णांक len);
+	पूर्णांक (*copy_पूर्णांकo_pages)(काष्ठा TCP_Server_Info *server,
+				काष्ठा cअगरs_पढ़ोdata *rdata,
+				काष्ठा iov_iter *iter);
+	काष्ठा kvec			iov[2];
+	काष्ठा TCP_Server_Info		*server;
+#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
+	काष्ठा smbd_mr			*mr;
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक			pagesz;
+	अचिन्हित पूर्णांक			page_offset;
+	अचिन्हित पूर्णांक			tailsz;
+	काष्ठा cअगरs_credits		credits;
+	अचिन्हित पूर्णांक			nr_pages;
+	काष्ठा page			**pages;
+पूर्ण;
 
-/* asynchronous write support */
-struct cifs_writedata {
-	struct kref			refcount;
-	struct list_head		list;
-	struct completion		done;
-	enum writeback_sync_modes	sync_mode;
-	struct work_struct		work;
-	struct cifsFileInfo		*cfile;
-	struct cifs_aio_ctx		*ctx;
+/* asynchronous ग_लिखो support */
+काष्ठा cअगरs_ग_लिखोdata अणु
+	काष्ठा kref			refcount;
+	काष्ठा list_head		list;
+	काष्ठा completion		करोne;
+	क्रमागत ग_लिखोback_sync_modes	sync_mode;
+	काष्ठा work_काष्ठा		work;
+	काष्ठा cअगरsFileInfo		*cfile;
+	काष्ठा cअगरs_aio_ctx		*ctx;
 	__u64				offset;
 	pid_t				pid;
-	unsigned int			bytes;
-	int				result;
-	struct TCP_Server_Info		*server;
-#ifdef CONFIG_CIFS_SMB_DIRECT
-	struct smbd_mr			*mr;
-#endif
-	unsigned int			pagesz;
-	unsigned int			page_offset;
-	unsigned int			tailsz;
-	struct cifs_credits		credits;
-	unsigned int			nr_pages;
-	struct page			**pages;
-};
+	अचिन्हित पूर्णांक			bytes;
+	पूर्णांक				result;
+	काष्ठा TCP_Server_Info		*server;
+#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
+	काष्ठा smbd_mr			*mr;
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक			pagesz;
+	अचिन्हित पूर्णांक			page_offset;
+	अचिन्हित पूर्णांक			tailsz;
+	काष्ठा cअगरs_credits		credits;
+	अचिन्हित पूर्णांक			nr_pages;
+	काष्ठा page			**pages;
+पूर्ण;
 
 /*
- * Take a reference on the file private data. Must be called with
+ * Take a reference on the file निजी data. Must be called with
  * cfile->file_info_lock held.
  */
-static inline void
-cifsFileInfo_get_locked(struct cifsFileInfo *cifs_file)
-{
-	++cifs_file->count;
-}
+अटल अंतरभूत व्योम
+cअगरsFileInfo_get_locked(काष्ठा cअगरsFileInfo *cअगरs_file)
+अणु
+	++cअगरs_file->count;
+पूर्ण
 
-struct cifsFileInfo *cifsFileInfo_get(struct cifsFileInfo *cifs_file);
-void _cifsFileInfo_put(struct cifsFileInfo *cifs_file, bool wait_oplock_hdlr,
+काष्ठा cअगरsFileInfo *cअगरsFileInfo_get(काष्ठा cअगरsFileInfo *cअगरs_file);
+व्योम _cअगरsFileInfo_put(काष्ठा cअगरsFileInfo *cअगरs_file, bool रुको_oplock_hdlr,
 		       bool offload);
-void cifsFileInfo_put(struct cifsFileInfo *cifs_file);
+व्योम cअगरsFileInfo_put(काष्ठा cअगरsFileInfo *cअगरs_file);
 
-#define CIFS_CACHE_READ_FLG	1
-#define CIFS_CACHE_HANDLE_FLG	2
-#define CIFS_CACHE_RH_FLG	(CIFS_CACHE_READ_FLG | CIFS_CACHE_HANDLE_FLG)
-#define CIFS_CACHE_WRITE_FLG	4
-#define CIFS_CACHE_RW_FLG	(CIFS_CACHE_READ_FLG | CIFS_CACHE_WRITE_FLG)
-#define CIFS_CACHE_RHW_FLG	(CIFS_CACHE_RW_FLG | CIFS_CACHE_HANDLE_FLG)
+#घोषणा CIFS_CACHE_READ_FLG	1
+#घोषणा CIFS_CACHE_HANDLE_FLG	2
+#घोषणा CIFS_CACHE_RH_FLG	(CIFS_CACHE_READ_FLG | CIFS_CACHE_HANDLE_FLG)
+#घोषणा CIFS_CACHE_WRITE_FLG	4
+#घोषणा CIFS_CACHE_RW_FLG	(CIFS_CACHE_READ_FLG | CIFS_CACHE_WRITE_FLG)
+#घोषणा CIFS_CACHE_RHW_FLG	(CIFS_CACHE_RW_FLG | CIFS_CACHE_HANDLE_FLG)
 
-#define CIFS_CACHE_READ(cinode) ((cinode->oplock & CIFS_CACHE_READ_FLG) || (CIFS_SB(cinode->vfs_inode.i_sb)->mnt_cifs_flags & CIFS_MOUNT_RO_CACHE))
-#define CIFS_CACHE_HANDLE(cinode) (cinode->oplock & CIFS_CACHE_HANDLE_FLG)
-#define CIFS_CACHE_WRITE(cinode) ((cinode->oplock & CIFS_CACHE_WRITE_FLG) || (CIFS_SB(cinode->vfs_inode.i_sb)->mnt_cifs_flags & CIFS_MOUNT_RW_CACHE))
+#घोषणा CIFS_CACHE_READ(cinode) ((cinode->oplock & CIFS_CACHE_READ_FLG) || (CIFS_SB(cinode->vfs_inode.i_sb)->mnt_cअगरs_flags & CIFS_MOUNT_RO_CACHE))
+#घोषणा CIFS_CACHE_HANDLE(cinode) (cinode->oplock & CIFS_CACHE_HANDLE_FLG)
+#घोषणा CIFS_CACHE_WRITE(cinode) ((cinode->oplock & CIFS_CACHE_WRITE_FLG) || (CIFS_SB(cinode->vfs_inode.i_sb)->mnt_cअगरs_flags & CIFS_MOUNT_RW_CACHE))
 
 /*
- * One of these for each file inode
+ * One of these क्रम each file inode
  */
 
-struct cifsInodeInfo {
+काष्ठा cअगरsInodeInfo अणु
 	bool can_cache_brlcks;
-	struct list_head llist;	/* locks helb by this inode */
+	काष्ठा list_head llist;	/* locks helb by this inode */
 	/*
-	 * NOTE: Some code paths call down_read(lock_sem) twice, so
-	 * we must always use cifs_down_write() instead of down_write()
-	 * for this semaphore to avoid deadlocks.
+	 * NOTE: Some code paths call करोwn_पढ़ो(lock_sem) twice, so
+	 * we must always use cअगरs_करोwn_ग_लिखो() instead of करोwn_ग_लिखो()
+	 * क्रम this semaphore to aव्योम deadlocks.
 	 */
-	struct rw_semaphore lock_sem;	/* protect the fields above */
-	/* BB add in lists for dirty pages i.e. write caching info for oplock */
-	struct list_head openFileList;
-	spinlock_t	open_file_lock;	/* protects openFileList */
-	__u32 cifsAttrs; /* e.g. DOS archive bit, sparse, compressed, system */
-	unsigned int oplock;		/* oplock/lease level we have */
-	unsigned int epoch;		/* used to track lease state changes */
-#define CIFS_INODE_PENDING_OPLOCK_BREAK   (0) /* oplock break in progress */
-#define CIFS_INODE_PENDING_WRITERS	  (1) /* Writes in progress */
-#define CIFS_INODE_FLAG_UNUSED		  (2) /* Unused flag */
-#define CIFS_INO_DELETE_PENDING		  (3) /* delete pending on server */
-#define CIFS_INO_INVALID_MAPPING	  (4) /* pagecache is invalid */
-#define CIFS_INO_LOCK			  (5) /* lock bit for synchronization */
-#define CIFS_INO_MODIFIED_ATTR            (6) /* Indicate change in mtime/ctime */
-	unsigned long flags;
-	spinlock_t writers_lock;
-	unsigned int writers;		/* Number of writers on this inode */
-	unsigned long time;		/* jiffies of last update of inode */
-	u64  server_eof;		/* current file size on server -- protected by i_lock */
+	काष्ठा rw_semaphore lock_sem;	/* protect the fields above */
+	/* BB add in lists क्रम dirty pages i.e. ग_लिखो caching info क्रम oplock */
+	काष्ठा list_head खोलोFileList;
+	spinlock_t	खोलो_file_lock;	/* protects खोलोFileList */
+	__u32 cअगरsAttrs; /* e.g. DOS archive bit, sparse, compressed, प्रणाली */
+	अचिन्हित पूर्णांक oplock;		/* oplock/lease level we have */
+	अचिन्हित पूर्णांक epoch;		/* used to track lease state changes */
+#घोषणा CIFS_INODE_PENDING_OPLOCK_BREAK   (0) /* oplock अवरोध in progress */
+#घोषणा CIFS_INODE_PENDING_WRITERS	  (1) /* Writes in progress */
+#घोषणा CIFS_INODE_FLAG_UNUSED		  (2) /* Unused flag */
+#घोषणा CIFS_INO_DELETE_PENDING		  (3) /* delete pending on server */
+#घोषणा CIFS_INO_INVALID_MAPPING	  (4) /* pagecache is invalid */
+#घोषणा CIFS_INO_LOCK			  (5) /* lock bit क्रम synchronization */
+#घोषणा CIFS_INO_MODIFIED_ATTR            (6) /* Indicate change in mसमय/स_समय */
+	अचिन्हित दीर्घ flags;
+	spinlock_t ग_लिखोrs_lock;
+	अचिन्हित पूर्णांक ग_लिखोrs;		/* Number of ग_लिखोrs on this inode */
+	अचिन्हित दीर्घ समय;		/* jअगरfies of last update of inode */
+	u64  server_eof;		/* current file size on server -- रक्षित by i_lock */
 	u64  uniqueid;			/* server inode number */
-	u64  createtime;		/* creation time on server */
-	__u8 lease_key[SMB2_LEASE_KEY_SIZE];	/* lease key for this inode */
-#ifdef CONFIG_CIFS_FSCACHE
-	struct fscache_cookie *fscache;
-#endif
-	struct inode vfs_inode;
-	struct list_head deferred_closes; /* list of deferred closes */
+	u64  createसमय;		/* creation समय on server */
+	__u8 lease_key[SMB2_LEASE_KEY_SIZE];	/* lease key क्रम this inode */
+#अगर_घोषित CONFIG_CIFS_FSCACHE
+	काष्ठा fscache_cookie *fscache;
+#पूर्ण_अगर
+	काष्ठा inode vfs_inode;
+	काष्ठा list_head deferred_बंदs; /* list of deferred बंदs */
 	spinlock_t deferred_lock; /* protection on deferred list */
 	bool lease_granted; /* Flag to indicate whether lease or oplock is granted. */
-};
+पूर्ण;
 
-static inline struct cifsInodeInfo *
-CIFS_I(struct inode *inode)
-{
-	return container_of(inode, struct cifsInodeInfo, vfs_inode);
-}
+अटल अंतरभूत काष्ठा cअगरsInodeInfo *
+CIFS_I(काष्ठा inode *inode)
+अणु
+	वापस container_of(inode, काष्ठा cअगरsInodeInfo, vfs_inode);
+पूर्ण
 
-static inline struct cifs_sb_info *
-CIFS_SB(struct super_block *sb)
-{
-	return sb->s_fs_info;
-}
+अटल अंतरभूत काष्ठा cअगरs_sb_info *
+CIFS_SB(काष्ठा super_block *sb)
+अणु
+	वापस sb->s_fs_info;
+पूर्ण
 
-static inline struct cifs_sb_info *
-CIFS_FILE_SB(struct file *file)
-{
-	return CIFS_SB(file_inode(file)->i_sb);
-}
+अटल अंतरभूत काष्ठा cअगरs_sb_info *
+CIFS_खाता_SB(काष्ठा file *file)
+अणु
+	वापस CIFS_SB(file_inode(file)->i_sb);
+पूर्ण
 
-static inline char CIFS_DIR_SEP(const struct cifs_sb_info *cifs_sb)
-{
-	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_POSIX_PATHS)
-		return '/';
-	else
-		return '\\';
-}
+अटल अंतरभूत अक्षर CIFS_सूची_SEP(स्थिर काष्ठा cअगरs_sb_info *cअगरs_sb)
+अणु
+	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_POSIX_PATHS)
+		वापस '/';
+	अन्यथा
+		वापस '\\';
+पूर्ण
 
-static inline void
-convert_delimiter(char *path, char delim)
-{
-	char old_delim, *pos;
+अटल अंतरभूत व्योम
+convert_delimiter(अक्षर *path, अक्षर delim)
+अणु
+	अक्षर old_delim, *pos;
 
-	if (delim == '/')
+	अगर (delim == '/')
 		old_delim = '\\';
-	else
+	अन्यथा
 		old_delim = '/';
 
 	pos = path;
-	while ((pos = strchr(pos, old_delim)))
+	जबतक ((pos = म_अक्षर(pos, old_delim)))
 		*pos = delim;
-}
+पूर्ण
 
-#define cifs_stats_inc atomic_inc
+#घोषणा cअगरs_stats_inc atomic_inc
 
-static inline void cifs_stats_bytes_written(struct cifs_tcon *tcon,
-					    unsigned int bytes)
-{
-	if (bytes) {
+अटल अंतरभूत व्योम cअगरs_stats_bytes_written(काष्ठा cअगरs_tcon *tcon,
+					    अचिन्हित पूर्णांक bytes)
+अणु
+	अगर (bytes) अणु
 		spin_lock(&tcon->stat_lock);
 		tcon->bytes_written += bytes;
 		spin_unlock(&tcon->stat_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void cifs_stats_bytes_read(struct cifs_tcon *tcon,
-					 unsigned int bytes)
-{
+अटल अंतरभूत व्योम cअगरs_stats_bytes_पढ़ो(काष्ठा cअगरs_tcon *tcon,
+					 अचिन्हित पूर्णांक bytes)
+अणु
 	spin_lock(&tcon->stat_lock);
-	tcon->bytes_read += bytes;
+	tcon->bytes_पढ़ो += bytes;
 	spin_unlock(&tcon->stat_lock);
-}
+पूर्ण
 
 
 /*
- * This is the prototype for the mid receive function. This function is for
+ * This is the prototype क्रम the mid receive function. This function is क्रम
  * receiving the rest of the SMB frame, starting with the WordCount (which is
- * just after the MID in struct smb_hdr). Note:
+ * just after the MID in काष्ठा smb_hdr). Note:
  *
- * - This will be called by cifsd, with no locks held.
+ * - This will be called by cअगरsd, with no locks held.
  * - The mid will still be on the pending_mid_q.
- * - mid->resp_buf will point to the current buffer.
+ * - mid->resp_buf will poपूर्णांक to the current buffer.
  *
  * Returns zero on a successful receive, or an error. The receive state in
  * the TCP_Server_Info will also be updated.
  */
-typedef int (mid_receive_t)(struct TCP_Server_Info *server,
-			    struct mid_q_entry *mid);
+प्रकार पूर्णांक (mid_receive_t)(काष्ठा TCP_Server_Info *server,
+			    काष्ठा mid_q_entry *mid);
 
 /*
- * This is the prototype for the mid callback function. This is called once the
+ * This is the prototype क्रम the mid callback function. This is called once the
  * mid has been received off of the socket. When creating one, take special
- * care to avoid deadlocks. Things to bear in mind:
+ * care to aव्योम deadlocks. Things to bear in mind:
  *
- * - it will be called by cifsd, with no locks held
- * - the mid will be removed from any lists
+ * - it will be called by cअगरsd, with no locks held
+ * - the mid will be हटाओd from any lists
  */
-typedef void (mid_callback_t)(struct mid_q_entry *mid);
+प्रकार व्योम (mid_callback_t)(काष्ठा mid_q_entry *mid);
 
 /*
- * This is the protopyte for mid handle function. This is called once the mid
+ * This is the protopyte क्रम mid handle function. This is called once the mid
  * has been recognized after decryption of the message.
  */
-typedef int (mid_handle_t)(struct TCP_Server_Info *server,
-			    struct mid_q_entry *mid);
+प्रकार पूर्णांक (mid_handle_t)(काष्ठा TCP_Server_Info *server,
+			    काष्ठा mid_q_entry *mid);
 
-/* one of these for every pending CIFS request to the server */
-struct mid_q_entry {
-	struct list_head qhead;	/* mids waiting on reply from this server */
-	struct kref refcount;
-	struct TCP_Server_Info *server;	/* server corresponding to this mid */
+/* one of these क्रम every pending CIFS request to the server */
+काष्ठा mid_q_entry अणु
+	काष्ठा list_head qhead;	/* mids रुकोing on reply from this server */
+	काष्ठा kref refcount;
+	काष्ठा TCP_Server_Info *server;	/* server corresponding to this mid */
 	__u64 mid;		/* multiplex id */
 	__u16 credits;		/* number of credits consumed by this mid */
 	__u16 credits_received;	/* number of credits from the response */
 	__u32 pid;		/* process id */
-	__u32 sequence_number;  /* for CIFS signing */
-	unsigned long when_alloc;  /* when mid was created */
-#ifdef CONFIG_CIFS_STATS2
-	unsigned long when_sent; /* time when smb send finished */
-	unsigned long when_received; /* when demux complete (taken off wire) */
-#endif
+	__u32 sequence_number;  /* क्रम CIFS signing */
+	अचिन्हित दीर्घ when_alloc;  /* when mid was created */
+#अगर_घोषित CONFIG_CIFS_STATS2
+	अचिन्हित दीर्घ when_sent; /* समय when smb send finished */
+	अचिन्हित दीर्घ when_received; /* when demux complete (taken off wire) */
+#पूर्ण_अगर
 	mid_receive_t *receive; /* call receive callback */
 	mid_callback_t *callback; /* call completion callback */
 	mid_handle_t *handle; /* call handle mid callback */
-	void *callback_data;	  /* general purpose pointer for callback */
-	struct task_struct *creator;
-	void *resp_buf;		/* pointer to received SMB header */
-	unsigned int resp_buf_size;
-	int mid_state;	/* wish this were enum but can not pass to wait_event */
-	unsigned int mid_flags;
+	व्योम *callback_data;	  /* general purpose poपूर्णांकer क्रम callback */
+	काष्ठा task_काष्ठा *creator;
+	व्योम *resp_buf;		/* poपूर्णांकer to received SMB header */
+	अचिन्हित पूर्णांक resp_buf_size;
+	पूर्णांक mid_state;	/* wish this were क्रमागत but can not pass to रुको_event */
+	अचिन्हित पूर्णांक mid_flags;
 	__le16 command;		/* smb command code */
-	unsigned int optype;	/* operation type */
-	bool large_buf:1;	/* if valid response, is pointer to large buf */
-	bool multiRsp:1;	/* multiple trans2 responses for one request  */
+	अचिन्हित पूर्णांक optype;	/* operation type */
+	bool large_buf:1;	/* अगर valid response, is poपूर्णांकer to large buf */
+	bool multiRsp:1;	/* multiple trans2 responses क्रम one request  */
 	bool multiEnd:1;	/* both received */
 	bool decrypted:1;	/* decrypted entry */
-};
+पूर्ण;
 
-struct close_cancelled_open {
-	struct cifs_fid         fid;
-	struct cifs_tcon        *tcon;
-	struct work_struct      work;
+काष्ठा बंद_cancelled_खोलो अणु
+	काष्ठा cअगरs_fid         fid;
+	काष्ठा cअगरs_tcon        *tcon;
+	काष्ठा work_काष्ठा      work;
 	__u64 mid;
 	__u16 cmd;
-};
+पूर्ण;
 
 /*	Make code in transport.c a little cleaner by moving
-	update of optional stats into function below */
-static inline void cifs_in_send_inc(struct TCP_Server_Info *server)
-{
+	update of optional stats पूर्णांकo function below */
+अटल अंतरभूत व्योम cअगरs_in_send_inc(काष्ठा TCP_Server_Info *server)
+अणु
 	atomic_inc(&server->in_send);
-}
+पूर्ण
 
-static inline void cifs_in_send_dec(struct TCP_Server_Info *server)
-{
+अटल अंतरभूत व्योम cअगरs_in_send_dec(काष्ठा TCP_Server_Info *server)
+अणु
 	atomic_dec(&server->in_send);
-}
+पूर्ण
 
-static inline void cifs_num_waiters_inc(struct TCP_Server_Info *server)
-{
-	atomic_inc(&server->num_waiters);
-}
+अटल अंतरभूत व्योम cअगरs_num_रुकोers_inc(काष्ठा TCP_Server_Info *server)
+अणु
+	atomic_inc(&server->num_रुकोers);
+पूर्ण
 
-static inline void cifs_num_waiters_dec(struct TCP_Server_Info *server)
-{
-	atomic_dec(&server->num_waiters);
-}
+अटल अंतरभूत व्योम cअगरs_num_रुकोers_dec(काष्ठा TCP_Server_Info *server)
+अणु
+	atomic_dec(&server->num_रुकोers);
+पूर्ण
 
-#ifdef CONFIG_CIFS_STATS2
-static inline void cifs_save_when_sent(struct mid_q_entry *mid)
-{
-	mid->when_sent = jiffies;
-}
-#else
-static inline void cifs_save_when_sent(struct mid_q_entry *mid)
-{
-}
-#endif
+#अगर_घोषित CONFIG_CIFS_STATS2
+अटल अंतरभूत व्योम cअगरs_save_when_sent(काष्ठा mid_q_entry *mid)
+अणु
+	mid->when_sent = jअगरfies;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम cअगरs_save_when_sent(काष्ठा mid_q_entry *mid)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-/* for pending dnotify requests */
-struct dir_notify_req {
-	struct list_head lhead;
+/* क्रम pending dnotअगरy requests */
+काष्ठा dir_notअगरy_req अणु
+	काष्ठा list_head lhead;
 	__le16 Pid;
 	__le16 PidHigh;
 	__u16 Mid;
 	__u16 Tid;
 	__u16 Uid;
 	__u16 netfid;
-	__u32 filter; /* CompletionFilter (for multishot) */
-	int multishot;
-	struct file *pfile;
-};
+	__u32 filter; /* CompletionFilter (क्रम multishot) */
+	पूर्णांक multishot;
+	काष्ठा file *pfile;
+पूर्ण;
 
-struct dfs_info3_param {
-	int flags; /* DFSREF_REFERRAL_SERVER, DFSREF_STORAGE_SERVER*/
-	int path_consumed;
-	int server_type;
-	int ref_flag;
-	char *path_name;
-	char *node_name;
-	int ttl;
-};
+काष्ठा dfs_info3_param अणु
+	पूर्णांक flags; /* DFSREF_REFERRAL_SERVER, DFSREF_STORAGE_SERVER*/
+	पूर्णांक path_consumed;
+	पूर्णांक server_type;
+	पूर्णांक ref_flag;
+	अक्षर *path_name;
+	अक्षर *node_name;
+	पूर्णांक ttl;
+पूर्ण;
 
 /*
- * common struct for holding inode info when searching for or updating an
+ * common काष्ठा क्रम holding inode info when searching क्रम or updating an
  * inode with new info
  */
 
-#define CIFS_FATTR_DFS_REFERRAL		0x1
-#define CIFS_FATTR_DELETE_PENDING	0x2
-#define CIFS_FATTR_NEED_REVAL		0x4
-#define CIFS_FATTR_INO_COLLISION	0x8
-#define CIFS_FATTR_UNKNOWN_NLINK	0x10
-#define CIFS_FATTR_FAKE_ROOT_INO	0x20
+#घोषणा CIFS_FATTR_DFS_REFERRAL		0x1
+#घोषणा CIFS_FATTR_DELETE_PENDING	0x2
+#घोषणा CIFS_FATTR_NEED_REVAL		0x4
+#घोषणा CIFS_FATTR_INO_COLLISION	0x8
+#घोषणा CIFS_FATTR_UNKNOWN_NLINK	0x10
+#घोषणा CIFS_FATTR_FAKE_ROOT_INO	0x20
 
-struct cifs_fattr {
+काष्ठा cअगरs_fattr अणु
 	u32		cf_flags;
-	u32		cf_cifsattrs;
+	u32		cf_cअगरsattrs;
 	u64		cf_uniqueid;
 	u64		cf_eof;
 	u64		cf_bytes;
-	u64		cf_createtime;
+	u64		cf_createसमय;
 	kuid_t		cf_uid;
 	kgid_t		cf_gid;
 	umode_t		cf_mode;
 	dev_t		cf_rdev;
-	unsigned int	cf_nlink;
-	unsigned int	cf_dtype;
-	struct timespec64 cf_atime;
-	struct timespec64 cf_mtime;
-	struct timespec64 cf_ctime;
-	u32             cf_cifstag;
-};
+	अचिन्हित पूर्णांक	cf_nlink;
+	अचिन्हित पूर्णांक	cf_dtype;
+	काष्ठा बारpec64 cf_aसमय;
+	काष्ठा बारpec64 cf_mसमय;
+	काष्ठा बारpec64 cf_स_समय;
+	u32             cf_cअगरstag;
+पूर्ण;
 
-static inline void free_dfs_info_param(struct dfs_info3_param *param)
-{
-	if (param) {
-		kfree(param->path_name);
-		kfree(param->node_name);
-	}
-}
+अटल अंतरभूत व्योम मुक्त_dfs_info_param(काष्ठा dfs_info3_param *param)
+अणु
+	अगर (param) अणु
+		kमुक्त(param->path_name);
+		kमुक्त(param->node_name);
+	पूर्ण
+पूर्ण
 
-static inline void free_dfs_info_array(struct dfs_info3_param *param,
-				       int number_of_items)
-{
-	int i;
-	if ((number_of_items == 0) || (param == NULL))
-		return;
-	for (i = 0; i < number_of_items; i++) {
-		kfree(param[i].path_name);
-		kfree(param[i].node_name);
-	}
-	kfree(param);
-}
+अटल अंतरभूत व्योम मुक्त_dfs_info_array(काष्ठा dfs_info3_param *param,
+				       पूर्णांक number_of_items)
+अणु
+	पूर्णांक i;
+	अगर ((number_of_items == 0) || (param == शून्य))
+		वापस;
+	क्रम (i = 0; i < number_of_items; i++) अणु
+		kमुक्त(param[i].path_name);
+		kमुक्त(param[i].node_name);
+	पूर्ण
+	kमुक्त(param);
+पूर्ण
 
-static inline bool is_interrupt_error(int error)
-{
-	switch (error) {
-	case -EINTR:
-	case -ERESTARTSYS:
-	case -ERESTARTNOHAND:
-	case -ERESTARTNOINTR:
-		return true;
-	}
-	return false;
-}
+अटल अंतरभूत bool is_पूर्णांकerrupt_error(पूर्णांक error)
+अणु
+	चयन (error) अणु
+	हाल -EINTR:
+	हाल -ERESTARTSYS:
+	हाल -ERESTARTNOHAND:
+	हाल -ERESTARTNOINTR:
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static inline bool is_retryable_error(int error)
-{
-	if (is_interrupt_error(error) || error == -EAGAIN)
-		return true;
-	return false;
-}
+अटल अंतरभूत bool is_retryable_error(पूर्णांक error)
+अणु
+	अगर (is_पूर्णांकerrupt_error(error) || error == -EAGAIN)
+		वापस true;
+	वापस false;
+पूर्ण
 
 
-/* cifs_get_writable_file() flags */
-#define FIND_WR_ANY         0
-#define FIND_WR_FSUID_ONLY  1
-#define FIND_WR_WITH_DELETE 2
+/* cअगरs_get_writable_file() flags */
+#घोषणा FIND_WR_ANY         0
+#घोषणा FIND_WR_FSUID_ONLY  1
+#घोषणा FIND_WR_WITH_DELETE 2
 
-#define   MID_FREE 0
-#define   MID_REQUEST_ALLOCATED 1
-#define   MID_REQUEST_SUBMITTED 2
-#define   MID_RESPONSE_RECEIVED 4
-#define   MID_RETRY_NEEDED      8 /* session closed while this request out */
-#define   MID_RESPONSE_MALFORMED 0x10
-#define   MID_SHUTDOWN		 0x20
+#घोषणा   MID_FREE 0
+#घोषणा   MID_REQUEST_ALLOCATED 1
+#घोषणा   MID_REQUEST_SUBMITTED 2
+#घोषणा   MID_RESPONSE_RECEIVED 4
+#घोषणा   MID_RETRY_NEEDED      8 /* session बंदd जबतक this request out */
+#घोषणा   MID_RESPONSE_MALFORMED 0x10
+#घोषणा   MID_SHUTDOWN		 0x20
 
 /* Flags */
-#define   MID_WAIT_CANCELLED	 1 /* Cancelled while waiting for response */
-#define   MID_DELETED            2 /* Mid has been dequeued/deleted */
+#घोषणा   MID_WAIT_CANCELLED	 1 /* Cancelled जबतक रुकोing क्रम response */
+#घोषणा   MID_DELETED            2 /* Mid has been dequeued/deleted */
 
-/* Types of response buffer returned from SendReceive2 */
-#define   CIFS_NO_BUFFER        0    /* Response buffer not returned */
-#define   CIFS_SMALL_BUFFER     1
-#define   CIFS_LARGE_BUFFER     2
-#define   CIFS_IOVEC            4    /* array of response buffers */
+/* Types of response buffer वापसed from SendReceive2 */
+#घोषणा   CIFS_NO_BUFFER        0    /* Response buffer not वापसed */
+#घोषणा   CIFS_SMALL_BUFFER     1
+#घोषणा   CIFS_LARGE_BUFFER     2
+#घोषणा   CIFS_IOVEC            4    /* array of response buffers */
 
 /* Type of Request to SendReceive2 */
-#define   CIFS_BLOCKING_OP      1    /* operation can block */
-#define   CIFS_NON_BLOCKING     2    /* do not block waiting for credits */
-#define   CIFS_TIMEOUT_MASK 0x003    /* only one of above set in req */
-#define   CIFS_LOG_ERROR    0x010    /* log NT STATUS if non-zero */
-#define   CIFS_LARGE_BUF_OP 0x020    /* large request buffer */
-#define   CIFS_NO_RSP_BUF   0x040    /* no response buffer required */
+#घोषणा   CIFS_BLOCKING_OP      1    /* operation can block */
+#घोषणा   CIFS_NON_BLOCKING     2    /* करो not block रुकोing क्रम credits */
+#घोषणा   CIFS_TIMEOUT_MASK 0x003    /* only one of above set in req */
+#घोषणा   CIFS_LOG_ERROR    0x010    /* log NT STATUS अगर non-zero */
+#घोषणा   CIFS_LARGE_BUF_OP 0x020    /* large request buffer */
+#घोषणा   CIFS_NO_RSP_BUF   0x040    /* no response buffer required */
 
 /* Type of request operation */
-#define   CIFS_ECHO_OP            0x080  /* echo request */
-#define   CIFS_OBREAK_OP          0x0100 /* oplock break request */
-#define   CIFS_NEG_OP             0x0200 /* negotiate request */
-#define   CIFS_CP_CREATE_CLOSE_OP 0x0400 /* compound create+close request */
-/* Lower bitmask values are reserved by others below. */
-#define   CIFS_SESS_OP            0x2000 /* session setup request */
-#define   CIFS_OP_MASK            0x2780 /* mask request type */
+#घोषणा   CIFS_ECHO_OP            0x080  /* echo request */
+#घोषणा   CIFS_OBREAK_OP          0x0100 /* oplock अवरोध request */
+#घोषणा   CIFS_NEG_OP             0x0200 /* negotiate request */
+#घोषणा   CIFS_CP_CREATE_CLOSE_OP 0x0400 /* compound create+बंद request */
+/* Lower biपंचांगask values are reserved by others below. */
+#घोषणा   CIFS_SESS_OP            0x2000 /* session setup request */
+#घोषणा   CIFS_OP_MASK            0x2780 /* mask request type */
 
-#define   CIFS_HAS_CREDITS        0x0400 /* already has credits */
-#define   CIFS_TRANSFORM_REQ      0x0800 /* transform request before sending */
-#define   CIFS_NO_SRV_RSP         0x1000 /* there is no server response */
+#घोषणा   CIFS_HAS_CREDITS        0x0400 /* alपढ़ोy has credits */
+#घोषणा   CIFS_TRANSFORM_REQ      0x0800 /* transक्रमm request beक्रमe sending */
+#घोषणा   CIFS_NO_SRV_RSP         0x1000 /* there is no server response */
 
 /* Security Flags: indicate type of session setup needed */
-#define   CIFSSEC_MAY_SIGN	0x00001
-#define   CIFSSEC_MAY_NTLM	0x00002
-#define   CIFSSEC_MAY_NTLMV2	0x00004
-#define   CIFSSEC_MAY_KRB5	0x00008
-#ifdef CONFIG_CIFS_WEAK_PW_HASH
-#define   CIFSSEC_MAY_LANMAN	0x00010
-#define   CIFSSEC_MAY_PLNTXT	0x00020
-#else
-#define   CIFSSEC_MAY_LANMAN    0
-#define   CIFSSEC_MAY_PLNTXT    0
-#endif /* weak passwords */
-#define   CIFSSEC_MAY_SEAL	0x00040 /* not supported yet */
-#define   CIFSSEC_MAY_NTLMSSP	0x00080 /* raw ntlmssp with ntlmv2 */
+#घोषणा   CIFSSEC_MAY_SIGN	0x00001
+#घोषणा   CIFSSEC_MAY_NTLM	0x00002
+#घोषणा   CIFSSEC_MAY_NTLMV2	0x00004
+#घोषणा   CIFSSEC_MAY_KRB5	0x00008
+#अगर_घोषित CONFIG_CIFS_WEAK_PW_HASH
+#घोषणा   CIFSSEC_MAY_LANMAN	0x00010
+#घोषणा   CIFSSEC_MAY_PLNTXT	0x00020
+#अन्यथा
+#घोषणा   CIFSSEC_MAY_LANMAN    0
+#घोषणा   CIFSSEC_MAY_PLNTXT    0
+#पूर्ण_अगर /* weak passwords */
+#घोषणा   CIFSSEC_MAY_SEAL	0x00040 /* not supported yet */
+#घोषणा   CIFSSEC_MAY_NTLMSSP	0x00080 /* raw ntlmssp with ntlmv2 */
 
-#define   CIFSSEC_MUST_SIGN	0x01001
+#घोषणा   CIFSSEC_MUST_SIGN	0x01001
 /* note that only one of the following can be set so the
 result of setting MUST flags more than once will be to
 require use of the stronger protocol */
-#define   CIFSSEC_MUST_NTLM	0x02002
-#define   CIFSSEC_MUST_NTLMV2	0x04004
-#define   CIFSSEC_MUST_KRB5	0x08008
-#ifdef CONFIG_CIFS_WEAK_PW_HASH
-#define   CIFSSEC_MUST_LANMAN	0x10010
-#define   CIFSSEC_MUST_PLNTXT	0x20020
-#ifdef CONFIG_CIFS_UPCALL
-#define   CIFSSEC_MASK          0xBF0BF /* allows weak security but also krb5 */
-#else
-#define   CIFSSEC_MASK          0xB70B7 /* current flags supported if weak */
-#endif /* UPCALL */
-#else /* do not allow weak pw hash */
-#define   CIFSSEC_MUST_LANMAN	0
-#define   CIFSSEC_MUST_PLNTXT	0
-#ifdef CONFIG_CIFS_UPCALL
-#define   CIFSSEC_MASK          0x8F08F /* flags supported if no weak allowed */
-#else
-#define	  CIFSSEC_MASK          0x87087 /* flags supported if no weak allowed */
-#endif /* UPCALL */
-#endif /* WEAK_PW_HASH */
-#define   CIFSSEC_MUST_SEAL	0x40040 /* not supported yet */
-#define   CIFSSEC_MUST_NTLMSSP	0x80080 /* raw ntlmssp with ntlmv2 */
+#घोषणा   CIFSSEC_MUST_NTLM	0x02002
+#घोषणा   CIFSSEC_MUST_NTLMV2	0x04004
+#घोषणा   CIFSSEC_MUST_KRB5	0x08008
+#अगर_घोषित CONFIG_CIFS_WEAK_PW_HASH
+#घोषणा   CIFSSEC_MUST_LANMAN	0x10010
+#घोषणा   CIFSSEC_MUST_PLNTXT	0x20020
+#अगर_घोषित CONFIG_CIFS_UPCALL
+#घोषणा   CIFSSEC_MASK          0xBF0BF /* allows weak security but also krb5 */
+#अन्यथा
+#घोषणा   CIFSSEC_MASK          0xB70B7 /* current flags supported अगर weak */
+#पूर्ण_अगर /* UPCALL */
+#अन्यथा /* करो not allow weak pw hash */
+#घोषणा   CIFSSEC_MUST_LANMAN	0
+#घोषणा   CIFSSEC_MUST_PLNTXT	0
+#अगर_घोषित CONFIG_CIFS_UPCALL
+#घोषणा   CIFSSEC_MASK          0x8F08F /* flags supported अगर no weak allowed */
+#अन्यथा
+#घोषणा	  CIFSSEC_MASK          0x87087 /* flags supported अगर no weak allowed */
+#पूर्ण_अगर /* UPCALL */
+#पूर्ण_अगर /* WEAK_PW_HASH */
+#घोषणा   CIFSSEC_MUST_SEAL	0x40040 /* not supported yet */
+#घोषणा   CIFSSEC_MUST_NTLMSSP	0x80080 /* raw ntlmssp with ntlmv2 */
 
-#define   CIFSSEC_DEF (CIFSSEC_MAY_SIGN | CIFSSEC_MAY_NTLMV2 | CIFSSEC_MAY_NTLMSSP)
-#define   CIFSSEC_MAX (CIFSSEC_MUST_SIGN | CIFSSEC_MUST_NTLMV2)
-#define   CIFSSEC_AUTH_MASK (CIFSSEC_MAY_NTLM | CIFSSEC_MAY_NTLMV2 | CIFSSEC_MAY_LANMAN | CIFSSEC_MAY_PLNTXT | CIFSSEC_MAY_KRB5 | CIFSSEC_MAY_NTLMSSP)
+#घोषणा   CIFSSEC_DEF (CIFSSEC_MAY_SIGN | CIFSSEC_MAY_NTLMV2 | CIFSSEC_MAY_NTLMSSP)
+#घोषणा   CIFSSEC_MAX (CIFSSEC_MUST_SIGN | CIFSSEC_MUST_NTLMV2)
+#घोषणा   CIFSSEC_AUTH_MASK (CIFSSEC_MAY_NTLM | CIFSSEC_MAY_NTLMV2 | CIFSSEC_MAY_LANMAN | CIFSSEC_MAY_PLNTXT | CIFSSEC_MAY_KRB5 | CIFSSEC_MAY_NTLMSSP)
 /*
  *****************************************************************
- * All constants go here
+ * All स्थिरants go here
  *****************************************************************
  */
 
-#define UID_HASH (16)
+#घोषणा UID_HASH (16)
 
 /*
  * Note that ONE module should define _DECLARE_GLOBALS_HERE to cause the
@@ -1787,65 +1788,65 @@ require use of the stronger protocol */
 
 /****************************************************************************
  *  Locking notes.  All updates to global variables and lists should be
- *                  protected by spinlocks or semaphores.
+ *                  रक्षित by spinlocks or semaphores.
  *
  *  Spinlocks
  *  ---------
  *  GlobalMid_Lock protects:
  *	list operations on pending_mid_q and oplockQ
  *      updates to XID counters, multiplex id  and SMB sequence numbers
- *      list operations on global DnotifyReqList
+ *      list operations on global DnotअगरyReqList
  *  tcp_ses_lock protects:
  *	list operations on tcp and SMB session lists
- *  tcon->open_file_lock protects the list of open files hanging off the tcon
- *  inode->open_file_lock protects the openFileList hanging off the inode
- *  cfile->file_info_lock protects counters and fields in cifs file struct
- *  f_owner.lock protects certain per file struct operations
+ *  tcon->खोलो_file_lock protects the list of खोलो files hanging off the tcon
+ *  inode->खोलो_file_lock protects the खोलोFileList hanging off the inode
+ *  cfile->file_info_lock protects counters and fields in cअगरs file काष्ठा
+ *  f_owner.lock protects certain per file काष्ठा operations
  *  mapping->page_lock protects certain per page operations
  *
- *  Note that the cifs_tcon.open_file_lock should be taken before
- *  not after the cifsInodeInfo.open_file_lock
+ *  Note that the cअगरs_tcon.खोलो_file_lock should be taken beक्रमe
+ *  not after the cअगरsInodeInfo.खोलो_file_lock
  *
  *  Semaphores
  *  ----------
- *  cifsInodeInfo->lock_sem protects:
+ *  cअगरsInodeInfo->lock_sem protects:
  *	the list of locks held by the inode
  *
  ****************************************************************************/
 
-#ifdef DECLARE_GLOBALS_HERE
-#define GLOBAL_EXTERN
-#else
-#define GLOBAL_EXTERN extern
-#endif
+#अगर_घोषित DECLARE_GLOBALS_HERE
+#घोषणा GLOBAL_EXTERN
+#अन्यथा
+#घोषणा GLOBAL_EXTERN बाह्य
+#पूर्ण_अगर
 
 /*
- * the list of TCP_Server_Info structures, ie each of the sockets
+ * the list of TCP_Server_Info काष्ठाures, ie each of the sockets
  * connecting our client to a distinct server (ip address), is
- * chained together by cifs_tcp_ses_list. The list of all our SMB
+ * chained together by cअगरs_tcp_ses_list. The list of all our SMB
  * sessions (and from that the tree connections) can be found
- * by iterating over cifs_tcp_ses_list
+ * by iterating over cअगरs_tcp_ses_list
  */
-GLOBAL_EXTERN struct list_head		cifs_tcp_ses_list;
+GLOBAL_EXTERN काष्ठा list_head		cअगरs_tcp_ses_list;
 
 /*
- * This lock protects the cifs_tcp_ses_list, the list of smb sessions per
+ * This lock protects the cअगरs_tcp_ses_list, the list of smb sessions per
  * tcp session, and the list of tcon's per smb session. It also protects
- * the reference counters for the server, smb session, and tcon. It also
- * protects some fields in the TCP_Server_Info struct such as dstaddr. Finally,
- * changes to the tcon->tidStatus should be done while holding this lock.
- * generally the locks should be taken in order tcp_ses_lock before
- * tcon->open_file_lock and that before file->file_info_lock since the
- * structure order is cifs_socket-->cifs_ses-->cifs_tcon-->cifs_file
+ * the reference counters क्रम the server, smb session, and tcon. It also
+ * protects some fields in the TCP_Server_Info काष्ठा such as dstaddr. Finally,
+ * changes to the tcon->tidStatus should be करोne जबतक holding this lock.
+ * generally the locks should be taken in order tcp_ses_lock beक्रमe
+ * tcon->खोलो_file_lock and that beक्रमe file->file_info_lock since the
+ * काष्ठाure order is cअगरs_socket-->cअगरs_ses-->cअगरs_tcon-->cअगरs_file
  */
-GLOBAL_EXTERN spinlock_t		cifs_tcp_ses_lock;
+GLOBAL_EXTERN spinlock_t		cअगरs_tcp_ses_lock;
 
 /*
- * Global transaction id (XID) information
+ * Global transaction id (XID) inक्रमmation
  */
-GLOBAL_EXTERN unsigned int GlobalCurrentXid;	/* protected by GlobalMid_Sem */
-GLOBAL_EXTERN unsigned int GlobalTotalActiveXid; /* prot by GlobalMid_Sem */
-GLOBAL_EXTERN unsigned int GlobalMaxActiveXid;	/* prot by GlobalMid_Sem */
+GLOBAL_EXTERN अचिन्हित पूर्णांक GlobalCurrentXid;	/* रक्षित by GlobalMid_Sem */
+GLOBAL_EXTERN अचिन्हित पूर्णांक GlobalTotalActiveXid; /* prot by GlobalMid_Sem */
+GLOBAL_EXTERN अचिन्हित पूर्णांक GlobalMaxActiveXid;	/* prot by GlobalMid_Sem */
 GLOBAL_EXTERN spinlock_t GlobalMid_Lock;  /* protects above & list operations */
 					  /* on midQ entries */
 /*
@@ -1860,105 +1861,105 @@ GLOBAL_EXTERN atomic_t tconInfoReconnectCount;
 
 /* Various Debug counters */
 GLOBAL_EXTERN atomic_t bufAllocCount;    /* current number allocated  */
-#ifdef CONFIG_CIFS_STATS2
-GLOBAL_EXTERN atomic_t totBufAllocCount; /* total allocated over all time */
+#अगर_घोषित CONFIG_CIFS_STATS2
+GLOBAL_EXTERN atomic_t totBufAllocCount; /* total allocated over all समय */
 GLOBAL_EXTERN atomic_t totSmBufAllocCount;
-extern unsigned int slow_rsp_threshold; /* number of secs before logging */
-#endif
+बाह्य अचिन्हित पूर्णांक slow_rsp_threshold; /* number of secs beक्रमe logging */
+#पूर्ण_अगर
 GLOBAL_EXTERN atomic_t smBufAllocCount;
 GLOBAL_EXTERN atomic_t midCount;
 
 /* Misc globals */
-extern bool enable_oplocks; /* enable or disable oplocks */
-extern bool lookupCacheEnabled;
-extern unsigned int global_secflags;	/* if on, session setup sent
+बाह्य bool enable_oplocks; /* enable or disable oplocks */
+बाह्य bool lookupCacheEnabled;
+बाह्य अचिन्हित पूर्णांक global_secflags;	/* अगर on, session setup sent
 				with more secure ntlmssp2 challenge/resp */
-extern unsigned int sign_CIFS_PDUs;  /* enable smb packet signing */
-extern bool enable_gcm_256; /* allow optional negotiate of strongest signing (aes-gcm-256) */
-extern bool require_gcm_256; /* require use of strongest signing (aes-gcm-256) */
-extern bool linuxExtEnabled;/*enable Linux/Unix CIFS extensions*/
-extern unsigned int CIFSMaxBufSize;  /* max size not including hdr */
-extern unsigned int cifs_min_rcv;    /* min size of big ntwrk buf pool */
-extern unsigned int cifs_min_small;  /* min size of small buf pool */
-extern unsigned int cifs_max_pending; /* MAX requests at once to server*/
-extern bool disable_legacy_dialects;  /* forbid vers=1.0 and vers=2.0 mounts */
+बाह्य अचिन्हित पूर्णांक sign_CIFS_PDUs;  /* enable smb packet signing */
+बाह्य bool enable_gcm_256; /* allow optional negotiate of strongest signing (aes-gcm-256) */
+बाह्य bool require_gcm_256; /* require use of strongest signing (aes-gcm-256) */
+बाह्य bool linuxExtEnabled;/*enable Linux/Unix CIFS extensions*/
+बाह्य अचिन्हित पूर्णांक CIFSMaxBufSize;  /* max size not including hdr */
+बाह्य अचिन्हित पूर्णांक cअगरs_min_rcv;    /* min size of big ntwrk buf pool */
+बाह्य अचिन्हित पूर्णांक cअगरs_min_small;  /* min size of small buf pool */
+बाह्य अचिन्हित पूर्णांक cअगरs_max_pending; /* MAX requests at once to server*/
+बाह्य bool disable_legacy_dialects;  /* क्रमbid vers=1.0 and vers=2.0 mounts */
 
-void cifs_oplock_break(struct work_struct *work);
-void cifs_queue_oplock_break(struct cifsFileInfo *cfile);
-void smb2_deferred_work_close(struct work_struct *work);
+व्योम cअगरs_oplock_अवरोध(काष्ठा work_काष्ठा *work);
+व्योम cअगरs_queue_oplock_अवरोध(काष्ठा cअगरsFileInfo *cfile);
+व्योम smb2_deferred_work_बंद(काष्ठा work_काष्ठा *work);
 
-extern const struct slow_work_ops cifs_oplock_break_ops;
-extern struct workqueue_struct *cifsiod_wq;
-extern struct workqueue_struct *decrypt_wq;
-extern struct workqueue_struct *fileinfo_put_wq;
-extern struct workqueue_struct *cifsoplockd_wq;
-extern struct workqueue_struct *deferredclose_wq;
-extern __u32 cifs_lock_secret;
+बाह्य स्थिर काष्ठा slow_work_ops cअगरs_oplock_अवरोध_ops;
+बाह्य काष्ठा workqueue_काष्ठा *cअगरsiod_wq;
+बाह्य काष्ठा workqueue_काष्ठा *decrypt_wq;
+बाह्य काष्ठा workqueue_काष्ठा *fileinfo_put_wq;
+बाह्य काष्ठा workqueue_काष्ठा *cअगरsoplockd_wq;
+बाह्य काष्ठा workqueue_काष्ठा *deferredबंद_wq;
+बाह्य __u32 cअगरs_lock_secret;
 
-extern mempool_t *cifs_mid_poolp;
+बाह्य mempool_t *cअगरs_mid_poolp;
 
-/* Operations for different SMB versions */
-#define SMB1_VERSION_STRING	"1.0"
-extern struct smb_version_operations smb1_operations;
-extern struct smb_version_values smb1_values;
-#define SMB20_VERSION_STRING	"2.0"
-extern struct smb_version_operations smb20_operations;
-extern struct smb_version_values smb20_values;
-#define SMB21_VERSION_STRING	"2.1"
-extern struct smb_version_operations smb21_operations;
-extern struct smb_version_values smb21_values;
-#define SMBDEFAULT_VERSION_STRING "default"
-extern struct smb_version_values smbdefault_values;
-#define SMB3ANY_VERSION_STRING "3"
-extern struct smb_version_values smb3any_values;
-#define SMB30_VERSION_STRING	"3.0"
-extern struct smb_version_operations smb30_operations;
-extern struct smb_version_values smb30_values;
-#define SMB302_VERSION_STRING	"3.02"
-#define ALT_SMB302_VERSION_STRING "3.0.2"
-/*extern struct smb_version_operations smb302_operations;*/ /* not needed yet */
-extern struct smb_version_values smb302_values;
-#define SMB311_VERSION_STRING	"3.1.1"
-#define ALT_SMB311_VERSION_STRING "3.11"
-extern struct smb_version_operations smb311_operations;
-extern struct smb_version_values smb311_values;
+/* Operations क्रम dअगरferent SMB versions */
+#घोषणा SMB1_VERSION_STRING	"1.0"
+बाह्य काष्ठा smb_version_operations smb1_operations;
+बाह्य काष्ठा smb_version_values smb1_values;
+#घोषणा SMB20_VERSION_STRING	"2.0"
+बाह्य काष्ठा smb_version_operations smb20_operations;
+बाह्य काष्ठा smb_version_values smb20_values;
+#घोषणा SMB21_VERSION_STRING	"2.1"
+बाह्य काष्ठा smb_version_operations smb21_operations;
+बाह्य काष्ठा smb_version_values smb21_values;
+#घोषणा SMBDEFAULT_VERSION_STRING "default"
+बाह्य काष्ठा smb_version_values smbशेष_values;
+#घोषणा SMB3ANY_VERSION_STRING "3"
+बाह्य काष्ठा smb_version_values smb3any_values;
+#घोषणा SMB30_VERSION_STRING	"3.0"
+बाह्य काष्ठा smb_version_operations smb30_operations;
+बाह्य काष्ठा smb_version_values smb30_values;
+#घोषणा SMB302_VERSION_STRING	"3.02"
+#घोषणा ALT_SMB302_VERSION_STRING "3.0.2"
+/*बाह्य काष्ठा smb_version_operations smb302_operations;*/ /* not needed yet */
+बाह्य काष्ठा smb_version_values smb302_values;
+#घोषणा SMB311_VERSION_STRING	"3.1.1"
+#घोषणा ALT_SMB311_VERSION_STRING "3.11"
+बाह्य काष्ठा smb_version_operations smb311_operations;
+बाह्य काष्ठा smb_version_values smb311_values;
 
-static inline char *get_security_type_str(enum securityEnum sectype)
-{
-	switch (sectype) {
-	case RawNTLMSSP:
-		return "RawNTLMSSP";
-	case Kerberos:
-		return "Kerberos";
-	case NTLMv2:
-		return "NTLMv2";
-	case NTLM:
-		return "NTLM";
-	case LANMAN:
-		return "LANMAN";
-	default:
-		return "Unknown";
-	}
-}
+अटल अंतरभूत अक्षर *get_security_type_str(क्रमागत securityEnum sectype)
+अणु
+	चयन (sectype) अणु
+	हाल RawNTLMSSP:
+		वापस "RawNTLMSSP";
+	हाल Kerberos:
+		वापस "Kerberos";
+	हाल NTLMv2:
+		वापस "NTLMv2";
+	हाल NTLM:
+		वापस "NTLM";
+	हाल LANMAN:
+		वापस "LANMAN";
+	शेष:
+		वापस "Unknown";
+	पूर्ण
+पूर्ण
 
-static inline bool is_smb1_server(struct TCP_Server_Info *server)
-{
-	return strcmp(server->vals->version_string, SMB1_VERSION_STRING) == 0;
-}
+अटल अंतरभूत bool is_smb1_server(काष्ठा TCP_Server_Info *server)
+अणु
+	वापस म_भेद(server->vals->version_string, SMB1_VERSION_STRING) == 0;
+पूर्ण
 
-static inline bool is_tcon_dfs(struct cifs_tcon *tcon)
-{
+अटल अंतरभूत bool is_tcon_dfs(काष्ठा cअगरs_tcon *tcon)
+अणु
 	/*
 	 * For SMB1, see MS-CIFS 2.4.55 SMB_COM_TREE_CONNECT_ANDX (0x75) and MS-CIFS 3.3.4.4 DFS
-	 * Subsystem Notifies That a Share Is a DFS Share.
+	 * Subप्रणाली Notअगरies That a Share Is a DFS Share.
 	 *
 	 * For SMB2+, see MS-SMB2 2.2.10 SMB2 TREE_CONNECT Response and MS-SMB2 3.3.4.14 Server
 	 * Application Updates a Share.
 	 */
-	if (!tcon || !tcon->ses || !tcon->ses->server)
-		return false;
-	return is_smb1_server(tcon->ses->server) ? tcon->Flags & SMB_SHARE_IS_IN_DFS :
+	अगर (!tcon || !tcon->ses || !tcon->ses->server)
+		वापस false;
+	वापस is_smb1_server(tcon->ses->server) ? tcon->Flags & SMB_SHARE_IS_IN_DFS :
 		tcon->share_flags & (SHI1005_FLAGS_DFS | SHI1005_FLAGS_DFS_ROOT);
-}
+पूर्ण
 
-#endif	/* _CIFS_GLOB_H */
+#पूर्ण_अगर	/* _CIFS_GLOB_H */

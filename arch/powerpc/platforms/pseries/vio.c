@@ -1,373 +1,374 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * IBM PowerPC Virtual I/O Infrastructure Support.
+ * IBM PowerPC Virtual I/O Infraकाष्ठाure Support.
  *
  *    Copyright (c) 2003,2008 IBM Corp.
  *     Dave Engebretsen engebret@us.ibm.com
  *     Santiago Leon santil@us.ibm.com
- *     Hollis Blanchard <hollisb@us.ibm.com>
+ *     Hollis Blanअक्षरd <hollisb@us.ibm.com>
  *     Stephen Rothwell
  *     Robert Jennings <rcjenn@us.ibm.com>
  */
 
-#include <linux/cpu.h>
-#include <linux/types.h>
-#include <linux/delay.h>
-#include <linux/stat.h>
-#include <linux/device.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/console.h>
-#include <linux/export.h>
-#include <linux/mm.h>
-#include <linux/dma-map-ops.h>
-#include <linux/kobject.h>
-#include <linux/kexec.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/types.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/console.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/kexec.h>
 
-#include <asm/iommu.h>
-#include <asm/dma.h>
-#include <asm/vio.h>
-#include <asm/prom.h>
-#include <asm/firmware.h>
-#include <asm/tce.h>
-#include <asm/page.h>
-#include <asm/hvcall.h>
-#include <asm/machdep.h>
+#समावेश <यंत्र/iommu.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/vपन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/tce.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/hvcall.h>
+#समावेश <यंत्र/machdep.h>
 
-static struct vio_dev vio_bus_device  = { /* fake "parent" device */
+अटल काष्ठा vio_dev vio_bus_device  = अणु /* fake "parent" device */
 	.name = "vio",
 	.type = "",
 	.dev.init_name = "vio",
 	.dev.bus = &vio_bus_type,
-};
+पूर्ण;
 
-#ifdef CONFIG_PPC_SMLPAR
+#अगर_घोषित CONFIG_PPC_SMLPAR
 /**
- * vio_cmo_pool - A pool of IO memory for CMO use
+ * vio_cmo_pool - A pool of IO memory क्रम CMO use
  *
  * @size: The size of the pool in bytes
- * @free: The amount of free memory in the pool
+ * @मुक्त: The amount of मुक्त memory in the pool
  */
-struct vio_cmo_pool {
-	size_t size;
-	size_t free;
-};
+काष्ठा vio_cmo_pool अणु
+	माप_प्रकार size;
+	माप_प्रकार मुक्त;
+पूर्ण;
 
 /* How many ms to delay queued balance work */
-#define VIO_CMO_BALANCE_DELAY 100
+#घोषणा VIO_CMO_BALANCE_DELAY 100
 
 /* Portion out IO memory to CMO devices by this chunk size */
-#define VIO_CMO_BALANCE_CHUNK 131072
+#घोषणा VIO_CMO_BALANCE_CHUNK 131072
 
 /**
  * vio_cmo_dev_entry - A device that is CMO-enabled and requires entitlement
  *
- * @vio_dev: struct vio_dev pointer
- * @list: pointer to other devices on bus that are being tracked
+ * @vio_dev: काष्ठा vio_dev poपूर्णांकer
+ * @list: poपूर्णांकer to other devices on bus that are being tracked
  */
-struct vio_cmo_dev_entry {
-	struct vio_dev *viodev;
-	struct list_head list;
-};
+काष्ठा vio_cmo_dev_entry अणु
+	काष्ठा vio_dev *viodev;
+	काष्ठा list_head list;
+पूर्ण;
 
 /**
- * vio_cmo - VIO bus accounting structure for CMO entitlement
+ * vio_cmo - VIO bus accounting काष्ठाure क्रम CMO entitlement
  *
- * @lock: spinlock for entire structure
- * @balance_q: work queue for balancing system entitlement
+ * @lock: spinlock क्रम entire काष्ठाure
+ * @balance_q: work queue क्रम balancing प्रणाली entitlement
  * @device_list: list of CMO-enabled devices requiring entitlement
- * @entitled: total system entitlement in bytes
+ * @entitled: total प्रणाली entitlement in bytes
  * @reserve: pool of memory from which devices reserve entitlement, incl. spare
- * @excess: pool of excess entitlement not needed for device reserves or spare
- * @spare: IO memory for device hotplug functionality
- * @min: minimum necessary for system operation
- * @desired: desired memory for system operation
+ * @excess: pool of excess entitlement not needed क्रम device reserves or spare
+ * @spare: IO memory क्रम device hotplug functionality
+ * @min: minimum necessary क्रम प्रणाली operation
+ * @desired: desired memory क्रम प्रणाली operation
  * @curr: bytes currently allocated
- * @high: high water mark for IO data usage
+ * @high: high water mark क्रम IO data usage
  */
-static struct vio_cmo {
+अटल काष्ठा vio_cmo अणु
 	spinlock_t lock;
-	struct delayed_work balance_q;
-	struct list_head device_list;
-	size_t entitled;
-	struct vio_cmo_pool reserve;
-	struct vio_cmo_pool excess;
-	size_t spare;
-	size_t min;
-	size_t desired;
-	size_t curr;
-	size_t high;
-} vio_cmo;
+	काष्ठा delayed_work balance_q;
+	काष्ठा list_head device_list;
+	माप_प्रकार entitled;
+	काष्ठा vio_cmo_pool reserve;
+	काष्ठा vio_cmo_pool excess;
+	माप_प्रकार spare;
+	माप_प्रकार min;
+	माप_प्रकार desired;
+	माप_प्रकार curr;
+	माप_प्रकार high;
+पूर्ण vio_cmo;
 
 /**
- * vio_cmo_OF_devices - Count the number of OF devices that have DMA windows
+ * vio_cmo_OF_devices - Count the number of OF devices that have DMA winकरोws
  */
-static int vio_cmo_num_OF_devs(void)
-{
-	struct device_node *node_vroot;
-	int count = 0;
+अटल पूर्णांक vio_cmo_num_OF_devs(व्योम)
+अणु
+	काष्ठा device_node *node_vroot;
+	पूर्णांक count = 0;
 
 	/*
 	 * Count the number of vdevice entries with an
-	 * ibm,my-dma-window OF property
+	 * ibm,my-dma-winकरोw OF property
 	 */
-	node_vroot = of_find_node_by_name(NULL, "vdevice");
-	if (node_vroot) {
-		struct device_node *of_node;
-		struct property *prop;
+	node_vroot = of_find_node_by_name(शून्य, "vdevice");
+	अगर (node_vroot) अणु
+		काष्ठा device_node *of_node;
+		काष्ठा property *prop;
 
-		for_each_child_of_node(node_vroot, of_node) {
+		क्रम_each_child_of_node(node_vroot, of_node) अणु
 			prop = of_find_property(of_node, "ibm,my-dma-window",
-			                       NULL);
-			if (prop)
+			                       शून्य);
+			अगर (prop)
 				count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	of_node_put(node_vroot);
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
- * vio_cmo_alloc - allocate IO memory for CMO-enable devices
+ * vio_cmo_alloc - allocate IO memory क्रम CMO-enable devices
  *
  * @viodev: VIO device requesting IO memory
  * @size: size of allocation requested
  *
- * Allocations come from memory reserved for the devices and any excess
+ * Allocations come from memory reserved क्रम the devices and any excess
  * IO memory available to all devices.  The spare pool used to service
- * hotplug must be equal to %VIO_CMO_MIN_ENT for the excess pool to be
+ * hotplug must be equal to %VIO_CMO_MIN_ENT क्रम the excess pool to be
  * made available.
  *
  * Return codes:
- *  0 for successful allocation and -ENOMEM for a failure
+ *  0 क्रम successful allocation and -ENOMEM क्रम a failure
  */
-static inline int vio_cmo_alloc(struct vio_dev *viodev, size_t size)
-{
-	unsigned long flags;
-	size_t reserve_free = 0;
-	size_t excess_free = 0;
-	int ret = -ENOMEM;
+अटल अंतरभूत पूर्णांक vio_cmo_alloc(काष्ठा vio_dev *viodev, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ flags;
+	माप_प्रकार reserve_मुक्त = 0;
+	माप_प्रकार excess_मुक्त = 0;
+	पूर्णांक ret = -ENOMEM;
 
 	spin_lock_irqsave(&vio_cmo.lock, flags);
 
-	/* Determine the amount of free entitlement available in reserve */
-	if (viodev->cmo.entitled > viodev->cmo.allocated)
-		reserve_free = viodev->cmo.entitled - viodev->cmo.allocated;
+	/* Determine the amount of मुक्त entitlement available in reserve */
+	अगर (viodev->cmo.entitled > viodev->cmo.allocated)
+		reserve_मुक्त = viodev->cmo.entitled - viodev->cmo.allocated;
 
 	/* If spare is not fulfilled, the excess pool can not be used. */
-	if (vio_cmo.spare >= VIO_CMO_MIN_ENT)
-		excess_free = vio_cmo.excess.free;
+	अगर (vio_cmo.spare >= VIO_CMO_MIN_ENT)
+		excess_मुक्त = vio_cmo.excess.मुक्त;
 
 	/* The request can be satisfied */
-	if ((reserve_free + excess_free) >= size) {
+	अगर ((reserve_मुक्त + excess_मुक्त) >= size) अणु
 		vio_cmo.curr += size;
-		if (vio_cmo.curr > vio_cmo.high)
+		अगर (vio_cmo.curr > vio_cmo.high)
 			vio_cmo.high = vio_cmo.curr;
 		viodev->cmo.allocated += size;
-		size -= min(reserve_free, size);
-		vio_cmo.excess.free -= size;
+		size -= min(reserve_मुक्त, size);
+		vio_cmo.excess.मुक्त -= size;
 		ret = 0;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&vio_cmo.lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * vio_cmo_dealloc - deallocate IO memory from CMO-enable devices
- * @viodev: VIO device freeing IO memory
+ * @viodev: VIO device मुक्तing IO memory
  * @size: size of deallocation
  *
- * IO memory is freed by the device back to the correct memory pools.
+ * IO memory is मुक्तd by the device back to the correct memory pools.
  * The spare pool is replenished first from either memory pool, then
  * the reserve pool is used to reduce device entitlement, the excess
  * pool is used to increase the reserve pool toward the desired entitlement
- * target, and then the remaining memory is returned to the pools.
+ * target, and then the reमुख्यing memory is वापसed to the pools.
  *
  */
-static inline void vio_cmo_dealloc(struct vio_dev *viodev, size_t size)
-{
-	unsigned long flags;
-	size_t spare_needed = 0;
-	size_t excess_freed = 0;
-	size_t reserve_freed = size;
-	size_t tmp;
-	int balance = 0;
+अटल अंतरभूत व्योम vio_cmo_dealloc(काष्ठा vio_dev *viodev, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ flags;
+	माप_प्रकार spare_needed = 0;
+	माप_प्रकार excess_मुक्तd = 0;
+	माप_प्रकार reserve_मुक्तd = size;
+	माप_प्रकार पंचांगp;
+	पूर्णांक balance = 0;
 
 	spin_lock_irqsave(&vio_cmo.lock, flags);
 	vio_cmo.curr -= size;
 
-	/* Amount of memory freed from the excess pool */
-	if (viodev->cmo.allocated > viodev->cmo.entitled) {
-		excess_freed = min(reserve_freed, (viodev->cmo.allocated -
+	/* Amount of memory मुक्तd from the excess pool */
+	अगर (viodev->cmo.allocated > viodev->cmo.entitled) अणु
+		excess_मुक्तd = min(reserve_मुक्तd, (viodev->cmo.allocated -
 		                                   viodev->cmo.entitled));
-		reserve_freed -= excess_freed;
-	}
+		reserve_मुक्तd -= excess_मुक्तd;
+	पूर्ण
 
 	/* Remove allocation from device */
-	viodev->cmo.allocated -= (reserve_freed + excess_freed);
+	viodev->cmo.allocated -= (reserve_मुक्तd + excess_मुक्तd);
 
 	/* Spare is a subset of the reserve pool, replenish it first. */
 	spare_needed = VIO_CMO_MIN_ENT - vio_cmo.spare;
 
 	/*
 	 * Replenish the spare in the reserve pool from the excess pool.
-	 * This moves entitlement into the reserve pool.
+	 * This moves entitlement पूर्णांकo the reserve pool.
 	 */
-	if (spare_needed && excess_freed) {
-		tmp = min(excess_freed, spare_needed);
-		vio_cmo.excess.size -= tmp;
-		vio_cmo.reserve.size += tmp;
-		vio_cmo.spare += tmp;
-		excess_freed -= tmp;
-		spare_needed -= tmp;
+	अगर (spare_needed && excess_मुक्तd) अणु
+		पंचांगp = min(excess_मुक्तd, spare_needed);
+		vio_cmo.excess.size -= पंचांगp;
+		vio_cmo.reserve.size += पंचांगp;
+		vio_cmo.spare += पंचांगp;
+		excess_मुक्तd -= पंचांगp;
+		spare_needed -= पंचांगp;
 		balance = 1;
-	}
+	पूर्ण
 
 	/*
 	 * Replenish the spare in the reserve pool from the reserve pool.
-	 * This removes entitlement from the device down to VIO_CMO_MIN_ENT,
-	 * if needed, and gives it to the spare pool. The amount of used
-	 * memory in this pool does not change.
+	 * This हटाओs entitlement from the device करोwn to VIO_CMO_MIN_ENT,
+	 * अगर needed, and gives it to the spare pool. The amount of used
+	 * memory in this pool करोes not change.
 	 */
-	if (spare_needed && reserve_freed) {
-		tmp = min3(spare_needed, reserve_freed, (viodev->cmo.entitled - VIO_CMO_MIN_ENT));
+	अगर (spare_needed && reserve_मुक्तd) अणु
+		पंचांगp = min3(spare_needed, reserve_मुक्तd, (viodev->cmo.entitled - VIO_CMO_MIN_ENT));
 
-		vio_cmo.spare += tmp;
-		viodev->cmo.entitled -= tmp;
-		reserve_freed -= tmp;
-		spare_needed -= tmp;
+		vio_cmo.spare += पंचांगp;
+		viodev->cmo.entitled -= पंचांगp;
+		reserve_मुक्तd -= पंचांगp;
+		spare_needed -= पंचांगp;
 		balance = 1;
-	}
+	पूर्ण
 
 	/*
 	 * Increase the reserve pool until the desired allocation is met.
-	 * Move an allocation freed from the excess pool into the reserve
+	 * Move an allocation मुक्तd from the excess pool पूर्णांकo the reserve
 	 * pool and schedule a balance operation.
 	 */
-	if (excess_freed && (vio_cmo.desired > vio_cmo.reserve.size)) {
-		tmp = min(excess_freed, (vio_cmo.desired - vio_cmo.reserve.size));
+	अगर (excess_मुक्तd && (vio_cmo.desired > vio_cmo.reserve.size)) अणु
+		पंचांगp = min(excess_मुक्तd, (vio_cmo.desired - vio_cmo.reserve.size));
 
-		vio_cmo.excess.size -= tmp;
-		vio_cmo.reserve.size += tmp;
-		excess_freed -= tmp;
+		vio_cmo.excess.size -= पंचांगp;
+		vio_cmo.reserve.size += पंचांगp;
+		excess_मुक्तd -= पंचांगp;
 		balance = 1;
-	}
+	पूर्ण
 
 	/* Return memory from the excess pool to that pool */
-	if (excess_freed)
-		vio_cmo.excess.free += excess_freed;
+	अगर (excess_मुक्तd)
+		vio_cmo.excess.मुक्त += excess_मुक्तd;
 
-	if (balance)
+	अगर (balance)
 		schedule_delayed_work(&vio_cmo.balance_q, VIO_CMO_BALANCE_DELAY);
 	spin_unlock_irqrestore(&vio_cmo.lock, flags);
-}
+पूर्ण
 
 /**
- * vio_cmo_entitlement_update - Manage system entitlement changes
+ * vio_cmo_entitlement_update - Manage प्रणाली entitlement changes
  *
- * @new_entitlement: new system entitlement to attempt to accommodate
+ * @new_entitlement: new प्रणाली entitlement to attempt to accommodate
  *
  * Increases in entitlement will be used to fulfill the spare entitlement
- * and the rest is given to the excess pool.  Decreases, if they are
+ * and the rest is given to the excess pool.  Decreases, अगर they are
  * possible, come from the excess pool and from unused device entitlement
  *
  * Returns: 0 on success, -ENOMEM when change can not be made
  */
-int vio_cmo_entitlement_update(size_t new_entitlement)
-{
-	struct vio_dev *viodev;
-	struct vio_cmo_dev_entry *dev_ent;
-	unsigned long flags;
-	size_t avail, delta, tmp;
+पूर्णांक vio_cmo_entitlement_update(माप_प्रकार new_entitlement)
+अणु
+	काष्ठा vio_dev *viodev;
+	काष्ठा vio_cmo_dev_entry *dev_ent;
+	अचिन्हित दीर्घ flags;
+	माप_प्रकार avail, delta, पंचांगp;
 
 	spin_lock_irqsave(&vio_cmo.lock, flags);
 
 	/* Entitlement increases */
-	if (new_entitlement > vio_cmo.entitled) {
+	अगर (new_entitlement > vio_cmo.entitled) अणु
 		delta = new_entitlement - vio_cmo.entitled;
 
 		/* Fulfill spare allocation */
-		if (vio_cmo.spare < VIO_CMO_MIN_ENT) {
-			tmp = min(delta, (VIO_CMO_MIN_ENT - vio_cmo.spare));
-			vio_cmo.spare += tmp;
-			vio_cmo.reserve.size += tmp;
-			delta -= tmp;
-		}
+		अगर (vio_cmo.spare < VIO_CMO_MIN_ENT) अणु
+			पंचांगp = min(delta, (VIO_CMO_MIN_ENT - vio_cmo.spare));
+			vio_cmo.spare += पंचांगp;
+			vio_cmo.reserve.size += पंचांगp;
+			delta -= पंचांगp;
+		पूर्ण
 
-		/* Remaining new allocation goes to the excess pool */
+		/* Reमुख्यing new allocation goes to the excess pool */
 		vio_cmo.entitled += delta;
 		vio_cmo.excess.size += delta;
-		vio_cmo.excess.free += delta;
+		vio_cmo.excess.मुक्त += delta;
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Entitlement decreases */
 	delta = vio_cmo.entitled - new_entitlement;
-	avail = vio_cmo.excess.free;
+	avail = vio_cmo.excess.मुक्त;
 
 	/*
 	 * Need to check how much unused entitlement each device can
-	 * sacrifice to fulfill entitlement change.
+	 * sacrअगरice to fulfill entitlement change.
 	 */
-	list_for_each_entry(dev_ent, &vio_cmo.device_list, list) {
-		if (avail >= delta)
-			break;
+	list_क्रम_each_entry(dev_ent, &vio_cmo.device_list, list) अणु
+		अगर (avail >= delta)
+			अवरोध;
 
 		viodev = dev_ent->viodev;
-		if ((viodev->cmo.entitled > viodev->cmo.allocated) &&
+		अगर ((viodev->cmo.entitled > viodev->cmo.allocated) &&
 		    (viodev->cmo.entitled > VIO_CMO_MIN_ENT))
 				avail += viodev->cmo.entitled -
-				         max_t(size_t, viodev->cmo.allocated,
+				         max_t(माप_प्रकार, viodev->cmo.allocated,
 				               VIO_CMO_MIN_ENT);
-	}
+	पूर्ण
 
-	if (delta <= avail) {
+	अगर (delta <= avail) अणु
 		vio_cmo.entitled -= delta;
 
 		/* Take entitlement from the excess pool first */
-		tmp = min(vio_cmo.excess.free, delta);
-		vio_cmo.excess.size -= tmp;
-		vio_cmo.excess.free -= tmp;
-		delta -= tmp;
+		पंचांगp = min(vio_cmo.excess.मुक्त, delta);
+		vio_cmo.excess.size -= पंचांगp;
+		vio_cmo.excess.मुक्त -= पंचांगp;
+		delta -= पंचांगp;
 
 		/*
 		 * Remove all but VIO_CMO_MIN_ENT bytes from devices
 		 * until entitlement change is served
 		 */
-		list_for_each_entry(dev_ent, &vio_cmo.device_list, list) {
-			if (!delta)
-				break;
+		list_क्रम_each_entry(dev_ent, &vio_cmo.device_list, list) अणु
+			अगर (!delta)
+				अवरोध;
 
 			viodev = dev_ent->viodev;
-			tmp = 0;
-			if ((viodev->cmo.entitled > viodev->cmo.allocated) &&
+			पंचांगp = 0;
+			अगर ((viodev->cmo.entitled > viodev->cmo.allocated) &&
 			    (viodev->cmo.entitled > VIO_CMO_MIN_ENT))
-				tmp = viodev->cmo.entitled -
-				      max_t(size_t, viodev->cmo.allocated,
+				पंचांगp = viodev->cmo.entitled -
+				      max_t(माप_प्रकार, viodev->cmo.allocated,
 				            VIO_CMO_MIN_ENT);
-			viodev->cmo.entitled -= min(tmp, delta);
-			delta -= min(tmp, delta);
-		}
-	} else {
+			viodev->cmo.entitled -= min(पंचांगp, delta);
+			delta -= min(पंचांगp, delta);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		spin_unlock_irqrestore(&vio_cmo.lock, flags);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 out:
 	schedule_delayed_work(&vio_cmo.balance_q, 0);
 	spin_unlock_irqrestore(&vio_cmo.lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vio_cmo_balance - Balance entitlement among devices
  *
- * @work: work queue structure for this operation
+ * @work: work queue काष्ठाure क्रम this operation
  *
- * Any system entitlement above the minimum needed for devices, or
- * already allocated to devices, can be distributed to the devices.
+ * Any प्रणाली entitlement above the minimum needed क्रम devices, or
+ * alपढ़ोy allocated to devices, can be distributed to the devices.
  * The list of devices is iterated through to recalculate the desired
  * entitlement level and to determine how much entitlement above the
  * minimum entitlement is allocated to devices.
@@ -376,29 +377,29 @@ out:
  * their requirements are fulfilled or there is no entitlement left to give.
  * Upon completion sizes of the reserve and excess pools are calculated.
  *
- * The system minimum entitlement level is also recalculated here.
- * Entitlement will be reserved for devices even after vio_bus_remove to
+ * The प्रणाली minimum entitlement level is also recalculated here.
+ * Entitlement will be reserved क्रम devices even after vio_bus_हटाओ to
  * accommodate reloading the driver.  The OF tree is walked to count the
- * number of devices present and this will remove entitlement for devices
- * that have actually left the system after having vio_bus_remove called.
+ * number of devices present and this will हटाओ entitlement क्रम devices
+ * that have actually left the प्रणाली after having vio_bus_हटाओ called.
  */
-static void vio_cmo_balance(struct work_struct *work)
-{
-	struct vio_cmo *cmo;
-	struct vio_dev *viodev;
-	struct vio_cmo_dev_entry *dev_ent;
-	unsigned long flags;
-	size_t avail = 0, level, chunk, need;
-	int devcount = 0, fulfilled;
+अटल व्योम vio_cmo_balance(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा vio_cmo *cmo;
+	काष्ठा vio_dev *viodev;
+	काष्ठा vio_cmo_dev_entry *dev_ent;
+	अचिन्हित दीर्घ flags;
+	माप_प्रकार avail = 0, level, chunk, need;
+	पूर्णांक devcount = 0, fulfilled;
 
-	cmo = container_of(work, struct vio_cmo, balance_q.work);
+	cmo = container_of(work, काष्ठा vio_cmo, balance_q.work);
 
 	spin_lock_irqsave(&vio_cmo.lock, flags);
 
 	/* Calculate minimum entitlement and fulfill spare */
 	cmo->min = vio_cmo_num_OF_devs() * VIO_CMO_MIN_ENT;
 	BUG_ON(cmo->min > cmo->entitled);
-	cmo->spare = min_t(size_t, VIO_CMO_MIN_ENT, (cmo->entitled - cmo->min));
+	cmo->spare = min_t(माप_प्रकार, VIO_CMO_MIN_ENT, (cmo->entitled - cmo->min));
 	cmo->min += cmo->spare;
 	cmo->desired = cmo->min;
 
@@ -407,200 +408,200 @@ static void vio_cmo_balance(struct work_struct *work)
 	 * entitlements
 	 */
 	avail = cmo->entitled - cmo->spare;
-	list_for_each_entry(dev_ent, &vio_cmo.device_list, list) {
+	list_क्रम_each_entry(dev_ent, &vio_cmo.device_list, list) अणु
 		viodev = dev_ent->viodev;
 		devcount++;
 		viodev->cmo.entitled = VIO_CMO_MIN_ENT;
 		cmo->desired += (viodev->cmo.desired - VIO_CMO_MIN_ENT);
-		avail -= max_t(size_t, viodev->cmo.allocated, VIO_CMO_MIN_ENT);
-	}
+		avail -= max_t(माप_प्रकार, viodev->cmo.allocated, VIO_CMO_MIN_ENT);
+	पूर्ण
 
 	/*
 	 * Having provided each device with the minimum entitlement, loop
-	 * over the devices portioning out the remaining entitlement
+	 * over the devices portioning out the reमुख्यing entitlement
 	 * until there is nothing left.
 	 */
 	level = VIO_CMO_MIN_ENT;
-	while (avail) {
+	जबतक (avail) अणु
 		fulfilled = 0;
-		list_for_each_entry(dev_ent, &vio_cmo.device_list, list) {
+		list_क्रम_each_entry(dev_ent, &vio_cmo.device_list, list) अणु
 			viodev = dev_ent->viodev;
 
-			if (viodev->cmo.desired <= level) {
+			अगर (viodev->cmo.desired <= level) अणु
 				fulfilled++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			/*
 			 * Give the device up to VIO_CMO_BALANCE_CHUNK
-			 * bytes of entitlement, but do not exceed the
-			 * desired level of entitlement for the device.
+			 * bytes of entitlement, but करो not exceed the
+			 * desired level of entitlement क्रम the device.
 			 */
-			chunk = min_t(size_t, avail, VIO_CMO_BALANCE_CHUNK);
+			chunk = min_t(माप_प्रकार, avail, VIO_CMO_BALANCE_CHUNK);
 			chunk = min(chunk, (viodev->cmo.desired -
 			                    viodev->cmo.entitled));
 			viodev->cmo.entitled += chunk;
 
 			/*
-			 * If the memory for this entitlement increase was
-			 * already allocated to the device it does not come
+			 * If the memory क्रम this entitlement increase was
+			 * alपढ़ोy allocated to the device it करोes not come
 			 * from the available pool being portioned out.
 			 */
 			need = max(viodev->cmo.allocated, viodev->cmo.entitled)-
 			       max(viodev->cmo.allocated, level);
 			avail -= need;
 
-		}
-		if (fulfilled == devcount)
-			break;
+		पूर्ण
+		अगर (fulfilled == devcount)
+			अवरोध;
 		level += VIO_CMO_BALANCE_CHUNK;
-	}
+	पूर्ण
 
 	/* Calculate new reserve and excess pool sizes */
 	cmo->reserve.size = cmo->min;
-	cmo->excess.free = 0;
+	cmo->excess.मुक्त = 0;
 	cmo->excess.size = 0;
 	need = 0;
-	list_for_each_entry(dev_ent, &vio_cmo.device_list, list) {
+	list_क्रम_each_entry(dev_ent, &vio_cmo.device_list, list) अणु
 		viodev = dev_ent->viodev;
 		/* Calculated reserve size above the minimum entitlement */
-		if (viodev->cmo.entitled)
+		अगर (viodev->cmo.entitled)
 			cmo->reserve.size += (viodev->cmo.entitled -
 			                      VIO_CMO_MIN_ENT);
 		/* Calculated used excess entitlement */
-		if (viodev->cmo.allocated > viodev->cmo.entitled)
+		अगर (viodev->cmo.allocated > viodev->cmo.entitled)
 			need += viodev->cmo.allocated - viodev->cmo.entitled;
-	}
+	पूर्ण
 	cmo->excess.size = cmo->entitled - cmo->reserve.size;
-	cmo->excess.free = cmo->excess.size - need;
+	cmo->excess.मुक्त = cmo->excess.size - need;
 
 	cancel_delayed_work(to_delayed_work(work));
 	spin_unlock_irqrestore(&vio_cmo.lock, flags);
-}
+पूर्ण
 
-static void *vio_dma_iommu_alloc_coherent(struct device *dev, size_t size,
+अटल व्योम *vio_dma_iommu_alloc_coherent(काष्ठा device *dev, माप_प्रकार size,
 					  dma_addr_t *dma_handle, gfp_t flag,
-					  unsigned long attrs)
-{
-	struct vio_dev *viodev = to_vio_dev(dev);
-	void *ret;
+					  अचिन्हित दीर्घ attrs)
+अणु
+	काष्ठा vio_dev *viodev = to_vio_dev(dev);
+	व्योम *ret;
 
-	if (vio_cmo_alloc(viodev, roundup(size, PAGE_SIZE))) {
+	अगर (vio_cmo_alloc(viodev, roundup(size, PAGE_SIZE))) अणु
 		atomic_inc(&viodev->cmo.allocs_failed);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	ret = iommu_alloc_coherent(dev, get_iommu_table_base(dev), size,
 				    dma_handle, dev->coherent_dma_mask, flag,
 				    dev_to_node(dev));
-	if (unlikely(ret == NULL)) {
+	अगर (unlikely(ret == शून्य)) अणु
 		vio_cmo_dealloc(viodev, roundup(size, PAGE_SIZE));
 		atomic_inc(&viodev->cmo.allocs_failed);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vio_dma_iommu_free_coherent(struct device *dev, size_t size,
-					void *vaddr, dma_addr_t dma_handle,
-					unsigned long attrs)
-{
-	struct vio_dev *viodev = to_vio_dev(dev);
+अटल व्योम vio_dma_iommu_मुक्त_coherent(काष्ठा device *dev, माप_प्रकार size,
+					व्योम *vaddr, dma_addr_t dma_handle,
+					अचिन्हित दीर्घ attrs)
+अणु
+	काष्ठा vio_dev *viodev = to_vio_dev(dev);
 
-	iommu_free_coherent(get_iommu_table_base(dev), size, vaddr, dma_handle);
+	iommu_मुक्त_coherent(get_iommu_table_base(dev), size, vaddr, dma_handle);
 	vio_cmo_dealloc(viodev, roundup(size, PAGE_SIZE));
-}
+पूर्ण
 
-static dma_addr_t vio_dma_iommu_map_page(struct device *dev, struct page *page,
-                                         unsigned long offset, size_t size,
-                                         enum dma_data_direction direction,
-                                         unsigned long attrs)
-{
-	struct vio_dev *viodev = to_vio_dev(dev);
-	struct iommu_table *tbl = get_iommu_table_base(dev);
+अटल dma_addr_t vio_dma_iommu_map_page(काष्ठा device *dev, काष्ठा page *page,
+                                         अचिन्हित दीर्घ offset, माप_प्रकार size,
+                                         क्रमागत dma_data_direction direction,
+                                         अचिन्हित दीर्घ attrs)
+अणु
+	काष्ठा vio_dev *viodev = to_vio_dev(dev);
+	काष्ठा iommu_table *tbl = get_iommu_table_base(dev);
 	dma_addr_t ret = DMA_MAPPING_ERROR;
 
-	if (vio_cmo_alloc(viodev, roundup(size, IOMMU_PAGE_SIZE(tbl))))
-		goto out_fail;
+	अगर (vio_cmo_alloc(viodev, roundup(size, IOMMU_PAGE_SIZE(tbl))))
+		जाओ out_fail;
 	ret = iommu_map_page(dev, tbl, page, offset, size, dma_get_mask(dev),
 			direction, attrs);
-	if (unlikely(ret == DMA_MAPPING_ERROR))
-		goto out_deallocate;
-	return ret;
+	अगर (unlikely(ret == DMA_MAPPING_ERROR))
+		जाओ out_deallocate;
+	वापस ret;
 
 out_deallocate:
 	vio_cmo_dealloc(viodev, roundup(size, IOMMU_PAGE_SIZE(tbl)));
 out_fail:
 	atomic_inc(&viodev->cmo.allocs_failed);
-	return DMA_MAPPING_ERROR;
-}
+	वापस DMA_MAPPING_ERROR;
+पूर्ण
 
-static void vio_dma_iommu_unmap_page(struct device *dev, dma_addr_t dma_handle,
-				     size_t size,
-				     enum dma_data_direction direction,
-				     unsigned long attrs)
-{
-	struct vio_dev *viodev = to_vio_dev(dev);
-	struct iommu_table *tbl = get_iommu_table_base(dev);
+अटल व्योम vio_dma_iommu_unmap_page(काष्ठा device *dev, dma_addr_t dma_handle,
+				     माप_प्रकार size,
+				     क्रमागत dma_data_direction direction,
+				     अचिन्हित दीर्घ attrs)
+अणु
+	काष्ठा vio_dev *viodev = to_vio_dev(dev);
+	काष्ठा iommu_table *tbl = get_iommu_table_base(dev);
 
 	iommu_unmap_page(tbl, dma_handle, size, direction, attrs);
 	vio_cmo_dealloc(viodev, roundup(size, IOMMU_PAGE_SIZE(tbl)));
-}
+पूर्ण
 
-static int vio_dma_iommu_map_sg(struct device *dev, struct scatterlist *sglist,
-                                int nelems, enum dma_data_direction direction,
-                                unsigned long attrs)
-{
-	struct vio_dev *viodev = to_vio_dev(dev);
-	struct iommu_table *tbl = get_iommu_table_base(dev);
-	struct scatterlist *sgl;
-	int ret, count;
-	size_t alloc_size = 0;
+अटल पूर्णांक vio_dma_iommu_map_sg(काष्ठा device *dev, काष्ठा scatterlist *sglist,
+                                पूर्णांक nelems, क्रमागत dma_data_direction direction,
+                                अचिन्हित दीर्घ attrs)
+अणु
+	काष्ठा vio_dev *viodev = to_vio_dev(dev);
+	काष्ठा iommu_table *tbl = get_iommu_table_base(dev);
+	काष्ठा scatterlist *sgl;
+	पूर्णांक ret, count;
+	माप_प्रकार alloc_size = 0;
 
-	for_each_sg(sglist, sgl, nelems, count)
+	क्रम_each_sg(sglist, sgl, nelems, count)
 		alloc_size += roundup(sgl->length, IOMMU_PAGE_SIZE(tbl));
 
-	if (vio_cmo_alloc(viodev, alloc_size))
-		goto out_fail;
+	अगर (vio_cmo_alloc(viodev, alloc_size))
+		जाओ out_fail;
 	ret = ppc_iommu_map_sg(dev, tbl, sglist, nelems, dma_get_mask(dev),
 			direction, attrs);
-	if (unlikely(!ret))
-		goto out_deallocate;
+	अगर (unlikely(!ret))
+		जाओ out_deallocate;
 
-	for_each_sg(sglist, sgl, ret, count)
+	क्रम_each_sg(sglist, sgl, ret, count)
 		alloc_size -= roundup(sgl->dma_length, IOMMU_PAGE_SIZE(tbl));
-	if (alloc_size)
+	अगर (alloc_size)
 		vio_cmo_dealloc(viodev, alloc_size);
-	return ret;
+	वापस ret;
 
 out_deallocate:
 	vio_cmo_dealloc(viodev, alloc_size);
 out_fail:
 	atomic_inc(&viodev->cmo.allocs_failed);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vio_dma_iommu_unmap_sg(struct device *dev,
-		struct scatterlist *sglist, int nelems,
-		enum dma_data_direction direction,
-		unsigned long attrs)
-{
-	struct vio_dev *viodev = to_vio_dev(dev);
-	struct iommu_table *tbl = get_iommu_table_base(dev);
-	struct scatterlist *sgl;
-	size_t alloc_size = 0;
-	int count;
+अटल व्योम vio_dma_iommu_unmap_sg(काष्ठा device *dev,
+		काष्ठा scatterlist *sglist, पूर्णांक nelems,
+		क्रमागत dma_data_direction direction,
+		अचिन्हित दीर्घ attrs)
+अणु
+	काष्ठा vio_dev *viodev = to_vio_dev(dev);
+	काष्ठा iommu_table *tbl = get_iommu_table_base(dev);
+	काष्ठा scatterlist *sgl;
+	माप_प्रकार alloc_size = 0;
+	पूर्णांक count;
 
-	for_each_sg(sglist, sgl, nelems, count)
+	क्रम_each_sg(sglist, sgl, nelems, count)
 		alloc_size += roundup(sgl->dma_length, IOMMU_PAGE_SIZE(tbl));
 
 	ppc_iommu_unmap_sg(tbl, sglist, nelems, direction, attrs);
 	vio_cmo_dealloc(viodev, alloc_size);
-}
+पूर्ण
 
-static const struct dma_map_ops vio_dma_mapping_ops = {
+अटल स्थिर काष्ठा dma_map_ops vio_dma_mapping_ops = अणु
 	.alloc             = vio_dma_iommu_alloc_coherent,
-	.free              = vio_dma_iommu_free_coherent,
+	.मुक्त              = vio_dma_iommu_मुक्त_coherent,
 	.map_sg            = vio_dma_iommu_map_sg,
 	.unmap_sg          = vio_dma_iommu_unmap_sg,
 	.map_page          = vio_dma_iommu_map_page,
@@ -610,386 +611,386 @@ static const struct dma_map_ops vio_dma_mapping_ops = {
 	.mmap		   = dma_common_mmap,
 	.get_sgtable	   = dma_common_get_sgtable,
 	.alloc_pages	   = dma_common_alloc_pages,
-	.free_pages	   = dma_common_free_pages,
-};
+	.मुक्त_pages	   = dma_common_मुक्त_pages,
+पूर्ण;
 
 /**
- * vio_cmo_set_dev_desired - Set desired entitlement for a device
+ * vio_cmo_set_dev_desired - Set desired entitlement क्रम a device
  *
- * @viodev: struct vio_dev for device to alter
+ * @viodev: काष्ठा vio_dev क्रम device to alter
  * @desired: new desired entitlement level in bytes
  *
- * For use by devices to request a change to their entitlement at runtime or
+ * For use by devices to request a change to their entitlement at runसमय or
  * through sysfs.  The desired entitlement level is changed and a balancing
- * of system resources is scheduled to run in the future.
+ * of प्रणाली resources is scheduled to run in the future.
  */
-void vio_cmo_set_dev_desired(struct vio_dev *viodev, size_t desired)
-{
-	unsigned long flags;
-	struct vio_cmo_dev_entry *dev_ent;
-	int found = 0;
+व्योम vio_cmo_set_dev_desired(काष्ठा vio_dev *viodev, माप_प्रकार desired)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा vio_cmo_dev_entry *dev_ent;
+	पूर्णांक found = 0;
 
-	if (!firmware_has_feature(FW_FEATURE_CMO))
-		return;
+	अगर (!firmware_has_feature(FW_FEATURE_CMO))
+		वापस;
 
 	spin_lock_irqsave(&vio_cmo.lock, flags);
-	if (desired < VIO_CMO_MIN_ENT)
+	अगर (desired < VIO_CMO_MIN_ENT)
 		desired = VIO_CMO_MIN_ENT;
 
 	/*
-	 * Changes will not be made for devices not in the device list.
+	 * Changes will not be made क्रम devices not in the device list.
 	 * If it is not in the device list, then no driver is loaded
-	 * for the device and it can not receive entitlement.
+	 * क्रम the device and it can not receive entitlement.
 	 */
-	list_for_each_entry(dev_ent, &vio_cmo.device_list, list)
-		if (viodev == dev_ent->viodev) {
+	list_क्रम_each_entry(dev_ent, &vio_cmo.device_list, list)
+		अगर (viodev == dev_ent->viodev) अणु
 			found = 1;
-			break;
-		}
-	if (!found) {
+			अवरोध;
+		पूर्ण
+	अगर (!found) अणु
 		spin_unlock_irqrestore(&vio_cmo.lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Increase/decrease in desired device entitlement */
-	if (desired >= viodev->cmo.desired) {
+	अगर (desired >= viodev->cmo.desired) अणु
 		/* Just bump the bus and device values prior to a balance*/
 		vio_cmo.desired += desired - viodev->cmo.desired;
 		viodev->cmo.desired = desired;
-	} else {
-		/* Decrease bus and device values for desired entitlement */
+	पूर्ण अन्यथा अणु
+		/* Decrease bus and device values क्रम desired entitlement */
 		vio_cmo.desired -= viodev->cmo.desired - desired;
 		viodev->cmo.desired = desired;
 		/*
 		 * If less entitlement is desired than current entitlement, move
 		 * any reserve memory in the change region to the excess pool.
 		 */
-		if (viodev->cmo.entitled > desired) {
+		अगर (viodev->cmo.entitled > desired) अणु
 			vio_cmo.reserve.size -= viodev->cmo.entitled - desired;
 			vio_cmo.excess.size += viodev->cmo.entitled - desired;
 			/*
 			 * If entitlement moving from the reserve pool to the
 			 * excess pool is currently unused, add to the excess
-			 * free counter.
+			 * मुक्त counter.
 			 */
-			if (viodev->cmo.allocated < viodev->cmo.entitled)
-				vio_cmo.excess.free += viodev->cmo.entitled -
+			अगर (viodev->cmo.allocated < viodev->cmo.entitled)
+				vio_cmo.excess.मुक्त += viodev->cmo.entitled -
 				                       max(viodev->cmo.allocated, desired);
 			viodev->cmo.entitled = desired;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	schedule_delayed_work(&vio_cmo.balance_q, 0);
 	spin_unlock_irqrestore(&vio_cmo.lock, flags);
-}
+पूर्ण
 
 /**
- * vio_cmo_bus_probe - Handle CMO specific bus probe activities
+ * vio_cmo_bus_probe - Handle CMO specअगरic bus probe activities
  *
- * @viodev - Pointer to struct vio_dev for device
+ * @viodev - Poपूर्णांकer to काष्ठा vio_dev क्रम device
  *
  * Determine the devices IO memory entitlement needs, attempting
- * to satisfy the system minimum entitlement at first and scheduling
- * a balance operation to take care of the rest at a later time.
+ * to satisfy the प्रणाली minimum entitlement at first and scheduling
+ * a balance operation to take care of the rest at a later समय.
  *
- * Returns: 0 on success, -EINVAL when device doesn't support CMO, and
- *          -ENOMEM when entitlement is not available for device or
+ * Returns: 0 on success, -EINVAL when device करोesn't support CMO, and
+ *          -ENOMEM when entitlement is not available क्रम device or
  *          device entry.
  *
  */
-static int vio_cmo_bus_probe(struct vio_dev *viodev)
-{
-	struct vio_cmo_dev_entry *dev_ent;
-	struct device *dev = &viodev->dev;
-	struct iommu_table *tbl;
-	struct vio_driver *viodrv = to_vio_driver(dev->driver);
-	unsigned long flags;
-	size_t size;
+अटल पूर्णांक vio_cmo_bus_probe(काष्ठा vio_dev *viodev)
+अणु
+	काष्ठा vio_cmo_dev_entry *dev_ent;
+	काष्ठा device *dev = &viodev->dev;
+	काष्ठा iommu_table *tbl;
+	काष्ठा vio_driver *viodrv = to_vio_driver(dev->driver);
+	अचिन्हित दीर्घ flags;
+	माप_प्रकार size;
 	bool dma_capable = false;
 
 	tbl = get_iommu_table_base(dev);
 
-	/* A device requires entitlement if it has a DMA window property */
-	switch (viodev->family) {
-	case VDEVICE:
-		if (of_get_property(viodev->dev.of_node,
-					"ibm,my-dma-window", NULL))
+	/* A device requires entitlement अगर it has a DMA winकरोw property */
+	चयन (viodev->family) अणु
+	हाल VDEVICE:
+		अगर (of_get_property(viodev->dev.of_node,
+					"ibm,my-dma-window", शून्य))
 			dma_capable = true;
-		break;
-	case PFO:
+		अवरोध;
+	हाल PFO:
 		dma_capable = false;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_warn(dev, "unknown device family: %d\n", viodev->family);
 		BUG();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Configure entitlement for the device. */
-	if (dma_capable) {
+	/* Configure entitlement क्रम the device. */
+	अगर (dma_capable) अणु
 		/* Check that the driver is CMO enabled and get desired DMA */
-		if (!viodrv->get_desired_dma) {
+		अगर (!viodrv->get_desired_dma) अणु
 			dev_err(dev, "%s: device driver does not support CMO\n",
 			        __func__);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		viodev->cmo.desired =
 			IOMMU_PAGE_ALIGN(viodrv->get_desired_dma(viodev), tbl);
-		if (viodev->cmo.desired < VIO_CMO_MIN_ENT)
+		अगर (viodev->cmo.desired < VIO_CMO_MIN_ENT)
 			viodev->cmo.desired = VIO_CMO_MIN_ENT;
 		size = VIO_CMO_MIN_ENT;
 
-		dev_ent = kmalloc(sizeof(struct vio_cmo_dev_entry),
+		dev_ent = kदो_स्मृति(माप(काष्ठा vio_cmo_dev_entry),
 		                  GFP_KERNEL);
-		if (!dev_ent)
-			return -ENOMEM;
+		अगर (!dev_ent)
+			वापस -ENOMEM;
 
 		dev_ent->viodev = viodev;
 		spin_lock_irqsave(&vio_cmo.lock, flags);
 		list_add(&dev_ent->list, &vio_cmo.device_list);
-	} else {
+	पूर्ण अन्यथा अणु
 		viodev->cmo.desired = 0;
 		size = 0;
 		spin_lock_irqsave(&vio_cmo.lock, flags);
-	}
+	पूर्ण
 
 	/*
-	 * If the needs for vio_cmo.min have not changed since they
+	 * If the needs क्रम vio_cmo.min have not changed since they
 	 * were last set, the number of devices in the OF tree has
-	 * been constant and the IO memory for this is already in
+	 * been स्थिरant and the IO memory क्रम this is alपढ़ोy in
 	 * the reserve pool.
 	 */
-	if (vio_cmo.min == ((vio_cmo_num_OF_devs() + 1) *
-	                    VIO_CMO_MIN_ENT)) {
-		/* Updated desired entitlement if device requires it */
-		if (size)
+	अगर (vio_cmo.min == ((vio_cmo_num_OF_devs() + 1) *
+	                    VIO_CMO_MIN_ENT)) अणु
+		/* Updated desired entitlement अगर device requires it */
+		अगर (size)
 			vio_cmo.desired += (viodev->cmo.desired -
 		                        VIO_CMO_MIN_ENT);
-	} else {
-		size_t tmp;
+	पूर्ण अन्यथा अणु
+		माप_प्रकार पंचांगp;
 
-		tmp = vio_cmo.spare + vio_cmo.excess.free;
-		if (tmp < size) {
+		पंचांगp = vio_cmo.spare + vio_cmo.excess.मुक्त;
+		अगर (पंचांगp < size) अणु
 			dev_err(dev, "%s: insufficient free "
 			        "entitlement to add device. "
 			        "Need %lu, have %lu\n", __func__,
-				size, (vio_cmo.spare + tmp));
+				size, (vio_cmo.spare + पंचांगp));
 			spin_unlock_irqrestore(&vio_cmo.lock, flags);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		/* Use excess pool first to fulfill request */
-		tmp = min(size, vio_cmo.excess.free);
-		vio_cmo.excess.free -= tmp;
-		vio_cmo.excess.size -= tmp;
-		vio_cmo.reserve.size += tmp;
+		पंचांगp = min(size, vio_cmo.excess.मुक्त);
+		vio_cmo.excess.मुक्त -= पंचांगp;
+		vio_cmo.excess.size -= पंचांगp;
+		vio_cmo.reserve.size += पंचांगp;
 
-		/* Use spare if excess pool was insufficient */
-		vio_cmo.spare -= size - tmp;
+		/* Use spare अगर excess pool was insufficient */
+		vio_cmo.spare -= size - पंचांगp;
 
 		/* Update bus accounting */
 		vio_cmo.min += size;
 		vio_cmo.desired += viodev->cmo.desired;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&vio_cmo.lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * vio_cmo_bus_remove - Handle CMO specific bus removal activities
+ * vio_cmo_bus_हटाओ - Handle CMO specअगरic bus removal activities
  *
- * @viodev - Pointer to struct vio_dev for device
+ * @viodev - Poपूर्णांकer to काष्ठा vio_dev क्रम device
  *
  * Remove the device from the cmo device list.  The minimum entitlement
- * will be reserved for the device as long as it is in the system.  The
- * rest of the entitlement the device had been allocated will be returned
- * to the system.
+ * will be reserved क्रम the device as दीर्घ as it is in the प्रणाली.  The
+ * rest of the entitlement the device had been allocated will be वापसed
+ * to the प्रणाली.
  */
-static void vio_cmo_bus_remove(struct vio_dev *viodev)
-{
-	struct vio_cmo_dev_entry *dev_ent;
-	unsigned long flags;
-	size_t tmp;
+अटल व्योम vio_cmo_bus_हटाओ(काष्ठा vio_dev *viodev)
+अणु
+	काष्ठा vio_cmo_dev_entry *dev_ent;
+	अचिन्हित दीर्घ flags;
+	माप_प्रकार पंचांगp;
 
 	spin_lock_irqsave(&vio_cmo.lock, flags);
-	if (viodev->cmo.allocated) {
+	अगर (viodev->cmo.allocated) अणु
 		dev_err(&viodev->dev, "%s: device had %lu bytes of IO "
 		        "allocated after remove operation.\n",
 		        __func__, viodev->cmo.allocated);
 		BUG();
-	}
+	पूर्ण
 
 	/*
-	 * Remove the device from the device list being maintained for
+	 * Remove the device from the device list being मुख्यtained क्रम
 	 * CMO enabled devices.
 	 */
-	list_for_each_entry(dev_ent, &vio_cmo.device_list, list)
-		if (viodev == dev_ent->viodev) {
+	list_क्रम_each_entry(dev_ent, &vio_cmo.device_list, list)
+		अगर (viodev == dev_ent->viodev) अणु
 			list_del(&dev_ent->list);
-			kfree(dev_ent);
-			break;
-		}
+			kमुक्त(dev_ent);
+			अवरोध;
+		पूर्ण
 
 	/*
-	 * Devices may not require any entitlement and they do not need
-	 * to be processed.  Otherwise, return the device's entitlement
+	 * Devices may not require any entitlement and they करो not need
+	 * to be processed.  Otherwise, वापस the device's entitlement
 	 * back to the pools.
 	 */
-	if (viodev->cmo.entitled) {
+	अगर (viodev->cmo.entitled) अणु
 		/*
 		 * This device has not yet left the OF tree, it's
-		 * minimum entitlement remains in vio_cmo.min and
+		 * minimum entitlement reमुख्यs in vio_cmo.min and
 		 * vio_cmo.desired
 		 */
 		vio_cmo.desired -= (viodev->cmo.desired - VIO_CMO_MIN_ENT);
 
 		/*
-		 * Save min allocation for device in reserve as long
+		 * Save min allocation क्रम device in reserve as दीर्घ
 		 * as it exists in OF tree as determined by later
 		 * balance operation
 		 */
 		viodev->cmo.entitled -= VIO_CMO_MIN_ENT;
 
-		/* Replenish spare from freed reserve pool */
-		if (viodev->cmo.entitled && (vio_cmo.spare < VIO_CMO_MIN_ENT)) {
-			tmp = min(viodev->cmo.entitled, (VIO_CMO_MIN_ENT -
+		/* Replenish spare from मुक्तd reserve pool */
+		अगर (viodev->cmo.entitled && (vio_cmo.spare < VIO_CMO_MIN_ENT)) अणु
+			पंचांगp = min(viodev->cmo.entitled, (VIO_CMO_MIN_ENT -
 			                                 vio_cmo.spare));
-			vio_cmo.spare += tmp;
-			viodev->cmo.entitled -= tmp;
-		}
+			vio_cmo.spare += पंचांगp;
+			viodev->cmo.entitled -= पंचांगp;
+		पूर्ण
 
-		/* Remaining reserve goes to excess pool */
+		/* Reमुख्यing reserve goes to excess pool */
 		vio_cmo.excess.size += viodev->cmo.entitled;
-		vio_cmo.excess.free += viodev->cmo.entitled;
+		vio_cmo.excess.मुक्त += viodev->cmo.entitled;
 		vio_cmo.reserve.size -= viodev->cmo.entitled;
 
 		/*
-		 * Until the device is removed it will keep a
+		 * Until the device is हटाओd it will keep a
 		 * minimum entitlement; this will guarantee that
 		 * a module unload/load will result in a success.
 		 */
 		viodev->cmo.entitled = VIO_CMO_MIN_ENT;
 		viodev->cmo.desired = VIO_CMO_MIN_ENT;
 		atomic_set(&viodev->cmo.allocs_failed, 0);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&vio_cmo.lock, flags);
-}
+पूर्ण
 
-static void vio_cmo_set_dma_ops(struct vio_dev *viodev)
-{
+अटल व्योम vio_cmo_set_dma_ops(काष्ठा vio_dev *viodev)
+अणु
 	set_dma_ops(&viodev->dev, &vio_dma_mapping_ops);
-}
+पूर्ण
 
 /**
- * vio_cmo_bus_init - CMO entitlement initialization at bus init time
+ * vio_cmo_bus_init - CMO entitlement initialization at bus init समय
  *
  * Set up the reserve and excess entitlement pools based on available
- * system entitlement and the number of devices in the OF tree that
+ * प्रणाली entitlement and the number of devices in the OF tree that
  * require entitlement in the reserve pool.
  */
-static void vio_cmo_bus_init(void)
-{
-	struct hvcall_mpp_data mpp_data;
-	int err;
+अटल व्योम vio_cmo_bus_init(व्योम)
+अणु
+	काष्ठा hvcall_mpp_data mpp_data;
+	पूर्णांक err;
 
-	memset(&vio_cmo, 0, sizeof(struct vio_cmo));
+	स_रखो(&vio_cmo, 0, माप(काष्ठा vio_cmo));
 	spin_lock_init(&vio_cmo.lock);
 	INIT_LIST_HEAD(&vio_cmo.device_list);
 	INIT_DELAYED_WORK(&vio_cmo.balance_q, vio_cmo_balance);
 
-	/* Get current system entitlement */
+	/* Get current प्रणाली entitlement */
 	err = h_get_mpp(&mpp_data);
 
 	/*
-	 * On failure, continue with entitlement set to 0, will panic()
+	 * On failure, जारी with entitlement set to 0, will panic()
 	 * later when spare is reserved.
 	 */
-	if (err != H_SUCCESS) {
-		printk(KERN_ERR "%s: unable to determine system IO "\
+	अगर (err != H_SUCCESS) अणु
+		prपूर्णांकk(KERN_ERR "%s: unable to determine system IO "\
 		       "entitlement. (%d)\n", __func__, err);
 		vio_cmo.entitled = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		vio_cmo.entitled = mpp_data.entitled_mem;
-	}
+	पूर्ण
 
 	/* Set reservation and check against entitlement */
 	vio_cmo.spare = VIO_CMO_MIN_ENT;
 	vio_cmo.reserve.size = vio_cmo.spare;
 	vio_cmo.reserve.size += (vio_cmo_num_OF_devs() *
 	                         VIO_CMO_MIN_ENT);
-	if (vio_cmo.reserve.size > vio_cmo.entitled) {
-		printk(KERN_ERR "%s: insufficient system entitlement\n",
+	अगर (vio_cmo.reserve.size > vio_cmo.entitled) अणु
+		prपूर्णांकk(KERN_ERR "%s: insufficient system entitlement\n",
 		       __func__);
 		panic("%s: Insufficient system entitlement", __func__);
-	}
+	पूर्ण
 
-	/* Set the remaining accounting variables */
+	/* Set the reमुख्यing accounting variables */
 	vio_cmo.excess.size = vio_cmo.entitled - vio_cmo.reserve.size;
-	vio_cmo.excess.free = vio_cmo.excess.size;
+	vio_cmo.excess.मुक्त = vio_cmo.excess.size;
 	vio_cmo.min = vio_cmo.reserve.size;
 	vio_cmo.desired = vio_cmo.reserve.size;
-}
+पूर्ण
 
-/* sysfs device functions and data structures for CMO */
+/* sysfs device functions and data काष्ठाures क्रम CMO */
 
-#define viodev_cmo_rd_attr(name)                                        \
-static ssize_t cmo_##name##_show(struct device *dev,                    \
-                                        struct device_attribute *attr,  \
-                                         char *buf)                     \
-{                                                                       \
-	return sprintf(buf, "%lu\n", to_vio_dev(dev)->cmo.name);        \
-}
+#घोषणा viodev_cmo_rd_attr(name)                                        \
+अटल sमाप_प्रकार cmo_##name##_show(काष्ठा device *dev,                    \
+                                        काष्ठा device_attribute *attr,  \
+                                         अक्षर *buf)                     \
+अणु                                                                       \
+	वापस प्र_लिखो(buf, "%lu\n", to_vio_dev(dev)->cmo.name);        \
+पूर्ण
 
-static ssize_t cmo_allocs_failed_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct vio_dev *viodev = to_vio_dev(dev);
-	return sprintf(buf, "%d\n", atomic_read(&viodev->cmo.allocs_failed));
-}
+अटल sमाप_प्रकार cmo_allocs_failed_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा vio_dev *viodev = to_vio_dev(dev);
+	वापस प्र_लिखो(buf, "%d\n", atomic_पढ़ो(&viodev->cmo.allocs_failed));
+पूर्ण
 
-static ssize_t cmo_allocs_failed_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct vio_dev *viodev = to_vio_dev(dev);
+अटल sमाप_प्रकार cmo_allocs_failed_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा vio_dev *viodev = to_vio_dev(dev);
 	atomic_set(&viodev->cmo.allocs_failed, 0);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t cmo_desired_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct vio_dev *viodev = to_vio_dev(dev);
-	size_t new_desired;
-	int ret;
+अटल sमाप_प्रकार cmo_desired_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा vio_dev *viodev = to_vio_dev(dev);
+	माप_प्रकार new_desired;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &new_desired);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &new_desired);
+	अगर (ret)
+		वापस ret;
 
 	vio_cmo_set_dev_desired(viodev, new_desired);
-	return count;
-}
+	वापस count;
+पूर्ण
 
 viodev_cmo_rd_attr(desired);
 viodev_cmo_rd_attr(entitled);
 viodev_cmo_rd_attr(allocated);
 
-static ssize_t name_show(struct device *, struct device_attribute *, char *);
-static ssize_t devspec_show(struct device *, struct device_attribute *, char *);
-static ssize_t modalias_show(struct device *dev, struct device_attribute *attr,
-			     char *buf);
+अटल sमाप_प्रकार name_show(काष्ठा device *, काष्ठा device_attribute *, अक्षर *);
+अटल sमाप_प्रकार devspec_show(काष्ठा device *, काष्ठा device_attribute *, अक्षर *);
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf);
 
-static struct device_attribute dev_attr_name;
-static struct device_attribute dev_attr_devspec;
-static struct device_attribute dev_attr_modalias;
+अटल काष्ठा device_attribute dev_attr_name;
+अटल काष्ठा device_attribute dev_attr_devspec;
+अटल काष्ठा device_attribute dev_attr_modalias;
 
-static DEVICE_ATTR_RO(cmo_entitled);
-static DEVICE_ATTR_RO(cmo_allocated);
-static DEVICE_ATTR_RW(cmo_desired);
-static DEVICE_ATTR_RW(cmo_allocs_failed);
+अटल DEVICE_ATTR_RO(cmo_entitled);
+अटल DEVICE_ATTR_RO(cmo_allocated);
+अटल DEVICE_ATTR_RW(cmo_desired);
+अटल DEVICE_ATTR_RW(cmo_allocs_failed);
 
-static struct attribute *vio_cmo_dev_attrs[] = {
+अटल काष्ठा attribute *vio_cmo_dev_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_devspec.attr,
 	&dev_attr_modalias.attr,
@@ -997,27 +998,27 @@ static struct attribute *vio_cmo_dev_attrs[] = {
 	&dev_attr_cmo_allocated.attr,
 	&dev_attr_cmo_desired.attr,
 	&dev_attr_cmo_allocs_failed.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(vio_cmo_dev);
 
-/* sysfs bus functions and data structures for CMO */
+/* sysfs bus functions and data काष्ठाures क्रम CMO */
 
-#define viobus_cmo_rd_attr(name)                                        \
-static ssize_t cmo_bus_##name##_show(struct bus_type *bt, char *buf)    \
-{                                                                       \
-	return sprintf(buf, "%lu\n", vio_cmo.name);                     \
-}                                                                       \
-static struct bus_attribute bus_attr_cmo_bus_##name =			\
-	__ATTR(cmo_##name, S_IRUGO, cmo_bus_##name##_show, NULL)
+#घोषणा viobus_cmo_rd_attr(name)                                        \
+अटल sमाप_प्रकार cmo_bus_##name##_show(काष्ठा bus_type *bt, अक्षर *buf)    \
+अणु                                                                       \
+	वापस प्र_लिखो(buf, "%lu\n", vio_cmo.name);                     \
+पूर्ण                                                                       \
+अटल काष्ठा bus_attribute bus_attr_cmo_bus_##name =			\
+	__ATTR(cmo_##name, S_IRUGO, cmo_bus_##name##_show, शून्य)
 
-#define viobus_cmo_pool_rd_attr(name, var)                              \
-static ssize_t                                                          \
-cmo_##name##_##var##_show(struct bus_type *bt, char *buf)               \
-{                                                                       \
-	return sprintf(buf, "%lu\n", vio_cmo.name.var);                 \
-}                                                                       \
-static BUS_ATTR_RO(cmo_##name##_##var)
+#घोषणा viobus_cmo_pool_rd_attr(name, var)                              \
+अटल sमाप_प्रकार                                                          \
+cmo_##name##_##var##_show(काष्ठा bus_type *bt, अक्षर *buf)               \
+अणु                                                                       \
+	वापस प्र_लिखो(buf, "%lu\n", vio_cmo.name.var);                 \
+पूर्ण                                                                       \
+अटल BUS_ATTR_RO(cmo_##name##_##var)
 
 viobus_cmo_rd_attr(entitled);
 viobus_cmo_rd_attr(spare);
@@ -1026,27 +1027,27 @@ viobus_cmo_rd_attr(desired);
 viobus_cmo_rd_attr(curr);
 viobus_cmo_pool_rd_attr(reserve, size);
 viobus_cmo_pool_rd_attr(excess, size);
-viobus_cmo_pool_rd_attr(excess, free);
+viobus_cmo_pool_rd_attr(excess, मुक्त);
 
-static ssize_t cmo_high_show(struct bus_type *bt, char *buf)
-{
-	return sprintf(buf, "%lu\n", vio_cmo.high);
-}
+अटल sमाप_प्रकार cmo_high_show(काष्ठा bus_type *bt, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%lu\n", vio_cmo.high);
+पूर्ण
 
-static ssize_t cmo_high_store(struct bus_type *bt, const char *buf,
-			      size_t count)
-{
-	unsigned long flags;
+अटल sमाप_प्रकार cmo_high_store(काष्ठा bus_type *bt, स्थिर अक्षर *buf,
+			      माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vio_cmo.lock, flags);
 	vio_cmo.high = vio_cmo.curr;
 	spin_unlock_irqrestore(&vio_cmo.lock, flags);
 
-	return count;
-}
-static BUS_ATTR_RW(cmo_high);
+	वापस count;
+पूर्ण
+अटल BUS_ATTR_RW(cmo_high);
 
-static struct attribute *vio_bus_attrs[] = {
+अटल काष्ठा attribute *vio_bus_attrs[] = अणु
 	&bus_attr_cmo_bus_entitled.attr,
 	&bus_attr_cmo_bus_spare.attr,
 	&bus_attr_cmo_bus_min.attr,
@@ -1055,254 +1056,254 @@ static struct attribute *vio_bus_attrs[] = {
 	&bus_attr_cmo_high.attr,
 	&bus_attr_cmo_reserve_size.attr,
 	&bus_attr_cmo_excess_size.attr,
-	&bus_attr_cmo_excess_free.attr,
-	NULL,
-};
+	&bus_attr_cmo_excess_मुक्त.attr,
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(vio_bus);
 
-static void vio_cmo_sysfs_init(void)
-{
+अटल व्योम vio_cmo_sysfs_init(व्योम)
+अणु
 	vio_bus_type.dev_groups = vio_cmo_dev_groups;
 	vio_bus_type.bus_groups = vio_bus_groups;
-}
-#else /* CONFIG_PPC_SMLPAR */
-int vio_cmo_entitlement_update(size_t new_entitlement) { return 0; }
-void vio_cmo_set_dev_desired(struct vio_dev *viodev, size_t desired) {}
-static int vio_cmo_bus_probe(struct vio_dev *viodev) { return 0; }
-static void vio_cmo_bus_remove(struct vio_dev *viodev) {}
-static void vio_cmo_set_dma_ops(struct vio_dev *viodev) {}
-static void vio_cmo_bus_init(void) {}
-static void vio_cmo_sysfs_init(void) { }
-#endif /* CONFIG_PPC_SMLPAR */
+पूर्ण
+#अन्यथा /* CONFIG_PPC_SMLPAR */
+पूर्णांक vio_cmo_entitlement_update(माप_प्रकार new_entitlement) अणु वापस 0; पूर्ण
+व्योम vio_cmo_set_dev_desired(काष्ठा vio_dev *viodev, माप_प्रकार desired) अणुपूर्ण
+अटल पूर्णांक vio_cmo_bus_probe(काष्ठा vio_dev *viodev) अणु वापस 0; पूर्ण
+अटल व्योम vio_cmo_bus_हटाओ(काष्ठा vio_dev *viodev) अणुपूर्ण
+अटल व्योम vio_cmo_set_dma_ops(काष्ठा vio_dev *viodev) अणुपूर्ण
+अटल व्योम vio_cmo_bus_init(व्योम) अणुपूर्ण
+अटल व्योम vio_cmo_sysfs_init(व्योम) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_SMLPAR */
 EXPORT_SYMBOL(vio_cmo_entitlement_update);
 EXPORT_SYMBOL(vio_cmo_set_dev_desired);
 
 
 /*
- * Platform Facilities Option (PFO) support
+ * Platक्रमm Facilities Option (PFO) support
  */
 
 /**
- * vio_h_cop_sync - Perform a synchronous PFO co-processor operation
+ * vio_h_cop_sync - Perक्रमm a synchronous PFO co-processor operation
  *
- * @vdev - Pointer to a struct vio_dev for device
- * @op - Pointer to a struct vio_pfo_op for the operation parameters
+ * @vdev - Poपूर्णांकer to a काष्ठा vio_dev क्रम device
+ * @op - Poपूर्णांकer to a काष्ठा vio_pfo_op क्रम the operation parameters
  *
- * Calls the hypervisor to synchronously perform the PFO operation
- * described in @op.  In the case of a busy response from the hypervisor,
- * the operation will be re-submitted indefinitely unless a non-zero timeout
- * is specified or an error occurs. The timeout places a limit on when to
- * stop re-submitting a operation, the total time can be exceeded if an
+ * Calls the hypervisor to synchronously perक्रमm the PFO operation
+ * described in @op.  In the हाल of a busy response from the hypervisor,
+ * the operation will be re-submitted indefinitely unless a non-zero समयout
+ * is specअगरied or an error occurs. The समयout places a limit on when to
+ * stop re-submitting a operation, the total समय can be exceeded अगर an
  * operation is in progress.
  *
- * If op->hcall_ret is not NULL, this will be set to the return from the
- * last h_cop_op call or it will be 0 if an error not involving the h_call
+ * If op->hcall_ret is not शून्य, this will be set to the वापस from the
+ * last h_cop_op call or it will be 0 अगर an error not involving the h_call
  * was encountered.
  *
  * Returns:
  *	0 on success,
- *	-EINVAL if the h_call fails due to an invalid parameter,
- *	-E2BIG if the h_call can not be performed synchronously,
- *	-EBUSY if a timeout is specified and has elapsed,
- *	-EACCES if the memory area for data/status has been rescinded, or
- *	-EPERM if a hardware fault has been indicated
+ *	-EINVAL अगर the h_call fails due to an invalid parameter,
+ *	-E2BIG अगर the h_call can not be perक्रमmed synchronously,
+ *	-EBUSY अगर a समयout is specअगरied and has elapsed,
+ *	-EACCES अगर the memory area क्रम data/status has been rescinded, or
+ *	-EPERM अगर a hardware fault has been indicated
  */
-int vio_h_cop_sync(struct vio_dev *vdev, struct vio_pfo_op *op)
-{
-	struct device *dev = &vdev->dev;
-	unsigned long deadline = 0;
-	long hret = 0;
-	int ret = 0;
+पूर्णांक vio_h_cop_sync(काष्ठा vio_dev *vdev, काष्ठा vio_pfo_op *op)
+अणु
+	काष्ठा device *dev = &vdev->dev;
+	अचिन्हित दीर्घ deadline = 0;
+	दीर्घ hret = 0;
+	पूर्णांक ret = 0;
 
-	if (op->timeout)
-		deadline = jiffies + msecs_to_jiffies(op->timeout);
+	अगर (op->समयout)
+		deadline = jअगरfies + msecs_to_jअगरfies(op->समयout);
 
-	while (true) {
+	जबतक (true) अणु
 		hret = plpar_hcall_norets(H_COP, op->flags,
 				vdev->resource_id,
 				op->in, op->inlen, op->out,
 				op->outlen, op->csbcpb);
 
-		if (hret == H_SUCCESS ||
+		अगर (hret == H_SUCCESS ||
 		    (hret != H_NOT_ENOUGH_RESOURCES &&
 		     hret != H_BUSY && hret != H_RESOURCE) ||
-		    (op->timeout && time_after(deadline, jiffies)))
-			break;
+		    (op->समयout && समय_after(deadline, jअगरfies)))
+			अवरोध;
 
 		dev_dbg(dev, "%s: hcall ret(%ld), retrying.\n", __func__, hret);
-	}
+	पूर्ण
 
-	switch (hret) {
-	case H_SUCCESS:
+	चयन (hret) अणु
+	हाल H_SUCCESS:
 		ret = 0;
-		break;
-	case H_OP_MODE:
-	case H_TOO_BIG:
+		अवरोध;
+	हाल H_OP_MODE:
+	हाल H_TOO_BIG:
 		ret = -E2BIG;
-		break;
-	case H_RESCINDED:
+		अवरोध;
+	हाल H_RESCINDED:
 		ret = -EACCES;
-		break;
-	case H_HARDWARE:
+		अवरोध;
+	हाल H_HARDWARE:
 		ret = -EPERM;
-		break;
-	case H_NOT_ENOUGH_RESOURCES:
-	case H_RESOURCE:
-	case H_BUSY:
+		अवरोध;
+	हाल H_NOT_ENOUGH_RESOURCES:
+	हाल H_RESOURCE:
+	हाल H_BUSY:
 		ret = -EBUSY;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		dev_dbg(dev, "%s: Sync h_cop_op failure (ret:%d) (hret:%ld)\n",
 				__func__, ret, hret);
 
 	op->hcall_err = hret;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(vio_h_cop_sync);
 
-static struct iommu_table *vio_build_iommu_table(struct vio_dev *dev)
-{
-	const __be32 *dma_window;
-	struct iommu_table *tbl;
-	unsigned long offset, size;
+अटल काष्ठा iommu_table *vio_build_iommu_table(काष्ठा vio_dev *dev)
+अणु
+	स्थिर __be32 *dma_winकरोw;
+	काष्ठा iommu_table *tbl;
+	अचिन्हित दीर्घ offset, size;
 
-	dma_window = of_get_property(dev->dev.of_node,
-				  "ibm,my-dma-window", NULL);
-	if (!dma_window)
-		return NULL;
+	dma_winकरोw = of_get_property(dev->dev.of_node,
+				  "ibm,my-dma-window", शून्य);
+	अगर (!dma_winकरोw)
+		वापस शून्य;
 
-	tbl = kzalloc(sizeof(*tbl), GFP_KERNEL);
-	if (tbl == NULL)
-		return NULL;
+	tbl = kzalloc(माप(*tbl), GFP_KERNEL);
+	अगर (tbl == शून्य)
+		वापस शून्य;
 
 	kref_init(&tbl->it_kref);
 
-	of_parse_dma_window(dev->dev.of_node, dma_window,
+	of_parse_dma_winकरोw(dev->dev.of_node, dma_winकरोw,
 			    &tbl->it_index, &offset, &size);
 
 	/* TCE table size - measured in tce entries */
-	tbl->it_page_shift = IOMMU_PAGE_SHIFT_4K;
-	tbl->it_size = size >> tbl->it_page_shift;
-	/* offset for VIO should always be 0 */
-	tbl->it_offset = offset >> tbl->it_page_shift;
+	tbl->it_page_shअगरt = IOMMU_PAGE_SHIFT_4K;
+	tbl->it_size = size >> tbl->it_page_shअगरt;
+	/* offset क्रम VIO should always be 0 */
+	tbl->it_offset = offset >> tbl->it_page_shअगरt;
 	tbl->it_busno = 0;
 	tbl->it_type = TCE_VB;
 	tbl->it_blocksize = 16;
 
-	if (firmware_has_feature(FW_FEATURE_LPAR))
+	अगर (firmware_has_feature(FW_FEATURE_LPAR))
 		tbl->it_ops = &iommu_table_lpar_multi_ops;
-	else
+	अन्यथा
 		tbl->it_ops = &iommu_table_pseries_ops;
 
-	return iommu_init_table(tbl, -1, 0, 0);
-}
+	वापस iommu_init_table(tbl, -1, 0, 0);
+पूर्ण
 
 /**
- * vio_match_device: - Tell if a VIO device has a matching
- *			VIO device id structure.
- * @ids:	array of VIO device id structures to search in
- * @dev:	the VIO device structure to match against
+ * vio_match_device: - Tell अगर a VIO device has a matching
+ *			VIO device id काष्ठाure.
+ * @ids:	array of VIO device id काष्ठाures to search in
+ * @dev:	the VIO device काष्ठाure to match against
  *
  * Used by a driver to check whether a VIO device present in the
- * system is in its list of supported devices. Returns the matching
- * vio_device_id structure or NULL if there is no match.
+ * प्रणाली is in its list of supported devices. Returns the matching
+ * vio_device_id काष्ठाure or शून्य अगर there is no match.
  */
-static const struct vio_device_id *vio_match_device(
-		const struct vio_device_id *ids, const struct vio_dev *dev)
-{
-	while (ids->type[0] != '\0') {
-		if ((strncmp(dev->type, ids->type, strlen(ids->type)) == 0) &&
+अटल स्थिर काष्ठा vio_device_id *vio_match_device(
+		स्थिर काष्ठा vio_device_id *ids, स्थिर काष्ठा vio_dev *dev)
+अणु
+	जबतक (ids->type[0] != '\0') अणु
+		अगर ((म_भेदन(dev->type, ids->type, म_माप(ids->type)) == 0) &&
 		    of_device_is_compatible(dev->dev.of_node,
 					 ids->compat))
-			return ids;
+			वापस ids;
 		ids++;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
- * Convert from struct device to struct vio_dev and pass to driver.
- * dev->driver has already been set by generic code because vio_bus_match
+ * Convert from काष्ठा device to काष्ठा vio_dev and pass to driver.
+ * dev->driver has alपढ़ोy been set by generic code because vio_bus_match
  * succeeded.
  */
-static int vio_bus_probe(struct device *dev)
-{
-	struct vio_dev *viodev = to_vio_dev(dev);
-	struct vio_driver *viodrv = to_vio_driver(dev->driver);
-	const struct vio_device_id *id;
-	int error = -ENODEV;
+अटल पूर्णांक vio_bus_probe(काष्ठा device *dev)
+अणु
+	काष्ठा vio_dev *viodev = to_vio_dev(dev);
+	काष्ठा vio_driver *viodrv = to_vio_driver(dev->driver);
+	स्थिर काष्ठा vio_device_id *id;
+	पूर्णांक error = -ENODEV;
 
-	if (!viodrv->probe)
-		return error;
+	अगर (!viodrv->probe)
+		वापस error;
 
 	id = vio_match_device(viodrv->id_table, viodev);
-	if (id) {
-		memset(&viodev->cmo, 0, sizeof(viodev->cmo));
-		if (firmware_has_feature(FW_FEATURE_CMO)) {
+	अगर (id) अणु
+		स_रखो(&viodev->cmo, 0, माप(viodev->cmo));
+		अगर (firmware_has_feature(FW_FEATURE_CMO)) अणु
 			error = vio_cmo_bus_probe(viodev);
-			if (error)
-				return error;
-		}
+			अगर (error)
+				वापस error;
+		पूर्ण
 		error = viodrv->probe(viodev, id);
-		if (error && firmware_has_feature(FW_FEATURE_CMO))
-			vio_cmo_bus_remove(viodev);
-	}
+		अगर (error && firmware_has_feature(FW_FEATURE_CMO))
+			vio_cmo_bus_हटाओ(viodev);
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-/* convert from struct device to struct vio_dev and pass to driver. */
-static int vio_bus_remove(struct device *dev)
-{
-	struct vio_dev *viodev = to_vio_dev(dev);
-	struct vio_driver *viodrv = to_vio_driver(dev->driver);
-	struct device *devptr;
+/* convert from काष्ठा device to काष्ठा vio_dev and pass to driver. */
+अटल पूर्णांक vio_bus_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा vio_dev *viodev = to_vio_dev(dev);
+	काष्ठा vio_driver *viodrv = to_vio_driver(dev->driver);
+	काष्ठा device *devptr;
 
 	/*
-	 * Hold a reference to the device after the remove function is called
-	 * to allow for CMO accounting cleanup for the device.
+	 * Hold a reference to the device after the हटाओ function is called
+	 * to allow क्रम CMO accounting cleanup क्रम the device.
 	 */
 	devptr = get_device(dev);
 
-	if (viodrv->remove)
-		viodrv->remove(viodev);
+	अगर (viodrv->हटाओ)
+		viodrv->हटाओ(viodev);
 
-	if (firmware_has_feature(FW_FEATURE_CMO))
-		vio_cmo_bus_remove(viodev);
+	अगर (firmware_has_feature(FW_FEATURE_CMO))
+		vio_cmo_bus_हटाओ(viodev);
 
 	put_device(devptr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vio_bus_shutdown(struct device *dev)
-{
-	struct vio_dev *viodev = to_vio_dev(dev);
-	struct vio_driver *viodrv;
+अटल व्योम vio_bus_shutकरोwn(काष्ठा device *dev)
+अणु
+	काष्ठा vio_dev *viodev = to_vio_dev(dev);
+	काष्ठा vio_driver *viodrv;
 
-	if (dev->driver) {
+	अगर (dev->driver) अणु
 		viodrv = to_vio_driver(dev->driver);
-		if (viodrv->shutdown)
-			viodrv->shutdown(viodev);
-		else if (kexec_in_progress)
-			vio_bus_remove(dev);
-	}
-}
+		अगर (viodrv->shutकरोwn)
+			viodrv->shutकरोwn(viodev);
+		अन्यथा अगर (kexec_in_progress)
+			vio_bus_हटाओ(dev);
+	पूर्ण
+पूर्ण
 
 /**
- * vio_register_driver: - Register a new vio driver
- * @viodrv:	The vio_driver structure to be registered.
+ * vio_रेजिस्टर_driver: - Register a new vio driver
+ * @viodrv:	The vio_driver काष्ठाure to be रेजिस्टरed.
  */
-int __vio_register_driver(struct vio_driver *viodrv, struct module *owner,
-			  const char *mod_name)
-{
-	// vio_bus_type is only initialised for pseries
-	if (!machine_is(pseries))
-		return -ENODEV;
+पूर्णांक __vio_रेजिस्टर_driver(काष्ठा vio_driver *viodrv, काष्ठा module *owner,
+			  स्थिर अक्षर *mod_name)
+अणु
+	// vio_bus_type is only initialised क्रम pseries
+	अगर (!machine_is(pseries))
+		वापस -ENODEV;
 
 	pr_debug("%s: driver %s registering\n", __func__, viodrv->name);
 
@@ -1313,121 +1314,121 @@ int __vio_register_driver(struct vio_driver *viodrv, struct module *owner,
 	viodrv->driver.owner = owner;
 	viodrv->driver.mod_name = mod_name;
 
-	return driver_register(&viodrv->driver);
-}
-EXPORT_SYMBOL(__vio_register_driver);
+	वापस driver_रेजिस्टर(&viodrv->driver);
+पूर्ण
+EXPORT_SYMBOL(__vio_रेजिस्टर_driver);
 
 /**
- * vio_unregister_driver - Remove registration of vio driver.
- * @viodrv:	The vio_driver struct to be removed form registration
+ * vio_unरेजिस्टर_driver - Remove registration of vio driver.
+ * @viodrv:	The vio_driver काष्ठा to be हटाओd क्रमm registration
  */
-void vio_unregister_driver(struct vio_driver *viodrv)
-{
-	driver_unregister(&viodrv->driver);
-}
-EXPORT_SYMBOL(vio_unregister_driver);
+व्योम vio_unरेजिस्टर_driver(काष्ठा vio_driver *viodrv)
+अणु
+	driver_unरेजिस्टर(&viodrv->driver);
+पूर्ण
+EXPORT_SYMBOL(vio_unरेजिस्टर_driver);
 
 /* vio_dev refcount hit 0 */
-static void vio_dev_release(struct device *dev)
-{
-	struct iommu_table *tbl = get_iommu_table_base(dev);
+अटल व्योम vio_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा iommu_table *tbl = get_iommu_table_base(dev);
 
-	if (tbl)
+	अगर (tbl)
 		iommu_tce_table_put(tbl);
 	of_node_put(dev->of_node);
-	kfree(to_vio_dev(dev));
-}
+	kमुक्त(to_vio_dev(dev));
+पूर्ण
 
 /**
- * vio_register_device_node: - Register a new vio device.
- * @of_node:	The OF node for this device.
+ * vio_रेजिस्टर_device_node: - Register a new vio device.
+ * @of_node:	The OF node क्रम this device.
  *
- * Creates and initializes a vio_dev structure from the data in
- * of_node and adds it to the list of virtual devices.
- * Returns a pointer to the created vio_dev or NULL if node has
- * NULL device_type or compatible fields.
+ * Creates and initializes a vio_dev काष्ठाure from the data in
+ * of_node and adds it to the list of भव devices.
+ * Returns a poपूर्णांकer to the created vio_dev or शून्य अगर node has
+ * शून्य device_type or compatible fields.
  */
-struct vio_dev *vio_register_device_node(struct device_node *of_node)
-{
-	struct vio_dev *viodev;
-	struct device_node *parent_node;
-	const __be32 *prop;
-	enum vio_dev_family family;
+काष्ठा vio_dev *vio_रेजिस्टर_device_node(काष्ठा device_node *of_node)
+अणु
+	काष्ठा vio_dev *viodev;
+	काष्ठा device_node *parent_node;
+	स्थिर __be32 *prop;
+	क्रमागत vio_dev_family family;
 
 	/*
-	 * Determine if this node is a under the /vdevice node or under the
-	 * /ibm,platform-facilities node.  This decides the device's family.
+	 * Determine अगर this node is a under the /vdevice node or under the
+	 * /ibm,platक्रमm-facilities node.  This decides the device's family.
 	 */
 	parent_node = of_get_parent(of_node);
-	if (parent_node) {
-		if (of_node_is_type(parent_node, "ibm,platform-facilities"))
+	अगर (parent_node) अणु
+		अगर (of_node_is_type(parent_node, "ibm,platform-facilities"))
 			family = PFO;
-		else if (of_node_is_type(parent_node, "vdevice"))
+		अन्यथा अगर (of_node_is_type(parent_node, "vdevice"))
 			family = VDEVICE;
-		else {
+		अन्यथा अणु
 			pr_warn("%s: parent(%pOF) of %pOFn not recognized.\n",
 					__func__,
 					parent_node,
 					of_node);
 			of_node_put(parent_node);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 		of_node_put(parent_node);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_warn("%s: could not determine the parent of node %pOFn.\n",
 				__func__, of_node);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (family == PFO) {
-		if (of_get_property(of_node, "interrupt-controller", NULL)) {
+	अगर (family == PFO) अणु
+		अगर (of_get_property(of_node, "interrupt-controller", शून्य)) अणु
 			pr_debug("%s: Skipping the interrupt controller %pOFn.\n",
 					__func__, of_node);
-			return NULL;
-		}
-	}
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	/* allocate a vio_dev for this node */
-	viodev = kzalloc(sizeof(struct vio_dev), GFP_KERNEL);
-	if (viodev == NULL) {
+	/* allocate a vio_dev क्रम this node */
+	viodev = kzalloc(माप(काष्ठा vio_dev), GFP_KERNEL);
+	अगर (viodev == शून्य) अणु
 		pr_warn("%s: allocation failure for VIO device.\n", __func__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* we need the 'device_type' property, in order to match with drivers */
 	viodev->family = family;
-	if (viodev->family == VDEVICE) {
-		unsigned int unit_address;
+	अगर (viodev->family == VDEVICE) अणु
+		अचिन्हित पूर्णांक unit_address;
 
 		viodev->type = of_node_get_device_type(of_node);
-		if (!viodev->type) {
+		अगर (!viodev->type) अणु
 			pr_warn("%s: node %pOFn is missing the 'device_type' "
 					"property.\n", __func__, of_node);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		prop = of_get_property(of_node, "reg", NULL);
-		if (prop == NULL) {
+		prop = of_get_property(of_node, "reg", शून्य);
+		अगर (prop == शून्य) अणु
 			pr_warn("%s: node %pOFn missing 'reg'\n",
 					__func__, of_node);
-			goto out;
-		}
-		unit_address = of_read_number(prop, 1);
+			जाओ out;
+		पूर्ण
+		unit_address = of_पढ़ो_number(prop, 1);
 		dev_set_name(&viodev->dev, "%x", unit_address);
 		viodev->irq = irq_of_parse_and_map(of_node, 0);
 		viodev->unit_address = unit_address;
-	} else {
-		/* PFO devices need their resource_id for submitting COP_OPs
-		 * This is an optional field for devices, but is required when
-		 * performing synchronous ops */
-		prop = of_get_property(of_node, "ibm,resource-id", NULL);
-		if (prop != NULL)
-			viodev->resource_id = of_read_number(prop, 1);
+	पूर्ण अन्यथा अणु
+		/* PFO devices need their resource_id क्रम submitting COP_OPs
+		 * This is an optional field क्रम devices, but is required when
+		 * perक्रमming synchronous ops */
+		prop = of_get_property(of_node, "ibm,resource-id", शून्य);
+		अगर (prop != शून्य)
+			viodev->resource_id = of_पढ़ो_number(prop, 1);
 
 		dev_set_name(&viodev->dev, "%pOFn", of_node);
 		viodev->type = dev_name(&viodev->dev);
 		viodev->irq = 0;
-	}
+	पूर्ण
 
 	viodev->name = of_node->name;
 	viodev->dev.of_node = of_node_get(of_node);
@@ -1439,290 +1440,290 @@ struct vio_dev *vio_register_device_node(struct device_node *of_node)
 	viodev->dev.bus = &vio_bus_type;
 	viodev->dev.release = vio_dev_release;
 
-	if (of_get_property(viodev->dev.of_node, "ibm,my-dma-window", NULL)) {
-		if (firmware_has_feature(FW_FEATURE_CMO))
+	अगर (of_get_property(viodev->dev.of_node, "ibm,my-dma-window", शून्य)) अणु
+		अगर (firmware_has_feature(FW_FEATURE_CMO))
 			vio_cmo_set_dma_ops(viodev);
-		else
+		अन्यथा
 			set_dma_ops(&viodev->dev, &dma_iommu_ops);
 
 		set_iommu_table_base(&viodev->dev,
 				     vio_build_iommu_table(viodev));
 
 		/* needed to ensure proper operation of coherent allocations
-		 * later, in case driver doesn't set it explicitly */
+		 * later, in हाल driver करोesn't set it explicitly */
 		viodev->dev.coherent_dma_mask = DMA_BIT_MASK(64);
 		viodev->dev.dma_mask = &viodev->dev.coherent_dma_mask;
-	}
+	पूर्ण
 
-	/* register with generic device framework */
-	if (device_register(&viodev->dev)) {
-		printk(KERN_ERR "%s: failed to register device %s\n",
+	/* रेजिस्टर with generic device framework */
+	अगर (device_रेजिस्टर(&viodev->dev)) अणु
+		prपूर्णांकk(KERN_ERR "%s: failed to register device %s\n",
 				__func__, dev_name(&viodev->dev));
 		put_device(&viodev->dev);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return viodev;
+	वापस viodev;
 
-out:	/* Use this exit point for any return prior to device_register */
-	kfree(viodev);
+out:	/* Use this निकास poपूर्णांक क्रम any वापस prior to device_रेजिस्टर */
+	kमुक्त(viodev);
 
-	return NULL;
-}
-EXPORT_SYMBOL(vio_register_device_node);
+	वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL(vio_रेजिस्टर_device_node);
 
 /*
- * vio_bus_scan_for_devices - Scan OF and register each child device
- * @root_name - OF node name for the root of the subtree to search.
- *		This must be non-NULL
+ * vio_bus_scan_क्रम_devices - Scan OF and रेजिस्टर each child device
+ * @root_name - OF node name क्रम the root of the subtree to search.
+ *		This must be non-शून्य
  *
- * Starting from the root node provide, register the device node for
+ * Starting from the root node provide, रेजिस्टर the device node क्रम
  * each child beneath the root.
  */
-static void vio_bus_scan_register_devices(char *root_name)
-{
-	struct device_node *node_root, *node_child;
+अटल व्योम vio_bus_scan_रेजिस्टर_devices(अक्षर *root_name)
+अणु
+	काष्ठा device_node *node_root, *node_child;
 
-	if (!root_name)
-		return;
+	अगर (!root_name)
+		वापस;
 
-	node_root = of_find_node_by_name(NULL, root_name);
-	if (node_root) {
+	node_root = of_find_node_by_name(शून्य, root_name);
+	अगर (node_root) अणु
 
 		/*
-		 * Create struct vio_devices for each virtual device in
+		 * Create काष्ठा vio_devices क्रम each भव device in
 		 * the device tree. Drivers will associate with them later.
 		 */
-		node_child = of_get_next_child(node_root, NULL);
-		while (node_child) {
-			vio_register_device_node(node_child);
+		node_child = of_get_next_child(node_root, शून्य);
+		जबतक (node_child) अणु
+			vio_रेजिस्टर_device_node(node_child);
 			node_child = of_get_next_child(node_root, node_child);
-		}
+		पूर्ण
 		of_node_put(node_root);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * vio_bus_init: - Initialize the virtual IO bus
+ * vio_bus_init: - Initialize the भव IO bus
  */
-static int __init vio_bus_init(void)
-{
-	int err;
+अटल पूर्णांक __init vio_bus_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	if (firmware_has_feature(FW_FEATURE_CMO))
+	अगर (firmware_has_feature(FW_FEATURE_CMO))
 		vio_cmo_sysfs_init();
 
-	err = bus_register(&vio_bus_type);
-	if (err) {
-		printk(KERN_ERR "failed to register VIO bus\n");
-		return err;
-	}
+	err = bus_रेजिस्टर(&vio_bus_type);
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "failed to register VIO bus\n");
+		वापस err;
+	पूर्ण
 
 	/*
 	 * The fake parent of all vio devices, just to give us
 	 * a nice directory
 	 */
-	err = device_register(&vio_bus_device.dev);
-	if (err) {
-		printk(KERN_WARNING "%s: device_register returned %i\n",
+	err = device_रेजिस्टर(&vio_bus_device.dev);
+	अगर (err) अणु
+		prपूर्णांकk(KERN_WARNING "%s: device_register returned %i\n",
 				__func__, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (firmware_has_feature(FW_FEATURE_CMO))
+	अगर (firmware_has_feature(FW_FEATURE_CMO))
 		vio_cmo_bus_init();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 machine_postcore_initcall(pseries, vio_bus_init);
 
-static int __init vio_device_init(void)
-{
-	vio_bus_scan_register_devices("vdevice");
-	vio_bus_scan_register_devices("ibm,platform-facilities");
+अटल पूर्णांक __init vio_device_init(व्योम)
+अणु
+	vio_bus_scan_रेजिस्टर_devices("vdevice");
+	vio_bus_scan_रेजिस्टर_devices("ibm,platform-facilities");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 machine_device_initcall(pseries, vio_device_init);
 
-static ssize_t name_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%s\n", to_vio_dev(dev)->name);
-}
-static DEVICE_ATTR_RO(name);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%s\n", to_vio_dev(dev)->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static ssize_t devspec_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct device_node *of_node = dev->of_node;
+अटल sमाप_प्रकार devspec_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा device_node *of_node = dev->of_node;
 
-	return sprintf(buf, "%pOF\n", of_node);
-}
-static DEVICE_ATTR_RO(devspec);
+	वापस प्र_लिखो(buf, "%pOF\n", of_node);
+पूर्ण
+अटल DEVICE_ATTR_RO(devspec);
 
-static ssize_t modalias_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	const struct vio_dev *vio_dev = to_vio_dev(dev);
-	struct device_node *dn;
-	const char *cp;
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	स्थिर काष्ठा vio_dev *vio_dev = to_vio_dev(dev);
+	काष्ठा device_node *dn;
+	स्थिर अक्षर *cp;
 
 	dn = dev->of_node;
-	if (!dn) {
-		strcpy(buf, "\n");
-		return strlen(buf);
-	}
-	cp = of_get_property(dn, "compatible", NULL);
-	if (!cp) {
-		strcpy(buf, "\n");
-		return strlen(buf);
-	}
+	अगर (!dn) अणु
+		म_नकल(buf, "\n");
+		वापस म_माप(buf);
+	पूर्ण
+	cp = of_get_property(dn, "compatible", शून्य);
+	अगर (!cp) अणु
+		म_नकल(buf, "\n");
+		वापस म_माप(buf);
+	पूर्ण
 
-	return sprintf(buf, "vio:T%sS%s\n", vio_dev->type, cp);
-}
-static DEVICE_ATTR_RO(modalias);
+	वापस प्र_लिखो(buf, "vio:T%sS%s\n", vio_dev->type, cp);
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static struct attribute *vio_dev_attrs[] = {
+अटल काष्ठा attribute *vio_dev_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_devspec.attr,
 	&dev_attr_modalias.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(vio_dev);
 
-void vio_unregister_device(struct vio_dev *viodev)
-{
-	device_unregister(&viodev->dev);
-	if (viodev->family == VDEVICE)
+व्योम vio_unरेजिस्टर_device(काष्ठा vio_dev *viodev)
+अणु
+	device_unरेजिस्टर(&viodev->dev);
+	अगर (viodev->family == VDEVICE)
 		irq_dispose_mapping(viodev->irq);
-}
-EXPORT_SYMBOL(vio_unregister_device);
+पूर्ण
+EXPORT_SYMBOL(vio_unरेजिस्टर_device);
 
-static int vio_bus_match(struct device *dev, struct device_driver *drv)
-{
-	const struct vio_dev *vio_dev = to_vio_dev(dev);
-	struct vio_driver *vio_drv = to_vio_driver(drv);
-	const struct vio_device_id *ids = vio_drv->id_table;
+अटल पूर्णांक vio_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	स्थिर काष्ठा vio_dev *vio_dev = to_vio_dev(dev);
+	काष्ठा vio_driver *vio_drv = to_vio_driver(drv);
+	स्थिर काष्ठा vio_device_id *ids = vio_drv->id_table;
 
-	return (ids != NULL) && (vio_match_device(ids, vio_dev) != NULL);
-}
+	वापस (ids != शून्य) && (vio_match_device(ids, vio_dev) != शून्य);
+पूर्ण
 
-static int vio_hotplug(struct device *dev, struct kobj_uevent_env *env)
-{
-	const struct vio_dev *vio_dev = to_vio_dev(dev);
-	struct device_node *dn;
-	const char *cp;
+अटल पूर्णांक vio_hotplug(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	स्थिर काष्ठा vio_dev *vio_dev = to_vio_dev(dev);
+	काष्ठा device_node *dn;
+	स्थिर अक्षर *cp;
 
 	dn = dev->of_node;
-	if (!dn)
-		return -ENODEV;
-	cp = of_get_property(dn, "compatible", NULL);
-	if (!cp)
-		return -ENODEV;
+	अगर (!dn)
+		वापस -ENODEV;
+	cp = of_get_property(dn, "compatible", शून्य);
+	अगर (!cp)
+		वापस -ENODEV;
 
 	add_uevent_var(env, "MODALIAS=vio:T%sS%s", vio_dev->type, cp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct bus_type vio_bus_type = {
+काष्ठा bus_type vio_bus_type = अणु
 	.name = "vio",
 	.dev_groups = vio_dev_groups,
 	.uevent = vio_hotplug,
 	.match = vio_bus_match,
 	.probe = vio_bus_probe,
-	.remove = vio_bus_remove,
-	.shutdown = vio_bus_shutdown,
-};
+	.हटाओ = vio_bus_हटाओ,
+	.shutकरोwn = vio_bus_shutकरोwn,
+पूर्ण;
 
 /**
- * vio_get_attribute: - get attribute for virtual device
+ * vio_get_attribute: - get attribute क्रम भव device
  * @vdev:	The vio device to get property.
  * @which:	The property/attribute to be extracted.
- * @length:	Pointer to length of returned data size (unused if NULL).
+ * @length:	Poपूर्णांकer to length of वापसed data size (unused अगर शून्य).
  *
- * Calls prom.c's of_get_property() to return the value of the
- * attribute specified by @which
+ * Calls prom.c's of_get_property() to वापस the value of the
+ * attribute specअगरied by @which
 */
-const void *vio_get_attribute(struct vio_dev *vdev, char *which, int *length)
-{
-	return of_get_property(vdev->dev.of_node, which, length);
-}
+स्थिर व्योम *vio_get_attribute(काष्ठा vio_dev *vdev, अक्षर *which, पूर्णांक *length)
+अणु
+	वापस of_get_property(vdev->dev.of_node, which, length);
+पूर्ण
 EXPORT_SYMBOL(vio_get_attribute);
 
-/* vio_find_name() - internal because only vio.c knows how we formatted the
+/* vio_find_name() - पूर्णांकernal because only vio.c knows how we क्रमmatted the
  * kobject name
  */
-static struct vio_dev *vio_find_name(const char *name)
-{
-	struct device *found;
+अटल काष्ठा vio_dev *vio_find_name(स्थिर अक्षर *name)
+अणु
+	काष्ठा device *found;
 
-	found = bus_find_device_by_name(&vio_bus_type, NULL, name);
-	if (!found)
-		return NULL;
+	found = bus_find_device_by_name(&vio_bus_type, शून्य, name);
+	अगर (!found)
+		वापस शून्य;
 
-	return to_vio_dev(found);
-}
+	वापस to_vio_dev(found);
+पूर्ण
 
 /**
- * vio_find_node - find an already-registered vio_dev
- * @vnode: device_node of the virtual device we're looking for
+ * vio_find_node - find an alपढ़ोy-रेजिस्टरed vio_dev
+ * @vnode: device_node of the भव device we're looking क्रम
  *
- * Takes a reference to the embedded struct device which needs to be dropped
+ * Takes a reference to the embedded काष्ठा device which needs to be dropped
  * after use.
  */
-struct vio_dev *vio_find_node(struct device_node *vnode)
-{
-	char kobj_name[20];
-	struct device_node *vnode_parent;
+काष्ठा vio_dev *vio_find_node(काष्ठा device_node *vnode)
+अणु
+	अक्षर kobj_name[20];
+	काष्ठा device_node *vnode_parent;
 
 	vnode_parent = of_get_parent(vnode);
-	if (!vnode_parent)
-		return NULL;
+	अगर (!vnode_parent)
+		वापस शून्य;
 
-	/* construct the kobject name from the device node */
-	if (of_node_is_type(vnode_parent, "vdevice")) {
-		const __be32 *prop;
+	/* स्थिरruct the kobject name from the device node */
+	अगर (of_node_is_type(vnode_parent, "vdevice")) अणु
+		स्थिर __be32 *prop;
 		
-		prop = of_get_property(vnode, "reg", NULL);
-		if (!prop)
-			goto out;
-		snprintf(kobj_name, sizeof(kobj_name), "%x",
-			 (uint32_t)of_read_number(prop, 1));
-	} else if (of_node_is_type(vnode_parent, "ibm,platform-facilities"))
-		snprintf(kobj_name, sizeof(kobj_name), "%pOFn", vnode);
-	else
-		goto out;
+		prop = of_get_property(vnode, "reg", शून्य);
+		अगर (!prop)
+			जाओ out;
+		snम_लिखो(kobj_name, माप(kobj_name), "%x",
+			 (uपूर्णांक32_t)of_पढ़ो_number(prop, 1));
+	पूर्ण अन्यथा अगर (of_node_is_type(vnode_parent, "ibm,platform-facilities"))
+		snम_लिखो(kobj_name, माप(kobj_name), "%pOFn", vnode);
+	अन्यथा
+		जाओ out;
 
 	of_node_put(vnode_parent);
-	return vio_find_name(kobj_name);
+	वापस vio_find_name(kobj_name);
 out:
 	of_node_put(vnode_parent);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(vio_find_node);
 
-int vio_enable_interrupts(struct vio_dev *dev)
-{
-	int rc = h_vio_signal(dev->unit_address, VIO_IRQ_ENABLE);
-	if (rc != H_SUCCESS)
-		printk(KERN_ERR "vio: Error 0x%x enabling interrupts\n", rc);
-	return rc;
-}
-EXPORT_SYMBOL(vio_enable_interrupts);
+पूर्णांक vio_enable_पूर्णांकerrupts(काष्ठा vio_dev *dev)
+अणु
+	पूर्णांक rc = h_vio_संकेत(dev->unit_address, VIO_IRQ_ENABLE);
+	अगर (rc != H_SUCCESS)
+		prपूर्णांकk(KERN_ERR "vio: Error 0x%x enabling interrupts\n", rc);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL(vio_enable_पूर्णांकerrupts);
 
-int vio_disable_interrupts(struct vio_dev *dev)
-{
-	int rc = h_vio_signal(dev->unit_address, VIO_IRQ_DISABLE);
-	if (rc != H_SUCCESS)
-		printk(KERN_ERR "vio: Error 0x%x disabling interrupts\n", rc);
-	return rc;
-}
-EXPORT_SYMBOL(vio_disable_interrupts);
+पूर्णांक vio_disable_पूर्णांकerrupts(काष्ठा vio_dev *dev)
+अणु
+	पूर्णांक rc = h_vio_संकेत(dev->unit_address, VIO_IRQ_DISABLE);
+	अगर (rc != H_SUCCESS)
+		prपूर्णांकk(KERN_ERR "vio: Error 0x%x disabling interrupts\n", rc);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL(vio_disable_पूर्णांकerrupts);
 
-static int __init vio_init(void)
-{
+अटल पूर्णांक __init vio_init(व्योम)
+अणु
 	dma_debug_add_bus(&vio_bus_type);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 machine_fs_initcall(pseries, vio_init);

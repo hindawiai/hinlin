@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <perf/threadmap.h>
-#include <stdlib.h>
-#include <linux/refcount.h>
-#include <internal/threadmap.h>
-#include <string.h>
-#include <asm/bug.h>
-#include <stdio.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <perf/thपढ़ोmap.h>
+#समावेश <मानककोष.स>
+#समावेश <linux/refcount.h>
+#समावेश <पूर्णांकernal/thपढ़ोmap.h>
+#समावेश <माला.स>
+#समावेश <यंत्र/bug.h>
+#समावेश <मानकपन.स>
 
-static void perf_thread_map__reset(struct perf_thread_map *map, int start, int nr)
-{
-	size_t size = (nr - start) * sizeof(map->map[0]);
+अटल व्योम perf_thपढ़ो_map__reset(काष्ठा perf_thपढ़ो_map *map, पूर्णांक start, पूर्णांक nr)
+अणु
+	माप_प्रकार size = (nr - start) * माप(map->map[0]);
 
-	memset(&map->map[start], 0, size);
-	map->err_thread = -1;
-}
+	स_रखो(&map->map[start], 0, size);
+	map->err_thपढ़ो = -1;
+पूर्ण
 
-struct perf_thread_map *perf_thread_map__realloc(struct perf_thread_map *map, int nr)
-{
-	size_t size = sizeof(*map) + sizeof(map->map[0]) * nr;
-	int start = map ? map->nr : 0;
+काष्ठा perf_thपढ़ो_map *perf_thपढ़ो_map__पुनः_स्मृति(काष्ठा perf_thपढ़ो_map *map, पूर्णांक nr)
+अणु
+	माप_प्रकार size = माप(*map) + माप(map->map[0]) * nr;
+	पूर्णांक start = map ? map->nr : 0;
 
-	map = realloc(map, size);
+	map = पुनः_स्मृति(map, size);
 	/*
-	 * We only realloc to add more items, let's reset new items.
+	 * We only पुनः_स्मृति to add more items, let's reset new items.
 	 */
-	if (map)
-		perf_thread_map__reset(map, start, nr);
+	अगर (map)
+		perf_thपढ़ो_map__reset(map, start, nr);
 
-	return map;
-}
+	वापस map;
+पूर्ण
 
-#define thread_map__alloc(__nr) perf_thread_map__realloc(NULL, __nr)
+#घोषणा thपढ़ो_map__alloc(__nr) perf_thपढ़ो_map__पुनः_स्मृति(शून्य, __nr)
 
-void perf_thread_map__set_pid(struct perf_thread_map *map, int thread, pid_t pid)
-{
-	map->map[thread].pid = pid;
-}
+व्योम perf_thपढ़ो_map__set_pid(काष्ठा perf_thपढ़ो_map *map, पूर्णांक thपढ़ो, pid_t pid)
+अणु
+	map->map[thपढ़ो].pid = pid;
+पूर्ण
 
-char *perf_thread_map__comm(struct perf_thread_map *map, int thread)
-{
-	return map->map[thread].comm;
-}
+अक्षर *perf_thपढ़ो_map__comm(काष्ठा perf_thपढ़ो_map *map, पूर्णांक thपढ़ो)
+अणु
+	वापस map->map[thपढ़ो].comm;
+पूर्ण
 
-struct perf_thread_map *perf_thread_map__new_dummy(void)
-{
-	struct perf_thread_map *threads = thread_map__alloc(1);
+काष्ठा perf_thपढ़ो_map *perf_thपढ़ो_map__new_dummy(व्योम)
+अणु
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs = thपढ़ो_map__alloc(1);
 
-	if (threads != NULL) {
-		perf_thread_map__set_pid(threads, 0, -1);
-		threads->nr = 1;
-		refcount_set(&threads->refcnt, 1);
-	}
-	return threads;
-}
+	अगर (thपढ़ोs != शून्य) अणु
+		perf_thपढ़ो_map__set_pid(thपढ़ोs, 0, -1);
+		thपढ़ोs->nr = 1;
+		refcount_set(&thपढ़ोs->refcnt, 1);
+	पूर्ण
+	वापस thपढ़ोs;
+पूर्ण
 
-static void perf_thread_map__delete(struct perf_thread_map *threads)
-{
-	if (threads) {
-		int i;
+अटल व्योम perf_thपढ़ो_map__delete(काष्ठा perf_thपढ़ो_map *thपढ़ोs)
+अणु
+	अगर (thपढ़ोs) अणु
+		पूर्णांक i;
 
-		WARN_ONCE(refcount_read(&threads->refcnt) != 0,
+		WARN_ONCE(refcount_पढ़ो(&thपढ़ोs->refcnt) != 0,
 			  "thread map refcnt unbalanced\n");
-		for (i = 0; i < threads->nr; i++)
-			free(perf_thread_map__comm(threads, i));
-		free(threads);
-	}
-}
+		क्रम (i = 0; i < thपढ़ोs->nr; i++)
+			मुक्त(perf_thपढ़ो_map__comm(thपढ़ोs, i));
+		मुक्त(thपढ़ोs);
+	पूर्ण
+पूर्ण
 
-struct perf_thread_map *perf_thread_map__get(struct perf_thread_map *map)
-{
-	if (map)
+काष्ठा perf_thपढ़ो_map *perf_thपढ़ो_map__get(काष्ठा perf_thपढ़ो_map *map)
+अणु
+	अगर (map)
 		refcount_inc(&map->refcnt);
-	return map;
-}
+	वापस map;
+पूर्ण
 
-void perf_thread_map__put(struct perf_thread_map *map)
-{
-	if (map && refcount_dec_and_test(&map->refcnt))
-		perf_thread_map__delete(map);
-}
+व्योम perf_thपढ़ो_map__put(काष्ठा perf_thपढ़ो_map *map)
+अणु
+	अगर (map && refcount_dec_and_test(&map->refcnt))
+		perf_thपढ़ो_map__delete(map);
+पूर्ण
 
-int perf_thread_map__nr(struct perf_thread_map *threads)
-{
-	return threads ? threads->nr : 1;
-}
+पूर्णांक perf_thपढ़ो_map__nr(काष्ठा perf_thपढ़ो_map *thपढ़ोs)
+अणु
+	वापस thपढ़ोs ? thपढ़ोs->nr : 1;
+पूर्ण
 
-pid_t perf_thread_map__pid(struct perf_thread_map *map, int thread)
-{
-	return map->map[thread].pid;
-}
+pid_t perf_thपढ़ो_map__pid(काष्ठा perf_thपढ़ो_map *map, पूर्णांक thपढ़ो)
+अणु
+	वापस map->map[thपढ़ो].pid;
+पूर्ण

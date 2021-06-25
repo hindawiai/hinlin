@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2004
  */
-#ifndef _H_JFS_TYPES
-#define	_H_JFS_TYPES
+#अगर_अघोषित _H_JFS_TYPES
+#घोषणा	_H_JFS_TYPES
 
 /*
  *	jfs_types.h:
@@ -14,8 +15,8 @@
  * of JFS include list in all JFS .c file.
  */
 
-#include <linux/types.h>
-#include <linux/nls.h>
+#समावेश <linux/types.h>
+#समावेश <linux/nls.h>
 
 /*
  * transaction and lock id's
@@ -23,112 +24,112 @@
  * Don't change these without carefully considering the impact on the
  * size and alignment of all of the linelock variants
  */
-typedef u16 tid_t;
-typedef u16 lid_t;
+प्रकार u16 tid_t;
+प्रकार u16 lid_t;
 
 /*
- * Almost identical to Linux's timespec, but not quite
+ * Almost identical to Linux's बारpec, but not quite
  */
-struct timestruc_t {
+काष्ठा बारtruc_t अणु
 	__le32 tv_sec;
 	__le32 tv_nsec;
-};
+पूर्ण;
 
 /*
  *	handy
  */
 
-#define LEFTMOSTONE	0x80000000
-#define	HIGHORDER	0x80000000u	/* high order bit on	*/
-#define	ONES		0xffffffffu	/* all bit on		*/
+#घोषणा LEFTMOSTONE	0x80000000
+#घोषणा	HIGHORDER	0x80000000u	/* high order bit on	*/
+#घोषणा	ONES		0xffffffffu	/* all bit on		*/
 
 /*
  *	physical xd (pxd)
  *
- *	The leftmost 24 bits of len_addr are the extent length.
- *	The rightmost 8 bits of len_addr are the most signficant bits of
+ *	The lefपंचांगost 24 bits of len_addr are the extent length.
+ *	The righपंचांगost 8 bits of len_addr are the most signficant bits of
  *	the extent address
  */
-typedef struct {
+प्रकार काष्ठा अणु
 	__le32 len_addr;
 	__le32 addr2;
-} pxd_t;
+पूर्ण pxd_t;
 
-/* xd_t field construction */
+/* xd_t field स्थिरruction */
 
-static inline void PXDlength(pxd_t *pxd, __u32 len)
-{
+अटल अंतरभूत व्योम PXDlength(pxd_t *pxd, __u32 len)
+अणु
 	pxd->len_addr = (pxd->len_addr & cpu_to_le32(~0xffffff)) |
 			cpu_to_le32(len & 0xffffff);
-}
+पूर्ण
 
-static inline void PXDaddress(pxd_t *pxd, __u64 addr)
-{
+अटल अंतरभूत व्योम PXDaddress(pxd_t *pxd, __u64 addr)
+अणु
 	pxd->len_addr = (pxd->len_addr & cpu_to_le32(0xffffff)) |
 			cpu_to_le32((addr >> 32)<<24);
 	pxd->addr2 = cpu_to_le32(addr & 0xffffffff);
-}
+पूर्ण
 
 /* xd_t field extraction */
-static inline __u32 lengthPXD(pxd_t *pxd)
-{
-	return le32_to_cpu((pxd)->len_addr) & 0xffffff;
-}
+अटल अंतरभूत __u32 lengthPXD(pxd_t *pxd)
+अणु
+	वापस le32_to_cpu((pxd)->len_addr) & 0xffffff;
+पूर्ण
 
-static inline __u64 addressPXD(pxd_t *pxd)
-{
+अटल अंतरभूत __u64 addressPXD(pxd_t *pxd)
+अणु
 	__u64 n = le32_to_cpu(pxd->len_addr) & ~0xffffff;
-	return (n << 8) + le32_to_cpu(pxd->addr2);
-}
+	वापस (n << 8) + le32_to_cpu(pxd->addr2);
+पूर्ण
 
-#define MAXTREEHEIGHT 8
+#घोषणा MAXTREEHEIGHT 8
 /* pxd list */
-struct pxdlist {
+काष्ठा pxdlist अणु
 	s16 maxnpxd;
 	s16 npxd;
 	pxd_t pxd[MAXTREEHEIGHT];
-};
+पूर्ण;
 
 
 /*
  *	data extent descriptor (dxd)
  */
-typedef struct {
+प्रकार काष्ठा अणु
 	__u8 flag;	/* 1: flags */
 	__u8 rsrvd[3];
 	__le32 size;		/* 4: size in byte */
 	pxd_t loc;		/* 8: address and length in unit of fsblksize */
-} dxd_t;			/* - 16 - */
+पूर्ण dxd_t;			/* - 16 - */
 
 /* dxd_t flags */
-#define	DXD_INDEX	0x80	/* B+-tree index */
-#define	DXD_INLINE	0x40	/* in-line data extent */
-#define	DXD_EXTENT	0x20	/* out-of-line single extent */
-#define	DXD_FILE	0x10	/* out-of-line file (inode) */
-#define DXD_CORRUPT	0x08	/* Inconsistency detected */
+#घोषणा	DXD_INDEX	0x80	/* B+-tree index */
+#घोषणा	DXD_INLINE	0x40	/* in-line data extent */
+#घोषणा	DXD_EXTENT	0x20	/* out-of-line single extent */
+#घोषणा	DXD_खाता	0x10	/* out-of-line file (inode) */
+#घोषणा DXD_CORRUPT	0x08	/* Inconsistency detected */
 
-/* dxd_t field construction
+/* dxd_t field स्थिरruction
  */
-#define	DXDlength(dxd, len)	PXDlength(&(dxd)->loc, len)
-#define	DXDaddress(dxd, addr)	PXDaddress(&(dxd)->loc, addr)
-#define	lengthDXD(dxd)	lengthPXD(&(dxd)->loc)
-#define	addressDXD(dxd)	addressPXD(&(dxd)->loc)
-#define DXDsize(dxd, size32) ((dxd)->size = cpu_to_le32(size32))
-#define sizeDXD(dxd)	le32_to_cpu((dxd)->size)
+#घोषणा	DXDlength(dxd, len)	PXDlength(&(dxd)->loc, len)
+#घोषणा	DXDaddress(dxd, addr)	PXDaddress(&(dxd)->loc, addr)
+#घोषणा	lengthDXD(dxd)	lengthPXD(&(dxd)->loc)
+#घोषणा	addressDXD(dxd)	addressPXD(&(dxd)->loc)
+#घोषणा DXDsize(dxd, size32) ((dxd)->size = cpu_to_le32(size32))
+#घोषणा sizeDXD(dxd)	le32_to_cpu((dxd)->size)
 
 /*
  *	directory entry argument
  */
-struct component_name {
-	int namlen;
-	wchar_t *name;
-};
+काष्ठा component_name अणु
+	पूर्णांक namlen;
+	ब_अक्षर_प्रकार *name;
+पूर्ण;
 
 
 /*
- *	DASD limit information - stored in directory inode
+ *	DASD limit inक्रमmation - stored in directory inode
  */
-struct dasd {
+काष्ठा dasd अणु
 	u8 thresh;		/* Alert Threshold (in percent)		*/
 	u8 delta;		/* Alert Threshold delta (in percent)	*/
 	u8 rsrvd1;
@@ -137,21 +138,21 @@ struct dasd {
 	u8 rsrvd2[3];
 	u8 used_hi;		/* DASD usage (in logical blocks)	*/
 	__le32 used_lo;		/* DASD usage (in logical blocks)	*/
-};
+पूर्ण;
 
-#define DASDLIMIT(dasdp) \
+#घोषणा DASDLIMIT(dasdp) \
 	(((u64)((dasdp)->limit_hi) << 32) + __le32_to_cpu((dasdp)->limit_lo))
-#define setDASDLIMIT(dasdp, limit)\
-{\
+#घोषणा setDASDLIMIT(dasdp, limit)\
+अणु\
 	(dasdp)->limit_hi = ((u64)limit) >> 32;\
 	(dasdp)->limit_lo = __cpu_to_le32(limit);\
-}
-#define DASDUSED(dasdp) \
+पूर्ण
+#घोषणा DASDUSED(dasdp) \
 	(((u64)((dasdp)->used_hi) << 32) + __le32_to_cpu((dasdp)->used_lo))
-#define setDASDUSED(dasdp, used)\
-{\
+#घोषणा setDASDUSED(dasdp, used)\
+अणु\
 	(dasdp)->used_hi = ((u64)used) >> 32;\
 	(dasdp)->used_lo = __cpu_to_le32(used);\
-}
+पूर्ण
 
-#endif				/* !_H_JFS_TYPES */
+#पूर्ण_अगर				/* !_H_JFS_TYPES */

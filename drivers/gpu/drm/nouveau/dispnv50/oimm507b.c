@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,34 +20,34 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "oimm.h"
+#समावेश "oimm.h"
 
-#include <nvif/cl507b.h>
+#समावेश <nvअगर/cl507b.h>
 
-static int
-oimm507b_init_(const struct nv50_wimm_func *func, struct nouveau_drm *drm,
-	       s32 oclass, struct nv50_wndw *wndw)
-{
-	struct nv50_disp_overlay_v0 args = {
+अटल पूर्णांक
+oimm507b_init_(स्थिर काष्ठा nv50_wimm_func *func, काष्ठा nouveau_drm *drm,
+	       s32 oclass, काष्ठा nv50_wndw *wndw)
+अणु
+	काष्ठा nv50_disp_overlay_v0 args = अणु
 		.head = wndw->id,
-	};
-	struct nv50_disp *disp = nv50_disp(drm->dev);
-	int ret;
+	पूर्ण;
+	काष्ठा nv50_disp *disp = nv50_disp(drm->dev);
+	पूर्णांक ret;
 
-	ret = nvif_object_ctor(&disp->disp->object, "kmsOvim", 0, oclass,
-			       &args, sizeof(args), &wndw->wimm.base.user);
-	if (ret) {
+	ret = nvअगर_object_ctor(&disp->disp->object, "kmsOvim", 0, oclass,
+			       &args, माप(args), &wndw->wimm.base.user);
+	अगर (ret) अणु
 		NV_ERROR(drm, "oimm%04x allocation failed: %d\n", oclass, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	nvif_object_map(&wndw->wimm.base.user, NULL, 0);
+	nvअगर_object_map(&wndw->wimm.base.user, शून्य, 0);
 	wndw->immd = func;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-oimm507b_init(struct nouveau_drm *drm, s32 oclass, struct nv50_wndw *wndw)
-{
-	return oimm507b_init_(&curs507a, drm, oclass, wndw);
-}
+पूर्णांक
+oimm507b_init(काष्ठा nouveau_drm *drm, s32 oclass, काष्ठा nv50_wndw *wndw)
+अणु
+	वापस oimm507b_init_(&curs507a, drm, oclass, wndw);
+पूर्ण

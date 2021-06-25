@@ -1,155 +1,156 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1994, 95, 96, 97, 98, 99, 2003 by Ralf Baechle
  * Copyright (C) 1996 by Paul M. Antoine
  * Copyright (C) 1999 Silicon Graphics
  * Copyright (C) 2000 MIPS Technologies, Inc.
  */
-#ifndef _ASM_IRQFLAGS_H
-#define _ASM_IRQFLAGS_H
+#अगर_अघोषित _ASM_IRQFLAGS_H
+#घोषणा _ASM_IRQFLAGS_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/compiler.h>
-#include <linux/stringify.h>
-#include <asm/compiler.h>
-#include <asm/hazards.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <यंत्र/compiler.h>
+#समावेश <यंत्र/hazards.h>
 
-#if defined(CONFIG_CPU_HAS_DIEI)
+#अगर defined(CONFIG_CPU_HAS_DIEI)
 
-static inline void arch_local_irq_disable(void)
-{
-	__asm__ __volatile__(
+अटल अंतरभूत व्योम arch_local_irq_disable(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__(
 	"	.set	push						\n"
 	"	.set	noat						\n"
 	"	di							\n"
-	"	" __stringify(__irq_disable_hazard) "			\n"
+	"	" __stringअगरy(__irq_disable_hazard) "			\n"
 	"	.set	pop						\n"
-	: /* no outputs */
-	: /* no inputs */
+	: /* no outमाला_दो */
+	: /* no inमाला_दो */
 	: "memory");
-}
+पूर्ण
 
-static inline unsigned long arch_local_irq_save(void)
-{
-	unsigned long flags;
+अटल अंतरभूत अचिन्हित दीर्घ arch_local_irq_save(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	asm __volatile__(
+	यंत्र __अस्थिर__(
 	"	.set	push						\n"
 	"	.set	reorder						\n"
 	"	.set	noat						\n"
-#if defined(CONFIG_CPU_LOONGSON64) || defined(CONFIG_CPU_LOONGSON32)
+#अगर defined(CONFIG_CPU_LOONGSON64) || defined(CONFIG_CPU_LOONGSON32)
 	"	mfc0	%[flags], $12					\n"
 	"	di							\n"
-#else
+#अन्यथा
 	"	di	%[flags]					\n"
-#endif
+#पूर्ण_अगर
 	"	andi	%[flags], 1					\n"
-	"	" __stringify(__irq_disable_hazard) "			\n"
+	"	" __stringअगरy(__irq_disable_hazard) "			\n"
 	"	.set	pop						\n"
 	: [flags] "=r" (flags)
-	: /* no inputs */
+	: /* no inमाला_दो */
 	: "memory");
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static inline void arch_local_irq_restore(unsigned long flags)
-{
-	unsigned long __tmp1;
+अटल अंतरभूत व्योम arch_local_irq_restore(अचिन्हित दीर्घ flags)
+अणु
+	अचिन्हित दीर्घ __पंचांगp1;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	.set	push						\n"
 	"	.set	noreorder					\n"
 	"	.set	noat						\n"
-#if defined(CONFIG_IRQ_MIPS_CPU)
+#अगर defined(CONFIG_IRQ_MIPS_CPU)
 	/*
-	 * Slow, but doesn't suffer from a relatively unlikely race
+	 * Slow, but करोesn't suffer from a relatively unlikely race
 	 * condition we're having since days 1.
 	 */
 	"	beqz	%[flags], 1f					\n"
 	"	di							\n"
 	"	ei							\n"
 	"1:								\n"
-#else
+#अन्यथा
 	/*
-	 * Fast, dangerous.  Life is fun, life is good.
+	 * Fast, dangerous.  Lअगरe is fun, lअगरe is good.
 	 */
 	"	mfc0	$1, $12						\n"
 	"	ins	$1, %[flags], 0, 1				\n"
 	"	mtc0	$1, $12						\n"
-#endif
-	"	" __stringify(__irq_disable_hazard) "			\n"
+#पूर्ण_अगर
+	"	" __stringअगरy(__irq_disable_hazard) "			\n"
 	"	.set	pop						\n"
-	: [flags] "=r" (__tmp1)
+	: [flags] "=r" (__पंचांगp1)
 	: "0" (flags)
 	: "memory");
-}
+पूर्ण
 
-#else
-/* Functions that require preempt_{dis,en}able() are in mips-atomic.c */
-void arch_local_irq_disable(void);
-unsigned long arch_local_irq_save(void);
-void arch_local_irq_restore(unsigned long flags);
-#endif /* CONFIG_CPU_HAS_DIEI */
+#अन्यथा
+/* Functions that require preempt_अणुdis,enपूर्णable() are in mips-atomic.c */
+व्योम arch_local_irq_disable(व्योम);
+अचिन्हित दीर्घ arch_local_irq_save(व्योम);
+व्योम arch_local_irq_restore(अचिन्हित दीर्घ flags);
+#पूर्ण_अगर /* CONFIG_CPU_HAS_DIEI */
 
-static inline void arch_local_irq_enable(void)
-{
-	__asm__ __volatile__(
+अटल अंतरभूत व्योम arch_local_irq_enable(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__(
 	"	.set	push						\n"
 	"	.set	reorder						\n"
 	"	.set	noat						\n"
-#if defined(CONFIG_CPU_HAS_DIEI)
+#अगर defined(CONFIG_CPU_HAS_DIEI)
 	"	ei							\n"
-#else
+#अन्यथा
 	"	mfc0	$1,$12						\n"
 	"	ori	$1,0x1f						\n"
 	"	xori	$1,0x1e						\n"
 	"	mtc0	$1,$12						\n"
-#endif
-	"	" __stringify(__irq_enable_hazard) "			\n"
+#पूर्ण_अगर
+	"	" __stringअगरy(__irq_enable_hazard) "			\n"
 	"	.set	pop						\n"
-	: /* no outputs */
-	: /* no inputs */
+	: /* no outमाला_दो */
+	: /* no inमाला_दो */
 	: "memory");
-}
+पूर्ण
 
-static inline unsigned long arch_local_save_flags(void)
-{
-	unsigned long flags;
+अटल अंतरभूत अचिन्हित दीर्घ arch_local_save_flags(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	asm __volatile__(
+	यंत्र __अस्थिर__(
 	"	.set	push						\n"
 	"	.set	reorder						\n"
 	"	mfc0	%[flags], $12					\n"
 	"	.set	pop						\n"
 	: [flags] "=r" (flags));
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
 
-static inline int arch_irqs_disabled_flags(unsigned long flags)
-{
-	return !(flags & 1);
-}
+अटल अंतरभूत पूर्णांक arch_irqs_disabled_flags(अचिन्हित दीर्घ flags)
+अणु
+	वापस !(flags & 1);
+पूर्ण
 
-static inline int arch_irqs_disabled(void)
-{
-	return arch_irqs_disabled_flags(arch_local_save_flags());
-}
+अटल अंतरभूत पूर्णांक arch_irqs_disabled(व्योम)
+अणु
+	वापस arch_irqs_disabled_flags(arch_local_save_flags());
+पूर्ण
 
-#endif /* #ifndef __ASSEMBLY__ */
+#पूर्ण_अगर /* #अगर_अघोषित __ASSEMBLY__ */
 
 /*
  * Do the CPU's IRQ-state tracing from assembly code.
  */
-#ifdef CONFIG_TRACE_IRQFLAGS
-/* Reload some registers clobbered by trace_hardirqs_on */
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_TRACE_IRQFLAGS
+/* Reload some रेजिस्टरs clobbered by trace_hardirqs_on */
+#अगर_घोषित CONFIG_64BIT
 # define TRACE_IRQS_RELOAD_REGS						\
 	LONG_L	$11, PT_R11(sp);					\
 	LONG_L	$10, PT_R10(sp);					\
@@ -160,14 +161,14 @@ static inline int arch_irqs_disabled(void)
 	LONG_L	$5, PT_R5(sp);						\
 	LONG_L	$4, PT_R4(sp);						\
 	LONG_L	$2, PT_R2(sp)
-#else
+#अन्यथा
 # define TRACE_IRQS_RELOAD_REGS						\
 	LONG_L	$7, PT_R7(sp);						\
 	LONG_L	$6, PT_R6(sp);						\
 	LONG_L	$5, PT_R5(sp);						\
 	LONG_L	$4, PT_R4(sp);						\
 	LONG_L	$2, PT_R2(sp)
-#endif
+#पूर्ण_अगर
 # define TRACE_IRQS_ON							\
 	CLI;	/* make sure trace_hardirqs_on() is called in kernel level */ \
 	jal	trace_hardirqs_on
@@ -176,10 +177,10 @@ static inline int arch_irqs_disabled(void)
 	TRACE_IRQS_RELOAD_REGS
 # define TRACE_IRQS_OFF							\
 	jal	trace_hardirqs_off
-#else
+#अन्यथा
 # define TRACE_IRQS_ON
 # define TRACE_IRQS_ON_RELOAD
 # define TRACE_IRQS_OFF
-#endif
+#पूर्ण_अगर
 
-#endif /* _ASM_IRQFLAGS_H */
+#पूर्ण_अगर /* _ASM_IRQFLAGS_H */

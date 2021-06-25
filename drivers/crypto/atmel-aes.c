@@ -1,531 +1,532 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cryptographic API.
  *
- * Support for ATMEL AES HW acceleration.
+ * Support क्रम ATMEL AES HW acceleration.
  *
- * Copyright (c) 2012 Eukréa Electromatique - ATMEL
+ * Copyright (c) 2012 Eukrथऊa Electromatique - ATMEL
  * Author: Nicolas Royer <nicolas@eukrea.com>
  *
  * Some ideas are from omap-aes.c driver.
  */
 
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/hw_random.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/hw_अक्रमom.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/device.h>
-#include <linux/dmaengine.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/scatterlist.h>
-#include <linux/dma-mapping.h>
-#include <linux/of_device.h>
-#include <linux/delay.h>
-#include <linux/crypto.h>
-#include <crypto/scatterwalk.h>
-#include <crypto/algapi.h>
-#include <crypto/aes.h>
-#include <crypto/gcm.h>
-#include <crypto/xts.h>
-#include <crypto/internal/aead.h>
-#include <crypto/internal/skcipher.h>
-#include "atmel-aes-regs.h"
-#include "atmel-authenc.h"
+#समावेश <linux/device.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/crypto.h>
+#समावेश <crypto/scatterwalk.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/aes.h>
+#समावेश <crypto/gcm.h>
+#समावेश <crypto/xts.h>
+#समावेश <crypto/पूर्णांकernal/aead.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश "atmel-aes-regs.h"
+#समावेश "atmel-authenc.h"
 
-#define ATMEL_AES_PRIORITY	300
+#घोषणा ATMEL_AES_PRIORITY	300
 
-#define ATMEL_AES_BUFFER_ORDER	2
-#define ATMEL_AES_BUFFER_SIZE	(PAGE_SIZE << ATMEL_AES_BUFFER_ORDER)
+#घोषणा ATMEL_AES_BUFFER_ORDER	2
+#घोषणा ATMEL_AES_BUFFER_SIZE	(PAGE_SIZE << ATMEL_AES_BUFFER_ORDER)
 
-#define CFB8_BLOCK_SIZE		1
-#define CFB16_BLOCK_SIZE	2
-#define CFB32_BLOCK_SIZE	4
-#define CFB64_BLOCK_SIZE	8
+#घोषणा CFB8_BLOCK_SIZE		1
+#घोषणा CFB16_BLOCK_SIZE	2
+#घोषणा CFB32_BLOCK_SIZE	4
+#घोषणा CFB64_BLOCK_SIZE	8
 
-#define SIZE_IN_WORDS(x)	((x) >> 2)
+#घोषणा SIZE_IN_WORDS(x)	((x) >> 2)
 
 /* AES flags */
-/* Reserve bits [18:16] [14:12] [1:0] for mode (same as for AES_MR) */
-#define AES_FLAGS_ENCRYPT	AES_MR_CYPHER_ENC
-#define AES_FLAGS_GTAGEN	AES_MR_GTAGEN
-#define AES_FLAGS_OPMODE_MASK	(AES_MR_OPMOD_MASK | AES_MR_CFBS_MASK)
-#define AES_FLAGS_ECB		AES_MR_OPMOD_ECB
-#define AES_FLAGS_CBC		AES_MR_OPMOD_CBC
-#define AES_FLAGS_OFB		AES_MR_OPMOD_OFB
-#define AES_FLAGS_CFB128	(AES_MR_OPMOD_CFB | AES_MR_CFBS_128b)
-#define AES_FLAGS_CFB64		(AES_MR_OPMOD_CFB | AES_MR_CFBS_64b)
-#define AES_FLAGS_CFB32		(AES_MR_OPMOD_CFB | AES_MR_CFBS_32b)
-#define AES_FLAGS_CFB16		(AES_MR_OPMOD_CFB | AES_MR_CFBS_16b)
-#define AES_FLAGS_CFB8		(AES_MR_OPMOD_CFB | AES_MR_CFBS_8b)
-#define AES_FLAGS_CTR		AES_MR_OPMOD_CTR
-#define AES_FLAGS_GCM		AES_MR_OPMOD_GCM
-#define AES_FLAGS_XTS		AES_MR_OPMOD_XTS
+/* Reserve bits [18:16] [14:12] [1:0] क्रम mode (same as क्रम AES_MR) */
+#घोषणा AES_FLAGS_ENCRYPT	AES_MR_CYPHER_ENC
+#घोषणा AES_FLAGS_GTAGEN	AES_MR_GTAGEN
+#घोषणा AES_FLAGS_OPMODE_MASK	(AES_MR_OPMOD_MASK | AES_MR_CFBS_MASK)
+#घोषणा AES_FLAGS_ECB		AES_MR_OPMOD_ECB
+#घोषणा AES_FLAGS_CBC		AES_MR_OPMOD_CBC
+#घोषणा AES_FLAGS_OFB		AES_MR_OPMOD_OFB
+#घोषणा AES_FLAGS_CFB128	(AES_MR_OPMOD_CFB | AES_MR_CFBS_128b)
+#घोषणा AES_FLAGS_CFB64		(AES_MR_OPMOD_CFB | AES_MR_CFBS_64b)
+#घोषणा AES_FLAGS_CFB32		(AES_MR_OPMOD_CFB | AES_MR_CFBS_32b)
+#घोषणा AES_FLAGS_CFB16		(AES_MR_OPMOD_CFB | AES_MR_CFBS_16b)
+#घोषणा AES_FLAGS_CFB8		(AES_MR_OPMOD_CFB | AES_MR_CFBS_8b)
+#घोषणा AES_FLAGS_CTR		AES_MR_OPMOD_CTR
+#घोषणा AES_FLAGS_GCM		AES_MR_OPMOD_GCM
+#घोषणा AES_FLAGS_XTS		AES_MR_OPMOD_XTS
 
-#define AES_FLAGS_MODE_MASK	(AES_FLAGS_OPMODE_MASK |	\
+#घोषणा AES_FLAGS_MODE_MASK	(AES_FLAGS_OPMODE_MASK |	\
 				 AES_FLAGS_ENCRYPT |		\
 				 AES_FLAGS_GTAGEN)
 
-#define AES_FLAGS_BUSY		BIT(3)
-#define AES_FLAGS_DUMP_REG	BIT(4)
-#define AES_FLAGS_OWN_SHA	BIT(5)
+#घोषणा AES_FLAGS_BUSY		BIT(3)
+#घोषणा AES_FLAGS_DUMP_REG	BIT(4)
+#घोषणा AES_FLAGS_OWN_SHA	BIT(5)
 
-#define AES_FLAGS_PERSISTENT	AES_FLAGS_BUSY
+#घोषणा AES_FLAGS_PERSISTENT	AES_FLAGS_BUSY
 
-#define ATMEL_AES_QUEUE_LENGTH	50
+#घोषणा ATMEL_AES_QUEUE_LENGTH	50
 
-#define ATMEL_AES_DMA_THRESHOLD		256
+#घोषणा ATMEL_AES_DMA_THRESHOLD		256
 
 
-struct atmel_aes_caps {
+काष्ठा aपंचांगel_aes_caps अणु
 	bool			has_dualbuff;
 	bool			has_cfb64;
 	bool			has_gcm;
 	bool			has_xts;
 	bool			has_authenc;
 	u32			max_burst_size;
-};
+पूर्ण;
 
-struct atmel_aes_dev;
-
-
-typedef int (*atmel_aes_fn_t)(struct atmel_aes_dev *);
+काष्ठा aपंचांगel_aes_dev;
 
 
-struct atmel_aes_base_ctx {
-	struct atmel_aes_dev	*dd;
-	atmel_aes_fn_t		start;
-	int			keylen;
-	u32			key[AES_KEYSIZE_256 / sizeof(u32)];
+प्रकार पूर्णांक (*aपंचांगel_aes_fn_t)(काष्ठा aपंचांगel_aes_dev *);
+
+
+काष्ठा aपंचांगel_aes_base_ctx अणु
+	काष्ठा aपंचांगel_aes_dev	*dd;
+	aपंचांगel_aes_fn_t		start;
+	पूर्णांक			keylen;
+	u32			key[AES_KEYSIZE_256 / माप(u32)];
 	u16			block_size;
 	bool			is_aead;
-};
+पूर्ण;
 
-struct atmel_aes_ctx {
-	struct atmel_aes_base_ctx	base;
-};
+काष्ठा aपंचांगel_aes_ctx अणु
+	काष्ठा aपंचांगel_aes_base_ctx	base;
+पूर्ण;
 
-struct atmel_aes_ctr_ctx {
-	struct atmel_aes_base_ctx	base;
+काष्ठा aपंचांगel_aes_ctr_ctx अणु
+	काष्ठा aपंचांगel_aes_base_ctx	base;
 
-	__be32			iv[AES_BLOCK_SIZE / sizeof(u32)];
-	size_t			offset;
-	struct scatterlist	src[2];
-	struct scatterlist	dst[2];
+	__be32			iv[AES_BLOCK_SIZE / माप(u32)];
+	माप_प्रकार			offset;
+	काष्ठा scatterlist	src[2];
+	काष्ठा scatterlist	dst[2];
 	u32			blocks;
-};
+पूर्ण;
 
-struct atmel_aes_gcm_ctx {
-	struct atmel_aes_base_ctx	base;
+काष्ठा aपंचांगel_aes_gcm_ctx अणु
+	काष्ठा aपंचांगel_aes_base_ctx	base;
 
-	struct scatterlist	src[2];
-	struct scatterlist	dst[2];
+	काष्ठा scatterlist	src[2];
+	काष्ठा scatterlist	dst[2];
 
-	__be32			j0[AES_BLOCK_SIZE / sizeof(u32)];
-	u32			tag[AES_BLOCK_SIZE / sizeof(u32)];
-	__be32			ghash[AES_BLOCK_SIZE / sizeof(u32)];
-	size_t			textlen;
+	__be32			j0[AES_BLOCK_SIZE / माप(u32)];
+	u32			tag[AES_BLOCK_SIZE / माप(u32)];
+	__be32			ghash[AES_BLOCK_SIZE / माप(u32)];
+	माप_प्रकार			textlen;
 
-	const __be32		*ghash_in;
+	स्थिर __be32		*ghash_in;
 	__be32			*ghash_out;
-	atmel_aes_fn_t		ghash_resume;
-};
+	aपंचांगel_aes_fn_t		ghash_resume;
+पूर्ण;
 
-struct atmel_aes_xts_ctx {
-	struct atmel_aes_base_ctx	base;
+काष्ठा aपंचांगel_aes_xts_ctx अणु
+	काष्ठा aपंचांगel_aes_base_ctx	base;
 
-	u32			key2[AES_KEYSIZE_256 / sizeof(u32)];
-};
+	u32			key2[AES_KEYSIZE_256 / माप(u32)];
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
-struct atmel_aes_authenc_ctx {
-	struct atmel_aes_base_ctx	base;
-	struct atmel_sha_authenc_ctx	*auth;
-};
-#endif
+#अगर IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
+काष्ठा aपंचांगel_aes_authenc_ctx अणु
+	काष्ठा aपंचांगel_aes_base_ctx	base;
+	काष्ठा aपंचांगel_sha_authenc_ctx	*auth;
+पूर्ण;
+#पूर्ण_अगर
 
-struct atmel_aes_reqctx {
-	unsigned long		mode;
+काष्ठा aपंचांगel_aes_reqctx अणु
+	अचिन्हित दीर्घ		mode;
 	u8			lastc[AES_BLOCK_SIZE];
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
-struct atmel_aes_authenc_reqctx {
-	struct atmel_aes_reqctx	base;
+#अगर IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
+काष्ठा aपंचांगel_aes_authenc_reqctx अणु
+	काष्ठा aपंचांगel_aes_reqctx	base;
 
-	struct scatterlist	src[2];
-	struct scatterlist	dst[2];
-	size_t			textlen;
-	u32			digest[SHA512_DIGEST_SIZE / sizeof(u32)];
+	काष्ठा scatterlist	src[2];
+	काष्ठा scatterlist	dst[2];
+	माप_प्रकार			textlen;
+	u32			digest[SHA512_DIGEST_SIZE / माप(u32)];
 
 	/* auth_req MUST be place last. */
-	struct ahash_request	auth_req;
-};
-#endif
+	काष्ठा ahash_request	auth_req;
+पूर्ण;
+#पूर्ण_अगर
 
-struct atmel_aes_dma {
-	struct dma_chan		*chan;
-	struct scatterlist	*sg;
-	int			nents;
-	unsigned int		remainder;
-	unsigned int		sg_len;
-};
+काष्ठा aपंचांगel_aes_dma अणु
+	काष्ठा dma_chan		*chan;
+	काष्ठा scatterlist	*sg;
+	पूर्णांक			nents;
+	अचिन्हित पूर्णांक		reमुख्यder;
+	अचिन्हित पूर्णांक		sg_len;
+पूर्ण;
 
-struct atmel_aes_dev {
-	struct list_head	list;
-	unsigned long		phys_base;
-	void __iomem		*io_base;
+काष्ठा aपंचांगel_aes_dev अणु
+	काष्ठा list_head	list;
+	अचिन्हित दीर्घ		phys_base;
+	व्योम __iomem		*io_base;
 
-	struct crypto_async_request	*areq;
-	struct atmel_aes_base_ctx	*ctx;
+	काष्ठा crypto_async_request	*areq;
+	काष्ठा aपंचांगel_aes_base_ctx	*ctx;
 
 	bool			is_async;
-	atmel_aes_fn_t		resume;
-	atmel_aes_fn_t		cpu_transfer_complete;
+	aपंचांगel_aes_fn_t		resume;
+	aपंचांगel_aes_fn_t		cpu_transfer_complete;
 
-	struct device		*dev;
-	struct clk		*iclk;
-	int			irq;
+	काष्ठा device		*dev;
+	काष्ठा clk		*iclk;
+	पूर्णांक			irq;
 
-	unsigned long		flags;
+	अचिन्हित दीर्घ		flags;
 
 	spinlock_t		lock;
-	struct crypto_queue	queue;
+	काष्ठा crypto_queue	queue;
 
-	struct tasklet_struct	done_task;
-	struct tasklet_struct	queue_task;
+	काष्ठा tasklet_काष्ठा	करोne_task;
+	काष्ठा tasklet_काष्ठा	queue_task;
 
-	size_t			total;
-	size_t			datalen;
+	माप_प्रकार			total;
+	माप_प्रकार			datalen;
 	u32			*data;
 
-	struct atmel_aes_dma	src;
-	struct atmel_aes_dma	dst;
+	काष्ठा aपंचांगel_aes_dma	src;
+	काष्ठा aपंचांगel_aes_dma	dst;
 
-	size_t			buflen;
-	void			*buf;
-	struct scatterlist	aligned_sg;
-	struct scatterlist	*real_dst;
+	माप_प्रकार			buflen;
+	व्योम			*buf;
+	काष्ठा scatterlist	aligned_sg;
+	काष्ठा scatterlist	*real_dst;
 
-	struct atmel_aes_caps	caps;
+	काष्ठा aपंचांगel_aes_caps	caps;
 
 	u32			hw_version;
-};
+पूर्ण;
 
-struct atmel_aes_drv {
-	struct list_head	dev_list;
+काष्ठा aपंचांगel_aes_drv अणु
+	काष्ठा list_head	dev_list;
 	spinlock_t		lock;
-};
+पूर्ण;
 
-static struct atmel_aes_drv atmel_aes = {
-	.dev_list = LIST_HEAD_INIT(atmel_aes.dev_list),
-	.lock = __SPIN_LOCK_UNLOCKED(atmel_aes.lock),
-};
+अटल काष्ठा aपंचांगel_aes_drv aपंचांगel_aes = अणु
+	.dev_list = LIST_HEAD_INIT(aपंचांगel_aes.dev_list),
+	.lock = __SPIN_LOCK_UNLOCKED(aपंचांगel_aes.lock),
+पूर्ण;
 
-#ifdef VERBOSE_DEBUG
-static const char *atmel_aes_reg_name(u32 offset, char *tmp, size_t sz)
-{
-	switch (offset) {
-	case AES_CR:
-		return "CR";
+#अगर_घोषित VERBOSE_DEBUG
+अटल स्थिर अक्षर *aपंचांगel_aes_reg_name(u32 offset, अक्षर *पंचांगp, माप_प्रकार sz)
+अणु
+	चयन (offset) अणु
+	हाल AES_CR:
+		वापस "CR";
 
-	case AES_MR:
-		return "MR";
+	हाल AES_MR:
+		वापस "MR";
 
-	case AES_ISR:
-		return "ISR";
+	हाल AES_ISR:
+		वापस "ISR";
 
-	case AES_IMR:
-		return "IMR";
+	हाल AES_IMR:
+		वापस "IMR";
 
-	case AES_IER:
-		return "IER";
+	हाल AES_IER:
+		वापस "IER";
 
-	case AES_IDR:
-		return "IDR";
+	हाल AES_IDR:
+		वापस "IDR";
 
-	case AES_KEYWR(0):
-	case AES_KEYWR(1):
-	case AES_KEYWR(2):
-	case AES_KEYWR(3):
-	case AES_KEYWR(4):
-	case AES_KEYWR(5):
-	case AES_KEYWR(6):
-	case AES_KEYWR(7):
-		snprintf(tmp, sz, "KEYWR[%u]", (offset - AES_KEYWR(0)) >> 2);
-		break;
+	हाल AES_KEYWR(0):
+	हाल AES_KEYWR(1):
+	हाल AES_KEYWR(2):
+	हाल AES_KEYWR(3):
+	हाल AES_KEYWR(4):
+	हाल AES_KEYWR(5):
+	हाल AES_KEYWR(6):
+	हाल AES_KEYWR(7):
+		snम_लिखो(पंचांगp, sz, "KEYWR[%u]", (offset - AES_KEYWR(0)) >> 2);
+		अवरोध;
 
-	case AES_IDATAR(0):
-	case AES_IDATAR(1):
-	case AES_IDATAR(2):
-	case AES_IDATAR(3):
-		snprintf(tmp, sz, "IDATAR[%u]", (offset - AES_IDATAR(0)) >> 2);
-		break;
+	हाल AES_IDATAR(0):
+	हाल AES_IDATAR(1):
+	हाल AES_IDATAR(2):
+	हाल AES_IDATAR(3):
+		snम_लिखो(पंचांगp, sz, "IDATAR[%u]", (offset - AES_IDATAR(0)) >> 2);
+		अवरोध;
 
-	case AES_ODATAR(0):
-	case AES_ODATAR(1):
-	case AES_ODATAR(2):
-	case AES_ODATAR(3):
-		snprintf(tmp, sz, "ODATAR[%u]", (offset - AES_ODATAR(0)) >> 2);
-		break;
+	हाल AES_ODATAR(0):
+	हाल AES_ODATAR(1):
+	हाल AES_ODATAR(2):
+	हाल AES_ODATAR(3):
+		snम_लिखो(पंचांगp, sz, "ODATAR[%u]", (offset - AES_ODATAR(0)) >> 2);
+		अवरोध;
 
-	case AES_IVR(0):
-	case AES_IVR(1):
-	case AES_IVR(2):
-	case AES_IVR(3):
-		snprintf(tmp, sz, "IVR[%u]", (offset - AES_IVR(0)) >> 2);
-		break;
+	हाल AES_IVR(0):
+	हाल AES_IVR(1):
+	हाल AES_IVR(2):
+	हाल AES_IVR(3):
+		snम_लिखो(पंचांगp, sz, "IVR[%u]", (offset - AES_IVR(0)) >> 2);
+		अवरोध;
 
-	case AES_AADLENR:
-		return "AADLENR";
+	हाल AES_AADLENR:
+		वापस "AADLENR";
 
-	case AES_CLENR:
-		return "CLENR";
+	हाल AES_CLENR:
+		वापस "CLENR";
 
-	case AES_GHASHR(0):
-	case AES_GHASHR(1):
-	case AES_GHASHR(2):
-	case AES_GHASHR(3):
-		snprintf(tmp, sz, "GHASHR[%u]", (offset - AES_GHASHR(0)) >> 2);
-		break;
+	हाल AES_GHASHR(0):
+	हाल AES_GHASHR(1):
+	हाल AES_GHASHR(2):
+	हाल AES_GHASHR(3):
+		snम_लिखो(पंचांगp, sz, "GHASHR[%u]", (offset - AES_GHASHR(0)) >> 2);
+		अवरोध;
 
-	case AES_TAGR(0):
-	case AES_TAGR(1):
-	case AES_TAGR(2):
-	case AES_TAGR(3):
-		snprintf(tmp, sz, "TAGR[%u]", (offset - AES_TAGR(0)) >> 2);
-		break;
+	हाल AES_TAGR(0):
+	हाल AES_TAGR(1):
+	हाल AES_TAGR(2):
+	हाल AES_TAGR(3):
+		snम_लिखो(पंचांगp, sz, "TAGR[%u]", (offset - AES_TAGR(0)) >> 2);
+		अवरोध;
 
-	case AES_CTRR:
-		return "CTRR";
+	हाल AES_CTRR:
+		वापस "CTRR";
 
-	case AES_GCMHR(0):
-	case AES_GCMHR(1):
-	case AES_GCMHR(2):
-	case AES_GCMHR(3):
-		snprintf(tmp, sz, "GCMHR[%u]", (offset - AES_GCMHR(0)) >> 2);
-		break;
+	हाल AES_GCMHR(0):
+	हाल AES_GCMHR(1):
+	हाल AES_GCMHR(2):
+	हाल AES_GCMHR(3):
+		snम_लिखो(पंचांगp, sz, "GCMHR[%u]", (offset - AES_GCMHR(0)) >> 2);
+		अवरोध;
 
-	case AES_EMR:
-		return "EMR";
+	हाल AES_EMR:
+		वापस "EMR";
 
-	case AES_TWR(0):
-	case AES_TWR(1):
-	case AES_TWR(2):
-	case AES_TWR(3):
-		snprintf(tmp, sz, "TWR[%u]", (offset - AES_TWR(0)) >> 2);
-		break;
+	हाल AES_TWR(0):
+	हाल AES_TWR(1):
+	हाल AES_TWR(2):
+	हाल AES_TWR(3):
+		snम_लिखो(पंचांगp, sz, "TWR[%u]", (offset - AES_TWR(0)) >> 2);
+		अवरोध;
 
-	case AES_ALPHAR(0):
-	case AES_ALPHAR(1):
-	case AES_ALPHAR(2):
-	case AES_ALPHAR(3):
-		snprintf(tmp, sz, "ALPHAR[%u]", (offset - AES_ALPHAR(0)) >> 2);
-		break;
+	हाल AES_ALPHAR(0):
+	हाल AES_ALPHAR(1):
+	हाल AES_ALPHAR(2):
+	हाल AES_ALPHAR(3):
+		snम_लिखो(पंचांगp, sz, "ALPHAR[%u]", (offset - AES_ALPHAR(0)) >> 2);
+		अवरोध;
 
-	default:
-		snprintf(tmp, sz, "0x%02x", offset);
-		break;
-	}
+	शेष:
+		snम_लिखो(पंचांगp, sz, "0x%02x", offset);
+		अवरोध;
+	पूर्ण
 
-	return tmp;
-}
-#endif /* VERBOSE_DEBUG */
+	वापस पंचांगp;
+पूर्ण
+#पूर्ण_अगर /* VERBOSE_DEBUG */
 
 /* Shared functions */
 
-static inline u32 atmel_aes_read(struct atmel_aes_dev *dd, u32 offset)
-{
-	u32 value = readl_relaxed(dd->io_base + offset);
+अटल अंतरभूत u32 aपंचांगel_aes_पढ़ो(काष्ठा aपंचांगel_aes_dev *dd, u32 offset)
+अणु
+	u32 value = पढ़ोl_relaxed(dd->io_base + offset);
 
-#ifdef VERBOSE_DEBUG
-	if (dd->flags & AES_FLAGS_DUMP_REG) {
-		char tmp[16];
+#अगर_घोषित VERBOSE_DEBUG
+	अगर (dd->flags & AES_FLAGS_DUMP_REG) अणु
+		अक्षर पंचांगp[16];
 
 		dev_vdbg(dd->dev, "read 0x%08x from %s\n", value,
-			 atmel_aes_reg_name(offset, tmp, sizeof(tmp)));
-	}
-#endif /* VERBOSE_DEBUG */
+			 aपंचांगel_aes_reg_name(offset, पंचांगp, माप(पंचांगp)));
+	पूर्ण
+#पूर्ण_अगर /* VERBOSE_DEBUG */
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static inline void atmel_aes_write(struct atmel_aes_dev *dd,
+अटल अंतरभूत व्योम aपंचांगel_aes_ग_लिखो(काष्ठा aपंचांगel_aes_dev *dd,
 					u32 offset, u32 value)
-{
-#ifdef VERBOSE_DEBUG
-	if (dd->flags & AES_FLAGS_DUMP_REG) {
-		char tmp[16];
+अणु
+#अगर_घोषित VERBOSE_DEBUG
+	अगर (dd->flags & AES_FLAGS_DUMP_REG) अणु
+		अक्षर पंचांगp[16];
 
 		dev_vdbg(dd->dev, "write 0x%08x into %s\n", value,
-			 atmel_aes_reg_name(offset, tmp, sizeof(tmp)));
-	}
-#endif /* VERBOSE_DEBUG */
+			 aपंचांगel_aes_reg_name(offset, पंचांगp, माप(पंचांगp)));
+	पूर्ण
+#पूर्ण_अगर /* VERBOSE_DEBUG */
 
-	writel_relaxed(value, dd->io_base + offset);
-}
+	ग_लिखोl_relaxed(value, dd->io_base + offset);
+पूर्ण
 
-static void atmel_aes_read_n(struct atmel_aes_dev *dd, u32 offset,
-					u32 *value, int count)
-{
-	for (; count--; value++, offset += 4)
-		*value = atmel_aes_read(dd, offset);
-}
+अटल व्योम aपंचांगel_aes_पढ़ो_n(काष्ठा aपंचांगel_aes_dev *dd, u32 offset,
+					u32 *value, पूर्णांक count)
+अणु
+	क्रम (; count--; value++, offset += 4)
+		*value = aपंचांगel_aes_पढ़ो(dd, offset);
+पूर्ण
 
-static void atmel_aes_write_n(struct atmel_aes_dev *dd, u32 offset,
-			      const u32 *value, int count)
-{
-	for (; count--; value++, offset += 4)
-		atmel_aes_write(dd, offset, *value);
-}
+अटल व्योम aपंचांगel_aes_ग_लिखो_n(काष्ठा aपंचांगel_aes_dev *dd, u32 offset,
+			      स्थिर u32 *value, पूर्णांक count)
+अणु
+	क्रम (; count--; value++, offset += 4)
+		aपंचांगel_aes_ग_लिखो(dd, offset, *value);
+पूर्ण
 
-static inline void atmel_aes_read_block(struct atmel_aes_dev *dd, u32 offset,
-					void *value)
-{
-	atmel_aes_read_n(dd, offset, value, SIZE_IN_WORDS(AES_BLOCK_SIZE));
-}
+अटल अंतरभूत व्योम aपंचांगel_aes_पढ़ो_block(काष्ठा aपंचांगel_aes_dev *dd, u32 offset,
+					व्योम *value)
+अणु
+	aपंचांगel_aes_पढ़ो_n(dd, offset, value, SIZE_IN_WORDS(AES_BLOCK_SIZE));
+पूर्ण
 
-static inline void atmel_aes_write_block(struct atmel_aes_dev *dd, u32 offset,
-					 const void *value)
-{
-	atmel_aes_write_n(dd, offset, value, SIZE_IN_WORDS(AES_BLOCK_SIZE));
-}
+अटल अंतरभूत व्योम aपंचांगel_aes_ग_लिखो_block(काष्ठा aपंचांगel_aes_dev *dd, u32 offset,
+					 स्थिर व्योम *value)
+अणु
+	aपंचांगel_aes_ग_लिखो_n(dd, offset, value, SIZE_IN_WORDS(AES_BLOCK_SIZE));
+पूर्ण
 
-static inline int atmel_aes_wait_for_data_ready(struct atmel_aes_dev *dd,
-						atmel_aes_fn_t resume)
-{
-	u32 isr = atmel_aes_read(dd, AES_ISR);
+अटल अंतरभूत पूर्णांक aपंचांगel_aes_रुको_क्रम_data_पढ़ोy(काष्ठा aपंचांगel_aes_dev *dd,
+						aपंचांगel_aes_fn_t resume)
+अणु
+	u32 isr = aपंचांगel_aes_पढ़ो(dd, AES_ISR);
 
-	if (unlikely(isr & AES_INT_DATARDY))
-		return resume(dd);
+	अगर (unlikely(isr & AES_INT_DATARDY))
+		वापस resume(dd);
 
 	dd->resume = resume;
-	atmel_aes_write(dd, AES_IER, AES_INT_DATARDY);
-	return -EINPROGRESS;
-}
+	aपंचांगel_aes_ग_लिखो(dd, AES_IER, AES_INT_DATARDY);
+	वापस -EINPROGRESS;
+पूर्ण
 
-static inline size_t atmel_aes_padlen(size_t len, size_t block_size)
-{
+अटल अंतरभूत माप_प्रकार aपंचांगel_aes_padlen(माप_प्रकार len, माप_प्रकार block_size)
+अणु
 	len &= block_size - 1;
-	return len ? block_size - len : 0;
-}
+	वापस len ? block_size - len : 0;
+पूर्ण
 
-static struct atmel_aes_dev *atmel_aes_find_dev(struct atmel_aes_base_ctx *ctx)
-{
-	struct atmel_aes_dev *aes_dd = NULL;
-	struct atmel_aes_dev *tmp;
+अटल काष्ठा aपंचांगel_aes_dev *aपंचांगel_aes_find_dev(काष्ठा aपंचांगel_aes_base_ctx *ctx)
+अणु
+	काष्ठा aपंचांगel_aes_dev *aes_dd = शून्य;
+	काष्ठा aपंचांगel_aes_dev *पंचांगp;
 
-	spin_lock_bh(&atmel_aes.lock);
-	if (!ctx->dd) {
-		list_for_each_entry(tmp, &atmel_aes.dev_list, list) {
-			aes_dd = tmp;
-			break;
-		}
+	spin_lock_bh(&aपंचांगel_aes.lock);
+	अगर (!ctx->dd) अणु
+		list_क्रम_each_entry(पंचांगp, &aपंचांगel_aes.dev_list, list) अणु
+			aes_dd = पंचांगp;
+			अवरोध;
+		पूर्ण
 		ctx->dd = aes_dd;
-	} else {
+	पूर्ण अन्यथा अणु
 		aes_dd = ctx->dd;
-	}
+	पूर्ण
 
-	spin_unlock_bh(&atmel_aes.lock);
+	spin_unlock_bh(&aपंचांगel_aes.lock);
 
-	return aes_dd;
-}
+	वापस aes_dd;
+पूर्ण
 
-static int atmel_aes_hw_init(struct atmel_aes_dev *dd)
-{
-	int err;
+अटल पूर्णांक aपंचांगel_aes_hw_init(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	पूर्णांक err;
 
 	err = clk_enable(dd->iclk);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	atmel_aes_write(dd, AES_CR, AES_CR_SWRST);
-	atmel_aes_write(dd, AES_MR, 0xE << AES_MR_CKEY_OFFSET);
+	aपंचांगel_aes_ग_लिखो(dd, AES_CR, AES_CR_SWRST);
+	aपंचांगel_aes_ग_लिखो(dd, AES_MR, 0xE << AES_MR_CKEY_OFFSET);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline unsigned int atmel_aes_get_version(struct atmel_aes_dev *dd)
-{
-	return atmel_aes_read(dd, AES_HW_VERSION) & 0x00000fff;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक aपंचांगel_aes_get_version(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	वापस aपंचांगel_aes_पढ़ो(dd, AES_HW_VERSION) & 0x00000fff;
+पूर्ण
 
-static int atmel_aes_hw_version_init(struct atmel_aes_dev *dd)
-{
-	int err;
+अटल पूर्णांक aपंचांगel_aes_hw_version_init(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	पूर्णांक err;
 
-	err = atmel_aes_hw_init(dd);
-	if (err)
-		return err;
+	err = aपंचांगel_aes_hw_init(dd);
+	अगर (err)
+		वापस err;
 
-	dd->hw_version = atmel_aes_get_version(dd);
+	dd->hw_version = aपंचांगel_aes_get_version(dd);
 
 	dev_info(dd->dev, "version: 0x%x\n", dd->hw_version);
 
 	clk_disable(dd->iclk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void atmel_aes_set_mode(struct atmel_aes_dev *dd,
-				      const struct atmel_aes_reqctx *rctx)
-{
+अटल अंतरभूत व्योम aपंचांगel_aes_set_mode(काष्ठा aपंचांगel_aes_dev *dd,
+				      स्थिर काष्ठा aपंचांगel_aes_reqctx *rctx)
+अणु
 	/* Clear all but persistent flags and set request flags. */
 	dd->flags = (dd->flags & AES_FLAGS_PERSISTENT) | rctx->mode;
-}
+पूर्ण
 
-static inline bool atmel_aes_is_encrypt(const struct atmel_aes_dev *dd)
-{
-	return (dd->flags & AES_FLAGS_ENCRYPT);
-}
+अटल अंतरभूत bool aपंचांगel_aes_is_encrypt(स्थिर काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	वापस (dd->flags & AES_FLAGS_ENCRYPT);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
-static void atmel_aes_authenc_complete(struct atmel_aes_dev *dd, int err);
-#endif
+#अगर IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
+अटल व्योम aपंचांगel_aes_authenc_complete(काष्ठा aपंचांगel_aes_dev *dd, पूर्णांक err);
+#पूर्ण_अगर
 
-static void atmel_aes_set_iv_as_last_ciphertext_block(struct atmel_aes_dev *dd)
-{
-	struct skcipher_request *req = skcipher_request_cast(dd->areq);
-	struct atmel_aes_reqctx *rctx = skcipher_request_ctx(req);
-	struct crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
-	unsigned int ivsize = crypto_skcipher_ivsize(skcipher);
+अटल व्योम aपंचांगel_aes_set_iv_as_last_ciphertext_block(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा skcipher_request *req = skcipher_request_cast(dd->areq);
+	काष्ठा aपंचांगel_aes_reqctx *rctx = skcipher_request_ctx(req);
+	काष्ठा crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
+	अचिन्हित पूर्णांक ivsize = crypto_skcipher_ivsize(skcipher);
 
-	if (req->cryptlen < ivsize)
-		return;
+	अगर (req->cryptlen < ivsize)
+		वापस;
 
-	if (rctx->mode & AES_FLAGS_ENCRYPT) {
+	अगर (rctx->mode & AES_FLAGS_ENCRYPT) अणु
 		scatterwalk_map_and_copy(req->iv, req->dst,
 					 req->cryptlen - ivsize, ivsize, 0);
-	} else {
-		if (req->src == req->dst)
-			memcpy(req->iv, rctx->lastc, ivsize);
-		else
+	पूर्ण अन्यथा अणु
+		अगर (req->src == req->dst)
+			स_नकल(req->iv, rctx->lastc, ivsize);
+		अन्यथा
 			scatterwalk_map_and_copy(req->iv, req->src,
 						 req->cryptlen - ivsize,
 						 ivsize, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline struct atmel_aes_ctr_ctx *
-atmel_aes_ctr_ctx_cast(struct atmel_aes_base_ctx *ctx)
-{
-	return container_of(ctx, struct atmel_aes_ctr_ctx, base);
-}
+अटल अंतरभूत काष्ठा aपंचांगel_aes_ctr_ctx *
+aपंचांगel_aes_ctr_ctx_cast(काष्ठा aपंचांगel_aes_base_ctx *ctx)
+अणु
+	वापस container_of(ctx, काष्ठा aपंचांगel_aes_ctr_ctx, base);
+पूर्ण
 
-static void atmel_aes_ctr_update_req_iv(struct atmel_aes_dev *dd)
-{
-	struct atmel_aes_ctr_ctx *ctx = atmel_aes_ctr_ctx_cast(dd->ctx);
-	struct skcipher_request *req = skcipher_request_cast(dd->areq);
-	struct crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
-	unsigned int ivsize = crypto_skcipher_ivsize(skcipher);
-	int i;
+अटल व्योम aपंचांगel_aes_ctr_update_req_iv(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aपंचांगel_aes_ctr_ctx *ctx = aपंचांगel_aes_ctr_ctx_cast(dd->ctx);
+	काष्ठा skcipher_request *req = skcipher_request_cast(dd->areq);
+	काष्ठा crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
+	अचिन्हित पूर्णांक ivsize = crypto_skcipher_ivsize(skcipher);
+	पूर्णांक i;
 
 	/*
 	 * The CTR transfer works in fragments of data of maximum 1 MByte
@@ -533,125 +534,125 @@ static void atmel_aes_ctr_update_req_iv(struct atmel_aes_dev *dd)
 	 * here, ctx->blocks contains the number of blocks of the last fragment
 	 * processed, there is no need to explicit cast it to u16.
 	 */
-	for (i = 0; i < ctx->blocks; i++)
+	क्रम (i = 0; i < ctx->blocks; i++)
 		crypto_inc((u8 *)ctx->iv, AES_BLOCK_SIZE);
 
-	memcpy(req->iv, ctx->iv, ivsize);
-}
+	स_नकल(req->iv, ctx->iv, ivsize);
+पूर्ण
 
-static inline int atmel_aes_complete(struct atmel_aes_dev *dd, int err)
-{
-	struct skcipher_request *req = skcipher_request_cast(dd->areq);
-	struct atmel_aes_reqctx *rctx = skcipher_request_ctx(req);
+अटल अंतरभूत पूर्णांक aपंचांगel_aes_complete(काष्ठा aपंचांगel_aes_dev *dd, पूर्णांक err)
+अणु
+	काष्ठा skcipher_request *req = skcipher_request_cast(dd->areq);
+	काष्ठा aपंचांगel_aes_reqctx *rctx = skcipher_request_ctx(req);
 
-#if IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
-	if (dd->ctx->is_aead)
-		atmel_aes_authenc_complete(dd, err);
-#endif
+#अगर IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
+	अगर (dd->ctx->is_aead)
+		aपंचांगel_aes_authenc_complete(dd, err);
+#पूर्ण_अगर
 
 	clk_disable(dd->iclk);
 	dd->flags &= ~AES_FLAGS_BUSY;
 
-	if (!err && !dd->ctx->is_aead &&
-	    (rctx->mode & AES_FLAGS_OPMODE_MASK) != AES_FLAGS_ECB) {
-		if ((rctx->mode & AES_FLAGS_OPMODE_MASK) != AES_FLAGS_CTR)
-			atmel_aes_set_iv_as_last_ciphertext_block(dd);
-		else
-			atmel_aes_ctr_update_req_iv(dd);
-	}
+	अगर (!err && !dd->ctx->is_aead &&
+	    (rctx->mode & AES_FLAGS_OPMODE_MASK) != AES_FLAGS_ECB) अणु
+		अगर ((rctx->mode & AES_FLAGS_OPMODE_MASK) != AES_FLAGS_CTR)
+			aपंचांगel_aes_set_iv_as_last_ciphertext_block(dd);
+		अन्यथा
+			aपंचांगel_aes_ctr_update_req_iv(dd);
+	पूर्ण
 
-	if (dd->is_async)
+	अगर (dd->is_async)
 		dd->areq->complete(dd->areq, err);
 
 	tasklet_schedule(&dd->queue_task);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void atmel_aes_write_ctrl_key(struct atmel_aes_dev *dd, bool use_dma,
-				     const __be32 *iv, const u32 *key, int keylen)
-{
+अटल व्योम aपंचांगel_aes_ग_लिखो_ctrl_key(काष्ठा aपंचांगel_aes_dev *dd, bool use_dma,
+				     स्थिर __be32 *iv, स्थिर u32 *key, पूर्णांक keylen)
+अणु
 	u32 valmr = 0;
 
-	/* MR register must be set before IV registers */
-	if (keylen == AES_KEYSIZE_128)
+	/* MR रेजिस्टर must be set beक्रमe IV रेजिस्टरs */
+	अगर (keylen == AES_KEYSIZE_128)
 		valmr |= AES_MR_KEYSIZE_128;
-	else if (keylen == AES_KEYSIZE_192)
+	अन्यथा अगर (keylen == AES_KEYSIZE_192)
 		valmr |= AES_MR_KEYSIZE_192;
-	else
+	अन्यथा
 		valmr |= AES_MR_KEYSIZE_256;
 
 	valmr |= dd->flags & AES_FLAGS_MODE_MASK;
 
-	if (use_dma) {
+	अगर (use_dma) अणु
 		valmr |= AES_MR_SMOD_IDATAR0;
-		if (dd->caps.has_dualbuff)
+		अगर (dd->caps.has_dualbuff)
 			valmr |= AES_MR_DUALBUFF;
-	} else {
+	पूर्ण अन्यथा अणु
 		valmr |= AES_MR_SMOD_AUTO;
-	}
+	पूर्ण
 
-	atmel_aes_write(dd, AES_MR, valmr);
+	aपंचांगel_aes_ग_लिखो(dd, AES_MR, valmr);
 
-	atmel_aes_write_n(dd, AES_KEYWR(0), key, SIZE_IN_WORDS(keylen));
+	aपंचांगel_aes_ग_लिखो_n(dd, AES_KEYWR(0), key, SIZE_IN_WORDS(keylen));
 
-	if (iv && (valmr & AES_MR_OPMOD_MASK) != AES_MR_OPMOD_ECB)
-		atmel_aes_write_block(dd, AES_IVR(0), iv);
-}
+	अगर (iv && (valmr & AES_MR_OPMOD_MASK) != AES_MR_OPMOD_ECB)
+		aपंचांगel_aes_ग_लिखो_block(dd, AES_IVR(0), iv);
+पूर्ण
 
-static inline void atmel_aes_write_ctrl(struct atmel_aes_dev *dd, bool use_dma,
-					const __be32 *iv)
+अटल अंतरभूत व्योम aपंचांगel_aes_ग_लिखो_ctrl(काष्ठा aपंचांगel_aes_dev *dd, bool use_dma,
+					स्थिर __be32 *iv)
 
-{
-	atmel_aes_write_ctrl_key(dd, use_dma, iv,
+अणु
+	aपंचांगel_aes_ग_लिखो_ctrl_key(dd, use_dma, iv,
 				 dd->ctx->key, dd->ctx->keylen);
-}
+पूर्ण
 
 /* CPU transfer */
 
-static int atmel_aes_cpu_transfer(struct atmel_aes_dev *dd)
-{
-	int err = 0;
+अटल पूर्णांक aपंचांगel_aes_cpu_transfer(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	पूर्णांक err = 0;
 	u32 isr;
 
-	for (;;) {
-		atmel_aes_read_block(dd, AES_ODATAR(0), dd->data);
+	क्रम (;;) अणु
+		aपंचांगel_aes_पढ़ो_block(dd, AES_ODATAR(0), dd->data);
 		dd->data += 4;
 		dd->datalen -= AES_BLOCK_SIZE;
 
-		if (dd->datalen < AES_BLOCK_SIZE)
-			break;
+		अगर (dd->datalen < AES_BLOCK_SIZE)
+			अवरोध;
 
-		atmel_aes_write_block(dd, AES_IDATAR(0), dd->data);
+		aपंचांगel_aes_ग_लिखो_block(dd, AES_IDATAR(0), dd->data);
 
-		isr = atmel_aes_read(dd, AES_ISR);
-		if (!(isr & AES_INT_DATARDY)) {
-			dd->resume = atmel_aes_cpu_transfer;
-			atmel_aes_write(dd, AES_IER, AES_INT_DATARDY);
-			return -EINPROGRESS;
-		}
-	}
+		isr = aपंचांगel_aes_पढ़ो(dd, AES_ISR);
+		अगर (!(isr & AES_INT_DATARDY)) अणु
+			dd->resume = aपंचांगel_aes_cpu_transfer;
+			aपंचांगel_aes_ग_लिखो(dd, AES_IER, AES_INT_DATARDY);
+			वापस -EINPROGRESS;
+		पूर्ण
+	पूर्ण
 
-	if (!sg_copy_from_buffer(dd->real_dst, sg_nents(dd->real_dst),
+	अगर (!sg_copy_from_buffer(dd->real_dst, sg_nents(dd->real_dst),
 				 dd->buf, dd->total))
 		err = -EINVAL;
 
-	if (err)
-		return atmel_aes_complete(dd, err);
+	अगर (err)
+		वापस aपंचांगel_aes_complete(dd, err);
 
-	return dd->cpu_transfer_complete(dd);
-}
+	वापस dd->cpu_transfer_complete(dd);
+पूर्ण
 
-static int atmel_aes_cpu_start(struct atmel_aes_dev *dd,
-			       struct scatterlist *src,
-			       struct scatterlist *dst,
-			       size_t len,
-			       atmel_aes_fn_t resume)
-{
-	size_t padlen = atmel_aes_padlen(len, AES_BLOCK_SIZE);
+अटल पूर्णांक aपंचांगel_aes_cpu_start(काष्ठा aपंचांगel_aes_dev *dd,
+			       काष्ठा scatterlist *src,
+			       काष्ठा scatterlist *dst,
+			       माप_प्रकार len,
+			       aपंचांगel_aes_fn_t resume)
+अणु
+	माप_प्रकार padlen = aपंचांगel_aes_padlen(len, AES_BLOCK_SIZE);
 
-	if (unlikely(len == 0))
-		return -EINVAL;
+	अगर (unlikely(len == 0))
+		वापस -EINVAL;
 
 	sg_copy_to_buffer(src, sg_nents(src), dd->buf, len);
 
@@ -660,308 +661,308 @@ static int atmel_aes_cpu_start(struct atmel_aes_dev *dd,
 	dd->cpu_transfer_complete = resume;
 	dd->datalen = len + padlen;
 	dd->data = (u32 *)dd->buf;
-	atmel_aes_write_block(dd, AES_IDATAR(0), dd->data);
-	return atmel_aes_wait_for_data_ready(dd, atmel_aes_cpu_transfer);
-}
+	aपंचांगel_aes_ग_लिखो_block(dd, AES_IDATAR(0), dd->data);
+	वापस aपंचांगel_aes_रुको_क्रम_data_पढ़ोy(dd, aपंचांगel_aes_cpu_transfer);
+पूर्ण
 
 
 /* DMA transfer */
 
-static void atmel_aes_dma_callback(void *data);
+अटल व्योम aपंचांगel_aes_dma_callback(व्योम *data);
 
-static bool atmel_aes_check_aligned(struct atmel_aes_dev *dd,
-				    struct scatterlist *sg,
-				    size_t len,
-				    struct atmel_aes_dma *dma)
-{
-	int nents;
+अटल bool aपंचांगel_aes_check_aligned(काष्ठा aपंचांगel_aes_dev *dd,
+				    काष्ठा scatterlist *sg,
+				    माप_प्रकार len,
+				    काष्ठा aपंचांगel_aes_dma *dma)
+अणु
+	पूर्णांक nents;
 
-	if (!IS_ALIGNED(len, dd->ctx->block_size))
-		return false;
+	अगर (!IS_ALIGNED(len, dd->ctx->block_size))
+		वापस false;
 
-	for (nents = 0; sg; sg = sg_next(sg), ++nents) {
-		if (!IS_ALIGNED(sg->offset, sizeof(u32)))
-			return false;
+	क्रम (nents = 0; sg; sg = sg_next(sg), ++nents) अणु
+		अगर (!IS_ALIGNED(sg->offset, माप(u32)))
+			वापस false;
 
-		if (len <= sg->length) {
-			if (!IS_ALIGNED(len, dd->ctx->block_size))
-				return false;
+		अगर (len <= sg->length) अणु
+			अगर (!IS_ALIGNED(len, dd->ctx->block_size))
+				वापस false;
 
 			dma->nents = nents+1;
-			dma->remainder = sg->length - len;
+			dma->reमुख्यder = sg->length - len;
 			sg->length = len;
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
-		if (!IS_ALIGNED(sg->length, dd->ctx->block_size))
-			return false;
+		अगर (!IS_ALIGNED(sg->length, dd->ctx->block_size))
+			वापस false;
 
 		len -= sg->length;
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline void atmel_aes_restore_sg(const struct atmel_aes_dma *dma)
-{
-	struct scatterlist *sg = dma->sg;
-	int nents = dma->nents;
+अटल अंतरभूत व्योम aपंचांगel_aes_restore_sg(स्थिर काष्ठा aपंचांगel_aes_dma *dma)
+अणु
+	काष्ठा scatterlist *sg = dma->sg;
+	पूर्णांक nents = dma->nents;
 
-	if (!dma->remainder)
-		return;
+	अगर (!dma->reमुख्यder)
+		वापस;
 
-	while (--nents > 0 && sg)
+	जबतक (--nents > 0 && sg)
 		sg = sg_next(sg);
 
-	if (!sg)
-		return;
+	अगर (!sg)
+		वापस;
 
-	sg->length += dma->remainder;
-}
+	sg->length += dma->reमुख्यder;
+पूर्ण
 
-static int atmel_aes_map(struct atmel_aes_dev *dd,
-			 struct scatterlist *src,
-			 struct scatterlist *dst,
-			 size_t len)
-{
+अटल पूर्णांक aपंचांगel_aes_map(काष्ठा aपंचांगel_aes_dev *dd,
+			 काष्ठा scatterlist *src,
+			 काष्ठा scatterlist *dst,
+			 माप_प्रकार len)
+अणु
 	bool src_aligned, dst_aligned;
-	size_t padlen;
+	माप_प्रकार padlen;
 
 	dd->total = len;
 	dd->src.sg = src;
 	dd->dst.sg = dst;
 	dd->real_dst = dst;
 
-	src_aligned = atmel_aes_check_aligned(dd, src, len, &dd->src);
-	if (src == dst)
+	src_aligned = aपंचांगel_aes_check_aligned(dd, src, len, &dd->src);
+	अगर (src == dst)
 		dst_aligned = src_aligned;
-	else
-		dst_aligned = atmel_aes_check_aligned(dd, dst, len, &dd->dst);
-	if (!src_aligned || !dst_aligned) {
-		padlen = atmel_aes_padlen(len, dd->ctx->block_size);
+	अन्यथा
+		dst_aligned = aपंचांगel_aes_check_aligned(dd, dst, len, &dd->dst);
+	अगर (!src_aligned || !dst_aligned) अणु
+		padlen = aपंचांगel_aes_padlen(len, dd->ctx->block_size);
 
-		if (dd->buflen < len + padlen)
-			return -ENOMEM;
+		अगर (dd->buflen < len + padlen)
+			वापस -ENOMEM;
 
-		if (!src_aligned) {
+		अगर (!src_aligned) अणु
 			sg_copy_to_buffer(src, sg_nents(src), dd->buf, len);
 			dd->src.sg = &dd->aligned_sg;
 			dd->src.nents = 1;
-			dd->src.remainder = 0;
-		}
+			dd->src.reमुख्यder = 0;
+		पूर्ण
 
-		if (!dst_aligned) {
+		अगर (!dst_aligned) अणु
 			dd->dst.sg = &dd->aligned_sg;
 			dd->dst.nents = 1;
-			dd->dst.remainder = 0;
-		}
+			dd->dst.reमुख्यder = 0;
+		पूर्ण
 
 		sg_init_table(&dd->aligned_sg, 1);
 		sg_set_buf(&dd->aligned_sg, dd->buf, len + padlen);
-	}
+	पूर्ण
 
-	if (dd->src.sg == dd->dst.sg) {
+	अगर (dd->src.sg == dd->dst.sg) अणु
 		dd->src.sg_len = dma_map_sg(dd->dev, dd->src.sg, dd->src.nents,
-					    DMA_BIDIRECTIONAL);
+					    DMA_BIसूचीECTIONAL);
 		dd->dst.sg_len = dd->src.sg_len;
-		if (!dd->src.sg_len)
-			return -EFAULT;
-	} else {
+		अगर (!dd->src.sg_len)
+			वापस -EFAULT;
+	पूर्ण अन्यथा अणु
 		dd->src.sg_len = dma_map_sg(dd->dev, dd->src.sg, dd->src.nents,
 					    DMA_TO_DEVICE);
-		if (!dd->src.sg_len)
-			return -EFAULT;
+		अगर (!dd->src.sg_len)
+			वापस -EFAULT;
 
 		dd->dst.sg_len = dma_map_sg(dd->dev, dd->dst.sg, dd->dst.nents,
 					    DMA_FROM_DEVICE);
-		if (!dd->dst.sg_len) {
+		अगर (!dd->dst.sg_len) अणु
 			dma_unmap_sg(dd->dev, dd->src.sg, dd->src.nents,
 				     DMA_TO_DEVICE);
-			return -EFAULT;
-		}
-	}
+			वापस -EFAULT;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void atmel_aes_unmap(struct atmel_aes_dev *dd)
-{
-	if (dd->src.sg == dd->dst.sg) {
+अटल व्योम aपंचांगel_aes_unmap(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	अगर (dd->src.sg == dd->dst.sg) अणु
 		dma_unmap_sg(dd->dev, dd->src.sg, dd->src.nents,
-			     DMA_BIDIRECTIONAL);
+			     DMA_BIसूचीECTIONAL);
 
-		if (dd->src.sg != &dd->aligned_sg)
-			atmel_aes_restore_sg(&dd->src);
-	} else {
+		अगर (dd->src.sg != &dd->aligned_sg)
+			aपंचांगel_aes_restore_sg(&dd->src);
+	पूर्ण अन्यथा अणु
 		dma_unmap_sg(dd->dev, dd->dst.sg, dd->dst.nents,
 			     DMA_FROM_DEVICE);
 
-		if (dd->dst.sg != &dd->aligned_sg)
-			atmel_aes_restore_sg(&dd->dst);
+		अगर (dd->dst.sg != &dd->aligned_sg)
+			aपंचांगel_aes_restore_sg(&dd->dst);
 
 		dma_unmap_sg(dd->dev, dd->src.sg, dd->src.nents,
 			     DMA_TO_DEVICE);
 
-		if (dd->src.sg != &dd->aligned_sg)
-			atmel_aes_restore_sg(&dd->src);
-	}
+		अगर (dd->src.sg != &dd->aligned_sg)
+			aपंचांगel_aes_restore_sg(&dd->src);
+	पूर्ण
 
-	if (dd->dst.sg == &dd->aligned_sg)
+	अगर (dd->dst.sg == &dd->aligned_sg)
 		sg_copy_from_buffer(dd->real_dst, sg_nents(dd->real_dst),
 				    dd->buf, dd->total);
-}
+पूर्ण
 
-static int atmel_aes_dma_transfer_start(struct atmel_aes_dev *dd,
-					enum dma_slave_buswidth addr_width,
-					enum dma_transfer_direction dir,
+अटल पूर्णांक aपंचांगel_aes_dma_transfer_start(काष्ठा aपंचांगel_aes_dev *dd,
+					क्रमागत dma_slave_buswidth addr_width,
+					क्रमागत dma_transfer_direction dir,
 					u32 maxburst)
-{
-	struct dma_async_tx_descriptor *desc;
-	struct dma_slave_config config;
+अणु
+	काष्ठा dma_async_tx_descriptor *desc;
+	काष्ठा dma_slave_config config;
 	dma_async_tx_callback callback;
-	struct atmel_aes_dma *dma;
-	int err;
+	काष्ठा aपंचांगel_aes_dma *dma;
+	पूर्णांक err;
 
-	memset(&config, 0, sizeof(config));
+	स_रखो(&config, 0, माप(config));
 	config.src_addr_width = addr_width;
 	config.dst_addr_width = addr_width;
 	config.src_maxburst = maxburst;
 	config.dst_maxburst = maxburst;
 
-	switch (dir) {
-	case DMA_MEM_TO_DEV:
+	चयन (dir) अणु
+	हाल DMA_MEM_TO_DEV:
 		dma = &dd->src;
-		callback = NULL;
+		callback = शून्य;
 		config.dst_addr = dd->phys_base + AES_IDATAR(0);
-		break;
+		अवरोध;
 
-	case DMA_DEV_TO_MEM:
+	हाल DMA_DEV_TO_MEM:
 		dma = &dd->dst;
-		callback = atmel_aes_dma_callback;
+		callback = aपंचांगel_aes_dma_callback;
 		config.src_addr = dd->phys_base + AES_ODATAR(0);
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	err = dmaengine_slave_config(dma->chan, &config);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	desc = dmaengine_prep_slave_sg(dma->chan, dma->sg, dma->sg_len, dir,
 				       DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	if (!desc)
-		return -ENOMEM;
+	अगर (!desc)
+		वापस -ENOMEM;
 
 	desc->callback = callback;
 	desc->callback_param = dd;
 	dmaengine_submit(desc);
 	dma_async_issue_pending(dma->chan);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_aes_dma_start(struct atmel_aes_dev *dd,
-			       struct scatterlist *src,
-			       struct scatterlist *dst,
-			       size_t len,
-			       atmel_aes_fn_t resume)
-{
-	enum dma_slave_buswidth addr_width;
+अटल पूर्णांक aपंचांगel_aes_dma_start(काष्ठा aपंचांगel_aes_dev *dd,
+			       काष्ठा scatterlist *src,
+			       काष्ठा scatterlist *dst,
+			       माप_प्रकार len,
+			       aपंचांगel_aes_fn_t resume)
+अणु
+	क्रमागत dma_slave_buswidth addr_width;
 	u32 maxburst;
-	int err;
+	पूर्णांक err;
 
-	switch (dd->ctx->block_size) {
-	case CFB8_BLOCK_SIZE:
+	चयन (dd->ctx->block_size) अणु
+	हाल CFB8_BLOCK_SIZE:
 		addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
 		maxburst = 1;
-		break;
+		अवरोध;
 
-	case CFB16_BLOCK_SIZE:
+	हाल CFB16_BLOCK_SIZE:
 		addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
 		maxburst = 1;
-		break;
+		अवरोध;
 
-	case CFB32_BLOCK_SIZE:
-	case CFB64_BLOCK_SIZE:
+	हाल CFB32_BLOCK_SIZE:
+	हाल CFB64_BLOCK_SIZE:
 		addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 		maxburst = 1;
-		break;
+		अवरोध;
 
-	case AES_BLOCK_SIZE:
+	हाल AES_BLOCK_SIZE:
 		addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 		maxburst = dd->caps.max_burst_size;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	err = atmel_aes_map(dd, src, dst, len);
-	if (err)
-		goto exit;
+	err = aपंचांगel_aes_map(dd, src, dst, len);
+	अगर (err)
+		जाओ निकास;
 
 	dd->resume = resume;
 
 	/* Set output DMA transfer first */
-	err = atmel_aes_dma_transfer_start(dd, addr_width, DMA_DEV_TO_MEM,
+	err = aपंचांगel_aes_dma_transfer_start(dd, addr_width, DMA_DEV_TO_MEM,
 					   maxburst);
-	if (err)
-		goto unmap;
+	अगर (err)
+		जाओ unmap;
 
 	/* Then set input DMA transfer */
-	err = atmel_aes_dma_transfer_start(dd, addr_width, DMA_MEM_TO_DEV,
+	err = aपंचांगel_aes_dma_transfer_start(dd, addr_width, DMA_MEM_TO_DEV,
 					   maxburst);
-	if (err)
-		goto output_transfer_stop;
+	अगर (err)
+		जाओ output_transfer_stop;
 
-	return -EINPROGRESS;
+	वापस -EINPROGRESS;
 
 output_transfer_stop:
 	dmaengine_terminate_sync(dd->dst.chan);
 unmap:
-	atmel_aes_unmap(dd);
-exit:
-	return atmel_aes_complete(dd, err);
-}
+	aपंचांगel_aes_unmap(dd);
+निकास:
+	वापस aपंचांगel_aes_complete(dd, err);
+पूर्ण
 
-static void atmel_aes_dma_callback(void *data)
-{
-	struct atmel_aes_dev *dd = data;
+अटल व्योम aपंचांगel_aes_dma_callback(व्योम *data)
+अणु
+	काष्ठा aपंचांगel_aes_dev *dd = data;
 
-	atmel_aes_unmap(dd);
+	aपंचांगel_aes_unmap(dd);
 	dd->is_async = true;
-	(void)dd->resume(dd);
-}
+	(व्योम)dd->resume(dd);
+पूर्ण
 
-static int atmel_aes_handle_queue(struct atmel_aes_dev *dd,
-				  struct crypto_async_request *new_areq)
-{
-	struct crypto_async_request *areq, *backlog;
-	struct atmel_aes_base_ctx *ctx;
-	unsigned long flags;
+अटल पूर्णांक aपंचांगel_aes_handle_queue(काष्ठा aपंचांगel_aes_dev *dd,
+				  काष्ठा crypto_async_request *new_areq)
+अणु
+	काष्ठा crypto_async_request *areq, *backlog;
+	काष्ठा aपंचांगel_aes_base_ctx *ctx;
+	अचिन्हित दीर्घ flags;
 	bool start_async;
-	int err, ret = 0;
+	पूर्णांक err, ret = 0;
 
 	spin_lock_irqsave(&dd->lock, flags);
-	if (new_areq)
+	अगर (new_areq)
 		ret = crypto_enqueue_request(&dd->queue, new_areq);
-	if (dd->flags & AES_FLAGS_BUSY) {
+	अगर (dd->flags & AES_FLAGS_BUSY) अणु
 		spin_unlock_irqrestore(&dd->lock, flags);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	backlog = crypto_get_backlog(&dd->queue);
 	areq = crypto_dequeue_request(&dd->queue);
-	if (areq)
+	अगर (areq)
 		dd->flags |= AES_FLAGS_BUSY;
 	spin_unlock_irqrestore(&dd->lock, flags);
 
-	if (!areq)
-		return ret;
+	अगर (!areq)
+		वापस ret;
 
-	if (backlog)
+	अगर (backlog)
 		backlog->complete(backlog, -EINPROGRESS);
 
 	ctx = crypto_tfm_ctx(areq->tfm);
@@ -973,55 +974,55 @@ static int atmel_aes_handle_queue(struct atmel_aes_dev *dd,
 
 	/* WARNING: ctx->start() MAY change dd->is_async. */
 	err = ctx->start(dd);
-	return (start_async) ? ret : err;
-}
+	वापस (start_async) ? ret : err;
+पूर्ण
 
 
 /* AES async block ciphers */
 
-static int atmel_aes_transfer_complete(struct atmel_aes_dev *dd)
-{
-	return atmel_aes_complete(dd, 0);
-}
+अटल पूर्णांक aपंचांगel_aes_transfer_complete(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	वापस aपंचांगel_aes_complete(dd, 0);
+पूर्ण
 
-static int atmel_aes_start(struct atmel_aes_dev *dd)
-{
-	struct skcipher_request *req = skcipher_request_cast(dd->areq);
-	struct atmel_aes_reqctx *rctx = skcipher_request_ctx(req);
+अटल पूर्णांक aपंचांगel_aes_start(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा skcipher_request *req = skcipher_request_cast(dd->areq);
+	काष्ठा aपंचांगel_aes_reqctx *rctx = skcipher_request_ctx(req);
 	bool use_dma = (req->cryptlen >= ATMEL_AES_DMA_THRESHOLD ||
 			dd->ctx->block_size != AES_BLOCK_SIZE);
-	int err;
+	पूर्णांक err;
 
-	atmel_aes_set_mode(dd, rctx);
+	aपंचांगel_aes_set_mode(dd, rctx);
 
-	err = atmel_aes_hw_init(dd);
-	if (err)
-		return atmel_aes_complete(dd, err);
+	err = aपंचांगel_aes_hw_init(dd);
+	अगर (err)
+		वापस aपंचांगel_aes_complete(dd, err);
 
-	atmel_aes_write_ctrl(dd, use_dma, (void *)req->iv);
-	if (use_dma)
-		return atmel_aes_dma_start(dd, req->src, req->dst,
+	aपंचांगel_aes_ग_लिखो_ctrl(dd, use_dma, (व्योम *)req->iv);
+	अगर (use_dma)
+		वापस aपंचांगel_aes_dma_start(dd, req->src, req->dst,
 					   req->cryptlen,
-					   atmel_aes_transfer_complete);
+					   aपंचांगel_aes_transfer_complete);
 
-	return atmel_aes_cpu_start(dd, req->src, req->dst, req->cryptlen,
-				   atmel_aes_transfer_complete);
-}
+	वापस aपंचांगel_aes_cpu_start(dd, req->src, req->dst, req->cryptlen,
+				   aपंचांगel_aes_transfer_complete);
+पूर्ण
 
-static int atmel_aes_ctr_transfer(struct atmel_aes_dev *dd)
-{
-	struct atmel_aes_ctr_ctx *ctx = atmel_aes_ctr_ctx_cast(dd->ctx);
-	struct skcipher_request *req = skcipher_request_cast(dd->areq);
-	struct scatterlist *src, *dst;
-	size_t datalen;
+अटल पूर्णांक aपंचांगel_aes_ctr_transfer(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aपंचांगel_aes_ctr_ctx *ctx = aपंचांगel_aes_ctr_ctx_cast(dd->ctx);
+	काष्ठा skcipher_request *req = skcipher_request_cast(dd->areq);
+	काष्ठा scatterlist *src, *dst;
+	माप_प्रकार datalen;
 	u32 ctr;
 	u16 start, end;
 	bool use_dma, fragmented = false;
 
-	/* Check for transfer completion. */
+	/* Check क्रम transfer completion. */
 	ctx->offset += dd->total;
-	if (ctx->offset >= req->cryptlen)
-		return atmel_aes_transfer_complete(dd);
+	अगर (ctx->offset >= req->cryptlen)
+		वापस aपंचांगel_aes_transfer_complete(dd);
 
 	/* Compute data length. */
 	datalen = req->cryptlen - ctx->offset;
@@ -1032,11 +1033,11 @@ static int atmel_aes_ctr_transfer(struct atmel_aes_dev *dd)
 	start = ctr & 0xffff;
 	end = start + ctx->blocks - 1;
 
-	if (ctx->blocks >> 16 || end < start) {
+	अगर (ctx->blocks >> 16 || end < start) अणु
 		ctr |= 0xffff;
 		datalen = AES_BLOCK_SIZE * (0x10000 - start);
 		fragmented = true;
-	}
+	पूर्ण
 
 	use_dma = (datalen >= ATMEL_AES_DMA_THRESHOLD);
 
@@ -1046,378 +1047,378 @@ static int atmel_aes_ctr_transfer(struct atmel_aes_dev *dd)
 	       scatterwalk_ffwd(ctx->dst, req->dst, ctx->offset));
 
 	/* Configure hardware. */
-	atmel_aes_write_ctrl(dd, use_dma, ctx->iv);
-	if (unlikely(fragmented)) {
+	aपंचांगel_aes_ग_लिखो_ctrl(dd, use_dma, ctx->iv);
+	अगर (unlikely(fragmented)) अणु
 		/*
 		 * Increment the counter manually to cope with the hardware
 		 * counter overflow.
 		 */
 		ctx->iv[3] = cpu_to_be32(ctr);
 		crypto_inc((u8 *)ctx->iv, AES_BLOCK_SIZE);
-	}
+	पूर्ण
 
-	if (use_dma)
-		return atmel_aes_dma_start(dd, src, dst, datalen,
-					   atmel_aes_ctr_transfer);
+	अगर (use_dma)
+		वापस aपंचांगel_aes_dma_start(dd, src, dst, datalen,
+					   aपंचांगel_aes_ctr_transfer);
 
-	return atmel_aes_cpu_start(dd, src, dst, datalen,
-				   atmel_aes_ctr_transfer);
-}
+	वापस aपंचांगel_aes_cpu_start(dd, src, dst, datalen,
+				   aपंचांगel_aes_ctr_transfer);
+पूर्ण
 
-static int atmel_aes_ctr_start(struct atmel_aes_dev *dd)
-{
-	struct atmel_aes_ctr_ctx *ctx = atmel_aes_ctr_ctx_cast(dd->ctx);
-	struct skcipher_request *req = skcipher_request_cast(dd->areq);
-	struct atmel_aes_reqctx *rctx = skcipher_request_ctx(req);
-	int err;
+अटल पूर्णांक aपंचांगel_aes_ctr_start(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aपंचांगel_aes_ctr_ctx *ctx = aपंचांगel_aes_ctr_ctx_cast(dd->ctx);
+	काष्ठा skcipher_request *req = skcipher_request_cast(dd->areq);
+	काष्ठा aपंचांगel_aes_reqctx *rctx = skcipher_request_ctx(req);
+	पूर्णांक err;
 
-	atmel_aes_set_mode(dd, rctx);
+	aपंचांगel_aes_set_mode(dd, rctx);
 
-	err = atmel_aes_hw_init(dd);
-	if (err)
-		return atmel_aes_complete(dd, err);
+	err = aपंचांगel_aes_hw_init(dd);
+	अगर (err)
+		वापस aपंचांगel_aes_complete(dd, err);
 
-	memcpy(ctx->iv, req->iv, AES_BLOCK_SIZE);
+	स_नकल(ctx->iv, req->iv, AES_BLOCK_SIZE);
 	ctx->offset = 0;
 	dd->total = 0;
-	return atmel_aes_ctr_transfer(dd);
-}
+	वापस aपंचांगel_aes_ctr_transfer(dd);
+पूर्ण
 
-static int atmel_aes_crypt(struct skcipher_request *req, unsigned long mode)
-{
-	struct crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
-	struct atmel_aes_base_ctx *ctx = crypto_skcipher_ctx(skcipher);
-	struct atmel_aes_reqctx *rctx;
-	struct atmel_aes_dev *dd;
+अटल पूर्णांक aपंचांगel_aes_crypt(काष्ठा skcipher_request *req, अचिन्हित दीर्घ mode)
+अणु
+	काष्ठा crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
+	काष्ठा aपंचांगel_aes_base_ctx *ctx = crypto_skcipher_ctx(skcipher);
+	काष्ठा aपंचांगel_aes_reqctx *rctx;
+	काष्ठा aपंचांगel_aes_dev *dd;
 
-	switch (mode & AES_FLAGS_OPMODE_MASK) {
-	case AES_FLAGS_CFB8:
+	चयन (mode & AES_FLAGS_OPMODE_MASK) अणु
+	हाल AES_FLAGS_CFB8:
 		ctx->block_size = CFB8_BLOCK_SIZE;
-		break;
+		अवरोध;
 
-	case AES_FLAGS_CFB16:
+	हाल AES_FLAGS_CFB16:
 		ctx->block_size = CFB16_BLOCK_SIZE;
-		break;
+		अवरोध;
 
-	case AES_FLAGS_CFB32:
+	हाल AES_FLAGS_CFB32:
 		ctx->block_size = CFB32_BLOCK_SIZE;
-		break;
+		अवरोध;
 
-	case AES_FLAGS_CFB64:
+	हाल AES_FLAGS_CFB64:
 		ctx->block_size = CFB64_BLOCK_SIZE;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		ctx->block_size = AES_BLOCK_SIZE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	ctx->is_aead = false;
 
-	dd = atmel_aes_find_dev(ctx);
-	if (!dd)
-		return -ENODEV;
+	dd = aपंचांगel_aes_find_dev(ctx);
+	अगर (!dd)
+		वापस -ENODEV;
 
 	rctx = skcipher_request_ctx(req);
 	rctx->mode = mode;
 
-	if ((mode & AES_FLAGS_OPMODE_MASK) != AES_FLAGS_ECB &&
-	    !(mode & AES_FLAGS_ENCRYPT) && req->src == req->dst) {
-		unsigned int ivsize = crypto_skcipher_ivsize(skcipher);
+	अगर ((mode & AES_FLAGS_OPMODE_MASK) != AES_FLAGS_ECB &&
+	    !(mode & AES_FLAGS_ENCRYPT) && req->src == req->dst) अणु
+		अचिन्हित पूर्णांक ivsize = crypto_skcipher_ivsize(skcipher);
 
-		if (req->cryptlen >= ivsize)
+		अगर (req->cryptlen >= ivsize)
 			scatterwalk_map_and_copy(rctx->lastc, req->src,
 						 req->cryptlen - ivsize,
 						 ivsize, 0);
-	}
+	पूर्ण
 
-	return atmel_aes_handle_queue(dd, &req->base);
-}
+	वापस aपंचांगel_aes_handle_queue(dd, &req->base);
+पूर्ण
 
-static int atmel_aes_setkey(struct crypto_skcipher *tfm, const u8 *key,
-			   unsigned int keylen)
-{
-	struct atmel_aes_base_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक aपंचांगel_aes_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+			   अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा aपंचांगel_aes_base_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	if (keylen != AES_KEYSIZE_128 &&
+	अगर (keylen != AES_KEYSIZE_128 &&
 	    keylen != AES_KEYSIZE_192 &&
 	    keylen != AES_KEYSIZE_256)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	memcpy(ctx->key, key, keylen);
+	स_नकल(ctx->key, key, keylen);
 	ctx->keylen = keylen;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_aes_ecb_encrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_ECB | AES_FLAGS_ENCRYPT);
-}
+अटल पूर्णांक aपंचांगel_aes_ecb_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_ECB | AES_FLAGS_ENCRYPT);
+पूर्ण
 
-static int atmel_aes_ecb_decrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_ECB);
-}
+अटल पूर्णांक aपंचांगel_aes_ecb_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_ECB);
+पूर्ण
 
-static int atmel_aes_cbc_encrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CBC | AES_FLAGS_ENCRYPT);
-}
+अटल पूर्णांक aपंचांगel_aes_cbc_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CBC | AES_FLAGS_ENCRYPT);
+पूर्ण
 
-static int atmel_aes_cbc_decrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CBC);
-}
+अटल पूर्णांक aपंचांगel_aes_cbc_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CBC);
+पूर्ण
 
-static int atmel_aes_ofb_encrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_OFB | AES_FLAGS_ENCRYPT);
-}
+अटल पूर्णांक aपंचांगel_aes_ofb_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_OFB | AES_FLAGS_ENCRYPT);
+पूर्ण
 
-static int atmel_aes_ofb_decrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_OFB);
-}
+अटल पूर्णांक aपंचांगel_aes_ofb_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_OFB);
+पूर्ण
 
-static int atmel_aes_cfb_encrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CFB128 | AES_FLAGS_ENCRYPT);
-}
+अटल पूर्णांक aपंचांगel_aes_cfb_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CFB128 | AES_FLAGS_ENCRYPT);
+पूर्ण
 
-static int atmel_aes_cfb_decrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CFB128);
-}
+अटल पूर्णांक aपंचांगel_aes_cfb_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CFB128);
+पूर्ण
 
-static int atmel_aes_cfb64_encrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CFB64 | AES_FLAGS_ENCRYPT);
-}
+अटल पूर्णांक aपंचांगel_aes_cfb64_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CFB64 | AES_FLAGS_ENCRYPT);
+पूर्ण
 
-static int atmel_aes_cfb64_decrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CFB64);
-}
+अटल पूर्णांक aपंचांगel_aes_cfb64_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CFB64);
+पूर्ण
 
-static int atmel_aes_cfb32_encrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CFB32 | AES_FLAGS_ENCRYPT);
-}
+अटल पूर्णांक aपंचांगel_aes_cfb32_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CFB32 | AES_FLAGS_ENCRYPT);
+पूर्ण
 
-static int atmel_aes_cfb32_decrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CFB32);
-}
+अटल पूर्णांक aपंचांगel_aes_cfb32_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CFB32);
+पूर्ण
 
-static int atmel_aes_cfb16_encrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CFB16 | AES_FLAGS_ENCRYPT);
-}
+अटल पूर्णांक aपंचांगel_aes_cfb16_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CFB16 | AES_FLAGS_ENCRYPT);
+पूर्ण
 
-static int atmel_aes_cfb16_decrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CFB16);
-}
+अटल पूर्णांक aपंचांगel_aes_cfb16_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CFB16);
+पूर्ण
 
-static int atmel_aes_cfb8_encrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CFB8 | AES_FLAGS_ENCRYPT);
-}
+अटल पूर्णांक aपंचांगel_aes_cfb8_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CFB8 | AES_FLAGS_ENCRYPT);
+पूर्ण
 
-static int atmel_aes_cfb8_decrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CFB8);
-}
+अटल पूर्णांक aपंचांगel_aes_cfb8_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CFB8);
+पूर्ण
 
-static int atmel_aes_ctr_encrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CTR | AES_FLAGS_ENCRYPT);
-}
+अटल पूर्णांक aपंचांगel_aes_ctr_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CTR | AES_FLAGS_ENCRYPT);
+पूर्ण
 
-static int atmel_aes_ctr_decrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_CTR);
-}
+अटल पूर्णांक aपंचांगel_aes_ctr_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_CTR);
+पूर्ण
 
-static int atmel_aes_init_tfm(struct crypto_skcipher *tfm)
-{
-	struct atmel_aes_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक aपंचांगel_aes_init_tfm(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा aपंचांगel_aes_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	crypto_skcipher_set_reqsize(tfm, sizeof(struct atmel_aes_reqctx));
-	ctx->base.start = atmel_aes_start;
+	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा aपंचांगel_aes_reqctx));
+	ctx->base.start = aपंचांगel_aes_start;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_aes_ctr_init_tfm(struct crypto_skcipher *tfm)
-{
-	struct atmel_aes_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक aपंचांगel_aes_ctr_init_tfm(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा aपंचांगel_aes_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	crypto_skcipher_set_reqsize(tfm, sizeof(struct atmel_aes_reqctx));
-	ctx->base.start = atmel_aes_ctr_start;
+	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा aपंचांगel_aes_reqctx));
+	ctx->base.start = aपंचांगel_aes_ctr_start;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct skcipher_alg aes_algs[] = {
-{
+अटल काष्ठा skcipher_alg aes_algs[] = अणु
+अणु
 	.base.cra_name		= "ecb(aes)",
 	.base.cra_driver_name	= "atmel-ecb-aes",
 	.base.cra_blocksize	= AES_BLOCK_SIZE,
-	.base.cra_ctxsize	= sizeof(struct atmel_aes_ctx),
+	.base.cra_ctxsize	= माप(काष्ठा aपंचांगel_aes_ctx),
 
-	.init			= atmel_aes_init_tfm,
+	.init			= aपंचांगel_aes_init_tfm,
 	.min_keysize		= AES_MIN_KEY_SIZE,
 	.max_keysize		= AES_MAX_KEY_SIZE,
-	.setkey			= atmel_aes_setkey,
-	.encrypt		= atmel_aes_ecb_encrypt,
-	.decrypt		= atmel_aes_ecb_decrypt,
-},
-{
+	.setkey			= aपंचांगel_aes_setkey,
+	.encrypt		= aपंचांगel_aes_ecb_encrypt,
+	.decrypt		= aपंचांगel_aes_ecb_decrypt,
+पूर्ण,
+अणु
 	.base.cra_name		= "cbc(aes)",
 	.base.cra_driver_name	= "atmel-cbc-aes",
 	.base.cra_blocksize	= AES_BLOCK_SIZE,
-	.base.cra_ctxsize	= sizeof(struct atmel_aes_ctx),
+	.base.cra_ctxsize	= माप(काष्ठा aपंचांगel_aes_ctx),
 
-	.init			= atmel_aes_init_tfm,
+	.init			= aपंचांगel_aes_init_tfm,
 	.min_keysize		= AES_MIN_KEY_SIZE,
 	.max_keysize		= AES_MAX_KEY_SIZE,
-	.setkey			= atmel_aes_setkey,
-	.encrypt		= atmel_aes_cbc_encrypt,
-	.decrypt		= atmel_aes_cbc_decrypt,
+	.setkey			= aपंचांगel_aes_setkey,
+	.encrypt		= aपंचांगel_aes_cbc_encrypt,
+	.decrypt		= aपंचांगel_aes_cbc_decrypt,
 	.ivsize			= AES_BLOCK_SIZE,
-},
-{
+पूर्ण,
+अणु
 	.base.cra_name		= "ofb(aes)",
 	.base.cra_driver_name	= "atmel-ofb-aes",
 	.base.cra_blocksize	= AES_BLOCK_SIZE,
-	.base.cra_ctxsize	= sizeof(struct atmel_aes_ctx),
+	.base.cra_ctxsize	= माप(काष्ठा aपंचांगel_aes_ctx),
 
-	.init			= atmel_aes_init_tfm,
+	.init			= aपंचांगel_aes_init_tfm,
 	.min_keysize		= AES_MIN_KEY_SIZE,
 	.max_keysize		= AES_MAX_KEY_SIZE,
-	.setkey			= atmel_aes_setkey,
-	.encrypt		= atmel_aes_ofb_encrypt,
-	.decrypt		= atmel_aes_ofb_decrypt,
+	.setkey			= aपंचांगel_aes_setkey,
+	.encrypt		= aपंचांगel_aes_ofb_encrypt,
+	.decrypt		= aपंचांगel_aes_ofb_decrypt,
 	.ivsize			= AES_BLOCK_SIZE,
-},
-{
+पूर्ण,
+अणु
 	.base.cra_name		= "cfb(aes)",
 	.base.cra_driver_name	= "atmel-cfb-aes",
 	.base.cra_blocksize	= AES_BLOCK_SIZE,
-	.base.cra_ctxsize	= sizeof(struct atmel_aes_ctx),
+	.base.cra_ctxsize	= माप(काष्ठा aपंचांगel_aes_ctx),
 
-	.init			= atmel_aes_init_tfm,
+	.init			= aपंचांगel_aes_init_tfm,
 	.min_keysize		= AES_MIN_KEY_SIZE,
 	.max_keysize		= AES_MAX_KEY_SIZE,
-	.setkey			= atmel_aes_setkey,
-	.encrypt		= atmel_aes_cfb_encrypt,
-	.decrypt		= atmel_aes_cfb_decrypt,
+	.setkey			= aपंचांगel_aes_setkey,
+	.encrypt		= aपंचांगel_aes_cfb_encrypt,
+	.decrypt		= aपंचांगel_aes_cfb_decrypt,
 	.ivsize			= AES_BLOCK_SIZE,
-},
-{
+पूर्ण,
+अणु
 	.base.cra_name		= "cfb32(aes)",
 	.base.cra_driver_name	= "atmel-cfb32-aes",
 	.base.cra_blocksize	= CFB32_BLOCK_SIZE,
-	.base.cra_ctxsize	= sizeof(struct atmel_aes_ctx),
+	.base.cra_ctxsize	= माप(काष्ठा aपंचांगel_aes_ctx),
 
-	.init			= atmel_aes_init_tfm,
+	.init			= aपंचांगel_aes_init_tfm,
 	.min_keysize		= AES_MIN_KEY_SIZE,
 	.max_keysize		= AES_MAX_KEY_SIZE,
-	.setkey			= atmel_aes_setkey,
-	.encrypt		= atmel_aes_cfb32_encrypt,
-	.decrypt		= atmel_aes_cfb32_decrypt,
+	.setkey			= aपंचांगel_aes_setkey,
+	.encrypt		= aपंचांगel_aes_cfb32_encrypt,
+	.decrypt		= aपंचांगel_aes_cfb32_decrypt,
 	.ivsize			= AES_BLOCK_SIZE,
-},
-{
+पूर्ण,
+अणु
 	.base.cra_name		= "cfb16(aes)",
 	.base.cra_driver_name	= "atmel-cfb16-aes",
 	.base.cra_blocksize	= CFB16_BLOCK_SIZE,
-	.base.cra_ctxsize	= sizeof(struct atmel_aes_ctx),
+	.base.cra_ctxsize	= माप(काष्ठा aपंचांगel_aes_ctx),
 
-	.init			= atmel_aes_init_tfm,
+	.init			= aपंचांगel_aes_init_tfm,
 	.min_keysize		= AES_MIN_KEY_SIZE,
 	.max_keysize		= AES_MAX_KEY_SIZE,
-	.setkey			= atmel_aes_setkey,
-	.encrypt		= atmel_aes_cfb16_encrypt,
-	.decrypt		= atmel_aes_cfb16_decrypt,
+	.setkey			= aपंचांगel_aes_setkey,
+	.encrypt		= aपंचांगel_aes_cfb16_encrypt,
+	.decrypt		= aपंचांगel_aes_cfb16_decrypt,
 	.ivsize			= AES_BLOCK_SIZE,
-},
-{
+पूर्ण,
+अणु
 	.base.cra_name		= "cfb8(aes)",
 	.base.cra_driver_name	= "atmel-cfb8-aes",
 	.base.cra_blocksize	= CFB8_BLOCK_SIZE,
-	.base.cra_ctxsize	= sizeof(struct atmel_aes_ctx),
+	.base.cra_ctxsize	= माप(काष्ठा aपंचांगel_aes_ctx),
 
-	.init			= atmel_aes_init_tfm,
+	.init			= aपंचांगel_aes_init_tfm,
 	.min_keysize		= AES_MIN_KEY_SIZE,
 	.max_keysize		= AES_MAX_KEY_SIZE,
-	.setkey			= atmel_aes_setkey,
-	.encrypt		= atmel_aes_cfb8_encrypt,
-	.decrypt		= atmel_aes_cfb8_decrypt,
+	.setkey			= aपंचांगel_aes_setkey,
+	.encrypt		= aपंचांगel_aes_cfb8_encrypt,
+	.decrypt		= aपंचांगel_aes_cfb8_decrypt,
 	.ivsize			= AES_BLOCK_SIZE,
-},
-{
+पूर्ण,
+अणु
 	.base.cra_name		= "ctr(aes)",
 	.base.cra_driver_name	= "atmel-ctr-aes",
 	.base.cra_blocksize	= 1,
-	.base.cra_ctxsize	= sizeof(struct atmel_aes_ctr_ctx),
+	.base.cra_ctxsize	= माप(काष्ठा aपंचांगel_aes_ctr_ctx),
 
-	.init			= atmel_aes_ctr_init_tfm,
+	.init			= aपंचांगel_aes_ctr_init_tfm,
 	.min_keysize		= AES_MIN_KEY_SIZE,
 	.max_keysize		= AES_MAX_KEY_SIZE,
-	.setkey			= atmel_aes_setkey,
-	.encrypt		= atmel_aes_ctr_encrypt,
-	.decrypt		= atmel_aes_ctr_decrypt,
+	.setkey			= aपंचांगel_aes_setkey,
+	.encrypt		= aपंचांगel_aes_ctr_encrypt,
+	.decrypt		= aपंचांगel_aes_ctr_decrypt,
 	.ivsize			= AES_BLOCK_SIZE,
-},
-};
+पूर्ण,
+पूर्ण;
 
-static struct skcipher_alg aes_cfb64_alg = {
+अटल काष्ठा skcipher_alg aes_cfb64_alg = अणु
 	.base.cra_name		= "cfb64(aes)",
 	.base.cra_driver_name	= "atmel-cfb64-aes",
 	.base.cra_blocksize	= CFB64_BLOCK_SIZE,
-	.base.cra_ctxsize	= sizeof(struct atmel_aes_ctx),
+	.base.cra_ctxsize	= माप(काष्ठा aपंचांगel_aes_ctx),
 
-	.init			= atmel_aes_init_tfm,
+	.init			= aपंचांगel_aes_init_tfm,
 	.min_keysize		= AES_MIN_KEY_SIZE,
 	.max_keysize		= AES_MAX_KEY_SIZE,
-	.setkey			= atmel_aes_setkey,
-	.encrypt		= atmel_aes_cfb64_encrypt,
-	.decrypt		= atmel_aes_cfb64_decrypt,
+	.setkey			= aपंचांगel_aes_setkey,
+	.encrypt		= aपंचांगel_aes_cfb64_encrypt,
+	.decrypt		= aपंचांगel_aes_cfb64_decrypt,
 	.ivsize			= AES_BLOCK_SIZE,
-};
+पूर्ण;
 
 
 /* gcm aead functions */
 
-static int atmel_aes_gcm_ghash(struct atmel_aes_dev *dd,
-			       const u32 *data, size_t datalen,
-			       const __be32 *ghash_in, __be32 *ghash_out,
-			       atmel_aes_fn_t resume);
-static int atmel_aes_gcm_ghash_init(struct atmel_aes_dev *dd);
-static int atmel_aes_gcm_ghash_finalize(struct atmel_aes_dev *dd);
+अटल पूर्णांक aपंचांगel_aes_gcm_ghash(काष्ठा aपंचांगel_aes_dev *dd,
+			       स्थिर u32 *data, माप_प्रकार datalen,
+			       स्थिर __be32 *ghash_in, __be32 *ghash_out,
+			       aपंचांगel_aes_fn_t resume);
+अटल पूर्णांक aपंचांगel_aes_gcm_ghash_init(काष्ठा aपंचांगel_aes_dev *dd);
+अटल पूर्णांक aपंचांगel_aes_gcm_ghash_finalize(काष्ठा aपंचांगel_aes_dev *dd);
 
-static int atmel_aes_gcm_start(struct atmel_aes_dev *dd);
-static int atmel_aes_gcm_process(struct atmel_aes_dev *dd);
-static int atmel_aes_gcm_length(struct atmel_aes_dev *dd);
-static int atmel_aes_gcm_data(struct atmel_aes_dev *dd);
-static int atmel_aes_gcm_tag_init(struct atmel_aes_dev *dd);
-static int atmel_aes_gcm_tag(struct atmel_aes_dev *dd);
-static int atmel_aes_gcm_finalize(struct atmel_aes_dev *dd);
+अटल पूर्णांक aपंचांगel_aes_gcm_start(काष्ठा aपंचांगel_aes_dev *dd);
+अटल पूर्णांक aपंचांगel_aes_gcm_process(काष्ठा aपंचांगel_aes_dev *dd);
+अटल पूर्णांक aपंचांगel_aes_gcm_length(काष्ठा aपंचांगel_aes_dev *dd);
+अटल पूर्णांक aपंचांगel_aes_gcm_data(काष्ठा aपंचांगel_aes_dev *dd);
+अटल पूर्णांक aपंचांगel_aes_gcm_tag_init(काष्ठा aपंचांगel_aes_dev *dd);
+अटल पूर्णांक aपंचांगel_aes_gcm_tag(काष्ठा aपंचांगel_aes_dev *dd);
+अटल पूर्णांक aपंचांगel_aes_gcm_finalize(काष्ठा aपंचांगel_aes_dev *dd);
 
-static inline struct atmel_aes_gcm_ctx *
-atmel_aes_gcm_ctx_cast(struct atmel_aes_base_ctx *ctx)
-{
-	return container_of(ctx, struct atmel_aes_gcm_ctx, base);
-}
+अटल अंतरभूत काष्ठा aपंचांगel_aes_gcm_ctx *
+aपंचांगel_aes_gcm_ctx_cast(काष्ठा aपंचांगel_aes_base_ctx *ctx)
+अणु
+	वापस container_of(ctx, काष्ठा aपंचांगel_aes_gcm_ctx, base);
+पूर्ण
 
-static int atmel_aes_gcm_ghash(struct atmel_aes_dev *dd,
-			       const u32 *data, size_t datalen,
-			       const __be32 *ghash_in, __be32 *ghash_out,
-			       atmel_aes_fn_t resume)
-{
-	struct atmel_aes_gcm_ctx *ctx = atmel_aes_gcm_ctx_cast(dd->ctx);
+अटल पूर्णांक aपंचांगel_aes_gcm_ghash(काष्ठा aपंचांगel_aes_dev *dd,
+			       स्थिर u32 *data, माप_प्रकार datalen,
+			       स्थिर __be32 *ghash_in, __be32 *ghash_out,
+			       aपंचांगel_aes_fn_t resume)
+अणु
+	काष्ठा aपंचांगel_aes_gcm_ctx *ctx = aपंचांगel_aes_gcm_ctx_cast(dd->ctx);
 
 	dd->data = (u32 *)data;
 	dd->datalen = datalen;
@@ -1425,94 +1426,94 @@ static int atmel_aes_gcm_ghash(struct atmel_aes_dev *dd,
 	ctx->ghash_out = ghash_out;
 	ctx->ghash_resume = resume;
 
-	atmel_aes_write_ctrl(dd, false, NULL);
-	return atmel_aes_wait_for_data_ready(dd, atmel_aes_gcm_ghash_init);
-}
+	aपंचांगel_aes_ग_लिखो_ctrl(dd, false, शून्य);
+	वापस aपंचांगel_aes_रुको_क्रम_data_पढ़ोy(dd, aपंचांगel_aes_gcm_ghash_init);
+पूर्ण
 
-static int atmel_aes_gcm_ghash_init(struct atmel_aes_dev *dd)
-{
-	struct atmel_aes_gcm_ctx *ctx = atmel_aes_gcm_ctx_cast(dd->ctx);
+अटल पूर्णांक aपंचांगel_aes_gcm_ghash_init(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aपंचांगel_aes_gcm_ctx *ctx = aपंचांगel_aes_gcm_ctx_cast(dd->ctx);
 
 	/* Set the data length. */
-	atmel_aes_write(dd, AES_AADLENR, dd->total);
-	atmel_aes_write(dd, AES_CLENR, 0);
+	aपंचांगel_aes_ग_लिखो(dd, AES_AADLENR, dd->total);
+	aपंचांगel_aes_ग_लिखो(dd, AES_CLENR, 0);
 
-	/* If needed, overwrite the GCM Intermediate Hash Word Registers */
-	if (ctx->ghash_in)
-		atmel_aes_write_block(dd, AES_GHASHR(0), ctx->ghash_in);
+	/* If needed, overग_लिखो the GCM Intermediate Hash Word Registers */
+	अगर (ctx->ghash_in)
+		aपंचांगel_aes_ग_लिखो_block(dd, AES_GHASHR(0), ctx->ghash_in);
 
-	return atmel_aes_gcm_ghash_finalize(dd);
-}
+	वापस aपंचांगel_aes_gcm_ghash_finalize(dd);
+पूर्ण
 
-static int atmel_aes_gcm_ghash_finalize(struct atmel_aes_dev *dd)
-{
-	struct atmel_aes_gcm_ctx *ctx = atmel_aes_gcm_ctx_cast(dd->ctx);
+अटल पूर्णांक aपंचांगel_aes_gcm_ghash_finalize(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aपंचांगel_aes_gcm_ctx *ctx = aपंचांगel_aes_gcm_ctx_cast(dd->ctx);
 	u32 isr;
 
-	/* Write data into the Input Data Registers. */
-	while (dd->datalen > 0) {
-		atmel_aes_write_block(dd, AES_IDATAR(0), dd->data);
+	/* Write data पूर्णांकo the Input Data Registers. */
+	जबतक (dd->datalen > 0) अणु
+		aपंचांगel_aes_ग_लिखो_block(dd, AES_IDATAR(0), dd->data);
 		dd->data += 4;
 		dd->datalen -= AES_BLOCK_SIZE;
 
-		isr = atmel_aes_read(dd, AES_ISR);
-		if (!(isr & AES_INT_DATARDY)) {
-			dd->resume = atmel_aes_gcm_ghash_finalize;
-			atmel_aes_write(dd, AES_IER, AES_INT_DATARDY);
-			return -EINPROGRESS;
-		}
-	}
+		isr = aपंचांगel_aes_पढ़ो(dd, AES_ISR);
+		अगर (!(isr & AES_INT_DATARDY)) अणु
+			dd->resume = aपंचांगel_aes_gcm_ghash_finalize;
+			aपंचांगel_aes_ग_लिखो(dd, AES_IER, AES_INT_DATARDY);
+			वापस -EINPROGRESS;
+		पूर्ण
+	पूर्ण
 
 	/* Read the computed hash from GHASHRx. */
-	atmel_aes_read_block(dd, AES_GHASHR(0), ctx->ghash_out);
+	aपंचांगel_aes_पढ़ो_block(dd, AES_GHASHR(0), ctx->ghash_out);
 
-	return ctx->ghash_resume(dd);
-}
+	वापस ctx->ghash_resume(dd);
+पूर्ण
 
 
-static int atmel_aes_gcm_start(struct atmel_aes_dev *dd)
-{
-	struct atmel_aes_gcm_ctx *ctx = atmel_aes_gcm_ctx_cast(dd->ctx);
-	struct aead_request *req = aead_request_cast(dd->areq);
-	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-	struct atmel_aes_reqctx *rctx = aead_request_ctx(req);
-	size_t ivsize = crypto_aead_ivsize(tfm);
-	size_t datalen, padlen;
-	const void *iv = req->iv;
+अटल पूर्णांक aपंचांगel_aes_gcm_start(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aपंचांगel_aes_gcm_ctx *ctx = aपंचांगel_aes_gcm_ctx_cast(dd->ctx);
+	काष्ठा aead_request *req = aead_request_cast(dd->areq);
+	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
+	काष्ठा aपंचांगel_aes_reqctx *rctx = aead_request_ctx(req);
+	माप_प्रकार ivsize = crypto_aead_ivsize(tfm);
+	माप_प्रकार datalen, padlen;
+	स्थिर व्योम *iv = req->iv;
 	u8 *data = dd->buf;
-	int err;
+	पूर्णांक err;
 
-	atmel_aes_set_mode(dd, rctx);
+	aपंचांगel_aes_set_mode(dd, rctx);
 
-	err = atmel_aes_hw_init(dd);
-	if (err)
-		return atmel_aes_complete(dd, err);
+	err = aपंचांगel_aes_hw_init(dd);
+	अगर (err)
+		वापस aपंचांगel_aes_complete(dd, err);
 
-	if (likely(ivsize == GCM_AES_IV_SIZE)) {
-		memcpy(ctx->j0, iv, ivsize);
+	अगर (likely(ivsize == GCM_AES_IV_SIZE)) अणु
+		स_नकल(ctx->j0, iv, ivsize);
 		ctx->j0[3] = cpu_to_be32(1);
-		return atmel_aes_gcm_process(dd);
-	}
+		वापस aपंचांगel_aes_gcm_process(dd);
+	पूर्ण
 
-	padlen = atmel_aes_padlen(ivsize, AES_BLOCK_SIZE);
+	padlen = aपंचांगel_aes_padlen(ivsize, AES_BLOCK_SIZE);
 	datalen = ivsize + padlen + AES_BLOCK_SIZE;
-	if (datalen > dd->buflen)
-		return atmel_aes_complete(dd, -EINVAL);
+	अगर (datalen > dd->buflen)
+		वापस aपंचांगel_aes_complete(dd, -EINVAL);
 
-	memcpy(data, iv, ivsize);
-	memset(data + ivsize, 0, padlen + sizeof(u64));
+	स_नकल(data, iv, ivsize);
+	स_रखो(data + ivsize, 0, padlen + माप(u64));
 	((__be64 *)(data + datalen))[-1] = cpu_to_be64(ivsize * 8);
 
-	return atmel_aes_gcm_ghash(dd, (const u32 *)data, datalen,
-				   NULL, ctx->j0, atmel_aes_gcm_process);
-}
+	वापस aपंचांगel_aes_gcm_ghash(dd, (स्थिर u32 *)data, datalen,
+				   शून्य, ctx->j0, aपंचांगel_aes_gcm_process);
+पूर्ण
 
-static int atmel_aes_gcm_process(struct atmel_aes_dev *dd)
-{
-	struct atmel_aes_gcm_ctx *ctx = atmel_aes_gcm_ctx_cast(dd->ctx);
-	struct aead_request *req = aead_request_cast(dd->areq);
-	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-	bool enc = atmel_aes_is_encrypt(dd);
+अटल पूर्णांक aपंचांगel_aes_gcm_process(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aपंचांगel_aes_gcm_ctx *ctx = aपंचांगel_aes_gcm_ctx_cast(dd->ctx);
+	काष्ठा aead_request *req = aead_request_cast(dd->areq);
+	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
+	bool enc = aपंचांगel_aes_is_encrypt(dd);
 	u32 authsize;
 
 	/* Compute text length. */
@@ -1523,126 +1524,126 @@ static int atmel_aes_gcm_process(struct atmel_aes_dev *dd)
 	 * According to tcrypt test suite, the GCM Automatic Tag Generation
 	 * fails when both the message and its associated data are empty.
 	 */
-	if (likely(req->assoclen != 0 || ctx->textlen != 0))
+	अगर (likely(req->assoclen != 0 || ctx->textlen != 0))
 		dd->flags |= AES_FLAGS_GTAGEN;
 
-	atmel_aes_write_ctrl(dd, false, NULL);
-	return atmel_aes_wait_for_data_ready(dd, atmel_aes_gcm_length);
-}
+	aपंचांगel_aes_ग_लिखो_ctrl(dd, false, शून्य);
+	वापस aपंचांगel_aes_रुको_क्रम_data_पढ़ोy(dd, aपंचांगel_aes_gcm_length);
+पूर्ण
 
-static int atmel_aes_gcm_length(struct atmel_aes_dev *dd)
-{
-	struct atmel_aes_gcm_ctx *ctx = atmel_aes_gcm_ctx_cast(dd->ctx);
-	struct aead_request *req = aead_request_cast(dd->areq);
+अटल पूर्णांक aपंचांगel_aes_gcm_length(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aपंचांगel_aes_gcm_ctx *ctx = aपंचांगel_aes_gcm_ctx_cast(dd->ctx);
+	काष्ठा aead_request *req = aead_request_cast(dd->areq);
 	__be32 j0_lsw, *j0 = ctx->j0;
-	size_t padlen;
+	माप_प्रकार padlen;
 
-	/* Write incr32(J0) into IV. */
+	/* Write incr32(J0) पूर्णांकo IV. */
 	j0_lsw = j0[3];
 	be32_add_cpu(&j0[3], 1);
-	atmel_aes_write_block(dd, AES_IVR(0), j0);
+	aपंचांगel_aes_ग_लिखो_block(dd, AES_IVR(0), j0);
 	j0[3] = j0_lsw;
 
 	/* Set aad and text lengths. */
-	atmel_aes_write(dd, AES_AADLENR, req->assoclen);
-	atmel_aes_write(dd, AES_CLENR, ctx->textlen);
+	aपंचांगel_aes_ग_लिखो(dd, AES_AADLENR, req->assoclen);
+	aपंचांगel_aes_ग_लिखो(dd, AES_CLENR, ctx->textlen);
 
 	/* Check whether AAD are present. */
-	if (unlikely(req->assoclen == 0)) {
+	अगर (unlikely(req->assoclen == 0)) अणु
 		dd->datalen = 0;
-		return atmel_aes_gcm_data(dd);
-	}
+		वापस aपंचांगel_aes_gcm_data(dd);
+	पूर्ण
 
 	/* Copy assoc data and add padding. */
-	padlen = atmel_aes_padlen(req->assoclen, AES_BLOCK_SIZE);
-	if (unlikely(req->assoclen + padlen > dd->buflen))
-		return atmel_aes_complete(dd, -EINVAL);
+	padlen = aपंचांगel_aes_padlen(req->assoclen, AES_BLOCK_SIZE);
+	अगर (unlikely(req->assoclen + padlen > dd->buflen))
+		वापस aपंचांगel_aes_complete(dd, -EINVAL);
 	sg_copy_to_buffer(req->src, sg_nents(req->src), dd->buf, req->assoclen);
 
-	/* Write assoc data into the Input Data register. */
+	/* Write assoc data पूर्णांकo the Input Data रेजिस्टर. */
 	dd->data = (u32 *)dd->buf;
 	dd->datalen = req->assoclen + padlen;
-	return atmel_aes_gcm_data(dd);
-}
+	वापस aपंचांगel_aes_gcm_data(dd);
+पूर्ण
 
-static int atmel_aes_gcm_data(struct atmel_aes_dev *dd)
-{
-	struct atmel_aes_gcm_ctx *ctx = atmel_aes_gcm_ctx_cast(dd->ctx);
-	struct aead_request *req = aead_request_cast(dd->areq);
+अटल पूर्णांक aपंचांगel_aes_gcm_data(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aपंचांगel_aes_gcm_ctx *ctx = aपंचांगel_aes_gcm_ctx_cast(dd->ctx);
+	काष्ठा aead_request *req = aead_request_cast(dd->areq);
 	bool use_dma = (ctx->textlen >= ATMEL_AES_DMA_THRESHOLD);
-	struct scatterlist *src, *dst;
+	काष्ठा scatterlist *src, *dst;
 	u32 isr, mr;
 
 	/* Write AAD first. */
-	while (dd->datalen > 0) {
-		atmel_aes_write_block(dd, AES_IDATAR(0), dd->data);
+	जबतक (dd->datalen > 0) अणु
+		aपंचांगel_aes_ग_लिखो_block(dd, AES_IDATAR(0), dd->data);
 		dd->data += 4;
 		dd->datalen -= AES_BLOCK_SIZE;
 
-		isr = atmel_aes_read(dd, AES_ISR);
-		if (!(isr & AES_INT_DATARDY)) {
-			dd->resume = atmel_aes_gcm_data;
-			atmel_aes_write(dd, AES_IER, AES_INT_DATARDY);
-			return -EINPROGRESS;
-		}
-	}
+		isr = aपंचांगel_aes_पढ़ो(dd, AES_ISR);
+		अगर (!(isr & AES_INT_DATARDY)) अणु
+			dd->resume = aपंचांगel_aes_gcm_data;
+			aपंचांगel_aes_ग_लिखो(dd, AES_IER, AES_INT_DATARDY);
+			वापस -EINPROGRESS;
+		पूर्ण
+	पूर्ण
 
 	/* GMAC only. */
-	if (unlikely(ctx->textlen == 0))
-		return atmel_aes_gcm_tag_init(dd);
+	अगर (unlikely(ctx->textlen == 0))
+		वापस aपंचांगel_aes_gcm_tag_init(dd);
 
 	/* Prepare src and dst scatter lists to transfer cipher/plain texts */
 	src = scatterwalk_ffwd(ctx->src, req->src, req->assoclen);
 	dst = ((req->src == req->dst) ? src :
 	       scatterwalk_ffwd(ctx->dst, req->dst, req->assoclen));
 
-	if (use_dma) {
-		/* Update the Mode Register for DMA transfers. */
-		mr = atmel_aes_read(dd, AES_MR);
+	अगर (use_dma) अणु
+		/* Update the Mode Register क्रम DMA transfers. */
+		mr = aपंचांगel_aes_पढ़ो(dd, AES_MR);
 		mr &= ~(AES_MR_SMOD_MASK | AES_MR_DUALBUFF);
 		mr |= AES_MR_SMOD_IDATAR0;
-		if (dd->caps.has_dualbuff)
+		अगर (dd->caps.has_dualbuff)
 			mr |= AES_MR_DUALBUFF;
-		atmel_aes_write(dd, AES_MR, mr);
+		aपंचांगel_aes_ग_लिखो(dd, AES_MR, mr);
 
-		return atmel_aes_dma_start(dd, src, dst, ctx->textlen,
-					   atmel_aes_gcm_tag_init);
-	}
+		वापस aपंचांगel_aes_dma_start(dd, src, dst, ctx->textlen,
+					   aपंचांगel_aes_gcm_tag_init);
+	पूर्ण
 
-	return atmel_aes_cpu_start(dd, src, dst, ctx->textlen,
-				   atmel_aes_gcm_tag_init);
-}
+	वापस aपंचांगel_aes_cpu_start(dd, src, dst, ctx->textlen,
+				   aपंचांगel_aes_gcm_tag_init);
+पूर्ण
 
-static int atmel_aes_gcm_tag_init(struct atmel_aes_dev *dd)
-{
-	struct atmel_aes_gcm_ctx *ctx = atmel_aes_gcm_ctx_cast(dd->ctx);
-	struct aead_request *req = aead_request_cast(dd->areq);
+अटल पूर्णांक aपंचांगel_aes_gcm_tag_init(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aपंचांगel_aes_gcm_ctx *ctx = aपंचांगel_aes_gcm_ctx_cast(dd->ctx);
+	काष्ठा aead_request *req = aead_request_cast(dd->areq);
 	__be64 *data = dd->buf;
 
-	if (likely(dd->flags & AES_FLAGS_GTAGEN)) {
-		if (!(atmel_aes_read(dd, AES_ISR) & AES_INT_TAGRDY)) {
-			dd->resume = atmel_aes_gcm_tag_init;
-			atmel_aes_write(dd, AES_IER, AES_INT_TAGRDY);
-			return -EINPROGRESS;
-		}
+	अगर (likely(dd->flags & AES_FLAGS_GTAGEN)) अणु
+		अगर (!(aपंचांगel_aes_पढ़ो(dd, AES_ISR) & AES_INT_TAGRDY)) अणु
+			dd->resume = aपंचांगel_aes_gcm_tag_init;
+			aपंचांगel_aes_ग_लिखो(dd, AES_IER, AES_INT_TAGRDY);
+			वापस -EINPROGRESS;
+		पूर्ण
 
-		return atmel_aes_gcm_finalize(dd);
-	}
+		वापस aपंचांगel_aes_gcm_finalize(dd);
+	पूर्ण
 
 	/* Read the GCM Intermediate Hash Word Registers. */
-	atmel_aes_read_block(dd, AES_GHASHR(0), ctx->ghash);
+	aपंचांगel_aes_पढ़ो_block(dd, AES_GHASHR(0), ctx->ghash);
 
 	data[0] = cpu_to_be64(req->assoclen * 8);
 	data[1] = cpu_to_be64(ctx->textlen * 8);
 
-	return atmel_aes_gcm_ghash(dd, (const u32 *)data, AES_BLOCK_SIZE,
-				   ctx->ghash, ctx->ghash, atmel_aes_gcm_tag);
-}
+	वापस aपंचांगel_aes_gcm_ghash(dd, (स्थिर u32 *)data, AES_BLOCK_SIZE,
+				   ctx->ghash, ctx->ghash, aपंचांगel_aes_gcm_tag);
+पूर्ण
 
-static int atmel_aes_gcm_tag(struct atmel_aes_dev *dd)
-{
-	struct atmel_aes_gcm_ctx *ctx = atmel_aes_gcm_ctx_cast(dd->ctx);
-	unsigned long flags;
+अटल पूर्णांक aपंचांगel_aes_gcm_tag(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aपंचांगel_aes_gcm_ctx *ctx = aपंचांगel_aes_gcm_ctx_cast(dd->ctx);
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * Change mode to CTR to complete the tag generation.
@@ -1651,791 +1652,791 @@ static int atmel_aes_gcm_tag(struct atmel_aes_dev *dd)
 	flags = dd->flags;
 	dd->flags &= ~(AES_FLAGS_OPMODE_MASK | AES_FLAGS_GTAGEN);
 	dd->flags |= AES_FLAGS_CTR;
-	atmel_aes_write_ctrl(dd, false, ctx->j0);
+	aपंचांगel_aes_ग_लिखो_ctrl(dd, false, ctx->j0);
 	dd->flags = flags;
 
-	atmel_aes_write_block(dd, AES_IDATAR(0), ctx->ghash);
-	return atmel_aes_wait_for_data_ready(dd, atmel_aes_gcm_finalize);
-}
+	aपंचांगel_aes_ग_लिखो_block(dd, AES_IDATAR(0), ctx->ghash);
+	वापस aपंचांगel_aes_रुको_क्रम_data_पढ़ोy(dd, aपंचांगel_aes_gcm_finalize);
+पूर्ण
 
-static int atmel_aes_gcm_finalize(struct atmel_aes_dev *dd)
-{
-	struct atmel_aes_gcm_ctx *ctx = atmel_aes_gcm_ctx_cast(dd->ctx);
-	struct aead_request *req = aead_request_cast(dd->areq);
-	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-	bool enc = atmel_aes_is_encrypt(dd);
+अटल पूर्णांक aपंचांगel_aes_gcm_finalize(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aपंचांगel_aes_gcm_ctx *ctx = aपंचांगel_aes_gcm_ctx_cast(dd->ctx);
+	काष्ठा aead_request *req = aead_request_cast(dd->areq);
+	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
+	bool enc = aपंचांगel_aes_is_encrypt(dd);
 	u32 offset, authsize, itag[4], *otag = ctx->tag;
-	int err;
+	पूर्णांक err;
 
 	/* Read the computed tag. */
-	if (likely(dd->flags & AES_FLAGS_GTAGEN))
-		atmel_aes_read_block(dd, AES_TAGR(0), ctx->tag);
-	else
-		atmel_aes_read_block(dd, AES_ODATAR(0), ctx->tag);
+	अगर (likely(dd->flags & AES_FLAGS_GTAGEN))
+		aपंचांगel_aes_पढ़ो_block(dd, AES_TAGR(0), ctx->tag);
+	अन्यथा
+		aपंचांगel_aes_पढ़ो_block(dd, AES_ODATAR(0), ctx->tag);
 
 	offset = req->assoclen + ctx->textlen;
 	authsize = crypto_aead_authsize(tfm);
-	if (enc) {
+	अगर (enc) अणु
 		scatterwalk_map_and_copy(otag, req->dst, offset, authsize, 1);
 		err = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		scatterwalk_map_and_copy(itag, req->src, offset, authsize, 0);
 		err = crypto_memneq(itag, otag, authsize) ? -EBADMSG : 0;
-	}
+	पूर्ण
 
-	return atmel_aes_complete(dd, err);
-}
+	वापस aपंचांगel_aes_complete(dd, err);
+पूर्ण
 
-static int atmel_aes_gcm_crypt(struct aead_request *req,
-			       unsigned long mode)
-{
-	struct atmel_aes_base_ctx *ctx;
-	struct atmel_aes_reqctx *rctx;
-	struct atmel_aes_dev *dd;
+अटल पूर्णांक aपंचांगel_aes_gcm_crypt(काष्ठा aead_request *req,
+			       अचिन्हित दीर्घ mode)
+अणु
+	काष्ठा aपंचांगel_aes_base_ctx *ctx;
+	काष्ठा aपंचांगel_aes_reqctx *rctx;
+	काष्ठा aपंचांगel_aes_dev *dd;
 
 	ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
 	ctx->block_size = AES_BLOCK_SIZE;
 	ctx->is_aead = true;
 
-	dd = atmel_aes_find_dev(ctx);
-	if (!dd)
-		return -ENODEV;
+	dd = aपंचांगel_aes_find_dev(ctx);
+	अगर (!dd)
+		वापस -ENODEV;
 
 	rctx = aead_request_ctx(req);
 	rctx->mode = AES_FLAGS_GCM | mode;
 
-	return atmel_aes_handle_queue(dd, &req->base);
-}
+	वापस aपंचांगel_aes_handle_queue(dd, &req->base);
+पूर्ण
 
-static int atmel_aes_gcm_setkey(struct crypto_aead *tfm, const u8 *key,
-				unsigned int keylen)
-{
-	struct atmel_aes_base_ctx *ctx = crypto_aead_ctx(tfm);
+अटल पूर्णांक aपंचांगel_aes_gcm_setkey(काष्ठा crypto_aead *tfm, स्थिर u8 *key,
+				अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा aपंचांगel_aes_base_ctx *ctx = crypto_aead_ctx(tfm);
 
-	if (keylen != AES_KEYSIZE_256 &&
+	अगर (keylen != AES_KEYSIZE_256 &&
 	    keylen != AES_KEYSIZE_192 &&
 	    keylen != AES_KEYSIZE_128)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	memcpy(ctx->key, key, keylen);
+	स_नकल(ctx->key, key, keylen);
 	ctx->keylen = keylen;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_aes_gcm_setauthsize(struct crypto_aead *tfm,
-				     unsigned int authsize)
-{
-	return crypto_gcm_check_authsize(authsize);
-}
+अटल पूर्णांक aपंचांगel_aes_gcm_setauthsize(काष्ठा crypto_aead *tfm,
+				     अचिन्हित पूर्णांक authsize)
+अणु
+	वापस crypto_gcm_check_authsize(authsize);
+पूर्ण
 
-static int atmel_aes_gcm_encrypt(struct aead_request *req)
-{
-	return atmel_aes_gcm_crypt(req, AES_FLAGS_ENCRYPT);
-}
+अटल पूर्णांक aपंचांगel_aes_gcm_encrypt(काष्ठा aead_request *req)
+अणु
+	वापस aपंचांगel_aes_gcm_crypt(req, AES_FLAGS_ENCRYPT);
+पूर्ण
 
-static int atmel_aes_gcm_decrypt(struct aead_request *req)
-{
-	return atmel_aes_gcm_crypt(req, 0);
-}
+अटल पूर्णांक aपंचांगel_aes_gcm_decrypt(काष्ठा aead_request *req)
+अणु
+	वापस aपंचांगel_aes_gcm_crypt(req, 0);
+पूर्ण
 
-static int atmel_aes_gcm_init(struct crypto_aead *tfm)
-{
-	struct atmel_aes_gcm_ctx *ctx = crypto_aead_ctx(tfm);
+अटल पूर्णांक aपंचांगel_aes_gcm_init(काष्ठा crypto_aead *tfm)
+अणु
+	काष्ठा aपंचांगel_aes_gcm_ctx *ctx = crypto_aead_ctx(tfm);
 
-	crypto_aead_set_reqsize(tfm, sizeof(struct atmel_aes_reqctx));
-	ctx->base.start = atmel_aes_gcm_start;
+	crypto_aead_set_reqsize(tfm, माप(काष्ठा aपंचांगel_aes_reqctx));
+	ctx->base.start = aपंचांगel_aes_gcm_start;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct aead_alg aes_gcm_alg = {
-	.setkey		= atmel_aes_gcm_setkey,
-	.setauthsize	= atmel_aes_gcm_setauthsize,
-	.encrypt	= atmel_aes_gcm_encrypt,
-	.decrypt	= atmel_aes_gcm_decrypt,
-	.init		= atmel_aes_gcm_init,
+अटल काष्ठा aead_alg aes_gcm_alg = अणु
+	.setkey		= aपंचांगel_aes_gcm_setkey,
+	.setauthsize	= aपंचांगel_aes_gcm_setauthsize,
+	.encrypt	= aपंचांगel_aes_gcm_encrypt,
+	.decrypt	= aपंचांगel_aes_gcm_decrypt,
+	.init		= aपंचांगel_aes_gcm_init,
 	.ivsize		= GCM_AES_IV_SIZE,
 	.maxauthsize	= AES_BLOCK_SIZE,
 
-	.base = {
+	.base = अणु
 		.cra_name		= "gcm(aes)",
 		.cra_driver_name	= "atmel-gcm-aes",
 		.cra_blocksize		= 1,
-		.cra_ctxsize		= sizeof(struct atmel_aes_gcm_ctx),
-	},
-};
+		.cra_ctxsize		= माप(काष्ठा aपंचांगel_aes_gcm_ctx),
+	पूर्ण,
+पूर्ण;
 
 
 /* xts functions */
 
-static inline struct atmel_aes_xts_ctx *
-atmel_aes_xts_ctx_cast(struct atmel_aes_base_ctx *ctx)
-{
-	return container_of(ctx, struct atmel_aes_xts_ctx, base);
-}
+अटल अंतरभूत काष्ठा aपंचांगel_aes_xts_ctx *
+aपंचांगel_aes_xts_ctx_cast(काष्ठा aपंचांगel_aes_base_ctx *ctx)
+अणु
+	वापस container_of(ctx, काष्ठा aपंचांगel_aes_xts_ctx, base);
+पूर्ण
 
-static int atmel_aes_xts_process_data(struct atmel_aes_dev *dd);
+अटल पूर्णांक aपंचांगel_aes_xts_process_data(काष्ठा aपंचांगel_aes_dev *dd);
 
-static int atmel_aes_xts_start(struct atmel_aes_dev *dd)
-{
-	struct atmel_aes_xts_ctx *ctx = atmel_aes_xts_ctx_cast(dd->ctx);
-	struct skcipher_request *req = skcipher_request_cast(dd->areq);
-	struct atmel_aes_reqctx *rctx = skcipher_request_ctx(req);
-	unsigned long flags;
-	int err;
+अटल पूर्णांक aपंचांगel_aes_xts_start(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aपंचांगel_aes_xts_ctx *ctx = aपंचांगel_aes_xts_ctx_cast(dd->ctx);
+	काष्ठा skcipher_request *req = skcipher_request_cast(dd->areq);
+	काष्ठा aपंचांगel_aes_reqctx *rctx = skcipher_request_ctx(req);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
-	atmel_aes_set_mode(dd, rctx);
+	aपंचांगel_aes_set_mode(dd, rctx);
 
-	err = atmel_aes_hw_init(dd);
-	if (err)
-		return atmel_aes_complete(dd, err);
+	err = aपंचांगel_aes_hw_init(dd);
+	अगर (err)
+		वापस aपंचांगel_aes_complete(dd, err);
 
 	/* Compute the tweak value from req->iv with ecb(aes). */
 	flags = dd->flags;
 	dd->flags &= ~AES_FLAGS_MODE_MASK;
 	dd->flags |= (AES_FLAGS_ECB | AES_FLAGS_ENCRYPT);
-	atmel_aes_write_ctrl_key(dd, false, NULL,
+	aपंचांगel_aes_ग_लिखो_ctrl_key(dd, false, शून्य,
 				 ctx->key2, ctx->base.keylen);
 	dd->flags = flags;
 
-	atmel_aes_write_block(dd, AES_IDATAR(0), req->iv);
-	return atmel_aes_wait_for_data_ready(dd, atmel_aes_xts_process_data);
-}
+	aपंचांगel_aes_ग_लिखो_block(dd, AES_IDATAR(0), req->iv);
+	वापस aपंचांगel_aes_रुको_क्रम_data_पढ़ोy(dd, aपंचांगel_aes_xts_process_data);
+पूर्ण
 
-static int atmel_aes_xts_process_data(struct atmel_aes_dev *dd)
-{
-	struct skcipher_request *req = skcipher_request_cast(dd->areq);
+अटल पूर्णांक aपंचांगel_aes_xts_process_data(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा skcipher_request *req = skcipher_request_cast(dd->areq);
 	bool use_dma = (req->cryptlen >= ATMEL_AES_DMA_THRESHOLD);
-	u32 tweak[AES_BLOCK_SIZE / sizeof(u32)];
-	static const __le32 one[AES_BLOCK_SIZE / sizeof(u32)] = {cpu_to_le32(1), };
+	u32 tweak[AES_BLOCK_SIZE / माप(u32)];
+	अटल स्थिर __le32 one[AES_BLOCK_SIZE / माप(u32)] = अणुcpu_to_le32(1), पूर्ण;
 	u8 *tweak_bytes = (u8 *)tweak;
-	int i;
+	पूर्णांक i;
 
 	/* Read the computed ciphered tweak value. */
-	atmel_aes_read_block(dd, AES_ODATAR(0), tweak);
+	aपंचांगel_aes_पढ़ो_block(dd, AES_ODATAR(0), tweak);
 	/*
 	 * Hardware quirk:
-	 * the order of the ciphered tweak bytes need to be reversed before
-	 * writing them into the ODATARx registers.
+	 * the order of the ciphered tweak bytes need to be reversed beक्रमe
+	 * writing them पूर्णांकo the ODATARx रेजिस्टरs.
 	 */
-	for (i = 0; i < AES_BLOCK_SIZE/2; ++i) {
-		u8 tmp = tweak_bytes[AES_BLOCK_SIZE - 1 - i];
+	क्रम (i = 0; i < AES_BLOCK_SIZE/2; ++i) अणु
+		u8 पंचांगp = tweak_bytes[AES_BLOCK_SIZE - 1 - i];
 
 		tweak_bytes[AES_BLOCK_SIZE - 1 - i] = tweak_bytes[i];
-		tweak_bytes[i] = tmp;
-	}
+		tweak_bytes[i] = पंचांगp;
+	पूर्ण
 
 	/* Process the data. */
-	atmel_aes_write_ctrl(dd, use_dma, NULL);
-	atmel_aes_write_block(dd, AES_TWR(0), tweak);
-	atmel_aes_write_block(dd, AES_ALPHAR(0), one);
-	if (use_dma)
-		return atmel_aes_dma_start(dd, req->src, req->dst,
+	aपंचांगel_aes_ग_लिखो_ctrl(dd, use_dma, शून्य);
+	aपंचांगel_aes_ग_लिखो_block(dd, AES_TWR(0), tweak);
+	aपंचांगel_aes_ग_लिखो_block(dd, AES_ALPHAR(0), one);
+	अगर (use_dma)
+		वापस aपंचांगel_aes_dma_start(dd, req->src, req->dst,
 					   req->cryptlen,
-					   atmel_aes_transfer_complete);
+					   aपंचांगel_aes_transfer_complete);
 
-	return atmel_aes_cpu_start(dd, req->src, req->dst, req->cryptlen,
-				   atmel_aes_transfer_complete);
-}
+	वापस aपंचांगel_aes_cpu_start(dd, req->src, req->dst, req->cryptlen,
+				   aपंचांगel_aes_transfer_complete);
+पूर्ण
 
-static int atmel_aes_xts_setkey(struct crypto_skcipher *tfm, const u8 *key,
-				unsigned int keylen)
-{
-	struct atmel_aes_xts_ctx *ctx = crypto_skcipher_ctx(tfm);
-	int err;
+अटल पूर्णांक aपंचांगel_aes_xts_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+				अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा aपंचांगel_aes_xts_ctx *ctx = crypto_skcipher_ctx(tfm);
+	पूर्णांक err;
 
 	err = xts_check_key(crypto_skcipher_tfm(tfm), key, keylen);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	memcpy(ctx->base.key, key, keylen/2);
-	memcpy(ctx->key2, key + keylen/2, keylen/2);
+	स_नकल(ctx->base.key, key, keylen/2);
+	स_नकल(ctx->key2, key + keylen/2, keylen/2);
 	ctx->base.keylen = keylen/2;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_aes_xts_encrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_XTS | AES_FLAGS_ENCRYPT);
-}
+अटल पूर्णांक aपंचांगel_aes_xts_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_XTS | AES_FLAGS_ENCRYPT);
+पूर्ण
 
-static int atmel_aes_xts_decrypt(struct skcipher_request *req)
-{
-	return atmel_aes_crypt(req, AES_FLAGS_XTS);
-}
+अटल पूर्णांक aपंचांगel_aes_xts_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस aपंचांगel_aes_crypt(req, AES_FLAGS_XTS);
+पूर्ण
 
-static int atmel_aes_xts_init_tfm(struct crypto_skcipher *tfm)
-{
-	struct atmel_aes_xts_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक aपंचांगel_aes_xts_init_tfm(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा aपंचांगel_aes_xts_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	crypto_skcipher_set_reqsize(tfm, sizeof(struct atmel_aes_reqctx));
-	ctx->base.start = atmel_aes_xts_start;
+	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा aपंचांगel_aes_reqctx));
+	ctx->base.start = aपंचांगel_aes_xts_start;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct skcipher_alg aes_xts_alg = {
+अटल काष्ठा skcipher_alg aes_xts_alg = अणु
 	.base.cra_name		= "xts(aes)",
 	.base.cra_driver_name	= "atmel-xts-aes",
 	.base.cra_blocksize	= AES_BLOCK_SIZE,
-	.base.cra_ctxsize	= sizeof(struct atmel_aes_xts_ctx),
+	.base.cra_ctxsize	= माप(काष्ठा aपंचांगel_aes_xts_ctx),
 
 	.min_keysize		= 2 * AES_MIN_KEY_SIZE,
 	.max_keysize		= 2 * AES_MAX_KEY_SIZE,
 	.ivsize			= AES_BLOCK_SIZE,
-	.setkey			= atmel_aes_xts_setkey,
-	.encrypt		= atmel_aes_xts_encrypt,
-	.decrypt		= atmel_aes_xts_decrypt,
-	.init			= atmel_aes_xts_init_tfm,
-};
+	.setkey			= aपंचांगel_aes_xts_setkey,
+	.encrypt		= aपंचांगel_aes_xts_encrypt,
+	.decrypt		= aपंचांगel_aes_xts_decrypt,
+	.init			= aपंचांगel_aes_xts_init_tfm,
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
+#अगर IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
 /* authenc aead functions */
 
-static int atmel_aes_authenc_start(struct atmel_aes_dev *dd);
-static int atmel_aes_authenc_init(struct atmel_aes_dev *dd, int err,
+अटल पूर्णांक aपंचांगel_aes_authenc_start(काष्ठा aपंचांगel_aes_dev *dd);
+अटल पूर्णांक aपंचांगel_aes_authenc_init(काष्ठा aपंचांगel_aes_dev *dd, पूर्णांक err,
 				  bool is_async);
-static int atmel_aes_authenc_transfer(struct atmel_aes_dev *dd, int err,
+अटल पूर्णांक aपंचांगel_aes_authenc_transfer(काष्ठा aपंचांगel_aes_dev *dd, पूर्णांक err,
 				      bool is_async);
-static int atmel_aes_authenc_digest(struct atmel_aes_dev *dd);
-static int atmel_aes_authenc_final(struct atmel_aes_dev *dd, int err,
+अटल पूर्णांक aपंचांगel_aes_authenc_digest(काष्ठा aपंचांगel_aes_dev *dd);
+अटल पूर्णांक aपंचांगel_aes_authenc_final(काष्ठा aपंचांगel_aes_dev *dd, पूर्णांक err,
 				   bool is_async);
 
-static void atmel_aes_authenc_complete(struct atmel_aes_dev *dd, int err)
-{
-	struct aead_request *req = aead_request_cast(dd->areq);
-	struct atmel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
+अटल व्योम aपंचांगel_aes_authenc_complete(काष्ठा aपंचांगel_aes_dev *dd, पूर्णांक err)
+अणु
+	काष्ठा aead_request *req = aead_request_cast(dd->areq);
+	काष्ठा aपंचांगel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
 
-	if (err && (dd->flags & AES_FLAGS_OWN_SHA))
-		atmel_sha_authenc_abort(&rctx->auth_req);
+	अगर (err && (dd->flags & AES_FLAGS_OWN_SHA))
+		aपंचांगel_sha_authenc_पात(&rctx->auth_req);
 	dd->flags &= ~AES_FLAGS_OWN_SHA;
-}
+पूर्ण
 
-static int atmel_aes_authenc_start(struct atmel_aes_dev *dd)
-{
-	struct aead_request *req = aead_request_cast(dd->areq);
-	struct atmel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
-	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-	struct atmel_aes_authenc_ctx *ctx = crypto_aead_ctx(tfm);
-	int err;
+अटल पूर्णांक aपंचांगel_aes_authenc_start(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aead_request *req = aead_request_cast(dd->areq);
+	काष्ठा aपंचांगel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
+	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
+	काष्ठा aपंचांगel_aes_authenc_ctx *ctx = crypto_aead_ctx(tfm);
+	पूर्णांक err;
 
-	atmel_aes_set_mode(dd, &rctx->base);
+	aपंचांगel_aes_set_mode(dd, &rctx->base);
 
-	err = atmel_aes_hw_init(dd);
-	if (err)
-		return atmel_aes_complete(dd, err);
+	err = aपंचांगel_aes_hw_init(dd);
+	अगर (err)
+		वापस aपंचांगel_aes_complete(dd, err);
 
-	return atmel_sha_authenc_schedule(&rctx->auth_req, ctx->auth,
-					  atmel_aes_authenc_init, dd);
-}
+	वापस aपंचांगel_sha_authenc_schedule(&rctx->auth_req, ctx->auth,
+					  aपंचांगel_aes_authenc_init, dd);
+पूर्ण
 
-static int atmel_aes_authenc_init(struct atmel_aes_dev *dd, int err,
+अटल पूर्णांक aपंचांगel_aes_authenc_init(काष्ठा aपंचांगel_aes_dev *dd, पूर्णांक err,
 				  bool is_async)
-{
-	struct aead_request *req = aead_request_cast(dd->areq);
-	struct atmel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
+अणु
+	काष्ठा aead_request *req = aead_request_cast(dd->areq);
+	काष्ठा aपंचांगel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
 
-	if (is_async)
+	अगर (is_async)
 		dd->is_async = true;
-	if (err)
-		return atmel_aes_complete(dd, err);
+	अगर (err)
+		वापस aपंचांगel_aes_complete(dd, err);
 
 	/* If here, we've got the ownership of the SHA device. */
 	dd->flags |= AES_FLAGS_OWN_SHA;
 
 	/* Configure the SHA device. */
-	return atmel_sha_authenc_init(&rctx->auth_req,
+	वापस aपंचांगel_sha_authenc_init(&rctx->auth_req,
 				      req->src, req->assoclen,
 				      rctx->textlen,
-				      atmel_aes_authenc_transfer, dd);
-}
+				      aपंचांगel_aes_authenc_transfer, dd);
+पूर्ण
 
-static int atmel_aes_authenc_transfer(struct atmel_aes_dev *dd, int err,
+अटल पूर्णांक aपंचांगel_aes_authenc_transfer(काष्ठा aपंचांगel_aes_dev *dd, पूर्णांक err,
 				      bool is_async)
-{
-	struct aead_request *req = aead_request_cast(dd->areq);
-	struct atmel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
-	bool enc = atmel_aes_is_encrypt(dd);
-	struct scatterlist *src, *dst;
-	__be32 iv[AES_BLOCK_SIZE / sizeof(u32)];
+अणु
+	काष्ठा aead_request *req = aead_request_cast(dd->areq);
+	काष्ठा aपंचांगel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
+	bool enc = aपंचांगel_aes_is_encrypt(dd);
+	काष्ठा scatterlist *src, *dst;
+	__be32 iv[AES_BLOCK_SIZE / माप(u32)];
 	u32 emr;
 
-	if (is_async)
+	अगर (is_async)
 		dd->is_async = true;
-	if (err)
-		return atmel_aes_complete(dd, err);
+	अगर (err)
+		वापस aपंचांगel_aes_complete(dd, err);
 
 	/* Prepare src and dst scatter-lists to transfer cipher/plain texts. */
 	src = scatterwalk_ffwd(rctx->src, req->src, req->assoclen);
 	dst = src;
 
-	if (req->src != req->dst)
+	अगर (req->src != req->dst)
 		dst = scatterwalk_ffwd(rctx->dst, req->dst, req->assoclen);
 
 	/* Configure the AES device. */
-	memcpy(iv, req->iv, sizeof(iv));
+	स_नकल(iv, req->iv, माप(iv));
 
 	/*
-	 * Here we always set the 2nd parameter of atmel_aes_write_ctrl() to
-	 * 'true' even if the data transfer is actually performed by the CPU (so
-	 * not by the DMA) because we must force the AES_MR_SMOD bitfield to the
+	 * Here we always set the 2nd parameter of aपंचांगel_aes_ग_लिखो_ctrl() to
+	 * 'true' even अगर the data transfer is actually perक्रमmed by the CPU (so
+	 * not by the DMA) because we must क्रमce the AES_MR_SMOD bitfield to the
 	 * value AES_MR_SMOD_IDATAR0. Indeed, both AES_MR_SMOD and SHA_MR_SMOD
 	 * must be set to *_MR_SMOD_IDATAR0.
 	 */
-	atmel_aes_write_ctrl(dd, true, iv);
+	aपंचांगel_aes_ग_लिखो_ctrl(dd, true, iv);
 	emr = AES_EMR_PLIPEN;
-	if (!enc)
+	अगर (!enc)
 		emr |= AES_EMR_PLIPD;
-	atmel_aes_write(dd, AES_EMR, emr);
+	aपंचांगel_aes_ग_लिखो(dd, AES_EMR, emr);
 
 	/* Transfer data. */
-	return atmel_aes_dma_start(dd, src, dst, rctx->textlen,
-				   atmel_aes_authenc_digest);
-}
+	वापस aपंचांगel_aes_dma_start(dd, src, dst, rctx->textlen,
+				   aपंचांगel_aes_authenc_digest);
+पूर्ण
 
-static int atmel_aes_authenc_digest(struct atmel_aes_dev *dd)
-{
-	struct aead_request *req = aead_request_cast(dd->areq);
-	struct atmel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
+अटल पूर्णांक aपंचांगel_aes_authenc_digest(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	काष्ठा aead_request *req = aead_request_cast(dd->areq);
+	काष्ठा aपंचांगel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
 
-	/* atmel_sha_authenc_final() releases the SHA device. */
+	/* aपंचांगel_sha_authenc_final() releases the SHA device. */
 	dd->flags &= ~AES_FLAGS_OWN_SHA;
-	return atmel_sha_authenc_final(&rctx->auth_req,
-				       rctx->digest, sizeof(rctx->digest),
-				       atmel_aes_authenc_final, dd);
-}
+	वापस aपंचांगel_sha_authenc_final(&rctx->auth_req,
+				       rctx->digest, माप(rctx->digest),
+				       aपंचांगel_aes_authenc_final, dd);
+पूर्ण
 
-static int atmel_aes_authenc_final(struct atmel_aes_dev *dd, int err,
+अटल पूर्णांक aपंचांगel_aes_authenc_final(काष्ठा aपंचांगel_aes_dev *dd, पूर्णांक err,
 				   bool is_async)
-{
-	struct aead_request *req = aead_request_cast(dd->areq);
-	struct atmel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
-	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-	bool enc = atmel_aes_is_encrypt(dd);
-	u32 idigest[SHA512_DIGEST_SIZE / sizeof(u32)], *odigest = rctx->digest;
+अणु
+	काष्ठा aead_request *req = aead_request_cast(dd->areq);
+	काष्ठा aपंचांगel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
+	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
+	bool enc = aपंचांगel_aes_is_encrypt(dd);
+	u32 idigest[SHA512_DIGEST_SIZE / माप(u32)], *odigest = rctx->digest;
 	u32 offs, authsize;
 
-	if (is_async)
+	अगर (is_async)
 		dd->is_async = true;
-	if (err)
-		goto complete;
+	अगर (err)
+		जाओ complete;
 
 	offs = req->assoclen + rctx->textlen;
 	authsize = crypto_aead_authsize(tfm);
-	if (enc) {
+	अगर (enc) अणु
 		scatterwalk_map_and_copy(odigest, req->dst, offs, authsize, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		scatterwalk_map_and_copy(idigest, req->src, offs, authsize, 0);
-		if (crypto_memneq(idigest, odigest, authsize))
+		अगर (crypto_memneq(idigest, odigest, authsize))
 			err = -EBADMSG;
-	}
+	पूर्ण
 
 complete:
-	return atmel_aes_complete(dd, err);
-}
+	वापस aपंचांगel_aes_complete(dd, err);
+पूर्ण
 
-static int atmel_aes_authenc_setkey(struct crypto_aead *tfm, const u8 *key,
-				    unsigned int keylen)
-{
-	struct atmel_aes_authenc_ctx *ctx = crypto_aead_ctx(tfm);
-	struct crypto_authenc_keys keys;
-	int err;
+अटल पूर्णांक aपंचांगel_aes_authenc_setkey(काष्ठा crypto_aead *tfm, स्थिर u8 *key,
+				    अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा aपंचांगel_aes_authenc_ctx *ctx = crypto_aead_ctx(tfm);
+	काष्ठा crypto_authenc_keys keys;
+	पूर्णांक err;
 
-	if (crypto_authenc_extractkeys(&keys, key, keylen) != 0)
-		goto badkey;
+	अगर (crypto_authenc_extractkeys(&keys, key, keylen) != 0)
+		जाओ badkey;
 
-	if (keys.enckeylen > sizeof(ctx->base.key))
-		goto badkey;
+	अगर (keys.enckeylen > माप(ctx->base.key))
+		जाओ badkey;
 
 	/* Save auth key. */
-	err = atmel_sha_authenc_setkey(ctx->auth,
+	err = aपंचांगel_sha_authenc_setkey(ctx->auth,
 				       keys.authkey, keys.authkeylen,
 				       crypto_aead_get_flags(tfm));
-	if (err) {
-		memzero_explicit(&keys, sizeof(keys));
-		return err;
-	}
+	अगर (err) अणु
+		memzero_explicit(&keys, माप(keys));
+		वापस err;
+	पूर्ण
 
 	/* Save enc key. */
 	ctx->base.keylen = keys.enckeylen;
-	memcpy(ctx->base.key, keys.enckey, keys.enckeylen);
+	स_नकल(ctx->base.key, keys.enckey, keys.enckeylen);
 
-	memzero_explicit(&keys, sizeof(keys));
-	return 0;
+	memzero_explicit(&keys, माप(keys));
+	वापस 0;
 
 badkey:
-	memzero_explicit(&keys, sizeof(keys));
-	return -EINVAL;
-}
+	memzero_explicit(&keys, माप(keys));
+	वापस -EINVAL;
+पूर्ण
 
-static int atmel_aes_authenc_init_tfm(struct crypto_aead *tfm,
-				      unsigned long auth_mode)
-{
-	struct atmel_aes_authenc_ctx *ctx = crypto_aead_ctx(tfm);
-	unsigned int auth_reqsize = atmel_sha_authenc_get_reqsize();
+अटल पूर्णांक aपंचांगel_aes_authenc_init_tfm(काष्ठा crypto_aead *tfm,
+				      अचिन्हित दीर्घ auth_mode)
+अणु
+	काष्ठा aपंचांगel_aes_authenc_ctx *ctx = crypto_aead_ctx(tfm);
+	अचिन्हित पूर्णांक auth_reqsize = aपंचांगel_sha_authenc_get_reqsize();
 
-	ctx->auth = atmel_sha_authenc_spawn(auth_mode);
-	if (IS_ERR(ctx->auth))
-		return PTR_ERR(ctx->auth);
+	ctx->auth = aपंचांगel_sha_authenc_spawn(auth_mode);
+	अगर (IS_ERR(ctx->auth))
+		वापस PTR_ERR(ctx->auth);
 
-	crypto_aead_set_reqsize(tfm, (sizeof(struct atmel_aes_authenc_reqctx) +
+	crypto_aead_set_reqsize(tfm, (माप(काष्ठा aपंचांगel_aes_authenc_reqctx) +
 				      auth_reqsize));
-	ctx->base.start = atmel_aes_authenc_start;
+	ctx->base.start = aपंचांगel_aes_authenc_start;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_aes_authenc_hmac_sha1_init_tfm(struct crypto_aead *tfm)
-{
-	return atmel_aes_authenc_init_tfm(tfm, SHA_FLAGS_HMAC_SHA1);
-}
+अटल पूर्णांक aपंचांगel_aes_authenc_hmac_sha1_init_tfm(काष्ठा crypto_aead *tfm)
+अणु
+	वापस aपंचांगel_aes_authenc_init_tfm(tfm, SHA_FLAGS_HMAC_SHA1);
+पूर्ण
 
-static int atmel_aes_authenc_hmac_sha224_init_tfm(struct crypto_aead *tfm)
-{
-	return atmel_aes_authenc_init_tfm(tfm, SHA_FLAGS_HMAC_SHA224);
-}
+अटल पूर्णांक aपंचांगel_aes_authenc_hmac_sha224_init_tfm(काष्ठा crypto_aead *tfm)
+अणु
+	वापस aपंचांगel_aes_authenc_init_tfm(tfm, SHA_FLAGS_HMAC_SHA224);
+पूर्ण
 
-static int atmel_aes_authenc_hmac_sha256_init_tfm(struct crypto_aead *tfm)
-{
-	return atmel_aes_authenc_init_tfm(tfm, SHA_FLAGS_HMAC_SHA256);
-}
+अटल पूर्णांक aपंचांगel_aes_authenc_hmac_sha256_init_tfm(काष्ठा crypto_aead *tfm)
+अणु
+	वापस aपंचांगel_aes_authenc_init_tfm(tfm, SHA_FLAGS_HMAC_SHA256);
+पूर्ण
 
-static int atmel_aes_authenc_hmac_sha384_init_tfm(struct crypto_aead *tfm)
-{
-	return atmel_aes_authenc_init_tfm(tfm, SHA_FLAGS_HMAC_SHA384);
-}
+अटल पूर्णांक aपंचांगel_aes_authenc_hmac_sha384_init_tfm(काष्ठा crypto_aead *tfm)
+अणु
+	वापस aपंचांगel_aes_authenc_init_tfm(tfm, SHA_FLAGS_HMAC_SHA384);
+पूर्ण
 
-static int atmel_aes_authenc_hmac_sha512_init_tfm(struct crypto_aead *tfm)
-{
-	return atmel_aes_authenc_init_tfm(tfm, SHA_FLAGS_HMAC_SHA512);
-}
+अटल पूर्णांक aपंचांगel_aes_authenc_hmac_sha512_init_tfm(काष्ठा crypto_aead *tfm)
+अणु
+	वापस aपंचांगel_aes_authenc_init_tfm(tfm, SHA_FLAGS_HMAC_SHA512);
+पूर्ण
 
-static void atmel_aes_authenc_exit_tfm(struct crypto_aead *tfm)
-{
-	struct atmel_aes_authenc_ctx *ctx = crypto_aead_ctx(tfm);
+अटल व्योम aपंचांगel_aes_authenc_निकास_tfm(काष्ठा crypto_aead *tfm)
+अणु
+	काष्ठा aपंचांगel_aes_authenc_ctx *ctx = crypto_aead_ctx(tfm);
 
-	atmel_sha_authenc_free(ctx->auth);
-}
+	aपंचांगel_sha_authenc_मुक्त(ctx->auth);
+पूर्ण
 
-static int atmel_aes_authenc_crypt(struct aead_request *req,
-				   unsigned long mode)
-{
-	struct atmel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
-	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-	struct atmel_aes_base_ctx *ctx = crypto_aead_ctx(tfm);
+अटल पूर्णांक aपंचांगel_aes_authenc_crypt(काष्ठा aead_request *req,
+				   अचिन्हित दीर्घ mode)
+अणु
+	काष्ठा aपंचांगel_aes_authenc_reqctx *rctx = aead_request_ctx(req);
+	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
+	काष्ठा aपंचांगel_aes_base_ctx *ctx = crypto_aead_ctx(tfm);
 	u32 authsize = crypto_aead_authsize(tfm);
 	bool enc = (mode & AES_FLAGS_ENCRYPT);
-	struct atmel_aes_dev *dd;
+	काष्ठा aपंचांगel_aes_dev *dd;
 
 	/* Compute text length. */
-	if (!enc && req->cryptlen < authsize)
-		return -EINVAL;
+	अगर (!enc && req->cryptlen < authsize)
+		वापस -EINVAL;
 	rctx->textlen = req->cryptlen - (enc ? 0 : authsize);
 
 	/*
 	 * Currently, empty messages are not supported yet:
-	 * the SHA auto-padding can be used only on non-empty messages.
-	 * Hence a special case needs to be implemented for empty message.
+	 * the SHA स्वतः-padding can be used only on non-empty messages.
+	 * Hence a special हाल needs to be implemented क्रम empty message.
 	 */
-	if (!rctx->textlen && !req->assoclen)
-		return -EINVAL;
+	अगर (!rctx->textlen && !req->assoclen)
+		वापस -EINVAL;
 
 	rctx->base.mode = mode;
 	ctx->block_size = AES_BLOCK_SIZE;
 	ctx->is_aead = true;
 
-	dd = atmel_aes_find_dev(ctx);
-	if (!dd)
-		return -ENODEV;
+	dd = aपंचांगel_aes_find_dev(ctx);
+	अगर (!dd)
+		वापस -ENODEV;
 
-	return atmel_aes_handle_queue(dd, &req->base);
-}
+	वापस aपंचांगel_aes_handle_queue(dd, &req->base);
+पूर्ण
 
-static int atmel_aes_authenc_cbc_aes_encrypt(struct aead_request *req)
-{
-	return atmel_aes_authenc_crypt(req, AES_FLAGS_CBC | AES_FLAGS_ENCRYPT);
-}
+अटल पूर्णांक aपंचांगel_aes_authenc_cbc_aes_encrypt(काष्ठा aead_request *req)
+अणु
+	वापस aपंचांगel_aes_authenc_crypt(req, AES_FLAGS_CBC | AES_FLAGS_ENCRYPT);
+पूर्ण
 
-static int atmel_aes_authenc_cbc_aes_decrypt(struct aead_request *req)
-{
-	return atmel_aes_authenc_crypt(req, AES_FLAGS_CBC);
-}
+अटल पूर्णांक aपंचांगel_aes_authenc_cbc_aes_decrypt(काष्ठा aead_request *req)
+अणु
+	वापस aपंचांगel_aes_authenc_crypt(req, AES_FLAGS_CBC);
+पूर्ण
 
-static struct aead_alg aes_authenc_algs[] = {
-{
-	.setkey		= atmel_aes_authenc_setkey,
-	.encrypt	= atmel_aes_authenc_cbc_aes_encrypt,
-	.decrypt	= atmel_aes_authenc_cbc_aes_decrypt,
-	.init		= atmel_aes_authenc_hmac_sha1_init_tfm,
-	.exit		= atmel_aes_authenc_exit_tfm,
+अटल काष्ठा aead_alg aes_authenc_algs[] = अणु
+अणु
+	.setkey		= aपंचांगel_aes_authenc_setkey,
+	.encrypt	= aपंचांगel_aes_authenc_cbc_aes_encrypt,
+	.decrypt	= aपंचांगel_aes_authenc_cbc_aes_decrypt,
+	.init		= aपंचांगel_aes_authenc_hmac_sha1_init_tfm,
+	.निकास		= aपंचांगel_aes_authenc_निकास_tfm,
 	.ivsize		= AES_BLOCK_SIZE,
 	.maxauthsize	= SHA1_DIGEST_SIZE,
 
-	.base = {
+	.base = अणु
 		.cra_name		= "authenc(hmac(sha1),cbc(aes))",
 		.cra_driver_name	= "atmel-authenc-hmac-sha1-cbc-aes",
 		.cra_blocksize		= AES_BLOCK_SIZE,
-		.cra_ctxsize		= sizeof(struct atmel_aes_authenc_ctx),
-	},
-},
-{
-	.setkey		= atmel_aes_authenc_setkey,
-	.encrypt	= atmel_aes_authenc_cbc_aes_encrypt,
-	.decrypt	= atmel_aes_authenc_cbc_aes_decrypt,
-	.init		= atmel_aes_authenc_hmac_sha224_init_tfm,
-	.exit		= atmel_aes_authenc_exit_tfm,
+		.cra_ctxsize		= माप(काष्ठा aपंचांगel_aes_authenc_ctx),
+	पूर्ण,
+पूर्ण,
+अणु
+	.setkey		= aपंचांगel_aes_authenc_setkey,
+	.encrypt	= aपंचांगel_aes_authenc_cbc_aes_encrypt,
+	.decrypt	= aपंचांगel_aes_authenc_cbc_aes_decrypt,
+	.init		= aपंचांगel_aes_authenc_hmac_sha224_init_tfm,
+	.निकास		= aपंचांगel_aes_authenc_निकास_tfm,
 	.ivsize		= AES_BLOCK_SIZE,
 	.maxauthsize	= SHA224_DIGEST_SIZE,
 
-	.base = {
+	.base = अणु
 		.cra_name		= "authenc(hmac(sha224),cbc(aes))",
 		.cra_driver_name	= "atmel-authenc-hmac-sha224-cbc-aes",
 		.cra_blocksize		= AES_BLOCK_SIZE,
-		.cra_ctxsize		= sizeof(struct atmel_aes_authenc_ctx),
-	},
-},
-{
-	.setkey		= atmel_aes_authenc_setkey,
-	.encrypt	= atmel_aes_authenc_cbc_aes_encrypt,
-	.decrypt	= atmel_aes_authenc_cbc_aes_decrypt,
-	.init		= atmel_aes_authenc_hmac_sha256_init_tfm,
-	.exit		= atmel_aes_authenc_exit_tfm,
+		.cra_ctxsize		= माप(काष्ठा aपंचांगel_aes_authenc_ctx),
+	पूर्ण,
+पूर्ण,
+अणु
+	.setkey		= aपंचांगel_aes_authenc_setkey,
+	.encrypt	= aपंचांगel_aes_authenc_cbc_aes_encrypt,
+	.decrypt	= aपंचांगel_aes_authenc_cbc_aes_decrypt,
+	.init		= aपंचांगel_aes_authenc_hmac_sha256_init_tfm,
+	.निकास		= aपंचांगel_aes_authenc_निकास_tfm,
 	.ivsize		= AES_BLOCK_SIZE,
 	.maxauthsize	= SHA256_DIGEST_SIZE,
 
-	.base = {
+	.base = अणु
 		.cra_name		= "authenc(hmac(sha256),cbc(aes))",
 		.cra_driver_name	= "atmel-authenc-hmac-sha256-cbc-aes",
 		.cra_blocksize		= AES_BLOCK_SIZE,
-		.cra_ctxsize		= sizeof(struct atmel_aes_authenc_ctx),
-	},
-},
-{
-	.setkey		= atmel_aes_authenc_setkey,
-	.encrypt	= atmel_aes_authenc_cbc_aes_encrypt,
-	.decrypt	= atmel_aes_authenc_cbc_aes_decrypt,
-	.init		= atmel_aes_authenc_hmac_sha384_init_tfm,
-	.exit		= atmel_aes_authenc_exit_tfm,
+		.cra_ctxsize		= माप(काष्ठा aपंचांगel_aes_authenc_ctx),
+	पूर्ण,
+पूर्ण,
+अणु
+	.setkey		= aपंचांगel_aes_authenc_setkey,
+	.encrypt	= aपंचांगel_aes_authenc_cbc_aes_encrypt,
+	.decrypt	= aपंचांगel_aes_authenc_cbc_aes_decrypt,
+	.init		= aपंचांगel_aes_authenc_hmac_sha384_init_tfm,
+	.निकास		= aपंचांगel_aes_authenc_निकास_tfm,
 	.ivsize		= AES_BLOCK_SIZE,
 	.maxauthsize	= SHA384_DIGEST_SIZE,
 
-	.base = {
+	.base = अणु
 		.cra_name		= "authenc(hmac(sha384),cbc(aes))",
 		.cra_driver_name	= "atmel-authenc-hmac-sha384-cbc-aes",
 		.cra_blocksize		= AES_BLOCK_SIZE,
-		.cra_ctxsize		= sizeof(struct atmel_aes_authenc_ctx),
-	},
-},
-{
-	.setkey		= atmel_aes_authenc_setkey,
-	.encrypt	= atmel_aes_authenc_cbc_aes_encrypt,
-	.decrypt	= atmel_aes_authenc_cbc_aes_decrypt,
-	.init		= atmel_aes_authenc_hmac_sha512_init_tfm,
-	.exit		= atmel_aes_authenc_exit_tfm,
+		.cra_ctxsize		= माप(काष्ठा aपंचांगel_aes_authenc_ctx),
+	पूर्ण,
+पूर्ण,
+अणु
+	.setkey		= aपंचांगel_aes_authenc_setkey,
+	.encrypt	= aपंचांगel_aes_authenc_cbc_aes_encrypt,
+	.decrypt	= aपंचांगel_aes_authenc_cbc_aes_decrypt,
+	.init		= aपंचांगel_aes_authenc_hmac_sha512_init_tfm,
+	.निकास		= aपंचांगel_aes_authenc_निकास_tfm,
 	.ivsize		= AES_BLOCK_SIZE,
 	.maxauthsize	= SHA512_DIGEST_SIZE,
 
-	.base = {
+	.base = अणु
 		.cra_name		= "authenc(hmac(sha512),cbc(aes))",
 		.cra_driver_name	= "atmel-authenc-hmac-sha512-cbc-aes",
 		.cra_blocksize		= AES_BLOCK_SIZE,
-		.cra_ctxsize		= sizeof(struct atmel_aes_authenc_ctx),
-	},
-},
-};
-#endif /* CONFIG_CRYPTO_DEV_ATMEL_AUTHENC */
+		.cra_ctxsize		= माप(काष्ठा aपंचांगel_aes_authenc_ctx),
+	पूर्ण,
+पूर्ण,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_CRYPTO_DEV_ATMEL_AUTHENC */
 
 /* Probe functions */
 
-static int atmel_aes_buff_init(struct atmel_aes_dev *dd)
-{
-	dd->buf = (void *)__get_free_pages(GFP_KERNEL, ATMEL_AES_BUFFER_ORDER);
+अटल पूर्णांक aपंचांगel_aes_buff_init(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	dd->buf = (व्योम *)__get_मुक्त_pages(GFP_KERNEL, ATMEL_AES_BUFFER_ORDER);
 	dd->buflen = ATMEL_AES_BUFFER_SIZE;
 	dd->buflen &= ~(AES_BLOCK_SIZE - 1);
 
-	if (!dd->buf) {
+	अगर (!dd->buf) अणु
 		dev_err(dd->dev, "unable to alloc pages.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void atmel_aes_buff_cleanup(struct atmel_aes_dev *dd)
-{
-	free_page((unsigned long)dd->buf);
-}
+अटल व्योम aपंचांगel_aes_buff_cleanup(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	मुक्त_page((अचिन्हित दीर्घ)dd->buf);
+पूर्ण
 
-static int atmel_aes_dma_init(struct atmel_aes_dev *dd)
-{
-	int ret;
+अटल पूर्णांक aपंचांगel_aes_dma_init(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	पूर्णांक ret;
 
 	/* Try to grab 2 DMA channels */
 	dd->src.chan = dma_request_chan(dd->dev, "tx");
-	if (IS_ERR(dd->src.chan)) {
+	अगर (IS_ERR(dd->src.chan)) अणु
 		ret = PTR_ERR(dd->src.chan);
-		goto err_dma_in;
-	}
+		जाओ err_dma_in;
+	पूर्ण
 
 	dd->dst.chan = dma_request_chan(dd->dev, "rx");
-	if (IS_ERR(dd->dst.chan)) {
+	अगर (IS_ERR(dd->dst.chan)) अणु
 		ret = PTR_ERR(dd->dst.chan);
-		goto err_dma_out;
-	}
+		जाओ err_dma_out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_dma_out:
 	dma_release_channel(dd->src.chan);
 err_dma_in:
 	dev_err(dd->dev, "no DMA channel available\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void atmel_aes_dma_cleanup(struct atmel_aes_dev *dd)
-{
+अटल व्योम aपंचांगel_aes_dma_cleanup(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
 	dma_release_channel(dd->dst.chan);
 	dma_release_channel(dd->src.chan);
-}
+पूर्ण
 
-static void atmel_aes_queue_task(unsigned long data)
-{
-	struct atmel_aes_dev *dd = (struct atmel_aes_dev *)data;
+अटल व्योम aपंचांगel_aes_queue_task(अचिन्हित दीर्घ data)
+अणु
+	काष्ठा aपंचांगel_aes_dev *dd = (काष्ठा aपंचांगel_aes_dev *)data;
 
-	atmel_aes_handle_queue(dd, NULL);
-}
+	aपंचांगel_aes_handle_queue(dd, शून्य);
+पूर्ण
 
-static void atmel_aes_done_task(unsigned long data)
-{
-	struct atmel_aes_dev *dd = (struct atmel_aes_dev *)data;
+अटल व्योम aपंचांगel_aes_करोne_task(अचिन्हित दीर्घ data)
+अणु
+	काष्ठा aपंचांगel_aes_dev *dd = (काष्ठा aपंचांगel_aes_dev *)data;
 
 	dd->is_async = true;
-	(void)dd->resume(dd);
-}
+	(व्योम)dd->resume(dd);
+पूर्ण
 
-static irqreturn_t atmel_aes_irq(int irq, void *dev_id)
-{
-	struct atmel_aes_dev *aes_dd = dev_id;
+अटल irqवापस_t aपंचांगel_aes_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा aपंचांगel_aes_dev *aes_dd = dev_id;
 	u32 reg;
 
-	reg = atmel_aes_read(aes_dd, AES_ISR);
-	if (reg & atmel_aes_read(aes_dd, AES_IMR)) {
-		atmel_aes_write(aes_dd, AES_IDR, reg);
-		if (AES_FLAGS_BUSY & aes_dd->flags)
-			tasklet_schedule(&aes_dd->done_task);
-		else
+	reg = aपंचांगel_aes_पढ़ो(aes_dd, AES_ISR);
+	अगर (reg & aपंचांगel_aes_पढ़ो(aes_dd, AES_IMR)) अणु
+		aपंचांगel_aes_ग_लिखो(aes_dd, AES_IDR, reg);
+		अगर (AES_FLAGS_BUSY & aes_dd->flags)
+			tasklet_schedule(&aes_dd->करोne_task);
+		अन्यथा
 			dev_warn(aes_dd->dev, "AES interrupt when no active requests.\n");
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static void atmel_aes_unregister_algs(struct atmel_aes_dev *dd)
-{
-	int i;
+अटल व्योम aपंचांगel_aes_unरेजिस्टर_algs(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	पूर्णांक i;
 
-#if IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
-	if (dd->caps.has_authenc)
-		for (i = 0; i < ARRAY_SIZE(aes_authenc_algs); i++)
-			crypto_unregister_aead(&aes_authenc_algs[i]);
-#endif
+#अगर IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
+	अगर (dd->caps.has_authenc)
+		क्रम (i = 0; i < ARRAY_SIZE(aes_authenc_algs); i++)
+			crypto_unरेजिस्टर_aead(&aes_authenc_algs[i]);
+#पूर्ण_अगर
 
-	if (dd->caps.has_xts)
-		crypto_unregister_skcipher(&aes_xts_alg);
+	अगर (dd->caps.has_xts)
+		crypto_unरेजिस्टर_skcipher(&aes_xts_alg);
 
-	if (dd->caps.has_gcm)
-		crypto_unregister_aead(&aes_gcm_alg);
+	अगर (dd->caps.has_gcm)
+		crypto_unरेजिस्टर_aead(&aes_gcm_alg);
 
-	if (dd->caps.has_cfb64)
-		crypto_unregister_skcipher(&aes_cfb64_alg);
+	अगर (dd->caps.has_cfb64)
+		crypto_unरेजिस्टर_skcipher(&aes_cfb64_alg);
 
-	for (i = 0; i < ARRAY_SIZE(aes_algs); i++)
-		crypto_unregister_skcipher(&aes_algs[i]);
-}
+	क्रम (i = 0; i < ARRAY_SIZE(aes_algs); i++)
+		crypto_unरेजिस्टर_skcipher(&aes_algs[i]);
+पूर्ण
 
-static void atmel_aes_crypto_alg_init(struct crypto_alg *alg)
-{
+अटल व्योम aपंचांगel_aes_crypto_alg_init(काष्ठा crypto_alg *alg)
+अणु
 	alg->cra_flags = CRYPTO_ALG_ASYNC;
 	alg->cra_alignmask = 0xf;
 	alg->cra_priority = ATMEL_AES_PRIORITY;
 	alg->cra_module = THIS_MODULE;
-}
+पूर्ण
 
-static int atmel_aes_register_algs(struct atmel_aes_dev *dd)
-{
-	int err, i, j;
+अटल पूर्णांक aपंचांगel_aes_रेजिस्टर_algs(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
+	पूर्णांक err, i, j;
 
-	for (i = 0; i < ARRAY_SIZE(aes_algs); i++) {
-		atmel_aes_crypto_alg_init(&aes_algs[i].base);
+	क्रम (i = 0; i < ARRAY_SIZE(aes_algs); i++) अणु
+		aपंचांगel_aes_crypto_alg_init(&aes_algs[i].base);
 
-		err = crypto_register_skcipher(&aes_algs[i]);
-		if (err)
-			goto err_aes_algs;
-	}
+		err = crypto_रेजिस्टर_skcipher(&aes_algs[i]);
+		अगर (err)
+			जाओ err_aes_algs;
+	पूर्ण
 
-	if (dd->caps.has_cfb64) {
-		atmel_aes_crypto_alg_init(&aes_cfb64_alg.base);
+	अगर (dd->caps.has_cfb64) अणु
+		aपंचांगel_aes_crypto_alg_init(&aes_cfb64_alg.base);
 
-		err = crypto_register_skcipher(&aes_cfb64_alg);
-		if (err)
-			goto err_aes_cfb64_alg;
-	}
+		err = crypto_रेजिस्टर_skcipher(&aes_cfb64_alg);
+		अगर (err)
+			जाओ err_aes_cfb64_alg;
+	पूर्ण
 
-	if (dd->caps.has_gcm) {
-		atmel_aes_crypto_alg_init(&aes_gcm_alg.base);
+	अगर (dd->caps.has_gcm) अणु
+		aपंचांगel_aes_crypto_alg_init(&aes_gcm_alg.base);
 
-		err = crypto_register_aead(&aes_gcm_alg);
-		if (err)
-			goto err_aes_gcm_alg;
-	}
+		err = crypto_रेजिस्टर_aead(&aes_gcm_alg);
+		अगर (err)
+			जाओ err_aes_gcm_alg;
+	पूर्ण
 
-	if (dd->caps.has_xts) {
-		atmel_aes_crypto_alg_init(&aes_xts_alg.base);
+	अगर (dd->caps.has_xts) अणु
+		aपंचांगel_aes_crypto_alg_init(&aes_xts_alg.base);
 
-		err = crypto_register_skcipher(&aes_xts_alg);
-		if (err)
-			goto err_aes_xts_alg;
-	}
+		err = crypto_रेजिस्टर_skcipher(&aes_xts_alg);
+		अगर (err)
+			जाओ err_aes_xts_alg;
+	पूर्ण
 
-#if IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
-	if (dd->caps.has_authenc) {
-		for (i = 0; i < ARRAY_SIZE(aes_authenc_algs); i++) {
-			atmel_aes_crypto_alg_init(&aes_authenc_algs[i].base);
+#अगर IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
+	अगर (dd->caps.has_authenc) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(aes_authenc_algs); i++) अणु
+			aपंचांगel_aes_crypto_alg_init(&aes_authenc_algs[i].base);
 
-			err = crypto_register_aead(&aes_authenc_algs[i]);
-			if (err)
-				goto err_aes_authenc_alg;
-		}
-	}
-#endif
+			err = crypto_रेजिस्टर_aead(&aes_authenc_algs[i]);
+			अगर (err)
+				जाओ err_aes_authenc_alg;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
+	वापस 0;
 
-#if IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
+#अगर IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
 	/* i = ARRAY_SIZE(aes_authenc_algs); */
 err_aes_authenc_alg:
-	for (j = 0; j < i; j++)
-		crypto_unregister_aead(&aes_authenc_algs[j]);
-	crypto_unregister_skcipher(&aes_xts_alg);
-#endif
+	क्रम (j = 0; j < i; j++)
+		crypto_unरेजिस्टर_aead(&aes_authenc_algs[j]);
+	crypto_unरेजिस्टर_skcipher(&aes_xts_alg);
+#पूर्ण_अगर
 err_aes_xts_alg:
-	crypto_unregister_aead(&aes_gcm_alg);
+	crypto_unरेजिस्टर_aead(&aes_gcm_alg);
 err_aes_gcm_alg:
-	crypto_unregister_skcipher(&aes_cfb64_alg);
+	crypto_unरेजिस्टर_skcipher(&aes_cfb64_alg);
 err_aes_cfb64_alg:
 	i = ARRAY_SIZE(aes_algs);
 err_aes_algs:
-	for (j = 0; j < i; j++)
-		crypto_unregister_skcipher(&aes_algs[j]);
+	क्रम (j = 0; j < i; j++)
+		crypto_unरेजिस्टर_skcipher(&aes_algs[j]);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void atmel_aes_get_cap(struct atmel_aes_dev *dd)
-{
+अटल व्योम aपंचांगel_aes_get_cap(काष्ठा aपंचांगel_aes_dev *dd)
+अणु
 	dd->caps.has_dualbuff = 0;
 	dd->caps.has_cfb64 = 0;
 	dd->caps.has_gcm = 0;
@@ -2444,196 +2445,196 @@ static void atmel_aes_get_cap(struct atmel_aes_dev *dd)
 	dd->caps.max_burst_size = 1;
 
 	/* keep only major version number */
-	switch (dd->hw_version & 0xff0) {
-	case 0x500:
+	चयन (dd->hw_version & 0xff0) अणु
+	हाल 0x500:
 		dd->caps.has_dualbuff = 1;
 		dd->caps.has_cfb64 = 1;
 		dd->caps.has_gcm = 1;
 		dd->caps.has_xts = 1;
 		dd->caps.has_authenc = 1;
 		dd->caps.max_burst_size = 4;
-		break;
-	case 0x200:
+		अवरोध;
+	हाल 0x200:
 		dd->caps.has_dualbuff = 1;
 		dd->caps.has_cfb64 = 1;
 		dd->caps.has_gcm = 1;
 		dd->caps.max_burst_size = 4;
-		break;
-	case 0x130:
+		अवरोध;
+	हाल 0x130:
 		dd->caps.has_dualbuff = 1;
 		dd->caps.has_cfb64 = 1;
 		dd->caps.max_burst_size = 4;
-		break;
-	case 0x120:
-		break;
-	default:
+		अवरोध;
+	हाल 0x120:
+		अवरोध;
+	शेष:
 		dev_warn(dd->dev,
 				"Unmanaged aes version, set minimum capabilities\n");
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-#if defined(CONFIG_OF)
-static const struct of_device_id atmel_aes_dt_ids[] = {
-	{ .compatible = "atmel,at91sam9g46-aes" },
-	{ /* sentinel */ }
-};
-MODULE_DEVICE_TABLE(of, atmel_aes_dt_ids);
-#endif
+#अगर defined(CONFIG_OF)
+अटल स्थिर काष्ठा of_device_id aपंचांगel_aes_dt_ids[] = अणु
+	अणु .compatible = "atmel,at91sam9g46-aes" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, aपंचांगel_aes_dt_ids);
+#पूर्ण_अगर
 
-static int atmel_aes_probe(struct platform_device *pdev)
-{
-	struct atmel_aes_dev *aes_dd;
-	struct device *dev = &pdev->dev;
-	struct resource *aes_res;
-	int err;
+अटल पूर्णांक aपंचांगel_aes_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aपंचांगel_aes_dev *aes_dd;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *aes_res;
+	पूर्णांक err;
 
-	aes_dd = devm_kzalloc(&pdev->dev, sizeof(*aes_dd), GFP_KERNEL);
-	if (!aes_dd)
-		return -ENOMEM;
+	aes_dd = devm_kzalloc(&pdev->dev, माप(*aes_dd), GFP_KERNEL);
+	अगर (!aes_dd)
+		वापस -ENOMEM;
 
 	aes_dd->dev = dev;
 
-	platform_set_drvdata(pdev, aes_dd);
+	platक्रमm_set_drvdata(pdev, aes_dd);
 
 	INIT_LIST_HEAD(&aes_dd->list);
 	spin_lock_init(&aes_dd->lock);
 
-	tasklet_init(&aes_dd->done_task, atmel_aes_done_task,
-					(unsigned long)aes_dd);
-	tasklet_init(&aes_dd->queue_task, atmel_aes_queue_task,
-					(unsigned long)aes_dd);
+	tasklet_init(&aes_dd->करोne_task, aपंचांगel_aes_करोne_task,
+					(अचिन्हित दीर्घ)aes_dd);
+	tasklet_init(&aes_dd->queue_task, aपंचांगel_aes_queue_task,
+					(अचिन्हित दीर्घ)aes_dd);
 
 	crypto_init_queue(&aes_dd->queue, ATMEL_AES_QUEUE_LENGTH);
 
 	/* Get the base address */
-	aes_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!aes_res) {
+	aes_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!aes_res) अणु
 		dev_err(dev, "no MEM resource info\n");
 		err = -ENODEV;
-		goto err_tasklet_kill;
-	}
+		जाओ err_tasklet_समाप्त;
+	पूर्ण
 	aes_dd->phys_base = aes_res->start;
 
 	/* Get the IRQ */
-	aes_dd->irq = platform_get_irq(pdev,  0);
-	if (aes_dd->irq < 0) {
+	aes_dd->irq = platक्रमm_get_irq(pdev,  0);
+	अगर (aes_dd->irq < 0) अणु
 		err = aes_dd->irq;
-		goto err_tasklet_kill;
-	}
+		जाओ err_tasklet_समाप्त;
+	पूर्ण
 
-	err = devm_request_irq(&pdev->dev, aes_dd->irq, atmel_aes_irq,
+	err = devm_request_irq(&pdev->dev, aes_dd->irq, aपंचांगel_aes_irq,
 			       IRQF_SHARED, "atmel-aes", aes_dd);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "unable to request aes irq.\n");
-		goto err_tasklet_kill;
-	}
+		जाओ err_tasklet_समाप्त;
+	पूर्ण
 
-	/* Initializing the clock */
+	/* Initializing the घड़ी */
 	aes_dd->iclk = devm_clk_get(&pdev->dev, "aes_clk");
-	if (IS_ERR(aes_dd->iclk)) {
+	अगर (IS_ERR(aes_dd->iclk)) अणु
 		dev_err(dev, "clock initialization failed.\n");
 		err = PTR_ERR(aes_dd->iclk);
-		goto err_tasklet_kill;
-	}
+		जाओ err_tasklet_समाप्त;
+	पूर्ण
 
 	aes_dd->io_base = devm_ioremap_resource(&pdev->dev, aes_res);
-	if (IS_ERR(aes_dd->io_base)) {
+	अगर (IS_ERR(aes_dd->io_base)) अणु
 		dev_err(dev, "can't ioremap\n");
 		err = PTR_ERR(aes_dd->io_base);
-		goto err_tasklet_kill;
-	}
+		जाओ err_tasklet_समाप्त;
+	पूर्ण
 
 	err = clk_prepare(aes_dd->iclk);
-	if (err)
-		goto err_tasklet_kill;
+	अगर (err)
+		जाओ err_tasklet_समाप्त;
 
-	err = atmel_aes_hw_version_init(aes_dd);
-	if (err)
-		goto err_iclk_unprepare;
+	err = aपंचांगel_aes_hw_version_init(aes_dd);
+	अगर (err)
+		जाओ err_iclk_unprepare;
 
-	atmel_aes_get_cap(aes_dd);
+	aपंचांगel_aes_get_cap(aes_dd);
 
-#if IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
-	if (aes_dd->caps.has_authenc && !atmel_sha_authenc_is_ready()) {
+#अगर IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
+	अगर (aes_dd->caps.has_authenc && !aपंचांगel_sha_authenc_is_पढ़ोy()) अणु
 		err = -EPROBE_DEFER;
-		goto err_iclk_unprepare;
-	}
-#endif
+		जाओ err_iclk_unprepare;
+	पूर्ण
+#पूर्ण_अगर
 
-	err = atmel_aes_buff_init(aes_dd);
-	if (err)
-		goto err_iclk_unprepare;
+	err = aपंचांगel_aes_buff_init(aes_dd);
+	अगर (err)
+		जाओ err_iclk_unprepare;
 
-	err = atmel_aes_dma_init(aes_dd);
-	if (err)
-		goto err_buff_cleanup;
+	err = aपंचांगel_aes_dma_init(aes_dd);
+	अगर (err)
+		जाओ err_buff_cleanup;
 
-	spin_lock(&atmel_aes.lock);
-	list_add_tail(&aes_dd->list, &atmel_aes.dev_list);
-	spin_unlock(&atmel_aes.lock);
+	spin_lock(&aपंचांगel_aes.lock);
+	list_add_tail(&aes_dd->list, &aपंचांगel_aes.dev_list);
+	spin_unlock(&aपंचांगel_aes.lock);
 
-	err = atmel_aes_register_algs(aes_dd);
-	if (err)
-		goto err_algs;
+	err = aपंचांगel_aes_रेजिस्टर_algs(aes_dd);
+	अगर (err)
+		जाओ err_algs;
 
 	dev_info(dev, "Atmel AES - Using %s, %s for DMA transfers\n",
 			dma_chan_name(aes_dd->src.chan),
 			dma_chan_name(aes_dd->dst.chan));
 
-	return 0;
+	वापस 0;
 
 err_algs:
-	spin_lock(&atmel_aes.lock);
+	spin_lock(&aपंचांगel_aes.lock);
 	list_del(&aes_dd->list);
-	spin_unlock(&atmel_aes.lock);
-	atmel_aes_dma_cleanup(aes_dd);
+	spin_unlock(&aपंचांगel_aes.lock);
+	aपंचांगel_aes_dma_cleanup(aes_dd);
 err_buff_cleanup:
-	atmel_aes_buff_cleanup(aes_dd);
+	aपंचांगel_aes_buff_cleanup(aes_dd);
 err_iclk_unprepare:
 	clk_unprepare(aes_dd->iclk);
-err_tasklet_kill:
-	tasklet_kill(&aes_dd->done_task);
-	tasklet_kill(&aes_dd->queue_task);
+err_tasklet_समाप्त:
+	tasklet_समाप्त(&aes_dd->करोne_task);
+	tasklet_समाप्त(&aes_dd->queue_task);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int atmel_aes_remove(struct platform_device *pdev)
-{
-	struct atmel_aes_dev *aes_dd;
+अटल पूर्णांक aपंचांगel_aes_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aपंचांगel_aes_dev *aes_dd;
 
-	aes_dd = platform_get_drvdata(pdev);
-	if (!aes_dd)
-		return -ENODEV;
-	spin_lock(&atmel_aes.lock);
+	aes_dd = platक्रमm_get_drvdata(pdev);
+	अगर (!aes_dd)
+		वापस -ENODEV;
+	spin_lock(&aपंचांगel_aes.lock);
 	list_del(&aes_dd->list);
-	spin_unlock(&atmel_aes.lock);
+	spin_unlock(&aपंचांगel_aes.lock);
 
-	atmel_aes_unregister_algs(aes_dd);
+	aपंचांगel_aes_unरेजिस्टर_algs(aes_dd);
 
-	tasklet_kill(&aes_dd->done_task);
-	tasklet_kill(&aes_dd->queue_task);
+	tasklet_समाप्त(&aes_dd->करोne_task);
+	tasklet_समाप्त(&aes_dd->queue_task);
 
-	atmel_aes_dma_cleanup(aes_dd);
-	atmel_aes_buff_cleanup(aes_dd);
+	aपंचांगel_aes_dma_cleanup(aes_dd);
+	aपंचांगel_aes_buff_cleanup(aes_dd);
 
 	clk_unprepare(aes_dd->iclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver atmel_aes_driver = {
-	.probe		= atmel_aes_probe,
-	.remove		= atmel_aes_remove,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver aपंचांगel_aes_driver = अणु
+	.probe		= aपंचांगel_aes_probe,
+	.हटाओ		= aपंचांगel_aes_हटाओ,
+	.driver		= अणु
 		.name	= "atmel_aes",
-		.of_match_table = of_match_ptr(atmel_aes_dt_ids),
-	},
-};
+		.of_match_table = of_match_ptr(aपंचांगel_aes_dt_ids),
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(atmel_aes_driver);
+module_platक्रमm_driver(aपंचांगel_aes_driver);
 
 MODULE_DESCRIPTION("Atmel AES hw acceleration support.");
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Nicolas Royer - Eukréa Electromatique");
+MODULE_AUTHOR("Nicolas Royer - Eukrथऊa Electromatique");

@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/seq_file.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <asm/machvec.h>
-#include <asm/processor.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/seq_file.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/machvec.h>
+#समावेश <यंत्र/processor.h>
 
-static const char *cpu_name[] = {
+अटल स्थिर अक्षर *cpu_name[] = अणु
 	[CPU_SH7201]	= "SH7201",
 	[CPU_SH7203]	= "SH7203",	[CPU_SH7263]	= "SH7263",
 	[CPU_SH7264]	= "SH7264",	[CPU_SH7269]	= "SH7269",
@@ -29,123 +30,123 @@ static const char *cpu_name[] = {
 	[CPU_SH7372]	= "SH7372",	[CPU_SH7734]	= "SH7734",
 	[CPU_J2]	= "J2",
 	[CPU_SH_NONE]	= "Unknown"
-};
+पूर्ण;
 
-const char *get_cpu_subtype(struct sh_cpuinfo *c)
-{
-	return cpu_name[c->type];
-}
+स्थिर अक्षर *get_cpu_subtype(काष्ठा sh_cpuinfo *c)
+अणु
+	वापस cpu_name[c->type];
+पूर्ण
 EXPORT_SYMBOL(get_cpu_subtype);
 
-#ifdef CONFIG_PROC_FS
-/* Symbolic CPU flags, keep in sync with asm/cpu-features.h */
-static const char *cpu_flags[] = {
+#अगर_घोषित CONFIG_PROC_FS
+/* Symbolic CPU flags, keep in sync with यंत्र/cpu-features.h */
+अटल स्थिर अक्षर *cpu_flags[] = अणु
 	"none", "fpu", "p2flush", "mmuassoc", "dsp", "perfctr",
-	"ptea", "llsc", "l2", "op32", "pteaex", NULL
-};
+	"ptea", "llsc", "l2", "op32", "pteaex", शून्य
+पूर्ण;
 
-static void show_cpuflags(struct seq_file *m, struct sh_cpuinfo *c)
-{
-	unsigned long i;
+अटल व्योम show_cpuflags(काष्ठा seq_file *m, काष्ठा sh_cpuinfo *c)
+अणु
+	अचिन्हित दीर्घ i;
 
-	seq_printf(m, "cpu flags\t:");
+	seq_म_लिखो(m, "cpu flags\t:");
 
-	if (!c->flags) {
-		seq_printf(m, " %s\n", cpu_flags[0]);
-		return;
-	}
+	अगर (!c->flags) अणु
+		seq_म_लिखो(m, " %s\n", cpu_flags[0]);
+		वापस;
+	पूर्ण
 
-	for (i = 0; cpu_flags[i]; i++)
-		if ((c->flags & (1 << i)))
-			seq_printf(m, " %s", cpu_flags[i+1]);
+	क्रम (i = 0; cpu_flags[i]; i++)
+		अगर ((c->flags & (1 << i)))
+			seq_म_लिखो(m, " %s", cpu_flags[i+1]);
 
-	seq_printf(m, "\n");
-}
+	seq_म_लिखो(m, "\n");
+पूर्ण
 
-static void show_cacheinfo(struct seq_file *m, const char *type,
-			   struct cache_info info)
-{
-	unsigned int cache_size;
+अटल व्योम show_cacheinfo(काष्ठा seq_file *m, स्थिर अक्षर *type,
+			   काष्ठा cache_info info)
+अणु
+	अचिन्हित पूर्णांक cache_size;
 
 	cache_size = info.ways * info.sets * info.linesz;
 
-	seq_printf(m, "%s size\t: %2dKiB (%d-way)\n",
+	seq_म_लिखो(m, "%s size\t: %2dKiB (%d-way)\n",
 		   type, cache_size >> 10, info.ways);
-}
+पूर्ण
 
 /*
- *	Get CPU information for use by the procfs.
+ *	Get CPU inक्रमmation क्रम use by the procfs.
  */
-static int show_cpuinfo(struct seq_file *m, void *v)
-{
-	struct sh_cpuinfo *c = v;
-	unsigned int cpu = c - cpu_data;
+अटल पूर्णांक show_cpuinfo(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा sh_cpuinfo *c = v;
+	अचिन्हित पूर्णांक cpu = c - cpu_data;
 
-	if (!cpu_online(cpu))
-		return 0;
+	अगर (!cpu_online(cpu))
+		वापस 0;
 
-	if (cpu == 0)
-		seq_printf(m, "machine\t\t: %s\n", get_system_type());
-	else
-		seq_printf(m, "\n");
+	अगर (cpu == 0)
+		seq_म_लिखो(m, "machine\t\t: %s\n", get_प्रणाली_type());
+	अन्यथा
+		seq_म_लिखो(m, "\n");
 
-	seq_printf(m, "processor\t: %d\n", cpu);
-	seq_printf(m, "cpu family\t: %s\n", init_utsname()->machine);
-	seq_printf(m, "cpu type\t: %s\n", get_cpu_subtype(c));
-	if (c->cut_major == -1)
-		seq_printf(m, "cut\t\t: unknown\n");
-	else if (c->cut_minor == -1)
-		seq_printf(m, "cut\t\t: %d.x\n", c->cut_major);
-	else
-		seq_printf(m, "cut\t\t: %d.%d\n", c->cut_major, c->cut_minor);
+	seq_म_लिखो(m, "processor\t: %d\n", cpu);
+	seq_म_लिखो(m, "cpu family\t: %s\n", init_utsname()->machine);
+	seq_म_लिखो(m, "cpu type\t: %s\n", get_cpu_subtype(c));
+	अगर (c->cut_major == -1)
+		seq_म_लिखो(m, "cut\t\t: unknown\n");
+	अन्यथा अगर (c->cut_minor == -1)
+		seq_म_लिखो(m, "cut\t\t: %d.x\n", c->cut_major);
+	अन्यथा
+		seq_म_लिखो(m, "cut\t\t: %d.%d\n", c->cut_major, c->cut_minor);
 
 	show_cpuflags(m, c);
 
-	seq_printf(m, "cache type\t: ");
+	seq_म_लिखो(m, "cache type\t: ");
 
 	/*
-	 * Check for what type of cache we have, we support both the
-	 * unified cache on the SH-2 and SH-3, as well as the harvard
+	 * Check क्रम what type of cache we have, we support both the
+	 * unअगरied cache on the SH-2 and SH-3, as well as the harvard
 	 * style cache on the SH-4.
 	 */
-	if (c->icache.flags & SH_CACHE_COMBINED) {
-		seq_printf(m, "unified\n");
+	अगर (c->icache.flags & SH_CACHE_COMBINED) अणु
+		seq_म_लिखो(m, "unified\n");
 		show_cacheinfo(m, "cache", c->icache);
-	} else {
-		seq_printf(m, "split (harvard)\n");
+	पूर्ण अन्यथा अणु
+		seq_म_लिखो(m, "split (harvard)\n");
 		show_cacheinfo(m, "icache", c->icache);
 		show_cacheinfo(m, "dcache", c->dcache);
-	}
+	पूर्ण
 
 	/* Optional secondary cache */
-	if (c->flags & CPU_HAS_L2_CACHE)
+	अगर (c->flags & CPU_HAS_L2_CACHE)
 		show_cacheinfo(m, "scache", c->scache);
 
-	seq_printf(m, "address sizes\t: %u bits physical\n", c->phys_bits);
+	seq_म_लिखो(m, "address sizes\t: %u bits physical\n", c->phys_bits);
 
-	seq_printf(m, "bogomips\t: %lu.%02lu\n",
-		     c->loops_per_jiffy/(500000/HZ),
-		     (c->loops_per_jiffy/(5000/HZ)) % 100);
+	seq_म_लिखो(m, "bogomips\t: %lu.%02lu\n",
+		     c->loops_per_jअगरfy/(500000/HZ),
+		     (c->loops_per_jअगरfy/(5000/HZ)) % 100);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *c_start(struct seq_file *m, loff_t *pos)
-{
-	return *pos < NR_CPUS ? cpu_data + *pos : NULL;
-}
-static void *c_next(struct seq_file *m, void *v, loff_t *pos)
-{
+अटल व्योम *c_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	वापस *pos < NR_CPUS ? cpu_data + *pos : शून्य;
+पूर्ण
+अटल व्योम *c_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
 	++*pos;
-	return c_start(m, pos);
-}
-static void c_stop(struct seq_file *m, void *v)
-{
-}
-const struct seq_operations cpuinfo_op = {
+	वापस c_start(m, pos);
+पूर्ण
+अटल व्योम c_stop(काष्ठा seq_file *m, व्योम *v)
+अणु
+पूर्ण
+स्थिर काष्ठा seq_operations cpuinfo_op = अणु
 	.start	= c_start,
 	.next	= c_next,
 	.stop	= c_stop,
 	.show	= show_cpuinfo,
-};
-#endif /* CONFIG_PROC_FS */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_PROC_FS */

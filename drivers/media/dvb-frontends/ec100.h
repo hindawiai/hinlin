@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * E3C EC100 demodulator driver
  *
  * Copyright (C) 2009 Antti Palosaari <crope@iki.fi>
  */
 
-#ifndef EC100_H
-#define EC100_H
+#अगर_अघोषित EC100_H
+#घोषणा EC100_H
 
-#include <linux/dvb/frontend.h>
+#समावेश <linux/dvb/frontend.h>
 
-struct ec100_config {
+काष्ठा ec100_config अणु
 	/* demodulator's I2C address */
 	u8 demod_address;
-};
+पूर्ण;
 
 
-#if IS_REACHABLE(CONFIG_DVB_EC100)
-extern struct dvb_frontend *ec100_attach(const struct ec100_config *config,
-	struct i2c_adapter *i2c);
-#else
-static inline struct dvb_frontend *ec100_attach(
-	const struct ec100_config *config, struct i2c_adapter *i2c)
-{
+#अगर IS_REACHABLE(CONFIG_DVB_EC100)
+बाह्य काष्ठा dvb_frontend *ec100_attach(स्थिर काष्ठा ec100_config *config,
+	काष्ठा i2c_adapter *i2c);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *ec100_attach(
+	स्थिर काष्ठा ec100_config *config, काष्ठा i2c_adapter *i2c)
+अणु
 	pr_warn("%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* EC100_H */
+#पूर्ण_अगर /* EC100_H */

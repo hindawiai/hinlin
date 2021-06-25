@@ -1,73 +1,74 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __DMA_PUBLIC_H_INCLUDED__
-#define __DMA_PUBLIC_H_INCLUDED__
+#अगर_अघोषित __DMA_PUBLIC_H_INCLUDED__
+#घोषणा __DMA_PUBLIC_H_INCLUDED__
 
-#include "system_local.h"
+#समावेश "system_local.h"
 
-typedef struct dma_state_s		dma_state_t;
+प्रकार काष्ठा dma_state_s		dma_state_t;
 
-/*! Read the control registers of DMA[ID]
+/*! Read the control रेजिस्टरs of DMA[ID]
 
- \param	ID[in]				DMA identifier
- \param	state[out]			input formatter state structure
+ \param	ID[in]				DMA identअगरier
+ \param	state[out]			input क्रमmatter state काष्ठाure
 
- \return none, state = DMA[ID].state
+ \लeturn none, state = DMA[ID].state
  */
-void dma_get_state(
-    const dma_ID_t		ID,
+व्योम dma_get_state(
+    स्थिर dma_ID_t		ID,
     dma_state_t			*state);
 
-/*! Write to a control register of DMA[ID]
+/*! Write to a control रेजिस्टर of DMA[ID]
 
- \param	ID[in]				DMA identifier
- \param	reg[in]				register index
+ \param	ID[in]				DMA identअगरier
+ \param	reg[in]				रेजिस्टर index
  \param value[in]			The data to be written
 
- \return none, DMA[ID].ctrl[reg] = value
+ \लeturn none, DMA[ID].ctrl[reg] = value
  */
-STORAGE_CLASS_DMA_H void dma_reg_store(
-    const dma_ID_t		ID,
-    const unsigned int	reg,
-    const hrt_data		value);
+STORAGE_CLASS_DMA_H व्योम dma_reg_store(
+    स्थिर dma_ID_t		ID,
+    स्थिर अचिन्हित पूर्णांक	reg,
+    स्थिर hrt_data		value);
 
-/*! Read from a control register of DMA[ID]
+/*! Read from a control रेजिस्टर of DMA[ID]
 
- \param	ID[in]				DMA identifier
- \param	reg[in]				register index
+ \param	ID[in]				DMA identअगरier
+ \param	reg[in]				रेजिस्टर index
  \param value[in]			The data to be written
 
- \return DMA[ID].ctrl[reg]
+ \लeturn DMA[ID].ctrl[reg]
  */
 STORAGE_CLASS_DMA_H hrt_data dma_reg_load(
-    const dma_ID_t		ID,
-    const unsigned int	reg);
+    स्थिर dma_ID_t		ID,
+    स्थिर अचिन्हित पूर्णांक	reg);
 
 /*! Set maximum burst size of DMA[ID]
 
- \param ID[in]				DMA identifier
- \param conn[in]			Connection to set max burst size for
+ \param ID[in]				DMA identअगरier
+ \param conn[in]			Connection to set max burst size क्रम
  \param max_burst_size[in]		Maximum burst size in words
 
- \return none
+ \लeturn none
 */
-void
+व्योम
 dma_set_max_burst_size(
     dma_ID_t		ID,
     dma_connection		conn,
-    uint32_t		max_burst_size);
+    uपूर्णांक32_t		max_burst_size);
 
-#endif /* __DMA_PUBLIC_H_INCLUDED__ */
+#पूर्ण_अगर /* __DMA_PUBLIC_H_INCLUDED__ */

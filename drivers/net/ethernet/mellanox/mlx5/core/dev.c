@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013-2015, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,164 +31,164 @@
  * SOFTWARE.
  */
 
-#include <linux/mlx5/driver.h>
-#include <linux/mlx5/eswitch.h>
-#include <linux/mlx5/mlx5_ifc_vdpa.h>
-#include "mlx5_core.h"
+#समावेश <linux/mlx5/driver.h>
+#समावेश <linux/mlx5/eचयन.h>
+#समावेश <linux/mlx5/mlx5_अगरc_vdpa.h>
+#समावेश "mlx5_core.h"
 
-/* intf dev list mutex */
-static DEFINE_MUTEX(mlx5_intf_mutex);
-static DEFINE_IDA(mlx5_adev_ida);
+/* पूर्णांकf dev list mutex */
+अटल DEFINE_MUTEX(mlx5_पूर्णांकf_mutex);
+अटल DEFINE_IDA(mlx5_adev_ida);
 
-static bool is_eth_rep_supported(struct mlx5_core_dev *dev)
-{
-	if (!IS_ENABLED(CONFIG_MLX5_ESWITCH))
-		return false;
+अटल bool is_eth_rep_supported(काष्ठा mlx5_core_dev *dev)
+अणु
+	अगर (!IS_ENABLED(CONFIG_MLX5_ESWITCH))
+		वापस false;
 
-	if (!MLX5_ESWITCH_MANAGER(dev))
-		return false;
+	अगर (!MLX5_ESWITCH_MANAGER(dev))
+		वापस false;
 
-	if (!is_mdev_switchdev_mode(dev))
-		return false;
+	अगर (!is_mdev_चयनdev_mode(dev))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool is_eth_supported(struct mlx5_core_dev *dev)
-{
-	if (!IS_ENABLED(CONFIG_MLX5_CORE_EN))
-		return false;
+अटल bool is_eth_supported(काष्ठा mlx5_core_dev *dev)
+अणु
+	अगर (!IS_ENABLED(CONFIG_MLX5_CORE_EN))
+		वापस false;
 
-	if (MLX5_CAP_GEN(dev, port_type) != MLX5_CAP_PORT_TYPE_ETH)
-		return false;
+	अगर (MLX5_CAP_GEN(dev, port_type) != MLX5_CAP_PORT_TYPE_ETH)
+		वापस false;
 
-	if (!MLX5_CAP_GEN(dev, eth_net_offloads)) {
+	अगर (!MLX5_CAP_GEN(dev, eth_net_offloads)) अणु
 		mlx5_core_warn(dev, "Missing eth_net_offloads capability\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!MLX5_CAP_GEN(dev, nic_flow_table)) {
+	अगर (!MLX5_CAP_GEN(dev, nic_flow_table)) अणु
 		mlx5_core_warn(dev, "Missing nic_flow_table capability\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!MLX5_CAP_ETH(dev, csum_cap)) {
+	अगर (!MLX5_CAP_ETH(dev, csum_cap)) अणु
 		mlx5_core_warn(dev, "Missing csum_cap capability\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!MLX5_CAP_ETH(dev, max_lso_cap)) {
+	अगर (!MLX5_CAP_ETH(dev, max_lso_cap)) अणु
 		mlx5_core_warn(dev, "Missing max_lso_cap capability\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!MLX5_CAP_ETH(dev, vlan_cap)) {
+	अगर (!MLX5_CAP_ETH(dev, vlan_cap)) अणु
 		mlx5_core_warn(dev, "Missing vlan_cap capability\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!MLX5_CAP_ETH(dev, rss_ind_tbl_cap)) {
+	अगर (!MLX5_CAP_ETH(dev, rss_ind_tbl_cap)) अणु
 		mlx5_core_warn(dev, "Missing rss_ind_tbl_cap capability\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (MLX5_CAP_FLOWTABLE(dev,
-			       flow_table_properties_nic_receive.max_ft_level) < 3) {
+	अगर (MLX5_CAP_FLOWTABLE(dev,
+			       flow_table_properties_nic_receive.max_ft_level) < 3) अणु
 		mlx5_core_warn(dev, "max_ft_level < 3\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!MLX5_CAP_ETH(dev, self_lb_en_modifiable))
+	अगर (!MLX5_CAP_ETH(dev, self_lb_en_modअगरiable))
 		mlx5_core_warn(dev, "Self loop back prevention is not supported\n");
-	if (!MLX5_CAP_GEN(dev, cq_moderation))
+	अगर (!MLX5_CAP_GEN(dev, cq_moderation))
 		mlx5_core_warn(dev, "CQ moderation is not supported\n");
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool is_vnet_supported(struct mlx5_core_dev *dev)
-{
-	if (!IS_ENABLED(CONFIG_MLX5_VDPA_NET))
-		return false;
+अटल bool is_vnet_supported(काष्ठा mlx5_core_dev *dev)
+अणु
+	अगर (!IS_ENABLED(CONFIG_MLX5_VDPA_NET))
+		वापस false;
 
-	if (mlx5_core_is_pf(dev))
-		return false;
+	अगर (mlx5_core_is_pf(dev))
+		वापस false;
 
-	if (!(MLX5_CAP_GEN_64(dev, general_obj_types) &
+	अगर (!(MLX5_CAP_GEN_64(dev, general_obj_types) &
 	      MLX5_GENERAL_OBJ_TYPES_CAP_VIRTIO_NET_Q))
-		return false;
+		वापस false;
 
-	if (!(MLX5_CAP_DEV_VDPA_EMULATION(dev, event_mode) &
+	अगर (!(MLX5_CAP_DEV_VDPA_EMULATION(dev, event_mode) &
 	      MLX5_VIRTIO_Q_EVENT_MODE_QP_MODE))
-		return false;
+		वापस false;
 
-	if (!MLX5_CAP_DEV_VDPA_EMULATION(dev, eth_frame_offload_type))
-		return false;
+	अगर (!MLX5_CAP_DEV_VDPA_EMULATION(dev, eth_frame_offload_type))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool is_ib_rep_supported(struct mlx5_core_dev *dev)
-{
-	if (!IS_ENABLED(CONFIG_MLX5_INFINIBAND))
-		return false;
+अटल bool is_ib_rep_supported(काष्ठा mlx5_core_dev *dev)
+अणु
+	अगर (!IS_ENABLED(CONFIG_MLX5_INFINIBAND))
+		वापस false;
 
-	if (dev->priv.flags & MLX5_PRIV_FLAGS_DISABLE_IB_ADEV)
-		return false;
+	अगर (dev->priv.flags & MLX5_PRIV_FLAGS_DISABLE_IB_ADEV)
+		वापस false;
 
-	if (!is_eth_rep_supported(dev))
-		return false;
+	अगर (!is_eth_rep_supported(dev))
+		वापस false;
 
-	if (!MLX5_ESWITCH_MANAGER(dev))
-		return false;
+	अगर (!MLX5_ESWITCH_MANAGER(dev))
+		वापस false;
 
-	if (!is_mdev_switchdev_mode(dev))
-		return false;
+	अगर (!is_mdev_चयनdev_mode(dev))
+		वापस false;
 
-	if (mlx5_core_mp_enabled(dev))
-		return false;
+	अगर (mlx5_core_mp_enabled(dev))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool is_mp_supported(struct mlx5_core_dev *dev)
-{
-	if (!IS_ENABLED(CONFIG_MLX5_INFINIBAND))
-		return false;
+अटल bool is_mp_supported(काष्ठा mlx5_core_dev *dev)
+अणु
+	अगर (!IS_ENABLED(CONFIG_MLX5_INFINIBAND))
+		वापस false;
 
-	if (dev->priv.flags & MLX5_PRIV_FLAGS_DISABLE_IB_ADEV)
-		return false;
+	अगर (dev->priv.flags & MLX5_PRIV_FLAGS_DISABLE_IB_ADEV)
+		वापस false;
 
-	if (is_ib_rep_supported(dev))
-		return false;
+	अगर (is_ib_rep_supported(dev))
+		वापस false;
 
-	if (MLX5_CAP_GEN(dev, port_type) != MLX5_CAP_PORT_TYPE_ETH)
-		return false;
+	अगर (MLX5_CAP_GEN(dev, port_type) != MLX5_CAP_PORT_TYPE_ETH)
+		वापस false;
 
-	if (!mlx5_core_is_mp_slave(dev))
-		return false;
+	अगर (!mlx5_core_is_mp_slave(dev))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool is_ib_supported(struct mlx5_core_dev *dev)
-{
-	if (!IS_ENABLED(CONFIG_MLX5_INFINIBAND))
-		return false;
+अटल bool is_ib_supported(काष्ठा mlx5_core_dev *dev)
+अणु
+	अगर (!IS_ENABLED(CONFIG_MLX5_INFINIBAND))
+		वापस false;
 
-	if (dev->priv.flags & MLX5_PRIV_FLAGS_DISABLE_IB_ADEV)
-		return false;
+	अगर (dev->priv.flags & MLX5_PRIV_FLAGS_DISABLE_IB_ADEV)
+		वापस false;
 
-	if (is_ib_rep_supported(dev))
-		return false;
+	अगर (is_ib_rep_supported(dev))
+		वापस false;
 
-	if (is_mp_supported(dev))
-		return false;
+	अगर (is_mp_supported(dev))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-enum {
+क्रमागत अणु
 	MLX5_INTERFACE_PROTOCOL_ETH,
 	MLX5_INTERFACE_PROTOCOL_ETH_REP,
 
@@ -196,76 +197,76 @@ enum {
 	MLX5_INTERFACE_PROTOCOL_MPIB,
 
 	MLX5_INTERFACE_PROTOCOL_VNET,
-};
+पूर्ण;
 
-static const struct mlx5_adev_device {
-	const char *suffix;
-	bool (*is_supported)(struct mlx5_core_dev *dev);
-} mlx5_adev_devices[] = {
-	[MLX5_INTERFACE_PROTOCOL_VNET] = { .suffix = "vnet",
-					   .is_supported = &is_vnet_supported },
-	[MLX5_INTERFACE_PROTOCOL_IB] = { .suffix = "rdma",
-					 .is_supported = &is_ib_supported },
-	[MLX5_INTERFACE_PROTOCOL_ETH] = { .suffix = "eth",
-					  .is_supported = &is_eth_supported },
-	[MLX5_INTERFACE_PROTOCOL_ETH_REP] = { .suffix = "eth-rep",
-					   .is_supported = &is_eth_rep_supported },
-	[MLX5_INTERFACE_PROTOCOL_IB_REP] = { .suffix = "rdma-rep",
-					   .is_supported = &is_ib_rep_supported },
-	[MLX5_INTERFACE_PROTOCOL_MPIB] = { .suffix = "multiport",
-					   .is_supported = &is_mp_supported },
-};
+अटल स्थिर काष्ठा mlx5_adev_device अणु
+	स्थिर अक्षर *suffix;
+	bool (*is_supported)(काष्ठा mlx5_core_dev *dev);
+पूर्ण mlx5_adev_devices[] = अणु
+	[MLX5_INTERFACE_PROTOCOL_VNET] = अणु .suffix = "vnet",
+					   .is_supported = &is_vnet_supported पूर्ण,
+	[MLX5_INTERFACE_PROTOCOL_IB] = अणु .suffix = "rdma",
+					 .is_supported = &is_ib_supported पूर्ण,
+	[MLX5_INTERFACE_PROTOCOL_ETH] = अणु .suffix = "eth",
+					  .is_supported = &is_eth_supported पूर्ण,
+	[MLX5_INTERFACE_PROTOCOL_ETH_REP] = अणु .suffix = "eth-rep",
+					   .is_supported = &is_eth_rep_supported पूर्ण,
+	[MLX5_INTERFACE_PROTOCOL_IB_REP] = अणु .suffix = "rdma-rep",
+					   .is_supported = &is_ib_rep_supported पूर्ण,
+	[MLX5_INTERFACE_PROTOCOL_MPIB] = अणु .suffix = "multiport",
+					   .is_supported = &is_mp_supported पूर्ण,
+पूर्ण;
 
-int mlx5_adev_idx_alloc(void)
-{
-	return ida_alloc(&mlx5_adev_ida, GFP_KERNEL);
-}
+पूर्णांक mlx5_adev_idx_alloc(व्योम)
+अणु
+	वापस ida_alloc(&mlx5_adev_ida, GFP_KERNEL);
+पूर्ण
 
-void mlx5_adev_idx_free(int idx)
-{
-	ida_free(&mlx5_adev_ida, idx);
-}
+व्योम mlx5_adev_idx_मुक्त(पूर्णांक idx)
+अणु
+	ida_मुक्त(&mlx5_adev_ida, idx);
+पूर्ण
 
-int mlx5_adev_init(struct mlx5_core_dev *dev)
-{
-	struct mlx5_priv *priv = &dev->priv;
+पूर्णांक mlx5_adev_init(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_priv *priv = &dev->priv;
 
-	priv->adev = kcalloc(ARRAY_SIZE(mlx5_adev_devices),
-			     sizeof(struct mlx5_adev *), GFP_KERNEL);
-	if (!priv->adev)
-		return -ENOMEM;
+	priv->adev = kसुस्मृति(ARRAY_SIZE(mlx5_adev_devices),
+			     माप(काष्ठा mlx5_adev *), GFP_KERNEL);
+	अगर (!priv->adev)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mlx5_adev_cleanup(struct mlx5_core_dev *dev)
-{
-	struct mlx5_priv *priv = &dev->priv;
+व्योम mlx5_adev_cleanup(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_priv *priv = &dev->priv;
 
-	kfree(priv->adev);
-}
+	kमुक्त(priv->adev);
+पूर्ण
 
-static void adev_release(struct device *dev)
-{
-	struct mlx5_adev *mlx5_adev =
-		container_of(dev, struct mlx5_adev, adev.dev);
-	struct mlx5_priv *priv = &mlx5_adev->mdev->priv;
-	int idx = mlx5_adev->idx;
+अटल व्योम adev_release(काष्ठा device *dev)
+अणु
+	काष्ठा mlx5_adev *mlx5_adev =
+		container_of(dev, काष्ठा mlx5_adev, adev.dev);
+	काष्ठा mlx5_priv *priv = &mlx5_adev->mdev->priv;
+	पूर्णांक idx = mlx5_adev->idx;
 
-	kfree(mlx5_adev);
-	priv->adev[idx] = NULL;
-}
+	kमुक्त(mlx5_adev);
+	priv->adev[idx] = शून्य;
+पूर्ण
 
-static struct mlx5_adev *add_adev(struct mlx5_core_dev *dev, int idx)
-{
-	const char *suffix = mlx5_adev_devices[idx].suffix;
-	struct auxiliary_device *adev;
-	struct mlx5_adev *madev;
-	int ret;
+अटल काष्ठा mlx5_adev *add_adev(काष्ठा mlx5_core_dev *dev, पूर्णांक idx)
+अणु
+	स्थिर अक्षर *suffix = mlx5_adev_devices[idx].suffix;
+	काष्ठा auxiliary_device *adev;
+	काष्ठा mlx5_adev *madev;
+	पूर्णांक ret;
 
-	madev = kzalloc(sizeof(*madev), GFP_KERNEL);
-	if (!madev)
-		return ERR_PTR(-ENOMEM);
+	madev = kzalloc(माप(*madev), GFP_KERNEL);
+	अगर (!madev)
+		वापस ERR_PTR(-ENOMEM);
 
 	adev = &madev->adev;
 	adev->id = dev->priv.adev_idx;
@@ -276,261 +277,261 @@ static struct mlx5_adev *add_adev(struct mlx5_core_dev *dev, int idx)
 	madev->idx = idx;
 
 	ret = auxiliary_device_init(adev);
-	if (ret) {
-		kfree(madev);
-		return ERR_PTR(ret);
-	}
+	अगर (ret) अणु
+		kमुक्त(madev);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	ret = auxiliary_device_add(adev);
-	if (ret) {
+	अगर (ret) अणु
 		auxiliary_device_uninit(adev);
-		return ERR_PTR(ret);
-	}
-	return madev;
-}
+		वापस ERR_PTR(ret);
+	पूर्ण
+	वापस madev;
+पूर्ण
 
-static void del_adev(struct auxiliary_device *adev)
-{
+अटल व्योम del_adev(काष्ठा auxiliary_device *adev)
+अणु
 	auxiliary_device_delete(adev);
 	auxiliary_device_uninit(adev);
-}
+पूर्ण
 
-int mlx5_attach_device(struct mlx5_core_dev *dev)
-{
-	struct mlx5_priv *priv = &dev->priv;
-	struct auxiliary_device *adev;
-	struct auxiliary_driver *adrv;
-	int ret = 0, i;
+पूर्णांक mlx5_attach_device(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_priv *priv = &dev->priv;
+	काष्ठा auxiliary_device *adev;
+	काष्ठा auxiliary_driver *adrv;
+	पूर्णांक ret = 0, i;
 
-	mutex_lock(&mlx5_intf_mutex);
+	mutex_lock(&mlx5_पूर्णांकf_mutex);
 	priv->flags &= ~MLX5_PRIV_FLAGS_DETACH;
-	for (i = 0; i < ARRAY_SIZE(mlx5_adev_devices); i++) {
-		if (!priv->adev[i]) {
+	क्रम (i = 0; i < ARRAY_SIZE(mlx5_adev_devices); i++) अणु
+		अगर (!priv->adev[i]) अणु
 			bool is_supported = false;
 
-			if (mlx5_adev_devices[i].is_supported)
+			अगर (mlx5_adev_devices[i].is_supported)
 				is_supported = mlx5_adev_devices[i].is_supported(dev);
 
-			if (!is_supported)
-				continue;
+			अगर (!is_supported)
+				जारी;
 
 			priv->adev[i] = add_adev(dev, i);
-			if (IS_ERR(priv->adev[i])) {
+			अगर (IS_ERR(priv->adev[i])) अणु
 				ret = PTR_ERR(priv->adev[i]);
-				priv->adev[i] = NULL;
-			}
-		} else {
+				priv->adev[i] = शून्य;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			adev = &priv->adev[i]->adev;
 
 			/* Pay attention that this is not PCI driver that
 			 * mlx5_core_dev is connected, but auxiliary driver.
 			 *
 			 * Here we can race of module unload with devlink
-			 * reload, but we don't need to take extra lock because
-			 * we are holding global mlx5_intf_mutex.
+			 * reload, but we करोn't need to take extra lock because
+			 * we are holding global mlx5_पूर्णांकf_mutex.
 			 */
-			if (!adev->dev.driver)
-				continue;
+			अगर (!adev->dev.driver)
+				जारी;
 			adrv = to_auxiliary_drv(adev->dev.driver);
 
-			if (adrv->resume)
+			अगर (adrv->resume)
 				ret = adrv->resume(adev);
-		}
-		if (ret) {
+		पूर्ण
+		अगर (ret) अणु
 			mlx5_core_warn(dev, "Device[%d] (%s) failed to load\n",
 				       i, mlx5_adev_devices[i].suffix);
 
-			break;
-		}
-	}
-	mutex_unlock(&mlx5_intf_mutex);
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	mutex_unlock(&mlx5_पूर्णांकf_mutex);
+	वापस ret;
+पूर्ण
 
-void mlx5_detach_device(struct mlx5_core_dev *dev)
-{
-	struct mlx5_priv *priv = &dev->priv;
-	struct auxiliary_device *adev;
-	struct auxiliary_driver *adrv;
-	pm_message_t pm = {};
-	int i;
+व्योम mlx5_detach_device(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_priv *priv = &dev->priv;
+	काष्ठा auxiliary_device *adev;
+	काष्ठा auxiliary_driver *adrv;
+	pm_message_t pm = अणुपूर्ण;
+	पूर्णांक i;
 
-	mutex_lock(&mlx5_intf_mutex);
-	for (i = ARRAY_SIZE(mlx5_adev_devices) - 1; i >= 0; i--) {
-		if (!priv->adev[i])
-			continue;
+	mutex_lock(&mlx5_पूर्णांकf_mutex);
+	क्रम (i = ARRAY_SIZE(mlx5_adev_devices) - 1; i >= 0; i--) अणु
+		अगर (!priv->adev[i])
+			जारी;
 
 		adev = &priv->adev[i]->adev;
 		/* Auxiliary driver was unbind manually through sysfs */
-		if (!adev->dev.driver)
-			goto skip_suspend;
+		अगर (!adev->dev.driver)
+			जाओ skip_suspend;
 
 		adrv = to_auxiliary_drv(adev->dev.driver);
 
-		if (adrv->suspend) {
+		अगर (adrv->suspend) अणु
 			adrv->suspend(adev, pm);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 skip_suspend:
 		del_adev(&priv->adev[i]->adev);
-		priv->adev[i] = NULL;
-	}
+		priv->adev[i] = शून्य;
+	पूर्ण
 	priv->flags |= MLX5_PRIV_FLAGS_DETACH;
-	mutex_unlock(&mlx5_intf_mutex);
-}
+	mutex_unlock(&mlx5_पूर्णांकf_mutex);
+पूर्ण
 
-int mlx5_register_device(struct mlx5_core_dev *dev)
-{
-	int ret;
+पूर्णांक mlx5_रेजिस्टर_device(काष्ठा mlx5_core_dev *dev)
+अणु
+	पूर्णांक ret;
 
-	mutex_lock(&mlx5_intf_mutex);
+	mutex_lock(&mlx5_पूर्णांकf_mutex);
 	dev->priv.flags &= ~MLX5_PRIV_FLAGS_DISABLE_ALL_ADEV;
 	ret = mlx5_rescan_drivers_locked(dev);
-	mutex_unlock(&mlx5_intf_mutex);
-	if (ret)
-		mlx5_unregister_device(dev);
+	mutex_unlock(&mlx5_पूर्णांकf_mutex);
+	अगर (ret)
+		mlx5_unरेजिस्टर_device(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void mlx5_unregister_device(struct mlx5_core_dev *dev)
-{
-	mutex_lock(&mlx5_intf_mutex);
+व्योम mlx5_unरेजिस्टर_device(काष्ठा mlx5_core_dev *dev)
+अणु
+	mutex_lock(&mlx5_पूर्णांकf_mutex);
 	dev->priv.flags |= MLX5_PRIV_FLAGS_DISABLE_ALL_ADEV;
 	mlx5_rescan_drivers_locked(dev);
-	mutex_unlock(&mlx5_intf_mutex);
-}
+	mutex_unlock(&mlx5_पूर्णांकf_mutex);
+पूर्ण
 
-static int add_drivers(struct mlx5_core_dev *dev)
-{
-	struct mlx5_priv *priv = &dev->priv;
-	int i, ret = 0;
+अटल पूर्णांक add_drivers(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_priv *priv = &dev->priv;
+	पूर्णांक i, ret = 0;
 
-	for (i = 0; i < ARRAY_SIZE(mlx5_adev_devices); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(mlx5_adev_devices); i++) अणु
 		bool is_supported = false;
 
-		if (priv->adev[i])
-			continue;
+		अगर (priv->adev[i])
+			जारी;
 
-		if (mlx5_adev_devices[i].is_supported)
+		अगर (mlx5_adev_devices[i].is_supported)
 			is_supported = mlx5_adev_devices[i].is_supported(dev);
 
-		if (!is_supported)
-			continue;
+		अगर (!is_supported)
+			जारी;
 
 		priv->adev[i] = add_adev(dev, i);
-		if (IS_ERR(priv->adev[i])) {
+		अगर (IS_ERR(priv->adev[i])) अणु
 			mlx5_core_warn(dev, "Device[%d] (%s) failed to load\n",
 				       i, mlx5_adev_devices[i].suffix);
-			/* We continue to rescan drivers and leave to the caller
-			 * to make decision if to release everything or continue.
+			/* We जारी to rescan drivers and leave to the caller
+			 * to make decision अगर to release everything or जारी.
 			 */
 			ret = PTR_ERR(priv->adev[i]);
-			priv->adev[i] = NULL;
-		}
-	}
-	return ret;
-}
+			priv->adev[i] = शून्य;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void delete_drivers(struct mlx5_core_dev *dev)
-{
-	struct mlx5_priv *priv = &dev->priv;
+अटल व्योम delete_drivers(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_priv *priv = &dev->priv;
 	bool delete_all;
-	int i;
+	पूर्णांक i;
 
 	delete_all = priv->flags & MLX5_PRIV_FLAGS_DISABLE_ALL_ADEV;
 
-	for (i = ARRAY_SIZE(mlx5_adev_devices) - 1; i >= 0; i--) {
+	क्रम (i = ARRAY_SIZE(mlx5_adev_devices) - 1; i >= 0; i--) अणु
 		bool is_supported = false;
 
-		if (!priv->adev[i])
-			continue;
+		अगर (!priv->adev[i])
+			जारी;
 
-		if (mlx5_adev_devices[i].is_supported && !delete_all)
+		अगर (mlx5_adev_devices[i].is_supported && !delete_all)
 			is_supported = mlx5_adev_devices[i].is_supported(dev);
 
-		if (is_supported)
-			continue;
+		अगर (is_supported)
+			जारी;
 
 		del_adev(&priv->adev[i]->adev);
-		priv->adev[i] = NULL;
-	}
-}
+		priv->adev[i] = शून्य;
+	पूर्ण
+पूर्ण
 
 /* This function is used after mlx5_core_dev is reconfigured.
  */
-int mlx5_rescan_drivers_locked(struct mlx5_core_dev *dev)
-{
-	struct mlx5_priv *priv = &dev->priv;
+पूर्णांक mlx5_rescan_drivers_locked(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_priv *priv = &dev->priv;
 
-	lockdep_assert_held(&mlx5_intf_mutex);
-	if (priv->flags & MLX5_PRIV_FLAGS_DETACH)
-		return 0;
+	lockdep_निश्चित_held(&mlx5_पूर्णांकf_mutex);
+	अगर (priv->flags & MLX5_PRIV_FLAGS_DETACH)
+		वापस 0;
 
 	delete_drivers(dev);
-	if (priv->flags & MLX5_PRIV_FLAGS_DISABLE_ALL_ADEV)
-		return 0;
+	अगर (priv->flags & MLX5_PRIV_FLAGS_DISABLE_ALL_ADEV)
+		वापस 0;
 
-	return add_drivers(dev);
-}
+	वापस add_drivers(dev);
+पूर्ण
 
-static u32 mlx5_gen_pci_id(const struct mlx5_core_dev *dev)
-{
-	return (u32)((pci_domain_nr(dev->pdev->bus) << 16) |
+अटल u32 mlx5_gen_pci_id(स्थिर काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस (u32)((pci_करोमुख्य_nr(dev->pdev->bus) << 16) |
 		     (dev->pdev->bus->number << 8) |
 		     PCI_SLOT(dev->pdev->devfn));
-}
+पूर्ण
 
-static int next_phys_dev(struct device *dev, const void *data)
-{
-	struct mlx5_adev *madev = container_of(dev, struct mlx5_adev, adev.dev);
-	struct mlx5_core_dev *mdev = madev->mdev;
-	const struct mlx5_core_dev *curr = data;
+अटल पूर्णांक next_phys_dev(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	काष्ठा mlx5_adev *madev = container_of(dev, काष्ठा mlx5_adev, adev.dev);
+	काष्ठा mlx5_core_dev *mdev = madev->mdev;
+	स्थिर काष्ठा mlx5_core_dev *curr = data;
 
-	if (!mlx5_core_is_pf(mdev))
-		return 0;
+	अगर (!mlx5_core_is_pf(mdev))
+		वापस 0;
 
-	if (mdev == curr)
-		return 0;
+	अगर (mdev == curr)
+		वापस 0;
 
-	if (mlx5_gen_pci_id(mdev) != mlx5_gen_pci_id(curr))
-		return 0;
+	अगर (mlx5_gen_pci_id(mdev) != mlx5_gen_pci_id(curr))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* This function is called with two flows:
- * 1. During initialization of mlx5_core_dev and we don't need to lock it.
- * 2. During LAG configure stage and caller holds &mlx5_intf_mutex.
+ * 1. During initialization of mlx5_core_dev and we करोn't need to lock it.
+ * 2. During LAG configure stage and caller holds &mlx5_पूर्णांकf_mutex.
  */
-struct mlx5_core_dev *mlx5_get_next_phys_dev(struct mlx5_core_dev *dev)
-{
-	struct auxiliary_device *adev;
-	struct mlx5_adev *madev;
+काष्ठा mlx5_core_dev *mlx5_get_next_phys_dev(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा auxiliary_device *adev;
+	काष्ठा mlx5_adev *madev;
 
-	if (!mlx5_core_is_pf(dev))
-		return NULL;
+	अगर (!mlx5_core_is_pf(dev))
+		वापस शून्य;
 
-	adev = auxiliary_find_device(NULL, dev, &next_phys_dev);
-	if (!adev)
-		return NULL;
+	adev = auxiliary_find_device(शून्य, dev, &next_phys_dev);
+	अगर (!adev)
+		वापस शून्य;
 
-	madev = container_of(adev, struct mlx5_adev, adev);
+	madev = container_of(adev, काष्ठा mlx5_adev, adev);
 	put_device(&adev->dev);
-	return madev->mdev;
-}
+	वापस madev->mdev;
+पूर्ण
 
-void mlx5_dev_list_lock(void)
-{
-	mutex_lock(&mlx5_intf_mutex);
-}
-void mlx5_dev_list_unlock(void)
-{
-	mutex_unlock(&mlx5_intf_mutex);
-}
+व्योम mlx5_dev_list_lock(व्योम)
+अणु
+	mutex_lock(&mlx5_पूर्णांकf_mutex);
+पूर्ण
+व्योम mlx5_dev_list_unlock(व्योम)
+अणु
+	mutex_unlock(&mlx5_पूर्णांकf_mutex);
+पूर्ण
 
-int mlx5_dev_list_trylock(void)
-{
-	return mutex_trylock(&mlx5_intf_mutex);
-}
+पूर्णांक mlx5_dev_list_trylock(व्योम)
+अणु
+	वापस mutex_trylock(&mlx5_पूर्णांकf_mutex);
+पूर्ण

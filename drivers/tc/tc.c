@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *	TURBOchannel bus services.
  *
@@ -6,45 +7,45 @@
  *	Copyright (c) 2005  James Simmons
  *
  *	This file is subject to the terms and conditions of the GNU
- *	General Public License.  See the file "COPYING" in the main
- *	directory of this archive for more details.
+ *	General Public License.  See the file "COPYING" in the मुख्य
+ *	directory of this archive क्रम more details.
  */
-#include <linux/compiler.h>
-#include <linux/dma-mapping.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/tc.h>
-#include <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/tc.h>
+#समावेश <linux/types.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-static struct tc_bus tc_bus = {
+अटल काष्ठा tc_bus tc_bus = अणु
 	.name = "TURBOchannel",
-};
+पूर्ण;
 
 /*
- * Probing for TURBOchannel modules.
+ * Probing क्रम TURBOchannel modules.
  */
-static void __init tc_bus_add_devices(struct tc_bus *tbus)
-{
-	resource_size_t slotsize = tbus->info.slot_size << 20;
-	resource_size_t extslotsize = tbus->ext_slot_size;
-	resource_size_t slotaddr;
-	resource_size_t extslotaddr;
-	resource_size_t devsize;
-	void __iomem *module;
-	struct tc_dev *tdev;
-	int i, slot, err;
+अटल व्योम __init tc_bus_add_devices(काष्ठा tc_bus *tbus)
+अणु
+	resource_माप_प्रकार slotsize = tbus->info.slot_size << 20;
+	resource_माप_प्रकार extslotsize = tbus->ext_slot_size;
+	resource_माप_प्रकार slotaddr;
+	resource_माप_प्रकार extslotaddr;
+	resource_माप_प्रकार devsize;
+	व्योम __iomem *module;
+	काष्ठा tc_dev *tdev;
+	पूर्णांक i, slot, err;
 	u8 pattern[4];
-	long offset;
+	दीर्घ offset;
 
-	for (slot = 0; slot < tbus->num_tcslots; slot++) {
+	क्रम (slot = 0; slot < tbus->num_tcslots; slot++) अणु
 		slotaddr = tbus->slot_base + slot * slotsize;
 		extslotaddr = tbus->ext_slot_base + slot * extslotsize;
 		module = ioremap(slotaddr, slotsize);
@@ -53,40 +54,40 @@ static void __init tc_bus_add_devices(struct tc_bus *tbus)
 		offset = TC_OLDCARD;
 
 		err = 0;
-		err |= tc_preadb(pattern + 0, module + offset + TC_PATTERN0);
-		err |= tc_preadb(pattern + 1, module + offset + TC_PATTERN1);
-		err |= tc_preadb(pattern + 2, module + offset + TC_PATTERN2);
-		err |= tc_preadb(pattern + 3, module + offset + TC_PATTERN3);
-		if (err)
-			goto out_err;
+		err |= tc_pपढ़ोb(pattern + 0, module + offset + TC_PATTERN0);
+		err |= tc_pपढ़ोb(pattern + 1, module + offset + TC_PATTERN1);
+		err |= tc_pपढ़ोb(pattern + 2, module + offset + TC_PATTERN2);
+		err |= tc_pपढ़ोb(pattern + 3, module + offset + TC_PATTERN3);
+		अगर (err)
+			जाओ out_err;
 
-		if (pattern[0] != 0x55 || pattern[1] != 0x00 ||
-		    pattern[2] != 0xaa || pattern[3] != 0xff) {
+		अगर (pattern[0] != 0x55 || pattern[1] != 0x00 ||
+		    pattern[2] != 0xaa || pattern[3] != 0xff) अणु
 			offset = TC_NEWCARD;
 
 			err = 0;
-			err |= tc_preadb(pattern + 0,
+			err |= tc_pपढ़ोb(pattern + 0,
 					 module + offset + TC_PATTERN0);
-			err |= tc_preadb(pattern + 1,
+			err |= tc_pपढ़ोb(pattern + 1,
 					 module + offset + TC_PATTERN1);
-			err |= tc_preadb(pattern + 2,
+			err |= tc_pपढ़ोb(pattern + 2,
 					 module + offset + TC_PATTERN2);
-			err |= tc_preadb(pattern + 3,
+			err |= tc_pपढ़ोb(pattern + 3,
 					 module + offset + TC_PATTERN3);
-			if (err)
-				goto out_err;
-		}
+			अगर (err)
+				जाओ out_err;
+		पूर्ण
 
-		if (pattern[0] != 0x55 || pattern[1] != 0x00 ||
+		अगर (pattern[0] != 0x55 || pattern[1] != 0x00 ||
 		    pattern[2] != 0xaa || pattern[3] != 0xff)
-			goto out_err;
+			जाओ out_err;
 
 		/* Found a board, allocate it an entry in the list */
-		tdev = kzalloc(sizeof(*tdev), GFP_KERNEL);
-		if (!tdev) {
+		tdev = kzalloc(माप(*tdev), GFP_KERNEL);
+		अगर (!tdev) अणु
 			pr_err("tc%x: unable to allocate tc_dev\n", slot);
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 		dev_set_name(&tdev->dev, "tc%x", slot);
 		tdev->bus = tbus;
 		tdev->dev.parent = &tbus->dev;
@@ -98,73 +99,73 @@ static void __init tc_bus_add_devices(struct tc_bus *tbus)
 		tdev->dev.dma_mask = &tdev->dma_mask;
 		tdev->dev.coherent_dma_mask = DMA_BIT_MASK(34);
 
-		for (i = 0; i < 8; i++) {
+		क्रम (i = 0; i < 8; i++) अणु
 			tdev->firmware[i] =
-				readb(module + offset + TC_FIRM_VER + 4 * i);
-			tdev->vendor[i] =
-				readb(module + offset + TC_VENDOR + 4 * i);
+				पढ़ोb(module + offset + TC_FIRM_VER + 4 * i);
+			tdev->venकरोr[i] =
+				पढ़ोb(module + offset + TC_VENDOR + 4 * i);
 			tdev->name[i] =
-				readb(module + offset + TC_MODULE + 4 * i);
-		}
+				पढ़ोb(module + offset + TC_MODULE + 4 * i);
+		पूर्ण
 		tdev->firmware[8] = 0;
-		tdev->vendor[8] = 0;
+		tdev->venकरोr[8] = 0;
 		tdev->name[8] = 0;
 
-		pr_info("%s: %s %s %s\n", dev_name(&tdev->dev), tdev->vendor,
+		pr_info("%s: %s %s %s\n", dev_name(&tdev->dev), tdev->venकरोr,
 			tdev->name, tdev->firmware);
 
-		devsize = readb(module + offset + TC_SLOT_SIZE);
+		devsize = पढ़ोb(module + offset + TC_SLOT_SIZE);
 		devsize <<= 22;
-		if (devsize <= slotsize) {
+		अगर (devsize <= slotsize) अणु
 			tdev->resource.start = slotaddr;
 			tdev->resource.end = slotaddr + devsize - 1;
-		} else if (devsize <= extslotsize) {
+		पूर्ण अन्यथा अगर (devsize <= extslotsize) अणु
 			tdev->resource.start = extslotaddr;
 			tdev->resource.end = extslotaddr + devsize - 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_err("%s: Cannot provide slot space "
 			       "(%ldMiB required, up to %ldMiB supported)\n",
-			       dev_name(&tdev->dev), (long)(devsize >> 20),
-			       (long)(max(slotsize, extslotsize) >> 20));
-			kfree(tdev);
-			goto out_err;
-		}
+			       dev_name(&tdev->dev), (दीर्घ)(devsize >> 20),
+			       (दीर्घ)(max(slotsize, extslotsize) >> 20));
+			kमुक्त(tdev);
+			जाओ out_err;
+		पूर्ण
 		tdev->resource.name = tdev->name;
 		tdev->resource.flags = IORESOURCE_MEM;
 
 		tc_device_get_irq(tdev);
 
-		if (device_register(&tdev->dev)) {
+		अगर (device_रेजिस्टर(&tdev->dev)) अणु
 			put_device(&tdev->dev);
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 		list_add_tail(&tdev->node, &tbus->devices);
 
 out_err:
 		iounmap(module);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * The main entry.
+ * The मुख्य entry.
  */
-static int __init tc_init(void)
-{
+अटल पूर्णांक __init tc_init(व्योम)
+अणु
 	/* Initialize the TURBOchannel bus */
-	if (tc_bus_get_info(&tc_bus))
-		goto out_err;
+	अगर (tc_bus_get_info(&tc_bus))
+		जाओ out_err;
 
 	INIT_LIST_HEAD(&tc_bus.devices);
 	dev_set_name(&tc_bus.dev, "tc");
-	if (device_register(&tc_bus.dev))
-		goto out_err_device;
+	अगर (device_रेजिस्टर(&tc_bus.dev))
+		जाओ out_err_device;
 
-	if (tc_bus.info.slot_size) {
-		unsigned int tc_clock = tc_get_speed(&tc_bus) / 100000;
+	अगर (tc_bus.info.slot_size) अणु
+		अचिन्हित पूर्णांक tc_घड़ी = tc_get_speed(&tc_bus) / 100000;
 
 		pr_info("tc: TURBOchannel rev. %d at %d.%d MHz "
 			"(with%s parity)\n", tc_bus.info.revision,
-			tc_clock / 10, tc_clock % 10,
+			tc_घड़ी / 10, tc_घड़ी % 10,
 			tc_bus.info.parity ? "" : "out");
 
 		tc_bus.resource[0].start = tc_bus.slot_base;
@@ -173,36 +174,36 @@ static int __init tc_init(void)
 					 tc_bus.num_tcslots - 1;
 		tc_bus.resource[0].name = tc_bus.name;
 		tc_bus.resource[0].flags = IORESOURCE_MEM;
-		if (request_resource(&iomem_resource,
-				     &tc_bus.resource[0]) < 0) {
+		अगर (request_resource(&iomem_resource,
+				     &tc_bus.resource[0]) < 0) अणु
 			pr_err("tc: Cannot reserve resource\n");
-			goto out_err_device;
-		}
-		if (tc_bus.ext_slot_size) {
+			जाओ out_err_device;
+		पूर्ण
+		अगर (tc_bus.ext_slot_size) अणु
 			tc_bus.resource[1].start = tc_bus.ext_slot_base;
 			tc_bus.resource[1].end = tc_bus.ext_slot_base +
 						 tc_bus.ext_slot_size *
 						 tc_bus.num_tcslots - 1;
 			tc_bus.resource[1].name = tc_bus.name;
 			tc_bus.resource[1].flags = IORESOURCE_MEM;
-			if (request_resource(&iomem_resource,
-					     &tc_bus.resource[1]) < 0) {
+			अगर (request_resource(&iomem_resource,
+					     &tc_bus.resource[1]) < 0) अणु
 				pr_err("tc: Cannot reserve resource\n");
-				goto out_err_resource;
-			}
-		}
+				जाओ out_err_resource;
+			पूर्ण
+		पूर्ण
 
 		tc_bus_add_devices(&tc_bus);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_err_resource:
 	release_resource(&tc_bus.resource[0]);
 out_err_device:
 	put_device(&tc_bus.dev);
 out_err:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 subsys_initcall(tc_init);

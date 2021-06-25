@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * (C) COPYRIGHT 2018 ARM Limited. All rights reserved.
  * Author: James.Qian.Wang <james.qian.wang@arm.com>
  *
  */
-#ifndef _MALIDP_UTILS_
-#define _MALIDP_UTILS_
+#अगर_अघोषित _MALIDP_UTILS_
+#घोषणा _MALIDP_UTILS_
 
-#include <linux/delay.h>
-#include <linux/errno.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
 
-#define has_bit(nr, mask)	(BIT(nr) & (mask))
-#define has_bits(bits, mask)	(((bits) & (mask)) == (bits))
+#घोषणा has_bit(nr, mask)	(BIT(nr) & (mask))
+#घोषणा has_bits(bits, mask)	(((bits) & (mask)) == (bits))
 
-#define dp_wait_cond(__cond, __tries, __min_range, __max_range)	\
-({							\
-	int num_tries = __tries;			\
-	while (!__cond && (num_tries > 0)) {		\
+#घोषणा dp_रुको_cond(__cond, __tries, __min_range, __max_range)	\
+(अणु							\
+	पूर्णांक num_tries = __tries;			\
+	जबतक (!__cond && (num_tries > 0)) अणु		\
 		usleep_range(__min_range, __max_range);	\
 		num_tries--;				\
-	}						\
+	पूर्ण						\
 	(__cond) ? 0 : -ETIMEDOUT;			\
-})
+पूर्ण)
 
 /* the restriction of range is [start, end] */
-struct malidp_range {
+काष्ठा malidp_range अणु
 	u32 start;
 	u32 end;
-};
+पूर्ण;
 
-static inline void set_range(struct malidp_range *rg, u32 start, u32 end)
-{
+अटल अंतरभूत व्योम set_range(काष्ठा malidp_range *rg, u32 start, u32 end)
+अणु
 	rg->start = start;
 	rg->end   = end;
-}
+पूर्ण
 
-static inline bool in_range(struct malidp_range *rg, u32 v)
-{
-	return (v >= rg->start) && (v <= rg->end);
-}
+अटल अंतरभूत bool in_range(काष्ठा malidp_range *rg, u32 v)
+अणु
+	वापस (v >= rg->start) && (v <= rg->end);
+पूर्ण
 
-#endif /* _MALIDP_UTILS_ */
+#पूर्ण_अगर /* _MALIDP_UTILS_ */

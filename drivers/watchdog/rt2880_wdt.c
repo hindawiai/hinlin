@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Ralink RT288x/RT3xxx/MT76xx built-in hardware watchdog timer
+ * Ralink RT288x/RT3xxx/MT76xx built-in hardware watchकरोg समयr
  *
- * Copyright (C) 2011 Gabor Juhos <juhosg@openwrt.org>
+ * Copyright (C) 2011 Gabor Juhos <juhosg@खोलोwrt.org>
  * Copyright (C) 2013 John Crispin <john@phrozen.org>
  *
- * This driver was based on: drivers/watchdog/softdog.c
+ * This driver was based on: drivers/watchकरोg/softकरोg.c
  */
 
-#include <linux/clk.h>
-#include <linux/reset.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/watchdog.h>
-#include <linux/moduleparam.h>
-#include <linux/platform_device.h>
-#include <linux/mod_devicetable.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mod_devicetable.h>
 
-#include <asm/mach-ralink/ralink_regs.h>
+#समावेश <यंत्र/mach-ralink/ralink_regs.h>
 
-#define SYSC_RSTSTAT			0x38
-#define WDT_RST_CAUSE			BIT(1)
+#घोषणा SYSC_RSTSTAT			0x38
+#घोषणा WDT_RST_CAUSE			BIT(1)
 
-#define RALINK_WDT_TIMEOUT		30
-#define RALINK_WDT_PRESCALE		65536
+#घोषणा RALINK_WDT_TIMEOUT		30
+#घोषणा RALINK_WDT_PRESCALE		65536
 
-#define TIMER_REG_TMR1LOAD		0x00
-#define TIMER_REG_TMR1CTL		0x08
+#घोषणा TIMER_REG_TMR1LOAD		0x00
+#घोषणा TIMER_REG_TMR1CTL		0x08
 
-#define TMRSTAT_TMR1RST			BIT(5)
+#घोषणा TMRSTAT_TMR1RST			BIT(5)
 
-#define TMR1CTL_ENABLE			BIT(7)
-#define TMR1CTL_MODE_SHIFT		4
-#define TMR1CTL_MODE_MASK		0x3
-#define TMR1CTL_MODE_FREE_RUNNING	0x0
-#define TMR1CTL_MODE_PERIODIC		0x1
-#define TMR1CTL_MODE_TIMEOUT		0x2
-#define TMR1CTL_MODE_WDT		0x3
-#define TMR1CTL_PRESCALE_MASK		0xf
-#define TMR1CTL_PRESCALE_65536		0xf
+#घोषणा TMR1CTL_ENABLE			BIT(7)
+#घोषणा TMR1CTL_MODE_SHIFT		4
+#घोषणा TMR1CTL_MODE_MASK		0x3
+#घोषणा TMR1CTL_MODE_FREE_RUNNING	0x0
+#घोषणा TMR1CTL_MODE_PERIODIC		0x1
+#घोषणा TMR1CTL_MODE_TIMEOUT		0x2
+#घोषणा TMR1CTL_MODE_WDT		0x3
+#घोषणा TMR1CTL_PRESCALE_MASK		0xf
+#घोषणा TMR1CTL_PRESCALE_65536		0xf
 
-static struct clk *rt288x_wdt_clk;
-static unsigned long rt288x_wdt_freq;
-static void __iomem *rt288x_wdt_base;
-static struct reset_control *rt288x_wdt_reset;
+अटल काष्ठा clk *rt288x_wdt_clk;
+अटल अचिन्हित दीर्घ rt288x_wdt_freq;
+अटल व्योम __iomem *rt288x_wdt_base;
+अटल काष्ठा reset_control *rt288x_wdt_reset;
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		"Watchdog cannot be stopped once started (default="
 		__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-static inline void rt_wdt_w32(unsigned reg, u32 val)
-{
-	iowrite32(val, rt288x_wdt_base + reg);
-}
+अटल अंतरभूत व्योम rt_wdt_w32(अचिन्हित reg, u32 val)
+अणु
+	ioग_लिखो32(val, rt288x_wdt_base + reg);
+पूर्ण
 
-static inline u32 rt_wdt_r32(unsigned reg)
-{
-	return ioread32(rt288x_wdt_base + reg);
-}
+अटल अंतरभूत u32 rt_wdt_r32(अचिन्हित reg)
+अणु
+	वापस ioपढ़ो32(rt288x_wdt_base + reg);
+पूर्ण
 
-static int rt288x_wdt_ping(struct watchdog_device *w)
-{
-	rt_wdt_w32(TIMER_REG_TMR1LOAD, w->timeout * rt288x_wdt_freq);
+अटल पूर्णांक rt288x_wdt_ping(काष्ठा watchकरोg_device *w)
+अणु
+	rt_wdt_w32(TIMER_REG_TMR1LOAD, w->समयout * rt288x_wdt_freq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt288x_wdt_start(struct watchdog_device *w)
-{
+अटल पूर्णांक rt288x_wdt_start(काष्ठा watchकरोg_device *w)
+अणु
 	u32 t;
 
 	t = rt_wdt_r32(TIMER_REG_TMR1CTL);
@@ -85,11 +86,11 @@ static int rt288x_wdt_start(struct watchdog_device *w)
 	t |= TMR1CTL_ENABLE;
 	rt_wdt_w32(TIMER_REG_TMR1CTL, t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt288x_wdt_stop(struct watchdog_device *w)
-{
+अटल पूर्णांक rt288x_wdt_stop(काष्ठा watchकरोg_device *w)
+अणु
 	u32 t;
 
 	rt288x_wdt_ping(w);
@@ -98,94 +99,94 @@ static int rt288x_wdt_stop(struct watchdog_device *w)
 	t &= ~TMR1CTL_ENABLE;
 	rt_wdt_w32(TIMER_REG_TMR1CTL, t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt288x_wdt_set_timeout(struct watchdog_device *w, unsigned int t)
-{
-	w->timeout = t;
+अटल पूर्णांक rt288x_wdt_set_समयout(काष्ठा watchकरोg_device *w, अचिन्हित पूर्णांक t)
+अणु
+	w->समयout = t;
 	rt288x_wdt_ping(w);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt288x_wdt_bootcause(void)
-{
-	if (rt_sysc_r32(SYSC_RSTSTAT) & WDT_RST_CAUSE)
-		return WDIOF_CARDRESET;
+अटल पूर्णांक rt288x_wdt_bootcause(व्योम)
+अणु
+	अगर (rt_sysc_r32(SYSC_RSTSTAT) & WDT_RST_CAUSE)
+		वापस WDIOF_CARDRESET;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct watchdog_info rt288x_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info rt288x_wdt_info = अणु
 	.identity = "Ralink Watchdog",
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
-};
+पूर्ण;
 
-static const struct watchdog_ops rt288x_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops rt288x_wdt_ops = अणु
 	.owner = THIS_MODULE,
 	.start = rt288x_wdt_start,
 	.stop = rt288x_wdt_stop,
 	.ping = rt288x_wdt_ping,
-	.set_timeout = rt288x_wdt_set_timeout,
-};
+	.set_समयout = rt288x_wdt_set_समयout,
+पूर्ण;
 
-static struct watchdog_device rt288x_wdt_dev = {
+अटल काष्ठा watchकरोg_device rt288x_wdt_dev = अणु
 	.info = &rt288x_wdt_info,
 	.ops = &rt288x_wdt_ops,
-	.min_timeout = 1,
-};
+	.min_समयout = 1,
+पूर्ण;
 
-static int rt288x_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	int ret;
+अटल पूर्णांक rt288x_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक ret;
 
-	rt288x_wdt_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(rt288x_wdt_base))
-		return PTR_ERR(rt288x_wdt_base);
+	rt288x_wdt_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(rt288x_wdt_base))
+		वापस PTR_ERR(rt288x_wdt_base);
 
-	rt288x_wdt_clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(rt288x_wdt_clk))
-		return PTR_ERR(rt288x_wdt_clk);
+	rt288x_wdt_clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(rt288x_wdt_clk))
+		वापस PTR_ERR(rt288x_wdt_clk);
 
-	rt288x_wdt_reset = devm_reset_control_get_exclusive(dev, NULL);
-	if (!IS_ERR(rt288x_wdt_reset))
-		reset_control_deassert(rt288x_wdt_reset);
+	rt288x_wdt_reset = devm_reset_control_get_exclusive(dev, शून्य);
+	अगर (!IS_ERR(rt288x_wdt_reset))
+		reset_control_deनिश्चित(rt288x_wdt_reset);
 
 	rt288x_wdt_freq = clk_get_rate(rt288x_wdt_clk) / RALINK_WDT_PRESCALE;
 
 	rt288x_wdt_dev.bootstatus = rt288x_wdt_bootcause();
-	rt288x_wdt_dev.max_timeout = (0xfffful / rt288x_wdt_freq);
+	rt288x_wdt_dev.max_समयout = (0xfffful / rt288x_wdt_freq);
 	rt288x_wdt_dev.parent = dev;
 
-	watchdog_init_timeout(&rt288x_wdt_dev, rt288x_wdt_dev.max_timeout,
+	watchकरोg_init_समयout(&rt288x_wdt_dev, rt288x_wdt_dev.max_समयout,
 			      dev);
-	watchdog_set_nowayout(&rt288x_wdt_dev, nowayout);
+	watchकरोg_set_nowayout(&rt288x_wdt_dev, nowayout);
 
-	watchdog_stop_on_reboot(&rt288x_wdt_dev);
-	ret = devm_watchdog_register_device(dev, &rt288x_wdt_dev);
-	if (!ret)
+	watchकरोg_stop_on_reboot(&rt288x_wdt_dev);
+	ret = devm_watchकरोg_रेजिस्टर_device(dev, &rt288x_wdt_dev);
+	अगर (!ret)
 		dev_info(dev, "Initialized\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id rt288x_wdt_match[] = {
-	{ .compatible = "ralink,rt2880-wdt" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id rt288x_wdt_match[] = अणु
+	अणु .compatible = "ralink,rt2880-wdt" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rt288x_wdt_match);
 
-static struct platform_driver rt288x_wdt_driver = {
+अटल काष्ठा platक्रमm_driver rt288x_wdt_driver = अणु
 	.probe		= rt288x_wdt_probe,
-	.driver		= {
+	.driver		= अणु
 		.name		= KBUILD_MODNAME,
 		.of_match_table	= rt288x_wdt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(rt288x_wdt_driver);
+module_platक्रमm_driver(rt288x_wdt_driver);
 
 MODULE_DESCRIPTION("MediaTek/Ralink RT288x/RT3xxx hardware watchdog driver");
 MODULE_AUTHOR("Gabor Juhos <juhosg@openwrt.org");

@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,72 +25,72 @@
  *          Alex Deucher
  */
 
-#include <linux/backlight.h>
-#include <linux/pci.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/pci.h>
 
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_device.h>
-#include <drm/drm_file.h>
-#include <drm/drm_util.h>
-#include <drm/radeon_drm.h>
+#समावेश <drm/drm_crtc_helper.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_file.h>
+#समावेश <drm/drm_util.h>
+#समावेश <drm/radeon_drm.h>
 
-#include "radeon.h"
-#include "radeon_asic.h"
-#include "radeon_legacy_encoders.h"
-#include "atom.h"
-#ifdef CONFIG_PMAC_BACKLIGHT
-#include <asm/backlight.h>
-#endif
+#समावेश "radeon.h"
+#समावेश "radeon_asic.h"
+#समावेश "radeon_legacy_encoders.h"
+#समावेश "atom.h"
+#अगर_घोषित CONFIG_PMAC_BACKLIGHT
+#समावेश <यंत्र/backlight.h>
+#पूर्ण_अगर
 
-static void radeon_legacy_encoder_disable(struct drm_encoder *encoder)
-{
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	const struct drm_encoder_helper_funcs *encoder_funcs;
+अटल व्योम radeon_legacy_encoder_disable(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	स्थिर काष्ठा drm_encoder_helper_funcs *encoder_funcs;
 
-	encoder_funcs = encoder->helper_private;
+	encoder_funcs = encoder->helper_निजी;
 	encoder_funcs->dpms(encoder, DRM_MODE_DPMS_OFF);
 	radeon_encoder->active_device = 0;
-}
+पूर्ण
 
-static void radeon_legacy_lvds_update(struct drm_encoder *encoder, int mode)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	uint32_t lvds_gen_cntl, lvds_pll_cntl, pixclks_cntl, disp_pwr_man;
-	int panel_pwr_delay = 2000;
+अटल व्योम radeon_legacy_lvds_update(काष्ठा drm_encoder *encoder, पूर्णांक mode)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	uपूर्णांक32_t lvds_gen_cntl, lvds_pll_cntl, pixclks_cntl, disp_pwr_man;
+	पूर्णांक panel_pwr_delay = 2000;
 	bool is_mac = false;
-	uint8_t backlight_level;
+	uपूर्णांक8_t backlight_level;
 	DRM_DEBUG_KMS("\n");
 
 	lvds_gen_cntl = RREG32(RADEON_LVDS_GEN_CNTL);
 	backlight_level = (lvds_gen_cntl >> RADEON_LVDS_BL_MOD_LEVEL_SHIFT) & 0xff;
 
-	if (radeon_encoder->enc_priv) {
-		if (rdev->is_atom_bios) {
-			struct radeon_encoder_atom_dig *lvds = radeon_encoder->enc_priv;
+	अगर (radeon_encoder->enc_priv) अणु
+		अगर (rdev->is_atom_bios) अणु
+			काष्ठा radeon_encoder_atom_dig *lvds = radeon_encoder->enc_priv;
 			panel_pwr_delay = lvds->panel_pwr_delay;
-			if (lvds->bl_dev)
+			अगर (lvds->bl_dev)
 				backlight_level = lvds->backlight_level;
-		} else {
-			struct radeon_encoder_lvds *lvds = radeon_encoder->enc_priv;
+		पूर्ण अन्यथा अणु
+			काष्ठा radeon_encoder_lvds *lvds = radeon_encoder->enc_priv;
 			panel_pwr_delay = lvds->panel_pwr_delay;
-			if (lvds->bl_dev)
+			अगर (lvds->bl_dev)
 				backlight_level = lvds->backlight_level;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* macs (and possibly some x86 oem systems?) wire up LVDS strangely
+	/* macs (and possibly some x86 oem प्रणालीs?) wire up LVDS strangely
 	 * Taken from radeonfb.
 	 */
-	if ((rdev->mode_info.connector_table == CT_IBOOK) ||
+	अगर ((rdev->mode_info.connector_table == CT_IBOOK) ||
 	    (rdev->mode_info.connector_table == CT_POWERBOOK_EXTERNAL) ||
 	    (rdev->mode_info.connector_table == CT_POWERBOOK_INTERNAL) ||
 	    (rdev->mode_info.connector_table == CT_POWERBOOK_VGA))
 		is_mac = true;
 
-	switch (mode) {
-	case DRM_MODE_DPMS_ON:
+	चयन (mode) अणु
+	हाल DRM_MODE_DPMS_ON:
 		disp_pwr_man = RREG32(RADEON_DISP_PWR_MAN);
 		disp_pwr_man |= RADEON_AUTO_PWRUP_EN;
 		WREG32(RADEON_DISP_PWR_MAN, disp_pwr_man);
@@ -107,89 +108,89 @@ static void radeon_legacy_lvds_update(struct drm_encoder *encoder, int mode)
 		lvds_gen_cntl |= (RADEON_LVDS_ON | RADEON_LVDS_EN |
 				  RADEON_LVDS_DIGON | RADEON_LVDS_BLON |
 				  (backlight_level << RADEON_LVDS_BL_MOD_LEVEL_SHIFT));
-		if (is_mac)
+		अगर (is_mac)
 			lvds_gen_cntl |= RADEON_LVDS_BL_MOD_EN;
 		mdelay(panel_pwr_delay);
 		WREG32(RADEON_LVDS_GEN_CNTL, lvds_gen_cntl);
-		break;
-	case DRM_MODE_DPMS_STANDBY:
-	case DRM_MODE_DPMS_SUSPEND:
-	case DRM_MODE_DPMS_OFF:
+		अवरोध;
+	हाल DRM_MODE_DPMS_STANDBY:
+	हाल DRM_MODE_DPMS_SUSPEND:
+	हाल DRM_MODE_DPMS_OFF:
 		pixclks_cntl = RREG32_PLL(RADEON_PIXCLKS_CNTL);
 		WREG32_PLL_P(RADEON_PIXCLKS_CNTL, 0, ~RADEON_PIXCLK_LVDS_ALWAYS_ONb);
 		lvds_gen_cntl |= RADEON_LVDS_DISPLAY_DIS;
-		if (is_mac) {
+		अगर (is_mac) अणु
 			lvds_gen_cntl &= ~RADEON_LVDS_BL_MOD_EN;
 			WREG32(RADEON_LVDS_GEN_CNTL, lvds_gen_cntl);
 			lvds_gen_cntl &= ~(RADEON_LVDS_ON | RADEON_LVDS_EN);
-		} else {
+		पूर्ण अन्यथा अणु
 			WREG32(RADEON_LVDS_GEN_CNTL, lvds_gen_cntl);
 			lvds_gen_cntl &= ~(RADEON_LVDS_ON | RADEON_LVDS_BLON | RADEON_LVDS_EN | RADEON_LVDS_DIGON);
-		}
+		पूर्ण
 		mdelay(panel_pwr_delay);
 		WREG32(RADEON_LVDS_GEN_CNTL, lvds_gen_cntl);
 		WREG32_PLL(RADEON_PIXCLKS_CNTL, pixclks_cntl);
 		mdelay(panel_pwr_delay);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atombios_encoder_dpms_scratch_regs(encoder, (mode == DRM_MODE_DPMS_ON) ? true : false);
-	else
+	अन्यथा
 		radeon_combios_encoder_dpms_scratch_regs(encoder, (mode == DRM_MODE_DPMS_ON) ? true : false);
 
-}
+पूर्ण
 
-static void radeon_legacy_lvds_dpms(struct drm_encoder *encoder, int mode)
-{
-	struct radeon_device *rdev = encoder->dev->dev_private;
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+अटल व्योम radeon_legacy_lvds_dpms(काष्ठा drm_encoder *encoder, पूर्णांक mode)
+अणु
+	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
 	DRM_DEBUG("\n");
 
-	if (radeon_encoder->enc_priv) {
-		if (rdev->is_atom_bios) {
-			struct radeon_encoder_atom_dig *lvds = radeon_encoder->enc_priv;
+	अगर (radeon_encoder->enc_priv) अणु
+		अगर (rdev->is_atom_bios) अणु
+			काष्ठा radeon_encoder_atom_dig *lvds = radeon_encoder->enc_priv;
 			lvds->dpms_mode = mode;
-		} else {
-			struct radeon_encoder_lvds *lvds = radeon_encoder->enc_priv;
+		पूर्ण अन्यथा अणु
+			काष्ठा radeon_encoder_lvds *lvds = radeon_encoder->enc_priv;
 			lvds->dpms_mode = mode;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	radeon_legacy_lvds_update(encoder, mode);
-}
+पूर्ण
 
-static void radeon_legacy_lvds_prepare(struct drm_encoder *encoder)
-{
-	struct radeon_device *rdev = encoder->dev->dev_private;
+अटल व्योम radeon_legacy_lvds_prepare(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atom_output_lock(encoder, true);
-	else
+	अन्यथा
 		radeon_combios_output_lock(encoder, true);
 	radeon_legacy_lvds_dpms(encoder, DRM_MODE_DPMS_OFF);
-}
+पूर्ण
 
-static void radeon_legacy_lvds_commit(struct drm_encoder *encoder)
-{
-	struct radeon_device *rdev = encoder->dev->dev_private;
+अटल व्योम radeon_legacy_lvds_commit(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
 
 	radeon_legacy_lvds_dpms(encoder, DRM_MODE_DPMS_ON);
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atom_output_lock(encoder, false);
-	else
+	अन्यथा
 		radeon_combios_output_lock(encoder, false);
-}
+पूर्ण
 
-static void radeon_legacy_lvds_mode_set(struct drm_encoder *encoder,
-					struct drm_display_mode *mode,
-					struct drm_display_mode *adjusted_mode)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_crtc *radeon_crtc = to_radeon_crtc(encoder->crtc);
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	uint32_t lvds_pll_cntl, lvds_gen_cntl, lvds_ss_gen_cntl;
+अटल व्योम radeon_legacy_lvds_mode_set(काष्ठा drm_encoder *encoder,
+					काष्ठा drm_display_mode *mode,
+					काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_crtc *radeon_crtc = to_radeon_crtc(encoder->crtc);
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	uपूर्णांक32_t lvds_pll_cntl, lvds_gen_cntl, lvds_ss_gen_cntl;
 
 	DRM_DEBUG_KMS("\n");
 
@@ -197,215 +198,215 @@ static void radeon_legacy_lvds_mode_set(struct drm_encoder *encoder,
 	lvds_pll_cntl &= ~RADEON_LVDS_PLL_EN;
 
 	lvds_ss_gen_cntl = RREG32(RADEON_LVDS_SS_GEN_CNTL);
-	if (rdev->is_atom_bios) {
+	अगर (rdev->is_atom_bios) अणु
 		/* LVDS_GEN_CNTL parameters are computed in LVDSEncoderControl
 		 * need to call that on resume to set up the reg properly.
 		 */
-		radeon_encoder->pixel_clock = adjusted_mode->clock;
+		radeon_encoder->pixel_घड़ी = adjusted_mode->घड़ी;
 		atombios_digital_setup(encoder, PANEL_ENCODER_ACTION_ENABLE);
 		lvds_gen_cntl = RREG32(RADEON_LVDS_GEN_CNTL);
-	} else {
-		struct radeon_encoder_lvds *lvds = (struct radeon_encoder_lvds *)radeon_encoder->enc_priv;
-		if (lvds) {
+	पूर्ण अन्यथा अणु
+		काष्ठा radeon_encoder_lvds *lvds = (काष्ठा radeon_encoder_lvds *)radeon_encoder->enc_priv;
+		अगर (lvds) अणु
 			DRM_DEBUG_KMS("bios LVDS_GEN_CNTL: 0x%x\n", lvds->lvds_gen_cntl);
 			lvds_gen_cntl = lvds->lvds_gen_cntl;
 			lvds_ss_gen_cntl &= ~((0xf << RADEON_LVDS_PWRSEQ_DELAY1_SHIFT) |
 					      (0xf << RADEON_LVDS_PWRSEQ_DELAY2_SHIFT));
 			lvds_ss_gen_cntl |= ((lvds->panel_digon_delay << RADEON_LVDS_PWRSEQ_DELAY1_SHIFT) |
 					     (lvds->panel_blon_delay << RADEON_LVDS_PWRSEQ_DELAY2_SHIFT));
-		} else
+		पूर्ण अन्यथा
 			lvds_gen_cntl = RREG32(RADEON_LVDS_GEN_CNTL);
-	}
+	पूर्ण
 	lvds_gen_cntl |= RADEON_LVDS_DISPLAY_DIS;
 	lvds_gen_cntl &= ~(RADEON_LVDS_ON |
 			   RADEON_LVDS_BLON |
 			   RADEON_LVDS_EN |
 			   RADEON_LVDS_RST_FM);
 
-	if (ASIC_IS_R300(rdev))
+	अगर (ASIC_IS_R300(rdev))
 		lvds_pll_cntl &= ~(R300_LVDS_SRC_SEL_MASK);
 
-	if (radeon_crtc->crtc_id == 0) {
-		if (ASIC_IS_R300(rdev)) {
-			if (radeon_encoder->rmx_type != RMX_OFF)
+	अगर (radeon_crtc->crtc_id == 0) अणु
+		अगर (ASIC_IS_R300(rdev)) अणु
+			अगर (radeon_encoder->rmx_type != RMX_OFF)
 				lvds_pll_cntl |= R300_LVDS_SRC_SEL_RMX;
-		} else
+		पूर्ण अन्यथा
 			lvds_gen_cntl &= ~RADEON_LVDS_SEL_CRTC2;
-	} else {
-		if (ASIC_IS_R300(rdev))
+	पूर्ण अन्यथा अणु
+		अगर (ASIC_IS_R300(rdev))
 			lvds_pll_cntl |= R300_LVDS_SRC_SEL_CRTC2;
-		else
+		अन्यथा
 			lvds_gen_cntl |= RADEON_LVDS_SEL_CRTC2;
-	}
+	पूर्ण
 
 	WREG32(RADEON_LVDS_GEN_CNTL, lvds_gen_cntl);
 	WREG32(RADEON_LVDS_PLL_CNTL, lvds_pll_cntl);
 	WREG32(RADEON_LVDS_SS_GEN_CNTL, lvds_ss_gen_cntl);
 
-	if (rdev->family == CHIP_RV410)
+	अगर (rdev->family == CHIP_RV410)
 		WREG32(RADEON_CLOCK_CNTL_INDEX, 0);
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atombios_encoder_crtc_scratch_regs(encoder, radeon_crtc->crtc_id);
-	else
+	अन्यथा
 		radeon_combios_encoder_crtc_scratch_regs(encoder, radeon_crtc->crtc_id);
-}
+पूर्ण
 
-static bool radeon_legacy_mode_fixup(struct drm_encoder *encoder,
-				     const struct drm_display_mode *mode,
-				     struct drm_display_mode *adjusted_mode)
-{
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+अटल bool radeon_legacy_mode_fixup(काष्ठा drm_encoder *encoder,
+				     स्थिर काष्ठा drm_display_mode *mode,
+				     काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
 
 	/* set the active encoder to connector routing */
 	radeon_encoder_set_active_device(encoder);
 	drm_mode_set_crtcinfo(adjusted_mode, 0);
 
-	/* get the native mode for LVDS */
-	if (radeon_encoder->active_device & (ATOM_DEVICE_LCD_SUPPORT))
+	/* get the native mode क्रम LVDS */
+	अगर (radeon_encoder->active_device & (ATOM_DEVICE_LCD_SUPPORT))
 		radeon_panel_mode_fixup(encoder, adjusted_mode);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static const struct drm_encoder_helper_funcs radeon_legacy_lvds_helper_funcs = {
+अटल स्थिर काष्ठा drm_encoder_helper_funcs radeon_legacy_lvds_helper_funcs = अणु
 	.dpms = radeon_legacy_lvds_dpms,
 	.mode_fixup = radeon_legacy_mode_fixup,
 	.prepare = radeon_legacy_lvds_prepare,
 	.mode_set = radeon_legacy_lvds_mode_set,
 	.commit = radeon_legacy_lvds_commit,
 	.disable = radeon_legacy_encoder_disable,
-};
+पूर्ण;
 
 u8
-radeon_legacy_get_backlight_level(struct radeon_encoder *radeon_encoder)
-{
-	struct drm_device *dev = radeon_encoder->base.dev;
-	struct radeon_device *rdev = dev->dev_private;
+radeon_legacy_get_backlight_level(काष्ठा radeon_encoder *radeon_encoder)
+अणु
+	काष्ठा drm_device *dev = radeon_encoder->base.dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
 	u8 backlight_level;
 
 	backlight_level = (RREG32(RADEON_LVDS_GEN_CNTL) >>
 			   RADEON_LVDS_BL_MOD_LEVEL_SHIFT) & 0xff;
 
-	return backlight_level;
-}
+	वापस backlight_level;
+पूर्ण
 
-void
-radeon_legacy_set_backlight_level(struct radeon_encoder *radeon_encoder, u8 level)
-{
-	struct drm_device *dev = radeon_encoder->base.dev;
-	struct radeon_device *rdev = dev->dev_private;
-	int dpms_mode = DRM_MODE_DPMS_ON;
+व्योम
+radeon_legacy_set_backlight_level(काष्ठा radeon_encoder *radeon_encoder, u8 level)
+अणु
+	काष्ठा drm_device *dev = radeon_encoder->base.dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	पूर्णांक dpms_mode = DRM_MODE_DPMS_ON;
 
-	if (radeon_encoder->enc_priv) {
-		if (rdev->is_atom_bios) {
-			struct radeon_encoder_atom_dig *lvds = radeon_encoder->enc_priv;
-			if (lvds->backlight_level > 0)
+	अगर (radeon_encoder->enc_priv) अणु
+		अगर (rdev->is_atom_bios) अणु
+			काष्ठा radeon_encoder_atom_dig *lvds = radeon_encoder->enc_priv;
+			अगर (lvds->backlight_level > 0)
 				dpms_mode = lvds->dpms_mode;
-			else
+			अन्यथा
 				dpms_mode = DRM_MODE_DPMS_OFF;
 			lvds->backlight_level = level;
-		} else {
-			struct radeon_encoder_lvds *lvds = radeon_encoder->enc_priv;
-			if (lvds->backlight_level > 0)
+		पूर्ण अन्यथा अणु
+			काष्ठा radeon_encoder_lvds *lvds = radeon_encoder->enc_priv;
+			अगर (lvds->backlight_level > 0)
 				dpms_mode = lvds->dpms_mode;
-			else
+			अन्यथा
 				dpms_mode = DRM_MODE_DPMS_OFF;
 			lvds->backlight_level = level;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	radeon_legacy_lvds_update(&radeon_encoder->base, dpms_mode);
-}
+पूर्ण
 
-#if defined(CONFIG_BACKLIGHT_CLASS_DEVICE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
+#अगर defined(CONFIG_BACKLIGHT_CLASS_DEVICE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
 
-static uint8_t radeon_legacy_lvds_level(struct backlight_device *bd)
-{
-	struct radeon_backlight_privdata *pdata = bl_get_data(bd);
-	uint8_t level;
+अटल uपूर्णांक8_t radeon_legacy_lvds_level(काष्ठा backlight_device *bd)
+अणु
+	काष्ठा radeon_backlight_privdata *pdata = bl_get_data(bd);
+	uपूर्णांक8_t level;
 
 	/* Convert brightness to hardware level */
-	if (bd->props.brightness < 0)
+	अगर (bd->props.brightness < 0)
 		level = 0;
-	else if (bd->props.brightness > RADEON_MAX_BL_LEVEL)
+	अन्यथा अगर (bd->props.brightness > RADEON_MAX_BL_LEVEL)
 		level = RADEON_MAX_BL_LEVEL;
-	else
+	अन्यथा
 		level = bd->props.brightness;
 
-	if (pdata->negative)
+	अगर (pdata->negative)
 		level = RADEON_MAX_BL_LEVEL - level;
 
-	return level;
-}
+	वापस level;
+पूर्ण
 
-static int radeon_legacy_backlight_update_status(struct backlight_device *bd)
-{
-	struct radeon_backlight_privdata *pdata = bl_get_data(bd);
-	struct radeon_encoder *radeon_encoder = pdata->encoder;
+अटल पूर्णांक radeon_legacy_backlight_update_status(काष्ठा backlight_device *bd)
+अणु
+	काष्ठा radeon_backlight_privdata *pdata = bl_get_data(bd);
+	काष्ठा radeon_encoder *radeon_encoder = pdata->encoder;
 
 	radeon_legacy_set_backlight_level(radeon_encoder,
 					  radeon_legacy_lvds_level(bd));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int radeon_legacy_backlight_get_brightness(struct backlight_device *bd)
-{
-	struct radeon_backlight_privdata *pdata = bl_get_data(bd);
-	struct radeon_encoder *radeon_encoder = pdata->encoder;
-	struct drm_device *dev = radeon_encoder->base.dev;
-	struct radeon_device *rdev = dev->dev_private;
-	uint8_t backlight_level;
+अटल पूर्णांक radeon_legacy_backlight_get_brightness(काष्ठा backlight_device *bd)
+अणु
+	काष्ठा radeon_backlight_privdata *pdata = bl_get_data(bd);
+	काष्ठा radeon_encoder *radeon_encoder = pdata->encoder;
+	काष्ठा drm_device *dev = radeon_encoder->base.dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	uपूर्णांक8_t backlight_level;
 
 	backlight_level = (RREG32(RADEON_LVDS_GEN_CNTL) >>
 			   RADEON_LVDS_BL_MOD_LEVEL_SHIFT) & 0xff;
 
-	return pdata->negative ? RADEON_MAX_BL_LEVEL - backlight_level : backlight_level;
-}
+	वापस pdata->negative ? RADEON_MAX_BL_LEVEL - backlight_level : backlight_level;
+पूर्ण
 
-static const struct backlight_ops radeon_backlight_ops = {
+अटल स्थिर काष्ठा backlight_ops radeon_backlight_ops = अणु
 	.get_brightness = radeon_legacy_backlight_get_brightness,
 	.update_status	= radeon_legacy_backlight_update_status,
-};
+पूर्ण;
 
-void radeon_legacy_backlight_init(struct radeon_encoder *radeon_encoder,
-				  struct drm_connector *drm_connector)
-{
-	struct drm_device *dev = radeon_encoder->base.dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct backlight_device *bd;
-	struct backlight_properties props;
-	struct radeon_backlight_privdata *pdata;
-	uint8_t backlight_level;
-	char bl_name[16];
+व्योम radeon_legacy_backlight_init(काष्ठा radeon_encoder *radeon_encoder,
+				  काष्ठा drm_connector *drm_connector)
+अणु
+	काष्ठा drm_device *dev = radeon_encoder->base.dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा backlight_device *bd;
+	काष्ठा backlight_properties props;
+	काष्ठा radeon_backlight_privdata *pdata;
+	uपूर्णांक8_t backlight_level;
+	अक्षर bl_name[16];
 
-	if (!radeon_encoder->enc_priv)
-		return;
+	अगर (!radeon_encoder->enc_priv)
+		वापस;
 
-#ifdef CONFIG_PMAC_BACKLIGHT
-	if (!pmac_has_backlight_type("ati") &&
+#अगर_घोषित CONFIG_PMAC_BACKLIGHT
+	अगर (!pmac_has_backlight_type("ati") &&
 	    !pmac_has_backlight_type("mnca"))
-		return;
-#endif
+		वापस;
+#पूर्ण_अगर
 
-	pdata = kmalloc(sizeof(struct radeon_backlight_privdata), GFP_KERNEL);
-	if (!pdata) {
+	pdata = kदो_स्मृति(माप(काष्ठा radeon_backlight_privdata), GFP_KERNEL);
+	अगर (!pdata) अणु
 		DRM_ERROR("Memory allocation failed\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	memset(&props, 0, sizeof(props));
+	स_रखो(&props, 0, माप(props));
 	props.max_brightness = RADEON_MAX_BL_LEVEL;
 	props.type = BACKLIGHT_RAW;
-	snprintf(bl_name, sizeof(bl_name),
+	snम_लिखो(bl_name, माप(bl_name),
 		 "radeon_bl%d", dev->primary->index);
-	bd = backlight_device_register(bl_name, drm_connector->kdev,
+	bd = backlight_device_रेजिस्टर(bl_name, drm_connector->kdev,
 				       pdata, &radeon_backlight_ops, &props);
-	if (IS_ERR(bd)) {
+	अगर (IS_ERR(bd)) अणु
 		DRM_ERROR("Backlight registration failed\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	pdata->encoder = radeon_encoder;
 
@@ -415,11 +416,11 @@ void radeon_legacy_backlight_init(struct radeon_encoder *radeon_encoder,
 	/* First, try to detect backlight level sense based on the assumption
 	 * that firmware set it up at full brightness
 	 */
-	if (backlight_level == 0)
+	अगर (backlight_level == 0)
 		pdata->negative = true;
-	else if (backlight_level == 0xff)
+	अन्यथा अगर (backlight_level == 0xff)
 		pdata->negative = false;
-	else {
+	अन्यथा अणु
 		/* XXX hack... maybe some day we can figure out in what direction
 		 * backlight should work on a given panel?
 		 */
@@ -428,192 +429,192 @@ void radeon_legacy_backlight_init(struct radeon_encoder *radeon_encoder,
 				   rdev->family != CHIP_RV280 &&
 				   rdev->family != CHIP_RV350);
 
-#ifdef CONFIG_PMAC_BACKLIGHT
+#अगर_घोषित CONFIG_PMAC_BACKLIGHT
 		pdata->negative = (pdata->negative ||
 				   of_machine_is_compatible("PowerBook4,3") ||
 				   of_machine_is_compatible("PowerBook6,3") ||
 				   of_machine_is_compatible("PowerBook6,5"));
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	if (rdev->is_atom_bios) {
-		struct radeon_encoder_atom_dig *lvds = radeon_encoder->enc_priv;
+	अगर (rdev->is_atom_bios) अणु
+		काष्ठा radeon_encoder_atom_dig *lvds = radeon_encoder->enc_priv;
 		lvds->bl_dev = bd;
-	} else {
-		struct radeon_encoder_lvds *lvds = radeon_encoder->enc_priv;
+	पूर्ण अन्यथा अणु
+		काष्ठा radeon_encoder_lvds *lvds = radeon_encoder->enc_priv;
 		lvds->bl_dev = bd;
-	}
+	पूर्ण
 
 	bd->props.brightness = radeon_legacy_backlight_get_brightness(bd);
-	bd->props.power = FB_BLANK_UNBLANK;
+	bd->props.घातer = FB_BLANK_UNBLANK;
 	backlight_update_status(bd);
 
 	DRM_INFO("radeon legacy LVDS backlight initialized\n");
 	rdev->mode_info.bl_encoder = radeon_encoder;
 
-	return;
+	वापस;
 
 error:
-	kfree(pdata);
-	return;
-}
+	kमुक्त(pdata);
+	वापस;
+पूर्ण
 
-static void radeon_legacy_backlight_exit(struct radeon_encoder *radeon_encoder)
-{
-	struct drm_device *dev = radeon_encoder->base.dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct backlight_device *bd = NULL;
+अटल व्योम radeon_legacy_backlight_निकास(काष्ठा radeon_encoder *radeon_encoder)
+अणु
+	काष्ठा drm_device *dev = radeon_encoder->base.dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा backlight_device *bd = शून्य;
 
-	if (!radeon_encoder->enc_priv)
-		return;
+	अगर (!radeon_encoder->enc_priv)
+		वापस;
 
-	if (rdev->is_atom_bios) {
-		struct radeon_encoder_atom_dig *lvds = radeon_encoder->enc_priv;
+	अगर (rdev->is_atom_bios) अणु
+		काष्ठा radeon_encoder_atom_dig *lvds = radeon_encoder->enc_priv;
 		bd = lvds->bl_dev;
-		lvds->bl_dev = NULL;
-	} else {
-		struct radeon_encoder_lvds *lvds = radeon_encoder->enc_priv;
+		lvds->bl_dev = शून्य;
+	पूर्ण अन्यथा अणु
+		काष्ठा radeon_encoder_lvds *lvds = radeon_encoder->enc_priv;
 		bd = lvds->bl_dev;
-		lvds->bl_dev = NULL;
-	}
+		lvds->bl_dev = शून्य;
+	पूर्ण
 
-	if (bd) {
-		struct radeon_backlight_privdata *pdata;
+	अगर (bd) अणु
+		काष्ठा radeon_backlight_privdata *pdata;
 
 		pdata = bl_get_data(bd);
-		backlight_device_unregister(bd);
-		kfree(pdata);
+		backlight_device_unरेजिस्टर(bd);
+		kमुक्त(pdata);
 
 		DRM_INFO("radeon legacy LVDS backlight unloaded\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-#else /* !CONFIG_BACKLIGHT_CLASS_DEVICE */
+#अन्यथा /* !CONFIG_BACKLIGHT_CLASS_DEVICE */
 
-void radeon_legacy_backlight_init(struct radeon_encoder *encoder)
-{
-}
+व्योम radeon_legacy_backlight_init(काष्ठा radeon_encoder *encoder)
+अणु
+पूर्ण
 
-static void radeon_legacy_backlight_exit(struct radeon_encoder *encoder)
-{
-}
+अटल व्योम radeon_legacy_backlight_निकास(काष्ठा radeon_encoder *encoder)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 
-static void radeon_lvds_enc_destroy(struct drm_encoder *encoder)
-{
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+अटल व्योम radeon_lvds_enc_destroy(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
 
-	if (radeon_encoder->enc_priv) {
-		radeon_legacy_backlight_exit(radeon_encoder);
-		kfree(radeon_encoder->enc_priv);
-	}
+	अगर (radeon_encoder->enc_priv) अणु
+		radeon_legacy_backlight_निकास(radeon_encoder);
+		kमुक्त(radeon_encoder->enc_priv);
+	पूर्ण
 	drm_encoder_cleanup(encoder);
-	kfree(radeon_encoder);
-}
+	kमुक्त(radeon_encoder);
+पूर्ण
 
-static const struct drm_encoder_funcs radeon_legacy_lvds_enc_funcs = {
+अटल स्थिर काष्ठा drm_encoder_funcs radeon_legacy_lvds_enc_funcs = अणु
 	.destroy = radeon_lvds_enc_destroy,
-};
+पूर्ण;
 
-static void radeon_legacy_primary_dac_dpms(struct drm_encoder *encoder, int mode)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	uint32_t crtc_ext_cntl = RREG32(RADEON_CRTC_EXT_CNTL);
-	uint32_t dac_cntl = RREG32(RADEON_DAC_CNTL);
-	uint32_t dac_macro_cntl = RREG32(RADEON_DAC_MACRO_CNTL);
+अटल व्योम radeon_legacy_primary_dac_dpms(काष्ठा drm_encoder *encoder, पूर्णांक mode)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	uपूर्णांक32_t crtc_ext_cntl = RREG32(RADEON_CRTC_EXT_CNTL);
+	uपूर्णांक32_t dac_cntl = RREG32(RADEON_DAC_CNTL);
+	uपूर्णांक32_t dac_macro_cntl = RREG32(RADEON_DAC_MACRO_CNTL);
 
 	DRM_DEBUG_KMS("\n");
 
-	switch (mode) {
-	case DRM_MODE_DPMS_ON:
+	चयन (mode) अणु
+	हाल DRM_MODE_DPMS_ON:
 		crtc_ext_cntl |= RADEON_CRTC_CRT_ON;
 		dac_cntl &= ~RADEON_DAC_PDWN;
 		dac_macro_cntl &= ~(RADEON_DAC_PDWN_R |
 				    RADEON_DAC_PDWN_G |
 				    RADEON_DAC_PDWN_B);
-		break;
-	case DRM_MODE_DPMS_STANDBY:
-	case DRM_MODE_DPMS_SUSPEND:
-	case DRM_MODE_DPMS_OFF:
+		अवरोध;
+	हाल DRM_MODE_DPMS_STANDBY:
+	हाल DRM_MODE_DPMS_SUSPEND:
+	हाल DRM_MODE_DPMS_OFF:
 		crtc_ext_cntl &= ~RADEON_CRTC_CRT_ON;
 		dac_cntl |= RADEON_DAC_PDWN;
 		dac_macro_cntl |= (RADEON_DAC_PDWN_R |
 				   RADEON_DAC_PDWN_G |
 				   RADEON_DAC_PDWN_B);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* handled in radeon_crtc_dpms() */
-	if (!(rdev->flags & RADEON_SINGLE_CRTC))
+	अगर (!(rdev->flags & RADEON_SINGLE_CRTC))
 		WREG32(RADEON_CRTC_EXT_CNTL, crtc_ext_cntl);
 	WREG32(RADEON_DAC_CNTL, dac_cntl);
 	WREG32(RADEON_DAC_MACRO_CNTL, dac_macro_cntl);
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atombios_encoder_dpms_scratch_regs(encoder, (mode == DRM_MODE_DPMS_ON) ? true : false);
-	else
+	अन्यथा
 		radeon_combios_encoder_dpms_scratch_regs(encoder, (mode == DRM_MODE_DPMS_ON) ? true : false);
 
-}
+पूर्ण
 
-static void radeon_legacy_primary_dac_prepare(struct drm_encoder *encoder)
-{
-	struct radeon_device *rdev = encoder->dev->dev_private;
+अटल व्योम radeon_legacy_primary_dac_prepare(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atom_output_lock(encoder, true);
-	else
+	अन्यथा
 		radeon_combios_output_lock(encoder, true);
 	radeon_legacy_primary_dac_dpms(encoder, DRM_MODE_DPMS_OFF);
-}
+पूर्ण
 
-static void radeon_legacy_primary_dac_commit(struct drm_encoder *encoder)
-{
-	struct radeon_device *rdev = encoder->dev->dev_private;
+अटल व्योम radeon_legacy_primary_dac_commit(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
 
 	radeon_legacy_primary_dac_dpms(encoder, DRM_MODE_DPMS_ON);
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atom_output_lock(encoder, false);
-	else
+	अन्यथा
 		radeon_combios_output_lock(encoder, false);
-}
+पूर्ण
 
-static void radeon_legacy_primary_dac_mode_set(struct drm_encoder *encoder,
-					       struct drm_display_mode *mode,
-					       struct drm_display_mode *adjusted_mode)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_crtc *radeon_crtc = to_radeon_crtc(encoder->crtc);
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	uint32_t disp_output_cntl, dac_cntl, dac2_cntl, dac_macro_cntl;
+अटल व्योम radeon_legacy_primary_dac_mode_set(काष्ठा drm_encoder *encoder,
+					       काष्ठा drm_display_mode *mode,
+					       काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_crtc *radeon_crtc = to_radeon_crtc(encoder->crtc);
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	uपूर्णांक32_t disp_output_cntl, dac_cntl, dac2_cntl, dac_macro_cntl;
 
 	DRM_DEBUG_KMS("\n");
 
-	if (radeon_crtc->crtc_id == 0) {
-		if (rdev->family == CHIP_R200 || ASIC_IS_R300(rdev)) {
+	अगर (radeon_crtc->crtc_id == 0) अणु
+		अगर (rdev->family == CHIP_R200 || ASIC_IS_R300(rdev)) अणु
 			disp_output_cntl = RREG32(RADEON_DISP_OUTPUT_CNTL) &
 				~(RADEON_DISP_DAC_SOURCE_MASK);
 			WREG32(RADEON_DISP_OUTPUT_CNTL, disp_output_cntl);
-		} else {
+		पूर्ण अन्यथा अणु
 			dac2_cntl = RREG32(RADEON_DAC_CNTL2)  & ~(RADEON_DAC2_DAC_CLK_SEL);
 			WREG32(RADEON_DAC_CNTL2, dac2_cntl);
-		}
-	} else {
-		if (rdev->family == CHIP_R200 || ASIC_IS_R300(rdev)) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (rdev->family == CHIP_R200 || ASIC_IS_R300(rdev)) अणु
 			disp_output_cntl = RREG32(RADEON_DISP_OUTPUT_CNTL) &
 				~(RADEON_DISP_DAC_SOURCE_MASK);
 			disp_output_cntl |= RADEON_DISP_DAC_SOURCE_CRTC2;
 			WREG32(RADEON_DISP_OUTPUT_CNTL, disp_output_cntl);
-		} else {
+		पूर्ण अन्यथा अणु
 			dac2_cntl = RREG32(RADEON_DAC_CNTL2) | RADEON_DAC2_DAC_CLK_SEL;
 			WREG32(RADEON_DAC_CNTL2, dac2_cntl);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	dac_cntl = (RADEON_DAC_MASK_ALL |
 		    RADEON_DAC_VGA_ADR_EN |
@@ -625,37 +626,37 @@ static void radeon_legacy_primary_dac_mode_set(struct drm_encoder *encoder,
 		       RADEON_DAC_RANGE_CNTL |
 		       RADEON_DAC_BLANKING);
 
-	if (radeon_encoder->enc_priv) {
-		struct radeon_encoder_primary_dac *p_dac = (struct radeon_encoder_primary_dac *)radeon_encoder->enc_priv;
+	अगर (radeon_encoder->enc_priv) अणु
+		काष्ठा radeon_encoder_primary_dac *p_dac = (काष्ठा radeon_encoder_primary_dac *)radeon_encoder->enc_priv;
 		dac_macro_cntl = p_dac->ps2_pdac_adj;
-	} else
+	पूर्ण अन्यथा
 		dac_macro_cntl = RREG32(RADEON_DAC_MACRO_CNTL);
 	dac_macro_cntl |= RADEON_DAC_PDWN_R | RADEON_DAC_PDWN_G | RADEON_DAC_PDWN_B;
 	WREG32(RADEON_DAC_MACRO_CNTL, dac_macro_cntl);
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atombios_encoder_crtc_scratch_regs(encoder, radeon_crtc->crtc_id);
-	else
+	अन्यथा
 		radeon_combios_encoder_crtc_scratch_regs(encoder, radeon_crtc->crtc_id);
-}
+पूर्ण
 
-static enum drm_connector_status radeon_legacy_primary_dac_detect(struct drm_encoder *encoder,
-								  struct drm_connector *connector)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	uint32_t vclk_ecp_cntl, crtc_ext_cntl;
-	uint32_t dac_ext_cntl, dac_cntl, dac_macro_cntl, tmp;
-	enum drm_connector_status found = connector_status_disconnected;
+अटल क्रमागत drm_connector_status radeon_legacy_primary_dac_detect(काष्ठा drm_encoder *encoder,
+								  काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	uपूर्णांक32_t vclk_ecp_cntl, crtc_ext_cntl;
+	uपूर्णांक32_t dac_ext_cntl, dac_cntl, dac_macro_cntl, पंचांगp;
+	क्रमागत drm_connector_status found = connector_status_disconnected;
 	bool color = true;
 
-	/* just don't bother on RN50 those chip are often connected to remoting
+	/* just करोn't bother on RN50 those chip are often connected to remoting
 	 * console hw and often we get failure to load detect those. So to make
 	 * everyone happy report the encoder as always connected.
 	 */
-	if (ASIC_IS_RN50(rdev)) {
-		return connector_status_connected;
-	}
+	अगर (ASIC_IS_RN50(rdev)) अणु
+		वापस connector_status_connected;
+	पूर्ण
 
 	/* save the regs we need */
 	vclk_ecp_cntl = RREG32_PLL(RADEON_VCLK_ECP_CNTL);
@@ -664,44 +665,44 @@ static enum drm_connector_status radeon_legacy_primary_dac_detect(struct drm_enc
 	dac_cntl = RREG32(RADEON_DAC_CNTL);
 	dac_macro_cntl = RREG32(RADEON_DAC_MACRO_CNTL);
 
-	tmp = vclk_ecp_cntl &
+	पंचांगp = vclk_ecp_cntl &
 		~(RADEON_PIXCLK_ALWAYS_ONb | RADEON_PIXCLK_DAC_ALWAYS_ONb);
-	WREG32_PLL(RADEON_VCLK_ECP_CNTL, tmp);
+	WREG32_PLL(RADEON_VCLK_ECP_CNTL, पंचांगp);
 
-	tmp = crtc_ext_cntl | RADEON_CRTC_CRT_ON;
-	WREG32(RADEON_CRTC_EXT_CNTL, tmp);
+	पंचांगp = crtc_ext_cntl | RADEON_CRTC_CRT_ON;
+	WREG32(RADEON_CRTC_EXT_CNTL, पंचांगp);
 
-	tmp = RADEON_DAC_FORCE_BLANK_OFF_EN |
+	पंचांगp = RADEON_DAC_FORCE_BLANK_OFF_EN |
 		RADEON_DAC_FORCE_DATA_EN;
 
-	if (color)
-		tmp |= RADEON_DAC_FORCE_DATA_SEL_RGB;
-	else
-		tmp |= RADEON_DAC_FORCE_DATA_SEL_G;
+	अगर (color)
+		पंचांगp |= RADEON_DAC_FORCE_DATA_SEL_RGB;
+	अन्यथा
+		पंचांगp |= RADEON_DAC_FORCE_DATA_SEL_G;
 
-	if (ASIC_IS_R300(rdev))
-		tmp |= (0x1b6 << RADEON_DAC_FORCE_DATA_SHIFT);
-	else if (ASIC_IS_RV100(rdev))
-		tmp |= (0x1ac << RADEON_DAC_FORCE_DATA_SHIFT);
-	else
-		tmp |= (0x180 << RADEON_DAC_FORCE_DATA_SHIFT);
+	अगर (ASIC_IS_R300(rdev))
+		पंचांगp |= (0x1b6 << RADEON_DAC_FORCE_DATA_SHIFT);
+	अन्यथा अगर (ASIC_IS_RV100(rdev))
+		पंचांगp |= (0x1ac << RADEON_DAC_FORCE_DATA_SHIFT);
+	अन्यथा
+		पंचांगp |= (0x180 << RADEON_DAC_FORCE_DATA_SHIFT);
 
-	WREG32(RADEON_DAC_EXT_CNTL, tmp);
+	WREG32(RADEON_DAC_EXT_CNTL, पंचांगp);
 
-	tmp = dac_cntl & ~(RADEON_DAC_RANGE_CNTL_MASK | RADEON_DAC_PDWN);
-	tmp |= RADEON_DAC_RANGE_CNTL_PS2 | RADEON_DAC_CMP_EN;
-	WREG32(RADEON_DAC_CNTL, tmp);
+	पंचांगp = dac_cntl & ~(RADEON_DAC_RANGE_CNTL_MASK | RADEON_DAC_PDWN);
+	पंचांगp |= RADEON_DAC_RANGE_CNTL_PS2 | RADEON_DAC_CMP_EN;
+	WREG32(RADEON_DAC_CNTL, पंचांगp);
 
-	tmp = dac_macro_cntl;
-	tmp &= ~(RADEON_DAC_PDWN_R |
+	पंचांगp = dac_macro_cntl;
+	पंचांगp &= ~(RADEON_DAC_PDWN_R |
 		 RADEON_DAC_PDWN_G |
 		 RADEON_DAC_PDWN_B);
 
-	WREG32(RADEON_DAC_MACRO_CNTL, tmp);
+	WREG32(RADEON_DAC_MACRO_CNTL, पंचांगp);
 
 	mdelay(2);
 
-	if (RREG32(RADEON_DAC_CNTL) & RADEON_DAC_CMP_OUTPUT)
+	अगर (RREG32(RADEON_DAC_CNTL) & RADEON_DAC_CMP_OUTPUT)
 		found = connector_status_connected;
 
 	/* restore the regs we used */
@@ -711,10 +712,10 @@ static enum drm_connector_status radeon_legacy_primary_dac_detect(struct drm_enc
 	WREG32(RADEON_CRTC_EXT_CNTL, crtc_ext_cntl);
 	WREG32_PLL(RADEON_VCLK_ECP_CNTL, vclk_ecp_cntl);
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static const struct drm_encoder_helper_funcs radeon_legacy_primary_dac_helper_funcs = {
+अटल स्थिर काष्ठा drm_encoder_helper_funcs radeon_legacy_primary_dac_helper_funcs = अणु
 	.dpms = radeon_legacy_primary_dac_dpms,
 	.mode_fixup = radeon_legacy_mode_fixup,
 	.prepare = radeon_legacy_primary_dac_prepare,
@@ -722,116 +723,116 @@ static const struct drm_encoder_helper_funcs radeon_legacy_primary_dac_helper_fu
 	.commit = radeon_legacy_primary_dac_commit,
 	.detect = radeon_legacy_primary_dac_detect,
 	.disable = radeon_legacy_encoder_disable,
-};
+पूर्ण;
 
 
-static const struct drm_encoder_funcs radeon_legacy_primary_dac_enc_funcs = {
+अटल स्थिर काष्ठा drm_encoder_funcs radeon_legacy_primary_dac_enc_funcs = अणु
 	.destroy = radeon_enc_destroy,
-};
+पूर्ण;
 
-static void radeon_legacy_tmds_int_dpms(struct drm_encoder *encoder, int mode)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	uint32_t fp_gen_cntl = RREG32(RADEON_FP_GEN_CNTL);
+अटल व्योम radeon_legacy_पंचांगds_पूर्णांक_dpms(काष्ठा drm_encoder *encoder, पूर्णांक mode)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	uपूर्णांक32_t fp_gen_cntl = RREG32(RADEON_FP_GEN_CNTL);
 	DRM_DEBUG_KMS("\n");
 
-	switch (mode) {
-	case DRM_MODE_DPMS_ON:
+	चयन (mode) अणु
+	हाल DRM_MODE_DPMS_ON:
 		fp_gen_cntl |= (RADEON_FP_FPON | RADEON_FP_TMDS_EN);
-		break;
-	case DRM_MODE_DPMS_STANDBY:
-	case DRM_MODE_DPMS_SUSPEND:
-	case DRM_MODE_DPMS_OFF:
+		अवरोध;
+	हाल DRM_MODE_DPMS_STANDBY:
+	हाल DRM_MODE_DPMS_SUSPEND:
+	हाल DRM_MODE_DPMS_OFF:
 		fp_gen_cntl &= ~(RADEON_FP_FPON | RADEON_FP_TMDS_EN);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	WREG32(RADEON_FP_GEN_CNTL, fp_gen_cntl);
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atombios_encoder_dpms_scratch_regs(encoder, (mode == DRM_MODE_DPMS_ON) ? true : false);
-	else
+	अन्यथा
 		radeon_combios_encoder_dpms_scratch_regs(encoder, (mode == DRM_MODE_DPMS_ON) ? true : false);
 
-}
+पूर्ण
 
-static void radeon_legacy_tmds_int_prepare(struct drm_encoder *encoder)
-{
-	struct radeon_device *rdev = encoder->dev->dev_private;
+अटल व्योम radeon_legacy_पंचांगds_पूर्णांक_prepare(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atom_output_lock(encoder, true);
-	else
+	अन्यथा
 		radeon_combios_output_lock(encoder, true);
-	radeon_legacy_tmds_int_dpms(encoder, DRM_MODE_DPMS_OFF);
-}
+	radeon_legacy_पंचांगds_पूर्णांक_dpms(encoder, DRM_MODE_DPMS_OFF);
+पूर्ण
 
-static void radeon_legacy_tmds_int_commit(struct drm_encoder *encoder)
-{
-	struct radeon_device *rdev = encoder->dev->dev_private;
+अटल व्योम radeon_legacy_पंचांगds_पूर्णांक_commit(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
 
-	radeon_legacy_tmds_int_dpms(encoder, DRM_MODE_DPMS_ON);
+	radeon_legacy_पंचांगds_पूर्णांक_dpms(encoder, DRM_MODE_DPMS_ON);
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atom_output_lock(encoder, true);
-	else
+	अन्यथा
 		radeon_combios_output_lock(encoder, true);
-}
+पूर्ण
 
-static void radeon_legacy_tmds_int_mode_set(struct drm_encoder *encoder,
-					    struct drm_display_mode *mode,
-					    struct drm_display_mode *adjusted_mode)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_crtc *radeon_crtc = to_radeon_crtc(encoder->crtc);
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	uint32_t tmp, tmds_pll_cntl, tmds_transmitter_cntl, fp_gen_cntl;
-	int i;
+अटल व्योम radeon_legacy_पंचांगds_पूर्णांक_mode_set(काष्ठा drm_encoder *encoder,
+					    काष्ठा drm_display_mode *mode,
+					    काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_crtc *radeon_crtc = to_radeon_crtc(encoder->crtc);
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	uपूर्णांक32_t पंचांगp, पंचांगds_pll_cntl, पंचांगds_transmitter_cntl, fp_gen_cntl;
+	पूर्णांक i;
 
 	DRM_DEBUG_KMS("\n");
 
-	tmp = tmds_pll_cntl = RREG32(RADEON_TMDS_PLL_CNTL);
-	tmp &= 0xfffff;
-	if (rdev->family == CHIP_RV280) {
-		/* bit 22 of TMDS_PLL_CNTL is read-back inverted */
-		tmp ^= (1 << 22);
-		tmds_pll_cntl ^= (1 << 22);
-	}
+	पंचांगp = पंचांगds_pll_cntl = RREG32(RADEON_TMDS_PLL_CNTL);
+	पंचांगp &= 0xfffff;
+	अगर (rdev->family == CHIP_RV280) अणु
+		/* bit 22 of TMDS_PLL_CNTL is पढ़ो-back inverted */
+		पंचांगp ^= (1 << 22);
+		पंचांगds_pll_cntl ^= (1 << 22);
+	पूर्ण
 
-	if (radeon_encoder->enc_priv) {
-		struct radeon_encoder_int_tmds *tmds = (struct radeon_encoder_int_tmds *)radeon_encoder->enc_priv;
+	अगर (radeon_encoder->enc_priv) अणु
+		काष्ठा radeon_encoder_पूर्णांक_पंचांगds *पंचांगds = (काष्ठा radeon_encoder_पूर्णांक_पंचांगds *)radeon_encoder->enc_priv;
 
-		for (i = 0; i < 4; i++) {
-			if (tmds->tmds_pll[i].freq == 0)
-				break;
-			if ((uint32_t)(mode->clock / 10) < tmds->tmds_pll[i].freq) {
-				tmp = tmds->tmds_pll[i].value ;
-				break;
-			}
-		}
-	}
+		क्रम (i = 0; i < 4; i++) अणु
+			अगर (पंचांगds->पंचांगds_pll[i].freq == 0)
+				अवरोध;
+			अगर ((uपूर्णांक32_t)(mode->घड़ी / 10) < पंचांगds->पंचांगds_pll[i].freq) अणु
+				पंचांगp = पंचांगds->पंचांगds_pll[i].value ;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (ASIC_IS_R300(rdev) || (rdev->family == CHIP_RV280)) {
-		if (tmp & 0xfff00000)
-			tmds_pll_cntl = tmp;
-		else {
-			tmds_pll_cntl &= 0xfff00000;
-			tmds_pll_cntl |= tmp;
-		}
-	} else
-		tmds_pll_cntl = tmp;
+	अगर (ASIC_IS_R300(rdev) || (rdev->family == CHIP_RV280)) अणु
+		अगर (पंचांगp & 0xfff00000)
+			पंचांगds_pll_cntl = पंचांगp;
+		अन्यथा अणु
+			पंचांगds_pll_cntl &= 0xfff00000;
+			पंचांगds_pll_cntl |= पंचांगp;
+		पूर्ण
+	पूर्ण अन्यथा
+		पंचांगds_pll_cntl = पंचांगp;
 
-	tmds_transmitter_cntl = RREG32(RADEON_TMDS_TRANSMITTER_CNTL) &
+	पंचांगds_transmitter_cntl = RREG32(RADEON_TMDS_TRANSMITTER_CNTL) &
 		~(RADEON_TMDS_TRANSMITTER_PLLRST);
 
-	if (rdev->family == CHIP_R200 ||
+	अगर (rdev->family == CHIP_R200 ||
 	    rdev->family == CHIP_R100 ||
 	    ASIC_IS_R300(rdev))
-		tmds_transmitter_cntl &= ~(RADEON_TMDS_TRANSMITTER_PLLEN);
-	else /* RV chips got this bit reversed */
-		tmds_transmitter_cntl |= RADEON_TMDS_TRANSMITTER_PLLEN;
+		पंचांगds_transmitter_cntl &= ~(RADEON_TMDS_TRANSMITTER_PLLEN);
+	अन्यथा /* RV chips got this bit reversed */
+		पंचांगds_transmitter_cntl |= RADEON_TMDS_TRANSMITTER_PLLEN;
 
 	fp_gen_cntl = (RREG32(RADEON_FP_GEN_CNTL) |
 		      (RADEON_FP_CRTC_DONT_SHADOW_VPAR |
@@ -847,331 +848,331 @@ static void radeon_legacy_tmds_int_mode_set(struct drm_encoder *encoder,
 			 RADEON_FP_CRTC_USE_SHADOW_VEND |
 			 RADEON_FP_CRT_SYNC_ALT);
 
-	if (1) /*  FIXME rgbBits == 8 */
-		fp_gen_cntl |= RADEON_FP_PANEL_FORMAT;  /* 24 bit format */
-	else
-		fp_gen_cntl &= ~RADEON_FP_PANEL_FORMAT;/* 18 bit format */
+	अगर (1) /*  FIXME rgbBits == 8 */
+		fp_gen_cntl |= RADEON_FP_PANEL_FORMAT;  /* 24 bit क्रमmat */
+	अन्यथा
+		fp_gen_cntl &= ~RADEON_FP_PANEL_FORMAT;/* 18 bit क्रमmat */
 
-	if (radeon_crtc->crtc_id == 0) {
-		if (ASIC_IS_R300(rdev) || rdev->family == CHIP_R200) {
+	अगर (radeon_crtc->crtc_id == 0) अणु
+		अगर (ASIC_IS_R300(rdev) || rdev->family == CHIP_R200) अणु
 			fp_gen_cntl &= ~R200_FP_SOURCE_SEL_MASK;
-			if (radeon_encoder->rmx_type != RMX_OFF)
+			अगर (radeon_encoder->rmx_type != RMX_OFF)
 				fp_gen_cntl |= R200_FP_SOURCE_SEL_RMX;
-			else
+			अन्यथा
 				fp_gen_cntl |= R200_FP_SOURCE_SEL_CRTC1;
-		} else
+		पूर्ण अन्यथा
 			fp_gen_cntl &= ~RADEON_FP_SEL_CRTC2;
-	} else {
-		if (ASIC_IS_R300(rdev) || rdev->family == CHIP_R200) {
+	पूर्ण अन्यथा अणु
+		अगर (ASIC_IS_R300(rdev) || rdev->family == CHIP_R200) अणु
 			fp_gen_cntl &= ~R200_FP_SOURCE_SEL_MASK;
 			fp_gen_cntl |= R200_FP_SOURCE_SEL_CRTC2;
-		} else
+		पूर्ण अन्यथा
 			fp_gen_cntl |= RADEON_FP_SEL_CRTC2;
-	}
+	पूर्ण
 
-	WREG32(RADEON_TMDS_PLL_CNTL, tmds_pll_cntl);
-	WREG32(RADEON_TMDS_TRANSMITTER_CNTL, tmds_transmitter_cntl);
+	WREG32(RADEON_TMDS_PLL_CNTL, पंचांगds_pll_cntl);
+	WREG32(RADEON_TMDS_TRANSMITTER_CNTL, पंचांगds_transmitter_cntl);
 	WREG32(RADEON_FP_GEN_CNTL, fp_gen_cntl);
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atombios_encoder_crtc_scratch_regs(encoder, radeon_crtc->crtc_id);
-	else
+	अन्यथा
 		radeon_combios_encoder_crtc_scratch_regs(encoder, radeon_crtc->crtc_id);
-}
+पूर्ण
 
-static const struct drm_encoder_helper_funcs radeon_legacy_tmds_int_helper_funcs = {
-	.dpms = radeon_legacy_tmds_int_dpms,
+अटल स्थिर काष्ठा drm_encoder_helper_funcs radeon_legacy_पंचांगds_पूर्णांक_helper_funcs = अणु
+	.dpms = radeon_legacy_पंचांगds_पूर्णांक_dpms,
 	.mode_fixup = radeon_legacy_mode_fixup,
-	.prepare = radeon_legacy_tmds_int_prepare,
-	.mode_set = radeon_legacy_tmds_int_mode_set,
-	.commit = radeon_legacy_tmds_int_commit,
+	.prepare = radeon_legacy_पंचांगds_पूर्णांक_prepare,
+	.mode_set = radeon_legacy_पंचांगds_पूर्णांक_mode_set,
+	.commit = radeon_legacy_पंचांगds_पूर्णांक_commit,
 	.disable = radeon_legacy_encoder_disable,
-};
+पूर्ण;
 
 
-static const struct drm_encoder_funcs radeon_legacy_tmds_int_enc_funcs = {
+अटल स्थिर काष्ठा drm_encoder_funcs radeon_legacy_पंचांगds_पूर्णांक_enc_funcs = अणु
 	.destroy = radeon_enc_destroy,
-};
+पूर्ण;
 
-static void radeon_legacy_tmds_ext_dpms(struct drm_encoder *encoder, int mode)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	uint32_t fp2_gen_cntl = RREG32(RADEON_FP2_GEN_CNTL);
+अटल व्योम radeon_legacy_पंचांगds_ext_dpms(काष्ठा drm_encoder *encoder, पूर्णांक mode)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	uपूर्णांक32_t fp2_gen_cntl = RREG32(RADEON_FP2_GEN_CNTL);
 	DRM_DEBUG_KMS("\n");
 
-	switch (mode) {
-	case DRM_MODE_DPMS_ON:
+	चयन (mode) अणु
+	हाल DRM_MODE_DPMS_ON:
 		fp2_gen_cntl &= ~RADEON_FP2_BLANK_EN;
 		fp2_gen_cntl |= (RADEON_FP2_ON | RADEON_FP2_DVO_EN);
-		break;
-	case DRM_MODE_DPMS_STANDBY:
-	case DRM_MODE_DPMS_SUSPEND:
-	case DRM_MODE_DPMS_OFF:
+		अवरोध;
+	हाल DRM_MODE_DPMS_STANDBY:
+	हाल DRM_MODE_DPMS_SUSPEND:
+	हाल DRM_MODE_DPMS_OFF:
 		fp2_gen_cntl |= RADEON_FP2_BLANK_EN;
 		fp2_gen_cntl &= ~(RADEON_FP2_ON | RADEON_FP2_DVO_EN);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	WREG32(RADEON_FP2_GEN_CNTL, fp2_gen_cntl);
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atombios_encoder_dpms_scratch_regs(encoder, (mode == DRM_MODE_DPMS_ON) ? true : false);
-	else
+	अन्यथा
 		radeon_combios_encoder_dpms_scratch_regs(encoder, (mode == DRM_MODE_DPMS_ON) ? true : false);
 
-}
+पूर्ण
 
-static void radeon_legacy_tmds_ext_prepare(struct drm_encoder *encoder)
-{
-	struct radeon_device *rdev = encoder->dev->dev_private;
+अटल व्योम radeon_legacy_पंचांगds_ext_prepare(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atom_output_lock(encoder, true);
-	else
+	अन्यथा
 		radeon_combios_output_lock(encoder, true);
-	radeon_legacy_tmds_ext_dpms(encoder, DRM_MODE_DPMS_OFF);
-}
+	radeon_legacy_पंचांगds_ext_dpms(encoder, DRM_MODE_DPMS_OFF);
+पूर्ण
 
-static void radeon_legacy_tmds_ext_commit(struct drm_encoder *encoder)
-{
-	struct radeon_device *rdev = encoder->dev->dev_private;
-	radeon_legacy_tmds_ext_dpms(encoder, DRM_MODE_DPMS_ON);
+अटल व्योम radeon_legacy_पंचांगds_ext_commit(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
+	radeon_legacy_पंचांगds_ext_dpms(encoder, DRM_MODE_DPMS_ON);
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atom_output_lock(encoder, false);
-	else
+	अन्यथा
 		radeon_combios_output_lock(encoder, false);
-}
+पूर्ण
 
-static void radeon_legacy_tmds_ext_mode_set(struct drm_encoder *encoder,
-					    struct drm_display_mode *mode,
-					    struct drm_display_mode *adjusted_mode)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_crtc *radeon_crtc = to_radeon_crtc(encoder->crtc);
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	uint32_t fp2_gen_cntl;
+अटल व्योम radeon_legacy_पंचांगds_ext_mode_set(काष्ठा drm_encoder *encoder,
+					    काष्ठा drm_display_mode *mode,
+					    काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_crtc *radeon_crtc = to_radeon_crtc(encoder->crtc);
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	uपूर्णांक32_t fp2_gen_cntl;
 
 	DRM_DEBUG_KMS("\n");
 
-	if (rdev->is_atom_bios) {
-		radeon_encoder->pixel_clock = adjusted_mode->clock;
+	अगर (rdev->is_atom_bios) अणु
+		radeon_encoder->pixel_घड़ी = adjusted_mode->घड़ी;
 		atombios_dvo_setup(encoder, ATOM_ENABLE);
 		fp2_gen_cntl = RREG32(RADEON_FP2_GEN_CNTL);
-	} else {
+	पूर्ण अन्यथा अणु
 		fp2_gen_cntl = RREG32(RADEON_FP2_GEN_CNTL);
 
-		if (1) /*  FIXME rgbBits == 8 */
-			fp2_gen_cntl |= RADEON_FP2_PANEL_FORMAT; /* 24 bit format, */
-		else
-			fp2_gen_cntl &= ~RADEON_FP2_PANEL_FORMAT;/* 18 bit format, */
+		अगर (1) /*  FIXME rgbBits == 8 */
+			fp2_gen_cntl |= RADEON_FP2_PANEL_FORMAT; /* 24 bit क्रमmat, */
+		अन्यथा
+			fp2_gen_cntl &= ~RADEON_FP2_PANEL_FORMAT;/* 18 bit क्रमmat, */
 
 		fp2_gen_cntl &= ~(RADEON_FP2_ON |
 				  RADEON_FP2_DVO_EN |
 				  RADEON_FP2_DVO_RATE_SEL_SDR);
 
-		/* XXX: these are oem specific */
-		if (ASIC_IS_R300(rdev)) {
-			if ((rdev->pdev->device == 0x4850) &&
-			    (rdev->pdev->subsystem_vendor == 0x1028) &&
-			    (rdev->pdev->subsystem_device == 0x2001)) /* Dell Inspiron 8600 */
+		/* XXX: these are oem specअगरic */
+		अगर (ASIC_IS_R300(rdev)) अणु
+			अगर ((rdev->pdev->device == 0x4850) &&
+			    (rdev->pdev->subप्रणाली_venकरोr == 0x1028) &&
+			    (rdev->pdev->subप्रणाली_device == 0x2001)) /* Dell Inspiron 8600 */
 				fp2_gen_cntl |= R300_FP2_DVO_CLOCK_MODE_SINGLE;
-			else
+			अन्यथा
 				fp2_gen_cntl |= RADEON_FP2_PAD_FLOP_EN | R300_FP2_DVO_CLOCK_MODE_SINGLE;
 
-			/*if (mode->clock > 165000)
+			/*अगर (mode->घड़ी > 165000)
 			  fp2_gen_cntl |= R300_FP2_DVO_DUAL_CHANNEL_EN;*/
-		}
-		if (!radeon_combios_external_tmds_setup(encoder))
-			radeon_external_tmds_setup(encoder);
-	}
+		पूर्ण
+		अगर (!radeon_combios_बाह्यal_पंचांगds_setup(encoder))
+			radeon_बाह्यal_पंचांगds_setup(encoder);
+	पूर्ण
 
-	if (radeon_crtc->crtc_id == 0) {
-		if ((rdev->family == CHIP_R200) || ASIC_IS_R300(rdev)) {
+	अगर (radeon_crtc->crtc_id == 0) अणु
+		अगर ((rdev->family == CHIP_R200) || ASIC_IS_R300(rdev)) अणु
 			fp2_gen_cntl &= ~R200_FP2_SOURCE_SEL_MASK;
-			if (radeon_encoder->rmx_type != RMX_OFF)
+			अगर (radeon_encoder->rmx_type != RMX_OFF)
 				fp2_gen_cntl |= R200_FP2_SOURCE_SEL_RMX;
-			else
+			अन्यथा
 				fp2_gen_cntl |= R200_FP2_SOURCE_SEL_CRTC1;
-		} else
+		पूर्ण अन्यथा
 			fp2_gen_cntl &= ~RADEON_FP2_SRC_SEL_CRTC2;
-	} else {
-		if ((rdev->family == CHIP_R200) || ASIC_IS_R300(rdev)) {
+	पूर्ण अन्यथा अणु
+		अगर ((rdev->family == CHIP_R200) || ASIC_IS_R300(rdev)) अणु
 			fp2_gen_cntl &= ~R200_FP2_SOURCE_SEL_MASK;
 			fp2_gen_cntl |= R200_FP2_SOURCE_SEL_CRTC2;
-		} else
+		पूर्ण अन्यथा
 			fp2_gen_cntl |= RADEON_FP2_SRC_SEL_CRTC2;
-	}
+	पूर्ण
 
 	WREG32(RADEON_FP2_GEN_CNTL, fp2_gen_cntl);
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atombios_encoder_crtc_scratch_regs(encoder, radeon_crtc->crtc_id);
-	else
+	अन्यथा
 		radeon_combios_encoder_crtc_scratch_regs(encoder, radeon_crtc->crtc_id);
-}
+पूर्ण
 
-static void radeon_ext_tmds_enc_destroy(struct drm_encoder *encoder)
-{
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	/* don't destroy the i2c bus record here, this will be done in radeon_i2c_fini */
-	kfree(radeon_encoder->enc_priv);
+अटल व्योम radeon_ext_पंचांगds_enc_destroy(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	/* करोn't destroy the i2c bus record here, this will be करोne in radeon_i2c_fini */
+	kमुक्त(radeon_encoder->enc_priv);
 	drm_encoder_cleanup(encoder);
-	kfree(radeon_encoder);
-}
+	kमुक्त(radeon_encoder);
+पूर्ण
 
-static const struct drm_encoder_helper_funcs radeon_legacy_tmds_ext_helper_funcs = {
-	.dpms = radeon_legacy_tmds_ext_dpms,
+अटल स्थिर काष्ठा drm_encoder_helper_funcs radeon_legacy_पंचांगds_ext_helper_funcs = अणु
+	.dpms = radeon_legacy_पंचांगds_ext_dpms,
 	.mode_fixup = radeon_legacy_mode_fixup,
-	.prepare = radeon_legacy_tmds_ext_prepare,
-	.mode_set = radeon_legacy_tmds_ext_mode_set,
-	.commit = radeon_legacy_tmds_ext_commit,
+	.prepare = radeon_legacy_पंचांगds_ext_prepare,
+	.mode_set = radeon_legacy_पंचांगds_ext_mode_set,
+	.commit = radeon_legacy_पंचांगds_ext_commit,
 	.disable = radeon_legacy_encoder_disable,
-};
+पूर्ण;
 
 
-static const struct drm_encoder_funcs radeon_legacy_tmds_ext_enc_funcs = {
-	.destroy = radeon_ext_tmds_enc_destroy,
-};
+अटल स्थिर काष्ठा drm_encoder_funcs radeon_legacy_पंचांगds_ext_enc_funcs = अणु
+	.destroy = radeon_ext_पंचांगds_enc_destroy,
+पूर्ण;
 
-static void radeon_legacy_tv_dac_dpms(struct drm_encoder *encoder, int mode)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	uint32_t fp2_gen_cntl = 0, crtc2_gen_cntl = 0, tv_dac_cntl = 0;
-	uint32_t tv_master_cntl = 0;
+अटल व्योम radeon_legacy_tv_dac_dpms(काष्ठा drm_encoder *encoder, पूर्णांक mode)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	uपूर्णांक32_t fp2_gen_cntl = 0, crtc2_gen_cntl = 0, tv_dac_cntl = 0;
+	uपूर्णांक32_t tv_master_cntl = 0;
 	bool is_tv;
 	DRM_DEBUG_KMS("\n");
 
 	is_tv = radeon_encoder->active_device & ATOM_DEVICE_TV_SUPPORT ? true : false;
 
-	if (rdev->family == CHIP_R200)
+	अगर (rdev->family == CHIP_R200)
 		fp2_gen_cntl = RREG32(RADEON_FP2_GEN_CNTL);
-	else {
-		if (is_tv)
+	अन्यथा अणु
+		अगर (is_tv)
 			tv_master_cntl = RREG32(RADEON_TV_MASTER_CNTL);
-		else
+		अन्यथा
 			crtc2_gen_cntl = RREG32(RADEON_CRTC2_GEN_CNTL);
 		tv_dac_cntl = RREG32(RADEON_TV_DAC_CNTL);
-	}
+	पूर्ण
 
-	switch (mode) {
-	case DRM_MODE_DPMS_ON:
-		if (rdev->family == CHIP_R200) {
+	चयन (mode) अणु
+	हाल DRM_MODE_DPMS_ON:
+		अगर (rdev->family == CHIP_R200) अणु
 			fp2_gen_cntl |= (RADEON_FP2_ON | RADEON_FP2_DVO_EN);
-		} else {
-			if (is_tv)
+		पूर्ण अन्यथा अणु
+			अगर (is_tv)
 				tv_master_cntl |= RADEON_TV_ON;
-			else
+			अन्यथा
 				crtc2_gen_cntl |= RADEON_CRTC2_CRT2_ON;
 
-			if (rdev->family == CHIP_R420 ||
+			अगर (rdev->family == CHIP_R420 ||
 			    rdev->family == CHIP_R423 ||
 			    rdev->family == CHIP_RV410)
 				tv_dac_cntl &= ~(R420_TV_DAC_RDACPD |
 						 R420_TV_DAC_GDACPD |
 						 R420_TV_DAC_BDACPD |
 						 RADEON_TV_DAC_BGSLEEP);
-			else
+			अन्यथा
 				tv_dac_cntl &= ~(RADEON_TV_DAC_RDACPD |
 						 RADEON_TV_DAC_GDACPD |
 						 RADEON_TV_DAC_BDACPD |
 						 RADEON_TV_DAC_BGSLEEP);
-		}
-		break;
-	case DRM_MODE_DPMS_STANDBY:
-	case DRM_MODE_DPMS_SUSPEND:
-	case DRM_MODE_DPMS_OFF:
-		if (rdev->family == CHIP_R200)
+		पूर्ण
+		अवरोध;
+	हाल DRM_MODE_DPMS_STANDBY:
+	हाल DRM_MODE_DPMS_SUSPEND:
+	हाल DRM_MODE_DPMS_OFF:
+		अगर (rdev->family == CHIP_R200)
 			fp2_gen_cntl &= ~(RADEON_FP2_ON | RADEON_FP2_DVO_EN);
-		else {
-			if (is_tv)
+		अन्यथा अणु
+			अगर (is_tv)
 				tv_master_cntl &= ~RADEON_TV_ON;
-			else
+			अन्यथा
 				crtc2_gen_cntl &= ~RADEON_CRTC2_CRT2_ON;
 
-			if (rdev->family == CHIP_R420 ||
+			अगर (rdev->family == CHIP_R420 ||
 			    rdev->family == CHIP_R423 ||
 			    rdev->family == CHIP_RV410)
 				tv_dac_cntl |= (R420_TV_DAC_RDACPD |
 						R420_TV_DAC_GDACPD |
 						R420_TV_DAC_BDACPD |
 						RADEON_TV_DAC_BGSLEEP);
-			else
+			अन्यथा
 				tv_dac_cntl |= (RADEON_TV_DAC_RDACPD |
 						RADEON_TV_DAC_GDACPD |
 						RADEON_TV_DAC_BDACPD |
 						RADEON_TV_DAC_BGSLEEP);
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	if (rdev->family == CHIP_R200) {
+	अगर (rdev->family == CHIP_R200) अणु
 		WREG32(RADEON_FP2_GEN_CNTL, fp2_gen_cntl);
-	} else {
-		if (is_tv)
+	पूर्ण अन्यथा अणु
+		अगर (is_tv)
 			WREG32(RADEON_TV_MASTER_CNTL, tv_master_cntl);
 		/* handled in radeon_crtc_dpms() */
-		else if (!(rdev->flags & RADEON_SINGLE_CRTC))
+		अन्यथा अगर (!(rdev->flags & RADEON_SINGLE_CRTC))
 			WREG32(RADEON_CRTC2_GEN_CNTL, crtc2_gen_cntl);
 		WREG32(RADEON_TV_DAC_CNTL, tv_dac_cntl);
-	}
+	पूर्ण
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atombios_encoder_dpms_scratch_regs(encoder, (mode == DRM_MODE_DPMS_ON) ? true : false);
-	else
+	अन्यथा
 		radeon_combios_encoder_dpms_scratch_regs(encoder, (mode == DRM_MODE_DPMS_ON) ? true : false);
 
-}
+पूर्ण
 
-static void radeon_legacy_tv_dac_prepare(struct drm_encoder *encoder)
-{
-	struct radeon_device *rdev = encoder->dev->dev_private;
+अटल व्योम radeon_legacy_tv_dac_prepare(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atom_output_lock(encoder, true);
-	else
+	अन्यथा
 		radeon_combios_output_lock(encoder, true);
 	radeon_legacy_tv_dac_dpms(encoder, DRM_MODE_DPMS_OFF);
-}
+पूर्ण
 
-static void radeon_legacy_tv_dac_commit(struct drm_encoder *encoder)
-{
-	struct radeon_device *rdev = encoder->dev->dev_private;
+अटल व्योम radeon_legacy_tv_dac_commit(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा radeon_device *rdev = encoder->dev->dev_निजी;
 
 	radeon_legacy_tv_dac_dpms(encoder, DRM_MODE_DPMS_ON);
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atom_output_lock(encoder, true);
-	else
+	अन्यथा
 		radeon_combios_output_lock(encoder, true);
-}
+पूर्ण
 
-static void radeon_legacy_tv_dac_mode_set(struct drm_encoder *encoder,
-		struct drm_display_mode *mode,
-		struct drm_display_mode *adjusted_mode)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_crtc *radeon_crtc = to_radeon_crtc(encoder->crtc);
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	struct radeon_encoder_tv_dac *tv_dac = radeon_encoder->enc_priv;
-	uint32_t tv_dac_cntl, gpiopad_a = 0, dac2_cntl, disp_output_cntl = 0;
-	uint32_t disp_hw_debug = 0, fp2_gen_cntl = 0, disp_tv_out_cntl = 0;
+अटल व्योम radeon_legacy_tv_dac_mode_set(काष्ठा drm_encoder *encoder,
+		काष्ठा drm_display_mode *mode,
+		काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_crtc *radeon_crtc = to_radeon_crtc(encoder->crtc);
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	काष्ठा radeon_encoder_tv_dac *tv_dac = radeon_encoder->enc_priv;
+	uपूर्णांक32_t tv_dac_cntl, gpiopad_a = 0, dac2_cntl, disp_output_cntl = 0;
+	uपूर्णांक32_t disp_hw_debug = 0, fp2_gen_cntl = 0, disp_tv_out_cntl = 0;
 	bool is_tv = false;
 
 	DRM_DEBUG_KMS("\n");
 
 	is_tv = radeon_encoder->active_device & ATOM_DEVICE_TV_SUPPORT ? true : false;
 
-	if (rdev->family != CHIP_R200) {
+	अगर (rdev->family != CHIP_R200) अणु
 		tv_dac_cntl = RREG32(RADEON_TV_DAC_CNTL);
-		if (rdev->family == CHIP_R420 ||
+		अगर (rdev->family == CHIP_R420 ||
 		    rdev->family == CHIP_R423 ||
-		    rdev->family == CHIP_RV410) {
+		    rdev->family == CHIP_RV410) अणु
 			tv_dac_cntl &= ~(RADEON_TV_DAC_STD_MASK |
 					 RADEON_TV_DAC_BGADJ_MASK |
 					 R420_TV_DAC_DACADJ_MASK |
@@ -1179,138 +1180,138 @@ static void radeon_legacy_tv_dac_mode_set(struct drm_encoder *encoder,
 					 R420_TV_DAC_GDACPD |
 					 R420_TV_DAC_BDACPD |
 					 R420_TV_DAC_TVENABLE);
-		} else {
+		पूर्ण अन्यथा अणु
 			tv_dac_cntl &= ~(RADEON_TV_DAC_STD_MASK |
 					 RADEON_TV_DAC_BGADJ_MASK |
 					 RADEON_TV_DAC_DACADJ_MASK |
 					 RADEON_TV_DAC_RDACPD |
 					 RADEON_TV_DAC_GDACPD |
 					 RADEON_TV_DAC_BDACPD);
-		}
+		पूर्ण
 
 		tv_dac_cntl |= RADEON_TV_DAC_NBLANK | RADEON_TV_DAC_NHOLD;
 
-		if (is_tv) {
-			if (tv_dac->tv_std == TV_STD_NTSC ||
+		अगर (is_tv) अणु
+			अगर (tv_dac->tv_std == TV_STD_NTSC ||
 			    tv_dac->tv_std == TV_STD_NTSC_J ||
 			    tv_dac->tv_std == TV_STD_PAL_M ||
 			    tv_dac->tv_std == TV_STD_PAL_60)
 				tv_dac_cntl |= tv_dac->ntsc_tvdac_adj;
-			else
+			अन्यथा
 				tv_dac_cntl |= tv_dac->pal_tvdac_adj;
 
-			if (tv_dac->tv_std == TV_STD_NTSC ||
+			अगर (tv_dac->tv_std == TV_STD_NTSC ||
 			    tv_dac->tv_std == TV_STD_NTSC_J)
 				tv_dac_cntl |= RADEON_TV_DAC_STD_NTSC;
-			else
+			अन्यथा
 				tv_dac_cntl |= RADEON_TV_DAC_STD_PAL;
-		} else
+		पूर्ण अन्यथा
 			tv_dac_cntl |= (RADEON_TV_DAC_STD_PS2 |
 					tv_dac->ps2_tvdac_adj);
 
 		WREG32(RADEON_TV_DAC_CNTL, tv_dac_cntl);
-	}
+	पूर्ण
 
-	if (ASIC_IS_R300(rdev)) {
+	अगर (ASIC_IS_R300(rdev)) अणु
 		gpiopad_a = RREG32(RADEON_GPIOPAD_A) | 1;
 		disp_output_cntl = RREG32(RADEON_DISP_OUTPUT_CNTL);
-	} else if (rdev->family != CHIP_R200)
+	पूर्ण अन्यथा अगर (rdev->family != CHIP_R200)
 		disp_hw_debug = RREG32(RADEON_DISP_HW_DEBUG);
-	else if (rdev->family == CHIP_R200)
+	अन्यथा अगर (rdev->family == CHIP_R200)
 		fp2_gen_cntl = RREG32(RADEON_FP2_GEN_CNTL);
 
-	if (rdev->family >= CHIP_R200)
+	अगर (rdev->family >= CHIP_R200)
 		disp_tv_out_cntl = RREG32(RADEON_DISP_TV_OUT_CNTL);
 
-	if (is_tv) {
-		uint32_t dac_cntl;
+	अगर (is_tv) अणु
+		uपूर्णांक32_t dac_cntl;
 
 		dac_cntl = RREG32(RADEON_DAC_CNTL);
 		dac_cntl &= ~RADEON_DAC_TVO_EN;
 		WREG32(RADEON_DAC_CNTL, dac_cntl);
 
-		if (ASIC_IS_R300(rdev))
+		अगर (ASIC_IS_R300(rdev))
 			gpiopad_a = RREG32(RADEON_GPIOPAD_A) & ~1;
 
 		dac2_cntl = RREG32(RADEON_DAC_CNTL2) & ~RADEON_DAC2_DAC2_CLK_SEL;
-		if (radeon_crtc->crtc_id == 0) {
-			if (ASIC_IS_R300(rdev)) {
+		अगर (radeon_crtc->crtc_id == 0) अणु
+			अगर (ASIC_IS_R300(rdev)) अणु
 				disp_output_cntl &= ~RADEON_DISP_TVDAC_SOURCE_MASK;
 				disp_output_cntl |= (RADEON_DISP_TVDAC_SOURCE_CRTC |
 						     RADEON_DISP_TV_SOURCE_CRTC);
-			}
-			if (rdev->family >= CHIP_R200) {
+			पूर्ण
+			अगर (rdev->family >= CHIP_R200) अणु
 				disp_tv_out_cntl &= ~RADEON_DISP_TV_PATH_SRC_CRTC2;
-			} else {
+			पूर्ण अन्यथा अणु
 				disp_hw_debug |= RADEON_CRT2_DISP1_SEL;
-			}
-		} else {
-			if (ASIC_IS_R300(rdev)) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (ASIC_IS_R300(rdev)) अणु
 				disp_output_cntl &= ~RADEON_DISP_TVDAC_SOURCE_MASK;
 				disp_output_cntl |= RADEON_DISP_TV_SOURCE_CRTC;
-			}
-			if (rdev->family >= CHIP_R200) {
+			पूर्ण
+			अगर (rdev->family >= CHIP_R200) अणु
 				disp_tv_out_cntl |= RADEON_DISP_TV_PATH_SRC_CRTC2;
-			} else {
+			पूर्ण अन्यथा अणु
 				disp_hw_debug &= ~RADEON_CRT2_DISP1_SEL;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		WREG32(RADEON_DAC_CNTL2, dac2_cntl);
-	} else {
+	पूर्ण अन्यथा अणु
 
 		dac2_cntl = RREG32(RADEON_DAC_CNTL2) | RADEON_DAC2_DAC2_CLK_SEL;
 
-		if (radeon_crtc->crtc_id == 0) {
-			if (ASIC_IS_R300(rdev)) {
+		अगर (radeon_crtc->crtc_id == 0) अणु
+			अगर (ASIC_IS_R300(rdev)) अणु
 				disp_output_cntl &= ~RADEON_DISP_TVDAC_SOURCE_MASK;
 				disp_output_cntl |= RADEON_DISP_TVDAC_SOURCE_CRTC;
-			} else if (rdev->family == CHIP_R200) {
+			पूर्ण अन्यथा अगर (rdev->family == CHIP_R200) अणु
 				fp2_gen_cntl &= ~(R200_FP2_SOURCE_SEL_MASK |
 						  RADEON_FP2_DVO_RATE_SEL_SDR);
-			} else
+			पूर्ण अन्यथा
 				disp_hw_debug |= RADEON_CRT2_DISP1_SEL;
-		} else {
-			if (ASIC_IS_R300(rdev)) {
+		पूर्ण अन्यथा अणु
+			अगर (ASIC_IS_R300(rdev)) अणु
 				disp_output_cntl &= ~RADEON_DISP_TVDAC_SOURCE_MASK;
 				disp_output_cntl |= RADEON_DISP_TVDAC_SOURCE_CRTC2;
-			} else if (rdev->family == CHIP_R200) {
+			पूर्ण अन्यथा अगर (rdev->family == CHIP_R200) अणु
 				fp2_gen_cntl &= ~(R200_FP2_SOURCE_SEL_MASK |
 						  RADEON_FP2_DVO_RATE_SEL_SDR);
 				fp2_gen_cntl |= R200_FP2_SOURCE_SEL_CRTC2;
-			} else
+			पूर्ण अन्यथा
 				disp_hw_debug &= ~RADEON_CRT2_DISP1_SEL;
-		}
+		पूर्ण
 		WREG32(RADEON_DAC_CNTL2, dac2_cntl);
-	}
+	पूर्ण
 
-	if (ASIC_IS_R300(rdev)) {
+	अगर (ASIC_IS_R300(rdev)) अणु
 		WREG32_P(RADEON_GPIOPAD_A, gpiopad_a, ~1);
 		WREG32(RADEON_DISP_OUTPUT_CNTL, disp_output_cntl);
-	} else if (rdev->family != CHIP_R200)
+	पूर्ण अन्यथा अगर (rdev->family != CHIP_R200)
 		WREG32(RADEON_DISP_HW_DEBUG, disp_hw_debug);
-	else if (rdev->family == CHIP_R200)
+	अन्यथा अगर (rdev->family == CHIP_R200)
 		WREG32(RADEON_FP2_GEN_CNTL, fp2_gen_cntl);
 
-	if (rdev->family >= CHIP_R200)
+	अगर (rdev->family >= CHIP_R200)
 		WREG32(RADEON_DISP_TV_OUT_CNTL, disp_tv_out_cntl);
 
-	if (is_tv)
+	अगर (is_tv)
 		radeon_legacy_tv_mode_set(encoder, mode, adjusted_mode);
 
-	if (rdev->is_atom_bios)
+	अगर (rdev->is_atom_bios)
 		radeon_atombios_encoder_crtc_scratch_regs(encoder, radeon_crtc->crtc_id);
-	else
+	अन्यथा
 		radeon_combios_encoder_crtc_scratch_regs(encoder, radeon_crtc->crtc_id);
 
-}
+पूर्ण
 
-static bool r300_legacy_tv_detect(struct drm_encoder *encoder,
-				  struct drm_connector *connector)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	uint32_t crtc2_gen_cntl, tv_dac_cntl, dac_cntl2, dac_ext_cntl;
-	uint32_t disp_output_cntl, gpiopad_a, tmp;
+अटल bool r300_legacy_tv_detect(काष्ठा drm_encoder *encoder,
+				  काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	uपूर्णांक32_t crtc2_gen_cntl, tv_dac_cntl, dac_cntl2, dac_ext_cntl;
+	uपूर्णांक32_t disp_output_cntl, gpiopad_a, पंचांगp;
 	bool found = false;
 
 	/* save regs needed */
@@ -1328,9 +1329,9 @@ static bool r300_legacy_tv_detect(struct drm_encoder *encoder,
 	WREG32(RADEON_CRTC2_GEN_CNTL,
 	       RADEON_CRTC2_CRT2_ON | RADEON_CRTC2_VSYNC_TRISTAT);
 
-	tmp = disp_output_cntl & ~RADEON_DISP_TVDAC_SOURCE_MASK;
-	tmp |= RADEON_DISP_TVDAC_SOURCE_CRTC2;
-	WREG32(RADEON_DISP_OUTPUT_CNTL, tmp);
+	पंचांगp = disp_output_cntl & ~RADEON_DISP_TVDAC_SOURCE_MASK;
+	पंचांगp |= RADEON_DISP_TVDAC_SOURCE_CRTC2;
+	WREG32(RADEON_DISP_OUTPUT_CNTL, पंचांगp);
 
 	WREG32(RADEON_DAC_EXT_CNTL,
 	       RADEON_DAC2_FORCE_BLANK_OFF_EN |
@@ -1357,14 +1358,14 @@ static bool r300_legacy_tv_detect(struct drm_encoder *encoder,
 	RREG32(RADEON_TV_DAC_CNTL);
 	mdelay(6);
 
-	tmp = RREG32(RADEON_TV_DAC_CNTL);
-	if ((tmp & RADEON_TV_DAC_GDACDET) != 0) {
+	पंचांगp = RREG32(RADEON_TV_DAC_CNTL);
+	अगर ((पंचांगp & RADEON_TV_DAC_GDACDET) != 0) अणु
 		found = true;
 		DRM_DEBUG_KMS("S-video TV connection detected\n");
-	} else if ((tmp & RADEON_TV_DAC_BDACDET) != 0) {
+	पूर्ण अन्यथा अगर ((पंचांगp & RADEON_TV_DAC_BDACDET) != 0) अणु
 		found = true;
 		DRM_DEBUG_KMS("Composite TV connection detected\n");
-	}
+	पूर्ण
 
 	WREG32(RADEON_TV_DAC_CNTL, tv_dac_cntl);
 	WREG32(RADEON_DAC_EXT_CNTL, dac_ext_cntl);
@@ -1372,20 +1373,20 @@ static bool r300_legacy_tv_detect(struct drm_encoder *encoder,
 	WREG32(RADEON_DISP_OUTPUT_CNTL, disp_output_cntl);
 	WREG32(RADEON_DAC_CNTL2, dac_cntl2);
 	WREG32_P(RADEON_GPIOPAD_A, gpiopad_a, ~1);
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static bool radeon_legacy_tv_detect(struct drm_encoder *encoder,
-				    struct drm_connector *connector)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	uint32_t tv_dac_cntl, dac_cntl2;
-	uint32_t config_cntl, tv_pre_dac_mux_cntl, tv_master_cntl, tmp;
+अटल bool radeon_legacy_tv_detect(काष्ठा drm_encoder *encoder,
+				    काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	uपूर्णांक32_t tv_dac_cntl, dac_cntl2;
+	uपूर्णांक32_t config_cntl, tv_pre_dac_mux_cntl, tv_master_cntl, पंचांगp;
 	bool found = false;
 
-	if (ASIC_IS_R300(rdev))
-		return r300_legacy_tv_detect(encoder, connector);
+	अगर (ASIC_IS_R300(rdev))
+		वापस r300_legacy_tv_detect(encoder, connector);
 
 	dac_cntl2 = RREG32(RADEON_DAC_CNTL2);
 	tv_master_cntl = RREG32(RADEON_TV_MASTER_CNTL);
@@ -1393,64 +1394,64 @@ static bool radeon_legacy_tv_detect(struct drm_encoder *encoder,
 	config_cntl = RREG32(RADEON_CONFIG_CNTL);
 	tv_pre_dac_mux_cntl = RREG32(RADEON_TV_PRE_DAC_MUX_CNTL);
 
-	tmp = dac_cntl2 & ~RADEON_DAC2_DAC2_CLK_SEL;
-	WREG32(RADEON_DAC_CNTL2, tmp);
+	पंचांगp = dac_cntl2 & ~RADEON_DAC2_DAC2_CLK_SEL;
+	WREG32(RADEON_DAC_CNTL2, पंचांगp);
 
-	tmp = tv_master_cntl | RADEON_TV_ON;
-	tmp &= ~(RADEON_TV_ASYNC_RST |
+	पंचांगp = tv_master_cntl | RADEON_TV_ON;
+	पंचांगp &= ~(RADEON_TV_ASYNC_RST |
 		 RADEON_RESTART_PHASE_FIX |
 		 RADEON_CRT_FIFO_CE_EN |
 		 RADEON_TV_FIFO_CE_EN |
 		 RADEON_RE_SYNC_NOW_SEL_MASK);
-	tmp |= RADEON_TV_FIFO_ASYNC_RST | RADEON_CRT_ASYNC_RST;
-	WREG32(RADEON_TV_MASTER_CNTL, tmp);
+	पंचांगp |= RADEON_TV_FIFO_ASYNC_RST | RADEON_CRT_ASYNC_RST;
+	WREG32(RADEON_TV_MASTER_CNTL, पंचांगp);
 
-	tmp = RADEON_TV_DAC_NBLANK | RADEON_TV_DAC_NHOLD |
+	पंचांगp = RADEON_TV_DAC_NBLANK | RADEON_TV_DAC_NHOLD |
 		RADEON_TV_MONITOR_DETECT_EN | RADEON_TV_DAC_STD_NTSC |
 		(8 << RADEON_TV_DAC_BGADJ_SHIFT);
 
-	if (config_cntl & RADEON_CFG_ATI_REV_ID_MASK)
-		tmp |= (4 << RADEON_TV_DAC_DACADJ_SHIFT);
-	else
-		tmp |= (8 << RADEON_TV_DAC_DACADJ_SHIFT);
-	WREG32(RADEON_TV_DAC_CNTL, tmp);
+	अगर (config_cntl & RADEON_CFG_ATI_REV_ID_MASK)
+		पंचांगp |= (4 << RADEON_TV_DAC_DACADJ_SHIFT);
+	अन्यथा
+		पंचांगp |= (8 << RADEON_TV_DAC_DACADJ_SHIFT);
+	WREG32(RADEON_TV_DAC_CNTL, पंचांगp);
 
-	tmp = RADEON_C_GRN_EN | RADEON_CMP_BLU_EN |
+	पंचांगp = RADEON_C_GRN_EN | RADEON_CMP_BLU_EN |
 		RADEON_RED_MX_FORCE_DAC_DATA |
 		RADEON_GRN_MX_FORCE_DAC_DATA |
 		RADEON_BLU_MX_FORCE_DAC_DATA |
 		(0x109 << RADEON_TV_FORCE_DAC_DATA_SHIFT);
-	WREG32(RADEON_TV_PRE_DAC_MUX_CNTL, tmp);
+	WREG32(RADEON_TV_PRE_DAC_MUX_CNTL, पंचांगp);
 
 	mdelay(3);
-	tmp = RREG32(RADEON_TV_DAC_CNTL);
-	if (tmp & RADEON_TV_DAC_GDACDET) {
+	पंचांगp = RREG32(RADEON_TV_DAC_CNTL);
+	अगर (पंचांगp & RADEON_TV_DAC_GDACDET) अणु
 		found = true;
 		DRM_DEBUG_KMS("S-video TV connection detected\n");
-	} else if ((tmp & RADEON_TV_DAC_BDACDET) != 0) {
+	पूर्ण अन्यथा अगर ((पंचांगp & RADEON_TV_DAC_BDACDET) != 0) अणु
 		found = true;
 		DRM_DEBUG_KMS("Composite TV connection detected\n");
-	}
+	पूर्ण
 
 	WREG32(RADEON_TV_PRE_DAC_MUX_CNTL, tv_pre_dac_mux_cntl);
 	WREG32(RADEON_TV_DAC_CNTL, tv_dac_cntl);
 	WREG32(RADEON_TV_MASTER_CNTL, tv_master_cntl);
 	WREG32(RADEON_DAC_CNTL2, dac_cntl2);
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static bool radeon_legacy_ext_dac_detect(struct drm_encoder *encoder,
-					 struct drm_connector *connector)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	uint32_t gpio_monid, fp2_gen_cntl, disp_output_cntl, crtc2_gen_cntl;
-	uint32_t disp_lin_trans_grph_a, disp_lin_trans_grph_b, disp_lin_trans_grph_c;
-	uint32_t disp_lin_trans_grph_d, disp_lin_trans_grph_e, disp_lin_trans_grph_f;
-	uint32_t tmp, crtc2_h_total_disp, crtc2_v_total_disp;
-	uint32_t crtc2_h_sync_strt_wid, crtc2_v_sync_strt_wid;
+अटल bool radeon_legacy_ext_dac_detect(काष्ठा drm_encoder *encoder,
+					 काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	uपूर्णांक32_t gpio_monid, fp2_gen_cntl, disp_output_cntl, crtc2_gen_cntl;
+	uपूर्णांक32_t disp_lin_trans_grph_a, disp_lin_trans_grph_b, disp_lin_trans_grph_c;
+	uपूर्णांक32_t disp_lin_trans_grph_d, disp_lin_trans_grph_e, disp_lin_trans_grph_f;
+	uपूर्णांक32_t पंचांगp, crtc2_h_total_disp, crtc2_v_total_disp;
+	uपूर्णांक32_t crtc2_h_sync_strt_wid, crtc2_v_sync_strt_wid;
 	bool found = false;
-	int i;
+	पूर्णांक i;
 
 	/* save the regs we need */
 	gpio_monid = RREG32(RADEON_GPIO_MONID);
@@ -1468,9 +1469,9 @@ static bool radeon_legacy_ext_dac_detect(struct drm_encoder *encoder,
 	crtc2_h_sync_strt_wid = RREG32(RADEON_CRTC2_H_SYNC_STRT_WID);
 	crtc2_v_sync_strt_wid = RREG32(RADEON_CRTC2_V_SYNC_STRT_WID);
 
-	tmp = RREG32(RADEON_GPIO_MONID);
-	tmp &= ~RADEON_GPIO_A_0;
-	WREG32(RADEON_GPIO_MONID, tmp);
+	पंचांगp = RREG32(RADEON_GPIO_MONID);
+	पंचांगp &= ~RADEON_GPIO_A_0;
+	WREG32(RADEON_GPIO_MONID, पंचांगp);
 
 	WREG32(RADEON_FP2_GEN_CNTL, (RADEON_FP2_ON |
 				     RADEON_FP2_PANEL_FORMAT |
@@ -1496,19 +1497,19 @@ static bool radeon_legacy_ext_dac_detect(struct drm_encoder *encoder,
 	WREG32(RADEON_CRTC2_V_TOTAL_DISP, 0x00080001);
 	WREG32(RADEON_CRTC2_V_SYNC_STRT_WID, 0x00000080);
 
-	for (i = 0; i < 200; i++) {
-		tmp = RREG32(RADEON_GPIO_MONID);
-		if (tmp & RADEON_GPIO_Y_0)
+	क्रम (i = 0; i < 200; i++) अणु
+		पंचांगp = RREG32(RADEON_GPIO_MONID);
+		अगर (पंचांगp & RADEON_GPIO_Y_0)
 			found = true;
 
-		if (found)
-			break;
+		अगर (found)
+			अवरोध;
 
-		if (!drm_can_sleep())
+		अगर (!drm_can_sleep())
 			mdelay(1);
-		else
+		अन्यथा
 			msleep(1);
-	}
+	पूर्ण
 
 	/* restore the regs we used */
 	WREG32(RADEON_DISP_LIN_TRANS_GRPH_A, disp_lin_trans_grph_a);
@@ -1526,161 +1527,161 @@ static bool radeon_legacy_ext_dac_detect(struct drm_encoder *encoder,
 	WREG32(RADEON_FP2_GEN_CNTL, fp2_gen_cntl);
 	WREG32(RADEON_GPIO_MONID, gpio_monid);
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static enum drm_connector_status radeon_legacy_tv_dac_detect(struct drm_encoder *encoder,
-							     struct drm_connector *connector)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	uint32_t crtc2_gen_cntl = 0, tv_dac_cntl, dac_cntl2, dac_ext_cntl;
-	uint32_t gpiopad_a = 0, pixclks_cntl, tmp;
-	uint32_t disp_output_cntl = 0, disp_hw_debug = 0, crtc_ext_cntl = 0;
-	enum drm_connector_status found = connector_status_disconnected;
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	struct radeon_encoder_tv_dac *tv_dac = radeon_encoder->enc_priv;
+अटल क्रमागत drm_connector_status radeon_legacy_tv_dac_detect(काष्ठा drm_encoder *encoder,
+							     काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	uपूर्णांक32_t crtc2_gen_cntl = 0, tv_dac_cntl, dac_cntl2, dac_ext_cntl;
+	uपूर्णांक32_t gpiopad_a = 0, pixclks_cntl, पंचांगp;
+	uपूर्णांक32_t disp_output_cntl = 0, disp_hw_debug = 0, crtc_ext_cntl = 0;
+	क्रमागत drm_connector_status found = connector_status_disconnected;
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	काष्ठा radeon_encoder_tv_dac *tv_dac = radeon_encoder->enc_priv;
 	bool color = true;
-	struct drm_crtc *crtc;
+	काष्ठा drm_crtc *crtc;
 
-	/* find out if crtc2 is in use or if this encoder is using it */
-	list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
-		struct radeon_crtc *radeon_crtc = to_radeon_crtc(crtc);
-		if ((radeon_crtc->crtc_id == 1) && crtc->enabled) {
-			if (encoder->crtc != crtc) {
-				return connector_status_disconnected;
-			}
-		}
-	}
+	/* find out अगर crtc2 is in use or अगर this encoder is using it */
+	list_क्रम_each_entry(crtc, &dev->mode_config.crtc_list, head) अणु
+		काष्ठा radeon_crtc *radeon_crtc = to_radeon_crtc(crtc);
+		अगर ((radeon_crtc->crtc_id == 1) && crtc->enabled) अणु
+			अगर (encoder->crtc != crtc) अणु
+				वापस connector_status_disconnected;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (connector->connector_type == DRM_MODE_CONNECTOR_SVIDEO ||
+	अगर (connector->connector_type == DRM_MODE_CONNECTOR_SVIDEO ||
 	    connector->connector_type == DRM_MODE_CONNECTOR_Composite ||
-	    connector->connector_type == DRM_MODE_CONNECTOR_9PinDIN) {
+	    connector->connector_type == DRM_MODE_CONNECTOR_9PinDIN) अणु
 		bool tv_detect;
 
-		if (radeon_encoder->active_device && !(radeon_encoder->active_device & ATOM_DEVICE_TV_SUPPORT))
-			return connector_status_disconnected;
+		अगर (radeon_encoder->active_device && !(radeon_encoder->active_device & ATOM_DEVICE_TV_SUPPORT))
+			वापस connector_status_disconnected;
 
 		tv_detect = radeon_legacy_tv_detect(encoder, connector);
-		if (tv_detect && tv_dac)
+		अगर (tv_detect && tv_dac)
 			found = connector_status_connected;
-		return found;
-	}
+		वापस found;
+	पूर्ण
 
-	/* don't probe if the encoder is being used for something else not CRT related */
-	if (radeon_encoder->active_device && !(radeon_encoder->active_device & ATOM_DEVICE_CRT_SUPPORT)) {
+	/* करोn't probe अगर the encoder is being used क्रम something अन्यथा not CRT related */
+	अगर (radeon_encoder->active_device && !(radeon_encoder->active_device & ATOM_DEVICE_CRT_SUPPORT)) अणु
 		DRM_INFO("not detecting due to %08x\n", radeon_encoder->active_device);
-		return connector_status_disconnected;
-	}
+		वापस connector_status_disconnected;
+	पूर्ण
 
-	/* R200 uses an external DAC for secondary DAC */
-	if (rdev->family == CHIP_R200) {
-		if (radeon_legacy_ext_dac_detect(encoder, connector))
+	/* R200 uses an बाह्यal DAC क्रम secondary DAC */
+	अगर (rdev->family == CHIP_R200) अणु
+		अगर (radeon_legacy_ext_dac_detect(encoder, connector))
 			found = connector_status_connected;
-		return found;
-	}
+		वापस found;
+	पूर्ण
 
 	/* save the regs we need */
 	pixclks_cntl = RREG32_PLL(RADEON_PIXCLKS_CNTL);
 
-	if (rdev->flags & RADEON_SINGLE_CRTC) {
+	अगर (rdev->flags & RADEON_SINGLE_CRTC) अणु
 		crtc_ext_cntl = RREG32(RADEON_CRTC_EXT_CNTL);
-	} else {
-		if (ASIC_IS_R300(rdev)) {
+	पूर्ण अन्यथा अणु
+		अगर (ASIC_IS_R300(rdev)) अणु
 			gpiopad_a = RREG32(RADEON_GPIOPAD_A);
 			disp_output_cntl = RREG32(RADEON_DISP_OUTPUT_CNTL);
-		} else {
+		पूर्ण अन्यथा अणु
 			disp_hw_debug = RREG32(RADEON_DISP_HW_DEBUG);
-		}
+		पूर्ण
 		crtc2_gen_cntl = RREG32(RADEON_CRTC2_GEN_CNTL);
-	}
+	पूर्ण
 	tv_dac_cntl = RREG32(RADEON_TV_DAC_CNTL);
 	dac_ext_cntl = RREG32(RADEON_DAC_EXT_CNTL);
 	dac_cntl2 = RREG32(RADEON_DAC_CNTL2);
 
-	tmp = pixclks_cntl & ~(RADEON_PIX2CLK_ALWAYS_ONb
+	पंचांगp = pixclks_cntl & ~(RADEON_PIX2CLK_ALWAYS_ONb
 			       | RADEON_PIX2CLK_DAC_ALWAYS_ONb);
-	WREG32_PLL(RADEON_PIXCLKS_CNTL, tmp);
+	WREG32_PLL(RADEON_PIXCLKS_CNTL, पंचांगp);
 
-	if (rdev->flags & RADEON_SINGLE_CRTC) {
-		tmp = crtc_ext_cntl | RADEON_CRTC_CRT_ON;
-		WREG32(RADEON_CRTC_EXT_CNTL, tmp);
-	} else {
-		tmp = crtc2_gen_cntl & ~RADEON_CRTC2_PIX_WIDTH_MASK;
-		tmp |= RADEON_CRTC2_CRT2_ON |
+	अगर (rdev->flags & RADEON_SINGLE_CRTC) अणु
+		पंचांगp = crtc_ext_cntl | RADEON_CRTC_CRT_ON;
+		WREG32(RADEON_CRTC_EXT_CNTL, पंचांगp);
+	पूर्ण अन्यथा अणु
+		पंचांगp = crtc2_gen_cntl & ~RADEON_CRTC2_PIX_WIDTH_MASK;
+		पंचांगp |= RADEON_CRTC2_CRT2_ON |
 			(2 << RADEON_CRTC2_PIX_WIDTH_SHIFT);
-		WREG32(RADEON_CRTC2_GEN_CNTL, tmp);
+		WREG32(RADEON_CRTC2_GEN_CNTL, पंचांगp);
 
-		if (ASIC_IS_R300(rdev)) {
+		अगर (ASIC_IS_R300(rdev)) अणु
 			WREG32_P(RADEON_GPIOPAD_A, 1, ~1);
-			tmp = disp_output_cntl & ~RADEON_DISP_TVDAC_SOURCE_MASK;
-			tmp |= RADEON_DISP_TVDAC_SOURCE_CRTC2;
-			WREG32(RADEON_DISP_OUTPUT_CNTL, tmp);
-		} else {
-			tmp = disp_hw_debug & ~RADEON_CRT2_DISP1_SEL;
-			WREG32(RADEON_DISP_HW_DEBUG, tmp);
-		}
-	}
+			पंचांगp = disp_output_cntl & ~RADEON_DISP_TVDAC_SOURCE_MASK;
+			पंचांगp |= RADEON_DISP_TVDAC_SOURCE_CRTC2;
+			WREG32(RADEON_DISP_OUTPUT_CNTL, पंचांगp);
+		पूर्ण अन्यथा अणु
+			पंचांगp = disp_hw_debug & ~RADEON_CRT2_DISP1_SEL;
+			WREG32(RADEON_DISP_HW_DEBUG, पंचांगp);
+		पूर्ण
+	पूर्ण
 
-	tmp = RADEON_TV_DAC_NBLANK |
+	पंचांगp = RADEON_TV_DAC_NBLANK |
 		RADEON_TV_DAC_NHOLD |
 		RADEON_TV_MONITOR_DETECT_EN |
 		RADEON_TV_DAC_STD_PS2;
 
-	WREG32(RADEON_TV_DAC_CNTL, tmp);
+	WREG32(RADEON_TV_DAC_CNTL, पंचांगp);
 
-	tmp = RADEON_DAC2_FORCE_BLANK_OFF_EN |
+	पंचांगp = RADEON_DAC2_FORCE_BLANK_OFF_EN |
 		RADEON_DAC2_FORCE_DATA_EN;
 
-	if (color)
-		tmp |= RADEON_DAC_FORCE_DATA_SEL_RGB;
-	else
-		tmp |= RADEON_DAC_FORCE_DATA_SEL_G;
+	अगर (color)
+		पंचांगp |= RADEON_DAC_FORCE_DATA_SEL_RGB;
+	अन्यथा
+		पंचांगp |= RADEON_DAC_FORCE_DATA_SEL_G;
 
-	if (ASIC_IS_R300(rdev))
-		tmp |= (0x1b6 << RADEON_DAC_FORCE_DATA_SHIFT);
-	else
-		tmp |= (0x180 << RADEON_DAC_FORCE_DATA_SHIFT);
+	अगर (ASIC_IS_R300(rdev))
+		पंचांगp |= (0x1b6 << RADEON_DAC_FORCE_DATA_SHIFT);
+	अन्यथा
+		पंचांगp |= (0x180 << RADEON_DAC_FORCE_DATA_SHIFT);
 
-	WREG32(RADEON_DAC_EXT_CNTL, tmp);
+	WREG32(RADEON_DAC_EXT_CNTL, पंचांगp);
 
-	tmp = dac_cntl2 | RADEON_DAC2_DAC2_CLK_SEL | RADEON_DAC2_CMP_EN;
-	WREG32(RADEON_DAC_CNTL2, tmp);
+	पंचांगp = dac_cntl2 | RADEON_DAC2_DAC2_CLK_SEL | RADEON_DAC2_CMP_EN;
+	WREG32(RADEON_DAC_CNTL2, पंचांगp);
 
 	mdelay(10);
 
-	if (ASIC_IS_R300(rdev)) {
-		if (RREG32(RADEON_DAC_CNTL2) & RADEON_DAC2_CMP_OUT_B)
+	अगर (ASIC_IS_R300(rdev)) अणु
+		अगर (RREG32(RADEON_DAC_CNTL2) & RADEON_DAC2_CMP_OUT_B)
 			found = connector_status_connected;
-	} else {
-		if (RREG32(RADEON_DAC_CNTL2) & RADEON_DAC2_CMP_OUTPUT)
+	पूर्ण अन्यथा अणु
+		अगर (RREG32(RADEON_DAC_CNTL2) & RADEON_DAC2_CMP_OUTPUT)
 			found = connector_status_connected;
-	}
+	पूर्ण
 
 	/* restore regs we used */
 	WREG32(RADEON_DAC_CNTL2, dac_cntl2);
 	WREG32(RADEON_DAC_EXT_CNTL, dac_ext_cntl);
 	WREG32(RADEON_TV_DAC_CNTL, tv_dac_cntl);
 
-	if (rdev->flags & RADEON_SINGLE_CRTC) {
+	अगर (rdev->flags & RADEON_SINGLE_CRTC) अणु
 		WREG32(RADEON_CRTC_EXT_CNTL, crtc_ext_cntl);
-	} else {
+	पूर्ण अन्यथा अणु
 		WREG32(RADEON_CRTC2_GEN_CNTL, crtc2_gen_cntl);
-		if (ASIC_IS_R300(rdev)) {
+		अगर (ASIC_IS_R300(rdev)) अणु
 			WREG32(RADEON_DISP_OUTPUT_CNTL, disp_output_cntl);
 			WREG32_P(RADEON_GPIOPAD_A, gpiopad_a, ~1);
-		} else {
+		पूर्ण अन्यथा अणु
 			WREG32(RADEON_DISP_HW_DEBUG, disp_hw_debug);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	WREG32_PLL(RADEON_PIXCLKS_CNTL, pixclks_cntl);
 
-	return found;
+	वापस found;
 
-}
+पूर्ण
 
-static const struct drm_encoder_helper_funcs radeon_legacy_tv_dac_helper_funcs = {
+अटल स्थिर काष्ठा drm_encoder_helper_funcs radeon_legacy_tv_dac_helper_funcs = अणु
 	.dpms = radeon_legacy_tv_dac_dpms,
 	.mode_fixup = radeon_legacy_mode_fixup,
 	.prepare = radeon_legacy_tv_dac_prepare,
@@ -1688,137 +1689,137 @@ static const struct drm_encoder_helper_funcs radeon_legacy_tv_dac_helper_funcs =
 	.commit = radeon_legacy_tv_dac_commit,
 	.detect = radeon_legacy_tv_dac_detect,
 	.disable = radeon_legacy_encoder_disable,
-};
+पूर्ण;
 
 
-static const struct drm_encoder_funcs radeon_legacy_tv_dac_enc_funcs = {
+अटल स्थिर काष्ठा drm_encoder_funcs radeon_legacy_tv_dac_enc_funcs = अणु
 	.destroy = radeon_enc_destroy,
-};
+पूर्ण;
 
 
-static struct radeon_encoder_int_tmds *radeon_legacy_get_tmds_info(struct radeon_encoder *encoder)
-{
-	struct drm_device *dev = encoder->base.dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_encoder_int_tmds *tmds = NULL;
+अटल काष्ठा radeon_encoder_पूर्णांक_पंचांगds *radeon_legacy_get_पंचांगds_info(काष्ठा radeon_encoder *encoder)
+अणु
+	काष्ठा drm_device *dev = encoder->base.dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_encoder_पूर्णांक_पंचांगds *पंचांगds = शून्य;
 	bool ret;
 
-	tmds = kzalloc(sizeof(struct radeon_encoder_int_tmds), GFP_KERNEL);
+	पंचांगds = kzalloc(माप(काष्ठा radeon_encoder_पूर्णांक_पंचांगds), GFP_KERNEL);
 
-	if (!tmds)
-		return NULL;
+	अगर (!पंचांगds)
+		वापस शून्य;
 
-	if (rdev->is_atom_bios)
-		ret = radeon_atombios_get_tmds_info(encoder, tmds);
-	else
-		ret = radeon_legacy_get_tmds_info_from_combios(encoder, tmds);
+	अगर (rdev->is_atom_bios)
+		ret = radeon_atombios_get_पंचांगds_info(encoder, पंचांगds);
+	अन्यथा
+		ret = radeon_legacy_get_पंचांगds_info_from_combios(encoder, पंचांगds);
 
-	if (!ret)
-		radeon_legacy_get_tmds_info_from_table(encoder, tmds);
+	अगर (!ret)
+		radeon_legacy_get_पंचांगds_info_from_table(encoder, पंचांगds);
 
-	return tmds;
-}
+	वापस पंचांगds;
+पूर्ण
 
-static struct radeon_encoder_ext_tmds *radeon_legacy_get_ext_tmds_info(struct radeon_encoder *encoder)
-{
-	struct drm_device *dev = encoder->base.dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_encoder_ext_tmds *tmds = NULL;
+अटल काष्ठा radeon_encoder_ext_पंचांगds *radeon_legacy_get_ext_पंचांगds_info(काष्ठा radeon_encoder *encoder)
+अणु
+	काष्ठा drm_device *dev = encoder->base.dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_encoder_ext_पंचांगds *पंचांगds = शून्य;
 	bool ret;
 
-	if (rdev->is_atom_bios)
-		return NULL;
+	अगर (rdev->is_atom_bios)
+		वापस शून्य;
 
-	tmds = kzalloc(sizeof(struct radeon_encoder_ext_tmds), GFP_KERNEL);
+	पंचांगds = kzalloc(माप(काष्ठा radeon_encoder_ext_पंचांगds), GFP_KERNEL);
 
-	if (!tmds)
-		return NULL;
+	अगर (!पंचांगds)
+		वापस शून्य;
 
-	ret = radeon_legacy_get_ext_tmds_info_from_combios(encoder, tmds);
+	ret = radeon_legacy_get_ext_पंचांगds_info_from_combios(encoder, पंचांगds);
 
-	if (!ret)
-		radeon_legacy_get_ext_tmds_info_from_table(encoder, tmds);
+	अगर (!ret)
+		radeon_legacy_get_ext_पंचांगds_info_from_table(encoder, पंचांगds);
 
-	return tmds;
-}
+	वापस पंचांगds;
+पूर्ण
 
-void
-radeon_add_legacy_encoder(struct drm_device *dev, uint32_t encoder_enum, uint32_t supported_device)
-{
-	struct radeon_device *rdev = dev->dev_private;
-	struct drm_encoder *encoder;
-	struct radeon_encoder *radeon_encoder;
+व्योम
+radeon_add_legacy_encoder(काष्ठा drm_device *dev, uपूर्णांक32_t encoder_क्रमागत, uपूर्णांक32_t supported_device)
+अणु
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा drm_encoder *encoder;
+	काष्ठा radeon_encoder *radeon_encoder;
 
-	/* see if we already added it */
-	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
+	/* see अगर we alपढ़ोy added it */
+	list_क्रम_each_entry(encoder, &dev->mode_config.encoder_list, head) अणु
 		radeon_encoder = to_radeon_encoder(encoder);
-		if (radeon_encoder->encoder_enum == encoder_enum) {
+		अगर (radeon_encoder->encoder_क्रमागत == encoder_क्रमागत) अणु
 			radeon_encoder->devices |= supported_device;
-			return;
-		}
+			वापस;
+		पूर्ण
 
-	}
+	पूर्ण
 
 	/* add a new one */
-	radeon_encoder = kzalloc(sizeof(struct radeon_encoder), GFP_KERNEL);
-	if (!radeon_encoder)
-		return;
+	radeon_encoder = kzalloc(माप(काष्ठा radeon_encoder), GFP_KERNEL);
+	अगर (!radeon_encoder)
+		वापस;
 
 	encoder = &radeon_encoder->base;
-	if (rdev->flags & RADEON_SINGLE_CRTC)
+	अगर (rdev->flags & RADEON_SINGLE_CRTC)
 		encoder->possible_crtcs = 0x1;
-	else
+	अन्यथा
 		encoder->possible_crtcs = 0x3;
 
-	radeon_encoder->enc_priv = NULL;
+	radeon_encoder->enc_priv = शून्य;
 
-	radeon_encoder->encoder_enum = encoder_enum;
-	radeon_encoder->encoder_id = (encoder_enum & OBJECT_ID_MASK) >> OBJECT_ID_SHIFT;
+	radeon_encoder->encoder_क्रमागत = encoder_क्रमागत;
+	radeon_encoder->encoder_id = (encoder_क्रमागत & OBJECT_ID_MASK) >> OBJECT_ID_SHIFT;
 	radeon_encoder->devices = supported_device;
 	radeon_encoder->rmx_type = RMX_OFF;
 
-	switch (radeon_encoder->encoder_id) {
-	case ENCODER_OBJECT_ID_INTERNAL_LVDS:
+	चयन (radeon_encoder->encoder_id) अणु
+	हाल ENCODER_OBJECT_ID_INTERNAL_LVDS:
 		encoder->possible_crtcs = 0x1;
 		drm_encoder_init(dev, encoder, &radeon_legacy_lvds_enc_funcs,
-				 DRM_MODE_ENCODER_LVDS, NULL);
+				 DRM_MODE_ENCODER_LVDS, शून्य);
 		drm_encoder_helper_add(encoder, &radeon_legacy_lvds_helper_funcs);
-		if (rdev->is_atom_bios)
+		अगर (rdev->is_atom_bios)
 			radeon_encoder->enc_priv = radeon_atombios_get_lvds_info(radeon_encoder);
-		else
+		अन्यथा
 			radeon_encoder->enc_priv = radeon_combios_get_lvds_info(radeon_encoder);
 		radeon_encoder->rmx_type = RMX_FULL;
-		break;
-	case ENCODER_OBJECT_ID_INTERNAL_TMDS1:
-		drm_encoder_init(dev, encoder, &radeon_legacy_tmds_int_enc_funcs,
-				 DRM_MODE_ENCODER_TMDS, NULL);
-		drm_encoder_helper_add(encoder, &radeon_legacy_tmds_int_helper_funcs);
-		radeon_encoder->enc_priv = radeon_legacy_get_tmds_info(radeon_encoder);
-		break;
-	case ENCODER_OBJECT_ID_INTERNAL_DAC1:
+		अवरोध;
+	हाल ENCODER_OBJECT_ID_INTERNAL_TMDS1:
+		drm_encoder_init(dev, encoder, &radeon_legacy_पंचांगds_पूर्णांक_enc_funcs,
+				 DRM_MODE_ENCODER_TMDS, शून्य);
+		drm_encoder_helper_add(encoder, &radeon_legacy_पंचांगds_पूर्णांक_helper_funcs);
+		radeon_encoder->enc_priv = radeon_legacy_get_पंचांगds_info(radeon_encoder);
+		अवरोध;
+	हाल ENCODER_OBJECT_ID_INTERNAL_DAC1:
 		drm_encoder_init(dev, encoder, &radeon_legacy_primary_dac_enc_funcs,
-				 DRM_MODE_ENCODER_DAC, NULL);
+				 DRM_MODE_ENCODER_DAC, शून्य);
 		drm_encoder_helper_add(encoder, &radeon_legacy_primary_dac_helper_funcs);
-		if (rdev->is_atom_bios)
+		अगर (rdev->is_atom_bios)
 			radeon_encoder->enc_priv = radeon_atombios_get_primary_dac_info(radeon_encoder);
-		else
+		अन्यथा
 			radeon_encoder->enc_priv = radeon_combios_get_primary_dac_info(radeon_encoder);
-		break;
-	case ENCODER_OBJECT_ID_INTERNAL_DAC2:
+		अवरोध;
+	हाल ENCODER_OBJECT_ID_INTERNAL_DAC2:
 		drm_encoder_init(dev, encoder, &radeon_legacy_tv_dac_enc_funcs,
-				 DRM_MODE_ENCODER_TVDAC, NULL);
+				 DRM_MODE_ENCODER_TVDAC, शून्य);
 		drm_encoder_helper_add(encoder, &radeon_legacy_tv_dac_helper_funcs);
-		if (rdev->is_atom_bios)
+		अगर (rdev->is_atom_bios)
 			radeon_encoder->enc_priv = radeon_atombios_get_tv_dac_info(radeon_encoder);
-		else
+		अन्यथा
 			radeon_encoder->enc_priv = radeon_combios_get_tv_dac_info(radeon_encoder);
-		break;
-	case ENCODER_OBJECT_ID_INTERNAL_DVO1:
-		drm_encoder_init(dev, encoder, &radeon_legacy_tmds_ext_enc_funcs,
-				 DRM_MODE_ENCODER_TMDS, NULL);
-		drm_encoder_helper_add(encoder, &radeon_legacy_tmds_ext_helper_funcs);
-		if (!rdev->is_atom_bios)
-			radeon_encoder->enc_priv = radeon_legacy_get_ext_tmds_info(radeon_encoder);
-		break;
-	}
-}
+		अवरोध;
+	हाल ENCODER_OBJECT_ID_INTERNAL_DVO1:
+		drm_encoder_init(dev, encoder, &radeon_legacy_पंचांगds_ext_enc_funcs,
+				 DRM_MODE_ENCODER_TMDS, शून्य);
+		drm_encoder_helper_add(encoder, &radeon_legacy_पंचांगds_ext_helper_funcs);
+		अगर (!rdev->is_atom_bios)
+			radeon_encoder->enc_priv = radeon_legacy_get_ext_पंचांगds_info(radeon_encoder);
+		अवरोध;
+	पूर्ण
+पूर्ण

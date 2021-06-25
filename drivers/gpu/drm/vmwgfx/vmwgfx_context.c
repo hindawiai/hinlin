@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2009-2015 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,66 +26,66 @@
  *
  **************************************************************************/
 
-#include <drm/ttm/ttm_placement.h>
+#समावेश <drm/tपंचांग/tपंचांग_placement.h>
 
-#include "vmwgfx_drv.h"
-#include "vmwgfx_resource_priv.h"
-#include "vmwgfx_binding.h"
+#समावेश "vmwgfx_drv.h"
+#समावेश "vmwgfx_resource_priv.h"
+#समावेश "vmwgfx_binding.h"
 
-struct vmw_user_context {
-	struct ttm_base_object base;
-	struct vmw_resource res;
-	struct vmw_ctx_binding_state *cbs;
-	struct vmw_cmdbuf_res_manager *man;
-	struct vmw_resource *cotables[SVGA_COTABLE_MAX];
+काष्ठा vmw_user_context अणु
+	काष्ठा tपंचांग_base_object base;
+	काष्ठा vmw_resource res;
+	काष्ठा vmw_ctx_binding_state *cbs;
+	काष्ठा vmw_cmdbuf_res_manager *man;
+	काष्ठा vmw_resource *cotables[SVGA_COTABLE_MAX];
 	spinlock_t cotable_lock;
-	struct vmw_buffer_object *dx_query_mob;
-};
+	काष्ठा vmw_buffer_object *dx_query_mob;
+पूर्ण;
 
-static void vmw_user_context_free(struct vmw_resource *res);
-static struct vmw_resource *
-vmw_user_context_base_to_res(struct ttm_base_object *base);
+अटल व्योम vmw_user_context_मुक्त(काष्ठा vmw_resource *res);
+अटल काष्ठा vmw_resource *
+vmw_user_context_base_to_res(काष्ठा tपंचांग_base_object *base);
 
-static int vmw_gb_context_create(struct vmw_resource *res);
-static int vmw_gb_context_bind(struct vmw_resource *res,
-			       struct ttm_validate_buffer *val_buf);
-static int vmw_gb_context_unbind(struct vmw_resource *res,
-				 bool readback,
-				 struct ttm_validate_buffer *val_buf);
-static int vmw_gb_context_destroy(struct vmw_resource *res);
-static int vmw_dx_context_create(struct vmw_resource *res);
-static int vmw_dx_context_bind(struct vmw_resource *res,
-			       struct ttm_validate_buffer *val_buf);
-static int vmw_dx_context_unbind(struct vmw_resource *res,
-				 bool readback,
-				 struct ttm_validate_buffer *val_buf);
-static int vmw_dx_context_destroy(struct vmw_resource *res);
+अटल पूर्णांक vmw_gb_context_create(काष्ठा vmw_resource *res);
+अटल पूर्णांक vmw_gb_context_bind(काष्ठा vmw_resource *res,
+			       काष्ठा tपंचांग_validate_buffer *val_buf);
+अटल पूर्णांक vmw_gb_context_unbind(काष्ठा vmw_resource *res,
+				 bool पढ़ोback,
+				 काष्ठा tपंचांग_validate_buffer *val_buf);
+अटल पूर्णांक vmw_gb_context_destroy(काष्ठा vmw_resource *res);
+अटल पूर्णांक vmw_dx_context_create(काष्ठा vmw_resource *res);
+अटल पूर्णांक vmw_dx_context_bind(काष्ठा vmw_resource *res,
+			       काष्ठा tपंचांग_validate_buffer *val_buf);
+अटल पूर्णांक vmw_dx_context_unbind(काष्ठा vmw_resource *res,
+				 bool पढ़ोback,
+				 काष्ठा tपंचांग_validate_buffer *val_buf);
+अटल पूर्णांक vmw_dx_context_destroy(काष्ठा vmw_resource *res);
 
-static uint64_t vmw_user_context_size;
+अटल uपूर्णांक64_t vmw_user_context_size;
 
-static const struct vmw_user_resource_conv user_context_conv = {
+अटल स्थिर काष्ठा vmw_user_resource_conv user_context_conv = अणु
 	.object_type = VMW_RES_CONTEXT,
 	.base_obj_to_res = vmw_user_context_base_to_res,
-	.res_free = vmw_user_context_free
-};
+	.res_मुक्त = vmw_user_context_मुक्त
+पूर्ण;
 
-const struct vmw_user_resource_conv *user_context_converter =
+स्थिर काष्ठा vmw_user_resource_conv *user_context_converter =
 	&user_context_conv;
 
 
-static const struct vmw_res_func vmw_legacy_context_func = {
+अटल स्थिर काष्ठा vmw_res_func vmw_legacy_context_func = अणु
 	.res_type = vmw_res_context,
 	.needs_backup = false,
 	.may_evict = false,
 	.type_name = "legacy contexts",
-	.backup_placement = NULL,
-	.create = NULL,
-	.destroy = NULL,
-	.bind = NULL,
-	.unbind = NULL
-};
+	.backup_placement = शून्य,
+	.create = शून्य,
+	.destroy = शून्य,
+	.bind = शून्य,
+	.unbind = शून्य
+पूर्ण;
 
-static const struct vmw_res_func vmw_gb_context_func = {
+अटल स्थिर काष्ठा vmw_res_func vmw_gb_context_func = अणु
 	.res_type = vmw_res_context,
 	.needs_backup = true,
 	.may_evict = true,
@@ -96,9 +97,9 @@ static const struct vmw_res_func vmw_gb_context_func = {
 	.destroy = vmw_gb_context_destroy,
 	.bind = vmw_gb_context_bind,
 	.unbind = vmw_gb_context_unbind
-};
+पूर्ण;
 
-static const struct vmw_res_func vmw_dx_context_func = {
+अटल स्थिर काष्ठा vmw_res_func vmw_dx_context_func = अणु
 	.res_type = vmw_res_dx_context,
 	.needs_backup = true,
 	.may_evict = true,
@@ -110,279 +111,279 @@ static const struct vmw_res_func vmw_dx_context_func = {
 	.destroy = vmw_dx_context_destroy,
 	.bind = vmw_dx_context_bind,
 	.unbind = vmw_dx_context_unbind
-};
+पूर्ण;
 
 /*
  * Context management:
  */
 
-static void vmw_context_cotables_unref(struct vmw_private *dev_priv,
-				       struct vmw_user_context *uctx)
-{
-	struct vmw_resource *res;
-	int i;
+अटल व्योम vmw_context_cotables_unref(काष्ठा vmw_निजी *dev_priv,
+				       काष्ठा vmw_user_context *uctx)
+अणु
+	काष्ठा vmw_resource *res;
+	पूर्णांक i;
 	u32 cotable_max = has_sm5_context(dev_priv) ?
 		SVGA_COTABLE_MAX : SVGA_COTABLE_DX10_MAX;
 
-	for (i = 0; i < cotable_max; ++i) {
+	क्रम (i = 0; i < cotable_max; ++i) अणु
 		spin_lock(&uctx->cotable_lock);
 		res = uctx->cotables[i];
-		uctx->cotables[i] = NULL;
+		uctx->cotables[i] = शून्य;
 		spin_unlock(&uctx->cotable_lock);
 
-		if (res)
+		अगर (res)
 			vmw_resource_unreference(&res);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vmw_hw_context_destroy(struct vmw_resource *res)
-{
-	struct vmw_user_context *uctx =
-		container_of(res, struct vmw_user_context, res);
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct {
+अटल व्योम vmw_hw_context_destroy(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_user_context *uctx =
+		container_of(res, काष्ठा vmw_user_context, res);
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDestroyContext body;
-	} *cmd;
+	पूर्ण *cmd;
 
 
-	if (res->func->destroy == vmw_gb_context_destroy ||
-	    res->func->destroy == vmw_dx_context_destroy) {
+	अगर (res->func->destroy == vmw_gb_context_destroy ||
+	    res->func->destroy == vmw_dx_context_destroy) अणु
 		mutex_lock(&dev_priv->cmdbuf_mutex);
 		vmw_cmdbuf_res_man_destroy(uctx->man);
 		mutex_lock(&dev_priv->binding_mutex);
-		vmw_binding_state_kill(uctx->cbs);
-		(void) res->func->destroy(res);
+		vmw_binding_state_समाप्त(uctx->cbs);
+		(व्योम) res->func->destroy(res);
 		mutex_unlock(&dev_priv->binding_mutex);
-		if (dev_priv->pinned_bo != NULL &&
+		अगर (dev_priv->pinned_bo != शून्य &&
 		    !dev_priv->query_cid_valid)
-			__vmw_execbuf_release_pinned_bo(dev_priv, NULL);
+			__vmw_execbuf_release_pinned_bo(dev_priv, शून्य);
 		mutex_unlock(&dev_priv->cmdbuf_mutex);
 		vmw_context_cotables_unref(dev_priv, uctx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	vmw_execbuf_release_pinned_bo(dev_priv);
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL))
-		return;
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य))
+		वापस;
 
 	cmd->header.id = SVGA_3D_CMD_CONTEXT_DESTROY;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.cid = res->id;
 
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
-	vmw_fifo_resource_dec(dev_priv);
-}
+	vmw_cmd_commit(dev_priv, माप(*cmd));
+	vmw_fअगरo_resource_dec(dev_priv);
+पूर्ण
 
-static int vmw_gb_context_init(struct vmw_private *dev_priv,
+अटल पूर्णांक vmw_gb_context_init(काष्ठा vmw_निजी *dev_priv,
 			       bool dx,
-			       struct vmw_resource *res,
-			       void (*res_free)(struct vmw_resource *res))
-{
-	int ret, i;
-	struct vmw_user_context *uctx =
-		container_of(res, struct vmw_user_context, res);
+			       काष्ठा vmw_resource *res,
+			       व्योम (*res_मुक्त)(काष्ठा vmw_resource *res))
+अणु
+	पूर्णांक ret, i;
+	काष्ठा vmw_user_context *uctx =
+		container_of(res, काष्ठा vmw_user_context, res);
 
-	res->backup_size = (dx ? sizeof(SVGADXContextMobFormat) :
+	res->backup_size = (dx ? माप(SVGADXContextMobFormat) :
 			    SVGA3D_CONTEXT_DATA_SIZE);
 	ret = vmw_resource_init(dev_priv, res, true,
-				res_free,
+				res_मुक्त,
 				dx ? &vmw_dx_context_func :
 				&vmw_gb_context_func);
-	if (unlikely(ret != 0))
-		goto out_err;
+	अगर (unlikely(ret != 0))
+		जाओ out_err;
 
-	if (dev_priv->has_mob) {
+	अगर (dev_priv->has_mob) अणु
 		uctx->man = vmw_cmdbuf_res_man_create(dev_priv);
-		if (IS_ERR(uctx->man)) {
+		अगर (IS_ERR(uctx->man)) अणु
 			ret = PTR_ERR(uctx->man);
-			uctx->man = NULL;
-			goto out_err;
-		}
-	}
+			uctx->man = शून्य;
+			जाओ out_err;
+		पूर्ण
+	पूर्ण
 
 	uctx->cbs = vmw_binding_state_alloc(dev_priv);
-	if (IS_ERR(uctx->cbs)) {
+	अगर (IS_ERR(uctx->cbs)) अणु
 		ret = PTR_ERR(uctx->cbs);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	spin_lock_init(&uctx->cotable_lock);
 
-	if (dx) {
+	अगर (dx) अणु
 		u32 cotable_max = has_sm5_context(dev_priv) ?
 			SVGA_COTABLE_MAX : SVGA_COTABLE_DX10_MAX;
-		for (i = 0; i < cotable_max; ++i) {
+		क्रम (i = 0; i < cotable_max; ++i) अणु
 			uctx->cotables[i] = vmw_cotable_alloc(dev_priv,
 							      &uctx->res, i);
-			if (IS_ERR(uctx->cotables[i])) {
+			अगर (IS_ERR(uctx->cotables[i])) अणु
 				ret = PTR_ERR(uctx->cotables[i]);
-				goto out_cotables;
-			}
-		}
-	}
+				जाओ out_cotables;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	res->hw_destroy = vmw_hw_context_destroy;
-	return 0;
+	वापस 0;
 
 out_cotables:
 	vmw_context_cotables_unref(dev_priv, uctx);
 out_err:
-	if (res_free)
-		res_free(res);
-	else
-		kfree(res);
-	return ret;
-}
+	अगर (res_मुक्त)
+		res_मुक्त(res);
+	अन्यथा
+		kमुक्त(res);
+	वापस ret;
+पूर्ण
 
-static int vmw_context_init(struct vmw_private *dev_priv,
-			    struct vmw_resource *res,
-			    void (*res_free)(struct vmw_resource *res),
+अटल पूर्णांक vmw_context_init(काष्ठा vmw_निजी *dev_priv,
+			    काष्ठा vmw_resource *res,
+			    व्योम (*res_मुक्त)(काष्ठा vmw_resource *res),
 			    bool dx)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	struct {
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDefineContext body;
-	} *cmd;
+	पूर्ण *cmd;
 
-	if (dev_priv->has_mob)
-		return vmw_gb_context_init(dev_priv, dx, res, res_free);
+	अगर (dev_priv->has_mob)
+		वापस vmw_gb_context_init(dev_priv, dx, res, res_मुक्त);
 
 	ret = vmw_resource_init(dev_priv, res, false,
-				res_free, &vmw_legacy_context_func);
+				res_मुक्त, &vmw_legacy_context_func);
 
-	if (unlikely(ret != 0)) {
+	अगर (unlikely(ret != 0)) अणु
 		DRM_ERROR("Failed to allocate a resource id.\n");
-		goto out_early;
-	}
+		जाओ out_early;
+	पूर्ण
 
-	if (unlikely(res->id >= SVGA3D_MAX_CONTEXT_IDS)) {
+	अगर (unlikely(res->id >= SVGA3D_MAX_CONTEXT_IDS)) अणु
 		DRM_ERROR("Out of hw context ids.\n");
 		vmw_resource_unreference(&res);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL)) {
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य)) अणु
 		vmw_resource_unreference(&res);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	cmd->header.id = SVGA_3D_CMD_CONTEXT_DEFINE;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.cid = res->id;
 
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
-	vmw_fifo_resource_inc(dev_priv);
+	vmw_cmd_commit(dev_priv, माप(*cmd));
+	vmw_fअगरo_resource_inc(dev_priv);
 	res->hw_destroy = vmw_hw_context_destroy;
-	return 0;
+	वापस 0;
 
 out_early:
-	if (res_free == NULL)
-		kfree(res);
-	else
-		res_free(res);
-	return ret;
-}
+	अगर (res_मुक्त == शून्य)
+		kमुक्त(res);
+	अन्यथा
+		res_मुक्त(res);
+	वापस ret;
+पूर्ण
 
 
 /*
  * GB context.
  */
 
-static int vmw_gb_context_create(struct vmw_resource *res)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	int ret;
-	struct {
+अटल पूर्णांक vmw_gb_context_create(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	पूर्णांक ret;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDefineGBContext body;
-	} *cmd;
+	पूर्ण *cmd;
 
-	if (likely(res->id != -1))
-		return 0;
+	अगर (likely(res->id != -1))
+		वापस 0;
 
 	ret = vmw_resource_alloc_id(res);
-	if (unlikely(ret != 0)) {
+	अगर (unlikely(ret != 0)) अणु
 		DRM_ERROR("Failed to allocate a context id.\n");
-		goto out_no_id;
-	}
+		जाओ out_no_id;
+	पूर्ण
 
-	if (unlikely(res->id >= VMWGFX_NUM_GB_CONTEXT)) {
+	अगर (unlikely(res->id >= VMWGFX_NUM_GB_CONTEXT)) अणु
 		ret = -EBUSY;
-		goto out_no_fifo;
-	}
+		जाओ out_no_fअगरo;
+	पूर्ण
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL)) {
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य)) अणु
 		ret = -ENOMEM;
-		goto out_no_fifo;
-	}
+		जाओ out_no_fअगरo;
+	पूर्ण
 
 	cmd->header.id = SVGA_3D_CMD_DEFINE_GB_CONTEXT;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.cid = res->id;
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
-	vmw_fifo_resource_inc(dev_priv);
+	vmw_cmd_commit(dev_priv, माप(*cmd));
+	vmw_fअगरo_resource_inc(dev_priv);
 
-	return 0;
+	वापस 0;
 
-out_no_fifo:
+out_no_fअगरo:
 	vmw_resource_release_id(res);
 out_no_id:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vmw_gb_context_bind(struct vmw_resource *res,
-			       struct ttm_validate_buffer *val_buf)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct {
+अटल पूर्णांक vmw_gb_context_bind(काष्ठा vmw_resource *res,
+			       काष्ठा tपंचांग_validate_buffer *val_buf)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdBindGBContext body;
-	} *cmd;
-	struct ttm_buffer_object *bo = val_buf->bo;
+	पूर्ण *cmd;
+	काष्ठा tपंचांग_buffer_object *bo = val_buf->bo;
 
 	BUG_ON(bo->mem.mem_type != VMW_PL_MOB);
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL))
-		return -ENOMEM;
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य))
+		वापस -ENOMEM;
 
 	cmd->header.id = SVGA_3D_CMD_BIND_GB_CONTEXT;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.cid = res->id;
 	cmd->body.mobid = bo->mem.start;
 	cmd->body.validContents = res->backup_dirty;
 	res->backup_dirty = false;
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
+	vmw_cmd_commit(dev_priv, माप(*cmd));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vmw_gb_context_unbind(struct vmw_resource *res,
-				 bool readback,
-				 struct ttm_validate_buffer *val_buf)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct ttm_buffer_object *bo = val_buf->bo;
-	struct vmw_fence_obj *fence;
-	struct vmw_user_context *uctx =
-		container_of(res, struct vmw_user_context, res);
+अटल पूर्णांक vmw_gb_context_unbind(काष्ठा vmw_resource *res,
+				 bool पढ़ोback,
+				 काष्ठा tपंचांग_validate_buffer *val_buf)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा tपंचांग_buffer_object *bo = val_buf->bo;
+	काष्ठा vmw_fence_obj *fence;
+	काष्ठा vmw_user_context *uctx =
+		container_of(res, काष्ठा vmw_user_context, res);
 
-	struct {
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdReadbackGBContext body;
-	} *cmd1;
-	struct {
+	पूर्ण *cmd1;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdBindGBContext body;
-	} *cmd2;
-	uint32_t submit_size;
-	uint8_t *cmd;
+	पूर्ण *cmd2;
+	uपूर्णांक32_t submit_size;
+	uपूर्णांक8_t *cmd;
 
 
 	BUG_ON(bo->mem.mem_type != VMW_PL_MOB);
@@ -390,24 +391,24 @@ static int vmw_gb_context_unbind(struct vmw_resource *res,
 	mutex_lock(&dev_priv->binding_mutex);
 	vmw_binding_state_scrub(uctx->cbs);
 
-	submit_size = sizeof(*cmd2) + (readback ? sizeof(*cmd1) : 0);
+	submit_size = माप(*cmd2) + (पढ़ोback ? माप(*cmd1) : 0);
 
 	cmd = VMW_CMD_RESERVE(dev_priv, submit_size);
-	if (unlikely(cmd == NULL)) {
+	अगर (unlikely(cmd == शून्य)) अणु
 		mutex_unlock(&dev_priv->binding_mutex);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	cmd2 = (void *) cmd;
-	if (readback) {
-		cmd1 = (void *) cmd;
+	cmd2 = (व्योम *) cmd;
+	अगर (पढ़ोback) अणु
+		cmd1 = (व्योम *) cmd;
 		cmd1->header.id = SVGA_3D_CMD_READBACK_GB_CONTEXT;
-		cmd1->header.size = sizeof(cmd1->body);
+		cmd1->header.size = माप(cmd1->body);
 		cmd1->body.cid = res->id;
-		cmd2 = (void *) (&cmd1[1]);
-	}
+		cmd2 = (व्योम *) (&cmd1[1]);
+	पूर्ण
 	cmd2->header.id = SVGA_3D_CMD_BIND_GB_CONTEXT;
-	cmd2->header.size = sizeof(cmd2->body);
+	cmd2->header.size = माप(cmd2->body);
 	cmd2->body.cid = res->id;
 	cmd2->body.mobid = SVGA3D_INVALID_ID;
 
@@ -418,212 +419,212 @@ static int vmw_gb_context_unbind(struct vmw_resource *res,
 	 * Create a fence object and fence the backup buffer.
 	 */
 
-	(void) vmw_execbuf_fence_commands(NULL, dev_priv,
-					  &fence, NULL);
+	(व्योम) vmw_execbuf_fence_commands(शून्य, dev_priv,
+					  &fence, शून्य);
 
 	vmw_bo_fence_single(bo, fence);
 
-	if (likely(fence != NULL))
+	अगर (likely(fence != शून्य))
 		vmw_fence_obj_unreference(&fence);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vmw_gb_context_destroy(struct vmw_resource *res)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct {
+अटल पूर्णांक vmw_gb_context_destroy(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDestroyGBContext body;
-	} *cmd;
+	पूर्ण *cmd;
 
-	if (likely(res->id == -1))
-		return 0;
+	अगर (likely(res->id == -1))
+		वापस 0;
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL))
-		return -ENOMEM;
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य))
+		वापस -ENOMEM;
 
 	cmd->header.id = SVGA_3D_CMD_DESTROY_GB_CONTEXT;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.cid = res->id;
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
-	if (dev_priv->query_cid == res->id)
+	vmw_cmd_commit(dev_priv, माप(*cmd));
+	अगर (dev_priv->query_cid == res->id)
 		dev_priv->query_cid_valid = false;
 	vmw_resource_release_id(res);
-	vmw_fifo_resource_dec(dev_priv);
+	vmw_fअगरo_resource_dec(dev_priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * DX context.
  */
 
-static int vmw_dx_context_create(struct vmw_resource *res)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	int ret;
-	struct {
+अटल पूर्णांक vmw_dx_context_create(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	पूर्णांक ret;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDXDefineContext body;
-	} *cmd;
+	पूर्ण *cmd;
 
-	if (likely(res->id != -1))
-		return 0;
+	अगर (likely(res->id != -1))
+		वापस 0;
 
 	ret = vmw_resource_alloc_id(res);
-	if (unlikely(ret != 0)) {
+	अगर (unlikely(ret != 0)) अणु
 		DRM_ERROR("Failed to allocate a context id.\n");
-		goto out_no_id;
-	}
+		जाओ out_no_id;
+	पूर्ण
 
-	if (unlikely(res->id >= VMWGFX_NUM_DXCONTEXT)) {
+	अगर (unlikely(res->id >= VMWGFX_NUM_DXCONTEXT)) अणु
 		ret = -EBUSY;
-		goto out_no_fifo;
-	}
+		जाओ out_no_fअगरo;
+	पूर्ण
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL)) {
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य)) अणु
 		ret = -ENOMEM;
-		goto out_no_fifo;
-	}
+		जाओ out_no_fअगरo;
+	पूर्ण
 
 	cmd->header.id = SVGA_3D_CMD_DX_DEFINE_CONTEXT;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.cid = res->id;
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
-	vmw_fifo_resource_inc(dev_priv);
+	vmw_cmd_commit(dev_priv, माप(*cmd));
+	vmw_fअगरo_resource_inc(dev_priv);
 
-	return 0;
+	वापस 0;
 
-out_no_fifo:
+out_no_fअगरo:
 	vmw_resource_release_id(res);
 out_no_id:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vmw_dx_context_bind(struct vmw_resource *res,
-			       struct ttm_validate_buffer *val_buf)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct {
+अटल पूर्णांक vmw_dx_context_bind(काष्ठा vmw_resource *res,
+			       काष्ठा tपंचांग_validate_buffer *val_buf)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDXBindContext body;
-	} *cmd;
-	struct ttm_buffer_object *bo = val_buf->bo;
+	पूर्ण *cmd;
+	काष्ठा tपंचांग_buffer_object *bo = val_buf->bo;
 
 	BUG_ON(bo->mem.mem_type != VMW_PL_MOB);
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL))
-		return -ENOMEM;
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य))
+		वापस -ENOMEM;
 
 	cmd->header.id = SVGA_3D_CMD_DX_BIND_CONTEXT;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.cid = res->id;
 	cmd->body.mobid = bo->mem.start;
 	cmd->body.validContents = res->backup_dirty;
 	res->backup_dirty = false;
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
+	vmw_cmd_commit(dev_priv, माप(*cmd));
 
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vmw_dx_context_scrub_cotables - Scrub all bindings and
  * cotables from a context
  *
- * @ctx: Pointer to the context resource
- * @readback: Whether to save the otable contents on scrubbing.
+ * @ctx: Poपूर्णांकer to the context resource
+ * @पढ़ोback: Whether to save the otable contents on scrubbing.
  *
- * COtables must be unbound before their context, but unbinding requires
- * the backup buffer being reserved, whereas scrubbing does not.
- * This function scrubs all cotables of a context, potentially reading back
- * the contents into their backup buffers. However, scrubbing cotables
+ * COtables must be unbound beक्रमe their context, but unbinding requires
+ * the backup buffer being reserved, whereas scrubbing करोes not.
+ * This function scrubs all cotables of a context, potentially पढ़ोing back
+ * the contents पूर्णांकo their backup buffers. However, scrubbing cotables
  * also makes the device context invalid, so scrub all bindings first so
- * that doesn't have to be done later with an invalid context.
+ * that करोesn't have to be करोne later with an invalid context.
  */
-void vmw_dx_context_scrub_cotables(struct vmw_resource *ctx,
-				   bool readback)
-{
-	struct vmw_user_context *uctx =
-		container_of(ctx, struct vmw_user_context, res);
+व्योम vmw_dx_context_scrub_cotables(काष्ठा vmw_resource *ctx,
+				   bool पढ़ोback)
+अणु
+	काष्ठा vmw_user_context *uctx =
+		container_of(ctx, काष्ठा vmw_user_context, res);
 	u32 cotable_max = has_sm5_context(ctx->dev_priv) ?
 		SVGA_COTABLE_MAX : SVGA_COTABLE_DX10_MAX;
-	int i;
+	पूर्णांक i;
 
 	vmw_binding_state_scrub(uctx->cbs);
-	for (i = 0; i < cotable_max; ++i) {
-		struct vmw_resource *res;
+	क्रम (i = 0; i < cotable_max; ++i) अणु
+		काष्ठा vmw_resource *res;
 
-		/* Avoid racing with ongoing cotable destruction. */
+		/* Aव्योम racing with ongoing cotable deकाष्ठाion. */
 		spin_lock(&uctx->cotable_lock);
 		res = uctx->cotables[vmw_cotable_scrub_order[i]];
-		if (res)
-			res = vmw_resource_reference_unless_doomed(res);
+		अगर (res)
+			res = vmw_resource_reference_unless_करोomed(res);
 		spin_unlock(&uctx->cotable_lock);
-		if (!res)
-			continue;
+		अगर (!res)
+			जारी;
 
-		WARN_ON(vmw_cotable_scrub(res, readback));
+		WARN_ON(vmw_cotable_scrub(res, पढ़ोback));
 		vmw_resource_unreference(&res);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int vmw_dx_context_unbind(struct vmw_resource *res,
-				 bool readback,
-				 struct ttm_validate_buffer *val_buf)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct ttm_buffer_object *bo = val_buf->bo;
-	struct vmw_fence_obj *fence;
-	struct vmw_user_context *uctx =
-		container_of(res, struct vmw_user_context, res);
+अटल पूर्णांक vmw_dx_context_unbind(काष्ठा vmw_resource *res,
+				 bool पढ़ोback,
+				 काष्ठा tपंचांग_validate_buffer *val_buf)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा tपंचांग_buffer_object *bo = val_buf->bo;
+	काष्ठा vmw_fence_obj *fence;
+	काष्ठा vmw_user_context *uctx =
+		container_of(res, काष्ठा vmw_user_context, res);
 
-	struct {
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDXReadbackContext body;
-	} *cmd1;
-	struct {
+	पूर्ण *cmd1;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDXBindContext body;
-	} *cmd2;
-	uint32_t submit_size;
-	uint8_t *cmd;
+	पूर्ण *cmd2;
+	uपूर्णांक32_t submit_size;
+	uपूर्णांक8_t *cmd;
 
 
 	BUG_ON(bo->mem.mem_type != VMW_PL_MOB);
 
 	mutex_lock(&dev_priv->binding_mutex);
-	vmw_dx_context_scrub_cotables(res, readback);
+	vmw_dx_context_scrub_cotables(res, पढ़ोback);
 
-	if (uctx->dx_query_mob && uctx->dx_query_mob->dx_query_ctx &&
-	    readback) {
+	अगर (uctx->dx_query_mob && uctx->dx_query_mob->dx_query_ctx &&
+	    पढ़ोback) अणु
 		WARN_ON(uctx->dx_query_mob->dx_query_ctx != res);
-		if (vmw_query_readback_all(uctx->dx_query_mob))
+		अगर (vmw_query_पढ़ोback_all(uctx->dx_query_mob))
 			DRM_ERROR("Failed to read back query states\n");
-	}
+	पूर्ण
 
-	submit_size = sizeof(*cmd2) + (readback ? sizeof(*cmd1) : 0);
+	submit_size = माप(*cmd2) + (पढ़ोback ? माप(*cmd1) : 0);
 
 	cmd = VMW_CMD_RESERVE(dev_priv, submit_size);
-	if (unlikely(cmd == NULL)) {
+	अगर (unlikely(cmd == शून्य)) अणु
 		mutex_unlock(&dev_priv->binding_mutex);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	cmd2 = (void *) cmd;
-	if (readback) {
-		cmd1 = (void *) cmd;
+	cmd2 = (व्योम *) cmd;
+	अगर (पढ़ोback) अणु
+		cmd1 = (व्योम *) cmd;
 		cmd1->header.id = SVGA_3D_CMD_DX_READBACK_CONTEXT;
-		cmd1->header.size = sizeof(cmd1->body);
+		cmd1->header.size = माप(cmd1->body);
 		cmd1->body.cid = res->id;
-		cmd2 = (void *) (&cmd1[1]);
-	}
+		cmd2 = (व्योम *) (&cmd1[1]);
+	पूर्ण
 	cmd2->header.id = SVGA_3D_CMD_DX_BIND_CONTEXT;
-	cmd2->header.size = sizeof(cmd2->body);
+	cmd2->header.size = माप(cmd2->body);
 	cmd2->body.cid = res->id;
 	cmd2->body.mobid = SVGA3D_INVALID_ID;
 
@@ -634,193 +635,193 @@ static int vmw_dx_context_unbind(struct vmw_resource *res,
 	 * Create a fence object and fence the backup buffer.
 	 */
 
-	(void) vmw_execbuf_fence_commands(NULL, dev_priv,
-					  &fence, NULL);
+	(व्योम) vmw_execbuf_fence_commands(शून्य, dev_priv,
+					  &fence, शून्य);
 
 	vmw_bo_fence_single(bo, fence);
 
-	if (likely(fence != NULL))
+	अगर (likely(fence != शून्य))
 		vmw_fence_obj_unreference(&fence);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vmw_dx_context_destroy(struct vmw_resource *res)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct {
+अटल पूर्णांक vmw_dx_context_destroy(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDXDestroyContext body;
-	} *cmd;
+	पूर्ण *cmd;
 
-	if (likely(res->id == -1))
-		return 0;
+	अगर (likely(res->id == -1))
+		वापस 0;
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL))
-		return -ENOMEM;
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य))
+		वापस -ENOMEM;
 
 	cmd->header.id = SVGA_3D_CMD_DX_DESTROY_CONTEXT;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.cid = res->id;
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
-	if (dev_priv->query_cid == res->id)
+	vmw_cmd_commit(dev_priv, माप(*cmd));
+	अगर (dev_priv->query_cid == res->id)
 		dev_priv->query_cid_valid = false;
 	vmw_resource_release_id(res);
-	vmw_fifo_resource_dec(dev_priv);
+	vmw_fअगरo_resource_dec(dev_priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * User-space context management:
  */
 
-static struct vmw_resource *
-vmw_user_context_base_to_res(struct ttm_base_object *base)
-{
-	return &(container_of(base, struct vmw_user_context, base)->res);
-}
+अटल काष्ठा vmw_resource *
+vmw_user_context_base_to_res(काष्ठा tपंचांग_base_object *base)
+अणु
+	वापस &(container_of(base, काष्ठा vmw_user_context, base)->res);
+पूर्ण
 
-static void vmw_user_context_free(struct vmw_resource *res)
-{
-	struct vmw_user_context *ctx =
-	    container_of(res, struct vmw_user_context, res);
-	struct vmw_private *dev_priv = res->dev_priv;
+अटल व्योम vmw_user_context_मुक्त(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_user_context *ctx =
+	    container_of(res, काष्ठा vmw_user_context, res);
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
 
-	if (ctx->cbs)
-		vmw_binding_state_free(ctx->cbs);
+	अगर (ctx->cbs)
+		vmw_binding_state_मुक्त(ctx->cbs);
 
-	(void) vmw_context_bind_dx_query(res, NULL);
+	(व्योम) vmw_context_bind_dx_query(res, शून्य);
 
-	ttm_base_object_kfree(ctx, base);
-	ttm_mem_global_free(vmw_mem_glob(dev_priv),
+	tपंचांग_base_object_kमुक्त(ctx, base);
+	tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv),
 			    vmw_user_context_size);
-}
+पूर्ण
 
 /*
  * This function is called when user space has no more references on the
  * base object. It releases the base-object's reference on the resource object.
  */
 
-static void vmw_user_context_base_release(struct ttm_base_object **p_base)
-{
-	struct ttm_base_object *base = *p_base;
-	struct vmw_user_context *ctx =
-	    container_of(base, struct vmw_user_context, base);
-	struct vmw_resource *res = &ctx->res;
+अटल व्योम vmw_user_context_base_release(काष्ठा tपंचांग_base_object **p_base)
+अणु
+	काष्ठा tपंचांग_base_object *base = *p_base;
+	काष्ठा vmw_user_context *ctx =
+	    container_of(base, काष्ठा vmw_user_context, base);
+	काष्ठा vmw_resource *res = &ctx->res;
 
-	*p_base = NULL;
+	*p_base = शून्य;
 	vmw_resource_unreference(&res);
-}
+पूर्ण
 
-int vmw_context_destroy_ioctl(struct drm_device *dev, void *data,
-			      struct drm_file *file_priv)
-{
-	struct drm_vmw_context_arg *arg = (struct drm_vmw_context_arg *)data;
-	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+पूर्णांक vmw_context_destroy_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			      काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_vmw_context_arg *arg = (काष्ठा drm_vmw_context_arg *)data;
+	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
 
-	return ttm_ref_object_base_unref(tfile, arg->cid, TTM_REF_USAGE);
-}
+	वापस tपंचांग_ref_object_base_unref(tfile, arg->cid, TTM_REF_USAGE);
+पूर्ण
 
-static int vmw_context_define(struct drm_device *dev, void *data,
-			      struct drm_file *file_priv, bool dx)
-{
-	struct vmw_private *dev_priv = vmw_priv(dev);
-	struct vmw_user_context *ctx;
-	struct vmw_resource *res;
-	struct vmw_resource *tmp;
-	struct drm_vmw_context_arg *arg = (struct drm_vmw_context_arg *)data;
-	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
-	struct ttm_operation_ctx ttm_opt_ctx = {
-		.interruptible = true,
-		.no_wait_gpu = false
-	};
-	int ret;
+अटल पूर्णांक vmw_context_define(काष्ठा drm_device *dev, व्योम *data,
+			      काष्ठा drm_file *file_priv, bool dx)
+अणु
+	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
+	काष्ठा vmw_user_context *ctx;
+	काष्ठा vmw_resource *res;
+	काष्ठा vmw_resource *पंचांगp;
+	काष्ठा drm_vmw_context_arg *arg = (काष्ठा drm_vmw_context_arg *)data;
+	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+	काष्ठा tपंचांग_operation_ctx tपंचांग_opt_ctx = अणु
+		.पूर्णांकerruptible = true,
+		.no_रुको_gpu = false
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (!has_sm4_context(dev_priv) && dx) {
+	अगर (!has_sm4_context(dev_priv) && dx) अणु
 		VMW_DEBUG_USER("DX contexts not supported by device.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (unlikely(vmw_user_context_size == 0))
-		vmw_user_context_size = ttm_round_pot(sizeof(*ctx)) +
+	अगर (unlikely(vmw_user_context_size == 0))
+		vmw_user_context_size = tपंचांग_round_pot(माप(*ctx)) +
 		  ((dev_priv->has_mob) ? vmw_cmdbuf_res_man_size() : 0) +
 		  + VMW_IDA_ACC_SIZE + TTM_OBJ_EXTRA_SIZE;
 
-	ret = ttm_read_lock(&dev_priv->reservation_sem, true);
-	if (unlikely(ret != 0))
-		return ret;
+	ret = tपंचांग_पढ़ो_lock(&dev_priv->reservation_sem, true);
+	अगर (unlikely(ret != 0))
+		वापस ret;
 
-	ret = ttm_mem_global_alloc(vmw_mem_glob(dev_priv),
+	ret = tपंचांग_mem_global_alloc(vmw_mem_glob(dev_priv),
 				   vmw_user_context_size,
-				   &ttm_opt_ctx);
-	if (unlikely(ret != 0)) {
-		if (ret != -ERESTARTSYS)
+				   &tपंचांग_opt_ctx);
+	अगर (unlikely(ret != 0)) अणु
+		अगर (ret != -ERESTARTSYS)
 			DRM_ERROR("Out of graphics memory for context"
 				  " creation.\n");
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (unlikely(!ctx)) {
-		ttm_mem_global_free(vmw_mem_glob(dev_priv),
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (unlikely(!ctx)) अणु
+		tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv),
 				    vmw_user_context_size);
 		ret = -ENOMEM;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	res = &ctx->res;
 	ctx->base.shareable = false;
-	ctx->base.tfile = NULL;
+	ctx->base.tfile = शून्य;
 
 	/*
-	 * From here on, the destructor takes over resource freeing.
+	 * From here on, the deकाष्ठाor takes over resource मुक्तing.
 	 */
 
-	ret = vmw_context_init(dev_priv, res, vmw_user_context_free, dx);
-	if (unlikely(ret != 0))
-		goto out_unlock;
+	ret = vmw_context_init(dev_priv, res, vmw_user_context_मुक्त, dx);
+	अगर (unlikely(ret != 0))
+		जाओ out_unlock;
 
-	tmp = vmw_resource_reference(&ctx->res);
-	ret = ttm_base_object_init(tfile, &ctx->base, false, VMW_RES_CONTEXT,
-				   &vmw_user_context_base_release, NULL);
+	पंचांगp = vmw_resource_reference(&ctx->res);
+	ret = tपंचांग_base_object_init(tfile, &ctx->base, false, VMW_RES_CONTEXT,
+				   &vmw_user_context_base_release, शून्य);
 
-	if (unlikely(ret != 0)) {
-		vmw_resource_unreference(&tmp);
-		goto out_err;
-	}
+	अगर (unlikely(ret != 0)) अणु
+		vmw_resource_unreference(&पंचांगp);
+		जाओ out_err;
+	पूर्ण
 
 	arg->cid = ctx->base.handle;
 out_err:
 	vmw_resource_unreference(&res);
 out_unlock:
-	ttm_read_unlock(&dev_priv->reservation_sem);
-	return ret;
-}
+	tपंचांग_पढ़ो_unlock(&dev_priv->reservation_sem);
+	वापस ret;
+पूर्ण
 
-int vmw_context_define_ioctl(struct drm_device *dev, void *data,
-			     struct drm_file *file_priv)
-{
-	return vmw_context_define(dev, data, file_priv, false);
-}
+पूर्णांक vmw_context_define_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			     काष्ठा drm_file *file_priv)
+अणु
+	वापस vmw_context_define(dev, data, file_priv, false);
+पूर्ण
 
-int vmw_extended_context_define_ioctl(struct drm_device *dev, void *data,
-				      struct drm_file *file_priv)
-{
-	union drm_vmw_extended_context_arg *arg = (typeof(arg)) data;
-	struct drm_vmw_context_arg *rep = &arg->rep;
+पूर्णांक vmw_extended_context_define_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				      काष्ठा drm_file *file_priv)
+अणु
+	जोड़ drm_vmw_extended_context_arg *arg = (typeof(arg)) data;
+	काष्ठा drm_vmw_context_arg *rep = &arg->rep;
 
-	switch (arg->req) {
-	case drm_vmw_context_legacy:
-		return vmw_context_define(dev, rep, file_priv, false);
-	case drm_vmw_context_dx:
-		return vmw_context_define(dev, rep, file_priv, true);
-	default:
-		break;
-	}
-	return -EINVAL;
-}
+	चयन (arg->req) अणु
+	हाल drm_vmw_context_legacy:
+		वापस vmw_context_define(dev, rep, file_priv, false);
+	हाल drm_vmw_context_dx:
+		वापस vmw_context_define(dev, rep, file_priv, true);
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * vmw_context_binding_list - Return a list of context bindings
@@ -830,97 +831,97 @@ int vmw_extended_context_define_ioctl(struct drm_device *dev, void *data,
  * Returns the current list of bindings of the given context. Note that
  * this list becomes stale as soon as the dev_priv::binding_mutex is unlocked.
  */
-struct list_head *vmw_context_binding_list(struct vmw_resource *ctx)
-{
-	struct vmw_user_context *uctx =
-		container_of(ctx, struct vmw_user_context, res);
+काष्ठा list_head *vmw_context_binding_list(काष्ठा vmw_resource *ctx)
+अणु
+	काष्ठा vmw_user_context *uctx =
+		container_of(ctx, काष्ठा vmw_user_context, res);
 
-	return vmw_binding_state_list(uctx->cbs);
-}
+	वापस vmw_binding_state_list(uctx->cbs);
+पूर्ण
 
-struct vmw_cmdbuf_res_manager *vmw_context_res_man(struct vmw_resource *ctx)
-{
-	return container_of(ctx, struct vmw_user_context, res)->man;
-}
+काष्ठा vmw_cmdbuf_res_manager *vmw_context_res_man(काष्ठा vmw_resource *ctx)
+अणु
+	वापस container_of(ctx, काष्ठा vmw_user_context, res)->man;
+पूर्ण
 
-struct vmw_resource *vmw_context_cotable(struct vmw_resource *ctx,
+काष्ठा vmw_resource *vmw_context_cotable(काष्ठा vmw_resource *ctx,
 					 SVGACOTableType cotable_type)
-{
+अणु
 	u32 cotable_max = has_sm5_context(ctx->dev_priv) ?
 		SVGA_COTABLE_MAX : SVGA_COTABLE_DX10_MAX;
 
-	if (cotable_type >= cotable_max)
-		return ERR_PTR(-EINVAL);
+	अगर (cotable_type >= cotable_max)
+		वापस ERR_PTR(-EINVAL);
 
-	return container_of(ctx, struct vmw_user_context, res)->
+	वापस container_of(ctx, काष्ठा vmw_user_context, res)->
 		cotables[cotable_type];
-}
+पूर्ण
 
 /**
  * vmw_context_binding_state -
- * Return a pointer to a context binding state structure
+ * Return a poपूर्णांकer to a context binding state काष्ठाure
  *
  * @ctx: The context resource
  *
  * Returns the current state of bindings of the given context. Note that
  * this state becomes stale as soon as the dev_priv::binding_mutex is unlocked.
  */
-struct vmw_ctx_binding_state *
-vmw_context_binding_state(struct vmw_resource *ctx)
-{
-	return container_of(ctx, struct vmw_user_context, res)->cbs;
-}
+काष्ठा vmw_ctx_binding_state *
+vmw_context_binding_state(काष्ठा vmw_resource *ctx)
+अणु
+	वापस container_of(ctx, काष्ठा vmw_user_context, res)->cbs;
+पूर्ण
 
 /**
  * vmw_context_bind_dx_query -
- * Sets query MOB for the context.  If @mob is NULL, then this function will
- * remove the association between the MOB and the context.  This function
+ * Sets query MOB क्रम the context.  If @mob is शून्य, then this function will
+ * हटाओ the association between the MOB and the context.  This function
  * assumes the binding_mutex is held.
  *
  * @ctx_res: The context resource
  * @mob: a reference to the query MOB
  *
- * Returns -EINVAL if a MOB has already been set and does not match the one
- * specified in the parameter.  0 otherwise.
+ * Returns -EINVAL अगर a MOB has alपढ़ोy been set and करोes not match the one
+ * specअगरied in the parameter.  0 otherwise.
  */
-int vmw_context_bind_dx_query(struct vmw_resource *ctx_res,
-			      struct vmw_buffer_object *mob)
-{
-	struct vmw_user_context *uctx =
-		container_of(ctx_res, struct vmw_user_context, res);
+पूर्णांक vmw_context_bind_dx_query(काष्ठा vmw_resource *ctx_res,
+			      काष्ठा vmw_buffer_object *mob)
+अणु
+	काष्ठा vmw_user_context *uctx =
+		container_of(ctx_res, काष्ठा vmw_user_context, res);
 
-	if (mob == NULL) {
-		if (uctx->dx_query_mob) {
-			uctx->dx_query_mob->dx_query_ctx = NULL;
+	अगर (mob == शून्य) अणु
+		अगर (uctx->dx_query_mob) अणु
+			uctx->dx_query_mob->dx_query_ctx = शून्य;
 			vmw_bo_unreference(&uctx->dx_query_mob);
-			uctx->dx_query_mob = NULL;
-		}
+			uctx->dx_query_mob = शून्य;
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Can only have one MOB per context for queries */
-	if (uctx->dx_query_mob && uctx->dx_query_mob != mob)
-		return -EINVAL;
+	/* Can only have one MOB per context क्रम queries */
+	अगर (uctx->dx_query_mob && uctx->dx_query_mob != mob)
+		वापस -EINVAL;
 
 	mob->dx_query_ctx  = ctx_res;
 
-	if (!uctx->dx_query_mob)
+	अगर (!uctx->dx_query_mob)
 		uctx->dx_query_mob = vmw_bo_reference(mob);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vmw_context_get_dx_query_mob - Returns non-counted reference to DX query mob
  *
  * @ctx_res: The context resource
  */
-struct vmw_buffer_object *
-vmw_context_get_dx_query_mob(struct vmw_resource *ctx_res)
-{
-	struct vmw_user_context *uctx =
-		container_of(ctx_res, struct vmw_user_context, res);
+काष्ठा vmw_buffer_object *
+vmw_context_get_dx_query_mob(काष्ठा vmw_resource *ctx_res)
+अणु
+	काष्ठा vmw_user_context *uctx =
+		container_of(ctx_res, काष्ठा vmw_user_context, res);
 
-	return uctx->dx_query_mob;
-}
+	वापस uctx->dx_query_mob;
+पूर्ण

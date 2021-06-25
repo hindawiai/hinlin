@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ARCH_TESTS_H
-#define ARCH_TESTS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ARCH_TESTS_H
+#घोषणा ARCH_TESTS_H
 
-#ifdef HAVE_DWARF_UNWIND_SUPPORT
-struct thread;
-struct perf_sample;
-#endif
+#अगर_घोषित HAVE_DWARF_UNWIND_SUPPORT
+काष्ठा thपढ़ो;
+काष्ठा perf_sample;
+#पूर्ण_अगर
 
-extern struct test arch_tests[];
+बाह्य काष्ठा test arch_tests[];
 
-#endif
+#पूर्ण_अगर

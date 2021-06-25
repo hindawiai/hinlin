@@ -1,499 +1,500 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 // Copyright (c) 2020 Cloudflare
 
-#define _GNU_SOURCE
+#घोषणा _GNU_SOURCE
 
-#include <arpa/inet.h>
-#include <string.h>
+#समावेश <arpa/inet.h>
+#समावेश <माला.स>
 
-#include <linux/pkt_cls.h>
-#include <netinet/tcp.h>
+#समावेश <linux/pkt_cls.h>
+#समावेश <netinet/tcp.h>
 
-#include <test_progs.h>
+#समावेश <test_progs.h>
 
-#include "progs/test_cls_redirect.h"
-#include "test_cls_redirect.skel.h"
-#include "test_cls_redirect_subprogs.skel.h"
+#समावेश "progs/test_cls_redirect.h"
+#समावेश "test_cls_redirect.skel.h"
+#समावेश "test_cls_redirect_subprogs.skel.h"
 
-#define ENCAP_IP INADDR_LOOPBACK
-#define ENCAP_PORT (1234)
+#घोषणा ENCAP_IP INADDR_LOOPBACK
+#घोषणा ENCAP_PORT (1234)
 
-static int duration = 0;
+अटल पूर्णांक duration = 0;
 
-struct addr_port {
+काष्ठा addr_port अणु
 	in_port_t port;
-	union {
-		struct in_addr in_addr;
-		struct in6_addr in6_addr;
-	};
-};
+	जोड़ अणु
+		काष्ठा in_addr in_addr;
+		काष्ठा in6_addr in6_addr;
+	पूर्ण;
+पूर्ण;
 
-struct tuple {
-	int family;
-	struct addr_port src;
-	struct addr_port dst;
-};
+काष्ठा tuple अणु
+	पूर्णांक family;
+	काष्ठा addr_port src;
+	काष्ठा addr_port dst;
+पूर्ण;
 
-static int start_server(const struct sockaddr *addr, socklen_t len, int type)
-{
-	int fd = socket(addr->sa_family, type, 0);
-	if (CHECK_FAIL(fd == -1))
-		return -1;
-	if (CHECK_FAIL(bind(fd, addr, len) == -1))
-		goto err;
-	if (type == SOCK_STREAM && CHECK_FAIL(listen(fd, 128) == -1))
-		goto err;
+अटल पूर्णांक start_server(स्थिर काष्ठा sockaddr *addr, socklen_t len, पूर्णांक type)
+अणु
+	पूर्णांक fd = socket(addr->sa_family, type, 0);
+	अगर (CHECK_FAIL(fd == -1))
+		वापस -1;
+	अगर (CHECK_FAIL(bind(fd, addr, len) == -1))
+		जाओ err;
+	अगर (type == SOCK_STREAM && CHECK_FAIL(listen(fd, 128) == -1))
+		जाओ err;
 
-	return fd;
-
-err:
-	close(fd);
-	return -1;
-}
-
-static int connect_to_server(const struct sockaddr *addr, socklen_t len,
-			     int type)
-{
-	int fd = socket(addr->sa_family, type, 0);
-	if (CHECK_FAIL(fd == -1))
-		return -1;
-	if (CHECK_FAIL(connect(fd, addr, len)))
-		goto err;
-
-	return fd;
+	वापस fd;
 
 err:
-	close(fd);
-	return -1;
-}
+	बंद(fd);
+	वापस -1;
+पूर्ण
 
-static bool fill_addr_port(const struct sockaddr *sa, struct addr_port *ap)
-{
-	const struct sockaddr_in6 *in6;
-	const struct sockaddr_in *in;
+अटल पूर्णांक connect_to_server(स्थिर काष्ठा sockaddr *addr, socklen_t len,
+			     पूर्णांक type)
+अणु
+	पूर्णांक fd = socket(addr->sa_family, type, 0);
+	अगर (CHECK_FAIL(fd == -1))
+		वापस -1;
+	अगर (CHECK_FAIL(connect(fd, addr, len)))
+		जाओ err;
 
-	switch (sa->sa_family) {
-	case AF_INET:
-		in = (const struct sockaddr_in *)sa;
+	वापस fd;
+
+err:
+	बंद(fd);
+	वापस -1;
+पूर्ण
+
+अटल bool fill_addr_port(स्थिर काष्ठा sockaddr *sa, काष्ठा addr_port *ap)
+अणु
+	स्थिर काष्ठा sockaddr_in6 *in6;
+	स्थिर काष्ठा sockaddr_in *in;
+
+	चयन (sa->sa_family) अणु
+	हाल AF_INET:
+		in = (स्थिर काष्ठा sockaddr_in *)sa;
 		ap->in_addr = in->sin_addr;
 		ap->port = in->sin_port;
-		return true;
+		वापस true;
 
-	case AF_INET6:
-		in6 = (const struct sockaddr_in6 *)sa;
+	हाल AF_INET6:
+		in6 = (स्थिर काष्ठा sockaddr_in6 *)sa;
 		ap->in6_addr = in6->sin6_addr;
 		ap->port = in6->sin6_port;
-		return true;
+		वापस true;
 
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool set_up_conn(const struct sockaddr *addr, socklen_t len, int type,
-			int *server, int *conn, struct tuple *tuple)
-{
-	struct sockaddr_storage ss;
-	socklen_t slen = sizeof(ss);
-	struct sockaddr *sa = (struct sockaddr *)&ss;
+अटल bool set_up_conn(स्थिर काष्ठा sockaddr *addr, socklen_t len, पूर्णांक type,
+			पूर्णांक *server, पूर्णांक *conn, काष्ठा tuple *tuple)
+अणु
+	काष्ठा sockaddr_storage ss;
+	socklen_t slen = माप(ss);
+	काष्ठा sockaddr *sa = (काष्ठा sockaddr *)&ss;
 
 	*server = start_server(addr, len, type);
-	if (*server < 0)
-		return false;
+	अगर (*server < 0)
+		वापस false;
 
-	if (CHECK_FAIL(getsockname(*server, sa, &slen)))
-		goto close_server;
+	अगर (CHECK_FAIL(माला_लोockname(*server, sa, &slen)))
+		जाओ बंद_server;
 
 	*conn = connect_to_server(sa, slen, type);
-	if (*conn < 0)
-		goto close_server;
+	अगर (*conn < 0)
+		जाओ बंद_server;
 
 	/* We want to simulate packets arriving at conn, so we have to
 	 * swap src and dst.
 	 */
-	slen = sizeof(ss);
-	if (CHECK_FAIL(getsockname(*conn, sa, &slen)))
-		goto close_conn;
+	slen = माप(ss);
+	अगर (CHECK_FAIL(माला_लोockname(*conn, sa, &slen)))
+		जाओ बंद_conn;
 
-	if (CHECK_FAIL(!fill_addr_port(sa, &tuple->dst)))
-		goto close_conn;
+	अगर (CHECK_FAIL(!fill_addr_port(sa, &tuple->dst)))
+		जाओ बंद_conn;
 
-	slen = sizeof(ss);
-	if (CHECK_FAIL(getpeername(*conn, sa, &slen)))
-		goto close_conn;
+	slen = माप(ss);
+	अगर (CHECK_FAIL(getpeername(*conn, sa, &slen)))
+		जाओ बंद_conn;
 
-	if (CHECK_FAIL(!fill_addr_port(sa, &tuple->src)))
-		goto close_conn;
+	अगर (CHECK_FAIL(!fill_addr_port(sa, &tuple->src)))
+		जाओ बंद_conn;
 
 	tuple->family = ss.ss_family;
-	return true;
+	वापस true;
 
-close_conn:
-	close(*conn);
+बंद_conn:
+	बंद(*conn);
 	*conn = -1;
-close_server:
-	close(*server);
+बंद_server:
+	बंद(*server);
 	*server = -1;
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static socklen_t prepare_addr(struct sockaddr_storage *addr, int family)
-{
-	struct sockaddr_in *addr4;
-	struct sockaddr_in6 *addr6;
+अटल socklen_t prepare_addr(काष्ठा sockaddr_storage *addr, पूर्णांक family)
+अणु
+	काष्ठा sockaddr_in *addr4;
+	काष्ठा sockaddr_in6 *addr6;
 
-	switch (family) {
-	case AF_INET:
-		addr4 = (struct sockaddr_in *)addr;
-		memset(addr4, 0, sizeof(*addr4));
+	चयन (family) अणु
+	हाल AF_INET:
+		addr4 = (काष्ठा sockaddr_in *)addr;
+		स_रखो(addr4, 0, माप(*addr4));
 		addr4->sin_family = family;
 		addr4->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-		return sizeof(*addr4);
-	case AF_INET6:
-		addr6 = (struct sockaddr_in6 *)addr;
-		memset(addr6, 0, sizeof(*addr6));
+		वापस माप(*addr4);
+	हाल AF_INET6:
+		addr6 = (काष्ठा sockaddr_in6 *)addr;
+		स_रखो(addr6, 0, माप(*addr6));
 		addr6->sin6_family = family;
 		addr6->sin6_addr = in6addr_loopback;
-		return sizeof(*addr6);
-	default:
-		fprintf(stderr, "Invalid family %d", family);
-		return 0;
-	}
-}
+		वापस माप(*addr6);
+	शेष:
+		ख_लिखो(मानक_त्रुटि, "Invalid family %d", family);
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static bool was_decapsulated(struct bpf_prog_test_run_attr *tattr)
-{
-	return tattr->data_size_out < tattr->data_size_in;
-}
+अटल bool was_decapsulated(काष्ठा bpf_prog_test_run_attr *tattr)
+अणु
+	वापस tattr->data_size_out < tattr->data_size_in;
+पूर्ण
 
-enum type {
+क्रमागत type अणु
 	UDP,
 	TCP,
 	__NR_KIND,
-};
+पूर्ण;
 
-enum hops {
+क्रमागत hops अणु
 	NO_HOPS,
 	ONE_HOP,
-};
+पूर्ण;
 
-enum flags {
+क्रमागत flags अणु
 	NONE,
 	SYN,
 	ACK,
-};
+पूर्ण;
 
-enum conn {
+क्रमागत conn अणु
 	KNOWN_CONN,
 	UNKNOWN_CONN,
-};
+पूर्ण;
 
-enum result {
+क्रमागत result अणु
 	ACCEPT,
 	FORWARD,
-};
+पूर्ण;
 
-struct test_cfg {
-	enum type type;
-	enum result result;
-	enum conn conn;
-	enum hops hops;
-	enum flags flags;
-};
+काष्ठा test_cfg अणु
+	क्रमागत type type;
+	क्रमागत result result;
+	क्रमागत conn conn;
+	क्रमागत hops hops;
+	क्रमागत flags flags;
+पूर्ण;
 
-static int test_str(void *buf, size_t len, const struct test_cfg *test,
-		    int family)
-{
-	const char *family_str, *type, *conn, *hops, *result, *flags;
+अटल पूर्णांक test_str(व्योम *buf, माप_प्रकार len, स्थिर काष्ठा test_cfg *test,
+		    पूर्णांक family)
+अणु
+	स्थिर अक्षर *family_str, *type, *conn, *hops, *result, *flags;
 
 	family_str = "IPv4";
-	if (family == AF_INET6)
+	अगर (family == AF_INET6)
 		family_str = "IPv6";
 
 	type = "TCP";
-	if (test->type == UDP)
+	अगर (test->type == UDP)
 		type = "UDP";
 
 	conn = "known";
-	if (test->conn == UNKNOWN_CONN)
+	अगर (test->conn == UNKNOWN_CONN)
 		conn = "unknown";
 
 	hops = "no hops";
-	if (test->hops == ONE_HOP)
+	अगर (test->hops == ONE_HOP)
 		hops = "one hop";
 
 	result = "accept";
-	if (test->result == FORWARD)
+	अगर (test->result == FORWARD)
 		result = "forward";
 
 	flags = "none";
-	if (test->flags == SYN)
+	अगर (test->flags == SYN)
 		flags = "SYN";
-	else if (test->flags == ACK)
+	अन्यथा अगर (test->flags == ACK)
 		flags = "ACK";
 
-	return snprintf(buf, len, "%s %s %s %s (%s, flags: %s)", family_str,
+	वापस snम_लिखो(buf, len, "%s %s %s %s (%s, flags: %s)", family_str,
 			type, result, conn, hops, flags);
-}
+पूर्ण
 
-static struct test_cfg tests[] = {
-	{ TCP, ACCEPT, UNKNOWN_CONN, NO_HOPS, SYN },
-	{ TCP, ACCEPT, UNKNOWN_CONN, NO_HOPS, ACK },
-	{ TCP, FORWARD, UNKNOWN_CONN, ONE_HOP, ACK },
-	{ TCP, ACCEPT, KNOWN_CONN, ONE_HOP, ACK },
-	{ UDP, ACCEPT, UNKNOWN_CONN, NO_HOPS, NONE },
-	{ UDP, FORWARD, UNKNOWN_CONN, ONE_HOP, NONE },
-	{ UDP, ACCEPT, KNOWN_CONN, ONE_HOP, NONE },
-};
+अटल काष्ठा test_cfg tests[] = अणु
+	अणु TCP, ACCEPT, UNKNOWN_CONN, NO_HOPS, SYN पूर्ण,
+	अणु TCP, ACCEPT, UNKNOWN_CONN, NO_HOPS, ACK पूर्ण,
+	अणु TCP, FORWARD, UNKNOWN_CONN, ONE_HOP, ACK पूर्ण,
+	अणु TCP, ACCEPT, KNOWN_CONN, ONE_HOP, ACK पूर्ण,
+	अणु UDP, ACCEPT, UNKNOWN_CONN, NO_HOPS, NONE पूर्ण,
+	अणु UDP, FORWARD, UNKNOWN_CONN, ONE_HOP, NONE पूर्ण,
+	अणु UDP, ACCEPT, KNOWN_CONN, ONE_HOP, NONE पूर्ण,
+पूर्ण;
 
-static void encap_init(encap_headers_t *encap, uint8_t hop_count, uint8_t proto)
-{
-	const uint8_t hlen =
-		(sizeof(struct guehdr) / sizeof(uint32_t)) + hop_count;
-	*encap = (encap_headers_t){
-		.eth = { .h_proto = htons(ETH_P_IP) },
-		.ip = {
+अटल व्योम encap_init(encap_headers_t *encap, uपूर्णांक8_t hop_count, uपूर्णांक8_t proto)
+अणु
+	स्थिर uपूर्णांक8_t hlen =
+		(माप(काष्ठा guehdr) / माप(uपूर्णांक32_t)) + hop_count;
+	*encap = (encap_headers_t)अणु
+		.eth = अणु .h_proto = htons(ETH_P_IP) पूर्ण,
+		.ip = अणु
 			.ihl = 5,
 			.version = 4,
 			.ttl = IPDEFTTL,
 			.protocol = IPPROTO_UDP,
 			.daddr = htonl(ENCAP_IP)
-		},
-		.udp = {
+		पूर्ण,
+		.udp = अणु
 			.dest = htons(ENCAP_PORT),
-		},
-		.gue = {
+		पूर्ण,
+		.gue = अणु
 			.hlen = hlen,
 			.proto_ctype = proto
-		},
-		.unigue = {
+		पूर्ण,
+		.unigue = अणु
 			.hop_count = hop_count
-		},
-	};
-}
+		पूर्ण,
+	पूर्ण;
+पूर्ण
 
-static size_t build_input(const struct test_cfg *test, void *const buf,
-			  const struct tuple *tuple)
-{
+अटल माप_प्रकार build_input(स्थिर काष्ठा test_cfg *test, व्योम *स्थिर buf,
+			  स्थिर काष्ठा tuple *tuple)
+अणु
 	in_port_t sport = tuple->src.port;
 	encap_headers_t encap;
-	struct iphdr ip;
-	struct ipv6hdr ipv6;
-	struct tcphdr tcp;
-	struct udphdr udp;
-	struct in_addr next_hop;
-	uint8_t *p = buf;
-	int proto;
+	काष्ठा iphdr ip;
+	काष्ठा ipv6hdr ipv6;
+	काष्ठा tcphdr tcp;
+	काष्ठा udphdr udp;
+	काष्ठा in_addr next_hop;
+	uपूर्णांक8_t *p = buf;
+	पूर्णांक proto;
 
 	proto = IPPROTO_IPIP;
-	if (tuple->family == AF_INET6)
+	अगर (tuple->family == AF_INET6)
 		proto = IPPROTO_IPV6;
 
 	encap_init(&encap, test->hops == ONE_HOP ? 1 : 0, proto);
-	p = mempcpy(p, &encap, sizeof(encap));
+	p = mempcpy(p, &encap, माप(encap));
 
-	if (test->hops == ONE_HOP) {
-		next_hop = (struct in_addr){ .s_addr = htonl(0x7f000002) };
-		p = mempcpy(p, &next_hop, sizeof(next_hop));
-	}
+	अगर (test->hops == ONE_HOP) अणु
+		next_hop = (काष्ठा in_addr)अणु .s_addr = htonl(0x7f000002) पूर्ण;
+		p = mempcpy(p, &next_hop, माप(next_hop));
+	पूर्ण
 
 	proto = IPPROTO_TCP;
-	if (test->type == UDP)
+	अगर (test->type == UDP)
 		proto = IPPROTO_UDP;
 
-	switch (tuple->family) {
-	case AF_INET:
-		ip = (struct iphdr){
+	चयन (tuple->family) अणु
+	हाल AF_INET:
+		ip = (काष्ठा iphdr)अणु
 			.ihl = 5,
 			.version = 4,
 			.ttl = IPDEFTTL,
 			.protocol = proto,
 			.saddr = tuple->src.in_addr.s_addr,
 			.daddr = tuple->dst.in_addr.s_addr,
-		};
-		p = mempcpy(p, &ip, sizeof(ip));
-		break;
-	case AF_INET6:
-		ipv6 = (struct ipv6hdr){
+		पूर्ण;
+		p = mempcpy(p, &ip, माप(ip));
+		अवरोध;
+	हाल AF_INET6:
+		ipv6 = (काष्ठा ipv6hdr)अणु
 			.version = 6,
 			.hop_limit = IPDEFTTL,
 			.nexthdr = proto,
 			.saddr = tuple->src.in6_addr,
 			.daddr = tuple->dst.in6_addr,
-		};
-		p = mempcpy(p, &ipv6, sizeof(ipv6));
-		break;
-	default:
-		return 0;
-	}
+		पूर्ण;
+		p = mempcpy(p, &ipv6, माप(ipv6));
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	if (test->conn == UNKNOWN_CONN)
+	अगर (test->conn == UNKNOWN_CONN)
 		sport--;
 
-	switch (test->type) {
-	case TCP:
-		tcp = (struct tcphdr){
+	चयन (test->type) अणु
+	हाल TCP:
+		tcp = (काष्ठा tcphdr)अणु
 			.source = sport,
 			.dest = tuple->dst.port,
-		};
-		if (test->flags == SYN)
+		पूर्ण;
+		अगर (test->flags == SYN)
 			tcp.syn = true;
-		if (test->flags == ACK)
+		अगर (test->flags == ACK)
 			tcp.ack = true;
-		p = mempcpy(p, &tcp, sizeof(tcp));
-		break;
-	case UDP:
-		udp = (struct udphdr){
+		p = mempcpy(p, &tcp, माप(tcp));
+		अवरोध;
+	हाल UDP:
+		udp = (काष्ठा udphdr)अणु
 			.source = sport,
 			.dest = tuple->dst.port,
-		};
-		p = mempcpy(p, &udp, sizeof(udp));
-		break;
-	default:
-		return 0;
-	}
+		पूर्ण;
+		p = mempcpy(p, &udp, माप(udp));
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	return (void *)p - buf;
-}
+	वापस (व्योम *)p - buf;
+पूर्ण
 
-static void close_fds(int *fds, int n)
-{
-	int i;
+अटल व्योम बंद_fds(पूर्णांक *fds, पूर्णांक n)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < n; i++)
-		if (fds[i] > 0)
-			close(fds[i]);
-}
+	क्रम (i = 0; i < n; i++)
+		अगर (fds[i] > 0)
+			बंद(fds[i]);
+पूर्ण
 
-static void test_cls_redirect_common(struct bpf_program *prog)
-{
-	struct bpf_prog_test_run_attr tattr = {};
-	int families[] = { AF_INET, AF_INET6 };
-	struct sockaddr_storage ss;
-	struct sockaddr *addr;
+अटल व्योम test_cls_redirect_common(काष्ठा bpf_program *prog)
+अणु
+	काष्ठा bpf_prog_test_run_attr tattr = अणुपूर्ण;
+	पूर्णांक families[] = अणु AF_INET, AF_INET6 पूर्ण;
+	काष्ठा sockaddr_storage ss;
+	काष्ठा sockaddr *addr;
 	socklen_t slen;
-	int i, j, err;
-	int servers[__NR_KIND][ARRAY_SIZE(families)] = {};
-	int conns[__NR_KIND][ARRAY_SIZE(families)] = {};
-	struct tuple tuples[__NR_KIND][ARRAY_SIZE(families)];
+	पूर्णांक i, j, err;
+	पूर्णांक servers[__NR_KIND][ARRAY_SIZE(families)] = अणुपूर्ण;
+	पूर्णांक conns[__NR_KIND][ARRAY_SIZE(families)] = अणुपूर्ण;
+	काष्ठा tuple tuples[__NR_KIND][ARRAY_SIZE(families)];
 
-	addr = (struct sockaddr *)&ss;
-	for (i = 0; i < ARRAY_SIZE(families); i++) {
+	addr = (काष्ठा sockaddr *)&ss;
+	क्रम (i = 0; i < ARRAY_SIZE(families); i++) अणु
 		slen = prepare_addr(&ss, families[i]);
-		if (CHECK_FAIL(!slen))
-			goto cleanup;
+		अगर (CHECK_FAIL(!slen))
+			जाओ cleanup;
 
-		if (CHECK_FAIL(!set_up_conn(addr, slen, SOCK_DGRAM,
+		अगर (CHECK_FAIL(!set_up_conn(addr, slen, SOCK_DGRAM,
 					    &servers[UDP][i], &conns[UDP][i],
 					    &tuples[UDP][i])))
-			goto cleanup;
+			जाओ cleanup;
 
-		if (CHECK_FAIL(!set_up_conn(addr, slen, SOCK_STREAM,
+		अगर (CHECK_FAIL(!set_up_conn(addr, slen, SOCK_STREAM,
 					    &servers[TCP][i], &conns[TCP][i],
 					    &tuples[TCP][i])))
-			goto cleanup;
-	}
+			जाओ cleanup;
+	पूर्ण
 
 	tattr.prog_fd = bpf_program__fd(prog);
-	for (i = 0; i < ARRAY_SIZE(tests); i++) {
-		struct test_cfg *test = &tests[i];
+	क्रम (i = 0; i < ARRAY_SIZE(tests); i++) अणु
+		काष्ठा test_cfg *test = &tests[i];
 
-		for (j = 0; j < ARRAY_SIZE(families); j++) {
-			struct tuple *tuple = &tuples[test->type][j];
-			char input[256];
-			char tmp[256];
+		क्रम (j = 0; j < ARRAY_SIZE(families); j++) अणु
+			काष्ठा tuple *tuple = &tuples[test->type][j];
+			अक्षर input[256];
+			अक्षर पंचांगp[256];
 
-			test_str(tmp, sizeof(tmp), test, tuple->family);
-			if (!test__start_subtest(tmp))
-				continue;
+			test_str(पंचांगp, माप(पंचांगp), test, tuple->family);
+			अगर (!test__start_subtest(पंचांगp))
+				जारी;
 
-			tattr.data_out = tmp;
-			tattr.data_size_out = sizeof(tmp);
+			tattr.data_out = पंचांगp;
+			tattr.data_size_out = माप(पंचांगp);
 
 			tattr.data_in = input;
 			tattr.data_size_in = build_input(test, input, tuple);
-			if (CHECK_FAIL(!tattr.data_size_in))
-				continue;
+			अगर (CHECK_FAIL(!tattr.data_size_in))
+				जारी;
 
 			err = bpf_prog_test_run_xattr(&tattr);
-			if (CHECK_FAIL(err))
-				continue;
+			अगर (CHECK_FAIL(err))
+				जारी;
 
-			if (tattr.retval != TC_ACT_REDIRECT) {
+			अगर (tattr.retval != TC_ACT_REसूचीECT) अणु
 				PRINT_FAIL("expected TC_ACT_REDIRECT, got %d\n",
 					   tattr.retval);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			switch (test->result) {
-			case ACCEPT:
-				if (CHECK_FAIL(!was_decapsulated(&tattr)))
-					continue;
-				break;
-			case FORWARD:
-				if (CHECK_FAIL(was_decapsulated(&tattr)))
-					continue;
-				break;
-			default:
+			चयन (test->result) अणु
+			हाल ACCEPT:
+				अगर (CHECK_FAIL(!was_decapsulated(&tattr)))
+					जारी;
+				अवरोध;
+			हाल FORWARD:
+				अगर (CHECK_FAIL(was_decapsulated(&tattr)))
+					जारी;
+				अवरोध;
+			शेष:
 				PRINT_FAIL("unknown result %d\n", test->result);
-				continue;
-			}
-		}
-	}
+				जारी;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 cleanup:
-	close_fds((int *)servers, sizeof(servers) / sizeof(servers[0][0]));
-	close_fds((int *)conns, sizeof(conns) / sizeof(conns[0][0]));
-}
+	बंद_fds((पूर्णांक *)servers, माप(servers) / माप(servers[0][0]));
+	बंद_fds((पूर्णांक *)conns, माप(conns) / माप(conns[0][0]));
+पूर्ण
 
-static void test_cls_redirect_inlined(void)
-{
-	struct test_cls_redirect *skel;
-	int err;
+अटल व्योम test_cls_redirect_अंतरभूतd(व्योम)
+अणु
+	काष्ठा test_cls_redirect *skel;
+	पूर्णांक err;
 
-	skel = test_cls_redirect__open();
-	if (CHECK(!skel, "skel_open", "failed\n"))
-		return;
+	skel = test_cls_redirect__खोलो();
+	अगर (CHECK(!skel, "skel_open", "failed\n"))
+		वापस;
 
 	skel->rodata->ENCAPSULATION_IP = htonl(ENCAP_IP);
 	skel->rodata->ENCAPSULATION_PORT = htons(ENCAP_PORT);
 
 	err = test_cls_redirect__load(skel);
-	if (CHECK(err, "skel_load", "failed: %d\n", err))
-		goto cleanup;
+	अगर (CHECK(err, "skel_load", "failed: %d\n", err))
+		जाओ cleanup;
 
 	test_cls_redirect_common(skel->progs.cls_redirect);
 
 cleanup:
 	test_cls_redirect__destroy(skel);
-}
+पूर्ण
 
-static void test_cls_redirect_subprogs(void)
-{
-	struct test_cls_redirect_subprogs *skel;
-	int err;
+अटल व्योम test_cls_redirect_subprogs(व्योम)
+अणु
+	काष्ठा test_cls_redirect_subprogs *skel;
+	पूर्णांक err;
 
-	skel = test_cls_redirect_subprogs__open();
-	if (CHECK(!skel, "skel_open", "failed\n"))
-		return;
+	skel = test_cls_redirect_subprogs__खोलो();
+	अगर (CHECK(!skel, "skel_open", "failed\n"))
+		वापस;
 
 	skel->rodata->ENCAPSULATION_IP = htonl(ENCAP_IP);
 	skel->rodata->ENCAPSULATION_PORT = htons(ENCAP_PORT);
 
 	err = test_cls_redirect_subprogs__load(skel);
-	if (CHECK(err, "skel_load", "failed: %d\n", err))
-		goto cleanup;
+	अगर (CHECK(err, "skel_load", "failed: %d\n", err))
+		जाओ cleanup;
 
 	test_cls_redirect_common(skel->progs.cls_redirect);
 
 cleanup:
 	test_cls_redirect_subprogs__destroy(skel);
-}
+पूर्ण
 
-void test_cls_redirect(void)
-{
-	if (test__start_subtest("cls_redirect_inlined"))
-		test_cls_redirect_inlined();
-	if (test__start_subtest("cls_redirect_subprogs"))
+व्योम test_cls_redirect(व्योम)
+अणु
+	अगर (test__start_subtest("cls_redirect_inlined"))
+		test_cls_redirect_अंतरभूतd();
+	अगर (test__start_subtest("cls_redirect_subprogs"))
 		test_cls_redirect_subprogs();
-}
+पूर्ण

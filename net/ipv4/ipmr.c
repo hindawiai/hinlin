@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	IP multicast routing support for mrouted 3.6/3.8
+ *	IP multicast routing support क्रम mrouted 3.6/3.8
  *
  *		(c) 1995 Alan Cox, <alan@lxorguk.ukuu.org.uk>
  *	  Linux Consultancy and Custom Driver Development
@@ -11,220 +12,220 @@
  *	Alan Cox		:	Fixed the clone/copy bug and device race.
  *	Mike McLagan		:	Routing by source
  *	Malcolm Beattie		:	Buffer handling fixes.
- *	Alexey Kuznetsov	:	Double buffer free and other fixes.
+ *	Alexey Kuznetsov	:	Double buffer मुक्त and other fixes.
  *	SVR Anand		:	Fixed several multicast bugs and problems.
  *	Alexey Kuznetsov	:	Status, optimisations and more.
  *	Brad Parker		:	Better behaviour on mrouted upcall
  *					overflow.
  *      Carlos Picoto           :       PIMv1 Support
- *	Pavlin Ivanov Radoslavov:	PIMv2 Registers must checksum only PIM header
+ *	Pavlin Ivanov Raकरोslavov:	PIMv2 Registers must checksum only PIM header
  *					Relax this requirement to work with older peers.
  */
 
-#include <linux/uaccess.h>
-#include <linux/types.h>
-#include <linux/cache.h>
-#include <linux/capability.h>
-#include <linux/errno.h>
-#include <linux/mm.h>
-#include <linux/kernel.h>
-#include <linux/fcntl.h>
-#include <linux/stat.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/inetdevice.h>
-#include <linux/igmp.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/mroute.h>
-#include <linux/init.h>
-#include <linux/if_ether.h>
-#include <linux/slab.h>
-#include <net/net_namespace.h>
-#include <net/ip.h>
-#include <net/protocol.h>
-#include <linux/skbuff.h>
-#include <net/route.h>
-#include <net/icmp.h>
-#include <net/udp.h>
-#include <net/raw.h>
-#include <linux/notifier.h>
-#include <linux/if_arp.h>
-#include <linux/netfilter_ipv4.h>
-#include <linux/compat.h>
-#include <linux/export.h>
-#include <linux/rhashtable.h>
-#include <net/ip_tunnels.h>
-#include <net/checksum.h>
-#include <net/netlink.h>
-#include <net/fib_rules.h>
-#include <linux/netconf.h>
-#include <net/rtnh.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/types.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/igmp.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/mroute.h>
+#समावेश <linux/init.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/slab.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/ip.h>
+#समावेश <net/protocol.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/route.h>
+#समावेश <net/icmp.h>
+#समावेश <net/udp.h>
+#समावेश <net/raw.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/netfilter_ipv4.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/export.h>
+#समावेश <linux/rhashtable.h>
+#समावेश <net/ip_tunnels.h>
+#समावेश <net/checksum.h>
+#समावेश <net/netlink.h>
+#समावेश <net/fib_rules.h>
+#समावेश <linux/netconf.h>
+#समावेश <net/rtnh.h>
 
-#include <linux/nospec.h>
+#समावेश <linux/nospec.h>
 
-struct ipmr_rule {
-	struct fib_rule		common;
-};
+काष्ठा ipmr_rule अणु
+	काष्ठा fib_rule		common;
+पूर्ण;
 
-struct ipmr_result {
-	struct mr_table		*mrt;
-};
+काष्ठा ipmr_result अणु
+	काष्ठा mr_table		*mrt;
+पूर्ण;
 
-/* Big lock, protecting vif table, mrt cache and mroute socket state.
+/* Big lock, protecting vअगर table, mrt cache and mroute socket state.
  * Note that the changes are semaphored via rtnl_lock.
  */
 
-static DEFINE_RWLOCK(mrt_lock);
+अटल DEFINE_RWLOCK(mrt_lock);
 
 /* Multicast router control variables */
 
-/* Special spinlock for queue of unresolved entries */
-static DEFINE_SPINLOCK(mfc_unres_lock);
+/* Special spinlock क्रम queue of unresolved entries */
+अटल DEFINE_SPINLOCK(mfc_unres_lock);
 
-/* We return to original Alan's scheme. Hash table of resolved
- * entries is changed only in process context and protected
- * with weak lock mrt_lock. Queue of unresolved entries is protected
+/* We वापस to original Alan's scheme. Hash table of resolved
+ * entries is changed only in process context and रक्षित
+ * with weak lock mrt_lock. Queue of unresolved entries is रक्षित
  * with strong spinlock mfc_unres_lock.
  *
- * In this case data path is free of exclusive locks at all.
+ * In this हाल data path is मुक्त of exclusive locks at all.
  */
 
-static struct kmem_cache *mrt_cachep __ro_after_init;
+अटल काष्ठा kmem_cache *mrt_cachep __ro_after_init;
 
-static struct mr_table *ipmr_new_table(struct net *net, u32 id);
-static void ipmr_free_table(struct mr_table *mrt);
+अटल काष्ठा mr_table *ipmr_new_table(काष्ठा net *net, u32 id);
+अटल व्योम ipmr_मुक्त_table(काष्ठा mr_table *mrt);
 
-static void ip_mr_forward(struct net *net, struct mr_table *mrt,
-			  struct net_device *dev, struct sk_buff *skb,
-			  struct mfc_cache *cache, int local);
-static int ipmr_cache_report(struct mr_table *mrt,
-			     struct sk_buff *pkt, vifi_t vifi, int assert);
-static void mroute_netlink_event(struct mr_table *mrt, struct mfc_cache *mfc,
-				 int cmd);
-static void igmpmsg_netlink_event(struct mr_table *mrt, struct sk_buff *pkt);
-static void mroute_clean_tables(struct mr_table *mrt, int flags);
-static void ipmr_expire_process(struct timer_list *t);
+अटल व्योम ip_mr_क्रमward(काष्ठा net *net, काष्ठा mr_table *mrt,
+			  काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+			  काष्ठा mfc_cache *cache, पूर्णांक local);
+अटल पूर्णांक ipmr_cache_report(काष्ठा mr_table *mrt,
+			     काष्ठा sk_buff *pkt, vअगरi_t vअगरi, पूर्णांक निश्चित);
+अटल व्योम mroute_netlink_event(काष्ठा mr_table *mrt, काष्ठा mfc_cache *mfc,
+				 पूर्णांक cmd);
+अटल व्योम igmpmsg_netlink_event(काष्ठा mr_table *mrt, काष्ठा sk_buff *pkt);
+अटल व्योम mroute_clean_tables(काष्ठा mr_table *mrt, पूर्णांक flags);
+अटल व्योम ipmr_expire_process(काष्ठा समयr_list *t);
 
-#ifdef CONFIG_IP_MROUTE_MULTIPLE_TABLES
-#define ipmr_for_each_table(mrt, net)					\
-	list_for_each_entry_rcu(mrt, &net->ipv4.mr_tables, list,	\
+#अगर_घोषित CONFIG_IP_MROUTE_MULTIPLE_TABLES
+#घोषणा ipmr_क्रम_each_table(mrt, net)					\
+	list_क्रम_each_entry_rcu(mrt, &net->ipv4.mr_tables, list,	\
 				lockdep_rtnl_is_held() ||		\
 				list_empty(&net->ipv4.mr_tables))
 
-static struct mr_table *ipmr_mr_table_iter(struct net *net,
-					   struct mr_table *mrt)
-{
-	struct mr_table *ret;
+अटल काष्ठा mr_table *ipmr_mr_table_iter(काष्ठा net *net,
+					   काष्ठा mr_table *mrt)
+अणु
+	काष्ठा mr_table *ret;
 
-	if (!mrt)
+	अगर (!mrt)
 		ret = list_entry_rcu(net->ipv4.mr_tables.next,
-				     struct mr_table, list);
-	else
+				     काष्ठा mr_table, list);
+	अन्यथा
 		ret = list_entry_rcu(mrt->list.next,
-				     struct mr_table, list);
+				     काष्ठा mr_table, list);
 
-	if (&ret->list == &net->ipv4.mr_tables)
-		return NULL;
-	return ret;
-}
+	अगर (&ret->list == &net->ipv4.mr_tables)
+		वापस शून्य;
+	वापस ret;
+पूर्ण
 
-static struct mr_table *ipmr_get_table(struct net *net, u32 id)
-{
-	struct mr_table *mrt;
+अटल काष्ठा mr_table *ipmr_get_table(काष्ठा net *net, u32 id)
+अणु
+	काष्ठा mr_table *mrt;
 
-	ipmr_for_each_table(mrt, net) {
-		if (mrt->id == id)
-			return mrt;
-	}
-	return NULL;
-}
+	ipmr_क्रम_each_table(mrt, net) अणु
+		अगर (mrt->id == id)
+			वापस mrt;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int ipmr_fib_lookup(struct net *net, struct flowi4 *flp4,
-			   struct mr_table **mrt)
-{
-	int err;
-	struct ipmr_result res;
-	struct fib_lookup_arg arg = {
+अटल पूर्णांक ipmr_fib_lookup(काष्ठा net *net, काष्ठा flowi4 *flp4,
+			   काष्ठा mr_table **mrt)
+अणु
+	पूर्णांक err;
+	काष्ठा ipmr_result res;
+	काष्ठा fib_lookup_arg arg = अणु
 		.result = &res,
 		.flags = FIB_LOOKUP_NOREF,
-	};
+	पूर्ण;
 
-	/* update flow if oif or iif point to device enslaved to l3mdev */
+	/* update flow अगर oअगर or iअगर poपूर्णांक to device enslaved to l3mdev */
 	l3mdev_update_flow(net, flowi4_to_flowi(flp4));
 
 	err = fib_rules_lookup(net->ipv4.mr_rules_ops,
 			       flowi4_to_flowi(flp4), 0, &arg);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	*mrt = res.mrt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipmr_rule_action(struct fib_rule *rule, struct flowi *flp,
-			    int flags, struct fib_lookup_arg *arg)
-{
-	struct ipmr_result *res = arg->result;
-	struct mr_table *mrt;
+अटल पूर्णांक ipmr_rule_action(काष्ठा fib_rule *rule, काष्ठा flowi *flp,
+			    पूर्णांक flags, काष्ठा fib_lookup_arg *arg)
+अणु
+	काष्ठा ipmr_result *res = arg->result;
+	काष्ठा mr_table *mrt;
 
-	switch (rule->action) {
-	case FR_ACT_TO_TBL:
-		break;
-	case FR_ACT_UNREACHABLE:
-		return -ENETUNREACH;
-	case FR_ACT_PROHIBIT:
-		return -EACCES;
-	case FR_ACT_BLACKHOLE:
-	default:
-		return -EINVAL;
-	}
+	चयन (rule->action) अणु
+	हाल FR_ACT_TO_TBL:
+		अवरोध;
+	हाल FR_ACT_UNREACHABLE:
+		वापस -ENETUNREACH;
+	हाल FR_ACT_PROHIBIT:
+		वापस -EACCES;
+	हाल FR_ACT_BLACKHOLE:
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	arg->table = fib_rule_get_table(rule, arg);
 
 	mrt = ipmr_get_table(rule->fr_net, arg->table);
-	if (!mrt)
-		return -EAGAIN;
+	अगर (!mrt)
+		वापस -EAGAIN;
 	res->mrt = mrt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipmr_rule_match(struct fib_rule *rule, struct flowi *fl, int flags)
-{
-	return 1;
-}
+अटल पूर्णांक ipmr_rule_match(काष्ठा fib_rule *rule, काष्ठा flowi *fl, पूर्णांक flags)
+अणु
+	वापस 1;
+पूर्ण
 
-static const struct nla_policy ipmr_rule_policy[FRA_MAX + 1] = {
+अटल स्थिर काष्ठा nla_policy ipmr_rule_policy[FRA_MAX + 1] = अणु
 	FRA_GENERIC_POLICY,
-};
+पूर्ण;
 
-static int ipmr_rule_configure(struct fib_rule *rule, struct sk_buff *skb,
-			       struct fib_rule_hdr *frh, struct nlattr **tb,
-			       struct netlink_ext_ack *extack)
-{
-	return 0;
-}
+अटल पूर्णांक ipmr_rule_configure(काष्ठा fib_rule *rule, काष्ठा sk_buff *skb,
+			       काष्ठा fib_rule_hdr *frh, काष्ठा nlattr **tb,
+			       काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस 0;
+पूर्ण
 
-static int ipmr_rule_compare(struct fib_rule *rule, struct fib_rule_hdr *frh,
-			     struct nlattr **tb)
-{
-	return 1;
-}
+अटल पूर्णांक ipmr_rule_compare(काष्ठा fib_rule *rule, काष्ठा fib_rule_hdr *frh,
+			     काष्ठा nlattr **tb)
+अणु
+	वापस 1;
+पूर्ण
 
-static int ipmr_rule_fill(struct fib_rule *rule, struct sk_buff *skb,
-			  struct fib_rule_hdr *frh)
-{
+अटल पूर्णांक ipmr_rule_fill(काष्ठा fib_rule *rule, काष्ठा sk_buff *skb,
+			  काष्ठा fib_rule_hdr *frh)
+अणु
 	frh->dst_len = 0;
 	frh->src_len = 0;
 	frh->tos     = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct fib_rules_ops __net_initconst ipmr_rules_ops_template = {
+अटल स्थिर काष्ठा fib_rules_ops __net_initस्थिर ipmr_rules_ops_ढाँचा = अणु
 	.family		= RTNL_FAMILY_IPMR,
-	.rule_size	= sizeof(struct ipmr_rule),
-	.addr_size	= sizeof(u32),
+	.rule_size	= माप(काष्ठा ipmr_rule),
+	.addr_size	= माप(u32),
 	.action		= ipmr_rule_action,
 	.match		= ipmr_rule_match,
 	.configure	= ipmr_rule_configure,
@@ -233,369 +234,369 @@ static const struct fib_rules_ops __net_initconst ipmr_rules_ops_template = {
 	.nlgroup	= RTNLGRP_IPV4_RULE,
 	.policy		= ipmr_rule_policy,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __net_init ipmr_rules_init(struct net *net)
-{
-	struct fib_rules_ops *ops;
-	struct mr_table *mrt;
-	int err;
+अटल पूर्णांक __net_init ipmr_rules_init(काष्ठा net *net)
+अणु
+	काष्ठा fib_rules_ops *ops;
+	काष्ठा mr_table *mrt;
+	पूर्णांक err;
 
-	ops = fib_rules_register(&ipmr_rules_ops_template, net);
-	if (IS_ERR(ops))
-		return PTR_ERR(ops);
+	ops = fib_rules_रेजिस्टर(&ipmr_rules_ops_ढाँचा, net);
+	अगर (IS_ERR(ops))
+		वापस PTR_ERR(ops);
 
 	INIT_LIST_HEAD(&net->ipv4.mr_tables);
 
 	mrt = ipmr_new_table(net, RT_TABLE_DEFAULT);
-	if (IS_ERR(mrt)) {
+	अगर (IS_ERR(mrt)) अणु
 		err = PTR_ERR(mrt);
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	err = fib_default_rule_add(ops, 0x7fff, RT_TABLE_DEFAULT, 0);
-	if (err < 0)
-		goto err2;
+	err = fib_शेष_rule_add(ops, 0x7fff, RT_TABLE_DEFAULT, 0);
+	अगर (err < 0)
+		जाओ err2;
 
 	net->ipv4.mr_rules_ops = ops;
-	return 0;
+	वापस 0;
 
 err2:
-	ipmr_free_table(mrt);
+	ipmr_मुक्त_table(mrt);
 err1:
-	fib_rules_unregister(ops);
-	return err;
-}
+	fib_rules_unरेजिस्टर(ops);
+	वापस err;
+पूर्ण
 
-static void __net_exit ipmr_rules_exit(struct net *net)
-{
-	struct mr_table *mrt, *next;
+अटल व्योम __net_निकास ipmr_rules_निकास(काष्ठा net *net)
+अणु
+	काष्ठा mr_table *mrt, *next;
 
 	rtnl_lock();
-	list_for_each_entry_safe(mrt, next, &net->ipv4.mr_tables, list) {
+	list_क्रम_each_entry_safe(mrt, next, &net->ipv4.mr_tables, list) अणु
 		list_del(&mrt->list);
-		ipmr_free_table(mrt);
-	}
-	fib_rules_unregister(net->ipv4.mr_rules_ops);
+		ipmr_मुक्त_table(mrt);
+	पूर्ण
+	fib_rules_unरेजिस्टर(net->ipv4.mr_rules_ops);
 	rtnl_unlock();
-}
+पूर्ण
 
-static int ipmr_rules_dump(struct net *net, struct notifier_block *nb,
-			   struct netlink_ext_ack *extack)
-{
-	return fib_rules_dump(net, nb, RTNL_FAMILY_IPMR, extack);
-}
+अटल पूर्णांक ipmr_rules_dump(काष्ठा net *net, काष्ठा notअगरier_block *nb,
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस fib_rules_dump(net, nb, RTNL_FAMILY_IPMR, extack);
+पूर्ण
 
-static unsigned int ipmr_rules_seq_read(struct net *net)
-{
-	return fib_rules_seq_read(net, RTNL_FAMILY_IPMR);
-}
+अटल अचिन्हित पूर्णांक ipmr_rules_seq_पढ़ो(काष्ठा net *net)
+अणु
+	वापस fib_rules_seq_पढ़ो(net, RTNL_FAMILY_IPMR);
+पूर्ण
 
-bool ipmr_rule_default(const struct fib_rule *rule)
-{
-	return fib_rule_matchall(rule) && rule->table == RT_TABLE_DEFAULT;
-}
-EXPORT_SYMBOL(ipmr_rule_default);
-#else
-#define ipmr_for_each_table(mrt, net) \
-	for (mrt = net->ipv4.mrt; mrt; mrt = NULL)
+bool ipmr_rule_शेष(स्थिर काष्ठा fib_rule *rule)
+अणु
+	वापस fib_rule_matchall(rule) && rule->table == RT_TABLE_DEFAULT;
+पूर्ण
+EXPORT_SYMBOL(ipmr_rule_शेष);
+#अन्यथा
+#घोषणा ipmr_क्रम_each_table(mrt, net) \
+	क्रम (mrt = net->ipv4.mrt; mrt; mrt = शून्य)
 
-static struct mr_table *ipmr_mr_table_iter(struct net *net,
-					   struct mr_table *mrt)
-{
-	if (!mrt)
-		return net->ipv4.mrt;
-	return NULL;
-}
+अटल काष्ठा mr_table *ipmr_mr_table_iter(काष्ठा net *net,
+					   काष्ठा mr_table *mrt)
+अणु
+	अगर (!mrt)
+		वापस net->ipv4.mrt;
+	वापस शून्य;
+पूर्ण
 
-static struct mr_table *ipmr_get_table(struct net *net, u32 id)
-{
-	return net->ipv4.mrt;
-}
+अटल काष्ठा mr_table *ipmr_get_table(काष्ठा net *net, u32 id)
+अणु
+	वापस net->ipv4.mrt;
+पूर्ण
 
-static int ipmr_fib_lookup(struct net *net, struct flowi4 *flp4,
-			   struct mr_table **mrt)
-{
+अटल पूर्णांक ipmr_fib_lookup(काष्ठा net *net, काष्ठा flowi4 *flp4,
+			   काष्ठा mr_table **mrt)
+अणु
 	*mrt = net->ipv4.mrt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __net_init ipmr_rules_init(struct net *net)
-{
-	struct mr_table *mrt;
+अटल पूर्णांक __net_init ipmr_rules_init(काष्ठा net *net)
+अणु
+	काष्ठा mr_table *mrt;
 
 	mrt = ipmr_new_table(net, RT_TABLE_DEFAULT);
-	if (IS_ERR(mrt))
-		return PTR_ERR(mrt);
+	अगर (IS_ERR(mrt))
+		वापस PTR_ERR(mrt);
 	net->ipv4.mrt = mrt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit ipmr_rules_exit(struct net *net)
-{
+अटल व्योम __net_निकास ipmr_rules_निकास(काष्ठा net *net)
+अणु
 	rtnl_lock();
-	ipmr_free_table(net->ipv4.mrt);
-	net->ipv4.mrt = NULL;
+	ipmr_मुक्त_table(net->ipv4.mrt);
+	net->ipv4.mrt = शून्य;
 	rtnl_unlock();
-}
+पूर्ण
 
-static int ipmr_rules_dump(struct net *net, struct notifier_block *nb,
-			   struct netlink_ext_ack *extack)
-{
-	return 0;
-}
+अटल पूर्णांक ipmr_rules_dump(काष्ठा net *net, काष्ठा notअगरier_block *nb,
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस 0;
+पूर्ण
 
-static unsigned int ipmr_rules_seq_read(struct net *net)
-{
-	return 0;
-}
+अटल अचिन्हित पूर्णांक ipmr_rules_seq_पढ़ो(काष्ठा net *net)
+अणु
+	वापस 0;
+पूर्ण
 
-bool ipmr_rule_default(const struct fib_rule *rule)
-{
-	return true;
-}
-EXPORT_SYMBOL(ipmr_rule_default);
-#endif
+bool ipmr_rule_शेष(स्थिर काष्ठा fib_rule *rule)
+अणु
+	वापस true;
+पूर्ण
+EXPORT_SYMBOL(ipmr_rule_शेष);
+#पूर्ण_अगर
 
-static inline int ipmr_hash_cmp(struct rhashtable_compare_arg *arg,
-				const void *ptr)
-{
-	const struct mfc_cache_cmp_arg *cmparg = arg->key;
-	struct mfc_cache *c = (struct mfc_cache *)ptr;
+अटल अंतरभूत पूर्णांक ipmr_hash_cmp(काष्ठा rhashtable_compare_arg *arg,
+				स्थिर व्योम *ptr)
+अणु
+	स्थिर काष्ठा mfc_cache_cmp_arg *cmparg = arg->key;
+	काष्ठा mfc_cache *c = (काष्ठा mfc_cache *)ptr;
 
-	return cmparg->mfc_mcastgrp != c->mfc_mcastgrp ||
+	वापस cmparg->mfc_mcastgrp != c->mfc_mcastgrp ||
 	       cmparg->mfc_origin != c->mfc_origin;
-}
+पूर्ण
 
-static const struct rhashtable_params ipmr_rht_params = {
-	.head_offset = offsetof(struct mr_mfc, mnode),
-	.key_offset = offsetof(struct mfc_cache, cmparg),
-	.key_len = sizeof(struct mfc_cache_cmp_arg),
-	.nelem_hint = 3,
+अटल स्थिर काष्ठा rhashtable_params ipmr_rht_params = अणु
+	.head_offset = दुरत्व(काष्ठा mr_mfc, mnode),
+	.key_offset = दुरत्व(काष्ठा mfc_cache, cmparg),
+	.key_len = माप(काष्ठा mfc_cache_cmp_arg),
+	.nelem_hपूर्णांक = 3,
 	.obj_cmpfn = ipmr_hash_cmp,
-	.automatic_shrinking = true,
-};
+	.स्वतःmatic_shrinking = true,
+पूर्ण;
 
-static void ipmr_new_table_set(struct mr_table *mrt,
-			       struct net *net)
-{
-#ifdef CONFIG_IP_MROUTE_MULTIPLE_TABLES
+अटल व्योम ipmr_new_table_set(काष्ठा mr_table *mrt,
+			       काष्ठा net *net)
+अणु
+#अगर_घोषित CONFIG_IP_MROUTE_MULTIPLE_TABLES
 	list_add_tail_rcu(&mrt->list, &net->ipv4.mr_tables);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static struct mfc_cache_cmp_arg ipmr_mr_table_ops_cmparg_any = {
+अटल काष्ठा mfc_cache_cmp_arg ipmr_mr_table_ops_cmparg_any = अणु
 	.mfc_mcastgrp = htonl(INADDR_ANY),
 	.mfc_origin = htonl(INADDR_ANY),
-};
+पूर्ण;
 
-static struct mr_table_ops ipmr_mr_table_ops = {
+अटल काष्ठा mr_table_ops ipmr_mr_table_ops = अणु
 	.rht_params = &ipmr_rht_params,
 	.cmparg_any = &ipmr_mr_table_ops_cmparg_any,
-};
+पूर्ण;
 
-static struct mr_table *ipmr_new_table(struct net *net, u32 id)
-{
-	struct mr_table *mrt;
+अटल काष्ठा mr_table *ipmr_new_table(काष्ठा net *net, u32 id)
+अणु
+	काष्ठा mr_table *mrt;
 
 	/* "pimreg%u" should not exceed 16 bytes (IFNAMSIZ) */
-	if (id != RT_TABLE_DEFAULT && id >= 1000000000)
-		return ERR_PTR(-EINVAL);
+	अगर (id != RT_TABLE_DEFAULT && id >= 1000000000)
+		वापस ERR_PTR(-EINVAL);
 
 	mrt = ipmr_get_table(net, id);
-	if (mrt)
-		return mrt;
+	अगर (mrt)
+		वापस mrt;
 
-	return mr_table_alloc(net, id, &ipmr_mr_table_ops,
+	वापस mr_table_alloc(net, id, &ipmr_mr_table_ops,
 			      ipmr_expire_process, ipmr_new_table_set);
-}
+पूर्ण
 
-static void ipmr_free_table(struct mr_table *mrt)
-{
-	del_timer_sync(&mrt->ipmr_expire_timer);
+अटल व्योम ipmr_मुक्त_table(काष्ठा mr_table *mrt)
+अणु
+	del_समयr_sync(&mrt->ipmr_expire_समयr);
 	mroute_clean_tables(mrt, MRT_FLUSH_VIFS | MRT_FLUSH_VIFS_STATIC |
 				 MRT_FLUSH_MFC | MRT_FLUSH_MFC_STATIC);
 	rhltable_destroy(&mrt->mfc_hash);
-	kfree(mrt);
-}
+	kमुक्त(mrt);
+पूर्ण
 
-/* Service routines creating virtual interfaces: DVMRP tunnels and PIMREG */
+/* Service routines creating भव पूर्णांकerfaces: DVMRP tunnels and PIMREG */
 
 /* Initialize ipmr pimreg/tunnel in_device */
-static bool ipmr_init_vif_indev(const struct net_device *dev)
-{
-	struct in_device *in_dev;
+अटल bool ipmr_init_vअगर_indev(स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा in_device *in_dev;
 
 	ASSERT_RTNL();
 
 	in_dev = __in_dev_get_rtnl(dev);
-	if (!in_dev)
-		return false;
+	अगर (!in_dev)
+		वापस false;
 	ipv4_devconf_setall(in_dev);
 	neigh_parms_data_state_setall(in_dev->arp_parms);
 	IPV4_DEVCONF(in_dev->cnf, RP_FILTER) = 0;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct net_device *ipmr_new_tunnel(struct net *net, struct vifctl *v)
-{
-	struct net_device *tunnel_dev, *new_dev;
-	struct ip_tunnel_parm p = { };
-	int err;
+अटल काष्ठा net_device *ipmr_new_tunnel(काष्ठा net *net, काष्ठा vअगरctl *v)
+अणु
+	काष्ठा net_device *tunnel_dev, *new_dev;
+	काष्ठा ip_tunnel_parm p = अणु पूर्ण;
+	पूर्णांक err;
 
 	tunnel_dev = __dev_get_by_name(net, "tunl0");
-	if (!tunnel_dev)
-		goto out;
+	अगर (!tunnel_dev)
+		जाओ out;
 
-	p.iph.daddr = v->vifc_rmt_addr.s_addr;
-	p.iph.saddr = v->vifc_lcl_addr.s_addr;
+	p.iph.daddr = v->vअगरc_rmt_addr.s_addr;
+	p.iph.saddr = v->vअगरc_lcl_addr.s_addr;
 	p.iph.version = 4;
 	p.iph.ihl = 5;
 	p.iph.protocol = IPPROTO_IPIP;
-	sprintf(p.name, "dvmrp%d", v->vifc_vifi);
+	प्र_लिखो(p.name, "dvmrp%d", v->vअगरc_vअगरi);
 
-	if (!tunnel_dev->netdev_ops->ndo_tunnel_ctl)
-		goto out;
-	err = tunnel_dev->netdev_ops->ndo_tunnel_ctl(tunnel_dev, &p,
+	अगर (!tunnel_dev->netdev_ops->nकरो_tunnel_ctl)
+		जाओ out;
+	err = tunnel_dev->netdev_ops->nकरो_tunnel_ctl(tunnel_dev, &p,
 			SIOCADDTUNNEL);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	new_dev = __dev_get_by_name(net, p.name);
-	if (!new_dev)
-		goto out;
+	अगर (!new_dev)
+		जाओ out;
 
 	new_dev->flags |= IFF_MULTICAST;
-	if (!ipmr_init_vif_indev(new_dev))
-		goto out_unregister;
-	if (dev_open(new_dev, NULL))
-		goto out_unregister;
+	अगर (!ipmr_init_vअगर_indev(new_dev))
+		जाओ out_unरेजिस्टर;
+	अगर (dev_खोलो(new_dev, शून्य))
+		जाओ out_unरेजिस्टर;
 	dev_hold(new_dev);
 	err = dev_set_allmulti(new_dev, 1);
-	if (err) {
-		dev_close(new_dev);
-		tunnel_dev->netdev_ops->ndo_tunnel_ctl(tunnel_dev, &p,
+	अगर (err) अणु
+		dev_बंद(new_dev);
+		tunnel_dev->netdev_ops->nकरो_tunnel_ctl(tunnel_dev, &p,
 				SIOCDELTUNNEL);
 		dev_put(new_dev);
 		new_dev = ERR_PTR(err);
-	}
-	return new_dev;
+	पूर्ण
+	वापस new_dev;
 
-out_unregister:
-	unregister_netdevice(new_dev);
+out_unरेजिस्टर:
+	unरेजिस्टर_netdevice(new_dev);
 out:
-	return ERR_PTR(-ENOBUFS);
-}
+	वापस ERR_PTR(-ENOBUFS);
+पूर्ण
 
-#if defined(CONFIG_IP_PIMSM_V1) || defined(CONFIG_IP_PIMSM_V2)
-static netdev_tx_t reg_vif_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct net *net = dev_net(dev);
-	struct mr_table *mrt;
-	struct flowi4 fl4 = {
-		.flowi4_oif	= dev->ifindex,
-		.flowi4_iif	= skb->skb_iif ? : LOOPBACK_IFINDEX,
+#अगर defined(CONFIG_IP_PIMSM_V1) || defined(CONFIG_IP_PIMSM_V2)
+अटल netdev_tx_t reg_vअगर_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा mr_table *mrt;
+	काष्ठा flowi4 fl4 = अणु
+		.flowi4_oअगर	= dev->अगरindex,
+		.flowi4_iअगर	= skb->skb_iअगर ? : LOOPBACK_IFINDEX,
 		.flowi4_mark	= skb->mark,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
 	err = ipmr_fib_lookup(net, &fl4, &mrt);
-	if (err < 0) {
-		kfree_skb(skb);
-		return err;
-	}
+	अगर (err < 0) अणु
+		kमुक्त_skb(skb);
+		वापस err;
+	पूर्ण
 
-	read_lock(&mrt_lock);
+	पढ़ो_lock(&mrt_lock);
 	dev->stats.tx_bytes += skb->len;
 	dev->stats.tx_packets++;
-	ipmr_cache_report(mrt, skb, mrt->mroute_reg_vif_num, IGMPMSG_WHOLEPKT);
-	read_unlock(&mrt_lock);
-	kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
+	ipmr_cache_report(mrt, skb, mrt->mroute_reg_vअगर_num, IGMPMSG_WHOLEPKT);
+	पढ़ो_unlock(&mrt_lock);
+	kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int reg_vif_get_iflink(const struct net_device *dev)
-{
-	return 0;
-}
+अटल पूर्णांक reg_vअगर_get_अगरlink(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops reg_vif_netdev_ops = {
-	.ndo_start_xmit	= reg_vif_xmit,
-	.ndo_get_iflink = reg_vif_get_iflink,
-};
+अटल स्थिर काष्ठा net_device_ops reg_vअगर_netdev_ops = अणु
+	.nकरो_start_xmit	= reg_vअगर_xmit,
+	.nकरो_get_अगरlink = reg_vअगर_get_अगरlink,
+पूर्ण;
 
-static void reg_vif_setup(struct net_device *dev)
-{
+अटल व्योम reg_vअगर_setup(काष्ठा net_device *dev)
+अणु
 	dev->type		= ARPHRD_PIMREG;
-	dev->mtu		= ETH_DATA_LEN - sizeof(struct iphdr) - 8;
+	dev->mtu		= ETH_DATA_LEN - माप(काष्ठा iphdr) - 8;
 	dev->flags		= IFF_NOARP;
-	dev->netdev_ops		= &reg_vif_netdev_ops;
-	dev->needs_free_netdev	= true;
+	dev->netdev_ops		= &reg_vअगर_netdev_ops;
+	dev->needs_मुक्त_netdev	= true;
 	dev->features		|= NETIF_F_NETNS_LOCAL;
-}
+पूर्ण
 
-static struct net_device *ipmr_reg_vif(struct net *net, struct mr_table *mrt)
-{
-	struct net_device *dev;
-	char name[IFNAMSIZ];
+अटल काष्ठा net_device *ipmr_reg_vअगर(काष्ठा net *net, काष्ठा mr_table *mrt)
+अणु
+	काष्ठा net_device *dev;
+	अक्षर name[IFNAMSIZ];
 
-	if (mrt->id == RT_TABLE_DEFAULT)
-		sprintf(name, "pimreg");
-	else
-		sprintf(name, "pimreg%u", mrt->id);
+	अगर (mrt->id == RT_TABLE_DEFAULT)
+		प्र_लिखो(name, "pimreg");
+	अन्यथा
+		प्र_लिखो(name, "pimreg%u", mrt->id);
 
-	dev = alloc_netdev(0, name, NET_NAME_UNKNOWN, reg_vif_setup);
+	dev = alloc_netdev(0, name, NET_NAME_UNKNOWN, reg_vअगर_setup);
 
-	if (!dev)
-		return NULL;
+	अगर (!dev)
+		वापस शून्य;
 
 	dev_net_set(dev, net);
 
-	if (register_netdevice(dev)) {
-		free_netdev(dev);
-		return NULL;
-	}
+	अगर (रेजिस्टर_netdevice(dev)) अणु
+		मुक्त_netdev(dev);
+		वापस शून्य;
+	पूर्ण
 
-	if (!ipmr_init_vif_indev(dev))
-		goto failure;
-	if (dev_open(dev, NULL))
-		goto failure;
+	अगर (!ipmr_init_vअगर_indev(dev))
+		जाओ failure;
+	अगर (dev_खोलो(dev, शून्य))
+		जाओ failure;
 
 	dev_hold(dev);
 
-	return dev;
+	वापस dev;
 
 failure:
-	unregister_netdevice(dev);
-	return NULL;
-}
+	unरेजिस्टर_netdevice(dev);
+	वापस शून्य;
+पूर्ण
 
-/* called with rcu_read_lock() */
-static int __pim_rcv(struct mr_table *mrt, struct sk_buff *skb,
-		     unsigned int pimlen)
-{
-	struct net_device *reg_dev = NULL;
-	struct iphdr *encap;
+/* called with rcu_पढ़ो_lock() */
+अटल पूर्णांक __pim_rcv(काष्ठा mr_table *mrt, काष्ठा sk_buff *skb,
+		     अचिन्हित पूर्णांक pimlen)
+अणु
+	काष्ठा net_device *reg_dev = शून्य;
+	काष्ठा iphdr *encap;
 
-	encap = (struct iphdr *)(skb_transport_header(skb) + pimlen);
+	encap = (काष्ठा iphdr *)(skb_transport_header(skb) + pimlen);
 	/* Check that:
 	 * a. packet is really sent to a multicast group
-	 * b. packet is not a NULL-REGISTER
+	 * b. packet is not a शून्य-REGISTER
 	 * c. packet is not truncated
 	 */
-	if (!ipv4_is_multicast(encap->daddr) ||
+	अगर (!ipv4_is_multicast(encap->daddr) ||
 	    encap->tot_len == 0 ||
 	    ntohs(encap->tot_len) + pimlen > skb->len)
-		return 1;
+		वापस 1;
 
-	read_lock(&mrt_lock);
-	if (mrt->mroute_reg_vif_num >= 0)
-		reg_dev = mrt->vif_table[mrt->mroute_reg_vif_num].dev;
-	read_unlock(&mrt_lock);
+	पढ़ो_lock(&mrt_lock);
+	अगर (mrt->mroute_reg_vअगर_num >= 0)
+		reg_dev = mrt->vअगर_table[mrt->mroute_reg_vअगर_num].dev;
+	पढ़ो_unlock(&mrt_lock);
 
-	if (!reg_dev)
-		return 1;
+	अगर (!reg_dev)
+		वापस 1;
 
 	skb->mac_header = skb->network_header;
 	skb_pull(skb, (u8 *)encap - skb->data);
@@ -605,517 +606,517 @@ static int __pim_rcv(struct mr_table *mrt, struct sk_buff *skb,
 
 	skb_tunnel_rx(skb, reg_dev, dev_net(reg_dev));
 
-	netif_rx(skb);
+	netअगर_rx(skb);
 
-	return NET_RX_SUCCESS;
-}
-#else
-static struct net_device *ipmr_reg_vif(struct net *net, struct mr_table *mrt)
-{
-	return NULL;
-}
-#endif
+	वापस NET_RX_SUCCESS;
+पूर्ण
+#अन्यथा
+अटल काष्ठा net_device *ipmr_reg_vअगर(काष्ठा net *net, काष्ठा mr_table *mrt)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-static int call_ipmr_vif_entry_notifiers(struct net *net,
-					 enum fib_event_type event_type,
-					 struct vif_device *vif,
-					 vifi_t vif_index, u32 tb_id)
-{
-	return mr_call_vif_notifiers(net, RTNL_FAMILY_IPMR, event_type,
-				     vif, vif_index, tb_id,
+अटल पूर्णांक call_ipmr_vअगर_entry_notअगरiers(काष्ठा net *net,
+					 क्रमागत fib_event_type event_type,
+					 काष्ठा vअगर_device *vअगर,
+					 vअगरi_t vअगर_index, u32 tb_id)
+अणु
+	वापस mr_call_vअगर_notअगरiers(net, RTNL_FAMILY_IPMR, event_type,
+				     vअगर, vअगर_index, tb_id,
 				     &net->ipv4.ipmr_seq);
-}
+पूर्ण
 
-static int call_ipmr_mfc_entry_notifiers(struct net *net,
-					 enum fib_event_type event_type,
-					 struct mfc_cache *mfc, u32 tb_id)
-{
-	return mr_call_mfc_notifiers(net, RTNL_FAMILY_IPMR, event_type,
+अटल पूर्णांक call_ipmr_mfc_entry_notअगरiers(काष्ठा net *net,
+					 क्रमागत fib_event_type event_type,
+					 काष्ठा mfc_cache *mfc, u32 tb_id)
+अणु
+	वापस mr_call_mfc_notअगरiers(net, RTNL_FAMILY_IPMR, event_type,
 				     &mfc->_c, tb_id, &net->ipv4.ipmr_seq);
-}
+पूर्ण
 
 /**
- *	vif_delete - Delete a VIF entry
+ *	vअगर_delete - Delete a VIF entry
  *	@mrt: Table to delete from
- *	@vifi: VIF identifier to delete
- *	@notify: Set to 1, if the caller is a notifier_call
- *	@head: if unregistering the VIF, place it on this queue
+ *	@vअगरi: VIF identअगरier to delete
+ *	@notअगरy: Set to 1, अगर the caller is a notअगरier_call
+ *	@head: अगर unरेजिस्टरing the VIF, place it on this queue
  */
-static int vif_delete(struct mr_table *mrt, int vifi, int notify,
-		      struct list_head *head)
-{
-	struct net *net = read_pnet(&mrt->net);
-	struct vif_device *v;
-	struct net_device *dev;
-	struct in_device *in_dev;
+अटल पूर्णांक vअगर_delete(काष्ठा mr_table *mrt, पूर्णांक vअगरi, पूर्णांक notअगरy,
+		      काष्ठा list_head *head)
+अणु
+	काष्ठा net *net = पढ़ो_pnet(&mrt->net);
+	काष्ठा vअगर_device *v;
+	काष्ठा net_device *dev;
+	काष्ठा in_device *in_dev;
 
-	if (vifi < 0 || vifi >= mrt->maxvif)
-		return -EADDRNOTAVAIL;
+	अगर (vअगरi < 0 || vअगरi >= mrt->maxvअगर)
+		वापस -EADDRNOTAVAIL;
 
-	v = &mrt->vif_table[vifi];
+	v = &mrt->vअगर_table[vअगरi];
 
-	if (VIF_EXISTS(mrt, vifi))
-		call_ipmr_vif_entry_notifiers(net, FIB_EVENT_VIF_DEL, v, vifi,
+	अगर (VIF_EXISTS(mrt, vअगरi))
+		call_ipmr_vअगर_entry_notअगरiers(net, FIB_EVENT_VIF_DEL, v, vअगरi,
 					      mrt->id);
 
-	write_lock_bh(&mrt_lock);
+	ग_लिखो_lock_bh(&mrt_lock);
 	dev = v->dev;
-	v->dev = NULL;
+	v->dev = शून्य;
 
-	if (!dev) {
-		write_unlock_bh(&mrt_lock);
-		return -EADDRNOTAVAIL;
-	}
+	अगर (!dev) अणु
+		ग_लिखो_unlock_bh(&mrt_lock);
+		वापस -EADDRNOTAVAIL;
+	पूर्ण
 
-	if (vifi == mrt->mroute_reg_vif_num)
-		mrt->mroute_reg_vif_num = -1;
+	अगर (vअगरi == mrt->mroute_reg_vअगर_num)
+		mrt->mroute_reg_vअगर_num = -1;
 
-	if (vifi + 1 == mrt->maxvif) {
-		int tmp;
+	अगर (vअगरi + 1 == mrt->maxvअगर) अणु
+		पूर्णांक पंचांगp;
 
-		for (tmp = vifi - 1; tmp >= 0; tmp--) {
-			if (VIF_EXISTS(mrt, tmp))
-				break;
-		}
-		mrt->maxvif = tmp+1;
-	}
+		क्रम (पंचांगp = vअगरi - 1; पंचांगp >= 0; पंचांगp--) अणु
+			अगर (VIF_EXISTS(mrt, पंचांगp))
+				अवरोध;
+		पूर्ण
+		mrt->maxvअगर = पंचांगp+1;
+	पूर्ण
 
-	write_unlock_bh(&mrt_lock);
+	ग_लिखो_unlock_bh(&mrt_lock);
 
 	dev_set_allmulti(dev, -1);
 
 	in_dev = __in_dev_get_rtnl(dev);
-	if (in_dev) {
+	अगर (in_dev) अणु
 		IPV4_DEVCONF(in_dev->cnf, MC_FORWARDING)--;
-		inet_netconf_notify_devconf(dev_net(dev), RTM_NEWNETCONF,
+		inet_netconf_notअगरy_devconf(dev_net(dev), RTM_NEWNETCONF,
 					    NETCONFA_MC_FORWARDING,
-					    dev->ifindex, &in_dev->cnf);
+					    dev->अगरindex, &in_dev->cnf);
 		ip_rt_multicast_event(in_dev);
-	}
+	पूर्ण
 
-	if (v->flags & (VIFF_TUNNEL | VIFF_REGISTER) && !notify)
-		unregister_netdevice_queue(dev, head);
+	अगर (v->flags & (VIFF_TUNNEL | VIFF_REGISTER) && !notअगरy)
+		unरेजिस्टर_netdevice_queue(dev, head);
 
 	dev_put(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ipmr_cache_free_rcu(struct rcu_head *head)
-{
-	struct mr_mfc *c = container_of(head, struct mr_mfc, rcu);
+अटल व्योम ipmr_cache_मुक्त_rcu(काष्ठा rcu_head *head)
+अणु
+	काष्ठा mr_mfc *c = container_of(head, काष्ठा mr_mfc, rcu);
 
-	kmem_cache_free(mrt_cachep, (struct mfc_cache *)c);
-}
+	kmem_cache_मुक्त(mrt_cachep, (काष्ठा mfc_cache *)c);
+पूर्ण
 
-static void ipmr_cache_free(struct mfc_cache *c)
-{
-	call_rcu(&c->_c.rcu, ipmr_cache_free_rcu);
-}
+अटल व्योम ipmr_cache_मुक्त(काष्ठा mfc_cache *c)
+अणु
+	call_rcu(&c->_c.rcu, ipmr_cache_मुक्त_rcu);
+पूर्ण
 
-/* Destroy an unresolved cache entry, killing queued skbs
- * and reporting error to netlink readers.
+/* Destroy an unresolved cache entry, समाप्तing queued skbs
+ * and reporting error to netlink पढ़ोers.
  */
-static void ipmr_destroy_unres(struct mr_table *mrt, struct mfc_cache *c)
-{
-	struct net *net = read_pnet(&mrt->net);
-	struct sk_buff *skb;
-	struct nlmsgerr *e;
+अटल व्योम ipmr_destroy_unres(काष्ठा mr_table *mrt, काष्ठा mfc_cache *c)
+अणु
+	काष्ठा net *net = पढ़ो_pnet(&mrt->net);
+	काष्ठा sk_buff *skb;
+	काष्ठा nlmsgerr *e;
 
 	atomic_dec(&mrt->cache_resolve_queue_len);
 
-	while ((skb = skb_dequeue(&c->_c.mfc_un.unres.unresolved))) {
-		if (ip_hdr(skb)->version == 0) {
-			struct nlmsghdr *nlh = skb_pull(skb,
-							sizeof(struct iphdr));
+	जबतक ((skb = skb_dequeue(&c->_c.mfc_un.unres.unresolved))) अणु
+		अगर (ip_hdr(skb)->version == 0) अणु
+			काष्ठा nlmsghdr *nlh = skb_pull(skb,
+							माप(काष्ठा iphdr));
 			nlh->nlmsg_type = NLMSG_ERROR;
-			nlh->nlmsg_len = nlmsg_msg_size(sizeof(struct nlmsgerr));
+			nlh->nlmsg_len = nlmsg_msg_size(माप(काष्ठा nlmsgerr));
 			skb_trim(skb, nlh->nlmsg_len);
 			e = nlmsg_data(nlh);
 			e->error = -ETIMEDOUT;
-			memset(&e->msg, 0, sizeof(e->msg));
+			स_रखो(&e->msg, 0, माप(e->msg));
 
 			rtnl_unicast(skb, net, NETLINK_CB(skb).portid);
-		} else {
-			kfree_skb(skb);
-		}
-	}
+		पूर्ण अन्यथा अणु
+			kमुक्त_skb(skb);
+		पूर्ण
+	पूर्ण
 
-	ipmr_cache_free(c);
-}
+	ipmr_cache_मुक्त(c);
+पूर्ण
 
-/* Timer process for the unresolved queue. */
-static void ipmr_expire_process(struct timer_list *t)
-{
-	struct mr_table *mrt = from_timer(mrt, t, ipmr_expire_timer);
-	struct mr_mfc *c, *next;
-	unsigned long expires;
-	unsigned long now;
+/* Timer process क्रम the unresolved queue. */
+अटल व्योम ipmr_expire_process(काष्ठा समयr_list *t)
+अणु
+	काष्ठा mr_table *mrt = from_समयr(mrt, t, ipmr_expire_समयr);
+	काष्ठा mr_mfc *c, *next;
+	अचिन्हित दीर्घ expires;
+	अचिन्हित दीर्घ now;
 
-	if (!spin_trylock(&mfc_unres_lock)) {
-		mod_timer(&mrt->ipmr_expire_timer, jiffies+HZ/10);
-		return;
-	}
+	अगर (!spin_trylock(&mfc_unres_lock)) अणु
+		mod_समयr(&mrt->ipmr_expire_समयr, jअगरfies+HZ/10);
+		वापस;
+	पूर्ण
 
-	if (list_empty(&mrt->mfc_unres_queue))
-		goto out;
+	अगर (list_empty(&mrt->mfc_unres_queue))
+		जाओ out;
 
-	now = jiffies;
+	now = jअगरfies;
 	expires = 10*HZ;
 
-	list_for_each_entry_safe(c, next, &mrt->mfc_unres_queue, list) {
-		if (time_after(c->mfc_un.unres.expires, now)) {
-			unsigned long interval = c->mfc_un.unres.expires - now;
-			if (interval < expires)
-				expires = interval;
-			continue;
-		}
+	list_क्रम_each_entry_safe(c, next, &mrt->mfc_unres_queue, list) अणु
+		अगर (समय_after(c->mfc_un.unres.expires, now)) अणु
+			अचिन्हित दीर्घ पूर्णांकerval = c->mfc_un.unres.expires - now;
+			अगर (पूर्णांकerval < expires)
+				expires = पूर्णांकerval;
+			जारी;
+		पूर्ण
 
 		list_del(&c->list);
-		mroute_netlink_event(mrt, (struct mfc_cache *)c, RTM_DELROUTE);
-		ipmr_destroy_unres(mrt, (struct mfc_cache *)c);
-	}
+		mroute_netlink_event(mrt, (काष्ठा mfc_cache *)c, RTM_DELROUTE);
+		ipmr_destroy_unres(mrt, (काष्ठा mfc_cache *)c);
+	पूर्ण
 
-	if (!list_empty(&mrt->mfc_unres_queue))
-		mod_timer(&mrt->ipmr_expire_timer, jiffies + expires);
+	अगर (!list_empty(&mrt->mfc_unres_queue))
+		mod_समयr(&mrt->ipmr_expire_समयr, jअगरfies + expires);
 
 out:
 	spin_unlock(&mfc_unres_lock);
-}
+पूर्ण
 
-/* Fill oifs list. It is called under write locked mrt_lock. */
-static void ipmr_update_thresholds(struct mr_table *mrt, struct mr_mfc *cache,
-				   unsigned char *ttls)
-{
-	int vifi;
+/* Fill oअगरs list. It is called under ग_लिखो locked mrt_lock. */
+अटल व्योम ipmr_update_thresholds(काष्ठा mr_table *mrt, काष्ठा mr_mfc *cache,
+				   अचिन्हित अक्षर *ttls)
+अणु
+	पूर्णांक vअगरi;
 
-	cache->mfc_un.res.minvif = MAXVIFS;
-	cache->mfc_un.res.maxvif = 0;
-	memset(cache->mfc_un.res.ttls, 255, MAXVIFS);
+	cache->mfc_un.res.minvअगर = MAXVIFS;
+	cache->mfc_un.res.maxvअगर = 0;
+	स_रखो(cache->mfc_un.res.ttls, 255, MAXVIFS);
 
-	for (vifi = 0; vifi < mrt->maxvif; vifi++) {
-		if (VIF_EXISTS(mrt, vifi) &&
-		    ttls[vifi] && ttls[vifi] < 255) {
-			cache->mfc_un.res.ttls[vifi] = ttls[vifi];
-			if (cache->mfc_un.res.minvif > vifi)
-				cache->mfc_un.res.minvif = vifi;
-			if (cache->mfc_un.res.maxvif <= vifi)
-				cache->mfc_un.res.maxvif = vifi + 1;
-		}
-	}
-	cache->mfc_un.res.lastuse = jiffies;
-}
+	क्रम (vअगरi = 0; vअगरi < mrt->maxvअगर; vअगरi++) अणु
+		अगर (VIF_EXISTS(mrt, vअगरi) &&
+		    ttls[vअगरi] && ttls[vअगरi] < 255) अणु
+			cache->mfc_un.res.ttls[vअगरi] = ttls[vअगरi];
+			अगर (cache->mfc_un.res.minvअगर > vअगरi)
+				cache->mfc_un.res.minvअगर = vअगरi;
+			अगर (cache->mfc_un.res.maxvअगर <= vअगरi)
+				cache->mfc_un.res.maxvअगर = vअगरi + 1;
+		पूर्ण
+	पूर्ण
+	cache->mfc_un.res.lastuse = jअगरfies;
+पूर्ण
 
-static int vif_add(struct net *net, struct mr_table *mrt,
-		   struct vifctl *vifc, int mrtsock)
-{
-	struct netdev_phys_item_id ppid = { };
-	int vifi = vifc->vifc_vifi;
-	struct vif_device *v = &mrt->vif_table[vifi];
-	struct net_device *dev;
-	struct in_device *in_dev;
-	int err;
+अटल पूर्णांक vअगर_add(काष्ठा net *net, काष्ठा mr_table *mrt,
+		   काष्ठा vअगरctl *vअगरc, पूर्णांक mrtsock)
+अणु
+	काष्ठा netdev_phys_item_id ppid = अणु पूर्ण;
+	पूर्णांक vअगरi = vअगरc->vअगरc_vअगरi;
+	काष्ठा vअगर_device *v = &mrt->vअगर_table[vअगरi];
+	काष्ठा net_device *dev;
+	काष्ठा in_device *in_dev;
+	पूर्णांक err;
 
-	/* Is vif busy ? */
-	if (VIF_EXISTS(mrt, vifi))
-		return -EADDRINUSE;
+	/* Is vअगर busy ? */
+	अगर (VIF_EXISTS(mrt, vअगरi))
+		वापस -EADDRINUSE;
 
-	switch (vifc->vifc_flags) {
-	case VIFF_REGISTER:
-		if (!ipmr_pimsm_enabled())
-			return -EINVAL;
+	चयन (vअगरc->vअगरc_flags) अणु
+	हाल VIFF_REGISTER:
+		अगर (!ipmr_pimsm_enabled())
+			वापस -EINVAL;
 		/* Special Purpose VIF in PIM
 		 * All the packets will be sent to the daemon
 		 */
-		if (mrt->mroute_reg_vif_num >= 0)
-			return -EADDRINUSE;
-		dev = ipmr_reg_vif(net, mrt);
-		if (!dev)
-			return -ENOBUFS;
+		अगर (mrt->mroute_reg_vअगर_num >= 0)
+			वापस -EADDRINUSE;
+		dev = ipmr_reg_vअगर(net, mrt);
+		अगर (!dev)
+			वापस -ENOBUFS;
 		err = dev_set_allmulti(dev, 1);
-		if (err) {
-			unregister_netdevice(dev);
+		अगर (err) अणु
+			unरेजिस्टर_netdevice(dev);
 			dev_put(dev);
-			return err;
-		}
-		break;
-	case VIFF_TUNNEL:
-		dev = ipmr_new_tunnel(net, vifc);
-		if (IS_ERR(dev))
-			return PTR_ERR(dev);
-		break;
-	case VIFF_USE_IFINDEX:
-	case 0:
-		if (vifc->vifc_flags == VIFF_USE_IFINDEX) {
-			dev = dev_get_by_index(net, vifc->vifc_lcl_ifindex);
-			if (dev && !__in_dev_get_rtnl(dev)) {
+			वापस err;
+		पूर्ण
+		अवरोध;
+	हाल VIFF_TUNNEL:
+		dev = ipmr_new_tunnel(net, vअगरc);
+		अगर (IS_ERR(dev))
+			वापस PTR_ERR(dev);
+		अवरोध;
+	हाल VIFF_USE_IFINDEX:
+	हाल 0:
+		अगर (vअगरc->vअगरc_flags == VIFF_USE_IFINDEX) अणु
+			dev = dev_get_by_index(net, vअगरc->vअगरc_lcl_अगरindex);
+			अगर (dev && !__in_dev_get_rtnl(dev)) अणु
 				dev_put(dev);
-				return -EADDRNOTAVAIL;
-			}
-		} else {
-			dev = ip_dev_find(net, vifc->vifc_lcl_addr.s_addr);
-		}
-		if (!dev)
-			return -EADDRNOTAVAIL;
+				वापस -EADDRNOTAVAIL;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			dev = ip_dev_find(net, vअगरc->vअगरc_lcl_addr.s_addr);
+		पूर्ण
+		अगर (!dev)
+			वापस -EADDRNOTAVAIL;
 		err = dev_set_allmulti(dev, 1);
-		if (err) {
+		अगर (err) अणु
 			dev_put(dev);
-			return err;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+			वापस err;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	in_dev = __in_dev_get_rtnl(dev);
-	if (!in_dev) {
+	अगर (!in_dev) अणु
 		dev_put(dev);
-		return -EADDRNOTAVAIL;
-	}
+		वापस -EADDRNOTAVAIL;
+	पूर्ण
 	IPV4_DEVCONF(in_dev->cnf, MC_FORWARDING)++;
-	inet_netconf_notify_devconf(net, RTM_NEWNETCONF, NETCONFA_MC_FORWARDING,
-				    dev->ifindex, &in_dev->cnf);
+	inet_netconf_notअगरy_devconf(net, RTM_NEWNETCONF, NETCONFA_MC_FORWARDING,
+				    dev->अगरindex, &in_dev->cnf);
 	ip_rt_multicast_event(in_dev);
 
-	/* Fill in the VIF structures */
-	vif_device_init(v, dev, vifc->vifc_rate_limit,
-			vifc->vifc_threshold,
-			vifc->vifc_flags | (!mrtsock ? VIFF_STATIC : 0),
+	/* Fill in the VIF काष्ठाures */
+	vअगर_device_init(v, dev, vअगरc->vअगरc_rate_limit,
+			vअगरc->vअगरc_threshold,
+			vअगरc->vअगरc_flags | (!mrtsock ? VIFF_STATIC : 0),
 			(VIFF_TUNNEL | VIFF_REGISTER));
 
 	err = dev_get_port_parent_id(dev, &ppid, true);
-	if (err == 0) {
-		memcpy(v->dev_parent_id.id, ppid.id, ppid.id_len);
+	अगर (err == 0) अणु
+		स_नकल(v->dev_parent_id.id, ppid.id, ppid.id_len);
 		v->dev_parent_id.id_len = ppid.id_len;
-	} else {
+	पूर्ण अन्यथा अणु
 		v->dev_parent_id.id_len = 0;
-	}
+	पूर्ण
 
-	v->local = vifc->vifc_lcl_addr.s_addr;
-	v->remote = vifc->vifc_rmt_addr.s_addr;
+	v->local = vअगरc->vअगरc_lcl_addr.s_addr;
+	v->remote = vअगरc->vअगरc_rmt_addr.s_addr;
 
 	/* And finish update writing critical data */
-	write_lock_bh(&mrt_lock);
+	ग_लिखो_lock_bh(&mrt_lock);
 	v->dev = dev;
-	if (v->flags & VIFF_REGISTER)
-		mrt->mroute_reg_vif_num = vifi;
-	if (vifi+1 > mrt->maxvif)
-		mrt->maxvif = vifi+1;
-	write_unlock_bh(&mrt_lock);
-	call_ipmr_vif_entry_notifiers(net, FIB_EVENT_VIF_ADD, v, vifi, mrt->id);
-	return 0;
-}
+	अगर (v->flags & VIFF_REGISTER)
+		mrt->mroute_reg_vअगर_num = vअगरi;
+	अगर (vअगरi+1 > mrt->maxvअगर)
+		mrt->maxvअगर = vअगरi+1;
+	ग_लिखो_unlock_bh(&mrt_lock);
+	call_ipmr_vअगर_entry_notअगरiers(net, FIB_EVENT_VIF_ADD, v, vअगरi, mrt->id);
+	वापस 0;
+पूर्ण
 
-/* called with rcu_read_lock() */
-static struct mfc_cache *ipmr_cache_find(struct mr_table *mrt,
+/* called with rcu_पढ़ो_lock() */
+अटल काष्ठा mfc_cache *ipmr_cache_find(काष्ठा mr_table *mrt,
 					 __be32 origin,
 					 __be32 mcastgrp)
-{
-	struct mfc_cache_cmp_arg arg = {
+अणु
+	काष्ठा mfc_cache_cmp_arg arg = अणु
 			.mfc_mcastgrp = mcastgrp,
 			.mfc_origin = origin
-	};
+	पूर्ण;
 
-	return mr_mfc_find(mrt, &arg);
-}
+	वापस mr_mfc_find(mrt, &arg);
+पूर्ण
 
-/* Look for a (*,G) entry */
-static struct mfc_cache *ipmr_cache_find_any(struct mr_table *mrt,
-					     __be32 mcastgrp, int vifi)
-{
-	struct mfc_cache_cmp_arg arg = {
+/* Look क्रम a (*,G) entry */
+अटल काष्ठा mfc_cache *ipmr_cache_find_any(काष्ठा mr_table *mrt,
+					     __be32 mcastgrp, पूर्णांक vअगरi)
+अणु
+	काष्ठा mfc_cache_cmp_arg arg = अणु
 			.mfc_mcastgrp = mcastgrp,
 			.mfc_origin = htonl(INADDR_ANY)
-	};
+	पूर्ण;
 
-	if (mcastgrp == htonl(INADDR_ANY))
-		return mr_mfc_find_any_parent(mrt, vifi);
-	return mr_mfc_find_any(mrt, vifi, &arg);
-}
+	अगर (mcastgrp == htonl(INADDR_ANY))
+		वापस mr_mfc_find_any_parent(mrt, vअगरi);
+	वापस mr_mfc_find_any(mrt, vअगरi, &arg);
+पूर्ण
 
-/* Look for a (S,G,iif) entry if parent != -1 */
-static struct mfc_cache *ipmr_cache_find_parent(struct mr_table *mrt,
+/* Look क्रम a (S,G,iअगर) entry अगर parent != -1 */
+अटल काष्ठा mfc_cache *ipmr_cache_find_parent(काष्ठा mr_table *mrt,
 						__be32 origin, __be32 mcastgrp,
-						int parent)
-{
-	struct mfc_cache_cmp_arg arg = {
+						पूर्णांक parent)
+अणु
+	काष्ठा mfc_cache_cmp_arg arg = अणु
 			.mfc_mcastgrp = mcastgrp,
 			.mfc_origin = origin,
-	};
+	पूर्ण;
 
-	return mr_mfc_find_parent(mrt, &arg, parent);
-}
+	वापस mr_mfc_find_parent(mrt, &arg, parent);
+पूर्ण
 
 /* Allocate a multicast cache entry */
-static struct mfc_cache *ipmr_cache_alloc(void)
-{
-	struct mfc_cache *c = kmem_cache_zalloc(mrt_cachep, GFP_KERNEL);
+अटल काष्ठा mfc_cache *ipmr_cache_alloc(व्योम)
+अणु
+	काष्ठा mfc_cache *c = kmem_cache_zalloc(mrt_cachep, GFP_KERNEL);
 
-	if (c) {
-		c->_c.mfc_un.res.last_assert = jiffies - MFC_ASSERT_THRESH - 1;
-		c->_c.mfc_un.res.minvif = MAXVIFS;
-		c->_c.free = ipmr_cache_free_rcu;
+	अगर (c) अणु
+		c->_c.mfc_un.res.last_निश्चित = jअगरfies - MFC_ASSERT_THRESH - 1;
+		c->_c.mfc_un.res.minvअगर = MAXVIFS;
+		c->_c.मुक्त = ipmr_cache_मुक्त_rcu;
 		refcount_set(&c->_c.mfc_un.res.refcount, 1);
-	}
-	return c;
-}
+	पूर्ण
+	वापस c;
+पूर्ण
 
-static struct mfc_cache *ipmr_cache_alloc_unres(void)
-{
-	struct mfc_cache *c = kmem_cache_zalloc(mrt_cachep, GFP_ATOMIC);
+अटल काष्ठा mfc_cache *ipmr_cache_alloc_unres(व्योम)
+अणु
+	काष्ठा mfc_cache *c = kmem_cache_zalloc(mrt_cachep, GFP_ATOMIC);
 
-	if (c) {
+	अगर (c) अणु
 		skb_queue_head_init(&c->_c.mfc_un.unres.unresolved);
-		c->_c.mfc_un.unres.expires = jiffies + 10 * HZ;
-	}
-	return c;
-}
+		c->_c.mfc_un.unres.expires = jअगरfies + 10 * HZ;
+	पूर्ण
+	वापस c;
+पूर्ण
 
-/* A cache entry has gone into a resolved state from queued */
-static void ipmr_cache_resolve(struct net *net, struct mr_table *mrt,
-			       struct mfc_cache *uc, struct mfc_cache *c)
-{
-	struct sk_buff *skb;
-	struct nlmsgerr *e;
+/* A cache entry has gone पूर्णांकo a resolved state from queued */
+अटल व्योम ipmr_cache_resolve(काष्ठा net *net, काष्ठा mr_table *mrt,
+			       काष्ठा mfc_cache *uc, काष्ठा mfc_cache *c)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा nlmsgerr *e;
 
 	/* Play the pending entries through our router */
-	while ((skb = __skb_dequeue(&uc->_c.mfc_un.unres.unresolved))) {
-		if (ip_hdr(skb)->version == 0) {
-			struct nlmsghdr *nlh = skb_pull(skb,
-							sizeof(struct iphdr));
+	जबतक ((skb = __skb_dequeue(&uc->_c.mfc_un.unres.unresolved))) अणु
+		अगर (ip_hdr(skb)->version == 0) अणु
+			काष्ठा nlmsghdr *nlh = skb_pull(skb,
+							माप(काष्ठा iphdr));
 
-			if (mr_fill_mroute(mrt, skb, &c->_c,
-					   nlmsg_data(nlh)) > 0) {
-				nlh->nlmsg_len = skb_tail_pointer(skb) -
+			अगर (mr_fill_mroute(mrt, skb, &c->_c,
+					   nlmsg_data(nlh)) > 0) अणु
+				nlh->nlmsg_len = skb_tail_poपूर्णांकer(skb) -
 						 (u8 *)nlh;
-			} else {
+			पूर्ण अन्यथा अणु
 				nlh->nlmsg_type = NLMSG_ERROR;
-				nlh->nlmsg_len = nlmsg_msg_size(sizeof(struct nlmsgerr));
+				nlh->nlmsg_len = nlmsg_msg_size(माप(काष्ठा nlmsgerr));
 				skb_trim(skb, nlh->nlmsg_len);
 				e = nlmsg_data(nlh);
 				e->error = -EMSGSIZE;
-				memset(&e->msg, 0, sizeof(e->msg));
-			}
+				स_रखो(&e->msg, 0, माप(e->msg));
+			पूर्ण
 
 			rtnl_unicast(skb, net, NETLINK_CB(skb).portid);
-		} else {
-			ip_mr_forward(net, mrt, skb->dev, skb, c, 0);
-		}
-	}
-}
+		पूर्ण अन्यथा अणु
+			ip_mr_क्रमward(net, mrt, skb->dev, skb, c, 0);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* Bounce a cache query up to mrouted and netlink.
  *
  * Called under mrt_lock.
  */
-static int ipmr_cache_report(struct mr_table *mrt,
-			     struct sk_buff *pkt, vifi_t vifi, int assert)
-{
-	const int ihl = ip_hdrlen(pkt);
-	struct sock *mroute_sk;
-	struct igmphdr *igmp;
-	struct igmpmsg *msg;
-	struct sk_buff *skb;
-	int ret;
+अटल पूर्णांक ipmr_cache_report(काष्ठा mr_table *mrt,
+			     काष्ठा sk_buff *pkt, vअगरi_t vअगरi, पूर्णांक निश्चित)
+अणु
+	स्थिर पूर्णांक ihl = ip_hdrlen(pkt);
+	काष्ठा sock *mroute_sk;
+	काष्ठा igmphdr *igmp;
+	काष्ठा igmpmsg *msg;
+	काष्ठा sk_buff *skb;
+	पूर्णांक ret;
 
-	if (assert == IGMPMSG_WHOLEPKT || assert == IGMPMSG_WRVIFWHOLE)
-		skb = skb_realloc_headroom(pkt, sizeof(struct iphdr));
-	else
+	अगर (निश्चित == IGMPMSG_WHOLEPKT || निश्चित == IGMPMSG_WRVIFWHOLE)
+		skb = skb_पुनः_स्मृति_headroom(pkt, माप(काष्ठा iphdr));
+	अन्यथा
 		skb = alloc_skb(128, GFP_ATOMIC);
 
-	if (!skb)
-		return -ENOBUFS;
+	अगर (!skb)
+		वापस -ENOBUFS;
 
-	if (assert == IGMPMSG_WHOLEPKT || assert == IGMPMSG_WRVIFWHOLE) {
-		/* Ugly, but we have no choice with this interface.
+	अगर (निश्चित == IGMPMSG_WHOLEPKT || निश्चित == IGMPMSG_WRVIFWHOLE) अणु
+		/* Ugly, but we have no choice with this पूर्णांकerface.
 		 * Duplicate old header, fix ihl, length etc.
 		 * And all this only to mangle msg->im_msgtype and
 		 * to set msg->im_mbz to "mbz" :-)
 		 */
-		skb_push(skb, sizeof(struct iphdr));
+		skb_push(skb, माप(काष्ठा iphdr));
 		skb_reset_network_header(skb);
 		skb_reset_transport_header(skb);
-		msg = (struct igmpmsg *)skb_network_header(skb);
-		memcpy(msg, skb_network_header(pkt), sizeof(struct iphdr));
-		msg->im_msgtype = assert;
+		msg = (काष्ठा igmpmsg *)skb_network_header(skb);
+		स_नकल(msg, skb_network_header(pkt), माप(काष्ठा iphdr));
+		msg->im_msgtype = निश्चित;
 		msg->im_mbz = 0;
-		if (assert == IGMPMSG_WRVIFWHOLE) {
-			msg->im_vif = vifi;
-			msg->im_vif_hi = vifi >> 8;
-		} else {
-			msg->im_vif = mrt->mroute_reg_vif_num;
-			msg->im_vif_hi = mrt->mroute_reg_vif_num >> 8;
-		}
-		ip_hdr(skb)->ihl = sizeof(struct iphdr) >> 2;
+		अगर (निश्चित == IGMPMSG_WRVIFWHOLE) अणु
+			msg->im_vअगर = vअगरi;
+			msg->im_vअगर_hi = vअगरi >> 8;
+		पूर्ण अन्यथा अणु
+			msg->im_vअगर = mrt->mroute_reg_vअगर_num;
+			msg->im_vअगर_hi = mrt->mroute_reg_vअगर_num >> 8;
+		पूर्ण
+		ip_hdr(skb)->ihl = माप(काष्ठा iphdr) >> 2;
 		ip_hdr(skb)->tot_len = htons(ntohs(ip_hdr(pkt)->tot_len) +
-					     sizeof(struct iphdr));
-	} else {
+					     माप(काष्ठा iphdr));
+	पूर्ण अन्यथा अणु
 		/* Copy the IP header */
 		skb_set_network_header(skb, skb->len);
 		skb_put(skb, ihl);
 		skb_copy_to_linear_data(skb, pkt->data, ihl);
 		/* Flag to the kernel this is a route add */
 		ip_hdr(skb)->protocol = 0;
-		msg = (struct igmpmsg *)skb_network_header(skb);
-		msg->im_vif = vifi;
-		msg->im_vif_hi = vifi >> 8;
+		msg = (काष्ठा igmpmsg *)skb_network_header(skb);
+		msg->im_vअगर = vअगरi;
+		msg->im_vअगर_hi = vअगरi >> 8;
 		skb_dst_set(skb, dst_clone(skb_dst(pkt)));
 		/* Add our header */
-		igmp = skb_put(skb, sizeof(struct igmphdr));
-		igmp->type = assert;
-		msg->im_msgtype = assert;
+		igmp = skb_put(skb, माप(काष्ठा igmphdr));
+		igmp->type = निश्चित;
+		msg->im_msgtype = निश्चित;
 		igmp->code = 0;
 		ip_hdr(skb)->tot_len = htons(skb->len);	/* Fix the length */
 		skb->transport_header = skb->network_header;
-	}
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	mroute_sk = rcu_dereference(mrt->mroute_sk);
-	if (!mroute_sk) {
-		rcu_read_unlock();
-		kfree_skb(skb);
-		return -EINVAL;
-	}
+	अगर (!mroute_sk) अणु
+		rcu_पढ़ो_unlock();
+		kमुक्त_skb(skb);
+		वापस -EINVAL;
+	पूर्ण
 
 	igmpmsg_netlink_event(mrt, skb);
 
 	/* Deliver to mrouted */
 	ret = sock_queue_rcv_skb(mroute_sk, skb);
-	rcu_read_unlock();
-	if (ret < 0) {
+	rcu_पढ़ो_unlock();
+	अगर (ret < 0) अणु
 		net_warn_ratelimited("mroute: pending queue full, dropping entries\n");
-		kfree_skb(skb);
-	}
+		kमुक्त_skb(skb);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Queue a packet for resolution. It gets locked cache entry! */
-static int ipmr_cache_unresolved(struct mr_table *mrt, vifi_t vifi,
-				 struct sk_buff *skb, struct net_device *dev)
-{
-	const struct iphdr *iph = ip_hdr(skb);
-	struct mfc_cache *c;
+/* Queue a packet क्रम resolution. It माला_लो locked cache entry! */
+अटल पूर्णांक ipmr_cache_unresolved(काष्ठा mr_table *mrt, vअगरi_t vअगरi,
+				 काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
+	काष्ठा mfc_cache *c;
 	bool found = false;
-	int err;
+	पूर्णांक err;
 
 	spin_lock_bh(&mfc_unres_lock);
-	list_for_each_entry(c, &mrt->mfc_unres_queue, _c.list) {
-		if (c->mfc_mcastgrp == iph->daddr &&
-		    c->mfc_origin == iph->saddr) {
+	list_क्रम_each_entry(c, &mrt->mfc_unres_queue, _c.list) अणु
+		अगर (c->mfc_mcastgrp == iph->daddr &&
+		    c->mfc_origin == iph->saddr) अणु
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found) {
-		/* Create a new entry if allowable */
+	अगर (!found) अणु
+		/* Create a new entry अगर allowable */
 		c = ipmr_cache_alloc_unres();
-		if (!c) {
+		अगर (!c) अणु
 			spin_unlock_bh(&mfc_unres_lock);
 
-			kfree_skb(skb);
-			return -ENOBUFS;
-		}
+			kमुक्त_skb(skb);
+			वापस -ENOBUFS;
+		पूर्ण
 
 		/* Fill in the new cache entry */
 		c->_c.mfc_parent = -1;
@@ -1123,635 +1124,635 @@ static int ipmr_cache_unresolved(struct mr_table *mrt, vifi_t vifi,
 		c->mfc_mcastgrp	= iph->daddr;
 
 		/* Reflect first query at mrouted. */
-		err = ipmr_cache_report(mrt, skb, vifi, IGMPMSG_NOCACHE);
+		err = ipmr_cache_report(mrt, skb, vअगरi, IGMPMSG_NOCACHE);
 
-		if (err < 0) {
+		अगर (err < 0) अणु
 			/* If the report failed throw the cache entry
 			   out - Brad Parker
 			 */
 			spin_unlock_bh(&mfc_unres_lock);
 
-			ipmr_cache_free(c);
-			kfree_skb(skb);
-			return err;
-		}
+			ipmr_cache_मुक्त(c);
+			kमुक्त_skb(skb);
+			वापस err;
+		पूर्ण
 
 		atomic_inc(&mrt->cache_resolve_queue_len);
 		list_add(&c->_c.list, &mrt->mfc_unres_queue);
 		mroute_netlink_event(mrt, c, RTM_NEWROUTE);
 
-		if (atomic_read(&mrt->cache_resolve_queue_len) == 1)
-			mod_timer(&mrt->ipmr_expire_timer,
+		अगर (atomic_पढ़ो(&mrt->cache_resolve_queue_len) == 1)
+			mod_समयr(&mrt->ipmr_expire_समयr,
 				  c->_c.mfc_un.unres.expires);
-	}
+	पूर्ण
 
-	/* See if we can append the packet */
-	if (c->_c.mfc_un.unres.unresolved.qlen > 3) {
-		kfree_skb(skb);
+	/* See अगर we can append the packet */
+	अगर (c->_c.mfc_un.unres.unresolved.qlen > 3) अणु
+		kमुक्त_skb(skb);
 		err = -ENOBUFS;
-	} else {
-		if (dev) {
+	पूर्ण अन्यथा अणु
+		अगर (dev) अणु
 			skb->dev = dev;
-			skb->skb_iif = dev->ifindex;
-		}
+			skb->skb_iअगर = dev->अगरindex;
+		पूर्ण
 		skb_queue_tail(&c->_c.mfc_un.unres.unresolved, skb);
 		err = 0;
-	}
+	पूर्ण
 
 	spin_unlock_bh(&mfc_unres_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* MFC cache manipulation by user space mroute daemon */
 
-static int ipmr_mfc_delete(struct mr_table *mrt, struct mfcctl *mfc, int parent)
-{
-	struct net *net = read_pnet(&mrt->net);
-	struct mfc_cache *c;
+अटल पूर्णांक ipmr_mfc_delete(काष्ठा mr_table *mrt, काष्ठा mfcctl *mfc, पूर्णांक parent)
+अणु
+	काष्ठा net *net = पढ़ो_pnet(&mrt->net);
+	काष्ठा mfc_cache *c;
 
 	/* The entries are added/deleted only under RTNL */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	c = ipmr_cache_find_parent(mrt, mfc->mfcc_origin.s_addr,
 				   mfc->mfcc_mcastgrp.s_addr, parent);
-	rcu_read_unlock();
-	if (!c)
-		return -ENOENT;
-	rhltable_remove(&mrt->mfc_hash, &c->_c.mnode, ipmr_rht_params);
+	rcu_पढ़ो_unlock();
+	अगर (!c)
+		वापस -ENOENT;
+	rhltable_हटाओ(&mrt->mfc_hash, &c->_c.mnode, ipmr_rht_params);
 	list_del_rcu(&c->_c.list);
-	call_ipmr_mfc_entry_notifiers(net, FIB_EVENT_ENTRY_DEL, c, mrt->id);
+	call_ipmr_mfc_entry_notअगरiers(net, FIB_EVENT_ENTRY_DEL, c, mrt->id);
 	mroute_netlink_event(mrt, c, RTM_DELROUTE);
 	mr_cache_put(&c->_c);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipmr_mfc_add(struct net *net, struct mr_table *mrt,
-			struct mfcctl *mfc, int mrtsock, int parent)
-{
-	struct mfc_cache *uc, *c;
-	struct mr_mfc *_uc;
+अटल पूर्णांक ipmr_mfc_add(काष्ठा net *net, काष्ठा mr_table *mrt,
+			काष्ठा mfcctl *mfc, पूर्णांक mrtsock, पूर्णांक parent)
+अणु
+	काष्ठा mfc_cache *uc, *c;
+	काष्ठा mr_mfc *_uc;
 	bool found;
-	int ret;
+	पूर्णांक ret;
 
-	if (mfc->mfcc_parent >= MAXVIFS)
-		return -ENFILE;
+	अगर (mfc->mfcc_parent >= MAXVIFS)
+		वापस -ENखाता;
 
 	/* The entries are added/deleted only under RTNL */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	c = ipmr_cache_find_parent(mrt, mfc->mfcc_origin.s_addr,
 				   mfc->mfcc_mcastgrp.s_addr, parent);
-	rcu_read_unlock();
-	if (c) {
-		write_lock_bh(&mrt_lock);
+	rcu_पढ़ो_unlock();
+	अगर (c) अणु
+		ग_लिखो_lock_bh(&mrt_lock);
 		c->_c.mfc_parent = mfc->mfcc_parent;
 		ipmr_update_thresholds(mrt, &c->_c, mfc->mfcc_ttls);
-		if (!mrtsock)
+		अगर (!mrtsock)
 			c->_c.mfc_flags |= MFC_STATIC;
-		write_unlock_bh(&mrt_lock);
-		call_ipmr_mfc_entry_notifiers(net, FIB_EVENT_ENTRY_REPLACE, c,
+		ग_लिखो_unlock_bh(&mrt_lock);
+		call_ipmr_mfc_entry_notअगरiers(net, FIB_EVENT_ENTRY_REPLACE, c,
 					      mrt->id);
 		mroute_netlink_event(mrt, c, RTM_NEWROUTE);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (mfc->mfcc_mcastgrp.s_addr != htonl(INADDR_ANY) &&
+	अगर (mfc->mfcc_mcastgrp.s_addr != htonl(INADDR_ANY) &&
 	    !ipv4_is_multicast(mfc->mfcc_mcastgrp.s_addr))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	c = ipmr_cache_alloc();
-	if (!c)
-		return -ENOMEM;
+	अगर (!c)
+		वापस -ENOMEM;
 
 	c->mfc_origin = mfc->mfcc_origin.s_addr;
 	c->mfc_mcastgrp = mfc->mfcc_mcastgrp.s_addr;
 	c->_c.mfc_parent = mfc->mfcc_parent;
 	ipmr_update_thresholds(mrt, &c->_c, mfc->mfcc_ttls);
-	if (!mrtsock)
+	अगर (!mrtsock)
 		c->_c.mfc_flags |= MFC_STATIC;
 
 	ret = rhltable_insert_key(&mrt->mfc_hash, &c->cmparg, &c->_c.mnode,
 				  ipmr_rht_params);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("ipmr: rhtable insert error %d\n", ret);
-		ipmr_cache_free(c);
-		return ret;
-	}
+		ipmr_cache_मुक्त(c);
+		वापस ret;
+	पूर्ण
 	list_add_tail_rcu(&c->_c.list, &mrt->mfc_cache_list);
-	/* Check to see if we resolved a queued list. If so we
+	/* Check to see अगर we resolved a queued list. If so we
 	 * need to send on the frames and tidy up.
 	 */
 	found = false;
 	spin_lock_bh(&mfc_unres_lock);
-	list_for_each_entry(_uc, &mrt->mfc_unres_queue, list) {
-		uc = (struct mfc_cache *)_uc;
-		if (uc->mfc_origin == c->mfc_origin &&
-		    uc->mfc_mcastgrp == c->mfc_mcastgrp) {
+	list_क्रम_each_entry(_uc, &mrt->mfc_unres_queue, list) अणु
+		uc = (काष्ठा mfc_cache *)_uc;
+		अगर (uc->mfc_origin == c->mfc_origin &&
+		    uc->mfc_mcastgrp == c->mfc_mcastgrp) अणु
 			list_del(&_uc->list);
 			atomic_dec(&mrt->cache_resolve_queue_len);
 			found = true;
-			break;
-		}
-	}
-	if (list_empty(&mrt->mfc_unres_queue))
-		del_timer(&mrt->ipmr_expire_timer);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (list_empty(&mrt->mfc_unres_queue))
+		del_समयr(&mrt->ipmr_expire_समयr);
 	spin_unlock_bh(&mfc_unres_lock);
 
-	if (found) {
+	अगर (found) अणु
 		ipmr_cache_resolve(net, mrt, uc, c);
-		ipmr_cache_free(uc);
-	}
-	call_ipmr_mfc_entry_notifiers(net, FIB_EVENT_ENTRY_ADD, c, mrt->id);
+		ipmr_cache_मुक्त(uc);
+	पूर्ण
+	call_ipmr_mfc_entry_notअगरiers(net, FIB_EVENT_ENTRY_ADD, c, mrt->id);
 	mroute_netlink_event(mrt, c, RTM_NEWROUTE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Close the multicast socket, and clear the vif tables etc */
-static void mroute_clean_tables(struct mr_table *mrt, int flags)
-{
-	struct net *net = read_pnet(&mrt->net);
-	struct mr_mfc *c, *tmp;
-	struct mfc_cache *cache;
+/* Close the multicast socket, and clear the vअगर tables etc */
+अटल व्योम mroute_clean_tables(काष्ठा mr_table *mrt, पूर्णांक flags)
+अणु
+	काष्ठा net *net = पढ़ो_pnet(&mrt->net);
+	काष्ठा mr_mfc *c, *पंचांगp;
+	काष्ठा mfc_cache *cache;
 	LIST_HEAD(list);
-	int i;
+	पूर्णांक i;
 
-	/* Shut down all active vif entries */
-	if (flags & (MRT_FLUSH_VIFS | MRT_FLUSH_VIFS_STATIC)) {
-		for (i = 0; i < mrt->maxvif; i++) {
-			if (((mrt->vif_table[i].flags & VIFF_STATIC) &&
+	/* Shut करोwn all active vअगर entries */
+	अगर (flags & (MRT_FLUSH_VIFS | MRT_FLUSH_VIFS_STATIC)) अणु
+		क्रम (i = 0; i < mrt->maxvअगर; i++) अणु
+			अगर (((mrt->vअगर_table[i].flags & VIFF_STATIC) &&
 			     !(flags & MRT_FLUSH_VIFS_STATIC)) ||
-			    (!(mrt->vif_table[i].flags & VIFF_STATIC) && !(flags & MRT_FLUSH_VIFS)))
-				continue;
-			vif_delete(mrt, i, 0, &list);
-		}
-		unregister_netdevice_many(&list);
-	}
+			    (!(mrt->vअगर_table[i].flags & VIFF_STATIC) && !(flags & MRT_FLUSH_VIFS)))
+				जारी;
+			vअगर_delete(mrt, i, 0, &list);
+		पूर्ण
+		unरेजिस्टर_netdevice_many(&list);
+	पूर्ण
 
 	/* Wipe the cache */
-	if (flags & (MRT_FLUSH_MFC | MRT_FLUSH_MFC_STATIC)) {
-		list_for_each_entry_safe(c, tmp, &mrt->mfc_cache_list, list) {
-			if (((c->mfc_flags & MFC_STATIC) && !(flags & MRT_FLUSH_MFC_STATIC)) ||
+	अगर (flags & (MRT_FLUSH_MFC | MRT_FLUSH_MFC_STATIC)) अणु
+		list_क्रम_each_entry_safe(c, पंचांगp, &mrt->mfc_cache_list, list) अणु
+			अगर (((c->mfc_flags & MFC_STATIC) && !(flags & MRT_FLUSH_MFC_STATIC)) ||
 			    (!(c->mfc_flags & MFC_STATIC) && !(flags & MRT_FLUSH_MFC)))
-				continue;
-			rhltable_remove(&mrt->mfc_hash, &c->mnode, ipmr_rht_params);
+				जारी;
+			rhltable_हटाओ(&mrt->mfc_hash, &c->mnode, ipmr_rht_params);
 			list_del_rcu(&c->list);
-			cache = (struct mfc_cache *)c;
-			call_ipmr_mfc_entry_notifiers(net, FIB_EVENT_ENTRY_DEL, cache,
+			cache = (काष्ठा mfc_cache *)c;
+			call_ipmr_mfc_entry_notअगरiers(net, FIB_EVENT_ENTRY_DEL, cache,
 						      mrt->id);
 			mroute_netlink_event(mrt, cache, RTM_DELROUTE);
 			mr_cache_put(c);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (flags & MRT_FLUSH_MFC) {
-		if (atomic_read(&mrt->cache_resolve_queue_len) != 0) {
+	अगर (flags & MRT_FLUSH_MFC) अणु
+		अगर (atomic_पढ़ो(&mrt->cache_resolve_queue_len) != 0) अणु
 			spin_lock_bh(&mfc_unres_lock);
-			list_for_each_entry_safe(c, tmp, &mrt->mfc_unres_queue, list) {
+			list_क्रम_each_entry_safe(c, पंचांगp, &mrt->mfc_unres_queue, list) अणु
 				list_del(&c->list);
-				cache = (struct mfc_cache *)c;
+				cache = (काष्ठा mfc_cache *)c;
 				mroute_netlink_event(mrt, cache, RTM_DELROUTE);
 				ipmr_destroy_unres(mrt, cache);
-			}
+			पूर्ण
 			spin_unlock_bh(&mfc_unres_lock);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* called from ip_ra_control(), before an RCU grace period,
- * we dont need to call synchronize_rcu() here
+/* called from ip_ra_control(), beक्रमe an RCU grace period,
+ * we करोnt need to call synchronize_rcu() here
  */
-static void mrtsock_destruct(struct sock *sk)
-{
-	struct net *net = sock_net(sk);
-	struct mr_table *mrt;
+अटल व्योम mrtsock_deकाष्ठा(काष्ठा sock *sk)
+अणु
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा mr_table *mrt;
 
 	rtnl_lock();
-	ipmr_for_each_table(mrt, net) {
-		if (sk == rtnl_dereference(mrt->mroute_sk)) {
+	ipmr_क्रम_each_table(mrt, net) अणु
+		अगर (sk == rtnl_dereference(mrt->mroute_sk)) अणु
 			IPV4_DEVCONF_ALL(net, MC_FORWARDING)--;
-			inet_netconf_notify_devconf(net, RTM_NEWNETCONF,
+			inet_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
 						    NETCONFA_MC_FORWARDING,
 						    NETCONFA_IFINDEX_ALL,
 						    net->ipv4.devconf_all);
-			RCU_INIT_POINTER(mrt->mroute_sk, NULL);
+			RCU_INIT_POINTER(mrt->mroute_sk, शून्य);
 			mroute_clean_tables(mrt, MRT_FLUSH_VIFS | MRT_FLUSH_MFC);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	rtnl_unlock();
-}
+पूर्ण
 
-/* Socket options and virtual interface manipulation. The whole
- * virtual interface system is a complete heap, but unfortunately
+/* Socket options and भव पूर्णांकerface manipulation. The whole
+ * भव पूर्णांकerface प्रणाली is a complete heap, but unक्रमtunately
  * that's how BSD mrouted happens to think. Maybe one day with a proper
  * MOSPF/PIM router set up we can clean this up.
  */
 
-int ip_mroute_setsockopt(struct sock *sk, int optname, sockptr_t optval,
-			 unsigned int optlen)
-{
-	struct net *net = sock_net(sk);
-	int val, ret = 0, parent = 0;
-	struct mr_table *mrt;
-	struct vifctl vif;
-	struct mfcctl mfc;
-	bool do_wrvifwhole;
+पूर्णांक ip_mroute_setsockopt(काष्ठा sock *sk, पूर्णांक optname, sockptr_t optval,
+			 अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा net *net = sock_net(sk);
+	पूर्णांक val, ret = 0, parent = 0;
+	काष्ठा mr_table *mrt;
+	काष्ठा vअगरctl vअगर;
+	काष्ठा mfcctl mfc;
+	bool करो_wrvअगरwhole;
 	u32 uval;
 
 	/* There's one exception to the lock - MRT_DONE which needs to unlock */
 	rtnl_lock();
-	if (sk->sk_type != SOCK_RAW ||
-	    inet_sk(sk)->inet_num != IPPROTO_IGMP) {
+	अगर (sk->sk_type != SOCK_RAW ||
+	    inet_sk(sk)->inet_num != IPPROTO_IGMP) अणु
 		ret = -EOPNOTSUPP;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	mrt = ipmr_get_table(net, raw_sk(sk)->ipmr_table ? : RT_TABLE_DEFAULT);
-	if (!mrt) {
+	अगर (!mrt) अणु
 		ret = -ENOENT;
-		goto out_unlock;
-	}
-	if (optname != MRT_INIT) {
-		if (sk != rcu_access_pointer(mrt->mroute_sk) &&
-		    !ns_capable(net->user_ns, CAP_NET_ADMIN)) {
+		जाओ out_unlock;
+	पूर्ण
+	अगर (optname != MRT_INIT) अणु
+		अगर (sk != rcu_access_poपूर्णांकer(mrt->mroute_sk) &&
+		    !ns_capable(net->user_ns, CAP_NET_ADMIN)) अणु
 			ret = -EACCES;
-			goto out_unlock;
-		}
-	}
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
 
-	switch (optname) {
-	case MRT_INIT:
-		if (optlen != sizeof(int)) {
+	चयन (optname) अणु
+	हाल MRT_INIT:
+		अगर (optlen != माप(पूर्णांक)) अणु
 			ret = -EINVAL;
-			break;
-		}
-		if (rtnl_dereference(mrt->mroute_sk)) {
+			अवरोध;
+		पूर्ण
+		अगर (rtnl_dereference(mrt->mroute_sk)) अणु
 			ret = -EADDRINUSE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ret = ip_ra_control(sk, 1, mrtsock_destruct);
-		if (ret == 0) {
-			rcu_assign_pointer(mrt->mroute_sk, sk);
+		ret = ip_ra_control(sk, 1, mrtsock_deकाष्ठा);
+		अगर (ret == 0) अणु
+			rcu_assign_poपूर्णांकer(mrt->mroute_sk, sk);
 			IPV4_DEVCONF_ALL(net, MC_FORWARDING)++;
-			inet_netconf_notify_devconf(net, RTM_NEWNETCONF,
+			inet_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
 						    NETCONFA_MC_FORWARDING,
 						    NETCONFA_IFINDEX_ALL,
 						    net->ipv4.devconf_all);
-		}
-		break;
-	case MRT_DONE:
-		if (sk != rcu_access_pointer(mrt->mroute_sk)) {
+		पूर्ण
+		अवरोध;
+	हाल MRT_DONE:
+		अगर (sk != rcu_access_poपूर्णांकer(mrt->mroute_sk)) अणु
 			ret = -EACCES;
-		} else {
-			/* We need to unlock here because mrtsock_destruct takes
+		पूर्ण अन्यथा अणु
+			/* We need to unlock here because mrtsock_deकाष्ठा takes
 			 * care of rtnl itself and we can't change that due to
 			 * the IP_ROUTER_ALERT setsockopt which runs without it.
 			 */
 			rtnl_unlock();
-			ret = ip_ra_control(sk, 0, NULL);
-			goto out;
-		}
-		break;
-	case MRT_ADD_VIF:
-	case MRT_DEL_VIF:
-		if (optlen != sizeof(vif)) {
+			ret = ip_ra_control(sk, 0, शून्य);
+			जाओ out;
+		पूर्ण
+		अवरोध;
+	हाल MRT_ADD_VIF:
+	हाल MRT_DEL_VIF:
+		अगर (optlen != माप(vअगर)) अणु
 			ret = -EINVAL;
-			break;
-		}
-		if (copy_from_sockptr(&vif, optval, sizeof(vif))) {
+			अवरोध;
+		पूर्ण
+		अगर (copy_from_sockptr(&vअगर, optval, माप(vअगर))) अणु
 			ret = -EFAULT;
-			break;
-		}
-		if (vif.vifc_vifi >= MAXVIFS) {
-			ret = -ENFILE;
-			break;
-		}
-		if (optname == MRT_ADD_VIF) {
-			ret = vif_add(net, mrt, &vif,
+			अवरोध;
+		पूर्ण
+		अगर (vअगर.vअगरc_vअगरi >= MAXVIFS) अणु
+			ret = -ENखाता;
+			अवरोध;
+		पूर्ण
+		अगर (optname == MRT_ADD_VIF) अणु
+			ret = vअगर_add(net, mrt, &vअगर,
 				      sk == rtnl_dereference(mrt->mroute_sk));
-		} else {
-			ret = vif_delete(mrt, vif.vifc_vifi, 0, NULL);
-		}
-		break;
-	/* Manipulate the forwarding caches. These live
+		पूर्ण अन्यथा अणु
+			ret = vअगर_delete(mrt, vअगर.vअगरc_vअगरi, 0, शून्य);
+		पूर्ण
+		अवरोध;
+	/* Manipulate the क्रमwarding caches. These live
 	 * in a sort of kernel/user symbiosis.
 	 */
-	case MRT_ADD_MFC:
-	case MRT_DEL_MFC:
+	हाल MRT_ADD_MFC:
+	हाल MRT_DEL_MFC:
 		parent = -1;
 		fallthrough;
-	case MRT_ADD_MFC_PROXY:
-	case MRT_DEL_MFC_PROXY:
-		if (optlen != sizeof(mfc)) {
+	हाल MRT_ADD_MFC_PROXY:
+	हाल MRT_DEL_MFC_PROXY:
+		अगर (optlen != माप(mfc)) अणु
 			ret = -EINVAL;
-			break;
-		}
-		if (copy_from_sockptr(&mfc, optval, sizeof(mfc))) {
+			अवरोध;
+		पूर्ण
+		अगर (copy_from_sockptr(&mfc, optval, माप(mfc))) अणु
 			ret = -EFAULT;
-			break;
-		}
-		if (parent == 0)
+			अवरोध;
+		पूर्ण
+		अगर (parent == 0)
 			parent = mfc.mfcc_parent;
-		if (optname == MRT_DEL_MFC || optname == MRT_DEL_MFC_PROXY)
+		अगर (optname == MRT_DEL_MFC || optname == MRT_DEL_MFC_PROXY)
 			ret = ipmr_mfc_delete(mrt, &mfc, parent);
-		else
+		अन्यथा
 			ret = ipmr_mfc_add(net, mrt, &mfc,
 					   sk == rtnl_dereference(mrt->mroute_sk),
 					   parent);
-		break;
-	case MRT_FLUSH:
-		if (optlen != sizeof(val)) {
+		अवरोध;
+	हाल MRT_FLUSH:
+		अगर (optlen != माप(val)) अणु
 			ret = -EINVAL;
-			break;
-		}
-		if (copy_from_sockptr(&val, optval, sizeof(val))) {
+			अवरोध;
+		पूर्ण
+		अगर (copy_from_sockptr(&val, optval, माप(val))) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mroute_clean_tables(mrt, val);
-		break;
-	/* Control PIM assert. */
-	case MRT_ASSERT:
-		if (optlen != sizeof(val)) {
+		अवरोध;
+	/* Control PIM निश्चित. */
+	हाल MRT_ASSERT:
+		अगर (optlen != माप(val)) अणु
 			ret = -EINVAL;
-			break;
-		}
-		if (copy_from_sockptr(&val, optval, sizeof(val))) {
+			अवरोध;
+		पूर्ण
+		अगर (copy_from_sockptr(&val, optval, माप(val))) अणु
 			ret = -EFAULT;
-			break;
-		}
-		mrt->mroute_do_assert = val;
-		break;
-	case MRT_PIM:
-		if (!ipmr_pimsm_enabled()) {
+			अवरोध;
+		पूर्ण
+		mrt->mroute_करो_निश्चित = val;
+		अवरोध;
+	हाल MRT_PIM:
+		अगर (!ipmr_pimsm_enabled()) अणु
 			ret = -ENOPROTOOPT;
-			break;
-		}
-		if (optlen != sizeof(val)) {
+			अवरोध;
+		पूर्ण
+		अगर (optlen != माप(val)) अणु
 			ret = -EINVAL;
-			break;
-		}
-		if (copy_from_sockptr(&val, optval, sizeof(val))) {
+			अवरोध;
+		पूर्ण
+		अगर (copy_from_sockptr(&val, optval, माप(val))) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		do_wrvifwhole = (val == IGMPMSG_WRVIFWHOLE);
+		करो_wrvअगरwhole = (val == IGMPMSG_WRVIFWHOLE);
 		val = !!val;
-		if (val != mrt->mroute_do_pim) {
-			mrt->mroute_do_pim = val;
-			mrt->mroute_do_assert = val;
-			mrt->mroute_do_wrvifwhole = do_wrvifwhole;
-		}
-		break;
-	case MRT_TABLE:
-		if (!IS_BUILTIN(CONFIG_IP_MROUTE_MULTIPLE_TABLES)) {
+		अगर (val != mrt->mroute_करो_pim) अणु
+			mrt->mroute_करो_pim = val;
+			mrt->mroute_करो_निश्चित = val;
+			mrt->mroute_करो_wrvअगरwhole = करो_wrvअगरwhole;
+		पूर्ण
+		अवरोध;
+	हाल MRT_TABLE:
+		अगर (!IS_BUILTIN(CONFIG_IP_MROUTE_MULTIPLE_TABLES)) अणु
 			ret = -ENOPROTOOPT;
-			break;
-		}
-		if (optlen != sizeof(uval)) {
+			अवरोध;
+		पूर्ण
+		अगर (optlen != माप(uval)) अणु
 			ret = -EINVAL;
-			break;
-		}
-		if (copy_from_sockptr(&uval, optval, sizeof(uval))) {
+			अवरोध;
+		पूर्ण
+		अगर (copy_from_sockptr(&uval, optval, माप(uval))) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (sk == rtnl_dereference(mrt->mroute_sk)) {
+		अगर (sk == rtnl_dereference(mrt->mroute_sk)) अणु
 			ret = -EBUSY;
-		} else {
+		पूर्ण अन्यथा अणु
 			mrt = ipmr_new_table(net, uval);
-			if (IS_ERR(mrt))
+			अगर (IS_ERR(mrt))
 				ret = PTR_ERR(mrt);
-			else
+			अन्यथा
 				raw_sk(sk)->ipmr_table = uval;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 	/* Spurious command, or MRT_VERSION which you cannot set. */
-	default:
+	शेष:
 		ret = -ENOPROTOOPT;
-	}
+	पूर्ण
 out_unlock:
 	rtnl_unlock();
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Getsock opt support for the multicast routing system. */
-int ip_mroute_getsockopt(struct sock *sk, int optname, char __user *optval, int __user *optlen)
-{
-	int olr;
-	int val;
-	struct net *net = sock_net(sk);
-	struct mr_table *mrt;
+/* Getsock opt support क्रम the multicast routing प्रणाली. */
+पूर्णांक ip_mroute_माला_लोockopt(काष्ठा sock *sk, पूर्णांक optname, अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	पूर्णांक olr;
+	पूर्णांक val;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा mr_table *mrt;
 
-	if (sk->sk_type != SOCK_RAW ||
+	अगर (sk->sk_type != SOCK_RAW ||
 	    inet_sk(sk)->inet_num != IPPROTO_IGMP)
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
 	mrt = ipmr_get_table(net, raw_sk(sk)->ipmr_table ? : RT_TABLE_DEFAULT);
-	if (!mrt)
-		return -ENOENT;
+	अगर (!mrt)
+		वापस -ENOENT;
 
-	switch (optname) {
-	case MRT_VERSION:
+	चयन (optname) अणु
+	हाल MRT_VERSION:
 		val = 0x0305;
-		break;
-	case MRT_PIM:
-		if (!ipmr_pimsm_enabled())
-			return -ENOPROTOOPT;
-		val = mrt->mroute_do_pim;
-		break;
-	case MRT_ASSERT:
-		val = mrt->mroute_do_assert;
-		break;
-	default:
-		return -ENOPROTOOPT;
-	}
+		अवरोध;
+	हाल MRT_PIM:
+		अगर (!ipmr_pimsm_enabled())
+			वापस -ENOPROTOOPT;
+		val = mrt->mroute_करो_pim;
+		अवरोध;
+	हाल MRT_ASSERT:
+		val = mrt->mroute_करो_निश्चित;
+		अवरोध;
+	शेष:
+		वापस -ENOPROTOOPT;
+	पूर्ण
 
-	if (get_user(olr, optlen))
-		return -EFAULT;
-	olr = min_t(unsigned int, olr, sizeof(int));
-	if (olr < 0)
-		return -EINVAL;
-	if (put_user(olr, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, olr))
-		return -EFAULT;
-	return 0;
-}
+	अगर (get_user(olr, optlen))
+		वापस -EFAULT;
+	olr = min_t(अचिन्हित पूर्णांक, olr, माप(पूर्णांक));
+	अगर (olr < 0)
+		वापस -EINVAL;
+	अगर (put_user(olr, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, olr))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
 /* The IP multicast ioctl support routines. */
-int ipmr_ioctl(struct sock *sk, int cmd, void __user *arg)
-{
-	struct sioc_sg_req sr;
-	struct sioc_vif_req vr;
-	struct vif_device *vif;
-	struct mfc_cache *c;
-	struct net *net = sock_net(sk);
-	struct mr_table *mrt;
+पूर्णांक ipmr_ioctl(काष्ठा sock *sk, पूर्णांक cmd, व्योम __user *arg)
+अणु
+	काष्ठा sioc_sg_req sr;
+	काष्ठा sioc_vअगर_req vr;
+	काष्ठा vअगर_device *vअगर;
+	काष्ठा mfc_cache *c;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा mr_table *mrt;
 
 	mrt = ipmr_get_table(net, raw_sk(sk)->ipmr_table ? : RT_TABLE_DEFAULT);
-	if (!mrt)
-		return -ENOENT;
+	अगर (!mrt)
+		वापस -ENOENT;
 
-	switch (cmd) {
-	case SIOCGETVIFCNT:
-		if (copy_from_user(&vr, arg, sizeof(vr)))
-			return -EFAULT;
-		if (vr.vifi >= mrt->maxvif)
-			return -EINVAL;
-		vr.vifi = array_index_nospec(vr.vifi, mrt->maxvif);
-		read_lock(&mrt_lock);
-		vif = &mrt->vif_table[vr.vifi];
-		if (VIF_EXISTS(mrt, vr.vifi)) {
-			vr.icount = vif->pkt_in;
-			vr.ocount = vif->pkt_out;
-			vr.ibytes = vif->bytes_in;
-			vr.obytes = vif->bytes_out;
-			read_unlock(&mrt_lock);
+	चयन (cmd) अणु
+	हाल SIOCGETVIFCNT:
+		अगर (copy_from_user(&vr, arg, माप(vr)))
+			वापस -EFAULT;
+		अगर (vr.vअगरi >= mrt->maxvअगर)
+			वापस -EINVAL;
+		vr.vअगरi = array_index_nospec(vr.vअगरi, mrt->maxvअगर);
+		पढ़ो_lock(&mrt_lock);
+		vअगर = &mrt->vअगर_table[vr.vअगरi];
+		अगर (VIF_EXISTS(mrt, vr.vअगरi)) अणु
+			vr.icount = vअगर->pkt_in;
+			vr.ocount = vअगर->pkt_out;
+			vr.ibytes = vअगर->bytes_in;
+			vr.obytes = vअगर->bytes_out;
+			पढ़ो_unlock(&mrt_lock);
 
-			if (copy_to_user(arg, &vr, sizeof(vr)))
-				return -EFAULT;
-			return 0;
-		}
-		read_unlock(&mrt_lock);
-		return -EADDRNOTAVAIL;
-	case SIOCGETSGCNT:
-		if (copy_from_user(&sr, arg, sizeof(sr)))
-			return -EFAULT;
+			अगर (copy_to_user(arg, &vr, माप(vr)))
+				वापस -EFAULT;
+			वापस 0;
+		पूर्ण
+		पढ़ो_unlock(&mrt_lock);
+		वापस -EADDRNOTAVAIL;
+	हाल SIOCGETSGCNT:
+		अगर (copy_from_user(&sr, arg, माप(sr)))
+			वापस -EFAULT;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		c = ipmr_cache_find(mrt, sr.src.s_addr, sr.grp.s_addr);
-		if (c) {
+		अगर (c) अणु
 			sr.pktcnt = c->_c.mfc_un.res.pkt;
 			sr.bytecnt = c->_c.mfc_un.res.bytes;
-			sr.wrong_if = c->_c.mfc_un.res.wrong_if;
-			rcu_read_unlock();
+			sr.wrong_अगर = c->_c.mfc_un.res.wrong_अगर;
+			rcu_पढ़ो_unlock();
 
-			if (copy_to_user(arg, &sr, sizeof(sr)))
-				return -EFAULT;
-			return 0;
-		}
-		rcu_read_unlock();
-		return -EADDRNOTAVAIL;
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
+			अगर (copy_to_user(arg, &sr, माप(sr)))
+				वापस -EFAULT;
+			वापस 0;
+		पूर्ण
+		rcu_पढ़ो_unlock();
+		वापस -EADDRNOTAVAIL;
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-struct compat_sioc_sg_req {
-	struct in_addr src;
-	struct in_addr grp;
-	compat_ulong_t pktcnt;
-	compat_ulong_t bytecnt;
-	compat_ulong_t wrong_if;
-};
+#अगर_घोषित CONFIG_COMPAT
+काष्ठा compat_sioc_sg_req अणु
+	काष्ठा in_addr src;
+	काष्ठा in_addr grp;
+	compat_uदीर्घ_t pktcnt;
+	compat_uदीर्घ_t bytecnt;
+	compat_uदीर्घ_t wrong_अगर;
+पूर्ण;
 
-struct compat_sioc_vif_req {
-	vifi_t	vifi;		/* Which iface */
-	compat_ulong_t icount;
-	compat_ulong_t ocount;
-	compat_ulong_t ibytes;
-	compat_ulong_t obytes;
-};
+काष्ठा compat_sioc_vअगर_req अणु
+	vअगरi_t	vअगरi;		/* Which अगरace */
+	compat_uदीर्घ_t icount;
+	compat_uदीर्घ_t ocount;
+	compat_uदीर्घ_t ibytes;
+	compat_uदीर्घ_t obytes;
+पूर्ण;
 
-int ipmr_compat_ioctl(struct sock *sk, unsigned int cmd, void __user *arg)
-{
-	struct compat_sioc_sg_req sr;
-	struct compat_sioc_vif_req vr;
-	struct vif_device *vif;
-	struct mfc_cache *c;
-	struct net *net = sock_net(sk);
-	struct mr_table *mrt;
+पूर्णांक ipmr_compat_ioctl(काष्ठा sock *sk, अचिन्हित पूर्णांक cmd, व्योम __user *arg)
+अणु
+	काष्ठा compat_sioc_sg_req sr;
+	काष्ठा compat_sioc_vअगर_req vr;
+	काष्ठा vअगर_device *vअगर;
+	काष्ठा mfc_cache *c;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा mr_table *mrt;
 
 	mrt = ipmr_get_table(net, raw_sk(sk)->ipmr_table ? : RT_TABLE_DEFAULT);
-	if (!mrt)
-		return -ENOENT;
+	अगर (!mrt)
+		वापस -ENOENT;
 
-	switch (cmd) {
-	case SIOCGETVIFCNT:
-		if (copy_from_user(&vr, arg, sizeof(vr)))
-			return -EFAULT;
-		if (vr.vifi >= mrt->maxvif)
-			return -EINVAL;
-		vr.vifi = array_index_nospec(vr.vifi, mrt->maxvif);
-		read_lock(&mrt_lock);
-		vif = &mrt->vif_table[vr.vifi];
-		if (VIF_EXISTS(mrt, vr.vifi)) {
-			vr.icount = vif->pkt_in;
-			vr.ocount = vif->pkt_out;
-			vr.ibytes = vif->bytes_in;
-			vr.obytes = vif->bytes_out;
-			read_unlock(&mrt_lock);
+	चयन (cmd) अणु
+	हाल SIOCGETVIFCNT:
+		अगर (copy_from_user(&vr, arg, माप(vr)))
+			वापस -EFAULT;
+		अगर (vr.vअगरi >= mrt->maxvअगर)
+			वापस -EINVAL;
+		vr.vअगरi = array_index_nospec(vr.vअगरi, mrt->maxvअगर);
+		पढ़ो_lock(&mrt_lock);
+		vअगर = &mrt->vअगर_table[vr.vअगरi];
+		अगर (VIF_EXISTS(mrt, vr.vअगरi)) अणु
+			vr.icount = vअगर->pkt_in;
+			vr.ocount = vअगर->pkt_out;
+			vr.ibytes = vअगर->bytes_in;
+			vr.obytes = vअगर->bytes_out;
+			पढ़ो_unlock(&mrt_lock);
 
-			if (copy_to_user(arg, &vr, sizeof(vr)))
-				return -EFAULT;
-			return 0;
-		}
-		read_unlock(&mrt_lock);
-		return -EADDRNOTAVAIL;
-	case SIOCGETSGCNT:
-		if (copy_from_user(&sr, arg, sizeof(sr)))
-			return -EFAULT;
+			अगर (copy_to_user(arg, &vr, माप(vr)))
+				वापस -EFAULT;
+			वापस 0;
+		पूर्ण
+		पढ़ो_unlock(&mrt_lock);
+		वापस -EADDRNOTAVAIL;
+	हाल SIOCGETSGCNT:
+		अगर (copy_from_user(&sr, arg, माप(sr)))
+			वापस -EFAULT;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		c = ipmr_cache_find(mrt, sr.src.s_addr, sr.grp.s_addr);
-		if (c) {
+		अगर (c) अणु
 			sr.pktcnt = c->_c.mfc_un.res.pkt;
 			sr.bytecnt = c->_c.mfc_un.res.bytes;
-			sr.wrong_if = c->_c.mfc_un.res.wrong_if;
-			rcu_read_unlock();
+			sr.wrong_अगर = c->_c.mfc_un.res.wrong_अगर;
+			rcu_पढ़ो_unlock();
 
-			if (copy_to_user(arg, &sr, sizeof(sr)))
-				return -EFAULT;
-			return 0;
-		}
-		rcu_read_unlock();
-		return -EADDRNOTAVAIL;
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
-#endif
+			अगर (copy_to_user(arg, &sr, माप(sr)))
+				वापस -EFAULT;
+			वापस 0;
+		पूर्ण
+		rcu_पढ़ो_unlock();
+		वापस -EADDRNOTAVAIL;
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static int ipmr_device_event(struct notifier_block *this, unsigned long event, void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct net *net = dev_net(dev);
-	struct mr_table *mrt;
-	struct vif_device *v;
-	int ct;
+अटल पूर्णांक ipmr_device_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा mr_table *mrt;
+	काष्ठा vअगर_device *v;
+	पूर्णांक ct;
 
-	if (event != NETDEV_UNREGISTER)
-		return NOTIFY_DONE;
+	अगर (event != NETDEV_UNREGISTER)
+		वापस NOTIFY_DONE;
 
-	ipmr_for_each_table(mrt, net) {
-		v = &mrt->vif_table[0];
-		for (ct = 0; ct < mrt->maxvif; ct++, v++) {
-			if (v->dev == dev)
-				vif_delete(mrt, ct, 1, NULL);
-		}
-	}
-	return NOTIFY_DONE;
-}
+	ipmr_क्रम_each_table(mrt, net) अणु
+		v = &mrt->vअगर_table[0];
+		क्रम (ct = 0; ct < mrt->maxvअगर; ct++, v++) अणु
+			अगर (v->dev == dev)
+				vअगर_delete(mrt, ct, 1, शून्य);
+		पूर्ण
+	पूर्ण
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block ip_mr_notifier = {
-	.notifier_call = ipmr_device_event,
-};
+अटल काष्ठा notअगरier_block ip_mr_notअगरier = अणु
+	.notअगरier_call = ipmr_device_event,
+पूर्ण;
 
 /* Encapsulate a packet by attaching a valid IPIP header to it.
- * This avoids tunnel drivers and other mess and gives us the speed so
- * important for multicast video.
+ * This aव्योमs tunnel drivers and other mess and gives us the speed so
+ * important क्रम multicast video.
  */
-static void ip_encap(struct net *net, struct sk_buff *skb,
+अटल व्योम ip_encap(काष्ठा net *net, काष्ठा sk_buff *skb,
 		     __be32 saddr, __be32 daddr)
-{
-	struct iphdr *iph;
-	const struct iphdr *old_iph = ip_hdr(skb);
+अणु
+	काष्ठा iphdr *iph;
+	स्थिर काष्ठा iphdr *old_iph = ip_hdr(skb);
 
-	skb_push(skb, sizeof(struct iphdr));
+	skb_push(skb, माप(काष्ठा iphdr));
 	skb->transport_header = skb->network_header;
 	skb_reset_network_header(skb);
 	iph = ip_hdr(skb);
@@ -1765,637 +1766,637 @@ static void ip_encap(struct net *net, struct sk_buff *skb,
 	iph->protocol	=	IPPROTO_IPIP;
 	iph->ihl	=	5;
 	iph->tot_len	=	htons(skb->len);
-	ip_select_ident(net, skb, NULL);
+	ip_select_ident(net, skb, शून्य);
 	ip_send_check(iph);
 
-	memset(&(IPCB(skb)->opt), 0, sizeof(IPCB(skb)->opt));
+	स_रखो(&(IPCB(skb)->opt), 0, माप(IPCB(skb)->opt));
 	nf_reset_ct(skb);
-}
+पूर्ण
 
-static inline int ipmr_forward_finish(struct net *net, struct sock *sk,
-				      struct sk_buff *skb)
-{
-	struct ip_options *opt = &(IPCB(skb)->opt);
+अटल अंतरभूत पूर्णांक ipmr_क्रमward_finish(काष्ठा net *net, काष्ठा sock *sk,
+				      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ip_options *opt = &(IPCB(skb)->opt);
 
 	IP_INC_STATS(net, IPSTATS_MIB_OUTFORWDATAGRAMS);
 	IP_ADD_STATS(net, IPSTATS_MIB_OUTOCTETS, skb->len);
 
-	if (unlikely(opt->optlen))
-		ip_forward_options(skb);
+	अगर (unlikely(opt->optlen))
+		ip_क्रमward_options(skb);
 
-	return dst_output(net, sk, skb);
-}
+	वापस dst_output(net, sk, skb);
+पूर्ण
 
-#ifdef CONFIG_NET_SWITCHDEV
-static bool ipmr_forward_offloaded(struct sk_buff *skb, struct mr_table *mrt,
-				   int in_vifi, int out_vifi)
-{
-	struct vif_device *out_vif = &mrt->vif_table[out_vifi];
-	struct vif_device *in_vif = &mrt->vif_table[in_vifi];
+#अगर_घोषित CONFIG_NET_SWITCHDEV
+अटल bool ipmr_क्रमward_offloaded(काष्ठा sk_buff *skb, काष्ठा mr_table *mrt,
+				   पूर्णांक in_vअगरi, पूर्णांक out_vअगरi)
+अणु
+	काष्ठा vअगर_device *out_vअगर = &mrt->vअगर_table[out_vअगरi];
+	काष्ठा vअगर_device *in_vअगर = &mrt->vअगर_table[in_vअगरi];
 
-	if (!skb->offload_l3_fwd_mark)
-		return false;
-	if (!out_vif->dev_parent_id.id_len || !in_vif->dev_parent_id.id_len)
-		return false;
-	return netdev_phys_item_id_same(&out_vif->dev_parent_id,
-					&in_vif->dev_parent_id);
-}
-#else
-static bool ipmr_forward_offloaded(struct sk_buff *skb, struct mr_table *mrt,
-				   int in_vifi, int out_vifi)
-{
-	return false;
-}
-#endif
+	अगर (!skb->offload_l3_fwd_mark)
+		वापस false;
+	अगर (!out_vअगर->dev_parent_id.id_len || !in_vअगर->dev_parent_id.id_len)
+		वापस false;
+	वापस netdev_phys_item_id_same(&out_vअगर->dev_parent_id,
+					&in_vअगर->dev_parent_id);
+पूर्ण
+#अन्यथा
+अटल bool ipmr_क्रमward_offloaded(काष्ठा sk_buff *skb, काष्ठा mr_table *mrt,
+				   पूर्णांक in_vअगरi, पूर्णांक out_vअगरi)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-/* Processing handlers for ipmr_forward */
+/* Processing handlers क्रम ipmr_क्रमward */
 
-static void ipmr_queue_xmit(struct net *net, struct mr_table *mrt,
-			    int in_vifi, struct sk_buff *skb, int vifi)
-{
-	const struct iphdr *iph = ip_hdr(skb);
-	struct vif_device *vif = &mrt->vif_table[vifi];
-	struct net_device *dev;
-	struct rtable *rt;
-	struct flowi4 fl4;
-	int    encap = 0;
+अटल व्योम ipmr_queue_xmit(काष्ठा net *net, काष्ठा mr_table *mrt,
+			    पूर्णांक in_vअगरi, काष्ठा sk_buff *skb, पूर्णांक vअगरi)
+अणु
+	स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
+	काष्ठा vअगर_device *vअगर = &mrt->vअगर_table[vअगरi];
+	काष्ठा net_device *dev;
+	काष्ठा rtable *rt;
+	काष्ठा flowi4 fl4;
+	पूर्णांक    encap = 0;
 
-	if (!vif->dev)
-		goto out_free;
+	अगर (!vअगर->dev)
+		जाओ out_मुक्त;
 
-	if (vif->flags & VIFF_REGISTER) {
-		vif->pkt_out++;
-		vif->bytes_out += skb->len;
-		vif->dev->stats.tx_bytes += skb->len;
-		vif->dev->stats.tx_packets++;
-		ipmr_cache_report(mrt, skb, vifi, IGMPMSG_WHOLEPKT);
-		goto out_free;
-	}
+	अगर (vअगर->flags & VIFF_REGISTER) अणु
+		vअगर->pkt_out++;
+		vअगर->bytes_out += skb->len;
+		vअगर->dev->stats.tx_bytes += skb->len;
+		vअगर->dev->stats.tx_packets++;
+		ipmr_cache_report(mrt, skb, vअगरi, IGMPMSG_WHOLEPKT);
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (ipmr_forward_offloaded(skb, mrt, in_vifi, vifi))
-		goto out_free;
+	अगर (ipmr_क्रमward_offloaded(skb, mrt, in_vअगरi, vअगरi))
+		जाओ out_मुक्त;
 
-	if (vif->flags & VIFF_TUNNEL) {
-		rt = ip_route_output_ports(net, &fl4, NULL,
-					   vif->remote, vif->local,
+	अगर (vअगर->flags & VIFF_TUNNEL) अणु
+		rt = ip_route_output_ports(net, &fl4, शून्य,
+					   vअगर->remote, vअगर->local,
 					   0, 0,
 					   IPPROTO_IPIP,
-					   RT_TOS(iph->tos), vif->link);
-		if (IS_ERR(rt))
-			goto out_free;
-		encap = sizeof(struct iphdr);
-	} else {
-		rt = ip_route_output_ports(net, &fl4, NULL, iph->daddr, 0,
+					   RT_TOS(iph->tos), vअगर->link);
+		अगर (IS_ERR(rt))
+			जाओ out_मुक्त;
+		encap = माप(काष्ठा iphdr);
+	पूर्ण अन्यथा अणु
+		rt = ip_route_output_ports(net, &fl4, शून्य, iph->daddr, 0,
 					   0, 0,
 					   IPPROTO_IPIP,
-					   RT_TOS(iph->tos), vif->link);
-		if (IS_ERR(rt))
-			goto out_free;
-	}
+					   RT_TOS(iph->tos), vअगर->link);
+		अगर (IS_ERR(rt))
+			जाओ out_मुक्त;
+	पूर्ण
 
 	dev = rt->dst.dev;
 
-	if (skb->len+encap > dst_mtu(&rt->dst) && (ntohs(iph->frag_off) & IP_DF)) {
-		/* Do not fragment multicasts. Alas, IPv4 does not
+	अगर (skb->len+encap > dst_mtu(&rt->dst) && (ntohs(iph->frag_off) & IP_DF)) अणु
+		/* Do not fragment multicasts. Alas, IPv4 करोes not
 		 * allow to send ICMP, so that packets will disappear
 		 * to blackhole.
 		 */
 		IP_INC_STATS(net, IPSTATS_MIB_FRAGFAILS);
 		ip_rt_put(rt);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	encap += LL_RESERVED_SPACE(dev) + rt->dst.header_len;
 
-	if (skb_cow(skb, encap)) {
+	अगर (skb_cow(skb, encap)) अणु
 		ip_rt_put(rt);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	vif->pkt_out++;
-	vif->bytes_out += skb->len;
+	vअगर->pkt_out++;
+	vअगर->bytes_out += skb->len;
 
 	skb_dst_drop(skb);
 	skb_dst_set(skb, &rt->dst);
 	ip_decrease_ttl(ip_hdr(skb));
 
-	/* FIXME: forward and output firewalls used to be called here.
-	 * What do we do with netfilter? -- RR
+	/* FIXME: क्रमward and output firewalls used to be called here.
+	 * What करो we करो with netfilter? -- RR
 	 */
-	if (vif->flags & VIFF_TUNNEL) {
-		ip_encap(net, skb, vif->local, vif->remote);
+	अगर (vअगर->flags & VIFF_TUNNEL) अणु
+		ip_encap(net, skb, vअगर->local, vअगर->remote);
 		/* FIXME: extra output firewall step used to be here. --RR */
-		vif->dev->stats.tx_packets++;
-		vif->dev->stats.tx_bytes += skb->len;
-	}
+		vअगर->dev->stats.tx_packets++;
+		vअगर->dev->stats.tx_bytes += skb->len;
+	पूर्ण
 
 	IPCB(skb)->flags |= IPSKB_FORWARDED;
 
 	/* RFC1584 teaches, that DVMRP/PIM router must deliver packets locally
-	 * not only before forwarding, but after forwarding on all output
-	 * interfaces. It is clear, if mrouter runs a multicasting
-	 * program, it should receive packets not depending to what interface
+	 * not only beक्रमe क्रमwarding, but after क्रमwarding on all output
+	 * पूर्णांकerfaces. It is clear, अगर mrouter runs a multicasting
+	 * program, it should receive packets not depending to what पूर्णांकerface
 	 * program is joined.
 	 * If we will not make it, the program will have to join on all
-	 * interfaces. On the other hand, multihoming host (or router, but
-	 * not mrouter) cannot join to more than one interface - it will
+	 * पूर्णांकerfaces. On the other hand, multihoming host (or router, but
+	 * not mrouter) cannot join to more than one पूर्णांकerface - it will
 	 * result in receiving multiple packets.
 	 */
 	NF_HOOK(NFPROTO_IPV4, NF_INET_FORWARD,
-		net, NULL, skb, skb->dev, dev,
-		ipmr_forward_finish);
-	return;
+		net, शून्य, skb, skb->dev, dev,
+		ipmr_क्रमward_finish);
+	वापस;
 
-out_free:
-	kfree_skb(skb);
-}
+out_मुक्त:
+	kमुक्त_skb(skb);
+पूर्ण
 
-static int ipmr_find_vif(struct mr_table *mrt, struct net_device *dev)
-{
-	int ct;
+अटल पूर्णांक ipmr_find_vअगर(काष्ठा mr_table *mrt, काष्ठा net_device *dev)
+अणु
+	पूर्णांक ct;
 
-	for (ct = mrt->maxvif-1; ct >= 0; ct--) {
-		if (mrt->vif_table[ct].dev == dev)
-			break;
-	}
-	return ct;
-}
+	क्रम (ct = mrt->maxvअगर-1; ct >= 0; ct--) अणु
+		अगर (mrt->vअगर_table[ct].dev == dev)
+			अवरोध;
+	पूर्ण
+	वापस ct;
+पूर्ण
 
-/* "local" means that we should preserve one skb (for local delivery) */
-static void ip_mr_forward(struct net *net, struct mr_table *mrt,
-			  struct net_device *dev, struct sk_buff *skb,
-			  struct mfc_cache *c, int local)
-{
-	int true_vifi = ipmr_find_vif(mrt, dev);
-	int psend = -1;
-	int vif, ct;
+/* "local" means that we should preserve one skb (क्रम local delivery) */
+अटल व्योम ip_mr_क्रमward(काष्ठा net *net, काष्ठा mr_table *mrt,
+			  काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+			  काष्ठा mfc_cache *c, पूर्णांक local)
+अणु
+	पूर्णांक true_vअगरi = ipmr_find_vअगर(mrt, dev);
+	पूर्णांक psend = -1;
+	पूर्णांक vअगर, ct;
 
-	vif = c->_c.mfc_parent;
+	vअगर = c->_c.mfc_parent;
 	c->_c.mfc_un.res.pkt++;
 	c->_c.mfc_un.res.bytes += skb->len;
-	c->_c.mfc_un.res.lastuse = jiffies;
+	c->_c.mfc_un.res.lastuse = jअगरfies;
 
-	if (c->mfc_origin == htonl(INADDR_ANY) && true_vifi >= 0) {
-		struct mfc_cache *cache_proxy;
+	अगर (c->mfc_origin == htonl(INADDR_ANY) && true_vअगरi >= 0) अणु
+		काष्ठा mfc_cache *cache_proxy;
 
 		/* For an (*,G) entry, we only check that the incomming
-		 * interface is part of the static tree.
+		 * पूर्णांकerface is part of the अटल tree.
 		 */
-		cache_proxy = mr_mfc_find_any_parent(mrt, vif);
-		if (cache_proxy &&
-		    cache_proxy->_c.mfc_un.res.ttls[true_vifi] < 255)
-			goto forward;
-	}
+		cache_proxy = mr_mfc_find_any_parent(mrt, vअगर);
+		अगर (cache_proxy &&
+		    cache_proxy->_c.mfc_un.res.ttls[true_vअगरi] < 255)
+			जाओ क्रमward;
+	पूर्ण
 
-	/* Wrong interface: drop packet and (maybe) send PIM assert. */
-	if (mrt->vif_table[vif].dev != dev) {
-		if (rt_is_output_route(skb_rtable(skb))) {
+	/* Wrong पूर्णांकerface: drop packet and (maybe) send PIM निश्चित. */
+	अगर (mrt->vअगर_table[vअगर].dev != dev) अणु
+		अगर (rt_is_output_route(skb_rtable(skb))) अणु
 			/* It is our own packet, looped back.
 			 * Very complicated situation...
 			 *
 			 * The best workaround until routing daemons will be
-			 * fixed is not to redistribute packet, if it was
-			 * send through wrong interface. It means, that
-			 * multicast applications WILL NOT work for
-			 * (S,G), which have default multicast route pointing
-			 * to wrong oif. In any case, it is not a good
+			 * fixed is not to redistribute packet, अगर it was
+			 * send through wrong पूर्णांकerface. It means, that
+			 * multicast applications WILL NOT work क्रम
+			 * (S,G), which have शेष multicast route poपूर्णांकing
+			 * to wrong oअगर. In any हाल, it is not a good
 			 * idea to use multicasting applications on router.
 			 */
-			goto dont_forward;
-		}
+			जाओ करोnt_क्रमward;
+		पूर्ण
 
-		c->_c.mfc_un.res.wrong_if++;
+		c->_c.mfc_un.res.wrong_अगर++;
 
-		if (true_vifi >= 0 && mrt->mroute_do_assert &&
-		    /* pimsm uses asserts, when switching from RPT to SPT,
-		     * so that we cannot check that packet arrived on an oif.
+		अगर (true_vअगरi >= 0 && mrt->mroute_करो_निश्चित &&
+		    /* pimsm uses निश्चितs, when चयनing from RPT to SPT,
+		     * so that we cannot check that packet arrived on an oअगर.
 		     * It is bad, but otherwise we would need to move pretty
 		     * large chunk of pimd to kernel. Ough... --ANK
 		     */
-		    (mrt->mroute_do_pim ||
-		     c->_c.mfc_un.res.ttls[true_vifi] < 255) &&
-		    time_after(jiffies,
-			       c->_c.mfc_un.res.last_assert +
-			       MFC_ASSERT_THRESH)) {
-			c->_c.mfc_un.res.last_assert = jiffies;
-			ipmr_cache_report(mrt, skb, true_vifi, IGMPMSG_WRONGVIF);
-			if (mrt->mroute_do_wrvifwhole)
-				ipmr_cache_report(mrt, skb, true_vifi,
+		    (mrt->mroute_करो_pim ||
+		     c->_c.mfc_un.res.ttls[true_vअगरi] < 255) &&
+		    समय_after(jअगरfies,
+			       c->_c.mfc_un.res.last_निश्चित +
+			       MFC_ASSERT_THRESH)) अणु
+			c->_c.mfc_un.res.last_निश्चित = jअगरfies;
+			ipmr_cache_report(mrt, skb, true_vअगरi, IGMPMSG_WRONGVIF);
+			अगर (mrt->mroute_करो_wrvअगरwhole)
+				ipmr_cache_report(mrt, skb, true_vअगरi,
 						  IGMPMSG_WRVIFWHOLE);
-		}
-		goto dont_forward;
-	}
+		पूर्ण
+		जाओ करोnt_क्रमward;
+	पूर्ण
 
-forward:
-	mrt->vif_table[vif].pkt_in++;
-	mrt->vif_table[vif].bytes_in += skb->len;
+क्रमward:
+	mrt->vअगर_table[vअगर].pkt_in++;
+	mrt->vअगर_table[vअगर].bytes_in += skb->len;
 
 	/* Forward the frame */
-	if (c->mfc_origin == htonl(INADDR_ANY) &&
-	    c->mfc_mcastgrp == htonl(INADDR_ANY)) {
-		if (true_vifi >= 0 &&
-		    true_vifi != c->_c.mfc_parent &&
+	अगर (c->mfc_origin == htonl(INADDR_ANY) &&
+	    c->mfc_mcastgrp == htonl(INADDR_ANY)) अणु
+		अगर (true_vअगरi >= 0 &&
+		    true_vअगरi != c->_c.mfc_parent &&
 		    ip_hdr(skb)->ttl >
-				c->_c.mfc_un.res.ttls[c->_c.mfc_parent]) {
+				c->_c.mfc_un.res.ttls[c->_c.mfc_parent]) अणु
 			/* It's an (*,*) entry and the packet is not coming from
-			 * the upstream: forward the packet to the upstream
+			 * the upstream: क्रमward the packet to the upstream
 			 * only.
 			 */
 			psend = c->_c.mfc_parent;
-			goto last_forward;
-		}
-		goto dont_forward;
-	}
-	for (ct = c->_c.mfc_un.res.maxvif - 1;
-	     ct >= c->_c.mfc_un.res.minvif; ct--) {
-		/* For (*,G) entry, don't forward to the incoming interface */
-		if ((c->mfc_origin != htonl(INADDR_ANY) ||
-		     ct != true_vifi) &&
-		    ip_hdr(skb)->ttl > c->_c.mfc_un.res.ttls[ct]) {
-			if (psend != -1) {
-				struct sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
+			जाओ last_क्रमward;
+		पूर्ण
+		जाओ करोnt_क्रमward;
+	पूर्ण
+	क्रम (ct = c->_c.mfc_un.res.maxvअगर - 1;
+	     ct >= c->_c.mfc_un.res.minvअगर; ct--) अणु
+		/* For (*,G) entry, करोn't क्रमward to the incoming पूर्णांकerface */
+		अगर ((c->mfc_origin != htonl(INADDR_ANY) ||
+		     ct != true_vअगरi) &&
+		    ip_hdr(skb)->ttl > c->_c.mfc_un.res.ttls[ct]) अणु
+			अगर (psend != -1) अणु
+				काष्ठा sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
 
-				if (skb2)
-					ipmr_queue_xmit(net, mrt, true_vifi,
+				अगर (skb2)
+					ipmr_queue_xmit(net, mrt, true_vअगरi,
 							skb2, psend);
-			}
+			पूर्ण
 			psend = ct;
-		}
-	}
-last_forward:
-	if (psend != -1) {
-		if (local) {
-			struct sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
+		पूर्ण
+	पूर्ण
+last_क्रमward:
+	अगर (psend != -1) अणु
+		अगर (local) अणु
+			काष्ठा sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
 
-			if (skb2)
-				ipmr_queue_xmit(net, mrt, true_vifi, skb2,
+			अगर (skb2)
+				ipmr_queue_xmit(net, mrt, true_vअगरi, skb2,
 						psend);
-		} else {
-			ipmr_queue_xmit(net, mrt, true_vifi, skb, psend);
-			return;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			ipmr_queue_xmit(net, mrt, true_vअगरi, skb, psend);
+			वापस;
+		पूर्ण
+	पूर्ण
 
-dont_forward:
-	if (!local)
-		kfree_skb(skb);
-}
+करोnt_क्रमward:
+	अगर (!local)
+		kमुक्त_skb(skb);
+पूर्ण
 
-static struct mr_table *ipmr_rt_fib_lookup(struct net *net, struct sk_buff *skb)
-{
-	struct rtable *rt = skb_rtable(skb);
-	struct iphdr *iph = ip_hdr(skb);
-	struct flowi4 fl4 = {
+अटल काष्ठा mr_table *ipmr_rt_fib_lookup(काष्ठा net *net, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rtable *rt = skb_rtable(skb);
+	काष्ठा iphdr *iph = ip_hdr(skb);
+	काष्ठा flowi4 fl4 = अणु
 		.daddr = iph->daddr,
 		.saddr = iph->saddr,
 		.flowi4_tos = RT_TOS(iph->tos),
-		.flowi4_oif = (rt_is_output_route(rt) ?
-			       skb->dev->ifindex : 0),
-		.flowi4_iif = (rt_is_output_route(rt) ?
+		.flowi4_oअगर = (rt_is_output_route(rt) ?
+			       skb->dev->अगरindex : 0),
+		.flowi4_iअगर = (rt_is_output_route(rt) ?
 			       LOOPBACK_IFINDEX :
-			       skb->dev->ifindex),
+			       skb->dev->अगरindex),
 		.flowi4_mark = skb->mark,
-	};
-	struct mr_table *mrt;
-	int err;
+	पूर्ण;
+	काष्ठा mr_table *mrt;
+	पूर्णांक err;
 
 	err = ipmr_fib_lookup(net, &fl4, &mrt);
-	if (err)
-		return ERR_PTR(err);
-	return mrt;
-}
+	अगर (err)
+		वापस ERR_PTR(err);
+	वापस mrt;
+पूर्ण
 
-/* Multicast packets for forwarding arrive here
- * Called with rcu_read_lock();
+/* Multicast packets क्रम क्रमwarding arrive here
+ * Called with rcu_पढ़ो_lock();
  */
-int ip_mr_input(struct sk_buff *skb)
-{
-	struct mfc_cache *cache;
-	struct net *net = dev_net(skb->dev);
-	int local = skb_rtable(skb)->rt_flags & RTCF_LOCAL;
-	struct mr_table *mrt;
-	struct net_device *dev;
+पूर्णांक ip_mr_input(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mfc_cache *cache;
+	काष्ठा net *net = dev_net(skb->dev);
+	पूर्णांक local = skb_rtable(skb)->rt_flags & RTCF_LOCAL;
+	काष्ठा mr_table *mrt;
+	काष्ठा net_device *dev;
 
-	/* skb->dev passed in is the loX master dev for vrfs.
-	 * As there are no vifs associated with loopback devices,
-	 * get the proper interface that does have a vif associated with it.
+	/* skb->dev passed in is the loX master dev क्रम vrfs.
+	 * As there are no vअगरs associated with loopback devices,
+	 * get the proper पूर्णांकerface that करोes have a vअगर associated with it.
 	 */
 	dev = skb->dev;
-	if (netif_is_l3_master(skb->dev)) {
-		dev = dev_get_by_index_rcu(net, IPCB(skb)->iif);
-		if (!dev) {
-			kfree_skb(skb);
-			return -ENODEV;
-		}
-	}
+	अगर (netअगर_is_l3_master(skb->dev)) अणु
+		dev = dev_get_by_index_rcu(net, IPCB(skb)->iअगर);
+		अगर (!dev) अणु
+			kमुक्त_skb(skb);
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
-	/* Packet is looped back after forward, it should not be
-	 * forwarded second time, but still can be delivered locally.
+	/* Packet is looped back after क्रमward, it should not be
+	 * क्रमwarded second समय, but still can be delivered locally.
 	 */
-	if (IPCB(skb)->flags & IPSKB_FORWARDED)
-		goto dont_forward;
+	अगर (IPCB(skb)->flags & IPSKB_FORWARDED)
+		जाओ करोnt_क्रमward;
 
 	mrt = ipmr_rt_fib_lookup(net, skb);
-	if (IS_ERR(mrt)) {
-		kfree_skb(skb);
-		return PTR_ERR(mrt);
-	}
-	if (!local) {
-		if (IPCB(skb)->opt.router_alert) {
-			if (ip_call_ra_chain(skb))
-				return 0;
-		} else if (ip_hdr(skb)->protocol == IPPROTO_IGMP) {
+	अगर (IS_ERR(mrt)) अणु
+		kमुक्त_skb(skb);
+		वापस PTR_ERR(mrt);
+	पूर्ण
+	अगर (!local) अणु
+		अगर (IPCB(skb)->opt.router_alert) अणु
+			अगर (ip_call_ra_chain(skb))
+				वापस 0;
+		पूर्ण अन्यथा अगर (ip_hdr(skb)->protocol == IPPROTO_IGMP) अणु
 			/* IGMPv1 (and broken IGMPv2 implementations sort of
-			 * Cisco IOS <= 11.2(8)) do not put router alert
+			 * Cisco IOS <= 11.2(8)) करो not put router alert
 			 * option to IGMP packets destined to routable
 			 * groups. It is very bad, because it means
-			 * that we can forward NO IGMP messages.
+			 * that we can क्रमward NO IGMP messages.
 			 */
-			struct sock *mroute_sk;
+			काष्ठा sock *mroute_sk;
 
 			mroute_sk = rcu_dereference(mrt->mroute_sk);
-			if (mroute_sk) {
+			अगर (mroute_sk) अणु
 				nf_reset_ct(skb);
 				raw_rcv(mroute_sk, skb);
-				return 0;
-			}
-		    }
-	}
+				वापस 0;
+			पूर्ण
+		    पूर्ण
+	पूर्ण
 
-	/* already under rcu_read_lock() */
+	/* alपढ़ोy under rcu_पढ़ो_lock() */
 	cache = ipmr_cache_find(mrt, ip_hdr(skb)->saddr, ip_hdr(skb)->daddr);
-	if (!cache) {
-		int vif = ipmr_find_vif(mrt, dev);
+	अगर (!cache) अणु
+		पूर्णांक vअगर = ipmr_find_vअगर(mrt, dev);
 
-		if (vif >= 0)
+		अगर (vअगर >= 0)
 			cache = ipmr_cache_find_any(mrt, ip_hdr(skb)->daddr,
-						    vif);
-	}
+						    vअगर);
+	पूर्ण
 
 	/* No usable cache entry */
-	if (!cache) {
-		int vif;
+	अगर (!cache) अणु
+		पूर्णांक vअगर;
 
-		if (local) {
-			struct sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
+		अगर (local) अणु
+			काष्ठा sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
 			ip_local_deliver(skb);
-			if (!skb2)
-				return -ENOBUFS;
+			अगर (!skb2)
+				वापस -ENOBUFS;
 			skb = skb2;
-		}
+		पूर्ण
 
-		read_lock(&mrt_lock);
-		vif = ipmr_find_vif(mrt, dev);
-		if (vif >= 0) {
-			int err2 = ipmr_cache_unresolved(mrt, vif, skb, dev);
-			read_unlock(&mrt_lock);
+		पढ़ो_lock(&mrt_lock);
+		vअगर = ipmr_find_vअगर(mrt, dev);
+		अगर (vअगर >= 0) अणु
+			पूर्णांक err2 = ipmr_cache_unresolved(mrt, vअगर, skb, dev);
+			पढ़ो_unlock(&mrt_lock);
 
-			return err2;
-		}
-		read_unlock(&mrt_lock);
-		kfree_skb(skb);
-		return -ENODEV;
-	}
+			वापस err2;
+		पूर्ण
+		पढ़ो_unlock(&mrt_lock);
+		kमुक्त_skb(skb);
+		वापस -ENODEV;
+	पूर्ण
 
-	read_lock(&mrt_lock);
-	ip_mr_forward(net, mrt, dev, skb, cache, local);
-	read_unlock(&mrt_lock);
+	पढ़ो_lock(&mrt_lock);
+	ip_mr_क्रमward(net, mrt, dev, skb, cache, local);
+	पढ़ो_unlock(&mrt_lock);
 
-	if (local)
-		return ip_local_deliver(skb);
+	अगर (local)
+		वापस ip_local_deliver(skb);
 
-	return 0;
+	वापस 0;
 
-dont_forward:
-	if (local)
-		return ip_local_deliver(skb);
-	kfree_skb(skb);
-	return 0;
-}
+करोnt_क्रमward:
+	अगर (local)
+		वापस ip_local_deliver(skb);
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_IP_PIMSM_V1
+#अगर_घोषित CONFIG_IP_PIMSM_V1
 /* Handle IGMP messages of PIMv1 */
-int pim_rcv_v1(struct sk_buff *skb)
-{
-	struct igmphdr *pim;
-	struct net *net = dev_net(skb->dev);
-	struct mr_table *mrt;
+पूर्णांक pim_rcv_v1(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा igmphdr *pim;
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा mr_table *mrt;
 
-	if (!pskb_may_pull(skb, sizeof(*pim) + sizeof(struct iphdr)))
-		goto drop;
+	अगर (!pskb_may_pull(skb, माप(*pim) + माप(काष्ठा iphdr)))
+		जाओ drop;
 
 	pim = igmp_hdr(skb);
 
 	mrt = ipmr_rt_fib_lookup(net, skb);
-	if (IS_ERR(mrt))
-		goto drop;
-	if (!mrt->mroute_do_pim ||
+	अगर (IS_ERR(mrt))
+		जाओ drop;
+	अगर (!mrt->mroute_करो_pim ||
 	    pim->group != PIM_V1_VERSION || pim->code != PIM_V1_REGISTER)
-		goto drop;
+		जाओ drop;
 
-	if (__pim_rcv(mrt, skb, sizeof(*pim))) {
+	अगर (__pim_rcv(mrt, skb, माप(*pim))) अणु
 drop:
-		kfree_skb(skb);
-	}
-	return 0;
-}
-#endif
+		kमुक्त_skb(skb);
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_IP_PIMSM_V2
-static int pim_rcv(struct sk_buff *skb)
-{
-	struct pimreghdr *pim;
-	struct net *net = dev_net(skb->dev);
-	struct mr_table *mrt;
+#अगर_घोषित CONFIG_IP_PIMSM_V2
+अटल पूर्णांक pim_rcv(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा pimreghdr *pim;
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा mr_table *mrt;
 
-	if (!pskb_may_pull(skb, sizeof(*pim) + sizeof(struct iphdr)))
-		goto drop;
+	अगर (!pskb_may_pull(skb, माप(*pim) + माप(काष्ठा iphdr)))
+		जाओ drop;
 
-	pim = (struct pimreghdr *)skb_transport_header(skb);
-	if (pim->type != ((PIM_VERSION << 4) | (PIM_TYPE_REGISTER)) ||
-	    (pim->flags & PIM_NULL_REGISTER) ||
-	    (ip_compute_csum((void *)pim, sizeof(*pim)) != 0 &&
+	pim = (काष्ठा pimreghdr *)skb_transport_header(skb);
+	अगर (pim->type != ((PIM_VERSION << 4) | (PIM_TYPE_REGISTER)) ||
+	    (pim->flags & PIM_शून्य_REGISTER) ||
+	    (ip_compute_csum((व्योम *)pim, माप(*pim)) != 0 &&
 	     csum_fold(skb_checksum(skb, 0, skb->len, 0))))
-		goto drop;
+		जाओ drop;
 
 	mrt = ipmr_rt_fib_lookup(net, skb);
-	if (IS_ERR(mrt))
-		goto drop;
-	if (__pim_rcv(mrt, skb, sizeof(*pim))) {
+	अगर (IS_ERR(mrt))
+		जाओ drop;
+	अगर (__pim_rcv(mrt, skb, माप(*pim))) अणु
 drop:
-		kfree_skb(skb);
-	}
-	return 0;
-}
-#endif
+		kमुक्त_skb(skb);
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-int ipmr_get_route(struct net *net, struct sk_buff *skb,
+पूर्णांक ipmr_get_route(काष्ठा net *net, काष्ठा sk_buff *skb,
 		   __be32 saddr, __be32 daddr,
-		   struct rtmsg *rtm, u32 portid)
-{
-	struct mfc_cache *cache;
-	struct mr_table *mrt;
-	int err;
+		   काष्ठा rपंचांगsg *rपंचांग, u32 portid)
+अणु
+	काष्ठा mfc_cache *cache;
+	काष्ठा mr_table *mrt;
+	पूर्णांक err;
 
 	mrt = ipmr_get_table(net, RT_TABLE_DEFAULT);
-	if (!mrt)
-		return -ENOENT;
+	अगर (!mrt)
+		वापस -ENOENT;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	cache = ipmr_cache_find(mrt, saddr, daddr);
-	if (!cache && skb->dev) {
-		int vif = ipmr_find_vif(mrt, skb->dev);
+	अगर (!cache && skb->dev) अणु
+		पूर्णांक vअगर = ipmr_find_vअगर(mrt, skb->dev);
 
-		if (vif >= 0)
-			cache = ipmr_cache_find_any(mrt, daddr, vif);
-	}
-	if (!cache) {
-		struct sk_buff *skb2;
-		struct iphdr *iph;
-		struct net_device *dev;
-		int vif = -1;
+		अगर (vअगर >= 0)
+			cache = ipmr_cache_find_any(mrt, daddr, vअगर);
+	पूर्ण
+	अगर (!cache) अणु
+		काष्ठा sk_buff *skb2;
+		काष्ठा iphdr *iph;
+		काष्ठा net_device *dev;
+		पूर्णांक vअगर = -1;
 
 		dev = skb->dev;
-		read_lock(&mrt_lock);
-		if (dev)
-			vif = ipmr_find_vif(mrt, dev);
-		if (vif < 0) {
-			read_unlock(&mrt_lock);
-			rcu_read_unlock();
-			return -ENODEV;
-		}
+		पढ़ो_lock(&mrt_lock);
+		अगर (dev)
+			vअगर = ipmr_find_vअगर(mrt, dev);
+		अगर (vअगर < 0) अणु
+			पढ़ो_unlock(&mrt_lock);
+			rcu_पढ़ो_unlock();
+			वापस -ENODEV;
+		पूर्ण
 
-		skb2 = skb_realloc_headroom(skb, sizeof(struct iphdr));
-		if (!skb2) {
-			read_unlock(&mrt_lock);
-			rcu_read_unlock();
-			return -ENOMEM;
-		}
+		skb2 = skb_पुनः_स्मृति_headroom(skb, माप(काष्ठा iphdr));
+		अगर (!skb2) अणु
+			पढ़ो_unlock(&mrt_lock);
+			rcu_पढ़ो_unlock();
+			वापस -ENOMEM;
+		पूर्ण
 
 		NETLINK_CB(skb2).portid = portid;
-		skb_push(skb2, sizeof(struct iphdr));
+		skb_push(skb2, माप(काष्ठा iphdr));
 		skb_reset_network_header(skb2);
 		iph = ip_hdr(skb2);
-		iph->ihl = sizeof(struct iphdr) >> 2;
+		iph->ihl = माप(काष्ठा iphdr) >> 2;
 		iph->saddr = saddr;
 		iph->daddr = daddr;
 		iph->version = 0;
-		err = ipmr_cache_unresolved(mrt, vif, skb2, dev);
-		read_unlock(&mrt_lock);
-		rcu_read_unlock();
-		return err;
-	}
+		err = ipmr_cache_unresolved(mrt, vअगर, skb2, dev);
+		पढ़ो_unlock(&mrt_lock);
+		rcu_पढ़ो_unlock();
+		वापस err;
+	पूर्ण
 
-	read_lock(&mrt_lock);
-	err = mr_fill_mroute(mrt, skb, &cache->_c, rtm);
-	read_unlock(&mrt_lock);
-	rcu_read_unlock();
-	return err;
-}
+	पढ़ो_lock(&mrt_lock);
+	err = mr_fill_mroute(mrt, skb, &cache->_c, rपंचांग);
+	पढ़ो_unlock(&mrt_lock);
+	rcu_पढ़ो_unlock();
+	वापस err;
+पूर्ण
 
-static int ipmr_fill_mroute(struct mr_table *mrt, struct sk_buff *skb,
-			    u32 portid, u32 seq, struct mfc_cache *c, int cmd,
-			    int flags)
-{
-	struct nlmsghdr *nlh;
-	struct rtmsg *rtm;
-	int err;
+अटल पूर्णांक ipmr_fill_mroute(काष्ठा mr_table *mrt, काष्ठा sk_buff *skb,
+			    u32 portid, u32 seq, काष्ठा mfc_cache *c, पूर्णांक cmd,
+			    पूर्णांक flags)
+अणु
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा rपंचांगsg *rपंचांग;
+	पूर्णांक err;
 
-	nlh = nlmsg_put(skb, portid, seq, cmd, sizeof(*rtm), flags);
-	if (!nlh)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, portid, seq, cmd, माप(*rपंचांग), flags);
+	अगर (!nlh)
+		वापस -EMSGSIZE;
 
-	rtm = nlmsg_data(nlh);
-	rtm->rtm_family   = RTNL_FAMILY_IPMR;
-	rtm->rtm_dst_len  = 32;
-	rtm->rtm_src_len  = 32;
-	rtm->rtm_tos      = 0;
-	rtm->rtm_table    = mrt->id;
-	if (nla_put_u32(skb, RTA_TABLE, mrt->id))
-		goto nla_put_failure;
-	rtm->rtm_type     = RTN_MULTICAST;
-	rtm->rtm_scope    = RT_SCOPE_UNIVERSE;
-	if (c->_c.mfc_flags & MFC_STATIC)
-		rtm->rtm_protocol = RTPROT_STATIC;
-	else
-		rtm->rtm_protocol = RTPROT_MROUTED;
-	rtm->rtm_flags    = 0;
+	rपंचांग = nlmsg_data(nlh);
+	rपंचांग->rपंचांग_family   = RTNL_FAMILY_IPMR;
+	rपंचांग->rपंचांग_dst_len  = 32;
+	rपंचांग->rपंचांग_src_len  = 32;
+	rपंचांग->rपंचांग_tos      = 0;
+	rपंचांग->rपंचांग_table    = mrt->id;
+	अगर (nla_put_u32(skb, RTA_TABLE, mrt->id))
+		जाओ nla_put_failure;
+	rपंचांग->rपंचांग_type     = RTN_MULTICAST;
+	rपंचांग->rपंचांग_scope    = RT_SCOPE_UNIVERSE;
+	अगर (c->_c.mfc_flags & MFC_STATIC)
+		rपंचांग->rपंचांग_protocol = RTPROT_STATIC;
+	अन्यथा
+		rपंचांग->rपंचांग_protocol = RTPROT_MROUTED;
+	rपंचांग->rपंचांग_flags    = 0;
 
-	if (nla_put_in_addr(skb, RTA_SRC, c->mfc_origin) ||
+	अगर (nla_put_in_addr(skb, RTA_SRC, c->mfc_origin) ||
 	    nla_put_in_addr(skb, RTA_DST, c->mfc_mcastgrp))
-		goto nla_put_failure;
-	err = mr_fill_mroute(mrt, skb, &c->_c, rtm);
-	/* do not break the dump if cache is unresolved */
-	if (err < 0 && err != -ENOENT)
-		goto nla_put_failure;
+		जाओ nla_put_failure;
+	err = mr_fill_mroute(mrt, skb, &c->_c, rपंचांग);
+	/* करो not अवरोध the dump अगर cache is unresolved */
+	अगर (err < 0 && err != -ENOENT)
+		जाओ nla_put_failure;
 
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int _ipmr_fill_mroute(struct mr_table *mrt, struct sk_buff *skb,
-			     u32 portid, u32 seq, struct mr_mfc *c, int cmd,
-			     int flags)
-{
-	return ipmr_fill_mroute(mrt, skb, portid, seq, (struct mfc_cache *)c,
+अटल पूर्णांक _ipmr_fill_mroute(काष्ठा mr_table *mrt, काष्ठा sk_buff *skb,
+			     u32 portid, u32 seq, काष्ठा mr_mfc *c, पूर्णांक cmd,
+			     पूर्णांक flags)
+अणु
+	वापस ipmr_fill_mroute(mrt, skb, portid, seq, (काष्ठा mfc_cache *)c,
 				cmd, flags);
-}
+पूर्ण
 
-static size_t mroute_msgsize(bool unresolved, int maxvif)
-{
-	size_t len =
-		NLMSG_ALIGN(sizeof(struct rtmsg))
+अटल माप_प्रकार mroute_msgsize(bool unresolved, पूर्णांक maxvअगर)
+अणु
+	माप_प्रकार len =
+		NLMSG_ALIGN(माप(काष्ठा rपंचांगsg))
 		+ nla_total_size(4)	/* RTA_TABLE */
 		+ nla_total_size(4)	/* RTA_SRC */
 		+ nla_total_size(4)	/* RTA_DST */
 		;
 
-	if (!unresolved)
+	अगर (!unresolved)
 		len = len
 		      + nla_total_size(4)	/* RTA_IIF */
 		      + nla_total_size(0)	/* RTA_MULTIPATH */
-		      + maxvif * NLA_ALIGN(sizeof(struct rtnexthop))
+		      + maxvअगर * NLA_ALIGN(माप(काष्ठा rtnexthop))
 						/* RTA_MFC_STATS */
-		      + nla_total_size_64bit(sizeof(struct rta_mfc_stats))
+		      + nla_total_size_64bit(माप(काष्ठा rta_mfc_stats))
 		;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static void mroute_netlink_event(struct mr_table *mrt, struct mfc_cache *mfc,
-				 int cmd)
-{
-	struct net *net = read_pnet(&mrt->net);
-	struct sk_buff *skb;
-	int err = -ENOBUFS;
+अटल व्योम mroute_netlink_event(काष्ठा mr_table *mrt, काष्ठा mfc_cache *mfc,
+				 पूर्णांक cmd)
+अणु
+	काष्ठा net *net = पढ़ो_pnet(&mrt->net);
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = -ENOBUFS;
 
 	skb = nlmsg_new(mroute_msgsize(mfc->_c.mfc_parent >= MAXVIFS,
-				       mrt->maxvif),
+				       mrt->maxvअगर),
 			GFP_ATOMIC);
-	if (!skb)
-		goto errout;
+	अगर (!skb)
+		जाओ errout;
 
 	err = ipmr_fill_mroute(mrt, skb, 0, 0, mfc, cmd, 0);
-	if (err < 0)
-		goto errout;
+	अगर (err < 0)
+		जाओ errout;
 
-	rtnl_notify(skb, net, 0, RTNLGRP_IPV4_MROUTE, NULL, GFP_ATOMIC);
-	return;
+	rtnl_notअगरy(skb, net, 0, RTNLGRP_IPV4_MROUTE, शून्य, GFP_ATOMIC);
+	वापस;
 
 errout:
-	kfree_skb(skb);
-	if (err < 0)
+	kमुक्त_skb(skb);
+	अगर (err < 0)
 		rtnl_set_sk_err(net, RTNLGRP_IPV4_MROUTE, err);
-}
+पूर्ण
 
-static size_t igmpmsg_netlink_msgsize(size_t payloadlen)
-{
-	size_t len =
-		NLMSG_ALIGN(sizeof(struct rtgenmsg))
+अटल माप_प्रकार igmpmsg_netlink_msgsize(माप_प्रकार payloadlen)
+अणु
+	माप_प्रकार len =
+		NLMSG_ALIGN(माप(काष्ठा rtgenmsg))
 		+ nla_total_size(1)	/* IPMRA_CREPORT_MSGTYPE */
 		+ nla_total_size(4)	/* IPMRA_CREPORT_VIF_ID */
 		+ nla_total_size(4)	/* IPMRA_CREPORT_SRC_ADDR */
@@ -2405,745 +2406,745 @@ static size_t igmpmsg_netlink_msgsize(size_t payloadlen)
 		+ nla_total_size(payloadlen)
 		;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static void igmpmsg_netlink_event(struct mr_table *mrt, struct sk_buff *pkt)
-{
-	struct net *net = read_pnet(&mrt->net);
-	struct nlmsghdr *nlh;
-	struct rtgenmsg *rtgenm;
-	struct igmpmsg *msg;
-	struct sk_buff *skb;
-	struct nlattr *nla;
-	int payloadlen;
+अटल व्योम igmpmsg_netlink_event(काष्ठा mr_table *mrt, काष्ठा sk_buff *pkt)
+अणु
+	काष्ठा net *net = पढ़ो_pnet(&mrt->net);
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा rtgenmsg *rtgenm;
+	काष्ठा igmpmsg *msg;
+	काष्ठा sk_buff *skb;
+	काष्ठा nlattr *nla;
+	पूर्णांक payloadlen;
 
-	payloadlen = pkt->len - sizeof(struct igmpmsg);
-	msg = (struct igmpmsg *)skb_network_header(pkt);
+	payloadlen = pkt->len - माप(काष्ठा igmpmsg);
+	msg = (काष्ठा igmpmsg *)skb_network_header(pkt);
 
 	skb = nlmsg_new(igmpmsg_netlink_msgsize(payloadlen), GFP_ATOMIC);
-	if (!skb)
-		goto errout;
+	अगर (!skb)
+		जाओ errout;
 
 	nlh = nlmsg_put(skb, 0, 0, RTM_NEWCACHEREPORT,
-			sizeof(struct rtgenmsg), 0);
-	if (!nlh)
-		goto errout;
+			माप(काष्ठा rtgenmsg), 0);
+	अगर (!nlh)
+		जाओ errout;
 	rtgenm = nlmsg_data(nlh);
 	rtgenm->rtgen_family = RTNL_FAMILY_IPMR;
-	if (nla_put_u8(skb, IPMRA_CREPORT_MSGTYPE, msg->im_msgtype) ||
-	    nla_put_u32(skb, IPMRA_CREPORT_VIF_ID, msg->im_vif | (msg->im_vif_hi << 8)) ||
+	अगर (nla_put_u8(skb, IPMRA_CREPORT_MSGTYPE, msg->im_msgtype) ||
+	    nla_put_u32(skb, IPMRA_CREPORT_VIF_ID, msg->im_vअगर | (msg->im_vअगर_hi << 8)) ||
 	    nla_put_in_addr(skb, IPMRA_CREPORT_SRC_ADDR,
 			    msg->im_src.s_addr) ||
 	    nla_put_in_addr(skb, IPMRA_CREPORT_DST_ADDR,
 			    msg->im_dst.s_addr) ||
 	    nla_put_u32(skb, IPMRA_CREPORT_TABLE, mrt->id))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	nla = nla_reserve(skb, IPMRA_CREPORT_PKT, payloadlen);
-	if (!nla || skb_copy_bits(pkt, sizeof(struct igmpmsg),
+	अगर (!nla || skb_copy_bits(pkt, माप(काष्ठा igmpmsg),
 				  nla_data(nla), payloadlen))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	nlmsg_end(skb, nlh);
 
-	rtnl_notify(skb, net, 0, RTNLGRP_IPV4_MROUTE_R, NULL, GFP_ATOMIC);
-	return;
+	rtnl_notअगरy(skb, net, 0, RTNLGRP_IPV4_MROUTE_R, शून्य, GFP_ATOMIC);
+	वापस;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
 errout:
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 	rtnl_set_sk_err(net, RTNLGRP_IPV4_MROUTE_R, -ENOBUFS);
-}
+पूर्ण
 
-static int ipmr_rtm_valid_getroute_req(struct sk_buff *skb,
-				       const struct nlmsghdr *nlh,
-				       struct nlattr **tb,
-				       struct netlink_ext_ack *extack)
-{
-	struct rtmsg *rtm;
-	int i, err;
+अटल पूर्णांक ipmr_rपंचांग_valid_getroute_req(काष्ठा sk_buff *skb,
+				       स्थिर काष्ठा nlmsghdr *nlh,
+				       काष्ठा nlattr **tb,
+				       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा rपंचांगsg *rपंचांग;
+	पूर्णांक i, err;
 
-	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*rtm))) {
+	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*rपंचांग))) अणु
 		NL_SET_ERR_MSG(extack, "ipv4: Invalid header for multicast route get request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!netlink_strict_get_check(skb))
-		return nlmsg_parse_deprecated(nlh, sizeof(*rtm), tb, RTA_MAX,
-					      rtm_ipv4_policy, extack);
+	अगर (!netlink_strict_get_check(skb))
+		वापस nlmsg_parse_deprecated(nlh, माप(*rपंचांग), tb, RTA_MAX,
+					      rपंचांग_ipv4_policy, extack);
 
-	rtm = nlmsg_data(nlh);
-	if ((rtm->rtm_src_len && rtm->rtm_src_len != 32) ||
-	    (rtm->rtm_dst_len && rtm->rtm_dst_len != 32) ||
-	    rtm->rtm_tos || rtm->rtm_table || rtm->rtm_protocol ||
-	    rtm->rtm_scope || rtm->rtm_type || rtm->rtm_flags) {
+	rपंचांग = nlmsg_data(nlh);
+	अगर ((rपंचांग->rपंचांग_src_len && rपंचांग->rपंचांग_src_len != 32) ||
+	    (rपंचांग->rपंचांग_dst_len && rपंचांग->rपंचांग_dst_len != 32) ||
+	    rपंचांग->rपंचांग_tos || rपंचांग->rपंचांग_table || rपंचांग->rपंचांग_protocol ||
+	    rपंचांग->rपंचांग_scope || rपंचांग->rपंचांग_type || rपंचांग->rपंचांग_flags) अणु
 		NL_SET_ERR_MSG(extack, "ipv4: Invalid values in header for multicast route get request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	err = nlmsg_parse_deprecated_strict(nlh, sizeof(*rtm), tb, RTA_MAX,
-					    rtm_ipv4_policy, extack);
-	if (err)
-		return err;
+	err = nlmsg_parse_deprecated_strict(nlh, माप(*rपंचांग), tb, RTA_MAX,
+					    rपंचांग_ipv4_policy, extack);
+	अगर (err)
+		वापस err;
 
-	if ((tb[RTA_SRC] && !rtm->rtm_src_len) ||
-	    (tb[RTA_DST] && !rtm->rtm_dst_len)) {
+	अगर ((tb[RTA_SRC] && !rपंचांग->rपंचांग_src_len) ||
+	    (tb[RTA_DST] && !rपंचांग->rपंचांग_dst_len)) अणु
 		NL_SET_ERR_MSG(extack, "ipv4: rtm_src_len and rtm_dst_len must be 32 for IPv4");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i <= RTA_MAX; i++) {
-		if (!tb[i])
-			continue;
+	क्रम (i = 0; i <= RTA_MAX; i++) अणु
+		अगर (!tb[i])
+			जारी;
 
-		switch (i) {
-		case RTA_SRC:
-		case RTA_DST:
-		case RTA_TABLE:
-			break;
-		default:
+		चयन (i) अणु
+		हाल RTA_SRC:
+		हाल RTA_DST:
+		हाल RTA_TABLE:
+			अवरोध;
+		शेष:
 			NL_SET_ERR_MSG(extack, "ipv4: Unsupported attribute in multicast route get request");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipmr_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
-			     struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(in_skb->sk);
-	struct nlattr *tb[RTA_MAX + 1];
-	struct sk_buff *skb = NULL;
-	struct mfc_cache *cache;
-	struct mr_table *mrt;
+अटल पूर्णांक ipmr_rपंचांग_getroute(काष्ठा sk_buff *in_skb, काष्ठा nlmsghdr *nlh,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(in_skb->sk);
+	काष्ठा nlattr *tb[RTA_MAX + 1];
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा mfc_cache *cache;
+	काष्ठा mr_table *mrt;
 	__be32 src, grp;
 	u32 tableid;
-	int err;
+	पूर्णांक err;
 
-	err = ipmr_rtm_valid_getroute_req(in_skb, nlh, tb, extack);
-	if (err < 0)
-		goto errout;
+	err = ipmr_rपंचांग_valid_getroute_req(in_skb, nlh, tb, extack);
+	अगर (err < 0)
+		जाओ errout;
 
 	src = tb[RTA_SRC] ? nla_get_in_addr(tb[RTA_SRC]) : 0;
 	grp = tb[RTA_DST] ? nla_get_in_addr(tb[RTA_DST]) : 0;
 	tableid = tb[RTA_TABLE] ? nla_get_u32(tb[RTA_TABLE]) : 0;
 
 	mrt = ipmr_get_table(net, tableid ? tableid : RT_TABLE_DEFAULT);
-	if (!mrt) {
+	अगर (!mrt) अणु
 		err = -ENOENT;
-		goto errout_free;
-	}
+		जाओ errout_मुक्त;
+	पूर्ण
 
 	/* entries are added/deleted only under RTNL */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	cache = ipmr_cache_find(mrt, src, grp);
-	rcu_read_unlock();
-	if (!cache) {
+	rcu_पढ़ो_unlock();
+	अगर (!cache) अणु
 		err = -ENOENT;
-		goto errout_free;
-	}
+		जाओ errout_मुक्त;
+	पूर्ण
 
-	skb = nlmsg_new(mroute_msgsize(false, mrt->maxvif), GFP_KERNEL);
-	if (!skb) {
+	skb = nlmsg_new(mroute_msgsize(false, mrt->maxvअगर), GFP_KERNEL);
+	अगर (!skb) अणु
 		err = -ENOBUFS;
-		goto errout_free;
-	}
+		जाओ errout_मुक्त;
+	पूर्ण
 
 	err = ipmr_fill_mroute(mrt, skb, NETLINK_CB(in_skb).portid,
 			       nlh->nlmsg_seq, cache,
 			       RTM_NEWROUTE, 0);
-	if (err < 0)
-		goto errout_free;
+	अगर (err < 0)
+		जाओ errout_मुक्त;
 
 	err = rtnl_unicast(skb, net, NETLINK_CB(in_skb).portid);
 
 errout:
-	return err;
+	वापस err;
 
-errout_free:
-	kfree_skb(skb);
-	goto errout;
-}
+errout_मुक्त:
+	kमुक्त_skb(skb);
+	जाओ errout;
+पूर्ण
 
-static int ipmr_rtm_dumproute(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct fib_dump_filter filter = {};
-	int err;
+अटल पूर्णांक ipmr_rपंचांग_dumproute(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा fib_dump_filter filter = अणुपूर्ण;
+	पूर्णांक err;
 
-	if (cb->strict_check) {
+	अगर (cb->strict_check) अणु
 		err = ip_valid_fib_dump_req(sock_net(skb->sk), cb->nlh,
 					    &filter, cb);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (filter.table_id) {
-		struct mr_table *mrt;
+	अगर (filter.table_id) अणु
+		काष्ठा mr_table *mrt;
 
 		mrt = ipmr_get_table(sock_net(skb->sk), filter.table_id);
-		if (!mrt) {
-			if (rtnl_msg_family(cb->nlh) != RTNL_FAMILY_IPMR)
-				return skb->len;
+		अगर (!mrt) अणु
+			अगर (rtnl_msg_family(cb->nlh) != RTNL_FAMILY_IPMR)
+				वापस skb->len;
 
 			NL_SET_ERR_MSG(cb->extack, "ipv4: MR table does not exist");
-			return -ENOENT;
-		}
+			वापस -ENOENT;
+		पूर्ण
 		err = mr_table_dump(mrt, skb, cb, _ipmr_fill_mroute,
 				    &mfc_unres_lock, &filter);
-		return skb->len ? : err;
-	}
+		वापस skb->len ? : err;
+	पूर्ण
 
-	return mr_rtm_dumproute(skb, cb, ipmr_mr_table_iter,
+	वापस mr_rपंचांग_dumproute(skb, cb, ipmr_mr_table_iter,
 				_ipmr_fill_mroute, &mfc_unres_lock, &filter);
-}
+पूर्ण
 
-static const struct nla_policy rtm_ipmr_policy[RTA_MAX + 1] = {
-	[RTA_SRC]	= { .type = NLA_U32 },
-	[RTA_DST]	= { .type = NLA_U32 },
-	[RTA_IIF]	= { .type = NLA_U32 },
-	[RTA_TABLE]	= { .type = NLA_U32 },
-	[RTA_MULTIPATH]	= { .len = sizeof(struct rtnexthop) },
-};
+अटल स्थिर काष्ठा nla_policy rपंचांग_ipmr_policy[RTA_MAX + 1] = अणु
+	[RTA_SRC]	= अणु .type = NLA_U32 पूर्ण,
+	[RTA_DST]	= अणु .type = NLA_U32 पूर्ण,
+	[RTA_IIF]	= अणु .type = NLA_U32 पूर्ण,
+	[RTA_TABLE]	= अणु .type = NLA_U32 पूर्ण,
+	[RTA_MULTIPATH]	= अणु .len = माप(काष्ठा rtnexthop) पूर्ण,
+पूर्ण;
 
-static bool ipmr_rtm_validate_proto(unsigned char rtm_protocol)
-{
-	switch (rtm_protocol) {
-	case RTPROT_STATIC:
-	case RTPROT_MROUTED:
-		return true;
-	}
-	return false;
-}
+अटल bool ipmr_rपंचांग_validate_proto(अचिन्हित अक्षर rपंचांग_protocol)
+अणु
+	चयन (rपंचांग_protocol) अणु
+	हाल RTPROT_STATIC:
+	हाल RTPROT_MROUTED:
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static int ipmr_nla_get_ttls(const struct nlattr *nla, struct mfcctl *mfcc)
-{
-	struct rtnexthop *rtnh = nla_data(nla);
-	int remaining = nla_len(nla), vifi = 0;
+अटल पूर्णांक ipmr_nla_get_ttls(स्थिर काष्ठा nlattr *nla, काष्ठा mfcctl *mfcc)
+अणु
+	काष्ठा rtnexthop *rtnh = nla_data(nla);
+	पूर्णांक reमुख्यing = nla_len(nla), vअगरi = 0;
 
-	while (rtnh_ok(rtnh, remaining)) {
-		mfcc->mfcc_ttls[vifi] = rtnh->rtnh_hops;
-		if (++vifi == MAXVIFS)
-			break;
-		rtnh = rtnh_next(rtnh, &remaining);
-	}
+	जबतक (rtnh_ok(rtnh, reमुख्यing)) अणु
+		mfcc->mfcc_ttls[vअगरi] = rtnh->rtnh_hops;
+		अगर (++vअगरi == MAXVIFS)
+			अवरोध;
+		rtnh = rtnh_next(rtnh, &reमुख्यing);
+	पूर्ण
 
-	return remaining > 0 ? -EINVAL : vifi;
-}
+	वापस reमुख्यing > 0 ? -EINVAL : vअगरi;
+पूर्ण
 
-/* returns < 0 on error, 0 for ADD_MFC and 1 for ADD_MFC_PROXY */
-static int rtm_to_ipmr_mfcc(struct net *net, struct nlmsghdr *nlh,
-			    struct mfcctl *mfcc, int *mrtsock,
-			    struct mr_table **mrtret,
-			    struct netlink_ext_ack *extack)
-{
-	struct net_device *dev = NULL;
+/* वापसs < 0 on error, 0 क्रम ADD_MFC and 1 क्रम ADD_MFC_PROXY */
+अटल पूर्णांक rपंचांग_to_ipmr_mfcc(काष्ठा net *net, काष्ठा nlmsghdr *nlh,
+			    काष्ठा mfcctl *mfcc, पूर्णांक *mrtsock,
+			    काष्ठा mr_table **mrtret,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net_device *dev = शून्य;
 	u32 tblid = RT_TABLE_DEFAULT;
-	struct mr_table *mrt;
-	struct nlattr *attr;
-	struct rtmsg *rtm;
-	int ret, rem;
+	काष्ठा mr_table *mrt;
+	काष्ठा nlattr *attr;
+	काष्ठा rपंचांगsg *rपंचांग;
+	पूर्णांक ret, rem;
 
-	ret = nlmsg_validate_deprecated(nlh, sizeof(*rtm), RTA_MAX,
-					rtm_ipmr_policy, extack);
-	if (ret < 0)
-		goto out;
-	rtm = nlmsg_data(nlh);
+	ret = nlmsg_validate_deprecated(nlh, माप(*rपंचांग), RTA_MAX,
+					rपंचांग_ipmr_policy, extack);
+	अगर (ret < 0)
+		जाओ out;
+	rपंचांग = nlmsg_data(nlh);
 
 	ret = -EINVAL;
-	if (rtm->rtm_family != RTNL_FAMILY_IPMR || rtm->rtm_dst_len != 32 ||
-	    rtm->rtm_type != RTN_MULTICAST ||
-	    rtm->rtm_scope != RT_SCOPE_UNIVERSE ||
-	    !ipmr_rtm_validate_proto(rtm->rtm_protocol))
-		goto out;
+	अगर (rपंचांग->rपंचांग_family != RTNL_FAMILY_IPMR || rपंचांग->rपंचांग_dst_len != 32 ||
+	    rपंचांग->rपंचांग_type != RTN_MULTICAST ||
+	    rपंचांग->rपंचांग_scope != RT_SCOPE_UNIVERSE ||
+	    !ipmr_rपंचांग_validate_proto(rपंचांग->rपंचांग_protocol))
+		जाओ out;
 
-	memset(mfcc, 0, sizeof(*mfcc));
+	स_रखो(mfcc, 0, माप(*mfcc));
 	mfcc->mfcc_parent = -1;
 	ret = 0;
-	nlmsg_for_each_attr(attr, nlh, sizeof(struct rtmsg), rem) {
-		switch (nla_type(attr)) {
-		case RTA_SRC:
+	nlmsg_क्रम_each_attr(attr, nlh, माप(काष्ठा rपंचांगsg), rem) अणु
+		चयन (nla_type(attr)) अणु
+		हाल RTA_SRC:
 			mfcc->mfcc_origin.s_addr = nla_get_be32(attr);
-			break;
-		case RTA_DST:
+			अवरोध;
+		हाल RTA_DST:
 			mfcc->mfcc_mcastgrp.s_addr = nla_get_be32(attr);
-			break;
-		case RTA_IIF:
+			अवरोध;
+		हाल RTA_IIF:
 			dev = __dev_get_by_index(net, nla_get_u32(attr));
-			if (!dev) {
+			अगर (!dev) अणु
 				ret = -ENODEV;
-				goto out;
-			}
-			break;
-		case RTA_MULTIPATH:
-			if (ipmr_nla_get_ttls(attr, mfcc) < 0) {
+				जाओ out;
+			पूर्ण
+			अवरोध;
+		हाल RTA_MULTIPATH:
+			अगर (ipmr_nla_get_ttls(attr, mfcc) < 0) अणु
 				ret = -EINVAL;
-				goto out;
-			}
-			break;
-		case RTA_PREFSRC:
+				जाओ out;
+			पूर्ण
+			अवरोध;
+		हाल RTA_PREFSRC:
 			ret = 1;
-			break;
-		case RTA_TABLE:
+			अवरोध;
+		हाल RTA_TABLE:
 			tblid = nla_get_u32(attr);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mrt = ipmr_get_table(net, tblid);
-	if (!mrt) {
+	अगर (!mrt) अणु
 		ret = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	*mrtret = mrt;
-	*mrtsock = rtm->rtm_protocol == RTPROT_MROUTED ? 1 : 0;
-	if (dev)
-		mfcc->mfcc_parent = ipmr_find_vif(mrt, dev);
+	*mrtsock = rपंचांग->rपंचांग_protocol == RTPROT_MROUTED ? 1 : 0;
+	अगर (dev)
+		mfcc->mfcc_parent = ipmr_find_vअगर(mrt, dev);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* takes care of both newroute and delroute */
-static int ipmr_rtm_route(struct sk_buff *skb, struct nlmsghdr *nlh,
-			  struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	int ret, mrtsock, parent;
-	struct mr_table *tbl;
-	struct mfcctl mfcc;
+अटल पूर्णांक ipmr_rपंचांग_route(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	पूर्णांक ret, mrtsock, parent;
+	काष्ठा mr_table *tbl;
+	काष्ठा mfcctl mfcc;
 
 	mrtsock = 0;
-	tbl = NULL;
-	ret = rtm_to_ipmr_mfcc(net, nlh, &mfcc, &mrtsock, &tbl, extack);
-	if (ret < 0)
-		return ret;
+	tbl = शून्य;
+	ret = rपंचांग_to_ipmr_mfcc(net, nlh, &mfcc, &mrtsock, &tbl, extack);
+	अगर (ret < 0)
+		वापस ret;
 
 	parent = ret ? mfcc.mfcc_parent : -1;
-	if (nlh->nlmsg_type == RTM_NEWROUTE)
-		return ipmr_mfc_add(net, tbl, &mfcc, mrtsock, parent);
-	else
-		return ipmr_mfc_delete(tbl, &mfcc, parent);
-}
+	अगर (nlh->nlmsg_type == RTM_NEWROUTE)
+		वापस ipmr_mfc_add(net, tbl, &mfcc, mrtsock, parent);
+	अन्यथा
+		वापस ipmr_mfc_delete(tbl, &mfcc, parent);
+पूर्ण
 
-static bool ipmr_fill_table(struct mr_table *mrt, struct sk_buff *skb)
-{
-	u32 queue_len = atomic_read(&mrt->cache_resolve_queue_len);
+अटल bool ipmr_fill_table(काष्ठा mr_table *mrt, काष्ठा sk_buff *skb)
+अणु
+	u32 queue_len = atomic_पढ़ो(&mrt->cache_resolve_queue_len);
 
-	if (nla_put_u32(skb, IPMRA_TABLE_ID, mrt->id) ||
+	अगर (nla_put_u32(skb, IPMRA_TABLE_ID, mrt->id) ||
 	    nla_put_u32(skb, IPMRA_TABLE_CACHE_RES_QUEUE_LEN, queue_len) ||
 	    nla_put_s32(skb, IPMRA_TABLE_MROUTE_REG_VIF_NUM,
-			mrt->mroute_reg_vif_num) ||
+			mrt->mroute_reg_vअगर_num) ||
 	    nla_put_u8(skb, IPMRA_TABLE_MROUTE_DO_ASSERT,
-		       mrt->mroute_do_assert) ||
-	    nla_put_u8(skb, IPMRA_TABLE_MROUTE_DO_PIM, mrt->mroute_do_pim) ||
+		       mrt->mroute_करो_निश्चित) ||
+	    nla_put_u8(skb, IPMRA_TABLE_MROUTE_DO_PIM, mrt->mroute_करो_pim) ||
 	    nla_put_u8(skb, IPMRA_TABLE_MROUTE_DO_WRVIFWHOLE,
-		       mrt->mroute_do_wrvifwhole))
-		return false;
+		       mrt->mroute_करो_wrvअगरwhole))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool ipmr_fill_vif(struct mr_table *mrt, u32 vifid, struct sk_buff *skb)
-{
-	struct nlattr *vif_nest;
-	struct vif_device *vif;
+अटल bool ipmr_fill_vअगर(काष्ठा mr_table *mrt, u32 vअगरid, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nlattr *vअगर_nest;
+	काष्ठा vअगर_device *vअगर;
 
-	/* if the VIF doesn't exist just continue */
-	if (!VIF_EXISTS(mrt, vifid))
-		return true;
+	/* अगर the VIF करोesn't exist just जारी */
+	अगर (!VIF_EXISTS(mrt, vअगरid))
+		वापस true;
 
-	vif = &mrt->vif_table[vifid];
-	vif_nest = nla_nest_start_noflag(skb, IPMRA_VIF);
-	if (!vif_nest)
-		return false;
-	if (nla_put_u32(skb, IPMRA_VIFA_IFINDEX, vif->dev->ifindex) ||
-	    nla_put_u32(skb, IPMRA_VIFA_VIF_ID, vifid) ||
-	    nla_put_u16(skb, IPMRA_VIFA_FLAGS, vif->flags) ||
-	    nla_put_u64_64bit(skb, IPMRA_VIFA_BYTES_IN, vif->bytes_in,
+	vअगर = &mrt->vअगर_table[vअगरid];
+	vअगर_nest = nla_nest_start_noflag(skb, IPMRA_VIF);
+	अगर (!vअगर_nest)
+		वापस false;
+	अगर (nla_put_u32(skb, IPMRA_VIFA_IFINDEX, vअगर->dev->अगरindex) ||
+	    nla_put_u32(skb, IPMRA_VIFA_VIF_ID, vअगरid) ||
+	    nla_put_u16(skb, IPMRA_VIFA_FLAGS, vअगर->flags) ||
+	    nla_put_u64_64bit(skb, IPMRA_VIFA_BYTES_IN, vअगर->bytes_in,
 			      IPMRA_VIFA_PAD) ||
-	    nla_put_u64_64bit(skb, IPMRA_VIFA_BYTES_OUT, vif->bytes_out,
+	    nla_put_u64_64bit(skb, IPMRA_VIFA_BYTES_OUT, vअगर->bytes_out,
 			      IPMRA_VIFA_PAD) ||
-	    nla_put_u64_64bit(skb, IPMRA_VIFA_PACKETS_IN, vif->pkt_in,
+	    nla_put_u64_64bit(skb, IPMRA_VIFA_PACKETS_IN, vअगर->pkt_in,
 			      IPMRA_VIFA_PAD) ||
-	    nla_put_u64_64bit(skb, IPMRA_VIFA_PACKETS_OUT, vif->pkt_out,
+	    nla_put_u64_64bit(skb, IPMRA_VIFA_PACKETS_OUT, vअगर->pkt_out,
 			      IPMRA_VIFA_PAD) ||
-	    nla_put_be32(skb, IPMRA_VIFA_LOCAL_ADDR, vif->local) ||
-	    nla_put_be32(skb, IPMRA_VIFA_REMOTE_ADDR, vif->remote)) {
-		nla_nest_cancel(skb, vif_nest);
-		return false;
-	}
-	nla_nest_end(skb, vif_nest);
+	    nla_put_be32(skb, IPMRA_VIFA_LOCAL_ADDR, vअगर->local) ||
+	    nla_put_be32(skb, IPMRA_VIFA_REMOTE_ADDR, vअगर->remote)) अणु
+		nla_nest_cancel(skb, vअगर_nest);
+		वापस false;
+	पूर्ण
+	nla_nest_end(skb, vअगर_nest);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int ipmr_valid_dumplink(const struct nlmsghdr *nlh,
-			       struct netlink_ext_ack *extack)
-{
-	struct ifinfomsg *ifm;
+अटल पूर्णांक ipmr_valid_dumplink(स्थिर काष्ठा nlmsghdr *nlh,
+			       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा अगरinfomsg *अगरm;
 
-	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifm))) {
+	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*अगरm))) अणु
 		NL_SET_ERR_MSG(extack, "ipv4: Invalid header for ipmr link dump");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (nlmsg_attrlen(nlh, sizeof(*ifm))) {
+	अगर (nlmsg_attrlen(nlh, माप(*अगरm))) अणु
 		NL_SET_ERR_MSG(extack, "Invalid data after header in ipmr link dump");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ifm = nlmsg_data(nlh);
-	if (ifm->__ifi_pad || ifm->ifi_type || ifm->ifi_flags ||
-	    ifm->ifi_change || ifm->ifi_index) {
+	अगरm = nlmsg_data(nlh);
+	अगर (अगरm->__अगरi_pad || अगरm->अगरi_type || अगरm->अगरi_flags ||
+	    अगरm->अगरi_change || अगरm->अगरi_index) अणु
 		NL_SET_ERR_MSG(extack, "Invalid values in header for ipmr link dump request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipmr_rtm_dumplink(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct net *net = sock_net(skb->sk);
-	struct nlmsghdr *nlh = NULL;
-	unsigned int t = 0, s_t;
-	unsigned int e = 0, s_e;
-	struct mr_table *mrt;
+अटल पूर्णांक ipmr_rपंचांग_dumplink(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा nlmsghdr *nlh = शून्य;
+	अचिन्हित पूर्णांक t = 0, s_t;
+	अचिन्हित पूर्णांक e = 0, s_e;
+	काष्ठा mr_table *mrt;
 
-	if (cb->strict_check) {
-		int err = ipmr_valid_dumplink(cb->nlh, cb->extack);
+	अगर (cb->strict_check) अणु
+		पूर्णांक err = ipmr_valid_dumplink(cb->nlh, cb->extack);
 
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	s_t = cb->args[0];
 	s_e = cb->args[1];
 
-	ipmr_for_each_table(mrt, net) {
-		struct nlattr *vifs, *af;
-		struct ifinfomsg *hdr;
+	ipmr_क्रम_each_table(mrt, net) अणु
+		काष्ठा nlattr *vअगरs, *af;
+		काष्ठा अगरinfomsg *hdr;
 		u32 i;
 
-		if (t < s_t)
-			goto skip_table;
+		अगर (t < s_t)
+			जाओ skip_table;
 		nlh = nlmsg_put(skb, NETLINK_CB(cb->skb).portid,
 				cb->nlh->nlmsg_seq, RTM_NEWLINK,
-				sizeof(*hdr), NLM_F_MULTI);
-		if (!nlh)
-			break;
+				माप(*hdr), NLM_F_MULTI);
+		अगर (!nlh)
+			अवरोध;
 
 		hdr = nlmsg_data(nlh);
-		memset(hdr, 0, sizeof(*hdr));
-		hdr->ifi_family = RTNL_FAMILY_IPMR;
+		स_रखो(hdr, 0, माप(*hdr));
+		hdr->अगरi_family = RTNL_FAMILY_IPMR;
 
 		af = nla_nest_start_noflag(skb, IFLA_AF_SPEC);
-		if (!af) {
+		अगर (!af) अणु
 			nlmsg_cancel(skb, nlh);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!ipmr_fill_table(mrt, skb)) {
+		अगर (!ipmr_fill_table(mrt, skb)) अणु
 			nlmsg_cancel(skb, nlh);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		vifs = nla_nest_start_noflag(skb, IPMRA_TABLE_VIFS);
-		if (!vifs) {
+		vअगरs = nla_nest_start_noflag(skb, IPMRA_TABLE_VIFS);
+		अगर (!vअगरs) अणु
 			nla_nest_end(skb, af);
 			nlmsg_end(skb, nlh);
-			goto out;
-		}
-		for (i = 0; i < mrt->maxvif; i++) {
-			if (e < s_e)
-				goto skip_entry;
-			if (!ipmr_fill_vif(mrt, i, skb)) {
-				nla_nest_end(skb, vifs);
+			जाओ out;
+		पूर्ण
+		क्रम (i = 0; i < mrt->maxvअगर; i++) अणु
+			अगर (e < s_e)
+				जाओ skip_entry;
+			अगर (!ipmr_fill_vअगर(mrt, i, skb)) अणु
+				nla_nest_end(skb, vअगरs);
 				nla_nest_end(skb, af);
 				nlmsg_end(skb, nlh);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 skip_entry:
 			e++;
-		}
+		पूर्ण
 		s_e = 0;
 		e = 0;
-		nla_nest_end(skb, vifs);
+		nla_nest_end(skb, vअगरs);
 		nla_nest_end(skb, af);
 		nlmsg_end(skb, nlh);
 skip_table:
 		t++;
-	}
+	पूर्ण
 
 out:
 	cb->args[1] = e;
 	cb->args[0] = t;
 
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-#ifdef CONFIG_PROC_FS
-/* The /proc interfaces to multicast routing :
- * /proc/net/ip_mr_cache & /proc/net/ip_mr_vif
+#अगर_घोषित CONFIG_PROC_FS
+/* The /proc पूर्णांकerfaces to multicast routing :
+ * /proc/net/ip_mr_cache & /proc/net/ip_mr_vअगर
  */
 
-static void *ipmr_vif_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *ipmr_vअगर_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(mrt_lock)
-{
-	struct mr_vif_iter *iter = seq->private;
-	struct net *net = seq_file_net(seq);
-	struct mr_table *mrt;
+अणु
+	काष्ठा mr_vअगर_iter *iter = seq->निजी;
+	काष्ठा net *net = seq_file_net(seq);
+	काष्ठा mr_table *mrt;
 
 	mrt = ipmr_get_table(net, RT_TABLE_DEFAULT);
-	if (!mrt)
-		return ERR_PTR(-ENOENT);
+	अगर (!mrt)
+		वापस ERR_PTR(-ENOENT);
 
 	iter->mrt = mrt;
 
-	read_lock(&mrt_lock);
-	return mr_vif_seq_start(seq, pos);
-}
+	पढ़ो_lock(&mrt_lock);
+	वापस mr_vअगर_seq_start(seq, pos);
+पूर्ण
 
-static void ipmr_vif_seq_stop(struct seq_file *seq, void *v)
+अटल व्योम ipmr_vअगर_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(mrt_lock)
-{
-	read_unlock(&mrt_lock);
-}
+अणु
+	पढ़ो_unlock(&mrt_lock);
+पूर्ण
 
-static int ipmr_vif_seq_show(struct seq_file *seq, void *v)
-{
-	struct mr_vif_iter *iter = seq->private;
-	struct mr_table *mrt = iter->mrt;
+अटल पूर्णांक ipmr_vअगर_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा mr_vअगर_iter *iter = seq->निजी;
+	काष्ठा mr_table *mrt = iter->mrt;
 
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(seq,
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(seq,
 			 "Interface      BytesIn  PktsIn  BytesOut PktsOut Flags Local    Remote\n");
-	} else {
-		const struct vif_device *vif = v;
-		const char *name =  vif->dev ?
-				    vif->dev->name : "none";
+	पूर्ण अन्यथा अणु
+		स्थिर काष्ठा vअगर_device *vअगर = v;
+		स्थिर अक्षर *name =  vअगर->dev ?
+				    vअगर->dev->name : "none";
 
-		seq_printf(seq,
+		seq_म_लिखो(seq,
 			   "%2td %-10s %8ld %7ld  %8ld %7ld %05X %08X %08X\n",
-			   vif - mrt->vif_table,
-			   name, vif->bytes_in, vif->pkt_in,
-			   vif->bytes_out, vif->pkt_out,
-			   vif->flags, vif->local, vif->remote);
-	}
-	return 0;
-}
+			   vअगर - mrt->vअगर_table,
+			   name, vअगर->bytes_in, vअगर->pkt_in,
+			   vअगर->bytes_out, vअगर->pkt_out,
+			   vअगर->flags, vअगर->local, vअगर->remote);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations ipmr_vif_seq_ops = {
-	.start = ipmr_vif_seq_start,
-	.next  = mr_vif_seq_next,
-	.stop  = ipmr_vif_seq_stop,
-	.show  = ipmr_vif_seq_show,
-};
+अटल स्थिर काष्ठा seq_operations ipmr_vअगर_seq_ops = अणु
+	.start = ipmr_vअगर_seq_start,
+	.next  = mr_vअगर_seq_next,
+	.stop  = ipmr_vअगर_seq_stop,
+	.show  = ipmr_vअगर_seq_show,
+पूर्ण;
 
-static void *ipmr_mfc_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	struct net *net = seq_file_net(seq);
-	struct mr_table *mrt;
+अटल व्योम *ipmr_mfc_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
+	काष्ठा mr_table *mrt;
 
 	mrt = ipmr_get_table(net, RT_TABLE_DEFAULT);
-	if (!mrt)
-		return ERR_PTR(-ENOENT);
+	अगर (!mrt)
+		वापस ERR_PTR(-ENOENT);
 
-	return mr_mfc_seq_start(seq, pos, mrt, &mfc_unres_lock);
-}
+	वापस mr_mfc_seq_start(seq, pos, mrt, &mfc_unres_lock);
+पूर्ण
 
-static int ipmr_mfc_seq_show(struct seq_file *seq, void *v)
-{
-	int n;
+अटल पूर्णांक ipmr_mfc_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	पूर्णांक n;
 
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(seq,
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(seq,
 		 "Group    Origin   Iif     Pkts    Bytes    Wrong Oifs\n");
-	} else {
-		const struct mfc_cache *mfc = v;
-		const struct mr_mfc_iter *it = seq->private;
-		const struct mr_table *mrt = it->mrt;
+	पूर्ण अन्यथा अणु
+		स्थिर काष्ठा mfc_cache *mfc = v;
+		स्थिर काष्ठा mr_mfc_iter *it = seq->निजी;
+		स्थिर काष्ठा mr_table *mrt = it->mrt;
 
-		seq_printf(seq, "%08X %08X %-3hd",
-			   (__force u32) mfc->mfc_mcastgrp,
-			   (__force u32) mfc->mfc_origin,
+		seq_म_लिखो(seq, "%08X %08X %-3hd",
+			   (__क्रमce u32) mfc->mfc_mcastgrp,
+			   (__क्रमce u32) mfc->mfc_origin,
 			   mfc->_c.mfc_parent);
 
-		if (it->cache != &mrt->mfc_unres_queue) {
-			seq_printf(seq, " %8lu %8lu %8lu",
+		अगर (it->cache != &mrt->mfc_unres_queue) अणु
+			seq_म_लिखो(seq, " %8lu %8lu %8lu",
 				   mfc->_c.mfc_un.res.pkt,
 				   mfc->_c.mfc_un.res.bytes,
-				   mfc->_c.mfc_un.res.wrong_if);
-			for (n = mfc->_c.mfc_un.res.minvif;
-			     n < mfc->_c.mfc_un.res.maxvif; n++) {
-				if (VIF_EXISTS(mrt, n) &&
+				   mfc->_c.mfc_un.res.wrong_अगर);
+			क्रम (n = mfc->_c.mfc_un.res.minvअगर;
+			     n < mfc->_c.mfc_un.res.maxvअगर; n++) अणु
+				अगर (VIF_EXISTS(mrt, n) &&
 				    mfc->_c.mfc_un.res.ttls[n] < 255)
-					seq_printf(seq,
+					seq_म_लिखो(seq,
 					   " %2d:%-3d",
 					   n, mfc->_c.mfc_un.res.ttls[n]);
-			}
-		} else {
-			/* unresolved mfc_caches don't contain
-			 * pkt, bytes and wrong_if values
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			/* unresolved mfc_caches करोn't contain
+			 * pkt, bytes and wrong_अगर values
 			 */
-			seq_printf(seq, " %8lu %8lu %8lu", 0ul, 0ul, 0ul);
-		}
-		seq_putc(seq, '\n');
-	}
-	return 0;
-}
+			seq_म_लिखो(seq, " %8lu %8lu %8lu", 0ul, 0ul, 0ul);
+		पूर्ण
+		seq_अ_दो(seq, '\n');
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations ipmr_mfc_seq_ops = {
+अटल स्थिर काष्ठा seq_operations ipmr_mfc_seq_ops = अणु
 	.start = ipmr_mfc_seq_start,
 	.next  = mr_mfc_seq_next,
 	.stop  = mr_mfc_seq_stop,
 	.show  = ipmr_mfc_seq_show,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_IP_PIMSM_V2
-static const struct net_protocol pim_protocol = {
+#अगर_घोषित CONFIG_IP_PIMSM_V2
+अटल स्थिर काष्ठा net_protocol pim_protocol = अणु
 	.handler	=	pim_rcv,
 	.netns_ok	=	1,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static unsigned int ipmr_seq_read(struct net *net)
-{
+अटल अचिन्हित पूर्णांक ipmr_seq_पढ़ो(काष्ठा net *net)
+अणु
 	ASSERT_RTNL();
 
-	return net->ipv4.ipmr_seq + ipmr_rules_seq_read(net);
-}
+	वापस net->ipv4.ipmr_seq + ipmr_rules_seq_पढ़ो(net);
+पूर्ण
 
-static int ipmr_dump(struct net *net, struct notifier_block *nb,
-		     struct netlink_ext_ack *extack)
-{
-	return mr_dump(net, nb, RTNL_FAMILY_IPMR, ipmr_rules_dump,
+अटल पूर्णांक ipmr_dump(काष्ठा net *net, काष्ठा notअगरier_block *nb,
+		     काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस mr_dump(net, nb, RTNL_FAMILY_IPMR, ipmr_rules_dump,
 		       ipmr_mr_table_iter, &mrt_lock, extack);
-}
+पूर्ण
 
-static const struct fib_notifier_ops ipmr_notifier_ops_template = {
+अटल स्थिर काष्ठा fib_notअगरier_ops ipmr_notअगरier_ops_ढाँचा = अणु
 	.family		= RTNL_FAMILY_IPMR,
-	.fib_seq_read	= ipmr_seq_read,
+	.fib_seq_पढ़ो	= ipmr_seq_पढ़ो,
 	.fib_dump	= ipmr_dump,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __net_init ipmr_notifier_init(struct net *net)
-{
-	struct fib_notifier_ops *ops;
+अटल पूर्णांक __net_init ipmr_notअगरier_init(काष्ठा net *net)
+अणु
+	काष्ठा fib_notअगरier_ops *ops;
 
 	net->ipv4.ipmr_seq = 0;
 
-	ops = fib_notifier_ops_register(&ipmr_notifier_ops_template, net);
-	if (IS_ERR(ops))
-		return PTR_ERR(ops);
-	net->ipv4.ipmr_notifier_ops = ops;
+	ops = fib_notअगरier_ops_रेजिस्टर(&ipmr_notअगरier_ops_ढाँचा, net);
+	अगर (IS_ERR(ops))
+		वापस PTR_ERR(ops);
+	net->ipv4.ipmr_notअगरier_ops = ops;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit ipmr_notifier_exit(struct net *net)
-{
-	fib_notifier_ops_unregister(net->ipv4.ipmr_notifier_ops);
-	net->ipv4.ipmr_notifier_ops = NULL;
-}
+अटल व्योम __net_निकास ipmr_notअगरier_निकास(काष्ठा net *net)
+अणु
+	fib_notअगरier_ops_unरेजिस्टर(net->ipv4.ipmr_notअगरier_ops);
+	net->ipv4.ipmr_notअगरier_ops = शून्य;
+पूर्ण
 
-/* Setup for IP multicast routing */
-static int __net_init ipmr_net_init(struct net *net)
-{
-	int err;
+/* Setup क्रम IP multicast routing */
+अटल पूर्णांक __net_init ipmr_net_init(काष्ठा net *net)
+अणु
+	पूर्णांक err;
 
-	err = ipmr_notifier_init(net);
-	if (err)
-		goto ipmr_notifier_fail;
+	err = ipmr_notअगरier_init(net);
+	अगर (err)
+		जाओ ipmr_notअगरier_fail;
 
 	err = ipmr_rules_init(net);
-	if (err < 0)
-		goto ipmr_rules_fail;
+	अगर (err < 0)
+		जाओ ipmr_rules_fail;
 
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 	err = -ENOMEM;
-	if (!proc_create_net("ip_mr_vif", 0, net->proc_net, &ipmr_vif_seq_ops,
-			sizeof(struct mr_vif_iter)))
-		goto proc_vif_fail;
-	if (!proc_create_net("ip_mr_cache", 0, net->proc_net, &ipmr_mfc_seq_ops,
-			sizeof(struct mr_mfc_iter)))
-		goto proc_cache_fail;
-#endif
-	return 0;
+	अगर (!proc_create_net("ip_mr_vif", 0, net->proc_net, &ipmr_vअगर_seq_ops,
+			माप(काष्ठा mr_vअगर_iter)))
+		जाओ proc_vअगर_fail;
+	अगर (!proc_create_net("ip_mr_cache", 0, net->proc_net, &ipmr_mfc_seq_ops,
+			माप(काष्ठा mr_mfc_iter)))
+		जाओ proc_cache_fail;
+#पूर्ण_अगर
+	वापस 0;
 
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 proc_cache_fail:
-	remove_proc_entry("ip_mr_vif", net->proc_net);
-proc_vif_fail:
-	ipmr_rules_exit(net);
-#endif
+	हटाओ_proc_entry("ip_mr_vif", net->proc_net);
+proc_vअगर_fail:
+	ipmr_rules_निकास(net);
+#पूर्ण_अगर
 ipmr_rules_fail:
-	ipmr_notifier_exit(net);
-ipmr_notifier_fail:
-	return err;
-}
+	ipmr_notअगरier_निकास(net);
+ipmr_notअगरier_fail:
+	वापस err;
+पूर्ण
 
-static void __net_exit ipmr_net_exit(struct net *net)
-{
-#ifdef CONFIG_PROC_FS
-	remove_proc_entry("ip_mr_cache", net->proc_net);
-	remove_proc_entry("ip_mr_vif", net->proc_net);
-#endif
-	ipmr_notifier_exit(net);
-	ipmr_rules_exit(net);
-}
+अटल व्योम __net_निकास ipmr_net_निकास(काष्ठा net *net)
+अणु
+#अगर_घोषित CONFIG_PROC_FS
+	हटाओ_proc_entry("ip_mr_cache", net->proc_net);
+	हटाओ_proc_entry("ip_mr_vif", net->proc_net);
+#पूर्ण_अगर
+	ipmr_notअगरier_निकास(net);
+	ipmr_rules_निकास(net);
+पूर्ण
 
-static struct pernet_operations ipmr_net_ops = {
+अटल काष्ठा pernet_operations ipmr_net_ops = अणु
 	.init = ipmr_net_init,
-	.exit = ipmr_net_exit,
-};
+	.निकास = ipmr_net_निकास,
+पूर्ण;
 
-int __init ip_mr_init(void)
-{
-	int err;
+पूर्णांक __init ip_mr_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	mrt_cachep = kmem_cache_create("ip_mrt_cache",
-				       sizeof(struct mfc_cache),
+				       माप(काष्ठा mfc_cache),
 				       0, SLAB_HWCACHE_ALIGN | SLAB_PANIC,
-				       NULL);
+				       शून्य);
 
-	err = register_pernet_subsys(&ipmr_net_ops);
-	if (err)
-		goto reg_pernet_fail;
+	err = रेजिस्टर_pernet_subsys(&ipmr_net_ops);
+	अगर (err)
+		जाओ reg_pernet_fail;
 
-	err = register_netdevice_notifier(&ip_mr_notifier);
-	if (err)
-		goto reg_notif_fail;
-#ifdef CONFIG_IP_PIMSM_V2
-	if (inet_add_protocol(&pim_protocol, IPPROTO_PIM) < 0) {
+	err = रेजिस्टर_netdevice_notअगरier(&ip_mr_notअगरier);
+	अगर (err)
+		जाओ reg_notअगर_fail;
+#अगर_घोषित CONFIG_IP_PIMSM_V2
+	अगर (inet_add_protocol(&pim_protocol, IPPROTO_PIM) < 0) अणु
 		pr_err("%s: can't add PIM protocol\n", __func__);
 		err = -EAGAIN;
-		goto add_proto_fail;
-	}
-#endif
-	rtnl_register(RTNL_FAMILY_IPMR, RTM_GETROUTE,
-		      ipmr_rtm_getroute, ipmr_rtm_dumproute, 0);
-	rtnl_register(RTNL_FAMILY_IPMR, RTM_NEWROUTE,
-		      ipmr_rtm_route, NULL, 0);
-	rtnl_register(RTNL_FAMILY_IPMR, RTM_DELROUTE,
-		      ipmr_rtm_route, NULL, 0);
+		जाओ add_proto_fail;
+	पूर्ण
+#पूर्ण_अगर
+	rtnl_रेजिस्टर(RTNL_FAMILY_IPMR, RTM_GETROUTE,
+		      ipmr_rपंचांग_getroute, ipmr_rपंचांग_dumproute, 0);
+	rtnl_रेजिस्टर(RTNL_FAMILY_IPMR, RTM_NEWROUTE,
+		      ipmr_rपंचांग_route, शून्य, 0);
+	rtnl_रेजिस्टर(RTNL_FAMILY_IPMR, RTM_DELROUTE,
+		      ipmr_rपंचांग_route, शून्य, 0);
 
-	rtnl_register(RTNL_FAMILY_IPMR, RTM_GETLINK,
-		      NULL, ipmr_rtm_dumplink, 0);
-	return 0;
+	rtnl_रेजिस्टर(RTNL_FAMILY_IPMR, RTM_GETLINK,
+		      शून्य, ipmr_rपंचांग_dumplink, 0);
+	वापस 0;
 
-#ifdef CONFIG_IP_PIMSM_V2
+#अगर_घोषित CONFIG_IP_PIMSM_V2
 add_proto_fail:
-	unregister_netdevice_notifier(&ip_mr_notifier);
-#endif
-reg_notif_fail:
-	unregister_pernet_subsys(&ipmr_net_ops);
+	unरेजिस्टर_netdevice_notअगरier(&ip_mr_notअगरier);
+#पूर्ण_अगर
+reg_notअगर_fail:
+	unरेजिस्टर_pernet_subsys(&ipmr_net_ops);
 reg_pernet_fail:
 	kmem_cache_destroy(mrt_cachep);
-	return err;
-}
+	वापस err;
+पूर्ण

@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/super.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
- *  super.c contains code to handle: - mount structures
+ *  super.c contains code to handle: - mount काष्ठाures
  *                                   - super-block tables
- *                                   - filesystem drivers list
- *                                   - mount system call
- *                                   - umount system call
- *                                   - ustat system call
+ *                                   - fileप्रणाली drivers list
+ *                                   - mount प्रणाली call
+ *                                   - umount प्रणाली call
+ *                                   - ustat प्रणाली call
  *
  * GK 2/5/95  -  Changed to support mounting the root fs via NFS
  *
  *  Added kerneld support: Jacques Gelinas and Bjorn Ekwall
  *  Added change_root: Werner Almesberger & Hans Lermen, Feb '96
  *  Added options to /proc/mounts:
- *    Torbjörn Lindh (torbjorn.lindh@gopta.se), April 14, 1996.
- *  Added devfs support: Richard Gooch <rgooch@atnf.csiro.au>, 13-JAN-1998
- *  Heavily rewritten for 'one fs - one tree' dcache architecture. AV, Mar 2000
+ *    Torbjथघrn Lindh (torbjorn.lindh@gopta.se), April 14, 1996.
+ *  Added devfs support: Riअक्षरd Gooch <rgooch@atnf.csiro.au>, 13-JAN-1998
+ *  Heavily rewritten क्रम 'one fs - one tree' dcache architecture. AV, Mar 2000
  */
 
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/blkdev.h>
-#include <linux/mount.h>
-#include <linux/security.h>
-#include <linux/writeback.h>		/* for the emergency remount stuff */
-#include <linux/idr.h>
-#include <linux/mutex.h>
-#include <linux/backing-dev.h>
-#include <linux/rculist_bl.h>
-#include <linux/cleancache.h>
-#include <linux/fscrypt.h>
-#include <linux/fsnotify.h>
-#include <linux/lockdep.h>
-#include <linux/user_namespace.h>
-#include <linux/fs_context.h>
-#include <uapi/linux/mount.h>
-#include "internal.h"
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/security.h>
+#समावेश <linux/ग_लिखोback.h>		/* क्रम the emergency remount stuff */
+#समावेश <linux/idr.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/rculist_bl.h>
+#समावेश <linux/cleancache.h>
+#समावेश <linux/fscrypt.h>
+#समावेश <linux/fsnotअगरy.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/user_namespace.h>
+#समावेश <linux/fs_context.h>
+#समावेश <uapi/linux/mount.h>
+#समावेश "internal.h"
 
-static int thaw_super_locked(struct super_block *sb);
+अटल पूर्णांक thaw_super_locked(काष्ठा super_block *sb);
 
-static LIST_HEAD(super_blocks);
-static DEFINE_SPINLOCK(sb_lock);
+अटल LIST_HEAD(super_blocks);
+अटल DEFINE_SPINLOCK(sb_lock);
 
-static char *sb_writers_name[SB_FREEZE_LEVELS] = {
+अटल अक्षर *sb_ग_लिखोrs_name[SB_FREEZE_LEVELS] = अणु
 	"sb_writers",
 	"sb_pagefaults",
 	"sb_internal",
-};
+पूर्ण;
 
 /*
- * One thing we have to be careful of with a per-sb shrinker is that we don't
+ * One thing we have to be careful of with a per-sb shrinker is that we करोn't
  * drop the last active reference to the superblock from within the shrinker.
- * If that happens we could trigger unregistering the shrinker from within the
+ * If that happens we could trigger unरेजिस्टरing the shrinker from within the
  * shrinker path and that leads to deadlock on the shrinker_rwsem. Hence we
- * take a passive reference to the superblock to avoid this from occurring.
+ * take a passive reference to the superblock to aव्योम this from occurring.
  */
-static unsigned long super_cache_scan(struct shrinker *shrink,
-				      struct shrink_control *sc)
-{
-	struct super_block *sb;
-	long	fs_objects = 0;
-	long	total_objects;
-	long	freed = 0;
-	long	dentries;
-	long	inodes;
+अटल अचिन्हित दीर्घ super_cache_scan(काष्ठा shrinker *shrink,
+				      काष्ठा shrink_control *sc)
+अणु
+	काष्ठा super_block *sb;
+	दीर्घ	fs_objects = 0;
+	दीर्घ	total_objects;
+	दीर्घ	मुक्तd = 0;
+	दीर्घ	dentries;
+	दीर्घ	inodes;
 
-	sb = container_of(shrink, struct super_block, s_shrink);
+	sb = container_of(shrink, काष्ठा super_block, s_shrink);
 
 	/*
-	 * Deadlock avoidance.  We may hold various FS locks, and we don't want
-	 * to recurse into the FS that called us in clear_inode() and friends..
+	 * Deadlock aव्योमance.  We may hold various FS locks, and we करोn't want
+	 * to recurse पूर्णांकo the FS that called us in clear_inode() and मित्रs..
 	 */
-	if (!(sc->gfp_mask & __GFP_FS))
-		return SHRINK_STOP;
+	अगर (!(sc->gfp_mask & __GFP_FS))
+		वापस SHRINK_STOP;
 
-	if (!trylock_super(sb))
-		return SHRINK_STOP;
+	अगर (!trylock_super(sb))
+		वापस SHRINK_STOP;
 
-	if (sb->s_op->nr_cached_objects)
+	अगर (sb->s_op->nr_cached_objects)
 		fs_objects = sb->s_op->nr_cached_objects(sb, sc);
 
 	inodes = list_lru_shrink_count(&sb->s_inode_lru, sc);
 	dentries = list_lru_shrink_count(&sb->s_dentry_lru, sc);
 	total_objects = dentries + inodes + fs_objects + 1;
-	if (!total_objects)
+	अगर (!total_objects)
 		total_objects = 1;
 
 	/* proportion the scan between the caches */
@@ -96,116 +97,116 @@ static unsigned long super_cache_scan(struct shrinker *shrink,
 
 	/*
 	 * prune the dcache first as the icache is pinned by it, then
-	 * prune the icache, followed by the filesystem specific caches
+	 * prune the icache, followed by the fileप्रणाली specअगरic caches
 	 *
 	 * Ensure that we always scan at least one object - memcg kmem
 	 * accounting uses this to fully empty the caches.
 	 */
 	sc->nr_to_scan = dentries + 1;
-	freed = prune_dcache_sb(sb, sc);
+	मुक्तd = prune_dcache_sb(sb, sc);
 	sc->nr_to_scan = inodes + 1;
-	freed += prune_icache_sb(sb, sc);
+	मुक्तd += prune_icache_sb(sb, sc);
 
-	if (fs_objects) {
+	अगर (fs_objects) अणु
 		sc->nr_to_scan = fs_objects + 1;
-		freed += sb->s_op->free_cached_objects(sb, sc);
-	}
+		मुक्तd += sb->s_op->मुक्त_cached_objects(sb, sc);
+	पूर्ण
 
-	up_read(&sb->s_umount);
-	return freed;
-}
+	up_पढ़ो(&sb->s_umount);
+	वापस मुक्तd;
+पूर्ण
 
-static unsigned long super_cache_count(struct shrinker *shrink,
-				       struct shrink_control *sc)
-{
-	struct super_block *sb;
-	long	total_objects = 0;
+अटल अचिन्हित दीर्घ super_cache_count(काष्ठा shrinker *shrink,
+				       काष्ठा shrink_control *sc)
+अणु
+	काष्ठा super_block *sb;
+	दीर्घ	total_objects = 0;
 
-	sb = container_of(shrink, struct super_block, s_shrink);
+	sb = container_of(shrink, काष्ठा super_block, s_shrink);
 
 	/*
-	 * We don't call trylock_super() here as it is a scalability bottleneck,
-	 * so we're exposed to partial setup state. The shrinker rwsem does not
-	 * protect filesystem operations backing list_lru_shrink_count() or
+	 * We करोn't call trylock_super() here as it is a scalability bottleneck,
+	 * so we're exposed to partial setup state. The shrinker rwsem करोes not
+	 * protect fileप्रणाली operations backing list_lru_shrink_count() or
 	 * s_op->nr_cached_objects(). Counts can change between
-	 * super_cache_count and super_cache_scan, so we really don't need locks
+	 * super_cache_count and super_cache_scan, so we really करोn't need locks
 	 * here.
 	 *
-	 * However, if we are currently mounting the superblock, the underlying
-	 * filesystem might be in a state of partial construction and hence it
+	 * However, अगर we are currently mounting the superblock, the underlying
+	 * fileप्रणाली might be in a state of partial स्थिरruction and hence it
 	 * is dangerous to access it.  trylock_super() uses a SB_BORN check to
-	 * avoid this situation, so do the same here. The memory barrier is
-	 * matched with the one in mount_fs() as we don't hold locks here.
+	 * aव्योम this situation, so करो the same here. The memory barrier is
+	 * matched with the one in mount_fs() as we करोn't hold locks here.
 	 */
-	if (!(sb->s_flags & SB_BORN))
-		return 0;
+	अगर (!(sb->s_flags & SB_BORN))
+		वापस 0;
 	smp_rmb();
 
-	if (sb->s_op && sb->s_op->nr_cached_objects)
+	अगर (sb->s_op && sb->s_op->nr_cached_objects)
 		total_objects = sb->s_op->nr_cached_objects(sb, sc);
 
 	total_objects += list_lru_shrink_count(&sb->s_dentry_lru, sc);
 	total_objects += list_lru_shrink_count(&sb->s_inode_lru, sc);
 
-	if (!total_objects)
-		return SHRINK_EMPTY;
+	अगर (!total_objects)
+		वापस SHRINK_EMPTY;
 
 	total_objects = vfs_pressure_ratio(total_objects);
-	return total_objects;
-}
+	वापस total_objects;
+पूर्ण
 
-static void destroy_super_work(struct work_struct *work)
-{
-	struct super_block *s = container_of(work, struct super_block,
+अटल व्योम destroy_super_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा super_block *s = container_of(work, काष्ठा super_block,
 							destroy_work);
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < SB_FREEZE_LEVELS; i++)
-		percpu_free_rwsem(&s->s_writers.rw_sem[i]);
-	kfree(s);
-}
+	क्रम (i = 0; i < SB_FREEZE_LEVELS; i++)
+		percpu_मुक्त_rwsem(&s->s_ग_लिखोrs.rw_sem[i]);
+	kमुक्त(s);
+पूर्ण
 
-static void destroy_super_rcu(struct rcu_head *head)
-{
-	struct super_block *s = container_of(head, struct super_block, rcu);
+अटल व्योम destroy_super_rcu(काष्ठा rcu_head *head)
+अणु
+	काष्ठा super_block *s = container_of(head, काष्ठा super_block, rcu);
 	INIT_WORK(&s->destroy_work, destroy_super_work);
 	schedule_work(&s->destroy_work);
-}
+पूर्ण
 
 /* Free a superblock that has never been seen by anyone */
-static void destroy_unused_super(struct super_block *s)
-{
-	if (!s)
-		return;
-	up_write(&s->s_umount);
+अटल व्योम destroy_unused_super(काष्ठा super_block *s)
+अणु
+	अगर (!s)
+		वापस;
+	up_ग_लिखो(&s->s_umount);
 	list_lru_destroy(&s->s_dentry_lru);
 	list_lru_destroy(&s->s_inode_lru);
-	security_sb_free(s);
+	security_sb_मुक्त(s);
 	put_user_ns(s->s_user_ns);
-	kfree(s->s_subtype);
-	free_prealloced_shrinker(&s->s_shrink);
+	kमुक्त(s->s_subtype);
+	मुक्त_pपुनः_स्मृतिed_shrinker(&s->s_shrink);
 	/* no delays needed */
 	destroy_super_work(&s->destroy_work);
-}
+पूर्ण
 
 /**
  *	alloc_super	-	create new superblock
- *	@type:	filesystem type superblock should belong to
+ *	@type:	fileप्रणाली type superblock should beदीर्घ to
  *	@flags: the mount flags
- *	@user_ns: User namespace for the super_block
+ *	@user_ns: User namespace क्रम the super_block
  *
- *	Allocates and initializes a new &struct super_block.  alloc_super()
- *	returns a pointer new superblock or %NULL if allocation had failed.
+ *	Allocates and initializes a new &काष्ठा super_block.  alloc_super()
+ *	वापसs a poपूर्णांकer new superblock or %शून्य अगर allocation had failed.
  */
-static struct super_block *alloc_super(struct file_system_type *type, int flags,
-				       struct user_namespace *user_ns)
-{
-	struct super_block *s = kzalloc(sizeof(struct super_block),  GFP_USER);
-	static const struct super_operations default_op;
-	int i;
+अटल काष्ठा super_block *alloc_super(काष्ठा file_प्रणाली_type *type, पूर्णांक flags,
+				       काष्ठा user_namespace *user_ns)
+अणु
+	काष्ठा super_block *s = kzalloc(माप(काष्ठा super_block),  GFP_USER);
+	अटल स्थिर काष्ठा super_operations शेष_op;
+	पूर्णांक i;
 
-	if (!s)
-		return NULL;
+	अगर (!s)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&s->s_mounts);
 	s->s_user_ns = get_user_ns(user_ns);
@@ -218,30 +219,30 @@ static struct super_block *alloc_super(struct file_system_type *type, int flags,
 	 * one (this one), and tries again to find a suitable old
 	 * one.
 	 *
-	 * In case that succeeds, it will acquire the s_umount
+	 * In हाल that succeeds, it will acquire the s_umount
 	 * lock of the old one. Since these are clearly distrinct
 	 * locks, and this object isn't exposed yet, there's no
 	 * risk of deadlocks.
 	 *
-	 * Annotate this by putting this lock in a different
+	 * Annotate this by putting this lock in a dअगरferent
 	 * subclass.
 	 */
-	down_write_nested(&s->s_umount, SINGLE_DEPTH_NESTING);
+	करोwn_ग_लिखो_nested(&s->s_umount, SINGLE_DEPTH_NESTING);
 
-	if (security_sb_alloc(s))
-		goto fail;
+	अगर (security_sb_alloc(s))
+		जाओ fail;
 
-	for (i = 0; i < SB_FREEZE_LEVELS; i++) {
-		if (__percpu_init_rwsem(&s->s_writers.rw_sem[i],
-					sb_writers_name[i],
-					&type->s_writers_key[i]))
-			goto fail;
-	}
-	init_waitqueue_head(&s->s_writers.wait_unfrozen);
+	क्रम (i = 0; i < SB_FREEZE_LEVELS; i++) अणु
+		अगर (__percpu_init_rwsem(&s->s_ग_लिखोrs.rw_sem[i],
+					sb_ग_लिखोrs_name[i],
+					&type->s_ग_लिखोrs_key[i]))
+			जाओ fail;
+	पूर्ण
+	init_रुकोqueue_head(&s->s_ग_लिखोrs.रुको_unfrozen);
 	s->s_bdi = &noop_backing_dev_info;
 	s->s_flags = flags;
-	if (s->s_user_ns != &init_user_ns)
-		s->s_iflags |= SB_I_NODEV;
+	अगर (s->s_user_ns != &init_user_ns)
+		s->s_अगरlags |= SB_I_NODEV;
 	INIT_HLIST_NODE(&s->s_instances);
 	INIT_HLIST_BL_HEAD(&s->s_roots);
 	mutex_init(&s->s_sync_lock);
@@ -252,14 +253,14 @@ static struct super_block *alloc_super(struct file_system_type *type, int flags,
 
 	s->s_count = 1;
 	atomic_set(&s->s_active, 1);
-	mutex_init(&s->s_vfs_rename_mutex);
-	lockdep_set_class(&s->s_vfs_rename_mutex, &type->s_vfs_rename_key);
+	mutex_init(&s->s_vfs_नाम_mutex);
+	lockdep_set_class(&s->s_vfs_नाम_mutex, &type->s_vfs_नाम_key);
 	init_rwsem(&s->s_dquot.dqio_sem);
 	s->s_maxbytes = MAX_NON_LFS;
-	s->s_op = &default_op;
-	s->s_time_gran = 1000000000;
-	s->s_time_min = TIME64_MIN;
-	s->s_time_max = TIME64_MAX;
+	s->s_op = &शेष_op;
+	s->s_समय_gran = 1000000000;
+	s->s_समय_min = TIME64_MIN;
+	s->s_समय_max = TIME64_MAX;
 	s->cleancache_poolid = CLEANCACHE_NO_POOL;
 
 	s->s_shrink.seeks = DEFAULT_SEEKS;
@@ -267,87 +268,87 @@ static struct super_block *alloc_super(struct file_system_type *type, int flags,
 	s->s_shrink.count_objects = super_cache_count;
 	s->s_shrink.batch = 1024;
 	s->s_shrink.flags = SHRINKER_NUMA_AWARE | SHRINKER_MEMCG_AWARE;
-	if (prealloc_shrinker(&s->s_shrink))
-		goto fail;
-	if (list_lru_init_memcg(&s->s_dentry_lru, &s->s_shrink))
-		goto fail;
-	if (list_lru_init_memcg(&s->s_inode_lru, &s->s_shrink))
-		goto fail;
-	return s;
+	अगर (pपुनः_स्मृति_shrinker(&s->s_shrink))
+		जाओ fail;
+	अगर (list_lru_init_memcg(&s->s_dentry_lru, &s->s_shrink))
+		जाओ fail;
+	अगर (list_lru_init_memcg(&s->s_inode_lru, &s->s_shrink))
+		जाओ fail;
+	वापस s;
 
 fail:
 	destroy_unused_super(s);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* Superblock refcounting  */
 
 /*
  * Drop a superblock's refcount.  The caller must hold sb_lock.
  */
-static void __put_super(struct super_block *s)
-{
-	if (!--s->s_count) {
+अटल व्योम __put_super(काष्ठा super_block *s)
+अणु
+	अगर (!--s->s_count) अणु
 		list_del_init(&s->s_list);
 		WARN_ON(s->s_dentry_lru.node);
 		WARN_ON(s->s_inode_lru.node);
 		WARN_ON(!list_empty(&s->s_mounts));
-		security_sb_free(s);
-		fscrypt_sb_free(s);
+		security_sb_मुक्त(s);
+		fscrypt_sb_मुक्त(s);
 		put_user_ns(s->s_user_ns);
-		kfree(s->s_subtype);
+		kमुक्त(s->s_subtype);
 		call_rcu(&s->rcu, destroy_super_rcu);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  *	put_super	-	drop a temporary reference to superblock
  *	@sb: superblock in question
  *
- *	Drops a temporary reference, frees superblock if there's no
+ *	Drops a temporary reference, मुक्तs superblock अगर there's no
  *	references left.
  */
-void put_super(struct super_block *sb)
-{
+व्योम put_super(काष्ठा super_block *sb)
+अणु
 	spin_lock(&sb_lock);
 	__put_super(sb);
 	spin_unlock(&sb_lock);
-}
+पूर्ण
 
 
 /**
  *	deactivate_locked_super	-	drop an active reference to superblock
  *	@s: superblock to deactivate
  *
- *	Drops an active reference to superblock, converting it into a temporary
- *	one if there is no other active references left.  In that case we
- *	tell fs driver to shut it down and drop the temporary reference we
+ *	Drops an active reference to superblock, converting it पूर्णांकo a temporary
+ *	one अगर there is no other active references left.  In that हाल we
+ *	tell fs driver to shut it करोwn and drop the temporary reference we
  *	had just acquired.
  *
  *	Caller holds exclusive lock on superblock; that lock is released.
  */
-void deactivate_locked_super(struct super_block *s)
-{
-	struct file_system_type *fs = s->s_type;
-	if (atomic_dec_and_test(&s->s_active)) {
+व्योम deactivate_locked_super(काष्ठा super_block *s)
+अणु
+	काष्ठा file_प्रणाली_type *fs = s->s_type;
+	अगर (atomic_dec_and_test(&s->s_active)) अणु
 		cleancache_invalidate_fs(s);
-		unregister_shrinker(&s->s_shrink);
-		fs->kill_sb(s);
+		unरेजिस्टर_shrinker(&s->s_shrink);
+		fs->समाप्त_sb(s);
 
 		/*
 		 * Since list_lru_destroy() may sleep, we cannot call it from
-		 * put_super(), where we hold the sb_lock. Therefore we destroy
+		 * put_super(), where we hold the sb_lock. Thereक्रमe we destroy
 		 * the lru lists right now.
 		 */
 		list_lru_destroy(&s->s_dentry_lru);
 		list_lru_destroy(&s->s_inode_lru);
 
-		put_filesystem(fs);
+		put_fileप्रणाली(fs);
 		put_super(s);
-	} else {
-		up_write(&s->s_umount);
-	}
-}
+	पूर्ण अन्यथा अणु
+		up_ग_लिखो(&s->s_umount);
+	पूर्ण
+पूर्ण
 
 EXPORT_SYMBOL(deactivate_locked_super);
 
@@ -359,13 +360,13 @@ EXPORT_SYMBOL(deactivate_locked_super);
  *	locked by caller.  If we are going to drop the final active reference,
  *	lock will be acquired prior to that.
  */
-void deactivate_super(struct super_block *s)
-{
-	if (!atomic_add_unless(&s->s_active, -1, 1)) {
-		down_write(&s->s_umount);
+व्योम deactivate_super(काष्ठा super_block *s)
+अणु
+	अगर (!atomic_add_unless(&s->s_active, -1, 1)) अणु
+		करोwn_ग_लिखो(&s->s_umount);
 		deactivate_locked_super(s);
-	}
-}
+	पूर्ण
+पूर्ण
 
 EXPORT_SYMBOL(deactivate_super);
 
@@ -375,338 +376,338 @@ EXPORT_SYMBOL(deactivate_super);
  *
  *	Tries to acquire an active reference.  grab_super() is used when we
  * 	had just found a superblock in super_blocks or fs_type->fs_supers
- *	and want to turn it into a full-blown active reference.  grab_super()
- *	is called with sb_lock held and drops it.  Returns 1 in case of
- *	success, 0 if we had failed (superblock contents was already dead or
+ *	and want to turn it पूर्णांकo a full-blown active reference.  grab_super()
+ *	is called with sb_lock held and drops it.  Returns 1 in हाल of
+ *	success, 0 अगर we had failed (superblock contents was alपढ़ोy dead or
  *	dying when grab_super() had been called).  Note that this is only
- *	called for superblocks not in rundown mode (== ones still on ->fs_supers
+ *	called क्रम superblocks not in runकरोwn mode (== ones still on ->fs_supers
  *	of their type), so increment of ->s_count is OK here.
  */
-static int grab_super(struct super_block *s) __releases(sb_lock)
-{
+अटल पूर्णांक grab_super(काष्ठा super_block *s) __releases(sb_lock)
+अणु
 	s->s_count++;
 	spin_unlock(&sb_lock);
-	down_write(&s->s_umount);
-	if ((s->s_flags & SB_BORN) && atomic_inc_not_zero(&s->s_active)) {
+	करोwn_ग_लिखो(&s->s_umount);
+	अगर ((s->s_flags & SB_BORN) && atomic_inc_not_zero(&s->s_active)) अणु
 		put_super(s);
-		return 1;
-	}
-	up_write(&s->s_umount);
+		वापस 1;
+	पूर्ण
+	up_ग_लिखो(&s->s_umount);
 	put_super(s);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *	trylock_super - try to grab ->s_umount shared
  *	@sb: reference we are trying to grab
  *
- *	Try to prevent fs shutdown.  This is used in places where we
+ *	Try to prevent fs shutकरोwn.  This is used in places where we
  *	cannot take an active reference but we need to ensure that the
- *	filesystem is not shut down while we are working on it. It returns
- *	false if we cannot acquire s_umount or if we lose the race and
- *	filesystem already got into shutdown, and returns true with the s_umount
- *	lock held in read mode in case of success. On successful return,
- *	the caller must drop the s_umount lock when done.
+ *	fileप्रणाली is not shut करोwn जबतक we are working on it. It वापसs
+ *	false अगर we cannot acquire s_umount or अगर we lose the race and
+ *	fileप्रणाली alपढ़ोy got पूर्णांकo shutकरोwn, and वापसs true with the s_umount
+ *	lock held in पढ़ो mode in हाल of success. On successful वापस,
+ *	the caller must drop the s_umount lock when करोne.
  *
- *	Note that unlike get_super() et.al. this one does *not* bump ->s_count.
- *	The reason why it's safe is that we are OK with doing trylock instead
- *	of down_read().  There's a couple of places that are OK with that, but
- *	it's very much not a general-purpose interface.
+ *	Note that unlike get_super() et.al. this one करोes *not* bump ->s_count.
+ *	The reason why it's safe is that we are OK with करोing trylock instead
+ *	of करोwn_पढ़ो().  There's a couple of places that are OK with that, but
+ *	it's very much not a general-purpose पूर्णांकerface.
  */
-bool trylock_super(struct super_block *sb)
-{
-	if (down_read_trylock(&sb->s_umount)) {
-		if (!hlist_unhashed(&sb->s_instances) &&
+bool trylock_super(काष्ठा super_block *sb)
+अणु
+	अगर (करोwn_पढ़ो_trylock(&sb->s_umount)) अणु
+		अगर (!hlist_unhashed(&sb->s_instances) &&
 		    sb->s_root && (sb->s_flags & SB_BORN))
-			return true;
-		up_read(&sb->s_umount);
-	}
+			वापस true;
+		up_पढ़ो(&sb->s_umount);
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- *	generic_shutdown_super	-	common helper for ->kill_sb()
- *	@sb: superblock to kill
+ *	generic_shutकरोwn_super	-	common helper क्रम ->समाप्त_sb()
+ *	@sb: superblock to समाप्त
  *
- *	generic_shutdown_super() does all fs-independent work on superblock
- *	shutdown.  Typical ->kill_sb() should pick all fs-specific objects
- *	that need destruction out of superblock, call generic_shutdown_super()
- *	and release aforementioned objects.  Note: dentries and inodes _are_
- *	taken care of and do not need specific handling.
+ *	generic_shutकरोwn_super() करोes all fs-independent work on superblock
+ *	shutकरोwn.  Typical ->समाप्त_sb() should pick all fs-specअगरic objects
+ *	that need deकाष्ठाion out of superblock, call generic_shutकरोwn_super()
+ *	and release aक्रमementioned objects.  Note: dentries and inodes _are_
+ *	taken care of and करो not need specअगरic handling.
  *
- *	Upon calling this function, the filesystem may no longer alter or
- *	rearrange the set of dentries belonging to this super_block, nor may it
+ *	Upon calling this function, the fileप्रणाली may no दीर्घer alter or
+ *	rearrange the set of dentries beदीर्घing to this super_block, nor may it
  *	change the attachments of dentries to inodes.
  */
-void generic_shutdown_super(struct super_block *sb)
-{
-	const struct super_operations *sop = sb->s_op;
+व्योम generic_shutकरोwn_super(काष्ठा super_block *sb)
+अणु
+	स्थिर काष्ठा super_operations *sop = sb->s_op;
 
-	if (sb->s_root) {
-		shrink_dcache_for_umount(sb);
-		sync_filesystem(sb);
+	अगर (sb->s_root) अणु
+		shrink_dcache_क्रम_umount(sb);
+		sync_fileप्रणाली(sb);
 		sb->s_flags &= ~SB_ACTIVE;
 
-		cgroup_writeback_umount();
+		cgroup_ग_लिखोback_umount();
 
 		/* evict all inodes with zero refcount */
 		evict_inodes(sb);
 		/* only nonzero refcount inodes can have marks */
-		fsnotify_sb_delete(sb);
+		fsnotअगरy_sb_delete(sb);
 		security_sb_delete(sb);
 
-		if (sb->s_dio_done_wq) {
-			destroy_workqueue(sb->s_dio_done_wq);
-			sb->s_dio_done_wq = NULL;
-		}
+		अगर (sb->s_dio_करोne_wq) अणु
+			destroy_workqueue(sb->s_dio_करोne_wq);
+			sb->s_dio_करोne_wq = शून्य;
+		पूर्ण
 
-		if (sop->put_super)
+		अगर (sop->put_super)
 			sop->put_super(sb);
 
-		if (!list_empty(&sb->s_inodes)) {
-			printk("VFS: Busy inodes after unmount of %s. "
+		अगर (!list_empty(&sb->s_inodes)) अणु
+			prपूर्णांकk("VFS: Busy inodes after unmount of %s. "
 			   "Self-destruct in 5 seconds.  Have a nice day...\n",
 			   sb->s_id);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_lock(&sb_lock);
-	/* should be initialized for __put_super_and_need_restart() */
+	/* should be initialized क्रम __put_super_and_need_restart() */
 	hlist_del_init(&sb->s_instances);
 	spin_unlock(&sb_lock);
-	up_write(&sb->s_umount);
-	if (sb->s_bdi != &noop_backing_dev_info) {
+	up_ग_लिखो(&sb->s_umount);
+	अगर (sb->s_bdi != &noop_backing_dev_info) अणु
 		bdi_put(sb->s_bdi);
 		sb->s_bdi = &noop_backing_dev_info;
-	}
-}
+	पूर्ण
+पूर्ण
 
-EXPORT_SYMBOL(generic_shutdown_super);
+EXPORT_SYMBOL(generic_shutकरोwn_super);
 
-bool mount_capable(struct fs_context *fc)
-{
-	if (!(fc->fs_type->fs_flags & FS_USERNS_MOUNT))
-		return capable(CAP_SYS_ADMIN);
-	else
-		return ns_capable(fc->user_ns, CAP_SYS_ADMIN);
-}
+bool mount_capable(काष्ठा fs_context *fc)
+अणु
+	अगर (!(fc->fs_type->fs_flags & FS_USERNS_MOUNT))
+		वापस capable(CAP_SYS_ADMIN);
+	अन्यथा
+		वापस ns_capable(fc->user_ns, CAP_SYS_ADMIN);
+पूर्ण
 
 /**
  * sget_fc - Find or create a superblock
- * @fc:	Filesystem context.
+ * @fc:	Fileप्रणाली context.
  * @test: Comparison callback
  * @set: Setup callback
  *
- * Find or create a superblock using the parameters stored in the filesystem
+ * Find or create a superblock using the parameters stored in the fileप्रणाली
  * context and the two callback functions.
  *
- * If an extant superblock is matched, then that will be returned with an
+ * If an extant superblock is matched, then that will be वापसed with an
  * elevated reference count that the caller must transfer or discard.
  *
  * If no match is made, a new superblock will be allocated and basic
- * initialisation will be performed (s_type, s_fs_info and s_id will be set and
+ * initialisation will be perक्रमmed (s_type, s_fs_info and s_id will be set and
  * the set() callback will be invoked), the superblock will be published and it
- * will be returned in a partially constructed state with SB_BORN and SB_ACTIVE
+ * will be वापसed in a partially स्थिरructed state with SB_BORN and SB_ACTIVE
  * as yet unset.
  */
-struct super_block *sget_fc(struct fs_context *fc,
-			    int (*test)(struct super_block *, struct fs_context *),
-			    int (*set)(struct super_block *, struct fs_context *))
-{
-	struct super_block *s = NULL;
-	struct super_block *old;
-	struct user_namespace *user_ns = fc->global ? &init_user_ns : fc->user_ns;
-	int err;
+काष्ठा super_block *sget_fc(काष्ठा fs_context *fc,
+			    पूर्णांक (*test)(काष्ठा super_block *, काष्ठा fs_context *),
+			    पूर्णांक (*set)(काष्ठा super_block *, काष्ठा fs_context *))
+अणु
+	काष्ठा super_block *s = शून्य;
+	काष्ठा super_block *old;
+	काष्ठा user_namespace *user_ns = fc->global ? &init_user_ns : fc->user_ns;
+	पूर्णांक err;
 
 retry:
 	spin_lock(&sb_lock);
-	if (test) {
-		hlist_for_each_entry(old, &fc->fs_type->fs_supers, s_instances) {
-			if (test(old, fc))
-				goto share_extant_sb;
-		}
-	}
-	if (!s) {
+	अगर (test) अणु
+		hlist_क्रम_each_entry(old, &fc->fs_type->fs_supers, s_instances) अणु
+			अगर (test(old, fc))
+				जाओ share_extant_sb;
+		पूर्ण
+	पूर्ण
+	अगर (!s) अणु
 		spin_unlock(&sb_lock);
 		s = alloc_super(fc->fs_type, fc->sb_flags, user_ns);
-		if (!s)
-			return ERR_PTR(-ENOMEM);
-		goto retry;
-	}
+		अगर (!s)
+			वापस ERR_PTR(-ENOMEM);
+		जाओ retry;
+	पूर्ण
 
 	s->s_fs_info = fc->s_fs_info;
 	err = set(s, fc);
-	if (err) {
-		s->s_fs_info = NULL;
+	अगर (err) अणु
+		s->s_fs_info = शून्य;
 		spin_unlock(&sb_lock);
 		destroy_unused_super(s);
-		return ERR_PTR(err);
-	}
-	fc->s_fs_info = NULL;
+		वापस ERR_PTR(err);
+	पूर्ण
+	fc->s_fs_info = शून्य;
 	s->s_type = fc->fs_type;
-	s->s_iflags |= fc->s_iflags;
-	strlcpy(s->s_id, s->s_type->name, sizeof(s->s_id));
+	s->s_अगरlags |= fc->s_अगरlags;
+	strlcpy(s->s_id, s->s_type->name, माप(s->s_id));
 	list_add_tail(&s->s_list, &super_blocks);
 	hlist_add_head(&s->s_instances, &s->s_type->fs_supers);
 	spin_unlock(&sb_lock);
-	get_filesystem(s->s_type);
-	register_shrinker_prepared(&s->s_shrink);
-	return s;
+	get_fileप्रणाली(s->s_type);
+	रेजिस्टर_shrinker_prepared(&s->s_shrink);
+	वापस s;
 
 share_extant_sb:
-	if (user_ns != old->s_user_ns) {
+	अगर (user_ns != old->s_user_ns) अणु
 		spin_unlock(&sb_lock);
 		destroy_unused_super(s);
-		return ERR_PTR(-EBUSY);
-	}
-	if (!grab_super(old))
-		goto retry;
+		वापस ERR_PTR(-EBUSY);
+	पूर्ण
+	अगर (!grab_super(old))
+		जाओ retry;
 	destroy_unused_super(s);
-	return old;
-}
+	वापस old;
+पूर्ण
 EXPORT_SYMBOL(sget_fc);
 
 /**
  *	sget	-	find or create a superblock
- *	@type:	  filesystem type superblock should belong to
+ *	@type:	  fileप्रणाली type superblock should beदीर्घ to
  *	@test:	  comparison callback
  *	@set:	  setup callback
  *	@flags:	  mount flags
  *	@data:	  argument to each of them
  */
-struct super_block *sget(struct file_system_type *type,
-			int (*test)(struct super_block *,void *),
-			int (*set)(struct super_block *,void *),
-			int flags,
-			void *data)
-{
-	struct user_namespace *user_ns = current_user_ns();
-	struct super_block *s = NULL;
-	struct super_block *old;
-	int err;
+काष्ठा super_block *sget(काष्ठा file_प्रणाली_type *type,
+			पूर्णांक (*test)(काष्ठा super_block *,व्योम *),
+			पूर्णांक (*set)(काष्ठा super_block *,व्योम *),
+			पूर्णांक flags,
+			व्योम *data)
+अणु
+	काष्ठा user_namespace *user_ns = current_user_ns();
+	काष्ठा super_block *s = शून्य;
+	काष्ठा super_block *old;
+	पूर्णांक err;
 
-	/* We don't yet pass the user namespace of the parent
+	/* We करोn't yet pass the user namespace of the parent
 	 * mount through to here so always use &init_user_ns
 	 * until that changes.
 	 */
-	if (flags & SB_SUBMOUNT)
+	अगर (flags & SB_SUBMOUNT)
 		user_ns = &init_user_ns;
 
 retry:
 	spin_lock(&sb_lock);
-	if (test) {
-		hlist_for_each_entry(old, &type->fs_supers, s_instances) {
-			if (!test(old, data))
-				continue;
-			if (user_ns != old->s_user_ns) {
+	अगर (test) अणु
+		hlist_क्रम_each_entry(old, &type->fs_supers, s_instances) अणु
+			अगर (!test(old, data))
+				जारी;
+			अगर (user_ns != old->s_user_ns) अणु
 				spin_unlock(&sb_lock);
 				destroy_unused_super(s);
-				return ERR_PTR(-EBUSY);
-			}
-			if (!grab_super(old))
-				goto retry;
+				वापस ERR_PTR(-EBUSY);
+			पूर्ण
+			अगर (!grab_super(old))
+				जाओ retry;
 			destroy_unused_super(s);
-			return old;
-		}
-	}
-	if (!s) {
+			वापस old;
+		पूर्ण
+	पूर्ण
+	अगर (!s) अणु
 		spin_unlock(&sb_lock);
 		s = alloc_super(type, (flags & ~SB_SUBMOUNT), user_ns);
-		if (!s)
-			return ERR_PTR(-ENOMEM);
-		goto retry;
-	}
+		अगर (!s)
+			वापस ERR_PTR(-ENOMEM);
+		जाओ retry;
+	पूर्ण
 
 	err = set(s, data);
-	if (err) {
+	अगर (err) अणु
 		spin_unlock(&sb_lock);
 		destroy_unused_super(s);
-		return ERR_PTR(err);
-	}
+		वापस ERR_PTR(err);
+	पूर्ण
 	s->s_type = type;
-	strlcpy(s->s_id, type->name, sizeof(s->s_id));
+	strlcpy(s->s_id, type->name, माप(s->s_id));
 	list_add_tail(&s->s_list, &super_blocks);
 	hlist_add_head(&s->s_instances, &type->fs_supers);
 	spin_unlock(&sb_lock);
-	get_filesystem(type);
-	register_shrinker_prepared(&s->s_shrink);
-	return s;
-}
+	get_fileप्रणाली(type);
+	रेजिस्टर_shrinker_prepared(&s->s_shrink);
+	वापस s;
+पूर्ण
 EXPORT_SYMBOL(sget);
 
-void drop_super(struct super_block *sb)
-{
-	up_read(&sb->s_umount);
+व्योम drop_super(काष्ठा super_block *sb)
+अणु
+	up_पढ़ो(&sb->s_umount);
 	put_super(sb);
-}
+पूर्ण
 
 EXPORT_SYMBOL(drop_super);
 
-void drop_super_exclusive(struct super_block *sb)
-{
-	up_write(&sb->s_umount);
+व्योम drop_super_exclusive(काष्ठा super_block *sb)
+अणु
+	up_ग_लिखो(&sb->s_umount);
 	put_super(sb);
-}
+पूर्ण
 EXPORT_SYMBOL(drop_super_exclusive);
 
-static void __iterate_supers(void (*f)(struct super_block *))
-{
-	struct super_block *sb, *p = NULL;
+अटल व्योम __iterate_supers(व्योम (*f)(काष्ठा super_block *))
+अणु
+	काष्ठा super_block *sb, *p = शून्य;
 
 	spin_lock(&sb_lock);
-	list_for_each_entry(sb, &super_blocks, s_list) {
-		if (hlist_unhashed(&sb->s_instances))
-			continue;
+	list_क्रम_each_entry(sb, &super_blocks, s_list) अणु
+		अगर (hlist_unhashed(&sb->s_instances))
+			जारी;
 		sb->s_count++;
 		spin_unlock(&sb_lock);
 
 		f(sb);
 
 		spin_lock(&sb_lock);
-		if (p)
+		अगर (p)
 			__put_super(p);
 		p = sb;
-	}
-	if (p)
+	पूर्ण
+	अगर (p)
 		__put_super(p);
 	spin_unlock(&sb_lock);
-}
+पूर्ण
 /**
- *	iterate_supers - call function for all active superblocks
+ *	iterate_supers - call function क्रम all active superblocks
  *	@f: function to call
  *	@arg: argument to pass to it
  *
  *	Scans the superblock list and calls given function, passing it
  *	locked superblock and given argument.
  */
-void iterate_supers(void (*f)(struct super_block *, void *), void *arg)
-{
-	struct super_block *sb, *p = NULL;
+व्योम iterate_supers(व्योम (*f)(काष्ठा super_block *, व्योम *), व्योम *arg)
+अणु
+	काष्ठा super_block *sb, *p = शून्य;
 
 	spin_lock(&sb_lock);
-	list_for_each_entry(sb, &super_blocks, s_list) {
-		if (hlist_unhashed(&sb->s_instances))
-			continue;
+	list_क्रम_each_entry(sb, &super_blocks, s_list) अणु
+		अगर (hlist_unhashed(&sb->s_instances))
+			जारी;
 		sb->s_count++;
 		spin_unlock(&sb_lock);
 
-		down_read(&sb->s_umount);
-		if (sb->s_root && (sb->s_flags & SB_BORN))
+		करोwn_पढ़ो(&sb->s_umount);
+		अगर (sb->s_root && (sb->s_flags & SB_BORN))
 			f(sb, arg);
-		up_read(&sb->s_umount);
+		up_पढ़ो(&sb->s_umount);
 
 		spin_lock(&sb_lock);
-		if (p)
+		अगर (p)
 			__put_super(p);
 		p = sb;
-	}
-	if (p)
+	पूर्ण
+	अगर (p)
 		__put_super(p);
 	spin_unlock(&sb_lock);
-}
+पूर्ण
 
 /**
- *	iterate_supers_type - call function for superblocks of given type
+ *	iterate_supers_type - call function क्रम superblocks of given type
  *	@type: fs type
  *	@f: function to call
  *	@arg: argument to pass to it
@@ -714,567 +715,567 @@ void iterate_supers(void (*f)(struct super_block *, void *), void *arg)
  *	Scans the superblock list and calls given function, passing it
  *	locked superblock and given argument.
  */
-void iterate_supers_type(struct file_system_type *type,
-	void (*f)(struct super_block *, void *), void *arg)
-{
-	struct super_block *sb, *p = NULL;
+व्योम iterate_supers_type(काष्ठा file_प्रणाली_type *type,
+	व्योम (*f)(काष्ठा super_block *, व्योम *), व्योम *arg)
+अणु
+	काष्ठा super_block *sb, *p = शून्य;
 
 	spin_lock(&sb_lock);
-	hlist_for_each_entry(sb, &type->fs_supers, s_instances) {
+	hlist_क्रम_each_entry(sb, &type->fs_supers, s_instances) अणु
 		sb->s_count++;
 		spin_unlock(&sb_lock);
 
-		down_read(&sb->s_umount);
-		if (sb->s_root && (sb->s_flags & SB_BORN))
+		करोwn_पढ़ो(&sb->s_umount);
+		अगर (sb->s_root && (sb->s_flags & SB_BORN))
 			f(sb, arg);
-		up_read(&sb->s_umount);
+		up_पढ़ो(&sb->s_umount);
 
 		spin_lock(&sb_lock);
-		if (p)
+		अगर (p)
 			__put_super(p);
 		p = sb;
-	}
-	if (p)
+	पूर्ण
+	अगर (p)
 		__put_super(p);
 	spin_unlock(&sb_lock);
-}
+पूर्ण
 
 EXPORT_SYMBOL(iterate_supers_type);
 
 /**
  * get_super - get the superblock of a device
- * @bdev: device to get the superblock for
+ * @bdev: device to get the superblock क्रम
  *
- * Scans the superblock list and finds the superblock of the file system
- * mounted on the device given. %NULL is returned if no match is found.
+ * Scans the superblock list and finds the superblock of the file प्रणाली
+ * mounted on the device given. %शून्य is वापसed अगर no match is found.
  */
-struct super_block *get_super(struct block_device *bdev)
-{
-	struct super_block *sb;
+काष्ठा super_block *get_super(काष्ठा block_device *bdev)
+अणु
+	काष्ठा super_block *sb;
 
-	if (!bdev)
-		return NULL;
+	अगर (!bdev)
+		वापस शून्य;
 
 	spin_lock(&sb_lock);
 rescan:
-	list_for_each_entry(sb, &super_blocks, s_list) {
-		if (hlist_unhashed(&sb->s_instances))
-			continue;
-		if (sb->s_bdev == bdev) {
+	list_क्रम_each_entry(sb, &super_blocks, s_list) अणु
+		अगर (hlist_unhashed(&sb->s_instances))
+			जारी;
+		अगर (sb->s_bdev == bdev) अणु
 			sb->s_count++;
 			spin_unlock(&sb_lock);
-			down_read(&sb->s_umount);
+			करोwn_पढ़ो(&sb->s_umount);
 			/* still alive? */
-			if (sb->s_root && (sb->s_flags & SB_BORN))
-				return sb;
-			up_read(&sb->s_umount);
+			अगर (sb->s_root && (sb->s_flags & SB_BORN))
+				वापस sb;
+			up_पढ़ो(&sb->s_umount);
 			/* nope, got unmounted */
 			spin_lock(&sb_lock);
 			__put_super(sb);
-			goto rescan;
-		}
-	}
+			जाओ rescan;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&sb_lock);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * get_active_super - get an active reference to the superblock of a device
- * @bdev: device to get the superblock for
+ * @bdev: device to get the superblock क्रम
  *
- * Scans the superblock list and finds the superblock of the file system
+ * Scans the superblock list and finds the superblock of the file प्रणाली
  * mounted on the device given.  Returns the superblock with an active
- * reference or %NULL if none was found.
+ * reference or %शून्य अगर none was found.
  */
-struct super_block *get_active_super(struct block_device *bdev)
-{
-	struct super_block *sb;
+काष्ठा super_block *get_active_super(काष्ठा block_device *bdev)
+अणु
+	काष्ठा super_block *sb;
 
-	if (!bdev)
-		return NULL;
+	अगर (!bdev)
+		वापस शून्य;
 
 restart:
 	spin_lock(&sb_lock);
-	list_for_each_entry(sb, &super_blocks, s_list) {
-		if (hlist_unhashed(&sb->s_instances))
-			continue;
-		if (sb->s_bdev == bdev) {
-			if (!grab_super(sb))
-				goto restart;
-			up_write(&sb->s_umount);
-			return sb;
-		}
-	}
+	list_क्रम_each_entry(sb, &super_blocks, s_list) अणु
+		अगर (hlist_unhashed(&sb->s_instances))
+			जारी;
+		अगर (sb->s_bdev == bdev) अणु
+			अगर (!grab_super(sb))
+				जाओ restart;
+			up_ग_लिखो(&sb->s_umount);
+			वापस sb;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&sb_lock);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct super_block *user_get_super(dev_t dev, bool excl)
-{
-	struct super_block *sb;
+काष्ठा super_block *user_get_super(dev_t dev, bool excl)
+अणु
+	काष्ठा super_block *sb;
 
 	spin_lock(&sb_lock);
 rescan:
-	list_for_each_entry(sb, &super_blocks, s_list) {
-		if (hlist_unhashed(&sb->s_instances))
-			continue;
-		if (sb->s_dev ==  dev) {
+	list_क्रम_each_entry(sb, &super_blocks, s_list) अणु
+		अगर (hlist_unhashed(&sb->s_instances))
+			जारी;
+		अगर (sb->s_dev ==  dev) अणु
 			sb->s_count++;
 			spin_unlock(&sb_lock);
-			if (excl)
-				down_write(&sb->s_umount);
-			else
-				down_read(&sb->s_umount);
+			अगर (excl)
+				करोwn_ग_लिखो(&sb->s_umount);
+			अन्यथा
+				करोwn_पढ़ो(&sb->s_umount);
 			/* still alive? */
-			if (sb->s_root && (sb->s_flags & SB_BORN))
-				return sb;
-			if (excl)
-				up_write(&sb->s_umount);
-			else
-				up_read(&sb->s_umount);
+			अगर (sb->s_root && (sb->s_flags & SB_BORN))
+				वापस sb;
+			अगर (excl)
+				up_ग_लिखो(&sb->s_umount);
+			अन्यथा
+				up_पढ़ो(&sb->s_umount);
 			/* nope, got unmounted */
 			spin_lock(&sb_lock);
 			__put_super(sb);
-			goto rescan;
-		}
-	}
+			जाओ rescan;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&sb_lock);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * reconfigure_super - asks filesystem to change superblock parameters
+ * reconfigure_super - asks fileप्रणाली to change superblock parameters
  * @fc: The superblock and configuration
  *
  * Alters the configuration parameters of a live superblock.
  */
-int reconfigure_super(struct fs_context *fc)
-{
-	struct super_block *sb = fc->root->d_sb;
-	int retval;
+पूर्णांक reconfigure_super(काष्ठा fs_context *fc)
+अणु
+	काष्ठा super_block *sb = fc->root->d_sb;
+	पूर्णांक retval;
 	bool remount_ro = false;
-	bool force = fc->sb_flags & SB_FORCE;
+	bool क्रमce = fc->sb_flags & SB_FORCE;
 
-	if (fc->sb_flags_mask & ~MS_RMT_MASK)
-		return -EINVAL;
-	if (sb->s_writers.frozen != SB_UNFROZEN)
-		return -EBUSY;
+	अगर (fc->sb_flags_mask & ~MS_RMT_MASK)
+		वापस -EINVAL;
+	अगर (sb->s_ग_लिखोrs.frozen != SB_UNFROZEN)
+		वापस -EBUSY;
 
 	retval = security_sb_remount(sb, fc->security);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	if (fc->sb_flags_mask & SB_RDONLY) {
-#ifdef CONFIG_BLOCK
-		if (!(fc->sb_flags & SB_RDONLY) && sb->s_bdev &&
-		    bdev_read_only(sb->s_bdev))
-			return -EACCES;
-#endif
+	अगर (fc->sb_flags_mask & SB_RDONLY) अणु
+#अगर_घोषित CONFIG_BLOCK
+		अगर (!(fc->sb_flags & SB_RDONLY) && sb->s_bdev &&
+		    bdev_पढ़ो_only(sb->s_bdev))
+			वापस -EACCES;
+#पूर्ण_अगर
 
-		remount_ro = (fc->sb_flags & SB_RDONLY) && !sb_rdonly(sb);
-	}
+		remount_ro = (fc->sb_flags & SB_RDONLY) && !sb_rकरोnly(sb);
+	पूर्ण
 
-	if (remount_ro) {
-		if (!hlist_empty(&sb->s_pins)) {
-			up_write(&sb->s_umount);
-			group_pin_kill(&sb->s_pins);
-			down_write(&sb->s_umount);
-			if (!sb->s_root)
-				return 0;
-			if (sb->s_writers.frozen != SB_UNFROZEN)
-				return -EBUSY;
-			remount_ro = !sb_rdonly(sb);
-		}
-	}
+	अगर (remount_ro) अणु
+		अगर (!hlist_empty(&sb->s_pins)) अणु
+			up_ग_लिखो(&sb->s_umount);
+			group_pin_समाप्त(&sb->s_pins);
+			करोwn_ग_लिखो(&sb->s_umount);
+			अगर (!sb->s_root)
+				वापस 0;
+			अगर (sb->s_ग_लिखोrs.frozen != SB_UNFROZEN)
+				वापस -EBUSY;
+			remount_ro = !sb_rकरोnly(sb);
+		पूर्ण
+	पूर्ण
 	shrink_dcache_sb(sb);
 
-	/* If we are reconfiguring to RDONLY and current sb is read/write,
-	 * make sure there are no files open for writing.
+	/* If we are reconfiguring to RDONLY and current sb is पढ़ो/ग_लिखो,
+	 * make sure there are no files खोलो क्रम writing.
 	 */
-	if (remount_ro) {
-		if (force) {
-			sb->s_readonly_remount = 1;
+	अगर (remount_ro) अणु
+		अगर (क्रमce) अणु
+			sb->s_पढ़ोonly_remount = 1;
 			smp_wmb();
-		} else {
-			retval = sb_prepare_remount_readonly(sb);
-			if (retval)
-				return retval;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			retval = sb_prepare_remount_पढ़ोonly(sb);
+			अगर (retval)
+				वापस retval;
+		पूर्ण
+	पूर्ण
 
-	if (fc->ops->reconfigure) {
+	अगर (fc->ops->reconfigure) अणु
 		retval = fc->ops->reconfigure(fc);
-		if (retval) {
-			if (!force)
-				goto cancel_readonly;
-			/* If forced remount, go ahead despite any errors */
+		अगर (retval) अणु
+			अगर (!क्रमce)
+				जाओ cancel_पढ़ोonly;
+			/* If क्रमced remount, go ahead despite any errors */
 			WARN(1, "forced remount of a %s fs returned %i\n",
 			     sb->s_type->name, retval);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	WRITE_ONCE(sb->s_flags, ((sb->s_flags & ~fc->sb_flags_mask) |
 				 (fc->sb_flags & fc->sb_flags_mask)));
-	/* Needs to be ordered wrt mnt_is_readonly() */
+	/* Needs to be ordered wrt mnt_is_पढ़ोonly() */
 	smp_wmb();
-	sb->s_readonly_remount = 0;
+	sb->s_पढ़ोonly_remount = 0;
 
 	/*
-	 * Some filesystems modify their metadata via some other path than the
-	 * bdev buffer cache (eg. use a private mapping, or directories in
-	 * pagecache, etc). Also file data modifications go via their own
-	 * mappings. So If we try to mount readonly then copy the filesystem
+	 * Some fileप्रणालीs modअगरy their metadata via some other path than the
+	 * bdev buffer cache (eg. use a निजी mapping, or directories in
+	 * pagecache, etc). Also file data modअगरications go via their own
+	 * mappings. So If we try to mount पढ़ोonly then copy the fileप्रणाली
 	 * from bdev, we could get stale data, so invalidate it to give a best
-	 * effort at coherency.
+	 * efक्रमt at coherency.
 	 */
-	if (remount_ro && sb->s_bdev)
+	अगर (remount_ro && sb->s_bdev)
 		invalidate_bdev(sb->s_bdev);
-	return 0;
+	वापस 0;
 
-cancel_readonly:
-	sb->s_readonly_remount = 0;
-	return retval;
-}
+cancel_पढ़ोonly:
+	sb->s_पढ़ोonly_remount = 0;
+	वापस retval;
+पूर्ण
 
-static void do_emergency_remount_callback(struct super_block *sb)
-{
-	down_write(&sb->s_umount);
-	if (sb->s_root && sb->s_bdev && (sb->s_flags & SB_BORN) &&
-	    !sb_rdonly(sb)) {
-		struct fs_context *fc;
+अटल व्योम करो_emergency_remount_callback(काष्ठा super_block *sb)
+अणु
+	करोwn_ग_लिखो(&sb->s_umount);
+	अगर (sb->s_root && sb->s_bdev && (sb->s_flags & SB_BORN) &&
+	    !sb_rकरोnly(sb)) अणु
+		काष्ठा fs_context *fc;
 
-		fc = fs_context_for_reconfigure(sb->s_root,
+		fc = fs_context_क्रम_reconfigure(sb->s_root,
 					SB_RDONLY | SB_FORCE, SB_RDONLY);
-		if (!IS_ERR(fc)) {
-			if (parse_monolithic_mount_data(fc, NULL) == 0)
-				(void)reconfigure_super(fc);
+		अगर (!IS_ERR(fc)) अणु
+			अगर (parse_monolithic_mount_data(fc, शून्य) == 0)
+				(व्योम)reconfigure_super(fc);
 			put_fs_context(fc);
-		}
-	}
-	up_write(&sb->s_umount);
-}
+		पूर्ण
+	पूर्ण
+	up_ग_लिखो(&sb->s_umount);
+पूर्ण
 
-static void do_emergency_remount(struct work_struct *work)
-{
-	__iterate_supers(do_emergency_remount_callback);
-	kfree(work);
-	printk("Emergency Remount complete\n");
-}
+अटल व्योम करो_emergency_remount(काष्ठा work_काष्ठा *work)
+अणु
+	__iterate_supers(करो_emergency_remount_callback);
+	kमुक्त(work);
+	prपूर्णांकk("Emergency Remount complete\n");
+पूर्ण
 
-void emergency_remount(void)
-{
-	struct work_struct *work;
+व्योम emergency_remount(व्योम)
+अणु
+	काष्ठा work_काष्ठा *work;
 
-	work = kmalloc(sizeof(*work), GFP_ATOMIC);
-	if (work) {
-		INIT_WORK(work, do_emergency_remount);
+	work = kदो_स्मृति(माप(*work), GFP_ATOMIC);
+	अगर (work) अणु
+		INIT_WORK(work, करो_emergency_remount);
 		schedule_work(work);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void do_thaw_all_callback(struct super_block *sb)
-{
-	down_write(&sb->s_umount);
-	if (sb->s_root && sb->s_flags & SB_BORN) {
+अटल व्योम करो_thaw_all_callback(काष्ठा super_block *sb)
+अणु
+	करोwn_ग_लिखो(&sb->s_umount);
+	अगर (sb->s_root && sb->s_flags & SB_BORN) अणु
 		emergency_thaw_bdev(sb);
 		thaw_super_locked(sb);
-	} else {
-		up_write(&sb->s_umount);
-	}
-}
+	पूर्ण अन्यथा अणु
+		up_ग_लिखो(&sb->s_umount);
+	पूर्ण
+पूर्ण
 
-static void do_thaw_all(struct work_struct *work)
-{
-	__iterate_supers(do_thaw_all_callback);
-	kfree(work);
-	printk(KERN_WARNING "Emergency Thaw complete\n");
-}
+अटल व्योम करो_thaw_all(काष्ठा work_काष्ठा *work)
+अणु
+	__iterate_supers(करो_thaw_all_callback);
+	kमुक्त(work);
+	prपूर्णांकk(KERN_WARNING "Emergency Thaw complete\n");
+पूर्ण
 
 /**
- * emergency_thaw_all -- forcibly thaw every frozen filesystem
+ * emergency_thaw_all -- क्रमcibly thaw every frozen fileप्रणाली
  *
- * Used for emergency unfreeze of all filesystems via SysRq
+ * Used क्रम emergency unमुक्तze of all fileप्रणालीs via SysRq
  */
-void emergency_thaw_all(void)
-{
-	struct work_struct *work;
+व्योम emergency_thaw_all(व्योम)
+अणु
+	काष्ठा work_काष्ठा *work;
 
-	work = kmalloc(sizeof(*work), GFP_ATOMIC);
-	if (work) {
-		INIT_WORK(work, do_thaw_all);
+	work = kदो_स्मृति(माप(*work), GFP_ATOMIC);
+	अगर (work) अणु
+		INIT_WORK(work, करो_thaw_all);
 		schedule_work(work);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static DEFINE_IDA(unnamed_dev_ida);
+अटल DEFINE_IDA(unnamed_dev_ida);
 
 /**
- * get_anon_bdev - Allocate a block device for filesystems which don't have one.
- * @p: Pointer to a dev_t.
+ * get_anon_bdev - Allocate a block device क्रम fileप्रणालीs which करोn't have one.
+ * @p: Poपूर्णांकer to a dev_t.
  *
- * Filesystems which don't use real block devices can call this function
- * to allocate a virtual block device.
+ * Fileप्रणालीs which करोn't use real block devices can call this function
+ * to allocate a भव block device.
  *
- * Context: Any context.  Frequently called while holding sb_lock.
- * Return: 0 on success, -EMFILE if there are no anonymous bdevs left
- * or -ENOMEM if memory allocation failed.
+ * Context: Any context.  Frequently called जबतक holding sb_lock.
+ * Return: 0 on success, -EMखाता अगर there are no anonymous bdevs left
+ * or -ENOMEM अगर memory allocation failed.
  */
-int get_anon_bdev(dev_t *p)
-{
-	int dev;
+पूर्णांक get_anon_bdev(dev_t *p)
+अणु
+	पूर्णांक dev;
 
 	/*
 	 * Many userspace utilities consider an FSID of 0 invalid.
-	 * Always return at least 1 from get_anon_bdev.
+	 * Always वापस at least 1 from get_anon_bdev.
 	 */
 	dev = ida_alloc_range(&unnamed_dev_ida, 1, (1 << MINORBITS) - 1,
 			GFP_ATOMIC);
-	if (dev == -ENOSPC)
-		dev = -EMFILE;
-	if (dev < 0)
-		return dev;
+	अगर (dev == -ENOSPC)
+		dev = -EMखाता;
+	अगर (dev < 0)
+		वापस dev;
 
 	*p = MKDEV(0, dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(get_anon_bdev);
 
-void free_anon_bdev(dev_t dev)
-{
-	ida_free(&unnamed_dev_ida, MINOR(dev));
-}
-EXPORT_SYMBOL(free_anon_bdev);
+व्योम मुक्त_anon_bdev(dev_t dev)
+अणु
+	ida_मुक्त(&unnamed_dev_ida, MINOR(dev));
+पूर्ण
+EXPORT_SYMBOL(मुक्त_anon_bdev);
 
-int set_anon_super(struct super_block *s, void *data)
-{
-	return get_anon_bdev(&s->s_dev);
-}
+पूर्णांक set_anon_super(काष्ठा super_block *s, व्योम *data)
+अणु
+	वापस get_anon_bdev(&s->s_dev);
+पूर्ण
 EXPORT_SYMBOL(set_anon_super);
 
-void kill_anon_super(struct super_block *sb)
-{
+व्योम समाप्त_anon_super(काष्ठा super_block *sb)
+अणु
 	dev_t dev = sb->s_dev;
-	generic_shutdown_super(sb);
-	free_anon_bdev(dev);
-}
-EXPORT_SYMBOL(kill_anon_super);
+	generic_shutकरोwn_super(sb);
+	मुक्त_anon_bdev(dev);
+पूर्ण
+EXPORT_SYMBOL(समाप्त_anon_super);
 
-void kill_litter_super(struct super_block *sb)
-{
-	if (sb->s_root)
+व्योम समाप्त_litter_super(काष्ठा super_block *sb)
+अणु
+	अगर (sb->s_root)
 		d_genocide(sb->s_root);
-	kill_anon_super(sb);
-}
-EXPORT_SYMBOL(kill_litter_super);
+	समाप्त_anon_super(sb);
+पूर्ण
+EXPORT_SYMBOL(समाप्त_litter_super);
 
-int set_anon_super_fc(struct super_block *sb, struct fs_context *fc)
-{
-	return set_anon_super(sb, NULL);
-}
+पूर्णांक set_anon_super_fc(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	वापस set_anon_super(sb, शून्य);
+पूर्ण
 EXPORT_SYMBOL(set_anon_super_fc);
 
-static int test_keyed_super(struct super_block *sb, struct fs_context *fc)
-{
-	return sb->s_fs_info == fc->s_fs_info;
-}
+अटल पूर्णांक test_keyed_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	वापस sb->s_fs_info == fc->s_fs_info;
+पूर्ण
 
-static int test_single_super(struct super_block *s, struct fs_context *fc)
-{
-	return 1;
-}
+अटल पूर्णांक test_single_super(काष्ठा super_block *s, काष्ठा fs_context *fc)
+अणु
+	वापस 1;
+पूर्ण
 
 /**
  * vfs_get_super - Get a superblock with a search key set in s_fs_info.
- * @fc: The filesystem context holding the parameters
+ * @fc: The fileप्रणाली context holding the parameters
  * @keying: How to distinguish superblocks
  * @fill_super: Helper to initialise a new superblock
  *
- * Search for a superblock and create a new one if not found.  The search
+ * Search क्रम a superblock and create a new one अगर not found.  The search
  * criterion is controlled by @keying.  If the search fails, a new superblock
  * is created and @fill_super() is called to initialise it.
  *
  * @keying can take one of a number of values:
  *
  * (1) vfs_get_single_super - Only one superblock of this type may exist on the
- *     system.  This is typically used for special system filesystems.
+ *     प्रणाली.  This is typically used क्रम special प्रणाली fileप्रणालीs.
  *
  * (2) vfs_get_keyed_super - Multiple superblocks may exist, but they must have
- *     distinct keys (where the key is in s_fs_info).  Searching for the same
- *     key again will turn up the superblock for that key.
+ *     distinct keys (where the key is in s_fs_info).  Searching क्रम the same
+ *     key again will turn up the superblock क्रम that key.
  *
  * (3) vfs_get_independent_super - Multiple superblocks may exist and are
  *     unkeyed.  Each call will get a new superblock.
  *
  * A permissions check is made by sget_fc() unless we're getting a superblock
- * for a kernel-internal mount or a submount.
+ * क्रम a kernel-पूर्णांकernal mount or a submount.
  */
-int vfs_get_super(struct fs_context *fc,
-		  enum vfs_get_super_keying keying,
-		  int (*fill_super)(struct super_block *sb,
-				    struct fs_context *fc))
-{
-	int (*test)(struct super_block *, struct fs_context *);
-	struct super_block *sb;
-	int err;
+पूर्णांक vfs_get_super(काष्ठा fs_context *fc,
+		  क्रमागत vfs_get_super_keying keying,
+		  पूर्णांक (*fill_super)(काष्ठा super_block *sb,
+				    काष्ठा fs_context *fc))
+अणु
+	पूर्णांक (*test)(काष्ठा super_block *, काष्ठा fs_context *);
+	काष्ठा super_block *sb;
+	पूर्णांक err;
 
-	switch (keying) {
-	case vfs_get_single_super:
-	case vfs_get_single_reconf_super:
+	चयन (keying) अणु
+	हाल vfs_get_single_super:
+	हाल vfs_get_single_reconf_super:
 		test = test_single_super;
-		break;
-	case vfs_get_keyed_super:
+		अवरोध;
+	हाल vfs_get_keyed_super:
 		test = test_keyed_super;
-		break;
-	case vfs_get_independent_super:
-		test = NULL;
-		break;
-	default:
+		अवरोध;
+	हाल vfs_get_independent_super:
+		test = शून्य;
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	sb = sget_fc(fc, test, set_anon_super_fc);
-	if (IS_ERR(sb))
-		return PTR_ERR(sb);
+	अगर (IS_ERR(sb))
+		वापस PTR_ERR(sb);
 
-	if (!sb->s_root) {
+	अगर (!sb->s_root) अणु
 		err = fill_super(sb, fc);
-		if (err)
-			goto error;
+		अगर (err)
+			जाओ error;
 
 		sb->s_flags |= SB_ACTIVE;
 		fc->root = dget(sb->s_root);
-	} else {
+	पूर्ण अन्यथा अणु
 		fc->root = dget(sb->s_root);
-		if (keying == vfs_get_single_reconf_super) {
+		अगर (keying == vfs_get_single_reconf_super) अणु
 			err = reconfigure_super(fc);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				dput(fc->root);
-				fc->root = NULL;
-				goto error;
-			}
-		}
-	}
+				fc->root = शून्य;
+				जाओ error;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
 	deactivate_locked_super(sb);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(vfs_get_super);
 
-int get_tree_nodev(struct fs_context *fc,
-		  int (*fill_super)(struct super_block *sb,
-				    struct fs_context *fc))
-{
-	return vfs_get_super(fc, vfs_get_independent_super, fill_super);
-}
+पूर्णांक get_tree_nodev(काष्ठा fs_context *fc,
+		  पूर्णांक (*fill_super)(काष्ठा super_block *sb,
+				    काष्ठा fs_context *fc))
+अणु
+	वापस vfs_get_super(fc, vfs_get_independent_super, fill_super);
+पूर्ण
 EXPORT_SYMBOL(get_tree_nodev);
 
-int get_tree_single(struct fs_context *fc,
-		  int (*fill_super)(struct super_block *sb,
-				    struct fs_context *fc))
-{
-	return vfs_get_super(fc, vfs_get_single_super, fill_super);
-}
+पूर्णांक get_tree_single(काष्ठा fs_context *fc,
+		  पूर्णांक (*fill_super)(काष्ठा super_block *sb,
+				    काष्ठा fs_context *fc))
+अणु
+	वापस vfs_get_super(fc, vfs_get_single_super, fill_super);
+पूर्ण
 EXPORT_SYMBOL(get_tree_single);
 
-int get_tree_single_reconf(struct fs_context *fc,
-		  int (*fill_super)(struct super_block *sb,
-				    struct fs_context *fc))
-{
-	return vfs_get_super(fc, vfs_get_single_reconf_super, fill_super);
-}
+पूर्णांक get_tree_single_reconf(काष्ठा fs_context *fc,
+		  पूर्णांक (*fill_super)(काष्ठा super_block *sb,
+				    काष्ठा fs_context *fc))
+अणु
+	वापस vfs_get_super(fc, vfs_get_single_reconf_super, fill_super);
+पूर्ण
 EXPORT_SYMBOL(get_tree_single_reconf);
 
-int get_tree_keyed(struct fs_context *fc,
-		  int (*fill_super)(struct super_block *sb,
-				    struct fs_context *fc),
-		void *key)
-{
+पूर्णांक get_tree_keyed(काष्ठा fs_context *fc,
+		  पूर्णांक (*fill_super)(काष्ठा super_block *sb,
+				    काष्ठा fs_context *fc),
+		व्योम *key)
+अणु
 	fc->s_fs_info = key;
-	return vfs_get_super(fc, vfs_get_keyed_super, fill_super);
-}
+	वापस vfs_get_super(fc, vfs_get_keyed_super, fill_super);
+पूर्ण
 EXPORT_SYMBOL(get_tree_keyed);
 
-#ifdef CONFIG_BLOCK
+#अगर_घोषित CONFIG_BLOCK
 
-static int set_bdev_super(struct super_block *s, void *data)
-{
+अटल पूर्णांक set_bdev_super(काष्ठा super_block *s, व्योम *data)
+अणु
 	s->s_bdev = data;
 	s->s_dev = s->s_bdev->bd_dev;
 	s->s_bdi = bdi_get(s->s_bdev->bd_bdi);
 
-	if (blk_queue_stable_writes(s->s_bdev->bd_disk->queue))
-		s->s_iflags |= SB_I_STABLE_WRITES;
-	return 0;
-}
+	अगर (blk_queue_stable_ग_लिखोs(s->s_bdev->bd_disk->queue))
+		s->s_अगरlags |= SB_I_STABLE_WRITES;
+	वापस 0;
+पूर्ण
 
-static int set_bdev_super_fc(struct super_block *s, struct fs_context *fc)
-{
-	return set_bdev_super(s, fc->sget_key);
-}
+अटल पूर्णांक set_bdev_super_fc(काष्ठा super_block *s, काष्ठा fs_context *fc)
+अणु
+	वापस set_bdev_super(s, fc->sget_key);
+पूर्ण
 
-static int test_bdev_super_fc(struct super_block *s, struct fs_context *fc)
-{
-	return s->s_bdev == fc->sget_key;
-}
+अटल पूर्णांक test_bdev_super_fc(काष्ठा super_block *s, काष्ठा fs_context *fc)
+अणु
+	वापस s->s_bdev == fc->sget_key;
+पूर्ण
 
 /**
  * get_tree_bdev - Get a superblock based on a single block device
- * @fc: The filesystem context holding the parameters
+ * @fc: The fileप्रणाली context holding the parameters
  * @fill_super: Helper to initialise a new superblock
  */
-int get_tree_bdev(struct fs_context *fc,
-		int (*fill_super)(struct super_block *,
-				  struct fs_context *))
-{
-	struct block_device *bdev;
-	struct super_block *s;
-	fmode_t mode = FMODE_READ | FMODE_EXCL;
-	int error = 0;
+पूर्णांक get_tree_bdev(काष्ठा fs_context *fc,
+		पूर्णांक (*fill_super)(काष्ठा super_block *,
+				  काष्ठा fs_context *))
+अणु
+	काष्ठा block_device *bdev;
+	काष्ठा super_block *s;
+	भ_शेषe_t mode = FMODE_READ | FMODE_EXCL;
+	पूर्णांक error = 0;
 
-	if (!(fc->sb_flags & SB_RDONLY))
+	अगर (!(fc->sb_flags & SB_RDONLY))
 		mode |= FMODE_WRITE;
 
-	if (!fc->source)
-		return invalf(fc, "No source specified");
+	अगर (!fc->source)
+		वापस invalf(fc, "No source specified");
 
 	bdev = blkdev_get_by_path(fc->source, mode, fc->fs_type);
-	if (IS_ERR(bdev)) {
+	अगर (IS_ERR(bdev)) अणु
 		errorf(fc, "%s: Can't open blockdev", fc->source);
-		return PTR_ERR(bdev);
-	}
+		वापस PTR_ERR(bdev);
+	पूर्ण
 
-	/* Once the superblock is inserted into the list by sget_fc(), s_umount
-	 * will protect the lockfs code from trying to start a snapshot while
+	/* Once the superblock is inserted पूर्णांकo the list by sget_fc(), s_umount
+	 * will protect the lockfs code from trying to start a snapshot जबतक
 	 * we are mounting
 	 */
-	mutex_lock(&bdev->bd_fsfreeze_mutex);
-	if (bdev->bd_fsfreeze_count > 0) {
-		mutex_unlock(&bdev->bd_fsfreeze_mutex);
+	mutex_lock(&bdev->bd_fsमुक्तze_mutex);
+	अगर (bdev->bd_fsमुक्तze_count > 0) अणु
+		mutex_unlock(&bdev->bd_fsमुक्तze_mutex);
 		warnf(fc, "%pg: Can't mount, blockdev is frozen", bdev);
 		blkdev_put(bdev, mode);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	fc->sb_flags |= SB_NOSEC;
 	fc->sget_key = bdev;
 	s = sget_fc(fc, test_bdev_super_fc, set_bdev_super_fc);
-	mutex_unlock(&bdev->bd_fsfreeze_mutex);
-	if (IS_ERR(s)) {
+	mutex_unlock(&bdev->bd_fsमुक्तze_mutex);
+	अगर (IS_ERR(s)) अणु
 		blkdev_put(bdev, mode);
-		return PTR_ERR(s);
-	}
+		वापस PTR_ERR(s);
+	पूर्ण
 
-	if (s->s_root) {
+	अगर (s->s_root) अणु
 		/* Don't summarily change the RO/RW state. */
-		if ((fc->sb_flags ^ s->s_flags) & SB_RDONLY) {
+		अगर ((fc->sb_flags ^ s->s_flags) & SB_RDONLY) अणु
 			warnf(fc, "%pg: Can't mount, would change RO state", bdev);
 			deactivate_locked_super(s);
 			blkdev_put(bdev, mode);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 
 		/*
 		 * s_umount nests inside bd_mutex during
@@ -1283,73 +1284,73 @@ int get_tree_bdev(struct fs_context *fc,
 		 * s_umount temporarily.  This is safe as we're
 		 * holding an active reference.
 		 */
-		up_write(&s->s_umount);
+		up_ग_लिखो(&s->s_umount);
 		blkdev_put(bdev, mode);
-		down_write(&s->s_umount);
-	} else {
+		करोwn_ग_लिखो(&s->s_umount);
+	पूर्ण अन्यथा अणु
 		s->s_mode = mode;
-		snprintf(s->s_id, sizeof(s->s_id), "%pg", bdev);
+		snम_लिखो(s->s_id, माप(s->s_id), "%pg", bdev);
 		sb_set_blocksize(s, block_size(bdev));
 		error = fill_super(s, fc);
-		if (error) {
+		अगर (error) अणु
 			deactivate_locked_super(s);
-			return error;
-		}
+			वापस error;
+		पूर्ण
 
 		s->s_flags |= SB_ACTIVE;
 		bdev->bd_super = s;
-	}
+	पूर्ण
 
 	BUG_ON(fc->root);
 	fc->root = dget(s->s_root);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(get_tree_bdev);
 
-static int test_bdev_super(struct super_block *s, void *data)
-{
-	return (void *)s->s_bdev == data;
-}
+अटल पूर्णांक test_bdev_super(काष्ठा super_block *s, व्योम *data)
+अणु
+	वापस (व्योम *)s->s_bdev == data;
+पूर्ण
 
-struct dentry *mount_bdev(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *data,
-	int (*fill_super)(struct super_block *, void *, int))
-{
-	struct block_device *bdev;
-	struct super_block *s;
-	fmode_t mode = FMODE_READ | FMODE_EXCL;
-	int error = 0;
+काष्ठा dentry *mount_bdev(काष्ठा file_प्रणाली_type *fs_type,
+	पूर्णांक flags, स्थिर अक्षर *dev_name, व्योम *data,
+	पूर्णांक (*fill_super)(काष्ठा super_block *, व्योम *, पूर्णांक))
+अणु
+	काष्ठा block_device *bdev;
+	काष्ठा super_block *s;
+	भ_शेषe_t mode = FMODE_READ | FMODE_EXCL;
+	पूर्णांक error = 0;
 
-	if (!(flags & SB_RDONLY))
+	अगर (!(flags & SB_RDONLY))
 		mode |= FMODE_WRITE;
 
 	bdev = blkdev_get_by_path(dev_name, mode, fs_type);
-	if (IS_ERR(bdev))
-		return ERR_CAST(bdev);
+	अगर (IS_ERR(bdev))
+		वापस ERR_CAST(bdev);
 
 	/*
-	 * once the super is inserted into the list by sget, s_umount
+	 * once the super is inserted पूर्णांकo the list by sget, s_umount
 	 * will protect the lockfs code from trying to start a snapshot
-	 * while we are mounting
+	 * जबतक we are mounting
 	 */
-	mutex_lock(&bdev->bd_fsfreeze_mutex);
-	if (bdev->bd_fsfreeze_count > 0) {
-		mutex_unlock(&bdev->bd_fsfreeze_mutex);
+	mutex_lock(&bdev->bd_fsमुक्तze_mutex);
+	अगर (bdev->bd_fsमुक्तze_count > 0) अणु
+		mutex_unlock(&bdev->bd_fsमुक्तze_mutex);
 		error = -EBUSY;
-		goto error_bdev;
-	}
+		जाओ error_bdev;
+	पूर्ण
 	s = sget(fs_type, test_bdev_super, set_bdev_super, flags | SB_NOSEC,
 		 bdev);
-	mutex_unlock(&bdev->bd_fsfreeze_mutex);
-	if (IS_ERR(s))
-		goto error_s;
+	mutex_unlock(&bdev->bd_fsमुक्तze_mutex);
+	अगर (IS_ERR(s))
+		जाओ error_s;
 
-	if (s->s_root) {
-		if ((flags ^ s->s_flags) & SB_RDONLY) {
+	अगर (s->s_root) अणु
+		अगर ((flags ^ s->s_flags) & SB_RDONLY) अणु
 			deactivate_locked_super(s);
 			error = -EBUSY;
-			goto error_bdev;
-		}
+			जाओ error_bdev;
+		पूर्ण
 
 		/*
 		 * s_umount nests inside bd_mutex during
@@ -1358,412 +1359,412 @@ struct dentry *mount_bdev(struct file_system_type *fs_type,
 		 * s_umount temporarily.  This is safe as we're
 		 * holding an active reference.
 		 */
-		up_write(&s->s_umount);
+		up_ग_लिखो(&s->s_umount);
 		blkdev_put(bdev, mode);
-		down_write(&s->s_umount);
-	} else {
+		करोwn_ग_लिखो(&s->s_umount);
+	पूर्ण अन्यथा अणु
 		s->s_mode = mode;
-		snprintf(s->s_id, sizeof(s->s_id), "%pg", bdev);
+		snम_लिखो(s->s_id, माप(s->s_id), "%pg", bdev);
 		sb_set_blocksize(s, block_size(bdev));
 		error = fill_super(s, data, flags & SB_SILENT ? 1 : 0);
-		if (error) {
+		अगर (error) अणु
 			deactivate_locked_super(s);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		s->s_flags |= SB_ACTIVE;
 		bdev->bd_super = s;
-	}
+	पूर्ण
 
-	return dget(s->s_root);
+	वापस dget(s->s_root);
 
 error_s:
 	error = PTR_ERR(s);
 error_bdev:
 	blkdev_put(bdev, mode);
 error:
-	return ERR_PTR(error);
-}
+	वापस ERR_PTR(error);
+पूर्ण
 EXPORT_SYMBOL(mount_bdev);
 
-void kill_block_super(struct super_block *sb)
-{
-	struct block_device *bdev = sb->s_bdev;
-	fmode_t mode = sb->s_mode;
+व्योम समाप्त_block_super(काष्ठा super_block *sb)
+अणु
+	काष्ठा block_device *bdev = sb->s_bdev;
+	भ_शेषe_t mode = sb->s_mode;
 
-	bdev->bd_super = NULL;
-	generic_shutdown_super(sb);
+	bdev->bd_super = शून्य;
+	generic_shutकरोwn_super(sb);
 	sync_blockdev(bdev);
 	WARN_ON_ONCE(!(mode & FMODE_EXCL));
 	blkdev_put(bdev, mode | FMODE_EXCL);
-}
+पूर्ण
 
-EXPORT_SYMBOL(kill_block_super);
-#endif
+EXPORT_SYMBOL(समाप्त_block_super);
+#पूर्ण_अगर
 
-struct dentry *mount_nodev(struct file_system_type *fs_type,
-	int flags, void *data,
-	int (*fill_super)(struct super_block *, void *, int))
-{
-	int error;
-	struct super_block *s = sget(fs_type, NULL, set_anon_super, flags, NULL);
+काष्ठा dentry *mount_nodev(काष्ठा file_प्रणाली_type *fs_type,
+	पूर्णांक flags, व्योम *data,
+	पूर्णांक (*fill_super)(काष्ठा super_block *, व्योम *, पूर्णांक))
+अणु
+	पूर्णांक error;
+	काष्ठा super_block *s = sget(fs_type, शून्य, set_anon_super, flags, शून्य);
 
-	if (IS_ERR(s))
-		return ERR_CAST(s);
+	अगर (IS_ERR(s))
+		वापस ERR_CAST(s);
 
 	error = fill_super(s, data, flags & SB_SILENT ? 1 : 0);
-	if (error) {
+	अगर (error) अणु
 		deactivate_locked_super(s);
-		return ERR_PTR(error);
-	}
+		वापस ERR_PTR(error);
+	पूर्ण
 	s->s_flags |= SB_ACTIVE;
-	return dget(s->s_root);
-}
+	वापस dget(s->s_root);
+पूर्ण
 EXPORT_SYMBOL(mount_nodev);
 
-static int reconfigure_single(struct super_block *s,
-			      int flags, void *data)
-{
-	struct fs_context *fc;
-	int ret;
+अटल पूर्णांक reconfigure_single(काष्ठा super_block *s,
+			      पूर्णांक flags, व्योम *data)
+अणु
+	काष्ठा fs_context *fc;
+	पूर्णांक ret;
 
-	/* The caller really need to be passing fc down into mount_single(),
-	 * then a chunk of this can be removed.  [Bollocks -- AV]
+	/* The caller really need to be passing fc करोwn पूर्णांकo mount_single(),
+	 * then a chunk of this can be हटाओd.  [Bollocks -- AV]
 	 * Better yet, reconfiguration shouldn't happen, but rather the second
-	 * mount should be rejected if the parameters are not compatible.
+	 * mount should be rejected अगर the parameters are not compatible.
 	 */
-	fc = fs_context_for_reconfigure(s->s_root, flags, MS_RMT_MASK);
-	if (IS_ERR(fc))
-		return PTR_ERR(fc);
+	fc = fs_context_क्रम_reconfigure(s->s_root, flags, MS_RMT_MASK);
+	अगर (IS_ERR(fc))
+		वापस PTR_ERR(fc);
 
 	ret = parse_monolithic_mount_data(fc, data);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	ret = reconfigure_super(fc);
 out:
 	put_fs_context(fc);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int compare_single(struct super_block *s, void *p)
-{
-	return 1;
-}
+अटल पूर्णांक compare_single(काष्ठा super_block *s, व्योम *p)
+अणु
+	वापस 1;
+पूर्ण
 
-struct dentry *mount_single(struct file_system_type *fs_type,
-	int flags, void *data,
-	int (*fill_super)(struct super_block *, void *, int))
-{
-	struct super_block *s;
-	int error;
+काष्ठा dentry *mount_single(काष्ठा file_प्रणाली_type *fs_type,
+	पूर्णांक flags, व्योम *data,
+	पूर्णांक (*fill_super)(काष्ठा super_block *, व्योम *, पूर्णांक))
+अणु
+	काष्ठा super_block *s;
+	पूर्णांक error;
 
-	s = sget(fs_type, compare_single, set_anon_super, flags, NULL);
-	if (IS_ERR(s))
-		return ERR_CAST(s);
-	if (!s->s_root) {
+	s = sget(fs_type, compare_single, set_anon_super, flags, शून्य);
+	अगर (IS_ERR(s))
+		वापस ERR_CAST(s);
+	अगर (!s->s_root) अणु
 		error = fill_super(s, data, flags & SB_SILENT ? 1 : 0);
-		if (!error)
+		अगर (!error)
 			s->s_flags |= SB_ACTIVE;
-	} else {
+	पूर्ण अन्यथा अणु
 		error = reconfigure_single(s, flags, data);
-	}
-	if (unlikely(error)) {
+	पूर्ण
+	अगर (unlikely(error)) अणु
 		deactivate_locked_super(s);
-		return ERR_PTR(error);
-	}
-	return dget(s->s_root);
-}
+		वापस ERR_PTR(error);
+	पूर्ण
+	वापस dget(s->s_root);
+पूर्ण
 EXPORT_SYMBOL(mount_single);
 
 /**
  * vfs_get_tree - Get the mountable root
  * @fc: The superblock configuration context.
  *
- * The filesystem is invoked to get or create a superblock which can then later
- * be used for mounting.  The filesystem places a pointer to the root to be
- * used for mounting in @fc->root.
+ * The fileप्रणाली is invoked to get or create a superblock which can then later
+ * be used क्रम mounting.  The fileप्रणाली places a poपूर्णांकer to the root to be
+ * used क्रम mounting in @fc->root.
  */
-int vfs_get_tree(struct fs_context *fc)
-{
-	struct super_block *sb;
-	int error;
+पूर्णांक vfs_get_tree(काष्ठा fs_context *fc)
+अणु
+	काष्ठा super_block *sb;
+	पूर्णांक error;
 
-	if (fc->root)
-		return -EBUSY;
+	अगर (fc->root)
+		वापस -EBUSY;
 
 	/* Get the mountable root in fc->root, with a ref on the root and a ref
 	 * on the superblock.
 	 */
 	error = fc->ops->get_tree(fc);
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 
-	if (!fc->root) {
+	अगर (!fc->root) अणु
 		pr_err("Filesystem %s get_tree() didn't set fc->root\n",
 		       fc->fs_type->name);
-		/* We don't know what the locking state of the superblock is -
-		 * if there is a superblock.
+		/* We करोn't know what the locking state of the superblock is -
+		 * अगर there is a superblock.
 		 */
 		BUG();
-	}
+	पूर्ण
 
 	sb = fc->root->d_sb;
 	WARN_ON(!sb->s_bdi);
 
 	/*
-	 * Write barrier is for super_cache_count(). We place it before setting
+	 * Write barrier is क्रम super_cache_count(). We place it beक्रमe setting
 	 * SB_BORN as the data dependency between the two functions is the
-	 * superblock structure contents that we just set up, not the SB_BORN
+	 * superblock काष्ठाure contents that we just set up, not the SB_BORN
 	 * flag.
 	 */
 	smp_wmb();
 	sb->s_flags |= SB_BORN;
 
-	error = security_sb_set_mnt_opts(sb, fc->security, 0, NULL);
-	if (unlikely(error)) {
+	error = security_sb_set_mnt_opts(sb, fc->security, 0, शून्य);
+	अगर (unlikely(error)) अणु
 		fc_drop_locked(fc);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	/*
-	 * filesystems should never set s_maxbytes larger than MAX_LFS_FILESIZE
-	 * but s_maxbytes was an unsigned long long for many releases. Throw
-	 * this warning for a little while to try and catch filesystems that
+	 * fileप्रणालीs should never set s_maxbytes larger than MAX_LFS_खाताSIZE
+	 * but s_maxbytes was an अचिन्हित दीर्घ दीर्घ क्रम many releases. Throw
+	 * this warning क्रम a little जबतक to try and catch fileप्रणालीs that
 	 * violate this rule.
 	 */
 	WARN((sb->s_maxbytes < 0), "%s set sb->s_maxbytes to "
 		"negative value (%lld)\n", fc->fs_type->name, sb->s_maxbytes);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vfs_get_tree);
 
 /*
- * Setup private BDI for given superblock. It gets automatically cleaned up
- * in generic_shutdown_super().
+ * Setup निजी BDI क्रम given superblock. It माला_लो स्वतःmatically cleaned up
+ * in generic_shutकरोwn_super().
  */
-int super_setup_bdi_name(struct super_block *sb, char *fmt, ...)
-{
-	struct backing_dev_info *bdi;
-	int err;
-	va_list args;
+पूर्णांक super_setup_bdi_name(काष्ठा super_block *sb, अक्षर *fmt, ...)
+अणु
+	काष्ठा backing_dev_info *bdi;
+	पूर्णांक err;
+	बहु_सूची args;
 
 	bdi = bdi_alloc(NUMA_NO_NODE);
-	if (!bdi)
-		return -ENOMEM;
+	अगर (!bdi)
+		वापस -ENOMEM;
 
-	va_start(args, fmt);
-	err = bdi_register_va(bdi, fmt, args);
-	va_end(args);
-	if (err) {
+	बहु_शुरू(args, fmt);
+	err = bdi_रेजिस्टर_va(bdi, fmt, args);
+	बहु_पूर्ण(args);
+	अगर (err) अणु
 		bdi_put(bdi);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	WARN_ON(sb->s_bdi != &noop_backing_dev_info);
 	sb->s_bdi = bdi;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(super_setup_bdi_name);
 
 /*
- * Setup private BDI for given superblock. I gets automatically cleaned up
- * in generic_shutdown_super().
+ * Setup निजी BDI क्रम given superblock. I माला_लो स्वतःmatically cleaned up
+ * in generic_shutकरोwn_super().
  */
-int super_setup_bdi(struct super_block *sb)
-{
-	static atomic_long_t bdi_seq = ATOMIC_LONG_INIT(0);
+पूर्णांक super_setup_bdi(काष्ठा super_block *sb)
+अणु
+	अटल atomic_दीर्घ_t bdi_seq = ATOMIC_LONG_INIT(0);
 
-	return super_setup_bdi_name(sb, "%.28s-%ld", sb->s_type->name,
-				    atomic_long_inc_return(&bdi_seq));
-}
+	वापस super_setup_bdi_name(sb, "%.28s-%ld", sb->s_type->name,
+				    atomic_दीर्घ_inc_वापस(&bdi_seq));
+पूर्ण
 EXPORT_SYMBOL(super_setup_bdi);
 
 /**
- * sb_wait_write - wait until all writers to given file system finish
- * @sb: the super for which we wait
- * @level: type of writers we wait for (normal vs page fault)
+ * sb_रुको_ग_लिखो - रुको until all ग_लिखोrs to given file प्रणाली finish
+ * @sb: the super क्रम which we रुको
+ * @level: type of ग_लिखोrs we रुको क्रम (normal vs page fault)
  *
- * This function waits until there are no writers of given type to given file
- * system.
+ * This function रुकोs until there are no ग_लिखोrs of given type to given file
+ * प्रणाली.
  */
-static void sb_wait_write(struct super_block *sb, int level)
-{
-	percpu_down_write(sb->s_writers.rw_sem + level-1);
-}
+अटल व्योम sb_रुको_ग_लिखो(काष्ठा super_block *sb, पूर्णांक level)
+अणु
+	percpu_करोwn_ग_लिखो(sb->s_ग_लिखोrs.rw_sem + level-1);
+पूर्ण
 
 /*
- * We are going to return to userspace and forget about these locks, the
- * ownership goes to the caller of thaw_super() which does unlock().
+ * We are going to वापस to userspace and क्रमget about these locks, the
+ * ownership goes to the caller of thaw_super() which करोes unlock().
  */
-static void lockdep_sb_freeze_release(struct super_block *sb)
-{
-	int level;
+अटल व्योम lockdep_sb_मुक्तze_release(काष्ठा super_block *sb)
+अणु
+	पूर्णांक level;
 
-	for (level = SB_FREEZE_LEVELS - 1; level >= 0; level--)
-		percpu_rwsem_release(sb->s_writers.rw_sem + level, 0, _THIS_IP_);
-}
+	क्रम (level = SB_FREEZE_LEVELS - 1; level >= 0; level--)
+		percpu_rwsem_release(sb->s_ग_लिखोrs.rw_sem + level, 0, _THIS_IP_);
+पूर्ण
 
 /*
- * Tell lockdep we are holding these locks before we call ->unfreeze_fs(sb).
+ * Tell lockdep we are holding these locks beक्रमe we call ->unमुक्तze_fs(sb).
  */
-static void lockdep_sb_freeze_acquire(struct super_block *sb)
-{
-	int level;
+अटल व्योम lockdep_sb_मुक्तze_acquire(काष्ठा super_block *sb)
+अणु
+	पूर्णांक level;
 
-	for (level = 0; level < SB_FREEZE_LEVELS; ++level)
-		percpu_rwsem_acquire(sb->s_writers.rw_sem + level, 0, _THIS_IP_);
-}
+	क्रम (level = 0; level < SB_FREEZE_LEVELS; ++level)
+		percpu_rwsem_acquire(sb->s_ग_लिखोrs.rw_sem + level, 0, _THIS_IP_);
+पूर्ण
 
-static void sb_freeze_unlock(struct super_block *sb)
-{
-	int level;
+अटल व्योम sb_मुक्तze_unlock(काष्ठा super_block *sb)
+अणु
+	पूर्णांक level;
 
-	for (level = SB_FREEZE_LEVELS - 1; level >= 0; level--)
-		percpu_up_write(sb->s_writers.rw_sem + level);
-}
+	क्रम (level = SB_FREEZE_LEVELS - 1; level >= 0; level--)
+		percpu_up_ग_लिखो(sb->s_ग_लिखोrs.rw_sem + level);
+पूर्ण
 
 /**
- * freeze_super - lock the filesystem and force it into a consistent state
+ * मुक्तze_super - lock the fileप्रणाली and क्रमce it पूर्णांकo a consistent state
  * @sb: the super to lock
  *
- * Syncs the super to make sure the filesystem is consistent and calls the fs's
- * freeze_fs.  Subsequent calls to this without first thawing the fs will return
+ * Syncs the super to make sure the fileप्रणाली is consistent and calls the fs's
+ * मुक्तze_fs.  Subsequent calls to this without first thawing the fs will वापस
  * -EBUSY.
  *
- * During this function, sb->s_writers.frozen goes through these values:
+ * During this function, sb->s_ग_लिखोrs.frozen goes through these values:
  *
- * SB_UNFROZEN: File system is normal, all writes progress as usual.
+ * SB_UNFROZEN: File प्रणाली is normal, all ग_लिखोs progress as usual.
  *
- * SB_FREEZE_WRITE: The file system is in the process of being frozen.  New
- * writes should be blocked, though page faults are still allowed. We wait for
- * all writes to complete and then proceed to the next stage.
+ * SB_FREEZE_WRITE: The file प्रणाली is in the process of being frozen.  New
+ * ग_लिखोs should be blocked, though page faults are still allowed. We रुको क्रम
+ * all ग_लिखोs to complete and then proceed to the next stage.
  *
- * SB_FREEZE_PAGEFAULT: Freezing continues. Now also page faults are blocked
- * but internal fs threads can still modify the filesystem (although they
- * should not dirty new pages or inodes), writeback can run etc. After waiting
- * for all running page faults we sync the filesystem which will clean all
+ * SB_FREEZE_PAGEFAULT: Freezing जारीs. Now also page faults are blocked
+ * but पूर्णांकernal fs thपढ़ोs can still modअगरy the fileप्रणाली (although they
+ * should not dirty new pages or inodes), ग_लिखोback can run etc. After रुकोing
+ * क्रम all running page faults we sync the fileप्रणाली which will clean all
  * dirty pages and inodes (no new dirty pages or inodes can be created when
  * sync is running).
  *
- * SB_FREEZE_FS: The file system is frozen. Now all internal sources of fs
- * modification are blocked (e.g. XFS preallocation truncation on inode
- * reclaim). This is usually implemented by blocking new transactions for
- * filesystems that have them and need this additional guard. After all
- * internal writers are finished we call ->freeze_fs() to finish filesystem
- * freezing. Then we transition to SB_FREEZE_COMPLETE state. This state is
- * mostly auxiliary for filesystems to verify they do not modify frozen fs.
+ * SB_FREEZE_FS: The file प्रणाली is frozen. Now all पूर्णांकernal sources of fs
+ * modअगरication are blocked (e.g. XFS pपुनः_स्मृतिation truncation on inode
+ * reclaim). This is usually implemented by blocking new transactions क्रम
+ * fileप्रणालीs that have them and need this additional guard. After all
+ * पूर्णांकernal ग_लिखोrs are finished we call ->मुक्तze_fs() to finish fileप्रणाली
+ * मुक्तzing. Then we transition to SB_FREEZE_COMPLETE state. This state is
+ * mostly auxiliary क्रम fileप्रणालीs to verअगरy they करो not modअगरy frozen fs.
  *
- * sb->s_writers.frozen is protected by sb->s_umount.
+ * sb->s_ग_लिखोrs.frozen is रक्षित by sb->s_umount.
  */
-int freeze_super(struct super_block *sb)
-{
-	int ret;
+पूर्णांक मुक्तze_super(काष्ठा super_block *sb)
+अणु
+	पूर्णांक ret;
 
 	atomic_inc(&sb->s_active);
-	down_write(&sb->s_umount);
-	if (sb->s_writers.frozen != SB_UNFROZEN) {
+	करोwn_ग_लिखो(&sb->s_umount);
+	अगर (sb->s_ग_लिखोrs.frozen != SB_UNFROZEN) अणु
 		deactivate_locked_super(sb);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (!(sb->s_flags & SB_BORN)) {
-		up_write(&sb->s_umount);
-		return 0;	/* sic - it's "nothing to do" */
-	}
+	अगर (!(sb->s_flags & SB_BORN)) अणु
+		up_ग_लिखो(&sb->s_umount);
+		वापस 0;	/* sic - it's "nothing to do" */
+	पूर्ण
 
-	if (sb_rdonly(sb)) {
-		/* Nothing to do really... */
-		sb->s_writers.frozen = SB_FREEZE_COMPLETE;
-		up_write(&sb->s_umount);
-		return 0;
-	}
+	अगर (sb_rकरोnly(sb)) अणु
+		/* Nothing to करो really... */
+		sb->s_ग_लिखोrs.frozen = SB_FREEZE_COMPLETE;
+		up_ग_लिखो(&sb->s_umount);
+		वापस 0;
+	पूर्ण
 
-	sb->s_writers.frozen = SB_FREEZE_WRITE;
-	/* Release s_umount to preserve sb_start_write -> s_umount ordering */
-	up_write(&sb->s_umount);
-	sb_wait_write(sb, SB_FREEZE_WRITE);
-	down_write(&sb->s_umount);
+	sb->s_ग_लिखोrs.frozen = SB_FREEZE_WRITE;
+	/* Release s_umount to preserve sb_start_ग_लिखो -> s_umount ordering */
+	up_ग_लिखो(&sb->s_umount);
+	sb_रुको_ग_लिखो(sb, SB_FREEZE_WRITE);
+	करोwn_ग_लिखो(&sb->s_umount);
 
 	/* Now we go and block page faults... */
-	sb->s_writers.frozen = SB_FREEZE_PAGEFAULT;
-	sb_wait_write(sb, SB_FREEZE_PAGEFAULT);
+	sb->s_ग_लिखोrs.frozen = SB_FREEZE_PAGEFAULT;
+	sb_रुको_ग_लिखो(sb, SB_FREEZE_PAGEFAULT);
 
-	/* All writers are done so after syncing there won't be dirty data */
-	sync_filesystem(sb);
+	/* All ग_लिखोrs are करोne so after syncing there won't be dirty data */
+	sync_fileप्रणाली(sb);
 
-	/* Now wait for internal filesystem counter */
-	sb->s_writers.frozen = SB_FREEZE_FS;
-	sb_wait_write(sb, SB_FREEZE_FS);
+	/* Now रुको क्रम पूर्णांकernal fileप्रणाली counter */
+	sb->s_ग_लिखोrs.frozen = SB_FREEZE_FS;
+	sb_रुको_ग_लिखो(sb, SB_FREEZE_FS);
 
-	if (sb->s_op->freeze_fs) {
-		ret = sb->s_op->freeze_fs(sb);
-		if (ret) {
-			printk(KERN_ERR
+	अगर (sb->s_op->मुक्तze_fs) अणु
+		ret = sb->s_op->मुक्तze_fs(sb);
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR
 				"VFS:Filesystem freeze failed\n");
-			sb->s_writers.frozen = SB_UNFROZEN;
-			sb_freeze_unlock(sb);
-			wake_up(&sb->s_writers.wait_unfrozen);
+			sb->s_ग_लिखोrs.frozen = SB_UNFROZEN;
+			sb_मुक्तze_unlock(sb);
+			wake_up(&sb->s_ग_लिखोrs.रुको_unfrozen);
 			deactivate_locked_super(sb);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	/*
-	 * For debugging purposes so that fs can warn if it sees write activity
-	 * when frozen is set to SB_FREEZE_COMPLETE, and for thaw_super().
+	 * For debugging purposes so that fs can warn अगर it sees ग_लिखो activity
+	 * when frozen is set to SB_FREEZE_COMPLETE, and क्रम thaw_super().
 	 */
-	sb->s_writers.frozen = SB_FREEZE_COMPLETE;
-	lockdep_sb_freeze_release(sb);
-	up_write(&sb->s_umount);
-	return 0;
-}
-EXPORT_SYMBOL(freeze_super);
+	sb->s_ग_लिखोrs.frozen = SB_FREEZE_COMPLETE;
+	lockdep_sb_मुक्तze_release(sb);
+	up_ग_लिखो(&sb->s_umount);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(मुक्तze_super);
 
-static int thaw_super_locked(struct super_block *sb)
-{
-	int error;
+अटल पूर्णांक thaw_super_locked(काष्ठा super_block *sb)
+अणु
+	पूर्णांक error;
 
-	if (sb->s_writers.frozen != SB_FREEZE_COMPLETE) {
-		up_write(&sb->s_umount);
-		return -EINVAL;
-	}
+	अगर (sb->s_ग_लिखोrs.frozen != SB_FREEZE_COMPLETE) अणु
+		up_ग_लिखो(&sb->s_umount);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (sb_rdonly(sb)) {
-		sb->s_writers.frozen = SB_UNFROZEN;
-		goto out;
-	}
+	अगर (sb_rकरोnly(sb)) अणु
+		sb->s_ग_लिखोrs.frozen = SB_UNFROZEN;
+		जाओ out;
+	पूर्ण
 
-	lockdep_sb_freeze_acquire(sb);
+	lockdep_sb_मुक्तze_acquire(sb);
 
-	if (sb->s_op->unfreeze_fs) {
-		error = sb->s_op->unfreeze_fs(sb);
-		if (error) {
-			printk(KERN_ERR
+	अगर (sb->s_op->unमुक्तze_fs) अणु
+		error = sb->s_op->unमुक्तze_fs(sb);
+		अगर (error) अणु
+			prपूर्णांकk(KERN_ERR
 				"VFS:Filesystem thaw failed\n");
-			lockdep_sb_freeze_release(sb);
-			up_write(&sb->s_umount);
-			return error;
-		}
-	}
+			lockdep_sb_मुक्तze_release(sb);
+			up_ग_लिखो(&sb->s_umount);
+			वापस error;
+		पूर्ण
+	पूर्ण
 
-	sb->s_writers.frozen = SB_UNFROZEN;
-	sb_freeze_unlock(sb);
+	sb->s_ग_लिखोrs.frozen = SB_UNFROZEN;
+	sb_मुक्तze_unlock(sb);
 out:
-	wake_up(&sb->s_writers.wait_unfrozen);
+	wake_up(&sb->s_ग_लिखोrs.रुको_unfrozen);
 	deactivate_locked_super(sb);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * thaw_super -- unlock filesystem
+ * thaw_super -- unlock fileप्रणाली
  * @sb: the super to thaw
  *
- * Unlocks the filesystem and marks it writeable again after freeze_super().
+ * Unlocks the fileप्रणाली and marks it ग_लिखोable again after मुक्तze_super().
  */
-int thaw_super(struct super_block *sb)
-{
-	down_write(&sb->s_umount);
-	return thaw_super_locked(sb);
-}
+पूर्णांक thaw_super(काष्ठा super_block *sb)
+अणु
+	करोwn_ग_लिखो(&sb->s_umount);
+	वापस thaw_super_locked(sb);
+पूर्ण
 EXPORT_SYMBOL(thaw_super);

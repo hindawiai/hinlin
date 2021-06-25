@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * TI j721e Cadence MHDP8546 DP wrapper
  *
@@ -6,14 +7,14 @@
  * Author: Jyri Sarha <jsarha@ti.com>
  */
 
-#ifndef CDNS_MHDP8546_J721E_H
-#define CDNS_MHDP8546_J721E_H
+#अगर_अघोषित CDNS_MHDP8546_J721E_H
+#घोषणा CDNS_MHDP8546_J721E_H
 
-#include "cdns-mhdp8546-core.h"
+#समावेश "cdns-mhdp8546-core.h"
 
-struct mhdp_platform_ops;
+काष्ठा mhdp_platक्रमm_ops;
 
-extern const struct mhdp_platform_ops mhdp_ti_j721e_ops;
-extern const struct drm_bridge_timings mhdp_ti_j721e_bridge_timings;
+बाह्य स्थिर काष्ठा mhdp_platक्रमm_ops mhdp_ti_j721e_ops;
+बाह्य स्थिर काष्ठा drm_bridge_timings mhdp_ti_j721e_bridge_timings;
 
-#endif /* !CDNS_MHDP8546_J721E_H */
+#पूर्ण_अगर /* !CDNS_MHDP8546_J721E_H */

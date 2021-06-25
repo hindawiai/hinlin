@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LINUX_BCM47XX_PRIVATE_H_
-#define LINUX_BCM47XX_PRIVATE_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LINUX_BCM47XX_PRIVATE_H_
+#घोषणा LINUX_BCM47XX_PRIVATE_H_
 
-#ifndef pr_fmt
-#define pr_fmt(fmt)		"bcm47xx: " fmt
-#endif
+#अगर_अघोषित pr_fmt
+#घोषणा pr_fmt(fmt)		"bcm47xx: " fmt
+#पूर्ण_अगर
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
 /* prom.c */
-void __init bcm47xx_prom_highmem_init(void);
+व्योम __init bcm47xx_prom_highmem_init(व्योम);
 
 /* buttons.c */
-int __init bcm47xx_buttons_register(void);
+पूर्णांक __init bcm47xx_buttons_रेजिस्टर(व्योम);
 
 /* leds.c */
-void __init bcm47xx_leds_register(void);
+व्योम __init bcm47xx_leds_रेजिस्टर(व्योम);
 
 /* setup.c */
-void __init bcm47xx_bus_setup(void);
+व्योम __init bcm47xx_bus_setup(व्योम);
 
 /* workarounds.c */
-void __init bcm47xx_workarounds(void);
+व्योम __init bcm47xx_workarounds(व्योम);
 
-#endif
+#पूर्ण_अगर

@@ -1,39 +1,40 @@
+<शैली गुरु>
 
 /*
  * Copyright (c) 2011 Atheros Communications Inc.
  * Copyright (c) 2011-2012 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/moduleparam.h>
-#include <linux/errno.h>
-#include <linux/export.h>
-#include <linux/of.h>
-#include <linux/mmc/sdio_func.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/export.h>
+#समावेश <linux/of.h>
+#समावेश <linux/mmc/sdio_func.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "core.h"
-#include "cfg80211.h"
-#include "target.h"
-#include "debug.h"
-#include "hif-ops.h"
-#include "htc-ops.h"
+#समावेश "core.h"
+#समावेश "cfg80211.h"
+#समावेश "target.h"
+#समावेश "debug.h"
+#समावेश "hif-ops.h"
+#समावेश "htc-ops.h"
 
-static const struct ath6kl_hw hw_list[] = {
-	{
+अटल स्थिर काष्ठा ath6kl_hw hw_list[] = अणु
+	अणु
 		.id				= AR6003_HW_2_0_VERSION,
 		.name				= "ar6003 hw 2.0",
 		.dataset_patch_addr		= 0x57e884,
@@ -47,18 +48,18 @@ static const struct ath6kl_hw hw_list[] = {
 		/* hw2.0 needs override address hardcoded */
 		.app_start_override_addr	= 0x944C00,
 
-		.fw = {
-			.dir		= AR6003_HW_2_0_FW_DIR,
-			.otp		= AR6003_HW_2_0_OTP_FILE,
-			.fw		= AR6003_HW_2_0_FIRMWARE_FILE,
-			.tcmd		= AR6003_HW_2_0_TCMD_FIRMWARE_FILE,
-			.patch		= AR6003_HW_2_0_PATCH_FILE,
-		},
+		.fw = अणु
+			.dir		= AR6003_HW_2_0_FW_सूची,
+			.otp		= AR6003_HW_2_0_OTP_खाता,
+			.fw		= AR6003_HW_2_0_FIRMWARE_खाता,
+			.tcmd		= AR6003_HW_2_0_TCMD_FIRMWARE_खाता,
+			.patch		= AR6003_HW_2_0_PATCH_खाता,
+		पूर्ण,
 
-		.fw_board		= AR6003_HW_2_0_BOARD_DATA_FILE,
-		.fw_default_board	= AR6003_HW_2_0_DEFAULT_BOARD_DATA_FILE,
-	},
-	{
+		.fw_board		= AR6003_HW_2_0_BOARD_DATA_खाता,
+		.fw_शेष_board	= AR6003_HW_2_0_DEFAULT_BOARD_DATA_खाता,
+	पूर्ण,
+	अणु
 		.id				= AR6003_HW_2_1_1_VERSION,
 		.name				= "ar6003 hw 2.1.1",
 		.dataset_patch_addr		= 0x57ff74,
@@ -70,20 +71,20 @@ static const struct ath6kl_hw hw_list[] = {
 		.testscript_addr		= 0x57ef74,
 		.flags				= ATH6KL_HW_SDIO_CRC_ERROR_WAR,
 
-		.fw = {
-			.dir		= AR6003_HW_2_1_1_FW_DIR,
-			.otp		= AR6003_HW_2_1_1_OTP_FILE,
-			.fw		= AR6003_HW_2_1_1_FIRMWARE_FILE,
-			.tcmd		= AR6003_HW_2_1_1_TCMD_FIRMWARE_FILE,
-			.patch		= AR6003_HW_2_1_1_PATCH_FILE,
-			.utf		= AR6003_HW_2_1_1_UTF_FIRMWARE_FILE,
-			.testscript	= AR6003_HW_2_1_1_TESTSCRIPT_FILE,
-		},
+		.fw = अणु
+			.dir		= AR6003_HW_2_1_1_FW_सूची,
+			.otp		= AR6003_HW_2_1_1_OTP_खाता,
+			.fw		= AR6003_HW_2_1_1_FIRMWARE_खाता,
+			.tcmd		= AR6003_HW_2_1_1_TCMD_FIRMWARE_खाता,
+			.patch		= AR6003_HW_2_1_1_PATCH_खाता,
+			.utf		= AR6003_HW_2_1_1_UTF_FIRMWARE_खाता,
+			.testscript	= AR6003_HW_2_1_1_TESTSCRIPT_खाता,
+		पूर्ण,
 
-		.fw_board		= AR6003_HW_2_1_1_BOARD_DATA_FILE,
-		.fw_default_board = AR6003_HW_2_1_1_DEFAULT_BOARD_DATA_FILE,
-	},
-	{
+		.fw_board		= AR6003_HW_2_1_1_BOARD_DATA_खाता,
+		.fw_शेष_board = AR6003_HW_2_1_1_DEFAULT_BOARD_DATA_खाता,
+	पूर्ण,
+	अणु
 		.id				= AR6004_HW_1_0_VERSION,
 		.name				= "ar6004 hw 1.0",
 		.dataset_patch_addr		= 0x57e884,
@@ -95,15 +96,15 @@ static const struct ath6kl_hw hw_list[] = {
 		.uarttx_pin			= 11,
 		.flags				= 0,
 
-		.fw = {
-			.dir		= AR6004_HW_1_0_FW_DIR,
-			.fw		= AR6004_HW_1_0_FIRMWARE_FILE,
-		},
+		.fw = अणु
+			.dir		= AR6004_HW_1_0_FW_सूची,
+			.fw		= AR6004_HW_1_0_FIRMWARE_खाता,
+		पूर्ण,
 
-		.fw_board		= AR6004_HW_1_0_BOARD_DATA_FILE,
-		.fw_default_board	= AR6004_HW_1_0_DEFAULT_BOARD_DATA_FILE,
-	},
-	{
+		.fw_board		= AR6004_HW_1_0_BOARD_DATA_खाता,
+		.fw_शेष_board	= AR6004_HW_1_0_DEFAULT_BOARD_DATA_खाता,
+	पूर्ण,
+	अणु
 		.id				= AR6004_HW_1_1_VERSION,
 		.name				= "ar6004 hw 1.1",
 		.dataset_patch_addr		= 0x57e884,
@@ -114,15 +115,15 @@ static const struct ath6kl_hw hw_list[] = {
 		.refclk_hz			= 40000000,
 		.uarttx_pin			= 11,
 		.flags				= 0,
-		.fw = {
-			.dir		= AR6004_HW_1_1_FW_DIR,
-			.fw		= AR6004_HW_1_1_FIRMWARE_FILE,
-		},
+		.fw = अणु
+			.dir		= AR6004_HW_1_1_FW_सूची,
+			.fw		= AR6004_HW_1_1_FIRMWARE_खाता,
+		पूर्ण,
 
-		.fw_board		= AR6004_HW_1_1_BOARD_DATA_FILE,
-		.fw_default_board	= AR6004_HW_1_1_DEFAULT_BOARD_DATA_FILE,
-	},
-	{
+		.fw_board		= AR6004_HW_1_1_BOARD_DATA_खाता,
+		.fw_शेष_board	= AR6004_HW_1_1_DEFAULT_BOARD_DATA_खाता,
+	पूर्ण,
+	अणु
 		.id				= AR6004_HW_1_2_VERSION,
 		.name				= "ar6004 hw 1.2",
 		.dataset_patch_addr		= 0x436ecc,
@@ -134,14 +135,14 @@ static const struct ath6kl_hw hw_list[] = {
 		.uarttx_pin			= 11,
 		.flags				= 0,
 
-		.fw = {
-			.dir		= AR6004_HW_1_2_FW_DIR,
-			.fw		= AR6004_HW_1_2_FIRMWARE_FILE,
-		},
-		.fw_board		= AR6004_HW_1_2_BOARD_DATA_FILE,
-		.fw_default_board	= AR6004_HW_1_2_DEFAULT_BOARD_DATA_FILE,
-	},
-	{
+		.fw = अणु
+			.dir		= AR6004_HW_1_2_FW_सूची,
+			.fw		= AR6004_HW_1_2_FIRMWARE_खाता,
+		पूर्ण,
+		.fw_board		= AR6004_HW_1_2_BOARD_DATA_खाता,
+		.fw_शेष_board	= AR6004_HW_1_2_DEFAULT_BOARD_DATA_खाता,
+	पूर्ण,
+	अणु
 		.id				= AR6004_HW_1_3_VERSION,
 		.name				= "ar6004 hw 1.3",
 		.dataset_patch_addr		= 0x437860,
@@ -153,18 +154,18 @@ static const struct ath6kl_hw hw_list[] = {
 		.uarttx_pin                     = 11,
 		.flags				= 0,
 
-		.fw = {
-			.dir            = AR6004_HW_1_3_FW_DIR,
-			.fw             = AR6004_HW_1_3_FIRMWARE_FILE,
-			.tcmd	        = AR6004_HW_1_3_TCMD_FIRMWARE_FILE,
-			.utf		= AR6004_HW_1_3_UTF_FIRMWARE_FILE,
-			.testscript	= AR6004_HW_1_3_TESTSCRIPT_FILE,
-		},
+		.fw = अणु
+			.dir            = AR6004_HW_1_3_FW_सूची,
+			.fw             = AR6004_HW_1_3_FIRMWARE_खाता,
+			.tcmd	        = AR6004_HW_1_3_TCMD_FIRMWARE_खाता,
+			.utf		= AR6004_HW_1_3_UTF_FIRMWARE_खाता,
+			.testscript	= AR6004_HW_1_3_TESTSCRIPT_खाता,
+		पूर्ण,
 
-		.fw_board               = AR6004_HW_1_3_BOARD_DATA_FILE,
-		.fw_default_board       = AR6004_HW_1_3_DEFAULT_BOARD_DATA_FILE,
-	},
-	{
+		.fw_board               = AR6004_HW_1_3_BOARD_DATA_खाता,
+		.fw_शेष_board       = AR6004_HW_1_3_DEFAULT_BOARD_DATA_खाता,
+	पूर्ण,
+	अणु
 		.id				= AR6004_HW_3_0_VERSION,
 		.name				= "ar6004 hw 3.0",
 		.dataset_patch_addr		= 0,
@@ -176,158 +177,158 @@ static const struct ath6kl_hw hw_list[] = {
 		.uarttx_pin			= 11,
 		.flags				= 0,
 
-		.fw = {
-			.dir		= AR6004_HW_3_0_FW_DIR,
-			.fw		= AR6004_HW_3_0_FIRMWARE_FILE,
-			.tcmd	        = AR6004_HW_3_0_TCMD_FIRMWARE_FILE,
-			.utf		= AR6004_HW_3_0_UTF_FIRMWARE_FILE,
-			.testscript	= AR6004_HW_3_0_TESTSCRIPT_FILE,
-		},
+		.fw = अणु
+			.dir		= AR6004_HW_3_0_FW_सूची,
+			.fw		= AR6004_HW_3_0_FIRMWARE_खाता,
+			.tcmd	        = AR6004_HW_3_0_TCMD_FIRMWARE_खाता,
+			.utf		= AR6004_HW_3_0_UTF_FIRMWARE_खाता,
+			.testscript	= AR6004_HW_3_0_TESTSCRIPT_खाता,
+		पूर्ण,
 
-		.fw_board		= AR6004_HW_3_0_BOARD_DATA_FILE,
-		.fw_default_board	= AR6004_HW_3_0_DEFAULT_BOARD_DATA_FILE,
-	},
-};
+		.fw_board		= AR6004_HW_3_0_BOARD_DATA_खाता,
+		.fw_शेष_board	= AR6004_HW_3_0_DEFAULT_BOARD_DATA_खाता,
+	पूर्ण,
+पूर्ण;
 
 /*
  * Include definitions here that can be used to tune the WLAN module
- * behavior. Different customers can tune the behavior as per their needs,
+ * behavior. Dअगरferent customers can tune the behavior as per their needs,
  * here.
  */
 
 /*
  * This configuration item enable/disable keepalive support.
- * Keepalive support: In the absence of any data traffic to AP, null
- * frames will be sent to the AP at periodic interval, to keep the association
- * active. This configuration item defines the periodic interval.
+ * Keepalive support: In the असलence of any data traffic to AP, null
+ * frames will be sent to the AP at periodic पूर्णांकerval, to keep the association
+ * active. This configuration item defines the periodic पूर्णांकerval.
  * Use value of zero to disable keepalive support
  * Default: 60 seconds
  */
-#define WLAN_CONFIG_KEEP_ALIVE_INTERVAL 60
+#घोषणा WLAN_CONFIG_KEEP_ALIVE_INTERVAL 60
 
 /*
- * This configuration item sets the value of disconnect timeout
- * Firmware delays sending the disconnec event to the host for this
- * timeout after is gets disconnected from the current AP.
- * If the firmware successly roams within the disconnect timeout
+ * This configuration item sets the value of disconnect समयout
+ * Firmware delays sending the disconnec event to the host क्रम this
+ * समयout after is माला_लो disconnected from the current AP.
+ * If the firmware successly roams within the disconnect समयout
  * it sends a new connect event
  */
-#define WLAN_CONFIG_DISCONNECT_TIMEOUT 10
+#घोषणा WLAN_CONFIG_DISCONNECT_TIMEOUT 10
 
 
-#define ATH6KL_DATA_OFFSET    64
-struct sk_buff *ath6kl_buf_alloc(int size)
-{
-	struct sk_buff *skb;
+#घोषणा ATH6KL_DATA_OFFSET    64
+काष्ठा sk_buff *ath6kl_buf_alloc(पूर्णांक size)
+अणु
+	काष्ठा sk_buff *skb;
 	u16 reserved;
 
 	/* Add chacheline space at front and back of buffer */
 	reserved = roundup((2 * L1_CACHE_BYTES) + ATH6KL_DATA_OFFSET +
-		   sizeof(struct htc_packet) + ATH6KL_HTC_ALIGN_BYTES, 4);
+		   माप(काष्ठा htc_packet) + ATH6KL_HTC_ALIGN_BYTES, 4);
 	skb = dev_alloc_skb(size + reserved);
 
-	if (skb)
+	अगर (skb)
 		skb_reserve(skb, reserved - L1_CACHE_BYTES);
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-void ath6kl_init_profile_info(struct ath6kl_vif *vif)
-{
-	vif->ssid_len = 0;
-	memset(vif->ssid, 0, sizeof(vif->ssid));
+व्योम ath6kl_init_profile_info(काष्ठा ath6kl_vअगर *vअगर)
+अणु
+	vअगर->ssid_len = 0;
+	स_रखो(vअगर->ssid, 0, माप(vअगर->ssid));
 
-	vif->dot11_auth_mode = OPEN_AUTH;
-	vif->auth_mode = NONE_AUTH;
-	vif->prwise_crypto = NONE_CRYPT;
-	vif->prwise_crypto_len = 0;
-	vif->grp_crypto = NONE_CRYPT;
-	vif->grp_crypto_len = 0;
-	memset(vif->wep_key_list, 0, sizeof(vif->wep_key_list));
-	memset(vif->req_bssid, 0, sizeof(vif->req_bssid));
-	memset(vif->bssid, 0, sizeof(vif->bssid));
-	vif->bss_ch = 0;
-}
+	vअगर->करोt11_auth_mode = OPEN_AUTH;
+	vअगर->auth_mode = NONE_AUTH;
+	vअगर->prwise_crypto = NONE_CRYPT;
+	vअगर->prwise_crypto_len = 0;
+	vअगर->grp_crypto = NONE_CRYPT;
+	vअगर->grp_crypto_len = 0;
+	स_रखो(vअगर->wep_key_list, 0, माप(vअगर->wep_key_list));
+	स_रखो(vअगर->req_bssid, 0, माप(vअगर->req_bssid));
+	स_रखो(vअगर->bssid, 0, माप(vअगर->bssid));
+	vअगर->bss_ch = 0;
+पूर्ण
 
-static int ath6kl_set_host_app_area(struct ath6kl *ar)
-{
+अटल पूर्णांक ath6kl_set_host_app_area(काष्ठा ath6kl *ar)
+अणु
 	u32 address, data;
-	struct host_app_area host_app_area;
+	काष्ठा host_app_area host_app_area;
 
 	/* Fetch the address of the host_app_area_s
-	 * instance in the host interest area */
-	address = ath6kl_get_hi_item_addr(ar, HI_ITEM(hi_app_host_interest));
+	 * instance in the host पूर्णांकerest area */
+	address = ath6kl_get_hi_item_addr(ar, HI_ITEM(hi_app_host_पूर्णांकerest));
 	address = TARG_VTOP(ar->target_type, address);
 
-	if (ath6kl_diag_read32(ar, address, &data))
-		return -EIO;
+	अगर (ath6kl_diag_पढ़ो32(ar, address, &data))
+		वापस -EIO;
 
 	address = TARG_VTOP(ar->target_type, data);
 	host_app_area.wmi_protocol_ver = cpu_to_le32(WMI_PROTOCOL_VERSION);
-	if (ath6kl_diag_write(ar, address, (u8 *) &host_app_area,
-			      sizeof(struct host_app_area)))
-		return -EIO;
+	अगर (ath6kl_diag_ग_लिखो(ar, address, (u8 *) &host_app_area,
+			      माप(काष्ठा host_app_area)))
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void set_ac2_ep_map(struct ath6kl *ar,
+अटल अंतरभूत व्योम set_ac2_ep_map(काष्ठा ath6kl *ar,
 				  u8 ac,
-				  enum htc_endpoint_id ep)
-{
+				  क्रमागत htc_endpoपूर्णांक_id ep)
+अणु
 	ar->ac2ep_map[ac] = ep;
 	ar->ep2ac_map[ep] = ac;
-}
+पूर्ण
 
 /* connect to a service */
-static int ath6kl_connectservice(struct ath6kl *ar,
-				 struct htc_service_connect_req  *con_req,
-				 char *desc)
-{
-	int status;
-	struct htc_service_connect_resp response;
+अटल पूर्णांक ath6kl_connectservice(काष्ठा ath6kl *ar,
+				 काष्ठा htc_service_connect_req  *con_req,
+				 अक्षर *desc)
+अणु
+	पूर्णांक status;
+	काष्ठा htc_service_connect_resp response;
 
-	memset(&response, 0, sizeof(response));
+	स_रखो(&response, 0, माप(response));
 
 	status = ath6kl_htc_conn_service(ar->htc_target, con_req, &response);
-	if (status) {
+	अगर (status) अणु
 		ath6kl_err("failed to connect to %s service status:%d\n",
 			   desc, status);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	switch (con_req->svc_id) {
-	case WMI_CONTROL_SVC:
-		if (test_bit(WMI_ENABLED, &ar->flag))
-			ath6kl_wmi_set_control_ep(ar->wmi, response.endpoint);
-		ar->ctrl_ep = response.endpoint;
-		break;
-	case WMI_DATA_BE_SVC:
-		set_ac2_ep_map(ar, WMM_AC_BE, response.endpoint);
-		break;
-	case WMI_DATA_BK_SVC:
-		set_ac2_ep_map(ar, WMM_AC_BK, response.endpoint);
-		break;
-	case WMI_DATA_VI_SVC:
-		set_ac2_ep_map(ar, WMM_AC_VI, response.endpoint);
-		break;
-	case WMI_DATA_VO_SVC:
-		set_ac2_ep_map(ar, WMM_AC_VO, response.endpoint);
-		break;
-	default:
+	चयन (con_req->svc_id) अणु
+	हाल WMI_CONTROL_SVC:
+		अगर (test_bit(WMI_ENABLED, &ar->flag))
+			ath6kl_wmi_set_control_ep(ar->wmi, response.endpoपूर्णांक);
+		ar->ctrl_ep = response.endpoपूर्णांक;
+		अवरोध;
+	हाल WMI_DATA_BE_SVC:
+		set_ac2_ep_map(ar, WMM_AC_BE, response.endpoपूर्णांक);
+		अवरोध;
+	हाल WMI_DATA_BK_SVC:
+		set_ac2_ep_map(ar, WMM_AC_BK, response.endpoपूर्णांक);
+		अवरोध;
+	हाल WMI_DATA_VI_SVC:
+		set_ac2_ep_map(ar, WMM_AC_VI, response.endpoपूर्णांक);
+		अवरोध;
+	हाल WMI_DATA_VO_SVC:
+		set_ac2_ep_map(ar, WMM_AC_VO, response.endpoपूर्णांक);
+		अवरोध;
+	शेष:
 		ath6kl_err("service id is not mapped %d\n", con_req->svc_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_init_service_ep(struct ath6kl *ar)
-{
-	struct htc_service_connect_req connect;
+अटल पूर्णांक ath6kl_init_service_ep(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा htc_service_connect_req connect;
 
-	memset(&connect, 0, sizeof(connect));
+	स_रखो(&connect, 0, माप(connect));
 
-	/* these fields are the same for all service endpoints */
+	/* these fields are the same क्रम all service endpoपूर्णांकs */
 	connect.ep_cb.tx_comp_multi = ath6kl_tx_complete;
 	connect.ep_cb.rx = ath6kl_rx;
 	connect.ep_cb.rx_refill = ath6kl_rx_refill;
@@ -335,17 +336,17 @@ static int ath6kl_init_service_ep(struct ath6kl *ar)
 
 	/*
 	 * Set the max queue depth so that our ath6kl_tx_queue_full handler
-	 * gets called.
+	 * माला_लो called.
 	*/
 	connect.max_txq_depth = MAX_DEFAULT_SEND_QUEUE_DEPTH;
 	connect.ep_cb.rx_refill_thresh = ATH6KL_MAX_RX_BUFFERS / 4;
-	if (!connect.ep_cb.rx_refill_thresh)
+	अगर (!connect.ep_cb.rx_refill_thresh)
 		connect.ep_cb.rx_refill_thresh++;
 
 	/* connect to control service */
 	connect.svc_id = WMI_CONTROL_SVC;
-	if (ath6kl_connectservice(ar, &connect, "WMI CONTROL"))
-		return -EIO;
+	अगर (ath6kl_connectservice(ar, &connect, "WMI CONTROL"))
+		वापस -EIO;
 
 	connect.flags |= HTC_FLGS_TX_BNDL_PAD_EN;
 
@@ -357,16 +358,16 @@ static int ath6kl_init_service_ep(struct ath6kl *ar)
 	connect.max_rxmsg_sz = WMI_MAX_TX_DATA_FRAME_LENGTH;
 
 	/*
-	 * To reduce the amount of committed memory for larger A_MSDU
-	 * frames, use the recv-alloc threshold mechanism for larger
+	 * To reduce the amount of committed memory क्रम larger A_MSDU
+	 * frames, use the recv-alloc threshold mechanism क्रम larger
 	 * packets.
 	 */
 	connect.ep_cb.rx_alloc_thresh = ATH6KL_BUFFER_SIZE;
 	connect.ep_cb.rx_allocthresh = ath6kl_alloc_amsdu_rxbuf;
 
 	/*
-	 * For the remaining data services set the connection flag to
-	 * reduce dribbling, if configured to do so.
+	 * For the reमुख्यing data services set the connection flag to
+	 * reduce dribbling, अगर configured to करो so.
 	 */
 	connect.conn_flags |= HTC_CONN_FLGS_REDUCE_CRED_DRIB;
 	connect.conn_flags &= ~HTC_CONN_FLGS_THRESH_MASK;
@@ -374,18 +375,18 @@ static int ath6kl_init_service_ep(struct ath6kl *ar)
 
 	connect.svc_id = WMI_DATA_BE_SVC;
 
-	if (ath6kl_connectservice(ar, &connect, "WMI DATA BE"))
-		return -EIO;
+	अगर (ath6kl_connectservice(ar, &connect, "WMI DATA BE"))
+		वापस -EIO;
 
 	/* connect to back-ground map this to WMI LOW_PRI */
 	connect.svc_id = WMI_DATA_BK_SVC;
-	if (ath6kl_connectservice(ar, &connect, "WMI DATA BK"))
-		return -EIO;
+	अगर (ath6kl_connectservice(ar, &connect, "WMI DATA BK"))
+		वापस -EIO;
 
 	/* connect to Video service, map this to HI PRI */
 	connect.svc_id = WMI_DATA_VI_SVC;
-	if (ath6kl_connectservice(ar, &connect, "WMI DATA VI"))
-		return -EIO;
+	अगर (ath6kl_connectservice(ar, &connect, "WMI DATA VI"))
+		वापस -EIO;
 
 	/*
 	 * Connect to VO service, this is currently not mapped to a WMI
@@ -395,710 +396,710 @@ static int ath6kl_init_service_ep(struct ath6kl *ar)
 	 * mailboxes.
 	 */
 	connect.svc_id = WMI_DATA_VO_SVC;
-	if (ath6kl_connectservice(ar, &connect, "WMI DATA VO"))
-		return -EIO;
+	अगर (ath6kl_connectservice(ar, &connect, "WMI DATA VO"))
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ath6kl_init_control_info(struct ath6kl_vif *vif)
-{
-	ath6kl_init_profile_info(vif);
-	vif->def_txkey_index = 0;
-	memset(vif->wep_key_list, 0, sizeof(vif->wep_key_list));
-	vif->ch_hint = 0;
-}
+व्योम ath6kl_init_control_info(काष्ठा ath6kl_vअगर *vअगर)
+अणु
+	ath6kl_init_profile_info(vअगर);
+	vअगर->def_txkey_index = 0;
+	स_रखो(vअगर->wep_key_list, 0, माप(vअगर->wep_key_list));
+	vअगर->ch_hपूर्णांक = 0;
+पूर्ण
 
 /*
  * Set HTC/Mbox operational parameters, this can only be called when the
  * target is in the BMI phase.
  */
-static int ath6kl_set_htc_params(struct ath6kl *ar, u32 mbox_isr_yield_val,
+अटल पूर्णांक ath6kl_set_htc_params(काष्ठा ath6kl *ar, u32 mbox_isr_yield_val,
 				 u8 htc_ctrl_buf)
-{
-	int status;
+अणु
+	पूर्णांक status;
 	u32 blk_size;
 
 	blk_size = ar->mbox_info.block_size;
 
-	if (htc_ctrl_buf)
+	अगर (htc_ctrl_buf)
 		blk_size |=  ((u32)htc_ctrl_buf) << 16;
 
-	/* set the host interest area for the block size */
-	status = ath6kl_bmi_write_hi32(ar, hi_mbox_io_block_sz, blk_size);
-	if (status) {
+	/* set the host पूर्णांकerest area क्रम the block size */
+	status = ath6kl_bmi_ग_लिखो_hi32(ar, hi_mbox_io_block_sz, blk_size);
+	अगर (status) अणु
 		ath6kl_err("bmi_write_memory for IO block size failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ath6kl_dbg(ATH6KL_DBG_TRC, "block size set: %d (target addr:0x%X)\n",
 		   blk_size,
 		   ath6kl_get_hi_item_addr(ar, HI_ITEM(hi_mbox_io_block_sz)));
 
-	if (mbox_isr_yield_val) {
-		/* set the host interest area for the mbox ISR yield limit */
-		status = ath6kl_bmi_write_hi32(ar, hi_mbox_isr_yield_limit,
+	अगर (mbox_isr_yield_val) अणु
+		/* set the host पूर्णांकerest area क्रम the mbox ISR yield limit */
+		status = ath6kl_bmi_ग_लिखो_hi32(ar, hi_mbox_isr_yield_limit,
 					       mbox_isr_yield_val);
-		if (status) {
+		अगर (status) अणु
 			ath6kl_err("bmi_write_memory for yield limit failed\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ath6kl_target_config_wlan_params(struct ath6kl *ar, int idx)
-{
-	int ret;
+अटल पूर्णांक ath6kl_target_config_wlan_params(काष्ठा ath6kl *ar, पूर्णांक idx)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * Configure the device for rx dot11 header rules. "0,0" are the
-	 * default values. Required if checksum offload is needed. Set
+	 * Configure the device क्रम rx करोt11 header rules. "0,0" are the
+	 * शेष values. Required अगर checksum offload is needed. Set
 	 * RxMetaVersion to 2.
 	 */
-	ret = ath6kl_wmi_set_rx_frame_format_cmd(ar->wmi, idx,
+	ret = ath6kl_wmi_set_rx_frame_क्रमmat_cmd(ar->wmi, idx,
 						 ar->rx_meta_ver, 0, 0);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("unable to set the rx frame format: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (ar->conf_flags & ATH6KL_CONF_IGNORE_PS_FAIL_EVT_IN_SCAN) {
+	अगर (ar->conf_flags & ATH6KL_CONF_IGNORE_PS_FAIL_EVT_IN_SCAN) अणु
 		ret = ath6kl_wmi_pmparams_cmd(ar->wmi, idx, 0, 1, 0, 0, 1,
 					      IGNORE_PS_FAIL_DURING_SCAN);
-		if (ret) {
+		अगर (ret) अणु
 			ath6kl_err("unable to set power save fail event policy: %d\n",
 				   ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (!(ar->conf_flags & ATH6KL_CONF_IGNORE_ERP_BARKER)) {
+	अगर (!(ar->conf_flags & ATH6KL_CONF_IGNORE_ERP_BARKER)) अणु
 		ret = ath6kl_wmi_set_lpreamble_cmd(ar->wmi, idx, 0,
 						   WMI_FOLLOW_BARKER_IN_ERP);
-		if (ret) {
+		अगर (ret) अणु
 			ath6kl_err("unable to set barker preamble policy: %d\n",
 				   ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = ath6kl_wmi_set_keepalive_cmd(ar->wmi, idx,
 					   WLAN_CONFIG_KEEP_ALIVE_INTERVAL);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("unable to set keep alive interval: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ath6kl_wmi_disctimeout_cmd(ar->wmi, idx,
+	ret = ath6kl_wmi_disस_समयout_cmd(ar->wmi, idx,
 					 WLAN_CONFIG_DISCONNECT_TIMEOUT);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("unable to set disconnect timeout: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!(ar->conf_flags & ATH6KL_CONF_ENABLE_TX_BURST)) {
+	अगर (!(ar->conf_flags & ATH6KL_CONF_ENABLE_TX_BURST)) अणु
 		ret = ath6kl_wmi_set_wmm_txop(ar->wmi, idx, WMI_TXOP_DISABLED);
-		if (ret) {
+		अगर (ret) अणु
 			ath6kl_err("unable to set txop bursting: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (ar->p2p && (ar->vif_max == 1 || idx)) {
+	अगर (ar->p2p && (ar->vअगर_max == 1 || idx)) अणु
 		ret = ath6kl_wmi_info_req_cmd(ar->wmi, idx,
 					      P2P_FLAG_CAPABILITIES_REQ |
 					      P2P_FLAG_MACADDR_REQ |
 					      P2P_FLAG_HMODEL_REQ);
-		if (ret) {
+		अगर (ret) अणु
 			ath6kl_dbg(ATH6KL_DBG_TRC,
 				   "failed to request P2P capabilities (%d) - assuming P2P not supported\n",
 				   ret);
 			ar->p2p = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ar->p2p && (ar->vif_max == 1 || idx)) {
-		/* Enable Probe Request reporting for P2P */
+	अगर (ar->p2p && (ar->vअगर_max == 1 || idx)) अणु
+		/* Enable Probe Request reporting क्रम P2P */
 		ret = ath6kl_wmi_probe_report_req_cmd(ar->wmi, idx, true);
-		if (ret) {
+		अगर (ret) अणु
 			ath6kl_dbg(ATH6KL_DBG_TRC,
 				   "failed to enable Probe Request reporting (%d)\n",
 				   ret);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ath6kl_configure_target(struct ath6kl *ar)
-{
+पूर्णांक ath6kl_configure_target(काष्ठा ath6kl *ar)
+अणु
 	u32 param, ram_reserved_size;
-	u8 fw_iftype, fw_mode = 0, fw_submode = 0;
-	int i, status;
+	u8 fw_अगरtype, fw_mode = 0, fw_submode = 0;
+	पूर्णांक i, status;
 
 	param = !!(ar->conf_flags & ATH6KL_CONF_UART_DEBUG);
-	if (ath6kl_bmi_write_hi32(ar, hi_serial_enable, param)) {
+	अगर (ath6kl_bmi_ग_लिखो_hi32(ar, hi_serial_enable, param)) अणु
 		ath6kl_err("bmi_write_memory for uart debug failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/*
-	 * Note: Even though the firmware interface type is
-	 * chosen as BSS_STA for all three interfaces, can
-	 * be configured to IBSS/AP as long as the fw submode
-	 * remains normal mode (0 - AP, STA and IBSS). But
-	 * due to an target assert in firmware only one interface is
-	 * configured for now.
+	 * Note: Even though the firmware पूर्णांकerface type is
+	 * chosen as BSS_STA क्रम all three पूर्णांकerfaces, can
+	 * be configured to IBSS/AP as दीर्घ as the fw submode
+	 * reमुख्यs normal mode (0 - AP, STA and IBSS). But
+	 * due to an target निश्चित in firmware only one पूर्णांकerface is
+	 * configured क्रम now.
 	 */
-	fw_iftype = HI_OPTION_FW_MODE_BSS_STA;
+	fw_अगरtype = HI_OPTION_FW_MODE_BSS_STA;
 
-	for (i = 0; i < ar->vif_max; i++)
-		fw_mode |= fw_iftype << (i * HI_OPTION_FW_MODE_BITS);
+	क्रम (i = 0; i < ar->vअगर_max; i++)
+		fw_mode |= fw_अगरtype << (i * HI_OPTION_FW_MODE_BITS);
 
 	/*
-	 * Submodes when fw does not support dynamic interface
-	 * switching:
-	 *		vif[0] - AP/STA/IBSS
-	 *		vif[1] - "P2P dev"/"P2P GO"/"P2P Client"
-	 *		vif[2] - "P2P dev"/"P2P GO"/"P2P Client"
-	 * Otherwise, All the interface are initialized to p2p dev.
+	 * Submodes when fw करोes not support dynamic पूर्णांकerface
+	 * चयनing:
+	 *		vअगर[0] - AP/STA/IBSS
+	 *		vअगर[1] - "P2P dev"/"P2P GO"/"P2P Client"
+	 *		vअगर[2] - "P2P dev"/"P2P GO"/"P2P Client"
+	 * Otherwise, All the पूर्णांकerface are initialized to p2p dev.
 	 */
 
-	if (test_bit(ATH6KL_FW_CAPABILITY_STA_P2PDEV_DUPLEX,
-		     ar->fw_capabilities)) {
-		for (i = 0; i < ar->vif_max; i++)
+	अगर (test_bit(ATH6KL_FW_CAPABILITY_STA_P2PDEV_DUPLEX,
+		     ar->fw_capabilities)) अणु
+		क्रम (i = 0; i < ar->vअगर_max; i++)
 			fw_submode |= HI_OPTION_FW_SUBMODE_P2PDEV <<
 				(i * HI_OPTION_FW_SUBMODE_BITS);
-	} else {
-		for (i = 0; i < ar->max_norm_iface; i++)
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < ar->max_norm_अगरace; i++)
 			fw_submode |= HI_OPTION_FW_SUBMODE_NONE <<
 				(i * HI_OPTION_FW_SUBMODE_BITS);
 
-		for (i = ar->max_norm_iface; i < ar->vif_max; i++)
+		क्रम (i = ar->max_norm_अगरace; i < ar->vअगर_max; i++)
 			fw_submode |= HI_OPTION_FW_SUBMODE_P2PDEV <<
 				(i * HI_OPTION_FW_SUBMODE_BITS);
 
-		if (ar->p2p && ar->vif_max == 1)
+		अगर (ar->p2p && ar->vअगर_max == 1)
 			fw_submode = HI_OPTION_FW_SUBMODE_P2PDEV;
-	}
+	पूर्ण
 
-	if (ath6kl_bmi_write_hi32(ar, hi_app_host_interest,
-				  HTC_PROTOCOL_VERSION) != 0) {
+	अगर (ath6kl_bmi_ग_लिखो_hi32(ar, hi_app_host_पूर्णांकerest,
+				  HTC_PROTOCOL_VERSION) != 0) अणु
 		ath6kl_err("bmi_write_memory for htc version failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* set the firmware mode to STA/IBSS/AP */
 	param = 0;
 
-	if (ath6kl_bmi_read_hi32(ar, hi_option_flag, &param) != 0) {
+	अगर (ath6kl_bmi_पढ़ो_hi32(ar, hi_option_flag, &param) != 0) अणु
 		ath6kl_err("bmi_read_memory for setting fwmode failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	param |= (ar->vif_max << HI_OPTION_NUM_DEV_SHIFT);
+	param |= (ar->vअगर_max << HI_OPTION_NUM_DEV_SHIFT);
 	param |= fw_mode << HI_OPTION_FW_MODE_SHIFT;
 	param |= fw_submode << HI_OPTION_FW_SUBMODE_SHIFT;
 
 	param |= (0 << HI_OPTION_MAC_ADDR_METHOD_SHIFT);
 	param |= (0 << HI_OPTION_FW_BRIDGE_SHIFT);
 
-	if (ath6kl_bmi_write_hi32(ar, hi_option_flag, param) != 0) {
+	अगर (ath6kl_bmi_ग_लिखो_hi32(ar, hi_option_flag, param) != 0) अणु
 		ath6kl_err("bmi_write_memory for setting fwmode failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	ath6kl_dbg(ATH6KL_DBG_TRC, "firmware mode set\n");
 
 	/*
-	 * Hardcode the address use for the extended board data
-	 * Ideally this should be pre-allocate by the OS at boot time
+	 * Hardcode the address use क्रम the extended board data
+	 * Ideally this should be pre-allocate by the OS at boot समय
 	 * But since it is a new feature and board data is loaded
-	 * at init time, we have to workaround this from host.
-	 * It is difficult to patch the firmware boot code,
+	 * at init समय, we have to workaround this from host.
+	 * It is dअगरficult to patch the firmware boot code,
 	 * but possible in theory.
 	 */
 
-	if ((ar->target_type == TARGET_TYPE_AR6003) ||
+	अगर ((ar->target_type == TARGET_TYPE_AR6003) ||
 	    (ar->version.target_ver == AR6004_HW_1_3_VERSION) ||
-	    (ar->version.target_ver == AR6004_HW_3_0_VERSION)) {
+	    (ar->version.target_ver == AR6004_HW_3_0_VERSION)) अणु
 		param = ar->hw.board_ext_data_addr;
 		ram_reserved_size = ar->hw.reserved_ram_size;
 
-		if (ath6kl_bmi_write_hi32(ar, hi_board_ext_data, param) != 0) {
+		अगर (ath6kl_bmi_ग_लिखो_hi32(ar, hi_board_ext_data, param) != 0) अणु
 			ath6kl_err("bmi_write_memory for hi_board_ext_data failed\n");
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		if (ath6kl_bmi_write_hi32(ar, hi_end_ram_reserve_sz,
-					  ram_reserved_size) != 0) {
+		अगर (ath6kl_bmi_ग_लिखो_hi32(ar, hi_end_ram_reserve_sz,
+					  ram_reserved_size) != 0) अणु
 			ath6kl_err("bmi_write_memory for hi_end_ram_reserve_sz failed\n");
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	/* set the block size for the target */
-	if (ath6kl_set_htc_params(ar, MBOX_YIELD_LIMIT, 0))
-		/* use default number of control buffers */
-		return -EIO;
+	/* set the block size क्रम the target */
+	अगर (ath6kl_set_htc_params(ar, MBOX_YIELD_LIMIT, 0))
+		/* use शेष number of control buffers */
+		वापस -EIO;
 
 	/* Configure GPIO AR600x UART */
-	status = ath6kl_bmi_write_hi32(ar, hi_dbg_uart_txpin,
+	status = ath6kl_bmi_ग_लिखो_hi32(ar, hi_dbg_uart_txpin,
 				       ar->hw.uarttx_pin);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	/* Only set the baud rate if we're actually doing debug */
-	if (ar->conf_flags & ATH6KL_CONF_UART_DEBUG) {
-		status = ath6kl_bmi_write_hi32(ar, hi_desired_baud_rate,
+	/* Only set the baud rate अगर we're actually करोing debug */
+	अगर (ar->conf_flags & ATH6KL_CONF_UART_DEBUG) अणु
+		status = ath6kl_bmi_ग_लिखो_hi32(ar, hi_desired_baud_rate,
 					       ar->hw.uarttx_rate);
-		if (status)
-			return status;
-	}
+		अगर (status)
+			वापस status;
+	पूर्ण
 
 	/* Configure target refclk_hz */
-	if (ar->hw.refclk_hz != 0) {
-		status = ath6kl_bmi_write_hi32(ar, hi_refclk_hz,
+	अगर (ar->hw.refclk_hz != 0) अणु
+		status = ath6kl_bmi_ग_लिखो_hi32(ar, hi_refclk_hz,
 					       ar->hw.refclk_hz);
-		if (status)
-			return status;
-	}
+		अगर (status)
+			वापस status;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* firmware upload */
-static int ath6kl_get_fw(struct ath6kl *ar, const char *filename,
-			 u8 **fw, size_t *fw_len)
-{
-	const struct firmware *fw_entry;
-	int ret;
+अटल पूर्णांक ath6kl_get_fw(काष्ठा ath6kl *ar, स्थिर अक्षर *filename,
+			 u8 **fw, माप_प्रकार *fw_len)
+अणु
+	स्थिर काष्ठा firmware *fw_entry;
+	पूर्णांक ret;
 
 	ret = request_firmware(&fw_entry, filename, ar->dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	*fw_len = fw_entry->size;
 	*fw = kmemdup(fw_entry->data, fw_entry->size, GFP_KERNEL);
 
-	if (*fw == NULL)
+	अगर (*fw == शून्य)
 		ret = -ENOMEM;
 
 	release_firmware(fw_entry);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 /*
- * Check the device tree for a board-id and use it to construct
- * the pathname to the firmware file.  Used (for now) to find a
+ * Check the device tree क्रम a board-id and use it to स्थिरruct
+ * the pathname to the firmware file.  Used (क्रम now) to find a
  * fallback to the "bdata.bin" file--typically a symlink to the
- * appropriate board-specific file.
+ * appropriate board-specअगरic file.
  */
-static bool check_device_tree(struct ath6kl *ar)
-{
-	static const char *board_id_prop = "atheros,board-id";
-	struct device_node *node;
-	char board_filename[64];
-	const char *board_id;
-	int ret;
+अटल bool check_device_tree(काष्ठा ath6kl *ar)
+अणु
+	अटल स्थिर अक्षर *board_id_prop = "atheros,board-id";
+	काष्ठा device_node *node;
+	अक्षर board_filename[64];
+	स्थिर अक्षर *board_id;
+	पूर्णांक ret;
 
-	for_each_compatible_node(node, NULL, "atheros,ath6kl") {
-		board_id = of_get_property(node, board_id_prop, NULL);
-		if (board_id == NULL) {
+	क्रम_each_compatible_node(node, शून्य, "atheros,ath6kl") अणु
+		board_id = of_get_property(node, board_id_prop, शून्य);
+		अगर (board_id == शून्य) अणु
 			ath6kl_warn("No \"%s\" property on %pOFn node.\n",
 				    board_id_prop, node);
-			continue;
-		}
-		snprintf(board_filename, sizeof(board_filename),
+			जारी;
+		पूर्ण
+		snम_लिखो(board_filename, माप(board_filename),
 			 "%s/bdata.%s.bin", ar->hw.fw.dir, board_id);
 
 		ret = ath6kl_get_fw(ar, board_filename, &ar->fw_board,
 				    &ar->fw_board_len);
-		if (ret) {
+		अगर (ret) अणु
 			ath6kl_err("Failed to get DT board file %s: %d\n",
 				   board_filename, ret);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		of_node_put(node);
-		return true;
-	}
-	return false;
-}
-#else
-static bool check_device_tree(struct ath6kl *ar)
-{
-	return false;
-}
-#endif /* CONFIG_OF */
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
+#अन्यथा
+अटल bool check_device_tree(काष्ठा ath6kl *ar)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OF */
 
-static int ath6kl_fetch_board_file(struct ath6kl *ar)
-{
-	const char *filename;
-	int ret;
+अटल पूर्णांक ath6kl_fetch_board_file(काष्ठा ath6kl *ar)
+अणु
+	स्थिर अक्षर *filename;
+	पूर्णांक ret;
 
-	if (ar->fw_board != NULL)
-		return 0;
+	अगर (ar->fw_board != शून्य)
+		वापस 0;
 
-	if (WARN_ON(ar->hw.fw_board == NULL))
-		return -EINVAL;
+	अगर (WARN_ON(ar->hw.fw_board == शून्य))
+		वापस -EINVAL;
 
 	filename = ar->hw.fw_board;
 
 	ret = ath6kl_get_fw(ar, filename, &ar->fw_board,
 			    &ar->fw_board_len);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		/* managed to get proper board file */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (check_device_tree(ar)) {
+	अगर (check_device_tree(ar)) अणु
 		/* got board file from device tree */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* there was no proper board file, try to use default instead */
+	/* there was no proper board file, try to use शेष instead */
 	ath6kl_warn("Failed to get board file %s (%d), trying to find default board file.\n",
 		    filename, ret);
 
-	filename = ar->hw.fw_default_board;
+	filename = ar->hw.fw_शेष_board;
 
 	ret = ath6kl_get_fw(ar, filename, &ar->fw_board,
 			    &ar->fw_board_len);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed to get default board file %s: %d\n",
 			   filename, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ath6kl_warn("WARNING! No proper board file was not found, instead using a default board file.\n");
 	ath6kl_warn("Most likely your hardware won't work as specified. Install correct board file!\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_fetch_otp_file(struct ath6kl *ar)
-{
-	char filename[100];
-	int ret;
+अटल पूर्णांक ath6kl_fetch_otp_file(काष्ठा ath6kl *ar)
+अणु
+	अक्षर filename[100];
+	पूर्णांक ret;
 
-	if (ar->fw_otp != NULL)
-		return 0;
+	अगर (ar->fw_otp != शून्य)
+		वापस 0;
 
-	if (ar->hw.fw.otp == NULL) {
+	अगर (ar->hw.fw.otp == शून्य) अणु
 		ath6kl_dbg(ATH6KL_DBG_BOOT,
 			   "no OTP file configured for this hw\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	snprintf(filename, sizeof(filename), "%s/%s",
+	snम_लिखो(filename, माप(filename), "%s/%s",
 		 ar->hw.fw.dir, ar->hw.fw.otp);
 
 	ret = ath6kl_get_fw(ar, filename, &ar->fw_otp,
 			    &ar->fw_otp_len);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed to get OTP file %s: %d\n",
 			   filename, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_fetch_testmode_file(struct ath6kl *ar)
-{
-	char filename[100];
-	int ret;
+अटल पूर्णांक ath6kl_fetch_tesपंचांगode_file(काष्ठा ath6kl *ar)
+अणु
+	अक्षर filename[100];
+	पूर्णांक ret;
 
-	if (ar->testmode == 0)
-		return 0;
+	अगर (ar->tesपंचांगode == 0)
+		वापस 0;
 
-	ath6kl_dbg(ATH6KL_DBG_BOOT, "testmode %d\n", ar->testmode);
+	ath6kl_dbg(ATH6KL_DBG_BOOT, "testmode %d\n", ar->tesपंचांगode);
 
-	if (ar->testmode == 2) {
-		if (ar->hw.fw.utf == NULL) {
+	अगर (ar->tesपंचांगode == 2) अणु
+		अगर (ar->hw.fw.utf == शून्य) अणु
 			ath6kl_warn("testmode 2 not supported\n");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
-		snprintf(filename, sizeof(filename), "%s/%s",
+		snम_लिखो(filename, माप(filename), "%s/%s",
 			 ar->hw.fw.dir, ar->hw.fw.utf);
-	} else {
-		if (ar->hw.fw.tcmd == NULL) {
+	पूर्ण अन्यथा अणु
+		अगर (ar->hw.fw.tcmd == शून्य) अणु
 			ath6kl_warn("testmode 1 not supported\n");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
-		snprintf(filename, sizeof(filename), "%s/%s",
+		snम_लिखो(filename, माप(filename), "%s/%s",
 			 ar->hw.fw.dir, ar->hw.fw.tcmd);
-	}
+	पूर्ण
 
 	set_bit(TESTMODE, &ar->flag);
 
 	ret = ath6kl_get_fw(ar, filename, &ar->fw, &ar->fw_len);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed to get testmode %d firmware file %s: %d\n",
-			   ar->testmode, filename, ret);
-		return ret;
-	}
+			   ar->tesपंचांगode, filename, ret);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_fetch_fw_file(struct ath6kl *ar)
-{
-	char filename[100];
-	int ret;
+अटल पूर्णांक ath6kl_fetch_fw_file(काष्ठा ath6kl *ar)
+अणु
+	अक्षर filename[100];
+	पूर्णांक ret;
 
-	if (ar->fw != NULL)
-		return 0;
+	अगर (ar->fw != शून्य)
+		वापस 0;
 
-	/* FIXME: remove WARN_ON() as we won't support FW API 1 for long */
-	if (WARN_ON(ar->hw.fw.fw == NULL))
-		return -EINVAL;
+	/* FIXME: हटाओ WARN_ON() as we won't support FW API 1 क्रम दीर्घ */
+	अगर (WARN_ON(ar->hw.fw.fw == शून्य))
+		वापस -EINVAL;
 
-	snprintf(filename, sizeof(filename), "%s/%s",
+	snम_लिखो(filename, माप(filename), "%s/%s",
 		 ar->hw.fw.dir, ar->hw.fw.fw);
 
 	ret = ath6kl_get_fw(ar, filename, &ar->fw, &ar->fw_len);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed to get firmware file %s: %d\n",
 			   filename, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_fetch_patch_file(struct ath6kl *ar)
-{
-	char filename[100];
-	int ret;
+अटल पूर्णांक ath6kl_fetch_patch_file(काष्ठा ath6kl *ar)
+अणु
+	अक्षर filename[100];
+	पूर्णांक ret;
 
-	if (ar->fw_patch != NULL)
-		return 0;
+	अगर (ar->fw_patch != शून्य)
+		वापस 0;
 
-	if (ar->hw.fw.patch == NULL)
-		return 0;
+	अगर (ar->hw.fw.patch == शून्य)
+		वापस 0;
 
-	snprintf(filename, sizeof(filename), "%s/%s",
+	snम_लिखो(filename, माप(filename), "%s/%s",
 		 ar->hw.fw.dir, ar->hw.fw.patch);
 
 	ret = ath6kl_get_fw(ar, filename, &ar->fw_patch,
 			    &ar->fw_patch_len);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed to get patch file %s: %d\n",
 			   filename, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_fetch_testscript_file(struct ath6kl *ar)
-{
-	char filename[100];
-	int ret;
+अटल पूर्णांक ath6kl_fetch_testscript_file(काष्ठा ath6kl *ar)
+अणु
+	अक्षर filename[100];
+	पूर्णांक ret;
 
-	if (ar->testmode != 2)
-		return 0;
+	अगर (ar->tesपंचांगode != 2)
+		वापस 0;
 
-	if (ar->fw_testscript != NULL)
-		return 0;
+	अगर (ar->fw_testscript != शून्य)
+		वापस 0;
 
-	if (ar->hw.fw.testscript == NULL)
-		return 0;
+	अगर (ar->hw.fw.testscript == शून्य)
+		वापस 0;
 
-	snprintf(filename, sizeof(filename), "%s/%s",
+	snम_लिखो(filename, माप(filename), "%s/%s",
 		 ar->hw.fw.dir, ar->hw.fw.testscript);
 
 	ret = ath6kl_get_fw(ar, filename, &ar->fw_testscript,
 				&ar->fw_testscript_len);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed to get testscript file %s: %d\n",
 			   filename, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_fetch_fw_api1(struct ath6kl *ar)
-{
-	int ret;
+अटल पूर्णांक ath6kl_fetch_fw_api1(काष्ठा ath6kl *ar)
+अणु
+	पूर्णांक ret;
 
 	ret = ath6kl_fetch_otp_file(ar);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ath6kl_fetch_fw_file(ar);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ath6kl_fetch_patch_file(ar);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ath6kl_fetch_testscript_file(ar);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_fetch_fw_apin(struct ath6kl *ar, const char *name)
-{
-	size_t magic_len, len, ie_len;
-	const struct firmware *fw;
-	struct ath6kl_fw_ie *hdr;
-	char filename[100];
-	const u8 *data;
-	int ret, ie_id, i, index, bit;
+अटल पूर्णांक ath6kl_fetch_fw_apin(काष्ठा ath6kl *ar, स्थिर अक्षर *name)
+अणु
+	माप_प्रकार magic_len, len, ie_len;
+	स्थिर काष्ठा firmware *fw;
+	काष्ठा ath6kl_fw_ie *hdr;
+	अक्षर filename[100];
+	स्थिर u8 *data;
+	पूर्णांक ret, ie_id, i, index, bit;
 	__le32 *val;
 
-	snprintf(filename, sizeof(filename), "%s/%s", ar->hw.fw.dir, name);
+	snम_लिखो(filename, माप(filename), "%s/%s", ar->hw.fw.dir, name);
 
 	ret = request_firmware(&fw, filename, ar->dev);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed request firmware, rv: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	data = fw->data;
 	len = fw->size;
 
 	/* magic also includes the null byte, check that as well */
-	magic_len = strlen(ATH6KL_FIRMWARE_MAGIC) + 1;
+	magic_len = म_माप(ATH6KL_FIRMWARE_MAGIC) + 1;
 
-	if (len < magic_len) {
+	अगर (len < magic_len) अणु
 		ath6kl_err("Magic length is invalid, len: %zd  magic_len: %zd\n",
 			   len, magic_len);
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (memcmp(data, ATH6KL_FIRMWARE_MAGIC, magic_len) != 0) {
+	अगर (स_भेद(data, ATH6KL_FIRMWARE_MAGIC, magic_len) != 0) अणु
 		ath6kl_err("Magic is invalid, magic_len: %zd\n",
 			   magic_len);
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	len -= magic_len;
 	data += magic_len;
 
 	/* loop elements */
-	while (len > sizeof(struct ath6kl_fw_ie)) {
+	जबतक (len > माप(काष्ठा ath6kl_fw_ie)) अणु
 		/* hdr is unaligned! */
-		hdr = (struct ath6kl_fw_ie *) data;
+		hdr = (काष्ठा ath6kl_fw_ie *) data;
 
 		ie_id = le32_to_cpup(&hdr->id);
 		ie_len = le32_to_cpup(&hdr->len);
 
-		len -= sizeof(*hdr);
-		data += sizeof(*hdr);
+		len -= माप(*hdr);
+		data += माप(*hdr);
 
 		ath6kl_dbg(ATH6KL_DBG_BOOT, "ie-id: %d  len: %zd (0x%zx)\n",
 			   ie_id, ie_len, ie_len);
 
-		if (len < ie_len) {
+		अगर (len < ie_len) अणु
 			ath6kl_err("IE len is invalid, len: %zd  ie_len: %zd  ie-id: %d\n",
 				   len, ie_len, ie_id);
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		switch (ie_id) {
-		case ATH6KL_FW_IE_FW_VERSION:
+		चयन (ie_id) अणु
+		हाल ATH6KL_FW_IE_FW_VERSION:
 			strlcpy(ar->wiphy->fw_version, data,
-				min(sizeof(ar->wiphy->fw_version), ie_len+1));
+				min(माप(ar->wiphy->fw_version), ie_len+1));
 
 			ath6kl_dbg(ATH6KL_DBG_BOOT,
 				   "found fw version %s\n",
 				    ar->wiphy->fw_version);
-			break;
-		case ATH6KL_FW_IE_OTP_IMAGE:
+			अवरोध;
+		हाल ATH6KL_FW_IE_OTP_IMAGE:
 			ath6kl_dbg(ATH6KL_DBG_BOOT, "found otp image ie (%zd B)\n",
 				   ie_len);
 
 			ar->fw_otp = kmemdup(data, ie_len, GFP_KERNEL);
 
-			if (ar->fw_otp == NULL) {
+			अगर (ar->fw_otp == शून्य) अणु
 				ath6kl_err("fw_otp cannot be allocated\n");
 				ret = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			ar->fw_otp_len = ie_len;
-			break;
-		case ATH6KL_FW_IE_FW_IMAGE:
+			अवरोध;
+		हाल ATH6KL_FW_IE_FW_IMAGE:
 			ath6kl_dbg(ATH6KL_DBG_BOOT, "found fw image ie (%zd B)\n",
 				   ie_len);
 
-			/* in testmode we already might have a fw file */
-			if (ar->fw != NULL)
-				break;
+			/* in tesपंचांगode we alपढ़ोy might have a fw file */
+			अगर (ar->fw != शून्य)
+				अवरोध;
 
-			ar->fw = vmalloc(ie_len);
+			ar->fw = vदो_स्मृति(ie_len);
 
-			if (ar->fw == NULL) {
+			अगर (ar->fw == शून्य) अणु
 				ath6kl_err("fw storage cannot be allocated, len: %zd\n", ie_len);
 				ret = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			memcpy(ar->fw, data, ie_len);
+			स_नकल(ar->fw, data, ie_len);
 			ar->fw_len = ie_len;
-			break;
-		case ATH6KL_FW_IE_PATCH_IMAGE:
+			अवरोध;
+		हाल ATH6KL_FW_IE_PATCH_IMAGE:
 			ath6kl_dbg(ATH6KL_DBG_BOOT, "found patch image ie (%zd B)\n",
 				   ie_len);
 
 			ar->fw_patch = kmemdup(data, ie_len, GFP_KERNEL);
 
-			if (ar->fw_patch == NULL) {
+			अगर (ar->fw_patch == शून्य) अणु
 				ath6kl_err("fw_patch storage cannot be allocated, len: %zd\n", ie_len);
 				ret = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			ar->fw_patch_len = ie_len;
-			break;
-		case ATH6KL_FW_IE_RESERVED_RAM_SIZE:
+			अवरोध;
+		हाल ATH6KL_FW_IE_RESERVED_RAM_SIZE:
 			val = (__le32 *) data;
 			ar->hw.reserved_ram_size = le32_to_cpup(val);
 
 			ath6kl_dbg(ATH6KL_DBG_BOOT,
 				   "found reserved ram size ie %d\n",
 				   ar->hw.reserved_ram_size);
-			break;
-		case ATH6KL_FW_IE_CAPABILITIES:
+			अवरोध;
+		हाल ATH6KL_FW_IE_CAPABILITIES:
 			ath6kl_dbg(ATH6KL_DBG_BOOT,
 				   "found firmware capabilities ie (%zd B)\n",
 				   ie_len);
 
-			for (i = 0; i < ATH6KL_FW_CAPABILITY_MAX; i++) {
+			क्रम (i = 0; i < ATH6KL_FW_CAPABILITY_MAX; i++) अणु
 				index = i / 8;
 				bit = i % 8;
 
-				if (index == ie_len)
-					break;
+				अगर (index == ie_len)
+					अवरोध;
 
-				if (data[index] & (1 << bit))
+				अगर (data[index] & (1 << bit))
 					__set_bit(i, ar->fw_capabilities);
-			}
+			पूर्ण
 
 			ath6kl_dbg_dump(ATH6KL_DBG_BOOT, "capabilities", "",
 					ar->fw_capabilities,
-					sizeof(ar->fw_capabilities));
-			break;
-		case ATH6KL_FW_IE_PATCH_ADDR:
-			if (ie_len != sizeof(*val))
-				break;
+					माप(ar->fw_capabilities));
+			अवरोध;
+		हाल ATH6KL_FW_IE_PATCH_ADDR:
+			अगर (ie_len != माप(*val))
+				अवरोध;
 
 			val = (__le32 *) data;
 			ar->hw.dataset_patch_addr = le32_to_cpup(val);
@@ -1106,10 +1107,10 @@ static int ath6kl_fetch_fw_apin(struct ath6kl *ar, const char *name)
 			ath6kl_dbg(ATH6KL_DBG_BOOT,
 				   "found patch address ie 0x%x\n",
 				   ar->hw.dataset_patch_addr);
-			break;
-		case ATH6KL_FW_IE_BOARD_ADDR:
-			if (ie_len != sizeof(*val))
-				break;
+			अवरोध;
+		हाल ATH6KL_FW_IE_BOARD_ADDR:
+			अगर (ie_len != माप(*val))
+				अवरोध;
 
 			val = (__le32 *) data;
 			ar->hw.board_addr = le32_to_cpup(val);
@@ -1117,225 +1118,225 @@ static int ath6kl_fetch_fw_apin(struct ath6kl *ar, const char *name)
 			ath6kl_dbg(ATH6KL_DBG_BOOT,
 				   "found board address ie 0x%x\n",
 				   ar->hw.board_addr);
-			break;
-		case ATH6KL_FW_IE_VIF_MAX:
-			if (ie_len != sizeof(*val))
-				break;
+			अवरोध;
+		हाल ATH6KL_FW_IE_VIF_MAX:
+			अगर (ie_len != माप(*val))
+				अवरोध;
 
 			val = (__le32 *) data;
-			ar->vif_max = min_t(unsigned int, le32_to_cpup(val),
+			ar->vअगर_max = min_t(अचिन्हित पूर्णांक, le32_to_cpup(val),
 					    ATH6KL_VIF_MAX);
 
-			if (ar->vif_max > 1 && !ar->p2p)
-				ar->max_norm_iface = 2;
+			अगर (ar->vअगर_max > 1 && !ar->p2p)
+				ar->max_norm_अगरace = 2;
 
 			ath6kl_dbg(ATH6KL_DBG_BOOT,
-				   "found vif max ie %d\n", ar->vif_max);
-			break;
-		default:
+				   "found vif max ie %d\n", ar->vअगर_max);
+			अवरोध;
+		शेष:
 			ath6kl_dbg(ATH6KL_DBG_BOOT, "Unknown fw ie: %u\n",
 				   le32_to_cpup(&hdr->id));
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		len -= ie_len;
 		data += ie_len;
-	}
+	पूर्ण
 
 	ret = 0;
 out:
 	release_firmware(fw);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ath6kl_init_fetch_firmwares(struct ath6kl *ar)
-{
-	int ret;
+पूर्णांक ath6kl_init_fetch_firmwares(काष्ठा ath6kl *ar)
+अणु
+	पूर्णांक ret;
 
 	ret = ath6kl_fetch_board_file(ar);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = ath6kl_fetch_testmode_file(ar);
-	if (ret)
-		return ret;
+	ret = ath6kl_fetch_tesपंचांगode_file(ar);
+	अगर (ret)
+		वापस ret;
 
-	ret = ath6kl_fetch_fw_apin(ar, ATH6KL_FW_API5_FILE);
-	if (ret == 0) {
+	ret = ath6kl_fetch_fw_apin(ar, ATH6KL_FW_API5_खाता);
+	अगर (ret == 0) अणु
 		ar->fw_api = 5;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = ath6kl_fetch_fw_apin(ar, ATH6KL_FW_API4_FILE);
-	if (ret == 0) {
+	ret = ath6kl_fetch_fw_apin(ar, ATH6KL_FW_API4_खाता);
+	अगर (ret == 0) अणु
 		ar->fw_api = 4;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = ath6kl_fetch_fw_apin(ar, ATH6KL_FW_API3_FILE);
-	if (ret == 0) {
+	ret = ath6kl_fetch_fw_apin(ar, ATH6KL_FW_API3_खाता);
+	अगर (ret == 0) अणु
 		ar->fw_api = 3;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = ath6kl_fetch_fw_apin(ar, ATH6KL_FW_API2_FILE);
-	if (ret == 0) {
+	ret = ath6kl_fetch_fw_apin(ar, ATH6KL_FW_API2_खाता);
+	अगर (ret == 0) अणु
 		ar->fw_api = 2;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = ath6kl_fetch_fw_api1(ar);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ar->fw_api = 1;
 
 out:
 	ath6kl_dbg(ATH6KL_DBG_BOOT, "using fw api %d\n", ar->fw_api);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_upload_board_file(struct ath6kl *ar)
-{
+अटल पूर्णांक ath6kl_upload_board_file(काष्ठा ath6kl *ar)
+अणु
 	u32 board_address, board_ext_address, param;
 	u32 board_data_size, board_ext_data_size;
-	int ret;
+	पूर्णांक ret;
 
-	if (WARN_ON(ar->fw_board == NULL))
-		return -ENOENT;
+	अगर (WARN_ON(ar->fw_board == शून्य))
+		वापस -ENOENT;
 
 	/*
-	 * Determine where in Target RAM to write Board Data.
-	 * For AR6004, host determine Target RAM address for
+	 * Determine where in Target RAM to ग_लिखो Board Data.
+	 * For AR6004, host determine Target RAM address क्रम
 	 * writing board data.
 	 */
-	if (ar->hw.board_addr != 0) {
+	अगर (ar->hw.board_addr != 0) अणु
 		board_address = ar->hw.board_addr;
-		ath6kl_bmi_write_hi32(ar, hi_board_data,
+		ath6kl_bmi_ग_लिखो_hi32(ar, hi_board_data,
 				      board_address);
-	} else {
-		ret = ath6kl_bmi_read_hi32(ar, hi_board_data, &board_address);
-		if (ret) {
+	पूर्ण अन्यथा अणु
+		ret = ath6kl_bmi_पढ़ो_hi32(ar, hi_board_data, &board_address);
+		अगर (ret) अणु
 			ath6kl_err("Failed to get board file target address.\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* determine where in target ram to write extended board data */
-	ret = ath6kl_bmi_read_hi32(ar, hi_board_ext_data, &board_ext_address);
-	if (ret) {
+	/* determine where in target ram to ग_लिखो extended board data */
+	ret = ath6kl_bmi_पढ़ो_hi32(ar, hi_board_ext_data, &board_ext_address);
+	अगर (ret) अणु
 		ath6kl_err("Failed to get extended board file target address.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (ar->target_type == TARGET_TYPE_AR6003 &&
-	    board_ext_address == 0) {
+	अगर (ar->target_type == TARGET_TYPE_AR6003 &&
+	    board_ext_address == 0) अणु
 		ath6kl_err("Failed to get board file target address.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (ar->target_type) {
-	case TARGET_TYPE_AR6003:
+	चयन (ar->target_type) अणु
+	हाल TARGET_TYPE_AR6003:
 		board_data_size = AR6003_BOARD_DATA_SZ;
 		board_ext_data_size = AR6003_BOARD_EXT_DATA_SZ;
-		if (ar->fw_board_len > (board_data_size + board_ext_data_size))
+		अगर (ar->fw_board_len > (board_data_size + board_ext_data_size))
 			board_ext_data_size = AR6003_BOARD_EXT_DATA_SZ_V2;
-		break;
-	case TARGET_TYPE_AR6004:
+		अवरोध;
+	हाल TARGET_TYPE_AR6004:
 		board_data_size = AR6004_BOARD_DATA_SZ;
 		board_ext_data_size = AR6004_BOARD_EXT_DATA_SZ;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (board_ext_address &&
-	    ar->fw_board_len == (board_data_size + board_ext_data_size)) {
-		/* write extended board data */
+	अगर (board_ext_address &&
+	    ar->fw_board_len == (board_data_size + board_ext_data_size)) अणु
+		/* ग_लिखो extended board data */
 		ath6kl_dbg(ATH6KL_DBG_BOOT,
 			   "writing extended board data to 0x%x (%d B)\n",
 			   board_ext_address, board_ext_data_size);
 
-		ret = ath6kl_bmi_write(ar, board_ext_address,
+		ret = ath6kl_bmi_ग_लिखो(ar, board_ext_address,
 				       ar->fw_board + board_data_size,
 				       board_ext_data_size);
-		if (ret) {
+		अगर (ret) अणु
 			ath6kl_err("Failed to write extended board data: %d\n",
 				   ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/* record that extended board data is initialized */
 		param = (board_ext_data_size << 16) | 1;
 
-		ath6kl_bmi_write_hi32(ar, hi_board_ext_data_config, param);
-	}
+		ath6kl_bmi_ग_लिखो_hi32(ar, hi_board_ext_data_config, param);
+	पूर्ण
 
-	if (ar->fw_board_len < board_data_size) {
+	अगर (ar->fw_board_len < board_data_size) अणु
 		ath6kl_err("Too small board file: %zu\n", ar->fw_board_len);
 		ret = -EINVAL;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ath6kl_dbg(ATH6KL_DBG_BOOT, "writing board file to 0x%x (%d B)\n",
 		   board_address, board_data_size);
 
-	ret = ath6kl_bmi_write(ar, board_address, ar->fw_board,
+	ret = ath6kl_bmi_ग_लिखो(ar, board_address, ar->fw_board,
 			       board_data_size);
 
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Board file bmi write failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* record the fact that Board Data IS initialized */
-	if ((ar->version.target_ver == AR6004_HW_1_3_VERSION) ||
+	अगर ((ar->version.target_ver == AR6004_HW_1_3_VERSION) ||
 	    (ar->version.target_ver == AR6004_HW_3_0_VERSION))
 		param = board_data_size;
-	else
+	अन्यथा
 		param = 1;
 
-	ath6kl_bmi_write_hi32(ar, hi_board_data_initialized, param);
+	ath6kl_bmi_ग_लिखो_hi32(ar, hi_board_data_initialized, param);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath6kl_upload_otp(struct ath6kl *ar)
-{
+अटल पूर्णांक ath6kl_upload_otp(काष्ठा ath6kl *ar)
+अणु
 	u32 address, param;
 	bool from_hw = false;
-	int ret;
+	पूर्णांक ret;
 
-	if (ar->fw_otp == NULL)
-		return 0;
+	अगर (ar->fw_otp == शून्य)
+		वापस 0;
 
 	address = ar->hw.app_load_addr;
 
 	ath6kl_dbg(ATH6KL_DBG_BOOT, "writing otp to 0x%x (%zd B)\n", address,
 		   ar->fw_otp_len);
 
-	ret = ath6kl_bmi_fast_download(ar, address, ar->fw_otp,
+	ret = ath6kl_bmi_fast_करोwnload(ar, address, ar->fw_otp,
 				       ar->fw_otp_len);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed to upload OTP file: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* read firmware start address */
-	ret = ath6kl_bmi_read_hi32(ar, hi_app_start, &address);
+	/* पढ़ो firmware start address */
+	ret = ath6kl_bmi_पढ़ो_hi32(ar, hi_app_start, &address);
 
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed to read hi_app_start: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (ar->hw.app_start_override_addr == 0) {
+	अगर (ar->hw.app_start_override_addr == 0) अणु
 		ar->hw.app_start_override_addr = address;
 		from_hw = true;
-	}
+	पूर्ण
 
 	ath6kl_dbg(ATH6KL_DBG_BOOT, "app_start_override_addr%s 0x%x\n",
 		   from_hw ? " (from hw)" : "",
@@ -1347,249 +1348,249 @@ static int ath6kl_upload_otp(struct ath6kl *ar)
 	param = 0;
 	ath6kl_bmi_execute(ar, ar->hw.app_start_override_addr, &param);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath6kl_upload_firmware(struct ath6kl *ar)
-{
+अटल पूर्णांक ath6kl_upload_firmware(काष्ठा ath6kl *ar)
+अणु
 	u32 address;
-	int ret;
+	पूर्णांक ret;
 
-	if (WARN_ON(ar->fw == NULL))
-		return 0;
+	अगर (WARN_ON(ar->fw == शून्य))
+		वापस 0;
 
 	address = ar->hw.app_load_addr;
 
 	ath6kl_dbg(ATH6KL_DBG_BOOT, "writing firmware to 0x%x (%zd B)\n",
 		   address, ar->fw_len);
 
-	ret = ath6kl_bmi_fast_download(ar, address, ar->fw, ar->fw_len);
+	ret = ath6kl_bmi_fast_करोwnload(ar, address, ar->fw, ar->fw_len);
 
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed to write firmware: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Set starting address for firmware
+	 * Set starting address क्रम firmware
 	 * Don't need to setup app_start override addr on AR6004
 	 */
-	if (ar->target_type != TARGET_TYPE_AR6004) {
+	अगर (ar->target_type != TARGET_TYPE_AR6004) अणु
 		address = ar->hw.app_start_override_addr;
 		ath6kl_bmi_set_app_start(ar, address);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ath6kl_upload_patch(struct ath6kl *ar)
-{
+अटल पूर्णांक ath6kl_upload_patch(काष्ठा ath6kl *ar)
+अणु
 	u32 address;
-	int ret;
+	पूर्णांक ret;
 
-	if (ar->fw_patch == NULL)
-		return 0;
+	अगर (ar->fw_patch == शून्य)
+		वापस 0;
 
 	address = ar->hw.dataset_patch_addr;
 
 	ath6kl_dbg(ATH6KL_DBG_BOOT, "writing patch to 0x%x (%zd B)\n",
 		   address, ar->fw_patch_len);
 
-	ret = ath6kl_bmi_write(ar, address, ar->fw_patch, ar->fw_patch_len);
-	if (ret) {
+	ret = ath6kl_bmi_ग_लिखो(ar, address, ar->fw_patch, ar->fw_patch_len);
+	अगर (ret) अणु
 		ath6kl_err("Failed to write patch file: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ath6kl_bmi_write_hi32(ar, hi_dset_list_head, address);
+	ath6kl_bmi_ग_लिखो_hi32(ar, hi_dset_list_head, address);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_upload_testscript(struct ath6kl *ar)
-{
+अटल पूर्णांक ath6kl_upload_testscript(काष्ठा ath6kl *ar)
+अणु
 	u32 address;
-	int ret;
+	पूर्णांक ret;
 
-	if (ar->testmode != 2)
-		return 0;
+	अगर (ar->tesपंचांगode != 2)
+		वापस 0;
 
-	if (ar->fw_testscript == NULL)
-		return 0;
+	अगर (ar->fw_testscript == शून्य)
+		वापस 0;
 
 	address = ar->hw.testscript_addr;
 
 	ath6kl_dbg(ATH6KL_DBG_BOOT, "writing testscript to 0x%x (%zd B)\n",
 		   address, ar->fw_testscript_len);
 
-	ret = ath6kl_bmi_write(ar, address, ar->fw_testscript,
+	ret = ath6kl_bmi_ग_लिखो(ar, address, ar->fw_testscript,
 		ar->fw_testscript_len);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed to write testscript file: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ath6kl_bmi_write_hi32(ar, hi_ota_testscript, address);
+	ath6kl_bmi_ग_लिखो_hi32(ar, hi_ota_testscript, address);
 
-	if ((ar->version.target_ver != AR6004_HW_1_3_VERSION) &&
+	अगर ((ar->version.target_ver != AR6004_HW_1_3_VERSION) &&
 	    (ar->version.target_ver != AR6004_HW_3_0_VERSION))
-		ath6kl_bmi_write_hi32(ar, hi_end_ram_reserve_sz, 4096);
+		ath6kl_bmi_ग_लिखो_hi32(ar, hi_end_ram_reserve_sz, 4096);
 
-	ath6kl_bmi_write_hi32(ar, hi_test_apps_related, 1);
+	ath6kl_bmi_ग_लिखो_hi32(ar, hi_test_apps_related, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_init_upload(struct ath6kl *ar)
-{
+अटल पूर्णांक ath6kl_init_upload(काष्ठा ath6kl *ar)
+अणु
 	u32 param, options, sleep, address;
-	int status = 0;
+	पूर्णांक status = 0;
 
-	if (ar->target_type != TARGET_TYPE_AR6003 &&
+	अगर (ar->target_type != TARGET_TYPE_AR6003 &&
 	    ar->target_type != TARGET_TYPE_AR6004)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* temporarily disable system sleep */
+	/* temporarily disable प्रणाली sleep */
 	address = MBOX_BASE_ADDRESS + LOCAL_SCRATCH_ADDRESS;
-	status = ath6kl_bmi_reg_read(ar, address, &param);
-	if (status)
-		return status;
+	status = ath6kl_bmi_reg_पढ़ो(ar, address, &param);
+	अगर (status)
+		वापस status;
 
 	options = param;
 
 	param |= ATH6KL_OPTION_SLEEP_DISABLE;
-	status = ath6kl_bmi_reg_write(ar, address, param);
-	if (status)
-		return status;
+	status = ath6kl_bmi_reg_ग_लिखो(ar, address, param);
+	अगर (status)
+		वापस status;
 
 	address = RTC_BASE_ADDRESS + SYSTEM_SLEEP_ADDRESS;
-	status = ath6kl_bmi_reg_read(ar, address, &param);
-	if (status)
-		return status;
+	status = ath6kl_bmi_reg_पढ़ो(ar, address, &param);
+	अगर (status)
+		वापस status;
 
 	sleep = param;
 
 	param |= SM(SYSTEM_SLEEP_DISABLE, 1);
-	status = ath6kl_bmi_reg_write(ar, address, param);
-	if (status)
-		return status;
+	status = ath6kl_bmi_reg_ग_लिखो(ar, address, param);
+	अगर (status)
+		वापस status;
 
 	ath6kl_dbg(ATH6KL_DBG_TRC, "old options: %d, old sleep: %d\n",
 		   options, sleep);
 
-	/* program analog PLL register */
-	/* no need to control 40/44MHz clock on AR6004 */
-	if (ar->target_type != TARGET_TYPE_AR6004) {
-		status = ath6kl_bmi_reg_write(ar, ATH6KL_ANALOG_PLL_REGISTER,
+	/* program analog PLL रेजिस्टर */
+	/* no need to control 40/44MHz घड़ी on AR6004 */
+	अगर (ar->target_type != TARGET_TYPE_AR6004) अणु
+		status = ath6kl_bmi_reg_ग_लिखो(ar, ATH6KL_ANALOG_PLL_REGISTER,
 					      0xF9104001);
 
-		if (status)
-			return status;
+		अगर (status)
+			वापस status;
 
-		/* Run at 80/88MHz by default */
+		/* Run at 80/88MHz by शेष */
 		param = SM(CPU_CLOCK_STANDARD, 1);
 
 		address = RTC_BASE_ADDRESS + CPU_CLOCK_ADDRESS;
-		status = ath6kl_bmi_reg_write(ar, address, param);
-		if (status)
-			return status;
-	}
+		status = ath6kl_bmi_reg_ग_लिखो(ar, address, param);
+		अगर (status)
+			वापस status;
+	पूर्ण
 
 	param = 0;
 	address = RTC_BASE_ADDRESS + LPO_CAL_ADDRESS;
 	param = SM(LPO_CAL_ENABLE, 1);
-	status = ath6kl_bmi_reg_write(ar, address, param);
-	if (status)
-		return status;
+	status = ath6kl_bmi_reg_ग_लिखो(ar, address, param);
+	अगर (status)
+		वापस status;
 
-	/* WAR to avoid SDIO CRC err */
-	if (ar->hw.flags & ATH6KL_HW_SDIO_CRC_ERROR_WAR) {
+	/* WAR to aव्योम SDIO CRC err */
+	अगर (ar->hw.flags & ATH6KL_HW_SDIO_CRC_ERROR_WAR) अणु
 		ath6kl_err("temporary war to avoid sdio crc error\n");
 
 		param = 0x28;
 		address = GPIO_BASE_ADDRESS + GPIO_PIN9_ADDRESS;
-		status = ath6kl_bmi_reg_write(ar, address, param);
-		if (status)
-			return status;
+		status = ath6kl_bmi_reg_ग_लिखो(ar, address, param);
+		अगर (status)
+			वापस status;
 
 		param = 0x20;
 
 		address = GPIO_BASE_ADDRESS + GPIO_PIN10_ADDRESS;
-		status = ath6kl_bmi_reg_write(ar, address, param);
-		if (status)
-			return status;
+		status = ath6kl_bmi_reg_ग_लिखो(ar, address, param);
+		अगर (status)
+			वापस status;
 
 		address = GPIO_BASE_ADDRESS + GPIO_PIN11_ADDRESS;
-		status = ath6kl_bmi_reg_write(ar, address, param);
-		if (status)
-			return status;
+		status = ath6kl_bmi_reg_ग_लिखो(ar, address, param);
+		अगर (status)
+			वापस status;
 
 		address = GPIO_BASE_ADDRESS + GPIO_PIN12_ADDRESS;
-		status = ath6kl_bmi_reg_write(ar, address, param);
-		if (status)
-			return status;
+		status = ath6kl_bmi_reg_ग_लिखो(ar, address, param);
+		अगर (status)
+			वापस status;
 
 		address = GPIO_BASE_ADDRESS + GPIO_PIN13_ADDRESS;
-		status = ath6kl_bmi_reg_write(ar, address, param);
-		if (status)
-			return status;
-	}
+		status = ath6kl_bmi_reg_ग_लिखो(ar, address, param);
+		अगर (status)
+			वापस status;
+	पूर्ण
 
-	/* write EEPROM data to Target RAM */
+	/* ग_लिखो EEPROM data to Target RAM */
 	status = ath6kl_upload_board_file(ar);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	/* transfer One time Programmable data */
+	/* transfer One समय Programmable data */
 	status = ath6kl_upload_otp(ar);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	/* Download Target firmware */
 	status = ath6kl_upload_firmware(ar);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	status = ath6kl_upload_patch(ar);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	/* Download the test script */
 	status = ath6kl_upload_testscript(ar);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	/* Restore system sleep */
+	/* Restore प्रणाली sleep */
 	address = RTC_BASE_ADDRESS + SYSTEM_SLEEP_ADDRESS;
-	status = ath6kl_bmi_reg_write(ar, address, sleep);
-	if (status)
-		return status;
+	status = ath6kl_bmi_reg_ग_लिखो(ar, address, sleep);
+	अगर (status)
+		वापस status;
 
 	address = MBOX_BASE_ADDRESS + LOCAL_SCRATCH_ADDRESS;
 	param = options | 0x20;
-	status = ath6kl_bmi_reg_write(ar, address, param);
-	if (status)
-		return status;
+	status = ath6kl_bmi_reg_ग_लिखो(ar, address, param);
+	अगर (status)
+		वापस status;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ath6kl_init_hw_params(struct ath6kl *ar)
-{
-	const struct ath6kl_hw *hw;
-	int i;
+पूर्णांक ath6kl_init_hw_params(काष्ठा ath6kl *ar)
+अणु
+	स्थिर काष्ठा ath6kl_hw *hw;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(hw_list); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(hw_list); i++) अणु
 		hw = &hw_list[i];
 
-		if (hw->id == ar->version.target_ver)
-			break;
-	}
+		अगर (hw->id == ar->version.target_ver)
+			अवरोध;
+	पूर्ण
 
-	if (i == ARRAY_SIZE(hw_list)) {
+	अगर (i == ARRAY_SIZE(hw_list)) अणु
 		ath6kl_err("Unsupported hardware version: 0x%x\n",
 			   ar->version.target_ver);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ar->hw = *hw;
 
@@ -1605,137 +1606,137 @@ int ath6kl_init_hw_params(struct ath6kl *ar)
 		   "refclk_hz %d uarttx_pin %d",
 		   ar->hw.refclk_hz, ar->hw.uarttx_pin);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char *ath6kl_init_get_hif_name(enum ath6kl_hif_type type)
-{
-	switch (type) {
-	case ATH6KL_HIF_TYPE_SDIO:
-		return "sdio";
-	case ATH6KL_HIF_TYPE_USB:
-		return "usb";
-	}
+अटल स्थिर अक्षर *ath6kl_init_get_hअगर_name(क्रमागत ath6kl_hअगर_type type)
+अणु
+	चयन (type) अणु
+	हाल ATH6KL_HIF_TYPE_SDIO:
+		वापस "sdio";
+	हाल ATH6KL_HIF_TYPE_USB:
+		वापस "usb";
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 
-static const struct fw_capa_str_map {
-	int id;
-	const char *name;
-} fw_capa_map[] = {
-	{ ATH6KL_FW_CAPABILITY_HOST_P2P, "host-p2p" },
-	{ ATH6KL_FW_CAPABILITY_SCHED_SCAN, "sched-scan" },
-	{ ATH6KL_FW_CAPABILITY_STA_P2PDEV_DUPLEX, "sta-p2pdev-duplex" },
-	{ ATH6KL_FW_CAPABILITY_INACTIVITY_TIMEOUT, "inactivity-timeout" },
-	{ ATH6KL_FW_CAPABILITY_RSN_CAP_OVERRIDE, "rsn-cap-override" },
-	{ ATH6KL_FW_CAPABILITY_WOW_MULTICAST_FILTER, "wow-mc-filter" },
-	{ ATH6KL_FW_CAPABILITY_BMISS_ENHANCE, "bmiss-enhance" },
-	{ ATH6KL_FW_CAPABILITY_SCHED_SCAN_MATCH_LIST, "sscan-match-list" },
-	{ ATH6KL_FW_CAPABILITY_RSSI_SCAN_THOLD, "rssi-scan-thold" },
-	{ ATH6KL_FW_CAPABILITY_CUSTOM_MAC_ADDR, "custom-mac-addr" },
-	{ ATH6KL_FW_CAPABILITY_TX_ERR_NOTIFY, "tx-err-notify" },
-	{ ATH6KL_FW_CAPABILITY_REGDOMAIN, "regdomain" },
-	{ ATH6KL_FW_CAPABILITY_SCHED_SCAN_V2, "sched-scan-v2" },
-	{ ATH6KL_FW_CAPABILITY_HEART_BEAT_POLL, "hb-poll" },
-	{ ATH6KL_FW_CAPABILITY_64BIT_RATES, "64bit-rates" },
-	{ ATH6KL_FW_CAPABILITY_AP_INACTIVITY_MINS, "ap-inactivity-mins" },
-	{ ATH6KL_FW_CAPABILITY_MAP_LP_ENDPOINT, "map-lp-endpoint" },
-	{ ATH6KL_FW_CAPABILITY_RATETABLE_MCS15, "ratetable-mcs15" },
-	{ ATH6KL_FW_CAPABILITY_NO_IP_CHECKSUM, "no-ip-checksum" },
-};
+अटल स्थिर काष्ठा fw_capa_str_map अणु
+	पूर्णांक id;
+	स्थिर अक्षर *name;
+पूर्ण fw_capa_map[] = अणु
+	अणु ATH6KL_FW_CAPABILITY_HOST_P2P, "host-p2p" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_SCHED_SCAN, "sched-scan" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_STA_P2PDEV_DUPLEX, "sta-p2pdev-duplex" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_INACTIVITY_TIMEOUT, "inactivity-timeout" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_RSN_CAP_OVERRIDE, "rsn-cap-override" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_WOW_MULTICAST_FILTER, "wow-mc-filter" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_BMISS_ENHANCE, "bmiss-enhance" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_SCHED_SCAN_MATCH_LIST, "sscan-match-list" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_RSSI_SCAN_THOLD, "rssi-scan-thold" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_CUSTOM_MAC_ADDR, "custom-mac-addr" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_TX_ERR_NOTIFY, "tx-err-notify" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_REGDOMAIN, "regdomain" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_SCHED_SCAN_V2, "sched-scan-v2" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_HEART_BEAT_POLL, "hb-poll" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_64BIT_RATES, "64bit-rates" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_AP_INACTIVITY_MINS, "ap-inactivity-mins" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_MAP_LP_ENDPOINT, "map-lp-endpoint" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_RATETABLE_MCS15, "ratetable-mcs15" पूर्ण,
+	अणु ATH6KL_FW_CAPABILITY_NO_IP_CHECKSUM, "no-ip-checksum" पूर्ण,
+पूर्ण;
 
-static const char *ath6kl_init_get_fw_capa_name(unsigned int id)
-{
-	int i;
+अटल स्थिर अक्षर *ath6kl_init_get_fw_capa_name(अचिन्हित पूर्णांक id)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(fw_capa_map); i++) {
-		if (fw_capa_map[i].id == id)
-			return fw_capa_map[i].name;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(fw_capa_map); i++) अणु
+		अगर (fw_capa_map[i].id == id)
+			वापस fw_capa_map[i].name;
+	पूर्ण
 
-	return "<unknown>";
-}
+	वापस "<unknown>";
+पूर्ण
 
-static void ath6kl_init_get_fwcaps(struct ath6kl *ar, char *buf, size_t buf_len)
-{
+अटल व्योम ath6kl_init_get_fwcaps(काष्ठा ath6kl *ar, अक्षर *buf, माप_प्रकार buf_len)
+अणु
 	u8 *data = (u8 *) ar->fw_capabilities;
-	size_t trunc_len, len = 0;
-	int i, index, bit;
-	char *trunc = "...";
+	माप_प्रकार trunc_len, len = 0;
+	पूर्णांक i, index, bit;
+	अक्षर *trunc = "...";
 
-	for (i = 0; i < ATH6KL_FW_CAPABILITY_MAX; i++) {
+	क्रम (i = 0; i < ATH6KL_FW_CAPABILITY_MAX; i++) अणु
 		index = i / 8;
 		bit = i % 8;
 
-		if (index >= sizeof(ar->fw_capabilities) * 4)
-			break;
+		अगर (index >= माप(ar->fw_capabilities) * 4)
+			अवरोध;
 
-		if (buf_len - len < 4) {
+		अगर (buf_len - len < 4) अणु
 			ath6kl_warn("firmware capability buffer too small!\n");
 
 			/* add "..." to the end of string */
-			trunc_len = strlen(trunc) + 1;
-			strncpy(buf + buf_len - trunc_len, trunc, trunc_len);
+			trunc_len = म_माप(trunc) + 1;
+			म_नकलन(buf + buf_len - trunc_len, trunc, trunc_len);
 
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (data[index] & (1 << bit)) {
-			len += scnprintf(buf + len, buf_len - len, "%s,",
+		अगर (data[index] & (1 << bit)) अणु
+			len += scnम_लिखो(buf + len, buf_len - len, "%s,",
 					    ath6kl_init_get_fw_capa_name(i));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* overwrite the last comma */
-	if (len > 0)
+	/* overग_लिखो the last comma */
+	अगर (len > 0)
 		len--;
 
 	buf[len] = '\0';
-}
+पूर्ण
 
-static int ath6kl_init_hw_reset(struct ath6kl *ar)
-{
+अटल पूर्णांक ath6kl_init_hw_reset(काष्ठा ath6kl *ar)
+अणु
 	ath6kl_dbg(ATH6KL_DBG_BOOT, "cold resetting the device");
 
-	return ath6kl_diag_write32(ar, RESET_CONTROL_ADDRESS,
+	वापस ath6kl_diag_ग_लिखो32(ar, RESET_CONTROL_ADDRESS,
 				   cpu_to_le32(RESET_CONTROL_COLD_RST));
-}
+पूर्ण
 
-static int __ath6kl_init_hw_start(struct ath6kl *ar)
-{
-	long timeleft;
-	int ret, i;
-	char buf[200];
+अटल पूर्णांक __ath6kl_init_hw_start(काष्ठा ath6kl *ar)
+अणु
+	दीर्घ समयleft;
+	पूर्णांक ret, i;
+	अक्षर buf[200];
 
 	ath6kl_dbg(ATH6KL_DBG_BOOT, "hw start\n");
 
-	ret = ath6kl_hif_power_on(ar);
-	if (ret)
-		return ret;
+	ret = ath6kl_hअगर_घातer_on(ar);
+	अगर (ret)
+		वापस ret;
 
 	ret = ath6kl_configure_target(ar);
-	if (ret)
-		goto err_power_off;
+	अगर (ret)
+		जाओ err_घातer_off;
 
 	ret = ath6kl_init_upload(ar);
-	if (ret)
-		goto err_power_off;
+	अगर (ret)
+		जाओ err_घातer_off;
 
 	/* Do we need to finish the BMI phase */
-	ret = ath6kl_bmi_done(ar);
-	if (ret)
-		goto err_power_off;
+	ret = ath6kl_bmi_करोne(ar);
+	अगर (ret)
+		जाओ err_घातer_off;
 
 	/*
-	 * The reason we have to wait for the target here is that the
+	 * The reason we have to रुको क्रम the target here is that the
 	 * driver layer has to init BMI in order to set the host block
 	 * size.
 	 */
-	ret = ath6kl_htc_wait_target(ar->htc_target);
+	ret = ath6kl_htc_रुको_target(ar->htc_target);
 
-	if (ret == -ETIMEDOUT) {
+	अगर (ret == -ETIMEDOUT) अणु
 		/*
 		 * Most likely USB target is in odd state after reboot and
 		 * needs a reset. A cold reset makes the whole device
@@ -1744,202 +1745,202 @@ static int __ath6kl_init_hw_start(struct ath6kl *ar)
 		 */
 		ath6kl_warn("htc wait target timed out, resetting device\n");
 		ath6kl_init_hw_reset(ar);
-		goto err_power_off;
-	} else if (ret) {
+		जाओ err_घातer_off;
+	पूर्ण अन्यथा अगर (ret) अणु
 		ath6kl_err("htc wait target failed: %d\n", ret);
-		goto err_power_off;
-	}
+		जाओ err_घातer_off;
+	पूर्ण
 
 	ret = ath6kl_init_service_ep(ar);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Endpoint service initialization failed: %d\n", ret);
-		goto err_cleanup_scatter;
-	}
+		जाओ err_cleanup_scatter;
+	पूर्ण
 
 	/* setup credit distribution */
 	ath6kl_htc_credit_setup(ar->htc_target, &ar->credit_state_info);
 
 	/* start HTC */
 	ret = ath6kl_htc_start(ar->htc_target);
-	if (ret) {
+	अगर (ret) अणु
 		/* FIXME: call this */
 		ath6kl_cookie_cleanup(ar);
-		goto err_cleanup_scatter;
-	}
+		जाओ err_cleanup_scatter;
+	पूर्ण
 
-	/* Wait for Wmi event to be ready */
-	timeleft = wait_event_interruptible_timeout(ar->event_wq,
+	/* Wait क्रम Wmi event to be पढ़ोy */
+	समयleft = रुको_event_पूर्णांकerruptible_समयout(ar->event_wq,
 						    test_bit(WMI_READY,
 							     &ar->flag),
 						    WMI_TIMEOUT);
-	if (timeleft <= 0) {
+	अगर (समयleft <= 0) अणु
 		clear_bit(WMI_READY, &ar->flag);
 		ath6kl_err("wmi is not ready or wait was interrupted: %ld\n",
-			   timeleft);
+			   समयleft);
 		ret = -EIO;
-		goto err_htc_stop;
-	}
+		जाओ err_htc_stop;
+	पूर्ण
 
 	ath6kl_dbg(ATH6KL_DBG_BOOT, "firmware booted\n");
 
-	if (test_and_clear_bit(FIRST_BOOT, &ar->flag)) {
+	अगर (test_and_clear_bit(FIRST_BOOT, &ar->flag)) अणु
 		ath6kl_info("%s %s fw %s api %d%s\n",
 			    ar->hw.name,
-			    ath6kl_init_get_hif_name(ar->hif_type),
+			    ath6kl_init_get_hअगर_name(ar->hअगर_type),
 			    ar->wiphy->fw_version,
 			    ar->fw_api,
 			    test_bit(TESTMODE, &ar->flag) ? " testmode" : "");
-		ath6kl_init_get_fwcaps(ar, buf, sizeof(buf));
+		ath6kl_init_get_fwcaps(ar, buf, माप(buf));
 		ath6kl_info("firmware supports: %s\n", buf);
-	}
+	पूर्ण
 
-	if (ar->version.abi_ver != ATH6KL_ABI_VERSION) {
+	अगर (ar->version.abi_ver != ATH6KL_ABI_VERSION) अणु
 		ath6kl_err("abi version mismatch: host(0x%x), target(0x%x)\n",
 			   ATH6KL_ABI_VERSION, ar->version.abi_ver);
 		ret = -EIO;
-		goto err_htc_stop;
-	}
+		जाओ err_htc_stop;
+	पूर्ण
 
 	ath6kl_dbg(ATH6KL_DBG_TRC, "%s: wmi is ready\n", __func__);
 
 	/* communicate the wmi protocol verision to the target */
-	/* FIXME: return error */
-	if ((ath6kl_set_host_app_area(ar)) != 0)
+	/* FIXME: वापस error */
+	अगर ((ath6kl_set_host_app_area(ar)) != 0)
 		ath6kl_err("unable to set the host app area\n");
 
-	for (i = 0; i < ar->vif_max; i++) {
+	क्रम (i = 0; i < ar->vअगर_max; i++) अणु
 		ret = ath6kl_target_config_wlan_params(ar, i);
-		if (ret)
-			goto err_htc_stop;
-	}
+		अगर (ret)
+			जाओ err_htc_stop;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_htc_stop:
 	ath6kl_htc_stop(ar->htc_target);
 err_cleanup_scatter:
-	ath6kl_hif_cleanup_scatter(ar);
-err_power_off:
-	ath6kl_hif_power_off(ar);
+	ath6kl_hअगर_cleanup_scatter(ar);
+err_घातer_off:
+	ath6kl_hअगर_घातer_off(ar);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ath6kl_init_hw_start(struct ath6kl *ar)
-{
-	int err;
+पूर्णांक ath6kl_init_hw_start(काष्ठा ath6kl *ar)
+अणु
+	पूर्णांक err;
 
 	err = __ath6kl_init_hw_start(ar);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	ar->state = ATH6KL_STATE_ON;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __ath6kl_init_hw_stop(struct ath6kl *ar)
-{
-	int ret;
+अटल पूर्णांक __ath6kl_init_hw_stop(काष्ठा ath6kl *ar)
+अणु
+	पूर्णांक ret;
 
 	ath6kl_dbg(ATH6KL_DBG_BOOT, "hw stop\n");
 
 	ath6kl_htc_stop(ar->htc_target);
 
-	ath6kl_hif_stop(ar);
+	ath6kl_hअगर_stop(ar);
 
 	ath6kl_bmi_reset(ar);
 
-	ret = ath6kl_hif_power_off(ar);
-	if (ret)
+	ret = ath6kl_hअगर_घातer_off(ar);
+	अगर (ret)
 		ath6kl_warn("failed to power off hif: %d\n", ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath6kl_init_hw_stop(struct ath6kl *ar)
-{
-	int err;
+पूर्णांक ath6kl_init_hw_stop(काष्ठा ath6kl *ar)
+अणु
+	पूर्णांक err;
 
 	err = __ath6kl_init_hw_stop(ar);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	ar->state = ATH6KL_STATE_OFF;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ath6kl_init_hw_restart(struct ath6kl *ar)
-{
+व्योम ath6kl_init_hw_restart(काष्ठा ath6kl *ar)
+अणु
 	clear_bit(WMI_READY, &ar->flag);
 
 	ath6kl_cfg80211_stop_all(ar);
 
-	if (__ath6kl_init_hw_stop(ar)) {
+	अगर (__ath6kl_init_hw_stop(ar)) अणु
 		ath6kl_dbg(ATH6KL_DBG_RECOVERY, "Failed to stop during fw error recovery\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (__ath6kl_init_hw_start(ar)) {
+	अगर (__ath6kl_init_hw_start(ar)) अणु
 		ath6kl_dbg(ATH6KL_DBG_RECOVERY, "Failed to restart during fw error recovery\n");
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-void ath6kl_stop_txrx(struct ath6kl *ar)
-{
-	struct ath6kl_vif *vif, *tmp_vif;
-	int i;
+व्योम ath6kl_stop_txrx(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_vअगर *vअगर, *पंचांगp_vअगर;
+	पूर्णांक i;
 
 	set_bit(DESTROY_IN_PROGRESS, &ar->flag);
 
-	if (down_interruptible(&ar->sem)) {
+	अगर (करोwn_पूर्णांकerruptible(&ar->sem)) अणु
 		ath6kl_err("down_interruptible failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < AP_MAX_NUM_STA; i++)
+	क्रम (i = 0; i < AP_MAX_NUM_STA; i++)
 		aggr_reset_state(ar->sta_list[i].aggr_conn);
 
 	spin_lock_bh(&ar->list_lock);
-	list_for_each_entry_safe(vif, tmp_vif, &ar->vif_list, list) {
-		list_del(&vif->list);
+	list_क्रम_each_entry_safe(vअगर, पंचांगp_vअगर, &ar->vअगर_list, list) अणु
+		list_del(&vअगर->list);
 		spin_unlock_bh(&ar->list_lock);
-		ath6kl_cfg80211_vif_stop(vif, test_bit(WMI_READY, &ar->flag));
+		ath6kl_cfg80211_vअगर_stop(vअगर, test_bit(WMI_READY, &ar->flag));
 		rtnl_lock();
 		wiphy_lock(ar->wiphy);
-		ath6kl_cfg80211_vif_cleanup(vif);
+		ath6kl_cfg80211_vअगर_cleanup(vअगर);
 		wiphy_unlock(ar->wiphy);
 		rtnl_unlock();
 		spin_lock_bh(&ar->list_lock);
-	}
+	पूर्ण
 	spin_unlock_bh(&ar->list_lock);
 
 	clear_bit(WMI_READY, &ar->flag);
 
-	if (ar->fw_recovery.enable)
-		del_timer_sync(&ar->fw_recovery.hb_timer);
+	अगर (ar->fw_recovery.enable)
+		del_समयr_sync(&ar->fw_recovery.hb_समयr);
 
 	/*
-	 * After wmi_shudown all WMI events will be dropped. We
+	 * After wmi_shuकरोwn all WMI events will be dropped. We
 	 * need to cleanup the buffers allocated in AP mode and
-	 * give disconnect notification to stack, which usually
+	 * give disconnect notअगरication to stack, which usually
 	 * happens in the disconnect_event. Simulate the disconnect
-	 * event by calling the function directly. Sometimes
+	 * event by calling the function directly. Someबार
 	 * disconnect_event will be received when the debug logs
 	 * are collected.
 	 */
-	ath6kl_wmi_shutdown(ar->wmi);
+	ath6kl_wmi_shutकरोwn(ar->wmi);
 
 	clear_bit(WMI_ENABLED, &ar->flag);
-	if (ar->htc_target) {
+	अगर (ar->htc_target) अणु
 		ath6kl_dbg(ATH6KL_DBG_TRC, "%s: shut down htc\n", __func__);
 		ath6kl_htc_stop(ar->htc_target);
-	}
+	पूर्ण
 
 	/*
-	 * Try to reset the device if we can. The driver may have been
+	 * Try to reset the device अगर we can. The driver may have been
 	 * configure NOT to reset the target during a debug session.
 	 */
 	ath6kl_init_hw_reset(ar);
 
 	up(&ar->sem);
-}
+पूर्ण
 EXPORT_SYMBOL(ath6kl_stop_txrx);

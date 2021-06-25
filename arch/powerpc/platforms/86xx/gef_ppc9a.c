@@ -1,177 +1,178 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * GE PPC9A board support
  *
  * Author: Martyn Welch <martyn.welch@ge.com>
  *
- * Copyright 2008 GE Intelligent Platforms Embedded Systems, Inc.
+ * Copyright 2008 GE Intelligent Platक्रमms Embedded Systems, Inc.
  *
- * Based on: mpc86xx_hpcn.c (MPC86xx HPCN board specific routines)
+ * Based on: mpc86xx_hpcn.c (MPC86xx HPCN board specअगरic routines)
  * Copyright 2006 Freescale Semiconductor Inc.
  *
  * NEC fixup adapted from arch/mips/pci/fixup-lm2e.c
  */
 
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/kdev_t.h>
-#include <linux/delay.h>
-#include <linux/seq_file.h>
-#include <linux/of_platform.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <asm/time.h>
-#include <asm/machdep.h>
-#include <asm/pci-bridge.h>
-#include <asm/prom.h>
-#include <mm/mmu_decl.h>
-#include <asm/udbg.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/pci-bridge.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <mm/mmu_decl.h>
+#समावेश <यंत्र/udbg.h>
 
-#include <asm/mpic.h>
-#include <asm/nvram.h>
+#समावेश <यंत्र/mpic.h>
+#समावेश <यंत्र/nvram.h>
 
-#include <sysdev/fsl_pci.h>
-#include <sysdev/fsl_soc.h>
-#include <sysdev/ge/ge_pic.h>
+#समावेश <sysdev/fsl_pci.h>
+#समावेश <sysdev/fsl_soc.h>
+#समावेश <sysdev/ge/ge_pic.h>
 
-#include "mpc86xx.h"
+#समावेश "mpc86xx.h"
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#ifdef DEBUG
-#define DBG (fmt...) do { printk(KERN_ERR "PPC9A: " fmt); } while (0)
-#else
-#define DBG (fmt...) do { } while (0)
-#endif
+#अगर_घोषित DEBUG
+#घोषणा DBG (fmt...) करो अणु prपूर्णांकk(KERN_ERR "PPC9A: " fmt); पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा DBG (fmt...) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-void __iomem *ppc9a_regs;
+व्योम __iomem *ppc9a_regs;
 
-static void __init gef_ppc9a_init_irq(void)
-{
-	struct device_node *cascade_node = NULL;
+अटल व्योम __init gef_ppc9a_init_irq(व्योम)
+अणु
+	काष्ठा device_node *cascade_node = शून्य;
 
 	mpc86xx_init_irq();
 
 	/*
-	 * There is a simple interrupt handler in the main FPGA, this needs
-	 * to be cascaded into the MPIC
+	 * There is a simple पूर्णांकerrupt handler in the मुख्य FPGA, this needs
+	 * to be cascaded पूर्णांकo the MPIC
 	 */
-	cascade_node = of_find_compatible_node(NULL, NULL, "gef,fpga-pic-1.00");
-	if (!cascade_node) {
-		printk(KERN_WARNING "PPC9A: No FPGA PIC\n");
-		return;
-	}
+	cascade_node = of_find_compatible_node(शून्य, शून्य, "gef,fpga-pic-1.00");
+	अगर (!cascade_node) अणु
+		prपूर्णांकk(KERN_WARNING "PPC9A: No FPGA PIC\n");
+		वापस;
+	पूर्ण
 
 	gef_pic_init(cascade_node);
 	of_node_put(cascade_node);
-}
+पूर्ण
 
-static void __init gef_ppc9a_setup_arch(void)
-{
-	struct device_node *regs;
+अटल व्योम __init gef_ppc9a_setup_arch(व्योम)
+अणु
+	काष्ठा device_node *regs;
 
-	printk(KERN_INFO "GE Intelligent Platforms PPC9A 6U VME SBC\n");
+	prपूर्णांकk(KERN_INFO "GE Intelligent Platforms PPC9A 6U VME SBC\n");
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	mpc86xx_smp_init();
-#endif
+#पूर्ण_अगर
 
 	fsl_pci_assign_primary();
 
-	/* Remap basic board registers */
-	regs = of_find_compatible_node(NULL, NULL, "gef,ppc9a-fpga-regs");
-	if (regs) {
+	/* Remap basic board रेजिस्टरs */
+	regs = of_find_compatible_node(शून्य, शून्य, "gef,ppc9a-fpga-regs");
+	अगर (regs) अणु
 		ppc9a_regs = of_iomap(regs, 0);
-		if (ppc9a_regs == NULL)
-			printk(KERN_WARNING "Unable to map board registers\n");
+		अगर (ppc9a_regs == शून्य)
+			prपूर्णांकk(KERN_WARNING "Unable to map board registers\n");
 		of_node_put(regs);
-	}
+	पूर्ण
 
-#if defined(CONFIG_MMIO_NVRAM)
+#अगर defined(CONFIG_MMIO_NVRAM)
 	mmio_nvram_init();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /* Return the PCB revision */
-static unsigned int gef_ppc9a_get_pcb_rev(void)
-{
-	unsigned int reg;
+अटल अचिन्हित पूर्णांक gef_ppc9a_get_pcb_rev(व्योम)
+अणु
+	अचिन्हित पूर्णांक reg;
 
-	reg = ioread32be(ppc9a_regs);
-	return (reg >> 16) & 0xff;
-}
+	reg = ioपढ़ो32be(ppc9a_regs);
+	वापस (reg >> 16) & 0xff;
+पूर्ण
 
 /* Return the board (software) revision */
-static unsigned int gef_ppc9a_get_board_rev(void)
-{
-	unsigned int reg;
+अटल अचिन्हित पूर्णांक gef_ppc9a_get_board_rev(व्योम)
+अणु
+	अचिन्हित पूर्णांक reg;
 
-	reg = ioread32be(ppc9a_regs);
-	return (reg >> 8) & 0xff;
-}
+	reg = ioपढ़ो32be(ppc9a_regs);
+	वापस (reg >> 8) & 0xff;
+पूर्ण
 
 /* Return the FPGA revision */
-static unsigned int gef_ppc9a_get_fpga_rev(void)
-{
-	unsigned int reg;
+अटल अचिन्हित पूर्णांक gef_ppc9a_get_fpga_rev(व्योम)
+अणु
+	अचिन्हित पूर्णांक reg;
 
-	reg = ioread32be(ppc9a_regs);
-	return reg & 0xf;
-}
+	reg = ioपढ़ो32be(ppc9a_regs);
+	वापस reg & 0xf;
+पूर्ण
 
 /* Return VME Geographical Address */
-static unsigned int gef_ppc9a_get_vme_geo_addr(void)
-{
-	unsigned int reg;
+अटल अचिन्हित पूर्णांक gef_ppc9a_get_vme_geo_addr(व्योम)
+अणु
+	अचिन्हित पूर्णांक reg;
 
-	reg = ioread32be(ppc9a_regs + 0x4);
-	return reg & 0x1f;
-}
+	reg = ioपढ़ो32be(ppc9a_regs + 0x4);
+	वापस reg & 0x1f;
+पूर्ण
 
 /* Return VME System Controller Status */
-static unsigned int gef_ppc9a_get_vme_is_syscon(void)
-{
-	unsigned int reg;
+अटल अचिन्हित पूर्णांक gef_ppc9a_get_vme_is_syscon(व्योम)
+अणु
+	अचिन्हित पूर्णांक reg;
 
-	reg = ioread32be(ppc9a_regs + 0x4);
-	return (reg >> 9) & 0x1;
-}
+	reg = ioपढ़ो32be(ppc9a_regs + 0x4);
+	वापस (reg >> 9) & 0x1;
+पूर्ण
 
-static void gef_ppc9a_show_cpuinfo(struct seq_file *m)
-{
-	uint svid = mfspr(SPRN_SVR);
+अटल व्योम gef_ppc9a_show_cpuinfo(काष्ठा seq_file *m)
+अणु
+	uपूर्णांक svid = mfspr(SPRN_SVR);
 
-	seq_printf(m, "Vendor\t\t: GE Intelligent Platforms\n");
+	seq_म_लिखो(m, "Vendor\t\t: GE Intelligent Platforms\n");
 
-	seq_printf(m, "Revision\t: %u%c\n", gef_ppc9a_get_pcb_rev(),
+	seq_म_लिखो(m, "Revision\t: %u%c\n", gef_ppc9a_get_pcb_rev(),
 		('A' + gef_ppc9a_get_board_rev()));
-	seq_printf(m, "FPGA Revision\t: %u\n", gef_ppc9a_get_fpga_rev());
+	seq_म_लिखो(m, "FPGA Revision\t: %u\n", gef_ppc9a_get_fpga_rev());
 
-	seq_printf(m, "SVR\t\t: 0x%x\n", svid);
+	seq_म_लिखो(m, "SVR\t\t: 0x%x\n", svid);
 
-	seq_printf(m, "VME geo. addr\t: %u\n", gef_ppc9a_get_vme_geo_addr());
+	seq_म_लिखो(m, "VME geo. addr\t: %u\n", gef_ppc9a_get_vme_geo_addr());
 
-	seq_printf(m, "VME syscon\t: %s\n",
+	seq_म_लिखो(m, "VME syscon\t: %s\n",
 		gef_ppc9a_get_vme_is_syscon() ? "yes" : "no");
-}
+पूर्ण
 
-static void gef_ppc9a_nec_fixup(struct pci_dev *pdev)
-{
-	unsigned int val;
+अटल व्योम gef_ppc9a_nec_fixup(काष्ठा pci_dev *pdev)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	/* Do not do the fixup on other platforms! */
-	if (!machine_is(gef_ppc9a))
-		return;
+	/* Do not करो the fixup on other platक्रमms! */
+	अगर (!machine_is(gef_ppc9a))
+		वापस;
 
-	printk(KERN_INFO "Running NEC uPD720101 Fixup\n");
+	prपूर्णांकk(KERN_INFO "Running NEC uPD720101 Fixup\n");
 
 	/* Ensure ports 1, 2, 3, 4 & 5 are enabled */
-	pci_read_config_dword(pdev, 0xe0, &val);
-	pci_write_config_dword(pdev, 0xe0, (val & ~7) | 0x5);
+	pci_पढ़ो_config_dword(pdev, 0xe0, &val);
+	pci_ग_लिखो_config_dword(pdev, 0xe0, (val & ~7) | 0x5);
 
-	/* System clock is 48-MHz Oscillator and EHCI Enabled. */
-	pci_write_config_dword(pdev, 0xe4, 1 << 5);
-}
+	/* System घड़ी is 48-MHz Oscillator and EHCI Enabled. */
+	pci_ग_लिखो_config_dword(pdev, 0xe4, 1 << 5);
+पूर्ण
 DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_NEC, PCI_DEVICE_ID_NEC_USB,
 	gef_ppc9a_nec_fixup);
 
@@ -179,31 +180,31 @@ DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_NEC, PCI_DEVICE_ID_NEC_USB,
  * Called very early, device-tree isn't unflattened
  *
  * This function is called to determine whether the BSP is compatible with the
- * supplied device-tree, which is assumed to be the correct one for the actual
+ * supplied device-tree, which is assumed to be the correct one क्रम the actual
  * board. It is expected thati, in the future, a kernel may support multiple
  * boards.
  */
-static int __init gef_ppc9a_probe(void)
-{
-	if (of_machine_is_compatible("gef,ppc9a"))
-		return 1;
+अटल पूर्णांक __init gef_ppc9a_probe(व्योम)
+अणु
+	अगर (of_machine_is_compatible("gef,ppc9a"))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 machine_arch_initcall(gef_ppc9a, mpc86xx_common_publish_devices);
 
-define_machine(gef_ppc9a) {
+define_machine(gef_ppc9a) अणु
 	.name			= "GE PPC9A",
 	.probe			= gef_ppc9a_probe,
 	.setup_arch		= gef_ppc9a_setup_arch,
 	.init_IRQ		= gef_ppc9a_init_irq,
 	.show_cpuinfo		= gef_ppc9a_show_cpuinfo,
 	.get_irq		= mpic_get_irq,
-	.time_init		= mpc86xx_time_init,
+	.समय_init		= mpc86xx_समय_init,
 	.calibrate_decr		= generic_calibrate_decr,
 	.progress		= udbg_progress,
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 	.pcibios_fixup_bus	= fsl_pcibios_fixup_bus,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;

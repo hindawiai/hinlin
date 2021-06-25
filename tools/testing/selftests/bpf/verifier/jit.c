@@ -1,6 +1,7 @@
-{
+<शैली गुरु>
+अणु
 	"jit: lsh, rsh, arsh by 1",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_MOV64_IMM(BPF_REG_1, 0xff),
 	BPF_ALU64_IMM(BPF_LSH, BPF_REG_1, 1),
@@ -16,13 +17,13 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 2,
-},
-{
+पूर्ण,
+अणु
 	"jit: mov32 for ldimm64, 1",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_LD_IMM64(BPF_REG_1, 0xfeffffffffffffffULL),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_1, 32),
@@ -30,26 +31,26 @@
 	BPF_JMP_REG(BPF_JEQ, BPF_REG_1, BPF_REG_2, 1),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 2,
-},
-{
+पूर्ण,
+अणु
 	"jit: mov32 for ldimm64, 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_LD_IMM64(BPF_REG_1, 0x1ffffffffULL),
 	BPF_LD_IMM64(BPF_REG_2, 0xffffffffULL),
 	BPF_JMP_REG(BPF_JEQ, BPF_REG_1, BPF_REG_2, 1),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 2,
-},
-{
+पूर्ण,
+अणु
 	"jit: various mul tests",
-	.insns = {
+	.insns = अणु
 	BPF_LD_IMM64(BPF_REG_2, 0xeeff0d413122ULL),
 	BPF_LD_IMM64(BPF_REG_0, 0xfefefeULL),
 	BPF_LD_IMM64(BPF_REG_1, 0xefefefULL),
@@ -82,13 +83,13 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 2,
-},
-{
+पूर्ण,
+अणु
 	"jit: jsgt, jslt",
-	.insns = {
+	.insns = अणु
 	BPF_LD_IMM64(BPF_REG_1, 0x80000000ULL),
 	BPF_LD_IMM64(BPF_REG_2, 0x0ULL),
 	BPF_JMP_REG(BPF_JSGT, BPF_REG_1, BPF_REG_2, 2),
@@ -101,31 +102,31 @@
 
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 2,
-},
-{
+पूर्ण,
+अणु
 	"jit: torturous jumps, imm8 nop jmp and pure jump padding",
-	.insns = { },
+	.insns = अणु पूर्ण,
 	.fill_helper = bpf_fill_torturous_jumps,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 1,
-},
-{
+पूर्ण,
+अणु
 	"jit: torturous jumps, imm32 nop jmp and jmp_cond padding",
-	.insns = { },
+	.insns = अणु पूर्ण,
 	.fill_helper = bpf_fill_torturous_jumps,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 2,
-},
-{
+पूर्ण,
+अणु
 	"jit: torturous jumps in subprog",
-	.insns = { },
+	.insns = अणु पूर्ण,
 	.fill_helper = bpf_fill_torturous_jumps,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 3,
-},
+पूर्ण,

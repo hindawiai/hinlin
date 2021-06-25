@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /*
  * Copyright (C) 2014, 2018-2020 Intel Corporation
  * Copyright (C) 2014-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
-#ifndef __fw_error_dump_h__
-#define __fw_error_dump_h__
+#अगर_अघोषित __fw_error_dump_h__
+#घोषणा __fw_error_dump_h__
 
-#include <linux/types.h>
-#include "fw/api/cmdhdr.h"
+#समावेश <linux/types.h>
+#समावेश "fw/api/cmdhdr.h"
 
-#define IWL_FW_ERROR_DUMP_BARKER	0x14789632
-#define IWL_FW_INI_ERROR_DUMP_BARKER	0x14789633
+#घोषणा IWL_FW_ERROR_DUMP_BARKER	0x14789632
+#घोषणा IWL_FW_INI_ERROR_DUMP_BARKER	0x14789633
 
 /**
- * enum iwl_fw_error_dump_type - types of data in the dump file
+ * क्रमागत iwl_fw_error_dump_type - types of data in the dump file
  * @IWL_FW_ERROR_DUMP_CSR: Control Status Registers - from offset 0
  * @IWL_FW_ERROR_DUMP_RXF:
- * @IWL_FW_ERROR_DUMP_TXCMD: last TX command data, structured as
- *	&struct iwl_fw_error_dump_txcmd packets
- * @IWL_FW_ERROR_DUMP_DEV_FW_INFO:  struct %iwl_fw_error_dump_info
+ * @IWL_FW_ERROR_DUMP_TXCMD: last TX command data, काष्ठाured as
+ *	&काष्ठा iwl_fw_error_dump_txcmd packets
+ * @IWL_FW_ERROR_DUMP_DEV_FW_INFO:  काष्ठा %iwl_fw_error_dump_info
  *	info on the device / firmware.
  * @IWL_FW_ERROR_DUMP_FW_MONITOR: firmware monitor
- * @IWL_FW_ERROR_DUMP_PRPH: range of periphery registers - there can be several
+ * @IWL_FW_ERROR_DUMP_PRPH: range of periphery रेजिस्टरs - there can be several
  *	sections like this in a single file.
- * @IWL_FW_ERROR_DUMP_FH_REGS: range of FH registers
+ * @IWL_FW_ERROR_DUMP_FH_REGS: range of FH रेजिस्टरs
  * @IWL_FW_ERROR_DUMP_MEM: chunk of memory
  * @IWL_FW_ERROR_DUMP_ERROR_INFO: description of what triggered this dump.
- *	Structured as &struct iwl_fw_error_dump_trigger_desc.
- * @IWL_FW_ERROR_DUMP_RB: the content of an RB structured as
- *	&struct iwl_fw_error_dump_rb
+ *	Structured as &काष्ठा iwl_fw_error_dump_trigger_desc.
+ * @IWL_FW_ERROR_DUMP_RB: the content of an RB काष्ठाured as
+ *	&काष्ठा iwl_fw_error_dump_rb
  * @IWL_FW_ERROR_PAGING: UMAC's image memory segments which were
  *	paged to the DRAM.
- * @IWL_FW_ERROR_DUMP_RADIO_REG: Dump the radio registers.
- * @IWL_FW_ERROR_DUMP_EXTERNAL: used only by external code utilities, and
- *	for that reason is not in use in any other place in the Linux Wi-Fi
+ * @IWL_FW_ERROR_DUMP_RADIO_REG: Dump the radio रेजिस्टरs.
+ * @IWL_FW_ERROR_DUMP_EXTERNAL: used only by बाह्यal code utilities, and
+ *	क्रम that reason is not in use in any other place in the Linux Wi-Fi
  *	stack.
- * @IWL_FW_ERROR_DUMP_MEM_CFG: the addresses and sizes of fifos in the smem,
- *	which we get from the fw after ALIVE. The content is structured as
- *	&struct iwl_fw_error_dump_smem_cfg.
+ * @IWL_FW_ERROR_DUMP_MEM_CFG: the addresses and sizes of fअगरos in the smem,
+ *	which we get from the fw after ALIVE. The content is काष्ठाured as
+ *	&काष्ठा iwl_fw_error_dump_smem_cfg.
  */
-enum iwl_fw_error_dump_type {
+क्रमागत iwl_fw_error_dump_type अणु
 	/* 0 is deprecated */
 	IWL_FW_ERROR_DUMP_CSR = 1,
 	IWL_FW_ERROR_DUMP_RXF = 2,
@@ -61,296 +62,296 @@ enum iwl_fw_error_dump_type {
 	IWL_FW_ERROR_DUMP_D3_DEBUG_DATA = 17,
 
 	IWL_FW_ERROR_DUMP_MAX,
-};
+पूर्ण;
 
 /**
- * struct iwl_fw_error_dump_data - data for one type
- * @type: &enum iwl_fw_error_dump_type
+ * काष्ठा iwl_fw_error_dump_data - data क्रम one type
+ * @type: &क्रमागत iwl_fw_error_dump_type
  * @len: the length starting from %data
  * @data: the data itself
  */
-struct iwl_fw_error_dump_data {
+काष्ठा iwl_fw_error_dump_data अणु
 	__le32 type;
 	__le32 len;
 	__u8 data[];
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct iwl_fw_error_dump_file - the layout of the header of the file
+ * काष्ठा iwl_fw_error_dump_file - the layout of the header of the file
  * @barker: must be %IWL_FW_ERROR_DUMP_BARKER
  * @file_len: the length of all the file starting from %barker
- * @data: array of &struct iwl_fw_error_dump_data
+ * @data: array of &काष्ठा iwl_fw_error_dump_data
  */
-struct iwl_fw_error_dump_file {
+काष्ठा iwl_fw_error_dump_file अणु
 	__le32 barker;
 	__le32 file_len;
 	u8 data[0];
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct iwl_fw_error_dump_txcmd - TX command data
+ * काष्ठा iwl_fw_error_dump_txcmd - TX command data
  * @cmdlen: original length of command
  * @caplen: captured length of command (may be less)
  * @data: captured command data, @caplen bytes
  */
-struct iwl_fw_error_dump_txcmd {
+काष्ठा iwl_fw_error_dump_txcmd अणु
 	__le32 cmdlen;
 	__le32 caplen;
 	u8 data[];
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct iwl_fw_error_dump_fifo - RX/TX FIFO data
- * @fifo_num: number of FIFO (starting from 0)
+ * काष्ठा iwl_fw_error_dump_fअगरo - RX/TX FIFO data
+ * @fअगरo_num: number of FIFO (starting from 0)
  * @available_bytes: num of bytes available in FIFO (may be less than FIFO size)
- * @wr_ptr: position of write pointer
- * @rd_ptr: position of read pointer
- * @fence_ptr: position of fence pointer
- * @fence_mode: the current mode of the fence (before locking) -
- *	0=follow RD pointer ; 1 = freeze
+ * @wr_ptr: position of ग_लिखो poपूर्णांकer
+ * @rd_ptr: position of पढ़ो poपूर्णांकer
+ * @fence_ptr: position of fence poपूर्णांकer
+ * @fence_mode: the current mode of the fence (beक्रमe locking) -
+ *	0=follow RD poपूर्णांकer ; 1 = मुक्तze
  * @data: all of the FIFO's data
  */
-struct iwl_fw_error_dump_fifo {
-	__le32 fifo_num;
+काष्ठा iwl_fw_error_dump_fअगरo अणु
+	__le32 fअगरo_num;
 	__le32 available_bytes;
 	__le32 wr_ptr;
 	__le32 rd_ptr;
 	__le32 fence_ptr;
 	__le32 fence_mode;
 	u8 data[];
-} __packed;
+पूर्ण __packed;
 
-enum iwl_fw_error_dump_family {
+क्रमागत iwl_fw_error_dump_family अणु
 	IWL_FW_ERROR_DUMP_FAMILY_7 = 7,
 	IWL_FW_ERROR_DUMP_FAMILY_8 = 8,
-};
+पूर्ण;
 
-#define MAX_NUM_LMAC 2
+#घोषणा MAX_NUM_LMAC 2
 
 /**
- * struct iwl_fw_error_dump_info - info on the device / firmware
+ * काष्ठा iwl_fw_error_dump_info - info on the device / firmware
  * @hw_type: the type of the device
  * @hw_step: the step of the device
- * @fw_human_readable: human readable FW version
- * @dev_human_readable: name of the device
- * @bus_human_readable: name of the bus used
+ * @fw_human_पढ़ोable: human पढ़ोable FW version
+ * @dev_human_पढ़ोable: name of the device
+ * @bus_human_पढ़ोable: name of the bus used
  * @num_of_lmacs: the number of lmacs
  * @lmac_err_id: the lmac 0/1 error_id/rt_status that triggered the latest dump
- *	if the dump collection was not initiated by an assert, the value is 0
+ *	अगर the dump collection was not initiated by an निश्चित, the value is 0
  * @umac_err_id: the umac error_id/rt_status that triggered the latest dump
- *	if the dump collection was not initiated by an assert, the value is 0
+ *	अगर the dump collection was not initiated by an निश्चित, the value is 0
  */
-struct iwl_fw_error_dump_info {
+काष्ठा iwl_fw_error_dump_info अणु
 	__le32 hw_type;
 	__le32 hw_step;
-	u8 fw_human_readable[FW_VER_HUMAN_READABLE_SZ];
-	u8 dev_human_readable[64];
-	u8 bus_human_readable[8];
+	u8 fw_human_पढ़ोable[FW_VER_HUMAN_READABLE_SZ];
+	u8 dev_human_पढ़ोable[64];
+	u8 bus_human_पढ़ोable[8];
 	u8 num_of_lmacs;
 	__le32 umac_err_id;
 	__le32 lmac_err_id[MAX_NUM_LMAC];
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct iwl_fw_error_dump_fw_mon - FW monitor data
- * @fw_mon_wr_ptr: the position of the write pointer in the cyclic buffer
- * @fw_mon_base_ptr: base pointer of the data
+ * काष्ठा iwl_fw_error_dump_fw_mon - FW monitor data
+ * @fw_mon_wr_ptr: the position of the ग_लिखो poपूर्णांकer in the cyclic buffer
+ * @fw_mon_base_ptr: base poपूर्णांकer of the data
  * @fw_mon_cycle_cnt: number of wraparounds
  * @fw_mon_base_high_ptr: used in AX210 devices, the base adderss is 64 bit
  *	so fw_mon_base_ptr holds LSB 32 bits and fw_mon_base_high_ptr hold
  *	MSB 32 bits
- * @reserved: for future use
+ * @reserved: क्रम future use
  * @data: captured data
  */
-struct iwl_fw_error_dump_fw_mon {
+काष्ठा iwl_fw_error_dump_fw_mon अणु
 	__le32 fw_mon_wr_ptr;
 	__le32 fw_mon_base_ptr;
 	__le32 fw_mon_cycle_cnt;
 	__le32 fw_mon_base_high_ptr;
 	__le32 reserved[2];
 	u8 data[];
-} __packed;
+पूर्ण __packed;
 
-#define MAX_NUM_LMAC 2
-#define TX_FIFO_INTERNAL_MAX_NUM	6
-#define TX_FIFO_MAX_NUM			15
+#घोषणा MAX_NUM_LMAC 2
+#घोषणा TX_FIFO_INTERNAL_MAX_NUM	6
+#घोषणा TX_FIFO_MAX_NUM			15
 /**
- * struct iwl_fw_error_dump_smem_cfg - Dump SMEM configuration
- *	This must follow &struct iwl_fwrt_shared_mem_cfg.
+ * काष्ठा iwl_fw_error_dump_smem_cfg - Dump SMEM configuration
+ *	This must follow &काष्ठा iwl_fwrt_shared_mem_cfg.
  * @num_lmacs: number of lmacs
- * @num_txfifo_entries: number of tx fifos
- * @lmac: sizes of lmacs txfifos and rxfifo1
- * @rxfifo2_size: size of rxfifo2
- * @internal_txfifo_addr: address of internal tx fifo
- * @internal_txfifo_size: size of internal tx fifo
+ * @num_txfअगरo_entries: number of tx fअगरos
+ * @lmac: sizes of lmacs txfअगरos and rxfअगरo1
+ * @rxfअगरo2_size: size of rxfअगरo2
+ * @पूर्णांकernal_txfअगरo_addr: address of पूर्णांकernal tx fअगरo
+ * @पूर्णांकernal_txfअगरo_size: size of पूर्णांकernal tx fअगरo
  */
-struct iwl_fw_error_dump_smem_cfg {
+काष्ठा iwl_fw_error_dump_smem_cfg अणु
 	__le32 num_lmacs;
-	__le32 num_txfifo_entries;
-	struct {
-		__le32 txfifo_size[TX_FIFO_MAX_NUM];
-		__le32 rxfifo1_size;
-	} lmac[MAX_NUM_LMAC];
-	__le32 rxfifo2_size;
-	__le32 internal_txfifo_addr;
-	__le32 internal_txfifo_size[TX_FIFO_INTERNAL_MAX_NUM];
-} __packed;
+	__le32 num_txfअगरo_entries;
+	काष्ठा अणु
+		__le32 txfअगरo_size[TX_FIFO_MAX_NUM];
+		__le32 rxfअगरo1_size;
+	पूर्ण lmac[MAX_NUM_LMAC];
+	__le32 rxfअगरo2_size;
+	__le32 पूर्णांकernal_txfअगरo_addr;
+	__le32 पूर्णांकernal_txfअगरo_size[TX_FIFO_INTERNAL_MAX_NUM];
+पूर्ण __packed;
 /**
- * struct iwl_fw_error_dump_prph - periphery registers data
- * @prph_start: address of the first register in this chunk
- * @data: the content of the registers
+ * काष्ठा iwl_fw_error_dump_prph - periphery रेजिस्टरs data
+ * @prph_start: address of the first रेजिस्टर in this chunk
+ * @data: the content of the रेजिस्टरs
  */
-struct iwl_fw_error_dump_prph {
+काष्ठा iwl_fw_error_dump_prph अणु
 	__le32 prph_start;
 	__le32 data[];
-};
+पूर्ण;
 
-enum iwl_fw_error_dump_mem_type {
+क्रमागत iwl_fw_error_dump_mem_type अणु
 	IWL_FW_ERROR_DUMP_MEM_SRAM,
 	IWL_FW_ERROR_DUMP_MEM_SMEM,
 	IWL_FW_ERROR_DUMP_MEM_NAMED_MEM = 10,
-};
+पूर्ण;
 
 /**
- * struct iwl_fw_error_dump_mem - chunk of memory
- * @type: &enum iwl_fw_error_dump_mem_type
- * @offset: the offset from which the memory was read
+ * काष्ठा iwl_fw_error_dump_mem - chunk of memory
+ * @type: &क्रमागत iwl_fw_error_dump_mem_type
+ * @offset: the offset from which the memory was पढ़ो
  * @data: the content of the memory
  */
-struct iwl_fw_error_dump_mem {
+काष्ठा iwl_fw_error_dump_mem अणु
 	__le32 type;
 	__le32 offset;
 	u8 data[];
-};
+पूर्ण;
 
-/* Dump version, used by the dump parser to differentiate between
- * different dump formats
+/* Dump version, used by the dump parser to dअगरferentiate between
+ * dअगरferent dump क्रमmats
  */
-#define IWL_INI_DUMP_VER 1
+#घोषणा IWL_INI_DUMP_VER 1
 
-/* Use bit 31 as dump info type to avoid colliding with region types */
-#define IWL_INI_DUMP_INFO_TYPE BIT(31)
+/* Use bit 31 as dump info type to aव्योम colliding with region types */
+#घोषणा IWL_INI_DUMP_INFO_TYPE BIT(31)
 
 /**
- * struct iwl_fw_ini_dump_entry
+ * काष्ठा iwl_fw_ini_dump_entry
  * @list: list of dump entries
  * @size: size of the data
  * @data: entry data
  */
-struct iwl_fw_ini_dump_entry {
-	struct list_head list;
+काष्ठा iwl_fw_ini_dump_entry अणु
+	काष्ठा list_head list;
 	u32 size;
 	u8 data[];
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct iwl_fw_error_dump_file - header of dump file
+ * काष्ठा iwl_fw_error_dump_file - header of dump file
  * @barker: must be %IWL_FW_INI_ERROR_DUMP_BARKER
  * @file_len: the length of all the file including the header
  */
-struct iwl_fw_ini_dump_file_hdr {
+काष्ठा iwl_fw_ini_dump_file_hdr अणु
 	__le32 barker;
 	__le32 file_len;
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct iwl_fw_ini_fifo_hdr - fifo range header
- * @fifo_num: the fifo number. In case of umac rx fifo, set BIT(31) to
- *	distinguish between lmac and umac rx fifos
- * @num_of_registers: num of registers to dump, dword size each
+ * काष्ठा iwl_fw_ini_fअगरo_hdr - fअगरo range header
+ * @fअगरo_num: the fअगरo number. In हाल of umac rx fअगरo, set BIT(31) to
+ *	distinguish between lmac and umac rx fअगरos
+ * @num_of_रेजिस्टरs: num of रेजिस्टरs to dump, dword size each
  */
-struct iwl_fw_ini_fifo_hdr {
-	__le32 fifo_num;
-	__le32 num_of_registers;
-} __packed;
+काष्ठा iwl_fw_ini_fअगरo_hdr अणु
+	__le32 fअगरo_num;
+	__le32 num_of_रेजिस्टरs;
+पूर्ण __packed;
 
 /**
- * struct iwl_fw_ini_error_dump_range - range of memory
+ * काष्ठा iwl_fw_ini_error_dump_range - range of memory
  * @range_data_size: the size of this range, in bytes
- * @internal_base_addr: base address of internal memory range
+ * @पूर्णांकernal_base_addr: base address of पूर्णांकernal memory range
  * @dram_base_addr: base address of dram monitor range
  * @page_num: page number of memory range
- * @fifo_hdr: fifo header of memory range
+ * @fअगरo_hdr: fअगरo header of memory range
  * @fw_pkt: FW packet header of memory range
  * @data: the actual memory
  */
-struct iwl_fw_ini_error_dump_range {
+काष्ठा iwl_fw_ini_error_dump_range अणु
 	__le32 range_data_size;
-	union {
-		__le32 internal_base_addr;
+	जोड़ अणु
+		__le32 पूर्णांकernal_base_addr;
 		__le64 dram_base_addr;
 		__le32 page_num;
-		struct iwl_fw_ini_fifo_hdr fifo_hdr;
-		struct iwl_cmd_header fw_pkt_hdr;
-	};
+		काष्ठा iwl_fw_ini_fअगरo_hdr fअगरo_hdr;
+		काष्ठा iwl_cmd_header fw_pkt_hdr;
+	पूर्ण;
 	__le32 data[];
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct iwl_fw_ini_error_dump_header - ini region dump header
+ * काष्ठा iwl_fw_ini_error_dump_header - ini region dump header
  * @version: dump version
  * @region_id: id of the region
  * @num_of_ranges: number of ranges in this region
  * @name_len: number of bytes allocated to the name string of this region
  * @name: name of the region
  */
-struct iwl_fw_ini_error_dump_header {
+काष्ठा iwl_fw_ini_error_dump_header अणु
 	__le32 version;
 	__le32 region_id;
 	__le32 num_of_ranges;
 	__le32 name_len;
 	u8 name[IWL_FW_INI_MAX_NAME];
-};
+पूर्ण;
 
 /**
- * struct iwl_fw_ini_error_dump - ini region dump
+ * काष्ठा iwl_fw_ini_error_dump - ini region dump
  * @header: the header of this region
  * @ranges: the memory ranges of this region
  */
-struct iwl_fw_ini_error_dump {
-	struct iwl_fw_ini_error_dump_header header;
-	struct iwl_fw_ini_error_dump_range ranges[];
-} __packed;
+काष्ठा iwl_fw_ini_error_dump अणु
+	काष्ठा iwl_fw_ini_error_dump_header header;
+	काष्ठा iwl_fw_ini_error_dump_range ranges[];
+पूर्ण __packed;
 
-/* This bit is used to differentiate between lmac and umac rxf */
-#define IWL_RXF_UMAC_BIT BIT(31)
+/* This bit is used to dअगरferentiate between lmac and umac rxf */
+#घोषणा IWL_RXF_UMAC_BIT BIT(31)
 
 /**
- * struct iwl_fw_ini_error_dump_register - ini register dump
- * @addr: address of the register
- * @data: data of the register
+ * काष्ठा iwl_fw_ini_error_dump_रेजिस्टर - ini रेजिस्टर dump
+ * @addr: address of the रेजिस्टर
+ * @data: data of the रेजिस्टर
  */
-struct iwl_fw_ini_error_dump_register {
+काष्ठा iwl_fw_ini_error_dump_रेजिस्टर अणु
 	__le32 addr;
 	__le32 data;
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct iwl_fw_ini_dump_cfg_name - configuration name
+ * काष्ठा iwl_fw_ini_dump_cfg_name - configuration name
  * @image_type: image type the configuration is related to
  * @cfg_name_len: length of the configuration name
  * @cfg_name: name of the configuraiton
  */
-struct iwl_fw_ini_dump_cfg_name {
+काष्ठा iwl_fw_ini_dump_cfg_name अणु
 	__le32 image_type;
 	__le32 cfg_name_len;
 	u8 cfg_name[IWL_FW_INI_MAX_CFG_NAME];
-} __packed;
+पूर्ण __packed;
 
 /* AX210's HW type */
-#define IWL_AX210_HW_TYPE 0x42
+#घोषणा IWL_AX210_HW_TYPE 0x42
 /* How many bits to roll when adding to the HW type of AX210 HW */
-#define IWL_AX210_HW_TYPE_ADDITION_SHIFT 12
+#घोषणा IWL_AX210_HW_TYPE_ADDITION_SHIFT 12
 /* This prph is used to tell apart HW_TYPE == 0x42 NICs */
-#define WFPM_OTP_CFG1_ADDR 0xd03098
-#define WFPM_OTP_CFG1_IS_JACKET_BIT BIT(4)
-#define WFPM_OTP_CFG1_IS_CDB_BIT BIT(5)
+#घोषणा WFPM_OTP_CFG1_ADDR 0xd03098
+#घोषणा WFPM_OTP_CFG1_IS_JACKET_BIT BIT(4)
+#घोषणा WFPM_OTP_CFG1_IS_CDB_BIT BIT(5)
 
-/* struct iwl_fw_ini_dump_info - ini dump information
+/* काष्ठा iwl_fw_ini_dump_info - ini dump inक्रमmation
  * @version: dump version
- * @time_point: time point that caused the dump collection
+ * @समय_poपूर्णांक: समय poपूर्णांक that caused the dump collection
  * @trigger_reason: reason of the trigger
- * @external_cfg_state: &enum iwl_ini_cfg_state
+ * @बाह्यal_cfg_state: &क्रमागत iwl_ini_cfg_state
  * @ver_type: FW version type
  * @ver_subtype: FW version subype
  * @hw_step: HW step
@@ -363,18 +364,18 @@ struct iwl_fw_ini_dump_cfg_name {
  * @lmac_minor: lmac minor version
  * @umac_major: umac major version
  * @umac_minor: umac minor version
- * @fw_mon_mode: FW monitor mode &enum iwl_fw_ini_buffer_location
- * @regions_mask: bitmap mask of regions ids in the dump
+ * @fw_mon_mode: FW monitor mode &क्रमागत iwl_fw_ini_buffer_location
+ * @regions_mask: biपंचांगap mask of regions ids in the dump
  * @build_tag_len: length of the build tag
  * @build_tag: build tag string
- * @num_of_cfg_names: number of configuration name structs
+ * @num_of_cfg_names: number of configuration name काष्ठाs
  * @cfg_names: configuration names
  */
-struct iwl_fw_ini_dump_info {
+काष्ठा iwl_fw_ini_dump_info अणु
 	__le32 version;
-	__le32 time_point;
+	__le32 समय_poपूर्णांक;
 	__le32 trigger_reason;
-	__le32 external_cfg_state;
+	__le32 बाह्यal_cfg_state;
 	__le32 ver_type;
 	__le32 ver_subtype;
 	__le32 hw_step;
@@ -392,109 +393,109 @@ struct iwl_fw_ini_dump_info {
 	__le32 build_tag_len;
 	u8 build_tag[FW_VER_HUMAN_READABLE_SZ];
 	__le32 num_of_cfg_names;
-	struct iwl_fw_ini_dump_cfg_name cfg_names[];
-} __packed;
+	काष्ठा iwl_fw_ini_dump_cfg_name cfg_names[];
+पूर्ण __packed;
 
 /**
- * struct iwl_fw_ini_err_table_dump - ini error table dump
+ * काष्ठा iwl_fw_ini_err_table_dump - ini error table dump
  * @header: header of the region
  * @version: error table version
  * @ranges: the memory ranges of this this region
  */
-struct iwl_fw_ini_err_table_dump {
-	struct iwl_fw_ini_error_dump_header header;
+काष्ठा iwl_fw_ini_err_table_dump अणु
+	काष्ठा iwl_fw_ini_error_dump_header header;
 	__le32 version;
-	struct iwl_fw_ini_error_dump_range ranges[];
-} __packed;
+	काष्ठा iwl_fw_ini_error_dump_range ranges[];
+पूर्ण __packed;
 
 /**
- * struct iwl_fw_error_dump_rb - content of an Receive Buffer
+ * काष्ठा iwl_fw_error_dump_rb - content of an Receive Buffer
  * @index: the index of the Receive Buffer in the Rx queue
  * @rxq: the RB's Rx queue
  * @reserved:
  * @data: the content of the Receive Buffer
  */
-struct iwl_fw_error_dump_rb {
+काष्ठा iwl_fw_error_dump_rb अणु
 	__le32 index;
 	__le32 rxq;
 	__le32 reserved;
 	u8 data[];
-};
+पूर्ण;
 
 /**
- * struct iwl_fw_ini_monitor_dump - ini monitor dump
+ * काष्ठा iwl_fw_ini_monitor_dump - ini monitor dump
  * @header: header of the region
- * @write_ptr: write pointer position in the buffer
+ * @ग_लिखो_ptr: ग_लिखो poपूर्णांकer position in the buffer
  * @cycle_cnt: cycles count
  * @cur_frag: current fragment in use
  * @ranges: the memory ranges of this this region
  */
-struct iwl_fw_ini_monitor_dump {
-	struct iwl_fw_ini_error_dump_header header;
-	__le32 write_ptr;
+काष्ठा iwl_fw_ini_monitor_dump अणु
+	काष्ठा iwl_fw_ini_error_dump_header header;
+	__le32 ग_लिखो_ptr;
 	__le32 cycle_cnt;
 	__le32 cur_frag;
-	struct iwl_fw_ini_error_dump_range ranges[];
-} __packed;
+	काष्ठा iwl_fw_ini_error_dump_range ranges[];
+पूर्ण __packed;
 
 /**
- * struct iwl_fw_ini_special_device_memory - special device memory
+ * काष्ठा iwl_fw_ini_special_device_memory - special device memory
  * @header: header of the region
  * @type: type of special memory
- * @version: struct special memory version
+ * @version: काष्ठा special memory version
  * @ranges: the memory ranges of this this region
  */
-struct iwl_fw_ini_special_device_memory {
-	struct iwl_fw_ini_error_dump_header header;
+काष्ठा iwl_fw_ini_special_device_memory अणु
+	काष्ठा iwl_fw_ini_error_dump_header header;
 	__le16 type;
 	__le16 version;
-	struct iwl_fw_ini_error_dump_range ranges[];
-} __packed;
+	काष्ठा iwl_fw_ini_error_dump_range ranges[];
+पूर्ण __packed;
 
 /**
- * struct iwl_fw_error_dump_paging - content of the UMAC's image page
+ * काष्ठा iwl_fw_error_dump_paging - content of the UMAC's image page
  *	block on DRAM
  * @index: the index of the page block
  * @reserved:
  * @data: the content of the page block
  */
-struct iwl_fw_error_dump_paging {
+काष्ठा iwl_fw_error_dump_paging अणु
 	__le32 index;
 	__le32 reserved;
 	u8 data[];
-};
+पूर्ण;
 
 /**
- * iwl_fw_error_next_data - advance fw error dump data pointer
+ * iwl_fw_error_next_data - advance fw error dump data poपूर्णांकer
  * @data: previous data block
  * Returns: next data block
  */
-static inline struct iwl_fw_error_dump_data *
-iwl_fw_error_next_data(struct iwl_fw_error_dump_data *data)
-{
-	return (void *)(data->data + le32_to_cpu(data->len));
-}
+अटल अंतरभूत काष्ठा iwl_fw_error_dump_data *
+iwl_fw_error_next_data(काष्ठा iwl_fw_error_dump_data *data)
+अणु
+	वापस (व्योम *)(data->data + le32_to_cpu(data->len));
+पूर्ण
 
 /**
- * enum iwl_fw_dbg_trigger - triggers available
+ * क्रमागत iwl_fw_dbg_trigger - triggers available
  *
  * @FW_DBG_TRIGGER_USER: trigger log collection by user
  *	This should not be defined as a trigger to the driver, but a value the
  *	driver should set to indicate that the trigger was initiated by the
  *	user.
- * @FW_DBG_TRIGGER_FW_ASSERT: trigger log collection when the firmware asserts
+ * @FW_DBG_TRIGGER_FW_ASSERT: trigger log collection when the firmware निश्चितs
  * @FW_DBG_TRIGGER_MISSED_BEACONS: trigger log collection when beacons are
  *	missed.
- * @FW_DBG_TRIGGER_CHANNEL_SWITCH: trigger log collection upon channel switch.
+ * @FW_DBG_TRIGGER_CHANNEL_SWITCH: trigger log collection upon channel चयन.
  * @FW_DBG_TRIGGER_FW_NOTIF: trigger log collection when the firmware sends a
- *	command response or a notification.
+ *	command response or a notअगरication.
  * @FW_DBG_TRIGGER_MLME: trigger log collection upon MLME event.
  * @FW_DBG_TRIGGER_STATS: trigger log collection upon statistics threshold.
  * @FW_DBG_TRIGGER_RSSI: trigger log collection when the rssi of the beacon
  *	goes below a threshold.
- * @FW_DBG_TRIGGER_TXQ_TIMERS: configures the timers for the Tx queue hang
+ * @FW_DBG_TRIGGER_TXQ_TIMERS: configures the समयrs क्रम the Tx queue hang
  *	detection.
- * @FW_DBG_TRIGGER_TIME_EVENT: trigger log collection upon time events related
+ * @FW_DBG_TRIGGER_TIME_EVENT: trigger log collection upon समय events related
  *	events.
  * @FW_DBG_TRIGGER_BA: trigger log collection upon BlockAck related events.
  * @FW_DBG_TX_LATENCY: trigger log collection when the tx latency goes above a
@@ -502,11 +503,11 @@ iwl_fw_error_next_data(struct iwl_fw_error_dump_data *data)
  * @FW_DBG_TDLS: trigger log collection upon TDLS related events.
  * @FW_DBG_TRIGGER_TX_STATUS: trigger log collection upon tx status when
  *  the firmware sends a tx reply.
- * @FW_DBG_TRIGGER_ALIVE_TIMEOUT: trigger log collection if alive flow timeouts
+ * @FW_DBG_TRIGGER_ALIVE_TIMEOUT: trigger log collection अगर alive flow समयouts
  * @FW_DBG_TRIGGER_DRIVER: trigger log collection upon a flow failure
  *	in the driver.
  */
-enum iwl_fw_dbg_trigger {
+क्रमागत iwl_fw_dbg_trigger अणु
 	FW_DBG_TRIGGER_INVALID = 0,
 	FW_DBG_TRIGGER_USER,
 	FW_DBG_TRIGGER_FW_ASSERT,
@@ -527,16 +528,16 @@ enum iwl_fw_dbg_trigger {
 
 	/* must be last */
 	FW_DBG_TRIGGER_MAX,
-};
+पूर्ण;
 
 /**
- * struct iwl_fw_error_dump_trigger_desc - describes the trigger condition
- * @type: &enum iwl_fw_dbg_trigger
+ * काष्ठा iwl_fw_error_dump_trigger_desc - describes the trigger condition
+ * @type: &क्रमागत iwl_fw_dbg_trigger
  * @data: raw data about what happened
  */
-struct iwl_fw_error_dump_trigger_desc {
+काष्ठा iwl_fw_error_dump_trigger_desc अणु
 	__le32 type;
 	u8 data[];
-};
+पूर्ण;
 
-#endif /* __fw_error_dump_h__ */
+#पूर्ण_अगर /* __fw_error_dump_h__ */

@@ -1,35 +1,36 @@
-#ifndef __NVIF_TIMER_H__
-#define __NVIF_TIMER_H__
-#include <nvif/os.h>
+<शैली गुरु>
+#अगर_अघोषित __NVIF_TIMER_H__
+#घोषणा __NVIF_TIMER_H__
+#समावेश <nvअगर/os.h>
 
-struct nvif_timer_wait {
-	struct nvif_device *device;
+काष्ठा nvअगर_समयr_रुको अणु
+	काष्ठा nvअगर_device *device;
 	u64 limit;
-	u64 time0;
-	u64 time1;
-	int reads;
-};
+	u64 समय0;
+	u64 समय1;
+	पूर्णांक पढ़ोs;
+पूर्ण;
 
-void nvif_timer_wait_init(struct nvif_device *, u64 nsec,
-			  struct nvif_timer_wait *);
-s64 nvif_timer_wait_test(struct nvif_timer_wait *);
+व्योम nvअगर_समयr_रुको_init(काष्ठा nvअगर_device *, u64 nsec,
+			  काष्ठा nvअगर_समयr_रुको *);
+s64 nvअगर_समयr_रुको_test(काष्ठा nvअगर_समयr_रुको *);
 
-/* Delay based on GPU time (ie. PTIMER).
+/* Delay based on GPU समय (ie. PTIMER).
  *
- * Will return -ETIMEDOUT unless the loop was terminated with 'break',
- * where it will return the number of nanoseconds taken instead.
+ * Will वापस -ETIMEDOUT unless the loop was terminated with 'break',
+ * where it will वापस the number of nanoseconds taken instead.
  */
-#define nvif_nsec(d,n,cond...) ({                                              \
-	struct nvif_timer_wait _wait;                                          \
+#घोषणा nvअगर_nsec(d,n,cond...) (अणु                                              \
+	काष्ठा nvअगर_समयr_रुको _रुको;                                          \
 	s64 _taken = 0;                                                        \
                                                                                \
-	nvif_timer_wait_init((d), (n), &_wait);                                \
-	do {                                                                   \
+	nvअगर_समयr_रुको_init((d), (n), &_रुको);                                \
+	करो अणु                                                                   \
 		cond                                                           \
-	} while ((_taken = nvif_timer_wait_test(&_wait)) >= 0);                \
+	पूर्ण जबतक ((_taken = nvअगर_समयr_रुको_test(&_रुको)) >= 0);                \
                                                                                \
 	_taken;                                                                \
-})
-#define nvif_usec(d,u,cond...) nvif_nsec((d), (u) * 1000, ##cond)
-#define nvif_msec(d,m,cond...) nvif_usec((d), (m) * 1000, ##cond)
-#endif
+पूर्ण)
+#घोषणा nvअगर_usec(d,u,cond...) nvअगर_nsec((d), (u) * 1000, ##cond)
+#घोषणा nvअगर_msec(d,m,cond...) nvअगर_usec((d), (m) * 1000, ##cond)
+#पूर्ण_अगर

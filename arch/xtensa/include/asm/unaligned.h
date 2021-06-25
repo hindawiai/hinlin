@@ -1,29 +1,30 @@
+<शैली गुरु>
 /*
- * Xtensa doesn't handle unaligned accesses efficiently.
+ * Xtensa करोesn't handle unaligned accesses efficiently.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
-#ifndef _ASM_XTENSA_UNALIGNED_H
-#define _ASM_XTENSA_UNALIGNED_H
+#अगर_अघोषित _ASM_XTENSA_UNALIGNED_H
+#घोषणा _ASM_XTENSA_UNALIGNED_H
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
-#ifdef __LITTLE_ENDIAN
-# include <linux/unaligned/le_struct.h>
-# include <linux/unaligned/be_byteshift.h>
+#अगर_घोषित __LITTLE_ENDIAN
+# include <linux/unaligned/le_काष्ठा.h>
+# include <linux/unaligned/be_byteshअगरt.h>
 # include <linux/unaligned/generic.h>
 # define get_unaligned	__get_unaligned_le
 # define put_unaligned	__put_unaligned_le
-#else
-# include <linux/unaligned/be_struct.h>
-# include <linux/unaligned/le_byteshift.h>
+#अन्यथा
+# include <linux/unaligned/be_काष्ठा.h>
+# include <linux/unaligned/le_byteshअगरt.h>
 # include <linux/unaligned/generic.h>
 # define get_unaligned	__get_unaligned_be
 # define put_unaligned	__put_unaligned_be
-#endif
+#पूर्ण_अगर
 
-#endif	/* _ASM_XTENSA_UNALIGNED_H */
+#पूर्ण_अगर	/* _ASM_XTENSA_UNALIGNED_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * This file is part of STM32 DAC driver
  *
@@ -7,264 +8,264 @@
  *
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/pm_runtime.h>
-#include <linux/regulator/consumer.h>
-#include <linux/reset.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/reset.h>
 
-#include "stm32-dac-core.h"
+#समावेश "stm32-dac-core.h"
 
 /**
- * struct stm32_dac_priv - stm32 DAC core private data
- * @pclk:		peripheral clock common for all DACs
+ * काष्ठा sपंचांग32_dac_priv - sपंचांग32 DAC core निजी data
+ * @pclk:		peripheral घड़ी common क्रम all DACs
  * @vref:		regulator reference
- * @common:		Common data for all DAC instances
+ * @common:		Common data क्रम all DAC instances
  */
-struct stm32_dac_priv {
-	struct clk *pclk;
-	struct regulator *vref;
-	struct stm32_dac_common common;
-};
+काष्ठा sपंचांग32_dac_priv अणु
+	काष्ठा clk *pclk;
+	काष्ठा regulator *vref;
+	काष्ठा sपंचांग32_dac_common common;
+पूर्ण;
 
 /**
- * struct stm32_dac_cfg - DAC configuration
+ * काष्ठा sपंचांग32_dac_cfg - DAC configuration
  * @has_hfsel: DAC has high frequency control
  */
-struct stm32_dac_cfg {
+काष्ठा sपंचांग32_dac_cfg अणु
 	bool has_hfsel;
-};
+पूर्ण;
 
-static struct stm32_dac_priv *to_stm32_dac_priv(struct stm32_dac_common *com)
-{
-	return container_of(com, struct stm32_dac_priv, common);
-}
+अटल काष्ठा sपंचांग32_dac_priv *to_sपंचांग32_dac_priv(काष्ठा sपंचांग32_dac_common *com)
+अणु
+	वापस container_of(com, काष्ठा sपंचांग32_dac_priv, common);
+पूर्ण
 
-static const struct regmap_config stm32_dac_regmap_cfg = {
+अटल स्थिर काष्ठा regmap_config sपंचांग32_dac_regmap_cfg = अणु
 	.reg_bits = 32,
 	.val_bits = 32,
-	.reg_stride = sizeof(u32),
-	.max_register = 0x3fc,
-};
+	.reg_stride = माप(u32),
+	.max_रेजिस्टर = 0x3fc,
+पूर्ण;
 
-static int stm32_dac_core_hw_start(struct device *dev)
-{
-	struct stm32_dac_common *common = dev_get_drvdata(dev);
-	struct stm32_dac_priv *priv = to_stm32_dac_priv(common);
-	int ret;
+अटल पूर्णांक sपंचांग32_dac_core_hw_start(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांग32_dac_common *common = dev_get_drvdata(dev);
+	काष्ठा sपंचांग32_dac_priv *priv = to_sपंचांग32_dac_priv(common);
+	पूर्णांक ret;
 
 	ret = regulator_enable(priv->vref);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "vref enable failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(priv->pclk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "pclk enable failed: %d\n", ret);
-		goto err_regulator_disable;
-	}
+		जाओ err_regulator_disable;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_regulator_disable:
 	regulator_disable(priv->vref);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void stm32_dac_core_hw_stop(struct device *dev)
-{
-	struct stm32_dac_common *common = dev_get_drvdata(dev);
-	struct stm32_dac_priv *priv = to_stm32_dac_priv(common);
+अटल व्योम sपंचांग32_dac_core_hw_stop(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांग32_dac_common *common = dev_get_drvdata(dev);
+	काष्ठा sपंचांग32_dac_priv *priv = to_sपंचांग32_dac_priv(common);
 
 	clk_disable_unprepare(priv->pclk);
 	regulator_disable(priv->vref);
-}
+पूर्ण
 
-static int stm32_dac_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	const struct stm32_dac_cfg *cfg;
-	struct stm32_dac_priv *priv;
-	struct regmap *regmap;
-	struct resource *res;
-	void __iomem *mmio;
-	struct reset_control *rst;
-	int ret;
+अटल पूर्णांक sपंचांग32_dac_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	स्थिर काष्ठा sपंचांग32_dac_cfg *cfg;
+	काष्ठा sपंचांग32_dac_priv *priv;
+	काष्ठा regmap *regmap;
+	काष्ठा resource *res;
+	व्योम __iomem *mmio;
+	काष्ठा reset_control *rst;
+	पूर्णांक ret;
 
-	if (!dev->of_node)
-		return -ENODEV;
+	अगर (!dev->of_node)
+		वापस -ENODEV;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
-	platform_set_drvdata(pdev, &priv->common);
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
+	platक्रमm_set_drvdata(pdev, &priv->common);
 
-	cfg = (const struct stm32_dac_cfg *)
+	cfg = (स्थिर काष्ठा sपंचांग32_dac_cfg *)
 		of_match_device(dev->driver->of_match_table, dev)->data;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	mmio = devm_ioremap_resource(dev, res);
-	if (IS_ERR(mmio))
-		return PTR_ERR(mmio);
+	अगर (IS_ERR(mmio))
+		वापस PTR_ERR(mmio);
 
 	regmap = devm_regmap_init_mmio_clk(dev, "pclk", mmio,
-					   &stm32_dac_regmap_cfg);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+					   &sपंचांग32_dac_regmap_cfg);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 	priv->common.regmap = regmap;
 
 	priv->pclk = devm_clk_get(dev, "pclk");
-	if (IS_ERR(priv->pclk)) {
+	अगर (IS_ERR(priv->pclk)) अणु
 		ret = PTR_ERR(priv->pclk);
 		dev_err(dev, "pclk get failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	priv->vref = devm_regulator_get(dev, "vref");
-	if (IS_ERR(priv->vref)) {
+	अगर (IS_ERR(priv->vref)) अणु
 		ret = PTR_ERR(priv->vref);
 		dev_err(dev, "vref get failed, %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pm_runtime_get_noresume(dev);
-	pm_runtime_set_active(dev);
-	pm_runtime_enable(dev);
+	pm_runसमय_get_noresume(dev);
+	pm_runसमय_set_active(dev);
+	pm_runसमय_enable(dev);
 
-	ret = stm32_dac_core_hw_start(dev);
-	if (ret)
-		goto err_pm_stop;
+	ret = sपंचांग32_dac_core_hw_start(dev);
+	अगर (ret)
+		जाओ err_pm_stop;
 
 	ret = regulator_get_voltage(priv->vref);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "vref get voltage failed, %d\n", ret);
-		goto err_hw_stop;
-	}
+		जाओ err_hw_stop;
+	पूर्ण
 	priv->common.vref_mv = ret / 1000;
 	dev_dbg(dev, "vref+=%dmV\n", priv->common.vref_mv);
 
-	rst = devm_reset_control_get_optional_exclusive(dev, NULL);
-	if (rst) {
-		if (IS_ERR(rst)) {
+	rst = devm_reset_control_get_optional_exclusive(dev, शून्य);
+	अगर (rst) अणु
+		अगर (IS_ERR(rst)) अणु
 			ret = dev_err_probe(dev, PTR_ERR(rst), "reset get failed\n");
-			goto err_hw_stop;
-		}
+			जाओ err_hw_stop;
+		पूर्ण
 
-		reset_control_assert(rst);
+		reset_control_निश्चित(rst);
 		udelay(2);
-		reset_control_deassert(rst);
-	}
+		reset_control_deनिश्चित(rst);
+	पूर्ण
 
-	if (cfg && cfg->has_hfsel) {
-		/* When clock speed is higher than 80MHz, set HFSEL */
+	अगर (cfg && cfg->has_hfsel) अणु
+		/* When घड़ी speed is higher than 80MHz, set HFSEL */
 		priv->common.hfsel = (clk_get_rate(priv->pclk) > 80000000UL);
 		ret = regmap_update_bits(regmap, STM32_DAC_CR,
 					 STM32H7_DAC_CR_HFSEL,
 					 priv->common.hfsel ?
 					 STM32H7_DAC_CR_HFSEL : 0);
-		if (ret)
-			goto err_hw_stop;
-	}
+		अगर (ret)
+			जाओ err_hw_stop;
+	पूर्ण
 
 
-	ret = of_platform_populate(pdev->dev.of_node, NULL, NULL, dev);
-	if (ret < 0) {
+	ret = of_platक्रमm_populate(pdev->dev.of_node, शून्य, शून्य, dev);
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to populate DT children\n");
-		goto err_hw_stop;
-	}
+		जाओ err_hw_stop;
+	पूर्ण
 
-	pm_runtime_put(dev);
+	pm_runसमय_put(dev);
 
-	return 0;
+	वापस 0;
 
 err_hw_stop:
-	stm32_dac_core_hw_stop(dev);
+	sपंचांग32_dac_core_hw_stop(dev);
 err_pm_stop:
-	pm_runtime_disable(dev);
-	pm_runtime_set_suspended(dev);
-	pm_runtime_put_noidle(dev);
+	pm_runसमय_disable(dev);
+	pm_runसमय_set_suspended(dev);
+	pm_runसमय_put_noidle(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stm32_dac_remove(struct platform_device *pdev)
-{
-	pm_runtime_get_sync(&pdev->dev);
-	of_platform_depopulate(&pdev->dev);
-	stm32_dac_core_hw_stop(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
-	pm_runtime_set_suspended(&pdev->dev);
-	pm_runtime_put_noidle(&pdev->dev);
+अटल पूर्णांक sपंचांग32_dac_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	pm_runसमय_get_sync(&pdev->dev);
+	of_platक्रमm_depopulate(&pdev->dev);
+	sपंचांग32_dac_core_hw_stop(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
+	pm_runसमय_set_suspended(&pdev->dev);
+	pm_runसमय_put_noidle(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused stm32_dac_core_resume(struct device *dev)
-{
-	struct stm32_dac_common *common = dev_get_drvdata(dev);
-	struct stm32_dac_priv *priv = to_stm32_dac_priv(common);
-	int ret;
+अटल पूर्णांक __maybe_unused sपंचांग32_dac_core_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांग32_dac_common *common = dev_get_drvdata(dev);
+	काष्ठा sपंचांग32_dac_priv *priv = to_sपंचांग32_dac_priv(common);
+	पूर्णांक ret;
 
-	if (priv->common.hfsel) {
-		/* restore hfsel (maybe lost under low power state) */
+	अगर (priv->common.hfsel) अणु
+		/* restore hfsel (maybe lost under low घातer state) */
 		ret = regmap_update_bits(priv->common.regmap, STM32_DAC_CR,
 					 STM32H7_DAC_CR_HFSEL,
 					 STM32H7_DAC_CR_HFSEL);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return pm_runtime_force_resume(dev);
-}
+	वापस pm_runसमय_क्रमce_resume(dev);
+पूर्ण
 
-static int __maybe_unused stm32_dac_core_runtime_suspend(struct device *dev)
-{
-	stm32_dac_core_hw_stop(dev);
+अटल पूर्णांक __maybe_unused sपंचांग32_dac_core_runसमय_suspend(काष्ठा device *dev)
+अणु
+	sपंचांग32_dac_core_hw_stop(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused stm32_dac_core_runtime_resume(struct device *dev)
-{
-	return stm32_dac_core_hw_start(dev);
-}
+अटल पूर्णांक __maybe_unused sपंचांग32_dac_core_runसमय_resume(काष्ठा device *dev)
+अणु
+	वापस sपंचांग32_dac_core_hw_start(dev);
+पूर्ण
 
-static const struct dev_pm_ops stm32_dac_core_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend, stm32_dac_core_resume)
-	SET_RUNTIME_PM_OPS(stm32_dac_core_runtime_suspend,
-			   stm32_dac_core_runtime_resume,
-			   NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops sपंचांग32_dac_core_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend, sपंचांग32_dac_core_resume)
+	SET_RUNTIME_PM_OPS(sपंचांग32_dac_core_runसमय_suspend,
+			   sपंचांग32_dac_core_runसमय_resume,
+			   शून्य)
+पूर्ण;
 
-static const struct stm32_dac_cfg stm32h7_dac_cfg = {
+अटल स्थिर काष्ठा sपंचांग32_dac_cfg sपंचांग32h7_dac_cfg = अणु
 	.has_hfsel = true,
-};
+पूर्ण;
 
-static const struct of_device_id stm32_dac_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sपंचांग32_dac_of_match[] = अणु
+	अणु
 		.compatible = "st,stm32f4-dac-core",
-	}, {
+	पूर्ण, अणु
 		.compatible = "st,stm32h7-dac-core",
-		.data = (void *)&stm32h7_dac_cfg,
-	},
-	{},
-};
-MODULE_DEVICE_TABLE(of, stm32_dac_of_match);
+		.data = (व्योम *)&sपंचांग32h7_dac_cfg,
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, sपंचांग32_dac_of_match);
 
-static struct platform_driver stm32_dac_driver = {
-	.probe = stm32_dac_probe,
-	.remove = stm32_dac_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver sपंचांग32_dac_driver = अणु
+	.probe = sपंचांग32_dac_probe,
+	.हटाओ = sपंचांग32_dac_हटाओ,
+	.driver = अणु
 		.name = "stm32-dac-core",
-		.of_match_table = stm32_dac_of_match,
-		.pm = &stm32_dac_core_pm_ops,
-	},
-};
-module_platform_driver(stm32_dac_driver);
+		.of_match_table = sपंचांग32_dac_of_match,
+		.pm = &sपंचांग32_dac_core_pm_ops,
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(sपंचांग32_dac_driver);
 
 MODULE_AUTHOR("Fabrice Gasnier <fabrice.gasnier@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics STM32 DAC core driver");

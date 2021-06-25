@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cedrus VPU driver
  *
- * Copyright (C) 2016 Florent Revest <florent.revest@free-electrons.com>
+ * Copyright (C) 2016 Florent Revest <florent.revest@मुक्त-electrons.com>
  * Copyright (C) 2018 Paul Kocialkowski <paul.kocialkowski@bootlin.com>
  * Copyright (C) 2018 Bootlin
  *
@@ -13,99 +14,99 @@
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  */
 
-#include <linux/pm_runtime.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <media/videobuf2-dma-contig.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-event.h>
-#include <media/v4l2-mem2mem.h>
+#समावेश <media/videobuf2-dma-contig.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/v4l2-mem2स्मृति.स>
 
-#include "cedrus.h"
-#include "cedrus_video.h"
-#include "cedrus_dec.h"
-#include "cedrus_hw.h"
+#समावेश "cedrus.h"
+#समावेश "cedrus_video.h"
+#समावेश "cedrus_dec.h"
+#समावेश "cedrus_hw.h"
 
-#define CEDRUS_DECODE_SRC	BIT(0)
-#define CEDRUS_DECODE_DST	BIT(1)
+#घोषणा CEDRUS_DECODE_SRC	BIT(0)
+#घोषणा CEDRUS_DECODE_DST	BIT(1)
 
-#define CEDRUS_MIN_WIDTH	16U
-#define CEDRUS_MIN_HEIGHT	16U
-#define CEDRUS_MAX_WIDTH	4096U
-#define CEDRUS_MAX_HEIGHT	2304U
+#घोषणा CEDRUS_MIN_WIDTH	16U
+#घोषणा CEDRUS_MIN_HEIGHT	16U
+#घोषणा CEDRUS_MAX_WIDTH	4096U
+#घोषणा CEDRUS_MAX_HEIGHT	2304U
 
-static struct cedrus_format cedrus_formats[] = {
-	{
-		.pixelformat	= V4L2_PIX_FMT_MPEG2_SLICE,
+अटल काष्ठा cedrus_क्रमmat cedrus_क्रमmats[] = अणु
+	अणु
+		.pixelक्रमmat	= V4L2_PIX_FMT_MPEG2_SLICE,
 		.directions	= CEDRUS_DECODE_SRC,
 		.capabilities	= CEDRUS_CAPABILITY_MPEG2_DEC,
-	},
-	{
-		.pixelformat	= V4L2_PIX_FMT_H264_SLICE,
+	पूर्ण,
+	अणु
+		.pixelक्रमmat	= V4L2_PIX_FMT_H264_SLICE,
 		.directions	= CEDRUS_DECODE_SRC,
 		.capabilities	= CEDRUS_CAPABILITY_H264_DEC,
-	},
-	{
-		.pixelformat	= V4L2_PIX_FMT_HEVC_SLICE,
+	पूर्ण,
+	अणु
+		.pixelक्रमmat	= V4L2_PIX_FMT_HEVC_SLICE,
 		.directions	= CEDRUS_DECODE_SRC,
 		.capabilities	= CEDRUS_CAPABILITY_H265_DEC,
-	},
-	{
-		.pixelformat	= V4L2_PIX_FMT_VP8_FRAME,
+	पूर्ण,
+	अणु
+		.pixelक्रमmat	= V4L2_PIX_FMT_VP8_FRAME,
 		.directions	= CEDRUS_DECODE_SRC,
 		.capabilities	= CEDRUS_CAPABILITY_VP8_DEC,
-	},
-	{
-		.pixelformat	= V4L2_PIX_FMT_SUNXI_TILED_NV12,
+	पूर्ण,
+	अणु
+		.pixelक्रमmat	= V4L2_PIX_FMT_SUNXI_TILED_NV12,
 		.directions	= CEDRUS_DECODE_DST,
-	},
-	{
-		.pixelformat	= V4L2_PIX_FMT_NV12,
+	पूर्ण,
+	अणु
+		.pixelक्रमmat	= V4L2_PIX_FMT_NV12,
 		.directions	= CEDRUS_DECODE_DST,
 		.capabilities	= CEDRUS_CAPABILITY_UNTILED,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#define CEDRUS_FORMATS_COUNT	ARRAY_SIZE(cedrus_formats)
+#घोषणा CEDRUS_FORMATS_COUNT	ARRAY_SIZE(cedrus_क्रमmats)
 
-static inline struct cedrus_ctx *cedrus_file2ctx(struct file *file)
-{
-	return container_of(file->private_data, struct cedrus_ctx, fh);
-}
+अटल अंतरभूत काष्ठा cedrus_ctx *cedrus_file2ctx(काष्ठा file *file)
+अणु
+	वापस container_of(file->निजी_data, काष्ठा cedrus_ctx, fh);
+पूर्ण
 
-static struct cedrus_format *cedrus_find_format(u32 pixelformat, u32 directions,
-						unsigned int capabilities)
-{
-	struct cedrus_format *first_valid_fmt = NULL;
-	struct cedrus_format *fmt;
-	unsigned int i;
+अटल काष्ठा cedrus_क्रमmat *cedrus_find_क्रमmat(u32 pixelक्रमmat, u32 directions,
+						अचिन्हित पूर्णांक capabilities)
+अणु
+	काष्ठा cedrus_क्रमmat *first_valid_fmt = शून्य;
+	काष्ठा cedrus_क्रमmat *fmt;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < CEDRUS_FORMATS_COUNT; i++) {
-		fmt = &cedrus_formats[i];
+	क्रम (i = 0; i < CEDRUS_FORMATS_COUNT; i++) अणु
+		fmt = &cedrus_क्रमmats[i];
 
-		if ((fmt->capabilities & capabilities) != fmt->capabilities ||
+		अगर ((fmt->capabilities & capabilities) != fmt->capabilities ||
 		    !(fmt->directions & directions))
-			continue;
+			जारी;
 
-		if (fmt->pixelformat == pixelformat)
-			break;
+		अगर (fmt->pixelक्रमmat == pixelक्रमmat)
+			अवरोध;
 
-		if (!first_valid_fmt)
+		अगर (!first_valid_fmt)
 			first_valid_fmt = fmt;
-	}
+	पूर्ण
 
-	if (i == CEDRUS_FORMATS_COUNT)
-		return first_valid_fmt;
+	अगर (i == CEDRUS_FORMATS_COUNT)
+		वापस first_valid_fmt;
 
-	return &cedrus_formats[i];
-}
+	वापस &cedrus_क्रमmats[i];
+पूर्ण
 
-void cedrus_prepare_format(struct v4l2_pix_format *pix_fmt)
-{
-	unsigned int width = pix_fmt->width;
-	unsigned int height = pix_fmt->height;
-	unsigned int sizeimage = pix_fmt->sizeimage;
-	unsigned int bytesperline = pix_fmt->bytesperline;
+व्योम cedrus_prepare_क्रमmat(काष्ठा v4l2_pix_क्रमmat *pix_fmt)
+अणु
+	अचिन्हित पूर्णांक width = pix_fmt->width;
+	अचिन्हित पूर्णांक height = pix_fmt->height;
+	अचिन्हित पूर्णांक sizeimage = pix_fmt->sizeimage;
+	अचिन्हित पूर्णांक bytesperline = pix_fmt->bytesperline;
 
 	pix_fmt->field = V4L2_FIELD_NONE;
 
@@ -113,18 +114,18 @@ void cedrus_prepare_format(struct v4l2_pix_format *pix_fmt)
 	width = clamp(width, CEDRUS_MIN_WIDTH, CEDRUS_MAX_WIDTH);
 	height = clamp(height, CEDRUS_MIN_HEIGHT, CEDRUS_MAX_HEIGHT);
 
-	switch (pix_fmt->pixelformat) {
-	case V4L2_PIX_FMT_MPEG2_SLICE:
-	case V4L2_PIX_FMT_H264_SLICE:
-	case V4L2_PIX_FMT_HEVC_SLICE:
-	case V4L2_PIX_FMT_VP8_FRAME:
-		/* Zero bytes per line for encoded source. */
+	चयन (pix_fmt->pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_MPEG2_SLICE:
+	हाल V4L2_PIX_FMT_H264_SLICE:
+	हाल V4L2_PIX_FMT_HEVC_SLICE:
+	हाल V4L2_PIX_FMT_VP8_FRAME:
+		/* Zero bytes per line क्रम encoded source. */
 		bytesperline = 0;
 		/* Choose some minimum size since this can't be 0 */
 		sizeimage = max_t(u32, SZ_1K, sizeimage);
-		break;
+		अवरोध;
 
-	case V4L2_PIX_FMT_SUNXI_TILED_NV12:
+	हाल V4L2_PIX_FMT_SUNXI_TILED_NV12:
 		/* 32-aligned stride. */
 		bytesperline = ALIGN(width, 32);
 
@@ -137,9 +138,9 @@ void cedrus_prepare_format(struct v4l2_pix_format *pix_fmt)
 		/* Chroma plane size. */
 		sizeimage += bytesperline * height / 2;
 
-		break;
+		अवरोध;
 
-	case V4L2_PIX_FMT_NV12:
+	हाल V4L2_PIX_FMT_NV12:
 		/* 16-aligned stride. */
 		bytesperline = ALIGN(width, 16);
 
@@ -152,224 +153,224 @@ void cedrus_prepare_format(struct v4l2_pix_format *pix_fmt)
 		/* Chroma plane size. */
 		sizeimage += bytesperline * height / 2;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	pix_fmt->width = width;
 	pix_fmt->height = height;
 
 	pix_fmt->bytesperline = bytesperline;
 	pix_fmt->sizeimage = sizeimage;
-}
+पूर्ण
 
-static int cedrus_querycap(struct file *file, void *priv,
-			   struct v4l2_capability *cap)
-{
-	strscpy(cap->driver, CEDRUS_NAME, sizeof(cap->driver));
-	strscpy(cap->card, CEDRUS_NAME, sizeof(cap->card));
-	snprintf(cap->bus_info, sizeof(cap->bus_info),
+अटल पूर्णांक cedrus_querycap(काष्ठा file *file, व्योम *priv,
+			   काष्ठा v4l2_capability *cap)
+अणु
+	strscpy(cap->driver, CEDRUS_NAME, माप(cap->driver));
+	strscpy(cap->card, CEDRUS_NAME, माप(cap->card));
+	snम_लिखो(cap->bus_info, माप(cap->bus_info),
 		 "platform:%s", CEDRUS_NAME);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cedrus_enum_fmt(struct file *file, struct v4l2_fmtdesc *f,
+अटल पूर्णांक cedrus_क्रमागत_fmt(काष्ठा file *file, काष्ठा v4l2_fmtdesc *f,
 			   u32 direction)
-{
-	struct cedrus_ctx *ctx = cedrus_file2ctx(file);
-	struct cedrus_dev *dev = ctx->dev;
-	unsigned int capabilities = dev->capabilities;
-	struct cedrus_format *fmt;
-	unsigned int i, index;
+अणु
+	काष्ठा cedrus_ctx *ctx = cedrus_file2ctx(file);
+	काष्ठा cedrus_dev *dev = ctx->dev;
+	अचिन्हित पूर्णांक capabilities = dev->capabilities;
+	काष्ठा cedrus_क्रमmat *fmt;
+	अचिन्हित पूर्णांक i, index;
 
-	/* Index among formats that match the requested direction. */
+	/* Index among क्रमmats that match the requested direction. */
 	index = 0;
 
-	for (i = 0; i < CEDRUS_FORMATS_COUNT; i++) {
-		fmt = &cedrus_formats[i];
+	क्रम (i = 0; i < CEDRUS_FORMATS_COUNT; i++) अणु
+		fmt = &cedrus_क्रमmats[i];
 
-		if (fmt->capabilities && (fmt->capabilities & capabilities) !=
+		अगर (fmt->capabilities && (fmt->capabilities & capabilities) !=
 		    fmt->capabilities)
-			continue;
+			जारी;
 
-		if (!(cedrus_formats[i].directions & direction))
-			continue;
+		अगर (!(cedrus_क्रमmats[i].directions & direction))
+			जारी;
 
-		if (index == f->index)
-			break;
+		अगर (index == f->index)
+			अवरोध;
 
 		index++;
-	}
+	पूर्ण
 
-	/* Matched format. */
-	if (i < CEDRUS_FORMATS_COUNT) {
-		f->pixelformat = cedrus_formats[i].pixelformat;
+	/* Matched क्रमmat. */
+	अगर (i < CEDRUS_FORMATS_COUNT) अणु
+		f->pixelक्रमmat = cedrus_क्रमmats[i].pixelक्रमmat;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int cedrus_enum_fmt_vid_cap(struct file *file, void *priv,
-				   struct v4l2_fmtdesc *f)
-{
-	return cedrus_enum_fmt(file, f, CEDRUS_DECODE_DST);
-}
+अटल पूर्णांक cedrus_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				   काष्ठा v4l2_fmtdesc *f)
+अणु
+	वापस cedrus_क्रमागत_fmt(file, f, CEDRUS_DECODE_DST);
+पूर्ण
 
-static int cedrus_enum_fmt_vid_out(struct file *file, void *priv,
-				   struct v4l2_fmtdesc *f)
-{
-	return cedrus_enum_fmt(file, f, CEDRUS_DECODE_SRC);
-}
+अटल पूर्णांक cedrus_क्रमागत_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				   काष्ठा v4l2_fmtdesc *f)
+अणु
+	वापस cedrus_क्रमागत_fmt(file, f, CEDRUS_DECODE_SRC);
+पूर्ण
 
-static int cedrus_g_fmt_vid_cap(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	struct cedrus_ctx *ctx = cedrus_file2ctx(file);
+अटल पूर्णांक cedrus_g_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा cedrus_ctx *ctx = cedrus_file2ctx(file);
 
 	f->fmt.pix = ctx->dst_fmt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cedrus_g_fmt_vid_out(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	struct cedrus_ctx *ctx = cedrus_file2ctx(file);
+अटल पूर्णांक cedrus_g_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा cedrus_ctx *ctx = cedrus_file2ctx(file);
 
 	f->fmt.pix = ctx->src_fmt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cedrus_try_fmt_vid_cap(struct file *file, void *priv,
-				  struct v4l2_format *f)
-{
-	struct cedrus_ctx *ctx = cedrus_file2ctx(file);
-	struct cedrus_dev *dev = ctx->dev;
-	struct v4l2_pix_format *pix_fmt = &f->fmt.pix;
-	struct cedrus_format *fmt =
-		cedrus_find_format(pix_fmt->pixelformat, CEDRUS_DECODE_DST,
+अटल पूर्णांक cedrus_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा cedrus_ctx *ctx = cedrus_file2ctx(file);
+	काष्ठा cedrus_dev *dev = ctx->dev;
+	काष्ठा v4l2_pix_क्रमmat *pix_fmt = &f->fmt.pix;
+	काष्ठा cedrus_क्रमmat *fmt =
+		cedrus_find_क्रमmat(pix_fmt->pixelक्रमmat, CEDRUS_DECODE_DST,
 				   dev->capabilities);
 
-	if (!fmt)
-		return -EINVAL;
+	अगर (!fmt)
+		वापस -EINVAL;
 
-	pix_fmt->pixelformat = fmt->pixelformat;
+	pix_fmt->pixelक्रमmat = fmt->pixelक्रमmat;
 	pix_fmt->width = ctx->src_fmt.width;
 	pix_fmt->height = ctx->src_fmt.height;
-	cedrus_prepare_format(pix_fmt);
+	cedrus_prepare_क्रमmat(pix_fmt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cedrus_try_fmt_vid_out(struct file *file, void *priv,
-				  struct v4l2_format *f)
-{
-	struct cedrus_ctx *ctx = cedrus_file2ctx(file);
-	struct cedrus_dev *dev = ctx->dev;
-	struct v4l2_pix_format *pix_fmt = &f->fmt.pix;
-	struct cedrus_format *fmt =
-		cedrus_find_format(pix_fmt->pixelformat, CEDRUS_DECODE_SRC,
+अटल पूर्णांक cedrus_try_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा cedrus_ctx *ctx = cedrus_file2ctx(file);
+	काष्ठा cedrus_dev *dev = ctx->dev;
+	काष्ठा v4l2_pix_क्रमmat *pix_fmt = &f->fmt.pix;
+	काष्ठा cedrus_क्रमmat *fmt =
+		cedrus_find_क्रमmat(pix_fmt->pixelक्रमmat, CEDRUS_DECODE_SRC,
 				   dev->capabilities);
 
-	if (!fmt)
-		return -EINVAL;
+	अगर (!fmt)
+		वापस -EINVAL;
 
-	pix_fmt->pixelformat = fmt->pixelformat;
-	cedrus_prepare_format(pix_fmt);
+	pix_fmt->pixelक्रमmat = fmt->pixelक्रमmat;
+	cedrus_prepare_क्रमmat(pix_fmt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cedrus_s_fmt_vid_cap(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	struct cedrus_ctx *ctx = cedrus_file2ctx(file);
-	struct vb2_queue *vq;
-	int ret;
+अटल पूर्णांक cedrus_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा cedrus_ctx *ctx = cedrus_file2ctx(file);
+	काष्ठा vb2_queue *vq;
+	पूर्णांक ret;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
-	if (vb2_is_busy(vq))
-		return -EBUSY;
+	अगर (vb2_is_busy(vq))
+		वापस -EBUSY;
 
 	ret = cedrus_try_fmt_vid_cap(file, priv, f);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ctx->dst_fmt = f->fmt.pix;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cedrus_s_fmt_vid_out(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	struct cedrus_ctx *ctx = cedrus_file2ctx(file);
-	struct vb2_queue *vq;
-	struct vb2_queue *peer_vq;
-	int ret;
+अटल पूर्णांक cedrus_s_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा cedrus_ctx *ctx = cedrus_file2ctx(file);
+	काष्ठा vb2_queue *vq;
+	काष्ठा vb2_queue *peer_vq;
+	पूर्णांक ret;
 
 	ret = cedrus_try_fmt_vid_out(file, priv, f);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
 	/*
 	 * In order to support dynamic resolution change,
-	 * the decoder admits a resolution change, as long
-	 * as the pixelformat remains. Can't be done if streaming.
+	 * the decoder admits a resolution change, as दीर्घ
+	 * as the pixelक्रमmat reमुख्यs. Can't be करोne अगर streaming.
 	 */
-	if (vb2_is_streaming(vq) || (vb2_is_busy(vq) &&
-	    f->fmt.pix.pixelformat != ctx->src_fmt.pixelformat))
-		return -EBUSY;
+	अगर (vb2_is_streaming(vq) || (vb2_is_busy(vq) &&
+	    f->fmt.pix.pixelक्रमmat != ctx->src_fmt.pixelक्रमmat))
+		वापस -EBUSY;
 	/*
-	 * Since format change on the OUTPUT queue will reset
-	 * the CAPTURE queue, we can't allow doing so
+	 * Since क्रमmat change on the OUTPUT queue will reset
+	 * the CAPTURE queue, we can't allow करोing so
 	 * when the CAPTURE queue has buffers allocated.
 	 */
 	peer_vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx,
 				  V4L2_BUF_TYPE_VIDEO_CAPTURE);
-	if (vb2_is_busy(peer_vq))
-		return -EBUSY;
+	अगर (vb2_is_busy(peer_vq))
+		वापस -EBUSY;
 
 	ret = cedrus_try_fmt_vid_out(file, priv, f);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ctx->src_fmt = f->fmt.pix;
 
-	switch (ctx->src_fmt.pixelformat) {
-	case V4L2_PIX_FMT_H264_SLICE:
-		vq->subsystem_flags |=
+	चयन (ctx->src_fmt.pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_H264_SLICE:
+		vq->subप्रणाली_flags |=
 			VB2_V4L2_FL_SUPPORTS_M2M_HOLD_CAPTURE_BUF;
-		break;
-	default:
-		vq->subsystem_flags &=
+		अवरोध;
+	शेष:
+		vq->subप्रणाली_flags &=
 			~VB2_V4L2_FL_SUPPORTS_M2M_HOLD_CAPTURE_BUF;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Propagate format information to capture. */
+	/* Propagate क्रमmat inक्रमmation to capture. */
 	ctx->dst_fmt.colorspace = f->fmt.pix.colorspace;
 	ctx->dst_fmt.xfer_func = f->fmt.pix.xfer_func;
 	ctx->dst_fmt.ycbcr_enc = f->fmt.pix.ycbcr_enc;
 	ctx->dst_fmt.quantization = f->fmt.pix.quantization;
 	ctx->dst_fmt.width = ctx->src_fmt.width;
 	ctx->dst_fmt.height = ctx->src_fmt.height;
-	cedrus_prepare_format(&ctx->dst_fmt);
+	cedrus_prepare_क्रमmat(&ctx->dst_fmt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct v4l2_ioctl_ops cedrus_ioctl_ops = {
+स्थिर काष्ठा v4l2_ioctl_ops cedrus_ioctl_ops = अणु
 	.vidioc_querycap		= cedrus_querycap,
 
-	.vidioc_enum_fmt_vid_cap	= cedrus_enum_fmt_vid_cap,
+	.vidioc_क्रमागत_fmt_vid_cap	= cedrus_क्रमागत_fmt_vid_cap,
 	.vidioc_g_fmt_vid_cap		= cedrus_g_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap		= cedrus_try_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap		= cedrus_s_fmt_vid_cap,
 
-	.vidioc_enum_fmt_vid_out	= cedrus_enum_fmt_vid_out,
+	.vidioc_क्रमागत_fmt_vid_out	= cedrus_क्रमागत_fmt_vid_out,
 	.vidioc_g_fmt_vid_out		= cedrus_g_fmt_vid_out,
 	.vidioc_try_fmt_vid_out		= cedrus_try_fmt_vid_out,
 	.vidioc_s_fmt_vid_out		= cedrus_s_fmt_vid_out,
@@ -390,160 +391,160 @@ const struct v4l2_ioctl_ops cedrus_ioctl_ops = {
 
 	.vidioc_subscribe_event		= v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event	= v4l2_event_unsubscribe,
-};
+पूर्ण;
 
-static int cedrus_queue_setup(struct vb2_queue *vq, unsigned int *nbufs,
-			      unsigned int *nplanes, unsigned int sizes[],
-			      struct device *alloc_devs[])
-{
-	struct cedrus_ctx *ctx = vb2_get_drv_priv(vq);
-	struct v4l2_pix_format *pix_fmt;
+अटल पूर्णांक cedrus_queue_setup(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक *nbufs,
+			      अचिन्हित पूर्णांक *nplanes, अचिन्हित पूर्णांक sizes[],
+			      काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा cedrus_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा v4l2_pix_क्रमmat *pix_fmt;
 
-	if (V4L2_TYPE_IS_OUTPUT(vq->type))
+	अगर (V4L2_TYPE_IS_OUTPUT(vq->type))
 		pix_fmt = &ctx->src_fmt;
-	else
+	अन्यथा
 		pix_fmt = &ctx->dst_fmt;
 
-	if (*nplanes) {
-		if (sizes[0] < pix_fmt->sizeimage)
-			return -EINVAL;
-	} else {
+	अगर (*nplanes) अणु
+		अगर (sizes[0] < pix_fmt->sizeimage)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
 		sizes[0] = pix_fmt->sizeimage;
 		*nplanes = 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cedrus_queue_cleanup(struct vb2_queue *vq, u32 state)
-{
-	struct cedrus_ctx *ctx = vb2_get_drv_priv(vq);
-	struct vb2_v4l2_buffer *vbuf;
+अटल व्योम cedrus_queue_cleanup(काष्ठा vb2_queue *vq, u32 state)
+अणु
+	काष्ठा cedrus_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा vb2_v4l2_buffer *vbuf;
 
-	for (;;) {
-		if (V4L2_TYPE_IS_OUTPUT(vq->type))
-			vbuf = v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx);
-		else
-			vbuf = v4l2_m2m_dst_buf_remove(ctx->fh.m2m_ctx);
+	क्रम (;;) अणु
+		अगर (V4L2_TYPE_IS_OUTPUT(vq->type))
+			vbuf = v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx);
+		अन्यथा
+			vbuf = v4l2_m2m_dst_buf_हटाओ(ctx->fh.m2m_ctx);
 
-		if (!vbuf)
-			return;
+		अगर (!vbuf)
+			वापस;
 
 		v4l2_ctrl_request_complete(vbuf->vb2_buf.req_obj.req,
 					   &ctx->hdl);
-		v4l2_m2m_buf_done(vbuf, state);
-	}
-}
+		v4l2_m2m_buf_करोne(vbuf, state);
+	पूर्ण
+पूर्ण
 
-static int cedrus_buf_out_validate(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+अटल पूर्णांक cedrus_buf_out_validate(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
 
 	vbuf->field = V4L2_FIELD_NONE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cedrus_buf_prepare(struct vb2_buffer *vb)
-{
-	struct vb2_queue *vq = vb->vb2_queue;
-	struct cedrus_ctx *ctx = vb2_get_drv_priv(vq);
-	struct v4l2_pix_format *pix_fmt;
+अटल पूर्णांक cedrus_buf_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_queue *vq = vb->vb2_queue;
+	काष्ठा cedrus_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा v4l2_pix_क्रमmat *pix_fmt;
 
-	if (V4L2_TYPE_IS_OUTPUT(vq->type))
+	अगर (V4L2_TYPE_IS_OUTPUT(vq->type))
 		pix_fmt = &ctx->src_fmt;
-	else
+	अन्यथा
 		pix_fmt = &ctx->dst_fmt;
 
-	if (vb2_plane_size(vb, 0) < pix_fmt->sizeimage)
-		return -EINVAL;
+	अगर (vb2_plane_size(vb, 0) < pix_fmt->sizeimage)
+		वापस -EINVAL;
 
 	vb2_set_plane_payload(vb, 0, pix_fmt->sizeimage);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cedrus_start_streaming(struct vb2_queue *vq, unsigned int count)
-{
-	struct cedrus_ctx *ctx = vb2_get_drv_priv(vq);
-	struct cedrus_dev *dev = ctx->dev;
-	int ret = 0;
+अटल पूर्णांक cedrus_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा cedrus_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा cedrus_dev *dev = ctx->dev;
+	पूर्णांक ret = 0;
 
-	switch (ctx->src_fmt.pixelformat) {
-	case V4L2_PIX_FMT_MPEG2_SLICE:
+	चयन (ctx->src_fmt.pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_MPEG2_SLICE:
 		ctx->current_codec = CEDRUS_CODEC_MPEG2;
-		break;
+		अवरोध;
 
-	case V4L2_PIX_FMT_H264_SLICE:
+	हाल V4L2_PIX_FMT_H264_SLICE:
 		ctx->current_codec = CEDRUS_CODEC_H264;
-		break;
+		अवरोध;
 
-	case V4L2_PIX_FMT_HEVC_SLICE:
+	हाल V4L2_PIX_FMT_HEVC_SLICE:
 		ctx->current_codec = CEDRUS_CODEC_H265;
-		break;
+		अवरोध;
 
-	case V4L2_PIX_FMT_VP8_FRAME:
+	हाल V4L2_PIX_FMT_VP8_FRAME:
 		ctx->current_codec = CEDRUS_CODEC_VP8;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (V4L2_TYPE_IS_OUTPUT(vq->type)) {
-		ret = pm_runtime_get_sync(dev->dev);
-		if (ret < 0) {
-			pm_runtime_put_noidle(dev->dev);
-			goto err_cleanup;
-		}
+	अगर (V4L2_TYPE_IS_OUTPUT(vq->type)) अणु
+		ret = pm_runसमय_get_sync(dev->dev);
+		अगर (ret < 0) अणु
+			pm_runसमय_put_noidle(dev->dev);
+			जाओ err_cleanup;
+		पूर्ण
 
-		if (dev->dec_ops[ctx->current_codec]->start) {
+		अगर (dev->dec_ops[ctx->current_codec]->start) अणु
 			ret = dev->dec_ops[ctx->current_codec]->start(ctx);
-			if (ret)
-				goto err_pm;
-		}
-	}
+			अगर (ret)
+				जाओ err_pm;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_pm:
-	pm_runtime_put(dev->dev);
+	pm_runसमय_put(dev->dev);
 err_cleanup:
 	cedrus_queue_cleanup(vq, VB2_BUF_STATE_QUEUED);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cedrus_stop_streaming(struct vb2_queue *vq)
-{
-	struct cedrus_ctx *ctx = vb2_get_drv_priv(vq);
-	struct cedrus_dev *dev = ctx->dev;
+अटल व्योम cedrus_stop_streaming(काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा cedrus_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा cedrus_dev *dev = ctx->dev;
 
-	if (V4L2_TYPE_IS_OUTPUT(vq->type)) {
-		if (dev->dec_ops[ctx->current_codec]->stop)
+	अगर (V4L2_TYPE_IS_OUTPUT(vq->type)) अणु
+		अगर (dev->dec_ops[ctx->current_codec]->stop)
 			dev->dec_ops[ctx->current_codec]->stop(ctx);
 
-		pm_runtime_put(dev->dev);
-	}
+		pm_runसमय_put(dev->dev);
+	पूर्ण
 
 	cedrus_queue_cleanup(vq, VB2_BUF_STATE_ERROR);
-}
+पूर्ण
 
-static void cedrus_buf_queue(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct cedrus_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+अटल व्योम cedrus_buf_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा cedrus_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
 
 	v4l2_m2m_buf_queue(ctx->fh.m2m_ctx, vbuf);
-}
+पूर्ण
 
-static void cedrus_buf_request_complete(struct vb2_buffer *vb)
-{
-	struct cedrus_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+अटल व्योम cedrus_buf_request_complete(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा cedrus_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
 
 	v4l2_ctrl_request_complete(vb->req_obj.req, &ctx->hdl);
-}
+पूर्ण
 
-static struct vb2_ops cedrus_qops = {
+अटल काष्ठा vb2_ops cedrus_qops = अणु
 	.queue_setup		= cedrus_queue_setup,
 	.buf_prepare		= cedrus_buf_prepare,
 	.buf_queue		= cedrus_buf_queue,
@@ -551,43 +552,43 @@ static struct vb2_ops cedrus_qops = {
 	.buf_request_complete	= cedrus_buf_request_complete,
 	.start_streaming	= cedrus_start_streaming,
 	.stop_streaming		= cedrus_stop_streaming,
-	.wait_prepare		= vb2_ops_wait_prepare,
-	.wait_finish		= vb2_ops_wait_finish,
-};
+	.रुको_prepare		= vb2_ops_रुको_prepare,
+	.रुको_finish		= vb2_ops_रुको_finish,
+पूर्ण;
 
-int cedrus_queue_init(void *priv, struct vb2_queue *src_vq,
-		      struct vb2_queue *dst_vq)
-{
-	struct cedrus_ctx *ctx = priv;
-	int ret;
+पूर्णांक cedrus_queue_init(व्योम *priv, काष्ठा vb2_queue *src_vq,
+		      काष्ठा vb2_queue *dst_vq)
+अणु
+	काष्ठा cedrus_ctx *ctx = priv;
+	पूर्णांक ret;
 
 	src_vq->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	src_vq->io_modes = VB2_MMAP | VB2_DMABUF;
 	src_vq->drv_priv = ctx;
-	src_vq->buf_struct_size = sizeof(struct cedrus_buffer);
+	src_vq->buf_काष्ठा_size = माप(काष्ठा cedrus_buffer);
 	src_vq->min_buffers_needed = 1;
 	src_vq->ops = &cedrus_qops;
 	src_vq->mem_ops = &vb2_dma_contig_memops;
-	src_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	src_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	src_vq->lock = &ctx->dev->dev_mutex;
 	src_vq->dev = ctx->dev->dev;
 	src_vq->supports_requests = true;
 	src_vq->requires_requests = true;
 
 	ret = vb2_queue_init(src_vq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dst_vq->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	dst_vq->io_modes = VB2_MMAP | VB2_DMABUF;
 	dst_vq->drv_priv = ctx;
-	dst_vq->buf_struct_size = sizeof(struct cedrus_buffer);
+	dst_vq->buf_काष्ठा_size = माप(काष्ठा cedrus_buffer);
 	dst_vq->min_buffers_needed = 1;
 	dst_vq->ops = &cedrus_qops;
 	dst_vq->mem_ops = &vb2_dma_contig_memops;
-	dst_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	dst_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	dst_vq->lock = &ctx->dev->dev_mutex;
 	dst_vq->dev = ctx->dev->dev;
 
-	return vb2_queue_init(dst_vq);
-}
+	वापस vb2_queue_init(dst_vq);
+पूर्ण

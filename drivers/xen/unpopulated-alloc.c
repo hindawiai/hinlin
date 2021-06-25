@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/errno.h>
-#include <linux/gfp.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/memremap.h>
-#include <linux/slab.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gfp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/memremap.h>
+#समावेश <linux/slab.h>
 
-#include <asm/page.h>
+#समावेश <यंत्र/page.h>
 
-#include <xen/page.h>
-#include <xen/xen.h>
+#समावेश <xen/page.h>
+#समावेश <xen/xen.h>
 
-static DEFINE_MUTEX(list_lock);
-static struct page *page_list;
-static unsigned int list_count;
+अटल DEFINE_MUTEX(list_lock);
+अटल काष्ठा page *page_list;
+अटल अचिन्हित पूर्णांक list_count;
 
-static int fill_list(unsigned int nr_pages)
-{
-	struct dev_pagemap *pgmap;
-	struct resource *res;
-	void *vaddr;
-	unsigned int i, alloc_pages = round_up(nr_pages, PAGES_PER_SECTION);
-	int ret = -ENOMEM;
+अटल पूर्णांक fill_list(अचिन्हित पूर्णांक nr_pages)
+अणु
+	काष्ठा dev_pagemap *pgmap;
+	काष्ठा resource *res;
+	व्योम *vaddr;
+	अचिन्हित पूर्णांक i, alloc_pages = round_up(nr_pages, PAGES_PER_SECTION);
+	पूर्णांक ret = -ENOMEM;
 
-	res = kzalloc(sizeof(*res), GFP_KERNEL);
-	if (!res)
-		return -ENOMEM;
+	res = kzalloc(माप(*res), GFP_KERNEL);
+	अगर (!res)
+		वापस -ENOMEM;
 
 	res->name = "Xen scratch";
 	res->flags = IORESOURCE_MEM | IORESOURCE_BUSY;
 
 	ret = allocate_resource(&iomem_resource, res,
 				alloc_pages * PAGE_SIZE, 0, -1,
-				PAGES_PER_SECTION * PAGE_SIZE, NULL, NULL);
-	if (ret < 0) {
+				PAGES_PER_SECTION * PAGE_SIZE, शून्य, शून्य);
+	अगर (ret < 0) अणु
 		pr_err("Cannot allocate new IOMEM resource\n");
-		goto err_resource;
-	}
+		जाओ err_resource;
+	पूर्ण
 
-	pgmap = kzalloc(sizeof(*pgmap), GFP_KERNEL);
-	if (!pgmap) {
+	pgmap = kzalloc(माप(*pgmap), GFP_KERNEL);
+	अगर (!pgmap) अणु
 		ret = -ENOMEM;
-		goto err_pgmap;
-	}
+		जाओ err_pgmap;
+	पूर्ण
 
 	pgmap->type = MEMORY_DEVICE_GENERIC;
-	pgmap->range = (struct range) {
+	pgmap->range = (काष्ठा range) अणु
 		.start = res->start,
 		.end = res->end,
-	};
+	पूर्ण;
 	pgmap->nr_range = 1;
 	pgmap->owner = res;
 
-#ifdef CONFIG_XEN_HAVE_PVMMU
+#अगर_घोषित CONFIG_XEN_HAVE_PVMMU
         /*
-         * memremap will build page tables for the new memory so
+         * memremap will build page tables क्रम the new memory so
          * the p2m must contain invalid entries so the correct
          * non-present PTEs will be written.
          *
@@ -62,143 +63,143 @@ static int fill_list(unsigned int nr_pages)
          * are not restored since this region is now known not to
          * conflict with any devices.
          */
-	if (!xen_feature(XENFEAT_auto_translated_physmap)) {
+	अगर (!xen_feature(XENFEAT_स्वतः_translated_physmap)) अणु
 		xen_pfn_t pfn = PFN_DOWN(res->start);
 
-		for (i = 0; i < alloc_pages; i++) {
-			if (!set_phys_to_machine(pfn + i, INVALID_P2M_ENTRY)) {
+		क्रम (i = 0; i < alloc_pages; i++) अणु
+			अगर (!set_phys_to_machine(pfn + i, INVALID_P2M_ENTRY)) अणु
 				pr_warn("set_phys_to_machine() failed, no memory added\n");
 				ret = -ENOMEM;
-				goto err_memremap;
-			}
-                }
-	}
-#endif
+				जाओ err_memremap;
+			पूर्ण
+                पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
 	vaddr = memremap_pages(pgmap, NUMA_NO_NODE);
-	if (IS_ERR(vaddr)) {
+	अगर (IS_ERR(vaddr)) अणु
 		pr_err("Cannot remap memory range\n");
 		ret = PTR_ERR(vaddr);
-		goto err_memremap;
-	}
+		जाओ err_memremap;
+	पूर्ण
 
-	for (i = 0; i < alloc_pages; i++) {
-		struct page *pg = virt_to_page(vaddr + PAGE_SIZE * i);
+	क्रम (i = 0; i < alloc_pages; i++) अणु
+		काष्ठा page *pg = virt_to_page(vaddr + PAGE_SIZE * i);
 
 		BUG_ON(!virt_addr_valid(vaddr + PAGE_SIZE * i));
 		pg->zone_device_data = page_list;
 		page_list = pg;
 		list_count++;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_memremap:
-	kfree(pgmap);
+	kमुक्त(pgmap);
 err_pgmap:
 	release_resource(res);
 err_resource:
-	kfree(res);
-	return ret;
-}
+	kमुक्त(res);
+	वापस ret;
+पूर्ण
 
 /**
  * xen_alloc_unpopulated_pages - alloc unpopulated pages
  * @nr_pages: Number of pages
- * @pages: pages returned
- * @return 0 on success, error otherwise
+ * @pages: pages वापसed
+ * @वापस 0 on success, error otherwise
  */
-int xen_alloc_unpopulated_pages(unsigned int nr_pages, struct page **pages)
-{
-	unsigned int i;
-	int ret = 0;
+पूर्णांक xen_alloc_unpopulated_pages(अचिन्हित पूर्णांक nr_pages, काष्ठा page **pages)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&list_lock);
-	if (list_count < nr_pages) {
+	अगर (list_count < nr_pages) अणु
 		ret = fill_list(nr_pages - list_count);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
-	for (i = 0; i < nr_pages; i++) {
-		struct page *pg = page_list;
+	क्रम (i = 0; i < nr_pages; i++) अणु
+		काष्ठा page *pg = page_list;
 
 		BUG_ON(!pg);
 		page_list = pg->zone_device_data;
 		list_count--;
 		pages[i] = pg;
 
-#ifdef CONFIG_XEN_HAVE_PVMMU
-		if (!xen_feature(XENFEAT_auto_translated_physmap)) {
+#अगर_घोषित CONFIG_XEN_HAVE_PVMMU
+		अगर (!xen_feature(XENFEAT_स्वतः_translated_physmap)) अणु
 			ret = xen_alloc_p2m_entry(page_to_pfn(pg));
-			if (ret < 0) {
-				unsigned int j;
+			अगर (ret < 0) अणु
+				अचिन्हित पूर्णांक j;
 
-				for (j = 0; j <= i; j++) {
+				क्रम (j = 0; j <= i; j++) अणु
 					pages[j]->zone_device_data = page_list;
 					page_list = pages[j];
 					list_count++;
-				}
-				goto out;
-			}
-		}
-#endif
-	}
+				पूर्ण
+				जाओ out;
+			पूर्ण
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
 out:
 	mutex_unlock(&list_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(xen_alloc_unpopulated_pages);
 
 /**
- * xen_free_unpopulated_pages - return unpopulated pages
+ * xen_मुक्त_unpopulated_pages - वापस unpopulated pages
  * @nr_pages: Number of pages
- * @pages: pages to return
+ * @pages: pages to वापस
  */
-void xen_free_unpopulated_pages(unsigned int nr_pages, struct page **pages)
-{
-	unsigned int i;
+व्योम xen_मुक्त_unpopulated_pages(अचिन्हित पूर्णांक nr_pages, काष्ठा page **pages)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	mutex_lock(&list_lock);
-	for (i = 0; i < nr_pages; i++) {
+	क्रम (i = 0; i < nr_pages; i++) अणु
 		pages[i]->zone_device_data = page_list;
 		page_list = pages[i];
 		list_count++;
-	}
+	पूर्ण
 	mutex_unlock(&list_lock);
-}
-EXPORT_SYMBOL(xen_free_unpopulated_pages);
+पूर्ण
+EXPORT_SYMBOL(xen_मुक्त_unpopulated_pages);
 
-#ifdef CONFIG_XEN_PV
-static int __init init(void)
-{
-	unsigned int i;
+#अगर_घोषित CONFIG_XEN_PV
+अटल पूर्णांक __init init(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (!xen_domain())
-		return -ENODEV;
+	अगर (!xen_करोमुख्य())
+		वापस -ENODEV;
 
-	if (!xen_pv_domain())
-		return 0;
+	अगर (!xen_pv_करोमुख्य())
+		वापस 0;
 
 	/*
 	 * Initialize with pages from the extra memory regions (see
 	 * arch/x86/xen/setup.c).
 	 */
-	for (i = 0; i < XEN_EXTRA_MEM_MAX_REGIONS; i++) {
-		unsigned int j;
+	क्रम (i = 0; i < XEN_EXTRA_MEM_MAX_REGIONS; i++) अणु
+		अचिन्हित पूर्णांक j;
 
-		for (j = 0; j < xen_extra_mem[i].n_pfns; j++) {
-			struct page *pg =
+		क्रम (j = 0; j < xen_extra_mem[i].n_pfns; j++) अणु
+			काष्ठा page *pg =
 				pfn_to_page(xen_extra_mem[i].start_pfn + j);
 
 			pg->zone_device_data = page_list;
 			page_list = pg;
 			list_count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(init);
-#endif
+#पूर्ण_अगर

@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
-#ifndef __LIMA_GP_H__
-#define __LIMA_GP_H__
+#अगर_अघोषित __LIMA_GP_H__
+#घोषणा __LIMA_GP_H__
 
-struct lima_ip;
-struct lima_device;
+काष्ठा lima_ip;
+काष्ठा lima_device;
 
-int lima_gp_resume(struct lima_ip *ip);
-void lima_gp_suspend(struct lima_ip *ip);
-int lima_gp_init(struct lima_ip *ip);
-void lima_gp_fini(struct lima_ip *ip);
+पूर्णांक lima_gp_resume(काष्ठा lima_ip *ip);
+व्योम lima_gp_suspend(काष्ठा lima_ip *ip);
+पूर्णांक lima_gp_init(काष्ठा lima_ip *ip);
+व्योम lima_gp_fini(काष्ठा lima_ip *ip);
 
-int lima_gp_pipe_init(struct lima_device *dev);
-void lima_gp_pipe_fini(struct lima_device *dev);
+पूर्णांक lima_gp_pipe_init(काष्ठा lima_device *dev);
+व्योम lima_gp_pipe_fini(काष्ठा lima_device *dev);
 
-#endif
+#पूर्ण_अगर

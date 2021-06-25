@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2010 Matt Turner.
  * Copyright 2012 Red Hat
@@ -8,43 +9,43 @@
  *	    Dave Airlie
  */
 
-#include <linux/delay.h>
-#include <linux/dma-buf-map.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-buf-map.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_atomic_state_helper.h>
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_damage_helper.h>
-#include <drm/drm_format_helper.h>
-#include <drm/drm_fourcc.h>
-#include <drm/drm_gem_atomic_helper.h>
-#include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_plane_helper.h>
-#include <drm/drm_print.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_simple_kms_helper.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_atomic_state_helper.h>
+#समावेश <drm/drm_crtc_helper.h>
+#समावेश <drm/drm_damage_helper.h>
+#समावेश <drm/drm_क्रमmat_helper.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश <drm/drm_gem_atomic_helper.h>
+#समावेश <drm/drm_gem_framebuffer_helper.h>
+#समावेश <drm/drm_plane_helper.h>
+#समावेश <drm/drm_prपूर्णांक.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_simple_kms_helper.h>
 
-#include "mgag200_drv.h"
+#समावेश "mgag200_drv.h"
 
-#define MGAG200_LUT_SIZE 256
+#घोषणा MGAG200_LUT_SIZE 256
 
 /*
- * This file contains setup code for the CRTC.
+ * This file contains setup code क्रम the CRTC.
  */
 
-static void mga_crtc_load_lut(struct drm_crtc *crtc)
-{
-	struct drm_device *dev = crtc->dev;
-	struct mga_device *mdev = to_mga_device(dev);
-	struct drm_framebuffer *fb;
+अटल व्योम mga_crtc_load_lut(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_device *dev = crtc->dev;
+	काष्ठा mga_device *mdev = to_mga_device(dev);
+	काष्ठा drm_framebuffer *fb;
 	u16 *r_ptr, *g_ptr, *b_ptr;
-	int i;
+	पूर्णांक i;
 
-	if (!crtc->enabled)
-		return;
+	अगर (!crtc->enabled)
+		वापस;
 
-	if (!mdev->display_pipe.plane.state)
-		return;
+	अगर (!mdev->display_pipe.plane.state)
+		वापस;
 
 	fb = mdev->display_pipe.plane.state->fb;
 
@@ -54,148 +55,148 @@ static void mga_crtc_load_lut(struct drm_crtc *crtc)
 
 	WREG8(DAC_INDEX + MGA1064_INDEX, 0);
 
-	if (fb && fb->format->cpp[0] * 8 == 16) {
-		int inc = (fb->format->depth == 15) ? 8 : 4;
+	अगर (fb && fb->क्रमmat->cpp[0] * 8 == 16) अणु
+		पूर्णांक inc = (fb->क्रमmat->depth == 15) ? 8 : 4;
 		u8 r, b;
-		for (i = 0; i < MGAG200_LUT_SIZE; i += inc) {
-			if (fb->format->depth == 16) {
-				if (i > (MGAG200_LUT_SIZE >> 1)) {
+		क्रम (i = 0; i < MGAG200_LUT_SIZE; i += inc) अणु
+			अगर (fb->क्रमmat->depth == 16) अणु
+				अगर (i > (MGAG200_LUT_SIZE >> 1)) अणु
 					r = b = 0;
-				} else {
+				पूर्ण अन्यथा अणु
 					r = *r_ptr++ >> 8;
 					b = *b_ptr++ >> 8;
 					r_ptr++;
 					b_ptr++;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				r = *r_ptr++ >> 8;
 				b = *b_ptr++ >> 8;
-			}
-			/* VGA registers */
+			पूर्ण
+			/* VGA रेजिस्टरs */
 			WREG8(DAC_INDEX + MGA1064_COL_PAL, r);
 			WREG8(DAC_INDEX + MGA1064_COL_PAL, *g_ptr++ >> 8);
 			WREG8(DAC_INDEX + MGA1064_COL_PAL, b);
-		}
-		return;
-	}
-	for (i = 0; i < MGAG200_LUT_SIZE; i++) {
-		/* VGA registers */
+		पूर्ण
+		वापस;
+	पूर्ण
+	क्रम (i = 0; i < MGAG200_LUT_SIZE; i++) अणु
+		/* VGA रेजिस्टरs */
 		WREG8(DAC_INDEX + MGA1064_COL_PAL, *r_ptr++ >> 8);
 		WREG8(DAC_INDEX + MGA1064_COL_PAL, *g_ptr++ >> 8);
 		WREG8(DAC_INDEX + MGA1064_COL_PAL, *b_ptr++ >> 8);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void mga_wait_vsync(struct mga_device *mdev)
-{
-	unsigned long timeout = jiffies + HZ/10;
-	unsigned int status = 0;
+अटल अंतरभूत व्योम mga_रुको_vsync(काष्ठा mga_device *mdev)
+अणु
+	अचिन्हित दीर्घ समयout = jअगरfies + HZ/10;
+	अचिन्हित पूर्णांक status = 0;
 
-	do {
+	करो अणु
 		status = RREG32(MGAREG_Status);
-	} while ((status & 0x08) && time_before(jiffies, timeout));
-	timeout = jiffies + HZ/10;
+	पूर्ण जबतक ((status & 0x08) && समय_beक्रमe(jअगरfies, समयout));
+	समयout = jअगरfies + HZ/10;
 	status = 0;
-	do {
+	करो अणु
 		status = RREG32(MGAREG_Status);
-	} while (!(status & 0x08) && time_before(jiffies, timeout));
-}
+	पूर्ण जबतक (!(status & 0x08) && समय_beक्रमe(jअगरfies, समयout));
+पूर्ण
 
-static inline void mga_wait_busy(struct mga_device *mdev)
-{
-	unsigned long timeout = jiffies + HZ;
-	unsigned int status = 0;
-	do {
+अटल अंतरभूत व्योम mga_रुको_busy(काष्ठा mga_device *mdev)
+अणु
+	अचिन्हित दीर्घ समयout = jअगरfies + HZ;
+	अचिन्हित पूर्णांक status = 0;
+	करो अणु
 		status = RREG8(MGAREG_Status + 2);
-	} while ((status & 0x01) && time_before(jiffies, timeout));
-}
+	पूर्ण जबतक ((status & 0x01) && समय_beक्रमe(jअगरfies, समयout));
+पूर्ण
 
 /*
  * PLL setup
  */
 
-static int mgag200_g200_set_plls(struct mga_device *mdev, long clock)
-{
-	struct drm_device *dev = &mdev->base;
-	const int post_div_max = 7;
-	const int in_div_min = 1;
-	const int in_div_max = 6;
-	const int feed_div_min = 7;
-	const int feed_div_max = 127;
-	u8 testm, testn;
+अटल पूर्णांक mgag200_g200_set_plls(काष्ठा mga_device *mdev, दीर्घ घड़ी)
+अणु
+	काष्ठा drm_device *dev = &mdev->base;
+	स्थिर पूर्णांक post_भाग_max = 7;
+	स्थिर पूर्णांक in_भाग_min = 1;
+	स्थिर पूर्णांक in_भाग_max = 6;
+	स्थिर पूर्णांक feed_भाग_min = 7;
+	स्थिर पूर्णांक feed_भाग_max = 127;
+	u8 tesपंचांग, testn;
 	u8 n = 0, m = 0, p, s;
-	long f_vco;
-	long computed;
-	long delta, tmp_delta;
-	long ref_clk = mdev->model.g200.ref_clk;
-	long p_clk_min = mdev->model.g200.pclk_min;
-	long p_clk_max =  mdev->model.g200.pclk_max;
+	दीर्घ f_vco;
+	दीर्घ computed;
+	दीर्घ delta, पंचांगp_delta;
+	दीर्घ ref_clk = mdev->model.g200.ref_clk;
+	दीर्घ p_clk_min = mdev->model.g200.pclk_min;
+	दीर्घ p_clk_max =  mdev->model.g200.pclk_max;
 
-	if (clock > p_clk_max) {
-		drm_err(dev, "Pixel Clock %ld too high\n", clock);
-		return 1;
-	}
+	अगर (घड़ी > p_clk_max) अणु
+		drm_err(dev, "Pixel Clock %ld too high\n", घड़ी);
+		वापस 1;
+	पूर्ण
 
-	if (clock < p_clk_min >> 3)
-		clock = p_clk_min >> 3;
+	अगर (घड़ी < p_clk_min >> 3)
+		घड़ी = p_clk_min >> 3;
 
-	f_vco = clock;
-	for (p = 0;
-	     p <= post_div_max && f_vco < p_clk_min;
+	f_vco = घड़ी;
+	क्रम (p = 0;
+	     p <= post_भाग_max && f_vco < p_clk_min;
 	     p = (p << 1) + 1, f_vco <<= 1)
 		;
 
-	delta = clock;
+	delta = घड़ी;
 
-	for (testm = in_div_min; testm <= in_div_max; testm++) {
-		for (testn = feed_div_min; testn <= feed_div_max; testn++) {
-			computed = ref_clk * (testn + 1) / (testm + 1);
-			if (computed < f_vco)
-				tmp_delta = f_vco - computed;
-			else
-				tmp_delta = computed - f_vco;
-			if (tmp_delta < delta) {
-				delta = tmp_delta;
-				m = testm;
+	क्रम (tesपंचांग = in_भाग_min; tesपंचांग <= in_भाग_max; tesपंचांग++) अणु
+		क्रम (testn = feed_भाग_min; testn <= feed_भाग_max; testn++) अणु
+			computed = ref_clk * (testn + 1) / (tesपंचांग + 1);
+			अगर (computed < f_vco)
+				पंचांगp_delta = f_vco - computed;
+			अन्यथा
+				पंचांगp_delta = computed - f_vco;
+			अगर (पंचांगp_delta < delta) अणु
+				delta = पंचांगp_delta;
+				m = tesपंचांग;
 				n = testn;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	f_vco = ref_clk * (n + 1) / (m + 1);
-	if (f_vco < 100000)
+	अगर (f_vco < 100000)
 		s = 0;
-	else if (f_vco < 140000)
+	अन्यथा अगर (f_vco < 140000)
 		s = 1;
-	else if (f_vco < 180000)
+	अन्यथा अगर (f_vco < 180000)
 		s = 2;
-	else
+	अन्यथा
 		s = 3;
 
 	drm_dbg_kms(dev, "clock: %ld vco: %ld m: %d n: %d p: %d s: %d\n",
-		    clock, f_vco, m, n, p, s);
+		    घड़ी, f_vco, m, n, p, s);
 
 	WREG_DAC(MGA1064_PIX_PLLC_M, m);
 	WREG_DAC(MGA1064_PIX_PLLC_N, n);
 	WREG_DAC(MGA1064_PIX_PLLC_P, (p | (s << 3)));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define P_ARRAY_SIZE 9
+#घोषणा P_ARRAY_SIZE 9
 
-static int mga_g200se_set_plls(struct mga_device *mdev, long clock)
-{
+अटल पूर्णांक mga_g200se_set_plls(काष्ठा mga_device *mdev, दीर्घ घड़ी)
+अणु
 	u32 unique_rev_id = mdev->model.g200se.unique_rev_id;
-	unsigned int vcomax, vcomin, pllreffreq;
-	unsigned int delta, tmpdelta, permitteddelta;
-	unsigned int testp, testm, testn;
-	unsigned int p, m, n;
-	unsigned int computed;
-	unsigned int pvalues_e4[P_ARRAY_SIZE] = {16, 14, 12, 10, 8, 6, 4, 2, 1};
-	unsigned int fvv;
-	unsigned int i;
+	अचिन्हित पूर्णांक vcomax, vcomin, pllreffreq;
+	अचिन्हित पूर्णांक delta, पंचांगpdelta, permitteddelta;
+	अचिन्हित पूर्णांक testp, tesपंचांग, testn;
+	अचिन्हित पूर्णांक p, m, n;
+	अचिन्हित पूर्णांक computed;
+	अचिन्हित पूर्णांक pvalues_e4[P_ARRAY_SIZE] = अणु16, 14, 12, 10, 8, 6, 4, 2, 1पूर्ण;
+	अचिन्हित पूर्णांक fvv;
+	अचिन्हित पूर्णांक i;
 
-	if (unique_rev_id <= 0x03) {
+	अगर (unique_rev_id <= 0x03) अणु
 
 		m = n = p = 0;
 		vcomax = 320000;
@@ -203,32 +204,32 @@ static int mga_g200se_set_plls(struct mga_device *mdev, long clock)
 		pllreffreq = 25000;
 
 		delta = 0xffffffff;
-		permitteddelta = clock * 5 / 1000;
+		permitteddelta = घड़ी * 5 / 1000;
 
-		for (testp = 8; testp > 0; testp /= 2) {
-			if (clock * testp > vcomax)
-				continue;
-			if (clock * testp < vcomin)
-				continue;
+		क्रम (testp = 8; testp > 0; testp /= 2) अणु
+			अगर (घड़ी * testp > vcomax)
+				जारी;
+			अगर (घड़ी * testp < vcomin)
+				जारी;
 
-			for (testn = 17; testn < 256; testn++) {
-				for (testm = 1; testm < 32; testm++) {
+			क्रम (testn = 17; testn < 256; testn++) अणु
+				क्रम (tesपंचांग = 1; tesपंचांग < 32; tesपंचांग++) अणु
 					computed = (pllreffreq * testn) /
-						(testm * testp);
-					if (computed > clock)
-						tmpdelta = computed - clock;
-					else
-						tmpdelta = clock - computed;
-					if (tmpdelta < delta) {
-						delta = tmpdelta;
-						m = testm - 1;
+						(tesपंचांग * testp);
+					अगर (computed > घड़ी)
+						पंचांगpdelta = computed - घड़ी;
+					अन्यथा
+						पंचांगpdelta = घड़ी - computed;
+					अगर (पंचांगpdelta < delta) अणु
+						delta = पंचांगpdelta;
+						m = tesपंचांग - 1;
 						n = testn - 1;
 						p = testp - 1;
-					}
-				}
-			}
-		}
-	} else {
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 
 
 		m = n = p = 0;
@@ -236,195 +237,195 @@ static int mga_g200se_set_plls(struct mga_device *mdev, long clock)
 		vcomin        = 800000;
 		pllreffreq    = 25000;
 
-		if (clock < 25000)
-			clock = 25000;
+		अगर (घड़ी < 25000)
+			घड़ी = 25000;
 
-		clock = clock * 2;
+		घड़ी = घड़ी * 2;
 
 		delta = 0xFFFFFFFF;
-		/* Permited delta is 0.5% as VESA Specification */
-		permitteddelta = clock * 5 / 1000;
+		/* Permited delta is 0.5% as VESA Specअगरication */
+		permitteddelta = घड़ी * 5 / 1000;
 
-		for (i = 0 ; i < P_ARRAY_SIZE ; i++) {
+		क्रम (i = 0 ; i < P_ARRAY_SIZE ; i++) अणु
 			testp = pvalues_e4[i];
 
-			if ((clock * testp) > vcomax)
-				continue;
-			if ((clock * testp) < vcomin)
-				continue;
+			अगर ((घड़ी * testp) > vcomax)
+				जारी;
+			अगर ((घड़ी * testp) < vcomin)
+				जारी;
 
-			for (testn = 50; testn <= 256; testn++) {
-				for (testm = 1; testm <= 32; testm++) {
+			क्रम (testn = 50; testn <= 256; testn++) अणु
+				क्रम (tesपंचांग = 1; tesपंचांग <= 32; tesपंचांग++) अणु
 					computed = (pllreffreq * testn) /
-						(testm * testp);
-					if (computed > clock)
-						tmpdelta = computed - clock;
-					else
-						tmpdelta = clock - computed;
+						(tesपंचांग * testp);
+					अगर (computed > घड़ी)
+						पंचांगpdelta = computed - घड़ी;
+					अन्यथा
+						पंचांगpdelta = घड़ी - computed;
 
-					if (tmpdelta < delta) {
-						delta = tmpdelta;
-						m = testm - 1;
+					अगर (पंचांगpdelta < delta) अणु
+						delta = पंचांगpdelta;
+						m = tesपंचांग - 1;
 						n = testn - 1;
 						p = testp - 1;
-					}
-				}
-			}
-		}
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		fvv = pllreffreq * (n + 1) / (m + 1);
 		fvv = (fvv - 800000) / 50000;
 
-		if (fvv > 15)
+		अगर (fvv > 15)
 			fvv = 15;
 
 		p |= (fvv << 4);
 		m |= 0x80;
 
-		clock = clock / 2;
-	}
+		घड़ी = घड़ी / 2;
+	पूर्ण
 
-	if (delta > permitteddelta) {
+	अगर (delta > permitteddelta) अणु
 		pr_warn("PLL delta too large\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	WREG_DAC(MGA1064_PIX_PLLC_M, m);
 	WREG_DAC(MGA1064_PIX_PLLC_N, n);
 	WREG_DAC(MGA1064_PIX_PLLC_P, p);
 
-	if (unique_rev_id >= 0x04) {
+	अगर (unique_rev_id >= 0x04) अणु
 		WREG_DAC(0x1a, 0x09);
 		msleep(20);
 		WREG_DAC(0x1a, 0x01);
 
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mga_g200wb_set_plls(struct mga_device *mdev, long clock)
-{
-	unsigned int vcomax, vcomin, pllreffreq;
-	unsigned int delta, tmpdelta;
-	unsigned int testp, testm, testn, testp2;
-	unsigned int p, m, n;
-	unsigned int computed;
-	int i, j, tmpcount, vcount;
+अटल पूर्णांक mga_g200wb_set_plls(काष्ठा mga_device *mdev, दीर्घ घड़ी)
+अणु
+	अचिन्हित पूर्णांक vcomax, vcomin, pllreffreq;
+	अचिन्हित पूर्णांक delta, पंचांगpdelta;
+	अचिन्हित पूर्णांक testp, tesपंचांग, testn, testp2;
+	अचिन्हित पूर्णांक p, m, n;
+	अचिन्हित पूर्णांक computed;
+	पूर्णांक i, j, पंचांगpcount, vcount;
 	bool pll_locked = false;
-	u8 tmp;
+	u8 पंचांगp;
 
 	m = n = p = 0;
 
 	delta = 0xffffffff;
 
-	if (mdev->type == G200_EW3) {
+	अगर (mdev->type == G200_EW3) अणु
 
 		vcomax = 800000;
 		vcomin = 400000;
 		pllreffreq = 25000;
 
-		for (testp = 1; testp < 8; testp++) {
-			for (testp2 = 1; testp2 < 8; testp2++) {
-				if (testp < testp2)
-					continue;
-				if ((clock * testp * testp2) > vcomax)
-					continue;
-				if ((clock * testp * testp2) < vcomin)
-					continue;
-				for (testm = 1; testm < 26; testm++) {
-					for (testn = 32; testn < 2048 ; testn++) {
+		क्रम (testp = 1; testp < 8; testp++) अणु
+			क्रम (testp2 = 1; testp2 < 8; testp2++) अणु
+				अगर (testp < testp2)
+					जारी;
+				अगर ((घड़ी * testp * testp2) > vcomax)
+					जारी;
+				अगर ((घड़ी * testp * testp2) < vcomin)
+					जारी;
+				क्रम (tesपंचांग = 1; tesपंचांग < 26; tesपंचांग++) अणु
+					क्रम (testn = 32; testn < 2048 ; testn++) अणु
 						computed = (pllreffreq * testn) /
-							(testm * testp * testp2);
-						if (computed > clock)
-							tmpdelta = computed - clock;
-						else
-							tmpdelta = clock - computed;
-						if (tmpdelta < delta) {
-							delta = tmpdelta;
+							(tesपंचांग * testp * testp2);
+						अगर (computed > घड़ी)
+							पंचांगpdelta = computed - घड़ी;
+						अन्यथा
+							पंचांगpdelta = घड़ी - computed;
+						अगर (पंचांगpdelta < delta) अणु
+							delta = पंचांगpdelta;
 							m = ((testn & 0x100) >> 1) |
-								(testm);
+								(tesपंचांग);
 							n = (testn & 0xFF);
 							p = ((testn & 0x600) >> 3) |
 								(testp2 << 3) |
 								(testp);
-						}
-					}
-				}
-			}
-		}
-	} else {
+						पूर्ण
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 
 		vcomax = 550000;
 		vcomin = 150000;
 		pllreffreq = 48000;
 
-		for (testp = 1; testp < 9; testp++) {
-			if (clock * testp > vcomax)
-				continue;
-			if (clock * testp < vcomin)
-				continue;
+		क्रम (testp = 1; testp < 9; testp++) अणु
+			अगर (घड़ी * testp > vcomax)
+				जारी;
+			अगर (घड़ी * testp < vcomin)
+				जारी;
 
-			for (testm = 1; testm < 17; testm++) {
-				for (testn = 1; testn < 151; testn++) {
+			क्रम (tesपंचांग = 1; tesपंचांग < 17; tesपंचांग++) अणु
+				क्रम (testn = 1; testn < 151; testn++) अणु
 					computed = (pllreffreq * testn) /
-						(testm * testp);
-					if (computed > clock)
-						tmpdelta = computed - clock;
-					else
-						tmpdelta = clock - computed;
-					if (tmpdelta < delta) {
-						delta = tmpdelta;
+						(tesपंचांग * testp);
+					अगर (computed > घड़ी)
+						पंचांगpdelta = computed - घड़ी;
+					अन्यथा
+						पंचांगpdelta = घड़ी - computed;
+					अगर (पंचांगpdelta < delta) अणु
+						delta = पंचांगpdelta;
 						n = testn - 1;
-						m = (testm - 1) |
+						m = (tesपंचांग - 1) |
 							((n >> 1) & 0x80);
 						p = testp - 1;
-					}
-				}
-			}
-		}
-	}
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i <= 32 && pll_locked == false; i++) {
-		if (i > 0) {
+	क्रम (i = 0; i <= 32 && pll_locked == false; i++) अणु
+		अगर (i > 0) अणु
 			WREG8(MGAREG_CRTC_INDEX, 0x1e);
-			tmp = RREG8(MGAREG_CRTC_DATA);
-			if (tmp < 0xff)
-				WREG8(MGAREG_CRTC_DATA, tmp+1);
-		}
+			पंचांगp = RREG8(MGAREG_CRTC_DATA);
+			अगर (पंचांगp < 0xff)
+				WREG8(MGAREG_CRTC_DATA, पंचांगp+1);
+		पूर्ण
 
 		/* set pixclkdis to 1 */
 		WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-		tmp = RREG8(DAC_DATA);
-		tmp |= MGA1064_PIX_CLK_CTL_CLK_DIS;
-		WREG8(DAC_DATA, tmp);
+		पंचांगp = RREG8(DAC_DATA);
+		पंचांगp |= MGA1064_PIX_CLK_CTL_CLK_DIS;
+		WREG8(DAC_DATA, पंचांगp);
 
 		WREG8(DAC_INDEX, MGA1064_REMHEADCTL);
-		tmp = RREG8(DAC_DATA);
-		tmp |= MGA1064_REMHEADCTL_CLKDIS;
-		WREG8(DAC_DATA, tmp);
+		पंचांगp = RREG8(DAC_DATA);
+		पंचांगp |= MGA1064_REMHEADCTL_CLKDIS;
+		WREG8(DAC_DATA, पंचांगp);
 
 		/* select PLL Set C */
-		tmp = RREG8(MGAREG_MEM_MISC_READ);
-		tmp |= 0x3 << 2;
-		WREG8(MGAREG_MEM_MISC_WRITE, tmp);
+		पंचांगp = RREG8(MGAREG_MEM_MISC_READ);
+		पंचांगp |= 0x3 << 2;
+		WREG8(MGAREG_MEM_MISC_WRITE, पंचांगp);
 
 		WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-		tmp = RREG8(DAC_DATA);
-		tmp |= MGA1064_PIX_CLK_CTL_CLK_POW_DOWN | 0x80;
-		WREG8(DAC_DATA, tmp);
+		पंचांगp = RREG8(DAC_DATA);
+		पंचांगp |= MGA1064_PIX_CLK_CTL_CLK_POW_DOWN | 0x80;
+		WREG8(DAC_DATA, पंचांगp);
 
 		udelay(500);
 
 		/* reset the PLL */
 		WREG8(DAC_INDEX, MGA1064_VREF_CTL);
-		tmp = RREG8(DAC_DATA);
-		tmp &= ~0x04;
-		WREG8(DAC_DATA, tmp);
+		पंचांगp = RREG8(DAC_DATA);
+		पंचांगp &= ~0x04;
+		WREG8(DAC_DATA, पंचांगp);
 
 		udelay(50);
 
-		/* program pixel pll register */
+		/* program pixel pll रेजिस्टर */
 		WREG_DAC(MGA1064_WB_PIX_PLLC_N, n);
 		WREG_DAC(MGA1064_WB_PIX_PLLC_M, m);
 		WREG_DAC(MGA1064_WB_PIX_PLLC_P, p);
@@ -433,63 +434,63 @@ static int mga_g200wb_set_plls(struct mga_device *mdev, long clock)
 
 		/* turn pll on */
 		WREG8(DAC_INDEX, MGA1064_VREF_CTL);
-		tmp = RREG8(DAC_DATA);
-		tmp |= 0x04;
-		WREG_DAC(MGA1064_VREF_CTL, tmp);
+		पंचांगp = RREG8(DAC_DATA);
+		पंचांगp |= 0x04;
+		WREG_DAC(MGA1064_VREF_CTL, पंचांगp);
 
 		udelay(500);
 
 		/* select the pixel pll */
 		WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-		tmp = RREG8(DAC_DATA);
-		tmp &= ~MGA1064_PIX_CLK_CTL_SEL_MSK;
-		tmp |= MGA1064_PIX_CLK_CTL_SEL_PLL;
-		WREG8(DAC_DATA, tmp);
+		पंचांगp = RREG8(DAC_DATA);
+		पंचांगp &= ~MGA1064_PIX_CLK_CTL_SEL_MSK;
+		पंचांगp |= MGA1064_PIX_CLK_CTL_SEL_PLL;
+		WREG8(DAC_DATA, पंचांगp);
 
 		WREG8(DAC_INDEX, MGA1064_REMHEADCTL);
-		tmp = RREG8(DAC_DATA);
-		tmp &= ~MGA1064_REMHEADCTL_CLKSL_MSK;
-		tmp |= MGA1064_REMHEADCTL_CLKSL_PLL;
-		WREG8(DAC_DATA, tmp);
+		पंचांगp = RREG8(DAC_DATA);
+		पंचांगp &= ~MGA1064_REMHEADCTL_CLKSL_MSK;
+		पंचांगp |= MGA1064_REMHEADCTL_CLKSL_PLL;
+		WREG8(DAC_DATA, पंचांगp);
 
-		/* reset dotclock rate bit */
+		/* reset करोtघड़ी rate bit */
 		WREG8(MGAREG_SEQ_INDEX, 1);
-		tmp = RREG8(MGAREG_SEQ_DATA);
-		tmp &= ~0x8;
-		WREG8(MGAREG_SEQ_DATA, tmp);
+		पंचांगp = RREG8(MGAREG_SEQ_DATA);
+		पंचांगp &= ~0x8;
+		WREG8(MGAREG_SEQ_DATA, पंचांगp);
 
 		WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-		tmp = RREG8(DAC_DATA);
-		tmp &= ~MGA1064_PIX_CLK_CTL_CLK_DIS;
-		WREG8(DAC_DATA, tmp);
+		पंचांगp = RREG8(DAC_DATA);
+		पंचांगp &= ~MGA1064_PIX_CLK_CTL_CLK_DIS;
+		WREG8(DAC_DATA, पंचांगp);
 
 		vcount = RREG8(MGAREG_VCOUNT);
 
-		for (j = 0; j < 30 && pll_locked == false; j++) {
-			tmpcount = RREG8(MGAREG_VCOUNT);
-			if (tmpcount < vcount)
+		क्रम (j = 0; j < 30 && pll_locked == false; j++) अणु
+			पंचांगpcount = RREG8(MGAREG_VCOUNT);
+			अगर (पंचांगpcount < vcount)
 				vcount = 0;
-			if ((tmpcount - vcount) > 2)
+			अगर ((पंचांगpcount - vcount) > 2)
 				pll_locked = true;
-			else
+			अन्यथा
 				udelay(5);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	WREG8(DAC_INDEX, MGA1064_REMHEADCTL);
-	tmp = RREG8(DAC_DATA);
-	tmp &= ~MGA1064_REMHEADCTL_CLKDIS;
-	WREG_DAC(MGA1064_REMHEADCTL, tmp);
-	return 0;
-}
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp &= ~MGA1064_REMHEADCTL_CLKDIS;
+	WREG_DAC(MGA1064_REMHEADCTL, पंचांगp);
+	वापस 0;
+पूर्ण
 
-static int mga_g200ev_set_plls(struct mga_device *mdev, long clock)
-{
-	unsigned int vcomax, vcomin, pllreffreq;
-	unsigned int delta, tmpdelta;
-	unsigned int testp, testm, testn;
-	unsigned int p, m, n;
-	unsigned int computed;
-	u8 tmp;
+अटल पूर्णांक mga_g200ev_set_plls(काष्ठा mga_device *mdev, दीर्घ घड़ी)
+अणु
+	अचिन्हित पूर्णांक vcomax, vcomin, pllreffreq;
+	अचिन्हित पूर्णांक delta, पंचांगpdelta;
+	अचिन्हित पूर्णांक testp, tesपंचांग, testn;
+	अचिन्हित पूर्णांक p, m, n;
+	अचिन्हित पूर्णांक computed;
+	u8 पंचांगp;
 
 	m = n = p = 0;
 	vcomax = 550000;
@@ -498,47 +499,47 @@ static int mga_g200ev_set_plls(struct mga_device *mdev, long clock)
 
 	delta = 0xffffffff;
 
-	for (testp = 16; testp > 0; testp--) {
-		if (clock * testp > vcomax)
-			continue;
-		if (clock * testp < vcomin)
-			continue;
+	क्रम (testp = 16; testp > 0; testp--) अणु
+		अगर (घड़ी * testp > vcomax)
+			जारी;
+		अगर (घड़ी * testp < vcomin)
+			जारी;
 
-		for (testn = 1; testn < 257; testn++) {
-			for (testm = 1; testm < 17; testm++) {
+		क्रम (testn = 1; testn < 257; testn++) अणु
+			क्रम (tesपंचांग = 1; tesपंचांग < 17; tesपंचांग++) अणु
 				computed = (pllreffreq * testn) /
-					(testm * testp);
-				if (computed > clock)
-					tmpdelta = computed - clock;
-				else
-					tmpdelta = clock - computed;
-				if (tmpdelta < delta) {
-					delta = tmpdelta;
+					(tesपंचांग * testp);
+				अगर (computed > घड़ी)
+					पंचांगpdelta = computed - घड़ी;
+				अन्यथा
+					पंचांगpdelta = घड़ी - computed;
+				अगर (पंचांगpdelta < delta) अणु
+					delta = पंचांगpdelta;
 					n = testn - 1;
-					m = testm - 1;
+					m = tesपंचांग - 1;
 					p = testp - 1;
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-	tmp = RREG8(DAC_DATA);
-	tmp |= MGA1064_PIX_CLK_CTL_CLK_DIS;
-	WREG8(DAC_DATA, tmp);
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp |= MGA1064_PIX_CLK_CTL_CLK_DIS;
+	WREG8(DAC_DATA, पंचांगp);
 
-	tmp = RREG8(MGAREG_MEM_MISC_READ);
-	tmp |= 0x3 << 2;
-	WREG8(MGAREG_MEM_MISC_WRITE, tmp);
+	पंचांगp = RREG8(MGAREG_MEM_MISC_READ);
+	पंचांगp |= 0x3 << 2;
+	WREG8(MGAREG_MEM_MISC_WRITE, पंचांगp);
 
 	WREG8(DAC_INDEX, MGA1064_PIX_PLL_STAT);
-	tmp = RREG8(DAC_DATA);
-	WREG8(DAC_DATA, tmp & ~0x40);
+	पंचांगp = RREG8(DAC_DATA);
+	WREG8(DAC_DATA, पंचांगp & ~0x40);
 
 	WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-	tmp = RREG8(DAC_DATA);
-	tmp |= MGA1064_PIX_CLK_CTL_CLK_POW_DOWN;
-	WREG8(DAC_DATA, tmp);
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp |= MGA1064_PIX_CLK_CTL_CLK_POW_DOWN;
+	WREG8(DAC_DATA, पंचांगp);
 
 	WREG_DAC(MGA1064_EV_PIX_PLLC_M, m);
 	WREG_DAC(MGA1064_EV_PIX_PLLC_N, n);
@@ -547,48 +548,48 @@ static int mga_g200ev_set_plls(struct mga_device *mdev, long clock)
 	udelay(50);
 
 	WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-	tmp = RREG8(DAC_DATA);
-	tmp &= ~MGA1064_PIX_CLK_CTL_CLK_POW_DOWN;
-	WREG8(DAC_DATA, tmp);
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp &= ~MGA1064_PIX_CLK_CTL_CLK_POW_DOWN;
+	WREG8(DAC_DATA, पंचांगp);
 
 	udelay(500);
 
 	WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-	tmp = RREG8(DAC_DATA);
-	tmp &= ~MGA1064_PIX_CLK_CTL_SEL_MSK;
-	tmp |= MGA1064_PIX_CLK_CTL_SEL_PLL;
-	WREG8(DAC_DATA, tmp);
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp &= ~MGA1064_PIX_CLK_CTL_SEL_MSK;
+	पंचांगp |= MGA1064_PIX_CLK_CTL_SEL_PLL;
+	WREG8(DAC_DATA, पंचांगp);
 
 	WREG8(DAC_INDEX, MGA1064_PIX_PLL_STAT);
-	tmp = RREG8(DAC_DATA);
-	WREG8(DAC_DATA, tmp | 0x40);
+	पंचांगp = RREG8(DAC_DATA);
+	WREG8(DAC_DATA, पंचांगp | 0x40);
 
-	tmp = RREG8(MGAREG_MEM_MISC_READ);
-	tmp |= (0x3 << 2);
-	WREG8(MGAREG_MEM_MISC_WRITE, tmp);
+	पंचांगp = RREG8(MGAREG_MEM_MISC_READ);
+	पंचांगp |= (0x3 << 2);
+	WREG8(MGAREG_MEM_MISC_WRITE, पंचांगp);
 
 	WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-	tmp = RREG8(DAC_DATA);
-	tmp &= ~MGA1064_PIX_CLK_CTL_CLK_DIS;
-	WREG8(DAC_DATA, tmp);
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp &= ~MGA1064_PIX_CLK_CTL_CLK_DIS;
+	WREG8(DAC_DATA, पंचांगp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mga_g200eh_set_plls(struct mga_device *mdev, long clock)
-{
-	unsigned int vcomax, vcomin, pllreffreq;
-	unsigned int delta, tmpdelta;
-	unsigned int testp, testm, testn;
-	unsigned int p, m, n;
-	unsigned int computed;
-	int i, j, tmpcount, vcount;
-	u8 tmp;
+अटल पूर्णांक mga_g200eh_set_plls(काष्ठा mga_device *mdev, दीर्घ घड़ी)
+अणु
+	अचिन्हित पूर्णांक vcomax, vcomin, pllreffreq;
+	अचिन्हित पूर्णांक delta, पंचांगpdelta;
+	अचिन्हित पूर्णांक testp, tesपंचांग, testn;
+	अचिन्हित पूर्णांक p, m, n;
+	अचिन्हित पूर्णांक computed;
+	पूर्णांक i, j, पंचांगpcount, vcount;
+	u8 पंचांगp;
 	bool pll_locked = false;
 
 	m = n = p = 0;
 
-	if (mdev->type == G200_EH3) {
+	अगर (mdev->type == G200_EH3) अणु
 		vcomax = 3000000;
 		vcomin = 1500000;
 		pllreffreq = 25000;
@@ -597,30 +598,30 @@ static int mga_g200eh_set_plls(struct mga_device *mdev, long clock)
 
 		testp = 0;
 
-		for (testm = 150; testm >= 6; testm--) {
-			if (clock * testm > vcomax)
-				continue;
-			if (clock * testm < vcomin)
-				continue;
-			for (testn = 120; testn >= 60; testn--) {
-				computed = (pllreffreq * testn) / testm;
-				if (computed > clock)
-					tmpdelta = computed - clock;
-				else
-					tmpdelta = clock - computed;
-				if (tmpdelta < delta) {
-					delta = tmpdelta;
+		क्रम (tesपंचांग = 150; tesपंचांग >= 6; tesपंचांग--) अणु
+			अगर (घड़ी * tesपंचांग > vcomax)
+				जारी;
+			अगर (घड़ी * tesपंचांग < vcomin)
+				जारी;
+			क्रम (testn = 120; testn >= 60; testn--) अणु
+				computed = (pllreffreq * testn) / tesपंचांग;
+				अगर (computed > घड़ी)
+					पंचांगpdelta = computed - घड़ी;
+				अन्यथा
+					पंचांगpdelta = घड़ी - computed;
+				अगर (पंचांगpdelta < delta) अणु
+					delta = पंचांगpdelta;
 					n = testn;
-					m = testm;
+					m = tesपंचांग;
 					p = testp;
-				}
-				if (delta == 0)
-					break;
-			}
-			if (delta == 0)
-				break;
-		}
-	} else {
+				पूर्ण
+				अगर (delta == 0)
+					अवरोध;
+			पूर्ण
+			अगर (delta == 0)
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 
 		vcomax = 800000;
 		vcomin = 400000;
@@ -628,46 +629,46 @@ static int mga_g200eh_set_plls(struct mga_device *mdev, long clock)
 
 		delta = 0xffffffff;
 
-		for (testp = 16; testp > 0; testp >>= 1) {
-			if (clock * testp > vcomax)
-				continue;
-			if (clock * testp < vcomin)
-				continue;
+		क्रम (testp = 16; testp > 0; testp >>= 1) अणु
+			अगर (घड़ी * testp > vcomax)
+				जारी;
+			अगर (घड़ी * testp < vcomin)
+				जारी;
 
-			for (testm = 1; testm < 33; testm++) {
-				for (testn = 17; testn < 257; testn++) {
+			क्रम (tesपंचांग = 1; tesपंचांग < 33; tesपंचांग++) अणु
+				क्रम (testn = 17; testn < 257; testn++) अणु
 					computed = (pllreffreq * testn) /
-						(testm * testp);
-					if (computed > clock)
-						tmpdelta = computed - clock;
-					else
-						tmpdelta = clock - computed;
-					if (tmpdelta < delta) {
-						delta = tmpdelta;
+						(tesपंचांग * testp);
+					अगर (computed > घड़ी)
+						पंचांगpdelta = computed - घड़ी;
+					अन्यथा
+						पंचांगpdelta = घड़ी - computed;
+					अगर (पंचांगpdelta < delta) अणु
+						delta = पंचांगpdelta;
 						n = testn - 1;
-						m = (testm - 1);
+						m = (tesपंचांग - 1);
 						p = testp - 1;
-					}
-					if ((clock * testp) >= 600000)
+					पूर्ण
+					अगर ((घड़ी * testp) >= 600000)
 						p |= 0x80;
-				}
-			}
-		}
-	}
-	for (i = 0; i <= 32 && pll_locked == false; i++) {
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	क्रम (i = 0; i <= 32 && pll_locked == false; i++) अणु
 		WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-		tmp = RREG8(DAC_DATA);
-		tmp |= MGA1064_PIX_CLK_CTL_CLK_DIS;
-		WREG8(DAC_DATA, tmp);
+		पंचांगp = RREG8(DAC_DATA);
+		पंचांगp |= MGA1064_PIX_CLK_CTL_CLK_DIS;
+		WREG8(DAC_DATA, पंचांगp);
 
-		tmp = RREG8(MGAREG_MEM_MISC_READ);
-		tmp |= 0x3 << 2;
-		WREG8(MGAREG_MEM_MISC_WRITE, tmp);
+		पंचांगp = RREG8(MGAREG_MEM_MISC_READ);
+		पंचांगp |= 0x3 << 2;
+		WREG8(MGAREG_MEM_MISC_WRITE, पंचांगp);
 
 		WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-		tmp = RREG8(DAC_DATA);
-		tmp |= MGA1064_PIX_CLK_CTL_CLK_POW_DOWN;
-		WREG8(DAC_DATA, tmp);
+		पंचांगp = RREG8(DAC_DATA);
+		पंचांगp |= MGA1064_PIX_CLK_CTL_CLK_POW_DOWN;
+		WREG8(DAC_DATA, पंचांगp);
 
 		udelay(500);
 
@@ -678,42 +679,42 @@ static int mga_g200eh_set_plls(struct mga_device *mdev, long clock)
 		udelay(500);
 
 		WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-		tmp = RREG8(DAC_DATA);
-		tmp &= ~MGA1064_PIX_CLK_CTL_SEL_MSK;
-		tmp |= MGA1064_PIX_CLK_CTL_SEL_PLL;
-		WREG8(DAC_DATA, tmp);
+		पंचांगp = RREG8(DAC_DATA);
+		पंचांगp &= ~MGA1064_PIX_CLK_CTL_SEL_MSK;
+		पंचांगp |= MGA1064_PIX_CLK_CTL_SEL_PLL;
+		WREG8(DAC_DATA, पंचांगp);
 
 		WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-		tmp = RREG8(DAC_DATA);
-		tmp &= ~MGA1064_PIX_CLK_CTL_CLK_DIS;
-		tmp &= ~MGA1064_PIX_CLK_CTL_CLK_POW_DOWN;
-		WREG8(DAC_DATA, tmp);
+		पंचांगp = RREG8(DAC_DATA);
+		पंचांगp &= ~MGA1064_PIX_CLK_CTL_CLK_DIS;
+		पंचांगp &= ~MGA1064_PIX_CLK_CTL_CLK_POW_DOWN;
+		WREG8(DAC_DATA, पंचांगp);
 
 		vcount = RREG8(MGAREG_VCOUNT);
 
-		for (j = 0; j < 30 && pll_locked == false; j++) {
-			tmpcount = RREG8(MGAREG_VCOUNT);
-			if (tmpcount < vcount)
+		क्रम (j = 0; j < 30 && pll_locked == false; j++) अणु
+			पंचांगpcount = RREG8(MGAREG_VCOUNT);
+			अगर (पंचांगpcount < vcount)
 				vcount = 0;
-			if ((tmpcount - vcount) > 2)
+			अगर ((पंचांगpcount - vcount) > 2)
 				pll_locked = true;
-			else
+			अन्यथा
 				udelay(5);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mga_g200er_set_plls(struct mga_device *mdev, long clock)
-{
-	static const unsigned int m_div_val[] = { 1, 2, 4, 8 };
-	unsigned int vcomax, vcomin, pllreffreq;
-	unsigned int delta, tmpdelta;
-	int testr, testn, testm, testo;
-	unsigned int p, m, n;
-	unsigned int computed, vco;
-	int tmp;
+अटल पूर्णांक mga_g200er_set_plls(काष्ठा mga_device *mdev, दीर्घ घड़ी)
+अणु
+	अटल स्थिर अचिन्हित पूर्णांक m_भाग_val[] = अणु 1, 2, 4, 8 पूर्ण;
+	अचिन्हित पूर्णांक vcomax, vcomin, pllreffreq;
+	अचिन्हित पूर्णांक delta, पंचांगpdelta;
+	पूर्णांक testr, testn, tesपंचांग, testo;
+	अचिन्हित पूर्णांक p, m, n;
+	अचिन्हित पूर्णांक computed, vco;
+	पूर्णांक पंचांगp;
 
 	m = n = p = 0;
 	vcomax = 1488000;
@@ -722,57 +723,57 @@ static int mga_g200er_set_plls(struct mga_device *mdev, long clock)
 
 	delta = 0xffffffff;
 
-	for (testr = 0; testr < 4; testr++) {
-		if (delta == 0)
-			break;
-		for (testn = 5; testn < 129; testn++) {
-			if (delta == 0)
-				break;
-			for (testm = 3; testm >= 0; testm--) {
-				if (delta == 0)
-					break;
-				for (testo = 5; testo < 33; testo++) {
+	क्रम (testr = 0; testr < 4; testr++) अणु
+		अगर (delta == 0)
+			अवरोध;
+		क्रम (testn = 5; testn < 129; testn++) अणु
+			अगर (delta == 0)
+				अवरोध;
+			क्रम (tesपंचांग = 3; tesपंचांग >= 0; tesपंचांग--) अणु
+				अगर (delta == 0)
+					अवरोध;
+				क्रम (testo = 5; testo < 33; testo++) अणु
 					vco = pllreffreq * (testn + 1) /
 						(testr + 1);
-					if (vco < vcomin)
-						continue;
-					if (vco > vcomax)
-						continue;
-					computed = vco / (m_div_val[testm] * (testo + 1));
-					if (computed > clock)
-						tmpdelta = computed - clock;
-					else
-						tmpdelta = clock - computed;
-					if (tmpdelta < delta) {
-						delta = tmpdelta;
-						m = testm | (testo << 3);
+					अगर (vco < vcomin)
+						जारी;
+					अगर (vco > vcomax)
+						जारी;
+					computed = vco / (m_भाग_val[tesपंचांग] * (testo + 1));
+					अगर (computed > घड़ी)
+						पंचांगpdelta = computed - घड़ी;
+					अन्यथा
+						पंचांगpdelta = घड़ी - computed;
+					अगर (पंचांगpdelta < delta) अणु
+						delta = पंचांगpdelta;
+						m = tesपंचांग | (testo << 3);
 						n = testn;
 						p = testr | (testr << 3);
-					}
-				}
-			}
-		}
-	}
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-	tmp = RREG8(DAC_DATA);
-	tmp |= MGA1064_PIX_CLK_CTL_CLK_DIS;
-	WREG8(DAC_DATA, tmp);
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp |= MGA1064_PIX_CLK_CTL_CLK_DIS;
+	WREG8(DAC_DATA, पंचांगp);
 
 	WREG8(DAC_INDEX, MGA1064_REMHEADCTL);
-	tmp = RREG8(DAC_DATA);
-	tmp |= MGA1064_REMHEADCTL_CLKDIS;
-	WREG8(DAC_DATA, tmp);
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp |= MGA1064_REMHEADCTL_CLKDIS;
+	WREG8(DAC_DATA, पंचांगp);
 
-	tmp = RREG8(MGAREG_MEM_MISC_READ);
-	tmp |= (0x3<<2) | 0xc0;
-	WREG8(MGAREG_MEM_MISC_WRITE, tmp);
+	पंचांगp = RREG8(MGAREG_MEM_MISC_READ);
+	पंचांगp |= (0x3<<2) | 0xc0;
+	WREG8(MGAREG_MEM_MISC_WRITE, पंचांगp);
 
 	WREG8(DAC_INDEX, MGA1064_PIX_CLK_CTL);
-	tmp = RREG8(DAC_DATA);
-	tmp &= ~MGA1064_PIX_CLK_CTL_CLK_DIS;
-	tmp |= MGA1064_PIX_CLK_CTL_CLK_POW_DOWN;
-	WREG8(DAC_DATA, tmp);
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp &= ~MGA1064_PIX_CLK_CTL_CLK_DIS;
+	पंचांगp |= MGA1064_PIX_CLK_CTL_CLK_POW_DOWN;
+	WREG8(DAC_DATA, पंचांगp);
 
 	udelay(500);
 
@@ -782,136 +783,136 @@ static int mga_g200er_set_plls(struct mga_device *mdev, long clock)
 
 	udelay(50);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mgag200_crtc_set_plls(struct mga_device *mdev, long clock)
-{
+अटल पूर्णांक mgag200_crtc_set_plls(काष्ठा mga_device *mdev, दीर्घ घड़ी)
+अणु
 	u8 misc;
 
-	switch(mdev->type) {
-	case G200_PCI:
-	case G200_AGP:
-		return mgag200_g200_set_plls(mdev, clock);
-	case G200_SE_A:
-	case G200_SE_B:
-		return mga_g200se_set_plls(mdev, clock);
-	case G200_WB:
-	case G200_EW3:
-		return mga_g200wb_set_plls(mdev, clock);
-	case G200_EV:
-		return mga_g200ev_set_plls(mdev, clock);
-	case G200_EH:
-	case G200_EH3:
-		return mga_g200eh_set_plls(mdev, clock);
-	case G200_ER:
-		return mga_g200er_set_plls(mdev, clock);
-	}
+	चयन(mdev->type) अणु
+	हाल G200_PCI:
+	हाल G200_AGP:
+		वापस mgag200_g200_set_plls(mdev, घड़ी);
+	हाल G200_SE_A:
+	हाल G200_SE_B:
+		वापस mga_g200se_set_plls(mdev, घड़ी);
+	हाल G200_WB:
+	हाल G200_EW3:
+		वापस mga_g200wb_set_plls(mdev, घड़ी);
+	हाल G200_EV:
+		वापस mga_g200ev_set_plls(mdev, घड़ी);
+	हाल G200_EH:
+	हाल G200_EH3:
+		वापस mga_g200eh_set_plls(mdev, घड़ी);
+	हाल G200_ER:
+		वापस mga_g200er_set_plls(mdev, घड़ी);
+	पूर्ण
 
 	misc = RREG8(MGA_MISC_IN);
 	misc &= ~MGAREG_MISC_CLK_SEL_MASK;
 	misc |= MGAREG_MISC_CLK_SEL_MGA_MSK;
 	WREG8(MGA_MISC_OUT, misc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mgag200_g200wb_hold_bmc(struct mga_device *mdev)
-{
-	u8 tmp;
-	int iter_max;
+अटल व्योम mgag200_g200wb_hold_bmc(काष्ठा mga_device *mdev)
+अणु
+	u8 पंचांगp;
+	पूर्णांक iter_max;
 
 	/* 1- The first step is to warn the BMC of an upcoming mode change.
 	 * We are putting the misc<0> to output.*/
 
 	WREG8(DAC_INDEX, MGA1064_GEN_IO_CTL);
-	tmp = RREG8(DAC_DATA);
-	tmp |= 0x10;
-	WREG_DAC(MGA1064_GEN_IO_CTL, tmp);
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp |= 0x10;
+	WREG_DAC(MGA1064_GEN_IO_CTL, पंचांगp);
 
 	/* we are putting a 1 on the misc<0> line */
 	WREG8(DAC_INDEX, MGA1064_GEN_IO_DATA);
-	tmp = RREG8(DAC_DATA);
-	tmp |= 0x10;
-	WREG_DAC(MGA1064_GEN_IO_DATA, tmp);
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp |= 0x10;
+	WREG_DAC(MGA1064_GEN_IO_DATA, पंचांगp);
 
 	/* 2- Second step to mask and further scan request
-	 * This will be done by asserting the remfreqmsk bit (XSPAREREG<7>)
+	 * This will be करोne by निश्चितing the remfreqmsk bit (XSPAREREG<7>)
 	 */
 	WREG8(DAC_INDEX, MGA1064_SPAREREG);
-	tmp = RREG8(DAC_DATA);
-	tmp |= 0x80;
-	WREG_DAC(MGA1064_SPAREREG, tmp);
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp |= 0x80;
+	WREG_DAC(MGA1064_SPAREREG, पंचांगp);
 
-	/* 3a- the third step is to verifu if there is an active scan
-	 * We are searching for a 0 on remhsyncsts <XSPAREREG<0>)
+	/* 3a- the third step is to verअगरu अगर there is an active scan
+	 * We are searching क्रम a 0 on remhsyncsts <XSPAREREG<0>)
 	 */
 	iter_max = 300;
-	while (!(tmp & 0x1) && iter_max) {
+	जबतक (!(पंचांगp & 0x1) && iter_max) अणु
 		WREG8(DAC_INDEX, MGA1064_SPAREREG);
-		tmp = RREG8(DAC_DATA);
+		पंचांगp = RREG8(DAC_DATA);
 		udelay(1000);
 		iter_max--;
-	}
+	पूर्ण
 
-	/* 3b- this step occurs only if the remove is actually scanning
-	 * we are waiting for the end of the frame which is a 1 on
+	/* 3b- this step occurs only अगर the हटाओ is actually scanning
+	 * we are रुकोing क्रम the end of the frame which is a 1 on
 	 * remvsyncsts (XSPAREREG<1>)
 	 */
-	if (iter_max) {
+	अगर (iter_max) अणु
 		iter_max = 300;
-		while ((tmp & 0x2) && iter_max) {
+		जबतक ((पंचांगp & 0x2) && iter_max) अणु
 			WREG8(DAC_INDEX, MGA1064_SPAREREG);
-			tmp = RREG8(DAC_DATA);
+			पंचांगp = RREG8(DAC_DATA);
 			udelay(1000);
 			iter_max--;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void mgag200_g200wb_release_bmc(struct mga_device *mdev)
-{
-	u8 tmp;
+अटल व्योम mgag200_g200wb_release_bmc(काष्ठा mga_device *mdev)
+अणु
+	u8 पंचांगp;
 
 	/* 1- The first step is to ensure that the vrsten and hrsten are set */
 	WREG8(MGAREG_CRTCEXT_INDEX, 1);
-	tmp = RREG8(MGAREG_CRTCEXT_DATA);
-	WREG8(MGAREG_CRTCEXT_DATA, tmp | 0x88);
+	पंचांगp = RREG8(MGAREG_CRTCEXT_DATA);
+	WREG8(MGAREG_CRTCEXT_DATA, पंचांगp | 0x88);
 
-	/* 2- second step is to assert the rstlvl2 */
+	/* 2- second step is to निश्चित the rstlvl2 */
 	WREG8(DAC_INDEX, MGA1064_REMHEADCTL2);
-	tmp = RREG8(DAC_DATA);
-	tmp |= 0x8;
-	WREG8(DAC_DATA, tmp);
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp |= 0x8;
+	WREG8(DAC_DATA, पंचांगp);
 
-	/* wait 10 us */
+	/* रुको 10 us */
 	udelay(10);
 
-	/* 3- deassert rstlvl2 */
-	tmp &= ~0x08;
+	/* 3- deनिश्चित rstlvl2 */
+	पंचांगp &= ~0x08;
 	WREG8(DAC_INDEX, MGA1064_REMHEADCTL2);
-	WREG8(DAC_DATA, tmp);
+	WREG8(DAC_DATA, पंचांगp);
 
-	/* 4- remove mask of scan request */
+	/* 4- हटाओ mask of scan request */
 	WREG8(DAC_INDEX, MGA1064_SPAREREG);
-	tmp = RREG8(DAC_DATA);
-	tmp &= ~0x80;
-	WREG8(DAC_DATA, tmp);
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp &= ~0x80;
+	WREG8(DAC_DATA, पंचांगp);
 
 	/* 5- put back a 0 on the misc<0> line */
 	WREG8(DAC_INDEX, MGA1064_GEN_IO_DATA);
-	tmp = RREG8(DAC_DATA);
-	tmp &= ~0x10;
-	WREG_DAC(MGA1064_GEN_IO_DATA, tmp);
-}
+	पंचांगp = RREG8(DAC_DATA);
+	पंचांगp &= ~0x10;
+	WREG_DAC(MGA1064_GEN_IO_DATA, पंचांगp);
+पूर्ण
 
 /*
  * This is how the framebuffer base address is stored in g200 cards:
  *   * Assume @offset is the gpu_addr variable of the framebuffer object
  *   * Then addr is the number of _pixels_ (not bytes) from the start of
- *     VRAM to the first pixel we want to display. (divided by 2 for 32bit
+ *     VRAM to the first pixel we want to display. (भागided by 2 क्रम 32bit
  *     framebuffers)
- *   * addr is stored in the CRTCEXT0, CRTCC and CRTCD registers
+ *   * addr is stored in the CRTCEXT0, CRTCC and CRTCD रेजिस्टरs
  *      addr<20> -> CRTCEXT0<6>
  *      addr<19-16> -> CRTCEXT0<3-0>
  *      addr<15-8> -> CRTCC<7-0>
@@ -920,10 +921,10 @@ static void mgag200_g200wb_release_bmc(struct mga_device *mdev)
  *  CRTCEXT0 has to be programmed last to trigger an update and make the
  *  new addr variable take effect.
  */
-static void mgag200_set_startadd(struct mga_device *mdev,
-				 unsigned long offset)
-{
-	struct drm_device *dev = &mdev->base;
+अटल व्योम mgag200_set_startadd(काष्ठा mga_device *mdev,
+				 अचिन्हित दीर्घ offset)
+अणु
+	काष्ठा drm_device *dev = &mdev->base;
 	u32 startadd;
 	u8 crtcc, crtcd, crtcext0;
 
@@ -931,7 +932,7 @@ static void mgag200_set_startadd(struct mga_device *mdev,
 
 	/*
 	 * Can't store addresses any higher than that, but we also
-	 * don't have more than 16 MiB of memory, so it should be fine.
+	 * करोn't have more than 16 MiB of memory, so it should be fine.
 	 */
 	drm_WARN_ON(dev, startadd > 0x1fffff);
 
@@ -946,12 +947,12 @@ static void mgag200_set_startadd(struct mga_device *mdev,
 	WREG_CRT(0x0c, crtcc);
 	WREG_CRT(0x0d, crtcd);
 	WREG_ECRT(0x00, crtcext0);
-}
+पूर्ण
 
-static void mgag200_set_dac_regs(struct mga_device *mdev)
-{
-	size_t i;
-	u8 dacvalue[] = {
+अटल व्योम mgag200_set_dac_regs(काष्ठा mga_device *mdev)
+अणु
+	माप_प्रकार i;
+	u8 dacvalue[] = अणु
 		/* 0x00: */        0,    0,    0,    0,    0,    0, 0x00,    0,
 		/* 0x08: */        0,    0,    0,    0,    0,    0,    0,    0,
 		/* 0x10: */        0,    0,    0,    0,    0,    0,    0,    0,
@@ -962,68 +963,68 @@ static void mgag200_set_dac_regs(struct mga_device *mdev)
 		/* 0x38: */     0x00, 0x93, 0x00, 0x77, 0x00, 0x00, 0x00, 0x3A,
 		/* 0x40: */        0,    0,    0,    0,    0,    0,    0,    0,
 		/* 0x48: */        0,    0,    0,    0,    0,    0,    0,    0
-	};
+	पूर्ण;
 
-	switch (mdev->type) {
-	case G200_PCI:
-	case G200_AGP:
+	चयन (mdev->type) अणु
+	हाल G200_PCI:
+	हाल G200_AGP:
 		dacvalue[MGA1064_SYS_PLL_M] = 0x04;
 		dacvalue[MGA1064_SYS_PLL_N] = 0x2D;
 		dacvalue[MGA1064_SYS_PLL_P] = 0x19;
-		break;
-	case G200_SE_A:
-	case G200_SE_B:
+		अवरोध;
+	हाल G200_SE_A:
+	हाल G200_SE_B:
 		dacvalue[MGA1064_VREF_CTL] = 0x03;
 		dacvalue[MGA1064_PIX_CLK_CTL] = MGA1064_PIX_CLK_CTL_SEL_PLL;
 		dacvalue[MGA1064_MISC_CTL] = MGA1064_MISC_CTL_DAC_EN |
 					     MGA1064_MISC_CTL_VGA8 |
 					     MGA1064_MISC_CTL_DAC_RAM_CS;
-		break;
-	case G200_WB:
-	case G200_EW3:
+		अवरोध;
+	हाल G200_WB:
+	हाल G200_EW3:
 		dacvalue[MGA1064_VREF_CTL] = 0x07;
-		break;
-	case G200_EV:
+		अवरोध;
+	हाल G200_EV:
 		dacvalue[MGA1064_PIX_CLK_CTL] = MGA1064_PIX_CLK_CTL_SEL_PLL;
 		dacvalue[MGA1064_MISC_CTL] = MGA1064_MISC_CTL_VGA8 |
 					     MGA1064_MISC_CTL_DAC_RAM_CS;
-		break;
-	case G200_EH:
-	case G200_EH3:
+		अवरोध;
+	हाल G200_EH:
+	हाल G200_EH3:
 		dacvalue[MGA1064_MISC_CTL] = MGA1064_MISC_CTL_VGA8 |
 					     MGA1064_MISC_CTL_DAC_RAM_CS;
-		break;
-	case G200_ER:
-		break;
-	}
+		अवरोध;
+	हाल G200_ER:
+		अवरोध;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(dacvalue); i++) {
-		if ((i <= 0x17) ||
+	क्रम (i = 0; i < ARRAY_SIZE(dacvalue); i++) अणु
+		अगर ((i <= 0x17) ||
 		    (i == 0x1b) ||
 		    (i == 0x1c) ||
 		    ((i >= 0x1f) && (i <= 0x29)) ||
 		    ((i >= 0x30) && (i <= 0x37)))
-			continue;
-		if (IS_G200_SE(mdev) &&
+			जारी;
+		अगर (IS_G200_SE(mdev) &&
 		    ((i == 0x2c) || (i == 0x2d) || (i == 0x2e)))
-			continue;
-		if ((mdev->type == G200_EV ||
+			जारी;
+		अगर ((mdev->type == G200_EV ||
 		    mdev->type == G200_WB ||
 		    mdev->type == G200_EH ||
 		    mdev->type == G200_EW3 ||
 		    mdev->type == G200_EH3) &&
 		    (i >= 0x44) && (i <= 0x4e))
-			continue;
+			जारी;
 
 		WREG_DAC(i, dacvalue[i]);
-	}
+	पूर्ण
 
-	if (mdev->type == G200_ER)
+	अगर (mdev->type == G200_ER)
 		WREG_DAC(0x90, 0);
-}
+पूर्ण
 
-static void mgag200_init_regs(struct mga_device *mdev)
-{
+अटल व्योम mgag200_init_regs(काष्ठा mga_device *mdev)
+अणु
 	u8 crtc11, misc;
 
 	mgag200_set_dac_regs(mdev);
@@ -1045,22 +1046,22 @@ static void mgag200_init_regs(struct mga_device *mdev)
 		    MGAREG_CRTC11_VINTCLR);
 	WREG_CRT(0x11, crtc11);
 
-	if (mdev->type == G200_ER)
+	अगर (mdev->type == G200_ER)
 		WREG_ECRT(0x24, 0x5);
 
-	if (mdev->type == G200_EW3)
+	अगर (mdev->type == G200_EW3)
 		WREG_ECRT(0x34, 0x5);
 
 	misc = RREG8(MGA_MISC_IN);
 	misc |= MGAREG_MISC_IOADSEL;
 	WREG8(MGA_MISC_OUT, misc);
-}
+पूर्ण
 
-static void mgag200_set_mode_regs(struct mga_device *mdev,
-				  const struct drm_display_mode *mode)
-{
-	unsigned int hdisplay, hsyncstart, hsyncend, htotal;
-	unsigned int vdisplay, vsyncstart, vsyncend, vtotal;
+अटल व्योम mgag200_set_mode_regs(काष्ठा mga_device *mdev,
+				  स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	अचिन्हित पूर्णांक hdisplay, hsyncstart, hsyncend, htotal;
+	अचिन्हित पूर्णांक vdisplay, vsyncstart, vsyncend, vtotal;
 	u8 misc, crtcext1, crtcext2, crtcext5;
 
 	hdisplay = mode->hdisplay / 8 - 1;
@@ -1069,7 +1070,7 @@ static void mgag200_set_mode_regs(struct mga_device *mdev,
 	htotal = mode->htotal / 8 - 1;
 
 	/* Work around hardware quirk */
-	if ((htotal & 0x07) == 0x06 || (htotal & 0x07) == 0x04)
+	अगर ((htotal & 0x07) == 0x06 || (htotal & 0x07) == 0x04)
 		htotal++;
 
 	vdisplay = mode->vdisplay - 1;
@@ -1079,21 +1080,21 @@ static void mgag200_set_mode_regs(struct mga_device *mdev,
 
 	misc = RREG8(MGA_MISC_IN);
 
-	if (mode->flags & DRM_MODE_FLAG_NHSYNC)
+	अगर (mode->flags & DRM_MODE_FLAG_NHSYNC)
 		misc |= MGAREG_MISC_HSYNCPOL;
-	else
+	अन्यथा
 		misc &= ~MGAREG_MISC_HSYNCPOL;
 
-	if (mode->flags & DRM_MODE_FLAG_NVSYNC)
+	अगर (mode->flags & DRM_MODE_FLAG_NVSYNC)
 		misc |= MGAREG_MISC_VSYNCPOL;
-	else
+	अन्यथा
 		misc &= ~MGAREG_MISC_VSYNCPOL;
 
 	crtcext1 = (((htotal - 4) & 0x100) >> 8) |
 		   ((hdisplay & 0x100) >> 7) |
 		   ((hsyncstart & 0x100) >> 6) |
 		    (htotal & 0x40);
-	if (mdev->type == G200_WB || mdev->type == G200_EW3)
+	अगर (mdev->type == G200_WB || mdev->type == G200_EW3)
 		crtcext1 |= BIT(7) | /* vrsten */
 			    BIT(3); /* hrsten */
 
@@ -1135,36 +1136,36 @@ static void mgag200_set_mode_regs(struct mga_device *mdev,
 	WREG_ECRT(0x05, crtcext5);
 
 	WREG8(MGA_MISC_OUT, misc);
-}
+पूर्ण
 
-static u8 mgag200_get_bpp_shift(struct mga_device *mdev,
-				const struct drm_format_info *format)
-{
-	return mdev->bpp_shifts[format->cpp[0] - 1];
-}
+अटल u8 mgag200_get_bpp_shअगरt(काष्ठा mga_device *mdev,
+				स्थिर काष्ठा drm_क्रमmat_info *क्रमmat)
+अणु
+	वापस mdev->bpp_shअगरts[क्रमmat->cpp[0] - 1];
+पूर्ण
 
 /*
  * Calculates the HW offset value from the framebuffer's pitch. The
  * offset is a multiple of the pixel size and depends on the display
- * format.
+ * क्रमmat.
  */
-static u32 mgag200_calculate_offset(struct mga_device *mdev,
-				    const struct drm_framebuffer *fb)
-{
-	u32 offset = fb->pitches[0] / fb->format->cpp[0];
-	u8 bppshift = mgag200_get_bpp_shift(mdev, fb->format);
+अटल u32 mgag200_calculate_offset(काष्ठा mga_device *mdev,
+				    स्थिर काष्ठा drm_framebuffer *fb)
+अणु
+	u32 offset = fb->pitches[0] / fb->क्रमmat->cpp[0];
+	u8 bppshअगरt = mgag200_get_bpp_shअगरt(mdev, fb->क्रमmat);
 
-	if (fb->format->cpp[0] * 8 == 24)
-		offset = (offset * 3) >> (4 - bppshift);
-	else
-		offset = offset >> (4 - bppshift);
+	अगर (fb->क्रमmat->cpp[0] * 8 == 24)
+		offset = (offset * 3) >> (4 - bppshअगरt);
+	अन्यथा
+		offset = offset >> (4 - bppshअगरt);
 
-	return offset;
-}
+	वापस offset;
+पूर्ण
 
-static void mgag200_set_offset(struct mga_device *mdev,
-			       const struct drm_framebuffer *fb)
-{
+अटल व्योम mgag200_set_offset(काष्ठा mga_device *mdev,
+			       स्थिर काष्ठा drm_framebuffer *fb)
+अणु
 	u8 crtc13, crtcext0;
 	u32 offset = mgag200_calculate_offset(mdev, fb);
 
@@ -1177,51 +1178,51 @@ static void mgag200_set_offset(struct mga_device *mdev,
 
 	WREG_CRT(0x13, crtc13);
 	WREG_ECRT(0x00, crtcext0);
-}
+पूर्ण
 
-static void mgag200_set_format_regs(struct mga_device *mdev,
-				    const struct drm_framebuffer *fb)
-{
-	struct drm_device *dev = &mdev->base;
-	const struct drm_format_info *format = fb->format;
-	unsigned int bpp, bppshift, scale;
+अटल व्योम mgag200_set_क्रमmat_regs(काष्ठा mga_device *mdev,
+				    स्थिर काष्ठा drm_framebuffer *fb)
+अणु
+	काष्ठा drm_device *dev = &mdev->base;
+	स्थिर काष्ठा drm_क्रमmat_info *क्रमmat = fb->क्रमmat;
+	अचिन्हित पूर्णांक bpp, bppshअगरt, scale;
 	u8 crtcext3, xmulctrl;
 
-	bpp = format->cpp[0] * 8;
+	bpp = क्रमmat->cpp[0] * 8;
 
-	bppshift = mgag200_get_bpp_shift(mdev, format);
-	switch (bpp) {
-	case 24:
-		scale = ((1 << bppshift) * 3) - 1;
-		break;
-	default:
-		scale = (1 << bppshift) - 1;
-		break;
-	}
+	bppshअगरt = mgag200_get_bpp_shअगरt(mdev, क्रमmat);
+	चयन (bpp) अणु
+	हाल 24:
+		scale = ((1 << bppshअगरt) * 3) - 1;
+		अवरोध;
+	शेष:
+		scale = (1 << bppshअगरt) - 1;
+		अवरोध;
+	पूर्ण
 
 	RREG_ECRT(3, crtcext3);
 
-	switch (bpp) {
-	case 8:
+	चयन (bpp) अणु
+	हाल 8:
 		xmulctrl = MGA1064_MUL_CTL_8bits;
-		break;
-	case 16:
-		if (format->depth == 15)
+		अवरोध;
+	हाल 16:
+		अगर (क्रमmat->depth == 15)
 			xmulctrl = MGA1064_MUL_CTL_15bits;
-		else
+		अन्यथा
 			xmulctrl = MGA1064_MUL_CTL_16bits;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		xmulctrl = MGA1064_MUL_CTL_24bits;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		xmulctrl = MGA1064_MUL_CTL_32_24bits;
-		break;
-	default:
-		/* BUG: We should have caught this problem already. */
+		अवरोध;
+	शेष:
+		/* BUG: We should have caught this problem alपढ़ोy. */
 		drm_WARN_ON(dev, "invalid format depth\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	crtcext3 &= ~GENMASK(2, 0);
 	crtcext3 |= scale;
@@ -1239,11 +1240,11 @@ static void mgag200_set_format_regs(struct mga_device *mdev,
 	WREG_GFX(8, 0x0f);
 
 	WREG_ECRT(3, crtcext3);
-}
+पूर्ण
 
-static void mgag200_g200er_reset_tagfifo(struct mga_device *mdev)
-{
-	static uint32_t RESET_FLAG = 0x00200000; /* undocumented magic value */
+अटल व्योम mgag200_g200er_reset_tagfअगरo(काष्ठा mga_device *mdev)
+अणु
+	अटल uपूर्णांक32_t RESET_FLAG = 0x00200000; /* unकरोcumented magic value */
 	u32 memctl;
 
 	memctl = RREG32(MGAREG_MEMCTL);
@@ -1255,61 +1256,61 @@ static void mgag200_g200er_reset_tagfifo(struct mga_device *mdev)
 
 	memctl &= ~RESET_FLAG;
 	WREG32(MGAREG_MEMCTL, memctl);
-}
+पूर्ण
 
-static void mgag200_g200se_set_hiprilvl(struct mga_device *mdev,
-					const struct drm_display_mode *mode,
-					const struct drm_framebuffer *fb)
-{
+अटल व्योम mgag200_g200se_set_hiprilvl(काष्ठा mga_device *mdev,
+					स्थिर काष्ठा drm_display_mode *mode,
+					स्थिर काष्ठा drm_framebuffer *fb)
+अणु
 	u32 unique_rev_id = mdev->model.g200se.unique_rev_id;
-	unsigned int hiprilvl;
+	अचिन्हित पूर्णांक hiprilvl;
 	u8 crtcext6;
 
-	if  (unique_rev_id >= 0x04) {
+	अगर  (unique_rev_id >= 0x04) अणु
 		hiprilvl = 0;
-	} else if (unique_rev_id >= 0x02) {
-		unsigned int bpp;
-		unsigned long mb;
+	पूर्ण अन्यथा अगर (unique_rev_id >= 0x02) अणु
+		अचिन्हित पूर्णांक bpp;
+		अचिन्हित दीर्घ mb;
 
-		if (fb->format->cpp[0] * 8 > 16)
+		अगर (fb->क्रमmat->cpp[0] * 8 > 16)
 			bpp = 32;
-		else if (fb->format->cpp[0] * 8 > 8)
+		अन्यथा अगर (fb->क्रमmat->cpp[0] * 8 > 8)
 			bpp = 16;
-		else
+		अन्यथा
 			bpp = 8;
 
-		mb = (mode->clock * bpp) / 1000;
-		if (mb > 3100)
+		mb = (mode->घड़ी * bpp) / 1000;
+		अगर (mb > 3100)
 			hiprilvl = 0;
-		else if (mb > 2600)
+		अन्यथा अगर (mb > 2600)
 			hiprilvl = 1;
-		else if (mb > 1900)
+		अन्यथा अगर (mb > 1900)
 			hiprilvl = 2;
-		else if (mb > 1160)
+		अन्यथा अगर (mb > 1160)
 			hiprilvl = 3;
-		else if (mb > 440)
+		अन्यथा अगर (mb > 440)
 			hiprilvl = 4;
-		else
+		अन्यथा
 			hiprilvl = 5;
 
-	} else if (unique_rev_id >= 0x01) {
+	पूर्ण अन्यथा अगर (unique_rev_id >= 0x01) अणु
 		hiprilvl = 3;
-	} else {
+	पूर्ण अन्यथा अणु
 		hiprilvl = 4;
-	}
+	पूर्ण
 
 	crtcext6 = hiprilvl; /* implicitly sets maxhipri to 0 */
 
 	WREG_ECRT(0x06, crtcext6);
-}
+पूर्ण
 
-static void mgag200_g200ev_set_hiprilvl(struct mga_device *mdev)
-{
+अटल व्योम mgag200_g200ev_set_hiprilvl(काष्ठा mga_device *mdev)
+अणु
 	WREG_ECRT(0x06, 0x00);
-}
+पूर्ण
 
-static void mgag200_enable_display(struct mga_device *mdev)
-{
+अटल व्योम mgag200_enable_display(काष्ठा mga_device *mdev)
+अणु
 	u8 seq0, seq1, crtcext1;
 
 	RREG_SEQ(0x00, seq0);
@@ -1318,11 +1319,11 @@ static void mgag200_enable_display(struct mga_device *mdev)
 	WREG_SEQ(0x00, seq0);
 
 	/*
-	 * TODO: replace busy waiting with vblank IRQ; put
-	 *       msleep(50) before changing SCROFF
+	 * TODO: replace busy रुकोing with vblank IRQ; put
+	 *       msleep(50) beक्रमe changing SCROFF
 	 */
-	mga_wait_vsync(mdev);
-	mga_wait_busy(mdev);
+	mga_रुको_vsync(mdev);
+	mga_रुको_busy(mdev);
 
 	RREG_SEQ(0x01, seq1);
 	seq1 &= ~MGAREG_SEQ1_SCROFF;
@@ -1334,10 +1335,10 @@ static void mgag200_enable_display(struct mga_device *mdev)
 	crtcext1 &= ~MGAREG_CRTCEXT1_VSYNCOFF;
 	crtcext1 &= ~MGAREG_CRTCEXT1_HSYNCOFF;
 	WREG_ECRT(0x01, crtcext1);
-}
+पूर्ण
 
-static void mgag200_disable_display(struct mga_device *mdev)
-{
+अटल व्योम mgag200_disable_display(काष्ठा mga_device *mdev)
+अणु
 	u8 seq0, seq1, crtcext1;
 
 	RREG_SEQ(0x00, seq0);
@@ -1345,11 +1346,11 @@ static void mgag200_disable_display(struct mga_device *mdev)
 	WREG_SEQ(0x00, seq0);
 
 	/*
-	 * TODO: replace busy waiting with vblank IRQ; put
-	 *       msleep(50) before changing SCROFF
+	 * TODO: replace busy रुकोing with vblank IRQ; put
+	 *       msleep(50) beक्रमe changing SCROFF
 	 */
-	mga_wait_vsync(mdev);
-	mga_wait_busy(mdev);
+	mga_रुको_vsync(mdev);
+	mga_रुको_busy(mdev);
 
 	RREG_SEQ(0x01, seq1);
 	seq1 |= MGAREG_SEQ1_SCROFF;
@@ -1361,357 +1362,357 @@ static void mgag200_disable_display(struct mga_device *mdev)
 	crtcext1 |= MGAREG_CRTCEXT1_VSYNCOFF |
 		    MGAREG_CRTCEXT1_HSYNCOFF;
 	WREG_ECRT(0x01, crtcext1);
-}
+पूर्ण
 
 /*
  * Connector
  */
 
-static int mga_vga_get_modes(struct drm_connector *connector)
-{
-	struct mga_connector *mga_connector = to_mga_connector(connector);
-	struct edid *edid;
-	int ret = 0;
+अटल पूर्णांक mga_vga_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा mga_connector *mga_connector = to_mga_connector(connector);
+	काष्ठा edid *edid;
+	पूर्णांक ret = 0;
 
 	edid = drm_get_edid(connector, &mga_connector->i2c->adapter);
-	if (edid) {
+	अगर (edid) अणु
 		drm_connector_update_edid_property(connector, edid);
 		ret = drm_add_edid_modes(connector, edid);
-		kfree(edid);
-	}
-	return ret;
-}
+		kमुक्त(edid);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static uint32_t mga_vga_calculate_mode_bandwidth(struct drm_display_mode *mode,
-							int bits_per_pixel)
-{
-	uint32_t total_area, divisor;
-	uint64_t active_area, pixels_per_second, bandwidth;
-	uint64_t bytes_per_pixel = (bits_per_pixel + 7) / 8;
+अटल uपूर्णांक32_t mga_vga_calculate_mode_bandwidth(काष्ठा drm_display_mode *mode,
+							पूर्णांक bits_per_pixel)
+अणु
+	uपूर्णांक32_t total_area, भागisor;
+	uपूर्णांक64_t active_area, pixels_per_second, bandwidth;
+	uपूर्णांक64_t bytes_per_pixel = (bits_per_pixel + 7) / 8;
 
-	divisor = 1024;
+	भागisor = 1024;
 
-	if (!mode->htotal || !mode->vtotal || !mode->clock)
-		return 0;
+	अगर (!mode->htotal || !mode->vtotal || !mode->घड़ी)
+		वापस 0;
 
 	active_area = mode->hdisplay * mode->vdisplay;
 	total_area = mode->htotal * mode->vtotal;
 
-	pixels_per_second = active_area * mode->clock * 1000;
-	do_div(pixels_per_second, total_area);
+	pixels_per_second = active_area * mode->घड़ी * 1000;
+	करो_भाग(pixels_per_second, total_area);
 
 	bandwidth = pixels_per_second * bytes_per_pixel * 100;
-	do_div(bandwidth, divisor);
+	करो_भाग(bandwidth, भागisor);
 
-	return (uint32_t)(bandwidth);
-}
+	वापस (uपूर्णांक32_t)(bandwidth);
+पूर्ण
 
-#define MODE_BANDWIDTH	MODE_BAD
+#घोषणा MODE_BANDWIDTH	MODE_BAD
 
-static enum drm_mode_status mga_vga_mode_valid(struct drm_connector *connector,
-				 struct drm_display_mode *mode)
-{
-	struct drm_device *dev = connector->dev;
-	struct mga_device *mdev = to_mga_device(dev);
-	int bpp = 32;
+अटल क्रमागत drm_mode_status mga_vga_mode_valid(काष्ठा drm_connector *connector,
+				 काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा mga_device *mdev = to_mga_device(dev);
+	पूर्णांक bpp = 32;
 
-	if (IS_G200_SE(mdev)) {
+	अगर (IS_G200_SE(mdev)) अणु
 		u32 unique_rev_id = mdev->model.g200se.unique_rev_id;
 
-		if (unique_rev_id == 0x01) {
-			if (mode->hdisplay > 1600)
-				return MODE_VIRTUAL_X;
-			if (mode->vdisplay > 1200)
-				return MODE_VIRTUAL_Y;
-			if (mga_vga_calculate_mode_bandwidth(mode, bpp)
+		अगर (unique_rev_id == 0x01) अणु
+			अगर (mode->hdisplay > 1600)
+				वापस MODE_VIRTUAL_X;
+			अगर (mode->vdisplay > 1200)
+				वापस MODE_VIRTUAL_Y;
+			अगर (mga_vga_calculate_mode_bandwidth(mode, bpp)
 				> (24400 * 1024))
-				return MODE_BANDWIDTH;
-		} else if (unique_rev_id == 0x02) {
-			if (mode->hdisplay > 1920)
-				return MODE_VIRTUAL_X;
-			if (mode->vdisplay > 1200)
-				return MODE_VIRTUAL_Y;
-			if (mga_vga_calculate_mode_bandwidth(mode, bpp)
+				वापस MODE_BANDWIDTH;
+		पूर्ण अन्यथा अगर (unique_rev_id == 0x02) अणु
+			अगर (mode->hdisplay > 1920)
+				वापस MODE_VIRTUAL_X;
+			अगर (mode->vdisplay > 1200)
+				वापस MODE_VIRTUAL_Y;
+			अगर (mga_vga_calculate_mode_bandwidth(mode, bpp)
 				> (30100 * 1024))
-				return MODE_BANDWIDTH;
-		} else {
-			if (mga_vga_calculate_mode_bandwidth(mode, bpp)
+				वापस MODE_BANDWIDTH;
+		पूर्ण अन्यथा अणु
+			अगर (mga_vga_calculate_mode_bandwidth(mode, bpp)
 				> (55000 * 1024))
-				return MODE_BANDWIDTH;
-		}
-	} else if (mdev->type == G200_WB) {
-		if (mode->hdisplay > 1280)
-			return MODE_VIRTUAL_X;
-		if (mode->vdisplay > 1024)
-			return MODE_VIRTUAL_Y;
-		if (mga_vga_calculate_mode_bandwidth(mode, bpp) >
+				वापस MODE_BANDWIDTH;
+		पूर्ण
+	पूर्ण अन्यथा अगर (mdev->type == G200_WB) अणु
+		अगर (mode->hdisplay > 1280)
+			वापस MODE_VIRTUAL_X;
+		अगर (mode->vdisplay > 1024)
+			वापस MODE_VIRTUAL_Y;
+		अगर (mga_vga_calculate_mode_bandwidth(mode, bpp) >
 		    (31877 * 1024))
-			return MODE_BANDWIDTH;
-	} else if (mdev->type == G200_EV &&
+			वापस MODE_BANDWIDTH;
+	पूर्ण अन्यथा अगर (mdev->type == G200_EV &&
 		(mga_vga_calculate_mode_bandwidth(mode, bpp)
-			> (32700 * 1024))) {
-		return MODE_BANDWIDTH;
-	} else if (mdev->type == G200_EH &&
+			> (32700 * 1024))) अणु
+		वापस MODE_BANDWIDTH;
+	पूर्ण अन्यथा अगर (mdev->type == G200_EH &&
 		(mga_vga_calculate_mode_bandwidth(mode, bpp)
-			> (37500 * 1024))) {
-		return MODE_BANDWIDTH;
-	} else if (mdev->type == G200_ER &&
+			> (37500 * 1024))) अणु
+		वापस MODE_BANDWIDTH;
+	पूर्ण अन्यथा अगर (mdev->type == G200_ER &&
 		(mga_vga_calculate_mode_bandwidth(mode,
-			bpp) > (55000 * 1024))) {
-		return MODE_BANDWIDTH;
-	}
+			bpp) > (55000 * 1024))) अणु
+		वापस MODE_BANDWIDTH;
+	पूर्ण
 
-	if ((mode->hdisplay % 8) != 0 || (mode->hsync_start % 8) != 0 ||
-	    (mode->hsync_end % 8) != 0 || (mode->htotal % 8) != 0) {
-		return MODE_H_ILLEGAL;
-	}
+	अगर ((mode->hdisplay % 8) != 0 || (mode->hsync_start % 8) != 0 ||
+	    (mode->hsync_end % 8) != 0 || (mode->htotal % 8) != 0) अणु
+		वापस MODE_H_ILLEGAL;
+	पूर्ण
 
-	if (mode->crtc_hdisplay > 2048 || mode->crtc_hsync_start > 4096 ||
+	अगर (mode->crtc_hdisplay > 2048 || mode->crtc_hsync_start > 4096 ||
 	    mode->crtc_hsync_end > 4096 || mode->crtc_htotal > 4096 ||
 	    mode->crtc_vdisplay > 2048 || mode->crtc_vsync_start > 4096 ||
-	    mode->crtc_vsync_end > 4096 || mode->crtc_vtotal > 4096) {
-		return MODE_BAD;
-	}
+	    mode->crtc_vsync_end > 4096 || mode->crtc_vtotal > 4096) अणु
+		वापस MODE_BAD;
+	पूर्ण
 
 	/* Validate the mode input by the user */
-	if (connector->cmdline_mode.specified) {
-		if (connector->cmdline_mode.bpp_specified)
+	अगर (connector->cmdline_mode.specअगरied) अणु
+		अगर (connector->cmdline_mode.bpp_specअगरied)
 			bpp = connector->cmdline_mode.bpp;
-	}
+	पूर्ण
 
-	if ((mode->hdisplay * mode->vdisplay * (bpp/8)) > mdev->vram_fb_available) {
-		if (connector->cmdline_mode.specified)
-			connector->cmdline_mode.specified = false;
-		return MODE_BAD;
-	}
+	अगर ((mode->hdisplay * mode->vdisplay * (bpp/8)) > mdev->vram_fb_available) अणु
+		अगर (connector->cmdline_mode.specअगरied)
+			connector->cmdline_mode.specअगरied = false;
+		वापस MODE_BAD;
+	पूर्ण
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-static void mga_connector_destroy(struct drm_connector *connector)
-{
-	struct mga_connector *mga_connector = to_mga_connector(connector);
+अटल व्योम mga_connector_destroy(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा mga_connector *mga_connector = to_mga_connector(connector);
 	mgag200_i2c_destroy(mga_connector->i2c);
 	drm_connector_cleanup(connector);
-}
+पूर्ण
 
-static const struct drm_connector_helper_funcs mga_vga_connector_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs mga_vga_connector_helper_funcs = अणु
 	.get_modes  = mga_vga_get_modes,
 	.mode_valid = mga_vga_mode_valid,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs mga_vga_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs mga_vga_connector_funcs = अणु
 	.reset                  = drm_atomic_helper_connector_reset,
 	.fill_modes             = drm_helper_probe_single_connector_modes,
 	.destroy                = mga_connector_destroy,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state   = drm_atomic_helper_connector_destroy_state,
-};
+पूर्ण;
 
-static int mgag200_vga_connector_init(struct mga_device *mdev)
-{
-	struct drm_device *dev = &mdev->base;
-	struct mga_connector *mconnector = &mdev->connector;
-	struct drm_connector *connector = &mconnector->base;
-	struct mga_i2c_chan *i2c;
-	int ret;
+अटल पूर्णांक mgag200_vga_connector_init(काष्ठा mga_device *mdev)
+अणु
+	काष्ठा drm_device *dev = &mdev->base;
+	काष्ठा mga_connector *mconnector = &mdev->connector;
+	काष्ठा drm_connector *connector = &mconnector->base;
+	काष्ठा mga_i2c_chan *i2c;
+	पूर्णांक ret;
 
 	i2c = mgag200_i2c_create(dev);
-	if (!i2c)
+	अगर (!i2c)
 		drm_warn(dev, "failed to add DDC bus\n");
 
 	ret = drm_connector_init_with_ddc(dev, connector,
 					  &mga_vga_connector_funcs,
 					  DRM_MODE_CONNECTOR_VGA,
 					  &i2c->adapter);
-	if (ret)
-		goto err_mgag200_i2c_destroy;
+	अगर (ret)
+		जाओ err_mgag200_i2c_destroy;
 	drm_connector_helper_add(connector, &mga_vga_connector_helper_funcs);
 
 	mconnector->i2c = i2c;
 
-	return 0;
+	वापस 0;
 
 err_mgag200_i2c_destroy:
 	mgag200_i2c_destroy(i2c);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Simple Display Pipe
  */
 
-static enum drm_mode_status
-mgag200_simple_display_pipe_mode_valid(struct drm_simple_display_pipe *pipe,
-				       const struct drm_display_mode *mode)
-{
-	return MODE_OK;
-}
+अटल क्रमागत drm_mode_status
+mgag200_simple_display_pipe_mode_valid(काष्ठा drm_simple_display_pipe *pipe,
+				       स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	वापस MODE_OK;
+पूर्ण
 
-static void
-mgag200_handle_damage(struct mga_device *mdev, struct drm_framebuffer *fb,
-		      struct drm_rect *clip, const struct dma_buf_map *map)
-{
-	void *vmap = map->vaddr; /* TODO: Use mapping abstraction properly */
+अटल व्योम
+mgag200_handle_damage(काष्ठा mga_device *mdev, काष्ठा drm_framebuffer *fb,
+		      काष्ठा drm_rect *clip, स्थिर काष्ठा dma_buf_map *map)
+अणु
+	व्योम *vmap = map->vaddr; /* TODO: Use mapping असलtraction properly */
 
-	drm_fb_memcpy_dstclip(mdev->vram, vmap, fb, clip);
+	drm_fb_स_नकल_dstclip(mdev->vram, vmap, fb, clip);
 
 	/* Always scanout image at VRAM offset 0 */
 	mgag200_set_startadd(mdev, (u32)0);
 	mgag200_set_offset(mdev, fb);
-}
+पूर्ण
 
-static void
-mgag200_simple_display_pipe_enable(struct drm_simple_display_pipe *pipe,
-				   struct drm_crtc_state *crtc_state,
-				   struct drm_plane_state *plane_state)
-{
-	struct drm_crtc *crtc = &pipe->crtc;
-	struct drm_device *dev = crtc->dev;
-	struct mga_device *mdev = to_mga_device(dev);
-	struct drm_display_mode *adjusted_mode = &crtc_state->adjusted_mode;
-	struct drm_framebuffer *fb = plane_state->fb;
-	struct drm_shadow_plane_state *shadow_plane_state = to_drm_shadow_plane_state(plane_state);
-	struct drm_rect fullscreen = {
+अटल व्योम
+mgag200_simple_display_pipe_enable(काष्ठा drm_simple_display_pipe *pipe,
+				   काष्ठा drm_crtc_state *crtc_state,
+				   काष्ठा drm_plane_state *plane_state)
+अणु
+	काष्ठा drm_crtc *crtc = &pipe->crtc;
+	काष्ठा drm_device *dev = crtc->dev;
+	काष्ठा mga_device *mdev = to_mga_device(dev);
+	काष्ठा drm_display_mode *adjusted_mode = &crtc_state->adjusted_mode;
+	काष्ठा drm_framebuffer *fb = plane_state->fb;
+	काष्ठा drm_shaकरोw_plane_state *shaकरोw_plane_state = to_drm_shaकरोw_plane_state(plane_state);
+	काष्ठा drm_rect fullscreen = अणु
 		.x1 = 0,
 		.x2 = fb->width,
 		.y1 = 0,
 		.y2 = fb->height,
-	};
+	पूर्ण;
 
-	if (mdev->type == G200_WB || mdev->type == G200_EW3)
+	अगर (mdev->type == G200_WB || mdev->type == G200_EW3)
 		mgag200_g200wb_hold_bmc(mdev);
 
-	mgag200_set_format_regs(mdev, fb);
+	mgag200_set_क्रमmat_regs(mdev, fb);
 	mgag200_set_mode_regs(mdev, adjusted_mode);
-	mgag200_crtc_set_plls(mdev, adjusted_mode->clock);
+	mgag200_crtc_set_plls(mdev, adjusted_mode->घड़ी);
 
-	if (mdev->type == G200_ER)
-		mgag200_g200er_reset_tagfifo(mdev);
+	अगर (mdev->type == G200_ER)
+		mgag200_g200er_reset_tagfअगरo(mdev);
 
-	if (IS_G200_SE(mdev))
+	अगर (IS_G200_SE(mdev))
 		mgag200_g200se_set_hiprilvl(mdev, adjusted_mode, fb);
-	else if (mdev->type == G200_EV)
+	अन्यथा अगर (mdev->type == G200_EV)
 		mgag200_g200ev_set_hiprilvl(mdev);
 
-	if (mdev->type == G200_WB || mdev->type == G200_EW3)
+	अगर (mdev->type == G200_WB || mdev->type == G200_EW3)
 		mgag200_g200wb_release_bmc(mdev);
 
 	mga_crtc_load_lut(crtc);
 	mgag200_enable_display(mdev);
 
-	mgag200_handle_damage(mdev, fb, &fullscreen, &shadow_plane_state->map[0]);
-}
+	mgag200_handle_damage(mdev, fb, &fullscreen, &shaकरोw_plane_state->map[0]);
+पूर्ण
 
-static void
-mgag200_simple_display_pipe_disable(struct drm_simple_display_pipe *pipe)
-{
-	struct drm_crtc *crtc = &pipe->crtc;
-	struct mga_device *mdev = to_mga_device(crtc->dev);
+अटल व्योम
+mgag200_simple_display_pipe_disable(काष्ठा drm_simple_display_pipe *pipe)
+अणु
+	काष्ठा drm_crtc *crtc = &pipe->crtc;
+	काष्ठा mga_device *mdev = to_mga_device(crtc->dev);
 
 	mgag200_disable_display(mdev);
-}
+पूर्ण
 
-static int
-mgag200_simple_display_pipe_check(struct drm_simple_display_pipe *pipe,
-				  struct drm_plane_state *plane_state,
-				  struct drm_crtc_state *crtc_state)
-{
-	struct drm_plane *plane = plane_state->plane;
-	struct drm_framebuffer *new_fb = plane_state->fb;
-	struct drm_framebuffer *fb = NULL;
+अटल पूर्णांक
+mgag200_simple_display_pipe_check(काष्ठा drm_simple_display_pipe *pipe,
+				  काष्ठा drm_plane_state *plane_state,
+				  काष्ठा drm_crtc_state *crtc_state)
+अणु
+	काष्ठा drm_plane *plane = plane_state->plane;
+	काष्ठा drm_framebuffer *new_fb = plane_state->fb;
+	काष्ठा drm_framebuffer *fb = शून्य;
 
-	if (!new_fb)
-		return 0;
+	अगर (!new_fb)
+		वापस 0;
 
-	if (plane->state)
+	अगर (plane->state)
 		fb = plane->state->fb;
 
-	if (!fb || (fb->format != new_fb->format))
+	अगर (!fb || (fb->क्रमmat != new_fb->क्रमmat))
 		crtc_state->mode_changed = true; /* update PLL settings */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-mgag200_simple_display_pipe_update(struct drm_simple_display_pipe *pipe,
-				   struct drm_plane_state *old_state)
-{
-	struct drm_plane *plane = &pipe->plane;
-	struct drm_device *dev = plane->dev;
-	struct mga_device *mdev = to_mga_device(dev);
-	struct drm_plane_state *state = plane->state;
-	struct drm_shadow_plane_state *shadow_plane_state = to_drm_shadow_plane_state(state);
-	struct drm_framebuffer *fb = state->fb;
-	struct drm_rect damage;
+अटल व्योम
+mgag200_simple_display_pipe_update(काष्ठा drm_simple_display_pipe *pipe,
+				   काष्ठा drm_plane_state *old_state)
+अणु
+	काष्ठा drm_plane *plane = &pipe->plane;
+	काष्ठा drm_device *dev = plane->dev;
+	काष्ठा mga_device *mdev = to_mga_device(dev);
+	काष्ठा drm_plane_state *state = plane->state;
+	काष्ठा drm_shaकरोw_plane_state *shaकरोw_plane_state = to_drm_shaकरोw_plane_state(state);
+	काष्ठा drm_framebuffer *fb = state->fb;
+	काष्ठा drm_rect damage;
 
-	if (!fb)
-		return;
+	अगर (!fb)
+		वापस;
 
-	if (drm_atomic_helper_damage_merged(old_state, state, &damage))
-		mgag200_handle_damage(mdev, fb, &damage, &shadow_plane_state->map[0]);
-}
+	अगर (drm_atomic_helper_damage_merged(old_state, state, &damage))
+		mgag200_handle_damage(mdev, fb, &damage, &shaकरोw_plane_state->map[0]);
+पूर्ण
 
-static const struct drm_simple_display_pipe_funcs
-mgag200_simple_display_pipe_funcs = {
+अटल स्थिर काष्ठा drm_simple_display_pipe_funcs
+mgag200_simple_display_pipe_funcs = अणु
 	.mode_valid = mgag200_simple_display_pipe_mode_valid,
 	.enable	    = mgag200_simple_display_pipe_enable,
 	.disable    = mgag200_simple_display_pipe_disable,
 	.check	    = mgag200_simple_display_pipe_check,
 	.update	    = mgag200_simple_display_pipe_update,
 	DRM_GEM_SIMPLE_DISPLAY_PIPE_SHADOW_PLANE_FUNCS,
-};
+पूर्ण;
 
-static const uint32_t mgag200_simple_display_pipe_formats[] = {
+अटल स्थिर uपूर्णांक32_t mgag200_simple_display_pipe_क्रमmats[] = अणु
 	DRM_FORMAT_XRGB8888,
 	DRM_FORMAT_RGB565,
 	DRM_FORMAT_RGB888,
-};
+पूर्ण;
 
-static const uint64_t mgag200_simple_display_pipe_fmtmods[] = {
+अटल स्थिर uपूर्णांक64_t mgag200_simple_display_pipe_fmपंचांगods[] = अणु
 	DRM_FORMAT_MOD_LINEAR,
 	DRM_FORMAT_MOD_INVALID
-};
+पूर्ण;
 
 /*
  * Mode config
  */
 
-static const struct drm_mode_config_funcs mgag200_mode_config_funcs = {
+अटल स्थिर काष्ठा drm_mode_config_funcs mgag200_mode_config_funcs = अणु
 	.fb_create     = drm_gem_fb_create_with_dirty,
 	.atomic_check  = drm_atomic_helper_check,
 	.atomic_commit = drm_atomic_helper_commit,
-};
+पूर्ण;
 
-static unsigned int mgag200_preferred_depth(struct mga_device *mdev)
-{
-	if (IS_G200_SE(mdev) && mdev->vram_fb_available < (2048*1024))
-		return 16;
-	else
-		return 32;
-}
+अटल अचिन्हित पूर्णांक mgag200_preferred_depth(काष्ठा mga_device *mdev)
+अणु
+	अगर (IS_G200_SE(mdev) && mdev->vram_fb_available < (2048*1024))
+		वापस 16;
+	अन्यथा
+		वापस 32;
+पूर्ण
 
-int mgag200_modeset_init(struct mga_device *mdev)
-{
-	struct drm_device *dev = &mdev->base;
-	struct drm_connector *connector = &mdev->connector.base;
-	struct drm_simple_display_pipe *pipe = &mdev->display_pipe;
-	size_t format_count = ARRAY_SIZE(mgag200_simple_display_pipe_formats);
-	int ret;
+पूर्णांक mgag200_modeset_init(काष्ठा mga_device *mdev)
+अणु
+	काष्ठा drm_device *dev = &mdev->base;
+	काष्ठा drm_connector *connector = &mdev->connector.base;
+	काष्ठा drm_simple_display_pipe *pipe = &mdev->display_pipe;
+	माप_प्रकार क्रमmat_count = ARRAY_SIZE(mgag200_simple_display_pipe_क्रमmats);
+	पूर्णांक ret;
 
-	mdev->bpp_shifts[0] = 0;
-	mdev->bpp_shifts[1] = 1;
-	mdev->bpp_shifts[2] = 0;
-	mdev->bpp_shifts[3] = 2;
+	mdev->bpp_shअगरts[0] = 0;
+	mdev->bpp_shअगरts[1] = 1;
+	mdev->bpp_shअगरts[2] = 0;
+	mdev->bpp_shअगरts[3] = 2;
 
 	mgag200_init_regs(mdev);
 
 	ret = drmm_mode_config_init(dev);
-	if (ret) {
+	अगर (ret) अणु
 		drm_err(dev, "drmm_mode_config_init() failed, error %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev->mode_config.max_width = MGAG200_MAX_FB_WIDTH;
 	dev->mode_config.max_height = MGAG200_MAX_FB_HEIGHT;
@@ -1723,30 +1724,30 @@ int mgag200_modeset_init(struct mga_device *mdev)
 	dev->mode_config.funcs = &mgag200_mode_config_funcs;
 
 	ret = mgag200_vga_connector_init(mdev);
-	if (ret) {
+	अगर (ret) अणु
 		drm_err(dev,
 			"mgag200_vga_connector_init() failed, error %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = drm_simple_display_pipe_init(dev, pipe,
 					   &mgag200_simple_display_pipe_funcs,
-					   mgag200_simple_display_pipe_formats,
-					   format_count,
-					   mgag200_simple_display_pipe_fmtmods,
+					   mgag200_simple_display_pipe_क्रमmats,
+					   क्रमmat_count,
+					   mgag200_simple_display_pipe_fmपंचांगods,
 					   connector);
-	if (ret) {
+	अगर (ret) अणु
 		drm_err(dev,
 			"drm_simple_display_pipe_init() failed, error %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* FIXME: legacy gamma tables; convert to CRTC state */
 	drm_mode_crtc_set_gamma_size(&pipe->crtc, MGAG200_LUT_SIZE);
 
 	drm_mode_config_reset(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
  * Copyright 1999-2000 Jeremy Fitzhardinge <jeremy@goop.org>
  *
@@ -7,9 +8,9 @@
  * option, any later version, incorporated herein by reference.
  */
 
-#ifndef _UAPI_LINUX_AUTO_FS4_H
-#define _UAPI_LINUX_AUTO_FS4_H
+#अगर_अघोषित _UAPI_LINUX_AUTO_FS4_H
+#घोषणा _UAPI_LINUX_AUTO_FS4_H
 
-#include <linux/auto_fs.h>
+#समावेश <linux/स्वतः_fs.h>
 
-#endif /* _UAPI_LINUX_AUTO_FS4_H */
+#पूर्ण_अगर /* _UAPI_LINUX_AUTO_FS4_H */

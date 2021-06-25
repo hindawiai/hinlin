@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/arch/arm/mach-footbridge/netwinder-pci.c
  *
- * PCI bios-type initialisation for PCI machines
+ * PCI bios-type initialisation क्रम PCI machines
  *
  * Bits taken from various places.
  */
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
 
-#include <asm/irq.h>
-#include <asm/mach/pci.h>
-#include <asm/mach-types.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/mach/pci.h>
+#समावेश <यंत्र/mach-types.h>
 
 /*
- * We now use the slot ID instead of the device identifiers to select
- * which interrupt is routed where.
+ * We now use the slot ID instead of the device identअगरiers to select
+ * which पूर्णांकerrupt is routed where.
  */
-static int netwinder_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
-	switch (slot) {
-	case 0:  /* host bridge */
-		return 0;
+अटल पूर्णांक netwinder_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
+	चयन (slot) अणु
+	हाल 0:  /* host bridge */
+		वापस 0;
 
-	case 9:  /* CyberPro */
-		return IRQ_NETWINDER_VGA;
+	हाल 9:  /* CyberPro */
+		वापस IRQ_NETWINDER_VGA;
 
-	case 10: /* DC21143 */
-		return IRQ_NETWINDER_ETHER100;
+	हाल 10: /* DC21143 */
+		वापस IRQ_NETWINDER_ETHER100;
 
-	case 12: /* Winbond 553 */
-		return IRQ_ISA_HARDDISK1;
+	हाल 12: /* Winbond 553 */
+		वापस IRQ_ISA_HARDDISK1;
 
-	case 13: /* Winbond 89C940F */
-		return IRQ_NETWINDER_ETHER10;
+	हाल 13: /* Winbond 89C940F */
+		वापस IRQ_NETWINDER_ETHER10;
 
-	default:
-		printk(KERN_ERR "PCI: unknown device in slot %s\n",
+	शेष:
+		prपूर्णांकk(KERN_ERR "PCI: unknown device in slot %s\n",
 			pci_name(dev));
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static struct hw_pci netwinder_pci __initdata = {
+अटल काष्ठा hw_pci netwinder_pci __initdata = अणु
 	.map_irq		= netwinder_map_irq,
 	.nr_controllers		= 1,
 	.ops			= &dc21285_ops,
 	.setup			= dc21285_setup,
 	.preinit		= dc21285_preinit,
 	.postinit		= dc21285_postinit,
-};
+पूर्ण;
 
-static int __init netwinder_pci_init(void)
-{
-	if (machine_is_netwinder())
+अटल पूर्णांक __init netwinder_pci_init(व्योम)
+अणु
+	अगर (machine_is_netwinder())
 		pci_common_init(&netwinder_pci);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 subsys_initcall(netwinder_pci_init);

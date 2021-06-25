@@ -1,136 +1,137 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Common definitions across all variants of ICP and ICS interrupt
+ * Common definitions across all variants of ICP and ICS पूर्णांकerrupt
  * controllers.
  */
 
-#ifndef _XICS_H
-#define _XICS_H
+#अगर_अघोषित _XICS_H
+#घोषणा _XICS_H
 
-#include <linux/interrupt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#define XICS_IPI		2
-#define XICS_IRQ_SPURIOUS	0
+#घोषणा XICS_IPI		2
+#घोषणा XICS_IRQ_SPURIOUS	0
 
 /* Want a priority other than 0.  Various HW issues require this. */
-#define	DEFAULT_PRIORITY	5
+#घोषणा	DEFAULT_PRIORITY	5
 
 /*
- * Mark IPIs as higher priority so we can take them inside interrupts
+ * Mark IPIs as higher priority so we can take them inside पूर्णांकerrupts
  * FIXME: still true now?
  */
-#define IPI_PRIORITY		4
+#घोषणा IPI_PRIORITY		4
 
 /* The least favored priority */
-#define LOWEST_PRIORITY		0xFF
+#घोषणा LOWEST_PRIORITY		0xFF
 
 /* The number of priorities defined above */
-#define MAX_NUM_PRIORITIES	3
+#घोषणा MAX_NUM_PRIORITIES	3
 
 /* Native ICP */
-#ifdef CONFIG_PPC_ICP_NATIVE
-extern int icp_native_init(void);
-extern void icp_native_flush_interrupt(void);
-extern void icp_native_cause_ipi_rm(int cpu);
-#else
-static inline int icp_native_init(void) { return -ENODEV; }
-#endif
+#अगर_घोषित CONFIG_PPC_ICP_NATIVE
+बाह्य पूर्णांक icp_native_init(व्योम);
+बाह्य व्योम icp_native_flush_पूर्णांकerrupt(व्योम);
+बाह्य व्योम icp_native_cause_ipi_rm(पूर्णांक cpu);
+#अन्यथा
+अटल अंतरभूत पूर्णांक icp_native_init(व्योम) अणु वापस -ENODEV; पूर्ण
+#पूर्ण_अगर
 
 /* PAPR ICP */
-#ifdef CONFIG_PPC_ICP_HV
-extern int icp_hv_init(void);
-#else
-static inline int icp_hv_init(void) { return -ENODEV; }
-#endif
+#अगर_घोषित CONFIG_PPC_ICP_HV
+बाह्य पूर्णांक icp_hv_init(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक icp_hv_init(व्योम) अणु वापस -ENODEV; पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_POWERNV
-extern int icp_opal_init(void);
-extern void icp_opal_flush_interrupt(void);
-#else
-static inline int icp_opal_init(void) { return -ENODEV; }
-#endif
+#अगर_घोषित CONFIG_PPC_POWERNV
+बाह्य पूर्णांक icp_opal_init(व्योम);
+बाह्य व्योम icp_opal_flush_पूर्णांकerrupt(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक icp_opal_init(व्योम) अणु वापस -ENODEV; पूर्ण
+#पूर्ण_अगर
 
 /* ICP ops */
-struct icp_ops {
-	unsigned int (*get_irq)(void);
-	void (*eoi)(struct irq_data *d);
-	void (*set_priority)(unsigned char prio);
-	void (*teardown_cpu)(void);
-	void (*flush_ipi)(void);
-#ifdef CONFIG_SMP
-	void (*cause_ipi)(int cpu);
+काष्ठा icp_ops अणु
+	अचिन्हित पूर्णांक (*get_irq)(व्योम);
+	व्योम (*eoi)(काष्ठा irq_data *d);
+	व्योम (*set_priority)(अचिन्हित अक्षर prio);
+	व्योम (*tearकरोwn_cpu)(व्योम);
+	व्योम (*flush_ipi)(व्योम);
+#अगर_घोषित CONFIG_SMP
+	व्योम (*cause_ipi)(पूर्णांक cpu);
 	irq_handler_t ipi_action;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-extern const struct icp_ops *icp_ops;
+बाह्य स्थिर काष्ठा icp_ops *icp_ops;
 
 /* Native ICS */
-extern int ics_native_init(void);
+बाह्य पूर्णांक ics_native_init(व्योम);
 
 /* RTAS ICS */
-#ifdef CONFIG_PPC_ICS_RTAS
-extern int ics_rtas_init(void);
-#else
-static inline int ics_rtas_init(void) { return -ENODEV; }
-#endif
+#अगर_घोषित CONFIG_PPC_ICS_RTAS
+बाह्य पूर्णांक ics_rtas_init(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक ics_rtas_init(व्योम) अणु वापस -ENODEV; पूर्ण
+#पूर्ण_अगर
 
 /* HAL ICS */
-#ifdef CONFIG_PPC_POWERNV
-extern int ics_opal_init(void);
-#else
-static inline int ics_opal_init(void) { return -ENODEV; }
-#endif
+#अगर_घोषित CONFIG_PPC_POWERNV
+बाह्य पूर्णांक ics_opal_init(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक ics_opal_init(व्योम) अणु वापस -ENODEV; पूर्ण
+#पूर्ण_अगर
 
 /* ICS instance, hooked up to chip_data of an irq */
-struct ics {
-	struct list_head link;
-	int (*map)(struct ics *ics, unsigned int virq);
-	void (*mask_unknown)(struct ics *ics, unsigned long vec);
-	long (*get_server)(struct ics *ics, unsigned long vec);
-	int (*host_match)(struct ics *ics, struct device_node *node);
-	char data[];
-};
+काष्ठा ics अणु
+	काष्ठा list_head link;
+	पूर्णांक (*map)(काष्ठा ics *ics, अचिन्हित पूर्णांक virq);
+	व्योम (*mask_unknown)(काष्ठा ics *ics, अचिन्हित दीर्घ vec);
+	दीर्घ (*get_server)(काष्ठा ics *ics, अचिन्हित दीर्घ vec);
+	पूर्णांक (*host_match)(काष्ठा ics *ics, काष्ठा device_node *node);
+	अक्षर data[];
+पूर्ण;
 
 /* Commons */
-extern unsigned int xics_default_server;
-extern unsigned int xics_default_distrib_server;
-extern unsigned int xics_interrupt_server_size;
-extern struct irq_domain *xics_host;
+बाह्य अचिन्हित पूर्णांक xics_शेष_server;
+बाह्य अचिन्हित पूर्णांक xics_शेष_distrib_server;
+बाह्य अचिन्हित पूर्णांक xics_पूर्णांकerrupt_server_size;
+बाह्य काष्ठा irq_करोमुख्य *xics_host;
 
-struct xics_cppr {
-	unsigned char stack[MAX_NUM_PRIORITIES];
-	int index;
-};
+काष्ठा xics_cppr अणु
+	अचिन्हित अक्षर stack[MAX_NUM_PRIORITIES];
+	पूर्णांक index;
+पूर्ण;
 
-DECLARE_PER_CPU(struct xics_cppr, xics_cppr);
+DECLARE_PER_CPU(काष्ठा xics_cppr, xics_cppr);
 
-static inline void xics_push_cppr(unsigned int vec)
-{
-	struct xics_cppr *os_cppr = this_cpu_ptr(&xics_cppr);
+अटल अंतरभूत व्योम xics_push_cppr(अचिन्हित पूर्णांक vec)
+अणु
+	काष्ठा xics_cppr *os_cppr = this_cpu_ptr(&xics_cppr);
 
-	if (WARN_ON(os_cppr->index >= MAX_NUM_PRIORITIES - 1))
-		return;
+	अगर (WARN_ON(os_cppr->index >= MAX_NUM_PRIORITIES - 1))
+		वापस;
 
-	if (vec == XICS_IPI)
+	अगर (vec == XICS_IPI)
 		os_cppr->stack[++os_cppr->index] = IPI_PRIORITY;
-	else
+	अन्यथा
 		os_cppr->stack[++os_cppr->index] = DEFAULT_PRIORITY;
-}
+पूर्ण
 
-static inline unsigned char xics_pop_cppr(void)
-{
-	struct xics_cppr *os_cppr = this_cpu_ptr(&xics_cppr);
+अटल अंतरभूत अचिन्हित अक्षर xics_pop_cppr(व्योम)
+अणु
+	काष्ठा xics_cppr *os_cppr = this_cpu_ptr(&xics_cppr);
 
-	if (WARN_ON(os_cppr->index < 1))
-		return LOWEST_PRIORITY;
+	अगर (WARN_ON(os_cppr->index < 1))
+		वापस LOWEST_PRIORITY;
 
-	return os_cppr->stack[--os_cppr->index];
-}
+	वापस os_cppr->stack[--os_cppr->index];
+पूर्ण
 
-static inline void xics_set_base_cppr(unsigned char cppr)
-{
-	struct xics_cppr *os_cppr = this_cpu_ptr(&xics_cppr);
+अटल अंतरभूत व्योम xics_set_base_cppr(अचिन्हित अक्षर cppr)
+अणु
+	काष्ठा xics_cppr *os_cppr = this_cpu_ptr(&xics_cppr);
 
 	/* we only really want to set the priority when there's
 	 * just one cppr value on the stack
@@ -138,37 +139,37 @@ static inline void xics_set_base_cppr(unsigned char cppr)
 	WARN_ON(os_cppr->index != 0);
 
 	os_cppr->stack[0] = cppr;
-}
+पूर्ण
 
-static inline unsigned char xics_cppr_top(void)
-{
-	struct xics_cppr *os_cppr = this_cpu_ptr(&xics_cppr);
+अटल अंतरभूत अचिन्हित अक्षर xics_cppr_top(व्योम)
+अणु
+	काष्ठा xics_cppr *os_cppr = this_cpu_ptr(&xics_cppr);
 	
-	return os_cppr->stack[os_cppr->index];
-}
+	वापस os_cppr->stack[os_cppr->index];
+पूर्ण
 
-DECLARE_PER_CPU_SHARED_ALIGNED(unsigned long, xics_ipi_message);
+DECLARE_PER_CPU_SHARED_ALIGNED(अचिन्हित दीर्घ, xics_ipi_message);
 
-extern void xics_init(void);
-extern void xics_setup_cpu(void);
-extern void xics_update_irq_servers(void);
-extern void xics_set_cpu_giq(unsigned int gserver, unsigned int join);
-extern void xics_mask_unknown_vec(unsigned int vec);
-extern irqreturn_t xics_ipi_dispatch(int cpu);
-extern void xics_smp_probe(void);
-extern void xics_register_ics(struct ics *ics);
-extern void xics_teardown_cpu(void);
-extern void xics_kexec_teardown_cpu(int secondary);
-extern void xics_migrate_irqs_away(void);
-extern void icp_native_eoi(struct irq_data *d);
-extern int xics_set_irq_type(struct irq_data *d, unsigned int flow_type);
-extern int xics_retrigger(struct irq_data *data);
-#ifdef CONFIG_SMP
-extern int xics_get_irq_server(unsigned int virq, const struct cpumask *cpumask,
-			       unsigned int strict_check);
-#else
-#define xics_get_irq_server(virq, cpumask, strict_check) (xics_default_server)
-#endif
+बाह्य व्योम xics_init(व्योम);
+बाह्य व्योम xics_setup_cpu(व्योम);
+बाह्य व्योम xics_update_irq_servers(व्योम);
+बाह्य व्योम xics_set_cpu_giq(अचिन्हित पूर्णांक gserver, अचिन्हित पूर्णांक join);
+बाह्य व्योम xics_mask_unknown_vec(अचिन्हित पूर्णांक vec);
+बाह्य irqवापस_t xics_ipi_dispatch(पूर्णांक cpu);
+बाह्य व्योम xics_smp_probe(व्योम);
+बाह्य व्योम xics_रेजिस्टर_ics(काष्ठा ics *ics);
+बाह्य व्योम xics_tearकरोwn_cpu(व्योम);
+बाह्य व्योम xics_kexec_tearकरोwn_cpu(पूर्णांक secondary);
+बाह्य व्योम xics_migrate_irqs_away(व्योम);
+बाह्य व्योम icp_native_eoi(काष्ठा irq_data *d);
+बाह्य पूर्णांक xics_set_irq_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक flow_type);
+बाह्य पूर्णांक xics_retrigger(काष्ठा irq_data *data);
+#अगर_घोषित CONFIG_SMP
+बाह्य पूर्णांक xics_get_irq_server(अचिन्हित पूर्णांक virq, स्थिर काष्ठा cpumask *cpumask,
+			       अचिन्हित पूर्णांक strict_check);
+#अन्यथा
+#घोषणा xics_get_irq_server(virq, cpumask, strict_check) (xics_शेष_server)
+#पूर्ण_अगर
 
 
-#endif /* _XICS_H */
+#पूर्ण_अगर /* _XICS_H */

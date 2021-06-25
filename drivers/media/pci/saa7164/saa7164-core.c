@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Driver for the NXP SAA7164 PCIe bridge
+ *  Driver क्रम the NXP SAA7164 PCIe bridge
  *
- *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
+ *  Copyright (c) 2010-2015 Steven Toth <stoth@kernelद_असल.com>
  */
 
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kmod.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/debugfs.h>
-#include <linux/delay.h>
-#include <asm/div64.h>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/delay.h>
+#समावेश <यंत्र/भाग64.h>
 
-#include "saa7164.h"
+#समावेश "saa7164.h"
 
 MODULE_DESCRIPTION("Driver for NXP SAA7164 based TV cards");
 MODULE_AUTHOR("Steven Toth <stoth@kernellabs.com>");
@@ -32,79 +33,79 @@ MODULE_LICENSE("GPL");
  * 32 bus
  */
 
-unsigned int saa_debug;
-module_param_named(debug, saa_debug, int, 0644);
+अचिन्हित पूर्णांक saa_debug;
+module_param_named(debug, saa_debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "enable debug messages");
 
-static unsigned int fw_debug;
-module_param(fw_debug, int, 0644);
+अटल अचिन्हित पूर्णांक fw_debug;
+module_param(fw_debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(fw_debug, "Firmware debug level def:2");
 
-unsigned int encoder_buffers = SAA7164_MAX_ENCODER_BUFFERS;
-module_param(encoder_buffers, int, 0644);
+अचिन्हित पूर्णांक encoder_buffers = SAA7164_MAX_ENCODER_BUFFERS;
+module_param(encoder_buffers, पूर्णांक, 0644);
 MODULE_PARM_DESC(encoder_buffers, "Total buffers in read queue 16-512 def:64");
 
-unsigned int vbi_buffers = SAA7164_MAX_VBI_BUFFERS;
-module_param(vbi_buffers, int, 0644);
+अचिन्हित पूर्णांक vbi_buffers = SAA7164_MAX_VBI_BUFFERS;
+module_param(vbi_buffers, पूर्णांक, 0644);
 MODULE_PARM_DESC(vbi_buffers, "Total buffers in read queue 16-512 def:64");
 
-unsigned int waitsecs = 10;
-module_param(waitsecs, int, 0644);
-MODULE_PARM_DESC(waitsecs, "timeout on firmware messages");
+अचिन्हित पूर्णांक रुकोsecs = 10;
+module_param(रुकोsecs, पूर्णांक, 0644);
+MODULE_PARM_DESC(रुकोsecs, "timeout on firmware messages");
 
-static unsigned int card[]  = {[0 ... (SAA7164_MAXBOARDS - 1)] = UNSET };
-module_param_array(card,  int, NULL, 0444);
+अटल अचिन्हित पूर्णांक card[]  = अणु[0 ... (SAA7164_MAXBOARDS - 1)] = UNSET पूर्ण;
+module_param_array(card,  पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(card, "card type");
 
-static unsigned int print_histogram = 64;
-module_param(print_histogram, int, 0644);
-MODULE_PARM_DESC(print_histogram, "print histogram values once");
+अटल अचिन्हित पूर्णांक prपूर्णांक_histogram = 64;
+module_param(prपूर्णांक_histogram, पूर्णांक, 0644);
+MODULE_PARM_DESC(prपूर्णांक_histogram, "print histogram values once");
 
-unsigned int crc_checking = 1;
-module_param(crc_checking, int, 0644);
+अचिन्हित पूर्णांक crc_checking = 1;
+module_param(crc_checking, पूर्णांक, 0644);
 MODULE_PARM_DESC(crc_checking, "enable crc sanity checking on buffers");
 
-static unsigned int guard_checking = 1;
-module_param(guard_checking, int, 0644);
+अटल अचिन्हित पूर्णांक guard_checking = 1;
+module_param(guard_checking, पूर्णांक, 0644);
 MODULE_PARM_DESC(guard_checking,
 	"enable dma sanity checking for buffer overruns");
 
-static bool enable_msi = true;
+अटल bool enable_msi = true;
 module_param(enable_msi, bool, 0444);
 MODULE_PARM_DESC(enable_msi,
 		"enable the use of an msi interrupt if available");
 
-static unsigned int saa7164_devcount;
+अटल अचिन्हित पूर्णांक saa7164_devcount;
 
-static DEFINE_MUTEX(devlist);
+अटल DEFINE_MUTEX(devlist);
 LIST_HEAD(saa7164_devlist);
 
-#define INT_SIZE 16
+#घोषणा INT_SIZE 16
 
-static void saa7164_pack_verifier(struct saa7164_buffer *buf)
-{
+अटल व्योम saa7164_pack_verअगरier(काष्ठा saa7164_buffer *buf)
+अणु
 	u8 *p = (u8 *)buf->cpu;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < buf->actual_size; i += 2048) {
+	क्रम (i = 0; i < buf->actual_size; i += 2048) अणु
 
-		if ((*(p + i + 0) != 0x00) || (*(p + i + 1) != 0x00) ||
-			(*(p + i + 2) != 0x01) || (*(p + i + 3) != 0xBA)) {
-			printk(KERN_ERR "No pack at 0x%x\n", i);
-#if 0
-			print_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1,
+		अगर ((*(p + i + 0) != 0x00) || (*(p + i + 1) != 0x00) ||
+			(*(p + i + 2) != 0x01) || (*(p + i + 3) != 0xBA)) अणु
+			prपूर्णांकk(KERN_ERR "No pack at 0x%x\n", i);
+#अगर 0
+			prपूर्णांक_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1,
 				       p + 1, 32, false);
-#endif
-		}
-	}
-}
+#पूर्ण_अगर
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#define FIXED_VIDEO_PID 0xf1
-#define FIXED_AUDIO_PID 0xf2
+#घोषणा FIXED_VIDEO_PID 0xf1
+#घोषणा FIXED_AUDIO_PID 0xf2
 
-static void saa7164_ts_verifier(struct saa7164_buffer *buf)
-{
-	struct saa7164_port *port = buf->port;
+अटल व्योम saa7164_ts_verअगरier(काष्ठा saa7164_buffer *buf)
+अणु
+	काष्ठा saa7164_port *port = buf->port;
 	u32 i;
 	u8 cc, a;
 	u16 pid;
@@ -114,71 +115,71 @@ static void saa7164_ts_verifier(struct saa7164_buffer *buf)
 	port->v_cc_errors = 0;
 	port->a_cc_errors = 0;
 
-	for (i = 0; i < buf->actual_size; i += 188) {
-		if (*(bufcpu + i) != 0x47)
+	क्रम (i = 0; i < buf->actual_size; i += 188) अणु
+		अगर (*(bufcpu + i) != 0x47)
 			port->sync_errors++;
 
-		/* TODO: Query pid lower 8 bits, ignoring upper bits intensionally */
+		/* TODO: Query pid lower 8 bits, ignoring upper bits पूर्णांकensionally */
 		pid = ((*(bufcpu + i + 1) & 0x1f) << 8) | *(bufcpu + i + 2);
 		cc = *(bufcpu + i + 3) & 0x0f;
 
-		if (pid == FIXED_VIDEO_PID) {
+		अगर (pid == FIXED_VIDEO_PID) अणु
 			a = ((port->last_v_cc + 1) & 0x0f);
-			if (a != cc) {
-				printk(KERN_ERR "video cc last = %x current = %x i = %d\n",
+			अगर (a != cc) अणु
+				prपूर्णांकk(KERN_ERR "video cc last = %x current = %x i = %d\n",
 					port->last_v_cc, cc, i);
 				port->v_cc_errors++;
-			}
+			पूर्ण
 
 			port->last_v_cc = cc;
-		} else
-		if (pid == FIXED_AUDIO_PID) {
+		पूर्ण अन्यथा
+		अगर (pid == FIXED_AUDIO_PID) अणु
 			a = ((port->last_a_cc + 1) & 0x0f);
-			if (a != cc) {
-				printk(KERN_ERR "audio cc last = %x current = %x i = %d\n",
+			अगर (a != cc) अणु
+				prपूर्णांकk(KERN_ERR "audio cc last = %x current = %x i = %d\n",
 					port->last_a_cc, cc, i);
 				port->a_cc_errors++;
-			}
+			पूर्ण
 
 			port->last_a_cc = cc;
-		}
+		पूर्ण
 
-	}
+	पूर्ण
 
-	/* Only report errors if we've been through this function at least
-	 * once already and the cached cc values are primed. First time through
+	/* Only report errors अगर we've been through this function at least
+	 * once alपढ़ोy and the cached cc values are primed. First समय through
 	 * always generates errors.
 	 */
-	if (port->v_cc_errors && (port->done_first_interrupt > 1))
-		printk(KERN_ERR "video pid cc, %d errors\n", port->v_cc_errors);
+	अगर (port->v_cc_errors && (port->करोne_first_पूर्णांकerrupt > 1))
+		prपूर्णांकk(KERN_ERR "video pid cc, %d errors\n", port->v_cc_errors);
 
-	if (port->a_cc_errors && (port->done_first_interrupt > 1))
-		printk(KERN_ERR "audio pid cc, %d errors\n", port->a_cc_errors);
+	अगर (port->a_cc_errors && (port->करोne_first_पूर्णांकerrupt > 1))
+		prपूर्णांकk(KERN_ERR "audio pid cc, %d errors\n", port->a_cc_errors);
 
-	if (port->sync_errors && (port->done_first_interrupt > 1))
-		printk(KERN_ERR "sync_errors = %d\n", port->sync_errors);
+	अगर (port->sync_errors && (port->करोne_first_पूर्णांकerrupt > 1))
+		prपूर्णांकk(KERN_ERR "sync_errors = %d\n", port->sync_errors);
 
-	if (port->done_first_interrupt == 1)
-		port->done_first_interrupt++;
-}
+	अगर (port->करोne_first_पूर्णांकerrupt == 1)
+		port->करोne_first_पूर्णांकerrupt++;
+पूर्ण
 
-static void saa7164_histogram_reset(struct saa7164_histogram *hg, char *name)
-{
-	int i;
+अटल व्योम saa7164_histogram_reset(काष्ठा saa7164_histogram *hg, अक्षर *name)
+अणु
+	पूर्णांक i;
 
-	memset(hg, 0, sizeof(struct saa7164_histogram));
-	strscpy(hg->name, name, sizeof(hg->name));
+	स_रखो(hg, 0, माप(काष्ठा saa7164_histogram));
+	strscpy(hg->name, name, माप(hg->name));
 
 	/* First 30ms x 1ms */
-	for (i = 0; i < 30; i++)
+	क्रम (i = 0; i < 30; i++)
 		hg->counter1[0 + i].val = i;
 
 	/* 30 - 200ms x 10ms  */
-	for (i = 0; i < 18; i++)
+	क्रम (i = 0; i < 18; i++)
 		hg->counter1[30 + i].val = 30 + (i * 10);
 
 	/* 200 - 2000ms x 100ms  */
-	for (i = 0; i < 15; i++)
+	क्रम (i = 0; i < 15; i++)
 		hg->counter1[48 + i].val = 200 + (i * 200);
 
 	/* Catch all massive value (2secs) */
@@ -207,416 +208,416 @@ static void saa7164_histogram_reset(struct saa7164_histogram *hg, char *name)
 
 	/* Catch all massive values (1hr) */
 	hg->counter1[63].val = 3600000;
-}
+पूर्ण
 
-void saa7164_histogram_update(struct saa7164_histogram *hg, u32 val)
-{
-	int i;
-	for (i = 0; i < 64; i++) {
-		if (val <= hg->counter1[i].val) {
+व्योम saa7164_histogram_update(काष्ठा saa7164_histogram *hg, u32 val)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < 64; i++) अणु
+		अगर (val <= hg->counter1[i].val) अणु
 			hg->counter1[i].count++;
-			hg->counter1[i].update_time = jiffies;
-			break;
-		}
-	}
-}
+			hg->counter1[i].update_समय = jअगरfies;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void saa7164_histogram_print(struct saa7164_port *port,
-	struct saa7164_histogram *hg)
-{
+अटल व्योम saa7164_histogram_prपूर्णांक(काष्ठा saa7164_port *port,
+	काष्ठा saa7164_histogram *hg)
+अणु
 	u32 entries = 0;
-	int i;
+	पूर्णांक i;
 
-	printk(KERN_ERR "Histogram named %s (ms, count, last_update_jiffy)\n", hg->name);
-	for (i = 0; i < 64; i++) {
-		if (hg->counter1[i].count == 0)
-			continue;
+	prपूर्णांकk(KERN_ERR "Histogram named %s (ms, count, last_update_jiffy)\n", hg->name);
+	क्रम (i = 0; i < 64; i++) अणु
+		अगर (hg->counter1[i].count == 0)
+			जारी;
 
-		printk(KERN_ERR " %4d %12d %Ld\n",
+		prपूर्णांकk(KERN_ERR " %4d %12d %Ld\n",
 			hg->counter1[i].val,
 			hg->counter1[i].count,
-			hg->counter1[i].update_time);
+			hg->counter1[i].update_समय);
 
 		entries++;
-	}
-	printk(KERN_ERR "Total: %d\n", entries);
-}
+	पूर्ण
+	prपूर्णांकk(KERN_ERR "Total: %d\n", entries);
+पूर्ण
 
-static void saa7164_work_enchandler_helper(struct saa7164_port *port, int bufnr)
-{
-	struct saa7164_dev *dev = port->dev;
-	struct saa7164_buffer *buf = NULL;
-	struct saa7164_user_buffer *ubuf = NULL;
-	struct list_head *c, *n;
-	int i = 0;
+अटल व्योम saa7164_work_enchandler_helper(काष्ठा saa7164_port *port, पूर्णांक bufnr)
+अणु
+	काष्ठा saa7164_dev *dev = port->dev;
+	काष्ठा saa7164_buffer *buf = शून्य;
+	काष्ठा saa7164_user_buffer *ubuf = शून्य;
+	काष्ठा list_head *c, *n;
+	पूर्णांक i = 0;
 	u8 *p;
 
 	mutex_lock(&port->dmaqueue_lock);
-	list_for_each_safe(c, n, &port->dmaqueue.list) {
+	list_क्रम_each_safe(c, n, &port->dmaqueue.list) अणु
 
-		buf = list_entry(c, struct saa7164_buffer, list);
-		if (i++ > port->hwcfg.buffercount) {
-			printk(KERN_ERR "%s() illegal i count %d\n",
+		buf = list_entry(c, काष्ठा saa7164_buffer, list);
+		अगर (i++ > port->hwcfg.buffercount) अणु
+			prपूर्णांकk(KERN_ERR "%s() illegal i count %d\n",
 				__func__, i);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (buf->idx == bufnr) {
+		अगर (buf->idx == bufnr) अणु
 
 			/* Found the buffer, deal with it */
-			dprintk(DBGLVL_IRQ, "%s() bufnr: %d\n", __func__, bufnr);
+			dprपूर्णांकk(DBGLVL_IRQ, "%s() bufnr: %d\n", __func__, bufnr);
 
-			if (crc_checking) {
+			अगर (crc_checking) अणु
 				/* Throw a new checksum on the dma buffer */
 				buf->crc = crc32(0, buf->cpu, buf->actual_size);
-			}
+			पूर्ण
 
-			if (guard_checking) {
+			अगर (guard_checking) अणु
 				p = (u8 *)buf->cpu;
-				if ((*(p + buf->actual_size + 0) != 0xff) ||
+				अगर ((*(p + buf->actual_size + 0) != 0xff) ||
 					(*(p + buf->actual_size + 1) != 0xff) ||
 					(*(p + buf->actual_size + 2) != 0xff) ||
 					(*(p + buf->actual_size + 3) != 0xff) ||
 					(*(p + buf->actual_size + 0x10) != 0xff) ||
 					(*(p + buf->actual_size + 0x11) != 0xff) ||
 					(*(p + buf->actual_size + 0x12) != 0xff) ||
-					(*(p + buf->actual_size + 0x13) != 0xff)) {
-						printk(KERN_ERR "%s() buf %p guard buffer breach\n",
+					(*(p + buf->actual_size + 0x13) != 0xff)) अणु
+						prपूर्णांकk(KERN_ERR "%s() buf %p guard buffer breach\n",
 							__func__, buf);
-#if 0
-			print_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1,
+#अगर 0
+			prपूर्णांक_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1,
 				       p + buf->actual_size - 32, 64, false);
-#endif
-				}
-			}
+#पूर्ण_अगर
+				पूर्ण
+			पूर्ण
 
-			if ((port->nr != SAA7164_PORT_VBI1) && (port->nr != SAA7164_PORT_VBI2)) {
+			अगर ((port->nr != SAA7164_PORT_VBI1) && (port->nr != SAA7164_PORT_VBI2)) अणु
 				/* Validate the incoming buffer content */
-				if (port->encoder_params.stream_type == V4L2_MPEG_STREAM_TYPE_MPEG2_TS)
-					saa7164_ts_verifier(buf);
-				else if (port->encoder_params.stream_type == V4L2_MPEG_STREAM_TYPE_MPEG2_PS)
-					saa7164_pack_verifier(buf);
-			}
+				अगर (port->encoder_params.stream_type == V4L2_MPEG_STREAM_TYPE_MPEG2_TS)
+					saa7164_ts_verअगरier(buf);
+				अन्यथा अगर (port->encoder_params.stream_type == V4L2_MPEG_STREAM_TYPE_MPEG2_PS)
+					saa7164_pack_verअगरier(buf);
+			पूर्ण
 
-			/* find a free user buffer and clone to it */
-			if (!list_empty(&port->list_buf_free.list)) {
+			/* find a मुक्त user buffer and clone to it */
+			अगर (!list_empty(&port->list_buf_मुक्त.list)) अणु
 
 				/* Pull the first buffer from the used list */
-				ubuf = list_first_entry(&port->list_buf_free.list,
-					struct saa7164_user_buffer, list);
+				ubuf = list_first_entry(&port->list_buf_मुक्त.list,
+					काष्ठा saa7164_user_buffer, list);
 
-				if (buf->actual_size <= ubuf->actual_size) {
+				अगर (buf->actual_size <= ubuf->actual_size) अणु
 
-					memcpy(ubuf->data, buf->cpu, ubuf->actual_size);
+					स_नकल(ubuf->data, buf->cpu, ubuf->actual_size);
 
-					if (crc_checking) {
-						/* Throw a new checksum on the read buffer */
+					अगर (crc_checking) अणु
+						/* Throw a new checksum on the पढ़ो buffer */
 						ubuf->crc = crc32(0, ubuf->data, ubuf->actual_size);
-					}
+					पूर्ण
 
-					/* Requeue the buffer on the free list */
+					/* Requeue the buffer on the मुक्त list */
 					ubuf->pos = 0;
 
 					list_move_tail(&ubuf->list,
 						&port->list_buf_used.list);
 
-					/* Flag any userland waiters */
-					wake_up_interruptible(&port->wait_read);
+					/* Flag any userland रुकोers */
+					wake_up_पूर्णांकerruptible(&port->रुको_पढ़ो);
 
-				} else {
-					printk(KERN_ERR "buf %p bufsize fails match\n", buf);
-				}
+				पूर्ण अन्यथा अणु
+					prपूर्णांकk(KERN_ERR "buf %p bufsize fails match\n", buf);
+				पूर्ण
 
-			} else
-				printk(KERN_ERR "encirq no free buffers, increase param encoder_buffers\n");
+			पूर्ण अन्यथा
+				prपूर्णांकk(KERN_ERR "encirq no free buffers, increase param encoder_buffers\n");
 
-			/* Ensure offset into buffer remains 0, fill buffer
-			 * with known bad data. We check for this data at a later point
-			 * in time. */
+			/* Ensure offset पूर्णांकo buffer reमुख्यs 0, fill buffer
+			 * with known bad data. We check क्रम this data at a later poपूर्णांक
+			 * in समय. */
 			saa7164_buffer_zero_offsets(port, bufnr);
-			memset(buf->cpu, 0xff, buf->pci_size);
-			if (crc_checking) {
+			स_रखो(buf->cpu, 0xff, buf->pci_size);
+			अगर (crc_checking) अणु
 				/* Throw yet aanother new checksum on the dma buffer */
 				buf->crc = crc32(0, buf->cpu, buf->actual_size);
-			}
+			पूर्ण
 
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&port->dmaqueue_lock);
-}
+पूर्ण
 
-static void saa7164_work_enchandler(struct work_struct *w)
-{
-	struct saa7164_port *port =
-		container_of(w, struct saa7164_port, workenc);
-	struct saa7164_dev *dev = port->dev;
+अटल व्योम saa7164_work_enchandler(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा saa7164_port *port =
+		container_of(w, काष्ठा saa7164_port, workenc);
+	काष्ठा saa7164_dev *dev = port->dev;
 
 	u32 wp, mcb, rp, cnt = 0;
 
-	port->last_svc_msecs_diff = port->last_svc_msecs;
-	port->last_svc_msecs = jiffies_to_msecs(jiffies);
+	port->last_svc_msecs_dअगरf = port->last_svc_msecs;
+	port->last_svc_msecs = jअगरfies_to_msecs(jअगरfies);
 
-	port->last_svc_msecs_diff = port->last_svc_msecs -
-		port->last_svc_msecs_diff;
+	port->last_svc_msecs_dअगरf = port->last_svc_msecs -
+		port->last_svc_msecs_dअगरf;
 
-	saa7164_histogram_update(&port->svc_interval,
-		port->last_svc_msecs_diff);
+	saa7164_histogram_update(&port->svc_पूर्णांकerval,
+		port->last_svc_msecs_dअगरf);
 
-	port->last_irq_svc_msecs_diff = port->last_svc_msecs -
+	port->last_irq_svc_msecs_dअगरf = port->last_svc_msecs -
 		port->last_irq_msecs;
 
-	saa7164_histogram_update(&port->irq_svc_interval,
-		port->last_irq_svc_msecs_diff);
+	saa7164_histogram_update(&port->irq_svc_पूर्णांकerval,
+		port->last_irq_svc_msecs_dअगरf);
 
-	dprintk(DBGLVL_IRQ,
+	dprपूर्णांकk(DBGLVL_IRQ,
 		"%s() %Ldms elapsed irq->deferred %Ldms wp: %d rp: %d\n",
 		__func__,
-		port->last_svc_msecs_diff,
-		port->last_irq_svc_msecs_diff,
+		port->last_svc_msecs_dअगरf,
+		port->last_irq_svc_msecs_dअगरf,
 		port->last_svc_wp,
 		port->last_svc_rp
 		);
 
-	/* Current write position */
-	wp = saa7164_readl(port->bufcounter);
-	if (wp > (port->hwcfg.buffercount - 1)) {
-		printk(KERN_ERR "%s() illegal buf count %d\n", __func__, wp);
-		return;
-	}
+	/* Current ग_लिखो position */
+	wp = saa7164_पढ़ोl(port->bufcounter);
+	अगर (wp > (port->hwcfg.buffercount - 1)) अणु
+		prपूर्णांकk(KERN_ERR "%s() illegal buf count %d\n", __func__, wp);
+		वापस;
+	पूर्ण
 
 	/* Most current complete buffer */
-	if (wp == 0)
+	अगर (wp == 0)
 		mcb = (port->hwcfg.buffercount - 1);
-	else
+	अन्यथा
 		mcb = wp - 1;
 
-	while (1) {
-		if (port->done_first_interrupt == 0) {
-			port->done_first_interrupt++;
+	जबतक (1) अणु
+		अगर (port->करोne_first_पूर्णांकerrupt == 0) अणु
+			port->करोne_first_पूर्णांकerrupt++;
 			rp = mcb;
-		} else
+		पूर्ण अन्यथा
 			rp = (port->last_svc_rp + 1) % 8;
 
-		if (rp > (port->hwcfg.buffercount - 1)) {
-			printk(KERN_ERR "%s() illegal rp count %d\n", __func__, rp);
-			break;
-		}
+		अगर (rp > (port->hwcfg.buffercount - 1)) अणु
+			prपूर्णांकk(KERN_ERR "%s() illegal rp count %d\n", __func__, rp);
+			अवरोध;
+		पूर्ण
 
 		saa7164_work_enchandler_helper(port, rp);
 		port->last_svc_rp = rp;
 		cnt++;
 
-		if (rp == mcb)
-			break;
-	}
+		अगर (rp == mcb)
+			अवरोध;
+	पूर्ण
 
-	/* TODO: Convert this into a /proc/saa7164 style readable file */
-	if (print_histogram == port->nr) {
-		saa7164_histogram_print(port, &port->irq_interval);
-		saa7164_histogram_print(port, &port->svc_interval);
-		saa7164_histogram_print(port, &port->irq_svc_interval);
-		saa7164_histogram_print(port, &port->read_interval);
-		saa7164_histogram_print(port, &port->poll_interval);
+	/* TODO: Convert this पूर्णांकo a /proc/saa7164 style पढ़ोable file */
+	अगर (prपूर्णांक_histogram == port->nr) अणु
+		saa7164_histogram_prपूर्णांक(port, &port->irq_पूर्णांकerval);
+		saa7164_histogram_prपूर्णांक(port, &port->svc_पूर्णांकerval);
+		saa7164_histogram_prपूर्णांक(port, &port->irq_svc_पूर्णांकerval);
+		saa7164_histogram_prपूर्णांक(port, &port->पढ़ो_पूर्णांकerval);
+		saa7164_histogram_prपूर्णांक(port, &port->poll_पूर्णांकerval);
 		/* TODO: fix this to preserve any previous state */
-		print_histogram = 64 + port->nr;
-	}
-}
+		prपूर्णांक_histogram = 64 + port->nr;
+	पूर्ण
+पूर्ण
 
-static void saa7164_work_vbihandler(struct work_struct *w)
-{
-	struct saa7164_port *port =
-		container_of(w, struct saa7164_port, workenc);
-	struct saa7164_dev *dev = port->dev;
+अटल व्योम saa7164_work_vbihandler(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा saa7164_port *port =
+		container_of(w, काष्ठा saa7164_port, workenc);
+	काष्ठा saa7164_dev *dev = port->dev;
 
 	u32 wp, mcb, rp, cnt = 0;
 
-	port->last_svc_msecs_diff = port->last_svc_msecs;
-	port->last_svc_msecs = jiffies_to_msecs(jiffies);
-	port->last_svc_msecs_diff = port->last_svc_msecs -
-		port->last_svc_msecs_diff;
+	port->last_svc_msecs_dअगरf = port->last_svc_msecs;
+	port->last_svc_msecs = jअगरfies_to_msecs(jअगरfies);
+	port->last_svc_msecs_dअगरf = port->last_svc_msecs -
+		port->last_svc_msecs_dअगरf;
 
-	saa7164_histogram_update(&port->svc_interval,
-		port->last_svc_msecs_diff);
+	saa7164_histogram_update(&port->svc_पूर्णांकerval,
+		port->last_svc_msecs_dअगरf);
 
-	port->last_irq_svc_msecs_diff = port->last_svc_msecs -
+	port->last_irq_svc_msecs_dअगरf = port->last_svc_msecs -
 		port->last_irq_msecs;
 
-	saa7164_histogram_update(&port->irq_svc_interval,
-		port->last_irq_svc_msecs_diff);
+	saa7164_histogram_update(&port->irq_svc_पूर्णांकerval,
+		port->last_irq_svc_msecs_dअगरf);
 
-	dprintk(DBGLVL_IRQ,
+	dprपूर्णांकk(DBGLVL_IRQ,
 		"%s() %Ldms elapsed irq->deferred %Ldms wp: %d rp: %d\n",
 		__func__,
-		port->last_svc_msecs_diff,
-		port->last_irq_svc_msecs_diff,
+		port->last_svc_msecs_dअगरf,
+		port->last_irq_svc_msecs_dअगरf,
 		port->last_svc_wp,
 		port->last_svc_rp
 		);
 
-	/* Current write position */
-	wp = saa7164_readl(port->bufcounter);
-	if (wp > (port->hwcfg.buffercount - 1)) {
-		printk(KERN_ERR "%s() illegal buf count %d\n", __func__, wp);
-		return;
-	}
+	/* Current ग_लिखो position */
+	wp = saa7164_पढ़ोl(port->bufcounter);
+	अगर (wp > (port->hwcfg.buffercount - 1)) अणु
+		prपूर्णांकk(KERN_ERR "%s() illegal buf count %d\n", __func__, wp);
+		वापस;
+	पूर्ण
 
 	/* Most current complete buffer */
-	if (wp == 0)
+	अगर (wp == 0)
 		mcb = (port->hwcfg.buffercount - 1);
-	else
+	अन्यथा
 		mcb = wp - 1;
 
-	while (1) {
-		if (port->done_first_interrupt == 0) {
-			port->done_first_interrupt++;
+	जबतक (1) अणु
+		अगर (port->करोne_first_पूर्णांकerrupt == 0) अणु
+			port->करोne_first_पूर्णांकerrupt++;
 			rp = mcb;
-		} else
+		पूर्ण अन्यथा
 			rp = (port->last_svc_rp + 1) % 8;
 
-		if (rp > (port->hwcfg.buffercount - 1)) {
-			printk(KERN_ERR "%s() illegal rp count %d\n", __func__, rp);
-			break;
-		}
+		अगर (rp > (port->hwcfg.buffercount - 1)) अणु
+			prपूर्णांकk(KERN_ERR "%s() illegal rp count %d\n", __func__, rp);
+			अवरोध;
+		पूर्ण
 
 		saa7164_work_enchandler_helper(port, rp);
 		port->last_svc_rp = rp;
 		cnt++;
 
-		if (rp == mcb)
-			break;
-	}
+		अगर (rp == mcb)
+			अवरोध;
+	पूर्ण
 
-	/* TODO: Convert this into a /proc/saa7164 style readable file */
-	if (print_histogram == port->nr) {
-		saa7164_histogram_print(port, &port->irq_interval);
-		saa7164_histogram_print(port, &port->svc_interval);
-		saa7164_histogram_print(port, &port->irq_svc_interval);
-		saa7164_histogram_print(port, &port->read_interval);
-		saa7164_histogram_print(port, &port->poll_interval);
+	/* TODO: Convert this पूर्णांकo a /proc/saa7164 style पढ़ोable file */
+	अगर (prपूर्णांक_histogram == port->nr) अणु
+		saa7164_histogram_prपूर्णांक(port, &port->irq_पूर्णांकerval);
+		saa7164_histogram_prपूर्णांक(port, &port->svc_पूर्णांकerval);
+		saa7164_histogram_prपूर्णांक(port, &port->irq_svc_पूर्णांकerval);
+		saa7164_histogram_prपूर्णांक(port, &port->पढ़ो_पूर्णांकerval);
+		saa7164_histogram_prपूर्णांक(port, &port->poll_पूर्णांकerval);
 		/* TODO: fix this to preserve any previous state */
-		print_histogram = 64 + port->nr;
-	}
-}
+		prपूर्णांक_histogram = 64 + port->nr;
+	पूर्ण
+पूर्ण
 
-static void saa7164_work_cmdhandler(struct work_struct *w)
-{
-	struct saa7164_dev *dev = container_of(w, struct saa7164_dev, workcmd);
+अटल व्योम saa7164_work_cmdhandler(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा saa7164_dev *dev = container_of(w, काष्ठा saa7164_dev, workcmd);
 
 	/* Wake up any complete commands */
 	saa7164_irq_dequeue(dev);
-}
+पूर्ण
 
-static void saa7164_buffer_deliver(struct saa7164_buffer *buf)
-{
-	struct saa7164_port *port = buf->port;
+अटल व्योम saa7164_buffer_deliver(काष्ठा saa7164_buffer *buf)
+अणु
+	काष्ठा saa7164_port *port = buf->port;
 
-	/* Feed the transport payload into the kernel demux */
+	/* Feed the transport payload पूर्णांकo the kernel demux */
 	dvb_dmx_swfilter_packets(&port->dvb.demux, (u8 *)buf->cpu,
 		SAA7164_TS_NUMBER_OF_LINES);
 
-}
+पूर्ण
 
-static irqreturn_t saa7164_irq_vbi(struct saa7164_port *port)
-{
-	struct saa7164_dev *dev = port->dev;
+अटल irqवापस_t saa7164_irq_vbi(काष्ठा saa7164_port *port)
+अणु
+	काष्ठा saa7164_dev *dev = port->dev;
 
-	/* Store old time */
-	port->last_irq_msecs_diff = port->last_irq_msecs;
+	/* Store old समय */
+	port->last_irq_msecs_dअगरf = port->last_irq_msecs;
 
 	/* Collect new stats */
-	port->last_irq_msecs = jiffies_to_msecs(jiffies);
+	port->last_irq_msecs = jअगरfies_to_msecs(jअगरfies);
 
 	/* Calculate stats */
-	port->last_irq_msecs_diff = port->last_irq_msecs -
-		port->last_irq_msecs_diff;
+	port->last_irq_msecs_dअगरf = port->last_irq_msecs -
+		port->last_irq_msecs_dअगरf;
 
-	saa7164_histogram_update(&port->irq_interval,
-		port->last_irq_msecs_diff);
+	saa7164_histogram_update(&port->irq_पूर्णांकerval,
+		port->last_irq_msecs_dअगरf);
 
-	dprintk(DBGLVL_IRQ, "%s() %Ldms elapsed\n", __func__,
-		port->last_irq_msecs_diff);
+	dprपूर्णांकk(DBGLVL_IRQ, "%s() %Ldms elapsed\n", __func__,
+		port->last_irq_msecs_dअगरf);
 
 	/* Tis calls the vbi irq handler */
 	schedule_work(&port->workenc);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t saa7164_irq_encoder(struct saa7164_port *port)
-{
-	struct saa7164_dev *dev = port->dev;
+अटल irqवापस_t saa7164_irq_encoder(काष्ठा saa7164_port *port)
+अणु
+	काष्ठा saa7164_dev *dev = port->dev;
 
-	/* Store old time */
-	port->last_irq_msecs_diff = port->last_irq_msecs;
+	/* Store old समय */
+	port->last_irq_msecs_dअगरf = port->last_irq_msecs;
 
 	/* Collect new stats */
-	port->last_irq_msecs = jiffies_to_msecs(jiffies);
+	port->last_irq_msecs = jअगरfies_to_msecs(jअगरfies);
 
 	/* Calculate stats */
-	port->last_irq_msecs_diff = port->last_irq_msecs -
-		port->last_irq_msecs_diff;
+	port->last_irq_msecs_dअगरf = port->last_irq_msecs -
+		port->last_irq_msecs_dअगरf;
 
-	saa7164_histogram_update(&port->irq_interval,
-		port->last_irq_msecs_diff);
+	saa7164_histogram_update(&port->irq_पूर्णांकerval,
+		port->last_irq_msecs_dअगरf);
 
-	dprintk(DBGLVL_IRQ, "%s() %Ldms elapsed\n", __func__,
-		port->last_irq_msecs_diff);
+	dprपूर्णांकk(DBGLVL_IRQ, "%s() %Ldms elapsed\n", __func__,
+		port->last_irq_msecs_dअगरf);
 
 	schedule_work(&port->workenc);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t saa7164_irq_ts(struct saa7164_port *port)
-{
-	struct saa7164_dev *dev = port->dev;
-	struct saa7164_buffer *buf;
-	struct list_head *c, *n;
-	int wp, i = 0, rp;
+अटल irqवापस_t saa7164_irq_ts(काष्ठा saa7164_port *port)
+अणु
+	काष्ठा saa7164_dev *dev = port->dev;
+	काष्ठा saa7164_buffer *buf;
+	काष्ठा list_head *c, *n;
+	पूर्णांक wp, i = 0, rp;
 
-	/* Find the current write point from the hardware */
-	wp = saa7164_readl(port->bufcounter);
+	/* Find the current ग_लिखो poपूर्णांक from the hardware */
+	wp = saa7164_पढ़ोl(port->bufcounter);
 
 	BUG_ON(wp > (port->hwcfg.buffercount - 1));
 
-	/* Find the previous buffer to the current write point */
-	if (wp == 0)
+	/* Find the previous buffer to the current ग_लिखो poपूर्णांक */
+	अगर (wp == 0)
 		rp = (port->hwcfg.buffercount - 1);
-	else
+	अन्यथा
 		rp = wp - 1;
 
 	/* Lookup the WP in the buffer list */
-	/* TODO: turn this into a worker thread */
-	list_for_each_safe(c, n, &port->dmaqueue.list) {
-		buf = list_entry(c, struct saa7164_buffer, list);
+	/* TODO: turn this पूर्णांकo a worker thपढ़ो */
+	list_क्रम_each_safe(c, n, &port->dmaqueue.list) अणु
+		buf = list_entry(c, काष्ठा saa7164_buffer, list);
 		BUG_ON(i > port->hwcfg.buffercount);
 		i++;
 
-		if (buf->idx == rp) {
+		अगर (buf->idx == rp) अणु
 			/* Found the buffer, deal with it */
-			dprintk(DBGLVL_IRQ, "%s() wp: %d processing: %d\n",
+			dprपूर्णांकk(DBGLVL_IRQ, "%s() wp: %d processing: %d\n",
 				__func__, wp, rp);
 			saa7164_buffer_deliver(buf);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Primary IRQ handler and dispatch mechanism */
-static irqreturn_t saa7164_irq(int irq, void *dev_id)
-{
-	struct saa7164_dev *dev = dev_id;
-	struct saa7164_port *porta, *portb, *portc, *portd, *porte, *portf;
+अटल irqवापस_t saa7164_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा saa7164_dev *dev = dev_id;
+	काष्ठा saa7164_port *porta, *portb, *portc, *portd, *porte, *portf;
 
-	u32 intid, intstat[INT_SIZE/4];
-	int i, handled = 0, bit;
+	u32 पूर्णांकid, पूर्णांकstat[INT_SIZE/4];
+	पूर्णांक i, handled = 0, bit;
 
-	if (dev == NULL) {
-		printk(KERN_ERR "%s() No device specified\n", __func__);
+	अगर (dev == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "%s() No device specified\n", __func__);
 		handled = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	porta = &dev->ports[SAA7164_PORT_TS1];
 	portb = &dev->ports[SAA7164_PORT_TS2];
@@ -626,273 +627,273 @@ static irqreturn_t saa7164_irq(int irq, void *dev_id)
 	portf = &dev->ports[SAA7164_PORT_VBI2];
 
 	/* Check that the hardware is accessible. If the status bytes are
-	 * 0xFF then the device is not accessible, the the IRQ belongs
+	 * 0xFF then the device is not accessible, the the IRQ beदीर्घs
 	 * to another driver.
-	 * 4 x u32 interrupt registers.
+	 * 4 x u32 पूर्णांकerrupt रेजिस्टरs.
 	 */
-	for (i = 0; i < INT_SIZE/4; i++) {
+	क्रम (i = 0; i < INT_SIZE/4; i++) अणु
 
-		/* TODO: Convert into saa7164_readl() */
-		/* Read the 4 hardware interrupt registers */
-		intstat[i] = saa7164_readl(dev->int_status + (i * 4));
+		/* TODO: Convert पूर्णांकo saa7164_पढ़ोl() */
+		/* Read the 4 hardware पूर्णांकerrupt रेजिस्टरs */
+		पूर्णांकstat[i] = saa7164_पढ़ोl(dev->पूर्णांक_status + (i * 4));
 
-		if (intstat[i])
+		अगर (पूर्णांकstat[i])
 			handled = 1;
-	}
-	if (handled == 0)
-		goto out;
+	पूर्ण
+	अगर (handled == 0)
+		जाओ out;
 
-	/* For each of the HW interrupt registers */
-	for (i = 0; i < INT_SIZE/4; i++) {
+	/* For each of the HW पूर्णांकerrupt रेजिस्टरs */
+	क्रम (i = 0; i < INT_SIZE/4; i++) अणु
 
-		if (intstat[i]) {
-			/* Each function of the board has it's own interruptid.
+		अगर (पूर्णांकstat[i]) अणु
+			/* Each function of the board has it's own पूर्णांकerruptid.
 			 * Find the function that triggered then call
 			 * it's handler.
 			 */
-			for (bit = 0; bit < 32; bit++) {
+			क्रम (bit = 0; bit < 32; bit++) अणु
 
-				if (((intstat[i] >> bit) & 0x00000001) == 0)
-					continue;
+				अगर (((पूर्णांकstat[i] >> bit) & 0x00000001) == 0)
+					जारी;
 
-				/* Calculate the interrupt id (0x00 to 0x7f) */
+				/* Calculate the पूर्णांकerrupt id (0x00 to 0x7f) */
 
-				intid = (i * 32) + bit;
-				if (intid == dev->intfdesc.bInterruptId) {
+				पूर्णांकid = (i * 32) + bit;
+				अगर (पूर्णांकid == dev->पूर्णांकfdesc.bInterruptId) अणु
 					/* A response to an cmd/api call */
 					schedule_work(&dev->workcmd);
-				} else if (intid == porta->hwcfg.interruptid) {
+				पूर्ण अन्यथा अगर (पूर्णांकid == porta->hwcfg.पूर्णांकerruptid) अणु
 
 					/* Transport path 1 */
 					saa7164_irq_ts(porta);
 
-				} else if (intid == portb->hwcfg.interruptid) {
+				पूर्ण अन्यथा अगर (पूर्णांकid == portb->hwcfg.पूर्णांकerruptid) अणु
 
 					/* Transport path 2 */
 					saa7164_irq_ts(portb);
 
-				} else if (intid == portc->hwcfg.interruptid) {
+				पूर्ण अन्यथा अगर (पूर्णांकid == portc->hwcfg.पूर्णांकerruptid) अणु
 
 					/* Encoder path 1 */
 					saa7164_irq_encoder(portc);
 
-				} else if (intid == portd->hwcfg.interruptid) {
+				पूर्ण अन्यथा अगर (पूर्णांकid == portd->hwcfg.पूर्णांकerruptid) अणु
 
 					/* Encoder path 2 */
 					saa7164_irq_encoder(portd);
 
-				} else if (intid == porte->hwcfg.interruptid) {
+				पूर्ण अन्यथा अगर (पूर्णांकid == porte->hwcfg.पूर्णांकerruptid) अणु
 
 					/* VBI path 1 */
 					saa7164_irq_vbi(porte);
 
-				} else if (intid == portf->hwcfg.interruptid) {
+				पूर्ण अन्यथा अगर (पूर्णांकid == portf->hwcfg.पूर्णांकerruptid) अणु
 
 					/* VBI path 2 */
 					saa7164_irq_vbi(portf);
 
-				} else {
+				पूर्ण अन्यथा अणु
 					/* Find the function */
-					dprintk(DBGLVL_IRQ,
+					dprपूर्णांकk(DBGLVL_IRQ,
 						"%s() unhandled interrupt reg 0x%x bit 0x%x intid = 0x%x\n",
-						__func__, i, bit, intid);
-				}
-			}
+						__func__, i, bit, पूर्णांकid);
+				पूर्ण
+			पूर्ण
 
 			/* Ack it */
-			saa7164_writel(dev->int_ack + (i * 4), intstat[i]);
+			saa7164_ग_लिखोl(dev->पूर्णांक_ack + (i * 4), पूर्णांकstat[i]);
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-void saa7164_getfirmwarestatus(struct saa7164_dev *dev)
-{
-	struct saa7164_fw_status *s = &dev->fw_status;
+व्योम saa7164_getfirmwarestatus(काष्ठा saa7164_dev *dev)
+अणु
+	काष्ठा saa7164_fw_status *s = &dev->fw_status;
 
-	dev->fw_status.status = saa7164_readl(SAA_DEVICE_SYSINIT_STATUS);
-	dev->fw_status.mode = saa7164_readl(SAA_DEVICE_SYSINIT_MODE);
-	dev->fw_status.spec = saa7164_readl(SAA_DEVICE_SYSINIT_SPEC);
-	dev->fw_status.inst = saa7164_readl(SAA_DEVICE_SYSINIT_INST);
-	dev->fw_status.cpuload = saa7164_readl(SAA_DEVICE_SYSINIT_CPULOAD);
-	dev->fw_status.remainheap =
-		saa7164_readl(SAA_DEVICE_SYSINIT_REMAINHEAP);
+	dev->fw_status.status = saa7164_पढ़ोl(SAA_DEVICE_SYSINIT_STATUS);
+	dev->fw_status.mode = saa7164_पढ़ोl(SAA_DEVICE_SYSINIT_MODE);
+	dev->fw_status.spec = saa7164_पढ़ोl(SAA_DEVICE_SYSINIT_SPEC);
+	dev->fw_status.inst = saa7164_पढ़ोl(SAA_DEVICE_SYSINIT_INST);
+	dev->fw_status.cpuload = saa7164_पढ़ोl(SAA_DEVICE_SYSINIT_CPULOAD);
+	dev->fw_status.reमुख्यheap =
+		saa7164_पढ़ोl(SAA_DEVICE_SYSINIT_REMAINHEAP);
 
-	dprintk(1, "Firmware status:\n");
-	dprintk(1, " .status     = 0x%08x\n", s->status);
-	dprintk(1, " .mode       = 0x%08x\n", s->mode);
-	dprintk(1, " .spec       = 0x%08x\n", s->spec);
-	dprintk(1, " .inst       = 0x%08x\n", s->inst);
-	dprintk(1, " .cpuload    = 0x%08x\n", s->cpuload);
-	dprintk(1, " .remainheap = 0x%08x\n", s->remainheap);
-}
+	dprपूर्णांकk(1, "Firmware status:\n");
+	dprपूर्णांकk(1, " .status     = 0x%08x\n", s->status);
+	dprपूर्णांकk(1, " .mode       = 0x%08x\n", s->mode);
+	dprपूर्णांकk(1, " .spec       = 0x%08x\n", s->spec);
+	dprपूर्णांकk(1, " .inst       = 0x%08x\n", s->inst);
+	dprपूर्णांकk(1, " .cpuload    = 0x%08x\n", s->cpuload);
+	dprपूर्णांकk(1, " .remainheap = 0x%08x\n", s->reमुख्यheap);
+पूर्ण
 
-u32 saa7164_getcurrentfirmwareversion(struct saa7164_dev *dev)
-{
+u32 saa7164_अ_लोurrentfirmwareversion(काष्ठा saa7164_dev *dev)
+अणु
 	u32 reg;
 
-	reg = saa7164_readl(SAA_DEVICE_VERSION);
-	dprintk(1, "Device running firmware version %d.%d.%d.%d (0x%x)\n",
+	reg = saa7164_पढ़ोl(SAA_DEVICE_VERSION);
+	dprपूर्णांकk(1, "Device running firmware version %d.%d.%d.%d (0x%x)\n",
 		(reg & 0x0000fc00) >> 10,
 		(reg & 0x000003e0) >> 5,
 		(reg & 0x0000001f),
 		(reg & 0xffff0000) >> 16,
 		reg);
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
-/* TODO: Debugging func, remove */
-void saa7164_dumpregs(struct saa7164_dev *dev, u32 addr)
-{
-	int i;
+/* TODO: Debugging func, हटाओ */
+व्योम saa7164_dumpregs(काष्ठा saa7164_dev *dev, u32 addr)
+अणु
+	पूर्णांक i;
 
-	dprintk(1, "--------------------> 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f\n");
+	dprपूर्णांकk(1, "--------------------> 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f\n");
 
-	for (i = 0; i < 0x100; i += 16)
-		dprintk(1, "region0[0x%08x] = %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+	क्रम (i = 0; i < 0x100; i += 16)
+		dprपूर्णांकk(1, "region0[0x%08x] = %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
 			i,
-			(u8)saa7164_readb(addr + i + 0),
-			(u8)saa7164_readb(addr + i + 1),
-			(u8)saa7164_readb(addr + i + 2),
-			(u8)saa7164_readb(addr + i + 3),
-			(u8)saa7164_readb(addr + i + 4),
-			(u8)saa7164_readb(addr + i + 5),
-			(u8)saa7164_readb(addr + i + 6),
-			(u8)saa7164_readb(addr + i + 7),
-			(u8)saa7164_readb(addr + i + 8),
-			(u8)saa7164_readb(addr + i + 9),
-			(u8)saa7164_readb(addr + i + 10),
-			(u8)saa7164_readb(addr + i + 11),
-			(u8)saa7164_readb(addr + i + 12),
-			(u8)saa7164_readb(addr + i + 13),
-			(u8)saa7164_readb(addr + i + 14),
-			(u8)saa7164_readb(addr + i + 15)
+			(u8)saa7164_पढ़ोb(addr + i + 0),
+			(u8)saa7164_पढ़ोb(addr + i + 1),
+			(u8)saa7164_पढ़ोb(addr + i + 2),
+			(u8)saa7164_पढ़ोb(addr + i + 3),
+			(u8)saa7164_पढ़ोb(addr + i + 4),
+			(u8)saa7164_पढ़ोb(addr + i + 5),
+			(u8)saa7164_पढ़ोb(addr + i + 6),
+			(u8)saa7164_पढ़ोb(addr + i + 7),
+			(u8)saa7164_पढ़ोb(addr + i + 8),
+			(u8)saa7164_पढ़ोb(addr + i + 9),
+			(u8)saa7164_पढ़ोb(addr + i + 10),
+			(u8)saa7164_पढ़ोb(addr + i + 11),
+			(u8)saa7164_पढ़ोb(addr + i + 12),
+			(u8)saa7164_पढ़ोb(addr + i + 13),
+			(u8)saa7164_पढ़ोb(addr + i + 14),
+			(u8)saa7164_पढ़ोb(addr + i + 15)
 			);
-}
+पूर्ण
 
-static void saa7164_dump_hwdesc(struct saa7164_dev *dev)
-{
-	dprintk(1, "@0x%p hwdesc sizeof(struct tmComResHWDescr) = %d bytes\n",
-		&dev->hwdesc, (u32)sizeof(struct tmComResHWDescr));
+अटल व्योम saa7164_dump_hwdesc(काष्ठा saa7164_dev *dev)
+अणु
+	dprपूर्णांकk(1, "@0x%p hwdesc sizeof(struct tmComResHWDescr) = %d bytes\n",
+		&dev->hwdesc, (u32)माप(काष्ठा पंचांगComResHWDescr));
 
-	dprintk(1, " .bLength = 0x%x\n", dev->hwdesc.bLength);
-	dprintk(1, " .bDescriptorType = 0x%x\n", dev->hwdesc.bDescriptorType);
-	dprintk(1, " .bDescriptorSubtype = 0x%x\n",
+	dprपूर्णांकk(1, " .bLength = 0x%x\n", dev->hwdesc.bLength);
+	dprपूर्णांकk(1, " .bDescriptorType = 0x%x\n", dev->hwdesc.bDescriptorType);
+	dprपूर्णांकk(1, " .bDescriptorSubtype = 0x%x\n",
 		dev->hwdesc.bDescriptorSubtype);
 
-	dprintk(1, " .bcdSpecVersion = 0x%x\n", dev->hwdesc.bcdSpecVersion);
-	dprintk(1, " .dwClockFrequency = 0x%x\n", dev->hwdesc.dwClockFrequency);
-	dprintk(1, " .dwClockUpdateRes = 0x%x\n", dev->hwdesc.dwClockUpdateRes);
-	dprintk(1, " .bCapabilities = 0x%x\n", dev->hwdesc.bCapabilities);
-	dprintk(1, " .dwDeviceRegistersLocation = 0x%x\n",
+	dprपूर्णांकk(1, " .bcdSpecVersion = 0x%x\n", dev->hwdesc.bcdSpecVersion);
+	dprपूर्णांकk(1, " .dwClockFrequency = 0x%x\n", dev->hwdesc.dwClockFrequency);
+	dprपूर्णांकk(1, " .dwClockUpdateRes = 0x%x\n", dev->hwdesc.dwClockUpdateRes);
+	dprपूर्णांकk(1, " .bCapabilities = 0x%x\n", dev->hwdesc.bCapabilities);
+	dprपूर्णांकk(1, " .dwDeviceRegistersLocation = 0x%x\n",
 		dev->hwdesc.dwDeviceRegistersLocation);
 
-	dprintk(1, " .dwHostMemoryRegion = 0x%x\n",
+	dprपूर्णांकk(1, " .dwHostMemoryRegion = 0x%x\n",
 		dev->hwdesc.dwHostMemoryRegion);
 
-	dprintk(1, " .dwHostMemoryRegionSize = 0x%x\n",
+	dprपूर्णांकk(1, " .dwHostMemoryRegionSize = 0x%x\n",
 		dev->hwdesc.dwHostMemoryRegionSize);
 
-	dprintk(1, " .dwHostHibernatMemRegion = 0x%x\n",
+	dprपूर्णांकk(1, " .dwHostHibernatMemRegion = 0x%x\n",
 		dev->hwdesc.dwHostHibernatMemRegion);
 
-	dprintk(1, " .dwHostHibernatMemRegionSize = 0x%x\n",
+	dprपूर्णांकk(1, " .dwHostHibernatMemRegionSize = 0x%x\n",
 		dev->hwdesc.dwHostHibernatMemRegionSize);
-}
+पूर्ण
 
-static void saa7164_dump_intfdesc(struct saa7164_dev *dev)
-{
-	dprintk(1, "@0x%p intfdesc sizeof(struct tmComResInterfaceDescr) = %d bytes\n",
-		&dev->intfdesc, (u32)sizeof(struct tmComResInterfaceDescr));
+अटल व्योम saa7164_dump_पूर्णांकfdesc(काष्ठा saa7164_dev *dev)
+अणु
+	dprपूर्णांकk(1, "@0x%p intfdesc sizeof(struct tmComResInterfaceDescr) = %d bytes\n",
+		&dev->पूर्णांकfdesc, (u32)माप(काष्ठा पंचांगComResInterfaceDescr));
 
-	dprintk(1, " .bLength = 0x%x\n", dev->intfdesc.bLength);
-	dprintk(1, " .bDescriptorType = 0x%x\n", dev->intfdesc.bDescriptorType);
-	dprintk(1, " .bDescriptorSubtype = 0x%x\n",
-		dev->intfdesc.bDescriptorSubtype);
+	dprपूर्णांकk(1, " .bLength = 0x%x\n", dev->पूर्णांकfdesc.bLength);
+	dprपूर्णांकk(1, " .bDescriptorType = 0x%x\n", dev->पूर्णांकfdesc.bDescriptorType);
+	dprपूर्णांकk(1, " .bDescriptorSubtype = 0x%x\n",
+		dev->पूर्णांकfdesc.bDescriptorSubtype);
 
-	dprintk(1, " .bFlags = 0x%x\n", dev->intfdesc.bFlags);
-	dprintk(1, " .bInterfaceType = 0x%x\n", dev->intfdesc.bInterfaceType);
-	dprintk(1, " .bInterfaceId = 0x%x\n", dev->intfdesc.bInterfaceId);
-	dprintk(1, " .bBaseInterface = 0x%x\n", dev->intfdesc.bBaseInterface);
-	dprintk(1, " .bInterruptId = 0x%x\n", dev->intfdesc.bInterruptId);
-	dprintk(1, " .bDebugInterruptId = 0x%x\n",
-		dev->intfdesc.bDebugInterruptId);
+	dprपूर्णांकk(1, " .bFlags = 0x%x\n", dev->पूर्णांकfdesc.bFlags);
+	dprपूर्णांकk(1, " .bInterfaceType = 0x%x\n", dev->पूर्णांकfdesc.bInterfaceType);
+	dprपूर्णांकk(1, " .bInterfaceId = 0x%x\n", dev->पूर्णांकfdesc.bInterfaceId);
+	dprपूर्णांकk(1, " .bBaseInterface = 0x%x\n", dev->पूर्णांकfdesc.bBaseInterface);
+	dprपूर्णांकk(1, " .bInterruptId = 0x%x\n", dev->पूर्णांकfdesc.bInterruptId);
+	dprपूर्णांकk(1, " .bDebugInterruptId = 0x%x\n",
+		dev->पूर्णांकfdesc.bDebugInterruptId);
 
-	dprintk(1, " .BARLocation = 0x%x\n", dev->intfdesc.BARLocation);
-}
+	dprपूर्णांकk(1, " .BARLocation = 0x%x\n", dev->पूर्णांकfdesc.BARLocation);
+पूर्ण
 
-static void saa7164_dump_busdesc(struct saa7164_dev *dev)
-{
-	dprintk(1, "@0x%p busdesc sizeof(struct tmComResBusDescr) = %d bytes\n",
-		&dev->busdesc, (u32)sizeof(struct tmComResBusDescr));
+अटल व्योम saa7164_dump_busdesc(काष्ठा saa7164_dev *dev)
+अणु
+	dprपूर्णांकk(1, "@0x%p busdesc sizeof(struct tmComResBusDescr) = %d bytes\n",
+		&dev->busdesc, (u32)माप(काष्ठा पंचांगComResBusDescr));
 
-	dprintk(1, " .CommandRing   = 0x%016Lx\n", dev->busdesc.CommandRing);
-	dprintk(1, " .ResponseRing  = 0x%016Lx\n", dev->busdesc.ResponseRing);
-	dprintk(1, " .CommandWrite  = 0x%x\n", dev->busdesc.CommandWrite);
-	dprintk(1, " .CommandRead   = 0x%x\n", dev->busdesc.CommandRead);
-	dprintk(1, " .ResponseWrite = 0x%x\n", dev->busdesc.ResponseWrite);
-	dprintk(1, " .ResponseRead  = 0x%x\n", dev->busdesc.ResponseRead);
-}
+	dprपूर्णांकk(1, " .CommandRing   = 0x%016Lx\n", dev->busdesc.CommandRing);
+	dprपूर्णांकk(1, " .ResponseRing  = 0x%016Lx\n", dev->busdesc.ResponseRing);
+	dprपूर्णांकk(1, " .CommandWrite  = 0x%x\n", dev->busdesc.CommandWrite);
+	dprपूर्णांकk(1, " .CommandRead   = 0x%x\n", dev->busdesc.CommandRead);
+	dprपूर्णांकk(1, " .ResponseWrite = 0x%x\n", dev->busdesc.ResponseWrite);
+	dprपूर्णांकk(1, " .ResponseRead  = 0x%x\n", dev->busdesc.ResponseRead);
+पूर्ण
 
-/* Much of the hardware configuration and PCI registers are configured
+/* Much of the hardware configuration and PCI रेजिस्टरs are configured
  * dynamically depending on firmware. We have to cache some initial
- * structures then use these to locate other important structures
+ * काष्ठाures then use these to locate other important काष्ठाures
  * from PCI space.
  */
-static void saa7164_get_descriptors(struct saa7164_dev *dev)
-{
-	memcpy_fromio(&dev->hwdesc, dev->bmmio, sizeof(struct tmComResHWDescr));
-	memcpy_fromio(&dev->intfdesc, dev->bmmio + sizeof(struct tmComResHWDescr),
-		sizeof(struct tmComResInterfaceDescr));
-	memcpy_fromio(&dev->busdesc, dev->bmmio + dev->intfdesc.BARLocation,
-		sizeof(struct tmComResBusDescr));
+अटल व्योम saa7164_get_descriptors(काष्ठा saa7164_dev *dev)
+अणु
+	स_नकल_fromio(&dev->hwdesc, dev->bmmio, माप(काष्ठा पंचांगComResHWDescr));
+	स_नकल_fromio(&dev->पूर्णांकfdesc, dev->bmmio + माप(काष्ठा पंचांगComResHWDescr),
+		माप(काष्ठा पंचांगComResInterfaceDescr));
+	स_नकल_fromio(&dev->busdesc, dev->bmmio + dev->पूर्णांकfdesc.BARLocation,
+		माप(काष्ठा पंचांगComResBusDescr));
 
-	if (dev->hwdesc.bLength != sizeof(struct tmComResHWDescr)) {
-		printk(KERN_ERR "Structure struct tmComResHWDescr is mangled\n");
-		printk(KERN_ERR "Need %x got %d\n", dev->hwdesc.bLength,
-			(u32)sizeof(struct tmComResHWDescr));
-	} else
+	अगर (dev->hwdesc.bLength != माप(काष्ठा पंचांगComResHWDescr)) अणु
+		prपूर्णांकk(KERN_ERR "Structure struct tmComResHWDescr is mangled\n");
+		prपूर्णांकk(KERN_ERR "Need %x got %d\n", dev->hwdesc.bLength,
+			(u32)माप(काष्ठा पंचांगComResHWDescr));
+	पूर्ण अन्यथा
 		saa7164_dump_hwdesc(dev);
 
-	if (dev->intfdesc.bLength != sizeof(struct tmComResInterfaceDescr)) {
-		printk(KERN_ERR "struct struct tmComResInterfaceDescr is mangled\n");
-		printk(KERN_ERR "Need %x got %d\n", dev->intfdesc.bLength,
-			(u32)sizeof(struct tmComResInterfaceDescr));
-	} else
-		saa7164_dump_intfdesc(dev);
+	अगर (dev->पूर्णांकfdesc.bLength != माप(काष्ठा पंचांगComResInterfaceDescr)) अणु
+		prपूर्णांकk(KERN_ERR "struct struct tmComResInterfaceDescr is mangled\n");
+		prपूर्णांकk(KERN_ERR "Need %x got %d\n", dev->पूर्णांकfdesc.bLength,
+			(u32)माप(काष्ठा पंचांगComResInterfaceDescr));
+	पूर्ण अन्यथा
+		saa7164_dump_पूर्णांकfdesc(dev);
 
 	saa7164_dump_busdesc(dev);
-}
+पूर्ण
 
-static int saa7164_pci_quirks(struct saa7164_dev *dev)
-{
-	return 0;
-}
+अटल पूर्णांक saa7164_pci_quirks(काष्ठा saa7164_dev *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int get_resources(struct saa7164_dev *dev)
-{
-	if (request_mem_region(pci_resource_start(dev->pci, 0),
-		pci_resource_len(dev->pci, 0), dev->name)) {
+अटल पूर्णांक get_resources(काष्ठा saa7164_dev *dev)
+अणु
+	अगर (request_mem_region(pci_resource_start(dev->pci, 0),
+		pci_resource_len(dev->pci, 0), dev->name)) अणु
 
-		if (request_mem_region(pci_resource_start(dev->pci, 2),
+		अगर (request_mem_region(pci_resource_start(dev->pci, 2),
 			pci_resource_len(dev->pci, 2), dev->name))
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 
-	printk(KERN_ERR "%s: can't get MMIO memory @ 0x%llx or 0x%llx\n",
+	prपूर्णांकk(KERN_ERR "%s: can't get MMIO memory @ 0x%llx or 0x%llx\n",
 		dev->name,
 		(u64)pci_resource_start(dev->pci, 0),
 		(u64)pci_resource_start(dev->pci, 2));
 
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static int saa7164_port_init(struct saa7164_dev *dev, int portnr)
-{
-	struct saa7164_port *port = NULL;
+अटल पूर्णांक saa7164_port_init(काष्ठा saa7164_dev *dev, पूर्णांक portnr)
+अणु
+	काष्ठा saa7164_port *port = शून्य;
 
 	BUG_ON((portnr < 0) || (portnr >= SAA7164_MAX_PORTS));
 
@@ -901,20 +902,20 @@ static int saa7164_port_init(struct saa7164_dev *dev, int portnr)
 	port->dev = dev;
 	port->nr = portnr;
 
-	if ((portnr == SAA7164_PORT_TS1) || (portnr == SAA7164_PORT_TS2))
+	अगर ((portnr == SAA7164_PORT_TS1) || (portnr == SAA7164_PORT_TS2))
 		port->type = SAA7164_MPEG_DVB;
-	else
-	if ((portnr == SAA7164_PORT_ENC1) || (portnr == SAA7164_PORT_ENC2)) {
+	अन्यथा
+	अगर ((portnr == SAA7164_PORT_ENC1) || (portnr == SAA7164_PORT_ENC2)) अणु
 		port->type = SAA7164_MPEG_ENCODER;
 
-		/* We need a deferred interrupt handler for cmd handling */
+		/* We need a deferred पूर्णांकerrupt handler क्रम cmd handling */
 		INIT_WORK(&port->workenc, saa7164_work_enchandler);
-	} else if ((portnr == SAA7164_PORT_VBI1) || (portnr == SAA7164_PORT_VBI2)) {
+	पूर्ण अन्यथा अगर ((portnr == SAA7164_PORT_VBI1) || (portnr == SAA7164_PORT_VBI2)) अणु
 		port->type = SAA7164_MPEG_VBI;
 
-		/* We need a deferred interrupt handler for cmd handling */
+		/* We need a deferred पूर्णांकerrupt handler क्रम cmd handling */
 		INIT_WORK(&port->workenc, saa7164_work_vbihandler);
-	} else
+	पूर्ण अन्यथा
 		BUG();
 
 	/* Init all the critical resources */
@@ -923,31 +924,31 @@ static int saa7164_port_init(struct saa7164_dev *dev, int portnr)
 	mutex_init(&port->dmaqueue_lock);
 
 	INIT_LIST_HEAD(&port->list_buf_used.list);
-	INIT_LIST_HEAD(&port->list_buf_free.list);
-	init_waitqueue_head(&port->wait_read);
+	INIT_LIST_HEAD(&port->list_buf_मुक्त.list);
+	init_रुकोqueue_head(&port->रुको_पढ़ो);
 
 
-	saa7164_histogram_reset(&port->irq_interval, "irq intervals");
-	saa7164_histogram_reset(&port->svc_interval, "deferred intervals");
-	saa7164_histogram_reset(&port->irq_svc_interval,
+	saa7164_histogram_reset(&port->irq_पूर्णांकerval, "irq intervals");
+	saa7164_histogram_reset(&port->svc_पूर्णांकerval, "deferred intervals");
+	saa7164_histogram_reset(&port->irq_svc_पूर्णांकerval,
 		"irq to deferred intervals");
-	saa7164_histogram_reset(&port->read_interval,
+	saa7164_histogram_reset(&port->पढ़ो_पूर्णांकerval,
 		"encoder/vbi read() intervals");
-	saa7164_histogram_reset(&port->poll_interval,
+	saa7164_histogram_reset(&port->poll_पूर्णांकerval,
 		"encoder/vbi poll() intervals");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int saa7164_dev_setup(struct saa7164_dev *dev)
-{
-	int i;
+अटल पूर्णांक saa7164_dev_setup(काष्ठा saa7164_dev *dev)
+अणु
+	पूर्णांक i;
 
 	mutex_init(&dev->lock);
 	atomic_inc(&dev->refcount);
 	dev->nr = saa7164_devcount++;
 
-	snprintf(dev->name, sizeof(dev->name), "saa7164[%d]", dev->nr);
+	snम_लिखो(dev->name, माप(dev->name), "saa7164[%d]", dev->nr);
 
 	mutex_lock(&devlist);
 	list_add_tail(&dev->devlist, &saa7164_devlist);
@@ -955,19 +956,19 @@ static int saa7164_dev_setup(struct saa7164_dev *dev)
 
 	/* board config */
 	dev->board = UNSET;
-	if (card[dev->nr] < saa7164_bcount)
+	अगर (card[dev->nr] < saa7164_bcount)
 		dev->board = card[dev->nr];
 
-	for (i = 0; UNSET == dev->board  &&  i < saa7164_idcount; i++)
-		if (dev->pci->subsystem_vendor == saa7164_subids[i].subvendor &&
-			dev->pci->subsystem_device ==
+	क्रम (i = 0; UNSET == dev->board  &&  i < saa7164_idcount; i++)
+		अगर (dev->pci->subप्रणाली_venकरोr == saa7164_subids[i].subvenकरोr &&
+			dev->pci->subप्रणाली_device ==
 				saa7164_subids[i].subdevice)
 				dev->board = saa7164_subids[i].card;
 
-	if (UNSET == dev->board) {
+	अगर (UNSET == dev->board) अणु
 		dev->board = SAA7164_BOARD_UNKNOWN;
 		saa7164_card_list(dev);
-	}
+	पूर्ण
 
 	dev->pci_bus  = dev->pci->bus->number;
 	dev->pci_slot = PCI_SLOT(dev->pci->devfn);
@@ -988,14 +989,14 @@ static int saa7164_dev_setup(struct saa7164_dev *dev)
 	saa7164_port_init(dev, SAA7164_PORT_VBI1);
 	saa7164_port_init(dev, SAA7164_PORT_VBI2);
 
-	if (get_resources(dev) < 0) {
-		printk(KERN_ERR "CORE %s No more PCIe resources for subsystem: %04x:%04x\n",
-		       dev->name, dev->pci->subsystem_vendor,
-		       dev->pci->subsystem_device);
+	अगर (get_resources(dev) < 0) अणु
+		prपूर्णांकk(KERN_ERR "CORE %s No more PCIe resources for subsystem: %04x:%04x\n",
+		       dev->name, dev->pci->subप्रणाली_venकरोr,
+		       dev->pci->subप्रणाली_device);
 
 		saa7164_devcount--;
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* PCI/e allocations */
 	dev->lmmio = ioremap(pci_resource_start(dev->pci, 0),
@@ -1007,25 +1008,25 @@ static int saa7164_dev_setup(struct saa7164_dev *dev)
 	dev->bmmio = (u8 __iomem *)dev->lmmio;
 	dev->bmmio2 = (u8 __iomem *)dev->lmmio2;
 
-	/* Interrupt and ack register locations offset of bmmio */
-	dev->int_status = 0x183000 + 0xf80;
-	dev->int_ack = 0x183000 + 0xf90;
+	/* Interrupt and ack रेजिस्टर locations offset of bmmio */
+	dev->पूर्णांक_status = 0x183000 + 0xf80;
+	dev->पूर्णांक_ack = 0x183000 + 0xf90;
 
-	printk(KERN_INFO
+	prपूर्णांकk(KERN_INFO
 		"CORE %s: subsystem: %04x:%04x, board: %s [card=%d,%s]\n",
-	       dev->name, dev->pci->subsystem_vendor,
-	       dev->pci->subsystem_device, saa7164_boards[dev->board].name,
+	       dev->name, dev->pci->subप्रणाली_venकरोr,
+	       dev->pci->subप्रणाली_device, saa7164_boards[dev->board].name,
 	       dev->board, card[dev->nr] == dev->board ?
 	       "insmod option" : "autodetected");
 
 	saa7164_pci_quirks(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void saa7164_dev_unregister(struct saa7164_dev *dev)
-{
-	dprintk(1, "%s()\n", __func__);
+अटल व्योम saa7164_dev_unरेजिस्टर(काष्ठा saa7164_dev *dev)
+अणु
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
 	release_mem_region(pci_resource_start(dev->pci, 0),
 		pci_resource_len(dev->pci, 0));
@@ -1033,300 +1034,300 @@ static void saa7164_dev_unregister(struct saa7164_dev *dev)
 	release_mem_region(pci_resource_start(dev->pci, 2),
 		pci_resource_len(dev->pci, 2));
 
-	if (!atomic_dec_and_test(&dev->refcount))
-		return;
+	अगर (!atomic_dec_and_test(&dev->refcount))
+		वापस;
 
 	iounmap(dev->lmmio);
 	iounmap(dev->lmmio2);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-static void *saa7164_seq_start(struct seq_file *s, loff_t *pos)
-{
-	struct saa7164_dev *dev;
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल व्योम *saa7164_seq_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	काष्ठा saa7164_dev *dev;
 	loff_t index = *pos;
 
 	mutex_lock(&devlist);
-	list_for_each_entry(dev, &saa7164_devlist, devlist) {
-		if (index-- == 0) {
+	list_क्रम_each_entry(dev, &saa7164_devlist, devlist) अणु
+		अगर (index-- == 0) अणु
 			mutex_unlock(&devlist);
-			return dev;
-		}
-	}
+			वापस dev;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&devlist);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void *saa7164_seq_next(struct seq_file *s, void *v, loff_t *pos)
-{
-	struct saa7164_dev *dev = v;
-	void *ret;
+अटल व्योम *saa7164_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा saa7164_dev *dev = v;
+	व्योम *ret;
 
 	mutex_lock(&devlist);
-	if (list_is_last(&dev->devlist, &saa7164_devlist))
-		ret = NULL;
-	else
+	अगर (list_is_last(&dev->devlist, &saa7164_devlist))
+		ret = शून्य;
+	अन्यथा
 		ret = list_next_entry(dev, devlist);
 	mutex_unlock(&devlist);
 
 	++*pos;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void saa7164_seq_stop(struct seq_file *s, void *v)
-{
-}
+अटल व्योम saa7164_seq_stop(काष्ठा seq_file *s, व्योम *v)
+अणु
+पूर्ण
 
-static int saa7164_seq_show(struct seq_file *m, void *v)
-{
-	struct saa7164_dev *dev = v;
-	struct tmComResBusInfo *b;
-	int i, c;
+अटल पूर्णांक saa7164_seq_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा saa7164_dev *dev = v;
+	काष्ठा पंचांगComResBusInfo *b;
+	पूर्णांक i, c;
 
-	seq_printf(m, "%s = %p\n", dev->name, dev);
+	seq_म_लिखो(m, "%s = %p\n", dev->name, dev);
 
 	/* Lock the bus from any other access */
 	b = &dev->bus;
 	mutex_lock(&b->lock);
 
-	seq_printf(m, " .m_pdwSetWritePos = 0x%x (0x%08x)\n",
-		   b->m_dwSetReadPos, saa7164_readl(b->m_dwSetReadPos));
+	seq_म_लिखो(m, " .m_pdwSetWritePos = 0x%x (0x%08x)\n",
+		   b->m_dwSetReadPos, saa7164_पढ़ोl(b->m_dwSetReadPos));
 
-	seq_printf(m, " .m_pdwSetReadPos  = 0x%x (0x%08x)\n",
-		   b->m_dwSetWritePos, saa7164_readl(b->m_dwSetWritePos));
+	seq_म_लिखो(m, " .m_pdwSetReadPos  = 0x%x (0x%08x)\n",
+		   b->m_dwSetWritePos, saa7164_पढ़ोl(b->m_dwSetWritePos));
 
-	seq_printf(m, " .m_pdwGetWritePos = 0x%x (0x%08x)\n",
-		   b->m_dwGetReadPos, saa7164_readl(b->m_dwGetReadPos));
+	seq_म_लिखो(m, " .m_pdwGetWritePos = 0x%x (0x%08x)\n",
+		   b->m_dwGetReadPos, saa7164_पढ़ोl(b->m_dwGetReadPos));
 
-	seq_printf(m, " .m_pdwGetReadPos  = 0x%x (0x%08x)\n",
-		   b->m_dwGetWritePos, saa7164_readl(b->m_dwGetWritePos));
+	seq_म_लिखो(m, " .m_pdwGetReadPos  = 0x%x (0x%08x)\n",
+		   b->m_dwGetWritePos, saa7164_पढ़ोl(b->m_dwGetWritePos));
 	c = 0;
-	seq_puts(m, "\n  Set Ring:\n");
-	seq_puts(m, "\n addr  00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f\n");
-	for (i = 0; i < b->m_dwSizeSetRing; i++) {
-		if (c == 0)
-			seq_printf(m, " %04x:", i);
+	seq_माला_दो(m, "\n  Set Ring:\n");
+	seq_माला_दो(m, "\n addr  00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f\n");
+	क्रम (i = 0; i < b->m_dwSizeSetRing; i++) अणु
+		अगर (c == 0)
+			seq_म_लिखो(m, " %04x:", i);
 
-		seq_printf(m, " %02x", readb(b->m_pdwSetRing + i));
+		seq_म_लिखो(m, " %02x", पढ़ोb(b->m_pdwSetRing + i));
 
-		if (++c == 16) {
-			seq_puts(m, "\n");
+		अगर (++c == 16) अणु
+			seq_माला_दो(m, "\n");
 			c = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	c = 0;
-	seq_puts(m, "\n  Get Ring:\n");
-	seq_puts(m, "\n addr  00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f\n");
-	for (i = 0; i < b->m_dwSizeGetRing; i++) {
-		if (c == 0)
-			seq_printf(m, " %04x:", i);
+	seq_माला_दो(m, "\n  Get Ring:\n");
+	seq_माला_दो(m, "\n addr  00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f\n");
+	क्रम (i = 0; i < b->m_dwSizeGetRing; i++) अणु
+		अगर (c == 0)
+			seq_म_लिखो(m, " %04x:", i);
 
-		seq_printf(m, " %02x", readb(b->m_pdwGetRing + i));
+		seq_म_लिखो(m, " %02x", पढ़ोb(b->m_pdwGetRing + i));
 
-		if (++c == 16) {
-			seq_puts(m, "\n");
+		अगर (++c == 16) अणु
+			seq_माला_दो(m, "\n");
 			c = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&b->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations saa7164_sops = {
+अटल स्थिर काष्ठा seq_operations saa7164_sops = अणु
 	.start = saa7164_seq_start,
 	.next = saa7164_seq_next,
 	.stop = saa7164_seq_stop,
 	.show = saa7164_seq_show,
-};
+पूर्ण;
 
 DEFINE_SEQ_ATTRIBUTE(saa7164);
 
-static struct dentry *saa7614_dentry;
+अटल काष्ठा dentry *saa7614_dentry;
 
-static void __init saa7164_debugfs_create(void)
-{
-	saa7614_dentry = debugfs_create_file("saa7164", 0444, NULL, NULL,
+अटल व्योम __init saa7164_debugfs_create(व्योम)
+अणु
+	saa7614_dentry = debugfs_create_file("saa7164", 0444, शून्य, शून्य,
 					     &saa7164_fops);
-}
+पूर्ण
 
-static void __exit saa7164_debugfs_remove(void)
-{
-	debugfs_remove(saa7614_dentry);
-}
-#else
-static void saa7164_debugfs_create(void) { }
-static void saa7164_debugfs_remove(void) { }
-#endif
+अटल व्योम __निकास saa7164_debugfs_हटाओ(व्योम)
+अणु
+	debugfs_हटाओ(saa7614_dentry);
+पूर्ण
+#अन्यथा
+अटल व्योम saa7164_debugfs_create(व्योम) अणु पूर्ण
+अटल व्योम saa7164_debugfs_हटाओ(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-static int saa7164_thread_function(void *data)
-{
-	struct saa7164_dev *dev = data;
-	struct tmFwInfoStruct fwinfo;
-	u64 last_poll_time = 0;
+अटल पूर्णांक saa7164_thपढ़ो_function(व्योम *data)
+अणु
+	काष्ठा saa7164_dev *dev = data;
+	काष्ठा पंचांगFwInfoStruct fwinfo;
+	u64 last_poll_समय = 0;
 
-	dprintk(DBGLVL_THR, "thread started\n");
+	dprपूर्णांकk(DBGLVL_THR, "thread started\n");
 
-	set_freezable();
+	set_मुक्तzable();
 
-	while (1) {
-		msleep_interruptible(100);
-		if (kthread_should_stop())
-			break;
-		try_to_freeze();
+	जबतक (1) अणु
+		msleep_पूर्णांकerruptible(100);
+		अगर (kthपढ़ो_should_stop())
+			अवरोध;
+		try_to_मुक्तze();
 
-		dprintk(DBGLVL_THR, "thread running\n");
+		dprपूर्णांकk(DBGLVL_THR, "thread running\n");
 
 		/* Dump the firmware debug message to console */
 		/* Polling this costs us 1-2% of the arm CPU */
-		/* convert this into a respnde to interrupt 0x7a */
+		/* convert this पूर्णांकo a respnde to पूर्णांकerrupt 0x7a */
 		saa7164_api_collect_debug(dev);
 
 		/* Monitor CPU load every 1 second */
-		if ((last_poll_time + 1000 /* ms */) < jiffies_to_msecs(jiffies)) {
+		अगर ((last_poll_समय + 1000 /* ms */) < jअगरfies_to_msecs(jअगरfies)) अणु
 			saa7164_api_get_load_info(dev, &fwinfo);
-			last_poll_time = jiffies_to_msecs(jiffies);
-		}
+			last_poll_समय = jअगरfies_to_msecs(jअगरfies);
+		पूर्ण
 
-	}
+	पूर्ण
 
-	dprintk(DBGLVL_THR, "thread exiting\n");
-	return 0;
-}
+	dprपूर्णांकk(DBGLVL_THR, "thread exiting\n");
+	वापस 0;
+पूर्ण
 
-static bool saa7164_enable_msi(struct pci_dev *pci_dev, struct saa7164_dev *dev)
-{
-	int err;
+अटल bool saa7164_enable_msi(काष्ठा pci_dev *pci_dev, काष्ठा saa7164_dev *dev)
+अणु
+	पूर्णांक err;
 
-	if (!enable_msi) {
-		printk(KERN_WARNING "%s() MSI disabled by module parameter 'enable_msi'"
+	अगर (!enable_msi) अणु
+		prपूर्णांकk(KERN_WARNING "%s() MSI disabled by module parameter 'enable_msi'"
 		       , __func__);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	err = pci_enable_msi(pci_dev);
 
-	if (err) {
-		printk(KERN_ERR "%s() Failed to enable MSI interrupt. Falling back to a shared IRQ\n",
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "%s() Failed to enable MSI interrupt. Falling back to a shared IRQ\n",
 		       __func__);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* no error - so request an msi interrupt */
+	/* no error - so request an msi पूर्णांकerrupt */
 	err = request_irq(pci_dev->irq, saa7164_irq, 0,
 						dev->name, dev);
 
-	if (err) {
-		/* fall back to legacy interrupt */
-		printk(KERN_ERR "%s() Failed to get an MSI interrupt. Falling back to a shared IRQ\n",
+	अगर (err) अणु
+		/* fall back to legacy पूर्णांकerrupt */
+		prपूर्णांकk(KERN_ERR "%s() Failed to get an MSI interrupt. Falling back to a shared IRQ\n",
 		       __func__);
 		pci_disable_msi(pci_dev);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int saa7164_initdev(struct pci_dev *pci_dev,
-			   const struct pci_device_id *pci_id)
-{
-	struct saa7164_dev *dev;
-	int err, i;
+अटल पूर्णांक saa7164_initdev(काष्ठा pci_dev *pci_dev,
+			   स्थिर काष्ठा pci_device_id *pci_id)
+अणु
+	काष्ठा saa7164_dev *dev;
+	पूर्णांक err, i;
 	u32 version;
 
-	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-	if (NULL == dev)
-		return -ENOMEM;
+	dev = kzalloc(माप(*dev), GFP_KERNEL);
+	अगर (शून्य == dev)
+		वापस -ENOMEM;
 
-	err = v4l2_device_register(&pci_dev->dev, &dev->v4l2_dev);
-	if (err < 0) {
+	err = v4l2_device_रेजिस्टर(&pci_dev->dev, &dev->v4l2_dev);
+	अगर (err < 0) अणु
 		dev_err(&pci_dev->dev, "v4l2_device_register failed\n");
-		goto fail_free;
-	}
+		जाओ fail_मुक्त;
+	पूर्ण
 
 	/* pci init */
 	dev->pci = pci_dev;
-	if (pci_enable_device(pci_dev)) {
+	अगर (pci_enable_device(pci_dev)) अणु
 		err = -EIO;
-		goto fail_free;
-	}
+		जाओ fail_मुक्त;
+	पूर्ण
 
-	if (saa7164_dev_setup(dev) < 0) {
+	अगर (saa7164_dev_setup(dev) < 0) अणु
 		err = -EINVAL;
-		goto fail_free;
-	}
+		जाओ fail_मुक्त;
+	पूर्ण
 
-	/* print pci info */
+	/* prपूर्णांक pci info */
 	dev->pci_rev = pci_dev->revision;
-	pci_read_config_byte(pci_dev, PCI_LATENCY_TIMER,  &dev->pci_lat);
-	printk(KERN_INFO "%s/0: found at %s, rev: %d, irq: %d, latency: %d, mmio: 0x%llx\n",
+	pci_पढ़ो_config_byte(pci_dev, PCI_LATENCY_TIMER,  &dev->pci_lat);
+	prपूर्णांकk(KERN_INFO "%s/0: found at %s, rev: %d, irq: %d, latency: %d, mmio: 0x%llx\n",
 	       dev->name,
 	       pci_name(pci_dev), dev->pci_rev, pci_dev->irq,
 	       dev->pci_lat,
-		(unsigned long long)pci_resource_start(pci_dev, 0));
+		(अचिन्हित दीर्घ दीर्घ)pci_resource_start(pci_dev, 0));
 
 	pci_set_master(pci_dev);
 	/* TODO */
 	err = dma_set_mask(&pci_dev->dev, 0xffffffff);
-	if (err) {
-		printk("%s/0: Oops: no 32bit PCI DMA ???\n", dev->name);
-		goto fail_irq;
-	}
+	अगर (err) अणु
+		prपूर्णांकk("%s/0: Oops: no 32bit PCI DMA ???\n", dev->name);
+		जाओ fail_irq;
+	पूर्ण
 
 	/* irq bit */
-	if (saa7164_enable_msi(pci_dev, dev)) {
+	अगर (saa7164_enable_msi(pci_dev, dev)) अणु
 		dev->msi = true;
-	} else {
-		/* if we have an error (i.e. we don't have an interrupt)
-			 or msi is not enabled - fallback to shared interrupt */
+	पूर्ण अन्यथा अणु
+		/* अगर we have an error (i.e. we करोn't have an पूर्णांकerrupt)
+			 or msi is not enabled - fallback to shared पूर्णांकerrupt */
 
 		err = request_irq(pci_dev->irq, saa7164_irq,
 				IRQF_SHARED, dev->name, dev);
 
-		if (err < 0) {
-			printk(KERN_ERR "%s: can't get IRQ %d\n", dev->name,
+		अगर (err < 0) अणु
+			prपूर्णांकk(KERN_ERR "%s: can't get IRQ %d\n", dev->name,
 			       pci_dev->irq);
 			err = -EIO;
-			goto fail_irq;
-		}
-	}
+			जाओ fail_irq;
+		पूर्ण
+	पूर्ण
 
 	pci_set_drvdata(pci_dev, dev);
 
-	/* Init the internal command list */
-	for (i = 0; i < SAA_CMD_MAX_MSG_UNITS; i++) {
+	/* Init the पूर्णांकernal command list */
+	क्रम (i = 0; i < SAA_CMD_MAX_MSG_UNITS; i++) अणु
 		dev->cmds[i].seqno = i;
 		dev->cmds[i].inuse = 0;
 		mutex_init(&dev->cmds[i].lock);
-		init_waitqueue_head(&dev->cmds[i].wait);
-	}
+		init_रुकोqueue_head(&dev->cmds[i].रुको);
+	पूर्ण
 
-	/* We need a deferred interrupt handler for cmd handling */
+	/* We need a deferred पूर्णांकerrupt handler क्रम cmd handling */
 	INIT_WORK(&dev->workcmd, saa7164_work_cmdhandler);
 
-	/* Only load the firmware if we know the board */
-	if (dev->board != SAA7164_BOARD_UNKNOWN) {
+	/* Only load the firmware अगर we know the board */
+	अगर (dev->board != SAA7164_BOARD_UNKNOWN) अणु
 
-		err = saa7164_downloadfirmware(dev);
-		if (err < 0) {
-			printk(KERN_ERR
+		err = saa7164_करोwnloadfirmware(dev);
+		अगर (err < 0) अणु
+			prपूर्णांकk(KERN_ERR
 				"Failed to boot firmware, no features registered\n");
-			goto fail_fw;
-		}
+			जाओ fail_fw;
+		पूर्ण
 
 		saa7164_get_descriptors(dev);
 		saa7164_dumpregs(dev, 0);
-		saa7164_getcurrentfirmwareversion(dev);
+		saa7164_अ_लोurrentfirmwareversion(dev);
 		saa7164_getfirmwarestatus(dev);
 		err = saa7164_bus_setup(dev);
-		if (err < 0)
-			printk(KERN_ERR
+		अगर (err < 0)
+			prपूर्णांकk(KERN_ERR
 				"Failed to setup the bus, will continue\n");
 		saa7164_bus_dump(dev);
 
@@ -1334,169 +1335,169 @@ static int saa7164_initdev(struct pci_dev *pci_dev,
 		 * firmware version, this checks the bus is running OK.
 		 */
 		version = 0;
-		if (saa7164_api_get_fw_version(dev, &version) == SAA_OK)
-			dprintk(1, "Bus is operating correctly using version %d.%d.%d.%d (0x%x)\n",
+		अगर (saa7164_api_get_fw_version(dev, &version) == SAA_OK)
+			dprपूर्णांकk(1, "Bus is operating correctly using version %d.%d.%d.%d (0x%x)\n",
 				(version & 0x0000fc00) >> 10,
 				(version & 0x000003e0) >> 5,
 				(version & 0x0000001f),
 				(version & 0xffff0000) >> 16,
 				version);
-		else
-			printk(KERN_ERR
+		अन्यथा
+			prपूर्णांकk(KERN_ERR
 				"Failed to communicate with the firmware\n");
 
 		/* Bring up the I2C buses */
-		saa7164_i2c_register(&dev->i2c_bus[0]);
-		saa7164_i2c_register(&dev->i2c_bus[1]);
-		saa7164_i2c_register(&dev->i2c_bus[2]);
+		saa7164_i2c_रेजिस्टर(&dev->i2c_bus[0]);
+		saa7164_i2c_रेजिस्टर(&dev->i2c_bus[1]);
+		saa7164_i2c_रेजिस्टर(&dev->i2c_bus[2]);
 		saa7164_gpio_setup(dev);
 		saa7164_card_setup(dev);
 
 		/* Parse the dynamic device configuration, find various
-		 * media endpoints (MPEG, WMV, PS, TS) and cache their
-		 * configuration details into the driver, so we can
-		 * reference them later during simething_register() func,
-		 * interrupt handlers, deferred work handlers etc.
+		 * media endpoपूर्णांकs (MPEG, WMV, PS, TS) and cache their
+		 * configuration details पूर्णांकo the driver, so we can
+		 * reference them later during simething_रेजिस्टर() func,
+		 * पूर्णांकerrupt handlers, deferred work handlers etc.
 		 */
-		saa7164_api_enum_subdevs(dev);
+		saa7164_api_क्रमागत_subdevs(dev);
 
-		/* Begin to create the video sub-systems and register funcs */
-		if (saa7164_boards[dev->board].porta == SAA7164_MPEG_DVB) {
-			if (saa7164_dvb_register(&dev->ports[SAA7164_PORT_TS1]) < 0) {
-				printk(KERN_ERR "%s() Failed to register dvb adapters on porta\n",
+		/* Begin to create the video sub-प्रणालीs and रेजिस्टर funcs */
+		अगर (saa7164_boards[dev->board].porta == SAA7164_MPEG_DVB) अणु
+			अगर (saa7164_dvb_रेजिस्टर(&dev->ports[SAA7164_PORT_TS1]) < 0) अणु
+				prपूर्णांकk(KERN_ERR "%s() Failed to register dvb adapters on porta\n",
 					__func__);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (saa7164_boards[dev->board].portb == SAA7164_MPEG_DVB) {
-			if (saa7164_dvb_register(&dev->ports[SAA7164_PORT_TS2]) < 0) {
-				printk(KERN_ERR"%s() Failed to register dvb adapters on portb\n",
+		अगर (saa7164_boards[dev->board].portb == SAA7164_MPEG_DVB) अणु
+			अगर (saa7164_dvb_रेजिस्टर(&dev->ports[SAA7164_PORT_TS2]) < 0) अणु
+				prपूर्णांकk(KERN_ERR"%s() Failed to register dvb adapters on portb\n",
 					__func__);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (saa7164_boards[dev->board].portc == SAA7164_MPEG_ENCODER) {
-			if (saa7164_encoder_register(&dev->ports[SAA7164_PORT_ENC1]) < 0) {
-				printk(KERN_ERR"%s() Failed to register mpeg encoder\n",
+		अगर (saa7164_boards[dev->board].portc == SAA7164_MPEG_ENCODER) अणु
+			अगर (saa7164_encoder_रेजिस्टर(&dev->ports[SAA7164_PORT_ENC1]) < 0) अणु
+				prपूर्णांकk(KERN_ERR"%s() Failed to register mpeg encoder\n",
 				       __func__);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (saa7164_boards[dev->board].portd == SAA7164_MPEG_ENCODER) {
-			if (saa7164_encoder_register(&dev->ports[SAA7164_PORT_ENC2]) < 0) {
-				printk(KERN_ERR"%s() Failed to register mpeg encoder\n",
+		अगर (saa7164_boards[dev->board].portd == SAA7164_MPEG_ENCODER) अणु
+			अगर (saa7164_encoder_रेजिस्टर(&dev->ports[SAA7164_PORT_ENC2]) < 0) अणु
+				prपूर्णांकk(KERN_ERR"%s() Failed to register mpeg encoder\n",
 				       __func__);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (saa7164_boards[dev->board].porte == SAA7164_MPEG_VBI) {
-			if (saa7164_vbi_register(&dev->ports[SAA7164_PORT_VBI1]) < 0) {
-				printk(KERN_ERR"%s() Failed to register vbi device\n",
+		अगर (saa7164_boards[dev->board].porte == SAA7164_MPEG_VBI) अणु
+			अगर (saa7164_vbi_रेजिस्टर(&dev->ports[SAA7164_PORT_VBI1]) < 0) अणु
+				prपूर्णांकk(KERN_ERR"%s() Failed to register vbi device\n",
 				       __func__);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (saa7164_boards[dev->board].portf == SAA7164_MPEG_VBI) {
-			if (saa7164_vbi_register(&dev->ports[SAA7164_PORT_VBI2]) < 0) {
-				printk(KERN_ERR"%s() Failed to register vbi device\n",
+		अगर (saa7164_boards[dev->board].portf == SAA7164_MPEG_VBI) अणु
+			अगर (saa7164_vbi_रेजिस्टर(&dev->ports[SAA7164_PORT_VBI2]) < 0) अणु
+				prपूर्णांकk(KERN_ERR"%s() Failed to register vbi device\n",
 				       __func__);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		saa7164_api_set_debug(dev, fw_debug);
 
-		if (fw_debug) {
-			dev->kthread = kthread_run(saa7164_thread_function, dev,
+		अगर (fw_debug) अणु
+			dev->kthपढ़ो = kthपढ़ो_run(saa7164_thपढ़ो_function, dev,
 				"saa7164 debug");
-			if (IS_ERR(dev->kthread)) {
-				dev->kthread = NULL;
-				printk(KERN_ERR "%s() Failed to create debug kernel thread\n",
+			अगर (IS_ERR(dev->kthपढ़ो)) अणु
+				dev->kthपढ़ो = शून्य;
+				prपूर्णांकk(KERN_ERR "%s() Failed to create debug kernel thread\n",
 				       __func__);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-	} /* != BOARD_UNKNOWN */
-	else
-		printk(KERN_ERR "%s() Unsupported board detected, registering without firmware\n",
+	पूर्ण /* != BOARD_UNKNOWN */
+	अन्यथा
+		prपूर्णांकk(KERN_ERR "%s() Unsupported board detected, registering without firmware\n",
 		       __func__);
 
-	dprintk(1, "%s() parameter debug = %d\n", __func__, saa_debug);
-	dprintk(1, "%s() parameter waitsecs = %d\n", __func__, waitsecs);
+	dprपूर्णांकk(1, "%s() parameter debug = %d\n", __func__, saa_debug);
+	dprपूर्णांकk(1, "%s() parameter waitsecs = %d\n", __func__, रुकोsecs);
 
 fail_fw:
-	return 0;
+	वापस 0;
 
 fail_irq:
-	saa7164_dev_unregister(dev);
-fail_free:
-	v4l2_device_unregister(&dev->v4l2_dev);
-	kfree(dev);
-	return err;
-}
+	saa7164_dev_unरेजिस्टर(dev);
+fail_मुक्त:
+	v4l2_device_unरेजिस्टर(&dev->v4l2_dev);
+	kमुक्त(dev);
+	वापस err;
+पूर्ण
 
-static void saa7164_shutdown(struct saa7164_dev *dev)
-{
-	dprintk(1, "%s()\n", __func__);
-}
+अटल व्योम saa7164_shutकरोwn(काष्ठा saa7164_dev *dev)
+अणु
+	dprपूर्णांकk(1, "%s()\n", __func__);
+पूर्ण
 
-static void saa7164_finidev(struct pci_dev *pci_dev)
-{
-	struct saa7164_dev *dev = pci_get_drvdata(pci_dev);
+अटल व्योम saa7164_finidev(काष्ठा pci_dev *pci_dev)
+अणु
+	काष्ठा saa7164_dev *dev = pci_get_drvdata(pci_dev);
 
-	if (dev->board != SAA7164_BOARD_UNKNOWN) {
-		if (fw_debug && dev->kthread) {
-			kthread_stop(dev->kthread);
-			dev->kthread = NULL;
-		}
-		if (dev->firmwareloaded)
+	अगर (dev->board != SAA7164_BOARD_UNKNOWN) अणु
+		अगर (fw_debug && dev->kthपढ़ो) अणु
+			kthपढ़ो_stop(dev->kthपढ़ो);
+			dev->kthपढ़ो = शून्य;
+		पूर्ण
+		अगर (dev->firmwareloaded)
 			saa7164_api_set_debug(dev, 0x00);
-	}
+	पूर्ण
 
-	saa7164_histogram_print(&dev->ports[SAA7164_PORT_ENC1],
-		&dev->ports[SAA7164_PORT_ENC1].irq_interval);
-	saa7164_histogram_print(&dev->ports[SAA7164_PORT_ENC1],
-		&dev->ports[SAA7164_PORT_ENC1].svc_interval);
-	saa7164_histogram_print(&dev->ports[SAA7164_PORT_ENC1],
-		&dev->ports[SAA7164_PORT_ENC1].irq_svc_interval);
-	saa7164_histogram_print(&dev->ports[SAA7164_PORT_ENC1],
-		&dev->ports[SAA7164_PORT_ENC1].read_interval);
-	saa7164_histogram_print(&dev->ports[SAA7164_PORT_ENC1],
-		&dev->ports[SAA7164_PORT_ENC1].poll_interval);
-	saa7164_histogram_print(&dev->ports[SAA7164_PORT_VBI1],
-		&dev->ports[SAA7164_PORT_VBI1].read_interval);
-	saa7164_histogram_print(&dev->ports[SAA7164_PORT_VBI2],
-		&dev->ports[SAA7164_PORT_VBI2].poll_interval);
+	saa7164_histogram_prपूर्णांक(&dev->ports[SAA7164_PORT_ENC1],
+		&dev->ports[SAA7164_PORT_ENC1].irq_पूर्णांकerval);
+	saa7164_histogram_prपूर्णांक(&dev->ports[SAA7164_PORT_ENC1],
+		&dev->ports[SAA7164_PORT_ENC1].svc_पूर्णांकerval);
+	saa7164_histogram_prपूर्णांक(&dev->ports[SAA7164_PORT_ENC1],
+		&dev->ports[SAA7164_PORT_ENC1].irq_svc_पूर्णांकerval);
+	saa7164_histogram_prपूर्णांक(&dev->ports[SAA7164_PORT_ENC1],
+		&dev->ports[SAA7164_PORT_ENC1].पढ़ो_पूर्णांकerval);
+	saa7164_histogram_prपूर्णांक(&dev->ports[SAA7164_PORT_ENC1],
+		&dev->ports[SAA7164_PORT_ENC1].poll_पूर्णांकerval);
+	saa7164_histogram_prपूर्णांक(&dev->ports[SAA7164_PORT_VBI1],
+		&dev->ports[SAA7164_PORT_VBI1].पढ़ो_पूर्णांकerval);
+	saa7164_histogram_prपूर्णांक(&dev->ports[SAA7164_PORT_VBI2],
+		&dev->ports[SAA7164_PORT_VBI2].poll_पूर्णांकerval);
 
-	saa7164_shutdown(dev);
+	saa7164_shutकरोwn(dev);
 
-	if (saa7164_boards[dev->board].porta == SAA7164_MPEG_DVB)
-		saa7164_dvb_unregister(&dev->ports[SAA7164_PORT_TS1]);
+	अगर (saa7164_boards[dev->board].porta == SAA7164_MPEG_DVB)
+		saa7164_dvb_unरेजिस्टर(&dev->ports[SAA7164_PORT_TS1]);
 
-	if (saa7164_boards[dev->board].portb == SAA7164_MPEG_DVB)
-		saa7164_dvb_unregister(&dev->ports[SAA7164_PORT_TS2]);
+	अगर (saa7164_boards[dev->board].portb == SAA7164_MPEG_DVB)
+		saa7164_dvb_unरेजिस्टर(&dev->ports[SAA7164_PORT_TS2]);
 
-	if (saa7164_boards[dev->board].portc == SAA7164_MPEG_ENCODER)
-		saa7164_encoder_unregister(&dev->ports[SAA7164_PORT_ENC1]);
+	अगर (saa7164_boards[dev->board].portc == SAA7164_MPEG_ENCODER)
+		saa7164_encoder_unरेजिस्टर(&dev->ports[SAA7164_PORT_ENC1]);
 
-	if (saa7164_boards[dev->board].portd == SAA7164_MPEG_ENCODER)
-		saa7164_encoder_unregister(&dev->ports[SAA7164_PORT_ENC2]);
+	अगर (saa7164_boards[dev->board].portd == SAA7164_MPEG_ENCODER)
+		saa7164_encoder_unरेजिस्टर(&dev->ports[SAA7164_PORT_ENC2]);
 
-	if (saa7164_boards[dev->board].porte == SAA7164_MPEG_VBI)
-		saa7164_vbi_unregister(&dev->ports[SAA7164_PORT_VBI1]);
+	अगर (saa7164_boards[dev->board].porte == SAA7164_MPEG_VBI)
+		saa7164_vbi_unरेजिस्टर(&dev->ports[SAA7164_PORT_VBI1]);
 
-	if (saa7164_boards[dev->board].portf == SAA7164_MPEG_VBI)
-		saa7164_vbi_unregister(&dev->ports[SAA7164_PORT_VBI2]);
+	अगर (saa7164_boards[dev->board].portf == SAA7164_MPEG_VBI)
+		saa7164_vbi_unरेजिस्टर(&dev->ports[SAA7164_PORT_VBI2]);
 
-	saa7164_i2c_unregister(&dev->i2c_bus[0]);
-	saa7164_i2c_unregister(&dev->i2c_bus[1]);
-	saa7164_i2c_unregister(&dev->i2c_bus[2]);
+	saa7164_i2c_unरेजिस्टर(&dev->i2c_bus[0]);
+	saa7164_i2c_unरेजिस्टर(&dev->i2c_bus[1]);
+	saa7164_i2c_unरेजिस्टर(&dev->i2c_bus[2]);
 
-	/* unregister stuff */
-	free_irq(pci_dev->irq, dev);
+	/* unरेजिस्टर stuff */
+	मुक्त_irq(pci_dev->irq, dev);
 
-	if (dev->msi) {
+	अगर (dev->msi) अणु
 		pci_disable_msi(pci_dev);
 		dev->msi = false;
-	}
+	पूर्ण
 
 	pci_disable_device(pci_dev);
 
@@ -1504,50 +1505,50 @@ static void saa7164_finidev(struct pci_dev *pci_dev)
 	list_del(&dev->devlist);
 	mutex_unlock(&devlist);
 
-	saa7164_dev_unregister(dev);
-	v4l2_device_unregister(&dev->v4l2_dev);
-	kfree(dev);
-}
+	saa7164_dev_unरेजिस्टर(dev);
+	v4l2_device_unरेजिस्टर(&dev->v4l2_dev);
+	kमुक्त(dev);
+पूर्ण
 
-static const struct pci_device_id saa7164_pci_tbl[] = {
-	{
+अटल स्थिर काष्ठा pci_device_id saa7164_pci_tbl[] = अणु
+	अणु
 		/* SAA7164 */
-		.vendor       = 0x1131,
+		.venकरोr       = 0x1131,
 		.device       = 0x7164,
-		.subvendor    = PCI_ANY_ID,
+		.subvenकरोr    = PCI_ANY_ID,
 		.subdevice    = PCI_ANY_ID,
-	}, {
+	पूर्ण, अणु
 		/* --- end of list --- */
-	}
-};
+	पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, saa7164_pci_tbl);
 
-static struct pci_driver saa7164_pci_driver = {
+अटल काष्ठा pci_driver saa7164_pci_driver = अणु
 	.name     = "saa7164",
 	.id_table = saa7164_pci_tbl,
 	.probe    = saa7164_initdev,
-	.remove   = saa7164_finidev,
-};
+	.हटाओ   = saa7164_finidev,
+पूर्ण;
 
-static int __init saa7164_init(void)
-{
-	int ret = pci_register_driver(&saa7164_pci_driver);
+अटल पूर्णांक __init saa7164_init(व्योम)
+अणु
+	पूर्णांक ret = pci_रेजिस्टर_driver(&saa7164_pci_driver);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	saa7164_debugfs_create();
 
 	pr_info("saa7164 driver loaded\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit saa7164_fini(void)
-{
-	saa7164_debugfs_remove();
-	pci_unregister_driver(&saa7164_pci_driver);
-}
+अटल व्योम __निकास saa7164_fini(व्योम)
+अणु
+	saa7164_debugfs_हटाओ();
+	pci_unरेजिस्टर_driver(&saa7164_pci_driver);
+पूर्ण
 
 module_init(saa7164_init);
-module_exit(saa7164_fini);
+module_निकास(saa7164_fini);

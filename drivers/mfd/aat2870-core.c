@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/drivers/mfd/aat2870-core.c
  *
@@ -6,344 +7,344 @@
  * Author: Jin Park <jinyoungp@nvidia.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/debugfs.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/i2c.h>
-#include <linux/delay.h>
-#include <linux/gpio.h>
-#include <linux/mfd/core.h>
-#include <linux/mfd/aat2870.h>
-#include <linux/regulator/machine.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/mfd/aat2870.h>
+#समावेश <linux/regulator/machine.h>
 
-static struct aat2870_register aat2870_regs[AAT2870_REG_NUM] = {
-	/* readable, writeable, value */
-	{ 0, 1, 0x00 },	/* 0x00 AAT2870_BL_CH_EN */
-	{ 0, 1, 0x16 },	/* 0x01 AAT2870_BLM */
-	{ 0, 1, 0x16 },	/* 0x02 AAT2870_BLS */
-	{ 0, 1, 0x56 },	/* 0x03 AAT2870_BL1 */
-	{ 0, 1, 0x56 },	/* 0x04 AAT2870_BL2 */
-	{ 0, 1, 0x56 },	/* 0x05 AAT2870_BL3 */
-	{ 0, 1, 0x56 },	/* 0x06 AAT2870_BL4 */
-	{ 0, 1, 0x56 },	/* 0x07 AAT2870_BL5 */
-	{ 0, 1, 0x56 },	/* 0x08 AAT2870_BL6 */
-	{ 0, 1, 0x56 },	/* 0x09 AAT2870_BL7 */
-	{ 0, 1, 0x56 },	/* 0x0A AAT2870_BL8 */
-	{ 0, 1, 0x00 },	/* 0x0B AAT2870_FLR */
-	{ 0, 1, 0x03 },	/* 0x0C AAT2870_FM */
-	{ 0, 1, 0x03 },	/* 0x0D AAT2870_FS */
-	{ 0, 1, 0x10 },	/* 0x0E AAT2870_ALS_CFG0 */
-	{ 0, 1, 0x06 },	/* 0x0F AAT2870_ALS_CFG1 */
-	{ 0, 1, 0x00 },	/* 0x10 AAT2870_ALS_CFG2 */
-	{ 1, 0, 0x00 },	/* 0x11 AAT2870_AMB */
-	{ 0, 1, 0x00 },	/* 0x12 AAT2870_ALS0 */
-	{ 0, 1, 0x00 },	/* 0x13 AAT2870_ALS1 */
-	{ 0, 1, 0x00 },	/* 0x14 AAT2870_ALS2 */
-	{ 0, 1, 0x00 },	/* 0x15 AAT2870_ALS3 */
-	{ 0, 1, 0x00 },	/* 0x16 AAT2870_ALS4 */
-	{ 0, 1, 0x00 },	/* 0x17 AAT2870_ALS5 */
-	{ 0, 1, 0x00 },	/* 0x18 AAT2870_ALS6 */
-	{ 0, 1, 0x00 },	/* 0x19 AAT2870_ALS7 */
-	{ 0, 1, 0x00 },	/* 0x1A AAT2870_ALS8 */
-	{ 0, 1, 0x00 },	/* 0x1B AAT2870_ALS9 */
-	{ 0, 1, 0x00 },	/* 0x1C AAT2870_ALSA */
-	{ 0, 1, 0x00 },	/* 0x1D AAT2870_ALSB */
-	{ 0, 1, 0x00 },	/* 0x1E AAT2870_ALSC */
-	{ 0, 1, 0x00 },	/* 0x1F AAT2870_ALSD */
-	{ 0, 1, 0x00 },	/* 0x20 AAT2870_ALSE */
-	{ 0, 1, 0x00 },	/* 0x21 AAT2870_ALSF */
-	{ 0, 1, 0x00 },	/* 0x22 AAT2870_SUB_SET */
-	{ 0, 1, 0x00 },	/* 0x23 AAT2870_SUB_CTRL */
-	{ 0, 1, 0x00 },	/* 0x24 AAT2870_LDO_AB */
-	{ 0, 1, 0x00 },	/* 0x25 AAT2870_LDO_CD */
-	{ 0, 1, 0x00 },	/* 0x26 AAT2870_LDO_EN */
-};
+अटल काष्ठा aat2870_रेजिस्टर aat2870_regs[AAT2870_REG_NUM] = अणु
+	/* पढ़ोable, ग_लिखोable, value */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x00 AAT2870_BL_CH_EN */
+	अणु 0, 1, 0x16 पूर्ण,	/* 0x01 AAT2870_BLM */
+	अणु 0, 1, 0x16 पूर्ण,	/* 0x02 AAT2870_BLS */
+	अणु 0, 1, 0x56 पूर्ण,	/* 0x03 AAT2870_BL1 */
+	अणु 0, 1, 0x56 पूर्ण,	/* 0x04 AAT2870_BL2 */
+	अणु 0, 1, 0x56 पूर्ण,	/* 0x05 AAT2870_BL3 */
+	अणु 0, 1, 0x56 पूर्ण,	/* 0x06 AAT2870_BL4 */
+	अणु 0, 1, 0x56 पूर्ण,	/* 0x07 AAT2870_BL5 */
+	अणु 0, 1, 0x56 पूर्ण,	/* 0x08 AAT2870_BL6 */
+	अणु 0, 1, 0x56 पूर्ण,	/* 0x09 AAT2870_BL7 */
+	अणु 0, 1, 0x56 पूर्ण,	/* 0x0A AAT2870_BL8 */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x0B AAT2870_FLR */
+	अणु 0, 1, 0x03 पूर्ण,	/* 0x0C AAT2870_FM */
+	अणु 0, 1, 0x03 पूर्ण,	/* 0x0D AAT2870_FS */
+	अणु 0, 1, 0x10 पूर्ण,	/* 0x0E AAT2870_ALS_CFG0 */
+	अणु 0, 1, 0x06 पूर्ण,	/* 0x0F AAT2870_ALS_CFG1 */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x10 AAT2870_ALS_CFG2 */
+	अणु 1, 0, 0x00 पूर्ण,	/* 0x11 AAT2870_AMB */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x12 AAT2870_ALS0 */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x13 AAT2870_ALS1 */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x14 AAT2870_ALS2 */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x15 AAT2870_ALS3 */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x16 AAT2870_ALS4 */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x17 AAT2870_ALS5 */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x18 AAT2870_ALS6 */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x19 AAT2870_ALS7 */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x1A AAT2870_ALS8 */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x1B AAT2870_ALS9 */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x1C AAT2870_ALSA */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x1D AAT2870_ALSB */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x1E AAT2870_ALSC */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x1F AAT2870_ALSD */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x20 AAT2870_ALSE */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x21 AAT2870_ALSF */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x22 AAT2870_SUB_SET */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x23 AAT2870_SUB_CTRL */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x24 AAT2870_LDO_AB */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x25 AAT2870_LDO_CD */
+	अणु 0, 1, 0x00 पूर्ण,	/* 0x26 AAT2870_LDO_EN */
+पूर्ण;
 
-static struct mfd_cell aat2870_devs[] = {
-	{
+अटल काष्ठा mfd_cell aat2870_devs[] = अणु
+	अणु
 		.name = "aat2870-backlight",
 		.id = AAT2870_ID_BL,
-		.pdata_size = sizeof(struct aat2870_bl_platform_data),
-	},
-	{
+		.pdata_size = माप(काष्ठा aat2870_bl_platक्रमm_data),
+	पूर्ण,
+	अणु
 		.name = "aat2870-regulator",
 		.id = AAT2870_ID_LDOA,
-		.pdata_size = sizeof(struct regulator_init_data),
-	},
-	{
+		.pdata_size = माप(काष्ठा regulator_init_data),
+	पूर्ण,
+	अणु
 		.name = "aat2870-regulator",
 		.id = AAT2870_ID_LDOB,
-		.pdata_size = sizeof(struct regulator_init_data),
-	},
-	{
+		.pdata_size = माप(काष्ठा regulator_init_data),
+	पूर्ण,
+	अणु
 		.name = "aat2870-regulator",
 		.id = AAT2870_ID_LDOC,
-		.pdata_size = sizeof(struct regulator_init_data),
-	},
-	{
+		.pdata_size = माप(काष्ठा regulator_init_data),
+	पूर्ण,
+	अणु
 		.name = "aat2870-regulator",
 		.id = AAT2870_ID_LDOD,
-		.pdata_size = sizeof(struct regulator_init_data),
-	},
-};
+		.pdata_size = माप(काष्ठा regulator_init_data),
+	पूर्ण,
+पूर्ण;
 
-static int __aat2870_read(struct aat2870_data *aat2870, u8 addr, u8 *val)
-{
-	int ret;
+अटल पूर्णांक __aat2870_पढ़ो(काष्ठा aat2870_data *aat2870, u8 addr, u8 *val)
+अणु
+	पूर्णांक ret;
 
-	if (addr >= AAT2870_REG_NUM) {
+	अगर (addr >= AAT2870_REG_NUM) अणु
 		dev_err(aat2870->dev, "Invalid address, 0x%02x\n", addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!aat2870->reg_cache[addr].readable) {
+	अगर (!aat2870->reg_cache[addr].पढ़ोable) अणु
 		*val = aat2870->reg_cache[addr].value;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = i2c_master_send(aat2870->client, &addr, 1);
-	if (ret < 0)
-		return ret;
-	if (ret != 1)
-		return -EIO;
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret != 1)
+		वापस -EIO;
 
 	ret = i2c_master_recv(aat2870->client, val, 1);
-	if (ret < 0)
-		return ret;
-	if (ret != 1)
-		return -EIO;
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret != 1)
+		वापस -EIO;
 
 out:
 	dev_dbg(aat2870->dev, "read: addr=0x%02x, val=0x%02x\n", addr, *val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __aat2870_write(struct aat2870_data *aat2870, u8 addr, u8 val)
-{
+अटल पूर्णांक __aat2870_ग_लिखो(काष्ठा aat2870_data *aat2870, u8 addr, u8 val)
+अणु
 	u8 msg[2];
-	int ret;
+	पूर्णांक ret;
 
-	if (addr >= AAT2870_REG_NUM) {
+	अगर (addr >= AAT2870_REG_NUM) अणु
 		dev_err(aat2870->dev, "Invalid address, 0x%02x\n", addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!aat2870->reg_cache[addr].writeable) {
+	अगर (!aat2870->reg_cache[addr].ग_लिखोable) अणु
 		dev_err(aat2870->dev, "Address 0x%02x is not writeable\n",
 			addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	msg[0] = addr;
 	msg[1] = val;
 	ret = i2c_master_send(aat2870->client, msg, 2);
-	if (ret < 0)
-		return ret;
-	if (ret != 2)
-		return -EIO;
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret != 2)
+		वापस -EIO;
 
 	aat2870->reg_cache[addr].value = val;
 
 	dev_dbg(aat2870->dev, "write: addr=0x%02x, val=0x%02x\n", addr, val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aat2870_read(struct aat2870_data *aat2870, u8 addr, u8 *val)
-{
-	int ret;
-
-	mutex_lock(&aat2870->io_lock);
-	ret = __aat2870_read(aat2870, addr, val);
-	mutex_unlock(&aat2870->io_lock);
-
-	return ret;
-}
-
-static int aat2870_write(struct aat2870_data *aat2870, u8 addr, u8 val)
-{
-	int ret;
+अटल पूर्णांक aat2870_पढ़ो(काष्ठा aat2870_data *aat2870, u8 addr, u8 *val)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&aat2870->io_lock);
-	ret = __aat2870_write(aat2870, addr, val);
+	ret = __aat2870_पढ़ो(aat2870, addr, val);
 	mutex_unlock(&aat2870->io_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int aat2870_update(struct aat2870_data *aat2870, u8 addr, u8 mask,
+अटल पूर्णांक aat2870_ग_लिखो(काष्ठा aat2870_data *aat2870, u8 addr, u8 val)
+अणु
+	पूर्णांक ret;
+
+	mutex_lock(&aat2870->io_lock);
+	ret = __aat2870_ग_लिखो(aat2870, addr, val);
+	mutex_unlock(&aat2870->io_lock);
+
+	वापस ret;
+पूर्ण
+
+अटल पूर्णांक aat2870_update(काष्ठा aat2870_data *aat2870, u8 addr, u8 mask,
 			  u8 val)
-{
-	int change;
+अणु
+	पूर्णांक change;
 	u8 old_val, new_val;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&aat2870->io_lock);
 
-	ret = __aat2870_read(aat2870, addr, &old_val);
-	if (ret)
-		goto out_unlock;
+	ret = __aat2870_पढ़ो(aat2870, addr, &old_val);
+	अगर (ret)
+		जाओ out_unlock;
 
 	new_val = (old_val & ~mask) | (val & mask);
 	change = old_val != new_val;
-	if (change)
-		ret = __aat2870_write(aat2870, addr, new_val);
+	अगर (change)
+		ret = __aat2870_ग_लिखो(aat2870, addr, new_val);
 
 out_unlock:
 	mutex_unlock(&aat2870->io_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void aat2870_enable(struct aat2870_data *aat2870)
-{
-	if (aat2870->en_pin >= 0)
+अटल अंतरभूत व्योम aat2870_enable(काष्ठा aat2870_data *aat2870)
+अणु
+	अगर (aat2870->en_pin >= 0)
 		gpio_set_value(aat2870->en_pin, 1);
 
 	aat2870->is_enable = 1;
-}
+पूर्ण
 
-static inline void aat2870_disable(struct aat2870_data *aat2870)
-{
-	if (aat2870->en_pin >= 0)
+अटल अंतरभूत व्योम aat2870_disable(काष्ठा aat2870_data *aat2870)
+अणु
+	अगर (aat2870->en_pin >= 0)
 		gpio_set_value(aat2870->en_pin, 0);
 
 	aat2870->is_enable = 0;
-}
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-static ssize_t aat2870_dump_reg(struct aat2870_data *aat2870, char *buf)
-{
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल sमाप_प्रकार aat2870_dump_reg(काष्ठा aat2870_data *aat2870, अक्षर *buf)
+अणु
 	u8 addr, val;
-	ssize_t count = 0;
-	int ret;
+	sमाप_प्रकार count = 0;
+	पूर्णांक ret;
 
-	count += sprintf(buf, "aat2870 registers\n");
-	for (addr = 0; addr < AAT2870_REG_NUM; addr++) {
-		count += snprintf(buf + count, PAGE_SIZE - count, "0x%02x: ", addr);
-		if (count >= PAGE_SIZE - 1)
-			break;
+	count += प्र_लिखो(buf, "aat2870 registers\n");
+	क्रम (addr = 0; addr < AAT2870_REG_NUM; addr++) अणु
+		count += snम_लिखो(buf + count, PAGE_SIZE - count, "0x%02x: ", addr);
+		अगर (count >= PAGE_SIZE - 1)
+			अवरोध;
 
-		ret = aat2870->read(aat2870, addr, &val);
-		if (ret == 0)
-			count += snprintf(buf + count, PAGE_SIZE - count,
+		ret = aat2870->पढ़ो(aat2870, addr, &val);
+		अगर (ret == 0)
+			count += snम_लिखो(buf + count, PAGE_SIZE - count,
 					  "0x%02x", val);
-		else
-			count += snprintf(buf + count, PAGE_SIZE - count,
+		अन्यथा
+			count += snम_लिखो(buf + count, PAGE_SIZE - count,
 					  "<read fail: %d>", ret);
 
-		if (count >= PAGE_SIZE - 1)
-			break;
+		अगर (count >= PAGE_SIZE - 1)
+			अवरोध;
 
-		count += snprintf(buf + count, PAGE_SIZE - count, "\n");
-		if (count >= PAGE_SIZE - 1)
-			break;
-	}
+		count += snम_लिखो(buf + count, PAGE_SIZE - count, "\n");
+		अगर (count >= PAGE_SIZE - 1)
+			अवरोध;
+	पूर्ण
 
 	/* Truncate count; min() would cause a warning */
-	if (count >= PAGE_SIZE)
+	अगर (count >= PAGE_SIZE)
 		count = PAGE_SIZE - 1;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t aat2870_reg_read_file(struct file *file, char __user *user_buf,
-				     size_t count, loff_t *ppos)
-{
-	struct aat2870_data *aat2870 = file->private_data;
-	char *buf;
-	ssize_t ret;
+अटल sमाप_प्रकार aat2870_reg_पढ़ो_file(काष्ठा file *file, अक्षर __user *user_buf,
+				     माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा aat2870_data *aat2870 = file->निजी_data;
+	अक्षर *buf;
+	sमाप_प्रकार ret;
 
-	buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	ret = aat2870_dump_reg(aat2870, buf);
-	if (ret >= 0)
-		ret = simple_read_from_buffer(user_buf, count, ppos, buf, ret);
+	अगर (ret >= 0)
+		ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, ret);
 
-	kfree(buf);
+	kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t aat2870_reg_write_file(struct file *file,
-				      const char __user *user_buf, size_t count,
+अटल sमाप_प्रकार aat2870_reg_ग_लिखो_file(काष्ठा file *file,
+				      स्थिर अक्षर __user *user_buf, माप_प्रकार count,
 				      loff_t *ppos)
-{
-	struct aat2870_data *aat2870 = file->private_data;
-	char buf[32];
-	ssize_t buf_size;
-	char *start = buf;
-	unsigned long addr, val;
-	int ret;
+अणु
+	काष्ठा aat2870_data *aat2870 = file->निजी_data;
+	अक्षर buf[32];
+	sमाप_प्रकार buf_size;
+	अक्षर *start = buf;
+	अचिन्हित दीर्घ addr, val;
+	पूर्णांक ret;
 
-	buf_size = min(count, (size_t)(sizeof(buf)-1));
-	if (copy_from_user(buf, user_buf, buf_size)) {
+	buf_size = min(count, (माप_प्रकार)(माप(buf)-1));
+	अगर (copy_from_user(buf, user_buf, buf_size)) अणु
 		dev_err(aat2870->dev, "Failed to copy from user\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 	buf[buf_size] = 0;
 
-	while (*start == ' ')
+	जबतक (*start == ' ')
 		start++;
 
-	ret = kstrtoul(start, 16, &addr);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(start, 16, &addr);
+	अगर (ret)
+		वापस ret;
 
-	if (addr >= AAT2870_REG_NUM) {
+	अगर (addr >= AAT2870_REG_NUM) अणु
 		dev_err(aat2870->dev, "Invalid address, 0x%lx\n", addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	while (*start == ' ')
+	जबतक (*start == ' ')
 		start++;
 
-	ret = kstrtoul(start, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(start, 16, &val);
+	अगर (ret)
+		वापस ret;
 
-	ret = aat2870->write(aat2870, (u8)addr, (u8)val);
-	if (ret)
-		return ret;
+	ret = aat2870->ग_लिखो(aat2870, (u8)addr, (u8)val);
+	अगर (ret)
+		वापस ret;
 
-	return buf_size;
-}
+	वापस buf_size;
+पूर्ण
 
-static const struct file_operations aat2870_reg_fops = {
-	.open = simple_open,
-	.read = aat2870_reg_read_file,
-	.write = aat2870_reg_write_file,
-};
+अटल स्थिर काष्ठा file_operations aat2870_reg_fops = अणु
+	.खोलो = simple_खोलो,
+	.पढ़ो = aat2870_reg_पढ़ो_file,
+	.ग_लिखो = aat2870_reg_ग_लिखो_file,
+पूर्ण;
 
-static void aat2870_init_debugfs(struct aat2870_data *aat2870)
-{
-	aat2870->dentry_root = debugfs_create_dir("aat2870", NULL);
+अटल व्योम aat2870_init_debugfs(काष्ठा aat2870_data *aat2870)
+अणु
+	aat2870->dentry_root = debugfs_create_dir("aat2870", शून्य);
 
 	debugfs_create_file("regs", 0644, aat2870->dentry_root, aat2870,
 			    &aat2870_reg_fops);
-}
+पूर्ण
 
-#else
-static inline void aat2870_init_debugfs(struct aat2870_data *aat2870)
-{
-}
-#endif /* CONFIG_DEBUG_FS */
+#अन्यथा
+अटल अंतरभूत व्योम aat2870_init_debugfs(काष्ठा aat2870_data *aat2870)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
 
-static int aat2870_i2c_probe(struct i2c_client *client,
-			     const struct i2c_device_id *id)
-{
-	struct aat2870_platform_data *pdata = dev_get_platdata(&client->dev);
-	struct aat2870_data *aat2870;
-	int i, j;
-	int ret = 0;
+अटल पूर्णांक aat2870_i2c_probe(काष्ठा i2c_client *client,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा aat2870_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
+	काष्ठा aat2870_data *aat2870;
+	पूर्णांक i, j;
+	पूर्णांक ret = 0;
 
-	aat2870 = devm_kzalloc(&client->dev, sizeof(struct aat2870_data),
+	aat2870 = devm_kzalloc(&client->dev, माप(काष्ठा aat2870_data),
 				GFP_KERNEL);
-	if (!aat2870)
-		return -ENOMEM;
+	अगर (!aat2870)
+		वापस -ENOMEM;
 
 	aat2870->dev = &client->dev;
 	dev_set_drvdata(aat2870->dev, aat2870);
@@ -353,113 +354,113 @@ static int aat2870_i2c_probe(struct i2c_client *client,
 
 	aat2870->reg_cache = aat2870_regs;
 
-	if (pdata->en_pin < 0)
+	अगर (pdata->en_pin < 0)
 		aat2870->en_pin = -1;
-	else
+	अन्यथा
 		aat2870->en_pin = pdata->en_pin;
 
 	aat2870->init = pdata->init;
 	aat2870->uninit = pdata->uninit;
-	aat2870->read = aat2870_read;
-	aat2870->write = aat2870_write;
+	aat2870->पढ़ो = aat2870_पढ़ो;
+	aat2870->ग_लिखो = aat2870_ग_लिखो;
 	aat2870->update = aat2870_update;
 
 	mutex_init(&aat2870->io_lock);
 
-	if (aat2870->init)
+	अगर (aat2870->init)
 		aat2870->init(aat2870);
 
-	if (aat2870->en_pin >= 0) {
+	अगर (aat2870->en_pin >= 0) अणु
 		ret = devm_gpio_request_one(&client->dev, aat2870->en_pin,
 					GPIOF_OUT_INIT_HIGH, "aat2870-en");
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&client->dev,
 				"Failed to request GPIO %d\n", aat2870->en_pin);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	aat2870_enable(aat2870);
 
-	for (i = 0; i < pdata->num_subdevs; i++) {
-		for (j = 0; j < ARRAY_SIZE(aat2870_devs); j++) {
-			if ((pdata->subdevs[i].id == aat2870_devs[j].id) &&
-					!strcmp(pdata->subdevs[i].name,
-						aat2870_devs[j].name)) {
-				aat2870_devs[j].platform_data =
-					pdata->subdevs[i].platform_data;
-				break;
-			}
-		}
-	}
+	क्रम (i = 0; i < pdata->num_subdevs; i++) अणु
+		क्रम (j = 0; j < ARRAY_SIZE(aat2870_devs); j++) अणु
+			अगर ((pdata->subdevs[i].id == aat2870_devs[j].id) &&
+					!म_भेद(pdata->subdevs[i].name,
+						aat2870_devs[j].name)) अणु
+				aat2870_devs[j].platक्रमm_data =
+					pdata->subdevs[i].platक्रमm_data;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	ret = mfd_add_devices(aat2870->dev, 0, aat2870_devs,
-			      ARRAY_SIZE(aat2870_devs), NULL, 0, NULL);
-	if (ret != 0) {
+			      ARRAY_SIZE(aat2870_devs), शून्य, 0, शून्य);
+	अगर (ret != 0) अणु
 		dev_err(aat2870->dev, "Failed to add subdev: %d\n", ret);
-		goto out_disable;
-	}
+		जाओ out_disable;
+	पूर्ण
 
 	aat2870_init_debugfs(aat2870);
 
-	return 0;
+	वापस 0;
 
 out_disable:
 	aat2870_disable(aat2870);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int aat2870_i2c_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct aat2870_data *aat2870 = i2c_get_clientdata(client);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक aat2870_i2c_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा aat2870_data *aat2870 = i2c_get_clientdata(client);
 
 	aat2870_disable(aat2870);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aat2870_i2c_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct aat2870_data *aat2870 = i2c_get_clientdata(client);
-	struct aat2870_register *reg = NULL;
-	int i;
+अटल पूर्णांक aat2870_i2c_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा aat2870_data *aat2870 = i2c_get_clientdata(client);
+	काष्ठा aat2870_रेजिस्टर *reg = शून्य;
+	पूर्णांक i;
 
 	aat2870_enable(aat2870);
 
-	/* restore registers */
-	for (i = 0; i < AAT2870_REG_NUM; i++) {
+	/* restore रेजिस्टरs */
+	क्रम (i = 0; i < AAT2870_REG_NUM; i++) अणु
 		reg = &aat2870->reg_cache[i];
-		if (reg->writeable)
-			aat2870->write(aat2870, i, reg->value);
-	}
+		अगर (reg->ग_लिखोable)
+			aat2870->ग_लिखो(aat2870, i, reg->value);
+	पूर्ण
 
-	return 0;
-}
-#endif /* CONFIG_PM_SLEEP */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static SIMPLE_DEV_PM_OPS(aat2870_pm_ops, aat2870_i2c_suspend,
+अटल SIMPLE_DEV_PM_OPS(aat2870_pm_ops, aat2870_i2c_suspend,
 			 aat2870_i2c_resume);
 
-static const struct i2c_device_id aat2870_i2c_id_table[] = {
-	{ "aat2870", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id aat2870_i2c_id_table[] = अणु
+	अणु "aat2870", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct i2c_driver aat2870_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver aat2870_i2c_driver = अणु
+	.driver = अणु
 		.name			= "aat2870",
 		.pm			= &aat2870_pm_ops,
 		.suppress_bind_attrs	= true,
-	},
+	पूर्ण,
 	.probe		= aat2870_i2c_probe,
 	.id_table	= aat2870_i2c_id_table,
-};
+पूर्ण;
 
-static int __init aat2870_init(void)
-{
-	return i2c_add_driver(&aat2870_i2c_driver);
-}
+अटल पूर्णांक __init aat2870_init(व्योम)
+अणु
+	वापस i2c_add_driver(&aat2870_i2c_driver);
+पूर्ण
 subsys_initcall(aat2870_init);

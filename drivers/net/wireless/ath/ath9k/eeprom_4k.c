@@ -1,85 +1,86 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2008-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <asm/unaligned.h>
-#include "hw.h"
-#include "ar9002_phy.h"
+#समावेश <यंत्र/unaligned.h>
+#समावेश "hw.h"
+#समावेश "ar9002_phy.h"
 
-static int ath9k_hw_4k_get_eeprom_ver(struct ath_hw *ah)
-{
+अटल पूर्णांक ath9k_hw_4k_get_eeprom_ver(काष्ठा ath_hw *ah)
+अणु
 	u16 version = le16_to_cpu(ah->eeprom.map4k.baseEepHeader.version);
 
-	return (version & AR5416_EEP_VER_MAJOR_MASK) >>
+	वापस (version & AR5416_EEP_VER_MAJOR_MASK) >>
 		AR5416_EEP_VER_MAJOR_SHIFT;
-}
+पूर्ण
 
-static int ath9k_hw_4k_get_eeprom_rev(struct ath_hw *ah)
-{
+अटल पूर्णांक ath9k_hw_4k_get_eeprom_rev(काष्ठा ath_hw *ah)
+अणु
 	u16 version = le16_to_cpu(ah->eeprom.map4k.baseEepHeader.version);
 
-	return version & AR5416_EEP_VER_MINOR_MASK;
-}
+	वापस version & AR5416_EEP_VER_MINOR_MASK;
+पूर्ण
 
-#define SIZE_EEPROM_4K (sizeof(struct ar5416_eeprom_4k) / sizeof(u16))
+#घोषणा SIZE_EEPROM_4K (माप(काष्ठा ar5416_eeprom_4k) / माप(u16))
 
-static bool __ath9k_hw_4k_fill_eeprom(struct ath_hw *ah)
-{
+अटल bool __ath9k_hw_4k_fill_eeprom(काष्ठा ath_hw *ah)
+अणु
 	u16 *eep_data = (u16 *)&ah->eeprom.map4k;
-	int addr, eep_start_loc = 64;
+	पूर्णांक addr, eep_start_loc = 64;
 
-	for (addr = 0; addr < SIZE_EEPROM_4K; addr++) {
-		if (!ath9k_hw_nvram_read(ah, addr + eep_start_loc, eep_data))
-			return false;
+	क्रम (addr = 0; addr < SIZE_EEPROM_4K; addr++) अणु
+		अगर (!ath9k_hw_nvram_पढ़ो(ah, addr + eep_start_loc, eep_data))
+			वापस false;
 		eep_data++;
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool __ath9k_hw_usb_4k_fill_eeprom(struct ath_hw *ah)
-{
+अटल bool __ath9k_hw_usb_4k_fill_eeprom(काष्ठा ath_hw *ah)
+अणु
 	u16 *eep_data = (u16 *)&ah->eeprom.map4k;
 
 	ath9k_hw_usb_gen_fill_eeprom(ah, eep_data, 64, SIZE_EEPROM_4K);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool ath9k_hw_4k_fill_eeprom(struct ath_hw *ah)
-{
-	struct ath_common *common = ath9k_hw_common(ah);
+अटल bool ath9k_hw_4k_fill_eeprom(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
 
-	if (!ath9k_hw_use_flash(ah)) {
+	अगर (!ath9k_hw_use_flash(ah)) अणु
 		ath_dbg(common, EEPROM, "Reading from EEPROM, not flash\n");
-	}
+	पूर्ण
 
-	if (common->bus_ops->ath_bus_type == ATH_USB)
-		return __ath9k_hw_usb_4k_fill_eeprom(ah);
-	else
-		return __ath9k_hw_4k_fill_eeprom(ah);
-}
+	अगर (common->bus_ops->ath_bus_type == ATH_USB)
+		वापस __ath9k_hw_usb_4k_fill_eeprom(ah);
+	अन्यथा
+		वापस __ath9k_hw_4k_fill_eeprom(ah);
+पूर्ण
 
-#ifdef CONFIG_ATH9K_COMMON_DEBUG
-static u32 ath9k_dump_4k_modal_eeprom(char *buf, u32 len, u32 size,
-				      struct modal_eep_4k_header *modal_hdr)
-{
+#अगर_घोषित CONFIG_ATH9K_COMMON_DEBUG
+अटल u32 ath9k_dump_4k_modal_eeprom(अक्षर *buf, u32 len, u32 size,
+				      काष्ठा modal_eep_4k_header *modal_hdr)
+अणु
 	PR_EEP("Chain0 Ant. Control", le16_to_cpu(modal_hdr->antCtrlChain[0]));
 	PR_EEP("Ant. Common Control", le32_to_cpu(modal_hdr->antCtrlCommon));
 	PR_EEP("Chain0 Ant. Gain", modal_hdr->antennaGainCh[0]);
-	PR_EEP("Switch Settle", modal_hdr->switchSettling);
+	PR_EEP("Switch Settle", modal_hdr->चयनSettling);
 	PR_EEP("Chain0 TxRxAtten", modal_hdr->txRxAttenCh[0]);
 	PR_EEP("Chain0 RxTxMargin", modal_hdr->rxTxMarginCh[0]);
 	PR_EEP("ADC Desired size", modal_hdr->adcDesiredSize);
@@ -120,27 +121,27 @@ static u32 ath9k_dump_4k_modal_eeprom(char *buf, u32 len, u32 size,
 	PR_EEP("HT40 Switch Settle", modal_hdr->swSettleHt40);
 	PR_EEP("Chain0 xatten2Db", modal_hdr->xatten2Db[0]);
 	PR_EEP("Chain0 xatten2Margin", modal_hdr->xatten2Margin[0]);
-	PR_EEP("Ant. Diversity ctl1", modal_hdr->antdiv_ctl1);
-	PR_EEP("Ant. Diversity ctl2", modal_hdr->antdiv_ctl2);
-	PR_EEP("TX Diversity", modal_hdr->tx_diversity);
+	PR_EEP("Ant. Diversity ctl1", modal_hdr->antभाग_ctl1);
+	PR_EEP("Ant. Diversity ctl2", modal_hdr->antभाग_ctl2);
+	PR_EEP("TX Diversity", modal_hdr->tx_भागersity);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static u32 ath9k_hw_4k_dump_eeprom(struct ath_hw *ah, bool dump_base_hdr,
+अटल u32 ath9k_hw_4k_dump_eeprom(काष्ठा ath_hw *ah, bool dump_base_hdr,
 				       u8 *buf, u32 len, u32 size)
-{
-	struct ar5416_eeprom_4k *eep = &ah->eeprom.map4k;
-	struct base_eep_header_4k *pBase = &eep->baseEepHeader;
+अणु
+	काष्ठा ar5416_eeprom_4k *eep = &ah->eeprom.map4k;
+	काष्ठा base_eep_header_4k *pBase = &eep->baseEepHeader;
 	u32 binBuildNumber = le32_to_cpu(pBase->binBuildNumber);
 
-	if (!dump_base_hdr) {
-		len += scnprintf(buf + len, size - len,
+	अगर (!dump_base_hdr) अणु
+		len += scnम_लिखो(buf + len, size - len,
 				 "%20s :\n", "2GHz modal Header");
 		len = ath9k_dump_4k_modal_eeprom(buf, len, size,
 						 &eep->modalHeader);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	PR_EEP("Major Version", ath9k_hw_4k_get_eeprom_ver(ah));
 	PR_EEP("Minor Version", ath9k_hw_4k_get_eeprom_rev(ah));
@@ -166,44 +167,44 @@ static u32 ath9k_hw_4k_dump_eeprom(struct ath_hw *ah, bool dump_base_hdr,
 	PR_EEP("Cal Bin Build", (binBuildNumber >> 8) & 0xFF);
 	PR_EEP("TX Gain type", pBase->txGainType);
 
-	len += scnprintf(buf + len, size - len, "%20s : %pM\n", "MacAddress",
+	len += scnम_लिखो(buf + len, size - len, "%20s : %pM\n", "MacAddress",
 			 pBase->macAddr);
 
 out:
-	if (len > size)
+	अगर (len > size)
 		len = size;
 
-	return len;
-}
-#else
-static u32 ath9k_hw_4k_dump_eeprom(struct ath_hw *ah, bool dump_base_hdr,
+	वापस len;
+पूर्ण
+#अन्यथा
+अटल u32 ath9k_hw_4k_dump_eeprom(काष्ठा ath_hw *ah, bool dump_base_hdr,
 				       u8 *buf, u32 len, u32 size)
-{
-	return 0;
-}
-#endif
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int ath9k_hw_4k_check_eeprom(struct ath_hw *ah)
-{
-	struct ar5416_eeprom_4k *eep = &ah->eeprom.map4k;
+अटल पूर्णांक ath9k_hw_4k_check_eeprom(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ar5416_eeprom_4k *eep = &ah->eeprom.map4k;
 	u32 el;
 	bool need_swap;
-	int i, err;
+	पूर्णांक i, err;
 
 	err = ath9k_hw_nvram_swap_data(ah, &need_swap, SIZE_EEPROM_4K);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (need_swap)
-		el = swab16((__force u16)eep->baseEepHeader.length);
-	else
+	अगर (need_swap)
+		el = swab16((__क्रमce u16)eep->baseEepHeader.length);
+	अन्यथा
 		el = le16_to_cpu(eep->baseEepHeader.length);
 
-	el = min(el / sizeof(u16), SIZE_EEPROM_4K);
-	if (!ath9k_hw_nvram_validate_checksum(ah, el))
-		return -EINVAL;
+	el = min(el / माप(u16), SIZE_EEPROM_4K);
+	अगर (!ath9k_hw_nvram_validate_checksum(ah, el))
+		वापस -EINVAL;
 
-	if (need_swap) {
+	अगर (need_swap) अणु
 		EEPROM_FIELD_SWAB16(eep->baseEepHeader.length);
 		EEPROM_FIELD_SWAB16(eep->baseEepHeader.checksum);
 		EEPROM_FIELD_SWAB16(eep->baseEepHeader.version);
@@ -214,93 +215,93 @@ static int ath9k_hw_4k_check_eeprom(struct ath_hw *ah)
 		EEPROM_FIELD_SWAB16(eep->baseEepHeader.deviceCap);
 		EEPROM_FIELD_SWAB32(eep->modalHeader.antCtrlCommon);
 
-		for (i = 0; i < AR5416_EEP4K_MAX_CHAINS; i++)
+		क्रम (i = 0; i < AR5416_EEP4K_MAX_CHAINS; i++)
 			EEPROM_FIELD_SWAB32(eep->modalHeader.antCtrlChain[i]);
 
-		for (i = 0; i < AR_EEPROM_MODAL_SPURS; i++)
+		क्रम (i = 0; i < AR_EEPROM_MODAL_SPURS; i++)
 			EEPROM_FIELD_SWAB16(
 				eep->modalHeader.spurChans[i].spurChan);
-	}
+	पूर्ण
 
-	if (!ath9k_hw_nvram_check_version(ah, AR5416_EEP_VER,
+	अगर (!ath9k_hw_nvram_check_version(ah, AR5416_EEP_VER,
 	    AR5416_EEP_NO_BACK_VER))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#undef SIZE_EEPROM_4K
+#अघोषित SIZE_EEPROM_4K
 
-static u32 ath9k_hw_4k_get_eeprom(struct ath_hw *ah,
-				  enum eeprom_param param)
-{
-	struct ar5416_eeprom_4k *eep = &ah->eeprom.map4k;
-	struct modal_eep_4k_header *pModal = &eep->modalHeader;
-	struct base_eep_header_4k *pBase = &eep->baseEepHeader;
+अटल u32 ath9k_hw_4k_get_eeprom(काष्ठा ath_hw *ah,
+				  क्रमागत eeprom_param param)
+अणु
+	काष्ठा ar5416_eeprom_4k *eep = &ah->eeprom.map4k;
+	काष्ठा modal_eep_4k_header *pModal = &eep->modalHeader;
+	काष्ठा base_eep_header_4k *pBase = &eep->baseEepHeader;
 
-	switch (param) {
-	case EEP_NFTHRESH_2:
-		return pModal->noiseFloorThreshCh[0];
-	case EEP_MAC_LSW:
-		return get_unaligned_be16(pBase->macAddr);
-	case EEP_MAC_MID:
-		return get_unaligned_be16(pBase->macAddr + 2);
-	case EEP_MAC_MSW:
-		return get_unaligned_be16(pBase->macAddr + 4);
-	case EEP_REG_0:
-		return le16_to_cpu(pBase->regDmn[0]);
-	case EEP_OP_CAP:
-		return le16_to_cpu(pBase->deviceCap);
-	case EEP_OP_MODE:
-		return pBase->opCapFlags;
-	case EEP_RF_SILENT:
-		return le16_to_cpu(pBase->rfSilent);
-	case EEP_OB_2:
-		return pModal->ob_0;
-	case EEP_DB_2:
-		return pModal->db1_1;
-	case EEP_TX_MASK:
-		return pBase->txMask;
-	case EEP_RX_MASK:
-		return pBase->rxMask;
-	case EEP_FRAC_N_5G:
-		return 0;
-	case EEP_PWR_TABLE_OFFSET:
-		return AR5416_PWR_TABLE_OFFSET_DB;
-	case EEP_MODAL_VER:
-		return pModal->version;
-	case EEP_ANT_DIV_CTL1:
-		return pModal->antdiv_ctl1;
-	case EEP_TXGAIN_TYPE:
-		return pBase->txGainType;
-	case EEP_ANTENNA_GAIN_2G:
-		return pModal->antennaGainCh[0];
-	default:
-		return 0;
-	}
-}
+	चयन (param) अणु
+	हाल EEP_NFTHRESH_2:
+		वापस pModal->noiseFloorThreshCh[0];
+	हाल EEP_MAC_LSW:
+		वापस get_unaligned_be16(pBase->macAddr);
+	हाल EEP_MAC_MID:
+		वापस get_unaligned_be16(pBase->macAddr + 2);
+	हाल EEP_MAC_MSW:
+		वापस get_unaligned_be16(pBase->macAddr + 4);
+	हाल EEP_REG_0:
+		वापस le16_to_cpu(pBase->regDmn[0]);
+	हाल EEP_OP_CAP:
+		वापस le16_to_cpu(pBase->deviceCap);
+	हाल EEP_OP_MODE:
+		वापस pBase->opCapFlags;
+	हाल EEP_RF_SILENT:
+		वापस le16_to_cpu(pBase->rfSilent);
+	हाल EEP_OB_2:
+		वापस pModal->ob_0;
+	हाल EEP_DB_2:
+		वापस pModal->db1_1;
+	हाल EEP_TX_MASK:
+		वापस pBase->txMask;
+	हाल EEP_RX_MASK:
+		वापस pBase->rxMask;
+	हाल EEP_FRAC_N_5G:
+		वापस 0;
+	हाल EEP_PWR_TABLE_OFFSET:
+		वापस AR5416_PWR_TABLE_OFFSET_DB;
+	हाल EEP_MODAL_VER:
+		वापस pModal->version;
+	हाल EEP_ANT_DIV_CTL1:
+		वापस pModal->antभाग_ctl1;
+	हाल EEP_TXGAIN_TYPE:
+		वापस pBase->txGainType;
+	हाल EEP_ANTENNA_GAIN_2G:
+		वापस pModal->antennaGainCh[0];
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void ath9k_hw_set_4k_power_cal_table(struct ath_hw *ah,
-				  struct ath9k_channel *chan)
-{
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct ar5416_eeprom_4k *pEepData = &ah->eeprom.map4k;
-	struct cal_data_per_freq_4k *pRawDataset;
-	u8 *pCalBChans = NULL;
+अटल व्योम ath9k_hw_set_4k_घातer_cal_table(काष्ठा ath_hw *ah,
+				  काष्ठा ath9k_channel *chan)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ar5416_eeprom_4k *pEepData = &ah->eeprom.map4k;
+	काष्ठा cal_data_per_freq_4k *pRawDataset;
+	u8 *pCalBChans = शून्य;
 	u16 pdGainOverlap_t2;
-	static u8 pdadcValues[AR5416_NUM_PDADC_VALUES];
+	अटल u8 pdadcValues[AR5416_NUM_PDADC_VALUES];
 	u16 gainBoundaries[AR5416_PD_GAINS_IN_MASK];
 	u16 numPiers, i, j;
 	u16 numXpdGain, xpdMask;
-	u16 xpdGainValues[AR5416_EEP4K_NUM_PD_GAINS] = { 0, 0 };
+	u16 xpdGainValues[AR5416_EEP4K_NUM_PD_GAINS] = अणु 0, 0 पूर्ण;
 	u32 reg32, regOffset, regChainOffset;
 
 	xpdMask = pEepData->modalHeader.xpdGain;
 
-	if (ath9k_hw_4k_get_eeprom_rev(ah) >= AR5416_EEP_MINOR_VER_2)
+	अगर (ath9k_hw_4k_get_eeprom_rev(ah) >= AR5416_EEP_MINOR_VER_2)
 		pdGainOverlap_t2 =
 			pEepData->modalHeader.pdGainOverlap;
-	else
+	अन्यथा
 		pdGainOverlap_t2 = (u16)(MS(REG_READ(ah, AR_PHY_TPCRG5),
 					    AR_PHY_TPCRG5_PD_GAIN_OVERLAP));
 
@@ -309,15 +310,15 @@ static void ath9k_hw_set_4k_power_cal_table(struct ath_hw *ah,
 
 	numXpdGain = 0;
 
-	for (i = 1; i <= AR5416_PD_GAINS_IN_MASK; i++) {
-		if ((xpdMask >> (AR5416_PD_GAINS_IN_MASK - i)) & 1) {
-			if (numXpdGain >= AR5416_EEP4K_NUM_PD_GAINS)
-				break;
+	क्रम (i = 1; i <= AR5416_PD_GAINS_IN_MASK; i++) अणु
+		अगर ((xpdMask >> (AR5416_PD_GAINS_IN_MASK - i)) & 1) अणु
+			अगर (numXpdGain >= AR5416_EEP4K_NUM_PD_GAINS)
+				अवरोध;
 			xpdGainValues[numXpdGain] =
 				(u16)(AR5416_PD_GAINS_IN_MASK - i);
 			numXpdGain++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ENABLE_REG_RMW_BUFFER(ah);
 	REG_RMW_FIELD(ah, AR_PHY_TPCRG1, AR_PHY_TPCRG1_NUM_PD_GAIN,
@@ -329,10 +330,10 @@ static void ath9k_hw_set_4k_power_cal_table(struct ath_hw *ah,
 	REG_RMW_FIELD(ah, AR_PHY_TPCRG1, AR_PHY_TPCRG1_PD_GAIN_3, 0);
 	REG_RMW_BUFFER_FLUSH(ah);
 
-	for (i = 0; i < AR5416_EEP4K_MAX_CHAINS; i++) {
+	क्रम (i = 0; i < AR5416_EEP4K_MAX_CHAINS; i++) अणु
 		regChainOffset = i * 0x1000;
 
-		if (pEepData->baseEepHeader.txMask & (1 << i)) {
+		अगर (pEepData->baseEepHeader.txMask & (1 << i)) अणु
 			pRawDataset = pEepData->calPierData2G[i];
 
 			ath9k_hw_get_gain_boundaries_pdadcs(ah, chan,
@@ -356,7 +357,7 @@ static void ath9k_hw_set_4k_power_cal_table(struct ath_hw *ah,
 			       AR_PHY_TPCRG5_PD_GAIN_BOUNDARY_4));
 
 			regOffset = AR_PHY_BASE + (672 << 2) + regChainOffset;
-			for (j = 0; j < 32; j++) {
+			क्रम (j = 0; j < 32; j++) अणु
 				reg32 = get_unaligned_le32(&pdadcValues[4 * j]);
 				REG_WRITE(ah, regOffset, reg32);
 
@@ -376,169 +377,169 @@ static void ath9k_hw_set_4k_power_cal_table(struct ath_hw *ah,
 					4 * j + 3, pdadcValues[4 * j + 3]);
 
 				regOffset += 4;
-			}
+			पूर्ण
 
 			REGWRITE_BUFFER_FLUSH(ah);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ath9k_hw_set_4k_power_per_rate_table(struct ath_hw *ah,
-						 struct ath9k_channel *chan,
-						 int16_t *ratesArray,
+अटल व्योम ath9k_hw_set_4k_घातer_per_rate_table(काष्ठा ath_hw *ah,
+						 काष्ठा ath9k_channel *chan,
+						 पूर्णांक16_t *ratesArray,
 						 u16 cfgCtl,
 						 u16 antenna_reduction,
-						 u16 powerLimit)
-{
-#define CMP_TEST_GRP \
+						 u16 घातerLimit)
+अणु
+#घोषणा CMP_TEST_GRP \
 	(((cfgCtl & ~CTL_MODE_M)| (pCtlMode[ctlMode] & CTL_MODE_M)) ==	\
 	 pEepData->ctlIndex[i])						\
 	|| (((cfgCtl & ~CTL_MODE_M) | (pCtlMode[ctlMode] & CTL_MODE_M)) == \
 	    ((pEepData->ctlIndex[i] & CTL_MODE_M) | SD_NO_CTL))
 
-	int i;
+	पूर्णांक i;
 	u16 twiceMinEdgePower;
 	u16 twiceMaxEdgePower;
 	u16 scaledPower = 0, minCtlPower;
 	u16 numCtlModes;
-	const u16 *pCtlMode;
+	स्थिर u16 *pCtlMode;
 	u16 ctlMode, freq;
-	struct chan_centers centers;
-	struct cal_ctl_data_4k *rep;
-	struct ar5416_eeprom_4k *pEepData = &ah->eeprom.map4k;
-	struct cal_target_power_leg targetPowerOfdm, targetPowerCck = {
-		0, { 0, 0, 0, 0}
-	};
-	struct cal_target_power_leg targetPowerOfdmExt = {
-		0, { 0, 0, 0, 0} }, targetPowerCckExt = {
-		0, { 0, 0, 0, 0 }
-	};
-	struct cal_target_power_ht targetPowerHt20, targetPowerHt40 = {
-		0, {0, 0, 0, 0}
-	};
-	static const u16 ctlModesFor11g[] = {
+	काष्ठा chan_centers centers;
+	काष्ठा cal_ctl_data_4k *rep;
+	काष्ठा ar5416_eeprom_4k *pEepData = &ah->eeprom.map4k;
+	काष्ठा cal_target_घातer_leg targetPowerOfdm, targetPowerCck = अणु
+		0, अणु 0, 0, 0, 0पूर्ण
+	पूर्ण;
+	काष्ठा cal_target_घातer_leg targetPowerOfdmExt = अणु
+		0, अणु 0, 0, 0, 0पूर्ण पूर्ण, targetPowerCckExt = अणु
+		0, अणु 0, 0, 0, 0 पूर्ण
+	पूर्ण;
+	काष्ठा cal_target_घातer_ht targetPowerHt20, targetPowerHt40 = अणु
+		0, अणु0, 0, 0, 0पूर्ण
+	पूर्ण;
+	अटल स्थिर u16 ctlModesFor11g[] = अणु
 		CTL_11B, CTL_11G, CTL_2GHT20,
 		CTL_11B_EXT, CTL_11G_EXT, CTL_2GHT40
-	};
+	पूर्ण;
 
 	ath9k_hw_get_channel_centers(ah, chan, &centers);
 
-	scaledPower = powerLimit - antenna_reduction;
+	scaledPower = घातerLimit - antenna_reduction;
 	scaledPower = min_t(u16, scaledPower, MAX_RATE_POWER);
 	numCtlModes = ARRAY_SIZE(ctlModesFor11g) - SUB_NUM_CTL_MODES_AT_2G_40;
 	pCtlMode = ctlModesFor11g;
 
-	ath9k_hw_get_legacy_target_powers(ah, chan,
+	ath9k_hw_get_legacy_target_घातers(ah, chan,
 			pEepData->calTargetPowerCck,
 			AR5416_NUM_2G_CCK_TARGET_POWERS,
 			&targetPowerCck, 4, false);
-	ath9k_hw_get_legacy_target_powers(ah, chan,
+	ath9k_hw_get_legacy_target_घातers(ah, chan,
 			pEepData->calTargetPower2G,
 			AR5416_NUM_2G_20_TARGET_POWERS,
 			&targetPowerOfdm, 4, false);
-	ath9k_hw_get_target_powers(ah, chan,
+	ath9k_hw_get_target_घातers(ah, chan,
 			pEepData->calTargetPower2GHT20,
 			AR5416_NUM_2G_20_TARGET_POWERS,
 			&targetPowerHt20, 8, false);
 
-	if (IS_CHAN_HT40(chan)) {
+	अगर (IS_CHAN_HT40(chan)) अणु
 		numCtlModes = ARRAY_SIZE(ctlModesFor11g);
-		ath9k_hw_get_target_powers(ah, chan,
+		ath9k_hw_get_target_घातers(ah, chan,
 				pEepData->calTargetPower2GHT40,
 				AR5416_NUM_2G_40_TARGET_POWERS,
 				&targetPowerHt40, 8, true);
-		ath9k_hw_get_legacy_target_powers(ah, chan,
+		ath9k_hw_get_legacy_target_घातers(ah, chan,
 				pEepData->calTargetPowerCck,
 				AR5416_NUM_2G_CCK_TARGET_POWERS,
 				&targetPowerCckExt, 4, true);
-		ath9k_hw_get_legacy_target_powers(ah, chan,
+		ath9k_hw_get_legacy_target_घातers(ah, chan,
 				pEepData->calTargetPower2G,
 				AR5416_NUM_2G_20_TARGET_POWERS,
 				&targetPowerOfdmExt, 4, true);
-	}
+	पूर्ण
 
-	for (ctlMode = 0; ctlMode < numCtlModes; ctlMode++) {
+	क्रम (ctlMode = 0; ctlMode < numCtlModes; ctlMode++) अणु
 		bool isHt40CtlMode = (pCtlMode[ctlMode] == CTL_5GHT40) ||
 			(pCtlMode[ctlMode] == CTL_2GHT40);
 
-		if (isHt40CtlMode)
+		अगर (isHt40CtlMode)
 			freq = centers.synth_center;
-		else if (pCtlMode[ctlMode] & EXT_ADDITIVE)
+		अन्यथा अगर (pCtlMode[ctlMode] & EXT_ADDITIVE)
 			freq = centers.ext_center;
-		else
+		अन्यथा
 			freq = centers.ctl_center;
 
 		twiceMaxEdgePower = MAX_RATE_POWER;
 
-		for (i = 0; (i < AR5416_EEP4K_NUM_CTLS) &&
-			     pEepData->ctlIndex[i]; i++) {
+		क्रम (i = 0; (i < AR5416_EEP4K_NUM_CTLS) &&
+			     pEepData->ctlIndex[i]; i++) अणु
 
-			if (CMP_TEST_GRP) {
+			अगर (CMP_TEST_GRP) अणु
 				rep = &(pEepData->ctlData[i]);
 
-				twiceMinEdgePower = ath9k_hw_get_max_edge_power(
+				twiceMinEdgePower = ath9k_hw_get_max_edge_घातer(
 					freq,
 					rep->ctlEdges[
 					ar5416_get_ntxchains(ah->txchainmask) - 1],
 					IS_CHAN_2GHZ(chan),
 					AR5416_EEP4K_NUM_BAND_EDGES);
 
-				if ((cfgCtl & ~CTL_MODE_M) == SD_NO_CTL) {
+				अगर ((cfgCtl & ~CTL_MODE_M) == SD_NO_CTL) अणु
 					twiceMaxEdgePower =
 						min(twiceMaxEdgePower,
 						    twiceMinEdgePower);
-				} else {
+				पूर्ण अन्यथा अणु
 					twiceMaxEdgePower = twiceMinEdgePower;
-					break;
-				}
-			}
-		}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		minCtlPower = (u8)min(twiceMaxEdgePower, scaledPower);
 
-		switch (pCtlMode[ctlMode]) {
-		case CTL_11B:
-			for (i = 0; i < ARRAY_SIZE(targetPowerCck.tPow2x); i++) {
+		चयन (pCtlMode[ctlMode]) अणु
+		हाल CTL_11B:
+			क्रम (i = 0; i < ARRAY_SIZE(targetPowerCck.tPow2x); i++) अणु
 				targetPowerCck.tPow2x[i] =
 					min((u16)targetPowerCck.tPow2x[i],
 					    minCtlPower);
-			}
-			break;
-		case CTL_11G:
-			for (i = 0; i < ARRAY_SIZE(targetPowerOfdm.tPow2x); i++) {
+			पूर्ण
+			अवरोध;
+		हाल CTL_11G:
+			क्रम (i = 0; i < ARRAY_SIZE(targetPowerOfdm.tPow2x); i++) अणु
 				targetPowerOfdm.tPow2x[i] =
 					min((u16)targetPowerOfdm.tPow2x[i],
 					    minCtlPower);
-			}
-			break;
-		case CTL_2GHT20:
-			for (i = 0; i < ARRAY_SIZE(targetPowerHt20.tPow2x); i++) {
+			पूर्ण
+			अवरोध;
+		हाल CTL_2GHT20:
+			क्रम (i = 0; i < ARRAY_SIZE(targetPowerHt20.tPow2x); i++) अणु
 				targetPowerHt20.tPow2x[i] =
 					min((u16)targetPowerHt20.tPow2x[i],
 					    minCtlPower);
-			}
-			break;
-		case CTL_11B_EXT:
+			पूर्ण
+			अवरोध;
+		हाल CTL_11B_EXT:
 			targetPowerCckExt.tPow2x[0] =
 				min((u16)targetPowerCckExt.tPow2x[0],
 				    minCtlPower);
-			break;
-		case CTL_11G_EXT:
+			अवरोध;
+		हाल CTL_11G_EXT:
 			targetPowerOfdmExt.tPow2x[0] =
 				min((u16)targetPowerOfdmExt.tPow2x[0],
 				    minCtlPower);
-			break;
-		case CTL_2GHT40:
-			for (i = 0; i < ARRAY_SIZE(targetPowerHt40.tPow2x); i++) {
+			अवरोध;
+		हाल CTL_2GHT40:
+			क्रम (i = 0; i < ARRAY_SIZE(targetPowerHt40.tPow2x); i++) अणु
 				targetPowerHt40.tPow2x[i] =
 					min((u16)targetPowerHt40.tPow2x[i],
 					    minCtlPower);
-			}
-			break;
-		default:
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	ratesArray[rate6mb] =
 	ratesArray[rate9mb] =
@@ -552,7 +553,7 @@ static void ath9k_hw_set_4k_power_per_rate_table(struct ath_hw *ah,
 	ratesArray[rate54mb] = targetPowerOfdm.tPow2x[3];
 	ratesArray[rateXr] = targetPowerOfdm.tPow2x[0];
 
-	for (i = 0; i < ARRAY_SIZE(targetPowerHt20.tPow2x); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(targetPowerHt20.tPow2x); i++)
 		ratesArray[rateHt20_0 + i] = targetPowerHt20.tPow2x[i];
 
 	ratesArray[rate1l] = targetPowerCck.tPow2x[0];
@@ -560,63 +561,63 @@ static void ath9k_hw_set_4k_power_per_rate_table(struct ath_hw *ah,
 	ratesArray[rate5_5s] = ratesArray[rate5_5l] = targetPowerCck.tPow2x[2];
 	ratesArray[rate11s] = ratesArray[rate11l] = targetPowerCck.tPow2x[3];
 
-	if (IS_CHAN_HT40(chan)) {
-		for (i = 0; i < ARRAY_SIZE(targetPowerHt40.tPow2x); i++) {
+	अगर (IS_CHAN_HT40(chan)) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(targetPowerHt40.tPow2x); i++) अणु
 			ratesArray[rateHt40_0 + i] =
 				targetPowerHt40.tPow2x[i];
-		}
+		पूर्ण
 		ratesArray[rateDupOfdm] = targetPowerHt40.tPow2x[0];
 		ratesArray[rateDupCck] = targetPowerHt40.tPow2x[0];
 		ratesArray[rateExtOfdm] = targetPowerOfdmExt.tPow2x[0];
 		ratesArray[rateExtCck] = targetPowerCckExt.tPow2x[0];
-	}
+	पूर्ण
 
-#undef CMP_TEST_GRP
-}
+#अघोषित CMP_TEST_GRP
+पूर्ण
 
-static void ath9k_hw_4k_set_txpower(struct ath_hw *ah,
-				    struct ath9k_channel *chan,
+अटल व्योम ath9k_hw_4k_set_txघातer(काष्ठा ath_hw *ah,
+				    काष्ठा ath9k_channel *chan,
 				    u16 cfgCtl,
 				    u8 twiceAntennaReduction,
-				    u8 powerLimit, bool test)
-{
-	struct ath_regulatory *regulatory = ath9k_hw_regulatory(ah);
-	struct ar5416_eeprom_4k *pEepData = &ah->eeprom.map4k;
-	struct modal_eep_4k_header *pModal = &pEepData->modalHeader;
-	int16_t ratesArray[Ar5416RateSize];
+				    u8 घातerLimit, bool test)
+अणु
+	काष्ठा ath_regulatory *regulatory = ath9k_hw_regulatory(ah);
+	काष्ठा ar5416_eeprom_4k *pEepData = &ah->eeprom.map4k;
+	काष्ठा modal_eep_4k_header *pModal = &pEepData->modalHeader;
+	पूर्णांक16_t ratesArray[Ar5416RateSize];
 	u8 ht40PowerIncForPdadc = 2;
-	int i;
+	पूर्णांक i;
 
-	memset(ratesArray, 0, sizeof(ratesArray));
+	स_रखो(ratesArray, 0, माप(ratesArray));
 
-	if (ath9k_hw_4k_get_eeprom_rev(ah) >= AR5416_EEP_MINOR_VER_2)
+	अगर (ath9k_hw_4k_get_eeprom_rev(ah) >= AR5416_EEP_MINOR_VER_2)
 		ht40PowerIncForPdadc = pModal->ht40PowerIncForPdadc;
 
-	ath9k_hw_set_4k_power_per_rate_table(ah, chan,
+	ath9k_hw_set_4k_घातer_per_rate_table(ah, chan,
 					     &ratesArray[0], cfgCtl,
 					     twiceAntennaReduction,
-					     powerLimit);
+					     घातerLimit);
 
-	ath9k_hw_set_4k_power_cal_table(ah, chan);
+	ath9k_hw_set_4k_घातer_cal_table(ah, chan);
 
-	regulatory->max_power_level = 0;
-	for (i = 0; i < ARRAY_SIZE(ratesArray); i++) {
-		if (ratesArray[i] > MAX_RATE_POWER)
+	regulatory->max_घातer_level = 0;
+	क्रम (i = 0; i < ARRAY_SIZE(ratesArray); i++) अणु
+		अगर (ratesArray[i] > MAX_RATE_POWER)
 			ratesArray[i] = MAX_RATE_POWER;
 
-		if (ratesArray[i] > regulatory->max_power_level)
-			regulatory->max_power_level = ratesArray[i];
-	}
+		अगर (ratesArray[i] > regulatory->max_घातer_level)
+			regulatory->max_घातer_level = ratesArray[i];
+	पूर्ण
 
-	if (test)
-	    return;
+	अगर (test)
+	    वापस;
 
-	for (i = 0; i < Ar5416RateSize; i++)
+	क्रम (i = 0; i < Ar5416RateSize; i++)
 		ratesArray[i] -= AR5416_PWR_TABLE_OFFSET_DB * 2;
 
 	ENABLE_REGWRITE_BUFFER(ah);
 
-	/* OFDM power per rate */
+	/* OFDM घातer per rate */
 	REG_WRITE(ah, AR_PHY_POWER_TX_RATE1,
 		  ATH9K_POW_SM(ratesArray[rate18mb], 24)
 		  | ATH9K_POW_SM(ratesArray[rate12mb], 16)
@@ -628,7 +629,7 @@ static void ath9k_hw_4k_set_txpower(struct ath_hw *ah,
 		  | ATH9K_POW_SM(ratesArray[rate36mb], 8)
 		  | ATH9K_POW_SM(ratesArray[rate24mb], 0));
 
-	/* CCK power per rate */
+	/* CCK घातer per rate */
 	REG_WRITE(ah, AR_PHY_POWER_TX_RATE3,
 		  ATH9K_POW_SM(ratesArray[rate2s], 24)
 		  | ATH9K_POW_SM(ratesArray[rate2l], 16)
@@ -640,7 +641,7 @@ static void ath9k_hw_4k_set_txpower(struct ath_hw *ah,
 		  | ATH9K_POW_SM(ratesArray[rate5_5s], 8)
 		  | ATH9K_POW_SM(ratesArray[rate5_5l], 0));
 
-	/* HT20 power per rate */
+	/* HT20 घातer per rate */
 	REG_WRITE(ah, AR_PHY_POWER_TX_RATE5,
 		  ATH9K_POW_SM(ratesArray[rateHt20_3], 24)
 		  | ATH9K_POW_SM(ratesArray[rateHt20_2], 16)
@@ -652,8 +653,8 @@ static void ath9k_hw_4k_set_txpower(struct ath_hw *ah,
 		  | ATH9K_POW_SM(ratesArray[rateHt20_5], 8)
 		  | ATH9K_POW_SM(ratesArray[rateHt20_4], 0));
 
-	/* HT40 power per rate */
-	if (IS_CHAN_HT40(chan)) {
+	/* HT40 घातer per rate */
+	अगर (IS_CHAN_HT40(chan)) अणु
 		REG_WRITE(ah, AR_PHY_POWER_TX_RATE7,
 			  ATH9K_POW_SM(ratesArray[rateHt40_3] +
 				       ht40PowerIncForPdadc, 24)
@@ -677,30 +678,30 @@ static void ath9k_hw_4k_set_txpower(struct ath_hw *ah,
 			  | ATH9K_POW_SM(ratesArray[rateExtCck], 16)
 			  | ATH9K_POW_SM(ratesArray[rateDupOfdm], 8)
 			  | ATH9K_POW_SM(ratesArray[rateDupCck], 0));
-	}
+	पूर्ण
 
 	/* TPC initializations */
-	if (ah->tpc_enabled) {
-		int ht40_delta;
+	अगर (ah->tpc_enabled) अणु
+		पूर्णांक ht40_delta;
 
 		ht40_delta = (IS_CHAN_HT40(chan)) ? ht40PowerIncForPdadc : 0;
-		ar5008_hw_init_rate_txpower(ah, ratesArray, chan, ht40_delta);
+		ar5008_hw_init_rate_txघातer(ah, ratesArray, chan, ht40_delta);
 		/* Enable TPC */
 		REG_WRITE(ah, AR_PHY_POWER_TX_RATE_MAX,
 			MAX_RATE_POWER | AR_PHY_POWER_TX_RATE_MAX_TPC_ENABLE);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Disable TPC */
 		REG_WRITE(ah, AR_PHY_POWER_TX_RATE_MAX, MAX_RATE_POWER);
-	}
+	पूर्ण
 
 	REGWRITE_BUFFER_FLUSH(ah);
-}
+पूर्ण
 
-static void ath9k_hw_4k_set_gain(struct ath_hw *ah,
-				 struct modal_eep_4k_header *pModal,
-				 struct ar5416_eeprom_4k *eep,
+अटल व्योम ath9k_hw_4k_set_gain(काष्ठा ath_hw *ah,
+				 काष्ठा modal_eep_4k_header *pModal,
+				 काष्ठा ar5416_eeprom_4k *eep,
 				 u8 txRxAttenLocal)
-{
+अणु
 	ENABLE_REG_RMW_BUFFER(ah);
 	REG_RMW(ah, AR_PHY_SWITCH_CHAIN_0,
 		le32_to_cpu(pModal->antCtrlChain[0]), 0);
@@ -710,7 +711,7 @@ static void ath9k_hw_4k_set_gain(struct ath_hw *ah,
 		SM(pModal->iqCalQCh[0], AR_PHY_TIMING_CTRL4_IQCORR_Q_Q_COFF),
 		AR_PHY_TIMING_CTRL4_IQCORR_Q_Q_COFF | AR_PHY_TIMING_CTRL4_IQCORR_Q_I_COFF);
 
-	if (ath9k_hw_4k_get_eeprom_rev(ah) >= AR5416_EEP_MINOR_VER_3) {
+	अगर (ath9k_hw_4k_get_eeprom_rev(ah) >= AR5416_EEP_MINOR_VER_3) अणु
 		txRxAttenLocal = pModal->txRxAttenCh[0];
 
 		REG_RMW_FIELD(ah, AR_PHY_GAIN_2GHZ,
@@ -735,7 +736,7 @@ static void ath9k_hw_4k_set_gain(struct ath_hw *ah,
 		REG_RMW_FIELD(ah, AR_PHY_GAIN_2GHZ + 0x1000,
 			      AR_PHY_GAIN_2GHZ_XATTEN2_DB,
 			      pModal->xatten2Db[0]);
-	}
+	पूर्ण
 
 	REG_RMW_FIELD(ah, AR_PHY_RXGAIN,
 		      AR9280_PHY_RXGAIN_TXRX_ATTEN, txRxAttenLocal);
@@ -747,22 +748,22 @@ static void ath9k_hw_4k_set_gain(struct ath_hw *ah,
 	REG_RMW_FIELD(ah, AR_PHY_RXGAIN + 0x1000,
 		      AR9280_PHY_RXGAIN_TXRX_MARGIN, pModal->rxTxMarginCh[0]);
 	REG_RMW_BUFFER_FLUSH(ah);
-}
+पूर्ण
 
 /*
- * Read EEPROM header info and program the device for correct operation
+ * Read EEPROM header info and program the device क्रम correct operation
  * given the channel value.
  */
-static void ath9k_hw_4k_set_board_values(struct ath_hw *ah,
-					 struct ath9k_channel *chan)
-{
-	struct ath9k_hw_capabilities *pCap = &ah->caps;
-	struct modal_eep_4k_header *pModal;
-	struct ar5416_eeprom_4k *eep = &ah->eeprom.map4k;
-	struct base_eep_header_4k *pBase = &eep->baseEepHeader;
+अटल व्योम ath9k_hw_4k_set_board_values(काष्ठा ath_hw *ah,
+					 काष्ठा ath9k_channel *chan)
+अणु
+	काष्ठा ath9k_hw_capabilities *pCap = &ah->caps;
+	काष्ठा modal_eep_4k_header *pModal;
+	काष्ठा ar5416_eeprom_4k *eep = &ah->eeprom.map4k;
+	काष्ठा base_eep_header_4k *pBase = &eep->baseEepHeader;
 	u8 txRxAttenLocal;
 	u8 ob[5], db1[5], db2[5];
-	u8 ant_div_control1, ant_div_control2;
+	u8 ant_भाग_control1, ant_भाग_control2;
 	u8 bb_desired_scale;
 	u32 regVal;
 
@@ -771,26 +772,26 @@ static void ath9k_hw_4k_set_board_values(struct ath_hw *ah,
 
 	REG_WRITE(ah, AR_PHY_SWITCH_COM, le32_to_cpu(pModal->antCtrlCommon));
 
-	/* Single chain for 4K EEPROM*/
+	/* Single chain क्रम 4K EEPROM*/
 	ath9k_hw_4k_set_gain(ah, pModal, eep, txRxAttenLocal);
 
 	/* Initialize Ant Diversity settings from EEPROM */
-	if (pModal->version >= 3) {
-		ant_div_control1 = pModal->antdiv_ctl1;
-		ant_div_control2 = pModal->antdiv_ctl2;
+	अगर (pModal->version >= 3) अणु
+		ant_भाग_control1 = pModal->antभाग_ctl1;
+		ant_भाग_control2 = pModal->antभाग_ctl2;
 
 		regVal = REG_READ(ah, AR_PHY_MULTICHAIN_GAIN_CTL);
 		regVal &= (~(AR_PHY_9285_ANT_DIV_CTL_ALL));
 
-		regVal |= SM(ant_div_control1,
+		regVal |= SM(ant_भाग_control1,
 			     AR_PHY_9285_ANT_DIV_CTL);
-		regVal |= SM(ant_div_control2,
+		regVal |= SM(ant_भाग_control2,
 			     AR_PHY_9285_ANT_DIV_ALT_LNACONF);
-		regVal |= SM((ant_div_control2 >> 2),
+		regVal |= SM((ant_भाग_control2 >> 2),
 			     AR_PHY_9285_ANT_DIV_MAIN_LNACONF);
-		regVal |= SM((ant_div_control1 >> 1),
+		regVal |= SM((ant_भाग_control1 >> 1),
 			     AR_PHY_9285_ANT_DIV_ALT_GAINTB);
-		regVal |= SM((ant_div_control1 >> 2),
+		regVal |= SM((ant_भाग_control1 >> 2),
 			     AR_PHY_9285_ANT_DIV_MAIN_GAINTB);
 
 
@@ -798,15 +799,15 @@ static void ath9k_hw_4k_set_board_values(struct ath_hw *ah,
 		regVal = REG_READ(ah, AR_PHY_MULTICHAIN_GAIN_CTL);
 		regVal = REG_READ(ah, AR_PHY_CCK_DETECT);
 		regVal &= (~AR_PHY_CCK_DETECT_BB_ENABLE_ANT_FAST_DIV);
-		regVal |= SM((ant_div_control1 >> 3),
+		regVal |= SM((ant_भाग_control1 >> 3),
 			     AR_PHY_CCK_DETECT_BB_ENABLE_ANT_FAST_DIV);
 
 		REG_WRITE(ah, AR_PHY_CCK_DETECT, regVal);
 		regVal = REG_READ(ah, AR_PHY_CCK_DETECT);
 
-		if (pCap->hw_caps & ATH9K_HW_CAP_ANT_DIV_COMB) {
+		अगर (pCap->hw_caps & ATH9K_HW_CAP_ANT_DIV_COMB) अणु
 			/*
-			 * If diversity combining is enabled,
+			 * If भागersity combining is enabled,
 			 * set MAIN to LNA1 and ALT to LNA2 initially.
 			 */
 			regVal = REG_READ(ah, AR_PHY_MULTICHAIN_GAIN_CTL);
@@ -820,10 +821,10 @@ static void ath9k_hw_4k_set_board_values(struct ath_hw *ah,
 			regVal &= (~(AR_PHY_9285_FAST_DIV_BIAS));
 			regVal |= (0 << AR_PHY_9285_FAST_DIV_BIAS_S);
 			REG_WRITE(ah, AR_PHY_MULTICHAIN_GAIN_CTL, regVal);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pModal->version >= 2) {
+	अगर (pModal->version >= 2) अणु
 		ob[0] = pModal->ob_0;
 		ob[1] = pModal->ob_1;
 		ob[2] = pModal->ob_2;
@@ -841,133 +842,133 @@ static void ath9k_hw_4k_set_board_values(struct ath_hw *ah,
 		db2[2] = pModal->db2_2;
 		db2[3] = pModal->db2_3;
 		db2[4] = pModal->db2_4;
-	} else if (pModal->version == 1) {
+	पूर्ण अन्यथा अगर (pModal->version == 1) अणु
 		ob[0] = pModal->ob_0;
 		ob[1] = ob[2] = ob[3] = ob[4] = pModal->ob_1;
 		db1[0] = pModal->db1_0;
 		db1[1] = db1[2] = db1[3] = db1[4] = pModal->db1_1;
 		db2[0] = pModal->db2_0;
 		db2[1] = db2[2] = db2[3] = db2[4] = pModal->db2_1;
-	} else {
-		int i;
+	पूर्ण अन्यथा अणु
+		पूर्णांक i;
 
-		for (i = 0; i < 5; i++) {
+		क्रम (i = 0; i < 5; i++) अणु
 			ob[i] = pModal->ob_0;
 			db1[i] = pModal->db1_0;
 			db2[i] = pModal->db1_0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ENABLE_REG_RMW_BUFFER(ah);
-	if (AR_SREV_9271(ah)) {
-		ath9k_hw_analog_shift_rmw(ah,
+	अगर (AR_SREV_9271(ah)) अणु
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G3,
 					  AR9271_AN_RF2G3_OB_cck,
 					  AR9271_AN_RF2G3_OB_cck_S,
 					  ob[0]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G3,
 					  AR9271_AN_RF2G3_OB_psk,
 					  AR9271_AN_RF2G3_OB_psk_S,
 					  ob[1]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G3,
 					  AR9271_AN_RF2G3_OB_qam,
 					  AR9271_AN_RF2G3_OB_qam_S,
 					  ob[2]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G3,
 					  AR9271_AN_RF2G3_DB_1,
 					  AR9271_AN_RF2G3_DB_1_S,
 					  db1[0]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G4,
 					  AR9271_AN_RF2G4_DB_2,
 					  AR9271_AN_RF2G4_DB_2_S,
 					  db2[0]);
-	} else {
-		ath9k_hw_analog_shift_rmw(ah,
+	पूर्ण अन्यथा अणु
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G3,
 					  AR9285_AN_RF2G3_OB_0,
 					  AR9285_AN_RF2G3_OB_0_S,
 					  ob[0]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G3,
 					  AR9285_AN_RF2G3_OB_1,
 					  AR9285_AN_RF2G3_OB_1_S,
 					  ob[1]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G3,
 					  AR9285_AN_RF2G3_OB_2,
 					  AR9285_AN_RF2G3_OB_2_S,
 					  ob[2]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G3,
 					  AR9285_AN_RF2G3_OB_3,
 					  AR9285_AN_RF2G3_OB_3_S,
 					  ob[3]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G3,
 					  AR9285_AN_RF2G3_OB_4,
 					  AR9285_AN_RF2G3_OB_4_S,
 					  ob[4]);
 
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G3,
 					  AR9285_AN_RF2G3_DB1_0,
 					  AR9285_AN_RF2G3_DB1_0_S,
 					  db1[0]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G3,
 					  AR9285_AN_RF2G3_DB1_1,
 					  AR9285_AN_RF2G3_DB1_1_S,
 					  db1[1]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G3,
 					  AR9285_AN_RF2G3_DB1_2,
 					  AR9285_AN_RF2G3_DB1_2_S,
 					  db1[2]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G4,
 					  AR9285_AN_RF2G4_DB1_3,
 					  AR9285_AN_RF2G4_DB1_3_S,
 					  db1[3]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G4,
 					  AR9285_AN_RF2G4_DB1_4,
 					  AR9285_AN_RF2G4_DB1_4_S, db1[4]);
 
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G4,
 					  AR9285_AN_RF2G4_DB2_0,
 					  AR9285_AN_RF2G4_DB2_0_S,
 					  db2[0]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G4,
 					  AR9285_AN_RF2G4_DB2_1,
 					  AR9285_AN_RF2G4_DB2_1_S,
 					  db2[1]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G4,
 					  AR9285_AN_RF2G4_DB2_2,
 					  AR9285_AN_RF2G4_DB2_2_S,
 					  db2[2]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G4,
 					  AR9285_AN_RF2G4_DB2_3,
 					  AR9285_AN_RF2G4_DB2_3_S,
 					  db2[3]);
-		ath9k_hw_analog_shift_rmw(ah,
+		ath9k_hw_analog_shअगरt_rmw(ah,
 					  AR9285_AN_RF2G4,
 					  AR9285_AN_RF2G4_DB2_4,
 					  AR9285_AN_RF2G4_DB2_4_S,
 					  db2[4]);
-	}
+	पूर्ण
 	REG_RMW_BUFFER_FLUSH(ah);
 
 	ENABLE_REG_RMW_BUFFER(ah);
 	REG_RMW_FIELD(ah, AR_PHY_SETTLING, AR_PHY_SETTLING_SWITCH,
-		      pModal->switchSettling);
+		      pModal->चयनSettling);
 	REG_RMW_FIELD(ah, AR_PHY_DESIRED_SZ, AR_PHY_DESIRED_SZ_ADC,
 		      pModal->adcDesiredSize);
 
@@ -980,7 +981,7 @@ static void ath9k_hw_4k_set_board_values(struct ath_hw *ah,
 	REG_RMW_FIELD(ah, AR_PHY_RF_CTL3, AR_PHY_TX_END_TO_A2_RX_ON,
 		      pModal->txEndToRxOn);
 
-	if (AR_SREV_9271_10(ah))
+	अगर (AR_SREV_9271_10(ah))
 		REG_RMW_FIELD(ah, AR_PHY_RF_CTL3, AR_PHY_TX_END_TO_A2_RX_ON,
 			      pModal->txEndToRxOn);
 	REG_RMW_FIELD(ah, AR_PHY_CCA, AR9280_PHY_CCA_THRESH62,
@@ -988,25 +989,25 @@ static void ath9k_hw_4k_set_board_values(struct ath_hw *ah,
 	REG_RMW_FIELD(ah, AR_PHY_EXT_CCA0, AR_PHY_EXT_CCA0_THRESH62,
 		      pModal->thresh62);
 
-	if (ath9k_hw_4k_get_eeprom_rev(ah) >= AR5416_EEP_MINOR_VER_2) {
+	अगर (ath9k_hw_4k_get_eeprom_rev(ah) >= AR5416_EEP_MINOR_VER_2) अणु
 		REG_RMW_FIELD(ah, AR_PHY_RF_CTL2, AR_PHY_TX_END_DATA_START,
 			      pModal->txFrameToDataStart);
 		REG_RMW_FIELD(ah, AR_PHY_RF_CTL2, AR_PHY_TX_END_PA_ON,
 			      pModal->txFrameToPaOn);
-	}
+	पूर्ण
 
-	if (ath9k_hw_4k_get_eeprom_rev(ah) >= AR5416_EEP_MINOR_VER_3) {
-		if (IS_CHAN_HT40(chan))
+	अगर (ath9k_hw_4k_get_eeprom_rev(ah) >= AR5416_EEP_MINOR_VER_3) अणु
+		अगर (IS_CHAN_HT40(chan))
 			REG_RMW_FIELD(ah, AR_PHY_SETTLING,
 				      AR_PHY_SETTLING_SWITCH,
 				      pModal->swSettleHt40);
-	}
+	पूर्ण
 
 	REG_RMW_BUFFER_FLUSH(ah);
 
 	bb_desired_scale = (pModal->bb_scale_smrt_antenna &
 			EEP_4K_BB_DESIRED_SCALE_MASK);
-	if ((pBase->txGainType == 0) && (bb_desired_scale != 0)) {
+	अगर ((pBase->txGainType == 0) && (bb_desired_scale != 0)) अणु
 		u32 pwrctrl, mask, clr;
 
 		mask = BIT(0)|BIT(5)|BIT(10)|BIT(15)|BIT(20)|BIT(25);
@@ -1028,20 +1029,20 @@ static void ath9k_hw_4k_set_board_values(struct ath_hw *ah,
 		REG_RMW(ah, AR_PHY_CH0_TX_PWRCTRL11, pwrctrl, clr);
 		REG_RMW(ah, AR_PHY_CH0_TX_PWRCTRL13, pwrctrl, clr);
 		REG_RMW_BUFFER_FLUSH(ah);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u16 ath9k_hw_4k_get_spur_channel(struct ath_hw *ah, u16 i, bool is2GHz)
-{
-	return le16_to_cpu(ah->eeprom.map4k.modalHeader.spurChans[i].spurChan);
-}
+अटल u16 ath9k_hw_4k_get_spur_channel(काष्ठा ath_hw *ah, u16 i, bool is2GHz)
+अणु
+	वापस le16_to_cpu(ah->eeprom.map4k.modalHeader.spurChans[i].spurChan);
+पूर्ण
 
-static u8 ath9k_hw_4k_get_eepmisc(struct ath_hw *ah)
-{
-	return ah->eeprom.map4k.baseEepHeader.eepMisc;
-}
+अटल u8 ath9k_hw_4k_get_eepmisc(काष्ठा ath_hw *ah)
+अणु
+	वापस ah->eeprom.map4k.baseEepHeader.eepMisc;
+पूर्ण
 
-const struct eeprom_ops eep_4k_ops = {
+स्थिर काष्ठा eeprom_ops eep_4k_ops = अणु
 	.check_eeprom		= ath9k_hw_4k_check_eeprom,
 	.get_eeprom		= ath9k_hw_4k_get_eeprom,
 	.fill_eeprom		= ath9k_hw_4k_fill_eeprom,
@@ -1049,7 +1050,7 @@ const struct eeprom_ops eep_4k_ops = {
 	.get_eeprom_ver		= ath9k_hw_4k_get_eeprom_ver,
 	.get_eeprom_rev		= ath9k_hw_4k_get_eeprom_rev,
 	.set_board_values	= ath9k_hw_4k_set_board_values,
-	.set_txpower		= ath9k_hw_4k_set_txpower,
+	.set_txघातer		= ath9k_hw_4k_set_txघातer,
 	.get_spur_channel	= ath9k_hw_4k_get_spur_channel,
 	.get_eepmisc		= ath9k_hw_4k_get_eepmisc
-};
+पूर्ण;

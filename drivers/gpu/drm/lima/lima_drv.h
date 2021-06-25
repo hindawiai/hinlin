@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
-#ifndef __LIMA_DRV_H__
-#define __LIMA_DRV_H__
+#अगर_अघोषित __LIMA_DRV_H__
+#घोषणा __LIMA_DRV_H__
 
-#include <drm/drm_file.h>
+#समावेश <drm/drm_file.h>
 
-#include "lima_ctx.h"
+#समावेश "lima_ctx.h"
 
-extern int lima_sched_timeout_ms;
-extern uint lima_heap_init_nr_pages;
-extern uint lima_max_error_tasks;
-extern uint lima_job_hang_limit;
+बाह्य पूर्णांक lima_sched_समयout_ms;
+बाह्य uपूर्णांक lima_heap_init_nr_pages;
+बाह्य uपूर्णांक lima_max_error_tasks;
+बाह्य uपूर्णांक lima_job_hang_limit;
 
-struct lima_vm;
-struct lima_bo;
-struct lima_sched_task;
+काष्ठा lima_vm;
+काष्ठा lima_bo;
+काष्ठा lima_sched_task;
 
-struct drm_lima_gem_submit_bo;
+काष्ठा drm_lima_gem_submit_bo;
 
-struct lima_drm_priv {
-	struct lima_vm *vm;
-	struct lima_ctx_mgr ctx_mgr;
-};
+काष्ठा lima_drm_priv अणु
+	काष्ठा lima_vm *vm;
+	काष्ठा lima_ctx_mgr ctx_mgr;
+पूर्ण;
 
-struct lima_submit {
-	struct lima_ctx *ctx;
-	int pipe;
+काष्ठा lima_submit अणु
+	काष्ठा lima_ctx *ctx;
+	पूर्णांक pipe;
 	u32 flags;
 
-	struct drm_lima_gem_submit_bo *bos;
-	struct lima_bo **lbos;
+	काष्ठा drm_lima_gem_submit_bo *bos;
+	काष्ठा lima_bo **lbos;
 	u32 nr_bos;
 
 	u32 in_sync[2];
 	u32 out_sync;
 
-	struct lima_sched_task *task;
-};
+	काष्ठा lima_sched_task *task;
+पूर्ण;
 
-static inline struct lima_drm_priv *
-to_lima_drm_priv(struct drm_file *file)
-{
-	return file->driver_priv;
-}
+अटल अंतरभूत काष्ठा lima_drm_priv *
+to_lima_drm_priv(काष्ठा drm_file *file)
+अणु
+	वापस file->driver_priv;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

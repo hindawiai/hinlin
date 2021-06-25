@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2010 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,67 +22,67 @@
  *
  * Authors: Ben Skeggs
  */
-#include "pll.h"
+#समावेश "pll.h"
 
-#include <subdev/bios.h>
-#include <subdev/bios/pll.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/pll.h>
 
-int
-gt215_pll_calc(struct nvkm_subdev *subdev, struct nvbios_pll *info,
-	       u32 freq, int *pN, int *pfN, int *pM, int *P)
-{
+पूर्णांक
+gt215_pll_calc(काष्ठा nvkm_subdev *subdev, काष्ठा nvbios_pll *info,
+	       u32 freq, पूर्णांक *pN, पूर्णांक *pfN, पूर्णांक *pM, पूर्णांक *P)
+अणु
 	u32 best_err = ~0, err;
-	int M, lM, hM, N, fN;
+	पूर्णांक M, lM, hM, N, fN;
 
 	*P = info->vco1.max_freq / freq;
-	if (*P > info->max_p)
+	अगर (*P > info->max_p)
 		*P = info->max_p;
-	if (*P < info->min_p)
+	अगर (*P < info->min_p)
 		*P = info->min_p;
 
 	lM = (info->refclk + info->vco1.max_inputfreq) / info->vco1.max_inputfreq;
-	lM = max(lM, (int)info->vco1.min_m);
+	lM = max(lM, (पूर्णांक)info->vco1.min_m);
 	hM = (info->refclk + info->vco1.min_inputfreq) / info->vco1.min_inputfreq;
-	hM = min(hM, (int)info->vco1.max_m);
+	hM = min(hM, (पूर्णांक)info->vco1.max_m);
 	lM = min(lM, hM);
 
-	for (M = lM; M <= hM; M++) {
-		u32 tmp = freq * *P * M;
-		N  = tmp / info->refclk;
-		fN = tmp % info->refclk;
+	क्रम (M = lM; M <= hM; M++) अणु
+		u32 पंचांगp = freq * *P * M;
+		N  = पंचांगp / info->refclk;
+		fN = पंचांगp % info->refclk;
 
-		if (!pfN) {
-			if (fN >= info->refclk / 2)
+		अगर (!pfN) अणु
+			अगर (fN >= info->refclk / 2)
 				N++;
-		} else {
-			if (fN <  info->refclk / 2)
+		पूर्ण अन्यथा अणु
+			अगर (fN <  info->refclk / 2)
 				N--;
-			fN = tmp - (N * info->refclk);
-		}
+			fN = पंचांगp - (N * info->refclk);
+		पूर्ण
 
-		if (N < info->vco1.min_n)
-			continue;
-		if (N > info->vco1.max_n)
-			break;
+		अगर (N < info->vco1.min_n)
+			जारी;
+		अगर (N > info->vco1.max_n)
+			अवरोध;
 
-		err = abs(freq - (info->refclk * N / M / *P));
-		if (err < best_err) {
+		err = असल(freq - (info->refclk * N / M / *P));
+		अगर (err < best_err) अणु
 			best_err = err;
 			*pN = N;
 			*pM = M;
-		}
+		पूर्ण
 
-		if (pfN) {
+		अगर (pfN) अणु
 			*pfN = ((fN << 13) + info->refclk / 2) / info->refclk;
 			*pfN = (*pfN - 4096) & 0xffff;
-			return freq;
-		}
-	}
+			वापस freq;
+		पूर्ण
+	पूर्ण
 
-	if (unlikely(best_err == ~0)) {
+	अगर (unlikely(best_err == ~0)) अणु
 		nvkm_error(subdev, "unable to find matching pll values\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return info->refclk * *pN / *pM / *P;
-}
+	वापस info->refclk * *pN / *pM / *P;
+पूर्ण

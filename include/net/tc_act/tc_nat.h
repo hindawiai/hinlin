@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_TC_NAT_H
-#define __NET_TC_NAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_TC_NAT_H
+#घोषणा __NET_TC_NAT_H
 
-#include <linux/types.h>
-#include <net/act_api.h>
+#समावेश <linux/types.h>
+#समावेश <net/act_api.h>
 
-struct tcf_nat {
-	struct tc_action common;
+काष्ठा tcf_nat अणु
+	काष्ठा tc_action common;
 
 	__be32 old_addr;
 	__be32 new_addr;
 	__be32 mask;
 	u32 flags;
-};
+पूर्ण;
 
-#define to_tcf_nat(a) ((struct tcf_nat *)a)
+#घोषणा to_tcf_nat(a) ((काष्ठा tcf_nat *)a)
 
-#endif /* __NET_TC_NAT_H */
+#पूर्ण_अगर /* __NET_TC_NAT_H */

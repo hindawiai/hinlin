@@ -1,113 +1,114 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2015 Thomas Meyer (thomas@m3y3r.de)
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <signal.h>
-#include <string.h>
-#include <sys/resource.h>
-#include <as-layout.h>
-#include <init.h>
-#include <kern_util.h>
-#include <os.h>
-#include <um_malloc.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <संकेत.स>
+#समावेश <माला.स>
+#समावेश <sys/resource.h>
+#समावेश <as-layout.h>
+#समावेश <init.h>
+#समावेश <kern_util.h>
+#समावेश <os.h>
+#समावेश <um_दो_स्मृति.h>
 
-#define PGD_BOUND (4 * 1024 * 1024)
-#define STACKSIZE (8 * 1024 * 1024)
-#define THREAD_NAME_LEN (256)
+#घोषणा PGD_BOUND (4 * 1024 * 1024)
+#घोषणा STACKSIZE (8 * 1024 * 1024)
+#घोषणा THREAD_NAME_LEN (256)
 
-long elf_aux_hwcap;
+दीर्घ elf_aux_hwcap;
 
-static void set_stklim(void)
-{
-	struct rlimit lim;
+अटल व्योम set_stklim(व्योम)
+अणु
+	काष्ठा rlimit lim;
 
-	if (getrlimit(RLIMIT_STACK, &lim) < 0) {
-		perror("getrlimit");
-		exit(1);
-	}
-	if ((lim.rlim_cur == RLIM_INFINITY) || (lim.rlim_cur > STACKSIZE)) {
+	अगर (getrlimit(RLIMIT_STACK, &lim) < 0) अणु
+		लिखो_त्रुटि("getrlimit");
+		निकास(1);
+	पूर्ण
+	अगर ((lim.rlim_cur == RLIM_अनन्त) || (lim.rlim_cur > STACKSIZE)) अणु
 		lim.rlim_cur = STACKSIZE;
-		if (setrlimit(RLIMIT_STACK, &lim) < 0) {
-			perror("setrlimit");
-			exit(1);
-		}
-	}
-}
+		अगर (setrlimit(RLIMIT_STACK, &lim) < 0) अणु
+			लिखो_त्रुटि("setrlimit");
+			निकास(1);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void last_ditch_exit(int sig)
-{
+अटल व्योम last_ditch_निकास(पूर्णांक sig)
+अणु
 	uml_cleanup();
-	exit(1);
-}
+	निकास(1);
+पूर्ण
 
-static void install_fatal_handler(int sig)
-{
-	struct sigaction action;
+अटल व्योम install_fatal_handler(पूर्णांक sig)
+अणु
+	काष्ठा sigaction action;
 
-	/* All signals are enabled in this handler ... */
+	/* All संकेतs are enabled in this handler ... */
 	sigemptyset(&action.sa_mask);
 
 	/*
-	 * ... including the signal being handled, plus we want the
-	 * handler reset to the default behavior, so that if an exit
-	 * handler is hanging for some reason, the UML will just die
-	 * after this signal is sent a second time.
+	 * ... including the संकेत being handled, plus we want the
+	 * handler reset to the शेष behavior, so that अगर an निकास
+	 * handler is hanging क्रम some reason, the UML will just die
+	 * after this संकेत is sent a second समय.
 	 */
 	action.sa_flags = SA_RESETHAND | SA_NODEFER;
-	action.sa_restorer = NULL;
-	action.sa_handler = last_ditch_exit;
-	if (sigaction(sig, &action, NULL) < 0) {
+	action.sa_restorer = शून्य;
+	action.sa_handler = last_ditch_निकास;
+	अगर (sigaction(sig, &action, शून्य) < 0) अणु
 		os_warn("failed to install handler for signal %d "
-			"- errno = %d\n", sig, errno);
-		exit(1);
-	}
-}
+			"- errno = %d\n", sig, त्रुटि_सं);
+		निकास(1);
+	पूर्ण
+पूर्ण
 
-#define UML_LIB_PATH	":" OS_LIB_PATH "/uml"
+#घोषणा UML_LIB_PATH	":" OS_LIB_PATH "/uml"
 
-static void setup_env_path(void)
-{
-	char *new_path = NULL;
-	char *old_path = NULL;
-	int path_len = 0;
+अटल व्योम setup_env_path(व्योम)
+अणु
+	अक्षर *new_path = शून्य;
+	अक्षर *old_path = शून्य;
+	पूर्णांक path_len = 0;
 
-	old_path = getenv("PATH");
+	old_path = दो_पर्या("PATH");
 	/*
-	 * if no PATH variable is set or it has an empty value
-	 * just use the default + /usr/lib/uml
+	 * अगर no PATH variable is set or it has an empty value
+	 * just use the शेष + /usr/lib/uml
 	 */
-	if (!old_path || (path_len = strlen(old_path)) == 0) {
-		if (putenv("PATH=:/bin:/usr/bin/" UML_LIB_PATH))
-			perror("couldn't putenv");
-		return;
-	}
+	अगर (!old_path || (path_len = म_माप(old_path)) == 0) अणु
+		अगर (putenv("PATH=:/bin:/usr/bin/" UML_LIB_PATH))
+			लिखो_त्रुटि("couldn't putenv");
+		वापस;
+	पूर्ण
 
 	/* append /usr/lib/uml to the existing path */
-	path_len += strlen("PATH=" UML_LIB_PATH) + 1;
-	new_path = malloc(path_len);
-	if (!new_path) {
-		perror("couldn't malloc to set a new PATH");
-		return;
-	}
-	snprintf(new_path, path_len, "PATH=%s" UML_LIB_PATH, old_path);
-	if (putenv(new_path)) {
-		perror("couldn't putenv to set a new PATH");
-		free(new_path);
-	}
-}
+	path_len += म_माप("PATH=" UML_LIB_PATH) + 1;
+	new_path = दो_स्मृति(path_len);
+	अगर (!new_path) अणु
+		लिखो_त्रुटि("couldn't malloc to set a new PATH");
+		वापस;
+	पूर्ण
+	snम_लिखो(new_path, path_len, "PATH=%s" UML_LIB_PATH, old_path);
+	अगर (putenv(new_path)) अणु
+		लिखो_त्रुटि("couldn't putenv to set a new PATH");
+		मुक्त(new_path);
+	पूर्ण
+पूर्ण
 
-extern void scan_elf_aux( char **envp);
+बाह्य व्योम scan_elf_aux( अक्षर **envp);
 
-int __init main(int argc, char **argv, char **envp)
-{
-	char **new_argv;
-	int ret, i, err;
+पूर्णांक __init मुख्य(पूर्णांक argc, अक्षर **argv, अक्षर **envp)
+अणु
+	अक्षर **new_argv;
+	पूर्णांक ret, i, err;
 
 	set_stklim();
 
@@ -115,140 +116,140 @@ int __init main(int argc, char **argv, char **envp)
 
 	setsid();
 
-	new_argv = malloc((argc + 1) * sizeof(char *));
-	if (new_argv == NULL) {
-		perror("Mallocing argv");
-		exit(1);
-	}
-	for (i = 0; i < argc; i++) {
+	new_argv = दो_स्मृति((argc + 1) * माप(अक्षर *));
+	अगर (new_argv == शून्य) अणु
+		लिखो_त्रुटि("Mallocing argv");
+		निकास(1);
+	पूर्ण
+	क्रम (i = 0; i < argc; i++) अणु
 		new_argv[i] = strdup(argv[i]);
-		if (new_argv[i] == NULL) {
-			perror("Mallocing an arg");
-			exit(1);
-		}
-	}
-	new_argv[argc] = NULL;
+		अगर (new_argv[i] == शून्य) अणु
+			लिखो_त्रुटि("Mallocing an arg");
+			निकास(1);
+		पूर्ण
+	पूर्ण
+	new_argv[argc] = शून्य;
 
 	/*
-	 * Allow these signals to bring down a UML if all other
+	 * Allow these संकेतs to bring करोwn a UML अगर all other
 	 * methods of control fail.
 	 */
-	install_fatal_handler(SIGINT);
-	install_fatal_handler(SIGTERM);
+	install_fatal_handler(संक_विघ्न);
+	install_fatal_handler(संक_इति);
 
-#ifdef CONFIG_ARCH_REUSE_HOST_VSYSCALL_AREA
+#अगर_घोषित CONFIG_ARCH_REUSE_HOST_VSYSCALL_AREA
 	scan_elf_aux(envp);
-#endif
+#पूर्ण_अगर
 
 	change_sig(SIGPIPE, 0);
-	ret = linux_main(argc, argv);
+	ret = linux_मुख्य(argc, argv);
 
 	/*
-	 * Disable SIGPROF - I have no idea why libc doesn't do this or turn
-	 * off the profiling time, but UML dies with a SIGPROF just before
-	 * exiting when profiling is active.
+	 * Disable SIGPROF - I have no idea why libc करोesn't करो this or turn
+	 * off the profiling समय, but UML dies with a SIGPROF just beक्रमe
+	 * निकासing when profiling is active.
 	 */
 	change_sig(SIGPROF, 0);
 
 	/*
-	 * This signal stuff used to be in the reboot case.  However,
-	 * sometimes a timer signal can come in when we're halting (reproducably
-	 * when writing out gcov information, presumably because that takes
-	 * some time) and cause a segfault.
+	 * This संकेत stuff used to be in the reboot हाल.  However,
+	 * someबार a समयr संकेत can come in when we're halting (reproducably
+	 * when writing out gcov inक्रमmation, presumably because that takes
+	 * some समय) and cause a segfault.
 	 */
 
-	/* stop timers and set timer signal to be ignored */
-	os_timer_disable();
+	/* stop समयrs and set समयr संकेत to be ignored */
+	os_समयr_disable();
 
-	/* disable SIGIO for the fds and set SIGIO to be ignored */
+	/* disable SIGIO क्रम the fds and set SIGIO to be ignored */
 	err = deactivate_all_fds();
-	if (err)
+	अगर (err)
 		os_warn("deactivate_all_fds failed, errno = %d\n", -err);
 
 	/*
-	 * Let any pending signals fire now.  This ensures
+	 * Let any pending संकेतs fire now.  This ensures
 	 * that they won't be delivered after the exec, when
 	 * they are definitely not expected.
 	 */
-	unblock_signals();
+	unblock_संकेतs();
 
 	os_info("\n");
 	/* Reboot */
-	if (ret) {
+	अगर (ret) अणु
 		execvp(new_argv[0], new_argv);
-		perror("Failed to exec kernel");
+		लिखो_त्रुटि("Failed to exec kernel");
 		ret = 1;
-	}
-	return uml_exitcode;
-}
+	पूर्ण
+	वापस uml_निकासcode;
+पूर्ण
 
-extern void *__real_malloc(int);
+बाह्य व्योम *__real_दो_स्मृति(पूर्णांक);
 
-void *__wrap_malloc(int size)
-{
-	void *ret;
+व्योम *__wrap_दो_स्मृति(पूर्णांक size)
+अणु
+	व्योम *ret;
 
-	if (!kmalloc_ok)
-		return __real_malloc(size);
-	else if (size <= UM_KERN_PAGE_SIZE)
+	अगर (!kदो_स्मृति_ok)
+		वापस __real_दो_स्मृति(size);
+	अन्यथा अगर (size <= UM_KERN_PAGE_SIZE)
 		/* finding contiguous pages can be hard*/
-		ret = uml_kmalloc(size, UM_GFP_KERNEL);
-	else ret = vmalloc(size);
+		ret = uml_kदो_स्मृति(size, UM_GFP_KERNEL);
+	अन्यथा ret = vदो_स्मृति(size);
 
 	/*
-	 * glibc people insist that if malloc fails, errno should be
-	 * set by malloc as well. So we do.
+	 * glibc people insist that अगर दो_स्मृति fails, त्रुटि_सं should be
+	 * set by दो_स्मृति as well. So we करो.
 	 */
-	if (ret == NULL)
-		errno = ENOMEM;
+	अगर (ret == शून्य)
+		त्रुटि_सं = ENOMEM;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void *__wrap_calloc(int n, int size)
-{
-	void *ptr = __wrap_malloc(n * size);
+व्योम *__wrap_सुस्मृति(पूर्णांक n, पूर्णांक size)
+अणु
+	व्योम *ptr = __wrap_दो_स्मृति(n * size);
 
-	if (ptr == NULL)
-		return NULL;
-	memset(ptr, 0, n * size);
-	return ptr;
-}
+	अगर (ptr == शून्य)
+		वापस शून्य;
+	स_रखो(ptr, 0, n * size);
+	वापस ptr;
+पूर्ण
 
-extern void __real_free(void *);
+बाह्य व्योम __real_मुक्त(व्योम *);
 
-extern unsigned long high_physmem;
+बाह्य अचिन्हित दीर्घ high_physmem;
 
-void __wrap_free(void *ptr)
-{
-	unsigned long addr = (unsigned long) ptr;
+व्योम __wrap_मुक्त(व्योम *ptr)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) ptr;
 
 	/*
 	 * We need to know how the allocation happened, so it can be correctly
-	 * freed.  This is done by seeing what region of memory the pointer is
+	 * मुक्तd.  This is करोne by seeing what region of memory the poपूर्णांकer is
 	 * in -
-	 * 	physical memory - kmalloc/kfree
-	 *	kernel virtual memory - vmalloc/vfree
-	 * 	anywhere else - malloc/free
-	 * If kmalloc is not yet possible, then either high_physmem and/or
-	 * end_vm are still 0 (as at startup), in which case we call free, or
+	 * 	physical memory - kदो_स्मृति/kमुक्त
+	 *	kernel भव memory - vदो_स्मृति/vमुक्त
+	 * 	anywhere अन्यथा - दो_स्मृति/मुक्त
+	 * If kदो_स्मृति is not yet possible, then either high_physmem and/or
+	 * end_vm are still 0 (as at startup), in which हाल we call मुक्त, or
 	 * we have set them, but anyway addr has not been allocated from those
-	 * areas. So, in both cases __real_free is called.
+	 * areas. So, in both हालs __real_मुक्त is called.
 	 *
-	 * CAN_KMALLOC is checked because it would be bad to free a buffer
-	 * with kmalloc/vmalloc after they have been turned off during
-	 * shutdown.
-	 * XXX: However, we sometimes shutdown CAN_KMALLOC temporarily, so
-	 * there is a possibility for memory leaks.
+	 * CAN_KMALLOC is checked because it would be bad to मुक्त a buffer
+	 * with kदो_स्मृति/vदो_स्मृति after they have been turned off during
+	 * shutकरोwn.
+	 * XXX: However, we someबार shutकरोwn CAN_KMALLOC temporarily, so
+	 * there is a possibility क्रम memory leaks.
 	 */
 
-	if ((addr >= uml_physmem) && (addr < high_physmem)) {
-		if (kmalloc_ok)
-			kfree(ptr);
-	}
-	else if ((addr >= start_vm) && (addr < end_vm)) {
-		if (kmalloc_ok)
-			vfree(ptr);
-	}
-	else __real_free(ptr);
-}
+	अगर ((addr >= uml_physmem) && (addr < high_physmem)) अणु
+		अगर (kदो_स्मृति_ok)
+			kमुक्त(ptr);
+	पूर्ण
+	अन्यथा अगर ((addr >= start_vm) && (addr < end_vm)) अणु
+		अगर (kदो_स्मृति_ok)
+			vमुक्त(ptr);
+	पूर्ण
+	अन्यथा __real_मुक्त(ptr);
+पूर्ण

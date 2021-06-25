@@ -1,17 +1,18 @@
+<शैली गुरु>
 /*
  *
  *   Copyright (c) 2011, 2012, Qualcomm Atheros Communications Inc.
  *   Copyright (c) 2014, I2SE GmbH
  *
- *   Permission to use, copy, modify, and/or distribute this software
- *   for any purpose with or without fee is hereby granted, provided
+ *   Permission to use, copy, modअगरy, and/or distribute this software
+ *   क्रम any purpose with or without fee is hereby granted, provided
  *   that the above copyright notice and this permission notice appear
  *   in all copies.
  *
  *   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
  *   WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
  *   WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- *   THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+ *   THE AUTHOR BE LIABLE FOR ANY SPECIAL, सूचीECT, INसूचीECT, OR
  *   CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
  *   LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
  *   NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
@@ -19,37 +20,37 @@
  *
  */
 
-/*   This module implements the Qualcomm Atheros SPI protocol for
+/*   This module implements the Qualcomm Atheros SPI protocol क्रम
  *   kernel-based SPI device.
  */
 
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/spi/spi.h>
 
-#include "qca_7k.h"
+#समावेश "qca_7k.h"
 
-void
-qcaspi_spi_error(struct qcaspi *qca)
-{
-	if (qca->sync != QCASPI_SYNC_READY)
-		return;
+व्योम
+qcaspi_spi_error(काष्ठा qcaspi *qca)
+अणु
+	अगर (qca->sync != QCASPI_SYNC_READY)
+		वापस;
 
 	netdev_err(qca->net_dev, "spi error\n");
 	qca->sync = QCASPI_SYNC_UNKNOWN;
 	qca->stats.spi_err++;
-}
+पूर्ण
 
-int
-qcaspi_read_register(struct qcaspi *qca, u16 reg, u16 *result)
-{
+पूर्णांक
+qcaspi_पढ़ो_रेजिस्टर(काष्ठा qcaspi *qca, u16 reg, u16 *result)
+अणु
 	__be16 rx_data;
 	__be16 tx_data;
-	struct spi_transfer transfer[2];
-	struct spi_message msg;
-	int ret;
+	काष्ठा spi_transfer transfer[2];
+	काष्ठा spi_message msg;
+	पूर्णांक ret;
 
-	memset(transfer, 0, sizeof(transfer));
+	स_रखो(transfer, 0, माप(transfer));
 
 	spi_message_init(&msg);
 
@@ -63,33 +64,33 @@ qcaspi_read_register(struct qcaspi *qca, u16 reg, u16 *result)
 
 	spi_message_add_tail(&transfer[0], &msg);
 
-	if (qca->legacy_mode) {
+	अगर (qca->legacy_mode) अणु
 		spi_sync(qca->spi_dev, &msg);
 		spi_message_init(&msg);
-	}
+	पूर्ण
 	spi_message_add_tail(&transfer[1], &msg);
 	ret = spi_sync(qca->spi_dev, &msg);
 
-	if (!ret)
+	अगर (!ret)
 		ret = msg.status;
 
-	if (ret)
+	अगर (ret)
 		qcaspi_spi_error(qca);
-	else
+	अन्यथा
 		*result = be16_to_cpu(rx_data);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-__qcaspi_write_register(struct qcaspi *qca, u16 reg, u16 value)
-{
+अटल पूर्णांक
+__qcaspi_ग_लिखो_रेजिस्टर(काष्ठा qcaspi *qca, u16 reg, u16 value)
+अणु
 	__be16 tx_data[2];
-	struct spi_transfer transfer[2];
-	struct spi_message msg;
-	int ret;
+	काष्ठा spi_transfer transfer[2];
+	काष्ठा spi_message msg;
+	पूर्णांक ret;
 
-	memset(&transfer, 0, sizeof(transfer));
+	स_रखो(&transfer, 0, माप(transfer));
 
 	spi_message_init(&msg);
 
@@ -102,48 +103,48 @@ __qcaspi_write_register(struct qcaspi *qca, u16 reg, u16 value)
 	transfer[1].len = QCASPI_CMD_LEN;
 
 	spi_message_add_tail(&transfer[0], &msg);
-	if (qca->legacy_mode) {
+	अगर (qca->legacy_mode) अणु
 		spi_sync(qca->spi_dev, &msg);
 		spi_message_init(&msg);
-	}
+	पूर्ण
 	spi_message_add_tail(&transfer[1], &msg);
 	ret = spi_sync(qca->spi_dev, &msg);
 
-	if (!ret)
+	अगर (!ret)
 		ret = msg.status;
 
-	if (ret)
+	अगर (ret)
 		qcaspi_spi_error(qca);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-qcaspi_write_register(struct qcaspi *qca, u16 reg, u16 value, int retry)
-{
-	int ret, i = 0;
+पूर्णांक
+qcaspi_ग_लिखो_रेजिस्टर(काष्ठा qcaspi *qca, u16 reg, u16 value, पूर्णांक retry)
+अणु
+	पूर्णांक ret, i = 0;
 	u16 confirmed;
 
-	do {
-		ret = __qcaspi_write_register(qca, reg, value);
-		if (ret)
-			return ret;
+	करो अणु
+		ret = __qcaspi_ग_लिखो_रेजिस्टर(qca, reg, value);
+		अगर (ret)
+			वापस ret;
 
-		if (!retry)
-			return 0;
+		अगर (!retry)
+			वापस 0;
 
-		ret = qcaspi_read_register(qca, reg, &confirmed);
-		if (ret)
-			return ret;
+		ret = qcaspi_पढ़ो_रेजिस्टर(qca, reg, &confirmed);
+		अगर (ret)
+			वापस ret;
 
 		ret = confirmed != value;
-		if (!ret)
-			return 0;
+		अगर (!ret)
+			वापस 0;
 
 		i++;
-		qca->stats.write_verify_failed++;
+		qca->stats.ग_लिखो_verअगरy_failed++;
 
-	} while (i <= retry);
+	पूर्ण जबतक (i <= retry);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

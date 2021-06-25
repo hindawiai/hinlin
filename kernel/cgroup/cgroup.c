@@ -1,10 +1,11 @@
+<शैली गुरु>
 /*
- *  Generic process-grouping system.
+ *  Generic process-grouping प्रणाली.
  *
- *  Based originally on the cpuset system, extracted by Paul Menage
+ *  Based originally on the cpuset प्रणाली, extracted by Paul Menage
  *  Copyright (C) 2006 Google, Inc
  *
- *  Notifications support
+ *  Notअगरications support
  *  Copyright (C) 2009 Nokia Corporation
  *  Author: Kirill A. Shutemov
  *
@@ -22,162 +23,162 @@
  *  ---------------------------------------------------
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of the Linux
- *  distribution for more details.
+ *  License.  See the file COPYING in the मुख्य directory of the Linux
+ *  distribution क्रम more details.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include "cgroup-internal.h"
+#समावेश "cgroup-internal.h"
 
-#include <linux/cred.h>
-#include <linux/errno.h>
-#include <linux/init_task.h>
-#include <linux/kernel.h>
-#include <linux/magic.h>
-#include <linux/mutex.h>
-#include <linux/mount.h>
-#include <linux/pagemap.h>
-#include <linux/proc_fs.h>
-#include <linux/rcupdate.h>
-#include <linux/sched.h>
-#include <linux/sched/task.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/percpu-rwsem.h>
-#include <linux/string.h>
-#include <linux/hashtable.h>
-#include <linux/idr.h>
-#include <linux/kthread.h>
-#include <linux/atomic.h>
-#include <linux/cpuset.h>
-#include <linux/proc_ns.h>
-#include <linux/nsproxy.h>
-#include <linux/file.h>
-#include <linux/fs_parser.h>
-#include <linux/sched/cputime.h>
-#include <linux/psi.h>
-#include <net/sock.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init_task.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/percpu-rwsem.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/hashtable.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/cpuset.h>
+#समावेश <linux/proc_ns.h>
+#समावेश <linux/nsproxy.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fs_parser.h>
+#समावेश <linux/sched/cpuसमय.स>
+#समावेश <linux/psi.h>
+#समावेश <net/sock.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/cgroup.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/cgroup.h>
 
-#define CGROUP_FILE_NAME_MAX		(MAX_CGROUP_TYPE_NAMELEN +	\
+#घोषणा CGROUP_खाता_NAME_MAX		(MAX_CGROUP_TYPE_NAMELEN +	\
 					 MAX_CFTYPE_NAME + 2)
-/* let's not notify more than 100 times per second */
-#define CGROUP_FILE_NOTIFY_MIN_INTV	DIV_ROUND_UP(HZ, 100)
+/* let's not notअगरy more than 100 बार per second */
+#घोषणा CGROUP_खाता_NOTIFY_MIN_INTV	DIV_ROUND_UP(HZ, 100)
 
 /*
- * cgroup_mutex is the master lock.  Any modification to cgroup or its
- * hierarchy must be performed while holding it.
+ * cgroup_mutex is the master lock.  Any modअगरication to cgroup or its
+ * hierarchy must be perक्रमmed जबतक holding it.
  *
- * css_set_lock protects task->cgroups pointer, the list of css_set
+ * css_set_lock protects task->cgroups poपूर्णांकer, the list of css_set
  * objects, and the chain of tasks off each css_set.
  *
- * These locks are exported if CONFIG_PROVE_RCU so that accessors in
- * cgroup.h can use them for lockdep annotations.
+ * These locks are exported अगर CONFIG_PROVE_RCU so that accessors in
+ * cgroup.h can use them क्रम lockdep annotations.
  */
 DEFINE_MUTEX(cgroup_mutex);
 DEFINE_SPINLOCK(css_set_lock);
 
-#ifdef CONFIG_PROVE_RCU
+#अगर_घोषित CONFIG_PROVE_RCU
 EXPORT_SYMBOL_GPL(cgroup_mutex);
 EXPORT_SYMBOL_GPL(css_set_lock);
-#endif
+#पूर्ण_अगर
 
 DEFINE_SPINLOCK(trace_cgroup_path_lock);
-char trace_cgroup_path[TRACE_CGROUP_PATH_LEN];
-bool cgroup_debug __read_mostly;
+अक्षर trace_cgroup_path[TRACE_CGROUP_PATH_LEN];
+bool cgroup_debug __पढ़ो_mostly;
 
 /*
  * Protects cgroup_idr and css_idr so that IDs can be released without
  * grabbing cgroup_mutex.
  */
-static DEFINE_SPINLOCK(cgroup_idr_lock);
+अटल DEFINE_SPINLOCK(cgroup_idr_lock);
 
 /*
- * Protects cgroup_file->kn for !self csses.  It synchronizes notifications
+ * Protects cgroup_file->kn क्रम !self csses.  It synchronizes notअगरications
  * against file removal/re-creation across css hiding.
  */
-static DEFINE_SPINLOCK(cgroup_file_kn_lock);
+अटल DEFINE_SPINLOCK(cgroup_file_kn_lock);
 
-DEFINE_PERCPU_RWSEM(cgroup_threadgroup_rwsem);
+DEFINE_PERCPU_RWSEM(cgroup_thपढ़ोgroup_rwsem);
 
-#define cgroup_assert_mutex_or_rcu_locked()				\
-	RCU_LOCKDEP_WARN(!rcu_read_lock_held() &&			\
+#घोषणा cgroup_निश्चित_mutex_or_rcu_locked()				\
+	RCU_LOCKDEP_WARN(!rcu_पढ़ो_lock_held() &&			\
 			   !lockdep_is_held(&cgroup_mutex),		\
 			   "cgroup_mutex or RCU read lock required");
 
 /*
- * cgroup destruction makes heavy use of work items and there can be a lot
- * of concurrent destructions.  Use a separate workqueue so that cgroup
- * destruction work items don't end up filling up max_active of system_wq
+ * cgroup deकाष्ठाion makes heavy use of work items and there can be a lot
+ * of concurrent deकाष्ठाions.  Use a separate workqueue so that cgroup
+ * deकाष्ठाion work items करोn't end up filling up max_active of प्रणाली_wq
  * which may lead to deadlock.
  */
-static struct workqueue_struct *cgroup_destroy_wq;
+अटल काष्ठा workqueue_काष्ठा *cgroup_destroy_wq;
 
-/* generate an array of cgroup subsystem pointers */
-#define SUBSYS(_x) [_x ## _cgrp_id] = &_x ## _cgrp_subsys,
-struct cgroup_subsys *cgroup_subsys[] = {
-#include <linux/cgroup_subsys.h>
-};
-#undef SUBSYS
+/* generate an array of cgroup subप्रणाली poपूर्णांकers */
+#घोषणा SUBSYS(_x) [_x ## _cgrp_id] = &_x ## _cgrp_subsys,
+काष्ठा cgroup_subsys *cgroup_subsys[] = अणु
+#समावेश <linux/cgroup_subsys.h>
+पूर्ण;
+#अघोषित SUBSYS
 
-/* array of cgroup subsystem names */
-#define SUBSYS(_x) [_x ## _cgrp_id] = #_x,
-static const char *cgroup_subsys_name[] = {
-#include <linux/cgroup_subsys.h>
-};
-#undef SUBSYS
+/* array of cgroup subप्रणाली names */
+#घोषणा SUBSYS(_x) [_x ## _cgrp_id] = #_x,
+अटल स्थिर अक्षर *cgroup_subsys_name[] = अणु
+#समावेश <linux/cgroup_subsys.h>
+पूर्ण;
+#अघोषित SUBSYS
 
-/* array of static_keys for cgroup_subsys_enabled() and cgroup_subsys_on_dfl() */
-#define SUBSYS(_x)								\
+/* array of अटल_keys क्रम cgroup_subsys_enabled() and cgroup_subsys_on_dfl() */
+#घोषणा SUBSYS(_x)								\
 	DEFINE_STATIC_KEY_TRUE(_x ## _cgrp_subsys_enabled_key);			\
 	DEFINE_STATIC_KEY_TRUE(_x ## _cgrp_subsys_on_dfl_key);			\
 	EXPORT_SYMBOL_GPL(_x ## _cgrp_subsys_enabled_key);			\
 	EXPORT_SYMBOL_GPL(_x ## _cgrp_subsys_on_dfl_key);
-#include <linux/cgroup_subsys.h>
-#undef SUBSYS
+#समावेश <linux/cgroup_subsys.h>
+#अघोषित SUBSYS
 
-#define SUBSYS(_x) [_x ## _cgrp_id] = &_x ## _cgrp_subsys_enabled_key,
-static struct static_key_true *cgroup_subsys_enabled_key[] = {
-#include <linux/cgroup_subsys.h>
-};
-#undef SUBSYS
+#घोषणा SUBSYS(_x) [_x ## _cgrp_id] = &_x ## _cgrp_subsys_enabled_key,
+अटल काष्ठा अटल_key_true *cgroup_subsys_enabled_key[] = अणु
+#समावेश <linux/cgroup_subsys.h>
+पूर्ण;
+#अघोषित SUBSYS
 
-#define SUBSYS(_x) [_x ## _cgrp_id] = &_x ## _cgrp_subsys_on_dfl_key,
-static struct static_key_true *cgroup_subsys_on_dfl_key[] = {
-#include <linux/cgroup_subsys.h>
-};
-#undef SUBSYS
+#घोषणा SUBSYS(_x) [_x ## _cgrp_id] = &_x ## _cgrp_subsys_on_dfl_key,
+अटल काष्ठा अटल_key_true *cgroup_subsys_on_dfl_key[] = अणु
+#समावेश <linux/cgroup_subsys.h>
+पूर्ण;
+#अघोषित SUBSYS
 
-static DEFINE_PER_CPU(struct cgroup_rstat_cpu, cgrp_dfl_root_rstat_cpu);
+अटल DEFINE_PER_CPU(काष्ठा cgroup_rstat_cpu, cgrp_dfl_root_rstat_cpu);
 
-/* the default hierarchy */
-struct cgroup_root cgrp_dfl_root = { .cgrp.rstat_cpu = &cgrp_dfl_root_rstat_cpu };
+/* the शेष hierarchy */
+काष्ठा cgroup_root cgrp_dfl_root = अणु .cgrp.rstat_cpu = &cgrp_dfl_root_rstat_cpu पूर्ण;
 EXPORT_SYMBOL_GPL(cgrp_dfl_root);
 
 /*
- * The default hierarchy always exists but is hidden until mounted for the
- * first time.  This is for backward compatibility.
+ * The शेष hierarchy always exists but is hidden until mounted क्रम the
+ * first समय.  This is क्रम backward compatibility.
  */
-static bool cgrp_dfl_visible;
+अटल bool cgrp_dfl_visible;
 
-/* some controllers are not supported in the default hierarchy */
-static u16 cgrp_dfl_inhibit_ss_mask;
+/* some controllers are not supported in the शेष hierarchy */
+अटल u16 cgrp_dfl_inhibit_ss_mask;
 
-/* some controllers are implicitly enabled on the default hierarchy */
-static u16 cgrp_dfl_implicit_ss_mask;
+/* some controllers are implicitly enabled on the शेष hierarchy */
+अटल u16 cgrp_dfl_implicit_ss_mask;
 
-/* some controllers can be threaded on the default hierarchy */
-static u16 cgrp_dfl_threaded_ss_mask;
+/* some controllers can be thपढ़ोed on the शेष hierarchy */
+अटल u16 cgrp_dfl_thपढ़ोed_ss_mask;
 
 /* The list of hierarchy roots */
 LIST_HEAD(cgroup_roots);
-static int cgroup_root_count;
+अटल पूर्णांक cgroup_root_count;
 
-/* hierarchy ID allocation and mapping, protected by cgroup_mutex */
-static DEFINE_IDR(cgroup_hierarchy_idr);
+/* hierarchy ID allocation and mapping, रक्षित by cgroup_mutex */
+अटल DEFINE_IDR(cgroup_hierarchy_idr);
 
 /*
  * Assign a monotonically increasing serial number to csses.  It guarantees
@@ -186,66 +187,66 @@ static DEFINE_IDR(cgroup_hierarchy_idr);
  * guarantees that sibling csses are always sorted in the ascending serial
  * number order on the list.  Protected by cgroup_mutex.
  */
-static u64 css_serial_nr_next = 1;
+अटल u64 css_serial_nr_next = 1;
 
 /*
- * These bitmasks identify subsystems with specific features to avoid
- * having to do iterative checks repeatedly.
+ * These biपंचांगasks identअगरy subप्रणालीs with specअगरic features to aव्योम
+ * having to करो iterative checks repeatedly.
  */
-static u16 have_fork_callback __read_mostly;
-static u16 have_exit_callback __read_mostly;
-static u16 have_release_callback __read_mostly;
-static u16 have_canfork_callback __read_mostly;
+अटल u16 have_विभाजन_callback __पढ़ो_mostly;
+अटल u16 have_निकास_callback __पढ़ो_mostly;
+अटल u16 have_release_callback __पढ़ो_mostly;
+अटल u16 have_canविभाजन_callback __पढ़ो_mostly;
 
-/* cgroup namespace for init task */
-struct cgroup_namespace init_cgroup_ns = {
+/* cgroup namespace क्रम init task */
+काष्ठा cgroup_namespace init_cgroup_ns = अणु
 	.ns.count	= REFCOUNT_INIT(2),
 	.user_ns	= &init_user_ns,
 	.ns.ops		= &cgroupns_operations,
 	.ns.inum	= PROC_CGROUP_INIT_INO,
 	.root_cset	= &init_css_set,
-};
+पूर्ण;
 
-static struct file_system_type cgroup2_fs_type;
-static struct cftype cgroup_base_files[];
+अटल काष्ठा file_प्रणाली_type cgroup2_fs_type;
+अटल काष्ठा cftype cgroup_base_files[];
 
-static int cgroup_apply_control(struct cgroup *cgrp);
-static void cgroup_finalize_control(struct cgroup *cgrp, int ret);
-static void css_task_iter_skip(struct css_task_iter *it,
-			       struct task_struct *task);
-static int cgroup_destroy_locked(struct cgroup *cgrp);
-static struct cgroup_subsys_state *css_create(struct cgroup *cgrp,
-					      struct cgroup_subsys *ss);
-static void css_release(struct percpu_ref *ref);
-static void kill_css(struct cgroup_subsys_state *css);
-static int cgroup_addrm_files(struct cgroup_subsys_state *css,
-			      struct cgroup *cgrp, struct cftype cfts[],
+अटल पूर्णांक cgroup_apply_control(काष्ठा cgroup *cgrp);
+अटल व्योम cgroup_finalize_control(काष्ठा cgroup *cgrp, पूर्णांक ret);
+अटल व्योम css_task_iter_skip(काष्ठा css_task_iter *it,
+			       काष्ठा task_काष्ठा *task);
+अटल पूर्णांक cgroup_destroy_locked(काष्ठा cgroup *cgrp);
+अटल काष्ठा cgroup_subsys_state *css_create(काष्ठा cgroup *cgrp,
+					      काष्ठा cgroup_subsys *ss);
+अटल व्योम css_release(काष्ठा percpu_ref *ref);
+अटल व्योम समाप्त_css(काष्ठा cgroup_subsys_state *css);
+अटल पूर्णांक cgroup_addrm_files(काष्ठा cgroup_subsys_state *css,
+			      काष्ठा cgroup *cgrp, काष्ठा cftype cfts[],
 			      bool is_add);
 
 /**
  * cgroup_ssid_enabled - cgroup subsys enabled test by subsys ID
- * @ssid: subsys ID of interest
+ * @ssid: subsys ID of पूर्णांकerest
  *
  * cgroup_subsys_enabled() can only be used with literal subsys names which
- * is fine for individual subsystems but unsuitable for cgroup core.  This
- * is slower static_key_enabled() based test indexed by @ssid.
+ * is fine क्रम inभागidual subप्रणालीs but unsuitable क्रम cgroup core.  This
+ * is slower अटल_key_enabled() based test indexed by @ssid.
  */
-bool cgroup_ssid_enabled(int ssid)
-{
-	if (CGROUP_SUBSYS_COUNT == 0)
-		return false;
+bool cgroup_ssid_enabled(पूर्णांक ssid)
+अणु
+	अगर (CGROUP_SUBSYS_COUNT == 0)
+		वापस false;
 
-	return static_key_enabled(cgroup_subsys_enabled_key[ssid]);
-}
+	वापस अटल_key_enabled(cgroup_subsys_enabled_key[ssid]);
+पूर्ण
 
 /**
- * cgroup_on_dfl - test whether a cgroup is on the default hierarchy
- * @cgrp: the cgroup of interest
+ * cgroup_on_dfl - test whether a cgroup is on the शेष hierarchy
+ * @cgrp: the cgroup of पूर्णांकerest
  *
- * The default hierarchy is the v2 interface of cgroup and this function
- * can be used to test whether a cgroup is on the default hierarchy for
- * cases where a subsystem should behave differently depending on the
- * interface version.
+ * The शेष hierarchy is the v2 पूर्णांकerface of cgroup and this function
+ * can be used to test whether a cgroup is on the शेष hierarchy क्रम
+ * हालs where a subप्रणाली should behave dअगरferently depending on the
+ * पूर्णांकerface version.
  *
  * List of changed behaviors:
  *
@@ -256,517 +257,517 @@ bool cgroup_ssid_enabled(int ssid)
  *
  * - Remount is disallowed.
  *
- * - rename(2) is disallowed.
+ * - नाम(2) is disallowed.
  *
- * - "tasks" is removed.  Everything should be at process granularity.  Use
+ * - "tasks" is हटाओd.  Everything should be at process granularity.  Use
  *   "cgroup.procs" instead.
  *
  * - "cgroup.procs" is not sorted.  pids will be unique unless they got
- *   recycled in-between reads.
+ *   recycled in-between पढ़ोs.
  *
- * - "release_agent" and "notify_on_release" are removed.  Replacement
- *   notification mechanism will be implemented.
+ * - "release_agent" and "notify_on_release" are हटाओd.  Replacement
+ *   notअगरication mechanism will be implemented.
  *
- * - "cgroup.clone_children" is removed.
+ * - "cgroup.clone_children" is हटाओd.
  *
- * - "cgroup.subtree_populated" is available.  Its value is 0 if the cgroup
+ * - "cgroup.subtree_populated" is available.  Its value is 0 अगर the cgroup
  *   and its descendants contain no task; otherwise, 1.  The file also
- *   generates kernfs notification which can be monitored through poll and
- *   [di]notify when the value of the file changes.
+ *   generates kernfs notअगरication which can be monitored through poll and
+ *   [di]notअगरy when the value of the file changes.
  *
  * - cpuset: tasks will be kept in empty cpusets when hotplug happens and
  *   take masks of ancestors with non-empty cpus/mems, instead of being
  *   moved to an ancestor.
  *
- * - cpuset: a task can be moved into an empty cpuset, and again it takes
+ * - cpuset: a task can be moved पूर्णांकo an empty cpuset, and again it takes
  *   masks of ancestors.
  *
  * - blkcg: blk-throttle becomes properly hierarchical.
  *
- * - debug: disallowed on the default hierarchy.
+ * - debug: disallowed on the शेष hierarchy.
  */
-bool cgroup_on_dfl(const struct cgroup *cgrp)
-{
-	return cgrp->root == &cgrp_dfl_root;
-}
+bool cgroup_on_dfl(स्थिर काष्ठा cgroup *cgrp)
+अणु
+	वापस cgrp->root == &cgrp_dfl_root;
+पूर्ण
 
 /* IDR wrappers which synchronize using cgroup_idr_lock */
-static int cgroup_idr_alloc(struct idr *idr, void *ptr, int start, int end,
+अटल पूर्णांक cgroup_idr_alloc(काष्ठा idr *idr, व्योम *ptr, पूर्णांक start, पूर्णांक end,
 			    gfp_t gfp_mask)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
 	idr_preload(gfp_mask);
 	spin_lock_bh(&cgroup_idr_lock);
-	ret = idr_alloc(idr, ptr, start, end, gfp_mask & ~__GFP_DIRECT_RECLAIM);
+	ret = idr_alloc(idr, ptr, start, end, gfp_mask & ~__GFP_सूचीECT_RECLAIM);
 	spin_unlock_bh(&cgroup_idr_lock);
 	idr_preload_end();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void *cgroup_idr_replace(struct idr *idr, void *ptr, int id)
-{
-	void *ret;
+अटल व्योम *cgroup_idr_replace(काष्ठा idr *idr, व्योम *ptr, पूर्णांक id)
+अणु
+	व्योम *ret;
 
 	spin_lock_bh(&cgroup_idr_lock);
 	ret = idr_replace(idr, ptr, id);
 	spin_unlock_bh(&cgroup_idr_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cgroup_idr_remove(struct idr *idr, int id)
-{
+अटल व्योम cgroup_idr_हटाओ(काष्ठा idr *idr, पूर्णांक id)
+अणु
 	spin_lock_bh(&cgroup_idr_lock);
-	idr_remove(idr, id);
+	idr_हटाओ(idr, id);
 	spin_unlock_bh(&cgroup_idr_lock);
-}
+पूर्ण
 
-static bool cgroup_has_tasks(struct cgroup *cgrp)
-{
-	return cgrp->nr_populated_csets;
-}
+अटल bool cgroup_has_tasks(काष्ठा cgroup *cgrp)
+अणु
+	वापस cgrp->nr_populated_csets;
+पूर्ण
 
-bool cgroup_is_threaded(struct cgroup *cgrp)
-{
-	return cgrp->dom_cgrp != cgrp;
-}
+bool cgroup_is_thपढ़ोed(काष्ठा cgroup *cgrp)
+अणु
+	वापस cgrp->करोm_cgrp != cgrp;
+पूर्ण
 
-/* can @cgrp host both domain and threaded children? */
-static bool cgroup_is_mixable(struct cgroup *cgrp)
-{
+/* can @cgrp host both करोमुख्य and thपढ़ोed children? */
+अटल bool cgroup_is_mixable(काष्ठा cgroup *cgrp)
+अणु
 	/*
-	 * Root isn't under domain level resource control exempting it from
-	 * the no-internal-process constraint, so it can serve as a thread
-	 * root and a parent of resource domains at the same time.
+	 * Root isn't under करोमुख्य level resource control exempting it from
+	 * the no-पूर्णांकernal-process स्थिरraपूर्णांक, so it can serve as a thपढ़ो
+	 * root and a parent of resource करोमुख्यs at the same समय.
 	 */
-	return !cgroup_parent(cgrp);
-}
+	वापस !cgroup_parent(cgrp);
+पूर्ण
 
-/* can @cgrp become a thread root? Should always be true for a thread root */
-static bool cgroup_can_be_thread_root(struct cgroup *cgrp)
-{
-	/* mixables don't care */
-	if (cgroup_is_mixable(cgrp))
-		return true;
+/* can @cgrp become a thपढ़ो root? Should always be true क्रम a thपढ़ो root */
+अटल bool cgroup_can_be_thपढ़ो_root(काष्ठा cgroup *cgrp)
+अणु
+	/* mixables करोn't care */
+	अगर (cgroup_is_mixable(cgrp))
+		वापस true;
 
-	/* domain roots can't be nested under threaded */
-	if (cgroup_is_threaded(cgrp))
-		return false;
+	/* करोमुख्य roots can't be nested under thपढ़ोed */
+	अगर (cgroup_is_thपढ़ोed(cgrp))
+		वापस false;
 
-	/* can only have either domain or threaded children */
-	if (cgrp->nr_populated_domain_children)
-		return false;
+	/* can only have either करोमुख्य or thपढ़ोed children */
+	अगर (cgrp->nr_populated_करोमुख्य_children)
+		वापस false;
 
-	/* and no domain controllers can be enabled */
-	if (cgrp->subtree_control & ~cgrp_dfl_threaded_ss_mask)
-		return false;
+	/* and no करोमुख्य controllers can be enabled */
+	अगर (cgrp->subtree_control & ~cgrp_dfl_thपढ़ोed_ss_mask)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* is @cgrp root of a threaded subtree? */
-bool cgroup_is_thread_root(struct cgroup *cgrp)
-{
-	/* thread root should be a domain */
-	if (cgroup_is_threaded(cgrp))
-		return false;
+/* is @cgrp root of a thपढ़ोed subtree? */
+bool cgroup_is_thपढ़ो_root(काष्ठा cgroup *cgrp)
+अणु
+	/* thपढ़ो root should be a करोमुख्य */
+	अगर (cgroup_is_thपढ़ोed(cgrp))
+		वापस false;
 
-	/* a domain w/ threaded children is a thread root */
-	if (cgrp->nr_threaded_children)
-		return true;
+	/* a करोमुख्य w/ thपढ़ोed children is a thपढ़ो root */
+	अगर (cgrp->nr_thपढ़ोed_children)
+		वापस true;
 
 	/*
-	 * A domain which has tasks and explicit threaded controllers
-	 * enabled is a thread root.
+	 * A करोमुख्य which has tasks and explicit thपढ़ोed controllers
+	 * enabled is a thपढ़ो root.
 	 */
-	if (cgroup_has_tasks(cgrp) &&
-	    (cgrp->subtree_control & cgrp_dfl_threaded_ss_mask))
-		return true;
+	अगर (cgroup_has_tasks(cgrp) &&
+	    (cgrp->subtree_control & cgrp_dfl_thपढ़ोed_ss_mask))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* a domain which isn't connected to the root w/o brekage can't be used */
-static bool cgroup_is_valid_domain(struct cgroup *cgrp)
-{
-	/* the cgroup itself can be a thread root */
-	if (cgroup_is_threaded(cgrp))
-		return false;
+/* a करोमुख्य which isn't connected to the root w/o brekage can't be used */
+अटल bool cgroup_is_valid_करोमुख्य(काष्ठा cgroup *cgrp)
+अणु
+	/* the cgroup itself can be a thपढ़ो root */
+	अगर (cgroup_is_thपढ़ोed(cgrp))
+		वापस false;
 
 	/* but the ancestors can't be unless mixable */
-	while ((cgrp = cgroup_parent(cgrp))) {
-		if (!cgroup_is_mixable(cgrp) && cgroup_is_thread_root(cgrp))
-			return false;
-		if (cgroup_is_threaded(cgrp))
-			return false;
-	}
+	जबतक ((cgrp = cgroup_parent(cgrp))) अणु
+		अगर (!cgroup_is_mixable(cgrp) && cgroup_is_thपढ़ो_root(cgrp))
+			वापस false;
+		अगर (cgroup_is_thपढ़ोed(cgrp))
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* subsystems visibly enabled on a cgroup */
-static u16 cgroup_control(struct cgroup *cgrp)
-{
-	struct cgroup *parent = cgroup_parent(cgrp);
+/* subप्रणालीs visibly enabled on a cgroup */
+अटल u16 cgroup_control(काष्ठा cgroup *cgrp)
+अणु
+	काष्ठा cgroup *parent = cgroup_parent(cgrp);
 	u16 root_ss_mask = cgrp->root->subsys_mask;
 
-	if (parent) {
+	अगर (parent) अणु
 		u16 ss_mask = parent->subtree_control;
 
-		/* threaded cgroups can only have threaded controllers */
-		if (cgroup_is_threaded(cgrp))
-			ss_mask &= cgrp_dfl_threaded_ss_mask;
-		return ss_mask;
-	}
+		/* thपढ़ोed cgroups can only have thपढ़ोed controllers */
+		अगर (cgroup_is_thपढ़ोed(cgrp))
+			ss_mask &= cgrp_dfl_thपढ़ोed_ss_mask;
+		वापस ss_mask;
+	पूर्ण
 
-	if (cgroup_on_dfl(cgrp))
+	अगर (cgroup_on_dfl(cgrp))
 		root_ss_mask &= ~(cgrp_dfl_inhibit_ss_mask |
 				  cgrp_dfl_implicit_ss_mask);
-	return root_ss_mask;
-}
+	वापस root_ss_mask;
+पूर्ण
 
-/* subsystems enabled on a cgroup */
-static u16 cgroup_ss_mask(struct cgroup *cgrp)
-{
-	struct cgroup *parent = cgroup_parent(cgrp);
+/* subप्रणालीs enabled on a cgroup */
+अटल u16 cgroup_ss_mask(काष्ठा cgroup *cgrp)
+अणु
+	काष्ठा cgroup *parent = cgroup_parent(cgrp);
 
-	if (parent) {
+	अगर (parent) अणु
 		u16 ss_mask = parent->subtree_ss_mask;
 
-		/* threaded cgroups can only have threaded controllers */
-		if (cgroup_is_threaded(cgrp))
-			ss_mask &= cgrp_dfl_threaded_ss_mask;
-		return ss_mask;
-	}
+		/* thपढ़ोed cgroups can only have thपढ़ोed controllers */
+		अगर (cgroup_is_thपढ़ोed(cgrp))
+			ss_mask &= cgrp_dfl_thपढ़ोed_ss_mask;
+		वापस ss_mask;
+	पूर्ण
 
-	return cgrp->root->subsys_mask;
-}
+	वापस cgrp->root->subsys_mask;
+पूर्ण
 
 /**
- * cgroup_css - obtain a cgroup's css for the specified subsystem
- * @cgrp: the cgroup of interest
- * @ss: the subsystem of interest (%NULL returns @cgrp->self)
+ * cgroup_css - obtain a cgroup's css क्रम the specअगरied subप्रणाली
+ * @cgrp: the cgroup of पूर्णांकerest
+ * @ss: the subप्रणाली of पूर्णांकerest (%शून्य वापसs @cgrp->self)
  *
  * Return @cgrp's css (cgroup_subsys_state) associated with @ss.  This
- * function must be called either under cgroup_mutex or rcu_read_lock() and
- * the caller is responsible for pinning the returned css if it wants to
- * keep accessing it outside the said locks.  This function may return
- * %NULL if @cgrp doesn't have @subsys_id enabled.
+ * function must be called either under cgroup_mutex or rcu_पढ़ो_lock() and
+ * the caller is responsible क्रम pinning the वापसed css अगर it wants to
+ * keep accessing it outside the said locks.  This function may वापस
+ * %शून्य अगर @cgrp करोesn't have @subsys_id enabled.
  */
-static struct cgroup_subsys_state *cgroup_css(struct cgroup *cgrp,
-					      struct cgroup_subsys *ss)
-{
-	if (ss)
-		return rcu_dereference_check(cgrp->subsys[ss->id],
+अटल काष्ठा cgroup_subsys_state *cgroup_css(काष्ठा cgroup *cgrp,
+					      काष्ठा cgroup_subsys *ss)
+अणु
+	अगर (ss)
+		वापस rcu_dereference_check(cgrp->subsys[ss->id],
 					lockdep_is_held(&cgroup_mutex));
-	else
-		return &cgrp->self;
-}
+	अन्यथा
+		वापस &cgrp->self;
+पूर्ण
 
 /**
- * cgroup_tryget_css - try to get a cgroup's css for the specified subsystem
- * @cgrp: the cgroup of interest
- * @ss: the subsystem of interest
+ * cgroup_tryget_css - try to get a cgroup's css क्रम the specअगरied subप्रणाली
+ * @cgrp: the cgroup of पूर्णांकerest
+ * @ss: the subप्रणाली of पूर्णांकerest
  *
  * Find and get @cgrp's css associated with @ss.  If the css doesn't exist
- * or is offline, %NULL is returned.
+ * or is offline, %शून्य is वापसed.
  */
-static struct cgroup_subsys_state *cgroup_tryget_css(struct cgroup *cgrp,
-						     struct cgroup_subsys *ss)
-{
-	struct cgroup_subsys_state *css;
+अटल काष्ठा cgroup_subsys_state *cgroup_tryget_css(काष्ठा cgroup *cgrp,
+						     काष्ठा cgroup_subsys *ss)
+अणु
+	काष्ठा cgroup_subsys_state *css;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	css = cgroup_css(cgrp, ss);
-	if (css && !css_tryget_online(css))
-		css = NULL;
-	rcu_read_unlock();
+	अगर (css && !css_tryget_online(css))
+		css = शून्य;
+	rcu_पढ़ो_unlock();
 
-	return css;
-}
+	वापस css;
+पूर्ण
 
 /**
- * cgroup_e_css_by_mask - obtain a cgroup's effective css for the specified ss
- * @cgrp: the cgroup of interest
- * @ss: the subsystem of interest (%NULL returns @cgrp->self)
+ * cgroup_e_css_by_mask - obtain a cgroup's effective css क्रम the specअगरied ss
+ * @cgrp: the cgroup of पूर्णांकerest
+ * @ss: the subप्रणाली of पूर्णांकerest (%शून्य वापसs @cgrp->self)
  *
- * Similar to cgroup_css() but returns the effective css, which is defined
+ * Similar to cgroup_css() but वापसs the effective css, which is defined
  * as the matching css of the nearest ancestor including self which has @ss
  * enabled.  If @ss is associated with the hierarchy @cgrp is on, this
- * function is guaranteed to return non-NULL css.
+ * function is guaranteed to वापस non-शून्य css.
  */
-static struct cgroup_subsys_state *cgroup_e_css_by_mask(struct cgroup *cgrp,
-							struct cgroup_subsys *ss)
-{
-	lockdep_assert_held(&cgroup_mutex);
+अटल काष्ठा cgroup_subsys_state *cgroup_e_css_by_mask(काष्ठा cgroup *cgrp,
+							काष्ठा cgroup_subsys *ss)
+अणु
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	if (!ss)
-		return &cgrp->self;
+	अगर (!ss)
+		वापस &cgrp->self;
 
 	/*
-	 * This function is used while updating css associations and thus
+	 * This function is used जबतक updating css associations and thus
 	 * can't test the csses directly.  Test ss_mask.
 	 */
-	while (!(cgroup_ss_mask(cgrp) & (1 << ss->id))) {
+	जबतक (!(cgroup_ss_mask(cgrp) & (1 << ss->id))) अणु
 		cgrp = cgroup_parent(cgrp);
-		if (!cgrp)
-			return NULL;
-	}
+		अगर (!cgrp)
+			वापस शून्य;
+	पूर्ण
 
-	return cgroup_css(cgrp, ss);
-}
+	वापस cgroup_css(cgrp, ss);
+पूर्ण
 
 /**
- * cgroup_e_css - obtain a cgroup's effective css for the specified subsystem
- * @cgrp: the cgroup of interest
- * @ss: the subsystem of interest
+ * cgroup_e_css - obtain a cgroup's effective css क्रम the specअगरied subप्रणाली
+ * @cgrp: the cgroup of पूर्णांकerest
+ * @ss: the subप्रणाली of पूर्णांकerest
  *
- * Find and get the effective css of @cgrp for @ss.  The effective css is
+ * Find and get the effective css of @cgrp क्रम @ss.  The effective css is
  * defined as the matching css of the nearest ancestor including self which
  * has @ss enabled.  If @ss is not mounted on the hierarchy @cgrp is on,
- * the root css is returned, so this function always returns a valid css.
+ * the root css is वापसed, so this function always वापसs a valid css.
  *
- * The returned css is not guaranteed to be online, and therefore it is the
- * callers responsibility to try get a reference for it.
+ * The वापसed css is not guaranteed to be online, and thereक्रमe it is the
+ * callers responsibility to try get a reference क्रम it.
  */
-struct cgroup_subsys_state *cgroup_e_css(struct cgroup *cgrp,
-					 struct cgroup_subsys *ss)
-{
-	struct cgroup_subsys_state *css;
+काष्ठा cgroup_subsys_state *cgroup_e_css(काष्ठा cgroup *cgrp,
+					 काष्ठा cgroup_subsys *ss)
+अणु
+	काष्ठा cgroup_subsys_state *css;
 
-	do {
+	करो अणु
 		css = cgroup_css(cgrp, ss);
 
-		if (css)
-			return css;
+		अगर (css)
+			वापस css;
 		cgrp = cgroup_parent(cgrp);
-	} while (cgrp);
+	पूर्ण जबतक (cgrp);
 
-	return init_css_set.subsys[ss->id];
-}
+	वापस init_css_set.subsys[ss->id];
+पूर्ण
 
 /**
- * cgroup_get_e_css - get a cgroup's effective css for the specified subsystem
- * @cgrp: the cgroup of interest
- * @ss: the subsystem of interest
+ * cgroup_get_e_css - get a cgroup's effective css क्रम the specअगरied subप्रणाली
+ * @cgrp: the cgroup of पूर्णांकerest
+ * @ss: the subप्रणाली of पूर्णांकerest
  *
- * Find and get the effective css of @cgrp for @ss.  The effective css is
+ * Find and get the effective css of @cgrp क्रम @ss.  The effective css is
  * defined as the matching css of the nearest ancestor including self which
  * has @ss enabled.  If @ss is not mounted on the hierarchy @cgrp is on,
- * the root css is returned, so this function always returns a valid css.
- * The returned css must be put using css_put().
+ * the root css is वापसed, so this function always वापसs a valid css.
+ * The वापसed css must be put using css_put().
  */
-struct cgroup_subsys_state *cgroup_get_e_css(struct cgroup *cgrp,
-					     struct cgroup_subsys *ss)
-{
-	struct cgroup_subsys_state *css;
+काष्ठा cgroup_subsys_state *cgroup_get_e_css(काष्ठा cgroup *cgrp,
+					     काष्ठा cgroup_subsys *ss)
+अणु
+	काष्ठा cgroup_subsys_state *css;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	do {
+	करो अणु
 		css = cgroup_css(cgrp, ss);
 
-		if (css && css_tryget_online(css))
-			goto out_unlock;
+		अगर (css && css_tryget_online(css))
+			जाओ out_unlock;
 		cgrp = cgroup_parent(cgrp);
-	} while (cgrp);
+	पूर्ण जबतक (cgrp);
 
 	css = init_css_set.subsys[ss->id];
 	css_get(css);
 out_unlock:
-	rcu_read_unlock();
-	return css;
-}
+	rcu_पढ़ो_unlock();
+	वापस css;
+पूर्ण
 
-static void cgroup_get_live(struct cgroup *cgrp)
-{
+अटल व्योम cgroup_get_live(काष्ठा cgroup *cgrp)
+अणु
 	WARN_ON_ONCE(cgroup_is_dead(cgrp));
 	css_get(&cgrp->self);
-}
+पूर्ण
 
 /**
  * __cgroup_task_count - count the number of tasks in a cgroup. The caller
- * is responsible for taking the css_set_lock.
+ * is responsible क्रम taking the css_set_lock.
  * @cgrp: the cgroup in question
  */
-int __cgroup_task_count(const struct cgroup *cgrp)
-{
-	int count = 0;
-	struct cgrp_cset_link *link;
+पूर्णांक __cgroup_task_count(स्थिर काष्ठा cgroup *cgrp)
+अणु
+	पूर्णांक count = 0;
+	काष्ठा cgrp_cset_link *link;
 
-	lockdep_assert_held(&css_set_lock);
+	lockdep_निश्चित_held(&css_set_lock);
 
-	list_for_each_entry(link, &cgrp->cset_links, cset_link)
+	list_क्रम_each_entry(link, &cgrp->cset_links, cset_link)
 		count += link->cset->nr_tasks;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
  * cgroup_task_count - count the number of tasks in a cgroup.
  * @cgrp: the cgroup in question
  */
-int cgroup_task_count(const struct cgroup *cgrp)
-{
-	int count;
+पूर्णांक cgroup_task_count(स्थिर काष्ठा cgroup *cgrp)
+अणु
+	पूर्णांक count;
 
 	spin_lock_irq(&css_set_lock);
 	count = __cgroup_task_count(cgrp);
 	spin_unlock_irq(&css_set_lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-struct cgroup_subsys_state *of_css(struct kernfs_open_file *of)
-{
-	struct cgroup *cgrp = of->kn->parent->priv;
-	struct cftype *cft = of_cft(of);
+काष्ठा cgroup_subsys_state *of_css(काष्ठा kernfs_खोलो_file *of)
+अणु
+	काष्ठा cgroup *cgrp = of->kn->parent->priv;
+	काष्ठा cftype *cft = of_cft(of);
 
 	/*
-	 * This is open and unprotected implementation of cgroup_css().
+	 * This is खोलो and unरक्षित implementation of cgroup_css().
 	 * seq_css() is only called from a kernfs file operation which has
-	 * an active reference on the file.  Because all the subsystem
-	 * files are drained before a css is disassociated with a cgroup,
+	 * an active reference on the file.  Because all the subप्रणाली
+	 * files are drained beक्रमe a css is disassociated with a cgroup,
 	 * the matching css from the cgroup's subsys table is guaranteed to
 	 * be and stay valid until the enclosing operation is complete.
 	 */
-	if (cft->ss)
-		return rcu_dereference_raw(cgrp->subsys[cft->ss->id]);
-	else
-		return &cgrp->self;
-}
+	अगर (cft->ss)
+		वापस rcu_dereference_raw(cgrp->subsys[cft->ss->id]);
+	अन्यथा
+		वापस &cgrp->self;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_css);
 
 /**
- * for_each_css - iterate all css's of a cgroup
+ * क्रम_each_css - iterate all css's of a cgroup
  * @css: the iteration cursor
- * @ssid: the index of the subsystem, CGROUP_SUBSYS_COUNT after reaching the end
+ * @ssid: the index of the subप्रणाली, CGROUP_SUBSYS_COUNT after reaching the end
  * @cgrp: the target cgroup to iterate css's of
  *
  * Should be called under cgroup_[tree_]mutex.
  */
-#define for_each_css(css, ssid, cgrp)					\
-	for ((ssid) = 0; (ssid) < CGROUP_SUBSYS_COUNT; (ssid)++)	\
-		if (!((css) = rcu_dereference_check(			\
+#घोषणा क्रम_each_css(css, ssid, cgrp)					\
+	क्रम ((ssid) = 0; (ssid) < CGROUP_SUBSYS_COUNT; (ssid)++)	\
+		अगर (!((css) = rcu_dereference_check(			\
 				(cgrp)->subsys[(ssid)],			\
-				lockdep_is_held(&cgroup_mutex)))) { }	\
-		else
+				lockdep_is_held(&cgroup_mutex)))) अणु पूर्ण	\
+		अन्यथा
 
 /**
- * for_each_e_css - iterate all effective css's of a cgroup
+ * क्रम_each_e_css - iterate all effective css's of a cgroup
  * @css: the iteration cursor
- * @ssid: the index of the subsystem, CGROUP_SUBSYS_COUNT after reaching the end
+ * @ssid: the index of the subप्रणाली, CGROUP_SUBSYS_COUNT after reaching the end
  * @cgrp: the target cgroup to iterate css's of
  *
  * Should be called under cgroup_[tree_]mutex.
  */
-#define for_each_e_css(css, ssid, cgrp)					    \
-	for ((ssid) = 0; (ssid) < CGROUP_SUBSYS_COUNT; (ssid)++)	    \
-		if (!((css) = cgroup_e_css_by_mask(cgrp,		    \
+#घोषणा क्रम_each_e_css(css, ssid, cgrp)					    \
+	क्रम ((ssid) = 0; (ssid) < CGROUP_SUBSYS_COUNT; (ssid)++)	    \
+		अगर (!((css) = cgroup_e_css_by_mask(cgrp,		    \
 						   cgroup_subsys[(ssid)]))) \
 			;						    \
-		else
+		अन्यथा
 
 /**
- * do_each_subsys_mask - filter for_each_subsys with a bitmask
+ * करो_each_subsys_mask - filter क्रम_each_subsys with a biपंचांगask
  * @ss: the iteration cursor
  * @ssid: the index of @ss, CGROUP_SUBSYS_COUNT after reaching the end
- * @ss_mask: the bitmask
+ * @ss_mask: the biपंचांगask
  *
- * The block will only run for cases where the ssid-th bit (1 << ssid) of
+ * The block will only run क्रम हालs where the ssid-th bit (1 << ssid) of
  * @ss_mask is set.
  */
-#define do_each_subsys_mask(ss, ssid, ss_mask) do {			\
-	unsigned long __ss_mask = (ss_mask);				\
-	if (!CGROUP_SUBSYS_COUNT) { /* to avoid spurious gcc warning */	\
+#घोषणा करो_each_subsys_mask(ss, ssid, ss_mask) करो अणु			\
+	अचिन्हित दीर्घ __ss_mask = (ss_mask);				\
+	अगर (!CGROUP_SUBSYS_COUNT) अणु /* to aव्योम spurious gcc warning */	\
 		(ssid) = 0;						\
-		break;							\
-	}								\
-	for_each_set_bit(ssid, &__ss_mask, CGROUP_SUBSYS_COUNT) {	\
+		अवरोध;							\
+	पूर्ण								\
+	क्रम_each_set_bit(ssid, &__ss_mask, CGROUP_SUBSYS_COUNT) अणु	\
 		(ss) = cgroup_subsys[ssid];				\
-		{
+		अणु
 
-#define while_each_subsys_mask()					\
-		}							\
-	}								\
-} while (false)
+#घोषणा जबतक_each_subsys_mask()					\
+		पूर्ण							\
+	पूर्ण								\
+पूर्ण जबतक (false)
 
 /* iterate over child cgrps, lock should be held throughout iteration */
-#define cgroup_for_each_live_child(child, cgrp)				\
-	list_for_each_entry((child), &(cgrp)->self.children, self.sibling) \
-		if (({ lockdep_assert_held(&cgroup_mutex);		\
-		       cgroup_is_dead(child); }))			\
+#घोषणा cgroup_क्रम_each_live_child(child, cgrp)				\
+	list_क्रम_each_entry((child), &(cgrp)->self.children, self.sibling) \
+		अगर ((अणु lockdep_निश्चित_held(&cgroup_mutex);		\
+		       cgroup_is_dead(child); पूर्ण))			\
 			;						\
-		else
+		अन्यथा
 
 /* walk live descendants in pre order */
-#define cgroup_for_each_live_descendant_pre(dsct, d_css, cgrp)		\
-	css_for_each_descendant_pre((d_css), cgroup_css((cgrp), NULL))	\
-		if (({ lockdep_assert_held(&cgroup_mutex);		\
+#घोषणा cgroup_क्रम_each_live_descendant_pre(dsct, d_css, cgrp)		\
+	css_क्रम_each_descendant_pre((d_css), cgroup_css((cgrp), शून्य))	\
+		अगर ((अणु lockdep_निश्चित_held(&cgroup_mutex);		\
 		       (dsct) = (d_css)->cgroup;			\
-		       cgroup_is_dead(dsct); }))			\
+		       cgroup_is_dead(dsct); पूर्ण))			\
 			;						\
-		else
+		अन्यथा
 
 /* walk live descendants in postorder */
-#define cgroup_for_each_live_descendant_post(dsct, d_css, cgrp)		\
-	css_for_each_descendant_post((d_css), cgroup_css((cgrp), NULL))	\
-		if (({ lockdep_assert_held(&cgroup_mutex);		\
+#घोषणा cgroup_क्रम_each_live_descendant_post(dsct, d_css, cgrp)		\
+	css_क्रम_each_descendant_post((d_css), cgroup_css((cgrp), शून्य))	\
+		अगर ((अणु lockdep_निश्चित_held(&cgroup_mutex);		\
 		       (dsct) = (d_css)->cgroup;			\
-		       cgroup_is_dead(dsct); }))			\
+		       cgroup_is_dead(dsct); पूर्ण))			\
 			;						\
-		else
+		अन्यथा
 
 /*
- * The default css_set - used by init and its children prior to any
- * hierarchies being mounted. It contains a pointer to the root state
- * for each subsystem. Also used to anchor the list of css_sets. Not
- * reference-counted, to improve performance when child cgroups
+ * The शेष css_set - used by init and its children prior to any
+ * hierarchies being mounted. It contains a poपूर्णांकer to the root state
+ * क्रम each subप्रणाली. Also used to anchor the list of css_sets. Not
+ * reference-counted, to improve perक्रमmance when child cgroups
  * haven't been created.
  */
-struct css_set init_css_set = {
+काष्ठा css_set init_css_set = अणु
 	.refcount		= REFCOUNT_INIT(1),
-	.dom_cset		= &init_css_set,
+	.करोm_cset		= &init_css_set,
 	.tasks			= LIST_HEAD_INIT(init_css_set.tasks),
 	.mg_tasks		= LIST_HEAD_INIT(init_css_set.mg_tasks),
 	.dying_tasks		= LIST_HEAD_INIT(init_css_set.dying_tasks),
 	.task_iters		= LIST_HEAD_INIT(init_css_set.task_iters),
-	.threaded_csets		= LIST_HEAD_INIT(init_css_set.threaded_csets),
+	.thपढ़ोed_csets		= LIST_HEAD_INIT(init_css_set.thपढ़ोed_csets),
 	.cgrp_links		= LIST_HEAD_INIT(init_css_set.cgrp_links),
 	.mg_preload_node	= LIST_HEAD_INIT(init_css_set.mg_preload_node),
 	.mg_node		= LIST_HEAD_INIT(init_css_set.mg_node),
 
 	/*
-	 * The following field is re-initialized when this cset gets linked
+	 * The following field is re-initialized when this cset माला_लो linked
 	 * in cgroup_init().  However, let's initialize the field
-	 * statically too so that the default cgroup can be accessed safely
+	 * अटलally too so that the शेष cgroup can be accessed safely
 	 * early during boot.
 	 */
 	.dfl_cgrp		= &cgrp_dfl_root.cgrp,
-};
+पूर्ण;
 
-static int css_set_count	= 1;	/* 1 for init_css_set */
+अटल पूर्णांक css_set_count	= 1;	/* 1 क्रम init_css_set */
 
-static bool css_set_threaded(struct css_set *cset)
-{
-	return cset->dom_cset != cset;
-}
+अटल bool css_set_thपढ़ोed(काष्ठा css_set *cset)
+अणु
+	वापस cset->करोm_cset != cset;
+पूर्ण
 
 /**
- * css_set_populated - does a css_set contain any tasks?
+ * css_set_populated - करोes a css_set contain any tasks?
  * @cset: target css_set
  *
  * css_set_populated() should be the same as !!cset->nr_tasks at steady
- * state. However, css_set_populated() can be called while a task is being
- * added to or removed from the linked list before the nr_tasks is
+ * state. However, css_set_populated() can be called जबतक a task is being
+ * added to or हटाओd from the linked list beक्रमe the nr_tasks is
  * properly updated. Hence, we can't just look at ->nr_tasks here.
  */
-static bool css_set_populated(struct css_set *cset)
-{
-	lockdep_assert_held(&css_set_lock);
+अटल bool css_set_populated(काष्ठा css_set *cset)
+अणु
+	lockdep_निश्चित_held(&css_set_lock);
 
-	return !list_empty(&cset->tasks) || !list_empty(&cset->mg_tasks);
-}
+	वापस !list_empty(&cset->tasks) || !list_empty(&cset->mg_tasks);
+पूर्ण
 
 /**
  * cgroup_update_populated - update the populated count of a cgroup
@@ -776,46 +777,46 @@ static bool css_set_populated(struct css_set *cset)
  * One of the css_sets associated with @cgrp is either getting its first
  * task or losing the last.  Update @cgrp->nr_populated_* accordingly.  The
  * count is propagated towards root so that a given cgroup's
- * nr_populated_children is zero iff none of its descendants contain any
+ * nr_populated_children is zero अगरf none of its descendants contain any
  * tasks.
  *
- * @cgrp's interface file "cgroup.populated" is zero if both
+ * @cgrp's पूर्णांकerface file "cgroup.populated" is zero अगर both
  * @cgrp->nr_populated_csets and @cgrp->nr_populated_children are zero and
- * 1 otherwise.  When the sum changes from or to zero, userland is notified
- * that the content of the interface file has changed.  This can be used to
+ * 1 otherwise.  When the sum changes from or to zero, userland is notअगरied
+ * that the content of the पूर्णांकerface file has changed.  This can be used to
  * detect when @cgrp and its descendants become populated or empty.
  */
-static void cgroup_update_populated(struct cgroup *cgrp, bool populated)
-{
-	struct cgroup *child = NULL;
-	int adj = populated ? 1 : -1;
+अटल व्योम cgroup_update_populated(काष्ठा cgroup *cgrp, bool populated)
+अणु
+	काष्ठा cgroup *child = शून्य;
+	पूर्णांक adj = populated ? 1 : -1;
 
-	lockdep_assert_held(&css_set_lock);
+	lockdep_निश्चित_held(&css_set_lock);
 
-	do {
+	करो अणु
 		bool was_populated = cgroup_is_populated(cgrp);
 
-		if (!child) {
+		अगर (!child) अणु
 			cgrp->nr_populated_csets += adj;
-		} else {
-			if (cgroup_is_threaded(child))
-				cgrp->nr_populated_threaded_children += adj;
-			else
-				cgrp->nr_populated_domain_children += adj;
-		}
+		पूर्ण अन्यथा अणु
+			अगर (cgroup_is_thपढ़ोed(child))
+				cgrp->nr_populated_thपढ़ोed_children += adj;
+			अन्यथा
+				cgrp->nr_populated_करोमुख्य_children += adj;
+		पूर्ण
 
-		if (was_populated == cgroup_is_populated(cgrp))
-			break;
+		अगर (was_populated == cgroup_is_populated(cgrp))
+			अवरोध;
 
-		cgroup1_check_for_release(cgrp);
-		TRACE_CGROUP_PATH(notify_populated, cgrp,
+		cgroup1_check_क्रम_release(cgrp);
+		TRACE_CGROUP_PATH(notअगरy_populated, cgrp,
 				  cgroup_is_populated(cgrp));
-		cgroup_file_notify(&cgrp->events_file);
+		cgroup_file_notअगरy(&cgrp->events_file);
 
 		child = cgrp;
 		cgrp = cgroup_parent(cgrp);
-	} while (cgrp);
-}
+	पूर्ण जबतक (cgrp);
+पूर्ण
 
 /**
  * css_set_update_populated - update populated state of a css_set
@@ -825,198 +826,198 @@ static void cgroup_update_populated(struct cgroup *cgrp, bool populated)
  * @cset is either getting the first task or losing the last.  Update the
  * populated counters of all associated cgroups accordingly.
  */
-static void css_set_update_populated(struct css_set *cset, bool populated)
-{
-	struct cgrp_cset_link *link;
+अटल व्योम css_set_update_populated(काष्ठा css_set *cset, bool populated)
+अणु
+	काष्ठा cgrp_cset_link *link;
 
-	lockdep_assert_held(&css_set_lock);
+	lockdep_निश्चित_held(&css_set_lock);
 
-	list_for_each_entry(link, &cset->cgrp_links, cgrp_link)
+	list_क्रम_each_entry(link, &cset->cgrp_links, cgrp_link)
 		cgroup_update_populated(link->cgrp, populated);
-}
+पूर्ण
 
 /*
- * @task is leaving, advance task iterators which are pointing to it so
+ * @task is leaving, advance task iterators which are poपूर्णांकing to it so
  * that they can resume at the next position.  Advancing an iterator might
- * remove it from the list, use safe walk.  See css_task_iter_skip() for
+ * हटाओ it from the list, use safe walk.  See css_task_iter_skip() क्रम
  * details.
  */
-static void css_set_skip_task_iters(struct css_set *cset,
-				    struct task_struct *task)
-{
-	struct css_task_iter *it, *pos;
+अटल व्योम css_set_skip_task_iters(काष्ठा css_set *cset,
+				    काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा css_task_iter *it, *pos;
 
-	list_for_each_entry_safe(it, pos, &cset->task_iters, iters_node)
+	list_क्रम_each_entry_safe(it, pos, &cset->task_iters, iters_node)
 		css_task_iter_skip(it, task);
-}
+पूर्ण
 
 /**
  * css_set_move_task - move a task from one css_set to another
  * @task: task being moved
- * @from_cset: css_set @task currently belongs to (may be NULL)
- * @to_cset: new css_set @task is being moved to (may be NULL)
+ * @from_cset: css_set @task currently beदीर्घs to (may be शून्य)
+ * @to_cset: new css_set @task is being moved to (may be शून्य)
  * @use_mg_tasks: move to @to_cset->mg_tasks instead of ->tasks
  *
- * Move @task from @from_cset to @to_cset.  If @task didn't belong to any
- * css_set, @from_cset can be NULL.  If @task is being disassociated
- * instead of moved, @to_cset can be NULL.
+ * Move @task from @from_cset to @to_cset.  If @task didn't beदीर्घ to any
+ * css_set, @from_cset can be शून्य.  If @task is being disassociated
+ * instead of moved, @to_cset can be शून्य.
  *
- * This function automatically handles populated counter updates and
- * css_task_iter adjustments but the caller is responsible for managing
+ * This function स्वतःmatically handles populated counter updates and
+ * css_task_iter adjusपंचांगents but the caller is responsible क्रम managing
  * @from_cset and @to_cset's reference counts.
  */
-static void css_set_move_task(struct task_struct *task,
-			      struct css_set *from_cset, struct css_set *to_cset,
+अटल व्योम css_set_move_task(काष्ठा task_काष्ठा *task,
+			      काष्ठा css_set *from_cset, काष्ठा css_set *to_cset,
 			      bool use_mg_tasks)
-{
-	lockdep_assert_held(&css_set_lock);
+अणु
+	lockdep_निश्चित_held(&css_set_lock);
 
-	if (to_cset && !css_set_populated(to_cset))
+	अगर (to_cset && !css_set_populated(to_cset))
 		css_set_update_populated(to_cset, true);
 
-	if (from_cset) {
+	अगर (from_cset) अणु
 		WARN_ON_ONCE(list_empty(&task->cg_list));
 
 		css_set_skip_task_iters(from_cset, task);
 		list_del_init(&task->cg_list);
-		if (!css_set_populated(from_cset))
+		अगर (!css_set_populated(from_cset))
 			css_set_update_populated(from_cset, false);
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ON_ONCE(!list_empty(&task->cg_list));
-	}
+	पूर्ण
 
-	if (to_cset) {
+	अगर (to_cset) अणु
 		/*
-		 * We are synchronized through cgroup_threadgroup_rwsem
+		 * We are synchronized through cgroup_thपढ़ोgroup_rwsem
 		 * against PF_EXITING setting such that we can't race
-		 * against cgroup_exit()/cgroup_free() dropping the css_set.
+		 * against cgroup_निकास()/cgroup_मुक्त() dropping the css_set.
 		 */
 		WARN_ON_ONCE(task->flags & PF_EXITING);
 
 		cgroup_move_task(task, to_cset);
 		list_add_tail(&task->cg_list, use_mg_tasks ? &to_cset->mg_tasks :
 							     &to_cset->tasks);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * hash table for cgroup groups. This improves the performance to find
- * an existing css_set. This hash doesn't (currently) take into
+ * hash table क्रम cgroup groups. This improves the perक्रमmance to find
+ * an existing css_set. This hash करोesn't (currently) take पूर्णांकo
  * account cgroups in empty hierarchies.
  */
-#define CSS_SET_HASH_BITS	7
-static DEFINE_HASHTABLE(css_set_table, CSS_SET_HASH_BITS);
+#घोषणा CSS_SET_HASH_BITS	7
+अटल DEFINE_HASHTABLE(css_set_table, CSS_SET_HASH_BITS);
 
-static unsigned long css_set_hash(struct cgroup_subsys_state *css[])
-{
-	unsigned long key = 0UL;
-	struct cgroup_subsys *ss;
-	int i;
+अटल अचिन्हित दीर्घ css_set_hash(काष्ठा cgroup_subsys_state *css[])
+अणु
+	अचिन्हित दीर्घ key = 0UL;
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक i;
 
-	for_each_subsys(ss, i)
-		key += (unsigned long)css[i];
+	क्रम_each_subsys(ss, i)
+		key += (अचिन्हित दीर्घ)css[i];
 	key = (key >> 16) ^ key;
 
-	return key;
-}
+	वापस key;
+पूर्ण
 
-void put_css_set_locked(struct css_set *cset)
-{
-	struct cgrp_cset_link *link, *tmp_link;
-	struct cgroup_subsys *ss;
-	int ssid;
+व्योम put_css_set_locked(काष्ठा css_set *cset)
+अणु
+	काष्ठा cgrp_cset_link *link, *पंचांगp_link;
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक ssid;
 
-	lockdep_assert_held(&css_set_lock);
+	lockdep_निश्चित_held(&css_set_lock);
 
-	if (!refcount_dec_and_test(&cset->refcount))
-		return;
+	अगर (!refcount_dec_and_test(&cset->refcount))
+		वापस;
 
-	WARN_ON_ONCE(!list_empty(&cset->threaded_csets));
+	WARN_ON_ONCE(!list_empty(&cset->thपढ़ोed_csets));
 
 	/* This css_set is dead. Unlink it and release cgroup and css refs */
-	for_each_subsys(ss, ssid) {
+	क्रम_each_subsys(ss, ssid) अणु
 		list_del(&cset->e_cset_node[ssid]);
 		css_put(cset->subsys[ssid]);
-	}
+	पूर्ण
 	hash_del(&cset->hlist);
 	css_set_count--;
 
-	list_for_each_entry_safe(link, tmp_link, &cset->cgrp_links, cgrp_link) {
+	list_क्रम_each_entry_safe(link, पंचांगp_link, &cset->cgrp_links, cgrp_link) अणु
 		list_del(&link->cset_link);
 		list_del(&link->cgrp_link);
-		if (cgroup_parent(link->cgrp))
+		अगर (cgroup_parent(link->cgrp))
 			cgroup_put(link->cgrp);
-		kfree(link);
-	}
+		kमुक्त(link);
+	पूर्ण
 
-	if (css_set_threaded(cset)) {
-		list_del(&cset->threaded_csets_node);
-		put_css_set_locked(cset->dom_cset);
-	}
+	अगर (css_set_thपढ़ोed(cset)) अणु
+		list_del(&cset->thपढ़ोed_csets_node);
+		put_css_set_locked(cset->करोm_cset);
+	पूर्ण
 
-	kfree_rcu(cset, rcu_head);
-}
+	kमुक्त_rcu(cset, rcu_head);
+पूर्ण
 
 /**
- * compare_css_sets - helper function for find_existing_css_set().
+ * compare_css_sets - helper function क्रम find_existing_css_set().
  * @cset: candidate css_set being tested
- * @old_cset: existing css_set for a task
+ * @old_cset: existing css_set क्रम a task
  * @new_cgrp: cgroup that's being entered by the task
- * @template: desired set of css pointers in css_set (pre-calculated)
+ * @ढाँचा: desired set of css poपूर्णांकers in css_set (pre-calculated)
  *
- * Returns true if "cset" matches "old_cset" except for the hierarchy
- * which "new_cgrp" belongs to, for which it should match "new_cgrp".
+ * Returns true अगर "cset" matches "old_cset" except क्रम the hierarchy
+ * which "new_cgrp" beदीर्घs to, क्रम which it should match "new_cgrp".
  */
-static bool compare_css_sets(struct css_set *cset,
-			     struct css_set *old_cset,
-			     struct cgroup *new_cgrp,
-			     struct cgroup_subsys_state *template[])
-{
-	struct cgroup *new_dfl_cgrp;
-	struct list_head *l1, *l2;
+अटल bool compare_css_sets(काष्ठा css_set *cset,
+			     काष्ठा css_set *old_cset,
+			     काष्ठा cgroup *new_cgrp,
+			     काष्ठा cgroup_subsys_state *ढाँचा[])
+अणु
+	काष्ठा cgroup *new_dfl_cgrp;
+	काष्ठा list_head *l1, *l2;
 
 	/*
-	 * On the default hierarchy, there can be csets which are
-	 * associated with the same set of cgroups but different csses.
+	 * On the शेष hierarchy, there can be csets which are
+	 * associated with the same set of cgroups but dअगरferent csses.
 	 * Let's first ensure that csses match.
 	 */
-	if (memcmp(template, cset->subsys, sizeof(cset->subsys)))
-		return false;
+	अगर (स_भेद(ढाँचा, cset->subsys, माप(cset->subsys)))
+		वापस false;
 
 
 	/* @cset's domain should match the default cgroup's */
-	if (cgroup_on_dfl(new_cgrp))
+	अगर (cgroup_on_dfl(new_cgrp))
 		new_dfl_cgrp = new_cgrp;
-	else
+	अन्यथा
 		new_dfl_cgrp = old_cset->dfl_cgrp;
 
-	if (new_dfl_cgrp->dom_cgrp != cset->dom_cset->dfl_cgrp)
-		return false;
+	अगर (new_dfl_cgrp->करोm_cgrp != cset->करोm_cset->dfl_cgrp)
+		वापस false;
 
 	/*
-	 * Compare cgroup pointers in order to distinguish between
-	 * different cgroups in hierarchies.  As different cgroups may
+	 * Compare cgroup poपूर्णांकers in order to distinguish between
+	 * dअगरferent cgroups in hierarchies.  As dअगरferent cgroups may
 	 * share the same effective css, this comparison is always
 	 * necessary.
 	 */
 	l1 = &cset->cgrp_links;
 	l2 = &old_cset->cgrp_links;
-	while (1) {
-		struct cgrp_cset_link *link1, *link2;
-		struct cgroup *cgrp1, *cgrp2;
+	जबतक (1) अणु
+		काष्ठा cgrp_cset_link *link1, *link2;
+		काष्ठा cgroup *cgrp1, *cgrp2;
 
 		l1 = l1->next;
 		l2 = l2->next;
-		/* See if we reached the end - both lists are equal length. */
-		if (l1 == &cset->cgrp_links) {
+		/* See अगर we reached the end - both lists are equal length. */
+		अगर (l1 == &cset->cgrp_links) अणु
 			BUG_ON(l2 != &old_cset->cgrp_links);
-			break;
-		} else {
+			अवरोध;
+		पूर्ण अन्यथा अणु
 			BUG_ON(l2 == &old_cset->cgrp_links);
-		}
+		पूर्ण
 		/* Locate the cgroups associated with these links. */
-		link1 = list_entry(l1, struct cgrp_cset_link, cgrp_link);
-		link2 = list_entry(l2, struct cgrp_cset_link, cgrp_link);
+		link1 = list_entry(l1, काष्ठा cgrp_cset_link, cgrp_link);
+		link2 = list_entry(l2, काष्ठा cgrp_cset_link, cgrp_link);
 		cgrp1 = link1->cgrp;
 		cgrp2 = link2->cgrp;
 		/* Hierarchies should be linked in the same order. */
@@ -1025,124 +1026,124 @@ static bool compare_css_sets(struct css_set *cset,
 		/*
 		 * If this hierarchy is the hierarchy of the cgroup
 		 * that's changing, then we need to check that this
-		 * css_set points to the new cgroup; if it's any other
-		 * hierarchy, then this css_set should point to the
+		 * css_set poपूर्णांकs to the new cgroup; अगर it's any other
+		 * hierarchy, then this css_set should poपूर्णांक to the
 		 * same cgroup as the old css_set.
 		 */
-		if (cgrp1->root == new_cgrp->root) {
-			if (cgrp1 != new_cgrp)
-				return false;
-		} else {
-			if (cgrp1 != cgrp2)
-				return false;
-		}
-	}
-	return true;
-}
+		अगर (cgrp1->root == new_cgrp->root) अणु
+			अगर (cgrp1 != new_cgrp)
+				वापस false;
+		पूर्ण अन्यथा अणु
+			अगर (cgrp1 != cgrp2)
+				वापस false;
+		पूर्ण
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /**
  * find_existing_css_set - init css array and find the matching css_set
- * @old_cset: the css_set that we're using before the cgroup transition
- * @cgrp: the cgroup that we're moving into
- * @template: out param for the new set of csses, should be clear on entry
+ * @old_cset: the css_set that we're using beक्रमe the cgroup transition
+ * @cgrp: the cgroup that we're moving पूर्णांकo
+ * @ढाँचा: out param क्रम the new set of csses, should be clear on entry
  */
-static struct css_set *find_existing_css_set(struct css_set *old_cset,
-					struct cgroup *cgrp,
-					struct cgroup_subsys_state *template[])
-{
-	struct cgroup_root *root = cgrp->root;
-	struct cgroup_subsys *ss;
-	struct css_set *cset;
-	unsigned long key;
-	int i;
+अटल काष्ठा css_set *find_existing_css_set(काष्ठा css_set *old_cset,
+					काष्ठा cgroup *cgrp,
+					काष्ठा cgroup_subsys_state *ढाँचा[])
+अणु
+	काष्ठा cgroup_root *root = cgrp->root;
+	काष्ठा cgroup_subsys *ss;
+	काष्ठा css_set *cset;
+	अचिन्हित दीर्घ key;
+	पूर्णांक i;
 
 	/*
-	 * Build the set of subsystem state objects that we want to see in the
-	 * new css_set. While subsystems can change globally, the entries here
-	 * won't change, so no need for locking.
+	 * Build the set of subप्रणाली state objects that we want to see in the
+	 * new css_set. While subप्रणालीs can change globally, the entries here
+	 * won't change, so no need क्रम locking.
 	 */
-	for_each_subsys(ss, i) {
-		if (root->subsys_mask & (1UL << i)) {
+	क्रम_each_subsys(ss, i) अणु
+		अगर (root->subsys_mask & (1UL << i)) अणु
 			/*
 			 * @ss is in this hierarchy, so we want the
 			 * effective css from @cgrp.
 			 */
-			template[i] = cgroup_e_css_by_mask(cgrp, ss);
-		} else {
+			ढाँचा[i] = cgroup_e_css_by_mask(cgrp, ss);
+		पूर्ण अन्यथा अणु
 			/*
-			 * @ss is not in this hierarchy, so we don't want
+			 * @ss is not in this hierarchy, so we करोn't want
 			 * to change the css.
 			 */
-			template[i] = old_cset->subsys[i];
-		}
-	}
+			ढाँचा[i] = old_cset->subsys[i];
+		पूर्ण
+	पूर्ण
 
-	key = css_set_hash(template);
-	hash_for_each_possible(css_set_table, cset, hlist, key) {
-		if (!compare_css_sets(cset, old_cset, cgrp, template))
-			continue;
+	key = css_set_hash(ढाँचा);
+	hash_क्रम_each_possible(css_set_table, cset, hlist, key) अणु
+		अगर (!compare_css_sets(cset, old_cset, cgrp, ढाँचा))
+			जारी;
 
 		/* This css_set matches what we need */
-		return cset;
-	}
+		वापस cset;
+	पूर्ण
 
 	/* No existing cgroup group matched */
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void free_cgrp_cset_links(struct list_head *links_to_free)
-{
-	struct cgrp_cset_link *link, *tmp_link;
+अटल व्योम मुक्त_cgrp_cset_links(काष्ठा list_head *links_to_मुक्त)
+अणु
+	काष्ठा cgrp_cset_link *link, *पंचांगp_link;
 
-	list_for_each_entry_safe(link, tmp_link, links_to_free, cset_link) {
+	list_क्रम_each_entry_safe(link, पंचांगp_link, links_to_मुक्त, cset_link) अणु
 		list_del(&link->cset_link);
-		kfree(link);
-	}
-}
+		kमुक्त(link);
+	पूर्ण
+पूर्ण
 
 /**
  * allocate_cgrp_cset_links - allocate cgrp_cset_links
  * @count: the number of links to allocate
- * @tmp_links: list_head the allocated links are put on
+ * @पंचांगp_links: list_head the allocated links are put on
  *
- * Allocate @count cgrp_cset_link structures and chain them on @tmp_links
- * through ->cset_link.  Returns 0 on success or -errno.
+ * Allocate @count cgrp_cset_link काष्ठाures and chain them on @पंचांगp_links
+ * through ->cset_link.  Returns 0 on success or -त्रुटि_सं.
  */
-static int allocate_cgrp_cset_links(int count, struct list_head *tmp_links)
-{
-	struct cgrp_cset_link *link;
-	int i;
+अटल पूर्णांक allocate_cgrp_cset_links(पूर्णांक count, काष्ठा list_head *पंचांगp_links)
+अणु
+	काष्ठा cgrp_cset_link *link;
+	पूर्णांक i;
 
-	INIT_LIST_HEAD(tmp_links);
+	INIT_LIST_HEAD(पंचांगp_links);
 
-	for (i = 0; i < count; i++) {
-		link = kzalloc(sizeof(*link), GFP_KERNEL);
-		if (!link) {
-			free_cgrp_cset_links(tmp_links);
-			return -ENOMEM;
-		}
-		list_add(&link->cset_link, tmp_links);
-	}
-	return 0;
-}
+	क्रम (i = 0; i < count; i++) अणु
+		link = kzalloc(माप(*link), GFP_KERNEL);
+		अगर (!link) अणु
+			मुक्त_cgrp_cset_links(पंचांगp_links);
+			वापस -ENOMEM;
+		पूर्ण
+		list_add(&link->cset_link, पंचांगp_links);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * link_css_set - a helper function to link a css_set to a cgroup
- * @tmp_links: cgrp_cset_link objects allocated by allocate_cgrp_cset_links()
+ * @पंचांगp_links: cgrp_cset_link objects allocated by allocate_cgrp_cset_links()
  * @cset: the css_set to be linked
  * @cgrp: the destination cgroup
  */
-static void link_css_set(struct list_head *tmp_links, struct css_set *cset,
-			 struct cgroup *cgrp)
-{
-	struct cgrp_cset_link *link;
+अटल व्योम link_css_set(काष्ठा list_head *पंचांगp_links, काष्ठा css_set *cset,
+			 काष्ठा cgroup *cgrp)
+अणु
+	काष्ठा cgrp_cset_link *link;
 
-	BUG_ON(list_empty(tmp_links));
+	BUG_ON(list_empty(पंचांगp_links));
 
-	if (cgroup_on_dfl(cgrp))
+	अगर (cgroup_on_dfl(cgrp))
 		cset->dfl_cgrp = cgrp;
 
-	link = list_first_entry(tmp_links, struct cgrp_cset_link, cset_link);
+	link = list_first_entry(पंचांगp_links, काष्ठा cgrp_cset_link, cset_link);
 	link->cset = cset;
 	link->cgrp = cgrp;
 
@@ -1153,79 +1154,79 @@ static void link_css_set(struct list_head *tmp_links, struct css_set *cset,
 	list_move_tail(&link->cset_link, &cgrp->cset_links);
 	list_add_tail(&link->cgrp_link, &cset->cgrp_links);
 
-	if (cgroup_parent(cgrp))
+	अगर (cgroup_parent(cgrp))
 		cgroup_get_live(cgrp);
-}
+पूर्ण
 
 /**
- * find_css_set - return a new css_set with one cgroup updated
+ * find_css_set - वापस a new css_set with one cgroup updated
  * @old_cset: the baseline css_set
  * @cgrp: the cgroup to be updated
  *
  * Return a new css_set that's equivalent to @old_cset, but with @cgrp
- * substituted into the appropriate hierarchy.
+ * substituted पूर्णांकo the appropriate hierarchy.
  */
-static struct css_set *find_css_set(struct css_set *old_cset,
-				    struct cgroup *cgrp)
-{
-	struct cgroup_subsys_state *template[CGROUP_SUBSYS_COUNT] = { };
-	struct css_set *cset;
-	struct list_head tmp_links;
-	struct cgrp_cset_link *link;
-	struct cgroup_subsys *ss;
-	unsigned long key;
-	int ssid;
+अटल काष्ठा css_set *find_css_set(काष्ठा css_set *old_cset,
+				    काष्ठा cgroup *cgrp)
+अणु
+	काष्ठा cgroup_subsys_state *ढाँचा[CGROUP_SUBSYS_COUNT] = अणु पूर्ण;
+	काष्ठा css_set *cset;
+	काष्ठा list_head पंचांगp_links;
+	काष्ठा cgrp_cset_link *link;
+	काष्ठा cgroup_subsys *ss;
+	अचिन्हित दीर्घ key;
+	पूर्णांक ssid;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	/* First see if we already have a cgroup group that matches
+	/* First see अगर we alपढ़ोy have a cgroup group that matches
 	 * the desired set */
 	spin_lock_irq(&css_set_lock);
-	cset = find_existing_css_set(old_cset, cgrp, template);
-	if (cset)
+	cset = find_existing_css_set(old_cset, cgrp, ढाँचा);
+	अगर (cset)
 		get_css_set(cset);
 	spin_unlock_irq(&css_set_lock);
 
-	if (cset)
-		return cset;
+	अगर (cset)
+		वापस cset;
 
-	cset = kzalloc(sizeof(*cset), GFP_KERNEL);
-	if (!cset)
-		return NULL;
+	cset = kzalloc(माप(*cset), GFP_KERNEL);
+	अगर (!cset)
+		वापस शून्य;
 
 	/* Allocate all the cgrp_cset_link objects that we'll need */
-	if (allocate_cgrp_cset_links(cgroup_root_count, &tmp_links) < 0) {
-		kfree(cset);
-		return NULL;
-	}
+	अगर (allocate_cgrp_cset_links(cgroup_root_count, &पंचांगp_links) < 0) अणु
+		kमुक्त(cset);
+		वापस शून्य;
+	पूर्ण
 
 	refcount_set(&cset->refcount, 1);
-	cset->dom_cset = cset;
+	cset->करोm_cset = cset;
 	INIT_LIST_HEAD(&cset->tasks);
 	INIT_LIST_HEAD(&cset->mg_tasks);
 	INIT_LIST_HEAD(&cset->dying_tasks);
 	INIT_LIST_HEAD(&cset->task_iters);
-	INIT_LIST_HEAD(&cset->threaded_csets);
+	INIT_LIST_HEAD(&cset->thपढ़ोed_csets);
 	INIT_HLIST_NODE(&cset->hlist);
 	INIT_LIST_HEAD(&cset->cgrp_links);
 	INIT_LIST_HEAD(&cset->mg_preload_node);
 	INIT_LIST_HEAD(&cset->mg_node);
 
-	/* Copy the set of subsystem state objects generated in
+	/* Copy the set of subप्रणाली state objects generated in
 	 * find_existing_css_set() */
-	memcpy(cset->subsys, template, sizeof(cset->subsys));
+	स_नकल(cset->subsys, ढाँचा, माप(cset->subsys));
 
 	spin_lock_irq(&css_set_lock);
 	/* Add reference counts and links from the new css_set. */
-	list_for_each_entry(link, &old_cset->cgrp_links, cgrp_link) {
-		struct cgroup *c = link->cgrp;
+	list_क्रम_each_entry(link, &old_cset->cgrp_links, cgrp_link) अणु
+		काष्ठा cgroup *c = link->cgrp;
 
-		if (c->root == cgrp->root)
+		अगर (c->root == cgrp->root)
 			c = cgrp;
-		link_css_set(&tmp_links, cset, c);
-	}
+		link_css_set(&पंचांगp_links, cset, c);
+	पूर्ण
 
-	BUG_ON(!list_empty(&tmp_links));
+	BUG_ON(!list_empty(&पंचांगp_links));
 
 	css_set_count++;
 
@@ -1233,88 +1234,88 @@ static struct css_set *find_css_set(struct css_set *old_cset,
 	key = css_set_hash(cset->subsys);
 	hash_add(css_set_table, &cset->hlist, key);
 
-	for_each_subsys(ss, ssid) {
-		struct cgroup_subsys_state *css = cset->subsys[ssid];
+	क्रम_each_subsys(ss, ssid) अणु
+		काष्ठा cgroup_subsys_state *css = cset->subsys[ssid];
 
 		list_add_tail(&cset->e_cset_node[ssid],
 			      &css->cgroup->e_csets[ssid]);
 		css_get(css);
-	}
+	पूर्ण
 
 	spin_unlock_irq(&css_set_lock);
 
 	/*
-	 * If @cset should be threaded, look up the matching dom_cset and
-	 * link them up.  We first fully initialize @cset then look for the
-	 * dom_cset.  It's simpler this way and safe as @cset is guaranteed
-	 * to stay empty until we return.
+	 * If @cset should be thपढ़ोed, look up the matching करोm_cset and
+	 * link them up.  We first fully initialize @cset then look क्रम the
+	 * करोm_cset.  It's simpler this way and safe as @cset is guaranteed
+	 * to stay empty until we वापस.
 	 */
-	if (cgroup_is_threaded(cset->dfl_cgrp)) {
-		struct css_set *dcset;
+	अगर (cgroup_is_thपढ़ोed(cset->dfl_cgrp)) अणु
+		काष्ठा css_set *dcset;
 
-		dcset = find_css_set(cset, cset->dfl_cgrp->dom_cgrp);
-		if (!dcset) {
+		dcset = find_css_set(cset, cset->dfl_cgrp->करोm_cgrp);
+		अगर (!dcset) अणु
 			put_css_set(cset);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
 		spin_lock_irq(&css_set_lock);
-		cset->dom_cset = dcset;
-		list_add_tail(&cset->threaded_csets_node,
-			      &dcset->threaded_csets);
+		cset->करोm_cset = dcset;
+		list_add_tail(&cset->thपढ़ोed_csets_node,
+			      &dcset->thपढ़ोed_csets);
 		spin_unlock_irq(&css_set_lock);
-	}
+	पूर्ण
 
-	return cset;
-}
+	वापस cset;
+पूर्ण
 
-struct cgroup_root *cgroup_root_from_kf(struct kernfs_root *kf_root)
-{
-	struct cgroup *root_cgrp = kf_root->kn->priv;
+काष्ठा cgroup_root *cgroup_root_from_kf(काष्ठा kernfs_root *kf_root)
+अणु
+	काष्ठा cgroup *root_cgrp = kf_root->kn->priv;
 
-	return root_cgrp->root;
-}
+	वापस root_cgrp->root;
+पूर्ण
 
-static int cgroup_init_root_id(struct cgroup_root *root)
-{
-	int id;
+अटल पूर्णांक cgroup_init_root_id(काष्ठा cgroup_root *root)
+अणु
+	पूर्णांक id;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
 	id = idr_alloc_cyclic(&cgroup_hierarchy_idr, root, 0, 0, GFP_KERNEL);
-	if (id < 0)
-		return id;
+	अगर (id < 0)
+		वापस id;
 
 	root->hierarchy_id = id;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cgroup_exit_root_id(struct cgroup_root *root)
-{
-	lockdep_assert_held(&cgroup_mutex);
+अटल व्योम cgroup_निकास_root_id(काष्ठा cgroup_root *root)
+अणु
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	idr_remove(&cgroup_hierarchy_idr, root->hierarchy_id);
-}
+	idr_हटाओ(&cgroup_hierarchy_idr, root->hierarchy_id);
+पूर्ण
 
-void cgroup_free_root(struct cgroup_root *root)
-{
-	kfree(root);
-}
+व्योम cgroup_मुक्त_root(काष्ठा cgroup_root *root)
+अणु
+	kमुक्त(root);
+पूर्ण
 
-static void cgroup_destroy_root(struct cgroup_root *root)
-{
-	struct cgroup *cgrp = &root->cgrp;
-	struct cgrp_cset_link *link, *tmp_link;
+अटल व्योम cgroup_destroy_root(काष्ठा cgroup_root *root)
+अणु
+	काष्ठा cgroup *cgrp = &root->cgrp;
+	काष्ठा cgrp_cset_link *link, *पंचांगp_link;
 
 	trace_cgroup_destroy_root(root);
 
 	cgroup_lock_and_drain_offline(&cgrp_dfl_root.cgrp);
 
-	BUG_ON(atomic_read(&root->nr_cgrps));
+	BUG_ON(atomic_पढ़ो(&root->nr_cgrps));
 	BUG_ON(!list_empty(&cgrp->self.children));
 
-	/* Rebind all subsystems back to the default hierarchy */
-	WARN_ON(rebind_subsystems(&cgrp_dfl_root, root->subsys_mask));
+	/* Rebind all subप्रणालीs back to the शेष hierarchy */
+	WARN_ON(rebind_subप्रणालीs(&cgrp_dfl_root, root->subsys_mask));
 
 	/*
 	 * Release all the links from cset_links to this hierarchy's
@@ -1322,341 +1323,341 @@ static void cgroup_destroy_root(struct cgroup_root *root)
 	 */
 	spin_lock_irq(&css_set_lock);
 
-	list_for_each_entry_safe(link, tmp_link, &cgrp->cset_links, cset_link) {
+	list_क्रम_each_entry_safe(link, पंचांगp_link, &cgrp->cset_links, cset_link) अणु
 		list_del(&link->cset_link);
 		list_del(&link->cgrp_link);
-		kfree(link);
-	}
+		kमुक्त(link);
+	पूर्ण
 
 	spin_unlock_irq(&css_set_lock);
 
-	if (!list_empty(&root->root_list)) {
+	अगर (!list_empty(&root->root_list)) अणु
 		list_del(&root->root_list);
 		cgroup_root_count--;
-	}
+	पूर्ण
 
-	cgroup_exit_root_id(root);
+	cgroup_निकास_root_id(root);
 
 	mutex_unlock(&cgroup_mutex);
 
-	cgroup_rstat_exit(cgrp);
+	cgroup_rstat_निकास(cgrp);
 	kernfs_destroy_root(root->kf_root);
-	cgroup_free_root(root);
-}
+	cgroup_मुक्त_root(root);
+पूर्ण
 
 /*
  * look up cgroup associated with current task's cgroup namespace on the
- * specified hierarchy
+ * specअगरied hierarchy
  */
-static struct cgroup *
-current_cgns_cgroup_from_root(struct cgroup_root *root)
-{
-	struct cgroup *res = NULL;
-	struct css_set *cset;
+अटल काष्ठा cgroup *
+current_cgns_cgroup_from_root(काष्ठा cgroup_root *root)
+अणु
+	काष्ठा cgroup *res = शून्य;
+	काष्ठा css_set *cset;
 
-	lockdep_assert_held(&css_set_lock);
+	lockdep_निश्चित_held(&css_set_lock);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	cset = current->nsproxy->cgroup_ns->root_cset;
-	if (cset == &init_css_set) {
+	अगर (cset == &init_css_set) अणु
 		res = &root->cgrp;
-	} else if (root == &cgrp_dfl_root) {
+	पूर्ण अन्यथा अगर (root == &cgrp_dfl_root) अणु
 		res = cset->dfl_cgrp;
-	} else {
-		struct cgrp_cset_link *link;
+	पूर्ण अन्यथा अणु
+		काष्ठा cgrp_cset_link *link;
 
-		list_for_each_entry(link, &cset->cgrp_links, cgrp_link) {
-			struct cgroup *c = link->cgrp;
+		list_क्रम_each_entry(link, &cset->cgrp_links, cgrp_link) अणु
+			काष्ठा cgroup *c = link->cgrp;
 
-			if (c->root == root) {
+			अगर (c->root == root) अणु
 				res = c;
-				break;
-			}
-		}
-	}
-	rcu_read_unlock();
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	BUG_ON(!res);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-/* look up cgroup associated with given css_set on the specified hierarchy */
-static struct cgroup *cset_cgroup_from_root(struct css_set *cset,
-					    struct cgroup_root *root)
-{
-	struct cgroup *res = NULL;
+/* look up cgroup associated with given css_set on the specअगरied hierarchy */
+अटल काष्ठा cgroup *cset_cgroup_from_root(काष्ठा css_set *cset,
+					    काष्ठा cgroup_root *root)
+अणु
+	काष्ठा cgroup *res = शून्य;
 
-	lockdep_assert_held(&cgroup_mutex);
-	lockdep_assert_held(&css_set_lock);
+	lockdep_निश्चित_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&css_set_lock);
 
-	if (cset == &init_css_set) {
+	अगर (cset == &init_css_set) अणु
 		res = &root->cgrp;
-	} else if (root == &cgrp_dfl_root) {
+	पूर्ण अन्यथा अगर (root == &cgrp_dfl_root) अणु
 		res = cset->dfl_cgrp;
-	} else {
-		struct cgrp_cset_link *link;
+	पूर्ण अन्यथा अणु
+		काष्ठा cgrp_cset_link *link;
 
-		list_for_each_entry(link, &cset->cgrp_links, cgrp_link) {
-			struct cgroup *c = link->cgrp;
+		list_क्रम_each_entry(link, &cset->cgrp_links, cgrp_link) अणु
+			काष्ठा cgroup *c = link->cgrp;
 
-			if (c->root == root) {
+			अगर (c->root == root) अणु
 				res = c;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	BUG_ON(!res);
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /*
- * Return the cgroup for "task" from the given hierarchy. Must be
+ * Return the cgroup क्रम "task" from the given hierarchy. Must be
  * called with cgroup_mutex and css_set_lock held.
  */
-struct cgroup *task_cgroup_from_root(struct task_struct *task,
-				     struct cgroup_root *root)
-{
+काष्ठा cgroup *task_cgroup_from_root(काष्ठा task_काष्ठा *task,
+				     काष्ठा cgroup_root *root)
+अणु
 	/*
 	 * No need to lock the task - since we hold css_set_lock the
 	 * task can't change groups.
 	 */
-	return cset_cgroup_from_root(task_css_set(task), root);
-}
+	वापस cset_cgroup_from_root(task_css_set(task), root);
+पूर्ण
 
 /*
- * A task must hold cgroup_mutex to modify cgroups.
+ * A task must hold cgroup_mutex to modअगरy cgroups.
  *
  * Any task can increment and decrement the count field without lock.
  * So in general, code holding cgroup_mutex can't rely on the count
- * field not changing.  However, if the count goes to zero, then only
+ * field not changing.  However, अगर the count goes to zero, then only
  * cgroup_attach_task() can increment it again.  Because a count of zero
- * means that no tasks are currently attached, therefore there is no
- * way a task attached to that cgroup can fork (the other way to
+ * means that no tasks are currently attached, thereक्रमe there is no
+ * way a task attached to that cgroup can विभाजन (the other way to
  * increment the count).  So code holding cgroup_mutex can safely
- * assume that if the count is zero, it will stay zero. Similarly, if
+ * assume that अगर the count is zero, it will stay zero. Similarly, अगर
  * a task holds cgroup_mutex on a cgroup with zero count, it
- * knows that the cgroup won't be removed, as cgroup_rmdir()
+ * knows that the cgroup won't be हटाओd, as cgroup_सूची_हटाओ()
  * needs that mutex.
  *
- * A cgroup can only be deleted if both its 'count' of using tasks
+ * A cgroup can only be deleted अगर both its 'count' of using tasks
  * is zero, and its list of 'children' cgroups is empty.  Since all
- * tasks in the system use _some_ cgroup, and since there is always at
- * least one task in the system (init, pid == 1), therefore, root cgroup
- * always has either children cgroups and/or using tasks.  So we don't
+ * tasks in the प्रणाली use _some_ cgroup, and since there is always at
+ * least one task in the प्रणाली (init, pid == 1), thereक्रमe, root cgroup
+ * always has either children cgroups and/or using tasks.  So we करोn't
  * need a special hack to ensure that root cgroup cannot be deleted.
  *
  * P.S.  One more locking exception.  RCU is used to guard the
- * update of a tasks cgroup pointer by cgroup_attach_task()
+ * update of a tasks cgroup poपूर्णांकer by cgroup_attach_task()
  */
 
-static struct kernfs_syscall_ops cgroup_kf_syscall_ops;
+अटल काष्ठा kernfs_syscall_ops cgroup_kf_syscall_ops;
 
-static char *cgroup_file_name(struct cgroup *cgrp, const struct cftype *cft,
-			      char *buf)
-{
-	struct cgroup_subsys *ss = cft->ss;
+अटल अक्षर *cgroup_file_name(काष्ठा cgroup *cgrp, स्थिर काष्ठा cftype *cft,
+			      अक्षर *buf)
+अणु
+	काष्ठा cgroup_subsys *ss = cft->ss;
 
-	if (cft->ss && !(cft->flags & CFTYPE_NO_PREFIX) &&
-	    !(cgrp->root->flags & CGRP_ROOT_NOPREFIX)) {
-		const char *dbg = (cft->flags & CFTYPE_DEBUG) ? ".__DEBUG__." : "";
+	अगर (cft->ss && !(cft->flags & CFTYPE_NO_PREFIX) &&
+	    !(cgrp->root->flags & CGRP_ROOT_NOPREFIX)) अणु
+		स्थिर अक्षर *dbg = (cft->flags & CFTYPE_DEBUG) ? ".__DEBUG__." : "";
 
-		snprintf(buf, CGROUP_FILE_NAME_MAX, "%s%s.%s",
+		snम_लिखो(buf, CGROUP_खाता_NAME_MAX, "%s%s.%s",
 			 dbg, cgroup_on_dfl(cgrp) ? ss->name : ss->legacy_name,
 			 cft->name);
-	} else {
-		strscpy(buf, cft->name, CGROUP_FILE_NAME_MAX);
-	}
-	return buf;
-}
+	पूर्ण अन्यथा अणु
+		strscpy(buf, cft->name, CGROUP_खाता_NAME_MAX);
+	पूर्ण
+	वापस buf;
+पूर्ण
 
 /**
  * cgroup_file_mode - deduce file mode of a control file
  * @cft: the control file in question
  *
- * S_IRUGO for read, S_IWUSR for write.
+ * S_IRUGO क्रम पढ़ो, S_IWUSR क्रम ग_लिखो.
  */
-static umode_t cgroup_file_mode(const struct cftype *cft)
-{
+अटल umode_t cgroup_file_mode(स्थिर काष्ठा cftype *cft)
+अणु
 	umode_t mode = 0;
 
-	if (cft->read_u64 || cft->read_s64 || cft->seq_show)
+	अगर (cft->पढ़ो_u64 || cft->पढ़ो_s64 || cft->seq_show)
 		mode |= S_IRUGO;
 
-	if (cft->write_u64 || cft->write_s64 || cft->write) {
-		if (cft->flags & CFTYPE_WORLD_WRITABLE)
+	अगर (cft->ग_लिखो_u64 || cft->ग_लिखो_s64 || cft->ग_लिखो) अणु
+		अगर (cft->flags & CFTYPE_WORLD_WRITABLE)
 			mode |= S_IWUGO;
-		else
+		अन्यथा
 			mode |= S_IWUSR;
-	}
+	पूर्ण
 
-	return mode;
-}
+	वापस mode;
+पूर्ण
 
 /**
  * cgroup_calc_subtree_ss_mask - calculate subtree_ss_mask
  * @subtree_control: the new subtree_control mask to consider
- * @this_ss_mask: available subsystems
+ * @this_ss_mask: available subप्रणालीs
  *
- * On the default hierarchy, a subsystem may request other subsystems to be
- * enabled together through its ->depends_on mask.  In such cases, more
- * subsystems than specified in "cgroup.subtree_control" may be enabled.
+ * On the शेष hierarchy, a subप्रणाली may request other subप्रणालीs to be
+ * enabled together through its ->depends_on mask.  In such हालs, more
+ * subप्रणालीs than specअगरied in "cgroup.subtree_control" may be enabled.
  *
- * This function calculates which subsystems need to be enabled if
- * @subtree_control is to be applied while restricted to @this_ss_mask.
+ * This function calculates which subप्रणालीs need to be enabled अगर
+ * @subtree_control is to be applied जबतक restricted to @this_ss_mask.
  */
-static u16 cgroup_calc_subtree_ss_mask(u16 subtree_control, u16 this_ss_mask)
-{
+अटल u16 cgroup_calc_subtree_ss_mask(u16 subtree_control, u16 this_ss_mask)
+अणु
 	u16 cur_ss_mask = subtree_control;
-	struct cgroup_subsys *ss;
-	int ssid;
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक ssid;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
 	cur_ss_mask |= cgrp_dfl_implicit_ss_mask;
 
-	while (true) {
+	जबतक (true) अणु
 		u16 new_ss_mask = cur_ss_mask;
 
-		do_each_subsys_mask(ss, ssid, cur_ss_mask) {
+		करो_each_subsys_mask(ss, ssid, cur_ss_mask) अणु
 			new_ss_mask |= ss->depends_on;
-		} while_each_subsys_mask();
+		पूर्ण जबतक_each_subsys_mask();
 
 		/*
-		 * Mask out subsystems which aren't available.  This can
-		 * happen only if some depended-upon subsystems were bound
-		 * to non-default hierarchies.
+		 * Mask out subप्रणालीs which aren't available.  This can
+		 * happen only अगर some depended-upon subप्रणालीs were bound
+		 * to non-शेष hierarchies.
 		 */
 		new_ss_mask &= this_ss_mask;
 
-		if (new_ss_mask == cur_ss_mask)
-			break;
+		अगर (new_ss_mask == cur_ss_mask)
+			अवरोध;
 		cur_ss_mask = new_ss_mask;
-	}
+	पूर्ण
 
-	return cur_ss_mask;
-}
+	वापस cur_ss_mask;
+पूर्ण
 
 /**
- * cgroup_kn_unlock - unlocking helper for cgroup kernfs methods
+ * cgroup_kn_unlock - unlocking helper क्रम cgroup kernfs methods
  * @kn: the kernfs_node being serviced
  *
- * This helper undoes cgroup_kn_lock_live() and should be invoked before
- * the method finishes if locking succeeded.  Note that once this function
- * returns the cgroup returned by cgroup_kn_lock_live() may become
- * inaccessible any time.  If the caller intends to continue to access the
- * cgroup, it should pin it before invoking this function.
+ * This helper unकरोes cgroup_kn_lock_live() and should be invoked beक्रमe
+ * the method finishes अगर locking succeeded.  Note that once this function
+ * वापसs the cgroup वापसed by cgroup_kn_lock_live() may become
+ * inaccessible any समय.  If the caller पूर्णांकends to जारी to access the
+ * cgroup, it should pin it beक्रमe invoking this function.
  */
-void cgroup_kn_unlock(struct kernfs_node *kn)
-{
-	struct cgroup *cgrp;
+व्योम cgroup_kn_unlock(काष्ठा kernfs_node *kn)
+अणु
+	काष्ठा cgroup *cgrp;
 
-	if (kernfs_type(kn) == KERNFS_DIR)
+	अगर (kernfs_type(kn) == KERNFS_सूची)
 		cgrp = kn->priv;
-	else
+	अन्यथा
 		cgrp = kn->parent->priv;
 
 	mutex_unlock(&cgroup_mutex);
 
-	kernfs_unbreak_active_protection(kn);
+	kernfs_unअवरोध_active_protection(kn);
 	cgroup_put(cgrp);
-}
+पूर्ण
 
 /**
- * cgroup_kn_lock_live - locking helper for cgroup kernfs methods
+ * cgroup_kn_lock_live - locking helper क्रम cgroup kernfs methods
  * @kn: the kernfs_node being serviced
- * @drain_offline: perform offline draining on the cgroup
+ * @drain_offline: perक्रमm offline draining on the cgroup
  *
  * This helper is to be used by a cgroup kernfs method currently servicing
- * @kn.  It breaks the active protection, performs cgroup locking and
- * verifies that the associated cgroup is alive.  Returns the cgroup if
- * alive; otherwise, %NULL.  A successful return should be undone by a
+ * @kn.  It अवरोधs the active protection, perक्रमms cgroup locking and
+ * verअगरies that the associated cgroup is alive.  Returns the cgroup अगर
+ * alive; otherwise, %शून्य.  A successful वापस should be unकरोne by a
  * matching cgroup_kn_unlock() invocation.  If @drain_offline is %true, the
- * cgroup is drained of offlining csses before return.
+ * cgroup is drained of offlining csses beक्रमe वापस.
  *
  * Any cgroup kernfs method implementation which requires locking the
- * associated cgroup should use this helper.  It avoids nesting cgroup
+ * associated cgroup should use this helper.  It aव्योमs nesting cgroup
  * locking under kernfs active protection and allows all kernfs operations
  * including self-removal.
  */
-struct cgroup *cgroup_kn_lock_live(struct kernfs_node *kn, bool drain_offline)
-{
-	struct cgroup *cgrp;
+काष्ठा cgroup *cgroup_kn_lock_live(काष्ठा kernfs_node *kn, bool drain_offline)
+अणु
+	काष्ठा cgroup *cgrp;
 
-	if (kernfs_type(kn) == KERNFS_DIR)
+	अगर (kernfs_type(kn) == KERNFS_सूची)
 		cgrp = kn->priv;
-	else
+	अन्यथा
 		cgrp = kn->parent->priv;
 
 	/*
 	 * We're gonna grab cgroup_mutex which nests outside kernfs
 	 * active_ref.  cgroup liveliness check alone provides enough
 	 * protection against removal.  Ensure @cgrp stays accessible and
-	 * break the active_ref protection.
+	 * अवरोध the active_ref protection.
 	 */
-	if (!cgroup_tryget(cgrp))
-		return NULL;
-	kernfs_break_active_protection(kn);
+	अगर (!cgroup_tryget(cgrp))
+		वापस शून्य;
+	kernfs_अवरोध_active_protection(kn);
 
-	if (drain_offline)
+	अगर (drain_offline)
 		cgroup_lock_and_drain_offline(cgrp);
-	else
+	अन्यथा
 		mutex_lock(&cgroup_mutex);
 
-	if (!cgroup_is_dead(cgrp))
-		return cgrp;
+	अगर (!cgroup_is_dead(cgrp))
+		वापस cgrp;
 
 	cgroup_kn_unlock(kn);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void cgroup_rm_file(struct cgroup *cgrp, const struct cftype *cft)
-{
-	char name[CGROUP_FILE_NAME_MAX];
+अटल व्योम cgroup_rm_file(काष्ठा cgroup *cgrp, स्थिर काष्ठा cftype *cft)
+अणु
+	अक्षर name[CGROUP_खाता_NAME_MAX];
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	if (cft->file_offset) {
-		struct cgroup_subsys_state *css = cgroup_css(cgrp, cft->ss);
-		struct cgroup_file *cfile = (void *)css + cft->file_offset;
+	अगर (cft->file_offset) अणु
+		काष्ठा cgroup_subsys_state *css = cgroup_css(cgrp, cft->ss);
+		काष्ठा cgroup_file *cfile = (व्योम *)css + cft->file_offset;
 
 		spin_lock_irq(&cgroup_file_kn_lock);
-		cfile->kn = NULL;
+		cfile->kn = शून्य;
 		spin_unlock_irq(&cgroup_file_kn_lock);
 
-		del_timer_sync(&cfile->notify_timer);
-	}
+		del_समयr_sync(&cfile->notअगरy_समयr);
+	पूर्ण
 
-	kernfs_remove_by_name(cgrp->kn, cgroup_file_name(cgrp, cft, name));
-}
+	kernfs_हटाओ_by_name(cgrp->kn, cgroup_file_name(cgrp, cft, name));
+पूर्ण
 
 /**
- * css_clear_dir - remove subsys files in a cgroup directory
+ * css_clear_dir - हटाओ subsys files in a cgroup directory
  * @css: target css
  */
-static void css_clear_dir(struct cgroup_subsys_state *css)
-{
-	struct cgroup *cgrp = css->cgroup;
-	struct cftype *cfts;
+अटल व्योम css_clear_dir(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा cgroup *cgrp = css->cgroup;
+	काष्ठा cftype *cfts;
 
-	if (!(css->flags & CSS_VISIBLE))
-		return;
+	अगर (!(css->flags & CSS_VISIBLE))
+		वापस;
 
 	css->flags &= ~CSS_VISIBLE;
 
-	if (!css->ss) {
-		if (cgroup_on_dfl(cgrp))
+	अगर (!css->ss) अणु
+		अगर (cgroup_on_dfl(cgrp))
 			cfts = cgroup_base_files;
-		else
+		अन्यथा
 			cfts = cgroup1_base_files;
 
 		cgroup_addrm_files(css, cgrp, cfts, false);
-	} else {
-		list_for_each_entry(cfts, &css->ss->cfts, node)
+	पूर्ण अन्यथा अणु
+		list_क्रम_each_entry(cfts, &css->ss->cfts, node)
 			cgroup_addrm_files(css, cgrp, cfts, false);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * css_populate_dir - create subsys files in a cgroup directory
@@ -1664,74 +1665,74 @@ static void css_clear_dir(struct cgroup_subsys_state *css)
  *
  * On failure, no file is added.
  */
-static int css_populate_dir(struct cgroup_subsys_state *css)
-{
-	struct cgroup *cgrp = css->cgroup;
-	struct cftype *cfts, *failed_cfts;
-	int ret;
+अटल पूर्णांक css_populate_dir(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा cgroup *cgrp = css->cgroup;
+	काष्ठा cftype *cfts, *failed_cfts;
+	पूर्णांक ret;
 
-	if ((css->flags & CSS_VISIBLE) || !cgrp->kn)
-		return 0;
+	अगर ((css->flags & CSS_VISIBLE) || !cgrp->kn)
+		वापस 0;
 
-	if (!css->ss) {
-		if (cgroup_on_dfl(cgrp))
+	अगर (!css->ss) अणु
+		अगर (cgroup_on_dfl(cgrp))
 			cfts = cgroup_base_files;
-		else
+		अन्यथा
 			cfts = cgroup1_base_files;
 
 		ret = cgroup_addrm_files(&cgrp->self, cgrp, cfts, true);
-		if (ret < 0)
-			return ret;
-	} else {
-		list_for_each_entry(cfts, &css->ss->cfts, node) {
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		list_क्रम_each_entry(cfts, &css->ss->cfts, node) अणु
 			ret = cgroup_addrm_files(css, cgrp, cfts, true);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				failed_cfts = cfts;
-				goto err;
-			}
-		}
-	}
+				जाओ err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	css->flags |= CSS_VISIBLE;
 
-	return 0;
+	वापस 0;
 err:
-	list_for_each_entry(cfts, &css->ss->cfts, node) {
-		if (cfts == failed_cfts)
-			break;
+	list_क्रम_each_entry(cfts, &css->ss->cfts, node) अणु
+		अगर (cfts == failed_cfts)
+			अवरोध;
 		cgroup_addrm_files(css, cgrp, cfts, false);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask)
-{
-	struct cgroup *dcgrp = &dst_root->cgrp;
-	struct cgroup_subsys *ss;
-	int ssid, i, ret;
+पूर्णांक rebind_subप्रणालीs(काष्ठा cgroup_root *dst_root, u16 ss_mask)
+अणु
+	काष्ठा cgroup *dcgrp = &dst_root->cgrp;
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक ssid, i, ret;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	do_each_subsys_mask(ss, ssid, ss_mask) {
+	करो_each_subsys_mask(ss, ssid, ss_mask) अणु
 		/*
 		 * If @ss has non-root csses attached to it, can't move.
 		 * If @ss is an implicit controller, it is exempt from this
 		 * rule and can be stolen.
 		 */
-		if (css_next_child(NULL, cgroup_css(&ss->root->cgrp, ss)) &&
+		अगर (css_next_child(शून्य, cgroup_css(&ss->root->cgrp, ss)) &&
 		    !ss->implicit_on_dfl)
-			return -EBUSY;
+			वापस -EBUSY;
 
 		/* can't move between two non-dummy roots either */
-		if (ss->root != &cgrp_dfl_root && dst_root != &cgrp_dfl_root)
-			return -EBUSY;
-	} while_each_subsys_mask();
+		अगर (ss->root != &cgrp_dfl_root && dst_root != &cgrp_dfl_root)
+			वापस -EBUSY;
+	पूर्ण जबतक_each_subsys_mask();
 
-	do_each_subsys_mask(ss, ssid, ss_mask) {
-		struct cgroup_root *src_root = ss->root;
-		struct cgroup *scgrp = &src_root->cgrp;
-		struct cgroup_subsys_state *css = cgroup_css(scgrp, ss);
-		struct css_set *cset;
+	करो_each_subsys_mask(ss, ssid, ss_mask) अणु
+		काष्ठा cgroup_root *src_root = ss->root;
+		काष्ठा cgroup *scgrp = &src_root->cgrp;
+		काष्ठा cgroup_subsys_state *css = cgroup_css(scgrp, ss);
+		काष्ठा css_set *cset;
 
 		WARN_ON(!css || cgroup_css(dcgrp, ss));
 
@@ -1741,153 +1742,153 @@ int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask)
 		cgroup_finalize_control(scgrp, 0);
 
 		/* rebind */
-		RCU_INIT_POINTER(scgrp->subsys[ssid], NULL);
-		rcu_assign_pointer(dcgrp->subsys[ssid], css);
+		RCU_INIT_POINTER(scgrp->subsys[ssid], शून्य);
+		rcu_assign_poपूर्णांकer(dcgrp->subsys[ssid], css);
 		ss->root = dst_root;
 		css->cgroup = dcgrp;
 
 		spin_lock_irq(&css_set_lock);
-		hash_for_each(css_set_table, i, cset, hlist)
+		hash_क्रम_each(css_set_table, i, cset, hlist)
 			list_move_tail(&cset->e_cset_node[ss->id],
 				       &dcgrp->e_csets[ss->id]);
 		spin_unlock_irq(&css_set_lock);
 
-		if (ss->css_rstat_flush) {
+		अगर (ss->css_rstat_flush) अणु
 			list_del_rcu(&css->rstat_css_node);
 			list_add_rcu(&css->rstat_css_node,
 				     &dcgrp->rstat_css_list);
-		}
+		पूर्ण
 
-		/* default hierarchy doesn't enable controllers by default */
+		/* शेष hierarchy करोesn't enable controllers by शेष */
 		dst_root->subsys_mask |= 1 << ssid;
-		if (dst_root == &cgrp_dfl_root) {
-			static_branch_enable(cgroup_subsys_on_dfl_key[ssid]);
-		} else {
+		अगर (dst_root == &cgrp_dfl_root) अणु
+			अटल_branch_enable(cgroup_subsys_on_dfl_key[ssid]);
+		पूर्ण अन्यथा अणु
 			dcgrp->subtree_control |= 1 << ssid;
-			static_branch_disable(cgroup_subsys_on_dfl_key[ssid]);
-		}
+			अटल_branch_disable(cgroup_subsys_on_dfl_key[ssid]);
+		पूर्ण
 
 		ret = cgroup_apply_control(dcgrp);
-		if (ret)
+		अगर (ret)
 			pr_warn("partial failure to rebind %s controller (err=%d)\n",
 				ss->name, ret);
 
-		if (ss->bind)
+		अगर (ss->bind)
 			ss->bind(css);
-	} while_each_subsys_mask();
+	पूर्ण जबतक_each_subsys_mask();
 
 	kernfs_activate(dcgrp->kn);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cgroup_show_path(struct seq_file *sf, struct kernfs_node *kf_node,
-		     struct kernfs_root *kf_root)
-{
-	int len = 0;
-	char *buf = NULL;
-	struct cgroup_root *kf_cgroot = cgroup_root_from_kf(kf_root);
-	struct cgroup *ns_cgroup;
+पूर्णांक cgroup_show_path(काष्ठा seq_file *sf, काष्ठा kernfs_node *kf_node,
+		     काष्ठा kernfs_root *kf_root)
+अणु
+	पूर्णांक len = 0;
+	अक्षर *buf = शून्य;
+	काष्ठा cgroup_root *kf_cgroot = cgroup_root_from_kf(kf_root);
+	काष्ठा cgroup *ns_cgroup;
 
-	buf = kmalloc(PATH_MAX, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(PATH_MAX, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	spin_lock_irq(&css_set_lock);
 	ns_cgroup = current_cgns_cgroup_from_root(kf_cgroot);
 	len = kernfs_path_from_node(kf_node, ns_cgroup->kn, buf, PATH_MAX);
 	spin_unlock_irq(&css_set_lock);
 
-	if (len >= PATH_MAX)
-		len = -ERANGE;
-	else if (len > 0) {
+	अगर (len >= PATH_MAX)
+		len = -दुस्फल;
+	अन्यथा अगर (len > 0) अणु
 		seq_escape(sf, buf, " \t\n\\");
 		len = 0;
-	}
-	kfree(buf);
-	return len;
-}
+	पूर्ण
+	kमुक्त(buf);
+	वापस len;
+पूर्ण
 
-enum cgroup2_param {
+क्रमागत cgroup2_param अणु
 	Opt_nsdelegate,
 	Opt_memory_localevents,
 	Opt_memory_recursiveprot,
 	nr__cgroup2_params
-};
+पूर्ण;
 
-static const struct fs_parameter_spec cgroup2_fs_parameters[] = {
+अटल स्थिर काष्ठा fs_parameter_spec cgroup2_fs_parameters[] = अणु
 	fsparam_flag("nsdelegate",		Opt_nsdelegate),
 	fsparam_flag("memory_localevents",	Opt_memory_localevents),
 	fsparam_flag("memory_recursiveprot",	Opt_memory_recursiveprot),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static int cgroup2_parse_param(struct fs_context *fc, struct fs_parameter *param)
-{
-	struct cgroup_fs_context *ctx = cgroup_fc2context(fc);
-	struct fs_parse_result result;
-	int opt;
+अटल पूर्णांक cgroup2_parse_param(काष्ठा fs_context *fc, काष्ठा fs_parameter *param)
+अणु
+	काष्ठा cgroup_fs_context *ctx = cgroup_fc2context(fc);
+	काष्ठा fs_parse_result result;
+	पूर्णांक opt;
 
 	opt = fs_parse(fc, cgroup2_fs_parameters, param, &result);
-	if (opt < 0)
-		return opt;
+	अगर (opt < 0)
+		वापस opt;
 
-	switch (opt) {
-	case Opt_nsdelegate:
+	चयन (opt) अणु
+	हाल Opt_nsdelegate:
 		ctx->flags |= CGRP_ROOT_NS_DELEGATE;
-		return 0;
-	case Opt_memory_localevents:
+		वापस 0;
+	हाल Opt_memory_localevents:
 		ctx->flags |= CGRP_ROOT_MEMORY_LOCAL_EVENTS;
-		return 0;
-	case Opt_memory_recursiveprot:
+		वापस 0;
+	हाल Opt_memory_recursiveprot:
 		ctx->flags |= CGRP_ROOT_MEMORY_RECURSIVE_PROT;
-		return 0;
-	}
-	return -EINVAL;
-}
+		वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static void apply_cgroup_root_flags(unsigned int root_flags)
-{
-	if (current->nsproxy->cgroup_ns == &init_cgroup_ns) {
-		if (root_flags & CGRP_ROOT_NS_DELEGATE)
+अटल व्योम apply_cgroup_root_flags(अचिन्हित पूर्णांक root_flags)
+अणु
+	अगर (current->nsproxy->cgroup_ns == &init_cgroup_ns) अणु
+		अगर (root_flags & CGRP_ROOT_NS_DELEGATE)
 			cgrp_dfl_root.flags |= CGRP_ROOT_NS_DELEGATE;
-		else
+		अन्यथा
 			cgrp_dfl_root.flags &= ~CGRP_ROOT_NS_DELEGATE;
 
-		if (root_flags & CGRP_ROOT_MEMORY_LOCAL_EVENTS)
+		अगर (root_flags & CGRP_ROOT_MEMORY_LOCAL_EVENTS)
 			cgrp_dfl_root.flags |= CGRP_ROOT_MEMORY_LOCAL_EVENTS;
-		else
+		अन्यथा
 			cgrp_dfl_root.flags &= ~CGRP_ROOT_MEMORY_LOCAL_EVENTS;
 
-		if (root_flags & CGRP_ROOT_MEMORY_RECURSIVE_PROT)
+		अगर (root_flags & CGRP_ROOT_MEMORY_RECURSIVE_PROT)
 			cgrp_dfl_root.flags |= CGRP_ROOT_MEMORY_RECURSIVE_PROT;
-		else
+		अन्यथा
 			cgrp_dfl_root.flags &= ~CGRP_ROOT_MEMORY_RECURSIVE_PROT;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int cgroup_show_options(struct seq_file *seq, struct kernfs_root *kf_root)
-{
-	if (cgrp_dfl_root.flags & CGRP_ROOT_NS_DELEGATE)
-		seq_puts(seq, ",nsdelegate");
-	if (cgrp_dfl_root.flags & CGRP_ROOT_MEMORY_LOCAL_EVENTS)
-		seq_puts(seq, ",memory_localevents");
-	if (cgrp_dfl_root.flags & CGRP_ROOT_MEMORY_RECURSIVE_PROT)
-		seq_puts(seq, ",memory_recursiveprot");
-	return 0;
-}
+अटल पूर्णांक cgroup_show_options(काष्ठा seq_file *seq, काष्ठा kernfs_root *kf_root)
+अणु
+	अगर (cgrp_dfl_root.flags & CGRP_ROOT_NS_DELEGATE)
+		seq_माला_दो(seq, ",nsdelegate");
+	अगर (cgrp_dfl_root.flags & CGRP_ROOT_MEMORY_LOCAL_EVENTS)
+		seq_माला_दो(seq, ",memory_localevents");
+	अगर (cgrp_dfl_root.flags & CGRP_ROOT_MEMORY_RECURSIVE_PROT)
+		seq_माला_दो(seq, ",memory_recursiveprot");
+	वापस 0;
+पूर्ण
 
-static int cgroup_reconfigure(struct fs_context *fc)
-{
-	struct cgroup_fs_context *ctx = cgroup_fc2context(fc);
+अटल पूर्णांक cgroup_reconfigure(काष्ठा fs_context *fc)
+अणु
+	काष्ठा cgroup_fs_context *ctx = cgroup_fc2context(fc);
 
 	apply_cgroup_root_flags(ctx->flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void init_cgroup_housekeeping(struct cgroup *cgrp)
-{
-	struct cgroup_subsys *ss;
-	int ssid;
+अटल व्योम init_cgroup_housekeeping(काष्ठा cgroup *cgrp)
+अणु
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक ssid;
 
 	INIT_LIST_HEAD(&cgrp->self.sibling);
 	INIT_LIST_HEAD(&cgrp->self.children);
@@ -1896,23 +1897,23 @@ static void init_cgroup_housekeeping(struct cgroup *cgrp)
 	mutex_init(&cgrp->pidlist_mutex);
 	cgrp->self.cgroup = cgrp;
 	cgrp->self.flags |= CSS_ONLINE;
-	cgrp->dom_cgrp = cgrp;
-	cgrp->max_descendants = INT_MAX;
-	cgrp->max_depth = INT_MAX;
+	cgrp->करोm_cgrp = cgrp;
+	cgrp->max_descendants = पूर्णांक_उच्च;
+	cgrp->max_depth = पूर्णांक_उच्च;
 	INIT_LIST_HEAD(&cgrp->rstat_css_list);
-	prev_cputime_init(&cgrp->prev_cputime);
+	prev_cpuसमय_init(&cgrp->prev_cpuसमय);
 
-	for_each_subsys(ss, ssid)
+	क्रम_each_subsys(ss, ssid)
 		INIT_LIST_HEAD(&cgrp->e_csets[ssid]);
 
-	init_waitqueue_head(&cgrp->offline_waitq);
+	init_रुकोqueue_head(&cgrp->offline_रुकोq);
 	INIT_WORK(&cgrp->release_agent_work, cgroup1_release_agent);
-}
+पूर्ण
 
-void init_cgroup_root(struct cgroup_fs_context *ctx)
-{
-	struct cgroup_root *root = ctx->root;
-	struct cgroup *cgrp = &root->cgrp;
+व्योम init_cgroup_root(काष्ठा cgroup_fs_context *ctx)
+अणु
+	काष्ठा cgroup_root *root = ctx->root;
+	काष्ठा cgroup *cgrp = &root->cgrp;
 
 	INIT_LIST_HEAD(&root->root_list);
 	atomic_set(&root->nr_cgrps, 1);
@@ -1920,43 +1921,43 @@ void init_cgroup_root(struct cgroup_fs_context *ctx)
 	init_cgroup_housekeeping(cgrp);
 
 	root->flags = ctx->flags;
-	if (ctx->release_agent)
+	अगर (ctx->release_agent)
 		strscpy(root->release_agent_path, ctx->release_agent, PATH_MAX);
-	if (ctx->name)
+	अगर (ctx->name)
 		strscpy(root->name, ctx->name, MAX_CGROUP_ROOT_NAMELEN);
-	if (ctx->cpuset_clone_children)
+	अगर (ctx->cpuset_clone_children)
 		set_bit(CGRP_CPUSET_CLONE_CHILDREN, &root->cgrp.flags);
-}
+पूर्ण
 
-int cgroup_setup_root(struct cgroup_root *root, u16 ss_mask)
-{
-	LIST_HEAD(tmp_links);
-	struct cgroup *root_cgrp = &root->cgrp;
-	struct kernfs_syscall_ops *kf_sops;
-	struct css_set *cset;
-	int i, ret;
+पूर्णांक cgroup_setup_root(काष्ठा cgroup_root *root, u16 ss_mask)
+अणु
+	LIST_HEAD(पंचांगp_links);
+	काष्ठा cgroup *root_cgrp = &root->cgrp;
+	काष्ठा kernfs_syscall_ops *kf_sops;
+	काष्ठा css_set *cset;
+	पूर्णांक i, ret;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
 	ret = percpu_ref_init(&root_cgrp->self.refcnt, css_release,
 			      0, GFP_KERNEL);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/*
 	 * We're accessing css_set_count without locking css_set_lock here,
 	 * but that's OK - it can only be increased by someone holding
 	 * cgroup_lock, and that's us.  Later rebinding may disable
-	 * controllers on the default hierarchy and thus create new csets,
+	 * controllers on the शेष hierarchy and thus create new csets,
 	 * which can't be more than the existing ones.  Allocate 2x.
 	 */
-	ret = allocate_cgrp_cset_links(2 * css_set_count, &tmp_links);
-	if (ret)
-		goto cancel_ref;
+	ret = allocate_cgrp_cset_links(2 * css_set_count, &पंचांगp_links);
+	अगर (ret)
+		जाओ cancel_ref;
 
 	ret = cgroup_init_root_id(root);
-	if (ret)
-		goto cancel_ref;
+	अगर (ret)
+		जाओ cancel_ref;
 
 	kf_sops = root == &cgrp_dfl_root ?
 		&cgroup_kf_syscall_ops : &cgroup1_kf_syscall_ops;
@@ -1966,25 +1967,25 @@ int cgroup_setup_root(struct cgroup_root *root, u16 ss_mask)
 					   KERNFS_ROOT_SUPPORT_EXPORTOP |
 					   KERNFS_ROOT_SUPPORT_USER_XATTR,
 					   root_cgrp);
-	if (IS_ERR(root->kf_root)) {
+	अगर (IS_ERR(root->kf_root)) अणु
 		ret = PTR_ERR(root->kf_root);
-		goto exit_root_id;
-	}
+		जाओ निकास_root_id;
+	पूर्ण
 	root_cgrp->kn = root->kf_root->kn;
 	WARN_ON_ONCE(cgroup_ino(root_cgrp) != 1);
 	root_cgrp->ancestor_ids[0] = cgroup_id(root_cgrp);
 
 	ret = css_populate_dir(&root_cgrp->self);
-	if (ret)
-		goto destroy_root;
+	अगर (ret)
+		जाओ destroy_root;
 
 	ret = cgroup_rstat_init(root_cgrp);
-	if (ret)
-		goto destroy_root;
+	अगर (ret)
+		जाओ destroy_root;
 
-	ret = rebind_subsystems(root, ss_mask);
-	if (ret)
-		goto exit_stats;
+	ret = rebind_subप्रणालीs(root, ss_mask);
+	अगर (ret)
+		जाओ निकास_stats;
 
 	ret = cgroup_bpf_inherit(root_cgrp);
 	WARN_ON_ONCE(ret);
@@ -1992,65 +1993,65 @@ int cgroup_setup_root(struct cgroup_root *root, u16 ss_mask)
 	trace_cgroup_setup_root(root);
 
 	/*
-	 * There must be no failure case after here, since rebinding takes
-	 * care of subsystems' refcounts, which are explicitly dropped in
-	 * the failure exit path.
+	 * There must be no failure हाल after here, since rebinding takes
+	 * care of subप्रणालीs' refcounts, which are explicitly dropped in
+	 * the failure निकास path.
 	 */
 	list_add(&root->root_list, &cgroup_roots);
 	cgroup_root_count++;
 
 	/*
-	 * Link the root cgroup in this hierarchy into all the css_set
+	 * Link the root cgroup in this hierarchy पूर्णांकo all the css_set
 	 * objects.
 	 */
 	spin_lock_irq(&css_set_lock);
-	hash_for_each(css_set_table, i, cset, hlist) {
-		link_css_set(&tmp_links, cset, root_cgrp);
-		if (css_set_populated(cset))
+	hash_क्रम_each(css_set_table, i, cset, hlist) अणु
+		link_css_set(&पंचांगp_links, cset, root_cgrp);
+		अगर (css_set_populated(cset))
 			cgroup_update_populated(root_cgrp, true);
-	}
+	पूर्ण
 	spin_unlock_irq(&css_set_lock);
 
 	BUG_ON(!list_empty(&root_cgrp->self.children));
-	BUG_ON(atomic_read(&root->nr_cgrps) != 1);
+	BUG_ON(atomic_पढ़ो(&root->nr_cgrps) != 1);
 
 	ret = 0;
-	goto out;
+	जाओ out;
 
-exit_stats:
-	cgroup_rstat_exit(root_cgrp);
+निकास_stats:
+	cgroup_rstat_निकास(root_cgrp);
 destroy_root:
 	kernfs_destroy_root(root->kf_root);
-	root->kf_root = NULL;
-exit_root_id:
-	cgroup_exit_root_id(root);
+	root->kf_root = शून्य;
+निकास_root_id:
+	cgroup_निकास_root_id(root);
 cancel_ref:
-	percpu_ref_exit(&root_cgrp->self.refcnt);
+	percpu_ref_निकास(&root_cgrp->self.refcnt);
 out:
-	free_cgrp_cset_links(&tmp_links);
-	return ret;
-}
+	मुक्त_cgrp_cset_links(&पंचांगp_links);
+	वापस ret;
+पूर्ण
 
-int cgroup_do_get_tree(struct fs_context *fc)
-{
-	struct cgroup_fs_context *ctx = cgroup_fc2context(fc);
-	int ret;
+पूर्णांक cgroup_करो_get_tree(काष्ठा fs_context *fc)
+अणु
+	काष्ठा cgroup_fs_context *ctx = cgroup_fc2context(fc);
+	पूर्णांक ret;
 
 	ctx->kfc.root = ctx->root->kf_root;
-	if (fc->fs_type == &cgroup2_fs_type)
+	अगर (fc->fs_type == &cgroup2_fs_type)
 		ctx->kfc.magic = CGROUP2_SUPER_MAGIC;
-	else
+	अन्यथा
 		ctx->kfc.magic = CGROUP_SUPER_MAGIC;
 	ret = kernfs_get_tree(fc);
 
 	/*
 	 * In non-init cgroup namespace, instead of root cgroup's dentry,
-	 * we return the dentry corresponding to the cgroupns->root_cgrp.
+	 * we वापस the dentry corresponding to the cgroupns->root_cgrp.
 	 */
-	if (!ret && ctx->ns != &init_cgroup_ns) {
-		struct dentry *nsdentry;
-		struct super_block *sb = fc->root->d_sb;
-		struct cgroup *cgrp;
+	अगर (!ret && ctx->ns != &init_cgroup_ns) अणु
+		काष्ठा dentry *nsdentry;
+		काष्ठा super_block *sb = fc->root->d_sb;
+		काष्ठा cgroup *cgrp;
 
 		mutex_lock(&cgroup_mutex);
 		spin_lock_irq(&css_set_lock);
@@ -2062,145 +2063,145 @@ int cgroup_do_get_tree(struct fs_context *fc)
 
 		nsdentry = kernfs_node_dentry(cgrp->kn, sb);
 		dput(fc->root);
-		if (IS_ERR(nsdentry)) {
+		अगर (IS_ERR(nsdentry)) अणु
 			deactivate_locked_super(sb);
 			ret = PTR_ERR(nsdentry);
-			nsdentry = NULL;
-		}
+			nsdentry = शून्य;
+		पूर्ण
 		fc->root = nsdentry;
-	}
+	पूर्ण
 
-	if (!ctx->kfc.new_sb_created)
+	अगर (!ctx->kfc.new_sb_created)
 		cgroup_put(&ctx->root->cgrp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Destroy a cgroup filesystem context.
+ * Destroy a cgroup fileप्रणाली context.
  */
-static void cgroup_fs_context_free(struct fs_context *fc)
-{
-	struct cgroup_fs_context *ctx = cgroup_fc2context(fc);
+अटल व्योम cgroup_fs_context_मुक्त(काष्ठा fs_context *fc)
+अणु
+	काष्ठा cgroup_fs_context *ctx = cgroup_fc2context(fc);
 
-	kfree(ctx->name);
-	kfree(ctx->release_agent);
+	kमुक्त(ctx->name);
+	kमुक्त(ctx->release_agent);
 	put_cgroup_ns(ctx->ns);
-	kernfs_free_fs_context(fc);
-	kfree(ctx);
-}
+	kernfs_मुक्त_fs_context(fc);
+	kमुक्त(ctx);
+पूर्ण
 
-static int cgroup_get_tree(struct fs_context *fc)
-{
-	struct cgroup_fs_context *ctx = cgroup_fc2context(fc);
-	int ret;
+अटल पूर्णांक cgroup_get_tree(काष्ठा fs_context *fc)
+अणु
+	काष्ठा cgroup_fs_context *ctx = cgroup_fc2context(fc);
+	पूर्णांक ret;
 
 	cgrp_dfl_visible = true;
 	cgroup_get_live(&cgrp_dfl_root.cgrp);
 	ctx->root = &cgrp_dfl_root;
 
-	ret = cgroup_do_get_tree(fc);
-	if (!ret)
+	ret = cgroup_करो_get_tree(fc);
+	अगर (!ret)
 		apply_cgroup_root_flags(ctx->flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct fs_context_operations cgroup_fs_context_ops = {
-	.free		= cgroup_fs_context_free,
+अटल स्थिर काष्ठा fs_context_operations cgroup_fs_context_ops = अणु
+	.मुक्त		= cgroup_fs_context_मुक्त,
 	.parse_param	= cgroup2_parse_param,
 	.get_tree	= cgroup_get_tree,
 	.reconfigure	= cgroup_reconfigure,
-};
+पूर्ण;
 
-static const struct fs_context_operations cgroup1_fs_context_ops = {
-	.free		= cgroup_fs_context_free,
+अटल स्थिर काष्ठा fs_context_operations cgroup1_fs_context_ops = अणु
+	.मुक्त		= cgroup_fs_context_मुक्त,
 	.parse_param	= cgroup1_parse_param,
 	.get_tree	= cgroup1_get_tree,
 	.reconfigure	= cgroup1_reconfigure,
-};
+पूर्ण;
 
 /*
- * Initialise the cgroup filesystem creation/reconfiguration context.  Notably,
+ * Initialise the cgroup fileप्रणाली creation/reconfiguration context.  Notably,
  * we select the namespace we're going to use.
  */
-static int cgroup_init_fs_context(struct fs_context *fc)
-{
-	struct cgroup_fs_context *ctx;
+अटल पूर्णांक cgroup_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	काष्ठा cgroup_fs_context *ctx;
 
-	ctx = kzalloc(sizeof(struct cgroup_fs_context), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = kzalloc(माप(काष्ठा cgroup_fs_context), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	ctx->ns = current->nsproxy->cgroup_ns;
 	get_cgroup_ns(ctx->ns);
-	fc->fs_private = &ctx->kfc;
-	if (fc->fs_type == &cgroup2_fs_type)
+	fc->fs_निजी = &ctx->kfc;
+	अगर (fc->fs_type == &cgroup2_fs_type)
 		fc->ops = &cgroup_fs_context_ops;
-	else
+	अन्यथा
 		fc->ops = &cgroup1_fs_context_ops;
 	put_user_ns(fc->user_ns);
 	fc->user_ns = get_user_ns(ctx->ns->user_ns);
 	fc->global = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cgroup_kill_sb(struct super_block *sb)
-{
-	struct kernfs_root *kf_root = kernfs_root_from_sb(sb);
-	struct cgroup_root *root = cgroup_root_from_kf(kf_root);
+अटल व्योम cgroup_समाप्त_sb(काष्ठा super_block *sb)
+अणु
+	काष्ठा kernfs_root *kf_root = kernfs_root_from_sb(sb);
+	काष्ठा cgroup_root *root = cgroup_root_from_kf(kf_root);
 
 	/*
-	 * If @root doesn't have any children, start killing it.
+	 * If @root करोesn't have any children, start समाप्तing it.
 	 * This prevents new mounts by disabling percpu_ref_tryget_live().
-	 * cgroup_mount() may wait for @root's release.
+	 * cgroup_mount() may रुको क्रम @root's release.
 	 *
-	 * And don't kill the default root.
+	 * And करोn't समाप्त the शेष root.
 	 */
-	if (list_empty(&root->cgrp.self.children) && root != &cgrp_dfl_root &&
+	अगर (list_empty(&root->cgrp.self.children) && root != &cgrp_dfl_root &&
 	    !percpu_ref_is_dying(&root->cgrp.self.refcnt))
-		percpu_ref_kill(&root->cgrp.self.refcnt);
+		percpu_ref_समाप्त(&root->cgrp.self.refcnt);
 	cgroup_put(&root->cgrp);
-	kernfs_kill_sb(sb);
-}
+	kernfs_समाप्त_sb(sb);
+पूर्ण
 
-struct file_system_type cgroup_fs_type = {
+काष्ठा file_प्रणाली_type cgroup_fs_type = अणु
 	.name			= "cgroup",
 	.init_fs_context	= cgroup_init_fs_context,
 	.parameters		= cgroup1_fs_parameters,
-	.kill_sb		= cgroup_kill_sb,
+	.समाप्त_sb		= cgroup_समाप्त_sb,
 	.fs_flags		= FS_USERNS_MOUNT,
-};
+पूर्ण;
 
-static struct file_system_type cgroup2_fs_type = {
+अटल काष्ठा file_प्रणाली_type cgroup2_fs_type = अणु
 	.name			= "cgroup2",
 	.init_fs_context	= cgroup_init_fs_context,
 	.parameters		= cgroup2_fs_parameters,
-	.kill_sb		= cgroup_kill_sb,
+	.समाप्त_sb		= cgroup_समाप्त_sb,
 	.fs_flags		= FS_USERNS_MOUNT,
-};
+पूर्ण;
 
-#ifdef CONFIG_CPUSETS
-static const struct fs_context_operations cpuset_fs_context_ops = {
+#अगर_घोषित CONFIG_CPUSETS
+अटल स्थिर काष्ठा fs_context_operations cpuset_fs_context_ops = अणु
 	.get_tree	= cgroup1_get_tree,
-	.free		= cgroup_fs_context_free,
-};
+	.मुक्त		= cgroup_fs_context_मुक्त,
+पूर्ण;
 
 /*
- * This is ugly, but preserves the userspace API for existing cpuset
- * users. If someone tries to mount the "cpuset" filesystem, we
- * silently switch it to mount "cgroup" instead
+ * This is ugly, but preserves the userspace API क्रम existing cpuset
+ * users. If someone tries to mount the "cpuset" fileप्रणाली, we
+ * silently चयन it to mount "cgroup" instead
  */
-static int cpuset_init_fs_context(struct fs_context *fc)
-{
-	char *agent = kstrdup("/sbin/cpuset_release_agent", GFP_USER);
-	struct cgroup_fs_context *ctx;
-	int err;
+अटल पूर्णांक cpuset_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	अक्षर *agent = kstrdup("/sbin/cpuset_release_agent", GFP_USER);
+	काष्ठा cgroup_fs_context *ctx;
+	पूर्णांक err;
 
 	err = cgroup_init_fs_context(fc);
-	if (err) {
-		kfree(agent);
-		return err;
-	}
+	अगर (err) अणु
+		kमुक्त(agent);
+		वापस err;
+	पूर्ण
 
 	fc->ops = &cpuset_fs_context_ops;
 
@@ -2209,32 +2210,32 @@ static int cpuset_init_fs_context(struct fs_context *fc)
 	ctx->flags |= CGRP_ROOT_NOPREFIX;
 	ctx->release_agent = agent;
 
-	get_filesystem(&cgroup_fs_type);
-	put_filesystem(fc->fs_type);
+	get_fileप्रणाली(&cgroup_fs_type);
+	put_fileप्रणाली(fc->fs_type);
 	fc->fs_type = &cgroup_fs_type;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct file_system_type cpuset_fs_type = {
+अटल काष्ठा file_प्रणाली_type cpuset_fs_type = अणु
 	.name			= "cpuset",
 	.init_fs_context	= cpuset_init_fs_context,
 	.fs_flags		= FS_USERNS_MOUNT,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-int cgroup_path_ns_locked(struct cgroup *cgrp, char *buf, size_t buflen,
-			  struct cgroup_namespace *ns)
-{
-	struct cgroup *root = cset_cgroup_from_root(ns->root_cset, cgrp->root);
+पूर्णांक cgroup_path_ns_locked(काष्ठा cgroup *cgrp, अक्षर *buf, माप_प्रकार buflen,
+			  काष्ठा cgroup_namespace *ns)
+अणु
+	काष्ठा cgroup *root = cset_cgroup_from_root(ns->root_cset, cgrp->root);
 
-	return kernfs_path_from_node(cgrp->kn, root->kn, buf, buflen);
-}
+	वापस kernfs_path_from_node(cgrp->kn, root->kn, buf, buflen);
+पूर्ण
 
-int cgroup_path_ns(struct cgroup *cgrp, char *buf, size_t buflen,
-		   struct cgroup_namespace *ns)
-{
-	int ret;
+पूर्णांक cgroup_path_ns(काष्ठा cgroup *cgrp, अक्षर *buf, माप_प्रकार buflen,
+		   काष्ठा cgroup_namespace *ns)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&cgroup_mutex);
 	spin_lock_irq(&css_set_lock);
@@ -2244,47 +2245,47 @@ int cgroup_path_ns(struct cgroup *cgrp, char *buf, size_t buflen,
 	spin_unlock_irq(&css_set_lock);
 	mutex_unlock(&cgroup_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(cgroup_path_ns);
 
 /**
  * task_cgroup_path - cgroup path of a task in the first cgroup hierarchy
  * @task: target task
- * @buf: the buffer to write the path into
+ * @buf: the buffer to ग_लिखो the path पूर्णांकo
  * @buflen: the length of the buffer
  *
  * Determine @task's cgroup on the first (the one with the lowest non-zero
- * hierarchy_id) cgroup hierarchy and copy its path into @buf.  This
- * function grabs cgroup_mutex and shouldn't be used inside locks used by
+ * hierarchy_id) cgroup hierarchy and copy its path पूर्णांकo @buf.  This
+ * function grअसल cgroup_mutex and shouldn't be used inside locks used by
  * cgroup controller callbacks.
  *
  * Return value is the same as kernfs_path().
  */
-int task_cgroup_path(struct task_struct *task, char *buf, size_t buflen)
-{
-	struct cgroup_root *root;
-	struct cgroup *cgrp;
-	int hierarchy_id = 1;
-	int ret;
+पूर्णांक task_cgroup_path(काष्ठा task_काष्ठा *task, अक्षर *buf, माप_प्रकार buflen)
+अणु
+	काष्ठा cgroup_root *root;
+	काष्ठा cgroup *cgrp;
+	पूर्णांक hierarchy_id = 1;
+	पूर्णांक ret;
 
 	mutex_lock(&cgroup_mutex);
 	spin_lock_irq(&css_set_lock);
 
 	root = idr_get_next(&cgroup_hierarchy_idr, &hierarchy_id);
 
-	if (root) {
+	अगर (root) अणु
 		cgrp = task_cgroup_from_root(task, root);
 		ret = cgroup_path_ns_locked(cgrp, buf, buflen, &init_cgroup_ns);
-	} else {
-		/* if no hierarchy exists, everyone is in "/" */
+	पूर्ण अन्यथा अणु
+		/* अगर no hierarchy exists, everyone is in "/" */
 		ret = strlcpy(buf, "/", buflen);
-	}
+	पूर्ण
 
 	spin_unlock_irq(&css_set_lock);
 	mutex_unlock(&cgroup_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(task_cgroup_path);
 
 /**
@@ -2293,142 +2294,142 @@ EXPORT_SYMBOL_GPL(task_cgroup_path);
  * @mgctx: target migration context
  *
  * Add @task, which is a migration target, to @mgctx->tset.  This function
- * becomes noop if @task doesn't need to be migrated.  @task's css_set
+ * becomes noop अगर @task करोesn't need to be migrated.  @task's css_set
  * should have been added as a migration source and @task->cg_list will be
  * moved from the css_set's tasks list to mg_tasks one.
  */
-static void cgroup_migrate_add_task(struct task_struct *task,
-				    struct cgroup_mgctx *mgctx)
-{
-	struct css_set *cset;
+अटल व्योम cgroup_migrate_add_task(काष्ठा task_काष्ठा *task,
+				    काष्ठा cgroup_mgctx *mgctx)
+अणु
+	काष्ठा css_set *cset;
 
-	lockdep_assert_held(&css_set_lock);
+	lockdep_निश्चित_held(&css_set_lock);
 
-	/* @task either already exited or can't exit until the end */
-	if (task->flags & PF_EXITING)
-		return;
+	/* @task either alपढ़ोy निकासed or can't निकास until the end */
+	अगर (task->flags & PF_EXITING)
+		वापस;
 
-	/* cgroup_threadgroup_rwsem protects racing against forks */
+	/* cgroup_thपढ़ोgroup_rwsem protects racing against विभाजनs */
 	WARN_ON_ONCE(list_empty(&task->cg_list));
 
 	cset = task_css_set(task);
-	if (!cset->mg_src_cgrp)
-		return;
+	अगर (!cset->mg_src_cgrp)
+		वापस;
 
 	mgctx->tset.nr_tasks++;
 
 	list_move_tail(&task->cg_list, &cset->mg_tasks);
-	if (list_empty(&cset->mg_node))
+	अगर (list_empty(&cset->mg_node))
 		list_add_tail(&cset->mg_node,
 			      &mgctx->tset.src_csets);
-	if (list_empty(&cset->mg_dst_cset->mg_node))
+	अगर (list_empty(&cset->mg_dst_cset->mg_node))
 		list_add_tail(&cset->mg_dst_cset->mg_node,
 			      &mgctx->tset.dst_csets);
-}
+पूर्ण
 
 /**
- * cgroup_taskset_first - reset taskset and return the first task
- * @tset: taskset of interest
- * @dst_cssp: output variable for the destination css
+ * cgroup_taskset_first - reset taskset and वापस the first task
+ * @tset: taskset of पूर्णांकerest
+ * @dst_cssp: output variable क्रम the destination css
  *
- * @tset iteration is initialized and the first task is returned.
+ * @tset iteration is initialized and the first task is वापसed.
  */
-struct task_struct *cgroup_taskset_first(struct cgroup_taskset *tset,
-					 struct cgroup_subsys_state **dst_cssp)
-{
-	tset->cur_cset = list_first_entry(tset->csets, struct css_set, mg_node);
-	tset->cur_task = NULL;
+काष्ठा task_काष्ठा *cgroup_taskset_first(काष्ठा cgroup_taskset *tset,
+					 काष्ठा cgroup_subsys_state **dst_cssp)
+अणु
+	tset->cur_cset = list_first_entry(tset->csets, काष्ठा css_set, mg_node);
+	tset->cur_task = शून्य;
 
-	return cgroup_taskset_next(tset, dst_cssp);
-}
+	वापस cgroup_taskset_next(tset, dst_cssp);
+पूर्ण
 
 /**
  * cgroup_taskset_next - iterate to the next task in taskset
- * @tset: taskset of interest
- * @dst_cssp: output variable for the destination css
+ * @tset: taskset of पूर्णांकerest
+ * @dst_cssp: output variable क्रम the destination css
  *
  * Return the next task in @tset.  Iteration must have been initialized
  * with cgroup_taskset_first().
  */
-struct task_struct *cgroup_taskset_next(struct cgroup_taskset *tset,
-					struct cgroup_subsys_state **dst_cssp)
-{
-	struct css_set *cset = tset->cur_cset;
-	struct task_struct *task = tset->cur_task;
+काष्ठा task_काष्ठा *cgroup_taskset_next(काष्ठा cgroup_taskset *tset,
+					काष्ठा cgroup_subsys_state **dst_cssp)
+अणु
+	काष्ठा css_set *cset = tset->cur_cset;
+	काष्ठा task_काष्ठा *task = tset->cur_task;
 
-	while (&cset->mg_node != tset->csets) {
-		if (!task)
+	जबतक (&cset->mg_node != tset->csets) अणु
+		अगर (!task)
 			task = list_first_entry(&cset->mg_tasks,
-						struct task_struct, cg_list);
-		else
+						काष्ठा task_काष्ठा, cg_list);
+		अन्यथा
 			task = list_next_entry(task, cg_list);
 
-		if (&task->cg_list != &cset->mg_tasks) {
+		अगर (&task->cg_list != &cset->mg_tasks) अणु
 			tset->cur_cset = cset;
 			tset->cur_task = task;
 
 			/*
-			 * This function may be called both before and
-			 * after cgroup_taskset_migrate().  The two cases
+			 * This function may be called both beक्रमe and
+			 * after cgroup_taskset_migrate().  The two हालs
 			 * can be distinguished by looking at whether @cset
 			 * has its ->mg_dst_cset set.
 			 */
-			if (cset->mg_dst_cset)
+			अगर (cset->mg_dst_cset)
 				*dst_cssp = cset->mg_dst_cset->subsys[tset->ssid];
-			else
+			अन्यथा
 				*dst_cssp = cset->subsys[tset->ssid];
 
-			return task;
-		}
+			वापस task;
+		पूर्ण
 
 		cset = list_next_entry(cset, mg_node);
-		task = NULL;
-	}
+		task = शून्य;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * cgroup_taskset_migrate - migrate a taskset
  * @mgctx: migration context
  *
  * Migrate tasks in @mgctx as setup by migration preparation functions.
- * This function fails iff one of the ->can_attach callbacks fails and
+ * This function fails अगरf one of the ->can_attach callbacks fails and
  * guarantees that either all or none of the tasks in @mgctx are migrated.
  * @mgctx is consumed regardless of success.
  */
-static int cgroup_migrate_execute(struct cgroup_mgctx *mgctx)
-{
-	struct cgroup_taskset *tset = &mgctx->tset;
-	struct cgroup_subsys *ss;
-	struct task_struct *task, *tmp_task;
-	struct css_set *cset, *tmp_cset;
-	int ssid, failed_ssid, ret;
+अटल पूर्णांक cgroup_migrate_execute(काष्ठा cgroup_mgctx *mgctx)
+अणु
+	काष्ठा cgroup_taskset *tset = &mgctx->tset;
+	काष्ठा cgroup_subsys *ss;
+	काष्ठा task_काष्ठा *task, *पंचांगp_task;
+	काष्ठा css_set *cset, *पंचांगp_cset;
+	पूर्णांक ssid, failed_ssid, ret;
 
 	/* check that we can legitimately attach to the cgroup */
-	if (tset->nr_tasks) {
-		do_each_subsys_mask(ss, ssid, mgctx->ss_mask) {
-			if (ss->can_attach) {
+	अगर (tset->nr_tasks) अणु
+		करो_each_subsys_mask(ss, ssid, mgctx->ss_mask) अणु
+			अगर (ss->can_attach) अणु
 				tset->ssid = ssid;
 				ret = ss->can_attach(tset);
-				if (ret) {
+				अगर (ret) अणु
 					failed_ssid = ssid;
-					goto out_cancel_attach;
-				}
-			}
-		} while_each_subsys_mask();
-	}
+					जाओ out_cancel_attach;
+				पूर्ण
+			पूर्ण
+		पूर्ण जबतक_each_subsys_mask();
+	पूर्ण
 
 	/*
 	 * Now that we're guaranteed success, proceed to move all tasks to
-	 * the new cgroup.  There are no failure cases after here, so this
-	 * is the commit point.
+	 * the new cgroup.  There are no failure हालs after here, so this
+	 * is the commit poपूर्णांक.
 	 */
 	spin_lock_irq(&css_set_lock);
-	list_for_each_entry(cset, &tset->src_csets, mg_node) {
-		list_for_each_entry_safe(task, tmp_task, &cset->mg_tasks, cg_list) {
-			struct css_set *from_cset = task_css_set(task);
-			struct css_set *to_cset = cset->mg_dst_cset;
+	list_क्रम_each_entry(cset, &tset->src_csets, mg_node) अणु
+		list_क्रम_each_entry_safe(task, पंचांगp_task, &cset->mg_tasks, cg_list) अणु
+			काष्ठा css_set *from_cset = task_css_set(task);
+			काष्ठा css_set *to_cset = cset->mg_dst_cset;
 
 			get_css_set(to_cset);
 			to_cset->nr_tasks++;
@@ -2438,129 +2439,129 @@ static int cgroup_migrate_execute(struct cgroup_mgctx *mgctx)
 			 * If the source or destination cgroup is frozen,
 			 * the task might require to change its state.
 			 */
-			cgroup_freezer_migrate_task(task, from_cset->dfl_cgrp,
+			cgroup_मुक्तzer_migrate_task(task, from_cset->dfl_cgrp,
 						    to_cset->dfl_cgrp);
 			put_css_set_locked(from_cset);
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irq(&css_set_lock);
 
 	/*
 	 * Migration is committed, all target tasks are now on dst_csets.
-	 * Nothing is sensitive to fork() after this point.  Notify
+	 * Nothing is sensitive to विभाजन() after this poपूर्णांक.  Notअगरy
 	 * controllers that migration is complete.
 	 */
 	tset->csets = &tset->dst_csets;
 
-	if (tset->nr_tasks) {
-		do_each_subsys_mask(ss, ssid, mgctx->ss_mask) {
-			if (ss->attach) {
+	अगर (tset->nr_tasks) अणु
+		करो_each_subsys_mask(ss, ssid, mgctx->ss_mask) अणु
+			अगर (ss->attach) अणु
 				tset->ssid = ssid;
 				ss->attach(tset);
-			}
-		} while_each_subsys_mask();
-	}
+			पूर्ण
+		पूर्ण जबतक_each_subsys_mask();
+	पूर्ण
 
 	ret = 0;
-	goto out_release_tset;
+	जाओ out_release_tset;
 
 out_cancel_attach:
-	if (tset->nr_tasks) {
-		do_each_subsys_mask(ss, ssid, mgctx->ss_mask) {
-			if (ssid == failed_ssid)
-				break;
-			if (ss->cancel_attach) {
+	अगर (tset->nr_tasks) अणु
+		करो_each_subsys_mask(ss, ssid, mgctx->ss_mask) अणु
+			अगर (ssid == failed_ssid)
+				अवरोध;
+			अगर (ss->cancel_attach) अणु
 				tset->ssid = ssid;
 				ss->cancel_attach(tset);
-			}
-		} while_each_subsys_mask();
-	}
+			पूर्ण
+		पूर्ण जबतक_each_subsys_mask();
+	पूर्ण
 out_release_tset:
 	spin_lock_irq(&css_set_lock);
 	list_splice_init(&tset->dst_csets, &tset->src_csets);
-	list_for_each_entry_safe(cset, tmp_cset, &tset->src_csets, mg_node) {
+	list_क्रम_each_entry_safe(cset, पंचांगp_cset, &tset->src_csets, mg_node) अणु
 		list_splice_tail_init(&cset->mg_tasks, &cset->tasks);
 		list_del_init(&cset->mg_node);
-	}
+	पूर्ण
 	spin_unlock_irq(&css_set_lock);
 
 	/*
-	 * Re-initialize the cgroup_taskset structure in case it is reused
+	 * Re-initialize the cgroup_taskset काष्ठाure in हाल it is reused
 	 * again in another cgroup_migrate_add_task()/cgroup_migrate_execute()
 	 * iteration.
 	 */
 	tset->nr_tasks = 0;
 	tset->csets    = &tset->src_csets;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * cgroup_migrate_vet_dst - verify whether a cgroup can be migration destination
+ * cgroup_migrate_vet_dst - verअगरy whether a cgroup can be migration destination
  * @dst_cgrp: destination cgroup to test
  *
- * On the default hierarchy, except for the mixable, (possible) thread root
- * and threaded cgroups, subtree_control must be zero for migration
- * destination cgroups with tasks so that child cgroups don't compete
+ * On the शेष hierarchy, except क्रम the mixable, (possible) thपढ़ो root
+ * and thपढ़ोed cgroups, subtree_control must be zero क्रम migration
+ * destination cgroups with tasks so that child cgroups करोn't compete
  * against tasks.
  */
-int cgroup_migrate_vet_dst(struct cgroup *dst_cgrp)
-{
-	/* v1 doesn't have any restriction */
-	if (!cgroup_on_dfl(dst_cgrp))
-		return 0;
+पूर्णांक cgroup_migrate_vet_dst(काष्ठा cgroup *dst_cgrp)
+अणु
+	/* v1 करोesn't have any restriction */
+	अगर (!cgroup_on_dfl(dst_cgrp))
+		वापस 0;
 
-	/* verify @dst_cgrp can host resources */
-	if (!cgroup_is_valid_domain(dst_cgrp->dom_cgrp))
-		return -EOPNOTSUPP;
+	/* verअगरy @dst_cgrp can host resources */
+	अगर (!cgroup_is_valid_करोमुख्य(dst_cgrp->करोm_cgrp))
+		वापस -EOPNOTSUPP;
 
-	/* mixables don't care */
-	if (cgroup_is_mixable(dst_cgrp))
-		return 0;
+	/* mixables करोn't care */
+	अगर (cgroup_is_mixable(dst_cgrp))
+		वापस 0;
 
 	/*
-	 * If @dst_cgrp is already or can become a thread root or is
-	 * threaded, it doesn't matter.
+	 * If @dst_cgrp is alपढ़ोy or can become a thपढ़ो root or is
+	 * thपढ़ोed, it करोesn't matter.
 	 */
-	if (cgroup_can_be_thread_root(dst_cgrp) || cgroup_is_threaded(dst_cgrp))
-		return 0;
+	अगर (cgroup_can_be_thपढ़ो_root(dst_cgrp) || cgroup_is_thपढ़ोed(dst_cgrp))
+		वापस 0;
 
-	/* apply no-internal-process constraint */
-	if (dst_cgrp->subtree_control)
-		return -EBUSY;
+	/* apply no-पूर्णांकernal-process स्थिरraपूर्णांक */
+	अगर (dst_cgrp->subtree_control)
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cgroup_migrate_finish - cleanup after attach
  * @mgctx: migration context
  *
- * Undo cgroup_migrate_add_src() and cgroup_migrate_prepare_dst().  See
- * those functions for details.
+ * Unकरो cgroup_migrate_add_src() and cgroup_migrate_prepare_dst().  See
+ * those functions क्रम details.
  */
-void cgroup_migrate_finish(struct cgroup_mgctx *mgctx)
-{
+व्योम cgroup_migrate_finish(काष्ठा cgroup_mgctx *mgctx)
+अणु
 	LIST_HEAD(preloaded);
-	struct css_set *cset, *tmp_cset;
+	काष्ठा css_set *cset, *पंचांगp_cset;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
 	spin_lock_irq(&css_set_lock);
 
 	list_splice_tail_init(&mgctx->preloaded_src_csets, &preloaded);
 	list_splice_tail_init(&mgctx->preloaded_dst_csets, &preloaded);
 
-	list_for_each_entry_safe(cset, tmp_cset, &preloaded, mg_preload_node) {
-		cset->mg_src_cgrp = NULL;
-		cset->mg_dst_cgrp = NULL;
-		cset->mg_dst_cset = NULL;
+	list_क्रम_each_entry_safe(cset, पंचांगp_cset, &preloaded, mg_preload_node) अणु
+		cset->mg_src_cgrp = शून्य;
+		cset->mg_dst_cgrp = शून्य;
+		cset->mg_dst_cset = शून्य;
 		list_del_init(&cset->mg_preload_node);
 		put_css_set_locked(cset);
-	}
+	पूर्ण
 
 	spin_unlock_irq(&css_set_lock);
-}
+पूर्ण
 
 /**
  * cgroup_migrate_add_src - add a migration source css_set
@@ -2568,37 +2569,37 @@ void cgroup_migrate_finish(struct cgroup_mgctx *mgctx)
  * @dst_cgrp: the destination cgroup
  * @mgctx: migration context
  *
- * Tasks belonging to @src_cset are about to be migrated to @dst_cgrp.  Pin
+ * Tasks beदीर्घing to @src_cset are about to be migrated to @dst_cgrp.  Pin
  * @src_cset and add it to @mgctx->src_csets, which should later be cleaned
  * up by cgroup_migrate_finish().
  *
- * This function may be called without holding cgroup_threadgroup_rwsem
- * even if the target is a process.  Threads may be created and destroyed
- * but as long as cgroup_mutex is not dropped, no new css_set can be put
- * into play and the preloaded css_sets are guaranteed to cover all
+ * This function may be called without holding cgroup_thपढ़ोgroup_rwsem
+ * even अगर the target is a process.  Thपढ़ोs may be created and destroyed
+ * but as दीर्घ as cgroup_mutex is not dropped, no new css_set can be put
+ * पूर्णांकo play and the preloaded css_sets are guaranteed to cover all
  * migrations.
  */
-void cgroup_migrate_add_src(struct css_set *src_cset,
-			    struct cgroup *dst_cgrp,
-			    struct cgroup_mgctx *mgctx)
-{
-	struct cgroup *src_cgrp;
+व्योम cgroup_migrate_add_src(काष्ठा css_set *src_cset,
+			    काष्ठा cgroup *dst_cgrp,
+			    काष्ठा cgroup_mgctx *mgctx)
+अणु
+	काष्ठा cgroup *src_cgrp;
 
-	lockdep_assert_held(&cgroup_mutex);
-	lockdep_assert_held(&css_set_lock);
+	lockdep_निश्चित_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&css_set_lock);
 
 	/*
 	 * If ->dead, @src_set is associated with one or more dead cgroups
-	 * and doesn't contain any migratable tasks.  Ignore it early so
-	 * that the rest of migration path doesn't get confused by it.
+	 * and करोesn't contain any migratable tasks.  Ignore it early so
+	 * that the rest of migration path करोesn't get confused by it.
 	 */
-	if (src_cset->dead)
-		return;
+	अगर (src_cset->dead)
+		वापस;
 
 	src_cgrp = cset_cgroup_from_root(src_cset, dst_cgrp->root);
 
-	if (!list_empty(&src_cset->mg_preload_node))
-		return;
+	अगर (!list_empty(&src_cset->mg_preload_node))
+		वापस;
 
 	WARN_ON(src_cset->mg_src_cgrp);
 	WARN_ON(src_cset->mg_dst_cgrp);
@@ -2609,10 +2610,10 @@ void cgroup_migrate_add_src(struct css_set *src_cset,
 	src_cset->mg_dst_cgrp = dst_cgrp;
 	get_css_set(src_cset);
 	list_add_tail(&src_cset->mg_preload_node, &mgctx->preloaded_src_csets);
-}
+पूर्ण
 
 /**
- * cgroup_migrate_prepare_dst - prepare destination css_sets for migration
+ * cgroup_migrate_prepare_dst - prepare destination css_sets क्रम migration
  * @mgctx: migration context
  *
  * Tasks are about to be moved and all the source css_sets have been
@@ -2621,26 +2622,26 @@ void cgroup_migrate_add_src(struct css_set *src_cset,
  * to @mgctx->preloaded_dst_csets.
  *
  * This function must be called after cgroup_migrate_add_src() has been
- * called on each migration source css_set.  After migration is performed
+ * called on each migration source css_set.  After migration is perक्रमmed
  * using cgroup_migrate(), cgroup_migrate_finish() must be called on
  * @mgctx.
  */
-int cgroup_migrate_prepare_dst(struct cgroup_mgctx *mgctx)
-{
-	struct css_set *src_cset, *tmp_cset;
+पूर्णांक cgroup_migrate_prepare_dst(काष्ठा cgroup_mgctx *mgctx)
+अणु
+	काष्ठा css_set *src_cset, *पंचांगp_cset;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	/* look up the dst cset for each src cset and link it to src */
-	list_for_each_entry_safe(src_cset, tmp_cset, &mgctx->preloaded_src_csets,
-				 mg_preload_node) {
-		struct css_set *dst_cset;
-		struct cgroup_subsys *ss;
-		int ssid;
+	/* look up the dst cset क्रम each src cset and link it to src */
+	list_क्रम_each_entry_safe(src_cset, पंचांगp_cset, &mgctx->preloaded_src_csets,
+				 mg_preload_node) अणु
+		काष्ठा css_set *dst_cset;
+		काष्ठा cgroup_subsys *ss;
+		पूर्णांक ssid;
 
 		dst_cset = find_css_set(src_cset, src_cset->mg_dst_cgrp);
-		if (!dst_cset)
-			return -ENOMEM;
+		अगर (!dst_cset)
+			वापस -ENOMEM;
 
 		WARN_ON_ONCE(src_cset->mg_dst_cset || dst_cset->mg_dst_cset);
 
@@ -2649,340 +2650,340 @@ int cgroup_migrate_prepare_dst(struct cgroup_mgctx *mgctx)
 		 * cgroup_migrate() will skip the cset too.  Note that we
 		 * can't handle src == dst as some nodes are used by both.
 		 */
-		if (src_cset == dst_cset) {
-			src_cset->mg_src_cgrp = NULL;
-			src_cset->mg_dst_cgrp = NULL;
+		अगर (src_cset == dst_cset) अणु
+			src_cset->mg_src_cgrp = शून्य;
+			src_cset->mg_dst_cgrp = शून्य;
 			list_del_init(&src_cset->mg_preload_node);
 			put_css_set(src_cset);
 			put_css_set(dst_cset);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		src_cset->mg_dst_cset = dst_cset;
 
-		if (list_empty(&dst_cset->mg_preload_node))
+		अगर (list_empty(&dst_cset->mg_preload_node))
 			list_add_tail(&dst_cset->mg_preload_node,
 				      &mgctx->preloaded_dst_csets);
-		else
+		अन्यथा
 			put_css_set(dst_cset);
 
-		for_each_subsys(ss, ssid)
-			if (src_cset->subsys[ssid] != dst_cset->subsys[ssid])
+		क्रम_each_subsys(ss, ssid)
+			अगर (src_cset->subsys[ssid] != dst_cset->subsys[ssid])
 				mgctx->ss_mask |= 1 << ssid;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cgroup_migrate - migrate a process or task to a cgroup
  * @leader: the leader of the process or the task to migrate
- * @threadgroup: whether @leader points to the whole process or a single task
+ * @thपढ़ोgroup: whether @leader poपूर्णांकs to the whole process or a single task
  * @mgctx: migration context
  *
  * Migrate a process or task denoted by @leader.  If migrating a process,
- * the caller must be holding cgroup_threadgroup_rwsem.  The caller is also
- * responsible for invoking cgroup_migrate_add_src() and
- * cgroup_migrate_prepare_dst() on the targets before invoking this
+ * the caller must be holding cgroup_thपढ़ोgroup_rwsem.  The caller is also
+ * responsible क्रम invoking cgroup_migrate_add_src() and
+ * cgroup_migrate_prepare_dst() on the tarमाला_लो beक्रमe invoking this
  * function and following up with cgroup_migrate_finish().
  *
- * As long as a controller's ->can_attach() doesn't fail, this function is
+ * As दीर्घ as a controller's ->can_attach() doesn't fail, this function is
  * guaranteed to succeed.  This means that, excluding ->can_attach()
- * failure, when migrating multiple targets, the success or failure can be
- * decided for all targets by invoking group_migrate_prepare_dst() before
+ * failure, when migrating multiple tarमाला_लो, the success or failure can be
+ * decided क्रम all tarमाला_लो by invoking group_migrate_prepare_dst() beक्रमe
  * actually starting migrating.
  */
-int cgroup_migrate(struct task_struct *leader, bool threadgroup,
-		   struct cgroup_mgctx *mgctx)
-{
-	struct task_struct *task;
+पूर्णांक cgroup_migrate(काष्ठा task_काष्ठा *leader, bool thपढ़ोgroup,
+		   काष्ठा cgroup_mgctx *mgctx)
+अणु
+	काष्ठा task_काष्ठा *task;
 
 	/*
-	 * Prevent freeing of tasks while we take a snapshot. Tasks that are
-	 * already PF_EXITING could be freed from underneath us unless we
-	 * take an rcu_read_lock.
+	 * Prevent मुक्तing of tasks जबतक we take a snapshot. Tasks that are
+	 * alपढ़ोy PF_EXITING could be मुक्तd from underneath us unless we
+	 * take an rcu_पढ़ो_lock.
 	 */
 	spin_lock_irq(&css_set_lock);
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	task = leader;
-	do {
+	करो अणु
 		cgroup_migrate_add_task(task, mgctx);
-		if (!threadgroup)
-			break;
-	} while_each_thread(leader, task);
-	rcu_read_unlock();
+		अगर (!thपढ़ोgroup)
+			अवरोध;
+	पूर्ण जबतक_each_thपढ़ो(leader, task);
+	rcu_पढ़ो_unlock();
 	spin_unlock_irq(&css_set_lock);
 
-	return cgroup_migrate_execute(mgctx);
-}
+	वापस cgroup_migrate_execute(mgctx);
+पूर्ण
 
 /**
- * cgroup_attach_task - attach a task or a whole threadgroup to a cgroup
+ * cgroup_attach_task - attach a task or a whole thपढ़ोgroup to a cgroup
  * @dst_cgrp: the cgroup to attach to
- * @leader: the task or the leader of the threadgroup to be attached
- * @threadgroup: attach the whole threadgroup?
+ * @leader: the task or the leader of the thपढ़ोgroup to be attached
+ * @thपढ़ोgroup: attach the whole thपढ़ोgroup?
  *
- * Call holding cgroup_mutex and cgroup_threadgroup_rwsem.
+ * Call holding cgroup_mutex and cgroup_thपढ़ोgroup_rwsem.
  */
-int cgroup_attach_task(struct cgroup *dst_cgrp, struct task_struct *leader,
-		       bool threadgroup)
-{
+पूर्णांक cgroup_attach_task(काष्ठा cgroup *dst_cgrp, काष्ठा task_काष्ठा *leader,
+		       bool thपढ़ोgroup)
+अणु
 	DEFINE_CGROUP_MGCTX(mgctx);
-	struct task_struct *task;
-	int ret = 0;
+	काष्ठा task_काष्ठा *task;
+	पूर्णांक ret = 0;
 
 	/* look up all src csets */
 	spin_lock_irq(&css_set_lock);
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	task = leader;
-	do {
+	करो अणु
 		cgroup_migrate_add_src(task_css_set(task), dst_cgrp, &mgctx);
-		if (!threadgroup)
-			break;
-	} while_each_thread(leader, task);
-	rcu_read_unlock();
+		अगर (!thपढ़ोgroup)
+			अवरोध;
+	पूर्ण जबतक_each_thपढ़ो(leader, task);
+	rcu_पढ़ो_unlock();
 	spin_unlock_irq(&css_set_lock);
 
 	/* prepare dst csets and commit */
 	ret = cgroup_migrate_prepare_dst(&mgctx);
-	if (!ret)
-		ret = cgroup_migrate(leader, threadgroup, &mgctx);
+	अगर (!ret)
+		ret = cgroup_migrate(leader, thपढ़ोgroup, &mgctx);
 
 	cgroup_migrate_finish(&mgctx);
 
-	if (!ret)
-		TRACE_CGROUP_PATH(attach_task, dst_cgrp, leader, threadgroup);
+	अगर (!ret)
+		TRACE_CGROUP_PATH(attach_task, dst_cgrp, leader, thपढ़ोgroup);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct task_struct *cgroup_procs_write_start(char *buf, bool threadgroup,
+काष्ठा task_काष्ठा *cgroup_procs_ग_लिखो_start(अक्षर *buf, bool thपढ़ोgroup,
 					     bool *locked)
-	__acquires(&cgroup_threadgroup_rwsem)
-{
-	struct task_struct *tsk;
+	__acquires(&cgroup_thपढ़ोgroup_rwsem)
+अणु
+	काष्ठा task_काष्ठा *tsk;
 	pid_t pid;
 
-	if (kstrtoint(strstrip(buf), 0, &pid) || pid < 0)
-		return ERR_PTR(-EINVAL);
+	अगर (kstrtoपूर्णांक(म_मालाip(buf), 0, &pid) || pid < 0)
+		वापस ERR_PTR(-EINVAL);
 
 	/*
-	 * If we migrate a single thread, we don't care about threadgroup
-	 * stability. If the thread is `current`, it won't exit(2) under our
+	 * If we migrate a single thपढ़ो, we करोn't care about thपढ़ोgroup
+	 * stability. If the thपढ़ो is `current`, it won't निकास(2) under our
 	 * hands or change PID through exec(2). We exclude
-	 * cgroup_update_dfl_csses and other cgroup_{proc,thread}s_write
+	 * cgroup_update_dfl_csses and other cgroup_अणुproc,thपढ़ोपूर्णs_ग_लिखो
 	 * callers by cgroup_mutex.
-	 * Therefore, we can skip the global lock.
+	 * Thereक्रमe, we can skip the global lock.
 	 */
-	lockdep_assert_held(&cgroup_mutex);
-	if (pid || threadgroup) {
-		percpu_down_write(&cgroup_threadgroup_rwsem);
+	lockdep_निश्चित_held(&cgroup_mutex);
+	अगर (pid || thपढ़ोgroup) अणु
+		percpu_करोwn_ग_लिखो(&cgroup_thपढ़ोgroup_rwsem);
 		*locked = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		*locked = false;
-	}
+	पूर्ण
 
-	rcu_read_lock();
-	if (pid) {
+	rcu_पढ़ो_lock();
+	अगर (pid) अणु
 		tsk = find_task_by_vpid(pid);
-		if (!tsk) {
+		अगर (!tsk) अणु
 			tsk = ERR_PTR(-ESRCH);
-			goto out_unlock_threadgroup;
-		}
-	} else {
+			जाओ out_unlock_thपढ़ोgroup;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		tsk = current;
-	}
+	पूर्ण
 
-	if (threadgroup)
+	अगर (thपढ़ोgroup)
 		tsk = tsk->group_leader;
 
 	/*
-	 * kthreads may acquire PF_NO_SETAFFINITY during initialization.
-	 * If userland migrates such a kthread to a non-root cgroup, it can
-	 * become trapped in a cpuset, or RT kthread may be born in a
-	 * cgroup with no rt_runtime allocated.  Just say no.
+	 * kthपढ़ोs may acquire PF_NO_SETAFFINITY during initialization.
+	 * If userland migrates such a kthपढ़ो to a non-root cgroup, it can
+	 * become trapped in a cpuset, or RT kthपढ़ो may be born in a
+	 * cgroup with no rt_runसमय allocated.  Just say no.
 	 */
-	if (tsk->no_cgroup_migration || (tsk->flags & PF_NO_SETAFFINITY)) {
+	अगर (tsk->no_cgroup_migration || (tsk->flags & PF_NO_SETAFFINITY)) अणु
 		tsk = ERR_PTR(-EINVAL);
-		goto out_unlock_threadgroup;
-	}
+		जाओ out_unlock_thपढ़ोgroup;
+	पूर्ण
 
-	get_task_struct(tsk);
-	goto out_unlock_rcu;
+	get_task_काष्ठा(tsk);
+	जाओ out_unlock_rcu;
 
-out_unlock_threadgroup:
-	if (*locked) {
-		percpu_up_write(&cgroup_threadgroup_rwsem);
+out_unlock_thपढ़ोgroup:
+	अगर (*locked) अणु
+		percpu_up_ग_लिखो(&cgroup_thपढ़ोgroup_rwsem);
 		*locked = false;
-	}
+	पूर्ण
 out_unlock_rcu:
-	rcu_read_unlock();
-	return tsk;
-}
+	rcu_पढ़ो_unlock();
+	वापस tsk;
+पूर्ण
 
-void cgroup_procs_write_finish(struct task_struct *task, bool locked)
-	__releases(&cgroup_threadgroup_rwsem)
-{
-	struct cgroup_subsys *ss;
-	int ssid;
+व्योम cgroup_procs_ग_लिखो_finish(काष्ठा task_काष्ठा *task, bool locked)
+	__releases(&cgroup_thपढ़ोgroup_rwsem)
+अणु
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक ssid;
 
-	/* release reference from cgroup_procs_write_start() */
-	put_task_struct(task);
+	/* release reference from cgroup_procs_ग_लिखो_start() */
+	put_task_काष्ठा(task);
 
-	if (locked)
-		percpu_up_write(&cgroup_threadgroup_rwsem);
-	for_each_subsys(ss, ssid)
-		if (ss->post_attach)
+	अगर (locked)
+		percpu_up_ग_लिखो(&cgroup_thपढ़ोgroup_rwsem);
+	क्रम_each_subsys(ss, ssid)
+		अगर (ss->post_attach)
 			ss->post_attach();
-}
+पूर्ण
 
-static void cgroup_print_ss_mask(struct seq_file *seq, u16 ss_mask)
-{
-	struct cgroup_subsys *ss;
-	bool printed = false;
-	int ssid;
+अटल व्योम cgroup_prपूर्णांक_ss_mask(काष्ठा seq_file *seq, u16 ss_mask)
+अणु
+	काष्ठा cgroup_subsys *ss;
+	bool prपूर्णांकed = false;
+	पूर्णांक ssid;
 
-	do_each_subsys_mask(ss, ssid, ss_mask) {
-		if (printed)
-			seq_putc(seq, ' ');
-		seq_puts(seq, ss->name);
-		printed = true;
-	} while_each_subsys_mask();
-	if (printed)
-		seq_putc(seq, '\n');
-}
+	करो_each_subsys_mask(ss, ssid, ss_mask) अणु
+		अगर (prपूर्णांकed)
+			seq_अ_दो(seq, ' ');
+		seq_माला_दो(seq, ss->name);
+		prपूर्णांकed = true;
+	पूर्ण जबतक_each_subsys_mask();
+	अगर (prपूर्णांकed)
+		seq_अ_दो(seq, '\n');
+पूर्ण
 
 /* show controllers which are enabled from the parent */
-static int cgroup_controllers_show(struct seq_file *seq, void *v)
-{
-	struct cgroup *cgrp = seq_css(seq)->cgroup;
+अटल पूर्णांक cgroup_controllers_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा cgroup *cgrp = seq_css(seq)->cgroup;
 
-	cgroup_print_ss_mask(seq, cgroup_control(cgrp));
-	return 0;
-}
+	cgroup_prपूर्णांक_ss_mask(seq, cgroup_control(cgrp));
+	वापस 0;
+पूर्ण
 
-/* show controllers which are enabled for a given cgroup's children */
-static int cgroup_subtree_control_show(struct seq_file *seq, void *v)
-{
-	struct cgroup *cgrp = seq_css(seq)->cgroup;
+/* show controllers which are enabled क्रम a given cgroup's children */
+अटल पूर्णांक cgroup_subtree_control_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा cgroup *cgrp = seq_css(seq)->cgroup;
 
-	cgroup_print_ss_mask(seq, cgrp->subtree_control);
-	return 0;
-}
+	cgroup_prपूर्णांक_ss_mask(seq, cgrp->subtree_control);
+	वापस 0;
+पूर्ण
 
 /**
- * cgroup_update_dfl_csses - update css assoc of a subtree in default hierarchy
- * @cgrp: root of the subtree to update csses for
+ * cgroup_update_dfl_csses - update css assoc of a subtree in शेष hierarchy
+ * @cgrp: root of the subtree to update csses क्रम
  *
  * @cgrp's control masks have changed and its subtree's css associations
  * need to be updated accordingly.  This function looks up all css_sets
  * which are attached to the subtree, creates the matching updated css_sets
  * and migrates the tasks to the new ones.
  */
-static int cgroup_update_dfl_csses(struct cgroup *cgrp)
-{
+अटल पूर्णांक cgroup_update_dfl_csses(काष्ठा cgroup *cgrp)
+अणु
 	DEFINE_CGROUP_MGCTX(mgctx);
-	struct cgroup_subsys_state *d_css;
-	struct cgroup *dsct;
-	struct css_set *src_cset;
-	int ret;
+	काष्ठा cgroup_subsys_state *d_css;
+	काष्ठा cgroup *dsct;
+	काष्ठा css_set *src_cset;
+	पूर्णांक ret;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	percpu_down_write(&cgroup_threadgroup_rwsem);
+	percpu_करोwn_ग_लिखो(&cgroup_thपढ़ोgroup_rwsem);
 
 	/* look up all csses currently attached to @cgrp's subtree */
 	spin_lock_irq(&css_set_lock);
-	cgroup_for_each_live_descendant_pre(dsct, d_css, cgrp) {
-		struct cgrp_cset_link *link;
+	cgroup_क्रम_each_live_descendant_pre(dsct, d_css, cgrp) अणु
+		काष्ठा cgrp_cset_link *link;
 
-		list_for_each_entry(link, &dsct->cset_links, cset_link)
+		list_क्रम_each_entry(link, &dsct->cset_links, cset_link)
 			cgroup_migrate_add_src(link->cset, dsct, &mgctx);
-	}
+	पूर्ण
 	spin_unlock_irq(&css_set_lock);
 
-	/* NULL dst indicates self on default hierarchy */
+	/* शून्य dst indicates self on शेष hierarchy */
 	ret = cgroup_migrate_prepare_dst(&mgctx);
-	if (ret)
-		goto out_finish;
+	अगर (ret)
+		जाओ out_finish;
 
 	spin_lock_irq(&css_set_lock);
-	list_for_each_entry(src_cset, &mgctx.preloaded_src_csets, mg_preload_node) {
-		struct task_struct *task, *ntask;
+	list_क्रम_each_entry(src_cset, &mgctx.preloaded_src_csets, mg_preload_node) अणु
+		काष्ठा task_काष्ठा *task, *ntask;
 
 		/* all tasks in src_csets need to be migrated */
-		list_for_each_entry_safe(task, ntask, &src_cset->tasks, cg_list)
+		list_क्रम_each_entry_safe(task, ntask, &src_cset->tasks, cg_list)
 			cgroup_migrate_add_task(task, &mgctx);
-	}
+	पूर्ण
 	spin_unlock_irq(&css_set_lock);
 
 	ret = cgroup_migrate_execute(&mgctx);
 out_finish:
 	cgroup_migrate_finish(&mgctx);
-	percpu_up_write(&cgroup_threadgroup_rwsem);
-	return ret;
-}
+	percpu_up_ग_लिखो(&cgroup_thपढ़ोgroup_rwsem);
+	वापस ret;
+पूर्ण
 
 /**
  * cgroup_lock_and_drain_offline - lock cgroup_mutex and drain offlined csses
  * @cgrp: root of the target subtree
  *
  * Because css offlining is asynchronous, userland may try to re-enable a
- * controller while the previous css is still around.  This function grabs
+ * controller जबतक the previous css is still around.  This function grअसल
  * cgroup_mutex and drains the previous css instances of @cgrp's subtree.
  */
-void cgroup_lock_and_drain_offline(struct cgroup *cgrp)
+व्योम cgroup_lock_and_drain_offline(काष्ठा cgroup *cgrp)
 	__acquires(&cgroup_mutex)
-{
-	struct cgroup *dsct;
-	struct cgroup_subsys_state *d_css;
-	struct cgroup_subsys *ss;
-	int ssid;
+अणु
+	काष्ठा cgroup *dsct;
+	काष्ठा cgroup_subsys_state *d_css;
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक ssid;
 
 restart:
 	mutex_lock(&cgroup_mutex);
 
-	cgroup_for_each_live_descendant_post(dsct, d_css, cgrp) {
-		for_each_subsys(ss, ssid) {
-			struct cgroup_subsys_state *css = cgroup_css(dsct, ss);
-			DEFINE_WAIT(wait);
+	cgroup_क्रम_each_live_descendant_post(dsct, d_css, cgrp) अणु
+		क्रम_each_subsys(ss, ssid) अणु
+			काष्ठा cgroup_subsys_state *css = cgroup_css(dsct, ss);
+			DEFINE_WAIT(रुको);
 
-			if (!css || !percpu_ref_is_dying(&css->refcnt))
-				continue;
+			अगर (!css || !percpu_ref_is_dying(&css->refcnt))
+				जारी;
 
 			cgroup_get_live(dsct);
-			prepare_to_wait(&dsct->offline_waitq, &wait,
+			prepare_to_रुको(&dsct->offline_रुकोq, &रुको,
 					TASK_UNINTERRUPTIBLE);
 
 			mutex_unlock(&cgroup_mutex);
 			schedule();
-			finish_wait(&dsct->offline_waitq, &wait);
+			finish_रुको(&dsct->offline_रुकोq, &रुको);
 
 			cgroup_put(dsct);
-			goto restart;
-		}
-	}
-}
+			जाओ restart;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * cgroup_save_control - save control masks and dom_cgrp of a subtree
+ * cgroup_save_control - save control masks and करोm_cgrp of a subtree
  * @cgrp: root of the target subtree
  *
- * Save ->subtree_control, ->subtree_ss_mask and ->dom_cgrp to the
- * respective old_ prefixed fields for @cgrp's subtree including @cgrp
+ * Save ->subtree_control, ->subtree_ss_mask and ->करोm_cgrp to the
+ * respective old_ prefixed fields क्रम @cgrp's subtree including @cgrp
  * itself.
  */
-static void cgroup_save_control(struct cgroup *cgrp)
-{
-	struct cgroup *dsct;
-	struct cgroup_subsys_state *d_css;
+अटल व्योम cgroup_save_control(काष्ठा cgroup *cgrp)
+अणु
+	काष्ठा cgroup *dsct;
+	काष्ठा cgroup_subsys_state *d_css;
 
-	cgroup_for_each_live_descendant_pre(dsct, d_css, cgrp) {
+	cgroup_क्रम_each_live_descendant_pre(dsct, d_css, cgrp) अणु
 		dsct->old_subtree_control = dsct->subtree_control;
 		dsct->old_subtree_ss_mask = dsct->subtree_ss_mask;
-		dsct->old_dom_cgrp = dsct->dom_cgrp;
-	}
-}
+		dsct->old_करोm_cgrp = dsct->करोm_cgrp;
+	पूर्ण
+पूर्ण
 
 /**
  * cgroup_propagate_control - refresh control masks of a subtree
@@ -2990,314 +2991,314 @@ static void cgroup_save_control(struct cgroup *cgrp)
  *
  * For @cgrp and its subtree, ensure ->subtree_ss_mask matches
  * ->subtree_control and propagate controller availability through the
- * subtree so that descendants don't have unavailable controllers enabled.
+ * subtree so that descendants करोn't have unavailable controllers enabled.
  */
-static void cgroup_propagate_control(struct cgroup *cgrp)
-{
-	struct cgroup *dsct;
-	struct cgroup_subsys_state *d_css;
+अटल व्योम cgroup_propagate_control(काष्ठा cgroup *cgrp)
+अणु
+	काष्ठा cgroup *dsct;
+	काष्ठा cgroup_subsys_state *d_css;
 
-	cgroup_for_each_live_descendant_pre(dsct, d_css, cgrp) {
+	cgroup_क्रम_each_live_descendant_pre(dsct, d_css, cgrp) अणु
 		dsct->subtree_control &= cgroup_control(dsct);
 		dsct->subtree_ss_mask =
 			cgroup_calc_subtree_ss_mask(dsct->subtree_control,
 						    cgroup_ss_mask(dsct));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * cgroup_restore_control - restore control masks and dom_cgrp of a subtree
+ * cgroup_restore_control - restore control masks and करोm_cgrp of a subtree
  * @cgrp: root of the target subtree
  *
- * Restore ->subtree_control, ->subtree_ss_mask and ->dom_cgrp from the
- * respective old_ prefixed fields for @cgrp's subtree including @cgrp
+ * Restore ->subtree_control, ->subtree_ss_mask and ->करोm_cgrp from the
+ * respective old_ prefixed fields क्रम @cgrp's subtree including @cgrp
  * itself.
  */
-static void cgroup_restore_control(struct cgroup *cgrp)
-{
-	struct cgroup *dsct;
-	struct cgroup_subsys_state *d_css;
+अटल व्योम cgroup_restore_control(काष्ठा cgroup *cgrp)
+अणु
+	काष्ठा cgroup *dsct;
+	काष्ठा cgroup_subsys_state *d_css;
 
-	cgroup_for_each_live_descendant_post(dsct, d_css, cgrp) {
+	cgroup_क्रम_each_live_descendant_post(dsct, d_css, cgrp) अणु
 		dsct->subtree_control = dsct->old_subtree_control;
 		dsct->subtree_ss_mask = dsct->old_subtree_ss_mask;
-		dsct->dom_cgrp = dsct->old_dom_cgrp;
-	}
-}
+		dsct->करोm_cgrp = dsct->old_करोm_cgrp;
+	पूर्ण
+पूर्ण
 
-static bool css_visible(struct cgroup_subsys_state *css)
-{
-	struct cgroup_subsys *ss = css->ss;
-	struct cgroup *cgrp = css->cgroup;
+अटल bool css_visible(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा cgroup_subsys *ss = css->ss;
+	काष्ठा cgroup *cgrp = css->cgroup;
 
-	if (cgroup_control(cgrp) & (1 << ss->id))
-		return true;
-	if (!(cgroup_ss_mask(cgrp) & (1 << ss->id)))
-		return false;
-	return cgroup_on_dfl(cgrp) && ss->implicit_on_dfl;
-}
+	अगर (cgroup_control(cgrp) & (1 << ss->id))
+		वापस true;
+	अगर (!(cgroup_ss_mask(cgrp) & (1 << ss->id)))
+		वापस false;
+	वापस cgroup_on_dfl(cgrp) && ss->implicit_on_dfl;
+पूर्ण
 
 /**
  * cgroup_apply_control_enable - enable or show csses according to control
  * @cgrp: root of the target subtree
  *
  * Walk @cgrp's subtree and create new csses or make the existing ones
- * visible.  A css is created invisible if it's being implicitly enabled
+ * visible.  A css is created invisible अगर it's being implicitly enabled
  * through dependency.  An invisible css is made visible when the userland
  * explicitly enables it.
  *
- * Returns 0 on success, -errno on failure.  On failure, csses which have
- * been processed already aren't cleaned up.  The caller is responsible for
+ * Returns 0 on success, -त्रुटि_सं on failure.  On failure, csses which have
+ * been processed alपढ़ोy aren't cleaned up.  The caller is responsible क्रम
  * cleaning up with cgroup_apply_control_disable().
  */
-static int cgroup_apply_control_enable(struct cgroup *cgrp)
-{
-	struct cgroup *dsct;
-	struct cgroup_subsys_state *d_css;
-	struct cgroup_subsys *ss;
-	int ssid, ret;
+अटल पूर्णांक cgroup_apply_control_enable(काष्ठा cgroup *cgrp)
+अणु
+	काष्ठा cgroup *dsct;
+	काष्ठा cgroup_subsys_state *d_css;
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक ssid, ret;
 
-	cgroup_for_each_live_descendant_pre(dsct, d_css, cgrp) {
-		for_each_subsys(ss, ssid) {
-			struct cgroup_subsys_state *css = cgroup_css(dsct, ss);
+	cgroup_क्रम_each_live_descendant_pre(dsct, d_css, cgrp) अणु
+		क्रम_each_subsys(ss, ssid) अणु
+			काष्ठा cgroup_subsys_state *css = cgroup_css(dsct, ss);
 
-			if (!(cgroup_ss_mask(dsct) & (1 << ss->id)))
-				continue;
+			अगर (!(cgroup_ss_mask(dsct) & (1 << ss->id)))
+				जारी;
 
-			if (!css) {
+			अगर (!css) अणु
 				css = css_create(dsct, ss);
-				if (IS_ERR(css))
-					return PTR_ERR(css);
-			}
+				अगर (IS_ERR(css))
+					वापस PTR_ERR(css);
+			पूर्ण
 
 			WARN_ON_ONCE(percpu_ref_is_dying(&css->refcnt));
 
-			if (css_visible(css)) {
+			अगर (css_visible(css)) अणु
 				ret = css_populate_dir(css);
-				if (ret)
-					return ret;
-			}
-		}
-	}
+				अगर (ret)
+					वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cgroup_apply_control_disable - kill or hide csses according to control
+ * cgroup_apply_control_disable - समाप्त or hide csses according to control
  * @cgrp: root of the target subtree
  *
- * Walk @cgrp's subtree and kill and hide csses so that they match
+ * Walk @cgrp's subtree and समाप्त and hide csses so that they match
  * cgroup_ss_mask() and cgroup_visible_mask().
  *
- * A css is hidden when the userland requests it to be disabled while other
- * subsystems are still depending on it.  The css must not actively control
- * resources and be in the vanilla state if it's made visible again later.
- * Controllers which may be depended upon should provide ->css_reset() for
+ * A css is hidden when the userland requests it to be disabled जबतक other
+ * subप्रणालीs are still depending on it.  The css must not actively control
+ * resources and be in the vanilla state अगर it's made visible again later.
+ * Controllers which may be depended upon should provide ->css_reset() क्रम
  * this purpose.
  */
-static void cgroup_apply_control_disable(struct cgroup *cgrp)
-{
-	struct cgroup *dsct;
-	struct cgroup_subsys_state *d_css;
-	struct cgroup_subsys *ss;
-	int ssid;
+अटल व्योम cgroup_apply_control_disable(काष्ठा cgroup *cgrp)
+अणु
+	काष्ठा cgroup *dsct;
+	काष्ठा cgroup_subsys_state *d_css;
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक ssid;
 
-	cgroup_for_each_live_descendant_post(dsct, d_css, cgrp) {
-		for_each_subsys(ss, ssid) {
-			struct cgroup_subsys_state *css = cgroup_css(dsct, ss);
+	cgroup_क्रम_each_live_descendant_post(dsct, d_css, cgrp) अणु
+		क्रम_each_subsys(ss, ssid) अणु
+			काष्ठा cgroup_subsys_state *css = cgroup_css(dsct, ss);
 
-			if (!css)
-				continue;
+			अगर (!css)
+				जारी;
 
 			WARN_ON_ONCE(percpu_ref_is_dying(&css->refcnt));
 
-			if (css->parent &&
-			    !(cgroup_ss_mask(dsct) & (1 << ss->id))) {
-				kill_css(css);
-			} else if (!css_visible(css)) {
+			अगर (css->parent &&
+			    !(cgroup_ss_mask(dsct) & (1 << ss->id))) अणु
+				समाप्त_css(css);
+			पूर्ण अन्यथा अगर (!css_visible(css)) अणु
 				css_clear_dir(css);
-				if (ss->css_reset)
+				अगर (ss->css_reset)
 					ss->css_reset(css);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * cgroup_apply_control - apply control mask updates to the subtree
  * @cgrp: root of the target subtree
  *
- * subsystems can be enabled and disabled in a subtree using the following
+ * subप्रणालीs can be enabled and disabled in a subtree using the following
  * steps.
  *
  * 1. Call cgroup_save_control() to stash the current state.
  * 2. Update ->subtree_control masks in the subtree as desired.
  * 3. Call cgroup_apply_control() to apply the changes.
- * 4. Optionally perform other related operations.
+ * 4. Optionally perक्रमm other related operations.
  * 5. Call cgroup_finalize_control() to finish up.
  *
  * This function implements step 3 and propagates the mask changes
- * throughout @cgrp's subtree, updates csses accordingly and perform
+ * throughout @cgrp's subtree, updates csses accordingly and perक्रमm
  * process migrations.
  */
-static int cgroup_apply_control(struct cgroup *cgrp)
-{
-	int ret;
+अटल पूर्णांक cgroup_apply_control(काष्ठा cgroup *cgrp)
+अणु
+	पूर्णांक ret;
 
 	cgroup_propagate_control(cgrp);
 
 	ret = cgroup_apply_control_enable(cgrp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * At this point, cgroup_e_css_by_mask() results reflect the new csses
+	 * At this poपूर्णांक, cgroup_e_css_by_mask() results reflect the new csses
 	 * making the following cgroup_update_dfl_csses() properly update
 	 * css associations of all tasks in the subtree.
 	 */
 	ret = cgroup_update_dfl_csses(cgrp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cgroup_finalize_control - finalize control mask update
  * @cgrp: root of the target subtree
  * @ret: the result of the update
  *
- * Finalize control mask update.  See cgroup_apply_control() for more info.
+ * Finalize control mask update.  See cgroup_apply_control() क्रम more info.
  */
-static void cgroup_finalize_control(struct cgroup *cgrp, int ret)
-{
-	if (ret) {
+अटल व्योम cgroup_finalize_control(काष्ठा cgroup *cgrp, पूर्णांक ret)
+अणु
+	अगर (ret) अणु
 		cgroup_restore_control(cgrp);
 		cgroup_propagate_control(cgrp);
-	}
+	पूर्ण
 
 	cgroup_apply_control_disable(cgrp);
-}
+पूर्ण
 
-static int cgroup_vet_subtree_control_enable(struct cgroup *cgrp, u16 enable)
-{
-	u16 domain_enable = enable & ~cgrp_dfl_threaded_ss_mask;
+अटल पूर्णांक cgroup_vet_subtree_control_enable(काष्ठा cgroup *cgrp, u16 enable)
+अणु
+	u16 करोमुख्य_enable = enable & ~cgrp_dfl_thपढ़ोed_ss_mask;
 
-	/* if nothing is getting enabled, nothing to worry about */
-	if (!enable)
-		return 0;
+	/* अगर nothing is getting enabled, nothing to worry about */
+	अगर (!enable)
+		वापस 0;
 
 	/* can @cgrp host any resources? */
-	if (!cgroup_is_valid_domain(cgrp->dom_cgrp))
-		return -EOPNOTSUPP;
+	अगर (!cgroup_is_valid_करोमुख्य(cgrp->करोm_cgrp))
+		वापस -EOPNOTSUPP;
 
-	/* mixables don't care */
-	if (cgroup_is_mixable(cgrp))
-		return 0;
+	/* mixables करोn't care */
+	अगर (cgroup_is_mixable(cgrp))
+		वापस 0;
 
-	if (domain_enable) {
-		/* can't enable domain controllers inside a thread subtree */
-		if (cgroup_is_thread_root(cgrp) || cgroup_is_threaded(cgrp))
-			return -EOPNOTSUPP;
-	} else {
+	अगर (करोमुख्य_enable) अणु
+		/* can't enable करोमुख्य controllers inside a thपढ़ो subtree */
+		अगर (cgroup_is_thपढ़ो_root(cgrp) || cgroup_is_thपढ़ोed(cgrp))
+			वापस -EOPNOTSUPP;
+	पूर्ण अन्यथा अणु
 		/*
-		 * Threaded controllers can handle internal competitions
-		 * and are always allowed inside a (prospective) thread
+		 * Thपढ़ोed controllers can handle पूर्णांकernal competitions
+		 * and are always allowed inside a (prospective) thपढ़ो
 		 * subtree.
 		 */
-		if (cgroup_can_be_thread_root(cgrp) || cgroup_is_threaded(cgrp))
-			return 0;
-	}
+		अगर (cgroup_can_be_thपढ़ो_root(cgrp) || cgroup_is_thपढ़ोed(cgrp))
+			वापस 0;
+	पूर्ण
 
 	/*
-	 * Controllers can't be enabled for a cgroup with tasks to avoid
+	 * Controllers can't be enabled क्रम a cgroup with tasks to aव्योम
 	 * child cgroups competing against tasks.
 	 */
-	if (cgroup_has_tasks(cgrp))
-		return -EBUSY;
+	अगर (cgroup_has_tasks(cgrp))
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* change the enabled child controllers for a cgroup in the default hierarchy */
-static ssize_t cgroup_subtree_control_write(struct kernfs_open_file *of,
-					    char *buf, size_t nbytes,
+/* change the enabled child controllers क्रम a cgroup in the शेष hierarchy */
+अटल sमाप_प्रकार cgroup_subtree_control_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+					    अक्षर *buf, माप_प्रकार nbytes,
 					    loff_t off)
-{
+अणु
 	u16 enable = 0, disable = 0;
-	struct cgroup *cgrp, *child;
-	struct cgroup_subsys *ss;
-	char *tok;
-	int ssid, ret;
+	काष्ठा cgroup *cgrp, *child;
+	काष्ठा cgroup_subsys *ss;
+	अक्षर *tok;
+	पूर्णांक ssid, ret;
 
 	/*
-	 * Parse input - space separated list of subsystem names prefixed
+	 * Parse input - space separated list of subप्रणाली names prefixed
 	 * with either + or -.
 	 */
-	buf = strstrip(buf);
-	while ((tok = strsep(&buf, " "))) {
-		if (tok[0] == '\0')
-			continue;
-		do_each_subsys_mask(ss, ssid, ~cgrp_dfl_inhibit_ss_mask) {
-			if (!cgroup_ssid_enabled(ssid) ||
-			    strcmp(tok + 1, ss->name))
-				continue;
+	buf = म_मालाip(buf);
+	जबतक ((tok = strsep(&buf, " "))) अणु
+		अगर (tok[0] == '\0')
+			जारी;
+		करो_each_subsys_mask(ss, ssid, ~cgrp_dfl_inhibit_ss_mask) अणु
+			अगर (!cgroup_ssid_enabled(ssid) ||
+			    म_भेद(tok + 1, ss->name))
+				जारी;
 
-			if (*tok == '+') {
+			अगर (*tok == '+') अणु
 				enable |= 1 << ssid;
 				disable &= ~(1 << ssid);
-			} else if (*tok == '-') {
+			पूर्ण अन्यथा अगर (*tok == '-') अणु
 				disable |= 1 << ssid;
 				enable &= ~(1 << ssid);
-			} else {
-				return -EINVAL;
-			}
-			break;
-		} while_each_subsys_mask();
-		if (ssid == CGROUP_SUBSYS_COUNT)
-			return -EINVAL;
-	}
+			पूर्ण अन्यथा अणु
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+		पूर्ण जबतक_each_subsys_mask();
+		अगर (ssid == CGROUP_SUBSYS_COUNT)
+			वापस -EINVAL;
+	पूर्ण
 
 	cgrp = cgroup_kn_lock_live(of->kn, true);
-	if (!cgrp)
-		return -ENODEV;
+	अगर (!cgrp)
+		वापस -ENODEV;
 
-	for_each_subsys(ss, ssid) {
-		if (enable & (1 << ssid)) {
-			if (cgrp->subtree_control & (1 << ssid)) {
+	क्रम_each_subsys(ss, ssid) अणु
+		अगर (enable & (1 << ssid)) अणु
+			अगर (cgrp->subtree_control & (1 << ssid)) अणु
 				enable &= ~(1 << ssid);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (!(cgroup_control(cgrp) & (1 << ssid))) {
+			अगर (!(cgroup_control(cgrp) & (1 << ssid))) अणु
 				ret = -ENOENT;
-				goto out_unlock;
-			}
-		} else if (disable & (1 << ssid)) {
-			if (!(cgrp->subtree_control & (1 << ssid))) {
+				जाओ out_unlock;
+			पूर्ण
+		पूर्ण अन्यथा अगर (disable & (1 << ssid)) अणु
+			अगर (!(cgrp->subtree_control & (1 << ssid))) अणु
 				disable &= ~(1 << ssid);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			/* a child has it enabled? */
-			cgroup_for_each_live_child(child, cgrp) {
-				if (child->subtree_control & (1 << ssid)) {
+			cgroup_क्रम_each_live_child(child, cgrp) अणु
+				अगर (child->subtree_control & (1 << ssid)) अणु
 					ret = -EBUSY;
-					goto out_unlock;
-				}
-			}
-		}
-	}
+					जाओ out_unlock;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!enable && !disable) {
+	अगर (!enable && !disable) अणु
 		ret = 0;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	ret = cgroup_vet_subtree_control_enable(cgrp, enable);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 
 	/* save and update control masks and prepare csses */
 	cgroup_save_control(cgrp);
@@ -3307,52 +3308,52 @@ static ssize_t cgroup_subtree_control_write(struct kernfs_open_file *of,
 
 	ret = cgroup_apply_control(cgrp);
 	cgroup_finalize_control(cgrp, ret);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 
 	kernfs_activate(cgrp->kn);
 out_unlock:
 	cgroup_kn_unlock(of->kn);
-	return ret ?: nbytes;
-}
+	वापस ret ?: nbytes;
+पूर्ण
 
 /**
- * cgroup_enable_threaded - make @cgrp threaded
+ * cgroup_enable_thपढ़ोed - make @cgrp thपढ़ोed
  * @cgrp: the target cgroup
  *
- * Called when "threaded" is written to the cgroup.type interface file and
- * tries to make @cgrp threaded and join the parent's resource domain.
- * This function is never called on the root cgroup as cgroup.type doesn't
+ * Called when "threaded" is written to the cgroup.type पूर्णांकerface file and
+ * tries to make @cgrp thपढ़ोed and join the parent's resource करोमुख्य.
+ * This function is never called on the root cgroup as cgroup.type करोesn't
  * exist on it.
  */
-static int cgroup_enable_threaded(struct cgroup *cgrp)
-{
-	struct cgroup *parent = cgroup_parent(cgrp);
-	struct cgroup *dom_cgrp = parent->dom_cgrp;
-	struct cgroup *dsct;
-	struct cgroup_subsys_state *d_css;
-	int ret;
+अटल पूर्णांक cgroup_enable_thपढ़ोed(काष्ठा cgroup *cgrp)
+अणु
+	काष्ठा cgroup *parent = cgroup_parent(cgrp);
+	काष्ठा cgroup *करोm_cgrp = parent->करोm_cgrp;
+	काष्ठा cgroup *dsct;
+	काष्ठा cgroup_subsys_state *d_css;
+	पूर्णांक ret;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	/* noop if already threaded */
-	if (cgroup_is_threaded(cgrp))
-		return 0;
+	/* noop अगर alपढ़ोy thपढ़ोed */
+	अगर (cgroup_is_thपढ़ोed(cgrp))
+		वापस 0;
 
 	/*
-	 * If @cgroup is populated or has domain controllers enabled, it
-	 * can't be switched.  While the below cgroup_can_be_thread_root()
+	 * If @cgroup is populated or has करोमुख्य controllers enabled, it
+	 * can't be चयनed.  While the below cgroup_can_be_thपढ़ो_root()
 	 * test can catch the same conditions, that's only when @parent is
 	 * not mixable, so let's check it explicitly.
 	 */
-	if (cgroup_is_populated(cgrp) ||
-	    cgrp->subtree_control & ~cgrp_dfl_threaded_ss_mask)
-		return -EOPNOTSUPP;
+	अगर (cgroup_is_populated(cgrp) ||
+	    cgrp->subtree_control & ~cgrp_dfl_thपढ़ोed_ss_mask)
+		वापस -EOPNOTSUPP;
 
-	/* we're joining the parent's domain, ensure its validity */
-	if (!cgroup_is_valid_domain(dom_cgrp) ||
-	    !cgroup_can_be_thread_root(dom_cgrp))
-		return -EOPNOTSUPP;
+	/* we're joining the parent's करोमुख्य, ensure its validity */
+	अगर (!cgroup_is_valid_करोमुख्य(करोm_cgrp) ||
+	    !cgroup_can_be_thपढ़ो_root(करोm_cgrp))
+		वापस -EOPNOTSUPP;
 
 	/*
 	 * The following shouldn't cause actual migrations and should
@@ -3360,1041 +3361,1041 @@ static int cgroup_enable_threaded(struct cgroup *cgrp)
 	 */
 	cgroup_save_control(cgrp);
 
-	cgroup_for_each_live_descendant_pre(dsct, d_css, cgrp)
-		if (dsct == cgrp || cgroup_is_threaded(dsct))
-			dsct->dom_cgrp = dom_cgrp;
+	cgroup_क्रम_each_live_descendant_pre(dsct, d_css, cgrp)
+		अगर (dsct == cgrp || cgroup_is_thपढ़ोed(dsct))
+			dsct->करोm_cgrp = करोm_cgrp;
 
 	ret = cgroup_apply_control(cgrp);
-	if (!ret)
-		parent->nr_threaded_children++;
+	अगर (!ret)
+		parent->nr_thपढ़ोed_children++;
 
 	cgroup_finalize_control(cgrp, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cgroup_type_show(struct seq_file *seq, void *v)
-{
-	struct cgroup *cgrp = seq_css(seq)->cgroup;
+अटल पूर्णांक cgroup_type_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा cgroup *cgrp = seq_css(seq)->cgroup;
 
-	if (cgroup_is_threaded(cgrp))
-		seq_puts(seq, "threaded\n");
-	else if (!cgroup_is_valid_domain(cgrp))
-		seq_puts(seq, "domain invalid\n");
-	else if (cgroup_is_thread_root(cgrp))
-		seq_puts(seq, "domain threaded\n");
-	else
-		seq_puts(seq, "domain\n");
+	अगर (cgroup_is_thपढ़ोed(cgrp))
+		seq_माला_दो(seq, "threaded\n");
+	अन्यथा अगर (!cgroup_is_valid_करोमुख्य(cgrp))
+		seq_माला_दो(seq, "domain invalid\n");
+	अन्यथा अगर (cgroup_is_thपढ़ो_root(cgrp))
+		seq_माला_दो(seq, "domain threaded\n");
+	अन्यथा
+		seq_माला_दो(seq, "domain\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t cgroup_type_write(struct kernfs_open_file *of, char *buf,
-				 size_t nbytes, loff_t off)
-{
-	struct cgroup *cgrp;
-	int ret;
+अटल sमाप_प्रकार cgroup_type_ग_लिखो(काष्ठा kernfs_खोलो_file *of, अक्षर *buf,
+				 माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा cgroup *cgrp;
+	पूर्णांक ret;
 
-	/* only switching to threaded mode is supported */
-	if (strcmp(strstrip(buf), "threaded"))
-		return -EINVAL;
+	/* only चयनing to thपढ़ोed mode is supported */
+	अगर (म_भेद(म_मालाip(buf), "threaded"))
+		वापस -EINVAL;
 
-	/* drain dying csses before we re-apply (threaded) subtree control */
+	/* drain dying csses beक्रमe we re-apply (thपढ़ोed) subtree control */
 	cgrp = cgroup_kn_lock_live(of->kn, true);
-	if (!cgrp)
-		return -ENOENT;
+	अगर (!cgrp)
+		वापस -ENOENT;
 
-	/* threaded can only be enabled */
-	ret = cgroup_enable_threaded(cgrp);
+	/* thपढ़ोed can only be enabled */
+	ret = cgroup_enable_thपढ़ोed(cgrp);
 
 	cgroup_kn_unlock(of->kn);
-	return ret ?: nbytes;
-}
+	वापस ret ?: nbytes;
+पूर्ण
 
-static int cgroup_max_descendants_show(struct seq_file *seq, void *v)
-{
-	struct cgroup *cgrp = seq_css(seq)->cgroup;
-	int descendants = READ_ONCE(cgrp->max_descendants);
+अटल पूर्णांक cgroup_max_descendants_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा cgroup *cgrp = seq_css(seq)->cgroup;
+	पूर्णांक descendants = READ_ONCE(cgrp->max_descendants);
 
-	if (descendants == INT_MAX)
-		seq_puts(seq, "max\n");
-	else
-		seq_printf(seq, "%d\n", descendants);
+	अगर (descendants == पूर्णांक_उच्च)
+		seq_माला_दो(seq, "max\n");
+	अन्यथा
+		seq_म_लिखो(seq, "%d\n", descendants);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t cgroup_max_descendants_write(struct kernfs_open_file *of,
-					   char *buf, size_t nbytes, loff_t off)
-{
-	struct cgroup *cgrp;
-	int descendants;
-	ssize_t ret;
+अटल sमाप_प्रकार cgroup_max_descendants_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+					   अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा cgroup *cgrp;
+	पूर्णांक descendants;
+	sमाप_प्रकार ret;
 
-	buf = strstrip(buf);
-	if (!strcmp(buf, "max")) {
-		descendants = INT_MAX;
-	} else {
-		ret = kstrtoint(buf, 0, &descendants);
-		if (ret)
-			return ret;
-	}
+	buf = म_मालाip(buf);
+	अगर (!म_भेद(buf, "max")) अणु
+		descendants = पूर्णांक_उच्च;
+	पूर्ण अन्यथा अणु
+		ret = kstrtoपूर्णांक(buf, 0, &descendants);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (descendants < 0)
-		return -ERANGE;
+	अगर (descendants < 0)
+		वापस -दुस्फल;
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
-	if (!cgrp)
-		return -ENOENT;
+	अगर (!cgrp)
+		वापस -ENOENT;
 
 	cgrp->max_descendants = descendants;
 
 	cgroup_kn_unlock(of->kn);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int cgroup_max_depth_show(struct seq_file *seq, void *v)
-{
-	struct cgroup *cgrp = seq_css(seq)->cgroup;
-	int depth = READ_ONCE(cgrp->max_depth);
+अटल पूर्णांक cgroup_max_depth_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा cgroup *cgrp = seq_css(seq)->cgroup;
+	पूर्णांक depth = READ_ONCE(cgrp->max_depth);
 
-	if (depth == INT_MAX)
-		seq_puts(seq, "max\n");
-	else
-		seq_printf(seq, "%d\n", depth);
+	अगर (depth == पूर्णांक_उच्च)
+		seq_माला_दो(seq, "max\n");
+	अन्यथा
+		seq_म_लिखो(seq, "%d\n", depth);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t cgroup_max_depth_write(struct kernfs_open_file *of,
-				      char *buf, size_t nbytes, loff_t off)
-{
-	struct cgroup *cgrp;
-	ssize_t ret;
-	int depth;
+अटल sमाप_प्रकार cgroup_max_depth_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+				      अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा cgroup *cgrp;
+	sमाप_प्रकार ret;
+	पूर्णांक depth;
 
-	buf = strstrip(buf);
-	if (!strcmp(buf, "max")) {
-		depth = INT_MAX;
-	} else {
-		ret = kstrtoint(buf, 0, &depth);
-		if (ret)
-			return ret;
-	}
+	buf = म_मालाip(buf);
+	अगर (!म_भेद(buf, "max")) अणु
+		depth = पूर्णांक_उच्च;
+	पूर्ण अन्यथा अणु
+		ret = kstrtoपूर्णांक(buf, 0, &depth);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (depth < 0)
-		return -ERANGE;
+	अगर (depth < 0)
+		वापस -दुस्फल;
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
-	if (!cgrp)
-		return -ENOENT;
+	अगर (!cgrp)
+		वापस -ENOENT;
 
 	cgrp->max_depth = depth;
 
 	cgroup_kn_unlock(of->kn);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int cgroup_events_show(struct seq_file *seq, void *v)
-{
-	struct cgroup *cgrp = seq_css(seq)->cgroup;
+अटल पूर्णांक cgroup_events_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा cgroup *cgrp = seq_css(seq)->cgroup;
 
-	seq_printf(seq, "populated %d\n", cgroup_is_populated(cgrp));
-	seq_printf(seq, "frozen %d\n", test_bit(CGRP_FROZEN, &cgrp->flags));
+	seq_म_लिखो(seq, "populated %d\n", cgroup_is_populated(cgrp));
+	seq_म_लिखो(seq, "frozen %d\n", test_bit(CGRP_FROZEN, &cgrp->flags));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cgroup_stat_show(struct seq_file *seq, void *v)
-{
-	struct cgroup *cgroup = seq_css(seq)->cgroup;
+अटल पूर्णांक cgroup_stat_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा cgroup *cgroup = seq_css(seq)->cgroup;
 
-	seq_printf(seq, "nr_descendants %d\n",
+	seq_म_लिखो(seq, "nr_descendants %d\n",
 		   cgroup->nr_descendants);
-	seq_printf(seq, "nr_dying_descendants %d\n",
+	seq_म_लिखो(seq, "nr_dying_descendants %d\n",
 		   cgroup->nr_dying_descendants);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused cgroup_extra_stat_show(struct seq_file *seq,
-						 struct cgroup *cgrp, int ssid)
-{
-	struct cgroup_subsys *ss = cgroup_subsys[ssid];
-	struct cgroup_subsys_state *css;
-	int ret;
+अटल पूर्णांक __maybe_unused cgroup_extra_stat_show(काष्ठा seq_file *seq,
+						 काष्ठा cgroup *cgrp, पूर्णांक ssid)
+अणु
+	काष्ठा cgroup_subsys *ss = cgroup_subsys[ssid];
+	काष्ठा cgroup_subsys_state *css;
+	पूर्णांक ret;
 
-	if (!ss->css_extra_stat_show)
-		return 0;
+	अगर (!ss->css_extra_stat_show)
+		वापस 0;
 
 	css = cgroup_tryget_css(cgrp, ss);
-	if (!css)
-		return 0;
+	अगर (!css)
+		वापस 0;
 
 	ret = ss->css_extra_stat_show(seq, css);
 	css_put(css);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cpu_stat_show(struct seq_file *seq, void *v)
-{
-	struct cgroup __maybe_unused *cgrp = seq_css(seq)->cgroup;
-	int ret = 0;
+अटल पूर्णांक cpu_stat_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा cgroup __maybe_unused *cgrp = seq_css(seq)->cgroup;
+	पूर्णांक ret = 0;
 
-	cgroup_base_stat_cputime_show(seq);
-#ifdef CONFIG_CGROUP_SCHED
+	cgroup_base_stat_cpuसमय_show(seq);
+#अगर_घोषित CONFIG_CGROUP_SCHED
 	ret = cgroup_extra_stat_show(seq, cgrp, cpu_cgrp_id);
-#endif
-	return ret;
-}
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_PSI
-static int cgroup_io_pressure_show(struct seq_file *seq, void *v)
-{
-	struct cgroup *cgrp = seq_css(seq)->cgroup;
-	struct psi_group *psi = cgroup_ino(cgrp) == 1 ? &psi_system : &cgrp->psi;
+#अगर_घोषित CONFIG_PSI
+अटल पूर्णांक cgroup_io_pressure_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा cgroup *cgrp = seq_css(seq)->cgroup;
+	काष्ठा psi_group *psi = cgroup_ino(cgrp) == 1 ? &psi_प्रणाली : &cgrp->psi;
 
-	return psi_show(seq, psi, PSI_IO);
-}
-static int cgroup_memory_pressure_show(struct seq_file *seq, void *v)
-{
-	struct cgroup *cgrp = seq_css(seq)->cgroup;
-	struct psi_group *psi = cgroup_ino(cgrp) == 1 ? &psi_system : &cgrp->psi;
+	वापस psi_show(seq, psi, PSI_IO);
+पूर्ण
+अटल पूर्णांक cgroup_memory_pressure_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा cgroup *cgrp = seq_css(seq)->cgroup;
+	काष्ठा psi_group *psi = cgroup_ino(cgrp) == 1 ? &psi_प्रणाली : &cgrp->psi;
 
-	return psi_show(seq, psi, PSI_MEM);
-}
-static int cgroup_cpu_pressure_show(struct seq_file *seq, void *v)
-{
-	struct cgroup *cgrp = seq_css(seq)->cgroup;
-	struct psi_group *psi = cgroup_ino(cgrp) == 1 ? &psi_system : &cgrp->psi;
+	वापस psi_show(seq, psi, PSI_MEM);
+पूर्ण
+अटल पूर्णांक cgroup_cpu_pressure_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा cgroup *cgrp = seq_css(seq)->cgroup;
+	काष्ठा psi_group *psi = cgroup_ino(cgrp) == 1 ? &psi_प्रणाली : &cgrp->psi;
 
-	return psi_show(seq, psi, PSI_CPU);
-}
+	वापस psi_show(seq, psi, PSI_CPU);
+पूर्ण
 
-static ssize_t cgroup_pressure_write(struct kernfs_open_file *of, char *buf,
-					  size_t nbytes, enum psi_res res)
-{
-	struct psi_trigger *new;
-	struct cgroup *cgrp;
-	struct psi_group *psi;
+अटल sमाप_प्रकार cgroup_pressure_ग_लिखो(काष्ठा kernfs_खोलो_file *of, अक्षर *buf,
+					  माप_प्रकार nbytes, क्रमागत psi_res res)
+अणु
+	काष्ठा psi_trigger *new;
+	काष्ठा cgroup *cgrp;
+	काष्ठा psi_group *psi;
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
-	if (!cgrp)
-		return -ENODEV;
+	अगर (!cgrp)
+		वापस -ENODEV;
 
 	cgroup_get(cgrp);
 	cgroup_kn_unlock(of->kn);
 
-	psi = cgroup_ino(cgrp) == 1 ? &psi_system : &cgrp->psi;
+	psi = cgroup_ino(cgrp) == 1 ? &psi_प्रणाली : &cgrp->psi;
 	new = psi_trigger_create(psi, buf, nbytes, res);
-	if (IS_ERR(new)) {
+	अगर (IS_ERR(new)) अणु
 		cgroup_put(cgrp);
-		return PTR_ERR(new);
-	}
+		वापस PTR_ERR(new);
+	पूर्ण
 
 	psi_trigger_replace(&of->priv, new);
 
 	cgroup_put(cgrp);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static ssize_t cgroup_io_pressure_write(struct kernfs_open_file *of,
-					  char *buf, size_t nbytes,
+अटल sमाप_प्रकार cgroup_io_pressure_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+					  अक्षर *buf, माप_प्रकार nbytes,
 					  loff_t off)
-{
-	return cgroup_pressure_write(of, buf, nbytes, PSI_IO);
-}
+अणु
+	वापस cgroup_pressure_ग_लिखो(of, buf, nbytes, PSI_IO);
+पूर्ण
 
-static ssize_t cgroup_memory_pressure_write(struct kernfs_open_file *of,
-					  char *buf, size_t nbytes,
+अटल sमाप_प्रकार cgroup_memory_pressure_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+					  अक्षर *buf, माप_प्रकार nbytes,
 					  loff_t off)
-{
-	return cgroup_pressure_write(of, buf, nbytes, PSI_MEM);
-}
+अणु
+	वापस cgroup_pressure_ग_लिखो(of, buf, nbytes, PSI_MEM);
+पूर्ण
 
-static ssize_t cgroup_cpu_pressure_write(struct kernfs_open_file *of,
-					  char *buf, size_t nbytes,
+अटल sमाप_प्रकार cgroup_cpu_pressure_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+					  अक्षर *buf, माप_प्रकार nbytes,
 					  loff_t off)
-{
-	return cgroup_pressure_write(of, buf, nbytes, PSI_CPU);
-}
+अणु
+	वापस cgroup_pressure_ग_लिखो(of, buf, nbytes, PSI_CPU);
+पूर्ण
 
-static __poll_t cgroup_pressure_poll(struct kernfs_open_file *of,
+अटल __poll_t cgroup_pressure_poll(काष्ठा kernfs_खोलो_file *of,
 					  poll_table *pt)
-{
-	return psi_trigger_poll(&of->priv, of->file, pt);
-}
+अणु
+	वापस psi_trigger_poll(&of->priv, of->file, pt);
+पूर्ण
 
-static void cgroup_pressure_release(struct kernfs_open_file *of)
-{
-	psi_trigger_replace(&of->priv, NULL);
-}
-#endif /* CONFIG_PSI */
+अटल व्योम cgroup_pressure_release(काष्ठा kernfs_खोलो_file *of)
+अणु
+	psi_trigger_replace(&of->priv, शून्य);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PSI */
 
-static int cgroup_freeze_show(struct seq_file *seq, void *v)
-{
-	struct cgroup *cgrp = seq_css(seq)->cgroup;
+अटल पूर्णांक cgroup_मुक्तze_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा cgroup *cgrp = seq_css(seq)->cgroup;
 
-	seq_printf(seq, "%d\n", cgrp->freezer.freeze);
+	seq_म_लिखो(seq, "%d\n", cgrp->मुक्तzer.मुक्तze);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t cgroup_freeze_write(struct kernfs_open_file *of,
-				   char *buf, size_t nbytes, loff_t off)
-{
-	struct cgroup *cgrp;
-	ssize_t ret;
-	int freeze;
+अटल sमाप_प्रकार cgroup_मुक्तze_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+				   अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा cgroup *cgrp;
+	sमाप_प्रकार ret;
+	पूर्णांक मुक्तze;
 
-	ret = kstrtoint(strstrip(buf), 0, &freeze);
-	if (ret)
-		return ret;
+	ret = kstrtoपूर्णांक(म_मालाip(buf), 0, &मुक्तze);
+	अगर (ret)
+		वापस ret;
 
-	if (freeze < 0 || freeze > 1)
-		return -ERANGE;
+	अगर (मुक्तze < 0 || मुक्तze > 1)
+		वापस -दुस्फल;
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
-	if (!cgrp)
-		return -ENOENT;
+	अगर (!cgrp)
+		वापस -ENOENT;
 
-	cgroup_freeze(cgrp, freeze);
+	cgroup_मुक्तze(cgrp, मुक्तze);
 
 	cgroup_kn_unlock(of->kn);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int cgroup_file_open(struct kernfs_open_file *of)
-{
-	struct cftype *cft = of_cft(of);
+अटल पूर्णांक cgroup_file_खोलो(काष्ठा kernfs_खोलो_file *of)
+अणु
+	काष्ठा cftype *cft = of_cft(of);
 
-	if (cft->open)
-		return cft->open(of);
-	return 0;
-}
+	अगर (cft->खोलो)
+		वापस cft->खोलो(of);
+	वापस 0;
+पूर्ण
 
-static void cgroup_file_release(struct kernfs_open_file *of)
-{
-	struct cftype *cft = of_cft(of);
+अटल व्योम cgroup_file_release(काष्ठा kernfs_खोलो_file *of)
+अणु
+	काष्ठा cftype *cft = of_cft(of);
 
-	if (cft->release)
+	अगर (cft->release)
 		cft->release(of);
-}
+पूर्ण
 
-static ssize_t cgroup_file_write(struct kernfs_open_file *of, char *buf,
-				 size_t nbytes, loff_t off)
-{
-	struct cgroup_namespace *ns = current->nsproxy->cgroup_ns;
-	struct cgroup *cgrp = of->kn->parent->priv;
-	struct cftype *cft = of_cft(of);
-	struct cgroup_subsys_state *css;
-	int ret;
+अटल sमाप_प्रकार cgroup_file_ग_लिखो(काष्ठा kernfs_खोलो_file *of, अक्षर *buf,
+				 माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा cgroup_namespace *ns = current->nsproxy->cgroup_ns;
+	काष्ठा cgroup *cgrp = of->kn->parent->priv;
+	काष्ठा cftype *cft = of_cft(of);
+	काष्ठा cgroup_subsys_state *css;
+	पूर्णांक ret;
 
-	if (!nbytes)
-		return 0;
+	अगर (!nbytes)
+		वापस 0;
 
 	/*
-	 * If namespaces are delegation boundaries, disallow writes to
+	 * If namespaces are delegation boundaries, disallow ग_लिखोs to
 	 * files in an non-init namespace root from inside the namespace
-	 * except for the files explicitly marked delegatable -
+	 * except क्रम the files explicitly marked delegatable -
 	 * cgroup.procs and cgroup.subtree_control.
 	 */
-	if ((cgrp->root->flags & CGRP_ROOT_NS_DELEGATE) &&
+	अगर ((cgrp->root->flags & CGRP_ROOT_NS_DELEGATE) &&
 	    !(cft->flags & CFTYPE_NS_DELEGATABLE) &&
 	    ns != &init_cgroup_ns && ns->root_cset->dfl_cgrp == cgrp)
-		return -EPERM;
+		वापस -EPERM;
 
-	if (cft->write)
-		return cft->write(of, buf, nbytes, off);
+	अगर (cft->ग_लिखो)
+		वापस cft->ग_लिखो(of, buf, nbytes, off);
 
 	/*
 	 * kernfs guarantees that a file isn't deleted with operations in
 	 * flight, which means that the matching css is and stays alive and
-	 * doesn't need to be pinned.  The RCU locking is not necessary
-	 * either.  It's just for the convenience of using cgroup_css().
+	 * करोesn't need to be pinned.  The RCU locking is not necessary
+	 * either.  It's just क्रम the convenience of using cgroup_css().
 	 */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	css = cgroup_css(cgrp, cft->ss);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (cft->write_u64) {
-		unsigned long long v;
-		ret = kstrtoull(buf, 0, &v);
-		if (!ret)
-			ret = cft->write_u64(css, cft, v);
-	} else if (cft->write_s64) {
-		long long v;
-		ret = kstrtoll(buf, 0, &v);
-		if (!ret)
-			ret = cft->write_s64(css, cft, v);
-	} else {
+	अगर (cft->ग_लिखो_u64) अणु
+		अचिन्हित दीर्घ दीर्घ v;
+		ret = kम_से_अदीर्घl(buf, 0, &v);
+		अगर (!ret)
+			ret = cft->ग_लिखो_u64(css, cft, v);
+	पूर्ण अन्यथा अगर (cft->ग_लिखो_s64) अणु
+		दीर्घ दीर्घ v;
+		ret = kम_से_दीर्घl(buf, 0, &v);
+		अगर (!ret)
+			ret = cft->ग_लिखो_s64(css, cft, v);
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret ?: nbytes;
-}
+	वापस ret ?: nbytes;
+पूर्ण
 
-static __poll_t cgroup_file_poll(struct kernfs_open_file *of, poll_table *pt)
-{
-	struct cftype *cft = of_cft(of);
+अटल __poll_t cgroup_file_poll(काष्ठा kernfs_खोलो_file *of, poll_table *pt)
+अणु
+	काष्ठा cftype *cft = of_cft(of);
 
-	if (cft->poll)
-		return cft->poll(of, pt);
+	अगर (cft->poll)
+		वापस cft->poll(of, pt);
 
-	return kernfs_generic_poll(of, pt);
-}
+	वापस kernfs_generic_poll(of, pt);
+पूर्ण
 
-static void *cgroup_seqfile_start(struct seq_file *seq, loff_t *ppos)
-{
-	return seq_cft(seq)->seq_start(seq, ppos);
-}
+अटल व्योम *cgroup_seqfile_start(काष्ठा seq_file *seq, loff_t *ppos)
+अणु
+	वापस seq_cft(seq)->seq_start(seq, ppos);
+पूर्ण
 
-static void *cgroup_seqfile_next(struct seq_file *seq, void *v, loff_t *ppos)
-{
-	return seq_cft(seq)->seq_next(seq, v, ppos);
-}
+अटल व्योम *cgroup_seqfile_next(काष्ठा seq_file *seq, व्योम *v, loff_t *ppos)
+अणु
+	वापस seq_cft(seq)->seq_next(seq, v, ppos);
+पूर्ण
 
-static void cgroup_seqfile_stop(struct seq_file *seq, void *v)
-{
-	if (seq_cft(seq)->seq_stop)
+अटल व्योम cgroup_seqfile_stop(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	अगर (seq_cft(seq)->seq_stop)
 		seq_cft(seq)->seq_stop(seq, v);
-}
+पूर्ण
 
-static int cgroup_seqfile_show(struct seq_file *m, void *arg)
-{
-	struct cftype *cft = seq_cft(m);
-	struct cgroup_subsys_state *css = seq_css(m);
+अटल पूर्णांक cgroup_seqfile_show(काष्ठा seq_file *m, व्योम *arg)
+अणु
+	काष्ठा cftype *cft = seq_cft(m);
+	काष्ठा cgroup_subsys_state *css = seq_css(m);
 
-	if (cft->seq_show)
-		return cft->seq_show(m, arg);
+	अगर (cft->seq_show)
+		वापस cft->seq_show(m, arg);
 
-	if (cft->read_u64)
-		seq_printf(m, "%llu\n", cft->read_u64(css, cft));
-	else if (cft->read_s64)
-		seq_printf(m, "%lld\n", cft->read_s64(css, cft));
-	else
-		return -EINVAL;
-	return 0;
-}
+	अगर (cft->पढ़ो_u64)
+		seq_म_लिखो(m, "%llu\n", cft->पढ़ो_u64(css, cft));
+	अन्यथा अगर (cft->पढ़ो_s64)
+		seq_म_लिखो(m, "%lld\n", cft->पढ़ो_s64(css, cft));
+	अन्यथा
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static struct kernfs_ops cgroup_kf_single_ops = {
-	.atomic_write_len	= PAGE_SIZE,
-	.open			= cgroup_file_open,
+अटल काष्ठा kernfs_ops cgroup_kf_single_ops = अणु
+	.atomic_ग_लिखो_len	= PAGE_SIZE,
+	.खोलो			= cgroup_file_खोलो,
 	.release		= cgroup_file_release,
-	.write			= cgroup_file_write,
+	.ग_लिखो			= cgroup_file_ग_लिखो,
 	.poll			= cgroup_file_poll,
 	.seq_show		= cgroup_seqfile_show,
-};
+पूर्ण;
 
-static struct kernfs_ops cgroup_kf_ops = {
-	.atomic_write_len	= PAGE_SIZE,
-	.open			= cgroup_file_open,
+अटल काष्ठा kernfs_ops cgroup_kf_ops = अणु
+	.atomic_ग_लिखो_len	= PAGE_SIZE,
+	.खोलो			= cgroup_file_खोलो,
 	.release		= cgroup_file_release,
-	.write			= cgroup_file_write,
+	.ग_लिखो			= cgroup_file_ग_लिखो,
 	.poll			= cgroup_file_poll,
 	.seq_start		= cgroup_seqfile_start,
 	.seq_next		= cgroup_seqfile_next,
 	.seq_stop		= cgroup_seqfile_stop,
 	.seq_show		= cgroup_seqfile_show,
-};
+पूर्ण;
 
 /* set uid and gid of cgroup dirs and files to that of the creator */
-static int cgroup_kn_set_ugid(struct kernfs_node *kn)
-{
-	struct iattr iattr = { .ia_valid = ATTR_UID | ATTR_GID,
+अटल पूर्णांक cgroup_kn_set_ugid(काष्ठा kernfs_node *kn)
+अणु
+	काष्ठा iattr iattr = अणु .ia_valid = ATTR_UID | ATTR_GID,
 			       .ia_uid = current_fsuid(),
-			       .ia_gid = current_fsgid(), };
+			       .ia_gid = current_fsgid(), पूर्ण;
 
-	if (uid_eq(iattr.ia_uid, GLOBAL_ROOT_UID) &&
+	अगर (uid_eq(iattr.ia_uid, GLOBAL_ROOT_UID) &&
 	    gid_eq(iattr.ia_gid, GLOBAL_ROOT_GID))
-		return 0;
+		वापस 0;
 
-	return kernfs_setattr(kn, &iattr);
-}
+	वापस kernfs_setattr(kn, &iattr);
+पूर्ण
 
-static void cgroup_file_notify_timer(struct timer_list *timer)
-{
-	cgroup_file_notify(container_of(timer, struct cgroup_file,
-					notify_timer));
-}
+अटल व्योम cgroup_file_notअगरy_समयr(काष्ठा समयr_list *समयr)
+अणु
+	cgroup_file_notअगरy(container_of(समयr, काष्ठा cgroup_file,
+					notअगरy_समयr));
+पूर्ण
 
-static int cgroup_add_file(struct cgroup_subsys_state *css, struct cgroup *cgrp,
-			   struct cftype *cft)
-{
-	char name[CGROUP_FILE_NAME_MAX];
-	struct kernfs_node *kn;
-	struct lock_class_key *key = NULL;
-	int ret;
+अटल पूर्णांक cgroup_add_file(काष्ठा cgroup_subsys_state *css, काष्ठा cgroup *cgrp,
+			   काष्ठा cftype *cft)
+अणु
+	अक्षर name[CGROUP_खाता_NAME_MAX];
+	काष्ठा kernfs_node *kn;
+	काष्ठा lock_class_key *key = शून्य;
+	पूर्णांक ret;
 
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
 	key = &cft->lockdep_key;
-#endif
+#पूर्ण_अगर
 	kn = __kernfs_create_file(cgrp->kn, cgroup_file_name(cgrp, cft, name),
 				  cgroup_file_mode(cft),
 				  GLOBAL_ROOT_UID, GLOBAL_ROOT_GID,
 				  0, cft->kf_ops, cft,
-				  NULL, key);
-	if (IS_ERR(kn))
-		return PTR_ERR(kn);
+				  शून्य, key);
+	अगर (IS_ERR(kn))
+		वापस PTR_ERR(kn);
 
 	ret = cgroup_kn_set_ugid(kn);
-	if (ret) {
-		kernfs_remove(kn);
-		return ret;
-	}
+	अगर (ret) अणु
+		kernfs_हटाओ(kn);
+		वापस ret;
+	पूर्ण
 
-	if (cft->file_offset) {
-		struct cgroup_file *cfile = (void *)css + cft->file_offset;
+	अगर (cft->file_offset) अणु
+		काष्ठा cgroup_file *cfile = (व्योम *)css + cft->file_offset;
 
-		timer_setup(&cfile->notify_timer, cgroup_file_notify_timer, 0);
+		समयr_setup(&cfile->notअगरy_समयr, cgroup_file_notअगरy_समयr, 0);
 
 		spin_lock_irq(&cgroup_file_kn_lock);
 		cfile->kn = kn;
 		spin_unlock_irq(&cgroup_file_kn_lock);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cgroup_addrm_files - add or remove files to a cgroup directory
+ * cgroup_addrm_files - add or हटाओ files to a cgroup directory
  * @css: the target css
  * @cgrp: the target cgroup (usually css->cgroup)
  * @cfts: array of cftypes to be added
- * @is_add: whether to add or remove
+ * @is_add: whether to add or हटाओ
  *
- * Depending on @is_add, add or remove files defined by @cfts on @cgrp.
+ * Depending on @is_add, add or हटाओ files defined by @cfts on @cgrp.
  * For removals, this function never fails.
  */
-static int cgroup_addrm_files(struct cgroup_subsys_state *css,
-			      struct cgroup *cgrp, struct cftype cfts[],
+अटल पूर्णांक cgroup_addrm_files(काष्ठा cgroup_subsys_state *css,
+			      काष्ठा cgroup *cgrp, काष्ठा cftype cfts[],
 			      bool is_add)
-{
-	struct cftype *cft, *cft_end = NULL;
-	int ret = 0;
+अणु
+	काष्ठा cftype *cft, *cft_end = शून्य;
+	पूर्णांक ret = 0;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
 restart:
-	for (cft = cfts; cft != cft_end && cft->name[0] != '\0'; cft++) {
-		/* does cft->flags tell us to skip this file on @cgrp? */
-		if ((cft->flags & __CFTYPE_ONLY_ON_DFL) && !cgroup_on_dfl(cgrp))
-			continue;
-		if ((cft->flags & __CFTYPE_NOT_ON_DFL) && cgroup_on_dfl(cgrp))
-			continue;
-		if ((cft->flags & CFTYPE_NOT_ON_ROOT) && !cgroup_parent(cgrp))
-			continue;
-		if ((cft->flags & CFTYPE_ONLY_ON_ROOT) && cgroup_parent(cgrp))
-			continue;
-		if ((cft->flags & CFTYPE_DEBUG) && !cgroup_debug)
-			continue;
-		if (is_add) {
+	क्रम (cft = cfts; cft != cft_end && cft->name[0] != '\0'; cft++) अणु
+		/* करोes cft->flags tell us to skip this file on @cgrp? */
+		अगर ((cft->flags & __CFTYPE_ONLY_ON_DFL) && !cgroup_on_dfl(cgrp))
+			जारी;
+		अगर ((cft->flags & __CFTYPE_NOT_ON_DFL) && cgroup_on_dfl(cgrp))
+			जारी;
+		अगर ((cft->flags & CFTYPE_NOT_ON_ROOT) && !cgroup_parent(cgrp))
+			जारी;
+		अगर ((cft->flags & CFTYPE_ONLY_ON_ROOT) && cgroup_parent(cgrp))
+			जारी;
+		अगर ((cft->flags & CFTYPE_DEBUG) && !cgroup_debug)
+			जारी;
+		अगर (is_add) अणु
 			ret = cgroup_add_file(css, cgrp, cft);
-			if (ret) {
+			अगर (ret) अणु
 				pr_warn("%s: failed to add %s, err=%d\n",
 					__func__, cft->name, ret);
 				cft_end = cft;
 				is_add = false;
-				goto restart;
-			}
-		} else {
+				जाओ restart;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			cgroup_rm_file(cgrp, cft);
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int cgroup_apply_cftypes(struct cftype *cfts, bool is_add)
-{
-	struct cgroup_subsys *ss = cfts[0].ss;
-	struct cgroup *root = &ss->root->cgrp;
-	struct cgroup_subsys_state *css;
-	int ret = 0;
+अटल पूर्णांक cgroup_apply_cftypes(काष्ठा cftype *cfts, bool is_add)
+अणु
+	काष्ठा cgroup_subsys *ss = cfts[0].ss;
+	काष्ठा cgroup *root = &ss->root->cgrp;
+	काष्ठा cgroup_subsys_state *css;
+	पूर्णांक ret = 0;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	/* add/rm files for all cgroups created before */
-	css_for_each_descendant_pre(css, cgroup_css(root, ss)) {
-		struct cgroup *cgrp = css->cgroup;
+	/* add/rm files क्रम all cgroups created beक्रमe */
+	css_क्रम_each_descendant_pre(css, cgroup_css(root, ss)) अणु
+		काष्ठा cgroup *cgrp = css->cgroup;
 
-		if (!(css->flags & CSS_VISIBLE))
-			continue;
+		अगर (!(css->flags & CSS_VISIBLE))
+			जारी;
 
 		ret = cgroup_addrm_files(css, cgrp, cfts, is_add);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	if (is_add && !ret)
+	अगर (is_add && !ret)
 		kernfs_activate(root->kn);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cgroup_exit_cftypes(struct cftype *cfts)
-{
-	struct cftype *cft;
+अटल व्योम cgroup_निकास_cftypes(काष्ठा cftype *cfts)
+अणु
+	काष्ठा cftype *cft;
 
-	for (cft = cfts; cft->name[0] != '\0'; cft++) {
-		/* free copy for custom atomic_write_len, see init_cftypes() */
-		if (cft->max_write_len && cft->max_write_len != PAGE_SIZE)
-			kfree(cft->kf_ops);
-		cft->kf_ops = NULL;
-		cft->ss = NULL;
+	क्रम (cft = cfts; cft->name[0] != '\0'; cft++) अणु
+		/* मुक्त copy क्रम custom atomic_ग_लिखो_len, see init_cftypes() */
+		अगर (cft->max_ग_लिखो_len && cft->max_ग_लिखो_len != PAGE_SIZE)
+			kमुक्त(cft->kf_ops);
+		cft->kf_ops = शून्य;
+		cft->ss = शून्य;
 
-		/* revert flags set by cgroup core while adding @cfts */
+		/* revert flags set by cgroup core जबतक adding @cfts */
 		cft->flags &= ~(__CFTYPE_ONLY_ON_DFL | __CFTYPE_NOT_ON_DFL);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int cgroup_init_cftypes(struct cgroup_subsys *ss, struct cftype *cfts)
-{
-	struct cftype *cft;
+अटल पूर्णांक cgroup_init_cftypes(काष्ठा cgroup_subsys *ss, काष्ठा cftype *cfts)
+अणु
+	काष्ठा cftype *cft;
 
-	for (cft = cfts; cft->name[0] != '\0'; cft++) {
-		struct kernfs_ops *kf_ops;
+	क्रम (cft = cfts; cft->name[0] != '\0'; cft++) अणु
+		काष्ठा kernfs_ops *kf_ops;
 
 		WARN_ON(cft->ss || cft->kf_ops);
 
-		if (cft->seq_start)
+		अगर (cft->seq_start)
 			kf_ops = &cgroup_kf_ops;
-		else
+		अन्यथा
 			kf_ops = &cgroup_kf_single_ops;
 
 		/*
-		 * Ugh... if @cft wants a custom max_write_len, we need to
-		 * make a copy of kf_ops to set its atomic_write_len.
+		 * Ugh... अगर @cft wants a custom max_ग_लिखो_len, we need to
+		 * make a copy of kf_ops to set its atomic_ग_लिखो_len.
 		 */
-		if (cft->max_write_len && cft->max_write_len != PAGE_SIZE) {
-			kf_ops = kmemdup(kf_ops, sizeof(*kf_ops), GFP_KERNEL);
-			if (!kf_ops) {
-				cgroup_exit_cftypes(cfts);
-				return -ENOMEM;
-			}
-			kf_ops->atomic_write_len = cft->max_write_len;
-		}
+		अगर (cft->max_ग_लिखो_len && cft->max_ग_लिखो_len != PAGE_SIZE) अणु
+			kf_ops = kmemdup(kf_ops, माप(*kf_ops), GFP_KERNEL);
+			अगर (!kf_ops) अणु
+				cgroup_निकास_cftypes(cfts);
+				वापस -ENOMEM;
+			पूर्ण
+			kf_ops->atomic_ग_लिखो_len = cft->max_ग_लिखो_len;
+		पूर्ण
 
 		cft->kf_ops = kf_ops;
 		cft->ss = ss;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cgroup_rm_cftypes_locked(struct cftype *cfts)
-{
-	lockdep_assert_held(&cgroup_mutex);
+अटल पूर्णांक cgroup_rm_cftypes_locked(काष्ठा cftype *cfts)
+अणु
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	if (!cfts || !cfts[0].ss)
-		return -ENOENT;
+	अगर (!cfts || !cfts[0].ss)
+		वापस -ENOENT;
 
 	list_del(&cfts->node);
 	cgroup_apply_cftypes(cfts, false);
-	cgroup_exit_cftypes(cfts);
-	return 0;
-}
+	cgroup_निकास_cftypes(cfts);
+	वापस 0;
+पूर्ण
 
 /**
- * cgroup_rm_cftypes - remove an array of cftypes from a subsystem
+ * cgroup_rm_cftypes - हटाओ an array of cftypes from a subप्रणाली
  * @cfts: zero-length name terminated array of cftypes
  *
- * Unregister @cfts.  Files described by @cfts are removed from all
+ * Unरेजिस्टर @cfts.  Files described by @cfts are हटाओd from all
  * existing cgroups and all future cgroups won't have them either.  This
- * function can be called anytime whether @cfts' subsys is attached or not.
+ * function can be called anyसमय whether @cfts' subsys is attached or not.
  *
- * Returns 0 on successful unregistration, -ENOENT if @cfts is not
- * registered.
+ * Returns 0 on successful unregistration, -ENOENT अगर @cfts is not
+ * रेजिस्टरed.
  */
-int cgroup_rm_cftypes(struct cftype *cfts)
-{
-	int ret;
+पूर्णांक cgroup_rm_cftypes(काष्ठा cftype *cfts)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&cgroup_mutex);
 	ret = cgroup_rm_cftypes_locked(cfts);
 	mutex_unlock(&cgroup_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * cgroup_add_cftypes - add an array of cftypes to a subsystem
- * @ss: target cgroup subsystem
+ * cgroup_add_cftypes - add an array of cftypes to a subप्रणाली
+ * @ss: target cgroup subप्रणाली
  * @cfts: zero-length name terminated array of cftypes
  *
- * Register @cfts to @ss.  Files described by @cfts are created for all
+ * Register @cfts to @ss.  Files described by @cfts are created क्रम all
  * existing cgroups to which @ss is attached and all future cgroups will
- * have them too.  This function can be called anytime whether @ss is
+ * have them too.  This function can be called anyसमय whether @ss is
  * attached or not.
  *
- * Returns 0 on successful registration, -errno on failure.  Note that this
- * function currently returns 0 as long as @cfts registration is successful
- * even if some file creation attempts on existing cgroups fail.
+ * Returns 0 on successful registration, -त्रुटि_सं on failure.  Note that this
+ * function currently वापसs 0 as दीर्घ as @cfts registration is successful
+ * even अगर some file creation attempts on existing cgroups fail.
  */
-static int cgroup_add_cftypes(struct cgroup_subsys *ss, struct cftype *cfts)
-{
-	int ret;
+अटल पूर्णांक cgroup_add_cftypes(काष्ठा cgroup_subsys *ss, काष्ठा cftype *cfts)
+अणु
+	पूर्णांक ret;
 
-	if (!cgroup_ssid_enabled(ss->id))
-		return 0;
+	अगर (!cgroup_ssid_enabled(ss->id))
+		वापस 0;
 
-	if (!cfts || cfts[0].name[0] == '\0')
-		return 0;
+	अगर (!cfts || cfts[0].name[0] == '\0')
+		वापस 0;
 
 	ret = cgroup_init_cftypes(ss, cfts);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&cgroup_mutex);
 
 	list_add_tail(&cfts->node, &ss->cfts);
 	ret = cgroup_apply_cftypes(cfts, true);
-	if (ret)
+	अगर (ret)
 		cgroup_rm_cftypes_locked(cfts);
 
 	mutex_unlock(&cgroup_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * cgroup_add_dfl_cftypes - add an array of cftypes for default hierarchy
- * @ss: target cgroup subsystem
+ * cgroup_add_dfl_cftypes - add an array of cftypes क्रम शेष hierarchy
+ * @ss: target cgroup subप्रणाली
  * @cfts: zero-length name terminated array of cftypes
  *
- * Similar to cgroup_add_cftypes() but the added files are only used for
- * the default hierarchy.
+ * Similar to cgroup_add_cftypes() but the added files are only used क्रम
+ * the शेष hierarchy.
  */
-int cgroup_add_dfl_cftypes(struct cgroup_subsys *ss, struct cftype *cfts)
-{
-	struct cftype *cft;
+पूर्णांक cgroup_add_dfl_cftypes(काष्ठा cgroup_subsys *ss, काष्ठा cftype *cfts)
+अणु
+	काष्ठा cftype *cft;
 
-	for (cft = cfts; cft && cft->name[0] != '\0'; cft++)
+	क्रम (cft = cfts; cft && cft->name[0] != '\0'; cft++)
 		cft->flags |= __CFTYPE_ONLY_ON_DFL;
-	return cgroup_add_cftypes(ss, cfts);
-}
+	वापस cgroup_add_cftypes(ss, cfts);
+पूर्ण
 
 /**
- * cgroup_add_legacy_cftypes - add an array of cftypes for legacy hierarchies
- * @ss: target cgroup subsystem
+ * cgroup_add_legacy_cftypes - add an array of cftypes क्रम legacy hierarchies
+ * @ss: target cgroup subप्रणाली
  * @cfts: zero-length name terminated array of cftypes
  *
- * Similar to cgroup_add_cftypes() but the added files are only used for
+ * Similar to cgroup_add_cftypes() but the added files are only used क्रम
  * the legacy hierarchies.
  */
-int cgroup_add_legacy_cftypes(struct cgroup_subsys *ss, struct cftype *cfts)
-{
-	struct cftype *cft;
+पूर्णांक cgroup_add_legacy_cftypes(काष्ठा cgroup_subsys *ss, काष्ठा cftype *cfts)
+अणु
+	काष्ठा cftype *cft;
 
-	for (cft = cfts; cft && cft->name[0] != '\0'; cft++)
+	क्रम (cft = cfts; cft && cft->name[0] != '\0'; cft++)
 		cft->flags |= __CFTYPE_NOT_ON_DFL;
-	return cgroup_add_cftypes(ss, cfts);
-}
+	वापस cgroup_add_cftypes(ss, cfts);
+पूर्ण
 
 /**
- * cgroup_file_notify - generate a file modified event for a cgroup_file
+ * cgroup_file_notअगरy - generate a file modअगरied event क्रम a cgroup_file
  * @cfile: target cgroup_file
  *
  * @cfile must have been obtained by setting cftype->file_offset.
  */
-void cgroup_file_notify(struct cgroup_file *cfile)
-{
-	unsigned long flags;
+व्योम cgroup_file_notअगरy(काष्ठा cgroup_file *cfile)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&cgroup_file_kn_lock, flags);
-	if (cfile->kn) {
-		unsigned long last = cfile->notified_at;
-		unsigned long next = last + CGROUP_FILE_NOTIFY_MIN_INTV;
+	अगर (cfile->kn) अणु
+		अचिन्हित दीर्घ last = cfile->notअगरied_at;
+		अचिन्हित दीर्घ next = last + CGROUP_खाता_NOTIFY_MIN_INTV;
 
-		if (time_in_range(jiffies, last, next)) {
-			timer_reduce(&cfile->notify_timer, next);
-		} else {
-			kernfs_notify(cfile->kn);
-			cfile->notified_at = jiffies;
-		}
-	}
+		अगर (समय_in_range(jअगरfies, last, next)) अणु
+			समयr_reduce(&cfile->notअगरy_समयr, next);
+		पूर्ण अन्यथा अणु
+			kernfs_notअगरy(cfile->kn);
+			cfile->notअगरied_at = jअगरfies;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&cgroup_file_kn_lock, flags);
-}
+पूर्ण
 
 /**
  * css_next_child - find the next child of a given css
- * @pos: the current position (%NULL to initiate traversal)
+ * @pos: the current position (%शून्य to initiate traversal)
  * @parent: css whose children to walk
  *
- * This function returns the next child of @parent and should be called
- * under either cgroup_mutex or RCU read lock.  The only requirement is
+ * This function वापसs the next child of @parent and should be called
+ * under either cgroup_mutex or RCU पढ़ो lock.  The only requirement is
  * that @parent and @pos are accessible.  The next sibling is guaranteed to
- * be returned regardless of their states.
+ * be वापसed regardless of their states.
  *
- * If a subsystem synchronizes ->css_online() and the start of iteration, a
+ * If a subप्रणाली synchronizes ->css_online() and the start of iteration, a
  * css which finished ->css_online() is guaranteed to be visible in the
  * future iterations and will stay visible until the last reference is put.
- * A css which hasn't finished ->css_online() or already finished
+ * A css which hasn't finished ->css_online() or alपढ़ोy finished
  * ->css_offline() may show up during traversal.  It's each subsystem's
  * responsibility to synchronize against on/offlining.
  */
-struct cgroup_subsys_state *css_next_child(struct cgroup_subsys_state *pos,
-					   struct cgroup_subsys_state *parent)
-{
-	struct cgroup_subsys_state *next;
+काष्ठा cgroup_subsys_state *css_next_child(काष्ठा cgroup_subsys_state *pos,
+					   काष्ठा cgroup_subsys_state *parent)
+अणु
+	काष्ठा cgroup_subsys_state *next;
 
-	cgroup_assert_mutex_or_rcu_locked();
+	cgroup_निश्चित_mutex_or_rcu_locked();
 
 	/*
-	 * @pos could already have been unlinked from the sibling list.
-	 * Once a cgroup is removed, its ->sibling.next is no longer
+	 * @pos could alपढ़ोy have been unlinked from the sibling list.
+	 * Once a cgroup is हटाओd, its ->sibling.next is no दीर्घer
 	 * updated when its next sibling changes.  CSS_RELEASED is set when
-	 * @pos is taken off list, at which time its next pointer is valid,
-	 * and, as releases are serialized, the one pointed to by the next
-	 * pointer is guaranteed to not have started release yet.  This
-	 * implies that if we observe !CSS_RELEASED on @pos in this RCU
-	 * critical section, the one pointed to by its next pointer is
-	 * guaranteed to not have finished its RCU grace period even if we
-	 * have dropped rcu_read_lock() in-between iterations.
+	 * @pos is taken off list, at which समय its next poपूर्णांकer is valid,
+	 * and, as releases are serialized, the one poपूर्णांकed to by the next
+	 * poपूर्णांकer is guaranteed to not have started release yet.  This
+	 * implies that अगर we observe !CSS_RELEASED on @pos in this RCU
+	 * critical section, the one poपूर्णांकed to by its next poपूर्णांकer is
+	 * guaranteed to not have finished its RCU grace period even अगर we
+	 * have dropped rcu_पढ़ो_lock() in-between iterations.
 	 *
-	 * If @pos has CSS_RELEASED set, its next pointer can't be
+	 * If @pos has CSS_RELEASED set, its next poपूर्णांकer can't be
 	 * dereferenced; however, as each css is given a monotonically
 	 * increasing unique serial number and always appended to the
 	 * sibling list, the next one can be found by walking the parent's
 	 * children until the first css with higher serial number than
-	 * @pos's.  While this path can be slower, it happens iff iteration
-	 * races against release and the race window is very small.
+	 * @pos's.  While this path can be slower, it happens अगरf iteration
+	 * races against release and the race winकरोw is very small.
 	 */
-	if (!pos) {
-		next = list_entry_rcu(parent->children.next, struct cgroup_subsys_state, sibling);
-	} else if (likely(!(pos->flags & CSS_RELEASED))) {
-		next = list_entry_rcu(pos->sibling.next, struct cgroup_subsys_state, sibling);
-	} else {
-		list_for_each_entry_rcu(next, &parent->children, sibling,
+	अगर (!pos) अणु
+		next = list_entry_rcu(parent->children.next, काष्ठा cgroup_subsys_state, sibling);
+	पूर्ण अन्यथा अगर (likely(!(pos->flags & CSS_RELEASED))) अणु
+		next = list_entry_rcu(pos->sibling.next, काष्ठा cgroup_subsys_state, sibling);
+	पूर्ण अन्यथा अणु
+		list_क्रम_each_entry_rcu(next, &parent->children, sibling,
 					lockdep_is_held(&cgroup_mutex))
-			if (next->serial_nr > pos->serial_nr)
-				break;
-	}
+			अगर (next->serial_nr > pos->serial_nr)
+				अवरोध;
+	पूर्ण
 
 	/*
-	 * @next, if not pointing to the head, can be dereferenced and is
+	 * @next, अगर not poपूर्णांकing to the head, can be dereferenced and is
 	 * the next sibling.
 	 */
-	if (&next->sibling != &parent->children)
-		return next;
-	return NULL;
-}
+	अगर (&next->sibling != &parent->children)
+		वापस next;
+	वापस शून्य;
+पूर्ण
 
 /**
- * css_next_descendant_pre - find the next descendant for pre-order walk
- * @pos: the current position (%NULL to initiate traversal)
+ * css_next_descendant_pre - find the next descendant क्रम pre-order walk
+ * @pos: the current position (%शून्य to initiate traversal)
  * @root: css whose descendants to walk
  *
- * To be used by css_for_each_descendant_pre().  Find the next descendant
- * to visit for pre-order traversal of @root's descendants.  @root is
+ * To be used by css_क्रम_each_descendant_pre().  Find the next descendant
+ * to visit क्रम pre-order traversal of @root's descendants.  @root is
  * included in the iteration and the first node to be visited.
  *
- * While this function requires cgroup_mutex or RCU read locking, it
- * doesn't require the whole traversal to be contained in a single critical
- * section.  This function will return the correct next descendant as long
+ * While this function requires cgroup_mutex or RCU पढ़ो locking, it
+ * करोesn't require the whole traversal to be contained in a single critical
+ * section.  This function will वापस the correct next descendant as दीर्घ
  * as both @pos and @root are accessible and @pos is a descendant of @root.
  *
- * If a subsystem synchronizes ->css_online() and the start of iteration, a
+ * If a subप्रणाली synchronizes ->css_online() and the start of iteration, a
  * css which finished ->css_online() is guaranteed to be visible in the
  * future iterations and will stay visible until the last reference is put.
- * A css which hasn't finished ->css_online() or already finished
+ * A css which hasn't finished ->css_online() or alपढ़ोy finished
  * ->css_offline() may show up during traversal.  It's each subsystem's
  * responsibility to synchronize against on/offlining.
  */
-struct cgroup_subsys_state *
-css_next_descendant_pre(struct cgroup_subsys_state *pos,
-			struct cgroup_subsys_state *root)
-{
-	struct cgroup_subsys_state *next;
+काष्ठा cgroup_subsys_state *
+css_next_descendant_pre(काष्ठा cgroup_subsys_state *pos,
+			काष्ठा cgroup_subsys_state *root)
+अणु
+	काष्ठा cgroup_subsys_state *next;
 
-	cgroup_assert_mutex_or_rcu_locked();
+	cgroup_निश्चित_mutex_or_rcu_locked();
 
-	/* if first iteration, visit @root */
-	if (!pos)
-		return root;
+	/* अगर first iteration, visit @root */
+	अगर (!pos)
+		वापस root;
 
-	/* visit the first child if exists */
-	next = css_next_child(NULL, pos);
-	if (next)
-		return next;
+	/* visit the first child अगर exists */
+	next = css_next_child(शून्य, pos);
+	अगर (next)
+		वापस next;
 
-	/* no child, visit my or the closest ancestor's next sibling */
-	while (pos != root) {
+	/* no child, visit my or the बंदst ancestor's next sibling */
+	जबतक (pos != root) अणु
 		next = css_next_child(pos, pos->parent);
-		if (next)
-			return next;
+		अगर (next)
+			वापस next;
 		pos = pos->parent;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(css_next_descendant_pre);
 
 /**
- * css_rightmost_descendant - return the rightmost descendant of a css
- * @pos: css of interest
+ * css_righपंचांगost_descendant - वापस the righपंचांगost descendant of a css
+ * @pos: css of पूर्णांकerest
  *
- * Return the rightmost descendant of @pos.  If there's no descendant, @pos
- * is returned.  This can be used during pre-order traversal to skip
+ * Return the righपंचांगost descendant of @pos.  If there's no descendant, @pos
+ * is वापसed.  This can be used during pre-order traversal to skip
  * subtree of @pos.
  *
- * While this function requires cgroup_mutex or RCU read locking, it
- * doesn't require the whole traversal to be contained in a single critical
- * section.  This function will return the correct rightmost descendant as
- * long as @pos is accessible.
+ * While this function requires cgroup_mutex or RCU पढ़ो locking, it
+ * करोesn't require the whole traversal to be contained in a single critical
+ * section.  This function will वापस the correct righपंचांगost descendant as
+ * दीर्घ as @pos is accessible.
  */
-struct cgroup_subsys_state *
-css_rightmost_descendant(struct cgroup_subsys_state *pos)
-{
-	struct cgroup_subsys_state *last, *tmp;
+काष्ठा cgroup_subsys_state *
+css_righपंचांगost_descendant(काष्ठा cgroup_subsys_state *pos)
+अणु
+	काष्ठा cgroup_subsys_state *last, *पंचांगp;
 
-	cgroup_assert_mutex_or_rcu_locked();
+	cgroup_निश्चित_mutex_or_rcu_locked();
 
-	do {
+	करो अणु
 		last = pos;
 		/* ->prev isn't RCU safe, walk ->next till the end */
-		pos = NULL;
-		css_for_each_child(tmp, last)
-			pos = tmp;
-	} while (pos);
+		pos = शून्य;
+		css_क्रम_each_child(पंचांगp, last)
+			pos = पंचांगp;
+	पूर्ण जबतक (pos);
 
-	return last;
-}
+	वापस last;
+पूर्ण
 
-static struct cgroup_subsys_state *
-css_leftmost_descendant(struct cgroup_subsys_state *pos)
-{
-	struct cgroup_subsys_state *last;
+अटल काष्ठा cgroup_subsys_state *
+css_lefपंचांगost_descendant(काष्ठा cgroup_subsys_state *pos)
+अणु
+	काष्ठा cgroup_subsys_state *last;
 
-	do {
+	करो अणु
 		last = pos;
-		pos = css_next_child(NULL, pos);
-	} while (pos);
+		pos = css_next_child(शून्य, pos);
+	पूर्ण जबतक (pos);
 
-	return last;
-}
+	वापस last;
+पूर्ण
 
 /**
- * css_next_descendant_post - find the next descendant for post-order walk
- * @pos: the current position (%NULL to initiate traversal)
+ * css_next_descendant_post - find the next descendant क्रम post-order walk
+ * @pos: the current position (%शून्य to initiate traversal)
  * @root: css whose descendants to walk
  *
- * To be used by css_for_each_descendant_post().  Find the next descendant
- * to visit for post-order traversal of @root's descendants.  @root is
+ * To be used by css_क्रम_each_descendant_post().  Find the next descendant
+ * to visit क्रम post-order traversal of @root's descendants.  @root is
  * included in the iteration and the last node to be visited.
  *
- * While this function requires cgroup_mutex or RCU read locking, it
- * doesn't require the whole traversal to be contained in a single critical
- * section.  This function will return the correct next descendant as long
+ * While this function requires cgroup_mutex or RCU पढ़ो locking, it
+ * करोesn't require the whole traversal to be contained in a single critical
+ * section.  This function will वापस the correct next descendant as दीर्घ
  * as both @pos and @cgroup are accessible and @pos is a descendant of
  * @cgroup.
  *
- * If a subsystem synchronizes ->css_online() and the start of iteration, a
+ * If a subप्रणाली synchronizes ->css_online() and the start of iteration, a
  * css which finished ->css_online() is guaranteed to be visible in the
  * future iterations and will stay visible until the last reference is put.
- * A css which hasn't finished ->css_online() or already finished
+ * A css which hasn't finished ->css_online() or alपढ़ोy finished
  * ->css_offline() may show up during traversal.  It's each subsystem's
  * responsibility to synchronize against on/offlining.
  */
-struct cgroup_subsys_state *
-css_next_descendant_post(struct cgroup_subsys_state *pos,
-			 struct cgroup_subsys_state *root)
-{
-	struct cgroup_subsys_state *next;
+काष्ठा cgroup_subsys_state *
+css_next_descendant_post(काष्ठा cgroup_subsys_state *pos,
+			 काष्ठा cgroup_subsys_state *root)
+अणु
+	काष्ठा cgroup_subsys_state *next;
 
-	cgroup_assert_mutex_or_rcu_locked();
+	cgroup_निश्चित_mutex_or_rcu_locked();
 
-	/* if first iteration, visit leftmost descendant which may be @root */
-	if (!pos)
-		return css_leftmost_descendant(root);
+	/* अगर first iteration, visit lefपंचांगost descendant which may be @root */
+	अगर (!pos)
+		वापस css_lefपंचांगost_descendant(root);
 
-	/* if we visited @root, we're done */
-	if (pos == root)
-		return NULL;
+	/* अगर we visited @root, we're करोne */
+	अगर (pos == root)
+		वापस शून्य;
 
-	/* if there's an unvisited sibling, visit its leftmost descendant */
+	/* अगर there's an unvisited sibling, visit its lefपंचांगost descendant */
 	next = css_next_child(pos, pos->parent);
-	if (next)
-		return css_leftmost_descendant(next);
+	अगर (next)
+		वापस css_lefपंचांगost_descendant(next);
 
 	/* no sibling left, visit parent */
-	return pos->parent;
-}
+	वापस pos->parent;
+पूर्ण
 
 /**
- * css_has_online_children - does a css have online children
+ * css_has_online_children - करोes a css have online children
  * @css: the target css
  *
- * Returns %true if @css has any online children; otherwise, %false.  This
+ * Returns %true अगर @css has any online children; otherwise, %false.  This
  * function can be called from any context but the caller is responsible
- * for synchronizing against on/offlining as necessary.
+ * क्रम synchronizing against on/offlining as necessary.
  */
-bool css_has_online_children(struct cgroup_subsys_state *css)
-{
-	struct cgroup_subsys_state *child;
+bool css_has_online_children(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा cgroup_subsys_state *child;
 	bool ret = false;
 
-	rcu_read_lock();
-	css_for_each_child(child, css) {
-		if (child->flags & CSS_ONLINE) {
+	rcu_पढ़ो_lock();
+	css_क्रम_each_child(child, css) अणु
+		अगर (child->flags & CSS_ONLINE) अणु
 			ret = true;
-			break;
-		}
-	}
-	rcu_read_unlock();
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस ret;
+पूर्ण
 
-static struct css_set *css_task_iter_next_css_set(struct css_task_iter *it)
-{
-	struct list_head *l;
-	struct cgrp_cset_link *link;
-	struct css_set *cset;
+अटल काष्ठा css_set *css_task_iter_next_css_set(काष्ठा css_task_iter *it)
+अणु
+	काष्ठा list_head *l;
+	काष्ठा cgrp_cset_link *link;
+	काष्ठा css_set *cset;
 
-	lockdep_assert_held(&css_set_lock);
+	lockdep_निश्चित_held(&css_set_lock);
 
-	/* find the next threaded cset */
-	if (it->tcset_pos) {
+	/* find the next thपढ़ोed cset */
+	अगर (it->tcset_pos) अणु
 		l = it->tcset_pos->next;
 
-		if (l != it->tcset_head) {
+		अगर (l != it->tcset_head) अणु
 			it->tcset_pos = l;
-			return container_of(l, struct css_set,
-					    threaded_csets_node);
-		}
+			वापस container_of(l, काष्ठा css_set,
+					    thपढ़ोed_csets_node);
+		पूर्ण
 
-		it->tcset_pos = NULL;
-	}
+		it->tcset_pos = शून्य;
+	पूर्ण
 
 	/* find the next cset */
 	l = it->cset_pos;
 	l = l->next;
-	if (l == it->cset_head) {
-		it->cset_pos = NULL;
-		return NULL;
-	}
+	अगर (l == it->cset_head) अणु
+		it->cset_pos = शून्य;
+		वापस शून्य;
+	पूर्ण
 
-	if (it->ss) {
-		cset = container_of(l, struct css_set, e_cset_node[it->ss->id]);
-	} else {
-		link = list_entry(l, struct cgrp_cset_link, cset_link);
+	अगर (it->ss) अणु
+		cset = container_of(l, काष्ठा css_set, e_cset_node[it->ss->id]);
+	पूर्ण अन्यथा अणु
+		link = list_entry(l, काष्ठा cgrp_cset_link, cset_link);
 		cset = link->cset;
-	}
+	पूर्ण
 
 	it->cset_pos = l;
 
-	/* initialize threaded css_set walking */
-	if (it->flags & CSS_TASK_ITER_THREADED) {
-		if (it->cur_dcset)
+	/* initialize thपढ़ोed css_set walking */
+	अगर (it->flags & CSS_TASK_ITER_THREADED) अणु
+		अगर (it->cur_dcset)
 			put_css_set_locked(it->cur_dcset);
 		it->cur_dcset = cset;
 		get_css_set(cset);
 
-		it->tcset_head = &cset->threaded_csets;
-		it->tcset_pos = &cset->threaded_csets;
-	}
+		it->tcset_head = &cset->thपढ़ोed_csets;
+		it->tcset_pos = &cset->thपढ़ोed_csets;
+	पूर्ण
 
-	return cset;
-}
+	वापस cset;
+पूर्ण
 
 /**
  * css_task_iter_advance_css_set - advance a task iterator to the next css_set
@@ -4402,35 +4403,35 @@ static struct css_set *css_task_iter_next_css_set(struct css_task_iter *it)
  *
  * Advance @it to the next css_set to walk.
  */
-static void css_task_iter_advance_css_set(struct css_task_iter *it)
-{
-	struct css_set *cset;
+अटल व्योम css_task_iter_advance_css_set(काष्ठा css_task_iter *it)
+अणु
+	काष्ठा css_set *cset;
 
-	lockdep_assert_held(&css_set_lock);
+	lockdep_निश्चित_held(&css_set_lock);
 
 	/* Advance to the next non-empty css_set and find first non-empty tasks list*/
-	while ((cset = css_task_iter_next_css_set(it))) {
-		if (!list_empty(&cset->tasks)) {
+	जबतक ((cset = css_task_iter_next_css_set(it))) अणु
+		अगर (!list_empty(&cset->tasks)) अणु
 			it->cur_tasks_head = &cset->tasks;
-			break;
-		} else if (!list_empty(&cset->mg_tasks)) {
+			अवरोध;
+		पूर्ण अन्यथा अगर (!list_empty(&cset->mg_tasks)) अणु
 			it->cur_tasks_head = &cset->mg_tasks;
-			break;
-		} else if (!list_empty(&cset->dying_tasks)) {
+			अवरोध;
+		पूर्ण अन्यथा अगर (!list_empty(&cset->dying_tasks)) अणु
 			it->cur_tasks_head = &cset->dying_tasks;
-			break;
-		}
-	}
-	if (!cset) {
-		it->task_pos = NULL;
-		return;
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!cset) अणु
+		it->task_pos = शून्य;
+		वापस;
+	पूर्ण
 	it->task_pos = it->cur_tasks_head->next;
 
 	/*
-	 * We don't keep css_sets locked across iteration steps and thus
+	 * We करोn't keep css_sets locked across iteration steps and thus
 	 * need to take steps to ensure that iteration can be resumed after
-	 * the lock is re-acquired.  Iteration is performed at two levels -
+	 * the lock is re-acquired.  Iteration is perक्रमmed at two levels -
 	 * css_sets and tasks in them.
 	 *
 	 * Once created, a css_set never leaves its cgroup lists, so a
@@ -4438,82 +4439,82 @@ static void css_task_iter_advance_css_set(struct css_task_iter *it)
 	 * iteration afterwards.
 	 *
 	 * Tasks may leave @cset across iteration steps.  This is resolved
-	 * by registering each iterator with the css_set currently being
+	 * by रेजिस्टरing each iterator with the css_set currently being
 	 * walked and making css_set_move_task() advance iterators whose
 	 * next task is leaving.
 	 */
-	if (it->cur_cset) {
+	अगर (it->cur_cset) अणु
 		list_del(&it->iters_node);
 		put_css_set_locked(it->cur_cset);
-	}
+	पूर्ण
 	get_css_set(cset);
 	it->cur_cset = cset;
 	list_add(&it->iters_node, &cset->task_iters);
-}
+पूर्ण
 
-static void css_task_iter_skip(struct css_task_iter *it,
-			       struct task_struct *task)
-{
-	lockdep_assert_held(&css_set_lock);
+अटल व्योम css_task_iter_skip(काष्ठा css_task_iter *it,
+			       काष्ठा task_काष्ठा *task)
+अणु
+	lockdep_निश्चित_held(&css_set_lock);
 
-	if (it->task_pos == &task->cg_list) {
+	अगर (it->task_pos == &task->cg_list) अणु
 		it->task_pos = it->task_pos->next;
 		it->flags |= CSS_TASK_ITER_SKIPPED;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void css_task_iter_advance(struct css_task_iter *it)
-{
-	struct task_struct *task;
+अटल व्योम css_task_iter_advance(काष्ठा css_task_iter *it)
+अणु
+	काष्ठा task_काष्ठा *task;
 
-	lockdep_assert_held(&css_set_lock);
+	lockdep_निश्चित_held(&css_set_lock);
 repeat:
-	if (it->task_pos) {
+	अगर (it->task_pos) अणु
 		/*
 		 * Advance iterator to find next entry. We go through cset
 		 * tasks, mg_tasks and dying_tasks, when consumed we move onto
 		 * the next cset.
 		 */
-		if (it->flags & CSS_TASK_ITER_SKIPPED)
+		अगर (it->flags & CSS_TASK_ITER_SKIPPED)
 			it->flags &= ~CSS_TASK_ITER_SKIPPED;
-		else
+		अन्यथा
 			it->task_pos = it->task_pos->next;
 
-		if (it->task_pos == &it->cur_cset->tasks) {
+		अगर (it->task_pos == &it->cur_cset->tasks) अणु
 			it->cur_tasks_head = &it->cur_cset->mg_tasks;
 			it->task_pos = it->cur_tasks_head->next;
-		}
-		if (it->task_pos == &it->cur_cset->mg_tasks) {
+		पूर्ण
+		अगर (it->task_pos == &it->cur_cset->mg_tasks) अणु
 			it->cur_tasks_head = &it->cur_cset->dying_tasks;
 			it->task_pos = it->cur_tasks_head->next;
-		}
-		if (it->task_pos == &it->cur_cset->dying_tasks)
+		पूर्ण
+		अगर (it->task_pos == &it->cur_cset->dying_tasks)
 			css_task_iter_advance_css_set(it);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* called from start, proceed to the first cset */
 		css_task_iter_advance_css_set(it);
-	}
+	पूर्ण
 
-	if (!it->task_pos)
-		return;
+	अगर (!it->task_pos)
+		वापस;
 
-	task = list_entry(it->task_pos, struct task_struct, cg_list);
+	task = list_entry(it->task_pos, काष्ठा task_काष्ठा, cg_list);
 
-	if (it->flags & CSS_TASK_ITER_PROCS) {
-		/* if PROCS, skip over tasks which aren't group leaders */
-		if (!thread_group_leader(task))
-			goto repeat;
+	अगर (it->flags & CSS_TASK_ITER_PROCS) अणु
+		/* अगर PROCS, skip over tasks which aren't group leaders */
+		अगर (!thपढ़ो_group_leader(task))
+			जाओ repeat;
 
-		/* and dying leaders w/o live member threads */
-		if (it->cur_tasks_head == &it->cur_cset->dying_tasks &&
-		    !atomic_read(&task->signal->live))
-			goto repeat;
-	} else {
+		/* and dying leaders w/o live member thपढ़ोs */
+		अगर (it->cur_tasks_head == &it->cur_cset->dying_tasks &&
+		    !atomic_पढ़ो(&task->संकेत->live))
+			जाओ repeat;
+	पूर्ण अन्यथा अणु
 		/* skip all dying ones */
-		if (it->cur_tasks_head == &it->cur_cset->dying_tasks)
-			goto repeat;
-	}
-}
+		अगर (it->cur_tasks_head == &it->cur_cset->dying_tasks)
+			जाओ repeat;
+	पूर्ण
+पूर्ण
 
 /**
  * css_task_iter_start - initiate task iteration
@@ -4523,22 +4524,22 @@ repeat:
  *
  * Initiate iteration through the tasks of @css.  The caller can call
  * css_task_iter_next() to walk through the tasks until the function
- * returns NULL.  On completion of iteration, css_task_iter_end() must be
+ * वापसs शून्य.  On completion of iteration, css_task_iter_end() must be
  * called.
  */
-void css_task_iter_start(struct cgroup_subsys_state *css, unsigned int flags,
-			 struct css_task_iter *it)
-{
-	memset(it, 0, sizeof(*it));
+व्योम css_task_iter_start(काष्ठा cgroup_subsys_state *css, अचिन्हित पूर्णांक flags,
+			 काष्ठा css_task_iter *it)
+अणु
+	स_रखो(it, 0, माप(*it));
 
 	spin_lock_irq(&css_set_lock);
 
 	it->ss = css->ss;
 	it->flags = flags;
 
-	if (it->ss)
+	अगर (it->ss)
 		it->cset_pos = &css->cgroup->e_csets[css->ss->id];
-	else
+	अन्यथा
 		it->cset_pos = &css->cgroup->cset_links;
 
 	it->cset_head = it->cset_pos;
@@ -4546,40 +4547,40 @@ void css_task_iter_start(struct cgroup_subsys_state *css, unsigned int flags,
 	css_task_iter_advance(it);
 
 	spin_unlock_irq(&css_set_lock);
-}
+पूर्ण
 
 /**
- * css_task_iter_next - return the next task for the iterator
+ * css_task_iter_next - वापस the next task क्रम the iterator
  * @it: the task iterator being iterated
  *
- * The "next" function for task iteration.  @it should have been
- * initialized via css_task_iter_start().  Returns NULL when the iteration
+ * The "next" function क्रम task iteration.  @it should have been
+ * initialized via css_task_iter_start().  Returns शून्य when the iteration
  * reaches the end.
  */
-struct task_struct *css_task_iter_next(struct css_task_iter *it)
-{
-	if (it->cur_task) {
-		put_task_struct(it->cur_task);
-		it->cur_task = NULL;
-	}
+काष्ठा task_काष्ठा *css_task_iter_next(काष्ठा css_task_iter *it)
+अणु
+	अगर (it->cur_task) अणु
+		put_task_काष्ठा(it->cur_task);
+		it->cur_task = शून्य;
+	पूर्ण
 
 	spin_lock_irq(&css_set_lock);
 
 	/* @it may be half-advanced by skips, finish advancing */
-	if (it->flags & CSS_TASK_ITER_SKIPPED)
+	अगर (it->flags & CSS_TASK_ITER_SKIPPED)
 		css_task_iter_advance(it);
 
-	if (it->task_pos) {
-		it->cur_task = list_entry(it->task_pos, struct task_struct,
+	अगर (it->task_pos) अणु
+		it->cur_task = list_entry(it->task_pos, काष्ठा task_काष्ठा,
 					  cg_list);
-		get_task_struct(it->cur_task);
+		get_task_काष्ठा(it->cur_task);
 		css_task_iter_advance(it);
-	}
+	पूर्ण
 
 	spin_unlock_irq(&css_set_lock);
 
-	return it->cur_task;
-}
+	वापस it->cur_task;
+पूर्ण
 
 /**
  * css_task_iter_end - finish task iteration
@@ -4587,403 +4588,403 @@ struct task_struct *css_task_iter_next(struct css_task_iter *it)
  *
  * Finish task iteration started by css_task_iter_start().
  */
-void css_task_iter_end(struct css_task_iter *it)
-{
-	if (it->cur_cset) {
+व्योम css_task_iter_end(काष्ठा css_task_iter *it)
+अणु
+	अगर (it->cur_cset) अणु
 		spin_lock_irq(&css_set_lock);
 		list_del(&it->iters_node);
 		put_css_set_locked(it->cur_cset);
 		spin_unlock_irq(&css_set_lock);
-	}
+	पूर्ण
 
-	if (it->cur_dcset)
+	अगर (it->cur_dcset)
 		put_css_set(it->cur_dcset);
 
-	if (it->cur_task)
-		put_task_struct(it->cur_task);
-}
+	अगर (it->cur_task)
+		put_task_काष्ठा(it->cur_task);
+पूर्ण
 
-static void cgroup_procs_release(struct kernfs_open_file *of)
-{
-	if (of->priv) {
+अटल व्योम cgroup_procs_release(काष्ठा kernfs_खोलो_file *of)
+अणु
+	अगर (of->priv) अणु
 		css_task_iter_end(of->priv);
-		kfree(of->priv);
-	}
-}
+		kमुक्त(of->priv);
+	पूर्ण
+पूर्ण
 
-static void *cgroup_procs_next(struct seq_file *s, void *v, loff_t *pos)
-{
-	struct kernfs_open_file *of = s->private;
-	struct css_task_iter *it = of->priv;
+अटल व्योम *cgroup_procs_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा kernfs_खोलो_file *of = s->निजी;
+	काष्ठा css_task_iter *it = of->priv;
 
-	if (pos)
+	अगर (pos)
 		(*pos)++;
 
-	return css_task_iter_next(it);
-}
+	वापस css_task_iter_next(it);
+पूर्ण
 
-static void *__cgroup_procs_start(struct seq_file *s, loff_t *pos,
-				  unsigned int iter_flags)
-{
-	struct kernfs_open_file *of = s->private;
-	struct cgroup *cgrp = seq_css(s)->cgroup;
-	struct css_task_iter *it = of->priv;
+अटल व्योम *__cgroup_procs_start(काष्ठा seq_file *s, loff_t *pos,
+				  अचिन्हित पूर्णांक iter_flags)
+अणु
+	काष्ठा kernfs_खोलो_file *of = s->निजी;
+	काष्ठा cgroup *cgrp = seq_css(s)->cgroup;
+	काष्ठा css_task_iter *it = of->priv;
 
 	/*
 	 * When a seq_file is seeked, it's always traversed sequentially
 	 * from position 0, so we can simply keep iterating on !0 *pos.
 	 */
-	if (!it) {
-		if (WARN_ON_ONCE((*pos)))
-			return ERR_PTR(-EINVAL);
+	अगर (!it) अणु
+		अगर (WARN_ON_ONCE((*pos)))
+			वापस ERR_PTR(-EINVAL);
 
-		it = kzalloc(sizeof(*it), GFP_KERNEL);
-		if (!it)
-			return ERR_PTR(-ENOMEM);
+		it = kzalloc(माप(*it), GFP_KERNEL);
+		अगर (!it)
+			वापस ERR_PTR(-ENOMEM);
 		of->priv = it;
 		css_task_iter_start(&cgrp->self, iter_flags, it);
-	} else if (!(*pos)) {
+	पूर्ण अन्यथा अगर (!(*pos)) अणु
 		css_task_iter_end(it);
 		css_task_iter_start(&cgrp->self, iter_flags, it);
-	} else
-		return it->cur_task;
+	पूर्ण अन्यथा
+		वापस it->cur_task;
 
-	return cgroup_procs_next(s, NULL, NULL);
-}
+	वापस cgroup_procs_next(s, शून्य, शून्य);
+पूर्ण
 
-static void *cgroup_procs_start(struct seq_file *s, loff_t *pos)
-{
-	struct cgroup *cgrp = seq_css(s)->cgroup;
+अटल व्योम *cgroup_procs_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	काष्ठा cgroup *cgrp = seq_css(s)->cgroup;
 
 	/*
-	 * All processes of a threaded subtree belong to the domain cgroup
-	 * of the subtree.  Only threads can be distributed across the
-	 * subtree.  Reject reads on cgroup.procs in the subtree proper.
+	 * All processes of a thपढ़ोed subtree beदीर्घ to the करोमुख्य cgroup
+	 * of the subtree.  Only thपढ़ोs can be distributed across the
+	 * subtree.  Reject पढ़ोs on cgroup.procs in the subtree proper.
 	 * They're always empty anyway.
 	 */
-	if (cgroup_is_threaded(cgrp))
-		return ERR_PTR(-EOPNOTSUPP);
+	अगर (cgroup_is_thपढ़ोed(cgrp))
+		वापस ERR_PTR(-EOPNOTSUPP);
 
-	return __cgroup_procs_start(s, pos, CSS_TASK_ITER_PROCS |
+	वापस __cgroup_procs_start(s, pos, CSS_TASK_ITER_PROCS |
 					    CSS_TASK_ITER_THREADED);
-}
+पूर्ण
 
-static int cgroup_procs_show(struct seq_file *s, void *v)
-{
-	seq_printf(s, "%d\n", task_pid_vnr(v));
-	return 0;
-}
+अटल पूर्णांक cgroup_procs_show(काष्ठा seq_file *s, व्योम *v)
+अणु
+	seq_म_लिखो(s, "%d\n", task_pid_vnr(v));
+	वापस 0;
+पूर्ण
 
-static int cgroup_may_write(const struct cgroup *cgrp, struct super_block *sb)
-{
-	int ret;
-	struct inode *inode;
+अटल पूर्णांक cgroup_may_ग_लिखो(स्थिर काष्ठा cgroup *cgrp, काष्ठा super_block *sb)
+अणु
+	पूर्णांक ret;
+	काष्ठा inode *inode;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
 	inode = kernfs_get_inode(sb, cgrp->procs_file.kn);
-	if (!inode)
-		return -ENOMEM;
+	अगर (!inode)
+		वापस -ENOMEM;
 
 	ret = inode_permission(&init_user_ns, inode, MAY_WRITE);
 	iput(inode);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cgroup_procs_write_permission(struct cgroup *src_cgrp,
-					 struct cgroup *dst_cgrp,
-					 struct super_block *sb)
-{
-	struct cgroup_namespace *ns = current->nsproxy->cgroup_ns;
-	struct cgroup *com_cgrp = src_cgrp;
-	int ret;
+अटल पूर्णांक cgroup_procs_ग_लिखो_permission(काष्ठा cgroup *src_cgrp,
+					 काष्ठा cgroup *dst_cgrp,
+					 काष्ठा super_block *sb)
+अणु
+	काष्ठा cgroup_namespace *ns = current->nsproxy->cgroup_ns;
+	काष्ठा cgroup *com_cgrp = src_cgrp;
+	पूर्णांक ret;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
 	/* find the common ancestor */
-	while (!cgroup_is_descendant(dst_cgrp, com_cgrp))
+	जबतक (!cgroup_is_descendant(dst_cgrp, com_cgrp))
 		com_cgrp = cgroup_parent(com_cgrp);
 
 	/* %current should be authorized to migrate to the common ancestor */
-	ret = cgroup_may_write(com_cgrp, sb);
-	if (ret)
-		return ret;
+	ret = cgroup_may_ग_लिखो(com_cgrp, sb);
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * If namespaces are delegation boundaries, %current must be able
 	 * to see both source and destination cgroups from its namespace.
 	 */
-	if ((cgrp_dfl_root.flags & CGRP_ROOT_NS_DELEGATE) &&
+	अगर ((cgrp_dfl_root.flags & CGRP_ROOT_NS_DELEGATE) &&
 	    (!cgroup_is_descendant(src_cgrp, ns->root_cset->dfl_cgrp) ||
 	     !cgroup_is_descendant(dst_cgrp, ns->root_cset->dfl_cgrp)))
-		return -ENOENT;
+		वापस -ENOENT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cgroup_attach_permissions(struct cgroup *src_cgrp,
-				     struct cgroup *dst_cgrp,
-				     struct super_block *sb, bool threadgroup)
-{
-	int ret = 0;
+अटल पूर्णांक cgroup_attach_permissions(काष्ठा cgroup *src_cgrp,
+				     काष्ठा cgroup *dst_cgrp,
+				     काष्ठा super_block *sb, bool thपढ़ोgroup)
+अणु
+	पूर्णांक ret = 0;
 
-	ret = cgroup_procs_write_permission(src_cgrp, dst_cgrp, sb);
-	if (ret)
-		return ret;
+	ret = cgroup_procs_ग_लिखो_permission(src_cgrp, dst_cgrp, sb);
+	अगर (ret)
+		वापस ret;
 
 	ret = cgroup_migrate_vet_dst(dst_cgrp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!threadgroup && (src_cgrp->dom_cgrp != dst_cgrp->dom_cgrp))
+	अगर (!thपढ़ोgroup && (src_cgrp->करोm_cgrp != dst_cgrp->करोm_cgrp))
 		ret = -EOPNOTSUPP;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t __cgroup_procs_write(struct kernfs_open_file *of, char *buf,
-				    bool threadgroup)
-{
-	struct cgroup *src_cgrp, *dst_cgrp;
-	struct task_struct *task;
-	ssize_t ret;
+अटल sमाप_प्रकार __cgroup_procs_ग_लिखो(काष्ठा kernfs_खोलो_file *of, अक्षर *buf,
+				    bool thपढ़ोgroup)
+अणु
+	काष्ठा cgroup *src_cgrp, *dst_cgrp;
+	काष्ठा task_काष्ठा *task;
+	sमाप_प्रकार ret;
 	bool locked;
 
 	dst_cgrp = cgroup_kn_lock_live(of->kn, false);
-	if (!dst_cgrp)
-		return -ENODEV;
+	अगर (!dst_cgrp)
+		वापस -ENODEV;
 
-	task = cgroup_procs_write_start(buf, threadgroup, &locked);
+	task = cgroup_procs_ग_लिखो_start(buf, thपढ़ोgroup, &locked);
 	ret = PTR_ERR_OR_ZERO(task);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 
 	/* find the source cgroup */
 	spin_lock_irq(&css_set_lock);
 	src_cgrp = task_cgroup_from_root(task, &cgrp_dfl_root);
 	spin_unlock_irq(&css_set_lock);
 
-	/* process and thread migrations follow same delegation rule */
+	/* process and thपढ़ो migrations follow same delegation rule */
 	ret = cgroup_attach_permissions(src_cgrp, dst_cgrp,
-					of->file->f_path.dentry->d_sb, threadgroup);
-	if (ret)
-		goto out_finish;
+					of->file->f_path.dentry->d_sb, thपढ़ोgroup);
+	अगर (ret)
+		जाओ out_finish;
 
-	ret = cgroup_attach_task(dst_cgrp, task, threadgroup);
+	ret = cgroup_attach_task(dst_cgrp, task, thपढ़ोgroup);
 
 out_finish:
-	cgroup_procs_write_finish(task, locked);
+	cgroup_procs_ग_लिखो_finish(task, locked);
 out_unlock:
 	cgroup_kn_unlock(of->kn);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t cgroup_procs_write(struct kernfs_open_file *of,
-				  char *buf, size_t nbytes, loff_t off)
-{
-	return __cgroup_procs_write(of, buf, true) ?: nbytes;
-}
+अटल sमाप_प्रकार cgroup_procs_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+				  अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	वापस __cgroup_procs_ग_लिखो(of, buf, true) ?: nbytes;
+पूर्ण
 
-static void *cgroup_threads_start(struct seq_file *s, loff_t *pos)
-{
-	return __cgroup_procs_start(s, pos, 0);
-}
+अटल व्योम *cgroup_thपढ़ोs_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	वापस __cgroup_procs_start(s, pos, 0);
+पूर्ण
 
-static ssize_t cgroup_threads_write(struct kernfs_open_file *of,
-				    char *buf, size_t nbytes, loff_t off)
-{
-	return __cgroup_procs_write(of, buf, false) ?: nbytes;
-}
+अटल sमाप_प्रकार cgroup_thपढ़ोs_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+				    अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	वापस __cgroup_procs_ग_लिखो(of, buf, false) ?: nbytes;
+पूर्ण
 
-/* cgroup core interface files for the default hierarchy */
-static struct cftype cgroup_base_files[] = {
-	{
+/* cgroup core पूर्णांकerface files क्रम the शेष hierarchy */
+अटल काष्ठा cftype cgroup_base_files[] = अणु
+	अणु
 		.name = "cgroup.type",
 		.flags = CFTYPE_NOT_ON_ROOT,
 		.seq_show = cgroup_type_show,
-		.write = cgroup_type_write,
-	},
-	{
+		.ग_लिखो = cgroup_type_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "cgroup.procs",
 		.flags = CFTYPE_NS_DELEGATABLE,
-		.file_offset = offsetof(struct cgroup, procs_file),
+		.file_offset = दुरत्व(काष्ठा cgroup, procs_file),
 		.release = cgroup_procs_release,
 		.seq_start = cgroup_procs_start,
 		.seq_next = cgroup_procs_next,
 		.seq_show = cgroup_procs_show,
-		.write = cgroup_procs_write,
-	},
-	{
+		.ग_लिखो = cgroup_procs_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "cgroup.threads",
 		.flags = CFTYPE_NS_DELEGATABLE,
 		.release = cgroup_procs_release,
-		.seq_start = cgroup_threads_start,
+		.seq_start = cgroup_thपढ़ोs_start,
 		.seq_next = cgroup_procs_next,
 		.seq_show = cgroup_procs_show,
-		.write = cgroup_threads_write,
-	},
-	{
+		.ग_लिखो = cgroup_thपढ़ोs_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "cgroup.controllers",
 		.seq_show = cgroup_controllers_show,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cgroup.subtree_control",
 		.flags = CFTYPE_NS_DELEGATABLE,
 		.seq_show = cgroup_subtree_control_show,
-		.write = cgroup_subtree_control_write,
-	},
-	{
+		.ग_लिखो = cgroup_subtree_control_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "cgroup.events",
 		.flags = CFTYPE_NOT_ON_ROOT,
-		.file_offset = offsetof(struct cgroup, events_file),
+		.file_offset = दुरत्व(काष्ठा cgroup, events_file),
 		.seq_show = cgroup_events_show,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cgroup.max.descendants",
 		.seq_show = cgroup_max_descendants_show,
-		.write = cgroup_max_descendants_write,
-	},
-	{
+		.ग_लिखो = cgroup_max_descendants_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "cgroup.max.depth",
 		.seq_show = cgroup_max_depth_show,
-		.write = cgroup_max_depth_write,
-	},
-	{
+		.ग_लिखो = cgroup_max_depth_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "cgroup.stat",
 		.seq_show = cgroup_stat_show,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cgroup.freeze",
 		.flags = CFTYPE_NOT_ON_ROOT,
-		.seq_show = cgroup_freeze_show,
-		.write = cgroup_freeze_write,
-	},
-	{
+		.seq_show = cgroup_मुक्तze_show,
+		.ग_लिखो = cgroup_मुक्तze_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "cpu.stat",
 		.seq_show = cpu_stat_show,
-	},
-#ifdef CONFIG_PSI
-	{
+	पूर्ण,
+#अगर_घोषित CONFIG_PSI
+	अणु
 		.name = "io.pressure",
 		.seq_show = cgroup_io_pressure_show,
-		.write = cgroup_io_pressure_write,
+		.ग_लिखो = cgroup_io_pressure_ग_लिखो,
 		.poll = cgroup_pressure_poll,
 		.release = cgroup_pressure_release,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "memory.pressure",
 		.seq_show = cgroup_memory_pressure_show,
-		.write = cgroup_memory_pressure_write,
+		.ग_लिखो = cgroup_memory_pressure_ग_लिखो,
 		.poll = cgroup_pressure_poll,
 		.release = cgroup_pressure_release,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cpu.pressure",
 		.seq_show = cgroup_cpu_pressure_show,
-		.write = cgroup_cpu_pressure_write,
+		.ग_लिखो = cgroup_cpu_pressure_ग_लिखो,
 		.poll = cgroup_pressure_poll,
 		.release = cgroup_pressure_release,
-	},
-#endif /* CONFIG_PSI */
-	{ }	/* terminate */
-};
+	पूर्ण,
+#पूर्ण_अगर /* CONFIG_PSI */
+	अणु पूर्ण	/* terminate */
+पूर्ण;
 
 /*
- * css destruction is four-stage process.
+ * css deकाष्ठाion is four-stage process.
  *
- * 1. Destruction starts.  Killing of the percpu_ref is initiated.
- *    Implemented in kill_css().
+ * 1. Deकाष्ठाion starts.  Killing of the percpu_ref is initiated.
+ *    Implemented in समाप्त_css().
  *
- * 2. When the percpu_ref is confirmed to be visible as killed on all CPUs
+ * 2. When the percpu_ref is confirmed to be visible as समाप्तed on all CPUs
  *    and thus css_tryget_online() is guaranteed to fail, the css can be
  *    offlined by invoking offline_css().  After offlining, the base ref is
- *    put.  Implemented in css_killed_work_fn().
+ *    put.  Implemented in css_समाप्तed_work_fn().
  *
- * 3. When the percpu_ref reaches zero, the only possible remaining
- *    accessors are inside RCU read sections.  css_release() schedules the
+ * 3. When the percpu_ref reaches zero, the only possible reमुख्यing
+ *    accessors are inside RCU पढ़ो sections.  css_release() schedules the
  *    RCU callback.
  *
- * 4. After the grace period, the css can be freed.  Implemented in
- *    css_free_work_fn().
+ * 4. After the grace period, the css can be मुक्तd.  Implemented in
+ *    css_मुक्त_work_fn().
  *
  * It is actually hairier because both step 2 and 4 require process context
  * and thus involve punting to css->destroy_work adding two additional
- * steps to the already complex sequence.
+ * steps to the alपढ़ोy complex sequence.
  */
-static void css_free_rwork_fn(struct work_struct *work)
-{
-	struct cgroup_subsys_state *css = container_of(to_rcu_work(work),
-				struct cgroup_subsys_state, destroy_rwork);
-	struct cgroup_subsys *ss = css->ss;
-	struct cgroup *cgrp = css->cgroup;
+अटल व्योम css_मुक्त_rwork_fn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cgroup_subsys_state *css = container_of(to_rcu_work(work),
+				काष्ठा cgroup_subsys_state, destroy_rwork);
+	काष्ठा cgroup_subsys *ss = css->ss;
+	काष्ठा cgroup *cgrp = css->cgroup;
 
-	percpu_ref_exit(&css->refcnt);
+	percpu_ref_निकास(&css->refcnt);
 
-	if (ss) {
-		/* css free path */
-		struct cgroup_subsys_state *parent = css->parent;
-		int id = css->id;
+	अगर (ss) अणु
+		/* css मुक्त path */
+		काष्ठा cgroup_subsys_state *parent = css->parent;
+		पूर्णांक id = css->id;
 
-		ss->css_free(css);
-		cgroup_idr_remove(&ss->css_idr, id);
+		ss->css_मुक्त(css);
+		cgroup_idr_हटाओ(&ss->css_idr, id);
 		cgroup_put(cgrp);
 
-		if (parent)
+		अगर (parent)
 			css_put(parent);
-	} else {
-		/* cgroup free path */
+	पूर्ण अन्यथा अणु
+		/* cgroup मुक्त path */
 		atomic_dec(&cgrp->root->nr_cgrps);
 		cgroup1_pidlist_destroy_all(cgrp);
 		cancel_work_sync(&cgrp->release_agent_work);
 
-		if (cgroup_parent(cgrp)) {
+		अगर (cgroup_parent(cgrp)) अणु
 			/*
 			 * We get a ref to the parent, and put the ref when
-			 * this cgroup is being freed, so it's guaranteed
-			 * that the parent won't be destroyed before its
+			 * this cgroup is being मुक्तd, so it's guaranteed
+			 * that the parent won't be destroyed beक्रमe its
 			 * children.
 			 */
 			cgroup_put(cgroup_parent(cgrp));
 			kernfs_put(cgrp->kn);
-			psi_cgroup_free(cgrp);
-			cgroup_rstat_exit(cgrp);
-			kfree(cgrp);
-		} else {
+			psi_cgroup_मुक्त(cgrp);
+			cgroup_rstat_निकास(cgrp);
+			kमुक्त(cgrp);
+		पूर्ण अन्यथा अणु
 			/*
 			 * This is root cgroup's refcnt reaching zero,
 			 * which indicates that the root should be
 			 * released.
 			 */
 			cgroup_destroy_root(cgrp->root);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void css_release_work_fn(struct work_struct *work)
-{
-	struct cgroup_subsys_state *css =
-		container_of(work, struct cgroup_subsys_state, destroy_work);
-	struct cgroup_subsys *ss = css->ss;
-	struct cgroup *cgrp = css->cgroup;
+अटल व्योम css_release_work_fn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cgroup_subsys_state *css =
+		container_of(work, काष्ठा cgroup_subsys_state, destroy_work);
+	काष्ठा cgroup_subsys *ss = css->ss;
+	काष्ठा cgroup *cgrp = css->cgroup;
 
 	mutex_lock(&cgroup_mutex);
 
 	css->flags |= CSS_RELEASED;
 	list_del_rcu(&css->sibling);
 
-	if (ss) {
+	अगर (ss) अणु
 		/* css release path */
-		if (!list_empty(&css->rstat_css_node)) {
+		अगर (!list_empty(&css->rstat_css_node)) अणु
 			cgroup_rstat_flush(cgrp);
 			list_del_rcu(&css->rstat_css_node);
-		}
+		पूर्ण
 
-		cgroup_idr_replace(&ss->css_idr, NULL, css->id);
-		if (ss->css_released)
+		cgroup_idr_replace(&ss->css_idr, शून्य, css->id);
+		अगर (ss->css_released)
 			ss->css_released(css);
-	} else {
-		struct cgroup *tcgrp;
+	पूर्ण अन्यथा अणु
+		काष्ठा cgroup *tcgrp;
 
 		/* cgroup release path */
 		TRACE_CGROUP_PATH(release, cgrp);
@@ -4991,7 +4992,7 @@ static void css_release_work_fn(struct work_struct *work)
 		cgroup_rstat_flush(cgrp);
 
 		spin_lock_irq(&css_set_lock);
-		for (tcgrp = cgroup_parent(cgrp); tcgrp;
+		क्रम (tcgrp = cgroup_parent(cgrp); tcgrp;
 		     tcgrp = cgroup_parent(tcgrp))
 			tcgrp->nr_dying_descendants--;
 		spin_unlock_irq(&css_set_lock);
@@ -5001,36 +5002,36 @@ static void css_release_work_fn(struct work_struct *work)
 		 * cgroup from dentry without going through kernfs -
 		 * cgroupstats_build() and css_tryget_online_from_dir().
 		 * Those are supported by RCU protecting clearing of
-		 * cgrp->kn->priv backpointer.
+		 * cgrp->kn->priv backpoपूर्णांकer.
 		 */
-		if (cgrp->kn)
-			RCU_INIT_POINTER(*(void __rcu __force **)&cgrp->kn->priv,
-					 NULL);
-	}
+		अगर (cgrp->kn)
+			RCU_INIT_POINTER(*(व्योम __rcu __क्रमce **)&cgrp->kn->priv,
+					 शून्य);
+	पूर्ण
 
 	mutex_unlock(&cgroup_mutex);
 
-	INIT_RCU_WORK(&css->destroy_rwork, css_free_rwork_fn);
+	INIT_RCU_WORK(&css->destroy_rwork, css_मुक्त_rwork_fn);
 	queue_rcu_work(cgroup_destroy_wq, &css->destroy_rwork);
-}
+पूर्ण
 
-static void css_release(struct percpu_ref *ref)
-{
-	struct cgroup_subsys_state *css =
-		container_of(ref, struct cgroup_subsys_state, refcnt);
+अटल व्योम css_release(काष्ठा percpu_ref *ref)
+अणु
+	काष्ठा cgroup_subsys_state *css =
+		container_of(ref, काष्ठा cgroup_subsys_state, refcnt);
 
 	INIT_WORK(&css->destroy_work, css_release_work_fn);
 	queue_work(cgroup_destroy_wq, &css->destroy_work);
-}
+पूर्ण
 
-static void init_and_link_css(struct cgroup_subsys_state *css,
-			      struct cgroup_subsys *ss, struct cgroup *cgrp)
-{
-	lockdep_assert_held(&cgroup_mutex);
+अटल व्योम init_and_link_css(काष्ठा cgroup_subsys_state *css,
+			      काष्ठा cgroup_subsys *ss, काष्ठा cgroup *cgrp)
+अणु
+	lockdep_निश्चित_held(&cgroup_mutex);
 
 	cgroup_get_live(cgrp);
 
-	memset(css, 0, sizeof(*css));
+	स_रखो(css, 0, माप(*css));
 	css->cgroup = cgrp;
 	css->ss = ss;
 	css->id = -1;
@@ -5040,56 +5041,56 @@ static void init_and_link_css(struct cgroup_subsys_state *css,
 	css->serial_nr = css_serial_nr_next++;
 	atomic_set(&css->online_cnt, 0);
 
-	if (cgroup_parent(cgrp)) {
+	अगर (cgroup_parent(cgrp)) अणु
 		css->parent = cgroup_css(cgroup_parent(cgrp), ss);
 		css_get(css->parent);
-	}
+	पूर्ण
 
-	if (ss->css_rstat_flush)
+	अगर (ss->css_rstat_flush)
 		list_add_rcu(&css->rstat_css_node, &cgrp->rstat_css_list);
 
 	BUG_ON(cgroup_css(cgrp, ss));
-}
+पूर्ण
 
-/* invoke ->css_online() on a new CSS and mark it online if successful */
-static int online_css(struct cgroup_subsys_state *css)
-{
-	struct cgroup_subsys *ss = css->ss;
-	int ret = 0;
+/* invoke ->css_online() on a new CSS and mark it online अगर successful */
+अटल पूर्णांक online_css(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा cgroup_subsys *ss = css->ss;
+	पूर्णांक ret = 0;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	if (ss->css_online)
+	अगर (ss->css_online)
 		ret = ss->css_online(css);
-	if (!ret) {
+	अगर (!ret) अणु
 		css->flags |= CSS_ONLINE;
-		rcu_assign_pointer(css->cgroup->subsys[ss->id], css);
+		rcu_assign_poपूर्णांकer(css->cgroup->subsys[ss->id], css);
 
 		atomic_inc(&css->online_cnt);
-		if (css->parent)
+		अगर (css->parent)
 			atomic_inc(&css->parent->online_cnt);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-/* if the CSS is online, invoke ->css_offline() on it and mark it offline */
-static void offline_css(struct cgroup_subsys_state *css)
-{
-	struct cgroup_subsys *ss = css->ss;
+/* अगर the CSS is online, invoke ->css_offline() on it and mark it offline */
+अटल व्योम offline_css(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा cgroup_subsys *ss = css->ss;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	if (!(css->flags & CSS_ONLINE))
-		return;
+	अगर (!(css->flags & CSS_ONLINE))
+		वापस;
 
-	if (ss->css_offline)
+	अगर (ss->css_offline)
 		ss->css_offline(css);
 
 	css->flags &= ~CSS_ONLINE;
-	RCU_INIT_POINTER(css->cgroup->subsys[ss->id], NULL);
+	RCU_INIT_POINTER(css->cgroup->subsys[ss->id], शून्य);
 
-	wake_up_all(&css->cgroup->offline_waitq);
-}
+	wake_up_all(&css->cgroup->offline_रुकोq);
+पूर्ण
 
 /**
  * css_create - create a cgroup_subsys_state
@@ -5097,89 +5098,89 @@ static void offline_css(struct cgroup_subsys_state *css)
  * @ss: the subsys of new css
  *
  * Create a new css associated with @cgrp - @ss pair.  On success, the new
- * css is online and installed in @cgrp.  This function doesn't create the
- * interface files.  Returns 0 on success, -errno on failure.
+ * css is online and installed in @cgrp.  This function करोesn't create the
+ * पूर्णांकerface files.  Returns 0 on success, -त्रुटि_सं on failure.
  */
-static struct cgroup_subsys_state *css_create(struct cgroup *cgrp,
-					      struct cgroup_subsys *ss)
-{
-	struct cgroup *parent = cgroup_parent(cgrp);
-	struct cgroup_subsys_state *parent_css = cgroup_css(parent, ss);
-	struct cgroup_subsys_state *css;
-	int err;
+अटल काष्ठा cgroup_subsys_state *css_create(काष्ठा cgroup *cgrp,
+					      काष्ठा cgroup_subsys *ss)
+अणु
+	काष्ठा cgroup *parent = cgroup_parent(cgrp);
+	काष्ठा cgroup_subsys_state *parent_css = cgroup_css(parent, ss);
+	काष्ठा cgroup_subsys_state *css;
+	पूर्णांक err;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
 	css = ss->css_alloc(parent_css);
-	if (!css)
+	अगर (!css)
 		css = ERR_PTR(-ENOMEM);
-	if (IS_ERR(css))
-		return css;
+	अगर (IS_ERR(css))
+		वापस css;
 
 	init_and_link_css(css, ss, cgrp);
 
 	err = percpu_ref_init(&css->refcnt, css_release, 0, GFP_KERNEL);
-	if (err)
-		goto err_free_css;
+	अगर (err)
+		जाओ err_मुक्त_css;
 
-	err = cgroup_idr_alloc(&ss->css_idr, NULL, 2, 0, GFP_KERNEL);
-	if (err < 0)
-		goto err_free_css;
+	err = cgroup_idr_alloc(&ss->css_idr, शून्य, 2, 0, GFP_KERNEL);
+	अगर (err < 0)
+		जाओ err_मुक्त_css;
 	css->id = err;
 
-	/* @css is ready to be brought online now, make it visible */
+	/* @css is पढ़ोy to be brought online now, make it visible */
 	list_add_tail_rcu(&css->sibling, &parent_css->children);
 	cgroup_idr_replace(&ss->css_idr, css, css->id);
 
 	err = online_css(css);
-	if (err)
-		goto err_list_del;
+	अगर (err)
+		जाओ err_list_del;
 
-	return css;
+	वापस css;
 
 err_list_del:
 	list_del_rcu(&css->sibling);
-err_free_css:
+err_मुक्त_css:
 	list_del_rcu(&css->rstat_css_node);
-	INIT_RCU_WORK(&css->destroy_rwork, css_free_rwork_fn);
+	INIT_RCU_WORK(&css->destroy_rwork, css_मुक्त_rwork_fn);
 	queue_rcu_work(cgroup_destroy_wq, &css->destroy_rwork);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
 /*
- * The returned cgroup is fully initialized including its control mask, but
+ * The वापसed cgroup is fully initialized including its control mask, but
  * it isn't associated with its kernfs_node and doesn't have the control
  * mask applied.
  */
-static struct cgroup *cgroup_create(struct cgroup *parent, const char *name,
+अटल काष्ठा cgroup *cgroup_create(काष्ठा cgroup *parent, स्थिर अक्षर *name,
 				    umode_t mode)
-{
-	struct cgroup_root *root = parent->root;
-	struct cgroup *cgrp, *tcgrp;
-	struct kernfs_node *kn;
-	int level = parent->level + 1;
-	int ret;
+अणु
+	काष्ठा cgroup_root *root = parent->root;
+	काष्ठा cgroup *cgrp, *tcgrp;
+	काष्ठा kernfs_node *kn;
+	पूर्णांक level = parent->level + 1;
+	पूर्णांक ret;
 
-	/* allocate the cgroup and its ID, 0 is reserved for the root */
-	cgrp = kzalloc(struct_size(cgrp, ancestor_ids, (level + 1)),
+	/* allocate the cgroup and its ID, 0 is reserved क्रम the root */
+	cgrp = kzalloc(काष्ठा_size(cgrp, ancestor_ids, (level + 1)),
 		       GFP_KERNEL);
-	if (!cgrp)
-		return ERR_PTR(-ENOMEM);
+	अगर (!cgrp)
+		वापस ERR_PTR(-ENOMEM);
 
 	ret = percpu_ref_init(&cgrp->self.refcnt, css_release, 0, GFP_KERNEL);
-	if (ret)
-		goto out_free_cgrp;
+	अगर (ret)
+		जाओ out_मुक्त_cgrp;
 
 	ret = cgroup_rstat_init(cgrp);
-	if (ret)
-		goto out_cancel_ref;
+	अगर (ret)
+		जाओ out_cancel_ref;
 
 	/* create the directory */
 	kn = kernfs_create_dir(parent->kn, name, mode, cgrp);
-	if (IS_ERR(kn)) {
+	अगर (IS_ERR(kn)) अणु
 		ret = PTR_ERR(kn);
-		goto out_stat_exit;
-	}
+		जाओ out_stat_निकास;
+	पूर्ण
 	cgrp->kn = kn;
 
 	init_cgroup_housekeeping(cgrp);
@@ -5189,34 +5190,34 @@ static struct cgroup *cgroup_create(struct cgroup *parent, const char *name,
 	cgrp->level = level;
 
 	ret = psi_cgroup_alloc(cgrp);
-	if (ret)
-		goto out_kernfs_remove;
+	अगर (ret)
+		जाओ out_kernfs_हटाओ;
 
 	ret = cgroup_bpf_inherit(cgrp);
-	if (ret)
-		goto out_psi_free;
+	अगर (ret)
+		जाओ out_psi_मुक्त;
 
 	/*
-	 * New cgroup inherits effective freeze counter, and
-	 * if the parent has to be frozen, the child has too.
+	 * New cgroup inherits effective मुक्तze counter, and
+	 * अगर the parent has to be frozen, the child has too.
 	 */
-	cgrp->freezer.e_freeze = parent->freezer.e_freeze;
-	if (cgrp->freezer.e_freeze) {
+	cgrp->मुक्तzer.e_मुक्तze = parent->मुक्तzer.e_मुक्तze;
+	अगर (cgrp->मुक्तzer.e_मुक्तze) अणु
 		/*
 		 * Set the CGRP_FREEZE flag, so when a process will be
 		 * attached to the child cgroup, it will become frozen.
-		 * At this point the new cgroup is unpopulated, so we can
+		 * At this poपूर्णांक the new cgroup is unpopulated, so we can
 		 * consider it frozen immediately.
 		 */
 		set_bit(CGRP_FREEZE, &cgrp->flags);
 		set_bit(CGRP_FROZEN, &cgrp->flags);
-	}
+	पूर्ण
 
 	spin_lock_irq(&css_set_lock);
-	for (tcgrp = cgrp; tcgrp; tcgrp = cgroup_parent(tcgrp)) {
+	क्रम (tcgrp = cgrp; tcgrp; tcgrp = cgroup_parent(tcgrp)) अणु
 		cgrp->ancestor_ids[tcgrp->level] = cgroup_id(tcgrp);
 
-		if (tcgrp != cgrp) {
+		अगर (tcgrp != cgrp) अणु
 			tcgrp->nr_descendants++;
 
 			/*
@@ -5224,16 +5225,16 @@ static struct cgroup *cgroup_create(struct cgroup *parent, const char *name,
 			 * get a new frozen descendant, but their state can't
 			 * change because of this.
 			 */
-			if (cgrp->freezer.e_freeze)
-				tcgrp->freezer.nr_frozen_descendants++;
-		}
-	}
+			अगर (cgrp->मुक्तzer.e_मुक्तze)
+				tcgrp->मुक्तzer.nr_frozen_descendants++;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irq(&css_set_lock);
 
-	if (notify_on_release(parent))
+	अगर (notअगरy_on_release(parent))
 		set_bit(CGRP_NOTIFY_ON_RELEASE, &cgrp->flags);
 
-	if (test_bit(CGRP_CPUSET_CLONE_CHILDREN, &parent->flags))
+	अगर (test_bit(CGRP_CPUSET_CLONE_CHILDREN, &parent->flags))
 		set_bit(CGRP_CPUSET_CLONE_CHILDREN, &cgrp->flags);
 
 	cgrp->self.serial_nr = css_serial_nr_next++;
@@ -5244,164 +5245,164 @@ static struct cgroup *cgroup_create(struct cgroup *parent, const char *name,
 	cgroup_get_live(parent);
 
 	/*
-	 * On the default hierarchy, a child doesn't automatically inherit
+	 * On the शेष hierarchy, a child करोesn't स्वतःmatically inherit
 	 * subtree_control from the parent.  Each is configured manually.
 	 */
-	if (!cgroup_on_dfl(cgrp))
+	अगर (!cgroup_on_dfl(cgrp))
 		cgrp->subtree_control = cgroup_control(cgrp);
 
 	cgroup_propagate_control(cgrp);
 
-	return cgrp;
+	वापस cgrp;
 
-out_psi_free:
-	psi_cgroup_free(cgrp);
-out_kernfs_remove:
-	kernfs_remove(cgrp->kn);
-out_stat_exit:
-	cgroup_rstat_exit(cgrp);
+out_psi_मुक्त:
+	psi_cgroup_मुक्त(cgrp);
+out_kernfs_हटाओ:
+	kernfs_हटाओ(cgrp->kn);
+out_stat_निकास:
+	cgroup_rstat_निकास(cgrp);
 out_cancel_ref:
-	percpu_ref_exit(&cgrp->self.refcnt);
-out_free_cgrp:
-	kfree(cgrp);
-	return ERR_PTR(ret);
-}
+	percpu_ref_निकास(&cgrp->self.refcnt);
+out_मुक्त_cgrp:
+	kमुक्त(cgrp);
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static bool cgroup_check_hierarchy_limits(struct cgroup *parent)
-{
-	struct cgroup *cgroup;
-	int ret = false;
-	int level = 1;
+अटल bool cgroup_check_hierarchy_limits(काष्ठा cgroup *parent)
+अणु
+	काष्ठा cgroup *cgroup;
+	पूर्णांक ret = false;
+	पूर्णांक level = 1;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	for (cgroup = parent; cgroup; cgroup = cgroup_parent(cgroup)) {
-		if (cgroup->nr_descendants >= cgroup->max_descendants)
-			goto fail;
+	क्रम (cgroup = parent; cgroup; cgroup = cgroup_parent(cgroup)) अणु
+		अगर (cgroup->nr_descendants >= cgroup->max_descendants)
+			जाओ fail;
 
-		if (level > cgroup->max_depth)
-			goto fail;
+		अगर (level > cgroup->max_depth)
+			जाओ fail;
 
 		level++;
-	}
+	पूर्ण
 
 	ret = true;
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cgroup_mkdir(struct kernfs_node *parent_kn, const char *name, umode_t mode)
-{
-	struct cgroup *parent, *cgrp;
-	int ret;
+पूर्णांक cgroup_सूची_गढ़ो(काष्ठा kernfs_node *parent_kn, स्थिर अक्षर *name, umode_t mode)
+अणु
+	काष्ठा cgroup *parent, *cgrp;
+	पूर्णांक ret;
 
-	/* do not accept '\n' to prevent making /proc/<pid>/cgroup unparsable */
-	if (strchr(name, '\n'))
-		return -EINVAL;
+	/* करो not accept '\n' to prevent making /proc/<pid>/cgroup unparsable */
+	अगर (म_अक्षर(name, '\n'))
+		वापस -EINVAL;
 
 	parent = cgroup_kn_lock_live(parent_kn, false);
-	if (!parent)
-		return -ENODEV;
+	अगर (!parent)
+		वापस -ENODEV;
 
-	if (!cgroup_check_hierarchy_limits(parent)) {
+	अगर (!cgroup_check_hierarchy_limits(parent)) अणु
 		ret = -EAGAIN;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	cgrp = cgroup_create(parent, name, mode);
-	if (IS_ERR(cgrp)) {
+	अगर (IS_ERR(cgrp)) अणु
 		ret = PTR_ERR(cgrp);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	/*
-	 * This extra ref will be put in cgroup_free_fn() and guarantees
+	 * This extra ref will be put in cgroup_मुक्त_fn() and guarantees
 	 * that @cgrp->kn is always accessible.
 	 */
 	kernfs_get(cgrp->kn);
 
 	ret = cgroup_kn_set_ugid(cgrp->kn);
-	if (ret)
-		goto out_destroy;
+	अगर (ret)
+		जाओ out_destroy;
 
 	ret = css_populate_dir(&cgrp->self);
-	if (ret)
-		goto out_destroy;
+	अगर (ret)
+		जाओ out_destroy;
 
 	ret = cgroup_apply_control_enable(cgrp);
-	if (ret)
-		goto out_destroy;
+	अगर (ret)
+		जाओ out_destroy;
 
-	TRACE_CGROUP_PATH(mkdir, cgrp);
+	TRACE_CGROUP_PATH(सूची_गढ़ो, cgrp);
 
 	/* let's create and online css's */
 	kernfs_activate(cgrp->kn);
 
 	ret = 0;
-	goto out_unlock;
+	जाओ out_unlock;
 
 out_destroy:
 	cgroup_destroy_locked(cgrp);
 out_unlock:
 	cgroup_kn_unlock(parent_kn);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * This is called when the refcnt of a css is confirmed to be killed.
- * css_tryget_online() is now guaranteed to fail.  Tell the subsystem to
- * initiate destruction and put the css ref from kill_css().
+ * This is called when the refcnt of a css is confirmed to be समाप्तed.
+ * css_tryget_online() is now guaranteed to fail.  Tell the subप्रणाली to
+ * initiate deकाष्ठाion and put the css ref from समाप्त_css().
  */
-static void css_killed_work_fn(struct work_struct *work)
-{
-	struct cgroup_subsys_state *css =
-		container_of(work, struct cgroup_subsys_state, destroy_work);
+अटल व्योम css_समाप्तed_work_fn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cgroup_subsys_state *css =
+		container_of(work, काष्ठा cgroup_subsys_state, destroy_work);
 
 	mutex_lock(&cgroup_mutex);
 
-	do {
+	करो अणु
 		offline_css(css);
 		css_put(css);
 		/* @css can't go away while we're holding cgroup_mutex */
 		css = css->parent;
-	} while (css && atomic_dec_and_test(&css->online_cnt));
+	पूर्ण जबतक (css && atomic_dec_and_test(&css->online_cnt));
 
 	mutex_unlock(&cgroup_mutex);
-}
+पूर्ण
 
-/* css kill confirmation processing requires process context, bounce */
-static void css_killed_ref_fn(struct percpu_ref *ref)
-{
-	struct cgroup_subsys_state *css =
-		container_of(ref, struct cgroup_subsys_state, refcnt);
+/* css समाप्त confirmation processing requires process context, bounce */
+अटल व्योम css_समाप्तed_ref_fn(काष्ठा percpu_ref *ref)
+अणु
+	काष्ठा cgroup_subsys_state *css =
+		container_of(ref, काष्ठा cgroup_subsys_state, refcnt);
 
-	if (atomic_dec_and_test(&css->online_cnt)) {
-		INIT_WORK(&css->destroy_work, css_killed_work_fn);
+	अगर (atomic_dec_and_test(&css->online_cnt)) अणु
+		INIT_WORK(&css->destroy_work, css_समाप्तed_work_fn);
 		queue_work(cgroup_destroy_wq, &css->destroy_work);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * kill_css - destroy a css
+ * समाप्त_css - destroy a css
  * @css: css to destroy
  *
- * This function initiates destruction of @css by removing cgroup interface
+ * This function initiates deकाष्ठाion of @css by removing cgroup पूर्णांकerface
  * files and putting its base reference.  ->css_offline() will be invoked
  * asynchronously once css_tryget_online() is guaranteed to fail and when
  * the reference count reaches zero, @css will be released.
  */
-static void kill_css(struct cgroup_subsys_state *css)
-{
-	lockdep_assert_held(&cgroup_mutex);
+अटल व्योम समाप्त_css(काष्ठा cgroup_subsys_state *css)
+अणु
+	lockdep_निश्चित_held(&cgroup_mutex);
 
-	if (css->flags & CSS_DYING)
-		return;
+	अगर (css->flags & CSS_DYING)
+		वापस;
 
 	css->flags |= CSS_DYING;
 
 	/*
-	 * This must happen before css is disassociated with its cgroup.
-	 * See seq_css() for details.
+	 * This must happen beक्रमe css is disassociated with its cgroup.
+	 * See seq_css() क्रम details.
 	 */
 	css_clear_dir(css);
 
@@ -5412,69 +5413,69 @@ static void kill_css(struct cgroup_subsys_state *css)
 	css_get(css);
 
 	/*
-	 * cgroup core guarantees that, by the time ->css_offline() is
+	 * cgroup core guarantees that, by the समय ->css_offline() is
 	 * invoked, no new css reference will be given out via
-	 * css_tryget_online().  We can't simply call percpu_ref_kill() and
+	 * css_tryget_online().  We can't simply call percpu_ref_समाप्त() and
 	 * proceed to offlining css's because percpu_ref_kill() doesn't
-	 * guarantee that the ref is seen as killed on all CPUs on return.
+	 * guarantee that the ref is seen as समाप्तed on all CPUs on वापस.
 	 *
-	 * Use percpu_ref_kill_and_confirm() to get notifications as each
-	 * css is confirmed to be seen as killed on all CPUs.
+	 * Use percpu_ref_समाप्त_and_confirm() to get notअगरications as each
+	 * css is confirmed to be seen as समाप्तed on all CPUs.
 	 */
-	percpu_ref_kill_and_confirm(&css->refcnt, css_killed_ref_fn);
-}
+	percpu_ref_समाप्त_and_confirm(&css->refcnt, css_समाप्तed_ref_fn);
+पूर्ण
 
 /**
- * cgroup_destroy_locked - the first stage of cgroup destruction
+ * cgroup_destroy_locked - the first stage of cgroup deकाष्ठाion
  * @cgrp: cgroup to be destroyed
  *
  * css's make use of percpu refcnts whose killing latency shouldn't be
- * exposed to userland and are RCU protected.  Also, cgroup core needs to
- * guarantee that css_tryget_online() won't succeed by the time
+ * exposed to userland and are RCU रक्षित.  Also, cgroup core needs to
+ * guarantee that css_tryget_online() won't succeed by the समय
  * ->css_offline() is invoked.  To satisfy all the requirements,
- * destruction is implemented in the following two steps.
+ * deकाष्ठाion is implemented in the following two steps.
  *
- * s1. Verify @cgrp can be destroyed and mark it dying.  Remove all
- *     userland visible parts and start killing the percpu refcnts of
+ * s1. Verअगरy @cgrp can be destroyed and mark it dying.  Remove all
+ *     userland visible parts and start समाप्तing the percpu refcnts of
  *     css's.  Set up so that the next stage will be kicked off once all
- *     the percpu refcnts are confirmed to be killed.
+ *     the percpu refcnts are confirmed to be समाप्तed.
  *
  * s2. Invoke ->css_offline(), mark the cgroup dead and proceed with the
- *     rest of destruction.  Once all cgroup references are gone, the
- *     cgroup is RCU-freed.
+ *     rest of deकाष्ठाion.  Once all cgroup references are gone, the
+ *     cgroup is RCU-मुक्तd.
  *
  * This function implements s1.  After this step, @cgrp is gone as far as
  * the userland is concerned and a new cgroup with the same name may be
- * created.  As cgroup doesn't care about the names internally, this
- * doesn't cause any problem.
+ * created.  As cgroup करोesn't care about the names पूर्णांकernally, this
+ * करोesn't cause any problem.
  */
-static int cgroup_destroy_locked(struct cgroup *cgrp)
+अटल पूर्णांक cgroup_destroy_locked(काष्ठा cgroup *cgrp)
 	__releases(&cgroup_mutex) __acquires(&cgroup_mutex)
-{
-	struct cgroup *tcgrp, *parent = cgroup_parent(cgrp);
-	struct cgroup_subsys_state *css;
-	struct cgrp_cset_link *link;
-	int ssid;
+अणु
+	काष्ठा cgroup *tcgrp, *parent = cgroup_parent(cgrp);
+	काष्ठा cgroup_subsys_state *css;
+	काष्ठा cgrp_cset_link *link;
+	पूर्णांक ssid;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
 	/*
-	 * Only migration can raise populated from zero and we're already
+	 * Only migration can उठाओ populated from zero and we're alपढ़ोy
 	 * holding cgroup_mutex.
 	 */
-	if (cgroup_is_populated(cgrp))
-		return -EBUSY;
+	अगर (cgroup_is_populated(cgrp))
+		वापस -EBUSY;
 
 	/*
 	 * Make sure there's no live children.  We can't test emptiness of
-	 * ->self.children as dead children linger on it while being
+	 * ->self.children as dead children linger on it जबतक being
 	 * drained; otherwise, "rmdir parent/child parent" may fail.
 	 */
-	if (css_has_online_children(&cgrp->self))
-		return -EBUSY;
+	अगर (css_has_online_children(&cgrp->self))
+		वापस -EBUSY;
 
 	/*
-	 * Mark @cgrp and the associated csets dead.  The former prevents
+	 * Mark @cgrp and the associated csets dead.  The क्रमmer prevents
 	 * further task migration and child creation by disabling
 	 * cgroup_lock_live_group().  The latter makes the csets ignored by
 	 * the migration path.
@@ -5482,71 +5483,71 @@ static int cgroup_destroy_locked(struct cgroup *cgrp)
 	cgrp->self.flags &= ~CSS_ONLINE;
 
 	spin_lock_irq(&css_set_lock);
-	list_for_each_entry(link, &cgrp->cset_links, cset_link)
+	list_क्रम_each_entry(link, &cgrp->cset_links, cset_link)
 		link->cset->dead = true;
 	spin_unlock_irq(&css_set_lock);
 
 	/* initiate massacre of all css's */
-	for_each_css(css, ssid, cgrp)
-		kill_css(css);
+	क्रम_each_css(css, ssid, cgrp)
+		समाप्त_css(css);
 
-	/* clear and remove @cgrp dir, @cgrp has an extra ref on its kn */
+	/* clear and हटाओ @cgrp dir, @cgrp has an extra ref on its kn */
 	css_clear_dir(&cgrp->self);
-	kernfs_remove(cgrp->kn);
+	kernfs_हटाओ(cgrp->kn);
 
-	if (parent && cgroup_is_threaded(cgrp))
-		parent->nr_threaded_children--;
+	अगर (parent && cgroup_is_thपढ़ोed(cgrp))
+		parent->nr_thपढ़ोed_children--;
 
 	spin_lock_irq(&css_set_lock);
-	for (tcgrp = cgroup_parent(cgrp); tcgrp; tcgrp = cgroup_parent(tcgrp)) {
+	क्रम (tcgrp = cgroup_parent(cgrp); tcgrp; tcgrp = cgroup_parent(tcgrp)) अणु
 		tcgrp->nr_descendants--;
 		tcgrp->nr_dying_descendants++;
 		/*
 		 * If the dying cgroup is frozen, decrease frozen descendants
 		 * counters of ancestor cgroups.
 		 */
-		if (test_bit(CGRP_FROZEN, &cgrp->flags))
-			tcgrp->freezer.nr_frozen_descendants--;
-	}
+		अगर (test_bit(CGRP_FROZEN, &cgrp->flags))
+			tcgrp->मुक्तzer.nr_frozen_descendants--;
+	पूर्ण
 	spin_unlock_irq(&css_set_lock);
 
-	cgroup1_check_for_release(parent);
+	cgroup1_check_क्रम_release(parent);
 
 	cgroup_bpf_offline(cgrp);
 
 	/* put the base reference */
-	percpu_ref_kill(&cgrp->self.refcnt);
+	percpu_ref_समाप्त(&cgrp->self.refcnt);
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-int cgroup_rmdir(struct kernfs_node *kn)
-{
-	struct cgroup *cgrp;
-	int ret = 0;
+पूर्णांक cgroup_सूची_हटाओ(काष्ठा kernfs_node *kn)
+अणु
+	काष्ठा cgroup *cgrp;
+	पूर्णांक ret = 0;
 
 	cgrp = cgroup_kn_lock_live(kn, false);
-	if (!cgrp)
-		return 0;
+	अगर (!cgrp)
+		वापस 0;
 
 	ret = cgroup_destroy_locked(cgrp);
-	if (!ret)
-		TRACE_CGROUP_PATH(rmdir, cgrp);
+	अगर (!ret)
+		TRACE_CGROUP_PATH(सूची_हटाओ, cgrp);
 
 	cgroup_kn_unlock(kn);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct kernfs_syscall_ops cgroup_kf_syscall_ops = {
+अटल काष्ठा kernfs_syscall_ops cgroup_kf_syscall_ops = अणु
 	.show_options		= cgroup_show_options,
-	.mkdir			= cgroup_mkdir,
-	.rmdir			= cgroup_rmdir,
+	.सूची_गढ़ो			= cgroup_सूची_गढ़ो,
+	.सूची_हटाओ			= cgroup_सूची_हटाओ,
 	.show_path		= cgroup_show_path,
-};
+पूर्ण;
 
-static void __init cgroup_init_subsys(struct cgroup_subsys *ss, bool early)
-{
-	struct cgroup_subsys_state *css;
+अटल व्योम __init cgroup_init_subsys(काष्ठा cgroup_subsys *ss, bool early)
+अणु
+	काष्ठा cgroup_subsys_state *css;
 
 	pr_debug("Initializing cgroup subsys %s\n", ss->name);
 
@@ -5555,10 +5556,10 @@ static void __init cgroup_init_subsys(struct cgroup_subsys *ss, bool early)
 	idr_init(&ss->css_idr);
 	INIT_LIST_HEAD(&ss->cfts);
 
-	/* Create the root cgroup state for this subsystem */
+	/* Create the root cgroup state क्रम this subप्रणाली */
 	ss->root = &cgrp_dfl_root;
 	css = ss->css_alloc(cgroup_css(&cgrp_dfl_root.cgrp, ss));
-	/* We don't handle early failures gracefully */
+	/* We करोn't handle early failures gracefully */
 	BUG_ON(IS_ERR(css));
 	init_and_link_css(css, ss, &cgrp_dfl_root.cgrp);
 
@@ -5568,46 +5569,46 @@ static void __init cgroup_init_subsys(struct cgroup_subsys *ss, bool early)
 	 */
 	css->flags |= CSS_NO_REF;
 
-	if (early) {
-		/* allocation can't be done safely during early init */
+	अगर (early) अणु
+		/* allocation can't be करोne safely during early init */
 		css->id = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		css->id = cgroup_idr_alloc(&ss->css_idr, css, 1, 2, GFP_KERNEL);
 		BUG_ON(css->id < 0);
-	}
+	पूर्ण
 
 	/* Update the init_css_set to contain a subsys
-	 * pointer to this state - since the subsystem is
-	 * newly registered, all tasks and hence the
-	 * init_css_set is in the subsystem's root cgroup. */
+	 * poपूर्णांकer to this state - since the subप्रणाली is
+	 * newly रेजिस्टरed, all tasks and hence the
+	 * init_css_set is in the subप्रणाली's root cgroup. */
 	init_css_set.subsys[ss->id] = css;
 
-	have_fork_callback |= (bool)ss->fork << ss->id;
-	have_exit_callback |= (bool)ss->exit << ss->id;
+	have_विभाजन_callback |= (bool)ss->विभाजन << ss->id;
+	have_निकास_callback |= (bool)ss->निकास << ss->id;
 	have_release_callback |= (bool)ss->release << ss->id;
-	have_canfork_callback |= (bool)ss->can_fork << ss->id;
+	have_canविभाजन_callback |= (bool)ss->can_विभाजन << ss->id;
 
-	/* At system boot, before all subsystems have been
-	 * registered, no tasks have been forked, so we don't
-	 * need to invoke fork callbacks here. */
+	/* At प्रणाली boot, beक्रमe all subप्रणालीs have been
+	 * रेजिस्टरed, no tasks have been विभाजनed, so we करोn't
+	 * need to invoke विभाजन callbacks here. */
 	BUG_ON(!list_empty(&init_task.tasks));
 
 	BUG_ON(online_css(css));
 
 	mutex_unlock(&cgroup_mutex);
-}
+पूर्ण
 
 /**
- * cgroup_init_early - cgroup initialization at system boot
+ * cgroup_init_early - cgroup initialization at प्रणाली boot
  *
- * Initialize cgroups at system boot, and initialize any
- * subsystems that request early init.
+ * Initialize cgroups at प्रणाली boot, and initialize any
+ * subप्रणालीs that request early init.
  */
-int __init cgroup_init_early(void)
-{
-	static struct cgroup_fs_context __initdata ctx;
-	struct cgroup_subsys *ss;
-	int i;
+पूर्णांक __init cgroup_init_early(व्योम)
+अणु
+	अटल काष्ठा cgroup_fs_context __initdata ctx;
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक i;
 
 	ctx.root = &cgrp_dfl_root;
 	init_cgroup_root(&ctx);
@@ -5615,47 +5616,47 @@ int __init cgroup_init_early(void)
 
 	RCU_INIT_POINTER(init_task.cgroups, &init_css_set);
 
-	for_each_subsys(ss, i) {
-		WARN(!ss->css_alloc || !ss->css_free || ss->name || ss->id,
+	क्रम_each_subsys(ss, i) अणु
+		WARN(!ss->css_alloc || !ss->css_मुक्त || ss->name || ss->id,
 		     "invalid cgroup_subsys %d:%s css_alloc=%p css_free=%p id:name=%d:%s\n",
-		     i, cgroup_subsys_name[i], ss->css_alloc, ss->css_free,
+		     i, cgroup_subsys_name[i], ss->css_alloc, ss->css_मुक्त,
 		     ss->id, ss->name);
-		WARN(strlen(cgroup_subsys_name[i]) > MAX_CGROUP_TYPE_NAMELEN,
+		WARN(म_माप(cgroup_subsys_name[i]) > MAX_CGROUP_TYPE_NAMELEN,
 		     "cgroup_subsys_name %s too long\n", cgroup_subsys_name[i]);
 
 		ss->id = i;
 		ss->name = cgroup_subsys_name[i];
-		if (!ss->legacy_name)
+		अगर (!ss->legacy_name)
 			ss->legacy_name = cgroup_subsys_name[i];
 
-		if (ss->early_init)
+		अगर (ss->early_init)
 			cgroup_init_subsys(ss, true);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * cgroup_init - cgroup initialization
  *
- * Register cgroup filesystem and /proc file, and initialize
- * any subsystems that didn't request early init.
+ * Register cgroup fileप्रणाली and /proc file, and initialize
+ * any subप्रणालीs that didn't request early init.
  */
-int __init cgroup_init(void)
-{
-	struct cgroup_subsys *ss;
-	int ssid;
+पूर्णांक __init cgroup_init(व्योम)
+अणु
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक ssid;
 
 	BUILD_BUG_ON(CGROUP_SUBSYS_COUNT > 16);
-	BUG_ON(cgroup_init_cftypes(NULL, cgroup_base_files));
-	BUG_ON(cgroup_init_cftypes(NULL, cgroup1_base_files));
+	BUG_ON(cgroup_init_cftypes(शून्य, cgroup_base_files));
+	BUG_ON(cgroup_init_cftypes(शून्य, cgroup1_base_files));
 
 	cgroup_rstat_boot();
 
 	/*
-	 * The latency of the synchronize_rcu() is too high for cgroups,
-	 * avoid it at the cost of forcing all readers into the slow path.
+	 * The latency of the synchronize_rcu() is too high क्रम cgroups,
+	 * aव्योम it at the cost of क्रमcing all पढ़ोers पूर्णांकo the slow path.
 	 */
-	rcu_sync_enter_start(&cgroup_threadgroup_rwsem.rss);
+	rcu_sync_enter_start(&cgroup_thपढ़ोgroup_rwsem.rss);
 
 	get_user_ns(init_cgroup_ns.user_ns);
 
@@ -5672,438 +5673,438 @@ int __init cgroup_init(void)
 
 	mutex_unlock(&cgroup_mutex);
 
-	for_each_subsys(ss, ssid) {
-		if (ss->early_init) {
-			struct cgroup_subsys_state *css =
+	क्रम_each_subsys(ss, ssid) अणु
+		अगर (ss->early_init) अणु
+			काष्ठा cgroup_subsys_state *css =
 				init_css_set.subsys[ss->id];
 
 			css->id = cgroup_idr_alloc(&ss->css_idr, css, 1, 2,
 						   GFP_KERNEL);
 			BUG_ON(css->id < 0);
-		} else {
+		पूर्ण अन्यथा अणु
 			cgroup_init_subsys(ss, false);
-		}
+		पूर्ण
 
 		list_add_tail(&init_css_set.e_cset_node[ssid],
 			      &cgrp_dfl_root.cgrp.e_csets[ssid]);
 
 		/*
 		 * Setting dfl_root subsys_mask needs to consider the
-		 * disabled flag and cftype registration needs kmalloc,
+		 * disabled flag and cftype registration needs kदो_स्मृति,
 		 * both of which aren't available during early_init.
 		 */
-		if (!cgroup_ssid_enabled(ssid))
-			continue;
+		अगर (!cgroup_ssid_enabled(ssid))
+			जारी;
 
-		if (cgroup1_ssid_disabled(ssid))
-			printk(KERN_INFO "Disabling %s control group subsystem in v1 mounts\n",
+		अगर (cgroup1_ssid_disabled(ssid))
+			prपूर्णांकk(KERN_INFO "Disabling %s control group subsystem in v1 mounts\n",
 			       ss->name);
 
 		cgrp_dfl_root.subsys_mask |= 1 << ss->id;
 
-		/* implicit controllers must be threaded too */
-		WARN_ON(ss->implicit_on_dfl && !ss->threaded);
+		/* implicit controllers must be thपढ़ोed too */
+		WARN_ON(ss->implicit_on_dfl && !ss->thपढ़ोed);
 
-		if (ss->implicit_on_dfl)
+		अगर (ss->implicit_on_dfl)
 			cgrp_dfl_implicit_ss_mask |= 1 << ss->id;
-		else if (!ss->dfl_cftypes)
+		अन्यथा अगर (!ss->dfl_cftypes)
 			cgrp_dfl_inhibit_ss_mask |= 1 << ss->id;
 
-		if (ss->threaded)
-			cgrp_dfl_threaded_ss_mask |= 1 << ss->id;
+		अगर (ss->thपढ़ोed)
+			cgrp_dfl_thपढ़ोed_ss_mask |= 1 << ss->id;
 
-		if (ss->dfl_cftypes == ss->legacy_cftypes) {
+		अगर (ss->dfl_cftypes == ss->legacy_cftypes) अणु
 			WARN_ON(cgroup_add_cftypes(ss, ss->dfl_cftypes));
-		} else {
+		पूर्ण अन्यथा अणु
 			WARN_ON(cgroup_add_dfl_cftypes(ss, ss->dfl_cftypes));
 			WARN_ON(cgroup_add_legacy_cftypes(ss, ss->legacy_cftypes));
-		}
+		पूर्ण
 
-		if (ss->bind)
+		अगर (ss->bind)
 			ss->bind(init_css_set.subsys[ssid]);
 
 		mutex_lock(&cgroup_mutex);
 		css_populate_dir(init_css_set.subsys[ssid]);
 		mutex_unlock(&cgroup_mutex);
-	}
+	पूर्ण
 
 	/* init_css_set.subsys[] has been updated, re-hash */
 	hash_del(&init_css_set.hlist);
 	hash_add(css_set_table, &init_css_set.hlist,
 		 css_set_hash(init_css_set.subsys));
 
-	WARN_ON(sysfs_create_mount_point(fs_kobj, "cgroup"));
-	WARN_ON(register_filesystem(&cgroup_fs_type));
-	WARN_ON(register_filesystem(&cgroup2_fs_type));
-	WARN_ON(!proc_create_single("cgroups", 0, NULL, proc_cgroupstats_show));
-#ifdef CONFIG_CPUSETS
-	WARN_ON(register_filesystem(&cpuset_fs_type));
-#endif
+	WARN_ON(sysfs_create_mount_poपूर्णांक(fs_kobj, "cgroup"));
+	WARN_ON(रेजिस्टर_fileप्रणाली(&cgroup_fs_type));
+	WARN_ON(रेजिस्टर_fileप्रणाली(&cgroup2_fs_type));
+	WARN_ON(!proc_create_single("cgroups", 0, शून्य, proc_cgroupstats_show));
+#अगर_घोषित CONFIG_CPUSETS
+	WARN_ON(रेजिस्टर_fileप्रणाली(&cpuset_fs_type));
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init cgroup_wq_init(void)
-{
+अटल पूर्णांक __init cgroup_wq_init(व्योम)
+अणु
 	/*
-	 * There isn't much point in executing destruction path in
+	 * There isn't much poपूर्णांक in executing deकाष्ठाion path in
 	 * parallel.  Good chunk is serialized with cgroup_mutex anyway.
-	 * Use 1 for @max_active.
+	 * Use 1 क्रम @max_active.
 	 *
-	 * We would prefer to do this in cgroup_init() above, but that
-	 * is called before init_workqueues(): so leave this until after.
+	 * We would prefer to करो this in cgroup_init() above, but that
+	 * is called beक्रमe init_workqueues(): so leave this until after.
 	 */
 	cgroup_destroy_wq = alloc_workqueue("cgroup_destroy", 0, 1);
 	BUG_ON(!cgroup_destroy_wq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 core_initcall(cgroup_wq_init);
 
-void cgroup_path_from_kernfs_id(u64 id, char *buf, size_t buflen)
-{
-	struct kernfs_node *kn;
+व्योम cgroup_path_from_kernfs_id(u64 id, अक्षर *buf, माप_प्रकार buflen)
+अणु
+	काष्ठा kernfs_node *kn;
 
 	kn = kernfs_find_and_get_node_by_id(cgrp_dfl_root.kf_root, id);
-	if (!kn)
-		return;
+	अगर (!kn)
+		वापस;
 	kernfs_path(kn, buf, buflen);
 	kernfs_put(kn);
-}
+पूर्ण
 
 /*
  * proc_cgroup_show()
- *  - Print task's cgroup paths into seq_file, one line for each hierarchy
- *  - Used for /proc/<pid>/cgroup.
+ *  - Prपूर्णांक task's cgroup paths पूर्णांकo seq_file, one line क्रम each hierarchy
+ *  - Used क्रम /proc/<pid>/cgroup.
  */
-int proc_cgroup_show(struct seq_file *m, struct pid_namespace *ns,
-		     struct pid *pid, struct task_struct *tsk)
-{
-	char *buf;
-	int retval;
-	struct cgroup_root *root;
+पूर्णांक proc_cgroup_show(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
+		     काष्ठा pid *pid, काष्ठा task_काष्ठा *tsk)
+अणु
+	अक्षर *buf;
+	पूर्णांक retval;
+	काष्ठा cgroup_root *root;
 
 	retval = -ENOMEM;
-	buf = kmalloc(PATH_MAX, GFP_KERNEL);
-	if (!buf)
-		goto out;
+	buf = kदो_स्मृति(PATH_MAX, GFP_KERNEL);
+	अगर (!buf)
+		जाओ out;
 
 	mutex_lock(&cgroup_mutex);
 	spin_lock_irq(&css_set_lock);
 
-	for_each_root(root) {
-		struct cgroup_subsys *ss;
-		struct cgroup *cgrp;
-		int ssid, count = 0;
+	क्रम_each_root(root) अणु
+		काष्ठा cgroup_subsys *ss;
+		काष्ठा cgroup *cgrp;
+		पूर्णांक ssid, count = 0;
 
-		if (root == &cgrp_dfl_root && !cgrp_dfl_visible)
-			continue;
+		अगर (root == &cgrp_dfl_root && !cgrp_dfl_visible)
+			जारी;
 
-		seq_printf(m, "%d:", root->hierarchy_id);
-		if (root != &cgrp_dfl_root)
-			for_each_subsys(ss, ssid)
-				if (root->subsys_mask & (1 << ssid))
-					seq_printf(m, "%s%s", count++ ? "," : "",
+		seq_म_लिखो(m, "%d:", root->hierarchy_id);
+		अगर (root != &cgrp_dfl_root)
+			क्रम_each_subsys(ss, ssid)
+				अगर (root->subsys_mask & (1 << ssid))
+					seq_म_लिखो(m, "%s%s", count++ ? "," : "",
 						   ss->legacy_name);
-		if (strlen(root->name))
-			seq_printf(m, "%sname=%s", count ? "," : "",
+		अगर (म_माप(root->name))
+			seq_म_लिखो(m, "%sname=%s", count ? "," : "",
 				   root->name);
-		seq_putc(m, ':');
+		seq_अ_दो(m, ':');
 
 		cgrp = task_cgroup_from_root(tsk, root);
 
 		/*
 		 * On traditional hierarchies, all zombie tasks show up as
-		 * belonging to the root cgroup.  On the default hierarchy,
-		 * while a zombie doesn't show up in "cgroup.procs" and
+		 * beदीर्घing to the root cgroup.  On the शेष hierarchy,
+		 * जबतक a zombie करोesn't show up in "cgroup.procs" and
 		 * thus can't be migrated, its /proc/PID/cgroup keeps
-		 * reporting the cgroup it belonged to before exiting.  If
-		 * the cgroup is removed before the zombie is reaped,
+		 * reporting the cgroup it beदीर्घed to beक्रमe निकासing.  If
+		 * the cgroup is हटाओd beक्रमe the zombie is reaped,
 		 * " (deleted)" is appended to the cgroup path.
 		 */
-		if (cgroup_on_dfl(cgrp) || !(tsk->flags & PF_EXITING)) {
+		अगर (cgroup_on_dfl(cgrp) || !(tsk->flags & PF_EXITING)) अणु
 			retval = cgroup_path_ns_locked(cgrp, buf, PATH_MAX,
 						current->nsproxy->cgroup_ns);
-			if (retval >= PATH_MAX)
+			अगर (retval >= PATH_MAX)
 				retval = -ENAMETOOLONG;
-			if (retval < 0)
-				goto out_unlock;
+			अगर (retval < 0)
+				जाओ out_unlock;
 
-			seq_puts(m, buf);
-		} else {
-			seq_puts(m, "/");
-		}
+			seq_माला_दो(m, buf);
+		पूर्ण अन्यथा अणु
+			seq_माला_दो(m, "/");
+		पूर्ण
 
-		if (cgroup_on_dfl(cgrp) && cgroup_is_dead(cgrp))
-			seq_puts(m, " (deleted)\n");
-		else
-			seq_putc(m, '\n');
-	}
+		अगर (cgroup_on_dfl(cgrp) && cgroup_is_dead(cgrp))
+			seq_माला_दो(m, " (deleted)\n");
+		अन्यथा
+			seq_अ_दो(m, '\n');
+	पूर्ण
 
 	retval = 0;
 out_unlock:
 	spin_unlock_irq(&css_set_lock);
 	mutex_unlock(&cgroup_mutex);
-	kfree(buf);
+	kमुक्त(buf);
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /**
- * cgroup_fork - initialize cgroup related fields during copy_process()
- * @child: pointer to task_struct of forking parent process.
+ * cgroup_विभाजन - initialize cgroup related fields during copy_process()
+ * @child: poपूर्णांकer to task_काष्ठा of विभाजनing parent process.
  *
- * A task is associated with the init_css_set until cgroup_post_fork()
+ * A task is associated with the init_css_set until cgroup_post_विभाजन()
  * attaches it to the target css_set.
  */
-void cgroup_fork(struct task_struct *child)
-{
+व्योम cgroup_विभाजन(काष्ठा task_काष्ठा *child)
+अणु
 	RCU_INIT_POINTER(child->cgroups, &init_css_set);
 	INIT_LIST_HEAD(&child->cg_list);
-}
+पूर्ण
 
-static struct cgroup *cgroup_get_from_file(struct file *f)
-{
-	struct cgroup_subsys_state *css;
-	struct cgroup *cgrp;
+अटल काष्ठा cgroup *cgroup_get_from_file(काष्ठा file *f)
+अणु
+	काष्ठा cgroup_subsys_state *css;
+	काष्ठा cgroup *cgrp;
 
-	css = css_tryget_online_from_dir(f->f_path.dentry, NULL);
-	if (IS_ERR(css))
-		return ERR_CAST(css);
+	css = css_tryget_online_from_dir(f->f_path.dentry, शून्य);
+	अगर (IS_ERR(css))
+		वापस ERR_CAST(css);
 
 	cgrp = css->cgroup;
-	if (!cgroup_on_dfl(cgrp)) {
+	अगर (!cgroup_on_dfl(cgrp)) अणु
 		cgroup_put(cgrp);
-		return ERR_PTR(-EBADF);
-	}
+		वापस ERR_PTR(-EBADF);
+	पूर्ण
 
-	return cgrp;
-}
+	वापस cgrp;
+पूर्ण
 
 /**
- * cgroup_css_set_fork - find or create a css_set for a child process
+ * cgroup_css_set_विभाजन - find or create a css_set क्रम a child process
  * @kargs: the arguments passed to create the child process
  *
  * This functions finds or creates a new css_set which the child
- * process will be attached to in cgroup_post_fork(). By default,
+ * process will be attached to in cgroup_post_विभाजन(). By शेष,
  * the child process will be given the same css_set as its parent.
  *
- * If CLONE_INTO_CGROUP is specified this function will try to find an
- * existing css_set which includes the requested cgroup and if not create
+ * If CLONE_INTO_CGROUP is specअगरied this function will try to find an
+ * existing css_set which includes the requested cgroup and अगर not create
  * a new css_set that the child will be attached to later. If this function
- * succeeds it will hold cgroup_threadgroup_rwsem on return. If
+ * succeeds it will hold cgroup_thपढ़ोgroup_rwsem on वापस. If
  * CLONE_INTO_CGROUP is requested this function will grab cgroup mutex
- * before grabbing cgroup_threadgroup_rwsem and will hold a reference
+ * beक्रमe grabbing cgroup_thपढ़ोgroup_rwsem and will hold a reference
  * to the target cgroup.
  */
-static int cgroup_css_set_fork(struct kernel_clone_args *kargs)
-	__acquires(&cgroup_mutex) __acquires(&cgroup_threadgroup_rwsem)
-{
-	int ret;
-	struct cgroup *dst_cgrp = NULL;
-	struct css_set *cset;
-	struct super_block *sb;
-	struct file *f;
+अटल पूर्णांक cgroup_css_set_विभाजन(काष्ठा kernel_clone_args *kargs)
+	__acquires(&cgroup_mutex) __acquires(&cgroup_thपढ़ोgroup_rwsem)
+अणु
+	पूर्णांक ret;
+	काष्ठा cgroup *dst_cgrp = शून्य;
+	काष्ठा css_set *cset;
+	काष्ठा super_block *sb;
+	काष्ठा file *f;
 
-	if (kargs->flags & CLONE_INTO_CGROUP)
+	अगर (kargs->flags & CLONE_INTO_CGROUP)
 		mutex_lock(&cgroup_mutex);
 
-	cgroup_threadgroup_change_begin(current);
+	cgroup_thपढ़ोgroup_change_begin(current);
 
 	spin_lock_irq(&css_set_lock);
 	cset = task_css_set(current);
 	get_css_set(cset);
 	spin_unlock_irq(&css_set_lock);
 
-	if (!(kargs->flags & CLONE_INTO_CGROUP)) {
+	अगर (!(kargs->flags & CLONE_INTO_CGROUP)) अणु
 		kargs->cset = cset;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	f = fget_raw(kargs->cgroup);
-	if (!f) {
+	अगर (!f) अणु
 		ret = -EBADF;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	sb = f->f_path.dentry->d_sb;
 
 	dst_cgrp = cgroup_get_from_file(f);
-	if (IS_ERR(dst_cgrp)) {
+	अगर (IS_ERR(dst_cgrp)) अणु
 		ret = PTR_ERR(dst_cgrp);
-		dst_cgrp = NULL;
-		goto err;
-	}
+		dst_cgrp = शून्य;
+		जाओ err;
+	पूर्ण
 
-	if (cgroup_is_dead(dst_cgrp)) {
+	अगर (cgroup_is_dead(dst_cgrp)) अणु
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/*
-	 * Verify that we the target cgroup is writable for us. This is
-	 * usually done by the vfs layer but since we're not going through
-	 * the vfs layer here we need to do it "manually".
+	 * Verअगरy that we the target cgroup is writable क्रम us. This is
+	 * usually करोne by the vfs layer but since we're not going through
+	 * the vfs layer here we need to करो it "manually".
 	 */
-	ret = cgroup_may_write(dst_cgrp, sb);
-	if (ret)
-		goto err;
+	ret = cgroup_may_ग_लिखो(dst_cgrp, sb);
+	अगर (ret)
+		जाओ err;
 
 	ret = cgroup_attach_permissions(cset->dfl_cgrp, dst_cgrp, sb,
 					!(kargs->flags & CLONE_THREAD));
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	kargs->cset = find_css_set(cset, dst_cgrp);
-	if (!kargs->cset) {
+	अगर (!kargs->cset) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	put_css_set(cset);
 	fput(f);
 	kargs->cgrp = dst_cgrp;
-	return ret;
+	वापस ret;
 
 err:
-	cgroup_threadgroup_change_end(current);
+	cgroup_thपढ़ोgroup_change_end(current);
 	mutex_unlock(&cgroup_mutex);
-	if (f)
+	अगर (f)
 		fput(f);
-	if (dst_cgrp)
+	अगर (dst_cgrp)
 		cgroup_put(dst_cgrp);
 	put_css_set(cset);
-	if (kargs->cset)
+	अगर (kargs->cset)
 		put_css_set(kargs->cset);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * cgroup_css_set_put_fork - drop references we took during fork
+ * cgroup_css_set_put_विभाजन - drop references we took during विभाजन
  * @kargs: the arguments passed to create the child process
  *
- * Drop references to the prepared css_set and target cgroup if
+ * Drop references to the prepared css_set and target cgroup अगर
  * CLONE_INTO_CGROUP was requested.
  */
-static void cgroup_css_set_put_fork(struct kernel_clone_args *kargs)
-	__releases(&cgroup_threadgroup_rwsem) __releases(&cgroup_mutex)
-{
-	cgroup_threadgroup_change_end(current);
+अटल व्योम cgroup_css_set_put_विभाजन(काष्ठा kernel_clone_args *kargs)
+	__releases(&cgroup_thपढ़ोgroup_rwsem) __releases(&cgroup_mutex)
+अणु
+	cgroup_thपढ़ोgroup_change_end(current);
 
-	if (kargs->flags & CLONE_INTO_CGROUP) {
-		struct cgroup *cgrp = kargs->cgrp;
-		struct css_set *cset = kargs->cset;
+	अगर (kargs->flags & CLONE_INTO_CGROUP) अणु
+		काष्ठा cgroup *cgrp = kargs->cgrp;
+		काष्ठा css_set *cset = kargs->cset;
 
 		mutex_unlock(&cgroup_mutex);
 
-		if (cset) {
+		अगर (cset) अणु
 			put_css_set(cset);
-			kargs->cset = NULL;
-		}
+			kargs->cset = शून्य;
+		पूर्ण
 
-		if (cgrp) {
+		अगर (cgrp) अणु
 			cgroup_put(cgrp);
-			kargs->cgrp = NULL;
-		}
-	}
-}
+			kargs->cgrp = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * cgroup_can_fork - called on a new task before the process is exposed
+ * cgroup_can_विभाजन - called on a new task beक्रमe the process is exposed
  * @child: the child process
  *
- * This prepares a new css_set for the child process which the child will
- * be attached to in cgroup_post_fork().
- * This calls the subsystem can_fork() callbacks. If the cgroup_can_fork()
- * callback returns an error, the fork aborts with that error code. This
- * allows for a cgroup subsystem to conditionally allow or deny new forks.
+ * This prepares a new css_set क्रम the child process which the child will
+ * be attached to in cgroup_post_विभाजन().
+ * This calls the subप्रणाली can_विभाजन() callbacks. If the cgroup_can_विभाजन()
+ * callback वापसs an error, the विभाजन पातs with that error code. This
+ * allows क्रम a cgroup subप्रणाली to conditionally allow or deny new विभाजनs.
  */
-int cgroup_can_fork(struct task_struct *child, struct kernel_clone_args *kargs)
-{
-	struct cgroup_subsys *ss;
-	int i, j, ret;
+पूर्णांक cgroup_can_विभाजन(काष्ठा task_काष्ठा *child, काष्ठा kernel_clone_args *kargs)
+अणु
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक i, j, ret;
 
-	ret = cgroup_css_set_fork(kargs);
-	if (ret)
-		return ret;
+	ret = cgroup_css_set_विभाजन(kargs);
+	अगर (ret)
+		वापस ret;
 
-	do_each_subsys_mask(ss, i, have_canfork_callback) {
-		ret = ss->can_fork(child, kargs->cset);
-		if (ret)
-			goto out_revert;
-	} while_each_subsys_mask();
+	करो_each_subsys_mask(ss, i, have_canविभाजन_callback) अणु
+		ret = ss->can_विभाजन(child, kargs->cset);
+		अगर (ret)
+			जाओ out_revert;
+	पूर्ण जबतक_each_subsys_mask();
 
-	return 0;
+	वापस 0;
 
 out_revert:
-	for_each_subsys(ss, j) {
-		if (j >= i)
-			break;
-		if (ss->cancel_fork)
-			ss->cancel_fork(child, kargs->cset);
-	}
+	क्रम_each_subsys(ss, j) अणु
+		अगर (j >= i)
+			अवरोध;
+		अगर (ss->cancel_विभाजन)
+			ss->cancel_विभाजन(child, kargs->cset);
+	पूर्ण
 
-	cgroup_css_set_put_fork(kargs);
+	cgroup_css_set_put_विभाजन(kargs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * cgroup_cancel_fork - called if a fork failed after cgroup_can_fork()
+ * cgroup_cancel_विभाजन - called अगर a विभाजन failed after cgroup_can_विभाजन()
  * @child: the child process
  * @kargs: the arguments passed to create the child process
  *
- * This calls the cancel_fork() callbacks if a fork failed *after*
- * cgroup_can_fork() succeeded and cleans up references we took to
- * prepare a new css_set for the child process in cgroup_can_fork().
+ * This calls the cancel_विभाजन() callbacks अगर a विभाजन failed *after*
+ * cgroup_can_विभाजन() succeeded and cleans up references we took to
+ * prepare a new css_set क्रम the child process in cgroup_can_विभाजन().
  */
-void cgroup_cancel_fork(struct task_struct *child,
-			struct kernel_clone_args *kargs)
-{
-	struct cgroup_subsys *ss;
-	int i;
+व्योम cgroup_cancel_विभाजन(काष्ठा task_काष्ठा *child,
+			काष्ठा kernel_clone_args *kargs)
+अणु
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक i;
 
-	for_each_subsys(ss, i)
-		if (ss->cancel_fork)
-			ss->cancel_fork(child, kargs->cset);
+	क्रम_each_subsys(ss, i)
+		अगर (ss->cancel_विभाजन)
+			ss->cancel_विभाजन(child, kargs->cset);
 
-	cgroup_css_set_put_fork(kargs);
-}
+	cgroup_css_set_put_विभाजन(kargs);
+पूर्ण
 
 /**
- * cgroup_post_fork - finalize cgroup setup for the child process
+ * cgroup_post_विभाजन - finalize cgroup setup क्रम the child process
  * @child: the child process
  *
- * Attach the child process to its css_set calling the subsystem fork()
+ * Attach the child process to its css_set calling the subप्रणाली विभाजन()
  * callbacks.
  */
-void cgroup_post_fork(struct task_struct *child,
-		      struct kernel_clone_args *kargs)
-	__releases(&cgroup_threadgroup_rwsem) __releases(&cgroup_mutex)
-{
-	struct cgroup_subsys *ss;
-	struct css_set *cset;
-	int i;
+व्योम cgroup_post_विभाजन(काष्ठा task_काष्ठा *child,
+		      काष्ठा kernel_clone_args *kargs)
+	__releases(&cgroup_thपढ़ोgroup_rwsem) __releases(&cgroup_mutex)
+अणु
+	काष्ठा cgroup_subsys *ss;
+	काष्ठा css_set *cset;
+	पूर्णांक i;
 
 	cset = kargs->cset;
-	kargs->cset = NULL;
+	kargs->cset = शून्य;
 
 	spin_lock_irq(&css_set_lock);
 
-	/* init tasks are special, only link regular threads */
-	if (likely(child->pid)) {
+	/* init tasks are special, only link regular thपढ़ोs */
+	अगर (likely(child->pid)) अणु
 		WARN_ON_ONCE(!list_empty(&child->cg_list));
 		cset->nr_tasks++;
-		css_set_move_task(child, NULL, cset, false);
-	} else {
+		css_set_move_task(child, शून्य, cset, false);
+	पूर्ण अन्यथा अणु
 		put_css_set(cset);
-		cset = NULL;
-	}
+		cset = शून्य;
+	पूर्ण
 
 	/*
 	 * If the cgroup has to be frozen, the new task has too.  Let's set
-	 * the JOBCTL_TRAP_FREEZE jobctl bit to get the task into the
+	 * the JOBCTL_TRAP_FREEZE jobctl bit to get the task पूर्णांकo the
 	 * frozen state.
 	 */
-	if (unlikely(cgroup_task_freeze(child))) {
+	अगर (unlikely(cgroup_task_मुक्तze(child))) अणु
 		spin_lock(&child->sighand->siglock);
 		WARN_ON_ONCE(child->frozen);
 		child->jobctl |= JOBCTL_TRAP_FREEZE;
@@ -6112,461 +6113,461 @@ void cgroup_post_fork(struct task_struct *child,
 		/*
 		 * Calling cgroup_update_frozen() isn't required here,
 		 * because it will be called anyway a bit later from
-		 * do_freezer_trap(). So we avoid cgroup's transient switch
+		 * करो_मुक्तzer_trap(). So we aव्योम cgroup's transient चयन
 		 * from the frozen state and back.
 		 */
-	}
+	पूर्ण
 
 	spin_unlock_irq(&css_set_lock);
 
 	/*
-	 * Call ss->fork().  This must happen after @child is linked on
-	 * css_set; otherwise, @child might change state between ->fork()
+	 * Call ss->विभाजन().  This must happen after @child is linked on
+	 * css_set; otherwise, @child might change state between ->विभाजन()
 	 * and addition to css_set.
 	 */
-	do_each_subsys_mask(ss, i, have_fork_callback) {
-		ss->fork(child);
-	} while_each_subsys_mask();
+	करो_each_subsys_mask(ss, i, have_विभाजन_callback) अणु
+		ss->विभाजन(child);
+	पूर्ण जबतक_each_subsys_mask();
 
 	/* Make the new cset the root_cset of the new cgroup namespace. */
-	if (kargs->flags & CLONE_NEWCGROUP) {
-		struct css_set *rcset = child->nsproxy->cgroup_ns->root_cset;
+	अगर (kargs->flags & CLONE_NEWCGROUP) अणु
+		काष्ठा css_set *rcset = child->nsproxy->cgroup_ns->root_cset;
 
 		get_css_set(cset);
 		child->nsproxy->cgroup_ns->root_cset = cset;
 		put_css_set(rcset);
-	}
+	पूर्ण
 
-	cgroup_css_set_put_fork(kargs);
-}
+	cgroup_css_set_put_विभाजन(kargs);
+पूर्ण
 
 /**
- * cgroup_exit - detach cgroup from exiting task
- * @tsk: pointer to task_struct of exiting process
+ * cgroup_निकास - detach cgroup from निकासing task
+ * @tsk: poपूर्णांकer to task_काष्ठा of निकासing process
  *
  * Description: Detach cgroup from @tsk.
  *
  */
-void cgroup_exit(struct task_struct *tsk)
-{
-	struct cgroup_subsys *ss;
-	struct css_set *cset;
-	int i;
+व्योम cgroup_निकास(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा cgroup_subsys *ss;
+	काष्ठा css_set *cset;
+	पूर्णांक i;
 
 	spin_lock_irq(&css_set_lock);
 
 	WARN_ON_ONCE(list_empty(&tsk->cg_list));
 	cset = task_css_set(tsk);
-	css_set_move_task(tsk, cset, NULL, false);
+	css_set_move_task(tsk, cset, शून्य, false);
 	list_add_tail(&tsk->cg_list, &cset->dying_tasks);
 	cset->nr_tasks--;
 
 	WARN_ON_ONCE(cgroup_task_frozen(tsk));
-	if (unlikely(cgroup_task_freeze(tsk)))
+	अगर (unlikely(cgroup_task_मुक्तze(tsk)))
 		cgroup_update_frozen(task_dfl_cgroup(tsk));
 
 	spin_unlock_irq(&css_set_lock);
 
-	/* see cgroup_post_fork() for details */
-	do_each_subsys_mask(ss, i, have_exit_callback) {
-		ss->exit(tsk);
-	} while_each_subsys_mask();
-}
+	/* see cgroup_post_विभाजन() क्रम details */
+	करो_each_subsys_mask(ss, i, have_निकास_callback) अणु
+		ss->निकास(tsk);
+	पूर्ण जबतक_each_subsys_mask();
+पूर्ण
 
-void cgroup_release(struct task_struct *task)
-{
-	struct cgroup_subsys *ss;
-	int ssid;
+व्योम cgroup_release(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक ssid;
 
-	do_each_subsys_mask(ss, ssid, have_release_callback) {
+	करो_each_subsys_mask(ss, ssid, have_release_callback) अणु
 		ss->release(task);
-	} while_each_subsys_mask();
+	पूर्ण जबतक_each_subsys_mask();
 
 	spin_lock_irq(&css_set_lock);
 	css_set_skip_task_iters(task_css_set(task), task);
 	list_del_init(&task->cg_list);
 	spin_unlock_irq(&css_set_lock);
-}
+पूर्ण
 
-void cgroup_free(struct task_struct *task)
-{
-	struct css_set *cset = task_css_set(task);
+व्योम cgroup_मुक्त(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा css_set *cset = task_css_set(task);
 	put_css_set(cset);
-}
+पूर्ण
 
-static int __init cgroup_disable(char *str)
-{
-	struct cgroup_subsys *ss;
-	char *token;
-	int i;
+अटल पूर्णांक __init cgroup_disable(अक्षर *str)
+अणु
+	काष्ठा cgroup_subsys *ss;
+	अक्षर *token;
+	पूर्णांक i;
 
-	while ((token = strsep(&str, ",")) != NULL) {
-		if (!*token)
-			continue;
+	जबतक ((token = strsep(&str, ",")) != शून्य) अणु
+		अगर (!*token)
+			जारी;
 
-		for_each_subsys(ss, i) {
-			if (strcmp(token, ss->name) &&
-			    strcmp(token, ss->legacy_name))
-				continue;
+		क्रम_each_subsys(ss, i) अणु
+			अगर (म_भेद(token, ss->name) &&
+			    म_भेद(token, ss->legacy_name))
+				जारी;
 
-			static_branch_disable(cgroup_subsys_enabled_key[i]);
+			अटल_branch_disable(cgroup_subsys_enabled_key[i]);
 			pr_info("Disabling %s control group subsystem\n",
 				ss->name);
-		}
-	}
-	return 1;
-}
+		पूर्ण
+	पूर्ण
+	वापस 1;
+पूर्ण
 __setup("cgroup_disable=", cgroup_disable);
 
-void __init __weak enable_debug_cgroup(void) { }
+व्योम __init __weak enable_debug_cgroup(व्योम) अणु पूर्ण
 
-static int __init enable_cgroup_debug(char *str)
-{
+अटल पूर्णांक __init enable_cgroup_debug(अक्षर *str)
+अणु
 	cgroup_debug = true;
 	enable_debug_cgroup();
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("cgroup_debug", enable_cgroup_debug);
 
 /**
  * css_tryget_online_from_dir - get corresponding css from a cgroup dentry
- * @dentry: directory dentry of interest
- * @ss: subsystem of interest
+ * @dentry: directory dentry of पूर्णांकerest
+ * @ss: subप्रणाली of पूर्णांकerest
  *
- * If @dentry is a directory for a cgroup which has @ss enabled on it, try
- * to get the corresponding css and return it.  If such css doesn't exist
- * or can't be pinned, an ERR_PTR value is returned.
+ * If @dentry is a directory क्रम a cgroup which has @ss enabled on it, try
+ * to get the corresponding css and वापस it.  If such css करोesn't exist
+ * or can't be pinned, an ERR_PTR value is वापसed.
  */
-struct cgroup_subsys_state *css_tryget_online_from_dir(struct dentry *dentry,
-						       struct cgroup_subsys *ss)
-{
-	struct kernfs_node *kn = kernfs_node_from_dentry(dentry);
-	struct file_system_type *s_type = dentry->d_sb->s_type;
-	struct cgroup_subsys_state *css = NULL;
-	struct cgroup *cgrp;
+काष्ठा cgroup_subsys_state *css_tryget_online_from_dir(काष्ठा dentry *dentry,
+						       काष्ठा cgroup_subsys *ss)
+अणु
+	काष्ठा kernfs_node *kn = kernfs_node_from_dentry(dentry);
+	काष्ठा file_प्रणाली_type *s_type = dentry->d_sb->s_type;
+	काष्ठा cgroup_subsys_state *css = शून्य;
+	काष्ठा cgroup *cgrp;
 
 	/* is @dentry a cgroup dir? */
-	if ((s_type != &cgroup_fs_type && s_type != &cgroup2_fs_type) ||
-	    !kn || kernfs_type(kn) != KERNFS_DIR)
-		return ERR_PTR(-EBADF);
+	अगर ((s_type != &cgroup_fs_type && s_type != &cgroup2_fs_type) ||
+	    !kn || kernfs_type(kn) != KERNFS_सूची)
+		वापस ERR_PTR(-EBADF);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	/*
-	 * This path doesn't originate from kernfs and @kn could already
-	 * have been or be removed at any point.  @kn->priv is RCU
-	 * protected for this access.  See css_release_work_fn() for details.
+	 * This path करोesn't originate from kernfs and @kn could alपढ़ोy
+	 * have been or be हटाओd at any poपूर्णांक.  @kn->priv is RCU
+	 * रक्षित क्रम this access.  See css_release_work_fn() क्रम details.
 	 */
-	cgrp = rcu_dereference(*(void __rcu __force **)&kn->priv);
-	if (cgrp)
+	cgrp = rcu_dereference(*(व्योम __rcu __क्रमce **)&kn->priv);
+	अगर (cgrp)
 		css = cgroup_css(cgrp, ss);
 
-	if (!css || !css_tryget_online(css))
+	अगर (!css || !css_tryget_online(css))
 		css = ERR_PTR(-ENOENT);
 
-	rcu_read_unlock();
-	return css;
-}
+	rcu_पढ़ो_unlock();
+	वापस css;
+पूर्ण
 
 /**
  * css_from_id - lookup css by id
  * @id: the cgroup id
- * @ss: cgroup subsys to be looked into
+ * @ss: cgroup subsys to be looked पूर्णांकo
  *
- * Returns the css if there's valid one with @id, otherwise returns NULL.
- * Should be called under rcu_read_lock().
+ * Returns the css अगर there's valid one with @id, otherwise वापसs शून्य.
+ * Should be called under rcu_पढ़ो_lock().
  */
-struct cgroup_subsys_state *css_from_id(int id, struct cgroup_subsys *ss)
-{
-	WARN_ON_ONCE(!rcu_read_lock_held());
-	return idr_find(&ss->css_idr, id);
-}
+काष्ठा cgroup_subsys_state *css_from_id(पूर्णांक id, काष्ठा cgroup_subsys *ss)
+अणु
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
+	वापस idr_find(&ss->css_idr, id);
+पूर्ण
 
 /**
- * cgroup_get_from_path - lookup and get a cgroup from its default hierarchy path
- * @path: path on the default hierarchy
+ * cgroup_get_from_path - lookup and get a cgroup from its शेष hierarchy path
+ * @path: path on the शेष hierarchy
  *
- * Find the cgroup at @path on the default hierarchy, increment its
- * reference count and return it.  Returns pointer to the found cgroup on
- * success, ERR_PTR(-ENOENT) if @path doesn't exist and ERR_PTR(-ENOTDIR)
- * if @path points to a non-directory.
+ * Find the cgroup at @path on the शेष hierarchy, increment its
+ * reference count and वापस it.  Returns poपूर्णांकer to the found cgroup on
+ * success, ERR_PTR(-ENOENT) अगर @path करोesn't exist and ERR_PTR(-ENOTसूची)
+ * अगर @path poपूर्णांकs to a non-directory.
  */
-struct cgroup *cgroup_get_from_path(const char *path)
-{
-	struct kernfs_node *kn;
-	struct cgroup *cgrp;
+काष्ठा cgroup *cgroup_get_from_path(स्थिर अक्षर *path)
+अणु
+	काष्ठा kernfs_node *kn;
+	काष्ठा cgroup *cgrp;
 
 	mutex_lock(&cgroup_mutex);
 
 	kn = kernfs_walk_and_get(cgrp_dfl_root.cgrp.kn, path);
-	if (kn) {
-		if (kernfs_type(kn) == KERNFS_DIR) {
+	अगर (kn) अणु
+		अगर (kernfs_type(kn) == KERNFS_सूची) अणु
 			cgrp = kn->priv;
 			cgroup_get_live(cgrp);
-		} else {
-			cgrp = ERR_PTR(-ENOTDIR);
-		}
+		पूर्ण अन्यथा अणु
+			cgrp = ERR_PTR(-ENOTसूची);
+		पूर्ण
 		kernfs_put(kn);
-	} else {
+	पूर्ण अन्यथा अणु
 		cgrp = ERR_PTR(-ENOENT);
-	}
+	पूर्ण
 
 	mutex_unlock(&cgroup_mutex);
-	return cgrp;
-}
+	वापस cgrp;
+पूर्ण
 EXPORT_SYMBOL_GPL(cgroup_get_from_path);
 
 /**
- * cgroup_get_from_fd - get a cgroup pointer from a fd
- * @fd: fd obtained by open(cgroup2_dir)
+ * cgroup_get_from_fd - get a cgroup poपूर्णांकer from a fd
+ * @fd: fd obtained by खोलो(cgroup2_dir)
  *
  * Find the cgroup from a fd which should be obtained
- * by opening a cgroup directory.  Returns a pointer to the
- * cgroup on success. ERR_PTR is returned if the cgroup
+ * by खोलोing a cgroup directory.  Returns a poपूर्णांकer to the
+ * cgroup on success. ERR_PTR is वापसed अगर the cgroup
  * cannot be found.
  */
-struct cgroup *cgroup_get_from_fd(int fd)
-{
-	struct cgroup *cgrp;
-	struct file *f;
+काष्ठा cgroup *cgroup_get_from_fd(पूर्णांक fd)
+अणु
+	काष्ठा cgroup *cgrp;
+	काष्ठा file *f;
 
 	f = fget_raw(fd);
-	if (!f)
-		return ERR_PTR(-EBADF);
+	अगर (!f)
+		वापस ERR_PTR(-EBADF);
 
 	cgrp = cgroup_get_from_file(f);
 	fput(f);
-	return cgrp;
-}
+	वापस cgrp;
+पूर्ण
 EXPORT_SYMBOL_GPL(cgroup_get_from_fd);
 
-static u64 power_of_ten(int power)
-{
+अटल u64 घातer_of_ten(पूर्णांक घातer)
+अणु
 	u64 v = 1;
-	while (power--)
+	जबतक (घातer--)
 		v *= 10;
-	return v;
-}
+	वापस v;
+पूर्ण
 
 /**
- * cgroup_parse_float - parse a floating number
+ * cgroup_parse_भग्न - parse a भग्नing number
  * @input: input string
- * @dec_shift: number of decimal digits to shift
+ * @dec_shअगरt: number of decimal digits to shअगरt
  * @v: output
  *
- * Parse a decimal floating point number in @input and store the result in
- * @v with decimal point right shifted @dec_shift times.  For example, if
- * @input is "12.3456" and @dec_shift is 3, *@v will be set to 12345.
- * Returns 0 on success, -errno otherwise.
+ * Parse a decimal भग्नing poपूर्णांक number in @input and store the result in
+ * @v with decimal poपूर्णांक right shअगरted @dec_shअगरt बार.  For example, अगर
+ * @input is "12.3456" and @dec_shअगरt is 3, *@v will be set to 12345.
+ * Returns 0 on success, -त्रुटि_सं otherwise.
  *
  * There's nothing cgroup specific about this function except that it's
  * currently the only user.
  */
-int cgroup_parse_float(const char *input, unsigned dec_shift, s64 *v)
-{
+पूर्णांक cgroup_parse_भग्न(स्थिर अक्षर *input, अचिन्हित dec_shअगरt, s64 *v)
+अणु
 	s64 whole, frac = 0;
-	int fstart = 0, fend = 0, flen;
+	पूर्णांक fstart = 0, fend = 0, flen;
 
-	if (!sscanf(input, "%lld.%n%lld%n", &whole, &fstart, &frac, &fend))
-		return -EINVAL;
-	if (frac < 0)
-		return -EINVAL;
+	अगर (!माला_पूछो(input, "%lld.%n%lld%n", &whole, &fstart, &frac, &fend))
+		वापस -EINVAL;
+	अगर (frac < 0)
+		वापस -EINVAL;
 
 	flen = fend > fstart ? fend - fstart : 0;
-	if (flen < dec_shift)
-		frac *= power_of_ten(dec_shift - flen);
-	else
-		frac = DIV_ROUND_CLOSEST_ULL(frac, power_of_ten(flen - dec_shift));
+	अगर (flen < dec_shअगरt)
+		frac *= घातer_of_ten(dec_shअगरt - flen);
+	अन्यथा
+		frac = DIV_ROUND_CLOSEST_ULL(frac, घातer_of_ten(flen - dec_shअगरt));
 
-	*v = whole * power_of_ten(dec_shift) + frac;
-	return 0;
-}
+	*v = whole * घातer_of_ten(dec_shअगरt) + frac;
+	वापस 0;
+पूर्ण
 
 /*
  * sock->sk_cgrp_data handling.  For more info, see sock_cgroup_data
  * definition in cgroup-defs.h.
  */
-#ifdef CONFIG_SOCK_CGROUP_DATA
+#अगर_घोषित CONFIG_SOCK_CGROUP_DATA
 
-#if defined(CONFIG_CGROUP_NET_PRIO) || defined(CONFIG_CGROUP_NET_CLASSID)
+#अगर defined(CONFIG_CGROUP_NET_PRIO) || defined(CONFIG_CGROUP_NET_CLASSID)
 
 DEFINE_SPINLOCK(cgroup_sk_update_lock);
-static bool cgroup_sk_alloc_disabled __read_mostly;
+अटल bool cgroup_sk_alloc_disabled __पढ़ो_mostly;
 
-void cgroup_sk_alloc_disable(void)
-{
-	if (cgroup_sk_alloc_disabled)
-		return;
+व्योम cgroup_sk_alloc_disable(व्योम)
+अणु
+	अगर (cgroup_sk_alloc_disabled)
+		वापस;
 	pr_info("cgroup: disabling cgroup2 socket matching due to net_prio or net_cls activation\n");
 	cgroup_sk_alloc_disabled = true;
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-#define cgroup_sk_alloc_disabled	false
+#घोषणा cgroup_sk_alloc_disabled	false
 
-#endif
+#पूर्ण_अगर
 
-void cgroup_sk_alloc(struct sock_cgroup_data *skcd)
-{
-	if (cgroup_sk_alloc_disabled) {
+व्योम cgroup_sk_alloc(काष्ठा sock_cgroup_data *skcd)
+अणु
+	अगर (cgroup_sk_alloc_disabled) अणु
 		skcd->no_refcnt = 1;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Don't associate the sock with unrelated interrupted task's cgroup. */
-	if (in_interrupt())
-		return;
+	अगर (in_पूर्णांकerrupt())
+		वापस;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	while (true) {
-		struct css_set *cset;
+	जबतक (true) अणु
+		काष्ठा css_set *cset;
 
 		cset = task_css_set(current);
-		if (likely(cgroup_tryget(cset->dfl_cgrp))) {
-			skcd->val = (unsigned long)cset->dfl_cgrp;
+		अगर (likely(cgroup_tryget(cset->dfl_cgrp))) अणु
+			skcd->val = (अचिन्हित दीर्घ)cset->dfl_cgrp;
 			cgroup_bpf_get(cset->dfl_cgrp);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		cpu_relax();
-	}
+	पूर्ण
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-void cgroup_sk_clone(struct sock_cgroup_data *skcd)
-{
-	if (skcd->val) {
-		if (skcd->no_refcnt)
-			return;
+व्योम cgroup_sk_clone(काष्ठा sock_cgroup_data *skcd)
+अणु
+	अगर (skcd->val) अणु
+		अगर (skcd->no_refcnt)
+			वापस;
 		/*
 		 * We might be cloning a socket which is left in an empty
-		 * cgroup and the cgroup might have already been rmdir'd.
+		 * cgroup and the cgroup might have alपढ़ोy been सूची_हटाओ'd.
 		 * Don't use cgroup_get_live().
 		 */
 		cgroup_get(sock_cgroup_ptr(skcd));
 		cgroup_bpf_get(sock_cgroup_ptr(skcd));
-	}
-}
+	पूर्ण
+पूर्ण
 
-void cgroup_sk_free(struct sock_cgroup_data *skcd)
-{
-	struct cgroup *cgrp = sock_cgroup_ptr(skcd);
+व्योम cgroup_sk_मुक्त(काष्ठा sock_cgroup_data *skcd)
+अणु
+	काष्ठा cgroup *cgrp = sock_cgroup_ptr(skcd);
 
-	if (skcd->no_refcnt)
-		return;
+	अगर (skcd->no_refcnt)
+		वापस;
 	cgroup_bpf_put(cgrp);
 	cgroup_put(cgrp);
-}
+पूर्ण
 
-#endif	/* CONFIG_SOCK_CGROUP_DATA */
+#पूर्ण_अगर	/* CONFIG_SOCK_CGROUP_DATA */
 
-#ifdef CONFIG_CGROUP_BPF
-int cgroup_bpf_attach(struct cgroup *cgrp,
-		      struct bpf_prog *prog, struct bpf_prog *replace_prog,
-		      struct bpf_cgroup_link *link,
-		      enum bpf_attach_type type,
+#अगर_घोषित CONFIG_CGROUP_BPF
+पूर्णांक cgroup_bpf_attach(काष्ठा cgroup *cgrp,
+		      काष्ठा bpf_prog *prog, काष्ठा bpf_prog *replace_prog,
+		      काष्ठा bpf_cgroup_link *link,
+		      क्रमागत bpf_attach_type type,
 		      u32 flags)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&cgroup_mutex);
 	ret = __cgroup_bpf_attach(cgrp, prog, replace_prog, link, type, flags);
 	mutex_unlock(&cgroup_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cgroup_bpf_detach(struct cgroup *cgrp, struct bpf_prog *prog,
-		      enum bpf_attach_type type)
-{
-	int ret;
+पूर्णांक cgroup_bpf_detach(काष्ठा cgroup *cgrp, काष्ठा bpf_prog *prog,
+		      क्रमागत bpf_attach_type type)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&cgroup_mutex);
-	ret = __cgroup_bpf_detach(cgrp, prog, NULL, type);
+	ret = __cgroup_bpf_detach(cgrp, prog, शून्य, type);
 	mutex_unlock(&cgroup_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cgroup_bpf_query(struct cgroup *cgrp, const union bpf_attr *attr,
-		     union bpf_attr __user *uattr)
-{
-	int ret;
+पूर्णांक cgroup_bpf_query(काष्ठा cgroup *cgrp, स्थिर जोड़ bpf_attr *attr,
+		     जोड़ bpf_attr __user *uattr)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&cgroup_mutex);
 	ret = __cgroup_bpf_query(cgrp, attr, uattr);
 	mutex_unlock(&cgroup_mutex);
-	return ret;
-}
-#endif /* CONFIG_CGROUP_BPF */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_CGROUP_BPF */
 
-#ifdef CONFIG_SYSFS
-static ssize_t show_delegatable_files(struct cftype *files, char *buf,
-				      ssize_t size, const char *prefix)
-{
-	struct cftype *cft;
-	ssize_t ret = 0;
+#अगर_घोषित CONFIG_SYSFS
+अटल sमाप_प्रकार show_delegatable_files(काष्ठा cftype *files, अक्षर *buf,
+				      sमाप_प्रकार size, स्थिर अक्षर *prefix)
+अणु
+	काष्ठा cftype *cft;
+	sमाप_प्रकार ret = 0;
 
-	for (cft = files; cft && cft->name[0] != '\0'; cft++) {
-		if (!(cft->flags & CFTYPE_NS_DELEGATABLE))
-			continue;
+	क्रम (cft = files; cft && cft->name[0] != '\0'; cft++) अणु
+		अगर (!(cft->flags & CFTYPE_NS_DELEGATABLE))
+			जारी;
 
-		if (prefix)
-			ret += snprintf(buf + ret, size - ret, "%s.", prefix);
+		अगर (prefix)
+			ret += snम_लिखो(buf + ret, size - ret, "%s.", prefix);
 
-		ret += snprintf(buf + ret, size - ret, "%s\n", cft->name);
+		ret += snम_लिखो(buf + ret, size - ret, "%s\n", cft->name);
 
-		if (WARN_ON(ret >= size))
-			break;
-	}
+		अगर (WARN_ON(ret >= size))
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t delegate_show(struct kobject *kobj, struct kobj_attribute *attr,
-			      char *buf)
-{
-	struct cgroup_subsys *ss;
-	int ssid;
-	ssize_t ret = 0;
+अटल sमाप_प्रकार delegate_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा cgroup_subsys *ss;
+	पूर्णांक ssid;
+	sमाप_प्रकार ret = 0;
 
 	ret = show_delegatable_files(cgroup_base_files, buf, PAGE_SIZE - ret,
-				     NULL);
+				     शून्य);
 
-	for_each_subsys(ss, ssid)
+	क्रम_each_subsys(ss, ssid)
 		ret += show_delegatable_files(ss->dfl_cftypes, buf + ret,
 					      PAGE_SIZE - ret,
 					      cgroup_subsys_name[ssid]);
 
-	return ret;
-}
-static struct kobj_attribute cgroup_delegate_attr = __ATTR_RO(delegate);
+	वापस ret;
+पूर्ण
+अटल काष्ठा kobj_attribute cgroup_delegate_attr = __ATTR_RO(delegate);
 
-static ssize_t features_show(struct kobject *kobj, struct kobj_attribute *attr,
-			     char *buf)
-{
-	return snprintf(buf, PAGE_SIZE,
+अटल sमाप_प्रकार features_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			     अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE,
 			"nsdelegate\n"
 			"memory_localevents\n"
 			"memory_recursiveprot\n");
-}
-static struct kobj_attribute cgroup_features_attr = __ATTR_RO(features);
+पूर्ण
+अटल काष्ठा kobj_attribute cgroup_features_attr = __ATTR_RO(features);
 
-static struct attribute *cgroup_sysfs_attrs[] = {
+अटल काष्ठा attribute *cgroup_sysfs_attrs[] = अणु
 	&cgroup_delegate_attr.attr,
 	&cgroup_features_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group cgroup_sysfs_attr_group = {
+अटल स्थिर काष्ठा attribute_group cgroup_sysfs_attr_group = अणु
 	.attrs = cgroup_sysfs_attrs,
 	.name = "cgroup",
-};
+पूर्ण;
 
-static int __init cgroup_sysfs_init(void)
-{
-	return sysfs_create_group(kernel_kobj, &cgroup_sysfs_attr_group);
-}
+अटल पूर्णांक __init cgroup_sysfs_init(व्योम)
+अणु
+	वापस sysfs_create_group(kernel_kobj, &cgroup_sysfs_attr_group);
+पूर्ण
 subsys_initcall(cgroup_sysfs_init);
 
-#endif /* CONFIG_SYSFS */
+#पूर्ण_अगर /* CONFIG_SYSFS */

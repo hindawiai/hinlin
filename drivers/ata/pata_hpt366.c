@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Libata driver for the highpoint 366 and 368 UDMA66 ATA controllers.
+ * Libata driver क्रम the highpoपूर्णांक 366 and 368 UDMA66 ATA controllers.
  *
  * This driver is heavily based upon:
  *
  * linux/drivers/ide/pci/hpt366.c		Version 0.36	April 25, 2003
  *
  * Copyright (C) 1999-2003		Andre Hedrick <andre@linux-ide.org>
- * Portions Copyright (C) 2001	        Sun Microsystems, Inc.
+ * Portions Copyright (C) 2001	        Sun Microप्रणालीs, Inc.
  * Portions Copyright (C) 2003		Red Hat Inc
  *
  *
  * TODO
- *	Look into engine reset on timeout errors. Should not be required.
+ *	Look पूर्णांकo engine reset on समयout errors. Should not be required.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/blkdev.h>
-#include <linux/delay.h>
-#include <scsi/scsi_host.h>
-#include <linux/libata.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <linux/libata.h>
 
-#define DRV_NAME	"pata_hpt366"
-#define DRV_VERSION	"0.6.11"
+#घोषणा DRV_NAME	"pata_hpt366"
+#घोषणा DRV_VERSION	"0.6.11"
 
-struct hpt_clock {
+काष्ठा hpt_घड़ी अणु
 	u8	xfer_mode;
 	u32	timing;
-};
+पूर्ण;
 
-/* key for bus clock timings
+/* key क्रम bus घड़ी timings
  * bit
- * 0:3    data_high_time. Inactive time of DIOW_/DIOR_ for PIO and MW DMA.
+ * 0:3    data_high_समय. Inactive समय of DIOW_/DIOR_ क्रम PIO and MW DMA.
  *        cycles = value + 1
- * 4:7    data_low_time. Active time of DIOW_/DIOR_ for PIO and MW DMA.
+ * 4:7    data_low_समय. Active समय of DIOW_/DIOR_ क्रम PIO and MW DMA.
  *        cycles = value + 1
- * 8:11   cmd_high_time. Inactive time of DIOW_/DIOR_ during task file
- *        register access.
- * 12:15  cmd_low_time. Active time of DIOW_/DIOR_ during task file
- *        register access.
- * 16:18  udma_cycle_time. Clock cycles for UDMA xfer?
- * 19:21  pre_high_time. Time to initialize 1st cycle for PIO and MW DMA xfer.
- * 22:24  cmd_pre_high_time. Time to initialize 1st PIO cycle for task file
- *        register access.
+ * 8:11   cmd_high_समय. Inactive समय of DIOW_/DIOR_ during task file
+ *        रेजिस्टर access.
+ * 12:15  cmd_low_समय. Active समय of DIOW_/DIOR_ during task file
+ *        रेजिस्टर access.
+ * 16:18  udma_cycle_समय. Clock cycles क्रम UDMA xfer?
+ * 19:21  pre_high_समय. Time to initialize 1st cycle क्रम PIO and MW DMA xfer.
+ * 22:24  cmd_pre_high_समय. Time to initialize 1st PIO cycle क्रम task file
+ *        रेजिस्टर access.
  * 28     UDMA enable.
  * 29     DMA  enable.
  * 30     PIO_MST enable. If set, the chip is in bus master mode during
@@ -54,86 +55,86 @@ struct hpt_clock {
  * 31     FIFO enable.
  */
 
-static const struct hpt_clock hpt366_40[] = {
-	{	XFER_UDMA_4,	0x900fd943	},
-	{	XFER_UDMA_3,	0x900ad943	},
-	{	XFER_UDMA_2,	0x900bd943	},
-	{	XFER_UDMA_1,	0x9008d943	},
-	{	XFER_UDMA_0,	0x9008d943	},
+अटल स्थिर काष्ठा hpt_घड़ी hpt366_40[] = अणु
+	अणु	XFER_UDMA_4,	0x900fd943	पूर्ण,
+	अणु	XFER_UDMA_3,	0x900ad943	पूर्ण,
+	अणु	XFER_UDMA_2,	0x900bd943	पूर्ण,
+	अणु	XFER_UDMA_1,	0x9008d943	पूर्ण,
+	अणु	XFER_UDMA_0,	0x9008d943	पूर्ण,
 
-	{	XFER_MW_DMA_2,	0xa008d943	},
-	{	XFER_MW_DMA_1,	0xa010d955	},
-	{	XFER_MW_DMA_0,	0xa010d9fc	},
+	अणु	XFER_MW_DMA_2,	0xa008d943	पूर्ण,
+	अणु	XFER_MW_DMA_1,	0xa010d955	पूर्ण,
+	अणु	XFER_MW_DMA_0,	0xa010d9fc	पूर्ण,
 
-	{	XFER_PIO_4,	0xc008d963	},
-	{	XFER_PIO_3,	0xc010d974	},
-	{	XFER_PIO_2,	0xc010d997	},
-	{	XFER_PIO_1,	0xc010d9c7	},
-	{	XFER_PIO_0,	0xc018d9d9	},
-	{	0,		0x0120d9d9	}
-};
+	अणु	XFER_PIO_4,	0xc008d963	पूर्ण,
+	अणु	XFER_PIO_3,	0xc010d974	पूर्ण,
+	अणु	XFER_PIO_2,	0xc010d997	पूर्ण,
+	अणु	XFER_PIO_1,	0xc010d9c7	पूर्ण,
+	अणु	XFER_PIO_0,	0xc018d9d9	पूर्ण,
+	अणु	0,		0x0120d9d9	पूर्ण
+पूर्ण;
 
-static const struct hpt_clock hpt366_33[] = {
-	{	XFER_UDMA_4,	0x90c9a731	},
-	{	XFER_UDMA_3,	0x90cfa731	},
-	{	XFER_UDMA_2,	0x90caa731	},
-	{	XFER_UDMA_1,	0x90cba731	},
-	{	XFER_UDMA_0,	0x90c8a731	},
+अटल स्थिर काष्ठा hpt_घड़ी hpt366_33[] = अणु
+	अणु	XFER_UDMA_4,	0x90c9a731	पूर्ण,
+	अणु	XFER_UDMA_3,	0x90cfa731	पूर्ण,
+	अणु	XFER_UDMA_2,	0x90caa731	पूर्ण,
+	अणु	XFER_UDMA_1,	0x90cba731	पूर्ण,
+	अणु	XFER_UDMA_0,	0x90c8a731	पूर्ण,
 
-	{	XFER_MW_DMA_2,	0xa0c8a731	},
-	{	XFER_MW_DMA_1,	0xa0c8a732	},	/* 0xa0c8a733 */
-	{	XFER_MW_DMA_0,	0xa0c8a797	},
+	अणु	XFER_MW_DMA_2,	0xa0c8a731	पूर्ण,
+	अणु	XFER_MW_DMA_1,	0xa0c8a732	पूर्ण,	/* 0xa0c8a733 */
+	अणु	XFER_MW_DMA_0,	0xa0c8a797	पूर्ण,
 
-	{	XFER_PIO_4,	0xc0c8a731	},
-	{	XFER_PIO_3,	0xc0c8a742	},
-	{	XFER_PIO_2,	0xc0d0a753	},
-	{	XFER_PIO_1,	0xc0d0a7a3	},	/* 0xc0d0a793 */
-	{	XFER_PIO_0,	0xc0d0a7aa	},	/* 0xc0d0a7a7 */
-	{	0,		0x0120a7a7	}
-};
+	अणु	XFER_PIO_4,	0xc0c8a731	पूर्ण,
+	अणु	XFER_PIO_3,	0xc0c8a742	पूर्ण,
+	अणु	XFER_PIO_2,	0xc0d0a753	पूर्ण,
+	अणु	XFER_PIO_1,	0xc0d0a7a3	पूर्ण,	/* 0xc0d0a793 */
+	अणु	XFER_PIO_0,	0xc0d0a7aa	पूर्ण,	/* 0xc0d0a7a7 */
+	अणु	0,		0x0120a7a7	पूर्ण
+पूर्ण;
 
-static const struct hpt_clock hpt366_25[] = {
-	{	XFER_UDMA_4,	0x90c98521	},
-	{	XFER_UDMA_3,	0x90cf8521	},
-	{	XFER_UDMA_2,	0x90cf8521	},
-	{	XFER_UDMA_1,	0x90cb8521	},
-	{	XFER_UDMA_0,	0x90cb8521	},
+अटल स्थिर काष्ठा hpt_घड़ी hpt366_25[] = अणु
+	अणु	XFER_UDMA_4,	0x90c98521	पूर्ण,
+	अणु	XFER_UDMA_3,	0x90cf8521	पूर्ण,
+	अणु	XFER_UDMA_2,	0x90cf8521	पूर्ण,
+	अणु	XFER_UDMA_1,	0x90cb8521	पूर्ण,
+	अणु	XFER_UDMA_0,	0x90cb8521	पूर्ण,
 
-	{	XFER_MW_DMA_2,	0xa0ca8521	},
-	{	XFER_MW_DMA_1,	0xa0ca8532	},
-	{	XFER_MW_DMA_0,	0xa0ca8575	},
+	अणु	XFER_MW_DMA_2,	0xa0ca8521	पूर्ण,
+	अणु	XFER_MW_DMA_1,	0xa0ca8532	पूर्ण,
+	अणु	XFER_MW_DMA_0,	0xa0ca8575	पूर्ण,
 
-	{	XFER_PIO_4,	0xc0ca8521	},
-	{	XFER_PIO_3,	0xc0ca8532	},
-	{	XFER_PIO_2,	0xc0ca8542	},
-	{	XFER_PIO_1,	0xc0d08572	},
-	{	XFER_PIO_0,	0xc0d08585	},
-	{	0,		0x01208585	}
-};
+	अणु	XFER_PIO_4,	0xc0ca8521	पूर्ण,
+	अणु	XFER_PIO_3,	0xc0ca8532	पूर्ण,
+	अणु	XFER_PIO_2,	0xc0ca8542	पूर्ण,
+	अणु	XFER_PIO_1,	0xc0d08572	पूर्ण,
+	अणु	XFER_PIO_0,	0xc0d08585	पूर्ण,
+	अणु	0,		0x01208585	पूर्ण
+पूर्ण;
 
 /**
  *	hpt36x_find_mode	-	find the hpt36x timing
  *	@ap: ATA port
  *	@speed: transfer mode
  *
- *	Return the 32bit register programming information for this channel
+ *	Return the 32bit रेजिस्टर programming inक्रमmation क्रम this channel
  *	that matches the speed provided.
  */
 
-static u32 hpt36x_find_mode(struct ata_port *ap, int speed)
-{
-	struct hpt_clock *clocks = ap->host->private_data;
+अटल u32 hpt36x_find_mode(काष्ठा ata_port *ap, पूर्णांक speed)
+अणु
+	काष्ठा hpt_घड़ी *घड़ीs = ap->host->निजी_data;
 
-	while (clocks->xfer_mode) {
-		if (clocks->xfer_mode == speed)
-			return clocks->timing;
-		clocks++;
-	}
+	जबतक (घड़ीs->xfer_mode) अणु
+		अगर (घड़ीs->xfer_mode == speed)
+			वापस घड़ीs->timing;
+		घड़ीs++;
+	पूर्ण
 	BUG();
-	return 0xffffffffU;	/* silence compiler warning */
-}
+	वापस 0xffffffffU;	/* silence compiler warning */
+पूर्ण
 
-static const char * const bad_ata33[] = {
+अटल स्थिर अक्षर * स्थिर bad_ata33[] = अणु
 	"Maxtor 92720U8", "Maxtor 92040U6", "Maxtor 91360U4", "Maxtor 91020U3",
 	"Maxtor 90845U3", "Maxtor 90650U2",
 	"Maxtor 91360D8", "Maxtor 91190D7", "Maxtor 91020D6", "Maxtor 90845D5",
@@ -146,10 +147,10 @@ static const char * const bad_ata33[] = {
 	"Maxtor 90750D6", "Maxtor 90625D5", "Maxtor 90500D4",
 	"Maxtor 91728D8", "Maxtor 91512D7", "Maxtor 91303D6", "Maxtor 91080D5",
 	"Maxtor 90845D4", "Maxtor 90680D4", "Maxtor 90648D3", "Maxtor 90432D2",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const char * const bad_ata66_4[] = {
+अटल स्थिर अक्षर * स्थिर bad_ata66_4[] = अणु
 	"IBM-DTLA-307075",
 	"IBM-DTLA-307060",
 	"IBM-DTLA-307045",
@@ -165,29 +166,29 @@ static const char * const bad_ata66_4[] = {
 	"IC35L040AVER07-0",
 	"IC35L060AVER07-0",
 	"WDC AC310200R",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const char * const bad_ata66_3[] = {
+अटल स्थिर अक्षर * स्थिर bad_ata66_3[] = अणु
 	"WDC AC310200R",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static int hpt_dma_blacklisted(const struct ata_device *dev, char *modestr,
-			       const char * const list[])
-{
-	unsigned char model_num[ATA_ID_PROD_LEN + 1];
-	int i;
+अटल पूर्णांक hpt_dma_blacklisted(स्थिर काष्ठा ata_device *dev, अक्षर *modestr,
+			       स्थिर अक्षर * स्थिर list[])
+अणु
+	अचिन्हित अक्षर model_num[ATA_ID_PROD_LEN + 1];
+	पूर्णांक i;
 
-	ata_id_c_string(dev->id, model_num, ATA_ID_PROD, sizeof(model_num));
+	ata_id_c_string(dev->id, model_num, ATA_ID_PROD, माप(model_num));
 
 	i = match_string(list, -1, model_num);
-	if (i >= 0) {
+	अगर (i >= 0) अणु
 		pr_warn("%s is not supported for %s\n", modestr, list[i]);
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  *	hpt366_filter	-	mode selection filter
@@ -197,136 +198,136 @@ static int hpt_dma_blacklisted(const struct ata_device *dev, char *modestr,
  *	Block UDMA on devices that cause trouble with this controller.
  */
 
-static unsigned long hpt366_filter(struct ata_device *adev, unsigned long mask)
-{
-	if (adev->class == ATA_DEV_ATA) {
-		if (hpt_dma_blacklisted(adev, "UDMA",  bad_ata33))
+अटल अचिन्हित दीर्घ hpt366_filter(काष्ठा ata_device *adev, अचिन्हित दीर्घ mask)
+अणु
+	अगर (adev->class == ATA_DEV_ATA) अणु
+		अगर (hpt_dma_blacklisted(adev, "UDMA",  bad_ata33))
 			mask &= ~ATA_MASK_UDMA;
-		if (hpt_dma_blacklisted(adev, "UDMA3", bad_ata66_3))
+		अगर (hpt_dma_blacklisted(adev, "UDMA3", bad_ata66_3))
 			mask &= ~(0xF8 << ATA_SHIFT_UDMA);
-		if (hpt_dma_blacklisted(adev, "UDMA4", bad_ata66_4))
+		अगर (hpt_dma_blacklisted(adev, "UDMA4", bad_ata66_4))
 			mask &= ~(0xF0 << ATA_SHIFT_UDMA);
-	} else if (adev->class == ATA_DEV_ATAPI)
+	पूर्ण अन्यथा अगर (adev->class == ATA_DEV_ATAPI)
 		mask &= ~(ATA_MASK_MWDMA | ATA_MASK_UDMA);
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static int hpt36x_cable_detect(struct ata_port *ap)
-{
-	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
+अटल पूर्णांक hpt36x_cable_detect(काष्ठा ata_port *ap)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
 	u8 ata66;
 
 	/*
 	 * Each channel of pata_hpt366 occupies separate PCI function
 	 * as the primary channel and bit1 indicates the cable type.
 	 */
-	pci_read_config_byte(pdev, 0x5A, &ata66);
-	if (ata66 & 2)
-		return ATA_CBL_PATA40;
-	return ATA_CBL_PATA80;
-}
+	pci_पढ़ो_config_byte(pdev, 0x5A, &ata66);
+	अगर (ata66 & 2)
+		वापस ATA_CBL_PATA40;
+	वापस ATA_CBL_PATA80;
+पूर्ण
 
-static void hpt366_set_mode(struct ata_port *ap, struct ata_device *adev,
+अटल व्योम hpt366_set_mode(काष्ठा ata_port *ap, काष्ठा ata_device *adev,
 			    u8 mode)
-{
-	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
 	u32 addr = 0x40 + 4 * adev->devno;
 	u32 mask, reg, t;
 
-	/* determine timing mask and find matching clock entry */
-	if (mode < XFER_MW_DMA_0)
+	/* determine timing mask and find matching घड़ी entry */
+	अगर (mode < XFER_MW_DMA_0)
 		mask = 0xc1f8ffff;
-	else if (mode < XFER_UDMA_0)
+	अन्यथा अगर (mode < XFER_UDMA_0)
 		mask = 0x303800ff;
-	else
+	अन्यथा
 		mask = 0x30070000;
 
 	t = hpt36x_find_mode(ap, mode);
 
 	/*
 	 * Combine new mode bits with old config bits and disable
-	 * on-chip PIO FIFO/buffer (and PIO MST mode as well) to avoid
+	 * on-chip PIO FIFO/buffer (and PIO MST mode as well) to aव्योम
 	 * problems handling I/O errors later.
 	 */
-	pci_read_config_dword(pdev, addr, &reg);
+	pci_पढ़ो_config_dword(pdev, addr, &reg);
 	reg = ((reg & ~mask) | (t & mask)) & ~0xc0000000;
-	pci_write_config_dword(pdev, addr, reg);
-}
+	pci_ग_लिखो_config_dword(pdev, addr, reg);
+पूर्ण
 
 /**
  *	hpt366_set_piomode		-	PIO setup
- *	@ap: ATA interface
- *	@adev: device on the interface
+ *	@ap: ATA पूर्णांकerface
+ *	@adev: device on the पूर्णांकerface
  *
- *	Perform PIO mode setup.
+ *	Perक्रमm PIO mode setup.
  */
 
-static void hpt366_set_piomode(struct ata_port *ap, struct ata_device *adev)
-{
+अटल व्योम hpt366_set_piomode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
+अणु
 	hpt366_set_mode(ap, adev, adev->pio_mode);
-}
+पूर्ण
 
 /**
  *	hpt366_set_dmamode		-	DMA timing setup
- *	@ap: ATA interface
+ *	@ap: ATA पूर्णांकerface
  *	@adev: Device being configured
  *
- *	Set up the channel for MWDMA or UDMA modes. Much the same as with
+ *	Set up the channel क्रम MWDMA or UDMA modes. Much the same as with
  *	PIO, load the mode number and then set MWDMA or UDMA flag.
  */
 
-static void hpt366_set_dmamode(struct ata_port *ap, struct ata_device *adev)
-{
+अटल व्योम hpt366_set_dmamode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
+अणु
 	hpt366_set_mode(ap, adev, adev->dma_mode);
-}
+पूर्ण
 
-static struct scsi_host_template hpt36x_sht = {
+अटल काष्ठा scsi_host_ढाँचा hpt36x_sht = अणु
 	ATA_BMDMA_SHT(DRV_NAME),
-};
+पूर्ण;
 
 /*
- *	Configuration for HPT366/68
+ *	Configuration क्रम HPT366/68
  */
 
-static struct ata_port_operations hpt366_port_ops = {
+अटल काष्ठा ata_port_operations hpt366_port_ops = अणु
 	.inherits	= &ata_bmdma_port_ops,
 	.cable_detect	= hpt36x_cable_detect,
 	.mode_filter	= hpt366_filter,
 	.set_piomode	= hpt366_set_piomode,
 	.set_dmamode	= hpt366_set_dmamode,
-};
+पूर्ण;
 
 /**
  *	hpt36x_init_chipset	-	common chip setup
  *	@dev: PCI device
  *
- *	Perform the chip setup work that must be done at both init and
- *	resume time
+ *	Perक्रमm the chip setup work that must be करोne at both init and
+ *	resume समय
  */
 
-static void hpt36x_init_chipset(struct pci_dev *dev)
-{
+अटल व्योम hpt36x_init_chipset(काष्ठा pci_dev *dev)
+अणु
 	u8 drive_fast;
 
-	pci_write_config_byte(dev, PCI_CACHE_LINE_SIZE, (L1_CACHE_BYTES / 4));
-	pci_write_config_byte(dev, PCI_LATENCY_TIMER, 0x78);
-	pci_write_config_byte(dev, PCI_MIN_GNT, 0x08);
-	pci_write_config_byte(dev, PCI_MAX_LAT, 0x08);
+	pci_ग_लिखो_config_byte(dev, PCI_CACHE_LINE_SIZE, (L1_CACHE_BYTES / 4));
+	pci_ग_लिखो_config_byte(dev, PCI_LATENCY_TIMER, 0x78);
+	pci_ग_लिखो_config_byte(dev, PCI_MIN_GNT, 0x08);
+	pci_ग_लिखो_config_byte(dev, PCI_MAX_LAT, 0x08);
 
-	pci_read_config_byte(dev, 0x51, &drive_fast);
-	if (drive_fast & 0x80)
-		pci_write_config_byte(dev, 0x51, drive_fast & ~0x80);
-}
+	pci_पढ़ो_config_byte(dev, 0x51, &drive_fast);
+	अगर (drive_fast & 0x80)
+		pci_ग_लिखो_config_byte(dev, 0x51, drive_fast & ~0x80);
+पूर्ण
 
 /**
  *	hpt36x_init_one		-	Initialise an HPT366/368
  *	@dev: PCI device
  *	@id: Entry in match table
  *
- *	Initialise an HPT36x device. There are some interesting complications
+ *	Initialise an HPT36x device. There are some पूर्णांकeresting complications
  *	here. Firstly the chip may report 366 and be one of several variants.
- *	Secondly all the timings depend on the clock for the chip which we must
+ *	Secondly all the timings depend on the घड़ी क्रम the chip which we must
  *	detect and look up
  *
  *	This is the known chip mappings. It may be missing a couple of later
@@ -340,81 +341,81 @@ static void hpt36x_init_chipset(struct pci_dev *dev)
  *
  */
 
-static int hpt36x_init_one(struct pci_dev *dev, const struct pci_device_id *id)
-{
-	static const struct ata_port_info info_hpt366 = {
+अटल पूर्णांक hpt36x_init_one(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	अटल स्थिर काष्ठा ata_port_info info_hpt366 = अणु
 		.flags = ATA_FLAG_SLAVE_POSS,
 		.pio_mask = ATA_PIO4,
 		.mwdma_mask = ATA_MWDMA2,
 		.udma_mask = ATA_UDMA4,
 		.port_ops = &hpt366_port_ops
-	};
-	const struct ata_port_info *ppi[] = { &info_hpt366, NULL };
+	पूर्ण;
+	स्थिर काष्ठा ata_port_info *ppi[] = अणु &info_hpt366, शून्य पूर्ण;
 
-	const void *hpriv = NULL;
+	स्थिर व्योम *hpriv = शून्य;
 	u32 reg1;
-	int rc;
+	पूर्णांक rc;
 
 	rc = pcim_enable_device(dev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/* May be a later chip in disguise. Check */
 	/* Newer chips are not in the HPT36x driver. Ignore them */
-	if (dev->revision > 2)
-		return -ENODEV;
+	अगर (dev->revision > 2)
+		वापस -ENODEV;
 
 	hpt36x_init_chipset(dev);
 
-	pci_read_config_dword(dev, 0x40,  &reg1);
+	pci_पढ़ो_config_dword(dev, 0x40,  &reg1);
 
-	/* PCI clocking determines the ATA timing values to use */
+	/* PCI घड़ीing determines the ATA timing values to use */
 	/* info_hpt366 is safe against re-entry so we can scribble on it */
-	switch ((reg1 & 0xf00) >> 8) {
-	case 9:
+	चयन ((reg1 & 0xf00) >> 8) अणु
+	हाल 9:
 		hpriv = &hpt366_40;
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		hpriv = &hpt366_25;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		hpriv = &hpt366_33;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	/* Now kick off ATA set up */
-	return ata_pci_bmdma_init_one(dev, ppi, &hpt36x_sht, (void *)hpriv, 0);
-}
+	वापस ata_pci_bmdma_init_one(dev, ppi, &hpt36x_sht, (व्योम *)hpriv, 0);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int hpt36x_reinit_one(struct pci_dev *dev)
-{
-	struct ata_host *host = pci_get_drvdata(dev);
-	int rc;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक hpt36x_reinit_one(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा ata_host *host = pci_get_drvdata(dev);
+	पूर्णांक rc;
 
-	rc = ata_pci_device_do_resume(dev);
-	if (rc)
-		return rc;
+	rc = ata_pci_device_करो_resume(dev);
+	अगर (rc)
+		वापस rc;
 	hpt36x_init_chipset(dev);
 	ata_host_resume(host);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct pci_device_id hpt36x[] = {
-	{ PCI_VDEVICE(TTI, PCI_DEVICE_ID_TTI_HPT366), },
-	{ },
-};
+अटल स्थिर काष्ठा pci_device_id hpt36x[] = अणु
+	अणु PCI_VDEVICE(TTI, PCI_DEVICE_ID_TTI_HPT366), पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct pci_driver hpt36x_pci_driver = {
+अटल काष्ठा pci_driver hpt36x_pci_driver = अणु
 	.name		= DRV_NAME,
 	.id_table	= hpt36x,
 	.probe		= hpt36x_init_one,
-	.remove		= ata_pci_remove_one,
-#ifdef CONFIG_PM_SLEEP
+	.हटाओ		= ata_pci_हटाओ_one,
+#अगर_घोषित CONFIG_PM_SLEEP
 	.suspend	= ata_pci_device_suspend,
 	.resume		= hpt36x_reinit_one,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 module_pci_driver(hpt36x_pci_driver);
 

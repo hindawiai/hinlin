@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012-2020 IBM Corporation
  *
  * Author: Ashley Lai <ashleydlai@gmail.com>
  *
- * Maintained by: <tpmdd-devel@lists.sourceforge.net>
+ * Maपूर्णांकained by: <tpmdd-devel@lists.sourceक्रमge.net>
  *
- * Device driver for TCG/TCPA TPM (trusted platform module).
- * Specifications at www.trustedcomputinggroup.org
+ * Device driver क्रम TCG/TCPA TPM (trusted platक्रमm module).
+ * Specअगरications at www.trustedcomputinggroup.org
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/dmapool.h>
-#include <linux/slab.h>
-#include <asm/vio.h>
-#include <asm/irq.h>
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/wait.h>
-#include <asm/prom.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/vपन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/रुको.h>
+#समावेश <यंत्र/prom.h>
 
-#include "tpm.h"
-#include "tpm_ibmvtpm.h"
+#समावेश "tpm.h"
+#समावेश "tpm_ibmvtpm.h"
 
-static const char tpm_ibmvtpm_driver_name[] = "tpm_ibmvtpm";
+अटल स्थिर अक्षर tpm_ibmvtpm_driver_name[] = "tpm_ibmvtpm";
 
-static const struct vio_device_id tpm_ibmvtpm_device_table[] = {
-	{ "IBM,vtpm", "IBM,vtpm"},
-	{ "IBM,vtpm", "IBM,vtpm20"},
-	{ "", "" }
-};
+अटल स्थिर काष्ठा vio_device_id tpm_ibmvtpm_device_table[] = अणु
+	अणु "IBM,vtpm", "IBM,vtpm"पूर्ण,
+	अणु "IBM,vtpm", "IBM,vtpm20"पूर्ण,
+	अणु "", "" पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(vio, tpm_ibmvtpm_device_table);
 
 /**
  * ibmvtpm_send_crq_word() - Send a CRQ request
- * @vdev:	vio device struct
- * @w1:		pre-constructed first word of tpm crq (second word is reserved)
+ * @vdev:	vio device काष्ठा
+ * @w1:		pre-स्थिरructed first word of tpm crq (second word is reserved)
  *
  * Return:
  *	0 - Success
  *	Non-zero - Failure
  */
-static int ibmvtpm_send_crq_word(struct vio_dev *vdev, u64 w1)
-{
-	return plpar_hcall_norets(H_SEND_CRQ, vdev->unit_address, w1, 0);
-}
+अटल पूर्णांक ibmvtpm_send_crq_word(काष्ठा vio_dev *vdev, u64 w1)
+अणु
+	वापस plpar_hcall_norets(H_SEND_CRQ, vdev->unit_address, w1, 0);
+पूर्ण
 
 /**
  * ibmvtpm_send_crq() - Send a CRQ request
  *
- * @vdev:	vio device struct
+ * @vdev:	vio device काष्ठा
  * @valid:	Valid field
  * @msg:	Type field
  * @len:	Length field
@@ -66,176 +67,176 @@ static int ibmvtpm_send_crq_word(struct vio_dev *vdev, u64 w1)
  * Word1 |                Reserved
  * -----------------------------------------------------------------------
  *
- * Which matches the following structure (on bigendian host):
+ * Which matches the following काष्ठाure (on bigendian host):
  *
- * struct ibmvtpm_crq {
+ * काष्ठा ibmvtpm_crq अणु
  *         u8 valid;
  *         u8 msg;
  *         __be16 len;
  *         __be32 data;
  *         __be64 reserved;
- * } __attribute__((packed, aligned(8)));
+ * पूर्ण __attribute__((packed, aligned(8)));
  *
- * However, the value is passed in a register so just compute the numeric value
- * to load into the register avoiding byteswap altogether. Endian only affects
- * memory loads and stores - registers are internally represented the same.
+ * However, the value is passed in a रेजिस्टर so just compute the numeric value
+ * to load पूर्णांकo the रेजिस्टर aव्योमing byteswap altogether. Endian only affects
+ * memory loads and stores - रेजिस्टरs are पूर्णांकernally represented the same.
  *
  * Return:
  *	0 (H_SUCCESS) - Success
  *	Non-zero - Failure
  */
-static int ibmvtpm_send_crq(struct vio_dev *vdev,
+अटल पूर्णांक ibmvtpm_send_crq(काष्ठा vio_dev *vdev,
 		u8 valid, u8 msg, u16 len, u32 data)
-{
+अणु
 	u64 w1 = ((u64)valid << 56) | ((u64)msg << 48) | ((u64)len << 32) |
 		(u64)data;
-	return ibmvtpm_send_crq_word(vdev, w1);
-}
+	वापस ibmvtpm_send_crq_word(vdev, w1);
+पूर्ण
 
 /**
  * tpm_ibmvtpm_recv - Receive data after send
  *
- * @chip:	tpm chip struct
- * @buf:	buffer to read
+ * @chip:	tpm chip काष्ठा
+ * @buf:	buffer to पढ़ो
  * @count:	size of buffer
  *
  * Return:
- *	Number of bytes read
+ *	Number of bytes पढ़ो
  */
-static int tpm_ibmvtpm_recv(struct tpm_chip *chip, u8 *buf, size_t count)
-{
-	struct ibmvtpm_dev *ibmvtpm = dev_get_drvdata(&chip->dev);
+अटल पूर्णांक tpm_ibmvtpm_recv(काष्ठा tpm_chip *chip, u8 *buf, माप_प्रकार count)
+अणु
+	काष्ठा ibmvtpm_dev *ibmvtpm = dev_get_drvdata(&chip->dev);
 	u16 len;
-	int sig;
+	पूर्णांक sig;
 
-	if (!ibmvtpm->rtce_buf) {
+	अगर (!ibmvtpm->rtce_buf) अणु
 		dev_err(ibmvtpm->dev, "ibmvtpm device is not ready\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	sig = wait_event_interruptible(ibmvtpm->wq, !ibmvtpm->tpm_processing_cmd);
-	if (sig)
-		return -EINTR;
+	sig = रुको_event_पूर्णांकerruptible(ibmvtpm->wq, !ibmvtpm->tpm_processing_cmd);
+	अगर (sig)
+		वापस -EINTR;
 
 	len = ibmvtpm->res_len;
 
-	if (count < len) {
+	अगर (count < len) अणु
 		dev_err(ibmvtpm->dev,
 			"Invalid size in recv: count=%zd, crq_size=%d\n",
 			count, len);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	spin_lock(&ibmvtpm->rtce_lock);
-	memcpy((void *)buf, (void *)ibmvtpm->rtce_buf, len);
-	memset(ibmvtpm->rtce_buf, 0, len);
+	स_नकल((व्योम *)buf, (व्योम *)ibmvtpm->rtce_buf, len);
+	स_रखो(ibmvtpm->rtce_buf, 0, len);
 	ibmvtpm->res_len = 0;
 	spin_unlock(&ibmvtpm->rtce_lock);
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /**
  * ibmvtpm_crq_send_init - Send a CRQ initialize message
- * @ibmvtpm:	vtpm device struct
+ * @ibmvtpm:	vtpm device काष्ठा
  *
  * Return:
  *	0 on success.
  *	Non-zero on failure.
  */
-static int ibmvtpm_crq_send_init(struct ibmvtpm_dev *ibmvtpm)
-{
-	int rc;
+अटल पूर्णांक ibmvtpm_crq_send_init(काष्ठा ibmvtpm_dev *ibmvtpm)
+अणु
+	पूर्णांक rc;
 
 	rc = ibmvtpm_send_crq_word(ibmvtpm->vdev, INIT_CRQ_CMD);
-	if (rc != H_SUCCESS)
+	अगर (rc != H_SUCCESS)
 		dev_err(ibmvtpm->dev,
 			"%s failed rc=%d\n", __func__, rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * tpm_ibmvtpm_resume - Resume from suspend
  *
- * @dev:	device struct
+ * @dev:	device काष्ठा
  *
  * Return: Always 0.
  */
-static int tpm_ibmvtpm_resume(struct device *dev)
-{
-	struct tpm_chip *chip = dev_get_drvdata(dev);
-	struct ibmvtpm_dev *ibmvtpm = dev_get_drvdata(&chip->dev);
-	int rc = 0;
+अटल पूर्णांक tpm_ibmvtpm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा tpm_chip *chip = dev_get_drvdata(dev);
+	काष्ठा ibmvtpm_dev *ibmvtpm = dev_get_drvdata(&chip->dev);
+	पूर्णांक rc = 0;
 
-	do {
-		if (rc)
+	करो अणु
+		अगर (rc)
 			msleep(100);
 		rc = plpar_hcall_norets(H_ENABLE_CRQ,
 					ibmvtpm->vdev->unit_address);
-	} while (rc == H_IN_PROGRESS || rc == H_BUSY || H_IS_LONG_BUSY(rc));
+	पूर्ण जबतक (rc == H_IN_PROGRESS || rc == H_BUSY || H_IS_LONG_BUSY(rc));
 
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(dev, "Error enabling ibmvtpm rc=%d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	rc = vio_enable_interrupts(ibmvtpm->vdev);
-	if (rc) {
+	rc = vio_enable_पूर्णांकerrupts(ibmvtpm->vdev);
+	अगर (rc) अणु
 		dev_err(dev, "Error vio_enable_interrupts rc=%d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = ibmvtpm_crq_send_init(ibmvtpm);
-	if (rc)
+	अगर (rc)
 		dev_err(dev, "Error send_init rc=%d\n", rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * tpm_ibmvtpm_send() - Send a TPM command
- * @chip:	tpm chip struct
+ * @chip:	tpm chip काष्ठा
  * @buf:	buffer contains data to send
  * @count:	size of buffer
  *
  * Return:
  *   0 on success,
- *   -errno on error
+ *   -त्रुटि_सं on error
  */
-static int tpm_ibmvtpm_send(struct tpm_chip *chip, u8 *buf, size_t count)
-{
-	struct ibmvtpm_dev *ibmvtpm = dev_get_drvdata(&chip->dev);
+अटल पूर्णांक tpm_ibmvtpm_send(काष्ठा tpm_chip *chip, u8 *buf, माप_प्रकार count)
+अणु
+	काष्ठा ibmvtpm_dev *ibmvtpm = dev_get_drvdata(&chip->dev);
 	bool retry = true;
-	int rc, sig;
+	पूर्णांक rc, sig;
 
-	if (!ibmvtpm->rtce_buf) {
+	अगर (!ibmvtpm->rtce_buf) अणु
 		dev_err(ibmvtpm->dev, "ibmvtpm device is not ready\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (count > ibmvtpm->rtce_size) {
+	अगर (count > ibmvtpm->rtce_size) अणु
 		dev_err(ibmvtpm->dev,
 			"Invalid size in send: count=%zd, rtce_size=%d\n",
 			count, ibmvtpm->rtce_size);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (ibmvtpm->tpm_processing_cmd) {
+	अगर (ibmvtpm->tpm_processing_cmd) अणु
 		dev_info(ibmvtpm->dev,
 		         "Need to wait for TPM to finish\n");
-		/* wait for previous command to finish */
-		sig = wait_event_interruptible(ibmvtpm->wq, !ibmvtpm->tpm_processing_cmd);
-		if (sig)
-			return -EINTR;
-	}
+		/* रुको क्रम previous command to finish */
+		sig = रुको_event_पूर्णांकerruptible(ibmvtpm->wq, !ibmvtpm->tpm_processing_cmd);
+		अगर (sig)
+			वापस -EINTR;
+	पूर्ण
 
 	spin_lock(&ibmvtpm->rtce_lock);
 	ibmvtpm->res_len = 0;
-	memcpy((void *)ibmvtpm->rtce_buf, (void *)buf, count);
+	स_नकल((व्योम *)ibmvtpm->rtce_buf, (व्योम *)buf, count);
 
 	/*
-	 * set the processing flag before the Hcall, since we may get the
-	 * result (interrupt) before even being able to check rc.
+	 * set the processing flag beक्रमe the Hcall, since we may get the
+	 * result (पूर्णांकerrupt) beक्रमe even being able to check rc.
 	 */
 	ibmvtpm->tpm_processing_cmd = true;
 
@@ -243,216 +244,216 @@ again:
 	rc = ibmvtpm_send_crq(ibmvtpm->vdev,
 			IBMVTPM_VALID_CMD, VTPM_TPM_COMMAND,
 			count, ibmvtpm->rtce_dma_handle);
-	if (rc != H_SUCCESS) {
+	अगर (rc != H_SUCCESS) अणु
 		/*
-		 * H_CLOSED can be returned after LPM resume.  Call
+		 * H_CLOSED can be वापसed after LPM resume.  Call
 		 * tpm_ibmvtpm_resume() to re-enable the CRQ then retry
-		 * ibmvtpm_send_crq() once before failing.
+		 * ibmvtpm_send_crq() once beक्रमe failing.
 		 */
-		if (rc == H_CLOSED && retry) {
+		अगर (rc == H_CLOSED && retry) अणु
 			tpm_ibmvtpm_resume(ibmvtpm->dev);
 			retry = false;
-			goto again;
-		}
+			जाओ again;
+		पूर्ण
 		dev_err(ibmvtpm->dev, "tpm_ibmvtpm_send failed rc=%d\n", rc);
 		ibmvtpm->tpm_processing_cmd = false;
-	}
+	पूर्ण
 
 	spin_unlock(&ibmvtpm->rtce_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tpm_ibmvtpm_cancel(struct tpm_chip *chip)
-{
-	return;
-}
+अटल व्योम tpm_ibmvtpm_cancel(काष्ठा tpm_chip *chip)
+अणु
+	वापस;
+पूर्ण
 
-static u8 tpm_ibmvtpm_status(struct tpm_chip *chip)
-{
-	return 0;
-}
+अटल u8 tpm_ibmvtpm_status(काष्ठा tpm_chip *chip)
+अणु
+	वापस 0;
+पूर्ण
 
 /**
  * ibmvtpm_crq_get_rtce_size - Send a CRQ request to get rtce size
  *
- * @ibmvtpm:	vtpm device struct
+ * @ibmvtpm:	vtpm device काष्ठा
  *
  * Return:
  *	0 on success.
  *	Non-zero on failure.
  */
-static int ibmvtpm_crq_get_rtce_size(struct ibmvtpm_dev *ibmvtpm)
-{
-	int rc;
+अटल पूर्णांक ibmvtpm_crq_get_rtce_size(काष्ठा ibmvtpm_dev *ibmvtpm)
+अणु
+	पूर्णांक rc;
 
 	rc = ibmvtpm_send_crq(ibmvtpm->vdev,
 			IBMVTPM_VALID_CMD, VTPM_GET_RTCE_BUFFER_SIZE, 0, 0);
-	if (rc != H_SUCCESS)
+	अगर (rc != H_SUCCESS)
 		dev_err(ibmvtpm->dev,
 			"ibmvtpm_crq_get_rtce_size failed rc=%d\n", rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * ibmvtpm_crq_get_version - Send a CRQ request to get vtpm version
  *			   - Note that this is vtpm version and not tpm version
  *
- * @ibmvtpm:	vtpm device struct
+ * @ibmvtpm:	vtpm device काष्ठा
  *
  * Return:
  *	0 on success.
  *	Non-zero on failure.
  */
-static int ibmvtpm_crq_get_version(struct ibmvtpm_dev *ibmvtpm)
-{
-	int rc;
+अटल पूर्णांक ibmvtpm_crq_get_version(काष्ठा ibmvtpm_dev *ibmvtpm)
+अणु
+	पूर्णांक rc;
 
 	rc = ibmvtpm_send_crq(ibmvtpm->vdev,
 			IBMVTPM_VALID_CMD, VTPM_GET_VERSION, 0, 0);
-	if (rc != H_SUCCESS)
+	अगर (rc != H_SUCCESS)
 		dev_err(ibmvtpm->dev,
 			"ibmvtpm_crq_get_version failed rc=%d\n", rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * ibmvtpm_crq_send_init_complete - Send a CRQ initialize complete message
- * @ibmvtpm:	vtpm device struct
+ * @ibmvtpm:	vtpm device काष्ठा
  *
  * Return:
  *	0 on success.
  *	Non-zero on failure.
  */
-static int ibmvtpm_crq_send_init_complete(struct ibmvtpm_dev *ibmvtpm)
-{
-	int rc;
+अटल पूर्णांक ibmvtpm_crq_send_init_complete(काष्ठा ibmvtpm_dev *ibmvtpm)
+अणु
+	पूर्णांक rc;
 
 	rc = ibmvtpm_send_crq_word(ibmvtpm->vdev, INIT_CRQ_COMP_CMD);
-	if (rc != H_SUCCESS)
+	अगर (rc != H_SUCCESS)
 		dev_err(ibmvtpm->dev,
 			"ibmvtpm_crq_send_init_complete failed rc=%d\n", rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * tpm_ibmvtpm_remove - ibm vtpm remove entry point
- * @vdev:	vio device struct
+ * tpm_ibmvtpm_हटाओ - ibm vtpm हटाओ entry poपूर्णांक
+ * @vdev:	vio device काष्ठा
  *
  * Return: Always 0.
  */
-static void tpm_ibmvtpm_remove(struct vio_dev *vdev)
-{
-	struct tpm_chip *chip = dev_get_drvdata(&vdev->dev);
-	struct ibmvtpm_dev *ibmvtpm = dev_get_drvdata(&chip->dev);
-	int rc = 0;
+अटल व्योम tpm_ibmvtpm_हटाओ(काष्ठा vio_dev *vdev)
+अणु
+	काष्ठा tpm_chip *chip = dev_get_drvdata(&vdev->dev);
+	काष्ठा ibmvtpm_dev *ibmvtpm = dev_get_drvdata(&chip->dev);
+	पूर्णांक rc = 0;
 
-	tpm_chip_unregister(chip);
+	tpm_chip_unरेजिस्टर(chip);
 
-	free_irq(vdev->irq, ibmvtpm);
+	मुक्त_irq(vdev->irq, ibmvtpm);
 
-	do {
-		if (rc)
+	करो अणु
+		अगर (rc)
 			msleep(100);
 		rc = plpar_hcall_norets(H_FREE_CRQ, vdev->unit_address);
-	} while (rc == H_BUSY || H_IS_LONG_BUSY(rc));
+	पूर्ण जबतक (rc == H_BUSY || H_IS_LONG_BUSY(rc));
 
 	dma_unmap_single(ibmvtpm->dev, ibmvtpm->crq_dma_handle,
-			 CRQ_RES_BUF_SIZE, DMA_BIDIRECTIONAL);
-	free_page((unsigned long)ibmvtpm->crq_queue.crq_addr);
+			 CRQ_RES_BUF_SIZE, DMA_BIसूचीECTIONAL);
+	मुक्त_page((अचिन्हित दीर्घ)ibmvtpm->crq_queue.crq_addr);
 
-	if (ibmvtpm->rtce_buf) {
+	अगर (ibmvtpm->rtce_buf) अणु
 		dma_unmap_single(ibmvtpm->dev, ibmvtpm->rtce_dma_handle,
-				 ibmvtpm->rtce_size, DMA_BIDIRECTIONAL);
-		kfree(ibmvtpm->rtce_buf);
-	}
+				 ibmvtpm->rtce_size, DMA_BIसूचीECTIONAL);
+		kमुक्त(ibmvtpm->rtce_buf);
+	पूर्ण
 
-	kfree(ibmvtpm);
+	kमुक्त(ibmvtpm);
 	/* For tpm_ibmvtpm_get_desired_dma */
-	dev_set_drvdata(&vdev->dev, NULL);
-}
+	dev_set_drvdata(&vdev->dev, शून्य);
+पूर्ण
 
 /**
  * tpm_ibmvtpm_get_desired_dma - Get DMA size needed by this driver
- * @vdev:	vio device struct
+ * @vdev:	vio device काष्ठा
  *
  * Return:
  *	Number of bytes the driver needs to DMA map.
  */
-static unsigned long tpm_ibmvtpm_get_desired_dma(struct vio_dev *vdev)
-{
-	struct tpm_chip *chip = dev_get_drvdata(&vdev->dev);
-	struct ibmvtpm_dev *ibmvtpm;
+अटल अचिन्हित दीर्घ tpm_ibmvtpm_get_desired_dma(काष्ठा vio_dev *vdev)
+अणु
+	काष्ठा tpm_chip *chip = dev_get_drvdata(&vdev->dev);
+	काष्ठा ibmvtpm_dev *ibmvtpm;
 
 	/*
-	 * ibmvtpm initializes at probe time, so the data we are
-	 * asking for may not be set yet. Estimate that 4K required
-	 * for TCE-mapped buffer in addition to CRQ.
+	 * ibmvtpm initializes at probe समय, so the data we are
+	 * asking क्रम may not be set yet. Estimate that 4K required
+	 * क्रम TCE-mapped buffer in addition to CRQ.
 	 */
-	if (chip)
+	अगर (chip)
 		ibmvtpm = dev_get_drvdata(&chip->dev);
-	else
-		return CRQ_RES_BUF_SIZE + PAGE_SIZE;
+	अन्यथा
+		वापस CRQ_RES_BUF_SIZE + PAGE_SIZE;
 
-	return CRQ_RES_BUF_SIZE + ibmvtpm->rtce_size;
-}
+	वापस CRQ_RES_BUF_SIZE + ibmvtpm->rtce_size;
+पूर्ण
 
 /**
  * tpm_ibmvtpm_suspend - Suspend
- * @dev:	device struct
+ * @dev:	device काष्ठा
  *
  * Return: Always 0.
  */
-static int tpm_ibmvtpm_suspend(struct device *dev)
-{
-	struct tpm_chip *chip = dev_get_drvdata(dev);
-	struct ibmvtpm_dev *ibmvtpm = dev_get_drvdata(&chip->dev);
-	int rc = 0;
+अटल पूर्णांक tpm_ibmvtpm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा tpm_chip *chip = dev_get_drvdata(dev);
+	काष्ठा ibmvtpm_dev *ibmvtpm = dev_get_drvdata(&chip->dev);
+	पूर्णांक rc = 0;
 
 	rc = ibmvtpm_send_crq(ibmvtpm->vdev,
 			IBMVTPM_VALID_CMD, VTPM_PREPARE_TO_SUSPEND, 0, 0);
-	if (rc != H_SUCCESS)
+	अगर (rc != H_SUCCESS)
 		dev_err(ibmvtpm->dev,
 			"tpm_ibmvtpm_suspend failed rc=%d\n", rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * ibmvtpm_reset_crq - Reset CRQ
  *
- * @ibmvtpm:	ibm vtpm struct
+ * @ibmvtpm:	ibm vtpm काष्ठा
  *
  * Return:
  *	0 on success.
  *	Non-zero on failure.
  */
-static int ibmvtpm_reset_crq(struct ibmvtpm_dev *ibmvtpm)
-{
-	int rc = 0;
+अटल पूर्णांक ibmvtpm_reset_crq(काष्ठा ibmvtpm_dev *ibmvtpm)
+अणु
+	पूर्णांक rc = 0;
 
-	do {
-		if (rc)
+	करो अणु
+		अगर (rc)
 			msleep(100);
 		rc = plpar_hcall_norets(H_FREE_CRQ,
 					ibmvtpm->vdev->unit_address);
-	} while (rc == H_BUSY || H_IS_LONG_BUSY(rc));
+	पूर्ण जबतक (rc == H_BUSY || H_IS_LONG_BUSY(rc));
 
-	memset(ibmvtpm->crq_queue.crq_addr, 0, CRQ_RES_BUF_SIZE);
+	स_रखो(ibmvtpm->crq_queue.crq_addr, 0, CRQ_RES_BUF_SIZE);
 	ibmvtpm->crq_queue.index = 0;
 
-	return plpar_hcall_norets(H_REG_CRQ, ibmvtpm->vdev->unit_address,
+	वापस plpar_hcall_norets(H_REG_CRQ, ibmvtpm->vdev->unit_address,
 				  ibmvtpm->crq_dma_handle, CRQ_RES_BUF_SIZE);
-}
+पूर्ण
 
-static bool tpm_ibmvtpm_req_canceled(struct tpm_chip *chip, u8 status)
-{
-	return (status == 0);
-}
+अटल bool tpm_ibmvtpm_req_canceled(काष्ठा tpm_chip *chip, u8 status)
+अणु
+	वापस (status == 0);
+पूर्ण
 
-static const struct tpm_class_ops tpm_ibmvtpm = {
+अटल स्थिर काष्ठा tpm_class_ops tpm_ibmvtpm = अणु
 	.recv = tpm_ibmvtpm_recv,
 	.send = tpm_ibmvtpm_send,
 	.cancel = tpm_ibmvtpm_cancel,
@@ -460,208 +461,208 @@ static const struct tpm_class_ops tpm_ibmvtpm = {
 	.req_complete_mask = 0,
 	.req_complete_val = 0,
 	.req_canceled = tpm_ibmvtpm_req_canceled,
-};
+पूर्ण;
 
-static const struct dev_pm_ops tpm_ibmvtpm_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops tpm_ibmvtpm_pm_ops = अणु
 	.suspend = tpm_ibmvtpm_suspend,
 	.resume = tpm_ibmvtpm_resume,
-};
+पूर्ण;
 
 /**
  * ibmvtpm_crq_get_next - Get next responded crq
  *
- * @ibmvtpm:	vtpm device struct
+ * @ibmvtpm:	vtpm device काष्ठा
  *
- * Return: vtpm crq pointer or NULL.
+ * Return: vtpm crq poपूर्णांकer or शून्य.
  */
-static struct ibmvtpm_crq *ibmvtpm_crq_get_next(struct ibmvtpm_dev *ibmvtpm)
-{
-	struct ibmvtpm_crq_queue *crq_q = &ibmvtpm->crq_queue;
-	struct ibmvtpm_crq *crq = &crq_q->crq_addr[crq_q->index];
+अटल काष्ठा ibmvtpm_crq *ibmvtpm_crq_get_next(काष्ठा ibmvtpm_dev *ibmvtpm)
+अणु
+	काष्ठा ibmvtpm_crq_queue *crq_q = &ibmvtpm->crq_queue;
+	काष्ठा ibmvtpm_crq *crq = &crq_q->crq_addr[crq_q->index];
 
-	if (crq->valid & VTPM_MSG_RES) {
-		if (++crq_q->index == crq_q->num_entry)
+	अगर (crq->valid & VTPM_MSG_RES) अणु
+		अगर (++crq_q->index == crq_q->num_entry)
 			crq_q->index = 0;
 		smp_rmb();
-	} else
-		crq = NULL;
-	return crq;
-}
+	पूर्ण अन्यथा
+		crq = शून्य;
+	वापस crq;
+पूर्ण
 
 /**
  * ibmvtpm_crq_process - Process responded crq
  *
  * @crq:	crq to be processed
- * @ibmvtpm:	vtpm device struct
+ * @ibmvtpm:	vtpm device काष्ठा
  *
  */
-static void ibmvtpm_crq_process(struct ibmvtpm_crq *crq,
-				struct ibmvtpm_dev *ibmvtpm)
-{
-	int rc = 0;
+अटल व्योम ibmvtpm_crq_process(काष्ठा ibmvtpm_crq *crq,
+				काष्ठा ibmvtpm_dev *ibmvtpm)
+अणु
+	पूर्णांक rc = 0;
 
-	switch (crq->valid) {
-	case VALID_INIT_CRQ:
-		switch (crq->msg) {
-		case INIT_CRQ_RES:
+	चयन (crq->valid) अणु
+	हाल VALID_INIT_CRQ:
+		चयन (crq->msg) अणु
+		हाल INIT_CRQ_RES:
 			dev_info(ibmvtpm->dev, "CRQ initialized\n");
 			rc = ibmvtpm_crq_send_init_complete(ibmvtpm);
-			if (rc)
+			अगर (rc)
 				dev_err(ibmvtpm->dev, "Unable to send CRQ init complete rc=%d\n", rc);
-			return;
-		case INIT_CRQ_COMP_RES:
+			वापस;
+		हाल INIT_CRQ_COMP_RES:
 			dev_info(ibmvtpm->dev,
 				 "CRQ initialization completed\n");
-			return;
-		default:
+			वापस;
+		शेष:
 			dev_err(ibmvtpm->dev, "Unknown crq message type: %d\n", crq->msg);
-			return;
-		}
-	case IBMVTPM_VALID_CMD:
-		switch (crq->msg) {
-		case VTPM_GET_RTCE_BUFFER_SIZE_RES:
-			if (be16_to_cpu(crq->len) <= 0) {
+			वापस;
+		पूर्ण
+	हाल IBMVTPM_VALID_CMD:
+		चयन (crq->msg) अणु
+		हाल VTPM_GET_RTCE_BUFFER_SIZE_RES:
+			अगर (be16_to_cpu(crq->len) <= 0) अणु
 				dev_err(ibmvtpm->dev, "Invalid rtce size\n");
-				return;
-			}
+				वापस;
+			पूर्ण
 			ibmvtpm->rtce_size = be16_to_cpu(crq->len);
-			ibmvtpm->rtce_buf = kmalloc(ibmvtpm->rtce_size,
+			ibmvtpm->rtce_buf = kदो_स्मृति(ibmvtpm->rtce_size,
 						    GFP_ATOMIC);
-			if (!ibmvtpm->rtce_buf) {
+			अगर (!ibmvtpm->rtce_buf) अणु
 				dev_err(ibmvtpm->dev, "Failed to allocate memory for rtce buffer\n");
-				return;
-			}
+				वापस;
+			पूर्ण
 
 			ibmvtpm->rtce_dma_handle = dma_map_single(ibmvtpm->dev,
 				ibmvtpm->rtce_buf, ibmvtpm->rtce_size,
-				DMA_BIDIRECTIONAL);
+				DMA_BIसूचीECTIONAL);
 
-			if (dma_mapping_error(ibmvtpm->dev,
-					      ibmvtpm->rtce_dma_handle)) {
-				kfree(ibmvtpm->rtce_buf);
-				ibmvtpm->rtce_buf = NULL;
+			अगर (dma_mapping_error(ibmvtpm->dev,
+					      ibmvtpm->rtce_dma_handle)) अणु
+				kमुक्त(ibmvtpm->rtce_buf);
+				ibmvtpm->rtce_buf = शून्य;
 				dev_err(ibmvtpm->dev, "Failed to dma map rtce buffer\n");
-			}
+			पूर्ण
 
-			return;
-		case VTPM_GET_VERSION_RES:
+			वापस;
+		हाल VTPM_GET_VERSION_RES:
 			ibmvtpm->vtpm_version = be32_to_cpu(crq->data);
-			return;
-		case VTPM_TPM_COMMAND_RES:
+			वापस;
+		हाल VTPM_TPM_COMMAND_RES:
 			/* len of the data in rtce buffer */
 			ibmvtpm->res_len = be16_to_cpu(crq->len);
 			ibmvtpm->tpm_processing_cmd = false;
-			wake_up_interruptible(&ibmvtpm->wq);
-			return;
-		default:
-			return;
-		}
-	}
-	return;
-}
+			wake_up_पूर्णांकerruptible(&ibmvtpm->wq);
+			वापस;
+		शेष:
+			वापस;
+		पूर्ण
+	पूर्ण
+	वापस;
+पूर्ण
 
 /**
- * ibmvtpm_interrupt -	Interrupt handler
+ * ibmvtpm_पूर्णांकerrupt -	Interrupt handler
  *
  * @irq:		irq number to handle
- * @vtpm_instance:	vtpm that received interrupt
+ * @vtpm_instance:	vtpm that received पूर्णांकerrupt
  *
  * Returns:
  *	IRQ_HANDLED
  **/
-static irqreturn_t ibmvtpm_interrupt(int irq, void *vtpm_instance)
-{
-	struct ibmvtpm_dev *ibmvtpm = (struct ibmvtpm_dev *) vtpm_instance;
-	struct ibmvtpm_crq *crq;
+अटल irqवापस_t ibmvtpm_पूर्णांकerrupt(पूर्णांक irq, व्योम *vtpm_instance)
+अणु
+	काष्ठा ibmvtpm_dev *ibmvtpm = (काष्ठा ibmvtpm_dev *) vtpm_instance;
+	काष्ठा ibmvtpm_crq *crq;
 
-	/* while loop is needed for initial setup (get version and
+	/* जबतक loop is needed क्रम initial setup (get version and
 	 * get rtce_size). There should be only one tpm request at any
-	 * given time.
+	 * given समय.
 	 */
-	while ((crq = ibmvtpm_crq_get_next(ibmvtpm)) != NULL) {
+	जबतक ((crq = ibmvtpm_crq_get_next(ibmvtpm)) != शून्य) अणु
 		ibmvtpm_crq_process(crq, ibmvtpm);
-		wake_up_interruptible(&ibmvtpm->crq_queue.wq);
+		wake_up_पूर्णांकerruptible(&ibmvtpm->crq_queue.wq);
 		crq->valid = 0;
 		smp_wmb();
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * tpm_ibmvtpm_probe - ibm vtpm initialize entry point
+ * tpm_ibmvtpm_probe - ibm vtpm initialize entry poपूर्णांक
  *
- * @vio_dev:	vio device struct
- * @id:		vio device id struct
+ * @vio_dev:	vio device काष्ठा
+ * @id:		vio device id काष्ठा
  *
  * Return:
  *	0 on success.
  *	Non-zero on failure.
  */
-static int tpm_ibmvtpm_probe(struct vio_dev *vio_dev,
-				   const struct vio_device_id *id)
-{
-	struct ibmvtpm_dev *ibmvtpm;
-	struct device *dev = &vio_dev->dev;
-	struct ibmvtpm_crq_queue *crq_q;
-	struct tpm_chip *chip;
-	int rc = -ENOMEM, rc1;
+अटल पूर्णांक tpm_ibmvtpm_probe(काष्ठा vio_dev *vio_dev,
+				   स्थिर काष्ठा vio_device_id *id)
+अणु
+	काष्ठा ibmvtpm_dev *ibmvtpm;
+	काष्ठा device *dev = &vio_dev->dev;
+	काष्ठा ibmvtpm_crq_queue *crq_q;
+	काष्ठा tpm_chip *chip;
+	पूर्णांक rc = -ENOMEM, rc1;
 
 	chip = tpmm_chip_alloc(dev, &tpm_ibmvtpm);
-	if (IS_ERR(chip))
-		return PTR_ERR(chip);
+	अगर (IS_ERR(chip))
+		वापस PTR_ERR(chip);
 
-	ibmvtpm = kzalloc(sizeof(struct ibmvtpm_dev), GFP_KERNEL);
-	if (!ibmvtpm) {
+	ibmvtpm = kzalloc(माप(काष्ठा ibmvtpm_dev), GFP_KERNEL);
+	अगर (!ibmvtpm) अणु
 		dev_err(dev, "kzalloc for ibmvtpm failed\n");
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	ibmvtpm->dev = dev;
 	ibmvtpm->vdev = vio_dev;
 
 	crq_q = &ibmvtpm->crq_queue;
-	crq_q->crq_addr = (struct ibmvtpm_crq *)get_zeroed_page(GFP_KERNEL);
-	if (!crq_q->crq_addr) {
+	crq_q->crq_addr = (काष्ठा ibmvtpm_crq *)get_zeroed_page(GFP_KERNEL);
+	अगर (!crq_q->crq_addr) अणु
 		dev_err(dev, "Unable to allocate memory for crq_addr\n");
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	crq_q->num_entry = CRQ_RES_BUF_SIZE / sizeof(*crq_q->crq_addr);
-	init_waitqueue_head(&crq_q->wq);
+	crq_q->num_entry = CRQ_RES_BUF_SIZE / माप(*crq_q->crq_addr);
+	init_रुकोqueue_head(&crq_q->wq);
 	ibmvtpm->crq_dma_handle = dma_map_single(dev, crq_q->crq_addr,
 						 CRQ_RES_BUF_SIZE,
-						 DMA_BIDIRECTIONAL);
+						 DMA_BIसूचीECTIONAL);
 
-	if (dma_mapping_error(dev, ibmvtpm->crq_dma_handle)) {
+	अगर (dma_mapping_error(dev, ibmvtpm->crq_dma_handle)) अणु
 		dev_err(dev, "dma mapping failed\n");
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	rc = plpar_hcall_norets(H_REG_CRQ, vio_dev->unit_address,
 				ibmvtpm->crq_dma_handle, CRQ_RES_BUF_SIZE);
-	if (rc == H_RESOURCE)
+	अगर (rc == H_RESOURCE)
 		rc = ibmvtpm_reset_crq(ibmvtpm);
 
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(dev, "Unable to register CRQ rc=%d\n", rc);
-		goto reg_crq_cleanup;
-	}
+		जाओ reg_crq_cleanup;
+	पूर्ण
 
-	rc = request_irq(vio_dev->irq, ibmvtpm_interrupt, 0,
+	rc = request_irq(vio_dev->irq, ibmvtpm_पूर्णांकerrupt, 0,
 			 tpm_ibmvtpm_driver_name, ibmvtpm);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(dev, "Error %d register irq 0x%x\n", rc, vio_dev->irq);
-		goto init_irq_cleanup;
-	}
+		जाओ init_irq_cleanup;
+	पूर्ण
 
-	rc = vio_enable_interrupts(vio_dev);
-	if (rc) {
+	rc = vio_enable_पूर्णांकerrupts(vio_dev);
+	अगर (rc) अणु
 		dev_err(dev, "Error %d enabling interrupts\n", rc);
-		goto init_irq_cleanup;
-	}
+		जाओ init_irq_cleanup;
+	पूर्ण
 
-	init_waitqueue_head(&ibmvtpm->wq);
+	init_रुकोqueue_head(&ibmvtpm->wq);
 
 	crq_q->index = 0;
 
@@ -670,57 +671,57 @@ static int tpm_ibmvtpm_probe(struct vio_dev *vio_dev,
 	spin_lock_init(&ibmvtpm->rtce_lock);
 
 	rc = ibmvtpm_crq_send_init(ibmvtpm);
-	if (rc)
-		goto init_irq_cleanup;
+	अगर (rc)
+		जाओ init_irq_cleanup;
 
 	rc = ibmvtpm_crq_get_version(ibmvtpm);
-	if (rc)
-		goto init_irq_cleanup;
+	अगर (rc)
+		जाओ init_irq_cleanup;
 
 	rc = ibmvtpm_crq_get_rtce_size(ibmvtpm);
-	if (rc)
-		goto init_irq_cleanup;
+	अगर (rc)
+		जाओ init_irq_cleanup;
 
-	if (!wait_event_timeout(ibmvtpm->crq_queue.wq,
-				ibmvtpm->rtce_buf != NULL,
-				HZ)) {
+	अगर (!रुको_event_समयout(ibmvtpm->crq_queue.wq,
+				ibmvtpm->rtce_buf != शून्य,
+				HZ)) अणु
 		dev_err(dev, "CRQ response timed out\n");
-		goto init_irq_cleanup;
-	}
+		जाओ init_irq_cleanup;
+	पूर्ण
 
-	if (!strcmp(id->compat, "IBM,vtpm20")) {
+	अगर (!म_भेद(id->compat, "IBM,vtpm20")) अणु
 		chip->flags |= TPM_CHIP_FLAG_TPM2;
 		rc = tpm2_get_cc_attrs_tbl(chip);
-		if (rc)
-			goto init_irq_cleanup;
-	}
+		अगर (rc)
+			जाओ init_irq_cleanup;
+	पूर्ण
 
-	return tpm_chip_register(chip);
+	वापस tpm_chip_रेजिस्टर(chip);
 init_irq_cleanup:
-	do {
+	करो अणु
 		rc1 = plpar_hcall_norets(H_FREE_CRQ, vio_dev->unit_address);
-	} while (rc1 == H_BUSY || H_IS_LONG_BUSY(rc1));
+	पूर्ण जबतक (rc1 == H_BUSY || H_IS_LONG_BUSY(rc1));
 reg_crq_cleanup:
 	dma_unmap_single(dev, ibmvtpm->crq_dma_handle, CRQ_RES_BUF_SIZE,
-			 DMA_BIDIRECTIONAL);
+			 DMA_BIसूचीECTIONAL);
 cleanup:
-	if (ibmvtpm) {
-		if (crq_q->crq_addr)
-			free_page((unsigned long)crq_q->crq_addr);
-		kfree(ibmvtpm);
-	}
+	अगर (ibmvtpm) अणु
+		अगर (crq_q->crq_addr)
+			मुक्त_page((अचिन्हित दीर्घ)crq_q->crq_addr);
+		kमुक्त(ibmvtpm);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static struct vio_driver ibmvtpm_driver = {
+अटल काष्ठा vio_driver ibmvtpm_driver = अणु
 	.id_table	 = tpm_ibmvtpm_device_table,
 	.probe		 = tpm_ibmvtpm_probe,
-	.remove		 = tpm_ibmvtpm_remove,
+	.हटाओ		 = tpm_ibmvtpm_हटाओ,
 	.get_desired_dma = tpm_ibmvtpm_get_desired_dma,
 	.name		 = tpm_ibmvtpm_driver_name,
 	.pm		 = &tpm_ibmvtpm_pm_ops,
-};
+पूर्ण;
 
 /**
  * ibmvtpm_module_init - Initialize ibm vtpm module.
@@ -730,21 +731,21 @@ static struct vio_driver ibmvtpm_driver = {
  *	0 on success.
  *	Non-zero on failure.
  */
-static int __init ibmvtpm_module_init(void)
-{
-	return vio_register_driver(&ibmvtpm_driver);
-}
+अटल पूर्णांक __init ibmvtpm_module_init(व्योम)
+अणु
+	वापस vio_रेजिस्टर_driver(&ibmvtpm_driver);
+पूर्ण
 
 /**
- * ibmvtpm_module_exit - Tear down ibm vtpm module.
+ * ibmvtpm_module_निकास - Tear करोwn ibm vtpm module.
  */
-static void __exit ibmvtpm_module_exit(void)
-{
-	vio_unregister_driver(&ibmvtpm_driver);
-}
+अटल व्योम __निकास ibmvtpm_module_निकास(व्योम)
+अणु
+	vio_unरेजिस्टर_driver(&ibmvtpm_driver);
+पूर्ण
 
 module_init(ibmvtpm_module_init);
-module_exit(ibmvtpm_module_exit);
+module_निकास(ibmvtpm_module_निकास);
 
 MODULE_AUTHOR("adlai@us.ibm.com");
 MODULE_DESCRIPTION("IBM vTPM Driver");

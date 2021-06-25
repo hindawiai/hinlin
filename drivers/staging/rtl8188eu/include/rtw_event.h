@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef _RTW_EVENT_H_
-#define _RTW_EVENT_H_
+#अगर_अघोषित _RTW_EVENT_H_
+#घोषणा _RTW_EVENT_H_
 
-#include <osdep_service.h>
+#समावेश <osdep_service.h>
 
-#include <wlan_bssdef.h>
-#include <linux/mutex.h>
-#include <linux/sem.h>
+#समावेश <wlan_bssdef.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sem.h>
 
 /*
  * Used to report a bss has been scanned
  */
-struct survey_event	{
-	struct wlan_bssid_ex bss;
-};
+काष्ठा survey_event	अणु
+	काष्ठा wlan_bssid_ex bss;
+पूर्ण;
 
 /*
- * Used to report that the requested site survey has been done.
+ * Used to report that the requested site survey has been करोne.
  *
  * bss_cnt indicates the number of bss that has been reported.
  *
  *
  */
-struct surveydone_event {
-	unsigned int	bss_cnt;
+काष्ठा surveyकरोne_event अणु
+	अचिन्हित पूर्णांक	bss_cnt;
 
-};
+पूर्ण;
 
 /*
  * Used to report the link result of joinning the given bss
@@ -42,40 +43,40 @@ struct surveydone_event {
  * > 0: TID
  *
  */
-struct joinbss_event {
-	struct	wlan_network	network;
-};
+काष्ठा joinbss_event अणु
+	काष्ठा	wlan_network	network;
+पूर्ण;
 
 /*
  * Used to report a given STA has joinned the created BSS.
  * It is used in AP/Ad-HoC(M) mode.
  */
 
-struct stassoc_event {
-	unsigned char macaddr[6];
-	unsigned char rsvd[2];
-	int    cam_id;
-};
+काष्ठा stassoc_event अणु
+	अचिन्हित अक्षर macaddr[6];
+	अचिन्हित अक्षर rsvd[2];
+	पूर्णांक    cam_id;
+पूर्ण;
 
-struct stadel_event {
-	unsigned char macaddr[6];
-	unsigned char rsvd[2]; /* for reason */
-	int mac_id;
-};
+काष्ठा stadel_event अणु
+	अचिन्हित अक्षर macaddr[6];
+	अचिन्हित अक्षर rsvd[2]; /* क्रम reason */
+	पूर्णांक mac_id;
+पूर्ण;
 
-struct fwevent {
+काष्ठा fwevent अणु
 	u32	parmsize;
-	void (*event_callback)(struct adapter *dev, u8 *pbuf);
-};
+	व्योम (*event_callback)(काष्ठा adapter *dev, u8 *pbuf);
+पूर्ण;
 
-#define C2HEVENT_SZ			32
+#घोषणा C2HEVENT_SZ			32
 
-#define NETWORK_QUEUE_SZ	4
+#घोषणा NETWORK_QUEUE_SZ	4
 
-struct network_queue {
-	int	head;
-	int	tail;
-	struct wlan_bssid_ex networks[NETWORK_QUEUE_SZ];
-};
+काष्ठा network_queue अणु
+	पूर्णांक	head;
+	पूर्णांक	tail;
+	काष्ठा wlan_bssid_ex networks[NETWORK_QUEUE_SZ];
+पूर्ण;
 
-#endif /*  _WLANEVENT_H_ */
+#पूर्ण_अगर /*  _WLANEVENT_H_ */

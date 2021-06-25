@@ -1,156 +1,157 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	ds2490.c  USB to one wire bridge
  *
  * Copyright (c) 2004 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/mod_devicetable.h>
-#include <linux/usb.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/slab.h>
 
-#include <linux/w1.h>
+#समावेश <linux/w1.h>
 
 /* USB Standard */
-/* USB Control request vendor type */
-#define VENDOR				0x40
+/* USB Control request venकरोr type */
+#घोषणा VENDOR				0x40
 
 /* COMMAND TYPE CODES */
-#define CONTROL_CMD			0x00
-#define COMM_CMD			0x01
-#define MODE_CMD			0x02
+#घोषणा CONTROL_CMD			0x00
+#घोषणा COMM_CMD			0x01
+#घोषणा MODE_CMD			0x02
 
 /* CONTROL COMMAND CODES */
-#define CTL_RESET_DEVICE		0x0000
-#define CTL_START_EXE			0x0001
-#define CTL_RESUME_EXE			0x0002
-#define CTL_HALT_EXE_IDLE		0x0003
-#define CTL_HALT_EXE_DONE		0x0004
-#define CTL_FLUSH_COMM_CMDS		0x0007
-#define CTL_FLUSH_RCV_BUFFER		0x0008
-#define CTL_FLUSH_XMT_BUFFER		0x0009
-#define CTL_GET_COMM_CMDS		0x000A
+#घोषणा CTL_RESET_DEVICE		0x0000
+#घोषणा CTL_START_EXE			0x0001
+#घोषणा CTL_RESUME_EXE			0x0002
+#घोषणा CTL_HALT_EXE_IDLE		0x0003
+#घोषणा CTL_HALT_EXE_DONE		0x0004
+#घोषणा CTL_FLUSH_COMM_CMDS		0x0007
+#घोषणा CTL_FLUSH_RCV_BUFFER		0x0008
+#घोषणा CTL_FLUSH_XMT_BUFFER		0x0009
+#घोषणा CTL_GET_COMM_CMDS		0x000A
 
 /* MODE COMMAND CODES */
-#define MOD_PULSE_EN			0x0000
-#define MOD_SPEED_CHANGE_EN		0x0001
-#define MOD_1WIRE_SPEED			0x0002
-#define MOD_STRONG_PU_DURATION		0x0003
-#define MOD_PULLDOWN_SLEWRATE		0x0004
-#define MOD_PROG_PULSE_DURATION		0x0005
-#define MOD_WRITE1_LOWTIME		0x0006
-#define MOD_DSOW0_TREC			0x0007
+#घोषणा MOD_PULSE_EN			0x0000
+#घोषणा MOD_SPEED_CHANGE_EN		0x0001
+#घोषणा MOD_1WIRE_SPEED			0x0002
+#घोषणा MOD_STRONG_PU_DURATION		0x0003
+#घोषणा MOD_PULLDOWN_SLEWRATE		0x0004
+#घोषणा MOD_PROG_PULSE_DURATION		0x0005
+#घोषणा MOD_WRITE1_LOWTIME		0x0006
+#घोषणा MOD_DSOW0_TREC			0x0007
 
 /* COMMUNICATION COMMAND CODES */
-#define COMM_ERROR_ESCAPE		0x0601
-#define COMM_SET_DURATION		0x0012
-#define COMM_BIT_IO			0x0020
-#define COMM_PULSE			0x0030
-#define COMM_1_WIRE_RESET		0x0042
-#define COMM_BYTE_IO			0x0052
-#define COMM_MATCH_ACCESS		0x0064
-#define COMM_BLOCK_IO			0x0074
-#define COMM_READ_STRAIGHT		0x0080
-#define COMM_DO_RELEASE			0x6092
-#define COMM_SET_PATH			0x00A2
-#define COMM_WRITE_SRAM_PAGE		0x00B2
-#define COMM_WRITE_EPROM		0x00C4
-#define COMM_READ_CRC_PROT_PAGE		0x00D4
-#define COMM_READ_REDIRECT_PAGE_CRC	0x21E4
-#define COMM_SEARCH_ACCESS		0x00F4
+#घोषणा COMM_ERROR_ESCAPE		0x0601
+#घोषणा COMM_SET_DURATION		0x0012
+#घोषणा COMM_BIT_IO			0x0020
+#घोषणा COMM_PULSE			0x0030
+#घोषणा COMM_1_WIRE_RESET		0x0042
+#घोषणा COMM_BYTE_IO			0x0052
+#घोषणा COMM_MATCH_ACCESS		0x0064
+#घोषणा COMM_BLOCK_IO			0x0074
+#घोषणा COMM_READ_STRAIGHT		0x0080
+#घोषणा COMM_DO_RELEASE			0x6092
+#घोषणा COMM_SET_PATH			0x00A2
+#घोषणा COMM_WRITE_SRAM_PAGE		0x00B2
+#घोषणा COMM_WRITE_EPROM		0x00C4
+#घोषणा COMM_READ_CRC_PROT_PAGE		0x00D4
+#घोषणा COMM_READ_REसूचीECT_PAGE_CRC	0x21E4
+#घोषणा COMM_SEARCH_ACCESS		0x00F4
 
 /* Communication command bits */
-#define COMM_TYPE			0x0008
-#define COMM_SE				0x0008
-#define COMM_D				0x0008
-#define COMM_Z				0x0008
-#define COMM_CH				0x0008
-#define COMM_SM				0x0008
-#define COMM_R				0x0008
-#define COMM_IM				0x0001
+#घोषणा COMM_TYPE			0x0008
+#घोषणा COMM_SE				0x0008
+#घोषणा COMM_D				0x0008
+#घोषणा COMM_Z				0x0008
+#घोषणा COMM_CH				0x0008
+#घोषणा COMM_SM				0x0008
+#घोषणा COMM_R				0x0008
+#घोषणा COMM_IM				0x0001
 
-#define COMM_PS				0x4000
-#define COMM_PST			0x4000
-#define COMM_CIB			0x4000
-#define COMM_RTS			0x4000
-#define COMM_DT				0x2000
-#define COMM_SPU			0x1000
-#define COMM_F				0x0800
-#define COMM_NTF			0x0400
-#define COMM_ICP			0x0200
-#define COMM_RST			0x0100
+#घोषणा COMM_PS				0x4000
+#घोषणा COMM_PST			0x4000
+#घोषणा COMM_CIB			0x4000
+#घोषणा COMM_RTS			0x4000
+#घोषणा COMM_DT				0x2000
+#घोषणा COMM_SPU			0x1000
+#घोषणा COMM_F				0x0800
+#घोषणा COMM_NTF			0x0400
+#घोषणा COMM_ICP			0x0200
+#घोषणा COMM_RST			0x0100
 
-#define PULSE_PROG			0x01
-#define PULSE_SPUE			0x02
+#घोषणा PULSE_PROG			0x01
+#घोषणा PULSE_SPUE			0x02
 
-#define BRANCH_MAIN			0xCC
-#define BRANCH_AUX			0x33
+#घोषणा BRANCH_MAIN			0xCC
+#घोषणा BRANCH_AUX			0x33
 
 /* Status flags */
-#define ST_SPUA				0x01  /* Strong Pull-up is active */
-#define ST_PRGA				0x02  /* 12V programming pulse is being generated */
-#define ST_12VP				0x04  /* external 12V programming voltage is present */
-#define ST_PMOD				0x08  /* DS2490 powered from USB and external sources */
-#define ST_HALT				0x10  /* DS2490 is currently halted */
-#define ST_IDLE				0x20  /* DS2490 is currently idle */
-#define ST_EPOF				0x80
+#घोषणा ST_SPUA				0x01  /* Strong Pull-up is active */
+#घोषणा ST_PRGA				0x02  /* 12V programming pulse is being generated */
+#घोषणा ST_12VP				0x04  /* बाह्यal 12V programming voltage is present */
+#घोषणा ST_PMOD				0x08  /* DS2490 घातered from USB and बाह्यal sources */
+#घोषणा ST_HALT				0x10  /* DS2490 is currently halted */
+#घोषणा ST_IDLE				0x20  /* DS2490 is currently idle */
+#घोषणा ST_EPOF				0x80
 /* Status transfer size, 16 bytes status, 16 byte result flags */
-#define ST_SIZE				0x20
+#घोषणा ST_SIZE				0x20
 
 /* Result Register flags */
-#define RR_DETECT			0xA5 /* New device detected */
-#define RR_NRS				0x01 /* Reset no presence or ... */
-#define RR_SH				0x02 /* short on reset or set path */
-#define RR_APP				0x04 /* alarming presence on reset */
-#define RR_VPP				0x08 /* 12V expected not seen */
-#define RR_CMP				0x10 /* compare error */
-#define RR_CRC				0x20 /* CRC error detected */
-#define RR_RDP				0x40 /* redirected page */
-#define RR_EOS				0x80 /* end of search error */
+#घोषणा RR_DETECT			0xA5 /* New device detected */
+#घोषणा RR_NRS				0x01 /* Reset no presence or ... */
+#घोषणा RR_SH				0x02 /* लघु on reset or set path */
+#घोषणा RR_APP				0x04 /* alarming presence on reset */
+#घोषणा RR_VPP				0x08 /* 12V expected not seen */
+#घोषणा RR_CMP				0x10 /* compare error */
+#घोषणा RR_CRC				0x20 /* CRC error detected */
+#घोषणा RR_RDP				0x40 /* redirected page */
+#घोषणा RR_EOS				0x80 /* end of search error */
 
-#define SPEED_NORMAL			0x00
-#define SPEED_FLEXIBLE			0x01
-#define SPEED_OVERDRIVE			0x02
+#घोषणा SPEED_NORMAL			0x00
+#घोषणा SPEED_FLEXIBLE			0x01
+#घोषणा SPEED_OVERDRIVE			0x02
 
-#define NUM_EP				4
-#define EP_CONTROL			0
-#define EP_STATUS			1
-#define EP_DATA_OUT			2
-#define EP_DATA_IN			3
+#घोषणा NUM_EP				4
+#घोषणा EP_CONTROL			0
+#घोषणा EP_STATUS			1
+#घोषणा EP_DATA_OUT			2
+#घोषणा EP_DATA_IN			3
 
-struct ds_device {
-	struct list_head	ds_entry;
+काष्ठा ds_device अणु
+	काष्ठा list_head	ds_entry;
 
-	struct usb_device	*udev;
-	struct usb_interface	*intf;
+	काष्ठा usb_device	*udev;
+	काष्ठा usb_पूर्णांकerface	*पूर्णांकf;
 
-	int			ep[NUM_EP];
+	पूर्णांक			ep[NUM_EP];
 
 	/* Strong PullUp
-	 * 0: pullup not active, else duration in milliseconds
+	 * 0: pullup not active, अन्यथा duration in milliseconds
 	 */
-	int			spu_sleep;
-	/* spu_bit contains COMM_SPU or 0 depending on if the strong pullup
-	 * should be active or not for writes.
+	पूर्णांक			spu_sleep;
+	/* spu_bit contains COMM_SPU or 0 depending on अगर the strong pullup
+	 * should be active or not क्रम ग_लिखोs.
 	 */
 	u16			spu_bit;
 
 	u8			st_buf[ST_SIZE];
 	u8			byte_buf;
 
-	struct w1_bus_master	master;
-};
+	काष्ठा w1_bus_master	master;
+पूर्ण;
 
-struct ds_status {
+काष्ठा ds_status अणु
 	u8			enable;
 	u8			speed;
 	u8			pullup_dur;
 	u8			ppuls_dur;
-	u8			pulldown_slew;
-	u8			write1_time;
-	u8			write0_time;
+	u8			pullकरोwn_slew;
+	u8			ग_लिखो1_समय;
+	u8			ग_लिखो0_समय;
 	u8			reserved0;
 	u8			status;
 	u8			command0;
@@ -160,607 +161,607 @@ struct ds_status {
 	u8			data_in_buffer_status;
 	u8			reserved1;
 	u8			reserved2;
-};
+पूर्ण;
 
-static LIST_HEAD(ds_devices);
-static DEFINE_MUTEX(ds_mutex);
+अटल LIST_HEAD(ds_devices);
+अटल DEFINE_MUTEX(ds_mutex);
 
-static int ds_send_control_cmd(struct ds_device *dev, u16 value, u16 index)
-{
-	int err;
+अटल पूर्णांक ds_send_control_cmd(काष्ठा ds_device *dev, u16 value, u16 index)
+अणु
+	पूर्णांक err;
 
 	err = usb_control_msg(dev->udev, usb_sndctrlpipe(dev->udev, dev->ep[EP_CONTROL]),
-			CONTROL_CMD, VENDOR, value, index, NULL, 0, 1000);
-	if (err < 0) {
+			CONTROL_CMD, VENDOR, value, index, शून्य, 0, 1000);
+	अगर (err < 0) अणु
 		pr_err("Failed to send command control message %x.%x: err=%d.\n",
 				value, index, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ds_send_control_mode(struct ds_device *dev, u16 value, u16 index)
-{
-	int err;
+अटल पूर्णांक ds_send_control_mode(काष्ठा ds_device *dev, u16 value, u16 index)
+अणु
+	पूर्णांक err;
 
 	err = usb_control_msg(dev->udev, usb_sndctrlpipe(dev->udev, dev->ep[EP_CONTROL]),
-			MODE_CMD, VENDOR, value, index, NULL, 0, 1000);
-	if (err < 0) {
+			MODE_CMD, VENDOR, value, index, शून्य, 0, 1000);
+	अगर (err < 0) अणु
 		pr_err("Failed to send mode control message %x.%x: err=%d.\n",
 				value, index, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ds_send_control(struct ds_device *dev, u16 value, u16 index)
-{
-	int err;
+अटल पूर्णांक ds_send_control(काष्ठा ds_device *dev, u16 value, u16 index)
+अणु
+	पूर्णांक err;
 
 	err = usb_control_msg(dev->udev, usb_sndctrlpipe(dev->udev, dev->ep[EP_CONTROL]),
-			COMM_CMD, VENDOR, value, index, NULL, 0, 1000);
-	if (err < 0) {
+			COMM_CMD, VENDOR, value, index, शून्य, 0, 1000);
+	अगर (err < 0) अणु
 		pr_err("Failed to send control message %x.%x: err=%d.\n",
 				value, index, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline void ds_print_msg(unsigned char *buf, unsigned char *str, int off)
-{
+अटल अंतरभूत व्योम ds_prपूर्णांक_msg(अचिन्हित अक्षर *buf, अचिन्हित अक्षर *str, पूर्णांक off)
+अणु
 	pr_info("%45s: %8x\n", str, buf[off]);
-}
+पूर्ण
 
-static void ds_dump_status(struct ds_device *dev, unsigned char *buf, int count)
-{
-	int i;
+अटल व्योम ds_dump_status(काष्ठा ds_device *dev, अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
 	pr_info("0x%x: count=%d, status: ", dev->ep[EP_STATUS], count);
-	for (i = 0; i < count; ++i)
+	क्रम (i = 0; i < count; ++i)
 		pr_info("%02x ", buf[i]);
 	pr_info("\n");
 
-	if (count >= 16) {
-		ds_print_msg(buf, "enable flag", 0);
-		ds_print_msg(buf, "1-wire speed", 1);
-		ds_print_msg(buf, "strong pullup duration", 2);
-		ds_print_msg(buf, "programming pulse duration", 3);
-		ds_print_msg(buf, "pulldown slew rate control", 4);
-		ds_print_msg(buf, "write-1 low time", 5);
-		ds_print_msg(buf, "data sample offset/write-0 recovery time",
+	अगर (count >= 16) अणु
+		ds_prपूर्णांक_msg(buf, "enable flag", 0);
+		ds_prपूर्णांक_msg(buf, "1-wire speed", 1);
+		ds_prपूर्णांक_msg(buf, "strong pullup duration", 2);
+		ds_prपूर्णांक_msg(buf, "programming pulse duration", 3);
+		ds_prपूर्णांक_msg(buf, "pulldown slew rate control", 4);
+		ds_prपूर्णांक_msg(buf, "write-1 low time", 5);
+		ds_prपूर्णांक_msg(buf, "data sample offset/write-0 recovery time",
 			6);
-		ds_print_msg(buf, "reserved (test register)", 7);
-		ds_print_msg(buf, "device status flags", 8);
-		ds_print_msg(buf, "communication command byte 1", 9);
-		ds_print_msg(buf, "communication command byte 2", 10);
-		ds_print_msg(buf, "communication command buffer status", 11);
-		ds_print_msg(buf, "1-wire data output buffer status", 12);
-		ds_print_msg(buf, "1-wire data input buffer status", 13);
-		ds_print_msg(buf, "reserved", 14);
-		ds_print_msg(buf, "reserved", 15);
-	}
-	for (i = 16; i < count; ++i) {
-		if (buf[i] == RR_DETECT) {
-			ds_print_msg(buf, "new device detect", i);
-			continue;
-		}
-		ds_print_msg(buf, "Result Register Value: ", i);
-		if (buf[i] & RR_NRS)
+		ds_prपूर्णांक_msg(buf, "reserved (test register)", 7);
+		ds_prपूर्णांक_msg(buf, "device status flags", 8);
+		ds_prपूर्णांक_msg(buf, "communication command byte 1", 9);
+		ds_prपूर्णांक_msg(buf, "communication command byte 2", 10);
+		ds_prपूर्णांक_msg(buf, "communication command buffer status", 11);
+		ds_prपूर्णांक_msg(buf, "1-wire data output buffer status", 12);
+		ds_prपूर्णांक_msg(buf, "1-wire data input buffer status", 13);
+		ds_prपूर्णांक_msg(buf, "reserved", 14);
+		ds_prपूर्णांक_msg(buf, "reserved", 15);
+	पूर्ण
+	क्रम (i = 16; i < count; ++i) अणु
+		अगर (buf[i] == RR_DETECT) अणु
+			ds_prपूर्णांक_msg(buf, "new device detect", i);
+			जारी;
+		पूर्ण
+		ds_prपूर्णांक_msg(buf, "Result Register Value: ", i);
+		अगर (buf[i] & RR_NRS)
 			pr_info("NRS: Reset no presence or ...\n");
-		if (buf[i] & RR_SH)
+		अगर (buf[i] & RR_SH)
 			pr_info("SH: short on reset or set path\n");
-		if (buf[i] & RR_APP)
+		अगर (buf[i] & RR_APP)
 			pr_info("APP: alarming presence on reset\n");
-		if (buf[i] & RR_VPP)
+		अगर (buf[i] & RR_VPP)
 			pr_info("VPP: 12V expected not seen\n");
-		if (buf[i] & RR_CMP)
+		अगर (buf[i] & RR_CMP)
 			pr_info("CMP: compare error\n");
-		if (buf[i] & RR_CRC)
+		अगर (buf[i] & RR_CRC)
 			pr_info("CRC: CRC error detected\n");
-		if (buf[i] & RR_RDP)
+		अगर (buf[i] & RR_RDP)
 			pr_info("RDP: redirected page\n");
-		if (buf[i] & RR_EOS)
+		अगर (buf[i] & RR_EOS)
 			pr_info("EOS: end of search error\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ds_recv_status(struct ds_device *dev, struct ds_status *st,
+अटल पूर्णांक ds_recv_status(काष्ठा ds_device *dev, काष्ठा ds_status *st,
 			  bool dump)
-{
-	int count, err;
+अणु
+	पूर्णांक count, err;
 
-	if (st)
-		memset(st, 0, sizeof(*st));
+	अगर (st)
+		स_रखो(st, 0, माप(*st));
 
 	count = 0;
-	err = usb_interrupt_msg(dev->udev,
-				usb_rcvintpipe(dev->udev,
+	err = usb_पूर्णांकerrupt_msg(dev->udev,
+				usb_rcvपूर्णांकpipe(dev->udev,
 					       dev->ep[EP_STATUS]),
-				dev->st_buf, sizeof(dev->st_buf),
+				dev->st_buf, माप(dev->st_buf),
 				&count, 1000);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_err("Failed to read 1-wire data from 0x%x: err=%d.\n",
 		       dev->ep[EP_STATUS], err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (dump)
+	अगर (dump)
 		ds_dump_status(dev, dev->st_buf, count);
 
-	if (st && count >= sizeof(*st))
-		memcpy(st, dev->st_buf, sizeof(*st));
+	अगर (st && count >= माप(*st))
+		स_नकल(st, dev->st_buf, माप(*st));
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void ds_reset_device(struct ds_device *dev)
-{
+अटल व्योम ds_reset_device(काष्ठा ds_device *dev)
+अणु
 	ds_send_control_cmd(dev, CTL_RESET_DEVICE, 0);
-	/* Always allow strong pullup which allow individual writes to use
+	/* Always allow strong pullup which allow inभागidual ग_लिखोs to use
 	 * the strong pullup.
 	 */
-	if (ds_send_control_mode(dev, MOD_PULSE_EN, PULSE_SPUE))
+	अगर (ds_send_control_mode(dev, MOD_PULSE_EN, PULSE_SPUE))
 		pr_err("ds_reset_device: Error allowing strong pullup\n");
-	/* Chip strong pullup time was cleared. */
-	if (dev->spu_sleep) {
+	/* Chip strong pullup समय was cleared. */
+	अगर (dev->spu_sleep) अणु
 		/* lower 4 bits are 0, see ds_set_pullup */
 		u8 del = dev->spu_sleep>>4;
-		if (ds_send_control(dev, COMM_SET_DURATION | COMM_IM, del))
+		अगर (ds_send_control(dev, COMM_SET_DURATION | COMM_IM, del))
 			pr_err("ds_reset_device: Error setting duration\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ds_recv_data(struct ds_device *dev, unsigned char *buf, int size)
-{
-	int count, err;
+अटल पूर्णांक ds_recv_data(काष्ठा ds_device *dev, अचिन्हित अक्षर *buf, पूर्णांक size)
+अणु
+	पूर्णांक count, err;
 
 	/* Careful on size.  If size is less than what is available in
 	 * the input buffer, the device fails the bulk transfer and
-	 * clears the input buffer.  It could read the maximum size of
-	 * the data buffer, but then do you return the first, last, or
-	 * some set of the middle size bytes?  As long as the rest of
-	 * the code is correct there will be size bytes waiting.  A
-	 * call to ds_wait_status will wait until the device is idle
+	 * clears the input buffer.  It could पढ़ो the maximum size of
+	 * the data buffer, but then करो you वापस the first, last, or
+	 * some set of the middle size bytes?  As दीर्घ as the rest of
+	 * the code is correct there will be size bytes रुकोing.  A
+	 * call to ds_रुको_status will रुको until the device is idle
 	 * and any data to be received would have been available.
 	 */
 	count = 0;
 	err = usb_bulk_msg(dev->udev, usb_rcvbulkpipe(dev->udev, dev->ep[EP_DATA_IN]),
 				buf, size, &count, 1000);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_info("Clearing ep0x%x.\n", dev->ep[EP_DATA_IN]);
 		usb_clear_halt(dev->udev, usb_rcvbulkpipe(dev->udev, dev->ep[EP_DATA_IN]));
-		ds_recv_status(dev, NULL, true);
-		return err;
-	}
+		ds_recv_status(dev, शून्य, true);
+		वापस err;
+	पूर्ण
 
-#if 0
-	{
-		int i;
+#अगर 0
+	अणु
+		पूर्णांक i;
 
-		printk("%s: count=%d: ", __func__, count);
-		for (i = 0; i < count; ++i)
-			printk("%02x ", buf[i]);
-		printk("\n");
-	}
-#endif
-	return count;
-}
+		prपूर्णांकk("%s: count=%d: ", __func__, count);
+		क्रम (i = 0; i < count; ++i)
+			prपूर्णांकk("%02x ", buf[i]);
+		prपूर्णांकk("\n");
+	पूर्ण
+#पूर्ण_अगर
+	वापस count;
+पूर्ण
 
-static int ds_send_data(struct ds_device *dev, unsigned char *buf, int len)
-{
-	int count, err;
+अटल पूर्णांक ds_send_data(काष्ठा ds_device *dev, अचिन्हित अक्षर *buf, पूर्णांक len)
+अणु
+	पूर्णांक count, err;
 
 	count = 0;
 	err = usb_bulk_msg(dev->udev, usb_sndbulkpipe(dev->udev, dev->ep[EP_DATA_OUT]), buf, len, &count, 1000);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_err("Failed to write 1-wire data to ep0x%x: "
 			"err=%d.\n", dev->ep[EP_DATA_OUT], err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#if 0
+#अगर 0
 
-int ds_stop_pulse(struct ds_device *dev, int limit)
-{
-	struct ds_status st;
-	int count = 0, err = 0;
+पूर्णांक ds_stop_pulse(काष्ठा ds_device *dev, पूर्णांक limit)
+अणु
+	काष्ठा ds_status st;
+	पूर्णांक count = 0, err = 0;
 
-	do {
+	करो अणु
 		err = ds_send_control(dev, CTL_HALT_EXE_IDLE, 0);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 		err = ds_send_control(dev, CTL_RESUME_EXE, 0);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 		err = ds_recv_status(dev, &st, false);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
-		if ((st.status & ST_SPUA) == 0) {
+		अगर ((st.status & ST_SPUA) == 0) अणु
 			err = ds_send_control_mode(dev, MOD_PULSE_EN, 0);
-			if (err)
-				break;
-		}
-	} while (++count < limit);
+			अगर (err)
+				अवरोध;
+		पूर्ण
+	पूर्ण जबतक (++count < limit);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ds_detect(struct ds_device *dev, struct ds_status *st)
-{
-	int err;
+पूर्णांक ds_detect(काष्ठा ds_device *dev, काष्ठा ds_status *st)
+अणु
+	पूर्णांक err;
 
 	err = ds_send_control_cmd(dev, CTL_RESET_DEVICE, 0);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = ds_send_control(dev, COMM_SET_DURATION | COMM_IM, 0);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = ds_send_control(dev, COMM_SET_DURATION | COMM_IM | COMM_TYPE, 0x40);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = ds_send_control_mode(dev, MOD_PULSE_EN, PULSE_PROG);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = ds_dump_status(dev, st);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#endif  /*  0  */
+#पूर्ण_अगर  /*  0  */
 
-static int ds_wait_status(struct ds_device *dev, struct ds_status *st)
-{
-	int err, count = 0;
+अटल पूर्णांक ds_रुको_status(काष्ठा ds_device *dev, काष्ठा ds_status *st)
+अणु
+	पूर्णांक err, count = 0;
 
-	do {
+	करो अणु
 		st->status = 0;
 		err = ds_recv_status(dev, st, false);
-#if 0
-		if (err >= 0) {
-			int i;
-			printk("0x%x: count=%d, status: ", dev->ep[EP_STATUS], err);
-			for (i = 0; i < err; ++i)
-				printk("%02x ", dev->st_buf[i]);
-			printk("\n");
-		}
-#endif
-	} while (!(st->status & ST_IDLE) && !(err < 0) && ++count < 100);
+#अगर 0
+		अगर (err >= 0) अणु
+			पूर्णांक i;
+			prपूर्णांकk("0x%x: count=%d, status: ", dev->ep[EP_STATUS], err);
+			क्रम (i = 0; i < err; ++i)
+				prपूर्णांकk("%02x ", dev->st_buf[i]);
+			prपूर्णांकk("\n");
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण जबतक (!(st->status & ST_IDLE) && !(err < 0) && ++count < 100);
 
-	if (err >= 16 && st->status & ST_EPOF) {
+	अगर (err >= 16 && st->status & ST_EPOF) अणु
 		pr_info("Resetting device after ST_EPOF.\n");
 		ds_reset_device(dev);
 		/* Always dump the device status. */
 		count = 101;
-	}
+	पूर्ण
 
-	/* Dump the status for errors or if there is extended return data.
+	/* Dump the status क्रम errors or अगर there is extended वापस data.
 	 * The extended status includes new device detection (maybe someone
-	 * can do something with it).
+	 * can करो something with it).
 	 */
-	if (err > 16 || count >= 100 || err < 0)
+	अगर (err > 16 || count >= 100 || err < 0)
 		ds_dump_status(dev, dev->st_buf, err);
 
-	/* Extended data isn't an error.  Well, a short is, but the dump
-	 * would have already told the user that and we can't do anything
+	/* Extended data isn't an error.  Well, a लघु is, but the dump
+	 * would have alपढ़ोy told the user that and we can't करो anything
 	 * about it in software anyway.
 	 */
-	if (count >= 100 || err < 0)
-		return -1;
-	else
-		return 0;
-}
+	अगर (count >= 100 || err < 0)
+		वापस -1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int ds_reset(struct ds_device *dev)
-{
-	int err;
+अटल पूर्णांक ds_reset(काष्ठा ds_device *dev)
+अणु
+	पूर्णांक err;
 
-	/* Other potentionally interesting flags for reset.
+	/* Other potentionally पूर्णांकeresting flags क्रम reset.
 	 *
-	 * COMM_NTF: Return result register feedback.  This could be used to
-	 * detect some conditions such as short, alarming presence, or
-	 * detect if a new device was detected.
+	 * COMM_NTF: Return result रेजिस्टर feedback.  This could be used to
+	 * detect some conditions such as लघु, alarming presence, or
+	 * detect अगर a new device was detected.
 	 *
 	 * COMM_SE which allows SPEED_NORMAL, SPEED_FLEXIBLE, SPEED_OVERDRIVE:
 	 * Select the data transfer rate.
 	 */
 	err = ds_send_control(dev, COMM_1_WIRE_RESET | COMM_IM, SPEED_NORMAL);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if 0
-static int ds_set_speed(struct ds_device *dev, int speed)
-{
-	int err;
+#अगर 0
+अटल पूर्णांक ds_set_speed(काष्ठा ds_device *dev, पूर्णांक speed)
+अणु
+	पूर्णांक err;
 
-	if (speed != SPEED_NORMAL && speed != SPEED_FLEXIBLE && speed != SPEED_OVERDRIVE)
-		return -EINVAL;
+	अगर (speed != SPEED_NORMAL && speed != SPEED_FLEXIBLE && speed != SPEED_OVERDRIVE)
+		वापस -EINVAL;
 
-	if (speed != SPEED_OVERDRIVE)
+	अगर (speed != SPEED_OVERDRIVE)
 		speed = SPEED_FLEXIBLE;
 
 	speed &= 0xff;
 
 	err = ds_send_control_mode(dev, MOD_1WIRE_SPEED, speed);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return err;
-}
-#endif  /*  0  */
+	वापस err;
+पूर्ण
+#पूर्ण_अगर  /*  0  */
 
-static int ds_set_pullup(struct ds_device *dev, int delay)
-{
-	int err = 0;
+अटल पूर्णांक ds_set_pullup(काष्ठा ds_device *dev, पूर्णांक delay)
+अणु
+	पूर्णांक err = 0;
 	u8 del = 1 + (u8)(delay >> 4);
 	/* Just storing delay would not get the trunication and roundup. */
-	int ms = del<<4;
+	पूर्णांक ms = del<<4;
 
-	/* Enable spu_bit if a delay is set. */
+	/* Enable spu_bit अगर a delay is set. */
 	dev->spu_bit = delay ? COMM_SPU : 0;
-	/* If delay is zero, it has already been disabled, if the time is
+	/* If delay is zero, it has alपढ़ोy been disabled, अगर the समय is
 	 * the same as the hardware was last programmed to, there is also
-	 * nothing more to do.  Compare with the recalculated value ms
-	 * rather than del or delay which can have a different value.
+	 * nothing more to करो.  Compare with the recalculated value ms
+	 * rather than del or delay which can have a dअगरferent value.
 	 */
-	if (delay == 0 || ms == dev->spu_sleep)
-		return err;
+	अगर (delay == 0 || ms == dev->spu_sleep)
+		वापस err;
 
 	err = ds_send_control(dev, COMM_SET_DURATION | COMM_IM, del);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	dev->spu_sleep = ms;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ds_touch_bit(struct ds_device *dev, u8 bit, u8 *tbit)
-{
-	int err;
-	struct ds_status st;
+अटल पूर्णांक ds_touch_bit(काष्ठा ds_device *dev, u8 bit, u8 *tbit)
+अणु
+	पूर्णांक err;
+	काष्ठा ds_status st;
 
 	err = ds_send_control(dev, COMM_BIT_IO | COMM_IM | (bit ? COMM_D : 0),
 		0);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	ds_wait_status(dev, &st);
+	ds_रुको_status(dev, &st);
 
-	err = ds_recv_data(dev, tbit, sizeof(*tbit));
-	if (err < 0)
-		return err;
+	err = ds_recv_data(dev, tbit, माप(*tbit));
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if 0
-static int ds_write_bit(struct ds_device *dev, u8 bit)
-{
-	int err;
-	struct ds_status st;
+#अगर 0
+अटल पूर्णांक ds_ग_लिखो_bit(काष्ठा ds_device *dev, u8 bit)
+अणु
+	पूर्णांक err;
+	काष्ठा ds_status st;
 
-	/* Set COMM_ICP to write without a readback.  Note, this will
-	 * produce one time slot, a down followed by an up with COMM_D
+	/* Set COMM_ICP to ग_लिखो without a पढ़ोback.  Note, this will
+	 * produce one समय slot, a करोwn followed by an up with COMM_D
 	 * only determing the timing.
 	 */
 	err = ds_send_control(dev, COMM_BIT_IO | COMM_IM | COMM_ICP |
 		(bit ? COMM_D : 0), 0);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	ds_wait_status(dev, &st);
+	ds_रुको_status(dev, &st);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int ds_write_byte(struct ds_device *dev, u8 byte)
-{
-	int err;
-	struct ds_status st;
+अटल पूर्णांक ds_ग_लिखो_byte(काष्ठा ds_device *dev, u8 byte)
+अणु
+	पूर्णांक err;
+	काष्ठा ds_status st;
 
 	err = ds_send_control(dev, COMM_BYTE_IO | COMM_IM | dev->spu_bit, byte);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (dev->spu_bit)
+	अगर (dev->spu_bit)
 		msleep(dev->spu_sleep);
 
-	err = ds_wait_status(dev, &st);
-	if (err)
-		return err;
+	err = ds_रुको_status(dev, &st);
+	अगर (err)
+		वापस err;
 
 	err = ds_recv_data(dev, &dev->byte_buf, 1);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return !(byte == dev->byte_buf);
-}
+	वापस !(byte == dev->byte_buf);
+पूर्ण
 
-static int ds_read_byte(struct ds_device *dev, u8 *byte)
-{
-	int err;
-	struct ds_status st;
+अटल पूर्णांक ds_पढ़ो_byte(काष्ठा ds_device *dev, u8 *byte)
+अणु
+	पूर्णांक err;
+	काष्ठा ds_status st;
 
 	err = ds_send_control(dev, COMM_BYTE_IO | COMM_IM, 0xff);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	ds_wait_status(dev, &st);
+	ds_रुको_status(dev, &st);
 
-	err = ds_recv_data(dev, byte, sizeof(*byte));
-	if (err < 0)
-		return err;
+	err = ds_recv_data(dev, byte, माप(*byte));
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ds_read_block(struct ds_device *dev, u8 *buf, int len)
-{
-	struct ds_status st;
-	int err;
+अटल पूर्णांक ds_पढ़ो_block(काष्ठा ds_device *dev, u8 *buf, पूर्णांक len)
+अणु
+	काष्ठा ds_status st;
+	पूर्णांक err;
 
-	if (len > 64*1024)
-		return -E2BIG;
+	अगर (len > 64*1024)
+		वापस -E2BIG;
 
-	memset(buf, 0xFF, len);
+	स_रखो(buf, 0xFF, len);
 
 	err = ds_send_data(dev, buf, len);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = ds_send_control(dev, COMM_BLOCK_IO | COMM_IM, len);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	ds_wait_status(dev, &st);
+	ds_रुको_status(dev, &st);
 
-	memset(buf, 0x00, len);
+	स_रखो(buf, 0x00, len);
 	err = ds_recv_data(dev, buf, len);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ds_write_block(struct ds_device *dev, u8 *buf, int len)
-{
-	int err;
-	struct ds_status st;
+अटल पूर्णांक ds_ग_लिखो_block(काष्ठा ds_device *dev, u8 *buf, पूर्णांक len)
+अणु
+	पूर्णांक err;
+	काष्ठा ds_status st;
 
 	err = ds_send_data(dev, buf, len);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = ds_send_control(dev, COMM_BLOCK_IO | COMM_IM | dev->spu_bit, len);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (dev->spu_bit)
+	अगर (dev->spu_bit)
 		msleep(dev->spu_sleep);
 
-	ds_wait_status(dev, &st);
+	ds_रुको_status(dev, &st);
 
 	err = ds_recv_data(dev, buf, len);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return !(err == len);
-}
+	वापस !(err == len);
+पूर्ण
 
-static void ds9490r_search(void *data, struct w1_master *master,
+अटल व्योम ds9490r_search(व्योम *data, काष्ठा w1_master *master,
 	u8 search_type, w1_slave_found_callback callback)
-{
-	/* When starting with an existing id, the first id returned will
-	 * be that device (if it is still on the bus most likely).
+अणु
+	/* When starting with an existing id, the first id वापसed will
+	 * be that device (अगर it is still on the bus most likely).
 	 *
 	 * If the number of devices found is less than or equal to the
-	 * search_limit, that number of IDs will be returned.  If there are
-	 * more, search_limit IDs will be returned followed by a non-zero
+	 * search_limit, that number of IDs will be वापसed.  If there are
+	 * more, search_limit IDs will be वापसed followed by a non-zero
 	 * discrepency value.
 	 */
-	struct ds_device *dev = data;
-	int err;
+	काष्ठा ds_device *dev = data;
+	पूर्णांक err;
 	u16 value, index;
-	struct ds_status st;
-	int search_limit;
-	int found = 0;
-	int i;
+	काष्ठा ds_status st;
+	पूर्णांक search_limit;
+	पूर्णांक found = 0;
+	पूर्णांक i;
 
-	/* DS18b20 spec, 13.16 ms per device, 75 per second, sleep for
-	 * discovering 8 devices (1 bulk transfer and 1/2 FIFO size) at a time.
+	/* DS18b20 spec, 13.16 ms per device, 75 per second, sleep क्रम
+	 * discovering 8 devices (1 bulk transfer and 1/2 FIFO size) at a समय.
 	 */
-	const unsigned long jtime = msecs_to_jiffies(1000*8/75);
-	/* FIFO 128 bytes, bulk packet size 64, read a multiple of the
+	स्थिर अचिन्हित दीर्घ jसमय = msecs_to_jअगरfies(1000*8/75);
+	/* FIFO 128 bytes, bulk packet size 64, पढ़ो a multiple of the
 	 * packet size.
 	 */
-	const size_t bufsize = 2 * 64;
+	स्थिर माप_प्रकार bufsize = 2 * 64;
 	u64 *buf, *found_ids;
 
-	buf = kmalloc(bufsize, GFP_KERNEL);
-	if (!buf)
-		return;
+	buf = kदो_स्मृति(bufsize, GFP_KERNEL);
+	अगर (!buf)
+		वापस;
 
 	/*
 	 * We are holding the bus mutex during the scan, but adding devices via the
 	 * callback needs the bus to be unlocked. So we queue up found ids here.
 	 */
-	found_ids = kmalloc_array(master->max_slave_count, sizeof(u64), GFP_KERNEL);
-	if (!found_ids) {
-		kfree(buf);
-		return;
-	}
+	found_ids = kदो_स्मृति_array(master->max_slave_count, माप(u64), GFP_KERNEL);
+	अगर (!found_ids) अणु
+		kमुक्त(buf);
+		वापस;
+	पूर्ण
 
 	mutex_lock(&master->bus_mutex);
 
 	/* address to start searching at */
-	if (ds_send_data(dev, (u8 *)&master->search_id, 8) < 0)
-		goto search_out;
+	अगर (ds_send_data(dev, (u8 *)&master->search_id, 8) < 0)
+		जाओ search_out;
 	master->search_id = 0;
 
 	value = COMM_SEARCH_ACCESS | COMM_IM | COMM_RST | COMM_SM | COMM_F |
 		COMM_RTS;
 	search_limit = master->max_slave_count;
-	if (search_limit > 255)
+	अगर (search_limit > 255)
 		search_limit = 0;
 	index = search_type | (search_limit << 8);
-	if (ds_send_control(dev, value, index) < 0)
-		goto search_out;
+	अगर (ds_send_control(dev, value, index) < 0)
+		जाओ search_out;
 
-	do {
-		schedule_timeout(jtime);
+	करो अणु
+		schedule_समयout(jसमय);
 
 		err = ds_recv_status(dev, &st, false);
-		if (err < 0 || err < sizeof(st))
-			break;
+		अगर (err < 0 || err < माप(st))
+			अवरोध;
 
-		if (st.data_in_buffer_status) {
-			/* Bulk in can receive partial ids, but when it does
+		अगर (st.data_in_buffer_status) अणु
+			/* Bulk in can receive partial ids, but when it करोes
 			 * they fail crc and will be discarded anyway.
 			 * That has only been seen when status in buffer
-			 * is 0 and bulk is read anyway, so don't read
-			 * bulk without first checking if status says there
-			 * is data to read.
+			 * is 0 and bulk is पढ़ो anyway, so करोn't पढ़ो
+			 * bulk without first checking अगर status says there
+			 * is data to पढ़ो.
 			 */
 			err = ds_recv_data(dev, (u8 *)buf, bufsize);
-			if (err < 0)
-				break;
-			for (i = 0; i < err/8; ++i) {
+			अगर (err < 0)
+				अवरोध;
+			क्रम (i = 0; i < err/8; ++i) अणु
 				found_ids[found++] = buf[i];
-				/* can't know if there will be a discrepancy
+				/* can't know अगर there will be a discrepancy
 				 * value after until the next id */
-				if (found == search_limit) {
+				अगर (found == search_limit) अणु
 					master->search_id = buf[i];
-					break;
-				}
-			}
-		}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (test_bit(W1_ABORT_SEARCH, &master->flags))
-			break;
-	} while (!(st.status & (ST_IDLE | ST_HALT)));
+		अगर (test_bit(W1_ABORT_SEARCH, &master->flags))
+			अवरोध;
+	पूर्ण जबतक (!(st.status & (ST_IDLE | ST_HALT)));
 
-	/* only continue the search if some weren't found */
-	if (found <= search_limit) {
+	/* only जारी the search अगर some weren't found */
+	अगर (found <= search_limit) अणु
 		master->search_id = 0;
-	} else if (!test_bit(W1_WARN_MAX_COUNT, &master->flags)) {
+	पूर्ण अन्यथा अगर (!test_bit(W1_WARN_MAX_COUNT, &master->flags)) अणु
 		/* Only max_slave_count will be scanned in a search,
 		 * but it will start where it left off next search
-		 * until all ids are identified and then it will start
-		 * over.  A continued search will report the previous
+		 * until all ids are identअगरied and then it will start
+		 * over.  A जारीd search will report the previous
 		 * last id as the first id (provided it is still on the
 		 * bus).
 		 */
@@ -768,312 +769,312 @@ static void ds9490r_search(void *data, struct w1_master *master,
 			"will continue next search.\n", __func__,
 			master->max_slave_count);
 		set_bit(W1_WARN_MAX_COUNT, &master->flags);
-	}
+	पूर्ण
 
 search_out:
 	mutex_unlock(&master->bus_mutex);
-	kfree(buf);
+	kमुक्त(buf);
 
-	for (i = 0; i < found; i++) /* run callback for all queued up IDs */
+	क्रम (i = 0; i < found; i++) /* run callback क्रम all queued up IDs */
 		callback(master, found_ids[i]);
-	kfree(found_ids);
-}
+	kमुक्त(found_ids);
+पूर्ण
 
-#if 0
+#अगर 0
 /*
- * FIXME: if this disabled code is ever used in the future all ds_send_data()
+ * FIXME: अगर this disabled code is ever used in the future all ds_send_data()
  * calls must be changed to use a DMAable buffer.
  */
-static int ds_match_access(struct ds_device *dev, u64 init)
-{
-	int err;
-	struct ds_status st;
+अटल पूर्णांक ds_match_access(काष्ठा ds_device *dev, u64 init)
+अणु
+	पूर्णांक err;
+	काष्ठा ds_status st;
 
-	err = ds_send_data(dev, (unsigned char *)&init, sizeof(init));
-	if (err)
-		return err;
+	err = ds_send_data(dev, (अचिन्हित अक्षर *)&init, माप(init));
+	अगर (err)
+		वापस err;
 
-	ds_wait_status(dev, &st);
+	ds_रुको_status(dev, &st);
 
 	err = ds_send_control(dev, COMM_MATCH_ACCESS | COMM_IM | COMM_RST, 0x0055);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	ds_wait_status(dev, &st);
+	ds_रुको_status(dev, &st);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ds_set_path(struct ds_device *dev, u64 init)
-{
-	int err;
-	struct ds_status st;
+अटल पूर्णांक ds_set_path(काष्ठा ds_device *dev, u64 init)
+अणु
+	पूर्णांक err;
+	काष्ठा ds_status st;
 	u8 buf[9];
 
-	memcpy(buf, &init, 8);
+	स_नकल(buf, &init, 8);
 	buf[8] = BRANCH_MAIN;
 
-	err = ds_send_data(dev, buf, sizeof(buf));
-	if (err)
-		return err;
+	err = ds_send_data(dev, buf, माप(buf));
+	अगर (err)
+		वापस err;
 
-	ds_wait_status(dev, &st);
+	ds_रुको_status(dev, &st);
 
 	err = ds_send_control(dev, COMM_SET_PATH | COMM_IM | COMM_RST, 0);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	ds_wait_status(dev, &st);
+	ds_रुको_status(dev, &st);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif  /*  0  */
+#पूर्ण_अगर  /*  0  */
 
-static u8 ds9490r_touch_bit(void *data, u8 bit)
-{
-	struct ds_device *dev = data;
+अटल u8 ds9490r_touch_bit(व्योम *data, u8 bit)
+अणु
+	काष्ठा ds_device *dev = data;
 
-	if (ds_touch_bit(dev, bit, &dev->byte_buf))
-		return 0;
+	अगर (ds_touch_bit(dev, bit, &dev->byte_buf))
+		वापस 0;
 
-	return dev->byte_buf;
-}
+	वापस dev->byte_buf;
+पूर्ण
 
-#if 0
-static void ds9490r_write_bit(void *data, u8 bit)
-{
-	struct ds_device *dev = data;
+#अगर 0
+अटल व्योम ds9490r_ग_लिखो_bit(व्योम *data, u8 bit)
+अणु
+	काष्ठा ds_device *dev = data;
 
-	ds_write_bit(dev, bit);
-}
+	ds_ग_लिखो_bit(dev, bit);
+पूर्ण
 
-static u8 ds9490r_read_bit(void *data)
-{
-	struct ds_device *dev = data;
-	int err;
+अटल u8 ds9490r_पढ़ो_bit(व्योम *data)
+अणु
+	काष्ठा ds_device *dev = data;
+	पूर्णांक err;
 
 	err = ds_touch_bit(dev, 1, &dev->byte_buf);
-	if (err)
-		return 0;
+	अगर (err)
+		वापस 0;
 
-	return dev->byte_buf & 1;
-}
-#endif
+	वापस dev->byte_buf & 1;
+पूर्ण
+#पूर्ण_अगर
 
-static void ds9490r_write_byte(void *data, u8 byte)
-{
-	struct ds_device *dev = data;
+अटल व्योम ds9490r_ग_लिखो_byte(व्योम *data, u8 byte)
+अणु
+	काष्ठा ds_device *dev = data;
 
-	ds_write_byte(dev, byte);
-}
+	ds_ग_लिखो_byte(dev, byte);
+पूर्ण
 
-static u8 ds9490r_read_byte(void *data)
-{
-	struct ds_device *dev = data;
-	int err;
+अटल u8 ds9490r_पढ़ो_byte(व्योम *data)
+अणु
+	काष्ठा ds_device *dev = data;
+	पूर्णांक err;
 
-	err = ds_read_byte(dev, &dev->byte_buf);
-	if (err)
-		return 0;
+	err = ds_पढ़ो_byte(dev, &dev->byte_buf);
+	अगर (err)
+		वापस 0;
 
-	return dev->byte_buf;
-}
+	वापस dev->byte_buf;
+पूर्ण
 
-static void ds9490r_write_block(void *data, const u8 *buf, int len)
-{
-	struct ds_device *dev = data;
+अटल व्योम ds9490r_ग_लिखो_block(व्योम *data, स्थिर u8 *buf, पूर्णांक len)
+अणु
+	काष्ठा ds_device *dev = data;
 	u8 *tbuf;
 
-	if (len <= 0)
-		return;
+	अगर (len <= 0)
+		वापस;
 
 	tbuf = kmemdup(buf, len, GFP_KERNEL);
-	if (!tbuf)
-		return;
+	अगर (!tbuf)
+		वापस;
 
-	ds_write_block(dev, tbuf, len);
+	ds_ग_लिखो_block(dev, tbuf, len);
 
-	kfree(tbuf);
-}
+	kमुक्त(tbuf);
+पूर्ण
 
-static u8 ds9490r_read_block(void *data, u8 *buf, int len)
-{
-	struct ds_device *dev = data;
-	int err;
+अटल u8 ds9490r_पढ़ो_block(व्योम *data, u8 *buf, पूर्णांक len)
+अणु
+	काष्ठा ds_device *dev = data;
+	पूर्णांक err;
 	u8 *tbuf;
 
-	if (len <= 0)
-		return 0;
+	अगर (len <= 0)
+		वापस 0;
 
-	tbuf = kmalloc(len, GFP_KERNEL);
-	if (!tbuf)
-		return 0;
+	tbuf = kदो_स्मृति(len, GFP_KERNEL);
+	अगर (!tbuf)
+		वापस 0;
 
-	err = ds_read_block(dev, tbuf, len);
-	if (err >= 0)
-		memcpy(buf, tbuf, len);
+	err = ds_पढ़ो_block(dev, tbuf, len);
+	अगर (err >= 0)
+		स_नकल(buf, tbuf, len);
 
-	kfree(tbuf);
+	kमुक्त(tbuf);
 
-	return err >= 0 ? len : 0;
-}
+	वापस err >= 0 ? len : 0;
+पूर्ण
 
-static u8 ds9490r_reset(void *data)
-{
-	struct ds_device *dev = data;
-	int err;
+अटल u8 ds9490r_reset(व्योम *data)
+अणु
+	काष्ठा ds_device *dev = data;
+	पूर्णांक err;
 
 	err = ds_reset(dev);
-	if (err)
-		return 1;
+	अगर (err)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 ds9490r_set_pullup(void *data, int delay)
-{
-	struct ds_device *dev = data;
+अटल u8 ds9490r_set_pullup(व्योम *data, पूर्णांक delay)
+अणु
+	काष्ठा ds_device *dev = data;
 
-	if (ds_set_pullup(dev, delay))
-		return 1;
+	अगर (ds_set_pullup(dev, delay))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ds_w1_init(struct ds_device *dev)
-{
-	memset(&dev->master, 0, sizeof(struct w1_bus_master));
+अटल पूर्णांक ds_w1_init(काष्ठा ds_device *dev)
+अणु
+	स_रखो(&dev->master, 0, माप(काष्ठा w1_bus_master));
 
 	/* Reset the device as it can be in a bad state.
-	 * This is necessary because a block write will wait for data
+	 * This is necessary because a block ग_लिखो will रुको क्रम data
 	 * to be placed in the output buffer and block any later
 	 * commands which will keep accumulating and the device will
-	 * not be idle.  Another case is removing the ds2490 module
-	 * while a bus search is in progress, somehow a few commands
+	 * not be idle.  Another हाल is removing the ds2490 module
+	 * जबतक a bus search is in progress, somehow a few commands
 	 * get through, but the input transfers fail leaving data in
-	 * the input buffer.  This will cause the next read to fail
+	 * the input buffer.  This will cause the next पढ़ो to fail
 	 * see the note in ds_recv_data.
 	 */
 	ds_reset_device(dev);
 
 	dev->master.data	= dev;
 	dev->master.touch_bit	= &ds9490r_touch_bit;
-	/* read_bit and write_bit in w1_bus_master are expected to set and
-	 * sample the line level.  For write_bit that means it is expected to
+	/* पढ़ो_bit and ग_लिखो_bit in w1_bus_master are expected to set and
+	 * sample the line level.  For ग_लिखो_bit that means it is expected to
 	 * set it to that value and leave it there.  ds2490 only supports an
-	 * individual time slot at the lowest level.  The requirement from
-	 * pulling the bus state down to reading the state is 15us, something
+	 * inभागidual समय slot at the lowest level.  The requirement from
+	 * pulling the bus state करोwn to पढ़ोing the state is 15us, something
 	 * that isn't realistic on the USB bus anyway.
-	dev->master.read_bit	= &ds9490r_read_bit;
-	dev->master.write_bit	= &ds9490r_write_bit;
+	dev->master.पढ़ो_bit	= &ds9490r_पढ़ो_bit;
+	dev->master.ग_लिखो_bit	= &ds9490r_ग_लिखो_bit;
 	*/
-	dev->master.read_byte	= &ds9490r_read_byte;
-	dev->master.write_byte	= &ds9490r_write_byte;
-	dev->master.read_block	= &ds9490r_read_block;
-	dev->master.write_block	= &ds9490r_write_block;
+	dev->master.पढ़ो_byte	= &ds9490r_पढ़ो_byte;
+	dev->master.ग_लिखो_byte	= &ds9490r_ग_लिखो_byte;
+	dev->master.पढ़ो_block	= &ds9490r_पढ़ो_block;
+	dev->master.ग_लिखो_block	= &ds9490r_ग_लिखो_block;
 	dev->master.reset_bus	= &ds9490r_reset;
 	dev->master.set_pullup	= &ds9490r_set_pullup;
 	dev->master.search	= &ds9490r_search;
 
-	return w1_add_master_device(&dev->master);
-}
+	वापस w1_add_master_device(&dev->master);
+पूर्ण
 
-static void ds_w1_fini(struct ds_device *dev)
-{
-	w1_remove_master_device(&dev->master);
-}
+अटल व्योम ds_w1_fini(काष्ठा ds_device *dev)
+अणु
+	w1_हटाओ_master_device(&dev->master);
+पूर्ण
 
-static int ds_probe(struct usb_interface *intf,
-		    const struct usb_device_id *udev_id)
-{
-	struct usb_device *udev = interface_to_usbdev(intf);
-	struct usb_endpoint_descriptor *endpoint;
-	struct usb_host_interface *iface_desc;
-	struct ds_device *dev;
-	int i, err, alt;
+अटल पूर्णांक ds_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+		    स्थिर काष्ठा usb_device_id *udev_id)
+अणु
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
+	काष्ठा usb_host_पूर्णांकerface *अगरace_desc;
+	काष्ठा ds_device *dev;
+	पूर्णांक i, err, alt;
 
-	dev = kzalloc(sizeof(struct ds_device), GFP_KERNEL);
-	if (!dev) {
+	dev = kzalloc(माप(काष्ठा ds_device), GFP_KERNEL);
+	अगर (!dev) अणु
 		pr_info("Failed to allocate new DS9490R structure.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	dev->udev = usb_get_dev(udev);
-	if (!dev->udev) {
+	अगर (!dev->udev) अणु
 		err = -ENOMEM;
-		goto err_out_free;
-	}
-	memset(dev->ep, 0, sizeof(dev->ep));
+		जाओ err_out_मुक्त;
+	पूर्ण
+	स_रखो(dev->ep, 0, माप(dev->ep));
 
-	usb_set_intfdata(intf, dev);
+	usb_set_पूर्णांकfdata(पूर्णांकf, dev);
 
 	err = usb_reset_configuration(dev->udev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&dev->udev->dev,
 			"Failed to reset configuration: err=%d.\n", err);
-		goto err_out_clear;
-	}
+		जाओ err_out_clear;
+	पूर्ण
 
-	/* alternative 3, 1ms interrupt (greatly speeds search), 64 byte bulk */
+	/* alternative 3, 1ms पूर्णांकerrupt (greatly speeds search), 64 byte bulk */
 	alt = 3;
-	err = usb_set_interface(dev->udev,
-		intf->cur_altsetting->desc.bInterfaceNumber, alt);
-	if (err) {
+	err = usb_set_पूर्णांकerface(dev->udev,
+		पूर्णांकf->cur_altsetting->desc.bInterfaceNumber, alt);
+	अगर (err) अणु
 		dev_err(&dev->udev->dev, "Failed to set alternative setting %d "
 			"for %d interface: err=%d.\n", alt,
-			intf->cur_altsetting->desc.bInterfaceNumber, err);
-		goto err_out_clear;
-	}
+			पूर्णांकf->cur_altsetting->desc.bInterfaceNumber, err);
+		जाओ err_out_clear;
+	पूर्ण
 
-	iface_desc = intf->cur_altsetting;
-	if (iface_desc->desc.bNumEndpoints != NUM_EP-1) {
+	अगरace_desc = पूर्णांकf->cur_altsetting;
+	अगर (अगरace_desc->desc.bNumEndpoपूर्णांकs != NUM_EP-1) अणु
 		pr_info("Num endpoints=%d. It is not DS9490R.\n",
-			iface_desc->desc.bNumEndpoints);
+			अगरace_desc->desc.bNumEndpoपूर्णांकs);
 		err = -EINVAL;
-		goto err_out_clear;
-	}
+		जाओ err_out_clear;
+	पूर्ण
 
 	/*
-	 * This loop doesn'd show control 0 endpoint,
-	 * so we will fill only 1-3 endpoints entry.
+	 * This loop करोesn'd show control 0 endpoपूर्णांक,
+	 * so we will fill only 1-3 endpoपूर्णांकs entry.
 	 */
-	for (i = 0; i < iface_desc->desc.bNumEndpoints; ++i) {
-		endpoint = &iface_desc->endpoint[i].desc;
+	क्रम (i = 0; i < अगरace_desc->desc.bNumEndpoपूर्णांकs; ++i) अणु
+		endpoपूर्णांक = &अगरace_desc->endpoपूर्णांक[i].desc;
 
-		dev->ep[i+1] = endpoint->bEndpointAddress;
-#if 0
-		printk("%d: addr=%x, size=%d, dir=%s, type=%x\n",
-			i, endpoint->bEndpointAddress, le16_to_cpu(endpoint->wMaxPacketSize),
-			(endpoint->bEndpointAddress & USB_DIR_IN)?"IN":"OUT",
-			endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK);
-#endif
-	}
+		dev->ep[i+1] = endpoपूर्णांक->bEndpoपूर्णांकAddress;
+#अगर 0
+		prपूर्णांकk("%d: addr=%x, size=%d, dir=%s, type=%x\n",
+			i, endpoपूर्णांक->bEndpoपूर्णांकAddress, le16_to_cpu(endpoपूर्णांक->wMaxPacketSize),
+			(endpoपूर्णांक->bEndpoपूर्णांकAddress & USB_सूची_IN)?"IN":"OUT",
+			endpoपूर्णांक->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK);
+#पूर्ण_अगर
+	पूर्ण
 
 	err = ds_w1_init(dev);
-	if (err)
-		goto err_out_clear;
+	अगर (err)
+		जाओ err_out_clear;
 
 	mutex_lock(&ds_mutex);
 	list_add_tail(&dev->ds_entry, &ds_devices);
 	mutex_unlock(&ds_mutex);
 
-	return 0;
+	वापस 0;
 
 err_out_clear:
-	usb_set_intfdata(intf, NULL);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
 	usb_put_dev(dev->udev);
-err_out_free:
-	kfree(dev);
-	return err;
-}
+err_out_मुक्त:
+	kमुक्त(dev);
+	वापस err;
+पूर्ण
 
-static void ds_disconnect(struct usb_interface *intf)
-{
-	struct ds_device *dev;
+अटल व्योम ds_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा ds_device *dev;
 
-	dev = usb_get_intfdata(intf);
-	if (!dev)
-		return;
+	dev = usb_get_पूर्णांकfdata(पूर्णांकf);
+	अगर (!dev)
+		वापस;
 
 	mutex_lock(&ds_mutex);
 	list_del(&dev->ds_entry);
@@ -1081,24 +1082,24 @@ static void ds_disconnect(struct usb_interface *intf)
 
 	ds_w1_fini(dev);
 
-	usb_set_intfdata(intf, NULL);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
 
 	usb_put_dev(dev->udev);
-	kfree(dev);
-}
+	kमुक्त(dev);
+पूर्ण
 
-static const struct usb_device_id ds_id_table[] = {
-	{ USB_DEVICE(0x04fa, 0x2490) },
-	{ },
-};
+अटल स्थिर काष्ठा usb_device_id ds_id_table[] = अणु
+	अणु USB_DEVICE(0x04fa, 0x2490) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, ds_id_table);
 
-static struct usb_driver ds_driver = {
+अटल काष्ठा usb_driver ds_driver = अणु
 	.name =		"DS9490R",
 	.probe =	ds_probe,
 	.disconnect =	ds_disconnect,
 	.id_table =	ds_id_table,
-};
+पूर्ण;
 module_usb_driver(ds_driver);
 
 MODULE_AUTHOR("Evgeniy Polyakov <zbr@ioremap.net>");

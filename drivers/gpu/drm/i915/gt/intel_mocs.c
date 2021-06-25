@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2015 Intel Corporation
+ * Copyright तऊ 2015 Intel Corporation
  */
 
-#include "i915_drv.h"
+#समावेश "i915_drv.h"
 
-#include "intel_engine.h"
-#include "intel_gt.h"
-#include "intel_lrc_reg.h"
-#include "intel_mocs.h"
-#include "intel_ring.h"
+#समावेश "intel_engine.h"
+#समावेश "intel_gt.h"
+#समावेश "intel_lrc_reg.h"
+#समावेश "intel_mocs.h"
+#समावेश "intel_ring.h"
 
-/* structures required */
-struct drm_i915_mocs_entry {
+/* काष्ठाures required */
+काष्ठा drm_i915_mocs_entry अणु
 	u32 control_value;
 	u16 l3cc_value;
 	u16 used;
-};
+पूर्ण;
 
-struct drm_i915_mocs_table {
-	unsigned int size;
-	unsigned int n_entries;
-	const struct drm_i915_mocs_entry *table;
-};
+काष्ठा drm_i915_mocs_table अणु
+	अचिन्हित पूर्णांक size;
+	अचिन्हित पूर्णांक n_entries;
+	स्थिर काष्ठा drm_i915_mocs_entry *table;
+पूर्ण;
 
-/* Defines for the tables (XXX_MOCS_0 - XXX_MOCS_63) */
-#define _LE_CACHEABILITY(value)	((value) << 0)
-#define _LE_TGT_CACHE(value)	((value) << 2)
-#define LE_LRUM(value)		((value) << 4)
-#define LE_AOM(value)		((value) << 6)
-#define LE_RSC(value)		((value) << 7)
-#define LE_SCC(value)		((value) << 8)
-#define LE_PFM(value)		((value) << 11)
-#define LE_SCF(value)		((value) << 14)
-#define LE_COS(value)		((value) << 15)
-#define LE_SSE(value)		((value) << 17)
+/* Defines क्रम the tables (XXX_MOCS_0 - XXX_MOCS_63) */
+#घोषणा _LE_CACHEABILITY(value)	((value) << 0)
+#घोषणा _LE_TGT_CACHE(value)	((value) << 2)
+#घोषणा LE_LRUM(value)		((value) << 4)
+#घोषणा LE_AOM(value)		((value) << 6)
+#घोषणा LE_RSC(value)		((value) << 7)
+#घोषणा LE_SCC(value)		((value) << 8)
+#घोषणा LE_PFM(value)		((value) << 11)
+#घोषणा LE_SCF(value)		((value) << 14)
+#घोषणा LE_COS(value)		((value) << 15)
+#घोषणा LE_SSE(value)		((value) << 17)
 
-/* Defines for the tables (LNCFMOCS0 - LNCFMOCS31) - two entries per word */
-#define L3_ESC(value)		((value) << 0)
-#define L3_SCC(value)		((value) << 1)
-#define _L3_CACHEABILITY(value)	((value) << 4)
+/* Defines क्रम the tables (LNCFMOCS0 - LNCFMOCS31) - two entries per word */
+#घोषणा L3_ESC(value)		((value) << 0)
+#घोषणा L3_SCC(value)		((value) << 1)
+#घोषणा _L3_CACHEABILITY(value)	((value) << 4)
 
 /* Helper defines */
-#define GEN9_NUM_MOCS_ENTRIES	64  /* 63-64 are reserved, but configured. */
+#घोषणा GEN9_NUM_MOCS_ENTRIES	64  /* 63-64 are reserved, but configured. */
 
 /* (e)LLC caching options */
 /*
- * Note: LE_0_PAGETABLE works only up to Gen11; for newer gens it means
+ * Note: LE_0_PAGETABLE works only up to Gen11; क्रम newer gens it means
  * the same as LE_UC
  */
-#define LE_0_PAGETABLE		_LE_CACHEABILITY(0)
-#define LE_1_UC			_LE_CACHEABILITY(1)
-#define LE_2_WT			_LE_CACHEABILITY(2)
-#define LE_3_WB			_LE_CACHEABILITY(3)
+#घोषणा LE_0_PAGETABLE		_LE_CACHEABILITY(0)
+#घोषणा LE_1_UC			_LE_CACHEABILITY(1)
+#घोषणा LE_2_WT			_LE_CACHEABILITY(2)
+#घोषणा LE_3_WB			_LE_CACHEABILITY(3)
 
 /* Target cache */
-#define LE_TC_0_PAGETABLE	_LE_TGT_CACHE(0)
-#define LE_TC_1_LLC		_LE_TGT_CACHE(1)
-#define LE_TC_2_LLC_ELLC	_LE_TGT_CACHE(2)
-#define LE_TC_3_LLC_ELLC_ALT	_LE_TGT_CACHE(3)
+#घोषणा LE_TC_0_PAGETABLE	_LE_TGT_CACHE(0)
+#घोषणा LE_TC_1_LLC		_LE_TGT_CACHE(1)
+#घोषणा LE_TC_2_LLC_ELLC	_LE_TGT_CACHE(2)
+#घोषणा LE_TC_3_LLC_ELLC_ALT	_LE_TGT_CACHE(3)
 
 /* L3 caching options */
-#define L3_0_DIRECT		_L3_CACHEABILITY(0)
-#define L3_1_UC			_L3_CACHEABILITY(1)
-#define L3_2_RESERVED		_L3_CACHEABILITY(2)
-#define L3_3_WB			_L3_CACHEABILITY(3)
+#घोषणा L3_0_सूचीECT		_L3_CACHEABILITY(0)
+#घोषणा L3_1_UC			_L3_CACHEABILITY(1)
+#घोषणा L3_2_RESERVED		_L3_CACHEABILITY(2)
+#घोषणा L3_3_WB			_L3_CACHEABILITY(3)
 
-#define MOCS_ENTRY(__idx, __control_value, __l3cc_value) \
-	[__idx] = { \
+#घोषणा MOCS_ENTRY(__idx, __control_value, __l3cc_value) \
+	[__idx] = अणु \
 		.control_value = __control_value, \
 		.l3cc_value = __l3cc_value, \
 		.used = 1, \
-	}
+	पूर्ण
 
 /*
  * MOCS tables
  *
  * These are the MOCS tables that are programmed across all the rings.
  * The control value is programmed to all the rings that support the
- * MOCS registers. While the l3cc_values are only programmed to the
- * LNCFCMOCS0 - LNCFCMOCS32 registers.
+ * MOCS रेजिस्टरs. While the l3cc_values are only programmed to the
+ * LNCFCMOCS0 - LNCFCMOCS32 रेजिस्टरs.
  *
- * These tables are intended to be kept reasonably consistent across
- * HW platforms, and for ICL+, be identical across OSes. To achieve
- * that, for Icelake and above, list of entries is published as part
+ * These tables are पूर्णांकended to be kept reasonably consistent across
+ * HW platक्रमms, and क्रम ICL+, be identical across OSes. To achieve
+ * that, क्रम Icelake and above, list of entries is published as part
  * of bspec.
  *
  * Entries not part of the following tables are undefined as far as
  * userspace is concerned and shouldn't be relied upon.  For Gen < 12
- * they will be initialized to PTE. Gen >= 12 onwards don't have a setting for
+ * they will be initialized to PTE. Gen >= 12 onwards करोn't have a setting क्रम
  * PTE and will be initialized to an invalid value.
  *
  * The last few entries are reserved by the hardware. For ICL+ they
- * should be initialized according to bspec and never used, for older
- * platforms they should never be written to.
+ * should be initialized according to bspec and never used, क्रम older
+ * platक्रमms they should never be written to.
  *
  * NOTE: These tables are part of bspec and defined as part of hardware
- *       interface for ICL+. For older platforms, they are part of kernel
- *       ABI. It is expected that, for specific hardware platform, existing
- *       entries will remain constant and the table will only be updated by
+ *       पूर्णांकerface क्रम ICL+. For older platक्रमms, they are part of kernel
+ *       ABI. It is expected that, क्रम specअगरic hardware platक्रमm, existing
+ *       entries will reमुख्य स्थिरant and the table will only be updated by
  *       adding new entries, filling unused positions.
  */
-#define GEN9_MOCS_ENTRIES \
+#घोषणा GEN9_MOCS_ENTRIES \
 	MOCS_ENTRY(I915_MOCS_UNCACHED, \
 		   LE_1_UC | LE_TC_2_LLC_ELLC, \
 		   L3_1_UC), \
@@ -109,7 +110,7 @@ struct drm_i915_mocs_table {
 		   LE_0_PAGETABLE | LE_TC_0_PAGETABLE | LE_LRUM(3), \
 		   L3_3_WB)
 
-static const struct drm_i915_mocs_entry skl_mocs_table[] = {
+अटल स्थिर काष्ठा drm_i915_mocs_entry skl_mocs_table[] = अणु
 	GEN9_MOCS_ENTRIES,
 	MOCS_ENTRY(I915_MOCS_CACHED,
 		   LE_3_WB | LE_TC_2_LLC_ELLC | LE_LRUM(3),
@@ -117,27 +118,27 @@ static const struct drm_i915_mocs_entry skl_mocs_table[] = {
 
 	/*
 	 * mocs:63
-	 * - used by the L3 for all of its evictions.
+	 * - used by the L3 क्रम all of its evictions.
 	 *   Thus it is expected to allow LLC cacheability to enable coherent
-	 *   flows to be maintained.
-	 * - used to force L3 uncachable cycles.
+	 *   flows to be मुख्यtained.
+	 * - used to क्रमce L3 uncachable cycles.
 	 *   Thus it is expected to make the surface L3 uncacheable.
 	 */
 	MOCS_ENTRY(63,
 		   LE_3_WB | LE_TC_1_LLC | LE_LRUM(3),
 		   L3_1_UC)
-};
+पूर्ण;
 
 /* NOTE: the LE_TGT_CACHE is not used on Broxton */
-static const struct drm_i915_mocs_entry broxton_mocs_table[] = {
+अटल स्थिर काष्ठा drm_i915_mocs_entry broxton_mocs_table[] = अणु
 	GEN9_MOCS_ENTRIES,
 	MOCS_ENTRY(I915_MOCS_CACHED,
 		   LE_1_UC | LE_TC_2_LLC_ELLC | LE_LRUM(3),
 		   L3_3_WB)
-};
+पूर्ण;
 
-#define GEN11_MOCS_ENTRIES \
-	/* Entries 0 and 1 are defined per-platform */ \
+#घोषणा GEN11_MOCS_ENTRIES \
+	/* Entries 0 and 1 are defined per-platक्रमm */ \
 	/* Base - L3 + LLC */ \
 	MOCS_ENTRY(2, \
 		   LE_3_WB | LE_TC_1_LLC | LE_LRUM(3), \
@@ -227,12 +228,12 @@ static const struct drm_i915_mocs_entry broxton_mocs_table[] = {
 		   LE_3_WB | LE_TC_1_LLC | LE_LRUM(3), \
 		   L3_1_UC)
 
-static const struct drm_i915_mocs_entry tgl_mocs_table[] = {
+अटल स्थिर काष्ठा drm_i915_mocs_entry tgl_mocs_table[] = अणु
 	/*
 	 * NOTE:
-	 * Reserved and unspecified MOCS indices have been set to (L3 + LCC).
+	 * Reserved and unspecअगरied MOCS indices have been set to (L3 + LCC).
 	 * These reserved entries should never be used, they may be changed
-	 * to low performant variants with better coherency in the future if
+	 * to low perक्रमmant variants with better coherency in the future अगर
 	 * more entries are needed. We are programming index I915_MOCS_PTE(1)
 	 * only, __init_mocs_table() take care to program unused index with
 	 * this entry.
@@ -266,9 +267,9 @@ static const struct drm_i915_mocs_entry tgl_mocs_table[] = {
 	MOCS_ENTRY(61,
 		   LE_1_UC | LE_TC_1_LLC,
 		   L3_3_WB),
-};
+पूर्ण;
 
-static const struct drm_i915_mocs_entry icl_mocs_table[] = {
+अटल स्थिर काष्ठा drm_i915_mocs_entry icl_mocs_table[] = अणु
 	/* Base - Uncached (Deprecated) */
 	MOCS_ENTRY(I915_MOCS_UNCACHED,
 		   LE_1_UC | LE_TC_1_LLC,
@@ -279,19 +280,19 @@ static const struct drm_i915_mocs_entry icl_mocs_table[] = {
 		   L3_3_WB),
 
 	GEN11_MOCS_ENTRIES
-};
+पूर्ण;
 
-static const struct drm_i915_mocs_entry dg1_mocs_table[] = {
+अटल स्थिर काष्ठा drm_i915_mocs_entry dg1_mocs_table[] = अणु
 	/* Error */
-	MOCS_ENTRY(0, 0, L3_0_DIRECT),
+	MOCS_ENTRY(0, 0, L3_0_सूचीECT),
 
 	/* UC */
 	MOCS_ENTRY(1, 0, L3_1_UC),
 
 	/* Reserved */
-	MOCS_ENTRY(2, 0, L3_0_DIRECT),
-	MOCS_ENTRY(3, 0, L3_0_DIRECT),
-	MOCS_ENTRY(4, 0, L3_0_DIRECT),
+	MOCS_ENTRY(2, 0, L3_0_सूचीECT),
+	MOCS_ENTRY(3, 0, L3_0_सूचीECT),
+	MOCS_ENTRY(4, 0, L3_0_सूचीECT),
 
 	/* WB - L3 */
 	MOCS_ENTRY(5, 0, L3_3_WB),
@@ -312,211 +313,211 @@ static const struct drm_i915_mocs_entry dg1_mocs_table[] = {
 	MOCS_ENTRY(61, 0, L3_1_UC),
 	MOCS_ENTRY(62, 0, L3_1_UC),
 	MOCS_ENTRY(63, 0, L3_1_UC),
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	HAS_GLOBAL_MOCS = BIT(0),
 	HAS_ENGINE_MOCS = BIT(1),
 	HAS_RENDER_L3CC = BIT(2),
-};
+पूर्ण;
 
-static bool has_l3cc(const struct drm_i915_private *i915)
-{
-	return true;
-}
+अटल bool has_l3cc(स्थिर काष्ठा drm_i915_निजी *i915)
+अणु
+	वापस true;
+पूर्ण
 
-static bool has_global_mocs(const struct drm_i915_private *i915)
-{
-	return HAS_GLOBAL_MOCS_REGISTERS(i915);
-}
+अटल bool has_global_mocs(स्थिर काष्ठा drm_i915_निजी *i915)
+अणु
+	वापस HAS_GLOBAL_MOCS_REGISTERS(i915);
+पूर्ण
 
-static bool has_mocs(const struct drm_i915_private *i915)
-{
-	return !IS_DGFX(i915);
-}
+अटल bool has_mocs(स्थिर काष्ठा drm_i915_निजी *i915)
+अणु
+	वापस !IS_DGFX(i915);
+पूर्ण
 
-static unsigned int get_mocs_settings(const struct drm_i915_private *i915,
-				      struct drm_i915_mocs_table *table)
-{
-	unsigned int flags;
+अटल अचिन्हित पूर्णांक get_mocs_settings(स्थिर काष्ठा drm_i915_निजी *i915,
+				      काष्ठा drm_i915_mocs_table *table)
+अणु
+	अचिन्हित पूर्णांक flags;
 
-	if (IS_DG1(i915)) {
+	अगर (IS_DG1(i915)) अणु
 		table->size = ARRAY_SIZE(dg1_mocs_table);
 		table->table = dg1_mocs_table;
 		table->n_entries = GEN9_NUM_MOCS_ENTRIES;
-	} else if (INTEL_GEN(i915) >= 12) {
+	पूर्ण अन्यथा अगर (INTEL_GEN(i915) >= 12) अणु
 		table->size  = ARRAY_SIZE(tgl_mocs_table);
 		table->table = tgl_mocs_table;
 		table->n_entries = GEN9_NUM_MOCS_ENTRIES;
-	} else if (IS_GEN(i915, 11)) {
+	पूर्ण अन्यथा अगर (IS_GEN(i915, 11)) अणु
 		table->size  = ARRAY_SIZE(icl_mocs_table);
 		table->table = icl_mocs_table;
 		table->n_entries = GEN9_NUM_MOCS_ENTRIES;
-	} else if (IS_GEN9_BC(i915) || IS_CANNONLAKE(i915)) {
+	पूर्ण अन्यथा अगर (IS_GEN9_BC(i915) || IS_CANNONLAKE(i915)) अणु
 		table->size  = ARRAY_SIZE(skl_mocs_table);
 		table->n_entries = GEN9_NUM_MOCS_ENTRIES;
 		table->table = skl_mocs_table;
-	} else if (IS_GEN9_LP(i915)) {
+	पूर्ण अन्यथा अगर (IS_GEN9_LP(i915)) अणु
 		table->size  = ARRAY_SIZE(broxton_mocs_table);
 		table->n_entries = GEN9_NUM_MOCS_ENTRIES;
 		table->table = broxton_mocs_table;
-	} else {
+	पूर्ण अन्यथा अणु
 		drm_WARN_ONCE(&i915->drm, INTEL_GEN(i915) >= 9,
 			      "Platform that should have a MOCS table does not.\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (GEM_DEBUG_WARN_ON(table->size > table->n_entries))
-		return 0;
+	अगर (GEM_DEBUG_WARN_ON(table->size > table->n_entries))
+		वापस 0;
 
 	/* WaDisableSkipCaching:skl,bxt,kbl,glk */
-	if (IS_GEN(i915, 9)) {
-		int i;
+	अगर (IS_GEN(i915, 9)) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < table->size; i++)
-			if (GEM_DEBUG_WARN_ON(table->table[i].l3cc_value &
+		क्रम (i = 0; i < table->size; i++)
+			अगर (GEM_DEBUG_WARN_ON(table->table[i].l3cc_value &
 					      (L3_ESC(1) | L3_SCC(0x7))))
-				return 0;
-	}
+				वापस 0;
+	पूर्ण
 
 	flags = 0;
-	if (has_mocs(i915)) {
-		if (has_global_mocs(i915))
+	अगर (has_mocs(i915)) अणु
+		अगर (has_global_mocs(i915))
 			flags |= HAS_GLOBAL_MOCS;
-		else
+		अन्यथा
 			flags |= HAS_ENGINE_MOCS;
-	}
-	if (has_l3cc(i915))
+	पूर्ण
+	अगर (has_l3cc(i915))
 		flags |= HAS_RENDER_L3CC;
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
 /*
- * Get control_value from MOCS entry taking into account when it's not used:
- * I915_MOCS_PTE's value is returned in this case.
+ * Get control_value from MOCS entry taking पूर्णांकo account when it's not used:
+ * I915_MOCS_PTE's value is वापसed in this हाल.
  */
-static u32 get_entry_control(const struct drm_i915_mocs_table *table,
-			     unsigned int index)
-{
-	if (index < table->size && table->table[index].used)
-		return table->table[index].control_value;
+अटल u32 get_entry_control(स्थिर काष्ठा drm_i915_mocs_table *table,
+			     अचिन्हित पूर्णांक index)
+अणु
+	अगर (index < table->size && table->table[index].used)
+		वापस table->table[index].control_value;
 
-	return table->table[I915_MOCS_PTE].control_value;
-}
+	वापस table->table[I915_MOCS_PTE].control_value;
+पूर्ण
 
-#define for_each_mocs(mocs, t, i) \
-	for (i = 0; \
+#घोषणा क्रम_each_mocs(mocs, t, i) \
+	क्रम (i = 0; \
 	     i < (t)->n_entries ? (mocs = get_entry_control((t), i)), 1 : 0;\
 	     i++)
 
-static void __init_mocs_table(struct intel_uncore *uncore,
-			      const struct drm_i915_mocs_table *table,
+अटल व्योम __init_mocs_table(काष्ठा पूर्णांकel_uncore *uncore,
+			      स्थिर काष्ठा drm_i915_mocs_table *table,
 			      u32 addr)
-{
-	unsigned int i;
+अणु
+	अचिन्हित पूर्णांक i;
 	u32 mocs;
 
-	for_each_mocs(mocs, table, i)
-		intel_uncore_write_fw(uncore, _MMIO(addr + i * 4), mocs);
-}
+	क्रम_each_mocs(mocs, table, i)
+		पूर्णांकel_uncore_ग_लिखो_fw(uncore, _MMIO(addr + i * 4), mocs);
+पूर्ण
 
-static u32 mocs_offset(const struct intel_engine_cs *engine)
-{
-	static const u32 offset[] = {
+अटल u32 mocs_offset(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अटल स्थिर u32 offset[] = अणु
 		[RCS0]  =  __GEN9_RCS0_MOCS0,
 		[VCS0]  =  __GEN9_VCS0_MOCS0,
 		[VCS1]  =  __GEN9_VCS1_MOCS0,
 		[VECS0] =  __GEN9_VECS0_MOCS0,
 		[BCS0]  =  __GEN9_BCS0_MOCS0,
 		[VCS2]  = __GEN11_VCS2_MOCS0,
-	};
+	पूर्ण;
 
 	GEM_BUG_ON(engine->id >= ARRAY_SIZE(offset));
-	return offset[engine->id];
-}
+	वापस offset[engine->id];
+पूर्ण
 
-static void init_mocs_table(struct intel_engine_cs *engine,
-			    const struct drm_i915_mocs_table *table)
-{
+अटल व्योम init_mocs_table(काष्ठा पूर्णांकel_engine_cs *engine,
+			    स्थिर काष्ठा drm_i915_mocs_table *table)
+अणु
 	__init_mocs_table(engine->uncore, table, mocs_offset(engine));
-}
+पूर्ण
 
 /*
- * Get l3cc_value from MOCS entry taking into account when it's not used:
- * I915_MOCS_PTE's value is returned in this case.
+ * Get l3cc_value from MOCS entry taking पूर्णांकo account when it's not used:
+ * I915_MOCS_PTE's value is वापसed in this हाल.
  */
-static u16 get_entry_l3cc(const struct drm_i915_mocs_table *table,
-			  unsigned int index)
-{
-	if (index < table->size && table->table[index].used)
-		return table->table[index].l3cc_value;
+अटल u16 get_entry_l3cc(स्थिर काष्ठा drm_i915_mocs_table *table,
+			  अचिन्हित पूर्णांक index)
+अणु
+	अगर (index < table->size && table->table[index].used)
+		वापस table->table[index].l3cc_value;
 
-	return table->table[I915_MOCS_PTE].l3cc_value;
-}
+	वापस table->table[I915_MOCS_PTE].l3cc_value;
+पूर्ण
 
-static u32 l3cc_combine(u16 low, u16 high)
-{
-	return low | (u32)high << 16;
-}
+अटल u32 l3cc_combine(u16 low, u16 high)
+अणु
+	वापस low | (u32)high << 16;
+पूर्ण
 
-#define for_each_l3cc(l3cc, t, i) \
-	for (i = 0; \
+#घोषणा क्रम_each_l3cc(l3cc, t, i) \
+	क्रम (i = 0; \
 	     i < ((t)->n_entries + 1) / 2 ? \
 	     (l3cc = l3cc_combine(get_entry_l3cc((t), 2 * i), \
 				  get_entry_l3cc((t), 2 * i + 1))), 1 : \
 	     0; \
 	     i++)
 
-static void init_l3cc_table(struct intel_engine_cs *engine,
-			    const struct drm_i915_mocs_table *table)
-{
-	struct intel_uncore *uncore = engine->uncore;
-	unsigned int i;
+अटल व्योम init_l3cc_table(काष्ठा पूर्णांकel_engine_cs *engine,
+			    स्थिर काष्ठा drm_i915_mocs_table *table)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = engine->uncore;
+	अचिन्हित पूर्णांक i;
 	u32 l3cc;
 
-	for_each_l3cc(l3cc, table, i)
-		intel_uncore_write_fw(uncore, GEN9_LNCFCMOCS(i), l3cc);
-}
+	क्रम_each_l3cc(l3cc, table, i)
+		पूर्णांकel_uncore_ग_लिखो_fw(uncore, GEN9_LNCFCMOCS(i), l3cc);
+पूर्ण
 
-void intel_mocs_init_engine(struct intel_engine_cs *engine)
-{
-	struct drm_i915_mocs_table table;
-	unsigned int flags;
+व्योम पूर्णांकel_mocs_init_engine(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा drm_i915_mocs_table table;
+	अचिन्हित पूर्णांक flags;
 
-	/* Called under a blanket forcewake */
-	assert_forcewakes_active(engine->uncore, FORCEWAKE_ALL);
+	/* Called under a blanket क्रमcewake */
+	निश्चित_क्रमcewakes_active(engine->uncore, FORCEWAKE_ALL);
 
 	flags = get_mocs_settings(engine->i915, &table);
-	if (!flags)
-		return;
+	अगर (!flags)
+		वापस;
 
-	/* Platforms with global MOCS do not need per-engine initialization. */
-	if (flags & HAS_ENGINE_MOCS)
+	/* Platक्रमms with global MOCS करो not need per-engine initialization. */
+	अगर (flags & HAS_ENGINE_MOCS)
 		init_mocs_table(engine, &table);
 
-	if (flags & HAS_RENDER_L3CC && engine->class == RENDER_CLASS)
+	अगर (flags & HAS_RENDER_L3CC && engine->class == RENDER_CLASS)
 		init_l3cc_table(engine, &table);
-}
+पूर्ण
 
-static u32 global_mocs_offset(void)
-{
-	return i915_mmio_reg_offset(GEN12_GLOBAL_MOCS(0));
-}
+अटल u32 global_mocs_offset(व्योम)
+अणु
+	वापस i915_mmio_reg_offset(GEN12_GLOBAL_MOCS(0));
+पूर्ण
 
-void intel_mocs_init(struct intel_gt *gt)
-{
-	struct drm_i915_mocs_table table;
-	unsigned int flags;
+व्योम पूर्णांकel_mocs_init(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा drm_i915_mocs_table table;
+	अचिन्हित पूर्णांक flags;
 
 	/*
 	 * LLC and eDRAM control values are not applicable to dgfx
 	 */
 	flags = get_mocs_settings(gt->i915, &table);
-	if (flags & HAS_GLOBAL_MOCS)
+	अगर (flags & HAS_GLOBAL_MOCS)
 		__init_mocs_table(gt->uncore, &table, global_mocs_offset());
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#include "selftest_mocs.c"
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#समावेश "selftest_mocs.c"
+#पूर्ण_अगर

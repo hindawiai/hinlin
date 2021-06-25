@@ -1,33 +1,34 @@
-#ifndef __NOUVEAU_VMA_H__
-#define __NOUVEAU_VMA_H__
-#include <nvif/vmm.h>
-struct nouveau_bo;
-struct nouveau_mem;
+<शैली गुरु>
+#अगर_अघोषित __NOUVEAU_VMA_H__
+#घोषणा __NOUVEAU_VMA_H__
+#समावेश <nvअगर/vmm.h>
+काष्ठा nouveau_bo;
+काष्ठा nouveau_mem;
 
-struct nouveau_vma {
-	struct nouveau_vmm *vmm;
-	int refs;
-	struct list_head head;
+काष्ठा nouveau_vma अणु
+	काष्ठा nouveau_vmm *vmm;
+	पूर्णांक refs;
+	काष्ठा list_head head;
 	u64 addr;
 
-	struct nouveau_mem *mem;
+	काष्ठा nouveau_mem *mem;
 
-	struct nouveau_fence *fence;
-};
+	काष्ठा nouveau_fence *fence;
+पूर्ण;
 
-struct nouveau_vma *nouveau_vma_find(struct nouveau_bo *, struct nouveau_vmm *);
-int nouveau_vma_new(struct nouveau_bo *, struct nouveau_vmm *,
-		    struct nouveau_vma **);
-void nouveau_vma_del(struct nouveau_vma **);
-int nouveau_vma_map(struct nouveau_vma *, struct nouveau_mem *);
-void nouveau_vma_unmap(struct nouveau_vma *);
+काष्ठा nouveau_vma *nouveau_vma_find(काष्ठा nouveau_bo *, काष्ठा nouveau_vmm *);
+पूर्णांक nouveau_vma_new(काष्ठा nouveau_bo *, काष्ठा nouveau_vmm *,
+		    काष्ठा nouveau_vma **);
+व्योम nouveau_vma_del(काष्ठा nouveau_vma **);
+पूर्णांक nouveau_vma_map(काष्ठा nouveau_vma *, काष्ठा nouveau_mem *);
+व्योम nouveau_vma_unmap(काष्ठा nouveau_vma *);
 
-struct nouveau_vmm {
-	struct nouveau_cli *cli;
-	struct nvif_vmm vmm;
-	struct nouveau_svmm *svmm;
-};
+काष्ठा nouveau_vmm अणु
+	काष्ठा nouveau_cli *cli;
+	काष्ठा nvअगर_vmm vmm;
+	काष्ठा nouveau_svmm *svmm;
+पूर्ण;
 
-int nouveau_vmm_init(struct nouveau_cli *, s32 oclass, struct nouveau_vmm *);
-void nouveau_vmm_fini(struct nouveau_vmm *);
-#endif
+पूर्णांक nouveau_vmm_init(काष्ठा nouveau_cli *, s32 oclass, काष्ठा nouveau_vmm *);
+व्योम nouveau_vmm_fini(काष्ठा nouveau_vmm *);
+#पूर्ण_अगर

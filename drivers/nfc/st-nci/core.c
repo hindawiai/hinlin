@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * NCI based Driver for STMicroelectronics NFC Chip
+ * NCI based Driver क्रम STMicroelectronics NFC Chip
  *
  * Copyright (C) 2014-2015  STMicroelectronics SAS. All rights reserved.
  */
 
-#include <linux/module.h>
-#include <linux/nfc.h>
-#include <net/nfc/nci.h>
-#include <net/nfc/nci_core.h>
-#include <linux/gpio.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/nfc.h>
+#समावेश <net/nfc/nci.h>
+#समावेश <net/nfc/nci_core.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/delay.h>
 
-#include "st-nci.h"
+#समावेश "st-nci.h"
 
-#define DRIVER_DESC "NCI NFC driver for ST_NCI"
+#घोषणा DRIVER_DESC "NCI NFC driver for ST_NCI"
 
-#define ST_NCI1_X_PROPRIETARY_ISO15693 0x83
+#घोषणा ST_NCI1_X_PROPRIETARY_ISO15693 0x83
 
-static int st_nci_init(struct nci_dev *ndev)
-{
-	struct nci_mode_set_cmd cmd;
+अटल पूर्णांक st_nci_init(काष्ठा nci_dev *ndev)
+अणु
+	काष्ठा nci_mode_set_cmd cmd;
 
 	cmd.cmd_type = ST_NCI_SET_NFC_MODE;
 	cmd.mode = 1;
 
-	return nci_prop_cmd(ndev, ST_NCI_CORE_PROP,
-			sizeof(struct nci_mode_set_cmd), (__u8 *)&cmd);
-}
+	वापस nci_prop_cmd(ndev, ST_NCI_CORE_PROP,
+			माप(काष्ठा nci_mode_set_cmd), (__u8 *)&cmd);
+पूर्ण
 
-static int st_nci_open(struct nci_dev *ndev)
-{
-	struct st_nci_info *info = nci_get_drvdata(ndev);
-	int r;
+अटल पूर्णांक st_nci_खोलो(काष्ठा nci_dev *ndev)
+अणु
+	काष्ठा st_nci_info *info = nci_get_drvdata(ndev);
+	पूर्णांक r;
 
-	if (test_and_set_bit(ST_NCI_RUNNING, &info->flags))
-		return 0;
+	अगर (test_and_set_bit(ST_NCI_RUNNING, &info->flags))
+		वापस 0;
 
-	r = ndlc_open(info->ndlc);
-	if (r)
+	r = ndlc_खोलो(info->ndlc);
+	अगर (r)
 		clear_bit(ST_NCI_RUNNING, &info->flags);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int st_nci_close(struct nci_dev *ndev)
-{
-	struct st_nci_info *info = nci_get_drvdata(ndev);
+अटल पूर्णांक st_nci_बंद(काष्ठा nci_dev *ndev)
+अणु
+	काष्ठा st_nci_info *info = nci_get_drvdata(ndev);
 
-	if (!test_bit(ST_NCI_RUNNING, &info->flags))
-		return 0;
+	अगर (!test_bit(ST_NCI_RUNNING, &info->flags))
+		वापस 0;
 
-	ndlc_close(info->ndlc);
+	ndlc_बंद(info->ndlc);
 
 	clear_bit(ST_NCI_RUNNING, &info->flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_nci_send(struct nci_dev *ndev, struct sk_buff *skb)
-{
-	struct st_nci_info *info = nci_get_drvdata(ndev);
+अटल पूर्णांक st_nci_send(काष्ठा nci_dev *ndev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा st_nci_info *info = nci_get_drvdata(ndev);
 
-	skb->dev = (void *)ndev;
+	skb->dev = (व्योम *)ndev;
 
-	if (!test_bit(ST_NCI_RUNNING, &info->flags))
-		return -EBUSY;
+	अगर (!test_bit(ST_NCI_RUNNING, &info->flags))
+		वापस -EBUSY;
 
-	return ndlc_send(info->ndlc, skb);
-}
+	वापस ndlc_send(info->ndlc, skb);
+पूर्ण
 
-static __u32 st_nci_get_rfprotocol(struct nci_dev *ndev,
+अटल __u32 st_nci_get_rfprotocol(काष्ठा nci_dev *ndev,
 					 __u8 rf_protocol)
-{
-	return rf_protocol == ST_NCI1_X_PROPRIETARY_ISO15693 ?
+अणु
+	वापस rf_protocol == ST_NCI1_X_PROPRIETARY_ISO15693 ?
 		NFC_PROTO_ISO15693_MASK : 0;
-}
+पूर्ण
 
-static int st_nci_prop_rsp_packet(struct nci_dev *ndev,
-					struct sk_buff *skb)
-{
+अटल पूर्णांक st_nci_prop_rsp_packet(काष्ठा nci_dev *ndev,
+					काष्ठा sk_buff *skb)
+अणु
 	__u8 status = skb->data[0];
 
 	nci_req_complete(ndev, status);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct nci_driver_ops st_nci_prop_ops[] = {
-	{
+अटल काष्ठा nci_driver_ops st_nci_prop_ops[] = अणु
+	अणु
 		.opcode = nci_opcode_pack(NCI_GID_PROPRIETARY,
 					  ST_NCI_CORE_PROP),
 		.rsp = st_nci_prop_rsp_packet,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct nci_ops st_nci_ops = {
+अटल काष्ठा nci_ops st_nci_ops = अणु
 	.init = st_nci_init,
-	.open = st_nci_open,
-	.close = st_nci_close,
+	.खोलो = st_nci_खोलो,
+	.बंद = st_nci_बंद,
 	.send = st_nci_send,
 	.get_rfprotocol = st_nci_get_rfprotocol,
 	.discover_se = st_nci_discover_se,
@@ -109,19 +110,19 @@ static struct nci_ops st_nci_ops = {
 	.hci_cmd_received = st_nci_hci_cmd_received,
 	.prop_ops = st_nci_prop_ops,
 	.n_prop_ops = ARRAY_SIZE(st_nci_prop_ops),
-};
+पूर्ण;
 
-int st_nci_probe(struct llt_ndlc *ndlc, int phy_headroom,
-		 int phy_tailroom, struct st_nci_se_status *se_status)
-{
-	struct st_nci_info *info;
-	int r;
+पूर्णांक st_nci_probe(काष्ठा llt_ndlc *ndlc, पूर्णांक phy_headroom,
+		 पूर्णांक phy_tailroom, काष्ठा st_nci_se_status *se_status)
+अणु
+	काष्ठा st_nci_info *info;
+	पूर्णांक r;
 	u32 protocols;
 
 	info = devm_kzalloc(ndlc->dev,
-			sizeof(struct st_nci_info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+			माप(काष्ठा st_nci_info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	protocols = NFC_PROTO_JEWEL_MASK
 		| NFC_PROTO_MIFARE_MASK
@@ -133,44 +134,44 @@ int st_nci_probe(struct llt_ndlc *ndlc, int phy_headroom,
 
 	ndlc->ndev = nci_allocate_device(&st_nci_ops, protocols,
 					phy_headroom, phy_tailroom);
-	if (!ndlc->ndev) {
+	अगर (!ndlc->ndev) अणु
 		pr_err("Cannot allocate nfc ndev\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	info->ndlc = ndlc;
 
 	nci_set_drvdata(ndlc->ndev, info);
 
-	r = st_nci_vendor_cmds_init(ndlc->ndev);
-	if (r) {
+	r = st_nci_venकरोr_cmds_init(ndlc->ndev);
+	अगर (r) अणु
 		pr_err("Cannot register proprietary vendor cmds\n");
-		goto err_reg_dev;
-	}
+		जाओ err_reg_dev;
+	पूर्ण
 
-	r = nci_register_device(ndlc->ndev);
-	if (r) {
+	r = nci_रेजिस्टर_device(ndlc->ndev);
+	अगर (r) अणु
 		pr_err("Cannot register nfc device to nci core\n");
-		goto err_reg_dev;
-	}
+		जाओ err_reg_dev;
+	पूर्ण
 
-	return st_nci_se_init(ndlc->ndev, se_status);
+	वापस st_nci_se_init(ndlc->ndev, se_status);
 
 err_reg_dev:
-	nci_free_device(ndlc->ndev);
-	return r;
-}
+	nci_मुक्त_device(ndlc->ndev);
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL_GPL(st_nci_probe);
 
-void st_nci_remove(struct nci_dev *ndev)
-{
-	struct st_nci_info *info = nci_get_drvdata(ndev);
+व्योम st_nci_हटाओ(काष्ठा nci_dev *ndev)
+अणु
+	काष्ठा st_nci_info *info = nci_get_drvdata(ndev);
 
-	ndlc_close(info->ndlc);
+	ndlc_बंद(info->ndlc);
 
-	nci_unregister_device(ndev);
-	nci_free_device(ndev);
-}
-EXPORT_SYMBOL_GPL(st_nci_remove);
+	nci_unरेजिस्टर_device(ndev);
+	nci_मुक्त_device(ndev);
+पूर्ण
+EXPORT_SYMBOL_GPL(st_nci_हटाओ);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION(DRIVER_DESC);

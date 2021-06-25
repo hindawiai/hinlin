@@ -1,199 +1,200 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#ifndef __ASM_COMPAT_H
-#define __ASM_COMPAT_H
+#अगर_अघोषित __ASM_COMPAT_H
+#घोषणा __ASM_COMPAT_H
 
-#include <asm-generic/compat.h>
+#समावेश <यंत्र-generic/compat.h>
 
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 
 /*
- * Architecture specific compatibility types
+ * Architecture specअगरic compatibility types
  */
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
 
-#define COMPAT_USER_HZ		100
-#ifdef __AARCH64EB__
-#define COMPAT_UTS_MACHINE	"armv8b\0\0"
-#else
-#define COMPAT_UTS_MACHINE	"armv8l\0\0"
-#endif
+#घोषणा COMPAT_USER_HZ		100
+#अगर_घोषित __AARCH64EB__
+#घोषणा COMPAT_UTS_MACHINE	"armv8b\0\0"
+#अन्यथा
+#घोषणा COMPAT_UTS_MACHINE	"armv8l\0\0"
+#पूर्ण_अगर
 
-typedef u16		__compat_uid_t;
-typedef u16		__compat_gid_t;
-typedef u16		__compat_uid16_t;
-typedef u16		__compat_gid16_t;
-typedef u32		__compat_uid32_t;
-typedef u32		__compat_gid32_t;
-typedef u16		compat_mode_t;
-typedef u32		compat_dev_t;
-typedef s32		compat_nlink_t;
-typedef u16		compat_ipc_pid_t;
-typedef u32		compat_caddr_t;
-typedef __kernel_fsid_t	compat_fsid_t;
+प्रकार u16		__compat_uid_t;
+प्रकार u16		__compat_gid_t;
+प्रकार u16		__compat_uid16_t;
+प्रकार u16		__compat_gid16_t;
+प्रकार u32		__compat_uid32_t;
+प्रकार u32		__compat_gid32_t;
+प्रकार u16		compat_mode_t;
+प्रकार u32		compat_dev_t;
+प्रकार s32		compat_nlink_t;
+प्रकार u16		compat_ipc_pid_t;
+प्रकार u32		compat_caddr_t;
+प्रकार __kernel_fsid_t	compat_fsid_t;
 
-struct compat_stat {
-#ifdef __AARCH64EB__
-	short		st_dev;
-	short		__pad1;
-#else
+काष्ठा compat_stat अणु
+#अगर_घोषित __AARCH64EB__
+	लघु		st_dev;
+	लघु		__pad1;
+#अन्यथा
 	compat_dev_t	st_dev;
-#endif
+#पूर्ण_अगर
 	compat_ino_t	st_ino;
 	compat_mode_t	st_mode;
-	compat_ushort_t	st_nlink;
+	compat_uलघु_t	st_nlink;
 	__compat_uid16_t	st_uid;
 	__compat_gid16_t	st_gid;
-#ifdef __AARCH64EB__
-	short		st_rdev;
-	short		__pad2;
-#else
+#अगर_घोषित __AARCH64EB__
+	लघु		st_rdev;
+	लघु		__pad2;
+#अन्यथा
 	compat_dev_t	st_rdev;
-#endif
+#पूर्ण_अगर
 	compat_off_t	st_size;
 	compat_off_t	st_blksize;
 	compat_off_t	st_blocks;
-	old_time32_t	st_atime;
-	compat_ulong_t	st_atime_nsec;
-	old_time32_t	st_mtime;
-	compat_ulong_t	st_mtime_nsec;
-	old_time32_t	st_ctime;
-	compat_ulong_t	st_ctime_nsec;
-	compat_ulong_t	__unused4[2];
-};
+	old_समय32_t	st_aसमय;
+	compat_uदीर्घ_t	st_aसमय_nsec;
+	old_समय32_t	st_mसमय;
+	compat_uदीर्घ_t	st_mसमय_nsec;
+	old_समय32_t	st_स_समय;
+	compat_uदीर्घ_t	st_स_समय_nsec;
+	compat_uदीर्घ_t	__unused4[2];
+पूर्ण;
 
-struct compat_flock {
-	short		l_type;
-	short		l_whence;
+काष्ठा compat_flock अणु
+	लघु		l_type;
+	लघु		l_whence;
 	compat_off_t	l_start;
 	compat_off_t	l_len;
 	compat_pid_t	l_pid;
-};
+पूर्ण;
 
-#define F_GETLK64	12	/*  using 'struct flock64' */
-#define F_SETLK64	13
-#define F_SETLKW64	14
+#घोषणा F_GETLK64	12	/*  using 'struct flock64' */
+#घोषणा F_SETLK64	13
+#घोषणा F_SETLKW64	14
 
-struct compat_flock64 {
-	short		l_type;
-	short		l_whence;
+काष्ठा compat_flock64 अणु
+	लघु		l_type;
+	लघु		l_whence;
 	compat_loff_t	l_start;
 	compat_loff_t	l_len;
 	compat_pid_t	l_pid;
-};
+पूर्ण;
 
-struct compat_statfs {
-	int		f_type;
-	int		f_bsize;
-	int		f_blocks;
-	int		f_bfree;
-	int		f_bavail;
-	int		f_files;
-	int		f_ffree;
+काष्ठा compat_statfs अणु
+	पूर्णांक		f_type;
+	पूर्णांक		f_bsize;
+	पूर्णांक		f_blocks;
+	पूर्णांक		f_bमुक्त;
+	पूर्णांक		f_bavail;
+	पूर्णांक		f_files;
+	पूर्णांक		f_fमुक्त;
 	compat_fsid_t	f_fsid;
-	int		f_namelen;	/* SunOS ignores this field. */
-	int		f_frsize;
-	int		f_flags;
-	int		f_spare[4];
-};
+	पूर्णांक		f_namelen;	/* SunOS ignores this field. */
+	पूर्णांक		f_frsize;
+	पूर्णांक		f_flags;
+	पूर्णांक		f_spare[4];
+पूर्ण;
 
-#define COMPAT_RLIM_INFINITY		0xffffffff
+#घोषणा COMPAT_RLIM_अनन्त		0xffffffff
 
-typedef u32		compat_old_sigset_t;
+प्रकार u32		compat_old_sigset_t;
 
-#define _COMPAT_NSIG		64
-#define _COMPAT_NSIG_BPW	32
+#घोषणा _COMPAT_NSIG		64
+#घोषणा _COMPAT_NSIG_BPW	32
 
-typedef u32		compat_sigset_word;
+प्रकार u32		compat_sigset_word;
 
-#define COMPAT_OFF_T_MAX	0x7fffffff
+#घोषणा COMPAT_OFF_T_MAX	0x7fffffff
 
-#define compat_user_stack_pointer() (user_stack_pointer(task_pt_regs(current)))
-#define COMPAT_MINSIGSTKSZ	2048
+#घोषणा compat_user_stack_poपूर्णांकer() (user_stack_poपूर्णांकer(task_pt_regs(current)))
+#घोषणा COMPAT_MINSIGSTKSZ	2048
 
-static inline void __user *arch_compat_alloc_user_space(long len)
-{
-	return (void __user *)compat_user_stack_pointer() - len;
-}
+अटल अंतरभूत व्योम __user *arch_compat_alloc_user_space(दीर्घ len)
+अणु
+	वापस (व्योम __user *)compat_user_stack_poपूर्णांकer() - len;
+पूर्ण
 
-struct compat_ipc64_perm {
+काष्ठा compat_ipc64_perm अणु
 	compat_key_t key;
 	__compat_uid32_t uid;
 	__compat_gid32_t gid;
 	__compat_uid32_t cuid;
 	__compat_gid32_t cgid;
-	unsigned short mode;
-	unsigned short __pad1;
-	unsigned short seq;
-	unsigned short __pad2;
-	compat_ulong_t unused1;
-	compat_ulong_t unused2;
-};
+	अचिन्हित लघु mode;
+	अचिन्हित लघु __pad1;
+	अचिन्हित लघु seq;
+	अचिन्हित लघु __pad2;
+	compat_uदीर्घ_t unused1;
+	compat_uदीर्घ_t unused2;
+पूर्ण;
 
-struct compat_semid64_ds {
-	struct compat_ipc64_perm sem_perm;
-	compat_ulong_t sem_otime;
-	compat_ulong_t sem_otime_high;
-	compat_ulong_t sem_ctime;
-	compat_ulong_t sem_ctime_high;
-	compat_ulong_t sem_nsems;
-	compat_ulong_t __unused3;
-	compat_ulong_t __unused4;
-};
+काष्ठा compat_semid64_ds अणु
+	काष्ठा compat_ipc64_perm sem_perm;
+	compat_uदीर्घ_t sem_oसमय;
+	compat_uदीर्घ_t sem_oसमय_high;
+	compat_uदीर्घ_t sem_स_समय;
+	compat_uदीर्घ_t sem_स_समय_high;
+	compat_uदीर्घ_t sem_nsems;
+	compat_uदीर्घ_t __unused3;
+	compat_uदीर्घ_t __unused4;
+पूर्ण;
 
-struct compat_msqid64_ds {
-	struct compat_ipc64_perm msg_perm;
-	compat_ulong_t msg_stime;
-	compat_ulong_t msg_stime_high;
-	compat_ulong_t msg_rtime;
-	compat_ulong_t msg_rtime_high;
-	compat_ulong_t msg_ctime;
-	compat_ulong_t msg_ctime_high;
-	compat_ulong_t msg_cbytes;
-	compat_ulong_t msg_qnum;
-	compat_ulong_t msg_qbytes;
+काष्ठा compat_msqid64_ds अणु
+	काष्ठा compat_ipc64_perm msg_perm;
+	compat_uदीर्घ_t msg_sसमय;
+	compat_uदीर्घ_t msg_sसमय_high;
+	compat_uदीर्घ_t msg_rसमय;
+	compat_uदीर्घ_t msg_rसमय_high;
+	compat_uदीर्घ_t msg_स_समय;
+	compat_uदीर्घ_t msg_स_समय_high;
+	compat_uदीर्घ_t msg_cbytes;
+	compat_uदीर्घ_t msg_qnum;
+	compat_uदीर्घ_t msg_qbytes;
 	compat_pid_t   msg_lspid;
 	compat_pid_t   msg_lrpid;
-	compat_ulong_t __unused4;
-	compat_ulong_t __unused5;
-};
+	compat_uदीर्घ_t __unused4;
+	compat_uदीर्घ_t __unused5;
+पूर्ण;
 
-struct compat_shmid64_ds {
-	struct compat_ipc64_perm shm_perm;
-	compat_size_t  shm_segsz;
-	compat_ulong_t shm_atime;
-	compat_ulong_t shm_atime_high;
-	compat_ulong_t shm_dtime;
-	compat_ulong_t shm_dtime_high;
-	compat_ulong_t shm_ctime;
-	compat_ulong_t shm_ctime_high;
+काष्ठा compat_shmid64_ds अणु
+	काष्ठा compat_ipc64_perm shm_perm;
+	compat_माप_प्रकार  shm_segsz;
+	compat_uदीर्घ_t shm_aसमय;
+	compat_uदीर्घ_t shm_aसमय_high;
+	compat_uदीर्घ_t shm_dसमय;
+	compat_uदीर्घ_t shm_dसमय_high;
+	compat_uदीर्घ_t shm_स_समय;
+	compat_uदीर्घ_t shm_स_समय_high;
 	compat_pid_t   shm_cpid;
 	compat_pid_t   shm_lpid;
-	compat_ulong_t shm_nattch;
-	compat_ulong_t __unused4;
-	compat_ulong_t __unused5;
-};
+	compat_uदीर्घ_t shm_nattch;
+	compat_uदीर्घ_t __unused4;
+	compat_uदीर्घ_t __unused5;
+पूर्ण;
 
-static inline int is_compat_task(void)
-{
-	return test_thread_flag(TIF_32BIT);
-}
+अटल अंतरभूत पूर्णांक is_compat_task(व्योम)
+अणु
+	वापस test_thपढ़ो_flag(TIF_32BIT);
+पूर्ण
 
-static inline int is_compat_thread(struct thread_info *thread)
-{
-	return test_ti_thread_flag(thread, TIF_32BIT);
-}
+अटल अंतरभूत पूर्णांक is_compat_thपढ़ो(काष्ठा thपढ़ो_info *thपढ़ो)
+अणु
+	वापस test_ti_thपढ़ो_flag(thपढ़ो, TIF_32BIT);
+पूर्ण
 
-#else /* !CONFIG_COMPAT */
+#अन्यथा /* !CONFIG_COMPAT */
 
-static inline int is_compat_thread(struct thread_info *thread)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक is_compat_thपढ़ो(काष्ठा thपढ़ो_info *thपढ़ो)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_COMPAT */
-#endif /* __ASM_COMPAT_H */
+#पूर्ण_अगर /* CONFIG_COMPAT */
+#पूर्ण_अगर /* __ASM_COMPAT_H */

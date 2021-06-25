@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  *  Broadcom Blutonium firmware driver
  *
  *  Copyright (C) 2003  Maxim Krasnyansky <maxk@qualcomm.com>
- *  Copyright (C) 2003  Marcel Holtmann <marcel@holtmann.org>
+ *  Copyright (C) 2003  Marcel Holपंचांगann <marcel@holपंचांगann.org>
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <linux/atomic.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/errno.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
 
-#include <linux/device.h>
-#include <linux/firmware.h>
+#समावेश <linux/device.h>
+#समावेश <linux/firmware.h>
 
-#include <linux/usb.h>
+#समावेश <linux/usb.h>
 
-#include <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/bluetooth.h>
 
-#define VERSION "1.2"
+#घोषणा VERSION "1.2"
 
-static const struct usb_device_id bcm203x_table[] = {
+अटल स्थिर काष्ठा usb_device_id bcm203x_table[] = अणु
 	/* Broadcom Blutonium (BCM2033) */
-	{ USB_DEVICE(0x0a5c, 0x2033) },
+	अणु USB_DEVICE(0x0a5c, 0x2033) पूर्ण,
 
-	{ }	/* Terminating entry */
-};
+	अणु पूर्ण	/* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, bcm203x_table);
 
-#define BCM203X_ERROR		0
-#define BCM203X_RESET		1
-#define BCM203X_LOAD_MINIDRV	2
-#define BCM203X_SELECT_MEMORY	3
-#define BCM203X_CHECK_MEMORY	4
-#define BCM203X_LOAD_FIRMWARE	5
-#define BCM203X_CHECK_FIRMWARE	6
+#घोषणा BCM203X_ERROR		0
+#घोषणा BCM203X_RESET		1
+#घोषणा BCM203X_LOAD_MINIDRV	2
+#घोषणा BCM203X_SELECT_MEMORY	3
+#घोषणा BCM203X_CHECK_MEMORY	4
+#घोषणा BCM203X_LOAD_FIRMWARE	5
+#घोषणा BCM203X_CHECK_FIRMWARE	6
 
-#define BCM203X_IN_EP		0x81
-#define BCM203X_OUT_EP		0x02
+#घोषणा BCM203X_IN_EP		0x81
+#घोषणा BCM203X_OUT_EP		0x02
 
-struct bcm203x_data {
-	struct usb_device	*udev;
+काष्ठा bcm203x_data अणु
+	काष्ठा usb_device	*udev;
 
-	unsigned long		state;
+	अचिन्हित दीर्घ		state;
 
-	struct work_struct	work;
-	atomic_t		shutdown;
+	काष्ठा work_काष्ठा	work;
+	atomic_t		shutकरोwn;
 
-	struct urb		*urb;
-	unsigned char		*buffer;
+	काष्ठा urb		*urb;
+	अचिन्हित अक्षर		*buffer;
 
-	unsigned char		*fw_data;
-	unsigned int		fw_size;
-	unsigned int		fw_sent;
-};
+	अचिन्हित अक्षर		*fw_data;
+	अचिन्हित पूर्णांक		fw_size;
+	अचिन्हित पूर्णांक		fw_sent;
+पूर्ण;
 
-static void bcm203x_complete(struct urb *urb)
-{
-	struct bcm203x_data *data = urb->context;
-	struct usb_device *udev = urb->dev;
-	int len;
+अटल व्योम bcm203x_complete(काष्ठा urb *urb)
+अणु
+	काष्ठा bcm203x_data *data = urb->context;
+	काष्ठा usb_device *udev = urb->dev;
+	पूर्णांक len;
 
 	BT_DBG("udev %p urb %p", udev, urb);
 
-	if (urb->status) {
+	अगर (urb->status) अणु
 		BT_ERR("URB failed with status %d", urb->status);
 		data->state = BCM203X_ERROR;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (data->state) {
-	case BCM203X_LOAD_MINIDRV:
-		memcpy(data->buffer, "#", 1);
+	चयन (data->state) अणु
+	हाल BCM203X_LOAD_MINIDRV:
+		स_नकल(data->buffer, "#", 1);
 
 		usb_fill_bulk_urb(urb, udev, usb_sndbulkpipe(udev, BCM203X_OUT_EP),
 				data->buffer, 1, bcm203x_complete, data);
@@ -86,135 +87,135 @@ static void bcm203x_complete(struct urb *urb)
 
 		/* use workqueue to have a small delay */
 		schedule_work(&data->work);
-		break;
+		अवरोध;
 
-	case BCM203X_SELECT_MEMORY:
-		usb_fill_int_urb(urb, udev, usb_rcvintpipe(udev, BCM203X_IN_EP),
+	हाल BCM203X_SELECT_MEMORY:
+		usb_fill_पूर्णांक_urb(urb, udev, usb_rcvपूर्णांकpipe(udev, BCM203X_IN_EP),
 				data->buffer, 32, bcm203x_complete, data, 1);
 
 		data->state = BCM203X_CHECK_MEMORY;
 
-		if (usb_submit_urb(data->urb, GFP_ATOMIC) < 0)
+		अगर (usb_submit_urb(data->urb, GFP_ATOMIC) < 0)
 			BT_ERR("Can't submit URB");
-		break;
+		अवरोध;
 
-	case BCM203X_CHECK_MEMORY:
-		if (data->buffer[0] != '#') {
+	हाल BCM203X_CHECK_MEMORY:
+		अगर (data->buffer[0] != '#') अणु
 			BT_ERR("Memory select failed");
 			data->state = BCM203X_ERROR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		data->state = BCM203X_LOAD_FIRMWARE;
 		fallthrough;
-	case BCM203X_LOAD_FIRMWARE:
-		if (data->fw_sent == data->fw_size) {
-			usb_fill_int_urb(urb, udev, usb_rcvintpipe(udev, BCM203X_IN_EP),
+	हाल BCM203X_LOAD_FIRMWARE:
+		अगर (data->fw_sent == data->fw_size) अणु
+			usb_fill_पूर्णांक_urb(urb, udev, usb_rcvपूर्णांकpipe(udev, BCM203X_IN_EP),
 				data->buffer, 32, bcm203x_complete, data, 1);
 
 			data->state = BCM203X_CHECK_FIRMWARE;
-		} else {
-			len = min_t(uint, data->fw_size - data->fw_sent, 4096);
+		पूर्ण अन्यथा अणु
+			len = min_t(uपूर्णांक, data->fw_size - data->fw_sent, 4096);
 
 			usb_fill_bulk_urb(urb, udev, usb_sndbulkpipe(udev, BCM203X_OUT_EP),
 				data->fw_data + data->fw_sent, len, bcm203x_complete, data);
 
 			data->fw_sent += len;
-		}
+		पूर्ण
 
-		if (usb_submit_urb(data->urb, GFP_ATOMIC) < 0)
+		अगर (usb_submit_urb(data->urb, GFP_ATOMIC) < 0)
 			BT_ERR("Can't submit URB");
-		break;
+		अवरोध;
 
-	case BCM203X_CHECK_FIRMWARE:
-		if (data->buffer[0] != '.') {
+	हाल BCM203X_CHECK_FIRMWARE:
+		अगर (data->buffer[0] != '.') अणु
 			BT_ERR("Firmware loading failed");
 			data->state = BCM203X_ERROR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		data->state = BCM203X_RESET;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void bcm203x_work(struct work_struct *work)
-{
-	struct bcm203x_data *data =
-		container_of(work, struct bcm203x_data, work);
+अटल व्योम bcm203x_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा bcm203x_data *data =
+		container_of(work, काष्ठा bcm203x_data, work);
 
-	if (atomic_read(&data->shutdown))
-		return;
+	अगर (atomic_पढ़ो(&data->shutकरोwn))
+		वापस;
 
-	if (usb_submit_urb(data->urb, GFP_KERNEL) < 0)
+	अगर (usb_submit_urb(data->urb, GFP_KERNEL) < 0)
 		BT_ERR("Can't submit URB");
-}
+पूर्ण
 
-static int bcm203x_probe(struct usb_interface *intf, const struct usb_device_id *id)
-{
-	const struct firmware *firmware;
-	struct usb_device *udev = interface_to_usbdev(intf);
-	struct bcm203x_data *data;
-	int size;
+अटल पूर्णांक bcm203x_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर काष्ठा usb_device_id *id)
+अणु
+	स्थिर काष्ठा firmware *firmware;
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	काष्ठा bcm203x_data *data;
+	पूर्णांक size;
 
-	BT_DBG("intf %p id %p", intf, id);
+	BT_DBG("intf %p id %p", पूर्णांकf, id);
 
-	if (intf->cur_altsetting->desc.bInterfaceNumber != 0)
-		return -ENODEV;
+	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceNumber != 0)
+		वापस -ENODEV;
 
-	data = devm_kzalloc(&intf->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&पूर्णांकf->dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->udev  = udev;
 	data->state = BCM203X_LOAD_MINIDRV;
 
 	data->urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!data->urb)
-		return -ENOMEM;
+	अगर (!data->urb)
+		वापस -ENOMEM;
 
-	if (request_firmware(&firmware, "BCM2033-MD.hex", &udev->dev) < 0) {
+	अगर (request_firmware(&firmware, "BCM2033-MD.hex", &udev->dev) < 0) अणु
 		BT_ERR("Mini driver request failed");
-		usb_free_urb(data->urb);
-		return -EIO;
-	}
+		usb_मुक्त_urb(data->urb);
+		वापस -EIO;
+	पूर्ण
 
 	BT_DBG("minidrv data %p size %zu", firmware->data, firmware->size);
 
-	size = max_t(uint, firmware->size, 4096);
+	size = max_t(uपूर्णांक, firmware->size, 4096);
 
-	data->buffer = kmalloc(size, GFP_KERNEL);
-	if (!data->buffer) {
+	data->buffer = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!data->buffer) अणु
 		BT_ERR("Can't allocate memory for mini driver");
 		release_firmware(firmware);
-		usb_free_urb(data->urb);
-		return -ENOMEM;
-	}
+		usb_मुक्त_urb(data->urb);
+		वापस -ENOMEM;
+	पूर्ण
 
-	memcpy(data->buffer, firmware->data, firmware->size);
+	स_नकल(data->buffer, firmware->data, firmware->size);
 
 	usb_fill_bulk_urb(data->urb, udev, usb_sndbulkpipe(udev, BCM203X_OUT_EP),
 			data->buffer, firmware->size, bcm203x_complete, data);
 
 	release_firmware(firmware);
 
-	if (request_firmware(&firmware, "BCM2033-FW.bin", &udev->dev) < 0) {
+	अगर (request_firmware(&firmware, "BCM2033-FW.bin", &udev->dev) < 0) अणु
 		BT_ERR("Firmware request failed");
-		usb_free_urb(data->urb);
-		kfree(data->buffer);
-		return -EIO;
-	}
+		usb_मुक्त_urb(data->urb);
+		kमुक्त(data->buffer);
+		वापस -EIO;
+	पूर्ण
 
 	BT_DBG("firmware data %p size %zu", firmware->data, firmware->size);
 
 	data->fw_data = kmemdup(firmware->data, firmware->size, GFP_KERNEL);
-	if (!data->fw_data) {
+	अगर (!data->fw_data) अणु
 		BT_ERR("Can't allocate memory for firmware image");
 		release_firmware(firmware);
-		usb_free_urb(data->urb);
-		kfree(data->buffer);
-		return -ENOMEM;
-	}
+		usb_मुक्त_urb(data->urb);
+		kमुक्त(data->buffer);
+		वापस -ENOMEM;
+	पूर्ण
 
 	data->fw_size = firmware->size;
 	data->fw_sent = 0;
@@ -223,39 +224,39 @@ static int bcm203x_probe(struct usb_interface *intf, const struct usb_device_id 
 
 	INIT_WORK(&data->work, bcm203x_work);
 
-	usb_set_intfdata(intf, data);
+	usb_set_पूर्णांकfdata(पूर्णांकf, data);
 
 	/* use workqueue to have a small delay */
 	schedule_work(&data->work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bcm203x_disconnect(struct usb_interface *intf)
-{
-	struct bcm203x_data *data = usb_get_intfdata(intf);
+अटल व्योम bcm203x_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा bcm203x_data *data = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	BT_DBG("intf %p", intf);
+	BT_DBG("intf %p", पूर्णांकf);
 
-	atomic_inc(&data->shutdown);
+	atomic_inc(&data->shutकरोwn);
 	cancel_work_sync(&data->work);
 
-	usb_kill_urb(data->urb);
+	usb_समाप्त_urb(data->urb);
 
-	usb_set_intfdata(intf, NULL);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
 
-	usb_free_urb(data->urb);
-	kfree(data->fw_data);
-	kfree(data->buffer);
-}
+	usb_मुक्त_urb(data->urb);
+	kमुक्त(data->fw_data);
+	kमुक्त(data->buffer);
+पूर्ण
 
-static struct usb_driver bcm203x_driver = {
+अटल काष्ठा usb_driver bcm203x_driver = अणु
 	.name		= "bcm203x",
 	.probe		= bcm203x_probe,
 	.disconnect	= bcm203x_disconnect,
 	.id_table	= bcm203x_table,
 	.disable_hub_initiated_lpm = 1,
-};
+पूर्ण;
 
 module_usb_driver(bcm203x_driver);
 

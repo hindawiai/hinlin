@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *    Filename: cfag12864b.c
  *     Version: 0.1.0
@@ -9,45 +10,45 @@
  *        Date: 2006-10-31
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include <linux/cdev.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/jiffies.h>
-#include <linux/mutex.h>
-#include <linux/uaccess.h>
-#include <linux/vmalloc.h>
-#include <linux/workqueue.h>
-#include <linux/ks0108.h>
-#include <linux/cfag12864b.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/ks0108.h>
+#समावेश <linux/cfag12864b.h>
 
 
-#define CFAG12864B_NAME "cfag12864b"
+#घोषणा CFAG12864B_NAME "cfag12864b"
 
 /*
  * Module Parameters
  */
 
-static unsigned int cfag12864b_rate = CONFIG_CFAG12864B_RATE;
-module_param(cfag12864b_rate, uint, S_IRUGO);
+अटल अचिन्हित पूर्णांक cfag12864b_rate = CONFIG_CFAG12864B_RATE;
+module_param(cfag12864b_rate, uपूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(cfag12864b_rate,
 	"Refresh rate (hertz)");
 
-unsigned int cfag12864b_getrate(void)
-{
-	return cfag12864b_rate;
-}
+अचिन्हित पूर्णांक cfag12864b_getrate(व्योम)
+अणु
+	वापस cfag12864b_rate;
+पूर्ण
 
 /*
  * cfag12864b Commands
  *
- *	E = Enable signal
- *		Every time E switch from low to high,
- *		cfag12864b/ks0108 reads the command/data.
+ *	E = Enable संकेत
+ *		Every समय E चयन from low to high,
+ *		cfag12864b/ks0108 पढ़ोs the command/data.
  *
  *	CS1 = First ks0108controller.
  *		If high, the first ks0108 controller receives commands/data.
@@ -55,238 +56,238 @@ unsigned int cfag12864b_getrate(void)
  *	CS2 = Second ks0108 controller
  *		If high, the second ks0108 controller receives commands/data.
  *
- *	DI = Data/Instruction
+ *	DI = Data/Inकाष्ठाion
  *		If low, cfag12864b will expect commands.
  *		If high, cfag12864b will expect data.
  *
  */
 
-#define bit(n) (((unsigned char)1)<<(n))
+#घोषणा bit(n) (((अचिन्हित अक्षर)1)<<(n))
 
-#define CFAG12864B_BIT_E	(0)
-#define CFAG12864B_BIT_CS1	(2)
-#define CFAG12864B_BIT_CS2	(1)
-#define CFAG12864B_BIT_DI	(3)
+#घोषणा CFAG12864B_BIT_E	(0)
+#घोषणा CFAG12864B_BIT_CS1	(2)
+#घोषणा CFAG12864B_BIT_CS2	(1)
+#घोषणा CFAG12864B_BIT_DI	(3)
 
-static unsigned char cfag12864b_state;
+अटल अचिन्हित अक्षर cfag12864b_state;
 
-static void cfag12864b_set(void)
-{
-	ks0108_writecontrol(cfag12864b_state);
-}
+अटल व्योम cfag12864b_set(व्योम)
+अणु
+	ks0108_ग_लिखोcontrol(cfag12864b_state);
+पूर्ण
 
-static void cfag12864b_setbit(unsigned char state, unsigned char n)
-{
-	if (state)
+अटल व्योम cfag12864b_setbit(अचिन्हित अक्षर state, अचिन्हित अक्षर n)
+अणु
+	अगर (state)
 		cfag12864b_state |= bit(n);
-	else
+	अन्यथा
 		cfag12864b_state &= ~bit(n);
-}
+पूर्ण
 
-static void cfag12864b_e(unsigned char state)
-{
+अटल व्योम cfag12864b_e(अचिन्हित अक्षर state)
+अणु
 	cfag12864b_setbit(state, CFAG12864B_BIT_E);
 	cfag12864b_set();
-}
+पूर्ण
 
-static void cfag12864b_cs1(unsigned char state)
-{
+अटल व्योम cfag12864b_cs1(अचिन्हित अक्षर state)
+अणु
 	cfag12864b_setbit(state, CFAG12864B_BIT_CS1);
-}
+पूर्ण
 
-static void cfag12864b_cs2(unsigned char state)
-{
+अटल व्योम cfag12864b_cs2(अचिन्हित अक्षर state)
+अणु
 	cfag12864b_setbit(state, CFAG12864B_BIT_CS2);
-}
+पूर्ण
 
-static void cfag12864b_di(unsigned char state)
-{
+अटल व्योम cfag12864b_di(अचिन्हित अक्षर state)
+अणु
 	cfag12864b_setbit(state, CFAG12864B_BIT_DI);
-}
+पूर्ण
 
-static void cfag12864b_setcontrollers(unsigned char first,
-	unsigned char second)
-{
-	if (first)
+अटल व्योम cfag12864b_setcontrollers(अचिन्हित अक्षर first,
+	अचिन्हित अक्षर second)
+अणु
+	अगर (first)
 		cfag12864b_cs1(0);
-	else
+	अन्यथा
 		cfag12864b_cs1(1);
 
-	if (second)
+	अगर (second)
 		cfag12864b_cs2(0);
-	else
+	अन्यथा
 		cfag12864b_cs2(1);
-}
+पूर्ण
 
-static void cfag12864b_controller(unsigned char which)
-{
-	if (which == 0)
+अटल व्योम cfag12864b_controller(अचिन्हित अक्षर which)
+अणु
+	अगर (which == 0)
 		cfag12864b_setcontrollers(1, 0);
-	else if (which == 1)
+	अन्यथा अगर (which == 1)
 		cfag12864b_setcontrollers(0, 1);
-}
+पूर्ण
 
-static void cfag12864b_displaystate(unsigned char state)
-{
+अटल व्योम cfag12864b_displaystate(अचिन्हित अक्षर state)
+अणु
 	cfag12864b_di(0);
 	cfag12864b_e(1);
 	ks0108_displaystate(state);
 	cfag12864b_e(0);
-}
+पूर्ण
 
-static void cfag12864b_address(unsigned char address)
-{
+अटल व्योम cfag12864b_address(अचिन्हित अक्षर address)
+अणु
 	cfag12864b_di(0);
 	cfag12864b_e(1);
 	ks0108_address(address);
 	cfag12864b_e(0);
-}
+पूर्ण
 
-static void cfag12864b_page(unsigned char page)
-{
+अटल व्योम cfag12864b_page(अचिन्हित अक्षर page)
+अणु
 	cfag12864b_di(0);
 	cfag12864b_e(1);
 	ks0108_page(page);
 	cfag12864b_e(0);
-}
+पूर्ण
 
-static void cfag12864b_startline(unsigned char startline)
-{
+अटल व्योम cfag12864b_startline(अचिन्हित अक्षर startline)
+अणु
 	cfag12864b_di(0);
 	cfag12864b_e(1);
 	ks0108_startline(startline);
 	cfag12864b_e(0);
-}
+पूर्ण
 
-static void cfag12864b_writebyte(unsigned char byte)
-{
+अटल व्योम cfag12864b_ग_लिखोbyte(अचिन्हित अक्षर byte)
+अणु
 	cfag12864b_di(1);
 	cfag12864b_e(1);
-	ks0108_writedata(byte);
+	ks0108_ग_लिखोdata(byte);
 	cfag12864b_e(0);
-}
+पूर्ण
 
-static void cfag12864b_nop(void)
-{
+अटल व्योम cfag12864b_nop(व्योम)
+अणु
 	cfag12864b_startline(0);
-}
+पूर्ण
 
 /*
  * cfag12864b Internal Commands
  */
 
-static void cfag12864b_on(void)
-{
+अटल व्योम cfag12864b_on(व्योम)
+अणु
 	cfag12864b_setcontrollers(1, 1);
 	cfag12864b_displaystate(1);
-}
+पूर्ण
 
-static void cfag12864b_off(void)
-{
+अटल व्योम cfag12864b_off(व्योम)
+अणु
 	cfag12864b_setcontrollers(1, 1);
 	cfag12864b_displaystate(0);
-}
+पूर्ण
 
-static void cfag12864b_clear(void)
-{
-	unsigned char i, j;
+अटल व्योम cfag12864b_clear(व्योम)
+अणु
+	अचिन्हित अक्षर i, j;
 
 	cfag12864b_setcontrollers(1, 1);
-	for (i = 0; i < CFAG12864B_PAGES; i++) {
+	क्रम (i = 0; i < CFAG12864B_PAGES; i++) अणु
 		cfag12864b_page(i);
 		cfag12864b_address(0);
-		for (j = 0; j < CFAG12864B_ADDRESSES; j++)
-			cfag12864b_writebyte(0);
-	}
-}
+		क्रम (j = 0; j < CFAG12864B_ADDRESSES; j++)
+			cfag12864b_ग_लिखोbyte(0);
+	पूर्ण
+पूर्ण
 
 /*
  * Update work
  */
 
-unsigned char *cfag12864b_buffer;
-static unsigned char *cfag12864b_cache;
-static DEFINE_MUTEX(cfag12864b_mutex);
-static unsigned char cfag12864b_updating;
-static void cfag12864b_update(struct work_struct *delayed_work);
-static struct workqueue_struct *cfag12864b_workqueue;
-static DECLARE_DELAYED_WORK(cfag12864b_work, cfag12864b_update);
+अचिन्हित अक्षर *cfag12864b_buffer;
+अटल अचिन्हित अक्षर *cfag12864b_cache;
+अटल DEFINE_MUTEX(cfag12864b_mutex);
+अटल अचिन्हित अक्षर cfag12864b_updating;
+अटल व्योम cfag12864b_update(काष्ठा work_काष्ठा *delayed_work);
+अटल काष्ठा workqueue_काष्ठा *cfag12864b_workqueue;
+अटल DECLARE_DELAYED_WORK(cfag12864b_work, cfag12864b_update);
 
-static void cfag12864b_queue(void)
-{
+अटल व्योम cfag12864b_queue(व्योम)
+अणु
 	queue_delayed_work(cfag12864b_workqueue, &cfag12864b_work,
 		HZ / cfag12864b_rate);
-}
+पूर्ण
 
-unsigned char cfag12864b_enable(void)
-{
-	unsigned char ret;
+अचिन्हित अक्षर cfag12864b_enable(व्योम)
+अणु
+	अचिन्हित अक्षर ret;
 
 	mutex_lock(&cfag12864b_mutex);
 
-	if (!cfag12864b_updating) {
+	अगर (!cfag12864b_updating) अणु
 		cfag12864b_updating = 1;
 		cfag12864b_queue();
 		ret = 0;
-	} else
+	पूर्ण अन्यथा
 		ret = 1;
 
 	mutex_unlock(&cfag12864b_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void cfag12864b_disable(void)
-{
+व्योम cfag12864b_disable(व्योम)
+अणु
 	mutex_lock(&cfag12864b_mutex);
 
-	if (cfag12864b_updating) {
+	अगर (cfag12864b_updating) अणु
 		cfag12864b_updating = 0;
 		cancel_delayed_work(&cfag12864b_work);
 		flush_workqueue(cfag12864b_workqueue);
-	}
+	पूर्ण
 
 	mutex_unlock(&cfag12864b_mutex);
-}
+पूर्ण
 
-unsigned char cfag12864b_isenabled(void)
-{
-	return cfag12864b_updating;
-}
+अचिन्हित अक्षर cfag12864b_isenabled(व्योम)
+अणु
+	वापस cfag12864b_updating;
+पूर्ण
 
-static void cfag12864b_update(struct work_struct *work)
-{
-	unsigned char c;
-	unsigned short i, j, k, b;
+अटल व्योम cfag12864b_update(काष्ठा work_काष्ठा *work)
+अणु
+	अचिन्हित अक्षर c;
+	अचिन्हित लघु i, j, k, b;
 
-	if (memcmp(cfag12864b_cache, cfag12864b_buffer, CFAG12864B_SIZE)) {
-		for (i = 0; i < CFAG12864B_CONTROLLERS; i++) {
+	अगर (स_भेद(cfag12864b_cache, cfag12864b_buffer, CFAG12864B_SIZE)) अणु
+		क्रम (i = 0; i < CFAG12864B_CONTROLLERS; i++) अणु
 			cfag12864b_controller(i);
 			cfag12864b_nop();
-			for (j = 0; j < CFAG12864B_PAGES; j++) {
+			क्रम (j = 0; j < CFAG12864B_PAGES; j++) अणु
 				cfag12864b_page(j);
 				cfag12864b_nop();
 				cfag12864b_address(0);
 				cfag12864b_nop();
-				for (k = 0; k < CFAG12864B_ADDRESSES; k++) {
-					for (c = 0, b = 0; b < 8; b++)
-						if (cfag12864b_buffer
+				क्रम (k = 0; k < CFAG12864B_ADDRESSES; k++) अणु
+					क्रम (c = 0, b = 0; b < 8; b++)
+						अगर (cfag12864b_buffer
 							[i * CFAG12864B_ADDRESSES / 8
 							+ k / 8 + (j * 8 + b) *
 							CFAG12864B_WIDTH / 8]
 							& bit(k % 8))
 							c |= bit(b);
-					cfag12864b_writebyte(c);
-				}
-			}
-		}
+					cfag12864b_ग_लिखोbyte(c);
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		memcpy(cfag12864b_cache, cfag12864b_buffer, CFAG12864B_SIZE);
-	}
+		स_नकल(cfag12864b_cache, cfag12864b_buffer, CFAG12864B_SIZE);
+	पूर्ण
 
-	if (cfag12864b_updating)
+	अगर (cfag12864b_updating)
 		cfag12864b_queue();
-}
+पूर्ण
 
 /*
  * cfag12864b Exported Symbols
@@ -302,78 +303,78 @@ EXPORT_SYMBOL_GPL(cfag12864b_isenabled);
  * Is the module inited?
  */
 
-static unsigned char cfag12864b_inited;
-unsigned char cfag12864b_isinited(void)
-{
-	return cfag12864b_inited;
-}
+अटल अचिन्हित अक्षर cfag12864b_inited;
+अचिन्हित अक्षर cfag12864b_isinited(व्योम)
+अणु
+	वापस cfag12864b_inited;
+पूर्ण
 EXPORT_SYMBOL_GPL(cfag12864b_isinited);
 
 /*
  * Module Init & Exit
  */
 
-static int __init cfag12864b_init(void)
-{
-	int ret = -EINVAL;
+अटल पूर्णांक __init cfag12864b_init(व्योम)
+अणु
+	पूर्णांक ret = -EINVAL;
 
 	/* ks0108_init() must be called first */
-	if (!ks0108_isinited()) {
-		printk(KERN_ERR CFAG12864B_NAME ": ERROR: "
+	अगर (!ks0108_isinited()) अणु
+		prपूर्णांकk(KERN_ERR CFAG12864B_NAME ": ERROR: "
 			"ks0108 is not initialized\n");
-		goto none;
-	}
+		जाओ none;
+	पूर्ण
 	BUILD_BUG_ON(PAGE_SIZE < CFAG12864B_SIZE);
 
-	cfag12864b_buffer = (unsigned char *) get_zeroed_page(GFP_KERNEL);
-	if (cfag12864b_buffer == NULL) {
-		printk(KERN_ERR CFAG12864B_NAME ": ERROR: "
+	cfag12864b_buffer = (अचिन्हित अक्षर *) get_zeroed_page(GFP_KERNEL);
+	अगर (cfag12864b_buffer == शून्य) अणु
+		prपूर्णांकk(KERN_ERR CFAG12864B_NAME ": ERROR: "
 			"can't get a free page\n");
 		ret = -ENOMEM;
-		goto none;
-	}
+		जाओ none;
+	पूर्ण
 
-	cfag12864b_cache = kmalloc(CFAG12864B_SIZE,
+	cfag12864b_cache = kदो_स्मृति(CFAG12864B_SIZE,
 				   GFP_KERNEL);
-	if (cfag12864b_cache == NULL) {
-		printk(KERN_ERR CFAG12864B_NAME ": ERROR: "
+	अगर (cfag12864b_cache == शून्य) अणु
+		prपूर्णांकk(KERN_ERR CFAG12864B_NAME ": ERROR: "
 			"can't alloc cache buffer (%i bytes)\n",
 			CFAG12864B_SIZE);
 		ret = -ENOMEM;
-		goto bufferalloced;
-	}
+		जाओ bufferalloced;
+	पूर्ण
 
-	cfag12864b_workqueue = create_singlethread_workqueue(CFAG12864B_NAME);
-	if (cfag12864b_workqueue == NULL)
-		goto cachealloced;
+	cfag12864b_workqueue = create_singlethपढ़ो_workqueue(CFAG12864B_NAME);
+	अगर (cfag12864b_workqueue == शून्य)
+		जाओ cachealloced;
 
 	cfag12864b_clear();
 	cfag12864b_on();
 
 	cfag12864b_inited = 1;
-	return 0;
+	वापस 0;
 
 cachealloced:
-	kfree(cfag12864b_cache);
+	kमुक्त(cfag12864b_cache);
 
 bufferalloced:
-	free_page((unsigned long) cfag12864b_buffer);
+	मुक्त_page((अचिन्हित दीर्घ) cfag12864b_buffer);
 
 none:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit cfag12864b_exit(void)
-{
+अटल व्योम __निकास cfag12864b_निकास(व्योम)
+अणु
 	cfag12864b_disable();
 	cfag12864b_off();
 	destroy_workqueue(cfag12864b_workqueue);
-	kfree(cfag12864b_cache);
-	free_page((unsigned long) cfag12864b_buffer);
-}
+	kमुक्त(cfag12864b_cache);
+	मुक्त_page((अचिन्हित दीर्घ) cfag12864b_buffer);
+पूर्ण
 
 module_init(cfag12864b_init);
-module_exit(cfag12864b_exit);
+module_निकास(cfag12864b_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Miguel Ojeda <ojeda@kernel.org>");

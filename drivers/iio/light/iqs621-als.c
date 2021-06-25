@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Azoteq IQS621/622 Ambient Light Sensors
  *
  * Copyright (C) 2019 Jeff LaBundy <jeff@labundy.com>
  */
 
-#include <linux/device.h>
-#include <linux/iio/events.h>
-#include <linux/iio/iio.h>
-#include <linux/kernel.h>
-#include <linux/mfd/iqs62x.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/notifier.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/device.h>
+#समावेश <linux/iio/events.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/iqs62x.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-#define IQS621_ALS_FLAGS_LIGHT			BIT(7)
-#define IQS621_ALS_FLAGS_RANGE			GENMASK(3, 0)
+#घोषणा IQS621_ALS_FLAGS_LIGHT			BIT(7)
+#घोषणा IQS621_ALS_FLAGS_RANGE			GENMASK(3, 0)
 
-#define IQS621_ALS_UI_OUT			0x17
+#घोषणा IQS621_ALS_UI_OUT			0x17
 
-#define IQS621_ALS_THRESH_DARK			0x80
-#define IQS621_ALS_THRESH_LIGHT			0x81
+#घोषणा IQS621_ALS_THRESH_DARK			0x80
+#घोषणा IQS621_ALS_THRESH_LIGHT			0x81
 
-#define IQS622_IR_RANGE				0x15
-#define IQS622_IR_FLAGS				0x16
-#define IQS622_IR_FLAGS_TOUCH			BIT(1)
-#define IQS622_IR_FLAGS_PROX			BIT(0)
+#घोषणा IQS622_IR_RANGE				0x15
+#घोषणा IQS622_IR_FLAGS				0x16
+#घोषणा IQS622_IR_FLAGS_TOUCH			BIT(1)
+#घोषणा IQS622_IR_FLAGS_PROX			BIT(0)
 
-#define IQS622_IR_UI_OUT			0x17
+#घोषणा IQS622_IR_UI_OUT			0x17
 
-#define IQS622_IR_THRESH_PROX			0x91
-#define IQS622_IR_THRESH_TOUCH			0x92
+#घोषणा IQS622_IR_THRESH_PROX			0x91
+#घोषणा IQS622_IR_THRESH_TOUCH			0x92
 
-struct iqs621_als_private {
-	struct iqs62x_core *iqs62x;
-	struct iio_dev *indio_dev;
-	struct notifier_block notifier;
-	struct mutex lock;
+काष्ठा iqs621_als_निजी अणु
+	काष्ठा iqs62x_core *iqs62x;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा notअगरier_block notअगरier;
+	काष्ठा mutex lock;
 	bool light_en;
 	bool range_en;
 	bool prox_en;
@@ -48,136 +49,136 @@ struct iqs621_als_private {
 	u8 thresh_light;
 	u8 thresh_dark;
 	u8 thresh_prox;
-};
+पूर्ण;
 
-static int iqs621_als_init(struct iqs621_als_private *iqs621_als)
-{
-	struct iqs62x_core *iqs62x = iqs621_als->iqs62x;
-	unsigned int event_mask = 0;
-	int ret;
+अटल पूर्णांक iqs621_als_init(काष्ठा iqs621_als_निजी *iqs621_als)
+अणु
+	काष्ठा iqs62x_core *iqs62x = iqs621_als->iqs62x;
+	अचिन्हित पूर्णांक event_mask = 0;
+	पूर्णांक ret;
 
-	switch (iqs621_als->ir_flags_mask) {
-	case IQS622_IR_FLAGS_TOUCH:
-		ret = regmap_write(iqs62x->regmap, IQS622_IR_THRESH_TOUCH,
+	चयन (iqs621_als->ir_flags_mask) अणु
+	हाल IQS622_IR_FLAGS_TOUCH:
+		ret = regmap_ग_लिखो(iqs62x->regmap, IQS622_IR_THRESH_TOUCH,
 				   iqs621_als->thresh_prox);
-		break;
+		अवरोध;
 
-	case IQS622_IR_FLAGS_PROX:
-		ret = regmap_write(iqs62x->regmap, IQS622_IR_THRESH_PROX,
+	हाल IQS622_IR_FLAGS_PROX:
+		ret = regmap_ग_लिखो(iqs62x->regmap, IQS622_IR_THRESH_PROX,
 				   iqs621_als->thresh_prox);
-		break;
+		अवरोध;
 
-	default:
-		ret = regmap_write(iqs62x->regmap, IQS621_ALS_THRESH_LIGHT,
+	शेष:
+		ret = regmap_ग_लिखो(iqs62x->regmap, IQS621_ALS_THRESH_LIGHT,
 				   iqs621_als->thresh_light);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		ret = regmap_write(iqs62x->regmap, IQS621_ALS_THRESH_DARK,
+		ret = regmap_ग_लिखो(iqs62x->regmap, IQS621_ALS_THRESH_DARK,
 				   iqs621_als->thresh_dark);
-	}
+	पूर्ण
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (iqs621_als->light_en || iqs621_als->range_en)
+	अगर (iqs621_als->light_en || iqs621_als->range_en)
 		event_mask |= iqs62x->dev_desc->als_mask;
 
-	if (iqs621_als->prox_en)
+	अगर (iqs621_als->prox_en)
 		event_mask |= iqs62x->dev_desc->ir_mask;
 
-	return regmap_update_bits(iqs62x->regmap, IQS620_GLBL_EVENT_MASK,
+	वापस regmap_update_bits(iqs62x->regmap, IQS620_GLBL_EVENT_MASK,
 				  event_mask, 0);
-}
+पूर्ण
 
-static int iqs621_als_notifier(struct notifier_block *notifier,
-			       unsigned long event_flags, void *context)
-{
-	struct iqs62x_event_data *event_data = context;
-	struct iqs621_als_private *iqs621_als;
-	struct iio_dev *indio_dev;
+अटल पूर्णांक iqs621_als_notअगरier(काष्ठा notअगरier_block *notअगरier,
+			       अचिन्हित दीर्घ event_flags, व्योम *context)
+अणु
+	काष्ठा iqs62x_event_data *event_data = context;
+	काष्ठा iqs621_als_निजी *iqs621_als;
+	काष्ठा iio_dev *indio_dev;
 	bool light_new, light_old;
 	bool prox_new, prox_old;
 	u8 range_new, range_old;
-	s64 timestamp;
-	int ret;
+	s64 बारtamp;
+	पूर्णांक ret;
 
-	iqs621_als = container_of(notifier, struct iqs621_als_private,
-				  notifier);
+	iqs621_als = container_of(notअगरier, काष्ठा iqs621_als_निजी,
+				  notअगरier);
 	indio_dev = iqs621_als->indio_dev;
-	timestamp = iio_get_time_ns(indio_dev);
+	बारtamp = iio_get_समय_ns(indio_dev);
 
 	mutex_lock(&iqs621_als->lock);
 
-	if (event_flags & BIT(IQS62X_EVENT_SYS_RESET)) {
+	अगर (event_flags & BIT(IQS62X_EVENT_SYS_RESET)) अणु
 		ret = iqs621_als_init(iqs621_als);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(indio_dev->dev.parent,
 				"Failed to re-initialize device: %d\n", ret);
 			ret = NOTIFY_BAD;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = NOTIFY_OK;
-		}
+		पूर्ण
 
-		goto err_mutex;
-	}
+		जाओ err_mutex;
+	पूर्ण
 
-	if (!iqs621_als->light_en && !iqs621_als->range_en &&
-	    !iqs621_als->prox_en) {
+	अगर (!iqs621_als->light_en && !iqs621_als->range_en &&
+	    !iqs621_als->prox_en) अणु
 		ret = NOTIFY_DONE;
-		goto err_mutex;
-	}
+		जाओ err_mutex;
+	पूर्ण
 
 	/* IQS621 only */
 	light_new = event_data->als_flags & IQS621_ALS_FLAGS_LIGHT;
 	light_old = iqs621_als->als_flags & IQS621_ALS_FLAGS_LIGHT;
 
-	if (iqs621_als->light_en && light_new && !light_old)
+	अगर (iqs621_als->light_en && light_new && !light_old)
 		iio_push_event(indio_dev,
 			       IIO_UNMOD_EVENT_CODE(IIO_LIGHT, 0,
 						    IIO_EV_TYPE_THRESH,
-						    IIO_EV_DIR_RISING),
-			       timestamp);
-	else if (iqs621_als->light_en && !light_new && light_old)
+						    IIO_EV_सूची_RISING),
+			       बारtamp);
+	अन्यथा अगर (iqs621_als->light_en && !light_new && light_old)
 		iio_push_event(indio_dev,
 			       IIO_UNMOD_EVENT_CODE(IIO_LIGHT, 0,
 						    IIO_EV_TYPE_THRESH,
-						    IIO_EV_DIR_FALLING),
-			       timestamp);
+						    IIO_EV_सूची_FALLING),
+			       बारtamp);
 
 	/* IQS621 and IQS622 */
 	range_new = event_data->als_flags & IQS621_ALS_FLAGS_RANGE;
 	range_old = iqs621_als->als_flags & IQS621_ALS_FLAGS_RANGE;
 
-	if (iqs621_als->range_en && (range_new > range_old))
+	अगर (iqs621_als->range_en && (range_new > range_old))
 		iio_push_event(indio_dev,
 			       IIO_UNMOD_EVENT_CODE(IIO_INTENSITY, 0,
 						    IIO_EV_TYPE_CHANGE,
-						    IIO_EV_DIR_RISING),
-			       timestamp);
-	else if (iqs621_als->range_en && (range_new < range_old))
+						    IIO_EV_सूची_RISING),
+			       बारtamp);
+	अन्यथा अगर (iqs621_als->range_en && (range_new < range_old))
 		iio_push_event(indio_dev,
 			       IIO_UNMOD_EVENT_CODE(IIO_INTENSITY, 0,
 						    IIO_EV_TYPE_CHANGE,
-						    IIO_EV_DIR_FALLING),
-			       timestamp);
+						    IIO_EV_सूची_FALLING),
+			       बारtamp);
 
 	/* IQS622 only */
 	prox_new = event_data->ir_flags & iqs621_als->ir_flags_mask;
 	prox_old = iqs621_als->ir_flags & iqs621_als->ir_flags_mask;
 
-	if (iqs621_als->prox_en && prox_new && !prox_old)
+	अगर (iqs621_als->prox_en && prox_new && !prox_old)
 		iio_push_event(indio_dev,
 			       IIO_UNMOD_EVENT_CODE(IIO_PROXIMITY, 0,
 						    IIO_EV_TYPE_THRESH,
-						    IIO_EV_DIR_RISING),
-			       timestamp);
-	else if (iqs621_als->prox_en && !prox_new && prox_old)
+						    IIO_EV_सूची_RISING),
+			       बारtamp);
+	अन्यथा अगर (iqs621_als->prox_en && !prox_new && prox_old)
 		iio_push_event(indio_dev,
 			       IIO_UNMOD_EVENT_CODE(IIO_PROXIMITY, 0,
 						    IIO_EV_TYPE_THRESH,
-						    IIO_EV_DIR_FALLING),
-			       timestamp);
+						    IIO_EV_सूची_FALLING),
+			       बारtamp);
 
 	iqs621_als->als_flags = event_data->als_flags;
 	iqs621_als->ir_flags = event_data->ir_flags;
@@ -186,220 +187,220 @@ static int iqs621_als_notifier(struct notifier_block *notifier,
 err_mutex:
 	mutex_unlock(&iqs621_als->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void iqs621_als_notifier_unregister(void *context)
-{
-	struct iqs621_als_private *iqs621_als = context;
-	struct iio_dev *indio_dev = iqs621_als->indio_dev;
-	int ret;
+अटल व्योम iqs621_als_notअगरier_unरेजिस्टर(व्योम *context)
+अणु
+	काष्ठा iqs621_als_निजी *iqs621_als = context;
+	काष्ठा iio_dev *indio_dev = iqs621_als->indio_dev;
+	पूर्णांक ret;
 
-	ret = blocking_notifier_chain_unregister(&iqs621_als->iqs62x->nh,
-						 &iqs621_als->notifier);
-	if (ret)
+	ret = blocking_notअगरier_chain_unरेजिस्टर(&iqs621_als->iqs62x->nh,
+						 &iqs621_als->notअगरier);
+	अगर (ret)
 		dev_err(indio_dev->dev.parent,
 			"Failed to unregister notifier: %d\n", ret);
-}
+पूर्ण
 
-static int iqs621_als_read_raw(struct iio_dev *indio_dev,
-			       struct iio_chan_spec const *chan,
-			       int *val, int *val2, long mask)
-{
-	struct iqs621_als_private *iqs621_als = iio_priv(indio_dev);
-	struct iqs62x_core *iqs62x = iqs621_als->iqs62x;
-	int ret;
+अटल पूर्णांक iqs621_als_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			       काष्ठा iio_chan_spec स्थिर *chan,
+			       पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा iqs621_als_निजी *iqs621_als = iio_priv(indio_dev);
+	काष्ठा iqs62x_core *iqs62x = iqs621_als->iqs62x;
+	पूर्णांक ret;
 	__le16 val_buf;
 
-	switch (chan->type) {
-	case IIO_INTENSITY:
-		ret = regmap_read(iqs62x->regmap, chan->address, val);
-		if (ret)
-			return ret;
+	चयन (chan->type) अणु
+	हाल IIO_INTENSITY:
+		ret = regmap_पढ़ो(iqs62x->regmap, chan->address, val);
+		अगर (ret)
+			वापस ret;
 
 		*val &= IQS621_ALS_FLAGS_RANGE;
-		return IIO_VAL_INT;
+		वापस IIO_VAL_INT;
 
-	case IIO_PROXIMITY:
-	case IIO_LIGHT:
-		ret = regmap_raw_read(iqs62x->regmap, chan->address, &val_buf,
-				      sizeof(val_buf));
-		if (ret)
-			return ret;
+	हाल IIO_PROXIMITY:
+	हाल IIO_LIGHT:
+		ret = regmap_raw_पढ़ो(iqs62x->regmap, chan->address, &val_buf,
+				      माप(val_buf));
+		अगर (ret)
+			वापस ret;
 
 		*val = le16_to_cpu(val_buf);
-		return IIO_VAL_INT;
+		वापस IIO_VAL_INT;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int iqs621_als_read_event_config(struct iio_dev *indio_dev,
-					const struct iio_chan_spec *chan,
-					enum iio_event_type type,
-					enum iio_event_direction dir)
-{
-	struct iqs621_als_private *iqs621_als = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक iqs621_als_पढ़ो_event_config(काष्ठा iio_dev *indio_dev,
+					स्थिर काष्ठा iio_chan_spec *chan,
+					क्रमागत iio_event_type type,
+					क्रमागत iio_event_direction dir)
+अणु
+	काष्ठा iqs621_als_निजी *iqs621_als = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	mutex_lock(&iqs621_als->lock);
 
-	switch (chan->type) {
-	case IIO_LIGHT:
+	चयन (chan->type) अणु
+	हाल IIO_LIGHT:
 		ret = iqs621_als->light_en;
-		break;
+		अवरोध;
 
-	case IIO_INTENSITY:
+	हाल IIO_INTENSITY:
 		ret = iqs621_als->range_en;
-		break;
+		अवरोध;
 
-	case IIO_PROXIMITY:
+	हाल IIO_PROXIMITY:
 		ret = iqs621_als->prox_en;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	mutex_unlock(&iqs621_als->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iqs621_als_write_event_config(struct iio_dev *indio_dev,
-					 const struct iio_chan_spec *chan,
-					 enum iio_event_type type,
-					 enum iio_event_direction dir,
-					 int state)
-{
-	struct iqs621_als_private *iqs621_als = iio_priv(indio_dev);
-	struct iqs62x_core *iqs62x = iqs621_als->iqs62x;
-	unsigned int val;
-	int ret;
+अटल पूर्णांक iqs621_als_ग_लिखो_event_config(काष्ठा iio_dev *indio_dev,
+					 स्थिर काष्ठा iio_chan_spec *chan,
+					 क्रमागत iio_event_type type,
+					 क्रमागत iio_event_direction dir,
+					 पूर्णांक state)
+अणु
+	काष्ठा iqs621_als_निजी *iqs621_als = iio_priv(indio_dev);
+	काष्ठा iqs62x_core *iqs62x = iqs621_als->iqs62x;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
 	mutex_lock(&iqs621_als->lock);
 
-	ret = regmap_read(iqs62x->regmap, iqs62x->dev_desc->als_flags, &val);
-	if (ret)
-		goto err_mutex;
+	ret = regmap_पढ़ो(iqs62x->regmap, iqs62x->dev_desc->als_flags, &val);
+	अगर (ret)
+		जाओ err_mutex;
 	iqs621_als->als_flags = val;
 
-	switch (chan->type) {
-	case IIO_LIGHT:
+	चयन (chan->type) अणु
+	हाल IIO_LIGHT:
 		ret = regmap_update_bits(iqs62x->regmap, IQS620_GLBL_EVENT_MASK,
 					 iqs62x->dev_desc->als_mask,
 					 iqs621_als->range_en || state ? 0 :
 									 0xFF);
-		if (!ret)
+		अगर (!ret)
 			iqs621_als->light_en = state;
-		break;
+		अवरोध;
 
-	case IIO_INTENSITY:
+	हाल IIO_INTENSITY:
 		ret = regmap_update_bits(iqs62x->regmap, IQS620_GLBL_EVENT_MASK,
 					 iqs62x->dev_desc->als_mask,
 					 iqs621_als->light_en || state ? 0 :
 									 0xFF);
-		if (!ret)
+		अगर (!ret)
 			iqs621_als->range_en = state;
-		break;
+		अवरोध;
 
-	case IIO_PROXIMITY:
-		ret = regmap_read(iqs62x->regmap, IQS622_IR_FLAGS, &val);
-		if (ret)
-			goto err_mutex;
+	हाल IIO_PROXIMITY:
+		ret = regmap_पढ़ो(iqs62x->regmap, IQS622_IR_FLAGS, &val);
+		अगर (ret)
+			जाओ err_mutex;
 		iqs621_als->ir_flags = val;
 
 		ret = regmap_update_bits(iqs62x->regmap, IQS620_GLBL_EVENT_MASK,
 					 iqs62x->dev_desc->ir_mask,
 					 state ? 0 : 0xFF);
-		if (!ret)
+		अगर (!ret)
 			iqs621_als->prox_en = state;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 err_mutex:
 	mutex_unlock(&iqs621_als->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iqs621_als_read_event_value(struct iio_dev *indio_dev,
-				       const struct iio_chan_spec *chan,
-				       enum iio_event_type type,
-				       enum iio_event_direction dir,
-				       enum iio_event_info info,
-				       int *val, int *val2)
-{
-	struct iqs621_als_private *iqs621_als = iio_priv(indio_dev);
-	int ret = IIO_VAL_INT;
+अटल पूर्णांक iqs621_als_पढ़ो_event_value(काष्ठा iio_dev *indio_dev,
+				       स्थिर काष्ठा iio_chan_spec *chan,
+				       क्रमागत iio_event_type type,
+				       क्रमागत iio_event_direction dir,
+				       क्रमागत iio_event_info info,
+				       पूर्णांक *val, पूर्णांक *val2)
+अणु
+	काष्ठा iqs621_als_निजी *iqs621_als = iio_priv(indio_dev);
+	पूर्णांक ret = IIO_VAL_INT;
 
 	mutex_lock(&iqs621_als->lock);
 
-	switch (dir) {
-	case IIO_EV_DIR_RISING:
+	चयन (dir) अणु
+	हाल IIO_EV_सूची_RISING:
 		*val = iqs621_als->thresh_light * 16;
-		break;
+		अवरोध;
 
-	case IIO_EV_DIR_FALLING:
+	हाल IIO_EV_सूची_FALLING:
 		*val = iqs621_als->thresh_dark * 4;
-		break;
+		अवरोध;
 
-	case IIO_EV_DIR_EITHER:
-		if (iqs621_als->ir_flags_mask == IQS622_IR_FLAGS_TOUCH)
+	हाल IIO_EV_सूची_EITHER:
+		अगर (iqs621_als->ir_flags_mask == IQS622_IR_FLAGS_TOUCH)
 			*val = iqs621_als->thresh_prox * 4;
-		else
+		अन्यथा
 			*val = iqs621_als->thresh_prox;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	mutex_unlock(&iqs621_als->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iqs621_als_write_event_value(struct iio_dev *indio_dev,
-					const struct iio_chan_spec *chan,
-					enum iio_event_type type,
-					enum iio_event_direction dir,
-					enum iio_event_info info,
-					int val, int val2)
-{
-	struct iqs621_als_private *iqs621_als = iio_priv(indio_dev);
-	struct iqs62x_core *iqs62x = iqs621_als->iqs62x;
-	unsigned int thresh_reg, thresh_val;
+अटल पूर्णांक iqs621_als_ग_लिखो_event_value(काष्ठा iio_dev *indio_dev,
+					स्थिर काष्ठा iio_chan_spec *chan,
+					क्रमागत iio_event_type type,
+					क्रमागत iio_event_direction dir,
+					क्रमागत iio_event_info info,
+					पूर्णांक val, पूर्णांक val2)
+अणु
+	काष्ठा iqs621_als_निजी *iqs621_als = iio_priv(indio_dev);
+	काष्ठा iqs62x_core *iqs62x = iqs621_als->iqs62x;
+	अचिन्हित पूर्णांक thresh_reg, thresh_val;
 	u8 ir_flags_mask, *thresh_cache;
-	int ret = -EINVAL;
+	पूर्णांक ret = -EINVAL;
 
 	mutex_lock(&iqs621_als->lock);
 
-	switch (dir) {
-	case IIO_EV_DIR_RISING:
+	चयन (dir) अणु
+	हाल IIO_EV_सूची_RISING:
 		thresh_reg = IQS621_ALS_THRESH_LIGHT;
 		thresh_val = val / 16;
 
 		thresh_cache = &iqs621_als->thresh_light;
 		ir_flags_mask = 0;
-		break;
+		अवरोध;
 
-	case IIO_EV_DIR_FALLING:
+	हाल IIO_EV_सूची_FALLING:
 		thresh_reg = IQS621_ALS_THRESH_DARK;
 		thresh_val = val / 4;
 
 		thresh_cache = &iqs621_als->thresh_dark;
 		ir_flags_mask = 0;
-		break;
+		अवरोध;
 
-	case IIO_EV_DIR_EITHER:
+	हाल IIO_EV_सूची_EITHER:
 		/*
 		 * The IQS622 supports two detection thresholds, both measured
-		 * in the same arbitrary units reported by read_raw: proximity
+		 * in the same arbitrary units reported by पढ़ो_raw: proximity
 		 * (0 through 255 in steps of 1), and touch (0 through 1020 in
 		 * steps of 4).
 		 *
@@ -407,41 +408,41 @@ static int iqs621_als_write_event_value(struct iio_dev *indio_dev,
 		 * select the hardware threshold that gives the best trade-off
 		 * between range and resolution.
 		 *
-		 * By default, the close-range (but coarse) touch threshold is
+		 * By शेष, the बंद-range (but coarse) touch threshold is
 		 * chosen during probe.
 		 */
-		switch (val) {
-		case 0 ... 255:
+		चयन (val) अणु
+		हाल 0 ... 255:
 			thresh_reg = IQS622_IR_THRESH_PROX;
 			thresh_val = val;
 
 			ir_flags_mask = IQS622_IR_FLAGS_PROX;
-			break;
+			अवरोध;
 
-		case 256 ... 1020:
+		हाल 256 ... 1020:
 			thresh_reg = IQS622_IR_THRESH_TOUCH;
 			thresh_val = val / 4;
 
 			ir_flags_mask = IQS622_IR_FLAGS_TOUCH;
-			break;
+			अवरोध;
 
-		default:
-			goto err_mutex;
-		}
+		शेष:
+			जाओ err_mutex;
+		पूर्ण
 
 		thresh_cache = &iqs621_als->thresh_prox;
-		break;
+		अवरोध;
 
-	default:
-		goto err_mutex;
-	}
+	शेष:
+		जाओ err_mutex;
+	पूर्ण
 
-	if (thresh_val > 0xFF)
-		goto err_mutex;
+	अगर (thresh_val > 0xFF)
+		जाओ err_mutex;
 
-	ret = regmap_write(iqs62x->regmap, thresh_reg, thresh_val);
-	if (ret)
-		goto err_mutex;
+	ret = regmap_ग_लिखो(iqs62x->regmap, thresh_reg, thresh_val);
+	अगर (ret)
+		जाओ err_mutex;
 
 	*thresh_cache = thresh_val;
 	iqs621_als->ir_flags_mask = ir_flags_mask;
@@ -449,168 +450,168 @@ static int iqs621_als_write_event_value(struct iio_dev *indio_dev,
 err_mutex:
 	mutex_unlock(&iqs621_als->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct iio_info iqs621_als_info = {
-	.read_raw = &iqs621_als_read_raw,
-	.read_event_config = iqs621_als_read_event_config,
-	.write_event_config = iqs621_als_write_event_config,
-	.read_event_value = iqs621_als_read_event_value,
-	.write_event_value = iqs621_als_write_event_value,
-};
+अटल स्थिर काष्ठा iio_info iqs621_als_info = अणु
+	.पढ़ो_raw = &iqs621_als_पढ़ो_raw,
+	.पढ़ो_event_config = iqs621_als_पढ़ो_event_config,
+	.ग_लिखो_event_config = iqs621_als_ग_लिखो_event_config,
+	.पढ़ो_event_value = iqs621_als_पढ़ो_event_value,
+	.ग_लिखो_event_value = iqs621_als_ग_लिखो_event_value,
+पूर्ण;
 
-static const struct iio_event_spec iqs621_als_range_events[] = {
-	{
+अटल स्थिर काष्ठा iio_event_spec iqs621_als_range_events[] = अणु
+	अणु
 		.type = IIO_EV_TYPE_CHANGE,
-		.dir = IIO_EV_DIR_EITHER,
+		.dir = IIO_EV_सूची_EITHER,
 		.mask_separate = BIT(IIO_EV_INFO_ENABLE),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct iio_event_spec iqs621_als_light_events[] = {
-	{
+अटल स्थिर काष्ठा iio_event_spec iqs621_als_light_events[] = अणु
+	अणु
 		.type = IIO_EV_TYPE_THRESH,
-		.dir = IIO_EV_DIR_EITHER,
+		.dir = IIO_EV_सूची_EITHER,
 		.mask_separate = BIT(IIO_EV_INFO_ENABLE),
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_EV_TYPE_THRESH,
-		.dir = IIO_EV_DIR_RISING,
+		.dir = IIO_EV_सूची_RISING,
 		.mask_separate = BIT(IIO_EV_INFO_VALUE),
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_EV_TYPE_THRESH,
-		.dir = IIO_EV_DIR_FALLING,
+		.dir = IIO_EV_सूची_FALLING,
 		.mask_separate = BIT(IIO_EV_INFO_VALUE),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct iio_chan_spec iqs621_als_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec iqs621_als_channels[] = अणु
+	अणु
 		.type = IIO_INTENSITY,
 		.address = IQS621_ALS_FLAGS,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.event_spec = iqs621_als_range_events,
 		.num_event_specs = ARRAY_SIZE(iqs621_als_range_events),
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_LIGHT,
 		.address = IQS621_ALS_UI_OUT,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED),
 		.event_spec = iqs621_als_light_events,
 		.num_event_specs = ARRAY_SIZE(iqs621_als_light_events),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct iio_event_spec iqs622_als_prox_events[] = {
-	{
+अटल स्थिर काष्ठा iio_event_spec iqs622_als_prox_events[] = अणु
+	अणु
 		.type = IIO_EV_TYPE_THRESH,
-		.dir = IIO_EV_DIR_EITHER,
+		.dir = IIO_EV_सूची_EITHER,
 		.mask_separate = BIT(IIO_EV_INFO_ENABLE) |
 				 BIT(IIO_EV_INFO_VALUE),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct iio_chan_spec iqs622_als_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec iqs622_als_channels[] = अणु
+	अणु
 		.type = IIO_INTENSITY,
 		.channel2 = IIO_MOD_LIGHT_BOTH,
 		.address = IQS622_ALS_FLAGS,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.event_spec = iqs621_als_range_events,
 		.num_event_specs = ARRAY_SIZE(iqs621_als_range_events),
-		.modified = true,
-	},
-	{
+		.modअगरied = true,
+	पूर्ण,
+	अणु
 		.type = IIO_INTENSITY,
 		.channel2 = IIO_MOD_LIGHT_IR,
 		.address = IQS622_IR_RANGE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
-		.modified = true,
-	},
-	{
+		.modअगरied = true,
+	पूर्ण,
+	अणु
 		.type = IIO_PROXIMITY,
 		.address = IQS622_IR_UI_OUT,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.event_spec = iqs622_als_prox_events,
 		.num_event_specs = ARRAY_SIZE(iqs622_als_prox_events),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int iqs621_als_probe(struct platform_device *pdev)
-{
-	struct iqs62x_core *iqs62x = dev_get_drvdata(pdev->dev.parent);
-	struct iqs621_als_private *iqs621_als;
-	struct iio_dev *indio_dev;
-	unsigned int val;
-	int ret;
+अटल पूर्णांक iqs621_als_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iqs62x_core *iqs62x = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा iqs621_als_निजी *iqs621_als;
+	काष्ठा iio_dev *indio_dev;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*iqs621_als));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&pdev->dev, माप(*iqs621_als));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	iqs621_als = iio_priv(indio_dev);
 	iqs621_als->iqs62x = iqs62x;
 	iqs621_als->indio_dev = indio_dev;
 
-	if (iqs62x->dev_desc->prod_num == IQS622_PROD_NUM) {
-		ret = regmap_read(iqs62x->regmap, IQS622_IR_THRESH_TOUCH,
+	अगर (iqs62x->dev_desc->prod_num == IQS622_PROD_NUM) अणु
+		ret = regmap_पढ़ो(iqs62x->regmap, IQS622_IR_THRESH_TOUCH,
 				  &val);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		iqs621_als->thresh_prox = val;
 		iqs621_als->ir_flags_mask = IQS622_IR_FLAGS_TOUCH;
 
 		indio_dev->channels = iqs622_als_channels;
 		indio_dev->num_channels = ARRAY_SIZE(iqs622_als_channels);
-	} else {
-		ret = regmap_read(iqs62x->regmap, IQS621_ALS_THRESH_LIGHT,
+	पूर्ण अन्यथा अणु
+		ret = regmap_पढ़ो(iqs62x->regmap, IQS621_ALS_THRESH_LIGHT,
 				  &val);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		iqs621_als->thresh_light = val;
 
-		ret = regmap_read(iqs62x->regmap, IQS621_ALS_THRESH_DARK,
+		ret = regmap_पढ़ो(iqs62x->regmap, IQS621_ALS_THRESH_DARK,
 				  &val);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		iqs621_als->thresh_dark = val;
 
 		indio_dev->channels = iqs621_als_channels;
 		indio_dev->num_channels = ARRAY_SIZE(iqs621_als_channels);
-	}
+	पूर्ण
 
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->name = iqs62x->dev_desc->dev_name;
 	indio_dev->info = &iqs621_als_info;
 
 	mutex_init(&iqs621_als->lock);
 
-	iqs621_als->notifier.notifier_call = iqs621_als_notifier;
-	ret = blocking_notifier_chain_register(&iqs621_als->iqs62x->nh,
-					       &iqs621_als->notifier);
-	if (ret) {
+	iqs621_als->notअगरier.notअगरier_call = iqs621_als_notअगरier;
+	ret = blocking_notअगरier_chain_रेजिस्टर(&iqs621_als->iqs62x->nh,
+					       &iqs621_als->notअगरier);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to register notifier: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = devm_add_action_or_reset(&pdev->dev,
-				       iqs621_als_notifier_unregister,
+				       iqs621_als_notअगरier_unरेजिस्टर,
 				       iqs621_als);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return devm_iio_device_register(&pdev->dev, indio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(&pdev->dev, indio_dev);
+पूर्ण
 
-static struct platform_driver iqs621_als_platform_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver iqs621_als_platक्रमm_driver = अणु
+	.driver = अणु
 		.name = "iqs621-als",
-	},
+	पूर्ण,
 	.probe = iqs621_als_probe,
-};
-module_platform_driver(iqs621_als_platform_driver);
+पूर्ण;
+module_platक्रमm_driver(iqs621_als_platक्रमm_driver);
 
 MODULE_AUTHOR("Jeff LaBundy <jeff@labundy.com>");
 MODULE_DESCRIPTION("Azoteq IQS621/622 Ambient Light Sensors");

@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _PARISC_SHMBUF_H
-#define _PARISC_SHMBUF_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _PARISC_SHMBUF_H
+#घोषणा _PARISC_SHMBUF_H
 
-#include <asm/bitsperlong.h>
+#समावेश <यंत्र/bitsperदीर्घ.h>
 
 /* 
- * The shmid64_ds structure for parisc architecture.
- * Note extra padding because this structure is passed back and forth
+ * The shmid64_ds काष्ठाure क्रम parisc architecture.
+ * Note extra padding because this काष्ठाure is passed back and क्रमth
  * between kernel and user space.
  *
- * Pad space is left for:
+ * Pad space is left क्रम:
  * - 2 miscellaneous 32-bit values
  */
 
-struct shmid64_ds {
-	struct ipc64_perm	shm_perm;	/* operation perms */
-#if __BITS_PER_LONG == 64
-	long			shm_atime;	/* last attach time */
-	long			shm_dtime;	/* last detach time */
-	long			shm_ctime;	/* last change time */
-#else
-	unsigned long		shm_atime_high;
-	unsigned long		shm_atime;	/* last attach time */
-	unsigned long		shm_dtime_high;
-	unsigned long		shm_dtime;	/* last detach time */
-	unsigned long		shm_ctime_high;
-	unsigned long		shm_ctime;	/* last change time */
-	unsigned int		__pad4;
-#endif
-	__kernel_size_t		shm_segsz;	/* size of segment (bytes) */
+काष्ठा shmid64_ds अणु
+	काष्ठा ipc64_perm	shm_perm;	/* operation perms */
+#अगर __BITS_PER_LONG == 64
+	दीर्घ			shm_aसमय;	/* last attach समय */
+	दीर्घ			shm_dसमय;	/* last detach समय */
+	दीर्घ			shm_स_समय;	/* last change समय */
+#अन्यथा
+	अचिन्हित दीर्घ		shm_aसमय_high;
+	अचिन्हित दीर्घ		shm_aसमय;	/* last attach समय */
+	अचिन्हित दीर्घ		shm_dसमय_high;
+	अचिन्हित दीर्घ		shm_dसमय;	/* last detach समय */
+	अचिन्हित दीर्घ		shm_स_समय_high;
+	अचिन्हित दीर्घ		shm_स_समय;	/* last change समय */
+	अचिन्हित पूर्णांक		__pad4;
+#पूर्ण_अगर
+	__kernel_माप_प्रकार		shm_segsz;	/* size of segment (bytes) */
 	__kernel_pid_t		shm_cpid;	/* pid of creator */
-	__kernel_pid_t		shm_lpid;	/* pid of last operator */
-	unsigned long		shm_nattch;	/* no. of current attaches */
-	unsigned long		__unused1;
-	unsigned long		__unused2;
-};
+	__kernel_pid_t		shm_lpid;	/* pid of last चालक */
+	अचिन्हित दीर्घ		shm_nattch;	/* no. of current attaches */
+	अचिन्हित दीर्घ		__unused1;
+	अचिन्हित दीर्घ		__unused2;
+पूर्ण;
 
-struct shminfo64 {
-	unsigned long	shmmax;
-	unsigned long	shmmin;
-	unsigned long	shmmni;
-	unsigned long	shmseg;
-	unsigned long	shmall;
-	unsigned long	__unused1;
-	unsigned long	__unused2;
-	unsigned long	__unused3;
-	unsigned long	__unused4;
-};
+काष्ठा shminfo64 अणु
+	अचिन्हित दीर्घ	shmmax;
+	अचिन्हित दीर्घ	shmmin;
+	अचिन्हित दीर्घ	shmmni;
+	अचिन्हित दीर्घ	shmseg;
+	अचिन्हित दीर्घ	shmall;
+	अचिन्हित दीर्घ	__unused1;
+	अचिन्हित दीर्घ	__unused2;
+	अचिन्हित दीर्घ	__unused3;
+	अचिन्हित दीर्घ	__unused4;
+पूर्ण;
 
-#endif /* _PARISC_SHMBUF_H */
+#पूर्ण_अगर /* _PARISC_SHMBUF_H */

@@ -1,184 +1,185 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#include "bench.h"
-#include "trigger_bench.skel.h"
+#समावेश "bench.h"
+#समावेश "trigger_bench.skel.h"
 
 /* BPF triggering benchmarks */
-static struct trigger_ctx {
-	struct trigger_bench *skel;
-} ctx;
+अटल काष्ठा trigger_ctx अणु
+	काष्ठा trigger_bench *skel;
+पूर्ण ctx;
 
-static struct counter base_hits;
+अटल काष्ठा counter base_hits;
 
-static void trigger_validate()
-{
-	if (env.consumer_cnt != 1) {
-		fprintf(stderr, "benchmark doesn't support multi-consumer!\n");
-		exit(1);
-	}
-}
+अटल व्योम trigger_validate()
+अणु
+	अगर (env.consumer_cnt != 1) अणु
+		ख_लिखो(मानक_त्रुटि, "benchmark doesn't support multi-consumer!\n");
+		निकास(1);
+	पूर्ण
+पूर्ण
 
-static void *trigger_base_producer(void *input)
-{
-	while (true) {
-		(void)syscall(__NR_getpgid);
+अटल व्योम *trigger_base_producer(व्योम *input)
+अणु
+	जबतक (true) अणु
+		(व्योम)syscall(__NR_getpgid);
 		atomic_inc(&base_hits.value);
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void trigger_base_measure(struct bench_res *res)
-{
+अटल व्योम trigger_base_measure(काष्ठा bench_res *res)
+अणु
 	res->hits = atomic_swap(&base_hits.value, 0);
-}
+पूर्ण
 
-static void *trigger_producer(void *input)
-{
-	while (true)
-		(void)syscall(__NR_getpgid);
-	return NULL;
-}
+अटल व्योम *trigger_producer(व्योम *input)
+अणु
+	जबतक (true)
+		(व्योम)syscall(__NR_getpgid);
+	वापस शून्य;
+पूर्ण
 
-static void trigger_measure(struct bench_res *res)
-{
+अटल व्योम trigger_measure(काष्ठा bench_res *res)
+अणु
 	res->hits = atomic_swap(&ctx.skel->bss->hits, 0);
-}
+पूर्ण
 
-static void setup_ctx()
-{
+अटल व्योम setup_ctx()
+अणु
 	setup_libbpf();
 
-	ctx.skel = trigger_bench__open_and_load();
-	if (!ctx.skel) {
-		fprintf(stderr, "failed to open skeleton\n");
-		exit(1);
-	}
-}
+	ctx.skel = trigger_bench__खोलो_and_load();
+	अगर (!ctx.skel) अणु
+		ख_लिखो(मानक_त्रुटि, "failed to open skeleton\n");
+		निकास(1);
+	पूर्ण
+पूर्ण
 
-static void attach_bpf(struct bpf_program *prog)
-{
-	struct bpf_link *link;
+अटल व्योम attach_bpf(काष्ठा bpf_program *prog)
+अणु
+	काष्ठा bpf_link *link;
 
 	link = bpf_program__attach(prog);
-	if (IS_ERR(link)) {
-		fprintf(stderr, "failed to attach program!\n");
-		exit(1);
-	}
-}
+	अगर (IS_ERR(link)) अणु
+		ख_लिखो(मानक_त्रुटि, "failed to attach program!\n");
+		निकास(1);
+	पूर्ण
+पूर्ण
 
-static void trigger_tp_setup()
-{
+अटल व्योम trigger_tp_setup()
+अणु
 	setup_ctx();
 	attach_bpf(ctx.skel->progs.bench_trigger_tp);
-}
+पूर्ण
 
-static void trigger_rawtp_setup()
-{
+अटल व्योम trigger_rawtp_setup()
+अणु
 	setup_ctx();
 	attach_bpf(ctx.skel->progs.bench_trigger_raw_tp);
-}
+पूर्ण
 
-static void trigger_kprobe_setup()
-{
+अटल व्योम trigger_kprobe_setup()
+अणु
 	setup_ctx();
 	attach_bpf(ctx.skel->progs.bench_trigger_kprobe);
-}
+पूर्ण
 
-static void trigger_fentry_setup()
-{
+अटल व्योम trigger_fentry_setup()
+अणु
 	setup_ctx();
 	attach_bpf(ctx.skel->progs.bench_trigger_fentry);
-}
+पूर्ण
 
-static void trigger_fentry_sleep_setup()
-{
+अटल व्योम trigger_fentry_sleep_setup()
+अणु
 	setup_ctx();
 	attach_bpf(ctx.skel->progs.bench_trigger_fentry_sleep);
-}
+पूर्ण
 
-static void trigger_fmodret_setup()
-{
+अटल व्योम trigger_भ_शेषret_setup()
+अणु
 	setup_ctx();
-	attach_bpf(ctx.skel->progs.bench_trigger_fmodret);
-}
+	attach_bpf(ctx.skel->progs.bench_trigger_भ_शेषret);
+पूर्ण
 
-static void *trigger_consumer(void *input)
-{
-	return NULL;
-}
+अटल व्योम *trigger_consumer(व्योम *input)
+अणु
+	वापस शून्य;
+पूर्ण
 
-const struct bench bench_trig_base = {
+स्थिर काष्ठा bench bench_trig_base = अणु
 	.name = "trig-base",
 	.validate = trigger_validate,
-	.producer_thread = trigger_base_producer,
-	.consumer_thread = trigger_consumer,
+	.producer_thपढ़ो = trigger_base_producer,
+	.consumer_thपढ़ो = trigger_consumer,
 	.measure = trigger_base_measure,
 	.report_progress = hits_drops_report_progress,
 	.report_final = hits_drops_report_final,
-};
+पूर्ण;
 
-const struct bench bench_trig_tp = {
+स्थिर काष्ठा bench bench_trig_tp = अणु
 	.name = "trig-tp",
 	.validate = trigger_validate,
 	.setup = trigger_tp_setup,
-	.producer_thread = trigger_producer,
-	.consumer_thread = trigger_consumer,
+	.producer_thपढ़ो = trigger_producer,
+	.consumer_thपढ़ो = trigger_consumer,
 	.measure = trigger_measure,
 	.report_progress = hits_drops_report_progress,
 	.report_final = hits_drops_report_final,
-};
+पूर्ण;
 
-const struct bench bench_trig_rawtp = {
+स्थिर काष्ठा bench bench_trig_rawtp = अणु
 	.name = "trig-rawtp",
 	.validate = trigger_validate,
 	.setup = trigger_rawtp_setup,
-	.producer_thread = trigger_producer,
-	.consumer_thread = trigger_consumer,
+	.producer_thपढ़ो = trigger_producer,
+	.consumer_thपढ़ो = trigger_consumer,
 	.measure = trigger_measure,
 	.report_progress = hits_drops_report_progress,
 	.report_final = hits_drops_report_final,
-};
+पूर्ण;
 
-const struct bench bench_trig_kprobe = {
+स्थिर काष्ठा bench bench_trig_kprobe = अणु
 	.name = "trig-kprobe",
 	.validate = trigger_validate,
 	.setup = trigger_kprobe_setup,
-	.producer_thread = trigger_producer,
-	.consumer_thread = trigger_consumer,
+	.producer_thपढ़ो = trigger_producer,
+	.consumer_thपढ़ो = trigger_consumer,
 	.measure = trigger_measure,
 	.report_progress = hits_drops_report_progress,
 	.report_final = hits_drops_report_final,
-};
+पूर्ण;
 
-const struct bench bench_trig_fentry = {
+स्थिर काष्ठा bench bench_trig_fentry = अणु
 	.name = "trig-fentry",
 	.validate = trigger_validate,
 	.setup = trigger_fentry_setup,
-	.producer_thread = trigger_producer,
-	.consumer_thread = trigger_consumer,
+	.producer_thपढ़ो = trigger_producer,
+	.consumer_thपढ़ो = trigger_consumer,
 	.measure = trigger_measure,
 	.report_progress = hits_drops_report_progress,
 	.report_final = hits_drops_report_final,
-};
+पूर्ण;
 
-const struct bench bench_trig_fentry_sleep = {
+स्थिर काष्ठा bench bench_trig_fentry_sleep = अणु
 	.name = "trig-fentry-sleep",
 	.validate = trigger_validate,
 	.setup = trigger_fentry_sleep_setup,
-	.producer_thread = trigger_producer,
-	.consumer_thread = trigger_consumer,
+	.producer_thपढ़ो = trigger_producer,
+	.consumer_thपढ़ो = trigger_consumer,
 	.measure = trigger_measure,
 	.report_progress = hits_drops_report_progress,
 	.report_final = hits_drops_report_final,
-};
+पूर्ण;
 
-const struct bench bench_trig_fmodret = {
+स्थिर काष्ठा bench bench_trig_भ_शेषret = अणु
 	.name = "trig-fmodret",
 	.validate = trigger_validate,
-	.setup = trigger_fmodret_setup,
-	.producer_thread = trigger_producer,
-	.consumer_thread = trigger_consumer,
+	.setup = trigger_भ_शेषret_setup,
+	.producer_thपढ़ो = trigger_producer,
+	.consumer_thपढ़ो = trigger_consumer,
 	.measure = trigger_measure,
 	.report_progress = hits_drops_report_progress,
 	.report_final = hits_drops_report_final,
-};
+पूर्ण;

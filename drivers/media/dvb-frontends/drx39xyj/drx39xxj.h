@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *  Driver for Micronas DRX39xx family (drx3933j)
+ *  Driver क्रम Micronas DRX39xx family (drx3933j)
  *
- *  Written by Devin Heitmueller <devin.heitmueller@kernellabs.com>
+ *  Written by Devin Heiपंचांगueller <devin.heiपंचांगueller@kernelद_असल.com>
  */
 
-#ifndef DRX39XXJ_H
-#define DRX39XXJ_H
+#अगर_अघोषित DRX39XXJ_H
+#घोषणा DRX39XXJ_H
 
-#include <linux/dvb/frontend.h>
-#include <media/dvb_frontend.h>
-#include "drx_driver.h"
+#समावेश <linux/dvb/frontend.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश "drx_driver.h"
 
-struct drx39xxj_state {
-	struct i2c_adapter *i2c;
-	struct drx_demod_instance *demod;
-	struct dvb_frontend frontend;
-	unsigned int i2c_gate_open:1;
-	const struct firmware *fw;
-};
+काष्ठा drx39xxj_state अणु
+	काष्ठा i2c_adapter *i2c;
+	काष्ठा drx_demod_instance *demod;
+	काष्ठा dvb_frontend frontend;
+	अचिन्हित पूर्णांक i2c_gate_खोलो:1;
+	स्थिर काष्ठा firmware *fw;
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_DRX39XYJ)
-struct dvb_frontend *drx39xxj_attach(struct i2c_adapter *i2c);
-#else
-static inline struct dvb_frontend *drx39xxj_attach(struct i2c_adapter *i2c) {
-	return NULL;
-};
-#endif
+#अगर IS_REACHABLE(CONFIG_DVB_DRX39XYJ)
+काष्ठा dvb_frontend *drx39xxj_attach(काष्ठा i2c_adapter *i2c);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *drx39xxj_attach(काष्ठा i2c_adapter *i2c) अणु
+	वापस शून्य;
+पूर्ण;
+#पूर्ण_अगर
 
-#endif /* DVB_DUMMY_FE_H */
+#पूर्ण_अगर /* DVB_DUMMY_FE_H */

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * wm9712.c  --  Codec driver for Wolfson WM9712 AC97 Codecs.
+ * wm9712.c  --  Codec driver क्रम Wolfson WM9712 AC97 Codecs.
  *
  * Copyright 2003, 2004, 2005, 2006, 2007 Wolfson Microelectronics PLC.
  * Author: Liam Girdwood <lrg@slimlogic.co.uk>
@@ -9,89 +10,89 @@
  *                   Russell King <rmk@arm.linux.org.uk>
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/input.h>
-#include <linux/delay.h>
-#include <linux/bitops.h>
-#include <linux/wm97xx.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/input.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/wm97xx.h>
 
-#define TS_NAME			"wm97xx"
-#define WM9712_VERSION		"1.00"
-#define DEFAULT_PRESSURE	0xb0c0
+#घोषणा TS_NAME			"wm97xx"
+#घोषणा WM9712_VERSION		"1.00"
+#घोषणा DEFAULT_PRESSURE	0xb0c0
 
 /*
  * Module parameters
  */
 
 /*
- * Set internal pull up for pen detect.
+ * Set पूर्णांकernal pull up क्रम pen detect.
  *
  * Pull up is in the range 1.02k (least sensitive) to 64k (most sensitive)
  * i.e. pull up resistance = 64k Ohms / rpu.
  *
- * Adjust this value if you are having problems with pen detect not
- * detecting any down event.
+ * Adjust this value अगर you are having problems with pen detect not
+ * detecting any करोwn event.
  */
-static int rpu = 8;
-module_param(rpu, int, 0);
+अटल पूर्णांक rpu = 8;
+module_param(rpu, पूर्णांक, 0);
 MODULE_PARM_DESC(rpu, "Set internal pull up resistor for pen detect.");
 
 /*
- * Set current used for pressure measurement.
+ * Set current used क्रम pressure measurement.
  *
  * Set pil = 2 to use 400uA
  *     pil = 1 to use 200uA and
  *     pil = 0 to disable pressure measurement.
  *
- * This is used to increase the range of values returned by the adc
+ * This is used to increase the range of values वापसed by the adc
  * when measureing touchpanel pressure.
  */
-static int pil;
-module_param(pil, int, 0);
+अटल पूर्णांक pil;
+module_param(pil, पूर्णांक, 0);
 MODULE_PARM_DESC(pil, "Set current used for pressure measurement.");
 
 /*
- * Set threshold for pressure measurement.
+ * Set threshold क्रम pressure measurement.
  *
- * Pen down pressure below threshold is ignored.
+ * Pen करोwn pressure below threshold is ignored.
  */
-static int pressure = DEFAULT_PRESSURE & 0xfff;
-module_param(pressure, int, 0);
+अटल पूर्णांक pressure = DEFAULT_PRESSURE & 0xfff;
+module_param(pressure, पूर्णांक, 0);
 MODULE_PARM_DESC(pressure, "Set threshold for pressure measurement.");
 
 /*
  * Set adc sample delay.
  *
- * For accurate touchpanel measurements, some settling time may be
- * required between the switch matrix applying a voltage across the
- * touchpanel plate and the ADC sampling the signal.
+ * For accurate touchpanel measurements, some settling समय may be
+ * required between the चयन matrix applying a voltage across the
+ * touchpanel plate and the ADC sampling the संकेत.
  *
  * This delay can be set by setting delay = n, where n is the array
  * position of the delay in the array delay_table below.
- * Long delays > 1ms are supported for completeness, but are not
+ * Long delays > 1ms are supported क्रम completeness, but are not
  * recommended.
  */
-static int delay = 3;
-module_param(delay, int, 0);
+अटल पूर्णांक delay = 3;
+module_param(delay, पूर्णांक, 0);
 MODULE_PARM_DESC(delay, "Set adc sample delay.");
 
 /*
  * Set five_wire = 1 to use a 5 wire touchscreen.
  *
- * NOTE: Five wire mode does not allow for readback of pressure.
+ * NOTE: Five wire mode करोes not allow क्रम पढ़ोback of pressure.
  */
-static int five_wire;
-module_param(five_wire, int, 0);
+अटल पूर्णांक five_wire;
+module_param(five_wire, पूर्णांक, 0);
 MODULE_PARM_DESC(five_wire, "Set to '1' to use 5-wire touchscreen.");
 
 /*
  * Set adc mask function.
  *
- * Sources of glitch noise, such as signals driving an LCD display, may feed
+ * Sources of glitch noise, such as संकेतs driving an LCD display, may feed
  * through to the touch screen plates and affect measurement accuracy. In
- * order to minimise this, a signal may be applied to the MASK pin to delay or
+ * order to minimise this, a संकेत may be applied to the MASK pin to delay or
  * synchronise the sampling.
  *
  * 0 = No delay or sync
@@ -99,24 +100,24 @@ MODULE_PARM_DESC(five_wire, "Set to '1' to use 5-wire touchscreen.");
  * 2 = Edge triggered, edge on pin delays conversion by delay param (above)
  * 3 = Edge triggered, edge on pin starts conversion after delay param
  */
-static int mask;
-module_param(mask, int, 0);
+अटल पूर्णांक mask;
+module_param(mask, पूर्णांक, 0);
 MODULE_PARM_DESC(mask, "Set adc mask function.");
 
 /*
  * Coordinate Polling Enable.
  *
  * Set to 1 to enable coordinate polling. e.g. x,y[,p] is sampled together
- * for every poll.
+ * क्रम every poll.
  */
-static int coord;
-module_param(coord, int, 0);
+अटल पूर्णांक coord;
+module_param(coord, पूर्णांक, 0);
 MODULE_PARM_DESC(coord, "Polling coordinate mode");
 
 /*
- * ADC sample delay times in uS
+ * ADC sample delay बार in uS
  */
-static const int delay_table[] = {
+अटल स्थिर पूर्णांक delay_table[] = अणु
 	21,    /* 1 AC97 Link frames */
 	42,    /* 2 */
 	84,    /* 4 */
@@ -132,63 +133,63 @@ static const int delay_table[] = {
 	4667,  /* 224 */
 	5333,  /* 256 */
 	6000,  /* 288 */
-	0      /* No delay, switch matrix always on */
-};
+	0      /* No delay, चयन matrix always on */
+पूर्ण;
 
 /*
  * Delay after issuing a POLL command.
  *
  * The delay is 3 AC97 link frames + the touchpanel settling delay
  */
-static inline void poll_delay(int d)
-{
+अटल अंतरभूत व्योम poll_delay(पूर्णांक d)
+अणु
 	udelay(3 * AC97_LINK_FRAME + delay_table[d]);
-}
+पूर्ण
 
 /*
  * set up the physical settings of the WM9712
  */
-static void wm9712_phy_init(struct wm97xx *wm)
-{
+अटल व्योम wm9712_phy_init(काष्ठा wm97xx *wm)
+अणु
 	u16 dig1 = 0;
 	u16 dig2 = WM97XX_RPR | WM9712_RPU(1);
 
 	/* WM9712 rpu */
-	if (rpu) {
+	अगर (rpu) अणु
 		dig2 &= 0xffc0;
 		dig2 |= WM9712_RPU(rpu);
 		dev_dbg(wm->dev, "setting pen detect pull-up to %d Ohms\n",
 			64000 / rpu);
-	}
+	पूर्ण
 
 	/* WM9712 five wire */
-	if (five_wire) {
+	अगर (five_wire) अणु
 		dig2 |= WM9712_45W;
 		dev_dbg(wm->dev, "setting 5-wire touchscreen mode.\n");
 
-		if (pil) {
+		अगर (pil) अणु
 			dev_warn(wm->dev, "pressure measurement is not "
 				 "supported in 5-wire mode\n");
 			pil = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* touchpanel pressure current*/
-	if (pil == 2) {
+	अगर (pil == 2) अणु
 		dig2 |= WM9712_PIL;
 		dev_dbg(wm->dev,
 			"setting pressure measurement current to 400uA.\n");
-	} else if (pil)
+	पूर्ण अन्यथा अगर (pil)
 		dev_dbg(wm->dev,
 			"setting pressure measurement current to 200uA.\n");
-	if (!pil)
+	अगर (!pil)
 		pressure = 0;
 
 	/* polling mode sample settling delay */
-	if (delay < 0 || delay > 15) {
+	अगर (delay < 0 || delay > 15) अणु
 		dev_dbg(wm->dev, "supplied delay out of range.\n");
 		delay = 4;
-	}
+	पूर्ण
 	dig1 &= 0xff0f;
 	dig1 |= WM97XX_DELAY(delay);
 	dev_dbg(wm->dev, "setting adc sample delay to %d u Secs.\n",
@@ -196,258 +197,258 @@ static void wm9712_phy_init(struct wm97xx *wm)
 
 	/* mask */
 	dig2 |= ((mask & 0x3) << 6);
-	if (mask) {
+	अगर (mask) अणु
 		u16 reg;
 		/* Set GPIO4 as Mask Pin*/
-		reg = wm97xx_reg_read(wm, AC97_MISC_AFE);
-		wm97xx_reg_write(wm, AC97_MISC_AFE, reg | WM97XX_GPIO_4);
-		reg = wm97xx_reg_read(wm, AC97_GPIO_CFG);
-		wm97xx_reg_write(wm, AC97_GPIO_CFG, reg | WM97XX_GPIO_4);
-	}
+		reg = wm97xx_reg_पढ़ो(wm, AC97_MISC_AFE);
+		wm97xx_reg_ग_लिखो(wm, AC97_MISC_AFE, reg | WM97XX_GPIO_4);
+		reg = wm97xx_reg_पढ़ो(wm, AC97_GPIO_CFG);
+		wm97xx_reg_ग_लिखो(wm, AC97_GPIO_CFG, reg | WM97XX_GPIO_4);
+	पूर्ण
 
-	/* wait - coord mode */
-	if (coord)
+	/* रुको - coord mode */
+	अगर (coord)
 		dig2 |= WM9712_WAIT;
 
-	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER1, dig1);
-	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER2, dig2);
-}
+	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER1, dig1);
+	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER2, dig2);
+पूर्ण
 
-static void wm9712_dig_enable(struct wm97xx *wm, int enable)
-{
+अटल व्योम wm9712_dig_enable(काष्ठा wm97xx *wm, पूर्णांक enable)
+अणु
 	u16 dig2 = wm->dig[2];
 
-	if (enable) {
-		wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER2,
+	अगर (enable) अणु
+		wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER2,
 				 dig2 | WM97XX_PRP_DET_DIG);
-		wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER_RD); /* dummy read */
-	} else
-		wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER2,
+		wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER_RD); /* dummy पढ़ो */
+	पूर्ण अन्यथा
+		wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER2,
 				 dig2 & ~WM97XX_PRP_DET_DIG);
-}
+पूर्ण
 
-static void wm9712_aux_prepare(struct wm97xx *wm)
-{
-	memcpy(wm->dig_save, wm->dig, sizeof(wm->dig));
-	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER1, 0);
-	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER2, WM97XX_PRP_DET_DIG);
-}
+अटल व्योम wm9712_aux_prepare(काष्ठा wm97xx *wm)
+अणु
+	स_नकल(wm->dig_save, wm->dig, माप(wm->dig));
+	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER1, 0);
+	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER2, WM97XX_PRP_DET_DIG);
+पूर्ण
 
-static void wm9712_dig_restore(struct wm97xx *wm)
-{
-	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER1, wm->dig_save[1]);
-	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER2, wm->dig_save[2]);
-}
+अटल व्योम wm9712_dig_restore(काष्ठा wm97xx *wm)
+अणु
+	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER1, wm->dig_save[1]);
+	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER2, wm->dig_save[2]);
+पूर्ण
 
-static inline int is_pden(struct wm97xx *wm)
-{
-	return wm->dig[2] & WM9712_PDEN;
-}
+अटल अंतरभूत पूर्णांक is_pden(काष्ठा wm97xx *wm)
+अणु
+	वापस wm->dig[2] & WM9712_PDEN;
+पूर्ण
 
 /*
  * Read a sample from the WM9712 adc in polling mode.
  */
-static int wm9712_poll_sample(struct wm97xx *wm, int adcsel, int *sample)
-{
-	int timeout = 5 * delay;
+अटल पूर्णांक wm9712_poll_sample(काष्ठा wm97xx *wm, पूर्णांक adcsel, पूर्णांक *sample)
+अणु
+	पूर्णांक समयout = 5 * delay;
 	bool wants_pen = adcsel & WM97XX_PEN_DOWN;
 
-	if (wants_pen && !wm->pen_probably_down) {
-		u16 data = wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER_RD);
-		if (!(data & WM97XX_PEN_DOWN))
-			return RC_PENUP;
-		wm->pen_probably_down = 1;
-	}
+	अगर (wants_pen && !wm->pen_probably_करोwn) अणु
+		u16 data = wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER_RD);
+		अगर (!(data & WM97XX_PEN_DOWN))
+			वापस RC_PENUP;
+		wm->pen_probably_करोwn = 1;
+	पूर्ण
 
 	/* set up digitiser */
-	if (wm->mach_ops && wm->mach_ops->pre_sample)
+	अगर (wm->mach_ops && wm->mach_ops->pre_sample)
 		wm->mach_ops->pre_sample(adcsel);
-	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER1, (adcsel & WM97XX_ADCSEL_MASK)
+	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER1, (adcsel & WM97XX_ADCSEL_MASK)
 				| WM97XX_POLL | WM97XX_DELAY(delay));
 
-	/* wait 3 AC97 time slots + delay for conversion */
+	/* रुको 3 AC97 समय slots + delay क्रम conversion */
 	poll_delay(delay);
 
-	/* wait for POLL to go low */
-	while ((wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER1) & WM97XX_POLL)
-	       && timeout) {
+	/* रुको क्रम POLL to go low */
+	जबतक ((wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER1) & WM97XX_POLL)
+	       && समयout) अणु
 		udelay(AC97_LINK_FRAME);
-		timeout--;
-	}
+		समयout--;
+	पूर्ण
 
-	if (timeout <= 0) {
-		/* If PDEN is set, we can get a timeout when pen goes up */
-		if (is_pden(wm))
-			wm->pen_probably_down = 0;
-		else
+	अगर (समयout <= 0) अणु
+		/* If PDEN is set, we can get a समयout when pen goes up */
+		अगर (is_pden(wm))
+			wm->pen_probably_करोwn = 0;
+		अन्यथा
 			dev_dbg(wm->dev, "adc sample timeout\n");
-		return RC_PENUP;
-	}
+		वापस RC_PENUP;
+	पूर्ण
 
-	*sample = wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER_RD);
-	if (wm->mach_ops && wm->mach_ops->post_sample)
+	*sample = wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER_RD);
+	अगर (wm->mach_ops && wm->mach_ops->post_sample)
 		wm->mach_ops->post_sample(adcsel);
 
 	/* check we have correct sample */
-	if ((*sample ^ adcsel) & WM97XX_ADCSEL_MASK) {
+	अगर ((*sample ^ adcsel) & WM97XX_ADCSEL_MASK) अणु
 		dev_dbg(wm->dev, "adc wrong sample, wanted %x got %x\n",
 			adcsel & WM97XX_ADCSEL_MASK,
 			*sample & WM97XX_ADCSEL_MASK);
-		return RC_AGAIN;
-	}
+		वापस RC_AGAIN;
+	पूर्ण
 
-	if (wants_pen && !(*sample & WM97XX_PEN_DOWN)) {
-		/* Sometimes it reads a wrong value the first time. */
-		*sample = wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER_RD);
-		if (!(*sample & WM97XX_PEN_DOWN)) {
-			wm->pen_probably_down = 0;
-			return RC_PENUP;
-		}
-	}
+	अगर (wants_pen && !(*sample & WM97XX_PEN_DOWN)) अणु
+		/* Someबार it पढ़ोs a wrong value the first समय. */
+		*sample = wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER_RD);
+		अगर (!(*sample & WM97XX_PEN_DOWN)) अणु
+			wm->pen_probably_करोwn = 0;
+			वापस RC_PENUP;
+		पूर्ण
+	पूर्ण
 
-	return RC_VALID;
-}
+	वापस RC_VALID;
+पूर्ण
 
 /*
  * Read a coord from the WM9712 adc in polling mode.
  */
-static int wm9712_poll_coord(struct wm97xx *wm, struct wm97xx_data *data)
-{
-	int timeout = 5 * delay;
+अटल पूर्णांक wm9712_poll_coord(काष्ठा wm97xx *wm, काष्ठा wm97xx_data *data)
+अणु
+	पूर्णांक समयout = 5 * delay;
 
-	if (!wm->pen_probably_down) {
-		u16 data_rd = wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER_RD);
-		if (!(data_rd & WM97XX_PEN_DOWN))
-			return RC_PENUP;
-		wm->pen_probably_down = 1;
-	}
+	अगर (!wm->pen_probably_करोwn) अणु
+		u16 data_rd = wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER_RD);
+		अगर (!(data_rd & WM97XX_PEN_DOWN))
+			वापस RC_PENUP;
+		wm->pen_probably_करोwn = 1;
+	पूर्ण
 
 	/* set up digitiser */
-	if (wm->mach_ops && wm->mach_ops->pre_sample)
+	अगर (wm->mach_ops && wm->mach_ops->pre_sample)
 		wm->mach_ops->pre_sample(WM97XX_ADCSEL_X | WM97XX_ADCSEL_Y);
 
-	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER1,
+	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER1,
 		WM97XX_COO | WM97XX_POLL | WM97XX_DELAY(delay));
 
-	/* wait 3 AC97 time slots + delay for conversion and read x */
+	/* रुको 3 AC97 समय slots + delay क्रम conversion and पढ़ो x */
 	poll_delay(delay);
-	data->x = wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER_RD);
-	/* wait for POLL to go low */
-	while ((wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER1) & WM97XX_POLL)
-	       && timeout) {
+	data->x = wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER_RD);
+	/* रुको क्रम POLL to go low */
+	जबतक ((wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER1) & WM97XX_POLL)
+	       && समयout) अणु
 		udelay(AC97_LINK_FRAME);
-		timeout--;
-	}
+		समयout--;
+	पूर्ण
 
-	if (timeout <= 0) {
-		/* If PDEN is set, we can get a timeout when pen goes up */
-		if (is_pden(wm))
-			wm->pen_probably_down = 0;
-		else
+	अगर (समयout <= 0) अणु
+		/* If PDEN is set, we can get a समयout when pen goes up */
+		अगर (is_pden(wm))
+			wm->pen_probably_करोwn = 0;
+		अन्यथा
 			dev_dbg(wm->dev, "adc sample timeout\n");
-		return RC_PENUP;
-	}
+		वापस RC_PENUP;
+	पूर्ण
 
-	/* read back y data */
-	data->y = wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER_RD);
-	if (pil)
-		data->p = wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER_RD);
-	else
+	/* पढ़ो back y data */
+	data->y = wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER_RD);
+	अगर (pil)
+		data->p = wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER_RD);
+	अन्यथा
 		data->p = DEFAULT_PRESSURE;
 
-	if (wm->mach_ops && wm->mach_ops->post_sample)
+	अगर (wm->mach_ops && wm->mach_ops->post_sample)
 		wm->mach_ops->post_sample(WM97XX_ADCSEL_X | WM97XX_ADCSEL_Y);
 
 	/* check we have correct sample */
-	if (!(data->x & WM97XX_ADCSEL_X) || !(data->y & WM97XX_ADCSEL_Y))
-		goto err;
-	if (pil && !(data->p & WM97XX_ADCSEL_PRES))
-		goto err;
+	अगर (!(data->x & WM97XX_ADCSEL_X) || !(data->y & WM97XX_ADCSEL_Y))
+		जाओ err;
+	अगर (pil && !(data->p & WM97XX_ADCSEL_PRES))
+		जाओ err;
 
-	if (!(data->x & WM97XX_PEN_DOWN) || !(data->y & WM97XX_PEN_DOWN)) {
-		wm->pen_probably_down = 0;
-		return RC_PENUP;
-	}
-	return RC_VALID;
+	अगर (!(data->x & WM97XX_PEN_DOWN) || !(data->y & WM97XX_PEN_DOWN)) अणु
+		wm->pen_probably_करोwn = 0;
+		वापस RC_PENUP;
+	पूर्ण
+	वापस RC_VALID;
 err:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Sample the WM9712 touchscreen in polling mode
  */
-static int wm9712_poll_touch(struct wm97xx *wm, struct wm97xx_data *data)
-{
-	int rc;
+अटल पूर्णांक wm9712_poll_touch(काष्ठा wm97xx *wm, काष्ठा wm97xx_data *data)
+अणु
+	पूर्णांक rc;
 
-	if (coord) {
+	अगर (coord) अणु
 		rc = wm9712_poll_coord(wm, data);
-		if (rc != RC_VALID)
-			return rc;
-	} else {
+		अगर (rc != RC_VALID)
+			वापस rc;
+	पूर्ण अन्यथा अणु
 		rc = wm9712_poll_sample(wm, WM97XX_ADCSEL_X | WM97XX_PEN_DOWN,
 					&data->x);
-		if (rc != RC_VALID)
-			return rc;
+		अगर (rc != RC_VALID)
+			वापस rc;
 
 		rc = wm9712_poll_sample(wm, WM97XX_ADCSEL_Y | WM97XX_PEN_DOWN,
 					&data->y);
-		if (rc != RC_VALID)
-			return rc;
+		अगर (rc != RC_VALID)
+			वापस rc;
 
-		if (pil && !five_wire) {
+		अगर (pil && !five_wire) अणु
 			rc = wm9712_poll_sample(wm, WM97XX_ADCSEL_PRES | WM97XX_PEN_DOWN,
 						&data->p);
-			if (rc != RC_VALID)
-				return rc;
-		} else
+			अगर (rc != RC_VALID)
+				वापस rc;
+		पूर्ण अन्यथा
 			data->p = DEFAULT_PRESSURE;
-	}
-	return RC_VALID;
-}
+	पूर्ण
+	वापस RC_VALID;
+पूर्ण
 
 /*
  * Enable WM9712 continuous mode, i.e. touch data is streamed across
  * an AC97 slot
  */
-static int wm9712_acc_enable(struct wm97xx *wm, int enable)
-{
+अटल पूर्णांक wm9712_acc_enable(काष्ठा wm97xx *wm, पूर्णांक enable)
+अणु
 	u16 dig1, dig2;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	dig1 = wm->dig[1];
 	dig2 = wm->dig[2];
 
-	if (enable) {
+	अगर (enable) अणु
 		/* continuous mode */
-		if (wm->mach_ops->acc_startup) {
+		अगर (wm->mach_ops->acc_startup) अणु
 			ret = wm->mach_ops->acc_startup(wm);
-			if (ret < 0)
-				return ret;
-		}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
 		dig1 &= ~(WM97XX_CM_RATE_MASK | WM97XX_ADCSEL_MASK |
 			WM97XX_DELAY_MASK | WM97XX_SLT_MASK);
 		dig1 |= WM97XX_CTC | WM97XX_COO | WM97XX_SLEN |
 			WM97XX_DELAY(delay) |
 			WM97XX_SLT(wm->acc_slot) |
 			WM97XX_RATE(wm->acc_rate);
-		if (pil)
+		अगर (pil)
 			dig1 |= WM97XX_ADCSEL_PRES;
 		dig2 |= WM9712_PDEN;
-	} else {
+	पूर्ण अन्यथा अणु
 		dig1 &= ~(WM97XX_CTC | WM97XX_COO | WM97XX_SLEN);
 		dig2 &= ~WM9712_PDEN;
-		if (wm->mach_ops->acc_shutdown)
-			wm->mach_ops->acc_shutdown(wm);
-	}
+		अगर (wm->mach_ops->acc_shutकरोwn)
+			wm->mach_ops->acc_shutकरोwn(wm);
+	पूर्ण
 
-	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER1, dig1);
-	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER2, dig2);
+	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER1, dig1);
+	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER2, dig2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct wm97xx_codec_drv wm9712_codec = {
+काष्ठा wm97xx_codec_drv wm9712_codec = अणु
 	.id = WM9712_ID2,
 	.name = "wm9712",
 	.poll_sample = wm9712_poll_sample,
@@ -457,10 +458,10 @@ struct wm97xx_codec_drv wm9712_codec = {
 	.dig_enable = wm9712_dig_enable,
 	.dig_restore = wm9712_dig_restore,
 	.aux_prepare = wm9712_aux_prepare,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(wm9712_codec);
 
-/* Module information */
+/* Module inक्रमmation */
 MODULE_AUTHOR("Liam Girdwood <lrg@slimlogic.co.uk>");
 MODULE_DESCRIPTION("WM9712 Touch Screen Driver");
 MODULE_LICENSE("GPL");

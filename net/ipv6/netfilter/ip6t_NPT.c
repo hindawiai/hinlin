@@ -1,188 +1,189 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2011, 2012 Patrick McHardy <kaber@trash.net>
  */
 
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/ipv6.h>
-#include <net/ipv6.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter_ipv6.h>
-#include <linux/netfilter_ipv6/ip6t_NPT.h>
-#include <linux/netfilter/x_tables.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/ipv6.h>
+#समावेश <net/ipv6.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter_ipv6.h>
+#समावेश <linux/netfilter_ipv6/ip6t_NPT.h>
+#समावेश <linux/netfilter/x_tables.h>
 
-static int ip6t_npt_checkentry(const struct xt_tgchk_param *par)
-{
-	struct ip6t_npt_tginfo *npt = par->targinfo;
-	struct in6_addr pfx;
+अटल पूर्णांक ip6t_npt_checkentry(स्थिर काष्ठा xt_tgchk_param *par)
+अणु
+	काष्ठा ip6t_npt_tginfo *npt = par->targinfo;
+	काष्ठा in6_addr pfx;
 	__wsum src_sum, dst_sum;
 
-	if (npt->src_pfx_len > 64 || npt->dst_pfx_len > 64)
-		return -EINVAL;
+	अगर (npt->src_pfx_len > 64 || npt->dst_pfx_len > 64)
+		वापस -EINVAL;
 
 	/* Ensure that LSB of prefix is zero */
 	ipv6_addr_prefix(&pfx, &npt->src_pfx.in6, npt->src_pfx_len);
-	if (!ipv6_addr_equal(&pfx, &npt->src_pfx.in6))
-		return -EINVAL;
+	अगर (!ipv6_addr_equal(&pfx, &npt->src_pfx.in6))
+		वापस -EINVAL;
 	ipv6_addr_prefix(&pfx, &npt->dst_pfx.in6, npt->dst_pfx_len);
-	if (!ipv6_addr_equal(&pfx, &npt->dst_pfx.in6))
-		return -EINVAL;
+	अगर (!ipv6_addr_equal(&pfx, &npt->dst_pfx.in6))
+		वापस -EINVAL;
 
-	src_sum = csum_partial(&npt->src_pfx.in6, sizeof(npt->src_pfx.in6), 0);
-	dst_sum = csum_partial(&npt->dst_pfx.in6, sizeof(npt->dst_pfx.in6), 0);
+	src_sum = csum_partial(&npt->src_pfx.in6, माप(npt->src_pfx.in6), 0);
+	dst_sum = csum_partial(&npt->dst_pfx.in6, माप(npt->dst_pfx.in6), 0);
 
-	npt->adjustment = ~csum_fold(csum_sub(src_sum, dst_sum));
-	return 0;
-}
+	npt->adjusपंचांगent = ~csum_fold(csum_sub(src_sum, dst_sum));
+	वापस 0;
+पूर्ण
 
-static bool ip6t_npt_map_pfx(const struct ip6t_npt_tginfo *npt,
-			     struct in6_addr *addr)
-{
-	unsigned int pfx_len;
-	unsigned int i, idx;
+अटल bool ip6t_npt_map_pfx(स्थिर काष्ठा ip6t_npt_tginfo *npt,
+			     काष्ठा in6_addr *addr)
+अणु
+	अचिन्हित पूर्णांक pfx_len;
+	अचिन्हित पूर्णांक i, idx;
 	__be32 mask;
 	__sum16 sum;
 
 	pfx_len = max(npt->src_pfx_len, npt->dst_pfx_len);
-	for (i = 0; i < pfx_len; i += 32) {
-		if (pfx_len - i >= 32)
+	क्रम (i = 0; i < pfx_len; i += 32) अणु
+		अगर (pfx_len - i >= 32)
 			mask = 0;
-		else
+		अन्यथा
 			mask = htonl((1 << (i - pfx_len + 32)) - 1);
 
 		idx = i / 32;
 		addr->s6_addr32[idx] &= mask;
 		addr->s6_addr32[idx] |= ~mask & npt->dst_pfx.in6.s6_addr32[idx];
-	}
+	पूर्ण
 
-	if (pfx_len <= 48)
+	अगर (pfx_len <= 48)
 		idx = 3;
-	else {
-		for (idx = 4; idx < ARRAY_SIZE(addr->s6_addr16); idx++) {
-			if ((__force __sum16)addr->s6_addr16[idx] !=
+	अन्यथा अणु
+		क्रम (idx = 4; idx < ARRAY_SIZE(addr->s6_addr16); idx++) अणु
+			अगर ((__क्रमce __sum16)addr->s6_addr16[idx] !=
 			    CSUM_MANGLED_0)
-				break;
-		}
-		if (idx == ARRAY_SIZE(addr->s6_addr16))
-			return false;
-	}
+				अवरोध;
+		पूर्ण
+		अगर (idx == ARRAY_SIZE(addr->s6_addr16))
+			वापस false;
+	पूर्ण
 
-	sum = ~csum_fold(csum_add(csum_unfold((__force __sum16)addr->s6_addr16[idx]),
-				  csum_unfold(npt->adjustment)));
-	if (sum == CSUM_MANGLED_0)
+	sum = ~csum_fold(csum_add(csum_unfold((__क्रमce __sum16)addr->s6_addr16[idx]),
+				  csum_unfold(npt->adjusपंचांगent)));
+	अगर (sum == CSUM_MANGLED_0)
 		sum = 0;
-	*(__force __sum16 *)&addr->s6_addr16[idx] = sum;
+	*(__क्रमce __sum16 *)&addr->s6_addr16[idx] = sum;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct ipv6hdr *icmpv6_bounced_ipv6hdr(struct sk_buff *skb,
-					      struct ipv6hdr *_bounced_hdr)
-{
-	if (ipv6_hdr(skb)->nexthdr != IPPROTO_ICMPV6)
-		return NULL;
+अटल काष्ठा ipv6hdr *icmpv6_bounced_ipv6hdr(काष्ठा sk_buff *skb,
+					      काष्ठा ipv6hdr *_bounced_hdr)
+अणु
+	अगर (ipv6_hdr(skb)->nexthdr != IPPROTO_ICMPV6)
+		वापस शून्य;
 
-	if (!icmpv6_is_err(icmp6_hdr(skb)->icmp6_type))
-		return NULL;
+	अगर (!icmpv6_is_err(icmp6_hdr(skb)->icmp6_type))
+		वापस शून्य;
 
-	return skb_header_pointer(skb,
-				  skb_transport_offset(skb) + sizeof(struct icmp6hdr),
-				  sizeof(struct ipv6hdr),
+	वापस skb_header_poपूर्णांकer(skb,
+				  skb_transport_offset(skb) + माप(काष्ठा icmp6hdr),
+				  माप(काष्ठा ipv6hdr),
 				  _bounced_hdr);
-}
+पूर्ण
 
-static unsigned int
-ip6t_snpt_tg(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct ip6t_npt_tginfo *npt = par->targinfo;
-	struct ipv6hdr _bounced_hdr;
-	struct ipv6hdr *bounced_hdr;
-	struct in6_addr bounced_pfx;
+अटल अचिन्हित पूर्णांक
+ip6t_snpt_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा ip6t_npt_tginfo *npt = par->targinfo;
+	काष्ठा ipv6hdr _bounced_hdr;
+	काष्ठा ipv6hdr *bounced_hdr;
+	काष्ठा in6_addr bounced_pfx;
 
-	if (!ip6t_npt_map_pfx(npt, &ipv6_hdr(skb)->saddr)) {
+	अगर (!ip6t_npt_map_pfx(npt, &ipv6_hdr(skb)->saddr)) अणु
 		icmpv6_send(skb, ICMPV6_PARAMPROB, ICMPV6_HDR_FIELD,
-			    offsetof(struct ipv6hdr, saddr));
-		return NF_DROP;
-	}
+			    दुरत्व(काष्ठा ipv6hdr, saddr));
+		वापस NF_DROP;
+	पूर्ण
 
-	/* rewrite dst addr of bounced packet which was sent to dst range */
+	/* reग_लिखो dst addr of bounced packet which was sent to dst range */
 	bounced_hdr = icmpv6_bounced_ipv6hdr(skb, &_bounced_hdr);
-	if (bounced_hdr) {
+	अगर (bounced_hdr) अणु
 		ipv6_addr_prefix(&bounced_pfx, &bounced_hdr->daddr, npt->src_pfx_len);
-		if (ipv6_addr_cmp(&bounced_pfx, &npt->src_pfx.in6) == 0)
+		अगर (ipv6_addr_cmp(&bounced_pfx, &npt->src_pfx.in6) == 0)
 			ip6t_npt_map_pfx(npt, &bounced_hdr->daddr);
-	}
+	पूर्ण
 
-	return XT_CONTINUE;
-}
+	वापस XT_CONTINUE;
+पूर्ण
 
-static unsigned int
-ip6t_dnpt_tg(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct ip6t_npt_tginfo *npt = par->targinfo;
-	struct ipv6hdr _bounced_hdr;
-	struct ipv6hdr *bounced_hdr;
-	struct in6_addr bounced_pfx;
+अटल अचिन्हित पूर्णांक
+ip6t_dnpt_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा ip6t_npt_tginfo *npt = par->targinfo;
+	काष्ठा ipv6hdr _bounced_hdr;
+	काष्ठा ipv6hdr *bounced_hdr;
+	काष्ठा in6_addr bounced_pfx;
 
-	if (!ip6t_npt_map_pfx(npt, &ipv6_hdr(skb)->daddr)) {
+	अगर (!ip6t_npt_map_pfx(npt, &ipv6_hdr(skb)->daddr)) अणु
 		icmpv6_send(skb, ICMPV6_PARAMPROB, ICMPV6_HDR_FIELD,
-			    offsetof(struct ipv6hdr, daddr));
-		return NF_DROP;
-	}
+			    दुरत्व(काष्ठा ipv6hdr, daddr));
+		वापस NF_DROP;
+	पूर्ण
 
-	/* rewrite src addr of bounced packet which was sent from dst range */
+	/* reग_लिखो src addr of bounced packet which was sent from dst range */
 	bounced_hdr = icmpv6_bounced_ipv6hdr(skb, &_bounced_hdr);
-	if (bounced_hdr) {
+	अगर (bounced_hdr) अणु
 		ipv6_addr_prefix(&bounced_pfx, &bounced_hdr->saddr, npt->src_pfx_len);
-		if (ipv6_addr_cmp(&bounced_pfx, &npt->src_pfx.in6) == 0)
+		अगर (ipv6_addr_cmp(&bounced_pfx, &npt->src_pfx.in6) == 0)
 			ip6t_npt_map_pfx(npt, &bounced_hdr->saddr);
-	}
+	पूर्ण
 
-	return XT_CONTINUE;
-}
+	वापस XT_CONTINUE;
+पूर्ण
 
-static struct xt_target ip6t_npt_target_reg[] __read_mostly = {
-	{
+अटल काष्ठा xt_target ip6t_npt_target_reg[] __पढ़ो_mostly = अणु
+	अणु
 		.name		= "SNPT",
 		.table		= "mangle",
 		.target		= ip6t_snpt_tg,
-		.targetsize	= sizeof(struct ip6t_npt_tginfo),
-		.usersize	= offsetof(struct ip6t_npt_tginfo, adjustment),
+		.tarमाला_लोize	= माप(काष्ठा ip6t_npt_tginfo),
+		.usersize	= दुरत्व(काष्ठा ip6t_npt_tginfo, adjusपंचांगent),
 		.checkentry	= ip6t_npt_checkentry,
 		.family		= NFPROTO_IPV6,
 		.hooks		= (1 << NF_INET_LOCAL_IN) |
 				  (1 << NF_INET_POST_ROUTING),
 		.me		= THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "DNPT",
 		.table		= "mangle",
 		.target		= ip6t_dnpt_tg,
-		.targetsize	= sizeof(struct ip6t_npt_tginfo),
-		.usersize	= offsetof(struct ip6t_npt_tginfo, adjustment),
+		.tarमाला_लोize	= माप(काष्ठा ip6t_npt_tginfo),
+		.usersize	= दुरत्व(काष्ठा ip6t_npt_tginfo, adjusपंचांगent),
 		.checkentry	= ip6t_npt_checkentry,
 		.family		= NFPROTO_IPV6,
 		.hooks		= (1 << NF_INET_PRE_ROUTING) |
 				  (1 << NF_INET_LOCAL_OUT),
 		.me		= THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init ip6t_npt_init(void)
-{
-	return xt_register_targets(ip6t_npt_target_reg,
+अटल पूर्णांक __init ip6t_npt_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_tarमाला_लो(ip6t_npt_target_reg,
 				   ARRAY_SIZE(ip6t_npt_target_reg));
-}
+पूर्ण
 
-static void __exit ip6t_npt_exit(void)
-{
-	xt_unregister_targets(ip6t_npt_target_reg,
+अटल व्योम __निकास ip6t_npt_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_tarमाला_लो(ip6t_npt_target_reg,
 			      ARRAY_SIZE(ip6t_npt_target_reg));
-}
+पूर्ण
 
 module_init(ip6t_npt_init);
-module_exit(ip6t_npt_exit);
+module_निकास(ip6t_npt_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("IPv6-to-IPv6 Network Prefix Translation (RFC 6296)");

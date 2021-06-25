@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Copyright © 1999-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright तऊ 1999-2010 David Woodhouse <dwmw2@infradead.org>
  */
 
-#ifndef __MTD_NFTL_H__
-#define __MTD_NFTL_H__
+#अगर_अघोषित __MTD_NFTL_H__
+#घोषणा __MTD_NFTL_H__
 
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/blktrans.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/blktrans.h>
 
-#include <mtd/nftl-user.h>
+#समावेश <mtd/nftl-user.h>
 
 /* these info are used in ReplUnitTable */
-#define BLOCK_NIL          0xffff /* last block of a chain */
-#define BLOCK_FREE         0xfffe /* free block */
-#define BLOCK_NOTEXPLORED  0xfffd /* non explored block, only used during mounting */
-#define BLOCK_RESERVED     0xfffc /* bios block or bad block */
+#घोषणा BLOCK_NIL          0xffff /* last block of a chain */
+#घोषणा BLOCK_FREE         0xfffe /* मुक्त block */
+#घोषणा BLOCK_NOTEXPLORED  0xfffd /* non explored block, only used during mounting */
+#घोषणा BLOCK_RESERVED     0xfffc /* bios block or bad block */
 
-struct NFTLrecord {
-	struct mtd_blktrans_dev mbd;
+काष्ठा NFTLrecord अणु
+	काष्ठा mtd_blktrans_dev mbd;
 	__u16 MediaUnit, SpareMediaUnit;
 	__u32 EraseSize;
-	struct NFTLMediaHeader MediaHdr;
-	int usecount;
-	unsigned char heads;
-	unsigned char sectors;
-	unsigned short cylinders;
+	काष्ठा NFTLMediaHeader MediaHdr;
+	पूर्णांक usecount;
+	अचिन्हित अक्षर heads;
+	अचिन्हित अक्षर sectors;
+	अचिन्हित लघु cylinders;
 	__u16 numvunits;
 	__u16 lastEUN;                  /* should be suppressed */
-	__u16 numfreeEUNs;
-	__u16 LastFreeEUN; 		/* To speed up finding a free EUN */
-	int head,sect,cyl;
-	__u16 *EUNtable; 		/* [numvunits]: First EUN for each virtual unit  */
-	__u16 *ReplUnitTable; 		/* [numEUNs]: ReplUnitNumber for each */
-        unsigned int nb_blocks;		/* number of physical blocks */
-        unsigned int nb_boot_blocks;	/* number of blocks used by the bios */
-        struct erase_info instr;
-};
+	__u16 numमुक्तEUNs;
+	__u16 LastFreeEUN; 		/* To speed up finding a मुक्त EUN */
+	पूर्णांक head,sect,cyl;
+	__u16 *EUNtable; 		/* [numvunits]: First EUN क्रम each भव unit  */
+	__u16 *ReplUnitTable; 		/* [numEUNs]: ReplUnitNumber क्रम each */
+        अचिन्हित पूर्णांक nb_blocks;		/* number of physical blocks */
+        अचिन्हित पूर्णांक nb_boot_blocks;	/* number of blocks used by the bios */
+        काष्ठा erase_info instr;
+पूर्ण;
 
-int NFTL_mount(struct NFTLrecord *s);
-int NFTL_formatblock(struct NFTLrecord *s, int block);
+पूर्णांक NFTL_mount(काष्ठा NFTLrecord *s);
+पूर्णांक NFTL_क्रमmatblock(काष्ठा NFTLrecord *s, पूर्णांक block);
 
-int nftl_read_oob(struct mtd_info *mtd, loff_t offs, size_t len,
-		  size_t *retlen, uint8_t *buf);
-int nftl_write_oob(struct mtd_info *mtd, loff_t offs, size_t len,
-		   size_t *retlen, uint8_t *buf);
+पूर्णांक nftl_पढ़ो_oob(काष्ठा mtd_info *mtd, loff_t offs, माप_प्रकार len,
+		  माप_प्रकार *retlen, uपूर्णांक8_t *buf);
+पूर्णांक nftl_ग_लिखो_oob(काष्ठा mtd_info *mtd, loff_t offs, माप_प्रकार len,
+		   माप_प्रकार *retlen, uपूर्णांक8_t *buf);
 
-#ifndef NFTL_MAJOR
-#define NFTL_MAJOR 93
-#endif
+#अगर_अघोषित NFTL_MAJOR
+#घोषणा NFTL_MAJOR 93
+#पूर्ण_अगर
 
-#define MAX_NFTLS 16
-#define MAX_SECTORS_PER_UNIT 64
-#define NFTL_PARTN_BITS 4
+#घोषणा MAX_NFTLS 16
+#घोषणा MAX_SECTORS_PER_UNIT 64
+#घोषणा NFTL_PARTN_BITS 4
 
-#endif /* __MTD_NFTL_H__ */
+#पूर्ण_अगर /* __MTD_NFTL_H__ */

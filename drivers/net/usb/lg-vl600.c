@@ -1,304 +1,305 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Ethernet interface part of the LG VL600 LTE modem (4G dongle)
+ * Ethernet पूर्णांकerface part of the LG VL600 LTE modem (4G करोngle)
  *
  * Copyright (C) 2011 Intel Corporation
  * Author: Andrzej Zaborowski <balrogg@gmail.com>
  */
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/mii.h>
-#include <linux/usb.h>
-#include <linux/usb/cdc.h>
-#include <linux/usb/usbnet.h>
-#include <linux/if_ether.h>
-#include <linux/if_arp.h>
-#include <linux/inetdevice.h>
-#include <linux/module.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/cdc.h>
+#समावेश <linux/usb/usbnet.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/module.h>
 
 /*
- * The device has a CDC ACM port for modem control (it claims to be
- * CDC ACM anyway) and a CDC Ethernet port for actual network data.
+ * The device has a CDC ACM port क्रम modem control (it claims to be
+ * CDC ACM anyway) and a CDC Ethernet port क्रम actual network data.
  * It will however ignore data on both ports that is not encapsulated
- * in a specific way, any data returned is also encapsulated the same
- * way.  The headers don't seem to follow any popular standard.
+ * in a specअगरic way, any data वापसed is also encapsulated the same
+ * way.  The headers करोn't seem to follow any popular standard.
  *
  * This driver adds and strips these headers from the ethernet frames
  * sent/received from the CDC Ethernet port.  The proprietary header
  * replaces the standard ethernet header in a packet so only actual
- * ethernet frames are allowed.  The headers allow some form of
+ * ethernet frames are allowed.  The headers allow some क्रमm of
  * multiplexing by using non standard values of the .h_proto field.
- * Windows/Mac drivers do send a couple of such frames to the device
+ * Winकरोws/Mac drivers करो send a couple of such frames to the device
  * during initialisation, with protocol set to 0x0906 or 0x0b06 and (what
- * seems to be) a flag in the .dummy_flags.  This doesn't seem necessary
- * for modem operation but can possibly be used for GPS or other funcitons.
+ * seems to be) a flag in the .dummy_flags.  This करोesn't seem necessary
+ * क्रम modem operation but can possibly be used क्रम GPS or other funcitons.
  */
 
-struct vl600_frame_hdr {
+काष्ठा vl600_frame_hdr अणु
 	__le32 len;
 	__le32 serial;
 	__le32 pkt_cnt;
 	__le32 dummy_flags;
 	__le32 dummy;
 	__le32 magic;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-struct vl600_pkt_hdr {
+काष्ठा vl600_pkt_hdr अणु
 	__le32 dummy[2];
 	__le32 len;
 	__be16 h_proto;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-struct vl600_state {
-	struct sk_buff *current_rx_buf;
-};
+काष्ठा vl600_state अणु
+	काष्ठा sk_buff *current_rx_buf;
+पूर्ण;
 
-static int vl600_bind(struct usbnet *dev, struct usb_interface *intf)
-{
-	int ret;
-	struct vl600_state *s = kzalloc(sizeof(struct vl600_state), GFP_KERNEL);
+अटल पूर्णांक vl600_bind(काष्ठा usbnet *dev, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	पूर्णांक ret;
+	काष्ठा vl600_state *s = kzalloc(माप(काष्ठा vl600_state), GFP_KERNEL);
 
-	if (!s)
-		return -ENOMEM;
+	अगर (!s)
+		वापस -ENOMEM;
 
-	ret = usbnet_cdc_bind(dev, intf);
-	if (ret) {
-		kfree(s);
-		return ret;
-	}
+	ret = usbnet_cdc_bind(dev, पूर्णांकf);
+	अगर (ret) अणु
+		kमुक्त(s);
+		वापस ret;
+	पूर्ण
 
 	dev->driver_priv = s;
 
-	/* ARP packets don't go through, but they're also of no use.  The
+	/* ARP packets करोn't go through, but they're also of no use.  The
 	 * subnet has only two hosts anyway: us and the gateway / DHCP
-	 * server (probably simulated by modem firmware or network operator)
-	 * whose address changes everytime we connect to the intarwebz and
-	 * who doesn't bother answering ARP requests either.  So hardware
+	 * server (probably simulated by modem firmware or network चालक)
+	 * whose address changes everyसमय we connect to the पूर्णांकarwebz and
+	 * who करोesn't bother answering ARP requests either.  So hardware
 	 * addresses have no meaning, the destination and the source of every
-	 * packet depend only on whether it is on the IN or OUT endpoint.  */
+	 * packet depend only on whether it is on the IN or OUT endpoपूर्णांक.  */
 	dev->net->flags |= IFF_NOARP;
-	/* IPv6 NDP relies on multicast.  Enable it by default. */
+	/* IPv6 NDP relies on multicast.  Enable it by शेष. */
 	dev->net->flags |= IFF_MULTICAST;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vl600_unbind(struct usbnet *dev, struct usb_interface *intf)
-{
-	struct vl600_state *s = dev->driver_priv;
+अटल व्योम vl600_unbind(काष्ठा usbnet *dev, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा vl600_state *s = dev->driver_priv;
 
-	dev_kfree_skb(s->current_rx_buf);
-	kfree(s);
+	dev_kमुक्त_skb(s->current_rx_buf);
+	kमुक्त(s);
 
-	return usbnet_cdc_unbind(dev, intf);
-}
+	वापस usbnet_cdc_unbind(dev, पूर्णांकf);
+पूर्ण
 
-static int vl600_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
-{
-	struct vl600_frame_hdr *frame;
-	struct vl600_pkt_hdr *packet;
-	struct ethhdr *ethhdr;
-	int packet_len, count;
-	struct sk_buff *buf = skb;
-	struct sk_buff *clone;
-	struct vl600_state *s = dev->driver_priv;
+अटल पूर्णांक vl600_rx_fixup(काष्ठा usbnet *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा vl600_frame_hdr *frame;
+	काष्ठा vl600_pkt_hdr *packet;
+	काष्ठा ethhdr *ethhdr;
+	पूर्णांक packet_len, count;
+	काष्ठा sk_buff *buf = skb;
+	काष्ठा sk_buff *clone;
+	काष्ठा vl600_state *s = dev->driver_priv;
 
 	/* Frame lengths are generally 4B multiplies but every couple of
 	 * hours there's an odd number of bytes sized yet correct frame,
-	 * so don't require this.  */
+	 * so करोn't require this.  */
 
 	/* Allow a packet (or multiple packets batched together) to be
-	 * split across many frames.  We don't allow a new batch to
+	 * split across many frames.  We करोn't allow a new batch to
 	 * begin in the same frame another one is ending however, and no
 	 * leading or trailing pad bytes.  */
-	if (s->current_rx_buf) {
-		frame = (struct vl600_frame_hdr *) s->current_rx_buf->data;
-		if (skb->len + s->current_rx_buf->len >
-				le32_to_cpup(&frame->len)) {
-			netif_err(dev, ifup, dev->net, "Fragment too long\n");
+	अगर (s->current_rx_buf) अणु
+		frame = (काष्ठा vl600_frame_hdr *) s->current_rx_buf->data;
+		अगर (skb->len + s->current_rx_buf->len >
+				le32_to_cpup(&frame->len)) अणु
+			netअगर_err(dev, अगरup, dev->net, "Fragment too long\n");
 			dev->net->stats.rx_length_errors++;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		buf = s->current_rx_buf;
 		skb_put_data(buf, skb->data, skb->len);
-	} else if (skb->len < 4) {
-		netif_err(dev, ifup, dev->net, "Frame too short\n");
+	पूर्ण अन्यथा अगर (skb->len < 4) अणु
+		netअगर_err(dev, अगरup, dev->net, "Frame too short\n");
 		dev->net->stats.rx_length_errors++;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	frame = (struct vl600_frame_hdr *) buf->data;
+	frame = (काष्ठा vl600_frame_hdr *) buf->data;
 	/* Yes, check that frame->magic == 0x53544448 (or 0x44544d48),
 	 * otherwise we may run out of memory w/a bad packet */
-	if (ntohl(frame->magic) != 0x53544448 &&
+	अगर (ntohl(frame->magic) != 0x53544448 &&
 			ntohl(frame->magic) != 0x44544d48)
-		goto error;
+		जाओ error;
 
-	if (buf->len < sizeof(*frame) ||
-			buf->len != le32_to_cpup(&frame->len)) {
-		/* Save this fragment for later assembly */
-		if (s->current_rx_buf)
-			return 0;
+	अगर (buf->len < माप(*frame) ||
+			buf->len != le32_to_cpup(&frame->len)) अणु
+		/* Save this fragment क्रम later assembly */
+		अगर (s->current_rx_buf)
+			वापस 0;
 
 		s->current_rx_buf = skb_copy_expand(skb, 0,
 				le32_to_cpup(&frame->len), GFP_ATOMIC);
-		if (!s->current_rx_buf)
+		अगर (!s->current_rx_buf)
 			dev->net->stats.rx_errors++;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	count = le32_to_cpup(&frame->pkt_cnt);
 
-	skb_pull(buf, sizeof(*frame));
+	skb_pull(buf, माप(*frame));
 
-	while (count--) {
-		if (buf->len < sizeof(*packet)) {
-			netif_err(dev, ifup, dev->net, "Packet too short\n");
-			goto error;
-		}
+	जबतक (count--) अणु
+		अगर (buf->len < माप(*packet)) अणु
+			netअगर_err(dev, अगरup, dev->net, "Packet too short\n");
+			जाओ error;
+		पूर्ण
 
-		packet = (struct vl600_pkt_hdr *) buf->data;
-		packet_len = sizeof(*packet) + le32_to_cpup(&packet->len);
-		if (packet_len > buf->len) {
-			netif_err(dev, ifup, dev->net,
+		packet = (काष्ठा vl600_pkt_hdr *) buf->data;
+		packet_len = माप(*packet) + le32_to_cpup(&packet->len);
+		अगर (packet_len > buf->len) अणु
+			netअगर_err(dev, अगरup, dev->net,
 					"Bad packet length stored in header\n");
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		/* Packet header is same size as the ethernet header
-		 * (sizeof(*packet) == sizeof(*ethhdr)), additionally
+		 * (माप(*packet) == माप(*ethhdr)), additionally
 		 * the h_proto field is in the same place so we just leave it
-		 * alone and fill in the remaining fields.
+		 * alone and fill in the reमुख्यing fields.
 		 */
-		ethhdr = (struct ethhdr *) skb->data;
-		if (be16_to_cpup(&ethhdr->h_proto) == ETH_P_ARP &&
-				buf->len > 0x26) {
+		ethhdr = (काष्ठा ethhdr *) skb->data;
+		अगर (be16_to_cpup(&ethhdr->h_proto) == ETH_P_ARP &&
+				buf->len > 0x26) अणु
 			/* Copy the addresses from packet contents */
-			memcpy(ethhdr->h_source,
-					&buf->data[sizeof(*ethhdr) + 0x8],
+			स_नकल(ethhdr->h_source,
+					&buf->data[माप(*ethhdr) + 0x8],
 					ETH_ALEN);
-			memcpy(ethhdr->h_dest,
-					&buf->data[sizeof(*ethhdr) + 0x12],
+			स_नकल(ethhdr->h_dest,
+					&buf->data[माप(*ethhdr) + 0x12],
 					ETH_ALEN);
-		} else {
+		पूर्ण अन्यथा अणु
 			eth_zero_addr(ethhdr->h_source);
-			memcpy(ethhdr->h_dest, dev->net->dev_addr, ETH_ALEN);
+			स_नकल(ethhdr->h_dest, dev->net->dev_addr, ETH_ALEN);
 
 			/* Inbound IPv6 packets have an IPv4 ethertype (0x800)
-			 * for some reason.  Peek at the L3 header to check
-			 * for IPv6 packets, and set the ethertype to IPv6
+			 * क्रम some reason.  Peek at the L3 header to check
+			 * क्रम IPv6 packets, and set the ethertype to IPv6
 			 * (0x86dd) so Linux can understand it.
 			 */
-			if ((buf->data[sizeof(*ethhdr)] & 0xf0) == 0x60)
+			अगर ((buf->data[माप(*ethhdr)] & 0xf0) == 0x60)
 				ethhdr->h_proto = htons(ETH_P_IPV6);
-		}
+		पूर्ण
 
-		if (count) {
+		अगर (count) अणु
 			/* Not the last packet in this batch */
 			clone = skb_clone(buf, GFP_ATOMIC);
-			if (!clone)
-				goto error;
+			अगर (!clone)
+				जाओ error;
 
 			skb_trim(clone, packet_len);
-			usbnet_skb_return(dev, clone);
+			usbnet_skb_वापस(dev, clone);
 
 			skb_pull(buf, (packet_len + 3) & ~3);
-		} else {
+		पूर्ण अन्यथा अणु
 			skb_trim(buf, packet_len);
 
-			if (s->current_rx_buf) {
-				usbnet_skb_return(dev, buf);
-				s->current_rx_buf = NULL;
-				return 0;
-			}
+			अगर (s->current_rx_buf) अणु
+				usbnet_skb_वापस(dev, buf);
+				s->current_rx_buf = शून्य;
+				वापस 0;
+			पूर्ण
 
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
 error:
-	if (s->current_rx_buf) {
-		dev_kfree_skb_any(s->current_rx_buf);
-		s->current_rx_buf = NULL;
-	}
+	अगर (s->current_rx_buf) अणु
+		dev_kमुक्त_skb_any(s->current_rx_buf);
+		s->current_rx_buf = शून्य;
+	पूर्ण
 	dev->net->stats.rx_errors++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sk_buff *vl600_tx_fixup(struct usbnet *dev,
-		struct sk_buff *skb, gfp_t flags)
-{
-	struct sk_buff *ret;
-	struct vl600_frame_hdr *frame;
-	struct vl600_pkt_hdr *packet;
-	static uint32_t serial = 1;
-	int orig_len = skb->len - sizeof(struct ethhdr);
-	int full_len = (skb->len + sizeof(struct vl600_frame_hdr) + 3) & ~3;
+अटल काष्ठा sk_buff *vl600_tx_fixup(काष्ठा usbnet *dev,
+		काष्ठा sk_buff *skb, gfp_t flags)
+अणु
+	काष्ठा sk_buff *ret;
+	काष्ठा vl600_frame_hdr *frame;
+	काष्ठा vl600_pkt_hdr *packet;
+	अटल uपूर्णांक32_t serial = 1;
+	पूर्णांक orig_len = skb->len - माप(काष्ठा ethhdr);
+	पूर्णांक full_len = (skb->len + माप(काष्ठा vl600_frame_hdr) + 3) & ~3;
 
-	frame = (struct vl600_frame_hdr *) skb->data;
-	if (skb->len > sizeof(*frame) && skb->len == le32_to_cpup(&frame->len))
-		return skb; /* Already encapsulated? */
+	frame = (काष्ठा vl600_frame_hdr *) skb->data;
+	अगर (skb->len > माप(*frame) && skb->len == le32_to_cpup(&frame->len))
+		वापस skb; /* Alपढ़ोy encapsulated? */
 
-	if (skb->len < sizeof(struct ethhdr))
+	अगर (skb->len < माप(काष्ठा ethhdr))
 		/* Drop, device can only deal with ethernet packets */
-		return NULL;
+		वापस शून्य;
 
-	if (!skb_cloned(skb)) {
-		int headroom = skb_headroom(skb);
-		int tailroom = skb_tailroom(skb);
+	अगर (!skb_cloned(skb)) अणु
+		पूर्णांक headroom = skb_headroom(skb);
+		पूर्णांक tailroom = skb_tailroom(skb);
 
-		if (tailroom >= full_len - skb->len - sizeof(*frame) &&
-				headroom >= sizeof(*frame))
+		अगर (tailroom >= full_len - skb->len - माप(*frame) &&
+				headroom >= माप(*frame))
 			/* There's enough head and tail room */
-			goto encapsulate;
+			जाओ encapsulate;
 
-		if (headroom + tailroom + skb->len >= full_len) {
-			/* There's enough total room, just readjust */
-			skb->data = memmove(skb->head + sizeof(*frame),
+		अगर (headroom + tailroom + skb->len >= full_len) अणु
+			/* There's enough total room, just पढ़ोjust */
+			skb->data = स_हटाओ(skb->head + माप(*frame),
 					skb->data, skb->len);
-			skb_set_tail_pointer(skb, skb->len);
-			goto encapsulate;
-		}
-	}
+			skb_set_tail_poपूर्णांकer(skb, skb->len);
+			जाओ encapsulate;
+		पूर्ण
+	पूर्ण
 
 	/* Alloc a new skb with the required size */
-	ret = skb_copy_expand(skb, sizeof(struct vl600_frame_hdr), full_len -
-			skb->len - sizeof(struct vl600_frame_hdr), flags);
-	dev_kfree_skb_any(skb);
-	if (!ret)
-		return ret;
+	ret = skb_copy_expand(skb, माप(काष्ठा vl600_frame_hdr), full_len -
+			skb->len - माप(काष्ठा vl600_frame_hdr), flags);
+	dev_kमुक्त_skb_any(skb);
+	अगर (!ret)
+		वापस ret;
 	skb = ret;
 
 encapsulate:
 	/* Packet header is same size as ethernet packet header
-	 * (sizeof(*packet) == sizeof(struct ethhdr)), additionally the
+	 * (माप(*packet) == माप(काष्ठा ethhdr)), additionally the
 	 * h_proto field is in the same place so we just leave it alone and
-	 * overwrite the remaining fields.
+	 * overग_लिखो the reमुख्यing fields.
 	 */
-	packet = (struct vl600_pkt_hdr *) skb->data;
+	packet = (काष्ठा vl600_pkt_hdr *) skb->data;
 	/* The VL600 wants IPv6 packets to have an IPv4 ethertype
 	 * Since this modem only supports IPv4 and IPv6, just set all
 	 * frames to 0x0800 (ETH_P_IP)
 	 */
 	packet->h_proto = htons(ETH_P_IP);
-	memset(&packet->dummy, 0, sizeof(packet->dummy));
+	स_रखो(&packet->dummy, 0, माप(packet->dummy));
 	packet->len = cpu_to_le32(orig_len);
 
-	frame = skb_push(skb, sizeof(*frame));
-	memset(frame, 0, sizeof(*frame));
+	frame = skb_push(skb, माप(*frame));
+	स_रखो(frame, 0, माप(*frame));
 	frame->len = cpu_to_le32(full_len);
 	frame->serial = cpu_to_le32(serial++);
 	frame->pkt_cnt = cpu_to_le32(1);
 
-	if (skb->len < full_len) /* Pad */
+	अगर (skb->len < full_len) /* Pad */
 		skb_put(skb, full_len - skb->len);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static const struct driver_info	vl600_info = {
+अटल स्थिर काष्ठा driver_info	vl600_info = अणु
 	.description	= "LG VL600 modem",
 	.flags		= FLAG_RX_ASSEMBLE | FLAG_WWAN,
 	.bind		= vl600_bind,
@@ -306,19 +307,19 @@ static const struct driver_info	vl600_info = {
 	.status		= usbnet_cdc_status,
 	.rx_fixup	= vl600_rx_fixup,
 	.tx_fixup	= vl600_tx_fixup,
-};
+पूर्ण;
 
-static const struct usb_device_id products[] = {
-	{
+अटल स्थिर काष्ठा usb_device_id products[] = अणु
+	अणु
 		USB_DEVICE_AND_INTERFACE_INFO(0x1004, 0x61aa, USB_CLASS_COMM,
 				USB_CDC_SUBCLASS_ETHERNET, USB_CDC_PROTO_NONE),
-		.driver_info	= (unsigned long) &vl600_info,
-	},
-	{},	/* End */
-};
+		.driver_info	= (अचिन्हित दीर्घ) &vl600_info,
+	पूर्ण,
+	अणुपूर्ण,	/* End */
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, products);
 
-static struct usb_driver lg_vl600_driver = {
+अटल काष्ठा usb_driver lg_vl600_driver = अणु
 	.name		= "lg-vl600",
 	.id_table	= products,
 	.probe		= usbnet_probe,
@@ -326,7 +327,7 @@ static struct usb_driver lg_vl600_driver = {
 	.suspend	= usbnet_suspend,
 	.resume		= usbnet_resume,
 	.disable_hub_initiated_lpm = 1,
-};
+पूर्ण;
 
 module_usb_driver(lg_vl600_driver);
 

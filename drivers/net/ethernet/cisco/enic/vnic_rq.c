@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -17,203 +18,203 @@
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
 
-#include "vnic_dev.h"
-#include "vnic_rq.h"
-#include "enic.h"
+#समावेश "vnic_dev.h"
+#समावेश "vnic_rq.h"
+#समावेश "enic.h"
 
-static int vnic_rq_alloc_bufs(struct vnic_rq *rq)
-{
-	struct vnic_rq_buf *buf;
-	unsigned int i, j, count = rq->ring.desc_count;
-	unsigned int blks = VNIC_RQ_BUF_BLKS_NEEDED(count);
+अटल पूर्णांक vnic_rq_alloc_bufs(काष्ठा vnic_rq *rq)
+अणु
+	काष्ठा vnic_rq_buf *buf;
+	अचिन्हित पूर्णांक i, j, count = rq->ring.desc_count;
+	अचिन्हित पूर्णांक blks = VNIC_RQ_BUF_BLKS_NEEDED(count);
 
-	for (i = 0; i < blks; i++) {
+	क्रम (i = 0; i < blks; i++) अणु
 		rq->bufs[i] = kzalloc(VNIC_RQ_BUF_BLK_SZ(count), GFP_KERNEL);
-		if (!rq->bufs[i])
-			return -ENOMEM;
-	}
+		अगर (!rq->bufs[i])
+			वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < blks; i++) {
+	क्रम (i = 0; i < blks; i++) अणु
 		buf = rq->bufs[i];
-		for (j = 0; j < VNIC_RQ_BUF_BLK_ENTRIES(count); j++) {
+		क्रम (j = 0; j < VNIC_RQ_BUF_BLK_ENTRIES(count); j++) अणु
 			buf->index = i * VNIC_RQ_BUF_BLK_ENTRIES(count) + j;
 			buf->desc = (u8 *)rq->ring.descs +
 				rq->ring.desc_size * buf->index;
-			if (buf->index + 1 == count) {
+			अगर (buf->index + 1 == count) अणु
 				buf->next = rq->bufs[0];
-				break;
-			} else if (j + 1 == VNIC_RQ_BUF_BLK_ENTRIES(count)) {
+				अवरोध;
+			पूर्ण अन्यथा अगर (j + 1 == VNIC_RQ_BUF_BLK_ENTRIES(count)) अणु
 				buf->next = rq->bufs[i + 1];
-			} else {
+			पूर्ण अन्यथा अणु
 				buf->next = buf + 1;
 				buf++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	rq->to_use = rq->to_clean = rq->bufs[0];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void vnic_rq_free(struct vnic_rq *rq)
-{
-	struct vnic_dev *vdev;
-	unsigned int i;
+व्योम vnic_rq_मुक्त(काष्ठा vnic_rq *rq)
+अणु
+	काष्ठा vnic_dev *vdev;
+	अचिन्हित पूर्णांक i;
 
 	vdev = rq->vdev;
 
-	vnic_dev_free_desc_ring(vdev, &rq->ring);
+	vnic_dev_मुक्त_desc_ring(vdev, &rq->ring);
 
-	for (i = 0; i < VNIC_RQ_BUF_BLKS_MAX; i++) {
-		if (rq->bufs[i]) {
-			kfree(rq->bufs[i]);
-			rq->bufs[i] = NULL;
-		}
-	}
+	क्रम (i = 0; i < VNIC_RQ_BUF_BLKS_MAX; i++) अणु
+		अगर (rq->bufs[i]) अणु
+			kमुक्त(rq->bufs[i]);
+			rq->bufs[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	rq->ctrl = NULL;
-}
+	rq->ctrl = शून्य;
+पूर्ण
 
-int vnic_rq_alloc(struct vnic_dev *vdev, struct vnic_rq *rq, unsigned int index,
-	unsigned int desc_count, unsigned int desc_size)
-{
-	int err;
+पूर्णांक vnic_rq_alloc(काष्ठा vnic_dev *vdev, काष्ठा vnic_rq *rq, अचिन्हित पूर्णांक index,
+	अचिन्हित पूर्णांक desc_count, अचिन्हित पूर्णांक desc_size)
+अणु
+	पूर्णांक err;
 
 	rq->index = index;
 	rq->vdev = vdev;
 
 	rq->ctrl = vnic_dev_get_res(vdev, RES_TYPE_RQ, index);
-	if (!rq->ctrl) {
+	अगर (!rq->ctrl) अणु
 		vdev_err(vdev, "Failed to hook RQ[%d] resource\n", index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	vnic_rq_disable(rq);
 
 	err = vnic_dev_alloc_desc_ring(vdev, &rq->ring, desc_count, desc_size);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = vnic_rq_alloc_bufs(rq);
-	if (err) {
-		vnic_rq_free(rq);
-		return err;
-	}
+	अगर (err) अणु
+		vnic_rq_मुक्त(rq);
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vnic_rq_init_start(struct vnic_rq *rq, unsigned int cq_index,
-	unsigned int fetch_index, unsigned int posted_index,
-	unsigned int error_interrupt_enable,
-	unsigned int error_interrupt_offset)
-{
+अटल व्योम vnic_rq_init_start(काष्ठा vnic_rq *rq, अचिन्हित पूर्णांक cq_index,
+	अचिन्हित पूर्णांक fetch_index, अचिन्हित पूर्णांक posted_index,
+	अचिन्हित पूर्णांक error_पूर्णांकerrupt_enable,
+	अचिन्हित पूर्णांक error_पूर्णांकerrupt_offset)
+अणु
 	u64 paddr;
-	unsigned int count = rq->ring.desc_count;
+	अचिन्हित पूर्णांक count = rq->ring.desc_count;
 
 	paddr = (u64)rq->ring.base_addr | VNIC_PADDR_TARGET;
-	writeq(paddr, &rq->ctrl->ring_base);
-	iowrite32(count, &rq->ctrl->ring_size);
-	iowrite32(cq_index, &rq->ctrl->cq_index);
-	iowrite32(error_interrupt_enable, &rq->ctrl->error_interrupt_enable);
-	iowrite32(error_interrupt_offset, &rq->ctrl->error_interrupt_offset);
-	iowrite32(0, &rq->ctrl->dropped_packet_count);
-	iowrite32(0, &rq->ctrl->error_status);
-	iowrite32(fetch_index, &rq->ctrl->fetch_index);
-	iowrite32(posted_index, &rq->ctrl->posted_index);
+	ग_लिखोq(paddr, &rq->ctrl->ring_base);
+	ioग_लिखो32(count, &rq->ctrl->ring_size);
+	ioग_लिखो32(cq_index, &rq->ctrl->cq_index);
+	ioग_लिखो32(error_पूर्णांकerrupt_enable, &rq->ctrl->error_पूर्णांकerrupt_enable);
+	ioग_लिखो32(error_पूर्णांकerrupt_offset, &rq->ctrl->error_पूर्णांकerrupt_offset);
+	ioग_लिखो32(0, &rq->ctrl->dropped_packet_count);
+	ioग_लिखो32(0, &rq->ctrl->error_status);
+	ioग_लिखो32(fetch_index, &rq->ctrl->fetch_index);
+	ioग_लिखो32(posted_index, &rq->ctrl->posted_index);
 
 	rq->to_use = rq->to_clean =
 		&rq->bufs[fetch_index / VNIC_RQ_BUF_BLK_ENTRIES(count)]
 			[fetch_index % VNIC_RQ_BUF_BLK_ENTRIES(count)];
-}
+पूर्ण
 
-void vnic_rq_init(struct vnic_rq *rq, unsigned int cq_index,
-	unsigned int error_interrupt_enable,
-	unsigned int error_interrupt_offset)
-{
-	vnic_rq_init_start(rq, cq_index, 0, 0, error_interrupt_enable,
-			   error_interrupt_offset);
-}
+व्योम vnic_rq_init(काष्ठा vnic_rq *rq, अचिन्हित पूर्णांक cq_index,
+	अचिन्हित पूर्णांक error_पूर्णांकerrupt_enable,
+	अचिन्हित पूर्णांक error_पूर्णांकerrupt_offset)
+अणु
+	vnic_rq_init_start(rq, cq_index, 0, 0, error_पूर्णांकerrupt_enable,
+			   error_पूर्णांकerrupt_offset);
+पूर्ण
 
-unsigned int vnic_rq_error_status(struct vnic_rq *rq)
-{
-	return ioread32(&rq->ctrl->error_status);
-}
+अचिन्हित पूर्णांक vnic_rq_error_status(काष्ठा vnic_rq *rq)
+अणु
+	वापस ioपढ़ो32(&rq->ctrl->error_status);
+पूर्ण
 
-void vnic_rq_enable(struct vnic_rq *rq)
-{
-	iowrite32(1, &rq->ctrl->enable);
-}
+व्योम vnic_rq_enable(काष्ठा vnic_rq *rq)
+अणु
+	ioग_लिखो32(1, &rq->ctrl->enable);
+पूर्ण
 
-int vnic_rq_disable(struct vnic_rq *rq)
-{
-	unsigned int wait;
-	struct vnic_dev *vdev = rq->vdev;
-	int i;
+पूर्णांक vnic_rq_disable(काष्ठा vnic_rq *rq)
+अणु
+	अचिन्हित पूर्णांक रुको;
+	काष्ठा vnic_dev *vdev = rq->vdev;
+	पूर्णांक i;
 
 	/* Due to a race condition with clearing RQ "mini-cache" in hw, we need
 	 * to disable the RQ twice to guarantee that stale descriptors are not
 	 * used when this RQ is re-enabled.
 	 */
-	for (i = 0; i < 2; i++) {
-		iowrite32(0, &rq->ctrl->enable);
+	क्रम (i = 0; i < 2; i++) अणु
+		ioग_लिखो32(0, &rq->ctrl->enable);
 
-		/* Wait for HW to ACK disable request */
-		for (wait = 20000; wait > 0; wait--)
-			if (!ioread32(&rq->ctrl->running))
-				break;
-		if (!wait) {
+		/* Wait क्रम HW to ACK disable request */
+		क्रम (रुको = 20000; रुको > 0; रुको--)
+			अगर (!ioपढ़ो32(&rq->ctrl->running))
+				अवरोध;
+		अगर (!रुको) अणु
 			vdev_neterr(vdev, "Failed to disable RQ[%d]\n",
 				    rq->index);
 
-			return -ETIMEDOUT;
-		}
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void vnic_rq_clean(struct vnic_rq *rq,
-	void (*buf_clean)(struct vnic_rq *rq, struct vnic_rq_buf *buf))
-{
-	struct vnic_rq_buf *buf;
+व्योम vnic_rq_clean(काष्ठा vnic_rq *rq,
+	व्योम (*buf_clean)(काष्ठा vnic_rq *rq, काष्ठा vnic_rq_buf *buf))
+अणु
+	काष्ठा vnic_rq_buf *buf;
 	u32 fetch_index;
-	unsigned int count = rq->ring.desc_count;
-	int i;
+	अचिन्हित पूर्णांक count = rq->ring.desc_count;
+	पूर्णांक i;
 
 	buf = rq->to_clean;
 
-	for (i = 0; i < rq->ring.desc_count; i++) {
+	क्रम (i = 0; i < rq->ring.desc_count; i++) अणु
 		(*buf_clean)(rq, buf);
 		buf = buf->next;
-	}
+	पूर्ण
 	rq->ring.desc_avail = rq->ring.desc_count - 1;
 
-	/* Use current fetch_index as the ring starting point */
-	fetch_index = ioread32(&rq->ctrl->fetch_index);
+	/* Use current fetch_index as the ring starting poपूर्णांक */
+	fetch_index = ioपढ़ो32(&rq->ctrl->fetch_index);
 
-	if (fetch_index == 0xFFFFFFFF) { /* check for hardware gone  */
+	अगर (fetch_index == 0xFFFFFFFF) अणु /* check क्रम hardware gone  */
 		/* Hardware surprise removal: reset fetch_index */
 		fetch_index = 0;
-	}
+	पूर्ण
 	rq->to_use = rq->to_clean =
 		&rq->bufs[fetch_index / VNIC_RQ_BUF_BLK_ENTRIES(count)]
 			[fetch_index % VNIC_RQ_BUF_BLK_ENTRIES(count)];
-	iowrite32(fetch_index, &rq->ctrl->posted_index);
+	ioग_लिखो32(fetch_index, &rq->ctrl->posted_index);
 
-	/* Anytime we write fetch_index, we need to re-write 0 to rq->enable
-	 * to re-sync internal VIC state.
+	/* Anyसमय we ग_लिखो fetch_index, we need to re-ग_लिखो 0 to rq->enable
+	 * to re-sync पूर्णांकernal VIC state.
 	 */
-	iowrite32(0, &rq->ctrl->enable);
+	ioग_लिखो32(0, &rq->ctrl->enable);
 
 	vnic_dev_clear_desc_ring(&rq->ring);
-}
+पूर्ण
 

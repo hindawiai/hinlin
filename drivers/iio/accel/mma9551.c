@@ -1,261 +1,262 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Freescale MMA9551L Intelligent Motion-Sensing Platform driver
+ * Freescale MMA9551L Intelligent Motion-Sensing Platक्रमm driver
  * Copyright (c) 2014, Intel Corporation.
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <linux/acpi.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/events.h>
-#include <linux/pm_runtime.h>
-#include "mma9551_core.h"
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/events.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश "mma9551_core.h"
 
-#define MMA9551_DRV_NAME		"mma9551"
-#define MMA9551_IRQ_NAME		"mma9551_event"
-#define MMA9551_GPIO_COUNT		4
+#घोषणा MMA9551_DRV_NAME		"mma9551"
+#घोषणा MMA9551_IRQ_NAME		"mma9551_event"
+#घोषणा MMA9551_GPIO_COUNT		4
 
 /* Tilt application (inclination in IIO terms). */
-#define MMA9551_TILT_XZ_ANG_REG		0x00
-#define MMA9551_TILT_YZ_ANG_REG		0x01
-#define MMA9551_TILT_XY_ANG_REG		0x02
-#define MMA9551_TILT_ANGFLG		BIT(7)
-#define MMA9551_TILT_QUAD_REG		0x03
-#define MMA9551_TILT_XY_QUAD_SHIFT	0
-#define MMA9551_TILT_YZ_QUAD_SHIFT	2
-#define MMA9551_TILT_XZ_QUAD_SHIFT	4
-#define MMA9551_TILT_CFG_REG		0x01
-#define MMA9551_TILT_ANG_THRESH_MASK	GENMASK(3, 0)
+#घोषणा MMA9551_TILT_XZ_ANG_REG		0x00
+#घोषणा MMA9551_TILT_YZ_ANG_REG		0x01
+#घोषणा MMA9551_TILT_XY_ANG_REG		0x02
+#घोषणा MMA9551_TILT_ANGFLG		BIT(7)
+#घोषणा MMA9551_TILT_QUAD_REG		0x03
+#घोषणा MMA9551_TILT_XY_QUAD_SHIFT	0
+#घोषणा MMA9551_TILT_YZ_QUAD_SHIFT	2
+#घोषणा MMA9551_TILT_XZ_QUAD_SHIFT	4
+#घोषणा MMA9551_TILT_CFG_REG		0x01
+#घोषणा MMA9551_TILT_ANG_THRESH_MASK	GENMASK(3, 0)
 
-#define MMA9551_DEFAULT_SAMPLE_RATE	122	/* Hz */
+#घोषणा MMA9551_DEFAULT_SAMPLE_RATE	122	/* Hz */
 
 /* Tilt events are mapped to the first three GPIO pins. */
-enum mma9551_tilt_axis {
+क्रमागत mma9551_tilt_axis अणु
 	mma9551_x = 0,
 	mma9551_y,
 	mma9551_z,
-};
+पूर्ण;
 
-struct mma9551_data {
-	struct i2c_client *client;
-	struct mutex mutex;
-	int event_enabled[3];
-	int irqs[MMA9551_GPIO_COUNT];
-};
+काष्ठा mma9551_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा mutex mutex;
+	पूर्णांक event_enabled[3];
+	पूर्णांक irqs[MMA9551_GPIO_COUNT];
+पूर्ण;
 
-static int mma9551_read_incli_chan(struct i2c_client *client,
-				   const struct iio_chan_spec *chan,
-				   int *val)
-{
-	u8 quad_shift, angle, quadrant;
+अटल पूर्णांक mma9551_पढ़ो_incli_chan(काष्ठा i2c_client *client,
+				   स्थिर काष्ठा iio_chan_spec *chan,
+				   पूर्णांक *val)
+अणु
+	u8 quad_shअगरt, angle, quadrant;
 	u16 reg_addr;
-	int ret;
+	पूर्णांक ret;
 
-	switch (chan->channel2) {
-	case IIO_MOD_X:
+	चयन (chan->channel2) अणु
+	हाल IIO_MOD_X:
 		reg_addr = MMA9551_TILT_YZ_ANG_REG;
-		quad_shift = MMA9551_TILT_YZ_QUAD_SHIFT;
-		break;
-	case IIO_MOD_Y:
+		quad_shअगरt = MMA9551_TILT_YZ_QUAD_SHIFT;
+		अवरोध;
+	हाल IIO_MOD_Y:
 		reg_addr = MMA9551_TILT_XZ_ANG_REG;
-		quad_shift = MMA9551_TILT_XZ_QUAD_SHIFT;
-		break;
-	case IIO_MOD_Z:
+		quad_shअगरt = MMA9551_TILT_XZ_QUAD_SHIFT;
+		अवरोध;
+	हाल IIO_MOD_Z:
 		reg_addr = MMA9551_TILT_XY_ANG_REG;
-		quad_shift = MMA9551_TILT_XY_QUAD_SHIFT;
-		break;
-	default:
-		return -EINVAL;
-	}
+		quad_shअगरt = MMA9551_TILT_XY_QUAD_SHIFT;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = mma9551_set_power_state(client, true);
-	if (ret < 0)
-		return ret;
+	ret = mma9551_set_घातer_state(client, true);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = mma9551_read_status_byte(client, MMA9551_APPID_TILT,
+	ret = mma9551_पढ़ो_status_byte(client, MMA9551_APPID_TILT,
 				       reg_addr, &angle);
-	if (ret < 0)
-		goto out_poweroff;
+	अगर (ret < 0)
+		जाओ out_घातeroff;
 
-	ret = mma9551_read_status_byte(client, MMA9551_APPID_TILT,
+	ret = mma9551_पढ़ो_status_byte(client, MMA9551_APPID_TILT,
 				       MMA9551_TILT_QUAD_REG, &quadrant);
-	if (ret < 0)
-		goto out_poweroff;
+	अगर (ret < 0)
+		जाओ out_घातeroff;
 
 	angle &= ~MMA9551_TILT_ANGFLG;
-	quadrant = (quadrant >> quad_shift) & 0x03;
+	quadrant = (quadrant >> quad_shअगरt) & 0x03;
 
-	if (quadrant == 1 || quadrant == 3)
+	अगर (quadrant == 1 || quadrant == 3)
 		*val = 90 * (quadrant + 1) - angle;
-	else
+	अन्यथा
 		*val = angle + 90 * quadrant;
 
 	ret = IIO_VAL_INT;
 
-out_poweroff:
-	mma9551_set_power_state(client, false);
-	return ret;
-}
+out_घातeroff:
+	mma9551_set_घातer_state(client, false);
+	वापस ret;
+पूर्ण
 
-static int mma9551_read_raw(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *chan,
-			    int *val, int *val2, long mask)
-{
-	struct mma9551_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक mma9551_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			    काष्ठा iio_chan_spec स्थिर *chan,
+			    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा mma9551_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_PROCESSED:
-		switch (chan->type) {
-		case IIO_INCLI:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_PROCESSED:
+		चयन (chan->type) अणु
+		हाल IIO_INCLI:
 			mutex_lock(&data->mutex);
-			ret = mma9551_read_incli_chan(data->client, chan, val);
+			ret = mma9551_पढ़ो_incli_chan(data->client, chan, val);
 			mutex_unlock(&data->mutex);
-			return ret;
-		default:
-			return -EINVAL;
-		}
-	case IIO_CHAN_INFO_RAW:
-		switch (chan->type) {
-		case IIO_ACCEL:
+			वापस ret;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	हाल IIO_CHAN_INFO_RAW:
+		चयन (chan->type) अणु
+		हाल IIO_ACCEL:
 			mutex_lock(&data->mutex);
-			ret = mma9551_read_accel_chan(data->client,
+			ret = mma9551_पढ़ो_accel_chan(data->client,
 						      chan, val, val2);
 			mutex_unlock(&data->mutex);
-			return ret;
-		default:
-			return -EINVAL;
-		}
-	case IIO_CHAN_INFO_SCALE:
-		switch (chan->type) {
-		case IIO_ACCEL:
-			return mma9551_read_accel_scale(val, val2);
-		default:
-			return -EINVAL;
-		}
-	default:
-		return -EINVAL;
-	}
-}
+			वापस ret;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	हाल IIO_CHAN_INFO_SCALE:
+		चयन (chan->type) अणु
+		हाल IIO_ACCEL:
+			वापस mma9551_पढ़ो_accel_scale(val, val2);
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int mma9551_read_event_config(struct iio_dev *indio_dev,
-				     const struct iio_chan_spec *chan,
-				     enum iio_event_type type,
-				     enum iio_event_direction dir)
-{
-	struct mma9551_data *data = iio_priv(indio_dev);
+अटल पूर्णांक mma9551_पढ़ो_event_config(काष्ठा iio_dev *indio_dev,
+				     स्थिर काष्ठा iio_chan_spec *chan,
+				     क्रमागत iio_event_type type,
+				     क्रमागत iio_event_direction dir)
+अणु
+	काष्ठा mma9551_data *data = iio_priv(indio_dev);
 
-	switch (chan->type) {
-	case IIO_INCLI:
+	चयन (chan->type) अणु
+	हाल IIO_INCLI:
 		/* IIO counts axes from 1, because IIO_NO_MOD is 0. */
-		return data->event_enabled[chan->channel2 - 1];
-	default:
-		return -EINVAL;
-	}
-}
+		वापस data->event_enabled[chan->channel2 - 1];
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int mma9551_config_incli_event(struct iio_dev *indio_dev,
-				      enum iio_modifier axis,
-				      int state)
-{
-	struct mma9551_data *data = iio_priv(indio_dev);
-	enum mma9551_tilt_axis mma_axis;
-	int ret;
+अटल पूर्णांक mma9551_config_incli_event(काष्ठा iio_dev *indio_dev,
+				      क्रमागत iio_modअगरier axis,
+				      पूर्णांक state)
+अणु
+	काष्ठा mma9551_data *data = iio_priv(indio_dev);
+	क्रमागत mma9551_tilt_axis mma_axis;
+	पूर्णांक ret;
 
 	/* IIO counts axes from 1, because IIO_NO_MOD is 0. */
 	mma_axis = axis - 1;
 
-	if (data->event_enabled[mma_axis] == state)
-		return 0;
+	अगर (data->event_enabled[mma_axis] == state)
+		वापस 0;
 
-	if (state == 0) {
+	अगर (state == 0) अणु
 		ret = mma9551_gpio_config(data->client,
-					  (enum mma9551_gpio_pin)mma_axis,
+					  (क्रमागत mma9551_gpio_pin)mma_axis,
 					  MMA9551_APPID_NONE, 0, 0);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		ret = mma9551_set_power_state(data->client, false);
-		if (ret < 0)
-			return ret;
-	} else {
-		int bitnum;
+		ret = mma9551_set_घातer_state(data->client, false);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		पूर्णांक bitnum;
 
-		/* Bit 7 of each angle register holds the angle flag. */
-		switch (axis) {
-		case IIO_MOD_X:
+		/* Bit 7 of each angle रेजिस्टर holds the angle flag. */
+		चयन (axis) अणु
+		हाल IIO_MOD_X:
 			bitnum = 7 + 8 * MMA9551_TILT_YZ_ANG_REG;
-			break;
-		case IIO_MOD_Y:
+			अवरोध;
+		हाल IIO_MOD_Y:
 			bitnum = 7 + 8 * MMA9551_TILT_XZ_ANG_REG;
-			break;
-		case IIO_MOD_Z:
+			अवरोध;
+		हाल IIO_MOD_Z:
 			bitnum = 7 + 8 * MMA9551_TILT_XY_ANG_REG;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
 
-		ret = mma9551_set_power_state(data->client, true);
-		if (ret < 0)
-			return ret;
+		ret = mma9551_set_घातer_state(data->client, true);
+		अगर (ret < 0)
+			वापस ret;
 
 		ret = mma9551_gpio_config(data->client,
-					  (enum mma9551_gpio_pin)mma_axis,
+					  (क्रमागत mma9551_gpio_pin)mma_axis,
 					  MMA9551_APPID_TILT, bitnum, 0);
-		if (ret < 0) {
-			mma9551_set_power_state(data->client, false);
-			return ret;
-		}
-	}
+		अगर (ret < 0) अणु
+			mma9551_set_घातer_state(data->client, false);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	data->event_enabled[mma_axis] = state;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mma9551_write_event_config(struct iio_dev *indio_dev,
-				      const struct iio_chan_spec *chan,
-				      enum iio_event_type type,
-				      enum iio_event_direction dir,
-				      int state)
-{
-	struct mma9551_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक mma9551_ग_लिखो_event_config(काष्ठा iio_dev *indio_dev,
+				      स्थिर काष्ठा iio_chan_spec *chan,
+				      क्रमागत iio_event_type type,
+				      क्रमागत iio_event_direction dir,
+				      पूर्णांक state)
+अणु
+	काष्ठा mma9551_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	switch (chan->type) {
-	case IIO_INCLI:
+	चयन (chan->type) अणु
+	हाल IIO_INCLI:
 		mutex_lock(&data->mutex);
 		ret = mma9551_config_incli_event(indio_dev,
 						 chan->channel2, state);
 		mutex_unlock(&data->mutex);
-		return ret;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस ret;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int mma9551_write_event_value(struct iio_dev *indio_dev,
-				     const struct iio_chan_spec *chan,
-				     enum iio_event_type type,
-				     enum iio_event_direction dir,
-				     enum iio_event_info info,
-				     int val, int val2)
-{
-	struct mma9551_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक mma9551_ग_लिखो_event_value(काष्ठा iio_dev *indio_dev,
+				     स्थिर काष्ठा iio_chan_spec *chan,
+				     क्रमागत iio_event_type type,
+				     क्रमागत iio_event_direction dir,
+				     क्रमागत iio_event_info info,
+				     पूर्णांक val, पूर्णांक val2)
+अणु
+	काष्ठा mma9551_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	switch (chan->type) {
-	case IIO_INCLI:
-		if (val2 != 0 || val < 1 || val > 10)
-			return -EINVAL;
+	चयन (chan->type) अणु
+	हाल IIO_INCLI:
+		अगर (val2 != 0 || val < 1 || val > 10)
+			वापस -EINVAL;
 		mutex_lock(&data->mutex);
 		ret = mma9551_update_config_bits(data->client,
 						 MMA9551_APPID_TILT,
@@ -263,57 +264,57 @@ static int mma9551_write_event_value(struct iio_dev *indio_dev,
 						 MMA9551_TILT_ANG_THRESH_MASK,
 						 val);
 		mutex_unlock(&data->mutex);
-		return ret;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस ret;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int mma9551_read_event_value(struct iio_dev *indio_dev,
-				    const struct iio_chan_spec *chan,
-				    enum iio_event_type type,
-				    enum iio_event_direction dir,
-				    enum iio_event_info info,
-				    int *val, int *val2)
-{
-	struct mma9551_data *data = iio_priv(indio_dev);
-	int ret;
-	u8 tmp;
+अटल पूर्णांक mma9551_पढ़ो_event_value(काष्ठा iio_dev *indio_dev,
+				    स्थिर काष्ठा iio_chan_spec *chan,
+				    क्रमागत iio_event_type type,
+				    क्रमागत iio_event_direction dir,
+				    क्रमागत iio_event_info info,
+				    पूर्णांक *val, पूर्णांक *val2)
+अणु
+	काष्ठा mma9551_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
+	u8 पंचांगp;
 
-	switch (chan->type) {
-	case IIO_INCLI:
+	चयन (chan->type) अणु
+	हाल IIO_INCLI:
 		mutex_lock(&data->mutex);
-		ret = mma9551_read_config_byte(data->client,
+		ret = mma9551_पढ़ो_config_byte(data->client,
 					       MMA9551_APPID_TILT,
-					       MMA9551_TILT_CFG_REG, &tmp);
+					       MMA9551_TILT_CFG_REG, &पंचांगp);
 		mutex_unlock(&data->mutex);
-		if (ret < 0)
-			return ret;
-		*val = tmp & MMA9551_TILT_ANG_THRESH_MASK;
+		अगर (ret < 0)
+			वापस ret;
+		*val = पंचांगp & MMA9551_TILT_ANG_THRESH_MASK;
 		*val2 = 0;
-		return IIO_VAL_INT;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस IIO_VAL_INT;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct iio_event_spec mma9551_incli_event = {
+अटल स्थिर काष्ठा iio_event_spec mma9551_incli_event = अणु
 	.type = IIO_EV_TYPE_ROC,
-	.dir = IIO_EV_DIR_RISING,
+	.dir = IIO_EV_सूची_RISING,
 	.mask_separate = BIT(IIO_EV_INFO_ENABLE),
 	.mask_shared_by_type = BIT(IIO_EV_INFO_VALUE),
-};
+पूर्ण;
 
-#define MMA9551_INCLI_CHANNEL(axis) {				\
+#घोषणा MMA9551_INCLI_CHANNEL(axis) अणु				\
 	.type = IIO_INCLI,					\
-	.modified = 1,						\
+	.modअगरied = 1,						\
 	.channel2 = axis,					\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED),	\
 	.event_spec = &mma9551_incli_event,			\
 	.num_event_specs = 1,					\
-}
+पूर्ण
 
-static const struct iio_chan_spec mma9551_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec mma9551_channels[] = अणु
 	MMA9551_ACCEL_CHANNEL(IIO_MOD_X),
 	MMA9551_ACCEL_CHANNEL(IIO_MOD_Y),
 	MMA9551_ACCEL_CHANNEL(IIO_MOD_Z),
@@ -321,301 +322,301 @@ static const struct iio_chan_spec mma9551_channels[] = {
 	MMA9551_INCLI_CHANNEL(IIO_MOD_X),
 	MMA9551_INCLI_CHANNEL(IIO_MOD_Y),
 	MMA9551_INCLI_CHANNEL(IIO_MOD_Z),
-};
+पूर्ण;
 
-static const struct iio_info mma9551_info = {
-	.read_raw = mma9551_read_raw,
-	.read_event_config = mma9551_read_event_config,
-	.write_event_config = mma9551_write_event_config,
-	.read_event_value = mma9551_read_event_value,
-	.write_event_value = mma9551_write_event_value,
-};
+अटल स्थिर काष्ठा iio_info mma9551_info = अणु
+	.पढ़ो_raw = mma9551_पढ़ो_raw,
+	.पढ़ो_event_config = mma9551_पढ़ो_event_config,
+	.ग_लिखो_event_config = mma9551_ग_लिखो_event_config,
+	.पढ़ो_event_value = mma9551_पढ़ो_event_value,
+	.ग_लिखो_event_value = mma9551_ग_लिखो_event_value,
+पूर्ण;
 
-static irqreturn_t mma9551_event_handler(int irq, void *private)
-{
-	struct iio_dev *indio_dev = private;
-	struct mma9551_data *data = iio_priv(indio_dev);
-	int i, ret, mma_axis = -1;
+अटल irqवापस_t mma9551_event_handler(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा iio_dev *indio_dev = निजी;
+	काष्ठा mma9551_data *data = iio_priv(indio_dev);
+	पूर्णांक i, ret, mma_axis = -1;
 	u16 reg;
 	u8 val;
 
 	mutex_lock(&data->mutex);
 
-	for (i = 0; i < 3; i++)
-		if (irq == data->irqs[i]) {
+	क्रम (i = 0; i < 3; i++)
+		अगर (irq == data->irqs[i]) अणु
 			mma_axis = i;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	if (mma_axis == -1) {
-		/* IRQ was triggered on 4th line, which we don't use. */
+	अगर (mma_axis == -1) अणु
+		/* IRQ was triggered on 4th line, which we करोn't use. */
 		dev_warn(&data->client->dev,
 			 "irq triggered on unused line %d\n", data->irqs[3]);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	switch (mma_axis) {
-	case mma9551_x:
+	चयन (mma_axis) अणु
+	हाल mma9551_x:
 		reg = MMA9551_TILT_YZ_ANG_REG;
-		break;
-	case mma9551_y:
+		अवरोध;
+	हाल mma9551_y:
 		reg = MMA9551_TILT_XZ_ANG_REG;
-		break;
-	case mma9551_z:
+		अवरोध;
+	हाल mma9551_z:
 		reg = MMA9551_TILT_XY_ANG_REG;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * Read the angle even though we don't use it, otherwise we
-	 * won't get any further interrupts.
+	 * Read the angle even though we करोn't use it, otherwise we
+	 * won't get any further पूर्णांकerrupts.
 	 */
-	ret = mma9551_read_status_byte(data->client, MMA9551_APPID_TILT,
+	ret = mma9551_पढ़ो_status_byte(data->client, MMA9551_APPID_TILT,
 				       reg, &val);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev,
 			"error %d reading tilt register in IRQ\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	iio_push_event(indio_dev,
 		       IIO_MOD_EVENT_CODE(IIO_INCLI, 0, (mma_axis + 1),
-					  IIO_EV_TYPE_ROC, IIO_EV_DIR_RISING),
-		       iio_get_time_ns(indio_dev));
+					  IIO_EV_TYPE_ROC, IIO_EV_सूची_RISING),
+		       iio_get_समय_ns(indio_dev));
 
 out:
 	mutex_unlock(&data->mutex);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int mma9551_init(struct mma9551_data *data)
-{
-	int ret;
+अटल पूर्णांक mma9551_init(काष्ठा mma9551_data *data)
+अणु
+	पूर्णांक ret;
 
-	ret = mma9551_read_version(data->client);
-	if (ret)
-		return ret;
+	ret = mma9551_पढ़ो_version(data->client);
+	अगर (ret)
+		वापस ret;
 
-	return mma9551_set_device_state(data->client, true);
-}
+	वापस mma9551_set_device_state(data->client, true);
+पूर्ण
 
-static int mma9551_gpio_probe(struct iio_dev *indio_dev)
-{
-	struct gpio_desc *gpio;
-	int i, ret;
-	struct mma9551_data *data = iio_priv(indio_dev);
-	struct device *dev = &data->client->dev;
+अटल पूर्णांक mma9551_gpio_probe(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा gpio_desc *gpio;
+	पूर्णांक i, ret;
+	काष्ठा mma9551_data *data = iio_priv(indio_dev);
+	काष्ठा device *dev = &data->client->dev;
 
-	for (i = 0; i < MMA9551_GPIO_COUNT; i++) {
-		gpio = devm_gpiod_get_index(dev, NULL, i, GPIOD_IN);
-		if (IS_ERR(gpio)) {
+	क्रम (i = 0; i < MMA9551_GPIO_COUNT; i++) अणु
+		gpio = devm_gpiod_get_index(dev, शून्य, i, GPIOD_IN);
+		अगर (IS_ERR(gpio)) अणु
 			dev_err(dev, "acpi gpio get index failed\n");
-			return PTR_ERR(gpio);
-		}
+			वापस PTR_ERR(gpio);
+		पूर्ण
 
 		ret = gpiod_to_irq(gpio);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		data->irqs[i] = ret;
-		ret = devm_request_threaded_irq(dev, data->irqs[i],
-				NULL, mma9551_event_handler,
+		ret = devm_request_thपढ़ोed_irq(dev, data->irqs[i],
+				शून्य, mma9551_event_handler,
 				IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 				MMA9551_IRQ_NAME, indio_dev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "request irq %d failed\n", data->irqs[i]);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		dev_dbg(dev, "gpio resource, no:%d irq:%d\n",
 			desc_to_gpio(gpio), data->irqs[i]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char *mma9551_match_acpi_device(struct device *dev)
-{
-	const struct acpi_device_id *id;
+अटल स्थिर अक्षर *mma9551_match_acpi_device(काष्ठा device *dev)
+अणु
+	स्थिर काष्ठा acpi_device_id *id;
 
 	id = acpi_match_device(dev->driver->acpi_match_table, dev);
-	if (!id)
-		return NULL;
+	अगर (!id)
+		वापस शून्य;
 
-	return dev_name(dev);
-}
+	वापस dev_name(dev);
+पूर्ण
 
-static int mma9551_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	struct mma9551_data *data;
-	struct iio_dev *indio_dev;
-	const char *name = NULL;
-	int ret;
+अटल पूर्णांक mma9551_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा mma9551_data *data;
+	काष्ठा iio_dev *indio_dev;
+	स्थिर अक्षर *name = शून्य;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
 	data->client = client;
 
-	if (id)
+	अगर (id)
 		name = id->name;
-	else if (ACPI_HANDLE(&client->dev))
+	अन्यथा अगर (ACPI_HANDLE(&client->dev))
 		name = mma9551_match_acpi_device(&client->dev);
 
 	ret = mma9551_init(data);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	mutex_init(&data->mutex);
 
 	indio_dev->channels = mma9551_channels;
 	indio_dev->num_channels = ARRAY_SIZE(mma9551_channels);
 	indio_dev->name = name;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->info = &mma9551_info;
 
 	ret = mma9551_gpio_probe(indio_dev);
-	if (ret < 0)
-		goto out_poweroff;
+	अगर (ret < 0)
+		जाओ out_घातeroff;
 
-	ret = pm_runtime_set_active(&client->dev);
-	if (ret < 0)
-		goto out_poweroff;
+	ret = pm_runसमय_set_active(&client->dev);
+	अगर (ret < 0)
+		जाओ out_घातeroff;
 
-	pm_runtime_enable(&client->dev);
-	pm_runtime_set_autosuspend_delay(&client->dev,
+	pm_runसमय_enable(&client->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&client->dev,
 					 MMA9551_AUTO_SUSPEND_DELAY_MS);
-	pm_runtime_use_autosuspend(&client->dev);
+	pm_runसमय_use_स्वतःsuspend(&client->dev);
 
-	ret = iio_device_register(indio_dev);
-	if (ret < 0) {
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "unable to register iio device\n");
-		goto out_poweroff;
-	}
+		जाओ out_घातeroff;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_poweroff:
+out_घातeroff:
 	mma9551_set_device_state(client, false);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mma9551_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
-	struct mma9551_data *data = iio_priv(indio_dev);
+अटल पूर्णांक mma9551_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+	काष्ठा mma9551_data *data = iio_priv(indio_dev);
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 
-	pm_runtime_disable(&client->dev);
-	pm_runtime_set_suspended(&client->dev);
-	pm_runtime_put_noidle(&client->dev);
+	pm_runसमय_disable(&client->dev);
+	pm_runसमय_set_suspended(&client->dev);
+	pm_runसमय_put_noidle(&client->dev);
 
 	mutex_lock(&data->mutex);
 	mma9551_set_device_state(data->client, false);
 	mutex_unlock(&data->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int mma9551_runtime_suspend(struct device *dev)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	struct mma9551_data *data = iio_priv(indio_dev);
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक mma9551_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा mma9551_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	mutex_lock(&data->mutex);
 	ret = mma9551_set_device_state(data->client, false);
 	mutex_unlock(&data->mutex);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "powering off device failed\n");
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mma9551_runtime_resume(struct device *dev)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	struct mma9551_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक mma9551_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा mma9551_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	ret = mma9551_set_device_state(data->client, true);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	mma9551_sleep(MMA9551_DEFAULT_SAMPLE_RATE);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM_SLEEP
-static int mma9551_suspend(struct device *dev)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	struct mma9551_data *data = iio_priv(indio_dev);
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक mma9551_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा mma9551_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	mutex_lock(&data->mutex);
 	ret = mma9551_set_device_state(data->client, false);
 	mutex_unlock(&data->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mma9551_resume(struct device *dev)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	struct mma9551_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक mma9551_resume(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा mma9551_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	mutex_lock(&data->mutex);
 	ret = mma9551_set_device_state(data->client, true);
 	mutex_unlock(&data->mutex);
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops mma9551_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops mma9551_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(mma9551_suspend, mma9551_resume)
-	SET_RUNTIME_PM_OPS(mma9551_runtime_suspend,
-			   mma9551_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(mma9551_runसमय_suspend,
+			   mma9551_runसमय_resume, शून्य)
+पूर्ण;
 
-static const struct acpi_device_id mma9551_acpi_match[] = {
-	{"MMA9551", 0},
-	{},
-};
+अटल स्थिर काष्ठा acpi_device_id mma9551_acpi_match[] = अणु
+	अणु"MMA9551", 0पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(acpi, mma9551_acpi_match);
 
-static const struct i2c_device_id mma9551_id[] = {
-	{"mma9551", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id mma9551_id[] = अणु
+	अणु"mma9551", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, mma9551_id);
 
-static struct i2c_driver mma9551_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver mma9551_driver = अणु
+	.driver = अणु
 		   .name = MMA9551_DRV_NAME,
 		   .acpi_match_table = ACPI_PTR(mma9551_acpi_match),
 		   .pm = &mma9551_pm_ops,
-		   },
+		   पूर्ण,
 	.probe = mma9551_probe,
-	.remove = mma9551_remove,
+	.हटाओ = mma9551_हटाओ,
 	.id_table = mma9551_id,
-};
+पूर्ण;
 
 module_i2c_driver(mma9551_driver);
 

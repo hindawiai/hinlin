@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Bestcomm ATA task microcode
  *
@@ -7,7 +8,7 @@
  * Created based on bestcom/code_dma/image_rtos1/dma_image.hex
  */
 
-#include <asm/types.h>
+#समावेश <यंत्र/types.h>
 
 /*
  * The header consists of the following fields:
@@ -21,7 +22,7 @@
  * The size fields contain the number of 32-bit words.
  */
 
-u32 bcom_ata_task[] = {
+u32 bcom_ata_task[] = अणु
 	/* header */
 	0x4243544b,
 	0x0e060709,
@@ -60,5 +61,5 @@ u32 bcom_ata_task[] = {
 	0x20000000,
 	0x00000000,
 	0x00000000,
-};
+पूर्ण;
 

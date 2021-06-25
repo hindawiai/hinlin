@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  Board-specific MMC configuration
+ *  Board-specअगरic MMC configuration
  */
 
-#ifndef _DAVINCI_MMC_H
-#define _DAVINCI_MMC_H
+#अगर_अघोषित _DAVINCI_MMC_H
+#घोषणा _DAVINCI_MMC_H
 
-#include <linux/types.h>
-#include <linux/mmc/host.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mmc/host.h>
 
-struct davinci_mmc_config {
+काष्ठा davinci_mmc_config अणु
 	/* get_cd()/get_wp() may sleep */
-	int	(*get_cd)(int module);
-	int	(*get_ro)(int module);
+	पूर्णांक	(*get_cd)(पूर्णांक module);
+	पूर्णांक	(*get_ro)(पूर्णांक module);
 
-	void	(*set_power)(int module, bool on);
+	व्योम	(*set_घातer)(पूर्णांक module, bool on);
 
 	/* wires == 0 is equivalent to wires == 4 (4-bit parallel) */
 	u8	wires;
@@ -26,12 +27,12 @@ struct davinci_mmc_config {
 
 	/* Number of sg segments */
 	u8	nr_sg;
-};
-void davinci_setup_mmc(int module, struct davinci_mmc_config *config);
+पूर्ण;
+व्योम davinci_setup_mmc(पूर्णांक module, काष्ठा davinci_mmc_config *config);
 
-enum {
+क्रमागत अणु
 	MMC_CTLR_VERSION_1 = 0,	/* DM644x and DM355 */
 	MMC_CTLR_VERSION_2,	/* DA830 */
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,546 +1,547 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * "RTT as Real Time Clock" driver for AT91SAM9 SoC family
+ * "RTT as Real Time Clock" driver क्रम AT91SAM9 SoC family
  *
  * (C) 2007 Michel Benoit
  *
  * Based on rtc-at91rm9200.c by Rick Bronson
  */
 
-#include <linux/clk.h>
-#include <linux/interrupt.h>
-#include <linux/ioctl.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/rtc.h>
-#include <linux/slab.h>
-#include <linux/suspend.h>
-#include <linux/time.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/समय.स>
 
 /*
  * This driver uses two configurable hardware resources that live in the
- * AT91SAM9 backup power domain (intended to be powered at all times)
- * to implement the Real Time Clock interfaces
+ * AT91SAM9 backup घातer करोमुख्य (पूर्णांकended to be घातered at all बार)
+ * to implement the Real Time Clock पूर्णांकerfaces
  *
- *  - A "Real-time Timer" (RTT) counts up in seconds from a base time.
+ *  - A "Real-time Timer" (RTT) counts up in seconds from a base समय.
  *    We can't assign the counter value (CRTV) ... but we can reset it.
  *
  *  - One of the "General Purpose Backup Registers" (GPBRs) holds the
- *    base time, normally an offset from the beginning of the POSIX
- *    epoch (1970-Jan-1 00:00:00 UTC).  Some systems also include the
- *    local timezone's offset.
+ *    base समय, normally an offset from the beginning of the POSIX
+ *    epoch (1970-Jan-1 00:00:00 UTC).  Some प्रणालीs also include the
+ *    local समयzone's offset.
  *
  * The RTC's value is the RTT counter plus that offset.  The RTC's alarm
  * is likewise a base (ALMV) plus that offset.
  *
- * Not all RTTs will be used as RTCs; some systems have multiple RTTs to
- * choose from, or a "real" RTC module.  All systems have multiple GPBR
- * registers available, likewise usable for more than "RTC" support.
+ * Not all RTTs will be used as RTCs; some प्रणालीs have multiple RTTs to
+ * choose from, or a "real" RTC module.  All प्रणालीs have multiple GPBR
+ * रेजिस्टरs available, likewise usable क्रम more than "RTC" support.
  */
 
-#define AT91_RTT_MR		0x00		/* Real-time Mode Register */
-#define AT91_RTT_RTPRES		(0xffff << 0)	/* Timer Prescaler Value */
-#define AT91_RTT_ALMIEN		BIT(16)		/* Alarm Interrupt Enable */
-#define AT91_RTT_RTTINCIEN	BIT(17)		/* Increment Interrupt Enable */
-#define AT91_RTT_RTTRST		BIT(18)		/* Timer Restart */
+#घोषणा AT91_RTT_MR		0x00		/* Real-समय Mode Register */
+#घोषणा AT91_RTT_RTPRES		(0xffff << 0)	/* Timer Prescaler Value */
+#घोषणा AT91_RTT_ALMIEN		BIT(16)		/* Alarm Interrupt Enable */
+#घोषणा AT91_RTT_RTTINCIEN	BIT(17)		/* Increment Interrupt Enable */
+#घोषणा AT91_RTT_RTTRST		BIT(18)		/* Timer Restart */
 
-#define AT91_RTT_AR		0x04		/* Real-time Alarm Register */
-#define AT91_RTT_ALMV		(0xffffffff)	/* Alarm Value */
+#घोषणा AT91_RTT_AR		0x04		/* Real-समय Alarm Register */
+#घोषणा AT91_RTT_ALMV		(0xffffffff)	/* Alarm Value */
 
-#define AT91_RTT_VR		0x08		/* Real-time Value Register */
-#define AT91_RTT_CRTV		(0xffffffff)	/* Current Real-time Value */
+#घोषणा AT91_RTT_VR		0x08		/* Real-समय Value Register */
+#घोषणा AT91_RTT_CRTV		(0xffffffff)	/* Current Real-समय Value */
 
-#define AT91_RTT_SR		0x0c		/* Real-time Status Register */
-#define AT91_RTT_ALMS		BIT(0)		/* Alarm Status */
-#define AT91_RTT_RTTINC		BIT(1)		/* Timer Increment */
+#घोषणा AT91_RTT_SR		0x0c		/* Real-समय Status Register */
+#घोषणा AT91_RTT_ALMS		BIT(0)		/* Alarm Status */
+#घोषणा AT91_RTT_RTTINC		BIT(1)		/* Timer Increment */
 
 /*
  * We store ALARM_DISABLED in ALMV to record that no alarm is set.
- * It's also the reset value for that field.
+ * It's also the reset value क्रम that field.
  */
-#define ALARM_DISABLED	((u32)~0)
+#घोषणा ALARM_DISABLED	((u32)~0)
 
-struct sam9_rtc {
-	void __iomem		*rtt;
-	struct rtc_device	*rtcdev;
+काष्ठा sam9_rtc अणु
+	व्योम __iomem		*rtt;
+	काष्ठा rtc_device	*rtcdev;
 	u32			imr;
-	struct regmap		*gpbr;
-	unsigned int		gpbr_offset;
-	int			irq;
-	struct clk		*sclk;
+	काष्ठा regmap		*gpbr;
+	अचिन्हित पूर्णांक		gpbr_offset;
+	पूर्णांक			irq;
+	काष्ठा clk		*sclk;
 	bool			suspended;
-	unsigned long		events;
+	अचिन्हित दीर्घ		events;
 	spinlock_t		lock;
-};
+पूर्ण;
 
-#define rtt_readl(rtc, field) \
-	readl((rtc)->rtt + AT91_RTT_ ## field)
-#define rtt_writel(rtc, field, val) \
-	writel((val), (rtc)->rtt + AT91_RTT_ ## field)
+#घोषणा rtt_पढ़ोl(rtc, field) \
+	पढ़ोl((rtc)->rtt + AT91_RTT_ ## field)
+#घोषणा rtt_ग_लिखोl(rtc, field, val) \
+	ग_लिखोl((val), (rtc)->rtt + AT91_RTT_ ## field)
 
-static inline unsigned int gpbr_readl(struct sam9_rtc *rtc)
-{
-	unsigned int val;
+अटल अंतरभूत अचिन्हित पूर्णांक gpbr_पढ़ोl(काष्ठा sam9_rtc *rtc)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	regmap_read(rtc->gpbr, rtc->gpbr_offset, &val);
+	regmap_पढ़ो(rtc->gpbr, rtc->gpbr_offset, &val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline void gpbr_writel(struct sam9_rtc *rtc, unsigned int val)
-{
-	regmap_write(rtc->gpbr, rtc->gpbr_offset, val);
-}
+अटल अंतरभूत व्योम gpbr_ग_लिखोl(काष्ठा sam9_rtc *rtc, अचिन्हित पूर्णांक val)
+अणु
+	regmap_ग_लिखो(rtc->gpbr, rtc->gpbr_offset, val);
+पूर्ण
 
 /*
- * Read current time and date in RTC
+ * Read current समय and date in RTC
  */
-static int at91_rtc_readtime(struct device *dev, struct rtc_time *tm)
-{
-	struct sam9_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक at91_rtc_पढ़ोसमय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा sam9_rtc *rtc = dev_get_drvdata(dev);
 	u32 secs, secs2;
 	u32 offset;
 
-	/* read current time offset */
-	offset = gpbr_readl(rtc);
-	if (offset == 0)
-		return -EILSEQ;
+	/* पढ़ो current समय offset */
+	offset = gpbr_पढ़ोl(rtc);
+	अगर (offset == 0)
+		वापस -EILSEQ;
 
-	/* reread the counter to help sync the two clock domains */
-	secs = rtt_readl(rtc, VR);
-	secs2 = rtt_readl(rtc, VR);
-	if (secs != secs2)
-		secs = rtt_readl(rtc, VR);
+	/* reपढ़ो the counter to help sync the two घड़ी करोमुख्यs */
+	secs = rtt_पढ़ोl(rtc, VR);
+	secs2 = rtt_पढ़ोl(rtc, VR);
+	अगर (secs != secs2)
+		secs = rtt_पढ़ोl(rtc, VR);
 
-	rtc_time64_to_tm(offset + secs, tm);
+	rtc_समय64_to_पंचांग(offset + secs, पंचांग);
 
-	dev_dbg(dev, "%s: %ptR\n", __func__, tm);
+	dev_dbg(dev, "%s: %ptR\n", __func__, पंचांग);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Set current time and date in RTC
+ * Set current समय and date in RTC
  */
-static int at91_rtc_settime(struct device *dev, struct rtc_time *tm)
-{
-	struct sam9_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक at91_rtc_समय_रखो(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा sam9_rtc *rtc = dev_get_drvdata(dev);
 	u32 offset, alarm, mr;
-	unsigned long secs;
+	अचिन्हित दीर्घ secs;
 
-	dev_dbg(dev, "%s: %ptR\n", __func__, tm);
+	dev_dbg(dev, "%s: %ptR\n", __func__, पंचांग);
 
-	secs = rtc_tm_to_time64(tm);
+	secs = rtc_पंचांग_to_समय64(पंचांग);
 
-	mr = rtt_readl(rtc, MR);
+	mr = rtt_पढ़ोl(rtc, MR);
 
-	/* disable interrupts */
-	rtt_writel(rtc, MR, mr & ~(AT91_RTT_ALMIEN | AT91_RTT_RTTINCIEN));
+	/* disable पूर्णांकerrupts */
+	rtt_ग_लिखोl(rtc, MR, mr & ~(AT91_RTT_ALMIEN | AT91_RTT_RTTINCIEN));
 
-	/* read current time offset */
-	offset = gpbr_readl(rtc);
+	/* पढ़ो current समय offset */
+	offset = gpbr_पढ़ोl(rtc);
 
-	/* store the new base time in a battery backup register */
+	/* store the new base समय in a battery backup रेजिस्टर */
 	secs += 1;
-	gpbr_writel(rtc, secs);
+	gpbr_ग_लिखोl(rtc, secs);
 
-	/* adjust the alarm time for the new base */
-	alarm = rtt_readl(rtc, AR);
-	if (alarm != ALARM_DISABLED) {
-		if (offset > secs) {
-			/* time jumped backwards, increase time until alarm */
+	/* adjust the alarm समय क्रम the new base */
+	alarm = rtt_पढ़ोl(rtc, AR);
+	अगर (alarm != ALARM_DISABLED) अणु
+		अगर (offset > secs) अणु
+			/* समय jumped backwards, increase समय until alarm */
 			alarm += (offset - secs);
-		} else if ((alarm + offset) > secs) {
-			/* time jumped forwards, decrease time until alarm */
+		पूर्ण अन्यथा अगर ((alarm + offset) > secs) अणु
+			/* समय jumped क्रमwards, decrease समय until alarm */
 			alarm -= (secs - offset);
-		} else {
-			/* time jumped past the alarm, disable alarm */
+		पूर्ण अन्यथा अणु
+			/* समय jumped past the alarm, disable alarm */
 			alarm = ALARM_DISABLED;
 			mr &= ~AT91_RTT_ALMIEN;
-		}
-		rtt_writel(rtc, AR, alarm);
-	}
+		पूर्ण
+		rtt_ग_लिखोl(rtc, AR, alarm);
+	पूर्ण
 
-	/* reset the timer, and re-enable interrupts */
-	rtt_writel(rtc, MR, mr | AT91_RTT_RTTRST);
+	/* reset the समयr, and re-enable पूर्णांकerrupts */
+	rtt_ग_लिखोl(rtc, MR, mr | AT91_RTT_RTTRST);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int at91_rtc_readalarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	struct sam9_rtc *rtc = dev_get_drvdata(dev);
-	struct rtc_time *tm = &alrm->time;
-	u32 alarm = rtt_readl(rtc, AR);
+अटल पूर्णांक at91_rtc_पढ़ोalarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	काष्ठा sam9_rtc *rtc = dev_get_drvdata(dev);
+	काष्ठा rtc_समय *पंचांग = &alrm->समय;
+	u32 alarm = rtt_पढ़ोl(rtc, AR);
 	u32 offset;
 
-	offset = gpbr_readl(rtc);
-	if (offset == 0)
-		return -EILSEQ;
+	offset = gpbr_पढ़ोl(rtc);
+	अगर (offset == 0)
+		वापस -EILSEQ;
 
-	memset(alrm, 0, sizeof(*alrm));
-	if (alarm != ALARM_DISABLED && offset != 0) {
-		rtc_time64_to_tm(offset + alarm, tm);
+	स_रखो(alrm, 0, माप(*alrm));
+	अगर (alarm != ALARM_DISABLED && offset != 0) अणु
+		rtc_समय64_to_पंचांग(offset + alarm, पंचांग);
 
-		dev_dbg(dev, "%s: %ptR\n", __func__, tm);
+		dev_dbg(dev, "%s: %ptR\n", __func__, पंचांग);
 
-		if (rtt_readl(rtc, MR) & AT91_RTT_ALMIEN)
+		अगर (rtt_पढ़ोl(rtc, MR) & AT91_RTT_ALMIEN)
 			alrm->enabled = 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int at91_rtc_setalarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	struct sam9_rtc *rtc = dev_get_drvdata(dev);
-	struct rtc_time *tm = &alrm->time;
-	unsigned long secs;
+अटल पूर्णांक at91_rtc_setalarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	काष्ठा sam9_rtc *rtc = dev_get_drvdata(dev);
+	काष्ठा rtc_समय *पंचांग = &alrm->समय;
+	अचिन्हित दीर्घ secs;
 	u32 offset;
 	u32 mr;
 
-	secs = rtc_tm_to_time64(tm);
+	secs = rtc_पंचांग_to_समय64(पंचांग);
 
-	offset = gpbr_readl(rtc);
-	if (offset == 0) {
-		/* time is not set */
-		return -EILSEQ;
-	}
-	mr = rtt_readl(rtc, MR);
-	rtt_writel(rtc, MR, mr & ~AT91_RTT_ALMIEN);
+	offset = gpbr_पढ़ोl(rtc);
+	अगर (offset == 0) अणु
+		/* समय is not set */
+		वापस -EILSEQ;
+	पूर्ण
+	mr = rtt_पढ़ोl(rtc, MR);
+	rtt_ग_लिखोl(rtc, MR, mr & ~AT91_RTT_ALMIEN);
 
 	/* alarm in the past? finish and leave disabled */
-	if (secs <= offset) {
-		rtt_writel(rtc, AR, ALARM_DISABLED);
-		return 0;
-	}
+	अगर (secs <= offset) अणु
+		rtt_ग_लिखोl(rtc, AR, ALARM_DISABLED);
+		वापस 0;
+	पूर्ण
 
-	/* else set alarm and maybe enable it */
-	rtt_writel(rtc, AR, secs - offset);
-	if (alrm->enabled)
-		rtt_writel(rtc, MR, mr | AT91_RTT_ALMIEN);
+	/* अन्यथा set alarm and maybe enable it */
+	rtt_ग_लिखोl(rtc, AR, secs - offset);
+	अगर (alrm->enabled)
+		rtt_ग_लिखोl(rtc, MR, mr | AT91_RTT_ALMIEN);
 
-	dev_dbg(dev, "%s: %ptR\n", __func__, tm);
+	dev_dbg(dev, "%s: %ptR\n", __func__, पंचांग);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int at91_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
-{
-	struct sam9_rtc *rtc = dev_get_drvdata(dev);
-	u32 mr = rtt_readl(rtc, MR);
+अटल पूर्णांक at91_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
+अणु
+	काष्ठा sam9_rtc *rtc = dev_get_drvdata(dev);
+	u32 mr = rtt_पढ़ोl(rtc, MR);
 
 	dev_dbg(dev, "alarm_irq_enable: enabled=%08x, mr %08x\n", enabled, mr);
-	if (enabled)
-		rtt_writel(rtc, MR, mr | AT91_RTT_ALMIEN);
-	else
-		rtt_writel(rtc, MR, mr & ~AT91_RTT_ALMIEN);
-	return 0;
-}
+	अगर (enabled)
+		rtt_ग_लिखोl(rtc, MR, mr | AT91_RTT_ALMIEN);
+	अन्यथा
+		rtt_ग_लिखोl(rtc, MR, mr & ~AT91_RTT_ALMIEN);
+	वापस 0;
+पूर्ण
 
 /*
- * Provide additional RTC information in /proc/driver/rtc
+ * Provide additional RTC inक्रमmation in /proc/driver/rtc
  */
-static int at91_rtc_proc(struct device *dev, struct seq_file *seq)
-{
-	struct sam9_rtc *rtc = dev_get_drvdata(dev);
-	u32 mr = rtt_readl(rtc, MR);
+अटल पूर्णांक at91_rtc_proc(काष्ठा device *dev, काष्ठा seq_file *seq)
+अणु
+	काष्ठा sam9_rtc *rtc = dev_get_drvdata(dev);
+	u32 mr = rtt_पढ़ोl(rtc, MR);
 
-	seq_printf(seq, "update_IRQ\t: %s\n",
+	seq_म_लिखो(seq, "update_IRQ\t: %s\n",
 		   (mr & AT91_RTT_RTTINCIEN) ? "yes" : "no");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t at91_rtc_cache_events(struct sam9_rtc *rtc)
-{
+अटल irqवापस_t at91_rtc_cache_events(काष्ठा sam9_rtc *rtc)
+अणु
 	u32 sr, mr;
 
-	/* Shared interrupt may be for another device.  Note: reading
-	 * SR clears it, so we must only read it in this irq handler!
+	/* Shared पूर्णांकerrupt may be क्रम another device.  Note: पढ़ोing
+	 * SR clears it, so we must only पढ़ो it in this irq handler!
 	 */
-	mr = rtt_readl(rtc, MR) & (AT91_RTT_ALMIEN | AT91_RTT_RTTINCIEN);
-	sr = rtt_readl(rtc, SR) & (mr >> 16);
-	if (!sr)
-		return IRQ_NONE;
+	mr = rtt_पढ़ोl(rtc, MR) & (AT91_RTT_ALMIEN | AT91_RTT_RTTINCIEN);
+	sr = rtt_पढ़ोl(rtc, SR) & (mr >> 16);
+	अगर (!sr)
+		वापस IRQ_NONE;
 
 	/* alarm status */
-	if (sr & AT91_RTT_ALMS)
+	अगर (sr & AT91_RTT_ALMS)
 		rtc->events |= (RTC_AF | RTC_IRQF);
 
-	/* timer update/increment */
-	if (sr & AT91_RTT_RTTINC)
+	/* समयr update/increment */
+	अगर (sr & AT91_RTT_RTTINC)
 		rtc->events |= (RTC_UF | RTC_IRQF);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void at91_rtc_flush_events(struct sam9_rtc *rtc)
-{
-	if (!rtc->events)
-		return;
+अटल व्योम at91_rtc_flush_events(काष्ठा sam9_rtc *rtc)
+अणु
+	अगर (!rtc->events)
+		वापस;
 
 	rtc_update_irq(rtc->rtcdev, 1, rtc->events);
 	rtc->events = 0;
 
 	pr_debug("%s: num=%ld, events=0x%02lx\n", __func__,
 		 rtc->events >> 8, rtc->events & 0x000000FF);
-}
+पूर्ण
 
 /*
- * IRQ handler for the RTC
+ * IRQ handler क्रम the RTC
  */
-static irqreturn_t at91_rtc_interrupt(int irq, void *_rtc)
-{
-	struct sam9_rtc *rtc = _rtc;
-	int ret;
+अटल irqवापस_t at91_rtc_पूर्णांकerrupt(पूर्णांक irq, व्योम *_rtc)
+अणु
+	काष्ठा sam9_rtc *rtc = _rtc;
+	पूर्णांक ret;
 
 	spin_lock(&rtc->lock);
 
 	ret = at91_rtc_cache_events(rtc);
 
 	/* We're called in suspended state */
-	if (rtc->suspended) {
+	अगर (rtc->suspended) अणु
 		/* Mask irqs coming from this peripheral */
-		rtt_writel(rtc, MR,
-			   rtt_readl(rtc, MR) &
+		rtt_ग_लिखोl(rtc, MR,
+			   rtt_पढ़ोl(rtc, MR) &
 			   ~(AT91_RTT_ALMIEN | AT91_RTT_RTTINCIEN));
-		/* Trigger a system wakeup */
-		pm_system_wakeup();
-	} else {
+		/* Trigger a प्रणाली wakeup */
+		pm_प्रणाली_wakeup();
+	पूर्ण अन्यथा अणु
 		at91_rtc_flush_events(rtc);
-	}
+	पूर्ण
 
 	spin_unlock(&rtc->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct rtc_class_ops at91_rtc_ops = {
-	.read_time	= at91_rtc_readtime,
-	.set_time	= at91_rtc_settime,
-	.read_alarm	= at91_rtc_readalarm,
+अटल स्थिर काष्ठा rtc_class_ops at91_rtc_ops = अणु
+	.पढ़ो_समय	= at91_rtc_पढ़ोसमय,
+	.set_समय	= at91_rtc_समय_रखो,
+	.पढ़ो_alarm	= at91_rtc_पढ़ोalarm,
 	.set_alarm	= at91_rtc_setalarm,
 	.proc		= at91_rtc_proc,
 	.alarm_irq_enable = at91_rtc_alarm_irq_enable,
-};
+पूर्ण;
 
 /*
  * Initialize and install RTC driver
  */
-static int at91_rtc_probe(struct platform_device *pdev)
-{
-	struct sam9_rtc	*rtc;
-	int		ret, irq;
+अटल पूर्णांक at91_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sam9_rtc	*rtc;
+	पूर्णांक		ret, irq;
 	u32		mr;
-	unsigned int	sclk_rate;
-	struct of_phandle_args args;
+	अचिन्हित पूर्णांक	sclk_rate;
+	काष्ठा of_phandle_args args;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	rtc = devm_kzalloc(&pdev->dev, sizeof(*rtc), GFP_KERNEL);
-	if (!rtc)
-		return -ENOMEM;
+	rtc = devm_kzalloc(&pdev->dev, माप(*rtc), GFP_KERNEL);
+	अगर (!rtc)
+		वापस -ENOMEM;
 
 	spin_lock_init(&rtc->lock);
 	rtc->irq = irq;
 
-	/* platform setup code should have handled this; sigh */
-	if (!device_can_wakeup(&pdev->dev))
+	/* platक्रमm setup code should have handled this; sigh */
+	अगर (!device_can_wakeup(&pdev->dev))
 		device_init_wakeup(&pdev->dev, 1);
 
-	platform_set_drvdata(pdev, rtc);
+	platक्रमm_set_drvdata(pdev, rtc);
 
-	rtc->rtt = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(rtc->rtt))
-		return PTR_ERR(rtc->rtt);
+	rtc->rtt = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(rtc->rtt))
+		वापस PTR_ERR(rtc->rtt);
 
 	ret = of_parse_phandle_with_fixed_args(pdev->dev.of_node,
 					       "atmel,rtt-rtc-time-reg", 1, 0,
 					       &args);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	rtc->gpbr = syscon_node_to_regmap(args.np);
 	rtc->gpbr_offset = args.args[0];
-	if (IS_ERR(rtc->gpbr)) {
+	अगर (IS_ERR(rtc->gpbr)) अणु
 		dev_err(&pdev->dev, "failed to retrieve gpbr regmap, aborting.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	rtc->sclk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(rtc->sclk))
-		return PTR_ERR(rtc->sclk);
+	rtc->sclk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(rtc->sclk))
+		वापस PTR_ERR(rtc->sclk);
 
 	ret = clk_prepare_enable(rtc->sclk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Could not enable slow clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	sclk_rate = clk_get_rate(rtc->sclk);
-	if (!sclk_rate || sclk_rate > AT91_RTT_RTPRES) {
+	अगर (!sclk_rate || sclk_rate > AT91_RTT_RTPRES) अणु
 		dev_err(&pdev->dev, "Invalid slow clock rate\n");
 		ret = -EINVAL;
-		goto err_clk;
-	}
+		जाओ err_clk;
+	पूर्ण
 
-	mr = rtt_readl(rtc, MR);
+	mr = rtt_पढ़ोl(rtc, MR);
 
 	/* unless RTT is counting at 1 Hz, re-initialize it */
-	if ((mr & AT91_RTT_RTPRES) != sclk_rate) {
+	अगर ((mr & AT91_RTT_RTPRES) != sclk_rate) अणु
 		mr = AT91_RTT_RTTRST | (sclk_rate & AT91_RTT_RTPRES);
-		gpbr_writel(rtc, 0);
-	}
+		gpbr_ग_लिखोl(rtc, 0);
+	पूर्ण
 
-	/* disable all interrupts (same as on shutdown path) */
+	/* disable all पूर्णांकerrupts (same as on shutकरोwn path) */
 	mr &= ~(AT91_RTT_ALMIEN | AT91_RTT_RTTINCIEN);
-	rtt_writel(rtc, MR, mr);
+	rtt_ग_लिखोl(rtc, MR, mr);
 
 	rtc->rtcdev = devm_rtc_allocate_device(&pdev->dev);
-	if (IS_ERR(rtc->rtcdev)) {
+	अगर (IS_ERR(rtc->rtcdev)) अणु
 		ret = PTR_ERR(rtc->rtcdev);
-		goto err_clk;
-	}
+		जाओ err_clk;
+	पूर्ण
 
 	rtc->rtcdev->ops = &at91_rtc_ops;
 	rtc->rtcdev->range_max = U32_MAX;
 
-	/* register irq handler after we know what name we'll use */
-	ret = devm_request_irq(&pdev->dev, rtc->irq, at91_rtc_interrupt,
+	/* रेजिस्टर irq handler after we know what name we'll use */
+	ret = devm_request_irq(&pdev->dev, rtc->irq, at91_rtc_पूर्णांकerrupt,
 			       IRQF_SHARED | IRQF_COND_SUSPEND,
 			       dev_name(&rtc->rtcdev->dev), rtc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_dbg(&pdev->dev, "can't share IRQ %d?\n", rtc->irq);
-		goto err_clk;
-	}
+		जाओ err_clk;
+	पूर्ण
 
 	/* NOTE:  sam9260 rev A silicon has a ROM bug which resets the
 	 * RTT on at least some reboots.  If you have that chip, you must
-	 * initialize the time from some external source like a GPS, wall
-	 * clock, discrete RTC, etc
+	 * initialize the समय from some बाह्यal source like a GPS, wall
+	 * घड़ी, discrete RTC, etc
 	 */
 
-	if (gpbr_readl(rtc) == 0)
+	अगर (gpbr_पढ़ोl(rtc) == 0)
 		dev_warn(&pdev->dev, "%s: SET TIME!\n",
 			 dev_name(&rtc->rtcdev->dev));
 
-	return devm_rtc_register_device(rtc->rtcdev);
+	वापस devm_rtc_रेजिस्टर_device(rtc->rtcdev);
 
 err_clk:
 	clk_disable_unprepare(rtc->sclk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Disable and remove the RTC driver
+ * Disable and हटाओ the RTC driver
  */
-static int at91_rtc_remove(struct platform_device *pdev)
-{
-	struct sam9_rtc	*rtc = platform_get_drvdata(pdev);
-	u32		mr = rtt_readl(rtc, MR);
+अटल पूर्णांक at91_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sam9_rtc	*rtc = platक्रमm_get_drvdata(pdev);
+	u32		mr = rtt_पढ़ोl(rtc, MR);
 
-	/* disable all interrupts */
-	rtt_writel(rtc, MR, mr & ~(AT91_RTT_ALMIEN | AT91_RTT_RTTINCIEN));
+	/* disable all पूर्णांकerrupts */
+	rtt_ग_लिखोl(rtc, MR, mr & ~(AT91_RTT_ALMIEN | AT91_RTT_RTTINCIEN));
 
 	clk_disable_unprepare(rtc->sclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void at91_rtc_shutdown(struct platform_device *pdev)
-{
-	struct sam9_rtc	*rtc = platform_get_drvdata(pdev);
-	u32		mr = rtt_readl(rtc, MR);
+अटल व्योम at91_rtc_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sam9_rtc	*rtc = platक्रमm_get_drvdata(pdev);
+	u32		mr = rtt_पढ़ोl(rtc, MR);
 
 	rtc->imr = mr & (AT91_RTT_ALMIEN | AT91_RTT_RTTINCIEN);
-	rtt_writel(rtc, MR, mr & ~rtc->imr);
-}
+	rtt_ग_लिखोl(rtc, MR, mr & ~rtc->imr);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 
 /* AT91SAM9 RTC Power management control */
 
-static int at91_rtc_suspend(struct device *dev)
-{
-	struct sam9_rtc	*rtc = dev_get_drvdata(dev);
-	u32		mr = rtt_readl(rtc, MR);
+अटल पूर्णांक at91_rtc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sam9_rtc	*rtc = dev_get_drvdata(dev);
+	u32		mr = rtt_पढ़ोl(rtc, MR);
 
 	/*
 	 * This IRQ is shared with DBGU and other hardware which isn't
 	 * necessarily a wakeup event source.
 	 */
 	rtc->imr = mr & (AT91_RTT_ALMIEN | AT91_RTT_RTTINCIEN);
-	if (rtc->imr) {
-		if (device_may_wakeup(dev) && (mr & AT91_RTT_ALMIEN)) {
-			unsigned long flags;
+	अगर (rtc->imr) अणु
+		अगर (device_may_wakeup(dev) && (mr & AT91_RTT_ALMIEN)) अणु
+			अचिन्हित दीर्घ flags;
 
 			enable_irq_wake(rtc->irq);
 			spin_lock_irqsave(&rtc->lock, flags);
 			rtc->suspended = true;
 			spin_unlock_irqrestore(&rtc->lock, flags);
-			/* don't let RTTINC cause wakeups */
-			if (mr & AT91_RTT_RTTINCIEN)
-				rtt_writel(rtc, MR, mr & ~AT91_RTT_RTTINCIEN);
-		} else {
-			rtt_writel(rtc, MR, mr & ~rtc->imr);
-		}
-	}
+			/* करोn't let RTTINC cause wakeups */
+			अगर (mr & AT91_RTT_RTTINCIEN)
+				rtt_ग_लिखोl(rtc, MR, mr & ~AT91_RTT_RTTINCIEN);
+		पूर्ण अन्यथा अणु
+			rtt_ग_लिखोl(rtc, MR, mr & ~rtc->imr);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int at91_rtc_resume(struct device *dev)
-{
-	struct sam9_rtc	*rtc = dev_get_drvdata(dev);
+अटल पूर्णांक at91_rtc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sam9_rtc	*rtc = dev_get_drvdata(dev);
 	u32		mr;
 
-	if (rtc->imr) {
-		unsigned long flags;
+	अगर (rtc->imr) अणु
+		अचिन्हित दीर्घ flags;
 
-		if (device_may_wakeup(dev))
+		अगर (device_may_wakeup(dev))
 			disable_irq_wake(rtc->irq);
-		mr = rtt_readl(rtc, MR);
-		rtt_writel(rtc, MR, mr | rtc->imr);
+		mr = rtt_पढ़ोl(rtc, MR);
+		rtt_ग_लिखोl(rtc, MR, mr | rtc->imr);
 
 		spin_lock_irqsave(&rtc->lock, flags);
 		rtc->suspended = false;
 		at91_rtc_cache_events(rtc);
 		at91_rtc_flush_events(rtc);
 		spin_unlock_irqrestore(&rtc->lock, flags);
-	}
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(at91_rtc_pm_ops, at91_rtc_suspend, at91_rtc_resume);
+अटल SIMPLE_DEV_PM_OPS(at91_rtc_pm_ops, at91_rtc_suspend, at91_rtc_resume);
 
-static const struct of_device_id at91_rtc_dt_ids[] = {
-	{ .compatible = "atmel,at91sam9260-rtt" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id at91_rtc_dt_ids[] = अणु
+	अणु .compatible = "atmel,at91sam9260-rtt" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, at91_rtc_dt_ids);
 
-static struct platform_driver at91_rtc_driver = {
+अटल काष्ठा platक्रमm_driver at91_rtc_driver = अणु
 	.probe		= at91_rtc_probe,
-	.remove		= at91_rtc_remove,
-	.shutdown	= at91_rtc_shutdown,
-	.driver		= {
+	.हटाओ		= at91_rtc_हटाओ,
+	.shutकरोwn	= at91_rtc_shutकरोwn,
+	.driver		= अणु
 		.name	= "rtc-at91sam9",
 		.pm	= &at91_rtc_pm_ops,
 		.of_match_table = of_match_ptr(at91_rtc_dt_ids),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(at91_rtc_driver);
+module_platक्रमm_driver(at91_rtc_driver);
 
 MODULE_AUTHOR("Michel Benoit");
 MODULE_DESCRIPTION("RTC driver for Atmel AT91SAM9x");

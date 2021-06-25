@@ -1,20 +1,21 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#ifndef __I915_GEM_CLFLUSH_H__
-#define __I915_GEM_CLFLUSH_H__
+#अगर_अघोषित __I915_GEM_CLFLUSH_H__
+#घोषणा __I915_GEM_CLFLUSH_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct drm_i915_private;
-struct drm_i915_gem_object;
+काष्ठा drm_i915_निजी;
+काष्ठा drm_i915_gem_object;
 
-bool i915_gem_clflush_object(struct drm_i915_gem_object *obj,
-			     unsigned int flags);
-#define I915_CLFLUSH_FORCE BIT(0)
-#define I915_CLFLUSH_SYNC BIT(1)
+bool i915_gem_clflush_object(काष्ठा drm_i915_gem_object *obj,
+			     अचिन्हित पूर्णांक flags);
+#घोषणा I915_CLFLUSH_FORCE BIT(0)
+#घोषणा I915_CLFLUSH_SYNC BIT(1)
 
-#endif /* __I915_GEM_CLFLUSH_H__ */
+#पूर्ण_अगर /* __I915_GEM_CLFLUSH_H__ */

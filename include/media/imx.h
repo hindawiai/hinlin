@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2014-2017 Mentor Graphics Inc.
  */
 
-#ifndef __MEDIA_IMX_H__
-#define __MEDIA_IMX_H__
+#अगर_अघोषित __MEDIA_IMX_H__
+#घोषणा __MEDIA_IMX_H__
 
-#include <linux/imx-media.h>
+#समावेश <linux/imx-media.h>
 
-#endif
+#पूर्ण_अगर

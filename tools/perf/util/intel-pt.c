@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * intel_pt.c: Intel Processor Trace support
+ * पूर्णांकel_pt.c: Intel Processor Trace support
  * Copyright (c) 2013-2015, Intel Corporation.
  */
 
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <errno.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/zalloc.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <मानकपन.स>
+#समावेश <stdbool.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/zभाग.स>
 
-#include "session.h"
-#include "machine.h"
-#include "memswap.h"
-#include "sort.h"
-#include "tool.h"
-#include "event.h"
-#include "evlist.h"
-#include "evsel.h"
-#include "map.h"
-#include "color.h"
-#include "thread.h"
-#include "thread-stack.h"
-#include "symbol.h"
-#include "callchain.h"
-#include "dso.h"
-#include "debug.h"
-#include "auxtrace.h"
-#include "tsc.h"
-#include "intel-pt.h"
-#include "config.h"
-#include "util/perf_api_probe.h"
-#include "util/synthetic-events.h"
-#include "time-utils.h"
+#समावेश "session.h"
+#समावेश "machine.h"
+#समावेश "memswap.h"
+#समावेश "sort.h"
+#समावेश "tool.h"
+#समावेश "event.h"
+#समावेश "evlist.h"
+#समावेश "evsel.h"
+#समावेश "map.h"
+#समावेश "color.h"
+#समावेश "thread.h"
+#समावेश "thread-stack.h"
+#समावेश "symbol.h"
+#समावेश "callchain.h"
+#समावेश "dso.h"
+#समावेश "debug.h"
+#समावेश "auxtrace.h"
+#समावेश "tsc.h"
+#समावेश "intel-pt.h"
+#समावेश "config.h"
+#समावेश "util/perf_api_probe.h"
+#समावेश "util/synthetic-events.h"
+#समावेश "time-utils.h"
 
-#include "../arch/x86/include/uapi/asm/perf_regs.h"
+#समावेश "../arch/x86/include/uapi/asm/perf_regs.h"
 
-#include "intel-pt-decoder/intel-pt-log.h"
-#include "intel-pt-decoder/intel-pt-decoder.h"
-#include "intel-pt-decoder/intel-pt-insn-decoder.h"
-#include "intel-pt-decoder/intel-pt-pkt-decoder.h"
+#समावेश "intel-pt-decoder/intel-pt-log.h"
+#समावेश "intel-pt-decoder/intel-pt-decoder.h"
+#समावेश "intel-pt-decoder/intel-pt-insn-decoder.h"
+#समावेश "intel-pt-decoder/intel-pt-pkt-decoder.h"
 
-#define MAX_TIMESTAMP (~0ULL)
+#घोषणा MAX_TIMESTAMP (~0ULL)
 
-struct range {
+काष्ठा range अणु
 	u64 start;
 	u64 end;
-};
+पूर्ण;
 
-struct intel_pt {
-	struct auxtrace auxtrace;
-	struct auxtrace_queues queues;
-	struct auxtrace_heap heap;
+काष्ठा पूर्णांकel_pt अणु
+	काष्ठा auxtrace auxtrace;
+	काष्ठा auxtrace_queues queues;
+	काष्ठा auxtrace_heap heap;
 	u32 auxtrace_type;
-	struct perf_session *session;
-	struct machine *machine;
-	struct evsel *switch_evsel;
-	struct thread *unknown_thread;
-	bool timeless_decoding;
+	काष्ठा perf_session *session;
+	काष्ठा machine *machine;
+	काष्ठा evsel *चयन_evsel;
+	काष्ठा thपढ़ो *unknown_thपढ़ो;
+	bool समयless_decoding;
 	bool sampling_mode;
 	bool snapshot_mode;
 	bool per_cpu_mmaps;
 	bool have_tsc;
 	bool data_queued;
 	bool est_tsc;
-	bool sync_switch;
+	bool sync_चयन;
 	bool mispred_all;
-	bool use_thread_stack;
+	bool use_thपढ़ो_stack;
 	bool callstack;
-	unsigned int br_stack_sz;
-	unsigned int br_stack_sz_plus;
-	int have_sched_switch;
+	अचिन्हित पूर्णांक br_stack_sz;
+	अचिन्हित पूर्णांक br_stack_sz_plus;
+	पूर्णांक have_sched_चयन;
 	u32 pmu_type;
 	u64 kernel_start;
-	u64 switch_ip;
+	u64 चयन_ip;
 	u64 ptss_ip;
 
-	struct perf_tsc_conversion tc;
-	bool cap_user_time_zero;
+	काष्ठा perf_tsc_conversion tc;
+	bool cap_user_समय_zero;
 
-	struct itrace_synth_opts synth_opts;
+	काष्ठा itrace_synth_opts synth_opts;
 
-	bool sample_instructions;
-	u64 instructions_sample_type;
-	u64 instructions_id;
+	bool sample_inकाष्ठाions;
+	u64 inकाष्ठाions_sample_type;
+	u64 inकाष्ठाions_id;
 
 	bool sample_branches;
 	u32 branches_filter;
@@ -97,13 +98,13 @@ struct intel_pt {
 	u64 transactions_sample_type;
 	u64 transactions_id;
 
-	bool sample_ptwrites;
-	u64 ptwrites_sample_type;
-	u64 ptwrites_id;
+	bool sample_ptग_लिखोs;
+	u64 ptग_लिखोs_sample_type;
+	u64 ptग_लिखोs_id;
 
 	bool sample_pwr_events;
 	u64 pwr_events_sample_type;
-	u64 mwait_id;
+	u64 mरुको_id;
 	u64 pwre_id;
 	u64 exstop_id;
 	u64 pwrx_id;
@@ -111,7 +112,7 @@ struct intel_pt {
 	u64 psb_id;
 
 	bool sample_pebs;
-	struct evsel *pebs_evsel;
+	काष्ठा evsel *pebs_evsel;
 
 	u64 tsc_bit;
 	u64 mtc_bit;
@@ -120,59 +121,59 @@ struct intel_pt {
 	u32 tsc_ctc_ratio_d;
 	u64 cyc_bit;
 	u64 noretcomp_bit;
-	unsigned max_non_turbo_ratio;
-	unsigned cbr2khz;
+	अचिन्हित max_non_turbo_ratio;
+	अचिन्हित cbr2khz;
 
-	unsigned long num_events;
+	अचिन्हित दीर्घ num_events;
 
-	char *filter;
-	struct addr_filters filts;
+	अक्षर *filter;
+	काष्ठा addr_filters filts;
 
-	struct range *time_ranges;
-	unsigned int range_cnt;
+	काष्ठा range *समय_ranges;
+	अचिन्हित पूर्णांक range_cnt;
 
-	struct ip_callchain *chain;
-	struct branch_stack *br_stack;
-};
+	काष्ठा ip_callchain *chain;
+	काष्ठा branch_stack *br_stack;
+पूर्ण;
 
-enum switch_state {
+क्रमागत चयन_state अणु
 	INTEL_PT_SS_NOT_TRACING,
 	INTEL_PT_SS_UNKNOWN,
 	INTEL_PT_SS_TRACING,
 	INTEL_PT_SS_EXPECTING_SWITCH_EVENT,
 	INTEL_PT_SS_EXPECTING_SWITCH_IP,
-};
+पूर्ण;
 
-struct intel_pt_queue {
-	struct intel_pt *pt;
-	unsigned int queue_nr;
-	struct auxtrace_buffer *buffer;
-	struct auxtrace_buffer *old_buffer;
-	void *decoder;
-	const struct intel_pt_state *state;
-	struct ip_callchain *chain;
-	struct branch_stack *last_branch;
-	union perf_event *event_buf;
+काष्ठा पूर्णांकel_pt_queue अणु
+	काष्ठा पूर्णांकel_pt *pt;
+	अचिन्हित पूर्णांक queue_nr;
+	काष्ठा auxtrace_buffer *buffer;
+	काष्ठा auxtrace_buffer *old_buffer;
+	व्योम *decoder;
+	स्थिर काष्ठा पूर्णांकel_pt_state *state;
+	काष्ठा ip_callchain *chain;
+	काष्ठा branch_stack *last_branch;
+	जोड़ perf_event *event_buf;
 	bool on_heap;
 	bool stop;
 	bool step_through_buffers;
 	bool use_buffer_pid_tid;
-	bool sync_switch;
+	bool sync_चयन;
 	pid_t pid, tid;
-	int cpu;
-	int switch_state;
+	पूर्णांक cpu;
+	पूर्णांक चयन_state;
 	pid_t next_tid;
-	struct thread *thread;
-	struct machine *guest_machine;
-	struct thread *unknown_guest_thread;
+	काष्ठा thपढ़ो *thपढ़ो;
+	काष्ठा machine *guest_machine;
+	काष्ठा thपढ़ो *unknown_guest_thपढ़ो;
 	pid_t guest_machine_pid;
 	bool exclude_kernel;
 	bool have_sample;
-	u64 time;
-	u64 timestamp;
-	u64 sel_timestamp;
+	u64 समय;
+	u64 बारtamp;
+	u64 sel_बारtamp;
 	bool sel_start;
-	unsigned int sel_idx;
+	अचिन्हित पूर्णांक sel_idx;
 	u32 flags;
 	u16 insn_len;
 	u64 last_insn_cnt;
@@ -182,500 +183,500 @@ struct intel_pt_queue {
 	u64 last_in_cyc_cnt;
 	u64 last_br_insn_cnt;
 	u64 last_br_cyc_cnt;
-	unsigned int cbr_seen;
-	char insn[INTEL_PT_INSN_BUF_SZ];
-};
+	अचिन्हित पूर्णांक cbr_seen;
+	अक्षर insn[INTEL_PT_INSN_BUF_SZ];
+पूर्ण;
 
-static void intel_pt_dump(struct intel_pt *pt __maybe_unused,
-			  unsigned char *buf, size_t len)
-{
-	struct intel_pt_pkt packet;
-	size_t pos = 0;
-	int ret, pkt_len, i;
-	char desc[INTEL_PT_PKT_DESC_MAX];
-	const char *color = PERF_COLOR_BLUE;
-	enum intel_pt_pkt_ctx ctx = INTEL_PT_NO_CTX;
+अटल व्योम पूर्णांकel_pt_dump(काष्ठा पूर्णांकel_pt *pt __maybe_unused,
+			  अचिन्हित अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा पूर्णांकel_pt_pkt packet;
+	माप_प्रकार pos = 0;
+	पूर्णांक ret, pkt_len, i;
+	अक्षर desc[INTEL_PT_PKT_DESC_MAX];
+	स्थिर अक्षर *color = PERF_COLOR_BLUE;
+	क्रमागत पूर्णांकel_pt_pkt_ctx ctx = INTEL_PT_NO_CTX;
 
-	color_fprintf(stdout, color,
+	color_ख_लिखो(मानक_निकास, color,
 		      ". ... Intel Processor Trace data: size %zu bytes\n",
 		      len);
 
-	while (len) {
-		ret = intel_pt_get_packet(buf, len, &packet, &ctx);
-		if (ret > 0)
+	जबतक (len) अणु
+		ret = पूर्णांकel_pt_get_packet(buf, len, &packet, &ctx);
+		अगर (ret > 0)
 			pkt_len = ret;
-		else
+		अन्यथा
 			pkt_len = 1;
-		printf(".");
-		color_fprintf(stdout, color, "  %08x: ", pos);
-		for (i = 0; i < pkt_len; i++)
-			color_fprintf(stdout, color, " %02x", buf[i]);
-		for (; i < 16; i++)
-			color_fprintf(stdout, color, "   ");
-		if (ret > 0) {
-			ret = intel_pt_pkt_desc(&packet, desc,
+		म_लिखो(".");
+		color_ख_लिखो(मानक_निकास, color, "  %08x: ", pos);
+		क्रम (i = 0; i < pkt_len; i++)
+			color_ख_लिखो(मानक_निकास, color, " %02x", buf[i]);
+		क्रम (; i < 16; i++)
+			color_ख_लिखो(मानक_निकास, color, "   ");
+		अगर (ret > 0) अणु
+			ret = पूर्णांकel_pt_pkt_desc(&packet, desc,
 						INTEL_PT_PKT_DESC_MAX);
-			if (ret > 0)
-				color_fprintf(stdout, color, " %s\n", desc);
-		} else {
-			color_fprintf(stdout, color, " Bad packet!\n");
-		}
+			अगर (ret > 0)
+				color_ख_लिखो(मानक_निकास, color, " %s\n", desc);
+		पूर्ण अन्यथा अणु
+			color_ख_लिखो(मानक_निकास, color, " Bad packet!\n");
+		पूर्ण
 		pos += pkt_len;
 		buf += pkt_len;
 		len -= pkt_len;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void intel_pt_dump_event(struct intel_pt *pt, unsigned char *buf,
-				size_t len)
-{
-	printf(".\n");
-	intel_pt_dump(pt, buf, len);
-}
+अटल व्योम पूर्णांकel_pt_dump_event(काष्ठा पूर्णांकel_pt *pt, अचिन्हित अक्षर *buf,
+				माप_प्रकार len)
+अणु
+	म_लिखो(".\n");
+	पूर्णांकel_pt_dump(pt, buf, len);
+पूर्ण
 
-static void intel_pt_log_event(union perf_event *event)
-{
-	FILE *f = intel_pt_log_fp();
+अटल व्योम पूर्णांकel_pt_log_event(जोड़ perf_event *event)
+अणु
+	खाता *f = पूर्णांकel_pt_log_fp();
 
-	if (!intel_pt_enable_logging || !f)
-		return;
+	अगर (!पूर्णांकel_pt_enable_logging || !f)
+		वापस;
 
-	perf_event__fprintf(event, NULL, f);
-}
+	perf_event__ख_लिखो(event, शून्य, f);
+पूर्ण
 
-static void intel_pt_dump_sample(struct perf_session *session,
-				 struct perf_sample *sample)
-{
-	struct intel_pt *pt = container_of(session->auxtrace, struct intel_pt,
+अटल व्योम पूर्णांकel_pt_dump_sample(काष्ठा perf_session *session,
+				 काष्ठा perf_sample *sample)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = container_of(session->auxtrace, काष्ठा पूर्णांकel_pt,
 					   auxtrace);
 
-	printf("\n");
-	intel_pt_dump(pt, sample->aux_sample.data, sample->aux_sample.size);
-}
+	म_लिखो("\n");
+	पूर्णांकel_pt_dump(pt, sample->aux_sample.data, sample->aux_sample.size);
+पूर्ण
 
-static bool intel_pt_log_events(struct intel_pt *pt, u64 tm)
-{
-	struct perf_time_interval *range = pt->synth_opts.ptime_range;
-	int n = pt->synth_opts.range_num;
+अटल bool पूर्णांकel_pt_log_events(काष्ठा पूर्णांकel_pt *pt, u64 पंचांग)
+अणु
+	काष्ठा perf_समय_पूर्णांकerval *range = pt->synth_opts.pसमय_range;
+	पूर्णांक n = pt->synth_opts.range_num;
 
-	if (pt->synth_opts.log_plus_flags & AUXTRACE_LOG_FLG_ALL_PERF_EVTS)
-		return true;
+	अगर (pt->synth_opts.log_plus_flags & AUXTRACE_LOG_FLG_ALL_PERF_EVTS)
+		वापस true;
 
-	if (pt->synth_opts.log_minus_flags & AUXTRACE_LOG_FLG_ALL_PERF_EVTS)
-		return false;
+	अगर (pt->synth_opts.log_minus_flags & AUXTRACE_LOG_FLG_ALL_PERF_EVTS)
+		वापस false;
 
-	/* perf_time__ranges_skip_sample does not work if time is zero */
-	if (!tm)
-		tm = 1;
+	/* perf_समय__ranges_skip_sample करोes not work अगर समय is zero */
+	अगर (!पंचांग)
+		पंचांग = 1;
 
-	return !n || !perf_time__ranges_skip_sample(range, n, tm);
-}
+	वापस !n || !perf_समय__ranges_skip_sample(range, n, पंचांग);
+पूर्ण
 
-static int intel_pt_do_fix_overlap(struct intel_pt *pt, struct auxtrace_buffer *a,
-				   struct auxtrace_buffer *b)
-{
+अटल पूर्णांक पूर्णांकel_pt_करो_fix_overlap(काष्ठा पूर्णांकel_pt *pt, काष्ठा auxtrace_buffer *a,
+				   काष्ठा auxtrace_buffer *b)
+अणु
 	bool consecutive = false;
-	void *start;
+	व्योम *start;
 
-	start = intel_pt_find_overlap(a->data, a->size, b->data, b->size,
+	start = पूर्णांकel_pt_find_overlap(a->data, a->size, b->data, b->size,
 				      pt->have_tsc, &consecutive);
-	if (!start)
-		return -EINVAL;
+	अगर (!start)
+		वापस -EINVAL;
 	b->use_size = b->data + b->size - start;
 	b->use_data = start;
-	if (b->use_size && consecutive)
+	अगर (b->use_size && consecutive)
 		b->consecutive = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_pt_get_buffer(struct intel_pt_queue *ptq,
-			       struct auxtrace_buffer *buffer,
-			       struct auxtrace_buffer *old_buffer,
-			       struct intel_pt_buffer *b)
-{
+अटल पूर्णांक पूर्णांकel_pt_get_buffer(काष्ठा पूर्णांकel_pt_queue *ptq,
+			       काष्ठा auxtrace_buffer *buffer,
+			       काष्ठा auxtrace_buffer *old_buffer,
+			       काष्ठा पूर्णांकel_pt_buffer *b)
+अणु
 	bool might_overlap;
 
-	if (!buffer->data) {
-		int fd = perf_data__fd(ptq->pt->session->data);
+	अगर (!buffer->data) अणु
+		पूर्णांक fd = perf_data__fd(ptq->pt->session->data);
 
 		buffer->data = auxtrace_buffer__get_data(buffer, fd);
-		if (!buffer->data)
-			return -ENOMEM;
-	}
+		अगर (!buffer->data)
+			वापस -ENOMEM;
+	पूर्ण
 
 	might_overlap = ptq->pt->snapshot_mode || ptq->pt->sampling_mode;
-	if (might_overlap && !buffer->consecutive && old_buffer &&
-	    intel_pt_do_fix_overlap(ptq->pt, old_buffer, buffer))
-		return -ENOMEM;
+	अगर (might_overlap && !buffer->consecutive && old_buffer &&
+	    पूर्णांकel_pt_करो_fix_overlap(ptq->pt, old_buffer, buffer))
+		वापस -ENOMEM;
 
-	if (buffer->use_data) {
+	अगर (buffer->use_data) अणु
 		b->len = buffer->use_size;
 		b->buf = buffer->use_data;
-	} else {
+	पूर्ण अन्यथा अणु
 		b->len = buffer->size;
 		b->buf = buffer->data;
-	}
-	b->ref_timestamp = buffer->reference;
+	पूर्ण
+	b->ref_बारtamp = buffer->reference;
 
-	if (!old_buffer || (might_overlap && !buffer->consecutive)) {
+	अगर (!old_buffer || (might_overlap && !buffer->consecutive)) अणु
 		b->consecutive = false;
 		b->trace_nr = buffer->buffer_nr + 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		b->consecutive = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Do not drop buffers with references - refer intel_pt_get_trace() */
-static void intel_pt_lookahead_drop_buffer(struct intel_pt_queue *ptq,
-					   struct auxtrace_buffer *buffer)
-{
-	if (!buffer || buffer == ptq->buffer || buffer == ptq->old_buffer)
-		return;
+/* Do not drop buffers with references - refer पूर्णांकel_pt_get_trace() */
+अटल व्योम पूर्णांकel_pt_lookahead_drop_buffer(काष्ठा पूर्णांकel_pt_queue *ptq,
+					   काष्ठा auxtrace_buffer *buffer)
+अणु
+	अगर (!buffer || buffer == ptq->buffer || buffer == ptq->old_buffer)
+		वापस;
 
 	auxtrace_buffer__drop_data(buffer);
-}
+पूर्ण
 
-/* Must be serialized with respect to intel_pt_get_trace() */
-static int intel_pt_lookahead(void *data, intel_pt_lookahead_cb_t cb,
-			      void *cb_data)
-{
-	struct intel_pt_queue *ptq = data;
-	struct auxtrace_buffer *buffer = ptq->buffer;
-	struct auxtrace_buffer *old_buffer = ptq->old_buffer;
-	struct auxtrace_queue *queue;
-	int err = 0;
+/* Must be serialized with respect to पूर्णांकel_pt_get_trace() */
+अटल पूर्णांक पूर्णांकel_pt_lookahead(व्योम *data, पूर्णांकel_pt_lookahead_cb_t cb,
+			      व्योम *cb_data)
+अणु
+	काष्ठा पूर्णांकel_pt_queue *ptq = data;
+	काष्ठा auxtrace_buffer *buffer = ptq->buffer;
+	काष्ठा auxtrace_buffer *old_buffer = ptq->old_buffer;
+	काष्ठा auxtrace_queue *queue;
+	पूर्णांक err = 0;
 
 	queue = &ptq->pt->queues.queue_array[ptq->queue_nr];
 
-	while (1) {
-		struct intel_pt_buffer b = { .len = 0 };
+	जबतक (1) अणु
+		काष्ठा पूर्णांकel_pt_buffer b = अणु .len = 0 पूर्ण;
 
 		buffer = auxtrace_buffer__next(queue, buffer);
-		if (!buffer)
-			break;
+		अगर (!buffer)
+			अवरोध;
 
-		err = intel_pt_get_buffer(ptq, buffer, old_buffer, &b);
-		if (err)
-			break;
+		err = पूर्णांकel_pt_get_buffer(ptq, buffer, old_buffer, &b);
+		अगर (err)
+			अवरोध;
 
-		if (b.len) {
-			intel_pt_lookahead_drop_buffer(ptq, old_buffer);
+		अगर (b.len) अणु
+			पूर्णांकel_pt_lookahead_drop_buffer(ptq, old_buffer);
 			old_buffer = buffer;
-		} else {
-			intel_pt_lookahead_drop_buffer(ptq, buffer);
-			continue;
-		}
+		पूर्ण अन्यथा अणु
+			पूर्णांकel_pt_lookahead_drop_buffer(ptq, buffer);
+			जारी;
+		पूर्ण
 
 		err = cb(&b, cb_data);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	if (buffer != old_buffer)
-		intel_pt_lookahead_drop_buffer(ptq, buffer);
-	intel_pt_lookahead_drop_buffer(ptq, old_buffer);
+	अगर (buffer != old_buffer)
+		पूर्णांकel_pt_lookahead_drop_buffer(ptq, buffer);
+	पूर्णांकel_pt_lookahead_drop_buffer(ptq, old_buffer);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * This function assumes data is processed sequentially only.
- * Must be serialized with respect to intel_pt_lookahead()
+ * Must be serialized with respect to पूर्णांकel_pt_lookahead()
  */
-static int intel_pt_get_trace(struct intel_pt_buffer *b, void *data)
-{
-	struct intel_pt_queue *ptq = data;
-	struct auxtrace_buffer *buffer = ptq->buffer;
-	struct auxtrace_buffer *old_buffer = ptq->old_buffer;
-	struct auxtrace_queue *queue;
-	int err;
+अटल पूर्णांक पूर्णांकel_pt_get_trace(काष्ठा पूर्णांकel_pt_buffer *b, व्योम *data)
+अणु
+	काष्ठा पूर्णांकel_pt_queue *ptq = data;
+	काष्ठा auxtrace_buffer *buffer = ptq->buffer;
+	काष्ठा auxtrace_buffer *old_buffer = ptq->old_buffer;
+	काष्ठा auxtrace_queue *queue;
+	पूर्णांक err;
 
-	if (ptq->stop) {
+	अगर (ptq->stop) अणु
 		b->len = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	queue = &ptq->pt->queues.queue_array[ptq->queue_nr];
 
 	buffer = auxtrace_buffer__next(queue, buffer);
-	if (!buffer) {
-		if (old_buffer)
+	अगर (!buffer) अणु
+		अगर (old_buffer)
 			auxtrace_buffer__drop_data(old_buffer);
 		b->len = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ptq->buffer = buffer;
 
-	err = intel_pt_get_buffer(ptq, buffer, old_buffer, b);
-	if (err)
-		return err;
+	err = पूर्णांकel_pt_get_buffer(ptq, buffer, old_buffer, b);
+	अगर (err)
+		वापस err;
 
-	if (ptq->step_through_buffers)
+	अगर (ptq->step_through_buffers)
 		ptq->stop = true;
 
-	if (b->len) {
-		if (old_buffer)
+	अगर (b->len) अणु
+		अगर (old_buffer)
 			auxtrace_buffer__drop_data(old_buffer);
 		ptq->old_buffer = buffer;
-	} else {
+	पूर्ण अन्यथा अणु
 		auxtrace_buffer__drop_data(buffer);
-		return intel_pt_get_trace(b, data);
-	}
+		वापस पूर्णांकel_pt_get_trace(b, data);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct intel_pt_cache_entry {
-	struct auxtrace_cache_entry	entry;
+काष्ठा पूर्णांकel_pt_cache_entry अणु
+	काष्ठा auxtrace_cache_entry	entry;
 	u64				insn_cnt;
 	u64				byte_cnt;
-	enum intel_pt_insn_op		op;
-	enum intel_pt_insn_branch	branch;
-	int				length;
-	int32_t				rel;
-	char				insn[INTEL_PT_INSN_BUF_SZ];
-};
+	क्रमागत पूर्णांकel_pt_insn_op		op;
+	क्रमागत पूर्णांकel_pt_insn_branch	branch;
+	पूर्णांक				length;
+	पूर्णांक32_t				rel;
+	अक्षर				insn[INTEL_PT_INSN_BUF_SZ];
+पूर्ण;
 
-static int intel_pt_config_div(const char *var, const char *value, void *data)
-{
-	int *d = data;
-	long val;
+अटल पूर्णांक पूर्णांकel_pt_config_भाग(स्थिर अक्षर *var, स्थिर अक्षर *value, व्योम *data)
+अणु
+	पूर्णांक *d = data;
+	दीर्घ val;
 
-	if (!strcmp(var, "intel-pt.cache-divisor")) {
-		val = strtol(value, NULL, 0);
-		if (val > 0 && val <= INT_MAX)
+	अगर (!म_भेद(var, "intel-pt.cache-divisor")) अणु
+		val = म_से_दीर्घ(value, शून्य, 0);
+		अगर (val > 0 && val <= पूर्णांक_उच्च)
 			*d = val;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_pt_cache_divisor(void)
-{
-	static int d;
+अटल पूर्णांक पूर्णांकel_pt_cache_भागisor(व्योम)
+अणु
+	अटल पूर्णांक d;
 
-	if (d)
-		return d;
+	अगर (d)
+		वापस d;
 
-	perf_config(intel_pt_config_div, &d);
+	perf_config(पूर्णांकel_pt_config_भाग, &d);
 
-	if (!d)
+	अगर (!d)
 		d = 64;
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static unsigned int intel_pt_cache_size(struct dso *dso,
-					struct machine *machine)
-{
+अटल अचिन्हित पूर्णांक पूर्णांकel_pt_cache_size(काष्ठा dso *dso,
+					काष्ठा machine *machine)
+अणु
 	off_t size;
 
 	size = dso__data_size(dso, machine);
-	size /= intel_pt_cache_divisor();
-	if (size < 1000)
-		return 10;
-	if (size > (1 << 21))
-		return 21;
-	return 32 - __builtin_clz(size);
-}
+	size /= पूर्णांकel_pt_cache_भागisor();
+	अगर (size < 1000)
+		वापस 10;
+	अगर (size > (1 << 21))
+		वापस 21;
+	वापस 32 - __builtin_clz(size);
+पूर्ण
 
-static struct auxtrace_cache *intel_pt_cache(struct dso *dso,
-					     struct machine *machine)
-{
-	struct auxtrace_cache *c;
-	unsigned int bits;
+अटल काष्ठा auxtrace_cache *पूर्णांकel_pt_cache(काष्ठा dso *dso,
+					     काष्ठा machine *machine)
+अणु
+	काष्ठा auxtrace_cache *c;
+	अचिन्हित पूर्णांक bits;
 
-	if (dso->auxtrace_cache)
-		return dso->auxtrace_cache;
+	अगर (dso->auxtrace_cache)
+		वापस dso->auxtrace_cache;
 
-	bits = intel_pt_cache_size(dso, machine);
+	bits = पूर्णांकel_pt_cache_size(dso, machine);
 
 	/* Ignoring cache creation failure */
-	c = auxtrace_cache__new(bits, sizeof(struct intel_pt_cache_entry), 200);
+	c = auxtrace_cache__new(bits, माप(काष्ठा पूर्णांकel_pt_cache_entry), 200);
 
 	dso->auxtrace_cache = c;
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-static int intel_pt_cache_add(struct dso *dso, struct machine *machine,
+अटल पूर्णांक पूर्णांकel_pt_cache_add(काष्ठा dso *dso, काष्ठा machine *machine,
 			      u64 offset, u64 insn_cnt, u64 byte_cnt,
-			      struct intel_pt_insn *intel_pt_insn)
-{
-	struct auxtrace_cache *c = intel_pt_cache(dso, machine);
-	struct intel_pt_cache_entry *e;
-	int err;
+			      काष्ठा पूर्णांकel_pt_insn *पूर्णांकel_pt_insn)
+अणु
+	काष्ठा auxtrace_cache *c = पूर्णांकel_pt_cache(dso, machine);
+	काष्ठा पूर्णांकel_pt_cache_entry *e;
+	पूर्णांक err;
 
-	if (!c)
-		return -ENOMEM;
+	अगर (!c)
+		वापस -ENOMEM;
 
 	e = auxtrace_cache__alloc_entry(c);
-	if (!e)
-		return -ENOMEM;
+	अगर (!e)
+		वापस -ENOMEM;
 
 	e->insn_cnt = insn_cnt;
 	e->byte_cnt = byte_cnt;
-	e->op = intel_pt_insn->op;
-	e->branch = intel_pt_insn->branch;
-	e->length = intel_pt_insn->length;
-	e->rel = intel_pt_insn->rel;
-	memcpy(e->insn, intel_pt_insn->buf, INTEL_PT_INSN_BUF_SZ);
+	e->op = पूर्णांकel_pt_insn->op;
+	e->branch = पूर्णांकel_pt_insn->branch;
+	e->length = पूर्णांकel_pt_insn->length;
+	e->rel = पूर्णांकel_pt_insn->rel;
+	स_नकल(e->insn, पूर्णांकel_pt_insn->buf, INTEL_PT_INSN_BUF_SZ);
 
 	err = auxtrace_cache__add(c, offset, &e->entry);
-	if (err)
-		auxtrace_cache__free_entry(c, e);
+	अगर (err)
+		auxtrace_cache__मुक्त_entry(c, e);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct intel_pt_cache_entry *
-intel_pt_cache_lookup(struct dso *dso, struct machine *machine, u64 offset)
-{
-	struct auxtrace_cache *c = intel_pt_cache(dso, machine);
+अटल काष्ठा पूर्णांकel_pt_cache_entry *
+पूर्णांकel_pt_cache_lookup(काष्ठा dso *dso, काष्ठा machine *machine, u64 offset)
+अणु
+	काष्ठा auxtrace_cache *c = पूर्णांकel_pt_cache(dso, machine);
 
-	if (!c)
-		return NULL;
+	अगर (!c)
+		वापस शून्य;
 
-	return auxtrace_cache__lookup(dso->auxtrace_cache, offset);
-}
+	वापस auxtrace_cache__lookup(dso->auxtrace_cache, offset);
+पूर्ण
 
-static void intel_pt_cache_invalidate(struct dso *dso, struct machine *machine,
+अटल व्योम पूर्णांकel_pt_cache_invalidate(काष्ठा dso *dso, काष्ठा machine *machine,
 				      u64 offset)
-{
-	struct auxtrace_cache *c = intel_pt_cache(dso, machine);
+अणु
+	काष्ठा auxtrace_cache *c = पूर्णांकel_pt_cache(dso, machine);
 
-	if (!c)
-		return;
+	अगर (!c)
+		वापस;
 
-	auxtrace_cache__remove(dso->auxtrace_cache, offset);
-}
+	auxtrace_cache__हटाओ(dso->auxtrace_cache, offset);
+पूर्ण
 
-static inline bool intel_pt_guest_kernel_ip(uint64_t ip)
-{
+अटल अंतरभूत bool पूर्णांकel_pt_guest_kernel_ip(uपूर्णांक64_t ip)
+अणु
 	/* Assumes 64-bit kernel */
-	return ip & (1ULL << 63);
-}
+	वापस ip & (1ULL << 63);
+पूर्ण
 
-static inline u8 intel_pt_nr_cpumode(struct intel_pt_queue *ptq, uint64_t ip, bool nr)
-{
-	if (nr) {
-		return intel_pt_guest_kernel_ip(ip) ?
+अटल अंतरभूत u8 पूर्णांकel_pt_nr_cpumode(काष्ठा पूर्णांकel_pt_queue *ptq, uपूर्णांक64_t ip, bool nr)
+अणु
+	अगर (nr) अणु
+		वापस पूर्णांकel_pt_guest_kernel_ip(ip) ?
 		       PERF_RECORD_MISC_GUEST_KERNEL :
 		       PERF_RECORD_MISC_GUEST_USER;
-	}
+	पूर्ण
 
-	return ip >= ptq->pt->kernel_start ?
+	वापस ip >= ptq->pt->kernel_start ?
 	       PERF_RECORD_MISC_KERNEL :
 	       PERF_RECORD_MISC_USER;
-}
+पूर्ण
 
-static inline u8 intel_pt_cpumode(struct intel_pt_queue *ptq, uint64_t from_ip, uint64_t to_ip)
-{
-	/* No support for non-zero CS base */
-	if (from_ip)
-		return intel_pt_nr_cpumode(ptq, from_ip, ptq->state->from_nr);
-	return intel_pt_nr_cpumode(ptq, to_ip, ptq->state->to_nr);
-}
+अटल अंतरभूत u8 पूर्णांकel_pt_cpumode(काष्ठा पूर्णांकel_pt_queue *ptq, uपूर्णांक64_t from_ip, uपूर्णांक64_t to_ip)
+अणु
+	/* No support क्रम non-zero CS base */
+	अगर (from_ip)
+		वापस पूर्णांकel_pt_nr_cpumode(ptq, from_ip, ptq->state->from_nr);
+	वापस पूर्णांकel_pt_nr_cpumode(ptq, to_ip, ptq->state->to_nr);
+पूर्ण
 
-static int intel_pt_get_guest(struct intel_pt_queue *ptq)
-{
-	struct machines *machines = &ptq->pt->session->machines;
-	struct machine *machine;
+अटल पूर्णांक पूर्णांकel_pt_get_guest(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	काष्ठा machines *machines = &ptq->pt->session->machines;
+	काष्ठा machine *machine;
 	pid_t pid = ptq->pid <= 0 ? DEFAULT_GUEST_KERNEL_ID : ptq->pid;
 
-	if (ptq->guest_machine && pid == ptq->guest_machine_pid)
-		return 0;
+	अगर (ptq->guest_machine && pid == ptq->guest_machine_pid)
+		वापस 0;
 
-	ptq->guest_machine = NULL;
-	thread__zput(ptq->unknown_guest_thread);
+	ptq->guest_machine = शून्य;
+	thपढ़ो__zput(ptq->unknown_guest_thपढ़ो);
 
 	machine = machines__find_guest(machines, pid);
-	if (!machine)
-		return -1;
+	अगर (!machine)
+		वापस -1;
 
-	ptq->unknown_guest_thread = machine__idle_thread(machine);
-	if (!ptq->unknown_guest_thread)
-		return -1;
+	ptq->unknown_guest_thपढ़ो = machine__idle_thपढ़ो(machine);
+	अगर (!ptq->unknown_guest_thपढ़ो)
+		वापस -1;
 
 	ptq->guest_machine = machine;
 	ptq->guest_machine_pid = pid;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_pt_walk_next_insn(struct intel_pt_insn *intel_pt_insn,
-				   uint64_t *insn_cnt_ptr, uint64_t *ip,
-				   uint64_t to_ip, uint64_t max_insn_cnt,
-				   void *data)
-{
-	struct intel_pt_queue *ptq = data;
-	struct machine *machine = ptq->pt->machine;
-	struct thread *thread;
-	struct addr_location al;
-	unsigned char buf[INTEL_PT_INSN_BUF_SZ];
-	ssize_t len;
-	int x86_64;
+अटल पूर्णांक पूर्णांकel_pt_walk_next_insn(काष्ठा पूर्णांकel_pt_insn *पूर्णांकel_pt_insn,
+				   uपूर्णांक64_t *insn_cnt_ptr, uपूर्णांक64_t *ip,
+				   uपूर्णांक64_t to_ip, uपूर्णांक64_t max_insn_cnt,
+				   व्योम *data)
+अणु
+	काष्ठा पूर्णांकel_pt_queue *ptq = data;
+	काष्ठा machine *machine = ptq->pt->machine;
+	काष्ठा thपढ़ो *thपढ़ो;
+	काष्ठा addr_location al;
+	अचिन्हित अक्षर buf[INTEL_PT_INSN_BUF_SZ];
+	sमाप_प्रकार len;
+	पूर्णांक x86_64;
 	u8 cpumode;
 	u64 offset, start_offset, start_ip;
 	u64 insn_cnt = 0;
 	bool one_map = true;
 	bool nr;
 
-	intel_pt_insn->length = 0;
+	पूर्णांकel_pt_insn->length = 0;
 
-	if (to_ip && *ip == to_ip)
-		goto out_no_cache;
+	अगर (to_ip && *ip == to_ip)
+		जाओ out_no_cache;
 
 	nr = ptq->state->to_nr;
-	cpumode = intel_pt_nr_cpumode(ptq, *ip, nr);
+	cpumode = पूर्णांकel_pt_nr_cpumode(ptq, *ip, nr);
 
-	if (nr) {
-		if (cpumode != PERF_RECORD_MISC_GUEST_KERNEL ||
-		    intel_pt_get_guest(ptq))
-			return -EINVAL;
+	अगर (nr) अणु
+		अगर (cpumode != PERF_RECORD_MISC_GUEST_KERNEL ||
+		    पूर्णांकel_pt_get_guest(ptq))
+			वापस -EINVAL;
 		machine = ptq->guest_machine;
-		thread = ptq->unknown_guest_thread;
-	} else {
-		thread = ptq->thread;
-		if (!thread) {
-			if (cpumode != PERF_RECORD_MISC_KERNEL)
-				return -EINVAL;
-			thread = ptq->pt->unknown_thread;
-		}
-	}
+		thपढ़ो = ptq->unknown_guest_thपढ़ो;
+	पूर्ण अन्यथा अणु
+		thपढ़ो = ptq->thपढ़ो;
+		अगर (!thपढ़ो) अणु
+			अगर (cpumode != PERF_RECORD_MISC_KERNEL)
+				वापस -EINVAL;
+			thपढ़ो = ptq->pt->unknown_thपढ़ो;
+		पूर्ण
+	पूर्ण
 
-	while (1) {
-		if (!thread__find_map(thread, cpumode, *ip, &al) || !al.map->dso)
-			return -EINVAL;
+	जबतक (1) अणु
+		अगर (!thपढ़ो__find_map(thपढ़ो, cpumode, *ip, &al) || !al.map->dso)
+			वापस -EINVAL;
 
-		if (al.map->dso->data.status == DSO_DATA_STATUS_ERROR &&
+		अगर (al.map->dso->data.status == DSO_DATA_STATUS_ERROR &&
 		    dso__data_status_seen(al.map->dso,
 					  DSO_DATA_STATUS_SEEN_ITRACE))
-			return -ENOENT;
+			वापस -ENOENT;
 
 		offset = al.map->map_ip(al.map, *ip);
 
-		if (!to_ip && one_map) {
-			struct intel_pt_cache_entry *e;
+		अगर (!to_ip && one_map) अणु
+			काष्ठा पूर्णांकel_pt_cache_entry *e;
 
-			e = intel_pt_cache_lookup(al.map->dso, machine, offset);
-			if (e &&
-			    (!max_insn_cnt || e->insn_cnt <= max_insn_cnt)) {
+			e = पूर्णांकel_pt_cache_lookup(al.map->dso, machine, offset);
+			अगर (e &&
+			    (!max_insn_cnt || e->insn_cnt <= max_insn_cnt)) अणु
 				*insn_cnt_ptr = e->insn_cnt;
 				*ip += e->byte_cnt;
-				intel_pt_insn->op = e->op;
-				intel_pt_insn->branch = e->branch;
-				intel_pt_insn->length = e->length;
-				intel_pt_insn->rel = e->rel;
-				memcpy(intel_pt_insn->buf, e->insn,
+				पूर्णांकel_pt_insn->op = e->op;
+				पूर्णांकel_pt_insn->branch = e->branch;
+				पूर्णांकel_pt_insn->length = e->length;
+				पूर्णांकel_pt_insn->rel = e->rel;
+				स_नकल(पूर्णांकel_pt_insn->buf, e->insn,
 				       INTEL_PT_INSN_BUF_SZ);
-				intel_pt_log_insn_no_data(intel_pt_insn, *ip);
-				return 0;
-			}
-		}
+				पूर्णांकel_pt_log_insn_no_data(पूर्णांकel_pt_insn, *ip);
+				वापस 0;
+			पूर्ण
+		पूर्ण
 
 		start_offset = offset;
 		start_ip = *ip;
@@ -685,767 +686,767 @@ static int intel_pt_walk_next_insn(struct intel_pt_insn *intel_pt_insn,
 
 		x86_64 = al.map->dso->is_64_bit;
 
-		while (1) {
-			len = dso__data_read_offset(al.map->dso, machine,
+		जबतक (1) अणु
+			len = dso__data_पढ़ो_offset(al.map->dso, machine,
 						    offset, buf,
 						    INTEL_PT_INSN_BUF_SZ);
-			if (len <= 0)
-				return -EINVAL;
+			अगर (len <= 0)
+				वापस -EINVAL;
 
-			if (intel_pt_get_insn(buf, len, x86_64, intel_pt_insn))
-				return -EINVAL;
+			अगर (पूर्णांकel_pt_get_insn(buf, len, x86_64, पूर्णांकel_pt_insn))
+				वापस -EINVAL;
 
-			intel_pt_log_insn(intel_pt_insn, *ip);
+			पूर्णांकel_pt_log_insn(पूर्णांकel_pt_insn, *ip);
 
 			insn_cnt += 1;
 
-			if (intel_pt_insn->branch != INTEL_PT_BR_NO_BRANCH)
-				goto out;
+			अगर (पूर्णांकel_pt_insn->branch != INTEL_PT_BR_NO_BRANCH)
+				जाओ out;
 
-			if (max_insn_cnt && insn_cnt >= max_insn_cnt)
-				goto out_no_cache;
+			अगर (max_insn_cnt && insn_cnt >= max_insn_cnt)
+				जाओ out_no_cache;
 
-			*ip += intel_pt_insn->length;
+			*ip += पूर्णांकel_pt_insn->length;
 
-			if (to_ip && *ip == to_ip) {
-				intel_pt_insn->length = 0;
-				goto out_no_cache;
-			}
+			अगर (to_ip && *ip == to_ip) अणु
+				पूर्णांकel_pt_insn->length = 0;
+				जाओ out_no_cache;
+			पूर्ण
 
-			if (*ip >= al.map->end)
-				break;
+			अगर (*ip >= al.map->end)
+				अवरोध;
 
-			offset += intel_pt_insn->length;
-		}
+			offset += पूर्णांकel_pt_insn->length;
+		पूर्ण
 		one_map = false;
-	}
+	पूर्ण
 out:
 	*insn_cnt_ptr = insn_cnt;
 
-	if (!one_map)
-		goto out_no_cache;
+	अगर (!one_map)
+		जाओ out_no_cache;
 
 	/*
-	 * Didn't lookup in the 'to_ip' case, so do it now to prevent duplicate
+	 * Didn't lookup in the 'to_ip' हाल, so करो it now to prevent duplicate
 	 * entries.
 	 */
-	if (to_ip) {
-		struct intel_pt_cache_entry *e;
+	अगर (to_ip) अणु
+		काष्ठा पूर्णांकel_pt_cache_entry *e;
 
-		e = intel_pt_cache_lookup(al.map->dso, machine, start_offset);
-		if (e)
-			return 0;
-	}
+		e = पूर्णांकel_pt_cache_lookup(al.map->dso, machine, start_offset);
+		अगर (e)
+			वापस 0;
+	पूर्ण
 
 	/* Ignore cache errors */
-	intel_pt_cache_add(al.map->dso, machine, start_offset, insn_cnt,
-			   *ip - start_ip, intel_pt_insn);
+	पूर्णांकel_pt_cache_add(al.map->dso, machine, start_offset, insn_cnt,
+			   *ip - start_ip, पूर्णांकel_pt_insn);
 
-	return 0;
+	वापस 0;
 
 out_no_cache:
 	*insn_cnt_ptr = insn_cnt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool intel_pt_match_pgd_ip(struct intel_pt *pt, uint64_t ip,
-				  uint64_t offset, const char *filename)
-{
-	struct addr_filter *filt;
+अटल bool पूर्णांकel_pt_match_pgd_ip(काष्ठा पूर्णांकel_pt *pt, uपूर्णांक64_t ip,
+				  uपूर्णांक64_t offset, स्थिर अक्षर *filename)
+अणु
+	काष्ठा addr_filter *filt;
 	bool have_filter   = false;
 	bool hit_tracestop = false;
 	bool hit_filter    = false;
 
-	list_for_each_entry(filt, &pt->filts.head, list) {
-		if (filt->start)
+	list_क्रम_each_entry(filt, &pt->filts.head, list) अणु
+		अगर (filt->start)
 			have_filter = true;
 
-		if ((filename && !filt->filename) ||
+		अगर ((filename && !filt->filename) ||
 		    (!filename && filt->filename) ||
-		    (filename && strcmp(filename, filt->filename)))
-			continue;
+		    (filename && म_भेद(filename, filt->filename)))
+			जारी;
 
-		if (!(offset >= filt->addr && offset < filt->addr + filt->size))
-			continue;
+		अगर (!(offset >= filt->addr && offset < filt->addr + filt->size))
+			जारी;
 
-		intel_pt_log("TIP.PGD ip %#"PRIx64" offset %#"PRIx64" in %s hit filter: %s offset %#"PRIx64" size %#"PRIx64"\n",
+		पूर्णांकel_pt_log("TIP.PGD ip %#"PRIx64" offset %#"PRIx64" in %s hit filter: %s offset %#"PRIx64" size %#"PRIx64"\n",
 			     ip, offset, filename ? filename : "[kernel]",
 			     filt->start ? "filter" : "stop",
 			     filt->addr, filt->size);
 
-		if (filt->start)
+		अगर (filt->start)
 			hit_filter = true;
-		else
+		अन्यथा
 			hit_tracestop = true;
-	}
+	पूर्ण
 
-	if (!hit_tracestop && !hit_filter)
-		intel_pt_log("TIP.PGD ip %#"PRIx64" offset %#"PRIx64" in %s is not in a filter region\n",
+	अगर (!hit_tracestop && !hit_filter)
+		पूर्णांकel_pt_log("TIP.PGD ip %#"PRIx64" offset %#"PRIx64" in %s is not in a filter region\n",
 			     ip, offset, filename ? filename : "[kernel]");
 
-	return hit_tracestop || (have_filter && !hit_filter);
-}
+	वापस hit_tracestop || (have_filter && !hit_filter);
+पूर्ण
 
-static int __intel_pt_pgd_ip(uint64_t ip, void *data)
-{
-	struct intel_pt_queue *ptq = data;
-	struct thread *thread;
-	struct addr_location al;
+अटल पूर्णांक __पूर्णांकel_pt_pgd_ip(uपूर्णांक64_t ip, व्योम *data)
+अणु
+	काष्ठा पूर्णांकel_pt_queue *ptq = data;
+	काष्ठा thपढ़ो *thपढ़ो;
+	काष्ठा addr_location al;
 	u8 cpumode;
 	u64 offset;
 
-	if (ptq->state->to_nr) {
-		if (intel_pt_guest_kernel_ip(ip))
-			return intel_pt_match_pgd_ip(ptq->pt, ip, ip, NULL);
-		/* No support for decoding guest user space */
-		return -EINVAL;
-	} else if (ip >= ptq->pt->kernel_start) {
-		return intel_pt_match_pgd_ip(ptq->pt, ip, ip, NULL);
-	}
+	अगर (ptq->state->to_nr) अणु
+		अगर (पूर्णांकel_pt_guest_kernel_ip(ip))
+			वापस पूर्णांकel_pt_match_pgd_ip(ptq->pt, ip, ip, शून्य);
+		/* No support क्रम decoding guest user space */
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (ip >= ptq->pt->kernel_start) अणु
+		वापस पूर्णांकel_pt_match_pgd_ip(ptq->pt, ip, ip, शून्य);
+	पूर्ण
 
 	cpumode = PERF_RECORD_MISC_USER;
 
-	thread = ptq->thread;
-	if (!thread)
-		return -EINVAL;
+	thपढ़ो = ptq->thपढ़ो;
+	अगर (!thपढ़ो)
+		वापस -EINVAL;
 
-	if (!thread__find_map(thread, cpumode, ip, &al) || !al.map->dso)
-		return -EINVAL;
+	अगर (!thपढ़ो__find_map(thपढ़ो, cpumode, ip, &al) || !al.map->dso)
+		वापस -EINVAL;
 
 	offset = al.map->map_ip(al.map, ip);
 
-	return intel_pt_match_pgd_ip(ptq->pt, ip, offset,
-				     al.map->dso->long_name);
-}
+	वापस पूर्णांकel_pt_match_pgd_ip(ptq->pt, ip, offset,
+				     al.map->dso->दीर्घ_name);
+पूर्ण
 
-static bool intel_pt_pgd_ip(uint64_t ip, void *data)
-{
-	return __intel_pt_pgd_ip(ip, data) > 0;
-}
+अटल bool पूर्णांकel_pt_pgd_ip(uपूर्णांक64_t ip, व्योम *data)
+अणु
+	वापस __पूर्णांकel_pt_pgd_ip(ip, data) > 0;
+पूर्ण
 
-static bool intel_pt_get_config(struct intel_pt *pt,
-				struct perf_event_attr *attr, u64 *config)
-{
-	if (attr->type == pt->pmu_type) {
-		if (config)
+अटल bool पूर्णांकel_pt_get_config(काष्ठा पूर्णांकel_pt *pt,
+				काष्ठा perf_event_attr *attr, u64 *config)
+अणु
+	अगर (attr->type == pt->pmu_type) अणु
+		अगर (config)
 			*config = attr->config;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool intel_pt_exclude_kernel(struct intel_pt *pt)
-{
-	struct evsel *evsel;
+अटल bool पूर्णांकel_pt_exclude_kernel(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(pt->session->evlist, evsel) {
-		if (intel_pt_get_config(pt, &evsel->core.attr, NULL) &&
+	evlist__क्रम_each_entry(pt->session->evlist, evsel) अणु
+		अगर (पूर्णांकel_pt_get_config(pt, &evsel->core.attr, शून्य) &&
 		    !evsel->core.attr.exclude_kernel)
-			return false;
-	}
-	return true;
-}
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static bool intel_pt_return_compression(struct intel_pt *pt)
-{
-	struct evsel *evsel;
+अटल bool पूर्णांकel_pt_वापस_compression(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	काष्ठा evsel *evsel;
 	u64 config;
 
-	if (!pt->noretcomp_bit)
-		return true;
+	अगर (!pt->noretcomp_bit)
+		वापस true;
 
-	evlist__for_each_entry(pt->session->evlist, evsel) {
-		if (intel_pt_get_config(pt, &evsel->core.attr, &config) &&
+	evlist__क्रम_each_entry(pt->session->evlist, evsel) अणु
+		अगर (पूर्णांकel_pt_get_config(pt, &evsel->core.attr, &config) &&
 		    (config & pt->noretcomp_bit))
-			return false;
-	}
-	return true;
-}
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static bool intel_pt_branch_enable(struct intel_pt *pt)
-{
-	struct evsel *evsel;
+अटल bool पूर्णांकel_pt_branch_enable(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	काष्ठा evsel *evsel;
 	u64 config;
 
-	evlist__for_each_entry(pt->session->evlist, evsel) {
-		if (intel_pt_get_config(pt, &evsel->core.attr, &config) &&
+	evlist__क्रम_each_entry(pt->session->evlist, evsel) अणु
+		अगर (पूर्णांकel_pt_get_config(pt, &evsel->core.attr, &config) &&
 		    (config & 1) && !(config & 0x2000))
-			return false;
-	}
-	return true;
-}
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static unsigned int intel_pt_mtc_period(struct intel_pt *pt)
-{
-	struct evsel *evsel;
-	unsigned int shift;
+अटल अचिन्हित पूर्णांक पूर्णांकel_pt_mtc_period(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	काष्ठा evsel *evsel;
+	अचिन्हित पूर्णांक shअगरt;
 	u64 config;
 
-	if (!pt->mtc_freq_bits)
-		return 0;
+	अगर (!pt->mtc_freq_bits)
+		वापस 0;
 
-	for (shift = 0, config = pt->mtc_freq_bits; !(config & 1); shift++)
+	क्रम (shअगरt = 0, config = pt->mtc_freq_bits; !(config & 1); shअगरt++)
 		config >>= 1;
 
-	evlist__for_each_entry(pt->session->evlist, evsel) {
-		if (intel_pt_get_config(pt, &evsel->core.attr, &config))
-			return (config & pt->mtc_freq_bits) >> shift;
-	}
-	return 0;
-}
+	evlist__क्रम_each_entry(pt->session->evlist, evsel) अणु
+		अगर (पूर्णांकel_pt_get_config(pt, &evsel->core.attr, &config))
+			वापस (config & pt->mtc_freq_bits) >> shअगरt;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static bool intel_pt_timeless_decoding(struct intel_pt *pt)
-{
-	struct evsel *evsel;
-	bool timeless_decoding = true;
+अटल bool पूर्णांकel_pt_समयless_decoding(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	काष्ठा evsel *evsel;
+	bool समयless_decoding = true;
 	u64 config;
 
-	if (!pt->tsc_bit || !pt->cap_user_time_zero)
-		return true;
+	अगर (!pt->tsc_bit || !pt->cap_user_समय_zero)
+		वापस true;
 
-	evlist__for_each_entry(pt->session->evlist, evsel) {
-		if (!(evsel->core.attr.sample_type & PERF_SAMPLE_TIME))
-			return true;
-		if (intel_pt_get_config(pt, &evsel->core.attr, &config)) {
-			if (config & pt->tsc_bit)
-				timeless_decoding = false;
-			else
-				return true;
-		}
-	}
-	return timeless_decoding;
-}
+	evlist__क्रम_each_entry(pt->session->evlist, evsel) अणु
+		अगर (!(evsel->core.attr.sample_type & PERF_SAMPLE_TIME))
+			वापस true;
+		अगर (पूर्णांकel_pt_get_config(pt, &evsel->core.attr, &config)) अणु
+			अगर (config & pt->tsc_bit)
+				समयless_decoding = false;
+			अन्यथा
+				वापस true;
+		पूर्ण
+	पूर्ण
+	वापस समयless_decoding;
+पूर्ण
 
-static bool intel_pt_tracing_kernel(struct intel_pt *pt)
-{
-	struct evsel *evsel;
+अटल bool पूर्णांकel_pt_tracing_kernel(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(pt->session->evlist, evsel) {
-		if (intel_pt_get_config(pt, &evsel->core.attr, NULL) &&
+	evlist__क्रम_each_entry(pt->session->evlist, evsel) अणु
+		अगर (पूर्णांकel_pt_get_config(pt, &evsel->core.attr, शून्य) &&
 		    !evsel->core.attr.exclude_kernel)
-			return true;
-	}
-	return false;
-}
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool intel_pt_have_tsc(struct intel_pt *pt)
-{
-	struct evsel *evsel;
+अटल bool पूर्णांकel_pt_have_tsc(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	काष्ठा evsel *evsel;
 	bool have_tsc = false;
 	u64 config;
 
-	if (!pt->tsc_bit)
-		return false;
+	अगर (!pt->tsc_bit)
+		वापस false;
 
-	evlist__for_each_entry(pt->session->evlist, evsel) {
-		if (intel_pt_get_config(pt, &evsel->core.attr, &config)) {
-			if (config & pt->tsc_bit)
+	evlist__क्रम_each_entry(pt->session->evlist, evsel) अणु
+		अगर (पूर्णांकel_pt_get_config(pt, &evsel->core.attr, &config)) अणु
+			अगर (config & pt->tsc_bit)
 				have_tsc = true;
-			else
-				return false;
-		}
-	}
-	return have_tsc;
-}
+			अन्यथा
+				वापस false;
+		पूर्ण
+	पूर्ण
+	वापस have_tsc;
+पूर्ण
 
-static bool intel_pt_sampling_mode(struct intel_pt *pt)
-{
-	struct evsel *evsel;
+अटल bool पूर्णांकel_pt_sampling_mode(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(pt->session->evlist, evsel) {
-		if ((evsel->core.attr.sample_type & PERF_SAMPLE_AUX) &&
+	evlist__क्रम_each_entry(pt->session->evlist, evsel) अणु
+		अगर ((evsel->core.attr.sample_type & PERF_SAMPLE_AUX) &&
 		    evsel->core.attr.aux_sample_size)
-			return true;
-	}
-	return false;
-}
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static u64 intel_pt_ctl(struct intel_pt *pt)
-{
-	struct evsel *evsel;
+अटल u64 पूर्णांकel_pt_ctl(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	काष्ठा evsel *evsel;
 	u64 config;
 
-	evlist__for_each_entry(pt->session->evlist, evsel) {
-		if (intel_pt_get_config(pt, &evsel->core.attr, &config))
-			return config;
-	}
-	return 0;
-}
+	evlist__क्रम_each_entry(pt->session->evlist, evsel) अणु
+		अगर (पूर्णांकel_pt_get_config(pt, &evsel->core.attr, &config))
+			वापस config;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static u64 intel_pt_ns_to_ticks(const struct intel_pt *pt, u64 ns)
-{
+अटल u64 पूर्णांकel_pt_ns_to_ticks(स्थिर काष्ठा पूर्णांकel_pt *pt, u64 ns)
+अणु
 	u64 quot, rem;
 
-	quot = ns / pt->tc.time_mult;
-	rem  = ns % pt->tc.time_mult;
-	return (quot << pt->tc.time_shift) + (rem << pt->tc.time_shift) /
-		pt->tc.time_mult;
-}
+	quot = ns / pt->tc.समय_mult;
+	rem  = ns % pt->tc.समय_mult;
+	वापस (quot << pt->tc.समय_shअगरt) + (rem << pt->tc.समय_shअगरt) /
+		pt->tc.समय_mult;
+पूर्ण
 
-static struct ip_callchain *intel_pt_alloc_chain(struct intel_pt *pt)
-{
-	size_t sz = sizeof(struct ip_callchain);
+अटल काष्ठा ip_callchain *पूर्णांकel_pt_alloc_chain(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	माप_प्रकार sz = माप(काष्ठा ip_callchain);
 
-	/* Add 1 to callchain_sz for callchain context */
-	sz += (pt->synth_opts.callchain_sz + 1) * sizeof(u64);
-	return zalloc(sz);
-}
+	/* Add 1 to callchain_sz क्रम callchain context */
+	sz += (pt->synth_opts.callchain_sz + 1) * माप(u64);
+	वापस zalloc(sz);
+पूर्ण
 
-static int intel_pt_callchain_init(struct intel_pt *pt)
-{
-	struct evsel *evsel;
+अटल पूर्णांक पूर्णांकel_pt_callchain_init(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(pt->session->evlist, evsel) {
-		if (!(evsel->core.attr.sample_type & PERF_SAMPLE_CALLCHAIN))
+	evlist__क्रम_each_entry(pt->session->evlist, evsel) अणु
+		अगर (!(evsel->core.attr.sample_type & PERF_SAMPLE_CALLCHAIN))
 			evsel->synth_sample_type |= PERF_SAMPLE_CALLCHAIN;
-	}
+	पूर्ण
 
-	pt->chain = intel_pt_alloc_chain(pt);
-	if (!pt->chain)
-		return -ENOMEM;
+	pt->chain = पूर्णांकel_pt_alloc_chain(pt);
+	अगर (!pt->chain)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void intel_pt_add_callchain(struct intel_pt *pt,
-				   struct perf_sample *sample)
-{
-	struct thread *thread = machine__findnew_thread(pt->machine,
+अटल व्योम पूर्णांकel_pt_add_callchain(काष्ठा पूर्णांकel_pt *pt,
+				   काष्ठा perf_sample *sample)
+अणु
+	काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(pt->machine,
 							sample->pid,
 							sample->tid);
 
-	thread_stack__sample_late(thread, sample->cpu, pt->chain,
+	thपढ़ो_stack__sample_late(thपढ़ो, sample->cpu, pt->chain,
 				  pt->synth_opts.callchain_sz + 1, sample->ip,
 				  pt->kernel_start);
 
 	sample->callchain = pt->chain;
-}
+पूर्ण
 
-static struct branch_stack *intel_pt_alloc_br_stack(unsigned int entry_cnt)
-{
-	size_t sz = sizeof(struct branch_stack);
+अटल काष्ठा branch_stack *पूर्णांकel_pt_alloc_br_stack(अचिन्हित पूर्णांक entry_cnt)
+अणु
+	माप_प्रकार sz = माप(काष्ठा branch_stack);
 
-	sz += entry_cnt * sizeof(struct branch_entry);
-	return zalloc(sz);
-}
+	sz += entry_cnt * माप(काष्ठा branch_entry);
+	वापस zalloc(sz);
+पूर्ण
 
-static int intel_pt_br_stack_init(struct intel_pt *pt)
-{
-	struct evsel *evsel;
+अटल पूर्णांक पूर्णांकel_pt_br_stack_init(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(pt->session->evlist, evsel) {
-		if (!(evsel->core.attr.sample_type & PERF_SAMPLE_BRANCH_STACK))
+	evlist__क्रम_each_entry(pt->session->evlist, evsel) अणु
+		अगर (!(evsel->core.attr.sample_type & PERF_SAMPLE_BRANCH_STACK))
 			evsel->synth_sample_type |= PERF_SAMPLE_BRANCH_STACK;
-	}
+	पूर्ण
 
-	pt->br_stack = intel_pt_alloc_br_stack(pt->br_stack_sz);
-	if (!pt->br_stack)
-		return -ENOMEM;
+	pt->br_stack = पूर्णांकel_pt_alloc_br_stack(pt->br_stack_sz);
+	अगर (!pt->br_stack)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void intel_pt_add_br_stack(struct intel_pt *pt,
-				  struct perf_sample *sample)
-{
-	struct thread *thread = machine__findnew_thread(pt->machine,
+अटल व्योम पूर्णांकel_pt_add_br_stack(काष्ठा पूर्णांकel_pt *pt,
+				  काष्ठा perf_sample *sample)
+अणु
+	काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(pt->machine,
 							sample->pid,
 							sample->tid);
 
-	thread_stack__br_sample_late(thread, sample->cpu, pt->br_stack,
+	thपढ़ो_stack__br_sample_late(thपढ़ो, sample->cpu, pt->br_stack,
 				     pt->br_stack_sz, sample->ip,
 				     pt->kernel_start);
 
 	sample->branch_stack = pt->br_stack;
-}
+पूर्ण
 
 /* INTEL_PT_LBR_0, INTEL_PT_LBR_1 and INTEL_PT_LBR_2 */
-#define LBRS_MAX (INTEL_PT_BLK_ITEM_ID_CNT * 3U)
+#घोषणा LBRS_MAX (INTEL_PT_BLK_ITEM_ID_CNT * 3U)
 
-static struct intel_pt_queue *intel_pt_alloc_queue(struct intel_pt *pt,
-						   unsigned int queue_nr)
-{
-	struct intel_pt_params params = { .get_trace = 0, };
-	struct perf_env *env = pt->machine->env;
-	struct intel_pt_queue *ptq;
+अटल काष्ठा पूर्णांकel_pt_queue *पूर्णांकel_pt_alloc_queue(काष्ठा पूर्णांकel_pt *pt,
+						   अचिन्हित पूर्णांक queue_nr)
+अणु
+	काष्ठा पूर्णांकel_pt_params params = अणु .get_trace = 0, पूर्ण;
+	काष्ठा perf_env *env = pt->machine->env;
+	काष्ठा पूर्णांकel_pt_queue *ptq;
 
-	ptq = zalloc(sizeof(struct intel_pt_queue));
-	if (!ptq)
-		return NULL;
+	ptq = zalloc(माप(काष्ठा पूर्णांकel_pt_queue));
+	अगर (!ptq)
+		वापस शून्य;
 
-	if (pt->synth_opts.callchain) {
-		ptq->chain = intel_pt_alloc_chain(pt);
-		if (!ptq->chain)
-			goto out_free;
-	}
+	अगर (pt->synth_opts.callchain) अणु
+		ptq->chain = पूर्णांकel_pt_alloc_chain(pt);
+		अगर (!ptq->chain)
+			जाओ out_मुक्त;
+	पूर्ण
 
-	if (pt->synth_opts.last_branch || pt->synth_opts.other_events) {
-		unsigned int entry_cnt = max(LBRS_MAX, pt->br_stack_sz);
+	अगर (pt->synth_opts.last_branch || pt->synth_opts.other_events) अणु
+		अचिन्हित पूर्णांक entry_cnt = max(LBRS_MAX, pt->br_stack_sz);
 
-		ptq->last_branch = intel_pt_alloc_br_stack(entry_cnt);
-		if (!ptq->last_branch)
-			goto out_free;
-	}
+		ptq->last_branch = पूर्णांकel_pt_alloc_br_stack(entry_cnt);
+		अगर (!ptq->last_branch)
+			जाओ out_मुक्त;
+	पूर्ण
 
-	ptq->event_buf = malloc(PERF_SAMPLE_MAX_SIZE);
-	if (!ptq->event_buf)
-		goto out_free;
+	ptq->event_buf = दो_स्मृति(PERF_SAMPLE_MAX_SIZE);
+	अगर (!ptq->event_buf)
+		जाओ out_मुक्त;
 
 	ptq->pt = pt;
 	ptq->queue_nr = queue_nr;
-	ptq->exclude_kernel = intel_pt_exclude_kernel(pt);
+	ptq->exclude_kernel = पूर्णांकel_pt_exclude_kernel(pt);
 	ptq->pid = -1;
 	ptq->tid = -1;
 	ptq->cpu = -1;
 	ptq->next_tid = -1;
 
-	params.get_trace = intel_pt_get_trace;
-	params.walk_insn = intel_pt_walk_next_insn;
-	params.lookahead = intel_pt_lookahead;
+	params.get_trace = पूर्णांकel_pt_get_trace;
+	params.walk_insn = पूर्णांकel_pt_walk_next_insn;
+	params.lookahead = पूर्णांकel_pt_lookahead;
 	params.data = ptq;
-	params.return_compression = intel_pt_return_compression(pt);
-	params.branch_enable = intel_pt_branch_enable(pt);
-	params.ctl = intel_pt_ctl(pt);
+	params.वापस_compression = पूर्णांकel_pt_वापस_compression(pt);
+	params.branch_enable = पूर्णांकel_pt_branch_enable(pt);
+	params.ctl = पूर्णांकel_pt_ctl(pt);
 	params.max_non_turbo_ratio = pt->max_non_turbo_ratio;
-	params.mtc_period = intel_pt_mtc_period(pt);
+	params.mtc_period = पूर्णांकel_pt_mtc_period(pt);
 	params.tsc_ctc_ratio_n = pt->tsc_ctc_ratio_n;
 	params.tsc_ctc_ratio_d = pt->tsc_ctc_ratio_d;
 	params.quick = pt->synth_opts.quick;
 
-	if (pt->filts.cnt > 0)
-		params.pgd_ip = intel_pt_pgd_ip;
+	अगर (pt->filts.cnt > 0)
+		params.pgd_ip = पूर्णांकel_pt_pgd_ip;
 
-	if (pt->synth_opts.instructions) {
-		if (pt->synth_opts.period) {
-			switch (pt->synth_opts.period_type) {
-			case PERF_ITRACE_PERIOD_INSTRUCTIONS:
+	अगर (pt->synth_opts.inकाष्ठाions) अणु
+		अगर (pt->synth_opts.period) अणु
+			चयन (pt->synth_opts.period_type) अणु
+			हाल PERF_ITRACE_PERIOD_INSTRUCTIONS:
 				params.period_type =
 						INTEL_PT_PERIOD_INSTRUCTIONS;
 				params.period = pt->synth_opts.period;
-				break;
-			case PERF_ITRACE_PERIOD_TICKS:
+				अवरोध;
+			हाल PERF_ITRACE_PERIOD_TICKS:
 				params.period_type = INTEL_PT_PERIOD_TICKS;
 				params.period = pt->synth_opts.period;
-				break;
-			case PERF_ITRACE_PERIOD_NANOSECS:
+				अवरोध;
+			हाल PERF_ITRACE_PERIOD_न_अंकOSECS:
 				params.period_type = INTEL_PT_PERIOD_TICKS;
-				params.period = intel_pt_ns_to_ticks(pt,
+				params.period = पूर्णांकel_pt_ns_to_ticks(pt,
 							pt->synth_opts.period);
-				break;
-			default:
-				break;
-			}
-		}
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (!params.period) {
+		अगर (!params.period) अणु
 			params.period_type = INTEL_PT_PERIOD_INSTRUCTIONS;
 			params.period = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (env->cpuid && !strncmp(env->cpuid, "GenuineIntel,6,92,", 18))
+	अगर (env->cpuid && !म_भेदन(env->cpuid, "GenuineIntel,6,92,", 18))
 		params.flags |= INTEL_PT_FUP_WITH_NLIP;
 
-	ptq->decoder = intel_pt_decoder_new(&params);
-	if (!ptq->decoder)
-		goto out_free;
+	ptq->decoder = पूर्णांकel_pt_decoder_new(&params);
+	अगर (!ptq->decoder)
+		जाओ out_मुक्त;
 
-	return ptq;
+	वापस ptq;
 
-out_free:
-	zfree(&ptq->event_buf);
-	zfree(&ptq->last_branch);
-	zfree(&ptq->chain);
-	free(ptq);
-	return NULL;
-}
+out_मुक्त:
+	zमुक्त(&ptq->event_buf);
+	zमुक्त(&ptq->last_branch);
+	zमुक्त(&ptq->chain);
+	मुक्त(ptq);
+	वापस शून्य;
+पूर्ण
 
-static void intel_pt_free_queue(void *priv)
-{
-	struct intel_pt_queue *ptq = priv;
+अटल व्योम पूर्णांकel_pt_मुक्त_queue(व्योम *priv)
+अणु
+	काष्ठा पूर्णांकel_pt_queue *ptq = priv;
 
-	if (!ptq)
-		return;
-	thread__zput(ptq->thread);
-	thread__zput(ptq->unknown_guest_thread);
-	intel_pt_decoder_free(ptq->decoder);
-	zfree(&ptq->event_buf);
-	zfree(&ptq->last_branch);
-	zfree(&ptq->chain);
-	free(ptq);
-}
+	अगर (!ptq)
+		वापस;
+	thपढ़ो__zput(ptq->thपढ़ो);
+	thपढ़ो__zput(ptq->unknown_guest_thपढ़ो);
+	पूर्णांकel_pt_decoder_मुक्त(ptq->decoder);
+	zमुक्त(&ptq->event_buf);
+	zमुक्त(&ptq->last_branch);
+	zमुक्त(&ptq->chain);
+	मुक्त(ptq);
+पूर्ण
 
-static void intel_pt_set_pid_tid_cpu(struct intel_pt *pt,
-				     struct auxtrace_queue *queue)
-{
-	struct intel_pt_queue *ptq = queue->priv;
+अटल व्योम पूर्णांकel_pt_set_pid_tid_cpu(काष्ठा पूर्णांकel_pt *pt,
+				     काष्ठा auxtrace_queue *queue)
+अणु
+	काष्ठा पूर्णांकel_pt_queue *ptq = queue->priv;
 
-	if (queue->tid == -1 || pt->have_sched_switch) {
+	अगर (queue->tid == -1 || pt->have_sched_चयन) अणु
 		ptq->tid = machine__get_current_tid(pt->machine, ptq->cpu);
-		if (ptq->tid == -1)
+		अगर (ptq->tid == -1)
 			ptq->pid = -1;
-		thread__zput(ptq->thread);
-	}
+		thपढ़ो__zput(ptq->thपढ़ो);
+	पूर्ण
 
-	if (!ptq->thread && ptq->tid != -1)
-		ptq->thread = machine__find_thread(pt->machine, -1, ptq->tid);
+	अगर (!ptq->thपढ़ो && ptq->tid != -1)
+		ptq->thपढ़ो = machine__find_thपढ़ो(pt->machine, -1, ptq->tid);
 
-	if (ptq->thread) {
-		ptq->pid = ptq->thread->pid_;
-		if (queue->cpu == -1)
-			ptq->cpu = ptq->thread->cpu;
-	}
-}
+	अगर (ptq->thपढ़ो) अणु
+		ptq->pid = ptq->thपढ़ो->pid_;
+		अगर (queue->cpu == -1)
+			ptq->cpu = ptq->thपढ़ो->cpu;
+	पूर्ण
+पूर्ण
 
-static void intel_pt_sample_flags(struct intel_pt_queue *ptq)
-{
+अटल व्योम पूर्णांकel_pt_sample_flags(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
 	ptq->insn_len = 0;
-	if (ptq->state->flags & INTEL_PT_ABORT_TX) {
+	अगर (ptq->state->flags & INTEL_PT_ABORT_TX) अणु
 		ptq->flags = PERF_IP_FLAG_BRANCH | PERF_IP_FLAG_TX_ABORT;
-	} else if (ptq->state->flags & INTEL_PT_ASYNC) {
-		if (!ptq->state->to_ip)
+	पूर्ण अन्यथा अगर (ptq->state->flags & INTEL_PT_ASYNC) अणु
+		अगर (!ptq->state->to_ip)
 			ptq->flags = PERF_IP_FLAG_BRANCH |
 				     PERF_IP_FLAG_TRACE_END;
-		else if (ptq->state->from_nr && !ptq->state->to_nr)
+		अन्यथा अगर (ptq->state->from_nr && !ptq->state->to_nr)
 			ptq->flags = PERF_IP_FLAG_BRANCH | PERF_IP_FLAG_CALL |
 				     PERF_IP_FLAG_VMEXIT;
-		else
+		अन्यथा
 			ptq->flags = PERF_IP_FLAG_BRANCH | PERF_IP_FLAG_CALL |
 				     PERF_IP_FLAG_ASYNC |
 				     PERF_IP_FLAG_INTERRUPT;
-	} else {
-		if (ptq->state->from_ip)
-			ptq->flags = intel_pt_insn_type(ptq->state->insn_op);
-		else
+	पूर्ण अन्यथा अणु
+		अगर (ptq->state->from_ip)
+			ptq->flags = पूर्णांकel_pt_insn_type(ptq->state->insn_op);
+		अन्यथा
 			ptq->flags = PERF_IP_FLAG_BRANCH |
 				     PERF_IP_FLAG_TRACE_BEGIN;
-		if (ptq->state->flags & INTEL_PT_IN_TX)
+		अगर (ptq->state->flags & INTEL_PT_IN_TX)
 			ptq->flags |= PERF_IP_FLAG_IN_TX;
 		ptq->insn_len = ptq->state->insn_len;
-		memcpy(ptq->insn, ptq->state->insn, INTEL_PT_INSN_BUF_SZ);
-	}
+		स_नकल(ptq->insn, ptq->state->insn, INTEL_PT_INSN_BUF_SZ);
+	पूर्ण
 
-	if (ptq->state->type & INTEL_PT_TRACE_BEGIN)
+	अगर (ptq->state->type & INTEL_PT_TRACE_BEGIN)
 		ptq->flags |= PERF_IP_FLAG_TRACE_BEGIN;
-	if (ptq->state->type & INTEL_PT_TRACE_END)
+	अगर (ptq->state->type & INTEL_PT_TRACE_END)
 		ptq->flags |= PERF_IP_FLAG_TRACE_END;
-}
+पूर्ण
 
-static void intel_pt_setup_time_range(struct intel_pt *pt,
-				      struct intel_pt_queue *ptq)
-{
-	if (!pt->range_cnt)
-		return;
+अटल व्योम पूर्णांकel_pt_setup_समय_range(काष्ठा पूर्णांकel_pt *pt,
+				      काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	अगर (!pt->range_cnt)
+		वापस;
 
-	ptq->sel_timestamp = pt->time_ranges[0].start;
+	ptq->sel_बारtamp = pt->समय_ranges[0].start;
 	ptq->sel_idx = 0;
 
-	if (ptq->sel_timestamp) {
+	अगर (ptq->sel_बारtamp) अणु
 		ptq->sel_start = true;
-	} else {
-		ptq->sel_timestamp = pt->time_ranges[0].end;
+	पूर्ण अन्यथा अणु
+		ptq->sel_बारtamp = pt->समय_ranges[0].end;
 		ptq->sel_start = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int intel_pt_setup_queue(struct intel_pt *pt,
-				struct auxtrace_queue *queue,
-				unsigned int queue_nr)
-{
-	struct intel_pt_queue *ptq = queue->priv;
+अटल पूर्णांक पूर्णांकel_pt_setup_queue(काष्ठा पूर्णांकel_pt *pt,
+				काष्ठा auxtrace_queue *queue,
+				अचिन्हित पूर्णांक queue_nr)
+अणु
+	काष्ठा पूर्णांकel_pt_queue *ptq = queue->priv;
 
-	if (list_empty(&queue->head))
-		return 0;
+	अगर (list_empty(&queue->head))
+		वापस 0;
 
-	if (!ptq) {
-		ptq = intel_pt_alloc_queue(pt, queue_nr);
-		if (!ptq)
-			return -ENOMEM;
+	अगर (!ptq) अणु
+		ptq = पूर्णांकel_pt_alloc_queue(pt, queue_nr);
+		अगर (!ptq)
+			वापस -ENOMEM;
 		queue->priv = ptq;
 
-		if (queue->cpu != -1)
+		अगर (queue->cpu != -1)
 			ptq->cpu = queue->cpu;
 		ptq->tid = queue->tid;
 
-		ptq->cbr_seen = UINT_MAX;
+		ptq->cbr_seen = अच_पूर्णांक_उच्च;
 
-		if (pt->sampling_mode && !pt->snapshot_mode &&
-		    pt->timeless_decoding)
+		अगर (pt->sampling_mode && !pt->snapshot_mode &&
+		    pt->समयless_decoding)
 			ptq->step_through_buffers = true;
 
-		ptq->sync_switch = pt->sync_switch;
+		ptq->sync_चयन = pt->sync_चयन;
 
-		intel_pt_setup_time_range(pt, ptq);
-	}
+		पूर्णांकel_pt_setup_समय_range(pt, ptq);
+	पूर्ण
 
-	if (!ptq->on_heap &&
-	    (!ptq->sync_switch ||
-	     ptq->switch_state != INTEL_PT_SS_EXPECTING_SWITCH_EVENT)) {
-		const struct intel_pt_state *state;
-		int ret;
+	अगर (!ptq->on_heap &&
+	    (!ptq->sync_चयन ||
+	     ptq->चयन_state != INTEL_PT_SS_EXPECTING_SWITCH_EVENT)) अणु
+		स्थिर काष्ठा पूर्णांकel_pt_state *state;
+		पूर्णांक ret;
 
-		if (pt->timeless_decoding)
-			return 0;
+		अगर (pt->समयless_decoding)
+			वापस 0;
 
-		intel_pt_log("queue %u getting timestamp\n", queue_nr);
-		intel_pt_log("queue %u decoding cpu %d pid %d tid %d\n",
+		पूर्णांकel_pt_log("queue %u getting timestamp\n", queue_nr);
+		पूर्णांकel_pt_log("queue %u decoding cpu %d pid %d tid %d\n",
 			     queue_nr, ptq->cpu, ptq->pid, ptq->tid);
 
-		if (ptq->sel_start && ptq->sel_timestamp) {
-			ret = intel_pt_fast_forward(ptq->decoder,
-						    ptq->sel_timestamp);
-			if (ret)
-				return ret;
-		}
+		अगर (ptq->sel_start && ptq->sel_बारtamp) अणु
+			ret = पूर्णांकel_pt_fast_क्रमward(ptq->decoder,
+						    ptq->sel_बारtamp);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 
-		while (1) {
-			state = intel_pt_decode(ptq->decoder);
-			if (state->err) {
-				if (state->err == INTEL_PT_ERR_NODATA) {
-					intel_pt_log("queue %u has no timestamp\n",
+		जबतक (1) अणु
+			state = पूर्णांकel_pt_decode(ptq->decoder);
+			अगर (state->err) अणु
+				अगर (state->err == INTEL_PT_ERR_NODATA) अणु
+					पूर्णांकel_pt_log("queue %u has no timestamp\n",
 						     queue_nr);
-					return 0;
-				}
-				continue;
-			}
-			if (state->timestamp)
-				break;
-		}
+					वापस 0;
+				पूर्ण
+				जारी;
+			पूर्ण
+			अगर (state->बारtamp)
+				अवरोध;
+		पूर्ण
 
-		ptq->timestamp = state->timestamp;
-		intel_pt_log("queue %u timestamp 0x%" PRIx64 "\n",
-			     queue_nr, ptq->timestamp);
+		ptq->बारtamp = state->बारtamp;
+		पूर्णांकel_pt_log("queue %u timestamp 0x%" PRIx64 "\n",
+			     queue_nr, ptq->बारtamp);
 		ptq->state = state;
 		ptq->have_sample = true;
-		if (ptq->sel_start && ptq->sel_timestamp &&
-		    ptq->timestamp < ptq->sel_timestamp)
+		अगर (ptq->sel_start && ptq->sel_बारtamp &&
+		    ptq->बारtamp < ptq->sel_बारtamp)
 			ptq->have_sample = false;
-		intel_pt_sample_flags(ptq);
-		ret = auxtrace_heap__add(&pt->heap, queue_nr, ptq->timestamp);
-		if (ret)
-			return ret;
+		पूर्णांकel_pt_sample_flags(ptq);
+		ret = auxtrace_heap__add(&pt->heap, queue_nr, ptq->बारtamp);
+		अगर (ret)
+			वापस ret;
 		ptq->on_heap = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_pt_setup_queues(struct intel_pt *pt)
-{
-	unsigned int i;
-	int ret;
+अटल पूर्णांक पूर्णांकel_pt_setup_queues(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = 0; i < pt->queues.nr_queues; i++) {
-		ret = intel_pt_setup_queue(pt, &pt->queues.queue_array[i], i);
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
+	क्रम (i = 0; i < pt->queues.nr_queues; i++) अणु
+		ret = पूर्णांकel_pt_setup_queue(pt, &pt->queues.queue_array[i], i);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline bool intel_pt_skip_event(struct intel_pt *pt)
-{
-	return pt->synth_opts.initial_skip &&
+अटल अंतरभूत bool पूर्णांकel_pt_skip_event(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	वापस pt->synth_opts.initial_skip &&
 	       pt->num_events++ < pt->synth_opts.initial_skip;
-}
+पूर्ण
 
 /*
  * Cannot count CBR as skipped because it won't go away until cbr == cbr_seen.
- * Also ensure CBR is first non-skipped event by allowing for 4 more samples
+ * Also ensure CBR is first non-skipped event by allowing क्रम 4 more samples
  * from this decoder state.
  */
-static inline bool intel_pt_skip_cbr_event(struct intel_pt *pt)
-{
-	return pt->synth_opts.initial_skip &&
+अटल अंतरभूत bool पूर्णांकel_pt_skip_cbr_event(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	वापस pt->synth_opts.initial_skip &&
 	       pt->num_events + 4 < pt->synth_opts.initial_skip;
-}
+पूर्ण
 
-static void intel_pt_prep_a_sample(struct intel_pt_queue *ptq,
-				   union perf_event *event,
-				   struct perf_sample *sample)
-{
+अटल व्योम पूर्णांकel_pt_prep_a_sample(काष्ठा पूर्णांकel_pt_queue *ptq,
+				   जोड़ perf_event *event,
+				   काष्ठा perf_sample *sample)
+अणु
 	event->sample.header.type = PERF_RECORD_SAMPLE;
-	event->sample.header.size = sizeof(struct perf_event_header);
+	event->sample.header.size = माप(काष्ठा perf_event_header);
 
 	sample->pid = ptq->pid;
 	sample->tid = ptq->tid;
 	sample->cpu = ptq->cpu;
 	sample->insn_len = ptq->insn_len;
-	memcpy(sample->insn, ptq->insn, INTEL_PT_INSN_BUF_SZ);
-}
+	स_नकल(sample->insn, ptq->insn, INTEL_PT_INSN_BUF_SZ);
+पूर्ण
 
-static void intel_pt_prep_b_sample(struct intel_pt *pt,
-				   struct intel_pt_queue *ptq,
-				   union perf_event *event,
-				   struct perf_sample *sample)
-{
-	intel_pt_prep_a_sample(ptq, event, sample);
+अटल व्योम पूर्णांकel_pt_prep_b_sample(काष्ठा पूर्णांकel_pt *pt,
+				   काष्ठा पूर्णांकel_pt_queue *ptq,
+				   जोड़ perf_event *event,
+				   काष्ठा perf_sample *sample)
+अणु
+	पूर्णांकel_pt_prep_a_sample(ptq, event, sample);
 
-	if (!pt->timeless_decoding)
-		sample->time = tsc_to_perf_time(ptq->timestamp, &pt->tc);
+	अगर (!pt->समयless_decoding)
+		sample->समय = tsc_to_perf_समय(ptq->बारtamp, &pt->tc);
 
 	sample->ip = ptq->state->from_ip;
 	sample->addr = ptq->state->to_ip;
-	sample->cpumode = intel_pt_cpumode(ptq, sample->ip, sample->addr);
+	sample->cpumode = पूर्णांकel_pt_cpumode(ptq, sample->ip, sample->addr);
 	sample->period = 1;
 	sample->flags = ptq->flags;
 
 	event->sample.header.misc = sample->cpumode;
-}
+पूर्ण
 
-static int intel_pt_inject_event(union perf_event *event,
-				 struct perf_sample *sample, u64 type)
-{
+अटल पूर्णांक पूर्णांकel_pt_inject_event(जोड़ perf_event *event,
+				 काष्ठा perf_sample *sample, u64 type)
+अणु
 	event->header.size = perf_event__sample_event_size(sample, type, 0);
-	return perf_event__synthesize_sample(event, type, 0, sample);
-}
+	वापस perf_event__synthesize_sample(event, type, 0, sample);
+पूर्ण
 
-static inline int intel_pt_opt_inject(struct intel_pt *pt,
-				      union perf_event *event,
-				      struct perf_sample *sample, u64 type)
-{
-	if (!pt->synth_opts.inject)
-		return 0;
+अटल अंतरभूत पूर्णांक पूर्णांकel_pt_opt_inject(काष्ठा पूर्णांकel_pt *pt,
+				      जोड़ perf_event *event,
+				      काष्ठा perf_sample *sample, u64 type)
+अणु
+	अगर (!pt->synth_opts.inject)
+		वापस 0;
 
-	return intel_pt_inject_event(event, sample, type);
-}
+	वापस पूर्णांकel_pt_inject_event(event, sample, type);
+पूर्ण
 
-static int intel_pt_deliver_synth_event(struct intel_pt *pt,
-					union perf_event *event,
-					struct perf_sample *sample, u64 type)
-{
-	int ret;
+अटल पूर्णांक पूर्णांकel_pt_deliver_synth_event(काष्ठा पूर्णांकel_pt *pt,
+					जोड़ perf_event *event,
+					काष्ठा perf_sample *sample, u64 type)
+अणु
+	पूर्णांक ret;
 
-	ret = intel_pt_opt_inject(pt, event, sample, type);
-	if (ret)
-		return ret;
+	ret = पूर्णांकel_pt_opt_inject(pt, event, sample, type);
+	अगर (ret)
+		वापस ret;
 
 	ret = perf_session__deliver_synth_event(pt->session, event, sample);
-	if (ret)
+	अगर (ret)
 		pr_err("Intel PT: failed to deliver event, error %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int intel_pt_synth_branch_sample(struct intel_pt_queue *ptq)
-{
-	struct intel_pt *pt = ptq->pt;
-	union perf_event *event = ptq->event_buf;
-	struct perf_sample sample = { .ip = 0, };
-	struct dummy_branch_stack {
+अटल पूर्णांक पूर्णांकel_pt_synth_branch_sample(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	जोड़ perf_event *event = ptq->event_buf;
+	काष्ठा perf_sample sample = अणु .ip = 0, पूर्ण;
+	काष्ठा dummy_branch_stack अणु
 		u64			nr;
 		u64			hw_idx;
-		struct branch_entry	entries;
-	} dummy_bs;
+		काष्ठा branch_entry	entries;
+	पूर्ण dummy_bs;
 
-	if (pt->branches_filter && !(pt->branches_filter & ptq->flags))
-		return 0;
+	अगर (pt->branches_filter && !(pt->branches_filter & ptq->flags))
+		वापस 0;
 
-	if (intel_pt_skip_event(pt))
-		return 0;
+	अगर (पूर्णांकel_pt_skip_event(pt))
+		वापस 0;
 
-	intel_pt_prep_b_sample(pt, ptq, event, &sample);
+	पूर्णांकel_pt_prep_b_sample(pt, ptq, event, &sample);
 
 	sample.id = ptq->pt->branches_id;
 	sample.stream_id = ptq->pt->branches_id;
@@ -1454,130 +1455,130 @@ static int intel_pt_synth_branch_sample(struct intel_pt_queue *ptq)
 	 * perf report cannot handle events without a branch stack when using
 	 * SORT_MODE__BRANCH so make a dummy one.
 	 */
-	if (pt->synth_opts.last_branch && sort__mode == SORT_MODE__BRANCH) {
-		dummy_bs = (struct dummy_branch_stack){
+	अगर (pt->synth_opts.last_branch && sort__mode == SORT_MODE__BRANCH) अणु
+		dummy_bs = (काष्ठा dummy_branch_stack)अणु
 			.nr = 1,
 			.hw_idx = -1ULL,
-			.entries = {
+			.entries = अणु
 				.from = sample.ip,
 				.to = sample.addr,
-			},
-		};
-		sample.branch_stack = (struct branch_stack *)&dummy_bs;
-	}
+			पूर्ण,
+		पूर्ण;
+		sample.branch_stack = (काष्ठा branch_stack *)&dummy_bs;
+	पूर्ण
 
-	if (ptq->state->flags & INTEL_PT_SAMPLE_IPC)
+	अगर (ptq->state->flags & INTEL_PT_SAMPLE_IPC)
 		sample.cyc_cnt = ptq->ipc_cyc_cnt - ptq->last_br_cyc_cnt;
-	if (sample.cyc_cnt) {
+	अगर (sample.cyc_cnt) अणु
 		sample.insn_cnt = ptq->ipc_insn_cnt - ptq->last_br_insn_cnt;
 		ptq->last_br_insn_cnt = ptq->ipc_insn_cnt;
 		ptq->last_br_cyc_cnt = ptq->ipc_cyc_cnt;
-	}
+	पूर्ण
 
-	return intel_pt_deliver_synth_event(pt, event, &sample,
+	वापस पूर्णांकel_pt_deliver_synth_event(pt, event, &sample,
 					    pt->branches_sample_type);
-}
+पूर्ण
 
-static void intel_pt_prep_sample(struct intel_pt *pt,
-				 struct intel_pt_queue *ptq,
-				 union perf_event *event,
-				 struct perf_sample *sample)
-{
-	intel_pt_prep_b_sample(pt, ptq, event, sample);
+अटल व्योम पूर्णांकel_pt_prep_sample(काष्ठा पूर्णांकel_pt *pt,
+				 काष्ठा पूर्णांकel_pt_queue *ptq,
+				 जोड़ perf_event *event,
+				 काष्ठा perf_sample *sample)
+अणु
+	पूर्णांकel_pt_prep_b_sample(pt, ptq, event, sample);
 
-	if (pt->synth_opts.callchain) {
-		thread_stack__sample(ptq->thread, ptq->cpu, ptq->chain,
+	अगर (pt->synth_opts.callchain) अणु
+		thपढ़ो_stack__sample(ptq->thपढ़ो, ptq->cpu, ptq->chain,
 				     pt->synth_opts.callchain_sz + 1,
 				     sample->ip, pt->kernel_start);
 		sample->callchain = ptq->chain;
-	}
+	पूर्ण
 
-	if (pt->synth_opts.last_branch) {
-		thread_stack__br_sample(ptq->thread, ptq->cpu, ptq->last_branch,
+	अगर (pt->synth_opts.last_branch) अणु
+		thपढ़ो_stack__br_sample(ptq->thपढ़ो, ptq->cpu, ptq->last_branch,
 					pt->br_stack_sz);
 		sample->branch_stack = ptq->last_branch;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int intel_pt_synth_instruction_sample(struct intel_pt_queue *ptq)
-{
-	struct intel_pt *pt = ptq->pt;
-	union perf_event *event = ptq->event_buf;
-	struct perf_sample sample = { .ip = 0, };
+अटल पूर्णांक पूर्णांकel_pt_synth_inकाष्ठाion_sample(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	जोड़ perf_event *event = ptq->event_buf;
+	काष्ठा perf_sample sample = अणु .ip = 0, पूर्ण;
 
-	if (intel_pt_skip_event(pt))
-		return 0;
+	अगर (पूर्णांकel_pt_skip_event(pt))
+		वापस 0;
 
-	intel_pt_prep_sample(pt, ptq, event, &sample);
+	पूर्णांकel_pt_prep_sample(pt, ptq, event, &sample);
 
-	sample.id = ptq->pt->instructions_id;
-	sample.stream_id = ptq->pt->instructions_id;
-	if (pt->synth_opts.quick)
+	sample.id = ptq->pt->inकाष्ठाions_id;
+	sample.stream_id = ptq->pt->inकाष्ठाions_id;
+	अगर (pt->synth_opts.quick)
 		sample.period = 1;
-	else
+	अन्यथा
 		sample.period = ptq->state->tot_insn_cnt - ptq->last_insn_cnt;
 
-	if (ptq->state->flags & INTEL_PT_SAMPLE_IPC)
+	अगर (ptq->state->flags & INTEL_PT_SAMPLE_IPC)
 		sample.cyc_cnt = ptq->ipc_cyc_cnt - ptq->last_in_cyc_cnt;
-	if (sample.cyc_cnt) {
+	अगर (sample.cyc_cnt) अणु
 		sample.insn_cnt = ptq->ipc_insn_cnt - ptq->last_in_insn_cnt;
 		ptq->last_in_insn_cnt = ptq->ipc_insn_cnt;
 		ptq->last_in_cyc_cnt = ptq->ipc_cyc_cnt;
-	}
+	पूर्ण
 
 	ptq->last_insn_cnt = ptq->state->tot_insn_cnt;
 
-	return intel_pt_deliver_synth_event(pt, event, &sample,
-					    pt->instructions_sample_type);
-}
+	वापस पूर्णांकel_pt_deliver_synth_event(pt, event, &sample,
+					    pt->inकाष्ठाions_sample_type);
+पूर्ण
 
-static int intel_pt_synth_transaction_sample(struct intel_pt_queue *ptq)
-{
-	struct intel_pt *pt = ptq->pt;
-	union perf_event *event = ptq->event_buf;
-	struct perf_sample sample = { .ip = 0, };
+अटल पूर्णांक पूर्णांकel_pt_synth_transaction_sample(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	जोड़ perf_event *event = ptq->event_buf;
+	काष्ठा perf_sample sample = अणु .ip = 0, पूर्ण;
 
-	if (intel_pt_skip_event(pt))
-		return 0;
+	अगर (पूर्णांकel_pt_skip_event(pt))
+		वापस 0;
 
-	intel_pt_prep_sample(pt, ptq, event, &sample);
+	पूर्णांकel_pt_prep_sample(pt, ptq, event, &sample);
 
 	sample.id = ptq->pt->transactions_id;
 	sample.stream_id = ptq->pt->transactions_id;
 
-	return intel_pt_deliver_synth_event(pt, event, &sample,
+	वापस पूर्णांकel_pt_deliver_synth_event(pt, event, &sample,
 					    pt->transactions_sample_type);
-}
+पूर्ण
 
-static void intel_pt_prep_p_sample(struct intel_pt *pt,
-				   struct intel_pt_queue *ptq,
-				   union perf_event *event,
-				   struct perf_sample *sample)
-{
-	intel_pt_prep_sample(pt, ptq, event, sample);
+अटल व्योम पूर्णांकel_pt_prep_p_sample(काष्ठा पूर्णांकel_pt *pt,
+				   काष्ठा पूर्णांकel_pt_queue *ptq,
+				   जोड़ perf_event *event,
+				   काष्ठा perf_sample *sample)
+अणु
+	पूर्णांकel_pt_prep_sample(pt, ptq, event, sample);
 
 	/*
-	 * Zero IP is used to mean "trace start" but that is not the case for
-	 * power or PTWRITE events with no IP, so clear the flags.
+	 * Zero IP is used to mean "trace start" but that is not the हाल क्रम
+	 * घातer or PTWRITE events with no IP, so clear the flags.
 	 */
-	if (!sample->ip)
+	अगर (!sample->ip)
 		sample->flags = 0;
-}
+पूर्ण
 
-static int intel_pt_synth_ptwrite_sample(struct intel_pt_queue *ptq)
-{
-	struct intel_pt *pt = ptq->pt;
-	union perf_event *event = ptq->event_buf;
-	struct perf_sample sample = { .ip = 0, };
-	struct perf_synth_intel_ptwrite raw;
+अटल पूर्णांक पूर्णांकel_pt_synth_ptग_लिखो_sample(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	जोड़ perf_event *event = ptq->event_buf;
+	काष्ठा perf_sample sample = अणु .ip = 0, पूर्ण;
+	काष्ठा perf_synth_पूर्णांकel_ptग_लिखो raw;
 
-	if (intel_pt_skip_event(pt))
-		return 0;
+	अगर (पूर्णांकel_pt_skip_event(pt))
+		वापस 0;
 
-	intel_pt_prep_p_sample(pt, ptq, event, &sample);
+	पूर्णांकel_pt_prep_p_sample(pt, ptq, event, &sample);
 
-	sample.id = ptq->pt->ptwrites_id;
-	sample.stream_id = ptq->pt->ptwrites_id;
+	sample.id = ptq->pt->ptग_लिखोs_id;
+	sample.stream_id = ptq->pt->ptग_लिखोs_id;
 
 	raw.flags = 0;
 	raw.ip = !!(ptq->state->flags & INTEL_PT_FUP_IP);
@@ -1586,24 +1587,24 @@ static int intel_pt_synth_ptwrite_sample(struct intel_pt_queue *ptq)
 	sample.raw_size = perf_synth__raw_size(raw);
 	sample.raw_data = perf_synth__raw_data(&raw);
 
-	return intel_pt_deliver_synth_event(pt, event, &sample,
-					    pt->ptwrites_sample_type);
-}
+	वापस पूर्णांकel_pt_deliver_synth_event(pt, event, &sample,
+					    pt->ptग_लिखोs_sample_type);
+पूर्ण
 
-static int intel_pt_synth_cbr_sample(struct intel_pt_queue *ptq)
-{
-	struct intel_pt *pt = ptq->pt;
-	union perf_event *event = ptq->event_buf;
-	struct perf_sample sample = { .ip = 0, };
-	struct perf_synth_intel_cbr raw;
+अटल पूर्णांक पूर्णांकel_pt_synth_cbr_sample(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	जोड़ perf_event *event = ptq->event_buf;
+	काष्ठा perf_sample sample = अणु .ip = 0, पूर्ण;
+	काष्ठा perf_synth_पूर्णांकel_cbr raw;
 	u32 flags;
 
-	if (intel_pt_skip_cbr_event(pt))
-		return 0;
+	अगर (पूर्णांकel_pt_skip_cbr_event(pt))
+		वापस 0;
 
 	ptq->cbr_seen = ptq->state->cbr;
 
-	intel_pt_prep_p_sample(pt, ptq, event, &sample);
+	पूर्णांकel_pt_prep_p_sample(pt, ptq, event, &sample);
 
 	sample.id = ptq->pt->cbr_id;
 	sample.stream_id = ptq->pt->cbr_id;
@@ -1616,21 +1617,21 @@ static int intel_pt_synth_cbr_sample(struct intel_pt_queue *ptq)
 	sample.raw_size = perf_synth__raw_size(raw);
 	sample.raw_data = perf_synth__raw_data(&raw);
 
-	return intel_pt_deliver_synth_event(pt, event, &sample,
+	वापस पूर्णांकel_pt_deliver_synth_event(pt, event, &sample,
 					    pt->pwr_events_sample_type);
-}
+पूर्ण
 
-static int intel_pt_synth_psb_sample(struct intel_pt_queue *ptq)
-{
-	struct intel_pt *pt = ptq->pt;
-	union perf_event *event = ptq->event_buf;
-	struct perf_sample sample = { .ip = 0, };
-	struct perf_synth_intel_psb raw;
+अटल पूर्णांक पूर्णांकel_pt_synth_psb_sample(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	जोड़ perf_event *event = ptq->event_buf;
+	काष्ठा perf_sample sample = अणु .ip = 0, पूर्ण;
+	काष्ठा perf_synth_पूर्णांकel_psb raw;
 
-	if (intel_pt_skip_event(pt))
-		return 0;
+	अगर (पूर्णांकel_pt_skip_event(pt))
+		वापस 0;
 
-	intel_pt_prep_p_sample(pt, ptq, event, &sample);
+	पूर्णांकel_pt_prep_p_sample(pt, ptq, event, &sample);
 
 	sample.id = ptq->pt->psb_id;
 	sample.stream_id = ptq->pt->psb_id;
@@ -1642,46 +1643,46 @@ static int intel_pt_synth_psb_sample(struct intel_pt_queue *ptq)
 	sample.raw_size = perf_synth__raw_size(raw);
 	sample.raw_data = perf_synth__raw_data(&raw);
 
-	return intel_pt_deliver_synth_event(pt, event, &sample,
+	वापस पूर्णांकel_pt_deliver_synth_event(pt, event, &sample,
 					    pt->pwr_events_sample_type);
-}
+पूर्ण
 
-static int intel_pt_synth_mwait_sample(struct intel_pt_queue *ptq)
-{
-	struct intel_pt *pt = ptq->pt;
-	union perf_event *event = ptq->event_buf;
-	struct perf_sample sample = { .ip = 0, };
-	struct perf_synth_intel_mwait raw;
+अटल पूर्णांक पूर्णांकel_pt_synth_mरुको_sample(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	जोड़ perf_event *event = ptq->event_buf;
+	काष्ठा perf_sample sample = अणु .ip = 0, पूर्ण;
+	काष्ठा perf_synth_पूर्णांकel_mरुको raw;
 
-	if (intel_pt_skip_event(pt))
-		return 0;
+	अगर (पूर्णांकel_pt_skip_event(pt))
+		वापस 0;
 
-	intel_pt_prep_p_sample(pt, ptq, event, &sample);
+	पूर्णांकel_pt_prep_p_sample(pt, ptq, event, &sample);
 
-	sample.id = ptq->pt->mwait_id;
-	sample.stream_id = ptq->pt->mwait_id;
+	sample.id = ptq->pt->mरुको_id;
+	sample.stream_id = ptq->pt->mरुको_id;
 
 	raw.reserved = 0;
-	raw.payload = cpu_to_le64(ptq->state->mwait_payload);
+	raw.payload = cpu_to_le64(ptq->state->mरुको_payload);
 
 	sample.raw_size = perf_synth__raw_size(raw);
 	sample.raw_data = perf_synth__raw_data(&raw);
 
-	return intel_pt_deliver_synth_event(pt, event, &sample,
+	वापस पूर्णांकel_pt_deliver_synth_event(pt, event, &sample,
 					    pt->pwr_events_sample_type);
-}
+पूर्ण
 
-static int intel_pt_synth_pwre_sample(struct intel_pt_queue *ptq)
-{
-	struct intel_pt *pt = ptq->pt;
-	union perf_event *event = ptq->event_buf;
-	struct perf_sample sample = { .ip = 0, };
-	struct perf_synth_intel_pwre raw;
+अटल पूर्णांक पूर्णांकel_pt_synth_pwre_sample(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	जोड़ perf_event *event = ptq->event_buf;
+	काष्ठा perf_sample sample = अणु .ip = 0, पूर्ण;
+	काष्ठा perf_synth_पूर्णांकel_pwre raw;
 
-	if (intel_pt_skip_event(pt))
-		return 0;
+	अगर (पूर्णांकel_pt_skip_event(pt))
+		वापस 0;
 
-	intel_pt_prep_p_sample(pt, ptq, event, &sample);
+	पूर्णांकel_pt_prep_p_sample(pt, ptq, event, &sample);
 
 	sample.id = ptq->pt->pwre_id;
 	sample.stream_id = ptq->pt->pwre_id;
@@ -1692,21 +1693,21 @@ static int intel_pt_synth_pwre_sample(struct intel_pt_queue *ptq)
 	sample.raw_size = perf_synth__raw_size(raw);
 	sample.raw_data = perf_synth__raw_data(&raw);
 
-	return intel_pt_deliver_synth_event(pt, event, &sample,
+	वापस पूर्णांकel_pt_deliver_synth_event(pt, event, &sample,
 					    pt->pwr_events_sample_type);
-}
+पूर्ण
 
-static int intel_pt_synth_exstop_sample(struct intel_pt_queue *ptq)
-{
-	struct intel_pt *pt = ptq->pt;
-	union perf_event *event = ptq->event_buf;
-	struct perf_sample sample = { .ip = 0, };
-	struct perf_synth_intel_exstop raw;
+अटल पूर्णांक पूर्णांकel_pt_synth_exstop_sample(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	जोड़ perf_event *event = ptq->event_buf;
+	काष्ठा perf_sample sample = अणु .ip = 0, पूर्ण;
+	काष्ठा perf_synth_पूर्णांकel_exstop raw;
 
-	if (intel_pt_skip_event(pt))
-		return 0;
+	अगर (पूर्णांकel_pt_skip_event(pt))
+		वापस 0;
 
-	intel_pt_prep_p_sample(pt, ptq, event, &sample);
+	पूर्णांकel_pt_prep_p_sample(pt, ptq, event, &sample);
 
 	sample.id = ptq->pt->exstop_id;
 	sample.stream_id = ptq->pt->exstop_id;
@@ -1717,21 +1718,21 @@ static int intel_pt_synth_exstop_sample(struct intel_pt_queue *ptq)
 	sample.raw_size = perf_synth__raw_size(raw);
 	sample.raw_data = perf_synth__raw_data(&raw);
 
-	return intel_pt_deliver_synth_event(pt, event, &sample,
+	वापस पूर्णांकel_pt_deliver_synth_event(pt, event, &sample,
 					    pt->pwr_events_sample_type);
-}
+पूर्ण
 
-static int intel_pt_synth_pwrx_sample(struct intel_pt_queue *ptq)
-{
-	struct intel_pt *pt = ptq->pt;
-	union perf_event *event = ptq->event_buf;
-	struct perf_sample sample = { .ip = 0, };
-	struct perf_synth_intel_pwrx raw;
+अटल पूर्णांक पूर्णांकel_pt_synth_pwrx_sample(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	जोड़ perf_event *event = ptq->event_buf;
+	काष्ठा perf_sample sample = अणु .ip = 0, पूर्ण;
+	काष्ठा perf_synth_पूर्णांकel_pwrx raw;
 
-	if (intel_pt_skip_event(pt))
-		return 0;
+	अगर (पूर्णांकel_pt_skip_event(pt))
+		वापस 0;
 
-	intel_pt_prep_p_sample(pt, ptq, event, &sample);
+	पूर्णांकel_pt_prep_p_sample(pt, ptq, event, &sample);
 
 	sample.id = ptq->pt->pwrx_id;
 	sample.stream_id = ptq->pt->pwrx_id;
@@ -1742,15 +1743,15 @@ static int intel_pt_synth_pwrx_sample(struct intel_pt_queue *ptq)
 	sample.raw_size = perf_synth__raw_size(raw);
 	sample.raw_data = perf_synth__raw_data(&raw);
 
-	return intel_pt_deliver_synth_event(pt, event, &sample,
+	वापस पूर्णांकel_pt_deliver_synth_event(pt, event, &sample,
 					    pt->pwr_events_sample_type);
-}
+पूर्ण
 
 /*
  * PEBS gp_regs array indexes plus 1 so that 0 means not present. Refer
- * intel_pt_add_gp_regs().
+ * पूर्णांकel_pt_add_gp_regs().
  */
-static const int pebs_gp_regs[] = {
+अटल स्थिर पूर्णांक pebs_gp_regs[] = अणु
 	[PERF_REG_X86_FLAGS]	= 1,
 	[PERF_REG_X86_IP]	= 2,
 	[PERF_REG_X86_AX]	= 3,
@@ -1769,327 +1770,327 @@ static const int pebs_gp_regs[] = {
 	[PERF_REG_X86_R13]	= 16,
 	[PERF_REG_X86_R14]	= 17,
 	[PERF_REG_X86_R15]	= 18,
-};
+पूर्ण;
 
-static u64 *intel_pt_add_gp_regs(struct regs_dump *intr_regs, u64 *pos,
-				 const struct intel_pt_blk_items *items,
+अटल u64 *पूर्णांकel_pt_add_gp_regs(काष्ठा regs_dump *पूर्णांकr_regs, u64 *pos,
+				 स्थिर काष्ठा पूर्णांकel_pt_blk_items *items,
 				 u64 regs_mask)
-{
-	const u64 *gp_regs = items->val[INTEL_PT_GP_REGS_POS];
+अणु
+	स्थिर u64 *gp_regs = items->val[INTEL_PT_GP_REGS_POS];
 	u32 mask = items->mask[INTEL_PT_GP_REGS_POS];
 	u32 bit;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0, bit = 1; i < PERF_REG_X86_64_MAX; i++, bit <<= 1) {
+	क्रम (i = 0, bit = 1; i < PERF_REG_X86_64_MAX; i++, bit <<= 1) अणु
 		/* Get the PEBS gp_regs array index */
-		int n = pebs_gp_regs[i] - 1;
+		पूर्णांक n = pebs_gp_regs[i] - 1;
 
-		if (n < 0)
-			continue;
+		अगर (n < 0)
+			जारी;
 		/*
-		 * Add only registers that were requested (i.e. 'regs_mask') and
+		 * Add only रेजिस्टरs that were requested (i.e. 'regs_mask') and
 		 * that were provided (i.e. 'mask'), and update the resulting
 		 * mask (i.e. 'intr_regs->mask') accordingly.
 		 */
-		if (mask & 1 << n && regs_mask & bit) {
-			intr_regs->mask |= bit;
+		अगर (mask & 1 << n && regs_mask & bit) अणु
+			पूर्णांकr_regs->mask |= bit;
 			*pos++ = gp_regs[n];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
-#ifndef PERF_REG_X86_XMM0
-#define PERF_REG_X86_XMM0 32
-#endif
+#अगर_अघोषित PERF_REG_X86_XMM0
+#घोषणा PERF_REG_X86_XMM0 32
+#पूर्ण_अगर
 
-static void intel_pt_add_xmm(struct regs_dump *intr_regs, u64 *pos,
-			     const struct intel_pt_blk_items *items,
+अटल व्योम पूर्णांकel_pt_add_xmm(काष्ठा regs_dump *पूर्णांकr_regs, u64 *pos,
+			     स्थिर काष्ठा पूर्णांकel_pt_blk_items *items,
 			     u64 regs_mask)
-{
+अणु
 	u32 mask = items->has_xmm & (regs_mask >> PERF_REG_X86_XMM0);
-	const u64 *xmm = items->xmm;
+	स्थिर u64 *xmm = items->xmm;
 
 	/*
-	 * If there are any XMM registers, then there should be all of them.
-	 * Nevertheless, follow the logic to add only registers that were
+	 * If there are any XMM रेजिस्टरs, then there should be all of them.
+	 * Nevertheless, follow the logic to add only रेजिस्टरs that were
 	 * requested (i.e. 'regs_mask') and that were provided (i.e. 'mask'),
 	 * and update the resulting mask (i.e. 'intr_regs->mask') accordingly.
 	 */
-	intr_regs->mask |= (u64)mask << PERF_REG_X86_XMM0;
+	पूर्णांकr_regs->mask |= (u64)mask << PERF_REG_X86_XMM0;
 
-	for (; mask; mask >>= 1, xmm++) {
-		if (mask & 1)
+	क्रम (; mask; mask >>= 1, xmm++) अणु
+		अगर (mask & 1)
 			*pos++ = *xmm;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define LBR_INFO_MISPRED	(1ULL << 63)
-#define LBR_INFO_IN_TX		(1ULL << 62)
-#define LBR_INFO_ABORT		(1ULL << 61)
-#define LBR_INFO_CYCLES		0xffff
+#घोषणा LBR_INFO_MISPRED	(1ULL << 63)
+#घोषणा LBR_INFO_IN_TX		(1ULL << 62)
+#घोषणा LBR_INFO_ABORT		(1ULL << 61)
+#घोषणा LBR_INFO_CYCLES		0xffff
 
-/* Refer kernel's intel_pmu_store_pebs_lbrs() */
-static u64 intel_pt_lbr_flags(u64 info)
-{
-	union {
-		struct branch_flags flags;
+/* Refer kernel's पूर्णांकel_pmu_store_pebs_lbrs() */
+अटल u64 पूर्णांकel_pt_lbr_flags(u64 info)
+अणु
+	जोड़ अणु
+		काष्ठा branch_flags flags;
 		u64 result;
-	} u;
+	पूर्ण u;
 
 	u.result	  = 0;
 	u.flags.mispred	  = !!(info & LBR_INFO_MISPRED);
 	u.flags.predicted = !(info & LBR_INFO_MISPRED);
 	u.flags.in_tx	  = !!(info & LBR_INFO_IN_TX);
-	u.flags.abort	  = !!(info & LBR_INFO_ABORT);
+	u.flags.पात	  = !!(info & LBR_INFO_ABORT);
 	u.flags.cycles	  = info & LBR_INFO_CYCLES;
 
-	return u.result;
-}
+	वापस u.result;
+पूर्ण
 
-static void intel_pt_add_lbrs(struct branch_stack *br_stack,
-			      const struct intel_pt_blk_items *items)
-{
+अटल व्योम पूर्णांकel_pt_add_lbrs(काष्ठा branch_stack *br_stack,
+			      स्थिर काष्ठा पूर्णांकel_pt_blk_items *items)
+अणु
 	u64 *to;
-	int i;
+	पूर्णांक i;
 
 	br_stack->nr = 0;
 
 	to = &br_stack->entries[0].from;
 
-	for (i = INTEL_PT_LBR_0_POS; i <= INTEL_PT_LBR_2_POS; i++) {
+	क्रम (i = INTEL_PT_LBR_0_POS; i <= INTEL_PT_LBR_2_POS; i++) अणु
 		u32 mask = items->mask[i];
-		const u64 *from = items->val[i];
+		स्थिर u64 *from = items->val[i];
 
-		for (; mask; mask >>= 3, from += 3) {
-			if ((mask & 7) == 7) {
+		क्रम (; mask; mask >>= 3, from += 3) अणु
+			अगर ((mask & 7) == 7) अणु
 				*to++ = from[0];
 				*to++ = from[1];
-				*to++ = intel_pt_lbr_flags(from[2]);
+				*to++ = पूर्णांकel_pt_lbr_flags(from[2]);
 				br_stack->nr += 1;
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int intel_pt_synth_pebs_sample(struct intel_pt_queue *ptq)
-{
-	const struct intel_pt_blk_items *items = &ptq->state->items;
-	struct perf_sample sample = { .ip = 0, };
-	union perf_event *event = ptq->event_buf;
-	struct intel_pt *pt = ptq->pt;
-	struct evsel *evsel = pt->pebs_evsel;
+अटल पूर्णांक पूर्णांकel_pt_synth_pebs_sample(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	स्थिर काष्ठा पूर्णांकel_pt_blk_items *items = &ptq->state->items;
+	काष्ठा perf_sample sample = अणु .ip = 0, पूर्ण;
+	जोड़ perf_event *event = ptq->event_buf;
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	काष्ठा evsel *evsel = pt->pebs_evsel;
 	u64 sample_type = evsel->core.attr.sample_type;
 	u64 id = evsel->core.id[0];
 	u8 cpumode;
-	u64 regs[8 * sizeof(sample.intr_regs.mask)];
+	u64 regs[8 * माप(sample.पूर्णांकr_regs.mask)];
 
-	if (intel_pt_skip_event(pt))
-		return 0;
+	अगर (पूर्णांकel_pt_skip_event(pt))
+		वापस 0;
 
-	intel_pt_prep_a_sample(ptq, event, &sample);
+	पूर्णांकel_pt_prep_a_sample(ptq, event, &sample);
 
 	sample.id = id;
 	sample.stream_id = id;
 
-	if (!evsel->core.attr.freq)
+	अगर (!evsel->core.attr.freq)
 		sample.period = evsel->core.attr.sample_period;
 
-	/* No support for non-zero CS base */
-	if (items->has_ip)
+	/* No support क्रम non-zero CS base */
+	अगर (items->has_ip)
 		sample.ip = items->ip;
-	else if (items->has_rip)
+	अन्यथा अगर (items->has_rip)
 		sample.ip = items->rip;
-	else
+	अन्यथा
 		sample.ip = ptq->state->from_ip;
 
-	cpumode = intel_pt_cpumode(ptq, sample.ip, 0);
+	cpumode = पूर्णांकel_pt_cpumode(ptq, sample.ip, 0);
 
 	event->sample.header.misc = cpumode | PERF_RECORD_MISC_EXACT_IP;
 
 	sample.cpumode = cpumode;
 
-	if (sample_type & PERF_SAMPLE_TIME) {
-		u64 timestamp = 0;
+	अगर (sample_type & PERF_SAMPLE_TIME) अणु
+		u64 बारtamp = 0;
 
-		if (items->has_timestamp)
-			timestamp = items->timestamp;
-		else if (!pt->timeless_decoding)
-			timestamp = ptq->timestamp;
-		if (timestamp)
-			sample.time = tsc_to_perf_time(timestamp, &pt->tc);
-	}
+		अगर (items->has_बारtamp)
+			बारtamp = items->बारtamp;
+		अन्यथा अगर (!pt->समयless_decoding)
+			बारtamp = ptq->बारtamp;
+		अगर (बारtamp)
+			sample.समय = tsc_to_perf_समय(बारtamp, &pt->tc);
+	पूर्ण
 
-	if (sample_type & PERF_SAMPLE_CALLCHAIN &&
-	    pt->synth_opts.callchain) {
-		thread_stack__sample(ptq->thread, ptq->cpu, ptq->chain,
+	अगर (sample_type & PERF_SAMPLE_CALLCHAIN &&
+	    pt->synth_opts.callchain) अणु
+		thपढ़ो_stack__sample(ptq->thपढ़ो, ptq->cpu, ptq->chain,
 				     pt->synth_opts.callchain_sz, sample.ip,
 				     pt->kernel_start);
 		sample.callchain = ptq->chain;
-	}
+	पूर्ण
 
-	if (sample_type & PERF_SAMPLE_REGS_INTR &&
+	अगर (sample_type & PERF_SAMPLE_REGS_INTR &&
 	    (items->mask[INTEL_PT_GP_REGS_POS] ||
-	     items->mask[INTEL_PT_XMM_POS])) {
-		u64 regs_mask = evsel->core.attr.sample_regs_intr;
+	     items->mask[INTEL_PT_XMM_POS])) अणु
+		u64 regs_mask = evsel->core.attr.sample_regs_पूर्णांकr;
 		u64 *pos;
 
-		sample.intr_regs.abi = items->is_32_bit ?
+		sample.पूर्णांकr_regs.abi = items->is_32_bit ?
 				       PERF_SAMPLE_REGS_ABI_32 :
 				       PERF_SAMPLE_REGS_ABI_64;
-		sample.intr_regs.regs = regs;
+		sample.पूर्णांकr_regs.regs = regs;
 
-		pos = intel_pt_add_gp_regs(&sample.intr_regs, regs, items, regs_mask);
+		pos = पूर्णांकel_pt_add_gp_regs(&sample.पूर्णांकr_regs, regs, items, regs_mask);
 
-		intel_pt_add_xmm(&sample.intr_regs, pos, items, regs_mask);
-	}
+		पूर्णांकel_pt_add_xmm(&sample.पूर्णांकr_regs, pos, items, regs_mask);
+	पूर्ण
 
-	if (sample_type & PERF_SAMPLE_BRANCH_STACK) {
-		if (items->mask[INTEL_PT_LBR_0_POS] ||
+	अगर (sample_type & PERF_SAMPLE_BRANCH_STACK) अणु
+		अगर (items->mask[INTEL_PT_LBR_0_POS] ||
 		    items->mask[INTEL_PT_LBR_1_POS] ||
-		    items->mask[INTEL_PT_LBR_2_POS]) {
-			intel_pt_add_lbrs(ptq->last_branch, items);
-		} else if (pt->synth_opts.last_branch) {
-			thread_stack__br_sample(ptq->thread, ptq->cpu,
+		    items->mask[INTEL_PT_LBR_2_POS]) अणु
+			पूर्णांकel_pt_add_lbrs(ptq->last_branch, items);
+		पूर्ण अन्यथा अगर (pt->synth_opts.last_branch) अणु
+			thपढ़ो_stack__br_sample(ptq->thपढ़ो, ptq->cpu,
 						ptq->last_branch,
 						pt->br_stack_sz);
-		} else {
+		पूर्ण अन्यथा अणु
 			ptq->last_branch->nr = 0;
-		}
+		पूर्ण
 		sample.branch_stack = ptq->last_branch;
-	}
+	पूर्ण
 
-	if (sample_type & PERF_SAMPLE_ADDR && items->has_mem_access_address)
+	अगर (sample_type & PERF_SAMPLE_ADDR && items->has_mem_access_address)
 		sample.addr = items->mem_access_address;
 
-	if (sample_type & PERF_SAMPLE_WEIGHT_TYPE) {
+	अगर (sample_type & PERF_SAMPLE_WEIGHT_TYPE) अणु
 		/*
 		 * Refer kernel's setup_pebs_adaptive_sample_data() and
-		 * intel_hsw_weight().
+		 * पूर्णांकel_hsw_weight().
 		 */
-		if (items->has_mem_access_latency) {
+		अगर (items->has_mem_access_latency) अणु
 			u64 weight = items->mem_access_latency >> 32;
 
 			/*
 			 * Starts from SPR, the mem access latency field
-			 * contains both cache latency [47:32] and instruction
+			 * contains both cache latency [47:32] and inकाष्ठाion
 			 * latency [15:0]. The cache latency is the same as the
-			 * mem access latency on previous platforms.
+			 * mem access latency on previous platक्रमms.
 			 *
 			 * In practice, no memory access could last than 4G
 			 * cycles. Use latency >> 32 to distinguish the
-			 * different format of the mem access latency field.
+			 * dअगरferent क्रमmat of the mem access latency field.
 			 */
-			if (weight > 0) {
+			अगर (weight > 0) अणु
 				sample.weight = weight & 0xffff;
 				sample.ins_lat = items->mem_access_latency & 0xffff;
-			} else
+			पूर्ण अन्यथा
 				sample.weight = items->mem_access_latency;
-		}
-		if (!sample.weight && items->has_tsx_aux_info) {
+		पूर्ण
+		अगर (!sample.weight && items->has_tsx_aux_info) अणु
 			/* Cycles last block */
 			sample.weight = (u32)items->tsx_aux_info;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sample_type & PERF_SAMPLE_TRANSACTION && items->has_tsx_aux_info) {
+	अगर (sample_type & PERF_SAMPLE_TRANSACTION && items->has_tsx_aux_info) अणु
 		u64 ax = items->has_rax ? items->rax : 0;
-		/* Refer kernel's intel_hsw_transaction() */
+		/* Refer kernel's पूर्णांकel_hsw_transaction() */
 		u64 txn = (u8)(items->tsx_aux_info >> 32);
 
-		/* For RTM XABORTs also log the abort code from AX */
-		if (txn & PERF_TXN_TRANSACTION && ax & 1)
+		/* For RTM XABORTs also log the पात code from AX */
+		अगर (txn & PERF_TXN_TRANSACTION && ax & 1)
 			txn |= ((ax >> 24) & 0xff) << PERF_TXN_ABORT_SHIFT;
 		sample.transaction = txn;
-	}
+	पूर्ण
 
-	return intel_pt_deliver_synth_event(pt, event, &sample, sample_type);
-}
+	वापस पूर्णांकel_pt_deliver_synth_event(pt, event, &sample, sample_type);
+पूर्ण
 
-static int intel_pt_synth_error(struct intel_pt *pt, int code, int cpu,
-				pid_t pid, pid_t tid, u64 ip, u64 timestamp)
-{
-	union perf_event event;
-	char msg[MAX_AUXTRACE_ERROR_MSG];
-	int err;
+अटल पूर्णांक पूर्णांकel_pt_synth_error(काष्ठा पूर्णांकel_pt *pt, पूर्णांक code, पूर्णांक cpu,
+				pid_t pid, pid_t tid, u64 ip, u64 बारtamp)
+अणु
+	जोड़ perf_event event;
+	अक्षर msg[MAX_AUXTRACE_ERROR_MSG];
+	पूर्णांक err;
 
-	if (pt->synth_opts.error_minus_flags) {
-		if (code == INTEL_PT_ERR_OVR &&
+	अगर (pt->synth_opts.error_minus_flags) अणु
+		अगर (code == INTEL_PT_ERR_OVR &&
 		    pt->synth_opts.error_minus_flags & AUXTRACE_ERR_FLG_OVERFLOW)
-			return 0;
-		if (code == INTEL_PT_ERR_LOST &&
+			वापस 0;
+		अगर (code == INTEL_PT_ERR_LOST &&
 		    pt->synth_opts.error_minus_flags & AUXTRACE_ERR_FLG_DATA_LOST)
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 
-	intel_pt__strerror(code, msg, MAX_AUXTRACE_ERROR_MSG);
+	पूर्णांकel_pt__म_त्रुटि(code, msg, MAX_AUXTRACE_ERROR_MSG);
 
 	auxtrace_synth_error(&event.auxtrace_error, PERF_AUXTRACE_ERROR_ITRACE,
-			     code, cpu, pid, tid, ip, msg, timestamp);
+			     code, cpu, pid, tid, ip, msg, बारtamp);
 
-	err = perf_session__deliver_synth_event(pt->session, &event, NULL);
-	if (err)
+	err = perf_session__deliver_synth_event(pt->session, &event, शून्य);
+	अगर (err)
 		pr_err("Intel Processor Trace: failed to deliver error event, error %d\n",
 		       err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int intel_ptq_synth_error(struct intel_pt_queue *ptq,
-				 const struct intel_pt_state *state)
-{
-	struct intel_pt *pt = ptq->pt;
-	u64 tm = ptq->timestamp;
+अटल पूर्णांक पूर्णांकel_ptq_synth_error(काष्ठा पूर्णांकel_pt_queue *ptq,
+				 स्थिर काष्ठा पूर्णांकel_pt_state *state)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	u64 पंचांग = ptq->बारtamp;
 
-	tm = pt->timeless_decoding ? 0 : tsc_to_perf_time(tm, &pt->tc);
+	पंचांग = pt->समयless_decoding ? 0 : tsc_to_perf_समय(पंचांग, &pt->tc);
 
-	return intel_pt_synth_error(pt, state->err, ptq->cpu, ptq->pid,
-				    ptq->tid, state->from_ip, tm);
-}
+	वापस पूर्णांकel_pt_synth_error(pt, state->err, ptq->cpu, ptq->pid,
+				    ptq->tid, state->from_ip, पंचांग);
+पूर्ण
 
-static int intel_pt_next_tid(struct intel_pt *pt, struct intel_pt_queue *ptq)
-{
-	struct auxtrace_queue *queue;
+अटल पूर्णांक पूर्णांकel_pt_next_tid(काष्ठा पूर्णांकel_pt *pt, काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	काष्ठा auxtrace_queue *queue;
 	pid_t tid = ptq->next_tid;
-	int err;
+	पूर्णांक err;
 
-	if (tid == -1)
-		return 0;
+	अगर (tid == -1)
+		वापस 0;
 
-	intel_pt_log("switch: cpu %d tid %d\n", ptq->cpu, tid);
+	पूर्णांकel_pt_log("switch: cpu %d tid %d\n", ptq->cpu, tid);
 
 	err = machine__set_current_tid(pt->machine, ptq->cpu, -1, tid);
 
 	queue = &pt->queues.queue_array[ptq->queue_nr];
-	intel_pt_set_pid_tid_cpu(pt, queue);
+	पूर्णांकel_pt_set_pid_tid_cpu(pt, queue);
 
 	ptq->next_tid = -1;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline bool intel_pt_is_switch_ip(struct intel_pt_queue *ptq, u64 ip)
-{
-	struct intel_pt *pt = ptq->pt;
+अटल अंतरभूत bool पूर्णांकel_pt_is_चयन_ip(काष्ठा पूर्णांकel_pt_queue *ptq, u64 ip)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
 
-	return ip == pt->switch_ip &&
+	वापस ip == pt->चयन_ip &&
 	       (ptq->flags & PERF_IP_FLAG_BRANCH) &&
 	       !(ptq->flags & (PERF_IP_FLAG_CONDITIONAL | PERF_IP_FLAG_ASYNC |
 			       PERF_IP_FLAG_INTERRUPT | PERF_IP_FLAG_TX_ABORT));
-}
+पूर्ण
 
-#define INTEL_PT_PWR_EVT (INTEL_PT_MWAIT_OP | INTEL_PT_PWR_ENTRY | \
+#घोषणा INTEL_PT_PWR_EVT (INTEL_PT_MWAIT_OP | INTEL_PT_PWR_ENTRY | \
 			  INTEL_PT_EX_STOP | INTEL_PT_PWR_EXIT)
 
-static int intel_pt_sample(struct intel_pt_queue *ptq)
-{
-	const struct intel_pt_state *state = ptq->state;
-	struct intel_pt *pt = ptq->pt;
-	int err;
+अटल पूर्णांक पूर्णांकel_pt_sample(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	स्थिर काष्ठा पूर्णांकel_pt_state *state = ptq->state;
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	पूर्णांक err;
 
-	if (!ptq->have_sample)
-		return 0;
+	अगर (!ptq->have_sample)
+		वापस 0;
 
 	ptq->have_sample = false;
 
@@ -2097,1042 +2098,1042 @@ static int intel_pt_sample(struct intel_pt_queue *ptq)
 	ptq->ipc_cyc_cnt = ptq->state->tot_cyc_cnt;
 
 	/*
-	 * Do PEBS first to allow for the possibility that the PEBS timestamp
-	 * precedes the current timestamp.
+	 * Do PEBS first to allow क्रम the possibility that the PEBS बारtamp
+	 * precedes the current बारtamp.
 	 */
-	if (pt->sample_pebs && state->type & INTEL_PT_BLK_ITEMS) {
-		err = intel_pt_synth_pebs_sample(ptq);
-		if (err)
-			return err;
-	}
+	अगर (pt->sample_pebs && state->type & INTEL_PT_BLK_ITEMS) अणु
+		err = पूर्णांकel_pt_synth_pebs_sample(ptq);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (pt->sample_pwr_events) {
-		if (state->type & INTEL_PT_PSB_EVT) {
-			err = intel_pt_synth_psb_sample(ptq);
-			if (err)
-				return err;
-		}
-		if (ptq->state->cbr != ptq->cbr_seen) {
-			err = intel_pt_synth_cbr_sample(ptq);
-			if (err)
-				return err;
-		}
-		if (state->type & INTEL_PT_PWR_EVT) {
-			if (state->type & INTEL_PT_MWAIT_OP) {
-				err = intel_pt_synth_mwait_sample(ptq);
-				if (err)
-					return err;
-			}
-			if (state->type & INTEL_PT_PWR_ENTRY) {
-				err = intel_pt_synth_pwre_sample(ptq);
-				if (err)
-					return err;
-			}
-			if (state->type & INTEL_PT_EX_STOP) {
-				err = intel_pt_synth_exstop_sample(ptq);
-				if (err)
-					return err;
-			}
-			if (state->type & INTEL_PT_PWR_EXIT) {
-				err = intel_pt_synth_pwrx_sample(ptq);
-				if (err)
-					return err;
-			}
-		}
-	}
+	अगर (pt->sample_pwr_events) अणु
+		अगर (state->type & INTEL_PT_PSB_EVT) अणु
+			err = पूर्णांकel_pt_synth_psb_sample(ptq);
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (ptq->state->cbr != ptq->cbr_seen) अणु
+			err = पूर्णांकel_pt_synth_cbr_sample(ptq);
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (state->type & INTEL_PT_PWR_EVT) अणु
+			अगर (state->type & INTEL_PT_MWAIT_OP) अणु
+				err = पूर्णांकel_pt_synth_mरुको_sample(ptq);
+				अगर (err)
+					वापस err;
+			पूर्ण
+			अगर (state->type & INTEL_PT_PWR_ENTRY) अणु
+				err = पूर्णांकel_pt_synth_pwre_sample(ptq);
+				अगर (err)
+					वापस err;
+			पूर्ण
+			अगर (state->type & INTEL_PT_EX_STOP) अणु
+				err = पूर्णांकel_pt_synth_exstop_sample(ptq);
+				अगर (err)
+					वापस err;
+			पूर्ण
+			अगर (state->type & INTEL_PT_PWR_EXIT) अणु
+				err = पूर्णांकel_pt_synth_pwrx_sample(ptq);
+				अगर (err)
+					वापस err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (pt->sample_instructions && (state->type & INTEL_PT_INSTRUCTION)) {
-		err = intel_pt_synth_instruction_sample(ptq);
-		if (err)
-			return err;
-	}
+	अगर (pt->sample_inकाष्ठाions && (state->type & INTEL_PT_INSTRUCTION)) अणु
+		err = पूर्णांकel_pt_synth_inकाष्ठाion_sample(ptq);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (pt->sample_transactions && (state->type & INTEL_PT_TRANSACTION)) {
-		err = intel_pt_synth_transaction_sample(ptq);
-		if (err)
-			return err;
-	}
+	अगर (pt->sample_transactions && (state->type & INTEL_PT_TRANSACTION)) अणु
+		err = पूर्णांकel_pt_synth_transaction_sample(ptq);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (pt->sample_ptwrites && (state->type & INTEL_PT_PTW)) {
-		err = intel_pt_synth_ptwrite_sample(ptq);
-		if (err)
-			return err;
-	}
+	अगर (pt->sample_ptग_लिखोs && (state->type & INTEL_PT_PTW)) अणु
+		err = पूर्णांकel_pt_synth_ptग_लिखो_sample(ptq);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (!(state->type & INTEL_PT_BRANCH))
-		return 0;
+	अगर (!(state->type & INTEL_PT_BRANCH))
+		वापस 0;
 
-	if (pt->use_thread_stack) {
-		thread_stack__event(ptq->thread, ptq->cpu, ptq->flags,
+	अगर (pt->use_thपढ़ो_stack) अणु
+		thपढ़ो_stack__event(ptq->thपढ़ो, ptq->cpu, ptq->flags,
 				    state->from_ip, state->to_ip, ptq->insn_len,
 				    state->trace_nr, pt->callstack,
 				    pt->br_stack_sz_plus,
 				    pt->mispred_all);
-	} else {
-		thread_stack__set_trace_nr(ptq->thread, ptq->cpu, state->trace_nr);
-	}
+	पूर्ण अन्यथा अणु
+		thपढ़ो_stack__set_trace_nr(ptq->thपढ़ो, ptq->cpu, state->trace_nr);
+	पूर्ण
 
-	if (pt->sample_branches) {
-		if (state->from_nr != state->to_nr &&
-		    state->from_ip && state->to_ip) {
-			struct intel_pt_state *st = (struct intel_pt_state *)state;
+	अगर (pt->sample_branches) अणु
+		अगर (state->from_nr != state->to_nr &&
+		    state->from_ip && state->to_ip) अणु
+			काष्ठा पूर्णांकel_pt_state *st = (काष्ठा पूर्णांकel_pt_state *)state;
 			u64 to_ip = st->to_ip;
 			u64 from_ip = st->from_ip;
 
 			/*
-			 * perf cannot handle having different machines for ip
+			 * perf cannot handle having dअगरferent machines क्रम ip
 			 * and addr, so create 2 branches.
 			 */
 			st->to_ip = 0;
-			err = intel_pt_synth_branch_sample(ptq);
-			if (err)
-				return err;
+			err = पूर्णांकel_pt_synth_branch_sample(ptq);
+			अगर (err)
+				वापस err;
 			st->from_ip = 0;
 			st->to_ip = to_ip;
-			err = intel_pt_synth_branch_sample(ptq);
+			err = पूर्णांकel_pt_synth_branch_sample(ptq);
 			st->from_ip = from_ip;
-		} else {
-			err = intel_pt_synth_branch_sample(ptq);
-		}
-		if (err)
-			return err;
-	}
+		पूर्ण अन्यथा अणु
+			err = पूर्णांकel_pt_synth_branch_sample(ptq);
+		पूर्ण
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (!ptq->sync_switch)
-		return 0;
+	अगर (!ptq->sync_चयन)
+		वापस 0;
 
-	if (intel_pt_is_switch_ip(ptq, state->to_ip)) {
-		switch (ptq->switch_state) {
-		case INTEL_PT_SS_NOT_TRACING:
-		case INTEL_PT_SS_UNKNOWN:
-		case INTEL_PT_SS_EXPECTING_SWITCH_IP:
-			err = intel_pt_next_tid(pt, ptq);
-			if (err)
-				return err;
-			ptq->switch_state = INTEL_PT_SS_TRACING;
-			break;
-		default:
-			ptq->switch_state = INTEL_PT_SS_EXPECTING_SWITCH_EVENT;
-			return 1;
-		}
-	} else if (!state->to_ip) {
-		ptq->switch_state = INTEL_PT_SS_NOT_TRACING;
-	} else if (ptq->switch_state == INTEL_PT_SS_NOT_TRACING) {
-		ptq->switch_state = INTEL_PT_SS_UNKNOWN;
-	} else if (ptq->switch_state == INTEL_PT_SS_UNKNOWN &&
+	अगर (पूर्णांकel_pt_is_चयन_ip(ptq, state->to_ip)) अणु
+		चयन (ptq->चयन_state) अणु
+		हाल INTEL_PT_SS_NOT_TRACING:
+		हाल INTEL_PT_SS_UNKNOWN:
+		हाल INTEL_PT_SS_EXPECTING_SWITCH_IP:
+			err = पूर्णांकel_pt_next_tid(pt, ptq);
+			अगर (err)
+				वापस err;
+			ptq->चयन_state = INTEL_PT_SS_TRACING;
+			अवरोध;
+		शेष:
+			ptq->चयन_state = INTEL_PT_SS_EXPECTING_SWITCH_EVENT;
+			वापस 1;
+		पूर्ण
+	पूर्ण अन्यथा अगर (!state->to_ip) अणु
+		ptq->चयन_state = INTEL_PT_SS_NOT_TRACING;
+	पूर्ण अन्यथा अगर (ptq->चयन_state == INTEL_PT_SS_NOT_TRACING) अणु
+		ptq->चयन_state = INTEL_PT_SS_UNKNOWN;
+	पूर्ण अन्यथा अगर (ptq->चयन_state == INTEL_PT_SS_UNKNOWN &&
 		   state->to_ip == pt->ptss_ip &&
-		   (ptq->flags & PERF_IP_FLAG_CALL)) {
-		ptq->switch_state = INTEL_PT_SS_TRACING;
-	}
+		   (ptq->flags & PERF_IP_FLAG_CALL)) अणु
+		ptq->चयन_state = INTEL_PT_SS_TRACING;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u64 intel_pt_switch_ip(struct intel_pt *pt, u64 *ptss_ip)
-{
-	struct machine *machine = pt->machine;
-	struct map *map;
-	struct symbol *sym, *start;
-	u64 ip, switch_ip = 0;
-	const char *ptss;
+अटल u64 पूर्णांकel_pt_चयन_ip(काष्ठा पूर्णांकel_pt *pt, u64 *ptss_ip)
+अणु
+	काष्ठा machine *machine = pt->machine;
+	काष्ठा map *map;
+	काष्ठा symbol *sym, *start;
+	u64 ip, चयन_ip = 0;
+	स्थिर अक्षर *ptss;
 
-	if (ptss_ip)
+	अगर (ptss_ip)
 		*ptss_ip = 0;
 
 	map = machine__kernel_map(machine);
-	if (!map)
-		return 0;
+	अगर (!map)
+		वापस 0;
 
-	if (map__load(map))
-		return 0;
+	अगर (map__load(map))
+		वापस 0;
 
 	start = dso__first_symbol(map->dso);
 
-	for (sym = start; sym; sym = dso__next_symbol(sym)) {
-		if (sym->binding == STB_GLOBAL &&
-		    !strcmp(sym->name, "__switch_to")) {
+	क्रम (sym = start; sym; sym = dso__next_symbol(sym)) अणु
+		अगर (sym->binding == STB_GLOBAL &&
+		    !म_भेद(sym->name, "__switch_to")) अणु
 			ip = map->unmap_ip(map, sym->start);
-			if (ip >= map->start && ip < map->end) {
-				switch_ip = ip;
-				break;
-			}
-		}
-	}
+			अगर (ip >= map->start && ip < map->end) अणु
+				चयन_ip = ip;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!switch_ip || !ptss_ip)
-		return 0;
+	अगर (!चयन_ip || !ptss_ip)
+		वापस 0;
 
-	if (pt->have_sched_switch == 1)
+	अगर (pt->have_sched_चयन == 1)
 		ptss = "perf_trace_sched_switch";
-	else
+	अन्यथा
 		ptss = "__perf_event_task_sched_out";
 
-	for (sym = start; sym; sym = dso__next_symbol(sym)) {
-		if (!strcmp(sym->name, ptss)) {
+	क्रम (sym = start; sym; sym = dso__next_symbol(sym)) अणु
+		अगर (!म_भेद(sym->name, ptss)) अणु
 			ip = map->unmap_ip(map, sym->start);
-			if (ip >= map->start && ip < map->end) {
+			अगर (ip >= map->start && ip < map->end) अणु
 				*ptss_ip = ip;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return switch_ip;
-}
+	वापस चयन_ip;
+पूर्ण
 
-static void intel_pt_enable_sync_switch(struct intel_pt *pt)
-{
-	unsigned int i;
+अटल व्योम पूर्णांकel_pt_enable_sync_चयन(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	pt->sync_switch = true;
+	pt->sync_चयन = true;
 
-	for (i = 0; i < pt->queues.nr_queues; i++) {
-		struct auxtrace_queue *queue = &pt->queues.queue_array[i];
-		struct intel_pt_queue *ptq = queue->priv;
+	क्रम (i = 0; i < pt->queues.nr_queues; i++) अणु
+		काष्ठा auxtrace_queue *queue = &pt->queues.queue_array[i];
+		काष्ठा पूर्णांकel_pt_queue *ptq = queue->priv;
 
-		if (ptq)
-			ptq->sync_switch = true;
-	}
-}
+		अगर (ptq)
+			ptq->sync_चयन = true;
+	पूर्ण
+पूर्ण
 
 /*
- * To filter against time ranges, it is only necessary to look at the next start
- * or end time.
+ * To filter against समय ranges, it is only necessary to look at the next start
+ * or end समय.
  */
-static bool intel_pt_next_time(struct intel_pt_queue *ptq)
-{
-	struct intel_pt *pt = ptq->pt;
+अटल bool पूर्णांकel_pt_next_समय(काष्ठा पूर्णांकel_pt_queue *ptq)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
 
-	if (ptq->sel_start) {
-		/* Next time is an end time */
+	अगर (ptq->sel_start) अणु
+		/* Next समय is an end समय */
 		ptq->sel_start = false;
-		ptq->sel_timestamp = pt->time_ranges[ptq->sel_idx].end;
-		return true;
-	} else if (ptq->sel_idx + 1 < pt->range_cnt) {
-		/* Next time is a start time */
+		ptq->sel_बारtamp = pt->समय_ranges[ptq->sel_idx].end;
+		वापस true;
+	पूर्ण अन्यथा अगर (ptq->sel_idx + 1 < pt->range_cnt) अणु
+		/* Next समय is a start समय */
 		ptq->sel_start = true;
 		ptq->sel_idx += 1;
-		ptq->sel_timestamp = pt->time_ranges[ptq->sel_idx].start;
-		return true;
-	}
+		ptq->sel_बारtamp = pt->समय_ranges[ptq->sel_idx].start;
+		वापस true;
+	पूर्ण
 
-	/* No next time */
-	return false;
-}
+	/* No next समय */
+	वापस false;
+पूर्ण
 
-static int intel_pt_time_filter(struct intel_pt_queue *ptq, u64 *ff_timestamp)
-{
-	int err;
+अटल पूर्णांक पूर्णांकel_pt_समय_filter(काष्ठा पूर्णांकel_pt_queue *ptq, u64 *ff_बारtamp)
+अणु
+	पूर्णांक err;
 
-	while (1) {
-		if (ptq->sel_start) {
-			if (ptq->timestamp >= ptq->sel_timestamp) {
-				/* After start time, so consider next time */
-				intel_pt_next_time(ptq);
-				if (!ptq->sel_timestamp) {
-					/* No end time */
-					return 0;
-				}
-				/* Check against end time */
-				continue;
-			}
-			/* Before start time, so fast forward */
+	जबतक (1) अणु
+		अगर (ptq->sel_start) अणु
+			अगर (ptq->बारtamp >= ptq->sel_बारtamp) अणु
+				/* After start समय, so consider next समय */
+				पूर्णांकel_pt_next_समय(ptq);
+				अगर (!ptq->sel_बारtamp) अणु
+					/* No end समय */
+					वापस 0;
+				पूर्ण
+				/* Check against end समय */
+				जारी;
+			पूर्ण
+			/* Beक्रमe start समय, so fast क्रमward */
 			ptq->have_sample = false;
-			if (ptq->sel_timestamp > *ff_timestamp) {
-				if (ptq->sync_switch) {
-					intel_pt_next_tid(ptq->pt, ptq);
-					ptq->switch_state = INTEL_PT_SS_UNKNOWN;
-				}
-				*ff_timestamp = ptq->sel_timestamp;
-				err = intel_pt_fast_forward(ptq->decoder,
-							    ptq->sel_timestamp);
-				if (err)
-					return err;
-			}
-			return 0;
-		} else if (ptq->timestamp > ptq->sel_timestamp) {
-			/* After end time, so consider next time */
-			if (!intel_pt_next_time(ptq)) {
-				/* No next time range, so stop decoding */
+			अगर (ptq->sel_बारtamp > *ff_बारtamp) अणु
+				अगर (ptq->sync_चयन) अणु
+					पूर्णांकel_pt_next_tid(ptq->pt, ptq);
+					ptq->चयन_state = INTEL_PT_SS_UNKNOWN;
+				पूर्ण
+				*ff_बारtamp = ptq->sel_बारtamp;
+				err = पूर्णांकel_pt_fast_क्रमward(ptq->decoder,
+							    ptq->sel_बारtamp);
+				अगर (err)
+					वापस err;
+			पूर्ण
+			वापस 0;
+		पूर्ण अन्यथा अगर (ptq->बारtamp > ptq->sel_बारtamp) अणु
+			/* After end समय, so consider next समय */
+			अगर (!पूर्णांकel_pt_next_समय(ptq)) अणु
+				/* No next समय range, so stop decoding */
 				ptq->have_sample = false;
-				ptq->switch_state = INTEL_PT_SS_NOT_TRACING;
-				return 1;
-			}
-			/* Check against next start time */
-			continue;
-		} else {
-			/* Before end time */
-			return 0;
-		}
-	}
-}
+				ptq->चयन_state = INTEL_PT_SS_NOT_TRACING;
+				वापस 1;
+			पूर्ण
+			/* Check against next start समय */
+			जारी;
+		पूर्ण अन्यथा अणु
+			/* Beक्रमe end समय */
+			वापस 0;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int intel_pt_run_decoder(struct intel_pt_queue *ptq, u64 *timestamp)
-{
-	const struct intel_pt_state *state = ptq->state;
-	struct intel_pt *pt = ptq->pt;
-	u64 ff_timestamp = 0;
-	int err;
+अटल पूर्णांक पूर्णांकel_pt_run_decoder(काष्ठा पूर्णांकel_pt_queue *ptq, u64 *बारtamp)
+अणु
+	स्थिर काष्ठा पूर्णांकel_pt_state *state = ptq->state;
+	काष्ठा पूर्णांकel_pt *pt = ptq->pt;
+	u64 ff_बारtamp = 0;
+	पूर्णांक err;
 
-	if (!pt->kernel_start) {
+	अगर (!pt->kernel_start) अणु
 		pt->kernel_start = machine__kernel_start(pt->machine);
-		if (pt->per_cpu_mmaps &&
-		    (pt->have_sched_switch == 1 || pt->have_sched_switch == 3) &&
-		    !pt->timeless_decoding && intel_pt_tracing_kernel(pt) &&
-		    !pt->sampling_mode) {
-			pt->switch_ip = intel_pt_switch_ip(pt, &pt->ptss_ip);
-			if (pt->switch_ip) {
-				intel_pt_log("switch_ip: %"PRIx64" ptss_ip: %"PRIx64"\n",
-					     pt->switch_ip, pt->ptss_ip);
-				intel_pt_enable_sync_switch(pt);
-			}
-		}
-	}
+		अगर (pt->per_cpu_mmaps &&
+		    (pt->have_sched_चयन == 1 || pt->have_sched_चयन == 3) &&
+		    !pt->समयless_decoding && पूर्णांकel_pt_tracing_kernel(pt) &&
+		    !pt->sampling_mode) अणु
+			pt->चयन_ip = पूर्णांकel_pt_चयन_ip(pt, &pt->ptss_ip);
+			अगर (pt->चयन_ip) अणु
+				पूर्णांकel_pt_log("switch_ip: %"PRIx64" ptss_ip: %"PRIx64"\n",
+					     pt->चयन_ip, pt->ptss_ip);
+				पूर्णांकel_pt_enable_sync_चयन(pt);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	intel_pt_log("queue %u decoding cpu %d pid %d tid %d\n",
+	पूर्णांकel_pt_log("queue %u decoding cpu %d pid %d tid %d\n",
 		     ptq->queue_nr, ptq->cpu, ptq->pid, ptq->tid);
-	while (1) {
-		err = intel_pt_sample(ptq);
-		if (err)
-			return err;
+	जबतक (1) अणु
+		err = पूर्णांकel_pt_sample(ptq);
+		अगर (err)
+			वापस err;
 
-		state = intel_pt_decode(ptq->decoder);
-		if (state->err) {
-			if (state->err == INTEL_PT_ERR_NODATA)
-				return 1;
-			if (ptq->sync_switch &&
-			    state->from_ip >= pt->kernel_start) {
-				ptq->sync_switch = false;
-				intel_pt_next_tid(pt, ptq);
-			}
-			if (pt->synth_opts.errors) {
-				err = intel_ptq_synth_error(ptq, state);
-				if (err)
-					return err;
-			}
-			continue;
-		}
+		state = पूर्णांकel_pt_decode(ptq->decoder);
+		अगर (state->err) अणु
+			अगर (state->err == INTEL_PT_ERR_NODATA)
+				वापस 1;
+			अगर (ptq->sync_चयन &&
+			    state->from_ip >= pt->kernel_start) अणु
+				ptq->sync_चयन = false;
+				पूर्णांकel_pt_next_tid(pt, ptq);
+			पूर्ण
+			अगर (pt->synth_opts.errors) अणु
+				err = पूर्णांकel_ptq_synth_error(ptq, state);
+				अगर (err)
+					वापस err;
+			पूर्ण
+			जारी;
+		पूर्ण
 
 		ptq->state = state;
 		ptq->have_sample = true;
-		intel_pt_sample_flags(ptq);
+		पूर्णांकel_pt_sample_flags(ptq);
 
-		/* Use estimated TSC upon return to user space */
-		if (pt->est_tsc &&
+		/* Use estimated TSC upon वापस to user space */
+		अगर (pt->est_tsc &&
 		    (state->from_ip >= pt->kernel_start || !state->from_ip) &&
-		    state->to_ip && state->to_ip < pt->kernel_start) {
-			intel_pt_log("TSC %"PRIx64" est. TSC %"PRIx64"\n",
-				     state->timestamp, state->est_timestamp);
-			ptq->timestamp = state->est_timestamp;
-		/* Use estimated TSC in unknown switch state */
-		} else if (ptq->sync_switch &&
-			   ptq->switch_state == INTEL_PT_SS_UNKNOWN &&
-			   intel_pt_is_switch_ip(ptq, state->to_ip) &&
-			   ptq->next_tid == -1) {
-			intel_pt_log("TSC %"PRIx64" est. TSC %"PRIx64"\n",
-				     state->timestamp, state->est_timestamp);
-			ptq->timestamp = state->est_timestamp;
-		} else if (state->timestamp > ptq->timestamp) {
-			ptq->timestamp = state->timestamp;
-		}
+		    state->to_ip && state->to_ip < pt->kernel_start) अणु
+			पूर्णांकel_pt_log("TSC %"PRIx64" est. TSC %"PRIx64"\n",
+				     state->बारtamp, state->est_बारtamp);
+			ptq->बारtamp = state->est_बारtamp;
+		/* Use estimated TSC in unknown चयन state */
+		पूर्ण अन्यथा अगर (ptq->sync_चयन &&
+			   ptq->चयन_state == INTEL_PT_SS_UNKNOWN &&
+			   पूर्णांकel_pt_is_चयन_ip(ptq, state->to_ip) &&
+			   ptq->next_tid == -1) अणु
+			पूर्णांकel_pt_log("TSC %"PRIx64" est. TSC %"PRIx64"\n",
+				     state->बारtamp, state->est_बारtamp);
+			ptq->बारtamp = state->est_बारtamp;
+		पूर्ण अन्यथा अगर (state->बारtamp > ptq->बारtamp) अणु
+			ptq->बारtamp = state->बारtamp;
+		पूर्ण
 
-		if (ptq->sel_timestamp) {
-			err = intel_pt_time_filter(ptq, &ff_timestamp);
-			if (err)
-				return err;
-		}
+		अगर (ptq->sel_बारtamp) अणु
+			err = पूर्णांकel_pt_समय_filter(ptq, &ff_बारtamp);
+			अगर (err)
+				वापस err;
+		पूर्ण
 
-		if (!pt->timeless_decoding && ptq->timestamp >= *timestamp) {
-			*timestamp = ptq->timestamp;
-			return 0;
-		}
-	}
-	return 0;
-}
+		अगर (!pt->समयless_decoding && ptq->बारtamp >= *बारtamp) अणु
+			*बारtamp = ptq->बारtamp;
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline int intel_pt_update_queues(struct intel_pt *pt)
-{
-	if (pt->queues.new_data) {
+अटल अंतरभूत पूर्णांक पूर्णांकel_pt_update_queues(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	अगर (pt->queues.new_data) अणु
 		pt->queues.new_data = false;
-		return intel_pt_setup_queues(pt);
-	}
-	return 0;
-}
+		वापस पूर्णांकel_pt_setup_queues(pt);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int intel_pt_process_queues(struct intel_pt *pt, u64 timestamp)
-{
-	unsigned int queue_nr;
+अटल पूर्णांक पूर्णांकel_pt_process_queues(काष्ठा पूर्णांकel_pt *pt, u64 बारtamp)
+अणु
+	अचिन्हित पूर्णांक queue_nr;
 	u64 ts;
-	int ret;
+	पूर्णांक ret;
 
-	while (1) {
-		struct auxtrace_queue *queue;
-		struct intel_pt_queue *ptq;
+	जबतक (1) अणु
+		काष्ठा auxtrace_queue *queue;
+		काष्ठा पूर्णांकel_pt_queue *ptq;
 
-		if (!pt->heap.heap_cnt)
-			return 0;
+		अगर (!pt->heap.heap_cnt)
+			वापस 0;
 
-		if (pt->heap.heap_array[0].ordinal >= timestamp)
-			return 0;
+		अगर (pt->heap.heap_array[0].ordinal >= बारtamp)
+			वापस 0;
 
 		queue_nr = pt->heap.heap_array[0].queue_nr;
 		queue = &pt->queues.queue_array[queue_nr];
 		ptq = queue->priv;
 
-		intel_pt_log("queue %u processing 0x%" PRIx64 " to 0x%" PRIx64 "\n",
+		पूर्णांकel_pt_log("queue %u processing 0x%" PRIx64 " to 0x%" PRIx64 "\n",
 			     queue_nr, pt->heap.heap_array[0].ordinal,
-			     timestamp);
+			     बारtamp);
 
 		auxtrace_heap__pop(&pt->heap);
 
-		if (pt->heap.heap_cnt) {
+		अगर (pt->heap.heap_cnt) अणु
 			ts = pt->heap.heap_array[0].ordinal + 1;
-			if (ts > timestamp)
-				ts = timestamp;
-		} else {
-			ts = timestamp;
-		}
+			अगर (ts > बारtamp)
+				ts = बारtamp;
+		पूर्ण अन्यथा अणु
+			ts = बारtamp;
+		पूर्ण
 
-		intel_pt_set_pid_tid_cpu(pt, queue);
+		पूर्णांकel_pt_set_pid_tid_cpu(pt, queue);
 
-		ret = intel_pt_run_decoder(ptq, &ts);
+		ret = पूर्णांकel_pt_run_decoder(ptq, &ts);
 
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			auxtrace_heap__add(&pt->heap, queue_nr, ts);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (!ret) {
+		अगर (!ret) अणु
 			ret = auxtrace_heap__add(&pt->heap, queue_nr, ts);
-			if (ret < 0)
-				return ret;
-		} else {
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण अन्यथा अणु
 			ptq->on_heap = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_pt_process_timeless_queues(struct intel_pt *pt, pid_t tid,
-					    u64 time_)
-{
-	struct auxtrace_queues *queues = &pt->queues;
-	unsigned int i;
+अटल पूर्णांक पूर्णांकel_pt_process_समयless_queues(काष्ठा पूर्णांकel_pt *pt, pid_t tid,
+					    u64 समय_)
+अणु
+	काष्ठा auxtrace_queues *queues = &pt->queues;
+	अचिन्हित पूर्णांक i;
 	u64 ts = 0;
 
-	for (i = 0; i < queues->nr_queues; i++) {
-		struct auxtrace_queue *queue = &pt->queues.queue_array[i];
-		struct intel_pt_queue *ptq = queue->priv;
+	क्रम (i = 0; i < queues->nr_queues; i++) अणु
+		काष्ठा auxtrace_queue *queue = &pt->queues.queue_array[i];
+		काष्ठा पूर्णांकel_pt_queue *ptq = queue->priv;
 
-		if (ptq && (tid == -1 || ptq->tid == tid)) {
-			ptq->time = time_;
-			intel_pt_set_pid_tid_cpu(pt, queue);
-			intel_pt_run_decoder(ptq, &ts);
-		}
-	}
-	return 0;
-}
+		अगर (ptq && (tid == -1 || ptq->tid == tid)) अणु
+			ptq->समय = समय_;
+			पूर्णांकel_pt_set_pid_tid_cpu(pt, queue);
+			पूर्णांकel_pt_run_decoder(ptq, &ts);
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void intel_pt_sample_set_pid_tid_cpu(struct intel_pt_queue *ptq,
-					    struct auxtrace_queue *queue,
-					    struct perf_sample *sample)
-{
-	struct machine *m = ptq->pt->machine;
+अटल व्योम पूर्णांकel_pt_sample_set_pid_tid_cpu(काष्ठा पूर्णांकel_pt_queue *ptq,
+					    काष्ठा auxtrace_queue *queue,
+					    काष्ठा perf_sample *sample)
+अणु
+	काष्ठा machine *m = ptq->pt->machine;
 
 	ptq->pid = sample->pid;
 	ptq->tid = sample->tid;
 	ptq->cpu = queue->cpu;
 
-	intel_pt_log("queue %u cpu %d pid %d tid %d\n",
+	पूर्णांकel_pt_log("queue %u cpu %d pid %d tid %d\n",
 		     ptq->queue_nr, ptq->cpu, ptq->pid, ptq->tid);
 
-	thread__zput(ptq->thread);
+	thपढ़ो__zput(ptq->thपढ़ो);
 
-	if (ptq->tid == -1)
-		return;
+	अगर (ptq->tid == -1)
+		वापस;
 
-	if (ptq->pid == -1) {
-		ptq->thread = machine__find_thread(m, -1, ptq->tid);
-		if (ptq->thread)
-			ptq->pid = ptq->thread->pid_;
-		return;
-	}
+	अगर (ptq->pid == -1) अणु
+		ptq->thपढ़ो = machine__find_thपढ़ो(m, -1, ptq->tid);
+		अगर (ptq->thपढ़ो)
+			ptq->pid = ptq->thपढ़ो->pid_;
+		वापस;
+	पूर्ण
 
-	ptq->thread = machine__findnew_thread(m, ptq->pid, ptq->tid);
-}
+	ptq->thपढ़ो = machine__findnew_thपढ़ो(m, ptq->pid, ptq->tid);
+पूर्ण
 
-static int intel_pt_process_timeless_sample(struct intel_pt *pt,
-					    struct perf_sample *sample)
-{
-	struct auxtrace_queue *queue;
-	struct intel_pt_queue *ptq;
+अटल पूर्णांक पूर्णांकel_pt_process_समयless_sample(काष्ठा पूर्णांकel_pt *pt,
+					    काष्ठा perf_sample *sample)
+अणु
+	काष्ठा auxtrace_queue *queue;
+	काष्ठा पूर्णांकel_pt_queue *ptq;
 	u64 ts = 0;
 
 	queue = auxtrace_queues__sample_queue(&pt->queues, sample, pt->session);
-	if (!queue)
-		return -EINVAL;
+	अगर (!queue)
+		वापस -EINVAL;
 
 	ptq = queue->priv;
-	if (!ptq)
-		return 0;
+	अगर (!ptq)
+		वापस 0;
 
 	ptq->stop = false;
-	ptq->time = sample->time;
-	intel_pt_sample_set_pid_tid_cpu(ptq, queue, sample);
-	intel_pt_run_decoder(ptq, &ts);
-	return 0;
-}
+	ptq->समय = sample->समय;
+	पूर्णांकel_pt_sample_set_pid_tid_cpu(ptq, queue, sample);
+	पूर्णांकel_pt_run_decoder(ptq, &ts);
+	वापस 0;
+पूर्ण
 
-static int intel_pt_lost(struct intel_pt *pt, struct perf_sample *sample)
-{
-	return intel_pt_synth_error(pt, INTEL_PT_ERR_LOST, sample->cpu,
-				    sample->pid, sample->tid, 0, sample->time);
-}
+अटल पूर्णांक पूर्णांकel_pt_lost(काष्ठा पूर्णांकel_pt *pt, काष्ठा perf_sample *sample)
+अणु
+	वापस पूर्णांकel_pt_synth_error(pt, INTEL_PT_ERR_LOST, sample->cpu,
+				    sample->pid, sample->tid, 0, sample->समय);
+पूर्ण
 
-static struct intel_pt_queue *intel_pt_cpu_to_ptq(struct intel_pt *pt, int cpu)
-{
-	unsigned i, j;
+अटल काष्ठा पूर्णांकel_pt_queue *पूर्णांकel_pt_cpu_to_ptq(काष्ठा पूर्णांकel_pt *pt, पूर्णांक cpu)
+अणु
+	अचिन्हित i, j;
 
-	if (cpu < 0 || !pt->queues.nr_queues)
-		return NULL;
+	अगर (cpu < 0 || !pt->queues.nr_queues)
+		वापस शून्य;
 
-	if ((unsigned)cpu >= pt->queues.nr_queues)
+	अगर ((अचिन्हित)cpu >= pt->queues.nr_queues)
 		i = pt->queues.nr_queues - 1;
-	else
+	अन्यथा
 		i = cpu;
 
-	if (pt->queues.queue_array[i].cpu == cpu)
-		return pt->queues.queue_array[i].priv;
+	अगर (pt->queues.queue_array[i].cpu == cpu)
+		वापस pt->queues.queue_array[i].priv;
 
-	for (j = 0; i > 0; j++) {
-		if (pt->queues.queue_array[--i].cpu == cpu)
-			return pt->queues.queue_array[i].priv;
-	}
+	क्रम (j = 0; i > 0; j++) अणु
+		अगर (pt->queues.queue_array[--i].cpu == cpu)
+			वापस pt->queues.queue_array[i].priv;
+	पूर्ण
 
-	for (; j < pt->queues.nr_queues; j++) {
-		if (pt->queues.queue_array[j].cpu == cpu)
-			return pt->queues.queue_array[j].priv;
-	}
+	क्रम (; j < pt->queues.nr_queues; j++) अणु
+		अगर (pt->queues.queue_array[j].cpu == cpu)
+			वापस pt->queues.queue_array[j].priv;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int intel_pt_sync_switch(struct intel_pt *pt, int cpu, pid_t tid,
-				u64 timestamp)
-{
-	struct intel_pt_queue *ptq;
-	int err;
+अटल पूर्णांक पूर्णांकel_pt_sync_चयन(काष्ठा पूर्णांकel_pt *pt, पूर्णांक cpu, pid_t tid,
+				u64 बारtamp)
+अणु
+	काष्ठा पूर्णांकel_pt_queue *ptq;
+	पूर्णांक err;
 
-	if (!pt->sync_switch)
-		return 1;
+	अगर (!pt->sync_चयन)
+		वापस 1;
 
-	ptq = intel_pt_cpu_to_ptq(pt, cpu);
-	if (!ptq || !ptq->sync_switch)
-		return 1;
+	ptq = पूर्णांकel_pt_cpu_to_ptq(pt, cpu);
+	अगर (!ptq || !ptq->sync_चयन)
+		वापस 1;
 
-	switch (ptq->switch_state) {
-	case INTEL_PT_SS_NOT_TRACING:
-		break;
-	case INTEL_PT_SS_UNKNOWN:
-	case INTEL_PT_SS_TRACING:
+	चयन (ptq->चयन_state) अणु
+	हाल INTEL_PT_SS_NOT_TRACING:
+		अवरोध;
+	हाल INTEL_PT_SS_UNKNOWN:
+	हाल INTEL_PT_SS_TRACING:
 		ptq->next_tid = tid;
-		ptq->switch_state = INTEL_PT_SS_EXPECTING_SWITCH_IP;
-		return 0;
-	case INTEL_PT_SS_EXPECTING_SWITCH_EVENT:
-		if (!ptq->on_heap) {
-			ptq->timestamp = perf_time_to_tsc(timestamp,
+		ptq->चयन_state = INTEL_PT_SS_EXPECTING_SWITCH_IP;
+		वापस 0;
+	हाल INTEL_PT_SS_EXPECTING_SWITCH_EVENT:
+		अगर (!ptq->on_heap) अणु
+			ptq->बारtamp = perf_समय_प्रकारo_tsc(बारtamp,
 							  &pt->tc);
 			err = auxtrace_heap__add(&pt->heap, ptq->queue_nr,
-						 ptq->timestamp);
-			if (err)
-				return err;
+						 ptq->बारtamp);
+			अगर (err)
+				वापस err;
 			ptq->on_heap = true;
-		}
-		ptq->switch_state = INTEL_PT_SS_TRACING;
-		break;
-	case INTEL_PT_SS_EXPECTING_SWITCH_IP:
-		intel_pt_log("ERROR: cpu %d expecting switch ip\n", cpu);
-		break;
-	default:
-		break;
-	}
+		पूर्ण
+		ptq->चयन_state = INTEL_PT_SS_TRACING;
+		अवरोध;
+	हाल INTEL_PT_SS_EXPECTING_SWITCH_IP:
+		पूर्णांकel_pt_log("ERROR: cpu %d expecting switch ip\n", cpu);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	ptq->next_tid = -1;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int intel_pt_process_switch(struct intel_pt *pt,
-				   struct perf_sample *sample)
-{
+अटल पूर्णांक पूर्णांकel_pt_process_चयन(काष्ठा पूर्णांकel_pt *pt,
+				   काष्ठा perf_sample *sample)
+अणु
 	pid_t tid;
-	int cpu, ret;
-	struct evsel *evsel = evlist__id2evsel(pt->session->evlist, sample->id);
+	पूर्णांक cpu, ret;
+	काष्ठा evsel *evsel = evlist__id2evsel(pt->session->evlist, sample->id);
 
-	if (evsel != pt->switch_evsel)
-		return 0;
+	अगर (evsel != pt->चयन_evsel)
+		वापस 0;
 
-	tid = evsel__intval(evsel, sample, "next_pid");
+	tid = evsel__पूर्णांकval(evsel, sample, "next_pid");
 	cpu = sample->cpu;
 
-	intel_pt_log("sched_switch: cpu %d tid %d time %"PRIu64" tsc %#"PRIx64"\n",
-		     cpu, tid, sample->time, perf_time_to_tsc(sample->time,
+	पूर्णांकel_pt_log("sched_switch: cpu %d tid %d time %"PRIu64" tsc %#"PRIx64"\n",
+		     cpu, tid, sample->समय, perf_समय_प्रकारo_tsc(sample->समय,
 		     &pt->tc));
 
-	ret = intel_pt_sync_switch(pt, cpu, tid, sample->time);
-	if (ret <= 0)
-		return ret;
+	ret = पूर्णांकel_pt_sync_चयन(pt, cpu, tid, sample->समय);
+	अगर (ret <= 0)
+		वापस ret;
 
-	return machine__set_current_tid(pt->machine, cpu, -1, tid);
-}
+	वापस machine__set_current_tid(pt->machine, cpu, -1, tid);
+पूर्ण
 
-static int intel_pt_context_switch_in(struct intel_pt *pt,
-				      struct perf_sample *sample)
-{
+अटल पूर्णांक पूर्णांकel_pt_context_चयन_in(काष्ठा पूर्णांकel_pt *pt,
+				      काष्ठा perf_sample *sample)
+अणु
 	pid_t pid = sample->pid;
 	pid_t tid = sample->tid;
-	int cpu = sample->cpu;
+	पूर्णांक cpu = sample->cpu;
 
-	if (pt->sync_switch) {
-		struct intel_pt_queue *ptq;
+	अगर (pt->sync_चयन) अणु
+		काष्ठा पूर्णांकel_pt_queue *ptq;
 
-		ptq = intel_pt_cpu_to_ptq(pt, cpu);
-		if (ptq && ptq->sync_switch) {
+		ptq = पूर्णांकel_pt_cpu_to_ptq(pt, cpu);
+		अगर (ptq && ptq->sync_चयन) अणु
 			ptq->next_tid = -1;
-			switch (ptq->switch_state) {
-			case INTEL_PT_SS_NOT_TRACING:
-			case INTEL_PT_SS_UNKNOWN:
-			case INTEL_PT_SS_TRACING:
-				break;
-			case INTEL_PT_SS_EXPECTING_SWITCH_EVENT:
-			case INTEL_PT_SS_EXPECTING_SWITCH_IP:
-				ptq->switch_state = INTEL_PT_SS_TRACING;
-				break;
-			default:
-				break;
-			}
-		}
-	}
+			चयन (ptq->चयन_state) अणु
+			हाल INTEL_PT_SS_NOT_TRACING:
+			हाल INTEL_PT_SS_UNKNOWN:
+			हाल INTEL_PT_SS_TRACING:
+				अवरोध;
+			हाल INTEL_PT_SS_EXPECTING_SWITCH_EVENT:
+			हाल INTEL_PT_SS_EXPECTING_SWITCH_IP:
+				ptq->चयन_state = INTEL_PT_SS_TRACING;
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * If the current tid has not been updated yet, ensure it is now that
 	 * a "switch in" event has occurred.
 	 */
-	if (machine__get_current_tid(pt->machine, cpu) == tid)
-		return 0;
+	अगर (machine__get_current_tid(pt->machine, cpu) == tid)
+		वापस 0;
 
-	return machine__set_current_tid(pt->machine, cpu, pid, tid);
-}
+	वापस machine__set_current_tid(pt->machine, cpu, pid, tid);
+पूर्ण
 
-static int intel_pt_context_switch(struct intel_pt *pt, union perf_event *event,
-				   struct perf_sample *sample)
-{
+अटल पूर्णांक पूर्णांकel_pt_context_चयन(काष्ठा पूर्णांकel_pt *pt, जोड़ perf_event *event,
+				   काष्ठा perf_sample *sample)
+अणु
 	bool out = event->header.misc & PERF_RECORD_MISC_SWITCH_OUT;
 	pid_t pid, tid;
-	int cpu, ret;
+	पूर्णांक cpu, ret;
 
 	cpu = sample->cpu;
 
-	if (pt->have_sched_switch == 3) {
-		if (!out)
-			return intel_pt_context_switch_in(pt, sample);
-		if (event->header.type != PERF_RECORD_SWITCH_CPU_WIDE) {
+	अगर (pt->have_sched_चयन == 3) अणु
+		अगर (!out)
+			वापस पूर्णांकel_pt_context_चयन_in(pt, sample);
+		अगर (event->header.type != PERF_RECORD_SWITCH_CPU_WIDE) अणु
 			pr_err("Expecting CPU-wide context switch event\n");
-			return -EINVAL;
-		}
-		pid = event->context_switch.next_prev_pid;
-		tid = event->context_switch.next_prev_tid;
-	} else {
-		if (out)
-			return 0;
+			वापस -EINVAL;
+		पूर्ण
+		pid = event->context_चयन.next_prev_pid;
+		tid = event->context_चयन.next_prev_tid;
+	पूर्ण अन्यथा अणु
+		अगर (out)
+			वापस 0;
 		pid = sample->pid;
 		tid = sample->tid;
-	}
+	पूर्ण
 
-	if (tid == -1)
-		intel_pt_log("context_switch event has no tid\n");
+	अगर (tid == -1)
+		पूर्णांकel_pt_log("context_switch event has no tid\n");
 
-	ret = intel_pt_sync_switch(pt, cpu, tid, sample->time);
-	if (ret <= 0)
-		return ret;
+	ret = पूर्णांकel_pt_sync_चयन(pt, cpu, tid, sample->समय);
+	अगर (ret <= 0)
+		वापस ret;
 
-	return machine__set_current_tid(pt->machine, cpu, pid, tid);
-}
+	वापस machine__set_current_tid(pt->machine, cpu, pid, tid);
+पूर्ण
 
-static int intel_pt_process_itrace_start(struct intel_pt *pt,
-					 union perf_event *event,
-					 struct perf_sample *sample)
-{
-	if (!pt->per_cpu_mmaps)
-		return 0;
+अटल पूर्णांक पूर्णांकel_pt_process_itrace_start(काष्ठा पूर्णांकel_pt *pt,
+					 जोड़ perf_event *event,
+					 काष्ठा perf_sample *sample)
+अणु
+	अगर (!pt->per_cpu_mmaps)
+		वापस 0;
 
-	intel_pt_log("itrace_start: cpu %d pid %d tid %d time %"PRIu64" tsc %#"PRIx64"\n",
+	पूर्णांकel_pt_log("itrace_start: cpu %d pid %d tid %d time %"PRIu64" tsc %#"PRIx64"\n",
 		     sample->cpu, event->itrace_start.pid,
-		     event->itrace_start.tid, sample->time,
-		     perf_time_to_tsc(sample->time, &pt->tc));
+		     event->itrace_start.tid, sample->समय,
+		     perf_समय_प्रकारo_tsc(sample->समय, &pt->tc));
 
-	return machine__set_current_tid(pt->machine, sample->cpu,
+	वापस machine__set_current_tid(pt->machine, sample->cpu,
 					event->itrace_start.pid,
 					event->itrace_start.tid);
-}
+पूर्ण
 
-static int intel_pt_find_map(struct thread *thread, u8 cpumode, u64 addr,
-			     struct addr_location *al)
-{
-	if (!al->map || addr < al->map->start || addr >= al->map->end) {
-		if (!thread__find_map(thread, cpumode, addr, al))
-			return -1;
-	}
+अटल पूर्णांक पूर्णांकel_pt_find_map(काष्ठा thपढ़ो *thपढ़ो, u8 cpumode, u64 addr,
+			     काष्ठा addr_location *al)
+अणु
+	अगर (!al->map || addr < al->map->start || addr >= al->map->end) अणु
+		अगर (!thपढ़ो__find_map(thपढ़ो, cpumode, addr, al))
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Invalidate all instruction cache entries that overlap the text poke */
-static int intel_pt_text_poke(struct intel_pt *pt, union perf_event *event)
-{
+/* Invalidate all inकाष्ठाion cache entries that overlap the text poke */
+अटल पूर्णांक पूर्णांकel_pt_text_poke(काष्ठा पूर्णांकel_pt *pt, जोड़ perf_event *event)
+अणु
 	u8 cpumode = event->header.misc & PERF_RECORD_MISC_CPUMODE_MASK;
 	u64 addr = event->text_poke.addr + event->text_poke.new_len - 1;
 	/* Assume text poke begins in a basic block no more than 4096 bytes */
-	int cnt = 4096 + event->text_poke.new_len;
-	struct thread *thread = pt->unknown_thread;
-	struct addr_location al = { .map = NULL };
-	struct machine *machine = pt->machine;
-	struct intel_pt_cache_entry *e;
+	पूर्णांक cnt = 4096 + event->text_poke.new_len;
+	काष्ठा thपढ़ो *thपढ़ो = pt->unknown_thपढ़ो;
+	काष्ठा addr_location al = अणु .map = शून्य पूर्ण;
+	काष्ठा machine *machine = pt->machine;
+	काष्ठा पूर्णांकel_pt_cache_entry *e;
 	u64 offset;
 
-	if (!event->text_poke.new_len)
-		return 0;
+	अगर (!event->text_poke.new_len)
+		वापस 0;
 
-	for (; cnt; cnt--, addr--) {
-		if (intel_pt_find_map(thread, cpumode, addr, &al)) {
-			if (addr < event->text_poke.addr)
-				return 0;
-			continue;
-		}
+	क्रम (; cnt; cnt--, addr--) अणु
+		अगर (पूर्णांकel_pt_find_map(thपढ़ो, cpumode, addr, &al)) अणु
+			अगर (addr < event->text_poke.addr)
+				वापस 0;
+			जारी;
+		पूर्ण
 
-		if (!al.map->dso || !al.map->dso->auxtrace_cache)
-			continue;
+		अगर (!al.map->dso || !al.map->dso->auxtrace_cache)
+			जारी;
 
 		offset = al.map->map_ip(al.map, addr);
 
-		e = intel_pt_cache_lookup(al.map->dso, machine, offset);
-		if (!e)
-			continue;
+		e = पूर्णांकel_pt_cache_lookup(al.map->dso, machine, offset);
+		अगर (!e)
+			जारी;
 
-		if (addr + e->byte_cnt + e->length <= event->text_poke.addr) {
+		अगर (addr + e->byte_cnt + e->length <= event->text_poke.addr) अणु
 			/*
 			 * No overlap. Working backwards there cannot be another
-			 * basic block that overlaps the text poke if there is a
-			 * branch instruction before the text poke address.
+			 * basic block that overlaps the text poke अगर there is a
+			 * branch inकाष्ठाion beक्रमe the text poke address.
 			 */
-			if (e->branch != INTEL_PT_BR_NO_BRANCH)
-				return 0;
-		} else {
-			intel_pt_cache_invalidate(al.map->dso, machine, offset);
-			intel_pt_log("Invalidated instruction cache for %s at %#"PRIx64"\n",
-				     al.map->dso->long_name, addr);
-		}
-	}
+			अगर (e->branch != INTEL_PT_BR_NO_BRANCH)
+				वापस 0;
+		पूर्ण अन्यथा अणु
+			पूर्णांकel_pt_cache_invalidate(al.map->dso, machine, offset);
+			पूर्णांकel_pt_log("Invalidated instruction cache for %s at %#"PRIx64"\n",
+				     al.map->dso->दीर्घ_name, addr);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_pt_process_event(struct perf_session *session,
-				  union perf_event *event,
-				  struct perf_sample *sample,
-				  struct perf_tool *tool)
-{
-	struct intel_pt *pt = container_of(session->auxtrace, struct intel_pt,
+अटल पूर्णांक पूर्णांकel_pt_process_event(काष्ठा perf_session *session,
+				  जोड़ perf_event *event,
+				  काष्ठा perf_sample *sample,
+				  काष्ठा perf_tool *tool)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = container_of(session->auxtrace, काष्ठा पूर्णांकel_pt,
 					   auxtrace);
-	u64 timestamp;
-	int err = 0;
+	u64 बारtamp;
+	पूर्णांक err = 0;
 
-	if (dump_trace)
-		return 0;
+	अगर (dump_trace)
+		वापस 0;
 
-	if (!tool->ordered_events) {
+	अगर (!tool->ordered_events) अणु
 		pr_err("Intel Processor Trace requires ordered events\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (sample->time && sample->time != (u64)-1)
-		timestamp = perf_time_to_tsc(sample->time, &pt->tc);
-	else
-		timestamp = 0;
+	अगर (sample->समय && sample->समय != (u64)-1)
+		बारtamp = perf_समय_प्रकारo_tsc(sample->समय, &pt->tc);
+	अन्यथा
+		बारtamp = 0;
 
-	if (timestamp || pt->timeless_decoding) {
-		err = intel_pt_update_queues(pt);
-		if (err)
-			return err;
-	}
+	अगर (बारtamp || pt->समयless_decoding) अणु
+		err = पूर्णांकel_pt_update_queues(pt);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (pt->timeless_decoding) {
-		if (pt->sampling_mode) {
-			if (sample->aux_sample.size)
-				err = intel_pt_process_timeless_sample(pt,
+	अगर (pt->समयless_decoding) अणु
+		अगर (pt->sampling_mode) अणु
+			अगर (sample->aux_sample.size)
+				err = पूर्णांकel_pt_process_समयless_sample(pt,
 								       sample);
-		} else if (event->header.type == PERF_RECORD_EXIT) {
-			err = intel_pt_process_timeless_queues(pt,
-							       event->fork.tid,
-							       sample->time);
-		}
-	} else if (timestamp) {
-		err = intel_pt_process_queues(pt, timestamp);
-	}
-	if (err)
-		return err;
+		पूर्ण अन्यथा अगर (event->header.type == PERF_RECORD_EXIT) अणु
+			err = पूर्णांकel_pt_process_समयless_queues(pt,
+							       event->विभाजन.tid,
+							       sample->समय);
+		पूर्ण
+	पूर्ण अन्यथा अगर (बारtamp) अणु
+		err = पूर्णांकel_pt_process_queues(pt, बारtamp);
+	पूर्ण
+	अगर (err)
+		वापस err;
 
-	if (event->header.type == PERF_RECORD_SAMPLE) {
-		if (pt->synth_opts.add_callchain && !sample->callchain)
-			intel_pt_add_callchain(pt, sample);
-		if (pt->synth_opts.add_last_branch && !sample->branch_stack)
-			intel_pt_add_br_stack(pt, sample);
-	}
+	अगर (event->header.type == PERF_RECORD_SAMPLE) अणु
+		अगर (pt->synth_opts.add_callchain && !sample->callchain)
+			पूर्णांकel_pt_add_callchain(pt, sample);
+		अगर (pt->synth_opts.add_last_branch && !sample->branch_stack)
+			पूर्णांकel_pt_add_br_stack(pt, sample);
+	पूर्ण
 
-	if (event->header.type == PERF_RECORD_AUX &&
+	अगर (event->header.type == PERF_RECORD_AUX &&
 	    (event->aux.flags & PERF_AUX_FLAG_TRUNCATED) &&
-	    pt->synth_opts.errors) {
-		err = intel_pt_lost(pt, sample);
-		if (err)
-			return err;
-	}
+	    pt->synth_opts.errors) अणु
+		err = पूर्णांकel_pt_lost(pt, sample);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (pt->switch_evsel && event->header.type == PERF_RECORD_SAMPLE)
-		err = intel_pt_process_switch(pt, sample);
-	else if (event->header.type == PERF_RECORD_ITRACE_START)
-		err = intel_pt_process_itrace_start(pt, event, sample);
-	else if (event->header.type == PERF_RECORD_SWITCH ||
+	अगर (pt->चयन_evsel && event->header.type == PERF_RECORD_SAMPLE)
+		err = पूर्णांकel_pt_process_चयन(pt, sample);
+	अन्यथा अगर (event->header.type == PERF_RECORD_ITRACE_START)
+		err = पूर्णांकel_pt_process_itrace_start(pt, event, sample);
+	अन्यथा अगर (event->header.type == PERF_RECORD_SWITCH ||
 		 event->header.type == PERF_RECORD_SWITCH_CPU_WIDE)
-		err = intel_pt_context_switch(pt, event, sample);
+		err = पूर्णांकel_pt_context_चयन(pt, event, sample);
 
-	if (!err && event->header.type == PERF_RECORD_TEXT_POKE)
-		err = intel_pt_text_poke(pt, event);
+	अगर (!err && event->header.type == PERF_RECORD_TEXT_POKE)
+		err = पूर्णांकel_pt_text_poke(pt, event);
 
-	if (intel_pt_enable_logging && intel_pt_log_events(pt, sample->time)) {
-		intel_pt_log("event %u: cpu %d time %"PRIu64" tsc %#"PRIx64" ",
-			     event->header.type, sample->cpu, sample->time, timestamp);
-		intel_pt_log_event(event);
-	}
+	अगर (पूर्णांकel_pt_enable_logging && पूर्णांकel_pt_log_events(pt, sample->समय)) अणु
+		पूर्णांकel_pt_log("event %u: cpu %d time %"PRIu64" tsc %#"PRIx64" ",
+			     event->header.type, sample->cpu, sample->समय, बारtamp);
+		पूर्णांकel_pt_log_event(event);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int intel_pt_flush(struct perf_session *session, struct perf_tool *tool)
-{
-	struct intel_pt *pt = container_of(session->auxtrace, struct intel_pt,
+अटल पूर्णांक पूर्णांकel_pt_flush(काष्ठा perf_session *session, काष्ठा perf_tool *tool)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = container_of(session->auxtrace, काष्ठा पूर्णांकel_pt,
 					   auxtrace);
-	int ret;
+	पूर्णांक ret;
 
-	if (dump_trace)
-		return 0;
+	अगर (dump_trace)
+		वापस 0;
 
-	if (!tool->ordered_events)
-		return -EINVAL;
+	अगर (!tool->ordered_events)
+		वापस -EINVAL;
 
-	ret = intel_pt_update_queues(pt);
-	if (ret < 0)
-		return ret;
+	ret = पूर्णांकel_pt_update_queues(pt);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (pt->timeless_decoding)
-		return intel_pt_process_timeless_queues(pt, -1,
+	अगर (pt->समयless_decoding)
+		वापस पूर्णांकel_pt_process_समयless_queues(pt, -1,
 							MAX_TIMESTAMP - 1);
 
-	return intel_pt_process_queues(pt, MAX_TIMESTAMP);
-}
+	वापस पूर्णांकel_pt_process_queues(pt, MAX_TIMESTAMP);
+पूर्ण
 
-static void intel_pt_free_events(struct perf_session *session)
-{
-	struct intel_pt *pt = container_of(session->auxtrace, struct intel_pt,
+अटल व्योम पूर्णांकel_pt_मुक्त_events(काष्ठा perf_session *session)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = container_of(session->auxtrace, काष्ठा पूर्णांकel_pt,
 					   auxtrace);
-	struct auxtrace_queues *queues = &pt->queues;
-	unsigned int i;
+	काष्ठा auxtrace_queues *queues = &pt->queues;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < queues->nr_queues; i++) {
-		intel_pt_free_queue(queues->queue_array[i].priv);
-		queues->queue_array[i].priv = NULL;
-	}
-	intel_pt_log_disable();
-	auxtrace_queues__free(queues);
-}
+	क्रम (i = 0; i < queues->nr_queues; i++) अणु
+		पूर्णांकel_pt_मुक्त_queue(queues->queue_array[i].priv);
+		queues->queue_array[i].priv = शून्य;
+	पूर्ण
+	पूर्णांकel_pt_log_disable();
+	auxtrace_queues__मुक्त(queues);
+पूर्ण
 
-static void intel_pt_free(struct perf_session *session)
-{
-	struct intel_pt *pt = container_of(session->auxtrace, struct intel_pt,
-					   auxtrace);
-
-	auxtrace_heap__free(&pt->heap);
-	intel_pt_free_events(session);
-	session->auxtrace = NULL;
-	thread__put(pt->unknown_thread);
-	addr_filters__exit(&pt->filts);
-	zfree(&pt->chain);
-	zfree(&pt->filter);
-	zfree(&pt->time_ranges);
-	free(pt);
-}
-
-static bool intel_pt_evsel_is_auxtrace(struct perf_session *session,
-				       struct evsel *evsel)
-{
-	struct intel_pt *pt = container_of(session->auxtrace, struct intel_pt,
+अटल व्योम पूर्णांकel_pt_मुक्त(काष्ठा perf_session *session)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = container_of(session->auxtrace, काष्ठा पूर्णांकel_pt,
 					   auxtrace);
 
-	return evsel->core.attr.type == pt->pmu_type;
-}
+	auxtrace_heap__मुक्त(&pt->heap);
+	पूर्णांकel_pt_मुक्त_events(session);
+	session->auxtrace = शून्य;
+	thपढ़ो__put(pt->unknown_thपढ़ो);
+	addr_filters__निकास(&pt->filts);
+	zमुक्त(&pt->chain);
+	zमुक्त(&pt->filter);
+	zमुक्त(&pt->समय_ranges);
+	मुक्त(pt);
+पूर्ण
 
-static int intel_pt_process_auxtrace_event(struct perf_session *session,
-					   union perf_event *event,
-					   struct perf_tool *tool __maybe_unused)
-{
-	struct intel_pt *pt = container_of(session->auxtrace, struct intel_pt,
+अटल bool पूर्णांकel_pt_evsel_is_auxtrace(काष्ठा perf_session *session,
+				       काष्ठा evsel *evsel)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = container_of(session->auxtrace, काष्ठा पूर्णांकel_pt,
 					   auxtrace);
 
-	if (!pt->data_queued) {
-		struct auxtrace_buffer *buffer;
+	वापस evsel->core.attr.type == pt->pmu_type;
+पूर्ण
+
+अटल पूर्णांक पूर्णांकel_pt_process_auxtrace_event(काष्ठा perf_session *session,
+					   जोड़ perf_event *event,
+					   काष्ठा perf_tool *tool __maybe_unused)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = container_of(session->auxtrace, काष्ठा पूर्णांकel_pt,
+					   auxtrace);
+
+	अगर (!pt->data_queued) अणु
+		काष्ठा auxtrace_buffer *buffer;
 		off_t data_offset;
-		int fd = perf_data__fd(session->data);
-		int err;
+		पूर्णांक fd = perf_data__fd(session->data);
+		पूर्णांक err;
 
-		if (perf_data__is_pipe(session->data)) {
+		अगर (perf_data__is_pipe(session->data)) अणु
 			data_offset = 0;
-		} else {
-			data_offset = lseek(fd, 0, SEEK_CUR);
-			if (data_offset == -1)
-				return -errno;
-		}
+		पूर्ण अन्यथा अणु
+			data_offset = lseek(fd, 0, प्रस्तुत_से);
+			अगर (data_offset == -1)
+				वापस -त्रुटि_सं;
+		पूर्ण
 
 		err = auxtrace_queues__add_event(&pt->queues, session, event,
 						 data_offset, &buffer);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		/* Dump here now we have copied a piped trace out of the pipe */
-		if (dump_trace) {
-			if (auxtrace_buffer__get_data(buffer, fd)) {
-				intel_pt_dump_event(pt, buffer->data,
+		अगर (dump_trace) अणु
+			अगर (auxtrace_buffer__get_data(buffer, fd)) अणु
+				पूर्णांकel_pt_dump_event(pt, buffer->data,
 						    buffer->size);
 				auxtrace_buffer__put_data(buffer);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_pt_queue_data(struct perf_session *session,
-			       struct perf_sample *sample,
-			       union perf_event *event, u64 data_offset)
-{
-	struct intel_pt *pt = container_of(session->auxtrace, struct intel_pt,
+अटल पूर्णांक पूर्णांकel_pt_queue_data(काष्ठा perf_session *session,
+			       काष्ठा perf_sample *sample,
+			       जोड़ perf_event *event, u64 data_offset)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = container_of(session->auxtrace, काष्ठा पूर्णांकel_pt,
 					   auxtrace);
-	u64 timestamp;
+	u64 बारtamp;
 
-	if (event) {
-		return auxtrace_queues__add_event(&pt->queues, session, event,
-						  data_offset, NULL);
-	}
+	अगर (event) अणु
+		वापस auxtrace_queues__add_event(&pt->queues, session, event,
+						  data_offset, शून्य);
+	पूर्ण
 
-	if (sample->time && sample->time != (u64)-1)
-		timestamp = perf_time_to_tsc(sample->time, &pt->tc);
-	else
-		timestamp = 0;
+	अगर (sample->समय && sample->समय != (u64)-1)
+		बारtamp = perf_समय_प्रकारo_tsc(sample->समय, &pt->tc);
+	अन्यथा
+		बारtamp = 0;
 
-	return auxtrace_queues__add_sample(&pt->queues, session, sample,
-					   data_offset, timestamp);
-}
+	वापस auxtrace_queues__add_sample(&pt->queues, session, sample,
+					   data_offset, बारtamp);
+पूर्ण
 
-struct intel_pt_synth {
-	struct perf_tool dummy_tool;
-	struct perf_session *session;
-};
+काष्ठा पूर्णांकel_pt_synth अणु
+	काष्ठा perf_tool dummy_tool;
+	काष्ठा perf_session *session;
+पूर्ण;
 
-static int intel_pt_event_synth(struct perf_tool *tool,
-				union perf_event *event,
-				struct perf_sample *sample __maybe_unused,
-				struct machine *machine __maybe_unused)
-{
-	struct intel_pt_synth *intel_pt_synth =
-			container_of(tool, struct intel_pt_synth, dummy_tool);
+अटल पूर्णांक पूर्णांकel_pt_event_synth(काष्ठा perf_tool *tool,
+				जोड़ perf_event *event,
+				काष्ठा perf_sample *sample __maybe_unused,
+				काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा पूर्णांकel_pt_synth *पूर्णांकel_pt_synth =
+			container_of(tool, काष्ठा पूर्णांकel_pt_synth, dummy_tool);
 
-	return perf_session__deliver_synth_event(intel_pt_synth->session, event,
-						 NULL);
-}
+	वापस perf_session__deliver_synth_event(पूर्णांकel_pt_synth->session, event,
+						 शून्य);
+पूर्ण
 
-static int intel_pt_synth_event(struct perf_session *session, const char *name,
-				struct perf_event_attr *attr, u64 id)
-{
-	struct intel_pt_synth intel_pt_synth;
-	int err;
+अटल पूर्णांक पूर्णांकel_pt_synth_event(काष्ठा perf_session *session, स्थिर अक्षर *name,
+				काष्ठा perf_event_attr *attr, u64 id)
+अणु
+	काष्ठा पूर्णांकel_pt_synth पूर्णांकel_pt_synth;
+	पूर्णांक err;
 
 	pr_debug("Synthesizing '%s' event with id %" PRIu64 " sample type %#" PRIx64 "\n",
 		 name, id, (u64)attr->sample_type);
 
-	memset(&intel_pt_synth, 0, sizeof(struct intel_pt_synth));
-	intel_pt_synth.session = session;
+	स_रखो(&पूर्णांकel_pt_synth, 0, माप(काष्ठा पूर्णांकel_pt_synth));
+	पूर्णांकel_pt_synth.session = session;
 
-	err = perf_event__synthesize_attr(&intel_pt_synth.dummy_tool, attr, 1,
-					  &id, intel_pt_event_synth);
-	if (err)
+	err = perf_event__synthesize_attr(&पूर्णांकel_pt_synth.dummy_tool, attr, 1,
+					  &id, पूर्णांकel_pt_event_synth);
+	अगर (err)
 		pr_err("%s: failed to synthesize '%s' event type\n",
 		       __func__, name);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void intel_pt_set_event_name(struct evlist *evlist, u64 id,
-				    const char *name)
-{
-	struct evsel *evsel;
+अटल व्योम पूर्णांकel_pt_set_event_name(काष्ठा evlist *evlist, u64 id,
+				    स्थिर अक्षर *name)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel->core.id && evsel->core.id[0] == id) {
-			if (evsel->name)
-				zfree(&evsel->name);
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel->core.id && evsel->core.id[0] == id) अणु
+			अगर (evsel->name)
+				zमुक्त(&evsel->name);
 			evsel->name = strdup(name);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static struct evsel *intel_pt_evsel(struct intel_pt *pt,
-					 struct evlist *evlist)
-{
-	struct evsel *evsel;
+अटल काष्ठा evsel *पूर्णांकel_pt_evsel(काष्ठा पूर्णांकel_pt *pt,
+					 काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel->core.attr.type == pt->pmu_type && evsel->core.ids)
-			return evsel;
-	}
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel->core.attr.type == pt->pmu_type && evsel->core.ids)
+			वापस evsel;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int intel_pt_synth_events(struct intel_pt *pt,
-				 struct perf_session *session)
-{
-	struct evlist *evlist = session->evlist;
-	struct evsel *evsel = intel_pt_evsel(pt, evlist);
-	struct perf_event_attr attr;
+अटल पूर्णांक पूर्णांकel_pt_synth_events(काष्ठा पूर्णांकel_pt *pt,
+				 काष्ठा perf_session *session)
+अणु
+	काष्ठा evlist *evlist = session->evlist;
+	काष्ठा evsel *evsel = पूर्णांकel_pt_evsel(pt, evlist);
+	काष्ठा perf_event_attr attr;
 	u64 id;
-	int err;
+	पूर्णांक err;
 
-	if (!evsel) {
+	अगर (!evsel) अणु
 		pr_debug("There are no selected events with Intel Processor Trace data\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	memset(&attr, 0, sizeof(struct perf_event_attr));
-	attr.size = sizeof(struct perf_event_attr);
+	स_रखो(&attr, 0, माप(काष्ठा perf_event_attr));
+	attr.size = माप(काष्ठा perf_event_attr);
 	attr.type = PERF_TYPE_HARDWARE;
 	attr.sample_type = evsel->core.attr.sample_type & PERF_SAMPLE_MASK;
 	attr.sample_type |= PERF_SAMPLE_IP | PERF_SAMPLE_TID |
 			    PERF_SAMPLE_PERIOD;
-	if (pt->timeless_decoding)
+	अगर (pt->समयless_decoding)
 		attr.sample_type &= ~(u64)PERF_SAMPLE_TIME;
-	else
+	अन्यथा
 		attr.sample_type |= PERF_SAMPLE_TIME;
-	if (!pt->per_cpu_mmaps)
+	अगर (!pt->per_cpu_mmaps)
 		attr.sample_type &= ~(u64)PERF_SAMPLE_CPU;
 	attr.exclude_user = evsel->core.attr.exclude_user;
 	attr.exclude_kernel = evsel->core.attr.exclude_kernel;
@@ -3140,274 +3141,274 @@ static int intel_pt_synth_events(struct intel_pt *pt,
 	attr.exclude_host = evsel->core.attr.exclude_host;
 	attr.exclude_guest = evsel->core.attr.exclude_guest;
 	attr.sample_id_all = evsel->core.attr.sample_id_all;
-	attr.read_format = evsel->core.attr.read_format;
+	attr.पढ़ो_क्रमmat = evsel->core.attr.पढ़ो_क्रमmat;
 
 	id = evsel->core.id[0] + 1000000000;
-	if (!id)
+	अगर (!id)
 		id = 1;
 
-	if (pt->synth_opts.branches) {
+	अगर (pt->synth_opts.branches) अणु
 		attr.config = PERF_COUNT_HW_BRANCH_INSTRUCTIONS;
 		attr.sample_period = 1;
 		attr.sample_type |= PERF_SAMPLE_ADDR;
-		err = intel_pt_synth_event(session, "branches", &attr, id);
-		if (err)
-			return err;
+		err = पूर्णांकel_pt_synth_event(session, "branches", &attr, id);
+		अगर (err)
+			वापस err;
 		pt->sample_branches = true;
 		pt->branches_sample_type = attr.sample_type;
 		pt->branches_id = id;
 		id += 1;
 		attr.sample_type &= ~(u64)PERF_SAMPLE_ADDR;
-	}
+	पूर्ण
 
-	if (pt->synth_opts.callchain)
+	अगर (pt->synth_opts.callchain)
 		attr.sample_type |= PERF_SAMPLE_CALLCHAIN;
-	if (pt->synth_opts.last_branch) {
+	अगर (pt->synth_opts.last_branch) अणु
 		attr.sample_type |= PERF_SAMPLE_BRANCH_STACK;
 		/*
-		 * We don't use the hardware index, but the sample generation
-		 * code uses the new format branch_stack with this field,
+		 * We करोn't use the hardware index, but the sample generation
+		 * code uses the new क्रमmat branch_stack with this field,
 		 * so the event attributes must indicate that it's present.
 		 */
 		attr.branch_sample_type |= PERF_SAMPLE_BRANCH_HW_INDEX;
-	}
+	पूर्ण
 
-	if (pt->synth_opts.instructions) {
+	अगर (pt->synth_opts.inकाष्ठाions) अणु
 		attr.config = PERF_COUNT_HW_INSTRUCTIONS;
-		if (pt->synth_opts.period_type == PERF_ITRACE_PERIOD_NANOSECS)
+		अगर (pt->synth_opts.period_type == PERF_ITRACE_PERIOD_न_अंकOSECS)
 			attr.sample_period =
-				intel_pt_ns_to_ticks(pt, pt->synth_opts.period);
-		else
+				पूर्णांकel_pt_ns_to_ticks(pt, pt->synth_opts.period);
+		अन्यथा
 			attr.sample_period = pt->synth_opts.period;
-		err = intel_pt_synth_event(session, "instructions", &attr, id);
-		if (err)
-			return err;
-		pt->sample_instructions = true;
-		pt->instructions_sample_type = attr.sample_type;
-		pt->instructions_id = id;
+		err = पूर्णांकel_pt_synth_event(session, "instructions", &attr, id);
+		अगर (err)
+			वापस err;
+		pt->sample_inकाष्ठाions = true;
+		pt->inकाष्ठाions_sample_type = attr.sample_type;
+		pt->inकाष्ठाions_id = id;
 		id += 1;
-	}
+	पूर्ण
 
 	attr.sample_type &= ~(u64)PERF_SAMPLE_PERIOD;
 	attr.sample_period = 1;
 
-	if (pt->synth_opts.transactions) {
+	अगर (pt->synth_opts.transactions) अणु
 		attr.config = PERF_COUNT_HW_INSTRUCTIONS;
-		err = intel_pt_synth_event(session, "transactions", &attr, id);
-		if (err)
-			return err;
+		err = पूर्णांकel_pt_synth_event(session, "transactions", &attr, id);
+		अगर (err)
+			वापस err;
 		pt->sample_transactions = true;
 		pt->transactions_sample_type = attr.sample_type;
 		pt->transactions_id = id;
-		intel_pt_set_event_name(evlist, id, "transactions");
+		पूर्णांकel_pt_set_event_name(evlist, id, "transactions");
 		id += 1;
-	}
+	पूर्ण
 
 	attr.type = PERF_TYPE_SYNTH;
 	attr.sample_type |= PERF_SAMPLE_RAW;
 
-	if (pt->synth_opts.ptwrites) {
+	अगर (pt->synth_opts.ptग_लिखोs) अणु
 		attr.config = PERF_SYNTH_INTEL_PTWRITE;
-		err = intel_pt_synth_event(session, "ptwrite", &attr, id);
-		if (err)
-			return err;
-		pt->sample_ptwrites = true;
-		pt->ptwrites_sample_type = attr.sample_type;
-		pt->ptwrites_id = id;
-		intel_pt_set_event_name(evlist, id, "ptwrite");
+		err = पूर्णांकel_pt_synth_event(session, "ptwrite", &attr, id);
+		अगर (err)
+			वापस err;
+		pt->sample_ptग_लिखोs = true;
+		pt->ptग_लिखोs_sample_type = attr.sample_type;
+		pt->ptग_लिखोs_id = id;
+		पूर्णांकel_pt_set_event_name(evlist, id, "ptwrite");
 		id += 1;
-	}
+	पूर्ण
 
-	if (pt->synth_opts.pwr_events) {
+	अगर (pt->synth_opts.pwr_events) अणु
 		pt->sample_pwr_events = true;
 		pt->pwr_events_sample_type = attr.sample_type;
 
 		attr.config = PERF_SYNTH_INTEL_CBR;
-		err = intel_pt_synth_event(session, "cbr", &attr, id);
-		if (err)
-			return err;
+		err = पूर्णांकel_pt_synth_event(session, "cbr", &attr, id);
+		अगर (err)
+			वापस err;
 		pt->cbr_id = id;
-		intel_pt_set_event_name(evlist, id, "cbr");
+		पूर्णांकel_pt_set_event_name(evlist, id, "cbr");
 		id += 1;
 
 		attr.config = PERF_SYNTH_INTEL_PSB;
-		err = intel_pt_synth_event(session, "psb", &attr, id);
-		if (err)
-			return err;
+		err = पूर्णांकel_pt_synth_event(session, "psb", &attr, id);
+		अगर (err)
+			वापस err;
 		pt->psb_id = id;
-		intel_pt_set_event_name(evlist, id, "psb");
+		पूर्णांकel_pt_set_event_name(evlist, id, "psb");
 		id += 1;
-	}
+	पूर्ण
 
-	if (pt->synth_opts.pwr_events && (evsel->core.attr.config & 0x10)) {
+	अगर (pt->synth_opts.pwr_events && (evsel->core.attr.config & 0x10)) अणु
 		attr.config = PERF_SYNTH_INTEL_MWAIT;
-		err = intel_pt_synth_event(session, "mwait", &attr, id);
-		if (err)
-			return err;
-		pt->mwait_id = id;
-		intel_pt_set_event_name(evlist, id, "mwait");
+		err = पूर्णांकel_pt_synth_event(session, "mwait", &attr, id);
+		अगर (err)
+			वापस err;
+		pt->mरुको_id = id;
+		पूर्णांकel_pt_set_event_name(evlist, id, "mwait");
 		id += 1;
 
 		attr.config = PERF_SYNTH_INTEL_PWRE;
-		err = intel_pt_synth_event(session, "pwre", &attr, id);
-		if (err)
-			return err;
+		err = पूर्णांकel_pt_synth_event(session, "pwre", &attr, id);
+		अगर (err)
+			वापस err;
 		pt->pwre_id = id;
-		intel_pt_set_event_name(evlist, id, "pwre");
+		पूर्णांकel_pt_set_event_name(evlist, id, "pwre");
 		id += 1;
 
 		attr.config = PERF_SYNTH_INTEL_EXSTOP;
-		err = intel_pt_synth_event(session, "exstop", &attr, id);
-		if (err)
-			return err;
+		err = पूर्णांकel_pt_synth_event(session, "exstop", &attr, id);
+		अगर (err)
+			वापस err;
 		pt->exstop_id = id;
-		intel_pt_set_event_name(evlist, id, "exstop");
+		पूर्णांकel_pt_set_event_name(evlist, id, "exstop");
 		id += 1;
 
 		attr.config = PERF_SYNTH_INTEL_PWRX;
-		err = intel_pt_synth_event(session, "pwrx", &attr, id);
-		if (err)
-			return err;
+		err = पूर्णांकel_pt_synth_event(session, "pwrx", &attr, id);
+		अगर (err)
+			वापस err;
 		pt->pwrx_id = id;
-		intel_pt_set_event_name(evlist, id, "pwrx");
+		पूर्णांकel_pt_set_event_name(evlist, id, "pwrx");
 		id += 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void intel_pt_setup_pebs_events(struct intel_pt *pt)
-{
-	struct evsel *evsel;
+अटल व्योम पूर्णांकel_pt_setup_pebs_events(काष्ठा पूर्णांकel_pt *pt)
+अणु
+	काष्ठा evsel *evsel;
 
-	if (!pt->synth_opts.other_events)
-		return;
+	अगर (!pt->synth_opts.other_events)
+		वापस;
 
-	evlist__for_each_entry(pt->session->evlist, evsel) {
-		if (evsel->core.attr.aux_output && evsel->core.id) {
+	evlist__क्रम_each_entry(pt->session->evlist, evsel) अणु
+		अगर (evsel->core.attr.aux_output && evsel->core.id) अणु
 			pt->sample_pebs = true;
 			pt->pebs_evsel = evsel;
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static struct evsel *intel_pt_find_sched_switch(struct evlist *evlist)
-{
-	struct evsel *evsel;
+अटल काष्ठा evsel *पूर्णांकel_pt_find_sched_चयन(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry_reverse(evlist, evsel) {
-		const char *name = evsel__name(evsel);
+	evlist__क्रम_each_entry_reverse(evlist, evsel) अणु
+		स्थिर अक्षर *name = evsel__name(evsel);
 
-		if (!strcmp(name, "sched:sched_switch"))
-			return evsel;
-	}
+		अगर (!म_भेद(name, "sched:sched_switch"))
+			वापस evsel;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool intel_pt_find_switch(struct evlist *evlist)
-{
-	struct evsel *evsel;
+अटल bool पूर्णांकel_pt_find_चयन(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel->core.attr.context_switch)
-			return true;
-	}
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel->core.attr.context_चयन)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int intel_pt_perf_config(const char *var, const char *value, void *data)
-{
-	struct intel_pt *pt = data;
+अटल पूर्णांक पूर्णांकel_pt_perf_config(स्थिर अक्षर *var, स्थिर अक्षर *value, व्योम *data)
+अणु
+	काष्ठा पूर्णांकel_pt *pt = data;
 
-	if (!strcmp(var, "intel-pt.mispred-all"))
+	अगर (!म_भेद(var, "intel-pt.mispred-all"))
 		pt->mispred_all = perf_config_bool(var, value);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Find least TSC which converts to ns or later */
-static u64 intel_pt_tsc_start(u64 ns, struct intel_pt *pt)
-{
-	u64 tsc, tm;
+अटल u64 पूर्णांकel_pt_tsc_start(u64 ns, काष्ठा पूर्णांकel_pt *pt)
+अणु
+	u64 tsc, पंचांग;
 
-	tsc = perf_time_to_tsc(ns, &pt->tc);
+	tsc = perf_समय_प्रकारo_tsc(ns, &pt->tc);
 
-	while (1) {
-		tm = tsc_to_perf_time(tsc, &pt->tc);
-		if (tm < ns)
-			break;
+	जबतक (1) अणु
+		पंचांग = tsc_to_perf_समय(tsc, &pt->tc);
+		अगर (पंचांग < ns)
+			अवरोध;
 		tsc -= 1;
-	}
+	पूर्ण
 
-	while (tm < ns)
-		tm = tsc_to_perf_time(++tsc, &pt->tc);
+	जबतक (पंचांग < ns)
+		पंचांग = tsc_to_perf_समय(++tsc, &pt->tc);
 
-	return tsc;
-}
+	वापस tsc;
+पूर्ण
 
 /* Find greatest TSC which converts to ns or earlier */
-static u64 intel_pt_tsc_end(u64 ns, struct intel_pt *pt)
-{
-	u64 tsc, tm;
+अटल u64 पूर्णांकel_pt_tsc_end(u64 ns, काष्ठा पूर्णांकel_pt *pt)
+अणु
+	u64 tsc, पंचांग;
 
-	tsc = perf_time_to_tsc(ns, &pt->tc);
+	tsc = perf_समय_प्रकारo_tsc(ns, &pt->tc);
 
-	while (1) {
-		tm = tsc_to_perf_time(tsc, &pt->tc);
-		if (tm > ns)
-			break;
+	जबतक (1) अणु
+		पंचांग = tsc_to_perf_समय(tsc, &pt->tc);
+		अगर (पंचांग > ns)
+			अवरोध;
 		tsc += 1;
-	}
+	पूर्ण
 
-	while (tm > ns)
-		tm = tsc_to_perf_time(--tsc, &pt->tc);
+	जबतक (पंचांग > ns)
+		पंचांग = tsc_to_perf_समय(--tsc, &pt->tc);
 
-	return tsc;
-}
+	वापस tsc;
+पूर्ण
 
-static int intel_pt_setup_time_ranges(struct intel_pt *pt,
-				      struct itrace_synth_opts *opts)
-{
-	struct perf_time_interval *p = opts->ptime_range;
-	int n = opts->range_num;
-	int i;
+अटल पूर्णांक पूर्णांकel_pt_setup_समय_ranges(काष्ठा पूर्णांकel_pt *pt,
+				      काष्ठा itrace_synth_opts *opts)
+अणु
+	काष्ठा perf_समय_पूर्णांकerval *p = opts->pसमय_range;
+	पूर्णांक n = opts->range_num;
+	पूर्णांक i;
 
-	if (!n || !p || pt->timeless_decoding)
-		return 0;
+	अगर (!n || !p || pt->समयless_decoding)
+		वापस 0;
 
-	pt->time_ranges = calloc(n, sizeof(struct range));
-	if (!pt->time_ranges)
-		return -ENOMEM;
+	pt->समय_ranges = सुस्मृति(n, माप(काष्ठा range));
+	अगर (!pt->समय_ranges)
+		वापस -ENOMEM;
 
 	pt->range_cnt = n;
 
-	intel_pt_log("%s: %u range(s)\n", __func__, n);
+	पूर्णांकel_pt_log("%s: %u range(s)\n", __func__, n);
 
-	for (i = 0; i < n; i++) {
-		struct range *r = &pt->time_ranges[i];
+	क्रम (i = 0; i < n; i++) अणु
+		काष्ठा range *r = &pt->समय_ranges[i];
 		u64 ts = p[i].start;
 		u64 te = p[i].end;
 
 		/*
-		 * Take care to ensure the TSC range matches the perf-time range
-		 * when converted back to perf-time.
+		 * Take care to ensure the TSC range matches the perf-समय range
+		 * when converted back to perf-समय.
 		 */
-		r->start = ts ? intel_pt_tsc_start(ts, pt) : 0;
-		r->end   = te ? intel_pt_tsc_end(te, pt) : 0;
+		r->start = ts ? पूर्णांकel_pt_tsc_start(ts, pt) : 0;
+		r->end   = te ? पूर्णांकel_pt_tsc_end(te, pt) : 0;
 
-		intel_pt_log("range %d: perf time interval: %"PRIu64" to %"PRIu64"\n",
+		पूर्णांकel_pt_log("range %d: perf time interval: %"PRIu64" to %"PRIu64"\n",
 			     i, ts, te);
-		intel_pt_log("range %d: TSC time interval: %#"PRIx64" to %#"PRIx64"\n",
+		पूर्णांकel_pt_log("range %d: TSC time interval: %#"PRIx64" to %#"PRIx64"\n",
 			     i, r->start, r->end);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char * const intel_pt_info_fmts[] = {
+अटल स्थिर अक्षर * स्थिर पूर्णांकel_pt_info_fmts[] = अणु
 	[INTEL_PT_PMU_TYPE]		= "  PMU Type            %"PRId64"\n",
 	[INTEL_PT_TIME_SHIFT]		= "  Time Shift          %"PRIu64"\n",
 	[INTEL_PT_TIME_MULT]		= "  Time Muliplier      %"PRIu64"\n",
@@ -3424,315 +3425,315 @@ static const char * const intel_pt_info_fmts[] = {
 	[INTEL_PT_CYC_BIT]		= "  CYC bit             %#"PRIx64"\n",
 	[INTEL_PT_MAX_NONTURBO_RATIO]	= "  Max non-turbo ratio %"PRIu64"\n",
 	[INTEL_PT_FILTER_STR_LEN]	= "  Filter string len.  %"PRIu64"\n",
-};
+पूर्ण;
 
-static void intel_pt_print_info(__u64 *arr, int start, int finish)
-{
-	int i;
+अटल व्योम पूर्णांकel_pt_prपूर्णांक_info(__u64 *arr, पूर्णांक start, पूर्णांक finish)
+अणु
+	पूर्णांक i;
 
-	if (!dump_trace)
-		return;
+	अगर (!dump_trace)
+		वापस;
 
-	for (i = start; i <= finish; i++)
-		fprintf(stdout, intel_pt_info_fmts[i], arr[i]);
-}
+	क्रम (i = start; i <= finish; i++)
+		ख_लिखो(मानक_निकास, पूर्णांकel_pt_info_fmts[i], arr[i]);
+पूर्ण
 
-static void intel_pt_print_info_str(const char *name, const char *str)
-{
-	if (!dump_trace)
-		return;
+अटल व्योम पूर्णांकel_pt_prपूर्णांक_info_str(स्थिर अक्षर *name, स्थिर अक्षर *str)
+अणु
+	अगर (!dump_trace)
+		वापस;
 
-	fprintf(stdout, "  %-20s%s\n", name, str ? str : "");
-}
+	ख_लिखो(मानक_निकास, "  %-20s%s\n", name, str ? str : "");
+पूर्ण
 
-static bool intel_pt_has(struct perf_record_auxtrace_info *auxtrace_info, int pos)
-{
-	return auxtrace_info->header.size >=
-		sizeof(struct perf_record_auxtrace_info) + (sizeof(u64) * (pos + 1));
-}
+अटल bool पूर्णांकel_pt_has(काष्ठा perf_record_auxtrace_info *auxtrace_info, पूर्णांक pos)
+अणु
+	वापस auxtrace_info->header.size >=
+		माप(काष्ठा perf_record_auxtrace_info) + (माप(u64) * (pos + 1));
+पूर्ण
 
-int intel_pt_process_auxtrace_info(union perf_event *event,
-				   struct perf_session *session)
-{
-	struct perf_record_auxtrace_info *auxtrace_info = &event->auxtrace_info;
-	size_t min_sz = sizeof(u64) * INTEL_PT_PER_CPU_MMAPS;
-	struct intel_pt *pt;
-	void *info_end;
+पूर्णांक पूर्णांकel_pt_process_auxtrace_info(जोड़ perf_event *event,
+				   काष्ठा perf_session *session)
+अणु
+	काष्ठा perf_record_auxtrace_info *auxtrace_info = &event->auxtrace_info;
+	माप_प्रकार min_sz = माप(u64) * INTEL_PT_PER_CPU_MMAPS;
+	काष्ठा पूर्णांकel_pt *pt;
+	व्योम *info_end;
 	__u64 *info;
-	int err;
+	पूर्णांक err;
 
-	if (auxtrace_info->header.size < sizeof(struct perf_record_auxtrace_info) +
+	अगर (auxtrace_info->header.size < माप(काष्ठा perf_record_auxtrace_info) +
 					min_sz)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	pt = zalloc(sizeof(struct intel_pt));
-	if (!pt)
-		return -ENOMEM;
+	pt = zalloc(माप(काष्ठा पूर्णांकel_pt));
+	अगर (!pt)
+		वापस -ENOMEM;
 
 	addr_filters__init(&pt->filts);
 
-	err = perf_config(intel_pt_perf_config, pt);
-	if (err)
-		goto err_free;
+	err = perf_config(पूर्णांकel_pt_perf_config, pt);
+	अगर (err)
+		जाओ err_मुक्त;
 
 	err = auxtrace_queues__init(&pt->queues);
-	if (err)
-		goto err_free;
+	अगर (err)
+		जाओ err_मुक्त;
 
-	intel_pt_log_set_name(INTEL_PT_PMU_NAME);
+	पूर्णांकel_pt_log_set_name(INTEL_PT_PMU_NAME);
 
 	pt->session = session;
 	pt->machine = &session->machines.host; /* No kvm support */
 	pt->auxtrace_type = auxtrace_info->type;
 	pt->pmu_type = auxtrace_info->priv[INTEL_PT_PMU_TYPE];
-	pt->tc.time_shift = auxtrace_info->priv[INTEL_PT_TIME_SHIFT];
-	pt->tc.time_mult = auxtrace_info->priv[INTEL_PT_TIME_MULT];
-	pt->tc.time_zero = auxtrace_info->priv[INTEL_PT_TIME_ZERO];
-	pt->cap_user_time_zero = auxtrace_info->priv[INTEL_PT_CAP_USER_TIME_ZERO];
+	pt->tc.समय_shअगरt = auxtrace_info->priv[INTEL_PT_TIME_SHIFT];
+	pt->tc.समय_mult = auxtrace_info->priv[INTEL_PT_TIME_MULT];
+	pt->tc.समय_zero = auxtrace_info->priv[INTEL_PT_TIME_ZERO];
+	pt->cap_user_समय_zero = auxtrace_info->priv[INTEL_PT_CAP_USER_TIME_ZERO];
 	pt->tsc_bit = auxtrace_info->priv[INTEL_PT_TSC_BIT];
 	pt->noretcomp_bit = auxtrace_info->priv[INTEL_PT_NORETCOMP_BIT];
-	pt->have_sched_switch = auxtrace_info->priv[INTEL_PT_HAVE_SCHED_SWITCH];
+	pt->have_sched_चयन = auxtrace_info->priv[INTEL_PT_HAVE_SCHED_SWITCH];
 	pt->snapshot_mode = auxtrace_info->priv[INTEL_PT_SNAPSHOT_MODE];
 	pt->per_cpu_mmaps = auxtrace_info->priv[INTEL_PT_PER_CPU_MMAPS];
-	intel_pt_print_info(&auxtrace_info->priv[0], INTEL_PT_PMU_TYPE,
+	पूर्णांकel_pt_prपूर्णांक_info(&auxtrace_info->priv[0], INTEL_PT_PMU_TYPE,
 			    INTEL_PT_PER_CPU_MMAPS);
 
-	if (intel_pt_has(auxtrace_info, INTEL_PT_CYC_BIT)) {
+	अगर (पूर्णांकel_pt_has(auxtrace_info, INTEL_PT_CYC_BIT)) अणु
 		pt->mtc_bit = auxtrace_info->priv[INTEL_PT_MTC_BIT];
 		pt->mtc_freq_bits = auxtrace_info->priv[INTEL_PT_MTC_FREQ_BITS];
 		pt->tsc_ctc_ratio_n = auxtrace_info->priv[INTEL_PT_TSC_CTC_N];
 		pt->tsc_ctc_ratio_d = auxtrace_info->priv[INTEL_PT_TSC_CTC_D];
 		pt->cyc_bit = auxtrace_info->priv[INTEL_PT_CYC_BIT];
-		intel_pt_print_info(&auxtrace_info->priv[0], INTEL_PT_MTC_BIT,
+		पूर्णांकel_pt_prपूर्णांक_info(&auxtrace_info->priv[0], INTEL_PT_MTC_BIT,
 				    INTEL_PT_CYC_BIT);
-	}
+	पूर्ण
 
-	if (intel_pt_has(auxtrace_info, INTEL_PT_MAX_NONTURBO_RATIO)) {
+	अगर (पूर्णांकel_pt_has(auxtrace_info, INTEL_PT_MAX_NONTURBO_RATIO)) अणु
 		pt->max_non_turbo_ratio =
 			auxtrace_info->priv[INTEL_PT_MAX_NONTURBO_RATIO];
-		intel_pt_print_info(&auxtrace_info->priv[0],
+		पूर्णांकel_pt_prपूर्णांक_info(&auxtrace_info->priv[0],
 				    INTEL_PT_MAX_NONTURBO_RATIO,
 				    INTEL_PT_MAX_NONTURBO_RATIO);
-	}
+	पूर्ण
 
 	info = &auxtrace_info->priv[INTEL_PT_FILTER_STR_LEN] + 1;
-	info_end = (void *)info + auxtrace_info->header.size;
+	info_end = (व्योम *)info + auxtrace_info->header.size;
 
-	if (intel_pt_has(auxtrace_info, INTEL_PT_FILTER_STR_LEN)) {
-		size_t len;
+	अगर (पूर्णांकel_pt_has(auxtrace_info, INTEL_PT_FILTER_STR_LEN)) अणु
+		माप_प्रकार len;
 
 		len = auxtrace_info->priv[INTEL_PT_FILTER_STR_LEN];
-		intel_pt_print_info(&auxtrace_info->priv[0],
+		पूर्णांकel_pt_prपूर्णांक_info(&auxtrace_info->priv[0],
 				    INTEL_PT_FILTER_STR_LEN,
 				    INTEL_PT_FILTER_STR_LEN);
-		if (len) {
-			const char *filter = (const char *)info;
+		अगर (len) अणु
+			स्थिर अक्षर *filter = (स्थिर अक्षर *)info;
 
 			len = roundup(len + 1, 8);
 			info += len >> 3;
-			if ((void *)info > info_end) {
+			अगर ((व्योम *)info > info_end) अणु
 				pr_err("%s: bad filter string length\n", __func__);
 				err = -EINVAL;
-				goto err_free_queues;
-			}
+				जाओ err_मुक्त_queues;
+			पूर्ण
 			pt->filter = memdup(filter, len);
-			if (!pt->filter) {
+			अगर (!pt->filter) अणु
 				err = -ENOMEM;
-				goto err_free_queues;
-			}
-			if (session->header.needs_swap)
+				जाओ err_मुक्त_queues;
+			पूर्ण
+			अगर (session->header.needs_swap)
 				mem_bswap_64(pt->filter, len);
-			if (pt->filter[len - 1]) {
+			अगर (pt->filter[len - 1]) अणु
 				pr_err("%s: filter string not null terminated\n", __func__);
 				err = -EINVAL;
-				goto err_free_queues;
-			}
+				जाओ err_मुक्त_queues;
+			पूर्ण
 			err = addr_filters__parse_bare_filter(&pt->filts,
 							      filter);
-			if (err)
-				goto err_free_queues;
-		}
-		intel_pt_print_info_str("Filter string", pt->filter);
-	}
+			अगर (err)
+				जाओ err_मुक्त_queues;
+		पूर्ण
+		पूर्णांकel_pt_prपूर्णांक_info_str("Filter string", pt->filter);
+	पूर्ण
 
-	pt->timeless_decoding = intel_pt_timeless_decoding(pt);
-	if (pt->timeless_decoding && !pt->tc.time_mult)
-		pt->tc.time_mult = 1;
-	pt->have_tsc = intel_pt_have_tsc(pt);
-	pt->sampling_mode = intel_pt_sampling_mode(pt);
-	pt->est_tsc = !pt->timeless_decoding;
+	pt->समयless_decoding = पूर्णांकel_pt_समयless_decoding(pt);
+	अगर (pt->समयless_decoding && !pt->tc.समय_mult)
+		pt->tc.समय_mult = 1;
+	pt->have_tsc = पूर्णांकel_pt_have_tsc(pt);
+	pt->sampling_mode = पूर्णांकel_pt_sampling_mode(pt);
+	pt->est_tsc = !pt->समयless_decoding;
 
-	pt->unknown_thread = thread__new(999999999, 999999999);
-	if (!pt->unknown_thread) {
+	pt->unknown_thपढ़ो = thपढ़ो__new(999999999, 999999999);
+	अगर (!pt->unknown_thपढ़ो) अणु
 		err = -ENOMEM;
-		goto err_free_queues;
-	}
+		जाओ err_मुक्त_queues;
+	पूर्ण
 
 	/*
-	 * Since this thread will not be kept in any rbtree not in a
-	 * list, initialize its list node so that at thread__put() the
-	 * current thread lifetime assumption is kept and we don't segfault
+	 * Since this thपढ़ो will not be kept in any rbtree not in a
+	 * list, initialize its list node so that at thपढ़ो__put() the
+	 * current thपढ़ो lअगरeसमय assumption is kept and we करोn't segfault
 	 * at list_del_init().
 	 */
-	INIT_LIST_HEAD(&pt->unknown_thread->node);
+	INIT_LIST_HEAD(&pt->unknown_thपढ़ो->node);
 
-	err = thread__set_comm(pt->unknown_thread, "unknown", 0);
-	if (err)
-		goto err_delete_thread;
-	if (thread__init_maps(pt->unknown_thread, pt->machine)) {
+	err = thपढ़ो__set_comm(pt->unknown_thपढ़ो, "unknown", 0);
+	अगर (err)
+		जाओ err_delete_thपढ़ो;
+	अगर (thपढ़ो__init_maps(pt->unknown_thपढ़ो, pt->machine)) अणु
 		err = -ENOMEM;
-		goto err_delete_thread;
-	}
+		जाओ err_delete_thपढ़ो;
+	पूर्ण
 
-	pt->auxtrace.process_event = intel_pt_process_event;
-	pt->auxtrace.process_auxtrace_event = intel_pt_process_auxtrace_event;
-	pt->auxtrace.queue_data = intel_pt_queue_data;
-	pt->auxtrace.dump_auxtrace_sample = intel_pt_dump_sample;
-	pt->auxtrace.flush_events = intel_pt_flush;
-	pt->auxtrace.free_events = intel_pt_free_events;
-	pt->auxtrace.free = intel_pt_free;
-	pt->auxtrace.evsel_is_auxtrace = intel_pt_evsel_is_auxtrace;
+	pt->auxtrace.process_event = पूर्णांकel_pt_process_event;
+	pt->auxtrace.process_auxtrace_event = पूर्णांकel_pt_process_auxtrace_event;
+	pt->auxtrace.queue_data = पूर्णांकel_pt_queue_data;
+	pt->auxtrace.dump_auxtrace_sample = पूर्णांकel_pt_dump_sample;
+	pt->auxtrace.flush_events = पूर्णांकel_pt_flush;
+	pt->auxtrace.मुक्त_events = पूर्णांकel_pt_मुक्त_events;
+	pt->auxtrace.मुक्त = पूर्णांकel_pt_मुक्त;
+	pt->auxtrace.evsel_is_auxtrace = पूर्णांकel_pt_evsel_is_auxtrace;
 	session->auxtrace = &pt->auxtrace;
 
-	if (dump_trace)
-		return 0;
+	अगर (dump_trace)
+		वापस 0;
 
-	if (pt->have_sched_switch == 1) {
-		pt->switch_evsel = intel_pt_find_sched_switch(session->evlist);
-		if (!pt->switch_evsel) {
+	अगर (pt->have_sched_चयन == 1) अणु
+		pt->चयन_evsel = पूर्णांकel_pt_find_sched_चयन(session->evlist);
+		अगर (!pt->चयन_evsel) अणु
 			pr_err("%s: missing sched_switch event\n", __func__);
 			err = -EINVAL;
-			goto err_delete_thread;
-		}
-	} else if (pt->have_sched_switch == 2 &&
-		   !intel_pt_find_switch(session->evlist)) {
+			जाओ err_delete_thपढ़ो;
+		पूर्ण
+	पूर्ण अन्यथा अगर (pt->have_sched_चयन == 2 &&
+		   !पूर्णांकel_pt_find_चयन(session->evlist)) अणु
 		pr_err("%s: missing context_switch attribute flag\n", __func__);
 		err = -EINVAL;
-		goto err_delete_thread;
-	}
+		जाओ err_delete_thपढ़ो;
+	पूर्ण
 
-	if (session->itrace_synth_opts->set) {
+	अगर (session->itrace_synth_opts->set) अणु
 		pt->synth_opts = *session->itrace_synth_opts;
-	} else {
-		itrace_synth_opts__set_default(&pt->synth_opts,
-				session->itrace_synth_opts->default_no_sample);
-		if (!session->itrace_synth_opts->default_no_sample &&
-		    !session->itrace_synth_opts->inject) {
+	पूर्ण अन्यथा अणु
+		itrace_synth_opts__set_शेष(&pt->synth_opts,
+				session->itrace_synth_opts->शेष_no_sample);
+		अगर (!session->itrace_synth_opts->शेष_no_sample &&
+		    !session->itrace_synth_opts->inject) अणु
 			pt->synth_opts.branches = false;
 			pt->synth_opts.callchain = true;
 			pt->synth_opts.add_callchain = true;
-		}
-		pt->synth_opts.thread_stack =
-				session->itrace_synth_opts->thread_stack;
-	}
+		पूर्ण
+		pt->synth_opts.thपढ़ो_stack =
+				session->itrace_synth_opts->thपढ़ो_stack;
+	पूर्ण
 
-	if (pt->synth_opts.log)
-		intel_pt_log_enable();
+	अगर (pt->synth_opts.log)
+		पूर्णांकel_pt_log_enable();
 
 	/* Maximum non-turbo ratio is TSC freq / 100 MHz */
-	if (pt->tc.time_mult) {
-		u64 tsc_freq = intel_pt_ns_to_ticks(pt, 1000000000);
+	अगर (pt->tc.समय_mult) अणु
+		u64 tsc_freq = पूर्णांकel_pt_ns_to_ticks(pt, 1000000000);
 
-		if (!pt->max_non_turbo_ratio)
+		अगर (!pt->max_non_turbo_ratio)
 			pt->max_non_turbo_ratio =
 					(tsc_freq + 50000000) / 100000000;
-		intel_pt_log("TSC frequency %"PRIu64"\n", tsc_freq);
-		intel_pt_log("Maximum non-turbo ratio %u\n",
+		पूर्णांकel_pt_log("TSC frequency %"PRIu64"\n", tsc_freq);
+		पूर्णांकel_pt_log("Maximum non-turbo ratio %u\n",
 			     pt->max_non_turbo_ratio);
 		pt->cbr2khz = tsc_freq / pt->max_non_turbo_ratio / 1000;
-	}
+	पूर्ण
 
-	err = intel_pt_setup_time_ranges(pt, session->itrace_synth_opts);
-	if (err)
-		goto err_delete_thread;
+	err = पूर्णांकel_pt_setup_समय_ranges(pt, session->itrace_synth_opts);
+	अगर (err)
+		जाओ err_delete_thपढ़ो;
 
-	if (pt->synth_opts.calls)
+	अगर (pt->synth_opts.calls)
 		pt->branches_filter |= PERF_IP_FLAG_CALL | PERF_IP_FLAG_ASYNC |
 				       PERF_IP_FLAG_TRACE_END;
-	if (pt->synth_opts.returns)
+	अगर (pt->synth_opts.वापसs)
 		pt->branches_filter |= PERF_IP_FLAG_RETURN |
 				       PERF_IP_FLAG_TRACE_BEGIN;
 
-	if ((pt->synth_opts.callchain || pt->synth_opts.add_callchain) &&
-	    !symbol_conf.use_callchain) {
+	अगर ((pt->synth_opts.callchain || pt->synth_opts.add_callchain) &&
+	    !symbol_conf.use_callchain) अणु
 		symbol_conf.use_callchain = true;
-		if (callchain_register_param(&callchain_param) < 0) {
+		अगर (callchain_रेजिस्टर_param(&callchain_param) < 0) अणु
 			symbol_conf.use_callchain = false;
 			pt->synth_opts.callchain = false;
 			pt->synth_opts.add_callchain = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pt->synth_opts.add_callchain) {
-		err = intel_pt_callchain_init(pt);
-		if (err)
-			goto err_delete_thread;
-	}
+	अगर (pt->synth_opts.add_callchain) अणु
+		err = पूर्णांकel_pt_callchain_init(pt);
+		अगर (err)
+			जाओ err_delete_thपढ़ो;
+	पूर्ण
 
-	if (pt->synth_opts.last_branch || pt->synth_opts.add_last_branch) {
+	अगर (pt->synth_opts.last_branch || pt->synth_opts.add_last_branch) अणु
 		pt->br_stack_sz = pt->synth_opts.last_branch_sz;
 		pt->br_stack_sz_plus = pt->br_stack_sz;
-	}
+	पूर्ण
 
-	if (pt->synth_opts.add_last_branch) {
-		err = intel_pt_br_stack_init(pt);
-		if (err)
-			goto err_delete_thread;
+	अगर (pt->synth_opts.add_last_branch) अणु
+		err = पूर्णांकel_pt_br_stack_init(pt);
+		अगर (err)
+			जाओ err_delete_thपढ़ो;
 		/*
-		 * Additional branch stack size to cater for tracing from the
-		 * actual sample ip to where the sample time is recorded.
+		 * Additional branch stack size to cater क्रम tracing from the
+		 * actual sample ip to where the sample समय is recorded.
 		 * Measured at about 200 branches, but generously set to 1024.
-		 * If kernel space is not being traced, then add just 1 for the
+		 * If kernel space is not being traced, then add just 1 क्रम the
 		 * branch to kernel space.
 		 */
-		if (intel_pt_tracing_kernel(pt))
+		अगर (पूर्णांकel_pt_tracing_kernel(pt))
 			pt->br_stack_sz_plus += 1024;
-		else
+		अन्यथा
 			pt->br_stack_sz_plus += 1;
-	}
+	पूर्ण
 
-	pt->use_thread_stack = pt->synth_opts.callchain ||
+	pt->use_thपढ़ो_stack = pt->synth_opts.callchain ||
 			       pt->synth_opts.add_callchain ||
-			       pt->synth_opts.thread_stack ||
+			       pt->synth_opts.thपढ़ो_stack ||
 			       pt->synth_opts.last_branch ||
 			       pt->synth_opts.add_last_branch;
 
 	pt->callstack = pt->synth_opts.callchain ||
 			pt->synth_opts.add_callchain ||
-			pt->synth_opts.thread_stack;
+			pt->synth_opts.thपढ़ो_stack;
 
-	err = intel_pt_synth_events(pt, session);
-	if (err)
-		goto err_delete_thread;
+	err = पूर्णांकel_pt_synth_events(pt, session);
+	अगर (err)
+		जाओ err_delete_thपढ़ो;
 
-	intel_pt_setup_pebs_events(pt);
+	पूर्णांकel_pt_setup_pebs_events(pt);
 
-	if (pt->sampling_mode || list_empty(&session->auxtrace_index))
+	अगर (pt->sampling_mode || list_empty(&session->auxtrace_index))
 		err = auxtrace_queue_data(session, true, true);
-	else
+	अन्यथा
 		err = auxtrace_queues__process_index(&pt->queues, session);
-	if (err)
-		goto err_delete_thread;
+	अगर (err)
+		जाओ err_delete_thपढ़ो;
 
-	if (pt->queues.populated)
+	अगर (pt->queues.populated)
 		pt->data_queued = true;
 
-	if (pt->timeless_decoding)
+	अगर (pt->समयless_decoding)
 		pr_debug2("Intel PT decoding without timestamps\n");
 
-	return 0;
+	वापस 0;
 
-err_delete_thread:
-	zfree(&pt->chain);
-	thread__zput(pt->unknown_thread);
-err_free_queues:
-	intel_pt_log_disable();
-	auxtrace_queues__free(&pt->queues);
-	session->auxtrace = NULL;
-err_free:
-	addr_filters__exit(&pt->filts);
-	zfree(&pt->filter);
-	zfree(&pt->time_ranges);
-	free(pt);
-	return err;
-}
+err_delete_thपढ़ो:
+	zमुक्त(&pt->chain);
+	thपढ़ो__zput(pt->unknown_thपढ़ो);
+err_मुक्त_queues:
+	पूर्णांकel_pt_log_disable();
+	auxtrace_queues__मुक्त(&pt->queues);
+	session->auxtrace = शून्य;
+err_मुक्त:
+	addr_filters__निकास(&pt->filts);
+	zमुक्त(&pt->filter);
+	zमुक्त(&pt->समय_ranges);
+	मुक्त(pt);
+	वापस err;
+पूर्ण

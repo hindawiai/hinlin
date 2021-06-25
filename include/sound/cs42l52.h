@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * linux/sound/cs42l52.h -- Platform data for CS42L52
+ * linux/sound/cs42l52.h -- Platक्रमm data क्रम CS42L52
  *
  * Copyright (c) 2012 Cirrus Logic Inc.
  */
 
-#ifndef __CS42L52_H
-#define __CS42L52_H
+#अगर_अघोषित __CS42L52_H
+#घोषणा __CS42L52_H
 
-struct cs42l52_platform_data {
+काष्ठा cs42l52_platक्रमm_data अणु
 
 	/* MICBIAS Level. Check datasheet Pg48 */
-	unsigned int micbias_lvl;
+	अचिन्हित पूर्णांक micbias_lvl;
 
-	/* MICA mode selection Differential or Single-ended */
-	bool mica_diff_cfg;
+	/* MICA mode selection Dअगरferential or Single-ended */
+	bool mica_dअगरf_cfg;
 
-	/* MICB mode selection Differential or Single-ended */
-	bool micb_diff_cfg;
+	/* MICB mode selection Dअगरferential or Single-ended */
+	bool micb_dअगरf_cfg;
 
 	/* Charge Pump Freq. Check datasheet Pg73 */
-	unsigned int chgfreq;
+	अचिन्हित पूर्णांक chgfreq;
 
 	/* Reset GPIO */
-	unsigned int reset_gpio;
-};
+	अचिन्हित पूर्णांक reset_gpio;
+पूर्ण;
 
-#endif /* __CS42L52_H */
+#पूर्ण_अगर /* __CS42L52_H */

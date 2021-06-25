@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,29 +22,29 @@
  *
  * Authors: AMD
  */
-#include <linux/string.h>
-#include <linux/acpi.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/acpi.h>
 
-#include <drm/drm_probe_helper.h>
-#include <drm/amdgpu_drm.h>
-#include "dm_services.h"
-#include "amdgpu.h"
-#include "amdgpu_dm.h"
-#include "amdgpu_dm_irq.h"
-#include "amdgpu_pm.h"
-#include "dm_pp_smu.h"
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/amdgpu_drm.h>
+#समावेश "dm_services.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_dm.h"
+#समावेश "amdgpu_dm_irq.h"
+#समावेश "amdgpu_pm.h"
+#समावेश "dm_pp_smu.h"
 
 bool dm_pp_apply_display_requirements(
-		const struct dc_context *ctx,
-		const struct dm_pp_display_configuration *pp_display_cfg)
-{
-	struct amdgpu_device *adev = ctx->driver_context;
-	int i;
+		स्थिर काष्ठा dc_context *ctx,
+		स्थिर काष्ठा dm_pp_display_configuration *pp_display_cfg)
+अणु
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	पूर्णांक i;
 
-	if (adev->pm.dpm_enabled) {
+	अगर (adev->pm.dpm_enabled) अणु
 
-		memset(&adev->pm.pm_display_cfg, 0,
-				sizeof(adev->pm.pm_display_cfg));
+		स_रखो(&adev->pm.pm_display_cfg, 0,
+				माप(adev->pm.pm_display_cfg));
 
 		adev->pm.pm_display_cfg.cpu_cc6_disable =
 			pp_display_cfg->cpu_cc6_disable;
@@ -51,783 +52,783 @@ bool dm_pp_apply_display_requirements(
 		adev->pm.pm_display_cfg.cpu_pstate_disable =
 			pp_display_cfg->cpu_pstate_disable;
 
-		adev->pm.pm_display_cfg.cpu_pstate_separation_time =
-			pp_display_cfg->cpu_pstate_separation_time;
+		adev->pm.pm_display_cfg.cpu_pstate_separation_समय =
+			pp_display_cfg->cpu_pstate_separation_समय;
 
-		adev->pm.pm_display_cfg.nb_pstate_switch_disable =
-			pp_display_cfg->nb_pstate_switch_disable;
+		adev->pm.pm_display_cfg.nb_pstate_चयन_disable =
+			pp_display_cfg->nb_pstate_चयन_disable;
 
 		adev->pm.pm_display_cfg.num_display =
 				pp_display_cfg->display_count;
 		adev->pm.pm_display_cfg.num_path_including_non_display =
 				pp_display_cfg->display_count;
 
-		adev->pm.pm_display_cfg.min_core_set_clock =
-				pp_display_cfg->min_engine_clock_khz/10;
-		adev->pm.pm_display_cfg.min_core_set_clock_in_sr =
-				pp_display_cfg->min_engine_clock_deep_sleep_khz/10;
-		adev->pm.pm_display_cfg.min_mem_set_clock =
-				pp_display_cfg->min_memory_clock_khz/10;
+		adev->pm.pm_display_cfg.min_core_set_घड़ी =
+				pp_display_cfg->min_engine_घड़ी_khz/10;
+		adev->pm.pm_display_cfg.min_core_set_घड़ी_in_sr =
+				pp_display_cfg->min_engine_घड़ी_deep_sleep_khz/10;
+		adev->pm.pm_display_cfg.min_mem_set_घड़ी =
+				pp_display_cfg->min_memory_घड़ी_khz/10;
 
 		adev->pm.pm_display_cfg.min_dcef_deep_sleep_set_clk =
-				pp_display_cfg->min_engine_clock_deep_sleep_khz/10;
+				pp_display_cfg->min_engine_घड़ी_deep_sleep_khz/10;
 		adev->pm.pm_display_cfg.min_dcef_set_clk =
-				pp_display_cfg->min_dcfclock_khz/10;
+				pp_display_cfg->min_dcfघड़ी_khz/10;
 
 		adev->pm.pm_display_cfg.multi_monitor_in_sync =
 				pp_display_cfg->all_displays_in_sync;
-		adev->pm.pm_display_cfg.min_vblank_time =
-				pp_display_cfg->avail_mclk_switch_time_us;
+		adev->pm.pm_display_cfg.min_vblank_समय =
+				pp_display_cfg->avail_mclk_चयन_समय_us;
 
 		adev->pm.pm_display_cfg.display_clk =
 				pp_display_cfg->disp_clk_khz/10;
 
 		adev->pm.pm_display_cfg.dce_tolerable_mclk_in_active_latency =
-				pp_display_cfg->avail_mclk_switch_time_in_disp_active_us;
+				pp_display_cfg->avail_mclk_चयन_समय_in_disp_active_us;
 
 		adev->pm.pm_display_cfg.crtc_index = pp_display_cfg->crtc_index;
-		adev->pm.pm_display_cfg.line_time_in_us =
-				pp_display_cfg->line_time_in_us;
+		adev->pm.pm_display_cfg.line_समय_in_us =
+				pp_display_cfg->line_समय_in_us;
 
 		adev->pm.pm_display_cfg.vrefresh = pp_display_cfg->disp_configs[0].v_refresh;
 		adev->pm.pm_display_cfg.crossfire_display_index = -1;
 		adev->pm.pm_display_cfg.min_bus_bandwidth = 0;
 
-		for (i = 0; i < pp_display_cfg->display_count; i++) {
-			const struct dm_pp_single_disp_config *dc_cfg =
+		क्रम (i = 0; i < pp_display_cfg->display_count; i++) अणु
+			स्थिर काष्ठा dm_pp_single_disp_config *dc_cfg =
 						&pp_display_cfg->disp_configs[i];
 			adev->pm.pm_display_cfg.displays[i].controller_id = dc_cfg->pipe_idx + 1;
-		}
+		पूर्ण
 
-		if (adev->powerplay.pp_funcs && adev->powerplay.pp_funcs->display_configuration_change)
-			adev->powerplay.pp_funcs->display_configuration_change(
-				adev->powerplay.pp_handle,
+		अगर (adev->घातerplay.pp_funcs && adev->घातerplay.pp_funcs->display_configuration_change)
+			adev->घातerplay.pp_funcs->display_configuration_change(
+				adev->घातerplay.pp_handle,
 				&adev->pm.pm_display_cfg);
 
-		amdgpu_pm_compute_clocks(adev);
-	}
+		amdgpu_pm_compute_घड़ीs(adev);
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void get_default_clock_levels(
-		enum dm_pp_clock_type clk_type,
-		struct dm_pp_clock_levels *clks)
-{
-	uint32_t disp_clks_in_khz[6] = {
-			300000, 400000, 496560, 626090, 685720, 757900 };
-	uint32_t sclks_in_khz[6] = {
-			300000, 360000, 423530, 514290, 626090, 720000 };
-	uint32_t mclks_in_khz[2] = { 333000, 800000 };
+अटल व्योम get_शेष_घड़ी_levels(
+		क्रमागत dm_pp_घड़ी_प्रकारype clk_type,
+		काष्ठा dm_pp_घड़ी_levels *clks)
+अणु
+	uपूर्णांक32_t disp_clks_in_khz[6] = अणु
+			300000, 400000, 496560, 626090, 685720, 757900 पूर्ण;
+	uपूर्णांक32_t sclks_in_khz[6] = अणु
+			300000, 360000, 423530, 514290, 626090, 720000 पूर्ण;
+	uपूर्णांक32_t mclks_in_khz[2] = अणु 333000, 800000 पूर्ण;
 
-	switch (clk_type) {
-	case DM_PP_CLOCK_TYPE_DISPLAY_CLK:
+	चयन (clk_type) अणु
+	हाल DM_PP_CLOCK_TYPE_DISPLAY_CLK:
 		clks->num_levels = 6;
-		memmove(clks->clocks_in_khz, disp_clks_in_khz,
-				sizeof(disp_clks_in_khz));
-		break;
-	case DM_PP_CLOCK_TYPE_ENGINE_CLK:
+		स_हटाओ(clks->घड़ीs_in_khz, disp_clks_in_khz,
+				माप(disp_clks_in_khz));
+		अवरोध;
+	हाल DM_PP_CLOCK_TYPE_ENGINE_CLK:
 		clks->num_levels = 6;
-		memmove(clks->clocks_in_khz, sclks_in_khz,
-				sizeof(sclks_in_khz));
-		break;
-	case DM_PP_CLOCK_TYPE_MEMORY_CLK:
+		स_हटाओ(clks->घड़ीs_in_khz, sclks_in_khz,
+				माप(sclks_in_khz));
+		अवरोध;
+	हाल DM_PP_CLOCK_TYPE_MEMORY_CLK:
 		clks->num_levels = 2;
-		memmove(clks->clocks_in_khz, mclks_in_khz,
-				sizeof(mclks_in_khz));
-		break;
-	default:
+		स_हटाओ(clks->घड़ीs_in_khz, mclks_in_khz,
+				माप(mclks_in_khz));
+		अवरोध;
+	शेष:
 		clks->num_levels = 0;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static enum amd_pp_clock_type dc_to_pp_clock_type(
-		enum dm_pp_clock_type dm_pp_clk_type)
-{
-	enum amd_pp_clock_type amd_pp_clk_type = 0;
+अटल क्रमागत amd_pp_घड़ी_प्रकारype dc_to_pp_घड़ी_प्रकारype(
+		क्रमागत dm_pp_घड़ी_प्रकारype dm_pp_clk_type)
+अणु
+	क्रमागत amd_pp_घड़ी_प्रकारype amd_pp_clk_type = 0;
 
-	switch (dm_pp_clk_type) {
-	case DM_PP_CLOCK_TYPE_DISPLAY_CLK:
-		amd_pp_clk_type = amd_pp_disp_clock;
-		break;
-	case DM_PP_CLOCK_TYPE_ENGINE_CLK:
-		amd_pp_clk_type = amd_pp_sys_clock;
-		break;
-	case DM_PP_CLOCK_TYPE_MEMORY_CLK:
-		amd_pp_clk_type = amd_pp_mem_clock;
-		break;
-	case DM_PP_CLOCK_TYPE_DCEFCLK:
-		amd_pp_clk_type  = amd_pp_dcef_clock;
-		break;
-	case DM_PP_CLOCK_TYPE_DCFCLK:
-		amd_pp_clk_type = amd_pp_dcf_clock;
-		break;
-	case DM_PP_CLOCK_TYPE_PIXELCLK:
-		amd_pp_clk_type = amd_pp_pixel_clock;
-		break;
-	case DM_PP_CLOCK_TYPE_FCLK:
-		amd_pp_clk_type = amd_pp_f_clock;
-		break;
-	case DM_PP_CLOCK_TYPE_DISPLAYPHYCLK:
-		amd_pp_clk_type = amd_pp_phy_clock;
-		break;
-	case DM_PP_CLOCK_TYPE_DPPCLK:
-		amd_pp_clk_type = amd_pp_dpp_clock;
-		break;
-	default:
+	चयन (dm_pp_clk_type) अणु
+	हाल DM_PP_CLOCK_TYPE_DISPLAY_CLK:
+		amd_pp_clk_type = amd_pp_disp_घड़ी;
+		अवरोध;
+	हाल DM_PP_CLOCK_TYPE_ENGINE_CLK:
+		amd_pp_clk_type = amd_pp_sys_घड़ी;
+		अवरोध;
+	हाल DM_PP_CLOCK_TYPE_MEMORY_CLK:
+		amd_pp_clk_type = amd_pp_mem_घड़ी;
+		अवरोध;
+	हाल DM_PP_CLOCK_TYPE_DCEFCLK:
+		amd_pp_clk_type  = amd_pp_dcef_घड़ी;
+		अवरोध;
+	हाल DM_PP_CLOCK_TYPE_DCFCLK:
+		amd_pp_clk_type = amd_pp_dcf_घड़ी;
+		अवरोध;
+	हाल DM_PP_CLOCK_TYPE_PIXELCLK:
+		amd_pp_clk_type = amd_pp_pixel_घड़ी;
+		अवरोध;
+	हाल DM_PP_CLOCK_TYPE_FCLK:
+		amd_pp_clk_type = amd_pp_f_घड़ी;
+		अवरोध;
+	हाल DM_PP_CLOCK_TYPE_DISPLAYPHYCLK:
+		amd_pp_clk_type = amd_pp_phy_घड़ी;
+		अवरोध;
+	हाल DM_PP_CLOCK_TYPE_DPPCLK:
+		amd_pp_clk_type = amd_pp_dpp_घड़ी;
+		अवरोध;
+	शेष:
 		DRM_ERROR("DM_PPLIB: invalid clock type: %d!\n",
 				dm_pp_clk_type);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return amd_pp_clk_type;
-}
+	वापस amd_pp_clk_type;
+पूर्ण
 
-static enum dm_pp_clocks_state pp_to_dc_powerlevel_state(
-			enum PP_DAL_POWERLEVEL max_clocks_state)
-{
-	switch (max_clocks_state) {
-	case PP_DAL_POWERLEVEL_0:
-		return DM_PP_CLOCKS_DPM_STATE_LEVEL_0;
-	case PP_DAL_POWERLEVEL_1:
-		return DM_PP_CLOCKS_DPM_STATE_LEVEL_1;
-	case PP_DAL_POWERLEVEL_2:
-		return DM_PP_CLOCKS_DPM_STATE_LEVEL_2;
-	case PP_DAL_POWERLEVEL_3:
-		return DM_PP_CLOCKS_DPM_STATE_LEVEL_3;
-	case PP_DAL_POWERLEVEL_4:
-		return DM_PP_CLOCKS_DPM_STATE_LEVEL_4;
-	case PP_DAL_POWERLEVEL_5:
-		return DM_PP_CLOCKS_DPM_STATE_LEVEL_5;
-	case PP_DAL_POWERLEVEL_6:
-		return DM_PP_CLOCKS_DPM_STATE_LEVEL_6;
-	case PP_DAL_POWERLEVEL_7:
-		return DM_PP_CLOCKS_DPM_STATE_LEVEL_7;
-	default:
+अटल क्रमागत dm_pp_घड़ीs_state pp_to_dc_घातerlevel_state(
+			क्रमागत PP_DAL_POWERLEVEL max_घड़ीs_state)
+अणु
+	चयन (max_घड़ीs_state) अणु
+	हाल PP_DAL_POWERLEVEL_0:
+		वापस DM_PP_CLOCKS_DPM_STATE_LEVEL_0;
+	हाल PP_DAL_POWERLEVEL_1:
+		वापस DM_PP_CLOCKS_DPM_STATE_LEVEL_1;
+	हाल PP_DAL_POWERLEVEL_2:
+		वापस DM_PP_CLOCKS_DPM_STATE_LEVEL_2;
+	हाल PP_DAL_POWERLEVEL_3:
+		वापस DM_PP_CLOCKS_DPM_STATE_LEVEL_3;
+	हाल PP_DAL_POWERLEVEL_4:
+		वापस DM_PP_CLOCKS_DPM_STATE_LEVEL_4;
+	हाल PP_DAL_POWERLEVEL_5:
+		वापस DM_PP_CLOCKS_DPM_STATE_LEVEL_5;
+	हाल PP_DAL_POWERLEVEL_6:
+		वापस DM_PP_CLOCKS_DPM_STATE_LEVEL_6;
+	हाल PP_DAL_POWERLEVEL_7:
+		वापस DM_PP_CLOCKS_DPM_STATE_LEVEL_7;
+	शेष:
 		DRM_ERROR("DM_PPLIB: invalid powerlevel state: %d!\n",
-				max_clocks_state);
-		return DM_PP_CLOCKS_STATE_INVALID;
-	}
-}
+				max_घड़ीs_state);
+		वापस DM_PP_CLOCKS_STATE_INVALID;
+	पूर्ण
+पूर्ण
 
-static void pp_to_dc_clock_levels(
-		const struct amd_pp_clocks *pp_clks,
-		struct dm_pp_clock_levels *dc_clks,
-		enum dm_pp_clock_type dc_clk_type)
-{
-	uint32_t i;
+अटल व्योम pp_to_dc_घड़ी_levels(
+		स्थिर काष्ठा amd_pp_घड़ीs *pp_clks,
+		काष्ठा dm_pp_घड़ी_levels *dc_clks,
+		क्रमागत dm_pp_घड़ी_प्रकारype dc_clk_type)
+अणु
+	uपूर्णांक32_t i;
 
-	if (pp_clks->count > DM_PP_MAX_CLOCK_LEVELS) {
+	अगर (pp_clks->count > DM_PP_MAX_CLOCK_LEVELS) अणु
 		DRM_INFO("DM_PPLIB: Warning: %s clock: number of levels %d exceeds maximum of %d!\n",
 				DC_DECODE_PP_CLOCK_TYPE(dc_clk_type),
 				pp_clks->count,
 				DM_PP_MAX_CLOCK_LEVELS);
 
 		dc_clks->num_levels = DM_PP_MAX_CLOCK_LEVELS;
-	} else
+	पूर्ण अन्यथा
 		dc_clks->num_levels = pp_clks->count;
 
 	DRM_INFO("DM_PPLIB: values for %s clock\n",
 			DC_DECODE_PP_CLOCK_TYPE(dc_clk_type));
 
-	for (i = 0; i < dc_clks->num_levels; i++) {
-		DRM_INFO("DM_PPLIB:\t %d\n", pp_clks->clock[i]);
-		dc_clks->clocks_in_khz[i] = pp_clks->clock[i];
-	}
-}
+	क्रम (i = 0; i < dc_clks->num_levels; i++) अणु
+		DRM_INFO("DM_PPLIB:\t %d\n", pp_clks->घड़ी[i]);
+		dc_clks->घड़ीs_in_khz[i] = pp_clks->घड़ी[i];
+	पूर्ण
+पूर्ण
 
-static void pp_to_dc_clock_levels_with_latency(
-		const struct pp_clock_levels_with_latency *pp_clks,
-		struct dm_pp_clock_levels_with_latency *clk_level_info,
-		enum dm_pp_clock_type dc_clk_type)
-{
-	uint32_t i;
+अटल व्योम pp_to_dc_घड़ी_levels_with_latency(
+		स्थिर काष्ठा pp_घड़ी_levels_with_latency *pp_clks,
+		काष्ठा dm_pp_घड़ी_levels_with_latency *clk_level_info,
+		क्रमागत dm_pp_घड़ी_प्रकारype dc_clk_type)
+अणु
+	uपूर्णांक32_t i;
 
-	if (pp_clks->num_levels > DM_PP_MAX_CLOCK_LEVELS) {
+	अगर (pp_clks->num_levels > DM_PP_MAX_CLOCK_LEVELS) अणु
 		DRM_INFO("DM_PPLIB: Warning: %s clock: number of levels %d exceeds maximum of %d!\n",
 				DC_DECODE_PP_CLOCK_TYPE(dc_clk_type),
 				pp_clks->num_levels,
 				DM_PP_MAX_CLOCK_LEVELS);
 
 		clk_level_info->num_levels = DM_PP_MAX_CLOCK_LEVELS;
-	} else
+	पूर्ण अन्यथा
 		clk_level_info->num_levels = pp_clks->num_levels;
 
 	DRM_DEBUG("DM_PPLIB: values for %s clock\n",
 			DC_DECODE_PP_CLOCK_TYPE(dc_clk_type));
 
-	for (i = 0; i < clk_level_info->num_levels; i++) {
-		DRM_DEBUG("DM_PPLIB:\t %d in kHz\n", pp_clks->data[i].clocks_in_khz);
-		clk_level_info->data[i].clocks_in_khz = pp_clks->data[i].clocks_in_khz;
+	क्रम (i = 0; i < clk_level_info->num_levels; i++) अणु
+		DRM_DEBUG("DM_PPLIB:\t %d in kHz\n", pp_clks->data[i].घड़ीs_in_khz);
+		clk_level_info->data[i].घड़ीs_in_khz = pp_clks->data[i].घड़ीs_in_khz;
 		clk_level_info->data[i].latency_in_us = pp_clks->data[i].latency_in_us;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pp_to_dc_clock_levels_with_voltage(
-		const struct pp_clock_levels_with_voltage *pp_clks,
-		struct dm_pp_clock_levels_with_voltage *clk_level_info,
-		enum dm_pp_clock_type dc_clk_type)
-{
-	uint32_t i;
+अटल व्योम pp_to_dc_घड़ी_levels_with_voltage(
+		स्थिर काष्ठा pp_घड़ी_levels_with_voltage *pp_clks,
+		काष्ठा dm_pp_घड़ी_levels_with_voltage *clk_level_info,
+		क्रमागत dm_pp_घड़ी_प्रकारype dc_clk_type)
+अणु
+	uपूर्णांक32_t i;
 
-	if (pp_clks->num_levels > DM_PP_MAX_CLOCK_LEVELS) {
+	अगर (pp_clks->num_levels > DM_PP_MAX_CLOCK_LEVELS) अणु
 		DRM_INFO("DM_PPLIB: Warning: %s clock: number of levels %d exceeds maximum of %d!\n",
 				DC_DECODE_PP_CLOCK_TYPE(dc_clk_type),
 				pp_clks->num_levels,
 				DM_PP_MAX_CLOCK_LEVELS);
 
 		clk_level_info->num_levels = DM_PP_MAX_CLOCK_LEVELS;
-	} else
+	पूर्ण अन्यथा
 		clk_level_info->num_levels = pp_clks->num_levels;
 
 	DRM_INFO("DM_PPLIB: values for %s clock\n",
 			DC_DECODE_PP_CLOCK_TYPE(dc_clk_type));
 
-	for (i = 0; i < clk_level_info->num_levels; i++) {
-		DRM_INFO("DM_PPLIB:\t %d in kHz, %d in mV\n", pp_clks->data[i].clocks_in_khz,
+	क्रम (i = 0; i < clk_level_info->num_levels; i++) अणु
+		DRM_INFO("DM_PPLIB:\t %d in kHz, %d in mV\n", pp_clks->data[i].घड़ीs_in_khz,
 			 pp_clks->data[i].voltage_in_mv);
-		clk_level_info->data[i].clocks_in_khz = pp_clks->data[i].clocks_in_khz;
+		clk_level_info->data[i].घड़ीs_in_khz = pp_clks->data[i].घड़ीs_in_khz;
 		clk_level_info->data[i].voltage_in_mv = pp_clks->data[i].voltage_in_mv;
-	}
-}
+	पूर्ण
+पूर्ण
 
-bool dm_pp_get_clock_levels_by_type(
-		const struct dc_context *ctx,
-		enum dm_pp_clock_type clk_type,
-		struct dm_pp_clock_levels *dc_clks)
-{
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	struct amd_pp_clocks pp_clks = { 0 };
-	struct amd_pp_simple_clock_info validation_clks = { 0 };
-	uint32_t i;
+bool dm_pp_get_घड़ी_levels_by_type(
+		स्थिर काष्ठा dc_context *ctx,
+		क्रमागत dm_pp_घड़ी_प्रकारype clk_type,
+		काष्ठा dm_pp_घड़ी_levels *dc_clks)
+अणु
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	काष्ठा amd_pp_घड़ीs pp_clks = अणु 0 पूर्ण;
+	काष्ठा amd_pp_simple_घड़ी_info validation_clks = अणु 0 पूर्ण;
+	uपूर्णांक32_t i;
 
-	if (adev->powerplay.pp_funcs && adev->powerplay.pp_funcs->get_clock_by_type) {
-		if (adev->powerplay.pp_funcs->get_clock_by_type(pp_handle,
-			dc_to_pp_clock_type(clk_type), &pp_clks)) {
-			/* Error in pplib. Provide default values. */
-			get_default_clock_levels(clk_type, dc_clks);
-			return true;
-		}
-	}
+	अगर (adev->घातerplay.pp_funcs && adev->घातerplay.pp_funcs->get_घड़ी_by_type) अणु
+		अगर (adev->घातerplay.pp_funcs->get_घड़ी_by_type(pp_handle,
+			dc_to_pp_घड़ी_प्रकारype(clk_type), &pp_clks)) अणु
+			/* Error in pplib. Provide शेष values. */
+			get_शेष_घड़ी_levels(clk_type, dc_clks);
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	pp_to_dc_clock_levels(&pp_clks, dc_clks, clk_type);
+	pp_to_dc_घड़ी_levels(&pp_clks, dc_clks, clk_type);
 
-	if (adev->powerplay.pp_funcs && adev->powerplay.pp_funcs->get_display_mode_validation_clocks) {
-		if (adev->powerplay.pp_funcs->get_display_mode_validation_clocks(
-						pp_handle, &validation_clks)) {
-			/* Error in pplib. Provide default values. */
+	अगर (adev->घातerplay.pp_funcs && adev->घातerplay.pp_funcs->get_display_mode_validation_घड़ीs) अणु
+		अगर (adev->घातerplay.pp_funcs->get_display_mode_validation_घड़ीs(
+						pp_handle, &validation_clks)) अणु
+			/* Error in pplib. Provide शेष values. */
 			DRM_INFO("DM_PPLIB: Warning: using default validation clocks!\n");
-			validation_clks.engine_max_clock = 72000;
-			validation_clks.memory_max_clock = 80000;
+			validation_clks.engine_max_घड़ी = 72000;
+			validation_clks.memory_max_घड़ी = 80000;
 			validation_clks.level = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	DRM_INFO("DM_PPLIB: Validation clocks:\n");
 	DRM_INFO("DM_PPLIB:    engine_max_clock: %d\n",
-			validation_clks.engine_max_clock);
+			validation_clks.engine_max_घड़ी);
 	DRM_INFO("DM_PPLIB:    memory_max_clock: %d\n",
-			validation_clks.memory_max_clock);
+			validation_clks.memory_max_घड़ी);
 	DRM_INFO("DM_PPLIB:    level           : %d\n",
 			validation_clks.level);
 
 	/* Translate 10 kHz to kHz. */
-	validation_clks.engine_max_clock *= 10;
-	validation_clks.memory_max_clock *= 10;
+	validation_clks.engine_max_घड़ी *= 10;
+	validation_clks.memory_max_घड़ी *= 10;
 
 	/* Determine the highest non-boosted level from the Validation Clocks */
-	if (clk_type == DM_PP_CLOCK_TYPE_ENGINE_CLK) {
-		for (i = 0; i < dc_clks->num_levels; i++) {
-			if (dc_clks->clocks_in_khz[i] > validation_clks.engine_max_clock) {
-				/* This clock is higher the validation clock.
+	अगर (clk_type == DM_PP_CLOCK_TYPE_ENGINE_CLK) अणु
+		क्रम (i = 0; i < dc_clks->num_levels; i++) अणु
+			अगर (dc_clks->घड़ीs_in_khz[i] > validation_clks.engine_max_घड़ी) अणु
+				/* This घड़ी is higher the validation घड़ी.
 				 * Than means the previous one is the highest
 				 * non-boosted one. */
 				DRM_INFO("DM_PPLIB: reducing engine clock level from %d to %d\n",
 						dc_clks->num_levels, i);
 				dc_clks->num_levels = i > 0 ? i : 1;
-				break;
-			}
-		}
-	} else if (clk_type == DM_PP_CLOCK_TYPE_MEMORY_CLK) {
-		for (i = 0; i < dc_clks->num_levels; i++) {
-			if (dc_clks->clocks_in_khz[i] > validation_clks.memory_max_clock) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (clk_type == DM_PP_CLOCK_TYPE_MEMORY_CLK) अणु
+		क्रम (i = 0; i < dc_clks->num_levels; i++) अणु
+			अगर (dc_clks->घड़ीs_in_khz[i] > validation_clks.memory_max_घड़ी) अणु
 				DRM_INFO("DM_PPLIB: reducing memory clock level from %d to %d\n",
 						dc_clks->num_levels, i);
 				dc_clks->num_levels = i > 0 ? i : 1;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool dm_pp_get_clock_levels_by_type_with_latency(
-	const struct dc_context *ctx,
-	enum dm_pp_clock_type clk_type,
-	struct dm_pp_clock_levels_with_latency *clk_level_info)
-{
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	struct pp_clock_levels_with_latency pp_clks = { 0 };
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	int ret;
+bool dm_pp_get_घड़ी_levels_by_type_with_latency(
+	स्थिर काष्ठा dc_context *ctx,
+	क्रमागत dm_pp_घड़ी_प्रकारype clk_type,
+	काष्ठा dm_pp_घड़ी_levels_with_latency *clk_level_info)
+अणु
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	काष्ठा pp_घड़ी_levels_with_latency pp_clks = अणु 0 पूर्ण;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	पूर्णांक ret;
 
-	if (pp_funcs && pp_funcs->get_clock_by_type_with_latency) {
-		ret = pp_funcs->get_clock_by_type_with_latency(pp_handle,
-						dc_to_pp_clock_type(clk_type),
+	अगर (pp_funcs && pp_funcs->get_घड़ी_by_type_with_latency) अणु
+		ret = pp_funcs->get_घड़ी_by_type_with_latency(pp_handle,
+						dc_to_pp_घड़ी_प्रकारype(clk_type),
 						&pp_clks);
-		if (ret)
-			return false;
-	}
+		अगर (ret)
+			वापस false;
+	पूर्ण
 
-	pp_to_dc_clock_levels_with_latency(&pp_clks, clk_level_info, clk_type);
+	pp_to_dc_घड़ी_levels_with_latency(&pp_clks, clk_level_info, clk_type);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool dm_pp_get_clock_levels_by_type_with_voltage(
-	const struct dc_context *ctx,
-	enum dm_pp_clock_type clk_type,
-	struct dm_pp_clock_levels_with_voltage *clk_level_info)
-{
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	struct pp_clock_levels_with_voltage pp_clk_info = {0};
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	int ret;
+bool dm_pp_get_घड़ी_levels_by_type_with_voltage(
+	स्थिर काष्ठा dc_context *ctx,
+	क्रमागत dm_pp_घड़ी_प्रकारype clk_type,
+	काष्ठा dm_pp_घड़ी_levels_with_voltage *clk_level_info)
+अणु
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	काष्ठा pp_घड़ी_levels_with_voltage pp_clk_info = अणु0पूर्ण;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	पूर्णांक ret;
 
-	if (pp_funcs && pp_funcs->get_clock_by_type_with_voltage) {
-		ret = pp_funcs->get_clock_by_type_with_voltage(pp_handle,
-						dc_to_pp_clock_type(clk_type),
+	अगर (pp_funcs && pp_funcs->get_घड़ी_by_type_with_voltage) अणु
+		ret = pp_funcs->get_घड़ी_by_type_with_voltage(pp_handle,
+						dc_to_pp_घड़ी_प्रकारype(clk_type),
 						&pp_clk_info);
-		if (ret)
-			return false;
-	}
+		अगर (ret)
+			वापस false;
+	पूर्ण
 
-	pp_to_dc_clock_levels_with_voltage(&pp_clk_info, clk_level_info, clk_type);
+	pp_to_dc_घड़ी_levels_with_voltage(&pp_clk_info, clk_level_info, clk_type);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool dm_pp_notify_wm_clock_changes(
-	const struct dc_context *ctx,
-	struct dm_pp_wm_sets_with_clock_ranges *wm_with_clock_ranges)
-{
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+bool dm_pp_notअगरy_wm_घड़ी_changes(
+	स्थिर काष्ठा dc_context *ctx,
+	काष्ठा dm_pp_wm_sets_with_घड़ी_ranges *wm_with_घड़ी_ranges)
+अणु
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
 	/*
-	 * Limit this watermark setting for Polaris for now
+	 * Limit this watermark setting क्रम Polaris क्रम now
 	 * TODO: expand this to other ASICs
 	 */
-	if ((adev->asic_type >= CHIP_POLARIS10) && (adev->asic_type <= CHIP_VEGAM)
-	     && pp_funcs && pp_funcs->set_watermarks_for_clocks_ranges) {
-		if (!pp_funcs->set_watermarks_for_clocks_ranges(pp_handle,
-						(void *)wm_with_clock_ranges))
-			return true;
-	}
+	अगर ((adev->asic_type >= CHIP_POLARIS10) && (adev->asic_type <= CHIP_VEGAM)
+	     && pp_funcs && pp_funcs->set_watermarks_क्रम_घड़ीs_ranges) अणु
+		अगर (!pp_funcs->set_watermarks_क्रम_घड़ीs_ranges(pp_handle,
+						(व्योम *)wm_with_घड़ी_ranges))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool dm_pp_apply_power_level_change_request(
-	const struct dc_context *ctx,
-	struct dm_pp_power_level_change_request *level_change_req)
-{
+bool dm_pp_apply_घातer_level_change_request(
+	स्थिर काष्ठा dc_context *ctx,
+	काष्ठा dm_pp_घातer_level_change_request *level_change_req)
+अणु
 	/* TODO: to be implemented */
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool dm_pp_apply_clock_for_voltage_request(
-	const struct dc_context *ctx,
-	struct dm_pp_clock_for_voltage_req *clock_for_voltage_req)
-{
-	struct amdgpu_device *adev = ctx->driver_context;
-	struct pp_display_clock_request pp_clock_request = {0};
-	int ret = 0;
+bool dm_pp_apply_घड़ी_क्रम_voltage_request(
+	स्थिर काष्ठा dc_context *ctx,
+	काष्ठा dm_pp_घड़ी_क्रम_voltage_req *घड़ी_क्रम_voltage_req)
+अणु
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	काष्ठा pp_display_घड़ी_request pp_घड़ी_request = अणु0पूर्ण;
+	पूर्णांक ret = 0;
 
-	pp_clock_request.clock_type = dc_to_pp_clock_type(clock_for_voltage_req->clk_type);
-	pp_clock_request.clock_freq_in_khz = clock_for_voltage_req->clocks_in_khz;
+	pp_घड़ी_request.घड़ी_प्रकारype = dc_to_pp_घड़ी_प्रकारype(घड़ी_क्रम_voltage_req->clk_type);
+	pp_घड़ी_request.घड़ी_freq_in_khz = घड़ी_क्रम_voltage_req->घड़ीs_in_khz;
 
-	if (!pp_clock_request.clock_type)
-		return false;
+	अगर (!pp_घड़ी_request.घड़ी_प्रकारype)
+		वापस false;
 
-	if (adev->powerplay.pp_funcs && adev->powerplay.pp_funcs->display_clock_voltage_request)
-		ret = adev->powerplay.pp_funcs->display_clock_voltage_request(
-			adev->powerplay.pp_handle,
-			&pp_clock_request);
-	if (ret)
-		return false;
-	return true;
-}
+	अगर (adev->घातerplay.pp_funcs && adev->घातerplay.pp_funcs->display_घड़ी_voltage_request)
+		ret = adev->घातerplay.pp_funcs->display_घड़ी_voltage_request(
+			adev->घातerplay.pp_handle,
+			&pp_घड़ी_request);
+	अगर (ret)
+		वापस false;
+	वापस true;
+पूर्ण
 
-bool dm_pp_get_static_clocks(
-	const struct dc_context *ctx,
-	struct dm_pp_static_clock_info *static_clk_info)
-{
-	struct amdgpu_device *adev = ctx->driver_context;
-	struct amd_pp_clock_info pp_clk_info = {0};
-	int ret = 0;
+bool dm_pp_get_अटल_घड़ीs(
+	स्थिर काष्ठा dc_context *ctx,
+	काष्ठा dm_pp_अटल_घड़ी_info *अटल_clk_info)
+अणु
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	काष्ठा amd_pp_घड़ी_info pp_clk_info = अणु0पूर्ण;
+	पूर्णांक ret = 0;
 
-	if (adev->powerplay.pp_funcs && adev->powerplay.pp_funcs->get_current_clocks)
-		ret = adev->powerplay.pp_funcs->get_current_clocks(
-			adev->powerplay.pp_handle,
+	अगर (adev->घातerplay.pp_funcs && adev->घातerplay.pp_funcs->get_current_घड़ीs)
+		ret = adev->घातerplay.pp_funcs->get_current_घड़ीs(
+			adev->घातerplay.pp_handle,
 			&pp_clk_info);
-	else
-		return false;
-	if (ret)
-		return false;
+	अन्यथा
+		वापस false;
+	अगर (ret)
+		वापस false;
 
-	static_clk_info->max_clocks_state = pp_to_dc_powerlevel_state(pp_clk_info.max_clocks_state);
-	static_clk_info->max_mclk_khz = pp_clk_info.max_memory_clock * 10;
-	static_clk_info->max_sclk_khz = pp_clk_info.max_engine_clock * 10;
+	अटल_clk_info->max_घड़ीs_state = pp_to_dc_घातerlevel_state(pp_clk_info.max_घड़ीs_state);
+	अटल_clk_info->max_mclk_khz = pp_clk_info.max_memory_घड़ी * 10;
+	अटल_clk_info->max_sclk_khz = pp_clk_info.max_engine_घड़ी * 10;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void pp_rv_set_wm_ranges(struct pp_smu *pp,
-		struct pp_smu_wm_range_sets *ranges)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	struct dm_pp_wm_sets_with_clock_ranges_soc15 wm_with_clock_ranges;
-	struct dm_pp_clock_range_for_dmif_wm_set_soc15 *wm_dce_clocks = wm_with_clock_ranges.wm_dmif_clocks_ranges;
-	struct dm_pp_clock_range_for_mcif_wm_set_soc15 *wm_soc_clocks = wm_with_clock_ranges.wm_mcif_clocks_ranges;
-	int32_t i;
+अटल व्योम pp_rv_set_wm_ranges(काष्ठा pp_smu *pp,
+		काष्ठा pp_smu_wm_range_sets *ranges)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	काष्ठा dm_pp_wm_sets_with_घड़ी_ranges_soc15 wm_with_घड़ी_ranges;
+	काष्ठा dm_pp_घड़ी_range_क्रम_dmअगर_wm_set_soc15 *wm_dce_घड़ीs = wm_with_घड़ी_ranges.wm_dmअगर_घड़ीs_ranges;
+	काष्ठा dm_pp_घड़ी_range_क्रम_mcअगर_wm_set_soc15 *wm_soc_घड़ीs = wm_with_घड़ी_ranges.wm_mcअगर_घड़ीs_ranges;
+	पूर्णांक32_t i;
 
-	wm_with_clock_ranges.num_wm_dmif_sets = ranges->num_reader_wm_sets;
-	wm_with_clock_ranges.num_wm_mcif_sets = ranges->num_writer_wm_sets;
+	wm_with_घड़ी_ranges.num_wm_dmअगर_sets = ranges->num_पढ़ोer_wm_sets;
+	wm_with_घड़ी_ranges.num_wm_mcअगर_sets = ranges->num_ग_लिखोr_wm_sets;
 
-	for (i = 0; i < wm_with_clock_ranges.num_wm_dmif_sets; i++) {
-		if (ranges->reader_wm_sets[i].wm_inst > 3)
-			wm_dce_clocks[i].wm_set_id = WM_SET_A;
-		else
-			wm_dce_clocks[i].wm_set_id =
-					ranges->reader_wm_sets[i].wm_inst;
-		wm_dce_clocks[i].wm_max_dcfclk_clk_in_khz =
-				ranges->reader_wm_sets[i].max_drain_clk_mhz * 1000;
-		wm_dce_clocks[i].wm_min_dcfclk_clk_in_khz =
-				ranges->reader_wm_sets[i].min_drain_clk_mhz * 1000;
-		wm_dce_clocks[i].wm_max_mem_clk_in_khz =
-				ranges->reader_wm_sets[i].max_fill_clk_mhz * 1000;
-		wm_dce_clocks[i].wm_min_mem_clk_in_khz =
-				ranges->reader_wm_sets[i].min_fill_clk_mhz * 1000;
-	}
+	क्रम (i = 0; i < wm_with_घड़ी_ranges.num_wm_dmअगर_sets; i++) अणु
+		अगर (ranges->पढ़ोer_wm_sets[i].wm_inst > 3)
+			wm_dce_घड़ीs[i].wm_set_id = WM_SET_A;
+		अन्यथा
+			wm_dce_घड़ीs[i].wm_set_id =
+					ranges->पढ़ोer_wm_sets[i].wm_inst;
+		wm_dce_घड़ीs[i].wm_max_dcfclk_clk_in_khz =
+				ranges->पढ़ोer_wm_sets[i].max_drain_clk_mhz * 1000;
+		wm_dce_घड़ीs[i].wm_min_dcfclk_clk_in_khz =
+				ranges->पढ़ोer_wm_sets[i].min_drain_clk_mhz * 1000;
+		wm_dce_घड़ीs[i].wm_max_mem_clk_in_khz =
+				ranges->पढ़ोer_wm_sets[i].max_fill_clk_mhz * 1000;
+		wm_dce_घड़ीs[i].wm_min_mem_clk_in_khz =
+				ranges->पढ़ोer_wm_sets[i].min_fill_clk_mhz * 1000;
+	पूर्ण
 
-	for (i = 0; i < wm_with_clock_ranges.num_wm_mcif_sets; i++) {
-		if (ranges->writer_wm_sets[i].wm_inst > 3)
-			wm_soc_clocks[i].wm_set_id = WM_SET_A;
-		else
-			wm_soc_clocks[i].wm_set_id =
-					ranges->writer_wm_sets[i].wm_inst;
-		wm_soc_clocks[i].wm_max_socclk_clk_in_khz =
-				ranges->writer_wm_sets[i].max_fill_clk_mhz * 1000;
-		wm_soc_clocks[i].wm_min_socclk_clk_in_khz =
-				ranges->writer_wm_sets[i].min_fill_clk_mhz * 1000;
-		wm_soc_clocks[i].wm_max_mem_clk_in_khz =
-				ranges->writer_wm_sets[i].max_drain_clk_mhz * 1000;
-		wm_soc_clocks[i].wm_min_mem_clk_in_khz =
-				ranges->writer_wm_sets[i].min_drain_clk_mhz * 1000;
-	}
+	क्रम (i = 0; i < wm_with_घड़ी_ranges.num_wm_mcअगर_sets; i++) अणु
+		अगर (ranges->ग_लिखोr_wm_sets[i].wm_inst > 3)
+			wm_soc_घड़ीs[i].wm_set_id = WM_SET_A;
+		अन्यथा
+			wm_soc_घड़ीs[i].wm_set_id =
+					ranges->ग_लिखोr_wm_sets[i].wm_inst;
+		wm_soc_घड़ीs[i].wm_max_socclk_clk_in_khz =
+				ranges->ग_लिखोr_wm_sets[i].max_fill_clk_mhz * 1000;
+		wm_soc_घड़ीs[i].wm_min_socclk_clk_in_khz =
+				ranges->ग_लिखोr_wm_sets[i].min_fill_clk_mhz * 1000;
+		wm_soc_घड़ीs[i].wm_max_mem_clk_in_khz =
+				ranges->ग_लिखोr_wm_sets[i].max_drain_clk_mhz * 1000;
+		wm_soc_घड़ीs[i].wm_min_mem_clk_in_khz =
+				ranges->ग_लिखोr_wm_sets[i].min_drain_clk_mhz * 1000;
+	पूर्ण
 
-	if (pp_funcs && pp_funcs->set_watermarks_for_clocks_ranges)
-		pp_funcs->set_watermarks_for_clocks_ranges(pp_handle,
-							   &wm_with_clock_ranges);
-}
+	अगर (pp_funcs && pp_funcs->set_watermarks_क्रम_घड़ीs_ranges)
+		pp_funcs->set_watermarks_क्रम_घड़ीs_ranges(pp_handle,
+							   &wm_with_घड़ी_ranges);
+पूर्ण
 
-static void pp_rv_set_pme_wa_enable(struct pp_smu *pp)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+अटल व्योम pp_rv_set_pme_wa_enable(काष्ठा pp_smu *pp)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
-	if (pp_funcs && pp_funcs->notify_smu_enable_pwe)
-		pp_funcs->notify_smu_enable_pwe(pp_handle);
-}
+	अगर (pp_funcs && pp_funcs->notअगरy_smu_enable_pwe)
+		pp_funcs->notअगरy_smu_enable_pwe(pp_handle);
+पूर्ण
 
-static void pp_rv_set_active_display_count(struct pp_smu *pp, int count)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+अटल व्योम pp_rv_set_active_display_count(काष्ठा pp_smu *pp, पूर्णांक count)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
-	if (!pp_funcs || !pp_funcs->set_active_display_count)
-		return;
+	अगर (!pp_funcs || !pp_funcs->set_active_display_count)
+		वापस;
 
 	pp_funcs->set_active_display_count(pp_handle, count);
-}
+पूर्ण
 
-static void pp_rv_set_min_deep_sleep_dcfclk(struct pp_smu *pp, int clock)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+अटल व्योम pp_rv_set_min_deep_sleep_dcfclk(काष्ठा pp_smu *pp, पूर्णांक घड़ी)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
-	if (!pp_funcs || !pp_funcs->set_min_deep_sleep_dcefclk)
-		return;
+	अगर (!pp_funcs || !pp_funcs->set_min_deep_sleep_dcefclk)
+		वापस;
 
-	pp_funcs->set_min_deep_sleep_dcefclk(pp_handle, clock);
-}
+	pp_funcs->set_min_deep_sleep_dcefclk(pp_handle, घड़ी);
+पूर्ण
 
-static void pp_rv_set_hard_min_dcefclk_by_freq(struct pp_smu *pp, int clock)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+अटल व्योम pp_rv_set_hard_min_dcefclk_by_freq(काष्ठा pp_smu *pp, पूर्णांक घड़ी)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
-	if (!pp_funcs || !pp_funcs->set_hard_min_dcefclk_by_freq)
-		return;
+	अगर (!pp_funcs || !pp_funcs->set_hard_min_dcefclk_by_freq)
+		वापस;
 
-	pp_funcs->set_hard_min_dcefclk_by_freq(pp_handle, clock);
-}
+	pp_funcs->set_hard_min_dcefclk_by_freq(pp_handle, घड़ी);
+पूर्ण
 
-static void pp_rv_set_hard_min_fclk_by_freq(struct pp_smu *pp, int mhz)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+अटल व्योम pp_rv_set_hard_min_fclk_by_freq(काष्ठा pp_smu *pp, पूर्णांक mhz)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
-	if (!pp_funcs || !pp_funcs->set_hard_min_fclk_by_freq)
-		return;
+	अगर (!pp_funcs || !pp_funcs->set_hard_min_fclk_by_freq)
+		वापस;
 
 	pp_funcs->set_hard_min_fclk_by_freq(pp_handle, mhz);
-}
+पूर्ण
 
-static enum pp_smu_status pp_nv_set_wm_ranges(struct pp_smu *pp,
-		struct pp_smu_wm_range_sets *ranges)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+अटल क्रमागत pp_smu_status pp_nv_set_wm_ranges(काष्ठा pp_smu *pp,
+		काष्ठा pp_smu_wm_range_sets *ranges)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
-	if (pp_funcs && pp_funcs->set_watermarks_for_clocks_ranges)
-		pp_funcs->set_watermarks_for_clocks_ranges(pp_handle, ranges);
+	अगर (pp_funcs && pp_funcs->set_watermarks_क्रम_घड़ीs_ranges)
+		pp_funcs->set_watermarks_क्रम_घड़ीs_ranges(pp_handle, ranges);
 
-	return PP_SMU_RESULT_OK;
-}
+	वापस PP_SMU_RESULT_OK;
+पूर्ण
 
-static enum pp_smu_status pp_nv_set_display_count(struct pp_smu *pp, int count)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+अटल क्रमागत pp_smu_status pp_nv_set_display_count(काष्ठा pp_smu *pp, पूर्णांक count)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
-	if (!pp_funcs || !pp_funcs->set_active_display_count)
-		return PP_SMU_RESULT_UNSUPPORTED;
+	अगर (!pp_funcs || !pp_funcs->set_active_display_count)
+		वापस PP_SMU_RESULT_UNSUPPORTED;
 
-	/* 0: successful or smu.ppt_funcs->set_display_count = NULL;  1: fail */
-	if (pp_funcs->set_active_display_count(pp_handle, count))
-		return PP_SMU_RESULT_FAIL;
+	/* 0: successful or smu.ppt_funcs->set_display_count = शून्य;  1: fail */
+	अगर (pp_funcs->set_active_display_count(pp_handle, count))
+		वापस PP_SMU_RESULT_FAIL;
 
-	return PP_SMU_RESULT_OK;
-}
+	वापस PP_SMU_RESULT_OK;
+पूर्ण
 
-static enum pp_smu_status
-pp_nv_set_min_deep_sleep_dcfclk(struct pp_smu *pp, int mhz)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+अटल क्रमागत pp_smu_status
+pp_nv_set_min_deep_sleep_dcfclk(काष्ठा pp_smu *pp, पूर्णांक mhz)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
-	if (!pp_funcs || !pp_funcs->set_min_deep_sleep_dcefclk)
-		return PP_SMU_RESULT_UNSUPPORTED;
+	अगर (!pp_funcs || !pp_funcs->set_min_deep_sleep_dcefclk)
+		वापस PP_SMU_RESULT_UNSUPPORTED;
 
-	/* 0: successful or smu.ppt_funcs->set_deep_sleep_dcefclk = NULL;1: fail */
-	if (pp_funcs->set_min_deep_sleep_dcefclk(pp_handle, mhz))
-		return PP_SMU_RESULT_FAIL;
+	/* 0: successful or smu.ppt_funcs->set_deep_sleep_dcefclk = शून्य;1: fail */
+	अगर (pp_funcs->set_min_deep_sleep_dcefclk(pp_handle, mhz))
+		वापस PP_SMU_RESULT_FAIL;
 
-	return PP_SMU_RESULT_OK;
-}
+	वापस PP_SMU_RESULT_OK;
+पूर्ण
 
-static enum pp_smu_status pp_nv_set_hard_min_dcefclk_by_freq(
-		struct pp_smu *pp, int mhz)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	struct pp_display_clock_request clock_req;
+अटल क्रमागत pp_smu_status pp_nv_set_hard_min_dcefclk_by_freq(
+		काष्ठा pp_smu *pp, पूर्णांक mhz)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	काष्ठा pp_display_घड़ी_request घड़ी_req;
 
-	if (!pp_funcs || !pp_funcs->display_clock_voltage_request)
-		return PP_SMU_RESULT_UNSUPPORTED;
+	अगर (!pp_funcs || !pp_funcs->display_घड़ी_voltage_request)
+		वापस PP_SMU_RESULT_UNSUPPORTED;
 
-	clock_req.clock_type = amd_pp_dcef_clock;
-	clock_req.clock_freq_in_khz = mhz * 1000;
+	घड़ी_req.घड़ी_प्रकारype = amd_pp_dcef_घड़ी;
+	घड़ी_req.घड़ी_freq_in_khz = mhz * 1000;
 
-	/* 0: successful or smu.ppt_funcs->display_clock_voltage_request = NULL
+	/* 0: successful or smu.ppt_funcs->display_घड़ी_voltage_request = शून्य
 	 * 1: fail
 	 */
-	if (pp_funcs->display_clock_voltage_request(pp_handle, &clock_req))
-		return PP_SMU_RESULT_FAIL;
+	अगर (pp_funcs->display_घड़ी_voltage_request(pp_handle, &घड़ी_req))
+		वापस PP_SMU_RESULT_FAIL;
 
-	return PP_SMU_RESULT_OK;
-}
+	वापस PP_SMU_RESULT_OK;
+पूर्ण
 
-static enum pp_smu_status
-pp_nv_set_hard_min_uclk_by_freq(struct pp_smu *pp, int mhz)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	struct pp_display_clock_request clock_req;
+अटल क्रमागत pp_smu_status
+pp_nv_set_hard_min_uclk_by_freq(काष्ठा pp_smu *pp, पूर्णांक mhz)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	काष्ठा pp_display_घड़ी_request घड़ी_req;
 
-	if (!pp_funcs || !pp_funcs->display_clock_voltage_request)
-		return PP_SMU_RESULT_UNSUPPORTED;
+	अगर (!pp_funcs || !pp_funcs->display_घड़ी_voltage_request)
+		वापस PP_SMU_RESULT_UNSUPPORTED;
 
-	clock_req.clock_type = amd_pp_mem_clock;
-	clock_req.clock_freq_in_khz = mhz * 1000;
+	घड़ी_req.घड़ी_प्रकारype = amd_pp_mem_घड़ी;
+	घड़ी_req.घड़ी_freq_in_khz = mhz * 1000;
 
-	/* 0: successful or smu.ppt_funcs->display_clock_voltage_request = NULL
+	/* 0: successful or smu.ppt_funcs->display_घड़ी_voltage_request = शून्य
 	 * 1: fail
 	 */
-	if (pp_funcs->display_clock_voltage_request(pp_handle, &clock_req))
-		return PP_SMU_RESULT_FAIL;
+	अगर (pp_funcs->display_घड़ी_voltage_request(pp_handle, &घड़ी_req))
+		वापस PP_SMU_RESULT_FAIL;
 
-	return PP_SMU_RESULT_OK;
-}
+	वापस PP_SMU_RESULT_OK;
+पूर्ण
 
-static enum pp_smu_status pp_nv_set_pstate_handshake_support(
-	struct pp_smu *pp, bool pstate_handshake_supported)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+अटल क्रमागत pp_smu_status pp_nv_set_pstate_handshake_support(
+	काष्ठा pp_smu *pp, bool pstate_handshake_supported)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
-	if (pp_funcs && pp_funcs->display_disable_memory_clock_switch) {
-		if (pp_funcs->display_disable_memory_clock_switch(pp_handle,
+	अगर (pp_funcs && pp_funcs->display_disable_memory_घड़ी_चयन) अणु
+		अगर (pp_funcs->display_disable_memory_घड़ी_चयन(pp_handle,
 								  !pstate_handshake_supported))
-			return PP_SMU_RESULT_FAIL;
-	}
+			वापस PP_SMU_RESULT_FAIL;
+	पूर्ण
 
-	return PP_SMU_RESULT_OK;
-}
+	वापस PP_SMU_RESULT_OK;
+पूर्ण
 
-static enum pp_smu_status pp_nv_set_voltage_by_freq(struct pp_smu *pp,
-		enum pp_smu_nv_clock_id clock_id, int mhz)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	struct pp_display_clock_request clock_req;
+अटल क्रमागत pp_smu_status pp_nv_set_voltage_by_freq(काष्ठा pp_smu *pp,
+		क्रमागत pp_smu_nv_घड़ी_id घड़ी_id, पूर्णांक mhz)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	काष्ठा pp_display_घड़ी_request घड़ी_req;
 
-	if (!pp_funcs || !pp_funcs->display_clock_voltage_request)
-		return PP_SMU_RESULT_UNSUPPORTED;
+	अगर (!pp_funcs || !pp_funcs->display_घड़ी_voltage_request)
+		वापस PP_SMU_RESULT_UNSUPPORTED;
 
-	switch (clock_id) {
-	case PP_SMU_NV_DISPCLK:
-		clock_req.clock_type = amd_pp_disp_clock;
-		break;
-	case PP_SMU_NV_PHYCLK:
-		clock_req.clock_type = amd_pp_phy_clock;
-		break;
-	case PP_SMU_NV_PIXELCLK:
-		clock_req.clock_type = amd_pp_pixel_clock;
-		break;
-	default:
-		break;
-	}
-	clock_req.clock_freq_in_khz = mhz * 1000;
+	चयन (घड़ी_id) अणु
+	हाल PP_SMU_NV_DISPCLK:
+		घड़ी_req.घड़ी_प्रकारype = amd_pp_disp_घड़ी;
+		अवरोध;
+	हाल PP_SMU_NV_PHYCLK:
+		घड़ी_req.घड़ी_प्रकारype = amd_pp_phy_घड़ी;
+		अवरोध;
+	हाल PP_SMU_NV_PIXELCLK:
+		घड़ी_req.घड़ी_प्रकारype = amd_pp_pixel_घड़ी;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	घड़ी_req.घड़ी_freq_in_khz = mhz * 1000;
 
-	/* 0: successful or smu.ppt_funcs->display_clock_voltage_request = NULL
+	/* 0: successful or smu.ppt_funcs->display_घड़ी_voltage_request = शून्य
 	 * 1: fail
 	 */
-	if (pp_funcs->display_clock_voltage_request(pp_handle, &clock_req))
-		return PP_SMU_RESULT_FAIL;
+	अगर (pp_funcs->display_घड़ी_voltage_request(pp_handle, &घड़ी_req))
+		वापस PP_SMU_RESULT_FAIL;
 
-	return PP_SMU_RESULT_OK;
-}
+	वापस PP_SMU_RESULT_OK;
+पूर्ण
 
-static enum pp_smu_status pp_nv_get_maximum_sustainable_clocks(
-		struct pp_smu *pp, struct pp_smu_nv_clock_table *max_clocks)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+अटल क्रमागत pp_smu_status pp_nv_get_maximum_sustainable_घड़ीs(
+		काष्ठा pp_smu *pp, काष्ठा pp_smu_nv_घड़ी_प्रकारable *max_घड़ीs)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
-	if (!pp_funcs || !pp_funcs->get_max_sustainable_clocks_by_dc)
-		return PP_SMU_RESULT_UNSUPPORTED;
+	अगर (!pp_funcs || !pp_funcs->get_max_sustainable_घड़ीs_by_dc)
+		वापस PP_SMU_RESULT_UNSUPPORTED;
 
-	if (!pp_funcs->get_max_sustainable_clocks_by_dc(pp_handle, max_clocks))
-		return PP_SMU_RESULT_OK;
+	अगर (!pp_funcs->get_max_sustainable_घड़ीs_by_dc(pp_handle, max_घड़ीs))
+		वापस PP_SMU_RESULT_OK;
 
-	return PP_SMU_RESULT_FAIL;
-}
+	वापस PP_SMU_RESULT_FAIL;
+पूर्ण
 
-static enum pp_smu_status pp_nv_get_uclk_dpm_states(struct pp_smu *pp,
-		unsigned int *clock_values_in_khz, unsigned int *num_states)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+अटल क्रमागत pp_smu_status pp_nv_get_uclk_dpm_states(काष्ठा pp_smu *pp,
+		अचिन्हित पूर्णांक *घड़ी_values_in_khz, अचिन्हित पूर्णांक *num_states)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
-	if (!pp_funcs || !pp_funcs->get_uclk_dpm_states)
-		return PP_SMU_RESULT_UNSUPPORTED;
+	अगर (!pp_funcs || !pp_funcs->get_uclk_dpm_states)
+		वापस PP_SMU_RESULT_UNSUPPORTED;
 
-	if (!pp_funcs->get_uclk_dpm_states(pp_handle,
-					   clock_values_in_khz,
+	अगर (!pp_funcs->get_uclk_dpm_states(pp_handle,
+					   घड़ी_values_in_khz,
 					   num_states))
-		return PP_SMU_RESULT_OK;
+		वापस PP_SMU_RESULT_OK;
 
-	return PP_SMU_RESULT_FAIL;
-}
+	वापस PP_SMU_RESULT_FAIL;
+पूर्ण
 
-static enum pp_smu_status pp_rn_get_dpm_clock_table(
-		struct pp_smu *pp, struct dpm_clocks *clock_table)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+अटल क्रमागत pp_smu_status pp_rn_get_dpm_घड़ी_प्रकारable(
+		काष्ठा pp_smu *pp, काष्ठा dpm_घड़ीs *घड़ी_प्रकारable)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
-	if (!pp_funcs || !pp_funcs->get_dpm_clock_table)
-		return PP_SMU_RESULT_UNSUPPORTED;
+	अगर (!pp_funcs || !pp_funcs->get_dpm_घड़ी_प्रकारable)
+		वापस PP_SMU_RESULT_UNSUPPORTED;
 
-	if (!pp_funcs->get_dpm_clock_table(pp_handle, clock_table))
-		return PP_SMU_RESULT_OK;
+	अगर (!pp_funcs->get_dpm_घड़ी_प्रकारable(pp_handle, घड़ी_प्रकारable))
+		वापस PP_SMU_RESULT_OK;
 
-	return PP_SMU_RESULT_FAIL;
-}
+	वापस PP_SMU_RESULT_FAIL;
+पूर्ण
 
-static enum pp_smu_status pp_rn_set_wm_ranges(struct pp_smu *pp,
-		struct pp_smu_wm_range_sets *ranges)
-{
-	const struct dc_context *ctx = pp->dm;
-	struct amdgpu_device *adev = ctx->driver_context;
-	void *pp_handle = adev->powerplay.pp_handle;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+अटल क्रमागत pp_smu_status pp_rn_set_wm_ranges(काष्ठा pp_smu *pp,
+		काष्ठा pp_smu_wm_range_sets *ranges)
+अणु
+	स्थिर काष्ठा dc_context *ctx = pp->dm;
+	काष्ठा amdgpu_device *adev = ctx->driver_context;
+	व्योम *pp_handle = adev->घातerplay.pp_handle;
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
 
-	if (pp_funcs && pp_funcs->set_watermarks_for_clocks_ranges)
-		pp_funcs->set_watermarks_for_clocks_ranges(pp_handle, ranges);
+	अगर (pp_funcs && pp_funcs->set_watermarks_क्रम_घड़ीs_ranges)
+		pp_funcs->set_watermarks_क्रम_घड़ीs_ranges(pp_handle, ranges);
 
-	return PP_SMU_RESULT_OK;
-}
+	वापस PP_SMU_RESULT_OK;
+पूर्ण
 
-void dm_pp_get_funcs(
-		struct dc_context *ctx,
-		struct pp_smu_funcs *funcs)
-{
-	switch (ctx->dce_version) {
-	case DCN_VERSION_1_0:
-	case DCN_VERSION_1_01:
+व्योम dm_pp_get_funcs(
+		काष्ठा dc_context *ctx,
+		काष्ठा pp_smu_funcs *funcs)
+अणु
+	चयन (ctx->dce_version) अणु
+	हाल DCN_VERSION_1_0:
+	हाल DCN_VERSION_1_01:
 		funcs->ctx.ver = PP_SMU_VER_RV;
 		funcs->rv_funcs.pp_smu.dm = ctx;
 		funcs->rv_funcs.set_wm_ranges = pp_rv_set_wm_ranges;
@@ -840,8 +841,8 @@ void dm_pp_get_funcs(
 				pp_rv_set_hard_min_dcefclk_by_freq;
 		funcs->rv_funcs.set_hard_min_fclk_by_freq =
 				pp_rv_set_hard_min_fclk_by_freq;
-		break;
-	case DCN_VERSION_2_0:
+		अवरोध;
+	हाल DCN_VERSION_2_0:
 		funcs->ctx.ver = PP_SMU_VER_NV;
 		funcs->nv_funcs.pp_smu.dm = ctx;
 		funcs->nv_funcs.set_display_count = pp_nv_set_display_count;
@@ -853,25 +854,25 @@ void dm_pp_get_funcs(
 				pp_nv_set_voltage_by_freq;
 		funcs->nv_funcs.set_wm_ranges = pp_nv_set_wm_ranges;
 
-		/* todo set_pme_wa_enable cause 4k@6ohz display not light up */
-		funcs->nv_funcs.set_pme_wa_enable = NULL;
-		/* todo debug waring message */
+		/* toकरो set_pme_wa_enable cause 4k@6ohz display not light up */
+		funcs->nv_funcs.set_pme_wa_enable = शून्य;
+		/* toकरो debug waring message */
 		funcs->nv_funcs.set_hard_min_uclk_by_freq = pp_nv_set_hard_min_uclk_by_freq;
-		/* todo  compare data with window driver*/
-		funcs->nv_funcs.get_maximum_sustainable_clocks = pp_nv_get_maximum_sustainable_clocks;
-		/*todo  compare data with window driver */
+		/* toकरो  compare data with winकरोw driver*/
+		funcs->nv_funcs.get_maximum_sustainable_घड़ीs = pp_nv_get_maximum_sustainable_घड़ीs;
+		/*toकरो  compare data with winकरोw driver */
 		funcs->nv_funcs.get_uclk_dpm_states = pp_nv_get_uclk_dpm_states;
 		funcs->nv_funcs.set_pstate_handshake_support = pp_nv_set_pstate_handshake_support;
-		break;
+		अवरोध;
 
-	case DCN_VERSION_2_1:
+	हाल DCN_VERSION_2_1:
 		funcs->ctx.ver = PP_SMU_VER_RN;
 		funcs->rn_funcs.pp_smu.dm = ctx;
 		funcs->rn_funcs.set_wm_ranges = pp_rn_set_wm_ranges;
-		funcs->rn_funcs.get_dpm_clock_table = pp_rn_get_dpm_clock_table;
-		break;
-	default:
+		funcs->rn_funcs.get_dpm_घड़ी_प्रकारable = pp_rn_get_dpm_घड़ी_प्रकारable;
+		अवरोध;
+	शेष:
 		DRM_ERROR("smu version is not supported !\n");
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण

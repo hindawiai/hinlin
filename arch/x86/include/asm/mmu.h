@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_MMU_H
-#define _ASM_X86_MMU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_MMU_H
+#घोषणा _ASM_X86_MMU_H
 
-#include <linux/spinlock.h>
-#include <linux/rwsem.h>
-#include <linux/mutex.h>
-#include <linux/atomic.h>
-#include <linux/bits.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/bits.h>
 
 /* Uprobes on this MM assume 32-bit code */
-#define MM_CONTEXT_UPROBE_IA32	BIT(0)
+#घोषणा MM_CONTEXT_UPROBE_IA32	BIT(0)
 /* vsyscall page is accessible on this MM */
-#define MM_CONTEXT_HAS_VSYSCALL	BIT(1)
+#घोषणा MM_CONTEXT_HAS_VSYSCALL	BIT(1)
 
 /*
- * x86 has arch-specific MMU state beyond what lives in mm_struct.
+ * x86 has arch-specअगरic MMU state beyond what lives in mm_काष्ठा.
  */
-typedef struct {
+प्रकार काष्ठा अणु
 	/*
-	 * ctx_id uniquely identifies this mm_struct.  A ctx_id will never
+	 * ctx_id uniquely identअगरies this mm_काष्ठा.  A ctx_id will never
 	 * be reused, and zero is not a valid ctx_id.
 	 */
 	u64 ctx_id;
 
 	/*
-	 * Any code that needs to do any sort of TLB flushing for this
+	 * Any code that needs to करो any sort of TLB flushing क्रम this
 	 * mm will first make its changes to the page tables, then
 	 * increment tlb_gen, then flush.  This lets the low-level
 	 * flushing code keep track of what needs flushing.
@@ -33,37 +34,37 @@ typedef struct {
 	 */
 	atomic64_t tlb_gen;
 
-#ifdef CONFIG_MODIFY_LDT_SYSCALL
-	struct rw_semaphore	ldt_usr_sem;
-	struct ldt_struct	*ldt;
-#endif
+#अगर_घोषित CONFIG_MODIFY_LDT_SYSCALL
+	काष्ठा rw_semaphore	ldt_usr_sem;
+	काष्ठा ldt_काष्ठा	*ldt;
+#पूर्ण_अगर
 
-#ifdef CONFIG_X86_64
-	unsigned short flags;
-#endif
+#अगर_घोषित CONFIG_X86_64
+	अचिन्हित लघु flags;
+#पूर्ण_अगर
 
-	struct mutex lock;
-	void __user *vdso;			/* vdso base address */
-	const struct vdso_image *vdso_image;	/* vdso image in use */
+	काष्ठा mutex lock;
+	व्योम __user *vdso;			/* vdso base address */
+	स्थिर काष्ठा vdso_image *vdso_image;	/* vdso image in use */
 
-	atomic_t perf_rdpmc_allowed;	/* nonzero if rdpmc is allowed */
-#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
+	atomic_t perf_rdpmc_allowed;	/* nonzero अगर rdpmc is allowed */
+#अगर_घोषित CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
 	/*
 	 * One bit per protection key says whether userspace can
-	 * use it or not.  protected by mmap_lock.
+	 * use it or not.  रक्षित by mmap_lock.
 	 */
 	u16 pkey_allocation_map;
 	s16 execute_only_pkey;
-#endif
-} mm_context_t;
+#पूर्ण_अगर
+पूर्ण mm_context_t;
 
-#define INIT_MM_CONTEXT(mm)						\
-	.context = {							\
+#घोषणा INIT_MM_CONTEXT(mm)						\
+	.context = अणु							\
 		.ctx_id = 1,						\
 		.lock = __MUTEX_INITIALIZER(mm.context.lock),		\
-	}
+	पूर्ण
 
-void leave_mm(int cpu);
-#define leave_mm leave_mm
+व्योम leave_mm(पूर्णांक cpu);
+#घोषणा leave_mm leave_mm
 
-#endif /* _ASM_X86_MMU_H */
+#पूर्ण_अगर /* _ASM_X86_MMU_H */

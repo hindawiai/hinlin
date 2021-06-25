@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * SuperTrak EX Series Storage Controller driver for Linux
+ * SuperTrak EX Series Storage Controller driver क्रम Linux
  *
  *	Copyright (C) 2005-2015 Promise Technology Inc.
  *
@@ -8,40 +9,40 @@
  *		Ed Lin <promise_linux@promise.com>
  */
 
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/time.h>
-#include <linux/pci.h>
-#include <linux/blkdev.h>
-#include <linux/interrupt.h>
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/ktime.h>
-#include <linux/reboot.h>
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/byteorder.h>
-#include <scsi/scsi.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_tcq.h>
-#include <scsi/scsi_dbg.h>
-#include <scsi/scsi_eh.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/reboot.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_tcq.h>
+#समावेश <scsi/scsi_dbg.h>
+#समावेश <scsi/scsi_eh.h>
 
-#define DRV_NAME "stex"
-#define ST_DRIVER_VERSION	"6.02.0000.01"
-#define ST_VER_MAJOR		6
-#define ST_VER_MINOR		02
-#define ST_OEM				0000
-#define ST_BUILD_VER		01
+#घोषणा DRV_NAME "stex"
+#घोषणा ST_DRIVER_VERSION	"6.02.0000.01"
+#घोषणा ST_VER_MAJOR		6
+#घोषणा ST_VER_MINOR		02
+#घोषणा ST_OEM				0000
+#घोषणा ST_BUILD_VER		01
 
-enum {
-	/* MU register offset */
+क्रमागत अणु
+	/* MU रेजिस्टर offset */
 	IMR0	= 0x10,	/* MU_INBOUND_MESSAGE_REG0 */
 	IMR1	= 0x14,	/* MU_INBOUND_MESSAGE_REG1 */
 	OMR0	= 0x18,	/* MU_OUTBOUND_MESSAGE_REG0 */
@@ -68,7 +69,7 @@ enum {
 	MAILBOX_BASE			= 0x1000,
 	MAILBOX_HNDSHK_STS		= 0x0,
 
-	/* MU register value */
+	/* MU रेजिस्टर value */
 	MU_INBOUND_DOORBELL_HANDSHAKE		= (1 << 0),
 	MU_INBOUND_DOORBELL_REQHEADCHANGED	= (1 << 1),
 	MU_INBOUND_DOORBELL_STATUSTAILCHANGED	= (1 << 2),
@@ -96,7 +97,7 @@ enum {
 	MU_HARD_RESET_WAIT			= 30000,
 	HMU_PARTNER_TYPE			= 2,
 
-	/* firmware returned values */
+	/* firmware वापसed values */
 	SRB_STATUS_SUCCESS			= 0x01,
 	SRB_STATUS_ERROR			= 0x04,
 	SRB_STATUS_BUSY				= 0x05,
@@ -129,9 +130,9 @@ enum {
 	SG_CF_EOT				= 0x80,	/* end of table */
 	SG_CF_64B				= 0x40,	/* 64 bit item */
 	SG_CF_HOST				= 0x20,	/* sg in host memory */
-	MSG_DATA_DIR_ND				= 0,
-	MSG_DATA_DIR_IN				= 1,
-	MSG_DATA_DIR_OUT			= 2,
+	MSG_DATA_सूची_ND				= 0,
+	MSG_DATA_सूची_IN				= 1,
+	MSG_DATA_सूची_OUT			= 2,
 
 	st_shasta				= 0,
 	st_vsc					= 1,
@@ -147,7 +148,7 @@ enum {
 	ST_TO_CMD				= 0,
 	ST_FROM_CMD				= 1,
 
-	/* vendor specific commands of Promise */
+	/* venकरोr specअगरic commands of Promise */
 	MGT_CMD					= 0xd8,
 	SINBAND_MGT_CMD				= 0xd9,
 	ARRAY_CMD				= 0xe0,
@@ -179,42 +180,42 @@ enum {
 	ST_S4						= 4,
 	ST_S5						= 5,
 	ST_S6						= 6,
-};
+पूर्ण;
 
-struct st_sgitem {
+काष्ठा st_sgitem अणु
 	u8 ctrl;	/* SG_CF_xxx */
 	u8 reserved[3];
 	__le32 count;
 	__le64 addr;
-};
+पूर्ण;
 
-struct st_ss_sgitem {
+काष्ठा st_ss_sgitem अणु
 	__le32 addr;
 	__le32 addr_hi;
 	__le32 count;
-};
+पूर्ण;
 
-struct st_sgtable {
+काष्ठा st_sgtable अणु
 	__le16 sg_count;
 	__le16 max_sg_count;
 	__le32 sz_in_byte;
-};
+पूर्ण;
 
-struct st_msg_header {
+काष्ठा st_msg_header अणु
 	__le64 handle;
 	u8 flag;
 	u8 channel;
-	__le16 timeout;
+	__le16 समयout;
 	u32 reserved;
-};
+पूर्ण;
 
-struct handshake_frame {
+काष्ठा handshake_frame अणु
 	__le64 rb_phy;		/* request payload queue physical address */
 	__le16 req_sz;		/* size of each request payload */
 	__le16 req_cnt;		/* count of reqs the buffer can hold */
 	__le16 status_sz;	/* size of each status payload */
 	__le16 status_cnt;	/* count of status the buffer can hold */
-	__le64 hosttime;	/* seconds from Jan 1, 1970 (GMT) */
+	__le64 hostसमय;	/* seconds from Jan 1, 1970 (GMT) */
 	u8 partner_type;	/* who sends this frame */
 	u8 reserved0[7];
 	__le32 partner_ver_major;
@@ -225,9 +226,9 @@ struct handshake_frame {
 	__le32 extra_size;	/* NEW */
 	__le32 scratch_size;
 	u32 reserved1;
-};
+पूर्ण;
 
-struct req_msg {
+काष्ठा req_msg अणु
 	__le16 tag;
 	u8 lun;
 	u8 target;
@@ -237,9 +238,9 @@ struct req_msg {
 	u8 payload_sz;		/* payload size in 4-byte, not used */
 	u8 cdb[STEX_CDB_LENGTH];
 	u32 variable[];
-};
+पूर्ण;
 
-struct status_msg {
+काष्ठा status_msg अणु
 	__le16 tag;
 	u8 lun;
 	u8 target;
@@ -248,22 +249,22 @@ struct status_msg {
 	u8 reserved;
 	u8 payload_sz;		/* payload size in 4-byte */
 	u8 variable[STATUS_VAR_LEN];
-};
+पूर्ण;
 
-struct ver_info {
+काष्ठा ver_info अणु
 	u32 major;
 	u32 minor;
 	u32 oem;
 	u32 build;
 	u32 reserved[2];
-};
+पूर्ण;
 
-struct st_frame {
+काष्ठा st_frame अणु
 	u32 base[6];
 	u32 rom_addr;
 
-	struct ver_info drv_ver;
-	struct ver_info bios_ver;
+	काष्ठा ver_info drv_ver;
+	काष्ठा ver_info bios_ver;
 
 	u32 bus;
 	u32 slot;
@@ -278,9 +279,9 @@ struct st_frame {
 
 	u32 channel;
 	u32 reserved1;
-};
+पूर्ण;
 
-struct st_drvver {
+काष्ठा st_drvver अणु
 	u32 major;
 	u32 minor;
 	u32 oem;
@@ -290,86 +291,86 @@ struct st_drvver {
 	u8 host_no;
 	u8 reserved0[2];
 	u32 reserved[3];
-};
+पूर्ण;
 
-struct st_ccb {
-	struct req_msg *req;
-	struct scsi_cmnd *cmd;
+काष्ठा st_ccb अणु
+	काष्ठा req_msg *req;
+	काष्ठा scsi_cmnd *cmd;
 
-	void *sense_buffer;
-	unsigned int sense_bufflen;
-	int sg_count;
+	व्योम *sense_buffer;
+	अचिन्हित पूर्णांक sense_bufflen;
+	पूर्णांक sg_count;
 
 	u32 req_type;
 	u8 srb_status;
 	u8 scsi_status;
 	u8 reserved[2];
-};
+पूर्ण;
 
-struct st_hba {
-	void __iomem *mmio_base;	/* iomapped PCI memory space */
-	void *dma_mem;
+काष्ठा st_hba अणु
+	व्योम __iomem *mmio_base;	/* iomapped PCI memory space */
+	व्योम *dma_mem;
 	dma_addr_t dma_handle;
-	size_t dma_size;
+	माप_प्रकार dma_size;
 
-	struct Scsi_Host *host;
-	struct pci_dev *pdev;
+	काष्ठा Scsi_Host *host;
+	काष्ठा pci_dev *pdev;
 
-	struct req_msg * (*alloc_rq) (struct st_hba *);
-	int (*map_sg)(struct st_hba *, struct req_msg *, struct st_ccb *);
-	void (*send) (struct st_hba *, struct req_msg *, u16);
+	काष्ठा req_msg * (*alloc_rq) (काष्ठा st_hba *);
+	पूर्णांक (*map_sg)(काष्ठा st_hba *, काष्ठा req_msg *, काष्ठा st_ccb *);
+	व्योम (*send) (काष्ठा st_hba *, काष्ठा req_msg *, u16);
 
 	u32 req_head;
 	u32 req_tail;
 	u32 status_head;
 	u32 status_tail;
 
-	struct status_msg *status_buffer;
-	void *copy_buffer; /* temp buffer for driver-handled commands */
-	struct st_ccb *ccb;
-	struct st_ccb *wait_ccb;
+	काष्ठा status_msg *status_buffer;
+	व्योम *copy_buffer; /* temp buffer क्रम driver-handled commands */
+	काष्ठा st_ccb *ccb;
+	काष्ठा st_ccb *रुको_ccb;
 	__le32 *scratch;
 
-	char work_q_name[20];
-	struct workqueue_struct *work_q;
-	struct work_struct reset_work;
-	wait_queue_head_t reset_waitq;
-	unsigned int mu_status;
-	unsigned int cardtype;
-	int msi_enabled;
-	int out_req_cnt;
+	अक्षर work_q_name[20];
+	काष्ठा workqueue_काष्ठा *work_q;
+	काष्ठा work_काष्ठा reset_work;
+	रुको_queue_head_t reset_रुकोq;
+	अचिन्हित पूर्णांक mu_status;
+	अचिन्हित पूर्णांक cardtype;
+	पूर्णांक msi_enabled;
+	पूर्णांक out_req_cnt;
 	u32 extra_offset;
 	u16 rq_count;
 	u16 rq_size;
 	u16 sts_count;
 	u8  supports_pm;
-	int msi_lock;
-};
+	पूर्णांक msi_lock;
+पूर्ण;
 
-struct st_card_info {
-	struct req_msg * (*alloc_rq) (struct st_hba *);
-	int (*map_sg)(struct st_hba *, struct req_msg *, struct st_ccb *);
-	void (*send) (struct st_hba *, struct req_msg *, u16);
-	unsigned int max_id;
-	unsigned int max_lun;
-	unsigned int max_channel;
+काष्ठा st_card_info अणु
+	काष्ठा req_msg * (*alloc_rq) (काष्ठा st_hba *);
+	पूर्णांक (*map_sg)(काष्ठा st_hba *, काष्ठा req_msg *, काष्ठा st_ccb *);
+	व्योम (*send) (काष्ठा st_hba *, काष्ठा req_msg *, u16);
+	अचिन्हित पूर्णांक max_id;
+	अचिन्हित पूर्णांक max_lun;
+	अचिन्हित पूर्णांक max_channel;
 	u16 rq_count;
 	u16 rq_size;
 	u16 sts_count;
-};
+पूर्ण;
 
-static int S6flag;
-static int stex_halt(struct notifier_block *nb, ulong event, void *buf);
-static struct notifier_block stex_notifier = {
-	stex_halt, NULL, 0
-};
+अटल पूर्णांक S6flag;
+अटल पूर्णांक stex_halt(काष्ठा notअगरier_block *nb, uदीर्घ event, व्योम *buf);
+अटल काष्ठा notअगरier_block stex_notअगरier = अणु
+	stex_halt, शून्य, 0
+पूर्ण;
 
-static int msi;
-module_param(msi, int, 0);
+अटल पूर्णांक msi;
+module_param(msi, पूर्णांक, 0);
 MODULE_PARM_DESC(msi, "Enable Message Signaled Interrupts(0=off, 1=on)");
 
-static const char console_inq_page[] =
-{
+अटल स्थिर अक्षर console_inq_page[] =
+अणु
 	0x03,0x00,0x03,0x03,0xFA,0x00,0x00,0x30,
 	0x50,0x72,0x6F,0x6D,0x69,0x73,0x65,0x20,	/* "Promise " */
 	0x52,0x41,0x49,0x44,0x20,0x43,0x6F,0x6E,	/* "RAID Con" */
@@ -378,124 +379,124 @@ static const char console_inq_page[] =
 	0x53,0x58,0x2F,0x52,0x53,0x41,0x46,0x2D,	/* "SX/RSAF-" */
 	0x54,0x45,0x31,0x2E,0x30,0x30,0x20,0x20,	/* "TE1.00  " */
 	0x0C,0x20,0x20,0x20,0x20,0x20,0x20,0x20
-};
+पूर्ण;
 
 MODULE_AUTHOR("Ed Lin");
 MODULE_DESCRIPTION("Promise Technology SuperTrak EX Controllers");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(ST_DRIVER_VERSION);
 
-static struct status_msg *stex_get_status(struct st_hba *hba)
-{
-	struct status_msg *status = hba->status_buffer + hba->status_tail;
+अटल काष्ठा status_msg *stex_get_status(काष्ठा st_hba *hba)
+अणु
+	काष्ठा status_msg *status = hba->status_buffer + hba->status_tail;
 
 	++hba->status_tail;
 	hba->status_tail %= hba->sts_count+1;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void stex_invalid_field(struct scsi_cmnd *cmd,
-			       void (*done)(struct scsi_cmnd *))
-{
+अटल व्योम stex_invalid_field(काष्ठा scsi_cmnd *cmd,
+			       व्योम (*करोne)(काष्ठा scsi_cmnd *))
+अणु
 	cmd->result = (DRIVER_SENSE << 24) | SAM_STAT_CHECK_CONDITION;
 
 	/* "Invalid field in cdb" */
 	scsi_build_sense_buffer(0, cmd->sense_buffer, ILLEGAL_REQUEST, 0x24,
 				0x0);
-	done(cmd);
-}
+	करोne(cmd);
+पूर्ण
 
-static struct req_msg *stex_alloc_req(struct st_hba *hba)
-{
-	struct req_msg *req = hba->dma_mem + hba->req_head * hba->rq_size;
+अटल काष्ठा req_msg *stex_alloc_req(काष्ठा st_hba *hba)
+अणु
+	काष्ठा req_msg *req = hba->dma_mem + hba->req_head * hba->rq_size;
 
 	++hba->req_head;
 	hba->req_head %= hba->rq_count+1;
 
-	return req;
-}
+	वापस req;
+पूर्ण
 
-static struct req_msg *stex_ss_alloc_req(struct st_hba *hba)
-{
-	return (struct req_msg *)(hba->dma_mem +
-		hba->req_head * hba->rq_size + sizeof(struct st_msg_header));
-}
+अटल काष्ठा req_msg *stex_ss_alloc_req(काष्ठा st_hba *hba)
+अणु
+	वापस (काष्ठा req_msg *)(hba->dma_mem +
+		hba->req_head * hba->rq_size + माप(काष्ठा st_msg_header));
+पूर्ण
 
-static int stex_map_sg(struct st_hba *hba,
-	struct req_msg *req, struct st_ccb *ccb)
-{
-	struct scsi_cmnd *cmd;
-	struct scatterlist *sg;
-	struct st_sgtable *dst;
-	struct st_sgitem *table;
-	int i, nseg;
+अटल पूर्णांक stex_map_sg(काष्ठा st_hba *hba,
+	काष्ठा req_msg *req, काष्ठा st_ccb *ccb)
+अणु
+	काष्ठा scsi_cmnd *cmd;
+	काष्ठा scatterlist *sg;
+	काष्ठा st_sgtable *dst;
+	काष्ठा st_sgitem *table;
+	पूर्णांक i, nseg;
 
 	cmd = ccb->cmd;
 	nseg = scsi_dma_map(cmd);
 	BUG_ON(nseg < 0);
-	if (nseg) {
-		dst = (struct st_sgtable *)req->variable;
+	अगर (nseg) अणु
+		dst = (काष्ठा st_sgtable *)req->variable;
 
 		ccb->sg_count = nseg;
 		dst->sg_count = cpu_to_le16((u16)nseg);
 		dst->max_sg_count = cpu_to_le16(hba->host->sg_tablesize);
 		dst->sz_in_byte = cpu_to_le32(scsi_bufflen(cmd));
 
-		table = (struct st_sgitem *)(dst + 1);
-		scsi_for_each_sg(cmd, sg, nseg, i) {
+		table = (काष्ठा st_sgitem *)(dst + 1);
+		scsi_क्रम_each_sg(cmd, sg, nseg, i) अणु
 			table[i].count = cpu_to_le32((u32)sg_dma_len(sg));
 			table[i].addr = cpu_to_le64(sg_dma_address(sg));
 			table[i].ctrl = SG_CF_64B | SG_CF_HOST;
-		}
+		पूर्ण
 		table[--i].ctrl |= SG_CF_EOT;
-	}
+	पूर्ण
 
-	return nseg;
-}
+	वापस nseg;
+पूर्ण
 
-static int stex_ss_map_sg(struct st_hba *hba,
-	struct req_msg *req, struct st_ccb *ccb)
-{
-	struct scsi_cmnd *cmd;
-	struct scatterlist *sg;
-	struct st_sgtable *dst;
-	struct st_ss_sgitem *table;
-	int i, nseg;
+अटल पूर्णांक stex_ss_map_sg(काष्ठा st_hba *hba,
+	काष्ठा req_msg *req, काष्ठा st_ccb *ccb)
+अणु
+	काष्ठा scsi_cmnd *cmd;
+	काष्ठा scatterlist *sg;
+	काष्ठा st_sgtable *dst;
+	काष्ठा st_ss_sgitem *table;
+	पूर्णांक i, nseg;
 
 	cmd = ccb->cmd;
 	nseg = scsi_dma_map(cmd);
 	BUG_ON(nseg < 0);
-	if (nseg) {
-		dst = (struct st_sgtable *)req->variable;
+	अगर (nseg) अणु
+		dst = (काष्ठा st_sgtable *)req->variable;
 
 		ccb->sg_count = nseg;
 		dst->sg_count = cpu_to_le16((u16)nseg);
 		dst->max_sg_count = cpu_to_le16(hba->host->sg_tablesize);
 		dst->sz_in_byte = cpu_to_le32(scsi_bufflen(cmd));
 
-		table = (struct st_ss_sgitem *)(dst + 1);
-		scsi_for_each_sg(cmd, sg, nseg, i) {
+		table = (काष्ठा st_ss_sgitem *)(dst + 1);
+		scsi_क्रम_each_sg(cmd, sg, nseg, i) अणु
 			table[i].count = cpu_to_le32((u32)sg_dma_len(sg));
 			table[i].addr =
 				cpu_to_le32(sg_dma_address(sg) & 0xffffffff);
 			table[i].addr_hi =
 				cpu_to_le32((sg_dma_address(sg) >> 16) >> 16);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return nseg;
-}
+	वापस nseg;
+पूर्ण
 
-static void stex_controller_info(struct st_hba *hba, struct st_ccb *ccb)
-{
-	struct st_frame *p;
-	size_t count = sizeof(struct st_frame);
+अटल व्योम stex_controller_info(काष्ठा st_hba *hba, काष्ठा st_ccb *ccb)
+अणु
+	काष्ठा st_frame *p;
+	माप_प्रकार count = माप(काष्ठा st_frame);
 
 	p = hba->copy_buffer;
 	scsi_sg_copy_to_buffer(ccb->cmd, p, count);
-	memset(p->base, 0, sizeof(u32)*6);
-	*(unsigned long *)(p->base) = pci_resource_start(hba->pdev, 0);
+	स_रखो(p->base, 0, माप(u32)*6);
+	*(अचिन्हित दीर्घ *)(p->base) = pci_resource_start(hba->pdev, 0);
 	p->rom_addr = 0;
 
 	p->drv_ver.major = ST_VER_MAJOR;
@@ -507,31 +508,31 @@ static void stex_controller_info(struct st_hba *hba, struct st_ccb *ccb)
 	p->slot = hba->pdev->devfn;
 	p->irq_level = 0;
 	p->irq_vec = hba->pdev->irq;
-	p->id = hba->pdev->vendor << 16 | hba->pdev->device;
+	p->id = hba->pdev->venकरोr << 16 | hba->pdev->device;
 	p->subid =
-		hba->pdev->subsystem_vendor << 16 | hba->pdev->subsystem_device;
+		hba->pdev->subप्रणाली_venकरोr << 16 | hba->pdev->subप्रणाली_device;
 
 	scsi_sg_copy_from_buffer(ccb->cmd, p, count);
-}
+पूर्ण
 
-static void
-stex_send_cmd(struct st_hba *hba, struct req_msg *req, u16 tag)
-{
+अटल व्योम
+stex_send_cmd(काष्ठा st_hba *hba, काष्ठा req_msg *req, u16 tag)
+अणु
 	req->tag = cpu_to_le16(tag);
 
 	hba->ccb[tag].req = req;
 	hba->out_req_cnt++;
 
-	writel(hba->req_head, hba->mmio_base + IMR0);
-	writel(MU_INBOUND_DOORBELL_REQHEADCHANGED, hba->mmio_base + IDBL);
-	readl(hba->mmio_base + IDBL); /* flush */
-}
+	ग_लिखोl(hba->req_head, hba->mmio_base + IMR0);
+	ग_लिखोl(MU_INBOUND_DOORBELL_REQHEADCHANGED, hba->mmio_base + IDBL);
+	पढ़ोl(hba->mmio_base + IDBL); /* flush */
+पूर्ण
 
-static void
-stex_ss_send_cmd(struct st_hba *hba, struct req_msg *req, u16 tag)
-{
-	struct scsi_cmnd *cmd;
-	struct st_msg_header *msg_h;
+अटल व्योम
+stex_ss_send_cmd(काष्ठा st_hba *hba, काष्ठा req_msg *req, u16 tag)
+अणु
+	काष्ठा scsi_cmnd *cmd;
+	काष्ठा st_msg_header *msg_h;
 	dma_addr_t addr;
 
 	req->tag = cpu_to_le16(tag);
@@ -540,136 +541,136 @@ stex_ss_send_cmd(struct st_hba *hba, struct req_msg *req, u16 tag)
 	hba->out_req_cnt++;
 
 	cmd = hba->ccb[tag].cmd;
-	msg_h = (struct st_msg_header *)req - 1;
-	if (likely(cmd)) {
+	msg_h = (काष्ठा st_msg_header *)req - 1;
+	अगर (likely(cmd)) अणु
 		msg_h->channel = (u8)cmd->device->channel;
-		msg_h->timeout = cpu_to_le16(cmd->request->timeout/HZ);
-	}
+		msg_h->समयout = cpu_to_le16(cmd->request->समयout/HZ);
+	पूर्ण
 	addr = hba->dma_handle + hba->req_head * hba->rq_size;
 	addr += (hba->ccb[tag].sg_count+4)/11;
 	msg_h->handle = cpu_to_le64(addr);
 
 	++hba->req_head;
 	hba->req_head %= hba->rq_count+1;
-	if (hba->cardtype == st_P3) {
-		writel((addr >> 16) >> 16, hba->mmio_base + YH2I_REQ_HI);
-		writel(addr, hba->mmio_base + YH2I_REQ);
-	} else {
-		writel((addr >> 16) >> 16, hba->mmio_base + YH2I_REQ_HI);
-		readl(hba->mmio_base + YH2I_REQ_HI); /* flush */
-		writel(addr, hba->mmio_base + YH2I_REQ);
-		readl(hba->mmio_base + YH2I_REQ); /* flush */
-	}
-}
+	अगर (hba->cardtype == st_P3) अणु
+		ग_लिखोl((addr >> 16) >> 16, hba->mmio_base + YH2I_REQ_HI);
+		ग_लिखोl(addr, hba->mmio_base + YH2I_REQ);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl((addr >> 16) >> 16, hba->mmio_base + YH2I_REQ_HI);
+		पढ़ोl(hba->mmio_base + YH2I_REQ_HI); /* flush */
+		ग_लिखोl(addr, hba->mmio_base + YH2I_REQ);
+		पढ़ोl(hba->mmio_base + YH2I_REQ); /* flush */
+	पूर्ण
+पूर्ण
 
-static void return_abnormal_state(struct st_hba *hba, int status)
-{
-	struct st_ccb *ccb;
-	unsigned long flags;
+अटल व्योम वापस_abnormal_state(काष्ठा st_hba *hba, पूर्णांक status)
+अणु
+	काष्ठा st_ccb *ccb;
+	अचिन्हित दीर्घ flags;
 	u16 tag;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	for (tag = 0; tag < hba->host->can_queue; tag++) {
+	क्रम (tag = 0; tag < hba->host->can_queue; tag++) अणु
 		ccb = &hba->ccb[tag];
-		if (ccb->req == NULL)
-			continue;
-		ccb->req = NULL;
-		if (ccb->cmd) {
+		अगर (ccb->req == शून्य)
+			जारी;
+		ccb->req = शून्य;
+		अगर (ccb->cmd) अणु
 			scsi_dma_unmap(ccb->cmd);
 			ccb->cmd->result = status << 16;
-			ccb->cmd->scsi_done(ccb->cmd);
-			ccb->cmd = NULL;
-		}
-	}
+			ccb->cmd->scsi_करोne(ccb->cmd);
+			ccb->cmd = शून्य;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-}
-static int
-stex_slave_config(struct scsi_device *sdev)
-{
-	sdev->use_10_for_rw = 1;
-	sdev->use_10_for_ms = 1;
-	blk_queue_rq_timeout(sdev->request_queue, 60 * HZ);
+पूर्ण
+अटल पूर्णांक
+stex_slave_config(काष्ठा scsi_device *sdev)
+अणु
+	sdev->use_10_क्रम_rw = 1;
+	sdev->use_10_क्रम_ms = 1;
+	blk_queue_rq_समयout(sdev->request_queue, 60 * HZ);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-stex_queuecommand_lck(struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd *))
-{
-	struct st_hba *hba;
-	struct Scsi_Host *host;
-	unsigned int id, lun;
-	struct req_msg *req;
+अटल पूर्णांक
+stex_queuecommand_lck(काष्ठा scsi_cmnd *cmd, व्योम (*करोne)(काष्ठा scsi_cmnd *))
+अणु
+	काष्ठा st_hba *hba;
+	काष्ठा Scsi_Host *host;
+	अचिन्हित पूर्णांक id, lun;
+	काष्ठा req_msg *req;
 	u16 tag;
 
 	host = cmd->device->host;
 	id = cmd->device->id;
 	lun = cmd->device->lun;
-	hba = (struct st_hba *) &host->hostdata[0];
-	if (hba->mu_status == MU_STATE_NOCONNECT) {
+	hba = (काष्ठा st_hba *) &host->hostdata[0];
+	अगर (hba->mu_status == MU_STATE_NOCONNECT) अणु
 		cmd->result = DID_NO_CONNECT;
-		done(cmd);
-		return 0;
-	}
-	if (unlikely(hba->mu_status != MU_STATE_STARTED))
-		return SCSI_MLQUEUE_HOST_BUSY;
+		करोne(cmd);
+		वापस 0;
+	पूर्ण
+	अगर (unlikely(hba->mu_status != MU_STATE_STARTED))
+		वापस SCSI_MLQUEUE_HOST_BUSY;
 
-	switch (cmd->cmnd[0]) {
-	case MODE_SENSE_10:
-	{
-		static char ms10_caching_page[12] =
-			{ 0, 0x12, 0, 0, 0, 0, 0, 0, 0x8, 0xa, 0x4, 0 };
-		unsigned char page;
+	चयन (cmd->cmnd[0]) अणु
+	हाल MODE_SENSE_10:
+	अणु
+		अटल अक्षर ms10_caching_page[12] =
+			अणु 0, 0x12, 0, 0, 0, 0, 0, 0, 0x8, 0xa, 0x4, 0 पूर्ण;
+		अचिन्हित अक्षर page;
 
 		page = cmd->cmnd[2] & 0x3f;
-		if (page == 0x8 || page == 0x3f) {
+		अगर (page == 0x8 || page == 0x3f) अणु
 			scsi_sg_copy_from_buffer(cmd, ms10_caching_page,
-						 sizeof(ms10_caching_page));
+						 माप(ms10_caching_page));
 			cmd->result = DID_OK << 16;
-			done(cmd);
-		} else
-			stex_invalid_field(cmd, done);
-		return 0;
-	}
-	case REPORT_LUNS:
+			करोne(cmd);
+		पूर्ण अन्यथा
+			stex_invalid_field(cmd, करोne);
+		वापस 0;
+	पूर्ण
+	हाल REPORT_LUNS:
 		/*
-		 * The shasta firmware does not report actual luns in the
-		 * target, so fail the command to force sequential lun scan.
-		 * Also, the console device does not support this command.
+		 * The shasta firmware करोes not report actual luns in the
+		 * target, so fail the command to क्रमce sequential lun scan.
+		 * Also, the console device करोes not support this command.
 		 */
-		if (hba->cardtype == st_shasta || id == host->max_id - 1) {
-			stex_invalid_field(cmd, done);
-			return 0;
-		}
-		break;
-	case TEST_UNIT_READY:
-		if (id == host->max_id - 1) {
+		अगर (hba->cardtype == st_shasta || id == host->max_id - 1) अणु
+			stex_invalid_field(cmd, करोne);
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	हाल TEST_UNIT_READY:
+		अगर (id == host->max_id - 1) अणु
 			cmd->result = DID_OK << 16;
-			done(cmd);
-			return 0;
-		}
-		break;
-	case INQUIRY:
-		if (lun >= host->max_lun) {
+			करोne(cmd);
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	हाल INQUIRY:
+		अगर (lun >= host->max_lun) अणु
 			cmd->result = DID_NO_CONNECT << 16;
-			done(cmd);
-			return 0;
-		}
-		if (id != host->max_id - 1)
-			break;
-		if (!lun && !cmd->device->channel &&
-			(cmd->cmnd[1] & INQUIRY_EVPD) == 0) {
-			scsi_sg_copy_from_buffer(cmd, (void *)console_inq_page,
-						 sizeof(console_inq_page));
+			करोne(cmd);
+			वापस 0;
+		पूर्ण
+		अगर (id != host->max_id - 1)
+			अवरोध;
+		अगर (!lun && !cmd->device->channel &&
+			(cmd->cmnd[1] & INQUIRY_EVPD) == 0) अणु
+			scsi_sg_copy_from_buffer(cmd, (व्योम *)console_inq_page,
+						 माप(console_inq_page));
 			cmd->result = DID_OK << 16;
-			done(cmd);
-		} else
-			stex_invalid_field(cmd, done);
-		return 0;
-	case PASSTHRU_CMD:
-		if (cmd->cmnd[1] == PASSTHRU_GET_DRVVER) {
-			struct st_drvver ver;
-			size_t cp_len = sizeof(ver);
+			करोne(cmd);
+		पूर्ण अन्यथा
+			stex_invalid_field(cmd, करोne);
+		वापस 0;
+	हाल PASSTHRU_CMD:
+		अगर (cmd->cmnd[1] == PASSTHRU_GET_DRVVER) अणु
+			काष्ठा st_drvver ver;
+			माप_प्रकार cp_len = माप(ver);
 
 			ver.major = ST_VER_MAJOR;
 			ver.minor = ST_VER_MINOR;
@@ -679,24 +680,24 @@ stex_queuecommand_lck(struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd *))
 			ver.console_id = host->max_id - 1;
 			ver.host_no = hba->host->host_no;
 			cp_len = scsi_sg_copy_from_buffer(cmd, &ver, cp_len);
-			if (sizeof(ver) == cp_len)
+			अगर (माप(ver) == cp_len)
 				cmd->result = DID_OK << 16;
-			else
+			अन्यथा
 				cmd->result = DID_ERROR << 16;
-			done(cmd);
-			return 0;
-		}
-		break;
-	default:
-		break;
-	}
+			करोne(cmd);
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	cmd->scsi_done = done;
+	cmd->scsi_करोne = करोne;
 
 	tag = cmd->request->tag;
 
-	if (unlikely(tag >= host->can_queue))
-		return SCSI_MLQUEUE_HOST_BUSY;
+	अगर (unlikely(tag >= host->can_queue))
+		वापस SCSI_MLQUEUE_HOST_BUSY;
 
 	req = hba->alloc_rq(hba);
 
@@ -704,230 +705,230 @@ stex_queuecommand_lck(struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd *))
 	req->target = id;
 
 	/* cdb */
-	memcpy(req->cdb, cmd->cmnd, STEX_CDB_LENGTH);
+	स_नकल(req->cdb, cmd->cmnd, STEX_CDB_LENGTH);
 
-	if (cmd->sc_data_direction == DMA_FROM_DEVICE)
-		req->data_dir = MSG_DATA_DIR_IN;
-	else if (cmd->sc_data_direction == DMA_TO_DEVICE)
-		req->data_dir = MSG_DATA_DIR_OUT;
-	else
-		req->data_dir = MSG_DATA_DIR_ND;
+	अगर (cmd->sc_data_direction == DMA_FROM_DEVICE)
+		req->data_dir = MSG_DATA_सूची_IN;
+	अन्यथा अगर (cmd->sc_data_direction == DMA_TO_DEVICE)
+		req->data_dir = MSG_DATA_सूची_OUT;
+	अन्यथा
+		req->data_dir = MSG_DATA_सूची_ND;
 
 	hba->ccb[tag].cmd = cmd;
 	hba->ccb[tag].sense_bufflen = SCSI_SENSE_BUFFERSIZE;
 	hba->ccb[tag].sense_buffer = cmd->sense_buffer;
 
-	if (!hba->map_sg(hba, req, &hba->ccb[tag])) {
+	अगर (!hba->map_sg(hba, req, &hba->ccb[tag])) अणु
 		hba->ccb[tag].sg_count = 0;
-		memset(&req->variable[0], 0, 8);
-	}
+		स_रखो(&req->variable[0], 0, 8);
+	पूर्ण
 
 	hba->send(hba, req, tag);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static DEF_SCSI_QCMD(stex_queuecommand)
+अटल DEF_SCSI_QCMD(stex_queuecommand)
 
-static void stex_scsi_done(struct st_ccb *ccb)
-{
-	struct scsi_cmnd *cmd = ccb->cmd;
-	int result;
+अटल व्योम stex_scsi_करोne(काष्ठा st_ccb *ccb)
+अणु
+	काष्ठा scsi_cmnd *cmd = ccb->cmd;
+	पूर्णांक result;
 
-	if (ccb->srb_status == SRB_STATUS_SUCCESS || ccb->srb_status == 0) {
+	अगर (ccb->srb_status == SRB_STATUS_SUCCESS || ccb->srb_status == 0) अणु
 		result = ccb->scsi_status;
-		switch (ccb->scsi_status) {
-		case SAM_STAT_GOOD:
+		चयन (ccb->scsi_status) अणु
+		हाल SAM_STAT_GOOD:
 			result |= DID_OK << 16;
-			break;
-		case SAM_STAT_CHECK_CONDITION:
+			अवरोध;
+		हाल SAM_STAT_CHECK_CONDITION:
 			result |= DRIVER_SENSE << 24;
-			break;
-		case SAM_STAT_BUSY:
+			अवरोध;
+		हाल SAM_STAT_BUSY:
 			result |= DID_BUS_BUSY << 16;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			result |= DID_ERROR << 16;
-			break;
-		}
-	}
-	else if (ccb->srb_status & SRB_SEE_SENSE)
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अन्यथा अगर (ccb->srb_status & SRB_SEE_SENSE)
 		result = DRIVER_SENSE << 24 | SAM_STAT_CHECK_CONDITION;
-	else switch (ccb->srb_status) {
-		case SRB_STATUS_SELECTION_TIMEOUT:
+	अन्यथा चयन (ccb->srb_status) अणु
+		हाल SRB_STATUS_SELECTION_TIMEOUT:
 			result = DID_NO_CONNECT << 16;
-			break;
-		case SRB_STATUS_BUSY:
+			अवरोध;
+		हाल SRB_STATUS_BUSY:
 			result = DID_BUS_BUSY << 16;
-			break;
-		case SRB_STATUS_INVALID_REQUEST:
-		case SRB_STATUS_ERROR:
-		default:
+			अवरोध;
+		हाल SRB_STATUS_INVALID_REQUEST:
+		हाल SRB_STATUS_ERROR:
+		शेष:
 			result = DID_ERROR << 16;
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
 	cmd->result = result;
-	cmd->scsi_done(cmd);
-}
+	cmd->scsi_करोne(cmd);
+पूर्ण
 
-static void stex_copy_data(struct st_ccb *ccb,
-	struct status_msg *resp, unsigned int variable)
-{
-	if (resp->scsi_status != SAM_STAT_GOOD) {
-		if (ccb->sense_buffer != NULL)
-			memcpy(ccb->sense_buffer, resp->variable,
+अटल व्योम stex_copy_data(काष्ठा st_ccb *ccb,
+	काष्ठा status_msg *resp, अचिन्हित पूर्णांक variable)
+अणु
+	अगर (resp->scsi_status != SAM_STAT_GOOD) अणु
+		अगर (ccb->sense_buffer != शून्य)
+			स_नकल(ccb->sense_buffer, resp->variable,
 				min(variable, ccb->sense_bufflen));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ccb->cmd == NULL)
-		return;
+	अगर (ccb->cmd == शून्य)
+		वापस;
 	scsi_sg_copy_from_buffer(ccb->cmd, resp->variable, variable);
-}
+पूर्ण
 
-static void stex_check_cmd(struct st_hba *hba,
-	struct st_ccb *ccb, struct status_msg *resp)
-{
-	if (ccb->cmd->cmnd[0] == MGT_CMD &&
+अटल व्योम stex_check_cmd(काष्ठा st_hba *hba,
+	काष्ठा st_ccb *ccb, काष्ठा status_msg *resp)
+अणु
+	अगर (ccb->cmd->cmnd[0] == MGT_CMD &&
 		resp->scsi_status != SAM_STAT_CHECK_CONDITION)
 		scsi_set_resid(ccb->cmd, scsi_bufflen(ccb->cmd) -
 			le32_to_cpu(*(__le32 *)&resp->variable[0]));
-}
+पूर्ण
 
-static void stex_mu_intr(struct st_hba *hba, u32 doorbell)
-{
-	void __iomem *base = hba->mmio_base;
-	struct status_msg *resp;
-	struct st_ccb *ccb;
-	unsigned int size;
+अटल व्योम stex_mu_पूर्णांकr(काष्ठा st_hba *hba, u32 करोorbell)
+अणु
+	व्योम __iomem *base = hba->mmio_base;
+	काष्ठा status_msg *resp;
+	काष्ठा st_ccb *ccb;
+	अचिन्हित पूर्णांक size;
 	u16 tag;
 
-	if (unlikely(!(doorbell & MU_OUTBOUND_DOORBELL_STATUSHEADCHANGED)))
-		return;
+	अगर (unlikely(!(करोorbell & MU_OUTBOUND_DOORBELL_STATUSHEADCHANGED)))
+		वापस;
 
 	/* status payloads */
-	hba->status_head = readl(base + OMR1);
-	if (unlikely(hba->status_head > hba->sts_count)) {
-		printk(KERN_WARNING DRV_NAME "(%s): invalid status head\n",
+	hba->status_head = पढ़ोl(base + OMR1);
+	अगर (unlikely(hba->status_head > hba->sts_count)) अणु
+		prपूर्णांकk(KERN_WARNING DRV_NAME "(%s): invalid status head\n",
 			pci_name(hba->pdev));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * it's not a valid status payload if:
+	 * it's not a valid status payload अगर:
 	 * 1. there are no pending requests(e.g. during init stage)
 	 * 2. there are some pending requests, but the controller is in
 	 *     reset status, and its type is not st_yosemite
-	 * firmware of st_yosemite in reset status will return pending requests
+	 * firmware of st_yosemite in reset status will वापस pending requests
 	 * to driver, so we allow it to pass
 	 */
-	if (unlikely(hba->out_req_cnt <= 0 ||
+	अगर (unlikely(hba->out_req_cnt <= 0 ||
 			(hba->mu_status == MU_STATE_RESETTING &&
-			 hba->cardtype != st_yosemite))) {
+			 hba->cardtype != st_yosemite))) अणु
 		hba->status_tail = hba->status_head;
-		goto update_status;
-	}
+		जाओ update_status;
+	पूर्ण
 
-	while (hba->status_tail != hba->status_head) {
+	जबतक (hba->status_tail != hba->status_head) अणु
 		resp = stex_get_status(hba);
 		tag = le16_to_cpu(resp->tag);
-		if (unlikely(tag >= hba->host->can_queue)) {
-			printk(KERN_WARNING DRV_NAME
+		अगर (unlikely(tag >= hba->host->can_queue)) अणु
+			prपूर्णांकk(KERN_WARNING DRV_NAME
 				"(%s): invalid tag\n", pci_name(hba->pdev));
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		hba->out_req_cnt--;
 		ccb = &hba->ccb[tag];
-		if (unlikely(hba->wait_ccb == ccb))
-			hba->wait_ccb = NULL;
-		if (unlikely(ccb->req == NULL)) {
-			printk(KERN_WARNING DRV_NAME
+		अगर (unlikely(hba->रुको_ccb == ccb))
+			hba->रुको_ccb = शून्य;
+		अगर (unlikely(ccb->req == शून्य)) अणु
+			prपूर्णांकk(KERN_WARNING DRV_NAME
 				"(%s): lagging req\n", pci_name(hba->pdev));
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		size = resp->payload_sz * sizeof(u32); /* payload size */
-		if (unlikely(size < sizeof(*resp) - STATUS_VAR_LEN ||
-			size > sizeof(*resp))) {
-			printk(KERN_WARNING DRV_NAME "(%s): bad status size\n",
+		size = resp->payload_sz * माप(u32); /* payload size */
+		अगर (unlikely(size < माप(*resp) - STATUS_VAR_LEN ||
+			size > माप(*resp))) अणु
+			prपूर्णांकk(KERN_WARNING DRV_NAME "(%s): bad status size\n",
 				pci_name(hba->pdev));
-		} else {
-			size -= sizeof(*resp) - STATUS_VAR_LEN; /* copy size */
-			if (size)
+		पूर्ण अन्यथा अणु
+			size -= माप(*resp) - STATUS_VAR_LEN; /* copy size */
+			अगर (size)
 				stex_copy_data(ccb, resp, size);
-		}
+		पूर्ण
 
-		ccb->req = NULL;
+		ccb->req = शून्य;
 		ccb->srb_status = resp->srb_status;
 		ccb->scsi_status = resp->scsi_status;
 
-		if (likely(ccb->cmd != NULL)) {
-			if (hba->cardtype == st_yosemite)
+		अगर (likely(ccb->cmd != शून्य)) अणु
+			अगर (hba->cardtype == st_yosemite)
 				stex_check_cmd(hba, ccb, resp);
 
-			if (unlikely(ccb->cmd->cmnd[0] == PASSTHRU_CMD &&
+			अगर (unlikely(ccb->cmd->cmnd[0] == PASSTHRU_CMD &&
 				ccb->cmd->cmnd[1] == PASSTHRU_GET_ADAPTER))
 				stex_controller_info(hba, ccb);
 
 			scsi_dma_unmap(ccb->cmd);
-			stex_scsi_done(ccb);
-		} else
+			stex_scsi_करोne(ccb);
+		पूर्ण अन्यथा
 			ccb->req_type = 0;
-	}
+	पूर्ण
 
 update_status:
-	writel(hba->status_head, base + IMR1);
-	readl(base + IMR1); /* flush */
-}
+	ग_लिखोl(hba->status_head, base + IMR1);
+	पढ़ोl(base + IMR1); /* flush */
+पूर्ण
 
-static irqreturn_t stex_intr(int irq, void *__hba)
-{
-	struct st_hba *hba = __hba;
-	void __iomem *base = hba->mmio_base;
+अटल irqवापस_t stex_पूर्णांकr(पूर्णांक irq, व्योम *__hba)
+अणु
+	काष्ठा st_hba *hba = __hba;
+	व्योम __iomem *base = hba->mmio_base;
 	u32 data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
 
-	data = readl(base + ODBL);
+	data = पढ़ोl(base + ODBL);
 
-	if (data && data != 0xffffffff) {
-		/* clear the interrupt */
-		writel(data, base + ODBL);
-		readl(base + ODBL); /* flush */
-		stex_mu_intr(hba, data);
+	अगर (data && data != 0xffffffff) अणु
+		/* clear the पूर्णांकerrupt */
+		ग_लिखोl(data, base + ODBL);
+		पढ़ोl(base + ODBL); /* flush */
+		stex_mu_पूर्णांकr(hba, data);
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
-		if (unlikely(data & MU_OUTBOUND_DOORBELL_REQUEST_RESET &&
+		अगर (unlikely(data & MU_OUTBOUND_DOORBELL_REQUEST_RESET &&
 			hba->cardtype == st_shasta))
 			queue_work(hba->work_q, &hba->reset_work);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static void stex_ss_mu_intr(struct st_hba *hba)
-{
-	struct status_msg *resp;
-	struct st_ccb *ccb;
+अटल व्योम stex_ss_mu_पूर्णांकr(काष्ठा st_hba *hba)
+अणु
+	काष्ठा status_msg *resp;
+	काष्ठा st_ccb *ccb;
 	__le32 *scratch;
-	unsigned int size;
-	int count = 0;
+	अचिन्हित पूर्णांक size;
+	पूर्णांक count = 0;
 	u32 value;
 	u16 tag;
 
-	if (unlikely(hba->out_req_cnt <= 0 ||
+	अगर (unlikely(hba->out_req_cnt <= 0 ||
 			hba->mu_status == MU_STATE_RESETTING))
-		return;
+		वापस;
 
-	while (count < hba->sts_count) {
+	जबतक (count < hba->sts_count) अणु
 		scratch = hba->scratch + hba->status_tail;
 		value = le32_to_cpu(*scratch);
-		if (unlikely(!(value & SS_STS_NORMAL)))
-			return;
+		अगर (unlikely(!(value & SS_STS_NORMAL)))
+			वापस;
 
 		resp = hba->status_buffer + hba->status_tail;
 		*scratch = 0;
@@ -936,608 +937,608 @@ static void stex_ss_mu_intr(struct st_hba *hba)
 		hba->status_tail %= hba->sts_count+1;
 
 		tag = (u16)value;
-		if (unlikely(tag >= hba->host->can_queue)) {
-			printk(KERN_WARNING DRV_NAME
+		अगर (unlikely(tag >= hba->host->can_queue)) अणु
+			prपूर्णांकk(KERN_WARNING DRV_NAME
 				"(%s): invalid tag\n", pci_name(hba->pdev));
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		hba->out_req_cnt--;
 		ccb = &hba->ccb[tag];
-		if (unlikely(hba->wait_ccb == ccb))
-			hba->wait_ccb = NULL;
-		if (unlikely(ccb->req == NULL)) {
-			printk(KERN_WARNING DRV_NAME
+		अगर (unlikely(hba->रुको_ccb == ccb))
+			hba->रुको_ccb = शून्य;
+		अगर (unlikely(ccb->req == शून्य)) अणु
+			prपूर्णांकk(KERN_WARNING DRV_NAME
 				"(%s): lagging req\n", pci_name(hba->pdev));
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		ccb->req = NULL;
-		if (likely(value & SS_STS_DONE)) { /* normal case */
+		ccb->req = शून्य;
+		अगर (likely(value & SS_STS_DONE)) अणु /* normal हाल */
 			ccb->srb_status = SRB_STATUS_SUCCESS;
 			ccb->scsi_status = SAM_STAT_GOOD;
-		} else {
+		पूर्ण अन्यथा अणु
 			ccb->srb_status = resp->srb_status;
 			ccb->scsi_status = resp->scsi_status;
-			size = resp->payload_sz * sizeof(u32);
-			if (unlikely(size < sizeof(*resp) - STATUS_VAR_LEN ||
-				size > sizeof(*resp))) {
-				printk(KERN_WARNING DRV_NAME
+			size = resp->payload_sz * माप(u32);
+			अगर (unlikely(size < माप(*resp) - STATUS_VAR_LEN ||
+				size > माप(*resp))) अणु
+				prपूर्णांकk(KERN_WARNING DRV_NAME
 					"(%s): bad status size\n",
 					pci_name(hba->pdev));
-			} else {
-				size -= sizeof(*resp) - STATUS_VAR_LEN;
-				if (size)
+			पूर्ण अन्यथा अणु
+				size -= माप(*resp) - STATUS_VAR_LEN;
+				अगर (size)
 					stex_copy_data(ccb, resp, size);
-			}
-			if (likely(ccb->cmd != NULL))
+			पूर्ण
+			अगर (likely(ccb->cmd != शून्य))
 				stex_check_cmd(hba, ccb, resp);
-		}
+		पूर्ण
 
-		if (likely(ccb->cmd != NULL)) {
+		अगर (likely(ccb->cmd != शून्य)) अणु
 			scsi_dma_unmap(ccb->cmd);
-			stex_scsi_done(ccb);
-		} else
+			stex_scsi_करोne(ccb);
+		पूर्ण अन्यथा
 			ccb->req_type = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t stex_ss_intr(int irq, void *__hba)
-{
-	struct st_hba *hba = __hba;
-	void __iomem *base = hba->mmio_base;
+अटल irqवापस_t stex_ss_पूर्णांकr(पूर्णांक irq, व्योम *__hba)
+अणु
+	काष्ठा st_hba *hba = __hba;
+	व्योम __iomem *base = hba->mmio_base;
 	u32 data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
 
-	if (hba->cardtype == st_yel) {
-		data = readl(base + YI2H_INT);
-		if (data && data != 0xffffffff) {
-			/* clear the interrupt */
-			writel(data, base + YI2H_INT_C);
-			stex_ss_mu_intr(hba);
+	अगर (hba->cardtype == st_yel) अणु
+		data = पढ़ोl(base + YI2H_INT);
+		अगर (data && data != 0xffffffff) अणु
+			/* clear the पूर्णांकerrupt */
+			ग_लिखोl(data, base + YI2H_INT_C);
+			stex_ss_mu_पूर्णांकr(hba);
 			spin_unlock_irqrestore(hba->host->host_lock, flags);
-			if (unlikely(data & SS_I2H_REQUEST_RESET))
+			अगर (unlikely(data & SS_I2H_REQUEST_RESET))
 				queue_work(hba->work_q, &hba->reset_work);
-			return IRQ_HANDLED;
-		}
-	} else {
-		data = readl(base + PSCRATCH4);
-		if (data != 0xffffffff) {
-			if (data != 0) {
-				/* clear the interrupt */
-				writel(data, base + PSCRATCH1);
-				writel((1 << 22), base + YH2I_INT);
-			}
-			stex_ss_mu_intr(hba);
+			वापस IRQ_HANDLED;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		data = पढ़ोl(base + PSCRATCH4);
+		अगर (data != 0xffffffff) अणु
+			अगर (data != 0) अणु
+				/* clear the पूर्णांकerrupt */
+				ग_लिखोl(data, base + PSCRATCH1);
+				ग_लिखोl((1 << 22), base + YH2I_INT);
+			पूर्ण
+			stex_ss_mu_पूर्णांकr(hba);
 			spin_unlock_irqrestore(hba->host->host_lock, flags);
-			if (unlikely(data & SS_I2H_REQUEST_RESET))
+			अगर (unlikely(data & SS_I2H_REQUEST_RESET))
 				queue_work(hba->work_q, &hba->reset_work);
-			return IRQ_HANDLED;
-		}
-	}
+			वापस IRQ_HANDLED;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static int stex_common_handshake(struct st_hba *hba)
-{
-	void __iomem *base = hba->mmio_base;
-	struct handshake_frame *h;
+अटल पूर्णांक stex_common_handshake(काष्ठा st_hba *hba)
+अणु
+	व्योम __iomem *base = hba->mmio_base;
+	काष्ठा handshake_frame *h;
 	dma_addr_t status_phys;
 	u32 data;
-	unsigned long before;
+	अचिन्हित दीर्घ beक्रमe;
 
-	if (readl(base + OMR0) != MU_HANDSHAKE_SIGNATURE) {
-		writel(MU_INBOUND_DOORBELL_HANDSHAKE, base + IDBL);
-		readl(base + IDBL);
-		before = jiffies;
-		while (readl(base + OMR0) != MU_HANDSHAKE_SIGNATURE) {
-			if (time_after(jiffies, before + MU_MAX_DELAY * HZ)) {
-				printk(KERN_ERR DRV_NAME
+	अगर (पढ़ोl(base + OMR0) != MU_HANDSHAKE_SIGNATURE) अणु
+		ग_लिखोl(MU_INBOUND_DOORBELL_HANDSHAKE, base + IDBL);
+		पढ़ोl(base + IDBL);
+		beक्रमe = jअगरfies;
+		जबतक (पढ़ोl(base + OMR0) != MU_HANDSHAKE_SIGNATURE) अणु
+			अगर (समय_after(jअगरfies, beक्रमe + MU_MAX_DELAY * HZ)) अणु
+				prपूर्णांकk(KERN_ERR DRV_NAME
 					"(%s): no handshake signature\n",
 					pci_name(hba->pdev));
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 			rmb();
 			msleep(1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	udelay(10);
 
-	data = readl(base + OMR1);
-	if ((data & 0xffff0000) == MU_HANDSHAKE_SIGNATURE_HALF) {
+	data = पढ़ोl(base + OMR1);
+	अगर ((data & 0xffff0000) == MU_HANDSHAKE_SIGNATURE_HALF) अणु
 		data &= 0x0000ffff;
-		if (hba->host->can_queue > data) {
+		अगर (hba->host->can_queue > data) अणु
 			hba->host->can_queue = data;
 			hba->host->cmd_per_lun = data;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	h = (struct handshake_frame *)hba->status_buffer;
+	h = (काष्ठा handshake_frame *)hba->status_buffer;
 	h->rb_phy = cpu_to_le64(hba->dma_handle);
 	h->req_sz = cpu_to_le16(hba->rq_size);
 	h->req_cnt = cpu_to_le16(hba->rq_count+1);
-	h->status_sz = cpu_to_le16(sizeof(struct status_msg));
+	h->status_sz = cpu_to_le16(माप(काष्ठा status_msg));
 	h->status_cnt = cpu_to_le16(hba->sts_count+1);
-	h->hosttime = cpu_to_le64(ktime_get_real_seconds());
+	h->hostसमय = cpu_to_le64(kसमय_get_real_seconds());
 	h->partner_type = HMU_PARTNER_TYPE;
-	if (hba->extra_offset) {
+	अगर (hba->extra_offset) अणु
 		h->extra_offset = cpu_to_le32(hba->extra_offset);
 		h->extra_size = cpu_to_le32(hba->dma_size - hba->extra_offset);
-	} else
+	पूर्ण अन्यथा
 		h->extra_offset = h->extra_size = 0;
 
 	status_phys = hba->dma_handle + (hba->rq_count+1) * hba->rq_size;
-	writel(status_phys, base + IMR0);
-	readl(base + IMR0);
-	writel((status_phys >> 16) >> 16, base + IMR1);
-	readl(base + IMR1);
+	ग_लिखोl(status_phys, base + IMR0);
+	पढ़ोl(base + IMR0);
+	ग_लिखोl((status_phys >> 16) >> 16, base + IMR1);
+	पढ़ोl(base + IMR1);
 
-	writel((status_phys >> 16) >> 16, base + OMR0); /* old fw compatible */
-	readl(base + OMR0);
-	writel(MU_INBOUND_DOORBELL_HANDSHAKE, base + IDBL);
-	readl(base + IDBL); /* flush */
+	ग_लिखोl((status_phys >> 16) >> 16, base + OMR0); /* old fw compatible */
+	पढ़ोl(base + OMR0);
+	ग_लिखोl(MU_INBOUND_DOORBELL_HANDSHAKE, base + IDBL);
+	पढ़ोl(base + IDBL); /* flush */
 
 	udelay(10);
-	before = jiffies;
-	while (readl(base + OMR0) != MU_HANDSHAKE_SIGNATURE) {
-		if (time_after(jiffies, before + MU_MAX_DELAY * HZ)) {
-			printk(KERN_ERR DRV_NAME
+	beक्रमe = jअगरfies;
+	जबतक (पढ़ोl(base + OMR0) != MU_HANDSHAKE_SIGNATURE) अणु
+		अगर (समय_after(jअगरfies, beक्रमe + MU_MAX_DELAY * HZ)) अणु
+			prपूर्णांकk(KERN_ERR DRV_NAME
 				"(%s): no signature after handshake frame\n",
 				pci_name(hba->pdev));
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		rmb();
 		msleep(1);
-	}
+	पूर्ण
 
-	writel(0, base + IMR0);
-	readl(base + IMR0);
-	writel(0, base + OMR0);
-	readl(base + OMR0);
-	writel(0, base + IMR1);
-	readl(base + IMR1);
-	writel(0, base + OMR1);
-	readl(base + OMR1); /* flush */
-	return 0;
-}
+	ग_लिखोl(0, base + IMR0);
+	पढ़ोl(base + IMR0);
+	ग_लिखोl(0, base + OMR0);
+	पढ़ोl(base + OMR0);
+	ग_लिखोl(0, base + IMR1);
+	पढ़ोl(base + IMR1);
+	ग_लिखोl(0, base + OMR1);
+	पढ़ोl(base + OMR1); /* flush */
+	वापस 0;
+पूर्ण
 
-static int stex_ss_handshake(struct st_hba *hba)
-{
-	void __iomem *base = hba->mmio_base;
-	struct st_msg_header *msg_h;
-	struct handshake_frame *h;
+अटल पूर्णांक stex_ss_handshake(काष्ठा st_hba *hba)
+अणु
+	व्योम __iomem *base = hba->mmio_base;
+	काष्ठा st_msg_header *msg_h;
+	काष्ठा handshake_frame *h;
 	__le32 *scratch;
 	u32 data, scratch_size, mailboxdata, operationaldata;
-	unsigned long before;
-	int ret = 0;
+	अचिन्हित दीर्घ beक्रमe;
+	पूर्णांक ret = 0;
 
-	before = jiffies;
+	beक्रमe = jअगरfies;
 
-	if (hba->cardtype == st_yel) {
-		operationaldata = readl(base + YIOA_STATUS);
-		while (operationaldata != SS_MU_OPERATIONAL) {
-			if (time_after(jiffies, before + MU_MAX_DELAY * HZ)) {
-				printk(KERN_ERR DRV_NAME
+	अगर (hba->cardtype == st_yel) अणु
+		operationaldata = पढ़ोl(base + YIOA_STATUS);
+		जबतक (operationaldata != SS_MU_OPERATIONAL) अणु
+			अगर (समय_after(jअगरfies, beक्रमe + MU_MAX_DELAY * HZ)) अणु
+				prपूर्णांकk(KERN_ERR DRV_NAME
 					"(%s): firmware not operational\n",
 					pci_name(hba->pdev));
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 			msleep(1);
-			operationaldata = readl(base + YIOA_STATUS);
-		}
-	} else {
-		operationaldata = readl(base + PSCRATCH3);
-		while (operationaldata != SS_MU_OPERATIONAL) {
-			if (time_after(jiffies, before + MU_MAX_DELAY * HZ)) {
-				printk(KERN_ERR DRV_NAME
+			operationaldata = पढ़ोl(base + YIOA_STATUS);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		operationaldata = पढ़ोl(base + PSCRATCH3);
+		जबतक (operationaldata != SS_MU_OPERATIONAL) अणु
+			अगर (समय_after(jअगरfies, beक्रमe + MU_MAX_DELAY * HZ)) अणु
+				prपूर्णांकk(KERN_ERR DRV_NAME
 					"(%s): firmware not operational\n",
 					pci_name(hba->pdev));
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 			msleep(1);
-			operationaldata = readl(base + PSCRATCH3);
-		}
-	}
+			operationaldata = पढ़ोl(base + PSCRATCH3);
+		पूर्ण
+	पूर्ण
 
-	msg_h = (struct st_msg_header *)hba->dma_mem;
+	msg_h = (काष्ठा st_msg_header *)hba->dma_mem;
 	msg_h->handle = cpu_to_le64(hba->dma_handle);
 	msg_h->flag = SS_HEAD_HANDSHAKE;
 
-	h = (struct handshake_frame *)(msg_h + 1);
+	h = (काष्ठा handshake_frame *)(msg_h + 1);
 	h->rb_phy = cpu_to_le64(hba->dma_handle);
 	h->req_sz = cpu_to_le16(hba->rq_size);
 	h->req_cnt = cpu_to_le16(hba->rq_count+1);
-	h->status_sz = cpu_to_le16(sizeof(struct status_msg));
+	h->status_sz = cpu_to_le16(माप(काष्ठा status_msg));
 	h->status_cnt = cpu_to_le16(hba->sts_count+1);
-	h->hosttime = cpu_to_le64(ktime_get_real_seconds());
+	h->hostसमय = cpu_to_le64(kसमय_get_real_seconds());
 	h->partner_type = HMU_PARTNER_TYPE;
 	h->extra_offset = h->extra_size = 0;
-	scratch_size = (hba->sts_count+1)*sizeof(u32);
+	scratch_size = (hba->sts_count+1)*माप(u32);
 	h->scratch_size = cpu_to_le32(scratch_size);
 
-	if (hba->cardtype == st_yel) {
-		data = readl(base + YINT_EN);
+	अगर (hba->cardtype == st_yel) अणु
+		data = पढ़ोl(base + YINT_EN);
 		data &= ~4;
-		writel(data, base + YINT_EN);
-		writel((hba->dma_handle >> 16) >> 16, base + YH2I_REQ_HI);
-		readl(base + YH2I_REQ_HI);
-		writel(hba->dma_handle, base + YH2I_REQ);
-		readl(base + YH2I_REQ); /* flush */
-	} else {
-		data = readl(base + YINT_EN);
+		ग_लिखोl(data, base + YINT_EN);
+		ग_लिखोl((hba->dma_handle >> 16) >> 16, base + YH2I_REQ_HI);
+		पढ़ोl(base + YH2I_REQ_HI);
+		ग_लिखोl(hba->dma_handle, base + YH2I_REQ);
+		पढ़ोl(base + YH2I_REQ); /* flush */
+	पूर्ण अन्यथा अणु
+		data = पढ़ोl(base + YINT_EN);
 		data &= ~(1 << 0);
 		data &= ~(1 << 2);
-		writel(data, base + YINT_EN);
-		if (hba->msi_lock == 0) {
+		ग_लिखोl(data, base + YINT_EN);
+		अगर (hba->msi_lock == 0) अणु
 			/* P3 MSI Register cannot access twice */
-			writel((1 << 6), base + YH2I_INT);
+			ग_लिखोl((1 << 6), base + YH2I_INT);
 			hba->msi_lock  = 1;
-		}
-		writel((hba->dma_handle >> 16) >> 16, base + YH2I_REQ_HI);
-		writel(hba->dma_handle, base + YH2I_REQ);
-	}
+		पूर्ण
+		ग_लिखोl((hba->dma_handle >> 16) >> 16, base + YH2I_REQ_HI);
+		ग_लिखोl(hba->dma_handle, base + YH2I_REQ);
+	पूर्ण
 
-	before = jiffies;
+	beक्रमe = jअगरfies;
 	scratch = hba->scratch;
-	if (hba->cardtype == st_yel) {
-		while (!(le32_to_cpu(*scratch) & SS_STS_HANDSHAKE)) {
-			if (time_after(jiffies, before + MU_MAX_DELAY * HZ)) {
-				printk(KERN_ERR DRV_NAME
+	अगर (hba->cardtype == st_yel) अणु
+		जबतक (!(le32_to_cpu(*scratch) & SS_STS_HANDSHAKE)) अणु
+			अगर (समय_after(jअगरfies, beक्रमe + MU_MAX_DELAY * HZ)) अणु
+				prपूर्णांकk(KERN_ERR DRV_NAME
 					"(%s): no signature after handshake frame\n",
 					pci_name(hba->pdev));
 				ret = -1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			rmb();
 			msleep(1);
-		}
-	} else {
-		mailboxdata = readl(base + MAILBOX_BASE + MAILBOX_HNDSHK_STS);
-		while (mailboxdata != SS_STS_HANDSHAKE) {
-			if (time_after(jiffies, before + MU_MAX_DELAY * HZ)) {
-				printk(KERN_ERR DRV_NAME
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		mailboxdata = पढ़ोl(base + MAILBOX_BASE + MAILBOX_HNDSHK_STS);
+		जबतक (mailboxdata != SS_STS_HANDSHAKE) अणु
+			अगर (समय_after(jअगरfies, beक्रमe + MU_MAX_DELAY * HZ)) अणु
+				prपूर्णांकk(KERN_ERR DRV_NAME
 					"(%s): no signature after handshake frame\n",
 					pci_name(hba->pdev));
 				ret = -1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			rmb();
 			msleep(1);
-			mailboxdata = readl(base + MAILBOX_BASE + MAILBOX_HNDSHK_STS);
-		}
-	}
-	memset(scratch, 0, scratch_size);
+			mailboxdata = पढ़ोl(base + MAILBOX_BASE + MAILBOX_HNDSHK_STS);
+		पूर्ण
+	पूर्ण
+	स_रखो(scratch, 0, scratch_size);
 	msg_h->flag = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stex_handshake(struct st_hba *hba)
-{
-	int err;
-	unsigned long flags;
-	unsigned int mu_status;
+अटल पूर्णांक stex_handshake(काष्ठा st_hba *hba)
+अणु
+	पूर्णांक err;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक mu_status;
 
-	if (hba->cardtype == st_yel || hba->cardtype == st_P3)
+	अगर (hba->cardtype == st_yel || hba->cardtype == st_P3)
 		err = stex_ss_handshake(hba);
-	else
+	अन्यथा
 		err = stex_common_handshake(hba);
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	mu_status = hba->mu_status;
-	if (err == 0) {
+	अगर (err == 0) अणु
 		hba->req_head = 0;
 		hba->req_tail = 0;
 		hba->status_head = 0;
 		hba->status_tail = 0;
 		hba->out_req_cnt = 0;
 		hba->mu_status = MU_STATE_STARTED;
-	} else
+	पूर्ण अन्यथा
 		hba->mu_status = MU_STATE_FAILED;
-	if (mu_status == MU_STATE_RESETTING)
-		wake_up_all(&hba->reset_waitq);
+	अगर (mu_status == MU_STATE_RESETTING)
+		wake_up_all(&hba->reset_रुकोq);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int stex_abort(struct scsi_cmnd *cmd)
-{
-	struct Scsi_Host *host = cmd->device->host;
-	struct st_hba *hba = (struct st_hba *)host->hostdata;
+अटल पूर्णांक stex_पात(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा Scsi_Host *host = cmd->device->host;
+	काष्ठा st_hba *hba = (काष्ठा st_hba *)host->hostdata;
 	u16 tag = cmd->request->tag;
-	void __iomem *base;
+	व्योम __iomem *base;
 	u32 data;
-	int result = SUCCESS;
-	unsigned long flags;
+	पूर्णांक result = SUCCESS;
+	अचिन्हित दीर्घ flags;
 
-	scmd_printk(KERN_INFO, cmd, "aborting command\n");
+	scmd_prपूर्णांकk(KERN_INFO, cmd, "aborting command\n");
 
 	base = hba->mmio_base;
 	spin_lock_irqsave(host->host_lock, flags);
-	if (tag < host->can_queue &&
+	अगर (tag < host->can_queue &&
 		hba->ccb[tag].req && hba->ccb[tag].cmd == cmd)
-		hba->wait_ccb = &hba->ccb[tag];
-	else
-		goto out;
+		hba->रुको_ccb = &hba->ccb[tag];
+	अन्यथा
+		जाओ out;
 
-	if (hba->cardtype == st_yel) {
-		data = readl(base + YI2H_INT);
-		if (data == 0 || data == 0xffffffff)
-			goto fail_out;
+	अगर (hba->cardtype == st_yel) अणु
+		data = पढ़ोl(base + YI2H_INT);
+		अगर (data == 0 || data == 0xffffffff)
+			जाओ fail_out;
 
-		writel(data, base + YI2H_INT_C);
-		stex_ss_mu_intr(hba);
-	} else if (hba->cardtype == st_P3) {
-		data = readl(base + PSCRATCH4);
-		if (data == 0xffffffff)
-			goto fail_out;
-		if (data != 0) {
-			writel(data, base + PSCRATCH1);
-			writel((1 << 22), base + YH2I_INT);
-		}
-		stex_ss_mu_intr(hba);
-	} else {
-		data = readl(base + ODBL);
-		if (data == 0 || data == 0xffffffff)
-			goto fail_out;
+		ग_लिखोl(data, base + YI2H_INT_C);
+		stex_ss_mu_पूर्णांकr(hba);
+	पूर्ण अन्यथा अगर (hba->cardtype == st_P3) अणु
+		data = पढ़ोl(base + PSCRATCH4);
+		अगर (data == 0xffffffff)
+			जाओ fail_out;
+		अगर (data != 0) अणु
+			ग_लिखोl(data, base + PSCRATCH1);
+			ग_लिखोl((1 << 22), base + YH2I_INT);
+		पूर्ण
+		stex_ss_mu_पूर्णांकr(hba);
+	पूर्ण अन्यथा अणु
+		data = पढ़ोl(base + ODBL);
+		अगर (data == 0 || data == 0xffffffff)
+			जाओ fail_out;
 
-		writel(data, base + ODBL);
-		readl(base + ODBL); /* flush */
-		stex_mu_intr(hba, data);
-	}
-	if (hba->wait_ccb == NULL) {
-		printk(KERN_WARNING DRV_NAME
+		ग_लिखोl(data, base + ODBL);
+		पढ़ोl(base + ODBL); /* flush */
+		stex_mu_पूर्णांकr(hba, data);
+	पूर्ण
+	अगर (hba->रुको_ccb == शून्य) अणु
+		prपूर्णांकk(KERN_WARNING DRV_NAME
 			"(%s): lost interrupt\n", pci_name(hba->pdev));
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 fail_out:
 	scsi_dma_unmap(cmd);
-	hba->wait_ccb->req = NULL; /* nullify the req's future return */
-	hba->wait_ccb = NULL;
+	hba->रुको_ccb->req = शून्य; /* nullअगरy the req's future वापस */
+	hba->रुको_ccb = शून्य;
 	result = FAILED;
 out:
 	spin_unlock_irqrestore(host->host_lock, flags);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void stex_hard_reset(struct st_hba *hba)
-{
-	struct pci_bus *bus;
-	int i;
+अटल व्योम stex_hard_reset(काष्ठा st_hba *hba)
+अणु
+	काष्ठा pci_bus *bus;
+	पूर्णांक i;
 	u16 pci_cmd;
 	u8 pci_bctl;
 
-	for (i = 0; i < 16; i++)
-		pci_read_config_dword(hba->pdev, i * 4,
+	क्रम (i = 0; i < 16; i++)
+		pci_पढ़ो_config_dword(hba->pdev, i * 4,
 			&hba->pdev->saved_config_space[i]);
 
 	/* Reset secondary bus. Our controller(MU/ATU) is the only device on
-	   secondary bus. Consult Intel 80331/3 developer's manual for detail */
+	   secondary bus. Consult Intel 80331/3 developer's manual क्रम detail */
 	bus = hba->pdev->bus;
-	pci_read_config_byte(bus->self, PCI_BRIDGE_CONTROL, &pci_bctl);
+	pci_पढ़ो_config_byte(bus->self, PCI_BRIDGE_CONTROL, &pci_bctl);
 	pci_bctl |= PCI_BRIDGE_CTL_BUS_RESET;
-	pci_write_config_byte(bus->self, PCI_BRIDGE_CONTROL, pci_bctl);
+	pci_ग_लिखो_config_byte(bus->self, PCI_BRIDGE_CONTROL, pci_bctl);
 
 	/*
-	 * 1 ms may be enough for 8-port controllers. But 16-port controllers
-	 * require more time to finish bus reset. Use 100 ms here for safety
+	 * 1 ms may be enough क्रम 8-port controllers. But 16-port controllers
+	 * require more समय to finish bus reset. Use 100 ms here क्रम safety
 	 */
 	msleep(100);
 	pci_bctl &= ~PCI_BRIDGE_CTL_BUS_RESET;
-	pci_write_config_byte(bus->self, PCI_BRIDGE_CONTROL, pci_bctl);
+	pci_ग_लिखो_config_byte(bus->self, PCI_BRIDGE_CONTROL, pci_bctl);
 
-	for (i = 0; i < MU_HARD_RESET_WAIT; i++) {
-		pci_read_config_word(hba->pdev, PCI_COMMAND, &pci_cmd);
-		if (pci_cmd != 0xffff && (pci_cmd & PCI_COMMAND_MASTER))
-			break;
+	क्रम (i = 0; i < MU_HARD_RESET_WAIT; i++) अणु
+		pci_पढ़ो_config_word(hba->pdev, PCI_COMMAND, &pci_cmd);
+		अगर (pci_cmd != 0xffff && (pci_cmd & PCI_COMMAND_MASTER))
+			अवरोध;
 		msleep(1);
-	}
+	पूर्ण
 
 	ssleep(5);
-	for (i = 0; i < 16; i++)
-		pci_write_config_dword(hba->pdev, i * 4,
+	क्रम (i = 0; i < 16; i++)
+		pci_ग_लिखो_config_dword(hba->pdev, i * 4,
 			hba->pdev->saved_config_space[i]);
-}
+पूर्ण
 
-static int stex_yos_reset(struct st_hba *hba)
-{
-	void __iomem *base;
-	unsigned long flags, before;
-	int ret = 0;
+अटल पूर्णांक stex_yos_reset(काष्ठा st_hba *hba)
+अणु
+	व्योम __iomem *base;
+	अचिन्हित दीर्घ flags, beक्रमe;
+	पूर्णांक ret = 0;
 
 	base = hba->mmio_base;
-	writel(MU_INBOUND_DOORBELL_RESET, base + IDBL);
-	readl(base + IDBL); /* flush */
-	before = jiffies;
-	while (hba->out_req_cnt > 0) {
-		if (time_after(jiffies, before + ST_INTERNAL_TIMEOUT * HZ)) {
-			printk(KERN_WARNING DRV_NAME
+	ग_लिखोl(MU_INBOUND_DOORBELL_RESET, base + IDBL);
+	पढ़ोl(base + IDBL); /* flush */
+	beक्रमe = jअगरfies;
+	जबतक (hba->out_req_cnt > 0) अणु
+		अगर (समय_after(jअगरfies, beक्रमe + ST_INTERNAL_TIMEOUT * HZ)) अणु
+			prपूर्णांकk(KERN_WARNING DRV_NAME
 				"(%s): reset timeout\n", pci_name(hba->pdev));
 			ret = -1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		msleep(1);
-	}
+	पूर्ण
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (ret == -1)
+	अगर (ret == -1)
 		hba->mu_status = MU_STATE_FAILED;
-	else
+	अन्यथा
 		hba->mu_status = MU_STATE_STARTED;
-	wake_up_all(&hba->reset_waitq);
+	wake_up_all(&hba->reset_रुकोq);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void stex_ss_reset(struct st_hba *hba)
-{
-	writel(SS_H2I_INT_RESET, hba->mmio_base + YH2I_INT);
-	readl(hba->mmio_base + YH2I_INT);
+अटल व्योम stex_ss_reset(काष्ठा st_hba *hba)
+अणु
+	ग_लिखोl(SS_H2I_INT_RESET, hba->mmio_base + YH2I_INT);
+	पढ़ोl(hba->mmio_base + YH2I_INT);
 	ssleep(5);
-}
+पूर्ण
 
-static void stex_p3_reset(struct st_hba *hba)
-{
-	writel(SS_H2I_INT_RESET, hba->mmio_base + YH2I_INT);
+अटल व्योम stex_p3_reset(काष्ठा st_hba *hba)
+अणु
+	ग_लिखोl(SS_H2I_INT_RESET, hba->mmio_base + YH2I_INT);
 	ssleep(5);
-}
+पूर्ण
 
-static int stex_do_reset(struct st_hba *hba)
-{
-	unsigned long flags;
-	unsigned int mu_status = MU_STATE_RESETTING;
+अटल पूर्णांक stex_करो_reset(काष्ठा st_hba *hba)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक mu_status = MU_STATE_RESETTING;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (hba->mu_status == MU_STATE_STARTING) {
+	अगर (hba->mu_status == MU_STATE_STARTING) अणु
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
-		printk(KERN_INFO DRV_NAME "(%s): request reset during init\n",
+		prपूर्णांकk(KERN_INFO DRV_NAME "(%s): request reset during init\n",
 			pci_name(hba->pdev));
-		return 0;
-	}
-	while (hba->mu_status == MU_STATE_RESETTING) {
+		वापस 0;
+	पूर्ण
+	जबतक (hba->mu_status == MU_STATE_RESETTING) अणु
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
-		wait_event_timeout(hba->reset_waitq,
+		रुको_event_समयout(hba->reset_रुकोq,
 				   hba->mu_status != MU_STATE_RESETTING,
 				   MU_MAX_DELAY * HZ);
 		spin_lock_irqsave(hba->host->host_lock, flags);
 		mu_status = hba->mu_status;
-	}
+	पूर्ण
 
-	if (mu_status != MU_STATE_RESETTING) {
+	अगर (mu_status != MU_STATE_RESETTING) अणु
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
-		return (mu_status == MU_STATE_STARTED) ? 0 : -1;
-	}
+		वापस (mu_status == MU_STATE_STARTED) ? 0 : -1;
+	पूर्ण
 
 	hba->mu_status = MU_STATE_RESETTING;
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	if (hba->cardtype == st_yosemite)
-		return stex_yos_reset(hba);
+	अगर (hba->cardtype == st_yosemite)
+		वापस stex_yos_reset(hba);
 
-	if (hba->cardtype == st_shasta)
+	अगर (hba->cardtype == st_shasta)
 		stex_hard_reset(hba);
-	else if (hba->cardtype == st_yel)
+	अन्यथा अगर (hba->cardtype == st_yel)
 		stex_ss_reset(hba);
-	else if (hba->cardtype == st_P3)
+	अन्यथा अगर (hba->cardtype == st_P3)
 		stex_p3_reset(hba);
 
-	return_abnormal_state(hba, DID_RESET);
+	वापस_abnormal_state(hba, DID_RESET);
 
-	if (stex_handshake(hba) == 0)
-		return 0;
+	अगर (stex_handshake(hba) == 0)
+		वापस 0;
 
-	printk(KERN_WARNING DRV_NAME "(%s): resetting: handshake failed\n",
+	prपूर्णांकk(KERN_WARNING DRV_NAME "(%s): resetting: handshake failed\n",
 		pci_name(hba->pdev));
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int stex_reset(struct scsi_cmnd *cmd)
-{
-	struct st_hba *hba;
+अटल पूर्णांक stex_reset(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा st_hba *hba;
 
-	hba = (struct st_hba *) &cmd->device->host->hostdata[0];
+	hba = (काष्ठा st_hba *) &cmd->device->host->hostdata[0];
 
-	shost_printk(KERN_INFO, cmd->device->host,
+	shost_prपूर्णांकk(KERN_INFO, cmd->device->host,
 		     "resetting host\n");
 
-	return stex_do_reset(hba) ? FAILED : SUCCESS;
-}
+	वापस stex_करो_reset(hba) ? FAILED : SUCCESS;
+पूर्ण
 
-static void stex_reset_work(struct work_struct *work)
-{
-	struct st_hba *hba = container_of(work, struct st_hba, reset_work);
+अटल व्योम stex_reset_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा st_hba *hba = container_of(work, काष्ठा st_hba, reset_work);
 
-	stex_do_reset(hba);
-}
+	stex_करो_reset(hba);
+पूर्ण
 
-static int stex_biosparam(struct scsi_device *sdev,
-	struct block_device *bdev, sector_t capacity, int geom[])
-{
-	int heads = 255, sectors = 63;
+अटल पूर्णांक stex_biosparam(काष्ठा scsi_device *sdev,
+	काष्ठा block_device *bdev, sector_t capacity, पूर्णांक geom[])
+अणु
+	पूर्णांक heads = 255, sectors = 63;
 
-	if (capacity < 0x200000) {
+	अगर (capacity < 0x200000) अणु
 		heads = 64;
 		sectors = 32;
-	}
+	पूर्ण
 
-	sector_div(capacity, heads * sectors);
+	sector_भाग(capacity, heads * sectors);
 
 	geom[0] = heads;
 	geom[1] = sectors;
 	geom[2] = capacity;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct scsi_host_template driver_template = {
+अटल काष्ठा scsi_host_ढाँचा driver_ढाँचा = अणु
 	.module				= THIS_MODULE,
 	.name				= DRV_NAME,
 	.proc_name			= DRV_NAME,
 	.bios_param			= stex_biosparam,
 	.queuecommand			= stex_queuecommand,
 	.slave_configure		= stex_slave_config,
-	.eh_abort_handler		= stex_abort,
+	.eh_पात_handler		= stex_पात,
 	.eh_host_reset_handler		= stex_reset,
 	.this_id			= -1,
 	.dma_boundary			= PAGE_SIZE - 1,
-};
+पूर्ण;
 
-static struct pci_device_id stex_pci_tbl[] = {
+अटल काष्ठा pci_device_id stex_pci_tbl[] = अणु
 	/* st_shasta */
-	{ 0x105a, 0x8350, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-		st_shasta }, /* SuperTrak EX8350/8300/16350/16300 */
-	{ 0x105a, 0xc350, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-		st_shasta }, /* SuperTrak EX12350 */
-	{ 0x105a, 0x4302, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-		st_shasta }, /* SuperTrak EX4350 */
-	{ 0x105a, 0xe350, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-		st_shasta }, /* SuperTrak EX24350 */
+	अणु 0x105a, 0x8350, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
+		st_shasta पूर्ण, /* SuperTrak EX8350/8300/16350/16300 */
+	अणु 0x105a, 0xc350, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
+		st_shasta पूर्ण, /* SuperTrak EX12350 */
+	अणु 0x105a, 0x4302, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
+		st_shasta पूर्ण, /* SuperTrak EX4350 */
+	अणु 0x105a, 0xe350, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
+		st_shasta पूर्ण, /* SuperTrak EX24350 */
 
 	/* st_vsc */
-	{ 0x105a, 0x7250, PCI_ANY_ID, PCI_ANY_ID, 0, 0, st_vsc },
+	अणु 0x105a, 0x7250, PCI_ANY_ID, PCI_ANY_ID, 0, 0, st_vsc पूर्ण,
 
 	/* st_yosemite */
-	{ 0x105a, 0x8650, 0x105a, PCI_ANY_ID, 0, 0, st_yosemite },
+	अणु 0x105a, 0x8650, 0x105a, PCI_ANY_ID, 0, 0, st_yosemite पूर्ण,
 
 	/* st_seq */
-	{ 0x105a, 0x3360, PCI_ANY_ID, PCI_ANY_ID, 0, 0, st_seq },
+	अणु 0x105a, 0x3360, PCI_ANY_ID, PCI_ANY_ID, 0, 0, st_seq पूर्ण,
 
 	/* st_yel */
-	{ 0x105a, 0x8650, 0x1033, PCI_ANY_ID, 0, 0, st_yel },
-	{ 0x105a, 0x8760, PCI_ANY_ID, PCI_ANY_ID, 0, 0, st_yel },
+	अणु 0x105a, 0x8650, 0x1033, PCI_ANY_ID, 0, 0, st_yel पूर्ण,
+	अणु 0x105a, 0x8760, PCI_ANY_ID, PCI_ANY_ID, 0, 0, st_yel पूर्ण,
 
 	/* st_P3, pluto */
-	{ PCI_VENDOR_ID_PROMISE, 0x8870, PCI_VENDOR_ID_PROMISE,
-		0x8870, 0, 0, st_P3 },
+	अणु PCI_VENDOR_ID_PROMISE, 0x8870, PCI_VENDOR_ID_PROMISE,
+		0x8870, 0, 0, st_P3 पूर्ण,
 	/* st_P3, p3 */
-	{ PCI_VENDOR_ID_PROMISE, 0x8870, PCI_VENDOR_ID_PROMISE,
-		0x4300, 0, 0, st_P3 },
+	अणु PCI_VENDOR_ID_PROMISE, 0x8870, PCI_VENDOR_ID_PROMISE,
+		0x4300, 0, 0, st_P3 पूर्ण,
 
 	/* st_P3, SymplyStor4E */
-	{ PCI_VENDOR_ID_PROMISE, 0x8871, PCI_VENDOR_ID_PROMISE,
-		0x4311, 0, 0, st_P3 },
+	अणु PCI_VENDOR_ID_PROMISE, 0x8871, PCI_VENDOR_ID_PROMISE,
+		0x4311, 0, 0, st_P3 पूर्ण,
 	/* st_P3, SymplyStor8E */
-	{ PCI_VENDOR_ID_PROMISE, 0x8871, PCI_VENDOR_ID_PROMISE,
-		0x4312, 0, 0, st_P3 },
+	अणु PCI_VENDOR_ID_PROMISE, 0x8871, PCI_VENDOR_ID_PROMISE,
+		0x4312, 0, 0, st_P3 पूर्ण,
 	/* st_P3, SymplyStor4 */
-	{ PCI_VENDOR_ID_PROMISE, 0x8871, PCI_VENDOR_ID_PROMISE,
-		0x4321, 0, 0, st_P3 },
+	अणु PCI_VENDOR_ID_PROMISE, 0x8871, PCI_VENDOR_ID_PROMISE,
+		0x4321, 0, 0, st_P3 पूर्ण,
 	/* st_P3, SymplyStor8 */
-	{ PCI_VENDOR_ID_PROMISE, 0x8871, PCI_VENDOR_ID_PROMISE,
-		0x4322, 0, 0, st_P3 },
-	{ }	/* terminate list */
-};
+	अणु PCI_VENDOR_ID_PROMISE, 0x8871, PCI_VENDOR_ID_PROMISE,
+		0x4322, 0, 0, st_P3 पूर्ण,
+	अणु पूर्ण	/* terminate list */
+पूर्ण;
 
-static struct st_card_info stex_card_info[] = {
+अटल काष्ठा st_card_info stex_card_info[] = अणु
 	/* st_shasta */
-	{
+	अणु
 		.max_id		= 17,
 		.max_lun	= 8,
 		.max_channel	= 0,
@@ -1547,10 +1548,10 @@ static struct st_card_info stex_card_info[] = {
 		.alloc_rq	= stex_alloc_req,
 		.map_sg		= stex_map_sg,
 		.send		= stex_send_cmd,
-	},
+	पूर्ण,
 
 	/* st_vsc */
-	{
+	अणु
 		.max_id		= 129,
 		.max_lun	= 1,
 		.max_channel	= 0,
@@ -1560,10 +1561,10 @@ static struct st_card_info stex_card_info[] = {
 		.alloc_rq	= stex_alloc_req,
 		.map_sg		= stex_map_sg,
 		.send		= stex_send_cmd,
-	},
+	पूर्ण,
 
 	/* st_yosemite */
-	{
+	अणु
 		.max_id		= 2,
 		.max_lun	= 256,
 		.max_channel	= 0,
@@ -1573,10 +1574,10 @@ static struct st_card_info stex_card_info[] = {
 		.alloc_rq	= stex_alloc_req,
 		.map_sg		= stex_map_sg,
 		.send		= stex_send_cmd,
-	},
+	पूर्ण,
 
 	/* st_seq */
-	{
+	अणु
 		.max_id		= 129,
 		.max_lun	= 1,
 		.max_channel	= 0,
@@ -1586,10 +1587,10 @@ static struct st_card_info stex_card_info[] = {
 		.alloc_rq	= stex_alloc_req,
 		.map_sg		= stex_map_sg,
 		.send		= stex_send_cmd,
-	},
+	पूर्ण,
 
 	/* st_yel */
-	{
+	अणु
 		.max_id		= 129,
 		.max_lun	= 256,
 		.max_channel	= 3,
@@ -1599,10 +1600,10 @@ static struct st_card_info stex_card_info[] = {
 		.alloc_rq	= stex_ss_alloc_req,
 		.map_sg		= stex_ss_map_sg,
 		.send		= stex_ss_send_cmd,
-	},
+	पूर्ण,
 
 	/* st_P3 */
-	{
+	अणु
 		.max_id		= 129,
 		.max_lun	= 256,
 		.max_channel	= 0,
@@ -1612,163 +1613,163 @@ static struct st_card_info stex_card_info[] = {
 		.alloc_rq	= stex_ss_alloc_req,
 		.map_sg		= stex_ss_map_sg,
 		.send		= stex_ss_send_cmd,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int stex_request_irq(struct st_hba *hba)
-{
-	struct pci_dev *pdev = hba->pdev;
-	int status;
+अटल पूर्णांक stex_request_irq(काष्ठा st_hba *hba)
+अणु
+	काष्ठा pci_dev *pdev = hba->pdev;
+	पूर्णांक status;
 
-	if (msi || hba->cardtype == st_P3) {
+	अगर (msi || hba->cardtype == st_P3) अणु
 		status = pci_enable_msi(pdev);
-		if (status != 0)
-			printk(KERN_ERR DRV_NAME
+		अगर (status != 0)
+			prपूर्णांकk(KERN_ERR DRV_NAME
 				"(%s): error %d setting up MSI\n",
 				pci_name(pdev), status);
-		else
+		अन्यथा
 			hba->msi_enabled = 1;
-	} else
+	पूर्ण अन्यथा
 		hba->msi_enabled = 0;
 
 	status = request_irq(pdev->irq,
 		(hba->cardtype == st_yel || hba->cardtype == st_P3) ?
-		stex_ss_intr : stex_intr, IRQF_SHARED, DRV_NAME, hba);
+		stex_ss_पूर्णांकr : stex_पूर्णांकr, IRQF_SHARED, DRV_NAME, hba);
 
-	if (status != 0) {
-		if (hba->msi_enabled)
+	अगर (status != 0) अणु
+		अगर (hba->msi_enabled)
 			pci_disable_msi(pdev);
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
-static void stex_free_irq(struct st_hba *hba)
-{
-	struct pci_dev *pdev = hba->pdev;
+अटल व्योम stex_मुक्त_irq(काष्ठा st_hba *hba)
+अणु
+	काष्ठा pci_dev *pdev = hba->pdev;
 
-	free_irq(pdev->irq, hba);
-	if (hba->msi_enabled)
+	मुक्त_irq(pdev->irq, hba);
+	अगर (hba->msi_enabled)
 		pci_disable_msi(pdev);
-}
+पूर्ण
 
-static int stex_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	struct st_hba *hba;
-	struct Scsi_Host *host;
-	const struct st_card_info *ci = NULL;
+अटल पूर्णांक stex_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा st_hba *hba;
+	काष्ठा Scsi_Host *host;
+	स्थिर काष्ठा st_card_info *ci = शून्य;
 	u32 sts_offset, cp_offset, scratch_offset;
-	int err;
+	पूर्णांक err;
 
 	err = pci_enable_device(pdev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	pci_set_master(pdev);
 
 	S6flag = 0;
-	register_reboot_notifier(&stex_notifier);
+	रेजिस्टर_reboot_notअगरier(&stex_notअगरier);
 
-	host = scsi_host_alloc(&driver_template, sizeof(struct st_hba));
+	host = scsi_host_alloc(&driver_ढाँचा, माप(काष्ठा st_hba));
 
-	if (!host) {
-		printk(KERN_ERR DRV_NAME "(%s): scsi_host_alloc failed\n",
+	अगर (!host) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): scsi_host_alloc failed\n",
 			pci_name(pdev));
 		err = -ENOMEM;
-		goto out_disable;
-	}
+		जाओ out_disable;
+	पूर्ण
 
-	hba = (struct st_hba *)host->hostdata;
-	memset(hba, 0, sizeof(struct st_hba));
+	hba = (काष्ठा st_hba *)host->hostdata;
+	स_रखो(hba, 0, माप(काष्ठा st_hba));
 
 	err = pci_request_regions(pdev, DRV_NAME);
-	if (err < 0) {
-		printk(KERN_ERR DRV_NAME "(%s): request regions failed\n",
+	अगर (err < 0) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): request regions failed\n",
 			pci_name(pdev));
-		goto out_scsi_host_put;
-	}
+		जाओ out_scsi_host_put;
+	पूर्ण
 
 	hba->mmio_base = pci_ioremap_bar(pdev, 0);
-	if ( !hba->mmio_base) {
-		printk(KERN_ERR DRV_NAME "(%s): memory map failed\n",
+	अगर ( !hba->mmio_base) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): memory map failed\n",
 			pci_name(pdev));
 		err = -ENOMEM;
-		goto out_release_regions;
-	}
+		जाओ out_release_regions;
+	पूर्ण
 
 	err = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
-	if (err)
+	अगर (err)
 		err = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-	if (err) {
-		printk(KERN_ERR DRV_NAME "(%s): set dma mask failed\n",
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): set dma mask failed\n",
 			pci_name(pdev));
-		goto out_iounmap;
-	}
+		जाओ out_iounmap;
+	पूर्ण
 
-	hba->cardtype = (unsigned int) id->driver_data;
+	hba->cardtype = (अचिन्हित पूर्णांक) id->driver_data;
 	ci = &stex_card_info[hba->cardtype];
-	switch (id->subdevice) {
-	case 0x4221:
-	case 0x4222:
-	case 0x4223:
-	case 0x4224:
-	case 0x4225:
-	case 0x4226:
-	case 0x4227:
-	case 0x4261:
-	case 0x4262:
-	case 0x4263:
-	case 0x4264:
-	case 0x4265:
-		break;
-	default:
-		if (hba->cardtype == st_yel || hba->cardtype == st_P3)
+	चयन (id->subdevice) अणु
+	हाल 0x4221:
+	हाल 0x4222:
+	हाल 0x4223:
+	हाल 0x4224:
+	हाल 0x4225:
+	हाल 0x4226:
+	हाल 0x4227:
+	हाल 0x4261:
+	हाल 0x4262:
+	हाल 0x4263:
+	हाल 0x4264:
+	हाल 0x4265:
+		अवरोध;
+	शेष:
+		अगर (hba->cardtype == st_yel || hba->cardtype == st_P3)
 			hba->supports_pm = 1;
-	}
+	पूर्ण
 
 	sts_offset = scratch_offset = (ci->rq_count+1) * ci->rq_size;
-	if (hba->cardtype == st_yel || hba->cardtype == st_P3)
-		sts_offset += (ci->sts_count+1) * sizeof(u32);
-	cp_offset = sts_offset + (ci->sts_count+1) * sizeof(struct status_msg);
-	hba->dma_size = cp_offset + sizeof(struct st_frame);
-	if (hba->cardtype == st_seq ||
-		(hba->cardtype == st_vsc && (pdev->subsystem_device & 1))) {
+	अगर (hba->cardtype == st_yel || hba->cardtype == st_P3)
+		sts_offset += (ci->sts_count+1) * माप(u32);
+	cp_offset = sts_offset + (ci->sts_count+1) * माप(काष्ठा status_msg);
+	hba->dma_size = cp_offset + माप(काष्ठा st_frame);
+	अगर (hba->cardtype == st_seq ||
+		(hba->cardtype == st_vsc && (pdev->subप्रणाली_device & 1))) अणु
 		hba->extra_offset = hba->dma_size;
 		hba->dma_size += ST_ADDITIONAL_MEM;
-	}
+	पूर्ण
 	hba->dma_mem = dma_alloc_coherent(&pdev->dev,
 		hba->dma_size, &hba->dma_handle, GFP_KERNEL);
-	if (!hba->dma_mem) {
-		/* Retry minimum coherent mapping for st_seq and st_vsc */
-		if (hba->cardtype == st_seq ||
-		    (hba->cardtype == st_vsc && (pdev->subsystem_device & 1))) {
-			printk(KERN_WARNING DRV_NAME
+	अगर (!hba->dma_mem) अणु
+		/* Retry minimum coherent mapping क्रम st_seq and st_vsc */
+		अगर (hba->cardtype == st_seq ||
+		    (hba->cardtype == st_vsc && (pdev->subप्रणाली_device & 1))) अणु
+			prपूर्णांकk(KERN_WARNING DRV_NAME
 				"(%s): allocating min buffer for controller\n",
 				pci_name(pdev));
 			hba->dma_size = hba->extra_offset
 				+ ST_ADDITIONAL_MEM_MIN;
 			hba->dma_mem = dma_alloc_coherent(&pdev->dev,
 				hba->dma_size, &hba->dma_handle, GFP_KERNEL);
-		}
+		पूर्ण
 
-		if (!hba->dma_mem) {
+		अगर (!hba->dma_mem) अणु
 			err = -ENOMEM;
-			printk(KERN_ERR DRV_NAME "(%s): dma mem alloc failed\n",
+			prपूर्णांकk(KERN_ERR DRV_NAME "(%s): dma mem alloc failed\n",
 				pci_name(pdev));
-			goto out_iounmap;
-		}
-	}
+			जाओ out_iounmap;
+		पूर्ण
+	पूर्ण
 
-	hba->ccb = kcalloc(ci->rq_count, sizeof(struct st_ccb), GFP_KERNEL);
-	if (!hba->ccb) {
+	hba->ccb = kसुस्मृति(ci->rq_count, माप(काष्ठा st_ccb), GFP_KERNEL);
+	अगर (!hba->ccb) अणु
 		err = -ENOMEM;
-		printk(KERN_ERR DRV_NAME "(%s): ccb alloc failed\n",
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): ccb alloc failed\n",
 			pci_name(pdev));
-		goto out_pci_free;
-	}
+		जाओ out_pci_मुक्त;
+	पूर्ण
 
-	if (hba->cardtype == st_yel || hba->cardtype == st_P3)
+	अगर (hba->cardtype == st_yel || hba->cardtype == st_P3)
 		hba->scratch = (__le32 *)(hba->dma_mem + scratch_offset);
-	hba->status_buffer = (struct status_msg *)(hba->dma_mem + sts_offset);
+	hba->status_buffer = (काष्ठा status_msg *)(hba->dma_mem + sts_offset);
 	hba->copy_buffer = hba->dma_mem + cp_offset;
 	hba->rq_count = ci->rq_count;
 	hba->rq_size = ci->rq_size;
@@ -1779,9 +1780,9 @@ static int stex_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	hba->mu_status = MU_STATE_STARTING;
 	hba->msi_lock = 0;
 
-	if (hba->cardtype == st_yel || hba->cardtype == st_P3)
+	अगर (hba->cardtype == st_yel || hba->cardtype == st_P3)
 		host->sg_tablesize = 38;
-	else
+	अन्यथा
 		host->sg_tablesize = 32;
 	host->can_queue = ci->rq_count;
 	host->cmd_per_lun = ci->rq_count;
@@ -1793,51 +1794,51 @@ static int stex_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 
 	hba->host = host;
 	hba->pdev = pdev;
-	init_waitqueue_head(&hba->reset_waitq);
+	init_रुकोqueue_head(&hba->reset_रुकोq);
 
-	snprintf(hba->work_q_name, sizeof(hba->work_q_name),
+	snम_लिखो(hba->work_q_name, माप(hba->work_q_name),
 		 "stex_wq_%d", host->host_no);
-	hba->work_q = create_singlethread_workqueue(hba->work_q_name);
-	if (!hba->work_q) {
-		printk(KERN_ERR DRV_NAME "(%s): create workqueue failed\n",
+	hba->work_q = create_singlethपढ़ो_workqueue(hba->work_q_name);
+	अगर (!hba->work_q) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): create workqueue failed\n",
 			pci_name(pdev));
 		err = -ENOMEM;
-		goto out_ccb_free;
-	}
+		जाओ out_ccb_मुक्त;
+	पूर्ण
 	INIT_WORK(&hba->reset_work, stex_reset_work);
 
 	err = stex_request_irq(hba);
-	if (err) {
-		printk(KERN_ERR DRV_NAME "(%s): request irq failed\n",
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): request irq failed\n",
 			pci_name(pdev));
-		goto out_free_wq;
-	}
+		जाओ out_मुक्त_wq;
+	पूर्ण
 
 	err = stex_handshake(hba);
-	if (err)
-		goto out_free_irq;
+	अगर (err)
+		जाओ out_मुक्त_irq;
 
 	pci_set_drvdata(pdev, hba);
 
 	err = scsi_add_host(host, &pdev->dev);
-	if (err) {
-		printk(KERN_ERR DRV_NAME "(%s): scsi_add_host failed\n",
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): scsi_add_host failed\n",
 			pci_name(pdev));
-		goto out_free_irq;
-	}
+		जाओ out_मुक्त_irq;
+	पूर्ण
 
 	scsi_scan_host(host);
 
-	return 0;
+	वापस 0;
 
-out_free_irq:
-	stex_free_irq(hba);
-out_free_wq:
+out_मुक्त_irq:
+	stex_मुक्त_irq(hba);
+out_मुक्त_wq:
 	destroy_workqueue(hba->work_q);
-out_ccb_free:
-	kfree(hba->ccb);
-out_pci_free:
-	dma_free_coherent(&pdev->dev, hba->dma_size,
+out_ccb_मुक्त:
+	kमुक्त(hba->ccb);
+out_pci_मुक्त:
+	dma_मुक्त_coherent(&pdev->dev, hba->dma_size,
 			  hba->dma_mem, hba->dma_handle);
 out_iounmap:
 	iounmap(hba->mmio_base);
@@ -1848,74 +1849,74 @@ out_scsi_host_put:
 out_disable:
 	pci_disable_device(pdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void stex_hba_stop(struct st_hba *hba, int st_sleep_mic)
-{
-	struct req_msg *req;
-	struct st_msg_header *msg_h;
-	unsigned long flags;
-	unsigned long before;
+अटल व्योम stex_hba_stop(काष्ठा st_hba *hba, पूर्णांक st_sleep_mic)
+अणु
+	काष्ठा req_msg *req;
+	काष्ठा st_msg_header *msg_h;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ beक्रमe;
 	u16 tag = 0;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
 
-	if ((hba->cardtype == st_yel || hba->cardtype == st_P3) &&
-		hba->supports_pm == 1) {
-		if (st_sleep_mic == ST_NOTHANDLED) {
+	अगर ((hba->cardtype == st_yel || hba->cardtype == st_P3) &&
+		hba->supports_pm == 1) अणु
+		अगर (st_sleep_mic == ST_NOTHANDLED) अणु
 			spin_unlock_irqrestore(hba->host->host_lock, flags);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	req = hba->alloc_rq(hba);
-	if (hba->cardtype == st_yel || hba->cardtype == st_P3) {
-		msg_h = (struct st_msg_header *)req - 1;
-		memset(msg_h, 0, hba->rq_size);
-	} else
-		memset(req, 0, hba->rq_size);
+	अगर (hba->cardtype == st_yel || hba->cardtype == st_P3) अणु
+		msg_h = (काष्ठा st_msg_header *)req - 1;
+		स_रखो(msg_h, 0, hba->rq_size);
+	पूर्ण अन्यथा
+		स_रखो(req, 0, hba->rq_size);
 
-	if ((hba->cardtype == st_yosemite || hba->cardtype == st_yel
+	अगर ((hba->cardtype == st_yosemite || hba->cardtype == st_yel
 		|| hba->cardtype == st_P3)
-		&& st_sleep_mic == ST_IGNORED) {
+		&& st_sleep_mic == ST_IGNORED) अणु
 		req->cdb[0] = MGT_CMD;
 		req->cdb[1] = MGT_CMD_SIGNATURE;
 		req->cdb[2] = CTLR_CONFIG_CMD;
 		req->cdb[3] = CTLR_SHUTDOWN;
-	} else if ((hba->cardtype == st_yel || hba->cardtype == st_P3)
-		&& st_sleep_mic != ST_IGNORED) {
+	पूर्ण अन्यथा अगर ((hba->cardtype == st_yel || hba->cardtype == st_P3)
+		&& st_sleep_mic != ST_IGNORED) अणु
 		req->cdb[0] = MGT_CMD;
 		req->cdb[1] = MGT_CMD_SIGNATURE;
 		req->cdb[2] = CTLR_CONFIG_CMD;
 		req->cdb[3] = PMIC_SHUTDOWN;
 		req->cdb[4] = st_sleep_mic;
-	} else {
+	पूर्ण अन्यथा अणु
 		req->cdb[0] = CONTROLLER_CMD;
 		req->cdb[1] = CTLR_POWER_STATE_CHANGE;
 		req->cdb[2] = CTLR_POWER_SAVING;
-	}
-	hba->ccb[tag].cmd = NULL;
+	पूर्ण
+	hba->ccb[tag].cmd = शून्य;
 	hba->ccb[tag].sg_count = 0;
 	hba->ccb[tag].sense_bufflen = 0;
-	hba->ccb[tag].sense_buffer = NULL;
+	hba->ccb[tag].sense_buffer = शून्य;
 	hba->ccb[tag].req_type = PASSTHRU_REQ_TYPE;
 	hba->send(hba, req, tag);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-	before = jiffies;
-	while (hba->ccb[tag].req_type & PASSTHRU_REQ_TYPE) {
-		if (time_after(jiffies, before + ST_INTERNAL_TIMEOUT * HZ)) {
+	beक्रमe = jअगरfies;
+	जबतक (hba->ccb[tag].req_type & PASSTHRU_REQ_TYPE) अणु
+		अगर (समय_after(jअगरfies, beक्रमe + ST_INTERNAL_TIMEOUT * HZ)) अणु
 			hba->ccb[tag].req_type = 0;
 			hba->mu_status = MU_STATE_STOP;
-			return;
-		}
+			वापस;
+		पूर्ण
 		msleep(1);
-	}
+	पूर्ण
 	hba->mu_status = MU_STATE_STOP;
-}
+पूर्ण
 
-static void stex_hba_free(struct st_hba *hba)
-{
-	stex_free_irq(hba);
+अटल व्योम stex_hba_मुक्त(काष्ठा st_hba *hba)
+अणु
+	stex_मुक्त_irq(hba);
 
 	destroy_workqueue(hba->work_q);
 
@@ -1923,108 +1924,108 @@ static void stex_hba_free(struct st_hba *hba)
 
 	pci_release_regions(hba->pdev);
 
-	kfree(hba->ccb);
+	kमुक्त(hba->ccb);
 
-	dma_free_coherent(&hba->pdev->dev, hba->dma_size,
+	dma_मुक्त_coherent(&hba->pdev->dev, hba->dma_size,
 			  hba->dma_mem, hba->dma_handle);
-}
+पूर्ण
 
-static void stex_remove(struct pci_dev *pdev)
-{
-	struct st_hba *hba = pci_get_drvdata(pdev);
+अटल व्योम stex_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा st_hba *hba = pci_get_drvdata(pdev);
 
 	hba->mu_status = MU_STATE_NOCONNECT;
-	return_abnormal_state(hba, DID_NO_CONNECT);
-	scsi_remove_host(hba->host);
+	वापस_abnormal_state(hba, DID_NO_CONNECT);
+	scsi_हटाओ_host(hba->host);
 
 	scsi_block_requests(hba->host);
 
-	stex_hba_free(hba);
+	stex_hba_मुक्त(hba);
 
 	scsi_host_put(hba->host);
 
 	pci_disable_device(pdev);
 
-	unregister_reboot_notifier(&stex_notifier);
-}
+	unरेजिस्टर_reboot_notअगरier(&stex_notअगरier);
+पूर्ण
 
-static void stex_shutdown(struct pci_dev *pdev)
-{
-	struct st_hba *hba = pci_get_drvdata(pdev);
+अटल व्योम stex_shutकरोwn(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा st_hba *hba = pci_get_drvdata(pdev);
 
-	if (hba->supports_pm == 0) {
+	अगर (hba->supports_pm == 0) अणु
 		stex_hba_stop(hba, ST_IGNORED);
-	} else if (hba->supports_pm == 1 && S6flag) {
-		unregister_reboot_notifier(&stex_notifier);
+	पूर्ण अन्यथा अगर (hba->supports_pm == 1 && S6flag) अणु
+		unरेजिस्टर_reboot_notअगरier(&stex_notअगरier);
 		stex_hba_stop(hba, ST_S6);
-	} else
+	पूर्ण अन्यथा
 		stex_hba_stop(hba, ST_S5);
-}
+पूर्ण
 
-static int stex_choice_sleep_mic(struct st_hba *hba, pm_message_t state)
-{
-	switch (state.event) {
-	case PM_EVENT_SUSPEND:
-		return ST_S3;
-	case PM_EVENT_HIBERNATE:
+अटल पूर्णांक stex_choice_sleep_mic(काष्ठा st_hba *hba, pm_message_t state)
+अणु
+	चयन (state.event) अणु
+	हाल PM_EVENT_SUSPEND:
+		वापस ST_S3;
+	हाल PM_EVENT_HIBERNATE:
 		hba->msi_lock = 0;
-		return ST_S4;
-	default:
-		return ST_NOTHANDLED;
-	}
-}
+		वापस ST_S4;
+	शेष:
+		वापस ST_NOTHANDLED;
+	पूर्ण
+पूर्ण
 
-static int stex_suspend(struct pci_dev *pdev, pm_message_t state)
-{
-	struct st_hba *hba = pci_get_drvdata(pdev);
+अटल पूर्णांक stex_suspend(काष्ठा pci_dev *pdev, pm_message_t state)
+अणु
+	काष्ठा st_hba *hba = pci_get_drvdata(pdev);
 
-	if ((hba->cardtype == st_yel || hba->cardtype == st_P3)
+	अगर ((hba->cardtype == st_yel || hba->cardtype == st_P3)
 		&& hba->supports_pm == 1)
 		stex_hba_stop(hba, stex_choice_sleep_mic(hba, state));
-	else
+	अन्यथा
 		stex_hba_stop(hba, ST_IGNORED);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stex_resume(struct pci_dev *pdev)
-{
-	struct st_hba *hba = pci_get_drvdata(pdev);
+अटल पूर्णांक stex_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा st_hba *hba = pci_get_drvdata(pdev);
 
 	hba->mu_status = MU_STATE_STARTING;
 	stex_handshake(hba);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stex_halt(struct notifier_block *nb, unsigned long event, void *buf)
-{
+अटल पूर्णांक stex_halt(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event, व्योम *buf)
+अणु
 	S6flag = 1;
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 MODULE_DEVICE_TABLE(pci, stex_pci_tbl);
 
-static struct pci_driver stex_pci_driver = {
+अटल काष्ठा pci_driver stex_pci_driver = अणु
 	.name		= DRV_NAME,
 	.id_table	= stex_pci_tbl,
 	.probe		= stex_probe,
-	.remove		= stex_remove,
-	.shutdown	= stex_shutdown,
+	.हटाओ		= stex_हटाओ,
+	.shutकरोwn	= stex_shutकरोwn,
 	.suspend	= stex_suspend,
 	.resume		= stex_resume,
-};
+पूर्ण;
 
-static int __init stex_init(void)
-{
-	printk(KERN_INFO DRV_NAME
+अटल पूर्णांक __init stex_init(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO DRV_NAME
 		": Promise SuperTrak EX Driver version: %s\n",
 		 ST_DRIVER_VERSION);
 
-	return pci_register_driver(&stex_pci_driver);
-}
+	वापस pci_रेजिस्टर_driver(&stex_pci_driver);
+पूर्ण
 
-static void __exit stex_exit(void)
-{
-	pci_unregister_driver(&stex_pci_driver);
-}
+अटल व्योम __निकास stex_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&stex_pci_driver);
+पूर्ण
 
 module_init(stex_init);
-module_exit(stex_exit);
+module_निकास(stex_निकास);

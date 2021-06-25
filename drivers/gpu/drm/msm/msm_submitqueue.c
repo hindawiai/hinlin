@@ -1,193 +1,194 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2017 The Linux Foundation. All rights reserved.
  */
 
-#include <linux/kref.h>
-#include <linux/uaccess.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/uaccess.h>
 
-#include "msm_gpu.h"
+#समावेश "msm_gpu.h"
 
-void msm_submitqueue_destroy(struct kref *kref)
-{
-	struct msm_gpu_submitqueue *queue = container_of(kref,
-		struct msm_gpu_submitqueue, ref);
+व्योम msm_submitqueue_destroy(काष्ठा kref *kref)
+अणु
+	काष्ठा msm_gpu_submitqueue *queue = container_of(kref,
+		काष्ठा msm_gpu_submitqueue, ref);
 
-	msm_file_private_put(queue->ctx);
+	msm_file_निजी_put(queue->ctx);
 
-	kfree(queue);
-}
+	kमुक्त(queue);
+पूर्ण
 
-struct msm_gpu_submitqueue *msm_submitqueue_get(struct msm_file_private *ctx,
+काष्ठा msm_gpu_submitqueue *msm_submitqueue_get(काष्ठा msm_file_निजी *ctx,
 		u32 id)
-{
-	struct msm_gpu_submitqueue *entry;
+अणु
+	काष्ठा msm_gpu_submitqueue *entry;
 
-	if (!ctx)
-		return NULL;
+	अगर (!ctx)
+		वापस शून्य;
 
-	read_lock(&ctx->queuelock);
+	पढ़ो_lock(&ctx->queuelock);
 
-	list_for_each_entry(entry, &ctx->submitqueues, node) {
-		if (entry->id == id) {
+	list_क्रम_each_entry(entry, &ctx->submitqueues, node) अणु
+		अगर (entry->id == id) अणु
 			kref_get(&entry->ref);
-			read_unlock(&ctx->queuelock);
+			पढ़ो_unlock(&ctx->queuelock);
 
-			return entry;
-		}
-	}
+			वापस entry;
+		पूर्ण
+	पूर्ण
 
-	read_unlock(&ctx->queuelock);
-	return NULL;
-}
+	पढ़ो_unlock(&ctx->queuelock);
+	वापस शून्य;
+पूर्ण
 
-void msm_submitqueue_close(struct msm_file_private *ctx)
-{
-	struct msm_gpu_submitqueue *entry, *tmp;
+व्योम msm_submitqueue_बंद(काष्ठा msm_file_निजी *ctx)
+अणु
+	काष्ठा msm_gpu_submitqueue *entry, *पंचांगp;
 
-	if (!ctx)
-		return;
+	अगर (!ctx)
+		वापस;
 
 	/*
-	 * No lock needed in close and there won't
+	 * No lock needed in बंद and there won't
 	 * be any more user ioctls coming our way
 	 */
-	list_for_each_entry_safe(entry, tmp, &ctx->submitqueues, node) {
+	list_क्रम_each_entry_safe(entry, पंचांगp, &ctx->submitqueues, node) अणु
 		list_del(&entry->node);
 		msm_submitqueue_put(entry);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int msm_submitqueue_create(struct drm_device *drm, struct msm_file_private *ctx,
+पूर्णांक msm_submitqueue_create(काष्ठा drm_device *drm, काष्ठा msm_file_निजी *ctx,
 		u32 prio, u32 flags, u32 *id)
-{
-	struct msm_drm_private *priv = drm->dev_private;
-	struct msm_gpu_submitqueue *queue;
+अणु
+	काष्ठा msm_drm_निजी *priv = drm->dev_निजी;
+	काष्ठा msm_gpu_submitqueue *queue;
 
-	if (!ctx)
-		return -ENODEV;
+	अगर (!ctx)
+		वापस -ENODEV;
 
-	queue = kzalloc(sizeof(*queue), GFP_KERNEL);
+	queue = kzalloc(माप(*queue), GFP_KERNEL);
 
-	if (!queue)
-		return -ENOMEM;
+	अगर (!queue)
+		वापस -ENOMEM;
 
 	kref_init(&queue->ref);
 	queue->flags = flags;
 
-	if (priv->gpu) {
-		if (prio >= priv->gpu->nr_rings) {
-			kfree(queue);
-			return -EINVAL;
-		}
+	अगर (priv->gpu) अणु
+		अगर (prio >= priv->gpu->nr_rings) अणु
+			kमुक्त(queue);
+			वापस -EINVAL;
+		पूर्ण
 
 		queue->prio = prio;
-	}
+	पूर्ण
 
-	write_lock(&ctx->queuelock);
+	ग_लिखो_lock(&ctx->queuelock);
 
-	queue->ctx = msm_file_private_get(ctx);
+	queue->ctx = msm_file_निजी_get(ctx);
 	queue->id = ctx->queueid++;
 
-	if (id)
+	अगर (id)
 		*id = queue->id;
 
 	list_add_tail(&queue->node, &ctx->submitqueues);
 
-	write_unlock(&ctx->queuelock);
+	ग_लिखो_unlock(&ctx->queuelock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int msm_submitqueue_init(struct drm_device *drm, struct msm_file_private *ctx)
-{
-	struct msm_drm_private *priv = drm->dev_private;
-	int default_prio;
+पूर्णांक msm_submitqueue_init(काष्ठा drm_device *drm, काष्ठा msm_file_निजी *ctx)
+अणु
+	काष्ठा msm_drm_निजी *priv = drm->dev_निजी;
+	पूर्णांक शेष_prio;
 
-	if (!ctx)
-		return 0;
+	अगर (!ctx)
+		वापस 0;
 
 	/*
 	 * Select priority 2 as the "default priority" unless nr_rings is less
 	 * than 2 and then pick the lowest pirority
 	 */
-	default_prio = priv->gpu ?
-		clamp_t(uint32_t, 2, 0, priv->gpu->nr_rings - 1) : 0;
+	शेष_prio = priv->gpu ?
+		clamp_t(uपूर्णांक32_t, 2, 0, priv->gpu->nr_rings - 1) : 0;
 
 	INIT_LIST_HEAD(&ctx->submitqueues);
 
 	rwlock_init(&ctx->queuelock);
 
-	return msm_submitqueue_create(drm, ctx, default_prio, 0, NULL);
-}
+	वापस msm_submitqueue_create(drm, ctx, शेष_prio, 0, शून्य);
+पूर्ण
 
-static int msm_submitqueue_query_faults(struct msm_gpu_submitqueue *queue,
-		struct drm_msm_submitqueue_query *args)
-{
-	size_t size = min_t(size_t, args->len, sizeof(queue->faults));
-	int ret;
+अटल पूर्णांक msm_submitqueue_query_faults(काष्ठा msm_gpu_submitqueue *queue,
+		काष्ठा drm_msm_submitqueue_query *args)
+अणु
+	माप_प्रकार size = min_t(माप_प्रकार, args->len, माप(queue->faults));
+	पूर्णांक ret;
 
-	/* If a zero length was passed in, return the data size we expect */
-	if (!args->len) {
-		args->len = sizeof(queue->faults);
-		return 0;
-	}
+	/* If a zero length was passed in, वापस the data size we expect */
+	अगर (!args->len) अणु
+		args->len = माप(queue->faults);
+		वापस 0;
+	पूर्ण
 
 	/* Set the length to the actual size of the data */
 	args->len = size;
 
 	ret = copy_to_user(u64_to_user_ptr(args->data), &queue->faults, size);
 
-	return ret ? -EFAULT : 0;
-}
+	वापस ret ? -EFAULT : 0;
+पूर्ण
 
-int msm_submitqueue_query(struct drm_device *drm, struct msm_file_private *ctx,
-		struct drm_msm_submitqueue_query *args)
-{
-	struct msm_gpu_submitqueue *queue;
-	int ret = -EINVAL;
+पूर्णांक msm_submitqueue_query(काष्ठा drm_device *drm, काष्ठा msm_file_निजी *ctx,
+		काष्ठा drm_msm_submitqueue_query *args)
+अणु
+	काष्ठा msm_gpu_submitqueue *queue;
+	पूर्णांक ret = -EINVAL;
 
-	if (args->pad)
-		return -EINVAL;
+	अगर (args->pad)
+		वापस -EINVAL;
 
 	queue = msm_submitqueue_get(ctx, args->id);
-	if (!queue)
-		return -ENOENT;
+	अगर (!queue)
+		वापस -ENOENT;
 
-	if (args->param == MSM_SUBMITQUEUE_PARAM_FAULTS)
+	अगर (args->param == MSM_SUBMITQUEUE_PARAM_FAULTS)
 		ret = msm_submitqueue_query_faults(queue, args);
 
 	msm_submitqueue_put(queue);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int msm_submitqueue_remove(struct msm_file_private *ctx, u32 id)
-{
-	struct msm_gpu_submitqueue *entry;
+पूर्णांक msm_submitqueue_हटाओ(काष्ठा msm_file_निजी *ctx, u32 id)
+अणु
+	काष्ठा msm_gpu_submitqueue *entry;
 
-	if (!ctx)
-		return 0;
+	अगर (!ctx)
+		वापस 0;
 
 	/*
 	 * id 0 is the "default" queue and can't be destroyed
 	 * by the user
 	 */
-	if (!id)
-		return -ENOENT;
+	अगर (!id)
+		वापस -ENOENT;
 
-	write_lock(&ctx->queuelock);
+	ग_लिखो_lock(&ctx->queuelock);
 
-	list_for_each_entry(entry, &ctx->submitqueues, node) {
-		if (entry->id == id) {
+	list_क्रम_each_entry(entry, &ctx->submitqueues, node) अणु
+		अगर (entry->id == id) अणु
 			list_del(&entry->node);
-			write_unlock(&ctx->queuelock);
+			ग_लिखो_unlock(&ctx->queuelock);
 
 			msm_submitqueue_put(entry);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	write_unlock(&ctx->queuelock);
-	return -ENOENT;
-}
+	ग_लिखो_unlock(&ctx->queuelock);
+	वापस -ENOENT;
+पूर्ण
 

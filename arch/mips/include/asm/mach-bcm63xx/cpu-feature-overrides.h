@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_MACH_BCM963XX_CPU_FEATURE_OVERRIDES_H
-#define __ASM_MACH_BCM963XX_CPU_FEATURE_OVERRIDES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_MACH_BCM963XX_CPU_FEATURE_OVERRIDES_H
+#घोषणा __ASM_MACH_BCM963XX_CPU_FEATURE_OVERRIDES_H
 
-#include <bcm63xx_cpu.h>
+#समावेश <bcm63xx_cpu.h>
 
-#define cpu_has_tlb			1
-#define cpu_has_4kex			1
-#define cpu_has_4k_cache		1
-#define cpu_has_fpu			0
-#define cpu_has_32fpr			0
-#define cpu_has_counter			1
-#define cpu_has_watch			0
-#define cpu_has_divec			1
-#define cpu_has_vce			0
-#define cpu_has_cache_cdex_p		0
-#define cpu_has_cache_cdex_s		0
-#define cpu_has_prefetch		1
-#define cpu_has_mcheck			1
-#define cpu_has_ejtag			1
-#define cpu_has_llsc			1
-#define cpu_has_mips16			0
-#define cpu_has_mips16e2		0
-#define cpu_has_mdmx			0
-#define cpu_has_mips3d			0
-#define cpu_has_smartmips		0
-#define cpu_has_vtag_icache		0
+#घोषणा cpu_has_tlb			1
+#घोषणा cpu_has_4kex			1
+#घोषणा cpu_has_4k_cache		1
+#घोषणा cpu_has_fpu			0
+#घोषणा cpu_has_32fpr			0
+#घोषणा cpu_has_counter			1
+#घोषणा cpu_has_watch			0
+#घोषणा cpu_has_भागec			1
+#घोषणा cpu_has_vce			0
+#घोषणा cpu_has_cache_cdex_p		0
+#घोषणा cpu_has_cache_cdex_s		0
+#घोषणा cpu_has_prefetch		1
+#घोषणा cpu_has_mcheck			1
+#घोषणा cpu_has_ejtag			1
+#घोषणा cpu_has_llsc			1
+#घोषणा cpu_has_mips16			0
+#घोषणा cpu_has_mips16e2		0
+#घोषणा cpu_has_mdmx			0
+#घोषणा cpu_has_mips3d			0
+#घोषणा cpu_has_smarपंचांगips		0
+#घोषणा cpu_has_vtag_icache		0
 
-#if !defined(CONFIG_SYS_HAS_CPU_BMIPS4350)
-#define cpu_has_dc_aliases		0
-#endif
+#अगर !defined(CONFIG_SYS_HAS_CPU_BMIPS4350)
+#घोषणा cpu_has_dc_aliases		0
+#पूर्ण_अगर
 
-#define cpu_has_ic_fills_f_dc		0
-#define cpu_has_pindexed_dcache		0
+#घोषणा cpu_has_ic_fills_f_dc		0
+#घोषणा cpu_has_pindexed_dcache		0
 
-#define cpu_has_mips32r1		1
-#define cpu_has_mips32r2		0
-#define cpu_has_mips64r1		0
-#define cpu_has_mips64r2		0
+#घोषणा cpu_has_mips32r1		1
+#घोषणा cpu_has_mips32r2		0
+#घोषणा cpu_has_mips64r1		0
+#घोषणा cpu_has_mips64r2		0
 
-#define cpu_has_dsp			0
-#define cpu_has_dsp2			0
-#define cpu_has_mipsmt			0
-#define cpu_has_userlocal		0
+#घोषणा cpu_has_dsp			0
+#घोषणा cpu_has_dsp2			0
+#घोषणा cpu_has_mipsmt			0
+#घोषणा cpu_has_userlocal		0
 
-#define cpu_has_nofpuex			0
-#define cpu_has_64bits			0
-#define cpu_has_64bit_zero_reg		0
+#घोषणा cpu_has_nofpuex			0
+#घोषणा cpu_has_64bits			0
+#घोषणा cpu_has_64bit_zero_reg		0
 
-#define cpu_dcache_line_size()		16
-#define cpu_icache_line_size()		16
-#define cpu_scache_line_size()		0
+#घोषणा cpu_dcache_line_size()		16
+#घोषणा cpu_icache_line_size()		16
+#घोषणा cpu_scache_line_size()		0
 
-#endif /* __ASM_MACH_BCM963XX_CPU_FEATURE_OVERRIDES_H */
+#पूर्ण_अगर /* __ASM_MACH_BCM963XX_CPU_FEATURE_OVERRIDES_H */

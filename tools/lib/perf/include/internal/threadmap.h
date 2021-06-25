@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LIBPERF_INTERNAL_THREADMAP_H
-#define __LIBPERF_INTERNAL_THREADMAP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LIBPERF_INTERNAL_THREADMAP_H
+#घोषणा __LIBPERF_INTERNAL_THREADMAP_H
 
-#include <linux/refcount.h>
-#include <sys/types.h>
-#include <unistd.h>
+#समावेश <linux/refcount.h>
+#समावेश <sys/types.h>
+#समावेश <unistd.h>
 
-struct thread_map_data {
+काष्ठा thपढ़ो_map_data अणु
 	pid_t	 pid;
-	char	*comm;
-};
+	अक्षर	*comm;
+पूर्ण;
 
-struct perf_thread_map {
+काष्ठा perf_thपढ़ो_map अणु
 	refcount_t	refcnt;
-	int		nr;
-	int		err_thread;
-	struct thread_map_data map[];
-};
+	पूर्णांक		nr;
+	पूर्णांक		err_thपढ़ो;
+	काष्ठा thपढ़ो_map_data map[];
+पूर्ण;
 
-struct perf_thread_map *perf_thread_map__realloc(struct perf_thread_map *map, int nr);
+काष्ठा perf_thपढ़ो_map *perf_thपढ़ो_map__पुनः_स्मृति(काष्ठा perf_thपढ़ो_map *map, पूर्णांक nr);
 
-#endif /* __LIBPERF_INTERNAL_THREADMAP_H */
+#पूर्ण_अगर /* __LIBPERF_INTERNAL_THREADMAP_H */

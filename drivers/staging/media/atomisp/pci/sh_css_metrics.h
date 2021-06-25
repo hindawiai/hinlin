@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef _SH_CSS_METRICS_H_
-#define _SH_CSS_METRICS_H_
+#अगर_अघोषित _SH_CSS_METRICS_H_
+#घोषणा _SH_CSS_METRICS_H_
 
-#include <type_support.h>
+#समावेश <type_support.h>
 
-struct sh_css_pc_histogram {
-	unsigned int length;
-	unsigned int *run;
-	unsigned int *stall;
-	unsigned int *msink;
-};
+काष्ठा sh_css_pc_histogram अणु
+	अचिन्हित पूर्णांक length;
+	अचिन्हित पूर्णांक *run;
+	अचिन्हित पूर्णांक *stall;
+	अचिन्हित पूर्णांक *msink;
+पूर्ण;
 
-struct sh_css_binary_metrics {
-	unsigned int mode;
-	unsigned int id;
-	struct sh_css_pc_histogram isp_histogram;
-	struct sh_css_pc_histogram sp_histogram;
-	struct sh_css_binary_metrics *next;
-};
+काष्ठा sh_css_binary_metrics अणु
+	अचिन्हित पूर्णांक mode;
+	अचिन्हित पूर्णांक id;
+	काष्ठा sh_css_pc_histogram isp_histogram;
+	काष्ठा sh_css_pc_histogram sp_histogram;
+	काष्ठा sh_css_binary_metrics *next;
+पूर्ण;
 
-struct ia_css_frame_metrics {
-	unsigned int num_frames;
-};
+काष्ठा ia_css_frame_metrics अणु
+	अचिन्हित पूर्णांक num_frames;
+पूर्ण;
 
-struct sh_css_metrics {
-	struct sh_css_binary_metrics *binary_metrics;
-	struct ia_css_frame_metrics   frame_metrics;
-};
+काष्ठा sh_css_metrics अणु
+	काष्ठा sh_css_binary_metrics *binary_metrics;
+	काष्ठा ia_css_frame_metrics   frame_metrics;
+पूर्ण;
 
-extern struct sh_css_metrics sh_css_metrics;
+बाह्य काष्ठा sh_css_metrics sh_css_metrics;
 
 /* includes ia_css_binary.h, which depends on sh_css_metrics.h */
-#include "ia_css_types.h"
+#समावेश "ia_css_types.h"
 
 /* Sample ISP and SP pc and add to histogram */
-void sh_css_metrics_enable_pc_histogram(bool enable);
-void sh_css_metrics_start_frame(void);
-void sh_css_metrics_start_binary(struct sh_css_binary_metrics *metrics);
-void sh_css_metrics_sample_pcs(void);
+व्योम sh_css_metrics_enable_pc_histogram(bool enable);
+व्योम sh_css_metrics_start_frame(व्योम);
+व्योम sh_css_metrics_start_binary(काष्ठा sh_css_binary_metrics *metrics);
+व्योम sh_css_metrics_sample_pcs(व्योम);
 
-#endif /* _SH_CSS_METRICS_H_ */
+#पूर्ण_अगर /* _SH_CSS_METRICS_H_ */

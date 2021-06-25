@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
 /*
- *    PARISC specific syscalls
+ *    PARISC specअगरic syscalls
  *
  *    Copyright (C) 1999-2003 Matthew Wilcox <willy at parisc-linux.org>
  *    Copyright (C) 2000-2003 Paul Bame <bame at parisc-linux.org>
- *    Copyright (C) 2001 Thomas Bogendoerfer <tsbogend at parisc-linux.org>
+ *    Copyright (C) 2001 Thomas Bogenकरोerfer <tsbogend at parisc-linux.org>
  *    Copyright (C) 1999-2020 Helge Deller <deller@gmx.de>
  */
 
-#include <linux/uaccess.h>
-#include <asm/elf.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/linkage.h>
-#include <linux/mm.h>
-#include <linux/mman.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/mm.h>
-#include <linux/shm.h>
-#include <linux/syscalls.h>
-#include <linux/utsname.h>
-#include <linux/personality.h>
-#include <linux/random.h>
-#include <linux/compat.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/elf.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/shm.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/compat.h>
 
-/* we construct an artificial offset for the mapping based on the physical
+/* we स्थिरruct an artअगरicial offset क्रम the mapping based on the physical
  * address of the kernel mapping variable */
-#define GET_LAST_MMAP(filp)		\
-	(filp ? ((unsigned long) filp->f_mapping) >> 8 : 0UL)
-#define SET_LAST_MMAP(filp, val)	\
-	 { /* nothing */ }
+#घोषणा GET_LAST_MMAP(filp)		\
+	(filp ? ((अचिन्हित दीर्घ) filp->f_mapping) >> 8 : 0UL)
+#घोषणा SET_LAST_MMAP(filp, val)	\
+	 अणु /* nothing */ पूर्ण
 
-static int get_offset(unsigned int last_mmap)
-{
-	return (last_mmap & (SHM_COLOUR-1)) >> PAGE_SHIFT;
-}
+अटल पूर्णांक get_offset(अचिन्हित पूर्णांक last_mmap)
+अणु
+	वापस (last_mmap & (SHM_COLOUR-1)) >> PAGE_SHIFT;
+पूर्ण
 
-static unsigned long shared_align_offset(unsigned int last_mmap,
-					 unsigned long pgoff)
-{
-	return (get_offset(last_mmap) + pgoff) << PAGE_SHIFT;
-}
+अटल अचिन्हित दीर्घ shared_align_offset(अचिन्हित पूर्णांक last_mmap,
+					 अचिन्हित दीर्घ pgoff)
+अणु
+	वापस (get_offset(last_mmap) + pgoff) << PAGE_SHIFT;
+पूर्ण
 
-static inline unsigned long COLOR_ALIGN(unsigned long addr,
-			 unsigned int last_mmap, unsigned long pgoff)
-{
-	unsigned long base = (addr+SHM_COLOUR-1) & ~(SHM_COLOUR-1);
-	unsigned long off  = (SHM_COLOUR-1) &
+अटल अंतरभूत अचिन्हित दीर्घ COLOR_ALIGN(अचिन्हित दीर्घ addr,
+			 अचिन्हित पूर्णांक last_mmap, अचिन्हित दीर्घ pgoff)
+अणु
+	अचिन्हित दीर्घ base = (addr+SHM_COLOUR-1) & ~(SHM_COLOUR-1);
+	अचिन्हित दीर्घ off  = (SHM_COLOUR-1) &
 		(shared_align_offset(last_mmap, pgoff) << PAGE_SHIFT);
 
-	return base + off;
-}
+	वापस base + off;
+पूर्ण
 
 
-#define STACK_SIZE_DEFAULT (USER_WIDE_MODE			\
+#घोषणा STACK_SIZE_DEFAULT (USER_WIDE_MODE			\
 			? (1 << 30)	/* 1 GB */		\
 			: (CONFIG_STACK_MAX_DEFAULT_SIZE_MB*1024*1024))
 
-unsigned long calc_max_stack_size(unsigned long stack_max)
-{
-#ifdef CONFIG_COMPAT
-	if (!USER_WIDE_MODE && (stack_max == COMPAT_RLIM_INFINITY))
+अचिन्हित दीर्घ calc_max_stack_size(अचिन्हित दीर्घ stack_max)
+अणु
+#अगर_घोषित CONFIG_COMPAT
+	अगर (!USER_WIDE_MODE && (stack_max == COMPAT_RLIM_अनन्त))
 		stack_max = STACK_SIZE_DEFAULT;
-	else
-#endif
-	if (stack_max == RLIM_INFINITY)
+	अन्यथा
+#पूर्ण_अगर
+	अगर (stack_max == RLIM_अनन्त)
 		stack_max = STACK_SIZE_DEFAULT;
 
-	return stack_max;
-}
+	वापस stack_max;
+पूर्ण
 
 
 /*
@@ -77,13 +78,13 @@ unsigned long calc_max_stack_size(unsigned long stack_max)
  */
 
 /*
- * When called from arch_get_unmapped_area(), rlim_stack will be NULL,
+ * When called from arch_get_unmapped_area(), rlim_stack will be शून्य,
  * indicating that "current" should be used instead of a passed-in
- * value from the exec bprm as done with arch_pick_mmap_layout().
+ * value from the exec bprm as करोne with arch_pick_mmap_layout().
  */
-static unsigned long mmap_upper_limit(struct rlimit *rlim_stack)
-{
-	unsigned long stack_base;
+अटल अचिन्हित दीर्घ mmap_upper_limit(काष्ठा rlimit *rlim_stack)
+अणु
+	अचिन्हित दीर्घ stack_base;
 
 	/* Limit stack size - see setup_arg_pages() in fs/exec.c */
 	stack_base = rlim_stack ? rlim_stack->rlim_max
@@ -91,108 +92,108 @@ static unsigned long mmap_upper_limit(struct rlimit *rlim_stack)
 
 	stack_base = calc_max_stack_size(stack_base);
 
-	/* Add space for stack randomization. */
-	if (current->flags & PF_RANDOMIZE)
+	/* Add space क्रम stack अक्रमomization. */
+	अगर (current->flags & PF_RANDOMIZE)
 		stack_base += (STACK_RND_MASK << PAGE_SHIFT);
 
-	return PAGE_ALIGN(STACK_TOP - stack_base);
-}
+	वापस PAGE_ALIGN(STACK_TOP - stack_base);
+पूर्ण
 
 
-unsigned long arch_get_unmapped_area(struct file *filp, unsigned long addr,
-		unsigned long len, unsigned long pgoff, unsigned long flags)
-{
-	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma, *prev;
-	unsigned long task_size = TASK_SIZE;
-	int do_color_align, last_mmap;
-	struct vm_unmapped_area_info info;
+अचिन्हित दीर्घ arch_get_unmapped_area(काष्ठा file *filp, अचिन्हित दीर्घ addr,
+		अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा vm_area_काष्ठा *vma, *prev;
+	अचिन्हित दीर्घ task_size = TASK_SIZE;
+	पूर्णांक करो_color_align, last_mmap;
+	काष्ठा vm_unmapped_area_info info;
 
-	if (len > task_size)
-		return -ENOMEM;
+	अगर (len > task_size)
+		वापस -ENOMEM;
 
-	do_color_align = 0;
-	if (filp || (flags & MAP_SHARED))
-		do_color_align = 1;
+	करो_color_align = 0;
+	अगर (filp || (flags & MAP_SHARED))
+		करो_color_align = 1;
 	last_mmap = GET_LAST_MMAP(filp);
 
-	if (flags & MAP_FIXED) {
-		if ((flags & MAP_SHARED) && last_mmap &&
+	अगर (flags & MAP_FIXED) अणु
+		अगर ((flags & MAP_SHARED) && last_mmap &&
 		    (addr - shared_align_offset(last_mmap, pgoff))
 				& (SHM_COLOUR - 1))
-			return -EINVAL;
-		goto found_addr;
-	}
+			वापस -EINVAL;
+		जाओ found_addr;
+	पूर्ण
 
-	if (addr) {
-		if (do_color_align && last_mmap)
+	अगर (addr) अणु
+		अगर (करो_color_align && last_mmap)
 			addr = COLOR_ALIGN(addr, last_mmap, pgoff);
-		else
+		अन्यथा
 			addr = PAGE_ALIGN(addr);
 
 		vma = find_vma_prev(mm, addr, &prev);
-		if (task_size - len >= addr &&
+		अगर (task_size - len >= addr &&
 		    (!vma || addr + len <= vm_start_gap(vma)) &&
 		    (!prev || addr >= vm_end_gap(prev)))
-			goto found_addr;
-	}
+			जाओ found_addr;
+	पूर्ण
 
 	info.flags = 0;
 	info.length = len;
 	info.low_limit = mm->mmap_legacy_base;
-	info.high_limit = mmap_upper_limit(NULL);
+	info.high_limit = mmap_upper_limit(शून्य);
 	info.align_mask = last_mmap ? (PAGE_MASK & (SHM_COLOUR - 1)) : 0;
 	info.align_offset = shared_align_offset(last_mmap, pgoff);
 	addr = vm_unmapped_area(&info);
 
 found_addr:
-	if (do_color_align && !last_mmap && !(addr & ~PAGE_MASK))
+	अगर (करो_color_align && !last_mmap && !(addr & ~PAGE_MASK))
 		SET_LAST_MMAP(filp, addr - (pgoff << PAGE_SHIFT));
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-unsigned long
-arch_get_unmapped_area_topdown(struct file *filp, const unsigned long addr0,
-			  const unsigned long len, const unsigned long pgoff,
-			  const unsigned long flags)
-{
-	struct vm_area_struct *vma, *prev;
-	struct mm_struct *mm = current->mm;
-	unsigned long addr = addr0;
-	int do_color_align, last_mmap;
-	struct vm_unmapped_area_info info;
+अचिन्हित दीर्घ
+arch_get_unmapped_area_topकरोwn(काष्ठा file *filp, स्थिर अचिन्हित दीर्घ addr0,
+			  स्थिर अचिन्हित दीर्घ len, स्थिर अचिन्हित दीर्घ pgoff,
+			  स्थिर अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा vm_area_काष्ठा *vma, *prev;
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	अचिन्हित दीर्घ addr = addr0;
+	पूर्णांक करो_color_align, last_mmap;
+	काष्ठा vm_unmapped_area_info info;
 
-	/* requested length too big for entire address space */
-	if (len > TASK_SIZE)
-		return -ENOMEM;
+	/* requested length too big क्रम entire address space */
+	अगर (len > TASK_SIZE)
+		वापस -ENOMEM;
 
-	do_color_align = 0;
-	if (filp || (flags & MAP_SHARED))
-		do_color_align = 1;
+	करो_color_align = 0;
+	अगर (filp || (flags & MAP_SHARED))
+		करो_color_align = 1;
 	last_mmap = GET_LAST_MMAP(filp);
 
-	if (flags & MAP_FIXED) {
-		if ((flags & MAP_SHARED) && last_mmap &&
+	अगर (flags & MAP_FIXED) अणु
+		अगर ((flags & MAP_SHARED) && last_mmap &&
 		    (addr - shared_align_offset(last_mmap, pgoff))
 			& (SHM_COLOUR - 1))
-			return -EINVAL;
-		goto found_addr;
-	}
+			वापस -EINVAL;
+		जाओ found_addr;
+	पूर्ण
 
-	/* requesting a specific address */
-	if (addr) {
-		if (do_color_align && last_mmap)
+	/* requesting a specअगरic address */
+	अगर (addr) अणु
+		अगर (करो_color_align && last_mmap)
 			addr = COLOR_ALIGN(addr, last_mmap, pgoff);
-		else
+		अन्यथा
 			addr = PAGE_ALIGN(addr);
 
 		vma = find_vma_prev(mm, addr, &prev);
-		if (TASK_SIZE - len >= addr &&
+		अगर (TASK_SIZE - len >= addr &&
 		    (!vma || addr + len <= vm_start_gap(vma)) &&
 		    (!prev || addr >= vm_end_gap(prev)))
-			goto found_addr;
-	}
+			जाओ found_addr;
+	पूर्ण
 
 	info.flags = VM_UNMAPPED_AREA_TOPDOWN;
 	info.length = len;
@@ -201,8 +202,8 @@ arch_get_unmapped_area_topdown(struct file *filp, const unsigned long addr0,
 	info.align_mask = last_mmap ? (PAGE_MASK & (SHM_COLOUR - 1)) : 0;
 	info.align_offset = shared_align_offset(last_mmap, pgoff);
 	addr = vm_unmapped_area(&info);
-	if (!(addr & ~PAGE_MASK))
-		goto found_addr;
+	अगर (!(addr & ~PAGE_MASK))
+		जाओ found_addr;
 	VM_BUG_ON(addr != -ENOMEM);
 
 	/*
@@ -211,188 +212,188 @@ arch_get_unmapped_area_topdown(struct file *filp, const unsigned long addr0,
 	 * can happen with large stack limits and large mmap()
 	 * allocations.
 	 */
-	return arch_get_unmapped_area(filp, addr0, len, pgoff, flags);
+	वापस arch_get_unmapped_area(filp, addr0, len, pgoff, flags);
 
 found_addr:
-	if (do_color_align && !last_mmap && !(addr & ~PAGE_MASK))
+	अगर (करो_color_align && !last_mmap && !(addr & ~PAGE_MASK))
 		SET_LAST_MMAP(filp, addr - (pgoff << PAGE_SHIFT));
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-static int mmap_is_legacy(void)
-{
-	if (current->personality & ADDR_COMPAT_LAYOUT)
-		return 1;
+अटल पूर्णांक mmap_is_legacy(व्योम)
+अणु
+	अगर (current->personality & ADDR_COMPAT_LAYOUT)
+		वापस 1;
 
 	/* parisc stack always grows up - so a unlimited stack should
 	 * not be an indicator to use the legacy memory layout.
-	 * if (rlimit(RLIMIT_STACK) == RLIM_INFINITY)
-	 *	return 1;
+	 * अगर (rlimit(RLIMIT_STACK) == RLIM_अनन्त)
+	 *	वापस 1;
 	 */
 
-	return sysctl_legacy_va_layout;
-}
+	वापस sysctl_legacy_va_layout;
+पूर्ण
 
-static unsigned long mmap_rnd(void)
-{
-	unsigned long rnd = 0;
+अटल अचिन्हित दीर्घ mmap_rnd(व्योम)
+अणु
+	अचिन्हित दीर्घ rnd = 0;
 
-	if (current->flags & PF_RANDOMIZE)
-		rnd = get_random_int() & MMAP_RND_MASK;
+	अगर (current->flags & PF_RANDOMIZE)
+		rnd = get_अक्रमom_पूर्णांक() & MMAP_RND_MASK;
 
-	return rnd << PAGE_SHIFT;
-}
+	वापस rnd << PAGE_SHIFT;
+पूर्ण
 
-unsigned long arch_mmap_rnd(void)
-{
-	return (get_random_int() & MMAP_RND_MASK) << PAGE_SHIFT;
-}
+अचिन्हित दीर्घ arch_mmap_rnd(व्योम)
+अणु
+	वापस (get_अक्रमom_पूर्णांक() & MMAP_RND_MASK) << PAGE_SHIFT;
+पूर्ण
 
-static unsigned long mmap_legacy_base(void)
-{
-	return TASK_UNMAPPED_BASE + mmap_rnd();
-}
+अटल अचिन्हित दीर्घ mmap_legacy_base(व्योम)
+अणु
+	वापस TASK_UNMAPPED_BASE + mmap_rnd();
+पूर्ण
 
 /*
  * This function, called very early during the creation of a new
  * process VM image, sets up which VM layout function to use:
  */
-void arch_pick_mmap_layout(struct mm_struct *mm, struct rlimit *rlim_stack)
-{
+व्योम arch_pick_mmap_layout(काष्ठा mm_काष्ठा *mm, काष्ठा rlimit *rlim_stack)
+अणु
 	mm->mmap_legacy_base = mmap_legacy_base();
 	mm->mmap_base = mmap_upper_limit(rlim_stack);
 
-	if (mmap_is_legacy()) {
+	अगर (mmap_is_legacy()) अणु
 		mm->mmap_base = mm->mmap_legacy_base;
 		mm->get_unmapped_area = arch_get_unmapped_area;
-	} else {
-		mm->get_unmapped_area = arch_get_unmapped_area_topdown;
-	}
-}
+	पूर्ण अन्यथा अणु
+		mm->get_unmapped_area = arch_get_unmapped_area_topकरोwn;
+	पूर्ण
+पूर्ण
 
 
-asmlinkage unsigned long sys_mmap2(unsigned long addr, unsigned long len,
-	unsigned long prot, unsigned long flags, unsigned long fd,
-	unsigned long pgoff)
-{
-	/* Make sure the shift for mmap2 is constant (12), no matter what PAGE_SIZE
+यंत्रlinkage अचिन्हित दीर्घ sys_mmap2(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+	अचिन्हित दीर्घ prot, अचिन्हित दीर्घ flags, अचिन्हित दीर्घ fd,
+	अचिन्हित दीर्घ pgoff)
+अणु
+	/* Make sure the shअगरt क्रम mmap2 is स्थिरant (12), no matter what PAGE_SIZE
 	   we have. */
-	return ksys_mmap_pgoff(addr, len, prot, flags, fd,
+	वापस ksys_mmap_pgoff(addr, len, prot, flags, fd,
 			       pgoff >> (PAGE_SHIFT - 12));
-}
+पूर्ण
 
-asmlinkage unsigned long sys_mmap(unsigned long addr, unsigned long len,
-		unsigned long prot, unsigned long flags, unsigned long fd,
-		unsigned long offset)
-{
-	if (!(offset & ~PAGE_MASK)) {
-		return ksys_mmap_pgoff(addr, len, prot, flags, fd,
+यंत्रlinkage अचिन्हित दीर्घ sys_mmap(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+		अचिन्हित दीर्घ prot, अचिन्हित दीर्घ flags, अचिन्हित दीर्घ fd,
+		अचिन्हित दीर्घ offset)
+अणु
+	अगर (!(offset & ~PAGE_MASK)) अणु
+		वापस ksys_mmap_pgoff(addr, len, prot, flags, fd,
 					offset >> PAGE_SHIFT);
-	} else {
-		return -EINVAL;
-	}
-}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /* Fucking broken ABI */
 
-#ifdef CONFIG_64BIT
-asmlinkage long parisc_truncate64(const char __user * path,
-					unsigned int high, unsigned int low)
-{
-	return ksys_truncate(path, (long)high << 32 | low);
-}
+#अगर_घोषित CONFIG_64BIT
+यंत्रlinkage दीर्घ parisc_truncate64(स्थिर अक्षर __user * path,
+					अचिन्हित पूर्णांक high, अचिन्हित पूर्णांक low)
+अणु
+	वापस ksys_truncate(path, (दीर्घ)high << 32 | low);
+पूर्ण
 
-asmlinkage long parisc_ftruncate64(unsigned int fd,
-					unsigned int high, unsigned int low)
-{
-	return ksys_ftruncate(fd, (long)high << 32 | low);
-}
+यंत्रlinkage दीर्घ parisc_ftruncate64(अचिन्हित पूर्णांक fd,
+					अचिन्हित पूर्णांक high, अचिन्हित पूर्णांक low)
+अणु
+	वापस ksys_ftruncate(fd, (दीर्घ)high << 32 | low);
+पूर्ण
 
-/* stubs for the benefit of the syscall_table since truncate64 and truncate 
+/* stubs क्रम the benefit of the syscall_table since truncate64 and truncate 
  * are identical on LP64 */
-asmlinkage long sys_truncate64(const char __user * path, unsigned long length)
-{
-	return ksys_truncate(path, length);
-}
-asmlinkage long sys_ftruncate64(unsigned int fd, unsigned long length)
-{
-	return ksys_ftruncate(fd, length);
-}
-asmlinkage long sys_fcntl64(unsigned int fd, unsigned int cmd, unsigned long arg)
-{
-	return sys_fcntl(fd, cmd, arg);
-}
-#else
+यंत्रlinkage दीर्घ sys_truncate64(स्थिर अक्षर __user * path, अचिन्हित दीर्घ length)
+अणु
+	वापस ksys_truncate(path, length);
+पूर्ण
+यंत्रlinkage दीर्घ sys_ftruncate64(अचिन्हित पूर्णांक fd, अचिन्हित दीर्घ length)
+अणु
+	वापस ksys_ftruncate(fd, length);
+पूर्ण
+यंत्रlinkage दीर्घ sys_fcntl64(अचिन्हित पूर्णांक fd, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस sys_fcntl(fd, cmd, arg);
+पूर्ण
+#अन्यथा
 
-asmlinkage long parisc_truncate64(const char __user * path,
-					unsigned int high, unsigned int low)
-{
-	return ksys_truncate(path, (loff_t)high << 32 | low);
-}
+यंत्रlinkage दीर्घ parisc_truncate64(स्थिर अक्षर __user * path,
+					अचिन्हित पूर्णांक high, अचिन्हित पूर्णांक low)
+अणु
+	वापस ksys_truncate(path, (loff_t)high << 32 | low);
+पूर्ण
 
-asmlinkage long parisc_ftruncate64(unsigned int fd,
-					unsigned int high, unsigned int low)
-{
-	return sys_ftruncate64(fd, (loff_t)high << 32 | low);
-}
-#endif
+यंत्रlinkage दीर्घ parisc_ftruncate64(अचिन्हित पूर्णांक fd,
+					अचिन्हित पूर्णांक high, अचिन्हित पूर्णांक low)
+अणु
+	वापस sys_ftruncate64(fd, (loff_t)high << 32 | low);
+पूर्ण
+#पूर्ण_अगर
 
-asmlinkage ssize_t parisc_pread64(unsigned int fd, char __user *buf, size_t count,
-					unsigned int high, unsigned int low)
-{
-	return ksys_pread64(fd, buf, count, (loff_t)high << 32 | low);
-}
+यंत्रlinkage sमाप_प्रकार parisc_pपढ़ो64(अचिन्हित पूर्णांक fd, अक्षर __user *buf, माप_प्रकार count,
+					अचिन्हित पूर्णांक high, अचिन्हित पूर्णांक low)
+अणु
+	वापस ksys_pपढ़ो64(fd, buf, count, (loff_t)high << 32 | low);
+पूर्ण
 
-asmlinkage ssize_t parisc_pwrite64(unsigned int fd, const char __user *buf,
-			size_t count, unsigned int high, unsigned int low)
-{
-	return ksys_pwrite64(fd, buf, count, (loff_t)high << 32 | low);
-}
+यंत्रlinkage sमाप_प्रकार parisc_pग_लिखो64(अचिन्हित पूर्णांक fd, स्थिर अक्षर __user *buf,
+			माप_प्रकार count, अचिन्हित पूर्णांक high, अचिन्हित पूर्णांक low)
+अणु
+	वापस ksys_pग_लिखो64(fd, buf, count, (loff_t)high << 32 | low);
+पूर्ण
 
-asmlinkage ssize_t parisc_readahead(int fd, unsigned int high, unsigned int low,
-		                    size_t count)
-{
-	return ksys_readahead(fd, (loff_t)high << 32 | low, count);
-}
+यंत्रlinkage sमाप_प्रकार parisc_पढ़ोahead(पूर्णांक fd, अचिन्हित पूर्णांक high, अचिन्हित पूर्णांक low,
+		                    माप_प्रकार count)
+अणु
+	वापस ksys_पढ़ोahead(fd, (loff_t)high << 32 | low, count);
+पूर्ण
 
-asmlinkage long parisc_fadvise64_64(int fd,
-			unsigned int high_off, unsigned int low_off,
-			unsigned int high_len, unsigned int low_len, int advice)
-{
-	return ksys_fadvise64_64(fd, (loff_t)high_off << 32 | low_off,
+यंत्रlinkage दीर्घ parisc_fadvise64_64(पूर्णांक fd,
+			अचिन्हित पूर्णांक high_off, अचिन्हित पूर्णांक low_off,
+			अचिन्हित पूर्णांक high_len, अचिन्हित पूर्णांक low_len, पूर्णांक advice)
+अणु
+	वापस ksys_fadvise64_64(fd, (loff_t)high_off << 32 | low_off,
 			(loff_t)high_len << 32 | low_len, advice);
-}
+पूर्ण
 
-asmlinkage long parisc_sync_file_range(int fd,
+यंत्रlinkage दीर्घ parisc_sync_file_range(पूर्णांक fd,
 			u32 hi_off, u32 lo_off, u32 hi_nbytes, u32 lo_nbytes,
-			unsigned int flags)
-{
-	return ksys_sync_file_range(fd, (loff_t)hi_off << 32 | lo_off,
+			अचिन्हित पूर्णांक flags)
+अणु
+	वापस ksys_sync_file_range(fd, (loff_t)hi_off << 32 | lo_off,
 			(loff_t)hi_nbytes << 32 | lo_nbytes, flags);
-}
+पूर्ण
 
-asmlinkage long parisc_fallocate(int fd, int mode, u32 offhi, u32 offlo,
+यंत्रlinkage दीर्घ parisc_fallocate(पूर्णांक fd, पूर्णांक mode, u32 offhi, u32 offlo,
 				u32 lenhi, u32 lenlo)
-{
-	return ksys_fallocate(fd, mode, ((u64)offhi << 32) | offlo,
+अणु
+	वापस ksys_fallocate(fd, mode, ((u64)offhi << 32) | offlo,
 			      ((u64)lenhi << 32) | lenlo);
-}
+पूर्ण
 
-long parisc_personality(unsigned long personality)
-{
-	long err;
+दीर्घ parisc_personality(अचिन्हित दीर्घ personality)
+अणु
+	दीर्घ err;
 
-	if (personality(current->personality) == PER_LINUX32
+	अगर (personality(current->personality) == PER_LINUX32
 	    && personality(personality) == PER_LINUX)
 		personality = (personality & ~PER_MASK) | PER_LINUX32;
 
 	err = sys_personality(personality);
-	if (personality(err) == PER_LINUX32)
+	अगर (personality(err) == PER_LINUX32)
 		err = (err & ~PER_MASK) | PER_LINUX;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Up to kernel v5.9 we defined O_NONBLOCK as 000200004,
@@ -404,62 +405,62 @@ long parisc_personality(unsigned long personality)
  * XXX: Remove those in year 2022 (or later)?
  */
 
-#define O_NONBLOCK_OLD		000200004
-#define O_NONBLOCK_MASK_OUT	(O_NONBLOCK_OLD & ~O_NONBLOCK)
+#घोषणा O_NONBLOCK_OLD		000200004
+#घोषणा O_NONBLOCK_MASK_OUT	(O_NONBLOCK_OLD & ~O_NONBLOCK)
 
-static int FIX_O_NONBLOCK(int flags)
-{
-	if (flags & O_NONBLOCK_MASK_OUT) {
-		struct task_struct *tsk = current;
+अटल पूर्णांक FIX_O_NONBLOCK(पूर्णांक flags)
+अणु
+	अगर (flags & O_NONBLOCK_MASK_OUT) अणु
+		काष्ठा task_काष्ठा *tsk = current;
 		pr_warn_once("%s(%d) uses a deprecated O_NONBLOCK value.\n",
 			tsk->comm, tsk->pid);
-	}
-	return flags & ~O_NONBLOCK_MASK_OUT;
-}
+	पूर्ण
+	वापस flags & ~O_NONBLOCK_MASK_OUT;
+पूर्ण
 
-asmlinkage long parisc_timerfd_create(int clockid, int flags)
-{
+यंत्रlinkage दीर्घ parisc_समयrfd_create(पूर्णांक घड़ीid, पूर्णांक flags)
+अणु
 	flags = FIX_O_NONBLOCK(flags);
-	return sys_timerfd_create(clockid, flags);
-}
+	वापस sys_समयrfd_create(घड़ीid, flags);
+पूर्ण
 
-asmlinkage long parisc_signalfd4(int ufd, sigset_t __user *user_mask,
-	size_t sizemask, int flags)
-{
+यंत्रlinkage दीर्घ parisc_संकेतfd4(पूर्णांक ufd, sigset_t __user *user_mask,
+	माप_प्रकार sizemask, पूर्णांक flags)
+अणु
 	flags = FIX_O_NONBLOCK(flags);
-	return sys_signalfd4(ufd, user_mask, sizemask, flags);
-}
+	वापस sys_संकेतfd4(ufd, user_mask, sizemask, flags);
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-asmlinkage long parisc_compat_signalfd4(int ufd,
+#अगर_घोषित CONFIG_COMPAT
+यंत्रlinkage दीर्घ parisc_compat_संकेतfd4(पूर्णांक ufd,
 	compat_sigset_t __user *user_mask,
-	compat_size_t sizemask, int flags)
-{
+	compat_माप_प्रकार sizemask, पूर्णांक flags)
+अणु
 	flags = FIX_O_NONBLOCK(flags);
-	return compat_sys_signalfd4(ufd, user_mask, sizemask, flags);
-}
-#endif
+	वापस compat_sys_संकेतfd4(ufd, user_mask, sizemask, flags);
+पूर्ण
+#पूर्ण_अगर
 
-asmlinkage long parisc_eventfd2(unsigned int count, int flags)
-{
+यंत्रlinkage दीर्घ parisc_eventfd2(अचिन्हित पूर्णांक count, पूर्णांक flags)
+अणु
 	flags = FIX_O_NONBLOCK(flags);
-	return sys_eventfd2(count, flags);
-}
+	वापस sys_eventfd2(count, flags);
+पूर्ण
 
-asmlinkage long parisc_userfaultfd(int flags)
-{
+यंत्रlinkage दीर्घ parisc_userfaultfd(पूर्णांक flags)
+अणु
 	flags = FIX_O_NONBLOCK(flags);
-	return sys_userfaultfd(flags);
-}
+	वापस sys_userfaultfd(flags);
+पूर्ण
 
-asmlinkage long parisc_pipe2(int __user *fildes, int flags)
-{
+यंत्रlinkage दीर्घ parisc_pipe2(पूर्णांक __user *fildes, पूर्णांक flags)
+अणु
 	flags = FIX_O_NONBLOCK(flags);
-	return sys_pipe2(fildes, flags);
-}
+	वापस sys_pipe2(fildes, flags);
+पूर्ण
 
-asmlinkage long parisc_inotify_init1(int flags)
-{
+यंत्रlinkage दीर्घ parisc_inotअगरy_init1(पूर्णांक flags)
+अणु
 	flags = FIX_O_NONBLOCK(flags);
-	return sys_inotify_init1(flags);
-}
+	वापस sys_inotअगरy_init1(flags);
+पूर्ण

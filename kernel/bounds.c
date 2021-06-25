@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Generate definitions needed by the preprocessor.
- * This code generates raw asm output which is post-processed
- * to extract and format the required data.
+ * This code generates raw यंत्र output which is post-processed
+ * to extract and क्रमmat the required data.
  */
 
-#define __GENERATING_BOUNDS_H
-/* Include headers that define the enum constants of interest */
-#include <linux/page-flags.h>
-#include <linux/mmzone.h>
-#include <linux/kbuild.h>
-#include <linux/log2.h>
-#include <linux/spinlock_types.h>
+#घोषणा __GENERATING_BOUNDS_H
+/* Include headers that define the क्रमागत स्थिरants of पूर्णांकerest */
+#समावेश <linux/page-flags.h>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/kbuild.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/spinlock_types.h>
 
-int main(void)
-{
-	/* The enum constants to put into include/generated/bounds.h */
+पूर्णांक मुख्य(व्योम)
+अणु
+	/* The क्रमागत स्थिरants to put पूर्णांकo include/generated/bounds.h */
 	DEFINE(NR_PAGEFLAGS, __NR_PAGEFLAGS);
 	DEFINE(MAX_NR_ZONES, __MAX_NR_ZONES);
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	DEFINE(NR_CPUS_BITS, ilog2(CONFIG_NR_CPUS));
-#endif
-	DEFINE(SPINLOCK_SIZE, sizeof(spinlock_t));
-	/* End of constants */
+#पूर्ण_अगर
+	DEFINE(SPINLOCK_SIZE, माप(spinlock_t));
+	/* End of स्थिरants */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

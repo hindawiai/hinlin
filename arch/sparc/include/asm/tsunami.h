@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * tsunami.h:  Module specific definitions for Tsunami V8 Sparcs
+ * tsunami.h:  Module specअगरic definitions क्रम Tsunami V8 Sparcs
  *
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  */
 
-#ifndef _SPARC_TSUNAMI_H
-#define _SPARC_TSUNAMI_H
+#अगर_अघोषित _SPARC_TSUNAMI_H
+#घोषणा _SPARC_TSUNAMI_H
 
-#include <asm/asi.h>
+#समावेश <यंत्र/asi.h>
 
-/* The MMU control register on the Tsunami:
+/* The MMU control रेजिस्टर on the Tsunami:
  *
  * -----------------------------------------------------------------------
  * | implvers |SW|AV|DV|MV| RSV |PC|ITD|ALC| RSV |PE| RC |IE|DE|RSV|NF|ME|
@@ -26,40 +27,40 @@
  * ALC: Alternate Cacheable
  * PE: Parity Enable   0=off 1=on
  * RC: Refresh Control
- * IE: Instruction cache Enable  0=off 1=on
+ * IE: Inकाष्ठाion cache Enable  0=off 1=on
  * DE: Data cache Enable  0=off 1=on
  * NF: No Fault, same as all other SRMMUs
  * ME: MMU Enable, same as all other SRMMUs
  */
 
-#define TSUNAMI_SW        0x00800000
-#define TSUNAMI_AV        0x00400000
-#define TSUNAMI_DV        0x00200000
-#define TSUNAMI_MV        0x00100000
-#define TSUNAMI_PC        0x00020000
-#define TSUNAMI_ITD       0x00010000
-#define TSUNAMI_ALC       0x00008000
-#define TSUNAMI_PE        0x00001000
-#define TSUNAMI_RCMASK    0x00000C00
-#define TSUNAMI_IENAB     0x00000200
-#define TSUNAMI_DENAB     0x00000100
-#define TSUNAMI_NF        0x00000002
-#define TSUNAMI_ME        0x00000001
+#घोषणा TSUNAMI_SW        0x00800000
+#घोषणा TSUNAMI_AV        0x00400000
+#घोषणा TSUNAMI_DV        0x00200000
+#घोषणा TSUNAMI_MV        0x00100000
+#घोषणा TSUNAMI_PC        0x00020000
+#घोषणा TSUNAMI_ITD       0x00010000
+#घोषणा TSUNAMI_ALC       0x00008000
+#घोषणा TSUNAMI_PE        0x00001000
+#घोषणा TSUNAMI_RCMASK    0x00000C00
+#घोषणा TSUNAMI_IENAB     0x00000200
+#घोषणा TSUNAMI_DENAB     0x00000100
+#घोषणा TSUNAMI_NF        0x00000002
+#घोषणा TSUNAMI_ME        0x00000001
 
-static inline void tsunami_flush_icache(void)
-{
-	__asm__ __volatile__("sta %%g0, [%%g0] %0\n\t"
-			     : /* no outputs */
+अटल अंतरभूत व्योम tsunami_flush_icache(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__("sta %%g0, [%%g0] %0\n\t"
+			     : /* no outमाला_दो */
 			     : "i" (ASI_M_IC_FLCLEAR)
 			     : "memory");
-}
+पूर्ण
 
-static inline void tsunami_flush_dcache(void)
-{
-	__asm__ __volatile__("sta %%g0, [%%g0] %0\n\t"
-			     : /* no outputs */
+अटल अंतरभूत व्योम tsunami_flush_dcache(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__("sta %%g0, [%%g0] %0\n\t"
+			     : /* no outमाला_दो */
 			     : "i" (ASI_M_DC_FLCLEAR)
 			     : "memory");
-}
+पूर्ण
 
-#endif /* !(_SPARC_TSUNAMI_H) */
+#पूर्ण_अगर /* !(_SPARC_TSUNAMI_H) */

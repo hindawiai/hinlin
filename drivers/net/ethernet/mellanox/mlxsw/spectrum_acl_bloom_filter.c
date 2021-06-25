@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2018 Mellanox Technologies. All rights reserved */
 
-#include <linux/errno.h>
-#include <linux/gfp.h>
-#include <linux/kernel.h>
-#include <linux/refcount.h>
-#include <linux/mutex.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gfp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/mutex.h>
 
-#include "spectrum.h"
-#include "spectrum_acl_tcam.h"
+#समावेश "spectrum.h"
+#समावेश "spectrum_acl_tcam.h"
 
-struct mlxsw_sp_acl_bf {
-	struct mutex lock; /* Protects Bloom Filter updates. */
-	unsigned int bank_size;
+काष्ठा mlxsw_sp_acl_bf अणु
+	काष्ठा mutex lock; /* Protects Bloom Filter updates. */
+	अचिन्हित पूर्णांक bank_size;
 	refcount_t refcnt[];
-};
+पूर्ण;
 
 /* Bloom filter uses a crc-16 hash over chunks of data which contain 4 key
  * blocks, eRP ID and region ID. In Spectrum-2, region key is combined of up to
@@ -26,8 +27,8 @@ struct mlxsw_sp_acl_bf {
  * | Chunk 2 Key blocks 11-8 | Chunk 1 Key blocks 7-4 | Chunk 0 Key blocks 3-0 |
  * +-------------------------+------------------------+------------------------+
  */
-#define MLXSW_BLOOM_KEY_CHUNKS 3
-#define MLXSW_BLOOM_KEY_LEN 69
+#घोषणा MLXSW_BLOOM_KEY_CHUNKS 3
+#घोषणा MLXSW_BLOOM_KEY_LEN 69
 
 /* Each chunk size is 23 bytes. 18 bytes of it contain 4 key blocks, each is
  * 36 bits, 2 bytes which hold eRP ID and region ID, and 3 bytes of zero
@@ -42,31 +43,31 @@ struct mlxsw_sp_acl_bf {
  * |    0    | region ID |  eRP ID  |      4 Key blocks (18 Bytes)      |
  * +---------+-----------+----------+-----------------------------------+
  */
-#define MLXSW_BLOOM_CHUNK_PAD_BYTES 3
-#define MLXSW_BLOOM_CHUNK_KEY_BYTES 18
-#define MLXSW_BLOOM_KEY_CHUNK_BYTES 23
+#घोषणा MLXSW_BLOOM_CHUNK_PAD_BYTES 3
+#घोषणा MLXSW_BLOOM_CHUNK_KEY_BYTES 18
+#घोषणा MLXSW_BLOOM_KEY_CHUNK_BYTES 23
 
 /* The offset of the key block within a chunk is 5 bytes as it comes after
  * 3 bytes of zero padding and 16 bits of region ID and eRP ID.
  */
-#define MLXSW_BLOOM_CHUNK_KEY_OFFSET 5
+#घोषणा MLXSW_BLOOM_CHUNK_KEY_OFFSET 5
 
 /* Each chunk contains 4 key blocks. Chunk 2 uses key blocks 11-8,
  * and we need to populate it with 4 key blocks copied from the entry encoded
  * key. Since the encoded key contains a padding, key block 11 starts at offset
  * 2. block 7 that is used in chunk 1 starts at offset 20 as 4 key blocks take
  * 18 bytes.
- * This array defines key offsets for easy access when copying key blocks from
+ * This array defines key offsets क्रम easy access when copying key blocks from
  * entry key to Bloom filter chunk.
  */
-static const u8 chunk_key_offsets[MLXSW_BLOOM_KEY_CHUNKS] = {2, 20, 38};
+अटल स्थिर u8 chunk_key_offsets[MLXSW_BLOOM_KEY_CHUNKS] = अणु2, 20, 38पूर्ण;
 
 /* This table is just the CRC of each possible byte. It is
- * computed, Msbit first, for the Bloom filter polynomial
+ * computed, Msbit first, क्रम the Bloom filter polynomial
  * which is 0x8529 (1 + x^3 + x^5 + x^8 + x^10 + x^15 and
  * the implicit x^16).
  */
-static const u16 mlxsw_sp_acl_bf_crc_tab[256] = {
+अटल स्थिर u16 mlxsw_sp_acl_bf_crc_tab[256] = अणु
 0x0000, 0x8529, 0x8f7b, 0x0a52, 0x9bdf, 0x1ef6, 0x14a4, 0x918d,
 0xb297, 0x37be, 0x3dec, 0xb8c5, 0x2948, 0xac61, 0xa633, 0x231a,
 0xe007, 0x652e, 0x6f7c, 0xea55, 0x7bd8, 0xfef1, 0xf4a3, 0x718a,
@@ -99,80 +100,80 @@ static const u16 mlxsw_sp_acl_bf_crc_tab[256] = {
 0xec4b, 0x6962, 0x6330, 0xe619, 0x7794, 0xf2bd, 0xf8ef, 0x7dc6,
 0xbedb, 0x3bf2, 0x31a0, 0xb489, 0x2504, 0xa02d, 0xaa7f, 0x2f56,
 0x0c4c, 0x8965, 0x8337, 0x061e, 0x9793, 0x12ba, 0x18e8, 0x9dc1,
-};
+पूर्ण;
 
-static u16 mlxsw_sp_acl_bf_crc_byte(u16 crc, u8 c)
-{
-	return (crc << 8) ^ mlxsw_sp_acl_bf_crc_tab[(crc >> 8) ^ c];
-}
+अटल u16 mlxsw_sp_acl_bf_crc_byte(u16 crc, u8 c)
+अणु
+	वापस (crc << 8) ^ mlxsw_sp_acl_bf_crc_tab[(crc >> 8) ^ c];
+पूर्ण
 
-static u16 mlxsw_sp_acl_bf_crc(const u8 *buffer, size_t len)
-{
+अटल u16 mlxsw_sp_acl_bf_crc(स्थिर u8 *buffer, माप_प्रकार len)
+अणु
 	u16 crc = 0;
 
-	while (len--)
+	जबतक (len--)
 		crc = mlxsw_sp_acl_bf_crc_byte(crc, *buffer++);
-	return crc;
-}
+	वापस crc;
+पूर्ण
 
-static void
-mlxsw_sp_acl_bf_key_encode(struct mlxsw_sp_acl_atcam_region *aregion,
-			   struct mlxsw_sp_acl_atcam_entry *aentry,
-			   char *output, u8 *len)
-{
-	struct mlxsw_afk_key_info *key_info = aregion->region->key_info;
+अटल व्योम
+mlxsw_sp_acl_bf_key_encode(काष्ठा mlxsw_sp_acl_atcam_region *aregion,
+			   काष्ठा mlxsw_sp_acl_atcam_entry *aentry,
+			   अक्षर *output, u8 *len)
+अणु
+	काष्ठा mlxsw_afk_key_info *key_info = aregion->region->key_info;
 	u8 chunk_index, chunk_count, block_count;
-	char *chunk = output;
+	अक्षर *chunk = output;
 	__be16 erp_region_id;
 
 	block_count = mlxsw_afk_key_info_blocks_count_get(key_info);
 	chunk_count = 1 + ((block_count - 1) >> 2);
 	erp_region_id = cpu_to_be16(aentry->ht_key.erp_id |
 				   (aregion->region->id << 4));
-	for (chunk_index = MLXSW_BLOOM_KEY_CHUNKS - chunk_count;
-	     chunk_index < MLXSW_BLOOM_KEY_CHUNKS; chunk_index++) {
-		memset(chunk, 0, MLXSW_BLOOM_CHUNK_PAD_BYTES);
-		memcpy(chunk + MLXSW_BLOOM_CHUNK_PAD_BYTES, &erp_region_id,
-		       sizeof(erp_region_id));
-		memcpy(chunk + MLXSW_BLOOM_CHUNK_KEY_OFFSET,
+	क्रम (chunk_index = MLXSW_BLOOM_KEY_CHUNKS - chunk_count;
+	     chunk_index < MLXSW_BLOOM_KEY_CHUNKS; chunk_index++) अणु
+		स_रखो(chunk, 0, MLXSW_BLOOM_CHUNK_PAD_BYTES);
+		स_नकल(chunk + MLXSW_BLOOM_CHUNK_PAD_BYTES, &erp_region_id,
+		       माप(erp_region_id));
+		स_नकल(chunk + MLXSW_BLOOM_CHUNK_KEY_OFFSET,
 		       &aentry->enc_key[chunk_key_offsets[chunk_index]],
 		       MLXSW_BLOOM_CHUNK_KEY_BYTES);
 		chunk += MLXSW_BLOOM_KEY_CHUNK_BYTES;
-	}
+	पूर्ण
 	*len = chunk_count * MLXSW_BLOOM_KEY_CHUNK_BYTES;
-}
+पूर्ण
 
-static unsigned int
-mlxsw_sp_acl_bf_rule_count_index_get(struct mlxsw_sp_acl_bf *bf,
-				     unsigned int erp_bank,
-				     unsigned int bf_index)
-{
-	return erp_bank * bf->bank_size + bf_index;
-}
+अटल अचिन्हित पूर्णांक
+mlxsw_sp_acl_bf_rule_count_index_get(काष्ठा mlxsw_sp_acl_bf *bf,
+				     अचिन्हित पूर्णांक erp_bank,
+				     अचिन्हित पूर्णांक bf_index)
+अणु
+	वापस erp_bank * bf->bank_size + bf_index;
+पूर्ण
 
-static unsigned int
-mlxsw_sp_acl_bf_index_get(struct mlxsw_sp_acl_bf *bf,
-			  struct mlxsw_sp_acl_atcam_region *aregion,
-			  struct mlxsw_sp_acl_atcam_entry *aentry)
-{
-	char bf_key[MLXSW_BLOOM_KEY_LEN];
+अटल अचिन्हित पूर्णांक
+mlxsw_sp_acl_bf_index_get(काष्ठा mlxsw_sp_acl_bf *bf,
+			  काष्ठा mlxsw_sp_acl_atcam_region *aregion,
+			  काष्ठा mlxsw_sp_acl_atcam_entry *aentry)
+अणु
+	अक्षर bf_key[MLXSW_BLOOM_KEY_LEN];
 	u8 bf_size;
 
 	mlxsw_sp_acl_bf_key_encode(aregion, aentry, bf_key, &bf_size);
-	return mlxsw_sp_acl_bf_crc(bf_key, bf_size);
-}
+	वापस mlxsw_sp_acl_bf_crc(bf_key, bf_size);
+पूर्ण
 
-int
-mlxsw_sp_acl_bf_entry_add(struct mlxsw_sp *mlxsw_sp,
-			  struct mlxsw_sp_acl_bf *bf,
-			  struct mlxsw_sp_acl_atcam_region *aregion,
-			  unsigned int erp_bank,
-			  struct mlxsw_sp_acl_atcam_entry *aentry)
-{
-	unsigned int rule_index;
-	char *peabfe_pl;
+पूर्णांक
+mlxsw_sp_acl_bf_entry_add(काष्ठा mlxsw_sp *mlxsw_sp,
+			  काष्ठा mlxsw_sp_acl_bf *bf,
+			  काष्ठा mlxsw_sp_acl_atcam_region *aregion,
+			  अचिन्हित पूर्णांक erp_bank,
+			  काष्ठा mlxsw_sp_acl_atcam_entry *aentry)
+अणु
+	अचिन्हित पूर्णांक rule_index;
+	अक्षर *peabfe_pl;
 	u16 bf_index;
-	int err;
+	पूर्णांक err;
 
 	mutex_lock(&bf->lock);
 
@@ -180,41 +181,41 @@ mlxsw_sp_acl_bf_entry_add(struct mlxsw_sp *mlxsw_sp,
 	rule_index = mlxsw_sp_acl_bf_rule_count_index_get(bf, erp_bank,
 							  bf_index);
 
-	if (refcount_inc_not_zero(&bf->refcnt[rule_index])) {
+	अगर (refcount_inc_not_zero(&bf->refcnt[rule_index])) अणु
 		err = 0;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	peabfe_pl = kmalloc(MLXSW_REG_PEABFE_LEN, GFP_KERNEL);
-	if (!peabfe_pl) {
+	peabfe_pl = kदो_स्मृति(MLXSW_REG_PEABFE_LEN, GFP_KERNEL);
+	अगर (!peabfe_pl) अणु
 		err = -ENOMEM;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	mlxsw_reg_peabfe_pack(peabfe_pl);
 	mlxsw_reg_peabfe_rec_pack(peabfe_pl, 0, 1, erp_bank, bf_index);
-	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(peabfe), peabfe_pl);
-	kfree(peabfe_pl);
-	if (err)
-		goto unlock;
+	err = mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(peabfe), peabfe_pl);
+	kमुक्त(peabfe_pl);
+	अगर (err)
+		जाओ unlock;
 
 	refcount_set(&bf->refcnt[rule_index], 1);
 	err = 0;
 
 unlock:
 	mutex_unlock(&bf->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void
-mlxsw_sp_acl_bf_entry_del(struct mlxsw_sp *mlxsw_sp,
-			  struct mlxsw_sp_acl_bf *bf,
-			  struct mlxsw_sp_acl_atcam_region *aregion,
-			  unsigned int erp_bank,
-			  struct mlxsw_sp_acl_atcam_entry *aentry)
-{
-	unsigned int rule_index;
-	char *peabfe_pl;
+व्योम
+mlxsw_sp_acl_bf_entry_del(काष्ठा mlxsw_sp *mlxsw_sp,
+			  काष्ठा mlxsw_sp_acl_bf *bf,
+			  काष्ठा mlxsw_sp_acl_atcam_region *aregion,
+			  अचिन्हित पूर्णांक erp_bank,
+			  काष्ठा mlxsw_sp_acl_atcam_entry *aentry)
+अणु
+	अचिन्हित पूर्णांक rule_index;
+	अक्षर *peabfe_pl;
 	u16 bf_index;
 
 	mutex_lock(&bf->lock);
@@ -223,47 +224,47 @@ mlxsw_sp_acl_bf_entry_del(struct mlxsw_sp *mlxsw_sp,
 	rule_index = mlxsw_sp_acl_bf_rule_count_index_get(bf, erp_bank,
 							  bf_index);
 
-	if (refcount_dec_and_test(&bf->refcnt[rule_index])) {
-		peabfe_pl = kmalloc(MLXSW_REG_PEABFE_LEN, GFP_KERNEL);
-		if (!peabfe_pl)
-			goto unlock;
+	अगर (refcount_dec_and_test(&bf->refcnt[rule_index])) अणु
+		peabfe_pl = kदो_स्मृति(MLXSW_REG_PEABFE_LEN, GFP_KERNEL);
+		अगर (!peabfe_pl)
+			जाओ unlock;
 
 		mlxsw_reg_peabfe_pack(peabfe_pl);
 		mlxsw_reg_peabfe_rec_pack(peabfe_pl, 0, 0, erp_bank, bf_index);
-		mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(peabfe), peabfe_pl);
-		kfree(peabfe_pl);
-	}
+		mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(peabfe), peabfe_pl);
+		kमुक्त(peabfe_pl);
+	पूर्ण
 
 unlock:
 	mutex_unlock(&bf->lock);
-}
+पूर्ण
 
-struct mlxsw_sp_acl_bf *
-mlxsw_sp_acl_bf_init(struct mlxsw_sp *mlxsw_sp, unsigned int num_erp_banks)
-{
-	struct mlxsw_sp_acl_bf *bf;
-	unsigned int bf_bank_size;
+काष्ठा mlxsw_sp_acl_bf *
+mlxsw_sp_acl_bf_init(काष्ठा mlxsw_sp *mlxsw_sp, अचिन्हित पूर्णांक num_erp_banks)
+अणु
+	काष्ठा mlxsw_sp_acl_bf *bf;
+	अचिन्हित पूर्णांक bf_bank_size;
 
-	if (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, ACL_MAX_BF_LOG))
-		return ERR_PTR(-EIO);
+	अगर (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, ACL_MAX_BF_LOG))
+		वापस ERR_PTR(-EIO);
 
 	/* Bloom filter size per erp_table_bank
 	 * is 2^ACL_MAX_BF_LOG
 	 */
 	bf_bank_size = 1 << MLXSW_CORE_RES_GET(mlxsw_sp->core, ACL_MAX_BF_LOG);
-	bf = kzalloc(struct_size(bf, refcnt, bf_bank_size * num_erp_banks),
+	bf = kzalloc(काष्ठा_size(bf, refcnt, bf_bank_size * num_erp_banks),
 		     GFP_KERNEL);
-	if (!bf)
-		return ERR_PTR(-ENOMEM);
+	अगर (!bf)
+		वापस ERR_PTR(-ENOMEM);
 
 	bf->bank_size = bf_bank_size;
 	mutex_init(&bf->lock);
 
-	return bf;
-}
+	वापस bf;
+पूर्ण
 
-void mlxsw_sp_acl_bf_fini(struct mlxsw_sp_acl_bf *bf)
-{
+व्योम mlxsw_sp_acl_bf_fini(काष्ठा mlxsw_sp_acl_bf *bf)
+अणु
 	mutex_destroy(&bf->lock);
-	kfree(bf);
-}
+	kमुक्त(bf);
+पूर्ण

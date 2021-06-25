@@ -1,243 +1,244 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2007-2008 Advanced Micro Devices, Inc.
  * Author: Joerg Roedel <jroedel@suse.de>
  */
 
-#define pr_fmt(fmt)    "iommu: " fmt
+#घोषणा pr_fmt(fmt)    "iommu: " fmt
 
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/bug.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/iommu.h>
-#include <linux/idr.h>
-#include <linux/notifier.h>
-#include <linux/err.h>
-#include <linux/pci.h>
-#include <linux/bitops.h>
-#include <linux/property.h>
-#include <linux/fsl/mc.h>
-#include <linux/module.h>
-#include <trace/events/iommu.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/iommu.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/err.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/property.h>
+#समावेश <linux/fsl/mc.h>
+#समावेश <linux/module.h>
+#समावेश <trace/events/iommu.h>
 
-static struct kset *iommu_group_kset;
-static DEFINE_IDA(iommu_group_ida);
+अटल काष्ठा kset *iommu_group_kset;
+अटल DEFINE_IDA(iommu_group_ida);
 
-static unsigned int iommu_def_domain_type __read_mostly;
-static bool iommu_dma_strict __read_mostly = true;
-static u32 iommu_cmd_line __read_mostly;
+अटल अचिन्हित पूर्णांक iommu_def_करोमुख्य_type __पढ़ो_mostly;
+अटल bool iommu_dma_strict __पढ़ो_mostly = true;
+अटल u32 iommu_cmd_line __पढ़ो_mostly;
 
-struct iommu_group {
-	struct kobject kobj;
-	struct kobject *devices_kobj;
-	struct list_head devices;
-	struct mutex mutex;
-	struct blocking_notifier_head notifier;
-	void *iommu_data;
-	void (*iommu_data_release)(void *iommu_data);
-	char *name;
-	int id;
-	struct iommu_domain *default_domain;
-	struct iommu_domain *domain;
-	struct list_head entry;
-};
+काष्ठा iommu_group अणु
+	काष्ठा kobject kobj;
+	काष्ठा kobject *devices_kobj;
+	काष्ठा list_head devices;
+	काष्ठा mutex mutex;
+	काष्ठा blocking_notअगरier_head notअगरier;
+	व्योम *iommu_data;
+	व्योम (*iommu_data_release)(व्योम *iommu_data);
+	अक्षर *name;
+	पूर्णांक id;
+	काष्ठा iommu_करोमुख्य *शेष_करोमुख्य;
+	काष्ठा iommu_करोमुख्य *करोमुख्य;
+	काष्ठा list_head entry;
+पूर्ण;
 
-struct group_device {
-	struct list_head list;
-	struct device *dev;
-	char *name;
-};
+काष्ठा group_device अणु
+	काष्ठा list_head list;
+	काष्ठा device *dev;
+	अक्षर *name;
+पूर्ण;
 
-struct iommu_group_attribute {
-	struct attribute attr;
-	ssize_t (*show)(struct iommu_group *group, char *buf);
-	ssize_t (*store)(struct iommu_group *group,
-			 const char *buf, size_t count);
-};
+काष्ठा iommu_group_attribute अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा iommu_group *group, अक्षर *buf);
+	sमाप_प्रकार (*store)(काष्ठा iommu_group *group,
+			 स्थिर अक्षर *buf, माप_प्रकार count);
+पूर्ण;
 
-static const char * const iommu_group_resv_type_string[] = {
-	[IOMMU_RESV_DIRECT]			= "direct",
-	[IOMMU_RESV_DIRECT_RELAXABLE]		= "direct-relaxable",
+अटल स्थिर अक्षर * स्थिर iommu_group_resv_type_string[] = अणु
+	[IOMMU_RESV_सूचीECT]			= "direct",
+	[IOMMU_RESV_सूचीECT_RELAXABLE]		= "direct-relaxable",
 	[IOMMU_RESV_RESERVED]			= "reserved",
 	[IOMMU_RESV_MSI]			= "msi",
 	[IOMMU_RESV_SW_MSI]			= "msi",
-};
+पूर्ण;
 
-#define IOMMU_CMD_LINE_DMA_API		BIT(0)
-#define IOMMU_CMD_LINE_STRICT		BIT(1)
+#घोषणा IOMMU_CMD_LINE_DMA_API		BIT(0)
+#घोषणा IOMMU_CMD_LINE_STRICT		BIT(1)
 
-static int iommu_alloc_default_domain(struct iommu_group *group,
-				      struct device *dev);
-static struct iommu_domain *__iommu_domain_alloc(struct bus_type *bus,
-						 unsigned type);
-static int __iommu_attach_device(struct iommu_domain *domain,
-				 struct device *dev);
-static int __iommu_attach_group(struct iommu_domain *domain,
-				struct iommu_group *group);
-static void __iommu_detach_group(struct iommu_domain *domain,
-				 struct iommu_group *group);
-static int iommu_create_device_direct_mappings(struct iommu_group *group,
-					       struct device *dev);
-static struct iommu_group *iommu_group_get_for_dev(struct device *dev);
-static ssize_t iommu_group_store_type(struct iommu_group *group,
-				      const char *buf, size_t count);
+अटल पूर्णांक iommu_alloc_शेष_करोमुख्य(काष्ठा iommu_group *group,
+				      काष्ठा device *dev);
+अटल काष्ठा iommu_करोमुख्य *__iommu_करोमुख्य_alloc(काष्ठा bus_type *bus,
+						 अचिन्हित type);
+अटल पूर्णांक __iommu_attach_device(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				 काष्ठा device *dev);
+अटल पूर्णांक __iommu_attach_group(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				काष्ठा iommu_group *group);
+अटल व्योम __iommu_detach_group(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				 काष्ठा iommu_group *group);
+अटल पूर्णांक iommu_create_device_direct_mappings(काष्ठा iommu_group *group,
+					       काष्ठा device *dev);
+अटल काष्ठा iommu_group *iommu_group_get_क्रम_dev(काष्ठा device *dev);
+अटल sमाप_प्रकार iommu_group_store_type(काष्ठा iommu_group *group,
+				      स्थिर अक्षर *buf, माप_प्रकार count);
 
-#define IOMMU_GROUP_ATTR(_name, _mode, _show, _store)		\
-struct iommu_group_attribute iommu_group_attr_##_name =		\
+#घोषणा IOMMU_GROUP_ATTR(_name, _mode, _show, _store)		\
+काष्ठा iommu_group_attribute iommu_group_attr_##_name =		\
 	__ATTR(_name, _mode, _show, _store)
 
-#define to_iommu_group_attr(_attr)	\
-	container_of(_attr, struct iommu_group_attribute, attr)
-#define to_iommu_group(_kobj)		\
-	container_of(_kobj, struct iommu_group, kobj)
+#घोषणा to_iommu_group_attr(_attr)	\
+	container_of(_attr, काष्ठा iommu_group_attribute, attr)
+#घोषणा to_iommu_group(_kobj)		\
+	container_of(_kobj, काष्ठा iommu_group, kobj)
 
-static LIST_HEAD(iommu_device_list);
-static DEFINE_SPINLOCK(iommu_device_lock);
+अटल LIST_HEAD(iommu_device_list);
+अटल DEFINE_SPINLOCK(iommu_device_lock);
 
 /*
- * Use a function instead of an array here because the domain-type is a
+ * Use a function instead of an array here because the करोमुख्य-type is a
  * bit-field, so an array would waste memory.
  */
-static const char *iommu_domain_type_str(unsigned int t)
-{
-	switch (t) {
-	case IOMMU_DOMAIN_BLOCKED:
-		return "Blocked";
-	case IOMMU_DOMAIN_IDENTITY:
-		return "Passthrough";
-	case IOMMU_DOMAIN_UNMANAGED:
-		return "Unmanaged";
-	case IOMMU_DOMAIN_DMA:
-		return "Translated";
-	default:
-		return "Unknown";
-	}
-}
+अटल स्थिर अक्षर *iommu_करोमुख्य_type_str(अचिन्हित पूर्णांक t)
+अणु
+	चयन (t) अणु
+	हाल IOMMU_DOMAIN_BLOCKED:
+		वापस "Blocked";
+	हाल IOMMU_DOMAIN_IDENTITY:
+		वापस "Passthrough";
+	हाल IOMMU_DOMAIN_UNMANAGED:
+		वापस "Unmanaged";
+	हाल IOMMU_DOMAIN_DMA:
+		वापस "Translated";
+	शेष:
+		वापस "Unknown";
+	पूर्ण
+पूर्ण
 
-static int __init iommu_subsys_init(void)
-{
-	if (!(iommu_cmd_line & IOMMU_CMD_LINE_DMA_API)) {
-		if (IS_ENABLED(CONFIG_IOMMU_DEFAULT_PASSTHROUGH))
-			iommu_set_default_passthrough(false);
-		else
-			iommu_set_default_translated(false);
+अटल पूर्णांक __init iommu_subsys_init(व्योम)
+अणु
+	अगर (!(iommu_cmd_line & IOMMU_CMD_LINE_DMA_API)) अणु
+		अगर (IS_ENABLED(CONFIG_IOMMU_DEFAULT_PASSTHROUGH))
+			iommu_set_शेष_passthrough(false);
+		अन्यथा
+			iommu_set_शेष_translated(false);
 
-		if (iommu_default_passthrough() && mem_encrypt_active()) {
+		अगर (iommu_शेष_passthrough() && mem_encrypt_active()) अणु
 			pr_info("Memory encryption detected - Disabling default IOMMU Passthrough\n");
-			iommu_set_default_translated(false);
-		}
-	}
+			iommu_set_शेष_translated(false);
+		पूर्ण
+	पूर्ण
 
 	pr_info("Default domain type: %s %s\n",
-		iommu_domain_type_str(iommu_def_domain_type),
+		iommu_करोमुख्य_type_str(iommu_def_करोमुख्य_type),
 		(iommu_cmd_line & IOMMU_CMD_LINE_DMA_API) ?
 			"(set via kernel command line)" : "");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(iommu_subsys_init);
 
 /**
- * iommu_device_register() - Register an IOMMU hardware instance
- * @iommu: IOMMU handle for the instance
+ * iommu_device_रेजिस्टर() - Register an IOMMU hardware instance
+ * @iommu: IOMMU handle क्रम the instance
  * @ops:   IOMMU ops to associate with the instance
- * @hwdev: (optional) actual instance device, used for fwnode lookup
+ * @hwdev: (optional) actual instance device, used क्रम fwnode lookup
  *
  * Return: 0 on success, or an error.
  */
-int iommu_device_register(struct iommu_device *iommu,
-			  const struct iommu_ops *ops, struct device *hwdev)
-{
+पूर्णांक iommu_device_रेजिस्टर(काष्ठा iommu_device *iommu,
+			  स्थिर काष्ठा iommu_ops *ops, काष्ठा device *hwdev)
+अणु
 	/* We need to be able to take module references appropriately */
-	if (WARN_ON(is_module_address((unsigned long)ops) && !ops->owner))
-		return -EINVAL;
+	अगर (WARN_ON(is_module_address((अचिन्हित दीर्घ)ops) && !ops->owner))
+		वापस -EINVAL;
 
 	iommu->ops = ops;
-	if (hwdev)
+	अगर (hwdev)
 		iommu->fwnode = hwdev->fwnode;
 
 	spin_lock(&iommu_device_lock);
 	list_add_tail(&iommu->list, &iommu_device_list);
 	spin_unlock(&iommu_device_lock);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(iommu_device_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_device_रेजिस्टर);
 
-void iommu_device_unregister(struct iommu_device *iommu)
-{
+व्योम iommu_device_unरेजिस्टर(काष्ठा iommu_device *iommu)
+अणु
 	spin_lock(&iommu_device_lock);
 	list_del(&iommu->list);
 	spin_unlock(&iommu_device_lock);
-}
-EXPORT_SYMBOL_GPL(iommu_device_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_device_unरेजिस्टर);
 
-static struct dev_iommu *dev_iommu_get(struct device *dev)
-{
-	struct dev_iommu *param = dev->iommu;
+अटल काष्ठा dev_iommu *dev_iommu_get(काष्ठा device *dev)
+अणु
+	काष्ठा dev_iommu *param = dev->iommu;
 
-	if (param)
-		return param;
+	अगर (param)
+		वापस param;
 
-	param = kzalloc(sizeof(*param), GFP_KERNEL);
-	if (!param)
-		return NULL;
+	param = kzalloc(माप(*param), GFP_KERNEL);
+	अगर (!param)
+		वापस शून्य;
 
 	mutex_init(&param->lock);
 	dev->iommu = param;
-	return param;
-}
+	वापस param;
+पूर्ण
 
-static void dev_iommu_free(struct device *dev)
-{
-	iommu_fwspec_free(dev);
-	kfree(dev->iommu);
-	dev->iommu = NULL;
-}
+अटल व्योम dev_iommu_मुक्त(काष्ठा device *dev)
+अणु
+	iommu_fwspec_मुक्त(dev);
+	kमुक्त(dev->iommu);
+	dev->iommu = शून्य;
+पूर्ण
 
-static int __iommu_probe_device(struct device *dev, struct list_head *group_list)
-{
-	const struct iommu_ops *ops = dev->bus->iommu_ops;
-	struct iommu_device *iommu_dev;
-	struct iommu_group *group;
-	int ret;
+अटल पूर्णांक __iommu_probe_device(काष्ठा device *dev, काष्ठा list_head *group_list)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = dev->bus->iommu_ops;
+	काष्ठा iommu_device *iommu_dev;
+	काष्ठा iommu_group *group;
+	पूर्णांक ret;
 
-	if (!ops)
-		return -ENODEV;
+	अगर (!ops)
+		वापस -ENODEV;
 
-	if (!dev_iommu_get(dev))
-		return -ENOMEM;
+	अगर (!dev_iommu_get(dev))
+		वापस -ENOMEM;
 
-	if (!try_module_get(ops->owner)) {
+	अगर (!try_module_get(ops->owner)) अणु
 		ret = -EINVAL;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	iommu_dev = ops->probe_device(dev);
-	if (IS_ERR(iommu_dev)) {
+	अगर (IS_ERR(iommu_dev)) अणु
 		ret = PTR_ERR(iommu_dev);
-		goto out_module_put;
-	}
+		जाओ out_module_put;
+	पूर्ण
 
 	dev->iommu->iommu_dev = iommu_dev;
 
-	group = iommu_group_get_for_dev(dev);
-	if (IS_ERR(group)) {
+	group = iommu_group_get_क्रम_dev(dev);
+	अगर (IS_ERR(group)) अणु
 		ret = PTR_ERR(group);
-		goto out_release;
-	}
+		जाओ out_release;
+	पूर्ण
 	iommu_group_put(group);
 
-	if (group_list && !group->default_domain && list_empty(&group->entry))
+	अगर (group_list && !group->शेष_करोमुख्य && list_empty(&group->entry))
 		list_add_tail(&group->entry, group_list);
 
 	iommu_device_link(iommu_dev, dev);
 
-	return 0;
+	वापस 0;
 
 out_release:
 	ops->release_device(dev);
@@ -245,166 +246,166 @@ out_release:
 out_module_put:
 	module_put(ops->owner);
 
-err_free:
-	dev_iommu_free(dev);
+err_मुक्त:
+	dev_iommu_मुक्त(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int iommu_probe_device(struct device *dev)
-{
-	const struct iommu_ops *ops = dev->bus->iommu_ops;
-	struct iommu_group *group;
-	int ret;
+पूर्णांक iommu_probe_device(काष्ठा device *dev)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = dev->bus->iommu_ops;
+	काष्ठा iommu_group *group;
+	पूर्णांक ret;
 
-	ret = __iommu_probe_device(dev, NULL);
-	if (ret)
-		goto err_out;
+	ret = __iommu_probe_device(dev, शून्य);
+	अगर (ret)
+		जाओ err_out;
 
 	group = iommu_group_get(dev);
-	if (!group) {
+	अगर (!group) अणु
 		ret = -ENODEV;
-		goto err_release;
-	}
+		जाओ err_release;
+	पूर्ण
 
 	/*
-	 * Try to allocate a default domain - needs support from the
-	 * IOMMU driver. There are still some drivers which don't
-	 * support default domains, so the return value is not yet
+	 * Try to allocate a शेष करोमुख्य - needs support from the
+	 * IOMMU driver. There are still some drivers which करोn't
+	 * support शेष करोमुख्यs, so the वापस value is not yet
 	 * checked.
 	 */
-	iommu_alloc_default_domain(group, dev);
+	iommu_alloc_शेष_करोमुख्य(group, dev);
 
-	if (group->default_domain) {
-		ret = __iommu_attach_device(group->default_domain, dev);
-		if (ret) {
+	अगर (group->शेष_करोमुख्य) अणु
+		ret = __iommu_attach_device(group->शेष_करोमुख्य, dev);
+		अगर (ret) अणु
 			iommu_group_put(group);
-			goto err_release;
-		}
-	}
+			जाओ err_release;
+		पूर्ण
+	पूर्ण
 
 	iommu_create_device_direct_mappings(group, dev);
 
 	iommu_group_put(group);
 
-	if (ops->probe_finalize)
+	अगर (ops->probe_finalize)
 		ops->probe_finalize(dev);
 
-	return 0;
+	वापस 0;
 
 err_release:
 	iommu_release_device(dev);
 
 err_out:
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-void iommu_release_device(struct device *dev)
-{
-	const struct iommu_ops *ops = dev->bus->iommu_ops;
+व्योम iommu_release_device(काष्ठा device *dev)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = dev->bus->iommu_ops;
 
-	if (!dev->iommu)
-		return;
+	अगर (!dev->iommu)
+		वापस;
 
 	iommu_device_unlink(dev->iommu->iommu_dev, dev);
 
 	ops->release_device(dev);
 
-	iommu_group_remove_device(dev);
+	iommu_group_हटाओ_device(dev);
 	module_put(ops->owner);
-	dev_iommu_free(dev);
-}
+	dev_iommu_मुक्त(dev);
+पूर्ण
 
-static int __init iommu_set_def_domain_type(char *str)
-{
+अटल पूर्णांक __init iommu_set_def_करोमुख्य_type(अक्षर *str)
+अणु
 	bool pt;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtobool(str, &pt);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (pt)
-		iommu_set_default_passthrough(true);
-	else
-		iommu_set_default_translated(true);
+	अगर (pt)
+		iommu_set_शेष_passthrough(true);
+	अन्यथा
+		iommu_set_शेष_translated(true);
 
-	return 0;
-}
-early_param("iommu.passthrough", iommu_set_def_domain_type);
+	वापस 0;
+पूर्ण
+early_param("iommu.passthrough", iommu_set_def_करोमुख्य_type);
 
-static int __init iommu_dma_setup(char *str)
-{
-	int ret = kstrtobool(str, &iommu_dma_strict);
+अटल पूर्णांक __init iommu_dma_setup(अक्षर *str)
+अणु
+	पूर्णांक ret = kstrtobool(str, &iommu_dma_strict);
 
-	if (!ret)
+	अगर (!ret)
 		iommu_cmd_line |= IOMMU_CMD_LINE_STRICT;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 early_param("iommu.strict", iommu_dma_setup);
 
-void iommu_set_dma_strict(bool strict)
-{
-	if (strict || !(iommu_cmd_line & IOMMU_CMD_LINE_STRICT))
+व्योम iommu_set_dma_strict(bool strict)
+अणु
+	अगर (strict || !(iommu_cmd_line & IOMMU_CMD_LINE_STRICT))
 		iommu_dma_strict = strict;
-}
+पूर्ण
 
-bool iommu_get_dma_strict(struct iommu_domain *domain)
-{
-	/* only allow lazy flushing for DMA domains */
-	if (domain->type == IOMMU_DOMAIN_DMA)
-		return iommu_dma_strict;
-	return true;
-}
+bool iommu_get_dma_strict(काष्ठा iommu_करोमुख्य *करोमुख्य)
+अणु
+	/* only allow lazy flushing क्रम DMA करोमुख्यs */
+	अगर (करोमुख्य->type == IOMMU_DOMAIN_DMA)
+		वापस iommu_dma_strict;
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_get_dma_strict);
 
-static ssize_t iommu_group_attr_show(struct kobject *kobj,
-				     struct attribute *__attr, char *buf)
-{
-	struct iommu_group_attribute *attr = to_iommu_group_attr(__attr);
-	struct iommu_group *group = to_iommu_group(kobj);
-	ssize_t ret = -EIO;
+अटल sमाप_प्रकार iommu_group_attr_show(काष्ठा kobject *kobj,
+				     काष्ठा attribute *__attr, अक्षर *buf)
+अणु
+	काष्ठा iommu_group_attribute *attr = to_iommu_group_attr(__attr);
+	काष्ठा iommu_group *group = to_iommu_group(kobj);
+	sमाप_प्रकार ret = -EIO;
 
-	if (attr->show)
+	अगर (attr->show)
 		ret = attr->show(group, buf);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t iommu_group_attr_store(struct kobject *kobj,
-				      struct attribute *__attr,
-				      const char *buf, size_t count)
-{
-	struct iommu_group_attribute *attr = to_iommu_group_attr(__attr);
-	struct iommu_group *group = to_iommu_group(kobj);
-	ssize_t ret = -EIO;
+अटल sमाप_प्रकार iommu_group_attr_store(काष्ठा kobject *kobj,
+				      काष्ठा attribute *__attr,
+				      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा iommu_group_attribute *attr = to_iommu_group_attr(__attr);
+	काष्ठा iommu_group *group = to_iommu_group(kobj);
+	sमाप_प्रकार ret = -EIO;
 
-	if (attr->store)
+	अगर (attr->store)
 		ret = attr->store(group, buf, count);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct sysfs_ops iommu_group_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops iommu_group_sysfs_ops = अणु
 	.show = iommu_group_attr_show,
 	.store = iommu_group_attr_store,
-};
+पूर्ण;
 
-static int iommu_group_create_file(struct iommu_group *group,
-				   struct iommu_group_attribute *attr)
-{
-	return sysfs_create_file(&group->kobj, &attr->attr);
-}
+अटल पूर्णांक iommu_group_create_file(काष्ठा iommu_group *group,
+				   काष्ठा iommu_group_attribute *attr)
+अणु
+	वापस sysfs_create_file(&group->kobj, &attr->attr);
+पूर्ण
 
-static void iommu_group_remove_file(struct iommu_group *group,
-				    struct iommu_group_attribute *attr)
-{
-	sysfs_remove_file(&group->kobj, &attr->attr);
-}
+अटल व्योम iommu_group_हटाओ_file(काष्ठा iommu_group *group,
+				    काष्ठा iommu_group_attribute *attr)
+अणु
+	sysfs_हटाओ_file(&group->kobj, &attr->attr);
+पूर्ण
 
-static ssize_t iommu_group_show_name(struct iommu_group *group, char *buf)
-{
-	return sprintf(buf, "%s\n", group->name);
-}
+अटल sमाप_प्रकार iommu_group_show_name(काष्ठा iommu_group *group, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%s\n", group->name);
+पूर्ण
 
 /**
  * iommu_insert_resv_region - Insert a new region in the
@@ -415,462 +416,462 @@ static ssize_t iommu_group_show_name(struct iommu_group *group, char *buf)
  * Elements are sorted by start address and overlapping segments
  * of the same type are merged.
  */
-static int iommu_insert_resv_region(struct iommu_resv_region *new,
-				    struct list_head *regions)
-{
-	struct iommu_resv_region *iter, *tmp, *nr, *top;
+अटल पूर्णांक iommu_insert_resv_region(काष्ठा iommu_resv_region *new,
+				    काष्ठा list_head *regions)
+अणु
+	काष्ठा iommu_resv_region *iter, *पंचांगp, *nr, *top;
 	LIST_HEAD(stack);
 
 	nr = iommu_alloc_resv_region(new->start, new->length,
 				     new->prot, new->type);
-	if (!nr)
-		return -ENOMEM;
+	अगर (!nr)
+		वापस -ENOMEM;
 
 	/* First add the new element based on start address sorting */
-	list_for_each_entry(iter, regions, list) {
-		if (nr->start < iter->start ||
+	list_क्रम_each_entry(iter, regions, list) अणु
+		अगर (nr->start < iter->start ||
 		    (nr->start == iter->start && nr->type <= iter->type))
-			break;
-	}
+			अवरोध;
+	पूर्ण
 	list_add_tail(&nr->list, &iter->list);
 
-	/* Merge overlapping segments of type nr->type in @regions, if any */
-	list_for_each_entry_safe(iter, tmp, regions, list) {
+	/* Merge overlapping segments of type nr->type in @regions, अगर any */
+	list_क्रम_each_entry_safe(iter, पंचांगp, regions, list) अणु
 		phys_addr_t top_end, iter_end = iter->start + iter->length - 1;
 
-		/* no merge needed on elements of different types than @new */
-		if (iter->type != new->type) {
+		/* no merge needed on elements of dअगरferent types than @new */
+		अगर (iter->type != new->type) अणु
 			list_move_tail(&iter->list, &stack);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* look for the last stack element of same type as @iter */
-		list_for_each_entry_reverse(top, &stack, list)
-			if (top->type == iter->type)
-				goto check_overlap;
+		/* look क्रम the last stack element of same type as @iter */
+		list_क्रम_each_entry_reverse(top, &stack, list)
+			अगर (top->type == iter->type)
+				जाओ check_overlap;
 
 		list_move_tail(&iter->list, &stack);
-		continue;
+		जारी;
 
 check_overlap:
 		top_end = top->start + top->length - 1;
 
-		if (iter->start > top_end + 1) {
+		अगर (iter->start > top_end + 1) अणु
 			list_move_tail(&iter->list, &stack);
-		} else {
+		पूर्ण अन्यथा अणु
 			top->length = max(top_end, iter_end) - top->start + 1;
 			list_del(&iter->list);
-			kfree(iter);
-		}
-	}
+			kमुक्त(iter);
+		पूर्ण
+	पूर्ण
 	list_splice(&stack, regions);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-iommu_insert_device_resv_regions(struct list_head *dev_resv_regions,
-				 struct list_head *group_resv_regions)
-{
-	struct iommu_resv_region *entry;
-	int ret = 0;
+अटल पूर्णांक
+iommu_insert_device_resv_regions(काष्ठा list_head *dev_resv_regions,
+				 काष्ठा list_head *group_resv_regions)
+अणु
+	काष्ठा iommu_resv_region *entry;
+	पूर्णांक ret = 0;
 
-	list_for_each_entry(entry, dev_resv_regions, list) {
+	list_क्रम_each_entry(entry, dev_resv_regions, list) अणु
 		ret = iommu_insert_resv_region(entry, group_resv_regions);
-		if (ret)
-			break;
-	}
-	return ret;
-}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int iommu_get_group_resv_regions(struct iommu_group *group,
-				 struct list_head *head)
-{
-	struct group_device *device;
-	int ret = 0;
+पूर्णांक iommu_get_group_resv_regions(काष्ठा iommu_group *group,
+				 काष्ठा list_head *head)
+अणु
+	काष्ठा group_device *device;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&group->mutex);
-	list_for_each_entry(device, &group->devices, list) {
-		struct list_head dev_resv_regions;
+	list_क्रम_each_entry(device, &group->devices, list) अणु
+		काष्ठा list_head dev_resv_regions;
 
 		INIT_LIST_HEAD(&dev_resv_regions);
 		iommu_get_resv_regions(device->dev, &dev_resv_regions);
 		ret = iommu_insert_device_resv_regions(&dev_resv_regions, head);
 		iommu_put_resv_regions(device->dev, &dev_resv_regions);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 	mutex_unlock(&group->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_get_group_resv_regions);
 
-static ssize_t iommu_group_show_resv_regions(struct iommu_group *group,
-					     char *buf)
-{
-	struct iommu_resv_region *region, *next;
-	struct list_head group_resv_regions;
-	char *str = buf;
+अटल sमाप_प्रकार iommu_group_show_resv_regions(काष्ठा iommu_group *group,
+					     अक्षर *buf)
+अणु
+	काष्ठा iommu_resv_region *region, *next;
+	काष्ठा list_head group_resv_regions;
+	अक्षर *str = buf;
 
 	INIT_LIST_HEAD(&group_resv_regions);
 	iommu_get_group_resv_regions(group, &group_resv_regions);
 
-	list_for_each_entry_safe(region, next, &group_resv_regions, list) {
-		str += sprintf(str, "0x%016llx 0x%016llx %s\n",
-			       (long long int)region->start,
-			       (long long int)(region->start +
+	list_क्रम_each_entry_safe(region, next, &group_resv_regions, list) अणु
+		str += प्र_लिखो(str, "0x%016llx 0x%016llx %s\n",
+			       (दीर्घ दीर्घ पूर्णांक)region->start,
+			       (दीर्घ दीर्घ पूर्णांक)(region->start +
 						region->length - 1),
 			       iommu_group_resv_type_string[region->type]);
-		kfree(region);
-	}
+		kमुक्त(region);
+	पूर्ण
 
-	return (str - buf);
-}
+	वापस (str - buf);
+पूर्ण
 
-static ssize_t iommu_group_show_type(struct iommu_group *group,
-				     char *buf)
-{
-	char *type = "unknown\n";
+अटल sमाप_प्रकार iommu_group_show_type(काष्ठा iommu_group *group,
+				     अक्षर *buf)
+अणु
+	अक्षर *type = "unknown\n";
 
 	mutex_lock(&group->mutex);
-	if (group->default_domain) {
-		switch (group->default_domain->type) {
-		case IOMMU_DOMAIN_BLOCKED:
+	अगर (group->शेष_करोमुख्य) अणु
+		चयन (group->शेष_करोमुख्य->type) अणु
+		हाल IOMMU_DOMAIN_BLOCKED:
 			type = "blocked\n";
-			break;
-		case IOMMU_DOMAIN_IDENTITY:
+			अवरोध;
+		हाल IOMMU_DOMAIN_IDENTITY:
 			type = "identity\n";
-			break;
-		case IOMMU_DOMAIN_UNMANAGED:
+			अवरोध;
+		हाल IOMMU_DOMAIN_UNMANAGED:
 			type = "unmanaged\n";
-			break;
-		case IOMMU_DOMAIN_DMA:
+			अवरोध;
+		हाल IOMMU_DOMAIN_DMA:
 			type = "DMA\n";
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&group->mutex);
-	strcpy(buf, type);
+	म_नकल(buf, type);
 
-	return strlen(type);
-}
+	वापस म_माप(type);
+पूर्ण
 
-static IOMMU_GROUP_ATTR(name, S_IRUGO, iommu_group_show_name, NULL);
+अटल IOMMU_GROUP_ATTR(name, S_IRUGO, iommu_group_show_name, शून्य);
 
-static IOMMU_GROUP_ATTR(reserved_regions, 0444,
-			iommu_group_show_resv_regions, NULL);
+अटल IOMMU_GROUP_ATTR(reserved_regions, 0444,
+			iommu_group_show_resv_regions, शून्य);
 
-static IOMMU_GROUP_ATTR(type, 0644, iommu_group_show_type,
+अटल IOMMU_GROUP_ATTR(type, 0644, iommu_group_show_type,
 			iommu_group_store_type);
 
-static void iommu_group_release(struct kobject *kobj)
-{
-	struct iommu_group *group = to_iommu_group(kobj);
+अटल व्योम iommu_group_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा iommu_group *group = to_iommu_group(kobj);
 
 	pr_debug("Releasing group %d\n", group->id);
 
-	if (group->iommu_data_release)
+	अगर (group->iommu_data_release)
 		group->iommu_data_release(group->iommu_data);
 
-	ida_simple_remove(&iommu_group_ida, group->id);
+	ida_simple_हटाओ(&iommu_group_ida, group->id);
 
-	if (group->default_domain)
-		iommu_domain_free(group->default_domain);
+	अगर (group->शेष_करोमुख्य)
+		iommu_करोमुख्य_मुक्त(group->शेष_करोमुख्य);
 
-	kfree(group->name);
-	kfree(group);
-}
+	kमुक्त(group->name);
+	kमुक्त(group);
+पूर्ण
 
-static struct kobj_type iommu_group_ktype = {
+अटल काष्ठा kobj_type iommu_group_ktype = अणु
 	.sysfs_ops = &iommu_group_sysfs_ops,
 	.release = iommu_group_release,
-};
+पूर्ण;
 
 /**
  * iommu_group_alloc - Allocate a new group
  *
  * This function is called by an iommu driver to allocate a new iommu
  * group.  The iommu group represents the minimum granularity of the iommu.
- * Upon successful return, the caller holds a reference to the supplied
+ * Upon successful वापस, the caller holds a reference to the supplied
  * group in order to hold the group until devices are added.  Use
  * iommu_group_put() to release this extra reference count, allowing the
- * group to be automatically reclaimed once it has no devices or external
+ * group to be स्वतःmatically reclaimed once it has no devices or बाह्यal
  * references.
  */
-struct iommu_group *iommu_group_alloc(void)
-{
-	struct iommu_group *group;
-	int ret;
+काष्ठा iommu_group *iommu_group_alloc(व्योम)
+अणु
+	काष्ठा iommu_group *group;
+	पूर्णांक ret;
 
-	group = kzalloc(sizeof(*group), GFP_KERNEL);
-	if (!group)
-		return ERR_PTR(-ENOMEM);
+	group = kzalloc(माप(*group), GFP_KERNEL);
+	अगर (!group)
+		वापस ERR_PTR(-ENOMEM);
 
 	group->kobj.kset = iommu_group_kset;
 	mutex_init(&group->mutex);
 	INIT_LIST_HEAD(&group->devices);
 	INIT_LIST_HEAD(&group->entry);
-	BLOCKING_INIT_NOTIFIER_HEAD(&group->notifier);
+	BLOCKING_INIT_NOTIFIER_HEAD(&group->notअगरier);
 
 	ret = ida_simple_get(&iommu_group_ida, 0, 0, GFP_KERNEL);
-	if (ret < 0) {
-		kfree(group);
-		return ERR_PTR(ret);
-	}
+	अगर (ret < 0) अणु
+		kमुक्त(group);
+		वापस ERR_PTR(ret);
+	पूर्ण
 	group->id = ret;
 
 	ret = kobject_init_and_add(&group->kobj, &iommu_group_ktype,
-				   NULL, "%d", group->id);
-	if (ret) {
-		ida_simple_remove(&iommu_group_ida, group->id);
+				   शून्य, "%d", group->id);
+	अगर (ret) अणु
+		ida_simple_हटाओ(&iommu_group_ida, group->id);
 		kobject_put(&group->kobj);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	group->devices_kobj = kobject_create_and_add("devices", &group->kobj);
-	if (!group->devices_kobj) {
-		kobject_put(&group->kobj); /* triggers .release & free */
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (!group->devices_kobj) अणु
+		kobject_put(&group->kobj); /* triggers .release & मुक्त */
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	/*
 	 * The devices_kobj holds a reference on the group kobject, so
-	 * as long as that exists so will the group.  We can therefore
-	 * use the devices_kobj for reference counting.
+	 * as दीर्घ as that exists so will the group.  We can thereक्रमe
+	 * use the devices_kobj क्रम reference counting.
 	 */
 	kobject_put(&group->kobj);
 
 	ret = iommu_group_create_file(group,
 				      &iommu_group_attr_reserved_regions);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
 	ret = iommu_group_create_file(group, &iommu_group_attr_type);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
 	pr_debug("Allocated group %d\n", group->id);
 
-	return group;
-}
+	वापस group;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_group_alloc);
 
-struct iommu_group *iommu_group_get_by_id(int id)
-{
-	struct kobject *group_kobj;
-	struct iommu_group *group;
-	const char *name;
+काष्ठा iommu_group *iommu_group_get_by_id(पूर्णांक id)
+अणु
+	काष्ठा kobject *group_kobj;
+	काष्ठा iommu_group *group;
+	स्थिर अक्षर *name;
 
-	if (!iommu_group_kset)
-		return NULL;
+	अगर (!iommu_group_kset)
+		वापस शून्य;
 
-	name = kasprintf(GFP_KERNEL, "%d", id);
-	if (!name)
-		return NULL;
+	name = kaप्र_लिखो(GFP_KERNEL, "%d", id);
+	अगर (!name)
+		वापस शून्य;
 
 	group_kobj = kset_find_obj(iommu_group_kset, name);
-	kfree(name);
+	kमुक्त(name);
 
-	if (!group_kobj)
-		return NULL;
+	अगर (!group_kobj)
+		वापस शून्य;
 
-	group = container_of(group_kobj, struct iommu_group, kobj);
+	group = container_of(group_kobj, काष्ठा iommu_group, kobj);
 	BUG_ON(group->id != id);
 
 	kobject_get(group->devices_kobj);
 	kobject_put(&group->kobj);
 
-	return group;
-}
+	वापस group;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_group_get_by_id);
 
 /**
- * iommu_group_get_iommudata - retrieve iommu_data registered for a group
+ * iommu_group_get_iommudata - retrieve iommu_data रेजिस्टरed क्रम a group
  * @group: the group
  *
- * iommu drivers can store data in the group for use when doing iommu
+ * iommu drivers can store data in the group क्रम use when करोing iommu
  * operations.  This function provides a way to retrieve it.  Caller
  * should hold a group reference.
  */
-void *iommu_group_get_iommudata(struct iommu_group *group)
-{
-	return group->iommu_data;
-}
+व्योम *iommu_group_get_iommudata(काष्ठा iommu_group *group)
+अणु
+	वापस group->iommu_data;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_group_get_iommudata);
 
 /**
- * iommu_group_set_iommudata - set iommu_data for a group
+ * iommu_group_set_iommudata - set iommu_data क्रम a group
  * @group: the group
  * @iommu_data: new data
- * @release: release function for iommu_data
+ * @release: release function क्रम iommu_data
  *
- * iommu drivers can store data in the group for use when doing iommu
+ * iommu drivers can store data in the group क्रम use when करोing iommu
  * operations.  This function provides a way to set the data after
  * the group has been allocated.  Caller should hold a group reference.
  */
-void iommu_group_set_iommudata(struct iommu_group *group, void *iommu_data,
-			       void (*release)(void *iommu_data))
-{
+व्योम iommu_group_set_iommudata(काष्ठा iommu_group *group, व्योम *iommu_data,
+			       व्योम (*release)(व्योम *iommu_data))
+अणु
 	group->iommu_data = iommu_data;
 	group->iommu_data_release = release;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_group_set_iommudata);
 
 /**
- * iommu_group_set_name - set name for a group
+ * iommu_group_set_name - set name क्रम a group
  * @group: the group
  * @name: name
  *
- * Allow iommu driver to set a name for a group.  When set it will
+ * Allow iommu driver to set a name क्रम a group.  When set it will
  * appear in a name attribute file under the group in sysfs.
  */
-int iommu_group_set_name(struct iommu_group *group, const char *name)
-{
-	int ret;
+पूर्णांक iommu_group_set_name(काष्ठा iommu_group *group, स्थिर अक्षर *name)
+अणु
+	पूर्णांक ret;
 
-	if (group->name) {
-		iommu_group_remove_file(group, &iommu_group_attr_name);
-		kfree(group->name);
-		group->name = NULL;
-		if (!name)
-			return 0;
-	}
+	अगर (group->name) अणु
+		iommu_group_हटाओ_file(group, &iommu_group_attr_name);
+		kमुक्त(group->name);
+		group->name = शून्य;
+		अगर (!name)
+			वापस 0;
+	पूर्ण
 
 	group->name = kstrdup(name, GFP_KERNEL);
-	if (!group->name)
-		return -ENOMEM;
+	अगर (!group->name)
+		वापस -ENOMEM;
 
 	ret = iommu_group_create_file(group, &iommu_group_attr_name);
-	if (ret) {
-		kfree(group->name);
-		group->name = NULL;
-		return ret;
-	}
+	अगर (ret) अणु
+		kमुक्त(group->name);
+		group->name = शून्य;
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_group_set_name);
 
-static int iommu_create_device_direct_mappings(struct iommu_group *group,
-					       struct device *dev)
-{
-	struct iommu_domain *domain = group->default_domain;
-	struct iommu_resv_region *entry;
-	struct list_head mappings;
-	unsigned long pg_size;
-	int ret = 0;
+अटल पूर्णांक iommu_create_device_direct_mappings(काष्ठा iommu_group *group,
+					       काष्ठा device *dev)
+अणु
+	काष्ठा iommu_करोमुख्य *करोमुख्य = group->शेष_करोमुख्य;
+	काष्ठा iommu_resv_region *entry;
+	काष्ठा list_head mappings;
+	अचिन्हित दीर्घ pg_size;
+	पूर्णांक ret = 0;
 
-	if (!domain || domain->type != IOMMU_DOMAIN_DMA)
-		return 0;
+	अगर (!करोमुख्य || करोमुख्य->type != IOMMU_DOMAIN_DMA)
+		वापस 0;
 
-	BUG_ON(!domain->pgsize_bitmap);
+	BUG_ON(!करोमुख्य->pgsize_biपंचांगap);
 
-	pg_size = 1UL << __ffs(domain->pgsize_bitmap);
+	pg_size = 1UL << __ffs(करोमुख्य->pgsize_biपंचांगap);
 	INIT_LIST_HEAD(&mappings);
 
 	iommu_get_resv_regions(dev, &mappings);
 
-	/* We need to consider overlapping regions for different devices */
-	list_for_each_entry(entry, &mappings, list) {
+	/* We need to consider overlapping regions क्रम dअगरferent devices */
+	list_क्रम_each_entry(entry, &mappings, list) अणु
 		dma_addr_t start, end, addr;
-		size_t map_size = 0;
+		माप_प्रकार map_size = 0;
 
-		if (domain->ops->apply_resv_region)
-			domain->ops->apply_resv_region(dev, domain, entry);
+		अगर (करोमुख्य->ops->apply_resv_region)
+			करोमुख्य->ops->apply_resv_region(dev, करोमुख्य, entry);
 
 		start = ALIGN(entry->start, pg_size);
 		end   = ALIGN(entry->start + entry->length, pg_size);
 
-		if (entry->type != IOMMU_RESV_DIRECT &&
-		    entry->type != IOMMU_RESV_DIRECT_RELAXABLE)
-			continue;
+		अगर (entry->type != IOMMU_RESV_सूचीECT &&
+		    entry->type != IOMMU_RESV_सूचीECT_RELAXABLE)
+			जारी;
 
-		for (addr = start; addr <= end; addr += pg_size) {
+		क्रम (addr = start; addr <= end; addr += pg_size) अणु
 			phys_addr_t phys_addr;
 
-			if (addr == end)
-				goto map_end;
+			अगर (addr == end)
+				जाओ map_end;
 
-			phys_addr = iommu_iova_to_phys(domain, addr);
-			if (!phys_addr) {
+			phys_addr = iommu_iova_to_phys(करोमुख्य, addr);
+			अगर (!phys_addr) अणु
 				map_size += pg_size;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 map_end:
-			if (map_size) {
-				ret = iommu_map(domain, addr - map_size,
+			अगर (map_size) अणु
+				ret = iommu_map(करोमुख्य, addr - map_size,
 						addr - map_size, map_size,
 						entry->prot);
-				if (ret)
-					goto out;
+				अगर (ret)
+					जाओ out;
 				map_size = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-	}
+	पूर्ण
 
-	iommu_flush_iotlb_all(domain);
+	iommu_flush_iotlb_all(करोमुख्य);
 
 out:
 	iommu_put_resv_regions(dev, &mappings);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool iommu_is_attach_deferred(struct iommu_domain *domain,
-				     struct device *dev)
-{
-	if (domain->ops->is_attach_deferred)
-		return domain->ops->is_attach_deferred(domain, dev);
+अटल bool iommu_is_attach_deferred(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				     काष्ठा device *dev)
+अणु
+	अगर (करोमुख्य->ops->is_attach_deferred)
+		वापस करोमुख्य->ops->is_attach_deferred(करोमुख्य, dev);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * iommu_group_add_device - add a device to an iommu group
- * @group: the group into which to add the device (reference should be held)
+ * @group: the group पूर्णांकo which to add the device (reference should be held)
  * @dev: the device
  *
- * This function is called by an iommu driver to add a device into a
+ * This function is called by an iommu driver to add a device पूर्णांकo a
  * group.  Adding a device increments the group reference count.
  */
-int iommu_group_add_device(struct iommu_group *group, struct device *dev)
-{
-	int ret, i = 0;
-	struct group_device *device;
+पूर्णांक iommu_group_add_device(काष्ठा iommu_group *group, काष्ठा device *dev)
+अणु
+	पूर्णांक ret, i = 0;
+	काष्ठा group_device *device;
 
-	device = kzalloc(sizeof(*device), GFP_KERNEL);
-	if (!device)
-		return -ENOMEM;
+	device = kzalloc(माप(*device), GFP_KERNEL);
+	अगर (!device)
+		वापस -ENOMEM;
 
 	device->dev = dev;
 
 	ret = sysfs_create_link(&dev->kobj, &group->kobj, "iommu_group");
-	if (ret)
-		goto err_free_device;
+	अगर (ret)
+		जाओ err_मुक्त_device;
 
-	device->name = kasprintf(GFP_KERNEL, "%s", kobject_name(&dev->kobj));
-rename:
-	if (!device->name) {
+	device->name = kaप्र_लिखो(GFP_KERNEL, "%s", kobject_name(&dev->kobj));
+नाम:
+	अगर (!device->name) अणु
 		ret = -ENOMEM;
-		goto err_remove_link;
-	}
+		जाओ err_हटाओ_link;
+	पूर्ण
 
 	ret = sysfs_create_link_nowarn(group->devices_kobj,
 				       &dev->kobj, device->name);
-	if (ret) {
-		if (ret == -EEXIST && i >= 0) {
+	अगर (ret) अणु
+		अगर (ret == -EEXIST && i >= 0) अणु
 			/*
-			 * Account for the slim chance of collision
+			 * Account क्रम the slim chance of collision
 			 * and append an instance to the name.
 			 */
-			kfree(device->name);
-			device->name = kasprintf(GFP_KERNEL, "%s.%d",
+			kमुक्त(device->name);
+			device->name = kaप्र_लिखो(GFP_KERNEL, "%s.%d",
 						 kobject_name(&dev->kobj), i++);
-			goto rename;
-		}
-		goto err_free_name;
-	}
+			जाओ नाम;
+		पूर्ण
+		जाओ err_मुक्त_name;
+	पूर्ण
 
 	kobject_get(group->devices_kobj);
 
@@ -878,96 +879,96 @@ rename:
 
 	mutex_lock(&group->mutex);
 	list_add_tail(&device->list, &group->devices);
-	if (group->domain  && !iommu_is_attach_deferred(group->domain, dev))
-		ret = __iommu_attach_device(group->domain, dev);
+	अगर (group->करोमुख्य  && !iommu_is_attach_deferred(group->करोमुख्य, dev))
+		ret = __iommu_attach_device(group->करोमुख्य, dev);
 	mutex_unlock(&group->mutex);
-	if (ret)
-		goto err_put_group;
+	अगर (ret)
+		जाओ err_put_group;
 
-	/* Notify any listeners about change to group. */
-	blocking_notifier_call_chain(&group->notifier,
+	/* Notअगरy any listeners about change to group. */
+	blocking_notअगरier_call_chain(&group->notअगरier,
 				     IOMMU_GROUP_NOTIFY_ADD_DEVICE, dev);
 
 	trace_add_device_to_group(group->id, dev);
 
 	dev_info(dev, "Adding to iommu group %d\n", group->id);
 
-	return 0;
+	वापस 0;
 
 err_put_group:
 	mutex_lock(&group->mutex);
 	list_del(&device->list);
 	mutex_unlock(&group->mutex);
-	dev->iommu_group = NULL;
+	dev->iommu_group = शून्य;
 	kobject_put(group->devices_kobj);
-	sysfs_remove_link(group->devices_kobj, device->name);
-err_free_name:
-	kfree(device->name);
-err_remove_link:
-	sysfs_remove_link(&dev->kobj, "iommu_group");
-err_free_device:
-	kfree(device);
+	sysfs_हटाओ_link(group->devices_kobj, device->name);
+err_मुक्त_name:
+	kमुक्त(device->name);
+err_हटाओ_link:
+	sysfs_हटाओ_link(&dev->kobj, "iommu_group");
+err_मुक्त_device:
+	kमुक्त(device);
 	dev_err(dev, "Failed to add to iommu group %d: %d\n", group->id, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_group_add_device);
 
 /**
- * iommu_group_remove_device - remove a device from it's current group
- * @dev: device to be removed
+ * iommu_group_हटाओ_device - हटाओ a device from it's current group
+ * @dev: device to be हटाओd
  *
- * This function is called by an iommu driver to remove the device from
+ * This function is called by an iommu driver to हटाओ the device from
  * it's current group.  This decrements the iommu group reference count.
  */
-void iommu_group_remove_device(struct device *dev)
-{
-	struct iommu_group *group = dev->iommu_group;
-	struct group_device *tmp_device, *device = NULL;
+व्योम iommu_group_हटाओ_device(काष्ठा device *dev)
+अणु
+	काष्ठा iommu_group *group = dev->iommu_group;
+	काष्ठा group_device *पंचांगp_device, *device = शून्य;
 
 	dev_info(dev, "Removing from iommu group %d\n", group->id);
 
-	/* Pre-notify listeners that a device is being removed. */
-	blocking_notifier_call_chain(&group->notifier,
+	/* Pre-notअगरy listeners that a device is being हटाओd. */
+	blocking_notअगरier_call_chain(&group->notअगरier,
 				     IOMMU_GROUP_NOTIFY_DEL_DEVICE, dev);
 
 	mutex_lock(&group->mutex);
-	list_for_each_entry(tmp_device, &group->devices, list) {
-		if (tmp_device->dev == dev) {
-			device = tmp_device;
+	list_क्रम_each_entry(पंचांगp_device, &group->devices, list) अणु
+		अगर (पंचांगp_device->dev == dev) अणु
+			device = पंचांगp_device;
 			list_del(&device->list);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&group->mutex);
 
-	if (!device)
-		return;
+	अगर (!device)
+		वापस;
 
-	sysfs_remove_link(group->devices_kobj, device->name);
-	sysfs_remove_link(&dev->kobj, "iommu_group");
+	sysfs_हटाओ_link(group->devices_kobj, device->name);
+	sysfs_हटाओ_link(&dev->kobj, "iommu_group");
 
-	trace_remove_device_from_group(group->id, dev);
+	trace_हटाओ_device_from_group(group->id, dev);
 
-	kfree(device->name);
-	kfree(device);
-	dev->iommu_group = NULL;
+	kमुक्त(device->name);
+	kमुक्त(device);
+	dev->iommu_group = शून्य;
 	kobject_put(group->devices_kobj);
-}
-EXPORT_SYMBOL_GPL(iommu_group_remove_device);
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_group_हटाओ_device);
 
-static int iommu_group_device_count(struct iommu_group *group)
-{
-	struct group_device *entry;
-	int ret = 0;
+अटल पूर्णांक iommu_group_device_count(काष्ठा iommu_group *group)
+अणु
+	काष्ठा group_device *entry;
+	पूर्णांक ret = 0;
 
-	list_for_each_entry(entry, &group->devices, list)
+	list_क्रम_each_entry(entry, &group->devices, list)
 		ret++;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * iommu_group_for_each_dev - iterate over each device in the group
+ * iommu_group_क्रम_each_dev - iterate over each device in the group
  * @group: the group
  * @data: caller opaque data to be passed to callback function
  * @fn: caller supplied callback function
@@ -975,67 +976,67 @@ static int iommu_group_device_count(struct iommu_group *group)
  * This function is called by group users to iterate over group devices.
  * Callers should hold a reference count to the group during callback.
  * The group->mutex is held across callbacks, which will block calls to
- * iommu_group_add/remove_device.
+ * iommu_group_add/हटाओ_device.
  */
-static int __iommu_group_for_each_dev(struct iommu_group *group, void *data,
-				      int (*fn)(struct device *, void *))
-{
-	struct group_device *device;
-	int ret = 0;
+अटल पूर्णांक __iommu_group_क्रम_each_dev(काष्ठा iommu_group *group, व्योम *data,
+				      पूर्णांक (*fn)(काष्ठा device *, व्योम *))
+अणु
+	काष्ठा group_device *device;
+	पूर्णांक ret = 0;
 
-	list_for_each_entry(device, &group->devices, list) {
+	list_क्रम_each_entry(device, &group->devices, list) अणु
 		ret = fn(device->dev, data);
-		if (ret)
-			break;
-	}
-	return ret;
-}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 
-int iommu_group_for_each_dev(struct iommu_group *group, void *data,
-			     int (*fn)(struct device *, void *))
-{
-	int ret;
+पूर्णांक iommu_group_क्रम_each_dev(काष्ठा iommu_group *group, व्योम *data,
+			     पूर्णांक (*fn)(काष्ठा device *, व्योम *))
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&group->mutex);
-	ret = __iommu_group_for_each_dev(group, data, fn);
+	ret = __iommu_group_क्रम_each_dev(group, data, fn);
 	mutex_unlock(&group->mutex);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(iommu_group_for_each_dev);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_group_क्रम_each_dev);
 
 /**
- * iommu_group_get - Return the group for a device and increment reference
- * @dev: get the group that this device belongs to
+ * iommu_group_get - Return the group क्रम a device and increment reference
+ * @dev: get the group that this device beदीर्घs to
  *
  * This function is called by iommu drivers and users to get the group
- * for the specified device.  If found, the group is returned and the group
- * reference in incremented, else NULL.
+ * क्रम the specअगरied device.  If found, the group is वापसed and the group
+ * reference in incremented, अन्यथा शून्य.
  */
-struct iommu_group *iommu_group_get(struct device *dev)
-{
-	struct iommu_group *group = dev->iommu_group;
+काष्ठा iommu_group *iommu_group_get(काष्ठा device *dev)
+अणु
+	काष्ठा iommu_group *group = dev->iommu_group;
 
-	if (group)
+	अगर (group)
 		kobject_get(group->devices_kobj);
 
-	return group;
-}
+	वापस group;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_group_get);
 
 /**
  * iommu_group_ref_get - Increment reference on a group
- * @group: the group to use, must not be NULL
+ * @group: the group to use, must not be शून्य
  *
  * This function is called by iommu drivers to take additional references on an
- * existing group.  Returns the given group for convenience.
+ * existing group.  Returns the given group क्रम convenience.
  */
-struct iommu_group *iommu_group_ref_get(struct iommu_group *group)
-{
+काष्ठा iommu_group *iommu_group_ref_get(काष्ठा iommu_group *group)
+अणु
 	kobject_get(group->devices_kobj);
-	return group;
-}
+	वापस group;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_group_ref_get);
 
 /**
@@ -1045,225 +1046,225 @@ EXPORT_SYMBOL_GPL(iommu_group_ref_get);
  * This function is called by iommu drivers and users to release the
  * iommu group.  Once the reference count is zero, the group is released.
  */
-void iommu_group_put(struct iommu_group *group)
-{
-	if (group)
+व्योम iommu_group_put(काष्ठा iommu_group *group)
+अणु
+	अगर (group)
 		kobject_put(group->devices_kobj);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_group_put);
 
 /**
- * iommu_group_register_notifier - Register a notifier for group changes
+ * iommu_group_रेजिस्टर_notअगरier - Register a notअगरier क्रम group changes
  * @group: the group to watch
- * @nb: notifier block to signal
+ * @nb: notअगरier block to संकेत
  *
  * This function allows iommu group users to track changes in a group.
- * See include/linux/iommu.h for actions sent via this notifier.  Caller
- * should hold a reference to the group throughout notifier registration.
+ * See include/linux/iommu.h क्रम actions sent via this notअगरier.  Caller
+ * should hold a reference to the group throughout notअगरier registration.
  */
-int iommu_group_register_notifier(struct iommu_group *group,
-				  struct notifier_block *nb)
-{
-	return blocking_notifier_chain_register(&group->notifier, nb);
-}
-EXPORT_SYMBOL_GPL(iommu_group_register_notifier);
+पूर्णांक iommu_group_रेजिस्टर_notअगरier(काष्ठा iommu_group *group,
+				  काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_रेजिस्टर(&group->notअगरier, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_group_रेजिस्टर_notअगरier);
 
 /**
- * iommu_group_unregister_notifier - Unregister a notifier
+ * iommu_group_unरेजिस्टर_notअगरier - Unरेजिस्टर a notअगरier
  * @group: the group to watch
- * @nb: notifier block to signal
+ * @nb: notअगरier block to संकेत
  *
- * Unregister a previously registered group notifier block.
+ * Unरेजिस्टर a previously रेजिस्टरed group notअगरier block.
  */
-int iommu_group_unregister_notifier(struct iommu_group *group,
-				    struct notifier_block *nb)
-{
-	return blocking_notifier_chain_unregister(&group->notifier, nb);
-}
-EXPORT_SYMBOL_GPL(iommu_group_unregister_notifier);
+पूर्णांक iommu_group_unरेजिस्टर_notअगरier(काष्ठा iommu_group *group,
+				    काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_unरेजिस्टर(&group->notअगरier, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_group_unरेजिस्टर_notअगरier);
 
 /**
- * iommu_register_device_fault_handler() - Register a device fault handler
+ * iommu_रेजिस्टर_device_fault_handler() - Register a device fault handler
  * @dev: the device
  * @handler: the fault handler
- * @data: private data passed as argument to the handler
+ * @data: निजी data passed as argument to the handler
  *
- * When an IOMMU fault event is received, this handler gets called with the
- * fault event and data as argument. The handler should return 0 on success. If
+ * When an IOMMU fault event is received, this handler माला_लो called with the
+ * fault event and data as argument. The handler should वापस 0 on success. If
  * the fault is recoverable (IOMMU_FAULT_PAGE_REQ), the consumer should also
  * complete the fault by calling iommu_page_response() with one of the following
  * response code:
  * - IOMMU_PAGE_RESP_SUCCESS: retry the translation
  * - IOMMU_PAGE_RESP_INVALID: terminate the fault
  * - IOMMU_PAGE_RESP_FAILURE: terminate the fault and stop reporting
- *   page faults if possible.
+ *   page faults अगर possible.
  *
- * Return 0 if the fault handler was installed successfully, or an error.
+ * Return 0 अगर the fault handler was installed successfully, or an error.
  */
-int iommu_register_device_fault_handler(struct device *dev,
+पूर्णांक iommu_रेजिस्टर_device_fault_handler(काष्ठा device *dev,
 					iommu_dev_fault_handler_t handler,
-					void *data)
-{
-	struct dev_iommu *param = dev->iommu;
-	int ret = 0;
+					व्योम *data)
+अणु
+	काष्ठा dev_iommu *param = dev->iommu;
+	पूर्णांक ret = 0;
 
-	if (!param)
-		return -EINVAL;
+	अगर (!param)
+		वापस -EINVAL;
 
 	mutex_lock(&param->lock);
-	/* Only allow one fault handler registered for each device */
-	if (param->fault_param) {
+	/* Only allow one fault handler रेजिस्टरed क्रम each device */
+	अगर (param->fault_param) अणु
 		ret = -EBUSY;
-		goto done_unlock;
-	}
+		जाओ करोne_unlock;
+	पूर्ण
 
 	get_device(dev);
-	param->fault_param = kzalloc(sizeof(*param->fault_param), GFP_KERNEL);
-	if (!param->fault_param) {
+	param->fault_param = kzalloc(माप(*param->fault_param), GFP_KERNEL);
+	अगर (!param->fault_param) अणु
 		put_device(dev);
 		ret = -ENOMEM;
-		goto done_unlock;
-	}
+		जाओ करोne_unlock;
+	पूर्ण
 	param->fault_param->handler = handler;
 	param->fault_param->data = data;
 	mutex_init(&param->fault_param->lock);
 	INIT_LIST_HEAD(&param->fault_param->faults);
 
-done_unlock:
+करोne_unlock:
 	mutex_unlock(&param->lock);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(iommu_register_device_fault_handler);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_रेजिस्टर_device_fault_handler);
 
 /**
- * iommu_unregister_device_fault_handler() - Unregister the device fault handler
+ * iommu_unरेजिस्टर_device_fault_handler() - Unरेजिस्टर the device fault handler
  * @dev: the device
  *
  * Remove the device fault handler installed with
- * iommu_register_device_fault_handler().
+ * iommu_रेजिस्टर_device_fault_handler().
  *
  * Return 0 on success, or an error.
  */
-int iommu_unregister_device_fault_handler(struct device *dev)
-{
-	struct dev_iommu *param = dev->iommu;
-	int ret = 0;
+पूर्णांक iommu_unरेजिस्टर_device_fault_handler(काष्ठा device *dev)
+अणु
+	काष्ठा dev_iommu *param = dev->iommu;
+	पूर्णांक ret = 0;
 
-	if (!param)
-		return -EINVAL;
+	अगर (!param)
+		वापस -EINVAL;
 
 	mutex_lock(&param->lock);
 
-	if (!param->fault_param)
-		goto unlock;
+	अगर (!param->fault_param)
+		जाओ unlock;
 
-	/* we cannot unregister handler if there are pending faults */
-	if (!list_empty(&param->fault_param->faults)) {
+	/* we cannot unरेजिस्टर handler अगर there are pending faults */
+	अगर (!list_empty(&param->fault_param->faults)) अणु
 		ret = -EBUSY;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	kfree(param->fault_param);
-	param->fault_param = NULL;
+	kमुक्त(param->fault_param);
+	param->fault_param = शून्य;
 	put_device(dev);
 unlock:
 	mutex_unlock(&param->lock);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(iommu_unregister_device_fault_handler);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_unरेजिस्टर_device_fault_handler);
 
 /**
  * iommu_report_device_fault() - Report fault event to device driver
  * @dev: the device
  * @evt: fault event data
  *
- * Called by IOMMU drivers when a fault is detected, typically in a threaded IRQ
+ * Called by IOMMU drivers when a fault is detected, typically in a thपढ़ोed IRQ
  * handler. When this function fails and the fault is recoverable, it is the
  * caller's responsibility to complete the fault.
  *
  * Return 0 on success, or an error.
  */
-int iommu_report_device_fault(struct device *dev, struct iommu_fault_event *evt)
-{
-	struct dev_iommu *param = dev->iommu;
-	struct iommu_fault_event *evt_pending = NULL;
-	struct iommu_fault_param *fparam;
-	int ret = 0;
+पूर्णांक iommu_report_device_fault(काष्ठा device *dev, काष्ठा iommu_fault_event *evt)
+अणु
+	काष्ठा dev_iommu *param = dev->iommu;
+	काष्ठा iommu_fault_event *evt_pending = शून्य;
+	काष्ठा iommu_fault_param *fparam;
+	पूर्णांक ret = 0;
 
-	if (!param || !evt)
-		return -EINVAL;
+	अगर (!param || !evt)
+		वापस -EINVAL;
 
-	/* we only report device fault if there is a handler registered */
+	/* we only report device fault अगर there is a handler रेजिस्टरed */
 	mutex_lock(&param->lock);
 	fparam = param->fault_param;
-	if (!fparam || !fparam->handler) {
+	अगर (!fparam || !fparam->handler) अणु
 		ret = -EINVAL;
-		goto done_unlock;
-	}
+		जाओ करोne_unlock;
+	पूर्ण
 
-	if (evt->fault.type == IOMMU_FAULT_PAGE_REQ &&
-	    (evt->fault.prm.flags & IOMMU_FAULT_PAGE_REQUEST_LAST_PAGE)) {
-		evt_pending = kmemdup(evt, sizeof(struct iommu_fault_event),
+	अगर (evt->fault.type == IOMMU_FAULT_PAGE_REQ &&
+	    (evt->fault.prm.flags & IOMMU_FAULT_PAGE_REQUEST_LAST_PAGE)) अणु
+		evt_pending = kmemdup(evt, माप(काष्ठा iommu_fault_event),
 				      GFP_KERNEL);
-		if (!evt_pending) {
+		अगर (!evt_pending) अणु
 			ret = -ENOMEM;
-			goto done_unlock;
-		}
+			जाओ करोne_unlock;
+		पूर्ण
 		mutex_lock(&fparam->lock);
 		list_add_tail(&evt_pending->list, &fparam->faults);
 		mutex_unlock(&fparam->lock);
-	}
+	पूर्ण
 
 	ret = fparam->handler(&evt->fault, fparam->data);
-	if (ret && evt_pending) {
+	अगर (ret && evt_pending) अणु
 		mutex_lock(&fparam->lock);
 		list_del(&evt_pending->list);
 		mutex_unlock(&fparam->lock);
-		kfree(evt_pending);
-	}
-done_unlock:
+		kमुक्त(evt_pending);
+	पूर्ण
+करोne_unlock:
 	mutex_unlock(&param->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_report_device_fault);
 
-int iommu_page_response(struct device *dev,
-			struct iommu_page_response *msg)
-{
+पूर्णांक iommu_page_response(काष्ठा device *dev,
+			काष्ठा iommu_page_response *msg)
+अणु
 	bool needs_pasid;
-	int ret = -EINVAL;
-	struct iommu_fault_event *evt;
-	struct iommu_fault_page_request *prm;
-	struct dev_iommu *param = dev->iommu;
+	पूर्णांक ret = -EINVAL;
+	काष्ठा iommu_fault_event *evt;
+	काष्ठा iommu_fault_page_request *prm;
+	काष्ठा dev_iommu *param = dev->iommu;
 	bool has_pasid = msg->flags & IOMMU_PAGE_RESP_PASID_VALID;
-	struct iommu_domain *domain = iommu_get_domain_for_dev(dev);
+	काष्ठा iommu_करोमुख्य *करोमुख्य = iommu_get_करोमुख्य_क्रम_dev(dev);
 
-	if (!domain || !domain->ops->page_response)
-		return -ENODEV;
+	अगर (!करोमुख्य || !करोमुख्य->ops->page_response)
+		वापस -ENODEV;
 
-	if (!param || !param->fault_param)
-		return -EINVAL;
+	अगर (!param || !param->fault_param)
+		वापस -EINVAL;
 
-	if (msg->version != IOMMU_PAGE_RESP_VERSION_1 ||
+	अगर (msg->version != IOMMU_PAGE_RESP_VERSION_1 ||
 	    msg->flags & ~IOMMU_PAGE_RESP_PASID_VALID)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Only send response if there is a fault report pending */
+	/* Only send response अगर there is a fault report pending */
 	mutex_lock(&param->fault_param->lock);
-	if (list_empty(&param->fault_param->faults)) {
+	अगर (list_empty(&param->fault_param->faults)) अणु
 		dev_warn_ratelimited(dev, "no pending PRQ, drop response\n");
-		goto done_unlock;
-	}
+		जाओ करोne_unlock;
+	पूर्ण
 	/*
-	 * Check if we have a matching page request pending to respond,
-	 * otherwise return -EINVAL
+	 * Check अगर we have a matching page request pending to respond,
+	 * otherwise वापस -EINVAL
 	 */
-	list_for_each_entry(evt, &param->fault_param->faults, list) {
+	list_क्रम_each_entry(evt, &param->fault_param->faults, list) अणु
 		prm = &evt->fault.prm;
-		if (prm->grpid != msg->grpid)
-			continue;
+		अगर (prm->grpid != msg->grpid)
+			जारी;
 
 		/*
 		 * If the PASID is required, the corresponding request is
@@ -1272,535 +1273,535 @@ int iommu_page_response(struct device *dev,
 		 * response.
 		 */
 		needs_pasid = prm->flags & IOMMU_FAULT_PAGE_RESPONSE_NEEDS_PASID;
-		if (needs_pasid && (!has_pasid || msg->pasid != prm->pasid))
-			continue;
+		अगर (needs_pasid && (!has_pasid || msg->pasid != prm->pasid))
+			जारी;
 
-		if (!needs_pasid && has_pasid) {
+		अगर (!needs_pasid && has_pasid) अणु
 			/* No big deal, just clear it. */
 			msg->flags &= ~IOMMU_PAGE_RESP_PASID_VALID;
 			msg->pasid = 0;
-		}
+		पूर्ण
 
-		ret = domain->ops->page_response(dev, evt, msg);
+		ret = करोमुख्य->ops->page_response(dev, evt, msg);
 		list_del(&evt->list);
-		kfree(evt);
-		break;
-	}
+		kमुक्त(evt);
+		अवरोध;
+	पूर्ण
 
-done_unlock:
+करोne_unlock:
 	mutex_unlock(&param->fault_param->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_page_response);
 
 /**
- * iommu_group_id - Return ID for a group
+ * iommu_group_id - Return ID क्रम a group
  * @group: the group to ID
  *
- * Return the unique ID for the group matching the sysfs group number.
+ * Return the unique ID क्रम the group matching the sysfs group number.
  */
-int iommu_group_id(struct iommu_group *group)
-{
-	return group->id;
-}
+पूर्णांक iommu_group_id(काष्ठा iommu_group *group)
+अणु
+	वापस group->id;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_group_id);
 
-static struct iommu_group *get_pci_alias_group(struct pci_dev *pdev,
-					       unsigned long *devfns);
+अटल काष्ठा iommu_group *get_pci_alias_group(काष्ठा pci_dev *pdev,
+					       अचिन्हित दीर्घ *devfns);
 
 /*
  * To consider a PCI device isolated, we require ACS to support Source
  * Validation, Request Redirection, Completer Redirection, and Upstream
  * Forwarding.  This effectively means that devices cannot spoof their
  * requester ID, requests and completions cannot be redirected, and all
- * transactions are forwarded upstream, even as it passes through a
- * bridge where the target device is downstream.
+ * transactions are क्रमwarded upstream, even as it passes through a
+ * bridge where the target device is करोwnstream.
  */
-#define REQ_ACS_FLAGS   (PCI_ACS_SV | PCI_ACS_RR | PCI_ACS_CR | PCI_ACS_UF)
+#घोषणा REQ_ACS_FLAGS   (PCI_ACS_SV | PCI_ACS_RR | PCI_ACS_CR | PCI_ACS_UF)
 
 /*
- * For multifunction devices which are not isolated from each other, find
- * all the other non-isolated functions and look for existing groups.  For
- * each function, we also need to look for aliases to or from other devices
- * that may already have a group.
+ * For multअगरunction devices which are not isolated from each other, find
+ * all the other non-isolated functions and look क्रम existing groups.  For
+ * each function, we also need to look क्रम aliases to or from other devices
+ * that may alपढ़ोy have a group.
  */
-static struct iommu_group *get_pci_function_alias_group(struct pci_dev *pdev,
-							unsigned long *devfns)
-{
-	struct pci_dev *tmp = NULL;
-	struct iommu_group *group;
+अटल काष्ठा iommu_group *get_pci_function_alias_group(काष्ठा pci_dev *pdev,
+							अचिन्हित दीर्घ *devfns)
+अणु
+	काष्ठा pci_dev *पंचांगp = शून्य;
+	काष्ठा iommu_group *group;
 
-	if (!pdev->multifunction || pci_acs_enabled(pdev, REQ_ACS_FLAGS))
-		return NULL;
+	अगर (!pdev->multअगरunction || pci_acs_enabled(pdev, REQ_ACS_FLAGS))
+		वापस शून्य;
 
-	for_each_pci_dev(tmp) {
-		if (tmp == pdev || tmp->bus != pdev->bus ||
-		    PCI_SLOT(tmp->devfn) != PCI_SLOT(pdev->devfn) ||
-		    pci_acs_enabled(tmp, REQ_ACS_FLAGS))
-			continue;
+	क्रम_each_pci_dev(पंचांगp) अणु
+		अगर (पंचांगp == pdev || पंचांगp->bus != pdev->bus ||
+		    PCI_SLOT(पंचांगp->devfn) != PCI_SLOT(pdev->devfn) ||
+		    pci_acs_enabled(पंचांगp, REQ_ACS_FLAGS))
+			जारी;
 
-		group = get_pci_alias_group(tmp, devfns);
-		if (group) {
-			pci_dev_put(tmp);
-			return group;
-		}
-	}
+		group = get_pci_alias_group(पंचांगp, devfns);
+		अगर (group) अणु
+			pci_dev_put(पंचांगp);
+			वापस group;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Look for aliases to or from the given device for existing groups. DMA
- * aliases are only supported on the same bus, therefore the search
+ * Look क्रम aliases to or from the given device क्रम existing groups. DMA
+ * aliases are only supported on the same bus, thereक्रमe the search
  * space is quite small (especially since we're really only looking at pcie
- * device, and therefore only expect multiple slots on the root complex or
- * downstream switch ports).  It's conceivable though that a pair of
- * multifunction devices could have aliases between them that would cause a
- * loop.  To prevent this, we use a bitmap to track where we've been.
+ * device, and thereक्रमe only expect multiple slots on the root complex or
+ * करोwnstream चयन ports).  It's conceivable though that a pair of
+ * multअगरunction devices could have aliases between them that would cause a
+ * loop.  To prevent this, we use a biपंचांगap to track where we've been.
  */
-static struct iommu_group *get_pci_alias_group(struct pci_dev *pdev,
-					       unsigned long *devfns)
-{
-	struct pci_dev *tmp = NULL;
-	struct iommu_group *group;
+अटल काष्ठा iommu_group *get_pci_alias_group(काष्ठा pci_dev *pdev,
+					       अचिन्हित दीर्घ *devfns)
+अणु
+	काष्ठा pci_dev *पंचांगp = शून्य;
+	काष्ठा iommu_group *group;
 
-	if (test_and_set_bit(pdev->devfn & 0xff, devfns))
-		return NULL;
+	अगर (test_and_set_bit(pdev->devfn & 0xff, devfns))
+		वापस शून्य;
 
 	group = iommu_group_get(&pdev->dev);
-	if (group)
-		return group;
+	अगर (group)
+		वापस group;
 
-	for_each_pci_dev(tmp) {
-		if (tmp == pdev || tmp->bus != pdev->bus)
-			continue;
+	क्रम_each_pci_dev(पंचांगp) अणु
+		अगर (पंचांगp == pdev || पंचांगp->bus != pdev->bus)
+			जारी;
 
 		/* We alias them or they alias us */
-		if (pci_devs_are_dma_aliases(pdev, tmp)) {
-			group = get_pci_alias_group(tmp, devfns);
-			if (group) {
-				pci_dev_put(tmp);
-				return group;
-			}
+		अगर (pci_devs_are_dma_aliases(pdev, पंचांगp)) अणु
+			group = get_pci_alias_group(पंचांगp, devfns);
+			अगर (group) अणु
+				pci_dev_put(पंचांगp);
+				वापस group;
+			पूर्ण
 
-			group = get_pci_function_alias_group(tmp, devfns);
-			if (group) {
-				pci_dev_put(tmp);
-				return group;
-			}
-		}
-	}
+			group = get_pci_function_alias_group(पंचांगp, devfns);
+			अगर (group) अणु
+				pci_dev_put(पंचांगp);
+				वापस group;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct group_for_pci_data {
-	struct pci_dev *pdev;
-	struct iommu_group *group;
-};
+काष्ठा group_क्रम_pci_data अणु
+	काष्ठा pci_dev *pdev;
+	काष्ठा iommu_group *group;
+पूर्ण;
 
 /*
- * DMA alias iterator callback, return the last seen device.  Stop and return
- * the IOMMU group if we find one along the way.
+ * DMA alias iterator callback, वापस the last seen device.  Stop and वापस
+ * the IOMMU group अगर we find one aदीर्घ the way.
  */
-static int get_pci_alias_or_group(struct pci_dev *pdev, u16 alias, void *opaque)
-{
-	struct group_for_pci_data *data = opaque;
+अटल पूर्णांक get_pci_alias_or_group(काष्ठा pci_dev *pdev, u16 alias, व्योम *opaque)
+अणु
+	काष्ठा group_क्रम_pci_data *data = opaque;
 
 	data->pdev = pdev;
 	data->group = iommu_group_get(&pdev->dev);
 
-	return data->group != NULL;
-}
+	वापस data->group != शून्य;
+पूर्ण
 
 /*
  * Generic device_group call-back function. It just allocates one
  * iommu-group per device.
  */
-struct iommu_group *generic_device_group(struct device *dev)
-{
-	return iommu_group_alloc();
-}
+काष्ठा iommu_group *generic_device_group(काष्ठा device *dev)
+अणु
+	वापस iommu_group_alloc();
+पूर्ण
 EXPORT_SYMBOL_GPL(generic_device_group);
 
 /*
  * Use standard PCI bus topology, isolation features, and DMA alias quirks
- * to find or create an IOMMU group for a device.
+ * to find or create an IOMMU group क्रम a device.
  */
-struct iommu_group *pci_device_group(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct group_for_pci_data data;
-	struct pci_bus *bus;
-	struct iommu_group *group = NULL;
-	u64 devfns[4] = { 0 };
+काष्ठा iommu_group *pci_device_group(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा group_क्रम_pci_data data;
+	काष्ठा pci_bus *bus;
+	काष्ठा iommu_group *group = शून्य;
+	u64 devfns[4] = अणु 0 पूर्ण;
 
-	if (WARN_ON(!dev_is_pci(dev)))
-		return ERR_PTR(-EINVAL);
+	अगर (WARN_ON(!dev_is_pci(dev)))
+		वापस ERR_PTR(-EINVAL);
 
 	/*
-	 * Find the upstream DMA alias for the device.  A device must not
+	 * Find the upstream DMA alias क्रम the device.  A device must not
 	 * be aliased due to topology in order to have its own IOMMU group.
-	 * If we find an alias along the way that already belongs to a
+	 * If we find an alias aदीर्घ the way that alपढ़ोy beदीर्घs to a
 	 * group, use it.
 	 */
-	if (pci_for_each_dma_alias(pdev, get_pci_alias_or_group, &data))
-		return data.group;
+	अगर (pci_क्रम_each_dma_alias(pdev, get_pci_alias_or_group, &data))
+		वापस data.group;
 
 	pdev = data.pdev;
 
 	/*
-	 * Continue upstream from the point of minimum IOMMU granularity
-	 * due to aliases to the point where devices are protected from
-	 * peer-to-peer DMA by PCI ACS.  Again, if we find an existing
+	 * Continue upstream from the poपूर्णांक of minimum IOMMU granularity
+	 * due to aliases to the poपूर्णांक where devices are रक्षित from
+	 * peer-to-peer DMA by PCI ACS.  Again, अगर we find an existing
 	 * group, use it.
 	 */
-	for (bus = pdev->bus; !pci_is_root_bus(bus); bus = bus->parent) {
-		if (!bus->self)
-			continue;
+	क्रम (bus = pdev->bus; !pci_is_root_bus(bus); bus = bus->parent) अणु
+		अगर (!bus->self)
+			जारी;
 
-		if (pci_acs_path_enabled(bus->self, NULL, REQ_ACS_FLAGS))
-			break;
+		अगर (pci_acs_path_enabled(bus->self, शून्य, REQ_ACS_FLAGS))
+			अवरोध;
 
 		pdev = bus->self;
 
 		group = iommu_group_get(&pdev->dev);
-		if (group)
-			return group;
-	}
+		अगर (group)
+			वापस group;
+	पूर्ण
 
 	/*
-	 * Look for existing groups on device aliases.  If we alias another
+	 * Look क्रम existing groups on device aliases.  If we alias another
 	 * device or another device aliases us, use the same group.
 	 */
-	group = get_pci_alias_group(pdev, (unsigned long *)devfns);
-	if (group)
-		return group;
+	group = get_pci_alias_group(pdev, (अचिन्हित दीर्घ *)devfns);
+	अगर (group)
+		वापस group;
 
 	/*
-	 * Look for existing groups on non-isolated functions on the same
-	 * slot and aliases of those funcions, if any.  No need to clear
-	 * the search bitmap, the tested devfns are still valid.
+	 * Look क्रम existing groups on non-isolated functions on the same
+	 * slot and aliases of those funcions, अगर any.  No need to clear
+	 * the search biपंचांगap, the tested devfns are still valid.
 	 */
-	group = get_pci_function_alias_group(pdev, (unsigned long *)devfns);
-	if (group)
-		return group;
+	group = get_pci_function_alias_group(pdev, (अचिन्हित दीर्घ *)devfns);
+	अगर (group)
+		वापस group;
 
 	/* No shared group found, allocate new */
-	return iommu_group_alloc();
-}
+	वापस iommu_group_alloc();
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_device_group);
 
-/* Get the IOMMU group for device on fsl-mc bus */
-struct iommu_group *fsl_mc_device_group(struct device *dev)
-{
-	struct device *cont_dev = fsl_mc_cont_dev(dev);
-	struct iommu_group *group;
+/* Get the IOMMU group क्रम device on fsl-mc bus */
+काष्ठा iommu_group *fsl_mc_device_group(काष्ठा device *dev)
+अणु
+	काष्ठा device *cont_dev = fsl_mc_cont_dev(dev);
+	काष्ठा iommu_group *group;
 
 	group = iommu_group_get(cont_dev);
-	if (!group)
+	अगर (!group)
 		group = iommu_group_alloc();
-	return group;
-}
+	वापस group;
+पूर्ण
 EXPORT_SYMBOL_GPL(fsl_mc_device_group);
 
-static int iommu_get_def_domain_type(struct device *dev)
-{
-	const struct iommu_ops *ops = dev->bus->iommu_ops;
+अटल पूर्णांक iommu_get_def_करोमुख्य_type(काष्ठा device *dev)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = dev->bus->iommu_ops;
 
-	if (dev_is_pci(dev) && to_pci_dev(dev)->untrusted)
-		return IOMMU_DOMAIN_DMA;
+	अगर (dev_is_pci(dev) && to_pci_dev(dev)->untrusted)
+		वापस IOMMU_DOMAIN_DMA;
 
-	if (ops->def_domain_type)
-		return ops->def_domain_type(dev);
+	अगर (ops->def_करोमुख्य_type)
+		वापस ops->def_करोमुख्य_type(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iommu_group_alloc_default_domain(struct bus_type *bus,
-					    struct iommu_group *group,
-					    unsigned int type)
-{
-	struct iommu_domain *dom;
+अटल पूर्णांक iommu_group_alloc_शेष_करोमुख्य(काष्ठा bus_type *bus,
+					    काष्ठा iommu_group *group,
+					    अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा iommu_करोमुख्य *करोm;
 
-	dom = __iommu_domain_alloc(bus, type);
-	if (!dom && type != IOMMU_DOMAIN_DMA) {
-		dom = __iommu_domain_alloc(bus, IOMMU_DOMAIN_DMA);
-		if (dom)
+	करोm = __iommu_करोमुख्य_alloc(bus, type);
+	अगर (!करोm && type != IOMMU_DOMAIN_DMA) अणु
+		करोm = __iommu_करोमुख्य_alloc(bus, IOMMU_DOMAIN_DMA);
+		अगर (करोm)
 			pr_warn("Failed to allocate default IOMMU domain of type %u for group %s - Falling back to IOMMU_DOMAIN_DMA",
 				type, group->name);
-	}
+	पूर्ण
 
-	if (!dom)
-		return -ENOMEM;
+	अगर (!करोm)
+		वापस -ENOMEM;
 
-	group->default_domain = dom;
-	if (!group->domain)
-		group->domain = dom;
-	return 0;
-}
+	group->शेष_करोमुख्य = करोm;
+	अगर (!group->करोमुख्य)
+		group->करोमुख्य = करोm;
+	वापस 0;
+पूर्ण
 
-static int iommu_alloc_default_domain(struct iommu_group *group,
-				      struct device *dev)
-{
-	unsigned int type;
+अटल पूर्णांक iommu_alloc_शेष_करोमुख्य(काष्ठा iommu_group *group,
+				      काष्ठा device *dev)
+अणु
+	अचिन्हित पूर्णांक type;
 
-	if (group->default_domain)
-		return 0;
+	अगर (group->शेष_करोमुख्य)
+		वापस 0;
 
-	type = iommu_get_def_domain_type(dev) ? : iommu_def_domain_type;
+	type = iommu_get_def_करोमुख्य_type(dev) ? : iommu_def_करोमुख्य_type;
 
-	return iommu_group_alloc_default_domain(dev->bus, group, type);
-}
+	वापस iommu_group_alloc_शेष_करोमुख्य(dev->bus, group, type);
+पूर्ण
 
 /**
- * iommu_group_get_for_dev - Find or create the IOMMU group for a device
+ * iommu_group_get_क्रम_dev - Find or create the IOMMU group क्रम a device
  * @dev: target device
  *
- * This function is intended to be called by IOMMU drivers and extended to
+ * This function is पूर्णांकended to be called by IOMMU drivers and extended to
  * support common, bus-defined algorithms when determining or creating the
- * IOMMU group for a device.  On success, the caller will hold a reference
- * to the returned IOMMU group, which will already include the provided
+ * IOMMU group क्रम a device.  On success, the caller will hold a reference
+ * to the वापसed IOMMU group, which will alपढ़ोy include the provided
  * device.  The reference should be released with iommu_group_put().
  */
-static struct iommu_group *iommu_group_get_for_dev(struct device *dev)
-{
-	const struct iommu_ops *ops = dev->bus->iommu_ops;
-	struct iommu_group *group;
-	int ret;
+अटल काष्ठा iommu_group *iommu_group_get_क्रम_dev(काष्ठा device *dev)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = dev->bus->iommu_ops;
+	काष्ठा iommu_group *group;
+	पूर्णांक ret;
 
 	group = iommu_group_get(dev);
-	if (group)
-		return group;
+	अगर (group)
+		वापस group;
 
-	if (!ops)
-		return ERR_PTR(-EINVAL);
+	अगर (!ops)
+		वापस ERR_PTR(-EINVAL);
 
 	group = ops->device_group(dev);
-	if (WARN_ON_ONCE(group == NULL))
-		return ERR_PTR(-EINVAL);
+	अगर (WARN_ON_ONCE(group == शून्य))
+		वापस ERR_PTR(-EINVAL);
 
-	if (IS_ERR(group))
-		return group;
+	अगर (IS_ERR(group))
+		वापस group;
 
 	ret = iommu_group_add_device(group, dev);
-	if (ret)
-		goto out_put_group;
+	अगर (ret)
+		जाओ out_put_group;
 
-	return group;
+	वापस group;
 
 out_put_group:
 	iommu_group_put(group);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-struct iommu_domain *iommu_group_default_domain(struct iommu_group *group)
-{
-	return group->default_domain;
-}
+काष्ठा iommu_करोमुख्य *iommu_group_शेष_करोमुख्य(काष्ठा iommu_group *group)
+अणु
+	वापस group->शेष_करोमुख्य;
+पूर्ण
 
-static int probe_iommu_group(struct device *dev, void *data)
-{
-	struct list_head *group_list = data;
-	struct iommu_group *group;
-	int ret;
+अटल पूर्णांक probe_iommu_group(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा list_head *group_list = data;
+	काष्ठा iommu_group *group;
+	पूर्णांक ret;
 
-	/* Device is probed already if in a group */
+	/* Device is probed alपढ़ोy अगर in a group */
 	group = iommu_group_get(dev);
-	if (group) {
+	अगर (group) अणु
 		iommu_group_put(group);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = __iommu_probe_device(dev, group_list);
-	if (ret == -ENODEV)
+	अगर (ret == -ENODEV)
 		ret = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int remove_iommu_group(struct device *dev, void *data)
-{
+अटल पूर्णांक हटाओ_iommu_group(काष्ठा device *dev, व्योम *data)
+अणु
 	iommu_release_device(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iommu_bus_notifier(struct notifier_block *nb,
-			      unsigned long action, void *data)
-{
-	unsigned long group_action = 0;
-	struct device *dev = data;
-	struct iommu_group *group;
+अटल पूर्णांक iommu_bus_notअगरier(काष्ठा notअगरier_block *nb,
+			      अचिन्हित दीर्घ action, व्योम *data)
+अणु
+	अचिन्हित दीर्घ group_action = 0;
+	काष्ठा device *dev = data;
+	काष्ठा iommu_group *group;
 
 	/*
-	 * ADD/DEL call into iommu driver ops if provided, which may
-	 * result in ADD/DEL notifiers to group->notifier
+	 * ADD/DEL call पूर्णांकo iommu driver ops अगर provided, which may
+	 * result in ADD/DEL notअगरiers to group->notअगरier
 	 */
-	if (action == BUS_NOTIFY_ADD_DEVICE) {
-		int ret;
+	अगर (action == BUS_NOTIFY_ADD_DEVICE) अणु
+		पूर्णांक ret;
 
 		ret = iommu_probe_device(dev);
-		return (ret) ? NOTIFY_DONE : NOTIFY_OK;
-	} else if (action == BUS_NOTIFY_REMOVED_DEVICE) {
+		वापस (ret) ? NOTIFY_DONE : NOTIFY_OK;
+	पूर्ण अन्यथा अगर (action == BUS_NOTIFY_REMOVED_DEVICE) अणु
 		iommu_release_device(dev);
-		return NOTIFY_OK;
-	}
+		वापस NOTIFY_OK;
+	पूर्ण
 
 	/*
-	 * Remaining BUS_NOTIFYs get filtered and republished to the
-	 * group, if anyone is listening
+	 * Reमुख्यing BUS_NOTIFYs get filtered and republished to the
+	 * group, अगर anyone is listening
 	 */
 	group = iommu_group_get(dev);
-	if (!group)
-		return 0;
+	अगर (!group)
+		वापस 0;
 
-	switch (action) {
-	case BUS_NOTIFY_BIND_DRIVER:
+	चयन (action) अणु
+	हाल BUS_NOTIFY_BIND_DRIVER:
 		group_action = IOMMU_GROUP_NOTIFY_BIND_DRIVER;
-		break;
-	case BUS_NOTIFY_BOUND_DRIVER:
+		अवरोध;
+	हाल BUS_NOTIFY_BOUND_DRIVER:
 		group_action = IOMMU_GROUP_NOTIFY_BOUND_DRIVER;
-		break;
-	case BUS_NOTIFY_UNBIND_DRIVER:
+		अवरोध;
+	हाल BUS_NOTIFY_UNBIND_DRIVER:
 		group_action = IOMMU_GROUP_NOTIFY_UNBIND_DRIVER;
-		break;
-	case BUS_NOTIFY_UNBOUND_DRIVER:
+		अवरोध;
+	हाल BUS_NOTIFY_UNBOUND_DRIVER:
 		group_action = IOMMU_GROUP_NOTIFY_UNBOUND_DRIVER;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (group_action)
-		blocking_notifier_call_chain(&group->notifier,
+	अगर (group_action)
+		blocking_notअगरier_call_chain(&group->notअगरier,
 					     group_action, dev);
 
 	iommu_group_put(group);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct __group_domain_type {
-	struct device *dev;
-	unsigned int type;
-};
+काष्ठा __group_करोमुख्य_type अणु
+	काष्ठा device *dev;
+	अचिन्हित पूर्णांक type;
+पूर्ण;
 
-static int probe_get_default_domain_type(struct device *dev, void *data)
-{
-	struct __group_domain_type *gtype = data;
-	unsigned int type = iommu_get_def_domain_type(dev);
+अटल पूर्णांक probe_get_शेष_करोमुख्य_type(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा __group_करोमुख्य_type *gtype = data;
+	अचिन्हित पूर्णांक type = iommu_get_def_करोमुख्य_type(dev);
 
-	if (type) {
-		if (gtype->type && gtype->type != type) {
+	अगर (type) अणु
+		अगर (gtype->type && gtype->type != type) अणु
 			dev_warn(dev, "Device needs domain type %s, but device %s in the same iommu group requires type %s - using default\n",
-				 iommu_domain_type_str(type),
+				 iommu_करोमुख्य_type_str(type),
 				 dev_name(gtype->dev),
-				 iommu_domain_type_str(gtype->type));
+				 iommu_करोमुख्य_type_str(gtype->type));
 			gtype->type = 0;
-		}
+		पूर्ण
 
-		if (!gtype->dev) {
+		अगर (!gtype->dev) अणु
 			gtype->dev  = dev;
 			gtype->type = type;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void probe_alloc_default_domain(struct bus_type *bus,
-				       struct iommu_group *group)
-{
-	struct __group_domain_type gtype;
+अटल व्योम probe_alloc_शेष_करोमुख्य(काष्ठा bus_type *bus,
+				       काष्ठा iommu_group *group)
+अणु
+	काष्ठा __group_करोमुख्य_type gtype;
 
-	memset(&gtype, 0, sizeof(gtype));
+	स_रखो(&gtype, 0, माप(gtype));
 
-	/* Ask for default domain requirements of all devices in the group */
-	__iommu_group_for_each_dev(group, &gtype,
-				   probe_get_default_domain_type);
+	/* Ask क्रम शेष करोमुख्य requirements of all devices in the group */
+	__iommu_group_क्रम_each_dev(group, &gtype,
+				   probe_get_शेष_करोमुख्य_type);
 
-	if (!gtype.type)
-		gtype.type = iommu_def_domain_type;
+	अगर (!gtype.type)
+		gtype.type = iommu_def_करोमुख्य_type;
 
-	iommu_group_alloc_default_domain(bus, group, gtype.type);
+	iommu_group_alloc_शेष_करोमुख्य(bus, group, gtype.type);
 
-}
+पूर्ण
 
-static int iommu_group_do_dma_attach(struct device *dev, void *data)
-{
-	struct iommu_domain *domain = data;
-	int ret = 0;
+अटल पूर्णांक iommu_group_करो_dma_attach(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा iommu_करोमुख्य *करोमुख्य = data;
+	पूर्णांक ret = 0;
 
-	if (!iommu_is_attach_deferred(domain, dev))
-		ret = __iommu_attach_device(domain, dev);
+	अगर (!iommu_is_attach_deferred(करोमुख्य, dev))
+		ret = __iommu_attach_device(करोमुख्य, dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __iommu_group_dma_attach(struct iommu_group *group)
-{
-	return __iommu_group_for_each_dev(group, group->default_domain,
-					  iommu_group_do_dma_attach);
-}
+अटल पूर्णांक __iommu_group_dma_attach(काष्ठा iommu_group *group)
+अणु
+	वापस __iommu_group_क्रम_each_dev(group, group->शेष_करोमुख्य,
+					  iommu_group_करो_dma_attach);
+पूर्ण
 
-static int iommu_group_do_probe_finalize(struct device *dev, void *data)
-{
-	struct iommu_domain *domain = data;
+अटल पूर्णांक iommu_group_करो_probe_finalize(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा iommu_करोमुख्य *करोमुख्य = data;
 
-	if (domain->ops->probe_finalize)
-		domain->ops->probe_finalize(dev);
+	अगर (करोमुख्य->ops->probe_finalize)
+		करोमुख्य->ops->probe_finalize(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __iommu_group_dma_finalize(struct iommu_group *group)
-{
-	__iommu_group_for_each_dev(group, group->default_domain,
-				   iommu_group_do_probe_finalize);
-}
+अटल व्योम __iommu_group_dma_finalize(काष्ठा iommu_group *group)
+अणु
+	__iommu_group_क्रम_each_dev(group, group->शेष_करोमुख्य,
+				   iommu_group_करो_probe_finalize);
+पूर्ण
 
-static int iommu_do_create_direct_mappings(struct device *dev, void *data)
-{
-	struct iommu_group *group = data;
+अटल पूर्णांक iommu_करो_create_direct_mappings(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा iommu_group *group = data;
 
 	iommu_create_device_direct_mappings(group, dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iommu_group_create_direct_mappings(struct iommu_group *group)
-{
-	return __iommu_group_for_each_dev(group, group,
-					  iommu_do_create_direct_mappings);
-}
+अटल पूर्णांक iommu_group_create_direct_mappings(काष्ठा iommu_group *group)
+अणु
+	वापस __iommu_group_क्रम_each_dev(group, group,
+					  iommu_करो_create_direct_mappings);
+पूर्ण
 
-int bus_iommu_probe(struct bus_type *bus)
-{
-	struct iommu_group *group, *next;
+पूर्णांक bus_iommu_probe(काष्ठा bus_type *bus)
+अणु
+	काष्ठा iommu_group *group, *next;
 	LIST_HEAD(group_list);
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * This code-path does not allocate the default domain when
-	 * creating the iommu group, so do it after the groups are
+	 * This code-path करोes not allocate the शेष करोमुख्य when
+	 * creating the iommu group, so करो it after the groups are
 	 * created.
 	 */
-	ret = bus_for_each_dev(bus, NULL, &group_list, probe_iommu_group);
-	if (ret)
-		return ret;
+	ret = bus_क्रम_each_dev(bus, शून्य, &group_list, probe_iommu_group);
+	अगर (ret)
+		वापस ret;
 
-	list_for_each_entry_safe(group, next, &group_list, entry) {
+	list_क्रम_each_entry_safe(group, next, &group_list, entry) अणु
 		/* Remove item from the list */
 		list_del_init(&group->entry);
 
 		mutex_lock(&group->mutex);
 
-		/* Try to allocate default domain */
-		probe_alloc_default_domain(bus, group);
+		/* Try to allocate शेष करोमुख्य */
+		probe_alloc_शेष_करोमुख्य(bus, group);
 
-		if (!group->default_domain) {
+		अगर (!group->शेष_करोमुख्य) अणु
 			mutex_unlock(&group->mutex);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		iommu_group_create_direct_mappings(group);
 
@@ -1808,480 +1809,480 @@ int bus_iommu_probe(struct bus_type *bus)
 
 		mutex_unlock(&group->mutex);
 
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		__iommu_group_dma_finalize(group);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iommu_bus_init(struct bus_type *bus, const struct iommu_ops *ops)
-{
-	struct notifier_block *nb;
-	int err;
+अटल पूर्णांक iommu_bus_init(काष्ठा bus_type *bus, स्थिर काष्ठा iommu_ops *ops)
+अणु
+	काष्ठा notअगरier_block *nb;
+	पूर्णांक err;
 
-	nb = kzalloc(sizeof(struct notifier_block), GFP_KERNEL);
-	if (!nb)
-		return -ENOMEM;
+	nb = kzalloc(माप(काष्ठा notअगरier_block), GFP_KERNEL);
+	अगर (!nb)
+		वापस -ENOMEM;
 
-	nb->notifier_call = iommu_bus_notifier;
+	nb->notअगरier_call = iommu_bus_notअगरier;
 
-	err = bus_register_notifier(bus, nb);
-	if (err)
-		goto out_free;
+	err = bus_रेजिस्टर_notअगरier(bus, nb);
+	अगर (err)
+		जाओ out_मुक्त;
 
 	err = bus_iommu_probe(bus);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
 
-	return 0;
+	वापस 0;
 
 out_err:
 	/* Clean up */
-	bus_for_each_dev(bus, NULL, NULL, remove_iommu_group);
-	bus_unregister_notifier(bus, nb);
+	bus_क्रम_each_dev(bus, शून्य, शून्य, हटाओ_iommu_group);
+	bus_unरेजिस्टर_notअगरier(bus, nb);
 
-out_free:
-	kfree(nb);
+out_मुक्त:
+	kमुक्त(nb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * bus_set_iommu - set iommu-callbacks for the bus
+ * bus_set_iommu - set iommu-callbacks क्रम the bus
  * @bus: bus.
  * @ops: the callbacks provided by the iommu-driver
  *
  * This function is called by an iommu driver to set the iommu methods
- * used for a particular bus. Drivers for devices on that bus can use
- * the iommu-api after these ops are registered.
+ * used क्रम a particular bus. Drivers क्रम devices on that bus can use
+ * the iommu-api after these ops are रेजिस्टरed.
  * This special function is needed because IOMMUs are usually devices on
  * the bus itself, so the iommu drivers are not initialized when the bus
  * is set up. With this function the iommu-driver can set the iommu-ops
  * afterwards.
  */
-int bus_set_iommu(struct bus_type *bus, const struct iommu_ops *ops)
-{
-	int err;
+पूर्णांक bus_set_iommu(काष्ठा bus_type *bus, स्थिर काष्ठा iommu_ops *ops)
+अणु
+	पूर्णांक err;
 
-	if (ops == NULL) {
-		bus->iommu_ops = NULL;
-		return 0;
-	}
+	अगर (ops == शून्य) अणु
+		bus->iommu_ops = शून्य;
+		वापस 0;
+	पूर्ण
 
-	if (bus->iommu_ops != NULL)
-		return -EBUSY;
+	अगर (bus->iommu_ops != शून्य)
+		वापस -EBUSY;
 
 	bus->iommu_ops = ops;
 
-	/* Do IOMMU specific setup for this bus-type */
+	/* Do IOMMU specअगरic setup क्रम this bus-type */
 	err = iommu_bus_init(bus, ops);
-	if (err)
-		bus->iommu_ops = NULL;
+	अगर (err)
+		bus->iommu_ops = शून्य;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(bus_set_iommu);
 
-bool iommu_present(struct bus_type *bus)
-{
-	return bus->iommu_ops != NULL;
-}
+bool iommu_present(काष्ठा bus_type *bus)
+अणु
+	वापस bus->iommu_ops != शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_present);
 
-bool iommu_capable(struct bus_type *bus, enum iommu_cap cap)
-{
-	if (!bus->iommu_ops || !bus->iommu_ops->capable)
-		return false;
+bool iommu_capable(काष्ठा bus_type *bus, क्रमागत iommu_cap cap)
+अणु
+	अगर (!bus->iommu_ops || !bus->iommu_ops->capable)
+		वापस false;
 
-	return bus->iommu_ops->capable(cap);
-}
+	वापस bus->iommu_ops->capable(cap);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_capable);
 
 /**
- * iommu_set_fault_handler() - set a fault handler for an iommu domain
- * @domain: iommu domain
+ * iommu_set_fault_handler() - set a fault handler क्रम an iommu करोमुख्य
+ * @करोमुख्य: iommu करोमुख्य
  * @handler: fault handler
  * @token: user data, will be passed back to the fault handler
  *
- * This function should be used by IOMMU users which want to be notified
+ * This function should be used by IOMMU users which want to be notअगरied
  * whenever an IOMMU fault happens.
  *
- * The fault handler itself should return 0 on success, and an appropriate
+ * The fault handler itself should वापस 0 on success, and an appropriate
  * error code otherwise.
  */
-void iommu_set_fault_handler(struct iommu_domain *domain,
+व्योम iommu_set_fault_handler(काष्ठा iommu_करोमुख्य *करोमुख्य,
 					iommu_fault_handler_t handler,
-					void *token)
-{
-	BUG_ON(!domain);
+					व्योम *token)
+अणु
+	BUG_ON(!करोमुख्य);
 
-	domain->handler = handler;
-	domain->handler_token = token;
-}
+	करोमुख्य->handler = handler;
+	करोमुख्य->handler_token = token;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_set_fault_handler);
 
-static struct iommu_domain *__iommu_domain_alloc(struct bus_type *bus,
-						 unsigned type)
-{
-	struct iommu_domain *domain;
+अटल काष्ठा iommu_करोमुख्य *__iommu_करोमुख्य_alloc(काष्ठा bus_type *bus,
+						 अचिन्हित type)
+अणु
+	काष्ठा iommu_करोमुख्य *करोमुख्य;
 
-	if (bus == NULL || bus->iommu_ops == NULL)
-		return NULL;
+	अगर (bus == शून्य || bus->iommu_ops == शून्य)
+		वापस शून्य;
 
-	domain = bus->iommu_ops->domain_alloc(type);
-	if (!domain)
-		return NULL;
+	करोमुख्य = bus->iommu_ops->करोमुख्य_alloc(type);
+	अगर (!करोमुख्य)
+		वापस शून्य;
 
-	domain->ops  = bus->iommu_ops;
-	domain->type = type;
-	/* Assume all sizes by default; the driver may override this later */
-	domain->pgsize_bitmap  = bus->iommu_ops->pgsize_bitmap;
+	करोमुख्य->ops  = bus->iommu_ops;
+	करोमुख्य->type = type;
+	/* Assume all sizes by शेष; the driver may override this later */
+	करोमुख्य->pgsize_biपंचांगap  = bus->iommu_ops->pgsize_biपंचांगap;
 
-	return domain;
-}
+	वापस करोमुख्य;
+पूर्ण
 
-struct iommu_domain *iommu_domain_alloc(struct bus_type *bus)
-{
-	return __iommu_domain_alloc(bus, IOMMU_DOMAIN_UNMANAGED);
-}
-EXPORT_SYMBOL_GPL(iommu_domain_alloc);
+काष्ठा iommu_करोमुख्य *iommu_करोमुख्य_alloc(काष्ठा bus_type *bus)
+अणु
+	वापस __iommu_करोमुख्य_alloc(bus, IOMMU_DOMAIN_UNMANAGED);
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_करोमुख्य_alloc);
 
-void iommu_domain_free(struct iommu_domain *domain)
-{
-	domain->ops->domain_free(domain);
-}
-EXPORT_SYMBOL_GPL(iommu_domain_free);
+व्योम iommu_करोमुख्य_मुक्त(काष्ठा iommu_करोमुख्य *करोमुख्य)
+अणु
+	करोमुख्य->ops->करोमुख्य_मुक्त(करोमुख्य);
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_करोमुख्य_मुक्त);
 
-static int __iommu_attach_device(struct iommu_domain *domain,
-				 struct device *dev)
-{
-	int ret;
+अटल पूर्णांक __iommu_attach_device(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				 काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
 
-	if (unlikely(domain->ops->attach_dev == NULL))
-		return -ENODEV;
+	अगर (unlikely(करोमुख्य->ops->attach_dev == शून्य))
+		वापस -ENODEV;
 
-	ret = domain->ops->attach_dev(domain, dev);
-	if (!ret)
-		trace_attach_device_to_domain(dev);
-	return ret;
-}
+	ret = करोमुख्य->ops->attach_dev(करोमुख्य, dev);
+	अगर (!ret)
+		trace_attach_device_to_करोमुख्य(dev);
+	वापस ret;
+पूर्ण
 
-int iommu_attach_device(struct iommu_domain *domain, struct device *dev)
-{
-	struct iommu_group *group;
-	int ret;
+पूर्णांक iommu_attach_device(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev)
+अणु
+	काष्ठा iommu_group *group;
+	पूर्णांक ret;
 
 	group = iommu_group_get(dev);
-	if (!group)
-		return -ENODEV;
+	अगर (!group)
+		वापस -ENODEV;
 
 	/*
-	 * Lock the group to make sure the device-count doesn't
-	 * change while we are attaching
+	 * Lock the group to make sure the device-count करोesn't
+	 * change जबतक we are attaching
 	 */
 	mutex_lock(&group->mutex);
 	ret = -EINVAL;
-	if (iommu_group_device_count(group) != 1)
-		goto out_unlock;
+	अगर (iommu_group_device_count(group) != 1)
+		जाओ out_unlock;
 
-	ret = __iommu_attach_group(domain, group);
+	ret = __iommu_attach_group(करोमुख्य, group);
 
 out_unlock:
 	mutex_unlock(&group->mutex);
 	iommu_group_put(group);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_attach_device);
 
-int iommu_deferred_attach(struct device *dev, struct iommu_domain *domain)
-{
-	const struct iommu_ops *ops = domain->ops;
+पूर्णांक iommu_deferred_attach(काष्ठा device *dev, काष्ठा iommu_करोमुख्य *करोमुख्य)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = करोमुख्य->ops;
 
-	if (ops->is_attach_deferred && ops->is_attach_deferred(domain, dev))
-		return __iommu_attach_device(domain, dev);
+	अगर (ops->is_attach_deferred && ops->is_attach_deferred(करोमुख्य, dev))
+		वापस __iommu_attach_device(करोमुख्य, dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Check flags and other user provided data for valid combinations. We also
+ * Check flags and other user provided data क्रम valid combinations. We also
  * make sure no reserved fields or unused flags are set. This is to ensure
- * not breaking userspace in the future when these fields or flags are used.
+ * not अवरोधing userspace in the future when these fields or flags are used.
  */
-static int iommu_check_cache_invl_data(struct iommu_cache_invalidate_info *info)
-{
+अटल पूर्णांक iommu_check_cache_invl_data(काष्ठा iommu_cache_invalidate_info *info)
+अणु
 	u32 mask;
-	int i;
+	पूर्णांक i;
 
-	if (info->version != IOMMU_CACHE_INVALIDATE_INFO_VERSION_1)
-		return -EINVAL;
+	अगर (info->version != IOMMU_CACHE_INVALIDATE_INFO_VERSION_1)
+		वापस -EINVAL;
 
 	mask = (1 << IOMMU_CACHE_INV_TYPE_NR) - 1;
-	if (info->cache & ~mask)
-		return -EINVAL;
+	अगर (info->cache & ~mask)
+		वापस -EINVAL;
 
-	if (info->granularity >= IOMMU_INV_GRANU_NR)
-		return -EINVAL;
+	अगर (info->granularity >= IOMMU_INV_GRANU_NR)
+		वापस -EINVAL;
 
-	switch (info->granularity) {
-	case IOMMU_INV_GRANU_ADDR:
-		if (info->cache & IOMMU_CACHE_INV_TYPE_PASID)
-			return -EINVAL;
+	चयन (info->granularity) अणु
+	हाल IOMMU_INV_GRANU_ADDR:
+		अगर (info->cache & IOMMU_CACHE_INV_TYPE_PASID)
+			वापस -EINVAL;
 
 		mask = IOMMU_INV_ADDR_FLAGS_PASID |
 			IOMMU_INV_ADDR_FLAGS_ARCHID |
 			IOMMU_INV_ADDR_FLAGS_LEAF;
 
-		if (info->granu.addr_info.flags & ~mask)
-			return -EINVAL;
-		break;
-	case IOMMU_INV_GRANU_PASID:
+		अगर (info->granu.addr_info.flags & ~mask)
+			वापस -EINVAL;
+		अवरोध;
+	हाल IOMMU_INV_GRANU_PASID:
 		mask = IOMMU_INV_PASID_FLAGS_PASID |
 			IOMMU_INV_PASID_FLAGS_ARCHID;
-		if (info->granu.pasid_info.flags & ~mask)
-			return -EINVAL;
+		अगर (info->granu.pasid_info.flags & ~mask)
+			वापस -EINVAL;
 
-		break;
-	case IOMMU_INV_GRANU_DOMAIN:
-		if (info->cache & IOMMU_CACHE_INV_TYPE_DEV_IOTLB)
-			return -EINVAL;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल IOMMU_INV_GRANU_DOMAIN:
+		अगर (info->cache & IOMMU_CACHE_INV_TYPE_DEV_IOTLB)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Check reserved padding fields */
-	for (i = 0; i < sizeof(info->padding); i++) {
-		if (info->padding[i])
-			return -EINVAL;
-	}
+	क्रम (i = 0; i < माप(info->padding); i++) अणु
+		अगर (info->padding[i])
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int iommu_uapi_cache_invalidate(struct iommu_domain *domain, struct device *dev,
-				void __user *uinfo)
-{
-	struct iommu_cache_invalidate_info inv_info = { 0 };
+पूर्णांक iommu_uapi_cache_invalidate(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev,
+				व्योम __user *uinfo)
+अणु
+	काष्ठा iommu_cache_invalidate_info inv_info = अणु 0 पूर्ण;
 	u32 minsz;
-	int ret;
+	पूर्णांक ret;
 
-	if (unlikely(!domain->ops->cache_invalidate))
-		return -ENODEV;
+	अगर (unlikely(!करोमुख्य->ops->cache_invalidate))
+		वापस -ENODEV;
 
 	/*
-	 * No new spaces can be added before the variable sized union, the
-	 * minimum size is the offset to the union.
+	 * No new spaces can be added beक्रमe the variable sized जोड़, the
+	 * minimum size is the offset to the जोड़.
 	 */
-	minsz = offsetof(struct iommu_cache_invalidate_info, granu);
+	minsz = दुरत्व(काष्ठा iommu_cache_invalidate_info, granu);
 
 	/* Copy minsz from user to get flags and argsz */
-	if (copy_from_user(&inv_info, uinfo, minsz))
-		return -EFAULT;
+	अगर (copy_from_user(&inv_info, uinfo, minsz))
+		वापस -EFAULT;
 
-	/* Fields before the variable size union are mandatory */
-	if (inv_info.argsz < minsz)
-		return -EINVAL;
+	/* Fields beक्रमe the variable size जोड़ are mandatory */
+	अगर (inv_info.argsz < minsz)
+		वापस -EINVAL;
 
 	/* PASID and address granu require additional info beyond minsz */
-	if (inv_info.granularity == IOMMU_INV_GRANU_PASID &&
-	    inv_info.argsz < offsetofend(struct iommu_cache_invalidate_info, granu.pasid_info))
-		return -EINVAL;
+	अगर (inv_info.granularity == IOMMU_INV_GRANU_PASID &&
+	    inv_info.argsz < दुरत्वend(काष्ठा iommu_cache_invalidate_info, granu.pasid_info))
+		वापस -EINVAL;
 
-	if (inv_info.granularity == IOMMU_INV_GRANU_ADDR &&
-	    inv_info.argsz < offsetofend(struct iommu_cache_invalidate_info, granu.addr_info))
-		return -EINVAL;
+	अगर (inv_info.granularity == IOMMU_INV_GRANU_ADDR &&
+	    inv_info.argsz < दुरत्वend(काष्ठा iommu_cache_invalidate_info, granu.addr_info))
+		वापस -EINVAL;
 
 	/*
 	 * User might be using a newer UAPI header which has a larger data
 	 * size, we shall support the existing flags within the current
-	 * size. Copy the remaining user data _after_ minsz but not more
+	 * size. Copy the reमुख्यing user data _after_ minsz but not more
 	 * than the current kernel supported size.
 	 */
-	if (copy_from_user((void *)&inv_info + minsz, uinfo + minsz,
-			   min_t(u32, inv_info.argsz, sizeof(inv_info)) - minsz))
-		return -EFAULT;
+	अगर (copy_from_user((व्योम *)&inv_info + minsz, uinfo + minsz,
+			   min_t(u32, inv_info.argsz, माप(inv_info)) - minsz))
+		वापस -EFAULT;
 
 	/* Now the argsz is validated, check the content */
 	ret = iommu_check_cache_invl_data(&inv_info);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return domain->ops->cache_invalidate(domain, dev, &inv_info);
-}
+	वापस करोमुख्य->ops->cache_invalidate(करोमुख्य, dev, &inv_info);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_uapi_cache_invalidate);
 
-static int iommu_check_bind_data(struct iommu_gpasid_bind_data *data)
-{
+अटल पूर्णांक iommu_check_bind_data(काष्ठा iommu_gpasid_bind_data *data)
+अणु
 	u64 mask;
-	int i;
+	पूर्णांक i;
 
-	if (data->version != IOMMU_GPASID_BIND_VERSION_1)
-		return -EINVAL;
+	अगर (data->version != IOMMU_GPASID_BIND_VERSION_1)
+		वापस -EINVAL;
 
-	/* Check the range of supported formats */
-	if (data->format >= IOMMU_PASID_FORMAT_LAST)
-		return -EINVAL;
+	/* Check the range of supported क्रमmats */
+	अगर (data->क्रमmat >= IOMMU_PASID_FORMAT_LAST)
+		वापस -EINVAL;
 
 	/* Check all flags */
 	mask = IOMMU_SVA_GPASID_VAL;
-	if (data->flags & ~mask)
-		return -EINVAL;
+	अगर (data->flags & ~mask)
+		वापस -EINVAL;
 
 	/* Check reserved padding fields */
-	for (i = 0; i < sizeof(data->padding); i++) {
-		if (data->padding[i])
-			return -EINVAL;
-	}
+	क्रम (i = 0; i < माप(data->padding); i++) अणु
+		अगर (data->padding[i])
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iommu_sva_prepare_bind_data(void __user *udata,
-				       struct iommu_gpasid_bind_data *data)
-{
+अटल पूर्णांक iommu_sva_prepare_bind_data(व्योम __user *udata,
+				       काष्ठा iommu_gpasid_bind_data *data)
+अणु
 	u32 minsz;
 
 	/*
-	 * No new spaces can be added before the variable sized union, the
-	 * minimum size is the offset to the union.
+	 * No new spaces can be added beक्रमe the variable sized जोड़, the
+	 * minimum size is the offset to the जोड़.
 	 */
-	minsz = offsetof(struct iommu_gpasid_bind_data, vendor);
+	minsz = दुरत्व(काष्ठा iommu_gpasid_bind_data, venकरोr);
 
 	/* Copy minsz from user to get flags and argsz */
-	if (copy_from_user(data, udata, minsz))
-		return -EFAULT;
+	अगर (copy_from_user(data, udata, minsz))
+		वापस -EFAULT;
 
-	/* Fields before the variable size union are mandatory */
-	if (data->argsz < minsz)
-		return -EINVAL;
+	/* Fields beक्रमe the variable size जोड़ are mandatory */
+	अगर (data->argsz < minsz)
+		वापस -EINVAL;
 	/*
-	 * User might be using a newer UAPI header, we shall let IOMMU vendor
+	 * User might be using a newer UAPI header, we shall let IOMMU venकरोr
 	 * driver decide on what size it needs. Since the guest PASID bind data
-	 * can be vendor specific, larger argsz could be the result of extension
-	 * for one vendor but it should not affect another vendor.
-	 * Copy the remaining user data _after_ minsz
+	 * can be venकरोr specअगरic, larger argsz could be the result of extension
+	 * क्रम one venकरोr but it should not affect another venकरोr.
+	 * Copy the reमुख्यing user data _after_ minsz
 	 */
-	if (copy_from_user((void *)data + minsz, udata + minsz,
-			   min_t(u32, data->argsz, sizeof(*data)) - minsz))
-		return -EFAULT;
+	अगर (copy_from_user((व्योम *)data + minsz, udata + minsz,
+			   min_t(u32, data->argsz, माप(*data)) - minsz))
+		वापस -EFAULT;
 
-	return iommu_check_bind_data(data);
-}
+	वापस iommu_check_bind_data(data);
+पूर्ण
 
-int iommu_uapi_sva_bind_gpasid(struct iommu_domain *domain, struct device *dev,
-			       void __user *udata)
-{
-	struct iommu_gpasid_bind_data data = { 0 };
-	int ret;
+पूर्णांक iommu_uapi_sva_bind_gpasid(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev,
+			       व्योम __user *udata)
+अणु
+	काष्ठा iommu_gpasid_bind_data data = अणु 0 पूर्ण;
+	पूर्णांक ret;
 
-	if (unlikely(!domain->ops->sva_bind_gpasid))
-		return -ENODEV;
+	अगर (unlikely(!करोमुख्य->ops->sva_bind_gpasid))
+		वापस -ENODEV;
 
 	ret = iommu_sva_prepare_bind_data(udata, &data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return domain->ops->sva_bind_gpasid(domain, dev, &data);
-}
+	वापस करोमुख्य->ops->sva_bind_gpasid(करोमुख्य, dev, &data);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_uapi_sva_bind_gpasid);
 
-int iommu_sva_unbind_gpasid(struct iommu_domain *domain, struct device *dev,
+पूर्णांक iommu_sva_unbind_gpasid(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev,
 			     ioasid_t pasid)
-{
-	if (unlikely(!domain->ops->sva_unbind_gpasid))
-		return -ENODEV;
+अणु
+	अगर (unlikely(!करोमुख्य->ops->sva_unbind_gpasid))
+		वापस -ENODEV;
 
-	return domain->ops->sva_unbind_gpasid(dev, pasid);
-}
+	वापस करोमुख्य->ops->sva_unbind_gpasid(dev, pasid);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_sva_unbind_gpasid);
 
-int iommu_uapi_sva_unbind_gpasid(struct iommu_domain *domain, struct device *dev,
-				 void __user *udata)
-{
-	struct iommu_gpasid_bind_data data = { 0 };
-	int ret;
+पूर्णांक iommu_uapi_sva_unbind_gpasid(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev,
+				 व्योम __user *udata)
+अणु
+	काष्ठा iommu_gpasid_bind_data data = अणु 0 पूर्ण;
+	पूर्णांक ret;
 
-	if (unlikely(!domain->ops->sva_bind_gpasid))
-		return -ENODEV;
+	अगर (unlikely(!करोमुख्य->ops->sva_bind_gpasid))
+		वापस -ENODEV;
 
 	ret = iommu_sva_prepare_bind_data(udata, &data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return iommu_sva_unbind_gpasid(domain, dev, data.hpasid);
-}
+	वापस iommu_sva_unbind_gpasid(करोमुख्य, dev, data.hpasid);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_uapi_sva_unbind_gpasid);
 
-static void __iommu_detach_device(struct iommu_domain *domain,
-				  struct device *dev)
-{
-	if (iommu_is_attach_deferred(domain, dev))
-		return;
+अटल व्योम __iommu_detach_device(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				  काष्ठा device *dev)
+अणु
+	अगर (iommu_is_attach_deferred(करोमुख्य, dev))
+		वापस;
 
-	if (unlikely(domain->ops->detach_dev == NULL))
-		return;
+	अगर (unlikely(करोमुख्य->ops->detach_dev == शून्य))
+		वापस;
 
-	domain->ops->detach_dev(domain, dev);
-	trace_detach_device_from_domain(dev);
-}
+	करोमुख्य->ops->detach_dev(करोमुख्य, dev);
+	trace_detach_device_from_करोमुख्य(dev);
+पूर्ण
 
-void iommu_detach_device(struct iommu_domain *domain, struct device *dev)
-{
-	struct iommu_group *group;
+व्योम iommu_detach_device(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev)
+अणु
+	काष्ठा iommu_group *group;
 
 	group = iommu_group_get(dev);
-	if (!group)
-		return;
+	अगर (!group)
+		वापस;
 
 	mutex_lock(&group->mutex);
-	if (iommu_group_device_count(group) != 1) {
+	अगर (iommu_group_device_count(group) != 1) अणु
 		WARN_ON(1);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	__iommu_detach_group(domain, group);
+	__iommu_detach_group(करोमुख्य, group);
 
 out_unlock:
 	mutex_unlock(&group->mutex);
 	iommu_group_put(group);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_detach_device);
 
-struct iommu_domain *iommu_get_domain_for_dev(struct device *dev)
-{
-	struct iommu_domain *domain;
-	struct iommu_group *group;
+काष्ठा iommu_करोमुख्य *iommu_get_करोमुख्य_क्रम_dev(काष्ठा device *dev)
+अणु
+	काष्ठा iommu_करोमुख्य *करोमुख्य;
+	काष्ठा iommu_group *group;
 
 	group = iommu_group_get(dev);
-	if (!group)
-		return NULL;
+	अगर (!group)
+		वापस शून्य;
 
-	domain = group->domain;
+	करोमुख्य = group->करोमुख्य;
 
 	iommu_group_put(group);
 
-	return domain;
-}
-EXPORT_SYMBOL_GPL(iommu_get_domain_for_dev);
+	वापस करोमुख्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_get_करोमुख्य_क्रम_dev);
 
 /*
- * For IOMMU_DOMAIN_DMA implementations which already provide their own
- * guarantees that the group and its default domain are valid and correct.
+ * For IOMMU_DOMAIN_DMA implementations which alपढ़ोy provide their own
+ * guarantees that the group and its शेष करोमुख्य are valid and correct.
  */
-struct iommu_domain *iommu_get_dma_domain(struct device *dev)
-{
-	return dev->iommu_group->default_domain;
-}
+काष्ठा iommu_करोमुख्य *iommu_get_dma_करोमुख्य(काष्ठा device *dev)
+अणु
+	वापस dev->iommu_group->शेष_करोमुख्य;
+पूर्ण
 
 /*
  * IOMMU groups are really the natural working unit of the IOMMU, but
- * the IOMMU API works on domains and devices.  Bridge that gap by
+ * the IOMMU API works on करोमुख्यs and devices.  Bridge that gap by
  * iterating over the devices in a group.  Ideally we'd have a single
  * device which represents the requestor ID of the group, but we also
  * allow IOMMU drivers to create policy defined minimum sets, where
@@ -2289,112 +2290,112 @@ struct iommu_domain *iommu_get_dma_domain(struct device *dev)
  * wish to group them at a higher level (ex. untrusted multi-function
  * PCI devices).  Thus we attach each device.
  */
-static int iommu_group_do_attach_device(struct device *dev, void *data)
-{
-	struct iommu_domain *domain = data;
+अटल पूर्णांक iommu_group_करो_attach_device(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा iommu_करोमुख्य *करोमुख्य = data;
 
-	return __iommu_attach_device(domain, dev);
-}
+	वापस __iommu_attach_device(करोमुख्य, dev);
+पूर्ण
 
-static int __iommu_attach_group(struct iommu_domain *domain,
-				struct iommu_group *group)
-{
-	int ret;
+अटल पूर्णांक __iommu_attach_group(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				काष्ठा iommu_group *group)
+अणु
+	पूर्णांक ret;
 
-	if (group->default_domain && group->domain != group->default_domain)
-		return -EBUSY;
+	अगर (group->शेष_करोमुख्य && group->करोमुख्य != group->शेष_करोमुख्य)
+		वापस -EBUSY;
 
-	ret = __iommu_group_for_each_dev(group, domain,
-					 iommu_group_do_attach_device);
-	if (ret == 0)
-		group->domain = domain;
+	ret = __iommu_group_क्रम_each_dev(group, करोमुख्य,
+					 iommu_group_करो_attach_device);
+	अगर (ret == 0)
+		group->करोमुख्य = करोमुख्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int iommu_attach_group(struct iommu_domain *domain, struct iommu_group *group)
-{
-	int ret;
+पूर्णांक iommu_attach_group(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा iommu_group *group)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&group->mutex);
-	ret = __iommu_attach_group(domain, group);
+	ret = __iommu_attach_group(करोमुख्य, group);
 	mutex_unlock(&group->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_attach_group);
 
-static int iommu_group_do_detach_device(struct device *dev, void *data)
-{
-	struct iommu_domain *domain = data;
+अटल पूर्णांक iommu_group_करो_detach_device(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा iommu_करोमुख्य *करोमुख्य = data;
 
-	__iommu_detach_device(domain, dev);
+	__iommu_detach_device(करोमुख्य, dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __iommu_detach_group(struct iommu_domain *domain,
-				 struct iommu_group *group)
-{
-	int ret;
+अटल व्योम __iommu_detach_group(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				 काष्ठा iommu_group *group)
+अणु
+	पूर्णांक ret;
 
-	if (!group->default_domain) {
-		__iommu_group_for_each_dev(group, domain,
-					   iommu_group_do_detach_device);
-		group->domain = NULL;
-		return;
-	}
+	अगर (!group->शेष_करोमुख्य) अणु
+		__iommu_group_क्रम_each_dev(group, करोमुख्य,
+					   iommu_group_करो_detach_device);
+		group->करोमुख्य = शून्य;
+		वापस;
+	पूर्ण
 
-	if (group->domain == group->default_domain)
-		return;
+	अगर (group->करोमुख्य == group->शेष_करोमुख्य)
+		वापस;
 
-	/* Detach by re-attaching to the default domain */
-	ret = __iommu_group_for_each_dev(group, group->default_domain,
-					 iommu_group_do_attach_device);
-	if (ret != 0)
+	/* Detach by re-attaching to the शेष करोमुख्य */
+	ret = __iommu_group_क्रम_each_dev(group, group->शेष_करोमुख्य,
+					 iommu_group_करो_attach_device);
+	अगर (ret != 0)
 		WARN_ON(1);
-	else
-		group->domain = group->default_domain;
-}
+	अन्यथा
+		group->करोमुख्य = group->शेष_करोमुख्य;
+पूर्ण
 
-void iommu_detach_group(struct iommu_domain *domain, struct iommu_group *group)
-{
+व्योम iommu_detach_group(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा iommu_group *group)
+अणु
 	mutex_lock(&group->mutex);
-	__iommu_detach_group(domain, group);
+	__iommu_detach_group(करोमुख्य, group);
 	mutex_unlock(&group->mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_detach_group);
 
-phys_addr_t iommu_iova_to_phys(struct iommu_domain *domain, dma_addr_t iova)
-{
-	if (unlikely(domain->ops->iova_to_phys == NULL))
-		return 0;
+phys_addr_t iommu_iova_to_phys(काष्ठा iommu_करोमुख्य *करोमुख्य, dma_addr_t iova)
+अणु
+	अगर (unlikely(करोमुख्य->ops->iova_to_phys == शून्य))
+		वापस 0;
 
-	return domain->ops->iova_to_phys(domain, iova);
-}
+	वापस करोमुख्य->ops->iova_to_phys(करोमुख्य, iova);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_iova_to_phys);
 
-static size_t iommu_pgsize(struct iommu_domain *domain,
-			   unsigned long addr_merge, size_t size)
-{
-	unsigned int pgsize_idx;
-	size_t pgsize;
+अटल माप_प्रकार iommu_pgsize(काष्ठा iommu_करोमुख्य *करोमुख्य,
+			   अचिन्हित दीर्घ addr_merge, माप_प्रकार size)
+अणु
+	अचिन्हित पूर्णांक pgsize_idx;
+	माप_प्रकार pgsize;
 
-	/* Max page size that still fits into 'size' */
+	/* Max page size that still fits पूर्णांकo 'size' */
 	pgsize_idx = __fls(size);
 
 	/* need to consider alignment requirements ? */
-	if (likely(addr_merge)) {
+	अगर (likely(addr_merge)) अणु
 		/* Max page size allowed by address */
-		unsigned int align_pgsize_idx = __ffs(addr_merge);
+		अचिन्हित पूर्णांक align_pgsize_idx = __ffs(addr_merge);
 		pgsize_idx = min(pgsize_idx, align_pgsize_idx);
-	}
+	पूर्ण
 
 	/* build a mask of acceptable page sizes */
 	pgsize = (1UL << (pgsize_idx + 1)) - 1;
 
 	/* throw away page sizes not supported by the hardware */
-	pgsize &= domain->pgsize_bitmap;
+	pgsize &= करोमुख्य->pgsize_biपंचांगap;
 
 	/* make sure we're still sane */
 	BUG_ON(!pgsize);
@@ -2403,123 +2404,123 @@ static size_t iommu_pgsize(struct iommu_domain *domain,
 	pgsize_idx = __fls(pgsize);
 	pgsize = 1UL << pgsize_idx;
 
-	return pgsize;
-}
+	वापस pgsize;
+पूर्ण
 
-static int __iommu_map(struct iommu_domain *domain, unsigned long iova,
-		       phys_addr_t paddr, size_t size, int prot, gfp_t gfp)
-{
-	const struct iommu_ops *ops = domain->ops;
-	unsigned long orig_iova = iova;
-	unsigned int min_pagesz;
-	size_t orig_size = size;
+अटल पूर्णांक __iommu_map(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
+		       phys_addr_t paddr, माप_प्रकार size, पूर्णांक prot, gfp_t gfp)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = करोमुख्य->ops;
+	अचिन्हित दीर्घ orig_iova = iova;
+	अचिन्हित पूर्णांक min_pagesz;
+	माप_प्रकार orig_size = size;
 	phys_addr_t orig_paddr = paddr;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (unlikely(ops->map == NULL ||
-		     domain->pgsize_bitmap == 0UL))
-		return -ENODEV;
+	अगर (unlikely(ops->map == शून्य ||
+		     करोमुख्य->pgsize_biपंचांगap == 0UL))
+		वापस -ENODEV;
 
-	if (unlikely(!(domain->type & __IOMMU_DOMAIN_PAGING)))
-		return -EINVAL;
+	अगर (unlikely(!(करोमुख्य->type & __IOMMU_DOMAIN_PAGING)))
+		वापस -EINVAL;
 
 	/* find out the minimum page size supported */
-	min_pagesz = 1 << __ffs(domain->pgsize_bitmap);
+	min_pagesz = 1 << __ffs(करोमुख्य->pgsize_biपंचांगap);
 
 	/*
-	 * both the virtual address and the physical one, as well as
+	 * both the भव address and the physical one, as well as
 	 * the size of the mapping, must be aligned (at least) to the
 	 * size of the smallest page supported by the hardware
 	 */
-	if (!IS_ALIGNED(iova | paddr | size, min_pagesz)) {
+	अगर (!IS_ALIGNED(iova | paddr | size, min_pagesz)) अणु
 		pr_err("unaligned: iova 0x%lx pa %pa size 0x%zx min_pagesz 0x%x\n",
 		       iova, &paddr, size, min_pagesz);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pr_debug("map: iova 0x%lx pa %pa size 0x%zx\n", iova, &paddr, size);
 
-	while (size) {
-		size_t pgsize = iommu_pgsize(domain, iova | paddr, size);
+	जबतक (size) अणु
+		माप_प्रकार pgsize = iommu_pgsize(करोमुख्य, iova | paddr, size);
 
 		pr_debug("mapping: iova 0x%lx pa %pa pgsize 0x%zx\n",
 			 iova, &paddr, pgsize);
-		ret = ops->map(domain, iova, paddr, pgsize, prot, gfp);
+		ret = ops->map(करोमुख्य, iova, paddr, pgsize, prot, gfp);
 
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		iova += pgsize;
 		paddr += pgsize;
 		size -= pgsize;
-	}
+	पूर्ण
 
-	/* unroll mapping in case something went wrong */
-	if (ret)
-		iommu_unmap(domain, orig_iova, orig_size - size);
-	else
+	/* unroll mapping in हाल something went wrong */
+	अगर (ret)
+		iommu_unmap(करोमुख्य, orig_iova, orig_size - size);
+	अन्यथा
 		trace_map(orig_iova, orig_paddr, orig_size);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int _iommu_map(struct iommu_domain *domain, unsigned long iova,
-		      phys_addr_t paddr, size_t size, int prot, gfp_t gfp)
-{
-	const struct iommu_ops *ops = domain->ops;
-	int ret;
+अटल पूर्णांक _iommu_map(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
+		      phys_addr_t paddr, माप_प्रकार size, पूर्णांक prot, gfp_t gfp)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = करोमुख्य->ops;
+	पूर्णांक ret;
 
-	ret = __iommu_map(domain, iova, paddr, size, prot, gfp);
-	if (ret == 0 && ops->iotlb_sync_map)
-		ops->iotlb_sync_map(domain, iova, size);
+	ret = __iommu_map(करोमुख्य, iova, paddr, size, prot, gfp);
+	अगर (ret == 0 && ops->iotlb_sync_map)
+		ops->iotlb_sync_map(करोमुख्य, iova, size);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int iommu_map(struct iommu_domain *domain, unsigned long iova,
-	      phys_addr_t paddr, size_t size, int prot)
-{
+पूर्णांक iommu_map(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
+	      phys_addr_t paddr, माप_प्रकार size, पूर्णांक prot)
+अणु
 	might_sleep();
-	return _iommu_map(domain, iova, paddr, size, prot, GFP_KERNEL);
-}
+	वापस _iommu_map(करोमुख्य, iova, paddr, size, prot, GFP_KERNEL);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_map);
 
-int iommu_map_atomic(struct iommu_domain *domain, unsigned long iova,
-	      phys_addr_t paddr, size_t size, int prot)
-{
-	return _iommu_map(domain, iova, paddr, size, prot, GFP_ATOMIC);
-}
+पूर्णांक iommu_map_atomic(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
+	      phys_addr_t paddr, माप_प्रकार size, पूर्णांक prot)
+अणु
+	वापस _iommu_map(करोमुख्य, iova, paddr, size, prot, GFP_ATOMIC);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_map_atomic);
 
-static size_t __iommu_unmap(struct iommu_domain *domain,
-			    unsigned long iova, size_t size,
-			    struct iommu_iotlb_gather *iotlb_gather)
-{
-	const struct iommu_ops *ops = domain->ops;
-	size_t unmapped_page, unmapped = 0;
-	unsigned long orig_iova = iova;
-	unsigned int min_pagesz;
+अटल माप_प्रकार __iommu_unmap(काष्ठा iommu_करोमुख्य *करोमुख्य,
+			    अचिन्हित दीर्घ iova, माप_प्रकार size,
+			    काष्ठा iommu_iotlb_gather *iotlb_gather)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = करोमुख्य->ops;
+	माप_प्रकार unmapped_page, unmapped = 0;
+	अचिन्हित दीर्घ orig_iova = iova;
+	अचिन्हित पूर्णांक min_pagesz;
 
-	if (unlikely(ops->unmap == NULL ||
-		     domain->pgsize_bitmap == 0UL))
-		return 0;
+	अगर (unlikely(ops->unmap == शून्य ||
+		     करोमुख्य->pgsize_biपंचांगap == 0UL))
+		वापस 0;
 
-	if (unlikely(!(domain->type & __IOMMU_DOMAIN_PAGING)))
-		return 0;
+	अगर (unlikely(!(करोमुख्य->type & __IOMMU_DOMAIN_PAGING)))
+		वापस 0;
 
 	/* find out the minimum page size supported */
-	min_pagesz = 1 << __ffs(domain->pgsize_bitmap);
+	min_pagesz = 1 << __ffs(करोमुख्य->pgsize_biपंचांगap);
 
 	/*
-	 * The virtual address, as well as the size of the mapping, must be
+	 * The भव address, as well as the size of the mapping, must be
 	 * aligned (at least) to the size of the smallest page supported
 	 * by the hardware
 	 */
-	if (!IS_ALIGNED(iova | size, min_pagesz)) {
+	अगर (!IS_ALIGNED(iova | size, min_pagesz)) अणु
 		pr_err("unaligned: iova 0x%lx size 0x%zx min_pagesz 0x%x\n",
 		       iova, size, min_pagesz);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	pr_debug("unmap this: iova 0x%lx size 0x%zx\n", iova, size);
 
@@ -2527,422 +2528,422 @@ static size_t __iommu_unmap(struct iommu_domain *domain,
 	 * Keep iterating until we either unmap 'size' bytes (or more)
 	 * or we hit an area that isn't mapped.
 	 */
-	while (unmapped < size) {
-		size_t pgsize = iommu_pgsize(domain, iova, size - unmapped);
+	जबतक (unmapped < size) अणु
+		माप_प्रकार pgsize = iommu_pgsize(करोमुख्य, iova, size - unmapped);
 
-		unmapped_page = ops->unmap(domain, iova, pgsize, iotlb_gather);
-		if (!unmapped_page)
-			break;
+		unmapped_page = ops->unmap(करोमुख्य, iova, pgsize, iotlb_gather);
+		अगर (!unmapped_page)
+			अवरोध;
 
 		pr_debug("unmapped: iova 0x%lx size 0x%zx\n",
 			 iova, unmapped_page);
 
 		iova += unmapped_page;
 		unmapped += unmapped_page;
-	}
+	पूर्ण
 
 	trace_unmap(orig_iova, size, unmapped);
-	return unmapped;
-}
+	वापस unmapped;
+पूर्ण
 
-size_t iommu_unmap(struct iommu_domain *domain,
-		   unsigned long iova, size_t size)
-{
-	struct iommu_iotlb_gather iotlb_gather;
-	size_t ret;
+माप_प्रकार iommu_unmap(काष्ठा iommu_करोमुख्य *करोमुख्य,
+		   अचिन्हित दीर्घ iova, माप_प्रकार size)
+अणु
+	काष्ठा iommu_iotlb_gather iotlb_gather;
+	माप_प्रकार ret;
 
 	iommu_iotlb_gather_init(&iotlb_gather);
-	ret = __iommu_unmap(domain, iova, size, &iotlb_gather);
-	iommu_iotlb_sync(domain, &iotlb_gather);
+	ret = __iommu_unmap(करोमुख्य, iova, size, &iotlb_gather);
+	iommu_iotlb_sync(करोमुख्य, &iotlb_gather);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_unmap);
 
-size_t iommu_unmap_fast(struct iommu_domain *domain,
-			unsigned long iova, size_t size,
-			struct iommu_iotlb_gather *iotlb_gather)
-{
-	return __iommu_unmap(domain, iova, size, iotlb_gather);
-}
+माप_प्रकार iommu_unmap_fast(काष्ठा iommu_करोमुख्य *करोमुख्य,
+			अचिन्हित दीर्घ iova, माप_प्रकार size,
+			काष्ठा iommu_iotlb_gather *iotlb_gather)
+अणु
+	वापस __iommu_unmap(करोमुख्य, iova, size, iotlb_gather);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_unmap_fast);
 
-static size_t __iommu_map_sg(struct iommu_domain *domain, unsigned long iova,
-			     struct scatterlist *sg, unsigned int nents, int prot,
+अटल माप_प्रकार __iommu_map_sg(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
+			     काष्ठा scatterlist *sg, अचिन्हित पूर्णांक nents, पूर्णांक prot,
 			     gfp_t gfp)
-{
-	const struct iommu_ops *ops = domain->ops;
-	size_t len = 0, mapped = 0;
+अणु
+	स्थिर काष्ठा iommu_ops *ops = करोमुख्य->ops;
+	माप_प्रकार len = 0, mapped = 0;
 	phys_addr_t start;
-	unsigned int i = 0;
-	int ret;
+	अचिन्हित पूर्णांक i = 0;
+	पूर्णांक ret;
 
-	while (i <= nents) {
+	जबतक (i <= nents) अणु
 		phys_addr_t s_phys = sg_phys(sg);
 
-		if (len && s_phys != start + len) {
-			ret = __iommu_map(domain, iova + mapped, start,
+		अगर (len && s_phys != start + len) अणु
+			ret = __iommu_map(करोमुख्य, iova + mapped, start,
 					len, prot, gfp);
 
-			if (ret)
-				goto out_err;
+			अगर (ret)
+				जाओ out_err;
 
 			mapped += len;
 			len = 0;
-		}
+		पूर्ण
 
-		if (len) {
+		अगर (len) अणु
 			len += sg->length;
-		} else {
+		पूर्ण अन्यथा अणु
 			len = sg->length;
 			start = s_phys;
-		}
+		पूर्ण
 
-		if (++i < nents)
+		अगर (++i < nents)
 			sg = sg_next(sg);
-	}
+	पूर्ण
 
-	if (ops->iotlb_sync_map)
-		ops->iotlb_sync_map(domain, iova, mapped);
-	return mapped;
+	अगर (ops->iotlb_sync_map)
+		ops->iotlb_sync_map(करोमुख्य, iova, mapped);
+	वापस mapped;
 
 out_err:
-	/* undo mappings already done */
-	iommu_unmap(domain, iova, mapped);
+	/* unकरो mappings alपढ़ोy करोne */
+	iommu_unmap(करोमुख्य, iova, mapped);
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-size_t iommu_map_sg(struct iommu_domain *domain, unsigned long iova,
-		    struct scatterlist *sg, unsigned int nents, int prot)
-{
+माप_प्रकार iommu_map_sg(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
+		    काष्ठा scatterlist *sg, अचिन्हित पूर्णांक nents, पूर्णांक prot)
+अणु
 	might_sleep();
-	return __iommu_map_sg(domain, iova, sg, nents, prot, GFP_KERNEL);
-}
+	वापस __iommu_map_sg(करोमुख्य, iova, sg, nents, prot, GFP_KERNEL);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_map_sg);
 
-size_t iommu_map_sg_atomic(struct iommu_domain *domain, unsigned long iova,
-		    struct scatterlist *sg, unsigned int nents, int prot)
-{
-	return __iommu_map_sg(domain, iova, sg, nents, prot, GFP_ATOMIC);
-}
+माप_प्रकार iommu_map_sg_atomic(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
+		    काष्ठा scatterlist *sg, अचिन्हित पूर्णांक nents, पूर्णांक prot)
+अणु
+	वापस __iommu_map_sg(करोमुख्य, iova, sg, nents, prot, GFP_ATOMIC);
+पूर्ण
 
 /**
  * report_iommu_fault() - report about an IOMMU fault to the IOMMU framework
- * @domain: the iommu domain where the fault has happened
+ * @करोमुख्य: the iommu करोमुख्य where the fault has happened
  * @dev: the device where the fault has happened
  * @iova: the faulting address
  * @flags: mmu fault flags (e.g. IOMMU_FAULT_READ/IOMMU_FAULT_WRITE/...)
  *
  * This function should be called by the low-level IOMMU implementations
  * whenever IOMMU faults happen, to allow high-level users, that are
- * interested in such events, to know about them.
+ * पूर्णांकerested in such events, to know about them.
  *
- * This event may be useful for several possible use cases:
+ * This event may be useful क्रम several possible use हालs:
  * - mere logging of the event
  * - dynamic TLB/PTE loading
- * - if restarting of the faulting device is required
+ * - अगर restarting of the faulting device is required
  *
- * Returns 0 on success and an appropriate error code otherwise (if dynamic
+ * Returns 0 on success and an appropriate error code otherwise (अगर dynamic
  * PTE/TLB loading will one day be supported, implementations will be able
- * to tell whether it succeeded or not according to this return value).
+ * to tell whether it succeeded or not according to this वापस value).
  *
- * Specifically, -ENOSYS is returned if a fault handler isn't installed
- * (though fault handlers can also return -ENOSYS, in case they want to
- * elicit the default behavior of the IOMMU drivers).
+ * Specअगरically, -ENOSYS is वापसed अगर a fault handler isn't installed
+ * (though fault handlers can also वापस -ENOSYS, in हाल they want to
+ * elicit the शेष behavior of the IOMMU drivers).
  */
-int report_iommu_fault(struct iommu_domain *domain, struct device *dev,
-		       unsigned long iova, int flags)
-{
-	int ret = -ENOSYS;
+पूर्णांक report_iommu_fault(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev,
+		       अचिन्हित दीर्घ iova, पूर्णांक flags)
+अणु
+	पूर्णांक ret = -ENOSYS;
 
 	/*
-	 * if upper layers showed interest and installed a fault handler,
+	 * अगर upper layers showed पूर्णांकerest and installed a fault handler,
 	 * invoke it.
 	 */
-	if (domain->handler)
-		ret = domain->handler(domain, dev, iova, flags,
-						domain->handler_token);
+	अगर (करोमुख्य->handler)
+		ret = करोमुख्य->handler(करोमुख्य, dev, iova, flags,
+						करोमुख्य->handler_token);
 
 	trace_io_page_fault(dev, iova, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(report_iommu_fault);
 
-static int __init iommu_init(void)
-{
+अटल पूर्णांक __init iommu_init(व्योम)
+अणु
 	iommu_group_kset = kset_create_and_add("iommu_groups",
-					       NULL, kernel_kobj);
+					       शून्य, kernel_kobj);
 	BUG_ON(!iommu_group_kset);
 
 	iommu_debugfs_setup();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 core_initcall(iommu_init);
 
-int iommu_enable_nesting(struct iommu_domain *domain)
-{
-	if (domain->type != IOMMU_DOMAIN_UNMANAGED)
-		return -EINVAL;
-	if (!domain->ops->enable_nesting)
-		return -EINVAL;
-	return domain->ops->enable_nesting(domain);
-}
+पूर्णांक iommu_enable_nesting(काष्ठा iommu_करोमुख्य *करोमुख्य)
+अणु
+	अगर (करोमुख्य->type != IOMMU_DOMAIN_UNMANAGED)
+		वापस -EINVAL;
+	अगर (!करोमुख्य->ops->enable_nesting)
+		वापस -EINVAL;
+	वापस करोमुख्य->ops->enable_nesting(करोमुख्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_enable_nesting);
 
-int iommu_set_pgtable_quirks(struct iommu_domain *domain,
-		unsigned long quirk)
-{
-	if (domain->type != IOMMU_DOMAIN_UNMANAGED)
-		return -EINVAL;
-	if (!domain->ops->set_pgtable_quirks)
-		return -EINVAL;
-	return domain->ops->set_pgtable_quirks(domain, quirk);
-}
+पूर्णांक iommu_set_pgtable_quirks(काष्ठा iommu_करोमुख्य *करोमुख्य,
+		अचिन्हित दीर्घ quirk)
+अणु
+	अगर (करोमुख्य->type != IOMMU_DOMAIN_UNMANAGED)
+		वापस -EINVAL;
+	अगर (!करोमुख्य->ops->set_pgtable_quirks)
+		वापस -EINVAL;
+	वापस करोमुख्य->ops->set_pgtable_quirks(करोमुख्य, quirk);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_set_pgtable_quirks);
 
-void iommu_get_resv_regions(struct device *dev, struct list_head *list)
-{
-	const struct iommu_ops *ops = dev->bus->iommu_ops;
+व्योम iommu_get_resv_regions(काष्ठा device *dev, काष्ठा list_head *list)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = dev->bus->iommu_ops;
 
-	if (ops && ops->get_resv_regions)
+	अगर (ops && ops->get_resv_regions)
 		ops->get_resv_regions(dev, list);
-}
+पूर्ण
 
-void iommu_put_resv_regions(struct device *dev, struct list_head *list)
-{
-	const struct iommu_ops *ops = dev->bus->iommu_ops;
+व्योम iommu_put_resv_regions(काष्ठा device *dev, काष्ठा list_head *list)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = dev->bus->iommu_ops;
 
-	if (ops && ops->put_resv_regions)
+	अगर (ops && ops->put_resv_regions)
 		ops->put_resv_regions(dev, list);
-}
+पूर्ण
 
 /**
  * generic_iommu_put_resv_regions - Reserved region driver helper
- * @dev: device for which to free reserved regions
- * @list: reserved region list for device
+ * @dev: device क्रम which to मुक्त reserved regions
+ * @list: reserved region list क्रम device
  *
  * IOMMU drivers can use this to implement their .put_resv_regions() callback
- * for simple reservations. Memory allocated for each reserved region will be
- * freed. If an IOMMU driver allocates additional resources per region, it is
+ * क्रम simple reservations. Memory allocated क्रम each reserved region will be
+ * मुक्तd. If an IOMMU driver allocates additional resources per region, it is
  * going to have to implement a custom callback.
  */
-void generic_iommu_put_resv_regions(struct device *dev, struct list_head *list)
-{
-	struct iommu_resv_region *entry, *next;
+व्योम generic_iommu_put_resv_regions(काष्ठा device *dev, काष्ठा list_head *list)
+अणु
+	काष्ठा iommu_resv_region *entry, *next;
 
-	list_for_each_entry_safe(entry, next, list, list)
-		kfree(entry);
-}
+	list_क्रम_each_entry_safe(entry, next, list, list)
+		kमुक्त(entry);
+पूर्ण
 EXPORT_SYMBOL(generic_iommu_put_resv_regions);
 
-struct iommu_resv_region *iommu_alloc_resv_region(phys_addr_t start,
-						  size_t length, int prot,
-						  enum iommu_resv_type type)
-{
-	struct iommu_resv_region *region;
+काष्ठा iommu_resv_region *iommu_alloc_resv_region(phys_addr_t start,
+						  माप_प्रकार length, पूर्णांक prot,
+						  क्रमागत iommu_resv_type type)
+अणु
+	काष्ठा iommu_resv_region *region;
 
-	region = kzalloc(sizeof(*region), GFP_KERNEL);
-	if (!region)
-		return NULL;
+	region = kzalloc(माप(*region), GFP_KERNEL);
+	अगर (!region)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&region->list);
 	region->start = start;
 	region->length = length;
 	region->prot = prot;
 	region->type = type;
-	return region;
-}
+	वापस region;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_alloc_resv_region);
 
-void iommu_set_default_passthrough(bool cmd_line)
-{
-	if (cmd_line)
+व्योम iommu_set_शेष_passthrough(bool cmd_line)
+अणु
+	अगर (cmd_line)
 		iommu_cmd_line |= IOMMU_CMD_LINE_DMA_API;
-	iommu_def_domain_type = IOMMU_DOMAIN_IDENTITY;
-}
+	iommu_def_करोमुख्य_type = IOMMU_DOMAIN_IDENTITY;
+पूर्ण
 
-void iommu_set_default_translated(bool cmd_line)
-{
-	if (cmd_line)
+व्योम iommu_set_शेष_translated(bool cmd_line)
+अणु
+	अगर (cmd_line)
 		iommu_cmd_line |= IOMMU_CMD_LINE_DMA_API;
-	iommu_def_domain_type = IOMMU_DOMAIN_DMA;
-}
+	iommu_def_करोमुख्य_type = IOMMU_DOMAIN_DMA;
+पूर्ण
 
-bool iommu_default_passthrough(void)
-{
-	return iommu_def_domain_type == IOMMU_DOMAIN_IDENTITY;
-}
-EXPORT_SYMBOL_GPL(iommu_default_passthrough);
+bool iommu_शेष_passthrough(व्योम)
+अणु
+	वापस iommu_def_करोमुख्य_type == IOMMU_DOMAIN_IDENTITY;
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_शेष_passthrough);
 
-const struct iommu_ops *iommu_ops_from_fwnode(struct fwnode_handle *fwnode)
-{
-	const struct iommu_ops *ops = NULL;
-	struct iommu_device *iommu;
+स्थिर काष्ठा iommu_ops *iommu_ops_from_fwnode(काष्ठा fwnode_handle *fwnode)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = शून्य;
+	काष्ठा iommu_device *iommu;
 
 	spin_lock(&iommu_device_lock);
-	list_for_each_entry(iommu, &iommu_device_list, list)
-		if (iommu->fwnode == fwnode) {
+	list_क्रम_each_entry(iommu, &iommu_device_list, list)
+		अगर (iommu->fwnode == fwnode) अणु
 			ops = iommu->ops;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 	spin_unlock(&iommu_device_lock);
-	return ops;
-}
+	वापस ops;
+पूर्ण
 
-int iommu_fwspec_init(struct device *dev, struct fwnode_handle *iommu_fwnode,
-		      const struct iommu_ops *ops)
-{
-	struct iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
+पूर्णांक iommu_fwspec_init(काष्ठा device *dev, काष्ठा fwnode_handle *iommu_fwnode,
+		      स्थिर काष्ठा iommu_ops *ops)
+अणु
+	काष्ठा iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
 
-	if (fwspec)
-		return ops == fwspec->ops ? 0 : -EINVAL;
+	अगर (fwspec)
+		वापस ops == fwspec->ops ? 0 : -EINVAL;
 
-	if (!dev_iommu_get(dev))
-		return -ENOMEM;
+	अगर (!dev_iommu_get(dev))
+		वापस -ENOMEM;
 
-	/* Preallocate for the overwhelmingly common case of 1 ID */
-	fwspec = kzalloc(struct_size(fwspec, ids, 1), GFP_KERNEL);
-	if (!fwspec)
-		return -ENOMEM;
+	/* Pपुनः_स्मृतिate क्रम the overwhelmingly common हाल of 1 ID */
+	fwspec = kzalloc(काष्ठा_size(fwspec, ids, 1), GFP_KERNEL);
+	अगर (!fwspec)
+		वापस -ENOMEM;
 
 	of_node_get(to_of_node(iommu_fwnode));
 	fwspec->iommu_fwnode = iommu_fwnode;
 	fwspec->ops = ops;
 	dev_iommu_fwspec_set(dev, fwspec);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_fwspec_init);
 
-void iommu_fwspec_free(struct device *dev)
-{
-	struct iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
+व्योम iommu_fwspec_मुक्त(काष्ठा device *dev)
+अणु
+	काष्ठा iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
 
-	if (fwspec) {
+	अगर (fwspec) अणु
 		fwnode_handle_put(fwspec->iommu_fwnode);
-		kfree(fwspec);
-		dev_iommu_fwspec_set(dev, NULL);
-	}
-}
-EXPORT_SYMBOL_GPL(iommu_fwspec_free);
+		kमुक्त(fwspec);
+		dev_iommu_fwspec_set(dev, शून्य);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_fwspec_मुक्त);
 
-int iommu_fwspec_add_ids(struct device *dev, u32 *ids, int num_ids)
-{
-	struct iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
-	int i, new_num;
+पूर्णांक iommu_fwspec_add_ids(काष्ठा device *dev, u32 *ids, पूर्णांक num_ids)
+अणु
+	काष्ठा iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
+	पूर्णांक i, new_num;
 
-	if (!fwspec)
-		return -EINVAL;
+	अगर (!fwspec)
+		वापस -EINVAL;
 
 	new_num = fwspec->num_ids + num_ids;
-	if (new_num > 1) {
-		fwspec = krealloc(fwspec, struct_size(fwspec, ids, new_num),
+	अगर (new_num > 1) अणु
+		fwspec = kपुनः_स्मृति(fwspec, काष्ठा_size(fwspec, ids, new_num),
 				  GFP_KERNEL);
-		if (!fwspec)
-			return -ENOMEM;
+		अगर (!fwspec)
+			वापस -ENOMEM;
 
 		dev_iommu_fwspec_set(dev, fwspec);
-	}
+	पूर्ण
 
-	for (i = 0; i < num_ids; i++)
+	क्रम (i = 0; i < num_ids; i++)
 		fwspec->ids[fwspec->num_ids + i] = ids[i];
 
 	fwspec->num_ids = new_num;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_fwspec_add_ids);
 
 /*
  * Per device IOMMU features.
  */
-int iommu_dev_enable_feature(struct device *dev, enum iommu_dev_features feat)
-{
-	if (dev->iommu && dev->iommu->iommu_dev) {
-		const struct iommu_ops *ops = dev->iommu->iommu_dev->ops;
+पूर्णांक iommu_dev_enable_feature(काष्ठा device *dev, क्रमागत iommu_dev_features feat)
+अणु
+	अगर (dev->iommu && dev->iommu->iommu_dev) अणु
+		स्थिर काष्ठा iommu_ops *ops = dev->iommu->iommu_dev->ops;
 
-		if (ops->dev_enable_feat)
-			return ops->dev_enable_feat(dev, feat);
-	}
+		अगर (ops->dev_enable_feat)
+			वापस ops->dev_enable_feat(dev, feat);
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_dev_enable_feature);
 
 /*
- * The device drivers should do the necessary cleanups before calling this.
- * For example, before disabling the aux-domain feature, the device driver
- * should detach all aux-domains. Otherwise, this will return -EBUSY.
+ * The device drivers should करो the necessary cleanups beक्रमe calling this.
+ * For example, beक्रमe disabling the aux-करोमुख्य feature, the device driver
+ * should detach all aux-करोमुख्यs. Otherwise, this will वापस -EBUSY.
  */
-int iommu_dev_disable_feature(struct device *dev, enum iommu_dev_features feat)
-{
-	if (dev->iommu && dev->iommu->iommu_dev) {
-		const struct iommu_ops *ops = dev->iommu->iommu_dev->ops;
+पूर्णांक iommu_dev_disable_feature(काष्ठा device *dev, क्रमागत iommu_dev_features feat)
+अणु
+	अगर (dev->iommu && dev->iommu->iommu_dev) अणु
+		स्थिर काष्ठा iommu_ops *ops = dev->iommu->iommu_dev->ops;
 
-		if (ops->dev_disable_feat)
-			return ops->dev_disable_feat(dev, feat);
-	}
+		अगर (ops->dev_disable_feat)
+			वापस ops->dev_disable_feat(dev, feat);
+	पूर्ण
 
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_dev_disable_feature);
 
-bool iommu_dev_feature_enabled(struct device *dev, enum iommu_dev_features feat)
-{
-	if (dev->iommu && dev->iommu->iommu_dev) {
-		const struct iommu_ops *ops = dev->iommu->iommu_dev->ops;
+bool iommu_dev_feature_enabled(काष्ठा device *dev, क्रमागत iommu_dev_features feat)
+अणु
+	अगर (dev->iommu && dev->iommu->iommu_dev) अणु
+		स्थिर काष्ठा iommu_ops *ops = dev->iommu->iommu_dev->ops;
 
-		if (ops->dev_feat_enabled)
-			return ops->dev_feat_enabled(dev, feat);
-	}
+		अगर (ops->dev_feat_enabled)
+			वापस ops->dev_feat_enabled(dev, feat);
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_dev_feature_enabled);
 
 /*
- * Aux-domain specific attach/detach.
+ * Aux-करोमुख्य specअगरic attach/detach.
  *
- * Only works if iommu_dev_feature_enabled(dev, IOMMU_DEV_FEAT_AUX) returns
- * true. Also, as long as domains are attached to a device through this
- * interface, any tries to call iommu_attach_device() should fail
+ * Only works अगर iommu_dev_feature_enabled(dev, IOMMU_DEV_FEAT_AUX) वापसs
+ * true. Also, as दीर्घ as करोमुख्यs are attached to a device through this
+ * पूर्णांकerface, any tries to call iommu_attach_device() should fail
  * (iommu_detach_device() can't fail, so we fail when trying to re-attach).
  * This should make us safe against a device being attached to a guest as a
- * whole while there are still pasid users on it (aux and sva).
+ * whole जबतक there are still pasid users on it (aux and sva).
  */
-int iommu_aux_attach_device(struct iommu_domain *domain, struct device *dev)
-{
-	int ret = -ENODEV;
+पूर्णांक iommu_aux_attach_device(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev)
+अणु
+	पूर्णांक ret = -ENODEV;
 
-	if (domain->ops->aux_attach_dev)
-		ret = domain->ops->aux_attach_dev(domain, dev);
+	अगर (करोमुख्य->ops->aux_attach_dev)
+		ret = करोमुख्य->ops->aux_attach_dev(करोमुख्य, dev);
 
-	if (!ret)
-		trace_attach_device_to_domain(dev);
+	अगर (!ret)
+		trace_attach_device_to_करोमुख्य(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_aux_attach_device);
 
-void iommu_aux_detach_device(struct iommu_domain *domain, struct device *dev)
-{
-	if (domain->ops->aux_detach_dev) {
-		domain->ops->aux_detach_dev(domain, dev);
-		trace_detach_device_from_domain(dev);
-	}
-}
+व्योम iommu_aux_detach_device(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev)
+अणु
+	अगर (करोमुख्य->ops->aux_detach_dev) अणु
+		करोमुख्य->ops->aux_detach_dev(करोमुख्य, dev);
+		trace_detach_device_from_करोमुख्य(dev);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_aux_detach_device);
 
-int iommu_aux_get_pasid(struct iommu_domain *domain, struct device *dev)
-{
-	int ret = -ENODEV;
+पूर्णांक iommu_aux_get_pasid(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev)
+अणु
+	पूर्णांक ret = -ENODEV;
 
-	if (domain->ops->aux_get_pasid)
-		ret = domain->ops->aux_get_pasid(domain, dev);
+	अगर (करोमुख्य->ops->aux_get_pasid)
+		ret = करोमुख्य->ops->aux_get_pasid(करोमुख्य, dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_aux_get_pasid);
 
 /**
@@ -2951,40 +2952,40 @@ EXPORT_SYMBOL_GPL(iommu_aux_get_pasid);
  * @mm: the mm to bind, caller must hold a reference to it
  *
  * Create a bond between device and address space, allowing the device to access
- * the mm using the returned PASID. If a bond already exists between @device and
- * @mm, it is returned and an additional reference is taken. Caller must call
+ * the mm using the वापसed PASID. If a bond alपढ़ोy exists between @device and
+ * @mm, it is वापसed and an additional reference is taken. Caller must call
  * iommu_sva_unbind_device() to release each reference.
  *
  * iommu_dev_enable_feature(dev, IOMMU_DEV_FEAT_SVA) must be called first, to
  * initialize the required SVA features.
  *
- * On error, returns an ERR_PTR value.
+ * On error, वापसs an ERR_PTR value.
  */
-struct iommu_sva *
-iommu_sva_bind_device(struct device *dev, struct mm_struct *mm, void *drvdata)
-{
-	struct iommu_group *group;
-	struct iommu_sva *handle = ERR_PTR(-EINVAL);
-	const struct iommu_ops *ops = dev->bus->iommu_ops;
+काष्ठा iommu_sva *
+iommu_sva_bind_device(काष्ठा device *dev, काष्ठा mm_काष्ठा *mm, व्योम *drvdata)
+अणु
+	काष्ठा iommu_group *group;
+	काष्ठा iommu_sva *handle = ERR_PTR(-EINVAL);
+	स्थिर काष्ठा iommu_ops *ops = dev->bus->iommu_ops;
 
-	if (!ops || !ops->sva_bind)
-		return ERR_PTR(-ENODEV);
+	अगर (!ops || !ops->sva_bind)
+		वापस ERR_PTR(-ENODEV);
 
 	group = iommu_group_get(dev);
-	if (!group)
-		return ERR_PTR(-ENODEV);
+	अगर (!group)
+		वापस ERR_PTR(-ENODEV);
 
-	/* Ensure device count and domain don't change while we're binding */
+	/* Ensure device count and करोमुख्य करोn't change while we're binding */
 	mutex_lock(&group->mutex);
 
 	/*
-	 * To keep things simple, SVA currently doesn't support IOMMU groups
-	 * with more than one device. Existing SVA-capable systems are not
+	 * To keep things simple, SVA currently करोesn't support IOMMU groups
+	 * with more than one device. Existing SVA-capable प्रणालीs are not
 	 * affected by the problems that required IOMMU groups (lack of ACS
 	 * isolation, device ID aliasing and other hardware issues).
 	 */
-	if (iommu_group_device_count(group) != 1)
-		goto out_unlock;
+	अगर (iommu_group_device_count(group) != 1)
+		जाओ out_unlock;
 
 	handle = ops->sva_bind(dev, mm, drvdata);
 
@@ -2992,271 +2993,271 @@ out_unlock:
 	mutex_unlock(&group->mutex);
 	iommu_group_put(group);
 
-	return handle;
-}
+	वापस handle;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_sva_bind_device);
 
 /**
  * iommu_sva_unbind_device() - Remove a bond created with iommu_sva_bind_device
- * @handle: the handle returned by iommu_sva_bind_device()
+ * @handle: the handle वापसed by iommu_sva_bind_device()
  *
  * Put reference to a bond between device and address space. The device should
- * not be issuing any more transaction for this PASID. All outstanding page
- * requests for this PASID must have been flushed to the IOMMU.
+ * not be issuing any more transaction क्रम this PASID. All outstanding page
+ * requests क्रम this PASID must have been flushed to the IOMMU.
  */
-void iommu_sva_unbind_device(struct iommu_sva *handle)
-{
-	struct iommu_group *group;
-	struct device *dev = handle->dev;
-	const struct iommu_ops *ops = dev->bus->iommu_ops;
+व्योम iommu_sva_unbind_device(काष्ठा iommu_sva *handle)
+अणु
+	काष्ठा iommu_group *group;
+	काष्ठा device *dev = handle->dev;
+	स्थिर काष्ठा iommu_ops *ops = dev->bus->iommu_ops;
 
-	if (!ops || !ops->sva_unbind)
-		return;
+	अगर (!ops || !ops->sva_unbind)
+		वापस;
 
 	group = iommu_group_get(dev);
-	if (!group)
-		return;
+	अगर (!group)
+		वापस;
 
 	mutex_lock(&group->mutex);
 	ops->sva_unbind(handle);
 	mutex_unlock(&group->mutex);
 
 	iommu_group_put(group);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_sva_unbind_device);
 
-u32 iommu_sva_get_pasid(struct iommu_sva *handle)
-{
-	const struct iommu_ops *ops = handle->dev->bus->iommu_ops;
+u32 iommu_sva_get_pasid(काष्ठा iommu_sva *handle)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = handle->dev->bus->iommu_ops;
 
-	if (!ops || !ops->sva_get_pasid)
-		return IOMMU_PASID_INVALID;
+	अगर (!ops || !ops->sva_get_pasid)
+		वापस IOMMU_PASID_INVALID;
 
-	return ops->sva_get_pasid(handle);
-}
+	वापस ops->sva_get_pasid(handle);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_sva_get_pasid);
 
 /*
- * Changes the default domain of an iommu group that has *only* one device
+ * Changes the शेष करोमुख्य of an iommu group that has *only* one device
  *
- * @group: The group for which the default domain should be changed
+ * @group: The group क्रम which the शेष करोमुख्य should be changed
  * @prev_dev: The device in the group (this is used to make sure that the device
  *	 hasn't changed after the caller has called this function)
- * @type: The type of the new default domain that gets associated with the group
+ * @type: The type of the new शेष करोमुख्य that माला_लो associated with the group
  *
  * Returns 0 on success and error code on failure
  *
  * Note:
  * 1. Presently, this function is called only when user requests to change the
- *    group's default domain type through /sys/kernel/iommu_groups/<grp_id>/type
- *    Please take a closer look if intended to use for other purposes.
+ *    group's शेष करोमुख्य type through /sys/kernel/iommu_groups/<grp_id>/type
+ *    Please take a बंदr look अगर पूर्णांकended to use क्रम other purposes.
  */
-static int iommu_change_dev_def_domain(struct iommu_group *group,
-				       struct device *prev_dev, int type)
-{
-	struct iommu_domain *prev_dom;
-	struct group_device *grp_dev;
-	int ret, dev_def_dom;
-	struct device *dev;
+अटल पूर्णांक iommu_change_dev_def_करोमुख्य(काष्ठा iommu_group *group,
+				       काष्ठा device *prev_dev, पूर्णांक type)
+अणु
+	काष्ठा iommu_करोमुख्य *prev_करोm;
+	काष्ठा group_device *grp_dev;
+	पूर्णांक ret, dev_def_करोm;
+	काष्ठा device *dev;
 
-	if (!group)
-		return -EINVAL;
+	अगर (!group)
+		वापस -EINVAL;
 
 	mutex_lock(&group->mutex);
 
-	if (group->default_domain != group->domain) {
+	अगर (group->शेष_करोमुख्य != group->करोमुख्य) अणु
 		dev_err_ratelimited(prev_dev, "Group not assigned to default domain\n");
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * iommu group wasn't locked while acquiring device lock in
+	 * iommu group wasn't locked जबतक acquiring device lock in
 	 * iommu_group_store_type(). So, make sure that the device count hasn't
-	 * changed while acquiring device lock.
+	 * changed जबतक acquiring device lock.
 	 *
-	 * Changing default domain of an iommu group with two or more devices
+	 * Changing शेष करोमुख्य of an iommu group with two or more devices
 	 * isn't supported because there could be a potential deadlock. Consider
 	 * the following scenario. T1 is trying to acquire device locks of all
-	 * the devices in the group and before it could acquire all of them,
-	 * there could be another thread T2 (from different sub-system and use
-	 * case) that has already acquired some of the device locks and might be
-	 * waiting for T1 to release other device locks.
+	 * the devices in the group and beक्रमe it could acquire all of them,
+	 * there could be another thपढ़ो T2 (from dअगरferent sub-प्रणाली and use
+	 * हाल) that has alपढ़ोy acquired some of the device locks and might be
+	 * रुकोing क्रम T1 to release other device locks.
 	 */
-	if (iommu_group_device_count(group) != 1) {
+	अगर (iommu_group_device_count(group) != 1) अणु
 		dev_err_ratelimited(prev_dev, "Cannot change default domain: Group has more than one device\n");
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Since group has only one device */
-	grp_dev = list_first_entry(&group->devices, struct group_device, list);
+	grp_dev = list_first_entry(&group->devices, काष्ठा group_device, list);
 	dev = grp_dev->dev;
 
-	if (prev_dev != dev) {
+	अगर (prev_dev != dev) अणु
 		dev_err_ratelimited(prev_dev, "Cannot change default domain: Device has been changed\n");
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	prev_dom = group->default_domain;
-	if (!prev_dom) {
+	prev_करोm = group->शेष_करोमुख्य;
+	अगर (!prev_करोm) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	dev_def_dom = iommu_get_def_domain_type(dev);
-	if (!type) {
+	dev_def_करोm = iommu_get_def_करोमुख्य_type(dev);
+	अगर (!type) अणु
 		/*
-		 * If the user hasn't requested any specific type of domain and
-		 * if the device supports both the domains, then default to the
-		 * domain the device was booted with
+		 * If the user hasn't requested any specअगरic type of करोमुख्य and
+		 * अगर the device supports both the करोमुख्यs, then शेष to the
+		 * करोमुख्य the device was booted with
 		 */
-		type = dev_def_dom ? : iommu_def_domain_type;
-	} else if (dev_def_dom && type != dev_def_dom) {
+		type = dev_def_करोm ? : iommu_def_करोमुख्य_type;
+	पूर्ण अन्यथा अगर (dev_def_करोm && type != dev_def_करोm) अणु
 		dev_err_ratelimited(prev_dev, "Device cannot be in %s domain\n",
-				    iommu_domain_type_str(type));
+				    iommu_करोमुख्य_type_str(type));
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Switch to a new domain only if the requested domain type is different
-	 * from the existing default domain type
+	 * Switch to a new करोमुख्य only अगर the requested करोमुख्य type is dअगरferent
+	 * from the existing शेष करोमुख्य type
 	 */
-	if (prev_dom->type == type) {
+	अगर (prev_करोm->type == type) अणु
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Sets group->default_domain to the newly allocated domain */
-	ret = iommu_group_alloc_default_domain(dev->bus, group, type);
-	if (ret)
-		goto out;
+	/* Sets group->शेष_करोमुख्य to the newly allocated करोमुख्य */
+	ret = iommu_group_alloc_शेष_करोमुख्य(dev->bus, group, type);
+	अगर (ret)
+		जाओ out;
 
 	ret = iommu_create_device_direct_mappings(group, dev);
-	if (ret)
-		goto free_new_domain;
+	अगर (ret)
+		जाओ मुक्त_new_करोमुख्य;
 
-	ret = __iommu_attach_device(group->default_domain, dev);
-	if (ret)
-		goto free_new_domain;
+	ret = __iommu_attach_device(group->शेष_करोमुख्य, dev);
+	अगर (ret)
+		जाओ मुक्त_new_करोमुख्य;
 
-	group->domain = group->default_domain;
+	group->करोमुख्य = group->शेष_करोमुख्य;
 
 	/*
 	 * Release the mutex here because ops->probe_finalize() call-back of
-	 * some vendor IOMMU drivers calls arm_iommu_attach_device() which
-	 * in-turn might call back into IOMMU core code, where it tries to take
+	 * some venकरोr IOMMU drivers calls arm_iommu_attach_device() which
+	 * in-turn might call back पूर्णांकo IOMMU core code, where it tries to take
 	 * group->mutex, resulting in a deadlock.
 	 */
 	mutex_unlock(&group->mutex);
 
 	/* Make sure dma_ops is appropriatley set */
-	iommu_group_do_probe_finalize(dev, group->default_domain);
-	iommu_domain_free(prev_dom);
-	return 0;
+	iommu_group_करो_probe_finalize(dev, group->शेष_करोमुख्य);
+	iommu_करोमुख्य_मुक्त(prev_करोm);
+	वापस 0;
 
-free_new_domain:
-	iommu_domain_free(group->default_domain);
-	group->default_domain = prev_dom;
-	group->domain = prev_dom;
+मुक्त_new_करोमुख्य:
+	iommu_करोमुख्य_मुक्त(group->शेष_करोमुख्य);
+	group->शेष_करोमुख्य = prev_करोm;
+	group->करोमुख्य = prev_करोm;
 
 out:
 	mutex_unlock(&group->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Changing the default domain through sysfs requires the users to ubind the
- * drivers from the devices in the iommu group. Return failure if this doesn't
+ * Changing the शेष करोमुख्य through sysfs requires the users to ubind the
+ * drivers from the devices in the iommu group. Return failure अगर this करोesn't
  * meet.
  *
  * We need to consider the race between this and the device release path.
  * device_lock(dev) is used here to guarantee that the device release path
- * will not be entered at the same time.
+ * will not be entered at the same समय.
  */
-static ssize_t iommu_group_store_type(struct iommu_group *group,
-				      const char *buf, size_t count)
-{
-	struct group_device *grp_dev;
-	struct device *dev;
-	int ret, req_type;
+अटल sमाप_प्रकार iommu_group_store_type(काष्ठा iommu_group *group,
+				      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा group_device *grp_dev;
+	काष्ठा device *dev;
+	पूर्णांक ret, req_type;
 
-	if (!capable(CAP_SYS_ADMIN) || !capable(CAP_SYS_RAWIO))
-		return -EACCES;
+	अगर (!capable(CAP_SYS_ADMIN) || !capable(CAP_SYS_RAWIO))
+		वापस -EACCES;
 
-	if (WARN_ON(!group))
-		return -EINVAL;
+	अगर (WARN_ON(!group))
+		वापस -EINVAL;
 
-	if (sysfs_streq(buf, "identity"))
+	अगर (sysfs_streq(buf, "identity"))
 		req_type = IOMMU_DOMAIN_IDENTITY;
-	else if (sysfs_streq(buf, "DMA"))
+	अन्यथा अगर (sysfs_streq(buf, "DMA"))
 		req_type = IOMMU_DOMAIN_DMA;
-	else if (sysfs_streq(buf, "auto"))
+	अन्यथा अगर (sysfs_streq(buf, "auto"))
 		req_type = 0;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	/*
-	 * Lock/Unlock the group mutex here before device lock to
+	 * Lock/Unlock the group mutex here beक्रमe device lock to
 	 * 1. Make sure that the iommu group has only one device (this is a
-	 *    prerequisite for step 2)
-	 * 2. Get struct *dev which is needed to lock device
+	 *    prerequisite क्रम step 2)
+	 * 2. Get काष्ठा *dev which is needed to lock device
 	 */
 	mutex_lock(&group->mutex);
-	if (iommu_group_device_count(group) != 1) {
+	अगर (iommu_group_device_count(group) != 1) अणु
 		mutex_unlock(&group->mutex);
 		pr_err_ratelimited("Cannot change default domain: Group has more than one device\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Since group has only one device */
-	grp_dev = list_first_entry(&group->devices, struct group_device, list);
+	grp_dev = list_first_entry(&group->devices, काष्ठा group_device, list);
 	dev = grp_dev->dev;
 	get_device(dev);
 
 	/*
 	 * Don't hold the group mutex because taking group mutex first and then
 	 * the device lock could potentially cause a deadlock as below. Assume
-	 * two threads T1 and T2. T1 is trying to change default domain of an
+	 * two thपढ़ोs T1 and T2. T1 is trying to change शेष करोमुख्य of an
 	 * iommu group and T2 is trying to hot unplug a device or release [1] VF
 	 * of a PCIe device which is in the same iommu group. T1 takes group
-	 * mutex and before it could take device lock assume T2 has taken device
-	 * lock and is yet to take group mutex. Now, both the threads will be
-	 * waiting for the other thread to release lock. Below, lock order was
+	 * mutex and beक्रमe it could take device lock assume T2 has taken device
+	 * lock and is yet to take group mutex. Now, both the thपढ़ोs will be
+	 * रुकोing क्रम the other thपढ़ो to release lock. Below, lock order was
 	 * suggested.
 	 * device_lock(dev);
 	 *	mutex_lock(&group->mutex);
-	 *		iommu_change_dev_def_domain();
+	 *		iommu_change_dev_def_करोमुख्य();
 	 *	mutex_unlock(&group->mutex);
 	 * device_unlock(dev);
 	 *
 	 * [1] Typical device release path
 	 * device_lock() from device/driver core code
-	 *  -> bus_notifier()
-	 *   -> iommu_bus_notifier()
+	 *  -> bus_notअगरier()
+	 *   -> iommu_bus_notअगरier()
 	 *    -> iommu_release_device()
-	 *     -> ops->release_device() vendor driver calls back iommu core code
+	 *     -> ops->release_device() venकरोr driver calls back iommu core code
 	 *      -> mutex_lock() from iommu core code
 	 */
 	mutex_unlock(&group->mutex);
 
-	/* Check if the device in the group still has a driver bound to it */
+	/* Check अगर the device in the group still has a driver bound to it */
 	device_lock(dev);
-	if (device_is_bound(dev)) {
+	अगर (device_is_bound(dev)) अणु
 		pr_err_ratelimited("Device is still bound to driver\n");
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = iommu_change_dev_def_domain(group, dev, req_type);
+	ret = iommu_change_dev_def_करोमुख्य(group, dev, req_type);
 	ret = ret ?: count;
 
 out:
 	device_unlock(dev);
 	put_device(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

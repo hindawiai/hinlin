@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * IIO ADC driver for NXP LPC18xx ADC
+ * IIO ADC driver क्रम NXP LPC18xx ADC
  *
  * Copyright (C) 2016 Joachim Eastwood <manabian@gmail.com>
  *
@@ -11,52 +12,52 @@
  *  - DMA
  */
 
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/driver.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/driver.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
 
-/* LPC18XX ADC registers and bits */
-#define LPC18XX_ADC_CR			0x000
-#define  LPC18XX_ADC_CR_CLKDIV_SHIFT	8
-#define  LPC18XX_ADC_CR_PDN		BIT(21)
-#define  LPC18XX_ADC_CR_START_NOW	(0x1 << 24)
-#define LPC18XX_ADC_GDR			0x004
+/* LPC18XX ADC रेजिस्टरs and bits */
+#घोषणा LPC18XX_ADC_CR			0x000
+#घोषणा  LPC18XX_ADC_CR_CLKDIV_SHIFT	8
+#घोषणा  LPC18XX_ADC_CR_PDN		BIT(21)
+#घोषणा  LPC18XX_ADC_CR_START_NOW	(0x1 << 24)
+#घोषणा LPC18XX_ADC_GDR			0x004
 
-/* Data register bits */
-#define LPC18XX_ADC_SAMPLE_SHIFT	6
-#define LPC18XX_ADC_SAMPLE_MASK		0x3ff
-#define LPC18XX_ADC_CONV_DONE		BIT(31)
+/* Data रेजिस्टर bits */
+#घोषणा LPC18XX_ADC_SAMPLE_SHIFT	6
+#घोषणा LPC18XX_ADC_SAMPLE_MASK		0x3ff
+#घोषणा LPC18XX_ADC_CONV_DONE		BIT(31)
 
 /* Clock should be 4.5 MHz or less */
-#define LPC18XX_ADC_CLK_TARGET		4500000
+#घोषणा LPC18XX_ADC_CLK_TARGET		4500000
 
-struct lpc18xx_adc {
-	struct regulator *vref;
-	void __iomem *base;
-	struct device *dev;
-	struct mutex lock;
-	struct clk *clk;
+काष्ठा lpc18xx_adc अणु
+	काष्ठा regulator *vref;
+	व्योम __iomem *base;
+	काष्ठा device *dev;
+	काष्ठा mutex lock;
+	काष्ठा clk *clk;
 	u32 cr_reg;
-};
+पूर्ण;
 
-#define LPC18XX_ADC_CHAN(_idx) {				\
+#घोषणा LPC18XX_ADC_CHAN(_idx) अणु				\
 	.type = IIO_VOLTAGE,					\
 	.indexed = 1,						\
 	.channel = _idx,					\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
-}
+पूर्ण
 
-static const struct iio_chan_spec lpc18xx_adc_iio_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec lpc18xx_adc_iio_channels[] = अणु
 	LPC18XX_ADC_CHAN(0),
 	LPC18XX_ADC_CHAN(1),
 	LPC18XX_ADC_CHAN(2),
@@ -65,159 +66,159 @@ static const struct iio_chan_spec lpc18xx_adc_iio_channels[] = {
 	LPC18XX_ADC_CHAN(5),
 	LPC18XX_ADC_CHAN(6),
 	LPC18XX_ADC_CHAN(7),
-};
+पूर्ण;
 
-static int lpc18xx_adc_read_chan(struct lpc18xx_adc *adc, unsigned int ch)
-{
-	int ret;
+अटल पूर्णांक lpc18xx_adc_पढ़ो_chan(काष्ठा lpc18xx_adc *adc, अचिन्हित पूर्णांक ch)
+अणु
+	पूर्णांक ret;
 	u32 reg;
 
 	reg = adc->cr_reg | BIT(ch) | LPC18XX_ADC_CR_START_NOW;
-	writel(reg, adc->base + LPC18XX_ADC_CR);
+	ग_लिखोl(reg, adc->base + LPC18XX_ADC_CR);
 
-	ret = readl_poll_timeout(adc->base + LPC18XX_ADC_GDR, reg,
+	ret = पढ़ोl_poll_समयout(adc->base + LPC18XX_ADC_GDR, reg,
 				 reg & LPC18XX_ADC_CONV_DONE, 3, 9);
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(adc->dev, "adc read timed out\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return (reg >> LPC18XX_ADC_SAMPLE_SHIFT) & LPC18XX_ADC_SAMPLE_MASK;
-}
+	वापस (reg >> LPC18XX_ADC_SAMPLE_SHIFT) & LPC18XX_ADC_SAMPLE_MASK;
+पूर्ण
 
-static int lpc18xx_adc_read_raw(struct iio_dev *indio_dev,
-				struct iio_chan_spec const *chan,
-				int *val, int *val2, long mask)
-{
-	struct lpc18xx_adc *adc = iio_priv(indio_dev);
+अटल पूर्णांक lpc18xx_adc_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+				काष्ठा iio_chan_spec स्थिर *chan,
+				पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा lpc18xx_adc *adc = iio_priv(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		mutex_lock(&adc->lock);
-		*val = lpc18xx_adc_read_chan(adc, chan->channel);
+		*val = lpc18xx_adc_पढ़ो_chan(adc, chan->channel);
 		mutex_unlock(&adc->lock);
-		if (*val < 0)
-			return *val;
+		अगर (*val < 0)
+			वापस *val;
 
-		return IIO_VAL_INT;
+		वापस IIO_VAL_INT;
 
-	case IIO_CHAN_INFO_SCALE:
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = regulator_get_voltage(adc->vref) / 1000;
 		*val2 = 10;
 
-		return IIO_VAL_FRACTIONAL_LOG2;
-	}
+		वापस IIO_VAL_FRACTIONAL_LOG2;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct iio_info lpc18xx_adc_info = {
-	.read_raw = lpc18xx_adc_read_raw,
-};
+अटल स्थिर काष्ठा iio_info lpc18xx_adc_info = अणु
+	.पढ़ो_raw = lpc18xx_adc_पढ़ो_raw,
+पूर्ण;
 
-static int lpc18xx_adc_probe(struct platform_device *pdev)
-{
-	struct iio_dev *indio_dev;
-	struct lpc18xx_adc *adc;
-	unsigned int clkdiv;
-	unsigned long rate;
-	int ret;
+अटल पूर्णांक lpc18xx_adc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा lpc18xx_adc *adc;
+	अचिन्हित पूर्णांक clkभाग;
+	अचिन्हित दीर्घ rate;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*adc));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&pdev->dev, माप(*adc));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, indio_dev);
+	platक्रमm_set_drvdata(pdev, indio_dev);
 	adc = iio_priv(indio_dev);
 	adc->dev = &pdev->dev;
 	mutex_init(&adc->lock);
 
-	adc->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(adc->base))
-		return PTR_ERR(adc->base);
+	adc->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(adc->base))
+		वापस PTR_ERR(adc->base);
 
-	adc->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(adc->clk)) {
+	adc->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(adc->clk)) अणु
 		dev_err(&pdev->dev, "error getting clock\n");
-		return PTR_ERR(adc->clk);
-	}
+		वापस PTR_ERR(adc->clk);
+	पूर्ण
 
 	rate = clk_get_rate(adc->clk);
-	clkdiv = DIV_ROUND_UP(rate, LPC18XX_ADC_CLK_TARGET);
+	clkभाग = DIV_ROUND_UP(rate, LPC18XX_ADC_CLK_TARGET);
 
 	adc->vref = devm_regulator_get(&pdev->dev, "vref");
-	if (IS_ERR(adc->vref)) {
+	अगर (IS_ERR(adc->vref)) अणु
 		dev_err(&pdev->dev, "error getting regulator\n");
-		return PTR_ERR(adc->vref);
-	}
+		वापस PTR_ERR(adc->vref);
+	पूर्ण
 
 	indio_dev->name = dev_name(&pdev->dev);
 	indio_dev->info = &lpc18xx_adc_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = lpc18xx_adc_iio_channels;
 	indio_dev->num_channels = ARRAY_SIZE(lpc18xx_adc_iio_channels);
 
 	ret = regulator_enable(adc->vref);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "unable to enable regulator\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(adc->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "unable to enable clock\n");
-		goto dis_reg;
-	}
+		जाओ dis_reg;
+	पूर्ण
 
-	adc->cr_reg = (clkdiv << LPC18XX_ADC_CR_CLKDIV_SHIFT) |
+	adc->cr_reg = (clkभाग << LPC18XX_ADC_CR_CLKDIV_SHIFT) |
 			LPC18XX_ADC_CR_PDN;
-	writel(adc->cr_reg, adc->base + LPC18XX_ADC_CR);
+	ग_लिखोl(adc->cr_reg, adc->base + LPC18XX_ADC_CR);
 
-	ret = iio_device_register(indio_dev);
-	if (ret) {
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "unable to register device\n");
-		goto dis_clk;
-	}
+		जाओ dis_clk;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 dis_clk:
-	writel(0, adc->base + LPC18XX_ADC_CR);
+	ग_लिखोl(0, adc->base + LPC18XX_ADC_CR);
 	clk_disable_unprepare(adc->clk);
 dis_reg:
 	regulator_disable(adc->vref);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lpc18xx_adc_remove(struct platform_device *pdev)
-{
-	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
-	struct lpc18xx_adc *adc = iio_priv(indio_dev);
+अटल पूर्णांक lpc18xx_adc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा lpc18xx_adc *adc = iio_priv(indio_dev);
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 
-	writel(0, adc->base + LPC18XX_ADC_CR);
+	ग_लिखोl(0, adc->base + LPC18XX_ADC_CR);
 	clk_disable_unprepare(adc->clk);
 	regulator_disable(adc->vref);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id lpc18xx_adc_match[] = {
-	{ .compatible = "nxp,lpc1850-adc" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id lpc18xx_adc_match[] = अणु
+	अणु .compatible = "nxp,lpc1850-adc" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, lpc18xx_adc_match);
 
-static struct platform_driver lpc18xx_adc_driver = {
+अटल काष्ठा platक्रमm_driver lpc18xx_adc_driver = अणु
 	.probe	= lpc18xx_adc_probe,
-	.remove	= lpc18xx_adc_remove,
-	.driver	= {
+	.हटाओ	= lpc18xx_adc_हटाओ,
+	.driver	= अणु
 		.name = "lpc18xx-adc",
 		.of_match_table = lpc18xx_adc_match,
-	},
-};
-module_platform_driver(lpc18xx_adc_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(lpc18xx_adc_driver);
 
 MODULE_DESCRIPTION("LPC18xx ADC driver");
 MODULE_AUTHOR("Joachim Eastwood <manabian@gmail.com>");

@@ -1,367 +1,368 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Procedures for creating, accessing and interpreting the device tree.
+ * Procedures क्रम creating, accessing and पूर्णांकerpreting the device tree.
  *
  * Paul Mackerras	August 1996.
  * Copyright (C) 1996-2005 Paul Mackerras.
  * 
- *  Adapted for 64bit PowerPC by Dave Engebretsen and Peter Bergner.
- *    {engebret|bergner}@us.ibm.com 
+ *  Adapted क्रम 64bit PowerPC by Dave Engebretsen and Peter Bergner.
+ *    अणुengebret|bergnerपूर्ण@us.ibm.com 
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <stdarg.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/init.h>
-#include <linux/threads.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <linux/initrd.h>
-#include <linux/bitops.h>
-#include <linux/export.h>
-#include <linux/kexec.h>
-#include <linux/irq.h>
-#include <linux/memblock.h>
-#include <linux/of.h>
-#include <linux/of_fdt.h>
-#include <linux/libfdt.h>
-#include <linux/cpu.h>
-#include <linux/pgtable.h>
+#समावेश <मानकतर्क.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/init.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/initrd.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kexec.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/libfdt.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/prom.h>
-#include <asm/rtas.h>
-#include <asm/page.h>
-#include <asm/processor.h>
-#include <asm/irq.h>
-#include <asm/io.h>
-#include <asm/kdump.h>
-#include <asm/smp.h>
-#include <asm/mmu.h>
-#include <asm/paca.h>
-#include <asm/powernv.h>
-#include <asm/iommu.h>
-#include <asm/btext.h>
-#include <asm/sections.h>
-#include <asm/machdep.h>
-#include <asm/pci-bridge.h>
-#include <asm/kexec.h>
-#include <asm/opal.h>
-#include <asm/fadump.h>
-#include <asm/epapr_hcalls.h>
-#include <asm/firmware.h>
-#include <asm/dt_cpu_ftrs.h>
-#include <asm/drmem.h>
-#include <asm/ultravisor.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/rtas.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/kdump.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/mmu.h>
+#समावेश <यंत्र/paca.h>
+#समावेश <यंत्र/घातernv.h>
+#समावेश <यंत्र/iommu.h>
+#समावेश <यंत्र/btext.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/pci-bridge.h>
+#समावेश <यंत्र/kexec.h>
+#समावेश <यंत्र/opal.h>
+#समावेश <यंत्र/fadump.h>
+#समावेश <यंत्र/epapr_hcalls.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/dt_cpu_ftrs.h>
+#समावेश <यंत्र/drस्मृति.स>
+#समावेश <यंत्र/ultravisor.h>
 
-#include <mm/mmu_decl.h>
+#समावेश <mm/mmu_decl.h>
 
-#ifdef DEBUG
-#define DBG(fmt...) printk(KERN_ERR fmt)
-#else
-#define DBG(fmt...)
-#endif
+#अगर_घोषित DEBUG
+#घोषणा DBG(fmt...) prपूर्णांकk(KERN_ERR fmt)
+#अन्यथा
+#घोषणा DBG(fmt...)
+#पूर्ण_अगर
 
-int *chip_id_lookup_table;
+पूर्णांक *chip_id_lookup_table;
 
-#ifdef CONFIG_PPC64
-int __initdata iommu_is_off;
-int __initdata iommu_force_on;
-unsigned long tce_alloc_start, tce_alloc_end;
+#अगर_घोषित CONFIG_PPC64
+पूर्णांक __initdata iommu_is_off;
+पूर्णांक __initdata iommu_क्रमce_on;
+अचिन्हित दीर्घ tce_alloc_start, tce_alloc_end;
 u64 ppc64_rma_size;
-#endif
-static phys_addr_t first_memblock_size;
-static int __initdata boot_cpu_count;
+#पूर्ण_अगर
+अटल phys_addr_t first_memblock_size;
+अटल पूर्णांक __initdata boot_cpu_count;
 
-static int __init early_parse_mem(char *p)
-{
-	if (!p)
-		return 1;
+अटल पूर्णांक __init early_parse_mem(अक्षर *p)
+अणु
+	अगर (!p)
+		वापस 1;
 
 	memory_limit = PAGE_ALIGN(memparse(p, &p));
 	DBG("memory limit = 0x%llx\n", memory_limit);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("mem", early_parse_mem);
 
 /*
- * overlaps_initrd - check for overlap with page aligned extension of
+ * overlaps_initrd - check क्रम overlap with page aligned extension of
  * initrd.
  */
-static inline int overlaps_initrd(unsigned long start, unsigned long size)
-{
-#ifdef CONFIG_BLK_DEV_INITRD
-	if (!initrd_start)
-		return 0;
+अटल अंतरभूत पूर्णांक overlaps_initrd(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size)
+अणु
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+	अगर (!initrd_start)
+		वापस 0;
 
-	return	(start + size) > ALIGN_DOWN(initrd_start, PAGE_SIZE) &&
+	वापस	(start + size) > ALIGN_DOWN(initrd_start, PAGE_SIZE) &&
 			start <= ALIGN(initrd_end, PAGE_SIZE);
-#else
-	return 0;
-#endif
-}
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
 /**
- * move_device_tree - move tree to an unused area, if needed.
+ * move_device_tree - move tree to an unused area, अगर needed.
  *
  * The device tree may be allocated beyond our memory limit, or inside the
- * crash kernel region for kdump, or within the page aligned range of initrd.
+ * crash kernel region क्रम kdump, or within the page aligned range of initrd.
  * If so, move it out of the way.
  */
-static void __init move_device_tree(void)
-{
-	unsigned long start, size;
-	void *p;
+अटल व्योम __init move_device_tree(व्योम)
+अणु
+	अचिन्हित दीर्घ start, size;
+	व्योम *p;
 
 	DBG("-> move_device_tree\n");
 
 	start = __pa(initial_boot_params);
 	size = fdt_totalsize(initial_boot_params);
 
-	if ((memory_limit && (start + size) > PHYSICAL_START + memory_limit) ||
+	अगर ((memory_limit && (start + size) > PHYSICAL_START + memory_limit) ||
 	    !memblock_is_memory(start + size - 1) ||
-	    overlaps_crashkernel(start, size) || overlaps_initrd(start, size)) {
+	    overlaps_crashkernel(start, size) || overlaps_initrd(start, size)) अणु
 		p = memblock_alloc_raw(size, PAGE_SIZE);
-		if (!p)
+		अगर (!p)
 			panic("Failed to allocate %lu bytes to move device tree\n",
 			      size);
-		memcpy(p, initial_boot_params, size);
+		स_नकल(p, initial_boot_params, size);
 		initial_boot_params = p;
 		DBG("Moved device tree to 0x%px\n", p);
-	}
+	पूर्ण
 
 	DBG("<- move_device_tree\n");
-}
+पूर्ण
 
 /*
  * ibm,pa-features is a per-cpu property that contains a string of
  * attribute descriptors, each of which has a 2 byte header plus up
  * to 254 bytes worth of processor attribute bits.  First header
- * byte specifies the number of bytes following the header.
+ * byte specअगरies the number of bytes following the header.
  * Second header byte is an "attribute-specifier" type, of which
  * zero is the only currently-defined value.
- * Implementation:  Pass in the byte and bit offset for the feature
- * that we are interested in.  The function will return -1 if the
- * pa-features property is missing, or a 1/0 to indicate if the feature
+ * Implementation:  Pass in the byte and bit offset क्रम the feature
+ * that we are पूर्णांकerested in.  The function will वापस -1 अगर the
+ * pa-features property is missing, or a 1/0 to indicate अगर the feature
  * is supported/not supported.  Note that the bit numbers are
  * big-endian to match the definition in PAPR.
  */
-static struct ibm_pa_feature {
-	unsigned long	cpu_features;	/* CPU_FTR_xxx bit */
-	unsigned long	mmu_features;	/* MMU_FTR_xxx bit */
-	unsigned int	cpu_user_ftrs;	/* PPC_FEATURE_xxx bit */
-	unsigned int	cpu_user_ftrs2;	/* PPC_FEATURE2_xxx bit */
-	unsigned char	pabyte;		/* byte number in ibm,pa-features */
-	unsigned char	pabit;		/* bit number (big-endian) */
-	unsigned char	invert;		/* if 1, pa bit set => clear feature */
-} ibm_pa_features[] __initdata = {
-	{ .pabyte = 0,  .pabit = 0, .cpu_user_ftrs = PPC_FEATURE_HAS_MMU },
-	{ .pabyte = 0,  .pabit = 1, .cpu_user_ftrs = PPC_FEATURE_HAS_FPU },
-	{ .pabyte = 0,  .pabit = 3, .cpu_features  = CPU_FTR_CTRL },
-	{ .pabyte = 0,  .pabit = 6, .cpu_features  = CPU_FTR_NOEXECUTE },
-	{ .pabyte = 1,  .pabit = 2, .mmu_features  = MMU_FTR_CI_LARGE_PAGE },
-#ifdef CONFIG_PPC_RADIX_MMU
-	{ .pabyte = 40, .pabit = 0, .mmu_features  = MMU_FTR_TYPE_RADIX | MMU_FTR_GTSE },
-#endif
-	{ .pabyte = 5,  .pabit = 0, .cpu_features  = CPU_FTR_REAL_LE,
-				    .cpu_user_ftrs = PPC_FEATURE_TRUE_LE },
+अटल काष्ठा ibm_pa_feature अणु
+	अचिन्हित दीर्घ	cpu_features;	/* CPU_FTR_xxx bit */
+	अचिन्हित दीर्घ	mmu_features;	/* MMU_FTR_xxx bit */
+	अचिन्हित पूर्णांक	cpu_user_ftrs;	/* PPC_FEATURE_xxx bit */
+	अचिन्हित पूर्णांक	cpu_user_ftrs2;	/* PPC_FEATURE2_xxx bit */
+	अचिन्हित अक्षर	pabyte;		/* byte number in ibm,pa-features */
+	अचिन्हित अक्षर	pabit;		/* bit number (big-endian) */
+	अचिन्हित अक्षर	invert;		/* अगर 1, pa bit set => clear feature */
+पूर्ण ibm_pa_features[] __initdata = अणु
+	अणु .pabyte = 0,  .pabit = 0, .cpu_user_ftrs = PPC_FEATURE_HAS_MMU पूर्ण,
+	अणु .pabyte = 0,  .pabit = 1, .cpu_user_ftrs = PPC_FEATURE_HAS_FPU पूर्ण,
+	अणु .pabyte = 0,  .pabit = 3, .cpu_features  = CPU_FTR_CTRL पूर्ण,
+	अणु .pabyte = 0,  .pabit = 6, .cpu_features  = CPU_FTR_NOEXECUTE पूर्ण,
+	अणु .pabyte = 1,  .pabit = 2, .mmu_features  = MMU_FTR_CI_LARGE_PAGE पूर्ण,
+#अगर_घोषित CONFIG_PPC_RADIX_MMU
+	अणु .pabyte = 40, .pabit = 0, .mmu_features  = MMU_FTR_TYPE_RADIX | MMU_FTR_GTSE पूर्ण,
+#पूर्ण_अगर
+	अणु .pabyte = 5,  .pabit = 0, .cpu_features  = CPU_FTR_REAL_LE,
+				    .cpu_user_ftrs = PPC_FEATURE_TRUE_LE पूर्ण,
 	/*
-	 * If the kernel doesn't support TM (ie CONFIG_PPC_TRANSACTIONAL_MEM=n),
-	 * we don't want to turn on TM here, so we use the *_COMP versions
-	 * which are 0 if the kernel doesn't support TM.
+	 * If the kernel करोesn't support TM (ie CONFIG_PPC_TRANSACTIONAL_MEM=n),
+	 * we करोn't want to turn on TM here, so we use the *_COMP versions
+	 * which are 0 अगर the kernel करोesn't support TM.
 	 */
-	{ .pabyte = 22, .pabit = 0, .cpu_features = CPU_FTR_TM_COMP,
-	  .cpu_user_ftrs2 = PPC_FEATURE2_HTM_COMP | PPC_FEATURE2_HTM_NOSC_COMP },
+	अणु .pabyte = 22, .pabit = 0, .cpu_features = CPU_FTR_TM_COMP,
+	  .cpu_user_ftrs2 = PPC_FEATURE2_HTM_COMP | PPC_FEATURE2_HTM_NOSC_COMP पूर्ण,
 
-	{ .pabyte = 64, .pabit = 0, .cpu_features = CPU_FTR_DAWR1 },
-};
+	अणु .pabyte = 64, .pabit = 0, .cpu_features = CPU_FTR_DAWR1 पूर्ण,
+पूर्ण;
 
-static void __init scan_features(unsigned long node, const unsigned char *ftrs,
-				 unsigned long tablelen,
-				 struct ibm_pa_feature *fp,
-				 unsigned long ft_size)
-{
-	unsigned long i, len, bit;
+अटल व्योम __init scan_features(अचिन्हित दीर्घ node, स्थिर अचिन्हित अक्षर *ftrs,
+				 अचिन्हित दीर्घ tablelen,
+				 काष्ठा ibm_pa_feature *fp,
+				 अचिन्हित दीर्घ ft_size)
+अणु
+	अचिन्हित दीर्घ i, len, bit;
 
 	/* find descriptor with type == 0 */
-	for (;;) {
-		if (tablelen < 3)
-			return;
+	क्रम (;;) अणु
+		अगर (tablelen < 3)
+			वापस;
 		len = 2 + ftrs[0];
-		if (tablelen < len)
-			return;		/* descriptor 0 not found */
-		if (ftrs[1] == 0)
-			break;
+		अगर (tablelen < len)
+			वापस;		/* descriptor 0 not found */
+		अगर (ftrs[1] == 0)
+			अवरोध;
 		tablelen -= len;
 		ftrs += len;
-	}
+	पूर्ण
 
 	/* loop over bits we know about */
-	for (i = 0; i < ft_size; ++i, ++fp) {
-		if (fp->pabyte >= ftrs[0])
-			continue;
+	क्रम (i = 0; i < ft_size; ++i, ++fp) अणु
+		अगर (fp->pabyte >= ftrs[0])
+			जारी;
 		bit = (ftrs[2 + fp->pabyte] >> (7 - fp->pabit)) & 1;
-		if (bit ^ fp->invert) {
+		अगर (bit ^ fp->invert) अणु
 			cur_cpu_spec->cpu_features |= fp->cpu_features;
 			cur_cpu_spec->cpu_user_features |= fp->cpu_user_ftrs;
 			cur_cpu_spec->cpu_user_features2 |= fp->cpu_user_ftrs2;
 			cur_cpu_spec->mmu_features |= fp->mmu_features;
-		} else {
+		पूर्ण अन्यथा अणु
 			cur_cpu_spec->cpu_features &= ~fp->cpu_features;
 			cur_cpu_spec->cpu_user_features &= ~fp->cpu_user_ftrs;
 			cur_cpu_spec->cpu_user_features2 &= ~fp->cpu_user_ftrs2;
 			cur_cpu_spec->mmu_features &= ~fp->mmu_features;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void __init check_cpu_pa_features(unsigned long node)
-{
-	const unsigned char *pa_ftrs;
-	int tablelen;
+अटल व्योम __init check_cpu_pa_features(अचिन्हित दीर्घ node)
+अणु
+	स्थिर अचिन्हित अक्षर *pa_ftrs;
+	पूर्णांक tablelen;
 
 	pa_ftrs = of_get_flat_dt_prop(node, "ibm,pa-features", &tablelen);
-	if (pa_ftrs == NULL)
-		return;
+	अगर (pa_ftrs == शून्य)
+		वापस;
 
 	scan_features(node, pa_ftrs, tablelen,
 		      ibm_pa_features, ARRAY_SIZE(ibm_pa_features));
-}
+पूर्ण
 
-#ifdef CONFIG_PPC_BOOK3S_64
-static void __init init_mmu_slb_size(unsigned long node)
-{
-	const __be32 *slb_size_ptr;
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
+अटल व्योम __init init_mmu_slb_size(अचिन्हित दीर्घ node)
+अणु
+	स्थिर __be32 *slb_size_ptr;
 
-	slb_size_ptr = of_get_flat_dt_prop(node, "slb-size", NULL) ? :
-			of_get_flat_dt_prop(node, "ibm,slb-size", NULL);
+	slb_size_ptr = of_get_flat_dt_prop(node, "slb-size", शून्य) ? :
+			of_get_flat_dt_prop(node, "ibm,slb-size", शून्य);
 
-	if (slb_size_ptr)
+	अगर (slb_size_ptr)
 		mmu_slb_size = be32_to_cpup(slb_size_ptr);
-}
-#else
-#define init_mmu_slb_size(node) do { } while(0)
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा init_mmu_slb_size(node) करो अणु पूर्ण जबतक(0)
+#पूर्ण_अगर
 
-static struct feature_property {
-	const char *name;
+अटल काष्ठा feature_property अणु
+	स्थिर अक्षर *name;
 	u32 min_value;
-	unsigned long cpu_feature;
-	unsigned long cpu_user_ftr;
-} feature_properties[] __initdata = {
-#ifdef CONFIG_ALTIVEC
-	{"altivec", 0, CPU_FTR_ALTIVEC, PPC_FEATURE_HAS_ALTIVEC},
-	{"ibm,vmx", 1, CPU_FTR_ALTIVEC, PPC_FEATURE_HAS_ALTIVEC},
-#endif /* CONFIG_ALTIVEC */
-#ifdef CONFIG_VSX
+	अचिन्हित दीर्घ cpu_feature;
+	अचिन्हित दीर्घ cpu_user_ftr;
+पूर्ण feature_properties[] __initdata = अणु
+#अगर_घोषित CONFIG_ALTIVEC
+	अणु"altivec", 0, CPU_FTR_ALTIVEC, PPC_FEATURE_HAS_ALTIVECपूर्ण,
+	अणु"ibm,vmx", 1, CPU_FTR_ALTIVEC, PPC_FEATURE_HAS_ALTIVECपूर्ण,
+#पूर्ण_अगर /* CONFIG_ALTIVEC */
+#अगर_घोषित CONFIG_VSX
 	/* Yes, this _really_ is ibm,vmx == 2 to enable VSX */
-	{"ibm,vmx", 2, CPU_FTR_VSX, PPC_FEATURE_HAS_VSX},
-#endif /* CONFIG_VSX */
-#ifdef CONFIG_PPC64
-	{"ibm,dfp", 1, 0, PPC_FEATURE_HAS_DFP},
-	{"ibm,purr", 1, CPU_FTR_PURR, 0},
-	{"ibm,spurr", 1, CPU_FTR_SPURR, 0},
-#endif /* CONFIG_PPC64 */
-};
+	अणु"ibm,vmx", 2, CPU_FTR_VSX, PPC_FEATURE_HAS_VSXपूर्ण,
+#पूर्ण_अगर /* CONFIG_VSX */
+#अगर_घोषित CONFIG_PPC64
+	अणु"ibm,dfp", 1, 0, PPC_FEATURE_HAS_DFPपूर्ण,
+	अणु"ibm,purr", 1, CPU_FTR_PURR, 0पूर्ण,
+	अणु"ibm,spurr", 1, CPU_FTR_SPURR, 0पूर्ण,
+#पूर्ण_अगर /* CONFIG_PPC64 */
+पूर्ण;
 
-#if defined(CONFIG_44x) && defined(CONFIG_PPC_FPU)
-static __init void identical_pvr_fixup(unsigned long node)
-{
-	unsigned int pvr;
-	const char *model = of_get_flat_dt_prop(node, "model", NULL);
+#अगर defined(CONFIG_44x) && defined(CONFIG_PPC_FPU)
+अटल __init व्योम identical_pvr_fixup(अचिन्हित दीर्घ node)
+अणु
+	अचिन्हित पूर्णांक pvr;
+	स्थिर अक्षर *model = of_get_flat_dt_prop(node, "model", शून्य);
 
 	/*
 	 * Since 440GR(x)/440EP(x) processors have the same pvr,
 	 * we check the node path and set bit 28 in the cur_cpu_spec
-	 * pvr for EP(x) processor version. This bit is always 0 in
-	 * the "real" pvr. Then we call identify_cpu again with
+	 * pvr क्रम EP(x) processor version. This bit is always 0 in
+	 * the "real" pvr. Then we call identअगरy_cpu again with
 	 * the new logical pvr to enable FPU support.
 	 */
-	if (model && strstr(model, "440EP")) {
+	अगर (model && म_माला(model, "440EP")) अणु
 		pvr = cur_cpu_spec->pvr_value | 0x8;
-		identify_cpu(0, pvr);
+		identअगरy_cpu(0, pvr);
 		DBG("Using logical pvr %x for %s\n", pvr, model);
-	}
-}
-#else
-#define identical_pvr_fixup(node) do { } while(0)
-#endif
+	पूर्ण
+पूर्ण
+#अन्यथा
+#घोषणा identical_pvr_fixup(node) करो अणु पूर्ण जबतक(0)
+#पूर्ण_अगर
 
-static void __init check_cpu_feature_properties(unsigned long node)
-{
-	int i;
-	struct feature_property *fp = feature_properties;
-	const __be32 *prop;
+अटल व्योम __init check_cpu_feature_properties(अचिन्हित दीर्घ node)
+अणु
+	पूर्णांक i;
+	काष्ठा feature_property *fp = feature_properties;
+	स्थिर __be32 *prop;
 
-	for (i = 0; i < (int)ARRAY_SIZE(feature_properties); ++i, ++fp) {
-		prop = of_get_flat_dt_prop(node, fp->name, NULL);
-		if (prop && be32_to_cpup(prop) >= fp->min_value) {
+	क्रम (i = 0; i < (पूर्णांक)ARRAY_SIZE(feature_properties); ++i, ++fp) अणु
+		prop = of_get_flat_dt_prop(node, fp->name, शून्य);
+		अगर (prop && be32_to_cpup(prop) >= fp->min_value) अणु
 			cur_cpu_spec->cpu_features |= fp->cpu_feature;
 			cur_cpu_spec->cpu_user_features |= fp->cpu_user_ftr;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int __init early_init_dt_scan_cpus(unsigned long node,
-					  const char *uname, int depth,
-					  void *data)
-{
-	const char *type = of_get_flat_dt_prop(node, "device_type", NULL);
-	const __be32 *prop;
-	const __be32 *intserv;
-	int i, nthreads;
-	int len;
-	int found = -1;
-	int found_thread = 0;
+अटल पूर्णांक __init early_init_dt_scan_cpus(अचिन्हित दीर्घ node,
+					  स्थिर अक्षर *uname, पूर्णांक depth,
+					  व्योम *data)
+अणु
+	स्थिर अक्षर *type = of_get_flat_dt_prop(node, "device_type", शून्य);
+	स्थिर __be32 *prop;
+	स्थिर __be32 *पूर्णांकserv;
+	पूर्णांक i, nthपढ़ोs;
+	पूर्णांक len;
+	पूर्णांक found = -1;
+	पूर्णांक found_thपढ़ो = 0;
 
 	/* We are scanning "cpu" nodes only */
-	if (type == NULL || strcmp(type, "cpu") != 0)
-		return 0;
+	अगर (type == शून्य || म_भेद(type, "cpu") != 0)
+		वापस 0;
 
 	/* Get physical cpuid */
-	intserv = of_get_flat_dt_prop(node, "ibm,ppc-interrupt-server#s", &len);
-	if (!intserv)
-		intserv = of_get_flat_dt_prop(node, "reg", &len);
+	पूर्णांकserv = of_get_flat_dt_prop(node, "ibm,ppc-interrupt-server#s", &len);
+	अगर (!पूर्णांकserv)
+		पूर्णांकserv = of_get_flat_dt_prop(node, "reg", &len);
 
-	nthreads = len / sizeof(int);
+	nthपढ़ोs = len / माप(पूर्णांक);
 
 	/*
-	 * Now see if any of these threads match our boot cpu.
-	 * NOTE: This must match the parsing done in smp_setup_cpu_maps.
+	 * Now see अगर any of these thपढ़ोs match our boot cpu.
+	 * NOTE: This must match the parsing करोne in smp_setup_cpu_maps.
 	 */
-	for (i = 0; i < nthreads; i++) {
-		if (be32_to_cpu(intserv[i]) ==
-			fdt_boot_cpuid_phys(initial_boot_params)) {
+	क्रम (i = 0; i < nthपढ़ोs; i++) अणु
+		अगर (be32_to_cpu(पूर्णांकserv[i]) ==
+			fdt_boot_cpuid_phys(initial_boot_params)) अणु
 			found = boot_cpu_count;
-			found_thread = i;
-		}
-#ifdef CONFIG_SMP
+			found_thपढ़ो = i;
+		पूर्ण
+#अगर_घोषित CONFIG_SMP
 		/* logical cpu id is always 0 on UP kernels */
 		boot_cpu_count++;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	/* Not the boot CPU */
-	if (found < 0)
-		return 0;
+	अगर (found < 0)
+		वापस 0;
 
 	DBG("boot cpu: logical %d physical %d\n", found,
-	    be32_to_cpu(intserv[found_thread]));
+	    be32_to_cpu(पूर्णांकserv[found_thपढ़ो]));
 	boot_cpuid = found;
 
 	/*
-	 * PAPR defines "logical" PVR values for cpus that
+	 * PAPR defines "logical" PVR values क्रम cpus that
 	 * meet various levels of the architecture:
 	 * 0x0f000001	Architecture version 2.04
 	 * 0x0f000002	Architecture version 2.05
 	 * If the cpu-version property in the cpu node contains
-	 * such a value, we call identify_cpu again with the
+	 * such a value, we call identअगरy_cpu again with the
 	 * logical PVR value in order to use the cpu feature
-	 * bits appropriate for the architecture level.
+	 * bits appropriate क्रम the architecture level.
 	 *
 	 * A POWER6 partition in "POWER6 architected" mode
 	 * uses the 0x0f000002 PVR value; in POWER5+ mode
@@ -369,230 +370,230 @@ static int __init early_init_dt_scan_cpus(unsigned long node,
 	 *
 	 * If we're using device tree CPU feature discovery then we don't
 	 * support the cpu-version property, and it's the responsibility of the
-	 * firmware/hypervisor to provide the correct feature set for the
-	 * architecture level via the ibm,powerpc-cpu-features binding.
+	 * firmware/hypervisor to provide the correct feature set क्रम the
+	 * architecture level via the ibm,घातerpc-cpu-features binding.
 	 */
-	if (!dt_cpu_ftrs_in_use()) {
-		prop = of_get_flat_dt_prop(node, "cpu-version", NULL);
-		if (prop && (be32_to_cpup(prop) & 0xff000000) == 0x0f000000)
-			identify_cpu(0, be32_to_cpup(prop));
+	अगर (!dt_cpu_ftrs_in_use()) अणु
+		prop = of_get_flat_dt_prop(node, "cpu-version", शून्य);
+		अगर (prop && (be32_to_cpup(prop) & 0xff000000) == 0x0f000000)
+			identअगरy_cpu(0, be32_to_cpup(prop));
 
 		check_cpu_feature_properties(node);
 		check_cpu_pa_features(node);
-	}
+	पूर्ण
 
 	identical_pvr_fixup(node);
 	init_mmu_slb_size(node);
 
-#ifdef CONFIG_PPC64
-	if (nthreads == 1)
+#अगर_घोषित CONFIG_PPC64
+	अगर (nthपढ़ोs == 1)
 		cur_cpu_spec->cpu_features &= ~CPU_FTR_SMT;
-	else if (!dt_cpu_ftrs_in_use())
+	अन्यथा अगर (!dt_cpu_ftrs_in_use())
 		cur_cpu_spec->cpu_features |= CPU_FTR_SMT;
 	allocate_paca(boot_cpuid);
-#endif
-	set_hard_smp_processor_id(found, be32_to_cpu(intserv[found_thread]));
+#पूर्ण_अगर
+	set_hard_smp_processor_id(found, be32_to_cpu(पूर्णांकserv[found_thपढ़ो]));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init early_init_dt_scan_chosen_ppc(unsigned long node,
-						const char *uname,
-						int depth, void *data)
-{
-	const unsigned long *lprop; /* All these set by kernel, so no need to convert endian */
+अटल पूर्णांक __init early_init_dt_scan_chosen_ppc(अचिन्हित दीर्घ node,
+						स्थिर अक्षर *uname,
+						पूर्णांक depth, व्योम *data)
+अणु
+	स्थिर अचिन्हित दीर्घ *lprop; /* All these set by kernel, so no need to convert endian */
 
-	/* Use common scan routine to determine if this is the chosen node */
-	if (early_init_dt_scan_chosen(node, uname, depth, data) == 0)
-		return 0;
+	/* Use common scan routine to determine अगर this is the chosen node */
+	अगर (early_init_dt_scan_chosen(node, uname, depth, data) == 0)
+		वापस 0;
 
-#ifdef CONFIG_PPC64
-	/* check if iommu is forced on or off */
-	if (of_get_flat_dt_prop(node, "linux,iommu-off", NULL) != NULL)
+#अगर_घोषित CONFIG_PPC64
+	/* check अगर iommu is क्रमced on or off */
+	अगर (of_get_flat_dt_prop(node, "linux,iommu-off", शून्य) != शून्य)
 		iommu_is_off = 1;
-	if (of_get_flat_dt_prop(node, "linux,iommu-force-on", NULL) != NULL)
-		iommu_force_on = 1;
-#endif
+	अगर (of_get_flat_dt_prop(node, "linux,iommu-force-on", शून्य) != शून्य)
+		iommu_क्रमce_on = 1;
+#पूर्ण_अगर
 
 	/* mem=x on the command line is the preferred mechanism */
-	lprop = of_get_flat_dt_prop(node, "linux,memory-limit", NULL);
-	if (lprop)
+	lprop = of_get_flat_dt_prop(node, "linux,memory-limit", शून्य);
+	अगर (lprop)
 		memory_limit = *lprop;
 
-#ifdef CONFIG_PPC64
-	lprop = of_get_flat_dt_prop(node, "linux,tce-alloc-start", NULL);
-	if (lprop)
+#अगर_घोषित CONFIG_PPC64
+	lprop = of_get_flat_dt_prop(node, "linux,tce-alloc-start", शून्य);
+	अगर (lprop)
 		tce_alloc_start = *lprop;
-	lprop = of_get_flat_dt_prop(node, "linux,tce-alloc-end", NULL);
-	if (lprop)
+	lprop = of_get_flat_dt_prop(node, "linux,tce-alloc-end", शून्य);
+	अगर (lprop)
 		tce_alloc_end = *lprop;
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_KEXEC_CORE
-	lprop = of_get_flat_dt_prop(node, "linux,crashkernel-base", NULL);
-	if (lprop)
+#अगर_घोषित CONFIG_KEXEC_CORE
+	lprop = of_get_flat_dt_prop(node, "linux,crashkernel-base", शून्य);
+	अगर (lprop)
 		crashk_res.start = *lprop;
 
-	lprop = of_get_flat_dt_prop(node, "linux,crashkernel-size", NULL);
-	if (lprop)
+	lprop = of_get_flat_dt_prop(node, "linux,crashkernel-size", शून्य);
+	अगर (lprop)
 		crashk_res.end = crashk_res.start + *lprop - 1;
-#endif
+#पूर्ण_अगर
 
-	/* break now */
-	return 1;
-}
+	/* अवरोध now */
+	वापस 1;
+पूर्ण
 
 /*
  * Compare the range against max mem limit and update
- * size if it cross the limit.
+ * size अगर it cross the limit.
  */
 
-#ifdef CONFIG_SPARSEMEM
-static bool validate_mem_limit(u64 base, u64 *size)
-{
+#अगर_घोषित CONFIG_SPARSEMEM
+अटल bool validate_mem_limit(u64 base, u64 *size)
+अणु
 	u64 max_mem = 1UL << (MAX_PHYSMEM_BITS);
 
-	if (base >= max_mem)
-		return false;
-	if ((base + *size) > max_mem)
+	अगर (base >= max_mem)
+		वापस false;
+	अगर ((base + *size) > max_mem)
 		*size = max_mem - base;
-	return true;
-}
-#else
-static bool validate_mem_limit(u64 base, u64 *size)
-{
-	return true;
-}
-#endif
+	वापस true;
+पूर्ण
+#अन्यथा
+अटल bool validate_mem_limit(u64 base, u64 *size)
+अणु
+	वापस true;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_PSERIES
+#अगर_घोषित CONFIG_PPC_PSERIES
 /*
  * Interpret the ibm dynamic reconfiguration memory LMBs.
- * This contains a list of memory blocks along with NUMA affinity
- * information.
+ * This contains a list of memory blocks aदीर्घ with NUMA affinity
+ * inक्रमmation.
  */
-static int  __init early_init_drmem_lmb(struct drmem_lmb *lmb,
-					const __be32 **usm,
-					void *data)
-{
+अटल पूर्णांक  __init early_init_drmem_lmb(काष्ठा drmem_lmb *lmb,
+					स्थिर __be32 **usm,
+					व्योम *data)
+अणु
 	u64 base, size;
-	int is_kexec_kdump = 0, rngs;
+	पूर्णांक is_kexec_kdump = 0, rngs;
 
 	base = lmb->base_addr;
 	size = drmem_lmb_size();
 	rngs = 1;
 
 	/*
-	 * Skip this block if the reserved bit is set in flags
-	 * or if the block is not assigned to this partition.
+	 * Skip this block अगर the reserved bit is set in flags
+	 * or अगर the block is not asचिन्हित to this partition.
 	 */
-	if ((lmb->flags & DRCONF_MEM_RESERVED) ||
+	अगर ((lmb->flags & DRCONF_MEM_RESERVED) ||
 	    !(lmb->flags & DRCONF_MEM_ASSIGNED))
-		return 0;
+		वापस 0;
 
-	if (*usm)
+	अगर (*usm)
 		is_kexec_kdump = 1;
 
-	if (is_kexec_kdump) {
+	अगर (is_kexec_kdump) अणु
 		/*
 		 * For each memblock in ibm,dynamic-memory, a
 		 * corresponding entry in linux,drconf-usable-memory
 		 * property contains a counter 'p' followed by 'p'
-		 * (base, size) duple. Now read the counter from
+		 * (base, size) duple. Now पढ़ो the counter from
 		 * linux,drconf-usable-memory property
 		 */
 		rngs = dt_mem_next_cell(dt_root_size_cells, usm);
-		if (!rngs) /* there are no (base, size) duple */
-			return 0;
-	}
+		अगर (!rngs) /* there are no (base, size) duple */
+			वापस 0;
+	पूर्ण
 
-	do {
-		if (is_kexec_kdump) {
+	करो अणु
+		अगर (is_kexec_kdump) अणु
 			base = dt_mem_next_cell(dt_root_addr_cells, usm);
 			size = dt_mem_next_cell(dt_root_size_cells, usm);
-		}
+		पूर्ण
 
-		if (iommu_is_off) {
-			if (base >= 0x80000000ul)
-				continue;
-			if ((base + size) > 0x80000000ul)
+		अगर (iommu_is_off) अणु
+			अगर (base >= 0x80000000ul)
+				जारी;
+			अगर ((base + size) > 0x80000000ul)
 				size = 0x80000000ul - base;
-		}
+		पूर्ण
 
-		if (!validate_mem_limit(base, &size))
-			continue;
+		अगर (!validate_mem_limit(base, &size))
+			जारी;
 
 		DBG("Adding: %llx -> %llx\n", base, size);
 		memblock_add(base, size);
 
-		if (lmb->flags & DRCONF_MEM_HOTREMOVABLE)
+		अगर (lmb->flags & DRCONF_MEM_HOTREMOVABLE)
 			memblock_mark_hotplug(base, size);
-	} while (--rngs);
+	पूर्ण जबतक (--rngs);
 
-	return 0;
-}
-#endif /* CONFIG_PPC_PSERIES */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_PSERIES */
 
-static int __init early_init_dt_scan_memory_ppc(unsigned long node,
-						const char *uname,
-						int depth, void *data)
-{
-#ifdef CONFIG_PPC_PSERIES
-	if (depth == 1 &&
-	    strcmp(uname, "ibm,dynamic-reconfiguration-memory") == 0) {
-		walk_drmem_lmbs_early(node, NULL, early_init_drmem_lmb);
-		return 0;
-	}
-#endif
+अटल पूर्णांक __init early_init_dt_scan_memory_ppc(अचिन्हित दीर्घ node,
+						स्थिर अक्षर *uname,
+						पूर्णांक depth, व्योम *data)
+अणु
+#अगर_घोषित CONFIG_PPC_PSERIES
+	अगर (depth == 1 &&
+	    म_भेद(uname, "ibm,dynamic-reconfiguration-memory") == 0) अणु
+		walk_drmem_lmbs_early(node, शून्य, early_init_drmem_lmb);
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर
 	
-	return early_init_dt_scan_memory(node, uname, depth, data);
-}
+	वापस early_init_dt_scan_memory(node, uname, depth, data);
+पूर्ण
 
 /*
  * For a relocatable kernel, we need to get the memstart_addr first,
- * then use it to calculate the virtual kernel start address. This has
- * to happen at a very early stage (before machine_init). In this case,
+ * then use it to calculate the भव kernel start address. This has
+ * to happen at a very early stage (beक्रमe machine_init). In this हाल,
  * we just want to get the memstart_address and would not like to mess the
- * memblock at this stage. So introduce a variable to skip the memblock_add()
- * for this reason.
+ * memblock at this stage. So पूर्णांकroduce a variable to skip the memblock_add()
+ * क्रम this reason.
  */
-#ifdef CONFIG_RELOCATABLE
-static int add_mem_to_memblock = 1;
-#else
-#define add_mem_to_memblock 1
-#endif
+#अगर_घोषित CONFIG_RELOCATABLE
+अटल पूर्णांक add_mem_to_memblock = 1;
+#अन्यथा
+#घोषणा add_mem_to_memblock 1
+#पूर्ण_अगर
 
-void __init early_init_dt_add_memory_arch(u64 base, u64 size)
-{
-#ifdef CONFIG_PPC64
-	if (iommu_is_off) {
-		if (base >= 0x80000000ul)
-			return;
-		if ((base + size) > 0x80000000ul)
+व्योम __init early_init_dt_add_memory_arch(u64 base, u64 size)
+अणु
+#अगर_घोषित CONFIG_PPC64
+	अगर (iommu_is_off) अणु
+		अगर (base >= 0x80000000ul)
+			वापस;
+		अगर ((base + size) > 0x80000000ul)
 			size = 0x80000000ul - base;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	/* Keep track of the beginning of memory -and- the size of
 	 * the very first block in the device-tree as it represents
 	 * the RMA on ppc64 server
 	 */
-	if (base < memstart_addr) {
+	अगर (base < memstart_addr) अणु
 		memstart_addr = base;
 		first_memblock_size = size;
-	}
+	पूर्ण
 
 	/* Add the chunk to the MEMBLOCK list */
-	if (add_mem_to_memblock) {
-		if (validate_mem_limit(base, &size))
+	अगर (add_mem_to_memblock) अणु
+		अगर (validate_mem_limit(base, &size))
 			memblock_add(base, size);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init early_reserve_mem_dt(void)
-{
-	unsigned long i, dt_root;
-	int len;
-	const __be32 *prop;
+अटल व्योम __init early_reserve_mem_dt(व्योम)
+अणु
+	अचिन्हित दीर्घ i, dt_root;
+	पूर्णांक len;
+	स्थिर __be32 *prop;
 
 	early_init_fdt_reserve_self();
 	early_init_fdt_scan_reserved_mem();
@@ -601,193 +602,193 @@ static void __init early_reserve_mem_dt(void)
 
 	prop = of_get_flat_dt_prop(dt_root, "reserved-ranges", &len);
 
-	if (!prop)
-		return;
+	अगर (!prop)
+		वापस;
 
 	DBG("Found new-style reserved-ranges\n");
 
 	/* Each reserved range is an (address,size) pair, 2 cells each,
 	 * totalling 4 cells per range. */
-	for (i = 0; i < len / (sizeof(*prop) * 4); i++) {
+	क्रम (i = 0; i < len / (माप(*prop) * 4); i++) अणु
 		u64 base, size;
 
-		base = of_read_number(prop + (i * 4) + 0, 2);
-		size = of_read_number(prop + (i * 4) + 2, 2);
+		base = of_पढ़ो_number(prop + (i * 4) + 0, 2);
+		size = of_पढ़ो_number(prop + (i * 4) + 2, 2);
 
-		if (size) {
+		अगर (size) अणु
 			DBG("reserving: %llx -> %llx\n", base, size);
 			memblock_reserve(base, size);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void __init early_reserve_mem(void)
-{
+अटल व्योम __init early_reserve_mem(व्योम)
+अणु
 	__be64 *reserve_map;
 
-	reserve_map = (__be64 *)(((unsigned long)initial_boot_params) +
+	reserve_map = (__be64 *)(((अचिन्हित दीर्घ)initial_boot_params) +
 			fdt_off_mem_rsvmap(initial_boot_params));
 
-	/* Look for the new "reserved-regions" property in the DT */
+	/* Look क्रम the new "reserved-regions" property in the DT */
 	early_reserve_mem_dt();
 
-#ifdef CONFIG_BLK_DEV_INITRD
-	/* Then reserve the initrd, if any */
-	if (initrd_start && (initrd_end > initrd_start)) {
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+	/* Then reserve the initrd, अगर any */
+	अगर (initrd_start && (initrd_end > initrd_start)) अणु
 		memblock_reserve(ALIGN_DOWN(__pa(initrd_start), PAGE_SIZE),
 			ALIGN(initrd_end, PAGE_SIZE) -
 			ALIGN_DOWN(initrd_start, PAGE_SIZE));
-	}
-#endif /* CONFIG_BLK_DEV_INITRD */
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_BLK_DEV_INITRD */
 
-#ifdef CONFIG_PPC32
+#अगर_घोषित CONFIG_PPC32
 	/* 
-	 * Handle the case where we might be booting from an old kexec
+	 * Handle the हाल where we might be booting from an old kexec
 	 * image that setup the mem_rsvmap as pairs of 32-bit values
 	 */
-	if (be64_to_cpup(reserve_map) > 0xffffffffull) {
+	अगर (be64_to_cpup(reserve_map) > 0xffffffffull) अणु
 		u32 base_32, size_32;
 		__be32 *reserve_map_32 = (__be32 *)reserve_map;
 
 		DBG("Found old 32-bit reserve map\n");
 
-		while (1) {
+		जबतक (1) अणु
 			base_32 = be32_to_cpup(reserve_map_32++);
 			size_32 = be32_to_cpup(reserve_map_32++);
-			if (size_32 == 0)
-				break;
+			अगर (size_32 == 0)
+				अवरोध;
 			DBG("reserving: %x -> %x\n", base_32, size_32);
 			memblock_reserve(base_32, size_32);
-		}
-		return;
-	}
-#endif
-}
+		पूर्ण
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
-static bool tm_disabled __initdata;
+#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
+अटल bool पंचांग_disabled __initdata;
 
-static int __init parse_ppc_tm(char *str)
-{
+अटल पूर्णांक __init parse_ppc_पंचांग(अक्षर *str)
+अणु
 	bool res;
 
-	if (kstrtobool(str, &res))
-		return -EINVAL;
+	अगर (kstrtobool(str, &res))
+		वापस -EINVAL;
 
-	tm_disabled = !res;
+	पंचांग_disabled = !res;
 
-	return 0;
-}
-early_param("ppc_tm", parse_ppc_tm);
+	वापस 0;
+पूर्ण
+early_param("ppc_tm", parse_ppc_पंचांग);
 
-static void __init tm_init(void)
-{
-	if (tm_disabled) {
+अटल व्योम __init पंचांग_init(व्योम)
+अणु
+	अगर (पंचांग_disabled) अणु
 		pr_info("Disabling hardware transactional memory (HTM)\n");
 		cur_cpu_spec->cpu_user_features2 &=
 			~(PPC_FEATURE2_HTM_NOSC | PPC_FEATURE2_HTM);
 		cur_cpu_spec->cpu_features &= ~CPU_FTR_TM;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	pnv_tm_init();
-}
-#else
-static void tm_init(void) { }
-#endif /* CONFIG_PPC_TRANSACTIONAL_MEM */
+	pnv_पंचांग_init();
+पूर्ण
+#अन्यथा
+अटल व्योम पंचांग_init(व्योम) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_TRANSACTIONAL_MEM */
 
-#ifdef CONFIG_PPC64
-static void __init save_fscr_to_task(void)
-{
+#अगर_घोषित CONFIG_PPC64
+अटल व्योम __init save_fscr_to_task(व्योम)
+अणु
 	/*
 	 * Ensure the init_task (pid 0, aka swapper) uses the value of FSCR we
 	 * have configured via the device tree features or via __init_FSCR().
 	 * That value will then be propagated to pid 1 (init) and all future
 	 * processes.
 	 */
-	if (early_cpu_has_feature(CPU_FTR_ARCH_207S))
-		init_task.thread.fscr = mfspr(SPRN_FSCR);
-}
-#else
-static inline void save_fscr_to_task(void) {}
-#endif
+	अगर (early_cpu_has_feature(CPU_FTR_ARCH_207S))
+		init_task.thपढ़ो.fscr = mfspr(SPRN_FSCR);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम save_fscr_to_task(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 
-void __init early_init_devtree(void *params)
-{
+व्योम __init early_init_devtree(व्योम *params)
+अणु
 	phys_addr_t limit;
 
 	DBG(" -> early_init_devtree(%px)\n", params);
 
-	/* Too early to BUG_ON(), do it by hand */
-	if (!early_init_dt_verify(params))
+	/* Too early to BUG_ON(), करो it by hand */
+	अगर (!early_init_dt_verअगरy(params))
 		panic("BUG: Failed verifying flat device tree, bad version?");
 
-#ifdef CONFIG_PPC_RTAS
-	/* Some machines might need RTAS info for debugging, grab it now. */
-	of_scan_flat_dt(early_init_dt_scan_rtas, NULL);
-#endif
+#अगर_घोषित CONFIG_PPC_RTAS
+	/* Some machines might need RTAS info क्रम debugging, grab it now. */
+	of_scan_flat_dt(early_init_dt_scan_rtas, शून्य);
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_POWERNV
-	/* Some machines might need OPAL info for debugging, grab it now. */
-	of_scan_flat_dt(early_init_dt_scan_opal, NULL);
+#अगर_घोषित CONFIG_PPC_POWERNV
+	/* Some machines might need OPAL info क्रम debugging, grab it now. */
+	of_scan_flat_dt(early_init_dt_scan_opal, शून्य);
 
-	/* Scan tree for ultravisor feature */
-	of_scan_flat_dt(early_init_dt_scan_ultravisor, NULL);
-#endif
+	/* Scan tree क्रम ultravisor feature */
+	of_scan_flat_dt(early_init_dt_scan_ultravisor, शून्य);
+#पूर्ण_अगर
 
-#if defined(CONFIG_FA_DUMP) || defined(CONFIG_PRESERVE_FA_DUMP)
-	/* scan tree to see if dump is active during last boot */
-	of_scan_flat_dt(early_init_dt_scan_fw_dump, NULL);
-#endif
+#अगर defined(CONFIG_FA_DUMP) || defined(CONFIG_PRESERVE_FA_DUMP)
+	/* scan tree to see अगर dump is active during last boot */
+	of_scan_flat_dt(early_init_dt_scan_fw_dump, शून्य);
+#पूर्ण_अगर
 
-	/* Retrieve various informations from the /chosen node of the
-	 * device-tree, including the platform type, initrd location and
+	/* Retrieve various inक्रमmations from the /chosen node of the
+	 * device-tree, including the platक्रमm type, initrd location and
 	 * size, TCE reserve, and more ...
 	 */
 	of_scan_flat_dt(early_init_dt_scan_chosen_ppc, boot_command_line);
 
 	/* Scan memory nodes and rebuild MEMBLOCKs */
-	of_scan_flat_dt(early_init_dt_scan_root, NULL);
-	of_scan_flat_dt(early_init_dt_scan_memory_ppc, NULL);
+	of_scan_flat_dt(early_init_dt_scan_root, शून्य);
+	of_scan_flat_dt(early_init_dt_scan_memory_ppc, शून्य);
 
 	parse_early_param();
 
-	/* make sure we've parsed cmdline for mem= before this */
-	if (memory_limit)
+	/* make sure we've parsed cmdline क्रम mem= beक्रमe this */
+	अगर (memory_limit)
 		first_memblock_size = min_t(u64, first_memblock_size, memory_limit);
 	setup_initial_memory_limit(memstart_addr, first_memblock_size);
 	/* Reserve MEMBLOCK regions used by kernel, initrd, dt, etc... */
 	memblock_reserve(PHYSICAL_START, __pa(klimit) - PHYSICAL_START);
-	/* If relocatable, reserve first 32k for interrupt vectors etc. */
-	if (PHYSICAL_START > MEMORY_START)
+	/* If relocatable, reserve first 32k क्रम पूर्णांकerrupt vectors etc. */
+	अगर (PHYSICAL_START > MEMORY_START)
 		memblock_reserve(MEMORY_START, 0x8000);
 	reserve_kdump_trampoline();
-#if defined(CONFIG_FA_DUMP) || defined(CONFIG_PRESERVE_FA_DUMP)
+#अगर defined(CONFIG_FA_DUMP) || defined(CONFIG_PRESERVE_FA_DUMP)
 	/*
-	 * If we fail to reserve memory for firmware-assisted dump then
+	 * If we fail to reserve memory क्रम firmware-assisted dump then
 	 * fallback to kexec based kdump.
 	 */
-	if (fadump_reserve_mem() == 0)
-#endif
+	अगर (fadump_reserve_mem() == 0)
+#पूर्ण_अगर
 		reserve_crashkernel();
 	early_reserve_mem();
 
 	/* Ensure that total memory size is page-aligned. */
 	limit = ALIGN(memory_limit ?: memblock_phys_mem_size(), PAGE_SIZE);
-	memblock_enforce_memory_limit(limit);
+	memblock_enक्रमce_memory_limit(limit);
 
-#if defined(CONFIG_PPC_BOOK3S_64) && defined(CONFIG_PPC_4K_PAGES)
-	if (!early_radix_enabled())
+#अगर defined(CONFIG_PPC_BOOK3S_64) && defined(CONFIG_PPC_4K_PAGES)
+	अगर (!early_radix_enabled())
 		memblock_cap_memory_range(0, 1UL << (H_MAX_PHYSMEM_BITS));
-#endif
+#पूर्ण_अगर
 
 	memblock_allow_resize();
 	memblock_dump_all();
 
-	DBG("Phys. mem: %llx\n", (unsigned long long)memblock_phys_mem_size());
+	DBG("Phys. mem: %llx\n", (अचिन्हित दीर्घ दीर्घ)memblock_phys_mem_size());
 
-	/* We may need to relocate the flat tree, do it now.
+	/* We may need to relocate the flat tree, करो it now.
 	 * FIXME .. and the initrd too? */
 	move_device_tree();
 
@@ -797,80 +798,80 @@ void __init early_init_devtree(void *params)
 
 	dt_cpu_ftrs_scan();
 
-	/* Retrieve CPU related informations from the flat tree
+	/* Retrieve CPU related inक्रमmations from the flat tree
 	 * (altivec support, boot CPU ID, ...)
 	 */
-	of_scan_flat_dt(early_init_dt_scan_cpus, NULL);
-	if (boot_cpuid < 0) {
-		printk("Failed to identify boot CPU !\n");
+	of_scan_flat_dt(early_init_dt_scan_cpus, शून्य);
+	अगर (boot_cpuid < 0) अणु
+		prपूर्णांकk("Failed to identify boot CPU !\n");
 		BUG();
-	}
+	पूर्ण
 
 	save_fscr_to_task();
 
-#if defined(CONFIG_SMP) && defined(CONFIG_PPC64)
-	/* We'll later wait for secondaries to check in; there are
+#अगर defined(CONFIG_SMP) && defined(CONFIG_PPC64)
+	/* We'll later रुको क्रम secondaries to check in; there are
 	 * NCPUS-1 non-boot CPUs  :-)
 	 */
 	spinning_secondaries = boot_cpu_count - 1;
-#endif
+#पूर्ण_अगर
 
 	mmu_early_init_devtree();
 
-#ifdef CONFIG_PPC_POWERNV
+#अगर_घोषित CONFIG_PPC_POWERNV
 	/* Scan and build the list of machine check recoverable ranges */
-	of_scan_flat_dt(early_init_dt_scan_recoverable_ranges, NULL);
-#endif
+	of_scan_flat_dt(early_init_dt_scan_recoverable_ranges, शून्य);
+#पूर्ण_अगर
 	epapr_paravirt_early_init();
 
-	/* Now try to figure out if we are running on LPAR and so on */
+	/* Now try to figure out अगर we are running on LPAR and so on */
 	pseries_probe_fw_features();
 
 	/*
-	 * Initialize pkey features and default AMR/IAMR values
+	 * Initialize pkey features and शेष AMR/IAMR values
 	 */
 	pkey_early_init_devtree();
 
-#ifdef CONFIG_PPC_PS3
-	/* Identify PS3 firmware */
-	if (of_flat_dt_is_compatible(of_get_flat_dt_root(), "sony,ps3"))
-		powerpc_firmware_features |= FW_FEATURE_PS3_POSSIBLE;
-#endif
+#अगर_घोषित CONFIG_PPC_PS3
+	/* Identअगरy PS3 firmware */
+	अगर (of_flat_dt_is_compatible(of_get_flat_dt_root(), "sony,ps3"))
+		घातerpc_firmware_features |= FW_FEATURE_PS3_POSSIBLE;
+#पूर्ण_अगर
 
-	tm_init();
+	पंचांग_init();
 
 	DBG(" <- early_init_devtree()\n");
-}
+पूर्ण
 
-#ifdef CONFIG_RELOCATABLE
+#अगर_घोषित CONFIG_RELOCATABLE
 /*
- * This function run before early_init_devtree, so we have to init
+ * This function run beक्रमe early_init_devtree, so we have to init
  * initial_boot_params.
  */
-void __init early_get_first_memblock_info(void *params, phys_addr_t *size)
-{
-	/* Setup flat device-tree pointer */
+व्योम __init early_get_first_memblock_info(व्योम *params, phys_addr_t *size)
+अणु
+	/* Setup flat device-tree poपूर्णांकer */
 	initial_boot_params = params;
 
 	/*
-	 * Scan the memory nodes and set add_mem_to_memblock to 0 to avoid
+	 * Scan the memory nodes and set add_mem_to_memblock to 0 to aव्योम
 	 * mess the memblock.
 	 */
 	add_mem_to_memblock = 0;
-	of_scan_flat_dt(early_init_dt_scan_root, NULL);
-	of_scan_flat_dt(early_init_dt_scan_memory_ppc, NULL);
+	of_scan_flat_dt(early_init_dt_scan_root, शून्य);
+	of_scan_flat_dt(early_init_dt_scan_memory_ppc, शून्य);
 	add_mem_to_memblock = 1;
 
-	if (size)
+	अगर (size)
 		*size = first_memblock_size;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*******
  *
- * New implementation of the OF "find" APIs, return a refcounted
- * object, call of_node_put() when done.  The device tree and list
- * are protected by a rw_lock.
+ * New implementation of the OF "find" APIs, वापस a refcounted
+ * object, call of_node_put() when करोne.  The device tree and list
+ * are रक्षित by a rw_lock.
  *
  * Note that property management will need some locking as well,
  * this isn't dealt with yet.
@@ -881,29 +882,29 @@ void __init early_get_first_memblock_info(void *params, phys_addr_t *size)
  * of_get_ibm_chip_id - Returns the IBM "chip-id" of a device
  * @np: device node of the device
  *
- * This looks for a property "ibm,chip-id" in the node or any
- * of its parents and returns its content, or -1 if it cannot
+ * This looks क्रम a property "ibm,chip-id" in the node or any
+ * of its parents and वापसs its content, or -1 अगर it cannot
  * be found.
  */
-int of_get_ibm_chip_id(struct device_node *np)
-{
+पूर्णांक of_get_ibm_chip_id(काष्ठा device_node *np)
+अणु
 	of_node_get(np);
-	while (np) {
+	जबतक (np) अणु
 		u32 chip_id;
 
 		/*
 		 * Skiboot may produce memory nodes that contain more than one
-		 * cell in chip-id, we only read the first one here.
+		 * cell in chip-id, we only पढ़ो the first one here.
 		 */
-		if (!of_property_read_u32(np, "ibm,chip-id", &chip_id)) {
+		अगर (!of_property_पढ़ो_u32(np, "ibm,chip-id", &chip_id)) अणु
 			of_node_put(np);
-			return chip_id;
-		}
+			वापस chip_id;
+		पूर्ण
 
 		np = of_get_next_parent(np);
-	}
-	return -1;
-}
+	पूर्ण
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL(of_get_ibm_chip_id);
 
 /**
@@ -911,41 +912,41 @@ EXPORT_SYMBOL(of_get_ibm_chip_id);
  * @cpu: The logical cpu number.
  *
  * Return the value of the ibm,chip-id property corresponding to the given
- * logical cpu number. If the chip-id can not be found, returns -1.
+ * logical cpu number. If the chip-id can not be found, वापसs -1.
  */
-int cpu_to_chip_id(int cpu)
-{
-	struct device_node *np;
-	int ret = -1, idx;
+पूर्णांक cpu_to_chip_id(पूर्णांक cpu)
+अणु
+	काष्ठा device_node *np;
+	पूर्णांक ret = -1, idx;
 
-	idx = cpu / threads_per_core;
-	if (chip_id_lookup_table && chip_id_lookup_table[idx] != -1)
-		return chip_id_lookup_table[idx];
+	idx = cpu / thपढ़ोs_per_core;
+	अगर (chip_id_lookup_table && chip_id_lookup_table[idx] != -1)
+		वापस chip_id_lookup_table[idx];
 
-	np = of_get_cpu_node(cpu, NULL);
-	if (np) {
+	np = of_get_cpu_node(cpu, शून्य);
+	अगर (np) अणु
 		ret = of_get_ibm_chip_id(np);
 		of_node_put(np);
 
-		if (chip_id_lookup_table)
+		अगर (chip_id_lookup_table)
 			chip_id_lookup_table[idx] = ret;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(cpu_to_chip_id);
 
-bool arch_match_cpu_phys_id(int cpu, u64 phys_id)
-{
-#ifdef CONFIG_SMP
+bool arch_match_cpu_phys_id(पूर्णांक cpu, u64 phys_id)
+अणु
+#अगर_घोषित CONFIG_SMP
 	/*
 	 * Early firmware scanning must use this rather than
-	 * get_hard_smp_processor_id because we don't have pacas allocated
+	 * get_hard_smp_processor_id because we करोn't have pacas allocated
 	 * until memory topology is discovered.
 	 */
-	if (cpu_to_phys_id != NULL)
-		return (int)phys_id == cpu_to_phys_id[cpu];
-#endif
+	अगर (cpu_to_phys_id != शून्य)
+		वापस (पूर्णांक)phys_id == cpu_to_phys_id[cpu];
+#पूर्ण_अगर
 
-	return (int)phys_id == get_hard_smp_processor_id(cpu);
-}
+	वापस (पूर्णांक)phys_id == get_hard_smp_processor_id(cpu);
+पूर्ण

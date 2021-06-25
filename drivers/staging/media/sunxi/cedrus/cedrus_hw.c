@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cedrus VPU driver
  *
- * Copyright (C) 2016 Florent Revest <florent.revest@free-electrons.com>
+ * Copyright (C) 2016 Florent Revest <florent.revest@मुक्त-electrons.com>
  * Copyright (C) 2018 Paul Kocialkowski <paul.kocialkowski@bootlin.com>
  * Copyright (C) 2018 Bootlin
  *
@@ -13,26 +14,26 @@
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  */
 
-#include <linux/platform_device.h>
-#include <linux/of_reserved_mem.h>
-#include <linux/of_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/interrupt.h>
-#include <linux/clk.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
-#include <linux/reset.h>
-#include <linux/soc/sunxi/sunxi_sram.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of_reserved_स्मृति.स>
+#समावेश <linux/of_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/soc/sunxi/sunxi_sram.h>
 
-#include <media/videobuf2-core.h>
-#include <media/v4l2-mem2mem.h>
+#समावेश <media/videobuf2-core.h>
+#समावेश <media/v4l2-mem2स्मृति.स>
 
-#include "cedrus.h"
-#include "cedrus_hw.h"
-#include "cedrus_regs.h"
+#समावेश "cedrus.h"
+#समावेश "cedrus_hw.h"
+#समावेश "cedrus_regs.h"
 
-int cedrus_engine_enable(struct cedrus_ctx *ctx, enum cedrus_codec codec)
-{
+पूर्णांक cedrus_engine_enable(काष्ठा cedrus_ctx *ctx, क्रमागत cedrus_codec codec)
+अणु
 	u32 reg = 0;
 
 	/*
@@ -42,154 +43,154 @@ int cedrus_engine_enable(struct cedrus_ctx *ctx, enum cedrus_codec codec)
 	reg |= VE_MODE_REC_WR_MODE_2MB;
 	reg |= VE_MODE_DDR_MODE_BW_128;
 
-	switch (codec) {
-	case CEDRUS_CODEC_MPEG2:
+	चयन (codec) अणु
+	हाल CEDRUS_CODEC_MPEG2:
 		reg |= VE_MODE_DEC_MPEG;
-		break;
+		अवरोध;
 
 	/* H.264 and VP8 both use the same decoding mode bit. */
-	case CEDRUS_CODEC_H264:
-	case CEDRUS_CODEC_VP8:
+	हाल CEDRUS_CODEC_H264:
+	हाल CEDRUS_CODEC_VP8:
 		reg |= VE_MODE_DEC_H264;
-		break;
+		अवरोध;
 
-	case CEDRUS_CODEC_H265:
+	हाल CEDRUS_CODEC_H265:
 		reg |= VE_MODE_DEC_H265;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ctx->src_fmt.width == 4096)
+	अगर (ctx->src_fmt.width == 4096)
 		reg |= VE_MODE_PIC_WIDTH_IS_4096;
-	if (ctx->src_fmt.width > 2048)
+	अगर (ctx->src_fmt.width > 2048)
 		reg |= VE_MODE_PIC_WIDTH_MORE_2048;
 
-	cedrus_write(ctx->dev, VE_MODE, reg);
+	cedrus_ग_लिखो(ctx->dev, VE_MODE, reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void cedrus_engine_disable(struct cedrus_dev *dev)
-{
-	cedrus_write(dev, VE_MODE, VE_MODE_DISABLED);
-}
+व्योम cedrus_engine_disable(काष्ठा cedrus_dev *dev)
+अणु
+	cedrus_ग_लिखो(dev, VE_MODE, VE_MODE_DISABLED);
+पूर्ण
 
-void cedrus_dst_format_set(struct cedrus_dev *dev,
-			   struct v4l2_pix_format *fmt)
-{
-	unsigned int width = fmt->width;
-	unsigned int height = fmt->height;
+व्योम cedrus_dst_क्रमmat_set(काष्ठा cedrus_dev *dev,
+			   काष्ठा v4l2_pix_क्रमmat *fmt)
+अणु
+	अचिन्हित पूर्णांक width = fmt->width;
+	अचिन्हित पूर्णांक height = fmt->height;
 	u32 chroma_size;
 	u32 reg;
 
-	switch (fmt->pixelformat) {
-	case V4L2_PIX_FMT_NV12:
+	चयन (fmt->pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_NV12:
 		chroma_size = ALIGN(width, 16) * ALIGN(height, 16) / 2;
 
 		reg = VE_PRIMARY_OUT_FMT_NV12;
-		cedrus_write(dev, VE_PRIMARY_OUT_FMT, reg);
+		cedrus_ग_लिखो(dev, VE_PRIMARY_OUT_FMT, reg);
 
 		reg = chroma_size / 2;
-		cedrus_write(dev, VE_PRIMARY_CHROMA_BUF_LEN, reg);
+		cedrus_ग_लिखो(dev, VE_PRIMARY_CHROMA_BUF_LEN, reg);
 
 		reg = VE_PRIMARY_FB_LINE_STRIDE_LUMA(ALIGN(width, 16)) |
 		      VE_PRIMARY_FB_LINE_STRIDE_CHROMA(ALIGN(width, 16) / 2);
-		cedrus_write(dev, VE_PRIMARY_FB_LINE_STRIDE, reg);
+		cedrus_ग_लिखो(dev, VE_PRIMARY_FB_LINE_STRIDE, reg);
 
-		break;
-	case V4L2_PIX_FMT_SUNXI_TILED_NV12:
-	default:
+		अवरोध;
+	हाल V4L2_PIX_FMT_SUNXI_TILED_NV12:
+	शेष:
 		reg = VE_PRIMARY_OUT_FMT_TILED_32_NV12;
-		cedrus_write(dev, VE_PRIMARY_OUT_FMT, reg);
+		cedrus_ग_लिखो(dev, VE_PRIMARY_OUT_FMT, reg);
 
 		reg = VE_SECONDARY_OUT_FMT_TILED_32_NV12;
-		cedrus_write(dev, VE_CHROMA_BUF_LEN, reg);
+		cedrus_ग_लिखो(dev, VE_CHROMA_BUF_LEN, reg);
 
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static irqreturn_t cedrus_irq(int irq, void *data)
-{
-	struct cedrus_dev *dev = data;
-	struct cedrus_ctx *ctx;
-	enum vb2_buffer_state state;
-	enum cedrus_irq_status status;
+अटल irqवापस_t cedrus_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा cedrus_dev *dev = data;
+	काष्ठा cedrus_ctx *ctx;
+	क्रमागत vb2_buffer_state state;
+	क्रमागत cedrus_irq_status status;
 
 	ctx = v4l2_m2m_get_curr_priv(dev->m2m_dev);
-	if (!ctx) {
+	अगर (!ctx) अणु
 		v4l2_err(&dev->v4l2_dev,
 			 "Instance released before the end of transaction\n");
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	status = dev->dec_ops[ctx->current_codec]->irq_status(ctx);
-	if (status == CEDRUS_IRQ_NONE)
-		return IRQ_NONE;
+	अगर (status == CEDRUS_IRQ_NONE)
+		वापस IRQ_NONE;
 
 	dev->dec_ops[ctx->current_codec]->irq_disable(ctx);
 	dev->dec_ops[ctx->current_codec]->irq_clear(ctx);
 
-	if (status == CEDRUS_IRQ_ERROR)
+	अगर (status == CEDRUS_IRQ_ERROR)
 		state = VB2_BUF_STATE_ERROR;
-	else
+	अन्यथा
 		state = VB2_BUF_STATE_DONE;
 
-	v4l2_m2m_buf_done_and_job_finish(ctx->dev->m2m_dev, ctx->fh.m2m_ctx,
+	v4l2_m2m_buf_करोne_and_job_finish(ctx->dev->m2m_dev, ctx->fh.m2m_ctx,
 					 state);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int cedrus_hw_suspend(struct device *device)
-{
-	struct cedrus_dev *dev = dev_get_drvdata(device);
+पूर्णांक cedrus_hw_suspend(काष्ठा device *device)
+अणु
+	काष्ठा cedrus_dev *dev = dev_get_drvdata(device);
 
-	reset_control_assert(dev->rstc);
+	reset_control_निश्चित(dev->rstc);
 
 	clk_disable_unprepare(dev->ram_clk);
 	clk_disable_unprepare(dev->mod_clk);
 	clk_disable_unprepare(dev->ahb_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cedrus_hw_resume(struct device *device)
-{
-	struct cedrus_dev *dev = dev_get_drvdata(device);
-	int ret;
+पूर्णांक cedrus_hw_resume(काष्ठा device *device)
+अणु
+	काष्ठा cedrus_dev *dev = dev_get_drvdata(device);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(dev->ahb_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to enable AHB clock\n");
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(dev->mod_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to enable MOD clock\n");
 
-		goto err_ahb_clk;
-	}
+		जाओ err_ahb_clk;
+	पूर्ण
 
 	ret = clk_prepare_enable(dev->ram_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to enable RAM clock\n");
 
-		goto err_mod_clk;
-	}
+		जाओ err_mod_clk;
+	पूर्ण
 
 	ret = reset_control_reset(dev->rstc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to apply reset\n");
 
-		goto err_ram_clk;
-	}
+		जाओ err_ram_clk;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_ram_clk:
 	clk_disable_unprepare(dev->ram_clk);
@@ -198,119 +199,119 @@ err_mod_clk:
 err_ahb_clk:
 	clk_disable_unprepare(dev->ahb_clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cedrus_hw_probe(struct cedrus_dev *dev)
-{
-	const struct cedrus_variant *variant;
-	int irq_dec;
-	int ret;
+पूर्णांक cedrus_hw_probe(काष्ठा cedrus_dev *dev)
+अणु
+	स्थिर काष्ठा cedrus_variant *variant;
+	पूर्णांक irq_dec;
+	पूर्णांक ret;
 
 	variant = of_device_get_match_data(dev->dev);
-	if (!variant)
-		return -EINVAL;
+	अगर (!variant)
+		वापस -EINVAL;
 
 	dev->capabilities = variant->capabilities;
 
-	irq_dec = platform_get_irq(dev->pdev, 0);
-	if (irq_dec <= 0)
-		return irq_dec;
+	irq_dec = platक्रमm_get_irq(dev->pdev, 0);
+	अगर (irq_dec <= 0)
+		वापस irq_dec;
 	ret = devm_request_irq(dev->dev, irq_dec, cedrus_irq,
 			       0, dev_name(dev->dev), dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to request IRQ\n");
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = of_reserved_mem_device_init(dev->dev);
-	if (ret && ret != -ENODEV) {
+	अगर (ret && ret != -ENODEV) अणु
 		dev_err(dev->dev, "Failed to reserve memory\n");
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = sunxi_sram_claim(dev->dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to claim SRAM\n");
 
-		goto err_mem;
-	}
+		जाओ err_mem;
+	पूर्ण
 
 	dev->ahb_clk = devm_clk_get(dev->dev, "ahb");
-	if (IS_ERR(dev->ahb_clk)) {
+	अगर (IS_ERR(dev->ahb_clk)) अणु
 		dev_err(dev->dev, "Failed to get AHB clock\n");
 
 		ret = PTR_ERR(dev->ahb_clk);
-		goto err_sram;
-	}
+		जाओ err_sram;
+	पूर्ण
 
 	dev->mod_clk = devm_clk_get(dev->dev, "mod");
-	if (IS_ERR(dev->mod_clk)) {
+	अगर (IS_ERR(dev->mod_clk)) अणु
 		dev_err(dev->dev, "Failed to get MOD clock\n");
 
 		ret = PTR_ERR(dev->mod_clk);
-		goto err_sram;
-	}
+		जाओ err_sram;
+	पूर्ण
 
 	dev->ram_clk = devm_clk_get(dev->dev, "ram");
-	if (IS_ERR(dev->ram_clk)) {
+	अगर (IS_ERR(dev->ram_clk)) अणु
 		dev_err(dev->dev, "Failed to get RAM clock\n");
 
 		ret = PTR_ERR(dev->ram_clk);
-		goto err_sram;
-	}
+		जाओ err_sram;
+	पूर्ण
 
-	dev->rstc = devm_reset_control_get(dev->dev, NULL);
-	if (IS_ERR(dev->rstc)) {
+	dev->rstc = devm_reset_control_get(dev->dev, शून्य);
+	अगर (IS_ERR(dev->rstc)) अणु
 		dev_err(dev->dev, "Failed to get reset control\n");
 
 		ret = PTR_ERR(dev->rstc);
-		goto err_sram;
-	}
+		जाओ err_sram;
+	पूर्ण
 
-	dev->base = devm_platform_ioremap_resource(dev->pdev, 0);
-	if (IS_ERR(dev->base)) {
+	dev->base = devm_platक्रमm_ioremap_resource(dev->pdev, 0);
+	अगर (IS_ERR(dev->base)) अणु
 		dev_err(dev->dev, "Failed to map registers\n");
 
 		ret = PTR_ERR(dev->base);
-		goto err_sram;
-	}
+		जाओ err_sram;
+	पूर्ण
 
 	ret = clk_set_rate(dev->mod_clk, variant->mod_rate);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to set clock rate\n");
 
-		goto err_sram;
-	}
+		जाओ err_sram;
+	पूर्ण
 
-	pm_runtime_enable(dev->dev);
-	if (!pm_runtime_enabled(dev->dev)) {
+	pm_runसमय_enable(dev->dev);
+	अगर (!pm_runसमय_enabled(dev->dev)) अणु
 		ret = cedrus_hw_resume(dev->dev);
-		if (ret)
-			goto err_pm;
-	}
+		अगर (ret)
+			जाओ err_pm;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_pm:
-	pm_runtime_disable(dev->dev);
+	pm_runसमय_disable(dev->dev);
 err_sram:
 	sunxi_sram_release(dev->dev);
 err_mem:
 	of_reserved_mem_device_release(dev->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void cedrus_hw_remove(struct cedrus_dev *dev)
-{
-	pm_runtime_disable(dev->dev);
-	if (!pm_runtime_status_suspended(dev->dev))
+व्योम cedrus_hw_हटाओ(काष्ठा cedrus_dev *dev)
+अणु
+	pm_runसमय_disable(dev->dev);
+	अगर (!pm_runसमय_status_suspended(dev->dev))
 		cedrus_hw_suspend(dev->dev);
 
 	sunxi_sram_release(dev->dev);
 
 	of_reserved_mem_device_release(dev->dev);
-}
+पूर्ण

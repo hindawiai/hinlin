@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008-2011 Freescale Semiconductor, Inc. All rights reserved.
  *
- * Author: Yu Liu, <yu.liu@freescale.com>
+ * Author: Yu Liu, <yu.liu@मुक्तscale.com>
  *
  * Description:
- * This file is derived from arch/powerpc/kvm/44x.c,
- * by Hollis Blanchard <hollisb@us.ibm.com>.
+ * This file is derived from arch/घातerpc/kvm/44x.c,
+ * by Hollis Blanअक्षरd <hollisb@us.ibm.com>.
  */
 
-#include <linux/kvm_host.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <linux/module.h>
-#include <linux/miscdevice.h>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/export.h>
+#समावेश <linux/module.h>
+#समावेश <linux/miscdevice.h>
 
-#include <asm/reg.h>
-#include <asm/cputable.h>
-#include <asm/kvm_ppc.h>
+#समावेश <यंत्र/reg.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/kvm_ppc.h>
 
-#include "../mm/mmu_decl.h"
-#include "booke.h"
-#include "e500.h"
+#समावेश "../mm/mmu_decl.h"
+#समावेश "booke.h"
+#समावेश "e500.h"
 
-struct id {
-	unsigned long val;
-	struct id **pentry;
-};
+काष्ठा id अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा id **pentry;
+पूर्ण;
 
-#define NUM_TIDS 256
+#घोषणा NUM_TIDS 256
 
 /*
  * This table provide mappings from:
@@ -40,154 +41,154 @@ struct id {
  * ID		[1..255]
  * Each vcpu keeps one vcpu_id_table.
  */
-struct vcpu_id_table {
-	struct id id[2][NUM_TIDS][2];
-};
+काष्ठा vcpu_id_table अणु
+	काष्ठा id id[2][NUM_TIDS][2];
+पूर्ण;
 
 /*
  * This table provide reversed mappings of vcpu_id_table:
  * ID --> address of vcpu_id_table item.
  * Each physical core has one pcpu_id_table.
  */
-struct pcpu_id_table {
-	struct id *entry[NUM_TIDS];
-};
+काष्ठा pcpu_id_table अणु
+	काष्ठा id *entry[NUM_TIDS];
+पूर्ण;
 
-static DEFINE_PER_CPU(struct pcpu_id_table, pcpu_sids);
+अटल DEFINE_PER_CPU(काष्ठा pcpu_id_table, pcpu_sids);
 
-/* This variable keeps last used shadow ID on local core.
- * The valid range of shadow ID is [1..255] */
-static DEFINE_PER_CPU(unsigned long, pcpu_last_used_sid);
+/* This variable keeps last used shaकरोw ID on local core.
+ * The valid range of shaकरोw ID is [1..255] */
+अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, pcpu_last_used_sid);
 
 /*
- * Allocate a free shadow id and setup a valid sid mapping in given entry.
+ * Allocate a मुक्त shaकरोw id and setup a valid sid mapping in given entry.
  * A mapping is only valid when vcpu_id_table and pcpu_id_table are match.
  *
  * The caller must have preemption disabled, and keep it that way until
- * it has finished with the returned shadow id (either written into the
- * TLB or arch.shadow_pid, or discarded).
+ * it has finished with the वापसed shaकरोw id (either written पूर्णांकo the
+ * TLB or arch.shaकरोw_pid, or discarded).
  */
-static inline int local_sid_setup_one(struct id *entry)
-{
-	unsigned long sid;
-	int ret = -1;
+अटल अंतरभूत पूर्णांक local_sid_setup_one(काष्ठा id *entry)
+अणु
+	अचिन्हित दीर्घ sid;
+	पूर्णांक ret = -1;
 
-	sid = __this_cpu_inc_return(pcpu_last_used_sid);
-	if (sid < NUM_TIDS) {
-		__this_cpu_write(pcpu_sids.entry[sid], entry);
+	sid = __this_cpu_inc_वापस(pcpu_last_used_sid);
+	अगर (sid < NUM_TIDS) अणु
+		__this_cpu_ग_लिखो(pcpu_sids.entry[sid], entry);
 		entry->val = sid;
 		entry->pentry = this_cpu_ptr(&pcpu_sids.entry[sid]);
 		ret = sid;
-	}
+	पूर्ण
 
 	/*
-	 * If sid == NUM_TIDS, we've run out of sids.  We return -1, and
+	 * If sid == NUM_TIDS, we've run out of sids.  We वापस -1, and
 	 * the caller will invalidate everything and start over.
 	 *
 	 * sid > NUM_TIDS indicates a race, which we disable preemption to
-	 * avoid.
+	 * aव्योम.
 	 */
 	WARN_ON(sid > NUM_TIDS);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Check if given entry contain a valid shadow id mapping.
- * An ID mapping is considered valid only if
+ * Check अगर given entry contain a valid shaकरोw id mapping.
+ * An ID mapping is considered valid only अगर
  * both vcpu and pcpu know this mapping.
  *
  * The caller must have preemption disabled, and keep it that way until
- * it has finished with the returned shadow id (either written into the
- * TLB or arch.shadow_pid, or discarded).
+ * it has finished with the वापसed shaकरोw id (either written पूर्णांकo the
+ * TLB or arch.shaकरोw_pid, or discarded).
  */
-static inline int local_sid_lookup(struct id *entry)
-{
-	if (entry && entry->val != 0 &&
-	    __this_cpu_read(pcpu_sids.entry[entry->val]) == entry &&
+अटल अंतरभूत पूर्णांक local_sid_lookup(काष्ठा id *entry)
+अणु
+	अगर (entry && entry->val != 0 &&
+	    __this_cpu_पढ़ो(pcpu_sids.entry[entry->val]) == entry &&
 	    entry->pentry == this_cpu_ptr(&pcpu_sids.entry[entry->val]))
-		return entry->val;
-	return -1;
-}
+		वापस entry->val;
+	वापस -1;
+पूर्ण
 
 /* Invalidate all id mappings on local core -- call with preempt disabled */
-static inline void local_sid_destroy_all(void)
-{
-	__this_cpu_write(pcpu_last_used_sid, 0);
-	memset(this_cpu_ptr(&pcpu_sids), 0, sizeof(pcpu_sids));
-}
+अटल अंतरभूत व्योम local_sid_destroy_all(व्योम)
+अणु
+	__this_cpu_ग_लिखो(pcpu_last_used_sid, 0);
+	स_रखो(this_cpu_ptr(&pcpu_sids), 0, माप(pcpu_sids));
+पूर्ण
 
-static void *kvmppc_e500_id_table_alloc(struct kvmppc_vcpu_e500 *vcpu_e500)
-{
-	vcpu_e500->idt = kzalloc(sizeof(struct vcpu_id_table), GFP_KERNEL);
-	return vcpu_e500->idt;
-}
+अटल व्योम *kvmppc_e500_id_table_alloc(काष्ठा kvmppc_vcpu_e500 *vcpu_e500)
+अणु
+	vcpu_e500->idt = kzalloc(माप(काष्ठा vcpu_id_table), GFP_KERNEL);
+	वापस vcpu_e500->idt;
+पूर्ण
 
-static void kvmppc_e500_id_table_free(struct kvmppc_vcpu_e500 *vcpu_e500)
-{
-	kfree(vcpu_e500->idt);
-	vcpu_e500->idt = NULL;
-}
+अटल व्योम kvmppc_e500_id_table_मुक्त(काष्ठा kvmppc_vcpu_e500 *vcpu_e500)
+अणु
+	kमुक्त(vcpu_e500->idt);
+	vcpu_e500->idt = शून्य;
+पूर्ण
 
-/* Map guest pid to shadow.
- * We use PID to keep shadow of current guest non-zero PID,
- * and use PID1 to keep shadow of guest zero PID.
- * So that guest tlbe with TID=0 can be accessed at any time */
-static void kvmppc_e500_recalc_shadow_pid(struct kvmppc_vcpu_e500 *vcpu_e500)
-{
+/* Map guest pid to shaकरोw.
+ * We use PID to keep shaकरोw of current guest non-zero PID,
+ * and use PID1 to keep shaकरोw of guest zero PID.
+ * So that guest tlbe with TID=0 can be accessed at any समय */
+अटल व्योम kvmppc_e500_recalc_shaकरोw_pid(काष्ठा kvmppc_vcpu_e500 *vcpu_e500)
+अणु
 	preempt_disable();
-	vcpu_e500->vcpu.arch.shadow_pid = kvmppc_e500_get_sid(vcpu_e500,
+	vcpu_e500->vcpu.arch.shaकरोw_pid = kvmppc_e500_get_sid(vcpu_e500,
 			get_cur_as(&vcpu_e500->vcpu),
 			get_cur_pid(&vcpu_e500->vcpu),
 			get_cur_pr(&vcpu_e500->vcpu), 1);
-	vcpu_e500->vcpu.arch.shadow_pid1 = kvmppc_e500_get_sid(vcpu_e500,
+	vcpu_e500->vcpu.arch.shaकरोw_pid1 = kvmppc_e500_get_sid(vcpu_e500,
 			get_cur_as(&vcpu_e500->vcpu), 0,
 			get_cur_pr(&vcpu_e500->vcpu), 1);
 	preempt_enable();
-}
+पूर्ण
 
 /* Invalidate all mappings on vcpu */
-static void kvmppc_e500_id_table_reset_all(struct kvmppc_vcpu_e500 *vcpu_e500)
-{
-	memset(vcpu_e500->idt, 0, sizeof(struct vcpu_id_table));
+अटल व्योम kvmppc_e500_id_table_reset_all(काष्ठा kvmppc_vcpu_e500 *vcpu_e500)
+अणु
+	स_रखो(vcpu_e500->idt, 0, माप(काष्ठा vcpu_id_table));
 
-	/* Update shadow pid when mappings are changed */
-	kvmppc_e500_recalc_shadow_pid(vcpu_e500);
-}
+	/* Update shaकरोw pid when mappings are changed */
+	kvmppc_e500_recalc_shaकरोw_pid(vcpu_e500);
+पूर्ण
 
 /* Invalidate one ID mapping on vcpu */
-static inline void kvmppc_e500_id_table_reset_one(
-			       struct kvmppc_vcpu_e500 *vcpu_e500,
-			       int as, int pid, int pr)
-{
-	struct vcpu_id_table *idt = vcpu_e500->idt;
+अटल अंतरभूत व्योम kvmppc_e500_id_table_reset_one(
+			       काष्ठा kvmppc_vcpu_e500 *vcpu_e500,
+			       पूर्णांक as, पूर्णांक pid, पूर्णांक pr)
+अणु
+	काष्ठा vcpu_id_table *idt = vcpu_e500->idt;
 
 	BUG_ON(as >= 2);
 	BUG_ON(pid >= NUM_TIDS);
 	BUG_ON(pr >= 2);
 
 	idt->id[as][pid][pr].val = 0;
-	idt->id[as][pid][pr].pentry = NULL;
+	idt->id[as][pid][pr].pentry = शून्य;
 
-	/* Update shadow pid when mappings are changed */
-	kvmppc_e500_recalc_shadow_pid(vcpu_e500);
-}
+	/* Update shaकरोw pid when mappings are changed */
+	kvmppc_e500_recalc_shaकरोw_pid(vcpu_e500);
+पूर्ण
 
 /*
- * Map guest (vcpu,AS,ID,PR) to physical core shadow id.
- * This function first lookup if a valid mapping exists,
- * if not, then creates a new one.
+ * Map guest (vcpu,AS,ID,PR) to physical core shaकरोw id.
+ * This function first lookup अगर a valid mapping exists,
+ * अगर not, then creates a new one.
  *
  * The caller must have preemption disabled, and keep it that way until
- * it has finished with the returned shadow id (either written into the
- * TLB or arch.shadow_pid, or discarded).
+ * it has finished with the वापसed shaकरोw id (either written पूर्णांकo the
+ * TLB or arch.shaकरोw_pid, or discarded).
  */
-unsigned int kvmppc_e500_get_sid(struct kvmppc_vcpu_e500 *vcpu_e500,
-				 unsigned int as, unsigned int gid,
-				 unsigned int pr, int avoid_recursion)
-{
-	struct vcpu_id_table *idt = vcpu_e500->idt;
-	int sid;
+अचिन्हित पूर्णांक kvmppc_e500_get_sid(काष्ठा kvmppc_vcpu_e500 *vcpu_e500,
+				 अचिन्हित पूर्णांक as, अचिन्हित पूर्णांक gid,
+				 अचिन्हित पूर्णांक pr, पूर्णांक aव्योम_recursion)
+अणु
+	काष्ठा vcpu_id_table *idt = vcpu_e500->idt;
+	पूर्णांक sid;
 
 	BUG_ON(as >= 2);
 	BUG_ON(gid >= NUM_TIDS);
@@ -195,75 +196,75 @@ unsigned int kvmppc_e500_get_sid(struct kvmppc_vcpu_e500 *vcpu_e500,
 
 	sid = local_sid_lookup(&idt->id[as][gid][pr]);
 
-	while (sid <= 0) {
+	जबतक (sid <= 0) अणु
 		/* No mapping yet */
 		sid = local_sid_setup_one(&idt->id[as][gid][pr]);
-		if (sid <= 0) {
+		अगर (sid <= 0) अणु
 			_tlbil_all();
 			local_sid_destroy_all();
-		}
+		पूर्ण
 
-		/* Update shadow pid when mappings are changed */
-		if (!avoid_recursion)
-			kvmppc_e500_recalc_shadow_pid(vcpu_e500);
-	}
+		/* Update shaकरोw pid when mappings are changed */
+		अगर (!aव्योम_recursion)
+			kvmppc_e500_recalc_shaकरोw_pid(vcpu_e500);
+	पूर्ण
 
-	return sid;
-}
+	वापस sid;
+पूर्ण
 
-unsigned int kvmppc_e500_get_tlb_stid(struct kvm_vcpu *vcpu,
-				      struct kvm_book3e_206_tlb_entry *gtlbe)
-{
-	return kvmppc_e500_get_sid(to_e500(vcpu), get_tlb_ts(gtlbe),
+अचिन्हित पूर्णांक kvmppc_e500_get_tlb_stid(काष्ठा kvm_vcpu *vcpu,
+				      काष्ठा kvm_book3e_206_tlb_entry *gtlbe)
+अणु
+	वापस kvmppc_e500_get_sid(to_e500(vcpu), get_tlb_ts(gtlbe),
 				   get_tlb_tid(gtlbe), get_cur_pr(vcpu), 0);
-}
+पूर्ण
 
-void kvmppc_set_pid(struct kvm_vcpu *vcpu, u32 pid)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+व्योम kvmppc_set_pid(काष्ठा kvm_vcpu *vcpu, u32 pid)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
 
-	if (vcpu->arch.pid != pid) {
+	अगर (vcpu->arch.pid != pid) अणु
 		vcpu_e500->pid[0] = vcpu->arch.pid = pid;
-		kvmppc_e500_recalc_shadow_pid(vcpu_e500);
-	}
-}
+		kvmppc_e500_recalc_shaकरोw_pid(vcpu_e500);
+	पूर्ण
+पूर्ण
 
 /* gtlbe must not be mapped by more than one host tlbe */
-void kvmppc_e500_tlbil_one(struct kvmppc_vcpu_e500 *vcpu_e500,
-                           struct kvm_book3e_206_tlb_entry *gtlbe)
-{
-	struct vcpu_id_table *idt = vcpu_e500->idt;
-	unsigned int pr, tid, ts;
-	int pid;
+व्योम kvmppc_e500_tlbil_one(काष्ठा kvmppc_vcpu_e500 *vcpu_e500,
+                           काष्ठा kvm_book3e_206_tlb_entry *gtlbe)
+अणु
+	काष्ठा vcpu_id_table *idt = vcpu_e500->idt;
+	अचिन्हित पूर्णांक pr, tid, ts;
+	पूर्णांक pid;
 	u32 val, eaddr;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	ts = get_tlb_ts(gtlbe);
 	tid = get_tlb_tid(gtlbe);
 
 	preempt_disable();
 
-	/* One guest ID may be mapped to two shadow IDs */
-	for (pr = 0; pr < 2; pr++) {
+	/* One guest ID may be mapped to two shaकरोw IDs */
+	क्रम (pr = 0; pr < 2; pr++) अणु
 		/*
-		 * The shadow PID can have a valid mapping on at most one
-		 * host CPU.  In the common case, it will be valid on this
-		 * CPU, in which case we do a local invalidation of the
-		 * specific address.
+		 * The shaकरोw PID can have a valid mapping on at most one
+		 * host CPU.  In the common हाल, it will be valid on this
+		 * CPU, in which हाल we करो a local invalidation of the
+		 * specअगरic address.
 		 *
-		 * If the shadow PID is not valid on the current host CPU,
-		 * we invalidate the entire shadow PID.
+		 * If the shaकरोw PID is not valid on the current host CPU,
+		 * we invalidate the entire shaकरोw PID.
 		 */
 		pid = local_sid_lookup(&idt->id[ts][tid][pr]);
-		if (pid <= 0) {
+		अगर (pid <= 0) अणु
 			kvmppc_e500_id_table_reset_one(vcpu_e500, ts, tid, pr);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
 		 * The guest is invalidating a 4K entry which is in a PID
-		 * that has a valid shadow mapping on this host CPU.  We
-		 * search host TLB to invalidate it's shadow TLB entry,
+		 * that has a valid shaकरोw mapping on this host CPU.  We
+		 * search host TLB to invalidate it's shaकरोw TLB entry,
 		 * similar to __tlbil_va except that we need to look in AS1.
 		 */
 		val = (pid << MAS6_SPID_SHIFT) | MAS6_SAS;
@@ -272,80 +273,80 @@ void kvmppc_e500_tlbil_one(struct kvmppc_vcpu_e500 *vcpu_e500,
 		local_irq_save(flags);
 
 		mtspr(SPRN_MAS6, val);
-		asm volatile("tlbsx 0, %[eaddr]" : : [eaddr] "r" (eaddr));
+		यंत्र अस्थिर("tlbsx 0, %[eaddr]" : : [eaddr] "r" (eaddr));
 		val = mfspr(SPRN_MAS1);
-		if (val & MAS1_VALID) {
+		अगर (val & MAS1_VALID) अणु
 			mtspr(SPRN_MAS1, val & ~MAS1_VALID);
-			asm volatile("tlbwe");
-		}
+			यंत्र अस्थिर("tlbwe");
+		पूर्ण
 
 		local_irq_restore(flags);
-	}
+	पूर्ण
 
 	preempt_enable();
-}
+पूर्ण
 
-void kvmppc_e500_tlbil_all(struct kvmppc_vcpu_e500 *vcpu_e500)
-{
+व्योम kvmppc_e500_tlbil_all(काष्ठा kvmppc_vcpu_e500 *vcpu_e500)
+अणु
 	kvmppc_e500_id_table_reset_all(vcpu_e500);
-}
+पूर्ण
 
-void kvmppc_mmu_msr_notify(struct kvm_vcpu *vcpu, u32 old_msr)
-{
-	/* Recalc shadow pid since MSR changes */
-	kvmppc_e500_recalc_shadow_pid(to_e500(vcpu));
-}
+व्योम kvmppc_mmu_msr_notअगरy(काष्ठा kvm_vcpu *vcpu, u32 old_msr)
+अणु
+	/* Recalc shaकरोw pid since MSR changes */
+	kvmppc_e500_recalc_shaकरोw_pid(to_e500(vcpu));
+पूर्ण
 
-static void kvmppc_core_vcpu_load_e500(struct kvm_vcpu *vcpu, int cpu)
-{
+अटल व्योम kvmppc_core_vcpu_load_e500(काष्ठा kvm_vcpu *vcpu, पूर्णांक cpu)
+अणु
 	kvmppc_booke_vcpu_load(vcpu, cpu);
 
-	/* Shadow PID may be expired on local core */
-	kvmppc_e500_recalc_shadow_pid(to_e500(vcpu));
-}
+	/* Shaकरोw PID may be expired on local core */
+	kvmppc_e500_recalc_shaकरोw_pid(to_e500(vcpu));
+पूर्ण
 
-static void kvmppc_core_vcpu_put_e500(struct kvm_vcpu *vcpu)
-{
-#ifdef CONFIG_SPE
-	if (vcpu->arch.shadow_msr & MSR_SPE)
+अटल व्योम kvmppc_core_vcpu_put_e500(काष्ठा kvm_vcpu *vcpu)
+अणु
+#अगर_घोषित CONFIG_SPE
+	अगर (vcpu->arch.shaकरोw_msr & MSR_SPE)
 		kvmppc_vcpu_disable_spe(vcpu);
-#endif
+#पूर्ण_अगर
 
 	kvmppc_booke_vcpu_put(vcpu);
-}
+पूर्ण
 
-int kvmppc_core_check_processor_compat(void)
-{
-	int r;
+पूर्णांक kvmppc_core_check_processor_compat(व्योम)
+अणु
+	पूर्णांक r;
 
-	if (strcmp(cur_cpu_spec->cpu_name, "e500v2") == 0)
+	अगर (म_भेद(cur_cpu_spec->cpu_name, "e500v2") == 0)
 		r = 0;
-	else
+	अन्यथा
 		r = -ENOTSUPP;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void kvmppc_e500_tlb_setup(struct kvmppc_vcpu_e500 *vcpu_e500)
-{
-	struct kvm_book3e_206_tlb_entry *tlbe;
+अटल व्योम kvmppc_e500_tlb_setup(काष्ठा kvmppc_vcpu_e500 *vcpu_e500)
+अणु
+	काष्ठा kvm_book3e_206_tlb_entry *tlbe;
 
-	/* Insert large initial mapping for guest. */
+	/* Insert large initial mapping क्रम guest. */
 	tlbe = get_entry(vcpu_e500, 1, 0);
 	tlbe->mas1 = MAS1_VALID | MAS1_TSIZE(BOOK3E_PAGESZ_256M);
 	tlbe->mas2 = 0;
 	tlbe->mas7_3 = E500_TLB_SUPER_PERM_MASK;
 
-	/* 4K map for serial output. Used by kernel wrapper. */
+	/* 4K map क्रम serial output. Used by kernel wrapper. */
 	tlbe = get_entry(vcpu_e500, 1, 1);
 	tlbe->mas1 = MAS1_VALID | MAS1_TSIZE(BOOK3E_PAGESZ_4K);
 	tlbe->mas2 = (0xe0004500 & 0xFFFFF000) | MAS2_I | MAS2_G;
 	tlbe->mas7_3 = (0xe0004500 & 0xFFFFF000) | E500_TLB_SUPER_PERM_MASK;
-}
+पूर्ण
 
-int kvmppc_core_vcpu_setup(struct kvm_vcpu *vcpu)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+पूर्णांक kvmppc_core_vcpu_setup(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
 
 	kvmppc_e500_tlb_setup(vcpu_e500);
 
@@ -355,13 +356,13 @@ int kvmppc_core_vcpu_setup(struct kvm_vcpu *vcpu)
 
 	vcpu->arch.cpu_type = KVM_CPU_E500V2;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kvmppc_core_get_sregs_e500(struct kvm_vcpu *vcpu,
-				      struct kvm_sregs *sregs)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+अटल पूर्णांक kvmppc_core_get_sregs_e500(काष्ठा kvm_vcpu *vcpu,
+				      काष्ठा kvm_sregs *sregs)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
 
 	sregs->u.e.features |= KVM_SREGS_E_ARCH206_MMU | KVM_SREGS_E_SPE |
 	                       KVM_SREGS_E_PM;
@@ -380,108 +381,108 @@ static int kvmppc_core_get_sregs_e500(struct kvm_vcpu *vcpu,
 
 	kvmppc_get_sregs_ivor(vcpu, sregs);
 	kvmppc_get_sregs_e500_tlb(vcpu, sregs);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kvmppc_core_set_sregs_e500(struct kvm_vcpu *vcpu,
-				      struct kvm_sregs *sregs)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
-	int ret;
+अटल पूर्णांक kvmppc_core_set_sregs_e500(काष्ठा kvm_vcpu *vcpu,
+				      काष्ठा kvm_sregs *sregs)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+	पूर्णांक ret;
 
-	if (sregs->u.e.impl_id == KVM_SREGS_E_IMPL_FSL) {
+	अगर (sregs->u.e.impl_id == KVM_SREGS_E_IMPL_FSL) अणु
 		vcpu_e500->svr = sregs->u.e.impl.fsl.svr;
 		vcpu_e500->hid0 = sregs->u.e.impl.fsl.hid0;
 		vcpu_e500->mcar = sregs->u.e.impl.fsl.mcar;
-	}
+	पूर्ण
 
 	ret = kvmppc_set_sregs_e500_tlb(vcpu, sregs);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!(sregs->u.e.features & KVM_SREGS_E_IVOR))
-		return 0;
+	अगर (!(sregs->u.e.features & KVM_SREGS_E_IVOR))
+		वापस 0;
 
-	if (sregs->u.e.features & KVM_SREGS_E_SPE) {
+	अगर (sregs->u.e.features & KVM_SREGS_E_SPE) अणु
 		vcpu->arch.ivor[BOOKE_IRQPRIO_SPE_UNAVAIL] =
 			sregs->u.e.ivor_high[0];
 		vcpu->arch.ivor[BOOKE_IRQPRIO_SPE_FP_DATA] =
 			sregs->u.e.ivor_high[1];
 		vcpu->arch.ivor[BOOKE_IRQPRIO_SPE_FP_ROUND] =
 			sregs->u.e.ivor_high[2];
-	}
+	पूर्ण
 
-	if (sregs->u.e.features & KVM_SREGS_E_PM) {
+	अगर (sregs->u.e.features & KVM_SREGS_E_PM) अणु
 		vcpu->arch.ivor[BOOKE_IRQPRIO_PERFORMANCE_MONITOR] =
 			sregs->u.e.ivor_high[3];
-	}
+	पूर्ण
 
-	return kvmppc_set_sregs_ivor(vcpu, sregs);
-}
+	वापस kvmppc_set_sregs_ivor(vcpu, sregs);
+पूर्ण
 
-static int kvmppc_get_one_reg_e500(struct kvm_vcpu *vcpu, u64 id,
-				   union kvmppc_one_reg *val)
-{
-	int r = kvmppc_get_one_reg_e500_tlb(vcpu, id, val);
-	return r;
-}
+अटल पूर्णांक kvmppc_get_one_reg_e500(काष्ठा kvm_vcpu *vcpu, u64 id,
+				   जोड़ kvmppc_one_reg *val)
+अणु
+	पूर्णांक r = kvmppc_get_one_reg_e500_tlb(vcpu, id, val);
+	वापस r;
+पूर्ण
 
-static int kvmppc_set_one_reg_e500(struct kvm_vcpu *vcpu, u64 id,
-				   union kvmppc_one_reg *val)
-{
-	int r = kvmppc_get_one_reg_e500_tlb(vcpu, id, val);
-	return r;
-}
+अटल पूर्णांक kvmppc_set_one_reg_e500(काष्ठा kvm_vcpu *vcpu, u64 id,
+				   जोड़ kvmppc_one_reg *val)
+अणु
+	पूर्णांक r = kvmppc_get_one_reg_e500_tlb(vcpu, id, val);
+	वापस r;
+पूर्ण
 
-static int kvmppc_core_vcpu_create_e500(struct kvm_vcpu *vcpu)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500;
-	int err;
+अटल पूर्णांक kvmppc_core_vcpu_create_e500(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500;
+	पूर्णांक err;
 
-	BUILD_BUG_ON(offsetof(struct kvmppc_vcpu_e500, vcpu) != 0);
+	BUILD_BUG_ON(दुरत्व(काष्ठा kvmppc_vcpu_e500, vcpu) != 0);
 	vcpu_e500 = to_e500(vcpu);
 
-	if (kvmppc_e500_id_table_alloc(vcpu_e500) == NULL)
-		return -ENOMEM;
+	अगर (kvmppc_e500_id_table_alloc(vcpu_e500) == शून्य)
+		वापस -ENOMEM;
 
 	err = kvmppc_e500_tlb_init(vcpu_e500);
-	if (err)
-		goto uninit_id;
+	अगर (err)
+		जाओ uninit_id;
 
-	vcpu->arch.shared = (void*)__get_free_page(GFP_KERNEL|__GFP_ZERO);
-	if (!vcpu->arch.shared) {
+	vcpu->arch.shared = (व्योम*)__get_मुक्त_page(GFP_KERNEL|__GFP_ZERO);
+	अगर (!vcpu->arch.shared) अणु
 		err = -ENOMEM;
-		goto uninit_tlb;
-	}
+		जाओ uninit_tlb;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 uninit_tlb:
 	kvmppc_e500_tlb_uninit(vcpu_e500);
 uninit_id:
-	kvmppc_e500_id_table_free(vcpu_e500);
-	return err;
-}
+	kvmppc_e500_id_table_मुक्त(vcpu_e500);
+	वापस err;
+पूर्ण
 
-static void kvmppc_core_vcpu_free_e500(struct kvm_vcpu *vcpu)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+अटल व्योम kvmppc_core_vcpu_मुक्त_e500(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
 
-	free_page((unsigned long)vcpu->arch.shared);
+	मुक्त_page((अचिन्हित दीर्घ)vcpu->arch.shared);
 	kvmppc_e500_tlb_uninit(vcpu_e500);
-	kvmppc_e500_id_table_free(vcpu_e500);
-}
+	kvmppc_e500_id_table_मुक्त(vcpu_e500);
+पूर्ण
 
-static int kvmppc_core_init_vm_e500(struct kvm *kvm)
-{
-	return 0;
-}
+अटल पूर्णांक kvmppc_core_init_vm_e500(काष्ठा kvm *kvm)
+अणु
+	वापस 0;
+पूर्ण
 
-static void kvmppc_core_destroy_vm_e500(struct kvm *kvm)
-{
-}
+अटल व्योम kvmppc_core_destroy_vm_e500(काष्ठा kvm *kvm)
+अणु
+पूर्ण
 
-static struct kvmppc_ops kvm_ops_e500 = {
+अटल काष्ठा kvmppc_ops kvm_ops_e500 = अणु
 	.get_sregs = kvmppc_core_get_sregs_e500,
 	.set_sregs = kvmppc_core_set_sregs_e500,
 	.get_one_reg = kvmppc_get_one_reg_e500,
@@ -489,64 +490,64 @@ static struct kvmppc_ops kvm_ops_e500 = {
 	.vcpu_load   = kvmppc_core_vcpu_load_e500,
 	.vcpu_put    = kvmppc_core_vcpu_put_e500,
 	.vcpu_create = kvmppc_core_vcpu_create_e500,
-	.vcpu_free   = kvmppc_core_vcpu_free_e500,
+	.vcpu_मुक्त   = kvmppc_core_vcpu_मुक्त_e500,
 	.init_vm = kvmppc_core_init_vm_e500,
 	.destroy_vm = kvmppc_core_destroy_vm_e500,
 	.emulate_op = kvmppc_core_emulate_op_e500,
 	.emulate_mtspr = kvmppc_core_emulate_mtspr_e500,
 	.emulate_mfspr = kvmppc_core_emulate_mfspr_e500,
-};
+पूर्ण;
 
-static int __init kvmppc_e500_init(void)
-{
-	int r, i;
-	unsigned long ivor[3];
-	/* Process remaining handlers above the generic first 16 */
-	unsigned long *handler = &kvmppc_booke_handler_addr[16];
-	unsigned long handler_len;
-	unsigned long max_ivor = 0;
+अटल पूर्णांक __init kvmppc_e500_init(व्योम)
+अणु
+	पूर्णांक r, i;
+	अचिन्हित दीर्घ ivor[3];
+	/* Process reमुख्यing handlers above the generic first 16 */
+	अचिन्हित दीर्घ *handler = &kvmppc_booke_handler_addr[16];
+	अचिन्हित दीर्घ handler_len;
+	अचिन्हित दीर्घ max_ivor = 0;
 
 	r = kvmppc_core_check_processor_compat();
-	if (r)
-		goto err_out;
+	अगर (r)
+		जाओ err_out;
 
 	r = kvmppc_booke_init();
-	if (r)
-		goto err_out;
+	अगर (r)
+		जाओ err_out;
 
 	/* copy extra E500 exception handlers */
 	ivor[0] = mfspr(SPRN_IVOR32);
 	ivor[1] = mfspr(SPRN_IVOR33);
 	ivor[2] = mfspr(SPRN_IVOR34);
-	for (i = 0; i < 3; i++) {
-		if (ivor[i] > ivor[max_ivor])
+	क्रम (i = 0; i < 3; i++) अणु
+		अगर (ivor[i] > ivor[max_ivor])
 			max_ivor = i;
 
 		handler_len = handler[i + 1] - handler[i];
-		memcpy((void *)kvmppc_booke_handlers + ivor[i],
-		       (void *)handler[i], handler_len);
-	}
+		स_नकल((व्योम *)kvmppc_booke_handlers + ivor[i],
+		       (व्योम *)handler[i], handler_len);
+	पूर्ण
 	handler_len = handler[max_ivor + 1] - handler[max_ivor];
 	flush_icache_range(kvmppc_booke_handlers, kvmppc_booke_handlers +
 			   ivor[max_ivor] + handler_len);
 
-	r = kvm_init(NULL, sizeof(struct kvmppc_vcpu_e500), 0, THIS_MODULE);
-	if (r)
-		goto err_out;
+	r = kvm_init(शून्य, माप(काष्ठा kvmppc_vcpu_e500), 0, THIS_MODULE);
+	अगर (r)
+		जाओ err_out;
 	kvm_ops_e500.owner = THIS_MODULE;
 	kvmppc_pr_ops = &kvm_ops_e500;
 
 err_out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void __exit kvmppc_e500_exit(void)
-{
-	kvmppc_pr_ops = NULL;
-	kvmppc_booke_exit();
-}
+अटल व्योम __निकास kvmppc_e500_निकास(व्योम)
+अणु
+	kvmppc_pr_ops = शून्य;
+	kvmppc_booke_निकास();
+पूर्ण
 
 module_init(kvmppc_e500_init);
-module_exit(kvmppc_e500_exit);
+module_निकास(kvmppc_e500_निकास);
 MODULE_ALIAS_MISCDEV(KVM_MINOR);
 MODULE_ALIAS("devname:kvm");

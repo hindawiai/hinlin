@@ -1,231 +1,232 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Support for OLPC XO-1.5 System Control Interrupts (SCI)
+ * Support क्रम OLPC XO-1.5 System Control Interrupts (SCI)
  *
  * Copyright (C) 2009-2010 One Laptop per Child
  */
 
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
-#include <linux/power_supply.h>
-#include <linux/olpc-ec.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/olpc-ec.h>
 
-#include <linux/acpi.h>
-#include <asm/olpc.h>
+#समावेश <linux/acpi.h>
+#समावेश <यंत्र/olpc.h>
 
-#define DRV_NAME			"olpc-xo15-sci"
-#define PFX				DRV_NAME ": "
-#define XO15_SCI_CLASS			DRV_NAME
-#define XO15_SCI_DEVICE_NAME		"OLPC XO-1.5 SCI"
+#घोषणा DRV_NAME			"olpc-xo15-sci"
+#घोषणा PFX				DRV_NAME ": "
+#घोषणा XO15_SCI_CLASS			DRV_NAME
+#घोषणा XO15_SCI_DEVICE_NAME		"OLPC XO-1.5 SCI"
 
-static unsigned long			xo15_sci_gpe;
-static bool				lid_wake_on_close;
+अटल अचिन्हित दीर्घ			xo15_sci_gpe;
+अटल bool				lid_wake_on_बंद;
 
 /*
- * The normal ACPI LID wakeup behavior is wake-on-open, but not
- * wake-on-close. This is implemented as standard by the XO-1.5 DSDT.
+ * The normal ACPI LID wakeup behavior is wake-on-खोलो, but not
+ * wake-on-बंद. This is implemented as standard by the XO-1.5 DSDT.
  *
  * We provide here a sysfs attribute that will additionally enable
- * wake-on-close behavior. This is useful (e.g.) when we opportunistically
- * suspend with the display running; if the lid is then closed, we want to
+ * wake-on-बंद behavior. This is useful (e.g.) when we opportunistically
+ * suspend with the display running; अगर the lid is then बंदd, we want to
  * wake up to turn the display off.
  *
  * This is controlled through a custom method in the XO-1.5 DSDT.
  */
-static int set_lid_wake_behavior(bool wake_on_close)
-{
+अटल पूर्णांक set_lid_wake_behavior(bool wake_on_बंद)
+अणु
 	acpi_status status;
 
-	status = acpi_execute_simple_method(NULL, "\\_SB.PCI0.LID.LIDW", wake_on_close);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_execute_simple_method(शून्य, "\\_SB.PCI0.LID.LIDW", wake_on_बंद);
+	अगर (ACPI_FAILURE(status)) अणु
 		pr_warn(PFX "failed to set lid behavior\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	lid_wake_on_close = wake_on_close;
+	lid_wake_on_बंद = wake_on_बंद;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t
-lid_wake_on_close_show(struct kobject *s, struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", lid_wake_on_close);
-}
+अटल sमाप_प्रकार
+lid_wake_on_बंद_show(काष्ठा kobject *s, काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", lid_wake_on_बंद);
+पूर्ण
 
-static ssize_t lid_wake_on_close_store(struct kobject *s,
-				       struct kobj_attribute *attr,
-				       const char *buf, size_t n)
-{
-	unsigned int val;
+अटल sमाप_प्रकार lid_wake_on_बंद_store(काष्ठा kobject *s,
+				       काष्ठा kobj_attribute *attr,
+				       स्थिर अक्षर *buf, माप_प्रकार n)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	if (sscanf(buf, "%u", &val) != 1)
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%u", &val) != 1)
+		वापस -EINVAL;
 
 	set_lid_wake_behavior(!!val);
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static struct kobj_attribute lid_wake_on_close_attr =
-	__ATTR(lid_wake_on_close, 0644,
-	       lid_wake_on_close_show,
-	       lid_wake_on_close_store);
+अटल काष्ठा kobj_attribute lid_wake_on_बंद_attr =
+	__ATTR(lid_wake_on_बंद, 0644,
+	       lid_wake_on_बंद_show,
+	       lid_wake_on_बंद_store);
 
-static void battery_status_changed(void)
-{
-	struct power_supply *psy = power_supply_get_by_name("olpc_battery");
+अटल व्योम battery_status_changed(व्योम)
+अणु
+	काष्ठा घातer_supply *psy = घातer_supply_get_by_name("olpc_battery");
 
-	if (psy) {
-		power_supply_changed(psy);
-		power_supply_put(psy);
-	}
-}
+	अगर (psy) अणु
+		घातer_supply_changed(psy);
+		घातer_supply_put(psy);
+	पूर्ण
+पूर्ण
 
-static void ac_status_changed(void)
-{
-	struct power_supply *psy = power_supply_get_by_name("olpc_ac");
+अटल व्योम ac_status_changed(व्योम)
+अणु
+	काष्ठा घातer_supply *psy = घातer_supply_get_by_name("olpc_ac");
 
-	if (psy) {
-		power_supply_changed(psy);
-		power_supply_put(psy);
-	}
-}
+	अगर (psy) अणु
+		घातer_supply_changed(psy);
+		घातer_supply_put(psy);
+	पूर्ण
+पूर्ण
 
-static void process_sci_queue(void)
-{
+अटल व्योम process_sci_queue(व्योम)
+अणु
 	u16 data;
-	int r;
+	पूर्णांक r;
 
-	do {
+	करो अणु
 		r = olpc_ec_sci_query(&data);
-		if (r || !data)
-			break;
+		अगर (r || !data)
+			अवरोध;
 
 		pr_debug(PFX "SCI 0x%x received\n", data);
 
-		switch (data) {
-		case EC_SCI_SRC_BATERR:
-		case EC_SCI_SRC_BATSOC:
-		case EC_SCI_SRC_BATTERY:
-		case EC_SCI_SRC_BATCRIT:
+		चयन (data) अणु
+		हाल EC_SCI_SRC_BATERR:
+		हाल EC_SCI_SRC_BATSOC:
+		हाल EC_SCI_SRC_BATTERY:
+		हाल EC_SCI_SRC_BATCRIT:
 			battery_status_changed();
-			break;
-		case EC_SCI_SRC_ACPWR:
+			अवरोध;
+		हाल EC_SCI_SRC_ACPWR:
 			ac_status_changed();
-			break;
-		}
-	} while (data);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (data);
 
-	if (r)
+	अगर (r)
 		pr_err(PFX "Failed to clear SCI queue");
-}
+पूर्ण
 
-static void process_sci_queue_work(struct work_struct *work)
-{
+अटल व्योम process_sci_queue_work(काष्ठा work_काष्ठा *work)
+अणु
 	process_sci_queue();
-}
+पूर्ण
 
-static DECLARE_WORK(sci_work, process_sci_queue_work);
+अटल DECLARE_WORK(sci_work, process_sci_queue_work);
 
-static u32 xo15_sci_gpe_handler(acpi_handle gpe_device, u32 gpe, void *context)
-{
+अटल u32 xo15_sci_gpe_handler(acpi_handle gpe_device, u32 gpe, व्योम *context)
+अणु
 	schedule_work(&sci_work);
-	return ACPI_INTERRUPT_HANDLED | ACPI_REENABLE_GPE;
-}
+	वापस ACPI_INTERRUPT_HANDLED | ACPI_REENABLE_GPE;
+पूर्ण
 
-static int xo15_sci_add(struct acpi_device *device)
-{
-	unsigned long long tmp;
+अटल पूर्णांक xo15_sci_add(काष्ठा acpi_device *device)
+अणु
+	अचिन्हित दीर्घ दीर्घ पंचांगp;
 	acpi_status status;
-	int r;
+	पूर्णांक r;
 
-	if (!device)
-		return -EINVAL;
+	अगर (!device)
+		वापस -EINVAL;
 
-	strcpy(acpi_device_name(device), XO15_SCI_DEVICE_NAME);
-	strcpy(acpi_device_class(device), XO15_SCI_CLASS);
+	म_नकल(acpi_device_name(device), XO15_SCI_DEVICE_NAME);
+	म_नकल(acpi_device_class(device), XO15_SCI_CLASS);
 
 	/* Get GPE bit assignment (EC events). */
-	status = acpi_evaluate_integer(device->handle, "_GPE", NULL, &tmp);
-	if (ACPI_FAILURE(status))
-		return -EINVAL;
+	status = acpi_evaluate_पूर्णांकeger(device->handle, "_GPE", शून्य, &पंचांगp);
+	अगर (ACPI_FAILURE(status))
+		वापस -EINVAL;
 
-	xo15_sci_gpe = tmp;
-	status = acpi_install_gpe_handler(NULL, xo15_sci_gpe,
+	xo15_sci_gpe = पंचांगp;
+	status = acpi_install_gpe_handler(शून्य, xo15_sci_gpe,
 					  ACPI_GPE_EDGE_TRIGGERED,
 					  xo15_sci_gpe_handler, device);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
 	dev_info(&device->dev, "Initialized, GPE = 0x%lx\n", xo15_sci_gpe);
 
-	r = sysfs_create_file(&device->dev.kobj, &lid_wake_on_close_attr.attr);
-	if (r)
-		goto err_sysfs;
+	r = sysfs_create_file(&device->dev.kobj, &lid_wake_on_बंद_attr.attr);
+	अगर (r)
+		जाओ err_sysfs;
 
 	/* Flush queue, and enable all SCI events */
 	process_sci_queue();
-	olpc_ec_mask_write(EC_SCI_SRC_ALL);
+	olpc_ec_mask_ग_लिखो(EC_SCI_SRC_ALL);
 
-	acpi_enable_gpe(NULL, xo15_sci_gpe);
+	acpi_enable_gpe(शून्य, xo15_sci_gpe);
 
 	/* Enable wake-on-EC */
-	if (device->wakeup.flags.valid)
+	अगर (device->wakeup.flags.valid)
 		device_init_wakeup(&device->dev, true);
 
-	return 0;
+	वापस 0;
 
 err_sysfs:
-	acpi_remove_gpe_handler(NULL, xo15_sci_gpe, xo15_sci_gpe_handler);
+	acpi_हटाओ_gpe_handler(शून्य, xo15_sci_gpe, xo15_sci_gpe_handler);
 	cancel_work_sync(&sci_work);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int xo15_sci_remove(struct acpi_device *device)
-{
-	acpi_disable_gpe(NULL, xo15_sci_gpe);
-	acpi_remove_gpe_handler(NULL, xo15_sci_gpe, xo15_sci_gpe_handler);
+अटल पूर्णांक xo15_sci_हटाओ(काष्ठा acpi_device *device)
+अणु
+	acpi_disable_gpe(शून्य, xo15_sci_gpe);
+	acpi_हटाओ_gpe_handler(शून्य, xo15_sci_gpe, xo15_sci_gpe_handler);
 	cancel_work_sync(&sci_work);
-	sysfs_remove_file(&device->dev.kobj, &lid_wake_on_close_attr.attr);
-	return 0;
-}
+	sysfs_हटाओ_file(&device->dev.kobj, &lid_wake_on_बंद_attr.attr);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int xo15_sci_resume(struct device *dev)
-{
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक xo15_sci_resume(काष्ठा device *dev)
+अणु
 	/* Enable all EC events */
-	olpc_ec_mask_write(EC_SCI_SRC_ALL);
+	olpc_ec_mask_ग_लिखो(EC_SCI_SRC_ALL);
 
 	/* Power/battery status might have changed */
 	battery_status_changed();
 	ac_status_changed();
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(xo15_sci_pm, NULL, xo15_sci_resume);
+अटल SIMPLE_DEV_PM_OPS(xo15_sci_pm, शून्य, xo15_sci_resume);
 
-static const struct acpi_device_id xo15_sci_device_ids[] = {
-	{"XO15EC", 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id xo15_sci_device_ids[] = अणु
+	अणु"XO15EC", 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 
-static struct acpi_driver xo15_sci_drv = {
+अटल काष्ठा acpi_driver xo15_sci_drv = अणु
 	.name = DRV_NAME,
 	.class = XO15_SCI_CLASS,
 	.ids = xo15_sci_device_ids,
-	.ops = {
+	.ops = अणु
 		.add = xo15_sci_add,
-		.remove = xo15_sci_remove,
-	},
+		.हटाओ = xo15_sci_हटाओ,
+	पूर्ण,
 	.drv.pm = &xo15_sci_pm,
-};
+पूर्ण;
 
-static int __init xo15_sci_init(void)
-{
-	return acpi_bus_register_driver(&xo15_sci_drv);
-}
+अटल पूर्णांक __init xo15_sci_init(व्योम)
+अणु
+	वापस acpi_bus_रेजिस्टर_driver(&xo15_sci_drv);
+पूर्ण
 device_initcall(xo15_sci_init);

@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-#ifndef __KVM_HOST_H
-#define __KVM_HOST_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
+#अगर_अघोषित __KVM_HOST_H
+#घोषणा __KVM_HOST_H
 
 
-#include <linux/types.h>
-#include <linux/hardirq.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/spinlock.h>
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/sched/stat.h>
-#include <linux/bug.h>
-#include <linux/minmax.h>
-#include <linux/mm.h>
-#include <linux/mmu_notifier.h>
-#include <linux/preempt.h>
-#include <linux/msi.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/rcupdate.h>
-#include <linux/ratelimit.h>
-#include <linux/err.h>
-#include <linux/irqflags.h>
-#include <linux/context_tracking.h>
-#include <linux/irqbypass.h>
-#include <linux/rcuwait.h>
-#include <linux/refcount.h>
-#include <linux/nospec.h>
-#include <asm/signal.h>
+#समावेश <linux/types.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/स्थिति.स>
+#समावेश <linux/bug.h>
+#समावेश <linux/minmax.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mmu_notअगरier.h>
+#समावेश <linux/preempt.h>
+#समावेश <linux/msi.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/err.h>
+#समावेश <linux/irqflags.h>
+#समावेश <linux/context_tracking.h>
+#समावेश <linux/irqbypass.h>
+#समावेश <linux/rcuरुको.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/nospec.h>
+#समावेश <यंत्र/संकेत.स>
 
-#include <linux/kvm.h>
-#include <linux/kvm_para.h>
+#समावेश <linux/kvm.h>
+#समावेश <linux/kvm_para.h>
 
-#include <linux/kvm_types.h>
+#समावेश <linux/kvm_types.h>
 
-#include <asm/kvm_host.h>
-#include <linux/kvm_dirty_ring.h>
+#समावेश <यंत्र/kvm_host.h>
+#समावेश <linux/kvm_dirty_ring.h>
 
-#ifndef KVM_MAX_VCPU_ID
-#define KVM_MAX_VCPU_ID KVM_MAX_VCPUS
-#endif
+#अगर_अघोषित KVM_MAX_VCPU_ID
+#घोषणा KVM_MAX_VCPU_ID KVM_MAX_VCPUS
+#पूर्ण_अगर
 
 /*
- * The bit 16 ~ bit 31 of kvm_memory_region::flags are internally used
- * in kvm, other bits are visible for userspace which are defined in
+ * The bit 16 ~ bit 31 of kvm_memory_region::flags are पूर्णांकernally used
+ * in kvm, other bits are visible क्रम userspace which are defined in
  * include/linux/kvm_h.
  */
-#define KVM_MEMSLOT_INVALID	(1UL << 16)
+#घोषणा KVM_MEMSLOT_INVALID	(1UL << 16)
 
 /*
  * Bit 63 of the memslot generation number is an "update in-progress flag",
- * e.g. is temporarily set for the duration of install_new_memslots().
+ * e.g. is temporarily set क्रम the duration of install_new_memslots().
  * This flag effectively creates a unique generation number that is used to
  * mark cached memslot data, e.g. MMIO accesses, as potentially being stale,
  * i.e. may (or may not) have come from the previous memslots generation.
@@ -59,1348 +60,1348 @@
  * This is necessary because the actual memslots update is not atomic with
  * respect to the generation number update.  Updating the generation number
  * first would allow a vCPU to cache a spte from the old memslots using the
- * new generation number, and updating the generation number after switching
+ * new generation number, and updating the generation number after चयनing
  * to the new memslots would allow cache hits using the old generation number
  * to reference the defunct memslots.
  *
- * This mechanism is used to prevent getting hits in KVM's caches while a
+ * This mechanism is used to prevent getting hits in KVM's caches जबतक a
  * memslot update is in-progress, and to prevent cache hits *after* updating
- * the actual generation number against accesses that were inserted into the
- * cache *before* the memslots were updated.
+ * the actual generation number against accesses that were inserted पूर्णांकo the
+ * cache *beक्रमe* the memslots were updated.
  */
-#define KVM_MEMSLOT_GEN_UPDATE_IN_PROGRESS	BIT_ULL(63)
+#घोषणा KVM_MEMSLOT_GEN_UPDATE_IN_PROGRESS	BIT_ULL(63)
 
-/* Two fragments for cross MMIO pages. */
-#define KVM_MAX_MMIO_FRAGMENTS	2
+/* Two fragments क्रम cross MMIO pages. */
+#घोषणा KVM_MAX_MMIO_FRAGMENTS	2
 
-#ifndef KVM_ADDRESS_SPACE_NUM
-#define KVM_ADDRESS_SPACE_NUM	1
-#endif
+#अगर_अघोषित KVM_ADDRESS_SPACE_NUM
+#घोषणा KVM_ADDRESS_SPACE_NUM	1
+#पूर्ण_अगर
 
 /*
  * For the normal pfn, the highest 12 bits should be zero,
  * so we can mask bit 62 ~ bit 52  to indicate the error pfn,
  * mask bit 63 to indicate the noslot pfn.
  */
-#define KVM_PFN_ERR_MASK	(0x7ffULL << 52)
-#define KVM_PFN_ERR_NOSLOT_MASK	(0xfffULL << 52)
-#define KVM_PFN_NOSLOT		(0x1ULL << 63)
+#घोषणा KVM_PFN_ERR_MASK	(0x7ffULL << 52)
+#घोषणा KVM_PFN_ERR_NOSLOT_MASK	(0xfffULL << 52)
+#घोषणा KVM_PFN_NOSLOT		(0x1ULL << 63)
 
-#define KVM_PFN_ERR_FAULT	(KVM_PFN_ERR_MASK)
-#define KVM_PFN_ERR_HWPOISON	(KVM_PFN_ERR_MASK + 1)
-#define KVM_PFN_ERR_RO_FAULT	(KVM_PFN_ERR_MASK + 2)
+#घोषणा KVM_PFN_ERR_FAULT	(KVM_PFN_ERR_MASK)
+#घोषणा KVM_PFN_ERR_HWPOISON	(KVM_PFN_ERR_MASK + 1)
+#घोषणा KVM_PFN_ERR_RO_FAULT	(KVM_PFN_ERR_MASK + 2)
 
 /*
  * error pfns indicate that the gfn is in slot but faild to
  * translate it to pfn on host.
  */
-static inline bool is_error_pfn(kvm_pfn_t pfn)
-{
-	return !!(pfn & KVM_PFN_ERR_MASK);
-}
+अटल अंतरभूत bool is_error_pfn(kvm_pfn_t pfn)
+अणु
+	वापस !!(pfn & KVM_PFN_ERR_MASK);
+पूर्ण
 
 /*
  * error_noslot pfns indicate that the gfn can not be
  * translated to pfn - it is not in slot or failed to
  * translate it to pfn.
  */
-static inline bool is_error_noslot_pfn(kvm_pfn_t pfn)
-{
-	return !!(pfn & KVM_PFN_ERR_NOSLOT_MASK);
-}
+अटल अंतरभूत bool is_error_noslot_pfn(kvm_pfn_t pfn)
+अणु
+	वापस !!(pfn & KVM_PFN_ERR_NOSLOT_MASK);
+पूर्ण
 
 /* noslot pfn indicates that the gfn is not in slot. */
-static inline bool is_noslot_pfn(kvm_pfn_t pfn)
-{
-	return pfn == KVM_PFN_NOSLOT;
-}
+अटल अंतरभूत bool is_noslot_pfn(kvm_pfn_t pfn)
+अणु
+	वापस pfn == KVM_PFN_NOSLOT;
+पूर्ण
 
 /*
  * architectures with KVM_HVA_ERR_BAD other than PAGE_OFFSET (e.g. s390)
  * provide own defines and kvm_is_error_hva
  */
-#ifndef KVM_HVA_ERR_BAD
+#अगर_अघोषित KVM_HVA_ERR_BAD
 
-#define KVM_HVA_ERR_BAD		(PAGE_OFFSET)
-#define KVM_HVA_ERR_RO_BAD	(PAGE_OFFSET + PAGE_SIZE)
+#घोषणा KVM_HVA_ERR_BAD		(PAGE_OFFSET)
+#घोषणा KVM_HVA_ERR_RO_BAD	(PAGE_OFFSET + PAGE_SIZE)
 
-static inline bool kvm_is_error_hva(unsigned long addr)
-{
-	return addr >= PAGE_OFFSET;
-}
+अटल अंतरभूत bool kvm_is_error_hva(अचिन्हित दीर्घ addr)
+अणु
+	वापस addr >= PAGE_OFFSET;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#define KVM_ERR_PTR_BAD_PAGE	(ERR_PTR(-ENOENT))
+#घोषणा KVM_ERR_PTR_BAD_PAGE	(ERR_PTR(-ENOENT))
 
-static inline bool is_error_page(struct page *page)
-{
-	return IS_ERR(page);
-}
+अटल अंतरभूत bool is_error_page(काष्ठा page *page)
+अणु
+	वापस IS_ERR(page);
+पूर्ण
 
-#define KVM_REQUEST_MASK           GENMASK(7,0)
-#define KVM_REQUEST_NO_WAKEUP      BIT(8)
-#define KVM_REQUEST_WAIT           BIT(9)
+#घोषणा KVM_REQUEST_MASK           GENMASK(7,0)
+#घोषणा KVM_REQUEST_NO_WAKEUP      BIT(8)
+#घोषणा KVM_REQUEST_WAIT           BIT(9)
 /*
  * Architecture-independent vcpu->requests bit members
- * Bits 4-7 are reserved for more arch-independent bits.
+ * Bits 4-7 are reserved क्रम more arch-independent bits.
  */
-#define KVM_REQ_TLB_FLUSH         (0 | KVM_REQUEST_WAIT | KVM_REQUEST_NO_WAKEUP)
-#define KVM_REQ_MMU_RELOAD        (1 | KVM_REQUEST_WAIT | KVM_REQUEST_NO_WAKEUP)
-#define KVM_REQ_UNBLOCK           2
-#define KVM_REQ_UNHALT            3
-#define KVM_REQUEST_ARCH_BASE     8
+#घोषणा KVM_REQ_TLB_FLUSH         (0 | KVM_REQUEST_WAIT | KVM_REQUEST_NO_WAKEUP)
+#घोषणा KVM_REQ_MMU_RELOAD        (1 | KVM_REQUEST_WAIT | KVM_REQUEST_NO_WAKEUP)
+#घोषणा KVM_REQ_UNBLOCK           2
+#घोषणा KVM_REQ_UNHALT            3
+#घोषणा KVM_REQUEST_ARCH_BASE     8
 
-#define KVM_ARCH_REQ_FLAGS(nr, flags) ({ \
-	BUILD_BUG_ON((unsigned)(nr) >= (sizeof_field(struct kvm_vcpu, requests) * 8) - KVM_REQUEST_ARCH_BASE); \
-	(unsigned)(((nr) + KVM_REQUEST_ARCH_BASE) | (flags)); \
-})
-#define KVM_ARCH_REQ(nr)           KVM_ARCH_REQ_FLAGS(nr, 0)
+#घोषणा KVM_ARCH_REQ_FLAGS(nr, flags) (अणु \
+	BUILD_BUG_ON((अचिन्हित)(nr) >= (माप_field(काष्ठा kvm_vcpu, requests) * 8) - KVM_REQUEST_ARCH_BASE); \
+	(अचिन्हित)(((nr) + KVM_REQUEST_ARCH_BASE) | (flags)); \
+पूर्ण)
+#घोषणा KVM_ARCH_REQ(nr)           KVM_ARCH_REQ_FLAGS(nr, 0)
 
-#define KVM_USERSPACE_IRQ_SOURCE_ID		0
-#define KVM_IRQFD_RESAMPLE_IRQ_SOURCE_ID	1
+#घोषणा KVM_USERSPACE_IRQ_SOURCE_ID		0
+#घोषणा KVM_IRQFD_RESAMPLE_IRQ_SOURCE_ID	1
 
-extern struct mutex kvm_lock;
-extern struct list_head vm_list;
+बाह्य काष्ठा mutex kvm_lock;
+बाह्य काष्ठा list_head vm_list;
 
-struct kvm_io_range {
+काष्ठा kvm_io_range अणु
 	gpa_t addr;
-	int len;
-	struct kvm_io_device *dev;
-};
+	पूर्णांक len;
+	काष्ठा kvm_io_device *dev;
+पूर्ण;
 
-#define NR_IOBUS_DEVS 1000
+#घोषणा NR_IOBUS_DEVS 1000
 
-struct kvm_io_bus {
-	int dev_count;
-	int ioeventfd_count;
-	struct kvm_io_range range[];
-};
+काष्ठा kvm_io_bus अणु
+	पूर्णांक dev_count;
+	पूर्णांक ioeventfd_count;
+	काष्ठा kvm_io_range range[];
+पूर्ण;
 
-enum kvm_bus {
+क्रमागत kvm_bus अणु
 	KVM_MMIO_BUS,
 	KVM_PIO_BUS,
 	KVM_VIRTIO_CCW_NOTIFY_BUS,
 	KVM_FAST_MMIO_BUS,
 	KVM_NR_BUSES
-};
+पूर्ण;
 
-int kvm_io_bus_write(struct kvm_vcpu *vcpu, enum kvm_bus bus_idx, gpa_t addr,
-		     int len, const void *val);
-int kvm_io_bus_write_cookie(struct kvm_vcpu *vcpu, enum kvm_bus bus_idx,
-			    gpa_t addr, int len, const void *val, long cookie);
-int kvm_io_bus_read(struct kvm_vcpu *vcpu, enum kvm_bus bus_idx, gpa_t addr,
-		    int len, void *val);
-int kvm_io_bus_register_dev(struct kvm *kvm, enum kvm_bus bus_idx, gpa_t addr,
-			    int len, struct kvm_io_device *dev);
-int kvm_io_bus_unregister_dev(struct kvm *kvm, enum kvm_bus bus_idx,
-			      struct kvm_io_device *dev);
-struct kvm_io_device *kvm_io_bus_get_dev(struct kvm *kvm, enum kvm_bus bus_idx,
+पूर्णांक kvm_io_bus_ग_लिखो(काष्ठा kvm_vcpu *vcpu, क्रमागत kvm_bus bus_idx, gpa_t addr,
+		     पूर्णांक len, स्थिर व्योम *val);
+पूर्णांक kvm_io_bus_ग_लिखो_cookie(काष्ठा kvm_vcpu *vcpu, क्रमागत kvm_bus bus_idx,
+			    gpa_t addr, पूर्णांक len, स्थिर व्योम *val, दीर्घ cookie);
+पूर्णांक kvm_io_bus_पढ़ो(काष्ठा kvm_vcpu *vcpu, क्रमागत kvm_bus bus_idx, gpa_t addr,
+		    पूर्णांक len, व्योम *val);
+पूर्णांक kvm_io_bus_रेजिस्टर_dev(काष्ठा kvm *kvm, क्रमागत kvm_bus bus_idx, gpa_t addr,
+			    पूर्णांक len, काष्ठा kvm_io_device *dev);
+पूर्णांक kvm_io_bus_unरेजिस्टर_dev(काष्ठा kvm *kvm, क्रमागत kvm_bus bus_idx,
+			      काष्ठा kvm_io_device *dev);
+काष्ठा kvm_io_device *kvm_io_bus_get_dev(काष्ठा kvm *kvm, क्रमागत kvm_bus bus_idx,
 					 gpa_t addr);
 
-#ifdef CONFIG_KVM_ASYNC_PF
-struct kvm_async_pf {
-	struct work_struct work;
-	struct list_head link;
-	struct list_head queue;
-	struct kvm_vcpu *vcpu;
-	struct mm_struct *mm;
+#अगर_घोषित CONFIG_KVM_ASYNC_PF
+काष्ठा kvm_async_pf अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा list_head link;
+	काष्ठा list_head queue;
+	काष्ठा kvm_vcpu *vcpu;
+	काष्ठा mm_काष्ठा *mm;
 	gpa_t cr2_or_gpa;
-	unsigned long addr;
-	struct kvm_arch_async_pf arch;
+	अचिन्हित दीर्घ addr;
+	काष्ठा kvm_arch_async_pf arch;
 	bool   wakeup_all;
 	bool notpresent_injected;
-};
+पूर्ण;
 
-void kvm_clear_async_pf_completion_queue(struct kvm_vcpu *vcpu);
-void kvm_check_async_pf_completion(struct kvm_vcpu *vcpu);
-bool kvm_setup_async_pf(struct kvm_vcpu *vcpu, gpa_t cr2_or_gpa,
-			unsigned long hva, struct kvm_arch_async_pf *arch);
-int kvm_async_pf_wakeup_all(struct kvm_vcpu *vcpu);
-#endif
+व्योम kvm_clear_async_pf_completion_queue(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_check_async_pf_completion(काष्ठा kvm_vcpu *vcpu);
+bool kvm_setup_async_pf(काष्ठा kvm_vcpu *vcpu, gpa_t cr2_or_gpa,
+			अचिन्हित दीर्घ hva, काष्ठा kvm_arch_async_pf *arch);
+पूर्णांक kvm_async_pf_wakeup_all(काष्ठा kvm_vcpu *vcpu);
+#पूर्ण_अगर
 
-#ifdef KVM_ARCH_WANT_MMU_NOTIFIER
-struct kvm_gfn_range {
-	struct kvm_memory_slot *slot;
+#अगर_घोषित KVM_ARCH_WANT_MMU_NOTIFIER
+काष्ठा kvm_gfn_range अणु
+	काष्ठा kvm_memory_slot *slot;
 	gfn_t start;
 	gfn_t end;
 	pte_t pte;
 	bool may_block;
-};
-bool kvm_unmap_gfn_range(struct kvm *kvm, struct kvm_gfn_range *range);
-bool kvm_age_gfn(struct kvm *kvm, struct kvm_gfn_range *range);
-bool kvm_test_age_gfn(struct kvm *kvm, struct kvm_gfn_range *range);
-bool kvm_set_spte_gfn(struct kvm *kvm, struct kvm_gfn_range *range);
-#endif
+पूर्ण;
+bool kvm_unmap_gfn_range(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range);
+bool kvm_age_gfn(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range);
+bool kvm_test_age_gfn(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range);
+bool kvm_set_spte_gfn(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range);
+#पूर्ण_अगर
 
-enum {
+क्रमागत अणु
 	OUTSIDE_GUEST_MODE,
 	IN_GUEST_MODE,
 	EXITING_GUEST_MODE,
 	READING_SHADOW_PAGE_TABLES,
-};
+पूर्ण;
 
-#define KVM_UNMAPPED_PAGE	((void *) 0x500 + POISON_POINTER_DELTA)
+#घोषणा KVM_UNMAPPED_PAGE	((व्योम *) 0x500 + POISON_POINTER_DELTA)
 
-struct kvm_host_map {
+काष्ठा kvm_host_map अणु
 	/*
-	 * Only valid if the 'pfn' is managed by the host kernel (i.e. There is
-	 * a 'struct page' for it. When using mem= kernel parameter some memory
+	 * Only valid अगर the 'pfn' is managed by the host kernel (i.e. There is
+	 * a 'struct page' क्रम it. When using mem= kernel parameter some memory
 	 * can be used as guest memory but they are not managed by host
 	 * kernel).
 	 * If 'pfn' is not managed by the host kernel, this field is
 	 * initialized to KVM_UNMAPPED_PAGE.
 	 */
-	struct page *page;
-	void *hva;
+	काष्ठा page *page;
+	व्योम *hva;
 	kvm_pfn_t pfn;
 	kvm_pfn_t gfn;
-};
+पूर्ण;
 
 /*
- * Used to check if the mapping is valid or not. Never use 'kvm_host_map'
- * directly to check for that.
+ * Used to check अगर the mapping is valid or not. Never use 'kvm_host_map'
+ * directly to check क्रम that.
  */
-static inline bool kvm_vcpu_mapped(struct kvm_host_map *map)
-{
-	return !!map->hva;
-}
+अटल अंतरभूत bool kvm_vcpu_mapped(काष्ठा kvm_host_map *map)
+अणु
+	वापस !!map->hva;
+पूर्ण
 
-static inline bool kvm_vcpu_can_poll(ktime_t cur, ktime_t stop)
-{
-	return single_task_running() && !need_resched() && ktime_before(cur, stop);
-}
+अटल अंतरभूत bool kvm_vcpu_can_poll(kसमय_प्रकार cur, kसमय_प्रकार stop)
+अणु
+	वापस single_task_running() && !need_resched() && kसमय_beक्रमe(cur, stop);
+पूर्ण
 
 /*
- * Sometimes a large or cross-page mmio needs to be broken up into separate
- * exits for userspace servicing.
+ * Someबार a large or cross-page mmio needs to be broken up पूर्णांकo separate
+ * निकासs क्रम userspace servicing.
  */
-struct kvm_mmio_fragment {
+काष्ठा kvm_mmio_fragment अणु
 	gpa_t gpa;
-	void *data;
-	unsigned len;
-};
+	व्योम *data;
+	अचिन्हित len;
+पूर्ण;
 
-struct kvm_vcpu {
-	struct kvm *kvm;
-#ifdef CONFIG_PREEMPT_NOTIFIERS
-	struct preempt_notifier preempt_notifier;
-#endif
-	int cpu;
-	int vcpu_id; /* id given by userspace at creation */
-	int vcpu_idx; /* index in kvm->vcpus array */
-	int srcu_idx;
-	int mode;
+काष्ठा kvm_vcpu अणु
+	काष्ठा kvm *kvm;
+#अगर_घोषित CONFIG_PREEMPT_NOTIFIERS
+	काष्ठा preempt_notअगरier preempt_notअगरier;
+#पूर्ण_अगर
+	पूर्णांक cpu;
+	पूर्णांक vcpu_id; /* id given by userspace at creation */
+	पूर्णांक vcpu_idx; /* index in kvm->vcpus array */
+	पूर्णांक srcu_idx;
+	पूर्णांक mode;
 	u64 requests;
-	unsigned long guest_debug;
+	अचिन्हित दीर्घ guest_debug;
 
-	int pre_pcpu;
-	struct list_head blocked_vcpu_list;
+	पूर्णांक pre_pcpu;
+	काष्ठा list_head blocked_vcpu_list;
 
-	struct mutex mutex;
-	struct kvm_run *run;
+	काष्ठा mutex mutex;
+	काष्ठा kvm_run *run;
 
-	struct rcuwait wait;
-	struct pid __rcu *pid;
-	int sigset_active;
+	काष्ठा rcuरुको रुको;
+	काष्ठा pid __rcu *pid;
+	पूर्णांक sigset_active;
 	sigset_t sigset;
-	struct kvm_vcpu_stat stat;
-	unsigned int halt_poll_ns;
+	काष्ठा kvm_vcpu_stat stat;
+	अचिन्हित पूर्णांक halt_poll_ns;
 	bool valid_wakeup;
 
-#ifdef CONFIG_HAS_IOMEM
-	int mmio_needed;
-	int mmio_read_completed;
-	int mmio_is_write;
-	int mmio_cur_fragment;
-	int mmio_nr_fragments;
-	struct kvm_mmio_fragment mmio_fragments[KVM_MAX_MMIO_FRAGMENTS];
-#endif
+#अगर_घोषित CONFIG_HAS_IOMEM
+	पूर्णांक mmio_needed;
+	पूर्णांक mmio_पढ़ो_completed;
+	पूर्णांक mmio_is_ग_लिखो;
+	पूर्णांक mmio_cur_fragment;
+	पूर्णांक mmio_nr_fragments;
+	काष्ठा kvm_mmio_fragment mmio_fragments[KVM_MAX_MMIO_FRAGMENTS];
+#पूर्ण_अगर
 
-#ifdef CONFIG_KVM_ASYNC_PF
-	struct {
+#अगर_घोषित CONFIG_KVM_ASYNC_PF
+	काष्ठा अणु
 		u32 queued;
-		struct list_head queue;
-		struct list_head done;
+		काष्ठा list_head queue;
+		काष्ठा list_head करोne;
 		spinlock_t lock;
-	} async_pf;
-#endif
+	पूर्ण async_pf;
+#पूर्ण_अगर
 
-#ifdef CONFIG_HAVE_KVM_CPU_RELAX_INTERCEPT
+#अगर_घोषित CONFIG_HAVE_KVM_CPU_RELAX_INTERCEPT
 	/*
-	 * Cpu relax intercept or pause loop exit optimization
-	 * in_spin_loop: set when a vcpu does a pause loop exit
-	 *  or cpu relax intercepted.
-	 * dy_eligible: indicates whether vcpu is eligible for directed yield.
+	 * Cpu relax पूर्णांकercept or छोड़ो loop निकास optimization
+	 * in_spin_loop: set when a vcpu करोes a छोड़ो loop निकास
+	 *  or cpu relax पूर्णांकercepted.
+	 * dy_eligible: indicates whether vcpu is eligible क्रम directed yield.
 	 */
-	struct {
+	काष्ठा अणु
 		bool in_spin_loop;
 		bool dy_eligible;
-	} spin_loop;
-#endif
+	पूर्ण spin_loop;
+#पूर्ण_अगर
 	bool preempted;
-	bool ready;
-	struct kvm_vcpu_arch arch;
-	struct kvm_dirty_ring dirty_ring;
-};
+	bool पढ़ोy;
+	काष्ठा kvm_vcpu_arch arch;
+	काष्ठा kvm_dirty_ring dirty_ring;
+पूर्ण;
 
 /* must be called with irqs disabled */
-static __always_inline void guest_enter_irqoff(void)
-{
+अटल __always_अंतरभूत व्योम guest_enter_irqoff(व्योम)
+अणु
 	/*
 	 * This is running in ioctl context so its safe to assume that it's the
-	 * stime pending cputime to flush.
+	 * sसमय pending cpuसमय to flush.
 	 */
 	instrumentation_begin();
-	vtime_account_guest_enter();
+	vसमय_account_guest_enter();
 	instrumentation_end();
 
 	/*
-	 * KVM does not hold any references to rcu protected data when it
-	 * switches CPU into a guest mode. In fact switching to a guest mode
-	 * is very similar to exiting to userspace from rcu point of view. In
-	 * addition CPU may stay in a guest mode for quite a long time (up to
-	 * one time slice). Lets treat guest mode as quiescent state, just like
-	 * we do with user-mode execution.
+	 * KVM करोes not hold any references to rcu रक्षित data when it
+	 * चयनes CPU पूर्णांकo a guest mode. In fact चयनing to a guest mode
+	 * is very similar to निकासing to userspace from rcu poपूर्णांक of view. In
+	 * addition CPU may stay in a guest mode क्रम quite a दीर्घ समय (up to
+	 * one समय slice). Lets treat guest mode as quiescent state, just like
+	 * we करो with user-mode execution.
 	 */
-	if (!context_tracking_guest_enter()) {
+	अगर (!context_tracking_guest_enter()) अणु
 		instrumentation_begin();
-		rcu_virt_note_context_switch(smp_processor_id());
+		rcu_virt_note_context_चयन(smp_processor_id());
 		instrumentation_end();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static __always_inline void guest_exit_irqoff(void)
-{
-	context_tracking_guest_exit();
+अटल __always_अंतरभूत व्योम guest_निकास_irqoff(व्योम)
+अणु
+	context_tracking_guest_निकास();
 
 	instrumentation_begin();
-	/* Flush the guest cputime we spent on the guest */
-	vtime_account_guest_exit();
+	/* Flush the guest cpuसमय we spent on the guest */
+	vसमय_account_guest_निकास();
 	instrumentation_end();
-}
+पूर्ण
 
-static inline void guest_exit(void)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम guest_निकास(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	guest_exit_irqoff();
+	guest_निकास_irqoff();
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static inline int kvm_vcpu_exiting_guest_mode(struct kvm_vcpu *vcpu)
-{
+अटल अंतरभूत पूर्णांक kvm_vcpu_निकासing_guest_mode(काष्ठा kvm_vcpu *vcpu)
+अणु
 	/*
-	 * The memory barrier ensures a previous write to vcpu->requests cannot
-	 * be reordered with the read of vcpu->mode.  It pairs with the general
-	 * memory barrier following the write of vcpu->mode in VCPU RUN.
+	 * The memory barrier ensures a previous ग_लिखो to vcpu->requests cannot
+	 * be reordered with the पढ़ो of vcpu->mode.  It pairs with the general
+	 * memory barrier following the ग_लिखो of vcpu->mode in VCPU RUN.
 	 */
-	smp_mb__before_atomic();
-	return cmpxchg(&vcpu->mode, IN_GUEST_MODE, EXITING_GUEST_MODE);
-}
+	smp_mb__beक्रमe_atomic();
+	वापस cmpxchg(&vcpu->mode, IN_GUEST_MODE, EXITING_GUEST_MODE);
+पूर्ण
 
 /*
- * Some of the bitops functions do not support too long bitmaps.
+ * Some of the bitops functions करो not support too दीर्घ biपंचांगaps.
  * This number must be determined not to exceed such limits.
  */
-#define KVM_MEM_MAX_NR_PAGES ((1UL << 31) - 1)
+#घोषणा KVM_MEM_MAX_NR_PAGES ((1UL << 31) - 1)
 
-struct kvm_memory_slot {
+काष्ठा kvm_memory_slot अणु
 	gfn_t base_gfn;
-	unsigned long npages;
-	unsigned long *dirty_bitmap;
-	struct kvm_arch_memory_slot arch;
-	unsigned long userspace_addr;
+	अचिन्हित दीर्घ npages;
+	अचिन्हित दीर्घ *dirty_biपंचांगap;
+	काष्ठा kvm_arch_memory_slot arch;
+	अचिन्हित दीर्घ userspace_addr;
 	u32 flags;
-	short id;
+	लघु id;
 	u16 as_id;
-};
+पूर्ण;
 
-static inline bool kvm_slot_dirty_track_enabled(struct kvm_memory_slot *slot)
-{
-	return slot->flags & KVM_MEM_LOG_DIRTY_PAGES;
-}
+अटल अंतरभूत bool kvm_slot_dirty_track_enabled(काष्ठा kvm_memory_slot *slot)
+अणु
+	वापस slot->flags & KVM_MEM_LOG_सूचीTY_PAGES;
+पूर्ण
 
-static inline unsigned long kvm_dirty_bitmap_bytes(struct kvm_memory_slot *memslot)
-{
-	return ALIGN(memslot->npages, BITS_PER_LONG) / 8;
-}
+अटल अंतरभूत अचिन्हित दीर्घ kvm_dirty_biपंचांगap_bytes(काष्ठा kvm_memory_slot *memslot)
+अणु
+	वापस ALIGN(memslot->npages, BITS_PER_LONG) / 8;
+पूर्ण
 
-static inline unsigned long *kvm_second_dirty_bitmap(struct kvm_memory_slot *memslot)
-{
-	unsigned long len = kvm_dirty_bitmap_bytes(memslot);
+अटल अंतरभूत अचिन्हित दीर्घ *kvm_second_dirty_biपंचांगap(काष्ठा kvm_memory_slot *memslot)
+अणु
+	अचिन्हित दीर्घ len = kvm_dirty_biपंचांगap_bytes(memslot);
 
-	return memslot->dirty_bitmap + len / sizeof(*memslot->dirty_bitmap);
-}
+	वापस memslot->dirty_biपंचांगap + len / माप(*memslot->dirty_biपंचांगap);
+पूर्ण
 
-#ifndef KVM_DIRTY_LOG_MANUAL_CAPS
-#define KVM_DIRTY_LOG_MANUAL_CAPS KVM_DIRTY_LOG_MANUAL_PROTECT_ENABLE
-#endif
+#अगर_अघोषित KVM_सूचीTY_LOG_MANUAL_CAPS
+#घोषणा KVM_सूचीTY_LOG_MANUAL_CAPS KVM_सूचीTY_LOG_MANUAL_PROTECT_ENABLE
+#पूर्ण_अगर
 
-struct kvm_s390_adapter_int {
+काष्ठा kvm_s390_adapter_पूर्णांक अणु
 	u64 ind_addr;
 	u64 summary_addr;
 	u64 ind_offset;
 	u32 summary_offset;
 	u32 adapter_id;
-};
+पूर्ण;
 
-struct kvm_hv_sint {
+काष्ठा kvm_hv_sपूर्णांक अणु
 	u32 vcpu;
-	u32 sint;
-};
+	u32 sपूर्णांक;
+पूर्ण;
 
-struct kvm_kernel_irq_routing_entry {
+काष्ठा kvm_kernel_irq_routing_entry अणु
 	u32 gsi;
 	u32 type;
-	int (*set)(struct kvm_kernel_irq_routing_entry *e,
-		   struct kvm *kvm, int irq_source_id, int level,
+	पूर्णांक (*set)(काष्ठा kvm_kernel_irq_routing_entry *e,
+		   काष्ठा kvm *kvm, पूर्णांक irq_source_id, पूर्णांक level,
 		   bool line_status);
-	union {
-		struct {
-			unsigned irqchip;
-			unsigned pin;
-		} irqchip;
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित irqchip;
+			अचिन्हित pin;
+		पूर्ण irqchip;
+		काष्ठा अणु
 			u32 address_lo;
 			u32 address_hi;
 			u32 data;
 			u32 flags;
 			u32 devid;
-		} msi;
-		struct kvm_s390_adapter_int adapter;
-		struct kvm_hv_sint hv_sint;
-	};
-	struct hlist_node link;
-};
+		पूर्ण msi;
+		काष्ठा kvm_s390_adapter_पूर्णांक adapter;
+		काष्ठा kvm_hv_sपूर्णांक hv_sपूर्णांक;
+	पूर्ण;
+	काष्ठा hlist_node link;
+पूर्ण;
 
-#ifdef CONFIG_HAVE_KVM_IRQ_ROUTING
-struct kvm_irq_routing_table {
-	int chip[KVM_NR_IRQCHIPS][KVM_IRQCHIP_NUM_PINS];
+#अगर_घोषित CONFIG_HAVE_KVM_IRQ_ROUTING
+काष्ठा kvm_irq_routing_table अणु
+	पूर्णांक chip[KVM_NR_IRQCHIPS][KVM_IRQCHIP_NUM_PINS];
 	u32 nr_rt_entries;
 	/*
 	 * Array indexed by gsi. Each entry contains list of irq chips
 	 * the gsi is connected to.
 	 */
-	struct hlist_head map[];
-};
-#endif
+	काष्ठा hlist_head map[];
+पूर्ण;
+#पूर्ण_अगर
 
-#ifndef KVM_PRIVATE_MEM_SLOTS
-#define KVM_PRIVATE_MEM_SLOTS 0
-#endif
+#अगर_अघोषित KVM_PRIVATE_MEM_SLOTS
+#घोषणा KVM_PRIVATE_MEM_SLOTS 0
+#पूर्ण_अगर
 
-#define KVM_MEM_SLOTS_NUM SHRT_MAX
-#define KVM_USER_MEM_SLOTS (KVM_MEM_SLOTS_NUM - KVM_PRIVATE_MEM_SLOTS)
+#घोषणा KVM_MEM_SLOTS_NUM लघु_उच्च
+#घोषणा KVM_USER_MEM_SLOTS (KVM_MEM_SLOTS_NUM - KVM_PRIVATE_MEM_SLOTS)
 
-#ifndef __KVM_VCPU_MULTIPLE_ADDRESS_SPACE
-static inline int kvm_arch_vcpu_memslots_id(struct kvm_vcpu *vcpu)
-{
-	return 0;
-}
-#endif
+#अगर_अघोषित __KVM_VCPU_MULTIPLE_ADDRESS_SPACE
+अटल अंतरभूत पूर्णांक kvm_arch_vcpu_memslots_id(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Note:
  * memslots are not sorted by id anymore, please use id_to_memslot()
  * to get the memslot by its id.
  */
-struct kvm_memslots {
+काष्ठा kvm_memslots अणु
 	u64 generation;
 	/* The mapping table from slot id to the index in memslots[]. */
-	short id_to_index[KVM_MEM_SLOTS_NUM];
+	लघु id_to_index[KVM_MEM_SLOTS_NUM];
 	atomic_t lru_slot;
-	int used_slots;
-	struct kvm_memory_slot memslots[];
-};
+	पूर्णांक used_slots;
+	काष्ठा kvm_memory_slot memslots[];
+पूर्ण;
 
-struct kvm {
-#ifdef KVM_HAVE_MMU_RWLOCK
+काष्ठा kvm अणु
+#अगर_घोषित KVM_HAVE_MMU_RWLOCK
 	rwlock_t mmu_lock;
-#else
+#अन्यथा
 	spinlock_t mmu_lock;
-#endif /* KVM_HAVE_MMU_RWLOCK */
+#पूर्ण_अगर /* KVM_HAVE_MMU_RWLOCK */
 
-	struct mutex slots_lock;
-	struct mm_struct *mm; /* userspace tied to this vm */
-	struct kvm_memslots __rcu *memslots[KVM_ADDRESS_SPACE_NUM];
-	struct kvm_vcpu *vcpus[KVM_MAX_VCPUS];
+	काष्ठा mutex slots_lock;
+	काष्ठा mm_काष्ठा *mm; /* userspace tied to this vm */
+	काष्ठा kvm_memslots __rcu *memslots[KVM_ADDRESS_SPACE_NUM];
+	काष्ठा kvm_vcpu *vcpus[KVM_MAX_VCPUS];
 
 	/*
-	 * created_vcpus is protected by kvm->lock, and is incremented
+	 * created_vcpus is रक्षित by kvm->lock, and is incremented
 	 * at the beginning of KVM_CREATE_VCPU.  online_vcpus is only
-	 * incremented after storing the kvm_vcpu pointer in vcpus,
+	 * incremented after storing the kvm_vcpu poपूर्णांकer in vcpus,
 	 * and is accessed atomically.
 	 */
 	atomic_t online_vcpus;
-	int created_vcpus;
-	int last_boosted_vcpu;
-	struct list_head vm_list;
-	struct mutex lock;
-	struct kvm_io_bus __rcu *buses[KVM_NR_BUSES];
-#ifdef CONFIG_HAVE_KVM_EVENTFD
-	struct {
+	पूर्णांक created_vcpus;
+	पूर्णांक last_boosted_vcpu;
+	काष्ठा list_head vm_list;
+	काष्ठा mutex lock;
+	काष्ठा kvm_io_bus __rcu *buses[KVM_NR_BUSES];
+#अगर_घोषित CONFIG_HAVE_KVM_EVENTFD
+	काष्ठा अणु
 		spinlock_t        lock;
-		struct list_head  items;
-		struct list_head  resampler_list;
-		struct mutex      resampler_lock;
-	} irqfds;
-	struct list_head ioeventfds;
-#endif
-	struct kvm_vm_stat stat;
-	struct kvm_arch arch;
+		काष्ठा list_head  items;
+		काष्ठा list_head  resampler_list;
+		काष्ठा mutex      resampler_lock;
+	पूर्ण irqfds;
+	काष्ठा list_head ioeventfds;
+#पूर्ण_अगर
+	काष्ठा kvm_vm_stat stat;
+	काष्ठा kvm_arch arch;
 	refcount_t users_count;
-#ifdef CONFIG_KVM_MMIO
-	struct kvm_coalesced_mmio_ring *coalesced_mmio_ring;
+#अगर_घोषित CONFIG_KVM_MMIO
+	काष्ठा kvm_coalesced_mmio_ring *coalesced_mmio_ring;
 	spinlock_t ring_lock;
-	struct list_head coalesced_zones;
-#endif
+	काष्ठा list_head coalesced_zones;
+#पूर्ण_अगर
 
-	struct mutex irq_lock;
-#ifdef CONFIG_HAVE_KVM_IRQCHIP
+	काष्ठा mutex irq_lock;
+#अगर_घोषित CONFIG_HAVE_KVM_IRQCHIP
 	/*
-	 * Update side is protected by irq_lock.
+	 * Update side is रक्षित by irq_lock.
 	 */
-	struct kvm_irq_routing_table __rcu *irq_routing;
-#endif
-#ifdef CONFIG_HAVE_KVM_IRQFD
-	struct hlist_head irq_ack_notifier_list;
-#endif
+	काष्ठा kvm_irq_routing_table __rcu *irq_routing;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_HAVE_KVM_IRQFD
+	काष्ठा hlist_head irq_ack_notअगरier_list;
+#पूर्ण_अगर
 
-#if defined(CONFIG_MMU_NOTIFIER) && defined(KVM_ARCH_WANT_MMU_NOTIFIER)
-	struct mmu_notifier mmu_notifier;
-	unsigned long mmu_notifier_seq;
-	long mmu_notifier_count;
-	unsigned long mmu_notifier_range_start;
-	unsigned long mmu_notifier_range_end;
-#endif
-	long tlbs_dirty;
-	struct list_head devices;
+#अगर defined(CONFIG_MMU_NOTIFIER) && defined(KVM_ARCH_WANT_MMU_NOTIFIER)
+	काष्ठा mmu_notअगरier mmu_notअगरier;
+	अचिन्हित दीर्घ mmu_notअगरier_seq;
+	दीर्घ mmu_notअगरier_count;
+	अचिन्हित दीर्घ mmu_notअगरier_range_start;
+	अचिन्हित दीर्घ mmu_notअगरier_range_end;
+#पूर्ण_अगर
+	दीर्घ tlbs_dirty;
+	काष्ठा list_head devices;
 	u64 manual_dirty_log_protect;
-	struct dentry *debugfs_dentry;
-	struct kvm_stat_data **debugfs_stat_data;
-	struct srcu_struct srcu;
-	struct srcu_struct irq_srcu;
+	काष्ठा dentry *debugfs_dentry;
+	काष्ठा kvm_stat_data **debugfs_stat_data;
+	काष्ठा srcu_काष्ठा srcu;
+	काष्ठा srcu_काष्ठा irq_srcu;
 	pid_t userspace_pid;
-	unsigned int max_halt_poll_ns;
+	अचिन्हित पूर्णांक max_halt_poll_ns;
 	u32 dirty_ring_size;
-};
+पूर्ण;
 
-#define kvm_err(fmt, ...) \
+#घोषणा kvm_err(fmt, ...) \
 	pr_err("kvm [%i]: " fmt, task_pid_nr(current), ## __VA_ARGS__)
-#define kvm_info(fmt, ...) \
+#घोषणा kvm_info(fmt, ...) \
 	pr_info("kvm [%i]: " fmt, task_pid_nr(current), ## __VA_ARGS__)
-#define kvm_debug(fmt, ...) \
+#घोषणा kvm_debug(fmt, ...) \
 	pr_debug("kvm [%i]: " fmt, task_pid_nr(current), ## __VA_ARGS__)
-#define kvm_debug_ratelimited(fmt, ...) \
+#घोषणा kvm_debug_ratelimited(fmt, ...) \
 	pr_debug_ratelimited("kvm [%i]: " fmt, task_pid_nr(current), \
 			     ## __VA_ARGS__)
-#define kvm_pr_unimpl(fmt, ...) \
+#घोषणा kvm_pr_unimpl(fmt, ...) \
 	pr_err_ratelimited("kvm [%i]: " fmt, \
 			   task_tgid_nr(current), ## __VA_ARGS__)
 
-/* The guest did something we don't support. */
-#define vcpu_unimpl(vcpu, fmt, ...)					\
+/* The guest did something we करोn't support. */
+#घोषणा vcpu_unimpl(vcpu, fmt, ...)					\
 	kvm_pr_unimpl("vcpu%i, guest rIP: 0x%lx " fmt,			\
-			(vcpu)->vcpu_id, kvm_rip_read(vcpu), ## __VA_ARGS__)
+			(vcpu)->vcpu_id, kvm_rip_पढ़ो(vcpu), ## __VA_ARGS__)
 
-#define vcpu_debug(vcpu, fmt, ...)					\
+#घोषणा vcpu_debug(vcpu, fmt, ...)					\
 	kvm_debug("vcpu%i " fmt, (vcpu)->vcpu_id, ## __VA_ARGS__)
-#define vcpu_debug_ratelimited(vcpu, fmt, ...)				\
+#घोषणा vcpu_debug_ratelimited(vcpu, fmt, ...)				\
 	kvm_debug_ratelimited("vcpu%i " fmt, (vcpu)->vcpu_id,           \
 			      ## __VA_ARGS__)
-#define vcpu_err(vcpu, fmt, ...)					\
+#घोषणा vcpu_err(vcpu, fmt, ...)					\
 	kvm_err("vcpu%i " fmt, (vcpu)->vcpu_id, ## __VA_ARGS__)
 
-static inline bool kvm_dirty_log_manual_protect_and_init_set(struct kvm *kvm)
-{
-	return !!(kvm->manual_dirty_log_protect & KVM_DIRTY_LOG_INITIALLY_SET);
-}
+अटल अंतरभूत bool kvm_dirty_log_manual_protect_and_init_set(काष्ठा kvm *kvm)
+अणु
+	वापस !!(kvm->manual_dirty_log_protect & KVM_सूचीTY_LOG_INITIALLY_SET);
+पूर्ण
 
-static inline struct kvm_io_bus *kvm_get_bus(struct kvm *kvm, enum kvm_bus idx)
-{
-	return srcu_dereference_check(kvm->buses[idx], &kvm->srcu,
+अटल अंतरभूत काष्ठा kvm_io_bus *kvm_get_bus(काष्ठा kvm *kvm, क्रमागत kvm_bus idx)
+अणु
+	वापस srcu_dereference_check(kvm->buses[idx], &kvm->srcu,
 				      lockdep_is_held(&kvm->slots_lock) ||
-				      !refcount_read(&kvm->users_count));
-}
+				      !refcount_पढ़ो(&kvm->users_count));
+पूर्ण
 
-static inline struct kvm_vcpu *kvm_get_vcpu(struct kvm *kvm, int i)
-{
-	int num_vcpus = atomic_read(&kvm->online_vcpus);
+अटल अंतरभूत काष्ठा kvm_vcpu *kvm_get_vcpu(काष्ठा kvm *kvm, पूर्णांक i)
+अणु
+	पूर्णांक num_vcpus = atomic_पढ़ो(&kvm->online_vcpus);
 	i = array_index_nospec(i, num_vcpus);
 
 	/* Pairs with smp_wmb() in kvm_vm_ioctl_create_vcpu.  */
 	smp_rmb();
-	return kvm->vcpus[i];
-}
+	वापस kvm->vcpus[i];
+पूर्ण
 
-#define kvm_for_each_vcpu(idx, vcpup, kvm) \
-	for (idx = 0; \
-	     idx < atomic_read(&kvm->online_vcpus) && \
-	     (vcpup = kvm_get_vcpu(kvm, idx)) != NULL; \
+#घोषणा kvm_क्रम_each_vcpu(idx, vcpup, kvm) \
+	क्रम (idx = 0; \
+	     idx < atomic_पढ़ो(&kvm->online_vcpus) && \
+	     (vcpup = kvm_get_vcpu(kvm, idx)) != शून्य; \
 	     idx++)
 
-static inline struct kvm_vcpu *kvm_get_vcpu_by_id(struct kvm *kvm, int id)
-{
-	struct kvm_vcpu *vcpu = NULL;
-	int i;
+अटल अंतरभूत काष्ठा kvm_vcpu *kvm_get_vcpu_by_id(काष्ठा kvm *kvm, पूर्णांक id)
+अणु
+	काष्ठा kvm_vcpu *vcpu = शून्य;
+	पूर्णांक i;
 
-	if (id < 0)
-		return NULL;
-	if (id < KVM_MAX_VCPUS)
+	अगर (id < 0)
+		वापस शून्य;
+	अगर (id < KVM_MAX_VCPUS)
 		vcpu = kvm_get_vcpu(kvm, id);
-	if (vcpu && vcpu->vcpu_id == id)
-		return vcpu;
-	kvm_for_each_vcpu(i, vcpu, kvm)
-		if (vcpu->vcpu_id == id)
-			return vcpu;
-	return NULL;
-}
+	अगर (vcpu && vcpu->vcpu_id == id)
+		वापस vcpu;
+	kvm_क्रम_each_vcpu(i, vcpu, kvm)
+		अगर (vcpu->vcpu_id == id)
+			वापस vcpu;
+	वापस शून्य;
+पूर्ण
 
-static inline int kvm_vcpu_get_idx(struct kvm_vcpu *vcpu)
-{
-	return vcpu->vcpu_idx;
-}
+अटल अंतरभूत पूर्णांक kvm_vcpu_get_idx(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu->vcpu_idx;
+पूर्ण
 
-#define kvm_for_each_memslot(memslot, slots)				\
-	for (memslot = &slots->memslots[0];				\
+#घोषणा kvm_क्रम_each_memslot(memslot, slots)				\
+	क्रम (memslot = &slots->memslots[0];				\
 	     memslot < slots->memslots + slots->used_slots; memslot++)	\
-		if (WARN_ON_ONCE(!memslot->npages)) {			\
-		} else
+		अगर (WARN_ON_ONCE(!memslot->npages)) अणु			\
+		पूर्ण अन्यथा
 
-void kvm_vcpu_destroy(struct kvm_vcpu *vcpu);
+व्योम kvm_vcpu_destroy(काष्ठा kvm_vcpu *vcpu);
 
-void vcpu_load(struct kvm_vcpu *vcpu);
-void vcpu_put(struct kvm_vcpu *vcpu);
+व्योम vcpu_load(काष्ठा kvm_vcpu *vcpu);
+व्योम vcpu_put(काष्ठा kvm_vcpu *vcpu);
 
-#ifdef __KVM_HAVE_IOAPIC
-void kvm_arch_post_irq_ack_notifier_list_update(struct kvm *kvm);
-void kvm_arch_post_irq_routing_update(struct kvm *kvm);
-#else
-static inline void kvm_arch_post_irq_ack_notifier_list_update(struct kvm *kvm)
-{
-}
-static inline void kvm_arch_post_irq_routing_update(struct kvm *kvm)
-{
-}
-#endif
+#अगर_घोषित __KVM_HAVE_IOAPIC
+व्योम kvm_arch_post_irq_ack_notअगरier_list_update(काष्ठा kvm *kvm);
+व्योम kvm_arch_post_irq_routing_update(काष्ठा kvm *kvm);
+#अन्यथा
+अटल अंतरभूत व्योम kvm_arch_post_irq_ack_notअगरier_list_update(काष्ठा kvm *kvm)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम kvm_arch_post_irq_routing_update(काष्ठा kvm *kvm)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_HAVE_KVM_IRQFD
-int kvm_irqfd_init(void);
-void kvm_irqfd_exit(void);
-#else
-static inline int kvm_irqfd_init(void)
-{
-	return 0;
-}
+#अगर_घोषित CONFIG_HAVE_KVM_IRQFD
+पूर्णांक kvm_irqfd_init(व्योम);
+व्योम kvm_irqfd_निकास(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक kvm_irqfd_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void kvm_irqfd_exit(void)
-{
-}
-#endif
-int kvm_init(void *opaque, unsigned vcpu_size, unsigned vcpu_align,
-		  struct module *module);
-void kvm_exit(void);
+अटल अंतरभूत व्योम kvm_irqfd_निकास(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
+पूर्णांक kvm_init(व्योम *opaque, अचिन्हित vcpu_size, अचिन्हित vcpu_align,
+		  काष्ठा module *module);
+व्योम kvm_निकास(व्योम);
 
-void kvm_get_kvm(struct kvm *kvm);
-void kvm_put_kvm(struct kvm *kvm);
-bool file_is_kvm(struct file *file);
-void kvm_put_kvm_no_destroy(struct kvm *kvm);
+व्योम kvm_get_kvm(काष्ठा kvm *kvm);
+व्योम kvm_put_kvm(काष्ठा kvm *kvm);
+bool file_is_kvm(काष्ठा file *file);
+व्योम kvm_put_kvm_no_destroy(काष्ठा kvm *kvm);
 
-static inline struct kvm_memslots *__kvm_memslots(struct kvm *kvm, int as_id)
-{
+अटल अंतरभूत काष्ठा kvm_memslots *__kvm_memslots(काष्ठा kvm *kvm, पूर्णांक as_id)
+अणु
 	as_id = array_index_nospec(as_id, KVM_ADDRESS_SPACE_NUM);
-	return srcu_dereference_check(kvm->memslots[as_id], &kvm->srcu,
+	वापस srcu_dereference_check(kvm->memslots[as_id], &kvm->srcu,
 			lockdep_is_held(&kvm->slots_lock) ||
-			!refcount_read(&kvm->users_count));
-}
+			!refcount_पढ़ो(&kvm->users_count));
+पूर्ण
 
-static inline struct kvm_memslots *kvm_memslots(struct kvm *kvm)
-{
-	return __kvm_memslots(kvm, 0);
-}
+अटल अंतरभूत काष्ठा kvm_memslots *kvm_memslots(काष्ठा kvm *kvm)
+अणु
+	वापस __kvm_memslots(kvm, 0);
+पूर्ण
 
-static inline struct kvm_memslots *kvm_vcpu_memslots(struct kvm_vcpu *vcpu)
-{
-	int as_id = kvm_arch_vcpu_memslots_id(vcpu);
+अटल अंतरभूत काष्ठा kvm_memslots *kvm_vcpu_memslots(काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक as_id = kvm_arch_vcpu_memslots_id(vcpu);
 
-	return __kvm_memslots(vcpu->kvm, as_id);
-}
+	वापस __kvm_memslots(vcpu->kvm, as_id);
+पूर्ण
 
-static inline
-struct kvm_memory_slot *id_to_memslot(struct kvm_memslots *slots, int id)
-{
-	int index = slots->id_to_index[id];
-	struct kvm_memory_slot *slot;
+अटल अंतरभूत
+काष्ठा kvm_memory_slot *id_to_memslot(काष्ठा kvm_memslots *slots, पूर्णांक id)
+अणु
+	पूर्णांक index = slots->id_to_index[id];
+	काष्ठा kvm_memory_slot *slot;
 
-	if (index < 0)
-		return NULL;
+	अगर (index < 0)
+		वापस शून्य;
 
 	slot = &slots->memslots[index];
 
 	WARN_ON(slot->id != id);
-	return slot;
-}
+	वापस slot;
+पूर्ण
 
 /*
  * KVM_SET_USER_MEMORY_REGION ioctl allows the following operations:
  * - create a new memory slot
  * - delete an existing memory slot
- * - modify an existing memory slot
+ * - modअगरy an existing memory slot
  *   -- move it in the guest physical memory space
  *   -- just change its flags
  *
  * Since flags can be changed by some of these operations, the following
- * differentiation is the best we can do for __kvm_set_memory_region():
+ * dअगरferentiation is the best we can करो क्रम __kvm_set_memory_region():
  */
-enum kvm_mr_change {
+क्रमागत kvm_mr_change अणु
 	KVM_MR_CREATE,
 	KVM_MR_DELETE,
 	KVM_MR_MOVE,
 	KVM_MR_FLAGS_ONLY,
-};
+पूर्ण;
 
-int kvm_set_memory_region(struct kvm *kvm,
-			  const struct kvm_userspace_memory_region *mem);
-int __kvm_set_memory_region(struct kvm *kvm,
-			    const struct kvm_userspace_memory_region *mem);
-void kvm_arch_free_memslot(struct kvm *kvm, struct kvm_memory_slot *slot);
-void kvm_arch_memslots_updated(struct kvm *kvm, u64 gen);
-int kvm_arch_prepare_memory_region(struct kvm *kvm,
-				struct kvm_memory_slot *memslot,
-				const struct kvm_userspace_memory_region *mem,
-				enum kvm_mr_change change);
-void kvm_arch_commit_memory_region(struct kvm *kvm,
-				const struct kvm_userspace_memory_region *mem,
-				struct kvm_memory_slot *old,
-				const struct kvm_memory_slot *new,
-				enum kvm_mr_change change);
+पूर्णांक kvm_set_memory_region(काष्ठा kvm *kvm,
+			  स्थिर काष्ठा kvm_userspace_memory_region *mem);
+पूर्णांक __kvm_set_memory_region(काष्ठा kvm *kvm,
+			    स्थिर काष्ठा kvm_userspace_memory_region *mem);
+व्योम kvm_arch_मुक्त_memslot(काष्ठा kvm *kvm, काष्ठा kvm_memory_slot *slot);
+व्योम kvm_arch_memslots_updated(काष्ठा kvm *kvm, u64 gen);
+पूर्णांक kvm_arch_prepare_memory_region(काष्ठा kvm *kvm,
+				काष्ठा kvm_memory_slot *memslot,
+				स्थिर काष्ठा kvm_userspace_memory_region *mem,
+				क्रमागत kvm_mr_change change);
+व्योम kvm_arch_commit_memory_region(काष्ठा kvm *kvm,
+				स्थिर काष्ठा kvm_userspace_memory_region *mem,
+				काष्ठा kvm_memory_slot *old,
+				स्थिर काष्ठा kvm_memory_slot *new,
+				क्रमागत kvm_mr_change change);
 /* flush all memory translations */
-void kvm_arch_flush_shadow_all(struct kvm *kvm);
-/* flush memory translations pointing to 'slot' */
-void kvm_arch_flush_shadow_memslot(struct kvm *kvm,
-				   struct kvm_memory_slot *slot);
+व्योम kvm_arch_flush_shaकरोw_all(काष्ठा kvm *kvm);
+/* flush memory translations poपूर्णांकing to 'slot' */
+व्योम kvm_arch_flush_shaकरोw_memslot(काष्ठा kvm *kvm,
+				   काष्ठा kvm_memory_slot *slot);
 
-int gfn_to_page_many_atomic(struct kvm_memory_slot *slot, gfn_t gfn,
-			    struct page **pages, int nr_pages);
+पूर्णांक gfn_to_page_many_atomic(काष्ठा kvm_memory_slot *slot, gfn_t gfn,
+			    काष्ठा page **pages, पूर्णांक nr_pages);
 
-struct page *gfn_to_page(struct kvm *kvm, gfn_t gfn);
-unsigned long gfn_to_hva(struct kvm *kvm, gfn_t gfn);
-unsigned long gfn_to_hva_prot(struct kvm *kvm, gfn_t gfn, bool *writable);
-unsigned long gfn_to_hva_memslot(struct kvm_memory_slot *slot, gfn_t gfn);
-unsigned long gfn_to_hva_memslot_prot(struct kvm_memory_slot *slot, gfn_t gfn,
+काष्ठा page *gfn_to_page(काष्ठा kvm *kvm, gfn_t gfn);
+अचिन्हित दीर्घ gfn_to_hva(काष्ठा kvm *kvm, gfn_t gfn);
+अचिन्हित दीर्घ gfn_to_hva_prot(काष्ठा kvm *kvm, gfn_t gfn, bool *writable);
+अचिन्हित दीर्घ gfn_to_hva_memslot(काष्ठा kvm_memory_slot *slot, gfn_t gfn);
+अचिन्हित दीर्घ gfn_to_hva_memslot_prot(काष्ठा kvm_memory_slot *slot, gfn_t gfn,
 				      bool *writable);
-void kvm_release_page_clean(struct page *page);
-void kvm_release_page_dirty(struct page *page);
-void kvm_set_page_accessed(struct page *page);
+व्योम kvm_release_page_clean(काष्ठा page *page);
+व्योम kvm_release_page_dirty(काष्ठा page *page);
+व्योम kvm_set_page_accessed(काष्ठा page *page);
 
-kvm_pfn_t gfn_to_pfn(struct kvm *kvm, gfn_t gfn);
-kvm_pfn_t gfn_to_pfn_prot(struct kvm *kvm, gfn_t gfn, bool write_fault,
+kvm_pfn_t gfn_to_pfn(काष्ठा kvm *kvm, gfn_t gfn);
+kvm_pfn_t gfn_to_pfn_prot(काष्ठा kvm *kvm, gfn_t gfn, bool ग_लिखो_fault,
 		      bool *writable);
-kvm_pfn_t gfn_to_pfn_memslot(struct kvm_memory_slot *slot, gfn_t gfn);
-kvm_pfn_t gfn_to_pfn_memslot_atomic(struct kvm_memory_slot *slot, gfn_t gfn);
-kvm_pfn_t __gfn_to_pfn_memslot(struct kvm_memory_slot *slot, gfn_t gfn,
-			       bool atomic, bool *async, bool write_fault,
+kvm_pfn_t gfn_to_pfn_memslot(काष्ठा kvm_memory_slot *slot, gfn_t gfn);
+kvm_pfn_t gfn_to_pfn_memslot_atomic(काष्ठा kvm_memory_slot *slot, gfn_t gfn);
+kvm_pfn_t __gfn_to_pfn_memslot(काष्ठा kvm_memory_slot *slot, gfn_t gfn,
+			       bool atomic, bool *async, bool ग_लिखो_fault,
 			       bool *writable, hva_t *hva);
 
-void kvm_release_pfn_clean(kvm_pfn_t pfn);
-void kvm_release_pfn_dirty(kvm_pfn_t pfn);
-void kvm_set_pfn_dirty(kvm_pfn_t pfn);
-void kvm_set_pfn_accessed(kvm_pfn_t pfn);
-void kvm_get_pfn(kvm_pfn_t pfn);
+व्योम kvm_release_pfn_clean(kvm_pfn_t pfn);
+व्योम kvm_release_pfn_dirty(kvm_pfn_t pfn);
+व्योम kvm_set_pfn_dirty(kvm_pfn_t pfn);
+व्योम kvm_set_pfn_accessed(kvm_pfn_t pfn);
+व्योम kvm_get_pfn(kvm_pfn_t pfn);
 
-void kvm_release_pfn(kvm_pfn_t pfn, bool dirty, struct gfn_to_pfn_cache *cache);
-int kvm_read_guest_page(struct kvm *kvm, gfn_t gfn, void *data, int offset,
-			int len);
-int kvm_read_guest(struct kvm *kvm, gpa_t gpa, void *data, unsigned long len);
-int kvm_read_guest_cached(struct kvm *kvm, struct gfn_to_hva_cache *ghc,
-			   void *data, unsigned long len);
-int kvm_read_guest_offset_cached(struct kvm *kvm, struct gfn_to_hva_cache *ghc,
-				 void *data, unsigned int offset,
-				 unsigned long len);
-int kvm_write_guest_page(struct kvm *kvm, gfn_t gfn, const void *data,
-			 int offset, int len);
-int kvm_write_guest(struct kvm *kvm, gpa_t gpa, const void *data,
-		    unsigned long len);
-int kvm_write_guest_cached(struct kvm *kvm, struct gfn_to_hva_cache *ghc,
-			   void *data, unsigned long len);
-int kvm_write_guest_offset_cached(struct kvm *kvm, struct gfn_to_hva_cache *ghc,
-				  void *data, unsigned int offset,
-				  unsigned long len);
-int kvm_gfn_to_hva_cache_init(struct kvm *kvm, struct gfn_to_hva_cache *ghc,
-			      gpa_t gpa, unsigned long len);
+व्योम kvm_release_pfn(kvm_pfn_t pfn, bool dirty, काष्ठा gfn_to_pfn_cache *cache);
+पूर्णांक kvm_पढ़ो_guest_page(काष्ठा kvm *kvm, gfn_t gfn, व्योम *data, पूर्णांक offset,
+			पूर्णांक len);
+पूर्णांक kvm_पढ़ो_guest(काष्ठा kvm *kvm, gpa_t gpa, व्योम *data, अचिन्हित दीर्घ len);
+पूर्णांक kvm_पढ़ो_guest_cached(काष्ठा kvm *kvm, काष्ठा gfn_to_hva_cache *ghc,
+			   व्योम *data, अचिन्हित दीर्घ len);
+पूर्णांक kvm_पढ़ो_guest_offset_cached(काष्ठा kvm *kvm, काष्ठा gfn_to_hva_cache *ghc,
+				 व्योम *data, अचिन्हित पूर्णांक offset,
+				 अचिन्हित दीर्घ len);
+पूर्णांक kvm_ग_लिखो_guest_page(काष्ठा kvm *kvm, gfn_t gfn, स्थिर व्योम *data,
+			 पूर्णांक offset, पूर्णांक len);
+पूर्णांक kvm_ग_लिखो_guest(काष्ठा kvm *kvm, gpa_t gpa, स्थिर व्योम *data,
+		    अचिन्हित दीर्घ len);
+पूर्णांक kvm_ग_लिखो_guest_cached(काष्ठा kvm *kvm, काष्ठा gfn_to_hva_cache *ghc,
+			   व्योम *data, अचिन्हित दीर्घ len);
+पूर्णांक kvm_ग_लिखो_guest_offset_cached(काष्ठा kvm *kvm, काष्ठा gfn_to_hva_cache *ghc,
+				  व्योम *data, अचिन्हित पूर्णांक offset,
+				  अचिन्हित दीर्घ len);
+पूर्णांक kvm_gfn_to_hva_cache_init(काष्ठा kvm *kvm, काष्ठा gfn_to_hva_cache *ghc,
+			      gpa_t gpa, अचिन्हित दीर्घ len);
 
-#define __kvm_get_guest(kvm, gfn, offset, v)				\
-({									\
-	unsigned long __addr = gfn_to_hva(kvm, gfn);			\
+#घोषणा __kvm_get_guest(kvm, gfn, offset, v)				\
+(अणु									\
+	अचिन्हित दीर्घ __addr = gfn_to_hva(kvm, gfn);			\
 	typeof(v) __user *__uaddr = (typeof(__uaddr))(__addr + offset);	\
-	int __ret = -EFAULT;						\
+	पूर्णांक __ret = -EFAULT;						\
 									\
-	if (!kvm_is_error_hva(__addr))					\
+	अगर (!kvm_is_error_hva(__addr))					\
 		__ret = get_user(v, __uaddr);				\
 	__ret;								\
-})
+पूर्ण)
 
-#define kvm_get_guest(kvm, gpa, v)					\
-({									\
+#घोषणा kvm_get_guest(kvm, gpa, v)					\
+(अणु									\
 	gpa_t __gpa = gpa;						\
-	struct kvm *__kvm = kvm;					\
+	काष्ठा kvm *__kvm = kvm;					\
 									\
 	__kvm_get_guest(__kvm, __gpa >> PAGE_SHIFT,			\
 			offset_in_page(__gpa), v);			\
-})
+पूर्ण)
 
-#define __kvm_put_guest(kvm, gfn, offset, v)				\
-({									\
-	unsigned long __addr = gfn_to_hva(kvm, gfn);			\
+#घोषणा __kvm_put_guest(kvm, gfn, offset, v)				\
+(अणु									\
+	अचिन्हित दीर्घ __addr = gfn_to_hva(kvm, gfn);			\
 	typeof(v) __user *__uaddr = (typeof(__uaddr))(__addr + offset);	\
-	int __ret = -EFAULT;						\
+	पूर्णांक __ret = -EFAULT;						\
 									\
-	if (!kvm_is_error_hva(__addr))					\
+	अगर (!kvm_is_error_hva(__addr))					\
 		__ret = put_user(v, __uaddr);				\
-	if (!__ret)							\
+	अगर (!__ret)							\
 		mark_page_dirty(kvm, gfn);				\
 	__ret;								\
-})
+पूर्ण)
 
-#define kvm_put_guest(kvm, gpa, v)					\
-({									\
+#घोषणा kvm_put_guest(kvm, gpa, v)					\
+(अणु									\
 	gpa_t __gpa = gpa;						\
-	struct kvm *__kvm = kvm;					\
+	काष्ठा kvm *__kvm = kvm;					\
 									\
 	__kvm_put_guest(__kvm, __gpa >> PAGE_SHIFT,			\
 			offset_in_page(__gpa), v);			\
-})
+पूर्ण)
 
-int kvm_clear_guest(struct kvm *kvm, gpa_t gpa, unsigned long len);
-struct kvm_memory_slot *gfn_to_memslot(struct kvm *kvm, gfn_t gfn);
-bool kvm_is_visible_gfn(struct kvm *kvm, gfn_t gfn);
-bool kvm_vcpu_is_visible_gfn(struct kvm_vcpu *vcpu, gfn_t gfn);
-unsigned long kvm_host_page_size(struct kvm_vcpu *vcpu, gfn_t gfn);
-void mark_page_dirty_in_slot(struct kvm *kvm, struct kvm_memory_slot *memslot, gfn_t gfn);
-void mark_page_dirty(struct kvm *kvm, gfn_t gfn);
+पूर्णांक kvm_clear_guest(काष्ठा kvm *kvm, gpa_t gpa, अचिन्हित दीर्घ len);
+काष्ठा kvm_memory_slot *gfn_to_memslot(काष्ठा kvm *kvm, gfn_t gfn);
+bool kvm_is_visible_gfn(काष्ठा kvm *kvm, gfn_t gfn);
+bool kvm_vcpu_is_visible_gfn(काष्ठा kvm_vcpu *vcpu, gfn_t gfn);
+अचिन्हित दीर्घ kvm_host_page_size(काष्ठा kvm_vcpu *vcpu, gfn_t gfn);
+व्योम mark_page_dirty_in_slot(काष्ठा kvm *kvm, काष्ठा kvm_memory_slot *memslot, gfn_t gfn);
+व्योम mark_page_dirty(काष्ठा kvm *kvm, gfn_t gfn);
 
-struct kvm_memslots *kvm_vcpu_memslots(struct kvm_vcpu *vcpu);
-struct kvm_memory_slot *kvm_vcpu_gfn_to_memslot(struct kvm_vcpu *vcpu, gfn_t gfn);
-kvm_pfn_t kvm_vcpu_gfn_to_pfn_atomic(struct kvm_vcpu *vcpu, gfn_t gfn);
-kvm_pfn_t kvm_vcpu_gfn_to_pfn(struct kvm_vcpu *vcpu, gfn_t gfn);
-int kvm_vcpu_map(struct kvm_vcpu *vcpu, gpa_t gpa, struct kvm_host_map *map);
-int kvm_map_gfn(struct kvm_vcpu *vcpu, gfn_t gfn, struct kvm_host_map *map,
-		struct gfn_to_pfn_cache *cache, bool atomic);
-struct page *kvm_vcpu_gfn_to_page(struct kvm_vcpu *vcpu, gfn_t gfn);
-void kvm_vcpu_unmap(struct kvm_vcpu *vcpu, struct kvm_host_map *map, bool dirty);
-int kvm_unmap_gfn(struct kvm_vcpu *vcpu, struct kvm_host_map *map,
-		  struct gfn_to_pfn_cache *cache, bool dirty, bool atomic);
-unsigned long kvm_vcpu_gfn_to_hva(struct kvm_vcpu *vcpu, gfn_t gfn);
-unsigned long kvm_vcpu_gfn_to_hva_prot(struct kvm_vcpu *vcpu, gfn_t gfn, bool *writable);
-int kvm_vcpu_read_guest_page(struct kvm_vcpu *vcpu, gfn_t gfn, void *data, int offset,
-			     int len);
-int kvm_vcpu_read_guest_atomic(struct kvm_vcpu *vcpu, gpa_t gpa, void *data,
-			       unsigned long len);
-int kvm_vcpu_read_guest(struct kvm_vcpu *vcpu, gpa_t gpa, void *data,
-			unsigned long len);
-int kvm_vcpu_write_guest_page(struct kvm_vcpu *vcpu, gfn_t gfn, const void *data,
-			      int offset, int len);
-int kvm_vcpu_write_guest(struct kvm_vcpu *vcpu, gpa_t gpa, const void *data,
-			 unsigned long len);
-void kvm_vcpu_mark_page_dirty(struct kvm_vcpu *vcpu, gfn_t gfn);
+काष्ठा kvm_memslots *kvm_vcpu_memslots(काष्ठा kvm_vcpu *vcpu);
+काष्ठा kvm_memory_slot *kvm_vcpu_gfn_to_memslot(काष्ठा kvm_vcpu *vcpu, gfn_t gfn);
+kvm_pfn_t kvm_vcpu_gfn_to_pfn_atomic(काष्ठा kvm_vcpu *vcpu, gfn_t gfn);
+kvm_pfn_t kvm_vcpu_gfn_to_pfn(काष्ठा kvm_vcpu *vcpu, gfn_t gfn);
+पूर्णांक kvm_vcpu_map(काष्ठा kvm_vcpu *vcpu, gpa_t gpa, काष्ठा kvm_host_map *map);
+पूर्णांक kvm_map_gfn(काष्ठा kvm_vcpu *vcpu, gfn_t gfn, काष्ठा kvm_host_map *map,
+		काष्ठा gfn_to_pfn_cache *cache, bool atomic);
+काष्ठा page *kvm_vcpu_gfn_to_page(काष्ठा kvm_vcpu *vcpu, gfn_t gfn);
+व्योम kvm_vcpu_unmap(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_host_map *map, bool dirty);
+पूर्णांक kvm_unmap_gfn(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_host_map *map,
+		  काष्ठा gfn_to_pfn_cache *cache, bool dirty, bool atomic);
+अचिन्हित दीर्घ kvm_vcpu_gfn_to_hva(काष्ठा kvm_vcpu *vcpu, gfn_t gfn);
+अचिन्हित दीर्घ kvm_vcpu_gfn_to_hva_prot(काष्ठा kvm_vcpu *vcpu, gfn_t gfn, bool *writable);
+पूर्णांक kvm_vcpu_पढ़ो_guest_page(काष्ठा kvm_vcpu *vcpu, gfn_t gfn, व्योम *data, पूर्णांक offset,
+			     पूर्णांक len);
+पूर्णांक kvm_vcpu_पढ़ो_guest_atomic(काष्ठा kvm_vcpu *vcpu, gpa_t gpa, व्योम *data,
+			       अचिन्हित दीर्घ len);
+पूर्णांक kvm_vcpu_पढ़ो_guest(काष्ठा kvm_vcpu *vcpu, gpa_t gpa, व्योम *data,
+			अचिन्हित दीर्घ len);
+पूर्णांक kvm_vcpu_ग_लिखो_guest_page(काष्ठा kvm_vcpu *vcpu, gfn_t gfn, स्थिर व्योम *data,
+			      पूर्णांक offset, पूर्णांक len);
+पूर्णांक kvm_vcpu_ग_लिखो_guest(काष्ठा kvm_vcpu *vcpu, gpa_t gpa, स्थिर व्योम *data,
+			 अचिन्हित दीर्घ len);
+व्योम kvm_vcpu_mark_page_dirty(काष्ठा kvm_vcpu *vcpu, gfn_t gfn);
 
-void kvm_sigset_activate(struct kvm_vcpu *vcpu);
-void kvm_sigset_deactivate(struct kvm_vcpu *vcpu);
+व्योम kvm_sigset_activate(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_sigset_deactivate(काष्ठा kvm_vcpu *vcpu);
 
-void kvm_vcpu_block(struct kvm_vcpu *vcpu);
-void kvm_arch_vcpu_blocking(struct kvm_vcpu *vcpu);
-void kvm_arch_vcpu_unblocking(struct kvm_vcpu *vcpu);
-bool kvm_vcpu_wake_up(struct kvm_vcpu *vcpu);
-void kvm_vcpu_kick(struct kvm_vcpu *vcpu);
-int kvm_vcpu_yield_to(struct kvm_vcpu *target);
-void kvm_vcpu_on_spin(struct kvm_vcpu *vcpu, bool usermode_vcpu_not_eligible);
+व्योम kvm_vcpu_block(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_arch_vcpu_blocking(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_arch_vcpu_unblocking(काष्ठा kvm_vcpu *vcpu);
+bool kvm_vcpu_wake_up(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_vcpu_kick(काष्ठा kvm_vcpu *vcpu);
+पूर्णांक kvm_vcpu_yield_to(काष्ठा kvm_vcpu *target);
+व्योम kvm_vcpu_on_spin(काष्ठा kvm_vcpu *vcpu, bool usermode_vcpu_not_eligible);
 
-void kvm_flush_remote_tlbs(struct kvm *kvm);
-void kvm_reload_remote_mmus(struct kvm *kvm);
+व्योम kvm_flush_remote_tlbs(काष्ठा kvm *kvm);
+व्योम kvm_reload_remote_mmus(काष्ठा kvm *kvm);
 
-#ifdef KVM_ARCH_NR_OBJS_PER_MEMORY_CACHE
-int kvm_mmu_topup_memory_cache(struct kvm_mmu_memory_cache *mc, int min);
-int kvm_mmu_memory_cache_nr_free_objects(struct kvm_mmu_memory_cache *mc);
-void kvm_mmu_free_memory_cache(struct kvm_mmu_memory_cache *mc);
-void *kvm_mmu_memory_cache_alloc(struct kvm_mmu_memory_cache *mc);
-#endif
+#अगर_घोषित KVM_ARCH_NR_OBJS_PER_MEMORY_CACHE
+पूर्णांक kvm_mmu_topup_memory_cache(काष्ठा kvm_mmu_memory_cache *mc, पूर्णांक min);
+पूर्णांक kvm_mmu_memory_cache_nr_मुक्त_objects(काष्ठा kvm_mmu_memory_cache *mc);
+व्योम kvm_mmu_मुक्त_memory_cache(काष्ठा kvm_mmu_memory_cache *mc);
+व्योम *kvm_mmu_memory_cache_alloc(काष्ठा kvm_mmu_memory_cache *mc);
+#पूर्ण_अगर
 
-bool kvm_make_vcpus_request_mask(struct kvm *kvm, unsigned int req,
-				 struct kvm_vcpu *except,
-				 unsigned long *vcpu_bitmap, cpumask_var_t tmp);
-bool kvm_make_all_cpus_request(struct kvm *kvm, unsigned int req);
-bool kvm_make_all_cpus_request_except(struct kvm *kvm, unsigned int req,
-				      struct kvm_vcpu *except);
-bool kvm_make_cpus_request_mask(struct kvm *kvm, unsigned int req,
-				unsigned long *vcpu_bitmap);
+bool kvm_make_vcpus_request_mask(काष्ठा kvm *kvm, अचिन्हित पूर्णांक req,
+				 काष्ठा kvm_vcpu *except,
+				 अचिन्हित दीर्घ *vcpu_biपंचांगap, cpumask_var_t पंचांगp);
+bool kvm_make_all_cpus_request(काष्ठा kvm *kvm, अचिन्हित पूर्णांक req);
+bool kvm_make_all_cpus_request_except(काष्ठा kvm *kvm, अचिन्हित पूर्णांक req,
+				      काष्ठा kvm_vcpu *except);
+bool kvm_make_cpus_request_mask(काष्ठा kvm *kvm, अचिन्हित पूर्णांक req,
+				अचिन्हित दीर्घ *vcpu_biपंचांगap);
 
-long kvm_arch_dev_ioctl(struct file *filp,
-			unsigned int ioctl, unsigned long arg);
-long kvm_arch_vcpu_ioctl(struct file *filp,
-			 unsigned int ioctl, unsigned long arg);
-vm_fault_t kvm_arch_vcpu_fault(struct kvm_vcpu *vcpu, struct vm_fault *vmf);
+दीर्घ kvm_arch_dev_ioctl(काष्ठा file *filp,
+			अचिन्हित पूर्णांक ioctl, अचिन्हित दीर्घ arg);
+दीर्घ kvm_arch_vcpu_ioctl(काष्ठा file *filp,
+			 अचिन्हित पूर्णांक ioctl, अचिन्हित दीर्घ arg);
+vm_fault_t kvm_arch_vcpu_fault(काष्ठा kvm_vcpu *vcpu, काष्ठा vm_fault *vmf);
 
-int kvm_vm_ioctl_check_extension(struct kvm *kvm, long ext);
+पूर्णांक kvm_vm_ioctl_check_extension(काष्ठा kvm *kvm, दीर्घ ext);
 
-void kvm_arch_mmu_enable_log_dirty_pt_masked(struct kvm *kvm,
-					struct kvm_memory_slot *slot,
+व्योम kvm_arch_mmu_enable_log_dirty_pt_masked(काष्ठा kvm *kvm,
+					काष्ठा kvm_memory_slot *slot,
 					gfn_t gfn_offset,
-					unsigned long mask);
-void kvm_arch_sync_dirty_log(struct kvm *kvm, struct kvm_memory_slot *memslot);
+					अचिन्हित दीर्घ mask);
+व्योम kvm_arch_sync_dirty_log(काष्ठा kvm *kvm, काष्ठा kvm_memory_slot *memslot);
 
-#ifdef CONFIG_KVM_GENERIC_DIRTYLOG_READ_PROTECT
-void kvm_arch_flush_remote_tlbs_memslot(struct kvm *kvm,
-					const struct kvm_memory_slot *memslot);
-#else /* !CONFIG_KVM_GENERIC_DIRTYLOG_READ_PROTECT */
-int kvm_vm_ioctl_get_dirty_log(struct kvm *kvm, struct kvm_dirty_log *log);
-int kvm_get_dirty_log(struct kvm *kvm, struct kvm_dirty_log *log,
-		      int *is_dirty, struct kvm_memory_slot **memslot);
-#endif
+#अगर_घोषित CONFIG_KVM_GENERIC_सूचीTYLOG_READ_PROTECT
+व्योम kvm_arch_flush_remote_tlbs_memslot(काष्ठा kvm *kvm,
+					स्थिर काष्ठा kvm_memory_slot *memslot);
+#अन्यथा /* !CONFIG_KVM_GENERIC_सूचीTYLOG_READ_PROTECT */
+पूर्णांक kvm_vm_ioctl_get_dirty_log(काष्ठा kvm *kvm, काष्ठा kvm_dirty_log *log);
+पूर्णांक kvm_get_dirty_log(काष्ठा kvm *kvm, काष्ठा kvm_dirty_log *log,
+		      पूर्णांक *is_dirty, काष्ठा kvm_memory_slot **memslot);
+#पूर्ण_अगर
 
-int kvm_vm_ioctl_irq_line(struct kvm *kvm, struct kvm_irq_level *irq_level,
+पूर्णांक kvm_vm_ioctl_irq_line(काष्ठा kvm *kvm, काष्ठा kvm_irq_level *irq_level,
 			bool line_status);
-int kvm_vm_ioctl_enable_cap(struct kvm *kvm,
-			    struct kvm_enable_cap *cap);
-long kvm_arch_vm_ioctl(struct file *filp,
-		       unsigned int ioctl, unsigned long arg);
+पूर्णांक kvm_vm_ioctl_enable_cap(काष्ठा kvm *kvm,
+			    काष्ठा kvm_enable_cap *cap);
+दीर्घ kvm_arch_vm_ioctl(काष्ठा file *filp,
+		       अचिन्हित पूर्णांक ioctl, अचिन्हित दीर्घ arg);
 
-int kvm_arch_vcpu_ioctl_get_fpu(struct kvm_vcpu *vcpu, struct kvm_fpu *fpu);
-int kvm_arch_vcpu_ioctl_set_fpu(struct kvm_vcpu *vcpu, struct kvm_fpu *fpu);
+पूर्णांक kvm_arch_vcpu_ioctl_get_fpu(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_fpu *fpu);
+पूर्णांक kvm_arch_vcpu_ioctl_set_fpu(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_fpu *fpu);
 
-int kvm_arch_vcpu_ioctl_translate(struct kvm_vcpu *vcpu,
-				    struct kvm_translation *tr);
+पूर्णांक kvm_arch_vcpu_ioctl_translate(काष्ठा kvm_vcpu *vcpu,
+				    काष्ठा kvm_translation *tr);
 
-int kvm_arch_vcpu_ioctl_get_regs(struct kvm_vcpu *vcpu, struct kvm_regs *regs);
-int kvm_arch_vcpu_ioctl_set_regs(struct kvm_vcpu *vcpu, struct kvm_regs *regs);
-int kvm_arch_vcpu_ioctl_get_sregs(struct kvm_vcpu *vcpu,
-				  struct kvm_sregs *sregs);
-int kvm_arch_vcpu_ioctl_set_sregs(struct kvm_vcpu *vcpu,
-				  struct kvm_sregs *sregs);
-int kvm_arch_vcpu_ioctl_get_mpstate(struct kvm_vcpu *vcpu,
-				    struct kvm_mp_state *mp_state);
-int kvm_arch_vcpu_ioctl_set_mpstate(struct kvm_vcpu *vcpu,
-				    struct kvm_mp_state *mp_state);
-int kvm_arch_vcpu_ioctl_set_guest_debug(struct kvm_vcpu *vcpu,
-					struct kvm_guest_debug *dbg);
-int kvm_arch_vcpu_ioctl_run(struct kvm_vcpu *vcpu);
+पूर्णांक kvm_arch_vcpu_ioctl_get_regs(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_regs *regs);
+पूर्णांक kvm_arch_vcpu_ioctl_set_regs(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_regs *regs);
+पूर्णांक kvm_arch_vcpu_ioctl_get_sregs(काष्ठा kvm_vcpu *vcpu,
+				  काष्ठा kvm_sregs *sregs);
+पूर्णांक kvm_arch_vcpu_ioctl_set_sregs(काष्ठा kvm_vcpu *vcpu,
+				  काष्ठा kvm_sregs *sregs);
+पूर्णांक kvm_arch_vcpu_ioctl_get_mpstate(काष्ठा kvm_vcpu *vcpu,
+				    काष्ठा kvm_mp_state *mp_state);
+पूर्णांक kvm_arch_vcpu_ioctl_set_mpstate(काष्ठा kvm_vcpu *vcpu,
+				    काष्ठा kvm_mp_state *mp_state);
+पूर्णांक kvm_arch_vcpu_ioctl_set_guest_debug(काष्ठा kvm_vcpu *vcpu,
+					काष्ठा kvm_guest_debug *dbg);
+पूर्णांक kvm_arch_vcpu_ioctl_run(काष्ठा kvm_vcpu *vcpu);
 
-int kvm_arch_init(void *opaque);
-void kvm_arch_exit(void);
+पूर्णांक kvm_arch_init(व्योम *opaque);
+व्योम kvm_arch_निकास(व्योम);
 
-void kvm_arch_sched_in(struct kvm_vcpu *vcpu, int cpu);
+व्योम kvm_arch_sched_in(काष्ठा kvm_vcpu *vcpu, पूर्णांक cpu);
 
-void kvm_arch_vcpu_load(struct kvm_vcpu *vcpu, int cpu);
-void kvm_arch_vcpu_put(struct kvm_vcpu *vcpu);
-int kvm_arch_vcpu_precreate(struct kvm *kvm, unsigned int id);
-int kvm_arch_vcpu_create(struct kvm_vcpu *vcpu);
-void kvm_arch_vcpu_postcreate(struct kvm_vcpu *vcpu);
-void kvm_arch_vcpu_destroy(struct kvm_vcpu *vcpu);
+व्योम kvm_arch_vcpu_load(काष्ठा kvm_vcpu *vcpu, पूर्णांक cpu);
+व्योम kvm_arch_vcpu_put(काष्ठा kvm_vcpu *vcpu);
+पूर्णांक kvm_arch_vcpu_precreate(काष्ठा kvm *kvm, अचिन्हित पूर्णांक id);
+पूर्णांक kvm_arch_vcpu_create(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_arch_vcpu_postcreate(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_arch_vcpu_destroy(काष्ठा kvm_vcpu *vcpu);
 
-#ifdef __KVM_HAVE_ARCH_VCPU_DEBUGFS
-void kvm_arch_create_vcpu_debugfs(struct kvm_vcpu *vcpu, struct dentry *debugfs_dentry);
-#endif
+#अगर_घोषित __KVM_HAVE_ARCH_VCPU_DEBUGFS
+व्योम kvm_arch_create_vcpu_debugfs(काष्ठा kvm_vcpu *vcpu, काष्ठा dentry *debugfs_dentry);
+#पूर्ण_अगर
 
-int kvm_arch_hardware_enable(void);
-void kvm_arch_hardware_disable(void);
-int kvm_arch_hardware_setup(void *opaque);
-void kvm_arch_hardware_unsetup(void);
-int kvm_arch_check_processor_compat(void *opaque);
-int kvm_arch_vcpu_runnable(struct kvm_vcpu *vcpu);
-bool kvm_arch_vcpu_in_kernel(struct kvm_vcpu *vcpu);
-int kvm_arch_vcpu_should_kick(struct kvm_vcpu *vcpu);
-bool kvm_arch_dy_runnable(struct kvm_vcpu *vcpu);
-bool kvm_arch_dy_has_pending_interrupt(struct kvm_vcpu *vcpu);
-int kvm_arch_post_init_vm(struct kvm *kvm);
-void kvm_arch_pre_destroy_vm(struct kvm *kvm);
+पूर्णांक kvm_arch_hardware_enable(व्योम);
+व्योम kvm_arch_hardware_disable(व्योम);
+पूर्णांक kvm_arch_hardware_setup(व्योम *opaque);
+व्योम kvm_arch_hardware_unsetup(व्योम);
+पूर्णांक kvm_arch_check_processor_compat(व्योम *opaque);
+पूर्णांक kvm_arch_vcpu_runnable(काष्ठा kvm_vcpu *vcpu);
+bool kvm_arch_vcpu_in_kernel(काष्ठा kvm_vcpu *vcpu);
+पूर्णांक kvm_arch_vcpu_should_kick(काष्ठा kvm_vcpu *vcpu);
+bool kvm_arch_dy_runnable(काष्ठा kvm_vcpu *vcpu);
+bool kvm_arch_dy_has_pending_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu);
+पूर्णांक kvm_arch_post_init_vm(काष्ठा kvm *kvm);
+व्योम kvm_arch_pre_destroy_vm(काष्ठा kvm *kvm);
 
-#ifndef __KVM_HAVE_ARCH_VM_ALLOC
+#अगर_अघोषित __KVM_HAVE_ARCH_VM_ALLOC
 /*
  * All architectures that want to use vzalloc currently also
  * need their own kvm_arch_alloc_vm implementation.
  */
-static inline struct kvm *kvm_arch_alloc_vm(void)
-{
-	return kzalloc(sizeof(struct kvm), GFP_KERNEL);
-}
+अटल अंतरभूत काष्ठा kvm *kvm_arch_alloc_vm(व्योम)
+अणु
+	वापस kzalloc(माप(काष्ठा kvm), GFP_KERNEL);
+पूर्ण
 
-static inline void kvm_arch_free_vm(struct kvm *kvm)
-{
-	kfree(kvm);
-}
-#endif
+अटल अंतरभूत व्योम kvm_arch_मुक्त_vm(काष्ठा kvm *kvm)
+अणु
+	kमुक्त(kvm);
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef __KVM_HAVE_ARCH_FLUSH_REMOTE_TLB
-static inline int kvm_arch_flush_remote_tlb(struct kvm *kvm)
-{
-	return -ENOTSUPP;
-}
-#endif
+#अगर_अघोषित __KVM_HAVE_ARCH_FLUSH_REMOTE_TLB
+अटल अंतरभूत पूर्णांक kvm_arch_flush_remote_tlb(काष्ठा kvm *kvm)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef __KVM_HAVE_ARCH_NONCOHERENT_DMA
-void kvm_arch_register_noncoherent_dma(struct kvm *kvm);
-void kvm_arch_unregister_noncoherent_dma(struct kvm *kvm);
-bool kvm_arch_has_noncoherent_dma(struct kvm *kvm);
-#else
-static inline void kvm_arch_register_noncoherent_dma(struct kvm *kvm)
-{
-}
+#अगर_घोषित __KVM_HAVE_ARCH_NONCOHERENT_DMA
+व्योम kvm_arch_रेजिस्टर_noncoherent_dma(काष्ठा kvm *kvm);
+व्योम kvm_arch_unरेजिस्टर_noncoherent_dma(काष्ठा kvm *kvm);
+bool kvm_arch_has_noncoherent_dma(काष्ठा kvm *kvm);
+#अन्यथा
+अटल अंतरभूत व्योम kvm_arch_रेजिस्टर_noncoherent_dma(काष्ठा kvm *kvm)
+अणु
+पूर्ण
 
-static inline void kvm_arch_unregister_noncoherent_dma(struct kvm *kvm)
-{
-}
+अटल अंतरभूत व्योम kvm_arch_unरेजिस्टर_noncoherent_dma(काष्ठा kvm *kvm)
+अणु
+पूर्ण
 
-static inline bool kvm_arch_has_noncoherent_dma(struct kvm *kvm)
-{
-	return false;
-}
-#endif
-#ifdef __KVM_HAVE_ARCH_ASSIGNED_DEVICE
-void kvm_arch_start_assignment(struct kvm *kvm);
-void kvm_arch_end_assignment(struct kvm *kvm);
-bool kvm_arch_has_assigned_device(struct kvm *kvm);
-#else
-static inline void kvm_arch_start_assignment(struct kvm *kvm)
-{
-}
+अटल अंतरभूत bool kvm_arch_has_noncoherent_dma(काष्ठा kvm *kvm)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित __KVM_HAVE_ARCH_ASSIGNED_DEVICE
+व्योम kvm_arch_start_assignment(काष्ठा kvm *kvm);
+व्योम kvm_arch_end_assignment(काष्ठा kvm *kvm);
+bool kvm_arch_has_asचिन्हित_device(काष्ठा kvm *kvm);
+#अन्यथा
+अटल अंतरभूत व्योम kvm_arch_start_assignment(काष्ठा kvm *kvm)
+अणु
+पूर्ण
 
-static inline void kvm_arch_end_assignment(struct kvm *kvm)
-{
-}
+अटल अंतरभूत व्योम kvm_arch_end_assignment(काष्ठा kvm *kvm)
+अणु
+पूर्ण
 
-static inline bool kvm_arch_has_assigned_device(struct kvm *kvm)
-{
-	return false;
-}
-#endif
+अटल अंतरभूत bool kvm_arch_has_asचिन्हित_device(काष्ठा kvm *kvm)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-static inline struct rcuwait *kvm_arch_vcpu_get_wait(struct kvm_vcpu *vcpu)
-{
-#ifdef __KVM_HAVE_ARCH_WQP
-	return vcpu->arch.waitp;
-#else
-	return &vcpu->wait;
-#endif
-}
+अटल अंतरभूत काष्ठा rcuरुको *kvm_arch_vcpu_get_रुको(काष्ठा kvm_vcpu *vcpu)
+अणु
+#अगर_घोषित __KVM_HAVE_ARCH_WQP
+	वापस vcpu->arch.रुकोp;
+#अन्यथा
+	वापस &vcpu->रुको;
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef __KVM_HAVE_ARCH_INTC_INITIALIZED
+#अगर_घोषित __KVM_HAVE_ARCH_INTC_INITIALIZED
 /*
- * returns true if the virtual interrupt controller is initialized and
- * ready to accept virtual IRQ. On some architectures the virtual interrupt
+ * वापसs true अगर the भव पूर्णांकerrupt controller is initialized and
+ * पढ़ोy to accept भव IRQ. On some architectures the भव पूर्णांकerrupt
  * controller is dynamically instantiated and this is not always true.
  */
-bool kvm_arch_intc_initialized(struct kvm *kvm);
-#else
-static inline bool kvm_arch_intc_initialized(struct kvm *kvm)
-{
-	return true;
-}
-#endif
+bool kvm_arch_पूर्णांकc_initialized(काष्ठा kvm *kvm);
+#अन्यथा
+अटल अंतरभूत bool kvm_arch_पूर्णांकc_initialized(काष्ठा kvm *kvm)
+अणु
+	वापस true;
+पूर्ण
+#पूर्ण_अगर
 
-int kvm_arch_init_vm(struct kvm *kvm, unsigned long type);
-void kvm_arch_destroy_vm(struct kvm *kvm);
-void kvm_arch_sync_events(struct kvm *kvm);
+पूर्णांक kvm_arch_init_vm(काष्ठा kvm *kvm, अचिन्हित दीर्घ type);
+व्योम kvm_arch_destroy_vm(काष्ठा kvm *kvm);
+व्योम kvm_arch_sync_events(काष्ठा kvm *kvm);
 
-int kvm_cpu_has_pending_timer(struct kvm_vcpu *vcpu);
+पूर्णांक kvm_cpu_has_pending_समयr(काष्ठा kvm_vcpu *vcpu);
 
 bool kvm_is_reserved_pfn(kvm_pfn_t pfn);
 bool kvm_is_zone_device_pfn(kvm_pfn_t pfn);
 bool kvm_is_transparent_hugepage(kvm_pfn_t pfn);
 
-struct kvm_irq_ack_notifier {
-	struct hlist_node link;
-	unsigned gsi;
-	void (*irq_acked)(struct kvm_irq_ack_notifier *kian);
-};
+काष्ठा kvm_irq_ack_notअगरier अणु
+	काष्ठा hlist_node link;
+	अचिन्हित gsi;
+	व्योम (*irq_acked)(काष्ठा kvm_irq_ack_notअगरier *kian);
+पूर्ण;
 
-int kvm_irq_map_gsi(struct kvm *kvm,
-		    struct kvm_kernel_irq_routing_entry *entries, int gsi);
-int kvm_irq_map_chip_pin(struct kvm *kvm, unsigned irqchip, unsigned pin);
+पूर्णांक kvm_irq_map_gsi(काष्ठा kvm *kvm,
+		    काष्ठा kvm_kernel_irq_routing_entry *entries, पूर्णांक gsi);
+पूर्णांक kvm_irq_map_chip_pin(काष्ठा kvm *kvm, अचिन्हित irqchip, अचिन्हित pin);
 
-int kvm_set_irq(struct kvm *kvm, int irq_source_id, u32 irq, int level,
+पूर्णांक kvm_set_irq(काष्ठा kvm *kvm, पूर्णांक irq_source_id, u32 irq, पूर्णांक level,
 		bool line_status);
-int kvm_set_msi(struct kvm_kernel_irq_routing_entry *irq_entry, struct kvm *kvm,
-		int irq_source_id, int level, bool line_status);
-int kvm_arch_set_irq_inatomic(struct kvm_kernel_irq_routing_entry *e,
-			       struct kvm *kvm, int irq_source_id,
-			       int level, bool line_status);
-bool kvm_irq_has_notifier(struct kvm *kvm, unsigned irqchip, unsigned pin);
-void kvm_notify_acked_gsi(struct kvm *kvm, int gsi);
-void kvm_notify_acked_irq(struct kvm *kvm, unsigned irqchip, unsigned pin);
-void kvm_register_irq_ack_notifier(struct kvm *kvm,
-				   struct kvm_irq_ack_notifier *kian);
-void kvm_unregister_irq_ack_notifier(struct kvm *kvm,
-				   struct kvm_irq_ack_notifier *kian);
-int kvm_request_irq_source_id(struct kvm *kvm);
-void kvm_free_irq_source_id(struct kvm *kvm, int irq_source_id);
-bool kvm_arch_irqfd_allowed(struct kvm *kvm, struct kvm_irqfd *args);
+पूर्णांक kvm_set_msi(काष्ठा kvm_kernel_irq_routing_entry *irq_entry, काष्ठा kvm *kvm,
+		पूर्णांक irq_source_id, पूर्णांक level, bool line_status);
+पूर्णांक kvm_arch_set_irq_inatomic(काष्ठा kvm_kernel_irq_routing_entry *e,
+			       काष्ठा kvm *kvm, पूर्णांक irq_source_id,
+			       पूर्णांक level, bool line_status);
+bool kvm_irq_has_notअगरier(काष्ठा kvm *kvm, अचिन्हित irqchip, अचिन्हित pin);
+व्योम kvm_notअगरy_acked_gsi(काष्ठा kvm *kvm, पूर्णांक gsi);
+व्योम kvm_notअगरy_acked_irq(काष्ठा kvm *kvm, अचिन्हित irqchip, अचिन्हित pin);
+व्योम kvm_रेजिस्टर_irq_ack_notअगरier(काष्ठा kvm *kvm,
+				   काष्ठा kvm_irq_ack_notअगरier *kian);
+व्योम kvm_unरेजिस्टर_irq_ack_notअगरier(काष्ठा kvm *kvm,
+				   काष्ठा kvm_irq_ack_notअगरier *kian);
+पूर्णांक kvm_request_irq_source_id(काष्ठा kvm *kvm);
+व्योम kvm_मुक्त_irq_source_id(काष्ठा kvm *kvm, पूर्णांक irq_source_id);
+bool kvm_arch_irqfd_allowed(काष्ठा kvm *kvm, काष्ठा kvm_irqfd *args);
 
 /*
  * search_memslots() and __gfn_to_memslot() are here because they are
- * used in non-modular code in arch/powerpc/kvm/book3s_hv_rm_mmu.c.
- * gfn_to_memslot() itself isn't here as an inline because that would
+ * used in non-modular code in arch/घातerpc/kvm/book3s_hv_rm_mmu.c.
+ * gfn_to_memslot() itself isn't here as an अंतरभूत because that would
  * bloat other code too much.
  *
  * IMPORTANT: Slots are sorted from highest GFN to lowest GFN!
  */
-static inline struct kvm_memory_slot *
-search_memslots(struct kvm_memslots *slots, gfn_t gfn)
-{
-	int start = 0, end = slots->used_slots;
-	int slot = atomic_read(&slots->lru_slot);
-	struct kvm_memory_slot *memslots = slots->memslots;
+अटल अंतरभूत काष्ठा kvm_memory_slot *
+search_memslots(काष्ठा kvm_memslots *slots, gfn_t gfn)
+अणु
+	पूर्णांक start = 0, end = slots->used_slots;
+	पूर्णांक slot = atomic_पढ़ो(&slots->lru_slot);
+	काष्ठा kvm_memory_slot *memslots = slots->memslots;
 
-	if (unlikely(!slots->used_slots))
-		return NULL;
+	अगर (unlikely(!slots->used_slots))
+		वापस शून्य;
 
-	if (gfn >= memslots[slot].base_gfn &&
+	अगर (gfn >= memslots[slot].base_gfn &&
 	    gfn < memslots[slot].base_gfn + memslots[slot].npages)
-		return &memslots[slot];
+		वापस &memslots[slot];
 
-	while (start < end) {
+	जबतक (start < end) अणु
 		slot = start + (end - start) / 2;
 
-		if (gfn >= memslots[slot].base_gfn)
+		अगर (gfn >= memslots[slot].base_gfn)
 			end = slot;
-		else
+		अन्यथा
 			start = slot + 1;
-	}
+	पूर्ण
 
-	if (start < slots->used_slots && gfn >= memslots[start].base_gfn &&
-	    gfn < memslots[start].base_gfn + memslots[start].npages) {
+	अगर (start < slots->used_slots && gfn >= memslots[start].base_gfn &&
+	    gfn < memslots[start].base_gfn + memslots[start].npages) अणु
 		atomic_set(&slots->lru_slot, start);
-		return &memslots[start];
-	}
+		वापस &memslots[start];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline struct kvm_memory_slot *
-__gfn_to_memslot(struct kvm_memslots *slots, gfn_t gfn)
-{
-	return search_memslots(slots, gfn);
-}
+अटल अंतरभूत काष्ठा kvm_memory_slot *
+__gfn_to_memslot(काष्ठा kvm_memslots *slots, gfn_t gfn)
+अणु
+	वापस search_memslots(slots, gfn);
+पूर्ण
 
-static inline unsigned long
-__gfn_to_hva_memslot(const struct kvm_memory_slot *slot, gfn_t gfn)
-{
+अटल अंतरभूत अचिन्हित दीर्घ
+__gfn_to_hva_memslot(स्थिर काष्ठा kvm_memory_slot *slot, gfn_t gfn)
+अणु
 	/*
-	 * The index was checked originally in search_memslots.  To avoid
+	 * The index was checked originally in search_memslots.  To aव्योम
 	 * that a malicious guest builds a Spectre gadget out of e.g. page
-	 * table walks, do not let the processor speculate loads outside
-	 * the guest's registered memslots.
+	 * table walks, करो not let the processor speculate loads outside
+	 * the guest's रेजिस्टरed memslots.
 	 */
-	unsigned long offset = gfn - slot->base_gfn;
+	अचिन्हित दीर्घ offset = gfn - slot->base_gfn;
 	offset = array_index_nospec(offset, slot->npages);
-	return slot->userspace_addr + offset * PAGE_SIZE;
-}
+	वापस slot->userspace_addr + offset * PAGE_SIZE;
+पूर्ण
 
-static inline int memslot_id(struct kvm *kvm, gfn_t gfn)
-{
-	return gfn_to_memslot(kvm, gfn)->id;
-}
+अटल अंतरभूत पूर्णांक memslot_id(काष्ठा kvm *kvm, gfn_t gfn)
+अणु
+	वापस gfn_to_memslot(kvm, gfn)->id;
+पूर्ण
 
-static inline gfn_t
-hva_to_gfn_memslot(unsigned long hva, struct kvm_memory_slot *slot)
-{
+अटल अंतरभूत gfn_t
+hva_to_gfn_memslot(अचिन्हित दीर्घ hva, काष्ठा kvm_memory_slot *slot)
+अणु
 	gfn_t gfn_offset = (hva - slot->userspace_addr) >> PAGE_SHIFT;
 
-	return slot->base_gfn + gfn_offset;
-}
+	वापस slot->base_gfn + gfn_offset;
+पूर्ण
 
-static inline gpa_t gfn_to_gpa(gfn_t gfn)
-{
-	return (gpa_t)gfn << PAGE_SHIFT;
-}
+अटल अंतरभूत gpa_t gfn_to_gpa(gfn_t gfn)
+अणु
+	वापस (gpa_t)gfn << PAGE_SHIFT;
+पूर्ण
 
-static inline gfn_t gpa_to_gfn(gpa_t gpa)
-{
-	return (gfn_t)(gpa >> PAGE_SHIFT);
-}
+अटल अंतरभूत gfn_t gpa_to_gfn(gpa_t gpa)
+अणु
+	वापस (gfn_t)(gpa >> PAGE_SHIFT);
+पूर्ण
 
-static inline hpa_t pfn_to_hpa(kvm_pfn_t pfn)
-{
-	return (hpa_t)pfn << PAGE_SHIFT;
-}
+अटल अंतरभूत hpa_t pfn_to_hpa(kvm_pfn_t pfn)
+अणु
+	वापस (hpa_t)pfn << PAGE_SHIFT;
+पूर्ण
 
-static inline struct page *kvm_vcpu_gpa_to_page(struct kvm_vcpu *vcpu,
+अटल अंतरभूत काष्ठा page *kvm_vcpu_gpa_to_page(काष्ठा kvm_vcpu *vcpu,
 						gpa_t gpa)
-{
-	return kvm_vcpu_gfn_to_page(vcpu, gpa_to_gfn(gpa));
-}
+अणु
+	वापस kvm_vcpu_gfn_to_page(vcpu, gpa_to_gfn(gpa));
+पूर्ण
 
-static inline bool kvm_is_error_gpa(struct kvm *kvm, gpa_t gpa)
-{
-	unsigned long hva = gfn_to_hva(kvm, gpa_to_gfn(gpa));
+अटल अंतरभूत bool kvm_is_error_gpa(काष्ठा kvm *kvm, gpa_t gpa)
+अणु
+	अचिन्हित दीर्घ hva = gfn_to_hva(kvm, gpa_to_gfn(gpa));
 
-	return kvm_is_error_hva(hva);
-}
+	वापस kvm_is_error_hva(hva);
+पूर्ण
 
-enum kvm_stat_kind {
+क्रमागत kvm_stat_kind अणु
 	KVM_STAT_VM,
 	KVM_STAT_VCPU,
-};
+पूर्ण;
 
-struct kvm_stat_data {
-	struct kvm *kvm;
-	struct kvm_stats_debugfs_item *dbgfs_item;
-};
+काष्ठा kvm_stat_data अणु
+	काष्ठा kvm *kvm;
+	काष्ठा kvm_stats_debugfs_item *dbgfs_item;
+पूर्ण;
 
-struct kvm_stats_debugfs_item {
-	const char *name;
-	int offset;
-	enum kvm_stat_kind kind;
-	int mode;
-};
+काष्ठा kvm_stats_debugfs_item अणु
+	स्थिर अक्षर *name;
+	पूर्णांक offset;
+	क्रमागत kvm_stat_kind kind;
+	पूर्णांक mode;
+पूर्ण;
 
-#define KVM_DBGFS_GET_MODE(dbgfs_item)                                         \
+#घोषणा KVM_DBGFS_GET_MODE(dbgfs_item)                                         \
 	((dbgfs_item)->mode ? (dbgfs_item)->mode : 0644)
 
-#define VM_STAT(n, x, ...) 							\
-	{ n, offsetof(struct kvm, stat.x), KVM_STAT_VM, ## __VA_ARGS__ }
-#define VCPU_STAT(n, x, ...)							\
-	{ n, offsetof(struct kvm_vcpu, stat.x), KVM_STAT_VCPU, ## __VA_ARGS__ }
+#घोषणा VM_STAT(n, x, ...) 							\
+	अणु n, दुरत्व(काष्ठा kvm, stat.x), KVM_STAT_VM, ## __VA_ARGS__ पूर्ण
+#घोषणा VCPU_STAT(n, x, ...)							\
+	अणु n, दुरत्व(काष्ठा kvm_vcpu, stat.x), KVM_STAT_VCPU, ## __VA_ARGS__ पूर्ण
 
-extern struct kvm_stats_debugfs_item debugfs_entries[];
-extern struct dentry *kvm_debugfs_dir;
+बाह्य काष्ठा kvm_stats_debugfs_item debugfs_entries[];
+बाह्य काष्ठा dentry *kvm_debugfs_dir;
 
-#if defined(CONFIG_MMU_NOTIFIER) && defined(KVM_ARCH_WANT_MMU_NOTIFIER)
-static inline int mmu_notifier_retry(struct kvm *kvm, unsigned long mmu_seq)
-{
-	if (unlikely(kvm->mmu_notifier_count))
-		return 1;
+#अगर defined(CONFIG_MMU_NOTIFIER) && defined(KVM_ARCH_WANT_MMU_NOTIFIER)
+अटल अंतरभूत पूर्णांक mmu_notअगरier_retry(काष्ठा kvm *kvm, अचिन्हित दीर्घ mmu_seq)
+अणु
+	अगर (unlikely(kvm->mmu_notअगरier_count))
+		वापस 1;
 	/*
-	 * Ensure the read of mmu_notifier_count happens before the read
-	 * of mmu_notifier_seq.  This interacts with the smp_wmb() in
-	 * mmu_notifier_invalidate_range_end to make sure that the caller
-	 * either sees the old (non-zero) value of mmu_notifier_count or
-	 * the new (incremented) value of mmu_notifier_seq.
+	 * Ensure the पढ़ो of mmu_notअगरier_count happens beक्रमe the पढ़ो
+	 * of mmu_notअगरier_seq.  This पूर्णांकeracts with the smp_wmb() in
+	 * mmu_notअगरier_invalidate_range_end to make sure that the caller
+	 * either sees the old (non-zero) value of mmu_notअगरier_count or
+	 * the new (incremented) value of mmu_notअगरier_seq.
 	 * PowerPC Book3s HV KVM calls this under a per-page lock
-	 * rather than under kvm->mmu_lock, for scalability, so
+	 * rather than under kvm->mmu_lock, क्रम scalability, so
 	 * can't rely on kvm->mmu_lock to keep things ordered.
 	 */
 	smp_rmb();
-	if (kvm->mmu_notifier_seq != mmu_seq)
-		return 1;
-	return 0;
-}
+	अगर (kvm->mmu_notअगरier_seq != mmu_seq)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static inline int mmu_notifier_retry_hva(struct kvm *kvm,
-					 unsigned long mmu_seq,
-					 unsigned long hva)
-{
-	lockdep_assert_held(&kvm->mmu_lock);
+अटल अंतरभूत पूर्णांक mmu_notअगरier_retry_hva(काष्ठा kvm *kvm,
+					 अचिन्हित दीर्घ mmu_seq,
+					 अचिन्हित दीर्घ hva)
+अणु
+	lockdep_निश्चित_held(&kvm->mmu_lock);
 	/*
-	 * If mmu_notifier_count is non-zero, then the range maintained by
-	 * kvm_mmu_notifier_invalidate_range_start contains all addresses that
+	 * If mmu_notअगरier_count is non-zero, then the range मुख्यtained by
+	 * kvm_mmu_notअगरier_invalidate_range_start contains all addresses that
 	 * might be being invalidated. Note that it may include some false
-	 * positives, due to shortcuts when handing concurrent invalidations.
+	 * positives, due to लघुcuts when handing concurrent invalidations.
 	 */
-	if (unlikely(kvm->mmu_notifier_count) &&
-	    hva >= kvm->mmu_notifier_range_start &&
-	    hva < kvm->mmu_notifier_range_end)
-		return 1;
-	if (kvm->mmu_notifier_seq != mmu_seq)
-		return 1;
-	return 0;
-}
-#endif
+	अगर (unlikely(kvm->mmu_notअगरier_count) &&
+	    hva >= kvm->mmu_notअगरier_range_start &&
+	    hva < kvm->mmu_notअगरier_range_end)
+		वापस 1;
+	अगर (kvm->mmu_notअगरier_seq != mmu_seq)
+		वापस 1;
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_HAVE_KVM_IRQ_ROUTING
+#अगर_घोषित CONFIG_HAVE_KVM_IRQ_ROUTING
 
-#define KVM_MAX_IRQ_ROUTES 4096 /* might need extension/rework in the future */
+#घोषणा KVM_MAX_IRQ_ROUTES 4096 /* might need extension/rework in the future */
 
-bool kvm_arch_can_set_irq_routing(struct kvm *kvm);
-int kvm_set_irq_routing(struct kvm *kvm,
-			const struct kvm_irq_routing_entry *entries,
-			unsigned nr,
-			unsigned flags);
-int kvm_set_routing_entry(struct kvm *kvm,
-			  struct kvm_kernel_irq_routing_entry *e,
-			  const struct kvm_irq_routing_entry *ue);
-void kvm_free_irq_routing(struct kvm *kvm);
+bool kvm_arch_can_set_irq_routing(काष्ठा kvm *kvm);
+पूर्णांक kvm_set_irq_routing(काष्ठा kvm *kvm,
+			स्थिर काष्ठा kvm_irq_routing_entry *entries,
+			अचिन्हित nr,
+			अचिन्हित flags);
+पूर्णांक kvm_set_routing_entry(काष्ठा kvm *kvm,
+			  काष्ठा kvm_kernel_irq_routing_entry *e,
+			  स्थिर काष्ठा kvm_irq_routing_entry *ue);
+व्योम kvm_मुक्त_irq_routing(काष्ठा kvm *kvm);
 
-#else
+#अन्यथा
 
-static inline void kvm_free_irq_routing(struct kvm *kvm) {}
+अटल अंतरभूत व्योम kvm_मुक्त_irq_routing(काष्ठा kvm *kvm) अणुपूर्ण
 
-#endif
+#पूर्ण_अगर
 
-int kvm_send_userspace_msi(struct kvm *kvm, struct kvm_msi *msi);
+पूर्णांक kvm_send_userspace_msi(काष्ठा kvm *kvm, काष्ठा kvm_msi *msi);
 
-#ifdef CONFIG_HAVE_KVM_EVENTFD
+#अगर_घोषित CONFIG_HAVE_KVM_EVENTFD
 
-void kvm_eventfd_init(struct kvm *kvm);
-int kvm_ioeventfd(struct kvm *kvm, struct kvm_ioeventfd *args);
+व्योम kvm_eventfd_init(काष्ठा kvm *kvm);
+पूर्णांक kvm_ioeventfd(काष्ठा kvm *kvm, काष्ठा kvm_ioeventfd *args);
 
-#ifdef CONFIG_HAVE_KVM_IRQFD
-int kvm_irqfd(struct kvm *kvm, struct kvm_irqfd *args);
-void kvm_irqfd_release(struct kvm *kvm);
-void kvm_irq_routing_update(struct kvm *);
-#else
-static inline int kvm_irqfd(struct kvm *kvm, struct kvm_irqfd *args)
-{
-	return -EINVAL;
-}
+#अगर_घोषित CONFIG_HAVE_KVM_IRQFD
+पूर्णांक kvm_irqfd(काष्ठा kvm *kvm, काष्ठा kvm_irqfd *args);
+व्योम kvm_irqfd_release(काष्ठा kvm *kvm);
+व्योम kvm_irq_routing_update(काष्ठा kvm *);
+#अन्यथा
+अटल अंतरभूत पूर्णांक kvm_irqfd(काष्ठा kvm *kvm, काष्ठा kvm_irqfd *args)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline void kvm_irqfd_release(struct kvm *kvm) {}
-#endif
+अटल अंतरभूत व्योम kvm_irqfd_release(काष्ठा kvm *kvm) अणुपूर्ण
+#पूर्ण_अगर
 
-#else
+#अन्यथा
 
-static inline void kvm_eventfd_init(struct kvm *kvm) {}
+अटल अंतरभूत व्योम kvm_eventfd_init(काष्ठा kvm *kvm) अणुपूर्ण
 
-static inline int kvm_irqfd(struct kvm *kvm, struct kvm_irqfd *args)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक kvm_irqfd(काष्ठा kvm *kvm, काष्ठा kvm_irqfd *args)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline void kvm_irqfd_release(struct kvm *kvm) {}
+अटल अंतरभूत व्योम kvm_irqfd_release(काष्ठा kvm *kvm) अणुपूर्ण
 
-#ifdef CONFIG_HAVE_KVM_IRQCHIP
-static inline void kvm_irq_routing_update(struct kvm *kvm)
-{
-}
-#endif
+#अगर_घोषित CONFIG_HAVE_KVM_IRQCHIP
+अटल अंतरभूत व्योम kvm_irq_routing_update(काष्ठा kvm *kvm)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static inline int kvm_ioeventfd(struct kvm *kvm, struct kvm_ioeventfd *args)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक kvm_ioeventfd(काष्ठा kvm *kvm, काष्ठा kvm_ioeventfd *args)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-#endif /* CONFIG_HAVE_KVM_EVENTFD */
+#पूर्ण_अगर /* CONFIG_HAVE_KVM_EVENTFD */
 
-void kvm_arch_irq_routing_update(struct kvm *kvm);
+व्योम kvm_arch_irq_routing_update(काष्ठा kvm *kvm);
 
-static inline void kvm_make_request(int req, struct kvm_vcpu *vcpu)
-{
+अटल अंतरभूत व्योम kvm_make_request(पूर्णांक req, काष्ठा kvm_vcpu *vcpu)
+अणु
 	/*
 	 * Ensure the rest of the request is published to kvm_check_request's
 	 * caller.  Paired with the smp_mb__after_atomic in kvm_check_request.
 	 */
 	smp_wmb();
-	set_bit(req & KVM_REQUEST_MASK, (void *)&vcpu->requests);
-}
+	set_bit(req & KVM_REQUEST_MASK, (व्योम *)&vcpu->requests);
+पूर्ण
 
-static inline bool kvm_request_pending(struct kvm_vcpu *vcpu)
-{
-	return READ_ONCE(vcpu->requests);
-}
+अटल अंतरभूत bool kvm_request_pending(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस READ_ONCE(vcpu->requests);
+पूर्ण
 
-static inline bool kvm_test_request(int req, struct kvm_vcpu *vcpu)
-{
-	return test_bit(req & KVM_REQUEST_MASK, (void *)&vcpu->requests);
-}
+अटल अंतरभूत bool kvm_test_request(पूर्णांक req, काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस test_bit(req & KVM_REQUEST_MASK, (व्योम *)&vcpu->requests);
+पूर्ण
 
-static inline void kvm_clear_request(int req, struct kvm_vcpu *vcpu)
-{
-	clear_bit(req & KVM_REQUEST_MASK, (void *)&vcpu->requests);
-}
+अटल अंतरभूत व्योम kvm_clear_request(पूर्णांक req, काष्ठा kvm_vcpu *vcpu)
+अणु
+	clear_bit(req & KVM_REQUEST_MASK, (व्योम *)&vcpu->requests);
+पूर्ण
 
-static inline bool kvm_check_request(int req, struct kvm_vcpu *vcpu)
-{
-	if (kvm_test_request(req, vcpu)) {
+अटल अंतरभूत bool kvm_check_request(पूर्णांक req, काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (kvm_test_request(req, vcpu)) अणु
 		kvm_clear_request(req, vcpu);
 
 		/*
@@ -1408,193 +1409,193 @@ static inline bool kvm_check_request(int req, struct kvm_vcpu *vcpu)
 		 * caller.  Paired with the smp_wmb in kvm_make_request.
 		 */
 		smp_mb__after_atomic();
-		return true;
-	} else {
-		return false;
-	}
-}
+		वापस true;
+	पूर्ण अन्यथा अणु
+		वापस false;
+	पूर्ण
+पूर्ण
 
-extern bool kvm_rebooting;
+बाह्य bool kvm_rebooting;
 
-extern unsigned int halt_poll_ns;
-extern unsigned int halt_poll_ns_grow;
-extern unsigned int halt_poll_ns_grow_start;
-extern unsigned int halt_poll_ns_shrink;
+बाह्य अचिन्हित पूर्णांक halt_poll_ns;
+बाह्य अचिन्हित पूर्णांक halt_poll_ns_grow;
+बाह्य अचिन्हित पूर्णांक halt_poll_ns_grow_start;
+बाह्य अचिन्हित पूर्णांक halt_poll_ns_shrink;
 
-struct kvm_device {
-	const struct kvm_device_ops *ops;
-	struct kvm *kvm;
-	void *private;
-	struct list_head vm_node;
-};
+काष्ठा kvm_device अणु
+	स्थिर काष्ठा kvm_device_ops *ops;
+	काष्ठा kvm *kvm;
+	व्योम *निजी;
+	काष्ठा list_head vm_node;
+पूर्ण;
 
 /* create, destroy, and name are mandatory */
-struct kvm_device_ops {
-	const char *name;
+काष्ठा kvm_device_ops अणु
+	स्थिर अक्षर *name;
 
 	/*
 	 * create is called holding kvm->lock and any operations not suitable
-	 * to do while holding the lock should be deferred to init (see
+	 * to करो जबतक holding the lock should be deferred to init (see
 	 * below).
 	 */
-	int (*create)(struct kvm_device *dev, u32 type);
+	पूर्णांक (*create)(काष्ठा kvm_device *dev, u32 type);
 
 	/*
-	 * init is called after create if create is successful and is called
+	 * init is called after create अगर create is successful and is called
 	 * outside of holding kvm->lock.
 	 */
-	void (*init)(struct kvm_device *dev);
+	व्योम (*init)(काष्ठा kvm_device *dev);
 
 	/*
-	 * Destroy is responsible for freeing dev.
+	 * Destroy is responsible क्रम मुक्तing dev.
 	 *
-	 * Destroy may be called before or after destructors are called
+	 * Destroy may be called beक्रमe or after deकाष्ठाors are called
 	 * on emulated I/O regions, depending on whether a reference is
-	 * held by a vcpu or other kvm component that gets destroyed
+	 * held by a vcpu or other kvm component that माला_लो destroyed
 	 * after the emulated I/O.
 	 */
-	void (*destroy)(struct kvm_device *dev);
+	व्योम (*destroy)(काष्ठा kvm_device *dev);
 
 	/*
-	 * Release is an alternative method to free the device. It is
-	 * called when the device file descriptor is closed. Once
+	 * Release is an alternative method to मुक्त the device. It is
+	 * called when the device file descriptor is बंदd. Once
 	 * release is called, the destroy method will not be called
-	 * anymore as the device is removed from the device list of
+	 * anymore as the device is हटाओd from the device list of
 	 * the VM. kvm->lock is held.
 	 */
-	void (*release)(struct kvm_device *dev);
+	व्योम (*release)(काष्ठा kvm_device *dev);
 
-	int (*set_attr)(struct kvm_device *dev, struct kvm_device_attr *attr);
-	int (*get_attr)(struct kvm_device *dev, struct kvm_device_attr *attr);
-	int (*has_attr)(struct kvm_device *dev, struct kvm_device_attr *attr);
-	long (*ioctl)(struct kvm_device *dev, unsigned int ioctl,
-		      unsigned long arg);
-	int (*mmap)(struct kvm_device *dev, struct vm_area_struct *vma);
-};
+	पूर्णांक (*set_attr)(काष्ठा kvm_device *dev, काष्ठा kvm_device_attr *attr);
+	पूर्णांक (*get_attr)(काष्ठा kvm_device *dev, काष्ठा kvm_device_attr *attr);
+	पूर्णांक (*has_attr)(काष्ठा kvm_device *dev, काष्ठा kvm_device_attr *attr);
+	दीर्घ (*ioctl)(काष्ठा kvm_device *dev, अचिन्हित पूर्णांक ioctl,
+		      अचिन्हित दीर्घ arg);
+	पूर्णांक (*mmap)(काष्ठा kvm_device *dev, काष्ठा vm_area_काष्ठा *vma);
+पूर्ण;
 
-void kvm_device_get(struct kvm_device *dev);
-void kvm_device_put(struct kvm_device *dev);
-struct kvm_device *kvm_device_from_filp(struct file *filp);
-int kvm_register_device_ops(const struct kvm_device_ops *ops, u32 type);
-void kvm_unregister_device_ops(u32 type);
+व्योम kvm_device_get(काष्ठा kvm_device *dev);
+व्योम kvm_device_put(काष्ठा kvm_device *dev);
+काष्ठा kvm_device *kvm_device_from_filp(काष्ठा file *filp);
+पूर्णांक kvm_रेजिस्टर_device_ops(स्थिर काष्ठा kvm_device_ops *ops, u32 type);
+व्योम kvm_unरेजिस्टर_device_ops(u32 type);
 
-extern struct kvm_device_ops kvm_mpic_ops;
-extern struct kvm_device_ops kvm_arm_vgic_v2_ops;
-extern struct kvm_device_ops kvm_arm_vgic_v3_ops;
+बाह्य काष्ठा kvm_device_ops kvm_mpic_ops;
+बाह्य काष्ठा kvm_device_ops kvm_arm_vgic_v2_ops;
+बाह्य काष्ठा kvm_device_ops kvm_arm_vgic_v3_ops;
 
-#ifdef CONFIG_HAVE_KVM_CPU_RELAX_INTERCEPT
+#अगर_घोषित CONFIG_HAVE_KVM_CPU_RELAX_INTERCEPT
 
-static inline void kvm_vcpu_set_in_spin_loop(struct kvm_vcpu *vcpu, bool val)
-{
+अटल अंतरभूत व्योम kvm_vcpu_set_in_spin_loop(काष्ठा kvm_vcpu *vcpu, bool val)
+अणु
 	vcpu->spin_loop.in_spin_loop = val;
-}
-static inline void kvm_vcpu_set_dy_eligible(struct kvm_vcpu *vcpu, bool val)
-{
+पूर्ण
+अटल अंतरभूत व्योम kvm_vcpu_set_dy_eligible(काष्ठा kvm_vcpu *vcpu, bool val)
+अणु
 	vcpu->spin_loop.dy_eligible = val;
-}
+पूर्ण
 
-#else /* !CONFIG_HAVE_KVM_CPU_RELAX_INTERCEPT */
+#अन्यथा /* !CONFIG_HAVE_KVM_CPU_RELAX_INTERCEPT */
 
-static inline void kvm_vcpu_set_in_spin_loop(struct kvm_vcpu *vcpu, bool val)
-{
-}
+अटल अंतरभूत व्योम kvm_vcpu_set_in_spin_loop(काष्ठा kvm_vcpu *vcpu, bool val)
+अणु
+पूर्ण
 
-static inline void kvm_vcpu_set_dy_eligible(struct kvm_vcpu *vcpu, bool val)
-{
-}
-#endif /* CONFIG_HAVE_KVM_CPU_RELAX_INTERCEPT */
+अटल अंतरभूत व्योम kvm_vcpu_set_dy_eligible(काष्ठा kvm_vcpu *vcpu, bool val)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HAVE_KVM_CPU_RELAX_INTERCEPT */
 
-static inline bool kvm_is_visible_memslot(struct kvm_memory_slot *memslot)
-{
-	return (memslot && memslot->id < KVM_USER_MEM_SLOTS &&
+अटल अंतरभूत bool kvm_is_visible_memslot(काष्ठा kvm_memory_slot *memslot)
+अणु
+	वापस (memslot && memslot->id < KVM_USER_MEM_SLOTS &&
 		!(memslot->flags & KVM_MEMSLOT_INVALID));
-}
+पूर्ण
 
-struct kvm_vcpu *kvm_get_running_vcpu(void);
-struct kvm_vcpu * __percpu *kvm_get_running_vcpus(void);
+काष्ठा kvm_vcpu *kvm_get_running_vcpu(व्योम);
+काष्ठा kvm_vcpu * __percpu *kvm_get_running_vcpus(व्योम);
 
-#ifdef CONFIG_HAVE_KVM_IRQ_BYPASS
-bool kvm_arch_has_irq_bypass(void);
-int kvm_arch_irq_bypass_add_producer(struct irq_bypass_consumer *,
-			   struct irq_bypass_producer *);
-void kvm_arch_irq_bypass_del_producer(struct irq_bypass_consumer *,
-			   struct irq_bypass_producer *);
-void kvm_arch_irq_bypass_stop(struct irq_bypass_consumer *);
-void kvm_arch_irq_bypass_start(struct irq_bypass_consumer *);
-int kvm_arch_update_irqfd_routing(struct kvm *kvm, unsigned int host_irq,
-				  uint32_t guest_irq, bool set);
-#endif /* CONFIG_HAVE_KVM_IRQ_BYPASS */
+#अगर_घोषित CONFIG_HAVE_KVM_IRQ_BYPASS
+bool kvm_arch_has_irq_bypass(व्योम);
+पूर्णांक kvm_arch_irq_bypass_add_producer(काष्ठा irq_bypass_consumer *,
+			   काष्ठा irq_bypass_producer *);
+व्योम kvm_arch_irq_bypass_del_producer(काष्ठा irq_bypass_consumer *,
+			   काष्ठा irq_bypass_producer *);
+व्योम kvm_arch_irq_bypass_stop(काष्ठा irq_bypass_consumer *);
+व्योम kvm_arch_irq_bypass_start(काष्ठा irq_bypass_consumer *);
+पूर्णांक kvm_arch_update_irqfd_routing(काष्ठा kvm *kvm, अचिन्हित पूर्णांक host_irq,
+				  uपूर्णांक32_t guest_irq, bool set);
+#पूर्ण_अगर /* CONFIG_HAVE_KVM_IRQ_BYPASS */
 
-#ifdef CONFIG_HAVE_KVM_INVALID_WAKEUPS
-/* If we wakeup during the poll time, was it a sucessful poll? */
-static inline bool vcpu_valid_wakeup(struct kvm_vcpu *vcpu)
-{
-	return vcpu->valid_wakeup;
-}
+#अगर_घोषित CONFIG_HAVE_KVM_INVALID_WAKEUPS
+/* If we wakeup during the poll समय, was it a sucessful poll? */
+अटल अंतरभूत bool vcpu_valid_wakeup(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu->valid_wakeup;
+पूर्ण
 
-#else
-static inline bool vcpu_valid_wakeup(struct kvm_vcpu *vcpu)
-{
-	return true;
-}
-#endif /* CONFIG_HAVE_KVM_INVALID_WAKEUPS */
+#अन्यथा
+अटल अंतरभूत bool vcpu_valid_wakeup(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस true;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HAVE_KVM_INVALID_WAKEUPS */
 
-#ifdef CONFIG_HAVE_KVM_NO_POLL
-/* Callback that tells if we must not poll */
-bool kvm_arch_no_poll(struct kvm_vcpu *vcpu);
-#else
-static inline bool kvm_arch_no_poll(struct kvm_vcpu *vcpu)
-{
-	return false;
-}
-#endif /* CONFIG_HAVE_KVM_NO_POLL */
+#अगर_घोषित CONFIG_HAVE_KVM_NO_POLL
+/* Callback that tells अगर we must not poll */
+bool kvm_arch_no_poll(काष्ठा kvm_vcpu *vcpu);
+#अन्यथा
+अटल अंतरभूत bool kvm_arch_no_poll(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HAVE_KVM_NO_POLL */
 
-#ifdef CONFIG_HAVE_KVM_VCPU_ASYNC_IOCTL
-long kvm_arch_vcpu_async_ioctl(struct file *filp,
-			       unsigned int ioctl, unsigned long arg);
-#else
-static inline long kvm_arch_vcpu_async_ioctl(struct file *filp,
-					     unsigned int ioctl,
-					     unsigned long arg)
-{
-	return -ENOIOCTLCMD;
-}
-#endif /* CONFIG_HAVE_KVM_VCPU_ASYNC_IOCTL */
+#अगर_घोषित CONFIG_HAVE_KVM_VCPU_ASYNC_IOCTL
+दीर्घ kvm_arch_vcpu_async_ioctl(काष्ठा file *filp,
+			       अचिन्हित पूर्णांक ioctl, अचिन्हित दीर्घ arg);
+#अन्यथा
+अटल अंतरभूत दीर्घ kvm_arch_vcpu_async_ioctl(काष्ठा file *filp,
+					     अचिन्हित पूर्णांक ioctl,
+					     अचिन्हित दीर्घ arg)
+अणु
+	वापस -ENOIOCTLCMD;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HAVE_KVM_VCPU_ASYNC_IOCTL */
 
-void kvm_arch_mmu_notifier_invalidate_range(struct kvm *kvm,
-					    unsigned long start, unsigned long end);
+व्योम kvm_arch_mmu_notअगरier_invalidate_range(काष्ठा kvm *kvm,
+					    अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
 
-#ifdef CONFIG_HAVE_KVM_VCPU_RUN_PID_CHANGE
-int kvm_arch_vcpu_run_pid_change(struct kvm_vcpu *vcpu);
-#else
-static inline int kvm_arch_vcpu_run_pid_change(struct kvm_vcpu *vcpu)
-{
-	return 0;
-}
-#endif /* CONFIG_HAVE_KVM_VCPU_RUN_PID_CHANGE */
+#अगर_घोषित CONFIG_HAVE_KVM_VCPU_RUN_PID_CHANGE
+पूर्णांक kvm_arch_vcpu_run_pid_change(काष्ठा kvm_vcpu *vcpu);
+#अन्यथा
+अटल अंतरभूत पूर्णांक kvm_arch_vcpu_run_pid_change(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HAVE_KVM_VCPU_RUN_PID_CHANGE */
 
-typedef int (*kvm_vm_thread_fn_t)(struct kvm *kvm, uintptr_t data);
+प्रकार पूर्णांक (*kvm_vm_thपढ़ो_fn_t)(काष्ठा kvm *kvm, uपूर्णांकptr_t data);
 
-int kvm_vm_create_worker_thread(struct kvm *kvm, kvm_vm_thread_fn_t thread_fn,
-				uintptr_t data, const char *name,
-				struct task_struct **thread_ptr);
+पूर्णांक kvm_vm_create_worker_thपढ़ो(काष्ठा kvm *kvm, kvm_vm_thपढ़ो_fn_t thपढ़ो_fn,
+				uपूर्णांकptr_t data, स्थिर अक्षर *name,
+				काष्ठा task_काष्ठा **thपढ़ो_ptr);
 
-#ifdef CONFIG_KVM_XFER_TO_GUEST_WORK
-static inline void kvm_handle_signal_exit(struct kvm_vcpu *vcpu)
-{
-	vcpu->run->exit_reason = KVM_EXIT_INTR;
-	vcpu->stat.signal_exits++;
-}
-#endif /* CONFIG_KVM_XFER_TO_GUEST_WORK */
+#अगर_घोषित CONFIG_KVM_XFER_TO_GUEST_WORK
+अटल अंतरभूत व्योम kvm_handle_संकेत_निकास(काष्ठा kvm_vcpu *vcpu)
+अणु
+	vcpu->run->निकास_reason = KVM_EXIT_INTR;
+	vcpu->stat.संकेत_निकासs++;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_KVM_XFER_TO_GUEST_WORK */
 
 /*
- * This defines how many reserved entries we want to keep before we
- * kick the vcpu to the userspace to avoid dirty ring full.  This
- * value can be tuned to higher if e.g. PML is enabled on the host.
+ * This defines how many reserved entries we want to keep beक्रमe we
+ * kick the vcpu to the userspace to aव्योम dirty ring full.  This
+ * value can be tuned to higher अगर e.g. PML is enabled on the host.
  */
-#define  KVM_DIRTY_RING_RSVD_ENTRIES  64
+#घोषणा  KVM_सूचीTY_RING_RSVD_ENTRIES  64
 
-/* Max number of entries allowed for each kvm dirty ring */
-#define  KVM_DIRTY_RING_MAX_ENTRIES  65536
+/* Max number of entries allowed क्रम each kvm dirty ring */
+#घोषणा  KVM_सूचीTY_RING_MAX_ENTRIES  65536
 
-#endif
+#पूर्ण_अगर

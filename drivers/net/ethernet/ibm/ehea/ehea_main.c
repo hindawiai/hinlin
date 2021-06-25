@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  linux/drivers/net/ethernet/ibm/ehea/ehea_main.c
+ *  linux/drivers/net/ethernet/ibm/ehea/ehea_मुख्य.c
  *
- *  eHEA ethernet device driver for IBM eServer System p
+ *  eHEA ethernet device driver क्रम IBM eServer System p
  *
  *  (C) Copyright IBM Corp. 2006
  *
@@ -12,29 +13,29 @@
  *	 Thomas Klein <tklein@de.ibm.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/device.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/if.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/if_ether.h>
-#include <linux/notifier.h>
-#include <linux/reboot.h>
-#include <linux/memory.h>
-#include <asm/kexec.h>
-#include <linux/mutex.h>
-#include <linux/prefetch.h>
+#समावेश <linux/device.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/memory.h>
+#समावेश <यंत्र/kexec.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/prefetch.h>
 
-#include <net/ip.h>
+#समावेश <net/ip.h>
 
-#include "ehea.h"
-#include "ehea_qmr.h"
-#include "ehea_phyp.h"
+#समावेश "ehea.h"
+#समावेश "ehea_qmr.h"
+#समावेश "ehea_phyp.h"
 
 
 MODULE_LICENSE("GPL");
@@ -43,21 +44,21 @@ MODULE_DESCRIPTION("IBM eServer HEA Driver");
 MODULE_VERSION(DRV_VERSION);
 
 
-static int msg_level = -1;
-static int rq1_entries = EHEA_DEF_ENTRIES_RQ1;
-static int rq2_entries = EHEA_DEF_ENTRIES_RQ2;
-static int rq3_entries = EHEA_DEF_ENTRIES_RQ3;
-static int sq_entries = EHEA_DEF_ENTRIES_SQ;
-static int use_mcs = 1;
-static int prop_carrier_state;
+अटल पूर्णांक msg_level = -1;
+अटल पूर्णांक rq1_entries = EHEA_DEF_ENTRIES_RQ1;
+अटल पूर्णांक rq2_entries = EHEA_DEF_ENTRIES_RQ2;
+अटल पूर्णांक rq3_entries = EHEA_DEF_ENTRIES_RQ3;
+अटल पूर्णांक sq_entries = EHEA_DEF_ENTRIES_SQ;
+अटल पूर्णांक use_mcs = 1;
+अटल पूर्णांक prop_carrier_state;
 
-module_param(msg_level, int, 0);
-module_param(rq1_entries, int, 0);
-module_param(rq2_entries, int, 0);
-module_param(rq3_entries, int, 0);
-module_param(sq_entries, int, 0);
-module_param(prop_carrier_state, int, 0);
-module_param(use_mcs, int, 0);
+module_param(msg_level, पूर्णांक, 0);
+module_param(rq1_entries, पूर्णांक, 0);
+module_param(rq2_entries, पूर्णांक, 0);
+module_param(rq3_entries, पूर्णांक, 0);
+module_param(sq_entries, पूर्णांक, 0);
+module_param(prop_carrier_state, पूर्णांक, 0);
+module_param(use_mcs, पूर्णांक, 0);
 
 MODULE_PARM_DESC(msg_level, "msg_level");
 MODULE_PARM_DESC(prop_carrier_state, "Propagate carrier state of physical "
@@ -77,118 +78,118 @@ MODULE_PARM_DESC(sq_entries, " Number of entries for the Send Queue  "
 MODULE_PARM_DESC(use_mcs, " Multiple receive queues, 1: enable, 0: disable, "
 		 "Default = 1");
 
-static int port_name_cnt;
-static LIST_HEAD(adapter_list);
-static unsigned long ehea_driver_flags;
-static DEFINE_MUTEX(dlpar_mem_lock);
-static struct ehea_fw_handle_array ehea_fw_handles;
-static struct ehea_bcmc_reg_array ehea_bcmc_regs;
+अटल पूर्णांक port_name_cnt;
+अटल LIST_HEAD(adapter_list);
+अटल अचिन्हित दीर्घ ehea_driver_flags;
+अटल DEFINE_MUTEX(dlpar_mem_lock);
+अटल काष्ठा ehea_fw_handle_array ehea_fw_handles;
+अटल काष्ठा ehea_bcmc_reg_array ehea_bcmc_regs;
 
 
-static int ehea_probe_adapter(struct platform_device *dev);
+अटल पूर्णांक ehea_probe_adapter(काष्ठा platक्रमm_device *dev);
 
-static int ehea_remove(struct platform_device *dev);
+अटल पूर्णांक ehea_हटाओ(काष्ठा platक्रमm_device *dev);
 
-static const struct of_device_id ehea_module_device_table[] = {
-	{
+अटल स्थिर काष्ठा of_device_id ehea_module_device_table[] = अणु
+	अणु
 		.name = "lhea",
 		.compatible = "IBM,lhea",
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = "network",
 		.compatible = "IBM,lhea-ethernet",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ehea_module_device_table);
 
-static const struct of_device_id ehea_device_table[] = {
-	{
+अटल स्थिर काष्ठा of_device_id ehea_device_table[] = अणु
+	अणु
 		.name = "lhea",
 		.compatible = "IBM,lhea",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ehea_device_table);
 
-static struct platform_driver ehea_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver ehea_driver = अणु
+	.driver = अणु
 		.name = "ehea",
 		.owner = THIS_MODULE,
 		.of_match_table = ehea_device_table,
-	},
+	पूर्ण,
 	.probe = ehea_probe_adapter,
-	.remove = ehea_remove,
-};
+	.हटाओ = ehea_हटाओ,
+पूर्ण;
 
-void ehea_dump(void *adr, int len, char *msg)
-{
-	int x;
-	unsigned char *deb = adr;
-	for (x = 0; x < len; x += 16) {
+व्योम ehea_dump(व्योम *adr, पूर्णांक len, अक्षर *msg)
+अणु
+	पूर्णांक x;
+	अचिन्हित अक्षर *deb = adr;
+	क्रम (x = 0; x < len; x += 16) अणु
 		pr_info("%s adr=%p ofs=%04x %016llx %016llx\n",
 			msg, deb, x, *((u64 *)&deb[0]), *((u64 *)&deb[8]));
 		deb += 16;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ehea_schedule_port_reset(struct ehea_port *port)
-{
-	if (!test_bit(__EHEA_DISABLE_PORT_RESET, &port->flags))
+अटल व्योम ehea_schedule_port_reset(काष्ठा ehea_port *port)
+अणु
+	अगर (!test_bit(__EHEA_DISABLE_PORT_RESET, &port->flags))
 		schedule_work(&port->reset_task);
-}
+पूर्ण
 
-static void ehea_update_firmware_handles(void)
-{
-	struct ehea_fw_handle_entry *arr = NULL;
-	struct ehea_adapter *adapter;
-	int num_adapters = 0;
-	int num_ports = 0;
-	int num_portres = 0;
-	int i = 0;
-	int num_fw_handles, k, l;
+अटल व्योम ehea_update_firmware_handles(व्योम)
+अणु
+	काष्ठा ehea_fw_handle_entry *arr = शून्य;
+	काष्ठा ehea_adapter *adapter;
+	पूर्णांक num_adapters = 0;
+	पूर्णांक num_ports = 0;
+	पूर्णांक num_portres = 0;
+	पूर्णांक i = 0;
+	पूर्णांक num_fw_handles, k, l;
 
 	/* Determine number of handles */
 	mutex_lock(&ehea_fw_handles.lock);
 
-	list_for_each_entry(adapter, &adapter_list, list) {
+	list_क्रम_each_entry(adapter, &adapter_list, list) अणु
 		num_adapters++;
 
-		for (k = 0; k < EHEA_MAX_PORTS; k++) {
-			struct ehea_port *port = adapter->port[k];
+		क्रम (k = 0; k < EHEA_MAX_PORTS; k++) अणु
+			काष्ठा ehea_port *port = adapter->port[k];
 
-			if (!port || (port->state != EHEA_PORT_UP))
-				continue;
+			अगर (!port || (port->state != EHEA_PORT_UP))
+				जारी;
 
 			num_ports++;
 			num_portres += port->num_def_qps;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	num_fw_handles = num_adapters * EHEA_NUM_ADAPTER_FW_HANDLES +
 			 num_ports * EHEA_NUM_PORT_FW_HANDLES +
 			 num_portres * EHEA_NUM_PORTRES_FW_HANDLES;
 
-	if (num_fw_handles) {
-		arr = kcalloc(num_fw_handles, sizeof(*arr), GFP_KERNEL);
-		if (!arr)
-			goto out;  /* Keep the existing array */
-	} else
-		goto out_update;
+	अगर (num_fw_handles) अणु
+		arr = kसुस्मृति(num_fw_handles, माप(*arr), GFP_KERNEL);
+		अगर (!arr)
+			जाओ out;  /* Keep the existing array */
+	पूर्ण अन्यथा
+		जाओ out_update;
 
-	list_for_each_entry(adapter, &adapter_list, list) {
-		if (num_adapters == 0)
-			break;
+	list_क्रम_each_entry(adapter, &adapter_list, list) अणु
+		अगर (num_adapters == 0)
+			अवरोध;
 
-		for (k = 0; k < EHEA_MAX_PORTS; k++) {
-			struct ehea_port *port = adapter->port[k];
+		क्रम (k = 0; k < EHEA_MAX_PORTS; k++) अणु
+			काष्ठा ehea_port *port = adapter->port[k];
 
-			if (!port || (port->state != EHEA_PORT_UP) ||
+			अगर (!port || (port->state != EHEA_PORT_UP) ||
 			    (num_ports == 0))
-				continue;
+				जारी;
 
-			for (l = 0; l < port->num_def_qps; l++) {
-				struct ehea_port_res *pr = &port->port_res[l];
+			क्रम (l = 0; l < port->num_def_qps; l++) अणु
+				काष्ठा ehea_port_res *pr = &port->port_res[l];
 
 				arr[i].adh = adapter->handle;
 				arr[i++].fwh = pr->qp->fw_handle;
@@ -202,72 +203,72 @@ static void ehea_update_firmware_handles(void)
 				arr[i++].fwh = pr->send_mr.handle;
 				arr[i].adh = adapter->handle;
 				arr[i++].fwh = pr->recv_mr.handle;
-			}
+			पूर्ण
 			arr[i].adh = adapter->handle;
 			arr[i++].fwh = port->qp_eq->fw_handle;
 			num_ports--;
-		}
+		पूर्ण
 
 		arr[i].adh = adapter->handle;
 		arr[i++].fwh = adapter->neq->fw_handle;
 
-		if (adapter->mr.handle) {
+		अगर (adapter->mr.handle) अणु
 			arr[i].adh = adapter->handle;
 			arr[i++].fwh = adapter->mr.handle;
-		}
+		पूर्ण
 		num_adapters--;
-	}
+	पूर्ण
 
 out_update:
-	kfree(ehea_fw_handles.arr);
+	kमुक्त(ehea_fw_handles.arr);
 	ehea_fw_handles.arr = arr;
 	ehea_fw_handles.num_entries = i;
 out:
 	mutex_unlock(&ehea_fw_handles.lock);
-}
+पूर्ण
 
-static void ehea_update_bcmc_registrations(void)
-{
-	unsigned long flags;
-	struct ehea_bcmc_reg_entry *arr = NULL;
-	struct ehea_adapter *adapter;
-	struct ehea_mc_list *mc_entry;
-	int num_registrations = 0;
-	int i = 0;
-	int k;
+अटल व्योम ehea_update_bcmc_registrations(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा ehea_bcmc_reg_entry *arr = शून्य;
+	काष्ठा ehea_adapter *adapter;
+	काष्ठा ehea_mc_list *mc_entry;
+	पूर्णांक num_registrations = 0;
+	पूर्णांक i = 0;
+	पूर्णांक k;
 
 	spin_lock_irqsave(&ehea_bcmc_regs.lock, flags);
 
 	/* Determine number of registrations */
-	list_for_each_entry(adapter, &adapter_list, list)
-		for (k = 0; k < EHEA_MAX_PORTS; k++) {
-			struct ehea_port *port = adapter->port[k];
+	list_क्रम_each_entry(adapter, &adapter_list, list)
+		क्रम (k = 0; k < EHEA_MAX_PORTS; k++) अणु
+			काष्ठा ehea_port *port = adapter->port[k];
 
-			if (!port || (port->state != EHEA_PORT_UP))
-				continue;
+			अगर (!port || (port->state != EHEA_PORT_UP))
+				जारी;
 
 			num_registrations += 2;	/* Broadcast registrations */
 
-			list_for_each_entry(mc_entry, &port->mc_list->list,list)
+			list_क्रम_each_entry(mc_entry, &port->mc_list->list,list)
 				num_registrations += 2;
-		}
+		पूर्ण
 
-	if (num_registrations) {
-		arr = kcalloc(num_registrations, sizeof(*arr), GFP_ATOMIC);
-		if (!arr)
-			goto out;  /* Keep the existing array */
-	} else
-		goto out_update;
+	अगर (num_registrations) अणु
+		arr = kसुस्मृति(num_registrations, माप(*arr), GFP_ATOMIC);
+		अगर (!arr)
+			जाओ out;  /* Keep the existing array */
+	पूर्ण अन्यथा
+		जाओ out_update;
 
-	list_for_each_entry(adapter, &adapter_list, list) {
-		for (k = 0; k < EHEA_MAX_PORTS; k++) {
-			struct ehea_port *port = adapter->port[k];
+	list_क्रम_each_entry(adapter, &adapter_list, list) अणु
+		क्रम (k = 0; k < EHEA_MAX_PORTS; k++) अणु
+			काष्ठा ehea_port *port = adapter->port[k];
 
-			if (!port || (port->state != EHEA_PORT_UP))
-				continue;
+			अगर (!port || (port->state != EHEA_PORT_UP))
+				जारी;
 
-			if (num_registrations == 0)
-				goto out_update;
+			अगर (num_registrations == 0)
+				जाओ out_update;
 
 			arr[i].adh = adapter->handle;
 			arr[i].port_id = port->logical_port_id;
@@ -282,16 +283,16 @@ static void ehea_update_bcmc_registrations(void)
 			arr[i++].macaddr = port->mac_addr;
 			num_registrations -= 2;
 
-			list_for_each_entry(mc_entry,
-					    &port->mc_list->list, list) {
-				if (num_registrations == 0)
-					goto out_update;
+			list_क्रम_each_entry(mc_entry,
+					    &port->mc_list->list, list) अणु
+				अगर (num_registrations == 0)
+					जाओ out_update;
 
 				arr[i].adh = adapter->handle;
 				arr[i].port_id = port->logical_port_id;
 				arr[i].reg_type = EHEA_BCMC_MULTICAST |
 						  EHEA_BCMC_UNTAGGED;
-				if (mc_entry->macaddr == 0)
+				अगर (mc_entry->macaddr == 0)
 					arr[i].reg_type |= EHEA_BCMC_SCOPE_ALL;
 				arr[i++].macaddr = mc_entry->macaddr;
 
@@ -299,38 +300,38 @@ static void ehea_update_bcmc_registrations(void)
 				arr[i].port_id = port->logical_port_id;
 				arr[i].reg_type = EHEA_BCMC_MULTICAST |
 						  EHEA_BCMC_VLANID_ALL;
-				if (mc_entry->macaddr == 0)
+				अगर (mc_entry->macaddr == 0)
 					arr[i].reg_type |= EHEA_BCMC_SCOPE_ALL;
 				arr[i++].macaddr = mc_entry->macaddr;
 				num_registrations -= 2;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 out_update:
-	kfree(ehea_bcmc_regs.arr);
+	kमुक्त(ehea_bcmc_regs.arr);
 	ehea_bcmc_regs.arr = arr;
 	ehea_bcmc_regs.num_entries = i;
 out:
 	spin_unlock_irqrestore(&ehea_bcmc_regs.lock, flags);
-}
+पूर्ण
 
-static void ehea_get_stats64(struct net_device *dev,
-			     struct rtnl_link_stats64 *stats)
-{
-	struct ehea_port *port = netdev_priv(dev);
+अटल व्योम ehea_get_stats64(काष्ठा net_device *dev,
+			     काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
 	u64 rx_packets = 0, tx_packets = 0, rx_bytes = 0, tx_bytes = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < port->num_def_qps; i++) {
+	क्रम (i = 0; i < port->num_def_qps; i++) अणु
 		rx_packets += port->port_res[i].rx_packets;
 		rx_bytes   += port->port_res[i].rx_bytes;
-	}
+	पूर्ण
 
-	for (i = 0; i < port->num_def_qps; i++) {
+	क्रम (i = 0; i < port->num_def_qps; i++) अणु
 		tx_packets += port->port_res[i].tx_packets;
 		tx_bytes   += port->port_res[i].tx_bytes;
-	}
+	पूर्ण
 
 	stats->tx_packets = tx_packets;
 	stats->rx_bytes = rx_bytes;
@@ -339,238 +340,238 @@ static void ehea_get_stats64(struct net_device *dev,
 
 	stats->multicast = port->stats.multicast;
 	stats->rx_errors = port->stats.rx_errors;
-}
+पूर्ण
 
-static void ehea_update_stats(struct work_struct *work)
-{
-	struct ehea_port *port =
-		container_of(work, struct ehea_port, stats_work.work);
-	struct net_device *dev = port->netdev;
-	struct rtnl_link_stats64 *stats = &port->stats;
-	struct hcp_ehea_port_cb2 *cb2;
+अटल व्योम ehea_update_stats(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ehea_port *port =
+		container_of(work, काष्ठा ehea_port, stats_work.work);
+	काष्ठा net_device *dev = port->netdev;
+	काष्ठा rtnl_link_stats64 *stats = &port->stats;
+	काष्ठा hcp_ehea_port_cb2 *cb2;
 	u64 hret;
 
-	cb2 = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!cb2) {
+	cb2 = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!cb2) अणु
 		netdev_err(dev, "No mem for cb2. Some interface statistics were not updated\n");
-		goto resched;
-	}
+		जाओ resched;
+	पूर्ण
 
 	hret = ehea_h_query_ehea_port(port->adapter->handle,
 				      port->logical_port_id,
 				      H_PORT_CB2, H_PORT_CB2_ALL, cb2);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		netdev_err(dev, "query_ehea_port failed\n");
-		goto out_herr;
-	}
+		जाओ out_herr;
+	पूर्ण
 
-	if (netif_msg_hw(port))
-		ehea_dump(cb2, sizeof(*cb2), "net_device_stats");
+	अगर (netअगर_msg_hw(port))
+		ehea_dump(cb2, माप(*cb2), "net_device_stats");
 
 	stats->multicast = cb2->rxmcp;
 	stats->rx_errors = cb2->rxuerr;
 
 out_herr:
-	free_page((unsigned long)cb2);
+	मुक्त_page((अचिन्हित दीर्घ)cb2);
 resched:
 	schedule_delayed_work(&port->stats_work,
-			      round_jiffies_relative(msecs_to_jiffies(1000)));
-}
+			      round_jअगरfies_relative(msecs_to_jअगरfies(1000)));
+पूर्ण
 
-static void ehea_refill_rq1(struct ehea_port_res *pr, int index, int nr_of_wqes)
-{
-	struct sk_buff **skb_arr_rq1 = pr->rq1_skba.arr;
-	struct net_device *dev = pr->port->netdev;
-	int max_index_mask = pr->rq1_skba.len - 1;
-	int fill_wqes = pr->rq1_skba.os_skbs + nr_of_wqes;
-	int adder = 0;
-	int i;
+अटल व्योम ehea_refill_rq1(काष्ठा ehea_port_res *pr, पूर्णांक index, पूर्णांक nr_of_wqes)
+अणु
+	काष्ठा sk_buff **skb_arr_rq1 = pr->rq1_skba.arr;
+	काष्ठा net_device *dev = pr->port->netdev;
+	पूर्णांक max_index_mask = pr->rq1_skba.len - 1;
+	पूर्णांक fill_wqes = pr->rq1_skba.os_skbs + nr_of_wqes;
+	पूर्णांक adder = 0;
+	पूर्णांक i;
 
 	pr->rq1_skba.os_skbs = 0;
 
-	if (unlikely(test_bit(__EHEA_STOP_XFER, &ehea_driver_flags))) {
-		if (nr_of_wqes > 0)
+	अगर (unlikely(test_bit(__EHEA_STOP_XFER, &ehea_driver_flags))) अणु
+		अगर (nr_of_wqes > 0)
 			pr->rq1_skba.index = index;
 		pr->rq1_skba.os_skbs = fill_wqes;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < fill_wqes; i++) {
-		if (!skb_arr_rq1[index]) {
+	क्रम (i = 0; i < fill_wqes; i++) अणु
+		अगर (!skb_arr_rq1[index]) अणु
 			skb_arr_rq1[index] = netdev_alloc_skb(dev,
 							      EHEA_L_PKT_SIZE);
-			if (!skb_arr_rq1[index]) {
+			अगर (!skb_arr_rq1[index]) अणु
 				pr->rq1_skba.os_skbs = fill_wqes - i;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		index--;
 		index &= max_index_mask;
 		adder++;
-	}
+	पूर्ण
 
-	if (adder == 0)
-		return;
+	अगर (adder == 0)
+		वापस;
 
-	/* Ring doorbell */
+	/* Ring करोorbell */
 	ehea_update_rq1a(pr->qp, adder);
-}
+पूर्ण
 
-static void ehea_init_fill_rq1(struct ehea_port_res *pr, int nr_rq1a)
-{
-	struct sk_buff **skb_arr_rq1 = pr->rq1_skba.arr;
-	struct net_device *dev = pr->port->netdev;
-	int i;
+अटल व्योम ehea_init_fill_rq1(काष्ठा ehea_port_res *pr, पूर्णांक nr_rq1a)
+अणु
+	काष्ठा sk_buff **skb_arr_rq1 = pr->rq1_skba.arr;
+	काष्ठा net_device *dev = pr->port->netdev;
+	पूर्णांक i;
 
-	if (nr_rq1a > pr->rq1_skba.len) {
+	अगर (nr_rq1a > pr->rq1_skba.len) अणु
 		netdev_err(dev, "NR_RQ1A bigger than skb array len\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < nr_rq1a; i++) {
+	क्रम (i = 0; i < nr_rq1a; i++) अणु
 		skb_arr_rq1[i] = netdev_alloc_skb(dev, EHEA_L_PKT_SIZE);
-		if (!skb_arr_rq1[i])
-			break;
-	}
-	/* Ring doorbell */
+		अगर (!skb_arr_rq1[i])
+			अवरोध;
+	पूर्ण
+	/* Ring करोorbell */
 	ehea_update_rq1a(pr->qp, i - 1);
-}
+पूर्ण
 
-static int ehea_refill_rq_def(struct ehea_port_res *pr,
-			      struct ehea_q_skb_arr *q_skba, int rq_nr,
-			      int num_wqes, int wqe_type, int packet_size)
-{
-	struct net_device *dev = pr->port->netdev;
-	struct ehea_qp *qp = pr->qp;
-	struct sk_buff **skb_arr = q_skba->arr;
-	struct ehea_rwqe *rwqe;
-	int i, index, max_index_mask, fill_wqes;
-	int adder = 0;
-	int ret = 0;
+अटल पूर्णांक ehea_refill_rq_def(काष्ठा ehea_port_res *pr,
+			      काष्ठा ehea_q_skb_arr *q_skba, पूर्णांक rq_nr,
+			      पूर्णांक num_wqes, पूर्णांक wqe_type, पूर्णांक packet_size)
+अणु
+	काष्ठा net_device *dev = pr->port->netdev;
+	काष्ठा ehea_qp *qp = pr->qp;
+	काष्ठा sk_buff **skb_arr = q_skba->arr;
+	काष्ठा ehea_rwqe *rwqe;
+	पूर्णांक i, index, max_index_mask, fill_wqes;
+	पूर्णांक adder = 0;
+	पूर्णांक ret = 0;
 
 	fill_wqes = q_skba->os_skbs + num_wqes;
 	q_skba->os_skbs = 0;
 
-	if (unlikely(test_bit(__EHEA_STOP_XFER, &ehea_driver_flags))) {
+	अगर (unlikely(test_bit(__EHEA_STOP_XFER, &ehea_driver_flags))) अणु
 		q_skba->os_skbs = fill_wqes;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	index = q_skba->index;
 	max_index_mask = q_skba->len - 1;
-	for (i = 0; i < fill_wqes; i++) {
-		u64 tmp_addr;
-		struct sk_buff *skb;
+	क्रम (i = 0; i < fill_wqes; i++) अणु
+		u64 पंचांगp_addr;
+		काष्ठा sk_buff *skb;
 
 		skb = netdev_alloc_skb_ip_align(dev, packet_size);
-		if (!skb) {
+		अगर (!skb) अणु
 			q_skba->os_skbs = fill_wqes - i;
-			if (q_skba->os_skbs == q_skba->len - 2) {
+			अगर (q_skba->os_skbs == q_skba->len - 2) अणु
 				netdev_info(pr->port->netdev,
 					    "rq%i ran dry - no mem for skb\n",
 					    rq_nr);
 				ret = -ENOMEM;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		skb_arr[index] = skb;
-		tmp_addr = ehea_map_vaddr(skb->data);
-		if (tmp_addr == -1) {
+		पंचांगp_addr = ehea_map_vaddr(skb->data);
+		अगर (पंचांगp_addr == -1) अणु
 			dev_consume_skb_any(skb);
 			q_skba->os_skbs = fill_wqes - i;
 			ret = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rwqe = ehea_get_next_rwqe(qp, rq_nr);
 		rwqe->wr_id = EHEA_BMASK_SET(EHEA_WR_ID_TYPE, wqe_type)
 			    | EHEA_BMASK_SET(EHEA_WR_ID_INDEX, index);
 		rwqe->sg_list[0].l_key = pr->recv_mr.lkey;
-		rwqe->sg_list[0].vaddr = tmp_addr;
+		rwqe->sg_list[0].vaddr = पंचांगp_addr;
 		rwqe->sg_list[0].len = packet_size;
 		rwqe->data_segments = 1;
 
 		index++;
 		index &= max_index_mask;
 		adder++;
-	}
+	पूर्ण
 
 	q_skba->index = index;
-	if (adder == 0)
-		goto out;
+	अगर (adder == 0)
+		जाओ out;
 
-	/* Ring doorbell */
+	/* Ring करोorbell */
 	iosync();
-	if (rq_nr == 2)
+	अगर (rq_nr == 2)
 		ehea_update_rq2a(pr->qp, adder);
-	else
+	अन्यथा
 		ehea_update_rq3a(pr->qp, adder);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int ehea_refill_rq2(struct ehea_port_res *pr, int nr_of_wqes)
-{
-	return ehea_refill_rq_def(pr, &pr->rq2_skba, 2,
+अटल पूर्णांक ehea_refill_rq2(काष्ठा ehea_port_res *pr, पूर्णांक nr_of_wqes)
+अणु
+	वापस ehea_refill_rq_def(pr, &pr->rq2_skba, 2,
 				  nr_of_wqes, EHEA_RWQE2_TYPE,
 				  EHEA_RQ2_PKT_SIZE);
-}
+पूर्ण
 
 
-static int ehea_refill_rq3(struct ehea_port_res *pr, int nr_of_wqes)
-{
-	return ehea_refill_rq_def(pr, &pr->rq3_skba, 3,
+अटल पूर्णांक ehea_refill_rq3(काष्ठा ehea_port_res *pr, पूर्णांक nr_of_wqes)
+अणु
+	वापस ehea_refill_rq_def(pr, &pr->rq3_skba, 3,
 				  nr_of_wqes, EHEA_RWQE3_TYPE,
 				  EHEA_MAX_PACKET_SIZE);
-}
+पूर्ण
 
-static inline int ehea_check_cqe(struct ehea_cqe *cqe, int *rq_num)
-{
+अटल अंतरभूत पूर्णांक ehea_check_cqe(काष्ठा ehea_cqe *cqe, पूर्णांक *rq_num)
+अणु
 	*rq_num = (cqe->type & EHEA_CQE_TYPE_RQ) >> 5;
-	if ((cqe->status & EHEA_CQE_STAT_ERR_MASK) == 0)
-		return 0;
-	if (((cqe->status & EHEA_CQE_STAT_ERR_TCP) != 0) &&
+	अगर ((cqe->status & EHEA_CQE_STAT_ERR_MASK) == 0)
+		वापस 0;
+	अगर (((cqe->status & EHEA_CQE_STAT_ERR_TCP) != 0) &&
 	    (cqe->header_length == 0))
-		return 0;
-	return -EINVAL;
-}
+		वापस 0;
+	वापस -EINVAL;
+पूर्ण
 
-static inline void ehea_fill_skb(struct net_device *dev,
-				 struct sk_buff *skb, struct ehea_cqe *cqe,
-				 struct ehea_port_res *pr)
-{
-	int length = cqe->num_bytes_transfered - 4;	/*remove CRC */
+अटल अंतरभूत व्योम ehea_fill_skb(काष्ठा net_device *dev,
+				 काष्ठा sk_buff *skb, काष्ठा ehea_cqe *cqe,
+				 काष्ठा ehea_port_res *pr)
+अणु
+	पूर्णांक length = cqe->num_bytes_transfered - 4;	/*हटाओ CRC */
 
 	skb_put(skb, length);
 	skb->protocol = eth_type_trans(skb, dev);
 
 	/* The packet was not an IPV4 packet so a complemented checksum was
 	   calculated. The value is found in the Internet Checksum field. */
-	if (cqe->status & EHEA_CQE_BLIND_CKSUM) {
+	अगर (cqe->status & EHEA_CQE_BLIND_CKSUM) अणु
 		skb->ip_summed = CHECKSUM_COMPLETE;
 		skb->csum = csum_unfold(~cqe->inet_checksum_value);
-	} else
+	पूर्ण अन्यथा
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
 
 	skb_record_rx_queue(skb, pr - &pr->port->port_res[0]);
-}
+पूर्ण
 
-static inline struct sk_buff *get_skb_by_index(struct sk_buff **skb_array,
-					       int arr_len,
-					       struct ehea_cqe *cqe)
-{
-	int skb_index = EHEA_BMASK_GET(EHEA_WR_ID_INDEX, cqe->wr_id);
-	struct sk_buff *skb;
-	void *pref;
-	int x;
+अटल अंतरभूत काष्ठा sk_buff *get_skb_by_index(काष्ठा sk_buff **skb_array,
+					       पूर्णांक arr_len,
+					       काष्ठा ehea_cqe *cqe)
+अणु
+	पूर्णांक skb_index = EHEA_BMASK_GET(EHEA_WR_ID_INDEX, cqe->wr_id);
+	काष्ठा sk_buff *skb;
+	व्योम *pref;
+	पूर्णांक x;
 
 	x = skb_index + 1;
 	x &= (arr_len - 1);
 
 	pref = skb_array[x];
-	if (pref) {
+	अगर (pref) अणु
 		prefetchw(pref);
 		prefetchw(pref + EHEA_CACHE_LINE);
 
@@ -579,164 +580,164 @@ static inline struct sk_buff *get_skb_by_index(struct sk_buff **skb_array,
 		prefetch(pref + EHEA_CACHE_LINE);
 		prefetch(pref + EHEA_CACHE_LINE * 2);
 		prefetch(pref + EHEA_CACHE_LINE * 3);
-	}
+	पूर्ण
 
 	skb = skb_array[skb_index];
-	skb_array[skb_index] = NULL;
-	return skb;
-}
+	skb_array[skb_index] = शून्य;
+	वापस skb;
+पूर्ण
 
-static inline struct sk_buff *get_skb_by_index_ll(struct sk_buff **skb_array,
-						  int arr_len, int wqe_index)
-{
-	struct sk_buff *skb;
-	void *pref;
-	int x;
+अटल अंतरभूत काष्ठा sk_buff *get_skb_by_index_ll(काष्ठा sk_buff **skb_array,
+						  पूर्णांक arr_len, पूर्णांक wqe_index)
+अणु
+	काष्ठा sk_buff *skb;
+	व्योम *pref;
+	पूर्णांक x;
 
 	x = wqe_index + 1;
 	x &= (arr_len - 1);
 
 	pref = skb_array[x];
-	if (pref) {
+	अगर (pref) अणु
 		prefetchw(pref);
 		prefetchw(pref + EHEA_CACHE_LINE);
 
 		pref = (skb_array[x]->data);
 		prefetchw(pref);
 		prefetchw(pref + EHEA_CACHE_LINE);
-	}
+	पूर्ण
 
 	skb = skb_array[wqe_index];
-	skb_array[wqe_index] = NULL;
-	return skb;
-}
+	skb_array[wqe_index] = शून्य;
+	वापस skb;
+पूर्ण
 
-static int ehea_treat_poll_error(struct ehea_port_res *pr, int rq,
-				 struct ehea_cqe *cqe, int *processed_rq2,
-				 int *processed_rq3)
-{
-	struct sk_buff *skb;
+अटल पूर्णांक ehea_treat_poll_error(काष्ठा ehea_port_res *pr, पूर्णांक rq,
+				 काष्ठा ehea_cqe *cqe, पूर्णांक *processed_rq2,
+				 पूर्णांक *processed_rq3)
+अणु
+	काष्ठा sk_buff *skb;
 
-	if (cqe->status & EHEA_CQE_STAT_ERR_TCP)
+	अगर (cqe->status & EHEA_CQE_STAT_ERR_TCP)
 		pr->p_stats.err_tcp_cksum++;
-	if (cqe->status & EHEA_CQE_STAT_ERR_IP)
+	अगर (cqe->status & EHEA_CQE_STAT_ERR_IP)
 		pr->p_stats.err_ip_cksum++;
-	if (cqe->status & EHEA_CQE_STAT_ERR_CRC)
+	अगर (cqe->status & EHEA_CQE_STAT_ERR_CRC)
 		pr->p_stats.err_frame_crc++;
 
-	if (rq == 2) {
+	अगर (rq == 2) अणु
 		*processed_rq2 += 1;
 		skb = get_skb_by_index(pr->rq2_skba.arr, pr->rq2_skba.len, cqe);
-		dev_kfree_skb(skb);
-	} else if (rq == 3) {
+		dev_kमुक्त_skb(skb);
+	पूर्ण अन्यथा अगर (rq == 3) अणु
 		*processed_rq3 += 1;
 		skb = get_skb_by_index(pr->rq3_skba.arr, pr->rq3_skba.len, cqe);
-		dev_kfree_skb(skb);
-	}
+		dev_kमुक्त_skb(skb);
+	पूर्ण
 
-	if (cqe->status & EHEA_CQE_STAT_FAT_ERR_MASK) {
-		if (netif_msg_rx_err(pr->port)) {
+	अगर (cqe->status & EHEA_CQE_STAT_FAT_ERR_MASK) अणु
+		अगर (netअगर_msg_rx_err(pr->port)) अणु
 			pr_err("Critical receive error for QP %d. Resetting port.\n",
 			       pr->qp->init_attr.qp_nr);
-			ehea_dump(cqe, sizeof(*cqe), "CQE");
-		}
+			ehea_dump(cqe, माप(*cqe), "CQE");
+		पूर्ण
 		ehea_schedule_port_reset(pr->port);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ehea_proc_rwqes(struct net_device *dev,
-			   struct ehea_port_res *pr,
-			   int budget)
-{
-	struct ehea_port *port = pr->port;
-	struct ehea_qp *qp = pr->qp;
-	struct ehea_cqe *cqe;
-	struct sk_buff *skb;
-	struct sk_buff **skb_arr_rq1 = pr->rq1_skba.arr;
-	struct sk_buff **skb_arr_rq2 = pr->rq2_skba.arr;
-	struct sk_buff **skb_arr_rq3 = pr->rq3_skba.arr;
-	int skb_arr_rq1_len = pr->rq1_skba.len;
-	int skb_arr_rq2_len = pr->rq2_skba.len;
-	int skb_arr_rq3_len = pr->rq3_skba.len;
-	int processed, processed_rq1, processed_rq2, processed_rq3;
+अटल पूर्णांक ehea_proc_rwqes(काष्ठा net_device *dev,
+			   काष्ठा ehea_port_res *pr,
+			   पूर्णांक budget)
+अणु
+	काष्ठा ehea_port *port = pr->port;
+	काष्ठा ehea_qp *qp = pr->qp;
+	काष्ठा ehea_cqe *cqe;
+	काष्ठा sk_buff *skb;
+	काष्ठा sk_buff **skb_arr_rq1 = pr->rq1_skba.arr;
+	काष्ठा sk_buff **skb_arr_rq2 = pr->rq2_skba.arr;
+	काष्ठा sk_buff **skb_arr_rq3 = pr->rq3_skba.arr;
+	पूर्णांक skb_arr_rq1_len = pr->rq1_skba.len;
+	पूर्णांक skb_arr_rq2_len = pr->rq2_skba.len;
+	पूर्णांक skb_arr_rq3_len = pr->rq3_skba.len;
+	पूर्णांक processed, processed_rq1, processed_rq2, processed_rq3;
 	u64 processed_bytes = 0;
-	int wqe_index, last_wqe_index, rq, port_reset;
+	पूर्णांक wqe_index, last_wqe_index, rq, port_reset;
 
 	processed = processed_rq1 = processed_rq2 = processed_rq3 = 0;
 	last_wqe_index = 0;
 
 	cqe = ehea_poll_rq1(qp, &wqe_index);
-	while ((processed < budget) && cqe) {
+	जबतक ((processed < budget) && cqe) अणु
 		ehea_inc_rq1(qp);
 		processed_rq1++;
 		processed++;
-		if (netif_msg_rx_status(port))
-			ehea_dump(cqe, sizeof(*cqe), "CQE");
+		अगर (netअगर_msg_rx_status(port))
+			ehea_dump(cqe, माप(*cqe), "CQE");
 
 		last_wqe_index = wqe_index;
 		rmb();
-		if (!ehea_check_cqe(cqe, &rq)) {
-			if (rq == 1) {
+		अगर (!ehea_check_cqe(cqe, &rq)) अणु
+			अगर (rq == 1) अणु
 				/* LL RQ1 */
 				skb = get_skb_by_index_ll(skb_arr_rq1,
 							  skb_arr_rq1_len,
 							  wqe_index);
-				if (unlikely(!skb)) {
-					netif_info(port, rx_err, dev,
+				अगर (unlikely(!skb)) अणु
+					netअगर_info(port, rx_err, dev,
 						  "LL rq1: skb=NULL\n");
 
 					skb = netdev_alloc_skb(dev,
 							       EHEA_L_PKT_SIZE);
-					if (!skb)
-						break;
-				}
-				skb_copy_to_linear_data(skb, ((char *)cqe) + 64,
+					अगर (!skb)
+						अवरोध;
+				पूर्ण
+				skb_copy_to_linear_data(skb, ((अक्षर *)cqe) + 64,
 						 cqe->num_bytes_transfered - 4);
 				ehea_fill_skb(dev, skb, cqe, pr);
-			} else if (rq == 2) {
+			पूर्ण अन्यथा अगर (rq == 2) अणु
 				/* RQ2 */
 				skb = get_skb_by_index(skb_arr_rq2,
 						       skb_arr_rq2_len, cqe);
-				if (unlikely(!skb)) {
-					netif_err(port, rx_err, dev,
+				अगर (unlikely(!skb)) अणु
+					netअगर_err(port, rx_err, dev,
 						  "rq2: skb=NULL\n");
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				ehea_fill_skb(dev, skb, cqe, pr);
 				processed_rq2++;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* RQ3 */
 				skb = get_skb_by_index(skb_arr_rq3,
 						       skb_arr_rq3_len, cqe);
-				if (unlikely(!skb)) {
-					netif_err(port, rx_err, dev,
+				अगर (unlikely(!skb)) अणु
+					netअगर_err(port, rx_err, dev,
 						  "rq3: skb=NULL\n");
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				ehea_fill_skb(dev, skb, cqe, pr);
 				processed_rq3++;
-			}
+			पूर्ण
 
 			processed_bytes += skb->len;
 
-			if (cqe->status & EHEA_CQE_VLAN_TAG_XTRACT)
+			अगर (cqe->status & EHEA_CQE_VLAN_TAG_XTRACT)
 				__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q),
 						       cqe->vlan_tag);
 
 			napi_gro_receive(&pr->napi, skb);
-		} else {
+		पूर्ण अन्यथा अणु
 			pr->p_stats.poll_receive_errors++;
 			port_reset = ehea_treat_poll_error(pr, rq, cqe,
 							   &processed_rq2,
 							   &processed_rq3);
-			if (port_reset)
-				break;
-		}
+			अगर (port_reset)
+				अवरोध;
+		पूर्ण
 		cqe = ehea_poll_rq1(qp, &wqe_index);
-	}
+	पूर्ण
 
 	pr->rx_packets += processed;
 	pr->rx_bytes += processed_bytes;
@@ -745,33 +746,33 @@ static int ehea_proc_rwqes(struct net_device *dev,
 	ehea_refill_rq2(pr, processed_rq2);
 	ehea_refill_rq3(pr, processed_rq3);
 
-	return processed;
-}
+	वापस processed;
+पूर्ण
 
-#define SWQE_RESTART_CHECK 0xdeadbeaff00d0000ull
+#घोषणा SWQE_RESTART_CHECK 0xdeadbeaff00d0000ull
 
-static void reset_sq_restart_flag(struct ehea_port *port)
-{
-	int i;
+अटल व्योम reset_sq_restart_flag(काष्ठा ehea_port *port)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < port->num_def_qps; i++) {
-		struct ehea_port_res *pr = &port->port_res[i];
+	क्रम (i = 0; i < port->num_def_qps; i++) अणु
+		काष्ठा ehea_port_res *pr = &port->port_res[i];
 		pr->sq_restart_flag = 0;
-	}
+	पूर्ण
 	wake_up(&port->restart_wq);
-}
+पूर्ण
 
-static void check_sqs(struct ehea_port *port)
-{
-	struct ehea_swqe *swqe;
-	int swqe_index;
-	int i;
+अटल व्योम check_sqs(काष्ठा ehea_port *port)
+अणु
+	काष्ठा ehea_swqe *swqe;
+	पूर्णांक swqe_index;
+	पूर्णांक i;
 
-	for (i = 0; i < port->num_def_qps; i++) {
-		struct ehea_port_res *pr = &port->port_res[i];
-		int ret;
+	क्रम (i = 0; i < port->num_def_qps; i++) अणु
+		काष्ठा ehea_port_res *pr = &port->port_res[i];
+		पूर्णांक ret;
 		swqe = ehea_get_swqe(pr->qp, &swqe_index);
-		memset(swqe, 0, SWQE_HEADER_SIZE);
+		स_रखो(swqe, 0, SWQE_HEADER_SIZE);
 		atomic_dec(&pr->swqe_avail);
 
 		swqe->tx_control |= EHEA_SWQE_PURGE;
@@ -782,109 +783,109 @@ static void check_sqs(struct ehea_port *port)
 
 		ehea_post_swqe(pr->qp, swqe);
 
-		ret = wait_event_timeout(port->restart_wq,
+		ret = रुको_event_समयout(port->restart_wq,
 					 pr->sq_restart_flag == 0,
-					 msecs_to_jiffies(100));
+					 msecs_to_jअगरfies(100));
 
-		if (!ret) {
+		अगर (!ret) अणु
 			pr_err("HW/SW queues out of sync\n");
 			ehea_schedule_port_reset(pr->port);
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
-static struct ehea_cqe *ehea_proc_cqes(struct ehea_port_res *pr, int my_quota)
-{
-	struct sk_buff *skb;
-	struct ehea_cq *send_cq = pr->send_cq;
-	struct ehea_cqe *cqe;
-	int quota = my_quota;
-	int cqe_counter = 0;
-	int swqe_av = 0;
-	int index;
-	struct netdev_queue *txq = netdev_get_tx_queue(pr->port->netdev,
+अटल काष्ठा ehea_cqe *ehea_proc_cqes(काष्ठा ehea_port_res *pr, पूर्णांक my_quota)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा ehea_cq *send_cq = pr->send_cq;
+	काष्ठा ehea_cqe *cqe;
+	पूर्णांक quota = my_quota;
+	पूर्णांक cqe_counter = 0;
+	पूर्णांक swqe_av = 0;
+	पूर्णांक index;
+	काष्ठा netdev_queue *txq = netdev_get_tx_queue(pr->port->netdev,
 						pr - &pr->port->port_res[0]);
 
 	cqe = ehea_poll_cq(send_cq);
-	while (cqe && (quota > 0)) {
+	जबतक (cqe && (quota > 0)) अणु
 		ehea_inc_cq(send_cq);
 
 		cqe_counter++;
 		rmb();
 
-		if (cqe->wr_id == SWQE_RESTART_CHECK) {
+		अगर (cqe->wr_id == SWQE_RESTART_CHECK) अणु
 			pr->sq_restart_flag = 1;
 			swqe_av++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (cqe->status & EHEA_CQE_STAT_ERR_MASK) {
+		अगर (cqe->status & EHEA_CQE_STAT_ERR_MASK) अणु
 			pr_err("Bad send completion status=0x%04X\n",
 			       cqe->status);
 
-			if (netif_msg_tx_err(pr->port))
-				ehea_dump(cqe, sizeof(*cqe), "Send CQE");
+			अगर (netअगर_msg_tx_err(pr->port))
+				ehea_dump(cqe, माप(*cqe), "Send CQE");
 
-			if (cqe->status & EHEA_CQE_STAT_RESET_MASK) {
+			अगर (cqe->status & EHEA_CQE_STAT_RESET_MASK) अणु
 				pr_err("Resetting port\n");
 				ehea_schedule_port_reset(pr->port);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (netif_msg_tx_done(pr->port))
-			ehea_dump(cqe, sizeof(*cqe), "CQE");
+		अगर (netअगर_msg_tx_करोne(pr->port))
+			ehea_dump(cqe, माप(*cqe), "CQE");
 
-		if (likely(EHEA_BMASK_GET(EHEA_WR_ID_TYPE, cqe->wr_id)
-			   == EHEA_SWQE2_TYPE)) {
+		अगर (likely(EHEA_BMASK_GET(EHEA_WR_ID_TYPE, cqe->wr_id)
+			   == EHEA_SWQE2_TYPE)) अणु
 
 			index = EHEA_BMASK_GET(EHEA_WR_ID_INDEX, cqe->wr_id);
 			skb = pr->sq_skba.arr[index];
 			dev_consume_skb_any(skb);
-			pr->sq_skba.arr[index] = NULL;
-		}
+			pr->sq_skba.arr[index] = शून्य;
+		पूर्ण
 
 		swqe_av += EHEA_BMASK_GET(EHEA_WR_ID_REFILL, cqe->wr_id);
 		quota--;
 
 		cqe = ehea_poll_cq(send_cq);
-	}
+	पूर्ण
 
 	ehea_update_feca(send_cq, cqe_counter);
 	atomic_add(swqe_av, &pr->swqe_avail);
 
-	if (unlikely(netif_tx_queue_stopped(txq) &&
-		     (atomic_read(&pr->swqe_avail) >= pr->swqe_refill_th))) {
-		__netif_tx_lock(txq, smp_processor_id());
-		if (netif_tx_queue_stopped(txq) &&
-		    (atomic_read(&pr->swqe_avail) >= pr->swqe_refill_th))
-			netif_tx_wake_queue(txq);
-		__netif_tx_unlock(txq);
-	}
+	अगर (unlikely(netअगर_tx_queue_stopped(txq) &&
+		     (atomic_पढ़ो(&pr->swqe_avail) >= pr->swqe_refill_th))) अणु
+		__netअगर_tx_lock(txq, smp_processor_id());
+		अगर (netअगर_tx_queue_stopped(txq) &&
+		    (atomic_पढ़ो(&pr->swqe_avail) >= pr->swqe_refill_th))
+			netअगर_tx_wake_queue(txq);
+		__netअगर_tx_unlock(txq);
+	पूर्ण
 
 	wake_up(&pr->port->swqe_avail_wq);
 
-	return cqe;
-}
+	वापस cqe;
+पूर्ण
 
-#define EHEA_POLL_MAX_CQES 65535
+#घोषणा EHEA_POLL_MAX_CQES 65535
 
-static int ehea_poll(struct napi_struct *napi, int budget)
-{
-	struct ehea_port_res *pr = container_of(napi, struct ehea_port_res,
+अटल पूर्णांक ehea_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा ehea_port_res *pr = container_of(napi, काष्ठा ehea_port_res,
 						napi);
-	struct net_device *dev = pr->port->netdev;
-	struct ehea_cqe *cqe;
-	struct ehea_cqe *cqe_skb = NULL;
-	int wqe_index;
-	int rx = 0;
+	काष्ठा net_device *dev = pr->port->netdev;
+	काष्ठा ehea_cqe *cqe;
+	काष्ठा ehea_cqe *cqe_skb = शून्य;
+	पूर्णांक wqe_index;
+	पूर्णांक rx = 0;
 
 	cqe_skb = ehea_proc_cqes(pr, EHEA_POLL_MAX_CQES);
 	rx += ehea_proc_rwqes(dev, pr, budget - rx);
 
-	while (rx != budget) {
+	जबतक (rx != budget) अणु
 		napi_complete(napi);
 		ehea_reset_cq_ep(pr->recv_cq);
 		ehea_reset_cq_ep(pr->send_cq);
@@ -894,40 +895,40 @@ static int ehea_poll(struct napi_struct *napi, int budget)
 		cqe = ehea_poll_rq1(pr->qp, &wqe_index);
 		cqe_skb = ehea_poll_cq(pr->send_cq);
 
-		if (!cqe && !cqe_skb)
-			return rx;
+		अगर (!cqe && !cqe_skb)
+			वापस rx;
 
-		if (!napi_reschedule(napi))
-			return rx;
+		अगर (!napi_reschedule(napi))
+			वापस rx;
 
 		cqe_skb = ehea_proc_cqes(pr, EHEA_POLL_MAX_CQES);
 		rx += ehea_proc_rwqes(dev, pr, budget - rx);
-	}
+	पूर्ण
 
-	return rx;
-}
+	वापस rx;
+पूर्ण
 
-static irqreturn_t ehea_recv_irq_handler(int irq, void *param)
-{
-	struct ehea_port_res *pr = param;
+अटल irqवापस_t ehea_recv_irq_handler(पूर्णांक irq, व्योम *param)
+अणु
+	काष्ठा ehea_port_res *pr = param;
 
 	napi_schedule(&pr->napi);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t ehea_qp_aff_irq_handler(int irq, void *param)
-{
-	struct ehea_port *port = param;
-	struct ehea_eqe *eqe;
-	struct ehea_qp *qp;
+अटल irqवापस_t ehea_qp_aff_irq_handler(पूर्णांक irq, व्योम *param)
+अणु
+	काष्ठा ehea_port *port = param;
+	काष्ठा ehea_eqe *eqe;
+	काष्ठा ehea_qp *qp;
 	u32 qp_token;
 	u64 resource_type, aer, aerr;
-	int reset_port = 0;
+	पूर्णांक reset_port = 0;
 
 	eqe = ehea_poll_eq(port->qp_eq);
 
-	while (eqe) {
+	जबतक (eqe) अणु
 		qp_token = EHEA_BMASK_GET(EHEA_EQE_QP_TOKEN, eqe->entry);
 		pr_err("QP aff_err: entry=0x%llx, token=0x%x\n",
 		       eqe->entry, qp_token);
@@ -937,297 +938,297 @@ static irqreturn_t ehea_qp_aff_irq_handler(int irq, void *param)
 		resource_type = ehea_error_data(port->adapter, qp->fw_handle,
 						&aer, &aerr);
 
-		if (resource_type == EHEA_AER_RESTYPE_QP) {
-			if ((aer & EHEA_AER_RESET_MASK) ||
+		अगर (resource_type == EHEA_AER_RESTYPE_QP) अणु
+			अगर ((aer & EHEA_AER_RESET_MASK) ||
 			    (aerr & EHEA_AERR_RESET_MASK))
 				 reset_port = 1;
-		} else
-			reset_port = 1;   /* Reset in case of CQ or EQ error */
+		पूर्ण अन्यथा
+			reset_port = 1;   /* Reset in हाल of CQ or EQ error */
 
 		eqe = ehea_poll_eq(port->qp_eq);
-	}
+	पूर्ण
 
-	if (reset_port) {
+	अगर (reset_port) अणु
 		pr_err("Resetting port\n");
 		ehea_schedule_port_reset(port);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct ehea_port *ehea_get_port(struct ehea_adapter *adapter,
-				       int logical_port)
-{
-	int i;
+अटल काष्ठा ehea_port *ehea_get_port(काष्ठा ehea_adapter *adapter,
+				       पूर्णांक logical_port)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < EHEA_MAX_PORTS; i++)
-		if (adapter->port[i])
-			if (adapter->port[i]->logical_port_id == logical_port)
-				return adapter->port[i];
-	return NULL;
-}
+	क्रम (i = 0; i < EHEA_MAX_PORTS; i++)
+		अगर (adapter->port[i])
+			अगर (adapter->port[i]->logical_port_id == logical_port)
+				वापस adapter->port[i];
+	वापस शून्य;
+पूर्ण
 
-int ehea_sense_port_attr(struct ehea_port *port)
-{
-	int ret;
+पूर्णांक ehea_sense_port_attr(काष्ठा ehea_port *port)
+अणु
+	पूर्णांक ret;
 	u64 hret;
-	struct hcp_ehea_port_cb0 *cb0;
+	काष्ठा hcp_ehea_port_cb0 *cb0;
 
 	/* may be called via ehea_neq_tasklet() */
-	cb0 = (void *)get_zeroed_page(GFP_ATOMIC);
-	if (!cb0) {
+	cb0 = (व्योम *)get_zeroed_page(GFP_ATOMIC);
+	अगर (!cb0) अणु
 		pr_err("no mem for cb0\n");
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hret = ehea_h_query_ehea_port(port->adapter->handle,
 				      port->logical_port_id, H_PORT_CB0,
 				      EHEA_BMASK_SET(H_PORT_CB0_ALL, 0xFFFF),
 				      cb0);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		ret = -EIO;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	/* MAC address */
 	port->mac_addr = cb0->port_mac_addr << 16;
 
-	if (!is_valid_ether_addr((u8 *)&port->mac_addr)) {
+	अगर (!is_valid_ether_addr((u8 *)&port->mac_addr)) अणु
 		ret = -EADDRNOTAVAIL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	/* Port speed */
-	switch (cb0->port_speed) {
-	case H_SPEED_10M_H:
+	चयन (cb0->port_speed) अणु
+	हाल H_SPEED_10M_H:
 		port->port_speed = EHEA_SPEED_10M;
 		port->full_duplex = 0;
-		break;
-	case H_SPEED_10M_F:
+		अवरोध;
+	हाल H_SPEED_10M_F:
 		port->port_speed = EHEA_SPEED_10M;
 		port->full_duplex = 1;
-		break;
-	case H_SPEED_100M_H:
+		अवरोध;
+	हाल H_SPEED_100M_H:
 		port->port_speed = EHEA_SPEED_100M;
 		port->full_duplex = 0;
-		break;
-	case H_SPEED_100M_F:
+		अवरोध;
+	हाल H_SPEED_100M_F:
 		port->port_speed = EHEA_SPEED_100M;
 		port->full_duplex = 1;
-		break;
-	case H_SPEED_1G_F:
+		अवरोध;
+	हाल H_SPEED_1G_F:
 		port->port_speed = EHEA_SPEED_1G;
 		port->full_duplex = 1;
-		break;
-	case H_SPEED_10G_F:
+		अवरोध;
+	हाल H_SPEED_10G_F:
 		port->port_speed = EHEA_SPEED_10G;
 		port->full_duplex = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		port->port_speed = 0;
 		port->full_duplex = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	port->autoneg = 1;
-	port->num_mcs = cb0->num_default_qps;
+	port->स्वतःneg = 1;
+	port->num_mcs = cb0->num_शेष_qps;
 
-	/* Number of default QPs */
-	if (use_mcs)
-		port->num_def_qps = cb0->num_default_qps;
-	else
+	/* Number of शेष QPs */
+	अगर (use_mcs)
+		port->num_def_qps = cb0->num_शेष_qps;
+	अन्यथा
 		port->num_def_qps = 1;
 
-	if (!port->num_def_qps) {
+	अगर (!port->num_def_qps) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	ret = 0;
-out_free:
-	if (ret || netif_msg_probe(port))
-		ehea_dump(cb0, sizeof(*cb0), "ehea_sense_port_attr");
-	free_page((unsigned long)cb0);
+out_मुक्त:
+	अगर (ret || netअगर_msg_probe(port))
+		ehea_dump(cb0, माप(*cb0), "ehea_sense_port_attr");
+	मुक्त_page((अचिन्हित दीर्घ)cb0);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ehea_set_portspeed(struct ehea_port *port, u32 port_speed)
-{
-	struct hcp_ehea_port_cb4 *cb4;
+पूर्णांक ehea_set_portspeed(काष्ठा ehea_port *port, u32 port_speed)
+अणु
+	काष्ठा hcp_ehea_port_cb4 *cb4;
 	u64 hret;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	cb4 = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!cb4) {
+	cb4 = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!cb4) अणु
 		pr_err("no mem for cb4\n");
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	cb4->port_speed = port_speed;
 
-	netif_carrier_off(port->netdev);
+	netअगर_carrier_off(port->netdev);
 
-	hret = ehea_h_modify_ehea_port(port->adapter->handle,
+	hret = ehea_h_modअगरy_ehea_port(port->adapter->handle,
 				       port->logical_port_id,
 				       H_PORT_CB4, H_PORT_CB4_SPEED, cb4);
-	if (hret == H_SUCCESS) {
-		port->autoneg = port_speed == EHEA_SPEED_AUTONEG ? 1 : 0;
+	अगर (hret == H_SUCCESS) अणु
+		port->स्वतःneg = port_speed == EHEA_SPEED_AUTONEG ? 1 : 0;
 
 		hret = ehea_h_query_ehea_port(port->adapter->handle,
 					      port->logical_port_id,
 					      H_PORT_CB4, H_PORT_CB4_SPEED,
 					      cb4);
-		if (hret == H_SUCCESS) {
-			switch (cb4->port_speed) {
-			case H_SPEED_10M_H:
+		अगर (hret == H_SUCCESS) अणु
+			चयन (cb4->port_speed) अणु
+			हाल H_SPEED_10M_H:
 				port->port_speed = EHEA_SPEED_10M;
 				port->full_duplex = 0;
-				break;
-			case H_SPEED_10M_F:
+				अवरोध;
+			हाल H_SPEED_10M_F:
 				port->port_speed = EHEA_SPEED_10M;
 				port->full_duplex = 1;
-				break;
-			case H_SPEED_100M_H:
+				अवरोध;
+			हाल H_SPEED_100M_H:
 				port->port_speed = EHEA_SPEED_100M;
 				port->full_duplex = 0;
-				break;
-			case H_SPEED_100M_F:
+				अवरोध;
+			हाल H_SPEED_100M_F:
 				port->port_speed = EHEA_SPEED_100M;
 				port->full_duplex = 1;
-				break;
-			case H_SPEED_1G_F:
+				अवरोध;
+			हाल H_SPEED_1G_F:
 				port->port_speed = EHEA_SPEED_1G;
 				port->full_duplex = 1;
-				break;
-			case H_SPEED_10G_F:
+				अवरोध;
+			हाल H_SPEED_10G_F:
 				port->port_speed = EHEA_SPEED_10G;
 				port->full_duplex = 1;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				port->port_speed = 0;
 				port->full_duplex = 0;
-				break;
-			}
-		} else {
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			pr_err("Failed sensing port speed\n");
 			ret = -EIO;
-		}
-	} else {
-		if (hret == H_AUTHORITY) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (hret == H_AUTHORITY) अणु
 			pr_info("Hypervisor denied setting port speed\n");
 			ret = -EPERM;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = -EIO;
 			pr_err("Failed setting port speed\n");
-		}
-	}
-	if (!prop_carrier_state || (port->phy_link == EHEA_PHY_LINK_UP))
-		netif_carrier_on(port->netdev);
+		पूर्ण
+	पूर्ण
+	अगर (!prop_carrier_state || (port->phy_link == EHEA_PHY_LINK_UP))
+		netअगर_carrier_on(port->netdev);
 
-	free_page((unsigned long)cb4);
+	मुक्त_page((अचिन्हित दीर्घ)cb4);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ehea_parse_eqe(struct ehea_adapter *adapter, u64 eqe)
-{
-	int ret;
+अटल व्योम ehea_parse_eqe(काष्ठा ehea_adapter *adapter, u64 eqe)
+अणु
+	पूर्णांक ret;
 	u8 ec;
 	u8 portnum;
-	struct ehea_port *port;
-	struct net_device *dev;
+	काष्ठा ehea_port *port;
+	काष्ठा net_device *dev;
 
 	ec = EHEA_BMASK_GET(NEQE_EVENT_CODE, eqe);
 	portnum = EHEA_BMASK_GET(NEQE_PORTNUM, eqe);
 	port = ehea_get_port(adapter, portnum);
-	if (!port) {
-		netdev_err(NULL, "unknown portnum %x\n", portnum);
-		return;
-	}
+	अगर (!port) अणु
+		netdev_err(शून्य, "unknown portnum %x\n", portnum);
+		वापस;
+	पूर्ण
 	dev = port->netdev;
 
-	switch (ec) {
-	case EHEA_EC_PORTSTATE_CHG:	/* port state change */
+	चयन (ec) अणु
+	हाल EHEA_EC_PORTSTATE_CHG:	/* port state change */
 
-		if (EHEA_BMASK_GET(NEQE_PORT_UP, eqe)) {
-			if (!netif_carrier_ok(dev)) {
+		अगर (EHEA_BMASK_GET(NEQE_PORT_UP, eqe)) अणु
+			अगर (!netअगर_carrier_ok(dev)) अणु
 				ret = ehea_sense_port_attr(port);
-				if (ret) {
+				अगर (ret) अणु
 					netdev_err(dev, "failed resensing port attributes\n");
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
-				netif_info(port, link, dev,
+				netअगर_info(port, link, dev,
 					   "Logical port up: %dMbps %s Duplex\n",
 					   port->port_speed,
 					   port->full_duplex == 1 ?
 					   "Full" : "Half");
 
-				netif_carrier_on(dev);
-				netif_wake_queue(dev);
-			}
-		} else
-			if (netif_carrier_ok(dev)) {
-				netif_info(port, link, dev,
+				netअगर_carrier_on(dev);
+				netअगर_wake_queue(dev);
+			पूर्ण
+		पूर्ण अन्यथा
+			अगर (netअगर_carrier_ok(dev)) अणु
+				netअगर_info(port, link, dev,
 					   "Logical port down\n");
-				netif_carrier_off(dev);
-				netif_tx_disable(dev);
-			}
+				netअगर_carrier_off(dev);
+				netअगर_tx_disable(dev);
+			पूर्ण
 
-		if (EHEA_BMASK_GET(NEQE_EXTSWITCH_PORT_UP, eqe)) {
+		अगर (EHEA_BMASK_GET(NEQE_EXTSWITCH_PORT_UP, eqe)) अणु
 			port->phy_link = EHEA_PHY_LINK_UP;
-			netif_info(port, link, dev,
+			netअगर_info(port, link, dev,
 				   "Physical port up\n");
-			if (prop_carrier_state)
-				netif_carrier_on(dev);
-		} else {
+			अगर (prop_carrier_state)
+				netअगर_carrier_on(dev);
+		पूर्ण अन्यथा अणु
 			port->phy_link = EHEA_PHY_LINK_DOWN;
-			netif_info(port, link, dev,
+			netअगर_info(port, link, dev,
 				   "Physical port down\n");
-			if (prop_carrier_state)
-				netif_carrier_off(dev);
-		}
+			अगर (prop_carrier_state)
+				netअगर_carrier_off(dev);
+		पूर्ण
 
-		if (EHEA_BMASK_GET(NEQE_EXTSWITCH_PRIMARY, eqe))
+		अगर (EHEA_BMASK_GET(NEQE_EXTSWITCH_PRIMARY, eqe))
 			netdev_info(dev,
 				    "External switch port is primary port\n");
-		else
+		अन्यथा
 			netdev_info(dev,
 				    "External switch port is backup port\n");
 
-		break;
-	case EHEA_EC_ADAPTER_MALFUNC:
+		अवरोध;
+	हाल EHEA_EC_ADAPTER_MALFUNC:
 		netdev_err(dev, "Adapter malfunction\n");
-		break;
-	case EHEA_EC_PORT_MALFUNC:
+		अवरोध;
+	हाल EHEA_EC_PORT_MALFUNC:
 		netdev_info(dev, "Port malfunction\n");
-		netif_carrier_off(dev);
-		netif_tx_disable(dev);
-		break;
-	default:
+		netअगर_carrier_off(dev);
+		netअगर_tx_disable(dev);
+		अवरोध;
+	शेष:
 		netdev_err(dev, "unknown event code %x, eqe=0x%llX\n", ec, eqe);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void ehea_neq_tasklet(struct tasklet_struct *t)
-{
-	struct ehea_adapter *adapter = from_tasklet(adapter, t, neq_tasklet);
-	struct ehea_eqe *eqe;
+अटल व्योम ehea_neq_tasklet(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा ehea_adapter *adapter = from_tasklet(adapter, t, neq_tasklet);
+	काष्ठा ehea_eqe *eqe;
 	u64 event_mask;
 
 	eqe = ehea_poll_eq(adapter->neq);
 	pr_debug("eqe=%p\n", eqe);
 
-	while (eqe) {
-		pr_debug("*eqe=%lx\n", (unsigned long) eqe->entry);
+	जबतक (eqe) अणु
+		pr_debug("*eqe=%lx\n", (अचिन्हित दीर्घ) eqe->entry);
 		ehea_parse_eqe(adapter, eqe->entry);
 		eqe = ehea_poll_eq(adapter->neq);
 		pr_debug("next eqe=%p\n", eqe);
-	}
+	पूर्ण
 
 	event_mask = EHEA_BMASK_SET(NELR_PORTSTATE_CHG, 1)
 		   | EHEA_BMASK_SET(NELR_ADAPTER_MALFUNC, 1)
@@ -1235,20 +1236,20 @@ static void ehea_neq_tasklet(struct tasklet_struct *t)
 
 	ehea_h_reset_events(adapter->handle,
 			    adapter->neq->fw_handle, event_mask);
-}
+पूर्ण
 
-static irqreturn_t ehea_interrupt_neq(int irq, void *param)
-{
-	struct ehea_adapter *adapter = param;
+अटल irqवापस_t ehea_पूर्णांकerrupt_neq(पूर्णांक irq, व्योम *param)
+अणु
+	काष्ठा ehea_adapter *adapter = param;
 	tasklet_hi_schedule(&adapter->neq_tasklet);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
-static int ehea_fill_port_res(struct ehea_port_res *pr)
-{
-	int ret;
-	struct ehea_qp_init_attr *init_attr = &pr->qp->init_attr;
+अटल पूर्णांक ehea_fill_port_res(काष्ठा ehea_port_res *pr)
+अणु
+	पूर्णांक ret;
+	काष्ठा ehea_qp_init_attr *init_attr = &pr->qp->init_attr;
 
 	ehea_init_fill_rq1(pr, pr->rq1_skba.len);
 
@@ -1256,100 +1257,100 @@ static int ehea_fill_port_res(struct ehea_port_res *pr)
 
 	ret |= ehea_refill_rq3(pr, init_attr->act_nr_rwqes_rq3 - 1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ehea_reg_interrupts(struct net_device *dev)
-{
-	struct ehea_port *port = netdev_priv(dev);
-	struct ehea_port_res *pr;
-	int i, ret;
+अटल पूर्णांक ehea_reg_पूर्णांकerrupts(काष्ठा net_device *dev)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
+	काष्ठा ehea_port_res *pr;
+	पूर्णांक i, ret;
 
 
-	snprintf(port->int_aff_name, EHEA_IRQ_NAME_SIZE - 1, "%s-aff",
+	snम_लिखो(port->पूर्णांक_aff_name, EHEA_IRQ_NAME_SIZE - 1, "%s-aff",
 		 dev->name);
 
 	ret = ibmebus_request_irq(port->qp_eq->attr.ist1,
 				  ehea_qp_aff_irq_handler,
-				  0, port->int_aff_name, port);
-	if (ret) {
+				  0, port->पूर्णांक_aff_name, port);
+	अगर (ret) अणु
 		netdev_err(dev, "failed registering irq for qp_aff_irq_handler:ist=%X\n",
 			   port->qp_eq->attr.ist1);
-		goto out_free_qpeq;
-	}
+		जाओ out_मुक्त_qpeq;
+	पूर्ण
 
-	netif_info(port, ifup, dev,
+	netअगर_info(port, अगरup, dev,
 		   "irq_handle 0x%X for function qp_aff_irq_handler registered\n",
 		   port->qp_eq->attr.ist1);
 
 
-	for (i = 0; i < port->num_def_qps; i++) {
+	क्रम (i = 0; i < port->num_def_qps; i++) अणु
 		pr = &port->port_res[i];
-		snprintf(pr->int_send_name, EHEA_IRQ_NAME_SIZE - 1,
+		snम_लिखो(pr->पूर्णांक_send_name, EHEA_IRQ_NAME_SIZE - 1,
 			 "%s-queue%d", dev->name, i);
 		ret = ibmebus_request_irq(pr->eq->attr.ist1,
 					  ehea_recv_irq_handler,
-					  0, pr->int_send_name, pr);
-		if (ret) {
+					  0, pr->पूर्णांक_send_name, pr);
+		अगर (ret) अणु
 			netdev_err(dev, "failed registering irq for ehea_queue port_res_nr:%d, ist=%X\n",
 				   i, pr->eq->attr.ist1);
-			goto out_free_req;
-		}
-		netif_info(port, ifup, dev,
+			जाओ out_मुक्त_req;
+		पूर्ण
+		netअगर_info(port, अगरup, dev,
 			   "irq_handle 0x%X for function ehea_queue_int %d registered\n",
 			   pr->eq->attr.ist1, i);
-	}
+	पूर्ण
 out:
-	return ret;
+	वापस ret;
 
 
-out_free_req:
-	while (--i >= 0) {
+out_मुक्त_req:
+	जबतक (--i >= 0) अणु
 		u32 ist = port->port_res[i].eq->attr.ist1;
-		ibmebus_free_irq(ist, &port->port_res[i]);
-	}
+		ibmebus_मुक्त_irq(ist, &port->port_res[i]);
+	पूर्ण
 
-out_free_qpeq:
-	ibmebus_free_irq(port->qp_eq->attr.ist1, port);
+out_मुक्त_qpeq:
+	ibmebus_मुक्त_irq(port->qp_eq->attr.ist1, port);
 	i = port->num_def_qps;
 
-	goto out;
+	जाओ out;
 
-}
+पूर्ण
 
-static void ehea_free_interrupts(struct net_device *dev)
-{
-	struct ehea_port *port = netdev_priv(dev);
-	struct ehea_port_res *pr;
-	int i;
+अटल व्योम ehea_मुक्त_पूर्णांकerrupts(काष्ठा net_device *dev)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
+	काष्ठा ehea_port_res *pr;
+	पूर्णांक i;
 
 	/* send */
 
-	for (i = 0; i < port->num_def_qps; i++) {
+	क्रम (i = 0; i < port->num_def_qps; i++) अणु
 		pr = &port->port_res[i];
-		ibmebus_free_irq(pr->eq->attr.ist1, pr);
-		netif_info(port, intr, dev,
+		ibmebus_मुक्त_irq(pr->eq->attr.ist1, pr);
+		netअगर_info(port, पूर्णांकr, dev,
 			   "free send irq for res %d with handle 0x%X\n",
 			   i, pr->eq->attr.ist1);
-	}
+	पूर्ण
 
 	/* associated events */
-	ibmebus_free_irq(port->qp_eq->attr.ist1, port);
-	netif_info(port, intr, dev,
+	ibmebus_मुक्त_irq(port->qp_eq->attr.ist1, port);
+	netअगर_info(port, पूर्णांकr, dev,
 		   "associated event interrupt for handle 0x%X freed\n",
 		   port->qp_eq->attr.ist1);
-}
+पूर्ण
 
-static int ehea_configure_port(struct ehea_port *port)
-{
-	int ret, i;
+अटल पूर्णांक ehea_configure_port(काष्ठा ehea_port *port)
+अणु
+	पूर्णांक ret, i;
 	u64 hret, mask;
-	struct hcp_ehea_port_cb0 *cb0;
+	काष्ठा hcp_ehea_port_cb0 *cb0;
 
 	ret = -ENOMEM;
-	cb0 = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!cb0)
-		goto out;
+	cb0 = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!cb0)
+		जाओ out;
 
 	cb0->port_rc = EHEA_BMASK_SET(PXLY_RC_VALID, 1)
 		     | EHEA_BMASK_SET(PXLY_RC_IP_CHKSUM, 1)
@@ -1359,88 +1360,88 @@ static int ehea_configure_port(struct ehea_port *port)
 				      PXLY_RC_VLAN_FILTER)
 		     | EHEA_BMASK_SET(PXLY_RC_JUMBO_FRAME, 1);
 
-	for (i = 0; i < port->num_mcs; i++)
-		if (use_mcs)
-			cb0->default_qpn_arr[i] =
+	क्रम (i = 0; i < port->num_mcs; i++)
+		अगर (use_mcs)
+			cb0->शेष_qpn_arr[i] =
 				port->port_res[i].qp->init_attr.qp_nr;
-		else
-			cb0->default_qpn_arr[i] =
+		अन्यथा
+			cb0->शेष_qpn_arr[i] =
 				port->port_res[0].qp->init_attr.qp_nr;
 
-	if (netif_msg_ifup(port))
-		ehea_dump(cb0, sizeof(*cb0), "ehea_configure_port");
+	अगर (netअगर_msg_अगरup(port))
+		ehea_dump(cb0, माप(*cb0), "ehea_configure_port");
 
 	mask = EHEA_BMASK_SET(H_PORT_CB0_PRC, 1)
 	     | EHEA_BMASK_SET(H_PORT_CB0_DEFQPNARRAY, 1);
 
-	hret = ehea_h_modify_ehea_port(port->adapter->handle,
+	hret = ehea_h_modअगरy_ehea_port(port->adapter->handle,
 				       port->logical_port_id,
 				       H_PORT_CB0, mask, cb0);
 	ret = -EIO;
-	if (hret != H_SUCCESS)
-		goto out_free;
+	अगर (hret != H_SUCCESS)
+		जाओ out_मुक्त;
 
 	ret = 0;
 
-out_free:
-	free_page((unsigned long)cb0);
+out_मुक्त:
+	मुक्त_page((अचिन्हित दीर्घ)cb0);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ehea_gen_smrs(struct ehea_port_res *pr)
-{
-	int ret;
-	struct ehea_adapter *adapter = pr->port->adapter;
+अटल पूर्णांक ehea_gen_smrs(काष्ठा ehea_port_res *pr)
+अणु
+	पूर्णांक ret;
+	काष्ठा ehea_adapter *adapter = pr->port->adapter;
 
 	ret = ehea_gen_smr(adapter, &adapter->mr, &pr->send_mr);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = ehea_gen_smr(adapter, &adapter->mr, &pr->recv_mr);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	return 0;
+	वापस 0;
 
-out_free:
+out_मुक्त:
 	ehea_rem_mr(&pr->send_mr);
 out:
 	pr_err("Generating SMRS failed\n");
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int ehea_rem_smrs(struct ehea_port_res *pr)
-{
-	if ((ehea_rem_mr(&pr->send_mr)) ||
+अटल पूर्णांक ehea_rem_smrs(काष्ठा ehea_port_res *pr)
+अणु
+	अगर ((ehea_rem_mr(&pr->send_mr)) ||
 	    (ehea_rem_mr(&pr->recv_mr)))
-		return -EIO;
-	else
-		return 0;
-}
+		वापस -EIO;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int ehea_init_q_skba(struct ehea_q_skb_arr *q_skba, int max_q_entries)
-{
-	int arr_size = sizeof(void *) * max_q_entries;
+अटल पूर्णांक ehea_init_q_skba(काष्ठा ehea_q_skb_arr *q_skba, पूर्णांक max_q_entries)
+अणु
+	पूर्णांक arr_size = माप(व्योम *) * max_q_entries;
 
 	q_skba->arr = vzalloc(arr_size);
-	if (!q_skba->arr)
-		return -ENOMEM;
+	अगर (!q_skba->arr)
+		वापस -ENOMEM;
 
 	q_skba->len = max_q_entries;
 	q_skba->index = 0;
 	q_skba->os_skbs = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ehea_init_port_res(struct ehea_port *port, struct ehea_port_res *pr,
-			      struct port_res_cfg *pr_cfg, int queue_token)
-{
-	struct ehea_adapter *adapter = port->adapter;
-	enum ehea_eq_type eq_type = EHEA_EQ;
-	struct ehea_qp_init_attr *init_attr = NULL;
-	int ret = -EIO;
+अटल पूर्णांक ehea_init_port_res(काष्ठा ehea_port *port, काष्ठा ehea_port_res *pr,
+			      काष्ठा port_res_cfg *pr_cfg, पूर्णांक queue_token)
+अणु
+	काष्ठा ehea_adapter *adapter = port->adapter;
+	क्रमागत ehea_eq_type eq_type = EHEA_EQ;
+	काष्ठा ehea_qp_init_attr *init_attr = शून्य;
+	पूर्णांक ret = -EIO;
 	u64 tx_bytes, rx_bytes, tx_packets, rx_packets;
 
 	tx_bytes = pr->tx_bytes;
@@ -1448,7 +1449,7 @@ static int ehea_init_port_res(struct ehea_port *port, struct ehea_port_res *pr,
 	rx_bytes = pr->rx_bytes;
 	rx_packets = pr->rx_packets;
 
-	memset(pr, 0, sizeof(struct ehea_port_res));
+	स_रखो(pr, 0, माप(काष्ठा ehea_port_res));
 
 	pr->tx_bytes = tx_bytes;
 	pr->tx_packets = tx_packets;
@@ -1458,41 +1459,41 @@ static int ehea_init_port_res(struct ehea_port *port, struct ehea_port_res *pr,
 	pr->port = port;
 
 	pr->eq = ehea_create_eq(adapter, eq_type, EHEA_MAX_ENTRIES_EQ, 0);
-	if (!pr->eq) {
+	अगर (!pr->eq) अणु
 		pr_err("create_eq failed (eq)\n");
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	pr->recv_cq = ehea_create_cq(adapter, pr_cfg->max_entries_rcq,
 				     pr->eq->fw_handle,
 				     port->logical_port_id);
-	if (!pr->recv_cq) {
+	अगर (!pr->recv_cq) अणु
 		pr_err("create_cq failed (cq_recv)\n");
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	pr->send_cq = ehea_create_cq(adapter, pr_cfg->max_entries_scq,
 				     pr->eq->fw_handle,
 				     port->logical_port_id);
-	if (!pr->send_cq) {
+	अगर (!pr->send_cq) अणु
 		pr_err("create_cq failed (cq_send)\n");
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (netif_msg_ifup(port))
+	अगर (netअगर_msg_अगरup(port))
 		pr_info("Send CQ: act_nr_cqes=%d, Recv CQ: act_nr_cqes=%d\n",
 			pr->send_cq->attr.act_nr_of_cqes,
 			pr->recv_cq->attr.act_nr_of_cqes);
 
-	init_attr = kzalloc(sizeof(*init_attr), GFP_KERNEL);
-	if (!init_attr) {
+	init_attr = kzalloc(माप(*init_attr), GFP_KERNEL);
+	अगर (!init_attr) अणु
 		ret = -ENOMEM;
 		pr_err("no mem for ehea_qp_init_attr\n");
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	init_attr->low_lat_rq1 = 1;
-	init_attr->signalingtype = 1;	/* generate CQE if specified in WQE */
+	init_attr->संकेतingtype = 1;	/* generate CQE अगर specअगरied in WQE */
 	init_attr->rq_count = 3;
 	init_attr->qp_token = queue_token;
 	init_attr->max_nr_send_wqes = pr_cfg->max_entries_sq;
@@ -1511,13 +1512,13 @@ static int ehea_init_port_res(struct ehea_port *port, struct ehea_port_res *pr,
 	init_attr->aff_eq_handle = port->qp_eq->fw_handle;
 
 	pr->qp = ehea_create_qp(adapter, adapter->pd, init_attr);
-	if (!pr->qp) {
+	अगर (!pr->qp) अणु
 		pr_err("create_qp failed\n");
 		ret = -EIO;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (netif_msg_ifup(port))
+	अगर (netअगर_msg_अगरup(port))
 		pr_info("QP: qp_nr=%d\n act_nr_snd_wqe=%d\n nr_rwqe_rq1=%d\n nr_rwqe_rq2=%d\n nr_rwqe_rq3=%d\n",
 			init_attr->qp_nr,
 			init_attr->act_nr_send_wqes,
@@ -1531,127 +1532,127 @@ static int ehea_init_port_res(struct ehea_port *port, struct ehea_port_res *pr,
 	ret |= ehea_init_q_skba(&pr->rq1_skba, init_attr->act_nr_rwqes_rq1 + 1);
 	ret |= ehea_init_q_skba(&pr->rq2_skba, init_attr->act_nr_rwqes_rq2 + 1);
 	ret |= ehea_init_q_skba(&pr->rq3_skba, init_attr->act_nr_rwqes_rq3 + 1);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	pr->swqe_refill_th = init_attr->act_nr_send_wqes / 10;
-	if (ehea_gen_smrs(pr) != 0) {
+	अगर (ehea_gen_smrs(pr) != 0) अणु
 		ret = -EIO;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	atomic_set(&pr->swqe_avail, init_attr->act_nr_send_wqes - 1);
 
-	kfree(init_attr);
+	kमुक्त(init_attr);
 
-	netif_napi_add(pr->port->netdev, &pr->napi, ehea_poll, 64);
+	netअगर_napi_add(pr->port->netdev, &pr->napi, ehea_poll, 64);
 
 	ret = 0;
-	goto out;
+	जाओ out;
 
-out_free:
-	kfree(init_attr);
-	vfree(pr->sq_skba.arr);
-	vfree(pr->rq1_skba.arr);
-	vfree(pr->rq2_skba.arr);
-	vfree(pr->rq3_skba.arr);
+out_मुक्त:
+	kमुक्त(init_attr);
+	vमुक्त(pr->sq_skba.arr);
+	vमुक्त(pr->rq1_skba.arr);
+	vमुक्त(pr->rq2_skba.arr);
+	vमुक्त(pr->rq3_skba.arr);
 	ehea_destroy_qp(pr->qp);
 	ehea_destroy_cq(pr->send_cq);
 	ehea_destroy_cq(pr->recv_cq);
 	ehea_destroy_eq(pr->eq);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ehea_clean_portres(struct ehea_port *port, struct ehea_port_res *pr)
-{
-	int ret, i;
+अटल पूर्णांक ehea_clean_portres(काष्ठा ehea_port *port, काष्ठा ehea_port_res *pr)
+अणु
+	पूर्णांक ret, i;
 
-	if (pr->qp)
-		netif_napi_del(&pr->napi);
+	अगर (pr->qp)
+		netअगर_napi_del(&pr->napi);
 
 	ret = ehea_destroy_qp(pr->qp);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		ehea_destroy_cq(pr->send_cq);
 		ehea_destroy_cq(pr->recv_cq);
 		ehea_destroy_eq(pr->eq);
 
-		for (i = 0; i < pr->rq1_skba.len; i++)
-			dev_kfree_skb(pr->rq1_skba.arr[i]);
+		क्रम (i = 0; i < pr->rq1_skba.len; i++)
+			dev_kमुक्त_skb(pr->rq1_skba.arr[i]);
 
-		for (i = 0; i < pr->rq2_skba.len; i++)
-			dev_kfree_skb(pr->rq2_skba.arr[i]);
+		क्रम (i = 0; i < pr->rq2_skba.len; i++)
+			dev_kमुक्त_skb(pr->rq2_skba.arr[i]);
 
-		for (i = 0; i < pr->rq3_skba.len; i++)
-			dev_kfree_skb(pr->rq3_skba.arr[i]);
+		क्रम (i = 0; i < pr->rq3_skba.len; i++)
+			dev_kमुक्त_skb(pr->rq3_skba.arr[i]);
 
-		for (i = 0; i < pr->sq_skba.len; i++)
-			dev_kfree_skb(pr->sq_skba.arr[i]);
+		क्रम (i = 0; i < pr->sq_skba.len; i++)
+			dev_kमुक्त_skb(pr->sq_skba.arr[i]);
 
-		vfree(pr->rq1_skba.arr);
-		vfree(pr->rq2_skba.arr);
-		vfree(pr->rq3_skba.arr);
-		vfree(pr->sq_skba.arr);
+		vमुक्त(pr->rq1_skba.arr);
+		vमुक्त(pr->rq2_skba.arr);
+		vमुक्त(pr->rq3_skba.arr);
+		vमुक्त(pr->sq_skba.arr);
 		ret = ehea_rem_smrs(pr);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void write_swqe2_immediate(struct sk_buff *skb, struct ehea_swqe *swqe,
+अटल व्योम ग_लिखो_swqe2_immediate(काष्ठा sk_buff *skb, काष्ठा ehea_swqe *swqe,
 				  u32 lkey)
-{
-	int skb_data_size = skb_headlen(skb);
+अणु
+	पूर्णांक skb_data_size = skb_headlen(skb);
 	u8 *imm_data = &swqe->u.immdata_desc.immediate_data[0];
-	struct ehea_vsgentry *sg1entry = &swqe->u.immdata_desc.sg_entry;
-	unsigned int immediate_len = SWQE2_MAX_IMM;
+	काष्ठा ehea_vsgentry *sg1entry = &swqe->u.immdata_desc.sg_entry;
+	अचिन्हित पूर्णांक immediate_len = SWQE2_MAX_IMM;
 
 	swqe->descriptors = 0;
 
-	if (skb_is_gso(skb)) {
+	अगर (skb_is_gso(skb)) अणु
 		swqe->tx_control |= EHEA_SWQE_TSO;
 		swqe->mss = skb_shinfo(skb)->gso_size;
 		/*
-		 * For TSO packets we only copy the headers into the
+		 * For TSO packets we only copy the headers पूर्णांकo the
 		 * immediate area.
 		 */
 		immediate_len = ETH_HLEN + ip_hdrlen(skb) + tcp_hdrlen(skb);
-	}
+	पूर्ण
 
-	if (skb_is_gso(skb) || skb_data_size >= SWQE2_MAX_IMM) {
+	अगर (skb_is_gso(skb) || skb_data_size >= SWQE2_MAX_IMM) अणु
 		skb_copy_from_linear_data(skb, imm_data, immediate_len);
 		swqe->immediate_data_length = immediate_len;
 
-		if (skb_data_size > immediate_len) {
+		अगर (skb_data_size > immediate_len) अणु
 			sg1entry->l_key = lkey;
 			sg1entry->len = skb_data_size - immediate_len;
 			sg1entry->vaddr =
 				ehea_map_vaddr(skb->data + immediate_len);
 			swqe->descriptors++;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		skb_copy_from_linear_data(skb, imm_data, skb_data_size);
 		swqe->immediate_data_length = skb_data_size;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void write_swqe2_data(struct sk_buff *skb, struct net_device *dev,
-				    struct ehea_swqe *swqe, u32 lkey)
-{
-	struct ehea_vsgentry *sg_list, *sg1entry, *sgentry;
+अटल अंतरभूत व्योम ग_लिखो_swqe2_data(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+				    काष्ठा ehea_swqe *swqe, u32 lkey)
+अणु
+	काष्ठा ehea_vsgentry *sg_list, *sg1entry, *sgentry;
 	skb_frag_t *frag;
-	int nfrags, sg1entry_contains_frag_data, i;
+	पूर्णांक nfrags, sg1entry_contains_frag_data, i;
 
 	nfrags = skb_shinfo(skb)->nr_frags;
 	sg1entry = &swqe->u.immdata_desc.sg_entry;
-	sg_list = (struct ehea_vsgentry *)&swqe->u.immdata_desc.sg_list;
+	sg_list = (काष्ठा ehea_vsgentry *)&swqe->u.immdata_desc.sg_list;
 	sg1entry_contains_frag_data = 0;
 
-	write_swqe2_immediate(skb, swqe, lkey);
+	ग_लिखो_swqe2_immediate(skb, swqe, lkey);
 
-	/* write descriptors */
-	if (nfrags > 0) {
-		if (swqe->descriptors == 0) {
+	/* ग_लिखो descriptors */
+	अगर (nfrags > 0) अणु
+		अगर (swqe->descriptors == 0) अणु
 			/* sg1entry not yet used */
 			frag = &skb_shinfo(skb)->frags[0];
 
@@ -1662,9 +1663,9 @@ static inline void write_swqe2_data(struct sk_buff *skb, struct net_device *dev,
 				ehea_map_vaddr(skb_frag_address(frag));
 			swqe->descriptors++;
 			sg1entry_contains_frag_data = 1;
-		}
+		पूर्ण
 
-		for (i = sg1entry_contains_frag_data; i < nfrags; i++) {
+		क्रम (i = sg1entry_contains_frag_data; i < nfrags; i++) अणु
 
 			frag = &skb_shinfo(skb)->frags[i];
 			sgentry = &sg_list[i - sg1entry_contains_frag_data];
@@ -1673,13 +1674,13 @@ static inline void write_swqe2_data(struct sk_buff *skb, struct net_device *dev,
 			sgentry->len = skb_frag_size(frag);
 			sgentry->vaddr = ehea_map_vaddr(skb_frag_address(frag));
 			swqe->descriptors++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int ehea_broadcast_reg_helper(struct ehea_port *port, u32 hcallid)
-{
-	int ret = 0;
+अटल पूर्णांक ehea_broadcast_reg_helper(काष्ठा ehea_port *port, u32 hcallid)
+अणु
+	पूर्णांक ret = 0;
 	u64 hret;
 	u8 reg_type;
 
@@ -1688,365 +1689,365 @@ static int ehea_broadcast_reg_helper(struct ehea_port *port, u32 hcallid)
 	hret = ehea_h_reg_dereg_bcmc(port->adapter->handle,
 				     port->logical_port_id,
 				     reg_type, port->mac_addr, 0, hcallid);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("%sregistering bc address failed (tagged)\n",
 		       hcallid == H_REG_BCMC ? "" : "de");
 		ret = -EIO;
-		goto out_herr;
-	}
+		जाओ out_herr;
+	पूर्ण
 
 	/* De/Register VLAN packets */
 	reg_type = EHEA_BCMC_BROADCAST | EHEA_BCMC_VLANID_ALL;
 	hret = ehea_h_reg_dereg_bcmc(port->adapter->handle,
 				     port->logical_port_id,
 				     reg_type, port->mac_addr, 0, hcallid);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("%sregistering bc address failed (vlan)\n",
 		       hcallid == H_REG_BCMC ? "" : "de");
 		ret = -EIO;
-	}
+	पूर्ण
 out_herr:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ehea_set_mac_addr(struct net_device *dev, void *sa)
-{
-	struct ehea_port *port = netdev_priv(dev);
-	struct sockaddr *mac_addr = sa;
-	struct hcp_ehea_port_cb0 *cb0;
-	int ret;
+अटल पूर्णांक ehea_set_mac_addr(काष्ठा net_device *dev, व्योम *sa)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
+	काष्ठा sockaddr *mac_addr = sa;
+	काष्ठा hcp_ehea_port_cb0 *cb0;
+	पूर्णांक ret;
 	u64 hret;
 
-	if (!is_valid_ether_addr(mac_addr->sa_data)) {
+	अगर (!is_valid_ether_addr(mac_addr->sa_data)) अणु
 		ret = -EADDRNOTAVAIL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	cb0 = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!cb0) {
+	cb0 = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!cb0) अणु
 		pr_err("no mem for cb0\n");
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memcpy(&(cb0->port_mac_addr), &(mac_addr->sa_data[0]), ETH_ALEN);
+	स_नकल(&(cb0->port_mac_addr), &(mac_addr->sa_data[0]), ETH_ALEN);
 
 	cb0->port_mac_addr = cb0->port_mac_addr >> 16;
 
-	hret = ehea_h_modify_ehea_port(port->adapter->handle,
+	hret = ehea_h_modअगरy_ehea_port(port->adapter->handle,
 				       port->logical_port_id, H_PORT_CB0,
 				       EHEA_BMASK_SET(H_PORT_CB0_MAC, 1), cb0);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		ret = -EIO;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	memcpy(dev->dev_addr, mac_addr->sa_data, dev->addr_len);
+	स_नकल(dev->dev_addr, mac_addr->sa_data, dev->addr_len);
 
-	/* Deregister old MAC in pHYP */
-	if (port->state == EHEA_PORT_UP) {
+	/* Deरेजिस्टर old MAC in pHYP */
+	अगर (port->state == EHEA_PORT_UP) अणु
 		ret = ehea_broadcast_reg_helper(port, H_DEREG_BCMC);
-		if (ret)
-			goto out_upregs;
-	}
+		अगर (ret)
+			जाओ out_upregs;
+	पूर्ण
 
 	port->mac_addr = cb0->port_mac_addr << 16;
 
 	/* Register new MAC in pHYP */
-	if (port->state == EHEA_PORT_UP) {
+	अगर (port->state == EHEA_PORT_UP) अणु
 		ret = ehea_broadcast_reg_helper(port, H_REG_BCMC);
-		if (ret)
-			goto out_upregs;
-	}
+		अगर (ret)
+			जाओ out_upregs;
+	पूर्ण
 
 	ret = 0;
 
 out_upregs:
 	ehea_update_bcmc_registrations();
-out_free:
-	free_page((unsigned long)cb0);
+out_मुक्त:
+	मुक्त_page((अचिन्हित दीर्घ)cb0);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ehea_promiscuous_error(u64 hret, int enable)
-{
-	if (hret == H_AUTHORITY)
+अटल व्योम ehea_promiscuous_error(u64 hret, पूर्णांक enable)
+अणु
+	अगर (hret == H_AUTHORITY)
 		pr_info("Hypervisor denied %sabling promiscuous mode\n",
 			enable == 1 ? "en" : "dis");
-	else
+	अन्यथा
 		pr_err("failed %sabling promiscuous mode\n",
 		       enable == 1 ? "en" : "dis");
-}
+पूर्ण
 
-static void ehea_promiscuous(struct net_device *dev, int enable)
-{
-	struct ehea_port *port = netdev_priv(dev);
-	struct hcp_ehea_port_cb7 *cb7;
+अटल व्योम ehea_promiscuous(काष्ठा net_device *dev, पूर्णांक enable)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
+	काष्ठा hcp_ehea_port_cb7 *cb7;
 	u64 hret;
 
-	if (enable == port->promisc)
-		return;
+	अगर (enable == port->promisc)
+		वापस;
 
-	cb7 = (void *)get_zeroed_page(GFP_ATOMIC);
-	if (!cb7) {
+	cb7 = (व्योम *)get_zeroed_page(GFP_ATOMIC);
+	अगर (!cb7) अणु
 		pr_err("no mem for cb7\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Modify Pxs_DUCQPN in CB7 */
+	/* Modअगरy Pxs_DUCQPN in CB7 */
 	cb7->def_uc_qpn = enable == 1 ? port->port_res[0].qp->fw_handle : 0;
 
-	hret = ehea_h_modify_ehea_port(port->adapter->handle,
+	hret = ehea_h_modअगरy_ehea_port(port->adapter->handle,
 				       port->logical_port_id,
 				       H_PORT_CB7, H_PORT_CB7_DUCQPN, cb7);
-	if (hret) {
+	अगर (hret) अणु
 		ehea_promiscuous_error(hret, enable);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	port->promisc = enable;
 out:
-	free_page((unsigned long)cb7);
-}
+	मुक्त_page((अचिन्हित दीर्घ)cb7);
+पूर्ण
 
-static u64 ehea_multicast_reg_helper(struct ehea_port *port, u64 mc_mac_addr,
+अटल u64 ehea_multicast_reg_helper(काष्ठा ehea_port *port, u64 mc_mac_addr,
 				     u32 hcallid)
-{
+अणु
 	u64 hret;
 	u8 reg_type;
 
 	reg_type = EHEA_BCMC_MULTICAST | EHEA_BCMC_UNTAGGED;
-	if (mc_mac_addr == 0)
+	अगर (mc_mac_addr == 0)
 		reg_type |= EHEA_BCMC_SCOPE_ALL;
 
 	hret = ehea_h_reg_dereg_bcmc(port->adapter->handle,
 				     port->logical_port_id,
 				     reg_type, mc_mac_addr, 0, hcallid);
-	if (hret)
-		goto out;
+	अगर (hret)
+		जाओ out;
 
 	reg_type = EHEA_BCMC_MULTICAST | EHEA_BCMC_VLANID_ALL;
-	if (mc_mac_addr == 0)
+	अगर (mc_mac_addr == 0)
 		reg_type |= EHEA_BCMC_SCOPE_ALL;
 
 	hret = ehea_h_reg_dereg_bcmc(port->adapter->handle,
 				     port->logical_port_id,
 				     reg_type, mc_mac_addr, 0, hcallid);
 out:
-	return hret;
-}
+	वापस hret;
+पूर्ण
 
-static int ehea_drop_multicast_list(struct net_device *dev)
-{
-	struct ehea_port *port = netdev_priv(dev);
-	struct ehea_mc_list *mc_entry = port->mc_list;
-	struct list_head *pos;
-	struct list_head *temp;
-	int ret = 0;
+अटल पूर्णांक ehea_drop_multicast_list(काष्ठा net_device *dev)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
+	काष्ठा ehea_mc_list *mc_entry = port->mc_list;
+	काष्ठा list_head *pos;
+	काष्ठा list_head *temp;
+	पूर्णांक ret = 0;
 	u64 hret;
 
-	list_for_each_safe(pos, temp, &(port->mc_list->list)) {
-		mc_entry = list_entry(pos, struct ehea_mc_list, list);
+	list_क्रम_each_safe(pos, temp, &(port->mc_list->list)) अणु
+		mc_entry = list_entry(pos, काष्ठा ehea_mc_list, list);
 
 		hret = ehea_multicast_reg_helper(port, mc_entry->macaddr,
 						 H_DEREG_BCMC);
-		if (hret) {
+		अगर (hret) अणु
 			pr_err("failed deregistering mcast MAC\n");
 			ret = -EIO;
-		}
+		पूर्ण
 
 		list_del(pos);
-		kfree(mc_entry);
-	}
-	return ret;
-}
+		kमुक्त(mc_entry);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void ehea_allmulti(struct net_device *dev, int enable)
-{
-	struct ehea_port *port = netdev_priv(dev);
+अटल व्योम ehea_allmulti(काष्ठा net_device *dev, पूर्णांक enable)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
 	u64 hret;
 
-	if (!port->allmulti) {
-		if (enable) {
+	अगर (!port->allmulti) अणु
+		अगर (enable) अणु
 			/* Enable ALLMULTI */
 			ehea_drop_multicast_list(dev);
 			hret = ehea_multicast_reg_helper(port, 0, H_REG_BCMC);
-			if (!hret)
+			अगर (!hret)
 				port->allmulti = 1;
-			else
+			अन्यथा
 				netdev_err(dev,
 					   "failed enabling IFF_ALLMULTI\n");
-		}
-	} else {
-		if (!enable) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!enable) अणु
 			/* Disable ALLMULTI */
 			hret = ehea_multicast_reg_helper(port, 0, H_DEREG_BCMC);
-			if (!hret)
+			अगर (!hret)
 				port->allmulti = 0;
-			else
+			अन्यथा
 				netdev_err(dev,
 					   "failed disabling IFF_ALLMULTI\n");
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ehea_add_multicast_entry(struct ehea_port *port, u8 *mc_mac_addr)
-{
-	struct ehea_mc_list *ehea_mcl_entry;
+अटल व्योम ehea_add_multicast_entry(काष्ठा ehea_port *port, u8 *mc_mac_addr)
+अणु
+	काष्ठा ehea_mc_list *ehea_mcl_entry;
 	u64 hret;
 
-	ehea_mcl_entry = kzalloc(sizeof(*ehea_mcl_entry), GFP_ATOMIC);
-	if (!ehea_mcl_entry)
-		return;
+	ehea_mcl_entry = kzalloc(माप(*ehea_mcl_entry), GFP_ATOMIC);
+	अगर (!ehea_mcl_entry)
+		वापस;
 
 	INIT_LIST_HEAD(&ehea_mcl_entry->list);
 
-	memcpy(&ehea_mcl_entry->macaddr, mc_mac_addr, ETH_ALEN);
+	स_नकल(&ehea_mcl_entry->macaddr, mc_mac_addr, ETH_ALEN);
 
 	hret = ehea_multicast_reg_helper(port, ehea_mcl_entry->macaddr,
 					 H_REG_BCMC);
-	if (!hret)
+	अगर (!hret)
 		list_add(&ehea_mcl_entry->list, &port->mc_list->list);
-	else {
+	अन्यथा अणु
 		pr_err("failed registering mcast MAC\n");
-		kfree(ehea_mcl_entry);
-	}
-}
+		kमुक्त(ehea_mcl_entry);
+	पूर्ण
+पूर्ण
 
-static void ehea_set_multicast_list(struct net_device *dev)
-{
-	struct ehea_port *port = netdev_priv(dev);
-	struct netdev_hw_addr *ha;
-	int ret;
+अटल व्योम ehea_set_multicast_list(काष्ठा net_device *dev)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
+	काष्ठा netdev_hw_addr *ha;
+	पूर्णांक ret;
 
 	ehea_promiscuous(dev, !!(dev->flags & IFF_PROMISC));
 
-	if (dev->flags & IFF_ALLMULTI) {
+	अगर (dev->flags & IFF_ALLMULTI) अणु
 		ehea_allmulti(dev, 1);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	ehea_allmulti(dev, 0);
 
-	if (!netdev_mc_empty(dev)) {
+	अगर (!netdev_mc_empty(dev)) अणु
 		ret = ehea_drop_multicast_list(dev);
-		if (ret) {
+		अगर (ret) अणु
 			/* Dropping the current multicast list failed.
-			 * Enabling ALL_MULTI is the best we can do.
+			 * Enabling ALL_MULTI is the best we can करो.
 			 */
 			ehea_allmulti(dev, 1);
-		}
+		पूर्ण
 
-		if (netdev_mc_count(dev) > port->adapter->max_mc_mac) {
+		अगर (netdev_mc_count(dev) > port->adapter->max_mc_mac) अणु
 			pr_info("Mcast registration limit reached (0x%llx). Use ALLMULTI!\n",
 				port->adapter->max_mc_mac);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		netdev_for_each_mc_addr(ha, dev)
+		netdev_क्रम_each_mc_addr(ha, dev)
 			ehea_add_multicast_entry(port, ha->addr);
 
-	}
+	पूर्ण
 out:
 	ehea_update_bcmc_registrations();
-}
+पूर्ण
 
-static void xmit_common(struct sk_buff *skb, struct ehea_swqe *swqe)
-{
+अटल व्योम xmit_common(काष्ठा sk_buff *skb, काष्ठा ehea_swqe *swqe)
+अणु
 	swqe->tx_control |= EHEA_SWQE_IMM_DATA_PRESENT | EHEA_SWQE_CRC;
 
-	if (vlan_get_protocol(skb) != htons(ETH_P_IP))
-		return;
+	अगर (vlan_get_protocol(skb) != htons(ETH_P_IP))
+		वापस;
 
-	if (skb->ip_summed == CHECKSUM_PARTIAL)
+	अगर (skb->ip_summed == CHECKSUM_PARTIAL)
 		swqe->tx_control |= EHEA_SWQE_IP_CHECKSUM;
 
 	swqe->ip_start = skb_network_offset(skb);
 	swqe->ip_end = swqe->ip_start + ip_hdrlen(skb) - 1;
 
-	switch (ip_hdr(skb)->protocol) {
-	case IPPROTO_UDP:
-		if (skb->ip_summed == CHECKSUM_PARTIAL)
+	चयन (ip_hdr(skb)->protocol) अणु
+	हाल IPPROTO_UDP:
+		अगर (skb->ip_summed == CHECKSUM_PARTIAL)
 			swqe->tx_control |= EHEA_SWQE_TCP_CHECKSUM;
 
 		swqe->tcp_offset = swqe->ip_end + 1 +
-				   offsetof(struct udphdr, check);
-		break;
+				   दुरत्व(काष्ठा udphdr, check);
+		अवरोध;
 
-	case IPPROTO_TCP:
-		if (skb->ip_summed == CHECKSUM_PARTIAL)
+	हाल IPPROTO_TCP:
+		अगर (skb->ip_summed == CHECKSUM_PARTIAL)
 			swqe->tx_control |= EHEA_SWQE_TCP_CHECKSUM;
 
 		swqe->tcp_offset = swqe->ip_end + 1 +
-				   offsetof(struct tcphdr, check);
-		break;
-	}
-}
+				   दुरत्व(काष्ठा tcphdr, check);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void ehea_xmit2(struct sk_buff *skb, struct net_device *dev,
-		       struct ehea_swqe *swqe, u32 lkey)
-{
+अटल व्योम ehea_xmit2(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+		       काष्ठा ehea_swqe *swqe, u32 lkey)
+अणु
 	swqe->tx_control |= EHEA_SWQE_DESCRIPTORS_PRESENT;
 
 	xmit_common(skb, swqe);
 
-	write_swqe2_data(skb, dev, swqe, lkey);
-}
+	ग_लिखो_swqe2_data(skb, dev, swqe, lkey);
+पूर्ण
 
-static void ehea_xmit3(struct sk_buff *skb, struct net_device *dev,
-		       struct ehea_swqe *swqe)
-{
+अटल व्योम ehea_xmit3(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+		       काष्ठा ehea_swqe *swqe)
+अणु
 	u8 *imm_data = &swqe->u.immdata_nodesc.immediate_data[0];
 
 	xmit_common(skb, swqe);
 
-	if (!skb->data_len)
+	अगर (!skb->data_len)
 		skb_copy_from_linear_data(skb, imm_data, skb->len);
-	else
+	अन्यथा
 		skb_copy_bits(skb, 0, imm_data, skb->len);
 
 	swqe->immediate_data_length = skb->len;
 	dev_consume_skb_any(skb);
-}
+पूर्ण
 
-static netdev_tx_t ehea_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct ehea_port *port = netdev_priv(dev);
-	struct ehea_swqe *swqe;
+अटल netdev_tx_t ehea_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
+	काष्ठा ehea_swqe *swqe;
 	u32 lkey;
-	int swqe_index;
-	struct ehea_port_res *pr;
-	struct netdev_queue *txq;
+	पूर्णांक swqe_index;
+	काष्ठा ehea_port_res *pr;
+	काष्ठा netdev_queue *txq;
 
 	pr = &port->port_res[skb_get_queue_mapping(skb)];
 	txq = netdev_get_tx_queue(dev, skb_get_queue_mapping(skb));
 
 	swqe = ehea_get_swqe(pr->qp, &swqe_index);
-	memset(swqe, 0, SWQE_HEADER_SIZE);
+	स_रखो(swqe, 0, SWQE_HEADER_SIZE);
 	atomic_dec(&pr->swqe_avail);
 
-	if (skb_vlan_tag_present(skb)) {
+	अगर (skb_vlan_tag_present(skb)) अणु
 		swqe->tx_control |= EHEA_SWQE_VLAN_INSERT;
 		swqe->vlan_tag = skb_vlan_tag_get(skb);
-	}
+	पूर्ण
 
 	pr->tx_packets++;
 	pr->tx_bytes += skb->len;
 
-	if (skb->len <= SWQE3_MAX_IMM) {
+	अगर (skb->len <= SWQE3_MAX_IMM) अणु
 		u32 sig_iv = port->sig_comp_iv;
 		u32 swqe_num = pr->swqe_id_counter;
 		ehea_xmit3(skb, dev, swqe);
 		swqe->wr_id = EHEA_BMASK_SET(EHEA_WR_ID_TYPE, EHEA_SWQE3_TYPE)
 			| EHEA_BMASK_SET(EHEA_WR_ID_COUNT, swqe_num);
-		if (pr->swqe_ll_count >= (sig_iv - 1)) {
+		अगर (pr->swqe_ll_count >= (sig_iv - 1)) अणु
 			swqe->wr_id |= EHEA_BMASK_SET(EHEA_WR_ID_REFILL,
 						      sig_iv);
 			swqe->tx_control |= EHEA_SWQE_SIGNALLED_COMPLETION;
 			pr->swqe_ll_count = 0;
-		} else
+		पूर्ण अन्यथा
 			pr->swqe_ll_count += 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		swqe->wr_id =
 			EHEA_BMASK_SET(EHEA_WR_ID_TYPE, EHEA_SWQE2_TYPE)
 		      | EHEA_BMASK_SET(EHEA_WR_ID_COUNT, pr->swqe_id_counter)
@@ -2060,193 +2061,193 @@ static netdev_tx_t ehea_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		lkey = pr->send_mr.lkey;
 		ehea_xmit2(skb, dev, swqe, lkey);
 		swqe->tx_control |= EHEA_SWQE_SIGNALLED_COMPLETION;
-	}
+	पूर्ण
 	pr->swqe_id_counter += 1;
 
-	netif_info(port, tx_queued, dev,
+	netअगर_info(port, tx_queued, dev,
 		   "post swqe on QP %d\n", pr->qp->init_attr.qp_nr);
-	if (netif_msg_tx_queued(port))
+	अगर (netअगर_msg_tx_queued(port))
 		ehea_dump(swqe, 512, "swqe");
 
-	if (unlikely(test_bit(__EHEA_STOP_XFER, &ehea_driver_flags))) {
-		netif_tx_stop_queue(txq);
+	अगर (unlikely(test_bit(__EHEA_STOP_XFER, &ehea_driver_flags))) अणु
+		netअगर_tx_stop_queue(txq);
 		swqe->tx_control |= EHEA_SWQE_PURGE;
-	}
+	पूर्ण
 
 	ehea_post_swqe(pr->qp, swqe);
 
-	if (unlikely(atomic_read(&pr->swqe_avail) <= 1)) {
+	अगर (unlikely(atomic_पढ़ो(&pr->swqe_avail) <= 1)) अणु
 		pr->p_stats.queue_stopped++;
-		netif_tx_stop_queue(txq);
-	}
+		netअगर_tx_stop_queue(txq);
+	पूर्ण
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int ehea_vlan_rx_add_vid(struct net_device *dev, __be16 proto, u16 vid)
-{
-	struct ehea_port *port = netdev_priv(dev);
-	struct ehea_adapter *adapter = port->adapter;
-	struct hcp_ehea_port_cb1 *cb1;
-	int index;
+अटल पूर्णांक ehea_vlan_rx_add_vid(काष्ठा net_device *dev, __be16 proto, u16 vid)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
+	काष्ठा ehea_adapter *adapter = port->adapter;
+	काष्ठा hcp_ehea_port_cb1 *cb1;
+	पूर्णांक index;
 	u64 hret;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	cb1 = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!cb1) {
+	cb1 = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!cb1) अणु
 		pr_err("no mem for cb1\n");
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hret = ehea_h_query_ehea_port(adapter->handle, port->logical_port_id,
 				      H_PORT_CB1, H_PORT_CB1_ALL, cb1);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("query_ehea_port failed\n");
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	index = (vid / 64);
 	cb1->vlan_filter[index] |= ((u64)(0x8000000000000000 >> (vid & 0x3F)));
 
-	hret = ehea_h_modify_ehea_port(adapter->handle, port->logical_port_id,
+	hret = ehea_h_modअगरy_ehea_port(adapter->handle, port->logical_port_id,
 				       H_PORT_CB1, H_PORT_CB1_ALL, cb1);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("modify_ehea_port failed\n");
 		err = -EINVAL;
-	}
+	पूर्ण
 out:
-	free_page((unsigned long)cb1);
-	return err;
-}
+	मुक्त_page((अचिन्हित दीर्घ)cb1);
+	वापस err;
+पूर्ण
 
-static int ehea_vlan_rx_kill_vid(struct net_device *dev, __be16 proto, u16 vid)
-{
-	struct ehea_port *port = netdev_priv(dev);
-	struct ehea_adapter *adapter = port->adapter;
-	struct hcp_ehea_port_cb1 *cb1;
-	int index;
+अटल पूर्णांक ehea_vlan_rx_समाप्त_vid(काष्ठा net_device *dev, __be16 proto, u16 vid)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
+	काष्ठा ehea_adapter *adapter = port->adapter;
+	काष्ठा hcp_ehea_port_cb1 *cb1;
+	पूर्णांक index;
 	u64 hret;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	cb1 = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!cb1) {
+	cb1 = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!cb1) अणु
 		pr_err("no mem for cb1\n");
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hret = ehea_h_query_ehea_port(adapter->handle, port->logical_port_id,
 				      H_PORT_CB1, H_PORT_CB1_ALL, cb1);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("query_ehea_port failed\n");
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	index = (vid / 64);
 	cb1->vlan_filter[index] &= ~((u64)(0x8000000000000000 >> (vid & 0x3F)));
 
-	hret = ehea_h_modify_ehea_port(adapter->handle, port->logical_port_id,
+	hret = ehea_h_modअगरy_ehea_port(adapter->handle, port->logical_port_id,
 				       H_PORT_CB1, H_PORT_CB1_ALL, cb1);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("modify_ehea_port failed\n");
 		err = -EINVAL;
-	}
+	पूर्ण
 out:
-	free_page((unsigned long)cb1);
-	return err;
-}
+	मुक्त_page((अचिन्हित दीर्घ)cb1);
+	वापस err;
+पूर्ण
 
-static int ehea_activate_qp(struct ehea_adapter *adapter, struct ehea_qp *qp)
-{
-	int ret = -EIO;
+अटल पूर्णांक ehea_activate_qp(काष्ठा ehea_adapter *adapter, काष्ठा ehea_qp *qp)
+अणु
+	पूर्णांक ret = -EIO;
 	u64 hret;
 	u16 dummy16 = 0;
 	u64 dummy64 = 0;
-	struct hcp_modify_qp_cb0 *cb0;
+	काष्ठा hcp_modअगरy_qp_cb0 *cb0;
 
-	cb0 = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!cb0) {
+	cb0 = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!cb0) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hret = ehea_h_query_ehea_qp(adapter->handle, 0, qp->fw_handle,
 				    EHEA_BMASK_SET(H_QPCB0_ALL, 0xFFFF), cb0);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("query_ehea_qp failed (1)\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	cb0->qp_ctl_reg = H_QP_CR_STATE_INITIALIZED;
-	hret = ehea_h_modify_ehea_qp(adapter->handle, 0, qp->fw_handle,
+	hret = ehea_h_modअगरy_ehea_qp(adapter->handle, 0, qp->fw_handle,
 				     EHEA_BMASK_SET(H_QPCB0_QP_CTL_REG, 1), cb0,
 				     &dummy64, &dummy64, &dummy16, &dummy16);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("modify_ehea_qp failed (1)\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hret = ehea_h_query_ehea_qp(adapter->handle, 0, qp->fw_handle,
 				    EHEA_BMASK_SET(H_QPCB0_ALL, 0xFFFF), cb0);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("query_ehea_qp failed (2)\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	cb0->qp_ctl_reg = H_QP_CR_ENABLED | H_QP_CR_STATE_INITIALIZED;
-	hret = ehea_h_modify_ehea_qp(adapter->handle, 0, qp->fw_handle,
+	hret = ehea_h_modअगरy_ehea_qp(adapter->handle, 0, qp->fw_handle,
 				     EHEA_BMASK_SET(H_QPCB0_QP_CTL_REG, 1), cb0,
 				     &dummy64, &dummy64, &dummy16, &dummy16);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("modify_ehea_qp failed (2)\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hret = ehea_h_query_ehea_qp(adapter->handle, 0, qp->fw_handle,
 				    EHEA_BMASK_SET(H_QPCB0_ALL, 0xFFFF), cb0);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("query_ehea_qp failed (3)\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	cb0->qp_ctl_reg = H_QP_CR_ENABLED | H_QP_CR_STATE_RDY2SND;
-	hret = ehea_h_modify_ehea_qp(adapter->handle, 0, qp->fw_handle,
+	hret = ehea_h_modअगरy_ehea_qp(adapter->handle, 0, qp->fw_handle,
 				     EHEA_BMASK_SET(H_QPCB0_QP_CTL_REG, 1), cb0,
 				     &dummy64, &dummy64, &dummy16, &dummy16);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("modify_ehea_qp failed (3)\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hret = ehea_h_query_ehea_qp(adapter->handle, 0, qp->fw_handle,
 				    EHEA_BMASK_SET(H_QPCB0_ALL, 0xFFFF), cb0);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("query_ehea_qp failed (4)\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = 0;
 out:
-	free_page((unsigned long)cb0);
-	return ret;
-}
+	मुक्त_page((अचिन्हित दीर्घ)cb0);
+	वापस ret;
+पूर्ण
 
-static int ehea_port_res_setup(struct ehea_port *port, int def_qps)
-{
-	int ret, i;
-	struct port_res_cfg pr_cfg, pr_cfg_small_rx;
-	enum ehea_eq_type eq_type = EHEA_EQ;
+अटल पूर्णांक ehea_port_res_setup(काष्ठा ehea_port *port, पूर्णांक def_qps)
+अणु
+	पूर्णांक ret, i;
+	काष्ठा port_res_cfg pr_cfg, pr_cfg_small_rx;
+	क्रमागत ehea_eq_type eq_type = EHEA_EQ;
 
 	port->qp_eq = ehea_create_eq(port->adapter, eq_type,
 				   EHEA_MAX_ENTRIES_EQ, 1);
-	if (!port->qp_eq) {
+	अगर (!port->qp_eq) अणु
 		ret = -EINVAL;
 		pr_err("ehea_create_eq failed (qp_eq)\n");
-		goto out_kill_eq;
-	}
+		जाओ out_समाप्त_eq;
+	पूर्ण
 
 	pr_cfg.max_entries_rcq = rq1_entries + rq2_entries + rq3_entries;
 	pr_cfg.max_entries_scq = sq_entries * 2;
@@ -2262,268 +2263,268 @@ static int ehea_port_res_setup(struct ehea_port *port, int def_qps)
 	pr_cfg_small_rx.max_entries_rq2 = 1;
 	pr_cfg_small_rx.max_entries_rq3 = 1;
 
-	for (i = 0; i < def_qps; i++) {
+	क्रम (i = 0; i < def_qps; i++) अणु
 		ret = ehea_init_port_res(port, &port->port_res[i], &pr_cfg, i);
-		if (ret)
-			goto out_clean_pr;
-	}
-	for (i = def_qps; i < def_qps; i++) {
+		अगर (ret)
+			जाओ out_clean_pr;
+	पूर्ण
+	क्रम (i = def_qps; i < def_qps; i++) अणु
 		ret = ehea_init_port_res(port, &port->port_res[i],
 					 &pr_cfg_small_rx, i);
-		if (ret)
-			goto out_clean_pr;
-	}
+		अगर (ret)
+			जाओ out_clean_pr;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_clean_pr:
-	while (--i >= 0)
+	जबतक (--i >= 0)
 		ehea_clean_portres(port, &port->port_res[i]);
 
-out_kill_eq:
+out_समाप्त_eq:
 	ehea_destroy_eq(port->qp_eq);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ehea_clean_all_portres(struct ehea_port *port)
-{
-	int ret = 0;
-	int i;
+अटल पूर्णांक ehea_clean_all_portres(काष्ठा ehea_port *port)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < port->num_def_qps; i++)
+	क्रम (i = 0; i < port->num_def_qps; i++)
 		ret |= ehea_clean_portres(port, &port->port_res[i]);
 
 	ret |= ehea_destroy_eq(port->qp_eq);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ehea_remove_adapter_mr(struct ehea_adapter *adapter)
-{
-	if (adapter->active_ports)
-		return;
+अटल व्योम ehea_हटाओ_adapter_mr(काष्ठा ehea_adapter *adapter)
+अणु
+	अगर (adapter->active_ports)
+		वापस;
 
 	ehea_rem_mr(&adapter->mr);
-}
+पूर्ण
 
-static int ehea_add_adapter_mr(struct ehea_adapter *adapter)
-{
-	if (adapter->active_ports)
-		return 0;
+अटल पूर्णांक ehea_add_adapter_mr(काष्ठा ehea_adapter *adapter)
+अणु
+	अगर (adapter->active_ports)
+		वापस 0;
 
-	return ehea_reg_kernel_mr(adapter, &adapter->mr);
-}
+	वापस ehea_reg_kernel_mr(adapter, &adapter->mr);
+पूर्ण
 
-static int ehea_up(struct net_device *dev)
-{
-	int ret, i;
-	struct ehea_port *port = netdev_priv(dev);
+अटल पूर्णांक ehea_up(काष्ठा net_device *dev)
+अणु
+	पूर्णांक ret, i;
+	काष्ठा ehea_port *port = netdev_priv(dev);
 
-	if (port->state == EHEA_PORT_UP)
-		return 0;
+	अगर (port->state == EHEA_PORT_UP)
+		वापस 0;
 
 	ret = ehea_port_res_setup(port, port->num_def_qps);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(dev, "port_res_failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Set default QP for this port */
+	/* Set शेष QP क्रम this port */
 	ret = ehea_configure_port(port);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(dev, "ehea_configure_port failed. ret:%d\n", ret);
-		goto out_clean_pr;
-	}
+		जाओ out_clean_pr;
+	पूर्ण
 
-	ret = ehea_reg_interrupts(dev);
-	if (ret) {
+	ret = ehea_reg_पूर्णांकerrupts(dev);
+	अगर (ret) अणु
 		netdev_err(dev, "reg_interrupts failed. ret:%d\n", ret);
-		goto out_clean_pr;
-	}
+		जाओ out_clean_pr;
+	पूर्ण
 
-	for (i = 0; i < port->num_def_qps; i++) {
+	क्रम (i = 0; i < port->num_def_qps; i++) अणु
 		ret = ehea_activate_qp(port->adapter, port->port_res[i].qp);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(dev, "activate_qp failed\n");
-			goto out_free_irqs;
-		}
-	}
+			जाओ out_मुक्त_irqs;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < port->num_def_qps; i++) {
+	क्रम (i = 0; i < port->num_def_qps; i++) अणु
 		ret = ehea_fill_port_res(&port->port_res[i]);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(dev, "out_free_irqs\n");
-			goto out_free_irqs;
-		}
-	}
+			जाओ out_मुक्त_irqs;
+		पूर्ण
+	पूर्ण
 
 	ret = ehea_broadcast_reg_helper(port, H_REG_BCMC);
-	if (ret) {
+	अगर (ret) अणु
 		ret = -EIO;
-		goto out_free_irqs;
-	}
+		जाओ out_मुक्त_irqs;
+	पूर्ण
 
 	port->state = EHEA_PORT_UP;
 
 	ret = 0;
-	goto out;
+	जाओ out;
 
-out_free_irqs:
-	ehea_free_interrupts(dev);
+out_मुक्त_irqs:
+	ehea_मुक्त_पूर्णांकerrupts(dev);
 
 out_clean_pr:
 	ehea_clean_all_portres(port);
 out:
-	if (ret)
+	अगर (ret)
 		netdev_info(dev, "Failed starting. ret=%i\n", ret);
 
 	ehea_update_bcmc_registrations();
 	ehea_update_firmware_handles();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void port_napi_disable(struct ehea_port *port)
-{
-	int i;
+अटल व्योम port_napi_disable(काष्ठा ehea_port *port)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < port->num_def_qps; i++)
+	क्रम (i = 0; i < port->num_def_qps; i++)
 		napi_disable(&port->port_res[i].napi);
-}
+पूर्ण
 
-static void port_napi_enable(struct ehea_port *port)
-{
-	int i;
+अटल व्योम port_napi_enable(काष्ठा ehea_port *port)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < port->num_def_qps; i++)
+	क्रम (i = 0; i < port->num_def_qps; i++)
 		napi_enable(&port->port_res[i].napi);
-}
+पूर्ण
 
-static int ehea_open(struct net_device *dev)
-{
-	int ret;
-	struct ehea_port *port = netdev_priv(dev);
+अटल पूर्णांक ehea_खोलो(काष्ठा net_device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा ehea_port *port = netdev_priv(dev);
 
 	mutex_lock(&port->port_lock);
 
-	netif_info(port, ifup, dev, "enabling port\n");
+	netअगर_info(port, अगरup, dev, "enabling port\n");
 
-	netif_carrier_off(dev);
+	netअगर_carrier_off(dev);
 
 	ret = ehea_up(dev);
-	if (!ret) {
+	अगर (!ret) अणु
 		port_napi_enable(port);
-		netif_tx_start_all_queues(dev);
-	}
+		netअगर_tx_start_all_queues(dev);
+	पूर्ण
 
 	mutex_unlock(&port->port_lock);
 	schedule_delayed_work(&port->stats_work,
-			      round_jiffies_relative(msecs_to_jiffies(1000)));
+			      round_jअगरfies_relative(msecs_to_jअगरfies(1000)));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ehea_down(struct net_device *dev)
-{
-	int ret;
-	struct ehea_port *port = netdev_priv(dev);
+अटल पूर्णांक ehea_करोwn(काष्ठा net_device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा ehea_port *port = netdev_priv(dev);
 
-	if (port->state == EHEA_PORT_DOWN)
-		return 0;
+	अगर (port->state == EHEA_PORT_DOWN)
+		वापस 0;
 
 	ehea_drop_multicast_list(dev);
 	ehea_allmulti(dev, 0);
 	ehea_broadcast_reg_helper(port, H_DEREG_BCMC);
 
-	ehea_free_interrupts(dev);
+	ehea_मुक्त_पूर्णांकerrupts(dev);
 
 	port->state = EHEA_PORT_DOWN;
 
 	ehea_update_bcmc_registrations();
 
 	ret = ehea_clean_all_portres(port);
-	if (ret)
+	अगर (ret)
 		netdev_info(dev, "Failed freeing resources. ret=%i\n", ret);
 
 	ehea_update_firmware_handles();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ehea_stop(struct net_device *dev)
-{
-	int ret;
-	struct ehea_port *port = netdev_priv(dev);
+अटल पूर्णांक ehea_stop(काष्ठा net_device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा ehea_port *port = netdev_priv(dev);
 
-	netif_info(port, ifdown, dev, "disabling port\n");
+	netअगर_info(port, अगरकरोwn, dev, "disabling port\n");
 
 	set_bit(__EHEA_DISABLE_PORT_RESET, &port->flags);
 	cancel_work_sync(&port->reset_task);
 	cancel_delayed_work_sync(&port->stats_work);
 	mutex_lock(&port->port_lock);
-	netif_tx_stop_all_queues(dev);
+	netअगर_tx_stop_all_queues(dev);
 	port_napi_disable(port);
-	ret = ehea_down(dev);
+	ret = ehea_करोwn(dev);
 	mutex_unlock(&port->port_lock);
 	clear_bit(__EHEA_DISABLE_PORT_RESET, &port->flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ehea_purge_sq(struct ehea_qp *orig_qp)
-{
-	struct ehea_qp qp = *orig_qp;
-	struct ehea_qp_init_attr *init_attr = &qp.init_attr;
-	struct ehea_swqe *swqe;
-	int wqe_index;
-	int i;
+अटल व्योम ehea_purge_sq(काष्ठा ehea_qp *orig_qp)
+अणु
+	काष्ठा ehea_qp qp = *orig_qp;
+	काष्ठा ehea_qp_init_attr *init_attr = &qp.init_attr;
+	काष्ठा ehea_swqe *swqe;
+	पूर्णांक wqe_index;
+	पूर्णांक i;
 
-	for (i = 0; i < init_attr->act_nr_send_wqes; i++) {
+	क्रम (i = 0; i < init_attr->act_nr_send_wqes; i++) अणु
 		swqe = ehea_get_swqe(&qp, &wqe_index);
 		swqe->tx_control |= EHEA_SWQE_PURGE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ehea_flush_sq(struct ehea_port *port)
-{
-	int i;
+अटल व्योम ehea_flush_sq(काष्ठा ehea_port *port)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < port->num_def_qps; i++) {
-		struct ehea_port_res *pr = &port->port_res[i];
-		int swqe_max = pr->sq_skba_size - 2 - pr->swqe_ll_count;
-		int ret;
+	क्रम (i = 0; i < port->num_def_qps; i++) अणु
+		काष्ठा ehea_port_res *pr = &port->port_res[i];
+		पूर्णांक swqe_max = pr->sq_skba_size - 2 - pr->swqe_ll_count;
+		पूर्णांक ret;
 
-		ret = wait_event_timeout(port->swqe_avail_wq,
-			 atomic_read(&pr->swqe_avail) >= swqe_max,
-			 msecs_to_jiffies(100));
+		ret = रुको_event_समयout(port->swqe_avail_wq,
+			 atomic_पढ़ो(&pr->swqe_avail) >= swqe_max,
+			 msecs_to_jअगरfies(100));
 
-		if (!ret) {
+		अगर (!ret) अणु
 			pr_err("WARNING: sq not flushed completely\n");
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int ehea_stop_qps(struct net_device *dev)
-{
-	struct ehea_port *port = netdev_priv(dev);
-	struct ehea_adapter *adapter = port->adapter;
-	struct hcp_modify_qp_cb0 *cb0;
-	int ret = -EIO;
-	int dret;
-	int i;
+अटल पूर्णांक ehea_stop_qps(काष्ठा net_device *dev)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
+	काष्ठा ehea_adapter *adapter = port->adapter;
+	काष्ठा hcp_modअगरy_qp_cb0 *cb0;
+	पूर्णांक ret = -EIO;
+	पूर्णांक dret;
+	पूर्णांक i;
 	u64 hret;
 	u64 dummy64 = 0;
 	u16 dummy16 = 0;
 
-	cb0 = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!cb0) {
+	cb0 = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!cb0) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < (port->num_def_qps); i++) {
-		struct ehea_port_res *pr =  &port->port_res[i];
-		struct ehea_qp *qp = pr->qp;
+	क्रम (i = 0; i < (port->num_def_qps); i++) अणु
+		काष्ठा ehea_port_res *pr =  &port->port_res[i];
+		काष्ठा ehea_qp *qp = pr->qp;
 
 		/* Purge send queue */
 		ehea_purge_sq(qp);
@@ -2532,106 +2533,106 @@ static int ehea_stop_qps(struct net_device *dev)
 		hret = ehea_h_query_ehea_qp(adapter->handle, 0, qp->fw_handle,
 					    EHEA_BMASK_SET(H_QPCB0_ALL, 0xFFFF),
 					    cb0);
-		if (hret != H_SUCCESS) {
+		अगर (hret != H_SUCCESS) अणु
 			pr_err("query_ehea_qp failed (1)\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		cb0->qp_ctl_reg = (cb0->qp_ctl_reg & H_QP_CR_RES_STATE) << 8;
 		cb0->qp_ctl_reg &= ~H_QP_CR_ENABLED;
 
-		hret = ehea_h_modify_ehea_qp(adapter->handle, 0, qp->fw_handle,
+		hret = ehea_h_modअगरy_ehea_qp(adapter->handle, 0, qp->fw_handle,
 					     EHEA_BMASK_SET(H_QPCB0_QP_CTL_REG,
 							    1), cb0, &dummy64,
 					     &dummy64, &dummy16, &dummy16);
-		if (hret != H_SUCCESS) {
+		अगर (hret != H_SUCCESS) अणु
 			pr_err("modify_ehea_qp failed (1)\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		hret = ehea_h_query_ehea_qp(adapter->handle, 0, qp->fw_handle,
 					    EHEA_BMASK_SET(H_QPCB0_ALL, 0xFFFF),
 					    cb0);
-		if (hret != H_SUCCESS) {
+		अगर (hret != H_SUCCESS) अणु
 			pr_err("query_ehea_qp failed (2)\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* deregister shared memory regions */
+		/* deरेजिस्टर shared memory regions */
 		dret = ehea_rem_smrs(pr);
-		if (dret) {
+		अगर (dret) अणु
 			pr_err("unreg shared memory region failed\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
 out:
-	free_page((unsigned long)cb0);
+	मुक्त_page((अचिन्हित दीर्घ)cb0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ehea_update_rqs(struct ehea_qp *orig_qp, struct ehea_port_res *pr)
-{
-	struct ehea_qp qp = *orig_qp;
-	struct ehea_qp_init_attr *init_attr = &qp.init_attr;
-	struct ehea_rwqe *rwqe;
-	struct sk_buff **skba_rq2 = pr->rq2_skba.arr;
-	struct sk_buff **skba_rq3 = pr->rq3_skba.arr;
-	struct sk_buff *skb;
+अटल व्योम ehea_update_rqs(काष्ठा ehea_qp *orig_qp, काष्ठा ehea_port_res *pr)
+अणु
+	काष्ठा ehea_qp qp = *orig_qp;
+	काष्ठा ehea_qp_init_attr *init_attr = &qp.init_attr;
+	काष्ठा ehea_rwqe *rwqe;
+	काष्ठा sk_buff **skba_rq2 = pr->rq2_skba.arr;
+	काष्ठा sk_buff **skba_rq3 = pr->rq3_skba.arr;
+	काष्ठा sk_buff *skb;
 	u32 lkey = pr->recv_mr.lkey;
 
 
-	int i;
-	int index;
+	पूर्णांक i;
+	पूर्णांक index;
 
-	for (i = 0; i < init_attr->act_nr_rwqes_rq2 + 1; i++) {
+	क्रम (i = 0; i < init_attr->act_nr_rwqes_rq2 + 1; i++) अणु
 		rwqe = ehea_get_next_rwqe(&qp, 2);
 		rwqe->sg_list[0].l_key = lkey;
 		index = EHEA_BMASK_GET(EHEA_WR_ID_INDEX, rwqe->wr_id);
 		skb = skba_rq2[index];
-		if (skb)
+		अगर (skb)
 			rwqe->sg_list[0].vaddr = ehea_map_vaddr(skb->data);
-	}
+	पूर्ण
 
-	for (i = 0; i < init_attr->act_nr_rwqes_rq3 + 1; i++) {
+	क्रम (i = 0; i < init_attr->act_nr_rwqes_rq3 + 1; i++) अणु
 		rwqe = ehea_get_next_rwqe(&qp, 3);
 		rwqe->sg_list[0].l_key = lkey;
 		index = EHEA_BMASK_GET(EHEA_WR_ID_INDEX, rwqe->wr_id);
 		skb = skba_rq3[index];
-		if (skb)
+		अगर (skb)
 			rwqe->sg_list[0].vaddr = ehea_map_vaddr(skb->data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ehea_restart_qps(struct net_device *dev)
-{
-	struct ehea_port *port = netdev_priv(dev);
-	struct ehea_adapter *adapter = port->adapter;
-	int ret = 0;
-	int i;
+अटल पूर्णांक ehea_restart_qps(काष्ठा net_device *dev)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
+	काष्ठा ehea_adapter *adapter = port->adapter;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	struct hcp_modify_qp_cb0 *cb0;
+	काष्ठा hcp_modअगरy_qp_cb0 *cb0;
 	u64 hret;
 	u64 dummy64 = 0;
 	u16 dummy16 = 0;
 
-	cb0 = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!cb0) {
+	cb0 = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!cb0) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < (port->num_def_qps); i++) {
-		struct ehea_port_res *pr =  &port->port_res[i];
-		struct ehea_qp *qp = pr->qp;
+	क्रम (i = 0; i < (port->num_def_qps); i++) अणु
+		काष्ठा ehea_port_res *pr =  &port->port_res[i];
+		काष्ठा ehea_qp *qp = pr->qp;
 
 		ret = ehea_gen_smrs(pr);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(dev, "creation of shared memory regions failed\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ehea_update_rqs(qp, pr);
 
@@ -2639,253 +2640,253 @@ static int ehea_restart_qps(struct net_device *dev)
 		hret = ehea_h_query_ehea_qp(adapter->handle, 0, qp->fw_handle,
 					    EHEA_BMASK_SET(H_QPCB0_ALL, 0xFFFF),
 					    cb0);
-		if (hret != H_SUCCESS) {
+		अगर (hret != H_SUCCESS) अणु
 			netdev_err(dev, "query_ehea_qp failed (1)\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		cb0->qp_ctl_reg = (cb0->qp_ctl_reg & H_QP_CR_RES_STATE) << 8;
 		cb0->qp_ctl_reg |= H_QP_CR_ENABLED;
 
-		hret = ehea_h_modify_ehea_qp(adapter->handle, 0, qp->fw_handle,
+		hret = ehea_h_modअगरy_ehea_qp(adapter->handle, 0, qp->fw_handle,
 					     EHEA_BMASK_SET(H_QPCB0_QP_CTL_REG,
 							    1), cb0, &dummy64,
 					     &dummy64, &dummy16, &dummy16);
-		if (hret != H_SUCCESS) {
+		अगर (hret != H_SUCCESS) अणु
 			netdev_err(dev, "modify_ehea_qp failed (1)\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		hret = ehea_h_query_ehea_qp(adapter->handle, 0, qp->fw_handle,
 					    EHEA_BMASK_SET(H_QPCB0_ALL, 0xFFFF),
 					    cb0);
-		if (hret != H_SUCCESS) {
+		अगर (hret != H_SUCCESS) अणु
 			netdev_err(dev, "query_ehea_qp failed (2)\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* refill entire queue */
 		ehea_refill_rq1(pr, pr->rq1_skba.index, 0);
 		ehea_refill_rq2(pr, 0);
 		ehea_refill_rq3(pr, 0);
-	}
+	पूर्ण
 out:
-	free_page((unsigned long)cb0);
+	मुक्त_page((अचिन्हित दीर्घ)cb0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ehea_reset_port(struct work_struct *work)
-{
-	int ret;
-	struct ehea_port *port =
-		container_of(work, struct ehea_port, reset_task);
-	struct net_device *dev = port->netdev;
+अटल व्योम ehea_reset_port(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक ret;
+	काष्ठा ehea_port *port =
+		container_of(work, काष्ठा ehea_port, reset_task);
+	काष्ठा net_device *dev = port->netdev;
 
 	mutex_lock(&dlpar_mem_lock);
 	port->resets++;
 	mutex_lock(&port->port_lock);
-	netif_tx_disable(dev);
+	netअगर_tx_disable(dev);
 
 	port_napi_disable(port);
 
-	ehea_down(dev);
+	ehea_करोwn(dev);
 
 	ret = ehea_up(dev);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ehea_set_multicast_list(dev);
 
-	netif_info(port, timer, dev, "reset successful\n");
+	netअगर_info(port, समयr, dev, "reset successful\n");
 
 	port_napi_enable(port);
 
-	netif_tx_wake_all_queues(dev);
+	netअगर_tx_wake_all_queues(dev);
 out:
 	mutex_unlock(&port->port_lock);
 	mutex_unlock(&dlpar_mem_lock);
-}
+पूर्ण
 
-static void ehea_rereg_mrs(void)
-{
-	int ret, i;
-	struct ehea_adapter *adapter;
+अटल व्योम ehea_rereg_mrs(व्योम)
+अणु
+	पूर्णांक ret, i;
+	काष्ठा ehea_adapter *adapter;
 
 	pr_info("LPAR memory changed - re-initializing driver\n");
 
-	list_for_each_entry(adapter, &adapter_list, list)
-		if (adapter->active_ports) {
-			/* Shutdown all ports */
-			for (i = 0; i < EHEA_MAX_PORTS; i++) {
-				struct ehea_port *port = adapter->port[i];
-				struct net_device *dev;
+	list_क्रम_each_entry(adapter, &adapter_list, list)
+		अगर (adapter->active_ports) अणु
+			/* Shutकरोwn all ports */
+			क्रम (i = 0; i < EHEA_MAX_PORTS; i++) अणु
+				काष्ठा ehea_port *port = adapter->port[i];
+				काष्ठा net_device *dev;
 
-				if (!port)
-					continue;
+				अगर (!port)
+					जारी;
 
 				dev = port->netdev;
 
-				if (dev->flags & IFF_UP) {
+				अगर (dev->flags & IFF_UP) अणु
 					mutex_lock(&port->port_lock);
-					netif_tx_disable(dev);
+					netअगर_tx_disable(dev);
 					ehea_flush_sq(port);
 					ret = ehea_stop_qps(dev);
-					if (ret) {
+					अगर (ret) अणु
 						mutex_unlock(&port->port_lock);
-						goto out;
-					}
+						जाओ out;
+					पूर्ण
 					port_napi_disable(port);
 					mutex_unlock(&port->port_lock);
-				}
+				पूर्ण
 				reset_sq_restart_flag(port);
-			}
+			पूर्ण
 
-			/* Unregister old memory region */
+			/* Unरेजिस्टर old memory region */
 			ret = ehea_rem_mr(&adapter->mr);
-			if (ret) {
+			अगर (ret) अणु
 				pr_err("unregister MR failed - driver inoperable!\n");
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 	clear_bit(__EHEA_STOP_XFER, &ehea_driver_flags);
 
-	list_for_each_entry(adapter, &adapter_list, list)
-		if (adapter->active_ports) {
+	list_क्रम_each_entry(adapter, &adapter_list, list)
+		अगर (adapter->active_ports) अणु
 			/* Register new memory region */
 			ret = ehea_reg_kernel_mr(adapter, &adapter->mr);
-			if (ret) {
+			अगर (ret) अणु
 				pr_err("register MR failed - driver inoperable!\n");
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			/* Restart all ports */
-			for (i = 0; i < EHEA_MAX_PORTS; i++) {
-				struct ehea_port *port = adapter->port[i];
+			क्रम (i = 0; i < EHEA_MAX_PORTS; i++) अणु
+				काष्ठा ehea_port *port = adapter->port[i];
 
-				if (port) {
-					struct net_device *dev = port->netdev;
+				अगर (port) अणु
+					काष्ठा net_device *dev = port->netdev;
 
-					if (dev->flags & IFF_UP) {
+					अगर (dev->flags & IFF_UP) अणु
 						mutex_lock(&port->port_lock);
 						ret = ehea_restart_qps(dev);
-						if (!ret) {
+						अगर (!ret) अणु
 							check_sqs(port);
 							port_napi_enable(port);
-							netif_tx_wake_all_queues(dev);
-						} else {
+							netअगर_tx_wake_all_queues(dev);
+						पूर्ण अन्यथा अणु
 							netdev_err(dev, "Unable to restart QPS\n");
-						}
+						पूर्ण
 						mutex_unlock(&port->port_lock);
-					}
-				}
-			}
-		}
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
 	pr_info("re-initializing driver complete\n");
 out:
-	return;
-}
+	वापस;
+पूर्ण
 
-static void ehea_tx_watchdog(struct net_device *dev, unsigned int txqueue)
-{
-	struct ehea_port *port = netdev_priv(dev);
+अटल व्योम ehea_tx_watchकरोg(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा ehea_port *port = netdev_priv(dev);
 
-	if (netif_carrier_ok(dev) &&
+	अगर (netअगर_carrier_ok(dev) &&
 	    !test_bit(__EHEA_STOP_XFER, &ehea_driver_flags))
 		ehea_schedule_port_reset(port);
-}
+पूर्ण
 
-static int ehea_sense_adapter_attr(struct ehea_adapter *adapter)
-{
-	struct hcp_query_ehea *cb;
+अटल पूर्णांक ehea_sense_adapter_attr(काष्ठा ehea_adapter *adapter)
+अणु
+	काष्ठा hcp_query_ehea *cb;
 	u64 hret;
-	int ret;
+	पूर्णांक ret;
 
-	cb = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!cb) {
+	cb = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!cb) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hret = ehea_h_query_ehea(adapter->handle, cb);
 
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		ret = -EIO;
-		goto out_herr;
-	}
+		जाओ out_herr;
+	पूर्ण
 
 	adapter->max_mc_mac = cb->max_mc_mac - 1;
 	ret = 0;
 
 out_herr:
-	free_page((unsigned long)cb);
+	मुक्त_page((अचिन्हित दीर्घ)cb);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ehea_get_jumboframe_status(struct ehea_port *port, int *jumbo)
-{
-	struct hcp_ehea_port_cb4 *cb4;
+अटल पूर्णांक ehea_get_jumboframe_status(काष्ठा ehea_port *port, पूर्णांक *jumbo)
+अणु
+	काष्ठा hcp_ehea_port_cb4 *cb4;
 	u64 hret;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	*jumbo = 0;
 
 	/* (Try to) enable *jumbo frames */
-	cb4 = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!cb4) {
+	cb4 = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!cb4) अणु
 		pr_err("no mem for cb4\n");
 		ret = -ENOMEM;
-		goto out;
-	} else {
+		जाओ out;
+	पूर्ण अन्यथा अणु
 		hret = ehea_h_query_ehea_port(port->adapter->handle,
 					      port->logical_port_id,
 					      H_PORT_CB4,
 					      H_PORT_CB4_JUMBO, cb4);
-		if (hret == H_SUCCESS) {
-			if (cb4->jumbo_frame)
+		अगर (hret == H_SUCCESS) अणु
+			अगर (cb4->jumbo_frame)
 				*jumbo = 1;
-			else {
+			अन्यथा अणु
 				cb4->jumbo_frame = 1;
-				hret = ehea_h_modify_ehea_port(port->adapter->
+				hret = ehea_h_modअगरy_ehea_port(port->adapter->
 							       handle,
 							       port->
 							       logical_port_id,
 							       H_PORT_CB4,
 							       H_PORT_CB4_JUMBO,
 							       cb4);
-				if (hret == H_SUCCESS)
+				अगर (hret == H_SUCCESS)
 					*jumbo = 1;
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			ret = -EINVAL;
 
-		free_page((unsigned long)cb4);
-	}
+		मुक्त_page((अचिन्हित दीर्घ)cb4);
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t ehea_show_port_id(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	struct ehea_port *port = container_of(dev, struct ehea_port, ofdev.dev);
-	return sprintf(buf, "%d", port->logical_port_id);
-}
+अटल sमाप_प्रकार ehea_show_port_id(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ehea_port *port = container_of(dev, काष्ठा ehea_port, ofdev.dev);
+	वापस प्र_लिखो(buf, "%d", port->logical_port_id);
+पूर्ण
 
-static DEVICE_ATTR(log_port_id, 0444, ehea_show_port_id, NULL);
+अटल DEVICE_ATTR(log_port_id, 0444, ehea_show_port_id, शून्य);
 
-static void logical_port_release(struct device *dev)
-{
-	struct ehea_port *port = container_of(dev, struct ehea_port, ofdev.dev);
+अटल व्योम logical_port_release(काष्ठा device *dev)
+अणु
+	काष्ठा ehea_port *port = container_of(dev, काष्ठा ehea_port, ofdev.dev);
 	of_node_put(port->ofdev.dev.of_node);
-}
+पूर्ण
 
-static struct device *ehea_register_port(struct ehea_port *port,
-					 struct device_node *dn)
-{
-	int ret;
+अटल काष्ठा device *ehea_रेजिस्टर_port(काष्ठा ehea_port *port,
+					 काष्ठा device_node *dn)
+अणु
+	पूर्णांक ret;
 
 	port->ofdev.dev.of_node = of_node_get(dn);
 	port->ofdev.dev.parent = &port->adapter->ofdev->dev;
@@ -2894,62 +2895,62 @@ static struct device *ehea_register_port(struct ehea_port *port,
 	dev_set_name(&port->ofdev.dev, "port%d", port_name_cnt++);
 	port->ofdev.dev.release = logical_port_release;
 
-	ret = of_device_register(&port->ofdev);
-	if (ret) {
+	ret = of_device_रेजिस्टर(&port->ofdev);
+	अगर (ret) अणु
 		pr_err("failed to register device. ret=%d\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = device_create_file(&port->ofdev.dev, &dev_attr_log_port_id);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("failed to register attributes, ret=%d\n", ret);
-		goto out_unreg_of_dev;
-	}
+		जाओ out_unreg_of_dev;
+	पूर्ण
 
-	return &port->ofdev.dev;
+	वापस &port->ofdev.dev;
 
 out_unreg_of_dev:
-	of_device_unregister(&port->ofdev);
+	of_device_unरेजिस्टर(&port->ofdev);
 out:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void ehea_unregister_port(struct ehea_port *port)
-{
-	device_remove_file(&port->ofdev.dev, &dev_attr_log_port_id);
-	of_device_unregister(&port->ofdev);
-}
+अटल व्योम ehea_unरेजिस्टर_port(काष्ठा ehea_port *port)
+अणु
+	device_हटाओ_file(&port->ofdev.dev, &dev_attr_log_port_id);
+	of_device_unरेजिस्टर(&port->ofdev);
+पूर्ण
 
-static const struct net_device_ops ehea_netdev_ops = {
-	.ndo_open		= ehea_open,
-	.ndo_stop		= ehea_stop,
-	.ndo_start_xmit		= ehea_start_xmit,
-	.ndo_get_stats64	= ehea_get_stats64,
-	.ndo_set_mac_address	= ehea_set_mac_addr,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_rx_mode	= ehea_set_multicast_list,
-	.ndo_vlan_rx_add_vid	= ehea_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid	= ehea_vlan_rx_kill_vid,
-	.ndo_tx_timeout		= ehea_tx_watchdog,
-};
+अटल स्थिर काष्ठा net_device_ops ehea_netdev_ops = अणु
+	.nकरो_खोलो		= ehea_खोलो,
+	.nकरो_stop		= ehea_stop,
+	.nकरो_start_xmit		= ehea_start_xmit,
+	.nकरो_get_stats64	= ehea_get_stats64,
+	.nकरो_set_mac_address	= ehea_set_mac_addr,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_rx_mode	= ehea_set_multicast_list,
+	.nकरो_vlan_rx_add_vid	= ehea_vlan_rx_add_vid,
+	.nकरो_vlan_rx_समाप्त_vid	= ehea_vlan_rx_समाप्त_vid,
+	.nकरो_tx_समयout		= ehea_tx_watchकरोg,
+पूर्ण;
 
-static struct ehea_port *ehea_setup_single_port(struct ehea_adapter *adapter,
+अटल काष्ठा ehea_port *ehea_setup_single_port(काष्ठा ehea_adapter *adapter,
 					 u32 logical_port_id,
-					 struct device_node *dn)
-{
-	int ret;
-	struct net_device *dev;
-	struct ehea_port *port;
-	struct device *port_dev;
-	int jumbo;
+					 काष्ठा device_node *dn)
+अणु
+	पूर्णांक ret;
+	काष्ठा net_device *dev;
+	काष्ठा ehea_port *port;
+	काष्ठा device *port_dev;
+	पूर्णांक jumbo;
 
-	/* allocate memory for the port structures */
-	dev = alloc_etherdev_mq(sizeof(struct ehea_port), EHEA_MAX_PORT_RES);
+	/* allocate memory क्रम the port काष्ठाures */
+	dev = alloc_etherdev_mq(माप(काष्ठा ehea_port), EHEA_MAX_PORT_RES);
 
-	if (!dev) {
+	अगर (!dev) अणु
 		ret = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	port = netdev_priv(dev);
 
@@ -2961,31 +2962,31 @@ static struct ehea_port *ehea_setup_single_port(struct ehea_adapter *adapter,
 	port->netdev = dev;
 	port->logical_port_id = logical_port_id;
 
-	port->msg_enable = netif_msg_init(msg_level, EHEA_MSG_DEFAULT);
+	port->msg_enable = netअगर_msg_init(msg_level, EHEA_MSG_DEFAULT);
 
-	port->mc_list = kzalloc(sizeof(struct ehea_mc_list), GFP_KERNEL);
-	if (!port->mc_list) {
+	port->mc_list = kzalloc(माप(काष्ठा ehea_mc_list), GFP_KERNEL);
+	अगर (!port->mc_list) अणु
 		ret = -ENOMEM;
-		goto out_free_ethdev;
-	}
+		जाओ out_मुक्त_ethdev;
+	पूर्ण
 
 	INIT_LIST_HEAD(&port->mc_list->list);
 
 	ret = ehea_sense_port_attr(port);
-	if (ret)
-		goto out_free_mc_list;
+	अगर (ret)
+		जाओ out_मुक्त_mc_list;
 
-	netif_set_real_num_rx_queues(dev, port->num_def_qps);
-	netif_set_real_num_tx_queues(dev, port->num_def_qps);
+	netअगर_set_real_num_rx_queues(dev, port->num_def_qps);
+	netअगर_set_real_num_tx_queues(dev, port->num_def_qps);
 
-	port_dev = ehea_register_port(port, dn);
-	if (!port_dev)
-		goto out_free_mc_list;
+	port_dev = ehea_रेजिस्टर_port(port, dn);
+	अगर (!port_dev)
+		जाओ out_मुक्त_mc_list;
 
 	SET_NETDEV_DEV(dev, port_dev);
 
-	/* initialize net_device structure */
-	memcpy(dev->dev_addr, &port->mac_addr, ETH_ALEN);
+	/* initialize net_device काष्ठाure */
+	स_नकल(dev->dev_addr, &port->mac_addr, ETH_ALEN);
 
 	dev->netdev_ops = &ehea_netdev_ops;
 	ehea_set_ethtool_ops(dev);
@@ -2998,7 +2999,7 @@ static struct ehea_port *ehea_setup_single_port(struct ehea_adapter *adapter,
 		      NETIF_F_HW_VLAN_CTAG_FILTER | NETIF_F_RXCSUM;
 	dev->vlan_features = NETIF_F_SG | NETIF_F_TSO | NETIF_F_HIGHDMA |
 			NETIF_F_IP_CSUM;
-	dev->watchdog_timeo = EHEA_WATCH_DOG_TIMEOUT;
+	dev->watchकरोg_समयo = EHEA_WATCH_DOG_TIMEOUT;
 
 	/* MTU range: 68 - 9022 */
 	dev->min_mtu = ETH_MIN_MTU;
@@ -3007,17 +3008,17 @@ static struct ehea_port *ehea_setup_single_port(struct ehea_adapter *adapter,
 	INIT_WORK(&port->reset_task, ehea_reset_port);
 	INIT_DELAYED_WORK(&port->stats_work, ehea_update_stats);
 
-	init_waitqueue_head(&port->swqe_avail_wq);
-	init_waitqueue_head(&port->restart_wq);
+	init_रुकोqueue_head(&port->swqe_avail_wq);
+	init_रुकोqueue_head(&port->restart_wq);
 
-	ret = register_netdev(dev);
-	if (ret) {
+	ret = रेजिस्टर_netdev(dev);
+	अगर (ret) अणु
 		pr_err("register_netdev failed. ret=%d\n", ret);
-		goto out_unreg_port;
-	}
+		जाओ out_unreg_port;
+	पूर्ण
 
 	ret = ehea_get_jumboframe_status(port, &jumbo);
-	if (ret)
+	अगर (ret)
 		netdev_err(dev, "failed determining jumbo frame status\n");
 
 	netdev_info(dev, "Jumbo frames are %sabled\n",
@@ -3025,554 +3026,554 @@ static struct ehea_port *ehea_setup_single_port(struct ehea_adapter *adapter,
 
 	adapter->active_ports++;
 
-	return port;
+	वापस port;
 
 out_unreg_port:
-	ehea_unregister_port(port);
+	ehea_unरेजिस्टर_port(port);
 
-out_free_mc_list:
-	kfree(port->mc_list);
+out_मुक्त_mc_list:
+	kमुक्त(port->mc_list);
 
-out_free_ethdev:
-	free_netdev(dev);
+out_मुक्त_ethdev:
+	मुक्त_netdev(dev);
 
 out_err:
 	pr_err("setting up logical port with id=%d failed, ret=%d\n",
 	       logical_port_id, ret);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void ehea_shutdown_single_port(struct ehea_port *port)
-{
-	struct ehea_adapter *adapter = port->adapter;
+अटल व्योम ehea_shutकरोwn_single_port(काष्ठा ehea_port *port)
+अणु
+	काष्ठा ehea_adapter *adapter = port->adapter;
 
 	cancel_work_sync(&port->reset_task);
 	cancel_delayed_work_sync(&port->stats_work);
-	unregister_netdev(port->netdev);
-	ehea_unregister_port(port);
-	kfree(port->mc_list);
-	free_netdev(port->netdev);
+	unरेजिस्टर_netdev(port->netdev);
+	ehea_unरेजिस्टर_port(port);
+	kमुक्त(port->mc_list);
+	मुक्त_netdev(port->netdev);
 	adapter->active_ports--;
-}
+पूर्ण
 
-static int ehea_setup_ports(struct ehea_adapter *adapter)
-{
-	struct device_node *lhea_dn;
-	struct device_node *eth_dn = NULL;
+अटल पूर्णांक ehea_setup_ports(काष्ठा ehea_adapter *adapter)
+अणु
+	काष्ठा device_node *lhea_dn;
+	काष्ठा device_node *eth_dn = शून्य;
 
-	const u32 *dn_log_port_id;
-	int i = 0;
+	स्थिर u32 *dn_log_port_id;
+	पूर्णांक i = 0;
 
 	lhea_dn = adapter->ofdev->dev.of_node;
-	while ((eth_dn = of_get_next_child(lhea_dn, eth_dn))) {
+	जबतक ((eth_dn = of_get_next_child(lhea_dn, eth_dn))) अणु
 
 		dn_log_port_id = of_get_property(eth_dn, "ibm,hea-port-no",
-						 NULL);
-		if (!dn_log_port_id) {
+						 शून्य);
+		अगर (!dn_log_port_id) अणु
 			pr_err("bad device node: eth_dn name=%pOF\n", eth_dn);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (ehea_add_adapter_mr(adapter)) {
+		अगर (ehea_add_adapter_mr(adapter)) अणु
 			pr_err("creating MR failed\n");
 			of_node_put(eth_dn);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
 		adapter->port[i] = ehea_setup_single_port(adapter,
 							  *dn_log_port_id,
 							  eth_dn);
-		if (adapter->port[i])
+		अगर (adapter->port[i])
 			netdev_info(adapter->port[i]->netdev,
 				    "logical port id #%d\n", *dn_log_port_id);
-		else
-			ehea_remove_adapter_mr(adapter);
+		अन्यथा
+			ehea_हटाओ_adapter_mr(adapter);
 
 		i++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct device_node *ehea_get_eth_dn(struct ehea_adapter *adapter,
+अटल काष्ठा device_node *ehea_get_eth_dn(काष्ठा ehea_adapter *adapter,
 					   u32 logical_port_id)
-{
-	struct device_node *lhea_dn;
-	struct device_node *eth_dn = NULL;
-	const u32 *dn_log_port_id;
+अणु
+	काष्ठा device_node *lhea_dn;
+	काष्ठा device_node *eth_dn = शून्य;
+	स्थिर u32 *dn_log_port_id;
 
 	lhea_dn = adapter->ofdev->dev.of_node;
-	while ((eth_dn = of_get_next_child(lhea_dn, eth_dn))) {
+	जबतक ((eth_dn = of_get_next_child(lhea_dn, eth_dn))) अणु
 
 		dn_log_port_id = of_get_property(eth_dn, "ibm,hea-port-no",
-						 NULL);
-		if (dn_log_port_id)
-			if (*dn_log_port_id == logical_port_id)
-				return eth_dn;
-	}
+						 शून्य);
+		अगर (dn_log_port_id)
+			अगर (*dn_log_port_id == logical_port_id)
+				वापस eth_dn;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static ssize_t ehea_probe_port(struct device *dev,
-			       struct device_attribute *attr,
-			       const char *buf, size_t count)
-{
-	struct ehea_adapter *adapter = dev_get_drvdata(dev);
-	struct ehea_port *port;
-	struct device_node *eth_dn = NULL;
-	int i;
+अटल sमाप_प्रकार ehea_probe_port(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ehea_adapter *adapter = dev_get_drvdata(dev);
+	काष्ठा ehea_port *port;
+	काष्ठा device_node *eth_dn = शून्य;
+	पूर्णांक i;
 
 	u32 logical_port_id;
 
-	sscanf(buf, "%d", &logical_port_id);
+	माला_पूछो(buf, "%d", &logical_port_id);
 
 	port = ehea_get_port(adapter, logical_port_id);
 
-	if (port) {
+	अगर (port) अणु
 		netdev_info(port->netdev, "adding port with logical port id=%d failed: port already configured\n",
 			    logical_port_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	eth_dn = ehea_get_eth_dn(adapter, logical_port_id);
 
-	if (!eth_dn) {
+	अगर (!eth_dn) अणु
 		pr_info("no logical port with id %d found\n", logical_port_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ehea_add_adapter_mr(adapter)) {
+	अगर (ehea_add_adapter_mr(adapter)) अणु
 		pr_err("creating MR failed\n");
 		of_node_put(eth_dn);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	port = ehea_setup_single_port(adapter, logical_port_id, eth_dn);
 
 	of_node_put(eth_dn);
 
-	if (port) {
-		for (i = 0; i < EHEA_MAX_PORTS; i++)
-			if (!adapter->port[i]) {
+	अगर (port) अणु
+		क्रम (i = 0; i < EHEA_MAX_PORTS; i++)
+			अगर (!adapter->port[i]) अणु
 				adapter->port[i] = port;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 		netdev_info(port->netdev, "added: (logical port id=%d)\n",
 			    logical_port_id);
-	} else {
-		ehea_remove_adapter_mr(adapter);
-		return -EIO;
-	}
+	पूर्ण अन्यथा अणु
+		ehea_हटाओ_adapter_mr(adapter);
+		वापस -EIO;
+	पूर्ण
 
-	return (ssize_t) count;
-}
+	वापस (sमाप_प्रकार) count;
+पूर्ण
 
-static ssize_t ehea_remove_port(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	struct ehea_adapter *adapter = dev_get_drvdata(dev);
-	struct ehea_port *port;
-	int i;
+अटल sमाप_प्रकार ehea_हटाओ_port(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ehea_adapter *adapter = dev_get_drvdata(dev);
+	काष्ठा ehea_port *port;
+	पूर्णांक i;
 	u32 logical_port_id;
 
-	sscanf(buf, "%d", &logical_port_id);
+	माला_पूछो(buf, "%d", &logical_port_id);
 
 	port = ehea_get_port(adapter, logical_port_id);
 
-	if (port) {
+	अगर (port) अणु
 		netdev_info(port->netdev, "removed: (logical port id=%d)\n",
 			    logical_port_id);
 
-		ehea_shutdown_single_port(port);
+		ehea_shutकरोwn_single_port(port);
 
-		for (i = 0; i < EHEA_MAX_PORTS; i++)
-			if (adapter->port[i] == port) {
-				adapter->port[i] = NULL;
-				break;
-			}
-	} else {
+		क्रम (i = 0; i < EHEA_MAX_PORTS; i++)
+			अगर (adapter->port[i] == port) अणु
+				adapter->port[i] = शून्य;
+				अवरोध;
+			पूर्ण
+	पूर्ण अन्यथा अणु
 		pr_err("removing port with logical port id=%d failed. port not configured.\n",
 		       logical_port_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ehea_remove_adapter_mr(adapter);
+	ehea_हटाओ_adapter_mr(adapter);
 
-	return (ssize_t) count;
-}
+	वापस (sमाप_प्रकार) count;
+पूर्ण
 
-static DEVICE_ATTR(probe_port, 0200, NULL, ehea_probe_port);
-static DEVICE_ATTR(remove_port, 0200, NULL, ehea_remove_port);
+अटल DEVICE_ATTR(probe_port, 0200, शून्य, ehea_probe_port);
+अटल DEVICE_ATTR(हटाओ_port, 0200, शून्य, ehea_हटाओ_port);
 
-static int ehea_create_device_sysfs(struct platform_device *dev)
-{
-	int ret = device_create_file(&dev->dev, &dev_attr_probe_port);
-	if (ret)
-		goto out;
+अटल पूर्णांक ehea_create_device_sysfs(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक ret = device_create_file(&dev->dev, &dev_attr_probe_port);
+	अगर (ret)
+		जाओ out;
 
-	ret = device_create_file(&dev->dev, &dev_attr_remove_port);
+	ret = device_create_file(&dev->dev, &dev_attr_हटाओ_port);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ehea_remove_device_sysfs(struct platform_device *dev)
-{
-	device_remove_file(&dev->dev, &dev_attr_probe_port);
-	device_remove_file(&dev->dev, &dev_attr_remove_port);
-}
+अटल व्योम ehea_हटाओ_device_sysfs(काष्ठा platक्रमm_device *dev)
+अणु
+	device_हटाओ_file(&dev->dev, &dev_attr_probe_port);
+	device_हटाओ_file(&dev->dev, &dev_attr_हटाओ_port);
+पूर्ण
 
-static int ehea_reboot_notifier(struct notifier_block *nb,
-				unsigned long action, void *unused)
-{
-	if (action == SYS_RESTART) {
+अटल पूर्णांक ehea_reboot_notअगरier(काष्ठा notअगरier_block *nb,
+				अचिन्हित दीर्घ action, व्योम *unused)
+अणु
+	अगर (action == SYS_RESTART) अणु
 		pr_info("Reboot: freeing all eHEA resources\n");
-		ibmebus_unregister_driver(&ehea_driver);
-	}
-	return NOTIFY_DONE;
-}
+		ibmebus_unरेजिस्टर_driver(&ehea_driver);
+	पूर्ण
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block ehea_reboot_nb = {
-	.notifier_call = ehea_reboot_notifier,
-};
+अटल काष्ठा notअगरier_block ehea_reboot_nb = अणु
+	.notअगरier_call = ehea_reboot_notअगरier,
+पूर्ण;
 
-static int ehea_mem_notifier(struct notifier_block *nb,
-			     unsigned long action, void *data)
-{
-	int ret = NOTIFY_BAD;
-	struct memory_notify *arg = data;
+अटल पूर्णांक ehea_mem_notअगरier(काष्ठा notअगरier_block *nb,
+			     अचिन्हित दीर्घ action, व्योम *data)
+अणु
+	पूर्णांक ret = NOTIFY_BAD;
+	काष्ठा memory_notअगरy *arg = data;
 
 	mutex_lock(&dlpar_mem_lock);
 
-	switch (action) {
-	case MEM_CANCEL_OFFLINE:
+	चयन (action) अणु
+	हाल MEM_CANCEL_OFFLINE:
 		pr_info("memory offlining canceled");
 		fallthrough;	/* re-add canceled memory block */
 
-	case MEM_ONLINE:
+	हाल MEM_ONLINE:
 		pr_info("memory is going online");
 		set_bit(__EHEA_STOP_XFER, &ehea_driver_flags);
-		if (ehea_add_sect_bmap(arg->start_pfn, arg->nr_pages))
-			goto out_unlock;
+		अगर (ehea_add_sect_bmap(arg->start_pfn, arg->nr_pages))
+			जाओ out_unlock;
 		ehea_rereg_mrs();
-		break;
+		अवरोध;
 
-	case MEM_GOING_OFFLINE:
+	हाल MEM_GOING_OFFLINE:
 		pr_info("memory is going offline");
 		set_bit(__EHEA_STOP_XFER, &ehea_driver_flags);
-		if (ehea_rem_sect_bmap(arg->start_pfn, arg->nr_pages))
-			goto out_unlock;
+		अगर (ehea_rem_sect_bmap(arg->start_pfn, arg->nr_pages))
+			जाओ out_unlock;
 		ehea_rereg_mrs();
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	ehea_update_firmware_handles();
 	ret = NOTIFY_OK;
 
 out_unlock:
 	mutex_unlock(&dlpar_mem_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct notifier_block ehea_mem_nb = {
-	.notifier_call = ehea_mem_notifier,
-};
+अटल काष्ठा notअगरier_block ehea_mem_nb = अणु
+	.notअगरier_call = ehea_mem_notअगरier,
+पूर्ण;
 
-static void ehea_crash_handler(void)
-{
-	int i;
+अटल व्योम ehea_crash_handler(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (ehea_fw_handles.arr)
-		for (i = 0; i < ehea_fw_handles.num_entries; i++)
-			ehea_h_free_resource(ehea_fw_handles.arr[i].adh,
+	अगर (ehea_fw_handles.arr)
+		क्रम (i = 0; i < ehea_fw_handles.num_entries; i++)
+			ehea_h_मुक्त_resource(ehea_fw_handles.arr[i].adh,
 					     ehea_fw_handles.arr[i].fwh,
 					     FORCE_FREE);
 
-	if (ehea_bcmc_regs.arr)
-		for (i = 0; i < ehea_bcmc_regs.num_entries; i++)
+	अगर (ehea_bcmc_regs.arr)
+		क्रम (i = 0; i < ehea_bcmc_regs.num_entries; i++)
 			ehea_h_reg_dereg_bcmc(ehea_bcmc_regs.arr[i].adh,
 					      ehea_bcmc_regs.arr[i].port_id,
 					      ehea_bcmc_regs.arr[i].reg_type,
 					      ehea_bcmc_regs.arr[i].macaddr,
 					      0, H_DEREG_BCMC);
-}
+पूर्ण
 
-static atomic_t ehea_memory_hooks_registered;
+अटल atomic_t ehea_memory_hooks_रेजिस्टरed;
 
 /* Register memory hooks on probe of first adapter */
-static int ehea_register_memory_hooks(void)
-{
-	int ret = 0;
+अटल पूर्णांक ehea_रेजिस्टर_memory_hooks(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-	if (atomic_inc_return(&ehea_memory_hooks_registered) > 1)
-		return 0;
+	अगर (atomic_inc_वापस(&ehea_memory_hooks_रेजिस्टरed) > 1)
+		वापस 0;
 
 	ret = ehea_create_busmap();
-	if (ret) {
+	अगर (ret) अणु
 		pr_info("ehea_create_busmap failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = register_reboot_notifier(&ehea_reboot_nb);
-	if (ret) {
+	ret = रेजिस्टर_reboot_notअगरier(&ehea_reboot_nb);
+	अगर (ret) अणु
 		pr_info("register_reboot_notifier failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = register_memory_notifier(&ehea_mem_nb);
-	if (ret) {
+	ret = रेजिस्टर_memory_notअगरier(&ehea_mem_nb);
+	अगर (ret) अणु
 		pr_info("register_memory_notifier failed\n");
-		goto out2;
-	}
+		जाओ out2;
+	पूर्ण
 
-	ret = crash_shutdown_register(ehea_crash_handler);
-	if (ret) {
+	ret = crash_shutकरोwn_रेजिस्टर(ehea_crash_handler);
+	अगर (ret) अणु
 		pr_info("crash_shutdown_register failed\n");
-		goto out3;
-	}
+		जाओ out3;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out3:
-	unregister_memory_notifier(&ehea_mem_nb);
+	unरेजिस्टर_memory_notअगरier(&ehea_mem_nb);
 out2:
-	unregister_reboot_notifier(&ehea_reboot_nb);
+	unरेजिस्टर_reboot_notअगरier(&ehea_reboot_nb);
 out:
-	atomic_dec(&ehea_memory_hooks_registered);
-	return ret;
-}
+	atomic_dec(&ehea_memory_hooks_रेजिस्टरed);
+	वापस ret;
+पूर्ण
 
-static void ehea_unregister_memory_hooks(void)
-{
-	/* Only remove the hooks if we've registered them */
-	if (atomic_read(&ehea_memory_hooks_registered) == 0)
-		return;
+अटल व्योम ehea_unरेजिस्टर_memory_hooks(व्योम)
+अणु
+	/* Only हटाओ the hooks अगर we've रेजिस्टरed them */
+	अगर (atomic_पढ़ो(&ehea_memory_hooks_रेजिस्टरed) == 0)
+		वापस;
 
-	unregister_reboot_notifier(&ehea_reboot_nb);
-	if (crash_shutdown_unregister(ehea_crash_handler))
+	unरेजिस्टर_reboot_notअगरier(&ehea_reboot_nb);
+	अगर (crash_shutकरोwn_unरेजिस्टर(ehea_crash_handler))
 		pr_info("failed unregistering crash handler\n");
-	unregister_memory_notifier(&ehea_mem_nb);
-}
+	unरेजिस्टर_memory_notअगरier(&ehea_mem_nb);
+पूर्ण
 
-static int ehea_probe_adapter(struct platform_device *dev)
-{
-	struct ehea_adapter *adapter;
-	const u64 *adapter_handle;
-	int ret;
-	int i;
+अटल पूर्णांक ehea_probe_adapter(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा ehea_adapter *adapter;
+	स्थिर u64 *adapter_handle;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	ret = ehea_register_memory_hooks();
-	if (ret)
-		return ret;
+	ret = ehea_रेजिस्टर_memory_hooks();
+	अगर (ret)
+		वापस ret;
 
-	if (!dev || !dev->dev.of_node) {
+	अगर (!dev || !dev->dev.of_node) अणु
 		pr_err("Invalid ibmebus device probed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	adapter = devm_kzalloc(&dev->dev, sizeof(*adapter), GFP_KERNEL);
-	if (!adapter) {
+	adapter = devm_kzalloc(&dev->dev, माप(*adapter), GFP_KERNEL);
+	अगर (!adapter) अणु
 		ret = -ENOMEM;
 		dev_err(&dev->dev, "no mem for ehea_adapter\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	list_add(&adapter->list, &adapter_list);
 
 	adapter->ofdev = dev;
 
 	adapter_handle = of_get_property(dev->dev.of_node, "ibm,hea-handle",
-					 NULL);
-	if (adapter_handle)
+					 शून्य);
+	अगर (adapter_handle)
 		adapter->handle = *adapter_handle;
 
-	if (!adapter->handle) {
+	अगर (!adapter->handle) अणु
 		dev_err(&dev->dev, "failed getting handle for adapter"
 			" '%pOF'\n", dev->dev.of_node);
 		ret = -ENODEV;
-		goto out_free_ad;
-	}
+		जाओ out_मुक्त_ad;
+	पूर्ण
 
 	adapter->pd = EHEA_PD_ID;
 
-	platform_set_drvdata(dev, adapter);
+	platक्रमm_set_drvdata(dev, adapter);
 
 
 	/* initialize adapter and ports */
 	/* get adapter properties */
 	ret = ehea_sense_adapter_attr(adapter);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&dev->dev, "sense_adapter_attr failed: %d\n", ret);
-		goto out_free_ad;
-	}
+		जाओ out_मुक्त_ad;
+	पूर्ण
 
 	adapter->neq = ehea_create_eq(adapter,
 				      EHEA_NEQ, EHEA_MAX_ENTRIES_EQ, 1);
-	if (!adapter->neq) {
+	अगर (!adapter->neq) अणु
 		ret = -EIO;
 		dev_err(&dev->dev, "NEQ creation failed\n");
-		goto out_free_ad;
-	}
+		जाओ out_मुक्त_ad;
+	पूर्ण
 
 	tasklet_setup(&adapter->neq_tasklet, ehea_neq_tasklet);
 
 	ret = ehea_create_device_sysfs(dev);
-	if (ret)
-		goto out_kill_eq;
+	अगर (ret)
+		जाओ out_समाप्त_eq;
 
 	ret = ehea_setup_ports(adapter);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&dev->dev, "setup_ports failed\n");
-		goto out_rem_dev_sysfs;
-	}
+		जाओ out_rem_dev_sysfs;
+	पूर्ण
 
 	ret = ibmebus_request_irq(adapter->neq->attr.ist1,
-				  ehea_interrupt_neq, 0,
+				  ehea_पूर्णांकerrupt_neq, 0,
 				  "ehea_neq", adapter);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&dev->dev, "requesting NEQ IRQ failed\n");
-		goto out_shutdown_ports;
-	}
+		जाओ out_shutकरोwn_ports;
+	पूर्ण
 
 	/* Handle any events that might be pending. */
 	tasklet_hi_schedule(&adapter->neq_tasklet);
 
 	ret = 0;
-	goto out;
+	जाओ out;
 
-out_shutdown_ports:
-	for (i = 0; i < EHEA_MAX_PORTS; i++)
-		if (adapter->port[i]) {
-			ehea_shutdown_single_port(adapter->port[i]);
-			adapter->port[i] = NULL;
-		}
+out_shutकरोwn_ports:
+	क्रम (i = 0; i < EHEA_MAX_PORTS; i++)
+		अगर (adapter->port[i]) अणु
+			ehea_shutकरोwn_single_port(adapter->port[i]);
+			adapter->port[i] = शून्य;
+		पूर्ण
 
 out_rem_dev_sysfs:
-	ehea_remove_device_sysfs(dev);
+	ehea_हटाओ_device_sysfs(dev);
 
-out_kill_eq:
+out_समाप्त_eq:
 	ehea_destroy_eq(adapter->neq);
 
-out_free_ad:
+out_मुक्त_ad:
 	list_del(&adapter->list);
 
 out:
 	ehea_update_firmware_handles();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ehea_remove(struct platform_device *dev)
-{
-	struct ehea_adapter *adapter = platform_get_drvdata(dev);
-	int i;
+अटल पूर्णांक ehea_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा ehea_adapter *adapter = platक्रमm_get_drvdata(dev);
+	पूर्णांक i;
 
-	for (i = 0; i < EHEA_MAX_PORTS; i++)
-		if (adapter->port[i]) {
-			ehea_shutdown_single_port(adapter->port[i]);
-			adapter->port[i] = NULL;
-		}
+	क्रम (i = 0; i < EHEA_MAX_PORTS; i++)
+		अगर (adapter->port[i]) अणु
+			ehea_shutकरोwn_single_port(adapter->port[i]);
+			adapter->port[i] = शून्य;
+		पूर्ण
 
-	ehea_remove_device_sysfs(dev);
+	ehea_हटाओ_device_sysfs(dev);
 
-	ibmebus_free_irq(adapter->neq->attr.ist1, adapter);
-	tasklet_kill(&adapter->neq_tasklet);
+	ibmebus_मुक्त_irq(adapter->neq->attr.ist1, adapter);
+	tasklet_समाप्त(&adapter->neq_tasklet);
 
 	ehea_destroy_eq(adapter->neq);
-	ehea_remove_adapter_mr(adapter);
+	ehea_हटाओ_adapter_mr(adapter);
 	list_del(&adapter->list);
 
 	ehea_update_firmware_handles();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_module_parm(void)
-{
-	int ret = 0;
+अटल पूर्णांक check_module_parm(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-	if ((rq1_entries < EHEA_MIN_ENTRIES_QP) ||
-	    (rq1_entries > EHEA_MAX_ENTRIES_RQ1)) {
+	अगर ((rq1_entries < EHEA_MIN_ENTRIES_QP) ||
+	    (rq1_entries > EHEA_MAX_ENTRIES_RQ1)) अणु
 		pr_info("Bad parameter: rq1_entries\n");
 		ret = -EINVAL;
-	}
-	if ((rq2_entries < EHEA_MIN_ENTRIES_QP) ||
-	    (rq2_entries > EHEA_MAX_ENTRIES_RQ2)) {
+	पूर्ण
+	अगर ((rq2_entries < EHEA_MIN_ENTRIES_QP) ||
+	    (rq2_entries > EHEA_MAX_ENTRIES_RQ2)) अणु
 		pr_info("Bad parameter: rq2_entries\n");
 		ret = -EINVAL;
-	}
-	if ((rq3_entries < EHEA_MIN_ENTRIES_QP) ||
-	    (rq3_entries > EHEA_MAX_ENTRIES_RQ3)) {
+	पूर्ण
+	अगर ((rq3_entries < EHEA_MIN_ENTRIES_QP) ||
+	    (rq3_entries > EHEA_MAX_ENTRIES_RQ3)) अणु
 		pr_info("Bad parameter: rq3_entries\n");
 		ret = -EINVAL;
-	}
-	if ((sq_entries < EHEA_MIN_ENTRIES_QP) ||
-	    (sq_entries > EHEA_MAX_ENTRIES_SQ)) {
+	पूर्ण
+	अगर ((sq_entries < EHEA_MIN_ENTRIES_QP) ||
+	    (sq_entries > EHEA_MAX_ENTRIES_SQ)) अणु
 		pr_info("Bad parameter: sq_entries\n");
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t capabilities_show(struct device_driver *drv, char *buf)
-{
-	return sprintf(buf, "%d", EHEA_CAPABILITIES);
-}
+अटल sमाप_प्रकार capabilities_show(काष्ठा device_driver *drv, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d", EHEA_CAPABILITIES);
+पूर्ण
 
-static DRIVER_ATTR_RO(capabilities);
+अटल DRIVER_ATTR_RO(capabilities);
 
-static int __init ehea_module_init(void)
-{
-	int ret;
+अटल पूर्णांक __init ehea_module_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	pr_info("IBM eHEA ethernet device driver (Release %s)\n", DRV_VERSION);
 
-	memset(&ehea_fw_handles, 0, sizeof(ehea_fw_handles));
-	memset(&ehea_bcmc_regs, 0, sizeof(ehea_bcmc_regs));
+	स_रखो(&ehea_fw_handles, 0, माप(ehea_fw_handles));
+	स_रखो(&ehea_bcmc_regs, 0, माप(ehea_bcmc_regs));
 
 	mutex_init(&ehea_fw_handles.lock);
 	spin_lock_init(&ehea_bcmc_regs.lock);
 
 	ret = check_module_parm();
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	ret = ibmebus_register_driver(&ehea_driver);
-	if (ret) {
+	ret = ibmebus_रेजिस्टर_driver(&ehea_driver);
+	अगर (ret) अणु
 		pr_err("failed registering eHEA device driver on ebus\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = driver_create_file(&ehea_driver.driver,
 				 &driver_attr_capabilities);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("failed to register capabilities attribute, ret=%d\n",
 		       ret);
-		goto out2;
-	}
+		जाओ out2;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
 out2:
-	ibmebus_unregister_driver(&ehea_driver);
+	ibmebus_unरेजिस्टर_driver(&ehea_driver);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit ehea_module_exit(void)
-{
-	driver_remove_file(&ehea_driver.driver, &driver_attr_capabilities);
-	ibmebus_unregister_driver(&ehea_driver);
-	ehea_unregister_memory_hooks();
-	kfree(ehea_fw_handles.arr);
-	kfree(ehea_bcmc_regs.arr);
+अटल व्योम __निकास ehea_module_निकास(व्योम)
+अणु
+	driver_हटाओ_file(&ehea_driver.driver, &driver_attr_capabilities);
+	ibmebus_unरेजिस्टर_driver(&ehea_driver);
+	ehea_unरेजिस्टर_memory_hooks();
+	kमुक्त(ehea_fw_handles.arr);
+	kमुक्त(ehea_bcmc_regs.arr);
 	ehea_destroy_busmap();
-}
+पूर्ण
 
 module_init(ehea_module_init);
-module_exit(ehea_module_exit);
+module_निकास(ehea_module_निकास);

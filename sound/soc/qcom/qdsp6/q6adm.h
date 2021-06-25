@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __Q6_ADM_V2_H__
-#define __Q6_ADM_V2_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __Q6_ADM_V2_H__
+#घोषणा __Q6_ADM_V2_H__
 
-#define ADM_PATH_PLAYBACK	0x1
-#define ADM_PATH_LIVE_REC	0x2
-#define MAX_COPPS_PER_PORT	8
-#define NULL_COPP_TOPOLOGY	0x00010312
+#घोषणा ADM_PATH_PLAYBACK	0x1
+#घोषणा ADM_PATH_LIVE_REC	0x2
+#घोषणा MAX_COPPS_PER_PORT	8
+#घोषणा शून्य_COPP_TOPOLOGY	0x00010312
 
 /* multiple copp per stream. */
-struct route_payload {
-	int num_copps;
-	int session_id;
-	int copp_idx[MAX_COPPS_PER_PORT];
-	int port_id[MAX_COPPS_PER_PORT];
-};
+काष्ठा route_payload अणु
+	पूर्णांक num_copps;
+	पूर्णांक session_id;
+	पूर्णांक copp_idx[MAX_COPPS_PER_PORT];
+	पूर्णांक port_id[MAX_COPPS_PER_PORT];
+पूर्ण;
 
-struct q6copp;
-struct q6copp *q6adm_open(struct device *dev, int port_id, int path, int rate,
-			   int channel_mode, int topology, int perf_mode,
-			   uint16_t bit_width, int app_type, int acdb_id);
-int q6adm_close(struct device *dev, struct q6copp *copp);
-int q6adm_get_copp_id(struct q6copp *copp);
-int q6adm_matrix_map(struct device *dev, int path,
-		     struct route_payload payload_map, int perf_mode);
+काष्ठा q6copp;
+काष्ठा q6copp *q6adm_खोलो(काष्ठा device *dev, पूर्णांक port_id, पूर्णांक path, पूर्णांक rate,
+			   पूर्णांक channel_mode, पूर्णांक topology, पूर्णांक perf_mode,
+			   uपूर्णांक16_t bit_width, पूर्णांक app_type, पूर्णांक acdb_id);
+पूर्णांक q6adm_बंद(काष्ठा device *dev, काष्ठा q6copp *copp);
+पूर्णांक q6adm_get_copp_id(काष्ठा q6copp *copp);
+पूर्णांक q6adm_matrix_map(काष्ठा device *dev, पूर्णांक path,
+		     काष्ठा route_payload payload_map, पूर्णांक perf_mode);
 
-#endif /* __Q6_ADM_V2_H__ */
+#पूर्ण_अगर /* __Q6_ADM_V2_H__ */

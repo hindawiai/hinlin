@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Hardware accelerated Matrox Millennium I, II, Mystique, G100, G200, G400 and G450.
@@ -9,230 +10,230 @@
  *
  * Version: 1.65 2002/08/14
  *
- * See matroxfb_base.c for contributors.
+ * See matroxfb_base.c क्रम contributors.
  *
  */
 
-#include "matroxfb_maven.h"
-#include "matroxfb_misc.h"
-#include "matroxfb_DAC1064.h"
-#include <linux/i2c.h>
-#include <linux/matroxfb.h>
-#include <linux/slab.h>
-#include <asm/div64.h>
+#समावेश "matroxfb_maven.h"
+#समावेश "matroxfb_misc.h"
+#समावेश "matroxfb_DAC1064.h"
+#समावेश <linux/i2c.h>
+#समावेश <linux/matroxfb.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/भाग64.h>
 
-#define MGATVO_B	1
-#define MGATVO_C	2
+#घोषणा MGATVO_B	1
+#घोषणा MGATVO_C	2
 
-static const struct maven_gamma {
-  unsigned char reg83;
-  unsigned char reg84;
-  unsigned char reg85;
-  unsigned char reg86;
-  unsigned char reg87;
-  unsigned char reg88;
-  unsigned char reg89;
-  unsigned char reg8a;
-  unsigned char reg8b;
-} maven_gamma[] = {
-  { 131, 57, 223, 15, 117, 212, 251, 91, 156},
-  { 133, 61, 128, 63, 180, 147, 195, 100, 180},
-  { 131, 19, 63, 31, 50, 66, 171, 64, 176},
-  { 0, 0, 0, 31, 16, 16, 16, 100, 200},
-  { 8, 23, 47, 73, 147, 244, 220, 80, 195},
-  { 22, 43, 64, 80, 147, 115, 58, 85, 168},
-  { 34, 60, 80, 214, 147, 212, 188, 85, 167},
-  { 45, 77, 96, 216, 147, 99, 91, 85, 159},
-  { 56, 76, 112, 107, 147, 212, 148, 64, 144},
-  { 65, 91, 128, 137, 147, 196, 17, 69, 148},
-  { 72, 104, 136, 138, 147, 180, 245, 73, 147},
-  { 87, 116, 143, 126, 16, 83, 229, 77, 144},
-  { 95, 119, 152, 254, 244, 83, 221, 77, 151},
-  { 100, 129, 159, 156, 244, 148, 197, 77, 160},
-  { 105, 141, 167, 247, 244, 132, 181, 84, 166},
-  { 105, 147, 168, 247, 244, 245, 181, 90, 170},
-  { 120, 153, 175, 248, 212, 229, 165, 90, 180},
-  { 119, 156, 176, 248, 244, 229, 84, 74, 160},
-  { 119, 158, 183, 248, 244, 229, 149, 78, 165}
-};
+अटल स्थिर काष्ठा maven_gamma अणु
+  अचिन्हित अक्षर reg83;
+  अचिन्हित अक्षर reg84;
+  अचिन्हित अक्षर reg85;
+  अचिन्हित अक्षर reg86;
+  अचिन्हित अक्षर reg87;
+  अचिन्हित अक्षर reg88;
+  अचिन्हित अक्षर reg89;
+  अचिन्हित अक्षर reg8a;
+  अचिन्हित अक्षर reg8b;
+पूर्ण maven_gamma[] = अणु
+  अणु 131, 57, 223, 15, 117, 212, 251, 91, 156पूर्ण,
+  अणु 133, 61, 128, 63, 180, 147, 195, 100, 180पूर्ण,
+  अणु 131, 19, 63, 31, 50, 66, 171, 64, 176पूर्ण,
+  अणु 0, 0, 0, 31, 16, 16, 16, 100, 200पूर्ण,
+  अणु 8, 23, 47, 73, 147, 244, 220, 80, 195पूर्ण,
+  अणु 22, 43, 64, 80, 147, 115, 58, 85, 168पूर्ण,
+  अणु 34, 60, 80, 214, 147, 212, 188, 85, 167पूर्ण,
+  अणु 45, 77, 96, 216, 147, 99, 91, 85, 159पूर्ण,
+  अणु 56, 76, 112, 107, 147, 212, 148, 64, 144पूर्ण,
+  अणु 65, 91, 128, 137, 147, 196, 17, 69, 148पूर्ण,
+  अणु 72, 104, 136, 138, 147, 180, 245, 73, 147पूर्ण,
+  अणु 87, 116, 143, 126, 16, 83, 229, 77, 144पूर्ण,
+  अणु 95, 119, 152, 254, 244, 83, 221, 77, 151पूर्ण,
+  अणु 100, 129, 159, 156, 244, 148, 197, 77, 160पूर्ण,
+  अणु 105, 141, 167, 247, 244, 132, 181, 84, 166पूर्ण,
+  अणु 105, 147, 168, 247, 244, 245, 181, 90, 170पूर्ण,
+  अणु 120, 153, 175, 248, 212, 229, 165, 90, 180पूर्ण,
+  अणु 119, 156, 176, 248, 244, 229, 84, 74, 160पूर्ण,
+  अणु 119, 158, 183, 248, 244, 229, 149, 78, 165पूर्ण
+पूर्ण;
 
 /* Definition of the various controls */
-struct mctl {
-	struct v4l2_queryctrl desc;
-	size_t control;
-};
+काष्ठा mctl अणु
+	काष्ठा v4l2_queryctrl desc;
+	माप_प्रकार control;
+पूर्ण;
 
-#define BLMIN	0x0FF
-#define WLMAX	0x3FF
+#घोषणा BLMIN	0x0FF
+#घोषणा WLMAX	0x3FF
 
-static const struct mctl maven_controls[] =
-{	{ { V4L2_CID_BRIGHTNESS, V4L2_CTRL_TYPE_INTEGER,
+अटल स्थिर काष्ठा mctl maven_controls[] =
+अणु	अणु अणु V4L2_CID_BRIGHTNESS, V4L2_CTRL_TYPE_INTEGER,
 	  "brightness",
 	  0, WLMAX - BLMIN, 1, 379 - BLMIN, 
 	  0,
-	}, offsetof(struct matrox_fb_info, altout.tvo_params.brightness) },
-	{ { V4L2_CID_CONTRAST, V4L2_CTRL_TYPE_INTEGER,
+	पूर्ण, दुरत्व(काष्ठा matrox_fb_info, altout.tvo_params.brightness) पूर्ण,
+	अणु अणु V4L2_CID_CONTRAST, V4L2_CTRL_TYPE_INTEGER,
 	  "contrast",
 	  0, 1023, 1, 127,
 	  0,
-	}, offsetof(struct matrox_fb_info, altout.tvo_params.contrast) },
-	{ { V4L2_CID_SATURATION, V4L2_CTRL_TYPE_INTEGER,
+	पूर्ण, दुरत्व(काष्ठा matrox_fb_info, altout.tvo_params.contrast) पूर्ण,
+	अणु अणु V4L2_CID_SATURATION, V4L2_CTRL_TYPE_INTEGER,
 	  "saturation",
 	  0, 255, 1, 155,
 	  0,
-	}, offsetof(struct matrox_fb_info, altout.tvo_params.saturation) },
-	{ { V4L2_CID_HUE, V4L2_CTRL_TYPE_INTEGER,
+	पूर्ण, दुरत्व(काष्ठा matrox_fb_info, altout.tvo_params.saturation) पूर्ण,
+	अणु अणु V4L2_CID_HUE, V4L2_CTRL_TYPE_INTEGER,
 	  "hue",
 	  0, 255, 1, 0,
 	  0,
-	}, offsetof(struct matrox_fb_info, altout.tvo_params.hue) },
-	{ { V4L2_CID_GAMMA, V4L2_CTRL_TYPE_INTEGER,
+	पूर्ण, दुरत्व(काष्ठा matrox_fb_info, altout.tvo_params.hue) पूर्ण,
+	अणु अणु V4L2_CID_GAMMA, V4L2_CTRL_TYPE_INTEGER,
 	  "gamma",
 	  0, ARRAY_SIZE(maven_gamma) - 1, 1, 3,
 	  0,
-	}, offsetof(struct matrox_fb_info, altout.tvo_params.gamma) },
-	{ { MATROXFB_CID_TESTOUT, V4L2_CTRL_TYPE_BOOLEAN,
+	पूर्ण, दुरत्व(काष्ठा matrox_fb_info, altout.tvo_params.gamma) पूर्ण,
+	अणु अणु MATROXFB_CID_TESTOUT, V4L2_CTRL_TYPE_BOOLEAN,
 	  "test output",
 	  0, 1, 1, 0,
 	  0,
-	}, offsetof(struct matrox_fb_info, altout.tvo_params.testout) },
-	{ { MATROXFB_CID_DEFLICKER, V4L2_CTRL_TYPE_INTEGER,
+	पूर्ण, दुरत्व(काष्ठा matrox_fb_info, altout.tvo_params.testout) पूर्ण,
+	अणु अणु MATROXFB_CID_DEFLICKER, V4L2_CTRL_TYPE_INTEGER,
 	  "deflicker mode",
 	  0, 2, 1, 0,
 	  0,
-	}, offsetof(struct matrox_fb_info, altout.tvo_params.deflicker) },
+	पूर्ण, दुरत्व(काष्ठा matrox_fb_info, altout.tvo_params.deflicker) पूर्ण,
 
-};
+पूर्ण;
 
-#define MAVCTRLS ARRAY_SIZE(maven_controls)
+#घोषणा MAVCTRLS ARRAY_SIZE(maven_controls)
 
 /* Return: positive number: id found
-           -EINVAL:         id not found, return failure
+           -EINVAL:         id not found, वापस failure
 	   -ENOENT:         id not found, create fake disabled control */
-static int get_ctrl_id(__u32 v4l2_id) {
-	int i;
+अटल पूर्णांक get_ctrl_id(__u32 v4l2_id) अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAVCTRLS; i++) {
-		if (v4l2_id < maven_controls[i].desc.id) {
-			if (maven_controls[i].desc.id == 0x08000000) {
-				return -EINVAL;
-			}
-			return -ENOENT;
-		}
-		if (v4l2_id == maven_controls[i].desc.id) {
-			return i;
-		}
-	}
-	return -EINVAL;
-}
+	क्रम (i = 0; i < MAVCTRLS; i++) अणु
+		अगर (v4l2_id < maven_controls[i].desc.id) अणु
+			अगर (maven_controls[i].desc.id == 0x08000000) अणु
+				वापस -EINVAL;
+			पूर्ण
+			वापस -ENOENT;
+		पूर्ण
+		अगर (v4l2_id == maven_controls[i].desc.id) अणु
+			वापस i;
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-struct maven_data {
-	struct matrox_fb_info*		primary_head;
-	struct i2c_client		*client;
-	int				version;
-};
+काष्ठा maven_data अणु
+	काष्ठा matrox_fb_info*		primary_head;
+	काष्ठा i2c_client		*client;
+	पूर्णांक				version;
+पूर्ण;
 
-static int* get_ctrl_ptr(struct maven_data* md, int idx) {
-	return (int*)((char*)(md->primary_head) + maven_controls[idx].control);
-}
+अटल पूर्णांक* get_ctrl_ptr(काष्ठा maven_data* md, पूर्णांक idx) अणु
+	वापस (पूर्णांक*)((अक्षर*)(md->primary_head) + maven_controls[idx].control);
+पूर्ण
 
-static int maven_get_reg(struct i2c_client* c, char reg) {
-	char dst;
-	struct i2c_msg msgs[] = {
-		{
+अटल पूर्णांक maven_get_reg(काष्ठा i2c_client* c, अक्षर reg) अणु
+	अक्षर dst;
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु
 			.addr = c->addr,
-			.flags = I2C_M_REV_DIR_ADDR,
-			.len = sizeof(reg),
+			.flags = I2C_M_REV_सूची_ADDR,
+			.len = माप(reg),
 			.buf = &reg
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr = c->addr,
 			.flags = I2C_M_RD | I2C_M_NOSTART,
-			.len = sizeof(dst),
+			.len = माप(dst),
 			.buf = &dst
-		}
-	};
+		पूर्ण
+	पूर्ण;
 	s32 err;
 
 	err = i2c_transfer(c->adapter, msgs, 2);
-	if (err < 0)
-		printk(KERN_INFO "ReadReg(%d) failed\n", reg);
-	return dst & 0xFF;
-}
+	अगर (err < 0)
+		prपूर्णांकk(KERN_INFO "ReadReg(%d) failed\n", reg);
+	वापस dst & 0xFF;
+पूर्ण
 
-static int maven_set_reg(struct i2c_client* c, int reg, int val) {
+अटल पूर्णांक maven_set_reg(काष्ठा i2c_client* c, पूर्णांक reg, पूर्णांक val) अणु
 	s32 err;
 
-	err = i2c_smbus_write_byte_data(c, reg, val);
-	if (err)
-		printk(KERN_INFO "WriteReg(%d) failed\n", reg);
-	return err;
-}
+	err = i2c_smbus_ग_लिखो_byte_data(c, reg, val);
+	अगर (err)
+		prपूर्णांकk(KERN_INFO "WriteReg(%d) failed\n", reg);
+	वापस err;
+पूर्ण
 
-static int maven_set_reg_pair(struct i2c_client* c, int reg, int val) {
+अटल पूर्णांक maven_set_reg_pair(काष्ठा i2c_client* c, पूर्णांक reg, पूर्णांक val) अणु
 	s32 err;
 
-	err = i2c_smbus_write_word_data(c, reg, val);
-	if (err)
-		printk(KERN_INFO "WriteRegPair(%d) failed\n", reg);
-	return err;
-}
+	err = i2c_smbus_ग_लिखो_word_data(c, reg, val);
+	अगर (err)
+		prपूर्णांकk(KERN_INFO "WriteRegPair(%d) failed\n", reg);
+	वापस err;
+पूर्ण
 
-static const struct matrox_pll_features maven_pll = {
+अटल स्थिर काष्ठा matrox_pll_features maven_pll = अणु
 	50000,
 	27000,
 	4, 127,
 	2, 31,
 	3
-};
+पूर्ण;
 
-struct matrox_pll_features2 {
-	unsigned int	vco_freq_min;
-	unsigned int	vco_freq_max;
-	unsigned int	feed_div_min;
-	unsigned int	feed_div_max;
-	unsigned int	in_div_min;
-	unsigned int	in_div_max;
-	unsigned int	post_shift_max;
-};
+काष्ठा matrox_pll_features2 अणु
+	अचिन्हित पूर्णांक	vco_freq_min;
+	अचिन्हित पूर्णांक	vco_freq_max;
+	अचिन्हित पूर्णांक	feed_भाग_min;
+	अचिन्हित पूर्णांक	feed_भाग_max;
+	अचिन्हित पूर्णांक	in_भाग_min;
+	अचिन्हित पूर्णांक	in_भाग_max;
+	अचिन्हित पूर्णांक	post_shअगरt_max;
+पूर्ण;
 
-struct matrox_pll_ctl {
-	unsigned int	ref_freq;
-	unsigned int	den;
-};
+काष्ठा matrox_pll_ctl अणु
+	अचिन्हित पूर्णांक	ref_freq;
+	अचिन्हित पूर्णांक	den;
+पूर्ण;
 
-static const struct matrox_pll_features2 maven1000_pll = {
+अटल स्थिर काष्ठा matrox_pll_features2 maven1000_pll = अणु
 	.vco_freq_min = 50000000,
 	.vco_freq_max = 300000000,
-	.feed_div_min = 5,
-	.feed_div_max = 128,
-	.in_div_min = 3,
-	.in_div_max = 32,
-	.post_shift_max = 3
-};
+	.feed_भाग_min = 5,
+	.feed_भाग_max = 128,
+	.in_भाग_min = 3,
+	.in_भाग_max = 32,
+	.post_shअगरt_max = 3
+पूर्ण;
 
-static const struct matrox_pll_ctl maven_PAL = {
+अटल स्थिर काष्ठा matrox_pll_ctl maven_PAL = अणु
 	.ref_freq = 540000,
 	.den = 50
-};
+पूर्ण;
 
-static const struct matrox_pll_ctl maven_NTSC = {
+अटल स्थिर काष्ठा matrox_pll_ctl maven_NTSC = अणु
 	.ref_freq = 450450,	/* 27027000/60 == 27000000/59.94005994 */
 	.den = 60
-};
+पूर्ण;
 
-static int matroxfb_PLL_mavenclock(const struct matrox_pll_features2* pll,
-		const struct matrox_pll_ctl* ctl,
-		unsigned int htotal, unsigned int vtotal,
-		unsigned int* in, unsigned int* feed, unsigned int* post,
-		unsigned int* h2) {
-	unsigned int besth2 = 0;
-	unsigned int fxtal = ctl->ref_freq;
-	unsigned int fmin = pll->vco_freq_min / ctl->den;
-	unsigned int fwant;
-	unsigned int p;
-	unsigned int scrlen;
-	unsigned int fmax;
+अटल पूर्णांक matroxfb_PLL_mavenघड़ी(स्थिर काष्ठा matrox_pll_features2* pll,
+		स्थिर काष्ठा matrox_pll_ctl* ctl,
+		अचिन्हित पूर्णांक htotal, अचिन्हित पूर्णांक vtotal,
+		अचिन्हित पूर्णांक* in, अचिन्हित पूर्णांक* feed, अचिन्हित पूर्णांक* post,
+		अचिन्हित पूर्णांक* h2) अणु
+	अचिन्हित पूर्णांक besth2 = 0;
+	अचिन्हित पूर्णांक fxtal = ctl->ref_freq;
+	अचिन्हित पूर्णांक fmin = pll->vco_freq_min / ctl->den;
+	अचिन्हित पूर्णांक fwant;
+	अचिन्हित पूर्णांक p;
+	अचिन्हित पूर्णांक scrlen;
+	अचिन्हित पूर्णांक fmax;
 
 	DBG(__func__)
 
@@ -240,141 +241,141 @@ static int matroxfb_PLL_mavenclock(const struct matrox_pll_features2* pll,
 	fwant = htotal * vtotal;
 	fmax = pll->vco_freq_max / ctl->den;
 
-	dprintk(KERN_DEBUG "want: %u, xtal: %u, h: %u, v: %u, fmax: %u\n",
+	dprपूर्णांकk(KERN_DEBUG "want: %u, xtal: %u, h: %u, v: %u, fmax: %u\n",
 		fwant, fxtal, htotal, vtotal, fmax);
-	for (p = 1; p <= pll->post_shift_max; p++) {
-		if (fwant * 2 > fmax)
-			break;
+	क्रम (p = 1; p <= pll->post_shअगरt_max; p++) अणु
+		अगर (fwant * 2 > fmax)
+			अवरोध;
 		fwant *= 2;
-	}
-	if (fwant > fmax)
-		return 0;
-	for (; p-- > 0; fwant >>= 1) {
-		unsigned int m;
+	पूर्ण
+	अगर (fwant > fmax)
+		वापस 0;
+	क्रम (; p-- > 0; fwant >>= 1) अणु
+		अचिन्हित पूर्णांक m;
 
-		if (fwant < fmin) break;
-		for (m = pll->in_div_min; m <= pll->in_div_max; m++) {
-			unsigned int n;
-			unsigned int dvd;
-			unsigned int ln;
+		अगर (fwant < fmin) अवरोध;
+		क्रम (m = pll->in_भाग_min; m <= pll->in_भाग_max; m++) अणु
+			अचिन्हित पूर्णांक n;
+			अचिन्हित पूर्णांक dvd;
+			अचिन्हित पूर्णांक ln;
 
 			n = (fwant * m) / fxtal;
-			if (n < pll->feed_div_min)
-				continue;
-			if (n > pll->feed_div_max)
-				break;
+			अगर (n < pll->feed_भाग_min)
+				जारी;
+			अगर (n > pll->feed_भाग_max)
+				अवरोध;
 
 			ln = fxtal * n;
 			dvd = m << p;
 
-			if (ln % dvd)
-				continue;
+			अगर (ln % dvd)
+				जारी;
 			ln = ln / dvd;
 
-			if (ln < scrlen + 2)
-				continue;
+			अगर (ln < scrlen + 2)
+				जारी;
 			ln = ln - scrlen;
-			if (ln > htotal)
-				continue;
-			dprintk(KERN_DEBUG "Match: %u / %u / %u / %u\n", n, m, p, ln);
-			if (ln > besth2) {
-				dprintk(KERN_DEBUG "Better...\n");
+			अगर (ln > htotal)
+				जारी;
+			dprपूर्णांकk(KERN_DEBUG "Match: %u / %u / %u / %u\n", n, m, p, ln);
+			अगर (ln > besth2) अणु
+				dprपूर्णांकk(KERN_DEBUG "Better...\n");
 				*h2 = besth2 = ln;
 				*post = p;
 				*in = m;
 				*feed = n;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* if h2/post/in/feed have not been assigned, return zero (error) */
-	if (besth2 < 2)
-		return 0;
+	/* अगर h2/post/in/feed have not been asचिन्हित, वापस zero (error) */
+	अगर (besth2 < 2)
+		वापस 0;
 
-	dprintk(KERN_ERR "clk: %02X %02X %02X %d %d\n", *in, *feed, *post, fxtal, fwant);
-	return fxtal * (*feed) / (*in) * ctl->den;
-}
+	dprपूर्णांकk(KERN_ERR "clk: %02X %02X %02X %d %d\n", *in, *feed, *post, fxtal, fwant);
+	वापस fxtal * (*feed) / (*in) * ctl->den;
+पूर्ण
 
-static int matroxfb_mavenclock(const struct matrox_pll_ctl *ctl,
-		unsigned int htotal, unsigned int vtotal,
-		unsigned int* in, unsigned int* feed, unsigned int* post,
-		unsigned int* htotal2) {
-	unsigned int fvco;
-	unsigned int p;
+अटल पूर्णांक matroxfb_mavenघड़ी(स्थिर काष्ठा matrox_pll_ctl *ctl,
+		अचिन्हित पूर्णांक htotal, अचिन्हित पूर्णांक vtotal,
+		अचिन्हित पूर्णांक* in, अचिन्हित पूर्णांक* feed, अचिन्हित पूर्णांक* post,
+		अचिन्हित पूर्णांक* htotal2) अणु
+	अचिन्हित पूर्णांक fvco;
+	अचिन्हित पूर्णांक p;
 
-	fvco = matroxfb_PLL_mavenclock(&maven1000_pll, ctl, htotal, vtotal, in, feed, &p, htotal2);
-	if (!fvco)
-		return -EINVAL;
+	fvco = matroxfb_PLL_mavenघड़ी(&maven1000_pll, ctl, htotal, vtotal, in, feed, &p, htotal2);
+	अगर (!fvco)
+		वापस -EINVAL;
 	p = (1 << p) - 1;
-	if (fvco <= 100000000)
+	अगर (fvco <= 100000000)
 		;
-	else if (fvco <= 140000000)
+	अन्यथा अगर (fvco <= 140000000)
 		p |= 0x08;
-	else if (fvco <= 180000000)
+	अन्यथा अगर (fvco <= 180000000)
 		p |= 0x10;
-	else
+	अन्यथा
 		p |= 0x18;
 	*post = p;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void DAC1064_calcclock(unsigned int freq, unsigned int fmax,
-		unsigned int* in, unsigned int* feed, unsigned int* post) {
-	unsigned int fvco;
-	unsigned int p;
+अटल व्योम DAC1064_calcघड़ी(अचिन्हित पूर्णांक freq, अचिन्हित पूर्णांक fmax,
+		अचिन्हित पूर्णांक* in, अचिन्हित पूर्णांक* feed, अचिन्हित पूर्णांक* post) अणु
+	अचिन्हित पूर्णांक fvco;
+	अचिन्हित पूर्णांक p;
 
-	fvco = matroxfb_PLL_calcclock(&maven_pll, freq, fmax, in, feed, &p);
+	fvco = matroxfb_PLL_calcघड़ी(&maven_pll, freq, fmax, in, feed, &p);
 	p = (1 << p) - 1;
-	if (fvco <= 100000)
+	अगर (fvco <= 100000)
 		;
-	else if (fvco <= 140000)
+	अन्यथा अगर (fvco <= 140000)
 		p |= 0x08;
-	else if (fvco <= 180000)
+	अन्यथा अगर (fvco <= 180000)
 		p |= 0x10;
-	else
+	अन्यथा
 		p |= 0x18;
 	*post = p;
-	return;
-}
+	वापस;
+पूर्ण
 
-static unsigned char maven_compute_deflicker (const struct maven_data* md) {
-	unsigned char df;
+अटल अचिन्हित अक्षर maven_compute_deflicker (स्थिर काष्ठा maven_data* md) अणु
+	अचिन्हित अक्षर df;
 	
 	df = (md->version == MGATVO_B?0x40:0x00);
-	switch (md->primary_head->altout.tvo_params.deflicker) {
-		case 0:
+	चयन (md->primary_head->altout.tvo_params.deflicker) अणु
+		हाल 0:
 /*			df |= 0x00; */
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			df |= 0xB1;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			df |= 0xA2;
-			break;
-	}
-	return df;
-}
+			अवरोध;
+	पूर्ण
+	वापस df;
+पूर्ण
 
-static void maven_compute_bwlevel (const struct maven_data* md,
-				   int *bl, int *wl) {
-	const int b = md->primary_head->altout.tvo_params.brightness + BLMIN;
-	const int c = md->primary_head->altout.tvo_params.contrast;
+अटल व्योम maven_compute_bwlevel (स्थिर काष्ठा maven_data* md,
+				   पूर्णांक *bl, पूर्णांक *wl) अणु
+	स्थिर पूर्णांक b = md->primary_head->altout.tvo_params.brightness + BLMIN;
+	स्थिर पूर्णांक c = md->primary_head->altout.tvo_params.contrast;
 
 	*bl = max(b - c, BLMIN);
 	*wl = min(b + c, WLMAX);
-}
+पूर्ण
 
-static const struct maven_gamma* maven_compute_gamma (const struct maven_data* md) {
- 	return maven_gamma + md->primary_head->altout.tvo_params.gamma;
-}
+अटल स्थिर काष्ठा maven_gamma* maven_compute_gamma (स्थिर काष्ठा maven_data* md) अणु
+ 	वापस maven_gamma + md->primary_head->altout.tvo_params.gamma;
+पूर्ण
 
 
-static void maven_init_TVdata(const struct maven_data* md, struct mavenregs* data) {
-	static struct mavenregs palregs = { {
+अटल व्योम maven_init_TVdata(स्थिर काष्ठा maven_data* md, काष्ठा mavenregs* data) अणु
+	अटल काष्ठा mavenregs palregs = अणु अणु
 		0x2A, 0x09, 0x8A, 0xCB,	/* 00: chroma subcarrier */
 		0x00,
 		0x00,	/* ? not written */
-		0x00,	/* modified by code (F9 written...) */
+		0x00,	/* modअगरied by code (F9 written...) */
 		0x00,	/* ? not written */
 		0x7E,	/* 08 */
 		0x44,	/* 09 */
@@ -411,7 +412,7 @@ static void maven_init_TVdata(const struct maven_data* md, struct mavenregs* dat
 		0xB0, 0x00, /* 31-32 */
 		0x14,	/* 33 */
 		0x49,	/* 34 */
-		0x00,	/* 35 written multiple times */
+		0x00,	/* 35 written multiple बार */
 		0x00,	/* 36 not written */
 		0xA3,	/* 37 */
 		0xC8,	/* 38 */
@@ -419,14 +420,14 @@ static void maven_init_TVdata(const struct maven_data* md, struct mavenregs* dat
 		0x02,	/* 3A */
 		0x22,	/* 3B */
 		0x3F, 0x03, /* 3C-3D */
-		0x00,	/* 3E written multiple times */
+		0x00,	/* 3E written multiple बार */
 		0x00,	/* 3F not written */
-	}, MATROXFB_OUTPUT_MODE_PAL, 625, 50 };
-	static struct mavenregs ntscregs = { {
+	पूर्ण, MATROXFB_OUTPUT_MODE_PAL, 625, 50 पूर्ण;
+	अटल काष्ठा mavenregs ntscregs = अणु अणु
 		0x21, 0xF0, 0x7C, 0x1F,	/* 00: chroma subcarrier */
 		0x00,
 		0x00,	/* ? not written */
-		0x00,	/* modified by code (F9 written...) */
+		0x00,	/* modअगरied by code (F9 written...) */
 		0x00,	/* ? not written */
 		0x7E,	/* 08 */
 		0x43,	/* 09 */
@@ -463,7 +464,7 @@ static void maven_init_TVdata(const struct maven_data* md, struct mavenregs* dat
 		0xB2, 0x04, /* 31-32 */
 		0x14,	/* 33 */
 		0x02,	/* 34 */
-		0x00,	/* 35 written multiple times */
+		0x00,	/* 35 written multiple बार */
 		0x00,	/* 36 not written */
 		0xA3,	/* 37 */
 		0xC8,	/* 38 */
@@ -471,22 +472,22 @@ static void maven_init_TVdata(const struct maven_data* md, struct mavenregs* dat
 		0x05,	/* 3A */
 		0x3B,	/* 3B */
 		0x3C, 0x00, /* 3C-3D */
-		0x00,	/* 3E written multiple times */
+		0x00,	/* 3E written multiple बार */
 		0x00,	/* never written */
-	}, MATROXFB_OUTPUT_MODE_NTSC, 525, 60 };
-	struct matrox_fb_info *minfo = md->primary_head;
+	पूर्ण, MATROXFB_OUTPUT_MODE_NTSC, 525, 60 पूर्ण;
+	काष्ठा matrox_fb_info *minfo = md->primary_head;
 
-	if (minfo->outputs[1].mode == MATROXFB_OUTPUT_MODE_PAL)
+	अगर (minfo->outमाला_दो[1].mode == MATROXFB_OUTPUT_MODE_PAL)
 		*data = palregs;
-	else
+	अन्यथा
 		*data = ntscregs;
 
 	/* Set deflicker */
 	data->regs[0x93] = maven_compute_deflicker(md);
  
 	/* set gamma */
-	{
-		const struct maven_gamma* g;
+	अणु
+		स्थिर काष्ठा maven_gamma* g;
 		g = maven_compute_gamma(md);
 		data->regs[0x83] = g->reg83;
 		data->regs[0x84] = g->reg84;
@@ -497,33 +498,33 @@ static void maven_init_TVdata(const struct maven_data* md, struct mavenregs* dat
 		data->regs[0x89] = g->reg89;
 		data->regs[0x8A] = g->reg8a;
 		data->regs[0x8B] = g->reg8b;
-	}
+	पूर्ण
  
 	/* Set contrast / brightness */
-	{
-		int bl, wl;
+	अणु
+		पूर्णांक bl, wl;
 		maven_compute_bwlevel (md, &bl, &wl);
 		data->regs[0x0e] = bl >> 2;
 		data->regs[0x0f] = bl & 3;
 		data->regs[0x1e] = wl >> 2;
 		data->regs[0x1f] = wl & 3;
-	}
+	पूर्ण
 
 	/* Set saturation */
-	{
+	अणु
 		data->regs[0x20] =
 		data->regs[0x22] = minfo->altout.tvo_params.saturation;
-	}
+	पूर्ण
  
 	/* Set HUE */
 	data->regs[0x25] = minfo->altout.tvo_params.hue;
-	return;
-}
+	वापस;
+पूर्ण
 
-#define LR(x) maven_set_reg(c, (x), m->regs[(x)])
-#define LRP(x) maven_set_reg_pair(c, (x), m->regs[(x)] | (m->regs[(x)+1] << 8))
-static void maven_init_TV(struct i2c_client* c, const struct mavenregs* m) {
-	int val;
+#घोषणा LR(x) maven_set_reg(c, (x), m->regs[(x)])
+#घोषणा LRP(x) maven_set_reg_pair(c, (x), m->regs[(x)] | (m->regs[(x)+1] << 8))
+अटल व्योम maven_init_TV(काष्ठा i2c_client* c, स्थिर काष्ठा mavenregs* m) अणु
+	पूर्णांक val;
 
 
 	maven_set_reg(c, 0x3E, 0x01);
@@ -536,12 +537,12 @@ static void maven_init_TV(struct i2c_client* c, const struct mavenregs* m) {
 	maven_set_reg_pair(c, 0x8E, 0x1EFF);
 	maven_set_reg(c, 0xC6, 0x01);
 
-	/* removed code... */
+	/* हटाओd code... */
 
 	maven_get_reg(c, 0x06);
-	maven_set_reg(c, 0x06, 0xF9);	/* or read |= 0xF0 ? */
+	maven_set_reg(c, 0x06, 0xF9);	/* or पढ़ो |= 0xF0 ? */
 
-	/* removed code here... */
+	/* हटाओd code here... */
 
 	/* real code begins here? */
 	/* chroma subcarrier */
@@ -558,11 +559,11 @@ static void maven_init_TV(struct i2c_client* c, const struct mavenregs* m) {
 	LRP(0x17);
 	LR(0x0B);
 	LR(0x0C);
-	if (m->mode == MATROXFB_OUTPUT_MODE_PAL) {
+	अगर (m->mode == MATROXFB_OUTPUT_MODE_PAL) अणु
 		maven_set_reg(c, 0x35, 0x10); /* ... */
-	} else {
+	पूर्ण अन्यथा अणु
 		maven_set_reg(c, 0x35, 0x0F); /* ... */
-	}
+	पूर्ण
 
 	LRP(0x10);
 
@@ -596,9 +597,9 @@ static void maven_init_TV(struct i2c_client* c, const struct mavenregs* m) {
 	LR(0x27);
 	LR(0x21);
 	LRP(0x2A);
-	if (m->mode == MATROXFB_OUTPUT_MODE_PAL)
+	अगर (m->mode == MATROXFB_OUTPUT_MODE_PAL)
 		maven_set_reg(c, 0x35, 0x1D);	/* ... */
-	else
+	अन्यथा
 		maven_set_reg(c, 0x35, 0x1C);
 
 	LRP(0x3C);
@@ -606,13 +607,13 @@ static void maven_init_TV(struct i2c_client* c, const struct mavenregs* m) {
 	LR(0x38);
 	maven_set_reg(c, 0xB3, 0x01);
 
-	maven_get_reg(c, 0xB0);	/* read 0x80 */
+	maven_get_reg(c, 0xB0);	/* पढ़ो 0x80 */
 	maven_set_reg(c, 0xB0, 0x08);	/* ugh... */
-	maven_get_reg(c, 0xB9);	/* read 0x7C */
+	maven_get_reg(c, 0xB9);	/* पढ़ो 0x7C */
 	maven_set_reg(c, 0xB9, 0x78);
-	maven_get_reg(c, 0xBF);	/* read 0x00 */
+	maven_get_reg(c, 0xBF);	/* पढ़ो 0x00 */
 	maven_set_reg(c, 0xBF, 0x02);
-	maven_get_reg(c, 0x94);	/* read 0x82 */
+	maven_get_reg(c, 0x94);	/* पढ़ो 0x82 */
 	maven_set_reg(c, 0x94, 0xB3);
 
 	LR(0x80); /* 04 1A 91 or 05 21 91 */
@@ -696,9 +697,9 @@ static void maven_init_TV(struct i2c_client* c, const struct mavenregs* m) {
 	LR(0x27);
 	LR(0x21);
 	LRP(0x2A);
-	if (m->mode == MATROXFB_OUTPUT_MODE_PAL)
+	अगर (m->mode == MATROXFB_OUTPUT_MODE_PAL)
 		maven_set_reg(c, 0x35, 0x1D);
-	else
+	अन्यथा
 		maven_set_reg(c, 0x35, 0x1C);
 	LRP(0x3C);
 	LR(0x37);
@@ -718,59 +719,59 @@ static void maven_init_TV(struct i2c_client* c, const struct mavenregs* m) {
 	LRP(0xAC);
 	maven_set_reg(c, 0x3E, 0x00);
 	maven_set_reg(c, 0x95, 0x20);
-}
+पूर्ण
 
-static int maven_find_exact_clocks(unsigned int ht, unsigned int vt,
-		struct mavenregs* m) {
-	unsigned int x;
-	unsigned int err = ~0;
+अटल पूर्णांक maven_find_exact_घड़ीs(अचिन्हित पूर्णांक ht, अचिन्हित पूर्णांक vt,
+		काष्ठा mavenregs* m) अणु
+	अचिन्हित पूर्णांक x;
+	अचिन्हित पूर्णांक err = ~0;
 
 	/* 1:1 */
 	m->regs[0x80] = 0x0F;
 	m->regs[0x81] = 0x07;
 	m->regs[0x82] = 0x81;
 
-	for (x = 0; x < 8; x++) {
-		unsigned int c;
-		unsigned int a, b,
+	क्रम (x = 0; x < 8; x++) अणु
+		अचिन्हित पूर्णांक c;
+		अचिन्हित पूर्णांक a, b,
 			     h2;
-		unsigned int h = ht + 2 + x;
+		अचिन्हित पूर्णांक h = ht + 2 + x;
 
-		if (!matroxfb_mavenclock((m->mode == MATROXFB_OUTPUT_MODE_PAL) ? &maven_PAL : &maven_NTSC, h, vt, &a, &b, &c, &h2)) {
-			unsigned int diff = h - h2;
+		अगर (!matroxfb_mavenघड़ी((m->mode == MATROXFB_OUTPUT_MODE_PAL) ? &maven_PAL : &maven_NTSC, h, vt, &a, &b, &c, &h2)) अणु
+			अचिन्हित पूर्णांक dअगरf = h - h2;
 
-			if (diff < err) {
-				err = diff;
+			अगर (dअगरf < err) अणु
+				err = dअगरf;
 				m->regs[0x80] = a - 1;
 				m->regs[0x81] = b - 1;
 				m->regs[0x82] = c | 0x80;
 				m->hcorr = h2 - 2;
 				m->htotal = h - 2;
-			}
-		}
-	}
-	return err != ~0U;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस err != ~0U;
+पूर्ण
 
-static inline int maven_compute_timming(struct maven_data* md,
-		struct my_timming* mt,
-		struct mavenregs* m) {
-	unsigned int tmpi;
-	unsigned int a, bv, c;
-	struct matrox_fb_info *minfo = md->primary_head;
+अटल अंतरभूत पूर्णांक maven_compute_timming(काष्ठा maven_data* md,
+		काष्ठा my_timming* mt,
+		काष्ठा mavenregs* m) अणु
+	अचिन्हित पूर्णांक पंचांगpi;
+	अचिन्हित पूर्णांक a, bv, c;
+	काष्ठा matrox_fb_info *minfo = md->primary_head;
 
-	m->mode = minfo->outputs[1].mode;
-	if (m->mode != MATROXFB_OUTPUT_MODE_MONITOR) {
-		unsigned int lmargin;
-		unsigned int umargin;
-		unsigned int vslen;
-		unsigned int hcrt;
-		unsigned int slen;
+	m->mode = minfo->outमाला_दो[1].mode;
+	अगर (m->mode != MATROXFB_OUTPUT_MODE_MONITOR) अणु
+		अचिन्हित पूर्णांक lmargin;
+		अचिन्हित पूर्णांक umargin;
+		अचिन्हित पूर्णांक vslen;
+		अचिन्हित पूर्णांक hcrt;
+		अचिन्हित पूर्णांक slen;
 
 		maven_init_TVdata(md, m);
 
-		if (maven_find_exact_clocks(mt->HTotal, mt->VTotal, m) == 0)
-			return -EINVAL;
+		अगर (maven_find_exact_घड़ीs(mt->HTotal, mt->VTotal, m) == 0)
+			वापस -EINVAL;
 
 		lmargin = mt->HTotal - mt->HSyncEnd;
 		slen = mt->HSyncEnd - mt->HSyncStart;
@@ -778,14 +779,14 @@ static inline int maven_compute_timming(struct maven_data* md,
 		umargin = mt->VTotal - mt->VSyncEnd;
 		vslen = mt->VSyncEnd - mt->VSyncStart;
 
-		if (m->hcorr < mt->HTotal)
+		अगर (m->hcorr < mt->HTotal)
 			hcrt += m->hcorr;
-		if (hcrt > mt->HTotal)
+		अगर (hcrt > mt->HTotal)
 			hcrt -= mt->HTotal;
-		if (hcrt + 2 > mt->HTotal)
+		अगर (hcrt + 2 > mt->HTotal)
 			hcrt = 0;	/* or issue warning? */
 
-		/* last (first? middle?) line in picture can have different length */
+		/* last (first? middle?) line in picture can have dअगरferent length */
 		/* hlen - 2 */
 		m->regs[0x96] = m->hcorr;
 		m->regs[0x97] = m->hcorr >> 8;
@@ -804,13 +805,13 @@ static inline int maven_compute_timming(struct maven_data* md,
 		m->regs[0xA2] = mt->VTotal - mt->VSyncStart - 1;	/* stop vblanking */
 		m->regs[0xA3] = (mt->VTotal - mt->VSyncStart - 1) >> 8;
 		/* something end... [A6]+1..[A8] */
-		if (md->version == MGATVO_B) {
+		अगर (md->version == MGATVO_B) अणु
 			m->regs[0xA4] = 0x04;
 			m->regs[0xA5] = 0x00;
-		} else {
+		पूर्ण अन्यथा अणु
 			m->regs[0xA4] = 0x01;
 			m->regs[0xA5] = 0x00;
-		}
+		पूर्ण
 		/* something start... 0..[A4]-1 */
 		m->regs[0xA6] = 0x00;
 		m->regs[0xA7] = 0x00;
@@ -823,32 +824,32 @@ static inline int maven_compute_timming(struct maven_data* md,
 		/* vertical vidrst pos */
 		m->regs[0xAC] = mt->VTotal - 2;
 		m->regs[0xAD] = (mt->VTotal - 2) >> 8;
-		/* moves picture up/down and so on... */
+		/* moves picture up/करोwn and so on... */
 		m->regs[0xAE] = 0x01; /* Fix this... 0..VTotal */
 		m->regs[0xAF] = 0x00;
-		{
-			int hdec;
-			int hlen;
-			unsigned int ibmin = 4 + lmargin + mt->HDisplay;
-			unsigned int ib;
-			int i;
+		अणु
+			पूर्णांक hdec;
+			पूर्णांक hlen;
+			अचिन्हित पूर्णांक ibmin = 4 + lmargin + mt->HDisplay;
+			अचिन्हित पूर्णांक ib;
+			पूर्णांक i;
 
-			/* Verify! */
+			/* Verअगरy! */
 			/* Where 94208 came from? */
-			if (mt->HTotal)
+			अगर (mt->HTotal)
 				hdec = 94208 / (mt->HTotal);
-			else
+			अन्यथा
 				hdec = 0x81;
-			if (hdec > 0x81)
+			अगर (hdec > 0x81)
 				hdec = 0x81;
-			if (hdec < 0x41)
+			अगर (hdec < 0x41)
 				hdec = 0x41;
 			hdec--;
 			hlen = 98304 - 128 - ((lmargin + mt->HDisplay - 8) * hdec);
-			if (hlen < 0)
+			अगर (hlen < 0)
 				hlen = 0;
 			hlen = hlen >> 8;
-			if (hlen > 0xFF)
+			अगर (hlen > 0xFF)
 				hlen = 0xFF;
 			/* Now we have to compute input buffer length.
 			   If you want any picture, it must be between
@@ -866,27 +867,27 @@ static inline int maven_compute_timming(struct maven_data* md,
 			     0x10000   0x6F8  0x6FF
 			 */
 			i = 1;
-			do {
+			करो अणु
 				ib = ((0x3C0000 * i - 0x8000)/ hdec + 0x05E7) >> 8;
 				i++;
-			} while (ib < ibmin);
-			if (ib >= m->htotal + 2) {
+			पूर्ण जबतक (ib < ibmin);
+			अगर (ib >= m->htotal + 2) अणु
 				ib = ibmin;
-			}
+			पूर्ण
 
 			m->regs[0x90] = hdec;	/* < 0x40 || > 0x80 is bad... 0x80 is questionable */
 			m->regs[0xC2] = hlen;
 			/* 'valid' input line length */
 			m->regs[0x9E] = ib;
 			m->regs[0x9F] = ib >> 8;
-		}
-		{
-			int vdec;
-			int vlen;
+		पूर्ण
+		अणु
+			पूर्णांक vdec;
+			पूर्णांक vlen;
 
-#define MATROX_USE64BIT_DIVIDE
-			if (mt->VTotal) {
-#ifdef MATROX_USE64BIT_DIVIDE
+#घोषणा MATROX_USE64BIT_DIVIDE
+			अगर (mt->VTotal) अणु
+#अगर_घोषित MATROX_USE64BIT_DIVIDE
 				u64 f1;
 				u32 a;
 				u32 b;
@@ -895,31 +896,31 @@ static inline int maven_compute_timming(struct maven_data* md,
 				b = (mt->VTotal - 1) * (m->htotal + 2) + m->hcorr + 2;
 
 				f1 = ((u64)a) << 15;	/* *32768 */
-				do_div(f1, b);
+				करो_भाग(f1, b);
 				vdec = f1;
-#else
+#अन्यथा
 				vdec = m->vlines * 32768 / mt->VTotal;
-#endif
-			} else
+#पूर्ण_अगर
+			पूर्ण अन्यथा
 				vdec = 0x8000;
-			if (vdec > 0x8000)
+			अगर (vdec > 0x8000)
 				vdec = 0x8000;
 			vlen = (vslen + umargin + mt->VDisplay) * vdec;
 			vlen = (vlen >> 16) - 146; /* FIXME: 146?! */
-			if (vlen < 0)
+			अगर (vlen < 0)
 				vlen = 0;
-			if (vlen > 0xFF)
+			अगर (vlen > 0xFF)
 				vlen = 0xFF;
 			vdec--;
 			m->regs[0x91] = vdec;
 			m->regs[0x92] = vdec >> 8;
 			m->regs[0xBE] = vlen;
-		}
+		पूर्ण
 		m->regs[0xB0] = 0x08;	/* output: SVideo/Composite */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	DAC1064_calcclock(mt->pixclock, 450000, &a, &bv, &c);
+	DAC1064_calcघड़ी(mt->pixघड़ी, 450000, &a, &bv, &c);
 	m->regs[0x80] = a;
 	m->regs[0x81] = bv;
 	m->regs[0x82] = c | 0x80;
@@ -934,44 +935,44 @@ static inline int maven_compute_timming(struct maven_data* md,
 	m->regs[0x98] = 0x00;
 	m->regs[0x99] = 0x00;
 	/* hsync len */
-	tmpi = mt->HSyncEnd - mt->HSyncStart;
-	m->regs[0x9A] = tmpi;
-	m->regs[0x9B] = tmpi >> 8;
+	पंचांगpi = mt->HSyncEnd - mt->HSyncStart;
+	m->regs[0x9A] = पंचांगpi;
+	m->regs[0x9B] = पंचांगpi >> 8;
 	/* hblank end */
-	tmpi = mt->HTotal - mt->HSyncStart;
-	m->regs[0x9C] = tmpi;
-	m->regs[0x9D] = tmpi >> 8;
+	पंचांगpi = mt->HTotal - mt->HSyncStart;
+	m->regs[0x9C] = पंचांगpi;
+	m->regs[0x9D] = पंचांगpi >> 8;
 	/* hblank start */
-	tmpi += mt->HDisplay;
-	m->regs[0x9E] = tmpi;
-	m->regs[0x9F] = tmpi >> 8;
+	पंचांगpi += mt->HDisplay;
+	m->regs[0x9E] = पंचांगpi;
+	m->regs[0x9F] = पंचांगpi >> 8;
 	/* htotal + 1 */
-	tmpi = mt->HTotal + 1;
-	m->regs[0xA0] = tmpi;
-	m->regs[0xA1] = tmpi >> 8;
+	पंचांगpi = mt->HTotal + 1;
+	m->regs[0xA0] = पंचांगpi;
+	m->regs[0xA1] = पंचांगpi >> 8;
 	/* vsync?! */
-	tmpi = mt->VSyncEnd - mt->VSyncStart - 1;
-	m->regs[0xA2] = tmpi;
-	m->regs[0xA3] = tmpi >> 8;
+	पंचांगpi = mt->VSyncEnd - mt->VSyncStart - 1;
+	m->regs[0xA2] = पंचांगpi;
+	m->regs[0xA3] = पंचांगpi >> 8;
 	/* ignored? */
-	tmpi = mt->VTotal - mt->VSyncStart;
-	m->regs[0xA4] = tmpi;
-	m->regs[0xA5] = tmpi >> 8;
+	पंचांगpi = mt->VTotal - mt->VSyncStart;
+	m->regs[0xA4] = पंचांगpi;
+	m->regs[0xA5] = पंचांगpi >> 8;
 	/* ignored? */
-	tmpi = mt->VTotal - 1;
-	m->regs[0xA6] = tmpi;
-	m->regs[0xA7] = tmpi >> 8;
+	पंचांगpi = mt->VTotal - 1;
+	m->regs[0xA6] = पंचांगpi;
+	m->regs[0xA7] = पंचांगpi >> 8;
 	/* vtotal - 1 */
-	m->regs[0xA8] = tmpi;
-	m->regs[0xA9] = tmpi >> 8;
+	m->regs[0xA8] = पंचांगpi;
+	m->regs[0xA9] = पंचांगpi >> 8;
 	/* hor vidrst */
-	tmpi = mt->HTotal - mt->delay;
-	m->regs[0xAA] = tmpi;
-	m->regs[0xAB] = tmpi >> 8;
+	पंचांगpi = mt->HTotal - mt->delay;
+	m->regs[0xAA] = पंचांगpi;
+	m->regs[0xAB] = पंचांगpi >> 8;
 	/* vert vidrst */
-	tmpi = mt->VTotal - 2;
-	m->regs[0xAC] = tmpi;
-	m->regs[0xAD] = tmpi >> 8;
+	पंचांगpi = mt->VTotal - 2;
+	m->regs[0xAC] = पंचांगpi;
+	m->regs[0xAD] = पंचांगpi >> 8;
 	/* ignored? */
 	m->regs[0xAE] = 0x00;
 	m->regs[0xAF] = 0x00;
@@ -979,18 +980,18 @@ static inline int maven_compute_timming(struct maven_data* md,
 	m->regs[0xB0] = 0x03;	/* output: monitor */
 	m->regs[0xB1] = 0xA0;	/* ??? */
 	m->regs[0x8C] = 0x20;	/* must be set... */
-	m->regs[0x8D] = 0x04;	/* defaults to 0x10: test signal */
-	m->regs[0xB9] = 0x1A;	/* defaults to 0x2C: too bright */
+	m->regs[0x8D] = 0x04;	/* शेषs to 0x10: test संकेत */
+	m->regs[0xB9] = 0x1A;	/* शेषs to 0x2C: too bright */
 	m->regs[0xBF] = 0x22;	/* makes picture stable */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int maven_program_timming(struct maven_data* md,
-		const struct mavenregs* m) {
-	struct i2c_client *c = md->client;
+अटल पूर्णांक maven_program_timming(काष्ठा maven_data* md,
+		स्थिर काष्ठा mavenregs* m) अणु
+	काष्ठा i2c_client *c = md->client;
 
-	if (m->mode == MATROXFB_OUTPUT_MODE_MONITOR) {
+	अगर (m->mode == MATROXFB_OUTPUT_MODE_MONITOR) अणु
 		LR(0x80);
 		LR(0x81);
 		LR(0x82);
@@ -1015,92 +1016,92 @@ static int maven_program_timming(struct maven_data* md,
 		LR(0xB0);	/* output: monitor */
 		LR(0xB1);	/* ??? */
 		LR(0x8C);	/* must be set... */
-		LR(0x8D);	/* defaults to 0x10: test signal */
-		LR(0xB9);	/* defaults to 0x2C: too bright */
+		LR(0x8D);	/* शेषs to 0x10: test संकेत */
+		LR(0xB9);	/* शेषs to 0x2C: too bright */
 		LR(0xBF);	/* makes picture stable */
-	} else {
+	पूर्ण अन्यथा अणु
 		maven_init_TV(c, m);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline int maven_resync(struct maven_data* md) {
-	struct i2c_client *c = md->client;
+अटल अंतरभूत पूर्णांक maven_resync(काष्ठा maven_data* md) अणु
+	काष्ठा i2c_client *c = md->client;
 	maven_set_reg(c, 0x95, 0x20);	/* start whole thing */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int maven_get_queryctrl (struct maven_data* md, 
-				struct v4l2_queryctrl *p) {
-	int i;
+अटल पूर्णांक maven_get_queryctrl (काष्ठा maven_data* md, 
+				काष्ठा v4l2_queryctrl *p) अणु
+	पूर्णांक i;
 	
 	i = get_ctrl_id(p->id);
-	if (i >= 0) {
+	अगर (i >= 0) अणु
 		*p = maven_controls[i].desc;
-		return 0;
-	}
-	if (i == -ENOENT) {
-		static const struct v4l2_queryctrl disctrl = 
-			{ .flags = V4L2_CTRL_FLAG_DISABLED };
+		वापस 0;
+	पूर्ण
+	अगर (i == -ENOENT) अणु
+		अटल स्थिर काष्ठा v4l2_queryctrl disctrl = 
+			अणु .flags = V4L2_CTRL_FLAG_DISABLED पूर्ण;
 			
 		i = p->id;
 		*p = disctrl;
 		p->id = i;
-		sprintf(p->name, "Ctrl #%08X", i);
-		return 0;
-	}
-	return -EINVAL;
-}
+		प्र_लिखो(p->name, "Ctrl #%08X", i);
+		वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int maven_set_control (struct maven_data* md, 
-			      struct v4l2_control *p) {
-	int i;
+अटल पूर्णांक maven_set_control (काष्ठा maven_data* md, 
+			      काष्ठा v4l2_control *p) अणु
+	पूर्णांक i;
 	
 	i = get_ctrl_id(p->id);
-	if (i < 0) return -EINVAL;
+	अगर (i < 0) वापस -EINVAL;
 
 	/*
-	 * Check if changed.
+	 * Check अगर changed.
 	 */
-	if (p->value == *get_ctrl_ptr(md, i)) return 0;
+	अगर (p->value == *get_ctrl_ptr(md, i)) वापस 0;
 
 	/*
 	 * Check limits.
 	 */
-	if (p->value > maven_controls[i].desc.maximum) return -EINVAL;
-	if (p->value < maven_controls[i].desc.minimum) return -EINVAL;
+	अगर (p->value > maven_controls[i].desc.maximum) वापस -EINVAL;
+	अगर (p->value < maven_controls[i].desc.minimum) वापस -EINVAL;
 
 	/*
 	 * Store new value.
 	 */
 	*get_ctrl_ptr(md, i) = p->value;
 
-	switch (p->id) {
-		case V4L2_CID_BRIGHTNESS:
-		case V4L2_CID_CONTRAST:
-		{
-		  int blacklevel, whitelevel;
+	चयन (p->id) अणु
+		हाल V4L2_CID_BRIGHTNESS:
+		हाल V4L2_CID_CONTRAST:
+		अणु
+		  पूर्णांक blacklevel, whitelevel;
 		  maven_compute_bwlevel(md, &blacklevel, &whitelevel);
 		  blacklevel = (blacklevel >> 2) | ((blacklevel & 3) << 8);
 		  whitelevel = (whitelevel >> 2) | ((whitelevel & 3) << 8);
 		  maven_set_reg_pair(md->client, 0x0e, blacklevel);
 		  maven_set_reg_pair(md->client, 0x1e, whitelevel);
-		}
-		break;
-		case V4L2_CID_SATURATION:
-		{
+		पूर्ण
+		अवरोध;
+		हाल V4L2_CID_SATURATION:
+		अणु
 		  maven_set_reg(md->client, 0x20, p->value);
 		  maven_set_reg(md->client, 0x22, p->value);
-		}
-		break;
-		case V4L2_CID_HUE:
-		{
+		पूर्ण
+		अवरोध;
+		हाल V4L2_CID_HUE:
+		अणु
 		  maven_set_reg(md->client, 0x25, p->value);
-		}
-		break;
-		case V4L2_CID_GAMMA:
-		{
-		  const struct maven_gamma* g;
+		पूर्ण
+		अवरोध;
+		हाल V4L2_CID_GAMMA:
+		अणु
+		  स्थिर काष्ठा maven_gamma* g;
 		  g = maven_compute_gamma(md);
 		  maven_set_reg(md->client, 0x83, g->reg83);
 		  maven_set_reg(md->client, 0x84, g->reg84);
@@ -1111,192 +1112,192 @@ static int maven_set_control (struct maven_data* md,
 		  maven_set_reg(md->client, 0x89, g->reg89);
 		  maven_set_reg(md->client, 0x8a, g->reg8a);
 		  maven_set_reg(md->client, 0x8b, g->reg8b);
-		}
-		break;
-		case MATROXFB_CID_TESTOUT:
-		{
-			unsigned char val 
+		पूर्ण
+		अवरोध;
+		हाल MATROXFB_CID_TESTOUT:
+		अणु
+			अचिन्हित अक्षर val 
 			  = maven_get_reg(md->client, 0x8d);
-			if (p->value) val |= 0x10;
-			else          val &= ~0x10;
+			अगर (p->value) val |= 0x10;
+			अन्यथा          val &= ~0x10;
 			maven_set_reg(md->client, 0x8d, val);
-		}
-		break;
-		case MATROXFB_CID_DEFLICKER:
-		{
+		पूर्ण
+		अवरोध;
+		हाल MATROXFB_CID_DEFLICKER:
+		अणु
 		  maven_set_reg(md->client, 0x93, maven_compute_deflicker(md));
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 	
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int maven_get_control (struct maven_data* md, 
-			      struct v4l2_control *p) {
-	int i;
+अटल पूर्णांक maven_get_control (काष्ठा maven_data* md, 
+			      काष्ठा v4l2_control *p) अणु
+	पूर्णांक i;
 	
 	i = get_ctrl_id(p->id);
-	if (i < 0) return -EINVAL;
+	अगर (i < 0) वापस -EINVAL;
 	p->value = *get_ctrl_ptr(md, i);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /******************************************************/
 
-static int maven_out_compute(void* md, struct my_timming* mt) {
-#define mdinfo ((struct maven_data*)md)
-#define minfo (mdinfo->primary_head)
-	return maven_compute_timming(md, mt, &minfo->hw.maven);
-#undef minfo
-#undef mdinfo
-}
+अटल पूर्णांक maven_out_compute(व्योम* md, काष्ठा my_timming* mt) अणु
+#घोषणा mdinfo ((काष्ठा maven_data*)md)
+#घोषणा minfo (mdinfo->primary_head)
+	वापस maven_compute_timming(md, mt, &minfo->hw.maven);
+#अघोषित minfo
+#अघोषित mdinfo
+पूर्ण
 
-static int maven_out_program(void* md) {
-#define mdinfo ((struct maven_data*)md)
-#define minfo (mdinfo->primary_head)
-	return maven_program_timming(md, &minfo->hw.maven);
-#undef minfo
-#undef mdinfo
-}
+अटल पूर्णांक maven_out_program(व्योम* md) अणु
+#घोषणा mdinfo ((काष्ठा maven_data*)md)
+#घोषणा minfo (mdinfo->primary_head)
+	वापस maven_program_timming(md, &minfo->hw.maven);
+#अघोषित minfo
+#अघोषित mdinfo
+पूर्ण
 
-static int maven_out_start(void* md) {
-	return maven_resync(md);
-}
+अटल पूर्णांक maven_out_start(व्योम* md) अणु
+	वापस maven_resync(md);
+पूर्ण
 
-static int maven_out_verify_mode(void* md, u_int32_t arg) {
-	switch (arg) {
-		case MATROXFB_OUTPUT_MODE_PAL:
-		case MATROXFB_OUTPUT_MODE_NTSC:
-		case MATROXFB_OUTPUT_MODE_MONITOR:
-			return 0;
-	}
-	return -EINVAL;
-}
+अटल पूर्णांक maven_out_verअगरy_mode(व्योम* md, u_पूर्णांक32_t arg) अणु
+	चयन (arg) अणु
+		हाल MATROXFB_OUTPUT_MODE_PAL:
+		हाल MATROXFB_OUTPUT_MODE_NTSC:
+		हाल MATROXFB_OUTPUT_MODE_MONITOR:
+			वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int maven_out_get_queryctrl(void* md, struct v4l2_queryctrl* p) {
-        return maven_get_queryctrl(md, p);
-}
+अटल पूर्णांक maven_out_get_queryctrl(व्योम* md, काष्ठा v4l2_queryctrl* p) अणु
+        वापस maven_get_queryctrl(md, p);
+पूर्ण
 
-static int maven_out_get_ctrl(void* md, struct v4l2_control* p) {
-	return maven_get_control(md, p);
-}
+अटल पूर्णांक maven_out_get_ctrl(व्योम* md, काष्ठा v4l2_control* p) अणु
+	वापस maven_get_control(md, p);
+पूर्ण
 
-static int maven_out_set_ctrl(void* md, struct v4l2_control* p) {
-	return maven_set_control(md, p);
-}
+अटल पूर्णांक maven_out_set_ctrl(व्योम* md, काष्ठा v4l2_control* p) अणु
+	वापस maven_set_control(md, p);
+पूर्ण
 
-static struct matrox_altout maven_altout = {
+अटल काष्ठा matrox_altout maven_altout = अणु
 	.name		= "Secondary output",
 	.compute	= maven_out_compute,
 	.program	= maven_out_program,
 	.start		= maven_out_start,
-	.verifymode	= maven_out_verify_mode,
+	.verअगरymode	= maven_out_verअगरy_mode,
 	.getqueryctrl	= maven_out_get_queryctrl,
-	.getctrl	= maven_out_get_ctrl,
+	.अ_लोtrl	= maven_out_get_ctrl,
 	.setctrl	= maven_out_set_ctrl,
-};
+पूर्ण;
 
-static int maven_init_client(struct i2c_client* clnt) {
-	struct maven_data* md = i2c_get_clientdata(clnt);
-	struct matrox_fb_info *minfo = container_of(clnt->adapter,
-						    struct i2c_bit_adapter,
+अटल पूर्णांक maven_init_client(काष्ठा i2c_client* clnt) अणु
+	काष्ठा maven_data* md = i2c_get_clientdata(clnt);
+	काष्ठा matrox_fb_info *minfo = container_of(clnt->adapter,
+						    काष्ठा i2c_bit_adapter,
 						    adapter)->minfo;
 
 	md->primary_head = minfo;
 	md->client = clnt;
-	down_write(&minfo->altout.lock);
-	minfo->outputs[1].output = &maven_altout;
-	minfo->outputs[1].src = minfo->outputs[1].default_src;
-	minfo->outputs[1].data = md;
-	minfo->outputs[1].mode = MATROXFB_OUTPUT_MODE_MONITOR;
-	up_write(&minfo->altout.lock);
-	if (maven_get_reg(clnt, 0xB2) < 0x14) {
+	करोwn_ग_लिखो(&minfo->altout.lock);
+	minfo->outमाला_दो[1].output = &maven_altout;
+	minfo->outमाला_दो[1].src = minfo->outमाला_दो[1].शेष_src;
+	minfo->outमाला_दो[1].data = md;
+	minfo->outमाला_दो[1].mode = MATROXFB_OUTPUT_MODE_MONITOR;
+	up_ग_लिखो(&minfo->altout.lock);
+	अगर (maven_get_reg(clnt, 0xB2) < 0x14) अणु
 		md->version = MGATVO_B;
-		/* Tweak some things for this old chip */
-	} else {
+		/* Tweak some things क्रम this old chip */
+	पूर्ण अन्यथा अणु
 		md->version = MGATVO_C;
-	}
+	पूर्ण
 	/*
 	 * Set all parameters to its initial values.
 	 */
-	{
-		unsigned int i;
+	अणु
+		अचिन्हित पूर्णांक i;
 
-		for (i = 0; i < MAVCTRLS; ++i) {
-			*get_ctrl_ptr(md, i) = maven_controls[i].desc.default_value;
-		}
-	}
+		क्रम (i = 0; i < MAVCTRLS; ++i) अणु
+			*get_ctrl_ptr(md, i) = maven_controls[i].desc.शेष_value;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int maven_shutdown_client(struct i2c_client* clnt) {
-	struct maven_data* md = i2c_get_clientdata(clnt);
+अटल पूर्णांक maven_shutकरोwn_client(काष्ठा i2c_client* clnt) अणु
+	काष्ठा maven_data* md = i2c_get_clientdata(clnt);
 
-	if (md->primary_head) {
-		struct matrox_fb_info *minfo = md->primary_head;
+	अगर (md->primary_head) अणु
+		काष्ठा matrox_fb_info *minfo = md->primary_head;
 
-		down_write(&minfo->altout.lock);
-		minfo->outputs[1].src = MATROXFB_SRC_NONE;
-		minfo->outputs[1].output = NULL;
-		minfo->outputs[1].data = NULL;
-		minfo->outputs[1].mode = MATROXFB_OUTPUT_MODE_MONITOR;
-		up_write(&minfo->altout.lock);
-		md->primary_head = NULL;
-	}
-	return 0;
-}
+		करोwn_ग_लिखो(&minfo->altout.lock);
+		minfo->outमाला_दो[1].src = MATROXFB_SRC_NONE;
+		minfo->outमाला_दो[1].output = शून्य;
+		minfo->outमाला_दो[1].data = शून्य;
+		minfo->outमाला_दो[1].mode = MATROXFB_OUTPUT_MODE_MONITOR;
+		up_ग_लिखो(&minfo->altout.lock);
+		md->primary_head = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int maven_probe(struct i2c_client *client,
-		       const struct i2c_device_id *id)
-{
-	struct i2c_adapter *adapter = client->adapter;
-	int err = -ENODEV;
-	struct maven_data* data;
+अटल पूर्णांक maven_probe(काष्ठा i2c_client *client,
+		       स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा i2c_adapter *adapter = client->adapter;
+	पूर्णांक err = -ENODEV;
+	काष्ठा maven_data* data;
 
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_WRITE_WORD_DATA |
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_WRITE_WORD_DATA |
 					      I2C_FUNC_SMBUS_BYTE_DATA |
 					      I2C_FUNC_NOSTART |
 					      I2C_FUNC_PROTOCOL_MANGLING))
-		goto ERROR0;
-	if (!(data = kzalloc(sizeof(*data), GFP_KERNEL))) {
+		जाओ ERROR0;
+	अगर (!(data = kzalloc(माप(*data), GFP_KERNEL))) अणु
 		err = -ENOMEM;
-		goto ERROR0;
-	}
+		जाओ ERROR0;
+	पूर्ण
 	i2c_set_clientdata(client, data);
 	err = maven_init_client(client);
-	if (err)
-		goto ERROR4;
-	return 0;
+	अगर (err)
+		जाओ ERROR4;
+	वापस 0;
 ERROR4:;
-	kfree(data);
+	kमुक्त(data);
 ERROR0:;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int maven_remove(struct i2c_client *client)
-{
-	maven_shutdown_client(client);
-	kfree(i2c_get_clientdata(client));
-	return 0;
-}
+अटल पूर्णांक maven_हटाओ(काष्ठा i2c_client *client)
+अणु
+	maven_shutकरोwn_client(client);
+	kमुक्त(i2c_get_clientdata(client));
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id maven_id[] = {
-	{ "maven", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id maven_id[] = अणु
+	अणु "maven", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, maven_id);
 
-static struct i2c_driver maven_driver={
-	.driver = {
+अटल काष्ठा i2c_driver maven_driver=अणु
+	.driver = अणु
 		.name	= "maven",
-	},
+	पूर्ण,
 	.probe		= maven_probe,
-	.remove		= maven_remove,
+	.हटाओ		= maven_हटाओ,
 	.id_table	= maven_id,
-};
+पूर्ण;
 
 module_i2c_driver(maven_driver);
 MODULE_AUTHOR("(c) 1999-2002 Petr Vandrovec <vandrove@vc.cvut.cz>");

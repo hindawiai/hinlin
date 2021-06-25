@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Machine declaration for Alpine platforms.
+ * Machine declaration क्रम Alpine platक्रमms.
  *
- * Copyright (C) 2015 Annapurna Labs Ltd.
+ * Copyright (C) 2015 Annapurna Lअसल Ltd.
  */
 
-#include <linux/of_platform.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach/arch.h>
 
-static const char * const al_match[] __initconst = {
+अटल स्थिर अक्षर * स्थिर al_match[] __initस्थिर = अणु
 	"al,alpine",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(AL_DT, "Annapurna Labs Alpine")
 	.dt_compat	= al_match,

@@ -1,310 +1,311 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * SCSI Zoned Block commands
  *
  * Copyright (C) 2014-2015 SUSE Linux GmbH
  * Written by: Hannes Reinecke <hare@suse.de>
- * Modified by: Damien Le Moal <damien.lemoal@hgst.com>
- * Modified by: Shaun Tancheff <shaun.tancheff@seagate.com>
+ * Modअगरied by: Damien Le Moal <damien.lemoal@hgst.com>
+ * Modअगरied by: Shaun Tancheff <shaun.tancheff@seagate.com>
  */
 
-#include <linux/blkdev.h>
-#include <linux/vmalloc.h>
-#include <linux/sched/mm.h>
-#include <linux/mutex.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/mutex.h>
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
 
-#include "sd.h"
+#समावेश "sd.h"
 
-static unsigned int sd_zbc_get_zone_wp_offset(struct blk_zone *zone)
-{
-	if (zone->type == ZBC_ZONE_TYPE_CONV)
-		return 0;
+अटल अचिन्हित पूर्णांक sd_zbc_get_zone_wp_offset(काष्ठा blk_zone *zone)
+अणु
+	अगर (zone->type == ZBC_ZONE_TYPE_CONV)
+		वापस 0;
 
-	switch (zone->cond) {
-	case BLK_ZONE_COND_IMP_OPEN:
-	case BLK_ZONE_COND_EXP_OPEN:
-	case BLK_ZONE_COND_CLOSED:
-		return zone->wp - zone->start;
-	case BLK_ZONE_COND_FULL:
-		return zone->len;
-	case BLK_ZONE_COND_EMPTY:
-	case BLK_ZONE_COND_OFFLINE:
-	case BLK_ZONE_COND_READONLY:
-	default:
+	चयन (zone->cond) अणु
+	हाल BLK_ZONE_COND_IMP_OPEN:
+	हाल BLK_ZONE_COND_EXP_OPEN:
+	हाल BLK_ZONE_COND_CLOSED:
+		वापस zone->wp - zone->start;
+	हाल BLK_ZONE_COND_FULL:
+		वापस zone->len;
+	हाल BLK_ZONE_COND_EMPTY:
+	हाल BLK_ZONE_COND_OFFLINE:
+	हाल BLK_ZONE_COND_READONLY:
+	शेष:
 		/*
-		 * Offline and read-only zones do not have a valid
-		 * write pointer. Use 0 as for an empty zone.
+		 * Offline and पढ़ो-only zones करो not have a valid
+		 * ग_लिखो poपूर्णांकer. Use 0 as क्रम an empty zone.
 		 */
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int sd_zbc_parse_report(struct scsi_disk *sdkp, u8 *buf,
-			       unsigned int idx, report_zones_cb cb, void *data)
-{
-	struct scsi_device *sdp = sdkp->device;
-	struct blk_zone zone = { 0 };
-	int ret;
+अटल पूर्णांक sd_zbc_parse_report(काष्ठा scsi_disk *sdkp, u8 *buf,
+			       अचिन्हित पूर्णांक idx, report_zones_cb cb, व्योम *data)
+अणु
+	काष्ठा scsi_device *sdp = sdkp->device;
+	काष्ठा blk_zone zone = अणु 0 पूर्ण;
+	पूर्णांक ret;
 
 	zone.type = buf[0] & 0x0f;
 	zone.cond = (buf[1] >> 4) & 0xf;
-	if (buf[1] & 0x01)
+	अगर (buf[1] & 0x01)
 		zone.reset = 1;
-	if (buf[1] & 0x02)
+	अगर (buf[1] & 0x02)
 		zone.non_seq = 1;
 
 	zone.len = logical_to_sectors(sdp, get_unaligned_be64(&buf[8]));
 	zone.capacity = zone.len;
 	zone.start = logical_to_sectors(sdp, get_unaligned_be64(&buf[16]));
 	zone.wp = logical_to_sectors(sdp, get_unaligned_be64(&buf[24]));
-	if (zone.type != ZBC_ZONE_TYPE_CONV &&
+	अगर (zone.type != ZBC_ZONE_TYPE_CONV &&
 	    zone.cond == ZBC_ZONE_COND_FULL)
 		zone.wp = zone.start + zone.len;
 
 	ret = cb(&zone, idx, data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (sdkp->rev_wp_offset)
+	अगर (sdkp->rev_wp_offset)
 		sdkp->rev_wp_offset[idx] = sd_zbc_get_zone_wp_offset(&zone);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * sd_zbc_do_report_zones - Issue a REPORT ZONES scsi command.
+ * sd_zbc_करो_report_zones - Issue a REPORT ZONES scsi command.
  * @sdkp: The target disk
- * @buf: vmalloc-ed buffer to use for the reply
+ * @buf: vदो_स्मृति-ed buffer to use क्रम the reply
  * @buflen: the buffer size
  * @lba: Start LBA of the report
  * @partial: Do partial report
  *
- * For internal use during device validation.
- * Using partial=true can significantly speed up execution of a report zones
- * command because the disk does not have to count all possible report matching
+ * For पूर्णांकernal use during device validation.
+ * Using partial=true can signअगरicantly speed up execution of a report zones
+ * command because the disk करोes not have to count all possible report matching
  * zones and will only report the count of zones fitting in the command reply
  * buffer.
  */
-static int sd_zbc_do_report_zones(struct scsi_disk *sdkp, unsigned char *buf,
-				  unsigned int buflen, sector_t lba,
+अटल पूर्णांक sd_zbc_करो_report_zones(काष्ठा scsi_disk *sdkp, अचिन्हित अक्षर *buf,
+				  अचिन्हित पूर्णांक buflen, sector_t lba,
 				  bool partial)
-{
-	struct scsi_device *sdp = sdkp->device;
-	const int timeout = sdp->request_queue->rq_timeout;
-	struct scsi_sense_hdr sshdr;
-	unsigned char cmd[16];
-	unsigned int rep_len;
-	int result;
+अणु
+	काष्ठा scsi_device *sdp = sdkp->device;
+	स्थिर पूर्णांक समयout = sdp->request_queue->rq_समयout;
+	काष्ठा scsi_sense_hdr sshdr;
+	अचिन्हित अक्षर cmd[16];
+	अचिन्हित पूर्णांक rep_len;
+	पूर्णांक result;
 
-	memset(cmd, 0, 16);
+	स_रखो(cmd, 0, 16);
 	cmd[0] = ZBC_IN;
 	cmd[1] = ZI_REPORT_ZONES;
 	put_unaligned_be64(lba, &cmd[2]);
 	put_unaligned_be32(buflen, &cmd[10]);
-	if (partial)
+	अगर (partial)
 		cmd[14] = ZBC_REPORT_ZONE_PARTIAL;
 
 	result = scsi_execute_req(sdp, cmd, DMA_FROM_DEVICE,
 				  buf, buflen, &sshdr,
-				  timeout, SD_MAX_RETRIES, NULL);
-	if (result) {
-		sd_printk(KERN_ERR, sdkp,
+				  समयout, SD_MAX_RETRIES, शून्य);
+	अगर (result) अणु
+		sd_prपूर्णांकk(KERN_ERR, sdkp,
 			  "REPORT ZONES start lba %llu failed\n", lba);
-		sd_print_result(sdkp, "REPORT ZONES", result);
-		if (driver_byte(result) == DRIVER_SENSE &&
+		sd_prपूर्णांक_result(sdkp, "REPORT ZONES", result);
+		अगर (driver_byte(result) == DRIVER_SENSE &&
 		    scsi_sense_valid(&sshdr))
-			sd_print_sense_hdr(sdkp, &sshdr);
-		return -EIO;
-	}
+			sd_prपूर्णांक_sense_hdr(sdkp, &sshdr);
+		वापस -EIO;
+	पूर्ण
 
 	rep_len = get_unaligned_be32(&buf[0]);
-	if (rep_len < 64) {
-		sd_printk(KERN_ERR, sdkp,
+	अगर (rep_len < 64) अणु
+		sd_prपूर्णांकk(KERN_ERR, sdkp,
 			  "REPORT ZONES report invalid length %u\n",
 			  rep_len);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * sd_zbc_alloc_report_buffer() - Allocate a buffer for report zones reply.
+ * sd_zbc_alloc_report_buffer() - Allocate a buffer क्रम report zones reply.
  * @sdkp: The target disk
  * @nr_zones: Maximum number of zones to report
  * @buflen: Size of the buffer allocated
  *
- * Try to allocate a reply buffer for the number of requested zones.
+ * Try to allocate a reply buffer क्रम the number of requested zones.
  * The size of the buffer allocated may be smaller than requested to
- * satify the device constraint (max_hw_sectors, max_segments, etc).
+ * satअगरy the device स्थिरraपूर्णांक (max_hw_sectors, max_segments, etc).
  *
  * Return the address of the allocated buffer and update @buflen with
  * the size of the allocated buffer.
  */
-static void *sd_zbc_alloc_report_buffer(struct scsi_disk *sdkp,
-					unsigned int nr_zones, size_t *buflen)
-{
-	struct request_queue *q = sdkp->disk->queue;
-	size_t bufsize;
-	void *buf;
+अटल व्योम *sd_zbc_alloc_report_buffer(काष्ठा scsi_disk *sdkp,
+					अचिन्हित पूर्णांक nr_zones, माप_प्रकार *buflen)
+अणु
+	काष्ठा request_queue *q = sdkp->disk->queue;
+	माप_प्रकार bufsize;
+	व्योम *buf;
 
 	/*
-	 * Report zone buffer size should be at most 64B times the number of
+	 * Report zone buffer size should be at most 64B बार the number of
 	 * zones requested plus the 64B reply header, but should be at least
-	 * SECTOR_SIZE for ATA devices.
-	 * Make sure that this size does not exceed the hardware capabilities.
+	 * SECTOR_SIZE क्रम ATA devices.
+	 * Make sure that this size करोes not exceed the hardware capabilities.
 	 * Furthermore, since the report zone command cannot be split, make
 	 * sure that the allocated buffer can always be mapped by limiting the
 	 * number of pages allocated to the HBA max segments limit.
 	 */
 	nr_zones = min(nr_zones, sdkp->nr_zones);
 	bufsize = roundup((nr_zones + 1) * 64, SECTOR_SIZE);
-	bufsize = min_t(size_t, bufsize,
+	bufsize = min_t(माप_प्रकार, bufsize,
 			queue_max_hw_sectors(q) << SECTOR_SHIFT);
-	bufsize = min_t(size_t, bufsize, queue_max_segments(q) << PAGE_SHIFT);
+	bufsize = min_t(माप_प्रकार, bufsize, queue_max_segments(q) << PAGE_SHIFT);
 
-	while (bufsize >= SECTOR_SIZE) {
-		buf = __vmalloc(bufsize,
+	जबतक (bufsize >= SECTOR_SIZE) अणु
+		buf = __vदो_स्मृति(bufsize,
 				GFP_KERNEL | __GFP_ZERO | __GFP_NORETRY);
-		if (buf) {
+		अगर (buf) अणु
 			*buflen = bufsize;
-			return buf;
-		}
+			वापस buf;
+		पूर्ण
 		bufsize >>= 1;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * sd_zbc_zone_sectors - Get the device zone size in number of 512B sectors.
  * @sdkp: The target disk
  */
-static inline sector_t sd_zbc_zone_sectors(struct scsi_disk *sdkp)
-{
-	return logical_to_sectors(sdkp->device, sdkp->zone_blocks);
-}
+अटल अंतरभूत sector_t sd_zbc_zone_sectors(काष्ठा scsi_disk *sdkp)
+अणु
+	वापस logical_to_sectors(sdkp->device, sdkp->zone_blocks);
+पूर्ण
 
-int sd_zbc_report_zones(struct gendisk *disk, sector_t sector,
-			unsigned int nr_zones, report_zones_cb cb, void *data)
-{
-	struct scsi_disk *sdkp = scsi_disk(disk);
+पूर्णांक sd_zbc_report_zones(काष्ठा gendisk *disk, sector_t sector,
+			अचिन्हित पूर्णांक nr_zones, report_zones_cb cb, व्योम *data)
+अणु
+	काष्ठा scsi_disk *sdkp = scsi_disk(disk);
 	sector_t capacity = logical_to_sectors(sdkp->device, sdkp->capacity);
-	unsigned int nr, i;
-	unsigned char *buf;
-	size_t offset, buflen = 0;
-	int zone_idx = 0;
-	int ret;
+	अचिन्हित पूर्णांक nr, i;
+	अचिन्हित अक्षर *buf;
+	माप_प्रकार offset, buflen = 0;
+	पूर्णांक zone_idx = 0;
+	पूर्णांक ret;
 
-	if (!sd_is_zoned(sdkp))
+	अगर (!sd_is_zoned(sdkp))
 		/* Not a zoned device */
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if (!capacity)
+	अगर (!capacity)
 		/* Device gone or invalid */
-		return -ENODEV;
+		वापस -ENODEV;
 
 	buf = sd_zbc_alloc_report_buffer(sdkp, nr_zones, &buflen);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	while (zone_idx < nr_zones && sector < capacity) {
-		ret = sd_zbc_do_report_zones(sdkp, buf, buflen,
+	जबतक (zone_idx < nr_zones && sector < capacity) अणु
+		ret = sd_zbc_करो_report_zones(sdkp, buf, buflen,
 				sectors_to_logical(sdkp->device, sector), true);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		offset = 0;
 		nr = min(nr_zones, get_unaligned_be32(&buf[0]) / 64);
-		if (!nr)
-			break;
+		अगर (!nr)
+			अवरोध;
 
-		for (i = 0; i < nr && zone_idx < nr_zones; i++) {
+		क्रम (i = 0; i < nr && zone_idx < nr_zones; i++) अणु
 			offset += 64;
 			ret = sd_zbc_parse_report(sdkp, buf + offset, zone_idx,
 						  cb, data);
-			if (ret)
-				goto out;
+			अगर (ret)
+				जाओ out;
 			zone_idx++;
-		}
+		पूर्ण
 
 		sector += sd_zbc_zone_sectors(sdkp) * i;
-	}
+	पूर्ण
 
 	ret = zone_idx;
 out:
-	kvfree(buf);
-	return ret;
-}
+	kvमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static blk_status_t sd_zbc_cmnd_checks(struct scsi_cmnd *cmd)
-{
-	struct request *rq = cmd->request;
-	struct scsi_disk *sdkp = scsi_disk(rq->rq_disk);
+अटल blk_status_t sd_zbc_cmnd_checks(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा request *rq = cmd->request;
+	काष्ठा scsi_disk *sdkp = scsi_disk(rq->rq_disk);
 	sector_t sector = blk_rq_pos(rq);
 
-	if (!sd_is_zoned(sdkp))
+	अगर (!sd_is_zoned(sdkp))
 		/* Not a zoned device */
-		return BLK_STS_IOERR;
+		वापस BLK_STS_IOERR;
 
-	if (sdkp->device->changed)
-		return BLK_STS_IOERR;
+	अगर (sdkp->device->changed)
+		वापस BLK_STS_IOERR;
 
-	if (sector & (sd_zbc_zone_sectors(sdkp) - 1))
+	अगर (sector & (sd_zbc_zone_sectors(sdkp) - 1))
 		/* Unaligned request */
-		return BLK_STS_IOERR;
+		वापस BLK_STS_IOERR;
 
-	return BLK_STS_OK;
-}
+	वापस BLK_STS_OK;
+पूर्ण
 
-#define SD_ZBC_INVALID_WP_OFST	(~0u)
-#define SD_ZBC_UPDATING_WP_OFST	(SD_ZBC_INVALID_WP_OFST - 1)
+#घोषणा SD_ZBC_INVALID_WP_OFST	(~0u)
+#घोषणा SD_ZBC_UPDATING_WP_OFST	(SD_ZBC_INVALID_WP_OFST - 1)
 
-static int sd_zbc_update_wp_offset_cb(struct blk_zone *zone, unsigned int idx,
-				    void *data)
-{
-	struct scsi_disk *sdkp = data;
+अटल पूर्णांक sd_zbc_update_wp_offset_cb(काष्ठा blk_zone *zone, अचिन्हित पूर्णांक idx,
+				    व्योम *data)
+अणु
+	काष्ठा scsi_disk *sdkp = data;
 
-	lockdep_assert_held(&sdkp->zones_wp_offset_lock);
+	lockdep_निश्चित_held(&sdkp->zones_wp_offset_lock);
 
 	sdkp->zones_wp_offset[idx] = sd_zbc_get_zone_wp_offset(zone);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sd_zbc_update_wp_offset_workfn(struct work_struct *work)
-{
-	struct scsi_disk *sdkp;
-	unsigned long flags;
-	unsigned int zno;
-	int ret;
+अटल व्योम sd_zbc_update_wp_offset_workfn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा scsi_disk *sdkp;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक zno;
+	पूर्णांक ret;
 
-	sdkp = container_of(work, struct scsi_disk, zone_wp_offset_work);
+	sdkp = container_of(work, काष्ठा scsi_disk, zone_wp_offset_work);
 
 	spin_lock_irqsave(&sdkp->zones_wp_offset_lock, flags);
-	for (zno = 0; zno < sdkp->nr_zones; zno++) {
-		if (sdkp->zones_wp_offset[zno] != SD_ZBC_UPDATING_WP_OFST)
-			continue;
+	क्रम (zno = 0; zno < sdkp->nr_zones; zno++) अणु
+		अगर (sdkp->zones_wp_offset[zno] != SD_ZBC_UPDATING_WP_OFST)
+			जारी;
 
 		spin_unlock_irqrestore(&sdkp->zones_wp_offset_lock, flags);
-		ret = sd_zbc_do_report_zones(sdkp, sdkp->zone_wp_update_buf,
+		ret = sd_zbc_करो_report_zones(sdkp, sdkp->zone_wp_update_buf,
 					     SD_BUF_SIZE,
 					     zno * sdkp->zone_blocks, true);
 		spin_lock_irqsave(&sdkp->zones_wp_offset_lock, flags);
-		if (!ret)
+		अगर (!ret)
 			sd_zbc_parse_report(sdkp, sdkp->zone_wp_update_buf + 64,
 					    zno, sd_zbc_update_wp_offset_cb,
 					    sdkp);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&sdkp->zones_wp_offset_lock, flags);
 
 	scsi_device_put(sdkp->device);
-}
+पूर्ण
 
 /**
  * sd_zbc_prepare_zone_append() - Prepare an emulated ZONE_APPEND command.
@@ -312,197 +313,197 @@ static void sd_zbc_update_wp_offset_workfn(struct work_struct *work)
  * @lba: the LBA to patch
  * @nr_blocks: the number of LBAs to be written
  *
- * Called from sd_setup_read_write_cmnd() for REQ_OP_ZONE_APPEND.
+ * Called from sd_setup_पढ़ो_ग_लिखो_cmnd() क्रम REQ_OP_ZONE_APPEND.
  * @sd_zbc_prepare_zone_append() handles the necessary zone wrote locking and
- * patching of the lba for an emulated ZONE_APPEND command.
+ * patching of the lba क्रम an emulated ZONE_APPEND command.
  *
- * In case the cached write pointer offset is %SD_ZBC_INVALID_WP_OFST it will
- * schedule a REPORT ZONES command and return BLK_STS_IOERR.
+ * In हाल the cached ग_लिखो poपूर्णांकer offset is %SD_ZBC_INVALID_WP_OFST it will
+ * schedule a REPORT ZONES command and वापस BLK_STS_IOERR.
  */
-blk_status_t sd_zbc_prepare_zone_append(struct scsi_cmnd *cmd, sector_t *lba,
-					unsigned int nr_blocks)
-{
-	struct request *rq = cmd->request;
-	struct scsi_disk *sdkp = scsi_disk(rq->rq_disk);
-	unsigned int wp_offset, zno = blk_rq_zone_no(rq);
-	unsigned long flags;
+blk_status_t sd_zbc_prepare_zone_append(काष्ठा scsi_cmnd *cmd, sector_t *lba,
+					अचिन्हित पूर्णांक nr_blocks)
+अणु
+	काष्ठा request *rq = cmd->request;
+	काष्ठा scsi_disk *sdkp = scsi_disk(rq->rq_disk);
+	अचिन्हित पूर्णांक wp_offset, zno = blk_rq_zone_no(rq);
+	अचिन्हित दीर्घ flags;
 	blk_status_t ret;
 
 	ret = sd_zbc_cmnd_checks(cmd);
-	if (ret != BLK_STS_OK)
-		return ret;
+	अगर (ret != BLK_STS_OK)
+		वापस ret;
 
-	if (!blk_rq_zone_is_seq(rq))
-		return BLK_STS_IOERR;
+	अगर (!blk_rq_zone_is_seq(rq))
+		वापस BLK_STS_IOERR;
 
-	/* Unlock of the write lock will happen in sd_zbc_complete() */
-	if (!blk_req_zone_write_trylock(rq))
-		return BLK_STS_ZONE_RESOURCE;
+	/* Unlock of the ग_लिखो lock will happen in sd_zbc_complete() */
+	अगर (!blk_req_zone_ग_लिखो_trylock(rq))
+		वापस BLK_STS_ZONE_RESOURCE;
 
 	spin_lock_irqsave(&sdkp->zones_wp_offset_lock, flags);
 	wp_offset = sdkp->zones_wp_offset[zno];
-	switch (wp_offset) {
-	case SD_ZBC_INVALID_WP_OFST:
+	चयन (wp_offset) अणु
+	हाल SD_ZBC_INVALID_WP_OFST:
 		/*
-		 * We are about to schedule work to update a zone write pointer
+		 * We are about to schedule work to update a zone ग_लिखो poपूर्णांकer
 		 * offset, which will cause the zone append command to be
-		 * requeued. So make sure that the scsi device does not go away
-		 * while the work is being processed.
+		 * requeued. So make sure that the scsi device करोes not go away
+		 * जबतक the work is being processed.
 		 */
-		if (scsi_device_get(sdkp->device)) {
+		अगर (scsi_device_get(sdkp->device)) अणु
 			ret = BLK_STS_IOERR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		sdkp->zones_wp_offset[zno] = SD_ZBC_UPDATING_WP_OFST;
 		schedule_work(&sdkp->zone_wp_offset_work);
 		fallthrough;
-	case SD_ZBC_UPDATING_WP_OFST:
+	हाल SD_ZBC_UPDATING_WP_OFST:
 		ret = BLK_STS_DEV_RESOURCE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		wp_offset = sectors_to_logical(sdkp->device, wp_offset);
-		if (wp_offset + nr_blocks > sdkp->zone_blocks) {
+		अगर (wp_offset + nr_blocks > sdkp->zone_blocks) अणु
 			ret = BLK_STS_IOERR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		*lba += wp_offset;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&sdkp->zones_wp_offset_lock, flags);
-	if (ret)
-		blk_req_zone_write_unlock(rq);
-	return ret;
-}
+	अगर (ret)
+		blk_req_zone_ग_लिखो_unlock(rq);
+	वापस ret;
+पूर्ण
 
 /**
  * sd_zbc_setup_zone_mgmt_cmnd - Prepare a zone ZBC_OUT command. The operations
  *			can be RESET WRITE POINTER, OPEN, CLOSE or FINISH.
  * @cmd: the command to setup
- * @op: Operation to be performed
+ * @op: Operation to be perक्रमmed
  * @all: All zones control
  *
- * Called from sd_init_command() for REQ_OP_ZONE_RESET, REQ_OP_ZONE_RESET_ALL,
+ * Called from sd_init_command() क्रम REQ_OP_ZONE_RESET, REQ_OP_ZONE_RESET_ALL,
  * REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE or REQ_OP_ZONE_FINISH requests.
  */
-blk_status_t sd_zbc_setup_zone_mgmt_cmnd(struct scsi_cmnd *cmd,
-					 unsigned char op, bool all)
-{
-	struct request *rq = cmd->request;
+blk_status_t sd_zbc_setup_zone_mgmt_cmnd(काष्ठा scsi_cmnd *cmd,
+					 अचिन्हित अक्षर op, bool all)
+अणु
+	काष्ठा request *rq = cmd->request;
 	sector_t sector = blk_rq_pos(rq);
-	struct scsi_disk *sdkp = scsi_disk(rq->rq_disk);
+	काष्ठा scsi_disk *sdkp = scsi_disk(rq->rq_disk);
 	sector_t block = sectors_to_logical(sdkp->device, sector);
 	blk_status_t ret;
 
 	ret = sd_zbc_cmnd_checks(cmd);
-	if (ret != BLK_STS_OK)
-		return ret;
+	अगर (ret != BLK_STS_OK)
+		वापस ret;
 
 	cmd->cmd_len = 16;
-	memset(cmd->cmnd, 0, cmd->cmd_len);
+	स_रखो(cmd->cmnd, 0, cmd->cmd_len);
 	cmd->cmnd[0] = ZBC_OUT;
 	cmd->cmnd[1] = op;
-	if (all)
+	अगर (all)
 		cmd->cmnd[14] = 0x1;
-	else
+	अन्यथा
 		put_unaligned_be64(block, &cmd->cmnd[2]);
 
-	rq->timeout = SD_TIMEOUT;
+	rq->समयout = SD_TIMEOUT;
 	cmd->sc_data_direction = DMA_NONE;
 	cmd->transfersize = 0;
 	cmd->allowed = 0;
 
-	return BLK_STS_OK;
-}
+	वापस BLK_STS_OK;
+पूर्ण
 
-static bool sd_zbc_need_zone_wp_update(struct request *rq)
-{
-	switch (req_op(rq)) {
-	case REQ_OP_ZONE_APPEND:
-	case REQ_OP_ZONE_FINISH:
-	case REQ_OP_ZONE_RESET:
-	case REQ_OP_ZONE_RESET_ALL:
-		return true;
-	case REQ_OP_WRITE:
-	case REQ_OP_WRITE_ZEROES:
-	case REQ_OP_WRITE_SAME:
-		return blk_rq_zone_is_seq(rq);
-	default:
-		return false;
-	}
-}
+अटल bool sd_zbc_need_zone_wp_update(काष्ठा request *rq)
+अणु
+	चयन (req_op(rq)) अणु
+	हाल REQ_OP_ZONE_APPEND:
+	हाल REQ_OP_ZONE_FINISH:
+	हाल REQ_OP_ZONE_RESET:
+	हाल REQ_OP_ZONE_RESET_ALL:
+		वापस true;
+	हाल REQ_OP_WRITE:
+	हाल REQ_OP_WRITE_ZEROES:
+	हाल REQ_OP_WRITE_SAME:
+		वापस blk_rq_zone_is_seq(rq);
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
 /**
- * sd_zbc_zone_wp_update - Update cached zone write pointer upon cmd completion
+ * sd_zbc_zone_wp_update - Update cached zone ग_लिखो poपूर्णांकer upon cmd completion
  * @cmd: Completed command
  * @good_bytes: Command reply bytes
  *
- * Called from sd_zbc_complete() to handle the update of the cached zone write
- * pointer value in case an update is needed.
+ * Called from sd_zbc_complete() to handle the update of the cached zone ग_लिखो
+ * poपूर्णांकer value in हाल an update is needed.
  */
-static unsigned int sd_zbc_zone_wp_update(struct scsi_cmnd *cmd,
-					  unsigned int good_bytes)
-{
-	int result = cmd->result;
-	struct request *rq = cmd->request;
-	struct scsi_disk *sdkp = scsi_disk(rq->rq_disk);
-	unsigned int zno = blk_rq_zone_no(rq);
-	enum req_opf op = req_op(rq);
-	unsigned long flags;
+अटल अचिन्हित पूर्णांक sd_zbc_zone_wp_update(काष्ठा scsi_cmnd *cmd,
+					  अचिन्हित पूर्णांक good_bytes)
+अणु
+	पूर्णांक result = cmd->result;
+	काष्ठा request *rq = cmd->request;
+	काष्ठा scsi_disk *sdkp = scsi_disk(rq->rq_disk);
+	अचिन्हित पूर्णांक zno = blk_rq_zone_no(rq);
+	क्रमागत req_opf op = req_op(rq);
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * If we got an error for a command that needs updating the write
-	 * pointer offset cache, we must mark the zone wp offset entry as
-	 * invalid to force an update from disk the next time a zone append
+	 * If we got an error क्रम a command that needs updating the ग_लिखो
+	 * poपूर्णांकer offset cache, we must mark the zone wp offset entry as
+	 * invalid to क्रमce an update from disk the next समय a zone append
 	 * command is issued.
 	 */
 	spin_lock_irqsave(&sdkp->zones_wp_offset_lock, flags);
 
-	if (result && op != REQ_OP_ZONE_RESET_ALL) {
-		if (op == REQ_OP_ZONE_APPEND) {
+	अगर (result && op != REQ_OP_ZONE_RESET_ALL) अणु
+		अगर (op == REQ_OP_ZONE_APPEND) अणु
 			/* Force complete completion (no retry) */
 			good_bytes = 0;
 			scsi_set_resid(cmd, blk_rq_bytes(rq));
-		}
+		पूर्ण
 
 		/*
-		 * Force an update of the zone write pointer offset on
+		 * Force an update of the zone ग_लिखो poपूर्णांकer offset on
 		 * the next zone append access.
 		 */
-		if (sdkp->zones_wp_offset[zno] != SD_ZBC_UPDATING_WP_OFST)
+		अगर (sdkp->zones_wp_offset[zno] != SD_ZBC_UPDATING_WP_OFST)
 			sdkp->zones_wp_offset[zno] = SD_ZBC_INVALID_WP_OFST;
-		goto unlock_wp_offset;
-	}
+		जाओ unlock_wp_offset;
+	पूर्ण
 
-	switch (op) {
-	case REQ_OP_ZONE_APPEND:
+	चयन (op) अणु
+	हाल REQ_OP_ZONE_APPEND:
 		rq->__sector += sdkp->zones_wp_offset[zno];
 		fallthrough;
-	case REQ_OP_WRITE_ZEROES:
-	case REQ_OP_WRITE_SAME:
-	case REQ_OP_WRITE:
-		if (sdkp->zones_wp_offset[zno] < sd_zbc_zone_sectors(sdkp))
+	हाल REQ_OP_WRITE_ZEROES:
+	हाल REQ_OP_WRITE_SAME:
+	हाल REQ_OP_WRITE:
+		अगर (sdkp->zones_wp_offset[zno] < sd_zbc_zone_sectors(sdkp))
 			sdkp->zones_wp_offset[zno] +=
 						good_bytes >> SECTOR_SHIFT;
-		break;
-	case REQ_OP_ZONE_RESET:
+		अवरोध;
+	हाल REQ_OP_ZONE_RESET:
 		sdkp->zones_wp_offset[zno] = 0;
-		break;
-	case REQ_OP_ZONE_FINISH:
+		अवरोध;
+	हाल REQ_OP_ZONE_FINISH:
 		sdkp->zones_wp_offset[zno] = sd_zbc_zone_sectors(sdkp);
-		break;
-	case REQ_OP_ZONE_RESET_ALL:
-		memset(sdkp->zones_wp_offset, 0,
-		       sdkp->nr_zones * sizeof(unsigned int));
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	हाल REQ_OP_ZONE_RESET_ALL:
+		स_रखो(sdkp->zones_wp_offset, 0,
+		       sdkp->nr_zones * माप(अचिन्हित पूर्णांक));
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 unlock_wp_offset:
 	spin_unlock_irqrestore(&sdkp->zones_wp_offset_lock, flags);
 
-	return good_bytes;
-}
+	वापस good_bytes;
+पूर्ण
 
 /**
  * sd_zbc_complete - ZBC command post processing.
@@ -510,79 +511,79 @@ unlock_wp_offset:
  * @good_bytes: Command reply bytes
  * @sshdr: command sense header
  *
- * Called from sd_done() to handle zone commands errors and updates to the
- * device queue zone write pointer offset cahce.
+ * Called from sd_करोne() to handle zone commands errors and updates to the
+ * device queue zone ग_लिखो poपूर्णांकer offset cahce.
  */
-unsigned int sd_zbc_complete(struct scsi_cmnd *cmd, unsigned int good_bytes,
-		     struct scsi_sense_hdr *sshdr)
-{
-	int result = cmd->result;
-	struct request *rq = cmd->request;
+अचिन्हित पूर्णांक sd_zbc_complete(काष्ठा scsi_cmnd *cmd, अचिन्हित पूर्णांक good_bytes,
+		     काष्ठा scsi_sense_hdr *sshdr)
+अणु
+	पूर्णांक result = cmd->result;
+	काष्ठा request *rq = cmd->request;
 
-	if (op_is_zone_mgmt(req_op(rq)) &&
+	अगर (op_is_zone_mgmt(req_op(rq)) &&
 	    result &&
 	    sshdr->sense_key == ILLEGAL_REQUEST &&
-	    sshdr->asc == 0x24) {
+	    sshdr->asc == 0x24) अणु
 		/*
 		 * INVALID FIELD IN CDB error: a zone management command was
 		 * attempted on a conventional zone. Nothing to worry about,
 		 * so be quiet about the error.
 		 */
 		rq->rq_flags |= RQF_QUIET;
-	} else if (sd_zbc_need_zone_wp_update(rq))
+	पूर्ण अन्यथा अगर (sd_zbc_need_zone_wp_update(rq))
 		good_bytes = sd_zbc_zone_wp_update(cmd, good_bytes);
 
-	if (req_op(rq) == REQ_OP_ZONE_APPEND)
-		blk_req_zone_write_unlock(rq);
+	अगर (req_op(rq) == REQ_OP_ZONE_APPEND)
+		blk_req_zone_ग_लिखो_unlock(rq);
 
-	return good_bytes;
-}
+	वापस good_bytes;
+पूर्ण
 
 /**
- * sd_zbc_check_zoned_characteristics - Check zoned block device characteristics
+ * sd_zbc_check_zoned_अक्षरacteristics - Check zoned block device अक्षरacteristics
  * @sdkp: Target disk
  * @buf: Buffer where to store the VPD page data
  *
- * Read VPD page B6, get information and check that reads are unconstrained.
+ * Read VPD page B6, get inक्रमmation and check that पढ़ोs are unस्थिरrained.
  */
-static int sd_zbc_check_zoned_characteristics(struct scsi_disk *sdkp,
-					      unsigned char *buf)
-{
+अटल पूर्णांक sd_zbc_check_zoned_अक्षरacteristics(काष्ठा scsi_disk *sdkp,
+					      अचिन्हित अक्षर *buf)
+अणु
 
-	if (scsi_get_vpd_page(sdkp->device, 0xb6, buf, 64)) {
-		sd_printk(KERN_NOTICE, sdkp,
+	अगर (scsi_get_vpd_page(sdkp->device, 0xb6, buf, 64)) अणु
+		sd_prपूर्णांकk(KERN_NOTICE, sdkp,
 			  "Read zoned characteristics VPD page failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (sdkp->device->type != TYPE_ZBC) {
+	अगर (sdkp->device->type != TYPE_ZBC) अणु
 		/* Host-aware */
 		sdkp->urswrz = 1;
-		sdkp->zones_optimal_open = get_unaligned_be32(&buf[8]);
+		sdkp->zones_optimal_खोलो = get_unaligned_be32(&buf[8]);
 		sdkp->zones_optimal_nonseq = get_unaligned_be32(&buf[12]);
-		sdkp->zones_max_open = 0;
-	} else {
+		sdkp->zones_max_खोलो = 0;
+	पूर्ण अन्यथा अणु
 		/* Host-managed */
 		sdkp->urswrz = buf[4] & 1;
-		sdkp->zones_optimal_open = 0;
+		sdkp->zones_optimal_खोलो = 0;
 		sdkp->zones_optimal_nonseq = 0;
-		sdkp->zones_max_open = get_unaligned_be32(&buf[16]);
-	}
+		sdkp->zones_max_खोलो = get_unaligned_be32(&buf[16]);
+	पूर्ण
 
 	/*
-	 * Check for unconstrained reads: host-managed devices with
-	 * constrained reads (drives failing read after write pointer)
+	 * Check क्रम unस्थिरrained पढ़ोs: host-managed devices with
+	 * स्थिरrained पढ़ोs (drives failing पढ़ो after ग_लिखो poपूर्णांकer)
 	 * are not supported.
 	 */
-	if (!sdkp->urswrz) {
-		if (sdkp->first_scan)
-			sd_printk(KERN_NOTICE, sdkp,
+	अगर (!sdkp->urswrz) अणु
+		अगर (sdkp->first_scan)
+			sd_prपूर्णांकk(KERN_NOTICE, sdkp,
 			  "constrained reads devices are not supported\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * sd_zbc_check_capacity - Check the device capacity
@@ -592,91 +593,91 @@ static int sd_zbc_check_zoned_characteristics(struct scsi_disk *sdkp,
  *
  * Get the device zone size and check that the device capacity as reported
  * by READ CAPACITY matches the max_lba value (plus one) of the report zones
- * command reply for devices with RC_BASIS == 0.
+ * command reply क्रम devices with RC_BASIS == 0.
  *
  * Returns 0 upon success or an error code upon failure.
  */
-static int sd_zbc_check_capacity(struct scsi_disk *sdkp, unsigned char *buf,
+अटल पूर्णांक sd_zbc_check_capacity(काष्ठा scsi_disk *sdkp, अचिन्हित अक्षर *buf,
 				 u32 *zblocks)
-{
+अणु
 	u64 zone_blocks;
 	sector_t max_lba;
-	unsigned char *rec;
-	int ret;
+	अचिन्हित अक्षर *rec;
+	पूर्णांक ret;
 
 	/* Do a report zone to get max_lba and the size of the first zone */
-	ret = sd_zbc_do_report_zones(sdkp, buf, SD_BUF_SIZE, 0, false);
-	if (ret)
-		return ret;
+	ret = sd_zbc_करो_report_zones(sdkp, buf, SD_BUF_SIZE, 0, false);
+	अगर (ret)
+		वापस ret;
 
-	if (sdkp->rc_basis == 0) {
+	अगर (sdkp->rc_basis == 0) अणु
 		/* The max_lba field is the capacity of this device */
 		max_lba = get_unaligned_be64(&buf[8]);
-		if (sdkp->capacity != max_lba + 1) {
-			if (sdkp->first_scan)
-				sd_printk(KERN_WARNING, sdkp,
+		अगर (sdkp->capacity != max_lba + 1) अणु
+			अगर (sdkp->first_scan)
+				sd_prपूर्णांकk(KERN_WARNING, sdkp,
 					"Changing capacity from %llu to max LBA+1 %llu\n",
-					(unsigned long long)sdkp->capacity,
-					(unsigned long long)max_lba + 1);
+					(अचिन्हित दीर्घ दीर्घ)sdkp->capacity,
+					(अचिन्हित दीर्घ दीर्घ)max_lba + 1);
 			sdkp->capacity = max_lba + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Get the size of the first reported zone */
 	rec = buf + 64;
 	zone_blocks = get_unaligned_be64(&rec[8]);
-	if (logical_to_sectors(sdkp->device, zone_blocks) > UINT_MAX) {
-		if (sdkp->first_scan)
-			sd_printk(KERN_NOTICE, sdkp,
+	अगर (logical_to_sectors(sdkp->device, zone_blocks) > अच_पूर्णांक_उच्च) अणु
+		अगर (sdkp->first_scan)
+			sd_prपूर्णांकk(KERN_NOTICE, sdkp,
 				  "Zone size too large\n");
-		return -EFBIG;
-	}
+		वापस -EFBIG;
+	पूर्ण
 
 	*zblocks = zone_blocks;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sd_zbc_print_zones(struct scsi_disk *sdkp)
-{
-	if (!sd_is_zoned(sdkp) || !sdkp->capacity)
-		return;
+अटल व्योम sd_zbc_prपूर्णांक_zones(काष्ठा scsi_disk *sdkp)
+अणु
+	अगर (!sd_is_zoned(sdkp) || !sdkp->capacity)
+		वापस;
 
-	if (sdkp->capacity & (sdkp->zone_blocks - 1))
-		sd_printk(KERN_NOTICE, sdkp,
+	अगर (sdkp->capacity & (sdkp->zone_blocks - 1))
+		sd_prपूर्णांकk(KERN_NOTICE, sdkp,
 			  "%u zones of %u logical blocks + 1 runt zone\n",
 			  sdkp->nr_zones - 1,
 			  sdkp->zone_blocks);
-	else
-		sd_printk(KERN_NOTICE, sdkp,
+	अन्यथा
+		sd_prपूर्णांकk(KERN_NOTICE, sdkp,
 			  "%u zones of %u logical blocks\n",
 			  sdkp->nr_zones,
 			  sdkp->zone_blocks);
-}
+पूर्ण
 
-static int sd_zbc_init_disk(struct scsi_disk *sdkp)
-{
-	sdkp->zones_wp_offset = NULL;
+अटल पूर्णांक sd_zbc_init_disk(काष्ठा scsi_disk *sdkp)
+अणु
+	sdkp->zones_wp_offset = शून्य;
 	spin_lock_init(&sdkp->zones_wp_offset_lock);
-	sdkp->rev_wp_offset = NULL;
+	sdkp->rev_wp_offset = शून्य;
 	mutex_init(&sdkp->rev_mutex);
 	INIT_WORK(&sdkp->zone_wp_offset_work, sd_zbc_update_wp_offset_workfn);
 	sdkp->zone_wp_update_buf = kzalloc(SD_BUF_SIZE, GFP_KERNEL);
-	if (!sdkp->zone_wp_update_buf)
-		return -ENOMEM;
+	अगर (!sdkp->zone_wp_update_buf)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sd_zbc_clear_zone_info(struct scsi_disk *sdkp)
-{
+अटल व्योम sd_zbc_clear_zone_info(काष्ठा scsi_disk *sdkp)
+अणु
 	/* Serialize against revalidate zones */
 	mutex_lock(&sdkp->rev_mutex);
 
-	kvfree(sdkp->zones_wp_offset);
-	sdkp->zones_wp_offset = NULL;
-	kfree(sdkp->zone_wp_update_buf);
-	sdkp->zone_wp_update_buf = NULL;
+	kvमुक्त(sdkp->zones_wp_offset);
+	sdkp->zones_wp_offset = शून्य;
+	kमुक्त(sdkp->zone_wp_update_buf);
+	sdkp->zone_wp_update_buf = शून्य;
 
 	sdkp->nr_zones = 0;
 	sdkp->rev_nr_zones = 0;
@@ -684,50 +685,50 @@ static void sd_zbc_clear_zone_info(struct scsi_disk *sdkp)
 	sdkp->rev_zone_blocks = 0;
 
 	mutex_unlock(&sdkp->rev_mutex);
-}
+पूर्ण
 
-void sd_zbc_release_disk(struct scsi_disk *sdkp)
-{
-	if (sd_is_zoned(sdkp))
+व्योम sd_zbc_release_disk(काष्ठा scsi_disk *sdkp)
+अणु
+	अगर (sd_is_zoned(sdkp))
 		sd_zbc_clear_zone_info(sdkp);
-}
+पूर्ण
 
-static void sd_zbc_revalidate_zones_cb(struct gendisk *disk)
-{
-	struct scsi_disk *sdkp = scsi_disk(disk);
+अटल व्योम sd_zbc_revalidate_zones_cb(काष्ठा gendisk *disk)
+अणु
+	काष्ठा scsi_disk *sdkp = scsi_disk(disk);
 
 	swap(sdkp->zones_wp_offset, sdkp->rev_wp_offset);
-}
+पूर्ण
 
-int sd_zbc_revalidate_zones(struct scsi_disk *sdkp)
-{
-	struct gendisk *disk = sdkp->disk;
-	struct request_queue *q = disk->queue;
+पूर्णांक sd_zbc_revalidate_zones(काष्ठा scsi_disk *sdkp)
+अणु
+	काष्ठा gendisk *disk = sdkp->disk;
+	काष्ठा request_queue *q = disk->queue;
 	u32 zone_blocks = sdkp->rev_zone_blocks;
-	unsigned int nr_zones = sdkp->rev_nr_zones;
+	अचिन्हित पूर्णांक nr_zones = sdkp->rev_nr_zones;
 	u32 max_append;
-	int ret = 0;
-	unsigned int flags;
+	पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक flags;
 
 	/*
-	 * For all zoned disks, initialize zone append emulation data if not
-	 * already done. This is necessary also for host-aware disks used as
+	 * For all zoned disks, initialize zone append emulation data अगर not
+	 * alपढ़ोy करोne. This is necessary also क्रम host-aware disks used as
 	 * regular disks due to the presence of partitions as these partitions
 	 * may be deleted and the disk zoned model changed back from
 	 * BLK_ZONED_NONE to BLK_ZONED_HA.
 	 */
-	if (sd_is_zoned(sdkp) && !sdkp->zone_wp_update_buf) {
+	अगर (sd_is_zoned(sdkp) && !sdkp->zone_wp_update_buf) अणु
 		ret = sd_zbc_init_disk(sdkp);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/*
-	 * There is nothing to do for regular disks, including host-aware disks
+	 * There is nothing to करो क्रम regular disks, including host-aware disks
 	 * that have partitions.
 	 */
-	if (!blk_queue_is_zoned(q))
-		return 0;
+	अगर (!blk_queue_is_zoned(q))
+		वापस 0;
 
 	/*
 	 * Make sure revalidate zones are serialized to ensure exclusive
@@ -735,33 +736,33 @@ int sd_zbc_revalidate_zones(struct scsi_disk *sdkp)
 	 */
 	mutex_lock(&sdkp->rev_mutex);
 
-	if (sdkp->zone_blocks == zone_blocks &&
+	अगर (sdkp->zone_blocks == zone_blocks &&
 	    sdkp->nr_zones == nr_zones &&
 	    disk->queue->nr_zones == nr_zones)
-		goto unlock;
+		जाओ unlock;
 
-	flags = memalloc_noio_save();
+	flags = meदो_स्मृति_noio_save();
 	sdkp->zone_blocks = zone_blocks;
 	sdkp->nr_zones = nr_zones;
-	sdkp->rev_wp_offset = kvcalloc(nr_zones, sizeof(u32), GFP_KERNEL);
-	if (!sdkp->rev_wp_offset) {
+	sdkp->rev_wp_offset = kvसुस्मृति(nr_zones, माप(u32), GFP_KERNEL);
+	अगर (!sdkp->rev_wp_offset) अणु
 		ret = -ENOMEM;
-		memalloc_noio_restore(flags);
-		goto unlock;
-	}
+		meदो_स्मृति_noio_restore(flags);
+		जाओ unlock;
+	पूर्ण
 
 	ret = blk_revalidate_disk_zones(disk, sd_zbc_revalidate_zones_cb);
 
-	memalloc_noio_restore(flags);
-	kvfree(sdkp->rev_wp_offset);
-	sdkp->rev_wp_offset = NULL;
+	meदो_स्मृति_noio_restore(flags);
+	kvमुक्त(sdkp->rev_wp_offset);
+	sdkp->rev_wp_offset = शून्य;
 
-	if (ret) {
+	अगर (ret) अणु
 		sdkp->zone_blocks = 0;
 		sdkp->nr_zones = 0;
 		sdkp->capacity = 0;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	max_append = min_t(u32, logical_to_sectors(sdkp->device, zone_blocks),
 			   q->limits.max_segments << (PAGE_SHIFT - 9));
@@ -769,79 +770,79 @@ int sd_zbc_revalidate_zones(struct scsi_disk *sdkp)
 
 	blk_queue_max_zone_append_sectors(q, max_append);
 
-	sd_zbc_print_zones(sdkp);
+	sd_zbc_prपूर्णांक_zones(sdkp);
 
 unlock:
 	mutex_unlock(&sdkp->rev_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int sd_zbc_read_zones(struct scsi_disk *sdkp, unsigned char *buf)
-{
-	struct gendisk *disk = sdkp->disk;
-	struct request_queue *q = disk->queue;
-	unsigned int nr_zones;
+पूर्णांक sd_zbc_पढ़ो_zones(काष्ठा scsi_disk *sdkp, अचिन्हित अक्षर *buf)
+अणु
+	काष्ठा gendisk *disk = sdkp->disk;
+	काष्ठा request_queue *q = disk->queue;
+	अचिन्हित पूर्णांक nr_zones;
 	u32 zone_blocks = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (!sd_is_zoned(sdkp))
+	अगर (!sd_is_zoned(sdkp))
 		/*
 		 * Device managed or normal SCSI disk,
 		 * no special handling required
 		 */
-		return 0;
+		वापस 0;
 
-	/* READ16/WRITE16 is mandatory for ZBC disks */
-	sdkp->device->use_16_for_rw = 1;
-	sdkp->device->use_10_for_rw = 0;
+	/* READ16/WRITE16 is mandatory क्रम ZBC disks */
+	sdkp->device->use_16_क्रम_rw = 1;
+	sdkp->device->use_10_क्रम_rw = 0;
 
-	if (!blk_queue_is_zoned(q)) {
+	अगर (!blk_queue_is_zoned(q)) अणु
 		/*
-		 * This can happen for a host aware disk with partitions.
-		 * The block device zone information was already cleared
+		 * This can happen क्रम a host aware disk with partitions.
+		 * The block device zone inक्रमmation was alपढ़ोy cleared
 		 * by blk_queue_set_zoned(). Only clear the scsi disk zone
-		 * information and exit early.
+		 * inक्रमmation and निकास early.
 		 */
 		sd_zbc_clear_zone_info(sdkp);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Check zoned block device characteristics (unconstrained reads) */
-	ret = sd_zbc_check_zoned_characteristics(sdkp, buf);
-	if (ret)
-		goto err;
+	/* Check zoned block device अक्षरacteristics (unस्थिरrained पढ़ोs) */
+	ret = sd_zbc_check_zoned_अक्षरacteristics(sdkp, buf);
+	अगर (ret)
+		जाओ err;
 
 	/* Check the device capacity reported by report zones */
 	ret = sd_zbc_check_capacity(sdkp, buf, &zone_blocks);
-	if (ret != 0)
-		goto err;
+	अगर (ret != 0)
+		जाओ err;
 
 	/* The drive satisfies the kernel restrictions: set it up */
 	blk_queue_flag_set(QUEUE_FLAG_ZONE_RESETALL, q);
 	blk_queue_required_elevator_features(q, ELEVATOR_F_ZBD_SEQ_WRITE);
-	if (sdkp->zones_max_open == U32_MAX)
-		blk_queue_max_open_zones(q, 0);
-	else
-		blk_queue_max_open_zones(q, sdkp->zones_max_open);
+	अगर (sdkp->zones_max_खोलो == U32_MAX)
+		blk_queue_max_खोलो_zones(q, 0);
+	अन्यथा
+		blk_queue_max_खोलो_zones(q, sdkp->zones_max_खोलो);
 	blk_queue_max_active_zones(q, 0);
 	nr_zones = round_up(sdkp->capacity, zone_blocks) >> ilog2(zone_blocks);
 
 	/*
-	 * Per ZBC and ZAC specifications, writes in sequential write required
+	 * Per ZBC and ZAC specअगरications, ग_लिखोs in sequential ग_लिखो required
 	 * zones of host-managed devices must be aligned to the device physical
 	 * block size.
 	 */
-	if (blk_queue_zoned_model(q) == BLK_ZONED_HM)
-		blk_queue_zone_write_granularity(q, sdkp->physical_block_size);
+	अगर (blk_queue_zoned_model(q) == BLK_ZONED_HM)
+		blk_queue_zone_ग_लिखो_granularity(q, sdkp->physical_block_size);
 
 	sdkp->rev_nr_zones = nr_zones;
 	sdkp->rev_zone_blocks = zone_blocks;
 
-	return 0;
+	वापस 0;
 
 err:
 	sdkp->capacity = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Declarations of CHRP platform-specific things.
+ * Declarations of CHRP platक्रमm-specअगरic things.
  */
 
-extern void chrp_nvram_init(void);
-extern void chrp_get_rtc_time(struct rtc_time *);
-extern int chrp_set_rtc_time(struct rtc_time *);
-extern long chrp_time_init(void);
+बाह्य व्योम chrp_nvram_init(व्योम);
+बाह्य व्योम chrp_get_rtc_समय(काष्ठा rtc_समय *);
+बाह्य पूर्णांक chrp_set_rtc_समय(काष्ठा rtc_समय *);
+बाह्य दीर्घ chrp_समय_init(व्योम);
 
-extern void chrp_find_bridges(void);
-extern void chrp_event_scan(unsigned long);
+बाह्य व्योम chrp_find_bridges(व्योम);
+बाह्य व्योम chrp_event_scan(अचिन्हित दीर्घ);

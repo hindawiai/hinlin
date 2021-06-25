@@ -1,76 +1,77 @@
-#include <linux/bpf.h>
-#include <linux/btf.h>
-#include <linux/err.h>
-#include <linux/irq_work.h>
-#include <linux/slab.h>
-#include <linux/filter.h>
-#include <linux/mm.h>
-#include <linux/vmalloc.h>
-#include <linux/wait.h>
-#include <linux/poll.h>
-#include <uapi/linux/btf.h>
+<शैली गुरु>
+#समावेश <linux/bpf.h>
+#समावेश <linux/btf.h>
+#समावेश <linux/err.h>
+#समावेश <linux/irq_work.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/filter.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/poll.h>
+#समावेश <uapi/linux/btf.h>
 
-#define RINGBUF_CREATE_FLAG_MASK (BPF_F_NUMA_NODE)
+#घोषणा RINGBUF_CREATE_FLAG_MASK (BPF_F_NUMA_NODE)
 
 /* non-mmap()'able part of bpf_ringbuf (everything up to consumer page) */
-#define RINGBUF_PGOFF \
-	(offsetof(struct bpf_ringbuf, consumer_pos) >> PAGE_SHIFT)
+#घोषणा RINGBUF_PGOFF \
+	(दुरत्व(काष्ठा bpf_ringbuf, consumer_pos) >> PAGE_SHIFT)
 /* consumer page and producer page */
-#define RINGBUF_POS_PAGES 2
+#घोषणा RINGBUF_POS_PAGES 2
 
-#define RINGBUF_MAX_RECORD_SZ (UINT_MAX/4)
+#घोषणा RINGBUF_MAX_RECORD_SZ (अच_पूर्णांक_उच्च/4)
 
 /* Maximum size of ring buffer area is limited by 32-bit page offset within
- * record header, counted in pages. Reserve 8 bits for extensibility, and take
- * into account few extra pages for consumer/producer pages and
- * non-mmap()'able parts. This gives 64GB limit, which seems plenty for single
+ * record header, counted in pages. Reserve 8 bits क्रम extensibility, and take
+ * पूर्णांकo account few extra pages क्रम consumer/producer pages and
+ * non-mmap()'able parts. This gives 64GB limit, which seems plenty क्रम single
  * ring buffer.
  */
-#define RINGBUF_MAX_DATA_SZ \
+#घोषणा RINGBUF_MAX_DATA_SZ \
 	(((1ULL << 24) - RINGBUF_POS_PAGES - RINGBUF_PGOFF) * PAGE_SIZE)
 
-struct bpf_ringbuf {
-	wait_queue_head_t waitq;
-	struct irq_work work;
+काष्ठा bpf_ringbuf अणु
+	रुको_queue_head_t रुकोq;
+	काष्ठा irq_work work;
 	u64 mask;
-	struct page **pages;
-	int nr_pages;
+	काष्ठा page **pages;
+	पूर्णांक nr_pages;
 	spinlock_t spinlock ____cacheline_aligned_in_smp;
-	/* Consumer and producer counters are put into separate pages to allow
+	/* Consumer and producer counters are put पूर्णांकo separate pages to allow
 	 * mapping consumer page as r/w, but restrict producer page to r/o.
-	 * This protects producer position from being modified by user-space
+	 * This protects producer position from being modअगरied by user-space
 	 * application and ruining in-kernel position tracking.
 	 */
-	unsigned long consumer_pos __aligned(PAGE_SIZE);
-	unsigned long producer_pos __aligned(PAGE_SIZE);
-	char data[] __aligned(PAGE_SIZE);
-};
+	अचिन्हित दीर्घ consumer_pos __aligned(PAGE_SIZE);
+	अचिन्हित दीर्घ producer_pos __aligned(PAGE_SIZE);
+	अक्षर data[] __aligned(PAGE_SIZE);
+पूर्ण;
 
-struct bpf_ringbuf_map {
-	struct bpf_map map;
-	struct bpf_ringbuf *rb;
-};
+काष्ठा bpf_ringbuf_map अणु
+	काष्ठा bpf_map map;
+	काष्ठा bpf_ringbuf *rb;
+पूर्ण;
 
-/* 8-byte ring buffer record header structure */
-struct bpf_ringbuf_hdr {
+/* 8-byte ring buffer record header काष्ठाure */
+काष्ठा bpf_ringbuf_hdr अणु
 	u32 len;
 	u32 pg_off;
-};
+पूर्ण;
 
-static struct bpf_ringbuf *bpf_ringbuf_area_alloc(size_t data_sz, int numa_node)
-{
-	const gfp_t flags = GFP_KERNEL_ACCOUNT | __GFP_RETRY_MAYFAIL |
+अटल काष्ठा bpf_ringbuf *bpf_ringbuf_area_alloc(माप_प्रकार data_sz, पूर्णांक numa_node)
+अणु
+	स्थिर gfp_t flags = GFP_KERNEL_ACCOUNT | __GFP_RETRY_MAYFAIL |
 			    __GFP_NOWARN | __GFP_ZERO;
-	int nr_meta_pages = RINGBUF_PGOFF + RINGBUF_POS_PAGES;
-	int nr_data_pages = data_sz >> PAGE_SHIFT;
-	int nr_pages = nr_meta_pages + nr_data_pages;
-	struct page **pages, *page;
-	struct bpf_ringbuf *rb;
-	size_t array_size;
-	int i;
+	पूर्णांक nr_meta_pages = RINGBUF_PGOFF + RINGBUF_POS_PAGES;
+	पूर्णांक nr_data_pages = data_sz >> PAGE_SHIFT;
+	पूर्णांक nr_pages = nr_meta_pages + nr_data_pages;
+	काष्ठा page **pages, *page;
+	काष्ठा bpf_ringbuf *rb;
+	माप_प्रकार array_size;
+	पूर्णांक i;
 
 	/* Each data page is mapped twice to allow "virtual"
-	 * continuous read of samples wrapping around the end of ring
+	 * continuous पढ़ो of samples wrapping around the end of ring
 	 * buffer area:
 	 * ------------------------------------------------------
 	 * | meta pages |  real data pages  |  same data pages  |
@@ -82,190 +83,190 @@ static struct bpf_ringbuf *bpf_ringbuf_area_alloc(size_t data_sz, int numa_node)
 	 *                               ^^^^^^^
 	 *                                  |
 	 * Here, no need to worry about special handling of wrapped-around
-	 * data due to double-mapped data pages. This works both in kernel and
-	 * when mmap()'ed in user-space, simplifying both kernel and
-	 * user-space implementations significantly.
+	 * data due to द्विगुन-mapped data pages. This works both in kernel and
+	 * when mmap()'ed in user-space, simplअगरying both kernel and
+	 * user-space implementations signअगरicantly.
 	 */
-	array_size = (nr_meta_pages + 2 * nr_data_pages) * sizeof(*pages);
+	array_size = (nr_meta_pages + 2 * nr_data_pages) * माप(*pages);
 	pages = bpf_map_area_alloc(array_size, numa_node);
-	if (!pages)
-		return NULL;
+	अगर (!pages)
+		वापस शून्य;
 
-	for (i = 0; i < nr_pages; i++) {
+	क्रम (i = 0; i < nr_pages; i++) अणु
 		page = alloc_pages_node(numa_node, flags, 0);
-		if (!page) {
+		अगर (!page) अणु
 			nr_pages = i;
-			goto err_free_pages;
-		}
+			जाओ err_मुक्त_pages;
+		पूर्ण
 		pages[i] = page;
-		if (i >= nr_meta_pages)
+		अगर (i >= nr_meta_pages)
 			pages[nr_data_pages + i] = page;
-	}
+	पूर्ण
 
 	rb = vmap(pages, nr_meta_pages + 2 * nr_data_pages,
 		  VM_ALLOC | VM_USERMAP, PAGE_KERNEL);
-	if (rb) {
+	अगर (rb) अणु
 		rb->pages = pages;
 		rb->nr_pages = nr_pages;
-		return rb;
-	}
+		वापस rb;
+	पूर्ण
 
-err_free_pages:
-	for (i = 0; i < nr_pages; i++)
-		__free_page(pages[i]);
-	kvfree(pages);
-	return NULL;
-}
+err_मुक्त_pages:
+	क्रम (i = 0; i < nr_pages; i++)
+		__मुक्त_page(pages[i]);
+	kvमुक्त(pages);
+	वापस शून्य;
+पूर्ण
 
-static void bpf_ringbuf_notify(struct irq_work *work)
-{
-	struct bpf_ringbuf *rb = container_of(work, struct bpf_ringbuf, work);
+अटल व्योम bpf_ringbuf_notअगरy(काष्ठा irq_work *work)
+अणु
+	काष्ठा bpf_ringbuf *rb = container_of(work, काष्ठा bpf_ringbuf, work);
 
-	wake_up_all(&rb->waitq);
-}
+	wake_up_all(&rb->रुकोq);
+पूर्ण
 
-static struct bpf_ringbuf *bpf_ringbuf_alloc(size_t data_sz, int numa_node)
-{
-	struct bpf_ringbuf *rb;
+अटल काष्ठा bpf_ringbuf *bpf_ringbuf_alloc(माप_प्रकार data_sz, पूर्णांक numa_node)
+अणु
+	काष्ठा bpf_ringbuf *rb;
 
 	rb = bpf_ringbuf_area_alloc(data_sz, numa_node);
-	if (!rb)
-		return NULL;
+	अगर (!rb)
+		वापस शून्य;
 
 	spin_lock_init(&rb->spinlock);
-	init_waitqueue_head(&rb->waitq);
-	init_irq_work(&rb->work, bpf_ringbuf_notify);
+	init_रुकोqueue_head(&rb->रुकोq);
+	init_irq_work(&rb->work, bpf_ringbuf_notअगरy);
 
 	rb->mask = data_sz - 1;
 	rb->consumer_pos = 0;
 	rb->producer_pos = 0;
 
-	return rb;
-}
+	वापस rb;
+पूर्ण
 
-static struct bpf_map *ringbuf_map_alloc(union bpf_attr *attr)
-{
-	struct bpf_ringbuf_map *rb_map;
+अटल काष्ठा bpf_map *ringbuf_map_alloc(जोड़ bpf_attr *attr)
+अणु
+	काष्ठा bpf_ringbuf_map *rb_map;
 
-	if (attr->map_flags & ~RINGBUF_CREATE_FLAG_MASK)
-		return ERR_PTR(-EINVAL);
+	अगर (attr->map_flags & ~RINGBUF_CREATE_FLAG_MASK)
+		वापस ERR_PTR(-EINVAL);
 
-	if (attr->key_size || attr->value_size ||
-	    !is_power_of_2(attr->max_entries) ||
+	अगर (attr->key_size || attr->value_size ||
+	    !is_घातer_of_2(attr->max_entries) ||
 	    !PAGE_ALIGNED(attr->max_entries))
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 	/* on 32-bit arch, it's impossible to overflow record's hdr->pgoff */
-	if (attr->max_entries > RINGBUF_MAX_DATA_SZ)
-		return ERR_PTR(-E2BIG);
-#endif
+	अगर (attr->max_entries > RINGBUF_MAX_DATA_SZ)
+		वापस ERR_PTR(-E2BIG);
+#पूर्ण_अगर
 
-	rb_map = kzalloc(sizeof(*rb_map), GFP_USER | __GFP_ACCOUNT);
-	if (!rb_map)
-		return ERR_PTR(-ENOMEM);
+	rb_map = kzalloc(माप(*rb_map), GFP_USER | __GFP_ACCOUNT);
+	अगर (!rb_map)
+		वापस ERR_PTR(-ENOMEM);
 
 	bpf_map_init_from_attr(&rb_map->map, attr);
 
 	rb_map->rb = bpf_ringbuf_alloc(attr->max_entries, rb_map->map.numa_node);
-	if (!rb_map->rb) {
-		kfree(rb_map);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (!rb_map->rb) अणु
+		kमुक्त(rb_map);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	return &rb_map->map;
-}
+	वापस &rb_map->map;
+पूर्ण
 
-static void bpf_ringbuf_free(struct bpf_ringbuf *rb)
-{
-	/* copy pages pointer and nr_pages to local variable, as we are going
+अटल व्योम bpf_ringbuf_मुक्त(काष्ठा bpf_ringbuf *rb)
+अणु
+	/* copy pages poपूर्णांकer and nr_pages to local variable, as we are going
 	 * to unmap rb itself with vunmap() below
 	 */
-	struct page **pages = rb->pages;
-	int i, nr_pages = rb->nr_pages;
+	काष्ठा page **pages = rb->pages;
+	पूर्णांक i, nr_pages = rb->nr_pages;
 
 	vunmap(rb);
-	for (i = 0; i < nr_pages; i++)
-		__free_page(pages[i]);
-	kvfree(pages);
-}
+	क्रम (i = 0; i < nr_pages; i++)
+		__मुक्त_page(pages[i]);
+	kvमुक्त(pages);
+पूर्ण
 
-static void ringbuf_map_free(struct bpf_map *map)
-{
-	struct bpf_ringbuf_map *rb_map;
+अटल व्योम ringbuf_map_मुक्त(काष्ठा bpf_map *map)
+अणु
+	काष्ठा bpf_ringbuf_map *rb_map;
 
-	rb_map = container_of(map, struct bpf_ringbuf_map, map);
-	bpf_ringbuf_free(rb_map->rb);
-	kfree(rb_map);
-}
+	rb_map = container_of(map, काष्ठा bpf_ringbuf_map, map);
+	bpf_ringbuf_मुक्त(rb_map->rb);
+	kमुक्त(rb_map);
+पूर्ण
 
-static void *ringbuf_map_lookup_elem(struct bpf_map *map, void *key)
-{
-	return ERR_PTR(-ENOTSUPP);
-}
+अटल व्योम *ringbuf_map_lookup_elem(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	वापस ERR_PTR(-ENOTSUPP);
+पूर्ण
 
-static int ringbuf_map_update_elem(struct bpf_map *map, void *key, void *value,
+अटल पूर्णांक ringbuf_map_update_elem(काष्ठा bpf_map *map, व्योम *key, व्योम *value,
 				   u64 flags)
-{
-	return -ENOTSUPP;
-}
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static int ringbuf_map_delete_elem(struct bpf_map *map, void *key)
-{
-	return -ENOTSUPP;
-}
+अटल पूर्णांक ringbuf_map_delete_elem(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static int ringbuf_map_get_next_key(struct bpf_map *map, void *key,
-				    void *next_key)
-{
-	return -ENOTSUPP;
-}
+अटल पूर्णांक ringbuf_map_get_next_key(काष्ठा bpf_map *map, व्योम *key,
+				    व्योम *next_key)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static int ringbuf_map_mmap(struct bpf_map *map, struct vm_area_struct *vma)
-{
-	struct bpf_ringbuf_map *rb_map;
+अटल पूर्णांक ringbuf_map_mmap(काष्ठा bpf_map *map, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा bpf_ringbuf_map *rb_map;
 
-	rb_map = container_of(map, struct bpf_ringbuf_map, map);
+	rb_map = container_of(map, काष्ठा bpf_ringbuf_map, map);
 
-	if (vma->vm_flags & VM_WRITE) {
-		/* allow writable mapping for the consumer_pos only */
-		if (vma->vm_pgoff != 0 || vma->vm_end - vma->vm_start != PAGE_SIZE)
-			return -EPERM;
-	} else {
+	अगर (vma->vm_flags & VM_WRITE) अणु
+		/* allow writable mapping क्रम the consumer_pos only */
+		अगर (vma->vm_pgoff != 0 || vma->vm_end - vma->vm_start != PAGE_SIZE)
+			वापस -EPERM;
+	पूर्ण अन्यथा अणु
 		vma->vm_flags &= ~VM_MAYWRITE;
-	}
-	/* remap_vmalloc_range() checks size and offset constraints */
-	return remap_vmalloc_range(vma, rb_map->rb,
+	पूर्ण
+	/* remap_vदो_स्मृति_range() checks size and offset स्थिरraपूर्णांकs */
+	वापस remap_vदो_स्मृति_range(vma, rb_map->rb,
 				   vma->vm_pgoff + RINGBUF_PGOFF);
-}
+पूर्ण
 
-static unsigned long ringbuf_avail_data_sz(struct bpf_ringbuf *rb)
-{
-	unsigned long cons_pos, prod_pos;
+अटल अचिन्हित दीर्घ ringbuf_avail_data_sz(काष्ठा bpf_ringbuf *rb)
+अणु
+	अचिन्हित दीर्घ cons_pos, prod_pos;
 
 	cons_pos = smp_load_acquire(&rb->consumer_pos);
 	prod_pos = smp_load_acquire(&rb->producer_pos);
-	return prod_pos - cons_pos;
-}
+	वापस prod_pos - cons_pos;
+पूर्ण
 
-static __poll_t ringbuf_map_poll(struct bpf_map *map, struct file *filp,
-				 struct poll_table_struct *pts)
-{
-	struct bpf_ringbuf_map *rb_map;
+अटल __poll_t ringbuf_map_poll(काष्ठा bpf_map *map, काष्ठा file *filp,
+				 काष्ठा poll_table_काष्ठा *pts)
+अणु
+	काष्ठा bpf_ringbuf_map *rb_map;
 
-	rb_map = container_of(map, struct bpf_ringbuf_map, map);
-	poll_wait(filp, &rb_map->rb->waitq, pts);
+	rb_map = container_of(map, काष्ठा bpf_ringbuf_map, map);
+	poll_रुको(filp, &rb_map->rb->रुकोq, pts);
 
-	if (ringbuf_avail_data_sz(rb_map->rb))
-		return EPOLLIN | EPOLLRDNORM;
-	return 0;
-}
+	अगर (ringbuf_avail_data_sz(rb_map->rb))
+		वापस EPOLLIN | EPOLLRDNORM;
+	वापस 0;
+पूर्ण
 
-static int ringbuf_map_btf_id;
-const struct bpf_map_ops ringbuf_map_ops = {
+अटल पूर्णांक ringbuf_map_btf_id;
+स्थिर काष्ठा bpf_map_ops ringbuf_map_ops = अणु
 	.map_meta_equal = bpf_map_meta_equal,
 	.map_alloc = ringbuf_map_alloc,
-	.map_free = ringbuf_map_free,
+	.map_मुक्त = ringbuf_map_मुक्त,
 	.map_mmap = ringbuf_map_mmap,
 	.map_poll = ringbuf_map_poll,
 	.map_lookup_elem = ringbuf_map_lookup_elem,
@@ -274,66 +275,66 @@ const struct bpf_map_ops ringbuf_map_ops = {
 	.map_get_next_key = ringbuf_map_get_next_key,
 	.map_btf_name = "bpf_ringbuf_map",
 	.map_btf_id = &ringbuf_map_btf_id,
-};
+पूर्ण;
 
-/* Given pointer to ring buffer record metadata and struct bpf_ringbuf itself,
+/* Given poपूर्णांकer to ring buffer record metadata and काष्ठा bpf_ringbuf itself,
  * calculate offset from record metadata to ring buffer in pages, rounded
- * down. This page offset is stored as part of record metadata and allows to
- * restore struct bpf_ringbuf * from record pointer. This page offset is
+ * करोwn. This page offset is stored as part of record metadata and allows to
+ * restore काष्ठा bpf_ringbuf * from record poपूर्णांकer. This page offset is
  * stored at offset 4 of record metadata header.
  */
-static size_t bpf_ringbuf_rec_pg_off(struct bpf_ringbuf *rb,
-				     struct bpf_ringbuf_hdr *hdr)
-{
-	return ((void *)hdr - (void *)rb) >> PAGE_SHIFT;
-}
+अटल माप_प्रकार bpf_ringbuf_rec_pg_off(काष्ठा bpf_ringbuf *rb,
+				     काष्ठा bpf_ringbuf_hdr *hdr)
+अणु
+	वापस ((व्योम *)hdr - (व्योम *)rb) >> PAGE_SHIFT;
+पूर्ण
 
-/* Given pointer to ring buffer record header, restore pointer to struct
+/* Given poपूर्णांकer to ring buffer record header, restore poपूर्णांकer to काष्ठा
  * bpf_ringbuf itself by using page offset stored at offset 4
  */
-static struct bpf_ringbuf *
-bpf_ringbuf_restore_from_rec(struct bpf_ringbuf_hdr *hdr)
-{
-	unsigned long addr = (unsigned long)(void *)hdr;
-	unsigned long off = (unsigned long)hdr->pg_off << PAGE_SHIFT;
+अटल काष्ठा bpf_ringbuf *
+bpf_ringbuf_restore_from_rec(काष्ठा bpf_ringbuf_hdr *hdr)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)(व्योम *)hdr;
+	अचिन्हित दीर्घ off = (अचिन्हित दीर्घ)hdr->pg_off << PAGE_SHIFT;
 
-	return (void*)((addr & PAGE_MASK) - off);
-}
+	वापस (व्योम*)((addr & PAGE_MASK) - off);
+पूर्ण
 
-static void *__bpf_ringbuf_reserve(struct bpf_ringbuf *rb, u64 size)
-{
-	unsigned long cons_pos, prod_pos, new_prod_pos, flags;
+अटल व्योम *__bpf_ringbuf_reserve(काष्ठा bpf_ringbuf *rb, u64 size)
+अणु
+	अचिन्हित दीर्घ cons_pos, prod_pos, new_prod_pos, flags;
 	u32 len, pg_off;
-	struct bpf_ringbuf_hdr *hdr;
+	काष्ठा bpf_ringbuf_hdr *hdr;
 
-	if (unlikely(size > RINGBUF_MAX_RECORD_SZ))
-		return NULL;
+	अगर (unlikely(size > RINGBUF_MAX_RECORD_SZ))
+		वापस शून्य;
 
 	len = round_up(size + BPF_RINGBUF_HDR_SZ, 8);
-	if (len > rb->mask + 1)
-		return NULL;
+	अगर (len > rb->mask + 1)
+		वापस शून्य;
 
 	cons_pos = smp_load_acquire(&rb->consumer_pos);
 
-	if (in_nmi()) {
-		if (!spin_trylock_irqsave(&rb->spinlock, flags))
-			return NULL;
-	} else {
+	अगर (in_nmi()) अणु
+		अगर (!spin_trylock_irqsave(&rb->spinlock, flags))
+			वापस शून्य;
+	पूर्ण अन्यथा अणु
 		spin_lock_irqsave(&rb->spinlock, flags);
-	}
+	पूर्ण
 
 	prod_pos = rb->producer_pos;
 	new_prod_pos = prod_pos + len;
 
-	/* check for out of ringbuf space by ensuring producer position
-	 * doesn't advance more than (ringbuf_size - 1) ahead
+	/* check क्रम out of ringbuf space by ensuring producer position
+	 * करोesn't advance more than (ringbuf_size - 1) ahead
 	 */
-	if (new_prod_pos - cons_pos > rb->mask) {
+	अगर (new_prod_pos - cons_pos > rb->mask) अणु
 		spin_unlock_irqrestore(&rb->spinlock, flags);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	hdr = (void *)rb->data + (prod_pos & rb->mask);
+	hdr = (व्योम *)rb->data + (prod_pos & rb->mask);
 	pg_off = bpf_ringbuf_rec_pg_off(rb, hdr);
 	hdr->len = size | BPF_RINGBUF_BUSY_BIT;
 	hdr->pg_off = pg_off;
@@ -343,133 +344,133 @@ static void *__bpf_ringbuf_reserve(struct bpf_ringbuf *rb, u64 size)
 
 	spin_unlock_irqrestore(&rb->spinlock, flags);
 
-	return (void *)hdr + BPF_RINGBUF_HDR_SZ;
-}
+	वापस (व्योम *)hdr + BPF_RINGBUF_HDR_SZ;
+पूर्ण
 
-BPF_CALL_3(bpf_ringbuf_reserve, struct bpf_map *, map, u64, size, u64, flags)
-{
-	struct bpf_ringbuf_map *rb_map;
+BPF_CALL_3(bpf_ringbuf_reserve, काष्ठा bpf_map *, map, u64, size, u64, flags)
+अणु
+	काष्ठा bpf_ringbuf_map *rb_map;
 
-	if (unlikely(flags))
-		return 0;
+	अगर (unlikely(flags))
+		वापस 0;
 
-	rb_map = container_of(map, struct bpf_ringbuf_map, map);
-	return (unsigned long)__bpf_ringbuf_reserve(rb_map->rb, size);
-}
+	rb_map = container_of(map, काष्ठा bpf_ringbuf_map, map);
+	वापस (अचिन्हित दीर्घ)__bpf_ringbuf_reserve(rb_map->rb, size);
+पूर्ण
 
-const struct bpf_func_proto bpf_ringbuf_reserve_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_ringbuf_reserve_proto = अणु
 	.func		= bpf_ringbuf_reserve,
-	.ret_type	= RET_PTR_TO_ALLOC_MEM_OR_NULL,
+	.ret_type	= RET_PTR_TO_ALLOC_MEM_OR_शून्य,
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_CONST_ALLOC_SIZE_OR_ZERO,
 	.arg3_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-static void bpf_ringbuf_commit(void *sample, u64 flags, bool discard)
-{
-	unsigned long rec_pos, cons_pos;
-	struct bpf_ringbuf_hdr *hdr;
-	struct bpf_ringbuf *rb;
+अटल व्योम bpf_ringbuf_commit(व्योम *sample, u64 flags, bool discard)
+अणु
+	अचिन्हित दीर्घ rec_pos, cons_pos;
+	काष्ठा bpf_ringbuf_hdr *hdr;
+	काष्ठा bpf_ringbuf *rb;
 	u32 new_len;
 
 	hdr = sample - BPF_RINGBUF_HDR_SZ;
 	rb = bpf_ringbuf_restore_from_rec(hdr);
 	new_len = hdr->len ^ BPF_RINGBUF_BUSY_BIT;
-	if (discard)
+	अगर (discard)
 		new_len |= BPF_RINGBUF_DISCARD_BIT;
 
 	/* update record header with correct final size prefix */
 	xchg(&hdr->len, new_len);
 
-	/* if consumer caught up and is waiting for our record, notify about
+	/* अगर consumer caught up and is रुकोing क्रम our record, notअगरy about
 	 * new data availability
 	 */
-	rec_pos = (void *)hdr - (void *)rb->data;
+	rec_pos = (व्योम *)hdr - (व्योम *)rb->data;
 	cons_pos = smp_load_acquire(&rb->consumer_pos) & rb->mask;
 
-	if (flags & BPF_RB_FORCE_WAKEUP)
+	अगर (flags & BPF_RB_FORCE_WAKEUP)
 		irq_work_queue(&rb->work);
-	else if (cons_pos == rec_pos && !(flags & BPF_RB_NO_WAKEUP))
+	अन्यथा अगर (cons_pos == rec_pos && !(flags & BPF_RB_NO_WAKEUP))
 		irq_work_queue(&rb->work);
-}
+पूर्ण
 
-BPF_CALL_2(bpf_ringbuf_submit, void *, sample, u64, flags)
-{
+BPF_CALL_2(bpf_ringbuf_submit, व्योम *, sample, u64, flags)
+अणु
 	bpf_ringbuf_commit(sample, flags, false /* discard */);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct bpf_func_proto bpf_ringbuf_submit_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_ringbuf_submit_proto = अणु
 	.func		= bpf_ringbuf_submit,
 	.ret_type	= RET_VOID,
 	.arg1_type	= ARG_PTR_TO_ALLOC_MEM,
 	.arg2_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_2(bpf_ringbuf_discard, void *, sample, u64, flags)
-{
+BPF_CALL_2(bpf_ringbuf_discard, व्योम *, sample, u64, flags)
+अणु
 	bpf_ringbuf_commit(sample, flags, true /* discard */);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct bpf_func_proto bpf_ringbuf_discard_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_ringbuf_discard_proto = अणु
 	.func		= bpf_ringbuf_discard,
 	.ret_type	= RET_VOID,
 	.arg1_type	= ARG_PTR_TO_ALLOC_MEM,
 	.arg2_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_4(bpf_ringbuf_output, struct bpf_map *, map, void *, data, u64, size,
+BPF_CALL_4(bpf_ringbuf_output, काष्ठा bpf_map *, map, व्योम *, data, u64, size,
 	   u64, flags)
-{
-	struct bpf_ringbuf_map *rb_map;
-	void *rec;
+अणु
+	काष्ठा bpf_ringbuf_map *rb_map;
+	व्योम *rec;
 
-	if (unlikely(flags & ~(BPF_RB_NO_WAKEUP | BPF_RB_FORCE_WAKEUP)))
-		return -EINVAL;
+	अगर (unlikely(flags & ~(BPF_RB_NO_WAKEUP | BPF_RB_FORCE_WAKEUP)))
+		वापस -EINVAL;
 
-	rb_map = container_of(map, struct bpf_ringbuf_map, map);
+	rb_map = container_of(map, काष्ठा bpf_ringbuf_map, map);
 	rec = __bpf_ringbuf_reserve(rb_map->rb, size);
-	if (!rec)
-		return -EAGAIN;
+	अगर (!rec)
+		वापस -EAGAIN;
 
-	memcpy(rec, data, size);
+	स_नकल(rec, data, size);
 	bpf_ringbuf_commit(rec, flags, false /* discard */);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct bpf_func_proto bpf_ringbuf_output_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_ringbuf_output_proto = अणु
 	.func		= bpf_ringbuf_output,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_PTR_TO_MEM,
 	.arg3_type	= ARG_CONST_SIZE_OR_ZERO,
 	.arg4_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_2(bpf_ringbuf_query, struct bpf_map *, map, u64, flags)
-{
-	struct bpf_ringbuf *rb;
+BPF_CALL_2(bpf_ringbuf_query, काष्ठा bpf_map *, map, u64, flags)
+अणु
+	काष्ठा bpf_ringbuf *rb;
 
-	rb = container_of(map, struct bpf_ringbuf_map, map)->rb;
+	rb = container_of(map, काष्ठा bpf_ringbuf_map, map)->rb;
 
-	switch (flags) {
-	case BPF_RB_AVAIL_DATA:
-		return ringbuf_avail_data_sz(rb);
-	case BPF_RB_RING_SIZE:
-		return rb->mask + 1;
-	case BPF_RB_CONS_POS:
-		return smp_load_acquire(&rb->consumer_pos);
-	case BPF_RB_PROD_POS:
-		return smp_load_acquire(&rb->producer_pos);
-	default:
-		return 0;
-	}
-}
+	चयन (flags) अणु
+	हाल BPF_RB_AVAIL_DATA:
+		वापस ringbuf_avail_data_sz(rb);
+	हाल BPF_RB_RING_SIZE:
+		वापस rb->mask + 1;
+	हाल BPF_RB_CONS_POS:
+		वापस smp_load_acquire(&rb->consumer_pos);
+	हाल BPF_RB_PROD_POS:
+		वापस smp_load_acquire(&rb->producer_pos);
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-const struct bpf_func_proto bpf_ringbuf_query_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_ringbuf_query_proto = अणु
 	.func		= bpf_ringbuf_query,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_ANYTHING,
-};
+पूर्ण;

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Network checksum routines
  *
@@ -7,96 +8,96 @@
  *
  * Most of the code coming from arch/alpha/lib/checksum.c
  *
- * This file contains network checksum routines that are better done
- * in an architecture-specific manner due to speed..
+ * This file contains network checksum routines that are better करोne
+ * in an architecture-specअगरic manner due to speed..
  */
 
-#include <linux/module.h>
-#include <linux/string.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
-static inline unsigned short
-from64to16 (unsigned long x)
-{
-	/* add up 32-bit words for 33 bits */
+अटल अंतरभूत अचिन्हित लघु
+from64to16 (अचिन्हित दीर्घ x)
+अणु
+	/* add up 32-bit words क्रम 33 bits */
 	x = (x & 0xffffffff) + (x >> 32);
-	/* add up 16-bit and 17-bit words for 17+c bits */
+	/* add up 16-bit and 17-bit words क्रम 17+c bits */
 	x = (x & 0xffff) + (x >> 16);
-	/* add up 16-bit and 2-bit for 16+c bit */
+	/* add up 16-bit and 2-bit क्रम 16+c bit */
 	x = (x & 0xffff) + (x >> 16);
 	/* add up carry.. */
 	x = (x & 0xffff) + (x >> 16);
-	return x;
-}
+	वापस x;
+पूर्ण
 
 /*
- * computes the checksum of the TCP/UDP pseudo-header
- * returns a 16-bit checksum, already complemented.
+ * computes the checksum of the TCP/UDP pseuकरो-header
+ * वापसs a 16-bit checksum, alपढ़ोy complemented.
  */
 __sum16
 csum_tcpudp_magic(__be32 saddr, __be32 daddr, __u32 len,
 		  __u8 proto, __wsum sum)
-{
-	return (__force __sum16)~from64to16(
-		(__force u64)saddr + (__force u64)daddr +
-		(__force u64)sum + ((len + proto) << 8));
-}
+अणु
+	वापस (__क्रमce __sum16)~from64to16(
+		(__क्रमce u64)saddr + (__क्रमce u64)daddr +
+		(__क्रमce u64)sum + ((len + proto) << 8));
+पूर्ण
 
 EXPORT_SYMBOL(csum_tcpudp_magic);
 
 __wsum
 csum_tcpudp_nofold(__be32 saddr, __be32 daddr, __u32 len,
 		   __u8 proto, __wsum sum)
-{
-	unsigned long result;
+अणु
+	अचिन्हित दीर्घ result;
 
-	result = (__force u64)saddr + (__force u64)daddr +
-		 (__force u64)sum + ((len + proto) << 8);
+	result = (__क्रमce u64)saddr + (__क्रमce u64)daddr +
+		 (__क्रमce u64)sum + ((len + proto) << 8);
 
-	/* Fold down to 32-bits so we don't lose in the typedef-less network stack.  */
+	/* Fold करोwn to 32-bits so we करोn't lose in the प्रकार-less network stack.  */
 	/* 64 to 33 */
 	result = (result & 0xffffffff) + (result >> 32);
 	/* 33 to 32 */
 	result = (result & 0xffffffff) + (result >> 32);
-	return (__force __wsum)result;
-}
+	वापस (__क्रमce __wsum)result;
+पूर्ण
 EXPORT_SYMBOL(csum_tcpudp_nofold);
 
-extern unsigned long do_csum (const unsigned char *, long);
+बाह्य अचिन्हित दीर्घ करो_csum (स्थिर अचिन्हित अक्षर *, दीर्घ);
 
 /*
  * computes the checksum of a memory block at buff, length len,
  * and adds in "sum" (32-bit)
  *
- * returns a 32-bit number suitable for feeding into itself
+ * वापसs a 32-bit number suitable क्रम feeding पूर्णांकo itself
  * or csum_tcpudp_magic
  *
  * this function must be called with even lengths, except
- * for the last fragment, which may be odd
+ * क्रम the last fragment, which may be odd
  *
  * it's best to have buff aligned on a 32-bit boundary
  */
-__wsum csum_partial(const void *buff, int len, __wsum sum)
-{
-	u64 result = do_csum(buff, len);
+__wsum csum_partial(स्थिर व्योम *buff, पूर्णांक len, __wsum sum)
+अणु
+	u64 result = करो_csum(buff, len);
 
 	/* add in old sum, and carry.. */
-	result += (__force u32)sum;
+	result += (__क्रमce u32)sum;
 	/* 32+c bits -> 32 bits */
 	result = (result & 0xffffffff) + (result >> 32);
-	return (__force __wsum)result;
-}
+	वापस (__क्रमce __wsum)result;
+पूर्ण
 
 EXPORT_SYMBOL(csum_partial);
 
 /*
- * this routine is used for miscellaneous IP-like checksums, mainly
+ * this routine is used क्रम miscellaneous IP-like checksums, मुख्यly
  * in icmp.c
  */
-__sum16 ip_compute_csum (const void *buff, int len)
-{
-	return (__force __sum16)~do_csum(buff,len);
-}
+__sum16 ip_compute_csum (स्थिर व्योम *buff, पूर्णांक len)
+अणु
+	वापस (__क्रमce __sum16)~करो_csum(buff,len);
+पूर्ण
 
 EXPORT_SYMBOL(ip_compute_csum);

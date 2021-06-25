@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 STMicroelectronics
  *
@@ -7,41 +8,41 @@
  * Author: Christophe Kerello <christophe.kerello@st.com>
  */
 
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/mfd/syscon.h>
-#include <linux/reboot.h>
-#include <linux/regmap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/regmap.h>
 
-struct reset_syscfg {
-	struct regmap *regmap;
-	/* syscfg used for reset */
-	unsigned int offset_rst;
-	unsigned int mask_rst;
-	/* syscfg used for unmask the reset */
-	unsigned int offset_rst_msk;
-	unsigned int mask_rst_msk;
-};
+काष्ठा reset_syscfg अणु
+	काष्ठा regmap *regmap;
+	/* syscfg used क्रम reset */
+	अचिन्हित पूर्णांक offset_rst;
+	अचिन्हित पूर्णांक mask_rst;
+	/* syscfg used क्रम unmask the reset */
+	अचिन्हित पूर्णांक offset_rst_msk;
+	अचिन्हित पूर्णांक mask_rst_msk;
+पूर्ण;
 
 /* STiH407 */
-#define STIH407_SYSCFG_4000	0x0
-#define STIH407_SYSCFG_4008	0x20
+#घोषणा STIH407_SYSCFG_4000	0x0
+#घोषणा STIH407_SYSCFG_4008	0x20
 
-static struct reset_syscfg stih407_reset = {
+अटल काष्ठा reset_syscfg stih407_reset = अणु
 	.offset_rst = STIH407_SYSCFG_4000,
 	.mask_rst = BIT(0),
 	.offset_rst_msk = STIH407_SYSCFG_4008,
 	.mask_rst_msk = BIT(0)
-};
+पूर्ण;
 
 
-static struct reset_syscfg *st_restart_syscfg;
+अटल काष्ठा reset_syscfg *st_restart_syscfg;
 
-static int st_restart(struct notifier_block *this, unsigned long mode,
-		      void *cmd)
-{
+अटल पूर्णांक st_restart(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ mode,
+		      व्योम *cmd)
+अणु
 	/* reset syscfg updated */
 	regmap_update_bits(st_restart_syscfg->regmap,
 			   st_restart_syscfg->offset_rst,
@@ -54,56 +55,56 @@ static int st_restart(struct notifier_block *this, unsigned long mode,
 			   st_restart_syscfg->mask_rst_msk,
 			   0);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block st_restart_nb = {
-	.notifier_call = st_restart,
+अटल काष्ठा notअगरier_block st_restart_nb = अणु
+	.notअगरier_call = st_restart,
 	.priority = 192,
-};
+पूर्ण;
 
-static const struct of_device_id st_reset_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id st_reset_of_match[] = अणु
+	अणु
 		.compatible = "st,stih407-restart",
-		.data = (void *)&stih407_reset,
-	},
-	{}
-};
+		.data = (व्योम *)&stih407_reset,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int st_reset_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	const struct of_device_id *match;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक st_reset_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा device *dev = &pdev->dev;
 
 	match = of_match_device(st_reset_of_match, dev);
-	if (!match)
-		return -ENODEV;
+	अगर (!match)
+		वापस -ENODEV;
 
-	st_restart_syscfg = (struct reset_syscfg *)match->data;
+	st_restart_syscfg = (काष्ठा reset_syscfg *)match->data;
 
 	st_restart_syscfg->regmap =
 		syscon_regmap_lookup_by_phandle(np, "st,syscfg");
-	if (IS_ERR(st_restart_syscfg->regmap)) {
+	अगर (IS_ERR(st_restart_syscfg->regmap)) अणु
 		dev_err(dev, "No syscfg phandle specified\n");
-		return PTR_ERR(st_restart_syscfg->regmap);
-	}
+		वापस PTR_ERR(st_restart_syscfg->regmap);
+	पूर्ण
 
-	return register_restart_handler(&st_restart_nb);
-}
+	वापस रेजिस्टर_restart_handler(&st_restart_nb);
+पूर्ण
 
-static struct platform_driver st_reset_driver = {
+अटल काष्ठा platक्रमm_driver st_reset_driver = अणु
 	.probe = st_reset_probe,
-	.driver = {
+	.driver = अणु
 		.name = "st_reset",
 		.of_match_table = st_reset_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init st_reset_init(void)
-{
-	return platform_driver_register(&st_reset_driver);
-}
+अटल पूर्णांक __init st_reset_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&st_reset_driver);
+पूर्ण
 
 device_initcall(st_reset_init);
 

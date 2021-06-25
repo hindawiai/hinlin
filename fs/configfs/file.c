@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * file.c - operations for regular (text) files.
+ * file.c - operations क्रम regular (text) files.
  *
  * Based on sysfs:
  * 	sysfs is Copyright (C) 2001, 2002, 2003 Patrick Mochel
@@ -8,545 +9,545 @@
  * configfs Copyright (C) 2005 Oracle.  All rights reserved.
  */
 
-#include <linux/fs.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
-#include <linux/vmalloc.h>
-#include <linux/uaccess.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/uaccess.h>
 
-#include <linux/configfs.h>
-#include "configfs_internal.h"
+#समावेश <linux/configfs.h>
+#समावेश "configfs_internal.h"
 
 /*
- * A simple attribute can only be 4096 characters.  Why 4k?  Because the
+ * A simple attribute can only be 4096 अक्षरacters.  Why 4k?  Because the
  * original code limited it to PAGE_SIZE.  That's a bad idea, though,
  * because an attribute of 16k on ia64 won't work on x86.  So we limit to
  * 4k, our minimum common page size.
  */
-#define SIMPLE_ATTR_SIZE 4096
+#घोषणा SIMPLE_ATTR_SIZE 4096
 
-struct configfs_buffer {
-	size_t			count;
+काष्ठा configfs_buffer अणु
+	माप_प्रकार			count;
 	loff_t			pos;
-	char			* page;
-	struct configfs_item_operations	* ops;
-	struct mutex		mutex;
-	int			needs_read_fill;
-	bool			read_in_progress;
-	bool			write_in_progress;
-	char			*bin_buffer;
-	int			bin_buffer_size;
-	int			cb_max_size;
-	struct config_item	*item;
-	struct module		*owner;
-	union {
-		struct configfs_attribute	*attr;
-		struct configfs_bin_attribute	*bin_attr;
-	};
-};
+	अक्षर			* page;
+	काष्ठा configfs_item_operations	* ops;
+	काष्ठा mutex		mutex;
+	पूर्णांक			needs_पढ़ो_fill;
+	bool			पढ़ो_in_progress;
+	bool			ग_लिखो_in_progress;
+	अक्षर			*bin_buffer;
+	पूर्णांक			bin_buffer_size;
+	पूर्णांक			cb_max_size;
+	काष्ठा config_item	*item;
+	काष्ठा module		*owner;
+	जोड़ अणु
+		काष्ठा configfs_attribute	*attr;
+		काष्ठा configfs_bin_attribute	*bin_attr;
+	पूर्ण;
+पूर्ण;
 
-static inline struct configfs_fragment *to_frag(struct file *file)
-{
-	struct configfs_dirent *sd = file->f_path.dentry->d_fsdata;
+अटल अंतरभूत काष्ठा configfs_fragment *to_frag(काष्ठा file *file)
+अणु
+	काष्ठा configfs_dirent *sd = file->f_path.dentry->d_fsdata;
 
-	return sd->s_frag;
-}
+	वापस sd->s_frag;
+पूर्ण
 
-static int fill_read_buffer(struct file *file, struct configfs_buffer *buffer)
-{
-	struct configfs_fragment *frag = to_frag(file);
-	ssize_t count = -ENOENT;
+अटल पूर्णांक fill_पढ़ो_buffer(काष्ठा file *file, काष्ठा configfs_buffer *buffer)
+अणु
+	काष्ठा configfs_fragment *frag = to_frag(file);
+	sमाप_प्रकार count = -ENOENT;
 
-	if (!buffer->page)
-		buffer->page = (char *) get_zeroed_page(GFP_KERNEL);
-	if (!buffer->page)
-		return -ENOMEM;
+	अगर (!buffer->page)
+		buffer->page = (अक्षर *) get_zeroed_page(GFP_KERNEL);
+	अगर (!buffer->page)
+		वापस -ENOMEM;
 
-	down_read(&frag->frag_sem);
-	if (!frag->frag_dead)
+	करोwn_पढ़ो(&frag->frag_sem);
+	अगर (!frag->frag_dead)
 		count = buffer->attr->show(buffer->item, buffer->page);
-	up_read(&frag->frag_sem);
+	up_पढ़ो(&frag->frag_sem);
 
-	if (count < 0)
-		return count;
-	if (WARN_ON_ONCE(count > (ssize_t)SIMPLE_ATTR_SIZE))
-		return -EIO;
-	buffer->needs_read_fill = 0;
+	अगर (count < 0)
+		वापस count;
+	अगर (WARN_ON_ONCE(count > (sमाप_प्रकार)SIMPLE_ATTR_SIZE))
+		वापस -EIO;
+	buffer->needs_पढ़ो_fill = 0;
 	buffer->count = count;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	configfs_read_file - read an attribute.
- *	@file:	file pointer.
+ *	configfs_पढ़ो_file - पढ़ो an attribute.
+ *	@file:	file poपूर्णांकer.
  *	@buf:	buffer to fill.
- *	@count:	number of bytes to read.
+ *	@count:	number of bytes to पढ़ो.
  *	@ppos:	starting offset in file.
  *
- *	Userspace wants to read an attribute file. The attribute descriptor
+ *	Userspace wants to पढ़ो an attribute file. The attribute descriptor
  *	is in the file's ->d_fsdata. The target item is in the directory's
  *	->d_fsdata.
  *
- *	We call fill_read_buffer() to allocate and fill the buffer from the
- *	item's show() method exactly once (if the read is happening from
+ *	We call fill_पढ़ो_buffer() to allocate and fill the buffer from the
+ *	item's show() method exactly once (अगर the पढ़ो is happening from
  *	the beginning of the file). That should fill the entire buffer with
- *	all the data the item has to offer for that attribute.
- *	We then call flush_read_buffer() to copy the buffer to userspace
- *	in the increments specified.
+ *	all the data the item has to offer क्रम that attribute.
+ *	We then call flush_पढ़ो_buffer() to copy the buffer to userspace
+ *	in the increments specअगरied.
  */
 
-static ssize_t
-configfs_read_file(struct file *file, char __user *buf, size_t count, loff_t *ppos)
-{
-	struct configfs_buffer *buffer = file->private_data;
-	ssize_t retval = 0;
+अटल sमाप_प्रकार
+configfs_पढ़ो_file(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा configfs_buffer *buffer = file->निजी_data;
+	sमाप_प्रकार retval = 0;
 
 	mutex_lock(&buffer->mutex);
-	if (buffer->needs_read_fill) {
-		retval = fill_read_buffer(file, buffer);
-		if (retval)
-			goto out;
-	}
+	अगर (buffer->needs_पढ़ो_fill) अणु
+		retval = fill_पढ़ो_buffer(file, buffer);
+		अगर (retval)
+			जाओ out;
+	पूर्ण
 	pr_debug("%s: count = %zd, ppos = %lld, buf = %s\n",
 		 __func__, count, *ppos, buffer->page);
-	retval = simple_read_from_buffer(buf, count, ppos, buffer->page,
+	retval = simple_पढ़ो_from_buffer(buf, count, ppos, buffer->page,
 					 buffer->count);
 out:
 	mutex_unlock(&buffer->mutex);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /**
- *	configfs_read_bin_file - read a binary attribute.
- *	@file:	file pointer.
+ *	configfs_पढ़ो_bin_file - पढ़ो a binary attribute.
+ *	@file:	file poपूर्णांकer.
  *	@buf:	buffer to fill.
- *	@count:	number of bytes to read.
+ *	@count:	number of bytes to पढ़ो.
  *	@ppos:	starting offset in file.
  *
- *	Userspace wants to read a binary attribute file. The attribute
+ *	Userspace wants to पढ़ो a binary attribute file. The attribute
  *	descriptor is in the file's ->d_fsdata. The target item is in the
  *	directory's ->d_fsdata.
  *
  *	We check whether we need to refill the buffer. If so we will
- *	call the attributes' attr->read() twice. The first time we
- *	will pass a NULL as a buffer pointer, which the attributes' method
- *	will use to return the size of the buffer required. If no error
- *	occurs we will allocate the buffer using vmalloc and call
- *	attr->read() again passing that buffer as an argument.
- *	Then we just copy to user-space using simple_read_from_buffer.
+ *	call the attributes' attr->पढ़ो() twice. The first समय we
+ *	will pass a शून्य as a buffer poपूर्णांकer, which the attributes' method
+ *	will use to वापस the size of the buffer required. If no error
+ *	occurs we will allocate the buffer using vदो_स्मृति and call
+ *	attr->पढ़ो() again passing that buffer as an argument.
+ *	Then we just copy to user-space using simple_पढ़ो_from_buffer.
  */
 
-static ssize_t
-configfs_read_bin_file(struct file *file, char __user *buf,
-		       size_t count, loff_t *ppos)
-{
-	struct configfs_fragment *frag = to_frag(file);
-	struct configfs_buffer *buffer = file->private_data;
-	ssize_t retval = 0;
-	ssize_t len = min_t(size_t, count, PAGE_SIZE);
+अटल sमाप_प्रकार
+configfs_पढ़ो_bin_file(काष्ठा file *file, अक्षर __user *buf,
+		       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा configfs_fragment *frag = to_frag(file);
+	काष्ठा configfs_buffer *buffer = file->निजी_data;
+	sमाप_प्रकार retval = 0;
+	sमाप_प्रकार len = min_t(माप_प्रकार, count, PAGE_SIZE);
 
 	mutex_lock(&buffer->mutex);
 
-	/* we don't support switching read/write modes */
-	if (buffer->write_in_progress) {
+	/* we करोn't support चयनing पढ़ो/ग_लिखो modes */
+	अगर (buffer->ग_लिखो_in_progress) अणु
 		retval = -ETXTBSY;
-		goto out;
-	}
-	buffer->read_in_progress = true;
+		जाओ out;
+	पूर्ण
+	buffer->पढ़ो_in_progress = true;
 
-	if (buffer->needs_read_fill) {
-		/* perform first read with buf == NULL to get extent */
-		down_read(&frag->frag_sem);
-		if (!frag->frag_dead)
-			len = buffer->bin_attr->read(buffer->item, NULL, 0);
-		else
+	अगर (buffer->needs_पढ़ो_fill) अणु
+		/* perक्रमm first पढ़ो with buf == शून्य to get extent */
+		करोwn_पढ़ो(&frag->frag_sem);
+		अगर (!frag->frag_dead)
+			len = buffer->bin_attr->पढ़ो(buffer->item, शून्य, 0);
+		अन्यथा
 			len = -ENOENT;
-		up_read(&frag->frag_sem);
-		if (len <= 0) {
+		up_पढ़ो(&frag->frag_sem);
+		अगर (len <= 0) अणु
 			retval = len;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* do not exceed the maximum value */
-		if (buffer->cb_max_size && len > buffer->cb_max_size) {
+		/* करो not exceed the maximum value */
+		अगर (buffer->cb_max_size && len > buffer->cb_max_size) अणु
 			retval = -EFBIG;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		buffer->bin_buffer = vmalloc(len);
-		if (buffer->bin_buffer == NULL) {
+		buffer->bin_buffer = vदो_स्मृति(len);
+		अगर (buffer->bin_buffer == शून्य) अणु
 			retval = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		buffer->bin_buffer_size = len;
 
-		/* perform second read to fill buffer */
-		down_read(&frag->frag_sem);
-		if (!frag->frag_dead)
-			len = buffer->bin_attr->read(buffer->item,
+		/* perक्रमm second पढ़ो to fill buffer */
+		करोwn_पढ़ो(&frag->frag_sem);
+		अगर (!frag->frag_dead)
+			len = buffer->bin_attr->पढ़ो(buffer->item,
 						     buffer->bin_buffer, len);
-		else
+		अन्यथा
 			len = -ENOENT;
-		up_read(&frag->frag_sem);
-		if (len < 0) {
+		up_पढ़ो(&frag->frag_sem);
+		अगर (len < 0) अणु
 			retval = len;
-			vfree(buffer->bin_buffer);
+			vमुक्त(buffer->bin_buffer);
 			buffer->bin_buffer_size = 0;
-			buffer->bin_buffer = NULL;
-			goto out;
-		}
+			buffer->bin_buffer = शून्य;
+			जाओ out;
+		पूर्ण
 
-		buffer->needs_read_fill = 0;
-	}
+		buffer->needs_पढ़ो_fill = 0;
+	पूर्ण
 
-	retval = simple_read_from_buffer(buf, count, ppos, buffer->bin_buffer,
+	retval = simple_पढ़ो_from_buffer(buf, count, ppos, buffer->bin_buffer,
 					buffer->bin_buffer_size);
 out:
 	mutex_unlock(&buffer->mutex);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 
 /**
- *	fill_write_buffer - copy buffer from userspace.
- *	@buffer:	data buffer for file.
+ *	fill_ग_लिखो_buffer - copy buffer from userspace.
+ *	@buffer:	data buffer क्रम file.
  *	@buf:		data from user.
  *	@count:		number of bytes in @userbuf.
  *
- *	Allocate @buffer->page if it hasn't been already, then
- *	copy the user-supplied buffer into it.
+ *	Allocate @buffer->page अगर it hasn't been alपढ़ोy, then
+ *	copy the user-supplied buffer पूर्णांकo it.
  */
 
-static int
-fill_write_buffer(struct configfs_buffer * buffer, const char __user * buf, size_t count)
-{
-	int error;
+अटल पूर्णांक
+fill_ग_लिखो_buffer(काष्ठा configfs_buffer * buffer, स्थिर अक्षर __user * buf, माप_प्रकार count)
+अणु
+	पूर्णांक error;
 
-	if (!buffer->page)
-		buffer->page = (char *)__get_free_pages(GFP_KERNEL, 0);
-	if (!buffer->page)
-		return -ENOMEM;
+	अगर (!buffer->page)
+		buffer->page = (अक्षर *)__get_मुक्त_pages(GFP_KERNEL, 0);
+	अगर (!buffer->page)
+		वापस -ENOMEM;
 
-	if (count >= SIMPLE_ATTR_SIZE)
+	अगर (count >= SIMPLE_ATTR_SIZE)
 		count = SIMPLE_ATTR_SIZE - 1;
 	error = copy_from_user(buffer->page,buf,count);
-	buffer->needs_read_fill = 1;
-	/* if buf is assumed to contain a string, terminate it by \0,
-	 * so e.g. sscanf() can scan the string easily */
+	buffer->needs_पढ़ो_fill = 1;
+	/* अगर buf is assumed to contain a string, terminate it by \0,
+	 * so e.g. माला_पूछो() can scan the string easily */
 	buffer->page[count] = 0;
-	return error ? -EFAULT : count;
-}
+	वापस error ? -EFAULT : count;
+पूर्ण
 
-static int
-flush_write_buffer(struct file *file, struct configfs_buffer *buffer, size_t count)
-{
-	struct configfs_fragment *frag = to_frag(file);
-	int res = -ENOENT;
+अटल पूर्णांक
+flush_ग_लिखो_buffer(काष्ठा file *file, काष्ठा configfs_buffer *buffer, माप_प्रकार count)
+अणु
+	काष्ठा configfs_fragment *frag = to_frag(file);
+	पूर्णांक res = -ENOENT;
 
-	down_read(&frag->frag_sem);
-	if (!frag->frag_dead)
+	करोwn_पढ़ो(&frag->frag_sem);
+	अगर (!frag->frag_dead)
 		res = buffer->attr->store(buffer->item, buffer->page, count);
-	up_read(&frag->frag_sem);
-	return res;
-}
+	up_पढ़ो(&frag->frag_sem);
+	वापस res;
+पूर्ण
 
 
 /**
- *	configfs_write_file - write an attribute.
- *	@file:	file pointer
- *	@buf:	data to write
+ *	configfs_ग_लिखो_file - ग_लिखो an attribute.
+ *	@file:	file poपूर्णांकer
+ *	@buf:	data to ग_लिखो
  *	@count:	number of bytes
  *	@ppos:	starting offset
  *
- *	Similar to configfs_read_file(), though working in the opposite direction.
- *	We allocate and fill the data from the user in fill_write_buffer(),
- *	then push it to the config_item in flush_write_buffer().
- *	There is no easy way for us to know if userspace is only doing a partial
- *	write, so we don't support them. We expect the entire buffer to come
- *	on the first write.
- *	Hint: if you're writing a value, first read the file, modify only
- *	the value you're changing, then write entire buffer back.
+ *	Similar to configfs_पढ़ो_file(), though working in the opposite direction.
+ *	We allocate and fill the data from the user in fill_ग_लिखो_buffer(),
+ *	then push it to the config_item in flush_ग_लिखो_buffer().
+ *	There is no easy way क्रम us to know अगर userspace is only करोing a partial
+ *	ग_लिखो, so we करोn't support them. We expect the entire buffer to come
+ *	on the first ग_लिखो.
+ *	Hपूर्णांक: अगर you're writing a value, first पढ़ो the file, modअगरy only
+ *	the value you're changing, then ग_लिखो entire buffer back.
  */
 
-static ssize_t
-configfs_write_file(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
-{
-	struct configfs_buffer *buffer = file->private_data;
-	ssize_t len;
+अटल sमाप_प्रकार
+configfs_ग_लिखो_file(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा configfs_buffer *buffer = file->निजी_data;
+	sमाप_प्रकार len;
 
 	mutex_lock(&buffer->mutex);
-	len = fill_write_buffer(buffer, buf, count);
-	if (len > 0)
-		len = flush_write_buffer(file, buffer, len);
-	if (len > 0)
+	len = fill_ग_लिखो_buffer(buffer, buf, count);
+	अगर (len > 0)
+		len = flush_ग_लिखो_buffer(file, buffer, len);
+	अगर (len > 0)
 		*ppos += len;
 	mutex_unlock(&buffer->mutex);
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /**
- *	configfs_write_bin_file - write a binary attribute.
- *	@file:	file pointer
- *	@buf:	data to write
+ *	configfs_ग_लिखो_bin_file - ग_लिखो a binary attribute.
+ *	@file:	file poपूर्णांकer
+ *	@buf:	data to ग_लिखो
  *	@count:	number of bytes
  *	@ppos:	starting offset
  *
- *	Writing to a binary attribute file is similar to a normal read.
- *	We buffer the consecutive writes (binary attribute files do not
- *	support lseek) in a continuously growing buffer, but we don't
- *	commit until the close of the file.
+ *	Writing to a binary attribute file is similar to a normal पढ़ो.
+ *	We buffer the consecutive ग_लिखोs (binary attribute files करो not
+ *	support lseek) in a continuously growing buffer, but we करोn't
+ *	commit until the बंद of the file.
  */
 
-static ssize_t
-configfs_write_bin_file(struct file *file, const char __user *buf,
-			size_t count, loff_t *ppos)
-{
-	struct configfs_buffer *buffer = file->private_data;
-	void *tbuf = NULL;
-	ssize_t len;
+अटल sमाप_प्रकार
+configfs_ग_लिखो_bin_file(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा configfs_buffer *buffer = file->निजी_data;
+	व्योम *tbuf = शून्य;
+	sमाप_प्रकार len;
 
 	mutex_lock(&buffer->mutex);
 
-	/* we don't support switching read/write modes */
-	if (buffer->read_in_progress) {
+	/* we करोn't support चयनing पढ़ो/ग_लिखो modes */
+	अगर (buffer->पढ़ो_in_progress) अणु
 		len = -ETXTBSY;
-		goto out;
-	}
-	buffer->write_in_progress = true;
+		जाओ out;
+	पूर्ण
+	buffer->ग_लिखो_in_progress = true;
 
 	/* buffer grows? */
-	if (*ppos + count > buffer->bin_buffer_size) {
+	अगर (*ppos + count > buffer->bin_buffer_size) अणु
 
-		if (buffer->cb_max_size &&
-			*ppos + count > buffer->cb_max_size) {
+		अगर (buffer->cb_max_size &&
+			*ppos + count > buffer->cb_max_size) अणु
 			len = -EFBIG;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		tbuf = vmalloc(*ppos + count);
-		if (tbuf == NULL) {
+		tbuf = vदो_स्मृति(*ppos + count);
+		अगर (tbuf == शून्य) अणु
 			len = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* copy old contents */
-		if (buffer->bin_buffer) {
-			memcpy(tbuf, buffer->bin_buffer,
+		अगर (buffer->bin_buffer) अणु
+			स_नकल(tbuf, buffer->bin_buffer,
 				buffer->bin_buffer_size);
-			vfree(buffer->bin_buffer);
-		}
+			vमुक्त(buffer->bin_buffer);
+		पूर्ण
 
 		/* clear the new area */
-		memset(tbuf + buffer->bin_buffer_size, 0,
+		स_रखो(tbuf + buffer->bin_buffer_size, 0,
 			*ppos + count - buffer->bin_buffer_size);
 		buffer->bin_buffer = tbuf;
 		buffer->bin_buffer_size = *ppos + count;
-	}
+	पूर्ण
 
-	len = simple_write_to_buffer(buffer->bin_buffer,
+	len = simple_ग_लिखो_to_buffer(buffer->bin_buffer,
 			buffer->bin_buffer_size, ppos, buf, count);
 out:
 	mutex_unlock(&buffer->mutex);
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int __configfs_open_file(struct inode *inode, struct file *file, int type)
-{
-	struct dentry *dentry = file->f_path.dentry;
-	struct configfs_fragment *frag = to_frag(file);
-	struct configfs_attribute *attr;
-	struct configfs_buffer *buffer;
-	int error;
+अटल पूर्णांक __configfs_खोलो_file(काष्ठा inode *inode, काष्ठा file *file, पूर्णांक type)
+अणु
+	काष्ठा dentry *dentry = file->f_path.dentry;
+	काष्ठा configfs_fragment *frag = to_frag(file);
+	काष्ठा configfs_attribute *attr;
+	काष्ठा configfs_buffer *buffer;
+	पूर्णांक error;
 
 	error = -ENOMEM;
-	buffer = kzalloc(sizeof(struct configfs_buffer), GFP_KERNEL);
-	if (!buffer)
-		goto out;
+	buffer = kzalloc(माप(काष्ठा configfs_buffer), GFP_KERNEL);
+	अगर (!buffer)
+		जाओ out;
 
 	error = -ENOENT;
-	down_read(&frag->frag_sem);
-	if (unlikely(frag->frag_dead))
-		goto out_free_buffer;
+	करोwn_पढ़ो(&frag->frag_sem);
+	अगर (unlikely(frag->frag_dead))
+		जाओ out_मुक्त_buffer;
 
 	error = -EINVAL;
 	buffer->item = to_item(dentry->d_parent);
-	if (!buffer->item)
-		goto out_free_buffer;
+	अगर (!buffer->item)
+		जाओ out_मुक्त_buffer;
 
 	attr = to_attr(dentry);
-	if (!attr)
-		goto out_free_buffer;
+	अगर (!attr)
+		जाओ out_मुक्त_buffer;
 
-	if (type & CONFIGFS_ITEM_BIN_ATTR) {
+	अगर (type & CONFIGFS_ITEM_BIN_ATTR) अणु
 		buffer->bin_attr = to_bin_attr(dentry);
 		buffer->cb_max_size = buffer->bin_attr->cb_max_size;
-	} else {
+	पूर्ण अन्यथा अणु
 		buffer->attr = attr;
-	}
+	पूर्ण
 
 	buffer->owner = attr->ca_owner;
-	/* Grab the module reference for this attribute if we have one */
+	/* Grab the module reference क्रम this attribute अगर we have one */
 	error = -ENODEV;
-	if (!try_module_get(buffer->owner))
-		goto out_free_buffer;
+	अगर (!try_module_get(buffer->owner))
+		जाओ out_मुक्त_buffer;
 
 	error = -EACCES;
-	if (!buffer->item->ci_type)
-		goto out_put_module;
+	अगर (!buffer->item->ci_type)
+		जाओ out_put_module;
 
 	buffer->ops = buffer->item->ci_type->ct_item_ops;
 
-	/* File needs write support.
+	/* File needs ग_लिखो support.
 	 * The inode's perms must say it's ok,
 	 * and we must have a store method.
 	 */
-	if (file->f_mode & FMODE_WRITE) {
-		if (!(inode->i_mode & S_IWUGO))
-			goto out_put_module;
-		if ((type & CONFIGFS_ITEM_ATTR) && !attr->store)
-			goto out_put_module;
-		if ((type & CONFIGFS_ITEM_BIN_ATTR) && !buffer->bin_attr->write)
-			goto out_put_module;
-	}
+	अगर (file->f_mode & FMODE_WRITE) अणु
+		अगर (!(inode->i_mode & S_IWUGO))
+			जाओ out_put_module;
+		अगर ((type & CONFIGFS_ITEM_ATTR) && !attr->store)
+			जाओ out_put_module;
+		अगर ((type & CONFIGFS_ITEM_BIN_ATTR) && !buffer->bin_attr->ग_लिखो)
+			जाओ out_put_module;
+	पूर्ण
 
-	/* File needs read support.
+	/* File needs पढ़ो support.
 	 * The inode's perms must say it's ok, and we there
-	 * must be a show method for it.
+	 * must be a show method क्रम it.
 	 */
-	if (file->f_mode & FMODE_READ) {
-		if (!(inode->i_mode & S_IRUGO))
-			goto out_put_module;
-		if ((type & CONFIGFS_ITEM_ATTR) && !attr->show)
-			goto out_put_module;
-		if ((type & CONFIGFS_ITEM_BIN_ATTR) && !buffer->bin_attr->read)
-			goto out_put_module;
-	}
+	अगर (file->f_mode & FMODE_READ) अणु
+		अगर (!(inode->i_mode & S_IRUGO))
+			जाओ out_put_module;
+		अगर ((type & CONFIGFS_ITEM_ATTR) && !attr->show)
+			जाओ out_put_module;
+		अगर ((type & CONFIGFS_ITEM_BIN_ATTR) && !buffer->bin_attr->पढ़ो)
+			जाओ out_put_module;
+	पूर्ण
 
 	mutex_init(&buffer->mutex);
-	buffer->needs_read_fill = 1;
-	buffer->read_in_progress = false;
-	buffer->write_in_progress = false;
-	file->private_data = buffer;
-	up_read(&frag->frag_sem);
-	return 0;
+	buffer->needs_पढ़ो_fill = 1;
+	buffer->पढ़ो_in_progress = false;
+	buffer->ग_लिखो_in_progress = false;
+	file->निजी_data = buffer;
+	up_पढ़ो(&frag->frag_sem);
+	वापस 0;
 
 out_put_module:
 	module_put(buffer->owner);
-out_free_buffer:
-	up_read(&frag->frag_sem);
-	kfree(buffer);
+out_मुक्त_buffer:
+	up_पढ़ो(&frag->frag_sem);
+	kमुक्त(buffer);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int configfs_release(struct inode *inode, struct file *filp)
-{
-	struct configfs_buffer *buffer = filp->private_data;
+अटल पूर्णांक configfs_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा configfs_buffer *buffer = filp->निजी_data;
 
 	module_put(buffer->owner);
-	if (buffer->page)
-		free_page((unsigned long)buffer->page);
+	अगर (buffer->page)
+		मुक्त_page((अचिन्हित दीर्घ)buffer->page);
 	mutex_destroy(&buffer->mutex);
-	kfree(buffer);
-	return 0;
-}
+	kमुक्त(buffer);
+	वापस 0;
+पूर्ण
 
-static int configfs_open_file(struct inode *inode, struct file *filp)
-{
-	return __configfs_open_file(inode, filp, CONFIGFS_ITEM_ATTR);
-}
+अटल पूर्णांक configfs_खोलो_file(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	वापस __configfs_खोलो_file(inode, filp, CONFIGFS_ITEM_ATTR);
+पूर्ण
 
-static int configfs_open_bin_file(struct inode *inode, struct file *filp)
-{
-	return __configfs_open_file(inode, filp, CONFIGFS_ITEM_BIN_ATTR);
-}
+अटल पूर्णांक configfs_खोलो_bin_file(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	वापस __configfs_खोलो_file(inode, filp, CONFIGFS_ITEM_BIN_ATTR);
+पूर्ण
 
-static int configfs_release_bin_file(struct inode *inode, struct file *file)
-{
-	struct configfs_buffer *buffer = file->private_data;
+अटल पूर्णांक configfs_release_bin_file(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा configfs_buffer *buffer = file->निजी_data;
 
-	buffer->read_in_progress = false;
+	buffer->पढ़ो_in_progress = false;
 
-	if (buffer->write_in_progress) {
-		struct configfs_fragment *frag = to_frag(file);
-		buffer->write_in_progress = false;
+	अगर (buffer->ग_लिखो_in_progress) अणु
+		काष्ठा configfs_fragment *frag = to_frag(file);
+		buffer->ग_लिखो_in_progress = false;
 
-		down_read(&frag->frag_sem);
-		if (!frag->frag_dead) {
+		करोwn_पढ़ो(&frag->frag_sem);
+		अगर (!frag->frag_dead) अणु
 			/* result of ->release() is ignored */
-			buffer->bin_attr->write(buffer->item,
+			buffer->bin_attr->ग_लिखो(buffer->item,
 					buffer->bin_buffer,
 					buffer->bin_buffer_size);
-		}
-		up_read(&frag->frag_sem);
-		/* vfree on NULL is safe */
-		vfree(buffer->bin_buffer);
-		buffer->bin_buffer = NULL;
+		पूर्ण
+		up_पढ़ो(&frag->frag_sem);
+		/* vमुक्त on शून्य is safe */
+		vमुक्त(buffer->bin_buffer);
+		buffer->bin_buffer = शून्य;
 		buffer->bin_buffer_size = 0;
-		buffer->needs_read_fill = 1;
-	}
+		buffer->needs_पढ़ो_fill = 1;
+	पूर्ण
 
 	configfs_release(inode, file);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-const struct file_operations configfs_file_operations = {
-	.read		= configfs_read_file,
-	.write		= configfs_write_file,
+स्थिर काष्ठा file_operations configfs_file_operations = अणु
+	.पढ़ो		= configfs_पढ़ो_file,
+	.ग_लिखो		= configfs_ग_लिखो_file,
 	.llseek		= generic_file_llseek,
-	.open		= configfs_open_file,
+	.खोलो		= configfs_खोलो_file,
 	.release	= configfs_release,
-};
+पूर्ण;
 
-const struct file_operations configfs_bin_file_operations = {
-	.read		= configfs_read_bin_file,
-	.write		= configfs_write_bin_file,
-	.llseek		= NULL,		/* bin file is not seekable */
-	.open		= configfs_open_bin_file,
+स्थिर काष्ठा file_operations configfs_bin_file_operations = अणु
+	.पढ़ो		= configfs_पढ़ो_bin_file,
+	.ग_लिखो		= configfs_ग_लिखो_bin_file,
+	.llseek		= शून्य,		/* bin file is not seekable */
+	.खोलो		= configfs_खोलो_bin_file,
 	.release	= configfs_release_bin_file,
-};
+पूर्ण;
 
 /**
- *	configfs_create_file - create an attribute file for an item.
- *	@item:	item we're creating for.
+ *	configfs_create_file - create an attribute file क्रम an item.
+ *	@item:	item we're creating क्रम.
  *	@attr:	atrribute descriptor.
  */
 
-int configfs_create_file(struct config_item * item, const struct configfs_attribute * attr)
-{
-	struct dentry *dir = item->ci_dentry;
-	struct configfs_dirent *parent_sd = dir->d_fsdata;
+पूर्णांक configfs_create_file(काष्ठा config_item * item, स्थिर काष्ठा configfs_attribute * attr)
+अणु
+	काष्ठा dentry *dir = item->ci_dentry;
+	काष्ठा configfs_dirent *parent_sd = dir->d_fsdata;
 	umode_t mode = (attr->ca_mode & S_IALLUGO) | S_IFREG;
-	int error = 0;
+	पूर्णांक error = 0;
 
 	inode_lock_nested(d_inode(dir), I_MUTEX_NORMAL);
-	error = configfs_make_dirent(parent_sd, NULL, (void *) attr, mode,
+	error = configfs_make_dirent(parent_sd, शून्य, (व्योम *) attr, mode,
 				     CONFIGFS_ITEM_ATTR, parent_sd->s_frag);
 	inode_unlock(d_inode(dir));
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- *	configfs_create_bin_file - create a binary attribute file for an item.
- *	@item:	item we're creating for.
+ *	configfs_create_bin_file - create a binary attribute file क्रम an item.
+ *	@item:	item we're creating क्रम.
  *	@attr:	atrribute descriptor.
  */
 
-int configfs_create_bin_file(struct config_item *item,
-		const struct configfs_bin_attribute *bin_attr)
-{
-	struct dentry *dir = item->ci_dentry;
-	struct configfs_dirent *parent_sd = dir->d_fsdata;
+पूर्णांक configfs_create_bin_file(काष्ठा config_item *item,
+		स्थिर काष्ठा configfs_bin_attribute *bin_attr)
+अणु
+	काष्ठा dentry *dir = item->ci_dentry;
+	काष्ठा configfs_dirent *parent_sd = dir->d_fsdata;
 	umode_t mode = (bin_attr->cb_attr.ca_mode & S_IALLUGO) | S_IFREG;
-	int error = 0;
+	पूर्णांक error = 0;
 
 	inode_lock_nested(dir->d_inode, I_MUTEX_NORMAL);
-	error = configfs_make_dirent(parent_sd, NULL, (void *) bin_attr, mode,
+	error = configfs_make_dirent(parent_sd, शून्य, (व्योम *) bin_attr, mode,
 				     CONFIGFS_ITEM_BIN_ATTR, parent_sd->s_frag);
 	inode_unlock(dir->d_inode);
 
-	return error;
-}
+	वापस error;
+पूर्ण

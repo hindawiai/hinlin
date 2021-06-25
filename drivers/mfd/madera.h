@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * MFD internals for Cirrus Logic Madera codecs
+ * MFD पूर्णांकernals क्रम Cirrus Logic Madera codecs
  *
  * Copyright 2015-2018 Cirrus Logic
  */
 
-#ifndef MADERA_MFD_H
-#define MADERA_MFD_H
+#अगर_अघोषित MADERA_MFD_H
+#घोषणा MADERA_MFD_H
 
-#include <linux/of.h>
-#include <linux/pm.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pm.h>
 
-struct madera;
+काष्ठा madera;
 
-extern const struct dev_pm_ops madera_pm_ops;
-extern const struct of_device_id madera_of_match[];
+बाह्य स्थिर काष्ठा dev_pm_ops madera_pm_ops;
+बाह्य स्थिर काष्ठा of_device_id madera_of_match[];
 
-int madera_dev_init(struct madera *madera);
-int madera_dev_exit(struct madera *madera);
+पूर्णांक madera_dev_init(काष्ठा madera *madera);
+पूर्णांक madera_dev_निकास(काष्ठा madera *madera);
 
-const char *madera_name_from_type(enum madera_type type);
+स्थिर अक्षर *madera_name_from_type(क्रमागत madera_type type);
 
-extern const struct regmap_config cs47l15_16bit_spi_regmap;
-extern const struct regmap_config cs47l15_32bit_spi_regmap;
-extern const struct regmap_config cs47l15_16bit_i2c_regmap;
-extern const struct regmap_config cs47l15_32bit_i2c_regmap;
-int cs47l15_patch(struct madera *madera);
+बाह्य स्थिर काष्ठा regmap_config cs47l15_16bit_spi_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l15_32bit_spi_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l15_16bit_i2c_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l15_32bit_i2c_regmap;
+पूर्णांक cs47l15_patch(काष्ठा madera *madera);
 
-extern const struct regmap_config cs47l35_16bit_spi_regmap;
-extern const struct regmap_config cs47l35_32bit_spi_regmap;
-extern const struct regmap_config cs47l35_16bit_i2c_regmap;
-extern const struct regmap_config cs47l35_32bit_i2c_regmap;
-int cs47l35_patch(struct madera *madera);
+बाह्य स्थिर काष्ठा regmap_config cs47l35_16bit_spi_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l35_32bit_spi_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l35_16bit_i2c_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l35_32bit_i2c_regmap;
+पूर्णांक cs47l35_patch(काष्ठा madera *madera);
 
-extern const struct regmap_config cs47l85_16bit_spi_regmap;
-extern const struct regmap_config cs47l85_32bit_spi_regmap;
-extern const struct regmap_config cs47l85_16bit_i2c_regmap;
-extern const struct regmap_config cs47l85_32bit_i2c_regmap;
-int cs47l85_patch(struct madera *madera);
+बाह्य स्थिर काष्ठा regmap_config cs47l85_16bit_spi_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l85_32bit_spi_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l85_16bit_i2c_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l85_32bit_i2c_regmap;
+पूर्णांक cs47l85_patch(काष्ठा madera *madera);
 
-extern const struct regmap_config cs47l90_16bit_spi_regmap;
-extern const struct regmap_config cs47l90_32bit_spi_regmap;
-extern const struct regmap_config cs47l90_16bit_i2c_regmap;
-extern const struct regmap_config cs47l90_32bit_i2c_regmap;
-int cs47l90_patch(struct madera *madera);
+बाह्य स्थिर काष्ठा regmap_config cs47l90_16bit_spi_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l90_32bit_spi_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l90_16bit_i2c_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l90_32bit_i2c_regmap;
+पूर्णांक cs47l90_patch(काष्ठा madera *madera);
 
-extern const struct regmap_config cs47l92_16bit_spi_regmap;
-extern const struct regmap_config cs47l92_32bit_spi_regmap;
-extern const struct regmap_config cs47l92_16bit_i2c_regmap;
-extern const struct regmap_config cs47l92_32bit_i2c_regmap;
-int cs47l92_patch(struct madera *madera);
+बाह्य स्थिर काष्ठा regmap_config cs47l92_16bit_spi_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l92_32bit_spi_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l92_16bit_i2c_regmap;
+बाह्य स्थिर काष्ठा regmap_config cs47l92_32bit_i2c_regmap;
+पूर्णांक cs47l92_patch(काष्ठा madera *madera);
 
-#endif
+#पूर्ण_अगर

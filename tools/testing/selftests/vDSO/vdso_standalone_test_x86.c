@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * vdso_test.c: Sample code to test parse_vdso.c on x86
  * Copyright (c) 2011-2014 Andy Lutomirski
@@ -8,119 +9,119 @@
  *     -Os -fno-asynchronous-unwind-tables -flto -lgcc_s
  *      vdso_standalone_test_x86.c parse_vdso.c
  * to generate a small binary.  On x86_64, you can omit -lgcc_s
- * if you want the binary to be completely standalone.
+ * अगर you want the binary to be completely standalone.
  */
 
-#include <sys/syscall.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <stdint.h>
+#समावेश <sys/syscall.h>
+#समावेश <sys/समय.स>
+#समावेश <unistd.h>
+#समावेश <मानक_निवेशt.h>
 
-#include "parse_vdso.h"
+#समावेश "parse_vdso.h"
 
 /* We need a libc functions... */
-int strcmp(const char *a, const char *b)
-{
-	/* This implementation is buggy: it never returns -1. */
-	while (*a || *b) {
-		if (*a != *b)
-			return 1;
-		if (*a == 0 || *b == 0)
-			return 1;
+पूर्णांक म_भेद(स्थिर अक्षर *a, स्थिर अक्षर *b)
+अणु
+	/* This implementation is buggy: it never वापसs -1. */
+	जबतक (*a || *b) अणु
+		अगर (*a != *b)
+			वापस 1;
+		अगर (*a == 0 || *b == 0)
+			वापस 1;
 		a++;
 		b++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* ...and two syscalls.  This is x86-specific. */
-static inline long x86_syscall3(long nr, long a0, long a1, long a2)
-{
-	long ret;
-#ifdef __x86_64__
-	asm volatile ("syscall" : "=a" (ret) : "a" (nr),
+/* ...and two syscalls.  This is x86-specअगरic. */
+अटल अंतरभूत दीर्घ x86_syscall3(दीर्घ nr, दीर्घ a0, दीर्घ a1, दीर्घ a2)
+अणु
+	दीर्घ ret;
+#अगर_घोषित __x86_64__
+	यंत्र अस्थिर ("syscall" : "=a" (ret) : "a" (nr),
 		      "D" (a0), "S" (a1), "d" (a2) :
 		      "cc", "memory", "rcx",
 		      "r8", "r9", "r10", "r11" );
-#else
-	asm volatile ("int $0x80" : "=a" (ret) : "a" (nr),
+#अन्यथा
+	यंत्र अस्थिर ("int $0x80" : "=a" (ret) : "a" (nr),
 		      "b" (a0), "c" (a1), "d" (a2) :
 		      "cc", "memory" );
-#endif
-	return ret;
-}
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
-static inline long linux_write(int fd, const void *data, size_t len)
-{
-	return x86_syscall3(__NR_write, fd, (long)data, (long)len);
-}
+अटल अंतरभूत दीर्घ linux_ग_लिखो(पूर्णांक fd, स्थिर व्योम *data, माप_प्रकार len)
+अणु
+	वापस x86_syscall3(__NR_ग_लिखो, fd, (दीर्घ)data, (दीर्घ)len);
+पूर्ण
 
-static inline void linux_exit(int code)
-{
-	x86_syscall3(__NR_exit, code, 0, 0);
-}
+अटल अंतरभूत व्योम linux_निकास(पूर्णांक code)
+अणु
+	x86_syscall3(__NR_निकास, code, 0, 0);
+पूर्ण
 
-void to_base10(char *lastdig, time_t n)
-{
-	while (n) {
+व्योम to_base10(अक्षर *lastdig, समय_प्रकार n)
+अणु
+	जबतक (n) अणु
 		*lastdig = (n % 10) + '0';
 		n /= 10;
 		lastdig--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-__attribute__((externally_visible)) void c_main(void **stack)
-{
+__attribute__((बाह्यally_visible)) व्योम c_मुख्य(व्योम **stack)
+अणु
 	/* Parse the stack */
-	long argc = (long)*stack;
+	दीर्घ argc = (दीर्घ)*stack;
 	stack += argc + 2;
 
-	/* Now we're pointing at the environment.  Skip it. */
-	while(*stack)
+	/* Now we're poपूर्णांकing at the environment.  Skip it. */
+	जबतक(*stack)
 		stack++;
 	stack++;
 
-	/* Now we're pointing at auxv.  Initialize the vDSO parser. */
-	vdso_init_from_auxv((void *)stack);
+	/* Now we're poपूर्णांकing at auxv.  Initialize the vDSO parser. */
+	vdso_init_from_auxv((व्योम *)stack);
 
-	/* Find gettimeofday. */
-	typedef long (*gtod_t)(struct timeval *tv, struct timezone *tz);
+	/* Find समय_लोofday. */
+	प्रकार दीर्घ (*gtod_t)(काष्ठा समयval *tv, काष्ठा समयzone *tz);
 	gtod_t gtod = (gtod_t)vdso_sym("LINUX_2.6", "__vdso_gettimeofday");
 
-	if (!gtod)
-		linux_exit(1);
+	अगर (!gtod)
+		linux_निकास(1);
 
-	struct timeval tv;
-	long ret = gtod(&tv, 0);
+	काष्ठा समयval tv;
+	दीर्घ ret = gtod(&tv, 0);
 
-	if (ret == 0) {
-		char buf[] = "The time is                     .000000\n";
+	अगर (ret == 0) अणु
+		अक्षर buf[] = "The time is                     .000000\n";
 		to_base10(buf + 31, tv.tv_sec);
 		to_base10(buf + 38, tv.tv_usec);
-		linux_write(1, buf, sizeof(buf) - 1);
-	} else {
-		linux_exit(ret);
-	}
+		linux_ग_लिखो(1, buf, माप(buf) - 1);
+	पूर्ण अन्यथा अणु
+		linux_निकास(ret);
+	पूर्ण
 
-	linux_exit(0);
-}
+	linux_निकास(0);
+पूर्ण
 
 /*
- * This is the real entry point.  It passes the initial stack into
- * the C entry point.
+ * This is the real entry poपूर्णांक.  It passes the initial stack पूर्णांकo
+ * the C entry poपूर्णांक.
  */
-asm (
+यंत्र (
 	".text\n"
 	".global _start\n"
 	".type _start,@function\n"
 	"_start:\n\t"
-#ifdef __x86_64__
+#अगर_घोषित __x86_64__
 	"mov %rsp,%rdi\n\t"
 	"jmp c_main"
-#else
+#अन्यथा
 	"push %esp\n\t"
 	"call c_main\n\t"
 	"int $3"
-#endif
+#पूर्ण_अगर
 	);

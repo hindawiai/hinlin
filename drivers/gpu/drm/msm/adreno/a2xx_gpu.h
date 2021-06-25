@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2018 The Linux Foundation. All rights reserved. */
 
-#ifndef __A2XX_GPU_H__
-#define __A2XX_GPU_H__
+#अगर_अघोषित __A2XX_GPU_H__
+#घोषणा __A2XX_GPU_H__
 
-#include "adreno_gpu.h"
+#समावेश "adreno_gpu.h"
 
 /* arrg, somehow fb.h is getting pulled in: */
-#undef ROP_COPY
-#undef ROP_XOR
+#अघोषित ROP_COPY
+#अघोषित ROP_XOR
 
-#include "a2xx.xml.h"
+#समावेश "a2xx.xml.h"
 
-struct a2xx_gpu {
-	struct adreno_gpu base;
+काष्ठा a2xx_gpu अणु
+	काष्ठा adreno_gpu base;
 	bool pm_enabled;
-};
-#define to_a2xx_gpu(x) container_of(x, struct a2xx_gpu, base)
+पूर्ण;
+#घोषणा to_a2xx_gpu(x) container_of(x, काष्ठा a2xx_gpu, base)
 
-#endif /* __A2XX_GPU_H__ */
+#पूर्ण_अगर /* __A2XX_GPU_H__ */

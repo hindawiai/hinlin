@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,131 +20,131 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <engine/falcon.h>
+#समावेश <engine/falcon.h>
 
-#include <core/gpuobj.h>
-#include <subdev/mc.h>
-#include <subdev/timer.h>
-#include <engine/fifo.h>
+#समावेश <core/gpuobj.h>
+#समावेश <subdev/mc.h>
+#समावेश <subdev/समयr.h>
+#समावेश <engine/fअगरo.h>
 
-static int
-nvkm_falcon_oclass_get(struct nvkm_oclass *oclass, int index)
-{
-	struct nvkm_falcon *falcon = nvkm_falcon(oclass->engine);
-	int c = 0;
+अटल पूर्णांक
+nvkm_falcon_oclass_get(काष्ठा nvkm_oclass *oclass, पूर्णांक index)
+अणु
+	काष्ठा nvkm_falcon *falcon = nvkm_falcon(oclass->engine);
+	पूर्णांक c = 0;
 
-	while (falcon->func->sclass[c].oclass) {
-		if (c++ == index) {
+	जबतक (falcon->func->sclass[c].oclass) अणु
+		अगर (c++ == index) अणु
 			oclass->base = falcon->func->sclass[index];
-			return index;
-		}
-	}
+			वापस index;
+		पूर्ण
+	पूर्ण
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-static int
-nvkm_falcon_cclass_bind(struct nvkm_object *object, struct nvkm_gpuobj *parent,
-			int align, struct nvkm_gpuobj **pgpuobj)
-{
-	return nvkm_gpuobj_new(object->engine->subdev.device, 256,
+अटल पूर्णांक
+nvkm_falcon_cclass_bind(काष्ठा nvkm_object *object, काष्ठा nvkm_gpuobj *parent,
+			पूर्णांक align, काष्ठा nvkm_gpuobj **pgpuobj)
+अणु
+	वापस nvkm_gpuobj_new(object->engine->subdev.device, 256,
 			       align, true, parent, pgpuobj);
-}
+पूर्ण
 
-static const struct nvkm_object_func
-nvkm_falcon_cclass = {
+अटल स्थिर काष्ठा nvkm_object_func
+nvkm_falcon_cclass = अणु
 	.bind = nvkm_falcon_cclass_bind,
-};
+पूर्ण;
 
-static void
-nvkm_falcon_intr(struct nvkm_engine *engine)
-{
-	struct nvkm_falcon *falcon = nvkm_falcon(engine);
-	struct nvkm_subdev *subdev = &falcon->engine.subdev;
-	struct nvkm_device *device = subdev->device;
-	const u32 base = falcon->addr;
+अटल व्योम
+nvkm_falcon_पूर्णांकr(काष्ठा nvkm_engine *engine)
+अणु
+	काष्ठा nvkm_falcon *falcon = nvkm_falcon(engine);
+	काष्ठा nvkm_subdev *subdev = &falcon->engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	स्थिर u32 base = falcon->addr;
 	u32 dest = nvkm_rd32(device, base + 0x01c);
-	u32 intr = nvkm_rd32(device, base + 0x008) & dest & ~(dest >> 16);
+	u32 पूर्णांकr = nvkm_rd32(device, base + 0x008) & dest & ~(dest >> 16);
 	u32 inst = nvkm_rd32(device, base + 0x050) & 0x3fffffff;
-	struct nvkm_fifo_chan *chan;
-	unsigned long flags;
+	काष्ठा nvkm_fअगरo_chan *chan;
+	अचिन्हित दीर्घ flags;
 
-	chan = nvkm_fifo_chan_inst(device->fifo, (u64)inst << 12, &flags);
+	chan = nvkm_fअगरo_chan_inst(device->fअगरo, (u64)inst << 12, &flags);
 
-	if (intr & 0x00000040) {
-		if (falcon->func->intr) {
-			falcon->func->intr(falcon, chan);
+	अगर (पूर्णांकr & 0x00000040) अणु
+		अगर (falcon->func->पूर्णांकr) अणु
+			falcon->func->पूर्णांकr(falcon, chan);
 			nvkm_wr32(device, base + 0x004, 0x00000040);
-			intr &= ~0x00000040;
-		}
-	}
+			पूर्णांकr &= ~0x00000040;
+		पूर्ण
+	पूर्ण
 
-	if (intr & 0x00000010) {
+	अगर (पूर्णांकr & 0x00000010) अणु
 		nvkm_debug(subdev, "ucode halted\n");
 		nvkm_wr32(device, base + 0x004, 0x00000010);
-		intr &= ~0x00000010;
-	}
+		पूर्णांकr &= ~0x00000010;
+	पूर्ण
 
-	if (intr)  {
-		nvkm_error(subdev, "intr %08x\n", intr);
-		nvkm_wr32(device, base + 0x004, intr);
-	}
+	अगर (पूर्णांकr)  अणु
+		nvkm_error(subdev, "intr %08x\n", पूर्णांकr);
+		nvkm_wr32(device, base + 0x004, पूर्णांकr);
+	पूर्ण
 
-	nvkm_fifo_chan_put(device->fifo, flags, &chan);
-}
+	nvkm_fअगरo_chan_put(device->fअगरo, flags, &chan);
+पूर्ण
 
-static int
-nvkm_falcon_fini(struct nvkm_engine *engine, bool suspend)
-{
-	struct nvkm_falcon *falcon = nvkm_falcon(engine);
-	struct nvkm_device *device = falcon->engine.subdev.device;
-	const u32 base = falcon->addr;
+अटल पूर्णांक
+nvkm_falcon_fini(काष्ठा nvkm_engine *engine, bool suspend)
+अणु
+	काष्ठा nvkm_falcon *falcon = nvkm_falcon(engine);
+	काष्ठा nvkm_device *device = falcon->engine.subdev.device;
+	स्थिर u32 base = falcon->addr;
 
-	if (!suspend) {
+	अगर (!suspend) अणु
 		nvkm_memory_unref(&falcon->core);
-		if (falcon->external) {
-			vfree(falcon->data.data);
-			vfree(falcon->code.data);
-			falcon->code.data = NULL;
-		}
-	}
+		अगर (falcon->बाह्यal) अणु
+			vमुक्त(falcon->data.data);
+			vमुक्त(falcon->code.data);
+			falcon->code.data = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (nvkm_mc_enabled(device, engine->subdev.type, engine->subdev.inst)) {
+	अगर (nvkm_mc_enabled(device, engine->subdev.type, engine->subdev.inst)) अणु
 		nvkm_mask(device, base + 0x048, 0x00000003, 0x00000000);
 		nvkm_wr32(device, base + 0x014, 0xffffffff);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void *
-vmemdup(const void *src, size_t len)
-{
-	void *p = vmalloc(len);
+अटल व्योम *
+vmemdup(स्थिर व्योम *src, माप_प्रकार len)
+अणु
+	व्योम *p = vदो_स्मृति(len);
 
-	if (p)
-		memcpy(p, src, len);
-	return p;
-}
+	अगर (p)
+		स_नकल(p, src, len);
+	वापस p;
+पूर्ण
 
-static int
-nvkm_falcon_oneinit(struct nvkm_engine *engine)
-{
-	struct nvkm_falcon *falcon = nvkm_falcon(engine);
-	struct nvkm_subdev *subdev = &falcon->engine.subdev;
-	struct nvkm_device *device = subdev->device;
-	const u32 base = falcon->addr;
+अटल पूर्णांक
+nvkm_falcon_oneinit(काष्ठा nvkm_engine *engine)
+अणु
+	काष्ठा nvkm_falcon *falcon = nvkm_falcon(engine);
+	काष्ठा nvkm_subdev *subdev = &falcon->engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	स्थिर u32 base = falcon->addr;
 	u32 caps;
 
 	/* determine falcon capabilities */
-	if (device->chipset <  0xa3 ||
-	    device->chipset == 0xaa || device->chipset == 0xac) {
+	अगर (device->chipset <  0xa3 ||
+	    device->chipset == 0xaa || device->chipset == 0xac) अणु
 		falcon->version = 0;
 		falcon->secret  = (falcon->addr == 0x087000) ? 1 : 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		caps = nvkm_rd32(device, base + 0x12c);
 		falcon->version = (caps & 0x0000000f);
 		falcon->secret  = (caps & 0x00000030) >> 4;
-	}
+	पूर्ण
 
 	caps = nvkm_rd32(device, base + 0x108);
 	falcon->code.limit = (caps & 0x000001ff) << 8;
@@ -153,158 +154,158 @@ nvkm_falcon_oneinit(struct nvkm_engine *engine)
 	nvkm_debug(subdev, "secret level: %d\n", falcon->secret);
 	nvkm_debug(subdev, "code limit: %d\n", falcon->code.limit);
 	nvkm_debug(subdev, "data limit: %d\n", falcon->data.limit);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_falcon_init(struct nvkm_engine *engine)
-{
-	struct nvkm_falcon *falcon = nvkm_falcon(engine);
-	struct nvkm_subdev *subdev = &falcon->engine.subdev;
-	struct nvkm_device *device = subdev->device;
-	const struct firmware *fw;
-	char name[32] = "internal";
-	const u32 base = falcon->addr;
-	int ret, i;
+अटल पूर्णांक
+nvkm_falcon_init(काष्ठा nvkm_engine *engine)
+अणु
+	काष्ठा nvkm_falcon *falcon = nvkm_falcon(engine);
+	काष्ठा nvkm_subdev *subdev = &falcon->engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	स्थिर काष्ठा firmware *fw;
+	अक्षर name[32] = "internal";
+	स्थिर u32 base = falcon->addr;
+	पूर्णांक ret, i;
 
-	/* wait for 'uc halted' to be signalled before continuing */
-	if (falcon->secret && falcon->version < 4) {
-		if (!falcon->version) {
+	/* रुको क्रम 'uc halted' to be संकेतled beक्रमe continuing */
+	अगर (falcon->secret && falcon->version < 4) अणु
+		अगर (!falcon->version) अणु
 			nvkm_msec(device, 2000,
-				if (nvkm_rd32(device, base + 0x008) & 0x00000010)
-					break;
+				अगर (nvkm_rd32(device, base + 0x008) & 0x00000010)
+					अवरोध;
 			);
-		} else {
+		पूर्ण अन्यथा अणु
 			nvkm_msec(device, 2000,
-				if (!(nvkm_rd32(device, base + 0x180) & 0x80000000))
-					break;
+				अगर (!(nvkm_rd32(device, base + 0x180) & 0x80000000))
+					अवरोध;
 			);
-		}
+		पूर्ण
 		nvkm_wr32(device, base + 0x004, 0x00000010);
-	}
+	पूर्ण
 
-	/* disable all interrupts */
+	/* disable all पूर्णांकerrupts */
 	nvkm_wr32(device, base + 0x014, 0xffffffff);
 
-	/* no default ucode provided by the engine implementation, try and
-	 * locate a "self-bootstrapping" firmware image for the engine
+	/* no शेष ucode provided by the engine implementation, try and
+	 * locate a "self-bootstrapping" firmware image क्रम the engine
 	 */
-	if (!falcon->code.data) {
-		snprintf(name, sizeof(name), "nouveau/nv%02x_fuc%03x",
+	अगर (!falcon->code.data) अणु
+		snम_लिखो(name, माप(name), "nouveau/nv%02x_fuc%03x",
 			 device->chipset, falcon->addr >> 12);
 
 		ret = request_firmware(&fw, name, device->dev);
-		if (ret == 0) {
+		अगर (ret == 0) अणु
 			falcon->code.data = vmemdup(fw->data, fw->size);
 			falcon->code.size = fw->size;
-			falcon->data.data = NULL;
+			falcon->data.data = शून्य;
 			falcon->data.size = 0;
 			release_firmware(fw);
-		}
+		पूर्ण
 
-		falcon->external = true;
-	}
+		falcon->बाह्यal = true;
+	पूर्ण
 
 	/* next step is to try and load "static code/data segment" firmware
-	 * images for the engine
+	 * images क्रम the engine
 	 */
-	if (!falcon->code.data) {
-		snprintf(name, sizeof(name), "nouveau/nv%02x_fuc%03xd",
+	अगर (!falcon->code.data) अणु
+		snम_लिखो(name, माप(name), "nouveau/nv%02x_fuc%03xd",
 			 device->chipset, falcon->addr >> 12);
 
 		ret = request_firmware(&fw, name, device->dev);
-		if (ret) {
+		अगर (ret) अणु
 			nvkm_error(subdev, "unable to load firmware data\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		falcon->data.data = vmemdup(fw->data, fw->size);
 		falcon->data.size = fw->size;
 		release_firmware(fw);
-		if (!falcon->data.data)
-			return -ENOMEM;
+		अगर (!falcon->data.data)
+			वापस -ENOMEM;
 
-		snprintf(name, sizeof(name), "nouveau/nv%02x_fuc%03xc",
+		snम_लिखो(name, माप(name), "nouveau/nv%02x_fuc%03xc",
 			 device->chipset, falcon->addr >> 12);
 
 		ret = request_firmware(&fw, name, device->dev);
-		if (ret) {
+		अगर (ret) अणु
 			nvkm_error(subdev, "unable to load firmware code\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		falcon->code.data = vmemdup(fw->data, fw->size);
 		falcon->code.size = fw->size;
 		release_firmware(fw);
-		if (!falcon->code.data)
-			return -ENOMEM;
-	}
+		अगर (!falcon->code.data)
+			वापस -ENOMEM;
+	पूर्ण
 
 	nvkm_debug(subdev, "firmware: %s (%s)\n", name, falcon->data.data ?
 		   "static code/data segments" : "self-bootstrapping");
 
 	/* ensure any "self-bootstrapping" firmware image is in vram */
-	if (!falcon->data.data && !falcon->core) {
+	अगर (!falcon->data.data && !falcon->core) अणु
 		ret = nvkm_memory_new(device, NVKM_MEM_TARGET_INST,
 				      falcon->code.size, 256, false,
 				      &falcon->core);
-		if (ret) {
+		अगर (ret) अणु
 			nvkm_error(subdev, "core allocation failed, %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		nvkm_kmap(falcon->core);
-		for (i = 0; i < falcon->code.size; i += 4)
+		क्रम (i = 0; i < falcon->code.size; i += 4)
 			nvkm_wo32(falcon->core, i, falcon->code.data[i / 4]);
-		nvkm_done(falcon->core);
-	}
+		nvkm_करोne(falcon->core);
+	पूर्ण
 
 	/* upload firmware bootloader (or the full code segments) */
-	if (falcon->core) {
+	अगर (falcon->core) अणु
 		u64 addr = nvkm_memory_addr(falcon->core);
-		if (device->card_type < NV_C0)
+		अगर (device->card_type < NV_C0)
 			nvkm_wr32(device, base + 0x618, 0x04000000);
-		else
+		अन्यथा
 			nvkm_wr32(device, base + 0x618, 0x00000114);
 		nvkm_wr32(device, base + 0x11c, 0);
 		nvkm_wr32(device, base + 0x110, addr >> 8);
 		nvkm_wr32(device, base + 0x114, 0);
 		nvkm_wr32(device, base + 0x118, 0x00006610);
-	} else {
-		if (falcon->code.size > falcon->code.limit ||
-		    falcon->data.size > falcon->data.limit) {
+	पूर्ण अन्यथा अणु
+		अगर (falcon->code.size > falcon->code.limit ||
+		    falcon->data.size > falcon->data.limit) अणु
 			nvkm_error(subdev, "ucode exceeds falcon limit(s)\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (falcon->version < 3) {
+		अगर (falcon->version < 3) अणु
 			nvkm_wr32(device, base + 0xff8, 0x00100000);
-			for (i = 0; i < falcon->code.size / 4; i++)
+			क्रम (i = 0; i < falcon->code.size / 4; i++)
 				nvkm_wr32(device, base + 0xff4, falcon->code.data[i]);
-		} else {
+		पूर्ण अन्यथा अणु
 			nvkm_wr32(device, base + 0x180, 0x01000000);
-			for (i = 0; i < falcon->code.size / 4; i++) {
-				if ((i & 0x3f) == 0)
+			क्रम (i = 0; i < falcon->code.size / 4; i++) अणु
+				अगर ((i & 0x3f) == 0)
 					nvkm_wr32(device, base + 0x188, i >> 6);
 				nvkm_wr32(device, base + 0x184, falcon->code.data[i]);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* upload data segment (if necessary), zeroing the remainder */
-	if (falcon->version < 3) {
+	/* upload data segment (अगर necessary), zeroing the reमुख्यder */
+	अगर (falcon->version < 3) अणु
 		nvkm_wr32(device, base + 0xff8, 0x00000000);
-		for (i = 0; !falcon->core && i < falcon->data.size / 4; i++)
+		क्रम (i = 0; !falcon->core && i < falcon->data.size / 4; i++)
 			nvkm_wr32(device, base + 0xff4, falcon->data.data[i]);
-		for (; i < falcon->data.limit; i += 4)
+		क्रम (; i < falcon->data.limit; i += 4)
 			nvkm_wr32(device, base + 0xff4, 0x00000000);
-	} else {
+	पूर्ण अन्यथा अणु
 		nvkm_wr32(device, base + 0x1c0, 0x01000000);
-		for (i = 0; !falcon->core && i < falcon->data.size / 4; i++)
+		क्रम (i = 0; !falcon->core && i < falcon->data.size / 4; i++)
 			nvkm_wr32(device, base + 0x1c4, falcon->data.data[i]);
-		for (; i < falcon->data.limit / 4; i++)
+		क्रम (; i < falcon->data.limit / 4; i++)
 			nvkm_wr32(device, base + 0x1c4, 0x00000000);
-	}
+	पूर्ण
 
 	/* start it running */
 	nvkm_wr32(device, base + 0x10c, 0x00000001); /* BLOCK_ON_FIFO */
@@ -312,37 +313,37 @@ nvkm_falcon_init(struct nvkm_engine *engine)
 	nvkm_wr32(device, base + 0x100, 0x00000002); /* TRIGGER */
 	nvkm_wr32(device, base + 0x048, 0x00000003); /* FIFO | CHSW */
 
-	if (falcon->func->init)
+	अगर (falcon->func->init)
 		falcon->func->init(falcon);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *
-nvkm_falcon_dtor(struct nvkm_engine *engine)
-{
-	return nvkm_falcon(engine);
-}
+अटल व्योम *
+nvkm_falcon_dtor(काष्ठा nvkm_engine *engine)
+अणु
+	वापस nvkm_falcon(engine);
+पूर्ण
 
-static const struct nvkm_engine_func
-nvkm_falcon = {
+अटल स्थिर काष्ठा nvkm_engine_func
+nvkm_falcon = अणु
 	.dtor = nvkm_falcon_dtor,
 	.oneinit = nvkm_falcon_oneinit,
 	.init = nvkm_falcon_init,
 	.fini = nvkm_falcon_fini,
-	.intr = nvkm_falcon_intr,
-	.fifo.sclass = nvkm_falcon_oclass_get,
+	.पूर्णांकr = nvkm_falcon_पूर्णांकr,
+	.fअगरo.sclass = nvkm_falcon_oclass_get,
 	.cclass = &nvkm_falcon_cclass,
-};
+पूर्ण;
 
-int
-nvkm_falcon_new_(const struct nvkm_falcon_func *func, struct nvkm_device *device,
-		 enum nvkm_subdev_type type, int inst, bool enable, u32 addr,
-		 struct nvkm_engine **pengine)
-{
-	struct nvkm_falcon *falcon;
+पूर्णांक
+nvkm_falcon_new_(स्थिर काष्ठा nvkm_falcon_func *func, काष्ठा nvkm_device *device,
+		 क्रमागत nvkm_subdev_type type, पूर्णांक inst, bool enable, u32 addr,
+		 काष्ठा nvkm_engine **pengine)
+अणु
+	काष्ठा nvkm_falcon *falcon;
 
-	if (!(falcon = kzalloc(sizeof(*falcon), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(falcon = kzalloc(माप(*falcon), GFP_KERNEL)))
+		वापस -ENOMEM;
 	falcon->func = func;
 	falcon->addr = addr;
 	falcon->code.data = func->code.data;
@@ -351,5 +352,5 @@ nvkm_falcon_new_(const struct nvkm_falcon_func *func, struct nvkm_device *device
 	falcon->data.size = func->data.size;
 	*pengine = &falcon->engine;
 
-	return nvkm_engine_ctor(&nvkm_falcon, device, type, inst, enable, &falcon->engine);
-}
+	वापस nvkm_engine_ctor(&nvkm_falcon, device, type, inst, enable, &falcon->engine);
+पूर्ण

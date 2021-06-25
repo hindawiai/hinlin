@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  * Copyright (C) 2015-2016 Samsung Electronics
  *               Krzysztof Opasiak <k.opasiak@samsung.com>
  */
 
-#ifndef __USBIP_COMMON_H
-#define __USBIP_COMMON_H
+#अगर_अघोषित __USBIP_COMMON_H
+#घोषणा __USBIP_COMMON_H
 
-#include <linux/compiler.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/net.h>
-#include <linux/printk.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
-#include <linux/usb.h>
-#include <linux/wait.h>
-#include <linux/sched/task.h>
-#include <linux/kcov.h>
-#include <uapi/linux/usbip.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/net.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/kcov.h>
+#समावेश <uapi/linux/usbip.h>
 
-#undef pr_fmt
+#अघोषित pr_fmt
 
-#ifdef DEBUG
-#define pr_fmt(fmt)     KBUILD_MODNAME ": %s:%d: " fmt, __func__, __LINE__
-#else
-#define pr_fmt(fmt)     KBUILD_MODNAME ": " fmt
-#endif
+#अगर_घोषित DEBUG
+#घोषणा pr_fmt(fmt)     KBUILD_MODNAME ": %s:%d: " fmt, __func__, __LINE__
+#अन्यथा
+#घोषणा pr_fmt(fmt)     KBUILD_MODNAME ": " fmt
+#पूर्ण_अगर
 
-enum {
+क्रमागत अणु
 	usbip_debug_xmit	= (1 << 0),
 	usbip_debug_sysfs	= (1 << 1),
 	usbip_debug_urb		= (1 << 2),
@@ -45,51 +46,51 @@ enum {
 	usbip_debug_vhci_rx	= (1 << 10),
 	usbip_debug_vhci_tx	= (1 << 11),
 	usbip_debug_vhci_sysfs  = (1 << 12)
-};
+पूर्ण;
 
-#define usbip_dbg_flag_xmit	(usbip_debug_flag & usbip_debug_xmit)
-#define usbip_dbg_flag_vhci_rh	(usbip_debug_flag & usbip_debug_vhci_rh)
-#define usbip_dbg_flag_vhci_hc	(usbip_debug_flag & usbip_debug_vhci_hc)
-#define usbip_dbg_flag_vhci_rx	(usbip_debug_flag & usbip_debug_vhci_rx)
-#define usbip_dbg_flag_vhci_tx	(usbip_debug_flag & usbip_debug_vhci_tx)
-#define usbip_dbg_flag_stub_rx	(usbip_debug_flag & usbip_debug_stub_rx)
-#define usbip_dbg_flag_stub_tx	(usbip_debug_flag & usbip_debug_stub_tx)
-#define usbip_dbg_flag_vhci_sysfs  (usbip_debug_flag & usbip_debug_vhci_sysfs)
+#घोषणा usbip_dbg_flag_xmit	(usbip_debug_flag & usbip_debug_xmit)
+#घोषणा usbip_dbg_flag_vhci_rh	(usbip_debug_flag & usbip_debug_vhci_rh)
+#घोषणा usbip_dbg_flag_vhci_hc	(usbip_debug_flag & usbip_debug_vhci_hc)
+#घोषणा usbip_dbg_flag_vhci_rx	(usbip_debug_flag & usbip_debug_vhci_rx)
+#घोषणा usbip_dbg_flag_vhci_tx	(usbip_debug_flag & usbip_debug_vhci_tx)
+#घोषणा usbip_dbg_flag_stub_rx	(usbip_debug_flag & usbip_debug_stub_rx)
+#घोषणा usbip_dbg_flag_stub_tx	(usbip_debug_flag & usbip_debug_stub_tx)
+#घोषणा usbip_dbg_flag_vhci_sysfs  (usbip_debug_flag & usbip_debug_vhci_sysfs)
 
-extern unsigned long usbip_debug_flag;
-extern struct device_attribute dev_attr_usbip_debug;
+बाह्य अचिन्हित दीर्घ usbip_debug_flag;
+बाह्य काष्ठा device_attribute dev_attr_usbip_debug;
 
-#define usbip_dbg_with_flag(flag, fmt, args...)		\
-	do {						\
-		if (flag & usbip_debug_flag)		\
+#घोषणा usbip_dbg_with_flag(flag, fmt, args...)		\
+	करो अणु						\
+		अगर (flag & usbip_debug_flag)		\
 			pr_debug(fmt, ##args);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define usbip_dbg_sysfs(fmt, args...) \
+#घोषणा usbip_dbg_sysfs(fmt, args...) \
 	usbip_dbg_with_flag(usbip_debug_sysfs, fmt , ##args)
-#define usbip_dbg_xmit(fmt, args...) \
+#घोषणा usbip_dbg_xmit(fmt, args...) \
 	usbip_dbg_with_flag(usbip_debug_xmit, fmt , ##args)
-#define usbip_dbg_urb(fmt, args...) \
+#घोषणा usbip_dbg_urb(fmt, args...) \
 	usbip_dbg_with_flag(usbip_debug_urb, fmt , ##args)
-#define usbip_dbg_eh(fmt, args...) \
+#घोषणा usbip_dbg_eh(fmt, args...) \
 	usbip_dbg_with_flag(usbip_debug_eh, fmt , ##args)
 
-#define usbip_dbg_vhci_rh(fmt, args...)	\
+#घोषणा usbip_dbg_vhci_rh(fmt, args...)	\
 	usbip_dbg_with_flag(usbip_debug_vhci_rh, fmt , ##args)
-#define usbip_dbg_vhci_hc(fmt, args...)	\
+#घोषणा usbip_dbg_vhci_hc(fmt, args...)	\
 	usbip_dbg_with_flag(usbip_debug_vhci_hc, fmt , ##args)
-#define usbip_dbg_vhci_rx(fmt, args...)	\
+#घोषणा usbip_dbg_vhci_rx(fmt, args...)	\
 	usbip_dbg_with_flag(usbip_debug_vhci_rx, fmt , ##args)
-#define usbip_dbg_vhci_tx(fmt, args...)	\
+#घोषणा usbip_dbg_vhci_tx(fmt, args...)	\
 	usbip_dbg_with_flag(usbip_debug_vhci_tx, fmt , ##args)
-#define usbip_dbg_vhci_sysfs(fmt, args...) \
+#घोषणा usbip_dbg_vhci_sysfs(fmt, args...) \
 	usbip_dbg_with_flag(usbip_debug_vhci_sysfs, fmt , ##args)
 
-#define usbip_dbg_stub_cmp(fmt, args...) \
+#घोषणा usbip_dbg_stub_cmp(fmt, args...) \
 	usbip_dbg_with_flag(usbip_debug_stub_cmp, fmt , ##args)
-#define usbip_dbg_stub_rx(fmt, args...) \
+#घोषणा usbip_dbg_stub_rx(fmt, args...) \
 	usbip_dbg_with_flag(usbip_debug_stub_rx, fmt , ##args)
-#define usbip_dbg_stub_tx(fmt, args...) \
+#घोषणा usbip_dbg_stub_tx(fmt, args...) \
 	usbip_dbg_with_flag(usbip_debug_stub_tx, fmt , ##args)
 
 /*
@@ -114,260 +115,260 @@ extern struct device_attribute dev_attr_usbip_debug;
  *    (server to client)
  *
  */
-#define USBIP_CMD_SUBMIT	0x0001
-#define USBIP_CMD_UNLINK	0x0002
-#define USBIP_RET_SUBMIT	0x0003
-#define USBIP_RET_UNLINK	0x0004
+#घोषणा USBIP_CMD_SUBMIT	0x0001
+#घोषणा USBIP_CMD_UNLINK	0x0002
+#घोषणा USBIP_RET_SUBMIT	0x0003
+#घोषणा USBIP_RET_UNLINK	0x0004
 
-#define USBIP_DIR_OUT	0x00
-#define USBIP_DIR_IN	0x01
+#घोषणा USBIP_सूची_OUT	0x00
+#घोषणा USBIP_सूची_IN	0x01
 
 /*
- * Arbitrary limit for the maximum number of isochronous packets in an URB,
- * compare for example the uhci_submit_isochronous function in
+ * Arbitrary limit क्रम the maximum number of isochronous packets in an URB,
+ * compare क्रम example the uhci_submit_isochronous function in
  * drivers/usb/host/uhci-q.c
  */
-#define USBIP_MAX_ISO_PACKETS 1024
+#घोषणा USBIP_MAX_ISO_PACKETS 1024
 
 /**
- * struct usbip_header_basic - data pertinent to every request
+ * काष्ठा usbip_header_basic - data pertinent to every request
  * @command: the usbip request type
- * @seqnum: sequential number that identifies requests; incremented per
+ * @seqnum: sequential number that identअगरies requests; incremented per
  *	    connection
- * @devid: specifies a remote USB device uniquely instead of busnum and devnum;
+ * @devid: specअगरies a remote USB device uniquely instead of busnum and devnum;
  *	   in the stub driver, this value is ((busnum << 16) | devnum)
  * @direction: direction of the transfer
- * @ep: endpoint number
+ * @ep: endpoपूर्णांक number
  */
-struct usbip_header_basic {
+काष्ठा usbip_header_basic अणु
 	__u32 command;
 	__u32 seqnum;
 	__u32 devid;
 	__u32 direction;
 	__u32 ep;
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct usbip_header_cmd_submit - USBIP_CMD_SUBMIT packet header
+ * काष्ठा usbip_header_cmd_submit - USBIP_CMD_SUBMIT packet header
  * @transfer_flags: URB flags
- * @transfer_buffer_length: the data size for (in) or (out) transfer
- * @start_frame: initial frame for isochronous or interrupt transfers
+ * @transfer_buffer_length: the data size क्रम (in) or (out) transfer
+ * @start_frame: initial frame क्रम isochronous or पूर्णांकerrupt transfers
  * @number_of_packets: number of isochronous packets
- * @interval: maximum time for the request on the server-side host controller
- * @setup: setup data for a control request
+ * @पूर्णांकerval: maximum समय क्रम the request on the server-side host controller
+ * @setup: setup data क्रम a control request
  */
-struct usbip_header_cmd_submit {
+काष्ठा usbip_header_cmd_submit अणु
 	__u32 transfer_flags;
 	__s32 transfer_buffer_length;
 
-	/* it is difficult for usbip to sync frames (reserved only?) */
+	/* it is dअगरficult क्रम usbip to sync frames (reserved only?) */
 	__s32 start_frame;
 	__s32 number_of_packets;
-	__s32 interval;
+	__s32 पूर्णांकerval;
 
-	unsigned char setup[8];
-} __packed;
+	अचिन्हित अक्षर setup[8];
+पूर्ण __packed;
 
 /**
- * struct usbip_header_ret_submit - USBIP_RET_SUBMIT packet header
- * @status: return status of a non-iso request
+ * काष्ठा usbip_header_ret_submit - USBIP_RET_SUBMIT packet header
+ * @status: वापस status of a non-iso request
  * @actual_length: number of bytes transferred
- * @start_frame: initial frame for isochronous or interrupt transfers
+ * @start_frame: initial frame क्रम isochronous or पूर्णांकerrupt transfers
  * @number_of_packets: number of isochronous packets
- * @error_count: number of errors for isochronous transfers
+ * @error_count: number of errors क्रम isochronous transfers
  */
-struct usbip_header_ret_submit {
+काष्ठा usbip_header_ret_submit अणु
 	__s32 status;
 	__s32 actual_length;
 	__s32 start_frame;
 	__s32 number_of_packets;
 	__s32 error_count;
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct usbip_header_cmd_unlink - USBIP_CMD_UNLINK packet header
+ * काष्ठा usbip_header_cmd_unlink - USBIP_CMD_UNLINK packet header
  * @seqnum: the URB seqnum to unlink
  */
-struct usbip_header_cmd_unlink {
+काष्ठा usbip_header_cmd_unlink अणु
 	__u32 seqnum;
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct usbip_header_ret_unlink - USBIP_RET_UNLINK packet header
- * @status: return status of the request
+ * काष्ठा usbip_header_ret_unlink - USBIP_RET_UNLINK packet header
+ * @status: वापस status of the request
  */
-struct usbip_header_ret_unlink {
+काष्ठा usbip_header_ret_unlink अणु
 	__s32 status;
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct usbip_header - common header for all usbip packets
+ * काष्ठा usbip_header - common header क्रम all usbip packets
  * @base: the basic header
  * @u: packet type dependent header
  */
-struct usbip_header {
-	struct usbip_header_basic base;
+काष्ठा usbip_header अणु
+	काष्ठा usbip_header_basic base;
 
-	union {
-		struct usbip_header_cmd_submit	cmd_submit;
-		struct usbip_header_ret_submit	ret_submit;
-		struct usbip_header_cmd_unlink	cmd_unlink;
-		struct usbip_header_ret_unlink	ret_unlink;
-	} u;
-} __packed;
+	जोड़ अणु
+		काष्ठा usbip_header_cmd_submit	cmd_submit;
+		काष्ठा usbip_header_ret_submit	ret_submit;
+		काष्ठा usbip_header_cmd_unlink	cmd_unlink;
+		काष्ठा usbip_header_ret_unlink	ret_unlink;
+	पूर्ण u;
+पूर्ण __packed;
 
 /*
- * This is the same as usb_iso_packet_descriptor but packed for pdu.
+ * This is the same as usb_iso_packet_descriptor but packed क्रम pdu.
  */
-struct usbip_iso_packet_descriptor {
+काष्ठा usbip_iso_packet_descriptor अणु
 	__u32 offset;
 	__u32 length;			/* expected length */
 	__u32 actual_length;
 	__u32 status;
-} __packed;
+पूर्ण __packed;
 
-enum usbip_side {
+क्रमागत usbip_side अणु
 	USBIP_VHCI,
 	USBIP_STUB,
 	USBIP_VUDC,
-};
+पूर्ण;
 
 /* event handler */
-#define USBIP_EH_SHUTDOWN	(1 << 0)
-#define USBIP_EH_BYE		(1 << 1)
-#define USBIP_EH_RESET		(1 << 2)
-#define USBIP_EH_UNUSABLE	(1 << 3)
+#घोषणा USBIP_EH_SHUTDOWN	(1 << 0)
+#घोषणा USBIP_EH_BYE		(1 << 1)
+#घोषणा USBIP_EH_RESET		(1 << 2)
+#घोषणा USBIP_EH_UNUSABLE	(1 << 3)
 
-#define	SDEV_EVENT_REMOVED	(USBIP_EH_SHUTDOWN | USBIP_EH_BYE)
-#define	SDEV_EVENT_DOWN		(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
-#define	SDEV_EVENT_ERROR_TCP	(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
-#define	SDEV_EVENT_ERROR_SUBMIT	(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
-#define	SDEV_EVENT_ERROR_MALLOC	(USBIP_EH_SHUTDOWN | USBIP_EH_UNUSABLE)
+#घोषणा	SDEV_EVENT_REMOVED	(USBIP_EH_SHUTDOWN | USBIP_EH_BYE)
+#घोषणा	SDEV_EVENT_DOWN		(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
+#घोषणा	SDEV_EVENT_ERROR_TCP	(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
+#घोषणा	SDEV_EVENT_ERROR_SUBMIT	(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
+#घोषणा	SDEV_EVENT_ERROR_MALLOC	(USBIP_EH_SHUTDOWN | USBIP_EH_UNUSABLE)
 
-#define VUDC_EVENT_REMOVED   (USBIP_EH_SHUTDOWN | USBIP_EH_RESET | USBIP_EH_BYE)
-#define	VUDC_EVENT_DOWN		(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
-#define	VUDC_EVENT_ERROR_TCP	(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
+#घोषणा VUDC_EVENT_REMOVED   (USBIP_EH_SHUTDOWN | USBIP_EH_RESET | USBIP_EH_BYE)
+#घोषणा	VUDC_EVENT_DOWN		(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
+#घोषणा	VUDC_EVENT_ERROR_TCP	(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
 /* catastrophic emulated usb error */
-#define	VUDC_EVENT_ERROR_USB	(USBIP_EH_SHUTDOWN | USBIP_EH_UNUSABLE)
-#define	VUDC_EVENT_ERROR_MALLOC	(USBIP_EH_SHUTDOWN | USBIP_EH_UNUSABLE)
+#घोषणा	VUDC_EVENT_ERROR_USB	(USBIP_EH_SHUTDOWN | USBIP_EH_UNUSABLE)
+#घोषणा	VUDC_EVENT_ERROR_MALLOC	(USBIP_EH_SHUTDOWN | USBIP_EH_UNUSABLE)
 
-#define	VDEV_EVENT_REMOVED (USBIP_EH_SHUTDOWN | USBIP_EH_RESET | USBIP_EH_BYE)
-#define	VDEV_EVENT_DOWN		(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
-#define	VDEV_EVENT_ERROR_TCP	(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
-#define	VDEV_EVENT_ERROR_MALLOC	(USBIP_EH_SHUTDOWN | USBIP_EH_UNUSABLE)
+#घोषणा	VDEV_EVENT_REMOVED (USBIP_EH_SHUTDOWN | USBIP_EH_RESET | USBIP_EH_BYE)
+#घोषणा	VDEV_EVENT_DOWN		(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
+#घोषणा	VDEV_EVENT_ERROR_TCP	(USBIP_EH_SHUTDOWN | USBIP_EH_RESET)
+#घोषणा	VDEV_EVENT_ERROR_MALLOC	(USBIP_EH_SHUTDOWN | USBIP_EH_UNUSABLE)
 
-/* a common structure for stub_device and vhci_device */
-struct usbip_device {
-	enum usbip_side side;
-	enum usbip_device_status status;
+/* a common काष्ठाure क्रम stub_device and vhci_device */
+काष्ठा usbip_device अणु
+	क्रमागत usbip_side side;
+	क्रमागत usbip_device_status status;
 
-	/* lock for status */
+	/* lock क्रम status */
 	spinlock_t lock;
 
-	/* mutex for synchronizing sysfs store paths */
-	struct mutex sysfs_lock;
+	/* mutex क्रम synchronizing sysfs store paths */
+	काष्ठा mutex sysfs_lock;
 
-	int sockfd;
-	struct socket *tcp_socket;
+	पूर्णांक sockfd;
+	काष्ठा socket *tcp_socket;
 
-	struct task_struct *tcp_rx;
-	struct task_struct *tcp_tx;
+	काष्ठा task_काष्ठा *tcp_rx;
+	काष्ठा task_काष्ठा *tcp_tx;
 
-	unsigned long event;
-	wait_queue_head_t eh_waitq;
+	अचिन्हित दीर्घ event;
+	रुको_queue_head_t eh_रुकोq;
 
-	struct eh_ops {
-		void (*shutdown)(struct usbip_device *);
-		void (*reset)(struct usbip_device *);
-		void (*unusable)(struct usbip_device *);
-	} eh_ops;
+	काष्ठा eh_ops अणु
+		व्योम (*shutकरोwn)(काष्ठा usbip_device *);
+		व्योम (*reset)(काष्ठा usbip_device *);
+		व्योम (*unusable)(काष्ठा usbip_device *);
+	पूर्ण eh_ops;
 
-#ifdef CONFIG_KCOV
+#अगर_घोषित CONFIG_KCOV
 	u64 kcov_handle;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-#define kthread_get_run(threadfn, data, namefmt, ...)			   \
-({									   \
-	struct task_struct *__k						   \
-		= kthread_create(threadfn, data, namefmt, ## __VA_ARGS__); \
-	if (!IS_ERR(__k)) {						   \
-		get_task_struct(__k);					   \
+#घोषणा kthपढ़ो_get_run(thपढ़ोfn, data, namefmt, ...)			   \
+(अणु									   \
+	काष्ठा task_काष्ठा *__k						   \
+		= kthपढ़ो_create(thपढ़ोfn, data, namefmt, ## __VA_ARGS__); \
+	अगर (!IS_ERR(__k)) अणु						   \
+		get_task_काष्ठा(__k);					   \
 		wake_up_process(__k);					   \
-	}								   \
+	पूर्ण								   \
 	__k;								   \
-})
+पूर्ण)
 
-#define kthread_stop_put(k)		\
-	do {				\
-		kthread_stop(k);	\
-		put_task_struct(k);	\
-	} while (0)
+#घोषणा kthपढ़ो_stop_put(k)		\
+	करो अणु				\
+		kthपढ़ो_stop(k);	\
+		put_task_काष्ठा(k);	\
+	पूर्ण जबतक (0)
 
 /* usbip_common.c */
-void usbip_dump_urb(struct urb *purb);
-void usbip_dump_header(struct usbip_header *pdu);
+व्योम usbip_dump_urb(काष्ठा urb *purb);
+व्योम usbip_dump_header(काष्ठा usbip_header *pdu);
 
-int usbip_recv(struct socket *sock, void *buf, int size);
+पूर्णांक usbip_recv(काष्ठा socket *sock, व्योम *buf, पूर्णांक size);
 
-void usbip_pack_pdu(struct usbip_header *pdu, struct urb *urb, int cmd,
-		    int pack);
-void usbip_header_correct_endian(struct usbip_header *pdu, int send);
+व्योम usbip_pack_pdu(काष्ठा usbip_header *pdu, काष्ठा urb *urb, पूर्णांक cmd,
+		    पूर्णांक pack);
+व्योम usbip_header_correct_endian(काष्ठा usbip_header *pdu, पूर्णांक send);
 
-struct usbip_iso_packet_descriptor*
-usbip_alloc_iso_desc_pdu(struct urb *urb, ssize_t *bufflen);
+काष्ठा usbip_iso_packet_descriptor*
+usbip_alloc_iso_desc_pdu(काष्ठा urb *urb, sमाप_प्रकार *bufflen);
 
-/* some members of urb must be substituted before. */
-int usbip_recv_iso(struct usbip_device *ud, struct urb *urb);
-void usbip_pad_iso(struct usbip_device *ud, struct urb *urb);
-int usbip_recv_xbuff(struct usbip_device *ud, struct urb *urb);
+/* some members of urb must be substituted beक्रमe. */
+पूर्णांक usbip_recv_iso(काष्ठा usbip_device *ud, काष्ठा urb *urb);
+व्योम usbip_pad_iso(काष्ठा usbip_device *ud, काष्ठा urb *urb);
+पूर्णांक usbip_recv_xbuff(काष्ठा usbip_device *ud, काष्ठा urb *urb);
 
 /* usbip_event.c */
-int usbip_init_eh(void);
-void usbip_finish_eh(void);
-int usbip_start_eh(struct usbip_device *ud);
-void usbip_stop_eh(struct usbip_device *ud);
-void usbip_event_add(struct usbip_device *ud, unsigned long event);
-int usbip_event_happened(struct usbip_device *ud);
-int usbip_in_eh(struct task_struct *task);
+पूर्णांक usbip_init_eh(व्योम);
+व्योम usbip_finish_eh(व्योम);
+पूर्णांक usbip_start_eh(काष्ठा usbip_device *ud);
+व्योम usbip_stop_eh(काष्ठा usbip_device *ud);
+व्योम usbip_event_add(काष्ठा usbip_device *ud, अचिन्हित दीर्घ event);
+पूर्णांक usbip_event_happened(काष्ठा usbip_device *ud);
+पूर्णांक usbip_in_eh(काष्ठा task_काष्ठा *task);
 
-static inline int interface_to_busnum(struct usb_interface *interface)
-{
-	struct usb_device *udev = interface_to_usbdev(interface);
+अटल अंतरभूत पूर्णांक पूर्णांकerface_to_busnum(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
 
-	return udev->bus->busnum;
-}
+	वापस udev->bus->busnum;
+पूर्ण
 
-static inline int interface_to_devnum(struct usb_interface *interface)
-{
-	struct usb_device *udev = interface_to_usbdev(interface);
+अटल अंतरभूत पूर्णांक पूर्णांकerface_to_devnum(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
 
-	return udev->devnum;
-}
+	वापस udev->devnum;
+पूर्ण
 
-#ifdef CONFIG_KCOV
+#अगर_घोषित CONFIG_KCOV
 
-static inline void usbip_kcov_handle_init(struct usbip_device *ud)
-{
+अटल अंतरभूत व्योम usbip_kcov_handle_init(काष्ठा usbip_device *ud)
+अणु
 	ud->kcov_handle = kcov_common_handle();
-}
+पूर्ण
 
-static inline void usbip_kcov_remote_start(struct usbip_device *ud)
-{
+अटल अंतरभूत व्योम usbip_kcov_remote_start(काष्ठा usbip_device *ud)
+अणु
 	kcov_remote_start_common(ud->kcov_handle);
-}
+पूर्ण
 
-static inline void usbip_kcov_remote_stop(void)
-{
+अटल अंतरभूत व्योम usbip_kcov_remote_stop(व्योम)
+अणु
 	kcov_remote_stop();
-}
+पूर्ण
 
-#else /* CONFIG_KCOV */
+#अन्यथा /* CONFIG_KCOV */
 
-static inline void usbip_kcov_handle_init(struct usbip_device *ud) { }
-static inline void usbip_kcov_remote_start(struct usbip_device *ud) { }
-static inline void usbip_kcov_remote_stop(void) { }
+अटल अंतरभूत व्योम usbip_kcov_handle_init(काष्ठा usbip_device *ud) अणु पूर्ण
+अटल अंतरभूत व्योम usbip_kcov_remote_start(काष्ठा usbip_device *ud) अणु पूर्ण
+अटल अंतरभूत व्योम usbip_kcov_remote_stop(व्योम) अणु पूर्ण
 
-#endif /* CONFIG_KCOV */
+#पूर्ण_अगर /* CONFIG_KCOV */
 
-#endif /* __USBIP_COMMON_H */
+#पूर्ण_अगर /* __USBIP_COMMON_H */

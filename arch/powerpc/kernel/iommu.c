@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2001 Mike Corrigan & Dave Engebretsen, IBM Corporation
  * 
- * Rewrite, cleanup, new allocation schemes, virtual merging: 
+ * Reग_लिखो, cleanup, new allocation schemes, भव merging: 
  * Copyright (C) 2004 Olof Johansson, IBM Corporation
  *               and  Ben. Herrenschmidt, IBM Corporation
  *
@@ -10,1172 +11,1172 @@
  */
 
 
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/spinlock.h>
-#include <linux/string.h>
-#include <linux/dma-mapping.h>
-#include <linux/bitmap.h>
-#include <linux/iommu-helper.h>
-#include <linux/crash_dump.h>
-#include <linux/hash.h>
-#include <linux/fault-inject.h>
-#include <linux/pci.h>
-#include <linux/iommu.h>
-#include <linux/sched.h>
-#include <linux/debugfs.h>
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/iommu.h>
-#include <asm/pci-bridge.h>
-#include <asm/machdep.h>
-#include <asm/kdump.h>
-#include <asm/fadump.h>
-#include <asm/vio.h>
-#include <asm/tce.h>
-#include <asm/mmu_context.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/iommu-helper.h>
+#समावेश <linux/crash_dump.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/fault-inject.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/debugfs.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/iommu.h>
+#समावेश <यंत्र/pci-bridge.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/kdump.h>
+#समावेश <यंत्र/fadump.h>
+#समावेश <यंत्र/vपन.स>
+#समावेश <यंत्र/tce.h>
+#समावेश <यंत्र/mmu_context.h>
 
-#define DBG(...)
+#घोषणा DBG(...)
 
-#ifdef CONFIG_IOMMU_DEBUGFS
-static int iommu_debugfs_weight_get(void *data, u64 *val)
-{
-	struct iommu_table *tbl = data;
-	*val = bitmap_weight(tbl->it_map, tbl->it_size);
-	return 0;
-}
-DEFINE_DEBUGFS_ATTRIBUTE(iommu_debugfs_fops_weight, iommu_debugfs_weight_get, NULL, "%llu\n");
+#अगर_घोषित CONFIG_IOMMU_DEBUGFS
+अटल पूर्णांक iommu_debugfs_weight_get(व्योम *data, u64 *val)
+अणु
+	काष्ठा iommu_table *tbl = data;
+	*val = biपंचांगap_weight(tbl->it_map, tbl->it_size);
+	वापस 0;
+पूर्ण
+DEFINE_DEBUGFS_ATTRIBUTE(iommu_debugfs_fops_weight, iommu_debugfs_weight_get, शून्य, "%llu\n");
 
-static void iommu_debugfs_add(struct iommu_table *tbl)
-{
-	char name[10];
-	struct dentry *liobn_entry;
+अटल व्योम iommu_debugfs_add(काष्ठा iommu_table *tbl)
+अणु
+	अक्षर name[10];
+	काष्ठा dentry *liobn_entry;
 
-	sprintf(name, "%08lx", tbl->it_index);
+	प्र_लिखो(name, "%08lx", tbl->it_index);
 	liobn_entry = debugfs_create_dir(name, iommu_debugfs_dir);
 
 	debugfs_create_file_unsafe("weight", 0400, liobn_entry, tbl, &iommu_debugfs_fops_weight);
-	debugfs_create_ulong("it_size", 0400, liobn_entry, &tbl->it_size);
-	debugfs_create_ulong("it_page_shift", 0400, liobn_entry, &tbl->it_page_shift);
-	debugfs_create_ulong("it_reserved_start", 0400, liobn_entry, &tbl->it_reserved_start);
-	debugfs_create_ulong("it_reserved_end", 0400, liobn_entry, &tbl->it_reserved_end);
-	debugfs_create_ulong("it_indirect_levels", 0400, liobn_entry, &tbl->it_indirect_levels);
-	debugfs_create_ulong("it_level_size", 0400, liobn_entry, &tbl->it_level_size);
-}
+	debugfs_create_uदीर्घ("it_size", 0400, liobn_entry, &tbl->it_size);
+	debugfs_create_uदीर्घ("it_page_shift", 0400, liobn_entry, &tbl->it_page_shअगरt);
+	debugfs_create_uदीर्घ("it_reserved_start", 0400, liobn_entry, &tbl->it_reserved_start);
+	debugfs_create_uदीर्घ("it_reserved_end", 0400, liobn_entry, &tbl->it_reserved_end);
+	debugfs_create_uदीर्घ("it_indirect_levels", 0400, liobn_entry, &tbl->it_indirect_levels);
+	debugfs_create_uदीर्घ("it_level_size", 0400, liobn_entry, &tbl->it_level_size);
+पूर्ण
 
-static void iommu_debugfs_del(struct iommu_table *tbl)
-{
-	char name[10];
-	struct dentry *liobn_entry;
+अटल व्योम iommu_debugfs_del(काष्ठा iommu_table *tbl)
+अणु
+	अक्षर name[10];
+	काष्ठा dentry *liobn_entry;
 
-	sprintf(name, "%08lx", tbl->it_index);
+	प्र_लिखो(name, "%08lx", tbl->it_index);
 	liobn_entry = debugfs_lookup(name, iommu_debugfs_dir);
-	debugfs_remove(liobn_entry);
-}
-#else
-static void iommu_debugfs_add(struct iommu_table *tbl){}
-static void iommu_debugfs_del(struct iommu_table *tbl){}
-#endif
+	debugfs_हटाओ(liobn_entry);
+पूर्ण
+#अन्यथा
+अटल व्योम iommu_debugfs_add(काष्ठा iommu_table *tbl)अणुपूर्ण
+अटल व्योम iommu_debugfs_del(काष्ठा iommu_table *tbl)अणुपूर्ण
+#पूर्ण_अगर
 
-static int novmerge;
+अटल पूर्णांक novmerge;
 
-static void __iommu_free(struct iommu_table *, dma_addr_t, unsigned int);
+अटल व्योम __iommu_मुक्त(काष्ठा iommu_table *, dma_addr_t, अचिन्हित पूर्णांक);
 
-static int __init setup_iommu(char *str)
-{
-	if (!strcmp(str, "novmerge"))
+अटल पूर्णांक __init setup_iommu(अक्षर *str)
+अणु
+	अगर (!म_भेद(str, "novmerge"))
 		novmerge = 1;
-	else if (!strcmp(str, "vmerge"))
+	अन्यथा अगर (!म_भेद(str, "vmerge"))
 		novmerge = 0;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("iommu=", setup_iommu);
 
-static DEFINE_PER_CPU(unsigned int, iommu_pool_hash);
+अटल DEFINE_PER_CPU(अचिन्हित पूर्णांक, iommu_pool_hash);
 
 /*
- * We precalculate the hash to avoid doing it on every allocation.
+ * We precalculate the hash to aव्योम करोing it on every allocation.
  *
- * The hash is important to spread CPUs across all the pools. For example,
- * on a POWER7 with 4 way SMT we want interrupts on the primary threads and
- * with 4 pools all primary threads would map to the same pool.
+ * The hash is important to spपढ़ो CPUs across all the pools. For example,
+ * on a POWER7 with 4 way SMT we want पूर्णांकerrupts on the primary thपढ़ोs and
+ * with 4 pools all primary thपढ़ोs would map to the same pool.
  */
-static int __init setup_iommu_pool_hash(void)
-{
-	unsigned int i;
+अटल पूर्णांक __init setup_iommu_pool_hash(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for_each_possible_cpu(i)
+	क्रम_each_possible_cpu(i)
 		per_cpu(iommu_pool_hash, i) = hash_32(i, IOMMU_POOL_HASHBITS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(setup_iommu_pool_hash);
 
-#ifdef CONFIG_FAIL_IOMMU
+#अगर_घोषित CONFIG_FAIL_IOMMU
 
-static DECLARE_FAULT_ATTR(fail_iommu);
+अटल DECLARE_FAULT_ATTR(fail_iommu);
 
-static int __init setup_fail_iommu(char *str)
-{
-	return setup_fault_attr(&fail_iommu, str);
-}
+अटल पूर्णांक __init setup_fail_iommu(अक्षर *str)
+अणु
+	वापस setup_fault_attr(&fail_iommu, str);
+पूर्ण
 __setup("fail_iommu=", setup_fail_iommu);
 
-static bool should_fail_iommu(struct device *dev)
-{
-	return dev->archdata.fail_iommu && should_fail(&fail_iommu, 1);
-}
+अटल bool should_fail_iommu(काष्ठा device *dev)
+अणु
+	वापस dev->archdata.fail_iommu && should_fail(&fail_iommu, 1);
+पूर्ण
 
-static int __init fail_iommu_debugfs(void)
-{
-	struct dentry *dir = fault_create_debugfs_attr("fail_iommu",
-						       NULL, &fail_iommu);
+अटल पूर्णांक __init fail_iommu_debugfs(व्योम)
+अणु
+	काष्ठा dentry *dir = fault_create_debugfs_attr("fail_iommu",
+						       शून्य, &fail_iommu);
 
-	return PTR_ERR_OR_ZERO(dir);
-}
+	वापस PTR_ERR_OR_ZERO(dir);
+पूर्ण
 late_initcall(fail_iommu_debugfs);
 
-static ssize_t fail_iommu_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", dev->archdata.fail_iommu);
-}
+अटल sमाप_प्रकार fail_iommu_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", dev->archdata.fail_iommu);
+पूर्ण
 
-static ssize_t fail_iommu_store(struct device *dev,
-				struct device_attribute *attr, const char *buf,
-				size_t count)
-{
-	int i;
+अटल sमाप_प्रकार fail_iommu_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
+				माप_प्रकार count)
+अणु
+	पूर्णांक i;
 
-	if (count > 0 && sscanf(buf, "%d", &i) > 0)
+	अगर (count > 0 && माला_पूछो(buf, "%d", &i) > 0)
 		dev->archdata.fail_iommu = (i == 0) ? 0 : 1;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(fail_iommu);
+अटल DEVICE_ATTR_RW(fail_iommu);
 
-static int fail_iommu_bus_notify(struct notifier_block *nb,
-				 unsigned long action, void *data)
-{
-	struct device *dev = data;
+अटल पूर्णांक fail_iommu_bus_notअगरy(काष्ठा notअगरier_block *nb,
+				 अचिन्हित दीर्घ action, व्योम *data)
+अणु
+	काष्ठा device *dev = data;
 
-	if (action == BUS_NOTIFY_ADD_DEVICE) {
-		if (device_create_file(dev, &dev_attr_fail_iommu))
+	अगर (action == BUS_NOTIFY_ADD_DEVICE) अणु
+		अगर (device_create_file(dev, &dev_attr_fail_iommu))
 			pr_warn("Unable to create IOMMU fault injection sysfs "
 				"entries\n");
-	} else if (action == BUS_NOTIFY_DEL_DEVICE) {
-		device_remove_file(dev, &dev_attr_fail_iommu);
-	}
+	पूर्ण अन्यथा अगर (action == BUS_NOTIFY_DEL_DEVICE) अणु
+		device_हटाओ_file(dev, &dev_attr_fail_iommu);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct notifier_block fail_iommu_bus_notifier = {
-	.notifier_call = fail_iommu_bus_notify
-};
+अटल काष्ठा notअगरier_block fail_iommu_bus_notअगरier = अणु
+	.notअगरier_call = fail_iommu_bus_notअगरy
+पूर्ण;
 
-static int __init fail_iommu_setup(void)
-{
-#ifdef CONFIG_PCI
-	bus_register_notifier(&pci_bus_type, &fail_iommu_bus_notifier);
-#endif
-#ifdef CONFIG_IBMVIO
-	bus_register_notifier(&vio_bus_type, &fail_iommu_bus_notifier);
-#endif
+अटल पूर्णांक __init fail_iommu_setup(व्योम)
+अणु
+#अगर_घोषित CONFIG_PCI
+	bus_रेजिस्टर_notअगरier(&pci_bus_type, &fail_iommu_bus_notअगरier);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IBMVIO
+	bus_रेजिस्टर_notअगरier(&vio_bus_type, &fail_iommu_bus_notअगरier);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /*
- * Must execute after PCI and VIO subsystem have initialised but before
+ * Must execute after PCI and VIO subप्रणाली have initialised but beक्रमe
  * devices are probed.
  */
 arch_initcall(fail_iommu_setup);
-#else
-static inline bool should_fail_iommu(struct device *dev)
-{
-	return false;
-}
-#endif
+#अन्यथा
+अटल अंतरभूत bool should_fail_iommu(काष्ठा device *dev)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-static unsigned long iommu_range_alloc(struct device *dev,
-				       struct iommu_table *tbl,
-                                       unsigned long npages,
-                                       unsigned long *handle,
-                                       unsigned long mask,
-                                       unsigned int align_order)
-{ 
-	unsigned long n, end, start;
-	unsigned long limit;
-	int largealloc = npages > 15;
-	int pass = 0;
-	unsigned long align_mask;
-	unsigned long flags;
-	unsigned int pool_nr;
-	struct iommu_pool *pool;
+अटल अचिन्हित दीर्घ iommu_range_alloc(काष्ठा device *dev,
+				       काष्ठा iommu_table *tbl,
+                                       अचिन्हित दीर्घ npages,
+                                       अचिन्हित दीर्घ *handle,
+                                       अचिन्हित दीर्घ mask,
+                                       अचिन्हित पूर्णांक align_order)
+अणु 
+	अचिन्हित दीर्घ n, end, start;
+	अचिन्हित दीर्घ limit;
+	पूर्णांक largealloc = npages > 15;
+	पूर्णांक pass = 0;
+	अचिन्हित दीर्घ align_mask;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक pool_nr;
+	काष्ठा iommu_pool *pool;
 
 	align_mask = (1ull << align_order) - 1;
 
 	/* This allocator was derived from x86_64's bit string search */
 
 	/* Sanity check */
-	if (unlikely(npages == 0)) {
-		if (printk_ratelimit())
+	अगर (unlikely(npages == 0)) अणु
+		अगर (prपूर्णांकk_ratelimit())
 			WARN_ON(1);
-		return DMA_MAPPING_ERROR;
-	}
+		वापस DMA_MAPPING_ERROR;
+	पूर्ण
 
-	if (should_fail_iommu(dev))
-		return DMA_MAPPING_ERROR;
+	अगर (should_fail_iommu(dev))
+		वापस DMA_MAPPING_ERROR;
 
 	/*
-	 * We don't need to disable preemption here because any CPU can
+	 * We करोn't need to disable preemption here because any CPU can
 	 * safely use any IOMMU pool.
 	 */
-	pool_nr = raw_cpu_read(iommu_pool_hash) & (tbl->nr_pools - 1);
+	pool_nr = raw_cpu_पढ़ो(iommu_pool_hash) & (tbl->nr_pools - 1);
 
-	if (largealloc)
+	अगर (largealloc)
 		pool = &(tbl->large_pool);
-	else
+	अन्यथा
 		pool = &(tbl->pools[pool_nr]);
 
 	spin_lock_irqsave(&(pool->lock), flags);
 
 again:
-	if ((pass == 0) && handle && *handle &&
+	अगर ((pass == 0) && handle && *handle &&
 	    (*handle >= pool->start) && (*handle < pool->end))
 		start = *handle;
-	else
-		start = pool->hint;
+	अन्यथा
+		start = pool->hपूर्णांक;
 
 	limit = pool->end;
 
-	/* The case below can happen if we have a small segment appended
+	/* The हाल below can happen अगर we have a small segment appended
 	 * to a large, or when the previous alloc was at the very end of
 	 * the available space. If so, go back to the initial start.
 	 */
-	if (start >= limit)
+	अगर (start >= limit)
 		start = pool->start;
 
-	if (limit + tbl->it_offset > mask) {
+	अगर (limit + tbl->it_offset > mask) अणु
 		limit = mask - tbl->it_offset + 1;
-		/* If we're constrained on address range, first try
-		 * at the masked hint to avoid O(n) search complexity,
+		/* If we're स्थिरrained on address range, first try
+		 * at the masked hपूर्णांक to aव्योम O(n) search complनिकासy,
 		 * but on second pass, start at 0 in pool 0.
 		 */
-		if ((start & mask) >= limit || pass > 0) {
+		अगर ((start & mask) >= limit || pass > 0) अणु
 			spin_unlock(&(pool->lock));
 			pool = &(tbl->pools[0]);
 			spin_lock(&(pool->lock));
 			start = pool->start;
-		} else {
+		पूर्ण अन्यथा अणु
 			start &= mask;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	n = iommu_area_alloc(tbl->it_map, limit, start, npages, tbl->it_offset,
-			dma_get_seg_boundary_nr_pages(dev, tbl->it_page_shift),
+			dma_get_seg_boundary_nr_pages(dev, tbl->it_page_shअगरt),
 			align_mask);
-	if (n == -1) {
-		if (likely(pass == 0)) {
+	अगर (n == -1) अणु
+		अगर (likely(pass == 0)) अणु
 			/* First try the pool from the start */
-			pool->hint = pool->start;
+			pool->hपूर्णांक = pool->start;
 			pass++;
-			goto again;
+			जाओ again;
 
-		} else if (pass <= tbl->nr_pools) {
+		पूर्ण अन्यथा अगर (pass <= tbl->nr_pools) अणु
 			/* Now try scanning all the other pools */
 			spin_unlock(&(pool->lock));
 			pool_nr = (pool_nr + 1) & (tbl->nr_pools - 1);
 			pool = &tbl->pools[pool_nr];
 			spin_lock(&(pool->lock));
-			pool->hint = pool->start;
+			pool->hपूर्णांक = pool->start;
 			pass++;
-			goto again;
+			जाओ again;
 
-		} else if (pass == tbl->nr_pools + 1) {
+		पूर्ण अन्यथा अगर (pass == tbl->nr_pools + 1) अणु
 			/* Last resort: try largepool */
 			spin_unlock(&pool->lock);
 			pool = &tbl->large_pool;
 			spin_lock(&pool->lock);
-			pool->hint = pool->start;
+			pool->hपूर्णांक = pool->start;
 			pass++;
-			goto again;
+			जाओ again;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Give up */
 			spin_unlock_irqrestore(&(pool->lock), flags);
-			return DMA_MAPPING_ERROR;
-		}
-	}
+			वापस DMA_MAPPING_ERROR;
+		पूर्ण
+	पूर्ण
 
 	end = n + npages;
 
-	/* Bump the hint to a new block for small allocs. */
-	if (largealloc) {
-		/* Don't bump to new block to avoid fragmentation */
-		pool->hint = end;
-	} else {
+	/* Bump the hपूर्णांक to a new block क्रम small allocs. */
+	अगर (largealloc) अणु
+		/* Don't bump to new block to aव्योम fragmentation */
+		pool->hपूर्णांक = end;
+	पूर्ण अन्यथा अणु
 		/* Overflow will be taken care of at the next allocation */
-		pool->hint = (end + tbl->it_blocksize - 1) &
+		pool->hपूर्णांक = (end + tbl->it_blocksize - 1) &
 		                ~(tbl->it_blocksize - 1);
-	}
+	पूर्ण
 
-	/* Update handle for SG allocations */
-	if (handle)
+	/* Update handle क्रम SG allocations */
+	अगर (handle)
 		*handle = end;
 
 	spin_unlock_irqrestore(&(pool->lock), flags);
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static dma_addr_t iommu_alloc(struct device *dev, struct iommu_table *tbl,
-			      void *page, unsigned int npages,
-			      enum dma_data_direction direction,
-			      unsigned long mask, unsigned int align_order,
-			      unsigned long attrs)
-{
-	unsigned long entry;
+अटल dma_addr_t iommu_alloc(काष्ठा device *dev, काष्ठा iommu_table *tbl,
+			      व्योम *page, अचिन्हित पूर्णांक npages,
+			      क्रमागत dma_data_direction direction,
+			      अचिन्हित दीर्घ mask, अचिन्हित पूर्णांक align_order,
+			      अचिन्हित दीर्घ attrs)
+अणु
+	अचिन्हित दीर्घ entry;
 	dma_addr_t ret = DMA_MAPPING_ERROR;
-	int build_fail;
+	पूर्णांक build_fail;
 
-	entry = iommu_range_alloc(dev, tbl, npages, NULL, mask, align_order);
+	entry = iommu_range_alloc(dev, tbl, npages, शून्य, mask, align_order);
 
-	if (unlikely(entry == DMA_MAPPING_ERROR))
-		return DMA_MAPPING_ERROR;
+	अगर (unlikely(entry == DMA_MAPPING_ERROR))
+		वापस DMA_MAPPING_ERROR;
 
-	entry += tbl->it_offset;	/* Offset into real TCE table */
-	ret = entry << tbl->it_page_shift;	/* Set the return dma address */
+	entry += tbl->it_offset;	/* Offset पूर्णांकo real TCE table */
+	ret = entry << tbl->it_page_shअगरt;	/* Set the वापस dma address */
 
 	/* Put the TCEs in the HW table */
 	build_fail = tbl->it_ops->set(tbl, entry, npages,
-				      (unsigned long)page &
+				      (अचिन्हित दीर्घ)page &
 				      IOMMU_PAGE_MASK(tbl), direction, attrs);
 
-	/* tbl->it_ops->set() only returns non-zero for transient errors.
-	 * Clean up the table bitmap in this case and return
+	/* tbl->it_ops->set() only वापसs non-zero क्रम transient errors.
+	 * Clean up the table biपंचांगap in this हाल and वापस
 	 * DMA_MAPPING_ERROR. For all other errors the functionality is
 	 * not altered.
 	 */
-	if (unlikely(build_fail)) {
-		__iommu_free(tbl, ret, npages);
-		return DMA_MAPPING_ERROR;
-	}
+	अगर (unlikely(build_fail)) अणु
+		__iommu_मुक्त(tbl, ret, npages);
+		वापस DMA_MAPPING_ERROR;
+	पूर्ण
 
-	/* Flush/invalidate TLB caches if necessary */
-	if (tbl->it_ops->flush)
+	/* Flush/invalidate TLB caches अगर necessary */
+	अगर (tbl->it_ops->flush)
 		tbl->it_ops->flush(tbl);
 
 	/* Make sure updates are seen by hardware */
 	mb();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool iommu_free_check(struct iommu_table *tbl, dma_addr_t dma_addr,
-			     unsigned int npages)
-{
-	unsigned long entry, free_entry;
+अटल bool iommu_मुक्त_check(काष्ठा iommu_table *tbl, dma_addr_t dma_addr,
+			     अचिन्हित पूर्णांक npages)
+अणु
+	अचिन्हित दीर्घ entry, मुक्त_entry;
 
-	entry = dma_addr >> tbl->it_page_shift;
-	free_entry = entry - tbl->it_offset;
+	entry = dma_addr >> tbl->it_page_shअगरt;
+	मुक्त_entry = entry - tbl->it_offset;
 
-	if (((free_entry + npages) > tbl->it_size) ||
-	    (entry < tbl->it_offset)) {
-		if (printk_ratelimit()) {
-			printk(KERN_INFO "iommu_free: invalid entry\n");
-			printk(KERN_INFO "\tentry     = 0x%lx\n", entry); 
-			printk(KERN_INFO "\tdma_addr  = 0x%llx\n", (u64)dma_addr);
-			printk(KERN_INFO "\tTable     = 0x%llx\n", (u64)tbl);
-			printk(KERN_INFO "\tbus#      = 0x%llx\n", (u64)tbl->it_busno);
-			printk(KERN_INFO "\tsize      = 0x%llx\n", (u64)tbl->it_size);
-			printk(KERN_INFO "\tstartOff  = 0x%llx\n", (u64)tbl->it_offset);
-			printk(KERN_INFO "\tindex     = 0x%llx\n", (u64)tbl->it_index);
+	अगर (((मुक्त_entry + npages) > tbl->it_size) ||
+	    (entry < tbl->it_offset)) अणु
+		अगर (prपूर्णांकk_ratelimit()) अणु
+			prपूर्णांकk(KERN_INFO "iommu_free: invalid entry\n");
+			prपूर्णांकk(KERN_INFO "\tentry     = 0x%lx\n", entry); 
+			prपूर्णांकk(KERN_INFO "\tdma_addr  = 0x%llx\n", (u64)dma_addr);
+			prपूर्णांकk(KERN_INFO "\tTable     = 0x%llx\n", (u64)tbl);
+			prपूर्णांकk(KERN_INFO "\tbus#      = 0x%llx\n", (u64)tbl->it_busno);
+			prपूर्णांकk(KERN_INFO "\tsize      = 0x%llx\n", (u64)tbl->it_size);
+			prपूर्णांकk(KERN_INFO "\tstartOff  = 0x%llx\n", (u64)tbl->it_offset);
+			prपूर्णांकk(KERN_INFO "\tindex     = 0x%llx\n", (u64)tbl->it_index);
 			WARN_ON(1);
-		}
+		पूर्ण
 
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct iommu_pool *get_pool(struct iommu_table *tbl,
-				   unsigned long entry)
-{
-	struct iommu_pool *p;
-	unsigned long largepool_start = tbl->large_pool.start;
+अटल काष्ठा iommu_pool *get_pool(काष्ठा iommu_table *tbl,
+				   अचिन्हित दीर्घ entry)
+अणु
+	काष्ठा iommu_pool *p;
+	अचिन्हित दीर्घ largepool_start = tbl->large_pool.start;
 
 	/* The large pool is the last pool at the top of the table */
-	if (entry >= largepool_start) {
+	अगर (entry >= largepool_start) अणु
 		p = &tbl->large_pool;
-	} else {
-		unsigned int pool_nr = entry / tbl->poolsize;
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक pool_nr = entry / tbl->poolsize;
 
 		BUG_ON(pool_nr > tbl->nr_pools);
 		p = &tbl->pools[pool_nr];
-	}
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static void __iommu_free(struct iommu_table *tbl, dma_addr_t dma_addr,
-			 unsigned int npages)
-{
-	unsigned long entry, free_entry;
-	unsigned long flags;
-	struct iommu_pool *pool;
+अटल व्योम __iommu_मुक्त(काष्ठा iommu_table *tbl, dma_addr_t dma_addr,
+			 अचिन्हित पूर्णांक npages)
+अणु
+	अचिन्हित दीर्घ entry, मुक्त_entry;
+	अचिन्हित दीर्घ flags;
+	काष्ठा iommu_pool *pool;
 
-	entry = dma_addr >> tbl->it_page_shift;
-	free_entry = entry - tbl->it_offset;
+	entry = dma_addr >> tbl->it_page_shअगरt;
+	मुक्त_entry = entry - tbl->it_offset;
 
-	pool = get_pool(tbl, free_entry);
+	pool = get_pool(tbl, मुक्त_entry);
 
-	if (!iommu_free_check(tbl, dma_addr, npages))
-		return;
+	अगर (!iommu_मुक्त_check(tbl, dma_addr, npages))
+		वापस;
 
 	tbl->it_ops->clear(tbl, entry, npages);
 
 	spin_lock_irqsave(&(pool->lock), flags);
-	bitmap_clear(tbl->it_map, free_entry, npages);
+	biपंचांगap_clear(tbl->it_map, मुक्त_entry, npages);
 	spin_unlock_irqrestore(&(pool->lock), flags);
-}
+पूर्ण
 
-static void iommu_free(struct iommu_table *tbl, dma_addr_t dma_addr,
-		unsigned int npages)
-{
-	__iommu_free(tbl, dma_addr, npages);
+अटल व्योम iommu_मुक्त(काष्ठा iommu_table *tbl, dma_addr_t dma_addr,
+		अचिन्हित पूर्णांक npages)
+अणु
+	__iommu_मुक्त(tbl, dma_addr, npages);
 
-	/* Make sure TLB cache is flushed if the HW needs it. We do
-	 * not do an mb() here on purpose, it is not needed on any of
-	 * the current platforms.
+	/* Make sure TLB cache is flushed अगर the HW needs it. We करो
+	 * not करो an mb() here on purpose, it is not needed on any of
+	 * the current platक्रमms.
 	 */
-	if (tbl->it_ops->flush)
+	अगर (tbl->it_ops->flush)
 		tbl->it_ops->flush(tbl);
-}
+पूर्ण
 
-int ppc_iommu_map_sg(struct device *dev, struct iommu_table *tbl,
-		     struct scatterlist *sglist, int nelems,
-		     unsigned long mask, enum dma_data_direction direction,
-		     unsigned long attrs)
-{
+पूर्णांक ppc_iommu_map_sg(काष्ठा device *dev, काष्ठा iommu_table *tbl,
+		     काष्ठा scatterlist *sglist, पूर्णांक nelems,
+		     अचिन्हित दीर्घ mask, क्रमागत dma_data_direction direction,
+		     अचिन्हित दीर्घ attrs)
+अणु
 	dma_addr_t dma_next = 0, dma_addr;
-	struct scatterlist *s, *outs, *segstart;
-	int outcount, incount, i, build_fail = 0;
-	unsigned int align;
-	unsigned long handle;
-	unsigned int max_seg_size;
+	काष्ठा scatterlist *s, *outs, *segstart;
+	पूर्णांक outcount, incount, i, build_fail = 0;
+	अचिन्हित पूर्णांक align;
+	अचिन्हित दीर्घ handle;
+	अचिन्हित पूर्णांक max_seg_size;
 
 	BUG_ON(direction == DMA_NONE);
 
-	if ((nelems == 0) || !tbl)
-		return 0;
+	अगर ((nelems == 0) || !tbl)
+		वापस 0;
 
 	outs = s = segstart = &sglist[0];
 	outcount = 1;
 	incount = nelems;
 	handle = 0;
 
-	/* Init first segment length for backout at failure */
+	/* Init first segment length क्रम backout at failure */
 	outs->dma_length = 0;
 
 	DBG("sg mapping %d elements:\n", nelems);
 
 	max_seg_size = dma_get_max_seg_size(dev);
-	for_each_sg(sglist, s, nelems, i) {
-		unsigned long vaddr, npages, entry, slen;
+	क्रम_each_sg(sglist, s, nelems, i) अणु
+		अचिन्हित दीर्घ vaddr, npages, entry, slen;
 
 		slen = s->length;
 		/* Sanity check */
-		if (slen == 0) {
+		अगर (slen == 0) अणु
 			dma_next = 0;
-			continue;
-		}
-		/* Allocate iommu entries for that segment */
-		vaddr = (unsigned long) sg_virt(s);
+			जारी;
+		पूर्ण
+		/* Allocate iommu entries क्रम that segment */
+		vaddr = (अचिन्हित दीर्घ) sg_virt(s);
 		npages = iommu_num_pages(vaddr, slen, IOMMU_PAGE_SIZE(tbl));
 		align = 0;
-		if (tbl->it_page_shift < PAGE_SHIFT && slen >= PAGE_SIZE &&
+		अगर (tbl->it_page_shअगरt < PAGE_SHIFT && slen >= PAGE_SIZE &&
 		    (vaddr & ~PAGE_MASK) == 0)
-			align = PAGE_SHIFT - tbl->it_page_shift;
+			align = PAGE_SHIFT - tbl->it_page_shअगरt;
 		entry = iommu_range_alloc(dev, tbl, npages, &handle,
-					  mask >> tbl->it_page_shift, align);
+					  mask >> tbl->it_page_shअगरt, align);
 
 		DBG("  - vaddr: %lx, size: %lx\n", vaddr, slen);
 
 		/* Handle failure */
-		if (unlikely(entry == DMA_MAPPING_ERROR)) {
-			if (!(attrs & DMA_ATTR_NO_WARN) &&
-			    printk_ratelimit())
+		अगर (unlikely(entry == DMA_MAPPING_ERROR)) अणु
+			अगर (!(attrs & DMA_ATTR_NO_WARN) &&
+			    prपूर्णांकk_ratelimit())
 				dev_info(dev, "iommu_alloc failed, tbl %p "
 					 "vaddr %lx npages %lu\n", tbl, vaddr,
 					 npages);
-			goto failure;
-		}
+			जाओ failure;
+		पूर्ण
 
 		/* Convert entry to a dma_addr_t */
 		entry += tbl->it_offset;
-		dma_addr = entry << tbl->it_page_shift;
+		dma_addr = entry << tbl->it_page_shअगरt;
 		dma_addr |= (s->offset & ~IOMMU_PAGE_MASK(tbl));
 
 		DBG("  - %lu pages, entry: %lx, dma_addr: %lx\n",
 			    npages, entry, dma_addr);
 
-		/* Insert into HW table */
+		/* Insert पूर्णांकo HW table */
 		build_fail = tbl->it_ops->set(tbl, entry, npages,
 					      vaddr & IOMMU_PAGE_MASK(tbl),
 					      direction, attrs);
-		if(unlikely(build_fail))
-			goto failure;
+		अगर(unlikely(build_fail))
+			जाओ failure;
 
-		/* If we are in an open segment, try merging */
-		if (segstart != s) {
+		/* If we are in an खोलो segment, try merging */
+		अगर (segstart != s) अणु
 			DBG("  - trying merge...\n");
-			/* We cannot merge if:
+			/* We cannot merge अगर:
 			 * - allocated dma_addr isn't contiguous to previous allocation
 			 */
-			if (novmerge || (dma_addr != dma_next) ||
-			    (outs->dma_length + s->length > max_seg_size)) {
+			अगर (novmerge || (dma_addr != dma_next) ||
+			    (outs->dma_length + s->length > max_seg_size)) अणु
 				/* Can't merge: create a new segment */
 				segstart = s;
 				outcount++;
 				outs = sg_next(outs);
 				DBG("    can't merge, new segment.\n");
-			} else {
+			पूर्ण अन्यथा अणु
 				outs->dma_length += s->length;
 				DBG("    merged, new len: %ux\n", outs->dma_length);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (segstart == s) {
+		अगर (segstart == s) अणु
 			/* This is a new segment, fill entries */
 			DBG("  - filling new segment.\n");
 			outs->dma_address = dma_addr;
 			outs->dma_length = slen;
-		}
+		पूर्ण
 
-		/* Calculate next page pointer for contiguous check */
+		/* Calculate next page poपूर्णांकer क्रम contiguous check */
 		dma_next = dma_addr + slen;
 
 		DBG("  - dma next is: %lx\n", dma_next);
-	}
+	पूर्ण
 
-	/* Flush/invalidate TLB caches if necessary */
-	if (tbl->it_ops->flush)
+	/* Flush/invalidate TLB caches अगर necessary */
+	अगर (tbl->it_ops->flush)
 		tbl->it_ops->flush(tbl);
 
 	DBG("mapped %d elements:\n", outcount);
 
 	/* For the sake of ppc_iommu_unmap_sg, we clear out the length in the
-	 * next entry of the sglist if we didn't fill the list completely
+	 * next entry of the sglist अगर we didn't fill the list completely
 	 */
-	if (outcount < incount) {
+	अगर (outcount < incount) अणु
 		outs = sg_next(outs);
 		outs->dma_address = DMA_MAPPING_ERROR;
 		outs->dma_length = 0;
-	}
+	पूर्ण
 
 	/* Make sure updates are seen by hardware */
 	mb();
 
-	return outcount;
+	वापस outcount;
 
  failure:
-	for_each_sg(sglist, s, nelems, i) {
-		if (s->dma_length != 0) {
-			unsigned long vaddr, npages;
+	क्रम_each_sg(sglist, s, nelems, i) अणु
+		अगर (s->dma_length != 0) अणु
+			अचिन्हित दीर्घ vaddr, npages;
 
 			vaddr = s->dma_address & IOMMU_PAGE_MASK(tbl);
 			npages = iommu_num_pages(s->dma_address, s->dma_length,
 						 IOMMU_PAGE_SIZE(tbl));
-			__iommu_free(tbl, vaddr, npages);
+			__iommu_मुक्त(tbl, vaddr, npages);
 			s->dma_address = DMA_MAPPING_ERROR;
 			s->dma_length = 0;
-		}
-		if (s == outs)
-			break;
-	}
-	return 0;
-}
+		पूर्ण
+		अगर (s == outs)
+			अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-void ppc_iommu_unmap_sg(struct iommu_table *tbl, struct scatterlist *sglist,
-			int nelems, enum dma_data_direction direction,
-			unsigned long attrs)
-{
-	struct scatterlist *sg;
+व्योम ppc_iommu_unmap_sg(काष्ठा iommu_table *tbl, काष्ठा scatterlist *sglist,
+			पूर्णांक nelems, क्रमागत dma_data_direction direction,
+			अचिन्हित दीर्घ attrs)
+अणु
+	काष्ठा scatterlist *sg;
 
 	BUG_ON(direction == DMA_NONE);
 
-	if (!tbl)
-		return;
+	अगर (!tbl)
+		वापस;
 
 	sg = sglist;
-	while (nelems--) {
-		unsigned int npages;
+	जबतक (nelems--) अणु
+		अचिन्हित पूर्णांक npages;
 		dma_addr_t dma_handle = sg->dma_address;
 
-		if (sg->dma_length == 0)
-			break;
+		अगर (sg->dma_length == 0)
+			अवरोध;
 		npages = iommu_num_pages(dma_handle, sg->dma_length,
 					 IOMMU_PAGE_SIZE(tbl));
-		__iommu_free(tbl, dma_handle, npages);
+		__iommu_मुक्त(tbl, dma_handle, npages);
 		sg = sg_next(sg);
-	}
+	पूर्ण
 
-	/* Flush/invalidate TLBs if necessary. As for iommu_free(), we
-	 * do not do an mb() here, the affected platforms do not need it
-	 * when freeing.
+	/* Flush/invalidate TLBs अगर necessary. As क्रम iommu_मुक्त(), we
+	 * करो not करो an mb() here, the affected platक्रमms करो not need it
+	 * when मुक्तing.
 	 */
-	if (tbl->it_ops->flush)
+	अगर (tbl->it_ops->flush)
 		tbl->it_ops->flush(tbl);
-}
+पूर्ण
 
-static void iommu_table_clear(struct iommu_table *tbl)
-{
+अटल व्योम iommu_table_clear(काष्ठा iommu_table *tbl)
+अणु
 	/*
-	 * In case of firmware assisted dump system goes through clean
-	 * reboot process at the time of system crash. Hence it's safe to
-	 * clear the TCE entries if firmware assisted dump is active.
+	 * In हाल of firmware assisted dump प्रणाली goes through clean
+	 * reboot process at the समय of प्रणाली crash. Hence it's safe to
+	 * clear the TCE entries अगर firmware assisted dump is active.
 	 */
-	if (!is_kdump_kernel() || is_fadump_active()) {
-		/* Clear the table in case firmware left allocations in it */
+	अगर (!is_kdump_kernel() || is_fadump_active()) अणु
+		/* Clear the table in हाल firmware left allocations in it */
 		tbl->it_ops->clear(tbl, tbl->it_offset, tbl->it_size);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-#ifdef CONFIG_CRASH_DUMP
-	if (tbl->it_ops->get) {
-		unsigned long index, tceval, tcecount = 0;
+#अगर_घोषित CONFIG_CRASH_DUMP
+	अगर (tbl->it_ops->get) अणु
+		अचिन्हित दीर्घ index, tceval, tcecount = 0;
 
 		/* Reserve the existing mappings left by the first kernel. */
-		for (index = 0; index < tbl->it_size; index++) {
+		क्रम (index = 0; index < tbl->it_size; index++) अणु
 			tceval = tbl->it_ops->get(tbl, index + tbl->it_offset);
 			/*
 			 * Freed TCE entry contains 0x7fffffffffffffff on JS20
 			 */
-			if (tceval && (tceval != 0x7fffffffffffffffUL)) {
+			अगर (tceval && (tceval != 0x7fffffffffffffffUL)) अणु
 				__set_bit(index, tbl->it_map);
 				tcecount++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if ((tbl->it_size - tcecount) < KDUMP_MIN_TCE_ENTRIES) {
-			printk(KERN_WARNING "TCE table is full; freeing ");
-			printk(KERN_WARNING "%d entries for the kdump boot\n",
+		अगर ((tbl->it_size - tcecount) < KDUMP_MIN_TCE_ENTRIES) अणु
+			prपूर्णांकk(KERN_WARNING "TCE table is full; freeing ");
+			prपूर्णांकk(KERN_WARNING "%d entries for the kdump boot\n",
 				KDUMP_MIN_TCE_ENTRIES);
-			for (index = tbl->it_size - KDUMP_MIN_TCE_ENTRIES;
+			क्रम (index = tbl->it_size - KDUMP_MIN_TCE_ENTRIES;
 				index < tbl->it_size; index++)
 				__clear_bit(index, tbl->it_map);
-		}
-	}
-#endif
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static void iommu_table_reserve_pages(struct iommu_table *tbl,
-		unsigned long res_start, unsigned long res_end)
-{
-	int i;
+अटल व्योम iommu_table_reserve_pages(काष्ठा iommu_table *tbl,
+		अचिन्हित दीर्घ res_start, अचिन्हित दीर्घ res_end)
+अणु
+	पूर्णांक i;
 
 	WARN_ON_ONCE(res_end < res_start);
 	/*
-	 * Reserve page 0 so it will not be used for any mappings.
-	 * This avoids buggy drivers that consider page 0 to be invalid
+	 * Reserve page 0 so it will not be used क्रम any mappings.
+	 * This aव्योमs buggy drivers that consider page 0 to be invalid
 	 * to crash the machine or even lose data.
 	 */
-	if (tbl->it_offset == 0)
+	अगर (tbl->it_offset == 0)
 		set_bit(0, tbl->it_map);
 
 	tbl->it_reserved_start = res_start;
 	tbl->it_reserved_end = res_end;
 
-	/* Check if res_start..res_end isn't empty and overlaps the table */
-	if (res_start && res_end &&
+	/* Check अगर res_start..res_end isn't empty and overlaps the table */
+	अगर (res_start && res_end &&
 			(tbl->it_offset + tbl->it_size < res_start ||
 			 res_end < tbl->it_offset))
-		return;
+		वापस;
 
-	for (i = tbl->it_reserved_start; i < tbl->it_reserved_end; ++i)
+	क्रम (i = tbl->it_reserved_start; i < tbl->it_reserved_end; ++i)
 		set_bit(i - tbl->it_offset, tbl->it_map);
-}
+पूर्ण
 
-static void iommu_table_release_pages(struct iommu_table *tbl)
-{
-	int i;
+अटल व्योम iommu_table_release_pages(काष्ठा iommu_table *tbl)
+अणु
+	पूर्णांक i;
 
 	/*
-	 * In case we have reserved the first bit, we should not emit
+	 * In हाल we have reserved the first bit, we should not emit
 	 * the warning below.
 	 */
-	if (tbl->it_offset == 0)
+	अगर (tbl->it_offset == 0)
 		clear_bit(0, tbl->it_map);
 
-	for (i = tbl->it_reserved_start; i < tbl->it_reserved_end; ++i)
+	क्रम (i = tbl->it_reserved_start; i < tbl->it_reserved_end; ++i)
 		clear_bit(i - tbl->it_offset, tbl->it_map);
-}
+पूर्ण
 
 /*
- * Build a iommu_table structure.  This contains a bit map which
+ * Build a iommu_table काष्ठाure.  This contains a bit map which
  * is used to manage allocation of the tce space.
  */
-struct iommu_table *iommu_init_table(struct iommu_table *tbl, int nid,
-		unsigned long res_start, unsigned long res_end)
-{
-	unsigned long sz;
-	static int welcomed = 0;
-	unsigned int i;
-	struct iommu_pool *p;
+काष्ठा iommu_table *iommu_init_table(काष्ठा iommu_table *tbl, पूर्णांक nid,
+		अचिन्हित दीर्घ res_start, अचिन्हित दीर्घ res_end)
+अणु
+	अचिन्हित दीर्घ sz;
+	अटल पूर्णांक welcomed = 0;
+	अचिन्हित पूर्णांक i;
+	काष्ठा iommu_pool *p;
 
 	BUG_ON(!tbl->it_ops);
 
-	/* number of bytes needed for the bitmap */
-	sz = BITS_TO_LONGS(tbl->it_size) * sizeof(unsigned long);
+	/* number of bytes needed क्रम the biपंचांगap */
+	sz = BITS_TO_LONGS(tbl->it_size) * माप(अचिन्हित दीर्घ);
 
 	tbl->it_map = vzalloc_node(sz, nid);
-	if (!tbl->it_map) {
+	अगर (!tbl->it_map) अणु
 		pr_err("%s: Can't allocate %ld bytes\n", __func__, sz);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	iommu_table_reserve_pages(tbl, res_start, res_end);
 
-	/* We only split the IOMMU table if we have 1GB or more of space */
-	if ((tbl->it_size << tbl->it_page_shift) >= (1UL * 1024 * 1024 * 1024))
+	/* We only split the IOMMU table अगर we have 1GB or more of space */
+	अगर ((tbl->it_size << tbl->it_page_shअगरt) >= (1UL * 1024 * 1024 * 1024))
 		tbl->nr_pools = IOMMU_NR_POOLS;
-	else
+	अन्यथा
 		tbl->nr_pools = 1;
 
-	/* We reserve the top 1/4 of the table for large allocations */
+	/* We reserve the top 1/4 of the table क्रम large allocations */
 	tbl->poolsize = (tbl->it_size * 3 / 4) / tbl->nr_pools;
 
-	for (i = 0; i < tbl->nr_pools; i++) {
+	क्रम (i = 0; i < tbl->nr_pools; i++) अणु
 		p = &tbl->pools[i];
 		spin_lock_init(&(p->lock));
 		p->start = tbl->poolsize * i;
-		p->hint = p->start;
+		p->hपूर्णांक = p->start;
 		p->end = p->start + tbl->poolsize;
-	}
+	पूर्ण
 
 	p = &tbl->large_pool;
 	spin_lock_init(&(p->lock));
 	p->start = tbl->poolsize * i;
-	p->hint = p->start;
+	p->hपूर्णांक = p->start;
 	p->end = tbl->it_size;
 
 	iommu_table_clear(tbl);
 
-	if (!welcomed) {
-		printk(KERN_INFO "IOMMU table initialized, virtual merging %s\n",
+	अगर (!welcomed) अणु
+		prपूर्णांकk(KERN_INFO "IOMMU table initialized, virtual merging %s\n",
 		       novmerge ? "disabled" : "enabled");
 		welcomed = 1;
-	}
+	पूर्ण
 
 	iommu_debugfs_add(tbl);
 
-	return tbl;
-}
+	वापस tbl;
+पूर्ण
 
-static void iommu_table_free(struct kref *kref)
-{
-	struct iommu_table *tbl;
+अटल व्योम iommu_table_मुक्त(काष्ठा kref *kref)
+अणु
+	काष्ठा iommu_table *tbl;
 
-	tbl = container_of(kref, struct iommu_table, it_kref);
+	tbl = container_of(kref, काष्ठा iommu_table, it_kref);
 
-	if (tbl->it_ops->free)
-		tbl->it_ops->free(tbl);
+	अगर (tbl->it_ops->मुक्त)
+		tbl->it_ops->मुक्त(tbl);
 
-	if (!tbl->it_map) {
-		kfree(tbl);
-		return;
-	}
+	अगर (!tbl->it_map) अणु
+		kमुक्त(tbl);
+		वापस;
+	पूर्ण
 
 	iommu_debugfs_del(tbl);
 
 	iommu_table_release_pages(tbl);
 
-	/* verify that table contains no entries */
-	if (!bitmap_empty(tbl->it_map, tbl->it_size))
+	/* verअगरy that table contains no entries */
+	अगर (!biपंचांगap_empty(tbl->it_map, tbl->it_size))
 		pr_warn("%s: Unexpected TCEs\n", __func__);
 
-	/* free bitmap */
-	vfree(tbl->it_map);
+	/* मुक्त biपंचांगap */
+	vमुक्त(tbl->it_map);
 
-	/* free table */
-	kfree(tbl);
-}
+	/* मुक्त table */
+	kमुक्त(tbl);
+पूर्ण
 
-struct iommu_table *iommu_tce_table_get(struct iommu_table *tbl)
-{
-	if (kref_get_unless_zero(&tbl->it_kref))
-		return tbl;
+काष्ठा iommu_table *iommu_tce_table_get(काष्ठा iommu_table *tbl)
+अणु
+	अगर (kref_get_unless_zero(&tbl->it_kref))
+		वापस tbl;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_tce_table_get);
 
-int iommu_tce_table_put(struct iommu_table *tbl)
-{
-	if (WARN_ON(!tbl))
-		return 0;
+पूर्णांक iommu_tce_table_put(काष्ठा iommu_table *tbl)
+अणु
+	अगर (WARN_ON(!tbl))
+		वापस 0;
 
-	return kref_put(&tbl->it_kref, iommu_table_free);
-}
+	वापस kref_put(&tbl->it_kref, iommu_table_मुक्त);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_tce_table_put);
 
-/* Creates TCEs for a user provided buffer.  The user buffer must be
- * contiguous real kernel storage (not vmalloc).  The address passed here
- * comprises a page address and offset into that page. The dma_addr_t
- * returned will point to the same byte within the page as was passed in.
+/* Creates TCEs क्रम a user provided buffer.  The user buffer must be
+ * contiguous real kernel storage (not vदो_स्मृति).  The address passed here
+ * comprises a page address and offset पूर्णांकo that page. The dma_addr_t
+ * वापसed will poपूर्णांक to the same byte within the page as was passed in.
  */
-dma_addr_t iommu_map_page(struct device *dev, struct iommu_table *tbl,
-			  struct page *page, unsigned long offset, size_t size,
-			  unsigned long mask, enum dma_data_direction direction,
-			  unsigned long attrs)
-{
+dma_addr_t iommu_map_page(काष्ठा device *dev, काष्ठा iommu_table *tbl,
+			  काष्ठा page *page, अचिन्हित दीर्घ offset, माप_प्रकार size,
+			  अचिन्हित दीर्घ mask, क्रमागत dma_data_direction direction,
+			  अचिन्हित दीर्घ attrs)
+अणु
 	dma_addr_t dma_handle = DMA_MAPPING_ERROR;
-	void *vaddr;
-	unsigned long uaddr;
-	unsigned int npages, align;
+	व्योम *vaddr;
+	अचिन्हित दीर्घ uaddr;
+	अचिन्हित पूर्णांक npages, align;
 
 	BUG_ON(direction == DMA_NONE);
 
 	vaddr = page_address(page) + offset;
-	uaddr = (unsigned long)vaddr;
+	uaddr = (अचिन्हित दीर्घ)vaddr;
 
-	if (tbl) {
+	अगर (tbl) अणु
 		npages = iommu_num_pages(uaddr, size, IOMMU_PAGE_SIZE(tbl));
 		align = 0;
-		if (tbl->it_page_shift < PAGE_SHIFT && size >= PAGE_SIZE &&
-		    ((unsigned long)vaddr & ~PAGE_MASK) == 0)
-			align = PAGE_SHIFT - tbl->it_page_shift;
+		अगर (tbl->it_page_shअगरt < PAGE_SHIFT && size >= PAGE_SIZE &&
+		    ((अचिन्हित दीर्घ)vaddr & ~PAGE_MASK) == 0)
+			align = PAGE_SHIFT - tbl->it_page_shअगरt;
 
 		dma_handle = iommu_alloc(dev, tbl, vaddr, npages, direction,
-					 mask >> tbl->it_page_shift, align,
+					 mask >> tbl->it_page_shअगरt, align,
 					 attrs);
-		if (dma_handle == DMA_MAPPING_ERROR) {
-			if (!(attrs & DMA_ATTR_NO_WARN) &&
-			    printk_ratelimit())  {
+		अगर (dma_handle == DMA_MAPPING_ERROR) अणु
+			अगर (!(attrs & DMA_ATTR_NO_WARN) &&
+			    prपूर्णांकk_ratelimit())  अणु
 				dev_info(dev, "iommu_alloc failed, tbl %p "
 					 "vaddr %p npages %d\n", tbl, vaddr,
 					 npages);
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			dma_handle |= (uaddr & ~IOMMU_PAGE_MASK(tbl));
-	}
+	पूर्ण
 
-	return dma_handle;
-}
+	वापस dma_handle;
+पूर्ण
 
-void iommu_unmap_page(struct iommu_table *tbl, dma_addr_t dma_handle,
-		      size_t size, enum dma_data_direction direction,
-		      unsigned long attrs)
-{
-	unsigned int npages;
+व्योम iommu_unmap_page(काष्ठा iommu_table *tbl, dma_addr_t dma_handle,
+		      माप_प्रकार size, क्रमागत dma_data_direction direction,
+		      अचिन्हित दीर्घ attrs)
+अणु
+	अचिन्हित पूर्णांक npages;
 
 	BUG_ON(direction == DMA_NONE);
 
-	if (tbl) {
+	अगर (tbl) अणु
 		npages = iommu_num_pages(dma_handle, size,
 					 IOMMU_PAGE_SIZE(tbl));
-		iommu_free(tbl, dma_handle, npages);
-	}
-}
+		iommu_मुक्त(tbl, dma_handle, npages);
+	पूर्ण
+पूर्ण
 
 /* Allocates a contiguous real buffer and creates mappings over it.
- * Returns the virtual address of the buffer and sets dma_handle
+ * Returns the भव address of the buffer and sets dma_handle
  * to the dma address (mapping) of the first page.
  */
-void *iommu_alloc_coherent(struct device *dev, struct iommu_table *tbl,
-			   size_t size,	dma_addr_t *dma_handle,
-			   unsigned long mask, gfp_t flag, int node)
-{
-	void *ret = NULL;
+व्योम *iommu_alloc_coherent(काष्ठा device *dev, काष्ठा iommu_table *tbl,
+			   माप_प्रकार size,	dma_addr_t *dma_handle,
+			   अचिन्हित दीर्घ mask, gfp_t flag, पूर्णांक node)
+अणु
+	व्योम *ret = शून्य;
 	dma_addr_t mapping;
-	unsigned int order;
-	unsigned int nio_pages, io_order;
-	struct page *page;
+	अचिन्हित पूर्णांक order;
+	अचिन्हित पूर्णांक nio_pages, io_order;
+	काष्ठा page *page;
 
 	size = PAGE_ALIGN(size);
 	order = get_order(size);
 
  	/*
-	 * Client asked for way too much space.  This is checked later
-	 * anyway.  It is easier to debug here for the drivers than in
+	 * Client asked क्रम way too much space.  This is checked later
+	 * anyway.  It is easier to debug here क्रम the drivers than in
 	 * the tce tables.
 	 */
-	if (order >= IOMAP_MAX_ORDER) {
+	अगर (order >= IOMAP_MAX_ORDER) अणु
 		dev_info(dev, "iommu_alloc_consistent size too large: 0x%lx\n",
 			 size);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (!tbl)
-		return NULL;
+	अगर (!tbl)
+		वापस शून्य;
 
 	/* Alloc enough pages (and possibly more) */
 	page = alloc_pages_node(node, flag, order);
-	if (!page)
-		return NULL;
+	अगर (!page)
+		वापस शून्य;
 	ret = page_address(page);
-	memset(ret, 0, size);
+	स_रखो(ret, 0, size);
 
 	/* Set up tces to cover the allocated range */
-	nio_pages = size >> tbl->it_page_shift;
+	nio_pages = size >> tbl->it_page_shअगरt;
 	io_order = get_iommu_order(size, tbl);
-	mapping = iommu_alloc(dev, tbl, ret, nio_pages, DMA_BIDIRECTIONAL,
-			      mask >> tbl->it_page_shift, io_order, 0);
-	if (mapping == DMA_MAPPING_ERROR) {
-		free_pages((unsigned long)ret, order);
-		return NULL;
-	}
+	mapping = iommu_alloc(dev, tbl, ret, nio_pages, DMA_BIसूचीECTIONAL,
+			      mask >> tbl->it_page_shअगरt, io_order, 0);
+	अगर (mapping == DMA_MAPPING_ERROR) अणु
+		मुक्त_pages((अचिन्हित दीर्घ)ret, order);
+		वापस शून्य;
+	पूर्ण
 	*dma_handle = mapping;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void iommu_free_coherent(struct iommu_table *tbl, size_t size,
-			 void *vaddr, dma_addr_t dma_handle)
-{
-	if (tbl) {
-		unsigned int nio_pages;
+व्योम iommu_मुक्त_coherent(काष्ठा iommu_table *tbl, माप_प्रकार size,
+			 व्योम *vaddr, dma_addr_t dma_handle)
+अणु
+	अगर (tbl) अणु
+		अचिन्हित पूर्णांक nio_pages;
 
 		size = PAGE_ALIGN(size);
-		nio_pages = size >> tbl->it_page_shift;
-		iommu_free(tbl, dma_handle, nio_pages);
+		nio_pages = size >> tbl->it_page_shअगरt;
+		iommu_मुक्त(tbl, dma_handle, nio_pages);
 		size = PAGE_ALIGN(size);
-		free_pages((unsigned long)vaddr, get_order(size));
-	}
-}
+		मुक्त_pages((अचिन्हित दीर्घ)vaddr, get_order(size));
+	पूर्ण
+पूर्ण
 
-unsigned long iommu_direction_to_tce_perm(enum dma_data_direction dir)
-{
-	switch (dir) {
-	case DMA_BIDIRECTIONAL:
-		return TCE_PCI_READ | TCE_PCI_WRITE;
-	case DMA_FROM_DEVICE:
-		return TCE_PCI_WRITE;
-	case DMA_TO_DEVICE:
-		return TCE_PCI_READ;
-	default:
-		return 0;
-	}
-}
+अचिन्हित दीर्घ iommu_direction_to_tce_perm(क्रमागत dma_data_direction dir)
+अणु
+	चयन (dir) अणु
+	हाल DMA_BIसूचीECTIONAL:
+		वापस TCE_PCI_READ | TCE_PCI_WRITE;
+	हाल DMA_FROM_DEVICE:
+		वापस TCE_PCI_WRITE;
+	हाल DMA_TO_DEVICE:
+		वापस TCE_PCI_READ;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_direction_to_tce_perm);
 
-#ifdef CONFIG_IOMMU_API
+#अगर_घोषित CONFIG_IOMMU_API
 /*
  * SPAPR TCE API
  */
-static void group_release(void *iommu_data)
-{
-	struct iommu_table_group *table_group = iommu_data;
+अटल व्योम group_release(व्योम *iommu_data)
+अणु
+	काष्ठा iommu_table_group *table_group = iommu_data;
 
-	table_group->group = NULL;
-}
+	table_group->group = शून्य;
+पूर्ण
 
-void iommu_register_group(struct iommu_table_group *table_group,
-		int pci_domain_number, unsigned long pe_num)
-{
-	struct iommu_group *grp;
-	char *name;
+व्योम iommu_रेजिस्टर_group(काष्ठा iommu_table_group *table_group,
+		पूर्णांक pci_करोमुख्य_number, अचिन्हित दीर्घ pe_num)
+अणु
+	काष्ठा iommu_group *grp;
+	अक्षर *name;
 
 	grp = iommu_group_alloc();
-	if (IS_ERR(grp)) {
+	अगर (IS_ERR(grp)) अणु
 		pr_warn("powerpc iommu api: cannot create new group, err=%ld\n",
 				PTR_ERR(grp));
-		return;
-	}
+		वापस;
+	पूर्ण
 	table_group->group = grp;
 	iommu_group_set_iommudata(grp, table_group, group_release);
-	name = kasprintf(GFP_KERNEL, "domain%d-pe%lx",
-			pci_domain_number, pe_num);
-	if (!name)
-		return;
+	name = kaप्र_लिखो(GFP_KERNEL, "domain%d-pe%lx",
+			pci_करोमुख्य_number, pe_num);
+	अगर (!name)
+		वापस;
 	iommu_group_set_name(grp, name);
-	kfree(name);
-}
+	kमुक्त(name);
+पूर्ण
 
-enum dma_data_direction iommu_tce_direction(unsigned long tce)
-{
-	if ((tce & TCE_PCI_READ) && (tce & TCE_PCI_WRITE))
-		return DMA_BIDIRECTIONAL;
-	else if (tce & TCE_PCI_READ)
-		return DMA_TO_DEVICE;
-	else if (tce & TCE_PCI_WRITE)
-		return DMA_FROM_DEVICE;
-	else
-		return DMA_NONE;
-}
+क्रमागत dma_data_direction iommu_tce_direction(अचिन्हित दीर्घ tce)
+अणु
+	अगर ((tce & TCE_PCI_READ) && (tce & TCE_PCI_WRITE))
+		वापस DMA_BIसूचीECTIONAL;
+	अन्यथा अगर (tce & TCE_PCI_READ)
+		वापस DMA_TO_DEVICE;
+	अन्यथा अगर (tce & TCE_PCI_WRITE)
+		वापस DMA_FROM_DEVICE;
+	अन्यथा
+		वापस DMA_NONE;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_tce_direction);
 
-void iommu_flush_tce(struct iommu_table *tbl)
-{
-	/* Flush/invalidate TLB caches if necessary */
-	if (tbl->it_ops->flush)
+व्योम iommu_flush_tce(काष्ठा iommu_table *tbl)
+अणु
+	/* Flush/invalidate TLB caches अगर necessary */
+	अगर (tbl->it_ops->flush)
 		tbl->it_ops->flush(tbl);
 
 	/* Make sure updates are seen by hardware */
 	mb();
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_flush_tce);
 
-int iommu_tce_check_ioba(unsigned long page_shift,
-		unsigned long offset, unsigned long size,
-		unsigned long ioba, unsigned long npages)
-{
-	unsigned long mask = (1UL << page_shift) - 1;
+पूर्णांक iommu_tce_check_ioba(अचिन्हित दीर्घ page_shअगरt,
+		अचिन्हित दीर्घ offset, अचिन्हित दीर्घ size,
+		अचिन्हित दीर्घ ioba, अचिन्हित दीर्घ npages)
+अणु
+	अचिन्हित दीर्घ mask = (1UL << page_shअगरt) - 1;
 
-	if (ioba & mask)
-		return -EINVAL;
+	अगर (ioba & mask)
+		वापस -EINVAL;
 
-	ioba >>= page_shift;
-	if (ioba < offset)
-		return -EINVAL;
+	ioba >>= page_shअगरt;
+	अगर (ioba < offset)
+		वापस -EINVAL;
 
-	if ((ioba + 1) > (offset + size))
-		return -EINVAL;
+	अगर ((ioba + 1) > (offset + size))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_tce_check_ioba);
 
-int iommu_tce_check_gpa(unsigned long page_shift, unsigned long gpa)
-{
-	unsigned long mask = (1UL << page_shift) - 1;
+पूर्णांक iommu_tce_check_gpa(अचिन्हित दीर्घ page_shअगरt, अचिन्हित दीर्घ gpa)
+अणु
+	अचिन्हित दीर्घ mask = (1UL << page_shअगरt) - 1;
 
-	if (gpa & mask)
-		return -EINVAL;
+	अगर (gpa & mask)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_tce_check_gpa);
 
-extern long iommu_tce_xchg_no_kill(struct mm_struct *mm,
-		struct iommu_table *tbl,
-		unsigned long entry, unsigned long *hpa,
-		enum dma_data_direction *direction)
-{
-	long ret;
-	unsigned long size = 0;
+बाह्य दीर्घ iommu_tce_xchg_no_समाप्त(काष्ठा mm_काष्ठा *mm,
+		काष्ठा iommu_table *tbl,
+		अचिन्हित दीर्घ entry, अचिन्हित दीर्घ *hpa,
+		क्रमागत dma_data_direction *direction)
+अणु
+	दीर्घ ret;
+	अचिन्हित दीर्घ size = 0;
 
-	ret = tbl->it_ops->xchg_no_kill(tbl, entry, hpa, direction, false);
-	if (!ret && ((*direction == DMA_FROM_DEVICE) ||
-			(*direction == DMA_BIDIRECTIONAL)) &&
-			!mm_iommu_is_devmem(mm, *hpa, tbl->it_page_shift,
+	ret = tbl->it_ops->xchg_no_समाप्त(tbl, entry, hpa, direction, false);
+	अगर (!ret && ((*direction == DMA_FROM_DEVICE) ||
+			(*direction == DMA_BIसूचीECTIONAL)) &&
+			!mm_iommu_is_devmem(mm, *hpa, tbl->it_page_shअगरt,
 					&size))
 		SetPageDirty(pfn_to_page(*hpa >> PAGE_SHIFT));
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(iommu_tce_xchg_no_kill);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_tce_xchg_no_समाप्त);
 
-void iommu_tce_kill(struct iommu_table *tbl,
-		unsigned long entry, unsigned long pages)
-{
-	if (tbl->it_ops->tce_kill)
-		tbl->it_ops->tce_kill(tbl, entry, pages, false);
-}
-EXPORT_SYMBOL_GPL(iommu_tce_kill);
+व्योम iommu_tce_समाप्त(काष्ठा iommu_table *tbl,
+		अचिन्हित दीर्घ entry, अचिन्हित दीर्घ pages)
+अणु
+	अगर (tbl->it_ops->tce_समाप्त)
+		tbl->it_ops->tce_समाप्त(tbl, entry, pages, false);
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_tce_समाप्त);
 
-int iommu_take_ownership(struct iommu_table *tbl)
-{
-	unsigned long flags, i, sz = (tbl->it_size + 7) >> 3;
-	int ret = 0;
+पूर्णांक iommu_take_ownership(काष्ठा iommu_table *tbl)
+अणु
+	अचिन्हित दीर्घ flags, i, sz = (tbl->it_size + 7) >> 3;
+	पूर्णांक ret = 0;
 
 	/*
-	 * VFIO does not control TCE entries allocation and the guest
-	 * can write new TCEs on top of existing ones so iommu_tce_build()
+	 * VFIO करोes not control TCE entries allocation and the guest
+	 * can ग_लिखो new TCEs on top of existing ones so iommu_tce_build()
 	 * must be able to release old pages. This functionality
-	 * requires exchange() callback defined so if it is not
+	 * requires exchange() callback defined so अगर it is not
 	 * implemented, we disallow taking ownership over the table.
 	 */
-	if (!tbl->it_ops->xchg_no_kill)
-		return -EINVAL;
+	अगर (!tbl->it_ops->xchg_no_समाप्त)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&tbl->large_pool.lock, flags);
-	for (i = 0; i < tbl->nr_pools; i++)
+	क्रम (i = 0; i < tbl->nr_pools; i++)
 		spin_lock_nest_lock(&tbl->pools[i].lock, &tbl->large_pool.lock);
 
 	iommu_table_release_pages(tbl);
 
-	if (!bitmap_empty(tbl->it_map, tbl->it_size)) {
+	अगर (!biपंचांगap_empty(tbl->it_map, tbl->it_size)) अणु
 		pr_err("iommu_tce: it_map is not empty");
 		ret = -EBUSY;
-		/* Undo iommu_table_release_pages, i.e. restore bit#0, etc */
+		/* Unकरो iommu_table_release_pages, i.e. restore bit#0, etc */
 		iommu_table_reserve_pages(tbl, tbl->it_reserved_start,
 				tbl->it_reserved_end);
-	} else {
-		memset(tbl->it_map, 0xff, sz);
-	}
+	पूर्ण अन्यथा अणु
+		स_रखो(tbl->it_map, 0xff, sz);
+	पूर्ण
 
-	for (i = 0; i < tbl->nr_pools; i++)
+	क्रम (i = 0; i < tbl->nr_pools; i++)
 		spin_unlock(&tbl->pools[i].lock);
 	spin_unlock_irqrestore(&tbl->large_pool.lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_take_ownership);
 
-void iommu_release_ownership(struct iommu_table *tbl)
-{
-	unsigned long flags, i, sz = (tbl->it_size + 7) >> 3;
+व्योम iommu_release_ownership(काष्ठा iommu_table *tbl)
+अणु
+	अचिन्हित दीर्घ flags, i, sz = (tbl->it_size + 7) >> 3;
 
 	spin_lock_irqsave(&tbl->large_pool.lock, flags);
-	for (i = 0; i < tbl->nr_pools; i++)
+	क्रम (i = 0; i < tbl->nr_pools; i++)
 		spin_lock_nest_lock(&tbl->pools[i].lock, &tbl->large_pool.lock);
 
-	memset(tbl->it_map, 0, sz);
+	स_रखो(tbl->it_map, 0, sz);
 
 	iommu_table_reserve_pages(tbl, tbl->it_reserved_start,
 			tbl->it_reserved_end);
 
-	for (i = 0; i < tbl->nr_pools; i++)
+	क्रम (i = 0; i < tbl->nr_pools; i++)
 		spin_unlock(&tbl->pools[i].lock);
 	spin_unlock_irqrestore(&tbl->large_pool.lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_release_ownership);
 
-int iommu_add_device(struct iommu_table_group *table_group, struct device *dev)
-{
+पूर्णांक iommu_add_device(काष्ठा iommu_table_group *table_group, काष्ठा device *dev)
+अणु
 	/*
-	 * The sysfs entries should be populated before
+	 * The sysfs entries should be populated beक्रमe
 	 * binding IOMMU group. If sysfs entries isn't
-	 * ready, we simply bail.
+	 * पढ़ोy, we simply bail.
 	 */
-	if (!device_is_registered(dev))
-		return -ENOENT;
+	अगर (!device_is_रेजिस्टरed(dev))
+		वापस -ENOENT;
 
-	if (device_iommu_mapped(dev)) {
+	अगर (device_iommu_mapped(dev)) अणु
 		pr_debug("%s: Skipping device %s with iommu group %d\n",
 			 __func__, dev_name(dev),
 			 iommu_group_id(dev->iommu_group));
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	pr_debug("%s: Adding %s to iommu group %d\n",
 		 __func__, dev_name(dev),  iommu_group_id(table_group->group));
 
-	return iommu_group_add_device(table_group->group, dev);
-}
+	वापस iommu_group_add_device(table_group->group, dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_add_device);
 
-void iommu_del_device(struct device *dev)
-{
+व्योम iommu_del_device(काष्ठा device *dev)
+अणु
 	/*
 	 * Some devices might not have IOMMU table and group
 	 * and we needn't detach them from the associated
 	 * IOMMU groups
 	 */
-	if (!device_iommu_mapped(dev)) {
+	अगर (!device_iommu_mapped(dev)) अणु
 		pr_debug("iommu_tce: skipping device %s with no tbl\n",
 			 dev_name(dev));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	iommu_group_remove_device(dev);
-}
+	iommu_group_हटाओ_device(dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_del_device);
-#endif /* CONFIG_IOMMU_API */
+#पूर्ण_अगर /* CONFIG_IOMMU_API */

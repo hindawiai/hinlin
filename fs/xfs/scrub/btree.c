@@ -1,139 +1,140 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2017 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
-#include "xfs_inode.h"
-#include "xfs_btree.h"
-#include "scrub/scrub.h"
-#include "scrub/common.h"
-#include "scrub/btree.h"
-#include "scrub/trace.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_btree.h"
+#समावेश "scrub/scrub.h"
+#समावेश "scrub/common.h"
+#समावेश "scrub/btree.h"
+#समावेश "scrub/trace.h"
 
 /* btree scrubbing */
 
 /*
- * Check for btree operation errors.  See the section about handling
+ * Check क्रम btree operation errors.  See the section about handling
  * operational errors in common.c.
  */
-static bool
+अटल bool
 __xchk_btree_process_error(
-	struct xfs_scrub	*sc,
-	struct xfs_btree_cur	*cur,
-	int			level,
-	int			*error,
+	काष्ठा xfs_scrub	*sc,
+	काष्ठा xfs_btree_cur	*cur,
+	पूर्णांक			level,
+	पूर्णांक			*error,
 	__u32			errflag,
-	void			*ret_ip)
-{
-	if (*error == 0)
-		return true;
+	व्योम			*ret_ip)
+अणु
+	अगर (*error == 0)
+		वापस true;
 
-	switch (*error) {
-	case -EDEADLOCK:
-		/* Used to restart an op with deadlock avoidance. */
+	चयन (*error) अणु
+	हाल -EDEADLOCK:
+		/* Used to restart an op with deadlock aव्योमance. */
 		trace_xchk_deadlock_retry(sc->ip, sc->sm, *error);
-		break;
-	case -EFSBADCRC:
-	case -EFSCORRUPTED:
-		/* Note the badness but don't abort. */
+		अवरोध;
+	हाल -EFSBADCRC:
+	हाल -EFSCORRUPTED:
+		/* Note the badness but करोn't पात. */
 		sc->sm->sm_flags |= errflag;
 		*error = 0;
 		/* fall through */
-	default:
-		if (cur->bc_flags & XFS_BTREE_ROOT_IN_INODE)
-			trace_xchk_ifork_btree_op_error(sc, cur, level,
+	शेष:
+		अगर (cur->bc_flags & XFS_BTREE_ROOT_IN_INODE)
+			trace_xchk_अगरork_btree_op_error(sc, cur, level,
 					*error, ret_ip);
-		else
+		अन्यथा
 			trace_xchk_btree_op_error(sc, cur, level,
 					*error, ret_ip);
-		break;
-	}
-	return false;
-}
+		अवरोध;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 bool
 xchk_btree_process_error(
-	struct xfs_scrub	*sc,
-	struct xfs_btree_cur	*cur,
-	int			level,
-	int			*error)
-{
-	return __xchk_btree_process_error(sc, cur, level, error,
-			XFS_SCRUB_OFLAG_CORRUPT, __return_address);
-}
+	काष्ठा xfs_scrub	*sc,
+	काष्ठा xfs_btree_cur	*cur,
+	पूर्णांक			level,
+	पूर्णांक			*error)
+अणु
+	वापस __xchk_btree_process_error(sc, cur, level, error,
+			XFS_SCRUB_OFLAG_CORRUPT, __वापस_address);
+पूर्ण
 
 bool
 xchk_btree_xref_process_error(
-	struct xfs_scrub	*sc,
-	struct xfs_btree_cur	*cur,
-	int			level,
-	int			*error)
-{
-	return __xchk_btree_process_error(sc, cur, level, error,
-			XFS_SCRUB_OFLAG_XFAIL, __return_address);
-}
+	काष्ठा xfs_scrub	*sc,
+	काष्ठा xfs_btree_cur	*cur,
+	पूर्णांक			level,
+	पूर्णांक			*error)
+अणु
+	वापस __xchk_btree_process_error(sc, cur, level, error,
+			XFS_SCRUB_OFLAG_XFAIL, __वापस_address);
+पूर्ण
 
 /* Record btree block corruption. */
-static void
+अटल व्योम
 __xchk_btree_set_corrupt(
-	struct xfs_scrub	*sc,
-	struct xfs_btree_cur	*cur,
-	int			level,
+	काष्ठा xfs_scrub	*sc,
+	काष्ठा xfs_btree_cur	*cur,
+	पूर्णांक			level,
 	__u32			errflag,
-	void			*ret_ip)
-{
+	व्योम			*ret_ip)
+अणु
 	sc->sm->sm_flags |= errflag;
 
-	if (cur->bc_flags & XFS_BTREE_ROOT_IN_INODE)
-		trace_xchk_ifork_btree_error(sc, cur, level,
+	अगर (cur->bc_flags & XFS_BTREE_ROOT_IN_INODE)
+		trace_xchk_अगरork_btree_error(sc, cur, level,
 				ret_ip);
-	else
+	अन्यथा
 		trace_xchk_btree_error(sc, cur, level,
 				ret_ip);
-}
+पूर्ण
 
-void
+व्योम
 xchk_btree_set_corrupt(
-	struct xfs_scrub	*sc,
-	struct xfs_btree_cur	*cur,
-	int			level)
-{
+	काष्ठा xfs_scrub	*sc,
+	काष्ठा xfs_btree_cur	*cur,
+	पूर्णांक			level)
+अणु
 	__xchk_btree_set_corrupt(sc, cur, level, XFS_SCRUB_OFLAG_CORRUPT,
-			__return_address);
-}
+			__वापस_address);
+पूर्ण
 
-void
+व्योम
 xchk_btree_xref_set_corrupt(
-	struct xfs_scrub	*sc,
-	struct xfs_btree_cur	*cur,
-	int			level)
-{
+	काष्ठा xfs_scrub	*sc,
+	काष्ठा xfs_btree_cur	*cur,
+	पूर्णांक			level)
+अणु
 	__xchk_btree_set_corrupt(sc, cur, level, XFS_SCRUB_OFLAG_XCORRUPT,
-			__return_address);
-}
+			__वापस_address);
+पूर्ण
 
 /*
- * Make sure this record is in order and doesn't stray outside of the parent
+ * Make sure this record is in order and करोesn't stray outside of the parent
  * keys.
  */
-STATIC void
+STATIC व्योम
 xchk_btree_rec(
-	struct xchk_btree	*bs)
-{
-	struct xfs_btree_cur	*cur = bs->cur;
-	union xfs_btree_rec	*rec;
-	union xfs_btree_key	key;
-	union xfs_btree_key	hkey;
-	union xfs_btree_key	*keyp;
-	struct xfs_btree_block	*block;
-	struct xfs_btree_block	*keyblock;
-	struct xfs_buf		*bp;
+	काष्ठा xchk_btree	*bs)
+अणु
+	काष्ठा xfs_btree_cur	*cur = bs->cur;
+	जोड़ xfs_btree_rec	*rec;
+	जोड़ xfs_btree_key	key;
+	जोड़ xfs_btree_key	hkey;
+	जोड़ xfs_btree_key	*keyp;
+	काष्ठा xfs_btree_block	*block;
+	काष्ठा xfs_btree_block	*keyblock;
+	काष्ठा xfs_buf		*bp;
 
 	block = xfs_btree_get_block(cur, 0, &bp);
 	rec = xfs_btree_rec_addr(cur, cur->bc_ptrs[0], block);
@@ -141,46 +142,46 @@ xchk_btree_rec(
 	trace_xchk_btree_rec(bs->sc, cur, 0);
 
 	/* If this isn't the first record, are they in order? */
-	if (!bs->firstrec && !cur->bc_ops->recs_inorder(cur, &bs->lastrec, rec))
+	अगर (!bs->firstrec && !cur->bc_ops->recs_inorder(cur, &bs->lastrec, rec))
 		xchk_btree_set_corrupt(bs->sc, cur, 0);
 	bs->firstrec = false;
-	memcpy(&bs->lastrec, rec, cur->bc_ops->rec_len);
+	स_नकल(&bs->lastrec, rec, cur->bc_ops->rec_len);
 
-	if (cur->bc_nlevels == 1)
-		return;
+	अगर (cur->bc_nlevels == 1)
+		वापस;
 
 	/* Is this at least as large as the parent low key? */
 	cur->bc_ops->init_key_from_rec(&key, rec);
 	keyblock = xfs_btree_get_block(cur, 1, &bp);
 	keyp = xfs_btree_key_addr(cur, cur->bc_ptrs[1], keyblock);
-	if (cur->bc_ops->diff_two_keys(cur, &key, keyp) < 0)
+	अगर (cur->bc_ops->dअगरf_two_keys(cur, &key, keyp) < 0)
 		xchk_btree_set_corrupt(bs->sc, cur, 1);
 
-	if (!(cur->bc_flags & XFS_BTREE_OVERLAPPING))
-		return;
+	अगर (!(cur->bc_flags & XFS_BTREE_OVERLAPPING))
+		वापस;
 
 	/* Is this no larger than the parent high key? */
 	cur->bc_ops->init_high_key_from_rec(&hkey, rec);
 	keyp = xfs_btree_high_key_addr(cur, cur->bc_ptrs[1], keyblock);
-	if (cur->bc_ops->diff_two_keys(cur, keyp, &hkey) < 0)
+	अगर (cur->bc_ops->dअगरf_two_keys(cur, keyp, &hkey) < 0)
 		xchk_btree_set_corrupt(bs->sc, cur, 1);
-}
+पूर्ण
 
 /*
- * Make sure this key is in order and doesn't stray outside of the parent
+ * Make sure this key is in order and करोesn't stray outside of the parent
  * keys.
  */
-STATIC void
+STATIC व्योम
 xchk_btree_key(
-	struct xchk_btree	*bs,
-	int			level)
-{
-	struct xfs_btree_cur	*cur = bs->cur;
-	union xfs_btree_key	*key;
-	union xfs_btree_key	*keyp;
-	struct xfs_btree_block	*block;
-	struct xfs_btree_block	*keyblock;
-	struct xfs_buf		*bp;
+	काष्ठा xchk_btree	*bs,
+	पूर्णांक			level)
+अणु
+	काष्ठा xfs_btree_cur	*cur = bs->cur;
+	जोड़ xfs_btree_key	*key;
+	जोड़ xfs_btree_key	*keyp;
+	काष्ठा xfs_btree_block	*block;
+	काष्ठा xfs_btree_block	*keyblock;
+	काष्ठा xfs_buf		*bp;
 
 	block = xfs_btree_get_block(cur, level, &bp);
 	key = xfs_btree_key_addr(cur, cur->bc_ptrs[level], block);
@@ -188,553 +189,553 @@ xchk_btree_key(
 	trace_xchk_btree_key(bs->sc, cur, level);
 
 	/* If this isn't the first key, are they in order? */
-	if (!bs->firstkey[level] &&
+	अगर (!bs->firstkey[level] &&
 	    !cur->bc_ops->keys_inorder(cur, &bs->lastkey[level], key))
 		xchk_btree_set_corrupt(bs->sc, cur, level);
 	bs->firstkey[level] = false;
-	memcpy(&bs->lastkey[level], key, cur->bc_ops->key_len);
+	स_नकल(&bs->lastkey[level], key, cur->bc_ops->key_len);
 
-	if (level + 1 >= cur->bc_nlevels)
-		return;
+	अगर (level + 1 >= cur->bc_nlevels)
+		वापस;
 
 	/* Is this at least as large as the parent low key? */
 	keyblock = xfs_btree_get_block(cur, level + 1, &bp);
 	keyp = xfs_btree_key_addr(cur, cur->bc_ptrs[level + 1], keyblock);
-	if (cur->bc_ops->diff_two_keys(cur, key, keyp) < 0)
+	अगर (cur->bc_ops->dअगरf_two_keys(cur, key, keyp) < 0)
 		xchk_btree_set_corrupt(bs->sc, cur, level);
 
-	if (!(cur->bc_flags & XFS_BTREE_OVERLAPPING))
-		return;
+	अगर (!(cur->bc_flags & XFS_BTREE_OVERLAPPING))
+		वापस;
 
 	/* Is this no larger than the parent high key? */
 	key = xfs_btree_high_key_addr(cur, cur->bc_ptrs[level], block);
 	keyp = xfs_btree_high_key_addr(cur, cur->bc_ptrs[level + 1], keyblock);
-	if (cur->bc_ops->diff_two_keys(cur, keyp, key) < 0)
+	अगर (cur->bc_ops->dअगरf_two_keys(cur, keyp, key) < 0)
 		xchk_btree_set_corrupt(bs->sc, cur, level);
-}
+पूर्ण
 
 /*
- * Check a btree pointer.  Returns true if it's ok to use this pointer.
- * Callers do not need to set the corrupt flag.
+ * Check a btree poपूर्णांकer.  Returns true अगर it's ok to use this poपूर्णांकer.
+ * Callers करो not need to set the corrupt flag.
  */
-static bool
+अटल bool
 xchk_btree_ptr_ok(
-	struct xchk_btree	*bs,
-	int			level,
-	union xfs_btree_ptr	*ptr)
-{
+	काष्ठा xchk_btree	*bs,
+	पूर्णांक			level,
+	जोड़ xfs_btree_ptr	*ptr)
+अणु
 	bool			res;
 
-	/* A btree rooted in an inode has no block pointer to the root. */
-	if ((bs->cur->bc_flags & XFS_BTREE_ROOT_IN_INODE) &&
+	/* A btree rooted in an inode has no block poपूर्णांकer to the root. */
+	अगर ((bs->cur->bc_flags & XFS_BTREE_ROOT_IN_INODE) &&
 	    level == bs->cur->bc_nlevels)
-		return true;
+		वापस true;
 
-	/* Otherwise, check the pointers. */
-	if (bs->cur->bc_flags & XFS_BTREE_LONG_PTRS)
+	/* Otherwise, check the poपूर्णांकers. */
+	अगर (bs->cur->bc_flags & XFS_BTREE_LONG_PTRS)
 		res = xfs_btree_check_lptr(bs->cur, be64_to_cpu(ptr->l), level);
-	else
+	अन्यथा
 		res = xfs_btree_check_sptr(bs->cur, be32_to_cpu(ptr->s), level);
-	if (!res)
+	अगर (!res)
 		xchk_btree_set_corrupt(bs->sc, bs->cur, level);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /* Check that a btree block's sibling matches what we expect it. */
-STATIC int
+STATIC पूर्णांक
 xchk_btree_block_check_sibling(
-	struct xchk_btree	*bs,
-	int			level,
-	int			direction,
-	union xfs_btree_ptr	*sibling)
-{
-	struct xfs_btree_cur	*cur = bs->cur;
-	struct xfs_btree_block	*pblock;
-	struct xfs_buf		*pbp;
-	struct xfs_btree_cur	*ncur = NULL;
-	union xfs_btree_ptr	*pp;
-	int			success;
-	int			error;
+	काष्ठा xchk_btree	*bs,
+	पूर्णांक			level,
+	पूर्णांक			direction,
+	जोड़ xfs_btree_ptr	*sibling)
+अणु
+	काष्ठा xfs_btree_cur	*cur = bs->cur;
+	काष्ठा xfs_btree_block	*pblock;
+	काष्ठा xfs_buf		*pbp;
+	काष्ठा xfs_btree_cur	*ncur = शून्य;
+	जोड़ xfs_btree_ptr	*pp;
+	पूर्णांक			success;
+	पूर्णांक			error;
 
 	error = xfs_btree_dup_cursor(cur, &ncur);
-	if (!xchk_btree_process_error(bs->sc, cur, level + 1, &error) ||
+	अगर (!xchk_btree_process_error(bs->sc, cur, level + 1, &error) ||
 	    !ncur)
-		return error;
+		वापस error;
 
 	/*
-	 * If the pointer is null, we shouldn't be able to move the upper
-	 * level pointer anywhere.
+	 * If the poपूर्णांकer is null, we shouldn't be able to move the upper
+	 * level poपूर्णांकer anywhere.
 	 */
-	if (xfs_btree_ptr_is_null(cur, sibling)) {
-		if (direction > 0)
+	अगर (xfs_btree_ptr_is_null(cur, sibling)) अणु
+		अगर (direction > 0)
 			error = xfs_btree_increment(ncur, level + 1, &success);
-		else
+		अन्यथा
 			error = xfs_btree_decrement(ncur, level + 1, &success);
-		if (error == 0 && success)
+		अगर (error == 0 && success)
 			xchk_btree_set_corrupt(bs->sc, cur, level);
 		error = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Increment upper level pointer. */
-	if (direction > 0)
+	/* Increment upper level poपूर्णांकer. */
+	अगर (direction > 0)
 		error = xfs_btree_increment(ncur, level + 1, &success);
-	else
+	अन्यथा
 		error = xfs_btree_decrement(ncur, level + 1, &success);
-	if (!xchk_btree_process_error(bs->sc, cur, level + 1, &error))
-		goto out;
-	if (!success) {
+	अगर (!xchk_btree_process_error(bs->sc, cur, level + 1, &error))
+		जाओ out;
+	अगर (!success) अणु
 		xchk_btree_set_corrupt(bs->sc, cur, level + 1);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Compare upper level pointer to sibling pointer. */
+	/* Compare upper level poपूर्णांकer to sibling poपूर्णांकer. */
 	pblock = xfs_btree_get_block(ncur, level + 1, &pbp);
 	pp = xfs_btree_ptr_addr(ncur, ncur->bc_ptrs[level + 1], pblock);
-	if (!xchk_btree_ptr_ok(bs, level + 1, pp))
-		goto out;
-	if (pbp)
+	अगर (!xchk_btree_ptr_ok(bs, level + 1, pp))
+		जाओ out;
+	अगर (pbp)
 		xchk_buffer_recheck(bs->sc, pbp);
 
-	if (xfs_btree_diff_two_ptrs(cur, pp, sibling))
+	अगर (xfs_btree_dअगरf_two_ptrs(cur, pp, sibling))
 		xchk_btree_set_corrupt(bs->sc, cur, level);
 out:
 	xfs_btree_del_cursor(ncur, XFS_BTREE_ERROR);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /* Check the siblings of a btree block. */
-STATIC int
+STATIC पूर्णांक
 xchk_btree_block_check_siblings(
-	struct xchk_btree	*bs,
-	struct xfs_btree_block	*block)
-{
-	struct xfs_btree_cur	*cur = bs->cur;
-	union xfs_btree_ptr	leftsib;
-	union xfs_btree_ptr	rightsib;
-	int			level;
-	int			error = 0;
+	काष्ठा xchk_btree	*bs,
+	काष्ठा xfs_btree_block	*block)
+अणु
+	काष्ठा xfs_btree_cur	*cur = bs->cur;
+	जोड़ xfs_btree_ptr	leftsib;
+	जोड़ xfs_btree_ptr	rightsib;
+	पूर्णांक			level;
+	पूर्णांक			error = 0;
 
 	xfs_btree_get_sibling(cur, block, &leftsib, XFS_BB_LEFTSIB);
 	xfs_btree_get_sibling(cur, block, &rightsib, XFS_BB_RIGHTSIB);
 	level = xfs_btree_get_level(block);
 
 	/* Root block should never have siblings. */
-	if (level == cur->bc_nlevels - 1) {
-		if (!xfs_btree_ptr_is_null(cur, &leftsib) ||
+	अगर (level == cur->bc_nlevels - 1) अणु
+		अगर (!xfs_btree_ptr_is_null(cur, &leftsib) ||
 		    !xfs_btree_ptr_is_null(cur, &rightsib))
 			xchk_btree_set_corrupt(bs->sc, cur, level);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Does the left & right sibling pointers match the adjacent
-	 * parent level pointers?
-	 * (These function absorbs error codes for us.)
+	 * Does the left & right sibling poपूर्णांकers match the adjacent
+	 * parent level poपूर्णांकers?
+	 * (These function असलorbs error codes क्रम us.)
 	 */
 	error = xchk_btree_block_check_sibling(bs, level, -1, &leftsib);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 	error = xchk_btree_block_check_sibling(bs, level, 1, &rightsib);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-struct check_owner {
-	struct list_head	list;
+काष्ठा check_owner अणु
+	काष्ठा list_head	list;
 	xfs_daddr_t		daddr;
-	int			level;
-};
+	पूर्णांक			level;
+पूर्ण;
 
 /*
  * Make sure this btree block isn't in the free list and that there's
- * an rmap record for it.
+ * an rmap record क्रम it.
  */
-STATIC int
+STATIC पूर्णांक
 xchk_btree_check_block_owner(
-	struct xchk_btree	*bs,
-	int			level,
+	काष्ठा xchk_btree	*bs,
+	पूर्णांक			level,
 	xfs_daddr_t		daddr)
-{
+अणु
 	xfs_agnumber_t		agno;
 	xfs_agblock_t		agbno;
 	xfs_btnum_t		btnum;
 	bool			init_sa;
-	int			error = 0;
+	पूर्णांक			error = 0;
 
-	if (!bs->cur)
-		return 0;
+	अगर (!bs->cur)
+		वापस 0;
 
 	btnum = bs->cur->bc_btnum;
 	agno = xfs_daddr_to_agno(bs->cur->bc_mp, daddr);
 	agbno = xfs_daddr_to_agbno(bs->cur->bc_mp, daddr);
 
 	init_sa = bs->cur->bc_flags & XFS_BTREE_LONG_PTRS;
-	if (init_sa) {
+	अगर (init_sa) अणु
 		error = xchk_ag_init(bs->sc, agno, &bs->sc->sa);
-		if (!xchk_btree_xref_process_error(bs->sc, bs->cur,
+		अगर (!xchk_btree_xref_process_error(bs->sc, bs->cur,
 				level, &error))
-			return error;
-	}
+			वापस error;
+	पूर्ण
 
 	xchk_xref_is_used_space(bs->sc, agbno, 1);
 	/*
 	 * The bnobt scrubber aliases bs->cur to bs->sc->sa.bno_cur, so we
-	 * have to nullify it (to shut down further block owner checks) if
+	 * have to nullअगरy it (to shut करोwn further block owner checks) अगर
 	 * self-xref encounters problems.
 	 */
-	if (!bs->sc->sa.bno_cur && btnum == XFS_BTNUM_BNO)
-		bs->cur = NULL;
+	अगर (!bs->sc->sa.bno_cur && btnum == XFS_BTNUM_BNO)
+		bs->cur = शून्य;
 
 	xchk_xref_is_owned_by(bs->sc, agbno, 1, bs->oinfo);
-	if (!bs->sc->sa.rmap_cur && btnum == XFS_BTNUM_RMAP)
-		bs->cur = NULL;
+	अगर (!bs->sc->sa.rmap_cur && btnum == XFS_BTNUM_RMAP)
+		bs->cur = शून्य;
 
-	if (init_sa)
-		xchk_ag_free(bs->sc, &bs->sc->sa);
+	अगर (init_sa)
+		xchk_ag_मुक्त(bs->sc, &bs->sc->sa);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /* Check the owner of a btree block. */
-STATIC int
+STATIC पूर्णांक
 xchk_btree_check_owner(
-	struct xchk_btree	*bs,
-	int			level,
-	struct xfs_buf		*bp)
-{
-	struct xfs_btree_cur	*cur = bs->cur;
-	struct check_owner	*co;
+	काष्ठा xchk_btree	*bs,
+	पूर्णांक			level,
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_btree_cur	*cur = bs->cur;
+	काष्ठा check_owner	*co;
 
 	/*
 	 * In theory, xfs_btree_get_block should only give us a null buffer
-	 * pointer for the root of a root-in-inode btree type, but we need
-	 * to check defensively here in case the cursor state is also screwed
+	 * poपूर्णांकer क्रम the root of a root-in-inode btree type, but we need
+	 * to check defensively here in हाल the cursor state is also screwed
 	 * up.
 	 */
-	if (bp == NULL) {
-		if (!(cur->bc_flags & XFS_BTREE_ROOT_IN_INODE))
+	अगर (bp == शून्य) अणु
+		अगर (!(cur->bc_flags & XFS_BTREE_ROOT_IN_INODE))
 			xchk_btree_set_corrupt(bs->sc, bs->cur, level);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * We want to cross-reference each btree block with the bnobt
 	 * and the rmapbt.  We cannot cross-reference the bnobt or
-	 * rmapbt while scanning the bnobt or rmapbt, respectively,
+	 * rmapbt जबतक scanning the bnobt or rmapbt, respectively,
 	 * because we cannot alter the cursor and we'd prefer not to
-	 * duplicate cursors.  Therefore, save the buffer daddr for
+	 * duplicate cursors.  Thereक्रमe, save the buffer daddr क्रम
 	 * later scanning.
 	 */
-	if (cur->bc_btnum == XFS_BTNUM_BNO || cur->bc_btnum == XFS_BTNUM_RMAP) {
-		co = kmem_alloc(sizeof(struct check_owner),
+	अगर (cur->bc_btnum == XFS_BTNUM_BNO || cur->bc_btnum == XFS_BTNUM_RMAP) अणु
+		co = kmem_alloc(माप(काष्ठा check_owner),
 				KM_MAYFAIL);
-		if (!co)
-			return -ENOMEM;
+		अगर (!co)
+			वापस -ENOMEM;
 		co->level = level;
 		co->daddr = XFS_BUF_ADDR(bp);
 		list_add_tail(&co->list, &bs->to_check);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return xchk_btree_check_block_owner(bs, level, XFS_BUF_ADDR(bp));
-}
+	वापस xchk_btree_check_block_owner(bs, level, XFS_BUF_ADDR(bp));
+पूर्ण
 
-/* Decide if we want to check minrecs of a btree block in the inode root. */
-static inline bool
+/* Decide अगर we want to check minrecs of a btree block in the inode root. */
+अटल अंतरभूत bool
 xchk_btree_check_iroot_minrecs(
-	struct xchk_btree	*bs)
-{
+	काष्ठा xchk_btree	*bs)
+अणु
 	/*
-	 * xfs_bmap_add_attrfork_btree had an implementation bug wherein it
-	 * would miscalculate the space required for the data fork bmbt root
-	 * when adding an attr fork, and promote the iroot contents to an
-	 * external block unnecessarily.  This went unnoticed for many years
-	 * until scrub found filesystems in this state.  Inode rooted btrees are
+	 * xfs_bmap_add_attrविभाजन_btree had an implementation bug wherein it
+	 * would miscalculate the space required क्रम the data विभाजन bmbt root
+	 * when adding an attr विभाजन, and promote the iroot contents to an
+	 * बाह्यal block unnecessarily.  This went unnoticed क्रम many years
+	 * until scrub found fileप्रणालीs in this state.  Inode rooted btrees are
 	 * not supposed to have immediate child blocks that are small enough
 	 * that the contents could fit in the inode root, but we can't fail
-	 * existing filesystems, so instead we disable the check for data fork
-	 * bmap btrees when there's an attr fork.
+	 * existing fileप्रणालीs, so instead we disable the check क्रम data विभाजन
+	 * bmap btrees when there's an attr विभाजन.
 	 */
-	if (bs->cur->bc_btnum == XFS_BTNUM_BMAP &&
-	    bs->cur->bc_ino.whichfork == XFS_DATA_FORK &&
+	अगर (bs->cur->bc_btnum == XFS_BTNUM_BMAP &&
+	    bs->cur->bc_ino.whichविभाजन == XFS_DATA_FORK &&
 	    XFS_IFORK_Q(bs->sc->ip))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Check that this btree block has at least minrecs records or is one of the
- * special blocks that don't require that.
+ * special blocks that करोn't require that.
  */
-STATIC void
+STATIC व्योम
 xchk_btree_check_minrecs(
-	struct xchk_btree	*bs,
-	int			level,
-	struct xfs_btree_block	*block)
-{
-	struct xfs_btree_cur	*cur = bs->cur;
-	unsigned int		root_level = cur->bc_nlevels - 1;
-	unsigned int		numrecs = be16_to_cpu(block->bb_numrecs);
+	काष्ठा xchk_btree	*bs,
+	पूर्णांक			level,
+	काष्ठा xfs_btree_block	*block)
+अणु
+	काष्ठा xfs_btree_cur	*cur = bs->cur;
+	अचिन्हित पूर्णांक		root_level = cur->bc_nlevels - 1;
+	अचिन्हित पूर्णांक		numrecs = be16_to_cpu(block->bb_numrecs);
 
 	/* More records than minrecs means the block is ok. */
-	if (numrecs >= cur->bc_ops->get_minrecs(cur, level))
-		return;
+	अगर (numrecs >= cur->bc_ops->get_minrecs(cur, level))
+		वापस;
 
 	/*
 	 * For btrees rooted in the inode, it's possible that the root block
-	 * contents spilled into a regular ondisk block because there wasn't
+	 * contents spilled पूर्णांकo a regular ondisk block because there wasn't
 	 * enough space in the inode root.  The number of records in that
 	 * child block might be less than the standard minrecs, but that's ok
 	 * provided that there's only one direct child of the root.
 	 */
-	if ((cur->bc_flags & XFS_BTREE_ROOT_IN_INODE) &&
-	    level == cur->bc_nlevels - 2) {
-		struct xfs_btree_block	*root_block;
-		struct xfs_buf		*root_bp;
-		int			root_maxrecs;
+	अगर ((cur->bc_flags & XFS_BTREE_ROOT_IN_INODE) &&
+	    level == cur->bc_nlevels - 2) अणु
+		काष्ठा xfs_btree_block	*root_block;
+		काष्ठा xfs_buf		*root_bp;
+		पूर्णांक			root_maxrecs;
 
 		root_block = xfs_btree_get_block(cur, root_level, &root_bp);
 		root_maxrecs = cur->bc_ops->get_dmaxrecs(cur, root_level);
-		if (xchk_btree_check_iroot_minrecs(bs) &&
+		अगर (xchk_btree_check_iroot_minrecs(bs) &&
 		    (be16_to_cpu(root_block->bb_numrecs) != 1 ||
 		     numrecs <= root_maxrecs))
 			xchk_btree_set_corrupt(bs->sc, cur, level);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * Otherwise, only the root level is allowed to have fewer than minrecs
 	 * records or keyptrs.
 	 */
-	if (level < root_level)
+	अगर (level < root_level)
 		xchk_btree_set_corrupt(bs->sc, cur, level);
-}
+पूर्ण
 
 /*
- * Grab and scrub a btree block given a btree pointer.  Returns block
- * and buffer pointers (if applicable) if they're ok to use.
+ * Grab and scrub a btree block given a btree poपूर्णांकer.  Returns block
+ * and buffer poपूर्णांकers (अगर applicable) अगर they're ok to use.
  */
-STATIC int
+STATIC पूर्णांक
 xchk_btree_get_block(
-	struct xchk_btree	*bs,
-	int			level,
-	union xfs_btree_ptr	*pp,
-	struct xfs_btree_block	**pblock,
-	struct xfs_buf		**pbp)
-{
+	काष्ठा xchk_btree	*bs,
+	पूर्णांक			level,
+	जोड़ xfs_btree_ptr	*pp,
+	काष्ठा xfs_btree_block	**pblock,
+	काष्ठा xfs_buf		**pbp)
+अणु
 	xfs_failaddr_t		failed_at;
-	int			error;
+	पूर्णांक			error;
 
-	*pblock = NULL;
-	*pbp = NULL;
+	*pblock = शून्य;
+	*pbp = शून्य;
 
 	error = xfs_btree_lookup_get_block(bs->cur, level, pp, pblock);
-	if (!xchk_btree_process_error(bs->sc, bs->cur, level, &error) ||
+	अगर (!xchk_btree_process_error(bs->sc, bs->cur, level, &error) ||
 	    !*pblock)
-		return error;
+		वापस error;
 
 	xfs_btree_get_block(bs->cur, level, pbp);
-	if (bs->cur->bc_flags & XFS_BTREE_LONG_PTRS)
+	अगर (bs->cur->bc_flags & XFS_BTREE_LONG_PTRS)
 		failed_at = __xfs_btree_check_lblock(bs->cur, *pblock,
 				level, *pbp);
-	else
+	अन्यथा
 		failed_at = __xfs_btree_check_sblock(bs->cur, *pblock,
 				 level, *pbp);
-	if (failed_at) {
+	अगर (failed_at) अणु
 		xchk_btree_set_corrupt(bs->sc, bs->cur, level);
-		return 0;
-	}
-	if (*pbp)
+		वापस 0;
+	पूर्ण
+	अगर (*pbp)
 		xchk_buffer_recheck(bs->sc, *pbp);
 
 	xchk_btree_check_minrecs(bs, level, *pblock);
 
 	/*
-	 * Check the block's owner; this function absorbs error codes
-	 * for us.
+	 * Check the block's owner; this function असलorbs error codes
+	 * क्रम us.
 	 */
 	error = xchk_btree_check_owner(bs, level, *pbp);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	/*
-	 * Check the block's siblings; this function absorbs error codes
-	 * for us.
+	 * Check the block's siblings; this function असलorbs error codes
+	 * क्रम us.
 	 */
-	return xchk_btree_block_check_siblings(bs, *pblock);
-}
+	वापस xchk_btree_block_check_siblings(bs, *pblock);
+पूर्ण
 
 /*
  * Check that the low and high keys of this block match the keys stored
  * in the parent block.
  */
-STATIC void
+STATIC व्योम
 xchk_btree_block_keys(
-	struct xchk_btree	*bs,
-	int			level,
-	struct xfs_btree_block	*block)
-{
-	union xfs_btree_key	block_keys;
-	struct xfs_btree_cur	*cur = bs->cur;
-	union xfs_btree_key	*high_bk;
-	union xfs_btree_key	*parent_keys;
-	union xfs_btree_key	*high_pk;
-	struct xfs_btree_block	*parent_block;
-	struct xfs_buf		*bp;
+	काष्ठा xchk_btree	*bs,
+	पूर्णांक			level,
+	काष्ठा xfs_btree_block	*block)
+अणु
+	जोड़ xfs_btree_key	block_keys;
+	काष्ठा xfs_btree_cur	*cur = bs->cur;
+	जोड़ xfs_btree_key	*high_bk;
+	जोड़ xfs_btree_key	*parent_keys;
+	जोड़ xfs_btree_key	*high_pk;
+	काष्ठा xfs_btree_block	*parent_block;
+	काष्ठा xfs_buf		*bp;
 
-	if (level >= cur->bc_nlevels - 1)
-		return;
+	अगर (level >= cur->bc_nlevels - 1)
+		वापस;
 
-	/* Calculate the keys for this block. */
+	/* Calculate the keys क्रम this block. */
 	xfs_btree_get_keys(cur, block, &block_keys);
 
-	/* Obtain the parent's copy of the keys for this block. */
+	/* Obtain the parent's copy of the keys क्रम this block. */
 	parent_block = xfs_btree_get_block(cur, level + 1, &bp);
 	parent_keys = xfs_btree_key_addr(cur, cur->bc_ptrs[level + 1],
 			parent_block);
 
-	if (cur->bc_ops->diff_two_keys(cur, &block_keys, parent_keys) != 0)
+	अगर (cur->bc_ops->dअगरf_two_keys(cur, &block_keys, parent_keys) != 0)
 		xchk_btree_set_corrupt(bs->sc, cur, 1);
 
-	if (!(cur->bc_flags & XFS_BTREE_OVERLAPPING))
-		return;
+	अगर (!(cur->bc_flags & XFS_BTREE_OVERLAPPING))
+		वापस;
 
 	/* Get high keys */
 	high_bk = xfs_btree_high_key_from_key(cur, &block_keys);
 	high_pk = xfs_btree_high_key_addr(cur, cur->bc_ptrs[level + 1],
 			parent_block);
 
-	if (cur->bc_ops->diff_two_keys(cur, high_bk, high_pk) != 0)
+	अगर (cur->bc_ops->dअगरf_two_keys(cur, high_bk, high_pk) != 0)
 		xchk_btree_set_corrupt(bs->sc, cur, 1);
-}
+पूर्ण
 
 /*
- * Visit all nodes and leaves of a btree.  Check that all pointers and
+ * Visit all nodes and leaves of a btree.  Check that all poपूर्णांकers and
  * records are in order, that the keys reflect the records, and use a callback
- * so that the caller can verify individual records.
+ * so that the caller can verअगरy inभागidual records.
  */
-int
+पूर्णांक
 xchk_btree(
-	struct xfs_scrub		*sc,
-	struct xfs_btree_cur		*cur,
+	काष्ठा xfs_scrub		*sc,
+	काष्ठा xfs_btree_cur		*cur,
 	xchk_btree_rec_fn		scrub_fn,
-	const struct xfs_owner_info	*oinfo,
-	void				*private)
-{
-	struct xchk_btree		bs = {
+	स्थिर काष्ठा xfs_owner_info	*oinfo,
+	व्योम				*निजी)
+अणु
+	काष्ठा xchk_btree		bs = अणु
 		.cur			= cur,
 		.scrub_rec		= scrub_fn,
 		.oinfo			= oinfo,
 		.firstrec		= true,
-		.private		= private,
+		.निजी		= निजी,
 		.sc			= sc,
-	};
-	union xfs_btree_ptr		ptr;
-	union xfs_btree_ptr		*pp;
-	union xfs_btree_rec		*recp;
-	struct xfs_btree_block		*block;
-	int				level;
-	struct xfs_buf			*bp;
-	struct check_owner		*co;
-	struct check_owner		*n;
-	int				i;
-	int				error = 0;
+	पूर्ण;
+	जोड़ xfs_btree_ptr		ptr;
+	जोड़ xfs_btree_ptr		*pp;
+	जोड़ xfs_btree_rec		*recp;
+	काष्ठा xfs_btree_block		*block;
+	पूर्णांक				level;
+	काष्ठा xfs_buf			*bp;
+	काष्ठा check_owner		*co;
+	काष्ठा check_owner		*n;
+	पूर्णांक				i;
+	पूर्णांक				error = 0;
 
 	/* Initialize scrub state */
-	for (i = 0; i < XFS_BTREE_MAXLEVELS; i++)
+	क्रम (i = 0; i < XFS_BTREE_MAXLEVELS; i++)
 		bs.firstkey[i] = true;
 	INIT_LIST_HEAD(&bs.to_check);
 
 	/* Don't try to check a tree with a height we can't handle. */
-	if (cur->bc_nlevels > XFS_BTREE_MAXLEVELS) {
+	अगर (cur->bc_nlevels > XFS_BTREE_MAXLEVELS) अणु
 		xchk_btree_set_corrupt(sc, cur, 0);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Load the root of the btree.  The helper function absorbs
-	 * error codes for us.
+	 * Load the root of the btree.  The helper function असलorbs
+	 * error codes क्रम us.
 	 */
 	level = cur->bc_nlevels - 1;
 	cur->bc_ops->init_ptr_from_cur(cur, &ptr);
-	if (!xchk_btree_ptr_ok(&bs, cur->bc_nlevels, &ptr))
-		goto out;
+	अगर (!xchk_btree_ptr_ok(&bs, cur->bc_nlevels, &ptr))
+		जाओ out;
 	error = xchk_btree_get_block(&bs, level, &ptr, &block, &bp);
-	if (error || !block)
-		goto out;
+	अगर (error || !block)
+		जाओ out;
 
 	cur->bc_ptrs[level] = 1;
 
-	while (level < cur->bc_nlevels) {
+	जबतक (level < cur->bc_nlevels) अणु
 		block = xfs_btree_get_block(cur, level, &bp);
 
-		if (level == 0) {
+		अगर (level == 0) अणु
 			/* End of leaf, pop back towards the root. */
-			if (cur->bc_ptrs[level] >
-			    be16_to_cpu(block->bb_numrecs)) {
+			अगर (cur->bc_ptrs[level] >
+			    be16_to_cpu(block->bb_numrecs)) अणु
 				xchk_btree_block_keys(&bs, level, block);
-				if (level < cur->bc_nlevels - 1)
+				अगर (level < cur->bc_nlevels - 1)
 					cur->bc_ptrs[level + 1]++;
 				level++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			/* Records in order for scrub? */
+			/* Records in order क्रम scrub? */
 			xchk_btree_rec(&bs);
 
 			/* Call out to the record checker. */
 			recp = xfs_btree_rec_addr(cur, cur->bc_ptrs[0], block);
 			error = bs.scrub_rec(&bs, recp);
-			if (error)
-				break;
-			if (xchk_should_terminate(sc, &error) ||
+			अगर (error)
+				अवरोध;
+			अगर (xchk_should_terminate(sc, &error) ||
 			    (sc->sm->sm_flags & XFS_SCRUB_OFLAG_CORRUPT))
-				break;
+				अवरोध;
 
 			cur->bc_ptrs[level]++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* End of node, pop back towards the root. */
-		if (cur->bc_ptrs[level] > be16_to_cpu(block->bb_numrecs)) {
+		अगर (cur->bc_ptrs[level] > be16_to_cpu(block->bb_numrecs)) अणु
 			xchk_btree_block_keys(&bs, level, block);
-			if (level < cur->bc_nlevels - 1)
+			अगर (level < cur->bc_nlevels - 1)
 				cur->bc_ptrs[level + 1]++;
 			level++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* Keys in order for scrub? */
+		/* Keys in order क्रम scrub? */
 		xchk_btree_key(&bs, level);
 
 		/* Drill another level deeper. */
 		pp = xfs_btree_ptr_addr(cur, cur->bc_ptrs[level], block);
-		if (!xchk_btree_ptr_ok(&bs, level, pp)) {
+		अगर (!xchk_btree_ptr_ok(&bs, level, pp)) अणु
 			cur->bc_ptrs[level]++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		level--;
 		error = xchk_btree_get_block(&bs, level, pp, &block, &bp);
-		if (error || !block)
-			goto out;
+		अगर (error || !block)
+			जाओ out;
 
 		cur->bc_ptrs[level] = 1;
-	}
+	पूर्ण
 
 out:
 	/* Process deferred owner checks on btree blocks. */
-	list_for_each_entry_safe(co, n, &bs.to_check, list) {
-		if (!error && bs.cur)
+	list_क्रम_each_entry_safe(co, n, &bs.to_check, list) अणु
+		अगर (!error && bs.cur)
 			error = xchk_btree_check_block_owner(&bs,
 					co->level, co->daddr);
 		list_del(&co->list);
-		kmem_free(co);
-	}
+		kmem_मुक्त(co);
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण

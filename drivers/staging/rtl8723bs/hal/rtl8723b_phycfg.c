@@ -1,189 +1,190 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#define _RTL8723B_PHYCFG_C_
+#घोषणा _RTL8723B_PHYCFG_C_
 
-#include <drv_types.h>
-#include <rtw_debug.h>
-#include <rtl8723b_hal.h>
+#समावेश <drv_types.h>
+#समावेश <rtw_debug.h>
+#समावेश <rtl8723b_hal.h>
 
 
 /*---------------------------Define Local Constant---------------------------*/
-/* Channel switch:The size of command tables for switch channel*/
-#define MAX_PRECMD_CNT 16
-#define MAX_RFDEPENDCMD_CNT 16
-#define MAX_POSTCMD_CNT 16
+/* Channel चयन:The size of command tables क्रम चयन channel*/
+#घोषणा MAX_PRECMD_CNT 16
+#घोषणा MAX_RFDEPENDCMD_CNT 16
+#घोषणा MAX_POSTCMD_CNT 16
 
-#define MAX_DOZE_WAITING_TIMES_9x 64
+#घोषणा MAX_DOZE_WAITING_TIMES_9x 64
 
 /**
- * phy_CalculateBitShift - Get shifted position of the BitMask.
- * @BitMask: Bitmask.
+ * phy_CalculateBitShअगरt - Get shअगरted position of the BitMask.
+ * @BitMask: Biपंचांगask.
  *
- * Return:	Return the shift bit position of the mask
+ * Return:	Return the shअगरt bit position of the mask
  */
-static	u32 phy_CalculateBitShift(u32 BitMask)
-{
+अटल	u32 phy_CalculateBitShअगरt(u32 BitMask)
+अणु
 	u32 i;
 
-	for (i = 0; i <= 31; i++) {
-		if (((BitMask>>i) &  0x1) == 1)
-			break;
-	}
-	return i;
-}
+	क्रम (i = 0; i <= 31; i++) अणु
+		अगर (((BitMask>>i) &  0x1) == 1)
+			अवरोध;
+	पूर्ण
+	वापस i;
+पूर्ण
 
 
 /**
- * PHY_QueryBBReg - Read "specific bits" from BB register.
+ * PHY_QueryBBReg - Read "specific bits" from BB रेजिस्टर.
  * @Adapter:
- * @RegAddr:	The target address to be readback
+ * @RegAddr:	The target address to be पढ़ोback
  * @BitMask:	The target bit position in the target address
- *				to be readback
+ *				to be पढ़ोback
  *
- * Return:	The readback register value
+ * Return:	The पढ़ोback रेजिस्टर value
  *
  * .. Note::	This function is equal to "GetRegSetting" in PHY programming
  *			guide
  */
-u32 PHY_QueryBBReg_8723B(struct adapter *Adapter, u32 RegAddr, u32 BitMask)
-{
-	u32 OriginalValue, BitShift;
+u32 PHY_QueryBBReg_8723B(काष्ठा adapter *Adapter, u32 RegAddr, u32 BitMask)
+अणु
+	u32 OriginalValue, BitShअगरt;
 
-#if (DISABLE_BB_RF == 1)
-	return 0;
-#endif
+#अगर (DISABLE_BB_RF == 1)
+	वापस 0;
+#पूर्ण_अगर
 
-	OriginalValue = rtw_read32(Adapter, RegAddr);
-	BitShift = phy_CalculateBitShift(BitMask);
+	OriginalValue = rtw_पढ़ो32(Adapter, RegAddr);
+	BitShअगरt = phy_CalculateBitShअगरt(BitMask);
 
-	return (OriginalValue & BitMask) >> BitShift;
+	वापस (OriginalValue & BitMask) >> BitShअगरt;
 
-}
+पूर्ण
 
 
 /**
- * PHY_SetBBReg - Write "Specific bits" to BB register (page 8~).
+ * PHY_SetBBReg - Write "Specific bits" to BB रेजिस्टर (page 8~).
  * @Adapter:
- * @RegAddr:	The target address to be modified
+ * @RegAddr:	The target address to be modअगरied
  * @BitMask:	The target bit position in the target address
- *				to be modified
- * @Data:		The new register value in the target bit position
+ *				to be modअगरied
+ * @Data:		The new रेजिस्टर value in the target bit position
  *				of the target address
  *
  * .. Note::	This function is equal to "PutRegSetting" in PHY programming
  *			guide
  */
 
-void PHY_SetBBReg_8723B(
-	struct adapter *Adapter,
+व्योम PHY_SetBBReg_8723B(
+	काष्ठा adapter *Adapter,
 	u32 RegAddr,
 	u32 BitMask,
 	u32 Data
 )
-{
+अणु
 	/* u16 BBWaitCounter	= 0; */
-	u32 OriginalValue, BitShift;
+	u32 OriginalValue, BitShअगरt;
 
-#if (DISABLE_BB_RF == 1)
-	return;
-#endif
+#अगर (DISABLE_BB_RF == 1)
+	वापस;
+#पूर्ण_अगर
 
-	if (BitMask != bMaskDWord) { /* if not "double word" write */
-		OriginalValue = rtw_read32(Adapter, RegAddr);
-		BitShift = phy_CalculateBitShift(BitMask);
-		Data = ((OriginalValue & (~BitMask)) | ((Data << BitShift) & BitMask));
-	}
+	अगर (BitMask != bMaskDWord) अणु /* अगर not "double word" ग_लिखो */
+		OriginalValue = rtw_पढ़ो32(Adapter, RegAddr);
+		BitShअगरt = phy_CalculateBitShअगरt(BitMask);
+		Data = ((OriginalValue & (~BitMask)) | ((Data << BitShअगरt) & BitMask));
+	पूर्ण
 
-	rtw_write32(Adapter, RegAddr, Data);
+	rtw_ग_लिखो32(Adapter, RegAddr, Data);
 
-}
+पूर्ण
 
 
 /*  */
-/*  2. RF register R/W API */
+/*  2. RF रेजिस्टर R/W API */
 /*  */
 
-static u32 phy_RFSerialRead_8723B(
-	struct adapter *Adapter, enum rf_path eRFPath, u32 Offset
+अटल u32 phy_RFSerialRead_8723B(
+	काष्ठा adapter *Adapter, क्रमागत rf_path eRFPath, u32 Offset
 )
-{
+अणु
 	u32 retValue = 0;
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
-	struct bb_register_def *pPhyReg = &pHalData->PHYRegDef[eRFPath];
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	काष्ठा bb_रेजिस्टर_def *pPhyReg = &pHalData->PHYRegDef[eRFPath];
 	u32 NewOffset;
-	u32 tmplong2;
+	u32 पंचांगpदीर्घ2;
 	u8 RfPiEnable = 0;
-	u32 MaskforPhySet = 0;
-	int i = 0;
+	u32 Maskक्रमPhySet = 0;
+	पूर्णांक i = 0;
 
 	/*  */
-	/*  Make sure RF register offset is correct */
+	/*  Make sure RF रेजिस्टर offset is correct */
 	/*  */
 	Offset &= 0xff;
 
 	NewOffset = Offset;
 
-	if (eRFPath == RF_PATH_A) {
-		tmplong2 = PHY_QueryBBReg(Adapter, rFPGA0_XA_HSSIParameter2|MaskforPhySet, bMaskDWord);
-		tmplong2 = (tmplong2 & (~bLSSIReadAddress)) | (NewOffset<<23) | bLSSIReadEdge;	/* T65 RF */
-		PHY_SetBBReg(Adapter, rFPGA0_XA_HSSIParameter2|MaskforPhySet, bMaskDWord, tmplong2&(~bLSSIReadEdge));
-	} else {
-		tmplong2 = PHY_QueryBBReg(Adapter, rFPGA0_XB_HSSIParameter2|MaskforPhySet, bMaskDWord);
-		tmplong2 = (tmplong2 & (~bLSSIReadAddress)) | (NewOffset<<23) | bLSSIReadEdge;	/* T65 RF */
-		PHY_SetBBReg(Adapter, rFPGA0_XB_HSSIParameter2|MaskforPhySet, bMaskDWord, tmplong2&(~bLSSIReadEdge));
-	}
+	अगर (eRFPath == RF_PATH_A) अणु
+		पंचांगpदीर्घ2 = PHY_QueryBBReg(Adapter, rFPGA0_XA_HSSIParameter2|Maskक्रमPhySet, bMaskDWord);
+		पंचांगpदीर्घ2 = (पंचांगpदीर्घ2 & (~bLSSIReadAddress)) | (NewOffset<<23) | bLSSIReadEdge;	/* T65 RF */
+		PHY_SetBBReg(Adapter, rFPGA0_XA_HSSIParameter2|Maskक्रमPhySet, bMaskDWord, पंचांगpदीर्घ2&(~bLSSIReadEdge));
+	पूर्ण अन्यथा अणु
+		पंचांगpदीर्घ2 = PHY_QueryBBReg(Adapter, rFPGA0_XB_HSSIParameter2|Maskक्रमPhySet, bMaskDWord);
+		पंचांगpदीर्घ2 = (पंचांगpदीर्घ2 & (~bLSSIReadAddress)) | (NewOffset<<23) | bLSSIReadEdge;	/* T65 RF */
+		PHY_SetBBReg(Adapter, rFPGA0_XB_HSSIParameter2|Maskक्रमPhySet, bMaskDWord, पंचांगpदीर्घ2&(~bLSSIReadEdge));
+	पूर्ण
 
-	tmplong2 = PHY_QueryBBReg(Adapter, rFPGA0_XA_HSSIParameter2|MaskforPhySet, bMaskDWord);
-	PHY_SetBBReg(Adapter, rFPGA0_XA_HSSIParameter2|MaskforPhySet, bMaskDWord, tmplong2 & (~bLSSIReadEdge));
-	PHY_SetBBReg(Adapter, rFPGA0_XA_HSSIParameter2|MaskforPhySet, bMaskDWord, tmplong2 | bLSSIReadEdge);
+	पंचांगpदीर्घ2 = PHY_QueryBBReg(Adapter, rFPGA0_XA_HSSIParameter2|Maskक्रमPhySet, bMaskDWord);
+	PHY_SetBBReg(Adapter, rFPGA0_XA_HSSIParameter2|Maskक्रमPhySet, bMaskDWord, पंचांगpदीर्घ2 & (~bLSSIReadEdge));
+	PHY_SetBBReg(Adapter, rFPGA0_XA_HSSIParameter2|Maskक्रमPhySet, bMaskDWord, पंचांगpदीर्घ2 | bLSSIReadEdge);
 
 	udelay(10);
 
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		udelay(MAX_STALL_TIME);
 	udelay(10);
 
-	if (eRFPath == RF_PATH_A)
-		RfPiEnable = (u8)PHY_QueryBBReg(Adapter, rFPGA0_XA_HSSIParameter1|MaskforPhySet, BIT8);
-	else if (eRFPath == RF_PATH_B)
-		RfPiEnable = (u8)PHY_QueryBBReg(Adapter, rFPGA0_XB_HSSIParameter1|MaskforPhySet, BIT8);
+	अगर (eRFPath == RF_PATH_A)
+		RfPiEnable = (u8)PHY_QueryBBReg(Adapter, rFPGA0_XA_HSSIParameter1|Maskक्रमPhySet, BIT8);
+	अन्यथा अगर (eRFPath == RF_PATH_B)
+		RfPiEnable = (u8)PHY_QueryBBReg(Adapter, rFPGA0_XB_HSSIParameter1|Maskक्रमPhySet, BIT8);
 
-	if (RfPiEnable) {
-		/*  Read from BBreg8b8, 12 bits for 8190, 20bits for T65 RF */
-		retValue = PHY_QueryBBReg(Adapter, pPhyReg->rfLSSIReadBackPi|MaskforPhySet, bLSSIReadBackData);
-	} else {
-		/* Read from BBreg8a0, 12 bits for 8190, 20 bits for T65 RF */
-		retValue = PHY_QueryBBReg(Adapter, pPhyReg->rfLSSIReadBack|MaskforPhySet, bLSSIReadBackData);
-	}
-	return retValue;
+	अगर (RfPiEnable) अणु
+		/*  Read from BBreg8b8, 12 bits क्रम 8190, 20bits क्रम T65 RF */
+		retValue = PHY_QueryBBReg(Adapter, pPhyReg->rfLSSIReadBackPi|Maskक्रमPhySet, bLSSIReadBackData);
+	पूर्ण अन्यथा अणु
+		/* Read from BBreg8a0, 12 bits क्रम 8190, 20 bits क्रम T65 RF */
+		retValue = PHY_QueryBBReg(Adapter, pPhyReg->rfLSSIReadBack|Maskक्रमPhySet, bLSSIReadBackData);
+	पूर्ण
+	वापस retValue;
 
-}
+पूर्ण
 
 /**
- * phy_RFSerialWrite_8723B - Write data to RF register (page 8~).
+ * phy_RFSerialWrite_8723B - Write data to RF रेजिस्टर (page 8~).
  * @Adapter:
  * @eRFPath:	Radio path of A/B/C/D
- * @Offset:	The target address to be read
- * @Data:	The new register Data in the target bit position
- *			of the target to be read
+ * @Offset:	The target address to be पढ़ो
+ * @Data:	The new रेजिस्टर Data in the target bit position
+ *			of the target to be पढ़ो
  *
  * .. Note::	Threre are three types of serial operations:
- *		1. Software serial write
+ *		1. Software serial ग_लिखो
  *		2. Hardware LSSI-Low Speed Serial Interface
  *		3. Hardware HSSI-High speed
- *		serial write. Driver need to implement (1) and (2).
+ *		serial ग_लिखो. Driver need to implement (1) and (2).
  *		This function is equal to the combination of RF_ReadReg() and  RFLSSIRead()
  *
  * .. Note::		  For RF8256 only
- *		 The total count of RTL8256(Zebra4) register is around 36 bit it only employs
+ *		 The total count of RTL8256(Zebra4) रेजिस्टर is around 36 bit it only employs
  *		 4-bit RF address. RTL8256 uses "register mode control bit" (Reg00[12], Reg00[10])
- *		 to access register address bigger than 0xf. See "Appendix-4 in PHY Configuration
- *		 programming guide" for more details.
- *		 Thus, we define a sub-finction for RTL8526 register address conversion
+ *		 to access रेजिस्टर address bigger than 0xf. See "Appendix-4 in PHY Configuration
+ *		 programming guide" क्रम more details.
+ *		 Thus, we define a sub-finction क्रम RTL8526 रेजिस्टर address conversion
  *	       ===========================================================
  *		 Register Mode		RegCTL[1]		RegCTL[0]		Note
  *							(Reg00[12])		(Reg00[10])
@@ -200,43 +201,43 @@ static u32 phy_RFSerialRead_8723B(
  *
  *
  */
-static void phy_RFSerialWrite_8723B(
-	struct adapter *Adapter,
-	enum rf_path eRFPath,
+अटल व्योम phy_RFSerialWrite_8723B(
+	काष्ठा adapter *Adapter,
+	क्रमागत rf_path eRFPath,
 	u32 Offset,
 	u32 Data
 )
-{
+अणु
 	u32 DataAndAddr = 0;
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
-	struct bb_register_def *pPhyReg = &pHalData->PHYRegDef[eRFPath];
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	काष्ठा bb_रेजिस्टर_def *pPhyReg = &pHalData->PHYRegDef[eRFPath];
 	u32 NewOffset;
 
 	Offset &= 0xff;
 
 	/*  */
-	/*  Switch page for 8256 RF IC */
+	/*  Switch page क्रम 8256 RF IC */
 	/*  */
 	NewOffset = Offset;
 
 	/*  */
-	/*  Put write addr in [5:0]  and write data in [31:16] */
+	/*  Put ग_लिखो addr in [5:0]  and ग_लिखो data in [31:16] */
 	/*  */
 	DataAndAddr = ((NewOffset<<20) | (Data&0x000fffff)) & 0x0fffffff;	/*  T65 RF */
 	/*  */
 	/*  Write Operation */
 	/*  */
 	PHY_SetBBReg(Adapter, pPhyReg->rf3wireOffset, bMaskDWord, DataAndAddr);
-}
+पूर्ण
 
 
 /**
- * PHY_QueryRFReg - Query "Specific bits" to RF register (page 8~).
+ * PHY_QueryRFReg - Query "Specific bits" to RF रेजिस्टर (page 8~).
  * @Adapter:
  * @eRFPath:	Radio path of A/B/C/D
- * @RegAdd:	The target address to be read
+ * @RegAdd:	The target address to be पढ़ो
  * @BitMask:	The target bit position in the target address
- *				to be read
+ *				to be पढ़ो
  *
  * Return:	Readback value
  *
@@ -244,64 +245,64 @@ static void phy_RFSerialWrite_8723B(
  *			programming guide
  */
 u32 PHY_QueryRFReg_8723B(
-	struct adapter *Adapter,
+	काष्ठा adapter *Adapter,
 	u8 eRFPath,
 	u32 RegAddr,
 	u32 BitMask
 )
-{
-	u32 Original_Value, BitShift;
+अणु
+	u32 Original_Value, BitShअगरt;
 
-#if (DISABLE_BB_RF == 1)
-	return 0;
-#endif
+#अगर (DISABLE_BB_RF == 1)
+	वापस 0;
+#पूर्ण_अगर
 
 	Original_Value = phy_RFSerialRead_8723B(Adapter, eRFPath, RegAddr);
-	BitShift =  phy_CalculateBitShift(BitMask);
+	BitShअगरt =  phy_CalculateBitShअगरt(BitMask);
 
-	return (Original_Value & BitMask) >> BitShift;
-}
+	वापस (Original_Value & BitMask) >> BitShअगरt;
+पूर्ण
 
 /**
- * PHY_SetRFReg - Write "Specific bits" to RF register (page 8~).
+ * PHY_SetRFReg - Write "Specific bits" to RF रेजिस्टर (page 8~).
  * @Adapter:
  * @eRFPath:	Radio path of A/B/C/D
- * @RegAddr:	The target address to be modified
+ * @RegAddr:	The target address to be modअगरied
  * @BitMask:	The target bit position in the target address
- *				to be modified
- * @Data:	The new register Data in the target bit position
+ *				to be modअगरied
+ * @Data:	The new रेजिस्टर Data in the target bit position
  *								of the target address
  *
  * .. Note::	This function is equal to "PutRFRegSetting" in PHY
  *			programming guide.
  */
-void PHY_SetRFReg_8723B(
-	struct adapter *Adapter,
+व्योम PHY_SetRFReg_8723B(
+	काष्ठा adapter *Adapter,
 	u8 eRFPath,
 	u32 RegAddr,
 	u32 BitMask,
 	u32 Data
 )
-{
-	u32 Original_Value, BitShift;
+अणु
+	u32 Original_Value, BitShअगरt;
 
-#if (DISABLE_BB_RF == 1)
-	return;
-#endif
+#अगर (DISABLE_BB_RF == 1)
+	वापस;
+#पूर्ण_अगर
 
 	/*  RF data is 12 bits only */
-	if (BitMask != bRFRegOffsetMask) {
+	अगर (BitMask != bRFRegOffsetMask) अणु
 		Original_Value = phy_RFSerialRead_8723B(Adapter, eRFPath, RegAddr);
-		BitShift =  phy_CalculateBitShift(BitMask);
-		Data = ((Original_Value & (~BitMask)) | (Data<<BitShift));
-	}
+		BitShअगरt =  phy_CalculateBitShअगरt(BitMask);
+		Data = ((Original_Value & (~BitMask)) | (Data<<BitShअगरt));
+	पूर्ण
 
 	phy_RFSerialWrite_8723B(Adapter, eRFPath, RegAddr, Data);
-}
+पूर्ण
 
 
 /*  */
-/*  3. Initial MAC/BB/RF config by reading MAC/BB/RF txt. */
+/*  3. Initial MAC/BB/RF config by पढ़ोing MAC/BB/RF txt. */
 /*  */
 
 
@@ -314,36 +315,36 @@ void PHY_SetRFReg_8723B(
  *
  *---------------------------------------------------------------------------
  */
-s32 PHY_MACConfig8723B(struct adapter *Adapter)
-{
-	struct hal_com_data	*pHalData = GET_HAL_DATA(Adapter);
+s32 PHY_MACConfig8723B(काष्ठा adapter *Adapter)
+अणु
+	काष्ठा hal_com_data	*pHalData = GET_HAL_DATA(Adapter);
 
 	ODM_ReadAndConfig_MP_8723B_MAC_REG(&pHalData->odmpriv);
-	return _SUCCESS;
-}
+	वापस _SUCCESS;
+पूर्ण
 
 /**
- * phy_InitBBRFRegisterDefinition - Initialize Register definition offset for
+ * phy_InitBBRFRegisterDefinition - Initialize Register definition offset क्रम
  *									Radio Path A/B/C/D
  * @Adapter:
  *
- * .. Note::		The initialization value is constant and it should never be changes
+ * .. Note::		The initialization value is स्थिरant and it should never be changes
  */
-static void phy_InitBBRFRegisterDefinition(struct adapter *Adapter)
-{
-	struct hal_com_data		*pHalData = GET_HAL_DATA(Adapter);
+अटल व्योम phy_InitBBRFRegisterDefinition(काष्ठा adapter *Adapter)
+अणु
+	काष्ठा hal_com_data		*pHalData = GET_HAL_DATA(Adapter);
 
 	/*  RF Interface Sowrtware Control */
-	pHalData->PHYRegDef[ODM_RF_PATH_A].rfintfs = rFPGA0_XAB_RFInterfaceSW; /*  16 LSBs if read 32-bit from 0x870 */
-	pHalData->PHYRegDef[ODM_RF_PATH_B].rfintfs = rFPGA0_XAB_RFInterfaceSW; /*  16 MSBs if read 32-bit from 0x870 (16-bit for 0x872) */
+	pHalData->PHYRegDef[ODM_RF_PATH_A].rfपूर्णांकfs = rFPGA0_XAB_RFInterfaceSW; /*  16 LSBs अगर पढ़ो 32-bit from 0x870 */
+	pHalData->PHYRegDef[ODM_RF_PATH_B].rfपूर्णांकfs = rFPGA0_XAB_RFInterfaceSW; /*  16 MSBs अगर पढ़ो 32-bit from 0x870 (16-bit क्रम 0x872) */
 
 	/*  RF Interface Output (and Enable) */
-	pHalData->PHYRegDef[ODM_RF_PATH_A].rfintfo = rFPGA0_XA_RFInterfaceOE; /*  16 LSBs if read 32-bit from 0x860 */
-	pHalData->PHYRegDef[ODM_RF_PATH_B].rfintfo = rFPGA0_XB_RFInterfaceOE; /*  16 LSBs if read 32-bit from 0x864 */
+	pHalData->PHYRegDef[ODM_RF_PATH_A].rfपूर्णांकfo = rFPGA0_XA_RFInterfaceOE; /*  16 LSBs अगर पढ़ो 32-bit from 0x860 */
+	pHalData->PHYRegDef[ODM_RF_PATH_B].rfपूर्णांकfo = rFPGA0_XB_RFInterfaceOE; /*  16 LSBs अगर पढ़ो 32-bit from 0x864 */
 
 	/*  RF Interface (Output and)  Enable */
-	pHalData->PHYRegDef[ODM_RF_PATH_A].rfintfe = rFPGA0_XA_RFInterfaceOE; /*  16 MSBs if read 32-bit from 0x860 (16-bit for 0x862) */
-	pHalData->PHYRegDef[ODM_RF_PATH_B].rfintfe = rFPGA0_XB_RFInterfaceOE; /*  16 MSBs if read 32-bit from 0x864 (16-bit for 0x866) */
+	pHalData->PHYRegDef[ODM_RF_PATH_A].rfपूर्णांकfe = rFPGA0_XA_RFInterfaceOE; /*  16 MSBs अगर पढ़ो 32-bit from 0x860 (16-bit क्रम 0x862) */
+	pHalData->PHYRegDef[ODM_RF_PATH_B].rfपूर्णांकfe = rFPGA0_XB_RFInterfaceOE; /*  16 MSBs अगर पढ़ो 32-bit from 0x864 (16-bit क्रम 0x866) */
 
 	pHalData->PHYRegDef[ODM_RF_PATH_A].rf3wireOffset = rFPGA0_XA_LSSIParameter; /* LSSI Parameter */
 	pHalData->PHYRegDef[ODM_RF_PATH_B].rf3wireOffset = rFPGA0_XB_LSSIParameter;
@@ -357,79 +358,79 @@ static void phy_InitBBRFRegisterDefinition(struct adapter *Adapter)
 	pHalData->PHYRegDef[ODM_RF_PATH_A].rfLSSIReadBackPi = TransceiverA_HSPI_Readback;
 	pHalData->PHYRegDef[ODM_RF_PATH_B].rfLSSIReadBackPi = TransceiverB_HSPI_Readback;
 
-}
+पूर्ण
 
-static int phy_BB8723b_Config_ParaFile(struct adapter *Adapter)
-{
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+अटल पूर्णांक phy_BB8723b_Config_ParaFile(काष्ठा adapter *Adapter)
+अणु
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
 
 	/*  Read Tx Power Limit File */
 	PHY_InitTxPowerLimit(Adapter);
-	if (
+	अगर (
 		Adapter->registrypriv.RegEnableTxPowerLimit == 1 ||
 		(Adapter->registrypriv.RegEnableTxPowerLimit == 2 && pHalData->EEPROMRegulatory == 1)
-	) {
+	) अणु
 		ODM_ConfigRFWithHeaderFile(&pHalData->odmpriv,
 					   CONFIG_RF_TXPWR_LMT, 0);
-	}
+	पूर्ण
 
 	/*  */
 	/*  1. Read PHY_REG.TXT BB INIT!! */
 	/*  */
 	ODM_ConfigBBWithHeaderFile(&pHalData->odmpriv, CONFIG_BB_PHY_REG);
 
-	/*  If EEPROM or EFUSE autoload OK, We must config by PHY_REG_PG.txt */
+	/*  If EEPROM or EFUSE स्वतःload OK, We must config by PHY_REG_PG.txt */
 	PHY_InitTxPowerByRate(Adapter);
-	if (
+	अगर (
 		Adapter->registrypriv.RegEnableTxPowerByRate == 1 ||
 		(Adapter->registrypriv.RegEnableTxPowerByRate == 2 && pHalData->EEPROMRegulatory != 2)
-	) {
+	) अणु
 		ODM_ConfigBBWithHeaderFile(&pHalData->odmpriv,
 					   CONFIG_BB_PHY_REG_PG);
 
-		if (pHalData->odmpriv.PhyRegPgValueType == PHY_REG_PG_EXACT_VALUE)
+		अगर (pHalData->odmpriv.PhyRegPgValueType == PHY_REG_PG_EXACT_VALUE)
 			PHY_TxPowerByRateConfiguration(Adapter);
 
-		if (
+		अगर (
 			Adapter->registrypriv.RegEnableTxPowerLimit == 1 ||
 			(Adapter->registrypriv.RegEnableTxPowerLimit == 2 && pHalData->EEPROMRegulatory == 1)
 		)
 			PHY_ConvertTxPowerLimitToPowerIndex(Adapter);
-	}
+	पूर्ण
 
 	/*  */
 	/*  2. Read BB AGC table Initialization */
 	/*  */
 	ODM_ConfigBBWithHeaderFile(&pHalData->odmpriv, CONFIG_BB_AGC_TAB);
 
-	return _SUCCESS;
-}
+	वापस _SUCCESS;
+पूर्ण
 
 
-int PHY_BBConfig8723B(struct adapter *Adapter)
-{
-	int	rtStatus = _SUCCESS;
-	struct hal_com_data	*pHalData = GET_HAL_DATA(Adapter);
+पूर्णांक PHY_BBConfig8723B(काष्ठा adapter *Adapter)
+अणु
+	पूर्णांक	rtStatus = _SUCCESS;
+	काष्ठा hal_com_data	*pHalData = GET_HAL_DATA(Adapter);
 	u32 RegVal;
 	u8 CrystalCap;
 
 	phy_InitBBRFRegisterDefinition(Adapter);
 
 	/*  Enable BB and RF */
-	RegVal = rtw_read16(Adapter, REG_SYS_FUNC_EN);
-	rtw_write16(Adapter, REG_SYS_FUNC_EN, (u16)(RegVal|BIT13|BIT0|BIT1));
+	RegVal = rtw_पढ़ो16(Adapter, REG_SYS_FUNC_EN);
+	rtw_ग_लिखो16(Adapter, REG_SYS_FUNC_EN, (u16)(RegVal|BIT13|BIT0|BIT1));
 
-	rtw_write32(Adapter, 0x948, 0x280);	/*  Others use Antenna S1 */
+	rtw_ग_लिखो32(Adapter, 0x948, 0x280);	/*  Others use Antenna S1 */
 
-	rtw_write8(Adapter, REG_RF_CTRL, RF_EN|RF_RSTB|RF_SDMRSTB);
+	rtw_ग_लिखो8(Adapter, REG_RF_CTRL, RF_EN|RF_RSTB|RF_SDMRSTB);
 
 	msleep(1);
 
 	PHY_SetRFReg(Adapter, ODM_RF_PATH_A, 0x1, 0xfffff, 0x780);
 
-	rtw_write8(Adapter, REG_SYS_FUNC_EN, FEN_PPLL|FEN_PCIEA|FEN_DIO_PCIE|FEN_BB_GLB_RSTn|FEN_BBRSTB);
+	rtw_ग_लिखो8(Adapter, REG_SYS_FUNC_EN, FEN_PPLL|FEN_PCIEA|FEN_DIO_PCIE|FEN_BB_GLB_RSTn|FEN_BBRSTB);
 
-	rtw_write8(Adapter, REG_AFE_XTAL_CTRL+1, 0x80);
+	rtw_ग_लिखो8(Adapter, REG_AFE_XTAL_CTRL+1, 0x80);
 
 	/*  */
 	/*  Config BB and AGC */
@@ -440,20 +441,20 @@ int PHY_BBConfig8723B(struct adapter *Adapter)
 	CrystalCap = pHalData->CrystalCap & 0x3F;
 	PHY_SetBBReg(Adapter, REG_MAC_PHY_CTRL, 0xFFF000, (CrystalCap | (CrystalCap << 6)));
 
-	return rtStatus;
-}
+	वापस rtStatus;
+पूर्ण
 
-static void phy_LCK_8723B(struct adapter *Adapter)
-{
+अटल व्योम phy_LCK_8723B(काष्ठा adapter *Adapter)
+अणु
 	PHY_SetRFReg(Adapter, RF_PATH_A, 0xB0, bRFRegOffsetMask, 0xDFBE0);
 	PHY_SetRFReg(Adapter, RF_PATH_A, RF_CHNLBW, bRFRegOffsetMask, 0x8C01);
 	mdelay(200);
 	PHY_SetRFReg(Adapter, RF_PATH_A, 0xB0, bRFRegOffsetMask, 0xDFFE0);
-}
+पूर्ण
 
-int PHY_RFConfig8723B(struct adapter *Adapter)
-{
-	int rtStatus = _SUCCESS;
+पूर्णांक PHY_RFConfig8723B(काष्ठा adapter *Adapter)
+अणु
+	पूर्णांक rtStatus = _SUCCESS;
 
 	/*  */
 	/*  RF config */
@@ -462,110 +463,110 @@ int PHY_RFConfig8723B(struct adapter *Adapter)
 
 	phy_LCK_8723B(Adapter);
 
-	return rtStatus;
-}
+	वापस rtStatus;
+पूर्ण
 
 /**************************************************************************************************************
  *   Description:
- *       The low-level interface to set TxAGC , called by both MP and Normal Driver.
+ *       The low-level पूर्णांकerface to set TxAGC , called by both MP and Normal Driver.
  *
  *                                                                                    <20120830, Kordan>
  **************************************************************************************************************/
 
-void PHY_SetTxPowerIndex(
-	struct adapter *Adapter,
+व्योम PHY_SetTxPowerIndex(
+	काष्ठा adapter *Adapter,
 	u32 PowerIndex,
 	u8 RFPath,
 	u8 Rate
 )
-{
-	if (RFPath == ODM_RF_PATH_A || RFPath == ODM_RF_PATH_B) {
-		switch (Rate) {
-		case MGN_1M:
+अणु
+	अगर (RFPath == ODM_RF_PATH_A || RFPath == ODM_RF_PATH_B) अणु
+		चयन (Rate) अणु
+		हाल MGN_1M:
 			PHY_SetBBReg(Adapter, rTxAGC_A_CCK1_Mcs32, bMaskByte1, PowerIndex);
-			break;
-		case MGN_2M:
+			अवरोध;
+		हाल MGN_2M:
 			PHY_SetBBReg(Adapter, rTxAGC_B_CCK11_A_CCK2_11, bMaskByte1, PowerIndex);
-			break;
-		case MGN_5_5M:
+			अवरोध;
+		हाल MGN_5_5M:
 			PHY_SetBBReg(Adapter, rTxAGC_B_CCK11_A_CCK2_11, bMaskByte2, PowerIndex);
-			break;
-		case MGN_11M:
+			अवरोध;
+		हाल MGN_11M:
 			PHY_SetBBReg(Adapter, rTxAGC_B_CCK11_A_CCK2_11, bMaskByte3, PowerIndex);
-			break;
+			अवरोध;
 
-		case MGN_6M:
+		हाल MGN_6M:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Rate18_06, bMaskByte0, PowerIndex);
-			break;
-		case MGN_9M:
+			अवरोध;
+		हाल MGN_9M:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Rate18_06, bMaskByte1, PowerIndex);
-			break;
-		case MGN_12M:
+			अवरोध;
+		हाल MGN_12M:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Rate18_06, bMaskByte2, PowerIndex);
-			break;
-		case MGN_18M:
+			अवरोध;
+		हाल MGN_18M:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Rate18_06, bMaskByte3, PowerIndex);
-			break;
+			अवरोध;
 
-		case MGN_24M:
+		हाल MGN_24M:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Rate54_24, bMaskByte0, PowerIndex);
-			break;
-		case MGN_36M:
+			अवरोध;
+		हाल MGN_36M:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Rate54_24, bMaskByte1, PowerIndex);
-			break;
-		case MGN_48M:
+			अवरोध;
+		हाल MGN_48M:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Rate54_24, bMaskByte2, PowerIndex);
-			break;
-		case MGN_54M:
+			अवरोध;
+		हाल MGN_54M:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Rate54_24, bMaskByte3, PowerIndex);
-			break;
+			अवरोध;
 
-		case MGN_MCS0:
+		हाल MGN_MCS0:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Mcs03_Mcs00, bMaskByte0, PowerIndex);
-			break;
-		case MGN_MCS1:
+			अवरोध;
+		हाल MGN_MCS1:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Mcs03_Mcs00, bMaskByte1, PowerIndex);
-			break;
-		case MGN_MCS2:
+			अवरोध;
+		हाल MGN_MCS2:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Mcs03_Mcs00, bMaskByte2, PowerIndex);
-			break;
-		case MGN_MCS3:
+			अवरोध;
+		हाल MGN_MCS3:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Mcs03_Mcs00, bMaskByte3, PowerIndex);
-			break;
+			अवरोध;
 
-		case MGN_MCS4:
+		हाल MGN_MCS4:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Mcs07_Mcs04, bMaskByte0, PowerIndex);
-			break;
-		case MGN_MCS5:
+			अवरोध;
+		हाल MGN_MCS5:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Mcs07_Mcs04, bMaskByte1, PowerIndex);
-			break;
-		case MGN_MCS6:
+			अवरोध;
+		हाल MGN_MCS6:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Mcs07_Mcs04, bMaskByte2, PowerIndex);
-			break;
-		case MGN_MCS7:
+			अवरोध;
+		हाल MGN_MCS7:
 			PHY_SetBBReg(Adapter, rTxAGC_A_Mcs07_Mcs04, bMaskByte3, PowerIndex);
-			break;
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
-}
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 u8 PHY_GetTxPowerIndex(
-	struct adapter *padapter,
+	काष्ठा adapter *padapter,
 	u8 RFPath,
 	u8 Rate,
-	enum channel_width BandWidth,
+	क्रमागत channel_width BandWidth,
 	u8 Channel
 )
-{
-	struct hal_com_data *pHalData = GET_HAL_DATA(padapter);
-	s8 txPower = 0, powerDiffByRate = 0, limit = 0;
+अणु
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(padapter);
+	s8 txPower = 0, घातerDअगरfByRate = 0, limit = 0;
 	bool bIn24G = false;
 
 	txPower = (s8) PHY_GetTxPowerIndexBase(padapter, RFPath, Rate, BandWidth, Channel, &bIn24G);
-	powerDiffByRate = PHY_GetTxPowerByRate(padapter, BAND_ON_2_4G, ODM_RF_PATH_A, RF_1TX, Rate);
+	घातerDअगरfByRate = PHY_GetTxPowerByRate(padapter, BAND_ON_2_4G, ODM_RF_PATH_A, RF_1TX, Rate);
 
 	limit = phy_get_tx_pwr_lmt(
 		padapter,
@@ -577,109 +578,109 @@ u8 PHY_GetTxPowerIndex(
 		pHalData->CurrentChannel
 	);
 
-	powerDiffByRate = powerDiffByRate > limit ? limit : powerDiffByRate;
-	txPower += powerDiffByRate;
+	घातerDअगरfByRate = घातerDअगरfByRate > limit ? limit : घातerDअगरfByRate;
+	txPower += घातerDअगरfByRate;
 
 	txPower += PHY_GetTxPowerTrackingOffset(padapter, RFPath, Rate);
 
-	if (txPower > MAX_POWER_INDEX)
+	अगर (txPower > MAX_POWER_INDEX)
 		txPower = MAX_POWER_INDEX;
 
-	return (u8) txPower;
-}
+	वापस (u8) txPower;
+पूर्ण
 
-void PHY_SetTxPowerLevel8723B(struct adapter *Adapter, u8 Channel)
-{
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
-	struct dm_odm_t *pDM_Odm = &pHalData->odmpriv;
-	struct fat_t *pDM_FatTable = &pDM_Odm->DM_FatTable;
+व्योम PHY_SetTxPowerLevel8723B(काष्ठा adapter *Adapter, u8 Channel)
+अणु
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	काष्ठा dm_odm_t *pDM_Odm = &pHalData->odmpriv;
+	काष्ठा fat_t *pDM_FatTable = &pDM_Odm->DM_FatTable;
 	u8 RFPath = ODM_RF_PATH_A;
 
-	if (pHalData->AntDivCfg) {/*  antenna diversity Enable */
+	अगर (pHalData->AntDivCfg) अणु/*  antenna भागersity Enable */
 		RFPath = ((pDM_FatTable->RxIdleAnt == MAIN_ANT) ? ODM_RF_PATH_A : ODM_RF_PATH_B);
-	} else { /*  antenna diversity disable */
+	पूर्ण अन्यथा अणु /*  antenna भागersity disable */
 		RFPath = pHalData->ant_path;
-	}
+	पूर्ण
 
 	PHY_SetTxPowerLevelByPath(Adapter, Channel, RFPath);
-}
+पूर्ण
 
-void PHY_GetTxPowerLevel8723B(struct adapter *Adapter, s32 *powerlevel)
-{
-}
+व्योम PHY_GetTxPowerLevel8723B(काष्ठा adapter *Adapter, s32 *घातerlevel)
+अणु
+पूर्ण
 
-static void phy_SetRegBW_8723B(
-	struct adapter *Adapter, enum channel_width CurrentBW
+अटल व्योम phy_SetRegBW_8723B(
+	काष्ठा adapter *Adapter, क्रमागत channel_width CurrentBW
 )
-{
-	u16 RegRfMod_BW, u2tmp = 0;
-	RegRfMod_BW = rtw_read16(Adapter, REG_TRXPTCL_CTL_8723B);
+अणु
+	u16 RegRfMod_BW, u2पंचांगp = 0;
+	RegRfMod_BW = rtw_पढ़ो16(Adapter, REG_TRXPTCL_CTL_8723B);
 
-	switch (CurrentBW) {
-	case CHANNEL_WIDTH_20:
-		rtw_write16(Adapter, REG_TRXPTCL_CTL_8723B, (RegRfMod_BW & 0xFE7F)); /*  BIT 7 = 0, BIT 8 = 0 */
-		break;
+	चयन (CurrentBW) अणु
+	हाल CHANNEL_WIDTH_20:
+		rtw_ग_लिखो16(Adapter, REG_TRXPTCL_CTL_8723B, (RegRfMod_BW & 0xFE7F)); /*  BIT 7 = 0, BIT 8 = 0 */
+		अवरोध;
 
-	case CHANNEL_WIDTH_40:
-		u2tmp = RegRfMod_BW | BIT7;
-		rtw_write16(Adapter, REG_TRXPTCL_CTL_8723B, (u2tmp & 0xFEFF)); /*  BIT 7 = 1, BIT 8 = 0 */
-		break;
+	हाल CHANNEL_WIDTH_40:
+		u2पंचांगp = RegRfMod_BW | BIT7;
+		rtw_ग_लिखो16(Adapter, REG_TRXPTCL_CTL_8723B, (u2पंचांगp & 0xFEFF)); /*  BIT 7 = 1, BIT 8 = 0 */
+		अवरोध;
 
-	case CHANNEL_WIDTH_80:
-		u2tmp = RegRfMod_BW | BIT8;
-		rtw_write16(Adapter, REG_TRXPTCL_CTL_8723B, (u2tmp & 0xFF7F)); /*  BIT 7 = 0, BIT 8 = 1 */
-		break;
+	हाल CHANNEL_WIDTH_80:
+		u2पंचांगp = RegRfMod_BW | BIT8;
+		rtw_ग_लिखो16(Adapter, REG_TRXPTCL_CTL_8723B, (u2पंचांगp & 0xFF7F)); /*  BIT 7 = 0, BIT 8 = 1 */
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static u8 phy_GetSecondaryChnl_8723B(struct adapter *Adapter)
-{
+अटल u8 phy_GetSecondaryChnl_8723B(काष्ठा adapter *Adapter)
+अणु
 	u8 SCSettingOf40 = 0, SCSettingOf20 = 0;
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
 
-	if (pHalData->CurrentChannelBW == CHANNEL_WIDTH_80) {
-		if (pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER)
+	अगर (pHalData->CurrentChannelBW == CHANNEL_WIDTH_80) अणु
+		अगर (pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER)
 			SCSettingOf40 = VHT_DATA_SC_40_LOWER_OF_80MHZ;
-		else if (pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER)
+		अन्यथा अगर (pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER)
 			SCSettingOf40 = VHT_DATA_SC_40_UPPER_OF_80MHZ;
 
-		if (
+		अगर (
 			(pHalData->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER) &&
 			(pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER)
 		)
 			SCSettingOf20 = VHT_DATA_SC_20_LOWEST_OF_80MHZ;
-		else if (
+		अन्यथा अगर (
 			(pHalData->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER) &&
 			(pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER)
 		)
 			SCSettingOf20 = VHT_DATA_SC_20_LOWER_OF_80MHZ;
-		else if (
+		अन्यथा अगर (
 			(pHalData->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER) &&
 			(pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER)
 		)
 			SCSettingOf20 = VHT_DATA_SC_20_UPPER_OF_80MHZ;
-		else if (
+		अन्यथा अगर (
 			(pHalData->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER) &&
 			(pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER)
 		)
 			SCSettingOf20 = VHT_DATA_SC_20_UPPERST_OF_80MHZ;
-	} else if (pHalData->CurrentChannelBW == CHANNEL_WIDTH_40) {
-		if (pHalData->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER)
+	पूर्ण अन्यथा अगर (pHalData->CurrentChannelBW == CHANNEL_WIDTH_40) अणु
+		अगर (pHalData->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER)
 			SCSettingOf20 = VHT_DATA_SC_20_UPPER_OF_80MHZ;
-		else if (pHalData->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER)
+		अन्यथा अगर (pHalData->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER)
 			SCSettingOf20 = VHT_DATA_SC_20_LOWER_OF_80MHZ;
-	}
+	पूर्ण
 
-	return  (SCSettingOf40 << 4) | SCSettingOf20;
-}
+	वापस  (SCSettingOf40 << 4) | SCSettingOf20;
+पूर्ण
 
-static void phy_PostSetBwMode8723B(struct adapter *Adapter)
-{
+अटल व्योम phy_PostSetBwMode8723B(काष्ठा adapter *Adapter)
+अणु
 	u8 SubChnlNum = 0;
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
 
 
 	/* 3 Set Reg668 Reg440 BW */
@@ -687,167 +688,167 @@ static void phy_PostSetBwMode8723B(struct adapter *Adapter)
 
 	/* 3 Set Reg483 */
 	SubChnlNum = phy_GetSecondaryChnl_8723B(Adapter);
-	rtw_write8(Adapter, REG_DATA_SC_8723B, SubChnlNum);
+	rtw_ग_लिखो8(Adapter, REG_DATA_SC_8723B, SubChnlNum);
 
 	/* 3 */
-	/* 3<2>Set PHY related register */
+	/* 3<2>Set PHY related रेजिस्टर */
 	/* 3 */
-	switch (pHalData->CurrentChannelBW) {
+	चयन (pHalData->CurrentChannelBW) अणु
 	/* 20 MHz channel*/
-	case CHANNEL_WIDTH_20:
+	हाल CHANNEL_WIDTH_20:
 		PHY_SetBBReg(Adapter, rFPGA0_RFMOD, bRFMOD, 0x0);
 
 		PHY_SetBBReg(Adapter, rFPGA1_RFMOD, bRFMOD, 0x0);
 
-		PHY_SetBBReg(Adapter, rOFDM0_TxPseudoNoiseWgt, (BIT31|BIT30), 0x0);
-		break;
+		PHY_SetBBReg(Adapter, rOFDM0_TxPseuकरोNoiseWgt, (BIT31|BIT30), 0x0);
+		अवरोध;
 
 	/* 40 MHz channel*/
-	case CHANNEL_WIDTH_40:
+	हाल CHANNEL_WIDTH_40:
 		PHY_SetBBReg(Adapter, rFPGA0_RFMOD, bRFMOD, 0x1);
 
 		PHY_SetBBReg(Adapter, rFPGA1_RFMOD, bRFMOD, 0x1);
 
-		/*  Set Control channel to upper or lower. These settings are required only for 40MHz */
+		/*  Set Control channel to upper or lower. These settings are required only क्रम 40MHz */
 		PHY_SetBBReg(Adapter, rCCK0_System, bCCKSideBand, (pHalData->nCur40MhzPrimeSC>>1));
 
 		PHY_SetBBReg(Adapter, rOFDM1_LSTF, 0xC00, pHalData->nCur40MhzPrimeSC);
 
 		PHY_SetBBReg(Adapter, 0x818, (BIT26|BIT27), (pHalData->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER) ? 2 : 1);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	/* 3<3>Set RF related register */
+	/* 3<3>Set RF related रेजिस्टर */
 	PHY_RF6052SetBandwidth8723B(Adapter, pHalData->CurrentChannelBW);
-}
+पूर्ण
 
-static void phy_SwChnl8723B(struct adapter *padapter)
-{
-	struct hal_com_data *pHalData = GET_HAL_DATA(padapter);
+अटल व्योम phy_SwChnl8723B(काष्ठा adapter *padapter)
+अणु
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(padapter);
 	u8 channelToSW = pHalData->CurrentChannel;
 
-	if (pHalData->rf_chip == RF_PSEUDO_11N)
-		return;
+	अगर (pHalData->rf_chip == RF_PSEUDO_11N)
+		वापस;
 	pHalData->RfRegChnlVal[0] = ((pHalData->RfRegChnlVal[0] & 0xfffff00) | channelToSW);
 	PHY_SetRFReg(padapter, ODM_RF_PATH_A, RF_CHNLBW, 0x3FF, pHalData->RfRegChnlVal[0]);
 	PHY_SetRFReg(padapter, ODM_RF_PATH_B, RF_CHNLBW, 0x3FF, pHalData->RfRegChnlVal[0]);
-}
+पूर्ण
 
-static void phy_SwChnlAndSetBwMode8723B(struct adapter *Adapter)
-{
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+अटल व्योम phy_SwChnlAndSetBwMode8723B(काष्ठा adapter *Adapter)
+अणु
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
 
-	if (Adapter->bDriverStopped || Adapter->bSurpriseRemoved)
-		return;
+	अगर (Adapter->bDriverStopped || Adapter->bSurpriseRemoved)
+		वापस;
 
-	if (pHalData->bSwChnl) {
+	अगर (pHalData->bSwChnl) अणु
 		phy_SwChnl8723B(Adapter);
 		pHalData->bSwChnl = false;
-	}
+	पूर्ण
 
-	if (pHalData->bSetChnlBW) {
+	अगर (pHalData->bSetChnlBW) अणु
 		phy_PostSetBwMode8723B(Adapter);
 		pHalData->bSetChnlBW = false;
-	}
+	पूर्ण
 
 	PHY_SetTxPowerLevel8723B(Adapter, pHalData->CurrentChannel);
-}
+पूर्ण
 
-static void PHY_HandleSwChnlAndSetBW8723B(
-	struct adapter *Adapter,
+अटल व्योम PHY_HandleSwChnlAndSetBW8723B(
+	काष्ठा adapter *Adapter,
 	bool bSwitchChannel,
 	bool bSetBandWidth,
 	u8 ChannelNum,
-	enum channel_width ChnlWidth,
-	enum extchnl_offset ExtChnlOffsetOf40MHz,
-	enum extchnl_offset ExtChnlOffsetOf80MHz,
+	क्रमागत channel_width ChnlWidth,
+	क्रमागत extchnl_offset ExtChnlOffsetOf40MHz,
+	क्रमागत extchnl_offset ExtChnlOffsetOf80MHz,
 	u8 CenterFrequencyIndex1
 )
-{
-	/* static bool		bInitialzed = false; */
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
-	u8 tmpChannel = pHalData->CurrentChannel;
-	enum channel_width tmpBW = pHalData->CurrentChannelBW;
-	u8 tmpnCur40MhzPrimeSC = pHalData->nCur40MhzPrimeSC;
-	u8 tmpnCur80MhzPrimeSC = pHalData->nCur80MhzPrimeSC;
-	u8 tmpCenterFrequencyIndex1 = pHalData->CurrentCenterFrequencyIndex1;
+अणु
+	/* अटल bool		bInitialzed = false; */
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	u8 पंचांगpChannel = pHalData->CurrentChannel;
+	क्रमागत channel_width पंचांगpBW = pHalData->CurrentChannelBW;
+	u8 पंचांगpnCur40MhzPrimeSC = pHalData->nCur40MhzPrimeSC;
+	u8 पंचांगpnCur80MhzPrimeSC = pHalData->nCur80MhzPrimeSC;
+	u8 पंचांगpCenterFrequencyIndex1 = pHalData->CurrentCenterFrequencyIndex1;
 
 	/* check is swchnl or setbw */
-	if (!bSwitchChannel && !bSetBandWidth)
-		return;
+	अगर (!bSwitchChannel && !bSetBandWidth)
+		वापस;
 
-	/* skip change for channel or bandwidth is the same */
-	if (bSwitchChannel) {
-		{
-			if (HAL_IsLegalChannel(Adapter, ChannelNum))
+	/* skip change क्रम channel or bandwidth is the same */
+	अगर (bSwitchChannel) अणु
+		अणु
+			अगर (HAL_IsLegalChannel(Adapter, ChannelNum))
 				pHalData->bSwChnl = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (bSetBandWidth)
+	अगर (bSetBandWidth)
 		pHalData->bSetChnlBW = true;
 
-	if (!pHalData->bSetChnlBW && !pHalData->bSwChnl)
-		return;
+	अगर (!pHalData->bSetChnlBW && !pHalData->bSwChnl)
+		वापस;
 
 
-	if (pHalData->bSwChnl) {
+	अगर (pHalData->bSwChnl) अणु
 		pHalData->CurrentChannel = ChannelNum;
 		pHalData->CurrentCenterFrequencyIndex1 = ChannelNum;
-	}
+	पूर्ण
 
 
-	if (pHalData->bSetChnlBW) {
+	अगर (pHalData->bSetChnlBW) अणु
 		pHalData->CurrentChannelBW = ChnlWidth;
 		pHalData->nCur40MhzPrimeSC = ExtChnlOffsetOf40MHz;
 		pHalData->nCur80MhzPrimeSC = ExtChnlOffsetOf80MHz;
 		pHalData->CurrentCenterFrequencyIndex1 = CenterFrequencyIndex1;
-	}
+	पूर्ण
 
-	/* Switch workitem or set timer to do switch channel or setbandwidth operation */
-	if ((!Adapter->bDriverStopped) && (!Adapter->bSurpriseRemoved)) {
+	/* Switch workitem or set समयr to करो चयन channel or setbandwidth operation */
+	अगर ((!Adapter->bDriverStopped) && (!Adapter->bSurpriseRemoved)) अणु
 		phy_SwChnlAndSetBwMode8723B(Adapter);
-	} else {
-		if (pHalData->bSwChnl) {
-			pHalData->CurrentChannel = tmpChannel;
-			pHalData->CurrentCenterFrequencyIndex1 = tmpChannel;
-		}
+	पूर्ण अन्यथा अणु
+		अगर (pHalData->bSwChnl) अणु
+			pHalData->CurrentChannel = पंचांगpChannel;
+			pHalData->CurrentCenterFrequencyIndex1 = पंचांगpChannel;
+		पूर्ण
 
-		if (pHalData->bSetChnlBW) {
-			pHalData->CurrentChannelBW = tmpBW;
-			pHalData->nCur40MhzPrimeSC = tmpnCur40MhzPrimeSC;
-			pHalData->nCur80MhzPrimeSC = tmpnCur80MhzPrimeSC;
-			pHalData->CurrentCenterFrequencyIndex1 = tmpCenterFrequencyIndex1;
-		}
-	}
-}
+		अगर (pHalData->bSetChnlBW) अणु
+			pHalData->CurrentChannelBW = पंचांगpBW;
+			pHalData->nCur40MhzPrimeSC = पंचांगpnCur40MhzPrimeSC;
+			pHalData->nCur80MhzPrimeSC = पंचांगpnCur80MhzPrimeSC;
+			pHalData->CurrentCenterFrequencyIndex1 = पंचांगpCenterFrequencyIndex1;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void PHY_SetBWMode8723B(
-	struct adapter *Adapter,
-	enum channel_width Bandwidth, /*  20M or 40M */
-	unsigned char Offset /*  Upper, Lower, or Don't care */
+व्योम PHY_SetBWMode8723B(
+	काष्ठा adapter *Adapter,
+	क्रमागत channel_width Bandwidth, /*  20M or 40M */
+	अचिन्हित अक्षर Offset /*  Upper, Lower, or Don't care */
 )
-{
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+अणु
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
 
 	PHY_HandleSwChnlAndSetBW8723B(Adapter, false, true, pHalData->CurrentChannel, Bandwidth, Offset, Offset, pHalData->CurrentChannel);
-}
+पूर्ण
 
 /*  Call after initialization */
-void PHY_SwChnl8723B(struct adapter *Adapter, u8 channel)
-{
+व्योम PHY_SwChnl8723B(काष्ठा adapter *Adapter, u8 channel)
+अणु
 	PHY_HandleSwChnlAndSetBW8723B(Adapter, true, false, channel, 0, 0, 0, channel);
-}
+पूर्ण
 
-void PHY_SetSwChnlBWMode8723B(
-	struct adapter *Adapter,
+व्योम PHY_SetSwChnlBWMode8723B(
+	काष्ठा adapter *Adapter,
 	u8 channel,
-	enum channel_width Bandwidth,
+	क्रमागत channel_width Bandwidth,
 	u8 Offset40,
 	u8 Offset80
 )
-{
+अणु
 	PHY_HandleSwChnlAndSetBW8723B(Adapter, true, true, channel, Bandwidth, Offset40, Offset80, channel);
-}
+पूर्ण

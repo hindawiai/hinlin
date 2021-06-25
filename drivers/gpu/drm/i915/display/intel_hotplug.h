@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_HOTPLUG_H__
-#define __INTEL_HOTPLUG_H__
+#अगर_अघोषित __INTEL_HOTPLUG_H__
+#घोषणा __INTEL_HOTPLUG_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct drm_i915_private;
-struct intel_connector;
-struct intel_digital_port;
-struct intel_encoder;
-enum port;
+काष्ठा drm_i915_निजी;
+काष्ठा पूर्णांकel_connector;
+काष्ठा पूर्णांकel_digital_port;
+काष्ठा पूर्णांकel_encoder;
+क्रमागत port;
 
-void intel_hpd_poll_enable(struct drm_i915_private *dev_priv);
-void intel_hpd_poll_disable(struct drm_i915_private *dev_priv);
-enum intel_hotplug_state intel_encoder_hotplug(struct intel_encoder *encoder,
-					       struct intel_connector *connector);
-void intel_hpd_irq_handler(struct drm_i915_private *dev_priv,
-			   u32 pin_mask, u32 long_mask);
-void intel_hpd_trigger_irq(struct intel_digital_port *dig_port);
-void intel_hpd_init(struct drm_i915_private *dev_priv);
-void intel_hpd_init_work(struct drm_i915_private *dev_priv);
-void intel_hpd_cancel_work(struct drm_i915_private *dev_priv);
-enum hpd_pin intel_hpd_pin_default(struct drm_i915_private *dev_priv,
-				   enum port port);
-bool intel_hpd_disable(struct drm_i915_private *dev_priv, enum hpd_pin pin);
-void intel_hpd_enable(struct drm_i915_private *dev_priv, enum hpd_pin pin);
+व्योम पूर्णांकel_hpd_poll_enable(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_hpd_poll_disable(काष्ठा drm_i915_निजी *dev_priv);
+क्रमागत पूर्णांकel_hotplug_state पूर्णांकel_encoder_hotplug(काष्ठा पूर्णांकel_encoder *encoder,
+					       काष्ठा पूर्णांकel_connector *connector);
+व्योम पूर्णांकel_hpd_irq_handler(काष्ठा drm_i915_निजी *dev_priv,
+			   u32 pin_mask, u32 दीर्घ_mask);
+व्योम पूर्णांकel_hpd_trigger_irq(काष्ठा पूर्णांकel_digital_port *dig_port);
+व्योम पूर्णांकel_hpd_init(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_hpd_init_work(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_hpd_cancel_work(काष्ठा drm_i915_निजी *dev_priv);
+क्रमागत hpd_pin पूर्णांकel_hpd_pin_शेष(काष्ठा drm_i915_निजी *dev_priv,
+				   क्रमागत port port);
+bool पूर्णांकel_hpd_disable(काष्ठा drm_i915_निजी *dev_priv, क्रमागत hpd_pin pin);
+व्योम पूर्णांकel_hpd_enable(काष्ठा drm_i915_निजी *dev_priv, क्रमागत hpd_pin pin);
 
-#endif /* __INTEL_HOTPLUG_H__ */
+#पूर्ण_अगर /* __INTEL_HOTPLUG_H__ */

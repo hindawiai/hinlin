@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_NFACCT_MATCH_H
-#define _XT_NFACCT_MATCH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_NFACCT_MATCH_H
+#घोषणा _XT_NFACCT_MATCH_H
 
-#include <linux/netfilter/nfnetlink_acct.h>
+#समावेश <linux/netfilter/nfnetlink_acct.h>
 
-struct nf_acct;
+काष्ठा nf_acct;
 
-struct xt_nfacct_match_info {
-	char		name[NFACCT_NAME_MAX];
-	struct nf_acct	*nfacct;
-};
+काष्ठा xt_nfacct_match_info अणु
+	अक्षर		name[NFACCT_NAME_MAX];
+	काष्ठा nf_acct	*nfacct;
+पूर्ण;
 
-struct xt_nfacct_match_info_v1 {
-	char		name[NFACCT_NAME_MAX];
-	struct nf_acct	*nfacct __attribute__((aligned(8)));
-};
+काष्ठा xt_nfacct_match_info_v1 अणु
+	अक्षर		name[NFACCT_NAME_MAX];
+	काष्ठा nf_acct	*nfacct __attribute__((aligned(8)));
+पूर्ण;
 
-#endif /* _XT_NFACCT_MATCH_H */
+#पूर्ण_अगर /* _XT_NFACCT_MATCH_H */

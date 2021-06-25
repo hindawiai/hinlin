@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  cx18 ADEC VBI functions
  *
@@ -8,7 +9,7 @@
  */
 
 
-#include "cx18-driver.h"
+#समावेश "cx18-driver.h"
 
 /*
  * For sliced VBI output, we set up to use VIP-1.1, 8-bit mode,
@@ -18,7 +19,7 @@
  *	4 byte EAV code:          0xff 0x00 0x00 0xRP
  *	unknown number of possible idle bytes
  *	3 byte Anc data preamble: 0x00 0xff 0xff
- *	1 byte data identifier:   ne010iii (parity bits, 010, DID bits)
+ *	1 byte data identअगरier:   ne010iii (parity bits, 010, DID bits)
  *	1 byte secondary data id: nessssss (parity bits, SDID bits)
  *	1 byte data word count:   necccccc (parity bits, NN Dword count)
  *	2 byte Internal DID:	  VBI-line-# 0x80
@@ -26,13 +27,13 @@
  *	1 byte checksum
  *	Fill bytes needed to fil out to 4*NN bytes of payload
  *
- * The RP codes for EAVs when in VIP-1.1 mode, not in raw mode, &
- * in the vertical blanking interval are:
+ * The RP codes क्रम EAVs when in VIP-1.1 mode, not in raw mode, &
+ * in the vertical blanking पूर्णांकerval are:
  *	0xb0 (Task         0 VerticalBlank HorizontalBlank 0 0 0 0)
  *	0xf0 (Task EvenField VerticalBlank HorizontalBlank 0 0 0 0)
  *
  * Since the V bit is only allowed to toggle in the EAV RP code, just
- * before the first active region line and for active lines, they are:
+ * beक्रमe the first active region line and क्रम active lines, they are:
  *	0x90 (Task         0 0 HorizontalBlank 0 0 0 0)
  *	0xd0 (Task EvenField 0 HorizontalBlank 0 0 0 0)
  *
@@ -41,9 +42,9 @@
  *	0x55 (0 1 010 2ndField !ActiveLine AncDataPresent)
  *
  */
-static const u8 sliced_vbi_did[2] = { 0x91, 0x55 };
+अटल स्थिर u8 sliced_vbi_did[2] = अणु 0x91, 0x55 पूर्ण;
 
-struct vbi_anc_data {
+काष्ठा vbi_anc_data अणु
 	/* u8 eav[4]; */
 	/* u8 idle[]; Variable number of idle bytes */
 	u8 preamble[3];
@@ -54,20 +55,20 @@ struct vbi_anc_data {
 	u8 payload[1]; /* data_count of payload */
 	/* u8 checksum; */
 	/* u8 fill[]; Variable number of fill bytes */
-};
+पूर्ण;
 
-static int odd_parity(u8 c)
-{
+अटल पूर्णांक odd_parity(u8 c)
+अणु
 	c ^= (c >> 4);
 	c ^= (c >> 2);
 	c ^= (c >> 1);
 
-	return c & 1;
-}
+	वापस c & 1;
+पूर्ण
 
-static int decode_vps(u8 *dst, u8 *p)
-{
-	static const u8 biphase_tbl[] = {
+अटल पूर्णांक decode_vps(u8 *dst, u8 *p)
+अणु
+	अटल स्थिर u8 biphase_tbl[] = अणु
 		0xf0, 0x78, 0x70, 0xf0, 0xb4, 0x3c, 0x34, 0xb4,
 		0xb0, 0x38, 0x30, 0xb0, 0xf0, 0x78, 0x70, 0xf0,
 		0xd2, 0x5a, 0x52, 0xd2, 0x96, 0x1e, 0x16, 0x96,
@@ -100,167 +101,167 @@ static int decode_vps(u8 *dst, u8 *p)
 		0x90, 0x18, 0x10, 0x90, 0xd0, 0x58, 0x50, 0xd0,
 		0xf0, 0x78, 0x70, 0xf0, 0xb4, 0x3c, 0x34, 0xb4,
 		0xb0, 0x38, 0x30, 0xb0, 0xf0, 0x78, 0x70, 0xf0,
-	};
+	पूर्ण;
 
 	u8 c, err = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 2 * 13; i += 2) {
+	क्रम (i = 0; i < 2 * 13; i += 2) अणु
 		err |= biphase_tbl[p[i]] | biphase_tbl[p[i + 1]];
 		c = (biphase_tbl[p[i + 1]] & 0xf) |
 		    ((biphase_tbl[p[i]] & 0xf) << 4);
 		dst[i / 2] = c;
-	}
+	पूर्ण
 
-	return err & 0xf0;
-}
+	वापस err & 0xf0;
+पूर्ण
 
-int cx18_av_g_sliced_fmt(struct v4l2_subdev *sd, struct v4l2_sliced_vbi_format *svbi)
-{
-	struct cx18 *cx = v4l2_get_subdevdata(sd);
-	struct cx18_av_state *state = &cx->av_state;
-	static const u16 lcr2vbi[] = {
+पूर्णांक cx18_av_g_sliced_fmt(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_sliced_vbi_क्रमmat *svbi)
+अणु
+	काष्ठा cx18 *cx = v4l2_get_subdevdata(sd);
+	काष्ठा cx18_av_state *state = &cx->av_state;
+	अटल स्थिर u16 lcr2vbi[] = अणु
 		0, V4L2_SLICED_TELETEXT_B, 0,	/* 1 */
 		0, V4L2_SLICED_WSS_625, 0,	/* 4 */
 		V4L2_SLICED_CAPTION_525,	/* 6 */
 		0, 0, V4L2_SLICED_VPS, 0, 0,	/* 9 */
 		0, 0, 0, 0
-	};
-	int is_pal = !(state->std & V4L2_STD_525_60);
-	int i;
+	पूर्ण;
+	पूर्णांक is_pal = !(state->std & V4L2_STD_525_60);
+	पूर्णांक i;
 
-	memset(svbi->service_lines, 0, sizeof(svbi->service_lines));
+	स_रखो(svbi->service_lines, 0, माप(svbi->service_lines));
 	svbi->service_set = 0;
 
-	/* we're done if raw VBI is active */
-	if ((cx18_av_read(cx, 0x404) & 0x10) == 0)
-		return 0;
+	/* we're करोne अगर raw VBI is active */
+	अगर ((cx18_av_पढ़ो(cx, 0x404) & 0x10) == 0)
+		वापस 0;
 
-	if (is_pal) {
-		for (i = 7; i <= 23; i++) {
-			u8 v = cx18_av_read(cx, 0x424 + i - 7);
-
-			svbi->service_lines[0][i] = lcr2vbi[v >> 4];
-			svbi->service_lines[1][i] = lcr2vbi[v & 0xf];
-			svbi->service_set |= svbi->service_lines[0][i] |
-				svbi->service_lines[1][i];
-		}
-	} else {
-		for (i = 10; i <= 21; i++) {
-			u8 v = cx18_av_read(cx, 0x424 + i - 10);
+	अगर (is_pal) अणु
+		क्रम (i = 7; i <= 23; i++) अणु
+			u8 v = cx18_av_पढ़ो(cx, 0x424 + i - 7);
 
 			svbi->service_lines[0][i] = lcr2vbi[v >> 4];
 			svbi->service_lines[1][i] = lcr2vbi[v & 0xf];
 			svbi->service_set |= svbi->service_lines[0][i] |
 				svbi->service_lines[1][i];
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = 10; i <= 21; i++) अणु
+			u8 v = cx18_av_पढ़ो(cx, 0x424 + i - 10);
 
-int cx18_av_s_raw_fmt(struct v4l2_subdev *sd, struct v4l2_vbi_format *fmt)
-{
-	struct cx18 *cx = v4l2_get_subdevdata(sd);
-	struct cx18_av_state *state = &cx->av_state;
+			svbi->service_lines[0][i] = lcr2vbi[v >> 4];
+			svbi->service_lines[1][i] = lcr2vbi[v & 0xf];
+			svbi->service_set |= svbi->service_lines[0][i] |
+				svbi->service_lines[1][i];
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
+
+पूर्णांक cx18_av_s_raw_fmt(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_vbi_क्रमmat *fmt)
+अणु
+	काष्ठा cx18 *cx = v4l2_get_subdevdata(sd);
+	काष्ठा cx18_av_state *state = &cx->av_state;
 
 	/* Setup standard */
 	cx18_av_std_setup(cx);
 
 	/* VBI Offset */
-	cx18_av_write(cx, 0x47f, state->slicer_line_delay);
-	cx18_av_write(cx, 0x404, 0x2e);
-	return 0;
-}
+	cx18_av_ग_लिखो(cx, 0x47f, state->slicer_line_delay);
+	cx18_av_ग_लिखो(cx, 0x404, 0x2e);
+	वापस 0;
+पूर्ण
 
-int cx18_av_s_sliced_fmt(struct v4l2_subdev *sd, struct v4l2_sliced_vbi_format *svbi)
-{
-	struct cx18 *cx = v4l2_get_subdevdata(sd);
-	struct cx18_av_state *state = &cx->av_state;
-	int is_pal = !(state->std & V4L2_STD_525_60);
-	int i, x;
+पूर्णांक cx18_av_s_sliced_fmt(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_sliced_vbi_क्रमmat *svbi)
+अणु
+	काष्ठा cx18 *cx = v4l2_get_subdevdata(sd);
+	काष्ठा cx18_av_state *state = &cx->av_state;
+	पूर्णांक is_pal = !(state->std & V4L2_STD_525_60);
+	पूर्णांक i, x;
 	u8 lcr[24];
 
-	for (x = 0; x <= 23; x++)
+	क्रम (x = 0; x <= 23; x++)
 		lcr[x] = 0x00;
 
 	/* Setup standard */
 	cx18_av_std_setup(cx);
 
 	/* Sliced VBI */
-	cx18_av_write(cx, 0x404, 0x32);	/* Ancillary data */
-	cx18_av_write(cx, 0x406, 0x13);
-	cx18_av_write(cx, 0x47f, state->slicer_line_delay);
+	cx18_av_ग_लिखो(cx, 0x404, 0x32);	/* Ancillary data */
+	cx18_av_ग_लिखो(cx, 0x406, 0x13);
+	cx18_av_ग_लिखो(cx, 0x47f, state->slicer_line_delay);
 
 	/* Force impossible lines to 0 */
-	if (is_pal) {
-		for (i = 0; i <= 6; i++)
+	अगर (is_pal) अणु
+		क्रम (i = 0; i <= 6; i++)
 			svbi->service_lines[0][i] =
 				svbi->service_lines[1][i] = 0;
-	} else {
-		for (i = 0; i <= 9; i++)
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i <= 9; i++)
 			svbi->service_lines[0][i] =
 				svbi->service_lines[1][i] = 0;
 
-		for (i = 22; i <= 23; i++)
+		क्रम (i = 22; i <= 23; i++)
 			svbi->service_lines[0][i] =
 				svbi->service_lines[1][i] = 0;
-	}
+	पूर्ण
 
-	/* Build register values for requested service lines */
-	for (i = 7; i <= 23; i++) {
-		for (x = 0; x <= 1; x++) {
-			switch (svbi->service_lines[1-x][i]) {
-			case V4L2_SLICED_TELETEXT_B:
+	/* Build रेजिस्टर values क्रम requested service lines */
+	क्रम (i = 7; i <= 23; i++) अणु
+		क्रम (x = 0; x <= 1; x++) अणु
+			चयन (svbi->service_lines[1-x][i]) अणु
+			हाल V4L2_SLICED_TELETEXT_B:
 				lcr[i] |= 1 << (4 * x);
-				break;
-			case V4L2_SLICED_WSS_625:
+				अवरोध;
+			हाल V4L2_SLICED_WSS_625:
 				lcr[i] |= 4 << (4 * x);
-				break;
-			case V4L2_SLICED_CAPTION_525:
+				अवरोध;
+			हाल V4L2_SLICED_CAPTION_525:
 				lcr[i] |= 6 << (4 * x);
-				break;
-			case V4L2_SLICED_VPS:
+				अवरोध;
+			हाल V4L2_SLICED_VPS:
 				lcr[i] |= 9 << (4 * x);
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (is_pal) {
-		for (x = 1, i = 0x424; i <= 0x434; i++, x++)
-			cx18_av_write(cx, i, lcr[6 + x]);
-	} else {
-		for (x = 1, i = 0x424; i <= 0x430; i++, x++)
-			cx18_av_write(cx, i, lcr[9 + x]);
-		for (i = 0x431; i <= 0x434; i++)
-			cx18_av_write(cx, i, 0);
-	}
+	अगर (is_pal) अणु
+		क्रम (x = 1, i = 0x424; i <= 0x434; i++, x++)
+			cx18_av_ग_लिखो(cx, i, lcr[6 + x]);
+	पूर्ण अन्यथा अणु
+		क्रम (x = 1, i = 0x424; i <= 0x430; i++, x++)
+			cx18_av_ग_लिखो(cx, i, lcr[9 + x]);
+		क्रम (i = 0x431; i <= 0x434; i++)
+			cx18_av_ग_लिखो(cx, i, 0);
+	पूर्ण
 
-	cx18_av_write(cx, 0x43c, 0x16);
+	cx18_av_ग_लिखो(cx, 0x43c, 0x16);
 	/* Should match vblank set in cx18_av_std_setup() */
-	cx18_av_write(cx, 0x474, is_pal ? 38 : 26);
-	return 0;
-}
+	cx18_av_ग_लिखो(cx, 0x474, is_pal ? 38 : 26);
+	वापस 0;
+पूर्ण
 
-int cx18_av_decode_vbi_line(struct v4l2_subdev *sd,
-				   struct v4l2_decode_vbi_line *vbi)
-{
-	struct cx18 *cx = v4l2_get_subdevdata(sd);
-	struct cx18_av_state *state = &cx->av_state;
-	struct vbi_anc_data *anc = (struct vbi_anc_data *)vbi->p;
+पूर्णांक cx18_av_decode_vbi_line(काष्ठा v4l2_subdev *sd,
+				   काष्ठा v4l2_decode_vbi_line *vbi)
+अणु
+	काष्ठा cx18 *cx = v4l2_get_subdevdata(sd);
+	काष्ठा cx18_av_state *state = &cx->av_state;
+	काष्ठा vbi_anc_data *anc = (काष्ठा vbi_anc_data *)vbi->p;
 	u8 *p;
-	int did, sdid, l, err = 0;
+	पूर्णांक did, sdid, l, err = 0;
 
 	/*
-	 * Check for the ancillary data header for sliced VBI
+	 * Check क्रम the ancillary data header क्रम sliced VBI
 	 */
-	if (anc->preamble[0] ||
+	अगर (anc->preamble[0] ||
 			anc->preamble[1] != 0xff || anc->preamble[2] != 0xff ||
 			(anc->did != sliced_vbi_did[0] &&
-			 anc->did != sliced_vbi_did[1])) {
+			 anc->did != sliced_vbi_did[1])) अणु
 		vbi->line = vbi->type = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	did = anc->did;
 	sdid = anc->sdid & 0xf;
@@ -269,31 +270,31 @@ int cx18_av_decode_vbi_line(struct v4l2_subdev *sd,
 	p = anc->payload;
 
 	/* Decode the SDID set by the slicer */
-	switch (sdid) {
-	case 1:
+	चयन (sdid) अणु
+	हाल 1:
 		sdid = V4L2_SLICED_TELETEXT_B;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		sdid = V4L2_SLICED_WSS_625;
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		sdid = V4L2_SLICED_CAPTION_525;
 		err = !odd_parity(p[0]) || !odd_parity(p[1]);
-		break;
-	case 9:
+		अवरोध;
+	हाल 9:
 		sdid = V4L2_SLICED_VPS;
-		if (decode_vps(p, p) != 0)
+		अगर (decode_vps(p, p) != 0)
 			err = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		sdid = 0;
 		err = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	vbi->type = err ? 0 : sdid;
 	vbi->line = err ? 0 : l;
 	vbi->is_second_field = err ? 0 : (did == sliced_vbi_did[1]);
 	vbi->p = p;
-	return 0;
-}
+	वापस 0;
+पूर्ण

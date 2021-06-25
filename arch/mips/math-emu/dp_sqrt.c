@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* IEEE754 floating point arithmetic
- * double precision square root
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* IEEE754 भग्नing poपूर्णांक arithmetic
+ * द्विगुन precision square root
  */
 /*
- * MIPS floating point support
+ * MIPS भग्नing poपूर्णांक support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
  */
 
-#include "ieee754dp.h"
+#समावेश "ieee754dp.h"
 
-static const unsigned int table[] = {
+अटल स्थिर अचिन्हित पूर्णांक table[] = अणु
 	0, 1204, 3062, 5746, 9193, 13348, 18162, 23592,
 	29598, 36145, 43202, 50740, 58733, 67158, 75992,
 	85215, 83599, 71378, 60428, 50647, 41945, 34246,
 	27478, 21581, 16499, 12183, 8588, 5674, 3403,
 	1742, 661, 130
-};
+पूर्ण;
 
-union ieee754dp ieee754dp_sqrt(union ieee754dp x)
-{
-	struct _ieee754_csr oldcsr;
-	union ieee754dp y, z, t;
-	unsigned int scalx, yh;
+जोड़ ieee754dp ieee754dp_वर्ग_मूल(जोड़ ieee754dp x)
+अणु
+	काष्ठा _ieee754_csr oldcsr;
+	जोड़ ieee754dp y, z, t;
+	अचिन्हित पूर्णांक scalx, yh;
 	COMPXDP;
 
 	EXPLODEXDP;
 	ieee754_clearcx();
 	FLUSHXDP;
 
-	/* x == INF or NAN? */
-	switch (xc) {
-	case IEEE754_CLASS_SNAN:
-		return ieee754dp_nanxcpt(x);
+	/* x == INF or न_अंक? */
+	चयन (xc) अणु
+	हाल IEEE754_CLASS_Sन_अंक:
+		वापस ieee754dp_nanxcpt(x);
 
-	case IEEE754_CLASS_QNAN:
-		/* sqrt(Nan) = Nan */
-		return x;
+	हाल IEEE754_CLASS_Qन_अंक:
+		/* वर्ग_मूल(Nan) = Nan */
+		वापस x;
 
-	case IEEE754_CLASS_ZERO:
-		/* sqrt(0) = 0 */
-		return x;
+	हाल IEEE754_CLASS_ZERO:
+		/* वर्ग_मूल(0) = 0 */
+		वापस x;
 
-	case IEEE754_CLASS_INF:
-		if (xs) {
-			/* sqrt(-Inf) = Nan */
+	हाल IEEE754_CLASS_INF:
+		अगर (xs) अणु
+			/* वर्ग_मूल(-Inf) = Nan */
 			ieee754_setcx(IEEE754_INVALID_OPERATION);
-			return ieee754dp_indef();
-		}
-		/* sqrt(+Inf) = Inf */
-		return x;
+			वापस ieee754dp_indef();
+		पूर्ण
+		/* वर्ग_मूल(+Inf) = Inf */
+		वापस x;
 
-	case IEEE754_CLASS_DNORM:
+	हाल IEEE754_CLASS_DNORM:
 		DPDNORMX;
 		fallthrough;
-	case IEEE754_CLASS_NORM:
-		if (xs) {
-			/* sqrt(-x) = Nan */
+	हाल IEEE754_CLASS_NORM:
+		अगर (xs) अणु
+			/* वर्ग_मूल(-x) = Nan */
 			ieee754_setcx(IEEE754_INVALID_OPERATION);
-			return ieee754dp_indef();
-		}
-		break;
-	}
+			वापस ieee754dp_indef();
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	/* save old csr; switch off INX enable & flag; set RN rounding */
+	/* save old csr; चयन off INX enable & flag; set RN rounding */
 	oldcsr = ieee754_csr;
 	ieee754_csr.mx &= ~IEEE754_INEXACT;
 	ieee754_csr.sx &= ~IEEE754_INEXACT;
@@ -70,13 +71,13 @@ union ieee754dp ieee754dp_sqrt(union ieee754dp x)
 
 	/* adjust exponent to prevent overflow */
 	scalx = 0;
-	if (xe > 512) {		/* x > 2**-512? */
+	अगर (xe > 512) अणु		/* x > 2**-512? */
 		xe -= 512;	/* x = x / 2**512 */
 		scalx += 256;
-	} else if (xe < -512) { /* x < 2**-512? */
+	पूर्ण अन्यथा अगर (xe < -512) अणु /* x < 2**-512? */
 		xe += 512;	/* x = x * 2**512 */
 		scalx -= 256;
-	}
+	पूर्ण
 
 	x = builddp(0, xe + DP_EBIAS, xm & ~DP_HIDDEN_BIT);
 	y = x;
@@ -89,12 +90,12 @@ union ieee754dp ieee754dp_sqrt(union ieee754dp x)
 
 	/* Heron's rule once with correction to improve to ~18 sig. bits */
 	/* t=x/y; y=y+t; py[n0]=py[n0]-0x00100006; py[n1]=0; */
-	t = ieee754dp_div(x, y);
+	t = ieee754dp_भाग(x, y);
 	y = ieee754dp_add(y, t);
 	y.bits -= 0x0010000600000000LL;
 	y.bits &= 0xffffffff00000000LL;
 
-	/* triple to almost 56 sig. bits: y ~= sqrt(x) to within 1 ulp */
+	/* triple to almost 56 sig. bits: y ~= वर्ग_मूल(x) to within 1 ulp */
 	/* t=y*y; z=t;	pt[n0]+=0x00100000; t+=z; z=(x-z)*y; */
 	t = ieee754dp_mul(y, y);
 	z = t;
@@ -103,22 +104,22 @@ union ieee754dp ieee754dp_sqrt(union ieee754dp x)
 	z = ieee754dp_mul(ieee754dp_sub(x, z), y);
 
 	/* t=z/(t+x) ;	pt[n0]+=0x00100000; y+=t; */
-	t = ieee754dp_div(z, ieee754dp_add(t, x));
+	t = ieee754dp_भाग(z, ieee754dp_add(t, x));
 	t.bexp += 0x001;
 	y = ieee754dp_add(y, t);
 
-	/* twiddle last bit to force y correctly rounded */
+	/* twiddle last bit to क्रमce y correctly rounded */
 
 	/* set RZ, clear INEX flag */
 	ieee754_csr.rm = FPU_CSR_RZ;
 	ieee754_csr.sx &= ~IEEE754_INEXACT;
 
 	/* t=x/y; ...chopped quotient, possibly inexact */
-	t = ieee754dp_div(x, y);
+	t = ieee754dp_भाग(x, y);
 
-	if (ieee754_csr.sx & IEEE754_INEXACT || t.bits != y.bits) {
+	अगर (ieee754_csr.sx & IEEE754_INEXACT || t.bits != y.bits) अणु
 
-		if (!(ieee754_csr.sx & IEEE754_INEXACT))
+		अगर (!(ieee754_csr.sx & IEEE754_INEXACT))
 			/* t = t-ulp */
 			t.bits -= 1;
 
@@ -126,21 +127,21 @@ union ieee754dp ieee754dp_sqrt(union ieee754dp x)
 		oldcsr.cx |= IEEE754_INEXACT;
 		oldcsr.sx |= IEEE754_INEXACT;
 
-		switch (oldcsr.rm) {
-		case FPU_CSR_RU:
+		चयन (oldcsr.rm) अणु
+		हाल FPU_CSR_RU:
 			y.bits += 1;
 			fallthrough;
-		case FPU_CSR_RN:
+		हाल FPU_CSR_RN:
 			t.bits += 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* y=y+t; ...chopped sum */
 		y = ieee754dp_add(y, t);
 
-		/* adjust scalx for correctly rounded sqrt(x) */
+		/* adjust scalx क्रम correctly rounded वर्ग_मूल(x) */
 		scalx -= 1;
-	}
+	पूर्ण
 
 	/* py[n0]=py[n0]+scalx; ...scale back y */
 	y.bexp += scalx;
@@ -148,5 +149,5 @@ union ieee754dp ieee754dp_sqrt(union ieee754dp x)
 	/* restore rounding mode, possibly set inexact */
 	ieee754_csr = oldcsr;
 
-	return y;
-}
+	वापस y;
+पूर्ण

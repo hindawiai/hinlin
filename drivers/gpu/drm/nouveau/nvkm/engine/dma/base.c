@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,96 +22,96 @@
  *
  * Authors: Ben Skeggs
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <core/client.h>
-#include <engine/fifo.h>
+#समावेश <core/client.h>
+#समावेश <engine/fअगरo.h>
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
-static int
-nvkm_dma_oclass_new(struct nvkm_device *device,
-		    const struct nvkm_oclass *oclass, void *data, u32 size,
-		    struct nvkm_object **pobject)
-{
-	struct nvkm_dma *dma = nvkm_dma(oclass->engine);
-	struct nvkm_dmaobj *dmaobj = NULL;
-	int ret;
+अटल पूर्णांक
+nvkm_dma_oclass_new(काष्ठा nvkm_device *device,
+		    स्थिर काष्ठा nvkm_oclass *oclass, व्योम *data, u32 size,
+		    काष्ठा nvkm_object **pobject)
+अणु
+	काष्ठा nvkm_dma *dma = nvkm_dma(oclass->engine);
+	काष्ठा nvkm_dmaobj *dmaobj = शून्य;
+	पूर्णांक ret;
 
 	ret = dma->func->class_new(dma, oclass, data, size, &dmaobj);
-	if (dmaobj)
+	अगर (dmaobj)
 		*pobject = &dmaobj->object;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nvkm_device_oclass
-nvkm_dma_oclass_base = {
+अटल स्थिर काष्ठा nvkm_device_oclass
+nvkm_dma_oclass_base = अणु
 	.ctor = nvkm_dma_oclass_new,
-};
+पूर्ण;
 
-static int
-nvkm_dma_oclass_fifo_new(const struct nvkm_oclass *oclass, void *data, u32 size,
-			 struct nvkm_object **pobject)
-{
-	return nvkm_dma_oclass_new(oclass->engine->subdev.device,
+अटल पूर्णांक
+nvkm_dma_oclass_fअगरo_new(स्थिर काष्ठा nvkm_oclass *oclass, व्योम *data, u32 size,
+			 काष्ठा nvkm_object **pobject)
+अणु
+	वापस nvkm_dma_oclass_new(oclass->engine->subdev.device,
 				   oclass, data, size, pobject);
-}
+पूर्ण
 
-static const struct nvkm_sclass
-nvkm_dma_sclass[] = {
-	{ 0, 0, NV_DMA_FROM_MEMORY, NULL, nvkm_dma_oclass_fifo_new },
-	{ 0, 0, NV_DMA_TO_MEMORY, NULL, nvkm_dma_oclass_fifo_new },
-	{ 0, 0, NV_DMA_IN_MEMORY, NULL, nvkm_dma_oclass_fifo_new },
-};
+अटल स्थिर काष्ठा nvkm_sclass
+nvkm_dma_sclass[] = अणु
+	अणु 0, 0, NV_DMA_FROM_MEMORY, शून्य, nvkm_dma_oclass_fअगरo_new पूर्ण,
+	अणु 0, 0, NV_DMA_TO_MEMORY, शून्य, nvkm_dma_oclass_fअगरo_new पूर्ण,
+	अणु 0, 0, NV_DMA_IN_MEMORY, शून्य, nvkm_dma_oclass_fअगरo_new पूर्ण,
+पूर्ण;
 
-static int
-nvkm_dma_oclass_base_get(struct nvkm_oclass *sclass, int index,
-			 const struct nvkm_device_oclass **class)
-{
-	const int count = ARRAY_SIZE(nvkm_dma_sclass);
-	if (index < count) {
-		const struct nvkm_sclass *oclass = &nvkm_dma_sclass[index];
+अटल पूर्णांक
+nvkm_dma_oclass_base_get(काष्ठा nvkm_oclass *sclass, पूर्णांक index,
+			 स्थिर काष्ठा nvkm_device_oclass **class)
+अणु
+	स्थिर पूर्णांक count = ARRAY_SIZE(nvkm_dma_sclass);
+	अगर (index < count) अणु
+		स्थिर काष्ठा nvkm_sclass *oclass = &nvkm_dma_sclass[index];
 		sclass->base = oclass[0];
 		sclass->engn = oclass;
 		*class = &nvkm_dma_oclass_base;
-		return index;
-	}
-	return count;
-}
+		वापस index;
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static int
-nvkm_dma_oclass_fifo_get(struct nvkm_oclass *oclass, int index)
-{
-	const int count = ARRAY_SIZE(nvkm_dma_sclass);
-	if (index < count) {
+अटल पूर्णांक
+nvkm_dma_oclass_fअगरo_get(काष्ठा nvkm_oclass *oclass, पूर्णांक index)
+अणु
+	स्थिर पूर्णांक count = ARRAY_SIZE(nvkm_dma_sclass);
+	अगर (index < count) अणु
 		oclass->base = nvkm_dma_sclass[index];
-		return index;
-	}
-	return count;
-}
+		वापस index;
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static void *
-nvkm_dma_dtor(struct nvkm_engine *engine)
-{
-	return nvkm_dma(engine);
-}
+अटल व्योम *
+nvkm_dma_dtor(काष्ठा nvkm_engine *engine)
+अणु
+	वापस nvkm_dma(engine);
+पूर्ण
 
-static const struct nvkm_engine_func
-nvkm_dma = {
+अटल स्थिर काष्ठा nvkm_engine_func
+nvkm_dma = अणु
 	.dtor = nvkm_dma_dtor,
 	.base.sclass = nvkm_dma_oclass_base_get,
-	.fifo.sclass = nvkm_dma_oclass_fifo_get,
-};
+	.fअगरo.sclass = nvkm_dma_oclass_fअगरo_get,
+पूर्ण;
 
-int
-nvkm_dma_new_(const struct nvkm_dma_func *func, struct nvkm_device *device,
-	      enum nvkm_subdev_type type, int inst, struct nvkm_dma **pdma)
-{
-	struct nvkm_dma *dma;
+पूर्णांक
+nvkm_dma_new_(स्थिर काष्ठा nvkm_dma_func *func, काष्ठा nvkm_device *device,
+	      क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_dma **pdma)
+अणु
+	काष्ठा nvkm_dma *dma;
 
-	if (!(dma = *pdma = kzalloc(sizeof(*dma), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(dma = *pdma = kzalloc(माप(*dma), GFP_KERNEL)))
+		वापस -ENOMEM;
 	dma->func = func;
 
-	return nvkm_engine_ctor(&nvkm_dma, device, type, inst, true, &dma->engine);
-}
+	वापस nvkm_engine_ctor(&nvkm_dma, device, type, inst, true, &dma->engine);
+पूर्ण

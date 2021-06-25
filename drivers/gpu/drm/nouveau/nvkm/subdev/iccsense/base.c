@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Martin Peres
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,176 +22,176 @@
  *
  * Authors: Martin Peres
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <subdev/bios.h>
-#include <subdev/bios/extdev.h>
-#include <subdev/bios/iccsense.h>
-#include <subdev/bios/power_budget.h>
-#include <subdev/i2c.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/extdev.h>
+#समावेश <subdev/bios/iccsense.h>
+#समावेश <subdev/bios/घातer_budget.h>
+#समावेश <subdev/i2c.h>
 
-static bool
-nvkm_iccsense_validate_device(struct i2c_adapter *i2c, u8 addr,
-			      enum nvbios_extdev_type type)
-{
-	switch (type) {
-	case NVBIOS_EXTDEV_INA209:
-	case NVBIOS_EXTDEV_INA219:
-		return nv_rd16i2cr(i2c, addr, 0x0) >= 0;
-	case NVBIOS_EXTDEV_INA3221:
-		return nv_rd16i2cr(i2c, addr, 0xff) == 0x3220 &&
+अटल bool
+nvkm_iccsense_validate_device(काष्ठा i2c_adapter *i2c, u8 addr,
+			      क्रमागत nvbios_extdev_type type)
+अणु
+	चयन (type) अणु
+	हाल NVBIOS_EXTDEV_INA209:
+	हाल NVBIOS_EXTDEV_INA219:
+		वापस nv_rd16i2cr(i2c, addr, 0x0) >= 0;
+	हाल NVBIOS_EXTDEV_INA3221:
+		वापस nv_rd16i2cr(i2c, addr, 0xff) == 0x3220 &&
 		       nv_rd16i2cr(i2c, addr, 0xfe) == 0x5449;
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static int
-nvkm_iccsense_poll_lane(struct i2c_adapter *i2c, u8 addr, u8 shunt_reg,
-			u8 shunt_shift, u8 bus_reg, u8 bus_shift, u8 shunt,
+अटल पूर्णांक
+nvkm_iccsense_poll_lane(काष्ठा i2c_adapter *i2c, u8 addr, u8 shunt_reg,
+			u8 shunt_shअगरt, u8 bus_reg, u8 bus_shअगरt, u8 shunt,
 			u16 lsb)
-{
-	int vshunt = nv_rd16i2cr(i2c, addr, shunt_reg);
-	int vbus = nv_rd16i2cr(i2c, addr, bus_reg);
+अणु
+	पूर्णांक vshunt = nv_rd16i2cr(i2c, addr, shunt_reg);
+	पूर्णांक vbus = nv_rd16i2cr(i2c, addr, bus_reg);
 
-	if (vshunt < 0 || vbus < 0)
-		return -EINVAL;
+	अगर (vshunt < 0 || vbus < 0)
+		वापस -EINVAL;
 
-	vshunt >>= shunt_shift;
-	vbus >>= bus_shift;
+	vshunt >>= shunt_shअगरt;
+	vbus >>= bus_shअगरt;
 
-	return vbus * vshunt * lsb / shunt;
-}
+	वापस vbus * vshunt * lsb / shunt;
+पूर्ण
 
-static int
-nvkm_iccsense_ina2x9_read(struct nvkm_iccsense *iccsense,
-                          struct nvkm_iccsense_rail *rail,
+अटल पूर्णांक
+nvkm_iccsense_ina2x9_पढ़ो(काष्ठा nvkm_iccsense *iccsense,
+                          काष्ठा nvkm_iccsense_rail *rail,
 			  u8 shunt_reg, u8 bus_reg)
-{
-	return nvkm_iccsense_poll_lane(rail->sensor->i2c, rail->sensor->addr,
+अणु
+	वापस nvkm_iccsense_poll_lane(rail->sensor->i2c, rail->sensor->addr,
 				       shunt_reg, 0, bus_reg, 3, rail->mohm,
 				       10 * 4);
-}
+पूर्ण
 
-static int
-nvkm_iccsense_ina209_read(struct nvkm_iccsense *iccsense,
-			  struct nvkm_iccsense_rail *rail)
-{
-	return nvkm_iccsense_ina2x9_read(iccsense, rail, 3, 4);
-}
+अटल पूर्णांक
+nvkm_iccsense_ina209_पढ़ो(काष्ठा nvkm_iccsense *iccsense,
+			  काष्ठा nvkm_iccsense_rail *rail)
+अणु
+	वापस nvkm_iccsense_ina2x9_पढ़ो(iccsense, rail, 3, 4);
+पूर्ण
 
-static int
-nvkm_iccsense_ina219_read(struct nvkm_iccsense *iccsense,
-			  struct nvkm_iccsense_rail *rail)
-{
-	return nvkm_iccsense_ina2x9_read(iccsense, rail, 1, 2);
-}
+अटल पूर्णांक
+nvkm_iccsense_ina219_पढ़ो(काष्ठा nvkm_iccsense *iccsense,
+			  काष्ठा nvkm_iccsense_rail *rail)
+अणु
+	वापस nvkm_iccsense_ina2x9_पढ़ो(iccsense, rail, 1, 2);
+पूर्ण
 
-static int
-nvkm_iccsense_ina3221_read(struct nvkm_iccsense *iccsense,
-			   struct nvkm_iccsense_rail *rail)
-{
-	return nvkm_iccsense_poll_lane(rail->sensor->i2c, rail->sensor->addr,
+अटल पूर्णांक
+nvkm_iccsense_ina3221_पढ़ो(काष्ठा nvkm_iccsense *iccsense,
+			   काष्ठा nvkm_iccsense_rail *rail)
+अणु
+	वापस nvkm_iccsense_poll_lane(rail->sensor->i2c, rail->sensor->addr,
 				       1 + (rail->idx * 2), 3,
 				       2 + (rail->idx * 2), 3, rail->mohm,
 				       40 * 8);
-}
+पूर्ण
 
-static void
-nvkm_iccsense_sensor_config(struct nvkm_iccsense *iccsense,
-		            struct nvkm_iccsense_sensor *sensor)
-{
-	struct nvkm_subdev *subdev = &iccsense->subdev;
+अटल व्योम
+nvkm_iccsense_sensor_config(काष्ठा nvkm_iccsense *iccsense,
+		            काष्ठा nvkm_iccsense_sensor *sensor)
+अणु
+	काष्ठा nvkm_subdev *subdev = &iccsense->subdev;
 	nvkm_trace(subdev, "write config of extdev %i: 0x%04x\n", sensor->id, sensor->config);
 	nv_wr16i2cr(sensor->i2c, sensor->addr, 0x00, sensor->config);
-}
+पूर्ण
 
-int
-nvkm_iccsense_read_all(struct nvkm_iccsense *iccsense)
-{
-	int result = 0;
-	struct nvkm_iccsense_rail *rail;
+पूर्णांक
+nvkm_iccsense_पढ़ो_all(काष्ठा nvkm_iccsense *iccsense)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा nvkm_iccsense_rail *rail;
 
-	if (!iccsense)
-		return -EINVAL;
+	अगर (!iccsense)
+		वापस -EINVAL;
 
-	list_for_each_entry(rail, &iccsense->rails, head) {
-		int res;
-		if (!rail->read)
-			return -ENODEV;
+	list_क्रम_each_entry(rail, &iccsense->rails, head) अणु
+		पूर्णांक res;
+		अगर (!rail->पढ़ो)
+			वापस -ENODEV;
 
-		res = rail->read(iccsense, rail);
-		if (res < 0)
-			return res;
+		res = rail->पढ़ो(iccsense, rail);
+		अगर (res < 0)
+			वापस res;
 		result += res;
-	}
-	return result;
-}
+	पूर्ण
+	वापस result;
+पूर्ण
 
-static void *
-nvkm_iccsense_dtor(struct nvkm_subdev *subdev)
-{
-	struct nvkm_iccsense *iccsense = nvkm_iccsense(subdev);
-	struct nvkm_iccsense_sensor *sensor, *tmps;
-	struct nvkm_iccsense_rail *rail, *tmpr;
+अटल व्योम *
+nvkm_iccsense_dtor(काष्ठा nvkm_subdev *subdev)
+अणु
+	काष्ठा nvkm_iccsense *iccsense = nvkm_iccsense(subdev);
+	काष्ठा nvkm_iccsense_sensor *sensor, *पंचांगps;
+	काष्ठा nvkm_iccsense_rail *rail, *पंचांगpr;
 
-	list_for_each_entry_safe(sensor, tmps, &iccsense->sensors, head) {
+	list_क्रम_each_entry_safe(sensor, पंचांगps, &iccsense->sensors, head) अणु
 		list_del(&sensor->head);
-		kfree(sensor);
-	}
-	list_for_each_entry_safe(rail, tmpr, &iccsense->rails, head) {
+		kमुक्त(sensor);
+	पूर्ण
+	list_क्रम_each_entry_safe(rail, पंचांगpr, &iccsense->rails, head) अणु
 		list_del(&rail->head);
-		kfree(rail);
-	}
+		kमुक्त(rail);
+	पूर्ण
 
-	return iccsense;
-}
+	वापस iccsense;
+पूर्ण
 
-static struct nvkm_iccsense_sensor*
-nvkm_iccsense_create_sensor(struct nvkm_iccsense *iccsense, u8 id)
-{
-	struct nvkm_subdev *subdev = &iccsense->subdev;
-	struct nvkm_bios *bios = subdev->device->bios;
-	struct nvkm_i2c *i2c = subdev->device->i2c;
-	struct nvbios_extdev_func extdev;
-	struct nvkm_i2c_bus *i2c_bus;
-	struct nvkm_iccsense_sensor *sensor;
+अटल काष्ठा nvkm_iccsense_sensor*
+nvkm_iccsense_create_sensor(काष्ठा nvkm_iccsense *iccsense, u8 id)
+अणु
+	काष्ठा nvkm_subdev *subdev = &iccsense->subdev;
+	काष्ठा nvkm_bios *bios = subdev->device->bios;
+	काष्ठा nvkm_i2c *i2c = subdev->device->i2c;
+	काष्ठा nvbios_extdev_func extdev;
+	काष्ठा nvkm_i2c_bus *i2c_bus;
+	काष्ठा nvkm_iccsense_sensor *sensor;
 	u8 addr;
 
-	if (!i2c || !bios || nvbios_extdev_parse(bios, id, &extdev))
-		return NULL;
+	अगर (!i2c || !bios || nvbios_extdev_parse(bios, id, &extdev))
+		वापस शून्य;
 
-	if (extdev.type == 0xff)
-		return NULL;
+	अगर (extdev.type == 0xff)
+		वापस शून्य;
 
-	if (extdev.type != NVBIOS_EXTDEV_INA209 &&
+	अगर (extdev.type != NVBIOS_EXTDEV_INA209 &&
 	    extdev.type != NVBIOS_EXTDEV_INA219 &&
-	    extdev.type != NVBIOS_EXTDEV_INA3221) {
+	    extdev.type != NVBIOS_EXTDEV_INA3221) अणु
 		iccsense->data_valid = false;
 		nvkm_error(subdev, "Unknown sensor type %x, power reading "
 			   "disabled\n", extdev.type);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (extdev.bus)
+	अगर (extdev.bus)
 		i2c_bus = nvkm_i2c_bus_find(i2c, NVKM_I2C_BUS_SEC);
-	else
+	अन्यथा
 		i2c_bus = nvkm_i2c_bus_find(i2c, NVKM_I2C_BUS_PRI);
-	if (!i2c_bus)
-		return NULL;
+	अगर (!i2c_bus)
+		वापस शून्य;
 
 	addr = extdev.addr >> 1;
-	if (!nvkm_iccsense_validate_device(&i2c_bus->i2c, addr,
-					   extdev.type)) {
+	अगर (!nvkm_iccsense_validate_device(&i2c_bus->i2c, addr,
+					   extdev.type)) अणु
 		iccsense->data_valid = false;
 		nvkm_warn(subdev, "found invalid sensor id: %i, power reading"
 			  "might be invalid\n", id);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	sensor = kmalloc(sizeof(*sensor), GFP_KERNEL);
-	if (!sensor)
-		return NULL;
+	sensor = kदो_स्मृति(माप(*sensor), GFP_KERNEL);
+	अगर (!sensor)
+		वापस शून्य;
 
 	list_add_tail(&sensor->head, &iccsense->sensors);
 	sensor->id = id;
@@ -198,134 +199,134 @@ nvkm_iccsense_create_sensor(struct nvkm_iccsense *iccsense, u8 id)
 	sensor->i2c = &i2c_bus->i2c;
 	sensor->addr = addr;
 	sensor->config = 0x0;
-	return sensor;
-}
+	वापस sensor;
+पूर्ण
 
-static struct nvkm_iccsense_sensor*
-nvkm_iccsense_get_sensor(struct nvkm_iccsense *iccsense, u8 id)
-{
-	struct nvkm_iccsense_sensor *sensor;
-	list_for_each_entry(sensor, &iccsense->sensors, head) {
-		if (sensor->id == id)
-			return sensor;
-	}
-	return nvkm_iccsense_create_sensor(iccsense, id);
-}
+अटल काष्ठा nvkm_iccsense_sensor*
+nvkm_iccsense_get_sensor(काष्ठा nvkm_iccsense *iccsense, u8 id)
+अणु
+	काष्ठा nvkm_iccsense_sensor *sensor;
+	list_क्रम_each_entry(sensor, &iccsense->sensors, head) अणु
+		अगर (sensor->id == id)
+			वापस sensor;
+	पूर्ण
+	वापस nvkm_iccsense_create_sensor(iccsense, id);
+पूर्ण
 
-static int
-nvkm_iccsense_oneinit(struct nvkm_subdev *subdev)
-{
-	struct nvkm_iccsense *iccsense = nvkm_iccsense(subdev);
-	struct nvkm_bios *bios = subdev->device->bios;
-	struct nvbios_power_budget budget;
-	struct nvbios_iccsense stbl;
-	int i, ret;
+अटल पूर्णांक
+nvkm_iccsense_oneinit(काष्ठा nvkm_subdev *subdev)
+अणु
+	काष्ठा nvkm_iccsense *iccsense = nvkm_iccsense(subdev);
+	काष्ठा nvkm_bios *bios = subdev->device->bios;
+	काष्ठा nvbios_घातer_budget budget;
+	काष्ठा nvbios_iccsense stbl;
+	पूर्णांक i, ret;
 
-	if (!bios)
-		return 0;
+	अगर (!bios)
+		वापस 0;
 
-	ret = nvbios_power_budget_header(bios, &budget);
-	if (!ret && budget.cap_entry != 0xff) {
-		struct nvbios_power_budget_entry entry;
-		ret = nvbios_power_budget_entry(bios, &budget,
+	ret = nvbios_घातer_budget_header(bios, &budget);
+	अगर (!ret && budget.cap_entry != 0xff) अणु
+		काष्ठा nvbios_घातer_budget_entry entry;
+		ret = nvbios_घातer_budget_entry(bios, &budget,
 		                                budget.cap_entry, &entry);
-		if (!ret) {
-			iccsense->power_w_max  = entry.avg_w;
-			iccsense->power_w_crit = entry.max_w;
-		}
-	}
+		अगर (!ret) अणु
+			iccsense->घातer_w_max  = entry.avg_w;
+			iccsense->घातer_w_crit = entry.max_w;
+		पूर्ण
+	पूर्ण
 
-	if (nvbios_iccsense_parse(bios, &stbl) || !stbl.nr_entry)
-		return 0;
+	अगर (nvbios_iccsense_parse(bios, &stbl) || !stbl.nr_entry)
+		वापस 0;
 
 	iccsense->data_valid = true;
-	for (i = 0; i < stbl.nr_entry; ++i) {
-		struct pwr_rail_t *pwr_rail = &stbl.rail[i];
-		struct nvkm_iccsense_sensor *sensor;
-		int r;
+	क्रम (i = 0; i < stbl.nr_entry; ++i) अणु
+		काष्ठा pwr_rail_t *pwr_rail = &stbl.rail[i];
+		काष्ठा nvkm_iccsense_sensor *sensor;
+		पूर्णांक r;
 
-		if (pwr_rail->mode != 1 || !pwr_rail->resistor_count)
-			continue;
+		अगर (pwr_rail->mode != 1 || !pwr_rail->resistor_count)
+			जारी;
 
 		sensor = nvkm_iccsense_get_sensor(iccsense, pwr_rail->extdev_id);
-		if (!sensor)
-			continue;
+		अगर (!sensor)
+			जारी;
 
-		if (!sensor->config)
+		अगर (!sensor->config)
 			sensor->config = pwr_rail->config;
-		else if (sensor->config != pwr_rail->config)
+		अन्यथा अगर (sensor->config != pwr_rail->config)
 			nvkm_error(subdev, "config mismatch found for extdev %i\n", pwr_rail->extdev_id);
 
-		for (r = 0; r < pwr_rail->resistor_count; ++r) {
-			struct nvkm_iccsense_rail *rail;
-			struct pwr_rail_resistor_t *res = &pwr_rail->resistors[r];
-			int (*read)(struct nvkm_iccsense *,
-				    struct nvkm_iccsense_rail *);
+		क्रम (r = 0; r < pwr_rail->resistor_count; ++r) अणु
+			काष्ठा nvkm_iccsense_rail *rail;
+			काष्ठा pwr_rail_resistor_t *res = &pwr_rail->resistors[r];
+			पूर्णांक (*पढ़ो)(काष्ठा nvkm_iccsense *,
+				    काष्ठा nvkm_iccsense_rail *);
 
-			if (!res->mohm || !res->enabled)
-				continue;
+			अगर (!res->mohm || !res->enabled)
+				जारी;
 
-			switch (sensor->type) {
-			case NVBIOS_EXTDEV_INA209:
-				read = nvkm_iccsense_ina209_read;
-				break;
-			case NVBIOS_EXTDEV_INA219:
-				read = nvkm_iccsense_ina219_read;
-				break;
-			case NVBIOS_EXTDEV_INA3221:
-				read = nvkm_iccsense_ina3221_read;
-				break;
-			default:
-				continue;
-			}
+			चयन (sensor->type) अणु
+			हाल NVBIOS_EXTDEV_INA209:
+				पढ़ो = nvkm_iccsense_ina209_पढ़ो;
+				अवरोध;
+			हाल NVBIOS_EXTDEV_INA219:
+				पढ़ो = nvkm_iccsense_ina219_पढ़ो;
+				अवरोध;
+			हाल NVBIOS_EXTDEV_INA3221:
+				पढ़ो = nvkm_iccsense_ina3221_पढ़ो;
+				अवरोध;
+			शेष:
+				जारी;
+			पूर्ण
 
-			rail = kmalloc(sizeof(*rail), GFP_KERNEL);
-			if (!rail)
-				return -ENOMEM;
+			rail = kदो_स्मृति(माप(*rail), GFP_KERNEL);
+			अगर (!rail)
+				वापस -ENOMEM;
 
-			rail->read = read;
+			rail->पढ़ो = पढ़ो;
 			rail->sensor = sensor;
 			rail->idx = r;
 			rail->mohm = res->mohm;
 			nvkm_debug(subdev, "create rail for extdev %i: { idx: %i, mohm: %i }\n", pwr_rail->extdev_id, r, rail->mohm);
 			list_add_tail(&rail->head, &iccsense->rails);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_iccsense_init(struct nvkm_subdev *subdev)
-{
-	struct nvkm_iccsense *iccsense = nvkm_iccsense(subdev);
-	struct nvkm_iccsense_sensor *sensor;
-	list_for_each_entry(sensor, &iccsense->sensors, head)
+अटल पूर्णांक
+nvkm_iccsense_init(काष्ठा nvkm_subdev *subdev)
+अणु
+	काष्ठा nvkm_iccsense *iccsense = nvkm_iccsense(subdev);
+	काष्ठा nvkm_iccsense_sensor *sensor;
+	list_क्रम_each_entry(sensor, &iccsense->sensors, head)
 		nvkm_iccsense_sensor_config(iccsense, sensor);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_subdev_func
-iccsense_func = {
+अटल स्थिर काष्ठा nvkm_subdev_func
+iccsense_func = अणु
 	.oneinit = nvkm_iccsense_oneinit,
 	.init = nvkm_iccsense_init,
 	.dtor = nvkm_iccsense_dtor,
-};
+पूर्ण;
 
-void
-nvkm_iccsense_ctor(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-		   struct nvkm_iccsense *iccsense)
-{
+व्योम
+nvkm_iccsense_ctor(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+		   काष्ठा nvkm_iccsense *iccsense)
+अणु
 	nvkm_subdev_ctor(&iccsense_func, device, type, inst, &iccsense->subdev);
-}
+पूर्ण
 
-int
-nvkm_iccsense_new_(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-		   struct nvkm_iccsense **iccsense)
-{
-	if (!(*iccsense = kzalloc(sizeof(**iccsense), GFP_KERNEL)))
-		return -ENOMEM;
+पूर्णांक
+nvkm_iccsense_new_(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+		   काष्ठा nvkm_iccsense **iccsense)
+अणु
+	अगर (!(*iccsense = kzalloc(माप(**iccsense), GFP_KERNEL)))
+		वापस -ENOMEM;
 	INIT_LIST_HEAD(&(*iccsense)->sensors);
 	INIT_LIST_HEAD(&(*iccsense)->rails);
 	nvkm_iccsense_ctor(device, type, inst, *iccsense);
-	return 0;
-}
+	वापस 0;
+पूर्ण

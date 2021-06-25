@@ -1,40 +1,41 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2012-2016 VMware, Inc.  All rights reserved.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of EITHER the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of EITHER the GNU General Public License
  * version 2 as published by the Free Software Foundation or the BSD
  * 2-Clause License. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED
  * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License version 2 for more details at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html.
+ * See the GNU General Public License version 2 क्रम more details at
+ * http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.hपंचांगl.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program available in the file COPYING in the main
+ * aदीर्घ with this program available in the file COPYING in the मुख्य
  * directory of this source tree.
  *
  * The BSD 2-Clause License
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT,
+ * INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
@@ -43,62 +44,62 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <linux/bitmap.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
 
-#include "pvrdma.h"
+#समावेश "pvrdma.h"
 
-int pvrdma_uar_table_init(struct pvrdma_dev *dev)
-{
+पूर्णांक pvrdma_uar_table_init(काष्ठा pvrdma_dev *dev)
+अणु
 	u32 num = dev->dsr->caps.max_uar;
 	u32 mask = num - 1;
-	struct pvrdma_id_table *tbl = &dev->uar_table.tbl;
+	काष्ठा pvrdma_id_table *tbl = &dev->uar_table.tbl;
 
-	if (!is_power_of_2(num))
-		return -EINVAL;
+	अगर (!is_घातer_of_2(num))
+		वापस -EINVAL;
 
 	tbl->last = 0;
 	tbl->top = 0;
 	tbl->max = num;
 	tbl->mask = mask;
 	spin_lock_init(&tbl->lock);
-	tbl->table = kcalloc(BITS_TO_LONGS(num), sizeof(long), GFP_KERNEL);
-	if (!tbl->table)
-		return -ENOMEM;
+	tbl->table = kसुस्मृति(BITS_TO_LONGS(num), माप(दीर्घ), GFP_KERNEL);
+	अगर (!tbl->table)
+		वापस -ENOMEM;
 
 	/* 0th UAR is taken by the device. */
 	set_bit(0, tbl->table);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void pvrdma_uar_table_cleanup(struct pvrdma_dev *dev)
-{
-	struct pvrdma_id_table *tbl = &dev->uar_table.tbl;
+व्योम pvrdma_uar_table_cleanup(काष्ठा pvrdma_dev *dev)
+अणु
+	काष्ठा pvrdma_id_table *tbl = &dev->uar_table.tbl;
 
-	kfree(tbl->table);
-}
+	kमुक्त(tbl->table);
+पूर्ण
 
-int pvrdma_uar_alloc(struct pvrdma_dev *dev, struct pvrdma_uar_map *uar)
-{
-	struct pvrdma_id_table *tbl;
-	unsigned long flags;
+पूर्णांक pvrdma_uar_alloc(काष्ठा pvrdma_dev *dev, काष्ठा pvrdma_uar_map *uar)
+अणु
+	काष्ठा pvrdma_id_table *tbl;
+	अचिन्हित दीर्घ flags;
 	u32 obj;
 
 	tbl = &dev->uar_table.tbl;
 
 	spin_lock_irqsave(&tbl->lock, flags);
 	obj = find_next_zero_bit(tbl->table, tbl->max, tbl->last);
-	if (obj >= tbl->max) {
+	अगर (obj >= tbl->max) अणु
 		tbl->top = (tbl->top + tbl->max) & tbl->mask;
 		obj = find_first_zero_bit(tbl->table, tbl->max);
-	}
+	पूर्ण
 
-	if (obj >= tbl->max) {
+	अगर (obj >= tbl->max) अणु
 		spin_unlock_irqrestore(&tbl->lock, flags);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	set_bit(obj, tbl->table);
 	obj |= tbl->top;
@@ -109,13 +110,13 @@ int pvrdma_uar_alloc(struct pvrdma_dev *dev, struct pvrdma_uar_map *uar)
 	uar->pfn = (pci_resource_start(dev->pdev, PVRDMA_PCI_RESOURCE_UAR) >>
 		    PAGE_SHIFT) + uar->index;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void pvrdma_uar_free(struct pvrdma_dev *dev, struct pvrdma_uar_map *uar)
-{
-	struct pvrdma_id_table *tbl = &dev->uar_table.tbl;
-	unsigned long flags;
+व्योम pvrdma_uar_मुक्त(काष्ठा pvrdma_dev *dev, काष्ठा pvrdma_uar_map *uar)
+अणु
+	काष्ठा pvrdma_id_table *tbl = &dev->uar_table.tbl;
+	अचिन्हित दीर्घ flags;
 	u32 obj;
 
 	obj = uar->index & (tbl->max - 1);
@@ -124,4 +125,4 @@ void pvrdma_uar_free(struct pvrdma_dev *dev, struct pvrdma_uar_map *uar)
 	tbl->last = min(tbl->last, obj);
 	tbl->top = (tbl->top + tbl->max) & tbl->mask;
 	spin_unlock_irqrestore(&tbl->lock, flags);
-}
+पूर्ण

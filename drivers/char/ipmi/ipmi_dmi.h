@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * DMI defines for use by IPMI
+ * DMI defines क्रम use by IPMI
  */
-#include "ipmi_si.h"
+#समावेश "ipmi_si.h"
 
-#ifdef CONFIG_IPMI_DMI_DECODE
-int ipmi_dmi_get_slave_addr(enum si_type si_type, unsigned int space,
-			    unsigned long base_addr);
-#endif
+#अगर_घोषित CONFIG_IPMI_DMI_DECODE
+पूर्णांक ipmi_dmi_get_slave_addr(क्रमागत si_type si_type, अचिन्हित पूर्णांक space,
+			    अचिन्हित दीर्घ base_addr);
+#पूर्ण_अगर

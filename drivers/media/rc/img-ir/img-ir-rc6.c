@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * ImgTec IR Decoder setup for Philips RC-6 protocol.
+ * ImgTec IR Decoder setup क्रम Philips RC-6 protocol.
  *
  * Copyright 2012-2014 Imagination Technologies Ltd.
  */
 
-#include "img-ir-hw.h"
+#समावेश "img-ir-hw.h"
 
 /* Convert RC6 data to a scancode */
-static int img_ir_rc6_scancode(int len, u64 raw, u64 enabled_protocols,
-				struct img_ir_scancode_req *request)
-{
-	unsigned int addr, cmd, mode, trl1, trl2;
+अटल पूर्णांक img_ir_rc6_scancode(पूर्णांक len, u64 raw, u64 enabled_protocols,
+				काष्ठा img_ir_scancode_req *request)
+अणु
+	अचिन्हित पूर्णांक addr, cmd, mode, trl1, trl2;
 
 	/*
-	 * Due to a side effect of the decoder handling the double length
-	 * Trailer bit, the header information is a bit scrambled, and the
-	 * raw data is shifted incorrectly.
+	 * Due to a side effect of the decoder handling the द्विगुन length
+	 * Trailer bit, the header inक्रमmation is a bit scrambled, and the
+	 * raw data is shअगरted incorrectly.
 	 * This workaround effectively recovers the header bits.
 	 *
 	 * The Header field should look like this:
@@ -43,71 +44,71 @@ static int img_ir_rc6_scancode(int len, u64 raw, u64 enabled_protocols,
 	 * Due to the above explained irregularity the trailer bits cannot
 	 * have the same value.
 	 */
-	if (trl1 == trl2)
-		return -EINVAL;
+	अगर (trl1 == trl2)
+		वापस -EINVAL;
 
-	/* Only mode 0 supported for now */
-	if (mode)
-		return -EINVAL;
+	/* Only mode 0 supported क्रम now */
+	अगर (mode)
+		वापस -EINVAL;
 
 	request->protocol = RC_PROTO_RC6_0;
 	request->scancode = addr << 8 | cmd;
 	request->toggle	  = trl2;
-	return IMG_IR_SCANCODE;
-}
+	वापस IMG_IR_SCANCODE;
+पूर्ण
 
 /* Convert RC6 scancode to RC6 data filter */
-static int img_ir_rc6_filter(const struct rc_scancode_filter *in,
-				 struct img_ir_filter *out, u64 protocols)
-{
+अटल पूर्णांक img_ir_rc6_filter(स्थिर काष्ठा rc_scancode_filter *in,
+				 काष्ठा img_ir_filter *out, u64 protocols)
+अणु
 	/* Not supported by the hw. */
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * RC-6 decoder
  * see http://www.sbprojects.com/knowledge/ir/rc6.php
  */
-struct img_ir_decoder img_ir_rc6 = {
+काष्ठा img_ir_decoder img_ir_rc6 = अणु
 	.type		= RC_PROTO_BIT_RC6_0,
-	.control	= {
+	.control	= अणु
 		.bitorien	= 1,
 		.code_type	= IMG_IR_CODETYPE_BIPHASE,
 		.decoden	= 1,
 		.decodinpol	= 1,
-	},
-	/* main timings */
+	पूर्ण,
+	/* मुख्य timings */
 	.tolerance	= 20,
 	/*
-	 * Due to a quirk in the img-ir decoder, default header values do
+	 * Due to a quirk in the img-ir decoder, शेष header values करो
 	 * not work, the values described below were extracted from
-	 * successful RTL test cases.
+	 * successful RTL test हालs.
 	 */
-	.timings	= {
+	.timings	= अणु
 		/* leader symbol */
-		.ldr = {
-			.pulse	= { 650 },
-			.space	= { 660 },
-		},
+		.ldr = अणु
+			.pulse	= अणु 650 पूर्ण,
+			.space	= अणु 660 पूर्ण,
+		पूर्ण,
 		/* 0 symbol */
-		.s00 = {
-			.pulse	= { 370 },
-			.space	= { 370 },
-		},
+		.s00 = अणु
+			.pulse	= अणु 370 पूर्ण,
+			.space	= अणु 370 पूर्ण,
+		पूर्ण,
 		/* 01 symbol */
-		.s01 = {
-			.pulse	= { 370 },
-			.space	= { 370 },
-		},
-		/* free time */
-		.ft  = {
+		.s01 = अणु
+			.pulse	= अणु 370 पूर्ण,
+			.space	= अणु 370 पूर्ण,
+		पूर्ण,
+		/* मुक्त समय */
+		.ft  = अणु
 			.minlen = 21,
 			.maxlen = 21,
 			.ft_min = 2666,	/* 2.666 ms */
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 
 	/* scancode logic */
 	.scancode	= img_ir_rc6_scancode,
 	.filter		= img_ir_rc6_filter,
-};
+पूर्ण;

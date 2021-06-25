@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Generic implementation of 64-bit atomics using spinlocks,
- * useful on processors that don't have 64-bit atomic instructions.
+ * useful on processors that करोn't have 64-bit atomic inकाष्ठाions.
  *
- * Copyright © 2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
+ * Copyright तऊ 2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
-#ifndef _ASM_GENERIC_ATOMIC64_H
-#define _ASM_GENERIC_ATOMIC64_H
-#include <linux/types.h>
+#अगर_अघोषित _ASM_GENERIC_ATOMIC64_H
+#घोषणा _ASM_GENERIC_ATOMIC64_H
+#समावेश <linux/types.h>
 
-typedef struct {
+प्रकार काष्ठा अणु
 	s64 counter;
-} atomic64_t;
+पूर्ण atomic64_t;
 
-#define ATOMIC64_INIT(i)	{ (i) }
+#घोषणा ATOMIC64_INIT(i)	अणु (i) पूर्ण
 
-extern s64 atomic64_read(const atomic64_t *v);
-extern void atomic64_set(atomic64_t *v, s64 i);
+बाह्य s64 atomic64_पढ़ो(स्थिर atomic64_t *v);
+बाह्य व्योम atomic64_set(atomic64_t *v, s64 i);
 
-#define atomic64_set_release(v, i)	atomic64_set((v), (i))
+#घोषणा atomic64_set_release(v, i)	atomic64_set((v), (i))
 
-#define ATOMIC64_OP(op)							\
-extern void	 atomic64_##op(s64 a, atomic64_t *v);
+#घोषणा ATOMIC64_OP(op)							\
+बाह्य व्योम	 atomic64_##op(s64 a, atomic64_t *v);
 
-#define ATOMIC64_OP_RETURN(op)						\
-extern s64 atomic64_##op##_return(s64 a, atomic64_t *v);
+#घोषणा ATOMIC64_OP_RETURN(op)						\
+बाह्य s64 atomic64_##op##_वापस(s64 a, atomic64_t *v);
 
-#define ATOMIC64_FETCH_OP(op)						\
-extern s64 atomic64_fetch_##op(s64 a, atomic64_t *v);
+#घोषणा ATOMIC64_FETCH_OP(op)						\
+बाह्य s64 atomic64_fetch_##op(s64 a, atomic64_t *v);
 
-#define ATOMIC64_OPS(op)	ATOMIC64_OP(op) ATOMIC64_OP_RETURN(op) ATOMIC64_FETCH_OP(op)
+#घोषणा ATOMIC64_OPS(op)	ATOMIC64_OP(op) ATOMIC64_OP_RETURN(op) ATOMIC64_FETCH_OP(op)
 
 ATOMIC64_OPS(add)
 ATOMIC64_OPS(sub)
 
-#undef ATOMIC64_OPS
-#define ATOMIC64_OPS(op)	ATOMIC64_OP(op) ATOMIC64_FETCH_OP(op)
+#अघोषित ATOMIC64_OPS
+#घोषणा ATOMIC64_OPS(op)	ATOMIC64_OP(op) ATOMIC64_FETCH_OP(op)
 
 ATOMIC64_OPS(and)
 ATOMIC64_OPS(or)
 ATOMIC64_OPS(xor)
 
-#undef ATOMIC64_OPS
-#undef ATOMIC64_FETCH_OP
-#undef ATOMIC64_OP_RETURN
-#undef ATOMIC64_OP
+#अघोषित ATOMIC64_OPS
+#अघोषित ATOMIC64_FETCH_OP
+#अघोषित ATOMIC64_OP_RETURN
+#अघोषित ATOMIC64_OP
 
-extern s64 atomic64_dec_if_positive(atomic64_t *v);
-#define atomic64_dec_if_positive atomic64_dec_if_positive
-extern s64 atomic64_cmpxchg(atomic64_t *v, s64 o, s64 n);
-extern s64 atomic64_xchg(atomic64_t *v, s64 new);
-extern s64 atomic64_fetch_add_unless(atomic64_t *v, s64 a, s64 u);
-#define atomic64_fetch_add_unless atomic64_fetch_add_unless
+बाह्य s64 atomic64_dec_अगर_positive(atomic64_t *v);
+#घोषणा atomic64_dec_अगर_positive atomic64_dec_अगर_positive
+बाह्य s64 atomic64_cmpxchg(atomic64_t *v, s64 o, s64 n);
+बाह्य s64 atomic64_xchg(atomic64_t *v, s64 new);
+बाह्य s64 atomic64_fetch_add_unless(atomic64_t *v, s64 a, s64 u);
+#घोषणा atomic64_fetch_add_unless atomic64_fetch_add_unless
 
-#endif  /*  _ASM_GENERIC_ATOMIC64_H  */
+#पूर्ण_अगर  /*  _ASM_GENERIC_ATOMIC64_H  */

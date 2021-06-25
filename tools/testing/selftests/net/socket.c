@@ -1,93 +1,94 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdio.h>
-#include <errno.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकपन.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
+#समावेश <माला.स>
+#समावेश <sys/types.h>
+#समावेश <sys/socket.h>
+#समावेश <netinet/in.h>
 
-struct socket_testcase {
-	int	domain;
-	int	type;
-	int	protocol;
+काष्ठा socket_testहाल अणु
+	पूर्णांक	करोमुख्य;
+	पूर्णांक	type;
+	पूर्णांक	protocol;
 
 	/* 0    = valid file descriptor
 	 * -foo = error foo
 	 */
-	int	expect;
+	पूर्णांक	expect;
 
-	/* If non-zero, accept EAFNOSUPPORT to handle the case
-	 * of the protocol not being configured into the kernel.
+	/* If non-zero, accept EAFNOSUPPORT to handle the हाल
+	 * of the protocol not being configured पूर्णांकo the kernel.
 	 */
-	int	nosupport_ok;
-};
+	पूर्णांक	nosupport_ok;
+पूर्ण;
 
-static struct socket_testcase tests[] = {
-	{ AF_MAX,  0,           0,           -EAFNOSUPPORT,    0 },
-	{ AF_INET, SOCK_STREAM, IPPROTO_TCP, 0,                1  },
-	{ AF_INET, SOCK_DGRAM,  IPPROTO_TCP, -EPROTONOSUPPORT, 1  },
-	{ AF_INET, SOCK_DGRAM,  IPPROTO_UDP, 0,                1  },
-	{ AF_INET, SOCK_STREAM, IPPROTO_UDP, -EPROTONOSUPPORT, 1  },
-};
+अटल काष्ठा socket_testहाल tests[] = अणु
+	अणु AF_MAX,  0,           0,           -EAFNOSUPPORT,    0 पूर्ण,
+	अणु AF_INET, SOCK_STREAM, IPPROTO_TCP, 0,                1  पूर्ण,
+	अणु AF_INET, SOCK_DGRAM,  IPPROTO_TCP, -EPROTONOSUPPORT, 1  पूर्ण,
+	अणु AF_INET, SOCK_DGRAM,  IPPROTO_UDP, 0,                1  पूर्ण,
+	अणु AF_INET, SOCK_STREAM, IPPROTO_UDP, -EPROTONOSUPPORT, 1  पूर्ण,
+पूर्ण;
 
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-#define ERR_STRING_SZ	64
+#घोषणा ARRAY_SIZE(arr) (माप(arr) / माप((arr)[0]))
+#घोषणा ERR_STRING_SZ	64
 
-static int run_tests(void)
-{
-	char err_string1[ERR_STRING_SZ];
-	char err_string2[ERR_STRING_SZ];
-	int i, err;
+अटल पूर्णांक run_tests(व्योम)
+अणु
+	अक्षर err_string1[ERR_STRING_SZ];
+	अक्षर err_string2[ERR_STRING_SZ];
+	पूर्णांक i, err;
 
 	err = 0;
-	for (i = 0; i < ARRAY_SIZE(tests); i++) {
-		struct socket_testcase *s = &tests[i];
-		int fd;
+	क्रम (i = 0; i < ARRAY_SIZE(tests); i++) अणु
+		काष्ठा socket_testहाल *s = &tests[i];
+		पूर्णांक fd;
 
-		fd = socket(s->domain, s->type, s->protocol);
-		if (fd < 0) {
-			if (s->nosupport_ok &&
-			    errno == EAFNOSUPPORT)
-				continue;
+		fd = socket(s->करोमुख्य, s->type, s->protocol);
+		अगर (fd < 0) अणु
+			अगर (s->nosupport_ok &&
+			    त्रुटि_सं == EAFNOSUPPORT)
+				जारी;
 
-			if (s->expect < 0 &&
-			    errno == -s->expect)
-				continue;
+			अगर (s->expect < 0 &&
+			    त्रुटि_सं == -s->expect)
+				जारी;
 
-			strerror_r(-s->expect, err_string1, ERR_STRING_SZ);
-			strerror_r(errno, err_string2, ERR_STRING_SZ);
+			म_त्रुटि_r(-s->expect, err_string1, ERR_STRING_SZ);
+			म_त्रुटि_r(त्रुटि_सं, err_string2, ERR_STRING_SZ);
 
-			fprintf(stderr, "socket(%d, %d, %d) expected "
+			ख_लिखो(मानक_त्रुटि, "socket(%d, %d, %d) expected "
 				"err (%s) got (%s)\n",
-				s->domain, s->type, s->protocol,
+				s->करोमुख्य, s->type, s->protocol,
 				err_string1, err_string2);
 
 			err = -1;
-			break;
-		} else {
-			close(fd);
+			अवरोध;
+		पूर्ण अन्यथा अणु
+			बंद(fd);
 
-			if (s->expect < 0) {
-				strerror_r(errno, err_string1, ERR_STRING_SZ);
+			अगर (s->expect < 0) अणु
+				म_त्रुटि_r(त्रुटि_सं, err_string1, ERR_STRING_SZ);
 
-				fprintf(stderr, "socket(%d, %d, %d) expected "
+				ख_लिखो(मानक_त्रुटि, "socket(%d, %d, %d) expected "
 					"success got err (%s)\n",
-					s->domain, s->type, s->protocol,
+					s->करोमुख्य, s->type, s->protocol,
 					err_string1);
 
 				err = -1;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int main(void)
-{
-	int err = run_tests();
+पूर्णांक मुख्य(व्योम)
+अणु
+	पूर्णांक err = run_tests();
 
-	return err;
-}
+	वापस err;
+पूर्ण

@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kobject.h>
-#include <boot_param.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kobject.h>
+#समावेश <boot_param.h>
 
-static ssize_t boardinfo_show(struct kobject *kobj,
-			      struct kobj_attribute *attr, char *buf)
-{
-	char board_manufacturer[64] = {0};
-	char *tmp_board_manufacturer = board_manufacturer;
-	char bios_vendor[64] = {0};
-	char *tmp_bios_vendor = bios_vendor;
+अटल sमाप_प्रकार boardinfo_show(काष्ठा kobject *kobj,
+			      काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	अक्षर board_manufacturer[64] = अणु0पूर्ण;
+	अक्षर *पंचांगp_board_manufacturer = board_manufacturer;
+	अक्षर bios_venकरोr[64] = अणु0पूर्ण;
+	अक्षर *पंचांगp_bios_venकरोr = bios_venकरोr;
 
-	strcpy(board_manufacturer, eboard->name);
-	strcpy(bios_vendor, einter->description);
+	म_नकल(board_manufacturer, eboard->name);
+	म_नकल(bios_venकरोr, eपूर्णांकer->description);
 
-	return sprintf(buf,
+	वापस प्र_लिखो(buf,
 		       "Board Info\n"
 		       "Manufacturer\t\t: %s\n"
 		       "Board Name\t\t: %s\n"
@@ -23,26 +24,26 @@ static ssize_t boardinfo_show(struct kobject *kobj,
 		       "Version\t\t\t: %s\n"
 		       "ROM Size\t\t: %d KB\n"
 		       "Release Date\t\t: %s\n",
-		       strsep(&tmp_board_manufacturer, "-"),
+		       strsep(&पंचांगp_board_manufacturer, "-"),
 		       eboard->name,
-		       strsep(&tmp_bios_vendor, "-"),
-		       einter->description,
-		       einter->size,
+		       strsep(&पंचांगp_bios_venकरोr, "-"),
+		       eपूर्णांकer->description,
+		       eपूर्णांकer->size,
 		       especial->special_name);
-}
-static struct kobj_attribute boardinfo_attr = __ATTR(boardinfo, 0444,
-						     boardinfo_show, NULL);
+पूर्ण
+अटल काष्ठा kobj_attribute boardinfo_attr = __ATTR(boardinfo, 0444,
+						     boardinfo_show, शून्य);
 
-static int __init boardinfo_init(void)
-{
-	struct kobject *lefi_kobj;
+अटल पूर्णांक __init boardinfo_init(व्योम)
+अणु
+	काष्ठा kobject *lefi_kobj;
 
 	lefi_kobj = kobject_create_and_add("lefi", firmware_kobj);
-	if (!lefi_kobj) {
+	अगर (!lefi_kobj) अणु
 		pr_err("lefi: Firmware registration failed.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return sysfs_create_file(lefi_kobj, &boardinfo_attr.attr);
-}
+	वापस sysfs_create_file(lefi_kobj, &boardinfo_attr.attr);
+पूर्ण
 late_initcall(boardinfo_init);

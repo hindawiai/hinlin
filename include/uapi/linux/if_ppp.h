@@ -1,1 +1,2 @@
-#include <linux/ppp-ioctl.h>
+<शैली गुरु>
+#समावेश <linux/ppp-ioctl.h>

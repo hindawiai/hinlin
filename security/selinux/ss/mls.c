@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Implementation of the multi-level security (MLS) policy.
  *
@@ -7,7 +8,7 @@
 /*
  * Updated: Trusted Computer Solutions, Inc. <dgoeddel@trustedcs.com>
  *
- *	Support for enhanced MLS infrastructure.
+ *	Support क्रम enhanced MLS infraकाष्ठाure.
  *
  * Copyright (C) 2004-2006 Trusted Computer Solutions, Inc.
  */
@@ -19,558 +20,558 @@
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2006
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <net/netlabel.h>
-#include "sidtab.h"
-#include "mls.h"
-#include "policydb.h"
-#include "services.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <net/netlabel.h>
+#समावेश "sidtab.h"
+#समावेश "mls.h"
+#समावेश "policydb.h"
+#समावेश "services.h"
 
 /*
- * Return the length in bytes for the MLS fields of the
+ * Return the length in bytes क्रम the MLS fields of the
  * security context string representation of `context'.
  */
-int mls_compute_context_len(struct policydb *p, struct context *context)
-{
-	int i, l, len, head, prev;
-	char *nm;
-	struct ebitmap *e;
-	struct ebitmap_node *node;
+पूर्णांक mls_compute_context_len(काष्ठा policydb *p, काष्ठा context *context)
+अणु
+	पूर्णांक i, l, len, head, prev;
+	अक्षर *nm;
+	काष्ठा ebiपंचांगap *e;
+	काष्ठा ebiपंचांगap_node *node;
 
-	if (!p->mls_enabled)
-		return 0;
+	अगर (!p->mls_enabled)
+		वापस 0;
 
-	len = 1; /* for the beginning ":" */
-	for (l = 0; l < 2; l++) {
-		int index_sens = context->range.level[l].sens;
-		len += strlen(sym_name(p, SYM_LEVELS, index_sens - 1));
+	len = 1; /* क्रम the beginning ":" */
+	क्रम (l = 0; l < 2; l++) अणु
+		पूर्णांक index_sens = context->range.level[l].sens;
+		len += म_माप(sym_name(p, SYM_LEVELS, index_sens - 1));
 
 		/* categories */
 		head = -2;
 		prev = -2;
 		e = &context->range.level[l].cat;
-		ebitmap_for_each_positive_bit(e, node, i) {
-			if (i - prev > 1) {
+		ebiपंचांगap_क्रम_each_positive_bit(e, node, i) अणु
+			अगर (i - prev > 1) अणु
 				/* one or more negative bits are skipped */
-				if (head != prev) {
+				अगर (head != prev) अणु
 					nm = sym_name(p, SYM_CATS, prev);
-					len += strlen(nm) + 1;
-				}
+					len += म_माप(nm) + 1;
+				पूर्ण
 				nm = sym_name(p, SYM_CATS, i);
-				len += strlen(nm) + 1;
+				len += म_माप(nm) + 1;
 				head = i;
-			}
+			पूर्ण
 			prev = i;
-		}
-		if (prev != head) {
+		पूर्ण
+		अगर (prev != head) अणु
 			nm = sym_name(p, SYM_CATS, prev);
-			len += strlen(nm) + 1;
-		}
-		if (l == 0) {
-			if (mls_level_eq(&context->range.level[0],
+			len += म_माप(nm) + 1;
+		पूर्ण
+		अगर (l == 0) अणु
+			अगर (mls_level_eq(&context->range.level[0],
 					 &context->range.level[1]))
-				break;
-			else
+				अवरोध;
+			अन्यथा
 				len++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /*
  * Write the security context string representation of
  * the MLS fields of `context' into the string `*scontext'.
- * Update `*scontext' to point to the end of the MLS fields.
+ * Update `*scontext' to poपूर्णांक to the end of the MLS fields.
  */
-void mls_sid_to_context(struct policydb *p,
-			struct context *context,
-			char **scontext)
-{
-	char *scontextp, *nm;
-	int i, l, head, prev;
-	struct ebitmap *e;
-	struct ebitmap_node *node;
+व्योम mls_sid_to_context(काष्ठा policydb *p,
+			काष्ठा context *context,
+			अक्षर **scontext)
+अणु
+	अक्षर *scontextp, *nm;
+	पूर्णांक i, l, head, prev;
+	काष्ठा ebiपंचांगap *e;
+	काष्ठा ebiपंचांगap_node *node;
 
-	if (!p->mls_enabled)
-		return;
+	अगर (!p->mls_enabled)
+		वापस;
 
 	scontextp = *scontext;
 
 	*scontextp = ':';
 	scontextp++;
 
-	for (l = 0; l < 2; l++) {
-		strcpy(scontextp, sym_name(p, SYM_LEVELS,
+	क्रम (l = 0; l < 2; l++) अणु
+		म_नकल(scontextp, sym_name(p, SYM_LEVELS,
 					   context->range.level[l].sens - 1));
-		scontextp += strlen(scontextp);
+		scontextp += म_माप(scontextp);
 
 		/* categories */
 		head = -2;
 		prev = -2;
 		e = &context->range.level[l].cat;
-		ebitmap_for_each_positive_bit(e, node, i) {
-			if (i - prev > 1) {
+		ebiपंचांगap_क्रम_each_positive_bit(e, node, i) अणु
+			अगर (i - prev > 1) अणु
 				/* one or more negative bits are skipped */
-				if (prev != head) {
-					if (prev - head > 1)
+				अगर (prev != head) अणु
+					अगर (prev - head > 1)
 						*scontextp++ = '.';
-					else
+					अन्यथा
 						*scontextp++ = ',';
 					nm = sym_name(p, SYM_CATS, prev);
-					strcpy(scontextp, nm);
-					scontextp += strlen(nm);
-				}
-				if (prev < 0)
+					म_नकल(scontextp, nm);
+					scontextp += म_माप(nm);
+				पूर्ण
+				अगर (prev < 0)
 					*scontextp++ = ':';
-				else
+				अन्यथा
 					*scontextp++ = ',';
 				nm = sym_name(p, SYM_CATS, i);
-				strcpy(scontextp, nm);
-				scontextp += strlen(nm);
+				म_नकल(scontextp, nm);
+				scontextp += म_माप(nm);
 				head = i;
-			}
+			पूर्ण
 			prev = i;
-		}
+		पूर्ण
 
-		if (prev != head) {
-			if (prev - head > 1)
+		अगर (prev != head) अणु
+			अगर (prev - head > 1)
 				*scontextp++ = '.';
-			else
+			अन्यथा
 				*scontextp++ = ',';
 			nm = sym_name(p, SYM_CATS, prev);
-			strcpy(scontextp, nm);
-			scontextp += strlen(nm);
-		}
+			म_नकल(scontextp, nm);
+			scontextp += म_माप(nm);
+		पूर्ण
 
-		if (l == 0) {
-			if (mls_level_eq(&context->range.level[0],
+		अगर (l == 0) अणु
+			अगर (mls_level_eq(&context->range.level[0],
 					 &context->range.level[1]))
-				break;
-			else
+				अवरोध;
+			अन्यथा
 				*scontextp++ = '-';
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*scontext = scontextp;
-	return;
-}
+	वापस;
+पूर्ण
 
-int mls_level_isvalid(struct policydb *p, struct mls_level *l)
-{
-	struct level_datum *levdatum;
+पूर्णांक mls_level_isvalid(काष्ठा policydb *p, काष्ठा mls_level *l)
+अणु
+	काष्ठा level_datum *levdatum;
 
-	if (!l->sens || l->sens > p->p_levels.nprim)
-		return 0;
+	अगर (!l->sens || l->sens > p->p_levels.nprim)
+		वापस 0;
 	levdatum = symtab_search(&p->p_levels,
 				 sym_name(p, SYM_LEVELS, l->sens - 1));
-	if (!levdatum)
-		return 0;
+	अगर (!levdatum)
+		वापस 0;
 
 	/*
-	 * Return 1 iff all the bits set in l->cat are also be set in
+	 * Return 1 अगरf all the bits set in l->cat are also be set in
 	 * levdatum->level->cat and no bit in l->cat is larger than
 	 * p->p_cats.nprim.
 	 */
-	return ebitmap_contains(&levdatum->level->cat, &l->cat,
+	वापस ebiपंचांगap_contains(&levdatum->level->cat, &l->cat,
 				p->p_cats.nprim);
-}
+पूर्ण
 
-int mls_range_isvalid(struct policydb *p, struct mls_range *r)
-{
-	return (mls_level_isvalid(p, &r->level[0]) &&
+पूर्णांक mls_range_isvalid(काष्ठा policydb *p, काष्ठा mls_range *r)
+अणु
+	वापस (mls_level_isvalid(p, &r->level[0]) &&
 		mls_level_isvalid(p, &r->level[1]) &&
-		mls_level_dom(&r->level[1], &r->level[0]));
-}
+		mls_level_करोm(&r->level[1], &r->level[0]));
+पूर्ण
 
 /*
- * Return 1 if the MLS fields in the security context
- * structure `c' are valid.  Return 0 otherwise.
+ * Return 1 अगर the MLS fields in the security context
+ * काष्ठाure `c' are valid.  Return 0 otherwise.
  */
-int mls_context_isvalid(struct policydb *p, struct context *c)
-{
-	struct user_datum *usrdatum;
+पूर्णांक mls_context_isvalid(काष्ठा policydb *p, काष्ठा context *c)
+अणु
+	काष्ठा user_datum *usrdatum;
 
-	if (!p->mls_enabled)
-		return 1;
+	अगर (!p->mls_enabled)
+		वापस 1;
 
-	if (!mls_range_isvalid(p, &c->range))
-		return 0;
+	अगर (!mls_range_isvalid(p, &c->range))
+		वापस 0;
 
-	if (c->role == OBJECT_R_VAL)
-		return 1;
+	अगर (c->role == OBJECT_R_VAL)
+		वापस 1;
 
 	/*
-	 * User must be authorized for the MLS range.
+	 * User must be authorized क्रम the MLS range.
 	 */
-	if (!c->user || c->user > p->p_users.nprim)
-		return 0;
-	usrdatum = p->user_val_to_struct[c->user - 1];
-	if (!mls_range_contains(usrdatum->range, c->range))
-		return 0; /* user may not be associated with range */
+	अगर (!c->user || c->user > p->p_users.nprim)
+		वापस 0;
+	usrdatum = p->user_val_to_काष्ठा[c->user - 1];
+	अगर (!mls_range_contains(usrdatum->range, c->range))
+		वापस 0; /* user may not be associated with range */
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Set the MLS fields in the security context structure
+ * Set the MLS fields in the security context काष्ठाure
  * `context' based on the string representation in
  * the string `scontext'.
  *
- * This function modifies the string in place, inserting
- * NULL characters to terminate the MLS fields.
+ * This function modअगरies the string in place, inserting
+ * शून्य अक्षरacters to terminate the MLS fields.
  *
  * If a def_sid is provided and no MLS field is present,
- * copy the MLS field of the associated default context.
- * Used for upgraded to MLS systems where objects may lack
+ * copy the MLS field of the associated शेष context.
+ * Used क्रम upgraded to MLS प्रणालीs where objects may lack
  * MLS fields.
  *
- * Policy read-lock must be held for sidtab lookup.
+ * Policy पढ़ो-lock must be held क्रम sidtab lookup.
  *
  */
-int mls_context_to_sid(struct policydb *pol,
-		       char oldc,
-		       char *scontext,
-		       struct context *context,
-		       struct sidtab *s,
+पूर्णांक mls_context_to_sid(काष्ठा policydb *pol,
+		       अक्षर oldc,
+		       अक्षर *scontext,
+		       काष्ठा context *context,
+		       काष्ठा sidtab *s,
 		       u32 def_sid)
-{
-	char *sensitivity, *cur_cat, *next_cat, *rngptr;
-	struct level_datum *levdatum;
-	struct cat_datum *catdatum, *rngdatum;
-	int l, rc, i;
-	char *rangep[2];
+अणु
+	अक्षर *sensitivity, *cur_cat, *next_cat, *rngptr;
+	काष्ठा level_datum *levdatum;
+	काष्ठा cat_datum *catdatum, *rngdatum;
+	पूर्णांक l, rc, i;
+	अक्षर *rangep[2];
 
-	if (!pol->mls_enabled) {
+	अगर (!pol->mls_enabled) अणु
 		/*
-		 * With no MLS, only return -EINVAL if there is a MLS field
+		 * With no MLS, only वापस -EINVAL अगर there is a MLS field
 		 * and it did not come from an xattr.
 		 */
-		if (oldc && def_sid == SECSID_NULL)
-			return -EINVAL;
-		return 0;
-	}
+		अगर (oldc && def_sid == SECSID_शून्य)
+			वापस -EINVAL;
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * No MLS component to the security context, try and map to
-	 * default if provided.
+	 * शेष अगर provided.
 	 */
-	if (!oldc) {
-		struct context *defcon;
+	अगर (!oldc) अणु
+		काष्ठा context *defcon;
 
-		if (def_sid == SECSID_NULL)
-			return -EINVAL;
+		अगर (def_sid == SECSID_शून्य)
+			वापस -EINVAL;
 
 		defcon = sidtab_search(s, def_sid);
-		if (!defcon)
-			return -EINVAL;
+		अगर (!defcon)
+			वापस -EINVAL;
 
-		return mls_context_cpy(context, defcon);
-	}
+		वापस mls_context_cpy(context, defcon);
+	पूर्ण
 
 	/*
 	 * If we're dealing with a range, figure out where the two parts
 	 * of the range begin.
 	 */
 	rangep[0] = scontext;
-	rangep[1] = strchr(scontext, '-');
-	if (rangep[1]) {
+	rangep[1] = म_अक्षर(scontext, '-');
+	अगर (rangep[1]) अणु
 		rangep[1][0] = '\0';
 		rangep[1]++;
-	}
+	पूर्ण
 
 	/* For each part of the range: */
-	for (l = 0; l < 2; l++) {
+	क्रम (l = 0; l < 2; l++) अणु
 		/* Split sensitivity and category set. */
 		sensitivity = rangep[l];
-		if (sensitivity == NULL)
-			break;
-		next_cat = strchr(sensitivity, ':');
-		if (next_cat)
+		अगर (sensitivity == शून्य)
+			अवरोध;
+		next_cat = म_अक्षर(sensitivity, ':');
+		अगर (next_cat)
 			*(next_cat++) = '\0';
 
 		/* Parse sensitivity. */
 		levdatum = symtab_search(&pol->p_levels, sensitivity);
-		if (!levdatum)
-			return -EINVAL;
+		अगर (!levdatum)
+			वापस -EINVAL;
 		context->range.level[l].sens = levdatum->level->sens;
 
 		/* Extract category set. */
-		while (next_cat != NULL) {
+		जबतक (next_cat != शून्य) अणु
 			cur_cat = next_cat;
-			next_cat = strchr(next_cat, ',');
-			if (next_cat != NULL)
+			next_cat = म_अक्षर(next_cat, ',');
+			अगर (next_cat != शून्य)
 				*(next_cat++) = '\0';
 
-			/* Separate into range if exists */
-			rngptr = strchr(cur_cat, '.');
-			if (rngptr != NULL) {
+			/* Separate पूर्णांकo range अगर exists */
+			rngptr = म_अक्षर(cur_cat, '.');
+			अगर (rngptr != शून्य) अणु
 				/* Remove '.' */
 				*rngptr++ = '\0';
-			}
+			पूर्ण
 
 			catdatum = symtab_search(&pol->p_cats, cur_cat);
-			if (!catdatum)
-				return -EINVAL;
+			अगर (!catdatum)
+				वापस -EINVAL;
 
-			rc = ebitmap_set_bit(&context->range.level[l].cat,
+			rc = ebiपंचांगap_set_bit(&context->range.level[l].cat,
 					     catdatum->value - 1, 1);
-			if (rc)
-				return rc;
+			अगर (rc)
+				वापस rc;
 
 			/* If range, set all categories in range */
-			if (rngptr == NULL)
-				continue;
+			अगर (rngptr == शून्य)
+				जारी;
 
 			rngdatum = symtab_search(&pol->p_cats, rngptr);
-			if (!rngdatum)
-				return -EINVAL;
+			अगर (!rngdatum)
+				वापस -EINVAL;
 
-			if (catdatum->value >= rngdatum->value)
-				return -EINVAL;
+			अगर (catdatum->value >= rngdatum->value)
+				वापस -EINVAL;
 
-			for (i = catdatum->value; i < rngdatum->value; i++) {
-				rc = ebitmap_set_bit(&context->range.level[l].cat, i, 1);
-				if (rc)
-					return rc;
-			}
-		}
-	}
+			क्रम (i = catdatum->value; i < rngdatum->value; i++) अणु
+				rc = ebiपंचांगap_set_bit(&context->range.level[l].cat, i, 1);
+				अगर (rc)
+					वापस rc;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* If we didn't see a '-', the range start is also the range end. */
-	if (rangep[1] == NULL) {
+	अगर (rangep[1] == शून्य) अणु
 		context->range.level[1].sens = context->range.level[0].sens;
-		rc = ebitmap_cpy(&context->range.level[1].cat,
+		rc = ebiपंचांगap_cpy(&context->range.level[1].cat,
 				 &context->range.level[0].cat);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Set the MLS fields in the security context structure
+ * Set the MLS fields in the security context काष्ठाure
  * `context' based on the string representation in
  * the string `str'.  This function will allocate temporary memory with the
- * given constraints of gfp_mask.
+ * given स्थिरraपूर्णांकs of gfp_mask.
  */
-int mls_from_string(struct policydb *p, char *str, struct context *context,
+पूर्णांक mls_from_string(काष्ठा policydb *p, अक्षर *str, काष्ठा context *context,
 		    gfp_t gfp_mask)
-{
-	char *tmpstr;
-	int rc;
+अणु
+	अक्षर *पंचांगpstr;
+	पूर्णांक rc;
 
-	if (!p->mls_enabled)
-		return -EINVAL;
+	अगर (!p->mls_enabled)
+		वापस -EINVAL;
 
-	tmpstr = kstrdup(str, gfp_mask);
-	if (!tmpstr) {
+	पंचांगpstr = kstrdup(str, gfp_mask);
+	अगर (!पंचांगpstr) अणु
 		rc = -ENOMEM;
-	} else {
-		rc = mls_context_to_sid(p, ':', tmpstr, context,
-					NULL, SECSID_NULL);
-		kfree(tmpstr);
-	}
+	पूर्ण अन्यथा अणु
+		rc = mls_context_to_sid(p, ':', पंचांगpstr, context,
+					शून्य, SECSID_शून्य);
+		kमुक्त(पंचांगpstr);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * Copies the MLS range `range' into `context'.
  */
-int mls_range_set(struct context *context,
-				struct mls_range *range)
-{
-	int l, rc = 0;
+पूर्णांक mls_range_set(काष्ठा context *context,
+				काष्ठा mls_range *range)
+अणु
+	पूर्णांक l, rc = 0;
 
-	/* Copy the MLS range into the  context */
-	for (l = 0; l < 2; l++) {
+	/* Copy the MLS range पूर्णांकo the  context */
+	क्रम (l = 0; l < 2; l++) अणु
 		context->range.level[l].sens = range->level[l].sens;
-		rc = ebitmap_cpy(&context->range.level[l].cat,
+		rc = ebiपंचांगap_cpy(&context->range.level[l].cat,
 				 &range->level[l].cat);
-		if (rc)
-			break;
-	}
+		अगर (rc)
+			अवरोध;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int mls_setup_user_range(struct policydb *p,
-			 struct context *fromcon, struct user_datum *user,
-			 struct context *usercon)
-{
-	if (p->mls_enabled) {
-		struct mls_level *fromcon_sen = &(fromcon->range.level[0]);
-		struct mls_level *fromcon_clr = &(fromcon->range.level[1]);
-		struct mls_level *user_low = &(user->range.level[0]);
-		struct mls_level *user_clr = &(user->range.level[1]);
-		struct mls_level *user_def = &(user->dfltlevel);
-		struct mls_level *usercon_sen = &(usercon->range.level[0]);
-		struct mls_level *usercon_clr = &(usercon->range.level[1]);
+पूर्णांक mls_setup_user_range(काष्ठा policydb *p,
+			 काष्ठा context *fromcon, काष्ठा user_datum *user,
+			 काष्ठा context *usercon)
+अणु
+	अगर (p->mls_enabled) अणु
+		काष्ठा mls_level *fromcon_sen = &(fromcon->range.level[0]);
+		काष्ठा mls_level *fromcon_clr = &(fromcon->range.level[1]);
+		काष्ठा mls_level *user_low = &(user->range.level[0]);
+		काष्ठा mls_level *user_clr = &(user->range.level[1]);
+		काष्ठा mls_level *user_def = &(user->dfltlevel);
+		काष्ठा mls_level *usercon_sen = &(usercon->range.level[0]);
+		काष्ठा mls_level *usercon_clr = &(usercon->range.level[1]);
 
-		/* Honor the user's default level if we can */
-		if (mls_level_between(user_def, fromcon_sen, fromcon_clr))
+		/* Honor the user's शेष level अगर we can */
+		अगर (mls_level_between(user_def, fromcon_sen, fromcon_clr))
 			*usercon_sen = *user_def;
-		else if (mls_level_between(fromcon_sen, user_def, user_clr))
+		अन्यथा अगर (mls_level_between(fromcon_sen, user_def, user_clr))
 			*usercon_sen = *fromcon_sen;
-		else if (mls_level_between(fromcon_clr, user_low, user_def))
+		अन्यथा अगर (mls_level_between(fromcon_clr, user_low, user_def))
 			*usercon_sen = *user_low;
-		else
-			return -EINVAL;
+		अन्यथा
+			वापस -EINVAL;
 
 		/* Lower the clearance of available contexts
-		   if the clearance of "fromcon" is lower than
-		   that of the user's default clearance (but
-		   only if the "fromcon" clearance dominates
+		   अगर the clearance of "fromcon" is lower than
+		   that of the user's शेष clearance (but
+		   only अगर the "fromcon" clearance करोminates
 		   the user's computed sensitivity level) */
-		if (mls_level_dom(user_clr, fromcon_clr))
+		अगर (mls_level_करोm(user_clr, fromcon_clr))
 			*usercon_clr = *fromcon_clr;
-		else if (mls_level_dom(fromcon_clr, user_clr))
+		अन्यथा अगर (mls_level_करोm(fromcon_clr, user_clr))
 			*usercon_clr = *user_clr;
-		else
-			return -EINVAL;
-	}
+		अन्यथा
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Convert the MLS fields in the security context
- * structure `oldc' from the values specified in the
+ * काष्ठाure `oldc' from the values specअगरied in the
  * policy `oldp' to the values specified in the policy `newp',
  * storing the resulting context in `newc'.
  */
-int mls_convert_context(struct policydb *oldp,
-			struct policydb *newp,
-			struct context *oldc,
-			struct context *newc)
-{
-	struct level_datum *levdatum;
-	struct cat_datum *catdatum;
-	struct ebitmap_node *node;
-	int l, i;
+पूर्णांक mls_convert_context(काष्ठा policydb *oldp,
+			काष्ठा policydb *newp,
+			काष्ठा context *oldc,
+			काष्ठा context *newc)
+अणु
+	काष्ठा level_datum *levdatum;
+	काष्ठा cat_datum *catdatum;
+	काष्ठा ebiपंचांगap_node *node;
+	पूर्णांक l, i;
 
-	if (!oldp->mls_enabled || !newp->mls_enabled)
-		return 0;
+	अगर (!oldp->mls_enabled || !newp->mls_enabled)
+		वापस 0;
 
-	for (l = 0; l < 2; l++) {
-		char *name = sym_name(oldp, SYM_LEVELS,
+	क्रम (l = 0; l < 2; l++) अणु
+		अक्षर *name = sym_name(oldp, SYM_LEVELS,
 				      oldc->range.level[l].sens - 1);
 
 		levdatum = symtab_search(&newp->p_levels, name);
 
-		if (!levdatum)
-			return -EINVAL;
+		अगर (!levdatum)
+			वापस -EINVAL;
 		newc->range.level[l].sens = levdatum->level->sens;
 
-		ebitmap_for_each_positive_bit(&oldc->range.level[l].cat,
-					      node, i) {
-			int rc;
+		ebiपंचांगap_क्रम_each_positive_bit(&oldc->range.level[l].cat,
+					      node, i) अणु
+			पूर्णांक rc;
 
 			catdatum = symtab_search(&newp->p_cats,
 						 sym_name(oldp, SYM_CATS, i));
-			if (!catdatum)
-				return -EINVAL;
-			rc = ebitmap_set_bit(&newc->range.level[l].cat,
+			अगर (!catdatum)
+				वापस -EINVAL;
+			rc = ebiपंचांगap_set_bit(&newc->range.level[l].cat,
 					     catdatum->value - 1, 1);
-			if (rc)
-				return rc;
-		}
-	}
+			अगर (rc)
+				वापस rc;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mls_compute_sid(struct policydb *p,
-		    struct context *scontext,
-		    struct context *tcontext,
+पूर्णांक mls_compute_sid(काष्ठा policydb *p,
+		    काष्ठा context *scontext,
+		    काष्ठा context *tcontext,
 		    u16 tclass,
-		    u32 specified,
-		    struct context *newcontext,
+		    u32 specअगरied,
+		    काष्ठा context *newcontext,
 		    bool sock)
-{
-	struct range_trans rtr;
-	struct mls_range *r;
-	struct class_datum *cladatum;
-	int default_range = 0;
+अणु
+	काष्ठा range_trans rtr;
+	काष्ठा mls_range *r;
+	काष्ठा class_datum *cladatum;
+	पूर्णांक शेष_range = 0;
 
-	if (!p->mls_enabled)
-		return 0;
+	अगर (!p->mls_enabled)
+		वापस 0;
 
-	switch (specified) {
-	case AVTAB_TRANSITION:
-		/* Look for a range transition rule. */
+	चयन (specअगरied) अणु
+	हाल AVTAB_TRANSITION:
+		/* Look क्रम a range transition rule. */
 		rtr.source_type = scontext->type;
 		rtr.target_type = tcontext->type;
 		rtr.target_class = tclass;
 		r = policydb_rangetr_search(p, &rtr);
-		if (r)
-			return mls_range_set(newcontext, r);
+		अगर (r)
+			वापस mls_range_set(newcontext, r);
 
-		if (tclass && tclass <= p->p_classes.nprim) {
-			cladatum = p->class_val_to_struct[tclass - 1];
-			if (cladatum)
-				default_range = cladatum->default_range;
-		}
+		अगर (tclass && tclass <= p->p_classes.nprim) अणु
+			cladatum = p->class_val_to_काष्ठा[tclass - 1];
+			अगर (cladatum)
+				शेष_range = cladatum->शेष_range;
+		पूर्ण
 
-		switch (default_range) {
-		case DEFAULT_SOURCE_LOW:
-			return mls_context_cpy_low(newcontext, scontext);
-		case DEFAULT_SOURCE_HIGH:
-			return mls_context_cpy_high(newcontext, scontext);
-		case DEFAULT_SOURCE_LOW_HIGH:
-			return mls_context_cpy(newcontext, scontext);
-		case DEFAULT_TARGET_LOW:
-			return mls_context_cpy_low(newcontext, tcontext);
-		case DEFAULT_TARGET_HIGH:
-			return mls_context_cpy_high(newcontext, tcontext);
-		case DEFAULT_TARGET_LOW_HIGH:
-			return mls_context_cpy(newcontext, tcontext);
-		case DEFAULT_GLBLUB:
-			return mls_context_glblub(newcontext,
+		चयन (शेष_range) अणु
+		हाल DEFAULT_SOURCE_LOW:
+			वापस mls_context_cpy_low(newcontext, scontext);
+		हाल DEFAULT_SOURCE_HIGH:
+			वापस mls_context_cpy_high(newcontext, scontext);
+		हाल DEFAULT_SOURCE_LOW_HIGH:
+			वापस mls_context_cpy(newcontext, scontext);
+		हाल DEFAULT_TARGET_LOW:
+			वापस mls_context_cpy_low(newcontext, tcontext);
+		हाल DEFAULT_TARGET_HIGH:
+			वापस mls_context_cpy_high(newcontext, tcontext);
+		हाल DEFAULT_TARGET_LOW_HIGH:
+			वापस mls_context_cpy(newcontext, tcontext);
+		हाल DEFAULT_GLBLUB:
+			वापस mls_context_glblub(newcontext,
 						  scontext, tcontext);
-		}
+		पूर्ण
 
 		fallthrough;
-	case AVTAB_CHANGE:
-		if ((tclass == p->process_class) || sock)
+	हाल AVTAB_CHANGE:
+		अगर ((tclass == p->process_class) || sock)
 			/* Use the process MLS attributes. */
-			return mls_context_cpy(newcontext, scontext);
-		else
+			वापस mls_context_cpy(newcontext, scontext);
+		अन्यथा
 			/* Use the process effective MLS attributes. */
-			return mls_context_cpy_low(newcontext, scontext);
-	case AVTAB_MEMBER:
+			वापस mls_context_cpy_low(newcontext, scontext);
+	हाल AVTAB_MEMBER:
 		/* Use the process effective MLS attributes. */
-		return mls_context_cpy_low(newcontext, scontext);
-	}
-	return -EINVAL;
-}
+		वापस mls_context_cpy_low(newcontext, scontext);
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-#ifdef CONFIG_NETLABEL
+#अगर_घोषित CONFIG_NETLABEL
 /**
  * mls_export_netlbl_lvl - Export the MLS sensitivity levels to NetLabel
  * @context: the security context
  * @secattr: the NetLabel security attributes
  *
  * Description:
- * Given the security context copy the low MLS sensitivity level into the
+ * Given the security context copy the low MLS sensitivity level पूर्णांकo the
  * NetLabel MLS sensitivity level field.
  *
  */
-void mls_export_netlbl_lvl(struct policydb *p,
-			   struct context *context,
-			   struct netlbl_lsm_secattr *secattr)
-{
-	if (!p->mls_enabled)
-		return;
+व्योम mls_export_netlbl_lvl(काष्ठा policydb *p,
+			   काष्ठा context *context,
+			   काष्ठा netlbl_lsm_secattr *secattr)
+अणु
+	अगर (!p->mls_enabled)
+		वापस;
 
 	secattr->attr.mls.lvl = context->range.level[0].sens - 1;
 	secattr->flags |= NETLBL_SECATTR_MLS_LVL;
-}
+पूर्ण
 
 /**
  * mls_import_netlbl_lvl - Import the NetLabel MLS sensitivity levels
@@ -579,19 +580,19 @@ void mls_export_netlbl_lvl(struct policydb *p,
  *
  * Description:
  * Given the security context and the NetLabel security attributes, copy the
- * NetLabel MLS sensitivity level into the context.
+ * NetLabel MLS sensitivity level पूर्णांकo the context.
  *
  */
-void mls_import_netlbl_lvl(struct policydb *p,
-			   struct context *context,
-			   struct netlbl_lsm_secattr *secattr)
-{
-	if (!p->mls_enabled)
-		return;
+व्योम mls_import_netlbl_lvl(काष्ठा policydb *p,
+			   काष्ठा context *context,
+			   काष्ठा netlbl_lsm_secattr *secattr)
+अणु
+	अगर (!p->mls_enabled)
+		वापस;
 
 	context->range.level[0].sens = secattr->attr.mls.lvl + 1;
 	context->range.level[1].sens = context->range.level[0].sens;
-}
+पूर्ण
 
 /**
  * mls_export_netlbl_cat - Export the MLS categories to NetLabel
@@ -599,26 +600,26 @@ void mls_import_netlbl_lvl(struct policydb *p,
  * @secattr: the NetLabel security attributes
  *
  * Description:
- * Given the security context copy the low MLS categories into the NetLabel
+ * Given the security context copy the low MLS categories पूर्णांकo the NetLabel
  * MLS category field.  Returns zero on success, negative values on failure.
  *
  */
-int mls_export_netlbl_cat(struct policydb *p,
-			  struct context *context,
-			  struct netlbl_lsm_secattr *secattr)
-{
-	int rc;
+पूर्णांक mls_export_netlbl_cat(काष्ठा policydb *p,
+			  काष्ठा context *context,
+			  काष्ठा netlbl_lsm_secattr *secattr)
+अणु
+	पूर्णांक rc;
 
-	if (!p->mls_enabled)
-		return 0;
+	अगर (!p->mls_enabled)
+		वापस 0;
 
-	rc = ebitmap_netlbl_export(&context->range.level[0].cat,
+	rc = ebiपंचांगap_netlbl_export(&context->range.level[0].cat,
 				   &secattr->attr.mls.cat);
-	if (rc == 0 && secattr->attr.mls.cat != NULL)
+	अगर (rc == 0 && secattr->attr.mls.cat != शून्य)
 		secattr->flags |= NETLBL_SECATTR_MLS_CAT;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * mls_import_netlbl_cat - Import the MLS categories from NetLabel
@@ -626,32 +627,32 @@ int mls_export_netlbl_cat(struct policydb *p,
  * @secattr: the NetLabel security attributes
  *
  * Description:
- * Copy the NetLabel security attributes into the SELinux context; since the
- * NetLabel security attribute only contains a single MLS category use it for
+ * Copy the NetLabel security attributes पूर्णांकo the SELinux context; since the
+ * NetLabel security attribute only contains a single MLS category use it क्रम
  * both the low and high categories of the context.  Returns zero on success,
  * negative values on failure.
  *
  */
-int mls_import_netlbl_cat(struct policydb *p,
-			  struct context *context,
-			  struct netlbl_lsm_secattr *secattr)
-{
-	int rc;
+पूर्णांक mls_import_netlbl_cat(काष्ठा policydb *p,
+			  काष्ठा context *context,
+			  काष्ठा netlbl_lsm_secattr *secattr)
+अणु
+	पूर्णांक rc;
 
-	if (!p->mls_enabled)
-		return 0;
+	अगर (!p->mls_enabled)
+		वापस 0;
 
-	rc = ebitmap_netlbl_import(&context->range.level[0].cat,
+	rc = ebiपंचांगap_netlbl_import(&context->range.level[0].cat,
 				   secattr->attr.mls.cat);
-	if (rc)
-		goto import_netlbl_cat_failure;
-	memcpy(&context->range.level[1].cat, &context->range.level[0].cat,
-	       sizeof(context->range.level[0].cat));
+	अगर (rc)
+		जाओ import_netlbl_cat_failure;
+	स_नकल(&context->range.level[1].cat, &context->range.level[0].cat,
+	       माप(context->range.level[0].cat));
 
-	return 0;
+	वापस 0;
 
 import_netlbl_cat_failure:
-	ebitmap_destroy(&context->range.level[0].cat);
-	return rc;
-}
-#endif /* CONFIG_NETLABEL */
+	ebiपंचांगap_destroy(&context->range.level[0].cat);
+	वापस rc;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NETLABEL */

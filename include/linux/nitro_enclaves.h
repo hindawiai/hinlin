@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  */
 
-#ifndef _LINUX_NITRO_ENCLAVES_H_
-#define _LINUX_NITRO_ENCLAVES_H_
+#अगर_अघोषित _LINUX_NITRO_ENCLAVES_H_
+#घोषणा _LINUX_NITRO_ENCLAVES_H_
 
-#include <uapi/linux/nitro_enclaves.h>
+#समावेश <uapi/linux/nitro_enclaves.h>
 
-#endif /* _LINUX_NITRO_ENCLAVES_H_ */
+#पूर्ण_अगर /* _LINUX_NITRO_ENCLAVES_H_ */

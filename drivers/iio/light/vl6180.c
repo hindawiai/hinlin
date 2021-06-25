@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * vl6180.c - Support for STMicroelectronics VL6180 ALS, range and proximity
+ * vl6180.c - Support क्रम STMicroelectronics VL6180 ALS, range and proximity
  * sensor
  *
  * Copyright 2017 Peter Meerwald-Stadler <pmeerw@pmeerw.net>
  * Copyright 2017 Manivannan Sadhasivam <manivannanece23@gmail.com>
  *
- * IIO driver for VL6180 (7-bit I2C slave address 0x29)
+ * IIO driver क्रम VL6180 (7-bit I2C slave address 0x29)
  *
  * Range: 0 to 100mm
  * ALS: < 1 Lux up to 100 kLux
@@ -15,494 +16,494 @@
  * TODO: irq, threshold events, continuous mode, hardware buffer
  */
 
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/i2c.h>
-#include <linux/mutex.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/delay.h>
-#include <linux/util_macros.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/util_macros.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
 
-#define VL6180_DRV_NAME "vl6180"
+#घोषणा VL6180_DRV_NAME "vl6180"
 
-/* Device identification register and value */
-#define VL6180_MODEL_ID	0x000
-#define VL6180_MODEL_ID_VAL 0xb4
+/* Device identअगरication रेजिस्टर and value */
+#घोषणा VL6180_MODEL_ID	0x000
+#घोषणा VL6180_MODEL_ID_VAL 0xb4
 
-/* Configuration registers */
-#define VL6180_INTR_CONFIG 0x014
-#define VL6180_INTR_CLEAR 0x015
-#define VL6180_OUT_OF_RESET 0x016
-#define VL6180_HOLD 0x017
-#define VL6180_RANGE_START 0x018
-#define VL6180_ALS_START 0x038
-#define VL6180_ALS_GAIN 0x03f
-#define VL6180_ALS_IT 0x040
+/* Configuration रेजिस्टरs */
+#घोषणा VL6180_INTR_CONFIG 0x014
+#घोषणा VL6180_INTR_CLEAR 0x015
+#घोषणा VL6180_OUT_OF_RESET 0x016
+#घोषणा VL6180_HOLD 0x017
+#घोषणा VL6180_RANGE_START 0x018
+#घोषणा VL6180_ALS_START 0x038
+#घोषणा VL6180_ALS_GAIN 0x03f
+#घोषणा VL6180_ALS_IT 0x040
 
-/* Status registers */
-#define VL6180_RANGE_STATUS 0x04d
-#define VL6180_ALS_STATUS 0x04e
-#define VL6180_INTR_STATUS 0x04f
+/* Status रेजिस्टरs */
+#घोषणा VL6180_RANGE_STATUS 0x04d
+#घोषणा VL6180_ALS_STATUS 0x04e
+#घोषणा VL6180_INTR_STATUS 0x04f
 
-/* Result value registers */
-#define VL6180_ALS_VALUE 0x050
-#define VL6180_RANGE_VALUE 0x062
-#define VL6180_RANGE_RATE 0x066
+/* Result value रेजिस्टरs */
+#घोषणा VL6180_ALS_VALUE 0x050
+#घोषणा VL6180_RANGE_VALUE 0x062
+#घोषणा VL6180_RANGE_RATE 0x066
 
-/* bits of the RANGE_START and ALS_START register */
-#define VL6180_MODE_CONT BIT(1) /* continuous mode */
-#define VL6180_STARTSTOP BIT(0) /* start measurement, auto-reset */
+/* bits of the RANGE_START and ALS_START रेजिस्टर */
+#घोषणा VL6180_MODE_CONT BIT(1) /* continuous mode */
+#घोषणा VL6180_STARTSTOP BIT(0) /* start measurement, स्वतः-reset */
 
-/* bits of the INTR_STATUS and INTR_CONFIG register */
-#define VL6180_ALS_READY BIT(5)
-#define VL6180_RANGE_READY BIT(2)
+/* bits of the INTR_STATUS and INTR_CONFIG रेजिस्टर */
+#घोषणा VL6180_ALS_READY BIT(5)
+#घोषणा VL6180_RANGE_READY BIT(2)
 
-/* bits of the INTR_CLEAR register */
-#define VL6180_CLEAR_ERROR BIT(2)
-#define VL6180_CLEAR_ALS BIT(1)
-#define VL6180_CLEAR_RANGE BIT(0)
+/* bits of the INTR_CLEAR रेजिस्टर */
+#घोषणा VL6180_CLEAR_ERROR BIT(2)
+#घोषणा VL6180_CLEAR_ALS BIT(1)
+#घोषणा VL6180_CLEAR_RANGE BIT(0)
 
-/* bits of the HOLD register */
-#define VL6180_HOLD_ON BIT(0)
+/* bits of the HOLD रेजिस्टर */
+#घोषणा VL6180_HOLD_ON BIT(0)
 
-/* default value for the ALS_IT register */
-#define VL6180_ALS_IT_100 0x63 /* 100 ms */
+/* शेष value क्रम the ALS_IT रेजिस्टर */
+#घोषणा VL6180_ALS_IT_100 0x63 /* 100 ms */
 
-/* values for the ALS_GAIN register */
-#define VL6180_ALS_GAIN_1 0x46
-#define VL6180_ALS_GAIN_1_25 0x45
-#define VL6180_ALS_GAIN_1_67 0x44
-#define VL6180_ALS_GAIN_2_5 0x43
-#define VL6180_ALS_GAIN_5 0x42
-#define VL6180_ALS_GAIN_10 0x41
-#define VL6180_ALS_GAIN_20 0x40
-#define VL6180_ALS_GAIN_40 0x47
+/* values क्रम the ALS_GAIN रेजिस्टर */
+#घोषणा VL6180_ALS_GAIN_1 0x46
+#घोषणा VL6180_ALS_GAIN_1_25 0x45
+#घोषणा VL6180_ALS_GAIN_1_67 0x44
+#घोषणा VL6180_ALS_GAIN_2_5 0x43
+#घोषणा VL6180_ALS_GAIN_5 0x42
+#घोषणा VL6180_ALS_GAIN_10 0x41
+#घोषणा VL6180_ALS_GAIN_20 0x40
+#घोषणा VL6180_ALS_GAIN_40 0x47
 
-struct vl6180_data {
-	struct i2c_client *client;
-	struct mutex lock;
-	unsigned int als_gain_milli;
-	unsigned int als_it_ms;
-};
+काष्ठा vl6180_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा mutex lock;
+	अचिन्हित पूर्णांक als_gain_milli;
+	अचिन्हित पूर्णांक als_it_ms;
+पूर्ण;
 
-enum { VL6180_ALS, VL6180_RANGE, VL6180_PROX };
+क्रमागत अणु VL6180_ALS, VL6180_RANGE, VL6180_PROX पूर्ण;
 
 /**
- * struct vl6180_chan_regs - Registers for accessing channels
- * @drdy_mask:			Data ready bit in status register
- * @start_reg:			Conversion start register
- * @value_reg:			Result value register
+ * काष्ठा vl6180_chan_regs - Registers क्रम accessing channels
+ * @drdy_mask:			Data पढ़ोy bit in status रेजिस्टर
+ * @start_reg:			Conversion start रेजिस्टर
+ * @value_reg:			Result value रेजिस्टर
  * @word:			Register word length
  */
-struct vl6180_chan_regs {
+काष्ठा vl6180_chan_regs अणु
 	u8 drdy_mask;
 	u16 start_reg, value_reg;
 	bool word;
-};
+पूर्ण;
 
-static const struct vl6180_chan_regs vl6180_chan_regs_table[] = {
-	[VL6180_ALS] = {
+अटल स्थिर काष्ठा vl6180_chan_regs vl6180_chan_regs_table[] = अणु
+	[VL6180_ALS] = अणु
 		.drdy_mask = VL6180_ALS_READY,
 		.start_reg = VL6180_ALS_START,
 		.value_reg = VL6180_ALS_VALUE,
 		.word = true,
-	},
-	[VL6180_RANGE] = {
+	पूर्ण,
+	[VL6180_RANGE] = अणु
 		.drdy_mask = VL6180_RANGE_READY,
 		.start_reg = VL6180_RANGE_START,
 		.value_reg = VL6180_RANGE_VALUE,
 		.word = false,
-	},
-	[VL6180_PROX] = {
+	पूर्ण,
+	[VL6180_PROX] = अणु
 		.drdy_mask = VL6180_RANGE_READY,
 		.start_reg = VL6180_RANGE_START,
 		.value_reg = VL6180_RANGE_RATE,
 		.word = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int vl6180_read(struct i2c_client *client, u16 cmd, void *databuf,
+अटल पूर्णांक vl6180_पढ़ो(काष्ठा i2c_client *client, u16 cmd, व्योम *databuf,
 		       u8 len)
-{
+अणु
 	__be16 cmdbuf = cpu_to_be16(cmd);
-	struct i2c_msg msgs[2] = {
-		{ .addr = client->addr, .len = sizeof(cmdbuf), .buf = (u8 *) &cmdbuf },
-		{ .addr = client->addr, .len = len, .buf = databuf,
-		  .flags = I2C_M_RD } };
-	int ret;
+	काष्ठा i2c_msg msgs[2] = अणु
+		अणु .addr = client->addr, .len = माप(cmdbuf), .buf = (u8 *) &cmdbuf पूर्ण,
+		अणु .addr = client->addr, .len = len, .buf = databuf,
+		  .flags = I2C_M_RD पूर्ण पूर्ण;
+	पूर्णांक ret;
 
 	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&client->dev, "failed reading register 0x%04x\n", cmd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vl6180_read_byte(struct i2c_client *client, u16 cmd)
-{
+अटल पूर्णांक vl6180_पढ़ो_byte(काष्ठा i2c_client *client, u16 cmd)
+अणु
 	u8 data;
-	int ret;
+	पूर्णांक ret;
 
-	ret = vl6180_read(client, cmd, &data, sizeof(data));
-	if (ret < 0)
-		return ret;
+	ret = vl6180_पढ़ो(client, cmd, &data, माप(data));
+	अगर (ret < 0)
+		वापस ret;
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static int vl6180_read_word(struct i2c_client *client, u16 cmd)
-{
+अटल पूर्णांक vl6180_पढ़ो_word(काष्ठा i2c_client *client, u16 cmd)
+अणु
 	__be16 data;
-	int ret;
+	पूर्णांक ret;
 
-	ret = vl6180_read(client, cmd, &data, sizeof(data));
-	if (ret < 0)
-		return ret;
+	ret = vl6180_पढ़ो(client, cmd, &data, माप(data));
+	अगर (ret < 0)
+		वापस ret;
 
-	return be16_to_cpu(data);
-}
+	वापस be16_to_cpu(data);
+पूर्ण
 
-static int vl6180_write_byte(struct i2c_client *client, u16 cmd, u8 val)
-{
+अटल पूर्णांक vl6180_ग_लिखो_byte(काष्ठा i2c_client *client, u16 cmd, u8 val)
+अणु
 	u8 buf[3];
-	struct i2c_msg msgs[1] = {
-		{ .addr = client->addr, .len = sizeof(buf), .buf = (u8 *) &buf } };
-	int ret;
+	काष्ठा i2c_msg msgs[1] = अणु
+		अणु .addr = client->addr, .len = माप(buf), .buf = (u8 *) &buf पूर्ण पूर्ण;
+	पूर्णांक ret;
 
 	buf[0] = cmd >> 8;
 	buf[1] = cmd & 0xff;
 	buf[2] = val;
 
 	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "failed writing register 0x%04x\n", cmd);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vl6180_write_word(struct i2c_client *client, u16 cmd, u16 val)
-{
+अटल पूर्णांक vl6180_ग_लिखो_word(काष्ठा i2c_client *client, u16 cmd, u16 val)
+अणु
 	__be16 buf[2];
-	struct i2c_msg msgs[1] = {
-		{ .addr = client->addr, .len = sizeof(buf), .buf = (u8 *) &buf } };
-	int ret;
+	काष्ठा i2c_msg msgs[1] = अणु
+		अणु .addr = client->addr, .len = माप(buf), .buf = (u8 *) &buf पूर्ण पूर्ण;
+	पूर्णांक ret;
 
 	buf[0] = cpu_to_be16(cmd);
 	buf[1] = cpu_to_be16(val);
 
 	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "failed writing register 0x%04x\n", cmd);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vl6180_measure(struct vl6180_data *data, int addr)
-{
-	struct i2c_client *client = data->client;
-	int tries = 20, ret;
+अटल पूर्णांक vl6180_measure(काष्ठा vl6180_data *data, पूर्णांक addr)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक tries = 20, ret;
 	u16 value;
 
 	mutex_lock(&data->lock);
 	/* Start single shot measurement */
-	ret = vl6180_write_byte(client,
+	ret = vl6180_ग_लिखो_byte(client,
 		vl6180_chan_regs_table[addr].start_reg, VL6180_STARTSTOP);
-	if (ret < 0)
-		goto fail;
+	अगर (ret < 0)
+		जाओ fail;
 
-	while (tries--) {
-		ret = vl6180_read_byte(client, VL6180_INTR_STATUS);
-		if (ret < 0)
-			goto fail;
+	जबतक (tries--) अणु
+		ret = vl6180_पढ़ो_byte(client, VL6180_INTR_STATUS);
+		अगर (ret < 0)
+			जाओ fail;
 
-		if (ret & vl6180_chan_regs_table[addr].drdy_mask)
-			break;
+		अगर (ret & vl6180_chan_regs_table[addr].drdy_mask)
+			अवरोध;
 		msleep(20);
-	}
+	पूर्ण
 
-	if (tries < 0) {
+	अगर (tries < 0) अणु
 		ret = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	/* Read result value from appropriate registers */
+	/* Read result value from appropriate रेजिस्टरs */
 	ret = vl6180_chan_regs_table[addr].word ?
-		vl6180_read_word(client, vl6180_chan_regs_table[addr].value_reg) :
-		vl6180_read_byte(client, vl6180_chan_regs_table[addr].value_reg);
-	if (ret < 0)
-		goto fail;
+		vl6180_पढ़ो_word(client, vl6180_chan_regs_table[addr].value_reg) :
+		vl6180_पढ़ो_byte(client, vl6180_chan_regs_table[addr].value_reg);
+	अगर (ret < 0)
+		जाओ fail;
 	value = ret;
 
-	/* Clear the interrupt flag after data read */
-	ret = vl6180_write_byte(client, VL6180_INTR_CLEAR,
+	/* Clear the पूर्णांकerrupt flag after data पढ़ो */
+	ret = vl6180_ग_लिखो_byte(client, VL6180_INTR_CLEAR,
 		VL6180_CLEAR_ERROR | VL6180_CLEAR_ALS | VL6180_CLEAR_RANGE);
-	if (ret < 0)
-		goto fail;
+	अगर (ret < 0)
+		जाओ fail;
 
 	ret = value;
 
 fail:
 	mutex_unlock(&data->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct iio_chan_spec vl6180_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec vl6180_channels[] = अणु
+	अणु
 		.type = IIO_LIGHT,
 		.address = VL6180_ALS,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 			BIT(IIO_CHAN_INFO_INT_TIME) |
 			BIT(IIO_CHAN_INFO_SCALE) |
 			BIT(IIO_CHAN_INFO_HARDWAREGAIN),
-	}, {
+	पूर्ण, अणु
 		.type = IIO_DISTANCE,
 		.address = VL6180_RANGE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 			BIT(IIO_CHAN_INFO_SCALE),
-	}, {
+	पूर्ण, अणु
 		.type = IIO_PROXIMITY,
 		.address = VL6180_PROX,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /*
  * Available Ambient Light Sensor gain settings, 1/1000th, and
- * corresponding setting for the VL6180_ALS_GAIN register
+ * corresponding setting क्रम the VL6180_ALS_GAIN रेजिस्टर
  */
-static const int vl6180_als_gain_tab[8] = {
+अटल स्थिर पूर्णांक vl6180_als_gain_tab[8] = अणु
 	1000, 1250, 1670, 2500, 5000, 10000, 20000, 40000
-};
-static const u8 vl6180_als_gain_tab_bits[8] = {
+पूर्ण;
+अटल स्थिर u8 vl6180_als_gain_tab_bits[8] = अणु
 	VL6180_ALS_GAIN_1,    VL6180_ALS_GAIN_1_25,
 	VL6180_ALS_GAIN_1_67, VL6180_ALS_GAIN_2_5,
 	VL6180_ALS_GAIN_5,    VL6180_ALS_GAIN_10,
 	VL6180_ALS_GAIN_20,   VL6180_ALS_GAIN_40
-};
+पूर्ण;
 
-static int vl6180_read_raw(struct iio_dev *indio_dev,
-				struct iio_chan_spec const *chan,
-				int *val, int *val2, long mask)
-{
-	struct vl6180_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक vl6180_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+				काष्ठा iio_chan_spec स्थिर *chan,
+				पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा vl6180_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		ret = vl6180_measure(data, chan->address);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		*val = ret;
 
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_INT_TIME:
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_INT_TIME:
 		*val = data->als_it_ms;
 		*val2 = 1000;
 
-		return IIO_VAL_FRACTIONAL;
+		वापस IIO_VAL_FRACTIONAL;
 
-	case IIO_CHAN_INFO_SCALE:
-		switch (chan->type) {
-		case IIO_LIGHT:
+	हाल IIO_CHAN_INFO_SCALE:
+		चयन (chan->type) अणु
+		हाल IIO_LIGHT:
 			/* one ALS count is 0.32 Lux @ gain 1, IT 100 ms */
 			*val = 32000; /* 0.32 * 1000 * 100 */
 			*val2 = data->als_gain_milli * data->als_it_ms;
 
-			return IIO_VAL_FRACTIONAL;
+			वापस IIO_VAL_FRACTIONAL;
 
-		case IIO_DISTANCE:
+		हाल IIO_DISTANCE:
 			*val = 0; /* sensor reports mm, scale to meter */
 			*val2 = 1000;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-		return IIO_VAL_INT_PLUS_MICRO;
-	case IIO_CHAN_INFO_HARDWAREGAIN:
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	हाल IIO_CHAN_INFO_HARDWAREGAIN:
 		*val = data->als_gain_milli;
 		*val2 = 1000;
 
-		return IIO_VAL_FRACTIONAL;
+		वापस IIO_VAL_FRACTIONAL;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static IIO_CONST_ATTR(als_gain_available, "1 1.25 1.67 2.5 5 10 20 40");
+अटल IIO_CONST_ATTR(als_gain_available, "1 1.25 1.67 2.5 5 10 20 40");
 
-static struct attribute *vl6180_attributes[] = {
-	&iio_const_attr_als_gain_available.dev_attr.attr,
-	NULL
-};
+अटल काष्ठा attribute *vl6180_attributes[] = अणु
+	&iio_स्थिर_attr_als_gain_available.dev_attr.attr,
+	शून्य
+पूर्ण;
 
-static const struct attribute_group vl6180_attribute_group = {
+अटल स्थिर काष्ठा attribute_group vl6180_attribute_group = अणु
 	.attrs = vl6180_attributes,
-};
+पूर्ण;
 
-/* HOLD is needed before updating any config registers */
-static int vl6180_hold(struct vl6180_data *data, bool hold)
-{
-	return vl6180_write_byte(data->client, VL6180_HOLD,
+/* HOLD is needed beक्रमe updating any config रेजिस्टरs */
+अटल पूर्णांक vl6180_hold(काष्ठा vl6180_data *data, bool hold)
+अणु
+	वापस vl6180_ग_लिखो_byte(data->client, VL6180_HOLD,
 		hold ? VL6180_HOLD_ON : 0);
-}
+पूर्ण
 
-static int vl6180_set_als_gain(struct vl6180_data *data, int val, int val2)
-{
-	int i, ret, gain;
+अटल पूर्णांक vl6180_set_als_gain(काष्ठा vl6180_data *data, पूर्णांक val, पूर्णांक val2)
+अणु
+	पूर्णांक i, ret, gain;
 
-	if (val < 1 || val > 40)
-		return -EINVAL;
+	अगर (val < 1 || val > 40)
+		वापस -EINVAL;
 
 	gain = (val * 1000000 + val2) / 1000;
-	if (gain < 1 || gain > 40000)
-		return -EINVAL;
+	अगर (gain < 1 || gain > 40000)
+		वापस -EINVAL;
 
-	i = find_closest(gain, vl6180_als_gain_tab,
+	i = find_बंदst(gain, vl6180_als_gain_tab,
 			 ARRAY_SIZE(vl6180_als_gain_tab));
 
 	mutex_lock(&data->lock);
 	ret = vl6180_hold(data, true);
-	if (ret < 0)
-		goto fail;
+	अगर (ret < 0)
+		जाओ fail;
 
-	ret = vl6180_write_byte(data->client, VL6180_ALS_GAIN,
+	ret = vl6180_ग_लिखो_byte(data->client, VL6180_ALS_GAIN,
 				vl6180_als_gain_tab_bits[i]);
 
-	if (ret >= 0)
+	अगर (ret >= 0)
 		data->als_gain_milli = vl6180_als_gain_tab[i];
 
 fail:
 	vl6180_hold(data, false);
 	mutex_unlock(&data->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vl6180_set_it(struct vl6180_data *data, int val, int val2)
-{
-	int ret, it_ms;
+अटल पूर्णांक vl6180_set_it(काष्ठा vl6180_data *data, पूर्णांक val, पूर्णांक val2)
+अणु
+	पूर्णांक ret, it_ms;
 
 	it_ms = DIV_ROUND_CLOSEST(val2, 1000); /* round to ms */
-	if (val != 0 || it_ms < 1 || it_ms > 512)
-		return -EINVAL;
+	अगर (val != 0 || it_ms < 1 || it_ms > 512)
+		वापस -EINVAL;
 
 	mutex_lock(&data->lock);
 	ret = vl6180_hold(data, true);
-	if (ret < 0)
-		goto fail;
+	अगर (ret < 0)
+		जाओ fail;
 
-	ret = vl6180_write_word(data->client, VL6180_ALS_IT, it_ms - 1);
+	ret = vl6180_ग_लिखो_word(data->client, VL6180_ALS_IT, it_ms - 1);
 
-	if (ret >= 0)
+	अगर (ret >= 0)
 		data->als_it_ms = it_ms;
 
 fail:
 	vl6180_hold(data, false);
 	mutex_unlock(&data->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vl6180_write_raw(struct iio_dev *indio_dev,
-			     struct iio_chan_spec const *chan,
-			     int val, int val2, long mask)
-{
-	struct vl6180_data *data = iio_priv(indio_dev);
+अटल पूर्णांक vl6180_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			     काष्ठा iio_chan_spec स्थिर *chan,
+			     पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा vl6180_data *data = iio_priv(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_INT_TIME:
-		return vl6180_set_it(data, val, val2);
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_INT_TIME:
+		वापस vl6180_set_it(data, val, val2);
 
-	case IIO_CHAN_INFO_HARDWAREGAIN:
-		if (chan->type != IIO_LIGHT)
-			return -EINVAL;
+	हाल IIO_CHAN_INFO_HARDWAREGAIN:
+		अगर (chan->type != IIO_LIGHT)
+			वापस -EINVAL;
 
-		return vl6180_set_als_gain(data, val, val2);
-	default:
-		return -EINVAL;
-	}
-}
+		वापस vl6180_set_als_gain(data, val, val2);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct iio_info vl6180_info = {
-	.read_raw = vl6180_read_raw,
-	.write_raw = vl6180_write_raw,
+अटल स्थिर काष्ठा iio_info vl6180_info = अणु
+	.पढ़ो_raw = vl6180_पढ़ो_raw,
+	.ग_लिखो_raw = vl6180_ग_लिखो_raw,
 	.attrs = &vl6180_attribute_group,
-};
+पूर्ण;
 
-static int vl6180_init(struct vl6180_data *data)
-{
-	struct i2c_client *client = data->client;
-	int ret;
+अटल पूर्णांक vl6180_init(काष्ठा vl6180_data *data)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक ret;
 
-	ret = vl6180_read_byte(client, VL6180_MODEL_ID);
-	if (ret < 0)
-		return ret;
+	ret = vl6180_पढ़ो_byte(client, VL6180_MODEL_ID);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret != VL6180_MODEL_ID_VAL) {
+	अगर (ret != VL6180_MODEL_ID_VAL) अणु
 		dev_err(&client->dev, "invalid model ID %02x\n", ret);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ret = vl6180_hold(data, true);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = vl6180_read_byte(client, VL6180_OUT_OF_RESET);
-	if (ret < 0)
-		return ret;
+	ret = vl6180_पढ़ो_byte(client, VL6180_OUT_OF_RESET);
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
 	 * Detect false reset condition here. This bit is always set when the
-	 * system comes out of reset.
+	 * प्रणाली comes out of reset.
 	 */
-	if (ret != 0x01)
+	अगर (ret != 0x01)
 		dev_info(&client->dev, "device is not fresh out of reset\n");
 
-	/* Enable ALS and Range ready interrupts */
-	ret = vl6180_write_byte(client, VL6180_INTR_CONFIG,
+	/* Enable ALS and Range पढ़ोy पूर्णांकerrupts */
+	ret = vl6180_ग_लिखो_byte(client, VL6180_INTR_CONFIG,
 				VL6180_ALS_READY | VL6180_RANGE_READY);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* ALS integration time: 100ms */
+	/* ALS पूर्णांकegration समय: 100ms */
 	data->als_it_ms = 100;
-	ret = vl6180_write_word(client, VL6180_ALS_IT, VL6180_ALS_IT_100);
-	if (ret < 0)
-		return ret;
+	ret = vl6180_ग_लिखो_word(client, VL6180_ALS_IT, VL6180_ALS_IT_100);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* ALS gain: 1 */
 	data->als_gain_milli = 1000;
-	ret = vl6180_write_byte(client, VL6180_ALS_GAIN, VL6180_ALS_GAIN_1);
-	if (ret < 0)
-		return ret;
+	ret = vl6180_ग_लिखो_byte(client, VL6180_ALS_GAIN, VL6180_ALS_GAIN_1);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = vl6180_write_byte(client, VL6180_OUT_OF_RESET, 0x00);
-	if (ret < 0)
-		return ret;
+	ret = vl6180_ग_लिखो_byte(client, VL6180_OUT_OF_RESET, 0x00);
+	अगर (ret < 0)
+		वापस ret;
 
-	return vl6180_hold(data, false);
-}
+	वापस vl6180_hold(data, false);
+पूर्ण
 
-static int vl6180_probe(struct i2c_client *client,
-			  const struct i2c_device_id *id)
-{
-	struct vl6180_data *data;
-	struct iio_dev *indio_dev;
-	int ret;
+अटल पूर्णांक vl6180_probe(काष्ठा i2c_client *client,
+			  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा vl6180_data *data;
+	काष्ठा iio_dev *indio_dev;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
@@ -513,35 +514,35 @@ static int vl6180_probe(struct i2c_client *client,
 	indio_dev->channels = vl6180_channels;
 	indio_dev->num_channels = ARRAY_SIZE(vl6180_channels);
 	indio_dev->name = VL6180_DRV_NAME;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 
 	ret = vl6180_init(data);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return devm_iio_device_register(&client->dev, indio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(&client->dev, indio_dev);
+पूर्ण
 
-static const struct of_device_id vl6180_of_match[] = {
-	{ .compatible = "st,vl6180", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id vl6180_of_match[] = अणु
+	अणु .compatible = "st,vl6180", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, vl6180_of_match);
 
-static const struct i2c_device_id vl6180_id[] = {
-	{ "vl6180", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id vl6180_id[] = अणु
+	अणु "vl6180", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, vl6180_id);
 
-static struct i2c_driver vl6180_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver vl6180_driver = अणु
+	.driver = अणु
 		.name   = VL6180_DRV_NAME,
 		.of_match_table = vl6180_of_match,
-	},
+	पूर्ण,
 	.probe  = vl6180_probe,
 	.id_table = vl6180_id,
-};
+पूर्ण;
 
 module_i2c_driver(vl6180_driver);
 

@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_GENERIC_NOMMU_H
-#define __ASM_GENERIC_NOMMU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_GENERIC_NOMMU_H
+#घोषणा __ASM_GENERIC_NOMMU_H
 
 /*
- * Generic hooks for NOMMU architectures, which do not need to do
+ * Generic hooks क्रम NOMMU architectures, which करो not need to करो
  * anything special here.
  */
-#include <asm-generic/mm_hooks.h>
+#समावेश <यंत्र-generic/mm_hooks.h>
 
-static inline void switch_mm(struct mm_struct *prev,
-			struct mm_struct *next,
-			struct task_struct *tsk)
-{
-}
+अटल अंतरभूत व्योम चयन_mm(काष्ठा mm_काष्ठा *prev,
+			काष्ठा mm_काष्ठा *next,
+			काष्ठा task_काष्ठा *tsk)
+अणु
+पूर्ण
 
-#include <asm-generic/mmu_context.h>
+#समावेश <यंत्र-generic/mmu_context.h>
 
-#endif /* __ASM_GENERIC_NOMMU_H */
+#पूर्ण_अगर /* __ASM_GENERIC_NOMMU_H */

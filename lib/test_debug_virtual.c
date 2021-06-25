@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/export.h>
-#include <linux/mm.h>
-#include <linux/vmalloc.h>
-#include <linux/slab.h>
-#include <linux/sizes.h>
-#include <linux/io.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/पन.स>
 
-#include <asm/page.h>
-#ifdef CONFIG_MIPS
-#include <asm/bootinfo.h>
-#endif
+#समावेश <यंत्र/page.h>
+#अगर_घोषित CONFIG_MIPS
+#समावेश <यंत्र/bootinfo.h>
+#पूर्ण_अगर
 
-struct foo {
-	unsigned int bar;
-};
+काष्ठा foo अणु
+	अचिन्हित पूर्णांक bar;
+पूर्ण;
 
-static struct foo *foo;
+अटल काष्ठा foo *foo;
 
-static int __init test_debug_virtual_init(void)
-{
+अटल पूर्णांक __init test_debug_भव_init(व्योम)
+अणु
 	phys_addr_t pa;
-	void *va;
+	व्योम *va;
 
-	va = (void *)VMALLOC_START;
+	va = (व्योम *)VMALLOC_START;
 	pa = virt_to_phys(va);
 
-	pr_info("PA: %pa for VA: 0x%lx\n", &pa, (unsigned long)va);
+	pr_info("PA: %pa for VA: 0x%lx\n", &pa, (अचिन्हित दीर्घ)va);
 
-	foo = kzalloc(sizeof(*foo), GFP_KERNEL);
-	if (!foo)
-		return -ENOMEM;
+	foo = kzalloc(माप(*foo), GFP_KERNEL);
+	अगर (!foo)
+		वापस -ENOMEM;
 
 	pa = virt_to_phys(foo);
 	va = foo;
-	pr_info("PA: %pa for VA: 0x%lx\n", &pa, (unsigned long)va);
+	pr_info("PA: %pa for VA: 0x%lx\n", &pa, (अचिन्हित दीर्घ)va);
 
-	return 0;
-}
-module_init(test_debug_virtual_init);
+	वापस 0;
+पूर्ण
+module_init(test_debug_भव_init);
 
-static void __exit test_debug_virtual_exit(void)
-{
-	kfree(foo);
-}
-module_exit(test_debug_virtual_exit);
+अटल व्योम __निकास test_debug_भव_निकास(व्योम)
+अणु
+	kमुक्त(foo);
+पूर्ण
+module_निकास(test_debug_भव_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Test module for CONFIG_DEBUG_VIRTUAL");

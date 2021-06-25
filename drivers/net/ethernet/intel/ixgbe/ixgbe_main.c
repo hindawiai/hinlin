@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/netdevice.h>
-#include <linux/vmalloc.h>
-#include <linux/string.h>
-#include <linux/in.h>
-#include <linux/interrupt.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/sctp.h>
-#include <linux/pkt_sched.h>
-#include <linux/ipv6.h>
-#include <linux/slab.h>
-#include <net/checksum.h>
-#include <net/ip6_checksum.h>
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/if.h>
-#include <linux/if_vlan.h>
-#include <linux/if_macvlan.h>
-#include <linux/if_bridge.h>
-#include <linux/prefetch.h>
-#include <linux/bpf.h>
-#include <linux/bpf_trace.h>
-#include <linux/atomic.h>
-#include <linux/numa.h>
-#include <generated/utsrelease.h>
-#include <scsi/fc/fc_fcoe.h>
-#include <net/udp_tunnel.h>
-#include <net/pkt_cls.h>
-#include <net/tc_act/tc_gact.h>
-#include <net/tc_act/tc_mirred.h>
-#include <net/vxlan.h>
-#include <net/mpls.h>
-#include <net/xdp_sock_drv.h>
-#include <net/xfrm.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/in.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/sctp.h>
+#समावेश <linux/pkt_sched.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/slab.h>
+#समावेश <net/checksum.h>
+#समावेश <net/ip6_checksum.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/अगर_macvlan.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/bpf_trace.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/numa.h>
+#समावेश <generated/utsrelease.h>
+#समावेश <scsi/fc/fc_fcoe.h>
+#समावेश <net/udp_tunnel.h>
+#समावेश <net/pkt_cls.h>
+#समावेश <net/tc_act/tc_gact.h>
+#समावेश <net/tc_act/tc_mirred.h>
+#समावेश <net/vxlan.h>
+#समावेश <net/mpls.h>
+#समावेश <net/xdp_sock_drv.h>
+#समावेश <net/xfrm.h>
 
-#include "ixgbe.h"
-#include "ixgbe_common.h"
-#include "ixgbe_dcb_82599.h"
-#include "ixgbe_phy.h"
-#include "ixgbe_sriov.h"
-#include "ixgbe_model.h"
-#include "ixgbe_txrx_common.h"
+#समावेश "ixgbe.h"
+#समावेश "ixgbe_common.h"
+#समावेश "ixgbe_dcb_82599.h"
+#समावेश "ixgbe_phy.h"
+#समावेश "ixgbe_sriov.h"
+#समावेश "ixgbe_model.h"
+#समावेश "ixgbe_txrx_common.h"
 
-char ixgbe_driver_name[] = "ixgbe";
-static const char ixgbe_driver_string[] =
+अक्षर ixgbe_driver_name[] = "ixgbe";
+अटल स्थिर अक्षर ixgbe_driver_string[] =
 			      "Intel(R) 10 Gigabit PCI Express Network Driver";
-#ifdef IXGBE_FCOE
-char ixgbe_default_device_descr[] =
+#अगर_घोषित IXGBE_FCOE
+अक्षर ixgbe_शेष_device_descr[] =
 			      "Intel(R) 10 Gigabit Network Connection";
-#else
-static char ixgbe_default_device_descr[] =
+#अन्यथा
+अटल अक्षर ixgbe_शेष_device_descr[] =
 			      "Intel(R) 10 Gigabit Network Connection";
-#endif
-static const char ixgbe_copyright[] =
+#पूर्ण_अगर
+अटल स्थिर अक्षर ixgbe_copyright[] =
 				"Copyright (c) 1999-2016 Intel Corporation.";
 
-static const char ixgbe_overheat_msg[] = "Network adapter has been stopped because it has over heated. Restart the computer. If the problem persists, power off the system and replace the adapter";
+अटल स्थिर अक्षर ixgbe_overheat_msg[] = "Network adapter has been stopped because it has over heated. Restart the computer. If the problem persists, power off the system and replace the adapter";
 
-static const struct ixgbe_info *ixgbe_info_tbl[] = {
+अटल स्थिर काष्ठा ixgbe_info *ixgbe_info_tbl[] = अणु
 	[board_82598]		= &ixgbe_82598_info,
 	[board_82599]		= &ixgbe_82599_info,
 	[board_X540]		= &ixgbe_X540_info,
@@ -71,483 +72,483 @@ static const struct ixgbe_info *ixgbe_info_tbl[] = {
 	[board_x550em_x_fw]	= &ixgbe_x550em_x_fw_info,
 	[board_x550em_a]	= &ixgbe_x550em_a_info,
 	[board_x550em_a_fw]	= &ixgbe_x550em_a_fw_info,
-};
+पूर्ण;
 
 /* ixgbe_pci_tbl - PCI Device ID Table
  *
  * Wildcard entries (PCI_ANY_ID) should come last
  * Last entry must be all 0s
  *
- * { Vendor ID, Device ID, SubVendor ID, SubDevice ID,
- *   Class, Class Mask, private data (not used) }
+ * अणु Venकरोr ID, Device ID, SubVenकरोr ID, SubDevice ID,
+ *   Class, Class Mask, निजी data (not used) पूर्ण
  */
-static const struct pci_device_id ixgbe_pci_tbl[] = {
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598), board_82598 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598AF_DUAL_PORT), board_82598 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598AF_SINGLE_PORT), board_82598 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598AT), board_82598 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598AT2), board_82598 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598EB_CX4), board_82598 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598_CX4_DUAL_PORT), board_82598 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598_DA_DUAL_PORT), board_82598 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598_SR_DUAL_PORT_EM), board_82598 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598EB_XF_LR), board_82598 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598EB_SFP_LOM), board_82598 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598_BX), board_82598 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_KX4), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_XAUI_LOM), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_KR), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_SFP), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_SFP_EM), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_KX4_MEZZ), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_CX4), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_BACKPLANE_FCOE), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_SFP_FCOE), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_T3_LOM), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_COMBO_BACKPLANE), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X540T), board_X540 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_SFP_SF2), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_LS), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_QSFP_SF_QP), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599EN_SFP), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_SFP_SF_QP), board_82599 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X540T1), board_X540 },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550T), board_X550},
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550T1), board_X550},
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_KX4), board_X550EM_x},
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_XFI), board_X550EM_x},
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_KR), board_X550EM_x},
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_10G_T), board_X550EM_x},
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_SFP), board_X550EM_x},
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_1G_T), board_x550em_x_fw},
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_KR), board_x550em_a },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_KR_L), board_x550em_a },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_SFP_N), board_x550em_a },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_SGMII), board_x550em_a },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_SGMII_L), board_x550em_a },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_10G_T), board_x550em_a},
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_SFP), board_x550em_a },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_1G_T), board_x550em_a_fw },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_1G_T_L), board_x550em_a_fw },
+अटल स्थिर काष्ठा pci_device_id ixgbe_pci_tbl[] = अणु
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598), board_82598 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598AF_DUAL_PORT), board_82598 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598AF_SINGLE_PORT), board_82598 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598AT), board_82598 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598AT2), board_82598 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598EB_CX4), board_82598 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598_CX4_DUAL_PORT), board_82598 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598_DA_DUAL_PORT), board_82598 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598_SR_DUAL_PORT_EM), board_82598 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598EB_XF_LR), board_82598 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598EB_SFP_LOM), board_82598 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598_BX), board_82598 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_KX4), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_XAUI_LOM), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_KR), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_SFP), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_SFP_EM), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_KX4_MEZZ), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_CX4), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_BACKPLANE_FCOE), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_SFP_FCOE), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_T3_LOM), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_COMBO_BACKPLANE), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X540T), board_X540 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_SFP_SF2), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_LS), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_QSFP_SF_QP), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599EN_SFP), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_SFP_SF_QP), board_82599 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X540T1), board_X540 पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550T), board_X550पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550T1), board_X550पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_KX4), board_X550EM_xपूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_XFI), board_X550EM_xपूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_KR), board_X550EM_xपूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_10G_T), board_X550EM_xपूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_SFP), board_X550EM_xपूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_1G_T), board_x550em_x_fwपूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_KR), board_x550em_a पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_KR_L), board_x550em_a पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_SFP_N), board_x550em_a पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_SGMII), board_x550em_a पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_SGMII_L), board_x550em_a पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_10G_T), board_x550em_aपूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_SFP), board_x550em_a पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_1G_T), board_x550em_a_fw पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_1G_T_L), board_x550em_a_fw पूर्ण,
 	/* required last entry */
-	{0, }
-};
+	अणु0, पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, ixgbe_pci_tbl);
 
-#ifdef CONFIG_IXGBE_DCA
-static int ixgbe_notify_dca(struct notifier_block *, unsigned long event,
-			    void *p);
-static struct notifier_block dca_notifier = {
-	.notifier_call = ixgbe_notify_dca,
-	.next          = NULL,
+#अगर_घोषित CONFIG_IXGBE_DCA
+अटल पूर्णांक ixgbe_notअगरy_dca(काष्ठा notअगरier_block *, अचिन्हित दीर्घ event,
+			    व्योम *p);
+अटल काष्ठा notअगरier_block dca_notअगरier = अणु
+	.notअगरier_call = ixgbe_notअगरy_dca,
+	.next          = शून्य,
 	.priority      = 0
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_PCI_IOV
-static unsigned int max_vfs;
-module_param(max_vfs, uint, 0);
+#अगर_घोषित CONFIG_PCI_IOV
+अटल अचिन्हित पूर्णांक max_vfs;
+module_param(max_vfs, uपूर्णांक, 0);
 MODULE_PARM_DESC(max_vfs,
 		 "Maximum number of virtual functions to allocate per physical function - default is zero and maximum value is 63. (Deprecated)");
-#endif /* CONFIG_PCI_IOV */
+#पूर्ण_अगर /* CONFIG_PCI_IOV */
 
-static unsigned int allow_unsupported_sfp;
-module_param(allow_unsupported_sfp, uint, 0);
+अटल अचिन्हित पूर्णांक allow_unsupported_sfp;
+module_param(allow_unsupported_sfp, uपूर्णांक, 0);
 MODULE_PARM_DESC(allow_unsupported_sfp,
 		 "Allow unsupported and untested SFP+ modules on 82599-based adapters");
 
-#define DEFAULT_MSG_ENABLE (NETIF_MSG_DRV|NETIF_MSG_PROBE|NETIF_MSG_LINK)
-static int debug = -1;
-module_param(debug, int, 0);
+#घोषणा DEFAULT_MSG_ENABLE (NETIF_MSG_DRV|NETIF_MSG_PROBE|NETIF_MSG_LINK)
+अटल पूर्णांक debug = -1;
+module_param(debug, पूर्णांक, 0);
 MODULE_PARM_DESC(debug, "Debug level (0=none,...,16=all)");
 
 MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com>");
 MODULE_DESCRIPTION("Intel(R) 10 Gigabit PCI Express Network Driver");
 MODULE_LICENSE("GPL v2");
 
-static struct workqueue_struct *ixgbe_wq;
+अटल काष्ठा workqueue_काष्ठा *ixgbe_wq;
 
-static bool ixgbe_check_cfg_remove(struct ixgbe_hw *hw, struct pci_dev *pdev);
-static void ixgbe_watchdog_link_is_down(struct ixgbe_adapter *);
+अटल bool ixgbe_check_cfg_हटाओ(काष्ठा ixgbe_hw *hw, काष्ठा pci_dev *pdev);
+अटल व्योम ixgbe_watchकरोg_link_is_करोwn(काष्ठा ixgbe_adapter *);
 
-static const struct net_device_ops ixgbe_netdev_ops;
+अटल स्थिर काष्ठा net_device_ops ixgbe_netdev_ops;
 
-static bool netif_is_ixgbe(struct net_device *dev)
-{
-	return dev && (dev->netdev_ops == &ixgbe_netdev_ops);
-}
+अटल bool netअगर_is_ixgbe(काष्ठा net_device *dev)
+अणु
+	वापस dev && (dev->netdev_ops == &ixgbe_netdev_ops);
+पूर्ण
 
-static int ixgbe_read_pci_cfg_word_parent(struct ixgbe_adapter *adapter,
+अटल पूर्णांक ixgbe_पढ़ो_pci_cfg_word_parent(काष्ठा ixgbe_adapter *adapter,
 					  u32 reg, u16 *value)
-{
-	struct pci_dev *parent_dev;
-	struct pci_bus *parent_bus;
+अणु
+	काष्ठा pci_dev *parent_dev;
+	काष्ठा pci_bus *parent_bus;
 
 	parent_bus = adapter->pdev->bus->parent;
-	if (!parent_bus)
-		return -1;
+	अगर (!parent_bus)
+		वापस -1;
 
 	parent_dev = parent_bus->self;
-	if (!parent_dev)
-		return -1;
+	अगर (!parent_dev)
+		वापस -1;
 
-	if (!pci_is_pcie(parent_dev))
-		return -1;
+	अगर (!pci_is_pcie(parent_dev))
+		वापस -1;
 
-	pcie_capability_read_word(parent_dev, reg, value);
-	if (*value == IXGBE_FAILED_READ_CFG_WORD &&
-	    ixgbe_check_cfg_remove(&adapter->hw, parent_dev))
-		return -1;
-	return 0;
-}
+	pcie_capability_पढ़ो_word(parent_dev, reg, value);
+	अगर (*value == IXGBE_FAILED_READ_CFG_WORD &&
+	    ixgbe_check_cfg_हटाओ(&adapter->hw, parent_dev))
+		वापस -1;
+	वापस 0;
+पूर्ण
 
-static s32 ixgbe_get_parent_bus_info(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल s32 ixgbe_get_parent_bus_info(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u16 link_status = 0;
-	int err;
+	पूर्णांक err;
 
 	hw->bus.type = ixgbe_bus_type_pci_express;
 
 	/* Get the negotiated link width and speed from PCI config space of the
-	 * parent, as this device is behind a switch
+	 * parent, as this device is behind a चयन
 	 */
-	err = ixgbe_read_pci_cfg_word_parent(adapter, 18, &link_status);
+	err = ixgbe_पढ़ो_pci_cfg_word_parent(adapter, 18, &link_status);
 
-	/* assume caller will handle error case */
-	if (err)
-		return err;
+	/* assume caller will handle error हाल */
+	अगर (err)
+		वापस err;
 
 	hw->bus.width = ixgbe_convert_bus_width(link_status);
 	hw->bus.speed = ixgbe_convert_bus_speed(link_status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ixgbe_pcie_from_parent - Determine whether PCIe info should come from parent
- * @hw: hw specific details
+ * @hw: hw specअगरic details
  *
  * This function is used by probe to determine whether a device's PCI-Express
  * bandwidth details should be gathered from the parent bus instead of from the
  * device. Used to ensure that various locations all have the correct device ID
  * checks.
  */
-static inline bool ixgbe_pcie_from_parent(struct ixgbe_hw *hw)
-{
-	switch (hw->device_id) {
-	case IXGBE_DEV_ID_82599_SFP_SF_QP:
-	case IXGBE_DEV_ID_82599_QSFP_SF_QP:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल अंतरभूत bool ixgbe_pcie_from_parent(काष्ठा ixgbe_hw *hw)
+अणु
+	चयन (hw->device_id) अणु
+	हाल IXGBE_DEV_ID_82599_SFP_SF_QP:
+	हाल IXGBE_DEV_ID_82599_QSFP_SF_QP:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static void ixgbe_check_minimum_link(struct ixgbe_adapter *adapter,
-				     int expected_gts)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct pci_dev *pdev;
+अटल व्योम ixgbe_check_minimum_link(काष्ठा ixgbe_adapter *adapter,
+				     पूर्णांक expected_gts)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा pci_dev *pdev;
 
-	/* Some devices are not connected over PCIe and thus do not negotiate
-	 * speed. These devices do not have valid bus info, and thus any report
+	/* Some devices are not connected over PCIe and thus करो not negotiate
+	 * speed. These devices करो not have valid bus info, and thus any report
 	 * we generate may not be correct.
 	 */
-	if (hw->bus.type == ixgbe_bus_type_internal)
-		return;
+	अगर (hw->bus.type == ixgbe_bus_type_पूर्णांकernal)
+		वापस;
 
 	/* determine whether to use the parent device */
-	if (ixgbe_pcie_from_parent(&adapter->hw))
+	अगर (ixgbe_pcie_from_parent(&adapter->hw))
 		pdev = adapter->pdev->bus->parent->self;
-	else
+	अन्यथा
 		pdev = adapter->pdev;
 
-	pcie_print_link_status(pdev);
-}
+	pcie_prपूर्णांक_link_status(pdev);
+पूर्ण
 
-static void ixgbe_service_event_schedule(struct ixgbe_adapter *adapter)
-{
-	if (!test_bit(__IXGBE_DOWN, &adapter->state) &&
+अटल व्योम ixgbe_service_event_schedule(काष्ठा ixgbe_adapter *adapter)
+अणु
+	अगर (!test_bit(__IXGBE_DOWN, &adapter->state) &&
 	    !test_bit(__IXGBE_REMOVING, &adapter->state) &&
 	    !test_and_set_bit(__IXGBE_SERVICE_SCHED, &adapter->state))
 		queue_work(ixgbe_wq, &adapter->service_task);
-}
+पूर्ण
 
-static void ixgbe_remove_adapter(struct ixgbe_hw *hw)
-{
-	struct ixgbe_adapter *adapter = hw->back;
+अटल व्योम ixgbe_हटाओ_adapter(काष्ठा ixgbe_hw *hw)
+अणु
+	काष्ठा ixgbe_adapter *adapter = hw->back;
 
-	if (!hw->hw_addr)
-		return;
-	hw->hw_addr = NULL;
+	अगर (!hw->hw_addr)
+		वापस;
+	hw->hw_addr = शून्य;
 	e_dev_err("Adapter removed\n");
-	if (test_bit(__IXGBE_SERVICE_INITED, &adapter->state))
+	अगर (test_bit(__IXGBE_SERVICE_INITED, &adapter->state))
 		ixgbe_service_event_schedule(adapter);
-}
+पूर्ण
 
-static u32 ixgbe_check_remove(struct ixgbe_hw *hw, u32 reg)
-{
+अटल u32 ixgbe_check_हटाओ(काष्ठा ixgbe_hw *hw, u32 reg)
+अणु
 	u8 __iomem *reg_addr;
 	u32 value;
-	int i;
+	पूर्णांक i;
 
 	reg_addr = READ_ONCE(hw->hw_addr);
-	if (ixgbe_removed(reg_addr))
-		return IXGBE_FAILED_READ_REG;
+	अगर (ixgbe_हटाओd(reg_addr))
+		वापस IXGBE_FAILED_READ_REG;
 
-	/* Register read of 0xFFFFFFF can indicate the adapter has been removed,
-	 * so perform several status register reads to determine if the adapter
-	 * has been removed.
+	/* Register पढ़ो of 0xFFFFFFF can indicate the adapter has been हटाओd,
+	 * so perक्रमm several status रेजिस्टर पढ़ोs to determine अगर the adapter
+	 * has been हटाओd.
 	 */
-	for (i = 0; i < IXGBE_FAILED_READ_RETRIES; i++) {
-		value = readl(reg_addr + IXGBE_STATUS);
-		if (value != IXGBE_FAILED_READ_REG)
-			break;
+	क्रम (i = 0; i < IXGBE_FAILED_READ_RETRIES; i++) अणु
+		value = पढ़ोl(reg_addr + IXGBE_STATUS);
+		अगर (value != IXGBE_FAILED_READ_REG)
+			अवरोध;
 		mdelay(3);
-	}
+	पूर्ण
 
-	if (value == IXGBE_FAILED_READ_REG)
-		ixgbe_remove_adapter(hw);
-	else
-		value = readl(reg_addr + reg);
-	return value;
-}
+	अगर (value == IXGBE_FAILED_READ_REG)
+		ixgbe_हटाओ_adapter(hw);
+	अन्यथा
+		value = पढ़ोl(reg_addr + reg);
+	वापस value;
+पूर्ण
 
 /**
- * ixgbe_read_reg - Read from device register
- * @hw: hw specific details
- * @reg: offset of register to read
+ * ixgbe_पढ़ो_reg - Read from device रेजिस्टर
+ * @hw: hw specअगरic details
+ * @reg: offset of रेजिस्टर to पढ़ो
  *
- * Returns : value read or IXGBE_FAILED_READ_REG if removed
+ * Returns : value पढ़ो or IXGBE_FAILED_READ_REG अगर हटाओd
  *
- * This function is used to read device registers. It checks for device
- * removal by confirming any read that returns all ones by checking the
- * status register value for all ones. This function avoids reading from
- * the hardware if a removal was previously detected in which case it
- * returns IXGBE_FAILED_READ_REG (all ones).
+ * This function is used to पढ़ो device रेजिस्टरs. It checks क्रम device
+ * removal by confirming any पढ़ो that वापसs all ones by checking the
+ * status रेजिस्टर value क्रम all ones. This function aव्योमs पढ़ोing from
+ * the hardware अगर a removal was previously detected in which हाल it
+ * वापसs IXGBE_FAILED_READ_REG (all ones).
  */
-u32 ixgbe_read_reg(struct ixgbe_hw *hw, u32 reg)
-{
+u32 ixgbe_पढ़ो_reg(काष्ठा ixgbe_hw *hw, u32 reg)
+अणु
 	u8 __iomem *reg_addr = READ_ONCE(hw->hw_addr);
 	u32 value;
 
-	if (ixgbe_removed(reg_addr))
-		return IXGBE_FAILED_READ_REG;
-	if (unlikely(hw->phy.nw_mng_if_sel &
-		     IXGBE_NW_MNG_IF_SEL_SGMII_ENABLE)) {
-		struct ixgbe_adapter *adapter;
-		int i;
+	अगर (ixgbe_हटाओd(reg_addr))
+		वापस IXGBE_FAILED_READ_REG;
+	अगर (unlikely(hw->phy.nw_mng_अगर_sel &
+		     IXGBE_NW_MNG_IF_SEL_SGMII_ENABLE)) अणु
+		काष्ठा ixgbe_adapter *adapter;
+		पूर्णांक i;
 
-		for (i = 0; i < 200; ++i) {
-			value = readl(reg_addr + IXGBE_MAC_SGMII_BUSY);
-			if (likely(!value))
-				goto writes_completed;
-			if (value == IXGBE_FAILED_READ_REG) {
-				ixgbe_remove_adapter(hw);
-				return IXGBE_FAILED_READ_REG;
-			}
+		क्रम (i = 0; i < 200; ++i) अणु
+			value = पढ़ोl(reg_addr + IXGBE_MAC_SGMII_BUSY);
+			अगर (likely(!value))
+				जाओ ग_लिखोs_completed;
+			अगर (value == IXGBE_FAILED_READ_REG) अणु
+				ixgbe_हटाओ_adapter(hw);
+				वापस IXGBE_FAILED_READ_REG;
+			पूर्ण
 			udelay(5);
-		}
+		पूर्ण
 
 		adapter = hw->back;
 		e_warn(hw, "register writes incomplete %08x\n", value);
-	}
+	पूर्ण
 
-writes_completed:
-	value = readl(reg_addr + reg);
-	if (unlikely(value == IXGBE_FAILED_READ_REG))
-		value = ixgbe_check_remove(hw, reg);
-	return value;
-}
+ग_लिखोs_completed:
+	value = पढ़ोl(reg_addr + reg);
+	अगर (unlikely(value == IXGBE_FAILED_READ_REG))
+		value = ixgbe_check_हटाओ(hw, reg);
+	वापस value;
+पूर्ण
 
-static bool ixgbe_check_cfg_remove(struct ixgbe_hw *hw, struct pci_dev *pdev)
-{
+अटल bool ixgbe_check_cfg_हटाओ(काष्ठा ixgbe_hw *hw, काष्ठा pci_dev *pdev)
+अणु
 	u16 value;
 
-	pci_read_config_word(pdev, PCI_VENDOR_ID, &value);
-	if (value == IXGBE_FAILED_READ_CFG_WORD) {
-		ixgbe_remove_adapter(hw);
-		return true;
-	}
-	return false;
-}
+	pci_पढ़ो_config_word(pdev, PCI_VENDOR_ID, &value);
+	अगर (value == IXGBE_FAILED_READ_CFG_WORD) अणु
+		ixgbe_हटाओ_adapter(hw);
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-u16 ixgbe_read_pci_cfg_word(struct ixgbe_hw *hw, u32 reg)
-{
-	struct ixgbe_adapter *adapter = hw->back;
+u16 ixgbe_पढ़ो_pci_cfg_word(काष्ठा ixgbe_hw *hw, u32 reg)
+अणु
+	काष्ठा ixgbe_adapter *adapter = hw->back;
 	u16 value;
 
-	if (ixgbe_removed(hw->hw_addr))
-		return IXGBE_FAILED_READ_CFG_WORD;
-	pci_read_config_word(adapter->pdev, reg, &value);
-	if (value == IXGBE_FAILED_READ_CFG_WORD &&
-	    ixgbe_check_cfg_remove(hw, adapter->pdev))
-		return IXGBE_FAILED_READ_CFG_WORD;
-	return value;
-}
+	अगर (ixgbe_हटाओd(hw->hw_addr))
+		वापस IXGBE_FAILED_READ_CFG_WORD;
+	pci_पढ़ो_config_word(adapter->pdev, reg, &value);
+	अगर (value == IXGBE_FAILED_READ_CFG_WORD &&
+	    ixgbe_check_cfg_हटाओ(hw, adapter->pdev))
+		वापस IXGBE_FAILED_READ_CFG_WORD;
+	वापस value;
+पूर्ण
 
-#ifdef CONFIG_PCI_IOV
-static u32 ixgbe_read_pci_cfg_dword(struct ixgbe_hw *hw, u32 reg)
-{
-	struct ixgbe_adapter *adapter = hw->back;
+#अगर_घोषित CONFIG_PCI_IOV
+अटल u32 ixgbe_पढ़ो_pci_cfg_dword(काष्ठा ixgbe_hw *hw, u32 reg)
+अणु
+	काष्ठा ixgbe_adapter *adapter = hw->back;
 	u32 value;
 
-	if (ixgbe_removed(hw->hw_addr))
-		return IXGBE_FAILED_READ_CFG_DWORD;
-	pci_read_config_dword(adapter->pdev, reg, &value);
-	if (value == IXGBE_FAILED_READ_CFG_DWORD &&
-	    ixgbe_check_cfg_remove(hw, adapter->pdev))
-		return IXGBE_FAILED_READ_CFG_DWORD;
-	return value;
-}
-#endif /* CONFIG_PCI_IOV */
+	अगर (ixgbe_हटाओd(hw->hw_addr))
+		वापस IXGBE_FAILED_READ_CFG_DWORD;
+	pci_पढ़ो_config_dword(adapter->pdev, reg, &value);
+	अगर (value == IXGBE_FAILED_READ_CFG_DWORD &&
+	    ixgbe_check_cfg_हटाओ(hw, adapter->pdev))
+		वापस IXGBE_FAILED_READ_CFG_DWORD;
+	वापस value;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI_IOV */
 
-void ixgbe_write_pci_cfg_word(struct ixgbe_hw *hw, u32 reg, u16 value)
-{
-	struct ixgbe_adapter *adapter = hw->back;
+व्योम ixgbe_ग_लिखो_pci_cfg_word(काष्ठा ixgbe_hw *hw, u32 reg, u16 value)
+अणु
+	काष्ठा ixgbe_adapter *adapter = hw->back;
 
-	if (ixgbe_removed(hw->hw_addr))
-		return;
-	pci_write_config_word(adapter->pdev, reg, value);
-}
+	अगर (ixgbe_हटाओd(hw->hw_addr))
+		वापस;
+	pci_ग_लिखो_config_word(adapter->pdev, reg, value);
+पूर्ण
 
-static void ixgbe_service_event_complete(struct ixgbe_adapter *adapter)
-{
+अटल व्योम ixgbe_service_event_complete(काष्ठा ixgbe_adapter *adapter)
+अणु
 	BUG_ON(!test_bit(__IXGBE_SERVICE_SCHED, &adapter->state));
 
-	/* flush memory to make sure state is correct before next watchdog */
-	smp_mb__before_atomic();
+	/* flush memory to make sure state is correct beक्रमe next watchकरोg */
+	smp_mb__beक्रमe_atomic();
 	clear_bit(__IXGBE_SERVICE_SCHED, &adapter->state);
-}
+पूर्ण
 
-struct ixgbe_reg_info {
+काष्ठा ixgbe_reg_info अणु
 	u32 ofs;
-	char *name;
-};
+	अक्षर *name;
+पूर्ण;
 
-static const struct ixgbe_reg_info ixgbe_reg_info_tbl[] = {
+अटल स्थिर काष्ठा ixgbe_reg_info ixgbe_reg_info_tbl[] = अणु
 
 	/* General Registers */
-	{IXGBE_CTRL, "CTRL"},
-	{IXGBE_STATUS, "STATUS"},
-	{IXGBE_CTRL_EXT, "CTRL_EXT"},
+	अणुIXGBE_CTRL, "CTRL"पूर्ण,
+	अणुIXGBE_STATUS, "STATUS"पूर्ण,
+	अणुIXGBE_CTRL_EXT, "CTRL_EXT"पूर्ण,
 
 	/* Interrupt Registers */
-	{IXGBE_EICR, "EICR"},
+	अणुIXGBE_EICR, "EICR"पूर्ण,
 
 	/* RX Registers */
-	{IXGBE_SRRCTL(0), "SRRCTL"},
-	{IXGBE_DCA_RXCTRL(0), "DRXCTL"},
-	{IXGBE_RDLEN(0), "RDLEN"},
-	{IXGBE_RDH(0), "RDH"},
-	{IXGBE_RDT(0), "RDT"},
-	{IXGBE_RXDCTL(0), "RXDCTL"},
-	{IXGBE_RDBAL(0), "RDBAL"},
-	{IXGBE_RDBAH(0), "RDBAH"},
+	अणुIXGBE_SRRCTL(0), "SRRCTL"पूर्ण,
+	अणुIXGBE_DCA_RXCTRL(0), "DRXCTL"पूर्ण,
+	अणुIXGBE_RDLEN(0), "RDLEN"पूर्ण,
+	अणुIXGBE_RDH(0), "RDH"पूर्ण,
+	अणुIXGBE_RDT(0), "RDT"पूर्ण,
+	अणुIXGBE_RXDCTL(0), "RXDCTL"पूर्ण,
+	अणुIXGBE_RDBAL(0), "RDBAL"पूर्ण,
+	अणुIXGBE_RDBAH(0), "RDBAH"पूर्ण,
 
 	/* TX Registers */
-	{IXGBE_TDBAL(0), "TDBAL"},
-	{IXGBE_TDBAH(0), "TDBAH"},
-	{IXGBE_TDLEN(0), "TDLEN"},
-	{IXGBE_TDH(0), "TDH"},
-	{IXGBE_TDT(0), "TDT"},
-	{IXGBE_TXDCTL(0), "TXDCTL"},
+	अणुIXGBE_TDBAL(0), "TDBAL"पूर्ण,
+	अणुIXGBE_TDBAH(0), "TDBAH"पूर्ण,
+	अणुIXGBE_TDLEN(0), "TDLEN"पूर्ण,
+	अणुIXGBE_TDH(0), "TDH"पूर्ण,
+	अणुIXGBE_TDT(0), "TDT"पूर्ण,
+	अणुIXGBE_TXDCTL(0), "TXDCTL"पूर्ण,
 
 	/* List Terminator */
-	{ .name = NULL }
-};
+	अणु .name = शून्य पूर्ण
+पूर्ण;
 
 
 /*
- * ixgbe_regdump - register printout routine
+ * ixgbe_regdump - रेजिस्टर prपूर्णांकout routine
  */
-static void ixgbe_regdump(struct ixgbe_hw *hw, struct ixgbe_reg_info *reginfo)
-{
-	int i;
-	char rname[16];
+अटल व्योम ixgbe_regdump(काष्ठा ixgbe_hw *hw, काष्ठा ixgbe_reg_info *reginfo)
+अणु
+	पूर्णांक i;
+	अक्षर rname[16];
 	u32 regs[64];
 
-	switch (reginfo->ofs) {
-	case IXGBE_SRRCTL(0):
-		for (i = 0; i < 64; i++)
+	चयन (reginfo->ofs) अणु
+	हाल IXGBE_SRRCTL(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_SRRCTL(i));
-		break;
-	case IXGBE_DCA_RXCTRL(0):
-		for (i = 0; i < 64; i++)
+		अवरोध;
+	हाल IXGBE_DCA_RXCTRL(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_DCA_RXCTRL(i));
-		break;
-	case IXGBE_RDLEN(0):
-		for (i = 0; i < 64; i++)
+		अवरोध;
+	हाल IXGBE_RDLEN(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_RDLEN(i));
-		break;
-	case IXGBE_RDH(0):
-		for (i = 0; i < 64; i++)
+		अवरोध;
+	हाल IXGBE_RDH(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_RDH(i));
-		break;
-	case IXGBE_RDT(0):
-		for (i = 0; i < 64; i++)
+		अवरोध;
+	हाल IXGBE_RDT(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_RDT(i));
-		break;
-	case IXGBE_RXDCTL(0):
-		for (i = 0; i < 64; i++)
+		अवरोध;
+	हाल IXGBE_RXDCTL(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_RXDCTL(i));
-		break;
-	case IXGBE_RDBAL(0):
-		for (i = 0; i < 64; i++)
+		अवरोध;
+	हाल IXGBE_RDBAL(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_RDBAL(i));
-		break;
-	case IXGBE_RDBAH(0):
-		for (i = 0; i < 64; i++)
+		अवरोध;
+	हाल IXGBE_RDBAH(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_RDBAH(i));
-		break;
-	case IXGBE_TDBAL(0):
-		for (i = 0; i < 64; i++)
+		अवरोध;
+	हाल IXGBE_TDBAL(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_TDBAL(i));
-		break;
-	case IXGBE_TDBAH(0):
-		for (i = 0; i < 64; i++)
+		अवरोध;
+	हाल IXGBE_TDBAH(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_TDBAH(i));
-		break;
-	case IXGBE_TDLEN(0):
-		for (i = 0; i < 64; i++)
+		अवरोध;
+	हाल IXGBE_TDLEN(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_TDLEN(i));
-		break;
-	case IXGBE_TDH(0):
-		for (i = 0; i < 64; i++)
+		अवरोध;
+	हाल IXGBE_TDH(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_TDH(i));
-		break;
-	case IXGBE_TDT(0):
-		for (i = 0; i < 64; i++)
+		अवरोध;
+	हाल IXGBE_TDT(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_TDT(i));
-		break;
-	case IXGBE_TXDCTL(0):
-		for (i = 0; i < 64; i++)
+		अवरोध;
+	हाल IXGBE_TXDCTL(0):
+		क्रम (i = 0; i < 64; i++)
 			regs[i] = IXGBE_READ_REG(hw, IXGBE_TXDCTL(i));
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_info("%-15s %08x\n",
 			reginfo->name, IXGBE_READ_REG(hw, reginfo->ofs));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	i = 0;
-	while (i < 64) {
-		int j;
-		char buf[9 * 8 + 1];
-		char *p = buf;
+	जबतक (i < 64) अणु
+		पूर्णांक j;
+		अक्षर buf[9 * 8 + 1];
+		अक्षर *p = buf;
 
-		snprintf(rname, 16, "%s[%d-%d]", reginfo->name, i, i + 7);
-		for (j = 0; j < 8; j++)
-			p += sprintf(p, " %08x", regs[i++]);
+		snम_लिखो(rname, 16, "%s[%d-%d]", reginfo->name, i, i + 7);
+		क्रम (j = 0; j < 8; j++)
+			p += प्र_लिखो(p, " %08x", regs[i++]);
 		pr_err("%-15s%s\n", rname, buf);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-static void ixgbe_print_buffer(struct ixgbe_ring *ring, int n)
-{
-	struct ixgbe_tx_buffer *tx_buffer;
+अटल व्योम ixgbe_prपूर्णांक_buffer(काष्ठा ixgbe_ring *ring, पूर्णांक n)
+अणु
+	काष्ठा ixgbe_tx_buffer *tx_buffer;
 
 	tx_buffer = &ring->tx_buffer_info[ring->next_to_clean];
 	pr_info(" %5d %5X %5X %016llX %08X %p %016llX\n",
@@ -555,32 +556,32 @@ static void ixgbe_print_buffer(struct ixgbe_ring *ring, int n)
 		(u64)dma_unmap_addr(tx_buffer, dma),
 		dma_unmap_len(tx_buffer, len),
 		tx_buffer->next_to_watch,
-		(u64)tx_buffer->time_stamp);
-}
+		(u64)tx_buffer->समय_stamp);
+पूर्ण
 
 /*
- * ixgbe_dump - Print registers, tx-rings and rx-rings
+ * ixgbe_dump - Prपूर्णांक रेजिस्टरs, tx-rings and rx-rings
  */
-static void ixgbe_dump(struct ixgbe_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct ixgbe_reg_info *reginfo;
-	int n = 0;
-	struct ixgbe_ring *ring;
-	struct ixgbe_tx_buffer *tx_buffer;
-	union ixgbe_adv_tx_desc *tx_desc;
-	struct my_u0 { u64 a; u64 b; } *u0;
-	struct ixgbe_ring *rx_ring;
-	union ixgbe_adv_rx_desc *rx_desc;
-	struct ixgbe_rx_buffer *rx_buffer_info;
-	int i = 0;
+अटल व्योम ixgbe_dump(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_reg_info *reginfo;
+	पूर्णांक n = 0;
+	काष्ठा ixgbe_ring *ring;
+	काष्ठा ixgbe_tx_buffer *tx_buffer;
+	जोड़ ixgbe_adv_tx_desc *tx_desc;
+	काष्ठा my_u0 अणु u64 a; u64 b; पूर्ण *u0;
+	काष्ठा ixgbe_ring *rx_ring;
+	जोड़ ixgbe_adv_rx_desc *rx_desc;
+	काष्ठा ixgbe_rx_buffer *rx_buffer_info;
+	पूर्णांक i = 0;
 
-	if (!netif_msg_hw(adapter))
-		return;
+	अगर (!netअगर_msg_hw(adapter))
+		वापस;
 
-	/* Print netdevice Info */
-	if (netdev) {
+	/* Prपूर्णांक netdevice Info */
+	अगर (netdev) अणु
 		dev_info(&adapter->pdev->dev, "Net device Info\n");
 		pr_info("Device Name     state            "
 			"trans_start\n");
@@ -588,37 +589,37 @@ static void ixgbe_dump(struct ixgbe_adapter *adapter)
 			netdev->name,
 			netdev->state,
 			dev_trans_start(netdev));
-	}
+	पूर्ण
 
-	/* Print Registers */
+	/* Prपूर्णांक Registers */
 	dev_info(&adapter->pdev->dev, "Register Dump\n");
 	pr_info(" Register Name   Value\n");
-	for (reginfo = (struct ixgbe_reg_info *)ixgbe_reg_info_tbl;
-	     reginfo->name; reginfo++) {
+	क्रम (reginfo = (काष्ठा ixgbe_reg_info *)ixgbe_reg_info_tbl;
+	     reginfo->name; reginfo++) अणु
 		ixgbe_regdump(hw, reginfo);
-	}
+	पूर्ण
 
-	/* Print TX Ring Summary */
-	if (!netdev || !netif_running(netdev))
-		return;
+	/* Prपूर्णांक TX Ring Summary */
+	अगर (!netdev || !netअगर_running(netdev))
+		वापस;
 
 	dev_info(&adapter->pdev->dev, "TX Rings Summary\n");
 	pr_info(" %s     %s              %s        %s\n",
 		"Queue [NTU] [NTC] [bi(ntc)->dma  ]",
 		"leng", "ntw", "timestamp");
-	for (n = 0; n < adapter->num_tx_queues; n++) {
+	क्रम (n = 0; n < adapter->num_tx_queues; n++) अणु
 		ring = adapter->tx_ring[n];
-		ixgbe_print_buffer(ring, n);
-	}
+		ixgbe_prपूर्णांक_buffer(ring, n);
+	पूर्ण
 
-	for (n = 0; n < adapter->num_xdp_queues; n++) {
+	क्रम (n = 0; n < adapter->num_xdp_queues; n++) अणु
 		ring = adapter->xdp_ring[n];
-		ixgbe_print_buffer(ring, n);
-	}
+		ixgbe_prपूर्णांक_buffer(ring, n);
+	पूर्ण
 
-	/* Print TX Rings */
-	if (!netif_msg_tx_done(adapter))
-		goto rx_ring_summary;
+	/* Prपूर्णांक TX Rings */
+	अगर (!netअगर_msg_tx_करोne(adapter))
+		जाओ rx_ring_summary;
 
 	dev_info(&adapter->pdev->dev, "TX Rings Dump\n");
 
@@ -657,7 +658,7 @@ static void ixgbe_dump(struct ixgbe_adapter *adapter)
 	 *   63                       36 35   32 31                         0
 	 */
 
-	for (n = 0; n < adapter->num_tx_queues; n++) {
+	क्रम (n = 0; n < adapter->num_tx_queues; n++) अणु
 		ring = adapter->tx_ring[n];
 		pr_info("------------------------------------\n");
 		pr_info("TX QUEUE INDEX = %d\n", ring->queue_index);
@@ -667,57 +668,57 @@ static void ixgbe_dump(struct ixgbe_adapter *adapter)
 			"[PlPOIdStDDt Ln] [bi->dma       ] ",
 			"leng", "ntw", "timestamp", "bi->skb");
 
-		for (i = 0; ring->desc && (i < ring->count); i++) {
+		क्रम (i = 0; ring->desc && (i < ring->count); i++) अणु
 			tx_desc = IXGBE_TX_DESC(ring, i);
 			tx_buffer = &ring->tx_buffer_info[i];
-			u0 = (struct my_u0 *)tx_desc;
-			if (dma_unmap_len(tx_buffer, len) > 0) {
-				const char *ring_desc;
+			u0 = (काष्ठा my_u0 *)tx_desc;
+			अगर (dma_unmap_len(tx_buffer, len) > 0) अणु
+				स्थिर अक्षर *ring_desc;
 
-				if (i == ring->next_to_use &&
+				अगर (i == ring->next_to_use &&
 				    i == ring->next_to_clean)
 					ring_desc = " NTC/U";
-				else if (i == ring->next_to_use)
+				अन्यथा अगर (i == ring->next_to_use)
 					ring_desc = " NTU";
-				else if (i == ring->next_to_clean)
+				अन्यथा अगर (i == ring->next_to_clean)
 					ring_desc = " NTC";
-				else
+				अन्यथा
 					ring_desc = "";
 				pr_info("T [0x%03X]    %016llX %016llX %016llX %08X %p %016llX %p%s",
 					i,
-					le64_to_cpu((__force __le64)u0->a),
-					le64_to_cpu((__force __le64)u0->b),
+					le64_to_cpu((__क्रमce __le64)u0->a),
+					le64_to_cpu((__क्रमce __le64)u0->b),
 					(u64)dma_unmap_addr(tx_buffer, dma),
 					dma_unmap_len(tx_buffer, len),
 					tx_buffer->next_to_watch,
-					(u64)tx_buffer->time_stamp,
+					(u64)tx_buffer->समय_stamp,
 					tx_buffer->skb,
 					ring_desc);
 
-				if (netif_msg_pktdata(adapter) &&
+				अगर (netअगर_msg_pktdata(adapter) &&
 				    tx_buffer->skb)
-					print_hex_dump(KERN_INFO, "",
+					prपूर्णांक_hex_dump(KERN_INFO, "",
 						DUMP_PREFIX_ADDRESS, 16, 1,
 						tx_buffer->skb->data,
 						dma_unmap_len(tx_buffer, len),
 						true);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Print RX Rings Summary */
+	/* Prपूर्णांक RX Rings Summary */
 rx_ring_summary:
 	dev_info(&adapter->pdev->dev, "RX Rings Summary\n");
 	pr_info("Queue [NTU] [NTC]\n");
-	for (n = 0; n < adapter->num_rx_queues; n++) {
+	क्रम (n = 0; n < adapter->num_rx_queues; n++) अणु
 		rx_ring = adapter->rx_ring[n];
 		pr_info("%5d %5X %5X\n",
 			n, rx_ring->next_to_use, rx_ring->next_to_clean);
-	}
+	पूर्ण
 
-	/* Print RX Rings */
-	if (!netif_msg_rx_status(adapter))
-		return;
+	/* Prपूर्णांक RX Rings */
+	अगर (!netअगर_msg_rx_status(adapter))
+		वापस;
 
 	dev_info(&adapter->pdev->dev, "RX Rings Dump\n");
 
@@ -766,7 +767,7 @@ rx_ring_summary:
 	 *   63       48 47    32 31          20 19                 0
 	 */
 
-	for (n = 0; n < adapter->num_rx_queues; n++) {
+	क्रम (n = 0; n < adapter->num_rx_queues; n++) अणु
 		rx_ring = adapter->rx_ring[n];
 		pr_info("------------------------------------\n");
 		pr_info("RX QUEUE INDEX = %d\n", rx_ring->queue_index);
@@ -780,99 +781,99 @@ rx_ring_summary:
 			"[vl er S cks ln] ---------------- [bi->skb       ] ",
 			"<-- Adv Rx Write-Back format");
 
-		for (i = 0; i < rx_ring->count; i++) {
-			const char *ring_desc;
+		क्रम (i = 0; i < rx_ring->count; i++) अणु
+			स्थिर अक्षर *ring_desc;
 
-			if (i == rx_ring->next_to_use)
+			अगर (i == rx_ring->next_to_use)
 				ring_desc = " NTU";
-			else if (i == rx_ring->next_to_clean)
+			अन्यथा अगर (i == rx_ring->next_to_clean)
 				ring_desc = " NTC";
-			else
+			अन्यथा
 				ring_desc = "";
 
 			rx_buffer_info = &rx_ring->rx_buffer_info[i];
 			rx_desc = IXGBE_RX_DESC(rx_ring, i);
-			u0 = (struct my_u0 *)rx_desc;
-			if (rx_desc->wb.upper.length) {
+			u0 = (काष्ठा my_u0 *)rx_desc;
+			अगर (rx_desc->wb.upper.length) अणु
 				/* Descriptor Done */
 				pr_info("RWB[0x%03X]     %016llX %016llX ---------------- %p%s\n",
 					i,
-					le64_to_cpu((__force __le64)u0->a),
-					le64_to_cpu((__force __le64)u0->b),
+					le64_to_cpu((__क्रमce __le64)u0->a),
+					le64_to_cpu((__क्रमce __le64)u0->b),
 					rx_buffer_info->skb,
 					ring_desc);
-			} else {
+			पूर्ण अन्यथा अणु
 				pr_info("R  [0x%03X]     %016llX %016llX %016llX %p%s\n",
 					i,
-					le64_to_cpu((__force __le64)u0->a),
-					le64_to_cpu((__force __le64)u0->b),
+					le64_to_cpu((__क्रमce __le64)u0->a),
+					le64_to_cpu((__क्रमce __le64)u0->b),
 					(u64)rx_buffer_info->dma,
 					rx_buffer_info->skb,
 					ring_desc);
 
-				if (netif_msg_pktdata(adapter) &&
-				    rx_buffer_info->dma) {
-					print_hex_dump(KERN_INFO, "",
+				अगर (netअगर_msg_pktdata(adapter) &&
+				    rx_buffer_info->dma) अणु
+					prपूर्णांक_hex_dump(KERN_INFO, "",
 					   DUMP_PREFIX_ADDRESS, 16, 1,
 					   page_address(rx_buffer_info->page) +
 						    rx_buffer_info->page_offset,
 					   ixgbe_rx_bufsz(rx_ring), true);
-				}
-			}
-		}
-	}
-}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ixgbe_release_hw_control(struct ixgbe_adapter *adapter)
-{
+अटल व्योम ixgbe_release_hw_control(काष्ठा ixgbe_adapter *adapter)
+अणु
 	u32 ctrl_ext;
 
 	/* Let firmware take over control of h/w */
 	ctrl_ext = IXGBE_READ_REG(&adapter->hw, IXGBE_CTRL_EXT);
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_CTRL_EXT,
 			ctrl_ext & ~IXGBE_CTRL_EXT_DRV_LOAD);
-}
+पूर्ण
 
-static void ixgbe_get_hw_control(struct ixgbe_adapter *adapter)
-{
+अटल व्योम ixgbe_get_hw_control(काष्ठा ixgbe_adapter *adapter)
+अणु
 	u32 ctrl_ext;
 
 	/* Let firmware know the driver has taken over */
 	ctrl_ext = IXGBE_READ_REG(&adapter->hw, IXGBE_CTRL_EXT);
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_CTRL_EXT,
 			ctrl_ext | IXGBE_CTRL_EXT_DRV_LOAD);
-}
+पूर्ण
 
 /**
- * ixgbe_set_ivar - set the IVAR registers, mapping interrupt causes to vectors
- * @adapter: pointer to adapter struct
- * @direction: 0 for Rx, 1 for Tx, -1 for other causes
- * @queue: queue to map the corresponding interrupt to
+ * ixgbe_set_ivar - set the IVAR रेजिस्टरs, mapping पूर्णांकerrupt causes to vectors
+ * @adapter: poपूर्णांकer to adapter काष्ठा
+ * @direction: 0 क्रम Rx, 1 क्रम Tx, -1 क्रम other causes
+ * @queue: queue to map the corresponding पूर्णांकerrupt to
  * @msix_vector: the vector to map to the corresponding queue
  *
  */
-static void ixgbe_set_ivar(struct ixgbe_adapter *adapter, s8 direction,
+अटल व्योम ixgbe_set_ivar(काष्ठा ixgbe_adapter *adapter, s8 direction,
 			   u8 queue, u8 msix_vector)
-{
+अणु
 	u32 ivar, index;
-	struct ixgbe_hw *hw = &adapter->hw;
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB:
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB:
 		msix_vector |= IXGBE_IVAR_ALLOC_VAL;
-		if (direction == -1)
+		अगर (direction == -1)
 			direction = 0;
 		index = (((direction * 64) + queue) >> 2) & 0x1F;
 		ivar = IXGBE_READ_REG(hw, IXGBE_IVAR(index));
 		ivar &= ~(0xFF << (8 * (queue & 0x3)));
 		ivar |= (msix_vector << (8 * (queue & 0x3)));
 		IXGBE_WRITE_REG(hw, IXGBE_IVAR(index), ivar);
-		break;
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
-		if (direction == -1) {
+		अवरोध;
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
+		अगर (direction == -1) अणु
 			/* other causes */
 			msix_vector |= IXGBE_IVAR_ALLOC_VAL;
 			index = ((queue & 1) * 8);
@@ -880,8 +881,8 @@ static void ixgbe_set_ivar(struct ixgbe_adapter *adapter, s8 direction,
 			ivar &= ~(0xFF << index);
 			ivar |= (msix_vector << index);
 			IXGBE_WRITE_REG(&adapter->hw, IXGBE_IVAR_MISC, ivar);
-			break;
-		} else {
+			अवरोध;
+		पूर्ण अन्यथा अणु
 			/* tx or rx causes */
 			msix_vector |= IXGBE_IVAR_ALLOC_VAL;
 			index = ((16 * (queue & 1)) + (8 * direction));
@@ -889,200 +890,200 @@ static void ixgbe_set_ivar(struct ixgbe_adapter *adapter, s8 direction,
 			ivar &= ~(0xFF << index);
 			ivar |= (msix_vector << index);
 			IXGBE_WRITE_REG(hw, IXGBE_IVAR(queue >> 1), ivar);
-			break;
-		}
-	default:
-		break;
-	}
-}
+			अवरोध;
+		पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void ixgbe_irq_rearm_queues(struct ixgbe_adapter *adapter,
+व्योम ixgbe_irq_rearm_queues(काष्ठा ixgbe_adapter *adapter,
 			    u64 qmask)
-{
+अणु
 	u32 mask;
 
-	switch (adapter->hw.mac.type) {
-	case ixgbe_mac_82598EB:
+	चयन (adapter->hw.mac.type) अणु
+	हाल ixgbe_mac_82598EB:
 		mask = (IXGBE_EIMS_RTX_QUEUE & qmask);
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EICS, mask);
-		break;
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
+		अवरोध;
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
 		mask = (qmask & 0xFFFFFFFF);
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EICS_EX(0), mask);
 		mask = (qmask >> 32);
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EICS_EX(1), mask);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void ixgbe_update_xoff_rx_lfc(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct ixgbe_hw_stats *hwstats = &adapter->stats;
-	int i;
+अटल व्योम ixgbe_update_xoff_rx_lfc(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_hw_stats *hwstats = &adapter->stats;
+	पूर्णांक i;
 	u32 data;
 
-	if ((hw->fc.current_mode != ixgbe_fc_full) &&
-	    (hw->fc.current_mode != ixgbe_fc_rx_pause))
-		return;
+	अगर ((hw->fc.current_mode != ixgbe_fc_full) &&
+	    (hw->fc.current_mode != ixgbe_fc_rx_छोड़ो))
+		वापस;
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB:
 		data = IXGBE_READ_REG(hw, IXGBE_LXOFFRXC);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		data = IXGBE_READ_REG(hw, IXGBE_LXOFFRXCNT);
-	}
+	पूर्ण
 	hwstats->lxoffrxc += data;
 
-	/* refill credits (no tx hang) if we received xoff */
-	if (!data)
-		return;
+	/* refill credits (no tx hang) अगर we received xoff */
+	अगर (!data)
+		वापस;
 
-	for (i = 0; i < adapter->num_tx_queues; i++)
+	क्रम (i = 0; i < adapter->num_tx_queues; i++)
 		clear_bit(__IXGBE_HANG_CHECK_ARMED,
 			  &adapter->tx_ring[i]->state);
 
-	for (i = 0; i < adapter->num_xdp_queues; i++)
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++)
 		clear_bit(__IXGBE_HANG_CHECK_ARMED,
 			  &adapter->xdp_ring[i]->state);
-}
+पूर्ण
 
-static void ixgbe_update_xoff_received(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct ixgbe_hw_stats *hwstats = &adapter->stats;
-	u32 xoff[8] = {0};
+अटल व्योम ixgbe_update_xoff_received(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_hw_stats *hwstats = &adapter->stats;
+	u32 xoff[8] = अणु0पूर्ण;
 	u8 tc;
-	int i;
+	पूर्णांक i;
 	bool pfc_en = adapter->dcb_cfg.pfc_mode_enable;
 
-	if (adapter->ixgbe_ieee_pfc)
+	अगर (adapter->ixgbe_ieee_pfc)
 		pfc_en |= !!(adapter->ixgbe_ieee_pfc->pfc_en);
 
-	if (!(adapter->flags & IXGBE_FLAG_DCB_ENABLED) || !pfc_en) {
+	अगर (!(adapter->flags & IXGBE_FLAG_DCB_ENABLED) || !pfc_en) अणु
 		ixgbe_update_xoff_rx_lfc(adapter);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* update stats for each tc, only valid with PFC enabled */
-	for (i = 0; i < MAX_TX_PACKET_BUFFERS; i++) {
+	/* update stats क्रम each tc, only valid with PFC enabled */
+	क्रम (i = 0; i < MAX_TX_PACKET_BUFFERS; i++) अणु
 		u32 pxoffrxc;
 
-		switch (hw->mac.type) {
-		case ixgbe_mac_82598EB:
+		चयन (hw->mac.type) अणु
+		हाल ixgbe_mac_82598EB:
 			pxoffrxc = IXGBE_READ_REG(hw, IXGBE_PXOFFRXC(i));
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pxoffrxc = IXGBE_READ_REG(hw, IXGBE_PXOFFRXCNT(i));
-		}
+		पूर्ण
 		hwstats->pxoffrxc[i] += pxoffrxc;
-		/* Get the TC for given UP */
+		/* Get the TC क्रम given UP */
 		tc = netdev_get_prio_tc_map(adapter->netdev, i);
 		xoff[tc] += pxoffrxc;
-	}
+	पूर्ण
 
 	/* disarm tx queues that have received xoff frames */
-	for (i = 0; i < adapter->num_tx_queues; i++) {
-		struct ixgbe_ring *tx_ring = adapter->tx_ring[i];
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+		काष्ठा ixgbe_ring *tx_ring = adapter->tx_ring[i];
 
 		tc = tx_ring->dcb_tc;
-		if (xoff[tc])
+		अगर (xoff[tc])
 			clear_bit(__IXGBE_HANG_CHECK_ARMED, &tx_ring->state);
-	}
+	पूर्ण
 
-	for (i = 0; i < adapter->num_xdp_queues; i++) {
-		struct ixgbe_ring *xdp_ring = adapter->xdp_ring[i];
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++) अणु
+		काष्ठा ixgbe_ring *xdp_ring = adapter->xdp_ring[i];
 
 		tc = xdp_ring->dcb_tc;
-		if (xoff[tc])
+		अगर (xoff[tc])
 			clear_bit(__IXGBE_HANG_CHECK_ARMED, &xdp_ring->state);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u64 ixgbe_get_tx_completed(struct ixgbe_ring *ring)
-{
-	return ring->stats.packets;
-}
+अटल u64 ixgbe_get_tx_completed(काष्ठा ixgbe_ring *ring)
+अणु
+	वापस ring->stats.packets;
+पूर्ण
 
-static u64 ixgbe_get_tx_pending(struct ixgbe_ring *ring)
-{
-	unsigned int head, tail;
+अटल u64 ixgbe_get_tx_pending(काष्ठा ixgbe_ring *ring)
+अणु
+	अचिन्हित पूर्णांक head, tail;
 
 	head = ring->next_to_clean;
 	tail = ring->next_to_use;
 
-	return ((head <= tail) ? tail : tail + ring->count) - head;
-}
+	वापस ((head <= tail) ? tail : tail + ring->count) - head;
+पूर्ण
 
-static inline bool ixgbe_check_tx_hang(struct ixgbe_ring *tx_ring)
-{
-	u32 tx_done = ixgbe_get_tx_completed(tx_ring);
-	u32 tx_done_old = tx_ring->tx_stats.tx_done_old;
+अटल अंतरभूत bool ixgbe_check_tx_hang(काष्ठा ixgbe_ring *tx_ring)
+अणु
+	u32 tx_करोne = ixgbe_get_tx_completed(tx_ring);
+	u32 tx_करोne_old = tx_ring->tx_stats.tx_करोne_old;
 	u32 tx_pending = ixgbe_get_tx_pending(tx_ring);
 
-	clear_check_for_tx_hang(tx_ring);
+	clear_check_क्रम_tx_hang(tx_ring);
 
 	/*
-	 * Check for a hung queue, but be thorough. This verifies
+	 * Check क्रम a hung queue, but be thorough. This verअगरies
 	 * that a transmit has been completed since the previous
 	 * check AND there is at least one packet pending. The
 	 * ARMED bit is set to indicate a potential hang. The
-	 * bit is cleared if a pause frame is received to remove
+	 * bit is cleared अगर a छोड़ो frame is received to हटाओ
 	 * false hang detection due to PFC or 802.3x frames. By
-	 * requiring this to fail twice we avoid races with
+	 * requiring this to fail twice we aव्योम races with
 	 * pfc clearing the ARMED bit and conditions where we
 	 * run the check_tx_hang logic with a transmit completion
-	 * pending but without time to complete it yet.
+	 * pending but without समय to complete it yet.
 	 */
-	if (tx_done_old == tx_done && tx_pending)
-		/* make sure it is true for two checks in a row */
-		return test_and_set_bit(__IXGBE_HANG_CHECK_ARMED,
+	अगर (tx_करोne_old == tx_करोne && tx_pending)
+		/* make sure it is true क्रम two checks in a row */
+		वापस test_and_set_bit(__IXGBE_HANG_CHECK_ARMED,
 					&tx_ring->state);
-	/* update completed stats and continue */
-	tx_ring->tx_stats.tx_done_old = tx_done;
-	/* reset the countdown */
+	/* update completed stats and जारी */
+	tx_ring->tx_stats.tx_करोne_old = tx_करोne;
+	/* reset the countकरोwn */
 	clear_bit(__IXGBE_HANG_CHECK_ARMED, &tx_ring->state);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * ixgbe_tx_timeout_reset - initiate reset due to Tx timeout
- * @adapter: driver private struct
+ * ixgbe_tx_समयout_reset - initiate reset due to Tx समयout
+ * @adapter: driver निजी काष्ठा
  **/
-static void ixgbe_tx_timeout_reset(struct ixgbe_adapter *adapter)
-{
+अटल व्योम ixgbe_tx_समयout_reset(काष्ठा ixgbe_adapter *adapter)
+अणु
 
-	/* Do the reset outside of interrupt context */
-	if (!test_bit(__IXGBE_DOWN, &adapter->state)) {
+	/* Do the reset outside of पूर्णांकerrupt context */
+	अगर (!test_bit(__IXGBE_DOWN, &adapter->state)) अणु
 		set_bit(__IXGBE_RESET_REQUESTED, &adapter->state);
 		e_warn(drv, "initiating reset due to tx timeout\n");
 		ixgbe_service_event_schedule(adapter);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ixgbe_tx_maxrate - callback to set the maximum per-queue bitrate
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @queue_index: Tx queue to set
  * @maxrate: desired maximum transmit bitrate
  **/
-static int ixgbe_tx_maxrate(struct net_device *netdev,
-			    int queue_index, u32 maxrate)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल पूर्णांक ixgbe_tx_maxrate(काष्ठा net_device *netdev,
+			    पूर्णांक queue_index, u32 maxrate)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 bcnrc_val = ixgbe_link_mbps(adapter);
 
-	if (!maxrate)
-		return 0;
+	अगर (!maxrate)
+		वापस 0;
 
 	/* Calculate the rate factor values to set */
 	bcnrc_val <<= IXGBE_RTTBCNRC_RF_INT_SHIFT;
@@ -1098,59 +1099,59 @@ static int ixgbe_tx_maxrate(struct net_device *netdev,
 	IXGBE_WRITE_REG(hw, IXGBE_RTTDQSEL, queue_index);
 	IXGBE_WRITE_REG(hw, IXGBE_RTTBCNRC, bcnrc_val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ixgbe_clean_tx_irq - Reclaim resources after transmit completes
- * @q_vector: structure containing interrupt and ring information
+ * @q_vector: काष्ठाure containing पूर्णांकerrupt and ring inक्रमmation
  * @tx_ring: tx ring to clean
- * @napi_budget: Used to determine if we are in netpoll
+ * @napi_budget: Used to determine अगर we are in netpoll
  **/
-static bool ixgbe_clean_tx_irq(struct ixgbe_q_vector *q_vector,
-			       struct ixgbe_ring *tx_ring, int napi_budget)
-{
-	struct ixgbe_adapter *adapter = q_vector->adapter;
-	struct ixgbe_tx_buffer *tx_buffer;
-	union ixgbe_adv_tx_desc *tx_desc;
-	unsigned int total_bytes = 0, total_packets = 0, total_ipsec = 0;
-	unsigned int budget = q_vector->tx.work_limit;
-	unsigned int i = tx_ring->next_to_clean;
+अटल bool ixgbe_clean_tx_irq(काष्ठा ixgbe_q_vector *q_vector,
+			       काष्ठा ixgbe_ring *tx_ring, पूर्णांक napi_budget)
+अणु
+	काष्ठा ixgbe_adapter *adapter = q_vector->adapter;
+	काष्ठा ixgbe_tx_buffer *tx_buffer;
+	जोड़ ixgbe_adv_tx_desc *tx_desc;
+	अचिन्हित पूर्णांक total_bytes = 0, total_packets = 0, total_ipsec = 0;
+	अचिन्हित पूर्णांक budget = q_vector->tx.work_limit;
+	अचिन्हित पूर्णांक i = tx_ring->next_to_clean;
 
-	if (test_bit(__IXGBE_DOWN, &adapter->state))
-		return true;
+	अगर (test_bit(__IXGBE_DOWN, &adapter->state))
+		वापस true;
 
 	tx_buffer = &tx_ring->tx_buffer_info[i];
 	tx_desc = IXGBE_TX_DESC(tx_ring, i);
 	i -= tx_ring->count;
 
-	do {
-		union ixgbe_adv_tx_desc *eop_desc = tx_buffer->next_to_watch;
+	करो अणु
+		जोड़ ixgbe_adv_tx_desc *eop_desc = tx_buffer->next_to_watch;
 
-		/* if next_to_watch is not set then there is no work pending */
-		if (!eop_desc)
-			break;
+		/* अगर next_to_watch is not set then there is no work pending */
+		अगर (!eop_desc)
+			अवरोध;
 
-		/* prevent any other reads prior to eop_desc */
+		/* prevent any other पढ़ोs prior to eop_desc */
 		smp_rmb();
 
-		/* if DD is not set pending work has not been completed */
-		if (!(eop_desc->wb.status & cpu_to_le32(IXGBE_TXD_STAT_DD)))
-			break;
+		/* अगर DD is not set pending work has not been completed */
+		अगर (!(eop_desc->wb.status & cpu_to_le32(IXGBE_TXD_STAT_DD)))
+			अवरोध;
 
 		/* clear next_to_watch to prevent false hangs */
-		tx_buffer->next_to_watch = NULL;
+		tx_buffer->next_to_watch = शून्य;
 
-		/* update the statistics for this packet */
+		/* update the statistics क्रम this packet */
 		total_bytes += tx_buffer->bytecount;
 		total_packets += tx_buffer->gso_segs;
-		if (tx_buffer->tx_flags & IXGBE_TX_FLAGS_IPSEC)
+		अगर (tx_buffer->tx_flags & IXGBE_TX_FLAGS_IPSEC)
 			total_ipsec++;
 
-		/* free the skb */
-		if (ring_is_xdp(tx_ring))
-			xdp_return_frame(tx_buffer->xdpf);
-		else
+		/* मुक्त the skb */
+		अगर (ring_is_xdp(tx_ring))
+			xdp_वापस_frame(tx_buffer->xdpf);
+		अन्यथा
 			napi_consume_skb(tx_buffer->skb, napi_budget);
 
 		/* unmap skb header data */
@@ -1162,43 +1163,43 @@ static bool ixgbe_clean_tx_irq(struct ixgbe_q_vector *q_vector,
 		/* clear tx_buffer data */
 		dma_unmap_len_set(tx_buffer, len, 0);
 
-		/* unmap remaining buffers */
-		while (tx_desc != eop_desc) {
+		/* unmap reमुख्यing buffers */
+		जबतक (tx_desc != eop_desc) अणु
 			tx_buffer++;
 			tx_desc++;
 			i++;
-			if (unlikely(!i)) {
+			अगर (unlikely(!i)) अणु
 				i -= tx_ring->count;
 				tx_buffer = tx_ring->tx_buffer_info;
 				tx_desc = IXGBE_TX_DESC(tx_ring, 0);
-			}
+			पूर्ण
 
-			/* unmap any remaining paged data */
-			if (dma_unmap_len(tx_buffer, len)) {
+			/* unmap any reमुख्यing paged data */
+			अगर (dma_unmap_len(tx_buffer, len)) अणु
 				dma_unmap_page(tx_ring->dev,
 					       dma_unmap_addr(tx_buffer, dma),
 					       dma_unmap_len(tx_buffer, len),
 					       DMA_TO_DEVICE);
 				dma_unmap_len_set(tx_buffer, len, 0);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* move us one more past the eop_desc for start of next pkt */
+		/* move us one more past the eop_desc क्रम start of next pkt */
 		tx_buffer++;
 		tx_desc++;
 		i++;
-		if (unlikely(!i)) {
+		अगर (unlikely(!i)) अणु
 			i -= tx_ring->count;
 			tx_buffer = tx_ring->tx_buffer_info;
 			tx_desc = IXGBE_TX_DESC(tx_ring, 0);
-		}
+		पूर्ण
 
-		/* issue prefetch for next Tx descriptor */
+		/* issue prefetch क्रम next Tx descriptor */
 		prefetch(tx_desc);
 
 		/* update budget accounting */
 		budget--;
-	} while (likely(budget));
+	पूर्ण जबतक (likely(budget));
 
 	i += tx_ring->count;
 	tx_ring->next_to_clean = i;
@@ -1210,9 +1211,9 @@ static bool ixgbe_clean_tx_irq(struct ixgbe_q_vector *q_vector,
 	q_vector->tx.total_packets += total_packets;
 	adapter->tx_ipsec += total_ipsec;
 
-	if (check_for_tx_hang(tx_ring) && ixgbe_check_tx_hang(tx_ring)) {
-		/* schedule immediate reset if we believe we hung */
-		struct ixgbe_hw *hw = &adapter->hw;
+	अगर (check_क्रम_tx_hang(tx_ring) && ixgbe_check_tx_hang(tx_ring)) अणु
+		/* schedule immediate reset अगर we believe we hung */
+		काष्ठा ixgbe_hw *hw = &adapter->hw;
 		e_err(drv, "Detected Tx Unit Hang %s\n"
 			"  Tx Queue             <%d>\n"
 			"  TDH, TDT             <%x>, <%x>\n"
@@ -1226,76 +1227,76 @@ static bool ixgbe_clean_tx_irq(struct ixgbe_q_vector *q_vector,
 			IXGBE_READ_REG(hw, IXGBE_TDH(tx_ring->reg_idx)),
 			IXGBE_READ_REG(hw, IXGBE_TDT(tx_ring->reg_idx)),
 			tx_ring->next_to_use, i,
-			tx_ring->tx_buffer_info[i].time_stamp, jiffies);
+			tx_ring->tx_buffer_info[i].समय_stamp, jअगरfies);
 
-		if (!ring_is_xdp(tx_ring))
-			netif_stop_subqueue(tx_ring->netdev,
+		अगर (!ring_is_xdp(tx_ring))
+			netअगर_stop_subqueue(tx_ring->netdev,
 					    tx_ring->queue_index);
 
 		e_info(probe,
 		       "tx hang %d detected on queue %d, resetting adapter\n",
-			adapter->tx_timeout_count + 1, tx_ring->queue_index);
+			adapter->tx_समयout_count + 1, tx_ring->queue_index);
 
-		/* schedule immediate reset if we believe we hung */
-		ixgbe_tx_timeout_reset(adapter);
+		/* schedule immediate reset अगर we believe we hung */
+		ixgbe_tx_समयout_reset(adapter);
 
-		/* the adapter is about to reset, no point in enabling stuff */
-		return true;
-	}
+		/* the adapter is about to reset, no poपूर्णांक in enabling stuff */
+		वापस true;
+	पूर्ण
 
-	if (ring_is_xdp(tx_ring))
-		return !!budget;
+	अगर (ring_is_xdp(tx_ring))
+		वापस !!budget;
 
 	netdev_tx_completed_queue(txring_txq(tx_ring),
 				  total_packets, total_bytes);
 
-#define TX_WAKE_THRESHOLD (DESC_NEEDED * 2)
-	if (unlikely(total_packets && netif_carrier_ok(tx_ring->netdev) &&
-		     (ixgbe_desc_unused(tx_ring) >= TX_WAKE_THRESHOLD))) {
+#घोषणा TX_WAKE_THRESHOLD (DESC_NEEDED * 2)
+	अगर (unlikely(total_packets && netअगर_carrier_ok(tx_ring->netdev) &&
+		     (ixgbe_desc_unused(tx_ring) >= TX_WAKE_THRESHOLD))) अणु
 		/* Make sure that anybody stopping the queue after this
 		 * sees the new next_to_clean.
 		 */
 		smp_mb();
-		if (__netif_subqueue_stopped(tx_ring->netdev,
+		अगर (__netअगर_subqueue_stopped(tx_ring->netdev,
 					     tx_ring->queue_index)
-		    && !test_bit(__IXGBE_DOWN, &adapter->state)) {
-			netif_wake_subqueue(tx_ring->netdev,
+		    && !test_bit(__IXGBE_DOWN, &adapter->state)) अणु
+			netअगर_wake_subqueue(tx_ring->netdev,
 					    tx_ring->queue_index);
 			++tx_ring->tx_stats.restart_queue;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return !!budget;
-}
+	वापस !!budget;
+पूर्ण
 
-#ifdef CONFIG_IXGBE_DCA
-static void ixgbe_update_tx_dca(struct ixgbe_adapter *adapter,
-				struct ixgbe_ring *tx_ring,
-				int cpu)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+#अगर_घोषित CONFIG_IXGBE_DCA
+अटल व्योम ixgbe_update_tx_dca(काष्ठा ixgbe_adapter *adapter,
+				काष्ठा ixgbe_ring *tx_ring,
+				पूर्णांक cpu)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 txctrl = 0;
 	u16 reg_offset;
 
-	if (adapter->flags & IXGBE_FLAG_DCA_ENABLED)
+	अगर (adapter->flags & IXGBE_FLAG_DCA_ENABLED)
 		txctrl = dca3_get_tag(tx_ring->dev, cpu);
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB:
 		reg_offset = IXGBE_DCA_TXCTRL(tx_ring->reg_idx);
-		break;
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
+		अवरोध;
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
 		reg_offset = IXGBE_DCA_TXCTRL_82599(tx_ring->reg_idx);
 		txctrl <<= IXGBE_DCA_TXCTRL_CPUID_SHIFT_82599;
-		break;
-	default:
-		/* for unknown hardware do not write register */
-		return;
-	}
+		अवरोध;
+	शेष:
+		/* क्रम unknown hardware करो not ग_लिखो रेजिस्टर */
+		वापस;
+	पूर्ण
 
 	/*
-	 * We can enable relaxed ordering for reads, but not writes when
+	 * We can enable relaxed ordering क्रम पढ़ोs, but not ग_लिखोs when
 	 * DCA is enabled.  This is due to a known issue in some chipsets
 	 * which will cause the DCA tag to be cleared.
 	 */
@@ -1304,30 +1305,30 @@ static void ixgbe_update_tx_dca(struct ixgbe_adapter *adapter,
 		  IXGBE_DCA_TXCTRL_DESC_DCA_EN;
 
 	IXGBE_WRITE_REG(hw, reg_offset, txctrl);
-}
+पूर्ण
 
-static void ixgbe_update_rx_dca(struct ixgbe_adapter *adapter,
-				struct ixgbe_ring *rx_ring,
-				int cpu)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_update_rx_dca(काष्ठा ixgbe_adapter *adapter,
+				काष्ठा ixgbe_ring *rx_ring,
+				पूर्णांक cpu)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 rxctrl = 0;
 	u8 reg_idx = rx_ring->reg_idx;
 
-	if (adapter->flags & IXGBE_FLAG_DCA_ENABLED)
+	अगर (adapter->flags & IXGBE_FLAG_DCA_ENABLED)
 		rxctrl = dca3_get_tag(rx_ring->dev, cpu);
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
 		rxctrl <<= IXGBE_DCA_RXCTRL_CPUID_SHIFT_82599;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * We can enable relaxed ordering for reads, but not writes when
+	 * We can enable relaxed ordering क्रम पढ़ोs, but not ग_लिखोs when
 	 * DCA is enabled.  This is due to a known issue in some chipsets
 	 * which will cause the DCA tag to be cleared.
 	 */
@@ -1336,254 +1337,254 @@ static void ixgbe_update_rx_dca(struct ixgbe_adapter *adapter,
 		  IXGBE_DCA_RXCTRL_DESC_DCA_EN;
 
 	IXGBE_WRITE_REG(hw, IXGBE_DCA_RXCTRL(reg_idx), rxctrl);
-}
+पूर्ण
 
-static void ixgbe_update_dca(struct ixgbe_q_vector *q_vector)
-{
-	struct ixgbe_adapter *adapter = q_vector->adapter;
-	struct ixgbe_ring *ring;
-	int cpu = get_cpu();
+अटल व्योम ixgbe_update_dca(काष्ठा ixgbe_q_vector *q_vector)
+अणु
+	काष्ठा ixgbe_adapter *adapter = q_vector->adapter;
+	काष्ठा ixgbe_ring *ring;
+	पूर्णांक cpu = get_cpu();
 
-	if (q_vector->cpu == cpu)
-		goto out_no_update;
+	अगर (q_vector->cpu == cpu)
+		जाओ out_no_update;
 
-	ixgbe_for_each_ring(ring, q_vector->tx)
+	ixgbe_क्रम_each_ring(ring, q_vector->tx)
 		ixgbe_update_tx_dca(adapter, ring, cpu);
 
-	ixgbe_for_each_ring(ring, q_vector->rx)
+	ixgbe_क्रम_each_ring(ring, q_vector->rx)
 		ixgbe_update_rx_dca(adapter, ring, cpu);
 
 	q_vector->cpu = cpu;
 out_no_update:
 	put_cpu();
-}
+पूर्ण
 
-static void ixgbe_setup_dca(struct ixgbe_adapter *adapter)
-{
-	int i;
+अटल व्योम ixgbe_setup_dca(काष्ठा ixgbe_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	/* always use CB2 mode, difference is masked in the CB driver */
-	if (adapter->flags & IXGBE_FLAG_DCA_ENABLED)
+	/* always use CB2 mode, dअगरference is masked in the CB driver */
+	अगर (adapter->flags & IXGBE_FLAG_DCA_ENABLED)
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_DCA_CTRL,
 				IXGBE_DCA_CTRL_DCA_MODE_CB2);
-	else
+	अन्यथा
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_DCA_CTRL,
 				IXGBE_DCA_CTRL_DCA_DISABLE);
 
-	for (i = 0; i < adapter->num_q_vectors; i++) {
+	क्रम (i = 0; i < adapter->num_q_vectors; i++) अणु
 		adapter->q_vector[i]->cpu = -1;
 		ixgbe_update_dca(adapter->q_vector[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __ixgbe_notify_dca(struct device *dev, void *data)
-{
-	struct ixgbe_adapter *adapter = dev_get_drvdata(dev);
-	unsigned long event = *(unsigned long *)data;
+अटल पूर्णांक __ixgbe_notअगरy_dca(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा ixgbe_adapter *adapter = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ event = *(अचिन्हित दीर्घ *)data;
 
-	if (!(adapter->flags & IXGBE_FLAG_DCA_CAPABLE))
-		return 0;
+	अगर (!(adapter->flags & IXGBE_FLAG_DCA_CAPABLE))
+		वापस 0;
 
-	switch (event) {
-	case DCA_PROVIDER_ADD:
-		/* if we're already enabled, don't do it again */
-		if (adapter->flags & IXGBE_FLAG_DCA_ENABLED)
-			break;
-		if (dca_add_requester(dev) == 0) {
+	चयन (event) अणु
+	हाल DCA_PROVIDER_ADD:
+		/* अगर we're already enabled, don't करो it again */
+		अगर (adapter->flags & IXGBE_FLAG_DCA_ENABLED)
+			अवरोध;
+		अगर (dca_add_requester(dev) == 0) अणु
 			adapter->flags |= IXGBE_FLAG_DCA_ENABLED;
 			IXGBE_WRITE_REG(&adapter->hw, IXGBE_DCA_CTRL,
 					IXGBE_DCA_CTRL_DCA_MODE_CB2);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough; /* DCA is disabled. */
-	case DCA_PROVIDER_REMOVE:
-		if (adapter->flags & IXGBE_FLAG_DCA_ENABLED) {
-			dca_remove_requester(dev);
+	हाल DCA_PROVIDER_REMOVE:
+		अगर (adapter->flags & IXGBE_FLAG_DCA_ENABLED) अणु
+			dca_हटाओ_requester(dev);
 			adapter->flags &= ~IXGBE_FLAG_DCA_ENABLED;
 			IXGBE_WRITE_REG(&adapter->hw, IXGBE_DCA_CTRL,
 					IXGBE_DCA_CTRL_DCA_DISABLE);
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_IXGBE_DCA */
+#पूर्ण_अगर /* CONFIG_IXGBE_DCA */
 
-#define IXGBE_RSS_L4_TYPES_MASK \
+#घोषणा IXGBE_RSS_L4_TYPES_MASK \
 	((1ul << IXGBE_RXDADV_RSSTYPE_IPV4_TCP) | \
 	 (1ul << IXGBE_RXDADV_RSSTYPE_IPV4_UDP) | \
 	 (1ul << IXGBE_RXDADV_RSSTYPE_IPV6_TCP) | \
 	 (1ul << IXGBE_RXDADV_RSSTYPE_IPV6_UDP))
 
-static inline void ixgbe_rx_hash(struct ixgbe_ring *ring,
-				 union ixgbe_adv_rx_desc *rx_desc,
-				 struct sk_buff *skb)
-{
+अटल अंतरभूत व्योम ixgbe_rx_hash(काष्ठा ixgbe_ring *ring,
+				 जोड़ ixgbe_adv_rx_desc *rx_desc,
+				 काष्ठा sk_buff *skb)
+अणु
 	u16 rss_type;
 
-	if (!(ring->netdev->features & NETIF_F_RXHASH))
-		return;
+	अगर (!(ring->netdev->features & NETIF_F_RXHASH))
+		वापस;
 
 	rss_type = le16_to_cpu(rx_desc->wb.lower.lo_dword.hs_rss.pkt_info) &
 		   IXGBE_RXDADV_RSSTYPE_MASK;
 
-	if (!rss_type)
-		return;
+	अगर (!rss_type)
+		वापस;
 
 	skb_set_hash(skb, le32_to_cpu(rx_desc->wb.lower.hi_dword.rss),
 		     (IXGBE_RSS_L4_TYPES_MASK & (1ul << rss_type)) ?
 		     PKT_HASH_TYPE_L4 : PKT_HASH_TYPE_L3);
-}
+पूर्ण
 
-#ifdef IXGBE_FCOE
+#अगर_घोषित IXGBE_FCOE
 /**
- * ixgbe_rx_is_fcoe - check the rx desc for incoming pkt type
- * @ring: structure containing ring specific data
+ * ixgbe_rx_is_fcoe - check the rx desc क्रम incoming pkt type
+ * @ring: काष्ठाure containing ring specअगरic data
  * @rx_desc: advanced rx descriptor
  *
- * Returns : true if it is FCoE pkt
+ * Returns : true अगर it is FCoE pkt
  */
-static inline bool ixgbe_rx_is_fcoe(struct ixgbe_ring *ring,
-				    union ixgbe_adv_rx_desc *rx_desc)
-{
+अटल अंतरभूत bool ixgbe_rx_is_fcoe(काष्ठा ixgbe_ring *ring,
+				    जोड़ ixgbe_adv_rx_desc *rx_desc)
+अणु
 	__le16 pkt_info = rx_desc->wb.lower.lo_dword.hs_rss.pkt_info;
 
-	return test_bit(__IXGBE_RX_FCOE, &ring->state) &&
+	वापस test_bit(__IXGBE_RX_FCOE, &ring->state) &&
 	       ((pkt_info & cpu_to_le16(IXGBE_RXDADV_PKTTYPE_ETQF_MASK)) ==
 		(cpu_to_le16(IXGBE_ETQF_FILTER_FCOE <<
 			     IXGBE_RXDADV_PKTTYPE_ETQF_SHIFT)));
-}
+पूर्ण
 
-#endif /* IXGBE_FCOE */
+#पूर्ण_अगर /* IXGBE_FCOE */
 /**
- * ixgbe_rx_checksum - indicate in skb if hw indicated a good cksum
- * @ring: structure containing ring specific data
+ * ixgbe_rx_checksum - indicate in skb अगर hw indicated a good cksum
+ * @ring: काष्ठाure containing ring specअगरic data
  * @rx_desc: current Rx descriptor being processed
- * @skb: skb currently being received and modified
+ * @skb: skb currently being received and modअगरied
  **/
-static inline void ixgbe_rx_checksum(struct ixgbe_ring *ring,
-				     union ixgbe_adv_rx_desc *rx_desc,
-				     struct sk_buff *skb)
-{
+अटल अंतरभूत व्योम ixgbe_rx_checksum(काष्ठा ixgbe_ring *ring,
+				     जोड़ ixgbe_adv_rx_desc *rx_desc,
+				     काष्ठा sk_buff *skb)
+अणु
 	__le16 pkt_info = rx_desc->wb.lower.lo_dword.hs_rss.pkt_info;
 	bool encap_pkt = false;
 
-	skb_checksum_none_assert(skb);
+	skb_checksum_none_निश्चित(skb);
 
 	/* Rx csum disabled */
-	if (!(ring->netdev->features & NETIF_F_RXCSUM))
-		return;
+	अगर (!(ring->netdev->features & NETIF_F_RXCSUM))
+		वापस;
 
-	/* check for VXLAN and Geneve packets */
-	if (pkt_info & cpu_to_le16(IXGBE_RXDADV_PKTTYPE_VXLAN)) {
+	/* check क्रम VXLAN and Geneve packets */
+	अगर (pkt_info & cpu_to_le16(IXGBE_RXDADV_PKTTYPE_VXLAN)) अणु
 		encap_pkt = true;
 		skb->encapsulation = 1;
-	}
+	पूर्ण
 
-	/* if IP and error */
-	if (ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_IPCS) &&
-	    ixgbe_test_staterr(rx_desc, IXGBE_RXDADV_ERR_IPE)) {
+	/* अगर IP and error */
+	अगर (ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_IPCS) &&
+	    ixgbe_test_staterr(rx_desc, IXGBE_RXDADV_ERR_IPE)) अणु
 		ring->rx_stats.csum_err++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_L4CS))
-		return;
+	अगर (!ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_L4CS))
+		वापस;
 
-	if (ixgbe_test_staterr(rx_desc, IXGBE_RXDADV_ERR_TCPE)) {
+	अगर (ixgbe_test_staterr(rx_desc, IXGBE_RXDADV_ERR_TCPE)) अणु
 		/*
 		 * 82599 errata, UDP frames with a 0 checksum can be marked as
 		 * checksum errors.
 		 */
-		if ((pkt_info & cpu_to_le16(IXGBE_RXDADV_PKTTYPE_UDP)) &&
+		अगर ((pkt_info & cpu_to_le16(IXGBE_RXDADV_PKTTYPE_UDP)) &&
 		    test_bit(__IXGBE_RX_CSUM_UDP_ZERO_ERR, &ring->state))
-			return;
+			वापस;
 
 		ring->rx_stats.csum_err++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* It must be a TCP or UDP packet with a valid checksum */
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
-	if (encap_pkt) {
-		if (!ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_OUTERIPCS))
-			return;
+	अगर (encap_pkt) अणु
+		अगर (!ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_OUTERIPCS))
+			वापस;
 
-		if (ixgbe_test_staterr(rx_desc, IXGBE_RXDADV_ERR_OUTERIPER)) {
+		अगर (ixgbe_test_staterr(rx_desc, IXGBE_RXDADV_ERR_OUTERIPER)) अणु
 			skb->ip_summed = CHECKSUM_NONE;
-			return;
-		}
+			वापस;
+		पूर्ण
 		/* If we checked the outer header let the stack know */
 		skb->csum_level = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int ixgbe_rx_offset(struct ixgbe_ring *rx_ring)
-{
-	return ring_uses_build_skb(rx_ring) ? IXGBE_SKB_PAD : 0;
-}
+अटल अचिन्हित पूर्णांक ixgbe_rx_offset(काष्ठा ixgbe_ring *rx_ring)
+अणु
+	वापस ring_uses_build_skb(rx_ring) ? IXGBE_SKB_PAD : 0;
+पूर्ण
 
-static bool ixgbe_alloc_mapped_page(struct ixgbe_ring *rx_ring,
-				    struct ixgbe_rx_buffer *bi)
-{
-	struct page *page = bi->page;
+अटल bool ixgbe_alloc_mapped_page(काष्ठा ixgbe_ring *rx_ring,
+				    काष्ठा ixgbe_rx_buffer *bi)
+अणु
+	काष्ठा page *page = bi->page;
 	dma_addr_t dma;
 
-	/* since we are recycling buffers we should seldom need to alloc */
-	if (likely(page))
-		return true;
+	/* since we are recycling buffers we should selकरोm need to alloc */
+	अगर (likely(page))
+		वापस true;
 
-	/* alloc new page for storage */
+	/* alloc new page क्रम storage */
 	page = dev_alloc_pages(ixgbe_rx_pg_order(rx_ring));
-	if (unlikely(!page)) {
+	अगर (unlikely(!page)) अणु
 		rx_ring->rx_stats.alloc_rx_page_failed++;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* map page for use */
+	/* map page क्रम use */
 	dma = dma_map_page_attrs(rx_ring->dev, page, 0,
 				 ixgbe_rx_pg_size(rx_ring),
 				 DMA_FROM_DEVICE,
 				 IXGBE_RX_DMA_ATTR);
 
 	/*
-	 * if mapping failed free memory back to system since
+	 * अगर mapping failed मुक्त memory back to प्रणाली since
 	 * there isn't much point in holding memory we can't use
 	 */
-	if (dma_mapping_error(rx_ring->dev, dma)) {
-		__free_pages(page, ixgbe_rx_pg_order(rx_ring));
+	अगर (dma_mapping_error(rx_ring->dev, dma)) अणु
+		__मुक्त_pages(page, ixgbe_rx_pg_order(rx_ring));
 
 		rx_ring->rx_stats.alloc_rx_page_failed++;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	bi->dma = dma;
 	bi->page = page;
 	bi->page_offset = rx_ring->rx_offset;
-	page_ref_add(page, USHRT_MAX - 1);
-	bi->pagecnt_bias = USHRT_MAX;
+	page_ref_add(page, अच_लघु_उच्च - 1);
+	bi->pagecnt_bias = अच_लघु_उच्च;
 	rx_ring->rx_stats.alloc_rx_page++;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * ixgbe_alloc_rx_buffers - Replace used receive buffers
  * @rx_ring: ring to place buffers on
  * @cleaned_count: number of buffers to replace
  **/
-void ixgbe_alloc_rx_buffers(struct ixgbe_ring *rx_ring, u16 cleaned_count)
-{
-	union ixgbe_adv_rx_desc *rx_desc;
-	struct ixgbe_rx_buffer *bi;
+व्योम ixgbe_alloc_rx_buffers(काष्ठा ixgbe_ring *rx_ring, u16 cleaned_count)
+अणु
+	जोड़ ixgbe_adv_rx_desc *rx_desc;
+	काष्ठा ixgbe_rx_buffer *bi;
 	u16 i = rx_ring->next_to_use;
 	u16 bufsz;
 
-	/* nothing to do */
-	if (!cleaned_count)
-		return;
+	/* nothing to करो */
+	अगर (!cleaned_count)
+		वापस;
 
 	rx_desc = IXGBE_RX_DESC(rx_ring, i);
 	bi = &rx_ring->rx_buffer_info[i];
@@ -1591,71 +1592,71 @@ void ixgbe_alloc_rx_buffers(struct ixgbe_ring *rx_ring, u16 cleaned_count)
 
 	bufsz = ixgbe_rx_bufsz(rx_ring);
 
-	do {
-		if (!ixgbe_alloc_mapped_page(rx_ring, bi))
-			break;
+	करो अणु
+		अगर (!ixgbe_alloc_mapped_page(rx_ring, bi))
+			अवरोध;
 
-		/* sync the buffer for use by the device */
-		dma_sync_single_range_for_device(rx_ring->dev, bi->dma,
+		/* sync the buffer क्रम use by the device */
+		dma_sync_single_range_क्रम_device(rx_ring->dev, bi->dma,
 						 bi->page_offset, bufsz,
 						 DMA_FROM_DEVICE);
 
 		/*
-		 * Refresh the desc even if buffer_addrs didn't change
-		 * because each write-back erases this info.
+		 * Refresh the desc even अगर buffer_addrs didn't change
+		 * because each ग_लिखो-back erases this info.
 		 */
-		rx_desc->read.pkt_addr = cpu_to_le64(bi->dma + bi->page_offset);
+		rx_desc->पढ़ो.pkt_addr = cpu_to_le64(bi->dma + bi->page_offset);
 
 		rx_desc++;
 		bi++;
 		i++;
-		if (unlikely(!i)) {
+		अगर (unlikely(!i)) अणु
 			rx_desc = IXGBE_RX_DESC(rx_ring, 0);
 			bi = rx_ring->rx_buffer_info;
 			i -= rx_ring->count;
-		}
+		पूर्ण
 
-		/* clear the length for the next_to_use descriptor */
+		/* clear the length क्रम the next_to_use descriptor */
 		rx_desc->wb.upper.length = 0;
 
 		cleaned_count--;
-	} while (cleaned_count);
+	पूर्ण जबतक (cleaned_count);
 
 	i += rx_ring->count;
 
-	if (rx_ring->next_to_use != i) {
+	अगर (rx_ring->next_to_use != i) अणु
 		rx_ring->next_to_use = i;
 
 		/* update next to alloc since we have filled the ring */
 		rx_ring->next_to_alloc = i;
 
-		/* Force memory writes to complete before letting h/w
+		/* Force memory ग_लिखोs to complete beक्रमe letting h/w
 		 * know there are new descriptors to fetch.  (Only
-		 * applicable for weak-ordered memory model archs,
+		 * applicable क्रम weak-ordered memory model archs,
 		 * such as IA-64).
 		 */
 		wmb();
-		writel(i, rx_ring->tail);
-	}
-}
+		ग_लिखोl(i, rx_ring->tail);
+	पूर्ण
+पूर्ण
 
-static void ixgbe_set_rsc_gso_size(struct ixgbe_ring *ring,
-				   struct sk_buff *skb)
-{
+अटल व्योम ixgbe_set_rsc_gso_size(काष्ठा ixgbe_ring *ring,
+				   काष्ठा sk_buff *skb)
+अणु
 	u16 hdr_len = skb_headlen(skb);
 
-	/* set gso_size to avoid messing up TCP MSS */
+	/* set gso_size to aव्योम messing up TCP MSS */
 	skb_shinfo(skb)->gso_size = DIV_ROUND_UP((skb->len - hdr_len),
 						 IXGBE_CB(skb)->append_cnt);
 	skb_shinfo(skb)->gso_type = SKB_GSO_TCPV4;
-}
+पूर्ण
 
-static void ixgbe_update_rsc_stats(struct ixgbe_ring *rx_ring,
-				   struct sk_buff *skb)
-{
-	/* if append_cnt is 0 then frame is not RSC */
-	if (!IXGBE_CB(skb)->append_cnt)
-		return;
+अटल व्योम ixgbe_update_rsc_stats(काष्ठा ixgbe_ring *rx_ring,
+				   काष्ठा sk_buff *skb)
+अणु
+	/* अगर append_cnt is 0 then frame is not RSC */
+	अगर (!IXGBE_CB(skb)->append_cnt)
+		वापस;
 
 	rx_ring->rx_stats.rsc_count += IXGBE_CB(skb)->append_cnt;
 	rx_ring->rx_stats.rsc_flush++;
@@ -1664,23 +1665,23 @@ static void ixgbe_update_rsc_stats(struct ixgbe_ring *rx_ring,
 
 	/* gso_size is computed using append_cnt so always clear it last */
 	IXGBE_CB(skb)->append_cnt = 0;
-}
+पूर्ण
 
 /**
  * ixgbe_process_skb_fields - Populate skb header fields from Rx descriptor
  * @rx_ring: rx descriptor ring packet is being transacted on
- * @rx_desc: pointer to the EOP Rx descriptor
- * @skb: pointer to current skb being populated
+ * @rx_desc: poपूर्णांकer to the EOP Rx descriptor
+ * @skb: poपूर्णांकer to current skb being populated
  *
- * This function checks the ring, descriptor, and packet information in
- * order to populate the hash, checksum, VLAN, timestamp, protocol, and
+ * This function checks the ring, descriptor, and packet inक्रमmation in
+ * order to populate the hash, checksum, VLAN, बारtamp, protocol, and
  * other fields within the skb.
  **/
-void ixgbe_process_skb_fields(struct ixgbe_ring *rx_ring,
-			      union ixgbe_adv_rx_desc *rx_desc,
-			      struct sk_buff *skb)
-{
-	struct net_device *dev = rx_ring->netdev;
+व्योम ixgbe_process_skb_fields(काष्ठा ixgbe_ring *rx_ring,
+			      जोड़ ixgbe_adv_rx_desc *rx_desc,
+			      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *dev = rx_ring->netdev;
 	u32 flags = rx_ring->q_vector->adapter->flags;
 
 	ixgbe_update_rsc_stats(rx_ring, skb);
@@ -1689,49 +1690,49 @@ void ixgbe_process_skb_fields(struct ixgbe_ring *rx_ring,
 
 	ixgbe_rx_checksum(rx_ring, rx_desc, skb);
 
-	if (unlikely(flags & IXGBE_FLAG_RX_HWTSTAMP_ENABLED))
+	अगर (unlikely(flags & IXGBE_FLAG_RX_HWTSTAMP_ENABLED))
 		ixgbe_ptp_rx_hwtstamp(rx_ring, rx_desc, skb);
 
-	if ((dev->features & NETIF_F_HW_VLAN_CTAG_RX) &&
-	    ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_VP)) {
+	अगर ((dev->features & NETIF_F_HW_VLAN_CTAG_RX) &&
+	    ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_VP)) अणु
 		u16 vid = le16_to_cpu(rx_desc->wb.upper.vlan);
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vid);
-	}
+	पूर्ण
 
-	if (ixgbe_test_staterr(rx_desc, IXGBE_RXDADV_STAT_SECP))
+	अगर (ixgbe_test_staterr(rx_desc, IXGBE_RXDADV_STAT_SECP))
 		ixgbe_ipsec_rx(rx_ring, rx_desc, skb);
 
 	/* record Rx queue, or update MACVLAN statistics */
-	if (netif_is_ixgbe(dev))
+	अगर (netअगर_is_ixgbe(dev))
 		skb_record_rx_queue(skb, rx_ring->queue_index);
-	else
+	अन्यथा
 		macvlan_count_rx(netdev_priv(dev), skb->len + ETH_HLEN, true,
 				 false);
 
 	skb->protocol = eth_type_trans(skb, dev);
-}
+पूर्ण
 
-void ixgbe_rx_skb(struct ixgbe_q_vector *q_vector,
-		  struct sk_buff *skb)
-{
+व्योम ixgbe_rx_skb(काष्ठा ixgbe_q_vector *q_vector,
+		  काष्ठा sk_buff *skb)
+अणु
 	napi_gro_receive(&q_vector->napi, skb);
-}
+पूर्ण
 
 /**
  * ixgbe_is_non_eop - process handling of non-EOP buffers
  * @rx_ring: Rx ring being processed
- * @rx_desc: Rx descriptor for current buffer
+ * @rx_desc: Rx descriptor क्रम current buffer
  * @skb: Current socket buffer containing buffer in progress
  *
  * This function updates next to clean.  If the buffer is an EOP buffer
- * this function exits returning false, otherwise it will place the
- * sk_buff in the next buffer to be chained and return true indicating
+ * this function निकासs वापसing false, otherwise it will place the
+ * sk_buff in the next buffer to be chained and वापस true indicating
  * that this is in fact a non-EOP buffer.
  **/
-static bool ixgbe_is_non_eop(struct ixgbe_ring *rx_ring,
-			     union ixgbe_adv_rx_desc *rx_desc,
-			     struct sk_buff *skb)
-{
+अटल bool ixgbe_is_non_eop(काष्ठा ixgbe_ring *rx_ring,
+			     जोड़ ixgbe_adv_rx_desc *rx_desc,
+			     काष्ठा sk_buff *skb)
+अणु
 	u32 ntc = rx_ring->next_to_clean + 1;
 
 	/* fetch, update, and store next to clean */
@@ -1740,12 +1741,12 @@ static bool ixgbe_is_non_eop(struct ixgbe_ring *rx_ring,
 
 	prefetch(IXGBE_RX_DESC(rx_ring, ntc));
 
-	/* update RSC append count if present */
-	if (ring_is_rsc_enabled(rx_ring)) {
+	/* update RSC append count अगर present */
+	अगर (ring_is_rsc_enabled(rx_ring)) अणु
 		__le32 rsc_enabled = rx_desc->wb.lower.lo_dword.data &
 				     cpu_to_le32(IXGBE_RXDADV_RSCCNT_MASK);
 
-		if (unlikely(rsc_enabled)) {
+		अगर (unlikely(rsc_enabled)) अणु
 			u32 rsc_cnt = le32_to_cpu(rsc_enabled);
 
 			rsc_cnt >>= IXGBE_RXDADV_RSCCNT_SHIFT;
@@ -1755,38 +1756,38 @@ static bool ixgbe_is_non_eop(struct ixgbe_ring *rx_ring,
 			ntc = le32_to_cpu(rx_desc->wb.upper.status_error);
 			ntc &= IXGBE_RXDADV_NEXTP_MASK;
 			ntc >>= IXGBE_RXDADV_NEXTP_SHIFT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* if we are the last buffer then there is nothing else to do */
-	if (likely(ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_EOP)))
-		return false;
+	/* अगर we are the last buffer then there is nothing अन्यथा to करो */
+	अगर (likely(ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_EOP)))
+		वापस false;
 
 	/* place skb in next buffer to be received */
 	rx_ring->rx_buffer_info[ntc].skb = skb;
 	rx_ring->rx_stats.non_eop_descs++;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * ixgbe_pull_tail - ixgbe specific version of skb_pull_tail
+ * ixgbe_pull_tail - ixgbe specअगरic version of skb_pull_tail
  * @rx_ring: rx descriptor ring packet is being transacted on
- * @skb: pointer to current skb being adjusted
+ * @skb: poपूर्णांकer to current skb being adjusted
  *
- * This function is an ixgbe specific version of __pskb_pull_tail.  The
- * main difference between this version and the original function is that
+ * This function is an ixgbe specअगरic version of __pskb_pull_tail.  The
+ * मुख्य dअगरference between this version and the original function is that
  * this function can make several assumptions about the state of things
- * that allow for significant optimizations versus the standard function.
- * As a result we can do things like drop a frag and maintain an accurate
- * truesize for the skb.
+ * that allow क्रम signअगरicant optimizations versus the standard function.
+ * As a result we can करो things like drop a frag and मुख्यtain an accurate
+ * truesize क्रम the skb.
  */
-static void ixgbe_pull_tail(struct ixgbe_ring *rx_ring,
-			    struct sk_buff *skb)
-{
+अटल व्योम ixgbe_pull_tail(काष्ठा ixgbe_ring *rx_ring,
+			    काष्ठा sk_buff *skb)
+अणु
 	skb_frag_t *frag = &skb_shinfo(skb)->frags[0];
-	unsigned char *va;
-	unsigned int pull_len;
+	अचिन्हित अक्षर *va;
+	अचिन्हित पूर्णांक pull_len;
 
 	/*
 	 * it is valid to use page_address instead of kmap since we are
@@ -1797,131 +1798,131 @@ static void ixgbe_pull_tail(struct ixgbe_ring *rx_ring,
 
 	/*
 	 * we need the header to contain the greater of either ETH_HLEN or
-	 * 60 bytes if the skb->len is less than 60 for skb_pad.
+	 * 60 bytes अगर the skb->len is less than 60 क्रम skb_pad.
 	 */
 	pull_len = eth_get_headlen(skb->dev, va, IXGBE_RX_HDR_SIZE);
 
-	/* align pull length to size of long to optimize memcpy performance */
-	skb_copy_to_linear_data(skb, va, ALIGN(pull_len, sizeof(long)));
+	/* align pull length to size of दीर्घ to optimize स_नकल perक्रमmance */
+	skb_copy_to_linear_data(skb, va, ALIGN(pull_len, माप(दीर्घ)));
 
-	/* update all of the pointers */
+	/* update all of the poपूर्णांकers */
 	skb_frag_size_sub(frag, pull_len);
 	skb_frag_off_add(frag, pull_len);
 	skb->data_len -= pull_len;
 	skb->tail += pull_len;
-}
+पूर्ण
 
 /**
- * ixgbe_dma_sync_frag - perform DMA sync for first frag of SKB
+ * ixgbe_dma_sync_frag - perक्रमm DMA sync क्रम first frag of SKB
  * @rx_ring: rx descriptor ring packet is being transacted on
- * @skb: pointer to current skb being updated
+ * @skb: poपूर्णांकer to current skb being updated
  *
- * This function provides a basic DMA sync up for the first fragment of an
- * skb.  The reason for doing this is that the first fragment cannot be
- * unmapped until we have reached the end of packet descriptor for a buffer
+ * This function provides a basic DMA sync up क्रम the first fragment of an
+ * skb.  The reason क्रम करोing this is that the first fragment cannot be
+ * unmapped until we have reached the end of packet descriptor क्रम a buffer
  * chain.
  */
-static void ixgbe_dma_sync_frag(struct ixgbe_ring *rx_ring,
-				struct sk_buff *skb)
-{
-	if (ring_uses_build_skb(rx_ring)) {
-		unsigned long offset = (unsigned long)(skb->data) & ~PAGE_MASK;
+अटल व्योम ixgbe_dma_sync_frag(काष्ठा ixgbe_ring *rx_ring,
+				काष्ठा sk_buff *skb)
+अणु
+	अगर (ring_uses_build_skb(rx_ring)) अणु
+		अचिन्हित दीर्घ offset = (अचिन्हित दीर्घ)(skb->data) & ~PAGE_MASK;
 
-		dma_sync_single_range_for_cpu(rx_ring->dev,
+		dma_sync_single_range_क्रम_cpu(rx_ring->dev,
 					      IXGBE_CB(skb)->dma,
 					      offset,
 					      skb_headlen(skb),
 					      DMA_FROM_DEVICE);
-	} else {
+	पूर्ण अन्यथा अणु
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[0];
 
-		dma_sync_single_range_for_cpu(rx_ring->dev,
+		dma_sync_single_range_क्रम_cpu(rx_ring->dev,
 					      IXGBE_CB(skb)->dma,
 					      skb_frag_off(frag),
 					      skb_frag_size(frag),
 					      DMA_FROM_DEVICE);
-	}
+	पूर्ण
 
 	/* If the page was released, just unmap it. */
-	if (unlikely(IXGBE_CB(skb)->page_released)) {
+	अगर (unlikely(IXGBE_CB(skb)->page_released)) अणु
 		dma_unmap_page_attrs(rx_ring->dev, IXGBE_CB(skb)->dma,
 				     ixgbe_rx_pg_size(rx_ring),
 				     DMA_FROM_DEVICE,
 				     IXGBE_RX_DMA_ATTR);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ixgbe_cleanup_headers - Correct corrupted or empty headers
  * @rx_ring: rx descriptor ring packet is being transacted on
- * @rx_desc: pointer to the EOP Rx descriptor
- * @skb: pointer to current skb being fixed
+ * @rx_desc: poपूर्णांकer to the EOP Rx descriptor
+ * @skb: poपूर्णांकer to current skb being fixed
  *
- * Check if the skb is valid in the XDP case it will be an error pointer.
- * Return true in this case to abort processing and advance to next
+ * Check अगर the skb is valid in the XDP हाल it will be an error poपूर्णांकer.
+ * Return true in this हाल to पात processing and advance to next
  * descriptor.
  *
- * Check for corrupted packet headers caused by senders on the local L2
- * embedded NIC switch not setting up their Tx Descriptors right.  These
+ * Check क्रम corrupted packet headers caused by senders on the local L2
+ * embedded NIC चयन not setting up their Tx Descriptors right.  These
  * should be very rare.
  *
- * Also address the case where we are pulling data in on pages only
+ * Also address the हाल where we are pulling data in on pages only
  * and as such no data is present in the skb header.
  *
- * In addition if skb is not at least 60 bytes we need to pad it so that
- * it is large enough to qualify as a valid Ethernet frame.
+ * In addition अगर skb is not at least 60 bytes we need to pad it so that
+ * it is large enough to qualअगरy as a valid Ethernet frame.
  *
- * Returns true if an error was encountered and skb was freed.
+ * Returns true अगर an error was encountered and skb was मुक्तd.
  **/
-bool ixgbe_cleanup_headers(struct ixgbe_ring *rx_ring,
-			   union ixgbe_adv_rx_desc *rx_desc,
-			   struct sk_buff *skb)
-{
-	struct net_device *netdev = rx_ring->netdev;
+bool ixgbe_cleanup_headers(काष्ठा ixgbe_ring *rx_ring,
+			   जोड़ ixgbe_adv_rx_desc *rx_desc,
+			   काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *netdev = rx_ring->netdev;
 
-	/* XDP packets use error pointer so abort at this point */
-	if (IS_ERR(skb))
-		return true;
+	/* XDP packets use error poपूर्णांकer so पात at this poपूर्णांक */
+	अगर (IS_ERR(skb))
+		वापस true;
 
-	/* Verify netdev is present, and that packet does not have any
+	/* Verअगरy netdev is present, and that packet करोes not have any
 	 * errors that would be unacceptable to the netdev.
 	 */
-	if (!netdev ||
+	अगर (!netdev ||
 	    (unlikely(ixgbe_test_staterr(rx_desc,
 					 IXGBE_RXDADV_ERR_FRAME_ERR_MASK) &&
-	     !(netdev->features & NETIF_F_RXALL)))) {
-		dev_kfree_skb_any(skb);
-		return true;
-	}
+	     !(netdev->features & NETIF_F_RXALL)))) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस true;
+	पूर्ण
 
 	/* place header in linear portion of buffer */
-	if (!skb_headlen(skb))
+	अगर (!skb_headlen(skb))
 		ixgbe_pull_tail(rx_ring, skb);
 
-#ifdef IXGBE_FCOE
-	/* do not attempt to pad FCoE Frames as this will disrupt DDP */
-	if (ixgbe_rx_is_fcoe(rx_ring, rx_desc))
-		return false;
+#अगर_घोषित IXGBE_FCOE
+	/* करो not attempt to pad FCoE Frames as this will disrupt DDP */
+	अगर (ixgbe_rx_is_fcoe(rx_ring, rx_desc))
+		वापस false;
 
-#endif
-	/* if eth_skb_pad returns an error the skb was freed */
-	if (eth_skb_pad(skb))
-		return true;
+#पूर्ण_अगर
+	/* अगर eth_skb_pad वापसs an error the skb was मुक्तd */
+	अगर (eth_skb_pad(skb))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * ixgbe_reuse_rx_page - page flip buffer and store it back on the ring
  * @rx_ring: rx descriptor ring to store buffers on
- * @old_buff: donor buffer to have page reused
+ * @old_buff: करोnor buffer to have page reused
  *
- * Synchronizes page for reuse by the adapter
+ * Synchronizes page क्रम reuse by the adapter
  **/
-static void ixgbe_reuse_rx_page(struct ixgbe_ring *rx_ring,
-				struct ixgbe_rx_buffer *old_buff)
-{
-	struct ixgbe_rx_buffer *new_buff;
+अटल व्योम ixgbe_reuse_rx_page(काष्ठा ixgbe_ring *rx_ring,
+				काष्ठा ixgbe_rx_buffer *old_buff)
+अणु
+	काष्ठा ixgbe_rx_buffer *new_buff;
 	u16 nta = rx_ring->next_to_alloc;
 
 	new_buff = &rx_ring->rx_buffer_info[nta];
@@ -1931,121 +1932,121 @@ static void ixgbe_reuse_rx_page(struct ixgbe_ring *rx_ring,
 	rx_ring->next_to_alloc = (nta < rx_ring->count) ? nta : 0;
 
 	/* Transfer page from old buffer to new buffer.
-	 * Move each member individually to avoid possible store
-	 * forwarding stalls and unnecessary copy of skb.
+	 * Move each member inभागidually to aव्योम possible store
+	 * क्रमwarding stalls and unnecessary copy of skb.
 	 */
 	new_buff->dma		= old_buff->dma;
 	new_buff->page		= old_buff->page;
 	new_buff->page_offset	= old_buff->page_offset;
 	new_buff->pagecnt_bias	= old_buff->pagecnt_bias;
-}
+पूर्ण
 
-static bool ixgbe_can_reuse_rx_page(struct ixgbe_rx_buffer *rx_buffer,
-				    int rx_buffer_pgcnt)
-{
-	unsigned int pagecnt_bias = rx_buffer->pagecnt_bias;
-	struct page *page = rx_buffer->page;
+अटल bool ixgbe_can_reuse_rx_page(काष्ठा ixgbe_rx_buffer *rx_buffer,
+				    पूर्णांक rx_buffer_pgcnt)
+अणु
+	अचिन्हित पूर्णांक pagecnt_bias = rx_buffer->pagecnt_bias;
+	काष्ठा page *page = rx_buffer->page;
 
-	/* avoid re-using remote and pfmemalloc pages */
-	if (!dev_page_is_reusable(page))
-		return false;
+	/* aव्योम re-using remote and pfmeदो_स्मृति pages */
+	अगर (!dev_page_is_reusable(page))
+		वापस false;
 
-#if (PAGE_SIZE < 8192)
-	/* if we are only owner of page we can reuse it */
-	if (unlikely((rx_buffer_pgcnt - pagecnt_bias) > 1))
-		return false;
-#else
+#अगर (PAGE_SIZE < 8192)
+	/* अगर we are only owner of page we can reuse it */
+	अगर (unlikely((rx_buffer_pgcnt - pagecnt_bias) > 1))
+		वापस false;
+#अन्यथा
 	/* The last offset is a bit aggressive in that we assume the
-	 * worst case of FCoE being enabled and using a 3K buffer.
+	 * worst हाल of FCoE being enabled and using a 3K buffer.
 	 * However this should have minimal impact as the 1K extra is
 	 * still less than one buffer in size.
 	 */
-#define IXGBE_LAST_OFFSET \
+#घोषणा IXGBE_LAST_OFFSET \
 	(SKB_WITH_OVERHEAD(PAGE_SIZE) - IXGBE_RXBUFFER_3K)
-	if (rx_buffer->page_offset > IXGBE_LAST_OFFSET)
-		return false;
-#endif
+	अगर (rx_buffer->page_offset > IXGBE_LAST_OFFSET)
+		वापस false;
+#पूर्ण_अगर
 
 	/* If we have drained the page fragment pool we need to update
 	 * the pagecnt_bias and page count so that we fully restock the
 	 * number of references the driver holds.
 	 */
-	if (unlikely(pagecnt_bias == 1)) {
-		page_ref_add(page, USHRT_MAX - 1);
-		rx_buffer->pagecnt_bias = USHRT_MAX;
-	}
+	अगर (unlikely(pagecnt_bias == 1)) अणु
+		page_ref_add(page, अच_लघु_उच्च - 1);
+		rx_buffer->pagecnt_bias = अच_लघु_उच्च;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * ixgbe_add_rx_frag - Add contents of Rx buffer to sk_buff
  * @rx_ring: rx descriptor ring to transact packets on
  * @rx_buffer: buffer containing page to add
- * @skb: sk_buff to place the data into
+ * @skb: sk_buff to place the data पूर्णांकo
  * @size: size of data in rx_buffer
  *
  * This function will add the data contained in rx_buffer->page to the skb.
- * This is done either through a direct copy if the data in the buffer is
+ * This is करोne either through a direct copy अगर the data in the buffer is
  * less than the skb header size, otherwise it will just attach the page as
  * a frag to the skb.
  *
- * The function will then update the page offset if necessary and return
- * true if the buffer can be reused by the adapter.
+ * The function will then update the page offset अगर necessary and वापस
+ * true अगर the buffer can be reused by the adapter.
  **/
-static void ixgbe_add_rx_frag(struct ixgbe_ring *rx_ring,
-			      struct ixgbe_rx_buffer *rx_buffer,
-			      struct sk_buff *skb,
-			      unsigned int size)
-{
-#if (PAGE_SIZE < 8192)
-	unsigned int truesize = ixgbe_rx_pg_size(rx_ring) / 2;
-#else
-	unsigned int truesize = rx_ring->rx_offset ?
+अटल व्योम ixgbe_add_rx_frag(काष्ठा ixgbe_ring *rx_ring,
+			      काष्ठा ixgbe_rx_buffer *rx_buffer,
+			      काष्ठा sk_buff *skb,
+			      अचिन्हित पूर्णांक size)
+अणु
+#अगर (PAGE_SIZE < 8192)
+	अचिन्हित पूर्णांक truesize = ixgbe_rx_pg_size(rx_ring) / 2;
+#अन्यथा
+	अचिन्हित पूर्णांक truesize = rx_ring->rx_offset ?
 				SKB_DATA_ALIGN(rx_ring->rx_offset + size) :
 				SKB_DATA_ALIGN(size);
-#endif
+#पूर्ण_अगर
 	skb_add_rx_frag(skb, skb_shinfo(skb)->nr_frags, rx_buffer->page,
 			rx_buffer->page_offset, size, truesize);
-#if (PAGE_SIZE < 8192)
+#अगर (PAGE_SIZE < 8192)
 	rx_buffer->page_offset ^= truesize;
-#else
+#अन्यथा
 	rx_buffer->page_offset += truesize;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static struct ixgbe_rx_buffer *ixgbe_get_rx_buffer(struct ixgbe_ring *rx_ring,
-						   union ixgbe_adv_rx_desc *rx_desc,
-						   struct sk_buff **skb,
-						   const unsigned int size,
-						   int *rx_buffer_pgcnt)
-{
-	struct ixgbe_rx_buffer *rx_buffer;
+अटल काष्ठा ixgbe_rx_buffer *ixgbe_get_rx_buffer(काष्ठा ixgbe_ring *rx_ring,
+						   जोड़ ixgbe_adv_rx_desc *rx_desc,
+						   काष्ठा sk_buff **skb,
+						   स्थिर अचिन्हित पूर्णांक size,
+						   पूर्णांक *rx_buffer_pgcnt)
+अणु
+	काष्ठा ixgbe_rx_buffer *rx_buffer;
 
 	rx_buffer = &rx_ring->rx_buffer_info[rx_ring->next_to_clean];
 	*rx_buffer_pgcnt =
-#if (PAGE_SIZE < 8192)
+#अगर (PAGE_SIZE < 8192)
 		page_count(rx_buffer->page);
-#else
+#अन्यथा
 		0;
-#endif
+#पूर्ण_अगर
 	prefetchw(rx_buffer->page);
 	*skb = rx_buffer->skb;
 
 	/* Delay unmapping of the first packet. It carries the header
-	 * information, HW may still access the header after the writeback.
+	 * inक्रमmation, HW may still access the header after the ग_लिखोback.
 	 * Only unmap it when EOP is reached
 	 */
-	if (!ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_EOP)) {
-		if (!*skb)
-			goto skip_sync;
-	} else {
-		if (*skb)
+	अगर (!ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_EOP)) अणु
+		अगर (!*skb)
+			जाओ skip_sync;
+	पूर्ण अन्यथा अणु
+		अगर (*skb)
 			ixgbe_dma_sync_frag(rx_ring, *skb);
-	}
+	पूर्ण
 
-	/* we are reusing so sync this buffer for CPU use */
-	dma_sync_single_range_for_cpu(rx_ring->dev,
+	/* we are reusing so sync this buffer क्रम CPU use */
+	dma_sync_single_range_क्रम_cpu(rx_ring->dev,
 				      rx_buffer->dma,
 				      rx_buffer->page_offset,
 				      size,
@@ -2053,50 +2054,50 @@ static struct ixgbe_rx_buffer *ixgbe_get_rx_buffer(struct ixgbe_ring *rx_ring,
 skip_sync:
 	rx_buffer->pagecnt_bias--;
 
-	return rx_buffer;
-}
+	वापस rx_buffer;
+पूर्ण
 
-static void ixgbe_put_rx_buffer(struct ixgbe_ring *rx_ring,
-				struct ixgbe_rx_buffer *rx_buffer,
-				struct sk_buff *skb,
-				int rx_buffer_pgcnt)
-{
-	if (ixgbe_can_reuse_rx_page(rx_buffer, rx_buffer_pgcnt)) {
+अटल व्योम ixgbe_put_rx_buffer(काष्ठा ixgbe_ring *rx_ring,
+				काष्ठा ixgbe_rx_buffer *rx_buffer,
+				काष्ठा sk_buff *skb,
+				पूर्णांक rx_buffer_pgcnt)
+अणु
+	अगर (ixgbe_can_reuse_rx_page(rx_buffer, rx_buffer_pgcnt)) अणु
 		/* hand second half of page back to the ring */
 		ixgbe_reuse_rx_page(rx_ring, rx_buffer);
-	} else {
-		if (!IS_ERR(skb) && IXGBE_CB(skb)->dma == rx_buffer->dma) {
+	पूर्ण अन्यथा अणु
+		अगर (!IS_ERR(skb) && IXGBE_CB(skb)->dma == rx_buffer->dma) अणु
 			/* the page has been released from the ring */
 			IXGBE_CB(skb)->page_released = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* we are not reusing the buffer so unmap it */
 			dma_unmap_page_attrs(rx_ring->dev, rx_buffer->dma,
 					     ixgbe_rx_pg_size(rx_ring),
 					     DMA_FROM_DEVICE,
 					     IXGBE_RX_DMA_ATTR);
-		}
+		पूर्ण
 		__page_frag_cache_drain(rx_buffer->page,
 					rx_buffer->pagecnt_bias);
-	}
+	पूर्ण
 
 	/* clear contents of rx_buffer */
-	rx_buffer->page = NULL;
-	rx_buffer->skb = NULL;
-}
+	rx_buffer->page = शून्य;
+	rx_buffer->skb = शून्य;
+पूर्ण
 
-static struct sk_buff *ixgbe_construct_skb(struct ixgbe_ring *rx_ring,
-					   struct ixgbe_rx_buffer *rx_buffer,
-					   struct xdp_buff *xdp,
-					   union ixgbe_adv_rx_desc *rx_desc)
-{
-	unsigned int size = xdp->data_end - xdp->data;
-#if (PAGE_SIZE < 8192)
-	unsigned int truesize = ixgbe_rx_pg_size(rx_ring) / 2;
-#else
-	unsigned int truesize = SKB_DATA_ALIGN(xdp->data_end -
+अटल काष्ठा sk_buff *ixgbe_स्थिरruct_skb(काष्ठा ixgbe_ring *rx_ring,
+					   काष्ठा ixgbe_rx_buffer *rx_buffer,
+					   काष्ठा xdp_buff *xdp,
+					   जोड़ ixgbe_adv_rx_desc *rx_desc)
+अणु
+	अचिन्हित पूर्णांक size = xdp->data_end - xdp->data;
+#अगर (PAGE_SIZE < 8192)
+	अचिन्हित पूर्णांक truesize = ixgbe_rx_pg_size(rx_ring) / 2;
+#अन्यथा
+	अचिन्हित पूर्णांक truesize = SKB_DATA_ALIGN(xdp->data_end -
 					       xdp->data_hard_start);
-#endif
-	struct sk_buff *skb;
+#पूर्ण_अगर
+	काष्ठा sk_buff *skb;
 
 	/* prefetch first cache line of first page */
 	net_prefetch(xdp->data);
@@ -2110,56 +2111,56 @@ static struct sk_buff *ixgbe_construct_skb(struct ixgbe_ring *rx_ring,
 	 * packets going to stack via ixgbe_build_skb(). The latter
 	 * provides us currently with 192 bytes of headroom.
 	 *
-	 * For ixgbe_construct_skb() mode it means that the
-	 * xdp->data_meta will always point to xdp->data, since
+	 * For ixgbe_स्थिरruct_skb() mode it means that the
+	 * xdp->data_meta will always poपूर्णांक to xdp->data, since
 	 * the helper cannot expand the head. Should this ever
-	 * change in future for legacy-rx mode on, then lets also
+	 * change in future क्रम legacy-rx mode on, then lets also
 	 * add xdp->data_meta handling here.
 	 */
 
 	/* allocate a skb to store the frags */
 	skb = napi_alloc_skb(&rx_ring->q_vector->napi, IXGBE_RX_HDR_SIZE);
-	if (unlikely(!skb))
-		return NULL;
+	अगर (unlikely(!skb))
+		वापस शून्य;
 
-	if (size > IXGBE_RX_HDR_SIZE) {
-		if (!ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_EOP))
+	अगर (size > IXGBE_RX_HDR_SIZE) अणु
+		अगर (!ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_EOP))
 			IXGBE_CB(skb)->dma = rx_buffer->dma;
 
 		skb_add_rx_frag(skb, 0, rx_buffer->page,
 				xdp->data - page_address(rx_buffer->page),
 				size, truesize);
-#if (PAGE_SIZE < 8192)
+#अगर (PAGE_SIZE < 8192)
 		rx_buffer->page_offset ^= truesize;
-#else
+#अन्यथा
 		rx_buffer->page_offset += truesize;
-#endif
-	} else {
-		memcpy(__skb_put(skb, size),
-		       xdp->data, ALIGN(size, sizeof(long)));
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
+		स_नकल(__skb_put(skb, size),
+		       xdp->data, ALIGN(size, माप(दीर्घ)));
 		rx_buffer->pagecnt_bias++;
-	}
+	पूर्ण
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *ixgbe_build_skb(struct ixgbe_ring *rx_ring,
-				       struct ixgbe_rx_buffer *rx_buffer,
-				       struct xdp_buff *xdp,
-				       union ixgbe_adv_rx_desc *rx_desc)
-{
-	unsigned int metasize = xdp->data - xdp->data_meta;
-#if (PAGE_SIZE < 8192)
-	unsigned int truesize = ixgbe_rx_pg_size(rx_ring) / 2;
-#else
-	unsigned int truesize = SKB_DATA_ALIGN(sizeof(struct skb_shared_info)) +
+अटल काष्ठा sk_buff *ixgbe_build_skb(काष्ठा ixgbe_ring *rx_ring,
+				       काष्ठा ixgbe_rx_buffer *rx_buffer,
+				       काष्ठा xdp_buff *xdp,
+				       जोड़ ixgbe_adv_rx_desc *rx_desc)
+अणु
+	अचिन्हित पूर्णांक metasize = xdp->data - xdp->data_meta;
+#अगर (PAGE_SIZE < 8192)
+	अचिन्हित पूर्णांक truesize = ixgbe_rx_pg_size(rx_ring) / 2;
+#अन्यथा
+	अचिन्हित पूर्णांक truesize = SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info)) +
 				SKB_DATA_ALIGN(xdp->data_end -
 					       xdp->data_hard_start);
-#endif
-	struct sk_buff *skb;
+#पूर्ण_अगर
+	काष्ठा sk_buff *skb;
 
 	/* Prefetch first cache line of first page. If xdp->data_meta
-	 * is unused, this points extactly as xdp->data, otherwise we
+	 * is unused, this poपूर्णांकs extactly as xdp->data, otherwise we
 	 * likely have a consumer accessing first few bytes of meta
 	 * data, and then actual data.
 	 */
@@ -2167,161 +2168,161 @@ static struct sk_buff *ixgbe_build_skb(struct ixgbe_ring *rx_ring,
 
 	/* build an skb to around the page buffer */
 	skb = build_skb(xdp->data_hard_start, truesize);
-	if (unlikely(!skb))
-		return NULL;
+	अगर (unlikely(!skb))
+		वापस शून्य;
 
-	/* update pointers within the skb to store the data */
+	/* update poपूर्णांकers within the skb to store the data */
 	skb_reserve(skb, xdp->data - xdp->data_hard_start);
 	__skb_put(skb, xdp->data_end - xdp->data);
-	if (metasize)
+	अगर (metasize)
 		skb_metadata_set(skb, metasize);
 
-	/* record DMA address if this is the start of a chain of buffers */
-	if (!ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_EOP))
+	/* record DMA address अगर this is the start of a chain of buffers */
+	अगर (!ixgbe_test_staterr(rx_desc, IXGBE_RXD_STAT_EOP))
 		IXGBE_CB(skb)->dma = rx_buffer->dma;
 
 	/* update buffer offset */
-#if (PAGE_SIZE < 8192)
+#अगर (PAGE_SIZE < 8192)
 	rx_buffer->page_offset ^= truesize;
-#else
+#अन्यथा
 	rx_buffer->page_offset += truesize;
-#endif
+#पूर्ण_अगर
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *ixgbe_run_xdp(struct ixgbe_adapter *adapter,
-				     struct ixgbe_ring *rx_ring,
-				     struct xdp_buff *xdp)
-{
-	int err, result = IXGBE_XDP_PASS;
-	struct bpf_prog *xdp_prog;
-	struct xdp_frame *xdpf;
+अटल काष्ठा sk_buff *ixgbe_run_xdp(काष्ठा ixgbe_adapter *adapter,
+				     काष्ठा ixgbe_ring *rx_ring,
+				     काष्ठा xdp_buff *xdp)
+अणु
+	पूर्णांक err, result = IXGBE_XDP_PASS;
+	काष्ठा bpf_prog *xdp_prog;
+	काष्ठा xdp_frame *xdpf;
 	u32 act;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	xdp_prog = READ_ONCE(rx_ring->xdp_prog);
 
-	if (!xdp_prog)
-		goto xdp_out;
+	अगर (!xdp_prog)
+		जाओ xdp_out;
 
-	prefetchw(xdp->data_hard_start); /* xdp_frame write */
+	prefetchw(xdp->data_hard_start); /* xdp_frame ग_लिखो */
 
 	act = bpf_prog_run_xdp(xdp_prog, xdp);
-	switch (act) {
-	case XDP_PASS:
-		break;
-	case XDP_TX:
+	चयन (act) अणु
+	हाल XDP_PASS:
+		अवरोध;
+	हाल XDP_TX:
 		xdpf = xdp_convert_buff_to_frame(xdp);
-		if (unlikely(!xdpf))
-			goto out_failure;
+		अगर (unlikely(!xdpf))
+			जाओ out_failure;
 		result = ixgbe_xmit_xdp_ring(adapter, xdpf);
-		if (result == IXGBE_XDP_CONSUMED)
-			goto out_failure;
-		break;
-	case XDP_REDIRECT:
-		err = xdp_do_redirect(adapter->netdev, xdp, xdp_prog);
-		if (err)
-			goto out_failure;
-		result = IXGBE_XDP_REDIR;
-		break;
-	default:
+		अगर (result == IXGBE_XDP_CONSUMED)
+			जाओ out_failure;
+		अवरोध;
+	हाल XDP_REसूचीECT:
+		err = xdp_करो_redirect(adapter->netdev, xdp, xdp_prog);
+		अगर (err)
+			जाओ out_failure;
+		result = IXGBE_XDP_REसूची;
+		अवरोध;
+	शेष:
 		bpf_warn_invalid_xdp_action(act);
 		fallthrough;
-	case XDP_ABORTED:
+	हाल XDP_ABORTED:
 out_failure:
 		trace_xdp_exception(rx_ring->netdev, xdp_prog, act);
-		fallthrough; /* handle aborts by dropping packet */
-	case XDP_DROP:
+		fallthrough; /* handle पातs by dropping packet */
+	हाल XDP_DROP:
 		result = IXGBE_XDP_CONSUMED;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 xdp_out:
-	rcu_read_unlock();
-	return ERR_PTR(-result);
-}
+	rcu_पढ़ो_unlock();
+	वापस ERR_PTR(-result);
+पूर्ण
 
-static unsigned int ixgbe_rx_frame_truesize(struct ixgbe_ring *rx_ring,
-					    unsigned int size)
-{
-	unsigned int truesize;
+अटल अचिन्हित पूर्णांक ixgbe_rx_frame_truesize(काष्ठा ixgbe_ring *rx_ring,
+					    अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक truesize;
 
-#if (PAGE_SIZE < 8192)
-	truesize = ixgbe_rx_pg_size(rx_ring) / 2; /* Must be power-of-2 */
-#else
+#अगर (PAGE_SIZE < 8192)
+	truesize = ixgbe_rx_pg_size(rx_ring) / 2; /* Must be घातer-of-2 */
+#अन्यथा
 	truesize = rx_ring->rx_offset ?
 		SKB_DATA_ALIGN(rx_ring->rx_offset + size) +
-		SKB_DATA_ALIGN(sizeof(struct skb_shared_info)) :
+		SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info)) :
 		SKB_DATA_ALIGN(size);
-#endif
-	return truesize;
-}
+#पूर्ण_अगर
+	वापस truesize;
+पूर्ण
 
-static void ixgbe_rx_buffer_flip(struct ixgbe_ring *rx_ring,
-				 struct ixgbe_rx_buffer *rx_buffer,
-				 unsigned int size)
-{
-	unsigned int truesize = ixgbe_rx_frame_truesize(rx_ring, size);
-#if (PAGE_SIZE < 8192)
+अटल व्योम ixgbe_rx_buffer_flip(काष्ठा ixgbe_ring *rx_ring,
+				 काष्ठा ixgbe_rx_buffer *rx_buffer,
+				 अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक truesize = ixgbe_rx_frame_truesize(rx_ring, size);
+#अगर (PAGE_SIZE < 8192)
 	rx_buffer->page_offset ^= truesize;
-#else
+#अन्यथा
 	rx_buffer->page_offset += truesize;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /**
  * ixgbe_clean_rx_irq - Clean completed descriptors from Rx ring - bounce buf
- * @q_vector: structure containing interrupt and ring information
+ * @q_vector: काष्ठाure containing पूर्णांकerrupt and ring inक्रमmation
  * @rx_ring: rx descriptor ring to transact packets on
  * @budget: Total limit on number of packets to process
  *
- * This function provides a "bounce buffer" approach to Rx interrupt
- * processing.  The advantage to this is that on systems that have
- * expensive overhead for IOMMU access this provides a means of avoiding
- * it by maintaining the mapping of the page to the syste.
+ * This function provides a "bounce buffer" approach to Rx पूर्णांकerrupt
+ * processing.  The advantage to this is that on प्रणालीs that have
+ * expensive overhead क्रम IOMMU access this provides a means of aव्योमing
+ * it by मुख्यtaining the mapping of the page to the syste.
  *
  * Returns amount of work completed
  **/
-static int ixgbe_clean_rx_irq(struct ixgbe_q_vector *q_vector,
-			       struct ixgbe_ring *rx_ring,
-			       const int budget)
-{
-	unsigned int total_rx_bytes = 0, total_rx_packets = 0, frame_sz = 0;
-	struct ixgbe_adapter *adapter = q_vector->adapter;
-#ifdef IXGBE_FCOE
-	int ddp_bytes;
-	unsigned int mss = 0;
-#endif /* IXGBE_FCOE */
+अटल पूर्णांक ixgbe_clean_rx_irq(काष्ठा ixgbe_q_vector *q_vector,
+			       काष्ठा ixgbe_ring *rx_ring,
+			       स्थिर पूर्णांक budget)
+अणु
+	अचिन्हित पूर्णांक total_rx_bytes = 0, total_rx_packets = 0, frame_sz = 0;
+	काष्ठा ixgbe_adapter *adapter = q_vector->adapter;
+#अगर_घोषित IXGBE_FCOE
+	पूर्णांक ddp_bytes;
+	अचिन्हित पूर्णांक mss = 0;
+#पूर्ण_अगर /* IXGBE_FCOE */
 	u16 cleaned_count = ixgbe_desc_unused(rx_ring);
-	unsigned int offset = rx_ring->rx_offset;
-	unsigned int xdp_xmit = 0;
-	struct xdp_buff xdp;
+	अचिन्हित पूर्णांक offset = rx_ring->rx_offset;
+	अचिन्हित पूर्णांक xdp_xmit = 0;
+	काष्ठा xdp_buff xdp;
 
 	/* Frame size depend on rx_ring setup when PAGE_SIZE=4K */
-#if (PAGE_SIZE < 8192)
+#अगर (PAGE_SIZE < 8192)
 	frame_sz = ixgbe_rx_frame_truesize(rx_ring, 0);
-#endif
+#पूर्ण_अगर
 	xdp_init_buff(&xdp, frame_sz, &rx_ring->xdp_rxq);
 
-	while (likely(total_rx_packets < budget)) {
-		union ixgbe_adv_rx_desc *rx_desc;
-		struct ixgbe_rx_buffer *rx_buffer;
-		struct sk_buff *skb;
-		int rx_buffer_pgcnt;
-		unsigned int size;
+	जबतक (likely(total_rx_packets < budget)) अणु
+		जोड़ ixgbe_adv_rx_desc *rx_desc;
+		काष्ठा ixgbe_rx_buffer *rx_buffer;
+		काष्ठा sk_buff *skb;
+		पूर्णांक rx_buffer_pgcnt;
+		अचिन्हित पूर्णांक size;
 
-		/* return some buffers to hardware, one at a time is too slow */
-		if (cleaned_count >= IXGBE_RX_BUFFER_WRITE) {
+		/* वापस some buffers to hardware, one at a समय is too slow */
+		अगर (cleaned_count >= IXGBE_RX_BUFFER_WRITE) अणु
 			ixgbe_alloc_rx_buffers(rx_ring, cleaned_count);
 			cleaned_count = 0;
-		}
+		पूर्ण
 
 		rx_desc = IXGBE_RX_DESC(rx_ring, rx_ring->next_to_clean);
 		size = le16_to_cpu(rx_desc->wb.upper.length);
-		if (!size)
-			break;
+		अगर (!size)
+			अवरोध;
 
-		/* This memory barrier is needed to keep us from reading
+		/* This memory barrier is needed to keep us from पढ़ोing
 		 * any other fields out of the rx_desc until we know the
 		 * descriptor has been written back
 		 */
@@ -2330,107 +2331,107 @@ static int ixgbe_clean_rx_irq(struct ixgbe_q_vector *q_vector,
 		rx_buffer = ixgbe_get_rx_buffer(rx_ring, rx_desc, &skb, size, &rx_buffer_pgcnt);
 
 		/* retrieve a buffer from the ring */
-		if (!skb) {
-			unsigned char *hard_start;
+		अगर (!skb) अणु
+			अचिन्हित अक्षर *hard_start;
 
 			hard_start = page_address(rx_buffer->page) +
 				     rx_buffer->page_offset - offset;
 			xdp_prepare_buff(&xdp, hard_start, offset, size, true);
-#if (PAGE_SIZE > 4096)
+#अगर (PAGE_SIZE > 4096)
 			/* At larger PAGE_SIZE, frame_sz depend on len size */
 			xdp.frame_sz = ixgbe_rx_frame_truesize(rx_ring, size);
-#endif
+#पूर्ण_अगर
 			skb = ixgbe_run_xdp(adapter, rx_ring, &xdp);
-		}
+		पूर्ण
 
-		if (IS_ERR(skb)) {
-			unsigned int xdp_res = -PTR_ERR(skb);
+		अगर (IS_ERR(skb)) अणु
+			अचिन्हित पूर्णांक xdp_res = -PTR_ERR(skb);
 
-			if (xdp_res & (IXGBE_XDP_TX | IXGBE_XDP_REDIR)) {
+			अगर (xdp_res & (IXGBE_XDP_TX | IXGBE_XDP_REसूची)) अणु
 				xdp_xmit |= xdp_res;
 				ixgbe_rx_buffer_flip(rx_ring, rx_buffer, size);
-			} else {
+			पूर्ण अन्यथा अणु
 				rx_buffer->pagecnt_bias++;
-			}
+			पूर्ण
 			total_rx_packets++;
 			total_rx_bytes += size;
-		} else if (skb) {
+		पूर्ण अन्यथा अगर (skb) अणु
 			ixgbe_add_rx_frag(rx_ring, rx_buffer, skb, size);
-		} else if (ring_uses_build_skb(rx_ring)) {
+		पूर्ण अन्यथा अगर (ring_uses_build_skb(rx_ring)) अणु
 			skb = ixgbe_build_skb(rx_ring, rx_buffer,
 					      &xdp, rx_desc);
-		} else {
-			skb = ixgbe_construct_skb(rx_ring, rx_buffer,
+		पूर्ण अन्यथा अणु
+			skb = ixgbe_स्थिरruct_skb(rx_ring, rx_buffer,
 						  &xdp, rx_desc);
-		}
+		पूर्ण
 
-		/* exit if we failed to retrieve a buffer */
-		if (!skb) {
+		/* निकास अगर we failed to retrieve a buffer */
+		अगर (!skb) अणु
 			rx_ring->rx_stats.alloc_rx_buff_failed++;
 			rx_buffer->pagecnt_bias++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ixgbe_put_rx_buffer(rx_ring, rx_buffer, skb, rx_buffer_pgcnt);
 		cleaned_count++;
 
-		/* place incomplete frames back on ring for completion */
-		if (ixgbe_is_non_eop(rx_ring, rx_desc, skb))
-			continue;
+		/* place incomplete frames back on ring क्रम completion */
+		अगर (ixgbe_is_non_eop(rx_ring, rx_desc, skb))
+			जारी;
 
-		/* verify the packet layout is correct */
-		if (ixgbe_cleanup_headers(rx_ring, rx_desc, skb))
-			continue;
+		/* verअगरy the packet layout is correct */
+		अगर (ixgbe_cleanup_headers(rx_ring, rx_desc, skb))
+			जारी;
 
 		/* probably a little skewed due to removing CRC */
 		total_rx_bytes += skb->len;
 
-		/* populate checksum, timestamp, VLAN, and protocol */
+		/* populate checksum, बारtamp, VLAN, and protocol */
 		ixgbe_process_skb_fields(rx_ring, rx_desc, skb);
 
-#ifdef IXGBE_FCOE
-		/* if ddp, not passing to ULD unless for FCP_RSP or error */
-		if (ixgbe_rx_is_fcoe(rx_ring, rx_desc)) {
+#अगर_घोषित IXGBE_FCOE
+		/* अगर ddp, not passing to ULD unless क्रम FCP_RSP or error */
+		अगर (ixgbe_rx_is_fcoe(rx_ring, rx_desc)) अणु
 			ddp_bytes = ixgbe_fcoe_ddp(adapter, rx_desc, skb);
 			/* include DDPed FCoE data */
-			if (ddp_bytes > 0) {
-				if (!mss) {
+			अगर (ddp_bytes > 0) अणु
+				अगर (!mss) अणु
 					mss = rx_ring->netdev->mtu -
-						sizeof(struct fcoe_hdr) -
-						sizeof(struct fc_frame_header) -
-						sizeof(struct fcoe_crc_eof);
-					if (mss > 512)
+						माप(काष्ठा fcoe_hdr) -
+						माप(काष्ठा fc_frame_header) -
+						माप(काष्ठा fcoe_crc_eof);
+					अगर (mss > 512)
 						mss &= ~511;
-				}
+				पूर्ण
 				total_rx_bytes += ddp_bytes;
 				total_rx_packets += DIV_ROUND_UP(ddp_bytes,
 								 mss);
-			}
-			if (!ddp_bytes) {
-				dev_kfree_skb_any(skb);
-				continue;
-			}
-		}
+			पूर्ण
+			अगर (!ddp_bytes) अणु
+				dev_kमुक्त_skb_any(skb);
+				जारी;
+			पूर्ण
+		पूर्ण
 
-#endif /* IXGBE_FCOE */
+#पूर्ण_अगर /* IXGBE_FCOE */
 		ixgbe_rx_skb(q_vector, skb);
 
 		/* update budget accounting */
 		total_rx_packets++;
-	}
+	पूर्ण
 
-	if (xdp_xmit & IXGBE_XDP_REDIR)
-		xdp_do_flush_map();
+	अगर (xdp_xmit & IXGBE_XDP_REसूची)
+		xdp_करो_flush_map();
 
-	if (xdp_xmit & IXGBE_XDP_TX) {
-		struct ixgbe_ring *ring = adapter->xdp_ring[smp_processor_id()];
+	अगर (xdp_xmit & IXGBE_XDP_TX) अणु
+		काष्ठा ixgbe_ring *ring = adapter->xdp_ring[smp_processor_id()];
 
-		/* Force memory writes to complete before letting h/w
+		/* Force memory ग_लिखोs to complete beक्रमe letting h/w
 		 * know there are new descriptors to fetch.
 		 */
 		wmb();
-		writel(ring->next_to_use, ring->tail);
-	}
+		ग_लिखोl(ring->next_to_use, ring->tail);
+	पूर्ण
 
 	u64_stats_update_begin(&rx_ring->syncp);
 	rx_ring->stats.packets += total_rx_packets;
@@ -2439,123 +2440,123 @@ static int ixgbe_clean_rx_irq(struct ixgbe_q_vector *q_vector,
 	q_vector->rx.total_packets += total_rx_packets;
 	q_vector->rx.total_bytes += total_rx_bytes;
 
-	return total_rx_packets;
-}
+	वापस total_rx_packets;
+पूर्ण
 
 /**
  * ixgbe_configure_msix - Configure MSI-X hardware
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  *
  * ixgbe_configure_msix sets up the hardware to properly generate MSI-X
- * interrupts.
+ * पूर्णांकerrupts.
  **/
-static void ixgbe_configure_msix(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_q_vector *q_vector;
-	int v_idx;
+अटल व्योम ixgbe_configure_msix(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_q_vector *q_vector;
+	पूर्णांक v_idx;
 	u32 mask;
 
 	/* Populate MSIX to EITR Select */
-	if (adapter->num_vfs > 32) {
+	अगर (adapter->num_vfs > 32) अणु
 		u32 eitrsel = BIT(adapter->num_vfs - 32) - 1;
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITRSEL, eitrsel);
-	}
+	पूर्ण
 
 	/*
 	 * Populate the IVAR table and set the ITR values to the
-	 * corresponding register.
+	 * corresponding रेजिस्टर.
 	 */
-	for (v_idx = 0; v_idx < adapter->num_q_vectors; v_idx++) {
-		struct ixgbe_ring *ring;
+	क्रम (v_idx = 0; v_idx < adapter->num_q_vectors; v_idx++) अणु
+		काष्ठा ixgbe_ring *ring;
 		q_vector = adapter->q_vector[v_idx];
 
-		ixgbe_for_each_ring(ring, q_vector->rx)
+		ixgbe_क्रम_each_ring(ring, q_vector->rx)
 			ixgbe_set_ivar(adapter, 0, ring->reg_idx, v_idx);
 
-		ixgbe_for_each_ring(ring, q_vector->tx)
+		ixgbe_क्रम_each_ring(ring, q_vector->tx)
 			ixgbe_set_ivar(adapter, 1, ring->reg_idx, v_idx);
 
-		ixgbe_write_eitr(q_vector);
-	}
+		ixgbe_ग_लिखो_eitr(q_vector);
+	पूर्ण
 
-	switch (adapter->hw.mac.type) {
-	case ixgbe_mac_82598EB:
+	चयन (adapter->hw.mac.type) अणु
+	हाल ixgbe_mac_82598EB:
 		ixgbe_set_ivar(adapter, -1, IXGBE_IVAR_OTHER_CAUSES_INDEX,
 			       v_idx);
-		break;
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
+		अवरोध;
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
 		ixgbe_set_ivar(adapter, -1, 1, v_idx);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITR(v_idx), 1950);
 
-	/* set up to autoclear timer, and the vectors */
+	/* set up to स्वतःclear समयr, and the vectors */
 	mask = IXGBE_EIMS_ENABLE_MASK;
 	mask &= ~(IXGBE_EIMS_OTHER |
 		  IXGBE_EIMS_MAILBOX |
 		  IXGBE_EIMS_LSC);
 
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIAC, mask);
-}
+पूर्ण
 
 /**
  * ixgbe_update_itr - update the dynamic ITR value based on statistics
- * @q_vector: structure containing interrupt and ring information
- * @ring_container: structure containing ring performance data
+ * @q_vector: काष्ठाure containing पूर्णांकerrupt and ring inक्रमmation
+ * @ring_container: काष्ठाure containing ring perक्रमmance data
  *
  *      Stores a new ITR value based on packets and byte
- *      counts during the last interrupt.  The advantage of per interrupt
- *      computation is faster updates and more accurate ITR for the current
+ *      counts during the last पूर्णांकerrupt.  The advantage of per पूर्णांकerrupt
+ *      computation is faster updates and more accurate ITR क्रम the current
  *      traffic pattern.  Constants in this function were computed
  *      based on theoretical maximum wire speed and thresholds were set based
- *      on testing data as well as attempting to minimize response time
- *      while increasing bulk throughput.
+ *      on testing data as well as attempting to minimize response समय
+ *      जबतक increasing bulk throughput.
  **/
-static void ixgbe_update_itr(struct ixgbe_q_vector *q_vector,
-			     struct ixgbe_ring_container *ring_container)
-{
-	unsigned int itr = IXGBE_ITR_ADAPTIVE_MIN_USECS |
+अटल व्योम ixgbe_update_itr(काष्ठा ixgbe_q_vector *q_vector,
+			     काष्ठा ixgbe_ring_container *ring_container)
+अणु
+	अचिन्हित पूर्णांक itr = IXGBE_ITR_ADAPTIVE_MIN_USECS |
 			   IXGBE_ITR_ADAPTIVE_LATENCY;
-	unsigned int avg_wire_size, packets, bytes;
-	unsigned long next_update = jiffies;
+	अचिन्हित पूर्णांक avg_wire_size, packets, bytes;
+	अचिन्हित दीर्घ next_update = jअगरfies;
 
-	/* If we don't have any rings just leave ourselves set for maximum
+	/* If we करोn't have any rings just leave ourselves set क्रम maximum
 	 * possible latency so we take ourselves out of the equation.
 	 */
-	if (!ring_container->ring)
-		return;
+	अगर (!ring_container->ring)
+		वापस;
 
-	/* If we didn't update within up to 1 - 2 jiffies we can assume
+	/* If we didn't update within up to 1 - 2 jअगरfies we can assume
 	 * that either packets are coming in so slow there hasn't been
 	 * any work, or that there is so much work that NAPI is dealing
-	 * with interrupt moderation and we don't need to do anything.
+	 * with पूर्णांकerrupt moderation and we करोn't need to करो anything.
 	 */
-	if (time_after(next_update, ring_container->next_update))
-		goto clear_counts;
+	अगर (समय_after(next_update, ring_container->next_update))
+		जाओ clear_counts;
 
 	packets = ring_container->total_packets;
 
 	/* We have no packets to actually measure against. This means
 	 * either one of the other queues on this vector is active or
-	 * we are a Tx queue doing TSO with too high of an interrupt rate.
+	 * we are a Tx queue करोing TSO with too high of an पूर्णांकerrupt rate.
 	 *
 	 * When this occurs just tick up our delay by the minimum value
 	 * and hope that this extra delay will prevent us from being called
 	 * without any work on our queue.
 	 */
-	if (!packets) {
+	अगर (!packets) अणु
 		itr = (q_vector->itr >> 2) + IXGBE_ITR_ADAPTIVE_MIN_INC;
-		if (itr > IXGBE_ITR_ADAPTIVE_MAX_USECS)
+		अगर (itr > IXGBE_ITR_ADAPTIVE_MAX_USECS)
 			itr = IXGBE_ITR_ADAPTIVE_MAX_USECS;
 		itr += ring_container->itr & IXGBE_ITR_ADAPTIVE_LATENCY;
-		goto clear_counts;
-	}
+		जाओ clear_counts;
+	पूर्ण
 
 	bytes = ring_container->total_bytes;
 
@@ -2563,45 +2564,45 @@ static void ixgbe_update_itr(struct ixgbe_q_vector *q_vector,
 	 * insufficient data to use bulk rate limiting approach. We are
 	 * likely latency driven.
 	 */
-	if (packets < 4 && bytes < 9000) {
+	अगर (packets < 4 && bytes < 9000) अणु
 		itr = IXGBE_ITR_ADAPTIVE_LATENCY;
-		goto adjust_by_size;
-	}
+		जाओ adjust_by_size;
+	पूर्ण
 
-	/* Between 4 and 48 we can assume that our current interrupt delay
+	/* Between 4 and 48 we can assume that our current पूर्णांकerrupt delay
 	 * is only slightly too low. As such we should increase it by a small
 	 * fixed amount.
 	 */
-	if (packets < 48) {
+	अगर (packets < 48) अणु
 		itr = (q_vector->itr >> 2) + IXGBE_ITR_ADAPTIVE_MIN_INC;
-		if (itr > IXGBE_ITR_ADAPTIVE_MAX_USECS)
+		अगर (itr > IXGBE_ITR_ADAPTIVE_MAX_USECS)
 			itr = IXGBE_ITR_ADAPTIVE_MAX_USECS;
-		goto clear_counts;
-	}
+		जाओ clear_counts;
+	पूर्ण
 
 	/* Between 48 and 96 is our "goldilocks" zone where we are working
-	 * out "just right". Just report that our current ITR is good for us.
+	 * out "just right". Just report that our current ITR is good क्रम us.
 	 */
-	if (packets < 96) {
+	अगर (packets < 96) अणु
 		itr = q_vector->itr >> 2;
-		goto clear_counts;
-	}
+		जाओ clear_counts;
+	पूर्ण
 
 	/* If packet count is 96 or greater we are likely looking at a slight
-	 * overrun of the delay we want. Try halving our delay to see if that
-	 * will cut the number of packets in half per interrupt.
+	 * overrun of the delay we want. Try halving our delay to see अगर that
+	 * will cut the number of packets in half per पूर्णांकerrupt.
 	 */
-	if (packets < 256) {
+	अगर (packets < 256) अणु
 		itr = q_vector->itr >> 3;
-		if (itr < IXGBE_ITR_ADAPTIVE_MIN_USECS)
+		अगर (itr < IXGBE_ITR_ADAPTIVE_MIN_USECS)
 			itr = IXGBE_ITR_ADAPTIVE_MIN_USECS;
-		goto clear_counts;
-	}
+		जाओ clear_counts;
+	पूर्ण
 
 	/* The paths below assume we are dealing with a bulk ITR since number
 	 * of packets is 256 or greater. We are just going to have to compute
-	 * a value and try to bring the count under control, though for smaller
-	 * packet sizes there isn't much we can do as NAPI polling will likely
+	 * a value and try to bring the count under control, though क्रम smaller
+	 * packet sizes there isn't much we can करो as NAPI polling will likely
 	 * be kicking in sooner rather than later.
 	 */
 	itr = IXGBE_ITR_ADAPTIVE_BULK;
@@ -2609,128 +2610,128 @@ static void ixgbe_update_itr(struct ixgbe_q_vector *q_vector,
 adjust_by_size:
 	/* If packet counts are 256 or greater we can assume we have a gross
 	 * overestimation of what the rate should be. Instead of trying to fine
-	 * tune it just use the formula below to try and dial in an exact value
+	 * tune it just use the क्रमmula below to try and dial in an exact value
 	 * give the current packet size of the frame.
 	 */
 	avg_wire_size = bytes / packets;
 
 	/* The following is a crude approximation of:
-	 *  wmem_default / (size + overhead) = desired_pkts_per_int
+	 *  wmem_शेष / (size + overhead) = desired_pkts_per_पूर्णांक
 	 *  rate / bits_per_byte / (size + ethernet overhead) = pkt_rate
 	 *  (desired_pkt_rate / pkt_rate) * usecs_per_sec = ITR value
 	 *
-	 * Assuming wmem_default is 212992 and overhead is 640 bytes per
+	 * Assuming wmem_शेष is 212992 and overhead is 640 bytes per
 	 * packet, (256 skb, 64 headroom, 320 shared info), we can reduce the
-	 * formula down to
+	 * क्रमmula करोwn to
 	 *
 	 *  (170 * (size + 24)) / (size + 640) = ITR
 	 *
-	 * We first do some math on the packet size and then finally bitshift
-	 * by 8 after rounding up. We also have to account for PCIe link speed
-	 * difference as ITR scales based on this.
+	 * We first करो some math on the packet size and then finally bitshअगरt
+	 * by 8 after rounding up. We also have to account क्रम PCIe link speed
+	 * dअगरference as ITR scales based on this.
 	 */
-	if (avg_wire_size <= 60) {
-		/* Start at 50k ints/sec */
+	अगर (avg_wire_size <= 60) अणु
+		/* Start at 50k पूर्णांकs/sec */
 		avg_wire_size = 5120;
-	} else if (avg_wire_size <= 316) {
-		/* 50K ints/sec to 16K ints/sec */
+	पूर्ण अन्यथा अगर (avg_wire_size <= 316) अणु
+		/* 50K पूर्णांकs/sec to 16K पूर्णांकs/sec */
 		avg_wire_size *= 40;
 		avg_wire_size += 2720;
-	} else if (avg_wire_size <= 1084) {
-		/* 16K ints/sec to 9.2K ints/sec */
+	पूर्ण अन्यथा अगर (avg_wire_size <= 1084) अणु
+		/* 16K पूर्णांकs/sec to 9.2K पूर्णांकs/sec */
 		avg_wire_size *= 15;
 		avg_wire_size += 11452;
-	} else if (avg_wire_size < 1968) {
-		/* 9.2K ints/sec to 8K ints/sec */
+	पूर्ण अन्यथा अगर (avg_wire_size < 1968) अणु
+		/* 9.2K पूर्णांकs/sec to 8K पूर्णांकs/sec */
 		avg_wire_size *= 5;
 		avg_wire_size += 22420;
-	} else {
-		/* plateau at a limit of 8K ints/sec */
+	पूर्ण अन्यथा अणु
+		/* plateau at a limit of 8K पूर्णांकs/sec */
 		avg_wire_size = 32256;
-	}
+	पूर्ण
 
-	/* If we are in low latency mode half our delay which doubles the rate
-	 * to somewhere between 100K to 16K ints/sec
+	/* If we are in low latency mode half our delay which द्विगुनs the rate
+	 * to somewhere between 100K to 16K पूर्णांकs/sec
 	 */
-	if (itr & IXGBE_ITR_ADAPTIVE_LATENCY)
+	अगर (itr & IXGBE_ITR_ADAPTIVE_LATENCY)
 		avg_wire_size >>= 1;
 
-	/* Resultant value is 256 times larger than it needs to be. This
+	/* Resultant value is 256 बार larger than it needs to be. This
 	 * gives us room to adjust the value as needed to either increase
 	 * or decrease the value based on link speeds of 10G, 2.5G, 1G, etc.
 	 *
-	 * Use addition as we have already recorded the new latency flag
-	 * for the ITR value.
+	 * Use addition as we have alपढ़ोy recorded the new latency flag
+	 * क्रम the ITR value.
 	 */
-	switch (q_vector->adapter->link_speed) {
-	case IXGBE_LINK_SPEED_10GB_FULL:
-	case IXGBE_LINK_SPEED_100_FULL:
-	default:
+	चयन (q_vector->adapter->link_speed) अणु
+	हाल IXGBE_LINK_SPEED_10GB_FULL:
+	हाल IXGBE_LINK_SPEED_100_FULL:
+	शेष:
 		itr += DIV_ROUND_UP(avg_wire_size,
 				    IXGBE_ITR_ADAPTIVE_MIN_INC * 256) *
 		       IXGBE_ITR_ADAPTIVE_MIN_INC;
-		break;
-	case IXGBE_LINK_SPEED_2_5GB_FULL:
-	case IXGBE_LINK_SPEED_1GB_FULL:
-	case IXGBE_LINK_SPEED_10_FULL:
-		if (avg_wire_size > 8064)
+		अवरोध;
+	हाल IXGBE_LINK_SPEED_2_5GB_FULL:
+	हाल IXGBE_LINK_SPEED_1GB_FULL:
+	हाल IXGBE_LINK_SPEED_10_FULL:
+		अगर (avg_wire_size > 8064)
 			avg_wire_size = 8064;
 		itr += DIV_ROUND_UP(avg_wire_size,
 				    IXGBE_ITR_ADAPTIVE_MIN_INC * 64) *
 		       IXGBE_ITR_ADAPTIVE_MIN_INC;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 clear_counts:
-	/* write back value */
+	/* ग_लिखो back value */
 	ring_container->itr = itr;
 
-	/* next update should occur within next jiffy */
+	/* next update should occur within next jअगरfy */
 	ring_container->next_update = next_update + 1;
 
 	ring_container->total_bytes = 0;
 	ring_container->total_packets = 0;
-}
+पूर्ण
 
 /**
- * ixgbe_write_eitr - write EITR register in hardware specific way
- * @q_vector: structure containing interrupt and ring information
+ * ixgbe_ग_लिखो_eitr - ग_लिखो EITR रेजिस्टर in hardware specअगरic way
+ * @q_vector: काष्ठाure containing पूर्णांकerrupt and ring inक्रमmation
  *
  * This function is made to be called by ethtool and by the driver
- * when it needs to update EITR registers at runtime.  Hardware
- * specific quirks/differences are taken care of here.
+ * when it needs to update EITR रेजिस्टरs at runसमय.  Hardware
+ * specअगरic quirks/dअगरferences are taken care of here.
  */
-void ixgbe_write_eitr(struct ixgbe_q_vector *q_vector)
-{
-	struct ixgbe_adapter *adapter = q_vector->adapter;
-	struct ixgbe_hw *hw = &adapter->hw;
-	int v_idx = q_vector->v_idx;
+व्योम ixgbe_ग_लिखो_eitr(काष्ठा ixgbe_q_vector *q_vector)
+अणु
+	काष्ठा ixgbe_adapter *adapter = q_vector->adapter;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक v_idx = q_vector->v_idx;
 	u32 itr_reg = q_vector->itr & IXGBE_MAX_EITR;
 
-	switch (adapter->hw.mac.type) {
-	case ixgbe_mac_82598EB:
-		/* must write high and low 16 bits to reset counter */
+	चयन (adapter->hw.mac.type) अणु
+	हाल ixgbe_mac_82598EB:
+		/* must ग_लिखो high and low 16 bits to reset counter */
 		itr_reg |= (itr_reg << 16);
-		break;
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
+		अवरोध;
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
 		/*
-		 * set the WDIS bit to not clear the timer bits and cause an
-		 * immediate assertion of the interrupt
+		 * set the WDIS bit to not clear the समयr bits and cause an
+		 * immediate निश्चितion of the पूर्णांकerrupt
 		 */
 		itr_reg |= IXGBE_EITR_CNT_WDIS;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	IXGBE_WRITE_REG(hw, IXGBE_EITR(v_idx), itr_reg);
-}
+पूर्ण
 
-static void ixgbe_set_itr(struct ixgbe_q_vector *q_vector)
-{
+अटल व्योम ixgbe_set_itr(काष्ठा ixgbe_q_vector *q_vector)
+अणु
 	u32 new_itr;
 
 	ixgbe_update_itr(q_vector, &q_vector->tx);
@@ -2739,742 +2740,742 @@ static void ixgbe_set_itr(struct ixgbe_q_vector *q_vector)
 	/* use the smallest value of new ITR delay calculations */
 	new_itr = min(q_vector->rx.itr, q_vector->tx.itr);
 
-	/* Clear latency flag if set, shift into correct position */
+	/* Clear latency flag अगर set, shअगरt पूर्णांकo correct position */
 	new_itr &= ~IXGBE_ITR_ADAPTIVE_LATENCY;
 	new_itr <<= 2;
 
-	if (new_itr != q_vector->itr) {
+	अगर (new_itr != q_vector->itr) अणु
 		/* save the algorithm value here */
 		q_vector->itr = new_itr;
 
-		ixgbe_write_eitr(q_vector);
-	}
-}
+		ixgbe_ग_लिखो_eitr(q_vector);
+	पूर्ण
+पूर्ण
 
 /**
- * ixgbe_check_overtemp_subtask - check for over temperature
- * @adapter: pointer to adapter
+ * ixgbe_check_overtemp_subtask - check क्रम over temperature
+ * @adapter: poपूर्णांकer to adapter
  **/
-static void ixgbe_check_overtemp_subtask(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	u32 eicr = adapter->interrupt_event;
+अटल व्योम ixgbe_check_overtemp_subtask(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	u32 eicr = adapter->पूर्णांकerrupt_event;
 	s32 rc;
 
-	if (test_bit(__IXGBE_DOWN, &adapter->state))
-		return;
+	अगर (test_bit(__IXGBE_DOWN, &adapter->state))
+		वापस;
 
-	if (!(adapter->flags2 & IXGBE_FLAG2_TEMP_SENSOR_EVENT))
-		return;
+	अगर (!(adapter->flags2 & IXGBE_FLAG2_TEMP_SENSOR_EVENT))
+		वापस;
 
 	adapter->flags2 &= ~IXGBE_FLAG2_TEMP_SENSOR_EVENT;
 
-	switch (hw->device_id) {
-	case IXGBE_DEV_ID_82599_T3_LOM:
+	चयन (hw->device_id) अणु
+	हाल IXGBE_DEV_ID_82599_T3_LOM:
 		/*
-		 * Since the warning interrupt is for both ports
-		 * we don't have to check if:
-		 *  - This interrupt wasn't for our port.
-		 *  - We may have missed the interrupt so always have to
-		 *    check if we  got a LSC
+		 * Since the warning पूर्णांकerrupt is क्रम both ports
+		 * we करोn't have to check अगर:
+		 *  - This पूर्णांकerrupt wasn't क्रम our port.
+		 *  - We may have missed the पूर्णांकerrupt so always have to
+		 *    check अगर we  got a LSC
 		 */
-		if (!(eicr & IXGBE_EICR_GPI_SDP0_8259X) &&
+		अगर (!(eicr & IXGBE_EICR_GPI_SDP0_8259X) &&
 		    !(eicr & IXGBE_EICR_LSC))
-			return;
+			वापस;
 
-		if (!(eicr & IXGBE_EICR_LSC) && hw->mac.ops.check_link) {
+		अगर (!(eicr & IXGBE_EICR_LSC) && hw->mac.ops.check_link) अणु
 			u32 speed;
 			bool link_up = false;
 
 			hw->mac.ops.check_link(hw, &speed, &link_up, false);
 
-			if (link_up)
-				return;
-		}
+			अगर (link_up)
+				वापस;
+		पूर्ण
 
-		/* Check if this is not due to overtemp */
-		if (hw->phy.ops.check_overtemp(hw) != IXGBE_ERR_OVERTEMP)
-			return;
+		/* Check अगर this is not due to overtemp */
+		अगर (hw->phy.ops.check_overtemp(hw) != IXGBE_ERR_OVERTEMP)
+			वापस;
 
-		break;
-	case IXGBE_DEV_ID_X550EM_A_1G_T:
-	case IXGBE_DEV_ID_X550EM_A_1G_T_L:
+		अवरोध;
+	हाल IXGBE_DEV_ID_X550EM_A_1G_T:
+	हाल IXGBE_DEV_ID_X550EM_A_1G_T_L:
 		rc = hw->phy.ops.check_overtemp(hw);
-		if (rc != IXGBE_ERR_OVERTEMP)
-			return;
-		break;
-	default:
-		if (adapter->hw.mac.type >= ixgbe_mac_X540)
-			return;
-		if (!(eicr & IXGBE_EICR_GPI_SDP0(hw)))
-			return;
-		break;
-	}
+		अगर (rc != IXGBE_ERR_OVERTEMP)
+			वापस;
+		अवरोध;
+	शेष:
+		अगर (adapter->hw.mac.type >= ixgbe_mac_X540)
+			वापस;
+		अगर (!(eicr & IXGBE_EICR_GPI_SDP0(hw)))
+			वापस;
+		अवरोध;
+	पूर्ण
 	e_crit(drv, "%s\n", ixgbe_overheat_msg);
 
-	adapter->interrupt_event = 0;
-}
+	adapter->पूर्णांकerrupt_event = 0;
+पूर्ण
 
-static void ixgbe_check_fan_failure(struct ixgbe_adapter *adapter, u32 eicr)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_check_fan_failure(काष्ठा ixgbe_adapter *adapter, u32 eicr)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	if ((adapter->flags & IXGBE_FLAG_FAN_FAIL_CAPABLE) &&
-	    (eicr & IXGBE_EICR_GPI_SDP1(hw))) {
+	अगर ((adapter->flags & IXGBE_FLAG_FAN_FAIL_CAPABLE) &&
+	    (eicr & IXGBE_EICR_GPI_SDP1(hw))) अणु
 		e_crit(probe, "Fan has stopped, replace the adapter\n");
-		/* write to clear the interrupt */
+		/* ग_लिखो to clear the पूर्णांकerrupt */
 		IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1(hw));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ixgbe_check_overtemp_event(struct ixgbe_adapter *adapter, u32 eicr)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_check_overtemp_event(काष्ठा ixgbe_adapter *adapter, u32 eicr)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	if (!(adapter->flags2 & IXGBE_FLAG2_TEMP_SENSOR_CAPABLE))
-		return;
+	अगर (!(adapter->flags2 & IXGBE_FLAG2_TEMP_SENSOR_CAPABLE))
+		वापस;
 
-	switch (adapter->hw.mac.type) {
-	case ixgbe_mac_82599EB:
+	चयन (adapter->hw.mac.type) अणु
+	हाल ixgbe_mac_82599EB:
 		/*
 		 * Need to check link state so complete overtemp check
 		 * on service task
 		 */
-		if (((eicr & IXGBE_EICR_GPI_SDP0(hw)) ||
+		अगर (((eicr & IXGBE_EICR_GPI_SDP0(hw)) ||
 		     (eicr & IXGBE_EICR_LSC)) &&
-		    (!test_bit(__IXGBE_DOWN, &adapter->state))) {
-			adapter->interrupt_event = eicr;
+		    (!test_bit(__IXGBE_DOWN, &adapter->state))) अणु
+			adapter->पूर्णांकerrupt_event = eicr;
 			adapter->flags2 |= IXGBE_FLAG2_TEMP_SENSOR_EVENT;
 			ixgbe_service_event_schedule(adapter);
-			return;
-		}
-		return;
-	case ixgbe_mac_x550em_a:
-		if (eicr & IXGBE_EICR_GPI_SDP0_X550EM_a) {
-			adapter->interrupt_event = eicr;
+			वापस;
+		पूर्ण
+		वापस;
+	हाल ixgbe_mac_x550em_a:
+		अगर (eicr & IXGBE_EICR_GPI_SDP0_X550EM_a) अणु
+			adapter->पूर्णांकerrupt_event = eicr;
 			adapter->flags2 |= IXGBE_FLAG2_TEMP_SENSOR_EVENT;
 			ixgbe_service_event_schedule(adapter);
 			IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMC,
 					IXGBE_EICR_GPI_SDP0_X550EM_a);
 			IXGBE_WRITE_REG(&adapter->hw, IXGBE_EICR,
 					IXGBE_EICR_GPI_SDP0_X550EM_a);
-		}
-		return;
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X540:
-		if (!(eicr & IXGBE_EICR_TS))
-			return;
-		break;
-	default:
-		return;
-	}
+		पूर्ण
+		वापस;
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X540:
+		अगर (!(eicr & IXGBE_EICR_TS))
+			वापस;
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
 	e_crit(drv, "%s\n", ixgbe_overheat_msg);
-}
+पूर्ण
 
-static inline bool ixgbe_is_sfp(struct ixgbe_hw *hw)
-{
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB:
-		if (hw->phy.type == ixgbe_phy_nl)
-			return true;
-		return false;
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
-		switch (hw->mac.ops.get_media_type(hw)) {
-		case ixgbe_media_type_fiber:
-		case ixgbe_media_type_fiber_qsfp:
-			return true;
-		default:
-			return false;
-		}
-	default:
-		return false;
-	}
-}
+अटल अंतरभूत bool ixgbe_is_sfp(काष्ठा ixgbe_hw *hw)
+अणु
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB:
+		अगर (hw->phy.type == ixgbe_phy_nl)
+			वापस true;
+		वापस false;
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
+		चयन (hw->mac.ops.get_media_type(hw)) अणु
+		हाल ixgbe_media_type_fiber:
+		हाल ixgbe_media_type_fiber_qsfp:
+			वापस true;
+		शेष:
+			वापस false;
+		पूर्ण
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static void ixgbe_check_sfp_event(struct ixgbe_adapter *adapter, u32 eicr)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_check_sfp_event(काष्ठा ixgbe_adapter *adapter, u32 eicr)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 eicr_mask = IXGBE_EICR_GPI_SDP2(hw);
 
-	if (!ixgbe_is_sfp(hw))
-		return;
+	अगर (!ixgbe_is_sfp(hw))
+		वापस;
 
-	/* Later MAC's use different SDP */
-	if (hw->mac.type >= ixgbe_mac_X540)
+	/* Later MAC's use dअगरferent SDP */
+	अगर (hw->mac.type >= ixgbe_mac_X540)
 		eicr_mask = IXGBE_EICR_GPI_SDP0_X540;
 
-	if (eicr & eicr_mask) {
-		/* Clear the interrupt */
+	अगर (eicr & eicr_mask) अणु
+		/* Clear the पूर्णांकerrupt */
 		IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr_mask);
-		if (!test_bit(__IXGBE_DOWN, &adapter->state)) {
+		अगर (!test_bit(__IXGBE_DOWN, &adapter->state)) अणु
 			adapter->flags2 |= IXGBE_FLAG2_SFP_NEEDS_RESET;
-			adapter->sfp_poll_time = 0;
+			adapter->sfp_poll_समय = 0;
 			ixgbe_service_event_schedule(adapter);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (adapter->hw.mac.type == ixgbe_mac_82599EB &&
-	    (eicr & IXGBE_EICR_GPI_SDP1(hw))) {
-		/* Clear the interrupt */
+	अगर (adapter->hw.mac.type == ixgbe_mac_82599EB &&
+	    (eicr & IXGBE_EICR_GPI_SDP1(hw))) अणु
+		/* Clear the पूर्णांकerrupt */
 		IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1(hw));
-		if (!test_bit(__IXGBE_DOWN, &adapter->state)) {
+		अगर (!test_bit(__IXGBE_DOWN, &adapter->state)) अणु
 			adapter->flags |= IXGBE_FLAG_NEED_LINK_CONFIG;
 			ixgbe_service_event_schedule(adapter);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ixgbe_check_lsc(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_check_lsc(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	adapter->lsc_int++;
+	adapter->lsc_पूर्णांक++;
 	adapter->flags |= IXGBE_FLAG_NEED_LINK_UPDATE;
-	adapter->link_check_timeout = jiffies;
-	if (!test_bit(__IXGBE_DOWN, &adapter->state)) {
+	adapter->link_check_समयout = jअगरfies;
+	अगर (!test_bit(__IXGBE_DOWN, &adapter->state)) अणु
 		IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_LSC);
 		IXGBE_WRITE_FLUSH(hw);
 		ixgbe_service_event_schedule(adapter);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void ixgbe_irq_enable_queues(struct ixgbe_adapter *adapter,
+अटल अंतरभूत व्योम ixgbe_irq_enable_queues(काष्ठा ixgbe_adapter *adapter,
 					   u64 qmask)
-{
+अणु
 	u32 mask;
-	struct ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB:
 		mask = (IXGBE_EIMS_RTX_QUEUE & qmask);
 		IXGBE_WRITE_REG(hw, IXGBE_EIMS, mask);
-		break;
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
+		अवरोध;
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
 		mask = (qmask & 0xFFFFFFFF);
-		if (mask)
+		अगर (mask)
 			IXGBE_WRITE_REG(hw, IXGBE_EIMS_EX(0), mask);
 		mask = (qmask >> 32);
-		if (mask)
+		अगर (mask)
 			IXGBE_WRITE_REG(hw, IXGBE_EIMS_EX(1), mask);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	/* skip the flush */
-}
+पूर्ण
 
 /**
- * ixgbe_irq_enable - Enable default interrupt generation settings
- * @adapter: board private structure
- * @queues: enable irqs for queues
- * @flush: flush register write
+ * ixgbe_irq_enable - Enable शेष पूर्णांकerrupt generation settings
+ * @adapter: board निजी काष्ठाure
+ * @queues: enable irqs क्रम queues
+ * @flush: flush रेजिस्टर ग_लिखो
  **/
-static inline void ixgbe_irq_enable(struct ixgbe_adapter *adapter, bool queues,
+अटल अंतरभूत व्योम ixgbe_irq_enable(काष्ठा ixgbe_adapter *adapter, bool queues,
 				    bool flush)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 mask = (IXGBE_EIMS_ENABLE_MASK & ~IXGBE_EIMS_RTX_QUEUE);
 
-	/* don't reenable LSC while waiting for link */
-	if (adapter->flags & IXGBE_FLAG_NEED_LINK_UPDATE)
+	/* करोn't reenable LSC जबतक रुकोing क्रम link */
+	अगर (adapter->flags & IXGBE_FLAG_NEED_LINK_UPDATE)
 		mask &= ~IXGBE_EIMS_LSC;
 
-	if (adapter->flags2 & IXGBE_FLAG2_TEMP_SENSOR_CAPABLE)
-		switch (adapter->hw.mac.type) {
-		case ixgbe_mac_82599EB:
+	अगर (adapter->flags2 & IXGBE_FLAG2_TEMP_SENSOR_CAPABLE)
+		चयन (adapter->hw.mac.type) अणु
+		हाल ixgbe_mac_82599EB:
 			mask |= IXGBE_EIMS_GPI_SDP0(hw);
-			break;
-		case ixgbe_mac_X540:
-		case ixgbe_mac_X550:
-		case ixgbe_mac_X550EM_x:
-		case ixgbe_mac_x550em_a:
+			अवरोध;
+		हाल ixgbe_mac_X540:
+		हाल ixgbe_mac_X550:
+		हाल ixgbe_mac_X550EM_x:
+		हाल ixgbe_mac_x550em_a:
 			mask |= IXGBE_EIMS_TS;
-			break;
-		default:
-			break;
-		}
-	if (adapter->flags & IXGBE_FLAG_FAN_FAIL_CAPABLE)
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	अगर (adapter->flags & IXGBE_FLAG_FAN_FAIL_CAPABLE)
 		mask |= IXGBE_EIMS_GPI_SDP1(hw);
-	switch (adapter->hw.mac.type) {
-	case ixgbe_mac_82599EB:
+	चयन (adapter->hw.mac.type) अणु
+	हाल ixgbe_mac_82599EB:
 		mask |= IXGBE_EIMS_GPI_SDP1(hw);
 		mask |= IXGBE_EIMS_GPI_SDP2(hw);
 		fallthrough;
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
-		if (adapter->hw.device_id == IXGBE_DEV_ID_X550EM_X_SFP ||
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
+		अगर (adapter->hw.device_id == IXGBE_DEV_ID_X550EM_X_SFP ||
 		    adapter->hw.device_id == IXGBE_DEV_ID_X550EM_A_SFP ||
 		    adapter->hw.device_id == IXGBE_DEV_ID_X550EM_A_SFP_N)
 			mask |= IXGBE_EIMS_GPI_SDP0(&adapter->hw);
-		if (adapter->hw.phy.type == ixgbe_phy_x550em_ext_t)
+		अगर (adapter->hw.phy.type == ixgbe_phy_x550em_ext_t)
 			mask |= IXGBE_EICR_GPI_SDP0_X540;
 		mask |= IXGBE_EIMS_ECC;
 		mask |= IXGBE_EIMS_MAILBOX;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if ((adapter->flags & IXGBE_FLAG_FDIR_HASH_CAPABLE) &&
-	    !(adapter->flags2 & IXGBE_FLAG2_FDIR_REQUIRES_REINIT))
-		mask |= IXGBE_EIMS_FLOW_DIR;
+	अगर ((adapter->flags & IXGBE_FLAG_Fसूची_HASH_CAPABLE) &&
+	    !(adapter->flags2 & IXGBE_FLAG2_Fसूची_REQUIRES_REINIT))
+		mask |= IXGBE_EIMS_FLOW_सूची;
 
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMS, mask);
-	if (queues)
+	अगर (queues)
 		ixgbe_irq_enable_queues(adapter, ~0);
-	if (flush)
+	अगर (flush)
 		IXGBE_WRITE_FLUSH(&adapter->hw);
-}
+पूर्ण
 
-static irqreturn_t ixgbe_msix_other(int irq, void *data)
-{
-	struct ixgbe_adapter *adapter = data;
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल irqवापस_t ixgbe_msix_other(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ixgbe_adapter *adapter = data;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 eicr;
 
 	/*
-	 * Workaround for Silicon errata.  Use clear-by-write instead
-	 * of clear-by-read.  Reading with EICS will return the
-	 * interrupt causes without clearing, which later be done
-	 * with the write to EICR.
+	 * Workaround क्रम Silicon errata.  Use clear-by-ग_लिखो instead
+	 * of clear-by-पढ़ो.  Reading with EICS will वापस the
+	 * पूर्णांकerrupt causes without clearing, which later be करोne
+	 * with the ग_लिखो to EICR.
 	 */
 	eicr = IXGBE_READ_REG(hw, IXGBE_EICS);
 
-	/* The lower 16bits of the EICR register are for the queue interrupts
-	 * which should be masked here in order to not accidentally clear them if
+	/* The lower 16bits of the EICR रेजिस्टर are क्रम the queue पूर्णांकerrupts
+	 * which should be masked here in order to not accidentally clear them अगर
 	 * the bits are high when ixgbe_msix_other is called. There is a race
-	 * condition otherwise which results in possible performance loss
-	 * especially if the ixgbe_msix_other interrupt is triggering
-	 * consistently (as it would when PPS is turned on for the X540 device)
+	 * condition otherwise which results in possible perक्रमmance loss
+	 * especially अगर the ixgbe_msix_other पूर्णांकerrupt is triggering
+	 * consistently (as it would when PPS is turned on क्रम the X540 device)
 	 */
 	eicr &= 0xFFFF0000;
 
 	IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr);
 
-	if (eicr & IXGBE_EICR_LSC)
+	अगर (eicr & IXGBE_EICR_LSC)
 		ixgbe_check_lsc(adapter);
 
-	if (eicr & IXGBE_EICR_MAILBOX)
+	अगर (eicr & IXGBE_EICR_MAILBOX)
 		ixgbe_msg_task(adapter);
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
-		if (hw->phy.type == ixgbe_phy_x550em_ext_t &&
-		    (eicr & IXGBE_EICR_GPI_SDP0_X540)) {
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
+		अगर (hw->phy.type == ixgbe_phy_x550em_ext_t &&
+		    (eicr & IXGBE_EICR_GPI_SDP0_X540)) अणु
 			adapter->flags2 |= IXGBE_FLAG2_PHY_INTERRUPT;
 			ixgbe_service_event_schedule(adapter);
 			IXGBE_WRITE_REG(hw, IXGBE_EICR,
 					IXGBE_EICR_GPI_SDP0_X540);
-		}
-		if (eicr & IXGBE_EICR_ECC) {
+		पूर्ण
+		अगर (eicr & IXGBE_EICR_ECC) अणु
 			e_info(link, "Received ECC Err, initiating reset\n");
 			set_bit(__IXGBE_RESET_REQUESTED, &adapter->state);
 			ixgbe_service_event_schedule(adapter);
 			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_ECC);
-		}
-		/* Handle Flow Director Full threshold interrupt */
-		if (eicr & IXGBE_EICR_FLOW_DIR) {
-			int reinit_count = 0;
-			int i;
-			for (i = 0; i < adapter->num_tx_queues; i++) {
-				struct ixgbe_ring *ring = adapter->tx_ring[i];
-				if (test_and_clear_bit(__IXGBE_TX_FDIR_INIT_DONE,
+		पूर्ण
+		/* Handle Flow Director Full threshold पूर्णांकerrupt */
+		अगर (eicr & IXGBE_EICR_FLOW_सूची) अणु
+			पूर्णांक reinit_count = 0;
+			पूर्णांक i;
+			क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+				काष्ठा ixgbe_ring *ring = adapter->tx_ring[i];
+				अगर (test_and_clear_bit(__IXGBE_TX_Fसूची_INIT_DONE,
 						       &ring->state))
 					reinit_count++;
-			}
-			if (reinit_count) {
-				/* no more flow director interrupts until after init */
-				IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_FLOW_DIR);
-				adapter->flags2 |= IXGBE_FLAG2_FDIR_REQUIRES_REINIT;
+			पूर्ण
+			अगर (reinit_count) अणु
+				/* no more flow director पूर्णांकerrupts until after init */
+				IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_FLOW_सूची);
+				adapter->flags2 |= IXGBE_FLAG2_Fसूची_REQUIRES_REINIT;
 				ixgbe_service_event_schedule(adapter);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		ixgbe_check_sfp_event(adapter, eicr);
 		ixgbe_check_overtemp_event(adapter, eicr);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	ixgbe_check_fan_failure(adapter, eicr);
 
-	if (unlikely(eicr & IXGBE_EICR_TIMESYNC))
+	अगर (unlikely(eicr & IXGBE_EICR_TIMESYNC))
 		ixgbe_ptp_check_pps_event(adapter);
 
-	/* re-enable the original interrupt state, no lsc, no queues */
-	if (!test_bit(__IXGBE_DOWN, &adapter->state))
+	/* re-enable the original पूर्णांकerrupt state, no lsc, no queues */
+	अगर (!test_bit(__IXGBE_DOWN, &adapter->state))
 		ixgbe_irq_enable(adapter, false, false);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t ixgbe_msix_clean_rings(int irq, void *data)
-{
-	struct ixgbe_q_vector *q_vector = data;
+अटल irqवापस_t ixgbe_msix_clean_rings(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ixgbe_q_vector *q_vector = data;
 
-	/* EIAM disabled interrupts (on this vector) for us */
+	/* EIAM disabled पूर्णांकerrupts (on this vector) क्रम us */
 
-	if (q_vector->rx.ring || q_vector->tx.ring)
+	अगर (q_vector->rx.ring || q_vector->tx.ring)
 		napi_schedule_irqoff(&q_vector->napi);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * ixgbe_poll - NAPI Rx polling callback
- * @napi: structure for representing this polling device
+ * @napi: काष्ठाure क्रम representing this polling device
  * @budget: how many packets driver is allowed to clean
  *
- * This function is used for legacy and MSI, NAPI mode
+ * This function is used क्रम legacy and MSI, NAPI mode
  **/
-int ixgbe_poll(struct napi_struct *napi, int budget)
-{
-	struct ixgbe_q_vector *q_vector =
-				container_of(napi, struct ixgbe_q_vector, napi);
-	struct ixgbe_adapter *adapter = q_vector->adapter;
-	struct ixgbe_ring *ring;
-	int per_ring_budget, work_done = 0;
+पूर्णांक ixgbe_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा ixgbe_q_vector *q_vector =
+				container_of(napi, काष्ठा ixgbe_q_vector, napi);
+	काष्ठा ixgbe_adapter *adapter = q_vector->adapter;
+	काष्ठा ixgbe_ring *ring;
+	पूर्णांक per_ring_budget, work_करोne = 0;
 	bool clean_complete = true;
 
-#ifdef CONFIG_IXGBE_DCA
-	if (adapter->flags & IXGBE_FLAG_DCA_ENABLED)
+#अगर_घोषित CONFIG_IXGBE_DCA
+	अगर (adapter->flags & IXGBE_FLAG_DCA_ENABLED)
 		ixgbe_update_dca(q_vector);
-#endif
+#पूर्ण_अगर
 
-	ixgbe_for_each_ring(ring, q_vector->tx) {
+	ixgbe_क्रम_each_ring(ring, q_vector->tx) अणु
 		bool wd = ring->xsk_pool ?
 			  ixgbe_clean_xdp_tx_irq(q_vector, ring, budget) :
 			  ixgbe_clean_tx_irq(q_vector, ring, budget);
 
-		if (!wd)
+		अगर (!wd)
 			clean_complete = false;
-	}
+	पूर्ण
 
-	/* Exit if we are called by netpoll */
-	if (budget <= 0)
-		return budget;
+	/* Exit अगर we are called by netpoll */
+	अगर (budget <= 0)
+		वापस budget;
 
-	/* attempt to distribute budget to each queue fairly, but don't allow
-	 * the budget to go below 1 because we'll exit polling */
-	if (q_vector->rx.count > 1)
+	/* attempt to distribute budget to each queue fairly, but करोn't allow
+	 * the budget to go below 1 because we'll निकास polling */
+	अगर (q_vector->rx.count > 1)
 		per_ring_budget = max(budget/q_vector->rx.count, 1);
-	else
+	अन्यथा
 		per_ring_budget = budget;
 
-	ixgbe_for_each_ring(ring, q_vector->rx) {
-		int cleaned = ring->xsk_pool ?
+	ixgbe_क्रम_each_ring(ring, q_vector->rx) अणु
+		पूर्णांक cleaned = ring->xsk_pool ?
 			      ixgbe_clean_rx_irq_zc(q_vector, ring,
 						    per_ring_budget) :
 			      ixgbe_clean_rx_irq(q_vector, ring,
 						 per_ring_budget);
 
-		work_done += cleaned;
-		if (cleaned >= per_ring_budget)
+		work_करोne += cleaned;
+		अगर (cleaned >= per_ring_budget)
 			clean_complete = false;
-	}
+	पूर्ण
 
-	/* If all work not completed, return budget and keep polling */
-	if (!clean_complete)
-		return budget;
+	/* If all work not completed, वापस budget and keep polling */
+	अगर (!clean_complete)
+		वापस budget;
 
-	/* all work done, exit the polling mode */
-	if (likely(napi_complete_done(napi, work_done))) {
-		if (adapter->rx_itr_setting & 1)
+	/* all work करोne, निकास the polling mode */
+	अगर (likely(napi_complete_करोne(napi, work_करोne))) अणु
+		अगर (adapter->rx_itr_setting & 1)
 			ixgbe_set_itr(q_vector);
-		if (!test_bit(__IXGBE_DOWN, &adapter->state))
+		अगर (!test_bit(__IXGBE_DOWN, &adapter->state))
 			ixgbe_irq_enable_queues(adapter,
 						BIT_ULL(q_vector->v_idx));
-	}
+	पूर्ण
 
-	return min(work_done, budget - 1);
-}
+	वापस min(work_करोne, budget - 1);
+पूर्ण
 
 /**
- * ixgbe_request_msix_irqs - Initialize MSI-X interrupts
- * @adapter: board private structure
+ * ixgbe_request_msix_irqs - Initialize MSI-X पूर्णांकerrupts
+ * @adapter: board निजी काष्ठाure
  *
  * ixgbe_request_msix_irqs allocates MSI-X vectors and requests
- * interrupts from the kernel.
+ * पूर्णांकerrupts from the kernel.
  **/
-static int ixgbe_request_msix_irqs(struct ixgbe_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	unsigned int ri = 0, ti = 0;
-	int vector, err;
+अटल पूर्णांक ixgbe_request_msix_irqs(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	अचिन्हित पूर्णांक ri = 0, ti = 0;
+	पूर्णांक vector, err;
 
-	for (vector = 0; vector < adapter->num_q_vectors; vector++) {
-		struct ixgbe_q_vector *q_vector = adapter->q_vector[vector];
-		struct msix_entry *entry = &adapter->msix_entries[vector];
+	क्रम (vector = 0; vector < adapter->num_q_vectors; vector++) अणु
+		काष्ठा ixgbe_q_vector *q_vector = adapter->q_vector[vector];
+		काष्ठा msix_entry *entry = &adapter->msix_entries[vector];
 
-		if (q_vector->tx.ring && q_vector->rx.ring) {
-			snprintf(q_vector->name, sizeof(q_vector->name),
+		अगर (q_vector->tx.ring && q_vector->rx.ring) अणु
+			snम_लिखो(q_vector->name, माप(q_vector->name),
 				 "%s-TxRx-%u", netdev->name, ri++);
 			ti++;
-		} else if (q_vector->rx.ring) {
-			snprintf(q_vector->name, sizeof(q_vector->name),
+		पूर्ण अन्यथा अगर (q_vector->rx.ring) अणु
+			snम_लिखो(q_vector->name, माप(q_vector->name),
 				 "%s-rx-%u", netdev->name, ri++);
-		} else if (q_vector->tx.ring) {
-			snprintf(q_vector->name, sizeof(q_vector->name),
+		पूर्ण अन्यथा अगर (q_vector->tx.ring) अणु
+			snम_लिखो(q_vector->name, माप(q_vector->name),
 				 "%s-tx-%u", netdev->name, ti++);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* skip this unused q_vector */
-			continue;
-		}
+			जारी;
+		पूर्ण
 		err = request_irq(entry->vector, &ixgbe_msix_clean_rings, 0,
 				  q_vector->name, q_vector);
-		if (err) {
+		अगर (err) अणु
 			e_err(probe, "request_irq failed for MSIX interrupt "
 			      "Error: %d\n", err);
-			goto free_queue_irqs;
-		}
-		/* If Flow Director is enabled, set interrupt affinity */
-		if (adapter->flags & IXGBE_FLAG_FDIR_HASH_CAPABLE) {
-			/* assign the mask for this irq */
-			irq_set_affinity_hint(entry->vector,
+			जाओ मुक्त_queue_irqs;
+		पूर्ण
+		/* If Flow Director is enabled, set पूर्णांकerrupt affinity */
+		अगर (adapter->flags & IXGBE_FLAG_Fसूची_HASH_CAPABLE) अणु
+			/* assign the mask क्रम this irq */
+			irq_set_affinity_hपूर्णांक(entry->vector,
 					      &q_vector->affinity_mask);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	err = request_irq(adapter->msix_entries[vector].vector,
 			  ixgbe_msix_other, 0, netdev->name, adapter);
-	if (err) {
+	अगर (err) अणु
 		e_err(probe, "request_irq for msix_other failed: %d\n", err);
-		goto free_queue_irqs;
-	}
+		जाओ मुक्त_queue_irqs;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free_queue_irqs:
-	while (vector) {
+मुक्त_queue_irqs:
+	जबतक (vector) अणु
 		vector--;
-		irq_set_affinity_hint(adapter->msix_entries[vector].vector,
-				      NULL);
-		free_irq(adapter->msix_entries[vector].vector,
+		irq_set_affinity_hपूर्णांक(adapter->msix_entries[vector].vector,
+				      शून्य);
+		मुक्त_irq(adapter->msix_entries[vector].vector,
 			 adapter->q_vector[vector]);
-	}
+	पूर्ण
 	adapter->flags &= ~IXGBE_FLAG_MSIX_ENABLED;
 	pci_disable_msix(adapter->pdev);
-	kfree(adapter->msix_entries);
-	adapter->msix_entries = NULL;
-	return err;
-}
+	kमुक्त(adapter->msix_entries);
+	adapter->msix_entries = शून्य;
+	वापस err;
+पूर्ण
 
 /**
- * ixgbe_intr - legacy mode Interrupt Handler
- * @irq: interrupt number
- * @data: pointer to a network interface device structure
+ * ixgbe_पूर्णांकr - legacy mode Interrupt Handler
+ * @irq: पूर्णांकerrupt number
+ * @data: poपूर्णांकer to a network पूर्णांकerface device काष्ठाure
  **/
-static irqreturn_t ixgbe_intr(int irq, void *data)
-{
-	struct ixgbe_adapter *adapter = data;
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct ixgbe_q_vector *q_vector = adapter->q_vector[0];
+अटल irqवापस_t ixgbe_पूर्णांकr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ixgbe_adapter *adapter = data;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_q_vector *q_vector = adapter->q_vector[0];
 	u32 eicr;
 
 	/*
-	 * Workaround for silicon errata #26 on 82598.  Mask the interrupt
-	 * before the read of EICR.
+	 * Workaround क्रम silicon errata #26 on 82598.  Mask the पूर्णांकerrupt
+	 * beक्रमe the पढ़ो of EICR.
 	 */
 	IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_IRQ_CLEAR_MASK);
 
-	/* for NAPI, using EIAM to auto-mask tx/rx interrupt bits on read
-	 * therefore no explicit interrupt disable is necessary */
+	/* क्रम NAPI, using EIAM to स्वतः-mask tx/rx पूर्णांकerrupt bits on पढ़ो
+	 * thereक्रमe no explicit पूर्णांकerrupt disable is necessary */
 	eicr = IXGBE_READ_REG(hw, IXGBE_EICR);
-	if (!eicr) {
+	अगर (!eicr) अणु
 		/*
-		 * shared interrupt alert!
-		 * make sure interrupts are enabled because the read will
-		 * have disabled interrupts due to EIAM
+		 * shared पूर्णांकerrupt alert!
+		 * make sure पूर्णांकerrupts are enabled because the पढ़ो will
+		 * have disabled पूर्णांकerrupts due to EIAM
 		 * finish the workaround of silicon errata on 82598.  Unmask
-		 * the interrupt that we masked before the EICR read.
+		 * the पूर्णांकerrupt that we masked beक्रमe the EICR पढ़ो.
 		 */
-		if (!test_bit(__IXGBE_DOWN, &adapter->state))
+		अगर (!test_bit(__IXGBE_DOWN, &adapter->state))
 			ixgbe_irq_enable(adapter, true, true);
-		return IRQ_NONE;	/* Not our interrupt */
-	}
+		वापस IRQ_NONE;	/* Not our पूर्णांकerrupt */
+	पूर्ण
 
-	if (eicr & IXGBE_EICR_LSC)
+	अगर (eicr & IXGBE_EICR_LSC)
 		ixgbe_check_lsc(adapter);
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82599EB:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82599EB:
 		ixgbe_check_sfp_event(adapter, eicr);
 		fallthrough;
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
-		if (eicr & IXGBE_EICR_ECC) {
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
+		अगर (eicr & IXGBE_EICR_ECC) अणु
 			e_info(link, "Received ECC Err, initiating reset\n");
 			set_bit(__IXGBE_RESET_REQUESTED, &adapter->state);
 			ixgbe_service_event_schedule(adapter);
 			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_ECC);
-		}
+		पूर्ण
 		ixgbe_check_overtemp_event(adapter, eicr);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	ixgbe_check_fan_failure(adapter, eicr);
-	if (unlikely(eicr & IXGBE_EICR_TIMESYNC))
+	अगर (unlikely(eicr & IXGBE_EICR_TIMESYNC))
 		ixgbe_ptp_check_pps_event(adapter);
 
-	/* would disable interrupts here but EIAM disabled it */
+	/* would disable पूर्णांकerrupts here but EIAM disabled it */
 	napi_schedule_irqoff(&q_vector->napi);
 
 	/*
-	 * re-enable link(maybe) and non-queue interrupts, no flush.
-	 * ixgbe_poll will re-enable the queue interrupts
+	 * re-enable link(maybe) and non-queue पूर्णांकerrupts, no flush.
+	 * ixgbe_poll will re-enable the queue पूर्णांकerrupts
 	 */
-	if (!test_bit(__IXGBE_DOWN, &adapter->state))
+	अगर (!test_bit(__IXGBE_DOWN, &adapter->state))
 		ixgbe_irq_enable(adapter, false, false);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * ixgbe_request_irq - initialize interrupts
- * @adapter: board private structure
+ * ixgbe_request_irq - initialize पूर्णांकerrupts
+ * @adapter: board निजी काष्ठाure
  *
- * Attempts to configure interrupts using the best available
+ * Attempts to configure पूर्णांकerrupts using the best available
  * capabilities of the hardware and kernel.
  **/
-static int ixgbe_request_irq(struct ixgbe_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	int err;
+अटल पूर्णांक ixgbe_request_irq(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	पूर्णांक err;
 
-	if (adapter->flags & IXGBE_FLAG_MSIX_ENABLED)
+	अगर (adapter->flags & IXGBE_FLAG_MSIX_ENABLED)
 		err = ixgbe_request_msix_irqs(adapter);
-	else if (adapter->flags & IXGBE_FLAG_MSI_ENABLED)
-		err = request_irq(adapter->pdev->irq, ixgbe_intr, 0,
+	अन्यथा अगर (adapter->flags & IXGBE_FLAG_MSI_ENABLED)
+		err = request_irq(adapter->pdev->irq, ixgbe_पूर्णांकr, 0,
 				  netdev->name, adapter);
-	else
-		err = request_irq(adapter->pdev->irq, ixgbe_intr, IRQF_SHARED,
+	अन्यथा
+		err = request_irq(adapter->pdev->irq, ixgbe_पूर्णांकr, IRQF_SHARED,
 				  netdev->name, adapter);
 
-	if (err)
+	अगर (err)
 		e_err(probe, "request_irq failed, Error %d\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ixgbe_free_irq(struct ixgbe_adapter *adapter)
-{
-	int vector;
+अटल व्योम ixgbe_मुक्त_irq(काष्ठा ixgbe_adapter *adapter)
+अणु
+	पूर्णांक vector;
 
-	if (!(adapter->flags & IXGBE_FLAG_MSIX_ENABLED)) {
-		free_irq(adapter->pdev->irq, adapter);
-		return;
-	}
+	अगर (!(adapter->flags & IXGBE_FLAG_MSIX_ENABLED)) अणु
+		मुक्त_irq(adapter->pdev->irq, adapter);
+		वापस;
+	पूर्ण
 
-	if (!adapter->msix_entries)
-		return;
+	अगर (!adapter->msix_entries)
+		वापस;
 
-	for (vector = 0; vector < adapter->num_q_vectors; vector++) {
-		struct ixgbe_q_vector *q_vector = adapter->q_vector[vector];
-		struct msix_entry *entry = &adapter->msix_entries[vector];
+	क्रम (vector = 0; vector < adapter->num_q_vectors; vector++) अणु
+		काष्ठा ixgbe_q_vector *q_vector = adapter->q_vector[vector];
+		काष्ठा msix_entry *entry = &adapter->msix_entries[vector];
 
-		/* free only the irqs that were actually requested */
-		if (!q_vector->rx.ring && !q_vector->tx.ring)
-			continue;
+		/* मुक्त only the irqs that were actually requested */
+		अगर (!q_vector->rx.ring && !q_vector->tx.ring)
+			जारी;
 
 		/* clear the affinity_mask in the IRQ descriptor */
-		irq_set_affinity_hint(entry->vector, NULL);
+		irq_set_affinity_hपूर्णांक(entry->vector, शून्य);
 
-		free_irq(entry->vector, q_vector);
-	}
+		मुक्त_irq(entry->vector, q_vector);
+	पूर्ण
 
-	free_irq(adapter->msix_entries[vector].vector, adapter);
-}
+	मुक्त_irq(adapter->msix_entries[vector].vector, adapter);
+पूर्ण
 
 /**
- * ixgbe_irq_disable - Mask off interrupt generation on the NIC
- * @adapter: board private structure
+ * ixgbe_irq_disable - Mask off पूर्णांकerrupt generation on the NIC
+ * @adapter: board निजी काष्ठाure
  **/
-static inline void ixgbe_irq_disable(struct ixgbe_adapter *adapter)
-{
-	switch (adapter->hw.mac.type) {
-	case ixgbe_mac_82598EB:
+अटल अंतरभूत व्योम ixgbe_irq_disable(काष्ठा ixgbe_adapter *adapter)
+अणु
+	चयन (adapter->hw.mac.type) अणु
+	हाल ixgbe_mac_82598EB:
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMC, ~0);
-		break;
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
+		अवरोध;
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMC, 0xFFFF0000);
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMC_EX(0), ~0);
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMC_EX(1), ~0);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	IXGBE_WRITE_FLUSH(&adapter->hw);
-	if (adapter->flags & IXGBE_FLAG_MSIX_ENABLED) {
-		int vector;
+	अगर (adapter->flags & IXGBE_FLAG_MSIX_ENABLED) अणु
+		पूर्णांक vector;
 
-		for (vector = 0; vector < adapter->num_q_vectors; vector++)
+		क्रम (vector = 0; vector < adapter->num_q_vectors; vector++)
 			synchronize_irq(adapter->msix_entries[vector].vector);
 
 		synchronize_irq(adapter->msix_entries[vector++].vector);
-	} else {
+	पूर्ण अन्यथा अणु
 		synchronize_irq(adapter->pdev->irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ixgbe_configure_msi_and_legacy - Initialize PIN (INTA...) and MSI interrupts
- * @adapter: board private structure
+ * ixgbe_configure_msi_and_legacy - Initialize PIN (INTA...) and MSI पूर्णांकerrupts
+ * @adapter: board निजी काष्ठाure
  *
  **/
-static void ixgbe_configure_msi_and_legacy(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_q_vector *q_vector = adapter->q_vector[0];
+अटल व्योम ixgbe_configure_msi_and_legacy(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_q_vector *q_vector = adapter->q_vector[0];
 
-	ixgbe_write_eitr(q_vector);
+	ixgbe_ग_लिखो_eitr(q_vector);
 
 	ixgbe_set_ivar(adapter, 0, 0, 0);
 	ixgbe_set_ivar(adapter, 1, 0, 0);
 
 	e_info(hw, "Legacy interrupt IVAR setup done\n");
-}
+पूर्ण
 
 /**
  * ixgbe_configure_tx_ring - Configure 8259x Tx ring after Reset
- * @adapter: board private structure
- * @ring: structure containing ring specific data
+ * @adapter: board निजी काष्ठाure
+ * @ring: काष्ठाure containing ring specअगरic data
  *
  * Configure the Tx descriptor ring after a reset.
  **/
-void ixgbe_configure_tx_ring(struct ixgbe_adapter *adapter,
-			     struct ixgbe_ring *ring)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+व्योम ixgbe_configure_tx_ring(काष्ठा ixgbe_adapter *adapter,
+			     काष्ठा ixgbe_ring *ring)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u64 tdba = ring->dma;
-	int wait_loop = 10;
+	पूर्णांक रुको_loop = 10;
 	u32 txdctl = IXGBE_TXDCTL_ENABLE;
 	u8 reg_idx = ring->reg_idx;
 
-	ring->xsk_pool = NULL;
-	if (ring_is_xdp(ring))
+	ring->xsk_pool = शून्य;
+	अगर (ring_is_xdp(ring))
 		ring->xsk_pool = ixgbe_xsk_pool(adapter, ring);
 
-	/* disable queue to avoid issues while updating state */
+	/* disable queue to aव्योम issues जबतक updating state */
 	IXGBE_WRITE_REG(hw, IXGBE_TXDCTL(reg_idx), 0);
 	IXGBE_WRITE_FLUSH(hw);
 
@@ -3482,262 +3483,262 @@ void ixgbe_configure_tx_ring(struct ixgbe_adapter *adapter,
 			(tdba & DMA_BIT_MASK(32)));
 	IXGBE_WRITE_REG(hw, IXGBE_TDBAH(reg_idx), (tdba >> 32));
 	IXGBE_WRITE_REG(hw, IXGBE_TDLEN(reg_idx),
-			ring->count * sizeof(union ixgbe_adv_tx_desc));
+			ring->count * माप(जोड़ ixgbe_adv_tx_desc));
 	IXGBE_WRITE_REG(hw, IXGBE_TDH(reg_idx), 0);
 	IXGBE_WRITE_REG(hw, IXGBE_TDT(reg_idx), 0);
 	ring->tail = adapter->io_addr + IXGBE_TDT(reg_idx);
 
 	/*
-	 * set WTHRESH to encourage burst writeback, it should not be set
+	 * set WTHRESH to encourage burst ग_लिखोback, it should not be set
 	 * higher than 1 when:
 	 * - ITR is 0 as it could cause false TX hangs
-	 * - ITR is set to > 100k int/sec and BQL is enabled
+	 * - ITR is set to > 100k पूर्णांक/sec and BQL is enabled
 	 *
-	 * In order to avoid issues WTHRESH + PTHRESH should always be equal
+	 * In order to aव्योम issues WTHRESH + PTHRESH should always be equal
 	 * to or less than the number of on chip descriptors, which is
 	 * currently 40.
 	 */
-	if (!ring->q_vector || (ring->q_vector->itr < IXGBE_100K_ITR))
+	अगर (!ring->q_vector || (ring->q_vector->itr < IXGBE_100K_ITR))
 		txdctl |= 1u << 16;	/* WTHRESH = 1 */
-	else
+	अन्यथा
 		txdctl |= 8u << 16;	/* WTHRESH = 8 */
 
 	/*
-	 * Setting PTHRESH to 32 both improves performance
-	 * and avoids a TX hang with DFP enabled
+	 * Setting PTHRESH to 32 both improves perक्रमmance
+	 * and aव्योमs a TX hang with DFP enabled
 	 */
 	txdctl |= (1u << 8) |	/* HTHRESH = 1 */
 		   32;		/* PTHRESH = 32 */
 
 	/* reinitialize flowdirector state */
-	if (adapter->flags & IXGBE_FLAG_FDIR_HASH_CAPABLE) {
+	अगर (adapter->flags & IXGBE_FLAG_Fसूची_HASH_CAPABLE) अणु
 		ring->atr_sample_rate = adapter->atr_sample_rate;
 		ring->atr_count = 0;
-		set_bit(__IXGBE_TX_FDIR_INIT_DONE, &ring->state);
-	} else {
+		set_bit(__IXGBE_TX_Fसूची_INIT_DONE, &ring->state);
+	पूर्ण अन्यथा अणु
 		ring->atr_sample_rate = 0;
-	}
+	पूर्ण
 
 	/* initialize XPS */
-	if (!test_and_set_bit(__IXGBE_TX_XPS_INIT_DONE, &ring->state)) {
-		struct ixgbe_q_vector *q_vector = ring->q_vector;
+	अगर (!test_and_set_bit(__IXGBE_TX_XPS_INIT_DONE, &ring->state)) अणु
+		काष्ठा ixgbe_q_vector *q_vector = ring->q_vector;
 
-		if (q_vector)
-			netif_set_xps_queue(ring->netdev,
+		अगर (q_vector)
+			netअगर_set_xps_queue(ring->netdev,
 					    &q_vector->affinity_mask,
 					    ring->queue_index);
-	}
+	पूर्ण
 
 	clear_bit(__IXGBE_HANG_CHECK_ARMED, &ring->state);
 
 	/* reinitialize tx_buffer_info */
-	memset(ring->tx_buffer_info, 0,
-	       sizeof(struct ixgbe_tx_buffer) * ring->count);
+	स_रखो(ring->tx_buffer_info, 0,
+	       माप(काष्ठा ixgbe_tx_buffer) * ring->count);
 
 	/* enable queue */
 	IXGBE_WRITE_REG(hw, IXGBE_TXDCTL(reg_idx), txdctl);
 
-	/* TXDCTL.EN will return 0 on 82598 if link is down, so skip it */
-	if (hw->mac.type == ixgbe_mac_82598EB &&
+	/* TXDCTL.EN will वापस 0 on 82598 अगर link is करोwn, so skip it */
+	अगर (hw->mac.type == ixgbe_mac_82598EB &&
 	    !(IXGBE_READ_REG(hw, IXGBE_LINKS) & IXGBE_LINKS_UP))
-		return;
+		वापस;
 
-	/* poll to verify queue is enabled */
-	do {
+	/* poll to verअगरy queue is enabled */
+	करो अणु
 		usleep_range(1000, 2000);
 		txdctl = IXGBE_READ_REG(hw, IXGBE_TXDCTL(reg_idx));
-	} while (--wait_loop && !(txdctl & IXGBE_TXDCTL_ENABLE));
-	if (!wait_loop)
+	पूर्ण जबतक (--रुको_loop && !(txdctl & IXGBE_TXDCTL_ENABLE));
+	अगर (!रुको_loop)
 		hw_dbg(hw, "Could not enable Tx Queue %d\n", reg_idx);
-}
+पूर्ण
 
-static void ixgbe_setup_mtqc(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_setup_mtqc(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 rttdcs, mtqc;
 	u8 tcs = adapter->hw_tcs;
 
-	if (hw->mac.type == ixgbe_mac_82598EB)
-		return;
+	अगर (hw->mac.type == ixgbe_mac_82598EB)
+		वापस;
 
-	/* disable the arbiter while setting MTQC */
+	/* disable the arbiter जबतक setting MTQC */
 	rttdcs = IXGBE_READ_REG(hw, IXGBE_RTTDCS);
 	rttdcs |= IXGBE_RTTDCS_ARBDIS;
 	IXGBE_WRITE_REG(hw, IXGBE_RTTDCS, rttdcs);
 
 	/* set transmit pool layout */
-	if (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED) {
+	अगर (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED) अणु
 		mtqc = IXGBE_MTQC_VT_ENA;
-		if (tcs > 4)
+		अगर (tcs > 4)
 			mtqc |= IXGBE_MTQC_RT_ENA | IXGBE_MTQC_8TC_8TQ;
-		else if (tcs > 1)
+		अन्यथा अगर (tcs > 1)
 			mtqc |= IXGBE_MTQC_RT_ENA | IXGBE_MTQC_4TC_4TQ;
-		else if (adapter->ring_feature[RING_F_VMDQ].mask ==
+		अन्यथा अगर (adapter->ring_feature[RING_F_VMDQ].mask ==
 			 IXGBE_82599_VMDQ_4Q_MASK)
 			mtqc |= IXGBE_MTQC_32VF;
-		else
+		अन्यथा
 			mtqc |= IXGBE_MTQC_64VF;
-	} else {
-		if (tcs > 4) {
+	पूर्ण अन्यथा अणु
+		अगर (tcs > 4) अणु
 			mtqc = IXGBE_MTQC_RT_ENA | IXGBE_MTQC_8TC_8TQ;
-		} else if (tcs > 1) {
+		पूर्ण अन्यथा अगर (tcs > 1) अणु
 			mtqc = IXGBE_MTQC_RT_ENA | IXGBE_MTQC_4TC_4TQ;
-		} else {
+		पूर्ण अन्यथा अणु
 			u8 max_txq = adapter->num_tx_queues +
 				adapter->num_xdp_queues;
-			if (max_txq > 63)
+			अगर (max_txq > 63)
 				mtqc = IXGBE_MTQC_RT_ENA | IXGBE_MTQC_4TC_4TQ;
-			else
+			अन्यथा
 				mtqc = IXGBE_MTQC_64Q_1PB;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	IXGBE_WRITE_REG(hw, IXGBE_MTQC, mtqc);
 
-	/* Enable Security TX Buffer IFG for multiple pb */
-	if (tcs) {
+	/* Enable Security TX Buffer IFG क्रम multiple pb */
+	अगर (tcs) अणु
 		u32 sectx = IXGBE_READ_REG(hw, IXGBE_SECTXMINIFG);
 		sectx |= IXGBE_SECTX_DCB;
 		IXGBE_WRITE_REG(hw, IXGBE_SECTXMINIFG, sectx);
-	}
+	पूर्ण
 
 	/* re-enable the arbiter */
 	rttdcs &= ~IXGBE_RTTDCS_ARBDIS;
 	IXGBE_WRITE_REG(hw, IXGBE_RTTDCS, rttdcs);
-}
+पूर्ण
 
 /**
  * ixgbe_configure_tx - Configure 8259x Transmit Unit after Reset
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  *
  * Configure the Tx unit of the MAC after a reset.
  **/
-static void ixgbe_configure_tx(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_configure_tx(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 dmatxctl;
 	u32 i;
 
 	ixgbe_setup_mtqc(adapter);
 
-	if (hw->mac.type != ixgbe_mac_82598EB) {
-		/* DMATXCTL.EN must be before Tx queues are enabled */
+	अगर (hw->mac.type != ixgbe_mac_82598EB) अणु
+		/* DMATXCTL.EN must be beक्रमe Tx queues are enabled */
 		dmatxctl = IXGBE_READ_REG(hw, IXGBE_DMATXCTL);
 		dmatxctl |= IXGBE_DMATXCTL_TE;
 		IXGBE_WRITE_REG(hw, IXGBE_DMATXCTL, dmatxctl);
-	}
+	पूर्ण
 
-	/* Setup the HW Tx Head and Tail descriptor pointers */
-	for (i = 0; i < adapter->num_tx_queues; i++)
+	/* Setup the HW Tx Head and Tail descriptor poपूर्णांकers */
+	क्रम (i = 0; i < adapter->num_tx_queues; i++)
 		ixgbe_configure_tx_ring(adapter, adapter->tx_ring[i]);
-	for (i = 0; i < adapter->num_xdp_queues; i++)
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++)
 		ixgbe_configure_tx_ring(adapter, adapter->xdp_ring[i]);
-}
+पूर्ण
 
-static void ixgbe_enable_rx_drop(struct ixgbe_adapter *adapter,
-				 struct ixgbe_ring *ring)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_enable_rx_drop(काष्ठा ixgbe_adapter *adapter,
+				 काष्ठा ixgbe_ring *ring)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u8 reg_idx = ring->reg_idx;
 	u32 srrctl = IXGBE_READ_REG(hw, IXGBE_SRRCTL(reg_idx));
 
 	srrctl |= IXGBE_SRRCTL_DROP_EN;
 
 	IXGBE_WRITE_REG(hw, IXGBE_SRRCTL(reg_idx), srrctl);
-}
+पूर्ण
 
-static void ixgbe_disable_rx_drop(struct ixgbe_adapter *adapter,
-				  struct ixgbe_ring *ring)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_disable_rx_drop(काष्ठा ixgbe_adapter *adapter,
+				  काष्ठा ixgbe_ring *ring)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u8 reg_idx = ring->reg_idx;
 	u32 srrctl = IXGBE_READ_REG(hw, IXGBE_SRRCTL(reg_idx));
 
 	srrctl &= ~IXGBE_SRRCTL_DROP_EN;
 
 	IXGBE_WRITE_REG(hw, IXGBE_SRRCTL(reg_idx), srrctl);
-}
+पूर्ण
 
-#ifdef CONFIG_IXGBE_DCB
-void ixgbe_set_rx_drop_en(struct ixgbe_adapter *adapter)
-#else
-static void ixgbe_set_rx_drop_en(struct ixgbe_adapter *adapter)
-#endif
-{
-	int i;
+#अगर_घोषित CONFIG_IXGBE_DCB
+व्योम ixgbe_set_rx_drop_en(काष्ठा ixgbe_adapter *adapter)
+#अन्यथा
+अटल व्योम ixgbe_set_rx_drop_en(काष्ठा ixgbe_adapter *adapter)
+#पूर्ण_अगर
+अणु
+	पूर्णांक i;
 	bool pfc_en = adapter->dcb_cfg.pfc_mode_enable;
 
-	if (adapter->ixgbe_ieee_pfc)
+	अगर (adapter->ixgbe_ieee_pfc)
 		pfc_en |= !!(adapter->ixgbe_ieee_pfc->pfc_en);
 
 	/*
-	 * We should set the drop enable bit if:
+	 * We should set the drop enable bit अगर:
 	 *  SR-IOV is enabled
 	 *   or
 	 *  Number of Rx queues > 1 and flow control is disabled
 	 *
-	 *  This allows us to avoid head of line blocking for security
-	 *  and performance reasons.
+	 *  This allows us to aव्योम head of line blocking क्रम security
+	 *  and perक्रमmance reasons.
 	 */
-	if (adapter->num_vfs || (adapter->num_rx_queues > 1 &&
-	    !(adapter->hw.fc.current_mode & ixgbe_fc_tx_pause) && !pfc_en)) {
-		for (i = 0; i < adapter->num_rx_queues; i++)
+	अगर (adapter->num_vfs || (adapter->num_rx_queues > 1 &&
+	    !(adapter->hw.fc.current_mode & ixgbe_fc_tx_छोड़ो) && !pfc_en)) अणु
+		क्रम (i = 0; i < adapter->num_rx_queues; i++)
 			ixgbe_enable_rx_drop(adapter, adapter->rx_ring[i]);
-	} else {
-		for (i = 0; i < adapter->num_rx_queues; i++)
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < adapter->num_rx_queues; i++)
 			ixgbe_disable_rx_drop(adapter, adapter->rx_ring[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define IXGBE_SRRCTL_BSIZEHDRSIZE_SHIFT 2
+#घोषणा IXGBE_SRRCTL_BSIZEHDRSIZE_SHIFT 2
 
-static void ixgbe_configure_srrctl(struct ixgbe_adapter *adapter,
-				   struct ixgbe_ring *rx_ring)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_configure_srrctl(काष्ठा ixgbe_adapter *adapter,
+				   काष्ठा ixgbe_ring *rx_ring)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 srrctl;
 	u8 reg_idx = rx_ring->reg_idx;
 
-	if (hw->mac.type == ixgbe_mac_82598EB) {
+	अगर (hw->mac.type == ixgbe_mac_82598EB) अणु
 		u16 mask = adapter->ring_feature[RING_F_RSS].mask;
 
 		/*
-		 * if VMDq is not active we must program one srrctl register
+		 * अगर VMDq is not active we must program one srrctl रेजिस्टर
 		 * per RSS queue since we have enabled RDRXCTL.MVMEN
 		 */
 		reg_idx &= mask;
-	}
+	पूर्ण
 
-	/* configure header buffer length, needed for RSC */
+	/* configure header buffer length, needed क्रम RSC */
 	srrctl = IXGBE_RX_HDR_SIZE << IXGBE_SRRCTL_BSIZEHDRSIZE_SHIFT;
 
 	/* configure the packet buffer length */
-	if (rx_ring->xsk_pool) {
+	अगर (rx_ring->xsk_pool) अणु
 		u32 xsk_buf_len = xsk_pool_get_rx_frame_size(rx_ring->xsk_pool);
 
 		/* If the MAC support setting RXDCTL.RLPML, the
 		 * SRRCTL[n].BSIZEPKT is set to PAGE_SIZE and
 		 * RXDCTL.RLPML is set to the actual UMEM buffer
 		 * size. If not, then we are stuck with a 1k buffer
-		 * size resolution. In this case frames larger than
+		 * size resolution. In this हाल frames larger than
 		 * the UMEM buffer size viewed in a 1k resolution will
 		 * be dropped.
 		 */
-		if (hw->mac.type != ixgbe_mac_82599EB)
+		अगर (hw->mac.type != ixgbe_mac_82599EB)
 			srrctl |= PAGE_SIZE >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
-		else
+		अन्यथा
 			srrctl |= xsk_buf_len >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
-	} else if (test_bit(__IXGBE_RX_3K_BUFFER, &rx_ring->state)) {
+	पूर्ण अन्यथा अगर (test_bit(__IXGBE_RX_3K_BUFFER, &rx_ring->state)) अणु
 		srrctl |= IXGBE_RXBUFFER_3K >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
-	} else {
+	पूर्ण अन्यथा अणु
 		srrctl |= IXGBE_RXBUFFER_2K >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
-	}
+	पूर्ण
 
 	/* configure descriptor type */
 	srrctl |= IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF;
 
 	IXGBE_WRITE_REG(hw, IXGBE_SRRCTL(reg_idx), srrctl);
-}
+पूर्ण
 
 /**
  * ixgbe_rss_indir_tbl_entries - Return RSS indirection table entries
@@ -3747,15 +3748,15 @@ static void ixgbe_configure_srrctl(struct ixgbe_adapter *adapter,
  *  - X550(non-SRIOV mode): 512
  *  - X550(SRIOV mode):     64
  */
-u32 ixgbe_rss_indir_tbl_entries(struct ixgbe_adapter *adapter)
-{
-	if (adapter->hw.mac.type < ixgbe_mac_X550)
-		return 128;
-	else if (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)
-		return 64;
-	else
-		return 512;
-}
+u32 ixgbe_rss_indir_tbl_entries(काष्ठा ixgbe_adapter *adapter)
+अणु
+	अगर (adapter->hw.mac.type < ixgbe_mac_X550)
+		वापस 128;
+	अन्यथा अगर (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)
+		वापस 64;
+	अन्यथा
+		वापस 512;
+पूर्ण
 
 /**
  * ixgbe_store_key - Write the RSS key to HW
@@ -3763,36 +3764,36 @@ u32 ixgbe_rss_indir_tbl_entries(struct ixgbe_adapter *adapter)
  *
  * Write the RSS key stored in adapter.rss_key to HW.
  */
-void ixgbe_store_key(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i;
+व्योम ixgbe_store_key(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i;
 
-	for (i = 0; i < 10; i++)
+	क्रम (i = 0; i < 10; i++)
 		IXGBE_WRITE_REG(hw, IXGBE_RSSRK(i), adapter->rss_key[i]);
-}
+पूर्ण
 
 /**
  * ixgbe_init_rss_key - Initialize adapter RSS key
  * @adapter: device handle
  *
- * Allocates and initializes the RSS key if it is not allocated.
+ * Allocates and initializes the RSS key अगर it is not allocated.
  **/
-static inline int ixgbe_init_rss_key(struct ixgbe_adapter *adapter)
-{
+अटल अंतरभूत पूर्णांक ixgbe_init_rss_key(काष्ठा ixgbe_adapter *adapter)
+अणु
 	u32 *rss_key;
 
-	if (!adapter->rss_key) {
+	अगर (!adapter->rss_key) अणु
 		rss_key = kzalloc(IXGBE_RSS_KEY_SIZE, GFP_KERNEL);
-		if (unlikely(!rss_key))
-			return -ENOMEM;
+		अगर (unlikely(!rss_key))
+			वापस -ENOMEM;
 
 		netdev_rss_key_fill(rss_key, IXGBE_RSS_KEY_SIZE);
 		adapter->rss_key = rss_key;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ixgbe_store_reta - Write the RETA table to HW
@@ -3800,10 +3801,10 @@ static inline int ixgbe_init_rss_key(struct ixgbe_adapter *adapter)
  *
  * Write the RSS redirection table stored in adapter.rss_indir_tbl[] to HW.
  */
-void ixgbe_store_reta(struct ixgbe_adapter *adapter)
-{
+व्योम ixgbe_store_reta(काष्ठा ixgbe_adapter *adapter)
+अणु
 	u32 i, reta_entries = ixgbe_rss_indir_tbl_entries(adapter);
-	struct ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 reta = 0;
 	u32 indices_multi;
 	u8 *indir_tbl = adapter->rss_indir_tbl;
@@ -3814,24 +3815,24 @@ void ixgbe_store_reta(struct ixgbe_adapter *adapter)
 	 *  - 82599/X540: 8 bit wide entries containing 4 bit RSS index
 	 *  - X550:       8 bit wide entries containing 6 bit RSS index
 	 */
-	if (adapter->hw.mac.type == ixgbe_mac_82598EB)
+	अगर (adapter->hw.mac.type == ixgbe_mac_82598EB)
 		indices_multi = 0x11;
-	else
+	अन्यथा
 		indices_multi = 0x1;
 
 	/* Write redirection table to HW */
-	for (i = 0; i < reta_entries; i++) {
+	क्रम (i = 0; i < reta_entries; i++) अणु
 		reta |= indices_multi * indir_tbl[i] << (i & 0x3) * 8;
-		if ((i & 3) == 3) {
-			if (i < 128)
+		अगर ((i & 3) == 3) अणु
+			अगर (i < 128)
 				IXGBE_WRITE_REG(hw, IXGBE_RETA(i >> 2), reta);
-			else
+			अन्यथा
 				IXGBE_WRITE_REG(hw, IXGBE_ERETA((i >> 2) - 32),
 						reta);
 			reta = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * ixgbe_store_vfreta - Write the RETA table to HW (x550 devices in SRIOV mode)
@@ -3839,87 +3840,87 @@ void ixgbe_store_reta(struct ixgbe_adapter *adapter)
  *
  * Write the RSS redirection table stored in adapter.rss_indir_tbl[] to HW.
  */
-static void ixgbe_store_vfreta(struct ixgbe_adapter *adapter)
-{
+अटल व्योम ixgbe_store_vfreta(काष्ठा ixgbe_adapter *adapter)
+अणु
 	u32 i, reta_entries = ixgbe_rss_indir_tbl_entries(adapter);
-	struct ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 vfreta = 0;
 
 	/* Write redirection table to HW */
-	for (i = 0; i < reta_entries; i++) {
+	क्रम (i = 0; i < reta_entries; i++) अणु
 		u16 pool = adapter->num_rx_pools;
 
 		vfreta |= (u32)adapter->rss_indir_tbl[i] << (i & 0x3) * 8;
-		if ((i & 3) != 3)
-			continue;
+		अगर ((i & 3) != 3)
+			जारी;
 
-		while (pool--)
+		जबतक (pool--)
 			IXGBE_WRITE_REG(hw,
 					IXGBE_PFVFRETA(i >> 2, VMDQ_P(pool)),
 					vfreta);
 		vfreta = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ixgbe_setup_reta(struct ixgbe_adapter *adapter)
-{
+अटल व्योम ixgbe_setup_reta(काष्ठा ixgbe_adapter *adapter)
+अणु
 	u32 i, j;
 	u32 reta_entries = ixgbe_rss_indir_tbl_entries(adapter);
 	u16 rss_i = adapter->ring_feature[RING_F_RSS].indices;
 
-	/* Program table for at least 4 queues w/ SR-IOV so that VFs can
+	/* Program table क्रम at least 4 queues w/ SR-IOV so that VFs can
 	 * make full use of any rings they may have.  We will use the
-	 * PSRTYPE register to control how many rings we use within the PF.
+	 * PSRTYPE रेजिस्टर to control how many rings we use within the PF.
 	 */
-	if ((adapter->flags & IXGBE_FLAG_SRIOV_ENABLED) && (rss_i < 4))
+	अगर ((adapter->flags & IXGBE_FLAG_SRIOV_ENABLED) && (rss_i < 4))
 		rss_i = 4;
 
 	/* Fill out hash function seeds */
 	ixgbe_store_key(adapter);
 
 	/* Fill out redirection table */
-	memset(adapter->rss_indir_tbl, 0, sizeof(adapter->rss_indir_tbl));
+	स_रखो(adapter->rss_indir_tbl, 0, माप(adapter->rss_indir_tbl));
 
-	for (i = 0, j = 0; i < reta_entries; i++, j++) {
-		if (j == rss_i)
+	क्रम (i = 0, j = 0; i < reta_entries; i++, j++) अणु
+		अगर (j == rss_i)
 			j = 0;
 
 		adapter->rss_indir_tbl[i] = j;
-	}
+	पूर्ण
 
 	ixgbe_store_reta(adapter);
-}
+पूर्ण
 
-static void ixgbe_setup_vfreta(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_setup_vfreta(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u16 rss_i = adapter->ring_feature[RING_F_RSS].indices;
-	int i, j;
+	पूर्णांक i, j;
 
 	/* Fill out hash function seeds */
-	for (i = 0; i < 10; i++) {
+	क्रम (i = 0; i < 10; i++) अणु
 		u16 pool = adapter->num_rx_pools;
 
-		while (pool--)
+		जबतक (pool--)
 			IXGBE_WRITE_REG(hw,
 					IXGBE_PFVFRSSRK(i, VMDQ_P(pool)),
 					*(adapter->rss_key + i));
-	}
+	पूर्ण
 
 	/* Fill out the redirection table */
-	for (i = 0, j = 0; i < 64; i++, j++) {
-		if (j == rss_i)
+	क्रम (i = 0, j = 0; i < 64; i++, j++) अणु
+		अगर (j == rss_i)
 			j = 0;
 
 		adapter->rss_indir_tbl[i] = j;
-	}
+	पूर्ण
 
 	ixgbe_store_vfreta(adapter);
-}
+पूर्ण
 
-static void ixgbe_setup_mrqc(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_setup_mrqc(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 mrqc = 0, rss_field = 0, vfmrqc = 0;
 	u32 rxcsum;
 
@@ -3928,87 +3929,87 @@ static void ixgbe_setup_mrqc(struct ixgbe_adapter *adapter)
 	rxcsum |= IXGBE_RXCSUM_PCSD;
 	IXGBE_WRITE_REG(hw, IXGBE_RXCSUM, rxcsum);
 
-	if (adapter->hw.mac.type == ixgbe_mac_82598EB) {
-		if (adapter->ring_feature[RING_F_RSS].mask)
+	अगर (adapter->hw.mac.type == ixgbe_mac_82598EB) अणु
+		अगर (adapter->ring_feature[RING_F_RSS].mask)
 			mrqc = IXGBE_MRQC_RSSEN;
-	} else {
+	पूर्ण अन्यथा अणु
 		u8 tcs = adapter->hw_tcs;
 
-		if (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED) {
-			if (tcs > 4)
+		अगर (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED) अणु
+			अगर (tcs > 4)
 				mrqc = IXGBE_MRQC_VMDQRT8TCEN;	/* 8 TCs */
-			else if (tcs > 1)
+			अन्यथा अगर (tcs > 1)
 				mrqc = IXGBE_MRQC_VMDQRT4TCEN;	/* 4 TCs */
-			else if (adapter->ring_feature[RING_F_VMDQ].mask ==
+			अन्यथा अगर (adapter->ring_feature[RING_F_VMDQ].mask ==
 				 IXGBE_82599_VMDQ_4Q_MASK)
 				mrqc = IXGBE_MRQC_VMDQRSS32EN;
-			else
+			अन्यथा
 				mrqc = IXGBE_MRQC_VMDQRSS64EN;
 
-			/* Enable L3/L4 for Tx Switched packets only for X550,
-			 * older devices do not support this feature
+			/* Enable L3/L4 क्रम Tx Switched packets only क्रम X550,
+			 * older devices करो not support this feature
 			 */
-			if (hw->mac.type >= ixgbe_mac_X550)
+			अगर (hw->mac.type >= ixgbe_mac_X550)
 				mrqc |= IXGBE_MRQC_L3L4TXSWEN;
-		} else {
-			if (tcs > 4)
+		पूर्ण अन्यथा अणु
+			अगर (tcs > 4)
 				mrqc = IXGBE_MRQC_RTRSS8TCEN;
-			else if (tcs > 1)
+			अन्यथा अगर (tcs > 1)
 				mrqc = IXGBE_MRQC_RTRSS4TCEN;
-			else
+			अन्यथा
 				mrqc = IXGBE_MRQC_RSSEN;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Perform hash on these packet types */
+	/* Perक्रमm hash on these packet types */
 	rss_field |= IXGBE_MRQC_RSS_FIELD_IPV4 |
 		     IXGBE_MRQC_RSS_FIELD_IPV4_TCP |
 		     IXGBE_MRQC_RSS_FIELD_IPV6 |
 		     IXGBE_MRQC_RSS_FIELD_IPV6_TCP;
 
-	if (adapter->flags2 & IXGBE_FLAG2_RSS_FIELD_IPV4_UDP)
+	अगर (adapter->flags2 & IXGBE_FLAG2_RSS_FIELD_IPV4_UDP)
 		rss_field |= IXGBE_MRQC_RSS_FIELD_IPV4_UDP;
-	if (adapter->flags2 & IXGBE_FLAG2_RSS_FIELD_IPV6_UDP)
+	अगर (adapter->flags2 & IXGBE_FLAG2_RSS_FIELD_IPV6_UDP)
 		rss_field |= IXGBE_MRQC_RSS_FIELD_IPV6_UDP;
 
-	if ((hw->mac.type >= ixgbe_mac_X550) &&
-	    (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)) {
+	अगर ((hw->mac.type >= ixgbe_mac_X550) &&
+	    (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)) अणु
 		u16 pool = adapter->num_rx_pools;
 
 		/* Enable VF RSS mode */
 		mrqc |= IXGBE_MRQC_MULTIPLE_RSS;
 		IXGBE_WRITE_REG(hw, IXGBE_MRQC, mrqc);
 
-		/* Setup RSS through the VF registers */
+		/* Setup RSS through the VF रेजिस्टरs */
 		ixgbe_setup_vfreta(adapter);
 		vfmrqc = IXGBE_MRQC_RSSEN;
 		vfmrqc |= rss_field;
 
-		while (pool--)
+		जबतक (pool--)
 			IXGBE_WRITE_REG(hw,
 					IXGBE_PFVFMRQC(VMDQ_P(pool)),
 					vfmrqc);
-	} else {
+	पूर्ण अन्यथा अणु
 		ixgbe_setup_reta(adapter);
 		mrqc |= rss_field;
 		IXGBE_WRITE_REG(hw, IXGBE_MRQC, mrqc);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ixgbe_configure_rscctl - enable RSC for the indicated ring
- * @adapter: address of board private structure
- * @ring: structure containing ring specific data
+ * ixgbe_configure_rscctl - enable RSC क्रम the indicated ring
+ * @adapter: address of board निजी काष्ठाure
+ * @ring: काष्ठाure containing ring specअगरic data
  **/
-static void ixgbe_configure_rscctl(struct ixgbe_adapter *adapter,
-				   struct ixgbe_ring *ring)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_configure_rscctl(काष्ठा ixgbe_adapter *adapter,
+				   काष्ठा ixgbe_ring *ring)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 rscctrl;
 	u8 reg_idx = ring->reg_idx;
 
-	if (!ring_is_rsc_enabled(ring))
-		return;
+	अगर (!ring_is_rsc_enabled(ring))
+		वापस;
 
 	rscctrl = IXGBE_READ_REG(hw, IXGBE_RSCCTL(reg_idx));
 	rscctrl |= IXGBE_RSCCTL_RSCEN;
@@ -4019,68 +4020,68 @@ static void ixgbe_configure_rscctl(struct ixgbe_adapter *adapter,
 	 */
 	rscctrl |= IXGBE_RSCCTL_MAXDESC_16;
 	IXGBE_WRITE_REG(hw, IXGBE_RSCCTL(reg_idx), rscctrl);
-}
+पूर्ण
 
-#define IXGBE_MAX_RX_DESC_POLL 10
-static void ixgbe_rx_desc_queue_enable(struct ixgbe_adapter *adapter,
-				       struct ixgbe_ring *ring)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int wait_loop = IXGBE_MAX_RX_DESC_POLL;
+#घोषणा IXGBE_MAX_RX_DESC_POLL 10
+अटल व्योम ixgbe_rx_desc_queue_enable(काष्ठा ixgbe_adapter *adapter,
+				       काष्ठा ixgbe_ring *ring)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक रुको_loop = IXGBE_MAX_RX_DESC_POLL;
 	u32 rxdctl;
 	u8 reg_idx = ring->reg_idx;
 
-	if (ixgbe_removed(hw->hw_addr))
-		return;
-	/* RXDCTL.EN will return 0 on 82598 if link is down, so skip it */
-	if (hw->mac.type == ixgbe_mac_82598EB &&
+	अगर (ixgbe_हटाओd(hw->hw_addr))
+		वापस;
+	/* RXDCTL.EN will वापस 0 on 82598 अगर link is करोwn, so skip it */
+	अगर (hw->mac.type == ixgbe_mac_82598EB &&
 	    !(IXGBE_READ_REG(hw, IXGBE_LINKS) & IXGBE_LINKS_UP))
-		return;
+		वापस;
 
-	do {
+	करो अणु
 		usleep_range(1000, 2000);
 		rxdctl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(reg_idx));
-	} while (--wait_loop && !(rxdctl & IXGBE_RXDCTL_ENABLE));
+	पूर्ण जबतक (--रुको_loop && !(rxdctl & IXGBE_RXDCTL_ENABLE));
 
-	if (!wait_loop) {
+	अगर (!रुको_loop) अणु
 		e_err(drv, "RXDCTL.ENABLE on Rx queue %d not set within "
 		      "the polling period\n", reg_idx);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ixgbe_configure_rx_ring(struct ixgbe_adapter *adapter,
-			     struct ixgbe_ring *ring)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	union ixgbe_adv_rx_desc *rx_desc;
+व्योम ixgbe_configure_rx_ring(काष्ठा ixgbe_adapter *adapter,
+			     काष्ठा ixgbe_ring *ring)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	जोड़ ixgbe_adv_rx_desc *rx_desc;
 	u64 rdba = ring->dma;
 	u32 rxdctl;
 	u8 reg_idx = ring->reg_idx;
 
 	xdp_rxq_info_unreg_mem_model(&ring->xdp_rxq);
 	ring->xsk_pool = ixgbe_xsk_pool(adapter, ring);
-	if (ring->xsk_pool) {
+	अगर (ring->xsk_pool) अणु
 		WARN_ON(xdp_rxq_info_reg_mem_model(&ring->xdp_rxq,
 						   MEM_TYPE_XSK_BUFF_POOL,
-						   NULL));
+						   शून्य));
 		xsk_pool_set_rxq_info(ring->xsk_pool, &ring->xdp_rxq);
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ON(xdp_rxq_info_reg_mem_model(&ring->xdp_rxq,
-						   MEM_TYPE_PAGE_SHARED, NULL));
-	}
+						   MEM_TYPE_PAGE_SHARED, शून्य));
+	पूर्ण
 
-	/* disable queue to avoid use of these values while updating state */
+	/* disable queue to aव्योम use of these values जबतक updating state */
 	rxdctl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(reg_idx));
 	rxdctl &= ~IXGBE_RXDCTL_ENABLE;
 
-	/* write value back with RXDCTL.ENABLE bit cleared */
+	/* ग_लिखो value back with RXDCTL.ENABLE bit cleared */
 	IXGBE_WRITE_REG(hw, IXGBE_RXDCTL(reg_idx), rxdctl);
 	IXGBE_WRITE_FLUSH(hw);
 
 	IXGBE_WRITE_REG(hw, IXGBE_RDBAL(reg_idx), (rdba & DMA_BIT_MASK(32)));
 	IXGBE_WRITE_REG(hw, IXGBE_RDBAH(reg_idx), (rdba >> 32));
 	IXGBE_WRITE_REG(hw, IXGBE_RDLEN(reg_idx),
-			ring->count * sizeof(union ixgbe_adv_rx_desc));
+			ring->count * माप(जोड़ ixgbe_adv_rx_desc));
 	/* Force flushing of IXGBE_RDLEN to prevent MDD */
 	IXGBE_WRITE_FLUSH(hw);
 
@@ -4091,36 +4092,36 @@ void ixgbe_configure_rx_ring(struct ixgbe_adapter *adapter,
 	ixgbe_configure_srrctl(adapter, ring);
 	ixgbe_configure_rscctl(adapter, ring);
 
-	if (hw->mac.type == ixgbe_mac_82598EB) {
+	अगर (hw->mac.type == ixgbe_mac_82598EB) अणु
 		/*
-		 * enable cache line friendly hardware writes:
-		 * PTHRESH=32 descriptors (half the internal cache),
-		 * this also removes ugly rx_no_buffer_count increment
+		 * enable cache line मित्रly hardware ग_लिखोs:
+		 * PTHRESH=32 descriptors (half the पूर्णांकernal cache),
+		 * this also हटाओs ugly rx_no_buffer_count increment
 		 * HTHRESH=4 descriptors (to minimize latency on fetch)
-		 * WTHRESH=8 burst writeback up to two cache lines
+		 * WTHRESH=8 burst ग_लिखोback up to two cache lines
 		 */
 		rxdctl &= ~0x3FFFFF;
 		rxdctl |=  0x080420;
-#if (PAGE_SIZE < 8192)
-	/* RXDCTL.RLPML does not work on 82599 */
-	} else if (hw->mac.type != ixgbe_mac_82599EB) {
+#अगर (PAGE_SIZE < 8192)
+	/* RXDCTL.RLPML करोes not work on 82599 */
+	पूर्ण अन्यथा अगर (hw->mac.type != ixgbe_mac_82599EB) अणु
 		rxdctl &= ~(IXGBE_RXDCTL_RLPMLMASK |
 			    IXGBE_RXDCTL_RLPML_EN);
 
-		/* Limit the maximum frame size so we don't overrun the skb.
+		/* Limit the maximum frame size so we करोn't overrun the skb.
 		 * This can happen in SRIOV mode when the MTU of the VF is
 		 * higher than the MTU of the PF.
 		 */
-		if (ring_uses_build_skb(ring) &&
+		अगर (ring_uses_build_skb(ring) &&
 		    !test_bit(__IXGBE_RX_3K_BUFFER, &ring->state))
 			rxdctl |= IXGBE_MAX_2K_FRAME_BUILD_SKB |
 				  IXGBE_RXDCTL_RLPML_EN;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	ring->rx_offset = ixgbe_rx_offset(ring);
 
-	if (ring->xsk_pool && hw->mac.type != ixgbe_mac_82599EB) {
+	अगर (ring->xsk_pool && hw->mac.type != ixgbe_mac_82599EB) अणु
 		u32 xsk_buf_len = xsk_pool_get_rx_frame_size(ring->xsk_pool);
 
 		rxdctl &= ~(IXGBE_RXDCTL_RLPMLMASK |
@@ -4128,11 +4129,11 @@ void ixgbe_configure_rx_ring(struct ixgbe_adapter *adapter,
 		rxdctl |= xsk_buf_len | IXGBE_RXDCTL_RLPML_EN;
 
 		ring->rx_buf_len = xsk_buf_len;
-	}
+	पूर्ण
 
 	/* initialize rx_buffer_info */
-	memset(ring->rx_buffer_info, 0,
-	       sizeof(struct ixgbe_rx_buffer) * ring->count);
+	स_रखो(ring->rx_buffer_info, 0,
+	       माप(काष्ठा ixgbe_rx_buffer) * ring->count);
 
 	/* initialize Rx descriptor 0 */
 	rx_desc = IXGBE_RX_DESC(ring, 0);
@@ -4143,16 +4144,16 @@ void ixgbe_configure_rx_ring(struct ixgbe_adapter *adapter,
 	IXGBE_WRITE_REG(hw, IXGBE_RXDCTL(reg_idx), rxdctl);
 
 	ixgbe_rx_desc_queue_enable(adapter, ring);
-	if (ring->xsk_pool)
+	अगर (ring->xsk_pool)
 		ixgbe_alloc_rx_buffers_zc(ring, ixgbe_desc_unused(ring));
-	else
+	अन्यथा
 		ixgbe_alloc_rx_buffers(ring, ixgbe_desc_unused(ring));
-}
+पूर्ण
 
-static void ixgbe_setup_psrtype(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int rss_i = adapter->ring_feature[RING_F_RSS].indices;
+अटल व्योम ixgbe_setup_psrtype(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक rss_i = adapter->ring_feature[RING_F_RSS].indices;
 	u16 pool = adapter->num_rx_pools;
 
 	/* PSRTYPE must be initialized in non 82598 adapters */
@@ -4162,28 +4163,28 @@ static void ixgbe_setup_psrtype(struct ixgbe_adapter *adapter)
 		      IXGBE_PSRTYPE_L2HDR |
 		      IXGBE_PSRTYPE_IPV6HDR;
 
-	if (hw->mac.type == ixgbe_mac_82598EB)
-		return;
+	अगर (hw->mac.type == ixgbe_mac_82598EB)
+		वापस;
 
-	if (rss_i > 3)
+	अगर (rss_i > 3)
 		psrtype |= 2u << 29;
-	else if (rss_i > 1)
+	अन्यथा अगर (rss_i > 1)
 		psrtype |= 1u << 29;
 
-	while (pool--)
+	जबतक (pool--)
 		IXGBE_WRITE_REG(hw, IXGBE_PSRTYPE(VMDQ_P(pool)), psrtype);
-}
+पूर्ण
 
-static void ixgbe_configure_virtualization(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_configure_भवization(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u16 pool = adapter->num_rx_pools;
-	u32 reg_offset, vf_shift, vmolr;
+	u32 reg_offset, vf_shअगरt, vmolr;
 	u32 gcr_ext, vmdctl;
-	int i;
+	पूर्णांक i;
 
-	if (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
-		return;
+	अगर (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
+		वापस;
 
 	vmdctl = IXGBE_READ_REG(hw, IXGBE_VT_CTL);
 	vmdctl |= IXGBE_VMD_CTL_VMDQ_EN;
@@ -4193,86 +4194,86 @@ static void ixgbe_configure_virtualization(struct ixgbe_adapter *adapter)
 	IXGBE_WRITE_REG(hw, IXGBE_VT_CTL, vmdctl);
 
 	/* accept untagged packets until a vlan tag is
-	 * specifically set for the VMDQ queue/pool
+	 * specअगरically set क्रम the VMDQ queue/pool
 	 */
 	vmolr = IXGBE_VMOLR_AUPE;
-	while (pool--)
+	जबतक (pool--)
 		IXGBE_WRITE_REG(hw, IXGBE_VMOLR(VMDQ_P(pool)), vmolr);
 
-	vf_shift = VMDQ_P(0) % 32;
+	vf_shअगरt = VMDQ_P(0) % 32;
 	reg_offset = (VMDQ_P(0) >= 32) ? 1 : 0;
 
-	/* Enable only the PF's pool for Tx/Rx */
-	IXGBE_WRITE_REG(hw, IXGBE_VFRE(reg_offset), GENMASK(31, vf_shift));
+	/* Enable only the PF's pool क्रम Tx/Rx */
+	IXGBE_WRITE_REG(hw, IXGBE_VFRE(reg_offset), GENMASK(31, vf_shअगरt));
 	IXGBE_WRITE_REG(hw, IXGBE_VFRE(reg_offset ^ 1), reg_offset - 1);
-	IXGBE_WRITE_REG(hw, IXGBE_VFTE(reg_offset), GENMASK(31, vf_shift));
+	IXGBE_WRITE_REG(hw, IXGBE_VFTE(reg_offset), GENMASK(31, vf_shअगरt));
 	IXGBE_WRITE_REG(hw, IXGBE_VFTE(reg_offset ^ 1), reg_offset - 1);
-	if (adapter->bridge_mode == BRIDGE_MODE_VEB)
+	अगर (adapter->bridge_mode == BRIDGE_MODE_VEB)
 		IXGBE_WRITE_REG(hw, IXGBE_PFDTXGSWC, IXGBE_PFDTXGSWC_VT_LBEN);
 
 	/* Map PF MAC address in RAR Entry 0 to first pool following VFs */
 	hw->mac.ops.set_vmdq(hw, 0, VMDQ_P(0));
 
-	/* clear VLAN promisc flag so VFTA will be updated if necessary */
+	/* clear VLAN promisc flag so VFTA will be updated अगर necessary */
 	adapter->flags2 &= ~IXGBE_FLAG2_VLAN_PROMISC;
 
 	/*
-	 * Set up VF register offsets for selected VT Mode,
-	 * i.e. 32 or 64 VFs for SR-IOV
+	 * Set up VF रेजिस्टर offsets क्रम selected VT Mode,
+	 * i.e. 32 or 64 VFs क्रम SR-IOV
 	 */
-	switch (adapter->ring_feature[RING_F_VMDQ].mask) {
-	case IXGBE_82599_VMDQ_8Q_MASK:
+	चयन (adapter->ring_feature[RING_F_VMDQ].mask) अणु
+	हाल IXGBE_82599_VMDQ_8Q_MASK:
 		gcr_ext = IXGBE_GCR_EXT_VT_MODE_16;
-		break;
-	case IXGBE_82599_VMDQ_4Q_MASK:
+		अवरोध;
+	हाल IXGBE_82599_VMDQ_4Q_MASK:
 		gcr_ext = IXGBE_GCR_EXT_VT_MODE_32;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		gcr_ext = IXGBE_GCR_EXT_VT_MODE_64;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	IXGBE_WRITE_REG(hw, IXGBE_GCR_EXT, gcr_ext);
 
-	for (i = 0; i < adapter->num_vfs; i++) {
+	क्रम (i = 0; i < adapter->num_vfs; i++) अणु
 		/* configure spoof checking */
-		ixgbe_ndo_set_vf_spoofchk(adapter->netdev, i,
+		ixgbe_nकरो_set_vf_spoofchk(adapter->netdev, i,
 					  adapter->vfinfo[i].spoofchk_enabled);
 
 		/* Enable/Disable RSS query feature  */
-		ixgbe_ndo_set_vf_rss_query_en(adapter->netdev, i,
+		ixgbe_nकरो_set_vf_rss_query_en(adapter->netdev, i,
 					  adapter->vfinfo[i].rss_query_enabled);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ixgbe_set_rx_buffer_len(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct net_device *netdev = adapter->netdev;
-	int max_frame = netdev->mtu + ETH_HLEN + ETH_FCS_LEN;
-	struct ixgbe_ring *rx_ring;
-	int i;
+अटल व्योम ixgbe_set_rx_buffer_len(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा net_device *netdev = adapter->netdev;
+	पूर्णांक max_frame = netdev->mtu + ETH_HLEN + ETH_FCS_LEN;
+	काष्ठा ixgbe_ring *rx_ring;
+	पूर्णांक i;
 	u32 mhadd, hlreg0;
 
-#ifdef IXGBE_FCOE
-	/* adjust max frame to be able to do baby jumbo for FCoE */
-	if ((adapter->flags & IXGBE_FLAG_FCOE_ENABLED) &&
+#अगर_घोषित IXGBE_FCOE
+	/* adjust max frame to be able to करो baby jumbo क्रम FCoE */
+	अगर ((adapter->flags & IXGBE_FLAG_FCOE_ENABLED) &&
 	    (max_frame < IXGBE_FCOE_JUMBO_FRAME_SIZE))
 		max_frame = IXGBE_FCOE_JUMBO_FRAME_SIZE;
 
-#endif /* IXGBE_FCOE */
+#पूर्ण_अगर /* IXGBE_FCOE */
 
 	/* adjust max frame to be at least the size of a standard frame */
-	if (max_frame < (ETH_FRAME_LEN + ETH_FCS_LEN))
+	अगर (max_frame < (ETH_FRAME_LEN + ETH_FCS_LEN))
 		max_frame = (ETH_FRAME_LEN + ETH_FCS_LEN);
 
 	mhadd = IXGBE_READ_REG(hw, IXGBE_MHADD);
-	if (max_frame != (mhadd >> IXGBE_MHADD_MFS_SHIFT)) {
+	अगर (max_frame != (mhadd >> IXGBE_MHADD_MFS_SHIFT)) अणु
 		mhadd &= ~IXGBE_MHADD_MFS_MASK;
 		mhadd |= max_frame << IXGBE_MHADD_MFS_SHIFT;
 
 		IXGBE_WRITE_REG(hw, IXGBE_MHADD, mhadd);
-	}
+	पूर्ण
 
 	hlreg0 = IXGBE_READ_REG(hw, IXGBE_HLREG0);
 	/* set jumbo enable since MHADD.MFS is keeping size locked at max_frame */
@@ -4280,94 +4281,94 @@ static void ixgbe_set_rx_buffer_len(struct ixgbe_adapter *adapter)
 	IXGBE_WRITE_REG(hw, IXGBE_HLREG0, hlreg0);
 
 	/*
-	 * Setup the HW Rx Head and Tail Descriptor Pointers and
+	 * Setup the HW Rx Head and Tail Descriptor Poपूर्णांकers and
 	 * the Base and Length of the Rx Descriptor Ring
 	 */
-	for (i = 0; i < adapter->num_rx_queues; i++) {
+	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
 		rx_ring = adapter->rx_ring[i];
 
 		clear_ring_rsc_enabled(rx_ring);
 		clear_bit(__IXGBE_RX_3K_BUFFER, &rx_ring->state);
 		clear_bit(__IXGBE_RX_BUILD_SKB_ENABLED, &rx_ring->state);
 
-		if (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED)
+		अगर (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED)
 			set_ring_rsc_enabled(rx_ring);
 
-		if (test_bit(__IXGBE_RX_FCOE, &rx_ring->state))
+		अगर (test_bit(__IXGBE_RX_FCOE, &rx_ring->state))
 			set_bit(__IXGBE_RX_3K_BUFFER, &rx_ring->state);
 
-		if (adapter->flags2 & IXGBE_FLAG2_RX_LEGACY)
-			continue;
+		अगर (adapter->flags2 & IXGBE_FLAG2_RX_LEGACY)
+			जारी;
 
 		set_bit(__IXGBE_RX_BUILD_SKB_ENABLED, &rx_ring->state);
 
-#if (PAGE_SIZE < 8192)
-		if (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED)
+#अगर (PAGE_SIZE < 8192)
+		अगर (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED)
 			set_bit(__IXGBE_RX_3K_BUFFER, &rx_ring->state);
 
-		if (IXGBE_2K_TOO_SMALL_WITH_PADDING ||
+		अगर (IXGBE_2K_TOO_SMALL_WITH_PADDING ||
 		    (max_frame > (ETH_FRAME_LEN + ETH_FCS_LEN)))
 			set_bit(__IXGBE_RX_3K_BUFFER, &rx_ring->state);
-#endif
-	}
-}
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-static void ixgbe_setup_rdrxctl(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_setup_rdrxctl(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 rdrxctl = IXGBE_READ_REG(hw, IXGBE_RDRXCTL);
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB:
 		/*
-		 * For VMDq support of different descriptor types or
+		 * For VMDq support of dअगरferent descriptor types or
 		 * buffer sizes through the use of multiple SRRCTL
-		 * registers, RDRXCTL.MVMEN must be set to 1
+		 * रेजिस्टरs, RDRXCTL.MVMEN must be set to 1
 		 *
-		 * also, the manual doesn't mention it clearly but DCA hints
+		 * also, the manual करोesn't mention it clearly but DCA hपूर्णांकs
 		 * will only use queue 0's tags unless this bit is set.  Side
 		 * effects of setting this bit are only that SRRCTL must be
 		 * fully programmed [0..15]
 		 */
 		rdrxctl |= IXGBE_RDRXCTL_MVMEN;
-		break;
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
-		if (adapter->num_vfs)
+		अवरोध;
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
+		अगर (adapter->num_vfs)
 			rdrxctl |= IXGBE_RDRXCTL_PSP;
 		fallthrough;
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-		/* Disable RSC for ACK packets */
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
+		/* Disable RSC क्रम ACK packets */
 		IXGBE_WRITE_REG(hw, IXGBE_RSCDBU,
 		   (IXGBE_RSCDBU_RSCACKDIS | IXGBE_READ_REG(hw, IXGBE_RSCDBU)));
 		rdrxctl &= ~IXGBE_RDRXCTL_RSCFRSTSIZE;
-		/* hardware requires some bits to be set by default */
+		/* hardware requires some bits to be set by शेष */
 		rdrxctl |= (IXGBE_RDRXCTL_RSCACKC | IXGBE_RDRXCTL_FCOE_WRFIX);
 		rdrxctl |= IXGBE_RDRXCTL_CRCSTRIP;
-		break;
-	default:
-		/* We should do nothing since we don't know this hardware */
-		return;
-	}
+		अवरोध;
+	शेष:
+		/* We should करो nothing since we करोn't know this hardware */
+		वापस;
+	पूर्ण
 
 	IXGBE_WRITE_REG(hw, IXGBE_RDRXCTL, rdrxctl);
-}
+पूर्ण
 
 /**
  * ixgbe_configure_rx - Configure 8259x Receive Unit after Reset
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  *
  * Configure the Rx unit of the MAC after a reset.
  **/
-static void ixgbe_configure_rx(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i;
+अटल व्योम ixgbe_configure_rx(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i;
 	u32 rxctrl, rfctl;
 
-	/* disable receives while setting up the descriptors */
+	/* disable receives जबतक setting up the descriptors */
 	hw->mac.ops.disable_rx(hw);
 
 	ixgbe_setup_psrtype(adapter);
@@ -4376,265 +4377,265 @@ static void ixgbe_configure_rx(struct ixgbe_adapter *adapter)
 	/* RSC Setup */
 	rfctl = IXGBE_READ_REG(hw, IXGBE_RFCTL);
 	rfctl &= ~IXGBE_RFCTL_RSC_DIS;
-	if (!(adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED))
+	अगर (!(adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED))
 		rfctl |= IXGBE_RFCTL_RSC_DIS;
 
 	/* disable NFS filtering */
 	rfctl |= (IXGBE_RFCTL_NFSW_DIS | IXGBE_RFCTL_NFSR_DIS);
 	IXGBE_WRITE_REG(hw, IXGBE_RFCTL, rfctl);
 
-	/* Program registers for the distribution of queues */
+	/* Program रेजिस्टरs क्रम the distribution of queues */
 	ixgbe_setup_mrqc(adapter);
 
-	/* set_rx_buffer_len must be called before ring initialization */
+	/* set_rx_buffer_len must be called beक्रमe ring initialization */
 	ixgbe_set_rx_buffer_len(adapter);
 
 	/*
-	 * Setup the HW Rx Head and Tail Descriptor Pointers and
+	 * Setup the HW Rx Head and Tail Descriptor Poपूर्णांकers and
 	 * the Base and Length of the Rx Descriptor Ring
 	 */
-	for (i = 0; i < adapter->num_rx_queues; i++)
+	क्रम (i = 0; i < adapter->num_rx_queues; i++)
 		ixgbe_configure_rx_ring(adapter, adapter->rx_ring[i]);
 
 	rxctrl = IXGBE_READ_REG(hw, IXGBE_RXCTRL);
-	/* disable drop enable for 82598 parts */
-	if (hw->mac.type == ixgbe_mac_82598EB)
+	/* disable drop enable क्रम 82598 parts */
+	अगर (hw->mac.type == ixgbe_mac_82598EB)
 		rxctrl |= IXGBE_RXCTRL_DMBYPS;
 
 	/* enable all receives */
 	rxctrl |= IXGBE_RXCTRL_RXEN;
 	hw->mac.ops.enable_rx_dma(hw, rxctrl);
-}
+पूर्ण
 
-static int ixgbe_vlan_rx_add_vid(struct net_device *netdev,
+अटल पूर्णांक ixgbe_vlan_rx_add_vid(काष्ठा net_device *netdev,
 				 __be16 proto, u16 vid)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
 	/* add VID to filter table */
-	if (!vid || !(adapter->flags2 & IXGBE_FLAG2_VLAN_PROMISC))
+	अगर (!vid || !(adapter->flags2 & IXGBE_FLAG2_VLAN_PROMISC))
 		hw->mac.ops.set_vfta(&adapter->hw, vid, VMDQ_P(0), true, !!vid);
 
 	set_bit(vid, adapter->active_vlans);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbe_find_vlvf_entry(struct ixgbe_hw *hw, u32 vlan)
-{
+अटल पूर्णांक ixgbe_find_vlvf_entry(काष्ठा ixgbe_hw *hw, u32 vlan)
+अणु
 	u32 vlvf;
-	int idx;
+	पूर्णांक idx;
 
-	/* short cut the special case */
-	if (vlan == 0)
-		return 0;
+	/* लघु cut the special हाल */
+	अगर (vlan == 0)
+		वापस 0;
 
-	/* Search for the vlan id in the VLVF entries */
-	for (idx = IXGBE_VLVF_ENTRIES; --idx;) {
+	/* Search क्रम the vlan id in the VLVF entries */
+	क्रम (idx = IXGBE_VLVF_ENTRIES; --idx;) अणु
 		vlvf = IXGBE_READ_REG(hw, IXGBE_VLVF(idx));
-		if ((vlvf & VLAN_VID_MASK) == vlan)
-			break;
-	}
+		अगर ((vlvf & VLAN_VID_MASK) == vlan)
+			अवरोध;
+	पूर्ण
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-void ixgbe_update_pf_promisc_vlvf(struct ixgbe_adapter *adapter, u32 vid)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+व्योम ixgbe_update_pf_promisc_vlvf(काष्ठा ixgbe_adapter *adapter, u32 vid)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 bits, word;
-	int idx;
+	पूर्णांक idx;
 
 	idx = ixgbe_find_vlvf_entry(hw, vid);
-	if (!idx)
-		return;
+	अगर (!idx)
+		वापस;
 
-	/* See if any other pools are set for this VLAN filter
+	/* See अगर any other pools are set क्रम this VLAN filter
 	 * entry other than the PF.
 	 */
 	word = idx * 2 + (VMDQ_P(0) / 32);
 	bits = ~BIT(VMDQ_P(0) % 32);
 	bits &= IXGBE_READ_REG(hw, IXGBE_VLVFB(word));
 
-	/* Disable the filter so this falls into the default pool. */
-	if (!bits && !IXGBE_READ_REG(hw, IXGBE_VLVFB(word ^ 1))) {
-		if (!(adapter->flags2 & IXGBE_FLAG2_VLAN_PROMISC))
+	/* Disable the filter so this falls पूर्णांकo the शेष pool. */
+	अगर (!bits && !IXGBE_READ_REG(hw, IXGBE_VLVFB(word ^ 1))) अणु
+		अगर (!(adapter->flags2 & IXGBE_FLAG2_VLAN_PROMISC))
 			IXGBE_WRITE_REG(hw, IXGBE_VLVFB(word), 0);
 		IXGBE_WRITE_REG(hw, IXGBE_VLVF(idx), 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ixgbe_vlan_rx_kill_vid(struct net_device *netdev,
+अटल पूर्णांक ixgbe_vlan_rx_समाप्त_vid(काष्ठा net_device *netdev,
 				  __be16 proto, u16 vid)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	/* remove VID from filter table */
-	if (vid && !(adapter->flags2 & IXGBE_FLAG2_VLAN_PROMISC))
+	/* हटाओ VID from filter table */
+	अगर (vid && !(adapter->flags2 & IXGBE_FLAG2_VLAN_PROMISC))
 		hw->mac.ops.set_vfta(hw, vid, VMDQ_P(0), false, true);
 
 	clear_bit(vid, adapter->active_vlans);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ixgbe_vlan_strip_disable - helper to disable hw vlan stripping
  * @adapter: driver data
  */
-static void ixgbe_vlan_strip_disable(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_vlan_strip_disable(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 vlnctrl;
-	int i, j;
+	पूर्णांक i, j;
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB:
 		vlnctrl = IXGBE_READ_REG(hw, IXGBE_VLNCTRL);
 		vlnctrl &= ~IXGBE_VLNCTRL_VME;
 		IXGBE_WRITE_REG(hw, IXGBE_VLNCTRL, vlnctrl);
-		break;
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
-		for (i = 0; i < adapter->num_rx_queues; i++) {
-			struct ixgbe_ring *ring = adapter->rx_ring[i];
+		अवरोध;
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
+		क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+			काष्ठा ixgbe_ring *ring = adapter->rx_ring[i];
 
-			if (!netif_is_ixgbe(ring->netdev))
-				continue;
+			अगर (!netअगर_is_ixgbe(ring->netdev))
+				जारी;
 
 			j = ring->reg_idx;
 			vlnctrl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(j));
 			vlnctrl &= ~IXGBE_RXDCTL_VME;
 			IXGBE_WRITE_REG(hw, IXGBE_RXDCTL(j), vlnctrl);
-		}
-		break;
-	default:
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * ixgbe_vlan_strip_enable - helper to enable hw vlan stripping
  * @adapter: driver data
  */
-static void ixgbe_vlan_strip_enable(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_vlan_strip_enable(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 vlnctrl;
-	int i, j;
+	पूर्णांक i, j;
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB:
 		vlnctrl = IXGBE_READ_REG(hw, IXGBE_VLNCTRL);
 		vlnctrl |= IXGBE_VLNCTRL_VME;
 		IXGBE_WRITE_REG(hw, IXGBE_VLNCTRL, vlnctrl);
-		break;
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
-		for (i = 0; i < adapter->num_rx_queues; i++) {
-			struct ixgbe_ring *ring = adapter->rx_ring[i];
+		अवरोध;
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
+		क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+			काष्ठा ixgbe_ring *ring = adapter->rx_ring[i];
 
-			if (!netif_is_ixgbe(ring->netdev))
-				continue;
+			अगर (!netअगर_is_ixgbe(ring->netdev))
+				जारी;
 
 			j = ring->reg_idx;
 			vlnctrl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(j));
 			vlnctrl |= IXGBE_RXDCTL_VME;
 			IXGBE_WRITE_REG(hw, IXGBE_RXDCTL(j), vlnctrl);
-		}
-		break;
-	default:
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void ixgbe_vlan_promisc_enable(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_vlan_promisc_enable(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 vlnctrl, i;
 
 	vlnctrl = IXGBE_READ_REG(hw, IXGBE_VLNCTRL);
 
-	if (adapter->flags & IXGBE_FLAG_VMDQ_ENABLED) {
+	अगर (adapter->flags & IXGBE_FLAG_VMDQ_ENABLED) अणु
 	/* For VMDq and SR-IOV we must leave VLAN filtering enabled */
 		vlnctrl |= IXGBE_VLNCTRL_VFE;
 		IXGBE_WRITE_REG(hw, IXGBE_VLNCTRL, vlnctrl);
-	} else {
+	पूर्ण अन्यथा अणु
 		vlnctrl &= ~IXGBE_VLNCTRL_VFE;
 		IXGBE_WRITE_REG(hw, IXGBE_VLNCTRL, vlnctrl);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Nothing to do for 82598 */
-	if (hw->mac.type == ixgbe_mac_82598EB)
-		return;
+	/* Nothing to करो क्रम 82598 */
+	अगर (hw->mac.type == ixgbe_mac_82598EB)
+		वापस;
 
-	/* We are already in VLAN promisc, nothing to do */
-	if (adapter->flags2 & IXGBE_FLAG2_VLAN_PROMISC)
-		return;
+	/* We are alपढ़ोy in VLAN promisc, nothing to करो */
+	अगर (adapter->flags2 & IXGBE_FLAG2_VLAN_PROMISC)
+		वापस;
 
-	/* Set flag so we don't redo unnecessary work */
+	/* Set flag so we करोn't reकरो unnecessary work */
 	adapter->flags2 |= IXGBE_FLAG2_VLAN_PROMISC;
 
 	/* Add PF to all active pools */
-	for (i = IXGBE_VLVF_ENTRIES; --i;) {
+	क्रम (i = IXGBE_VLVF_ENTRIES; --i;) अणु
 		u32 reg_offset = IXGBE_VLVFB(i * 2 + VMDQ_P(0) / 32);
 		u32 vlvfb = IXGBE_READ_REG(hw, reg_offset);
 
 		vlvfb |= BIT(VMDQ_P(0) % 32);
 		IXGBE_WRITE_REG(hw, reg_offset, vlvfb);
-	}
+	पूर्ण
 
 	/* Set all bits in the VLAN filter table array */
-	for (i = hw->mac.vft_size; i--;)
+	क्रम (i = hw->mac.vft_size; i--;)
 		IXGBE_WRITE_REG(hw, IXGBE_VFTA(i), ~0U);
-}
+पूर्ण
 
-#define VFTA_BLOCK_SIZE 8
-static void ixgbe_scrub_vfta(struct ixgbe_adapter *adapter, u32 vfta_offset)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	u32 vfta[VFTA_BLOCK_SIZE] = { 0 };
+#घोषणा VFTA_BLOCK_SIZE 8
+अटल व्योम ixgbe_scrub_vfta(काष्ठा ixgbe_adapter *adapter, u32 vfta_offset)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	u32 vfta[VFTA_BLOCK_SIZE] = अणु 0 पूर्ण;
 	u32 vid_start = vfta_offset * 32;
 	u32 vid_end = vid_start + (VFTA_BLOCK_SIZE * 32);
 	u32 i, vid, word, bits;
 
-	for (i = IXGBE_VLVF_ENTRIES; --i;) {
+	क्रम (i = IXGBE_VLVF_ENTRIES; --i;) अणु
 		u32 vlvf = IXGBE_READ_REG(hw, IXGBE_VLVF(i));
 
 		/* pull VLAN ID from VLVF */
 		vid = vlvf & VLAN_VID_MASK;
 
 		/* only concern outselves with a certain range */
-		if (vid < vid_start || vid >= vid_end)
-			continue;
+		अगर (vid < vid_start || vid >= vid_end)
+			जारी;
 
-		if (vlvf) {
+		अगर (vlvf) अणु
 			/* record VLAN ID in VFTA */
 			vfta[(vid - vid_start) / 32] |= BIT(vid % 32);
 
-			/* if PF is part of this then continue */
-			if (test_bit(vid, adapter->active_vlans))
-				continue;
-		}
+			/* अगर PF is part of this then जारी */
+			अगर (test_bit(vid, adapter->active_vlans))
+				जारी;
+		पूर्ण
 
-		/* remove PF from the pool */
+		/* हटाओ PF from the pool */
 		word = i * 2 + VMDQ_P(0) / 32;
 		bits = ~BIT(VMDQ_P(0) % 32);
 		bits &= IXGBE_READ_REG(hw, IXGBE_VLVFB(word));
 		IXGBE_WRITE_REG(hw, IXGBE_VLVFB(word), bits);
-	}
+	पूर्ण
 
-	/* extract values from active_vlans and write back to VFTA */
-	for (i = VFTA_BLOCK_SIZE; i--;) {
+	/* extract values from active_vlans and ग_लिखो back to VFTA */
+	क्रम (i = VFTA_BLOCK_SIZE; i--;) अणु
 		vid = (vfta_offset + i) * 32;
 		word = vid / BITS_PER_LONG;
 		bits = vid % BITS_PER_LONG;
@@ -4642,12 +4643,12 @@ static void ixgbe_scrub_vfta(struct ixgbe_adapter *adapter, u32 vfta_offset)
 		vfta[i] |= adapter->active_vlans[word] >> bits;
 
 		IXGBE_WRITE_REG(hw, IXGBE_VFTA(vfta_offset + i), vfta[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ixgbe_vlan_promisc_disable(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_vlan_promisc_disable(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 vlnctrl, i;
 
 	/* Set VLAN filtering to enabled */
@@ -4655,168 +4656,168 @@ static void ixgbe_vlan_promisc_disable(struct ixgbe_adapter *adapter)
 	vlnctrl |= IXGBE_VLNCTRL_VFE;
 	IXGBE_WRITE_REG(hw, IXGBE_VLNCTRL, vlnctrl);
 
-	if (!(adapter->flags & IXGBE_FLAG_VMDQ_ENABLED) ||
+	अगर (!(adapter->flags & IXGBE_FLAG_VMDQ_ENABLED) ||
 	    hw->mac.type == ixgbe_mac_82598EB)
-		return;
+		वापस;
 
-	/* We are not in VLAN promisc, nothing to do */
-	if (!(adapter->flags2 & IXGBE_FLAG2_VLAN_PROMISC))
-		return;
+	/* We are not in VLAN promisc, nothing to करो */
+	अगर (!(adapter->flags2 & IXGBE_FLAG2_VLAN_PROMISC))
+		वापस;
 
-	/* Set flag so we don't redo unnecessary work */
+	/* Set flag so we करोn't reकरो unnecessary work */
 	adapter->flags2 &= ~IXGBE_FLAG2_VLAN_PROMISC;
 
-	for (i = 0; i < hw->mac.vft_size; i += VFTA_BLOCK_SIZE)
+	क्रम (i = 0; i < hw->mac.vft_size; i += VFTA_BLOCK_SIZE)
 		ixgbe_scrub_vfta(adapter, i);
-}
+पूर्ण
 
-static void ixgbe_restore_vlan(struct ixgbe_adapter *adapter)
-{
+अटल व्योम ixgbe_restore_vlan(काष्ठा ixgbe_adapter *adapter)
+अणु
 	u16 vid = 1;
 
 	ixgbe_vlan_rx_add_vid(adapter->netdev, htons(ETH_P_8021Q), 0);
 
-	for_each_set_bit_from(vid, adapter->active_vlans, VLAN_N_VID)
+	क्रम_each_set_bit_from(vid, adapter->active_vlans, VLAN_N_VID)
 		ixgbe_vlan_rx_add_vid(adapter->netdev, htons(ETH_P_8021Q), vid);
-}
+पूर्ण
 
 /**
- * ixgbe_write_mc_addr_list - write multicast addresses to MTA
- * @netdev: network interface device structure
+ * ixgbe_ग_लिखो_mc_addr_list - ग_लिखो multicast addresses to MTA
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
  * Writes multicast address list to the MTA hash table.
  * Returns: -ENOMEM on failure
  *                0 on no addresses written
  *                X on writing X addresses to MTA
  **/
-static int ixgbe_write_mc_addr_list(struct net_device *netdev)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल पूर्णांक ixgbe_ग_लिखो_mc_addr_list(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	if (!netif_running(netdev))
-		return 0;
+	अगर (!netअगर_running(netdev))
+		वापस 0;
 
-	if (hw->mac.ops.update_mc_addr_list)
+	अगर (hw->mac.ops.update_mc_addr_list)
 		hw->mac.ops.update_mc_addr_list(hw, netdev);
-	else
-		return -ENOMEM;
+	अन्यथा
+		वापस -ENOMEM;
 
-#ifdef CONFIG_PCI_IOV
+#अगर_घोषित CONFIG_PCI_IOV
 	ixgbe_restore_vf_multicasts(adapter);
-#endif
+#पूर्ण_अगर
 
-	return netdev_mc_count(netdev);
-}
+	वापस netdev_mc_count(netdev);
+पूर्ण
 
-#ifdef CONFIG_PCI_IOV
-void ixgbe_full_sync_mac_table(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i;
+#अगर_घोषित CONFIG_PCI_IOV
+व्योम ixgbe_full_sync_mac_table(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i;
 
-	for (i = 0; i < hw->mac.num_rar_entries; i++, mac_table++) {
+	क्रम (i = 0; i < hw->mac.num_rar_entries; i++, mac_table++) अणु
 		mac_table->state &= ~IXGBE_MAC_STATE_MODIFIED;
 
-		if (mac_table->state & IXGBE_MAC_STATE_IN_USE)
+		अगर (mac_table->state & IXGBE_MAC_STATE_IN_USE)
 			hw->mac.ops.set_rar(hw, i,
 					    mac_table->addr,
 					    mac_table->pool,
 					    IXGBE_RAH_AV);
-		else
+		अन्यथा
 			hw->mac.ops.clear_rar(hw, i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif
-static void ixgbe_sync_mac_table(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i;
+#पूर्ण_अगर
+अटल व्योम ixgbe_sync_mac_table(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i;
 
-	for (i = 0; i < hw->mac.num_rar_entries; i++, mac_table++) {
-		if (!(mac_table->state & IXGBE_MAC_STATE_MODIFIED))
-			continue;
+	क्रम (i = 0; i < hw->mac.num_rar_entries; i++, mac_table++) अणु
+		अगर (!(mac_table->state & IXGBE_MAC_STATE_MODIFIED))
+			जारी;
 
 		mac_table->state &= ~IXGBE_MAC_STATE_MODIFIED;
 
-		if (mac_table->state & IXGBE_MAC_STATE_IN_USE)
+		अगर (mac_table->state & IXGBE_MAC_STATE_IN_USE)
 			hw->mac.ops.set_rar(hw, i,
 					    mac_table->addr,
 					    mac_table->pool,
 					    IXGBE_RAH_AV);
-		else
+		अन्यथा
 			hw->mac.ops.clear_rar(hw, i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ixgbe_flush_sw_mac_table(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i;
+अटल व्योम ixgbe_flush_sw_mac_table(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i;
 
-	for (i = 0; i < hw->mac.num_rar_entries; i++, mac_table++) {
+	क्रम (i = 0; i < hw->mac.num_rar_entries; i++, mac_table++) अणु
 		mac_table->state |= IXGBE_MAC_STATE_MODIFIED;
 		mac_table->state &= ~IXGBE_MAC_STATE_IN_USE;
-	}
+	पूर्ण
 
 	ixgbe_sync_mac_table(adapter);
-}
+पूर्ण
 
-static int ixgbe_available_rars(struct ixgbe_adapter *adapter, u16 pool)
-{
-	struct ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i, count = 0;
+अटल पूर्णांक ixgbe_available_rars(काष्ठा ixgbe_adapter *adapter, u16 pool)
+अणु
+	काष्ठा ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i, count = 0;
 
-	for (i = 0; i < hw->mac.num_rar_entries; i++, mac_table++) {
-		/* do not count default RAR as available */
-		if (mac_table->state & IXGBE_MAC_STATE_DEFAULT)
-			continue;
+	क्रम (i = 0; i < hw->mac.num_rar_entries; i++, mac_table++) अणु
+		/* करो not count शेष RAR as available */
+		अगर (mac_table->state & IXGBE_MAC_STATE_DEFAULT)
+			जारी;
 
-		/* only count unused and addresses that belong to us */
-		if (mac_table->state & IXGBE_MAC_STATE_IN_USE) {
-			if (mac_table->pool != pool)
-				continue;
-		}
+		/* only count unused and addresses that beदीर्घ to us */
+		अगर (mac_table->state & IXGBE_MAC_STATE_IN_USE) अणु
+			अगर (mac_table->pool != pool)
+				जारी;
+		पूर्ण
 
 		count++;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /* this function destroys the first RAR entry */
-static void ixgbe_mac_set_default_filter(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_mac_set_शेष_filter(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	memcpy(&mac_table->addr, hw->mac.addr, ETH_ALEN);
+	स_नकल(&mac_table->addr, hw->mac.addr, ETH_ALEN);
 	mac_table->pool = VMDQ_P(0);
 
 	mac_table->state = IXGBE_MAC_STATE_DEFAULT | IXGBE_MAC_STATE_IN_USE;
 
 	hw->mac.ops.set_rar(hw, 0, mac_table->addr, mac_table->pool,
 			    IXGBE_RAH_AV);
-}
+पूर्ण
 
-int ixgbe_add_mac_filter(struct ixgbe_adapter *adapter,
-			 const u8 *addr, u16 pool)
-{
-	struct ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i;
+पूर्णांक ixgbe_add_mac_filter(काष्ठा ixgbe_adapter *adapter,
+			 स्थिर u8 *addr, u16 pool)
+अणु
+	काष्ठा ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i;
 
-	if (is_zero_ether_addr(addr))
-		return -EINVAL;
+	अगर (is_zero_ether_addr(addr))
+		वापस -EINVAL;
 
-	for (i = 0; i < hw->mac.num_rar_entries; i++, mac_table++) {
-		if (mac_table->state & IXGBE_MAC_STATE_IN_USE)
-			continue;
+	क्रम (i = 0; i < hw->mac.num_rar_entries; i++, mac_table++) अणु
+		अगर (mac_table->state & IXGBE_MAC_STATE_IN_USE)
+			जारी;
 
 		ether_addr_copy(mac_table->addr, addr);
 		mac_table->pool = pool;
@@ -4826,136 +4827,136 @@ int ixgbe_add_mac_filter(struct ixgbe_adapter *adapter,
 
 		ixgbe_sync_mac_table(adapter);
 
-		return i;
-	}
+		वापस i;
+	पूर्ण
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-int ixgbe_del_mac_filter(struct ixgbe_adapter *adapter,
-			 const u8 *addr, u16 pool)
-{
-	struct ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i;
+पूर्णांक ixgbe_del_mac_filter(काष्ठा ixgbe_adapter *adapter,
+			 स्थिर u8 *addr, u16 pool)
+अणु
+	काष्ठा ixgbe_mac_addr *mac_table = &adapter->mac_table[0];
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i;
 
-	if (is_zero_ether_addr(addr))
-		return -EINVAL;
+	अगर (is_zero_ether_addr(addr))
+		वापस -EINVAL;
 
-	/* search table for addr, if found clear IN_USE flag and sync */
-	for (i = 0; i < hw->mac.num_rar_entries; i++, mac_table++) {
-		/* we can only delete an entry if it is in use */
-		if (!(mac_table->state & IXGBE_MAC_STATE_IN_USE))
-			continue;
-		/* we only care about entries that belong to the given pool */
-		if (mac_table->pool != pool)
-			continue;
-		/* we only care about a specific MAC address */
-		if (!ether_addr_equal(addr, mac_table->addr))
-			continue;
+	/* search table क्रम addr, अगर found clear IN_USE flag and sync */
+	क्रम (i = 0; i < hw->mac.num_rar_entries; i++, mac_table++) अणु
+		/* we can only delete an entry अगर it is in use */
+		अगर (!(mac_table->state & IXGBE_MAC_STATE_IN_USE))
+			जारी;
+		/* we only care about entries that beदीर्घ to the given pool */
+		अगर (mac_table->pool != pool)
+			जारी;
+		/* we only care about a specअगरic MAC address */
+		अगर (!ether_addr_equal(addr, mac_table->addr))
+			जारी;
 
 		mac_table->state |= IXGBE_MAC_STATE_MODIFIED;
 		mac_table->state &= ~IXGBE_MAC_STATE_IN_USE;
 
 		ixgbe_sync_mac_table(adapter);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int ixgbe_uc_sync(struct net_device *netdev, const unsigned char *addr)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	int ret;
+अटल पूर्णांक ixgbe_uc_sync(काष्ठा net_device *netdev, स्थिर अचिन्हित अक्षर *addr)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक ret;
 
 	ret = ixgbe_add_mac_filter(adapter, addr, VMDQ_P(0));
 
-	return min_t(int, ret, 0);
-}
+	वापस min_t(पूर्णांक, ret, 0);
+पूर्ण
 
-static int ixgbe_uc_unsync(struct net_device *netdev, const unsigned char *addr)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक ixgbe_uc_unsync(काष्ठा net_device *netdev, स्थिर अचिन्हित अक्षर *addr)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
 
 	ixgbe_del_mac_filter(adapter, addr, VMDQ_P(0));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ixgbe_set_rx_mode - Unicast, Multicast and Promiscuous mode set
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
- * The set_rx_method entry point is called whenever the unicast/multicast
- * address list or the network interface flags are updated.  This routine is
- * responsible for configuring the hardware for proper unicast, multicast and
+ * The set_rx_method entry poपूर्णांक is called whenever the unicast/multicast
+ * address list or the network पूर्णांकerface flags are updated.  This routine is
+ * responsible क्रम configuring the hardware क्रम proper unicast, multicast and
  * promiscuous mode.
  **/
-void ixgbe_set_rx_mode(struct net_device *netdev)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
+व्योम ixgbe_set_rx_mode(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 fctrl, vmolr = IXGBE_VMOLR_BAM | IXGBE_VMOLR_AUPE;
 	netdev_features_t features = netdev->features;
-	int count;
+	पूर्णांक count;
 
-	/* Check for Promiscuous and All Multicast modes */
+	/* Check क्रम Promiscuous and All Multicast modes */
 	fctrl = IXGBE_READ_REG(hw, IXGBE_FCTRL);
 
 	/* set all bits that we expect to always be set */
 	fctrl &= ~IXGBE_FCTRL_SBP; /* disable store-bad-packets */
 	fctrl |= IXGBE_FCTRL_BAM;
-	fctrl |= IXGBE_FCTRL_DPF; /* discard pause frames when FC enabled */
+	fctrl |= IXGBE_FCTRL_DPF; /* discard छोड़ो frames when FC enabled */
 	fctrl |= IXGBE_FCTRL_PMCF;
 
 	/* clear the bits we are changing the status of */
 	fctrl &= ~(IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
-	if (netdev->flags & IFF_PROMISC) {
+	अगर (netdev->flags & IFF_PROMISC) अणु
 		hw->addr_ctrl.user_set_promisc = true;
 		fctrl |= (IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
 		vmolr |= IXGBE_VMOLR_MPE;
 		features &= ~NETIF_F_HW_VLAN_CTAG_FILTER;
-	} else {
-		if (netdev->flags & IFF_ALLMULTI) {
+	पूर्ण अन्यथा अणु
+		अगर (netdev->flags & IFF_ALLMULTI) अणु
 			fctrl |= IXGBE_FCTRL_MPE;
 			vmolr |= IXGBE_VMOLR_MPE;
-		}
+		पूर्ण
 		hw->addr_ctrl.user_set_promisc = false;
-	}
+	पूर्ण
 
 	/*
-	 * Write addresses to available RAR registers, if there is not
+	 * Write addresses to available RAR रेजिस्टरs, अगर there is not
 	 * sufficient space to store all the addresses then enable
 	 * unicast promiscuous mode
 	 */
-	if (__dev_uc_sync(netdev, ixgbe_uc_sync, ixgbe_uc_unsync)) {
+	अगर (__dev_uc_sync(netdev, ixgbe_uc_sync, ixgbe_uc_unsync)) अणु
 		fctrl |= IXGBE_FCTRL_UPE;
 		vmolr |= IXGBE_VMOLR_ROPE;
-	}
+	पूर्ण
 
-	/* Write addresses to the MTA, if the attempt fails
+	/* Write addresses to the MTA, अगर the attempt fails
 	 * then we should just turn on promiscuous mode so
 	 * that we can at least receive multicast traffic
 	 */
-	count = ixgbe_write_mc_addr_list(netdev);
-	if (count < 0) {
+	count = ixgbe_ग_लिखो_mc_addr_list(netdev);
+	अगर (count < 0) अणु
 		fctrl |= IXGBE_FCTRL_MPE;
 		vmolr |= IXGBE_VMOLR_MPE;
-	} else if (count) {
+	पूर्ण अन्यथा अगर (count) अणु
 		vmolr |= IXGBE_VMOLR_ROMPE;
-	}
+	पूर्ण
 
-	if (hw->mac.type != ixgbe_mac_82598EB) {
+	अगर (hw->mac.type != ixgbe_mac_82598EB) अणु
 		vmolr |= IXGBE_READ_REG(hw, IXGBE_VMOLR(VMDQ_P(0))) &
 			 ~(IXGBE_VMOLR_MPE | IXGBE_VMOLR_ROMPE |
 			   IXGBE_VMOLR_ROPE);
 		IXGBE_WRITE_REG(hw, IXGBE_VMOLR(VMDQ_P(0)), vmolr);
-	}
+	पूर्ण
 
-	/* This is useful for sniffing bad packets. */
-	if (features & NETIF_F_RXALL) {
+	/* This is useful क्रम snअगरfing bad packets. */
+	अगर (features & NETIF_F_RXALL) अणु
 		/* UPE and MPE will be handled by normal PROMISC logic
 		 * in e1000e_set_rx_mode */
 		fctrl |= (IXGBE_FCTRL_SBP | /* Receive bad packets */
@@ -4964,363 +4965,363 @@ void ixgbe_set_rx_mode(struct net_device *netdev)
 
 		fctrl &= ~(IXGBE_FCTRL_DPF);
 		/* NOTE:  VLAN filtering is disabled by setting PROMISC */
-	}
+	पूर्ण
 
 	IXGBE_WRITE_REG(hw, IXGBE_FCTRL, fctrl);
 
-	if (features & NETIF_F_HW_VLAN_CTAG_RX)
+	अगर (features & NETIF_F_HW_VLAN_CTAG_RX)
 		ixgbe_vlan_strip_enable(adapter);
-	else
+	अन्यथा
 		ixgbe_vlan_strip_disable(adapter);
 
-	if (features & NETIF_F_HW_VLAN_CTAG_FILTER)
+	अगर (features & NETIF_F_HW_VLAN_CTAG_FILTER)
 		ixgbe_vlan_promisc_disable(adapter);
-	else
+	अन्यथा
 		ixgbe_vlan_promisc_enable(adapter);
-}
+पूर्ण
 
-static void ixgbe_napi_enable_all(struct ixgbe_adapter *adapter)
-{
-	int q_idx;
+अटल व्योम ixgbe_napi_enable_all(काष्ठा ixgbe_adapter *adapter)
+अणु
+	पूर्णांक q_idx;
 
-	for (q_idx = 0; q_idx < adapter->num_q_vectors; q_idx++)
+	क्रम (q_idx = 0; q_idx < adapter->num_q_vectors; q_idx++)
 		napi_enable(&adapter->q_vector[q_idx]->napi);
-}
+पूर्ण
 
-static void ixgbe_napi_disable_all(struct ixgbe_adapter *adapter)
-{
-	int q_idx;
+अटल व्योम ixgbe_napi_disable_all(काष्ठा ixgbe_adapter *adapter)
+अणु
+	पूर्णांक q_idx;
 
-	for (q_idx = 0; q_idx < adapter->num_q_vectors; q_idx++)
+	क्रम (q_idx = 0; q_idx < adapter->num_q_vectors; q_idx++)
 		napi_disable(&adapter->q_vector[q_idx]->napi);
-}
+पूर्ण
 
-static int ixgbe_udp_tunnel_sync(struct net_device *dev, unsigned int table)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(dev);
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct udp_tunnel_info ti;
+अटल पूर्णांक ixgbe_udp_tunnel_sync(काष्ठा net_device *dev, अचिन्हित पूर्णांक table)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा udp_tunnel_info ti;
 
 	udp_tunnel_nic_get_port(dev, table, 0, &ti);
-	if (ti.type == UDP_TUNNEL_TYPE_VXLAN)
+	अगर (ti.type == UDP_TUNNEL_TYPE_VXLAN)
 		adapter->vxlan_port = ti.port;
-	else
+	अन्यथा
 		adapter->geneve_port = ti.port;
 
 	IXGBE_WRITE_REG(hw, IXGBE_VXLANCTRL,
 			ntohs(adapter->vxlan_port) |
 			ntohs(adapter->geneve_port) <<
 				IXGBE_VXLANCTRL_GENEVE_UDPPORT_SHIFT);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct udp_tunnel_nic_info ixgbe_udp_tunnels_x550 = {
+अटल स्थिर काष्ठा udp_tunnel_nic_info ixgbe_udp_tunnels_x550 = अणु
 	.sync_table	= ixgbe_udp_tunnel_sync,
 	.flags		= UDP_TUNNEL_NIC_INFO_IPV4_ONLY,
-	.tables		= {
-		{ .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN,  },
-	},
-};
+	.tables		= अणु
+		अणु .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN,  पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct udp_tunnel_nic_info ixgbe_udp_tunnels_x550em_a = {
+अटल स्थिर काष्ठा udp_tunnel_nic_info ixgbe_udp_tunnels_x550em_a = अणु
 	.sync_table	= ixgbe_udp_tunnel_sync,
 	.flags		= UDP_TUNNEL_NIC_INFO_IPV4_ONLY,
-	.tables		= {
-		{ .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN,  },
-		{ .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_GENEVE, },
-	},
-};
+	.tables		= अणु
+		अणु .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN,  पूर्ण,
+		अणु .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_GENEVE, पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_IXGBE_DCB
+#अगर_घोषित CONFIG_IXGBE_DCB
 /**
  * ixgbe_configure_dcb - Configure DCB hardware
- * @adapter: ixgbe adapter struct
+ * @adapter: ixgbe adapter काष्ठा
  *
- * This is called by the driver on open to configure the DCB hardware.
- * This is also called by the gennetlink interface when reconfiguring
+ * This is called by the driver on खोलो to configure the DCB hardware.
+ * This is also called by the gennetlink पूर्णांकerface when reconfiguring
  * the DCB state.
  */
-static void ixgbe_configure_dcb(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int max_frame = adapter->netdev->mtu + ETH_HLEN + ETH_FCS_LEN;
+अटल व्योम ixgbe_configure_dcb(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक max_frame = adapter->netdev->mtu + ETH_HLEN + ETH_FCS_LEN;
 
-	if (!(adapter->flags & IXGBE_FLAG_DCB_ENABLED)) {
-		if (hw->mac.type == ixgbe_mac_82598EB)
-			netif_set_gso_max_size(adapter->netdev, 65536);
-		return;
-	}
+	अगर (!(adapter->flags & IXGBE_FLAG_DCB_ENABLED)) अणु
+		अगर (hw->mac.type == ixgbe_mac_82598EB)
+			netअगर_set_gso_max_size(adapter->netdev, 65536);
+		वापस;
+	पूर्ण
 
-	if (hw->mac.type == ixgbe_mac_82598EB)
-		netif_set_gso_max_size(adapter->netdev, 32768);
+	अगर (hw->mac.type == ixgbe_mac_82598EB)
+		netअगर_set_gso_max_size(adapter->netdev, 32768);
 
-#ifdef IXGBE_FCOE
-	if (adapter->netdev->features & NETIF_F_FCOE_MTU)
+#अगर_घोषित IXGBE_FCOE
+	अगर (adapter->netdev->features & NETIF_F_FCOE_MTU)
 		max_frame = max(max_frame, IXGBE_FCOE_JUMBO_FRAME_SIZE);
-#endif
+#पूर्ण_अगर
 
 	/* reconfigure the hardware */
-	if (adapter->dcbx_cap & DCB_CAP_DCBX_VER_CEE) {
+	अगर (adapter->dcbx_cap & DCB_CAP_DCBX_VER_CEE) अणु
 		ixgbe_dcb_calculate_tc_credits(hw, &adapter->dcb_cfg, max_frame,
 						DCB_TX_CONFIG);
 		ixgbe_dcb_calculate_tc_credits(hw, &adapter->dcb_cfg, max_frame,
 						DCB_RX_CONFIG);
 		ixgbe_dcb_hw_config(hw, &adapter->dcb_cfg);
-	} else if (adapter->ixgbe_ieee_ets && adapter->ixgbe_ieee_pfc) {
+	पूर्ण अन्यथा अगर (adapter->ixgbe_ieee_ets && adapter->ixgbe_ieee_pfc) अणु
 		ixgbe_dcb_hw_ets(&adapter->hw,
 				 adapter->ixgbe_ieee_ets,
 				 max_frame);
 		ixgbe_dcb_hw_pfc_config(&adapter->hw,
 					adapter->ixgbe_ieee_pfc->pfc_en,
 					adapter->ixgbe_ieee_ets->prio_tc);
-	}
+	पूर्ण
 
 	/* Enable RSS Hash per TC */
-	if (hw->mac.type != ixgbe_mac_82598EB) {
+	अगर (hw->mac.type != ixgbe_mac_82598EB) अणु
 		u32 msb = 0;
 		u16 rss_i = adapter->ring_feature[RING_F_RSS].indices - 1;
 
-		while (rss_i) {
+		जबतक (rss_i) अणु
 			msb++;
 			rss_i >>= 1;
-		}
+		पूर्ण
 
-		/* write msb to all 8 TCs in one write */
+		/* ग_लिखो msb to all 8 TCs in one ग_लिखो */
 		IXGBE_WRITE_REG(hw, IXGBE_RQTC, msb * 0x11111111);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-/* Additional bittime to account for IXGBE framing */
-#define IXGBE_ETH_FRAMING 20
+/* Additional bitसमय to account क्रम IXGBE framing */
+#घोषणा IXGBE_ETH_FRAMING 20
 
 /**
- * ixgbe_hpbthresh - calculate high water mark for flow control
+ * ixgbe_hpbthresh - calculate high water mark क्रम flow control
  *
- * @adapter: board private structure to calculate for
+ * @adapter: board निजी काष्ठाure to calculate क्रम
  * @pb: packet buffer to calculate
  */
-static int ixgbe_hpbthresh(struct ixgbe_adapter *adapter, int pb)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct net_device *dev = adapter->netdev;
-	int link, tc, kb, marker;
+अटल पूर्णांक ixgbe_hpbthresh(काष्ठा ixgbe_adapter *adapter, पूर्णांक pb)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा net_device *dev = adapter->netdev;
+	पूर्णांक link, tc, kb, marker;
 	u32 dv_id, rx_pba;
 
 	/* Calculate max LAN frame size */
 	tc = link = dev->mtu + ETH_HLEN + ETH_FCS_LEN + IXGBE_ETH_FRAMING;
 
-#ifdef IXGBE_FCOE
+#अगर_घोषित IXGBE_FCOE
 	/* FCoE traffic class uses FCOE jumbo frames */
-	if ((dev->features & NETIF_F_FCOE_MTU) &&
+	अगर ((dev->features & NETIF_F_FCOE_MTU) &&
 	    (tc < IXGBE_FCOE_JUMBO_FRAME_SIZE) &&
 	    (pb == ixgbe_fcoe_get_tc(adapter)))
 		tc = IXGBE_FCOE_JUMBO_FRAME_SIZE;
-#endif
+#पूर्ण_अगर
 
-	/* Calculate delay value for device */
-	switch (hw->mac.type) {
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
+	/* Calculate delay value क्रम device */
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
 		dv_id = IXGBE_DV_X540(link, tc);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dv_id = IXGBE_DV(link, tc);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Loopback switch introduces additional latency */
-	if (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)
+	/* Loopback चयन पूर्णांकroduces additional latency */
+	अगर (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)
 		dv_id += IXGBE_B2BT(tc);
 
-	/* Delay value is calculated in bit times convert to KB */
+	/* Delay value is calculated in bit बार convert to KB */
 	kb = IXGBE_BT2KB(dv_id);
 	rx_pba = IXGBE_READ_REG(hw, IXGBE_RXPBSIZE(pb)) >> 10;
 
 	marker = rx_pba - kb;
 
 	/* It is possible that the packet buffer is not large enough
-	 * to provide required headroom. In this case throw an error
-	 * to user and a do the best we can.
+	 * to provide required headroom. In this हाल throw an error
+	 * to user and a करो the best we can.
 	 */
-	if (marker < 0) {
+	अगर (marker < 0) अणु
 		e_warn(drv, "Packet Buffer(%i) can not provide enough"
 			    "headroom to support flow control."
 			    "Decrease MTU or number of traffic classes\n", pb);
 		marker = tc + 1;
-	}
+	पूर्ण
 
-	return marker;
-}
+	वापस marker;
+पूर्ण
 
 /**
- * ixgbe_lpbthresh - calculate low water mark for for flow control
+ * ixgbe_lpbthresh - calculate low water mark क्रम क्रम flow control
  *
- * @adapter: board private structure to calculate for
+ * @adapter: board निजी काष्ठाure to calculate क्रम
  * @pb: packet buffer to calculate
  */
-static int ixgbe_lpbthresh(struct ixgbe_adapter *adapter, int pb)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct net_device *dev = adapter->netdev;
-	int tc;
+अटल पूर्णांक ixgbe_lpbthresh(काष्ठा ixgbe_adapter *adapter, पूर्णांक pb)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा net_device *dev = adapter->netdev;
+	पूर्णांक tc;
 	u32 dv_id;
 
 	/* Calculate max LAN frame size */
 	tc = dev->mtu + ETH_HLEN + ETH_FCS_LEN;
 
-#ifdef IXGBE_FCOE
+#अगर_घोषित IXGBE_FCOE
 	/* FCoE traffic class uses FCOE jumbo frames */
-	if ((dev->features & NETIF_F_FCOE_MTU) &&
+	अगर ((dev->features & NETIF_F_FCOE_MTU) &&
 	    (tc < IXGBE_FCOE_JUMBO_FRAME_SIZE) &&
 	    (pb == netdev_get_prio_tc_map(dev, adapter->fcoe.up)))
 		tc = IXGBE_FCOE_JUMBO_FRAME_SIZE;
-#endif
+#पूर्ण_अगर
 
-	/* Calculate delay value for device */
-	switch (hw->mac.type) {
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
+	/* Calculate delay value क्रम device */
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
 		dv_id = IXGBE_LOW_DV_X540(tc);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dv_id = IXGBE_LOW_DV(tc);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Delay value is calculated in bit times convert to KB */
-	return IXGBE_BT2KB(dv_id);
-}
+	/* Delay value is calculated in bit बार convert to KB */
+	वापस IXGBE_BT2KB(dv_id);
+पूर्ण
 
 /*
  * ixgbe_pbthresh_setup - calculate and setup high low water marks
  */
-static void ixgbe_pbthresh_setup(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int num_tc = adapter->hw_tcs;
-	int i;
+अटल व्योम ixgbe_pbthresh_setup(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक num_tc = adapter->hw_tcs;
+	पूर्णांक i;
 
-	if (!num_tc)
+	अगर (!num_tc)
 		num_tc = 1;
 
-	for (i = 0; i < num_tc; i++) {
+	क्रम (i = 0; i < num_tc; i++) अणु
 		hw->fc.high_water[i] = ixgbe_hpbthresh(adapter, i);
 		hw->fc.low_water[i] = ixgbe_lpbthresh(adapter, i);
 
 		/* Low water marks must not be larger than high water marks */
-		if (hw->fc.low_water[i] > hw->fc.high_water[i])
+		अगर (hw->fc.low_water[i] > hw->fc.high_water[i])
 			hw->fc.low_water[i] = 0;
-	}
+	पूर्ण
 
-	for (; i < MAX_TRAFFIC_CLASS; i++)
+	क्रम (; i < MAX_TRAFFIC_CLASS; i++)
 		hw->fc.high_water[i] = 0;
-}
+पूर्ण
 
-static void ixgbe_configure_pb(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int hdrm;
+अटल व्योम ixgbe_configure_pb(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक hdrm;
 	u8 tc = adapter->hw_tcs;
 
-	if (adapter->flags & IXGBE_FLAG_FDIR_HASH_CAPABLE ||
-	    adapter->flags & IXGBE_FLAG_FDIR_PERFECT_CAPABLE)
+	अगर (adapter->flags & IXGBE_FLAG_Fसूची_HASH_CAPABLE ||
+	    adapter->flags & IXGBE_FLAG_Fसूची_PERFECT_CAPABLE)
 		hdrm = 32 << adapter->fdir_pballoc;
-	else
+	अन्यथा
 		hdrm = 0;
 
 	hw->mac.ops.set_rxpba(hw, tc, hdrm, PBA_STRATEGY_EQUAL);
 	ixgbe_pbthresh_setup(adapter);
-}
+पूर्ण
 
-static void ixgbe_fdir_filter_restore(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct hlist_node *node2;
-	struct ixgbe_fdir_filter *filter;
+अटल व्योम ixgbe_fdir_filter_restore(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा hlist_node *node2;
+	काष्ठा ixgbe_fdir_filter *filter;
 	u8 queue;
 
 	spin_lock(&adapter->fdir_perfect_lock);
 
-	if (!hlist_empty(&adapter->fdir_filter_list))
+	अगर (!hlist_empty(&adapter->fdir_filter_list))
 		ixgbe_fdir_set_input_mask_82599(hw, &adapter->fdir_mask);
 
-	hlist_for_each_entry_safe(filter, node2,
-				  &adapter->fdir_filter_list, fdir_node) {
-		if (filter->action == IXGBE_FDIR_DROP_QUEUE) {
-			queue = IXGBE_FDIR_DROP_QUEUE;
-		} else {
+	hlist_क्रम_each_entry_safe(filter, node2,
+				  &adapter->fdir_filter_list, fdir_node) अणु
+		अगर (filter->action == IXGBE_Fसूची_DROP_QUEUE) अणु
+			queue = IXGBE_Fसूची_DROP_QUEUE;
+		पूर्ण अन्यथा अणु
 			u32 ring = ethtool_get_flow_spec_ring(filter->action);
 			u8 vf = ethtool_get_flow_spec_ring_vf(filter->action);
 
-			if (!vf && (ring >= adapter->num_rx_queues)) {
+			अगर (!vf && (ring >= adapter->num_rx_queues)) अणु
 				e_err(drv, "FDIR restore failed without VF, ring: %u\n",
 				      ring);
-				continue;
-			} else if (vf &&
+				जारी;
+			पूर्ण अन्यथा अगर (vf &&
 				   ((vf > adapter->num_vfs) ||
-				     ring >= adapter->num_rx_queues_per_pool)) {
+				     ring >= adapter->num_rx_queues_per_pool)) अणु
 				e_err(drv, "FDIR restore failed with VF, vf: %hhu, ring: %u\n",
 				      vf, ring);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			/* Map the ring onto the absolute queue index */
-			if (!vf)
+			/* Map the ring onto the असलolute queue index */
+			अगर (!vf)
 				queue = adapter->rx_ring[ring]->reg_idx;
-			else
+			अन्यथा
 				queue = ((vf - 1) *
 					adapter->num_rx_queues_per_pool) + ring;
-		}
+		पूर्ण
 
-		ixgbe_fdir_write_perfect_filter_82599(hw,
+		ixgbe_fdir_ग_लिखो_perfect_filter_82599(hw,
 				&filter->filter, filter->sw_idx, queue);
-	}
+	पूर्ण
 
 	spin_unlock(&adapter->fdir_perfect_lock);
-}
+पूर्ण
 
 /**
  * ixgbe_clean_rx_ring - Free Rx Buffers per Queue
- * @rx_ring: ring to free buffers from
+ * @rx_ring: ring to मुक्त buffers from
  **/
-static void ixgbe_clean_rx_ring(struct ixgbe_ring *rx_ring)
-{
+अटल व्योम ixgbe_clean_rx_ring(काष्ठा ixgbe_ring *rx_ring)
+अणु
 	u16 i = rx_ring->next_to_clean;
-	struct ixgbe_rx_buffer *rx_buffer = &rx_ring->rx_buffer_info[i];
+	काष्ठा ixgbe_rx_buffer *rx_buffer = &rx_ring->rx_buffer_info[i];
 
-	if (rx_ring->xsk_pool) {
+	अगर (rx_ring->xsk_pool) अणु
 		ixgbe_xsk_clean_rx_ring(rx_ring);
-		goto skip_free;
-	}
+		जाओ skip_मुक्त;
+	पूर्ण
 
 	/* Free all the Rx ring sk_buffs */
-	while (i != rx_ring->next_to_alloc) {
-		if (rx_buffer->skb) {
-			struct sk_buff *skb = rx_buffer->skb;
-			if (IXGBE_CB(skb)->page_released)
+	जबतक (i != rx_ring->next_to_alloc) अणु
+		अगर (rx_buffer->skb) अणु
+			काष्ठा sk_buff *skb = rx_buffer->skb;
+			अगर (IXGBE_CB(skb)->page_released)
 				dma_unmap_page_attrs(rx_ring->dev,
 						     IXGBE_CB(skb)->dma,
 						     ixgbe_rx_pg_size(rx_ring),
 						     DMA_FROM_DEVICE,
 						     IXGBE_RX_DMA_ATTR);
-			dev_kfree_skb(skb);
-		}
+			dev_kमुक्त_skb(skb);
+		पूर्ण
 
 		/* Invalidate cache lines that may have been written to by
-		 * device so that we avoid corrupting memory.
+		 * device so that we aव्योम corrupting memory.
 		 */
-		dma_sync_single_range_for_cpu(rx_ring->dev,
+		dma_sync_single_range_क्रम_cpu(rx_ring->dev,
 					      rx_buffer->dma,
 					      rx_buffer->page_offset,
 					      ixgbe_rx_bufsz(rx_ring),
 					      DMA_FROM_DEVICE);
 
-		/* free resources associated with mapping */
+		/* मुक्त resources associated with mapping */
 		dma_unmap_page_attrs(rx_ring->dev, rx_buffer->dma,
 				     ixgbe_rx_pg_size(rx_ring),
 				     DMA_FROM_DEVICE,
@@ -5330,25 +5331,25 @@ static void ixgbe_clean_rx_ring(struct ixgbe_ring *rx_ring)
 
 		i++;
 		rx_buffer++;
-		if (i == rx_ring->count) {
+		अगर (i == rx_ring->count) अणु
 			i = 0;
 			rx_buffer = rx_ring->rx_buffer_info;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-skip_free:
+skip_मुक्त:
 	rx_ring->next_to_alloc = 0;
 	rx_ring->next_to_clean = 0;
 	rx_ring->next_to_use = 0;
-}
+पूर्ण
 
-static int ixgbe_fwd_ring_up(struct ixgbe_adapter *adapter,
-			     struct ixgbe_fwd_adapter *accel)
-{
+अटल पूर्णांक ixgbe_fwd_ring_up(काष्ठा ixgbe_adapter *adapter,
+			     काष्ठा ixgbe_fwd_adapter *accel)
+अणु
 	u16 rss_i = adapter->ring_feature[RING_F_RSS].indices;
-	int num_tc = netdev_get_num_tc(adapter->netdev);
-	struct net_device *vdev = accel->netdev;
-	int i, baseq, err;
+	पूर्णांक num_tc = netdev_get_num_tc(adapter->netdev);
+	काष्ठा net_device *vdev = accel->netdev;
+	पूर्णांक i, baseq, err;
 
 	baseq = accel->pool * adapter->num_rx_queues_per_pool;
 	netdev_dbg(vdev, "pool %i:%i queues %i:%i\n",
@@ -5358,32 +5359,32 @@ static int ixgbe_fwd_ring_up(struct ixgbe_adapter *adapter,
 	accel->rx_base_queue = baseq;
 	accel->tx_base_queue = baseq;
 
-	/* record configuration for macvlan interface in vdev */
-	for (i = 0; i < num_tc; i++)
+	/* record configuration क्रम macvlan पूर्णांकerface in vdev */
+	क्रम (i = 0; i < num_tc; i++)
 		netdev_bind_sb_channel_queue(adapter->netdev, vdev,
 					     i, rss_i, baseq + (rss_i * i));
 
-	for (i = 0; i < adapter->num_rx_queues_per_pool; i++)
+	क्रम (i = 0; i < adapter->num_rx_queues_per_pool; i++)
 		adapter->rx_ring[baseq + i]->netdev = vdev;
 
-	/* Guarantee all rings are updated before we update the
+	/* Guarantee all rings are updated beक्रमe we update the
 	 * MAC address filter.
 	 */
 	wmb();
 
-	/* ixgbe_add_mac_filter will return an index if it succeeds, so we
-	 * need to only treat it as an error value if it is negative.
+	/* ixgbe_add_mac_filter will वापस an index अगर it succeeds, so we
+	 * need to only treat it as an error value अगर it is negative.
 	 */
 	err = ixgbe_add_mac_filter(adapter, vdev->dev_addr,
 				   VMDQ_P(accel->pool));
-	if (err >= 0)
-		return 0;
+	अगर (err >= 0)
+		वापस 0;
 
-	/* if we cannot add the MAC rule then disable the offload */
+	/* अगर we cannot add the MAC rule then disable the offload */
 	macvlan_release_l2fw_offload(vdev);
 
-	for (i = 0; i < adapter->num_rx_queues_per_pool; i++)
-		adapter->rx_ring[baseq + i]->netdev = NULL;
+	क्रम (i = 0; i < adapter->num_rx_queues_per_pool; i++)
+		adapter->rx_ring[baseq + i]->netdev = शून्य;
 
 	netdev_err(vdev, "L2FW offload disabled due to L2 filter error\n");
 
@@ -5391,559 +5392,559 @@ static int ixgbe_fwd_ring_up(struct ixgbe_adapter *adapter,
 	netdev_unbind_sb_channel(adapter->netdev, vdev);
 	netdev_set_sb_channel(vdev, 0);
 
-	clear_bit(accel->pool, adapter->fwd_bitmask);
-	kfree(accel);
+	clear_bit(accel->pool, adapter->fwd_biपंचांगask);
+	kमुक्त(accel);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ixgbe_macvlan_up(struct net_device *vdev,
-			    struct netdev_nested_priv *priv)
-{
-	struct ixgbe_adapter *adapter = (struct ixgbe_adapter *)priv->data;
-	struct ixgbe_fwd_adapter *accel;
+अटल पूर्णांक ixgbe_macvlan_up(काष्ठा net_device *vdev,
+			    काष्ठा netdev_nested_priv *priv)
+अणु
+	काष्ठा ixgbe_adapter *adapter = (काष्ठा ixgbe_adapter *)priv->data;
+	काष्ठा ixgbe_fwd_adapter *accel;
 
-	if (!netif_is_macvlan(vdev))
-		return 0;
+	अगर (!netअगर_is_macvlan(vdev))
+		वापस 0;
 
 	accel = macvlan_accel_priv(vdev);
-	if (!accel)
-		return 0;
+	अगर (!accel)
+		वापस 0;
 
 	ixgbe_fwd_ring_up(adapter, accel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ixgbe_configure_dfwd(struct ixgbe_adapter *adapter)
-{
-	struct netdev_nested_priv priv = {
-		.data = (void *)adapter,
-	};
+अटल व्योम ixgbe_configure_dfwd(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा netdev_nested_priv priv = अणु
+		.data = (व्योम *)adapter,
+	पूर्ण;
 
 	netdev_walk_all_upper_dev_rcu(adapter->netdev,
 				      ixgbe_macvlan_up, &priv);
-}
+पूर्ण
 
-static void ixgbe_configure(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_configure(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
 	ixgbe_configure_pb(adapter);
-#ifdef CONFIG_IXGBE_DCB
+#अगर_घोषित CONFIG_IXGBE_DCB
 	ixgbe_configure_dcb(adapter);
-#endif
+#पूर्ण_अगर
 	/*
-	 * We must restore virtualization before VLANs or else
-	 * the VLVF registers will not be populated
+	 * We must restore भवization beक्रमe VLANs or अन्यथा
+	 * the VLVF रेजिस्टरs will not be populated
 	 */
-	ixgbe_configure_virtualization(adapter);
+	ixgbe_configure_भवization(adapter);
 
 	ixgbe_set_rx_mode(adapter->netdev);
 	ixgbe_restore_vlan(adapter);
 	ixgbe_ipsec_restore(adapter);
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
 		hw->mac.ops.disable_rx_buff(hw);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (adapter->flags & IXGBE_FLAG_FDIR_HASH_CAPABLE) {
+	अगर (adapter->flags & IXGBE_FLAG_Fसूची_HASH_CAPABLE) अणु
 		ixgbe_init_fdir_signature_82599(&adapter->hw,
 						adapter->fdir_pballoc);
-	} else if (adapter->flags & IXGBE_FLAG_FDIR_PERFECT_CAPABLE) {
+	पूर्ण अन्यथा अगर (adapter->flags & IXGBE_FLAG_Fसूची_PERFECT_CAPABLE) अणु
 		ixgbe_init_fdir_perfect_82599(&adapter->hw,
 					      adapter->fdir_pballoc);
 		ixgbe_fdir_filter_restore(adapter);
-	}
+	पूर्ण
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
 		hw->mac.ops.enable_rx_buff(hw);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-#ifdef CONFIG_IXGBE_DCA
+#अगर_घोषित CONFIG_IXGBE_DCA
 	/* configure DCA */
-	if (adapter->flags & IXGBE_FLAG_DCA_CAPABLE)
+	अगर (adapter->flags & IXGBE_FLAG_DCA_CAPABLE)
 		ixgbe_setup_dca(adapter);
-#endif /* CONFIG_IXGBE_DCA */
+#पूर्ण_अगर /* CONFIG_IXGBE_DCA */
 
-#ifdef IXGBE_FCOE
+#अगर_घोषित IXGBE_FCOE
 	/* configure FCoE L2 filters, redirection table, and Rx control */
 	ixgbe_configure_fcoe(adapter);
 
-#endif /* IXGBE_FCOE */
+#पूर्ण_अगर /* IXGBE_FCOE */
 	ixgbe_configure_tx(adapter);
 	ixgbe_configure_rx(adapter);
 	ixgbe_configure_dfwd(adapter);
-}
+पूर्ण
 
 /**
  * ixgbe_sfp_link_config - set up SFP+ link
- * @adapter: pointer to private adapter struct
+ * @adapter: poपूर्णांकer to निजी adapter काष्ठा
  **/
-static void ixgbe_sfp_link_config(struct ixgbe_adapter *adapter)
-{
+अटल व्योम ixgbe_sfp_link_config(काष्ठा ixgbe_adapter *adapter)
+अणु
 	/*
-	 * We are assuming the worst case scenario here, and that
-	 * is that an SFP was inserted/removed after the reset
-	 * but before SFP detection was enabled.  As such the best
+	 * We are assuming the worst हाल scenario here, and that
+	 * is that an SFP was inserted/हटाओd after the reset
+	 * but beक्रमe SFP detection was enabled.  As such the best
 	 * solution is to just start searching as soon as we start
 	 */
-	if (adapter->hw.mac.type == ixgbe_mac_82598EB)
+	अगर (adapter->hw.mac.type == ixgbe_mac_82598EB)
 		adapter->flags2 |= IXGBE_FLAG2_SEARCH_FOR_SFP;
 
 	adapter->flags2 |= IXGBE_FLAG2_SFP_NEEDS_RESET;
-	adapter->sfp_poll_time = 0;
-}
+	adapter->sfp_poll_समय = 0;
+पूर्ण
 
 /**
  * ixgbe_non_sfp_link_config - set up non-SFP+ link
- * @hw: pointer to private hardware struct
+ * @hw: poपूर्णांकer to निजी hardware काष्ठा
  *
  * Returns 0 on success, negative on failure
  **/
-static int ixgbe_non_sfp_link_config(struct ixgbe_hw *hw)
-{
+अटल पूर्णांक ixgbe_non_sfp_link_config(काष्ठा ixgbe_hw *hw)
+अणु
 	u32 speed;
-	bool autoneg, link_up = false;
-	int ret = IXGBE_ERR_LINK_SETUP;
+	bool स्वतःneg, link_up = false;
+	पूर्णांक ret = IXGBE_ERR_LINK_SETUP;
 
-	if (hw->mac.ops.check_link)
+	अगर (hw->mac.ops.check_link)
 		ret = hw->mac.ops.check_link(hw, &speed, &link_up, false);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	speed = hw->phy.autoneg_advertised;
-	if (!speed && hw->mac.ops.get_link_capabilities) {
+	speed = hw->phy.स्वतःneg_advertised;
+	अगर (!speed && hw->mac.ops.get_link_capabilities) अणु
 		ret = hw->mac.ops.get_link_capabilities(hw, &speed,
-							&autoneg);
+							&स्वतःneg);
 		speed &= ~(IXGBE_LINK_SPEED_5GB_FULL |
 			   IXGBE_LINK_SPEED_2_5GB_FULL);
-	}
+	पूर्ण
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (hw->mac.ops.setup_link)
+	अगर (hw->mac.ops.setup_link)
 		ret = hw->mac.ops.setup_link(hw, speed, link_up);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ixgbe_setup_gpie(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_setup_gpie(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 gpie = 0;
 
-	if (adapter->flags & IXGBE_FLAG_MSIX_ENABLED) {
+	अगर (adapter->flags & IXGBE_FLAG_MSIX_ENABLED) अणु
 		gpie = IXGBE_GPIE_MSIX_MODE | IXGBE_GPIE_PBA_SUPPORT |
 		       IXGBE_GPIE_OCD;
 		gpie |= IXGBE_GPIE_EIAME;
 		/*
-		 * use EIAM to auto-mask when MSI-X interrupt is asserted
-		 * this saves a register write for every interrupt
+		 * use EIAM to स्वतः-mask when MSI-X पूर्णांकerrupt is निश्चितed
+		 * this saves a रेजिस्टर ग_लिखो क्रम every पूर्णांकerrupt
 		 */
-		switch (hw->mac.type) {
-		case ixgbe_mac_82598EB:
+		चयन (hw->mac.type) अणु
+		हाल ixgbe_mac_82598EB:
 			IXGBE_WRITE_REG(hw, IXGBE_EIAM, IXGBE_EICS_RTX_QUEUE);
-			break;
-		case ixgbe_mac_82599EB:
-		case ixgbe_mac_X540:
-		case ixgbe_mac_X550:
-		case ixgbe_mac_X550EM_x:
-		case ixgbe_mac_x550em_a:
-		default:
+			अवरोध;
+		हाल ixgbe_mac_82599EB:
+		हाल ixgbe_mac_X540:
+		हाल ixgbe_mac_X550:
+		हाल ixgbe_mac_X550EM_x:
+		हाल ixgbe_mac_x550em_a:
+		शेष:
 			IXGBE_WRITE_REG(hw, IXGBE_EIAM_EX(0), 0xFFFFFFFF);
 			IXGBE_WRITE_REG(hw, IXGBE_EIAM_EX(1), 0xFFFFFFFF);
-			break;
-		}
-	} else {
-		/* legacy interrupts, use EIAM to auto-mask when reading EICR,
-		 * specifically only auto mask tx and rx interrupts */
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* legacy पूर्णांकerrupts, use EIAM to स्वतः-mask when पढ़ोing EICR,
+		 * specअगरically only स्वतः mask tx and rx पूर्णांकerrupts */
 		IXGBE_WRITE_REG(hw, IXGBE_EIAM, IXGBE_EICS_RTX_QUEUE);
-	}
+	पूर्ण
 
-	/* XXX: to interrupt immediately for EICS writes, enable this */
+	/* XXX: to पूर्णांकerrupt immediately क्रम EICS ग_लिखोs, enable this */
 	/* gpie |= IXGBE_GPIE_EIMEN; */
 
-	if (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED) {
+	अगर (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED) अणु
 		gpie &= ~IXGBE_GPIE_VTMODE_MASK;
 
-		switch (adapter->ring_feature[RING_F_VMDQ].mask) {
-		case IXGBE_82599_VMDQ_8Q_MASK:
+		चयन (adapter->ring_feature[RING_F_VMDQ].mask) अणु
+		हाल IXGBE_82599_VMDQ_8Q_MASK:
 			gpie |= IXGBE_GPIE_VTMODE_16;
-			break;
-		case IXGBE_82599_VMDQ_4Q_MASK:
+			अवरोध;
+		हाल IXGBE_82599_VMDQ_4Q_MASK:
 			gpie |= IXGBE_GPIE_VTMODE_32;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			gpie |= IXGBE_GPIE_VTMODE_64;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* Enable Thermal over heat sensor interrupt */
-	if (adapter->flags2 & IXGBE_FLAG2_TEMP_SENSOR_CAPABLE) {
-		switch (adapter->hw.mac.type) {
-		case ixgbe_mac_82599EB:
+	/* Enable Thermal over heat sensor पूर्णांकerrupt */
+	अगर (adapter->flags2 & IXGBE_FLAG2_TEMP_SENSOR_CAPABLE) अणु
+		चयन (adapter->hw.mac.type) अणु
+		हाल ixgbe_mac_82599EB:
 			gpie |= IXGBE_SDP0_GPIEN_8259X;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* Enable fan failure interrupt */
-	if (adapter->flags & IXGBE_FLAG_FAN_FAIL_CAPABLE)
+	/* Enable fan failure पूर्णांकerrupt */
+	अगर (adapter->flags & IXGBE_FLAG_FAN_FAIL_CAPABLE)
 		gpie |= IXGBE_SDP1_GPIEN(hw);
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82599EB:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82599EB:
 		gpie |= IXGBE_SDP1_GPIEN_8259X | IXGBE_SDP2_GPIEN_8259X;
-		break;
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
+		अवरोध;
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
 		gpie |= IXGBE_SDP0_GPIEN_X540;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	IXGBE_WRITE_REG(hw, IXGBE_GPIE, gpie);
-}
+पूर्ण
 
-static void ixgbe_up_complete(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int err;
+अटल व्योम ixgbe_up_complete(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक err;
 	u32 ctrl_ext;
 
 	ixgbe_get_hw_control(adapter);
 	ixgbe_setup_gpie(adapter);
 
-	if (adapter->flags & IXGBE_FLAG_MSIX_ENABLED)
+	अगर (adapter->flags & IXGBE_FLAG_MSIX_ENABLED)
 		ixgbe_configure_msix(adapter);
-	else
+	अन्यथा
 		ixgbe_configure_msi_and_legacy(adapter);
 
-	/* enable the optics for 82599 SFP+ fiber */
-	if (hw->mac.ops.enable_tx_laser)
+	/* enable the optics क्रम 82599 SFP+ fiber */
+	अगर (hw->mac.ops.enable_tx_laser)
 		hw->mac.ops.enable_tx_laser(hw);
 
-	if (hw->phy.ops.set_phy_power)
-		hw->phy.ops.set_phy_power(hw, true);
+	अगर (hw->phy.ops.set_phy_घातer)
+		hw->phy.ops.set_phy_घातer(hw, true);
 
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 	clear_bit(__IXGBE_DOWN, &adapter->state);
 	ixgbe_napi_enable_all(adapter);
 
-	if (ixgbe_is_sfp(hw)) {
+	अगर (ixgbe_is_sfp(hw)) अणु
 		ixgbe_sfp_link_config(adapter);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = ixgbe_non_sfp_link_config(hw);
-		if (err)
+		अगर (err)
 			e_err(probe, "link_config FAILED %d\n", err);
-	}
+	पूर्ण
 
-	/* clear any pending interrupts, may auto mask */
+	/* clear any pending पूर्णांकerrupts, may स्वतः mask */
 	IXGBE_READ_REG(hw, IXGBE_EICR);
 	ixgbe_irq_enable(adapter, true, true);
 
 	/*
-	 * If this adapter has a fan, check to see if we had a failure
-	 * before we enabled the interrupt.
+	 * If this adapter has a fan, check to see अगर we had a failure
+	 * beक्रमe we enabled the पूर्णांकerrupt.
 	 */
-	if (adapter->flags & IXGBE_FLAG_FAN_FAIL_CAPABLE) {
+	अगर (adapter->flags & IXGBE_FLAG_FAN_FAIL_CAPABLE) अणु
 		u32 esdp = IXGBE_READ_REG(hw, IXGBE_ESDP);
-		if (esdp & IXGBE_ESDP_SDP1)
+		अगर (esdp & IXGBE_ESDP_SDP1)
 			e_crit(drv, "Fan has stopped, replace the adapter\n");
-	}
+	पूर्ण
 
-	/* bring the link up in the watchdog, this could race with our first
-	 * link up interrupt but shouldn't be a problem */
+	/* bring the link up in the watchकरोg, this could race with our first
+	 * link up पूर्णांकerrupt but shouldn't be a problem */
 	adapter->flags |= IXGBE_FLAG_NEED_LINK_UPDATE;
-	adapter->link_check_timeout = jiffies;
-	mod_timer(&adapter->service_timer, jiffies);
+	adapter->link_check_समयout = jअगरfies;
+	mod_समयr(&adapter->service_समयr, jअगरfies);
 
 	/* Set PF Reset Done bit so PF/VF Mail Ops can work */
 	ctrl_ext = IXGBE_READ_REG(hw, IXGBE_CTRL_EXT);
 	ctrl_ext |= IXGBE_CTRL_EXT_PFRSTD;
 	IXGBE_WRITE_REG(hw, IXGBE_CTRL_EXT, ctrl_ext);
-}
+पूर्ण
 
-void ixgbe_reinit_locked(struct ixgbe_adapter *adapter)
-{
+व्योम ixgbe_reinit_locked(काष्ठा ixgbe_adapter *adapter)
+अणु
 	/* put off any impending NetWatchDogTimeout */
-	netif_trans_update(adapter->netdev);
+	netअगर_trans_update(adapter->netdev);
 
-	while (test_and_set_bit(__IXGBE_RESETTING, &adapter->state))
+	जबतक (test_and_set_bit(__IXGBE_RESETTING, &adapter->state))
 		usleep_range(1000, 2000);
-	if (adapter->hw.phy.type == ixgbe_phy_fw)
-		ixgbe_watchdog_link_is_down(adapter);
-	ixgbe_down(adapter);
+	अगर (adapter->hw.phy.type == ixgbe_phy_fw)
+		ixgbe_watchकरोg_link_is_करोwn(adapter);
+	ixgbe_करोwn(adapter);
 	/*
-	 * If SR-IOV enabled then wait a bit before bringing the adapter
-	 * back up to give the VFs time to respond to the reset.  The
-	 * two second wait is based upon the watchdog timer cycle in
+	 * If SR-IOV enabled then रुको a bit beक्रमe bringing the adapter
+	 * back up to give the VFs समय to respond to the reset.  The
+	 * two second रुको is based upon the watchकरोg समयr cycle in
 	 * the VF driver.
 	 */
-	if (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)
+	अगर (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)
 		msleep(2000);
 	ixgbe_up(adapter);
 	clear_bit(__IXGBE_RESETTING, &adapter->state);
-}
+पूर्ण
 
-void ixgbe_up(struct ixgbe_adapter *adapter)
-{
+व्योम ixgbe_up(काष्ठा ixgbe_adapter *adapter)
+अणु
 	/* hardware has been reset, we need to reload some things */
 	ixgbe_configure(adapter);
 
 	ixgbe_up_complete(adapter);
-}
+पूर्ण
 
-static unsigned long ixgbe_get_completion_timeout(struct ixgbe_adapter *adapter)
-{
+अटल अचिन्हित दीर्घ ixgbe_get_completion_समयout(काष्ठा ixgbe_adapter *adapter)
+अणु
 	u16 devctl2;
 
-	pcie_capability_read_word(adapter->pdev, PCI_EXP_DEVCTL2, &devctl2);
+	pcie_capability_पढ़ो_word(adapter->pdev, PCI_EXP_DEVCTL2, &devctl2);
 
-	switch (devctl2 & IXGBE_PCIDEVCTRL2_TIMEO_MASK) {
-	case IXGBE_PCIDEVCTRL2_17_34s:
-	case IXGBE_PCIDEVCTRL2_4_8s:
+	चयन (devctl2 & IXGBE_PCIDEVCTRL2_TIMEO_MASK) अणु
+	हाल IXGBE_PCIDEVCTRL2_17_34s:
+	हाल IXGBE_PCIDEVCTRL2_4_8s:
 		/* For now we cap the upper limit on delay to 2 seconds
 		 * as we end up going up to 34 seconds of delay in worst
-		 * case timeout value.
+		 * हाल समयout value.
 		 */
-	case IXGBE_PCIDEVCTRL2_1_2s:
-		return 2000000ul;	/* 2.0 s */
-	case IXGBE_PCIDEVCTRL2_260_520ms:
-		return 520000ul;	/* 520 ms */
-	case IXGBE_PCIDEVCTRL2_65_130ms:
-		return 130000ul;	/* 130 ms */
-	case IXGBE_PCIDEVCTRL2_16_32ms:
-		return 32000ul;		/* 32 ms */
-	case IXGBE_PCIDEVCTRL2_1_2ms:
-		return 2000ul;		/* 2 ms */
-	case IXGBE_PCIDEVCTRL2_50_100us:
-		return 100ul;		/* 100 us */
-	case IXGBE_PCIDEVCTRL2_16_32ms_def:
-		return 32000ul;		/* 32 ms */
-	default:
-		break;
-	}
+	हाल IXGBE_PCIDEVCTRL2_1_2s:
+		वापस 2000000ul;	/* 2.0 s */
+	हाल IXGBE_PCIDEVCTRL2_260_520ms:
+		वापस 520000ul;	/* 520 ms */
+	हाल IXGBE_PCIDEVCTRL2_65_130ms:
+		वापस 130000ul;	/* 130 ms */
+	हाल IXGBE_PCIDEVCTRL2_16_32ms:
+		वापस 32000ul;		/* 32 ms */
+	हाल IXGBE_PCIDEVCTRL2_1_2ms:
+		वापस 2000ul;		/* 2 ms */
+	हाल IXGBE_PCIDEVCTRL2_50_100us:
+		वापस 100ul;		/* 100 us */
+	हाल IXGBE_PCIDEVCTRL2_16_32ms_def:
+		वापस 32000ul;		/* 32 ms */
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	/* We shouldn't need to hit this path, but just in case default as
-	 * though completion timeout is not supported and support 32ms.
+	/* We shouldn't need to hit this path, but just in हाल शेष as
+	 * though completion समयout is not supported and support 32ms.
 	 */
-	return 32000ul;
-}
+	वापस 32000ul;
+पूर्ण
 
-void ixgbe_disable_rx(struct ixgbe_adapter *adapter)
-{
-	unsigned long wait_delay, delay_interval;
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i, wait_loop;
+व्योम ixgbe_disable_rx(काष्ठा ixgbe_adapter *adapter)
+अणु
+	अचिन्हित दीर्घ रुको_delay, delay_पूर्णांकerval;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i, रुको_loop;
 	u32 rxdctl;
 
 	/* disable receives */
 	hw->mac.ops.disable_rx(hw);
 
-	if (ixgbe_removed(hw->hw_addr))
-		return;
+	अगर (ixgbe_हटाओd(hw->hw_addr))
+		वापस;
 
 	/* disable all enabled Rx queues */
-	for (i = 0; i < adapter->num_rx_queues; i++) {
-		struct ixgbe_ring *ring = adapter->rx_ring[i];
+	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+		काष्ठा ixgbe_ring *ring = adapter->rx_ring[i];
 		u8 reg_idx = ring->reg_idx;
 
 		rxdctl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(reg_idx));
 		rxdctl &= ~IXGBE_RXDCTL_ENABLE;
 		rxdctl |= IXGBE_RXDCTL_SWFLSH;
 
-		/* write value back with RXDCTL.ENABLE bit cleared */
+		/* ग_लिखो value back with RXDCTL.ENABLE bit cleared */
 		IXGBE_WRITE_REG(hw, IXGBE_RXDCTL(reg_idx), rxdctl);
-	}
+	पूर्ण
 
-	/* RXDCTL.EN may not change on 82598 if link is down, so skip it */
-	if (hw->mac.type == ixgbe_mac_82598EB &&
+	/* RXDCTL.EN may not change on 82598 अगर link is करोwn, so skip it */
+	अगर (hw->mac.type == ixgbe_mac_82598EB &&
 	    !(IXGBE_READ_REG(hw, IXGBE_LINKS) & IXGBE_LINKS_UP))
-		return;
+		वापस;
 
-	/* Determine our minimum delay interval. We will increase this value
-	 * with each subsequent test. This way if the device returns quickly
-	 * we should spend as little time as possible waiting, however as
-	 * the time increases we will wait for larger periods of time.
+	/* Determine our minimum delay पूर्णांकerval. We will increase this value
+	 * with each subsequent test. This way अगर the device वापसs quickly
+	 * we should spend as little समय as possible रुकोing, however as
+	 * the समय increases we will रुको क्रम larger periods of समय.
 	 *
-	 * The trick here is that we increase the interval using the
+	 * The trick here is that we increase the पूर्णांकerval using the
 	 * following pattern: 1x 3x 5x 7x 9x 11x 13x 15x 17x 19x. The result
-	 * of that wait is that it totals up to 100x whatever interval we
-	 * choose. Since our minimum wait is 100us we can just divide the
-	 * total timeout by 100 to get our minimum delay interval.
+	 * of that रुको is that it totals up to 100x whatever पूर्णांकerval we
+	 * choose. Since our minimum रुको is 100us we can just भागide the
+	 * total समयout by 100 to get our minimum delay पूर्णांकerval.
 	 */
-	delay_interval = ixgbe_get_completion_timeout(adapter) / 100;
+	delay_पूर्णांकerval = ixgbe_get_completion_समयout(adapter) / 100;
 
-	wait_loop = IXGBE_MAX_RX_DESC_POLL;
-	wait_delay = delay_interval;
+	रुको_loop = IXGBE_MAX_RX_DESC_POLL;
+	रुको_delay = delay_पूर्णांकerval;
 
-	while (wait_loop--) {
-		usleep_range(wait_delay, wait_delay + 10);
-		wait_delay += delay_interval * 2;
+	जबतक (रुको_loop--) अणु
+		usleep_range(रुको_delay, रुको_delay + 10);
+		रुको_delay += delay_पूर्णांकerval * 2;
 		rxdctl = 0;
 
-		/* OR together the reading of all the active RXDCTL registers,
+		/* OR together the पढ़ोing of all the active RXDCTL रेजिस्टरs,
 		 * and then test the result. We need the disable to complete
-		 * before we start freeing the memory and invalidating the
+		 * beक्रमe we start मुक्तing the memory and invalidating the
 		 * DMA mappings.
 		 */
-		for (i = 0; i < adapter->num_rx_queues; i++) {
-			struct ixgbe_ring *ring = adapter->rx_ring[i];
+		क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+			काष्ठा ixgbe_ring *ring = adapter->rx_ring[i];
 			u8 reg_idx = ring->reg_idx;
 
 			rxdctl |= IXGBE_READ_REG(hw, IXGBE_RXDCTL(reg_idx));
-		}
+		पूर्ण
 
-		if (!(rxdctl & IXGBE_RXDCTL_ENABLE))
-			return;
-	}
+		अगर (!(rxdctl & IXGBE_RXDCTL_ENABLE))
+			वापस;
+	पूर्ण
 
 	e_err(drv,
 	      "RXDCTL.ENABLE for one or more queues not cleared within the polling period\n");
-}
+पूर्ण
 
-void ixgbe_disable_tx(struct ixgbe_adapter *adapter)
-{
-	unsigned long wait_delay, delay_interval;
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i, wait_loop;
+व्योम ixgbe_disable_tx(काष्ठा ixgbe_adapter *adapter)
+अणु
+	अचिन्हित दीर्घ रुको_delay, delay_पूर्णांकerval;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i, रुको_loop;
 	u32 txdctl;
 
-	if (ixgbe_removed(hw->hw_addr))
-		return;
+	अगर (ixgbe_हटाओd(hw->hw_addr))
+		वापस;
 
 	/* disable all enabled Tx queues */
-	for (i = 0; i < adapter->num_tx_queues; i++) {
-		struct ixgbe_ring *ring = adapter->tx_ring[i];
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+		काष्ठा ixgbe_ring *ring = adapter->tx_ring[i];
 		u8 reg_idx = ring->reg_idx;
 
 		IXGBE_WRITE_REG(hw, IXGBE_TXDCTL(reg_idx), IXGBE_TXDCTL_SWFLSH);
-	}
+	पूर्ण
 
 	/* disable all enabled XDP Tx queues */
-	for (i = 0; i < adapter->num_xdp_queues; i++) {
-		struct ixgbe_ring *ring = adapter->xdp_ring[i];
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++) अणु
+		काष्ठा ixgbe_ring *ring = adapter->xdp_ring[i];
 		u8 reg_idx = ring->reg_idx;
 
 		IXGBE_WRITE_REG(hw, IXGBE_TXDCTL(reg_idx), IXGBE_TXDCTL_SWFLSH);
-	}
+	पूर्ण
 
 	/* If the link is not up there shouldn't be much in the way of
 	 * pending transactions. Those that are left will be flushed out
 	 * when the reset logic goes through the flush sequence to clean out
 	 * the pending Tx transactions.
 	 */
-	if (!(IXGBE_READ_REG(hw, IXGBE_LINKS) & IXGBE_LINKS_UP))
-		goto dma_engine_disable;
+	अगर (!(IXGBE_READ_REG(hw, IXGBE_LINKS) & IXGBE_LINKS_UP))
+		जाओ dma_engine_disable;
 
-	/* Determine our minimum delay interval. We will increase this value
-	 * with each subsequent test. This way if the device returns quickly
-	 * we should spend as little time as possible waiting, however as
-	 * the time increases we will wait for larger periods of time.
+	/* Determine our minimum delay पूर्णांकerval. We will increase this value
+	 * with each subsequent test. This way अगर the device वापसs quickly
+	 * we should spend as little समय as possible रुकोing, however as
+	 * the समय increases we will रुको क्रम larger periods of समय.
 	 *
-	 * The trick here is that we increase the interval using the
+	 * The trick here is that we increase the पूर्णांकerval using the
 	 * following pattern: 1x 3x 5x 7x 9x 11x 13x 15x 17x 19x. The result
-	 * of that wait is that it totals up to 100x whatever interval we
-	 * choose. Since our minimum wait is 100us we can just divide the
-	 * total timeout by 100 to get our minimum delay interval.
+	 * of that रुको is that it totals up to 100x whatever पूर्णांकerval we
+	 * choose. Since our minimum रुको is 100us we can just भागide the
+	 * total समयout by 100 to get our minimum delay पूर्णांकerval.
 	 */
-	delay_interval = ixgbe_get_completion_timeout(adapter) / 100;
+	delay_पूर्णांकerval = ixgbe_get_completion_समयout(adapter) / 100;
 
-	wait_loop = IXGBE_MAX_RX_DESC_POLL;
-	wait_delay = delay_interval;
+	रुको_loop = IXGBE_MAX_RX_DESC_POLL;
+	रुको_delay = delay_पूर्णांकerval;
 
-	while (wait_loop--) {
-		usleep_range(wait_delay, wait_delay + 10);
-		wait_delay += delay_interval * 2;
+	जबतक (रुको_loop--) अणु
+		usleep_range(रुको_delay, रुको_delay + 10);
+		रुको_delay += delay_पूर्णांकerval * 2;
 		txdctl = 0;
 
-		/* OR together the reading of all the active TXDCTL registers,
+		/* OR together the पढ़ोing of all the active TXDCTL रेजिस्टरs,
 		 * and then test the result. We need the disable to complete
-		 * before we start freeing the memory and invalidating the
+		 * beक्रमe we start मुक्तing the memory and invalidating the
 		 * DMA mappings.
 		 */
-		for (i = 0; i < adapter->num_tx_queues; i++) {
-			struct ixgbe_ring *ring = adapter->tx_ring[i];
+		क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+			काष्ठा ixgbe_ring *ring = adapter->tx_ring[i];
 			u8 reg_idx = ring->reg_idx;
 
 			txdctl |= IXGBE_READ_REG(hw, IXGBE_TXDCTL(reg_idx));
-		}
-		for (i = 0; i < adapter->num_xdp_queues; i++) {
-			struct ixgbe_ring *ring = adapter->xdp_ring[i];
+		पूर्ण
+		क्रम (i = 0; i < adapter->num_xdp_queues; i++) अणु
+			काष्ठा ixgbe_ring *ring = adapter->xdp_ring[i];
 			u8 reg_idx = ring->reg_idx;
 
 			txdctl |= IXGBE_READ_REG(hw, IXGBE_TXDCTL(reg_idx));
-		}
+		पूर्ण
 
-		if (!(txdctl & IXGBE_TXDCTL_ENABLE))
-			goto dma_engine_disable;
-	}
+		अगर (!(txdctl & IXGBE_TXDCTL_ENABLE))
+			जाओ dma_engine_disable;
+	पूर्ण
 
 	e_err(drv,
 	      "TXDCTL.ENABLE for one or more queues not cleared within the polling period\n");
 
 dma_engine_disable:
 	/* Disable the Tx DMA engine on 82599 and later MAC */
-	switch (hw->mac.type) {
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
 		IXGBE_WRITE_REG(hw, IXGBE_DMATXCTL,
 				(IXGBE_READ_REG(hw, IXGBE_DMATXCTL) &
 				 ~IXGBE_DMATXCTL_TE));
 		fallthrough;
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void ixgbe_reset(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct net_device *netdev = adapter->netdev;
-	int err;
+व्योम ixgbe_reset(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा net_device *netdev = adapter->netdev;
+	पूर्णांक err;
 
-	if (ixgbe_removed(hw->hw_addr))
-		return;
-	/* lock SFP init bit to prevent race conditions with the watchdog */
-	while (test_and_set_bit(__IXGBE_IN_SFP_INIT, &adapter->state))
+	अगर (ixgbe_हटाओd(hw->hw_addr))
+		वापस;
+	/* lock SFP init bit to prevent race conditions with the watchकरोg */
+	जबतक (test_and_set_bit(__IXGBE_IN_SFP_INIT, &adapter->state))
 		usleep_range(1000, 2000);
 
-	/* clear all SFP and link config related flags while holding SFP_INIT */
+	/* clear all SFP and link config related flags जबतक holding SFP_INIT */
 	adapter->flags2 &= ~(IXGBE_FLAG2_SEARCH_FOR_SFP |
 			     IXGBE_FLAG2_SFP_NEEDS_RESET);
 	adapter->flags &= ~IXGBE_FLAG_NEED_LINK_CONFIG;
 
 	err = hw->mac.ops.init_hw(hw);
-	switch (err) {
-	case 0:
-	case IXGBE_ERR_SFP_NOT_PRESENT:
-	case IXGBE_ERR_SFP_NOT_SUPPORTED:
-		break;
-	case IXGBE_ERR_MASTER_REQUESTS_PENDING:
+	चयन (err) अणु
+	हाल 0:
+	हाल IXGBE_ERR_SFP_NOT_PRESENT:
+	हाल IXGBE_ERR_SFP_NOT_SUPPORTED:
+		अवरोध;
+	हाल IXGBE_ERR_MASTER_REQUESTS_PENDING:
 		e_dev_err("master disable timed out\n");
-		break;
-	case IXGBE_ERR_EEPROM_VERSION:
+		अवरोध;
+	हाल IXGBE_ERR_EEPROM_VERSION:
 		/* We are running on a pre-production device, log a warning */
 		e_dev_warn("This device is a pre-production adapter/LOM. "
 			   "Please be aware there may be issues associated with "
@@ -5951,57 +5952,57 @@ void ixgbe_reset(struct ixgbe_adapter *adapter)
 			   "please contact your Intel or hardware "
 			   "representative who provided you with this "
 			   "hardware.\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		e_dev_err("Hardware Error: %d\n", err);
-	}
+	पूर्ण
 
 	clear_bit(__IXGBE_IN_SFP_INIT, &adapter->state);
 
 	/* flush entries out of MAC table */
 	ixgbe_flush_sw_mac_table(adapter);
-	__dev_uc_unsync(netdev, NULL);
+	__dev_uc_unsync(netdev, शून्य);
 
-	/* do not flush user set addresses */
-	ixgbe_mac_set_default_filter(adapter);
+	/* करो not flush user set addresses */
+	ixgbe_mac_set_शेष_filter(adapter);
 
 	/* update SAN MAC vmdq pool selection */
-	if (hw->mac.san_mac_rar_index)
+	अगर (hw->mac.san_mac_rar_index)
 		hw->mac.ops.set_vmdq_san_mac(hw, VMDQ_P(0));
 
-	if (test_bit(__IXGBE_PTP_RUNNING, &adapter->state))
+	अगर (test_bit(__IXGBE_PTP_RUNNING, &adapter->state))
 		ixgbe_ptp_reset(adapter);
 
-	if (hw->phy.ops.set_phy_power) {
-		if (!netif_running(adapter->netdev) && !adapter->wol)
-			hw->phy.ops.set_phy_power(hw, false);
-		else
-			hw->phy.ops.set_phy_power(hw, true);
-	}
-}
+	अगर (hw->phy.ops.set_phy_घातer) अणु
+		अगर (!netअगर_running(adapter->netdev) && !adapter->wol)
+			hw->phy.ops.set_phy_घातer(hw, false);
+		अन्यथा
+			hw->phy.ops.set_phy_घातer(hw, true);
+	पूर्ण
+पूर्ण
 
 /**
  * ixgbe_clean_tx_ring - Free Tx Buffers
  * @tx_ring: ring to be cleaned
  **/
-static void ixgbe_clean_tx_ring(struct ixgbe_ring *tx_ring)
-{
+अटल व्योम ixgbe_clean_tx_ring(काष्ठा ixgbe_ring *tx_ring)
+अणु
 	u16 i = tx_ring->next_to_clean;
-	struct ixgbe_tx_buffer *tx_buffer = &tx_ring->tx_buffer_info[i];
+	काष्ठा ixgbe_tx_buffer *tx_buffer = &tx_ring->tx_buffer_info[i];
 
-	if (tx_ring->xsk_pool) {
+	अगर (tx_ring->xsk_pool) अणु
 		ixgbe_xsk_clean_tx_ring(tx_ring);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while (i != tx_ring->next_to_use) {
-		union ixgbe_adv_tx_desc *eop_desc, *tx_desc;
+	जबतक (i != tx_ring->next_to_use) अणु
+		जोड़ ixgbe_adv_tx_desc *eop_desc, *tx_desc;
 
 		/* Free all the Tx ring sk_buffs */
-		if (ring_is_xdp(tx_ring))
-			xdp_return_frame(tx_buffer->xdpf);
-		else
-			dev_kfree_skb_any(tx_buffer->skb);
+		अगर (ring_is_xdp(tx_ring))
+			xdp_वापस_frame(tx_buffer->xdpf);
+		अन्यथा
+			dev_kमुक्त_skb_any(tx_buffer->skb);
 
 		/* unmap skb header data */
 		dma_unmap_single(tx_ring->dev,
@@ -6009,113 +6010,113 @@ static void ixgbe_clean_tx_ring(struct ixgbe_ring *tx_ring)
 				 dma_unmap_len(tx_buffer, len),
 				 DMA_TO_DEVICE);
 
-		/* check for eop_desc to determine the end of the packet */
+		/* check क्रम eop_desc to determine the end of the packet */
 		eop_desc = tx_buffer->next_to_watch;
 		tx_desc = IXGBE_TX_DESC(tx_ring, i);
 
-		/* unmap remaining buffers */
-		while (tx_desc != eop_desc) {
+		/* unmap reमुख्यing buffers */
+		जबतक (tx_desc != eop_desc) अणु
 			tx_buffer++;
 			tx_desc++;
 			i++;
-			if (unlikely(i == tx_ring->count)) {
+			अगर (unlikely(i == tx_ring->count)) अणु
 				i = 0;
 				tx_buffer = tx_ring->tx_buffer_info;
 				tx_desc = IXGBE_TX_DESC(tx_ring, 0);
-			}
+			पूर्ण
 
-			/* unmap any remaining paged data */
-			if (dma_unmap_len(tx_buffer, len))
+			/* unmap any reमुख्यing paged data */
+			अगर (dma_unmap_len(tx_buffer, len))
 				dma_unmap_page(tx_ring->dev,
 					       dma_unmap_addr(tx_buffer, dma),
 					       dma_unmap_len(tx_buffer, len),
 					       DMA_TO_DEVICE);
-		}
+		पूर्ण
 
-		/* move us one more past the eop_desc for start of next pkt */
+		/* move us one more past the eop_desc क्रम start of next pkt */
 		tx_buffer++;
 		i++;
-		if (unlikely(i == tx_ring->count)) {
+		अगर (unlikely(i == tx_ring->count)) अणु
 			i = 0;
 			tx_buffer = tx_ring->tx_buffer_info;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* reset BQL for queue */
-	if (!ring_is_xdp(tx_ring))
+	/* reset BQL क्रम queue */
+	अगर (!ring_is_xdp(tx_ring))
 		netdev_tx_reset_queue(txring_txq(tx_ring));
 
 out:
 	/* reset next_to_use and next_to_clean */
 	tx_ring->next_to_use = 0;
 	tx_ring->next_to_clean = 0;
-}
+पूर्ण
 
 /**
- * ixgbe_clean_all_rx_rings - Free Rx Buffers for all queues
- * @adapter: board private structure
+ * ixgbe_clean_all_rx_rings - Free Rx Buffers क्रम all queues
+ * @adapter: board निजी काष्ठाure
  **/
-static void ixgbe_clean_all_rx_rings(struct ixgbe_adapter *adapter)
-{
-	int i;
+अटल व्योम ixgbe_clean_all_rx_rings(काष्ठा ixgbe_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_rx_queues; i++)
+	क्रम (i = 0; i < adapter->num_rx_queues; i++)
 		ixgbe_clean_rx_ring(adapter->rx_ring[i]);
-}
+पूर्ण
 
 /**
- * ixgbe_clean_all_tx_rings - Free Tx Buffers for all queues
- * @adapter: board private structure
+ * ixgbe_clean_all_tx_rings - Free Tx Buffers क्रम all queues
+ * @adapter: board निजी काष्ठाure
  **/
-static void ixgbe_clean_all_tx_rings(struct ixgbe_adapter *adapter)
-{
-	int i;
+अटल व्योम ixgbe_clean_all_tx_rings(काष्ठा ixgbe_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_tx_queues; i++)
+	क्रम (i = 0; i < adapter->num_tx_queues; i++)
 		ixgbe_clean_tx_ring(adapter->tx_ring[i]);
-	for (i = 0; i < adapter->num_xdp_queues; i++)
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++)
 		ixgbe_clean_tx_ring(adapter->xdp_ring[i]);
-}
+पूर्ण
 
-static void ixgbe_fdir_filter_exit(struct ixgbe_adapter *adapter)
-{
-	struct hlist_node *node2;
-	struct ixgbe_fdir_filter *filter;
+अटल व्योम ixgbe_fdir_filter_निकास(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा hlist_node *node2;
+	काष्ठा ixgbe_fdir_filter *filter;
 
 	spin_lock(&adapter->fdir_perfect_lock);
 
-	hlist_for_each_entry_safe(filter, node2,
-				  &adapter->fdir_filter_list, fdir_node) {
+	hlist_क्रम_each_entry_safe(filter, node2,
+				  &adapter->fdir_filter_list, fdir_node) अणु
 		hlist_del(&filter->fdir_node);
-		kfree(filter);
-	}
+		kमुक्त(filter);
+	पूर्ण
 	adapter->fdir_filter_count = 0;
 
 	spin_unlock(&adapter->fdir_perfect_lock);
-}
+पूर्ण
 
-void ixgbe_down(struct ixgbe_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i;
+व्योम ixgbe_करोwn(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i;
 
-	/* signal that we are down to the interrupt handler */
-	if (test_and_set_bit(__IXGBE_DOWN, &adapter->state))
-		return; /* do nothing if already down */
+	/* संकेत that we are करोwn to the पूर्णांकerrupt handler */
+	अगर (test_and_set_bit(__IXGBE_DOWN, &adapter->state))
+		वापस; /* करो nothing अगर alपढ़ोy करोwn */
 
 	/* Shut off incoming Tx traffic */
-	netif_tx_stop_all_queues(netdev);
+	netअगर_tx_stop_all_queues(netdev);
 
-	/* call carrier off first to avoid false dev_watchdog timeouts */
-	netif_carrier_off(netdev);
-	netif_tx_disable(netdev);
+	/* call carrier off first to aव्योम false dev_watchकरोg समयouts */
+	netअगर_carrier_off(netdev);
+	netअगर_tx_disable(netdev);
 
 	/* Disable Rx */
 	ixgbe_disable_rx(adapter);
 
-	/* synchronize_rcu() needed for pending XDP buffers to drain */
-	if (adapter->xdp_ring[0])
+	/* synchronize_rcu() needed क्रम pending XDP buffers to drain */
+	अगर (adapter->xdp_ring[0])
 		synchronize_rcu();
 
 	ixgbe_irq_disable(adapter);
@@ -6123,353 +6124,353 @@ void ixgbe_down(struct ixgbe_adapter *adapter)
 	ixgbe_napi_disable_all(adapter);
 
 	clear_bit(__IXGBE_RESET_REQUESTED, &adapter->state);
-	adapter->flags2 &= ~IXGBE_FLAG2_FDIR_REQUIRES_REINIT;
+	adapter->flags2 &= ~IXGBE_FLAG2_Fसूची_REQUIRES_REINIT;
 	adapter->flags &= ~IXGBE_FLAG_NEED_LINK_UPDATE;
 
-	del_timer_sync(&adapter->service_timer);
+	del_समयr_sync(&adapter->service_समयr);
 
-	if (adapter->num_vfs) {
+	अगर (adapter->num_vfs) अणु
 		/* Clear EITR Select mapping */
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITRSEL, 0);
 
 		/* Mark all the VFs as inactive */
-		for (i = 0 ; i < adapter->num_vfs; i++)
+		क्रम (i = 0 ; i < adapter->num_vfs; i++)
 			adapter->vfinfo[i].clear_to_send = false;
 
-		/* ping all the active vfs to let them know we are going down */
+		/* ping all the active vfs to let them know we are going करोwn */
 		ixgbe_ping_all_vfs(adapter);
 
 		/* Disable all VFTE/VFRE TX/RX */
 		ixgbe_disable_tx_rx(adapter);
-	}
+	पूर्ण
 
-	/* disable transmits in the hardware now that interrupts are off */
+	/* disable transmits in the hardware now that पूर्णांकerrupts are off */
 	ixgbe_disable_tx(adapter);
 
-	if (!pci_channel_offline(adapter->pdev))
+	अगर (!pci_channel_offline(adapter->pdev))
 		ixgbe_reset(adapter);
 
-	/* power down the optics for 82599 SFP+ fiber */
-	if (hw->mac.ops.disable_tx_laser)
+	/* घातer करोwn the optics क्रम 82599 SFP+ fiber */
+	अगर (hw->mac.ops.disable_tx_laser)
 		hw->mac.ops.disable_tx_laser(hw);
 
 	ixgbe_clean_all_tx_rings(adapter);
 	ixgbe_clean_all_rx_rings(adapter);
-}
+पूर्ण
 
 /**
  * ixgbe_set_eee_capable - helper function to determine EEE support on X550
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  */
-static void ixgbe_set_eee_capable(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_set_eee_capable(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	switch (hw->device_id) {
-	case IXGBE_DEV_ID_X550EM_A_1G_T:
-	case IXGBE_DEV_ID_X550EM_A_1G_T_L:
-		if (!hw->phy.eee_speeds_supported)
-			break;
+	चयन (hw->device_id) अणु
+	हाल IXGBE_DEV_ID_X550EM_A_1G_T:
+	हाल IXGBE_DEV_ID_X550EM_A_1G_T_L:
+		अगर (!hw->phy.eee_speeds_supported)
+			अवरोध;
 		adapter->flags2 |= IXGBE_FLAG2_EEE_CAPABLE;
-		if (!hw->phy.eee_speeds_advertised)
-			break;
+		अगर (!hw->phy.eee_speeds_advertised)
+			अवरोध;
 		adapter->flags2 |= IXGBE_FLAG2_EEE_ENABLED;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		adapter->flags2 &= ~IXGBE_FLAG2_EEE_CAPABLE;
 		adapter->flags2 &= ~IXGBE_FLAG2_EEE_ENABLED;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * ixgbe_tx_timeout - Respond to a Tx Hang
- * @netdev: network interface device structure
- * @txqueue: queue number that timed out
+ * ixgbe_tx_समयout - Respond to a Tx Hang
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @txqueue: queue number that समयd out
  **/
-static void ixgbe_tx_timeout(struct net_device *netdev, unsigned int __always_unused txqueue)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
+अटल व्योम ixgbe_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक __always_unused txqueue)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
 
-	/* Do the reset outside of interrupt context */
-	ixgbe_tx_timeout_reset(adapter);
-}
+	/* Do the reset outside of पूर्णांकerrupt context */
+	ixgbe_tx_समयout_reset(adapter);
+पूर्ण
 
-#ifdef CONFIG_IXGBE_DCB
-static void ixgbe_init_dcb(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct tc_configuration *tc;
-	int j;
+#अगर_घोषित CONFIG_IXGBE_DCB
+अटल व्योम ixgbe_init_dcb(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा tc_configuration *tc;
+	पूर्णांक j;
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB:
-	case ixgbe_mac_82599EB:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB:
+	हाल ixgbe_mac_82599EB:
 		adapter->dcb_cfg.num_tcs.pg_tcs = MAX_TRAFFIC_CLASS;
 		adapter->dcb_cfg.num_tcs.pfc_tcs = MAX_TRAFFIC_CLASS;
-		break;
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
+		अवरोध;
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
 		adapter->dcb_cfg.num_tcs.pg_tcs = X540_TRAFFIC_CLASS;
 		adapter->dcb_cfg.num_tcs.pfc_tcs = X540_TRAFFIC_CLASS;
-		break;
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
-	default:
+		अवरोध;
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
+	शेष:
 		adapter->dcb_cfg.num_tcs.pg_tcs = DEF_TRAFFIC_CLASS;
 		adapter->dcb_cfg.num_tcs.pfc_tcs = DEF_TRAFFIC_CLASS;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Configure DCB traffic classes */
-	for (j = 0; j < MAX_TRAFFIC_CLASS; j++) {
+	क्रम (j = 0; j < MAX_TRAFFIC_CLASS; j++) अणु
 		tc = &adapter->dcb_cfg.tc_config[j];
 		tc->path[DCB_TX_CONFIG].bwg_id = 0;
 		tc->path[DCB_TX_CONFIG].bwg_percent = 12 + (j & 1);
 		tc->path[DCB_RX_CONFIG].bwg_id = 0;
 		tc->path[DCB_RX_CONFIG].bwg_percent = 12 + (j & 1);
 		tc->dcb_pfc = pfc_disabled;
-	}
+	पूर्ण
 
-	/* Initialize default user to priority mapping, UPx->TC0 */
+	/* Initialize शेष user to priority mapping, UPx->TC0 */
 	tc = &adapter->dcb_cfg.tc_config[0];
-	tc->path[DCB_TX_CONFIG].up_to_tc_bitmap = 0xFF;
-	tc->path[DCB_RX_CONFIG].up_to_tc_bitmap = 0xFF;
+	tc->path[DCB_TX_CONFIG].up_to_tc_biपंचांगap = 0xFF;
+	tc->path[DCB_RX_CONFIG].up_to_tc_biपंचांगap = 0xFF;
 
 	adapter->dcb_cfg.bw_percentage[DCB_TX_CONFIG][0] = 100;
 	adapter->dcb_cfg.bw_percentage[DCB_RX_CONFIG][0] = 100;
 	adapter->dcb_cfg.pfc_mode_enable = false;
-	adapter->dcb_set_bitmap = 0x00;
-	if (adapter->flags & IXGBE_FLAG_DCB_CAPABLE)
+	adapter->dcb_set_biपंचांगap = 0x00;
+	अगर (adapter->flags & IXGBE_FLAG_DCB_CAPABLE)
 		adapter->dcbx_cap = DCB_CAP_DCBX_HOST | DCB_CAP_DCBX_VER_CEE;
-	memcpy(&adapter->temp_dcb_cfg, &adapter->dcb_cfg,
-	       sizeof(adapter->temp_dcb_cfg));
-}
-#endif
+	स_नकल(&adapter->temp_dcb_cfg, &adapter->dcb_cfg,
+	       माप(adapter->temp_dcb_cfg));
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * ixgbe_sw_init - Initialize general software structures (struct ixgbe_adapter)
- * @adapter: board private structure to initialize
- * @ii: pointer to ixgbe_info for device
+ * ixgbe_sw_init - Initialize general software काष्ठाures (काष्ठा ixgbe_adapter)
+ * @adapter: board निजी काष्ठाure to initialize
+ * @ii: poपूर्णांकer to ixgbe_info क्रम device
  *
- * ixgbe_sw_init initializes the Adapter private data structure.
- * Fields are initialized based on PCI device information and
+ * ixgbe_sw_init initializes the Adapter निजी data काष्ठाure.
+ * Fields are initialized based on PCI device inक्रमmation and
  * OS network device settings (MTU size).
  **/
-static int ixgbe_sw_init(struct ixgbe_adapter *adapter,
-			 const struct ixgbe_info *ii)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct pci_dev *pdev = adapter->pdev;
-	unsigned int rss, fdir;
+अटल पूर्णांक ixgbe_sw_init(काष्ठा ixgbe_adapter *adapter,
+			 स्थिर काष्ठा ixgbe_info *ii)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	अचिन्हित पूर्णांक rss, fdir;
 	u32 fwsm;
-	int i;
+	पूर्णांक i;
 
 	/* PCI config space info */
 
-	hw->vendor_id = pdev->vendor;
+	hw->venकरोr_id = pdev->venकरोr;
 	hw->device_id = pdev->device;
 	hw->revision_id = pdev->revision;
-	hw->subsystem_vendor_id = pdev->subsystem_vendor;
-	hw->subsystem_device_id = pdev->subsystem_device;
+	hw->subप्रणाली_venकरोr_id = pdev->subप्रणाली_venकरोr;
+	hw->subप्रणाली_device_id = pdev->subप्रणाली_device;
 
 	/* get_invariants needs the device IDs */
 	ii->get_invariants(hw);
 
 	/* Set common capability flags and settings */
-	rss = min_t(int, ixgbe_max_rss_indices(adapter), num_online_cpus());
+	rss = min_t(पूर्णांक, ixgbe_max_rss_indices(adapter), num_online_cpus());
 	adapter->ring_feature[RING_F_RSS].limit = rss;
 	adapter->flags2 |= IXGBE_FLAG2_RSC_CAPABLE;
 	adapter->max_q_vectors = MAX_Q_VECTORS_82599;
 	adapter->atr_sample_rate = 20;
-	fdir = min_t(int, IXGBE_MAX_FDIR_INDICES, num_online_cpus());
-	adapter->ring_feature[RING_F_FDIR].limit = fdir;
-	adapter->fdir_pballoc = IXGBE_FDIR_PBALLOC_64K;
+	fdir = min_t(पूर्णांक, IXGBE_MAX_Fसूची_INDICES, num_online_cpus());
+	adapter->ring_feature[RING_F_Fसूची].limit = fdir;
+	adapter->fdir_pballoc = IXGBE_Fसूची_PBALLOC_64K;
 	adapter->ring_feature[RING_F_VMDQ].limit = 1;
-#ifdef CONFIG_IXGBE_DCA
+#अगर_घोषित CONFIG_IXGBE_DCA
 	adapter->flags |= IXGBE_FLAG_DCA_CAPABLE;
-#endif
-#ifdef CONFIG_IXGBE_DCB
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IXGBE_DCB
 	adapter->flags |= IXGBE_FLAG_DCB_CAPABLE;
 	adapter->flags &= ~IXGBE_FLAG_DCB_ENABLED;
-#endif
-#ifdef IXGBE_FCOE
+#पूर्ण_अगर
+#अगर_घोषित IXGBE_FCOE
 	adapter->flags |= IXGBE_FLAG_FCOE_CAPABLE;
 	adapter->flags &= ~IXGBE_FLAG_FCOE_ENABLED;
-#ifdef CONFIG_IXGBE_DCB
-	/* Default traffic class to use for FCoE */
+#अगर_घोषित CONFIG_IXGBE_DCB
+	/* Default traffic class to use क्रम FCoE */
 	adapter->fcoe.up = IXGBE_FCOE_DEFTC;
-#endif /* CONFIG_IXGBE_DCB */
-#endif /* IXGBE_FCOE */
+#पूर्ण_अगर /* CONFIG_IXGBE_DCB */
+#पूर्ण_अगर /* IXGBE_FCOE */
 
-	/* initialize static ixgbe jump table entries */
-	adapter->jump_tables[0] = kzalloc(sizeof(*adapter->jump_tables[0]),
+	/* initialize अटल ixgbe jump table entries */
+	adapter->jump_tables[0] = kzalloc(माप(*adapter->jump_tables[0]),
 					  GFP_KERNEL);
-	if (!adapter->jump_tables[0])
-		return -ENOMEM;
+	अगर (!adapter->jump_tables[0])
+		वापस -ENOMEM;
 	adapter->jump_tables[0]->mat = ixgbe_ipv4_fields;
 
-	for (i = 1; i < IXGBE_MAX_LINK_HANDLE; i++)
-		adapter->jump_tables[i] = NULL;
+	क्रम (i = 1; i < IXGBE_MAX_LINK_HANDLE; i++)
+		adapter->jump_tables[i] = शून्य;
 
-	adapter->mac_table = kcalloc(hw->mac.num_rar_entries,
-				     sizeof(struct ixgbe_mac_addr),
+	adapter->mac_table = kसुस्मृति(hw->mac.num_rar_entries,
+				     माप(काष्ठा ixgbe_mac_addr),
 				     GFP_KERNEL);
-	if (!adapter->mac_table)
-		return -ENOMEM;
+	अगर (!adapter->mac_table)
+		वापस -ENOMEM;
 
-	if (ixgbe_init_rss_key(adapter))
-		return -ENOMEM;
+	अगर (ixgbe_init_rss_key(adapter))
+		वापस -ENOMEM;
 
-	adapter->af_xdp_zc_qps = bitmap_zalloc(MAX_XDP_QUEUES, GFP_KERNEL);
-	if (!adapter->af_xdp_zc_qps)
-		return -ENOMEM;
+	adapter->af_xdp_zc_qps = biपंचांगap_zalloc(MAX_XDP_QUEUES, GFP_KERNEL);
+	अगर (!adapter->af_xdp_zc_qps)
+		वापस -ENOMEM;
 
-	/* Set MAC specific capability flags and exceptions */
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB:
+	/* Set MAC specअगरic capability flags and exceptions */
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB:
 		adapter->flags2 &= ~IXGBE_FLAG2_RSC_CAPABLE;
 
-		if (hw->device_id == IXGBE_DEV_ID_82598AT)
+		अगर (hw->device_id == IXGBE_DEV_ID_82598AT)
 			adapter->flags |= IXGBE_FLAG_FAN_FAIL_CAPABLE;
 
 		adapter->max_q_vectors = MAX_Q_VECTORS_82598;
-		adapter->ring_feature[RING_F_FDIR].limit = 0;
+		adapter->ring_feature[RING_F_Fसूची].limit = 0;
 		adapter->atr_sample_rate = 0;
 		adapter->fdir_pballoc = 0;
-#ifdef IXGBE_FCOE
+#अगर_घोषित IXGBE_FCOE
 		adapter->flags &= ~IXGBE_FLAG_FCOE_CAPABLE;
 		adapter->flags &= ~IXGBE_FLAG_FCOE_ENABLED;
-#ifdef CONFIG_IXGBE_DCB
+#अगर_घोषित CONFIG_IXGBE_DCB
 		adapter->fcoe.up = 0;
-#endif /* IXGBE_DCB */
-#endif /* IXGBE_FCOE */
-		break;
-	case ixgbe_mac_82599EB:
-		if (hw->device_id == IXGBE_DEV_ID_82599_T3_LOM)
+#पूर्ण_अगर /* IXGBE_DCB */
+#पूर्ण_अगर /* IXGBE_FCOE */
+		अवरोध;
+	हाल ixgbe_mac_82599EB:
+		अगर (hw->device_id == IXGBE_DEV_ID_82599_T3_LOM)
 			adapter->flags2 |= IXGBE_FLAG2_TEMP_SENSOR_CAPABLE;
-		break;
-	case ixgbe_mac_X540:
+		अवरोध;
+	हाल ixgbe_mac_X540:
 		fwsm = IXGBE_READ_REG(hw, IXGBE_FWSM(hw));
-		if (fwsm & IXGBE_FWSM_TS_ENABLED)
+		अगर (fwsm & IXGBE_FWSM_TS_ENABLED)
 			adapter->flags2 |= IXGBE_FLAG2_TEMP_SENSOR_CAPABLE;
-		break;
-	case ixgbe_mac_x550em_a:
-		switch (hw->device_id) {
-		case IXGBE_DEV_ID_X550EM_A_1G_T:
-		case IXGBE_DEV_ID_X550EM_A_1G_T_L:
+		अवरोध;
+	हाल ixgbe_mac_x550em_a:
+		चयन (hw->device_id) अणु
+		हाल IXGBE_DEV_ID_X550EM_A_1G_T:
+		हाल IXGBE_DEV_ID_X550EM_A_1G_T_L:
 			adapter->flags2 |= IXGBE_FLAG2_TEMP_SENSOR_CAPABLE;
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	case ixgbe_mac_X550EM_x:
-#ifdef CONFIG_IXGBE_DCB
+	हाल ixgbe_mac_X550EM_x:
+#अगर_घोषित CONFIG_IXGBE_DCB
 		adapter->flags &= ~IXGBE_FLAG_DCB_CAPABLE;
-#endif
-#ifdef IXGBE_FCOE
+#पूर्ण_अगर
+#अगर_घोषित IXGBE_FCOE
 		adapter->flags &= ~IXGBE_FLAG_FCOE_CAPABLE;
-#ifdef CONFIG_IXGBE_DCB
+#अगर_घोषित CONFIG_IXGBE_DCB
 		adapter->fcoe.up = 0;
-#endif /* IXGBE_DCB */
-#endif /* IXGBE_FCOE */
+#पूर्ण_अगर /* IXGBE_DCB */
+#पूर्ण_अगर /* IXGBE_FCOE */
 		fallthrough;
-	case ixgbe_mac_X550:
-		if (hw->mac.type == ixgbe_mac_X550)
+	हाल ixgbe_mac_X550:
+		अगर (hw->mac.type == ixgbe_mac_X550)
 			adapter->flags2 |= IXGBE_FLAG2_TEMP_SENSOR_CAPABLE;
-#ifdef CONFIG_IXGBE_DCA
+#अगर_घोषित CONFIG_IXGBE_DCA
 		adapter->flags &= ~IXGBE_FLAG_DCA_CAPABLE;
-#endif
-		break;
-	default:
-		break;
-	}
+#पूर्ण_अगर
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-#ifdef IXGBE_FCOE
+#अगर_घोषित IXGBE_FCOE
 	/* FCoE support exists, always init the FCoE lock */
 	spin_lock_init(&adapter->fcoe.lock);
 
-#endif
+#पूर्ण_अगर
 	/* n-tuple support exists, always init our spinlock */
 	spin_lock_init(&adapter->fdir_perfect_lock);
 
-#ifdef CONFIG_IXGBE_DCB
+#अगर_घोषित CONFIG_IXGBE_DCB
 	ixgbe_init_dcb(adapter);
-#endif
+#पूर्ण_अगर
 	ixgbe_init_ipsec_offload(adapter);
 
-	/* default flow control settings */
+	/* शेष flow control settings */
 	hw->fc.requested_mode = ixgbe_fc_full;
-	hw->fc.current_mode = ixgbe_fc_full;	/* init for ethtool output */
+	hw->fc.current_mode = ixgbe_fc_full;	/* init क्रम ethtool output */
 	ixgbe_pbthresh_setup(adapter);
-	hw->fc.pause_time = IXGBE_DEFAULT_FCPAUSE;
+	hw->fc.छोड़ो_समय = IXGBE_DEFAULT_FCPAUSE;
 	hw->fc.send_xon = true;
-	hw->fc.disable_fc_autoneg = ixgbe_device_supports_autoneg_fc(hw);
+	hw->fc.disable_fc_स्वतःneg = ixgbe_device_supports_स्वतःneg_fc(hw);
 
-#ifdef CONFIG_PCI_IOV
-	if (max_vfs > 0)
+#अगर_घोषित CONFIG_PCI_IOV
+	अगर (max_vfs > 0)
 		e_dev_warn("Enabling SR-IOV VFs using the max_vfs module parameter is deprecated - please use the pci sysfs interface instead.\n");
 
 	/* assign number of SR-IOV VFs */
-	if (hw->mac.type != ixgbe_mac_82598EB) {
-		if (max_vfs > IXGBE_MAX_VFS_DRV_LIMIT) {
+	अगर (hw->mac.type != ixgbe_mac_82598EB) अणु
+		अगर (max_vfs > IXGBE_MAX_VFS_DRV_LIMIT) अणु
 			max_vfs = 0;
 			e_dev_warn("max_vfs parameter out of range. Not assigning any SR-IOV VFs\n");
-		}
-	}
-#endif /* CONFIG_PCI_IOV */
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI_IOV */
 
-	/* enable itr by default in dynamic mode */
+	/* enable itr by शेष in dynamic mode */
 	adapter->rx_itr_setting = 1;
 	adapter->tx_itr_setting = 1;
 
-	/* set default ring sizes */
+	/* set शेष ring sizes */
 	adapter->tx_ring_count = IXGBE_DEFAULT_TXD;
 	adapter->rx_ring_count = IXGBE_DEFAULT_RXD;
 
-	/* set default work limits */
+	/* set शेष work limits */
 	adapter->tx_work_limit = IXGBE_DEFAULT_TX_WORK;
 
 	/* initialize eeprom parameters */
-	if (ixgbe_init_eeprom_params_generic(hw)) {
+	अगर (ixgbe_init_eeprom_params_generic(hw)) अणु
 		e_dev_err("EEPROM initialization failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* PF holds first pool slot */
-	set_bit(0, adapter->fwd_bitmask);
+	set_bit(0, adapter->fwd_biपंचांगask);
 	set_bit(__IXGBE_DOWN, &adapter->state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ixgbe_setup_tx_resources - allocate Tx resources (Descriptors)
- * @tx_ring:    tx descriptor ring (for a specific queue) to setup
+ * @tx_ring:    tx descriptor ring (क्रम a specअगरic queue) to setup
  *
  * Return 0 on success, negative on failure
  **/
-int ixgbe_setup_tx_resources(struct ixgbe_ring *tx_ring)
-{
-	struct device *dev = tx_ring->dev;
-	int orig_node = dev_to_node(dev);
-	int ring_node = NUMA_NO_NODE;
-	int size;
+पूर्णांक ixgbe_setup_tx_resources(काष्ठा ixgbe_ring *tx_ring)
+अणु
+	काष्ठा device *dev = tx_ring->dev;
+	पूर्णांक orig_node = dev_to_node(dev);
+	पूर्णांक ring_node = NUMA_NO_NODE;
+	पूर्णांक size;
 
-	size = sizeof(struct ixgbe_tx_buffer) * tx_ring->count;
+	size = माप(काष्ठा ixgbe_tx_buffer) * tx_ring->count;
 
-	if (tx_ring->q_vector)
+	अगर (tx_ring->q_vector)
 		ring_node = tx_ring->q_vector->numa_node;
 
-	tx_ring->tx_buffer_info = vmalloc_node(size, ring_node);
-	if (!tx_ring->tx_buffer_info)
-		tx_ring->tx_buffer_info = vmalloc(size);
-	if (!tx_ring->tx_buffer_info)
-		goto err;
+	tx_ring->tx_buffer_info = vदो_स्मृति_node(size, ring_node);
+	अगर (!tx_ring->tx_buffer_info)
+		tx_ring->tx_buffer_info = vदो_स्मृति(size);
+	अगर (!tx_ring->tx_buffer_info)
+		जाओ err;
 
 	/* round up to nearest 4K */
-	tx_ring->size = tx_ring->count * sizeof(union ixgbe_adv_tx_desc);
+	tx_ring->size = tx_ring->count * माप(जोड़ ixgbe_adv_tx_desc);
 	tx_ring->size = ALIGN(tx_ring->size, 4096);
 
 	set_dev_node(dev, ring_node);
@@ -6478,99 +6479,99 @@ int ixgbe_setup_tx_resources(struct ixgbe_ring *tx_ring)
 					   &tx_ring->dma,
 					   GFP_KERNEL);
 	set_dev_node(dev, orig_node);
-	if (!tx_ring->desc)
+	अगर (!tx_ring->desc)
 		tx_ring->desc = dma_alloc_coherent(dev, tx_ring->size,
 						   &tx_ring->dma, GFP_KERNEL);
-	if (!tx_ring->desc)
-		goto err;
+	अगर (!tx_ring->desc)
+		जाओ err;
 
 	tx_ring->next_to_use = 0;
 	tx_ring->next_to_clean = 0;
-	return 0;
+	वापस 0;
 
 err:
-	vfree(tx_ring->tx_buffer_info);
-	tx_ring->tx_buffer_info = NULL;
+	vमुक्त(tx_ring->tx_buffer_info);
+	tx_ring->tx_buffer_info = शून्य;
 	dev_err(dev, "Unable to allocate memory for the Tx descriptor ring\n");
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
  * ixgbe_setup_all_tx_resources - allocate all queues Tx resources
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  *
- * If this function returns with an error, then it's possible one or
- * more of the rings is populated (while the rest are not).  It is the
+ * If this function वापसs with an error, then it's possible one or
+ * more of the rings is populated (जबतक the rest are not).  It is the
  * callers duty to clean those orphaned rings.
  *
  * Return 0 on success, negative on failure
  **/
-static int ixgbe_setup_all_tx_resources(struct ixgbe_adapter *adapter)
-{
-	int i, j = 0, err = 0;
+अटल पूर्णांक ixgbe_setup_all_tx_resources(काष्ठा ixgbe_adapter *adapter)
+अणु
+	पूर्णांक i, j = 0, err = 0;
 
-	for (i = 0; i < adapter->num_tx_queues; i++) {
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
 		err = ixgbe_setup_tx_resources(adapter->tx_ring[i]);
-		if (!err)
-			continue;
+		अगर (!err)
+			जारी;
 
 		e_err(probe, "Allocation for Tx Queue %u failed\n", i);
-		goto err_setup_tx;
-	}
-	for (j = 0; j < adapter->num_xdp_queues; j++) {
+		जाओ err_setup_tx;
+	पूर्ण
+	क्रम (j = 0; j < adapter->num_xdp_queues; j++) अणु
 		err = ixgbe_setup_tx_resources(adapter->xdp_ring[j]);
-		if (!err)
-			continue;
+		अगर (!err)
+			जारी;
 
 		e_err(probe, "Allocation for Tx Queue %u failed\n", j);
-		goto err_setup_tx;
-	}
+		जाओ err_setup_tx;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err_setup_tx:
-	/* rewind the index freeing the rings as we go */
-	while (j--)
-		ixgbe_free_tx_resources(adapter->xdp_ring[j]);
-	while (i--)
-		ixgbe_free_tx_resources(adapter->tx_ring[i]);
-	return err;
-}
+	/* शुरुआत the index मुक्तing the rings as we go */
+	जबतक (j--)
+		ixgbe_मुक्त_tx_resources(adapter->xdp_ring[j]);
+	जबतक (i--)
+		ixgbe_मुक्त_tx_resources(adapter->tx_ring[i]);
+	वापस err;
+पूर्ण
 
-static int ixgbe_rx_napi_id(struct ixgbe_ring *rx_ring)
-{
-	struct ixgbe_q_vector *q_vector = rx_ring->q_vector;
+अटल पूर्णांक ixgbe_rx_napi_id(काष्ठा ixgbe_ring *rx_ring)
+अणु
+	काष्ठा ixgbe_q_vector *q_vector = rx_ring->q_vector;
 
-	return q_vector ? q_vector->napi.napi_id : 0;
-}
+	वापस q_vector ? q_vector->napi.napi_id : 0;
+पूर्ण
 
 /**
  * ixgbe_setup_rx_resources - allocate Rx resources (Descriptors)
- * @adapter: pointer to ixgbe_adapter
- * @rx_ring:    rx descriptor ring (for a specific queue) to setup
+ * @adapter: poपूर्णांकer to ixgbe_adapter
+ * @rx_ring:    rx descriptor ring (क्रम a specअगरic queue) to setup
  *
  * Returns 0 on success, negative on failure
  **/
-int ixgbe_setup_rx_resources(struct ixgbe_adapter *adapter,
-			     struct ixgbe_ring *rx_ring)
-{
-	struct device *dev = rx_ring->dev;
-	int orig_node = dev_to_node(dev);
-	int ring_node = NUMA_NO_NODE;
-	int size;
+पूर्णांक ixgbe_setup_rx_resources(काष्ठा ixgbe_adapter *adapter,
+			     काष्ठा ixgbe_ring *rx_ring)
+अणु
+	काष्ठा device *dev = rx_ring->dev;
+	पूर्णांक orig_node = dev_to_node(dev);
+	पूर्णांक ring_node = NUMA_NO_NODE;
+	पूर्णांक size;
 
-	size = sizeof(struct ixgbe_rx_buffer) * rx_ring->count;
+	size = माप(काष्ठा ixgbe_rx_buffer) * rx_ring->count;
 
-	if (rx_ring->q_vector)
+	अगर (rx_ring->q_vector)
 		ring_node = rx_ring->q_vector->numa_node;
 
-	rx_ring->rx_buffer_info = vmalloc_node(size, ring_node);
-	if (!rx_ring->rx_buffer_info)
-		rx_ring->rx_buffer_info = vmalloc(size);
-	if (!rx_ring->rx_buffer_info)
-		goto err;
+	rx_ring->rx_buffer_info = vदो_स्मृति_node(size, ring_node);
+	अगर (!rx_ring->rx_buffer_info)
+		rx_ring->rx_buffer_info = vदो_स्मृति(size);
+	अगर (!rx_ring->rx_buffer_info)
+		जाओ err;
 
 	/* Round up to nearest 4K */
-	rx_ring->size = rx_ring->count * sizeof(union ixgbe_adv_rx_desc);
+	rx_ring->size = rx_ring->count * माप(जोड़ ixgbe_adv_rx_desc);
 	rx_ring->size = ALIGN(rx_ring->size, 4096);
 
 	set_dev_node(dev, ring_node);
@@ -6579,182 +6580,182 @@ int ixgbe_setup_rx_resources(struct ixgbe_adapter *adapter,
 					   &rx_ring->dma,
 					   GFP_KERNEL);
 	set_dev_node(dev, orig_node);
-	if (!rx_ring->desc)
+	अगर (!rx_ring->desc)
 		rx_ring->desc = dma_alloc_coherent(dev, rx_ring->size,
 						   &rx_ring->dma, GFP_KERNEL);
-	if (!rx_ring->desc)
-		goto err;
+	अगर (!rx_ring->desc)
+		जाओ err;
 
 	rx_ring->next_to_clean = 0;
 	rx_ring->next_to_use = 0;
 
 	/* XDP RX-queue info */
-	if (xdp_rxq_info_reg(&rx_ring->xdp_rxq, adapter->netdev,
+	अगर (xdp_rxq_info_reg(&rx_ring->xdp_rxq, adapter->netdev,
 			     rx_ring->queue_index, ixgbe_rx_napi_id(rx_ring)) < 0)
-		goto err;
+		जाओ err;
 
 	rx_ring->xdp_prog = adapter->xdp_prog;
 
-	return 0;
+	वापस 0;
 err:
-	vfree(rx_ring->rx_buffer_info);
-	rx_ring->rx_buffer_info = NULL;
+	vमुक्त(rx_ring->rx_buffer_info);
+	rx_ring->rx_buffer_info = शून्य;
 	dev_err(dev, "Unable to allocate memory for the Rx descriptor ring\n");
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
  * ixgbe_setup_all_rx_resources - allocate all queues Rx resources
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  *
- * If this function returns with an error, then it's possible one or
- * more of the rings is populated (while the rest are not).  It is the
+ * If this function वापसs with an error, then it's possible one or
+ * more of the rings is populated (जबतक the rest are not).  It is the
  * callers duty to clean those orphaned rings.
  *
  * Return 0 on success, negative on failure
  **/
-static int ixgbe_setup_all_rx_resources(struct ixgbe_adapter *adapter)
-{
-	int i, err = 0;
+अटल पूर्णांक ixgbe_setup_all_rx_resources(काष्ठा ixgbe_adapter *adapter)
+अणु
+	पूर्णांक i, err = 0;
 
-	for (i = 0; i < adapter->num_rx_queues; i++) {
+	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
 		err = ixgbe_setup_rx_resources(adapter, adapter->rx_ring[i]);
-		if (!err)
-			continue;
+		अगर (!err)
+			जारी;
 
 		e_err(probe, "Allocation for Rx Queue %u failed\n", i);
-		goto err_setup_rx;
-	}
+		जाओ err_setup_rx;
+	पूर्ण
 
-#ifdef IXGBE_FCOE
+#अगर_घोषित IXGBE_FCOE
 	err = ixgbe_setup_fcoe_ddp_resources(adapter);
-	if (!err)
-#endif
-		return 0;
+	अगर (!err)
+#पूर्ण_अगर
+		वापस 0;
 err_setup_rx:
-	/* rewind the index freeing the rings as we go */
-	while (i--)
-		ixgbe_free_rx_resources(adapter->rx_ring[i]);
-	return err;
-}
+	/* शुरुआत the index मुक्तing the rings as we go */
+	जबतक (i--)
+		ixgbe_मुक्त_rx_resources(adapter->rx_ring[i]);
+	वापस err;
+पूर्ण
 
 /**
- * ixgbe_free_tx_resources - Free Tx Resources per Queue
- * @tx_ring: Tx descriptor ring for a specific queue
+ * ixgbe_मुक्त_tx_resources - Free Tx Resources per Queue
+ * @tx_ring: Tx descriptor ring क्रम a specअगरic queue
  *
  * Free all transmit software resources
  **/
-void ixgbe_free_tx_resources(struct ixgbe_ring *tx_ring)
-{
+व्योम ixgbe_मुक्त_tx_resources(काष्ठा ixgbe_ring *tx_ring)
+अणु
 	ixgbe_clean_tx_ring(tx_ring);
 
-	vfree(tx_ring->tx_buffer_info);
-	tx_ring->tx_buffer_info = NULL;
+	vमुक्त(tx_ring->tx_buffer_info);
+	tx_ring->tx_buffer_info = शून्य;
 
-	/* if not set, then don't free */
-	if (!tx_ring->desc)
-		return;
+	/* अगर not set, then करोn't मुक्त */
+	अगर (!tx_ring->desc)
+		वापस;
 
-	dma_free_coherent(tx_ring->dev, tx_ring->size,
+	dma_मुक्त_coherent(tx_ring->dev, tx_ring->size,
 			  tx_ring->desc, tx_ring->dma);
 
-	tx_ring->desc = NULL;
-}
+	tx_ring->desc = शून्य;
+पूर्ण
 
 /**
- * ixgbe_free_all_tx_resources - Free Tx Resources for All Queues
- * @adapter: board private structure
+ * ixgbe_मुक्त_all_tx_resources - Free Tx Resources क्रम All Queues
+ * @adapter: board निजी काष्ठाure
  *
  * Free all transmit software resources
  **/
-static void ixgbe_free_all_tx_resources(struct ixgbe_adapter *adapter)
-{
-	int i;
+अटल व्योम ixgbe_मुक्त_all_tx_resources(काष्ठा ixgbe_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_tx_queues; i++)
-		if (adapter->tx_ring[i]->desc)
-			ixgbe_free_tx_resources(adapter->tx_ring[i]);
-	for (i = 0; i < adapter->num_xdp_queues; i++)
-		if (adapter->xdp_ring[i]->desc)
-			ixgbe_free_tx_resources(adapter->xdp_ring[i]);
-}
+	क्रम (i = 0; i < adapter->num_tx_queues; i++)
+		अगर (adapter->tx_ring[i]->desc)
+			ixgbe_मुक्त_tx_resources(adapter->tx_ring[i]);
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++)
+		अगर (adapter->xdp_ring[i]->desc)
+			ixgbe_मुक्त_tx_resources(adapter->xdp_ring[i]);
+पूर्ण
 
 /**
- * ixgbe_free_rx_resources - Free Rx Resources
+ * ixgbe_मुक्त_rx_resources - Free Rx Resources
  * @rx_ring: ring to clean the resources from
  *
  * Free all receive software resources
  **/
-void ixgbe_free_rx_resources(struct ixgbe_ring *rx_ring)
-{
+व्योम ixgbe_मुक्त_rx_resources(काष्ठा ixgbe_ring *rx_ring)
+अणु
 	ixgbe_clean_rx_ring(rx_ring);
 
-	rx_ring->xdp_prog = NULL;
+	rx_ring->xdp_prog = शून्य;
 	xdp_rxq_info_unreg(&rx_ring->xdp_rxq);
-	vfree(rx_ring->rx_buffer_info);
-	rx_ring->rx_buffer_info = NULL;
+	vमुक्त(rx_ring->rx_buffer_info);
+	rx_ring->rx_buffer_info = शून्य;
 
-	/* if not set, then don't free */
-	if (!rx_ring->desc)
-		return;
+	/* अगर not set, then करोn't मुक्त */
+	अगर (!rx_ring->desc)
+		वापस;
 
-	dma_free_coherent(rx_ring->dev, rx_ring->size,
+	dma_मुक्त_coherent(rx_ring->dev, rx_ring->size,
 			  rx_ring->desc, rx_ring->dma);
 
-	rx_ring->desc = NULL;
-}
+	rx_ring->desc = शून्य;
+पूर्ण
 
 /**
- * ixgbe_free_all_rx_resources - Free Rx Resources for All Queues
- * @adapter: board private structure
+ * ixgbe_मुक्त_all_rx_resources - Free Rx Resources क्रम All Queues
+ * @adapter: board निजी काष्ठाure
  *
  * Free all receive software resources
  **/
-static void ixgbe_free_all_rx_resources(struct ixgbe_adapter *adapter)
-{
-	int i;
+अटल व्योम ixgbe_मुक्त_all_rx_resources(काष्ठा ixgbe_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-#ifdef IXGBE_FCOE
-	ixgbe_free_fcoe_ddp_resources(adapter);
+#अगर_घोषित IXGBE_FCOE
+	ixgbe_मुक्त_fcoe_ddp_resources(adapter);
 
-#endif
-	for (i = 0; i < adapter->num_rx_queues; i++)
-		if (adapter->rx_ring[i]->desc)
-			ixgbe_free_rx_resources(adapter->rx_ring[i]);
-}
+#पूर्ण_अगर
+	क्रम (i = 0; i < adapter->num_rx_queues; i++)
+		अगर (adapter->rx_ring[i]->desc)
+			ixgbe_मुक्त_rx_resources(adapter->rx_ring[i]);
+पूर्ण
 
 /**
  * ixgbe_change_mtu - Change the Maximum Transfer Unit
- * @netdev: network interface device structure
- * @new_mtu: new value for maximum frame size
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @new_mtu: new value क्रम maximum frame size
  *
  * Returns 0 on success, negative on failure
  **/
-static int ixgbe_change_mtu(struct net_device *netdev, int new_mtu)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक ixgbe_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
 
-	if (adapter->xdp_prog) {
-		int new_frame_size = new_mtu + ETH_HLEN + ETH_FCS_LEN +
+	अगर (adapter->xdp_prog) अणु
+		पूर्णांक new_frame_size = new_mtu + ETH_HLEN + ETH_FCS_LEN +
 				     VLAN_HLEN;
-		int i;
+		पूर्णांक i;
 
-		for (i = 0; i < adapter->num_rx_queues; i++) {
-			struct ixgbe_ring *ring = adapter->rx_ring[i];
+		क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+			काष्ठा ixgbe_ring *ring = adapter->rx_ring[i];
 
-			if (new_frame_size > ixgbe_rx_bufsz(ring)) {
+			अगर (new_frame_size > ixgbe_rx_bufsz(ring)) अणु
 				e_warn(probe, "Requested MTU size is not supported with XDP\n");
-				return -EINVAL;
-			}
-		}
-	}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * For 82599EB we cannot allow legacy VFs to enable their receive
 	 * paths when MTU greater than 1500 is configured.  So display a
 	 * warning that legacy VFs will be disabled.
 	 */
-	if ((adapter->flags & IXGBE_FLAG_SRIOV_ENABLED) &&
+	अगर ((adapter->flags & IXGBE_FLAG_SRIOV_ENABLED) &&
 	    (adapter->hw.mac.type == ixgbe_mac_82599EB) &&
 	    (new_mtu > ETH_DATA_LEN))
 		e_warn(probe, "Setting MTU > 1500 will disable legacy VFs\n");
@@ -6762,65 +6763,65 @@ static int ixgbe_change_mtu(struct net_device *netdev, int new_mtu)
 	netdev_dbg(netdev, "changing MTU from %d to %d\n",
 		   netdev->mtu, new_mtu);
 
-	/* must set new MTU before calling down or up */
+	/* must set new MTU beक्रमe calling करोwn or up */
 	netdev->mtu = new_mtu;
 
-	if (netif_running(netdev))
+	अगर (netअगर_running(netdev))
 		ixgbe_reinit_locked(adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ixgbe_open - Called when a network interface is made active
- * @netdev: network interface device structure
+ * ixgbe_खोलो - Called when a network पूर्णांकerface is made active
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
  * Returns 0 on success, negative value on failure
  *
- * The open entry point is called when a network interface is made
- * active by the system (IFF_UP).  At this point all resources needed
- * for transmit and receive operations are allocated, the interrupt
- * handler is registered with the OS, the watchdog timer is started,
- * and the stack is notified that the interface is ready.
+ * The खोलो entry poपूर्णांक is called when a network पूर्णांकerface is made
+ * active by the प्रणाली (IFF_UP).  At this poपूर्णांक all resources needed
+ * क्रम transmit and receive operations are allocated, the पूर्णांकerrupt
+ * handler is रेजिस्टरed with the OS, the watchकरोg समयr is started,
+ * and the stack is notअगरied that the पूर्णांकerface is पढ़ोy.
  **/
-int ixgbe_open(struct net_device *netdev)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
-	int err, queues;
+पूर्णांक ixgbe_खोलो(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक err, queues;
 
-	/* disallow open during test */
-	if (test_bit(__IXGBE_TESTING, &adapter->state))
-		return -EBUSY;
+	/* disallow खोलो during test */
+	अगर (test_bit(__IXGBE_TESTING, &adapter->state))
+		वापस -EBUSY;
 
-	netif_carrier_off(netdev);
+	netअगर_carrier_off(netdev);
 
 	/* allocate transmit descriptors */
 	err = ixgbe_setup_all_tx_resources(adapter);
-	if (err)
-		goto err_setup_tx;
+	अगर (err)
+		जाओ err_setup_tx;
 
 	/* allocate receive descriptors */
 	err = ixgbe_setup_all_rx_resources(adapter);
-	if (err)
-		goto err_setup_rx;
+	अगर (err)
+		जाओ err_setup_rx;
 
 	ixgbe_configure(adapter);
 
 	err = ixgbe_request_irq(adapter);
-	if (err)
-		goto err_req_irq;
+	अगर (err)
+		जाओ err_req_irq;
 
-	/* Notify the stack of the actual queue counts. */
+	/* Notअगरy the stack of the actual queue counts. */
 	queues = adapter->num_tx_queues;
-	err = netif_set_real_num_tx_queues(netdev, queues);
-	if (err)
-		goto err_set_queues;
+	err = netअगर_set_real_num_tx_queues(netdev, queues);
+	अगर (err)
+		जाओ err_set_queues;
 
 	queues = adapter->num_rx_queues;
-	err = netif_set_real_num_rx_queues(netdev, queues);
-	if (err)
-		goto err_set_queues;
+	err = netअगर_set_real_num_rx_queues(netdev, queues);
+	अगर (err)
+		जाओ err_set_queues;
 
 	ixgbe_ptp_init(adapter);
 
@@ -6828,83 +6829,83 @@ int ixgbe_open(struct net_device *netdev)
 
 	udp_tunnel_nic_reset_ntf(netdev);
 
-	return 0;
+	वापस 0;
 
 err_set_queues:
-	ixgbe_free_irq(adapter);
+	ixgbe_मुक्त_irq(adapter);
 err_req_irq:
-	ixgbe_free_all_rx_resources(adapter);
-	if (hw->phy.ops.set_phy_power && !adapter->wol)
-		hw->phy.ops.set_phy_power(&adapter->hw, false);
+	ixgbe_मुक्त_all_rx_resources(adapter);
+	अगर (hw->phy.ops.set_phy_घातer && !adapter->wol)
+		hw->phy.ops.set_phy_घातer(&adapter->hw, false);
 err_setup_rx:
-	ixgbe_free_all_tx_resources(adapter);
+	ixgbe_मुक्त_all_tx_resources(adapter);
 err_setup_tx:
 	ixgbe_reset(adapter);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ixgbe_close_suspend(struct ixgbe_adapter *adapter)
-{
+अटल व्योम ixgbe_बंद_suspend(काष्ठा ixgbe_adapter *adapter)
+अणु
 	ixgbe_ptp_suspend(adapter);
 
-	if (adapter->hw.phy.ops.enter_lplu) {
+	अगर (adapter->hw.phy.ops.enter_lplu) अणु
 		adapter->hw.phy.reset_disable = true;
-		ixgbe_down(adapter);
+		ixgbe_करोwn(adapter);
 		adapter->hw.phy.ops.enter_lplu(&adapter->hw);
 		adapter->hw.phy.reset_disable = false;
-	} else {
-		ixgbe_down(adapter);
-	}
+	पूर्ण अन्यथा अणु
+		ixgbe_करोwn(adapter);
+	पूर्ण
 
-	ixgbe_free_irq(adapter);
+	ixgbe_मुक्त_irq(adapter);
 
-	ixgbe_free_all_tx_resources(adapter);
-	ixgbe_free_all_rx_resources(adapter);
-}
+	ixgbe_मुक्त_all_tx_resources(adapter);
+	ixgbe_मुक्त_all_rx_resources(adapter);
+पूर्ण
 
 /**
- * ixgbe_close - Disables a network interface
- * @netdev: network interface device structure
+ * ixgbe_बंद - Disables a network पूर्णांकerface
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
  * Returns 0, this is not allowed to fail
  *
- * The close entry point is called when an interface is de-activated
+ * The बंद entry poपूर्णांक is called when an पूर्णांकerface is de-activated
  * by the OS.  The hardware is still under the drivers control, but
  * needs to be disabled.  A global MAC reset is issued to stop the
- * hardware, and all transmit and receive resources are freed.
+ * hardware, and all transmit and receive resources are मुक्तd.
  **/
-int ixgbe_close(struct net_device *netdev)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
+पूर्णांक ixgbe_बंद(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
 
 	ixgbe_ptp_stop(adapter);
 
-	if (netif_device_present(netdev))
-		ixgbe_close_suspend(adapter);
+	अगर (netअगर_device_present(netdev))
+		ixgbe_बंद_suspend(adapter);
 
-	ixgbe_fdir_filter_exit(adapter);
+	ixgbe_fdir_filter_निकास(adapter);
 
 	ixgbe_release_hw_control(adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused ixgbe_resume(struct device *dev_d)
-{
-	struct pci_dev *pdev = to_pci_dev(dev_d);
-	struct ixgbe_adapter *adapter = pci_get_drvdata(pdev);
-	struct net_device *netdev = adapter->netdev;
+अटल पूर्णांक __maybe_unused ixgbe_resume(काष्ठा device *dev_d)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev_d);
+	काष्ठा ixgbe_adapter *adapter = pci_get_drvdata(pdev);
+	काष्ठा net_device *netdev = adapter->netdev;
 	u32 err;
 
 	adapter->hw.hw_addr = adapter->io_addr;
 
 	err = pci_enable_device_mem(pdev);
-	if (err) {
+	अगर (err) अणु
 		e_dev_err("Cannot enable PCI device from suspend\n");
-		return err;
-	}
-	smp_mb__before_atomic();
+		वापस err;
+	पूर्ण
+	smp_mb__beक्रमe_atomic();
 	clear_bit(__IXGBE_DISABLED, &adapter->state);
 	pci_set_master(pdev);
 
@@ -6915,45 +6916,45 @@ static int __maybe_unused ixgbe_resume(struct device *dev_d)
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_WUS, ~0);
 
 	rtnl_lock();
-	err = ixgbe_init_interrupt_scheme(adapter);
-	if (!err && netif_running(netdev))
-		err = ixgbe_open(netdev);
+	err = ixgbe_init_पूर्णांकerrupt_scheme(adapter);
+	अगर (!err && netअगर_running(netdev))
+		err = ixgbe_खोलो(netdev);
 
 
-	if (!err)
-		netif_device_attach(netdev);
+	अगर (!err)
+		netअगर_device_attach(netdev);
 	rtnl_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __ixgbe_shutdown(struct pci_dev *pdev, bool *enable_wake)
-{
-	struct ixgbe_adapter *adapter = pci_get_drvdata(pdev);
-	struct net_device *netdev = adapter->netdev;
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल पूर्णांक __ixgbe_shutकरोwn(काष्ठा pci_dev *pdev, bool *enable_wake)
+अणु
+	काष्ठा ixgbe_adapter *adapter = pci_get_drvdata(pdev);
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 ctrl;
 	u32 wufc = adapter->wol;
 
 	rtnl_lock();
-	netif_device_detach(netdev);
+	netअगर_device_detach(netdev);
 
-	if (netif_running(netdev))
-		ixgbe_close_suspend(adapter);
+	अगर (netअगर_running(netdev))
+		ixgbe_बंद_suspend(adapter);
 
-	ixgbe_clear_interrupt_scheme(adapter);
+	ixgbe_clear_पूर्णांकerrupt_scheme(adapter);
 	rtnl_unlock();
 
-	if (hw->mac.ops.stop_link_on_d3)
+	अगर (hw->mac.ops.stop_link_on_d3)
 		hw->mac.ops.stop_link_on_d3(hw);
 
-	if (wufc) {
+	अगर (wufc) अणु
 		u32 fctrl;
 
 		ixgbe_set_rx_mode(netdev);
 
-		/* enable the optics for 82599 SFP+ fiber as we can WoL */
-		if (hw->mac.ops.enable_tx_laser)
+		/* enable the optics क्रम 82599 SFP+ fiber as we can WoL */
+		अगर (hw->mac.ops.enable_tx_laser)
 			hw->mac.ops.enable_tx_laser(hw);
 
 		/* enable the reception of multicast packets */
@@ -6966,72 +6967,72 @@ static int __ixgbe_shutdown(struct pci_dev *pdev, bool *enable_wake)
 		IXGBE_WRITE_REG(hw, IXGBE_CTRL, ctrl);
 
 		IXGBE_WRITE_REG(hw, IXGBE_WUFC, wufc);
-	} else {
+	पूर्ण अन्यथा अणु
 		IXGBE_WRITE_REG(hw, IXGBE_WUC, 0);
 		IXGBE_WRITE_REG(hw, IXGBE_WUFC, 0);
-	}
+	पूर्ण
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB:
 		pci_wake_from_d3(pdev, false);
-		break;
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
+		अवरोध;
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
 		pci_wake_from_d3(pdev, !!wufc);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	*enable_wake = !!wufc;
-	if (hw->phy.ops.set_phy_power && !*enable_wake)
-		hw->phy.ops.set_phy_power(hw, false);
+	अगर (hw->phy.ops.set_phy_घातer && !*enable_wake)
+		hw->phy.ops.set_phy_घातer(hw, false);
 
 	ixgbe_release_hw_control(adapter);
 
-	if (!test_and_set_bit(__IXGBE_DISABLED, &adapter->state))
+	अगर (!test_and_set_bit(__IXGBE_DISABLED, &adapter->state))
 		pci_disable_device(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused ixgbe_suspend(struct device *dev_d)
-{
-	struct pci_dev *pdev = to_pci_dev(dev_d);
-	int retval;
+अटल पूर्णांक __maybe_unused ixgbe_suspend(काष्ठा device *dev_d)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev_d);
+	पूर्णांक retval;
 	bool wake;
 
-	retval = __ixgbe_shutdown(pdev, &wake);
+	retval = __ixgbe_shutकरोwn(pdev, &wake);
 
 	device_set_wakeup_enable(dev_d, wake);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void ixgbe_shutdown(struct pci_dev *pdev)
-{
+अटल व्योम ixgbe_shutकरोwn(काष्ठा pci_dev *pdev)
+अणु
 	bool wake;
 
-	__ixgbe_shutdown(pdev, &wake);
+	__ixgbe_shutकरोwn(pdev, &wake);
 
-	if (system_state == SYSTEM_POWER_OFF) {
+	अगर (प्रणाली_state == SYSTEM_POWER_OFF) अणु
 		pci_wake_from_d3(pdev, wake);
-		pci_set_power_state(pdev, PCI_D3hot);
-	}
-}
+		pci_set_घातer_state(pdev, PCI_D3hot);
+	पूर्ण
+पूर्ण
 
 /**
  * ixgbe_update_stats - Update the board statistics counters.
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  **/
-void ixgbe_update_stats(struct ixgbe_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct ixgbe_hw_stats *hwstats = &adapter->stats;
+व्योम ixgbe_update_stats(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_hw_stats *hwstats = &adapter->stats;
 	u64 total_mpc = 0;
 	u32 i, missed_rx = 0, mpc, bprc, lxon, lxoff, xon_off_tot;
 	u64 non_eop_descs = 0, restart_queue = 0, tx_busy = 0;
@@ -7039,26 +7040,26 @@ void ixgbe_update_stats(struct ixgbe_adapter *adapter)
 	u64 alloc_rx_page = 0;
 	u64 bytes = 0, packets = 0, hw_csum_rx_error = 0;
 
-	if (test_bit(__IXGBE_DOWN, &adapter->state) ||
+	अगर (test_bit(__IXGBE_DOWN, &adapter->state) ||
 	    test_bit(__IXGBE_RESETTING, &adapter->state))
-		return;
+		वापस;
 
-	if (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED) {
+	अगर (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED) अणु
 		u64 rsc_count = 0;
 		u64 rsc_flush = 0;
-		for (i = 0; i < adapter->num_rx_queues; i++) {
+		क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
 			rsc_count += adapter->rx_ring[i]->rx_stats.rsc_count;
 			rsc_flush += adapter->rx_ring[i]->rx_stats.rsc_flush;
-		}
+		पूर्ण
 		adapter->rsc_total_count = rsc_count;
 		adapter->rsc_total_flush = rsc_flush;
-	}
+	पूर्ण
 
-	for (i = 0; i < adapter->num_rx_queues; i++) {
-		struct ixgbe_ring *rx_ring = READ_ONCE(adapter->rx_ring[i]);
+	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+		काष्ठा ixgbe_ring *rx_ring = READ_ONCE(adapter->rx_ring[i]);
 
-		if (!rx_ring)
-			continue;
+		अगर (!rx_ring)
+			जारी;
 		non_eop_descs += rx_ring->rx_stats.non_eop_descs;
 		alloc_rx_page += rx_ring->rx_stats.alloc_rx_page;
 		alloc_rx_page_failed += rx_ring->rx_stats.alloc_rx_page_failed;
@@ -7066,7 +7067,7 @@ void ixgbe_update_stats(struct ixgbe_adapter *adapter)
 		hw_csum_rx_error += rx_ring->rx_stats.csum_err;
 		bytes += rx_ring->stats.bytes;
 		packets += rx_ring->stats.packets;
-	}
+	पूर्ण
 	adapter->non_eop_descs = non_eop_descs;
 	adapter->alloc_rx_page = alloc_rx_page;
 	adapter->alloc_rx_page_failed = alloc_rx_page_failed;
@@ -7077,27 +7078,27 @@ void ixgbe_update_stats(struct ixgbe_adapter *adapter)
 
 	bytes = 0;
 	packets = 0;
-	/* gather some stats to the adapter struct that are per queue */
-	for (i = 0; i < adapter->num_tx_queues; i++) {
-		struct ixgbe_ring *tx_ring = READ_ONCE(adapter->tx_ring[i]);
+	/* gather some stats to the adapter काष्ठा that are per queue */
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+		काष्ठा ixgbe_ring *tx_ring = READ_ONCE(adapter->tx_ring[i]);
 
-		if (!tx_ring)
-			continue;
+		अगर (!tx_ring)
+			जारी;
 		restart_queue += tx_ring->tx_stats.restart_queue;
 		tx_busy += tx_ring->tx_stats.tx_busy;
 		bytes += tx_ring->stats.bytes;
 		packets += tx_ring->stats.packets;
-	}
-	for (i = 0; i < adapter->num_xdp_queues; i++) {
-		struct ixgbe_ring *xdp_ring = READ_ONCE(adapter->xdp_ring[i]);
+	पूर्ण
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++) अणु
+		काष्ठा ixgbe_ring *xdp_ring = READ_ONCE(adapter->xdp_ring[i]);
 
-		if (!xdp_ring)
-			continue;
+		अगर (!xdp_ring)
+			जारी;
 		restart_queue += xdp_ring->tx_stats.restart_queue;
 		tx_busy += xdp_ring->tx_stats.tx_busy;
 		bytes += xdp_ring->stats.bytes;
 		packets += xdp_ring->stats.packets;
-	}
+	पूर्ण
 	adapter->restart_queue = restart_queue;
 	adapter->tx_busy = tx_busy;
 	netdev->stats.tx_bytes = bytes;
@@ -7105,51 +7106,51 @@ void ixgbe_update_stats(struct ixgbe_adapter *adapter)
 
 	hwstats->crcerrs += IXGBE_READ_REG(hw, IXGBE_CRCERRS);
 
-	/* 8 register reads */
-	for (i = 0; i < 8; i++) {
-		/* for packet buffers not used, the register should read 0 */
+	/* 8 रेजिस्टर पढ़ोs */
+	क्रम (i = 0; i < 8; i++) अणु
+		/* क्रम packet buffers not used, the रेजिस्टर should पढ़ो 0 */
 		mpc = IXGBE_READ_REG(hw, IXGBE_MPC(i));
 		missed_rx += mpc;
 		hwstats->mpc[i] += mpc;
 		total_mpc += hwstats->mpc[i];
 		hwstats->pxontxc[i] += IXGBE_READ_REG(hw, IXGBE_PXONTXC(i));
 		hwstats->pxofftxc[i] += IXGBE_READ_REG(hw, IXGBE_PXOFFTXC(i));
-		switch (hw->mac.type) {
-		case ixgbe_mac_82598EB:
+		चयन (hw->mac.type) अणु
+		हाल ixgbe_mac_82598EB:
 			hwstats->rnbc[i] += IXGBE_READ_REG(hw, IXGBE_RNBC(i));
 			hwstats->qbtc[i] += IXGBE_READ_REG(hw, IXGBE_QBTC(i));
 			hwstats->qbrc[i] += IXGBE_READ_REG(hw, IXGBE_QBRC(i));
 			hwstats->pxonrxc[i] +=
 				IXGBE_READ_REG(hw, IXGBE_PXONRXC(i));
-			break;
-		case ixgbe_mac_82599EB:
-		case ixgbe_mac_X540:
-		case ixgbe_mac_X550:
-		case ixgbe_mac_X550EM_x:
-		case ixgbe_mac_x550em_a:
+			अवरोध;
+		हाल ixgbe_mac_82599EB:
+		हाल ixgbe_mac_X540:
+		हाल ixgbe_mac_X550:
+		हाल ixgbe_mac_X550EM_x:
+		हाल ixgbe_mac_x550em_a:
 			hwstats->pxonrxc[i] +=
 				IXGBE_READ_REG(hw, IXGBE_PXONRXCNT(i));
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/*16 register reads */
-	for (i = 0; i < 16; i++) {
+	/*16 रेजिस्टर पढ़ोs */
+	क्रम (i = 0; i < 16; i++) अणु
 		hwstats->qptc[i] += IXGBE_READ_REG(hw, IXGBE_QPTC(i));
 		hwstats->qprc[i] += IXGBE_READ_REG(hw, IXGBE_QPRC(i));
-		if ((hw->mac.type == ixgbe_mac_82599EB) ||
+		अगर ((hw->mac.type == ixgbe_mac_82599EB) ||
 		    (hw->mac.type == ixgbe_mac_X540) ||
 		    (hw->mac.type == ixgbe_mac_X550) ||
 		    (hw->mac.type == ixgbe_mac_X550EM_x) ||
-		    (hw->mac.type == ixgbe_mac_x550em_a)) {
+		    (hw->mac.type == ixgbe_mac_x550em_a)) अणु
 			hwstats->qbtc[i] += IXGBE_READ_REG(hw, IXGBE_QBTC_L(i));
 			IXGBE_READ_REG(hw, IXGBE_QBTC_H(i)); /* to clear */
 			hwstats->qbrc[i] += IXGBE_READ_REG(hw, IXGBE_QBRC_L(i));
 			IXGBE_READ_REG(hw, IXGBE_QBRC_H(i)); /* to clear */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	hwstats->gprc += IXGBE_READ_REG(hw, IXGBE_GPRC);
 	/* work around hardware counting issue */
@@ -7157,26 +7158,26 @@ void ixgbe_update_stats(struct ixgbe_adapter *adapter)
 
 	ixgbe_update_xoff_received(adapter);
 
-	/* 82598 hardware only has a 32 bit counter in the high register */
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB:
+	/* 82598 hardware only has a 32 bit counter in the high रेजिस्टर */
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB:
 		hwstats->lxonrxc += IXGBE_READ_REG(hw, IXGBE_LXONRXC);
 		hwstats->gorc += IXGBE_READ_REG(hw, IXGBE_GORCH);
 		hwstats->gotc += IXGBE_READ_REG(hw, IXGBE_GOTCH);
 		hwstats->tor += IXGBE_READ_REG(hw, IXGBE_TORH);
-		break;
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
+		अवरोध;
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
 		/* OS2BMC stats are X540 and later */
 		hwstats->o2bgptc += IXGBE_READ_REG(hw, IXGBE_O2BGPTC);
 		hwstats->o2bspc += IXGBE_READ_REG(hw, IXGBE_O2BSPC);
 		hwstats->b2ospc += IXGBE_READ_REG(hw, IXGBE_B2OSPC);
 		hwstats->b2ogprc += IXGBE_READ_REG(hw, IXGBE_B2OGPRC);
 		fallthrough;
-	case ixgbe_mac_82599EB:
-		for (i = 0; i < 16; i++)
+	हाल ixgbe_mac_82599EB:
+		क्रम (i = 0; i < 16; i++)
 			adapter->hw_rx_no_dma_resources +=
 					     IXGBE_READ_REG(hw, IXGBE_QPRDC(i));
 		hwstats->gorc += IXGBE_READ_REG(hw, IXGBE_GORCL);
@@ -7186,38 +7187,38 @@ void ixgbe_update_stats(struct ixgbe_adapter *adapter)
 		hwstats->tor += IXGBE_READ_REG(hw, IXGBE_TORL);
 		IXGBE_READ_REG(hw, IXGBE_TORH); /* to clear */
 		hwstats->lxonrxc += IXGBE_READ_REG(hw, IXGBE_LXONRXCNT);
-		hwstats->fdirmatch += IXGBE_READ_REG(hw, IXGBE_FDIRMATCH);
-		hwstats->fdirmiss += IXGBE_READ_REG(hw, IXGBE_FDIRMISS);
-#ifdef IXGBE_FCOE
+		hwstats->fdirmatch += IXGBE_READ_REG(hw, IXGBE_FसूचीMATCH);
+		hwstats->fdirmiss += IXGBE_READ_REG(hw, IXGBE_FसूचीMISS);
+#अगर_घोषित IXGBE_FCOE
 		hwstats->fccrc += IXGBE_READ_REG(hw, IXGBE_FCCRC);
 		hwstats->fcoerpdc += IXGBE_READ_REG(hw, IXGBE_FCOERPDC);
 		hwstats->fcoeprc += IXGBE_READ_REG(hw, IXGBE_FCOEPRC);
 		hwstats->fcoeptc += IXGBE_READ_REG(hw, IXGBE_FCOEPTC);
 		hwstats->fcoedwrc += IXGBE_READ_REG(hw, IXGBE_FCOEDWRC);
 		hwstats->fcoedwtc += IXGBE_READ_REG(hw, IXGBE_FCOEDWTC);
-		/* Add up per cpu counters for total ddp aloc fail */
-		if (adapter->fcoe.ddp_pool) {
-			struct ixgbe_fcoe *fcoe = &adapter->fcoe;
-			struct ixgbe_fcoe_ddp_pool *ddp_pool;
-			unsigned int cpu;
+		/* Add up per cpu counters क्रम total ddp aloc fail */
+		अगर (adapter->fcoe.ddp_pool) अणु
+			काष्ठा ixgbe_fcoe *fcoe = &adapter->fcoe;
+			काष्ठा ixgbe_fcoe_ddp_pool *ddp_pool;
+			अचिन्हित पूर्णांक cpu;
 			u64 noddp = 0, noddp_ext_buff = 0;
-			for_each_possible_cpu(cpu) {
+			क्रम_each_possible_cpu(cpu) अणु
 				ddp_pool = per_cpu_ptr(fcoe->ddp_pool, cpu);
 				noddp += ddp_pool->noddp;
 				noddp_ext_buff += ddp_pool->noddp_ext_buff;
-			}
+			पूर्ण
 			hwstats->fcoe_noddp = noddp;
 			hwstats->fcoe_noddp_ext_buff = noddp_ext_buff;
-		}
-#endif /* IXGBE_FCOE */
-		break;
-	default:
-		break;
-	}
+		पूर्ण
+#पूर्ण_अगर /* IXGBE_FCOE */
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	bprc = IXGBE_READ_REG(hw, IXGBE_BPRC);
 	hwstats->bprc += bprc;
 	hwstats->mprc += IXGBE_READ_REG(hw, IXGBE_MPRC);
-	if (hw->mac.type == ixgbe_mac_82598EB)
+	अगर (hw->mac.type == ixgbe_mac_82598EB)
 		hwstats->mprc -= bprc;
 	hwstats->roc += IXGBE_READ_REG(hw, IXGBE_ROC);
 	hwstats->prc64 += IXGBE_READ_REG(hw, IXGBE_PRC64);
@@ -7253,7 +7254,7 @@ void ixgbe_update_stats(struct ixgbe_adapter *adapter)
 	hwstats->ptc1522 += IXGBE_READ_REG(hw, IXGBE_PTC1522);
 	hwstats->bptc += IXGBE_READ_REG(hw, IXGBE_BPTC);
 
-	/* Fill out the OS statistics structure */
+	/* Fill out the OS statistics काष्ठाure */
 	netdev->stats.multicast = hwstats->mprc;
 
 	/* Rx Errors */
@@ -7262,499 +7263,499 @@ void ixgbe_update_stats(struct ixgbe_adapter *adapter)
 	netdev->stats.rx_length_errors = hwstats->rlec;
 	netdev->stats.rx_crc_errors = hwstats->crcerrs;
 	netdev->stats.rx_missed_errors = total_mpc;
-}
+पूर्ण
 
 /**
- * ixgbe_fdir_reinit_subtask - worker thread to reinit FDIR filter table
- * @adapter: pointer to the device adapter structure
+ * ixgbe_fdir_reinit_subtask - worker thपढ़ो to reinit Fसूची filter table
+ * @adapter: poपूर्णांकer to the device adapter काष्ठाure
  **/
-static void ixgbe_fdir_reinit_subtask(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i;
+अटल व्योम ixgbe_fdir_reinit_subtask(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i;
 
-	if (!(adapter->flags2 & IXGBE_FLAG2_FDIR_REQUIRES_REINIT))
-		return;
+	अगर (!(adapter->flags2 & IXGBE_FLAG2_Fसूची_REQUIRES_REINIT))
+		वापस;
 
-	adapter->flags2 &= ~IXGBE_FLAG2_FDIR_REQUIRES_REINIT;
+	adapter->flags2 &= ~IXGBE_FLAG2_Fसूची_REQUIRES_REINIT;
 
-	/* if interface is down do nothing */
-	if (test_bit(__IXGBE_DOWN, &adapter->state))
-		return;
+	/* अगर पूर्णांकerface is करोwn करो nothing */
+	अगर (test_bit(__IXGBE_DOWN, &adapter->state))
+		वापस;
 
-	/* do nothing if we are not using signature filters */
-	if (!(adapter->flags & IXGBE_FLAG_FDIR_HASH_CAPABLE))
-		return;
+	/* करो nothing अगर we are not using signature filters */
+	अगर (!(adapter->flags & IXGBE_FLAG_Fसूची_HASH_CAPABLE))
+		वापस;
 
 	adapter->fdir_overflow++;
 
-	if (ixgbe_reinit_fdir_tables_82599(hw) == 0) {
-		for (i = 0; i < adapter->num_tx_queues; i++)
-			set_bit(__IXGBE_TX_FDIR_INIT_DONE,
+	अगर (ixgbe_reinit_fdir_tables_82599(hw) == 0) अणु
+		क्रम (i = 0; i < adapter->num_tx_queues; i++)
+			set_bit(__IXGBE_TX_Fसूची_INIT_DONE,
 				&(adapter->tx_ring[i]->state));
-		for (i = 0; i < adapter->num_xdp_queues; i++)
-			set_bit(__IXGBE_TX_FDIR_INIT_DONE,
+		क्रम (i = 0; i < adapter->num_xdp_queues; i++)
+			set_bit(__IXGBE_TX_Fसूची_INIT_DONE,
 				&adapter->xdp_ring[i]->state);
-		/* re-enable flow director interrupts */
-		IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_FLOW_DIR);
-	} else {
+		/* re-enable flow director पूर्णांकerrupts */
+		IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_FLOW_सूची);
+	पूर्ण अन्यथा अणु
 		e_err(probe, "failed to finish FDIR re-initialization, "
 		      "ignored adding FDIR ATR filters\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ixgbe_check_hang_subtask - check for hung queues and dropped interrupts
- * @adapter: pointer to the device adapter structure
+ * ixgbe_check_hang_subtask - check क्रम hung queues and dropped पूर्णांकerrupts
+ * @adapter: poपूर्णांकer to the device adapter काष्ठाure
  *
- * This function serves two purposes.  First it strobes the interrupt lines
- * in order to make certain interrupts are occurring.  Secondly it sets the
- * bits needed to check for TX hangs.  As a result we should immediately
- * determine if a hang has occurred.
+ * This function serves two purposes.  First it strobes the पूर्णांकerrupt lines
+ * in order to make certain पूर्णांकerrupts are occurring.  Secondly it sets the
+ * bits needed to check क्रम TX hangs.  As a result we should immediately
+ * determine अगर a hang has occurred.
  */
-static void ixgbe_check_hang_subtask(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_check_hang_subtask(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u64 eics = 0;
-	int i;
+	पूर्णांक i;
 
-	/* If we're down, removing or resetting, just bail */
-	if (test_bit(__IXGBE_DOWN, &adapter->state) ||
+	/* If we're करोwn, removing or resetting, just bail */
+	अगर (test_bit(__IXGBE_DOWN, &adapter->state) ||
 	    test_bit(__IXGBE_REMOVING, &adapter->state) ||
 	    test_bit(__IXGBE_RESETTING, &adapter->state))
-		return;
+		वापस;
 
 	/* Force detection of hung controller */
-	if (netif_carrier_ok(adapter->netdev)) {
-		for (i = 0; i < adapter->num_tx_queues; i++)
-			set_check_for_tx_hang(adapter->tx_ring[i]);
-		for (i = 0; i < adapter->num_xdp_queues; i++)
-			set_check_for_tx_hang(adapter->xdp_ring[i]);
-	}
+	अगर (netअगर_carrier_ok(adapter->netdev)) अणु
+		क्रम (i = 0; i < adapter->num_tx_queues; i++)
+			set_check_क्रम_tx_hang(adapter->tx_ring[i]);
+		क्रम (i = 0; i < adapter->num_xdp_queues; i++)
+			set_check_क्रम_tx_hang(adapter->xdp_ring[i]);
+	पूर्ण
 
-	if (!(adapter->flags & IXGBE_FLAG_MSIX_ENABLED)) {
+	अगर (!(adapter->flags & IXGBE_FLAG_MSIX_ENABLED)) अणु
 		/*
-		 * for legacy and MSI interrupts don't set any bits
-		 * that are enabled for EIAM, because this operation
-		 * would set *both* EIMS and EICS for any bit in EIAM
+		 * क्रम legacy and MSI पूर्णांकerrupts करोn't set any bits
+		 * that are enabled क्रम EIAM, because this operation
+		 * would set *both* EIMS and EICS क्रम any bit in EIAM
 		 */
 		IXGBE_WRITE_REG(hw, IXGBE_EICS,
 			(IXGBE_EICS_TCP_TIMER | IXGBE_EICS_OTHER));
-	} else {
-		/* get one bit for every active tx/rx interrupt vector */
-		for (i = 0; i < adapter->num_q_vectors; i++) {
-			struct ixgbe_q_vector *qv = adapter->q_vector[i];
-			if (qv->rx.ring || qv->tx.ring)
+	पूर्ण अन्यथा अणु
+		/* get one bit क्रम every active tx/rx पूर्णांकerrupt vector */
+		क्रम (i = 0; i < adapter->num_q_vectors; i++) अणु
+			काष्ठा ixgbe_q_vector *qv = adapter->q_vector[i];
+			अगर (qv->rx.ring || qv->tx.ring)
 				eics |= BIT_ULL(i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Cause software interrupt to ensure rings are cleaned */
+	/* Cause software पूर्णांकerrupt to ensure rings are cleaned */
 	ixgbe_irq_rearm_queues(adapter, eics);
-}
+पूर्ण
 
 /**
- * ixgbe_watchdog_update_link - update the link status
- * @adapter: pointer to the device adapter structure
+ * ixgbe_watchकरोg_update_link - update the link status
+ * @adapter: poपूर्णांकer to the device adapter काष्ठाure
  **/
-static void ixgbe_watchdog_update_link(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_watchकरोg_update_link(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 link_speed = adapter->link_speed;
 	bool link_up = adapter->link_up;
 	bool pfc_en = adapter->dcb_cfg.pfc_mode_enable;
 
-	if (!(adapter->flags & IXGBE_FLAG_NEED_LINK_UPDATE))
-		return;
+	अगर (!(adapter->flags & IXGBE_FLAG_NEED_LINK_UPDATE))
+		वापस;
 
-	if (hw->mac.ops.check_link) {
+	अगर (hw->mac.ops.check_link) अणु
 		hw->mac.ops.check_link(hw, &link_speed, &link_up, false);
-	} else {
-		/* always assume link is up, if no check link function */
+	पूर्ण अन्यथा अणु
+		/* always assume link is up, अगर no check link function */
 		link_speed = IXGBE_LINK_SPEED_10GB_FULL;
 		link_up = true;
-	}
+	पूर्ण
 
-	if (adapter->ixgbe_ieee_pfc)
+	अगर (adapter->ixgbe_ieee_pfc)
 		pfc_en |= !!(adapter->ixgbe_ieee_pfc->pfc_en);
 
-	if (link_up && !((adapter->flags & IXGBE_FLAG_DCB_ENABLED) && pfc_en)) {
+	अगर (link_up && !((adapter->flags & IXGBE_FLAG_DCB_ENABLED) && pfc_en)) अणु
 		hw->mac.ops.fc_enable(hw);
 		ixgbe_set_rx_drop_en(adapter);
-	}
+	पूर्ण
 
-	if (link_up ||
-	    time_after(jiffies, (adapter->link_check_timeout +
-				 IXGBE_TRY_LINK_TIMEOUT))) {
+	अगर (link_up ||
+	    समय_after(jअगरfies, (adapter->link_check_समयout +
+				 IXGBE_TRY_LINK_TIMEOUT))) अणु
 		adapter->flags &= ~IXGBE_FLAG_NEED_LINK_UPDATE;
 		IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMC_LSC);
 		IXGBE_WRITE_FLUSH(hw);
-	}
+	पूर्ण
 
 	adapter->link_up = link_up;
 	adapter->link_speed = link_speed;
-}
+पूर्ण
 
-static void ixgbe_update_default_up(struct ixgbe_adapter *adapter)
-{
-#ifdef CONFIG_IXGBE_DCB
-	struct net_device *netdev = adapter->netdev;
-	struct dcb_app app = {
+अटल व्योम ixgbe_update_शेष_up(काष्ठा ixgbe_adapter *adapter)
+अणु
+#अगर_घोषित CONFIG_IXGBE_DCB
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा dcb_app app = अणु
 			      .selector = IEEE_8021QAZ_APP_SEL_ETHERTYPE,
 			      .protocol = 0,
-			     };
+			     पूर्ण;
 	u8 up = 0;
 
-	if (adapter->dcbx_cap & DCB_CAP_DCBX_VER_IEEE)
+	अगर (adapter->dcbx_cap & DCB_CAP_DCBX_VER_IEEE)
 		up = dcb_ieee_getapp_mask(netdev, &app);
 
-	adapter->default_up = (up > 1) ? (ffs(up) - 1) : 0;
-#endif
-}
+	adapter->शेष_up = (up > 1) ? (ffs(up) - 1) : 0;
+#पूर्ण_अगर
+पूर्ण
 
 /**
- * ixgbe_watchdog_link_is_up - update netif_carrier status and
- *                             print link up message
- * @adapter: pointer to the device adapter structure
+ * ixgbe_watchकरोg_link_is_up - update netअगर_carrier status and
+ *                             prपूर्णांक link up message
+ * @adapter: poपूर्णांकer to the device adapter काष्ठाure
  **/
-static void ixgbe_watchdog_link_is_up(struct ixgbe_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_watchकरोg_link_is_up(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 link_speed = adapter->link_speed;
-	const char *speed_str;
+	स्थिर अक्षर *speed_str;
 	bool flow_rx, flow_tx;
 
-	/* only continue if link was previously down */
-	if (netif_carrier_ok(netdev))
-		return;
+	/* only जारी अगर link was previously करोwn */
+	अगर (netअगर_carrier_ok(netdev))
+		वापस;
 
 	adapter->flags2 &= ~IXGBE_FLAG2_SEARCH_FOR_SFP;
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB: {
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB: अणु
 		u32 frctl = IXGBE_READ_REG(hw, IXGBE_FCTRL);
 		u32 rmcs = IXGBE_READ_REG(hw, IXGBE_RMCS);
 		flow_rx = !!(frctl & IXGBE_FCTRL_RFCE);
 		flow_tx = !!(rmcs & IXGBE_RMCS_TFCE_802_3X);
-	}
-		break;
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
-	case ixgbe_mac_82599EB: {
+	पूर्ण
+		अवरोध;
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
+	हाल ixgbe_mac_82599EB: अणु
 		u32 mflcn = IXGBE_READ_REG(hw, IXGBE_MFLCN);
 		u32 fccfg = IXGBE_READ_REG(hw, IXGBE_FCCFG);
 		flow_rx = !!(mflcn & IXGBE_MFLCN_RFCE);
 		flow_tx = !!(fccfg & IXGBE_FCCFG_TFCE_802_3X);
-	}
-		break;
-	default:
+	पूर्ण
+		अवरोध;
+	शेष:
 		flow_tx = false;
 		flow_rx = false;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	adapter->last_rx_ptp_check = jiffies;
+	adapter->last_rx_ptp_check = jअगरfies;
 
-	if (test_bit(__IXGBE_PTP_RUNNING, &adapter->state))
+	अगर (test_bit(__IXGBE_PTP_RUNNING, &adapter->state))
 		ixgbe_ptp_start_cyclecounter(adapter);
 
-	switch (link_speed) {
-	case IXGBE_LINK_SPEED_10GB_FULL:
+	चयन (link_speed) अणु
+	हाल IXGBE_LINK_SPEED_10GB_FULL:
 		speed_str = "10 Gbps";
-		break;
-	case IXGBE_LINK_SPEED_5GB_FULL:
+		अवरोध;
+	हाल IXGBE_LINK_SPEED_5GB_FULL:
 		speed_str = "5 Gbps";
-		break;
-	case IXGBE_LINK_SPEED_2_5GB_FULL:
+		अवरोध;
+	हाल IXGBE_LINK_SPEED_2_5GB_FULL:
 		speed_str = "2.5 Gbps";
-		break;
-	case IXGBE_LINK_SPEED_1GB_FULL:
+		अवरोध;
+	हाल IXGBE_LINK_SPEED_1GB_FULL:
 		speed_str = "1 Gbps";
-		break;
-	case IXGBE_LINK_SPEED_100_FULL:
+		अवरोध;
+	हाल IXGBE_LINK_SPEED_100_FULL:
 		speed_str = "100 Mbps";
-		break;
-	case IXGBE_LINK_SPEED_10_FULL:
+		अवरोध;
+	हाल IXGBE_LINK_SPEED_10_FULL:
 		speed_str = "10 Mbps";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		speed_str = "unknown speed";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	e_info(drv, "NIC Link is Up %s, Flow Control: %s\n", speed_str,
 	       ((flow_rx && flow_tx) ? "RX/TX" :
 	       (flow_rx ? "RX" :
 	       (flow_tx ? "TX" : "None"))));
 
-	netif_carrier_on(netdev);
+	netअगर_carrier_on(netdev);
 	ixgbe_check_vf_rate_limit(adapter);
 
 	/* enable transmits */
-	netif_tx_wake_all_queues(adapter->netdev);
+	netअगर_tx_wake_all_queues(adapter->netdev);
 
-	/* update the default user priority for VFs */
-	ixgbe_update_default_up(adapter);
+	/* update the शेष user priority क्रम VFs */
+	ixgbe_update_शेष_up(adapter);
 
 	/* ping all the active vfs to let them know link has changed */
 	ixgbe_ping_all_vfs(adapter);
-}
+पूर्ण
 
 /**
- * ixgbe_watchdog_link_is_down - update netif_carrier status and
- *                               print link down message
- * @adapter: pointer to the adapter structure
+ * ixgbe_watchकरोg_link_is_करोwn - update netअगर_carrier status and
+ *                               prपूर्णांक link करोwn message
+ * @adapter: poपूर्णांकer to the adapter काष्ठाure
  **/
-static void ixgbe_watchdog_link_is_down(struct ixgbe_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_watchकरोg_link_is_करोwn(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
 	adapter->link_up = false;
 	adapter->link_speed = 0;
 
-	/* only continue if link was up previously */
-	if (!netif_carrier_ok(netdev))
-		return;
+	/* only जारी अगर link was up previously */
+	अगर (!netअगर_carrier_ok(netdev))
+		वापस;
 
-	/* poll for SFP+ cable when link is down */
-	if (ixgbe_is_sfp(hw) && hw->mac.type == ixgbe_mac_82598EB)
+	/* poll क्रम SFP+ cable when link is करोwn */
+	अगर (ixgbe_is_sfp(hw) && hw->mac.type == ixgbe_mac_82598EB)
 		adapter->flags2 |= IXGBE_FLAG2_SEARCH_FOR_SFP;
 
-	if (test_bit(__IXGBE_PTP_RUNNING, &adapter->state))
+	अगर (test_bit(__IXGBE_PTP_RUNNING, &adapter->state))
 		ixgbe_ptp_start_cyclecounter(adapter);
 
 	e_info(drv, "NIC Link is Down\n");
-	netif_carrier_off(netdev);
+	netअगर_carrier_off(netdev);
 
 	/* ping all the active vfs to let them know link has changed */
 	ixgbe_ping_all_vfs(adapter);
-}
+पूर्ण
 
-static bool ixgbe_ring_tx_pending(struct ixgbe_adapter *adapter)
-{
-	int i;
+अटल bool ixgbe_ring_tx_pending(काष्ठा ixgbe_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_tx_queues; i++) {
-		struct ixgbe_ring *tx_ring = adapter->tx_ring[i];
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+		काष्ठा ixgbe_ring *tx_ring = adapter->tx_ring[i];
 
-		if (tx_ring->next_to_use != tx_ring->next_to_clean)
-			return true;
-	}
+		अगर (tx_ring->next_to_use != tx_ring->next_to_clean)
+			वापस true;
+	पूर्ण
 
-	for (i = 0; i < adapter->num_xdp_queues; i++) {
-		struct ixgbe_ring *ring = adapter->xdp_ring[i];
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++) अणु
+		काष्ठा ixgbe_ring *ring = adapter->xdp_ring[i];
 
-		if (ring->next_to_use != ring->next_to_clean)
-			return true;
-	}
+		अगर (ring->next_to_use != ring->next_to_clean)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool ixgbe_vf_tx_pending(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
+अटल bool ixgbe_vf_tx_pending(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
 	u32 q_per_pool = __ALIGN_MASK(1, ~vmdq->mask);
 
-	int i, j;
+	पूर्णांक i, j;
 
-	if (!adapter->num_vfs)
-		return false;
+	अगर (!adapter->num_vfs)
+		वापस false;
 
-	/* resetting the PF is only needed for MAC before X550 */
-	if (hw->mac.type >= ixgbe_mac_X550)
-		return false;
+	/* resetting the PF is only needed क्रम MAC beक्रमe X550 */
+	अगर (hw->mac.type >= ixgbe_mac_X550)
+		वापस false;
 
-	for (i = 0; i < adapter->num_vfs; i++) {
-		for (j = 0; j < q_per_pool; j++) {
+	क्रम (i = 0; i < adapter->num_vfs; i++) अणु
+		क्रम (j = 0; j < q_per_pool; j++) अणु
 			u32 h, t;
 
 			h = IXGBE_READ_REG(hw, IXGBE_PVFTDHN(q_per_pool, i, j));
 			t = IXGBE_READ_REG(hw, IXGBE_PVFTDTN(q_per_pool, i, j));
 
-			if (h != t)
-				return true;
-		}
-	}
+			अगर (h != t)
+				वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * ixgbe_watchdog_flush_tx - flush queues on link down
- * @adapter: pointer to the device adapter structure
+ * ixgbe_watchकरोg_flush_tx - flush queues on link करोwn
+ * @adapter: poपूर्णांकer to the device adapter काष्ठाure
  **/
-static void ixgbe_watchdog_flush_tx(struct ixgbe_adapter *adapter)
-{
-	if (!netif_carrier_ok(adapter->netdev)) {
-		if (ixgbe_ring_tx_pending(adapter) ||
-		    ixgbe_vf_tx_pending(adapter)) {
+अटल व्योम ixgbe_watchकरोg_flush_tx(काष्ठा ixgbe_adapter *adapter)
+अणु
+	अगर (!netअगर_carrier_ok(adapter->netdev)) अणु
+		अगर (ixgbe_ring_tx_pending(adapter) ||
+		    ixgbe_vf_tx_pending(adapter)) अणु
 			/* We've lost link, so the controller stops DMA,
 			 * but we've got queued Tx work that's never going
-			 * to get done, so reset controller to flush Tx.
-			 * (Do the reset outside of interrupt context).
+			 * to get करोne, so reset controller to flush Tx.
+			 * (Do the reset outside of पूर्णांकerrupt context).
 			 */
 			e_warn(drv, "initiating reset to clear Tx work after link loss\n");
 			set_bit(__IXGBE_RESET_REQUESTED, &adapter->state);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PCI_IOV
-static void ixgbe_check_for_bad_vf(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct pci_dev *pdev = adapter->pdev;
-	unsigned int vf;
+#अगर_घोषित CONFIG_PCI_IOV
+अटल व्योम ixgbe_check_क्रम_bad_vf(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	अचिन्हित पूर्णांक vf;
 	u32 gpc;
 
-	if (!(netif_carrier_ok(adapter->netdev)))
-		return;
+	अगर (!(netअगर_carrier_ok(adapter->netdev)))
+		वापस;
 
 	gpc = IXGBE_READ_REG(hw, IXGBE_TXDGPC);
-	if (gpc) /* If incrementing then no need for the check below */
-		return;
-	/* Check to see if a bad DMA write target from an errant or
+	अगर (gpc) /* If incrementing then no need क्रम the check below */
+		वापस;
+	/* Check to see अगर a bad DMA ग_लिखो target from an errant or
 	 * malicious VF has caused a PCIe error.  If so then we can
 	 * issue a VFLR to the offending VF(s) and then resume without
 	 * requesting a full slot reset.
 	 */
 
-	if (!pdev)
-		return;
+	अगर (!pdev)
+		वापस;
 
-	/* check status reg for all VFs owned by this PF */
-	for (vf = 0; vf < adapter->num_vfs; ++vf) {
-		struct pci_dev *vfdev = adapter->vfinfo[vf].vfdev;
+	/* check status reg क्रम all VFs owned by this PF */
+	क्रम (vf = 0; vf < adapter->num_vfs; ++vf) अणु
+		काष्ठा pci_dev *vfdev = adapter->vfinfo[vf].vfdev;
 		u16 status_reg;
 
-		if (!vfdev)
-			continue;
-		pci_read_config_word(vfdev, PCI_STATUS, &status_reg);
-		if (status_reg != IXGBE_FAILED_READ_CFG_WORD &&
+		अगर (!vfdev)
+			जारी;
+		pci_पढ़ो_config_word(vfdev, PCI_STATUS, &status_reg);
+		अगर (status_reg != IXGBE_FAILED_READ_CFG_WORD &&
 		    status_reg & PCI_STATUS_REC_MASTER_ABORT)
 			pcie_flr(vfdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ixgbe_spoof_check(struct ixgbe_adapter *adapter)
-{
+अटल व्योम ixgbe_spoof_check(काष्ठा ixgbe_adapter *adapter)
+अणु
 	u32 ssvpc;
 
-	/* Do not perform spoof check for 82598 or if not in IOV mode */
-	if (adapter->hw.mac.type == ixgbe_mac_82598EB ||
+	/* Do not perक्रमm spoof check क्रम 82598 or अगर not in IOV mode */
+	अगर (adapter->hw.mac.type == ixgbe_mac_82598EB ||
 	    adapter->num_vfs == 0)
-		return;
+		वापस;
 
 	ssvpc = IXGBE_READ_REG(&adapter->hw, IXGBE_SSVPC);
 
 	/*
-	 * ssvpc register is cleared on read, if zero then no
-	 * spoofed packets in the last interval.
+	 * ssvpc रेजिस्टर is cleared on पढ़ो, अगर zero then no
+	 * spoofed packets in the last पूर्णांकerval.
 	 */
-	if (!ssvpc)
-		return;
+	अगर (!ssvpc)
+		वापस;
 
 	e_warn(drv, "%u Spoofed packets detected\n", ssvpc);
-}
-#else
-static void ixgbe_spoof_check(struct ixgbe_adapter __always_unused *adapter)
-{
-}
+पूर्ण
+#अन्यथा
+अटल व्योम ixgbe_spoof_check(काष्ठा ixgbe_adapter __always_unused *adapter)
+अणु
+पूर्ण
 
-static void
-ixgbe_check_for_bad_vf(struct ixgbe_adapter __always_unused *adapter)
-{
-}
-#endif /* CONFIG_PCI_IOV */
+अटल व्योम
+ixgbe_check_क्रम_bad_vf(काष्ठा ixgbe_adapter __always_unused *adapter)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI_IOV */
 
 
 /**
- * ixgbe_watchdog_subtask - check and bring link up
- * @adapter: pointer to the device adapter structure
+ * ixgbe_watchकरोg_subtask - check and bring link up
+ * @adapter: poपूर्णांकer to the device adapter काष्ठाure
  **/
-static void ixgbe_watchdog_subtask(struct ixgbe_adapter *adapter)
-{
-	/* if interface is down, removing or resetting, do nothing */
-	if (test_bit(__IXGBE_DOWN, &adapter->state) ||
+अटल व्योम ixgbe_watchकरोg_subtask(काष्ठा ixgbe_adapter *adapter)
+अणु
+	/* अगर पूर्णांकerface is करोwn, removing or resetting, करो nothing */
+	अगर (test_bit(__IXGBE_DOWN, &adapter->state) ||
 	    test_bit(__IXGBE_REMOVING, &adapter->state) ||
 	    test_bit(__IXGBE_RESETTING, &adapter->state))
-		return;
+		वापस;
 
-	ixgbe_watchdog_update_link(adapter);
+	ixgbe_watchकरोg_update_link(adapter);
 
-	if (adapter->link_up)
-		ixgbe_watchdog_link_is_up(adapter);
-	else
-		ixgbe_watchdog_link_is_down(adapter);
+	अगर (adapter->link_up)
+		ixgbe_watchकरोg_link_is_up(adapter);
+	अन्यथा
+		ixgbe_watchकरोg_link_is_करोwn(adapter);
 
-	ixgbe_check_for_bad_vf(adapter);
+	ixgbe_check_क्रम_bad_vf(adapter);
 	ixgbe_spoof_check(adapter);
 	ixgbe_update_stats(adapter);
 
-	ixgbe_watchdog_flush_tx(adapter);
-}
+	ixgbe_watchकरोg_flush_tx(adapter);
+पूर्ण
 
 /**
- * ixgbe_sfp_detection_subtask - poll for SFP+ cable
- * @adapter: the ixgbe adapter structure
+ * ixgbe_sfp_detection_subtask - poll क्रम SFP+ cable
+ * @adapter: the ixgbe adapter काष्ठाure
  **/
-static void ixgbe_sfp_detection_subtask(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_sfp_detection_subtask(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	s32 err;
 
-	/* not searching for SFP so there is nothing to do here */
-	if (!(adapter->flags2 & IXGBE_FLAG2_SEARCH_FOR_SFP) &&
+	/* not searching क्रम SFP so there is nothing to करो here */
+	अगर (!(adapter->flags2 & IXGBE_FLAG2_SEARCH_FOR_SFP) &&
 	    !(adapter->flags2 & IXGBE_FLAG2_SFP_NEEDS_RESET))
-		return;
+		वापस;
 
-	if (adapter->sfp_poll_time &&
-	    time_after(adapter->sfp_poll_time, jiffies))
-		return; /* If not yet time to poll for SFP */
+	अगर (adapter->sfp_poll_समय &&
+	    समय_after(adapter->sfp_poll_समय, jअगरfies))
+		वापस; /* If not yet समय to poll क्रम SFP */
 
-	/* someone else is in init, wait until next service event */
-	if (test_and_set_bit(__IXGBE_IN_SFP_INIT, &adapter->state))
-		return;
+	/* someone अन्यथा is in init, रुको until next service event */
+	अगर (test_and_set_bit(__IXGBE_IN_SFP_INIT, &adapter->state))
+		वापस;
 
-	adapter->sfp_poll_time = jiffies + IXGBE_SFP_POLL_JIFFIES - 1;
+	adapter->sfp_poll_समय = jअगरfies + IXGBE_SFP_POLL_JIFFIES - 1;
 
-	err = hw->phy.ops.identify_sfp(hw);
-	if (err == IXGBE_ERR_SFP_NOT_SUPPORTED)
-		goto sfp_out;
+	err = hw->phy.ops.identअगरy_sfp(hw);
+	अगर (err == IXGBE_ERR_SFP_NOT_SUPPORTED)
+		जाओ sfp_out;
 
-	if (err == IXGBE_ERR_SFP_NOT_PRESENT) {
+	अगर (err == IXGBE_ERR_SFP_NOT_PRESENT) अणु
 		/* If no cable is present, then we need to reset
-		 * the next time we find a good cable. */
+		 * the next समय we find a good cable. */
 		adapter->flags2 |= IXGBE_FLAG2_SFP_NEEDS_RESET;
-	}
+	पूर्ण
 
-	/* exit on error */
-	if (err)
-		goto sfp_out;
+	/* निकास on error */
+	अगर (err)
+		जाओ sfp_out;
 
-	/* exit if reset not needed */
-	if (!(adapter->flags2 & IXGBE_FLAG2_SFP_NEEDS_RESET))
-		goto sfp_out;
+	/* निकास अगर reset not needed */
+	अगर (!(adapter->flags2 & IXGBE_FLAG2_SFP_NEEDS_RESET))
+		जाओ sfp_out;
 
 	adapter->flags2 &= ~IXGBE_FLAG2_SFP_NEEDS_RESET;
 
 	/*
-	 * A module may be identified correctly, but the EEPROM may not have
-	 * support for that module.  setup_sfp() will fail in that case, so
+	 * A module may be identअगरied correctly, but the EEPROM may not have
+	 * support क्रम that module.  setup_sfp() will fail in that हाल, so
 	 * we should not allow that module to load.
 	 */
-	if (hw->mac.type == ixgbe_mac_82598EB)
+	अगर (hw->mac.type == ixgbe_mac_82598EB)
 		err = hw->phy.ops.reset(hw);
-	else
+	अन्यथा
 		err = hw->mac.ops.setup_sfp(hw);
 
-	if (err == IXGBE_ERR_SFP_NOT_SUPPORTED)
-		goto sfp_out;
+	अगर (err == IXGBE_ERR_SFP_NOT_SUPPORTED)
+		जाओ sfp_out;
 
 	adapter->flags |= IXGBE_FLAG_NEED_LINK_CONFIG;
 	e_info(probe, "detected SFP+: %d\n", hw->phy.sfp_type);
@@ -7762,220 +7763,220 @@ static void ixgbe_sfp_detection_subtask(struct ixgbe_adapter *adapter)
 sfp_out:
 	clear_bit(__IXGBE_IN_SFP_INIT, &adapter->state);
 
-	if ((err == IXGBE_ERR_SFP_NOT_SUPPORTED) &&
-	    (adapter->netdev->reg_state == NETREG_REGISTERED)) {
+	अगर ((err == IXGBE_ERR_SFP_NOT_SUPPORTED) &&
+	    (adapter->netdev->reg_state == NETREG_REGISTERED)) अणु
 		e_dev_err("failed to initialize because an unsupported "
 			  "SFP+ module type was detected.\n");
 		e_dev_err("Reload the driver after installing a "
 			  "supported module.\n");
-		unregister_netdev(adapter->netdev);
-	}
-}
+		unरेजिस्टर_netdev(adapter->netdev);
+	पूर्ण
+पूर्ण
 
 /**
  * ixgbe_sfp_link_config_subtask - set up link SFP after module install
- * @adapter: the ixgbe adapter structure
+ * @adapter: the ixgbe adapter काष्ठाure
  **/
-static void ixgbe_sfp_link_config_subtask(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_sfp_link_config_subtask(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 cap_speed;
 	u32 speed;
-	bool autoneg = false;
+	bool स्वतःneg = false;
 
-	if (!(adapter->flags & IXGBE_FLAG_NEED_LINK_CONFIG))
-		return;
+	अगर (!(adapter->flags & IXGBE_FLAG_NEED_LINK_CONFIG))
+		वापस;
 
-	/* someone else is in init, wait until next service event */
-	if (test_and_set_bit(__IXGBE_IN_SFP_INIT, &adapter->state))
-		return;
+	/* someone अन्यथा is in init, रुको until next service event */
+	अगर (test_and_set_bit(__IXGBE_IN_SFP_INIT, &adapter->state))
+		वापस;
 
 	adapter->flags &= ~IXGBE_FLAG_NEED_LINK_CONFIG;
 
-	hw->mac.ops.get_link_capabilities(hw, &cap_speed, &autoneg);
+	hw->mac.ops.get_link_capabilities(hw, &cap_speed, &स्वतःneg);
 
 	/* advertise highest capable link speed */
-	if (!autoneg && (cap_speed & IXGBE_LINK_SPEED_10GB_FULL))
+	अगर (!स्वतःneg && (cap_speed & IXGBE_LINK_SPEED_10GB_FULL))
 		speed = IXGBE_LINK_SPEED_10GB_FULL;
-	else
+	अन्यथा
 		speed = cap_speed & (IXGBE_LINK_SPEED_10GB_FULL |
 				     IXGBE_LINK_SPEED_1GB_FULL);
 
-	if (hw->mac.ops.setup_link)
+	अगर (hw->mac.ops.setup_link)
 		hw->mac.ops.setup_link(hw, speed, true);
 
 	adapter->flags |= IXGBE_FLAG_NEED_LINK_UPDATE;
-	adapter->link_check_timeout = jiffies;
+	adapter->link_check_समयout = jअगरfies;
 	clear_bit(__IXGBE_IN_SFP_INIT, &adapter->state);
-}
+पूर्ण
 
 /**
- * ixgbe_service_timer - Timer Call-back
- * @t: pointer to timer_list structure
+ * ixgbe_service_समयr - Timer Call-back
+ * @t: poपूर्णांकer to समयr_list काष्ठाure
  **/
-static void ixgbe_service_timer(struct timer_list *t)
-{
-	struct ixgbe_adapter *adapter = from_timer(adapter, t, service_timer);
-	unsigned long next_event_offset;
+अटल व्योम ixgbe_service_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ixgbe_adapter *adapter = from_समयr(adapter, t, service_समयr);
+	अचिन्हित दीर्घ next_event_offset;
 
-	/* poll faster when waiting for link */
-	if (adapter->flags & IXGBE_FLAG_NEED_LINK_UPDATE)
+	/* poll faster when रुकोing क्रम link */
+	अगर (adapter->flags & IXGBE_FLAG_NEED_LINK_UPDATE)
 		next_event_offset = HZ / 10;
-	else
+	अन्यथा
 		next_event_offset = HZ * 2;
 
-	/* Reset the timer */
-	mod_timer(&adapter->service_timer, next_event_offset + jiffies);
+	/* Reset the समयr */
+	mod_समयr(&adapter->service_समयr, next_event_offset + jअगरfies);
 
 	ixgbe_service_event_schedule(adapter);
-}
+पूर्ण
 
-static void ixgbe_phy_interrupt_subtask(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_phy_पूर्णांकerrupt_subtask(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 status;
 
-	if (!(adapter->flags2 & IXGBE_FLAG2_PHY_INTERRUPT))
-		return;
+	अगर (!(adapter->flags2 & IXGBE_FLAG2_PHY_INTERRUPT))
+		वापस;
 
 	adapter->flags2 &= ~IXGBE_FLAG2_PHY_INTERRUPT;
 
-	if (!hw->phy.ops.handle_lasi)
-		return;
+	अगर (!hw->phy.ops.handle_lasi)
+		वापस;
 
 	status = hw->phy.ops.handle_lasi(&adapter->hw);
-	if (status != IXGBE_ERR_OVERTEMP)
-		return;
+	अगर (status != IXGBE_ERR_OVERTEMP)
+		वापस;
 
 	e_crit(drv, "%s\n", ixgbe_overheat_msg);
-}
+पूर्ण
 
-static void ixgbe_reset_subtask(struct ixgbe_adapter *adapter)
-{
-	if (!test_and_clear_bit(__IXGBE_RESET_REQUESTED, &adapter->state))
-		return;
+अटल व्योम ixgbe_reset_subtask(काष्ठा ixgbe_adapter *adapter)
+अणु
+	अगर (!test_and_clear_bit(__IXGBE_RESET_REQUESTED, &adapter->state))
+		वापस;
 
 	rtnl_lock();
-	/* If we're already down, removing or resetting, just bail */
-	if (test_bit(__IXGBE_DOWN, &adapter->state) ||
+	/* If we're alपढ़ोy करोwn, removing or resetting, just bail */
+	अगर (test_bit(__IXGBE_DOWN, &adapter->state) ||
 	    test_bit(__IXGBE_REMOVING, &adapter->state) ||
-	    test_bit(__IXGBE_RESETTING, &adapter->state)) {
+	    test_bit(__IXGBE_RESETTING, &adapter->state)) अणु
 		rtnl_unlock();
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ixgbe_dump(adapter);
 	netdev_err(adapter->netdev, "Reset adapter\n");
-	adapter->tx_timeout_count++;
+	adapter->tx_समयout_count++;
 
 	ixgbe_reinit_locked(adapter);
 	rtnl_unlock();
-}
+पूर्ण
 
 /**
- * ixgbe_check_fw_error - Check firmware for errors
- * @adapter: the adapter private structure
+ * ixgbe_check_fw_error - Check firmware क्रम errors
+ * @adapter: the adapter निजी काष्ठाure
  *
- * Check firmware errors in register FWSM
+ * Check firmware errors in रेजिस्टर FWSM
  */
-static bool ixgbe_check_fw_error(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल bool ixgbe_check_fw_error(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 fwsm;
 
-	/* read fwsm.ext_err_ind register and log errors */
+	/* पढ़ो fwsm.ext_err_ind रेजिस्टर and log errors */
 	fwsm = IXGBE_READ_REG(hw, IXGBE_FWSM(hw));
 
-	if (fwsm & IXGBE_FWSM_EXT_ERR_IND_MASK ||
+	अगर (fwsm & IXGBE_FWSM_EXT_ERR_IND_MASK ||
 	    !(fwsm & IXGBE_FWSM_FW_VAL_BIT))
 		e_dev_warn("Warning firmware error detected FWSM: 0x%08X\n",
 			   fwsm);
 
-	if (hw->mac.ops.fw_recovery_mode && hw->mac.ops.fw_recovery_mode(hw)) {
+	अगर (hw->mac.ops.fw_recovery_mode && hw->mac.ops.fw_recovery_mode(hw)) अणु
 		e_dev_err("Firmware recovery mode detected. Limiting functionality. Refer to the Intel(R) Ethernet Adapters and Devices User Guide for details on firmware recovery mode.\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * ixgbe_service_task - manages and runs subtasks
- * @work: pointer to work_struct containing our data
+ * @work: poपूर्णांकer to work_काष्ठा containing our data
  **/
-static void ixgbe_service_task(struct work_struct *work)
-{
-	struct ixgbe_adapter *adapter = container_of(work,
-						     struct ixgbe_adapter,
+अटल व्योम ixgbe_service_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ixgbe_adapter *adapter = container_of(work,
+						     काष्ठा ixgbe_adapter,
 						     service_task);
-	if (ixgbe_removed(adapter->hw.hw_addr)) {
-		if (!test_bit(__IXGBE_DOWN, &adapter->state)) {
+	अगर (ixgbe_हटाओd(adapter->hw.hw_addr)) अणु
+		अगर (!test_bit(__IXGBE_DOWN, &adapter->state)) अणु
 			rtnl_lock();
-			ixgbe_down(adapter);
+			ixgbe_करोwn(adapter);
 			rtnl_unlock();
-		}
+		पूर्ण
 		ixgbe_service_event_complete(adapter);
-		return;
-	}
-	if (ixgbe_check_fw_error(adapter)) {
-		if (!test_bit(__IXGBE_DOWN, &adapter->state))
-			unregister_netdev(adapter->netdev);
+		वापस;
+	पूर्ण
+	अगर (ixgbe_check_fw_error(adapter)) अणु
+		अगर (!test_bit(__IXGBE_DOWN, &adapter->state))
+			unरेजिस्टर_netdev(adapter->netdev);
 		ixgbe_service_event_complete(adapter);
-		return;
-	}
+		वापस;
+	पूर्ण
 	ixgbe_reset_subtask(adapter);
-	ixgbe_phy_interrupt_subtask(adapter);
+	ixgbe_phy_पूर्णांकerrupt_subtask(adapter);
 	ixgbe_sfp_detection_subtask(adapter);
 	ixgbe_sfp_link_config_subtask(adapter);
 	ixgbe_check_overtemp_subtask(adapter);
-	ixgbe_watchdog_subtask(adapter);
+	ixgbe_watchकरोg_subtask(adapter);
 	ixgbe_fdir_reinit_subtask(adapter);
 	ixgbe_check_hang_subtask(adapter);
 
-	if (test_bit(__IXGBE_PTP_RUNNING, &adapter->state)) {
+	अगर (test_bit(__IXGBE_PTP_RUNNING, &adapter->state)) अणु
 		ixgbe_ptp_overflow_check(adapter);
-		if (adapter->flags & IXGBE_FLAG_RX_HWTSTAMP_IN_REGISTER)
+		अगर (adapter->flags & IXGBE_FLAG_RX_HWTSTAMP_IN_REGISTER)
 			ixgbe_ptp_rx_hang(adapter);
 		ixgbe_ptp_tx_hang(adapter);
-	}
+	पूर्ण
 
 	ixgbe_service_event_complete(adapter);
-}
+पूर्ण
 
-static int ixgbe_tso(struct ixgbe_ring *tx_ring,
-		     struct ixgbe_tx_buffer *first,
+अटल पूर्णांक ixgbe_tso(काष्ठा ixgbe_ring *tx_ring,
+		     काष्ठा ixgbe_tx_buffer *first,
 		     u8 *hdr_len,
-		     struct ixgbe_ipsec_tx_data *itd)
-{
+		     काष्ठा ixgbe_ipsec_tx_data *itd)
+अणु
 	u32 vlan_macip_lens, type_tucmd, mss_l4len_idx;
-	struct sk_buff *skb = first->skb;
-	union {
-		struct iphdr *v4;
-		struct ipv6hdr *v6;
-		unsigned char *hdr;
-	} ip;
-	union {
-		struct tcphdr *tcp;
-		struct udphdr *udp;
-		unsigned char *hdr;
-	} l4;
+	काष्ठा sk_buff *skb = first->skb;
+	जोड़ अणु
+		काष्ठा iphdr *v4;
+		काष्ठा ipv6hdr *v6;
+		अचिन्हित अक्षर *hdr;
+	पूर्ण ip;
+	जोड़ अणु
+		काष्ठा tcphdr *tcp;
+		काष्ठा udphdr *udp;
+		अचिन्हित अक्षर *hdr;
+	पूर्ण l4;
 	u32 paylen, l4_offset;
 	u32 fceof_saidx = 0;
-	int err;
+	पूर्णांक err;
 
-	if (skb->ip_summed != CHECKSUM_PARTIAL)
-		return 0;
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL)
+		वापस 0;
 
-	if (!skb_is_gso(skb))
-		return 0;
+	अगर (!skb_is_gso(skb))
+		वापस 0;
 
 	err = skb_cow_head(skb, 0);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (eth_p_mpls(first->protocol))
+	अगर (eth_p_mpls(first->protocol))
 		ip.hdr = skb_inner_network_header(skb);
-	else
+	अन्यथा
 		ip.hdr = skb_network_header(skb);
 	l4.hdr = skb_checksum_start(skb);
 
@@ -7984,14 +7985,14 @@ static int ixgbe_tso(struct ixgbe_ring *tx_ring,
 		      IXGBE_ADVTXD_TUCMD_L4T_UDP : IXGBE_ADVTXD_TUCMD_L4T_TCP;
 
 	/* initialize outer IP header fields */
-	if (ip.v4->version == 4) {
-		unsigned char *csum_start = skb_checksum_start(skb);
-		unsigned char *trans_start = ip.hdr + (ip.v4->ihl * 4);
-		int len = csum_start - trans_start;
+	अगर (ip.v4->version == 4) अणु
+		अचिन्हित अक्षर *csum_start = skb_checksum_start(skb);
+		अचिन्हित अक्षर *trans_start = ip.hdr + (ip.v4->ihl * 4);
+		पूर्णांक len = csum_start - trans_start;
 
 		/* IP header will have to cancel out any data that
 		 * is not a part of the outer IP header, so set to
-		 * a reverse csum if needed, else init check to 0.
+		 * a reverse csum अगर needed, अन्यथा init check to 0.
 		 */
 		ip.v4->check = (skb_shinfo(skb)->gso_type & SKB_GSO_PARTIAL) ?
 					   csum_fold(csum_partial(trans_start,
@@ -8002,35 +8003,35 @@ static int ixgbe_tso(struct ixgbe_ring *tx_ring,
 		first->tx_flags |= IXGBE_TX_FLAGS_TSO |
 				   IXGBE_TX_FLAGS_CSUM |
 				   IXGBE_TX_FLAGS_IPV4;
-	} else {
+	पूर्ण अन्यथा अणु
 		ip.v6->payload_len = 0;
 		first->tx_flags |= IXGBE_TX_FLAGS_TSO |
 				   IXGBE_TX_FLAGS_CSUM;
-	}
+	पूर्ण
 
 	/* determine offset of inner transport header */
 	l4_offset = l4.hdr - skb->data;
 
-	/* remove payload length from inner checksum */
+	/* हटाओ payload length from inner checksum */
 	paylen = skb->len - l4_offset;
 
-	if (type_tucmd & IXGBE_ADVTXD_TUCMD_L4T_TCP) {
+	अगर (type_tucmd & IXGBE_ADVTXD_TUCMD_L4T_TCP) अणु
 		/* compute length of segmentation header */
-		*hdr_len = (l4.tcp->doff * 4) + l4_offset;
-		csum_replace_by_diff(&l4.tcp->check,
-				     (__force __wsum)htonl(paylen));
-	} else {
+		*hdr_len = (l4.tcp->करोff * 4) + l4_offset;
+		csum_replace_by_dअगरf(&l4.tcp->check,
+				     (__क्रमce __wsum)htonl(paylen));
+	पूर्ण अन्यथा अणु
 		/* compute length of segmentation header */
-		*hdr_len = sizeof(*l4.udp) + l4_offset;
-		csum_replace_by_diff(&l4.udp->check,
-				     (__force __wsum)htonl(paylen));
-	}
+		*hdr_len = माप(*l4.udp) + l4_offset;
+		csum_replace_by_dअगरf(&l4.udp->check,
+				     (__क्रमce __wsum)htonl(paylen));
+	पूर्ण
 
 	/* update gso size and bytecount with header size */
 	first->gso_segs = skb_shinfo(skb)->gso_segs;
 	first->bytecount += (first->gso_segs - 1) * *hdr_len;
 
-	/* mss_l4len_id: use 0 as index for TSO */
+	/* mss_l4len_id: use 0 as index क्रम TSO */
 	mss_l4len_idx = (*hdr_len - l4_offset) << IXGBE_ADVTXD_L4LEN_SHIFT;
 	mss_l4len_idx |= skb_shinfo(skb)->gso_size << IXGBE_ADVTXD_MSS_SHIFT;
 
@@ -8045,43 +8046,43 @@ static int ixgbe_tso(struct ixgbe_ring *tx_ring,
 	ixgbe_tx_ctxtdesc(tx_ring, vlan_macip_lens, fceof_saidx, type_tucmd,
 			  mss_l4len_idx);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void ixgbe_tx_csum(struct ixgbe_ring *tx_ring,
-			  struct ixgbe_tx_buffer *first,
-			  struct ixgbe_ipsec_tx_data *itd)
-{
-	struct sk_buff *skb = first->skb;
+अटल व्योम ixgbe_tx_csum(काष्ठा ixgbe_ring *tx_ring,
+			  काष्ठा ixgbe_tx_buffer *first,
+			  काष्ठा ixgbe_ipsec_tx_data *itd)
+अणु
+	काष्ठा sk_buff *skb = first->skb;
 	u32 vlan_macip_lens = 0;
 	u32 fceof_saidx = 0;
 	u32 type_tucmd = 0;
 
-	if (skb->ip_summed != CHECKSUM_PARTIAL) {
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL) अणु
 csum_failed:
-		if (!(first->tx_flags & (IXGBE_TX_FLAGS_HW_VLAN |
+		अगर (!(first->tx_flags & (IXGBE_TX_FLAGS_HW_VLAN |
 					 IXGBE_TX_FLAGS_CC)))
-			return;
-		goto no_csum;
-	}
+			वापस;
+		जाओ no_csum;
+	पूर्ण
 
-	switch (skb->csum_offset) {
-	case offsetof(struct tcphdr, check):
+	चयन (skb->csum_offset) अणु
+	हाल दुरत्व(काष्ठा tcphdr, check):
 		type_tucmd = IXGBE_ADVTXD_TUCMD_L4T_TCP;
 		fallthrough;
-	case offsetof(struct udphdr, check):
-		break;
-	case offsetof(struct sctphdr, checksum):
+	हाल दुरत्व(काष्ठा udphdr, check):
+		अवरोध;
+	हाल दुरत्व(काष्ठा sctphdr, checksum):
 		/* validate that this is actually an SCTP request */
-		if (skb_csum_is_sctp(skb)) {
+		अगर (skb_csum_is_sctp(skb)) अणु
 			type_tucmd = IXGBE_ADVTXD_TUCMD_L4T_SCTP;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	default:
+	शेष:
 		skb_checksum_help(skb);
-		goto csum_failed;
-	}
+		जाओ csum_failed;
+	पूर्ण
 
 	/* update TX checksum flag */
 	first->tx_flags |= IXGBE_TX_FLAGS_CSUM;
@@ -8096,49 +8097,49 @@ no_csum:
 	type_tucmd |= itd->flags | itd->trailer_len;
 
 	ixgbe_tx_ctxtdesc(tx_ring, vlan_macip_lens, fceof_saidx, type_tucmd, 0);
-}
+पूर्ण
 
-#define IXGBE_SET_FLAG(_input, _flag, _result) \
+#घोषणा IXGBE_SET_FLAG(_input, _flag, _result) \
 	((_flag <= _result) ? \
 	 ((u32)(_input & _flag) * (_result / _flag)) : \
 	 ((u32)(_input & _flag) / (_flag / _result)))
 
-static u32 ixgbe_tx_cmd_type(struct sk_buff *skb, u32 tx_flags)
-{
-	/* set type for advanced descriptor with frame checksum insertion */
+अटल u32 ixgbe_tx_cmd_type(काष्ठा sk_buff *skb, u32 tx_flags)
+अणु
+	/* set type क्रम advanced descriptor with frame checksum insertion */
 	u32 cmd_type = IXGBE_ADVTXD_DTYP_DATA |
 		       IXGBE_ADVTXD_DCMD_DEXT |
 		       IXGBE_ADVTXD_DCMD_IFCS;
 
-	/* set HW vlan bit if vlan is present */
+	/* set HW vlan bit अगर vlan is present */
 	cmd_type |= IXGBE_SET_FLAG(tx_flags, IXGBE_TX_FLAGS_HW_VLAN,
 				   IXGBE_ADVTXD_DCMD_VLE);
 
-	/* set segmentation enable bits for TSO/FSO */
+	/* set segmentation enable bits क्रम TSO/FSO */
 	cmd_type |= IXGBE_SET_FLAG(tx_flags, IXGBE_TX_FLAGS_TSO,
 				   IXGBE_ADVTXD_DCMD_TSE);
 
-	/* set timestamp bit if present */
+	/* set बारtamp bit अगर present */
 	cmd_type |= IXGBE_SET_FLAG(tx_flags, IXGBE_TX_FLAGS_TSTAMP,
 				   IXGBE_ADVTXD_MAC_TSTAMP);
 
 	/* insert frame checksum */
 	cmd_type ^= IXGBE_SET_FLAG(skb->no_fcs, 1, IXGBE_ADVTXD_DCMD_IFCS);
 
-	return cmd_type;
-}
+	वापस cmd_type;
+पूर्ण
 
-static void ixgbe_tx_olinfo_status(union ixgbe_adv_tx_desc *tx_desc,
-				   u32 tx_flags, unsigned int paylen)
-{
+अटल व्योम ixgbe_tx_olinfo_status(जोड़ ixgbe_adv_tx_desc *tx_desc,
+				   u32 tx_flags, अचिन्हित पूर्णांक paylen)
+अणु
 	u32 olinfo_status = paylen << IXGBE_ADVTXD_PAYLEN_SHIFT;
 
-	/* enable L4 checksum for TSO and TX checksum offload */
+	/* enable L4 checksum क्रम TSO and TX checksum offload */
 	olinfo_status |= IXGBE_SET_FLAG(tx_flags,
 					IXGBE_TX_FLAGS_CSUM,
 					IXGBE_ADVTXD_POPTS_TXSM);
 
-	/* enable IPv4 checksum for TSO */
+	/* enable IPv4 checksum क्रम TSO */
 	olinfo_status |= IXGBE_SET_FLAG(tx_flags,
 					IXGBE_TX_FLAGS_IPV4,
 					IXGBE_ADVTXD_POPTS_IXSM);
@@ -8149,56 +8150,56 @@ static void ixgbe_tx_olinfo_status(union ixgbe_adv_tx_desc *tx_desc,
 					IXGBE_ADVTXD_POPTS_IPSEC);
 
 	/*
-	 * Check Context must be set if Tx switch is enabled, which it
-	 * always is for case where virtual functions are running
+	 * Check Context must be set अगर Tx चयन is enabled, which it
+	 * always is क्रम हाल where भव functions are running
 	 */
 	olinfo_status |= IXGBE_SET_FLAG(tx_flags,
 					IXGBE_TX_FLAGS_CC,
 					IXGBE_ADVTXD_CC);
 
-	tx_desc->read.olinfo_status = cpu_to_le32(olinfo_status);
-}
+	tx_desc->पढ़ो.olinfo_status = cpu_to_le32(olinfo_status);
+पूर्ण
 
-static int __ixgbe_maybe_stop_tx(struct ixgbe_ring *tx_ring, u16 size)
-{
-	netif_stop_subqueue(tx_ring->netdev, tx_ring->queue_index);
+अटल पूर्णांक __ixgbe_maybe_stop_tx(काष्ठा ixgbe_ring *tx_ring, u16 size)
+अणु
+	netअगर_stop_subqueue(tx_ring->netdev, tx_ring->queue_index);
 
 	/* Herbert's original patch had:
-	 *  smp_mb__after_netif_stop_queue();
-	 * but since that doesn't exist yet, just open code it.
+	 *  smp_mb__after_netअगर_stop_queue();
+	 * but since that करोesn't exist yet, just खोलो code it.
 	 */
 	smp_mb();
 
-	/* We need to check again in a case another CPU has just
+	/* We need to check again in a हाल another CPU has just
 	 * made room available.
 	 */
-	if (likely(ixgbe_desc_unused(tx_ring) < size))
-		return -EBUSY;
+	अगर (likely(ixgbe_desc_unused(tx_ring) < size))
+		वापस -EBUSY;
 
-	/* A reprieve! - use start_queue because it doesn't call schedule */
-	netif_start_subqueue(tx_ring->netdev, tx_ring->queue_index);
+	/* A reprieve! - use start_queue because it करोesn't call schedule */
+	netअगर_start_subqueue(tx_ring->netdev, tx_ring->queue_index);
 	++tx_ring->tx_stats.restart_queue;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int ixgbe_maybe_stop_tx(struct ixgbe_ring *tx_ring, u16 size)
-{
-	if (likely(ixgbe_desc_unused(tx_ring) >= size))
-		return 0;
+अटल अंतरभूत पूर्णांक ixgbe_maybe_stop_tx(काष्ठा ixgbe_ring *tx_ring, u16 size)
+अणु
+	अगर (likely(ixgbe_desc_unused(tx_ring) >= size))
+		वापस 0;
 
-	return __ixgbe_maybe_stop_tx(tx_ring, size);
-}
+	वापस __ixgbe_maybe_stop_tx(tx_ring, size);
+पूर्ण
 
-static int ixgbe_tx_map(struct ixgbe_ring *tx_ring,
-			struct ixgbe_tx_buffer *first,
-			const u8 hdr_len)
-{
-	struct sk_buff *skb = first->skb;
-	struct ixgbe_tx_buffer *tx_buffer;
-	union ixgbe_adv_tx_desc *tx_desc;
+अटल पूर्णांक ixgbe_tx_map(काष्ठा ixgbe_ring *tx_ring,
+			काष्ठा ixgbe_tx_buffer *first,
+			स्थिर u8 hdr_len)
+अणु
+	काष्ठा sk_buff *skb = first->skb;
+	काष्ठा ixgbe_tx_buffer *tx_buffer;
+	जोड़ ixgbe_adv_tx_desc *tx_desc;
 	skb_frag_t *frag;
 	dma_addr_t dma;
-	unsigned int data_len, size;
+	अचिन्हित पूर्णांक data_len, size;
 	u32 tx_flags = first->tx_flags;
 	u32 cmd_type = ixgbe_tx_cmd_type(skb, tx_flags);
 	u16 i = tx_ring->next_to_use;
@@ -8210,93 +8211,93 @@ static int ixgbe_tx_map(struct ixgbe_ring *tx_ring,
 	size = skb_headlen(skb);
 	data_len = skb->data_len;
 
-#ifdef IXGBE_FCOE
-	if (tx_flags & IXGBE_TX_FLAGS_FCOE) {
-		if (data_len < sizeof(struct fcoe_crc_eof)) {
-			size -= sizeof(struct fcoe_crc_eof) - data_len;
+#अगर_घोषित IXGBE_FCOE
+	अगर (tx_flags & IXGBE_TX_FLAGS_FCOE) अणु
+		अगर (data_len < माप(काष्ठा fcoe_crc_eof)) अणु
+			size -= माप(काष्ठा fcoe_crc_eof) - data_len;
 			data_len = 0;
-		} else {
-			data_len -= sizeof(struct fcoe_crc_eof);
-		}
-	}
+		पूर्ण अन्यथा अणु
+			data_len -= माप(काष्ठा fcoe_crc_eof);
+		पूर्ण
+	पूर्ण
 
-#endif
+#पूर्ण_अगर
 	dma = dma_map_single(tx_ring->dev, skb->data, size, DMA_TO_DEVICE);
 
 	tx_buffer = first;
 
-	for (frag = &skb_shinfo(skb)->frags[0];; frag++) {
-		if (dma_mapping_error(tx_ring->dev, dma))
-			goto dma_error;
+	क्रम (frag = &skb_shinfo(skb)->frags[0];; frag++) अणु
+		अगर (dma_mapping_error(tx_ring->dev, dma))
+			जाओ dma_error;
 
 		/* record length, and DMA address */
 		dma_unmap_len_set(tx_buffer, len, size);
 		dma_unmap_addr_set(tx_buffer, dma, dma);
 
-		tx_desc->read.buffer_addr = cpu_to_le64(dma);
+		tx_desc->पढ़ो.buffer_addr = cpu_to_le64(dma);
 
-		while (unlikely(size > IXGBE_MAX_DATA_PER_TXD)) {
-			tx_desc->read.cmd_type_len =
+		जबतक (unlikely(size > IXGBE_MAX_DATA_PER_TXD)) अणु
+			tx_desc->पढ़ो.cmd_type_len =
 				cpu_to_le32(cmd_type ^ IXGBE_MAX_DATA_PER_TXD);
 
 			i++;
 			tx_desc++;
-			if (i == tx_ring->count) {
+			अगर (i == tx_ring->count) अणु
 				tx_desc = IXGBE_TX_DESC(tx_ring, 0);
 				i = 0;
-			}
-			tx_desc->read.olinfo_status = 0;
+			पूर्ण
+			tx_desc->पढ़ो.olinfo_status = 0;
 
 			dma += IXGBE_MAX_DATA_PER_TXD;
 			size -= IXGBE_MAX_DATA_PER_TXD;
 
-			tx_desc->read.buffer_addr = cpu_to_le64(dma);
-		}
+			tx_desc->पढ़ो.buffer_addr = cpu_to_le64(dma);
+		पूर्ण
 
-		if (likely(!data_len))
-			break;
+		अगर (likely(!data_len))
+			अवरोध;
 
-		tx_desc->read.cmd_type_len = cpu_to_le32(cmd_type ^ size);
+		tx_desc->पढ़ो.cmd_type_len = cpu_to_le32(cmd_type ^ size);
 
 		i++;
 		tx_desc++;
-		if (i == tx_ring->count) {
+		अगर (i == tx_ring->count) अणु
 			tx_desc = IXGBE_TX_DESC(tx_ring, 0);
 			i = 0;
-		}
-		tx_desc->read.olinfo_status = 0;
+		पूर्ण
+		tx_desc->पढ़ो.olinfo_status = 0;
 
-#ifdef IXGBE_FCOE
-		size = min_t(unsigned int, data_len, skb_frag_size(frag));
-#else
+#अगर_घोषित IXGBE_FCOE
+		size = min_t(अचिन्हित पूर्णांक, data_len, skb_frag_size(frag));
+#अन्यथा
 		size = skb_frag_size(frag);
-#endif
+#पूर्ण_अगर
 		data_len -= size;
 
 		dma = skb_frag_dma_map(tx_ring->dev, frag, 0, size,
 				       DMA_TO_DEVICE);
 
 		tx_buffer = &tx_ring->tx_buffer_info[i];
-	}
+	पूर्ण
 
-	/* write last descriptor with RS and EOP bits */
+	/* ग_लिखो last descriptor with RS and EOP bits */
 	cmd_type |= size | IXGBE_TXD_CMD;
-	tx_desc->read.cmd_type_len = cpu_to_le32(cmd_type);
+	tx_desc->पढ़ो.cmd_type_len = cpu_to_le32(cmd_type);
 
 	netdev_tx_sent_queue(txring_txq(tx_ring), first->bytecount);
 
-	/* set the timestamp */
-	first->time_stamp = jiffies;
+	/* set the बारtamp */
+	first->समय_stamp = jअगरfies;
 
-	skb_tx_timestamp(skb);
+	skb_tx_बारtamp(skb);
 
 	/*
-	 * Force memory writes to complete before letting h/w know there
-	 * are new descriptors to fetch.  (Only applicable for weak-ordered
+	 * Force memory ग_लिखोs to complete beक्रमe letting h/w know there
+	 * are new descriptors to fetch.  (Only applicable क्रम weak-ordered
 	 * memory model archs, such as IA-64).
 	 *
 	 * We also need this memory barrier to make certain all of the
-	 * status bits have been updated before next_to_watch is written.
+	 * status bits have been updated beक्रमe next_to_watch is written.
 	 */
 	wmb();
 
@@ -8304,139 +8305,139 @@ static int ixgbe_tx_map(struct ixgbe_ring *tx_ring,
 	first->next_to_watch = tx_desc;
 
 	i++;
-	if (i == tx_ring->count)
+	अगर (i == tx_ring->count)
 		i = 0;
 
 	tx_ring->next_to_use = i;
 
 	ixgbe_maybe_stop_tx(tx_ring, DESC_NEEDED);
 
-	if (netif_xmit_stopped(txring_txq(tx_ring)) || !netdev_xmit_more()) {
-		writel(i, tx_ring->tail);
-	}
+	अगर (netअगर_xmit_stopped(txring_txq(tx_ring)) || !netdev_xmit_more()) अणु
+		ग_लिखोl(i, tx_ring->tail);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 dma_error:
 	dev_err(tx_ring->dev, "TX DMA map failed\n");
 
-	/* clear dma mappings for failed tx_buffer_info map */
-	for (;;) {
+	/* clear dma mappings क्रम failed tx_buffer_info map */
+	क्रम (;;) अणु
 		tx_buffer = &tx_ring->tx_buffer_info[i];
-		if (dma_unmap_len(tx_buffer, len))
+		अगर (dma_unmap_len(tx_buffer, len))
 			dma_unmap_page(tx_ring->dev,
 				       dma_unmap_addr(tx_buffer, dma),
 				       dma_unmap_len(tx_buffer, len),
 				       DMA_TO_DEVICE);
 		dma_unmap_len_set(tx_buffer, len, 0);
-		if (tx_buffer == first)
-			break;
-		if (i == 0)
+		अगर (tx_buffer == first)
+			अवरोध;
+		अगर (i == 0)
 			i += tx_ring->count;
 		i--;
-	}
+	पूर्ण
 
-	dev_kfree_skb_any(first->skb);
-	first->skb = NULL;
+	dev_kमुक्त_skb_any(first->skb);
+	first->skb = शून्य;
 
 	tx_ring->next_to_use = i;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void ixgbe_atr(struct ixgbe_ring *ring,
-		      struct ixgbe_tx_buffer *first)
-{
-	struct ixgbe_q_vector *q_vector = ring->q_vector;
-	union ixgbe_atr_hash_dword input = { .dword = 0 };
-	union ixgbe_atr_hash_dword common = { .dword = 0 };
-	union {
-		unsigned char *network;
-		struct iphdr *ipv4;
-		struct ipv6hdr *ipv6;
-	} hdr;
-	struct tcphdr *th;
-	unsigned int hlen;
-	struct sk_buff *skb;
+अटल व्योम ixgbe_atr(काष्ठा ixgbe_ring *ring,
+		      काष्ठा ixgbe_tx_buffer *first)
+अणु
+	काष्ठा ixgbe_q_vector *q_vector = ring->q_vector;
+	जोड़ ixgbe_atr_hash_dword input = अणु .dword = 0 पूर्ण;
+	जोड़ ixgbe_atr_hash_dword common = अणु .dword = 0 पूर्ण;
+	जोड़ अणु
+		अचिन्हित अक्षर *network;
+		काष्ठा iphdr *ipv4;
+		काष्ठा ipv6hdr *ipv6;
+	पूर्ण hdr;
+	काष्ठा tcphdr *th;
+	अचिन्हित पूर्णांक hlen;
+	काष्ठा sk_buff *skb;
 	__be16 vlan_id;
-	int l4_proto;
+	पूर्णांक l4_proto;
 
-	/* if ring doesn't have a interrupt vector, cannot perform ATR */
-	if (!q_vector)
-		return;
+	/* अगर ring करोesn't have a पूर्णांकerrupt vector, cannot perक्रमm ATR */
+	अगर (!q_vector)
+		वापस;
 
-	/* do nothing if sampling is disabled */
-	if (!ring->atr_sample_rate)
-		return;
+	/* करो nothing अगर sampling is disabled */
+	अगर (!ring->atr_sample_rate)
+		वापस;
 
 	ring->atr_count++;
 
 	/* currently only IPv4/IPv6 with TCP is supported */
-	if ((first->protocol != htons(ETH_P_IP)) &&
+	अगर ((first->protocol != htons(ETH_P_IP)) &&
 	    (first->protocol != htons(ETH_P_IPV6)))
-		return;
+		वापस;
 
 	/* snag network header to get L4 type and address */
 	skb = first->skb;
 	hdr.network = skb_network_header(skb);
-	if (unlikely(hdr.network <= skb->data))
-		return;
-	if (skb->encapsulation &&
+	अगर (unlikely(hdr.network <= skb->data))
+		वापस;
+	अगर (skb->encapsulation &&
 	    first->protocol == htons(ETH_P_IP) &&
-	    hdr.ipv4->protocol == IPPROTO_UDP) {
-		struct ixgbe_adapter *adapter = q_vector->adapter;
+	    hdr.ipv4->protocol == IPPROTO_UDP) अणु
+		काष्ठा ixgbe_adapter *adapter = q_vector->adapter;
 
-		if (unlikely(skb_tail_pointer(skb) < hdr.network +
+		अगर (unlikely(skb_tail_poपूर्णांकer(skb) < hdr.network +
 			     VXLAN_HEADROOM))
-			return;
+			वापस;
 
-		/* verify the port is recognized as VXLAN */
-		if (adapter->vxlan_port &&
+		/* verअगरy the port is recognized as VXLAN */
+		अगर (adapter->vxlan_port &&
 		    udp_hdr(skb)->dest == adapter->vxlan_port)
 			hdr.network = skb_inner_network_header(skb);
 
-		if (adapter->geneve_port &&
+		अगर (adapter->geneve_port &&
 		    udp_hdr(skb)->dest == adapter->geneve_port)
 			hdr.network = skb_inner_network_header(skb);
-	}
+	पूर्ण
 
 	/* Make sure we have at least [minimum IPv4 header + TCP]
 	 * or [IPv6 header] bytes
 	 */
-	if (unlikely(skb_tail_pointer(skb) < hdr.network + 40))
-		return;
+	अगर (unlikely(skb_tail_poपूर्णांकer(skb) < hdr.network + 40))
+		वापस;
 
 	/* Currently only IPv4/IPv6 with TCP is supported */
-	switch (hdr.ipv4->version) {
-	case IPVERSION:
-		/* access ihl as u8 to avoid unaligned access on ia64 */
+	चयन (hdr.ipv4->version) अणु
+	हाल IPVERSION:
+		/* access ihl as u8 to aव्योम unaligned access on ia64 */
 		hlen = (hdr.network[0] & 0x0F) << 2;
 		l4_proto = hdr.ipv4->protocol;
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		hlen = hdr.network - skb->data;
-		l4_proto = ipv6_find_hdr(skb, &hlen, IPPROTO_TCP, NULL, NULL);
+		l4_proto = ipv6_find_hdr(skb, &hlen, IPPROTO_TCP, शून्य, शून्य);
 		hlen -= hdr.network - skb->data;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
-	if (l4_proto != IPPROTO_TCP)
-		return;
+	अगर (l4_proto != IPPROTO_TCP)
+		वापस;
 
-	if (unlikely(skb_tail_pointer(skb) < hdr.network +
-		     hlen + sizeof(struct tcphdr)))
-		return;
+	अगर (unlikely(skb_tail_poपूर्णांकer(skb) < hdr.network +
+		     hlen + माप(काष्ठा tcphdr)))
+		वापस;
 
-	th = (struct tcphdr *)(hdr.network + hlen);
+	th = (काष्ठा tcphdr *)(hdr.network + hlen);
 
 	/* skip this packet since the socket is closing */
-	if (th->fin)
-		return;
+	अगर (th->fin)
+		वापस;
 
 	/* sample on all syn packets or once every atr sample count */
-	if (!th->syn && (ring->atr_count < ring->atr_sample_rate))
-		return;
+	अगर (!th->syn && (ring->atr_count < ring->atr_sample_rate))
+		वापस;
 
 	/* reset sample count */
 	ring->atr_count = 0;
@@ -8446,29 +8447,29 @@ static void ixgbe_atr(struct ixgbe_ring *ring,
 	/*
 	 * src and dst are inverted, think how the receiver sees them
 	 *
-	 * The input is broken into two sections, a non-compressed section
+	 * The input is broken पूर्णांकo two sections, a non-compressed section
 	 * containing vm_pool, vlan_id, and flow_type.  The rest of the data
 	 * is XORed together and stored in the compressed dword.
 	 */
-	input.formatted.vlan_id = vlan_id;
+	input.क्रमmatted.vlan_id = vlan_id;
 
 	/*
 	 * since src port and flex bytes occupy the same word XOR them together
-	 * and write the value to source port portion of compressed dword
+	 * and ग_लिखो the value to source port portion of compressed dword
 	 */
-	if (first->tx_flags & (IXGBE_TX_FLAGS_SW_VLAN | IXGBE_TX_FLAGS_HW_VLAN))
+	अगर (first->tx_flags & (IXGBE_TX_FLAGS_SW_VLAN | IXGBE_TX_FLAGS_HW_VLAN))
 		common.port.src ^= th->dest ^ htons(ETH_P_8021Q);
-	else
+	अन्यथा
 		common.port.src ^= th->dest ^ first->protocol;
 	common.port.dst ^= th->source;
 
-	switch (hdr.ipv4->version) {
-	case IPVERSION:
-		input.formatted.flow_type = IXGBE_ATR_FLOW_TYPE_TCPV4;
+	चयन (hdr.ipv4->version) अणु
+	हाल IPVERSION:
+		input.क्रमmatted.flow_type = IXGBE_ATR_FLOW_TYPE_TCPV4;
 		common.ip ^= hdr.ipv4->saddr ^ hdr.ipv4->daddr;
-		break;
-	case 6:
-		input.formatted.flow_type = IXGBE_ATR_FLOW_TYPE_TCPV6;
+		अवरोध;
+	हाल 6:
+		input.क्रमmatted.flow_type = IXGBE_ATR_FLOW_TYPE_TCPV6;
 		common.ip ^= hdr.ipv6->saddr.s6_addr32[0] ^
 			     hdr.ipv6->saddr.s6_addr32[1] ^
 			     hdr.ipv6->saddr.s6_addr32[2] ^
@@ -8477,86 +8478,86 @@ static void ixgbe_atr(struct ixgbe_ring *ring,
 			     hdr.ipv6->daddr.s6_addr32[1] ^
 			     hdr.ipv6->daddr.s6_addr32[2] ^
 			     hdr.ipv6->daddr.s6_addr32[3];
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (hdr.network != skb_network_header(skb))
-		input.formatted.flow_type |= IXGBE_ATR_L4TYPE_TUNNEL_MASK;
+	अगर (hdr.network != skb_network_header(skb))
+		input.क्रमmatted.flow_type |= IXGBE_ATR_L4TYPE_TUNNEL_MASK;
 
 	/* This assumes the Rx queue and Tx queue are bound to the same CPU */
 	ixgbe_fdir_add_signature_filter_82599(&q_vector->adapter->hw,
 					      input, common, ring->queue_index);
-}
+पूर्ण
 
-#ifdef IXGBE_FCOE
-static u16 ixgbe_select_queue(struct net_device *dev, struct sk_buff *skb,
-			      struct net_device *sb_dev)
-{
-	struct ixgbe_adapter *adapter;
-	struct ixgbe_ring_feature *f;
-	int txq;
+#अगर_घोषित IXGBE_FCOE
+अटल u16 ixgbe_select_queue(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+			      काष्ठा net_device *sb_dev)
+अणु
+	काष्ठा ixgbe_adapter *adapter;
+	काष्ठा ixgbe_ring_feature *f;
+	पूर्णांक txq;
 
-	if (sb_dev) {
+	अगर (sb_dev) अणु
 		u8 tc = netdev_get_prio_tc_map(dev, skb->priority);
-		struct net_device *vdev = sb_dev;
+		काष्ठा net_device *vdev = sb_dev;
 
 		txq = vdev->tc_to_txq[tc].offset;
 		txq += reciprocal_scale(skb_get_hash(skb),
 					vdev->tc_to_txq[tc].count);
 
-		return txq;
-	}
+		वापस txq;
+	पूर्ण
 
 	/*
-	 * only execute the code below if protocol is FCoE
+	 * only execute the code below अगर protocol is FCoE
 	 * or FIP and we have FCoE enabled on the adapter
 	 */
-	switch (vlan_get_protocol(skb)) {
-	case htons(ETH_P_FCOE):
-	case htons(ETH_P_FIP):
+	चयन (vlan_get_protocol(skb)) अणु
+	हाल htons(ETH_P_FCOE):
+	हाल htons(ETH_P_FIP):
 		adapter = netdev_priv(dev);
 
-		if (!sb_dev && (adapter->flags & IXGBE_FLAG_FCOE_ENABLED))
-			break;
+		अगर (!sb_dev && (adapter->flags & IXGBE_FLAG_FCOE_ENABLED))
+			अवरोध;
 		fallthrough;
-	default:
-		return netdev_pick_tx(dev, skb, sb_dev);
-	}
+	शेष:
+		वापस netdev_pick_tx(dev, skb, sb_dev);
+	पूर्ण
 
 	f = &adapter->ring_feature[RING_F_FCOE];
 
 	txq = skb_rx_queue_recorded(skb) ? skb_get_rx_queue(skb) :
 					   smp_processor_id();
 
-	while (txq >= f->indices)
+	जबतक (txq >= f->indices)
 		txq -= f->indices;
 
-	return txq + f->offset;
-}
+	वापस txq + f->offset;
+पूर्ण
 
-#endif
-int ixgbe_xmit_xdp_ring(struct ixgbe_adapter *adapter,
-			struct xdp_frame *xdpf)
-{
-	struct ixgbe_ring *ring = adapter->xdp_ring[smp_processor_id()];
-	struct ixgbe_tx_buffer *tx_buffer;
-	union ixgbe_adv_tx_desc *tx_desc;
+#पूर्ण_अगर
+पूर्णांक ixgbe_xmit_xdp_ring(काष्ठा ixgbe_adapter *adapter,
+			काष्ठा xdp_frame *xdpf)
+अणु
+	काष्ठा ixgbe_ring *ring = adapter->xdp_ring[smp_processor_id()];
+	काष्ठा ixgbe_tx_buffer *tx_buffer;
+	जोड़ ixgbe_adv_tx_desc *tx_desc;
 	u32 len, cmd_type;
 	dma_addr_t dma;
 	u16 i;
 
 	len = xdpf->len;
 
-	if (unlikely(!ixgbe_desc_unused(ring)))
-		return IXGBE_XDP_CONSUMED;
+	अगर (unlikely(!ixgbe_desc_unused(ring)))
+		वापस IXGBE_XDP_CONSUMED;
 
 	dma = dma_map_single(ring->dev, xdpf->data, len, DMA_TO_DEVICE);
-	if (dma_mapping_error(ring->dev, dma))
-		return IXGBE_XDP_CONSUMED;
+	अगर (dma_mapping_error(ring->dev, dma))
+		वापस IXGBE_XDP_CONSUMED;
 
-	/* record the location of the first descriptor for this packet */
+	/* record the location of the first descriptor क्रम this packet */
 	tx_buffer = &ring->tx_buffer_info[ring->next_to_use];
 	tx_buffer->bytecount = len;
 	tx_buffer->gso_segs = 1;
@@ -8569,491 +8570,491 @@ int ixgbe_xmit_xdp_ring(struct ixgbe_adapter *adapter,
 	dma_unmap_addr_set(tx_buffer, dma, dma);
 	tx_buffer->xdpf = xdpf;
 
-	tx_desc->read.buffer_addr = cpu_to_le64(dma);
+	tx_desc->पढ़ो.buffer_addr = cpu_to_le64(dma);
 
 	/* put descriptor type bits */
 	cmd_type = IXGBE_ADVTXD_DTYP_DATA |
 		   IXGBE_ADVTXD_DCMD_DEXT |
 		   IXGBE_ADVTXD_DCMD_IFCS;
 	cmd_type |= len | IXGBE_TXD_CMD;
-	tx_desc->read.cmd_type_len = cpu_to_le32(cmd_type);
-	tx_desc->read.olinfo_status =
+	tx_desc->पढ़ो.cmd_type_len = cpu_to_le32(cmd_type);
+	tx_desc->पढ़ो.olinfo_status =
 		cpu_to_le32(len << IXGBE_ADVTXD_PAYLEN_SHIFT);
 
-	/* Avoid any potential race with xdp_xmit and cleanup */
+	/* Aव्योम any potential race with xdp_xmit and cleanup */
 	smp_wmb();
 
 	/* set next_to_watch value indicating a packet is present */
 	i++;
-	if (i == ring->count)
+	अगर (i == ring->count)
 		i = 0;
 
 	tx_buffer->next_to_watch = tx_desc;
 	ring->next_to_use = i;
 
-	return IXGBE_XDP_TX;
-}
+	वापस IXGBE_XDP_TX;
+पूर्ण
 
-netdev_tx_t ixgbe_xmit_frame_ring(struct sk_buff *skb,
-			  struct ixgbe_adapter *adapter,
-			  struct ixgbe_ring *tx_ring)
-{
-	struct ixgbe_tx_buffer *first;
-	int tso;
+netdev_tx_t ixgbe_xmit_frame_ring(काष्ठा sk_buff *skb,
+			  काष्ठा ixgbe_adapter *adapter,
+			  काष्ठा ixgbe_ring *tx_ring)
+अणु
+	काष्ठा ixgbe_tx_buffer *first;
+	पूर्णांक tso;
 	u32 tx_flags = 0;
-	unsigned short f;
+	अचिन्हित लघु f;
 	u16 count = TXD_USE_COUNT(skb_headlen(skb));
-	struct ixgbe_ipsec_tx_data ipsec_tx = { 0 };
+	काष्ठा ixgbe_ipsec_tx_data ipsec_tx = अणु 0 पूर्ण;
 	__be16 protocol = skb->protocol;
 	u8 hdr_len = 0;
 
 	/*
 	 * need: 1 descriptor per page * PAGE_SIZE/IXGBE_MAX_DATA_PER_TXD,
-	 *       + 1 desc for skb_headlen/IXGBE_MAX_DATA_PER_TXD,
+	 *       + 1 desc क्रम skb_headlen/IXGBE_MAX_DATA_PER_TXD,
 	 *       + 2 desc gap to keep tail from touching head,
-	 *       + 1 desc for context descriptor,
-	 * otherwise try next time
+	 *       + 1 desc क्रम context descriptor,
+	 * otherwise try next समय
 	 */
-	for (f = 0; f < skb_shinfo(skb)->nr_frags; f++)
+	क्रम (f = 0; f < skb_shinfo(skb)->nr_frags; f++)
 		count += TXD_USE_COUNT(skb_frag_size(
 						&skb_shinfo(skb)->frags[f]));
 
-	if (ixgbe_maybe_stop_tx(tx_ring, count + 3)) {
+	अगर (ixgbe_maybe_stop_tx(tx_ring, count + 3)) अणु
 		tx_ring->tx_stats.tx_busy++;
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	/* record the location of the first descriptor for this packet */
+	/* record the location of the first descriptor क्रम this packet */
 	first = &tx_ring->tx_buffer_info[tx_ring->next_to_use];
 	first->skb = skb;
 	first->bytecount = skb->len;
 	first->gso_segs = 1;
 
-	/* if we have a HW VLAN tag being added default to the HW one */
-	if (skb_vlan_tag_present(skb)) {
+	/* अगर we have a HW VLAN tag being added शेष to the HW one */
+	अगर (skb_vlan_tag_present(skb)) अणु
 		tx_flags |= skb_vlan_tag_get(skb) << IXGBE_TX_FLAGS_VLAN_SHIFT;
 		tx_flags |= IXGBE_TX_FLAGS_HW_VLAN;
-	/* else if it is a SW VLAN check the next protocol and store the tag */
-	} else if (protocol == htons(ETH_P_8021Q)) {
-		struct vlan_hdr *vhdr, _vhdr;
-		vhdr = skb_header_pointer(skb, ETH_HLEN, sizeof(_vhdr), &_vhdr);
-		if (!vhdr)
-			goto out_drop;
+	/* अन्यथा अगर it is a SW VLAN check the next protocol and store the tag */
+	पूर्ण अन्यथा अगर (protocol == htons(ETH_P_8021Q)) अणु
+		काष्ठा vlan_hdr *vhdr, _vhdr;
+		vhdr = skb_header_poपूर्णांकer(skb, ETH_HLEN, माप(_vhdr), &_vhdr);
+		अगर (!vhdr)
+			जाओ out_drop;
 
 		tx_flags |= ntohs(vhdr->h_vlan_TCI) <<
 				  IXGBE_TX_FLAGS_VLAN_SHIFT;
 		tx_flags |= IXGBE_TX_FLAGS_SW_VLAN;
-	}
+	पूर्ण
 	protocol = vlan_get_protocol(skb);
 
-	if (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP) &&
-	    adapter->ptp_clock) {
-		if (adapter->tstamp_config.tx_type == HWTSTAMP_TX_ON &&
+	अगर (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP) &&
+	    adapter->ptp_घड़ी) अणु
+		अगर (adapter->tstamp_config.tx_type == HWTSTAMP_TX_ON &&
 		    !test_and_set_bit_lock(__IXGBE_PTP_TX_IN_PROGRESS,
-					   &adapter->state)) {
+					   &adapter->state)) अणु
 			skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
 			tx_flags |= IXGBE_TX_FLAGS_TSTAMP;
 
-			/* schedule check for Tx timestamp */
+			/* schedule check क्रम Tx बारtamp */
 			adapter->ptp_tx_skb = skb_get(skb);
-			adapter->ptp_tx_start = jiffies;
+			adapter->ptp_tx_start = jअगरfies;
 			schedule_work(&adapter->ptp_tx_work);
-		} else {
+		पूर्ण अन्यथा अणु
 			adapter->tx_hwtstamp_skipped++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-#ifdef CONFIG_PCI_IOV
+#अगर_घोषित CONFIG_PCI_IOV
 	/*
-	 * Use the l2switch_enable flag - would be false if the DMA
-	 * Tx switch had been disabled.
+	 * Use the l2चयन_enable flag - would be false अगर the DMA
+	 * Tx चयन had been disabled.
 	 */
-	if (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)
+	अगर (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)
 		tx_flags |= IXGBE_TX_FLAGS_CC;
 
-#endif
+#पूर्ण_अगर
 	/* DCB maps skb priorities 0-7 onto 3 bit PCP of VLAN tag. */
-	if ((adapter->flags & IXGBE_FLAG_DCB_ENABLED) &&
+	अगर ((adapter->flags & IXGBE_FLAG_DCB_ENABLED) &&
 	    ((tx_flags & (IXGBE_TX_FLAGS_HW_VLAN | IXGBE_TX_FLAGS_SW_VLAN)) ||
-	     (skb->priority != TC_PRIO_CONTROL))) {
+	     (skb->priority != TC_PRIO_CONTROL))) अणु
 		tx_flags &= ~IXGBE_TX_FLAGS_VLAN_PRIO_MASK;
 		tx_flags |= (skb->priority & 0x7) <<
 					IXGBE_TX_FLAGS_VLAN_PRIO_SHIFT;
-		if (tx_flags & IXGBE_TX_FLAGS_SW_VLAN) {
-			struct vlan_ethhdr *vhdr;
+		अगर (tx_flags & IXGBE_TX_FLAGS_SW_VLAN) अणु
+			काष्ठा vlan_ethhdr *vhdr;
 
-			if (skb_cow_head(skb, 0))
-				goto out_drop;
-			vhdr = (struct vlan_ethhdr *)skb->data;
+			अगर (skb_cow_head(skb, 0))
+				जाओ out_drop;
+			vhdr = (काष्ठा vlan_ethhdr *)skb->data;
 			vhdr->h_vlan_TCI = htons(tx_flags >>
 						 IXGBE_TX_FLAGS_VLAN_SHIFT);
-		} else {
+		पूर्ण अन्यथा अणु
 			tx_flags |= IXGBE_TX_FLAGS_HW_VLAN;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* record initial flags and protocol */
 	first->tx_flags = tx_flags;
 	first->protocol = protocol;
 
-#ifdef IXGBE_FCOE
-	/* setup tx offload for FCoE */
-	if ((protocol == htons(ETH_P_FCOE)) &&
-	    (tx_ring->netdev->features & (NETIF_F_FSO | NETIF_F_FCOE_CRC))) {
+#अगर_घोषित IXGBE_FCOE
+	/* setup tx offload क्रम FCoE */
+	अगर ((protocol == htons(ETH_P_FCOE)) &&
+	    (tx_ring->netdev->features & (NETIF_F_FSO | NETIF_F_FCOE_CRC))) अणु
 		tso = ixgbe_fso(tx_ring, first, &hdr_len);
-		if (tso < 0)
-			goto out_drop;
+		अगर (tso < 0)
+			जाओ out_drop;
 
-		goto xmit_fcoe;
-	}
+		जाओ xmit_fcoe;
+	पूर्ण
 
-#endif /* IXGBE_FCOE */
+#पूर्ण_अगर /* IXGBE_FCOE */
 
-#ifdef CONFIG_IXGBE_IPSEC
-	if (xfrm_offload(skb) &&
+#अगर_घोषित CONFIG_IXGBE_IPSEC
+	अगर (xfrm_offload(skb) &&
 	    !ixgbe_ipsec_tx(tx_ring, first, &ipsec_tx))
-		goto out_drop;
-#endif
+		जाओ out_drop;
+#पूर्ण_अगर
 	tso = ixgbe_tso(tx_ring, first, &hdr_len, &ipsec_tx);
-	if (tso < 0)
-		goto out_drop;
-	else if (!tso)
+	अगर (tso < 0)
+		जाओ out_drop;
+	अन्यथा अगर (!tso)
 		ixgbe_tx_csum(tx_ring, first, &ipsec_tx);
 
-	/* add the ATR filter if ATR is on */
-	if (test_bit(__IXGBE_TX_FDIR_INIT_DONE, &tx_ring->state))
+	/* add the ATR filter अगर ATR is on */
+	अगर (test_bit(__IXGBE_TX_Fसूची_INIT_DONE, &tx_ring->state))
 		ixgbe_atr(tx_ring, first);
 
-#ifdef IXGBE_FCOE
+#अगर_घोषित IXGBE_FCOE
 xmit_fcoe:
-#endif /* IXGBE_FCOE */
-	if (ixgbe_tx_map(tx_ring, first, hdr_len))
-		goto cleanup_tx_timestamp;
+#पूर्ण_अगर /* IXGBE_FCOE */
+	अगर (ixgbe_tx_map(tx_ring, first, hdr_len))
+		जाओ cleanup_tx_बारtamp;
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 out_drop:
-	dev_kfree_skb_any(first->skb);
-	first->skb = NULL;
-cleanup_tx_timestamp:
-	if (unlikely(tx_flags & IXGBE_TX_FLAGS_TSTAMP)) {
-		dev_kfree_skb_any(adapter->ptp_tx_skb);
-		adapter->ptp_tx_skb = NULL;
+	dev_kमुक्त_skb_any(first->skb);
+	first->skb = शून्य;
+cleanup_tx_बारtamp:
+	अगर (unlikely(tx_flags & IXGBE_TX_FLAGS_TSTAMP)) अणु
+		dev_kमुक्त_skb_any(adapter->ptp_tx_skb);
+		adapter->ptp_tx_skb = शून्य;
 		cancel_work_sync(&adapter->ptp_tx_work);
 		clear_bit_unlock(__IXGBE_PTP_TX_IN_PROGRESS, &adapter->state);
-	}
+	पूर्ण
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static netdev_tx_t __ixgbe_xmit_frame(struct sk_buff *skb,
-				      struct net_device *netdev,
-				      struct ixgbe_ring *ring)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_ring *tx_ring;
+अटल netdev_tx_t __ixgbe_xmit_frame(काष्ठा sk_buff *skb,
+				      काष्ठा net_device *netdev,
+				      काष्ठा ixgbe_ring *ring)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_ring *tx_ring;
 
 	/*
-	 * The minimum packet size for olinfo paylen is 17 so pad the skb
+	 * The minimum packet size क्रम olinfo paylen is 17 so pad the skb
 	 * in order to meet this minimum size requirement.
 	 */
-	if (skb_put_padto(skb, 17))
-		return NETDEV_TX_OK;
+	अगर (skb_put_padto(skb, 17))
+		वापस NETDEV_TX_OK;
 
 	tx_ring = ring ? ring : adapter->tx_ring[skb_get_queue_mapping(skb)];
-	if (unlikely(test_bit(__IXGBE_TX_DISABLED, &tx_ring->state)))
-		return NETDEV_TX_BUSY;
+	अगर (unlikely(test_bit(__IXGBE_TX_DISABLED, &tx_ring->state)))
+		वापस NETDEV_TX_BUSY;
 
-	return ixgbe_xmit_frame_ring(skb, adapter, tx_ring);
-}
+	वापस ixgbe_xmit_frame_ring(skb, adapter, tx_ring);
+पूर्ण
 
-static netdev_tx_t ixgbe_xmit_frame(struct sk_buff *skb,
-				    struct net_device *netdev)
-{
-	return __ixgbe_xmit_frame(skb, netdev, NULL);
-}
+अटल netdev_tx_t ixgbe_xmit_frame(काष्ठा sk_buff *skb,
+				    काष्ठा net_device *netdev)
+अणु
+	वापस __ixgbe_xmit_frame(skb, netdev, शून्य);
+पूर्ण
 
 /**
  * ixgbe_set_mac - Change the Ethernet Address of the NIC
- * @netdev: network interface device structure
- * @p: pointer to an address structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @p: poपूर्णांकer to an address काष्ठाure
  *
  * Returns 0 on success, negative on failure
  **/
-static int ixgbe_set_mac(struct net_device *netdev, void *p)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct sockaddr *addr = p;
+अटल पूर्णांक ixgbe_set_mac(काष्ठा net_device *netdev, व्योम *p)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा sockaddr *addr = p;
 
-	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(addr->sa_data))
+		वापस -EADDRNOTAVAIL;
 
-	memcpy(netdev->dev_addr, addr->sa_data, netdev->addr_len);
-	memcpy(hw->mac.addr, addr->sa_data, netdev->addr_len);
+	स_नकल(netdev->dev_addr, addr->sa_data, netdev->addr_len);
+	स_नकल(hw->mac.addr, addr->sa_data, netdev->addr_len);
 
-	ixgbe_mac_set_default_filter(adapter);
+	ixgbe_mac_set_शेष_filter(adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ixgbe_mdio_read(struct net_device *netdev, int prtad, int devad, u16 addr)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल पूर्णांक
+ixgbe_mdio_पढ़ो(काष्ठा net_device *netdev, पूर्णांक prtad, पूर्णांक devad, u16 addr)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u16 value;
-	int rc;
+	पूर्णांक rc;
 
-	if (adapter->mii_bus) {
-		int regnum = addr;
+	अगर (adapter->mii_bus) अणु
+		पूर्णांक regnum = addr;
 
-		if (devad != MDIO_DEVAD_NONE)
+		अगर (devad != MDIO_DEVAD_NONE)
 			regnum |= (devad << 16) | MII_ADDR_C45;
 
-		return mdiobus_read(adapter->mii_bus, prtad, regnum);
-	}
+		वापस mdiobus_पढ़ो(adapter->mii_bus, prtad, regnum);
+	पूर्ण
 
-	if (prtad != hw->phy.mdio.prtad)
-		return -EINVAL;
-	rc = hw->phy.ops.read_reg(hw, addr, devad, &value);
-	if (!rc)
+	अगर (prtad != hw->phy.mdio.prtad)
+		वापस -EINVAL;
+	rc = hw->phy.ops.पढ़ो_reg(hw, addr, devad, &value);
+	अगर (!rc)
 		rc = value;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ixgbe_mdio_write(struct net_device *netdev, int prtad, int devad,
+अटल पूर्णांक ixgbe_mdio_ग_लिखो(काष्ठा net_device *netdev, पूर्णांक prtad, पूर्णांक devad,
 			    u16 addr, u16 value)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	if (adapter->mii_bus) {
-		int regnum = addr;
+	अगर (adapter->mii_bus) अणु
+		पूर्णांक regnum = addr;
 
-		if (devad != MDIO_DEVAD_NONE)
+		अगर (devad != MDIO_DEVAD_NONE)
 			regnum |= (devad << 16) | MII_ADDR_C45;
 
-		return mdiobus_write(adapter->mii_bus, prtad, regnum, value);
-	}
+		वापस mdiobus_ग_लिखो(adapter->mii_bus, prtad, regnum, value);
+	पूर्ण
 
-	if (prtad != hw->phy.mdio.prtad)
-		return -EINVAL;
-	return hw->phy.ops.write_reg(hw, addr, devad, value);
-}
+	अगर (prtad != hw->phy.mdio.prtad)
+		वापस -EINVAL;
+	वापस hw->phy.ops.ग_लिखो_reg(hw, addr, devad, value);
+पूर्ण
 
-static int ixgbe_ioctl(struct net_device *netdev, struct ifreq *req, int cmd)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक ixgbe_ioctl(काष्ठा net_device *netdev, काष्ठा अगरreq *req, पूर्णांक cmd)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
 
-	switch (cmd) {
-	case SIOCSHWTSTAMP:
-		return ixgbe_ptp_set_ts_config(adapter, req);
-	case SIOCGHWTSTAMP:
-		return ixgbe_ptp_get_ts_config(adapter, req);
-	case SIOCGMIIPHY:
-		if (!adapter->hw.phy.ops.read_reg)
-			return -EOPNOTSUPP;
+	चयन (cmd) अणु
+	हाल SIOCSHWTSTAMP:
+		वापस ixgbe_ptp_set_ts_config(adapter, req);
+	हाल SIOCGHWTSTAMP:
+		वापस ixgbe_ptp_get_ts_config(adapter, req);
+	हाल SIOCGMIIPHY:
+		अगर (!adapter->hw.phy.ops.पढ़ो_reg)
+			वापस -EOPNOTSUPP;
 		fallthrough;
-	default:
-		return mdio_mii_ioctl(&adapter->hw.phy.mdio, if_mii(req), cmd);
-	}
-}
+	शेष:
+		वापस mdio_mii_ioctl(&adapter->hw.phy.mdio, अगर_mii(req), cmd);
+	पूर्ण
+पूर्ण
 
 /**
  * ixgbe_add_sanmac_netdev - Add the SAN MAC address to the corresponding
  * netdev->dev_addrs
- * @dev: network interface device structure
+ * @dev: network पूर्णांकerface device काष्ठाure
  *
  * Returns non-zero on failure
  **/
-static int ixgbe_add_sanmac_netdev(struct net_device *dev)
-{
-	int err = 0;
-	struct ixgbe_adapter *adapter = netdev_priv(dev);
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल पूर्णांक ixgbe_add_sanmac_netdev(काष्ठा net_device *dev)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	if (is_valid_ether_addr(hw->mac.san_addr)) {
+	अगर (is_valid_ether_addr(hw->mac.san_addr)) अणु
 		rtnl_lock();
 		err = dev_addr_add(dev, hw->mac.san_addr, NETDEV_HW_ADDR_T_SAN);
 		rtnl_unlock();
 
 		/* update SAN MAC vmdq pool selection */
 		hw->mac.ops.set_vmdq_san_mac(hw, VMDQ_P(0));
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /**
  * ixgbe_del_sanmac_netdev - Removes the SAN MAC address to the corresponding
  * netdev->dev_addrs
- * @dev: network interface device structure
+ * @dev: network पूर्णांकerface device काष्ठाure
  *
  * Returns non-zero on failure
  **/
-static int ixgbe_del_sanmac_netdev(struct net_device *dev)
-{
-	int err = 0;
-	struct ixgbe_adapter *adapter = netdev_priv(dev);
-	struct ixgbe_mac_info *mac = &adapter->hw.mac;
+अटल पूर्णांक ixgbe_del_sanmac_netdev(काष्ठा net_device *dev)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
+	काष्ठा ixgbe_mac_info *mac = &adapter->hw.mac;
 
-	if (is_valid_ether_addr(mac->san_addr)) {
+	अगर (is_valid_ether_addr(mac->san_addr)) अणु
 		rtnl_lock();
 		err = dev_addr_del(dev, mac->san_addr, NETDEV_HW_ADDR_T_SAN);
 		rtnl_unlock();
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void ixgbe_get_ring_stats64(struct rtnl_link_stats64 *stats,
-				   struct ixgbe_ring *ring)
-{
+अटल व्योम ixgbe_get_ring_stats64(काष्ठा rtnl_link_stats64 *stats,
+				   काष्ठा ixgbe_ring *ring)
+अणु
 	u64 bytes, packets;
-	unsigned int start;
+	अचिन्हित पूर्णांक start;
 
-	if (ring) {
-		do {
+	अगर (ring) अणु
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&ring->syncp);
 			packets = ring->stats.packets;
 			bytes   = ring->stats.bytes;
-		} while (u64_stats_fetch_retry_irq(&ring->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->syncp, start));
 		stats->tx_packets += packets;
 		stats->tx_bytes   += bytes;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ixgbe_get_stats64(struct net_device *netdev,
-			      struct rtnl_link_stats64 *stats)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	int i;
+अटल व्योम ixgbe_get_stats64(काष्ठा net_device *netdev,
+			      काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक i;
 
-	rcu_read_lock();
-	for (i = 0; i < adapter->num_rx_queues; i++) {
-		struct ixgbe_ring *ring = READ_ONCE(adapter->rx_ring[i]);
+	rcu_पढ़ो_lock();
+	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+		काष्ठा ixgbe_ring *ring = READ_ONCE(adapter->rx_ring[i]);
 		u64 bytes, packets;
-		unsigned int start;
+		अचिन्हित पूर्णांक start;
 
-		if (ring) {
-			do {
+		अगर (ring) अणु
+			करो अणु
 				start = u64_stats_fetch_begin_irq(&ring->syncp);
 				packets = ring->stats.packets;
 				bytes   = ring->stats.bytes;
-			} while (u64_stats_fetch_retry_irq(&ring->syncp, start));
+			पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->syncp, start));
 			stats->rx_packets += packets;
 			stats->rx_bytes   += bytes;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < adapter->num_tx_queues; i++) {
-		struct ixgbe_ring *ring = READ_ONCE(adapter->tx_ring[i]);
-
-		ixgbe_get_ring_stats64(stats, ring);
-	}
-	for (i = 0; i < adapter->num_xdp_queues; i++) {
-		struct ixgbe_ring *ring = READ_ONCE(adapter->xdp_ring[i]);
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+		काष्ठा ixgbe_ring *ring = READ_ONCE(adapter->tx_ring[i]);
 
 		ixgbe_get_ring_stats64(stats, ring);
-	}
-	rcu_read_unlock();
+	पूर्ण
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++) अणु
+		काष्ठा ixgbe_ring *ring = READ_ONCE(adapter->xdp_ring[i]);
 
-	/* following stats updated by ixgbe_watchdog_task() */
+		ixgbe_get_ring_stats64(stats, ring);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+
+	/* following stats updated by ixgbe_watchकरोg_task() */
 	stats->multicast	= netdev->stats.multicast;
 	stats->rx_errors	= netdev->stats.rx_errors;
 	stats->rx_length_errors	= netdev->stats.rx_length_errors;
 	stats->rx_crc_errors	= netdev->stats.rx_crc_errors;
 	stats->rx_missed_errors	= netdev->stats.rx_missed_errors;
-}
+पूर्ण
 
-#ifdef CONFIG_IXGBE_DCB
+#अगर_घोषित CONFIG_IXGBE_DCB
 /**
- * ixgbe_validate_rtr - verify 802.1Qp to Rx packet buffer mapping is valid.
- * @adapter: pointer to ixgbe_adapter
+ * ixgbe_validate_rtr - verअगरy 802.1Qp to Rx packet buffer mapping is valid.
+ * @adapter: poपूर्णांकer to ixgbe_adapter
  * @tc: number of traffic classes currently enabled
  *
  * Configure a valid 802.1Qp to Rx packet buffer mapping ie confirm
  * 802.1Q priority maps to a packet buffer that exists.
  */
-static void ixgbe_validate_rtr(struct ixgbe_adapter *adapter, u8 tc)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_validate_rtr(काष्ठा ixgbe_adapter *adapter, u8 tc)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 reg, rsave;
-	int i;
+	पूर्णांक i;
 
-	/* 82598 have a static priority to TC mapping that can not
+	/* 82598 have a अटल priority to TC mapping that can not
 	 * be changed so no validation is needed.
 	 */
-	if (hw->mac.type == ixgbe_mac_82598EB)
-		return;
+	अगर (hw->mac.type == ixgbe_mac_82598EB)
+		वापस;
 
 	reg = IXGBE_READ_REG(hw, IXGBE_RTRUP2TC);
 	rsave = reg;
 
-	for (i = 0; i < MAX_TRAFFIC_CLASS; i++) {
+	क्रम (i = 0; i < MAX_TRAFFIC_CLASS; i++) अणु
 		u8 up2tc = reg >> (i * IXGBE_RTRUP2TC_UP_SHIFT);
 
-		/* If up2tc is out of bounds default to zero */
-		if (up2tc > tc)
+		/* If up2tc is out of bounds शेष to zero */
+		अगर (up2tc > tc)
 			reg &= ~(0x7 << IXGBE_RTRUP2TC_UP_SHIFT);
-	}
+	पूर्ण
 
-	if (reg != rsave)
+	अगर (reg != rsave)
 		IXGBE_WRITE_REG(hw, IXGBE_RTRUP2TC, reg);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
  * ixgbe_set_prio_tc_map - Configure netdev prio tc map
- * @adapter: Pointer to adapter struct
+ * @adapter: Poपूर्णांकer to adapter काष्ठा
  *
  * Populate the netdev user priority to tc map
  */
-static void ixgbe_set_prio_tc_map(struct ixgbe_adapter *adapter)
-{
-	struct net_device *dev = adapter->netdev;
-	struct ixgbe_dcb_config *dcb_cfg = &adapter->dcb_cfg;
-	struct ieee_ets *ets = adapter->ixgbe_ieee_ets;
+अटल व्योम ixgbe_set_prio_tc_map(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
+	काष्ठा ixgbe_dcb_config *dcb_cfg = &adapter->dcb_cfg;
+	काष्ठा ieee_ets *ets = adapter->ixgbe_ieee_ets;
 	u8 prio;
 
-	for (prio = 0; prio < MAX_USER_PRIORITY; prio++) {
+	क्रम (prio = 0; prio < MAX_USER_PRIORITY; prio++) अणु
 		u8 tc = 0;
 
-		if (adapter->dcbx_cap & DCB_CAP_DCBX_VER_CEE)
+		अगर (adapter->dcbx_cap & DCB_CAP_DCBX_VER_CEE)
 			tc = ixgbe_dcb_get_tc_from_up(dcb_cfg, 0, prio);
-		else if (ets)
+		अन्यथा अगर (ets)
 			tc = ets->prio_tc[prio];
 
 		netdev_set_prio_tc_map(dev, prio, tc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif /* CONFIG_IXGBE_DCB */
-static int ixgbe_reassign_macvlan_pool(struct net_device *vdev,
-				       struct netdev_nested_priv *priv)
-{
-	struct ixgbe_adapter *adapter = (struct ixgbe_adapter *)priv->data;
-	struct ixgbe_fwd_adapter *accel;
-	int pool;
+#पूर्ण_अगर /* CONFIG_IXGBE_DCB */
+अटल पूर्णांक ixgbe_reassign_macvlan_pool(काष्ठा net_device *vdev,
+				       काष्ठा netdev_nested_priv *priv)
+अणु
+	काष्ठा ixgbe_adapter *adapter = (काष्ठा ixgbe_adapter *)priv->data;
+	काष्ठा ixgbe_fwd_adapter *accel;
+	पूर्णांक pool;
 
 	/* we only care about macvlans... */
-	if (!netif_is_macvlan(vdev))
-		return 0;
+	अगर (!netअगर_is_macvlan(vdev))
+		वापस 0;
 
 	/* that have hardware offload enabled... */
 	accel = macvlan_accel_priv(vdev);
-	if (!accel)
-		return 0;
+	अगर (!accel)
+		वापस 0;
 
-	/* If we can relocate to a different bit do so */
-	pool = find_first_zero_bit(adapter->fwd_bitmask, adapter->num_rx_pools);
-	if (pool < adapter->num_rx_pools) {
-		set_bit(pool, adapter->fwd_bitmask);
+	/* If we can relocate to a dअगरferent bit करो so */
+	pool = find_first_zero_bit(adapter->fwd_biपंचांगask, adapter->num_rx_pools);
+	अगर (pool < adapter->num_rx_pools) अणु
+		set_bit(pool, adapter->fwd_biपंचांगask);
 		accel->pool = pool;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* if we cannot find a free pool then disable the offload */
+	/* अगर we cannot find a मुक्त pool then disable the offload */
 	netdev_err(vdev, "L2FW offload disabled due to lack of queue resources\n");
 	macvlan_release_l2fw_offload(vdev);
 
@@ -9061,65 +9062,65 @@ static int ixgbe_reassign_macvlan_pool(struct net_device *vdev,
 	netdev_unbind_sb_channel(adapter->netdev, vdev);
 	netdev_set_sb_channel(vdev, 0);
 
-	kfree(accel);
+	kमुक्त(accel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ixgbe_defrag_macvlan_pools(struct net_device *dev)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(dev);
-	struct netdev_nested_priv priv = {
-		.data = (void *)adapter,
-	};
+अटल व्योम ixgbe_defrag_macvlan_pools(काष्ठा net_device *dev)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
+	काष्ठा netdev_nested_priv priv = अणु
+		.data = (व्योम *)adapter,
+	पूर्ण;
 
-	/* flush any stale bits out of the fwd bitmask */
-	bitmap_clear(adapter->fwd_bitmask, 1, 63);
+	/* flush any stale bits out of the fwd biपंचांगask */
+	biपंचांगap_clear(adapter->fwd_biपंचांगask, 1, 63);
 
 	/* walk through upper devices reassigning pools */
 	netdev_walk_all_upper_dev_rcu(dev, ixgbe_reassign_macvlan_pool,
 				      &priv);
-}
+पूर्ण
 
 /**
- * ixgbe_setup_tc - configure net_device for multiple traffic classes
+ * ixgbe_setup_tc - configure net_device क्रम multiple traffic classes
  *
  * @dev: net device to configure
  * @tc: number of traffic classes to enable
  */
-int ixgbe_setup_tc(struct net_device *dev, u8 tc)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(dev);
-	struct ixgbe_hw *hw = &adapter->hw;
+पूर्णांक ixgbe_setup_tc(काष्ठा net_device *dev, u8 tc)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
 	/* Hardware supports up to 8 traffic classes */
-	if (tc > adapter->dcb_cfg.num_tcs.pg_tcs)
-		return -EINVAL;
+	अगर (tc > adapter->dcb_cfg.num_tcs.pg_tcs)
+		वापस -EINVAL;
 
-	if (hw->mac.type == ixgbe_mac_82598EB && tc && tc < MAX_TRAFFIC_CLASS)
-		return -EINVAL;
+	अगर (hw->mac.type == ixgbe_mac_82598EB && tc && tc < MAX_TRAFFIC_CLASS)
+		वापस -EINVAL;
 
-	/* Hardware has to reinitialize queues and interrupts to
-	 * match packet buffer alignment. Unfortunately, the
-	 * hardware is not flexible enough to do this dynamically.
+	/* Hardware has to reinitialize queues and पूर्णांकerrupts to
+	 * match packet buffer alignment. Unक्रमtunately, the
+	 * hardware is not flexible enough to करो this dynamically.
 	 */
-	if (netif_running(dev))
-		ixgbe_close(dev);
-	else
+	अगर (netअगर_running(dev))
+		ixgbe_बंद(dev);
+	अन्यथा
 		ixgbe_reset(adapter);
 
-	ixgbe_clear_interrupt_scheme(adapter);
+	ixgbe_clear_पूर्णांकerrupt_scheme(adapter);
 
-#ifdef CONFIG_IXGBE_DCB
-	if (tc) {
-		if (adapter->xdp_prog) {
+#अगर_घोषित CONFIG_IXGBE_DCB
+	अगर (tc) अणु
+		अगर (adapter->xdp_prog) अणु
 			e_warn(probe, "DCB is not supported with XDP\n");
 
-			ixgbe_init_interrupt_scheme(adapter);
-			if (netif_running(dev))
-				ixgbe_open(dev);
-			return -EINVAL;
-		}
+			ixgbe_init_पूर्णांकerrupt_scheme(adapter);
+			अगर (netअगर_running(dev))
+				ixgbe_खोलो(dev);
+			वापस -EINVAL;
+		पूर्ण
 
 		netdev_set_num_tc(dev, tc);
 		ixgbe_set_prio_tc_map(adapter);
@@ -9127,14 +9128,14 @@ int ixgbe_setup_tc(struct net_device *dev, u8 tc)
 		adapter->hw_tcs = tc;
 		adapter->flags |= IXGBE_FLAG_DCB_ENABLED;
 
-		if (adapter->hw.mac.type == ixgbe_mac_82598EB) {
+		अगर (adapter->hw.mac.type == ixgbe_mac_82598EB) अणु
 			adapter->last_lfc_mode = adapter->hw.fc.requested_mode;
 			adapter->hw.fc.requested_mode = ixgbe_fc_none;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		netdev_reset_tc(dev);
 
-		if (adapter->hw.mac.type == ixgbe_mac_82598EB)
+		अगर (adapter->hw.mac.type == ixgbe_mac_82598EB)
 			adapter->hw.fc.requested_mode = adapter->last_lfc_mode;
 
 		adapter->flags &= ~IXGBE_FLAG_DCB_ENABLED;
@@ -9142,278 +9143,278 @@ int ixgbe_setup_tc(struct net_device *dev, u8 tc)
 
 		adapter->temp_dcb_cfg.pfc_mode_enable = false;
 		adapter->dcb_cfg.pfc_mode_enable = false;
-	}
+	पूर्ण
 
 	ixgbe_validate_rtr(adapter, tc);
 
-#endif /* CONFIG_IXGBE_DCB */
-	ixgbe_init_interrupt_scheme(adapter);
+#पूर्ण_अगर /* CONFIG_IXGBE_DCB */
+	ixgbe_init_पूर्णांकerrupt_scheme(adapter);
 
 	ixgbe_defrag_macvlan_pools(dev);
 
-	if (netif_running(dev))
-		return ixgbe_open(dev);
+	अगर (netअगर_running(dev))
+		वापस ixgbe_खोलो(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbe_delete_clsu32(struct ixgbe_adapter *adapter,
-			       struct tc_cls_u32_offload *cls)
-{
+अटल पूर्णांक ixgbe_delete_clsu32(काष्ठा ixgbe_adapter *adapter,
+			       काष्ठा tc_cls_u32_offload *cls)
+अणु
 	u32 hdl = cls->knode.handle;
 	u32 uhtid = TC_U32_USERHTID(cls->knode.handle);
 	u32 loc = cls->knode.handle & 0xfffff;
-	int err = 0, i, j;
-	struct ixgbe_jump_table *jump = NULL;
+	पूर्णांक err = 0, i, j;
+	काष्ठा ixgbe_jump_table *jump = शून्य;
 
-	if (loc > IXGBE_MAX_HW_ENTRIES)
-		return -EINVAL;
+	अगर (loc > IXGBE_MAX_HW_ENTRIES)
+		वापस -EINVAL;
 
-	if ((uhtid != 0x800) && (uhtid >= IXGBE_MAX_LINK_HANDLE))
-		return -EINVAL;
+	अगर ((uhtid != 0x800) && (uhtid >= IXGBE_MAX_LINK_HANDLE))
+		वापस -EINVAL;
 
 	/* Clear this filter in the link data it is associated with */
-	if (uhtid != 0x800) {
+	अगर (uhtid != 0x800) अणु
 		jump = adapter->jump_tables[uhtid];
-		if (!jump)
-			return -EINVAL;
-		if (!test_bit(loc - 1, jump->child_loc_map))
-			return -EINVAL;
+		अगर (!jump)
+			वापस -EINVAL;
+		अगर (!test_bit(loc - 1, jump->child_loc_map))
+			वापस -EINVAL;
 		clear_bit(loc - 1, jump->child_loc_map);
-	}
+	पूर्ण
 
-	/* Check if the filter being deleted is a link */
-	for (i = 1; i < IXGBE_MAX_LINK_HANDLE; i++) {
+	/* Check अगर the filter being deleted is a link */
+	क्रम (i = 1; i < IXGBE_MAX_LINK_HANDLE; i++) अणु
 		jump = adapter->jump_tables[i];
-		if (jump && jump->link_hdl == hdl) {
+		अगर (jump && jump->link_hdl == hdl) अणु
 			/* Delete filters in the hardware in the child hash
 			 * table associated with this link
 			 */
-			for (j = 0; j < IXGBE_MAX_HW_ENTRIES; j++) {
-				if (!test_bit(j, jump->child_loc_map))
-					continue;
+			क्रम (j = 0; j < IXGBE_MAX_HW_ENTRIES; j++) अणु
+				अगर (!test_bit(j, jump->child_loc_map))
+					जारी;
 				spin_lock(&adapter->fdir_perfect_lock);
 				err = ixgbe_update_ethtool_fdir_entry(adapter,
-								      NULL,
+								      शून्य,
 								      j + 1);
 				spin_unlock(&adapter->fdir_perfect_lock);
 				clear_bit(j, jump->child_loc_map);
-			}
-			/* Remove resources for this link */
-			kfree(jump->input);
-			kfree(jump->mask);
-			kfree(jump);
-			adapter->jump_tables[i] = NULL;
-			return err;
-		}
-	}
+			पूर्ण
+			/* Remove resources क्रम this link */
+			kमुक्त(jump->input);
+			kमुक्त(jump->mask);
+			kमुक्त(jump);
+			adapter->jump_tables[i] = शून्य;
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	spin_lock(&adapter->fdir_perfect_lock);
-	err = ixgbe_update_ethtool_fdir_entry(adapter, NULL, loc);
+	err = ixgbe_update_ethtool_fdir_entry(adapter, शून्य, loc);
 	spin_unlock(&adapter->fdir_perfect_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ixgbe_configure_clsu32_add_hnode(struct ixgbe_adapter *adapter,
-					    struct tc_cls_u32_offload *cls)
-{
+अटल पूर्णांक ixgbe_configure_clsu32_add_hnode(काष्ठा ixgbe_adapter *adapter,
+					    काष्ठा tc_cls_u32_offload *cls)
+अणु
 	u32 uhtid = TC_U32_USERHTID(cls->hnode.handle);
 
-	if (uhtid >= IXGBE_MAX_LINK_HANDLE)
-		return -EINVAL;
+	अगर (uhtid >= IXGBE_MAX_LINK_HANDLE)
+		वापस -EINVAL;
 
-	/* This ixgbe devices do not support hash tables at the moment
-	 * so abort when given hash tables.
+	/* This ixgbe devices करो not support hash tables at the moment
+	 * so पात when given hash tables.
 	 */
-	if (cls->hnode.divisor > 0)
-		return -EINVAL;
+	अगर (cls->hnode.भागisor > 0)
+		वापस -EINVAL;
 
 	set_bit(uhtid - 1, &adapter->tables);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbe_configure_clsu32_del_hnode(struct ixgbe_adapter *adapter,
-					    struct tc_cls_u32_offload *cls)
-{
+अटल पूर्णांक ixgbe_configure_clsu32_del_hnode(काष्ठा ixgbe_adapter *adapter,
+					    काष्ठा tc_cls_u32_offload *cls)
+अणु
 	u32 uhtid = TC_U32_USERHTID(cls->hnode.handle);
 
-	if (uhtid >= IXGBE_MAX_LINK_HANDLE)
-		return -EINVAL;
+	अगर (uhtid >= IXGBE_MAX_LINK_HANDLE)
+		वापस -EINVAL;
 
 	clear_bit(uhtid - 1, &adapter->tables);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_NET_CLS_ACT
-struct upper_walk_data {
-	struct ixgbe_adapter *adapter;
+#अगर_घोषित CONFIG_NET_CLS_ACT
+काष्ठा upper_walk_data अणु
+	काष्ठा ixgbe_adapter *adapter;
 	u64 action;
-	int ifindex;
+	पूर्णांक अगरindex;
 	u8 queue;
-};
+पूर्ण;
 
-static int get_macvlan_queue(struct net_device *upper,
-			     struct netdev_nested_priv *priv)
-{
-	if (netif_is_macvlan(upper)) {
-		struct ixgbe_fwd_adapter *vadapter = macvlan_accel_priv(upper);
-		struct ixgbe_adapter *adapter;
-		struct upper_walk_data *data;
-		int ifindex;
+अटल पूर्णांक get_macvlan_queue(काष्ठा net_device *upper,
+			     काष्ठा netdev_nested_priv *priv)
+अणु
+	अगर (netअगर_is_macvlan(upper)) अणु
+		काष्ठा ixgbe_fwd_adapter *vadapter = macvlan_accel_priv(upper);
+		काष्ठा ixgbe_adapter *adapter;
+		काष्ठा upper_walk_data *data;
+		पूर्णांक अगरindex;
 
-		data = (struct upper_walk_data *)priv->data;
-		ifindex = data->ifindex;
+		data = (काष्ठा upper_walk_data *)priv->data;
+		अगरindex = data->अगरindex;
 		adapter = data->adapter;
-		if (vadapter && upper->ifindex == ifindex) {
+		अगर (vadapter && upper->अगरindex == अगरindex) अणु
 			data->queue = adapter->rx_ring[vadapter->rx_base_queue]->reg_idx;
 			data->action = data->queue;
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int handle_redirect_action(struct ixgbe_adapter *adapter, int ifindex,
+अटल पूर्णांक handle_redirect_action(काष्ठा ixgbe_adapter *adapter, पूर्णांक अगरindex,
 				  u8 *queue, u64 *action)
-{
-	struct ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
-	unsigned int num_vfs = adapter->num_vfs, vf;
-	struct netdev_nested_priv priv;
-	struct upper_walk_data data;
-	struct net_device *upper;
+अणु
+	काष्ठा ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
+	अचिन्हित पूर्णांक num_vfs = adapter->num_vfs, vf;
+	काष्ठा netdev_nested_priv priv;
+	काष्ठा upper_walk_data data;
+	काष्ठा net_device *upper;
 
 	/* redirect to a SRIOV VF */
-	for (vf = 0; vf < num_vfs; ++vf) {
+	क्रम (vf = 0; vf < num_vfs; ++vf) अणु
 		upper = pci_get_drvdata(adapter->vfinfo[vf].vfdev);
-		if (upper->ifindex == ifindex) {
+		अगर (upper->अगरindex == अगरindex) अणु
 			*queue = vf * __ALIGN_MASK(1, ~vmdq->mask);
 			*action = vf + 1;
 			*action <<= ETHTOOL_RX_FLOW_SPEC_RING_VF_OFF;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	/* redirect to a offloaded macvlan netdev */
 	data.adapter = adapter;
-	data.ifindex = ifindex;
+	data.अगरindex = अगरindex;
 	data.action = 0;
 	data.queue = 0;
-	priv.data = (void *)&data;
-	if (netdev_walk_all_upper_dev_rcu(adapter->netdev,
-					  get_macvlan_queue, &priv)) {
+	priv.data = (व्योम *)&data;
+	अगर (netdev_walk_all_upper_dev_rcu(adapter->netdev,
+					  get_macvlan_queue, &priv)) अणु
 		*action = data.action;
 		*queue = data.queue;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int parse_tc_actions(struct ixgbe_adapter *adapter,
-			    struct tcf_exts *exts, u64 *action, u8 *queue)
-{
-	const struct tc_action *a;
-	int i;
+अटल पूर्णांक parse_tc_actions(काष्ठा ixgbe_adapter *adapter,
+			    काष्ठा tcf_exts *exts, u64 *action, u8 *queue)
+अणु
+	स्थिर काष्ठा tc_action *a;
+	पूर्णांक i;
 
-	if (!tcf_exts_has_actions(exts))
-		return -EINVAL;
+	अगर (!tcf_exts_has_actions(exts))
+		वापस -EINVAL;
 
-	tcf_exts_for_each_action(i, a, exts) {
+	tcf_exts_क्रम_each_action(i, a, exts) अणु
 		/* Drop action */
-		if (is_tcf_gact_shot(a)) {
-			*action = IXGBE_FDIR_DROP_QUEUE;
-			*queue = IXGBE_FDIR_DROP_QUEUE;
-			return 0;
-		}
+		अगर (is_tcf_gact_shot(a)) अणु
+			*action = IXGBE_Fसूची_DROP_QUEUE;
+			*queue = IXGBE_Fसूची_DROP_QUEUE;
+			वापस 0;
+		पूर्ण
 
 		/* Redirect to a VF or a offloaded macvlan */
-		if (is_tcf_mirred_egress_redirect(a)) {
-			struct net_device *dev = tcf_mirred_dev(a);
+		अगर (is_tcf_mirred_egress_redirect(a)) अणु
+			काष्ठा net_device *dev = tcf_mirred_dev(a);
 
-			if (!dev)
-				return -EINVAL;
-			return handle_redirect_action(adapter, dev->ifindex,
+			अगर (!dev)
+				वापस -EINVAL;
+			वापस handle_redirect_action(adapter, dev->अगरindex,
 						      queue, action);
-		}
+		पूर्ण
 
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return -EINVAL;
-}
-#else
-static int parse_tc_actions(struct ixgbe_adapter *adapter,
-			    struct tcf_exts *exts, u64 *action, u8 *queue)
-{
-	return -EINVAL;
-}
-#endif /* CONFIG_NET_CLS_ACT */
+	वापस -EINVAL;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक parse_tc_actions(काष्ठा ixgbe_adapter *adapter,
+			    काष्ठा tcf_exts *exts, u64 *action, u8 *queue)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NET_CLS_ACT */
 
-static int ixgbe_clsu32_build_input(struct ixgbe_fdir_filter *input,
-				    union ixgbe_atr_input *mask,
-				    struct tc_cls_u32_offload *cls,
-				    struct ixgbe_mat_field *field_ptr,
-				    struct ixgbe_nexthdr *nexthdr)
-{
-	int i, j, off;
+अटल पूर्णांक ixgbe_clsu32_build_input(काष्ठा ixgbe_fdir_filter *input,
+				    जोड़ ixgbe_atr_input *mask,
+				    काष्ठा tc_cls_u32_offload *cls,
+				    काष्ठा ixgbe_mat_field *field_ptr,
+				    काष्ठा ixgbe_nexthdr *nexthdr)
+अणु
+	पूर्णांक i, j, off;
 	__be32 val, m;
 	bool found_entry = false, found_jump_field = false;
 
-	for (i = 0; i < cls->knode.sel->nkeys; i++) {
+	क्रम (i = 0; i < cls->knode.sel->nkeys; i++) अणु
 		off = cls->knode.sel->keys[i].off;
 		val = cls->knode.sel->keys[i].val;
 		m = cls->knode.sel->keys[i].mask;
 
-		for (j = 0; field_ptr[j].val; j++) {
-			if (field_ptr[j].off == off) {
-				field_ptr[j].val(input, mask, (__force u32)val,
-						 (__force u32)m);
-				input->filter.formatted.flow_type |=
+		क्रम (j = 0; field_ptr[j].val; j++) अणु
+			अगर (field_ptr[j].off == off) अणु
+				field_ptr[j].val(input, mask, (__क्रमce u32)val,
+						 (__क्रमce u32)m);
+				input->filter.क्रमmatted.flow_type |=
 					field_ptr[j].type;
 				found_entry = true;
-				break;
-			}
-		}
-		if (nexthdr) {
-			if (nexthdr->off == cls->knode.sel->keys[i].off &&
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (nexthdr) अणु
+			अगर (nexthdr->off == cls->knode.sel->keys[i].off &&
 			    nexthdr->val ==
-			    (__force u32)cls->knode.sel->keys[i].val &&
+			    (__क्रमce u32)cls->knode.sel->keys[i].val &&
 			    nexthdr->mask ==
-			    (__force u32)cls->knode.sel->keys[i].mask)
+			    (__क्रमce u32)cls->knode.sel->keys[i].mask)
 				found_jump_field = true;
-			else
-				continue;
-		}
-	}
+			अन्यथा
+				जारी;
+		पूर्ण
+	पूर्ण
 
-	if (nexthdr && !found_jump_field)
-		return -EINVAL;
+	अगर (nexthdr && !found_jump_field)
+		वापस -EINVAL;
 
-	if (!found_entry)
-		return 0;
+	अगर (!found_entry)
+		वापस 0;
 
-	mask->formatted.flow_type = IXGBE_ATR_L4TYPE_IPV6_MASK |
+	mask->क्रमmatted.flow_type = IXGBE_ATR_L4TYPE_IPV6_MASK |
 				    IXGBE_ATR_L4TYPE_MASK;
 
-	if (input->filter.formatted.flow_type == IXGBE_ATR_FLOW_TYPE_IPV4)
-		mask->formatted.flow_type &= IXGBE_ATR_L4TYPE_IPV6_MASK;
+	अगर (input->filter.क्रमmatted.flow_type == IXGBE_ATR_FLOW_TYPE_IPV4)
+		mask->क्रमmatted.flow_type &= IXGBE_ATR_L4TYPE_IPV6_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbe_configure_clsu32(struct ixgbe_adapter *adapter,
-				  struct tc_cls_u32_offload *cls)
-{
+अटल पूर्णांक ixgbe_configure_clsu32(काष्ठा ixgbe_adapter *adapter,
+				  काष्ठा tc_cls_u32_offload *cls)
+अणु
 	__be16 protocol = cls->common.protocol;
 	u32 loc = cls->knode.handle & 0xfffff;
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct ixgbe_mat_field *field_ptr;
-	struct ixgbe_fdir_filter *input = NULL;
-	union ixgbe_atr_input *mask = NULL;
-	struct ixgbe_jump_table *jump = NULL;
-	int i, err = -EINVAL;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_mat_field *field_ptr;
+	काष्ठा ixgbe_fdir_filter *input = शून्य;
+	जोड़ ixgbe_atr_input *mask = शून्य;
+	काष्ठा ixgbe_jump_table *jump = शून्य;
+	पूर्णांक i, err = -EINVAL;
 	u8 queue;
 	u32 uhtid, link_uhtid;
 
@@ -9427,290 +9428,290 @@ static int ixgbe_configure_clsu32(struct ixgbe_adapter *adapter,
 	 * is in front of the network layer. Fix cls_u32 to support L2
 	 * headers when needed.
 	 */
-	if (protocol != htons(ETH_P_IP))
-		return err;
+	अगर (protocol != htons(ETH_P_IP))
+		वापस err;
 
-	if (loc >= ((1024 << adapter->fdir_pballoc) - 2)) {
+	अगर (loc >= ((1024 << adapter->fdir_pballoc) - 2)) अणु
 		e_err(drv, "Location out of range\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* cls u32 is a graph starting at root node 0x800. The driver tracks
 	 * links and also the fields used to advance the parser across each
 	 * link (e.g. nexthdr/eat parameters from 'tc'). This way we can map
 	 * the u32 graph onto the hardware parse graph denoted in ixgbe_model.h
-	 * To add support for new nodes update ixgbe_model.h parse structures
+	 * To add support क्रम new nodes update ixgbe_model.h parse काष्ठाures
 	 * this function _should_ be generic try not to hardcode values here.
 	 */
-	if (uhtid == 0x800) {
+	अगर (uhtid == 0x800) अणु
 		field_ptr = (adapter->jump_tables[0])->mat;
-	} else {
-		if (uhtid >= IXGBE_MAX_LINK_HANDLE)
-			return err;
-		if (!adapter->jump_tables[uhtid])
-			return err;
+	पूर्ण अन्यथा अणु
+		अगर (uhtid >= IXGBE_MAX_LINK_HANDLE)
+			वापस err;
+		अगर (!adapter->jump_tables[uhtid])
+			वापस err;
 		field_ptr = (adapter->jump_tables[uhtid])->mat;
-	}
+	पूर्ण
 
-	if (!field_ptr)
-		return err;
+	अगर (!field_ptr)
+		वापस err;
 
-	/* At this point we know the field_ptr is valid and need to either
+	/* At this poपूर्णांक we know the field_ptr is valid and need to either
 	 * build cls_u32 link or attach filter. Because adding a link to
-	 * a handle that does not exist is invalid and the same for adding
-	 * rules to handles that don't exist.
+	 * a handle that करोes not exist is invalid and the same क्रम adding
+	 * rules to handles that करोn't exist.
 	 */
 
-	if (link_uhtid) {
-		struct ixgbe_nexthdr *nexthdr = ixgbe_ipv4_jumps;
+	अगर (link_uhtid) अणु
+		काष्ठा ixgbe_nexthdr *nexthdr = ixgbe_ipv4_jumps;
 
-		if (link_uhtid >= IXGBE_MAX_LINK_HANDLE)
-			return err;
+		अगर (link_uhtid >= IXGBE_MAX_LINK_HANDLE)
+			वापस err;
 
-		if (!test_bit(link_uhtid - 1, &adapter->tables))
-			return err;
+		अगर (!test_bit(link_uhtid - 1, &adapter->tables))
+			वापस err;
 
 		/* Multiple filters as links to the same hash table are not
 		 * supported. To add a new filter with the same next header
-		 * but different match/jump conditions, create a new hash table
+		 * but dअगरferent match/jump conditions, create a new hash table
 		 * and link to it.
 		 */
-		if (adapter->jump_tables[link_uhtid] &&
-		    (adapter->jump_tables[link_uhtid])->link_hdl) {
+		अगर (adapter->jump_tables[link_uhtid] &&
+		    (adapter->jump_tables[link_uhtid])->link_hdl) अणु
 			e_err(drv, "Link filter exists for link: %x\n",
 			      link_uhtid);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		for (i = 0; nexthdr[i].jump; i++) {
-			if (nexthdr[i].o != cls->knode.sel->offoff ||
-			    nexthdr[i].s != cls->knode.sel->offshift ||
+		क्रम (i = 0; nexthdr[i].jump; i++) अणु
+			अगर (nexthdr[i].o != cls->knode.sel->offoff ||
+			    nexthdr[i].s != cls->knode.sel->offshअगरt ||
 			    nexthdr[i].m !=
-			    (__force u32)cls->knode.sel->offmask)
-				return err;
+			    (__क्रमce u32)cls->knode.sel->offmask)
+				वापस err;
 
-			jump = kzalloc(sizeof(*jump), GFP_KERNEL);
-			if (!jump)
-				return -ENOMEM;
-			input = kzalloc(sizeof(*input), GFP_KERNEL);
-			if (!input) {
+			jump = kzalloc(माप(*jump), GFP_KERNEL);
+			अगर (!jump)
+				वापस -ENOMEM;
+			input = kzalloc(माप(*input), GFP_KERNEL);
+			अगर (!input) अणु
 				err = -ENOMEM;
-				goto free_jump;
-			}
-			mask = kzalloc(sizeof(*mask), GFP_KERNEL);
-			if (!mask) {
+				जाओ मुक्त_jump;
+			पूर्ण
+			mask = kzalloc(माप(*mask), GFP_KERNEL);
+			अगर (!mask) अणु
 				err = -ENOMEM;
-				goto free_input;
-			}
+				जाओ मुक्त_input;
+			पूर्ण
 			jump->input = input;
 			jump->mask = mask;
 			jump->link_hdl = cls->knode.handle;
 
 			err = ixgbe_clsu32_build_input(input, mask, cls,
 						       field_ptr, &nexthdr[i]);
-			if (!err) {
+			अगर (!err) अणु
 				jump->mat = nexthdr[i].jump;
 				adapter->jump_tables[link_uhtid] = jump;
-				break;
-			} else {
-				kfree(mask);
-				kfree(input);
-				kfree(jump);
-			}
-		}
-		return 0;
-	}
+				अवरोध;
+			पूर्ण अन्यथा अणु
+				kमुक्त(mask);
+				kमुक्त(input);
+				kमुक्त(jump);
+			पूर्ण
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	input = kzalloc(sizeof(*input), GFP_KERNEL);
-	if (!input)
-		return -ENOMEM;
-	mask = kzalloc(sizeof(*mask), GFP_KERNEL);
-	if (!mask) {
+	input = kzalloc(माप(*input), GFP_KERNEL);
+	अगर (!input)
+		वापस -ENOMEM;
+	mask = kzalloc(माप(*mask), GFP_KERNEL);
+	अगर (!mask) अणु
 		err = -ENOMEM;
-		goto free_input;
-	}
+		जाओ मुक्त_input;
+	पूर्ण
 
-	if ((uhtid != 0x800) && (adapter->jump_tables[uhtid])) {
-		if ((adapter->jump_tables[uhtid])->input)
-			memcpy(input, (adapter->jump_tables[uhtid])->input,
-			       sizeof(*input));
-		if ((adapter->jump_tables[uhtid])->mask)
-			memcpy(mask, (adapter->jump_tables[uhtid])->mask,
-			       sizeof(*mask));
+	अगर ((uhtid != 0x800) && (adapter->jump_tables[uhtid])) अणु
+		अगर ((adapter->jump_tables[uhtid])->input)
+			स_नकल(input, (adapter->jump_tables[uhtid])->input,
+			       माप(*input));
+		अगर ((adapter->jump_tables[uhtid])->mask)
+			स_नकल(mask, (adapter->jump_tables[uhtid])->mask,
+			       माप(*mask));
 
-		/* Lookup in all child hash tables if this location is already
+		/* Lookup in all child hash tables अगर this location is alपढ़ोy
 		 * filled with a filter
 		 */
-		for (i = 1; i < IXGBE_MAX_LINK_HANDLE; i++) {
-			struct ixgbe_jump_table *link = adapter->jump_tables[i];
+		क्रम (i = 1; i < IXGBE_MAX_LINK_HANDLE; i++) अणु
+			काष्ठा ixgbe_jump_table *link = adapter->jump_tables[i];
 
-			if (link && (test_bit(loc - 1, link->child_loc_map))) {
+			अगर (link && (test_bit(loc - 1, link->child_loc_map))) अणु
 				e_err(drv, "Filter exists in location: %x\n",
 				      loc);
 				err = -EINVAL;
-				goto err_out;
-			}
-		}
-	}
-	err = ixgbe_clsu32_build_input(input, mask, cls, field_ptr, NULL);
-	if (err)
-		goto err_out;
+				जाओ err_out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	err = ixgbe_clsu32_build_input(input, mask, cls, field_ptr, शून्य);
+	अगर (err)
+		जाओ err_out;
 
 	err = parse_tc_actions(adapter, cls->knode.exts, &input->action,
 			       &queue);
-	if (err < 0)
-		goto err_out;
+	अगर (err < 0)
+		जाओ err_out;
 
 	input->sw_idx = loc;
 
 	spin_lock(&adapter->fdir_perfect_lock);
 
-	if (hlist_empty(&adapter->fdir_filter_list)) {
-		memcpy(&adapter->fdir_mask, mask, sizeof(*mask));
+	अगर (hlist_empty(&adapter->fdir_filter_list)) अणु
+		स_नकल(&adapter->fdir_mask, mask, माप(*mask));
 		err = ixgbe_fdir_set_input_mask_82599(hw, mask);
-		if (err)
-			goto err_out_w_lock;
-	} else if (memcmp(&adapter->fdir_mask, mask, sizeof(*mask))) {
+		अगर (err)
+			जाओ err_out_w_lock;
+	पूर्ण अन्यथा अगर (स_भेद(&adapter->fdir_mask, mask, माप(*mask))) अणु
 		err = -EINVAL;
-		goto err_out_w_lock;
-	}
+		जाओ err_out_w_lock;
+	पूर्ण
 
 	ixgbe_atr_compute_perfect_hash_82599(&input->filter, mask);
-	err = ixgbe_fdir_write_perfect_filter_82599(hw, &input->filter,
+	err = ixgbe_fdir_ग_लिखो_perfect_filter_82599(hw, &input->filter,
 						    input->sw_idx, queue);
-	if (err)
-		goto err_out_w_lock;
+	अगर (err)
+		जाओ err_out_w_lock;
 
 	ixgbe_update_ethtool_fdir_entry(adapter, input, input->sw_idx);
 	spin_unlock(&adapter->fdir_perfect_lock);
 
-	if ((uhtid != 0x800) && (adapter->jump_tables[uhtid]))
+	अगर ((uhtid != 0x800) && (adapter->jump_tables[uhtid]))
 		set_bit(loc - 1, (adapter->jump_tables[uhtid])->child_loc_map);
 
-	kfree(mask);
-	return err;
+	kमुक्त(mask);
+	वापस err;
 err_out_w_lock:
 	spin_unlock(&adapter->fdir_perfect_lock);
 err_out:
-	kfree(mask);
-free_input:
-	kfree(input);
-free_jump:
-	kfree(jump);
-	return err;
-}
+	kमुक्त(mask);
+मुक्त_input:
+	kमुक्त(input);
+मुक्त_jump:
+	kमुक्त(jump);
+	वापस err;
+पूर्ण
 
-static int ixgbe_setup_tc_cls_u32(struct ixgbe_adapter *adapter,
-				  struct tc_cls_u32_offload *cls_u32)
-{
-	switch (cls_u32->command) {
-	case TC_CLSU32_NEW_KNODE:
-	case TC_CLSU32_REPLACE_KNODE:
-		return ixgbe_configure_clsu32(adapter, cls_u32);
-	case TC_CLSU32_DELETE_KNODE:
-		return ixgbe_delete_clsu32(adapter, cls_u32);
-	case TC_CLSU32_NEW_HNODE:
-	case TC_CLSU32_REPLACE_HNODE:
-		return ixgbe_configure_clsu32_add_hnode(adapter, cls_u32);
-	case TC_CLSU32_DELETE_HNODE:
-		return ixgbe_configure_clsu32_del_hnode(adapter, cls_u32);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक ixgbe_setup_tc_cls_u32(काष्ठा ixgbe_adapter *adapter,
+				  काष्ठा tc_cls_u32_offload *cls_u32)
+अणु
+	चयन (cls_u32->command) अणु
+	हाल TC_CLSU32_NEW_KNODE:
+	हाल TC_CLSU32_REPLACE_KNODE:
+		वापस ixgbe_configure_clsu32(adapter, cls_u32);
+	हाल TC_CLSU32_DELETE_KNODE:
+		वापस ixgbe_delete_clsu32(adapter, cls_u32);
+	हाल TC_CLSU32_NEW_HNODE:
+	हाल TC_CLSU32_REPLACE_HNODE:
+		वापस ixgbe_configure_clsu32_add_hnode(adapter, cls_u32);
+	हाल TC_CLSU32_DELETE_HNODE:
+		वापस ixgbe_configure_clsu32_del_hnode(adapter, cls_u32);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int ixgbe_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
-				   void *cb_priv)
-{
-	struct ixgbe_adapter *adapter = cb_priv;
+अटल पूर्णांक ixgbe_setup_tc_block_cb(क्रमागत tc_setup_type type, व्योम *type_data,
+				   व्योम *cb_priv)
+अणु
+	काष्ठा ixgbe_adapter *adapter = cb_priv;
 
-	if (!tc_cls_can_offload_and_chain0(adapter->netdev, type_data))
-		return -EOPNOTSUPP;
+	अगर (!tc_cls_can_offload_and_chain0(adapter->netdev, type_data))
+		वापस -EOPNOTSUPP;
 
-	switch (type) {
-	case TC_SETUP_CLSU32:
-		return ixgbe_setup_tc_cls_u32(adapter, type_data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (type) अणु
+	हाल TC_SETUP_CLSU32:
+		वापस ixgbe_setup_tc_cls_u32(adapter, type_data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int ixgbe_setup_tc_mqprio(struct net_device *dev,
-				 struct tc_mqprio_qopt *mqprio)
-{
+अटल पूर्णांक ixgbe_setup_tc_mqprio(काष्ठा net_device *dev,
+				 काष्ठा tc_mqprio_qopt *mqprio)
+अणु
 	mqprio->hw = TC_MQPRIO_HW_OFFLOAD_TCS;
-	return ixgbe_setup_tc(dev, mqprio->num_tc);
-}
+	वापस ixgbe_setup_tc(dev, mqprio->num_tc);
+पूर्ण
 
-static LIST_HEAD(ixgbe_block_cb_list);
+अटल LIST_HEAD(ixgbe_block_cb_list);
 
-static int __ixgbe_setup_tc(struct net_device *dev, enum tc_setup_type type,
-			    void *type_data)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(dev);
+अटल पूर्णांक __ixgbe_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type,
+			    व्योम *type_data)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
 
-	switch (type) {
-	case TC_SETUP_BLOCK:
-		return flow_block_cb_setup_simple(type_data,
+	चयन (type) अणु
+	हाल TC_SETUP_BLOCK:
+		वापस flow_block_cb_setup_simple(type_data,
 						  &ixgbe_block_cb_list,
 						  ixgbe_setup_tc_block_cb,
 						  adapter, adapter, true);
-	case TC_SETUP_QDISC_MQPRIO:
-		return ixgbe_setup_tc_mqprio(dev, type_data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	हाल TC_SETUP_QDISC_MQPRIO:
+		वापस ixgbe_setup_tc_mqprio(dev, type_data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PCI_IOV
-void ixgbe_sriov_reinit(struct ixgbe_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
+#अगर_घोषित CONFIG_PCI_IOV
+व्योम ixgbe_sriov_reinit(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
 
 	rtnl_lock();
 	ixgbe_setup_tc(netdev, adapter->hw_tcs);
 	rtnl_unlock();
-}
+पूर्ण
 
-#endif
-void ixgbe_do_reset(struct net_device *netdev)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
+#पूर्ण_अगर
+व्योम ixgbe_करो_reset(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
 
-	if (netif_running(netdev))
+	अगर (netअगर_running(netdev))
 		ixgbe_reinit_locked(adapter);
-	else
+	अन्यथा
 		ixgbe_reset(adapter);
-}
+पूर्ण
 
-static netdev_features_t ixgbe_fix_features(struct net_device *netdev,
+अटल netdev_features_t ixgbe_fix_features(काष्ठा net_device *netdev,
 					    netdev_features_t features)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
 
 	/* If Rx checksum is disabled, then RSC/LRO should also be disabled */
-	if (!(features & NETIF_F_RXCSUM))
+	अगर (!(features & NETIF_F_RXCSUM))
 		features &= ~NETIF_F_LRO;
 
-	/* Turn off LRO if not RSC capable */
-	if (!(adapter->flags2 & IXGBE_FLAG2_RSC_CAPABLE))
+	/* Turn off LRO अगर not RSC capable */
+	अगर (!(adapter->flags2 & IXGBE_FLAG2_RSC_CAPABLE))
 		features &= ~NETIF_F_LRO;
 
-	if (adapter->xdp_prog && (features & NETIF_F_LRO)) {
+	अगर (adapter->xdp_prog && (features & NETIF_F_LRO)) अणु
 		e_dev_err("LRO is not supported with XDP\n");
 		features &= ~NETIF_F_LRO;
-	}
+	पूर्ण
 
-	return features;
-}
+	वापस features;
+पूर्ण
 
-static void ixgbe_reset_l2fw_offload(struct ixgbe_adapter *adapter)
-{
-	int rss = min_t(int, ixgbe_max_rss_indices(adapter),
+अटल व्योम ixgbe_reset_l2fw_offload(काष्ठा ixgbe_adapter *adapter)
+अणु
+	पूर्णांक rss = min_t(पूर्णांक, ixgbe_max_rss_indices(adapter),
 			num_online_cpus());
 
-	/* go back to full RSS if we're not running SR-IOV */
-	if (!adapter->ring_feature[RING_F_VMDQ].offset)
+	/* go back to full RSS अगर we're not running SR-IOV */
+	अगर (!adapter->ring_feature[RING_F_VMDQ].offset)
 		adapter->flags &= ~(IXGBE_FLAG_VMDQ_ENABLED |
 				    IXGBE_FLAG_SRIOV_ENABLED);
 
@@ -9718,117 +9719,117 @@ static void ixgbe_reset_l2fw_offload(struct ixgbe_adapter *adapter)
 	adapter->ring_feature[RING_F_VMDQ].limit = 1;
 
 	ixgbe_setup_tc(adapter->netdev, adapter->hw_tcs);
-}
+पूर्ण
 
-static int ixgbe_set_features(struct net_device *netdev,
+अटल पूर्णांक ixgbe_set_features(काष्ठा net_device *netdev,
 			      netdev_features_t features)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
 	netdev_features_t changed = netdev->features ^ features;
 	bool need_reset = false;
 
-	/* Make sure RSC matches LRO, reset if change */
-	if (!(features & NETIF_F_LRO)) {
-		if (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED)
+	/* Make sure RSC matches LRO, reset अगर change */
+	अगर (!(features & NETIF_F_LRO)) अणु
+		अगर (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED)
 			need_reset = true;
 		adapter->flags2 &= ~IXGBE_FLAG2_RSC_ENABLED;
-	} else if ((adapter->flags2 & IXGBE_FLAG2_RSC_CAPABLE) &&
-		   !(adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED)) {
-		if (adapter->rx_itr_setting == 1 ||
-		    adapter->rx_itr_setting > IXGBE_MIN_RSC_ITR) {
+	पूर्ण अन्यथा अगर ((adapter->flags2 & IXGBE_FLAG2_RSC_CAPABLE) &&
+		   !(adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED)) अणु
+		अगर (adapter->rx_itr_setting == 1 ||
+		    adapter->rx_itr_setting > IXGBE_MIN_RSC_ITR) अणु
 			adapter->flags2 |= IXGBE_FLAG2_RSC_ENABLED;
 			need_reset = true;
-		} else if ((changed ^ features) & NETIF_F_LRO) {
+		पूर्ण अन्यथा अगर ((changed ^ features) & NETIF_F_LRO) अणु
 			e_info(probe, "rx-usecs set too low, "
 			       "disabling RSC\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Check if Flow Director n-tuple support or hw_tc support was
+	 * Check अगर Flow Director n-tuple support or hw_tc support was
 	 * enabled or disabled.  If the state changed, we need to reset.
 	 */
-	if ((features & NETIF_F_NTUPLE) || (features & NETIF_F_HW_TC)) {
+	अगर ((features & NETIF_F_NTUPLE) || (features & NETIF_F_HW_TC)) अणु
 		/* turn off ATR, enable perfect filters and reset */
-		if (!(adapter->flags & IXGBE_FLAG_FDIR_PERFECT_CAPABLE))
+		अगर (!(adapter->flags & IXGBE_FLAG_Fसूची_PERFECT_CAPABLE))
 			need_reset = true;
 
-		adapter->flags &= ~IXGBE_FLAG_FDIR_HASH_CAPABLE;
-		adapter->flags |= IXGBE_FLAG_FDIR_PERFECT_CAPABLE;
-	} else {
+		adapter->flags &= ~IXGBE_FLAG_Fसूची_HASH_CAPABLE;
+		adapter->flags |= IXGBE_FLAG_Fसूची_PERFECT_CAPABLE;
+	पूर्ण अन्यथा अणु
 		/* turn off perfect filters, enable ATR and reset */
-		if (adapter->flags & IXGBE_FLAG_FDIR_PERFECT_CAPABLE)
+		अगर (adapter->flags & IXGBE_FLAG_Fसूची_PERFECT_CAPABLE)
 			need_reset = true;
 
-		adapter->flags &= ~IXGBE_FLAG_FDIR_PERFECT_CAPABLE;
+		adapter->flags &= ~IXGBE_FLAG_Fसूची_PERFECT_CAPABLE;
 
-		/* We cannot enable ATR if SR-IOV is enabled */
-		if (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED ||
-		    /* We cannot enable ATR if we have 2 or more tcs */
+		/* We cannot enable ATR अगर SR-IOV is enabled */
+		अगर (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED ||
+		    /* We cannot enable ATR अगर we have 2 or more tcs */
 		    (adapter->hw_tcs > 1) ||
-		    /* We cannot enable ATR if RSS is disabled */
+		    /* We cannot enable ATR अगर RSS is disabled */
 		    (adapter->ring_feature[RING_F_RSS].limit <= 1) ||
 		    /* A sample rate of 0 indicates ATR disabled */
 		    (!adapter->atr_sample_rate))
-			; /* do nothing not supported */
-		else /* otherwise supported and set the flag */
-			adapter->flags |= IXGBE_FLAG_FDIR_HASH_CAPABLE;
-	}
+			; /* करो nothing not supported */
+		अन्यथा /* otherwise supported and set the flag */
+			adapter->flags |= IXGBE_FLAG_Fसूची_HASH_CAPABLE;
+	पूर्ण
 
-	if (changed & NETIF_F_RXALL)
+	अगर (changed & NETIF_F_RXALL)
 		need_reset = true;
 
 	netdev->features = features;
 
-	if ((changed & NETIF_F_HW_L2FW_DOFFLOAD) && adapter->num_rx_pools > 1)
+	अगर ((changed & NETIF_F_HW_L2FW_DOFFLOAD) && adapter->num_rx_pools > 1)
 		ixgbe_reset_l2fw_offload(adapter);
-	else if (need_reset)
-		ixgbe_do_reset(netdev);
-	else if (changed & (NETIF_F_HW_VLAN_CTAG_RX |
+	अन्यथा अगर (need_reset)
+		ixgbe_करो_reset(netdev);
+	अन्यथा अगर (changed & (NETIF_F_HW_VLAN_CTAG_RX |
 			    NETIF_F_HW_VLAN_CTAG_FILTER))
 		ixgbe_set_rx_mode(netdev);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int ixgbe_ndo_fdb_add(struct ndmsg *ndm, struct nlattr *tb[],
-			     struct net_device *dev,
-			     const unsigned char *addr, u16 vid,
+अटल पूर्णांक ixgbe_nकरो_fdb_add(काष्ठा ndmsg *ndm, काष्ठा nlattr *tb[],
+			     काष्ठा net_device *dev,
+			     स्थिर अचिन्हित अक्षर *addr, u16 vid,
 			     u16 flags,
-			     struct netlink_ext_ack *extack)
-{
-	/* guarantee we can provide a unique filter for the unicast address */
-	if (is_unicast_ether_addr(addr) || is_link_local_ether_addr(addr)) {
-		struct ixgbe_adapter *adapter = netdev_priv(dev);
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	/* guarantee we can provide a unique filter क्रम the unicast address */
+	अगर (is_unicast_ether_addr(addr) || is_link_local_ether_addr(addr)) अणु
+		काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
 		u16 pool = VMDQ_P(0);
 
-		if (netdev_uc_count(dev) >= ixgbe_available_rars(adapter, pool))
-			return -ENOMEM;
-	}
+		अगर (netdev_uc_count(dev) >= ixgbe_available_rars(adapter, pool))
+			वापस -ENOMEM;
+	पूर्ण
 
-	return ndo_dflt_fdb_add(ndm, tb, dev, addr, vid, flags);
-}
+	वापस nकरो_dflt_fdb_add(ndm, tb, dev, addr, vid, flags);
+पूर्ण
 
 /**
  * ixgbe_configure_bridge_mode - set various bridge modes
- * @adapter: the private structure
+ * @adapter: the निजी काष्ठाure
  * @mode: requested bridge mode
  *
- * Configure some settings require for various bridge modes.
+ * Configure some settings require क्रम various bridge modes.
  **/
-static int ixgbe_configure_bridge_mode(struct ixgbe_adapter *adapter,
+अटल पूर्णांक ixgbe_configure_bridge_mode(काष्ठा ixgbe_adapter *adapter,
 				       __u16 mode)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	unsigned int p, num_pools;
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	अचिन्हित पूर्णांक p, num_pools;
 	u32 vmdctl;
 
-	switch (mode) {
-	case BRIDGE_MODE_VEPA:
-		/* disable Tx loopback, rely on switch hairpin mode */
+	चयन (mode) अणु
+	हाल BRIDGE_MODE_VEPA:
+		/* disable Tx loopback, rely on चयन hairpin mode */
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_PFDTXGSWC, 0);
 
-		/* must enable Rx switching replication to allow multicast
+		/* must enable Rx चयनing replication to allow multicast
 		 * packet reception on all VFs, and to enable source address
 		 * pruning.
 		 */
@@ -9837,144 +9838,144 @@ static int ixgbe_configure_bridge_mode(struct ixgbe_adapter *adapter,
 		IXGBE_WRITE_REG(hw, IXGBE_VMD_CTL, vmdctl);
 
 		/* enable Rx source address pruning. Note, this requires
-		 * replication to be enabled or else it does nothing.
+		 * replication to be enabled or अन्यथा it करोes nothing.
 		 */
 		num_pools = adapter->num_vfs + adapter->num_rx_pools;
-		for (p = 0; p < num_pools; p++) {
-			if (hw->mac.ops.set_source_address_pruning)
+		क्रम (p = 0; p < num_pools; p++) अणु
+			अगर (hw->mac.ops.set_source_address_pruning)
 				hw->mac.ops.set_source_address_pruning(hw,
 								       true,
 								       p);
-		}
-		break;
-	case BRIDGE_MODE_VEB:
-		/* enable Tx loopback for internal VF/PF communication */
+		पूर्ण
+		अवरोध;
+	हाल BRIDGE_MODE_VEB:
+		/* enable Tx loopback क्रम पूर्णांकernal VF/PF communication */
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_PFDTXGSWC,
 				IXGBE_PFDTXGSWC_VT_LBEN);
 
-		/* disable Rx switching replication unless we have SR-IOV
-		 * virtual functions
+		/* disable Rx चयनing replication unless we have SR-IOV
+		 * भव functions
 		 */
 		vmdctl = IXGBE_READ_REG(hw, IXGBE_VMD_CTL);
-		if (!adapter->num_vfs)
+		अगर (!adapter->num_vfs)
 			vmdctl &= ~IXGBE_VT_CTL_REPLEN;
 		IXGBE_WRITE_REG(hw, IXGBE_VMD_CTL, vmdctl);
 
-		/* disable Rx source address pruning, since we don't expect to
-		 * be receiving external loopback of our transmitted frames.
+		/* disable Rx source address pruning, since we करोn't expect to
+		 * be receiving बाह्यal loopback of our transmitted frames.
 		 */
 		num_pools = adapter->num_vfs + adapter->num_rx_pools;
-		for (p = 0; p < num_pools; p++) {
-			if (hw->mac.ops.set_source_address_pruning)
+		क्रम (p = 0; p < num_pools; p++) अणु
+			अगर (hw->mac.ops.set_source_address_pruning)
 				hw->mac.ops.set_source_address_pruning(hw,
 								       false,
 								       p);
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	adapter->bridge_mode = mode;
 
 	e_info(drv, "enabling bridge mode: %s\n",
 	       mode == BRIDGE_MODE_VEPA ? "VEPA" : "VEB");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbe_ndo_bridge_setlink(struct net_device *dev,
-				    struct nlmsghdr *nlh, u16 flags,
-				    struct netlink_ext_ack *extack)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(dev);
-	struct nlattr *attr, *br_spec;
-	int rem;
+अटल पूर्णांक ixgbe_nकरो_bridge_setlink(काष्ठा net_device *dev,
+				    काष्ठा nlmsghdr *nlh, u16 flags,
+				    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
+	काष्ठा nlattr *attr, *br_spec;
+	पूर्णांक rem;
 
-	if (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
-		return -EOPNOTSUPP;
+	अगर (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
+		वापस -EOPNOTSUPP;
 
-	br_spec = nlmsg_find_attr(nlh, sizeof(struct ifinfomsg), IFLA_AF_SPEC);
-	if (!br_spec)
-		return -EINVAL;
+	br_spec = nlmsg_find_attr(nlh, माप(काष्ठा अगरinfomsg), IFLA_AF_SPEC);
+	अगर (!br_spec)
+		वापस -EINVAL;
 
-	nla_for_each_nested(attr, br_spec, rem) {
-		int status;
+	nla_क्रम_each_nested(attr, br_spec, rem) अणु
+		पूर्णांक status;
 		__u16 mode;
 
-		if (nla_type(attr) != IFLA_BRIDGE_MODE)
-			continue;
+		अगर (nla_type(attr) != IFLA_BRIDGE_MODE)
+			जारी;
 
-		if (nla_len(attr) < sizeof(mode))
-			return -EINVAL;
+		अगर (nla_len(attr) < माप(mode))
+			वापस -EINVAL;
 
 		mode = nla_get_u16(attr);
 		status = ixgbe_configure_bridge_mode(adapter, mode);
-		if (status)
-			return status;
+		अगर (status)
+			वापस status;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbe_ndo_bridge_getlink(struct sk_buff *skb, u32 pid, u32 seq,
-				    struct net_device *dev,
-				    u32 filter_mask, int nlflags)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(dev);
+अटल पूर्णांक ixgbe_nकरो_bridge_getlink(काष्ठा sk_buff *skb, u32 pid, u32 seq,
+				    काष्ठा net_device *dev,
+				    u32 filter_mask, पूर्णांक nlflags)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
 
-	if (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
-		return 0;
+	अगर (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
+		वापस 0;
 
-	return ndo_dflt_bridge_getlink(skb, pid, seq, dev,
+	वापस nकरो_dflt_bridge_getlink(skb, pid, seq, dev,
 				       adapter->bridge_mode, 0, 0, nlflags,
-				       filter_mask, NULL);
-}
+				       filter_mask, शून्य);
+पूर्ण
 
-static void *ixgbe_fwd_add(struct net_device *pdev, struct net_device *vdev)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(pdev);
-	struct ixgbe_fwd_adapter *accel;
-	int tcs = adapter->hw_tcs ? : 1;
-	int pool, err;
+अटल व्योम *ixgbe_fwd_add(काष्ठा net_device *pdev, काष्ठा net_device *vdev)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(pdev);
+	काष्ठा ixgbe_fwd_adapter *accel;
+	पूर्णांक tcs = adapter->hw_tcs ? : 1;
+	पूर्णांक pool, err;
 
-	if (adapter->xdp_prog) {
+	अगर (adapter->xdp_prog) अणु
 		e_warn(probe, "L2FW offload is not supported with XDP\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	/* The hardware supported by ixgbe only filters on the destination MAC
-	 * address. In order to avoid issues we only support offloading modes
+	 * address. In order to aव्योम issues we only support offloading modes
 	 * where the hardware can actually provide the functionality.
 	 */
-	if (!macvlan_supports_dest_filter(vdev))
-		return ERR_PTR(-EMEDIUMTYPE);
+	अगर (!macvlan_supports_dest_filter(vdev))
+		वापस ERR_PTR(-EMEDIUMTYPE);
 
-	/* We need to lock down the macvlan to be a single queue device so that
+	/* We need to lock करोwn the macvlan to be a single queue device so that
 	 * we can reuse the tc_to_txq field in the macvlan netdev to represent
 	 * the queue mapping to our netdev.
 	 */
-	if (netif_is_multiqueue(vdev))
-		return ERR_PTR(-ERANGE);
+	अगर (netअगर_is_multiqueue(vdev))
+		वापस ERR_PTR(-दुस्फल);
 
-	pool = find_first_zero_bit(adapter->fwd_bitmask, adapter->num_rx_pools);
-	if (pool == adapter->num_rx_pools) {
+	pool = find_first_zero_bit(adapter->fwd_biपंचांगask, adapter->num_rx_pools);
+	अगर (pool == adapter->num_rx_pools) अणु
 		u16 used_pools = adapter->num_vfs + adapter->num_rx_pools;
 		u16 reserved_pools;
 
-		if (((adapter->flags & IXGBE_FLAG_DCB_ENABLED) &&
+		अगर (((adapter->flags & IXGBE_FLAG_DCB_ENABLED) &&
 		     adapter->num_rx_pools >= (MAX_TX_QUEUES / tcs)) ||
 		    adapter->num_rx_pools > IXGBE_MAX_MACVLANS)
-			return ERR_PTR(-EBUSY);
+			वापस ERR_PTR(-EBUSY);
 
 		/* Hardware has a limited number of available pools. Each VF,
-		 * and the PF require a pool. Check to ensure we don't
+		 * and the PF require a pool. Check to ensure we करोn't
 		 * attempt to use more then the available number of pools.
 		 */
-		if (used_pools >= IXGBE_MAX_VF_FUNCTIONS)
-			return ERR_PTR(-EBUSY);
+		अगर (used_pools >= IXGBE_MAX_VF_FUNCTIONS)
+			वापस ERR_PTR(-EBUSY);
 
 		/* Enable VMDq flag so device will be set in VM mode */
 		adapter->flags |= IXGBE_FLAG_VMDQ_ENABLED |
@@ -9984,100 +9985,100 @@ static void *ixgbe_fwd_add(struct net_device *pdev, struct net_device *vdev)
 		 * we start with the configurations that support 4 queues
 		 * per pools, followed by 2, and then by just 1 per pool.
 		 */
-		if (used_pools < 32 && adapter->num_rx_pools < 16)
+		अगर (used_pools < 32 && adapter->num_rx_pools < 16)
 			reserved_pools = min_t(u16,
 					       32 - used_pools,
 					       16 - adapter->num_rx_pools);
-		else if (adapter->num_rx_pools < 32)
+		अन्यथा अगर (adapter->num_rx_pools < 32)
 			reserved_pools = min_t(u16,
 					       64 - used_pools,
 					       32 - adapter->num_rx_pools);
-		else
+		अन्यथा
 			reserved_pools = 64 - used_pools;
 
 
-		if (!reserved_pools)
-			return ERR_PTR(-EBUSY);
+		अगर (!reserved_pools)
+			वापस ERR_PTR(-EBUSY);
 
 		adapter->ring_feature[RING_F_VMDQ].limit += reserved_pools;
 
 		/* Force reinit of ring allocation with VMDQ enabled */
 		err = ixgbe_setup_tc(pdev, adapter->hw_tcs);
-		if (err)
-			return ERR_PTR(err);
+		अगर (err)
+			वापस ERR_PTR(err);
 
-		if (pool >= adapter->num_rx_pools)
-			return ERR_PTR(-ENOMEM);
-	}
+		अगर (pool >= adapter->num_rx_pools)
+			वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	accel = kzalloc(sizeof(*accel), GFP_KERNEL);
-	if (!accel)
-		return ERR_PTR(-ENOMEM);
+	accel = kzalloc(माप(*accel), GFP_KERNEL);
+	अगर (!accel)
+		वापस ERR_PTR(-ENOMEM);
 
-	set_bit(pool, adapter->fwd_bitmask);
+	set_bit(pool, adapter->fwd_biपंचांगask);
 	netdev_set_sb_channel(vdev, pool);
 	accel->pool = pool;
 	accel->netdev = vdev;
 
-	if (!netif_running(pdev))
-		return accel;
+	अगर (!netअगर_running(pdev))
+		वापस accel;
 
 	err = ixgbe_fwd_ring_up(adapter, accel);
-	if (err)
-		return ERR_PTR(err);
+	अगर (err)
+		वापस ERR_PTR(err);
 
-	return accel;
-}
+	वापस accel;
+पूर्ण
 
-static void ixgbe_fwd_del(struct net_device *pdev, void *priv)
-{
-	struct ixgbe_fwd_adapter *accel = priv;
-	struct ixgbe_adapter *adapter = netdev_priv(pdev);
-	unsigned int rxbase = accel->rx_base_queue;
-	unsigned int i;
+अटल व्योम ixgbe_fwd_del(काष्ठा net_device *pdev, व्योम *priv)
+अणु
+	काष्ठा ixgbe_fwd_adapter *accel = priv;
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(pdev);
+	अचिन्हित पूर्णांक rxbase = accel->rx_base_queue;
+	अचिन्हित पूर्णांक i;
 
-	/* delete unicast filter associated with offloaded interface */
+	/* delete unicast filter associated with offloaded पूर्णांकerface */
 	ixgbe_del_mac_filter(adapter, accel->netdev->dev_addr,
 			     VMDQ_P(accel->pool));
 
-	/* Allow remaining Rx packets to get flushed out of the
-	 * Rx FIFO before we drop the netdev for the ring.
+	/* Allow reमुख्यing Rx packets to get flushed out of the
+	 * Rx FIFO beक्रमe we drop the netdev क्रम the ring.
 	 */
 	usleep_range(10000, 20000);
 
-	for (i = 0; i < adapter->num_rx_queues_per_pool; i++) {
-		struct ixgbe_ring *ring = adapter->rx_ring[rxbase + i];
-		struct ixgbe_q_vector *qv = ring->q_vector;
+	क्रम (i = 0; i < adapter->num_rx_queues_per_pool; i++) अणु
+		काष्ठा ixgbe_ring *ring = adapter->rx_ring[rxbase + i];
+		काष्ठा ixgbe_q_vector *qv = ring->q_vector;
 
 		/* Make sure we aren't processing any packets and clear
-		 * netdev to shut down the ring.
+		 * netdev to shut करोwn the ring.
 		 */
-		if (netif_running(adapter->netdev))
+		अगर (netअगर_running(adapter->netdev))
 			napi_synchronize(&qv->napi);
-		ring->netdev = NULL;
-	}
+		ring->netdev = शून्य;
+	पूर्ण
 
 	/* unbind the queues and drop the subordinate channel config */
 	netdev_unbind_sb_channel(pdev, accel->netdev);
 	netdev_set_sb_channel(accel->netdev, 0);
 
-	clear_bit(accel->pool, adapter->fwd_bitmask);
-	kfree(accel);
-}
+	clear_bit(accel->pool, adapter->fwd_biपंचांगask);
+	kमुक्त(accel);
+पूर्ण
 
-#define IXGBE_MAX_MAC_HDR_LEN		127
-#define IXGBE_MAX_NETWORK_HDR_LEN	511
+#घोषणा IXGBE_MAX_MAC_HDR_LEN		127
+#घोषणा IXGBE_MAX_NETWORK_HDR_LEN	511
 
-static netdev_features_t
-ixgbe_features_check(struct sk_buff *skb, struct net_device *dev,
+अटल netdev_features_t
+ixgbe_features_check(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
 		     netdev_features_t features)
-{
-	unsigned int network_hdr_len, mac_hdr_len;
+अणु
+	अचिन्हित पूर्णांक network_hdr_len, mac_hdr_len;
 
 	/* Make certain the headers can be described by a context descriptor */
 	mac_hdr_len = skb_network_header(skb) - skb->data;
-	if (unlikely(mac_hdr_len > IXGBE_MAX_MAC_HDR_LEN))
-		return features & ~(NETIF_F_HW_CSUM |
+	अगर (unlikely(mac_hdr_len > IXGBE_MAX_MAC_HDR_LEN))
+		वापस features & ~(NETIF_F_HW_CSUM |
 				    NETIF_F_SCTP_CRC |
 				    NETIF_F_GSO_UDP_L4 |
 				    NETIF_F_HW_VLAN_CTAG_TX |
@@ -10085,338 +10086,338 @@ ixgbe_features_check(struct sk_buff *skb, struct net_device *dev,
 				    NETIF_F_TSO6);
 
 	network_hdr_len = skb_checksum_start(skb) - skb_network_header(skb);
-	if (unlikely(network_hdr_len >  IXGBE_MAX_NETWORK_HDR_LEN))
-		return features & ~(NETIF_F_HW_CSUM |
+	अगर (unlikely(network_hdr_len >  IXGBE_MAX_NETWORK_HDR_LEN))
+		वापस features & ~(NETIF_F_HW_CSUM |
 				    NETIF_F_SCTP_CRC |
 				    NETIF_F_GSO_UDP_L4 |
 				    NETIF_F_TSO |
 				    NETIF_F_TSO6);
 
-	/* We can only support IPV4 TSO in tunnels if we can mangle the
-	 * inner IP ID field, so strip TSO if MANGLEID is not supported.
+	/* We can only support IPV4 TSO in tunnels अगर we can mangle the
+	 * inner IP ID field, so strip TSO अगर MANGLEID is not supported.
 	 * IPsec offoad sets skb->encapsulation but still can handle
 	 * the TSO, so it's the exception.
 	 */
-	if (skb->encapsulation && !(features & NETIF_F_TSO_MANGLEID)) {
-#ifdef CONFIG_IXGBE_IPSEC
-		if (!secpath_exists(skb))
-#endif
+	अगर (skb->encapsulation && !(features & NETIF_F_TSO_MANGLEID)) अणु
+#अगर_घोषित CONFIG_IXGBE_IPSEC
+		अगर (!secpath_exists(skb))
+#पूर्ण_अगर
 			features &= ~NETIF_F_TSO;
-	}
+	पूर्ण
 
-	return features;
-}
+	वापस features;
+पूर्ण
 
-static int ixgbe_xdp_setup(struct net_device *dev, struct bpf_prog *prog)
-{
-	int i, frame_size = dev->mtu + ETH_HLEN + ETH_FCS_LEN + VLAN_HLEN;
-	struct ixgbe_adapter *adapter = netdev_priv(dev);
-	struct bpf_prog *old_prog;
+अटल पूर्णांक ixgbe_xdp_setup(काष्ठा net_device *dev, काष्ठा bpf_prog *prog)
+अणु
+	पूर्णांक i, frame_size = dev->mtu + ETH_HLEN + ETH_FCS_LEN + VLAN_HLEN;
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
+	काष्ठा bpf_prog *old_prog;
 	bool need_reset;
 
-	if (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)
-		return -EINVAL;
+	अगर (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)
+		वापस -EINVAL;
 
-	if (adapter->flags & IXGBE_FLAG_DCB_ENABLED)
-		return -EINVAL;
+	अगर (adapter->flags & IXGBE_FLAG_DCB_ENABLED)
+		वापस -EINVAL;
 
-	/* verify ixgbe ring attributes are sufficient for XDP */
-	for (i = 0; i < adapter->num_rx_queues; i++) {
-		struct ixgbe_ring *ring = adapter->rx_ring[i];
+	/* verअगरy ixgbe ring attributes are sufficient क्रम XDP */
+	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+		काष्ठा ixgbe_ring *ring = adapter->rx_ring[i];
 
-		if (ring_is_rsc_enabled(ring))
-			return -EINVAL;
+		अगर (ring_is_rsc_enabled(ring))
+			वापस -EINVAL;
 
-		if (frame_size > ixgbe_rx_bufsz(ring))
-			return -EINVAL;
-	}
+		अगर (frame_size > ixgbe_rx_bufsz(ring))
+			वापस -EINVAL;
+	पूर्ण
 
-	if (nr_cpu_ids > MAX_XDP_QUEUES)
-		return -ENOMEM;
+	अगर (nr_cpu_ids > MAX_XDP_QUEUES)
+		वापस -ENOMEM;
 
 	old_prog = xchg(&adapter->xdp_prog, prog);
 	need_reset = (!!prog != !!old_prog);
 
 	/* If transitioning XDP modes reconfigure rings */
-	if (need_reset) {
-		int err;
+	अगर (need_reset) अणु
+		पूर्णांक err;
 
-		if (!prog)
-			/* Wait until ndo_xsk_wakeup completes. */
+		अगर (!prog)
+			/* Wait until nकरो_xsk_wakeup completes. */
 			synchronize_rcu();
 		err = ixgbe_setup_tc(dev, adapter->hw_tcs);
 
-		if (err) {
-			rcu_assign_pointer(adapter->xdp_prog, old_prog);
-			return -EINVAL;
-		}
-	} else {
-		for (i = 0; i < adapter->num_rx_queues; i++)
-			(void)xchg(&adapter->rx_ring[i]->xdp_prog,
+		अगर (err) अणु
+			rcu_assign_poपूर्णांकer(adapter->xdp_prog, old_prog);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < adapter->num_rx_queues; i++)
+			(व्योम)xchg(&adapter->rx_ring[i]->xdp_prog,
 			    adapter->xdp_prog);
-	}
+	पूर्ण
 
-	if (old_prog)
+	अगर (old_prog)
 		bpf_prog_put(old_prog);
 
-	/* Kick start the NAPI context if there is an AF_XDP socket open
+	/* Kick start the NAPI context अगर there is an AF_XDP socket खोलो
 	 * on that queue id. This so that receiving will start.
 	 */
-	if (need_reset && prog)
-		for (i = 0; i < adapter->num_rx_queues; i++)
-			if (adapter->xdp_ring[i]->xsk_pool)
-				(void)ixgbe_xsk_wakeup(adapter->netdev, i,
+	अगर (need_reset && prog)
+		क्रम (i = 0; i < adapter->num_rx_queues; i++)
+			अगर (adapter->xdp_ring[i]->xsk_pool)
+				(व्योम)ixgbe_xsk_wakeup(adapter->netdev, i,
 						       XDP_WAKEUP_RX);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbe_xdp(struct net_device *dev, struct netdev_bpf *xdp)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(dev);
+अटल पूर्णांक ixgbe_xdp(काष्ठा net_device *dev, काष्ठा netdev_bpf *xdp)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
 
-	switch (xdp->command) {
-	case XDP_SETUP_PROG:
-		return ixgbe_xdp_setup(dev, xdp->prog);
-	case XDP_SETUP_XSK_POOL:
-		return ixgbe_xsk_pool_setup(adapter, xdp->xsk.pool,
+	चयन (xdp->command) अणु
+	हाल XDP_SETUP_PROG:
+		वापस ixgbe_xdp_setup(dev, xdp->prog);
+	हाल XDP_SETUP_XSK_POOL:
+		वापस ixgbe_xsk_pool_setup(adapter, xdp->xsk.pool,
 					    xdp->xsk.queue_id);
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-void ixgbe_xdp_ring_update_tail(struct ixgbe_ring *ring)
-{
-	/* Force memory writes to complete before letting h/w know there
+व्योम ixgbe_xdp_ring_update_tail(काष्ठा ixgbe_ring *ring)
+अणु
+	/* Force memory ग_लिखोs to complete beक्रमe letting h/w know there
 	 * are new descriptors to fetch.
 	 */
 	wmb();
-	writel(ring->next_to_use, ring->tail);
-}
+	ग_लिखोl(ring->next_to_use, ring->tail);
+पूर्ण
 
-static int ixgbe_xdp_xmit(struct net_device *dev, int n,
-			  struct xdp_frame **frames, u32 flags)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(dev);
-	struct ixgbe_ring *ring;
-	int nxmit = 0;
-	int i;
+अटल पूर्णांक ixgbe_xdp_xmit(काष्ठा net_device *dev, पूर्णांक n,
+			  काष्ठा xdp_frame **frames, u32 flags)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
+	काष्ठा ixgbe_ring *ring;
+	पूर्णांक nxmit = 0;
+	पूर्णांक i;
 
-	if (unlikely(test_bit(__IXGBE_DOWN, &adapter->state)))
-		return -ENETDOWN;
+	अगर (unlikely(test_bit(__IXGBE_DOWN, &adapter->state)))
+		वापस -ENETDOWN;
 
-	if (unlikely(flags & ~XDP_XMIT_FLAGS_MASK))
-		return -EINVAL;
+	अगर (unlikely(flags & ~XDP_XMIT_FLAGS_MASK))
+		वापस -EINVAL;
 
-	/* During program transitions its possible adapter->xdp_prog is assigned
-	 * but ring has not been configured yet. In this case simply abort xmit.
+	/* During program transitions its possible adapter->xdp_prog is asचिन्हित
+	 * but ring has not been configured yet. In this हाल simply पात xmit.
 	 */
-	ring = adapter->xdp_prog ? adapter->xdp_ring[smp_processor_id()] : NULL;
-	if (unlikely(!ring))
-		return -ENXIO;
+	ring = adapter->xdp_prog ? adapter->xdp_ring[smp_processor_id()] : शून्य;
+	अगर (unlikely(!ring))
+		वापस -ENXIO;
 
-	if (unlikely(test_bit(__IXGBE_TX_DISABLED, &ring->state)))
-		return -ENXIO;
+	अगर (unlikely(test_bit(__IXGBE_TX_DISABLED, &ring->state)))
+		वापस -ENXIO;
 
-	for (i = 0; i < n; i++) {
-		struct xdp_frame *xdpf = frames[i];
-		int err;
+	क्रम (i = 0; i < n; i++) अणु
+		काष्ठा xdp_frame *xdpf = frames[i];
+		पूर्णांक err;
 
 		err = ixgbe_xmit_xdp_ring(adapter, xdpf);
-		if (err != IXGBE_XDP_TX)
-			break;
+		अगर (err != IXGBE_XDP_TX)
+			अवरोध;
 		nxmit++;
-	}
+	पूर्ण
 
-	if (unlikely(flags & XDP_XMIT_FLUSH))
+	अगर (unlikely(flags & XDP_XMIT_FLUSH))
 		ixgbe_xdp_ring_update_tail(ring);
 
-	return nxmit;
-}
+	वापस nxmit;
+पूर्ण
 
-static const struct net_device_ops ixgbe_netdev_ops = {
-	.ndo_open		= ixgbe_open,
-	.ndo_stop		= ixgbe_close,
-	.ndo_start_xmit		= ixgbe_xmit_frame,
-	.ndo_set_rx_mode	= ixgbe_set_rx_mode,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= ixgbe_set_mac,
-	.ndo_change_mtu		= ixgbe_change_mtu,
-	.ndo_tx_timeout		= ixgbe_tx_timeout,
-	.ndo_set_tx_maxrate	= ixgbe_tx_maxrate,
-	.ndo_vlan_rx_add_vid	= ixgbe_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid	= ixgbe_vlan_rx_kill_vid,
-	.ndo_do_ioctl		= ixgbe_ioctl,
-	.ndo_set_vf_mac		= ixgbe_ndo_set_vf_mac,
-	.ndo_set_vf_vlan	= ixgbe_ndo_set_vf_vlan,
-	.ndo_set_vf_rate	= ixgbe_ndo_set_vf_bw,
-	.ndo_set_vf_spoofchk	= ixgbe_ndo_set_vf_spoofchk,
-	.ndo_set_vf_rss_query_en = ixgbe_ndo_set_vf_rss_query_en,
-	.ndo_set_vf_trust	= ixgbe_ndo_set_vf_trust,
-	.ndo_get_vf_config	= ixgbe_ndo_get_vf_config,
-	.ndo_get_stats64	= ixgbe_get_stats64,
-	.ndo_setup_tc		= __ixgbe_setup_tc,
-#ifdef IXGBE_FCOE
-	.ndo_select_queue	= ixgbe_select_queue,
-	.ndo_fcoe_ddp_setup = ixgbe_fcoe_ddp_get,
-	.ndo_fcoe_ddp_target = ixgbe_fcoe_ddp_target,
-	.ndo_fcoe_ddp_done = ixgbe_fcoe_ddp_put,
-	.ndo_fcoe_enable = ixgbe_fcoe_enable,
-	.ndo_fcoe_disable = ixgbe_fcoe_disable,
-	.ndo_fcoe_get_wwn = ixgbe_fcoe_get_wwn,
-	.ndo_fcoe_get_hbainfo = ixgbe_fcoe_get_hbainfo,
-#endif /* IXGBE_FCOE */
-	.ndo_set_features = ixgbe_set_features,
-	.ndo_fix_features = ixgbe_fix_features,
-	.ndo_fdb_add		= ixgbe_ndo_fdb_add,
-	.ndo_bridge_setlink	= ixgbe_ndo_bridge_setlink,
-	.ndo_bridge_getlink	= ixgbe_ndo_bridge_getlink,
-	.ndo_dfwd_add_station	= ixgbe_fwd_add,
-	.ndo_dfwd_del_station	= ixgbe_fwd_del,
-	.ndo_features_check	= ixgbe_features_check,
-	.ndo_bpf		= ixgbe_xdp,
-	.ndo_xdp_xmit		= ixgbe_xdp_xmit,
-	.ndo_xsk_wakeup         = ixgbe_xsk_wakeup,
-};
+अटल स्थिर काष्ठा net_device_ops ixgbe_netdev_ops = अणु
+	.nकरो_खोलो		= ixgbe_खोलो,
+	.nकरो_stop		= ixgbe_बंद,
+	.nकरो_start_xmit		= ixgbe_xmit_frame,
+	.nकरो_set_rx_mode	= ixgbe_set_rx_mode,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= ixgbe_set_mac,
+	.nकरो_change_mtu		= ixgbe_change_mtu,
+	.nकरो_tx_समयout		= ixgbe_tx_समयout,
+	.nकरो_set_tx_maxrate	= ixgbe_tx_maxrate,
+	.nकरो_vlan_rx_add_vid	= ixgbe_vlan_rx_add_vid,
+	.nकरो_vlan_rx_समाप्त_vid	= ixgbe_vlan_rx_समाप्त_vid,
+	.nकरो_करो_ioctl		= ixgbe_ioctl,
+	.nकरो_set_vf_mac		= ixgbe_nकरो_set_vf_mac,
+	.nकरो_set_vf_vlan	= ixgbe_nकरो_set_vf_vlan,
+	.nकरो_set_vf_rate	= ixgbe_nकरो_set_vf_bw,
+	.nकरो_set_vf_spoofchk	= ixgbe_nकरो_set_vf_spoofchk,
+	.nकरो_set_vf_rss_query_en = ixgbe_nकरो_set_vf_rss_query_en,
+	.nकरो_set_vf_trust	= ixgbe_nकरो_set_vf_trust,
+	.nकरो_get_vf_config	= ixgbe_nकरो_get_vf_config,
+	.nकरो_get_stats64	= ixgbe_get_stats64,
+	.nकरो_setup_tc		= __ixgbe_setup_tc,
+#अगर_घोषित IXGBE_FCOE
+	.nकरो_select_queue	= ixgbe_select_queue,
+	.nकरो_fcoe_ddp_setup = ixgbe_fcoe_ddp_get,
+	.nकरो_fcoe_ddp_target = ixgbe_fcoe_ddp_target,
+	.nकरो_fcoe_ddp_करोne = ixgbe_fcoe_ddp_put,
+	.nकरो_fcoe_enable = ixgbe_fcoe_enable,
+	.nकरो_fcoe_disable = ixgbe_fcoe_disable,
+	.nकरो_fcoe_get_wwn = ixgbe_fcoe_get_wwn,
+	.nकरो_fcoe_get_hbainfo = ixgbe_fcoe_get_hbainfo,
+#पूर्ण_अगर /* IXGBE_FCOE */
+	.nकरो_set_features = ixgbe_set_features,
+	.nकरो_fix_features = ixgbe_fix_features,
+	.nकरो_fdb_add		= ixgbe_nकरो_fdb_add,
+	.nकरो_bridge_setlink	= ixgbe_nकरो_bridge_setlink,
+	.nकरो_bridge_getlink	= ixgbe_nकरो_bridge_getlink,
+	.nकरो_dfwd_add_station	= ixgbe_fwd_add,
+	.nकरो_dfwd_del_station	= ixgbe_fwd_del,
+	.nकरो_features_check	= ixgbe_features_check,
+	.nकरो_bpf		= ixgbe_xdp,
+	.nकरो_xdp_xmit		= ixgbe_xdp_xmit,
+	.nकरो_xsk_wakeup         = ixgbe_xsk_wakeup,
+पूर्ण;
 
-static void ixgbe_disable_txr_hw(struct ixgbe_adapter *adapter,
-				 struct ixgbe_ring *tx_ring)
-{
-	unsigned long wait_delay, delay_interval;
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_disable_txr_hw(काष्ठा ixgbe_adapter *adapter,
+				 काष्ठा ixgbe_ring *tx_ring)
+अणु
+	अचिन्हित दीर्घ रुको_delay, delay_पूर्णांकerval;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u8 reg_idx = tx_ring->reg_idx;
-	int wait_loop;
+	पूर्णांक रुको_loop;
 	u32 txdctl;
 
 	IXGBE_WRITE_REG(hw, IXGBE_TXDCTL(reg_idx), IXGBE_TXDCTL_SWFLSH);
 
 	/* delay mechanism from ixgbe_disable_tx */
-	delay_interval = ixgbe_get_completion_timeout(adapter) / 100;
+	delay_पूर्णांकerval = ixgbe_get_completion_समयout(adapter) / 100;
 
-	wait_loop = IXGBE_MAX_RX_DESC_POLL;
-	wait_delay = delay_interval;
+	रुको_loop = IXGBE_MAX_RX_DESC_POLL;
+	रुको_delay = delay_पूर्णांकerval;
 
-	while (wait_loop--) {
-		usleep_range(wait_delay, wait_delay + 10);
-		wait_delay += delay_interval * 2;
+	जबतक (रुको_loop--) अणु
+		usleep_range(रुको_delay, रुको_delay + 10);
+		रुको_delay += delay_पूर्णांकerval * 2;
 		txdctl = IXGBE_READ_REG(hw, IXGBE_TXDCTL(reg_idx));
 
-		if (!(txdctl & IXGBE_TXDCTL_ENABLE))
-			return;
-	}
+		अगर (!(txdctl & IXGBE_TXDCTL_ENABLE))
+			वापस;
+	पूर्ण
 
 	e_err(drv, "TXDCTL.ENABLE not cleared within the polling period\n");
-}
+पूर्ण
 
-static void ixgbe_disable_txr(struct ixgbe_adapter *adapter,
-			      struct ixgbe_ring *tx_ring)
-{
+अटल व्योम ixgbe_disable_txr(काष्ठा ixgbe_adapter *adapter,
+			      काष्ठा ixgbe_ring *tx_ring)
+अणु
 	set_bit(__IXGBE_TX_DISABLED, &tx_ring->state);
 	ixgbe_disable_txr_hw(adapter, tx_ring);
-}
+पूर्ण
 
-static void ixgbe_disable_rxr_hw(struct ixgbe_adapter *adapter,
-				 struct ixgbe_ring *rx_ring)
-{
-	unsigned long wait_delay, delay_interval;
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_disable_rxr_hw(काष्ठा ixgbe_adapter *adapter,
+				 काष्ठा ixgbe_ring *rx_ring)
+अणु
+	अचिन्हित दीर्घ रुको_delay, delay_पूर्णांकerval;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u8 reg_idx = rx_ring->reg_idx;
-	int wait_loop;
+	पूर्णांक रुको_loop;
 	u32 rxdctl;
 
 	rxdctl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(reg_idx));
 	rxdctl &= ~IXGBE_RXDCTL_ENABLE;
 	rxdctl |= IXGBE_RXDCTL_SWFLSH;
 
-	/* write value back with RXDCTL.ENABLE bit cleared */
+	/* ग_लिखो value back with RXDCTL.ENABLE bit cleared */
 	IXGBE_WRITE_REG(hw, IXGBE_RXDCTL(reg_idx), rxdctl);
 
-	/* RXDCTL.EN may not change on 82598 if link is down, so skip it */
-	if (hw->mac.type == ixgbe_mac_82598EB &&
+	/* RXDCTL.EN may not change on 82598 अगर link is करोwn, so skip it */
+	अगर (hw->mac.type == ixgbe_mac_82598EB &&
 	    !(IXGBE_READ_REG(hw, IXGBE_LINKS) & IXGBE_LINKS_UP))
-		return;
+		वापस;
 
 	/* delay mechanism from ixgbe_disable_rx */
-	delay_interval = ixgbe_get_completion_timeout(adapter) / 100;
+	delay_पूर्णांकerval = ixgbe_get_completion_समयout(adapter) / 100;
 
-	wait_loop = IXGBE_MAX_RX_DESC_POLL;
-	wait_delay = delay_interval;
+	रुको_loop = IXGBE_MAX_RX_DESC_POLL;
+	रुको_delay = delay_पूर्णांकerval;
 
-	while (wait_loop--) {
-		usleep_range(wait_delay, wait_delay + 10);
-		wait_delay += delay_interval * 2;
+	जबतक (रुको_loop--) अणु
+		usleep_range(रुको_delay, रुको_delay + 10);
+		रुको_delay += delay_पूर्णांकerval * 2;
 		rxdctl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(reg_idx));
 
-		if (!(rxdctl & IXGBE_RXDCTL_ENABLE))
-			return;
-	}
+		अगर (!(rxdctl & IXGBE_RXDCTL_ENABLE))
+			वापस;
+	पूर्ण
 
 	e_err(drv, "RXDCTL.ENABLE not cleared within the polling period\n");
-}
+पूर्ण
 
-static void ixgbe_reset_txr_stats(struct ixgbe_ring *tx_ring)
-{
-	memset(&tx_ring->stats, 0, sizeof(tx_ring->stats));
-	memset(&tx_ring->tx_stats, 0, sizeof(tx_ring->tx_stats));
-}
+अटल व्योम ixgbe_reset_txr_stats(काष्ठा ixgbe_ring *tx_ring)
+अणु
+	स_रखो(&tx_ring->stats, 0, माप(tx_ring->stats));
+	स_रखो(&tx_ring->tx_stats, 0, माप(tx_ring->tx_stats));
+पूर्ण
 
-static void ixgbe_reset_rxr_stats(struct ixgbe_ring *rx_ring)
-{
-	memset(&rx_ring->stats, 0, sizeof(rx_ring->stats));
-	memset(&rx_ring->rx_stats, 0, sizeof(rx_ring->rx_stats));
-}
+अटल व्योम ixgbe_reset_rxr_stats(काष्ठा ixgbe_ring *rx_ring)
+अणु
+	स_रखो(&rx_ring->stats, 0, माप(rx_ring->stats));
+	स_रखो(&rx_ring->rx_stats, 0, माप(rx_ring->rx_stats));
+पूर्ण
 
 /**
  * ixgbe_txrx_ring_disable - Disable Rx/Tx/XDP Tx rings
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  * @ring: ring index
  *
  * This function disables a certain Rx/Tx/XDP Tx ring. The function
  * assumes that the netdev is running.
  **/
-void ixgbe_txrx_ring_disable(struct ixgbe_adapter *adapter, int ring)
-{
-	struct ixgbe_ring *rx_ring, *tx_ring, *xdp_ring;
+व्योम ixgbe_txrx_ring_disable(काष्ठा ixgbe_adapter *adapter, पूर्णांक ring)
+अणु
+	काष्ठा ixgbe_ring *rx_ring, *tx_ring, *xdp_ring;
 
 	rx_ring = adapter->rx_ring[ring];
 	tx_ring = adapter->tx_ring[ring];
 	xdp_ring = adapter->xdp_ring[ring];
 
 	ixgbe_disable_txr(adapter, tx_ring);
-	if (xdp_ring)
+	अगर (xdp_ring)
 		ixgbe_disable_txr(adapter, xdp_ring);
 	ixgbe_disable_rxr_hw(adapter, rx_ring);
 
-	if (xdp_ring)
+	अगर (xdp_ring)
 		synchronize_rcu();
 
 	/* Rx/Tx/XDP Tx share the same napi context. */
 	napi_disable(&rx_ring->q_vector->napi);
 
 	ixgbe_clean_tx_ring(tx_ring);
-	if (xdp_ring)
+	अगर (xdp_ring)
 		ixgbe_clean_tx_ring(xdp_ring);
 	ixgbe_clean_rx_ring(rx_ring);
 
 	ixgbe_reset_txr_stats(tx_ring);
-	if (xdp_ring)
+	अगर (xdp_ring)
 		ixgbe_reset_txr_stats(xdp_ring);
 	ixgbe_reset_rxr_stats(rx_ring);
-}
+पूर्ण
 
 /**
  * ixgbe_txrx_ring_enable - Enable Rx/Tx/XDP Tx rings
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  * @ring: ring index
  *
  * This function enables a certain Rx/Tx/XDP Tx ring. The function
  * assumes that the netdev is running.
  **/
-void ixgbe_txrx_ring_enable(struct ixgbe_adapter *adapter, int ring)
-{
-	struct ixgbe_ring *rx_ring, *tx_ring, *xdp_ring;
+व्योम ixgbe_txrx_ring_enable(काष्ठा ixgbe_adapter *adapter, पूर्णांक ring)
+अणु
+	काष्ठा ixgbe_ring *rx_ring, *tx_ring, *xdp_ring;
 
 	rx_ring = adapter->rx_ring[ring];
 	tx_ring = adapter->tx_ring[ring];
@@ -10426,241 +10427,241 @@ void ixgbe_txrx_ring_enable(struct ixgbe_adapter *adapter, int ring)
 	napi_enable(&rx_ring->q_vector->napi);
 
 	ixgbe_configure_tx_ring(adapter, tx_ring);
-	if (xdp_ring)
+	अगर (xdp_ring)
 		ixgbe_configure_tx_ring(adapter, xdp_ring);
 	ixgbe_configure_rx_ring(adapter, rx_ring);
 
 	clear_bit(__IXGBE_TX_DISABLED, &tx_ring->state);
-	if (xdp_ring)
+	अगर (xdp_ring)
 		clear_bit(__IXGBE_TX_DISABLED, &xdp_ring->state);
-}
+पूर्ण
 
 /**
- * ixgbe_enumerate_functions - Get the number of ports this device has
- * @adapter: adapter structure
+ * ixgbe_क्रमागतerate_functions - Get the number of ports this device has
+ * @adapter: adapter काष्ठाure
  *
- * This function enumerates the phsyical functions co-located on a single slot,
+ * This function क्रमागतerates the phsyical functions co-located on a single slot,
  * in order to determine how many ports a device has. This is most useful in
- * determining the required GT/s of PCIe bandwidth necessary for optimal
- * performance.
+ * determining the required GT/s of PCIe bandwidth necessary क्रम optimal
+ * perक्रमmance.
  **/
-static inline int ixgbe_enumerate_functions(struct ixgbe_adapter *adapter)
-{
-	struct pci_dev *entry, *pdev = adapter->pdev;
-	int physfns = 0;
+अटल अंतरभूत पूर्णांक ixgbe_क्रमागतerate_functions(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा pci_dev *entry, *pdev = adapter->pdev;
+	पूर्णांक physfns = 0;
 
 	/* Some cards can not use the generic count PCIe functions method,
-	 * because they are behind a parent switch, so we hardcode these with
+	 * because they are behind a parent चयन, so we hardcode these with
 	 * the correct number of functions.
 	 */
-	if (ixgbe_pcie_from_parent(&adapter->hw))
+	अगर (ixgbe_pcie_from_parent(&adapter->hw))
 		physfns = 4;
 
-	list_for_each_entry(entry, &adapter->pdev->bus->devices, bus_list) {
-		/* don't count virtual functions */
-		if (entry->is_virtfn)
-			continue;
+	list_क्रम_each_entry(entry, &adapter->pdev->bus->devices, bus_list) अणु
+		/* करोn't count भव functions */
+		अगर (entry->is_virtfn)
+			जारी;
 
-		/* When the devices on the bus don't all match our device ID,
+		/* When the devices on the bus करोn't all match our device ID,
 		 * we can't reliably determine the correct number of
-		 * functions. This can occur if a function has been direct
-		 * attached to a virtual machine using VT-d, for example. In
-		 * this case, simply return -1 to indicate this.
+		 * functions. This can occur अगर a function has been direct
+		 * attached to a भव machine using VT-d, क्रम example. In
+		 * this हाल, simply वापस -1 to indicate this.
 		 */
-		if ((entry->vendor != pdev->vendor) ||
+		अगर ((entry->venकरोr != pdev->venकरोr) ||
 		    (entry->device != pdev->device))
-			return -1;
+			वापस -1;
 
 		physfns++;
-	}
+	पूर्ण
 
-	return physfns;
-}
+	वापस physfns;
+पूर्ण
 
 /**
  * ixgbe_wol_supported - Check whether device supports WoL
- * @adapter: the adapter private structure
+ * @adapter: the adapter निजी काष्ठाure
  * @device_id: the device ID
- * @subdevice_id: the subsystem device ID
+ * @subdevice_id: the subप्रणाली device ID
  *
  * This function is used by probe and ethtool to determine
  * which devices have WoL support
  *
  **/
-bool ixgbe_wol_supported(struct ixgbe_adapter *adapter, u16 device_id,
+bool ixgbe_wol_supported(काष्ठा ixgbe_adapter *adapter, u16 device_id,
 			 u16 subdevice_id)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u16 wol_cap = adapter->eeprom_cap & IXGBE_DEVICE_CAPS_WOL_MASK;
 
 	/* WOL not supported on 82598 */
-	if (hw->mac.type == ixgbe_mac_82598EB)
-		return false;
+	अगर (hw->mac.type == ixgbe_mac_82598EB)
+		वापस false;
 
-	/* check eeprom to see if WOL is enabled for X540 and newer */
-	if (hw->mac.type >= ixgbe_mac_X540) {
-		if ((wol_cap == IXGBE_DEVICE_CAPS_WOL_PORT0_1) ||
+	/* check eeprom to see अगर WOL is enabled क्रम X540 and newer */
+	अगर (hw->mac.type >= ixgbe_mac_X540) अणु
+		अगर ((wol_cap == IXGBE_DEVICE_CAPS_WOL_PORT0_1) ||
 		    ((wol_cap == IXGBE_DEVICE_CAPS_WOL_PORT0) &&
 		     (hw->bus.func == 0)))
-			return true;
-	}
+			वापस true;
+	पूर्ण
 
-	/* WOL is determined based on device IDs for 82599 MACs */
-	switch (device_id) {
-	case IXGBE_DEV_ID_82599_SFP:
+	/* WOL is determined based on device IDs क्रम 82599 MACs */
+	चयन (device_id) अणु
+	हाल IXGBE_DEV_ID_82599_SFP:
 		/* Only these subdevices could supports WOL */
-		switch (subdevice_id) {
-		case IXGBE_SUBDEV_ID_82599_560FLR:
-		case IXGBE_SUBDEV_ID_82599_LOM_SNAP6:
-		case IXGBE_SUBDEV_ID_82599_SFP_WOL0:
-		case IXGBE_SUBDEV_ID_82599_SFP_2OCP:
+		चयन (subdevice_id) अणु
+		हाल IXGBE_SUBDEV_ID_82599_560FLR:
+		हाल IXGBE_SUBDEV_ID_82599_LOM_SNAP6:
+		हाल IXGBE_SUBDEV_ID_82599_SFP_WOL0:
+		हाल IXGBE_SUBDEV_ID_82599_SFP_2OCP:
 			/* only support first port */
-			if (hw->bus.func != 0)
-				break;
+			अगर (hw->bus.func != 0)
+				अवरोध;
 			fallthrough;
-		case IXGBE_SUBDEV_ID_82599_SP_560FLR:
-		case IXGBE_SUBDEV_ID_82599_SFP:
-		case IXGBE_SUBDEV_ID_82599_RNDC:
-		case IXGBE_SUBDEV_ID_82599_ECNA_DP:
-		case IXGBE_SUBDEV_ID_82599_SFP_1OCP:
-		case IXGBE_SUBDEV_ID_82599_SFP_LOM_OEM1:
-		case IXGBE_SUBDEV_ID_82599_SFP_LOM_OEM2:
-			return true;
-		}
-		break;
-	case IXGBE_DEV_ID_82599EN_SFP:
+		हाल IXGBE_SUBDEV_ID_82599_SP_560FLR:
+		हाल IXGBE_SUBDEV_ID_82599_SFP:
+		हाल IXGBE_SUBDEV_ID_82599_RNDC:
+		हाल IXGBE_SUBDEV_ID_82599_ECNA_DP:
+		हाल IXGBE_SUBDEV_ID_82599_SFP_1OCP:
+		हाल IXGBE_SUBDEV_ID_82599_SFP_LOM_OEM1:
+		हाल IXGBE_SUBDEV_ID_82599_SFP_LOM_OEM2:
+			वापस true;
+		पूर्ण
+		अवरोध;
+	हाल IXGBE_DEV_ID_82599EN_SFP:
 		/* Only these subdevices support WOL */
-		switch (subdevice_id) {
-		case IXGBE_SUBDEV_ID_82599EN_SFP_OCP1:
-			return true;
-		}
-		break;
-	case IXGBE_DEV_ID_82599_COMBO_BACKPLANE:
+		चयन (subdevice_id) अणु
+		हाल IXGBE_SUBDEV_ID_82599EN_SFP_OCP1:
+			वापस true;
+		पूर्ण
+		अवरोध;
+	हाल IXGBE_DEV_ID_82599_COMBO_BACKPLANE:
 		/* All except this subdevice support WOL */
-		if (subdevice_id != IXGBE_SUBDEV_ID_82599_KX4_KR_MEZZ)
-			return true;
-		break;
-	case IXGBE_DEV_ID_82599_KX4:
-		return  true;
-	default:
-		break;
-	}
+		अगर (subdevice_id != IXGBE_SUBDEV_ID_82599_KX4_KR_MEZZ)
+			वापस true;
+		अवरोध;
+	हाल IXGBE_DEV_ID_82599_KX4:
+		वापस  true;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * ixgbe_set_fw_version - Set FW version
- * @adapter: the adapter private structure
+ * @adapter: the adapter निजी काष्ठाure
  *
  * This function is used by probe and ethtool to determine the FW version to
- * format to display. The FW version is taken from the EEPROM/NVM.
+ * क्रमmat to display. The FW version is taken from the EEPROM/NVM.
  */
-static void ixgbe_set_fw_version(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct ixgbe_nvm_version nvm_ver;
+अटल व्योम ixgbe_set_fw_version(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_nvm_version nvm_ver;
 
 	ixgbe_get_oem_prod_version(hw, &nvm_ver);
-	if (nvm_ver.oem_valid) {
-		snprintf(adapter->eeprom_id, sizeof(adapter->eeprom_id),
+	अगर (nvm_ver.oem_valid) अणु
+		snम_लिखो(adapter->eeprom_id, माप(adapter->eeprom_id),
 			 "%x.%x.%x", nvm_ver.oem_major, nvm_ver.oem_minor,
 			 nvm_ver.oem_release);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ixgbe_get_etk_id(hw, &nvm_ver);
 	ixgbe_get_orom_version(hw, &nvm_ver);
 
-	if (nvm_ver.or_valid) {
-		snprintf(adapter->eeprom_id, sizeof(adapter->eeprom_id),
+	अगर (nvm_ver.or_valid) अणु
+		snम_लिखो(adapter->eeprom_id, माप(adapter->eeprom_id),
 			 "0x%08x, %d.%d.%d", nvm_ver.etk_id, nvm_ver.or_major,
 			 nvm_ver.or_build, nvm_ver.or_patch);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Set ETrack ID format */
-	snprintf(adapter->eeprom_id, sizeof(adapter->eeprom_id),
+	/* Set ETrack ID क्रमmat */
+	snम_लिखो(adapter->eeprom_id, माप(adapter->eeprom_id),
 		 "0x%08x", nvm_ver.etk_id);
-}
+पूर्ण
 
 /**
  * ixgbe_probe - Device Initialization Routine
- * @pdev: PCI device information struct
+ * @pdev: PCI device inक्रमmation काष्ठा
  * @ent: entry in ixgbe_pci_tbl
  *
  * Returns 0 on success, negative on failure
  *
- * ixgbe_probe initializes an adapter identified by a pci_dev structure.
- * The OS initialization, configuring of the adapter private structure,
+ * ixgbe_probe initializes an adapter identअगरied by a pci_dev काष्ठाure.
+ * The OS initialization, configuring of the adapter निजी काष्ठाure,
  * and a hardware reset occur.
  **/
-static int ixgbe_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	struct net_device *netdev;
-	struct ixgbe_adapter *adapter = NULL;
-	struct ixgbe_hw *hw;
-	const struct ixgbe_info *ii = ixgbe_info_tbl[ent->driver_data];
-	int i, err, pci_using_dac, expected_gts;
-	unsigned int indices = MAX_TX_QUEUES;
+अटल पूर्णांक ixgbe_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा net_device *netdev;
+	काष्ठा ixgbe_adapter *adapter = शून्य;
+	काष्ठा ixgbe_hw *hw;
+	स्थिर काष्ठा ixgbe_info *ii = ixgbe_info_tbl[ent->driver_data];
+	पूर्णांक i, err, pci_using_dac, expected_gts;
+	अचिन्हित पूर्णांक indices = MAX_TX_QUEUES;
 	u8 part_str[IXGBE_PBANUM_LENGTH];
 	bool disable_dev = false;
-#ifdef IXGBE_FCOE
+#अगर_घोषित IXGBE_FCOE
 	u16 device_caps;
-#endif
+#पूर्ण_अगर
 	u32 eec;
 
 	/* Catch broken hardware that put the wrong VF device ID in
 	 * the PCIe SR-IOV capability.
 	 */
-	if (pdev->is_virtfn) {
+	अगर (pdev->is_virtfn) अणु
 		WARN(1, KERN_ERR "%s (%hx:%hx) should not be a VF!\n",
-		     pci_name(pdev), pdev->vendor, pdev->device);
-		return -EINVAL;
-	}
+		     pci_name(pdev), pdev->venकरोr, pdev->device);
+		वापस -EINVAL;
+	पूर्ण
 
 	err = pci_enable_device_mem(pdev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64))) {
+	अगर (!dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64))) अणु
 		pci_using_dac = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-		if (err) {
+		अगर (err) अणु
 			dev_err(&pdev->dev,
 				"No usable DMA configuration, aborting\n");
-			goto err_dma;
-		}
+			जाओ err_dma;
+		पूर्ण
 		pci_using_dac = 0;
-	}
+	पूर्ण
 
 	err = pci_request_mem_regions(pdev, ixgbe_driver_name);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev,
 			"pci_request_selected_regions failed 0x%x\n", err);
-		goto err_pci_reg;
-	}
+		जाओ err_pci_reg;
+	पूर्ण
 
 	pci_enable_pcie_error_reporting(pdev);
 
 	pci_set_master(pdev);
 	pci_save_state(pdev);
 
-	if (ii->mac == ixgbe_mac_82598EB) {
-#ifdef CONFIG_IXGBE_DCB
+	अगर (ii->mac == ixgbe_mac_82598EB) अणु
+#अगर_घोषित CONFIG_IXGBE_DCB
 		/* 8 TC w/ 4 queues per TC */
 		indices = 4 * MAX_TRAFFIC_CLASS;
-#else
+#अन्यथा
 		indices = IXGBE_MAX_RSS_INDICES;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	netdev = alloc_etherdev_mq(sizeof(struct ixgbe_adapter), indices);
-	if (!netdev) {
+	netdev = alloc_etherdev_mq(माप(काष्ठा ixgbe_adapter), indices);
+	अगर (!netdev) अणु
 		err = -ENOMEM;
-		goto err_alloc_etherdev;
-	}
+		जाओ err_alloc_etherdev;
+	पूर्ण
 
 	SET_NETDEV_DEV(netdev, &pdev->dev);
 
@@ -10670,117 +10671,117 @@ static int ixgbe_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	adapter->pdev = pdev;
 	hw = &adapter->hw;
 	hw->back = adapter;
-	adapter->msg_enable = netif_msg_init(debug, DEFAULT_MSG_ENABLE);
+	adapter->msg_enable = netअगर_msg_init(debug, DEFAULT_MSG_ENABLE);
 
 	hw->hw_addr = ioremap(pci_resource_start(pdev, 0),
 			      pci_resource_len(pdev, 0));
 	adapter->io_addr = hw->hw_addr;
-	if (!hw->hw_addr) {
+	अगर (!hw->hw_addr) अणु
 		err = -EIO;
-		goto err_ioremap;
-	}
+		जाओ err_ioremap;
+	पूर्ण
 
 	netdev->netdev_ops = &ixgbe_netdev_ops;
 	ixgbe_set_ethtool_ops(netdev);
-	netdev->watchdog_timeo = 5 * HZ;
-	strlcpy(netdev->name, pci_name(pdev), sizeof(netdev->name));
+	netdev->watchकरोg_समयo = 5 * HZ;
+	strlcpy(netdev->name, pci_name(pdev), माप(netdev->name));
 
 	/* Setup hw api */
 	hw->mac.ops   = *ii->mac_ops;
 	hw->mac.type  = ii->mac;
 	hw->mvals     = ii->mvals;
-	if (ii->link_ops)
+	अगर (ii->link_ops)
 		hw->link.ops  = *ii->link_ops;
 
 	/* EEPROM */
 	hw->eeprom.ops = *ii->eeprom_ops;
 	eec = IXGBE_READ_REG(hw, IXGBE_EEC(hw));
-	if (ixgbe_removed(hw->hw_addr)) {
+	अगर (ixgbe_हटाओd(hw->hw_addr)) अणु
 		err = -EIO;
-		goto err_ioremap;
-	}
-	/* If EEPROM is valid (bit 8 = 1), use default otherwise use bit bang */
-	if (!(eec & BIT(8)))
-		hw->eeprom.ops.read = &ixgbe_read_eeprom_bit_bang_generic;
+		जाओ err_ioremap;
+	पूर्ण
+	/* If EEPROM is valid (bit 8 = 1), use शेष otherwise use bit bang */
+	अगर (!(eec & BIT(8)))
+		hw->eeprom.ops.पढ़ो = &ixgbe_पढ़ो_eeprom_bit_bang_generic;
 
 	/* PHY */
 	hw->phy.ops = *ii->phy_ops;
 	hw->phy.sfp_type = ixgbe_sfp_type_unknown;
-	/* ixgbe_identify_phy_generic will set prtad and mmds properly */
+	/* ixgbe_identअगरy_phy_generic will set prtad and mmds properly */
 	hw->phy.mdio.prtad = MDIO_PRTAD_NONE;
 	hw->phy.mdio.mmds = 0;
 	hw->phy.mdio.mode_support = MDIO_SUPPORTS_C45 | MDIO_EMULATE_C22;
 	hw->phy.mdio.dev = netdev;
-	hw->phy.mdio.mdio_read = ixgbe_mdio_read;
-	hw->phy.mdio.mdio_write = ixgbe_mdio_write;
+	hw->phy.mdio.mdio_पढ़ो = ixgbe_mdio_पढ़ो;
+	hw->phy.mdio.mdio_ग_लिखो = ixgbe_mdio_ग_लिखो;
 
-	/* setup the private structure */
+	/* setup the निजी काष्ठाure */
 	err = ixgbe_sw_init(adapter, ii);
-	if (err)
-		goto err_sw_init;
+	अगर (err)
+		जाओ err_sw_init;
 
-	switch (adapter->hw.mac.type) {
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
+	चयन (adapter->hw.mac.type) अणु
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
 		netdev->udp_tunnel_nic_info = &ixgbe_udp_tunnels_x550;
-		break;
-	case ixgbe_mac_x550em_a:
+		अवरोध;
+	हाल ixgbe_mac_x550em_a:
 		netdev->udp_tunnel_nic_info = &ixgbe_udp_tunnels_x550em_a;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* Make sure the SWFW semaphore is in a valid state */
-	if (hw->mac.ops.init_swfw_sync)
+	अगर (hw->mac.ops.init_swfw_sync)
 		hw->mac.ops.init_swfw_sync(hw);
 
 	/* Make it possible the adapter to be woken up via WOL */
-	switch (adapter->hw.mac.type) {
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_x550em_a:
+	चयन (adapter->hw.mac.type) अणु
+	हाल ixgbe_mac_82599EB:
+	हाल ixgbe_mac_X540:
+	हाल ixgbe_mac_X550:
+	हाल ixgbe_mac_X550EM_x:
+	हाल ixgbe_mac_x550em_a:
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_WUS, ~0);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/*
 	 * If there is a fan on this device and it has failed log the
 	 * failure.
 	 */
-	if (adapter->flags & IXGBE_FLAG_FAN_FAIL_CAPABLE) {
+	अगर (adapter->flags & IXGBE_FLAG_FAN_FAIL_CAPABLE) अणु
 		u32 esdp = IXGBE_READ_REG(hw, IXGBE_ESDP);
-		if (esdp & IXGBE_ESDP_SDP1)
+		अगर (esdp & IXGBE_ESDP_SDP1)
 			e_crit(probe, "Fan has stopped, replace the adapter\n");
-	}
+	पूर्ण
 
-	if (allow_unsupported_sfp)
+	अगर (allow_unsupported_sfp)
 		hw->allow_unsupported_sfp = allow_unsupported_sfp;
 
 	/* reset_hw fills in the perm_addr as well */
-	hw->phy.reset_if_overtemp = true;
+	hw->phy.reset_अगर_overtemp = true;
 	err = hw->mac.ops.reset_hw(hw);
-	hw->phy.reset_if_overtemp = false;
+	hw->phy.reset_अगर_overtemp = false;
 	ixgbe_set_eee_capable(adapter);
-	if (err == IXGBE_ERR_SFP_NOT_PRESENT) {
+	अगर (err == IXGBE_ERR_SFP_NOT_PRESENT) अणु
 		err = 0;
-	} else if (err == IXGBE_ERR_SFP_NOT_SUPPORTED) {
+	पूर्ण अन्यथा अगर (err == IXGBE_ERR_SFP_NOT_SUPPORTED) अणु
 		e_dev_err("failed to load because an unsupported SFP+ or QSFP module type was detected.\n");
 		e_dev_err("Reload the driver after installing a supported module.\n");
-		goto err_sw_init;
-	} else if (err) {
+		जाओ err_sw_init;
+	पूर्ण अन्यथा अगर (err) अणु
 		e_dev_err("HW Init failed: %d\n", err);
-		goto err_sw_init;
-	}
+		जाओ err_sw_init;
+	पूर्ण
 
-#ifdef CONFIG_PCI_IOV
+#अगर_घोषित CONFIG_PCI_IOV
 	/* SR-IOV not supported on the 82598 */
-	if (adapter->hw.mac.type == ixgbe_mac_82598EB)
-		goto skip_sriov;
+	अगर (adapter->hw.mac.type == ixgbe_mac_82598EB)
+		जाओ skip_sriov;
 	/* Mailbox */
 	ixgbe_init_mbx_params_pf(hw);
 	hw->mbx.ops = ii->mbx_ops;
@@ -10788,7 +10789,7 @@ static int ixgbe_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	ixgbe_enable_sriov(adapter, max_vfs);
 skip_sriov:
 
-#endif
+#पूर्ण_अगर
 	netdev->features = NETIF_F_SG |
 			   NETIF_F_TSO |
 			   NETIF_F_TSO6 |
@@ -10796,7 +10797,7 @@ skip_sriov:
 			   NETIF_F_RXCSUM |
 			   NETIF_F_HW_CSUM;
 
-#define IXGBE_GSO_PARTIAL_FEATURES (NETIF_F_GSO_GRE | \
+#घोषणा IXGBE_GSO_PARTIAL_FEATURES (NETIF_F_GSO_GRE | \
 				    NETIF_F_GSO_GRE_CSUM | \
 				    NETIF_F_GSO_IPXIP4 | \
 				    NETIF_F_GSO_IPXIP6 | \
@@ -10807,18 +10808,18 @@ skip_sriov:
 	netdev->features |= NETIF_F_GSO_PARTIAL |
 			    IXGBE_GSO_PARTIAL_FEATURES;
 
-	if (hw->mac.type >= ixgbe_mac_82599EB)
+	अगर (hw->mac.type >= ixgbe_mac_82599EB)
 		netdev->features |= NETIF_F_SCTP_CRC | NETIF_F_GSO_UDP_L4;
 
-#ifdef CONFIG_IXGBE_IPSEC
-#define IXGBE_ESP_FEATURES	(NETIF_F_HW_ESP | \
+#अगर_घोषित CONFIG_IXGBE_IPSEC
+#घोषणा IXGBE_ESP_FEATURES	(NETIF_F_HW_ESP | \
 				 NETIF_F_HW_ESP_TX_CSUM | \
 				 NETIF_F_GSO_ESP)
 
-	if (adapter->ipsec)
+	अगर (adapter->ipsec)
 		netdev->features |= IXGBE_ESP_FEATURES;
-#endif
-	/* copy netdev features into list of user selectable features */
+#पूर्ण_अगर
+	/* copy netdev features पूर्णांकo list of user selectable features */
 	netdev->hw_features |= netdev->features |
 			       NETIF_F_HW_VLAN_CTAG_FILTER |
 			       NETIF_F_HW_VLAN_CTAG_RX |
@@ -10826,11 +10827,11 @@ skip_sriov:
 			       NETIF_F_RXALL |
 			       NETIF_F_HW_L2FW_DOFFLOAD;
 
-	if (hw->mac.type >= ixgbe_mac_82599EB)
+	अगर (hw->mac.type >= ixgbe_mac_82599EB)
 		netdev->hw_features |= NETIF_F_NTUPLE |
 				       NETIF_F_HW_TC;
 
-	if (pci_using_dac)
+	अगर (pci_using_dac)
 		netdev->features |= NETIF_F_HIGHDMA;
 
 	netdev->vlan_features |= netdev->features | NETIF_F_TSO_MANGLEID;
@@ -10853,23 +10854,23 @@ skip_sriov:
 	netdev->min_mtu = ETH_MIN_MTU;
 	netdev->max_mtu = IXGBE_MAX_JUMBO_FRAME_SIZE - (ETH_HLEN + ETH_FCS_LEN);
 
-#ifdef CONFIG_IXGBE_DCB
-	if (adapter->flags & IXGBE_FLAG_DCB_CAPABLE)
+#अगर_घोषित CONFIG_IXGBE_DCB
+	अगर (adapter->flags & IXGBE_FLAG_DCB_CAPABLE)
 		netdev->dcbnl_ops = &ixgbe_dcbnl_ops;
-#endif
+#पूर्ण_अगर
 
-#ifdef IXGBE_FCOE
-	if (adapter->flags & IXGBE_FLAG_FCOE_CAPABLE) {
-		unsigned int fcoe_l;
+#अगर_घोषित IXGBE_FCOE
+	अगर (adapter->flags & IXGBE_FLAG_FCOE_CAPABLE) अणु
+		अचिन्हित पूर्णांक fcoe_l;
 
-		if (hw->mac.ops.get_device_caps) {
+		अगर (hw->mac.ops.get_device_caps) अणु
 			hw->mac.ops.get_device_caps(hw, &device_caps);
-			if (device_caps & IXGBE_DEVICE_CAPS_FCOE_OFFLOADS)
+			अगर (device_caps & IXGBE_DEVICE_CAPS_FCOE_OFFLOADS)
 				adapter->flags &= ~IXGBE_FLAG_FCOE_CAPABLE;
-		}
+		पूर्ण
 
 
-		fcoe_l = min_t(int, IXGBE_FCRETA_SIZE, num_online_cpus());
+		fcoe_l = min_t(पूर्णांक, IXGBE_FCRETA_SIZE, num_online_cpus());
 		adapter->ring_feature[RING_F_FCOE].limit = fcoe_l;
 
 		netdev->features |= NETIF_F_FSO |
@@ -10878,67 +10879,67 @@ skip_sriov:
 		netdev->vlan_features |= NETIF_F_FSO |
 					 NETIF_F_FCOE_CRC |
 					 NETIF_F_FCOE_MTU;
-	}
-#endif /* IXGBE_FCOE */
-	if (adapter->flags2 & IXGBE_FLAG2_RSC_CAPABLE)
+	पूर्ण
+#पूर्ण_अगर /* IXGBE_FCOE */
+	अगर (adapter->flags2 & IXGBE_FLAG2_RSC_CAPABLE)
 		netdev->hw_features |= NETIF_F_LRO;
-	if (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED)
+	अगर (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED)
 		netdev->features |= NETIF_F_LRO;
 
-	if (ixgbe_check_fw_error(adapter)) {
+	अगर (ixgbe_check_fw_error(adapter)) अणु
 		err = -EIO;
-		goto err_sw_init;
-	}
+		जाओ err_sw_init;
+	पूर्ण
 
 	/* make sure the EEPROM is good */
-	if (hw->eeprom.ops.validate_checksum(hw, NULL) < 0) {
+	अगर (hw->eeprom.ops.validate_checksum(hw, शून्य) < 0) अणु
 		e_dev_err("The EEPROM Checksum Is Not Valid\n");
 		err = -EIO;
-		goto err_sw_init;
-	}
+		जाओ err_sw_init;
+	पूर्ण
 
-	eth_platform_get_mac_address(&adapter->pdev->dev,
+	eth_platक्रमm_get_mac_address(&adapter->pdev->dev,
 				     adapter->hw.mac.perm_addr);
 
-	memcpy(netdev->dev_addr, hw->mac.perm_addr, netdev->addr_len);
+	स_नकल(netdev->dev_addr, hw->mac.perm_addr, netdev->addr_len);
 
-	if (!is_valid_ether_addr(netdev->dev_addr)) {
+	अगर (!is_valid_ether_addr(netdev->dev_addr)) अणु
 		e_dev_err("invalid MAC address\n");
 		err = -EIO;
-		goto err_sw_init;
-	}
+		जाओ err_sw_init;
+	पूर्ण
 
 	/* Set hw->mac.addr to permanent MAC address */
 	ether_addr_copy(hw->mac.addr, hw->mac.perm_addr);
-	ixgbe_mac_set_default_filter(adapter);
+	ixgbe_mac_set_शेष_filter(adapter);
 
-	timer_setup(&adapter->service_timer, ixgbe_service_timer, 0);
+	समयr_setup(&adapter->service_समयr, ixgbe_service_समयr, 0);
 
-	if (ixgbe_removed(hw->hw_addr)) {
+	अगर (ixgbe_हटाओd(hw->hw_addr)) अणु
 		err = -EIO;
-		goto err_sw_init;
-	}
+		जाओ err_sw_init;
+	पूर्ण
 	INIT_WORK(&adapter->service_task, ixgbe_service_task);
 	set_bit(__IXGBE_SERVICE_INITED, &adapter->state);
 	clear_bit(__IXGBE_SERVICE_SCHED, &adapter->state);
 
-	err = ixgbe_init_interrupt_scheme(adapter);
-	if (err)
-		goto err_sw_init;
+	err = ixgbe_init_पूर्णांकerrupt_scheme(adapter);
+	अगर (err)
+		जाओ err_sw_init;
 
-	for (i = 0; i < adapter->num_rx_queues; i++)
+	क्रम (i = 0; i < adapter->num_rx_queues; i++)
 		u64_stats_init(&adapter->rx_ring[i]->syncp);
-	for (i = 0; i < adapter->num_tx_queues; i++)
+	क्रम (i = 0; i < adapter->num_tx_queues; i++)
 		u64_stats_init(&adapter->tx_ring[i]->syncp);
-	for (i = 0; i < adapter->num_xdp_queues; i++)
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++)
 		u64_stats_init(&adapter->xdp_ring[i]->syncp);
 
-	/* WOL not supported for all devices */
+	/* WOL not supported क्रम all devices */
 	adapter->wol = 0;
-	hw->eeprom.ops.read(hw, 0x2c, &adapter->eeprom_cap);
+	hw->eeprom.ops.पढ़ो(hw, 0x2c, &adapter->eeprom_cap);
 	hw->wol_enabled = ixgbe_wol_supported(adapter, pdev->device,
-						pdev->subsystem_device);
-	if (hw->wol_enabled)
+						pdev->subप्रणाली_device);
+	अगर (hw->wol_enabled)
 		adapter->wol = IXGBE_WUFC_MAG;
 
 	device_set_wakeup_enable(&adapter->pdev->dev, adapter->wol);
@@ -10946,38 +10947,38 @@ skip_sriov:
 	/* save off EEPROM version number */
 	ixgbe_set_fw_version(adapter);
 
-	/* pick up the PCI bus settings for reporting later */
-	if (ixgbe_pcie_from_parent(hw))
+	/* pick up the PCI bus settings क्रम reporting later */
+	अगर (ixgbe_pcie_from_parent(hw))
 		ixgbe_get_parent_bus_info(adapter);
-	else
+	अन्यथा
 		 hw->mac.ops.get_bus_info(hw);
 
-	/* calculate the expected PCIe bandwidth required for optimal
-	 * performance. Note that some older parts will never have enough
+	/* calculate the expected PCIe bandwidth required क्रम optimal
+	 * perक्रमmance. Note that some older parts will never have enough
 	 * bandwidth due to being older generation PCIe parts. We clamp these
-	 * parts to ensure no warning is displayed if it can't be fixed.
+	 * parts to ensure no warning is displayed अगर it can't be fixed.
 	 */
-	switch (hw->mac.type) {
-	case ixgbe_mac_82598EB:
-		expected_gts = min(ixgbe_enumerate_functions(adapter) * 10, 16);
-		break;
-	default:
-		expected_gts = ixgbe_enumerate_functions(adapter) * 10;
-		break;
-	}
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82598EB:
+		expected_gts = min(ixgbe_क्रमागतerate_functions(adapter) * 10, 16);
+		अवरोध;
+	शेष:
+		expected_gts = ixgbe_क्रमागतerate_functions(adapter) * 10;
+		अवरोध;
+	पूर्ण
 
-	/* don't check link if we failed to enumerate functions */
-	if (expected_gts > 0)
+	/* करोn't check link अगर we failed to क्रमागतerate functions */
+	अगर (expected_gts > 0)
 		ixgbe_check_minimum_link(adapter, expected_gts);
 
-	err = ixgbe_read_pba_string_generic(hw, part_str, sizeof(part_str));
-	if (err)
-		strlcpy(part_str, "Unknown", sizeof(part_str));
-	if (ixgbe_is_sfp(hw) && hw->phy.sfp_type != ixgbe_sfp_type_not_present)
+	err = ixgbe_पढ़ो_pba_string_generic(hw, part_str, माप(part_str));
+	अगर (err)
+		strlcpy(part_str, "Unknown", माप(part_str));
+	अगर (ixgbe_is_sfp(hw) && hw->phy.sfp_type != ixgbe_sfp_type_not_present)
 		e_dev_info("MAC: %d, PHY: %d, SFP+: %d, PBA No: %s\n",
 			   hw->mac.type, hw->phy.type, hw->phy.sfp_type,
 			   part_str);
-	else
+	अन्यथा
 		e_dev_info("MAC: %d, PHY: %d, PBA No: %s\n",
 			   hw->mac.type, hw->phy.type, part_str);
 
@@ -10985,7 +10986,7 @@ skip_sriov:
 
 	/* reset the hardware with the new settings */
 	err = hw->mac.ops.start_hw(hw);
-	if (err == IXGBE_ERR_EEPROM_VERSION) {
+	अगर (err == IXGBE_ERR_EEPROM_VERSION) अणु
 		/* We are running on a pre-production device, log a warning */
 		e_dev_warn("This device is a pre-production adapter/LOM. "
 			   "Please be aware there may be issues associated "
@@ -10993,327 +10994,327 @@ skip_sriov:
 			   "problems please contact your Intel or hardware "
 			   "representative who provided you with this "
 			   "hardware.\n");
-	}
-	strcpy(netdev->name, "eth%d");
+	पूर्ण
+	म_नकल(netdev->name, "eth%d");
 	pci_set_drvdata(pdev, adapter);
-	err = register_netdev(netdev);
-	if (err)
-		goto err_register;
+	err = रेजिस्टर_netdev(netdev);
+	अगर (err)
+		जाओ err_रेजिस्टर;
 
 
-	/* power down the optics for 82599 SFP+ fiber */
-	if (hw->mac.ops.disable_tx_laser)
+	/* घातer करोwn the optics क्रम 82599 SFP+ fiber */
+	अगर (hw->mac.ops.disable_tx_laser)
 		hw->mac.ops.disable_tx_laser(hw);
 
-	/* carrier off reporting is important to ethtool even BEFORE open */
-	netif_carrier_off(netdev);
+	/* carrier off reporting is important to ethtool even BEFORE खोलो */
+	netअगर_carrier_off(netdev);
 
-#ifdef CONFIG_IXGBE_DCA
-	if (dca_add_requester(&pdev->dev) == 0) {
+#अगर_घोषित CONFIG_IXGBE_DCA
+	अगर (dca_add_requester(&pdev->dev) == 0) अणु
 		adapter->flags |= IXGBE_FLAG_DCA_ENABLED;
 		ixgbe_setup_dca(adapter);
-	}
-#endif
-	if (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED) {
+	पूर्ण
+#पूर्ण_अगर
+	अगर (adapter->flags & IXGBE_FLAG_SRIOV_ENABLED) अणु
 		e_info(probe, "IOV is enabled with %d VFs\n", adapter->num_vfs);
-		for (i = 0; i < adapter->num_vfs; i++)
+		क्रम (i = 0; i < adapter->num_vfs; i++)
 			ixgbe_vf_configuration(pdev, (i | 0x10000000));
-	}
+	पूर्ण
 
 	/* firmware requires driver version to be 0xFFFFFFFF
-	 * since os does not support feature
+	 * since os करोes not support feature
 	 */
-	if (hw->mac.ops.set_fw_drv_ver)
+	अगर (hw->mac.ops.set_fw_drv_ver)
 		hw->mac.ops.set_fw_drv_ver(hw, 0xFF, 0xFF, 0xFF, 0xFF,
-					   sizeof(UTS_RELEASE) - 1,
+					   माप(UTS_RELEASE) - 1,
 					   UTS_RELEASE);
 
 	/* add san mac addr to netdev */
 	ixgbe_add_sanmac_netdev(netdev);
 
-	e_dev_info("%s\n", ixgbe_default_device_descr);
+	e_dev_info("%s\n", ixgbe_शेष_device_descr);
 
-#ifdef CONFIG_IXGBE_HWMON
-	if (ixgbe_sysfs_init(adapter))
+#अगर_घोषित CONFIG_IXGBE_HWMON
+	अगर (ixgbe_sysfs_init(adapter))
 		e_err(probe, "failed to allocate sysfs resources\n");
-#endif /* CONFIG_IXGBE_HWMON */
+#पूर्ण_अगर /* CONFIG_IXGBE_HWMON */
 
 	ixgbe_dbg_adapter_init(adapter);
 
-	/* setup link for SFP devices with MNG FW, else wait for IXGBE_UP */
-	if (ixgbe_mng_enabled(hw) && ixgbe_is_sfp(hw) && hw->mac.ops.setup_link)
+	/* setup link क्रम SFP devices with MNG FW, अन्यथा रुको क्रम IXGBE_UP */
+	अगर (ixgbe_mng_enabled(hw) && ixgbe_is_sfp(hw) && hw->mac.ops.setup_link)
 		hw->mac.ops.setup_link(hw,
 			IXGBE_LINK_SPEED_10GB_FULL | IXGBE_LINK_SPEED_1GB_FULL,
 			true);
 
 	err = ixgbe_mii_bus_init(hw);
-	if (err)
-		goto err_netdev;
+	अगर (err)
+		जाओ err_netdev;
 
-	return 0;
+	वापस 0;
 
 err_netdev:
-	unregister_netdev(netdev);
-err_register:
+	unरेजिस्टर_netdev(netdev);
+err_रेजिस्टर:
 	ixgbe_release_hw_control(adapter);
-	ixgbe_clear_interrupt_scheme(adapter);
+	ixgbe_clear_पूर्णांकerrupt_scheme(adapter);
 err_sw_init:
 	ixgbe_disable_sriov(adapter);
 	adapter->flags2 &= ~IXGBE_FLAG2_SEARCH_FOR_SFP;
 	iounmap(adapter->io_addr);
-	kfree(adapter->jump_tables[0]);
-	kfree(adapter->mac_table);
-	kfree(adapter->rss_key);
-	bitmap_free(adapter->af_xdp_zc_qps);
+	kमुक्त(adapter->jump_tables[0]);
+	kमुक्त(adapter->mac_table);
+	kमुक्त(adapter->rss_key);
+	biपंचांगap_मुक्त(adapter->af_xdp_zc_qps);
 err_ioremap:
 	disable_dev = !test_and_set_bit(__IXGBE_DISABLED, &adapter->state);
-	free_netdev(netdev);
+	मुक्त_netdev(netdev);
 err_alloc_etherdev:
 	pci_release_mem_regions(pdev);
 err_pci_reg:
 err_dma:
-	if (!adapter || disable_dev)
+	अगर (!adapter || disable_dev)
 		pci_disable_device(pdev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ixgbe_remove - Device Removal Routine
- * @pdev: PCI device information struct
+ * ixgbe_हटाओ - Device Removal Routine
+ * @pdev: PCI device inक्रमmation काष्ठा
  *
- * ixgbe_remove is called by the PCI subsystem to alert the driver
+ * ixgbe_हटाओ is called by the PCI subप्रणाली to alert the driver
  * that it should release a PCI device.  The could be caused by a
- * Hot-Plug event, or because the driver is going to be removed from
+ * Hot-Plug event, or because the driver is going to be हटाओd from
  * memory.
  **/
-static void ixgbe_remove(struct pci_dev *pdev)
-{
-	struct ixgbe_adapter *adapter = pci_get_drvdata(pdev);
-	struct net_device *netdev;
+अटल व्योम ixgbe_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ixgbe_adapter *adapter = pci_get_drvdata(pdev);
+	काष्ठा net_device *netdev;
 	bool disable_dev;
-	int i;
+	पूर्णांक i;
 
-	/* if !adapter then we already cleaned up in probe */
-	if (!adapter)
-		return;
+	/* अगर !adapter then we alपढ़ोy cleaned up in probe */
+	अगर (!adapter)
+		वापस;
 
 	netdev  = adapter->netdev;
-	ixgbe_dbg_adapter_exit(adapter);
+	ixgbe_dbg_adapter_निकास(adapter);
 
 	set_bit(__IXGBE_REMOVING, &adapter->state);
 	cancel_work_sync(&adapter->service_task);
 
-	if (adapter->mii_bus)
-		mdiobus_unregister(adapter->mii_bus);
+	अगर (adapter->mii_bus)
+		mdiobus_unरेजिस्टर(adapter->mii_bus);
 
-#ifdef CONFIG_IXGBE_DCA
-	if (adapter->flags & IXGBE_FLAG_DCA_ENABLED) {
+#अगर_घोषित CONFIG_IXGBE_DCA
+	अगर (adapter->flags & IXGBE_FLAG_DCA_ENABLED) अणु
 		adapter->flags &= ~IXGBE_FLAG_DCA_ENABLED;
-		dca_remove_requester(&pdev->dev);
+		dca_हटाओ_requester(&pdev->dev);
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_DCA_CTRL,
 				IXGBE_DCA_CTRL_DCA_DISABLE);
-	}
+	पूर्ण
 
-#endif
-#ifdef CONFIG_IXGBE_HWMON
-	ixgbe_sysfs_exit(adapter);
-#endif /* CONFIG_IXGBE_HWMON */
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IXGBE_HWMON
+	ixgbe_sysfs_निकास(adapter);
+#पूर्ण_अगर /* CONFIG_IXGBE_HWMON */
 
-	/* remove the added san mac */
+	/* हटाओ the added san mac */
 	ixgbe_del_sanmac_netdev(netdev);
 
-#ifdef CONFIG_PCI_IOV
+#अगर_घोषित CONFIG_PCI_IOV
 	ixgbe_disable_sriov(adapter);
-#endif
-	if (netdev->reg_state == NETREG_REGISTERED)
-		unregister_netdev(netdev);
+#पूर्ण_अगर
+	अगर (netdev->reg_state == NETREG_REGISTERED)
+		unरेजिस्टर_netdev(netdev);
 
 	ixgbe_stop_ipsec_offload(adapter);
-	ixgbe_clear_interrupt_scheme(adapter);
+	ixgbe_clear_पूर्णांकerrupt_scheme(adapter);
 
 	ixgbe_release_hw_control(adapter);
 
-#ifdef CONFIG_DCB
-	kfree(adapter->ixgbe_ieee_pfc);
-	kfree(adapter->ixgbe_ieee_ets);
+#अगर_घोषित CONFIG_DCB
+	kमुक्त(adapter->ixgbe_ieee_pfc);
+	kमुक्त(adapter->ixgbe_ieee_ets);
 
-#endif
+#पूर्ण_अगर
 	iounmap(adapter->io_addr);
 	pci_release_mem_regions(pdev);
 
 	e_dev_info("complete\n");
 
-	for (i = 0; i < IXGBE_MAX_LINK_HANDLE; i++) {
-		if (adapter->jump_tables[i]) {
-			kfree(adapter->jump_tables[i]->input);
-			kfree(adapter->jump_tables[i]->mask);
-		}
-		kfree(adapter->jump_tables[i]);
-	}
+	क्रम (i = 0; i < IXGBE_MAX_LINK_HANDLE; i++) अणु
+		अगर (adapter->jump_tables[i]) अणु
+			kमुक्त(adapter->jump_tables[i]->input);
+			kमुक्त(adapter->jump_tables[i]->mask);
+		पूर्ण
+		kमुक्त(adapter->jump_tables[i]);
+	पूर्ण
 
-	kfree(adapter->mac_table);
-	kfree(adapter->rss_key);
-	bitmap_free(adapter->af_xdp_zc_qps);
+	kमुक्त(adapter->mac_table);
+	kमुक्त(adapter->rss_key);
+	biपंचांगap_मुक्त(adapter->af_xdp_zc_qps);
 	disable_dev = !test_and_set_bit(__IXGBE_DISABLED, &adapter->state);
-	free_netdev(netdev);
+	मुक्त_netdev(netdev);
 
 	pci_disable_pcie_error_reporting(pdev);
 
-	if (disable_dev)
+	अगर (disable_dev)
 		pci_disable_device(pdev);
-}
+पूर्ण
 
 /**
  * ixgbe_io_error_detected - called when PCI error is detected
- * @pdev: Pointer to PCI device
+ * @pdev: Poपूर्णांकer to PCI device
  * @state: The current pci connection state
  *
  * This function is called after a PCI bus error affecting
  * this device has been detected.
  */
-static pci_ers_result_t ixgbe_io_error_detected(struct pci_dev *pdev,
+अटल pci_ers_result_t ixgbe_io_error_detected(काष्ठा pci_dev *pdev,
 						pci_channel_state_t state)
-{
-	struct ixgbe_adapter *adapter = pci_get_drvdata(pdev);
-	struct net_device *netdev = adapter->netdev;
+अणु
+	काष्ठा ixgbe_adapter *adapter = pci_get_drvdata(pdev);
+	काष्ठा net_device *netdev = adapter->netdev;
 
-#ifdef CONFIG_PCI_IOV
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct pci_dev *bdev, *vfdev;
+#अगर_घोषित CONFIG_PCI_IOV
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा pci_dev *bdev, *vfdev;
 	u32 dw0, dw1, dw2, dw3;
-	int vf, pos;
+	पूर्णांक vf, pos;
 	u16 req_id, pf_func;
 
-	if (adapter->hw.mac.type == ixgbe_mac_82598EB ||
+	अगर (adapter->hw.mac.type == ixgbe_mac_82598EB ||
 	    adapter->num_vfs == 0)
-		goto skip_bad_vf_detection;
+		जाओ skip_bad_vf_detection;
 
 	bdev = pdev->bus->self;
-	while (bdev && (pci_pcie_type(bdev) != PCI_EXP_TYPE_ROOT_PORT))
+	जबतक (bdev && (pci_pcie_type(bdev) != PCI_EXP_TYPE_ROOT_PORT))
 		bdev = bdev->bus->self;
 
-	if (!bdev)
-		goto skip_bad_vf_detection;
+	अगर (!bdev)
+		जाओ skip_bad_vf_detection;
 
 	pos = pci_find_ext_capability(bdev, PCI_EXT_CAP_ID_ERR);
-	if (!pos)
-		goto skip_bad_vf_detection;
+	अगर (!pos)
+		जाओ skip_bad_vf_detection;
 
-	dw0 = ixgbe_read_pci_cfg_dword(hw, pos + PCI_ERR_HEADER_LOG);
-	dw1 = ixgbe_read_pci_cfg_dword(hw, pos + PCI_ERR_HEADER_LOG + 4);
-	dw2 = ixgbe_read_pci_cfg_dword(hw, pos + PCI_ERR_HEADER_LOG + 8);
-	dw3 = ixgbe_read_pci_cfg_dword(hw, pos + PCI_ERR_HEADER_LOG + 12);
-	if (ixgbe_removed(hw->hw_addr))
-		goto skip_bad_vf_detection;
+	dw0 = ixgbe_पढ़ो_pci_cfg_dword(hw, pos + PCI_ERR_HEADER_LOG);
+	dw1 = ixgbe_पढ़ो_pci_cfg_dword(hw, pos + PCI_ERR_HEADER_LOG + 4);
+	dw2 = ixgbe_पढ़ो_pci_cfg_dword(hw, pos + PCI_ERR_HEADER_LOG + 8);
+	dw3 = ixgbe_पढ़ो_pci_cfg_dword(hw, pos + PCI_ERR_HEADER_LOG + 12);
+	अगर (ixgbe_हटाओd(hw->hw_addr))
+		जाओ skip_bad_vf_detection;
 
 	req_id = dw1 >> 16;
-	/* On the 82599 if bit 7 of the requestor ID is set then it's a VF */
-	if (!(req_id & 0x0080))
-		goto skip_bad_vf_detection;
+	/* On the 82599 अगर bit 7 of the requestor ID is set then it's a VF */
+	अगर (!(req_id & 0x0080))
+		जाओ skip_bad_vf_detection;
 
 	pf_func = req_id & 0x01;
-	if ((pf_func & 1) == (pdev->devfn & 1)) {
-		unsigned int device_id;
+	अगर ((pf_func & 1) == (pdev->devfn & 1)) अणु
+		अचिन्हित पूर्णांक device_id;
 
 		vf = (req_id & 0x7F) >> 1;
 		e_dev_err("VF %d has caused a PCIe error\n", vf);
 		e_dev_err("TLP: dw0: %8.8x\tdw1: %8.8x\tdw2: "
 				"%8.8x\tdw3: %8.8x\n",
 		dw0, dw1, dw2, dw3);
-		switch (adapter->hw.mac.type) {
-		case ixgbe_mac_82599EB:
+		चयन (adapter->hw.mac.type) अणु
+		हाल ixgbe_mac_82599EB:
 			device_id = IXGBE_82599_VF_DEVICE_ID;
-			break;
-		case ixgbe_mac_X540:
+			अवरोध;
+		हाल ixgbe_mac_X540:
 			device_id = IXGBE_X540_VF_DEVICE_ID;
-			break;
-		case ixgbe_mac_X550:
+			अवरोध;
+		हाल ixgbe_mac_X550:
 			device_id = IXGBE_DEV_ID_X550_VF;
-			break;
-		case ixgbe_mac_X550EM_x:
+			अवरोध;
+		हाल ixgbe_mac_X550EM_x:
 			device_id = IXGBE_DEV_ID_X550EM_X_VF;
-			break;
-		case ixgbe_mac_x550em_a:
+			अवरोध;
+		हाल ixgbe_mac_x550em_a:
 			device_id = IXGBE_DEV_ID_X550EM_A_VF;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			device_id = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Find the pci device of the offending VF */
-		vfdev = pci_get_device(PCI_VENDOR_ID_INTEL, device_id, NULL);
-		while (vfdev) {
-			if (vfdev->devfn == (req_id & 0xFF))
-				break;
+		vfdev = pci_get_device(PCI_VENDOR_ID_INTEL, device_id, शून्य);
+		जबतक (vfdev) अणु
+			अगर (vfdev->devfn == (req_id & 0xFF))
+				अवरोध;
 			vfdev = pci_get_device(PCI_VENDOR_ID_INTEL,
 					       device_id, vfdev);
-		}
+		पूर्ण
 		/*
 		 * There's a slim chance the VF could have been hot plugged,
-		 * so if it is no longer present we don't need to issue the
-		 * VFLR.  Just clean up the AER in that case.
+		 * so अगर it is no दीर्घer present we करोn't need to issue the
+		 * VFLR.  Just clean up the AER in that हाल.
 		 */
-		if (vfdev) {
+		अगर (vfdev) अणु
 			pcie_flr(vfdev);
 			/* Free device reference count */
 			pci_dev_put(vfdev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Even though the error may have occurred on the other port
-	 * we still need to increment the vf error reference count for
+	 * we still need to increment the vf error reference count क्रम
 	 * both ports because the I/O resume function will be called
-	 * for both of them.
+	 * क्रम both of them.
 	 */
 	adapter->vferr_refcount++;
 
-	return PCI_ERS_RESULT_RECOVERED;
+	वापस PCI_ERS_RESULT_RECOVERED;
 
 skip_bad_vf_detection:
-#endif /* CONFIG_PCI_IOV */
-	if (!test_bit(__IXGBE_SERVICE_INITED, &adapter->state))
-		return PCI_ERS_RESULT_DISCONNECT;
+#पूर्ण_अगर /* CONFIG_PCI_IOV */
+	अगर (!test_bit(__IXGBE_SERVICE_INITED, &adapter->state))
+		वापस PCI_ERS_RESULT_DISCONNECT;
 
-	if (!netif_device_present(netdev))
-		return PCI_ERS_RESULT_DISCONNECT;
+	अगर (!netअगर_device_present(netdev))
+		वापस PCI_ERS_RESULT_DISCONNECT;
 
 	rtnl_lock();
-	netif_device_detach(netdev);
+	netअगर_device_detach(netdev);
 
-	if (netif_running(netdev))
-		ixgbe_close_suspend(adapter);
+	अगर (netअगर_running(netdev))
+		ixgbe_बंद_suspend(adapter);
 
-	if (state == pci_channel_io_perm_failure) {
+	अगर (state == pci_channel_io_perm_failure) अणु
 		rtnl_unlock();
-		return PCI_ERS_RESULT_DISCONNECT;
-	}
+		वापस PCI_ERS_RESULT_DISCONNECT;
+	पूर्ण
 
-	if (!test_and_set_bit(__IXGBE_DISABLED, &adapter->state))
+	अगर (!test_and_set_bit(__IXGBE_DISABLED, &adapter->state))
 		pci_disable_device(pdev);
 	rtnl_unlock();
 
 	/* Request a slot reset. */
-	return PCI_ERS_RESULT_NEED_RESET;
-}
+	वापस PCI_ERS_RESULT_NEED_RESET;
+पूर्ण
 
 /**
  * ixgbe_io_slot_reset - called after the pci bus has been reset.
- * @pdev: Pointer to PCI device
+ * @pdev: Poपूर्णांकer to PCI device
  *
- * Restart the card from scratch, as if from a cold-boot.
+ * Restart the card from scratch, as अगर from a cold-boot.
  */
-static pci_ers_result_t ixgbe_io_slot_reset(struct pci_dev *pdev)
-{
-	struct ixgbe_adapter *adapter = pci_get_drvdata(pdev);
+अटल pci_ers_result_t ixgbe_io_slot_reset(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ixgbe_adapter *adapter = pci_get_drvdata(pdev);
 	pci_ers_result_t result;
 
-	if (pci_enable_device_mem(pdev)) {
+	अगर (pci_enable_device_mem(pdev)) अणु
 		e_err(probe, "Cannot re-enable PCI device after reset.\n");
 		result = PCI_ERS_RESULT_DISCONNECT;
-	} else {
-		smp_mb__before_atomic();
+	पूर्ण अन्यथा अणु
+		smp_mb__beक्रमe_atomic();
 		clear_bit(__IXGBE_DISABLED, &adapter->state);
 		adapter->hw.hw_addr = adapter->io_addr;
 		pci_set_master(pdev);
@@ -11325,128 +11326,128 @@ static pci_ers_result_t ixgbe_io_slot_reset(struct pci_dev *pdev)
 		ixgbe_reset(adapter);
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_WUS, ~0);
 		result = PCI_ERS_RESULT_RECOVERED;
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * ixgbe_io_resume - called when traffic can start flowing again.
- * @pdev: Pointer to PCI device
+ * @pdev: Poपूर्णांकer to PCI device
  *
  * This callback is called when the error recovery driver tells us that
  * its OK to resume normal operation.
  */
-static void ixgbe_io_resume(struct pci_dev *pdev)
-{
-	struct ixgbe_adapter *adapter = pci_get_drvdata(pdev);
-	struct net_device *netdev = adapter->netdev;
+अटल व्योम ixgbe_io_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ixgbe_adapter *adapter = pci_get_drvdata(pdev);
+	काष्ठा net_device *netdev = adapter->netdev;
 
-#ifdef CONFIG_PCI_IOV
-	if (adapter->vferr_refcount) {
+#अगर_घोषित CONFIG_PCI_IOV
+	अगर (adapter->vferr_refcount) अणु
 		e_info(drv, "Resuming after VF err\n");
 		adapter->vferr_refcount--;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-#endif
+#पूर्ण_अगर
 	rtnl_lock();
-	if (netif_running(netdev))
-		ixgbe_open(netdev);
+	अगर (netअगर_running(netdev))
+		ixgbe_खोलो(netdev);
 
-	netif_device_attach(netdev);
+	netअगर_device_attach(netdev);
 	rtnl_unlock();
-}
+पूर्ण
 
-static const struct pci_error_handlers ixgbe_err_handler = {
+अटल स्थिर काष्ठा pci_error_handlers ixgbe_err_handler = अणु
 	.error_detected = ixgbe_io_error_detected,
 	.slot_reset = ixgbe_io_slot_reset,
 	.resume = ixgbe_io_resume,
-};
+पूर्ण;
 
-static SIMPLE_DEV_PM_OPS(ixgbe_pm_ops, ixgbe_suspend, ixgbe_resume);
+अटल SIMPLE_DEV_PM_OPS(ixgbe_pm_ops, ixgbe_suspend, ixgbe_resume);
 
-static struct pci_driver ixgbe_driver = {
+अटल काष्ठा pci_driver ixgbe_driver = अणु
 	.name      = ixgbe_driver_name,
 	.id_table  = ixgbe_pci_tbl,
 	.probe     = ixgbe_probe,
-	.remove    = ixgbe_remove,
+	.हटाओ    = ixgbe_हटाओ,
 	.driver.pm = &ixgbe_pm_ops,
-	.shutdown  = ixgbe_shutdown,
+	.shutकरोwn  = ixgbe_shutकरोwn,
 	.sriov_configure = ixgbe_pci_sriov_configure,
 	.err_handler = &ixgbe_err_handler
-};
+पूर्ण;
 
 /**
  * ixgbe_init_module - Driver Registration Routine
  *
  * ixgbe_init_module is the first routine called when the driver is
- * loaded. All it does is register with the PCI subsystem.
+ * loaded. All it करोes is रेजिस्टर with the PCI subप्रणाली.
  **/
-static int __init ixgbe_init_module(void)
-{
-	int ret;
+अटल पूर्णांक __init ixgbe_init_module(व्योम)
+अणु
+	पूर्णांक ret;
 	pr_info("%s\n", ixgbe_driver_string);
 	pr_info("%s\n", ixgbe_copyright);
 
-	ixgbe_wq = create_singlethread_workqueue(ixgbe_driver_name);
-	if (!ixgbe_wq) {
+	ixgbe_wq = create_singlethपढ़ो_workqueue(ixgbe_driver_name);
+	अगर (!ixgbe_wq) अणु
 		pr_err("%s: Failed to create workqueue\n", ixgbe_driver_name);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ixgbe_dbg_init();
 
-	ret = pci_register_driver(&ixgbe_driver);
-	if (ret) {
+	ret = pci_रेजिस्टर_driver(&ixgbe_driver);
+	अगर (ret) अणु
 		destroy_workqueue(ixgbe_wq);
-		ixgbe_dbg_exit();
-		return ret;
-	}
+		ixgbe_dbg_निकास();
+		वापस ret;
+	पूर्ण
 
-#ifdef CONFIG_IXGBE_DCA
-	dca_register_notify(&dca_notifier);
-#endif
+#अगर_घोषित CONFIG_IXGBE_DCA
+	dca_रेजिस्टर_notअगरy(&dca_notअगरier);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 module_init(ixgbe_init_module);
 
 /**
- * ixgbe_exit_module - Driver Exit Cleanup Routine
+ * ixgbe_निकास_module - Driver Exit Cleanup Routine
  *
- * ixgbe_exit_module is called just before the driver is removed
+ * ixgbe_निकास_module is called just beक्रमe the driver is हटाओd
  * from memory.
  **/
-static void __exit ixgbe_exit_module(void)
-{
-#ifdef CONFIG_IXGBE_DCA
-	dca_unregister_notify(&dca_notifier);
-#endif
-	pci_unregister_driver(&ixgbe_driver);
+अटल व्योम __निकास ixgbe_निकास_module(व्योम)
+अणु
+#अगर_घोषित CONFIG_IXGBE_DCA
+	dca_unरेजिस्टर_notअगरy(&dca_notअगरier);
+#पूर्ण_अगर
+	pci_unरेजिस्टर_driver(&ixgbe_driver);
 
-	ixgbe_dbg_exit();
-	if (ixgbe_wq) {
+	ixgbe_dbg_निकास();
+	अगर (ixgbe_wq) अणु
 		destroy_workqueue(ixgbe_wq);
-		ixgbe_wq = NULL;
-	}
-}
+		ixgbe_wq = शून्य;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_IXGBE_DCA
-static int ixgbe_notify_dca(struct notifier_block *nb, unsigned long event,
-			    void *p)
-{
-	int ret_val;
+#अगर_घोषित CONFIG_IXGBE_DCA
+अटल पूर्णांक ixgbe_notअगरy_dca(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
+			    व्योम *p)
+अणु
+	पूर्णांक ret_val;
 
-	ret_val = driver_for_each_device(&ixgbe_driver.driver, NULL, &event,
-					 __ixgbe_notify_dca);
+	ret_val = driver_क्रम_each_device(&ixgbe_driver.driver, शून्य, &event,
+					 __ixgbe_notअगरy_dca);
 
-	return ret_val ? NOTIFY_BAD : NOTIFY_DONE;
-}
+	वापस ret_val ? NOTIFY_BAD : NOTIFY_DONE;
+पूर्ण
 
-#endif /* CONFIG_IXGBE_DCA */
+#पूर्ण_अगर /* CONFIG_IXGBE_DCA */
 
-module_exit(ixgbe_exit_module);
+module_निकास(ixgbe_निकास_module);
 
-/* ixgbe_main.c */
+/* ixgbe_मुख्य.c */

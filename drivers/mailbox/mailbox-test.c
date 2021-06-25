@@ -1,211 +1,212 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2015 ST Microelectronics
  *
  * Author: Lee Jones <lee.jones@linaro.org>
  */
 
-#include <linux/debugfs.h>
-#include <linux/err.h>
-#include <linux/fs.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/mailbox_client.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/poll.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/err.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mailbox_client.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/sched/संकेत.स>
 
-#define MBOX_MAX_SIG_LEN	8
-#define MBOX_MAX_MSG_LEN	128
-#define MBOX_BYTES_PER_LINE	16
-#define MBOX_HEXDUMP_LINE_LEN	((MBOX_BYTES_PER_LINE * 4) + 2)
-#define MBOX_HEXDUMP_MAX_LEN	(MBOX_HEXDUMP_LINE_LEN *		\
+#घोषणा MBOX_MAX_SIG_LEN	8
+#घोषणा MBOX_MAX_MSG_LEN	128
+#घोषणा MBOX_BYTES_PER_LINE	16
+#घोषणा MBOX_HEXDUMP_LINE_LEN	((MBOX_BYTES_PER_LINE * 4) + 2)
+#घोषणा MBOX_HEXDUMP_MAX_LEN	(MBOX_HEXDUMP_LINE_LEN *		\
 				 (MBOX_MAX_MSG_LEN / MBOX_BYTES_PER_LINE))
 
-static bool mbox_data_ready;
+अटल bool mbox_data_पढ़ोy;
 
-struct mbox_test_device {
-	struct device		*dev;
-	void __iomem		*tx_mmio;
-	void __iomem		*rx_mmio;
-	struct mbox_chan	*tx_channel;
-	struct mbox_chan	*rx_channel;
-	char			*rx_buffer;
-	char			*signal;
-	char			*message;
+काष्ठा mbox_test_device अणु
+	काष्ठा device		*dev;
+	व्योम __iomem		*tx_mmio;
+	व्योम __iomem		*rx_mmio;
+	काष्ठा mbox_chan	*tx_channel;
+	काष्ठा mbox_chan	*rx_channel;
+	अक्षर			*rx_buffer;
+	अक्षर			*संकेत;
+	अक्षर			*message;
 	spinlock_t		lock;
-	wait_queue_head_t	waitq;
-	struct fasync_struct	*async_queue;
-	struct dentry		*root_debugfs_dir;
-};
+	रुको_queue_head_t	रुकोq;
+	काष्ठा fasync_काष्ठा	*async_queue;
+	काष्ठा dentry		*root_debugfs_dir;
+पूर्ण;
 
-static ssize_t mbox_test_signal_write(struct file *filp,
-				       const char __user *userbuf,
-				       size_t count, loff_t *ppos)
-{
-	struct mbox_test_device *tdev = filp->private_data;
+अटल sमाप_प्रकार mbox_test_संकेत_ग_लिखो(काष्ठा file *filp,
+				       स्थिर अक्षर __user *userbuf,
+				       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mbox_test_device *tdev = filp->निजी_data;
 
-	if (!tdev->tx_channel) {
+	अगर (!tdev->tx_channel) अणु
 		dev_err(tdev->dev, "Channel cannot do Tx\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (count > MBOX_MAX_SIG_LEN) {
+	अगर (count > MBOX_MAX_SIG_LEN) अणु
 		dev_err(tdev->dev,
 			"Signal length %zd greater than max allowed %d\n",
 			count, MBOX_MAX_SIG_LEN);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Only allocate memory if we need to */
-	if (!tdev->signal) {
-		tdev->signal = kzalloc(MBOX_MAX_SIG_LEN, GFP_KERNEL);
-		if (!tdev->signal)
-			return -ENOMEM;
-	}
+	/* Only allocate memory अगर we need to */
+	अगर (!tdev->संकेत) अणु
+		tdev->संकेत = kzalloc(MBOX_MAX_SIG_LEN, GFP_KERNEL);
+		अगर (!tdev->संकेत)
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (copy_from_user(tdev->signal, userbuf, count)) {
-		kfree(tdev->signal);
-		tdev->signal = NULL;
-		return -EFAULT;
-	}
+	अगर (copy_from_user(tdev->संकेत, userbuf, count)) अणु
+		kमुक्त(tdev->संकेत);
+		tdev->संकेत = शून्य;
+		वापस -EFAULT;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations mbox_test_signal_ops = {
-	.write	= mbox_test_signal_write,
-	.open	= simple_open,
+अटल स्थिर काष्ठा file_operations mbox_test_संकेत_ops = अणु
+	.ग_लिखो	= mbox_test_संकेत_ग_लिखो,
+	.खोलो	= simple_खोलो,
 	.llseek	= generic_file_llseek,
-};
+पूर्ण;
 
-static int mbox_test_message_fasync(int fd, struct file *filp, int on)
-{
-	struct mbox_test_device *tdev = filp->private_data;
+अटल पूर्णांक mbox_test_message_fasync(पूर्णांक fd, काष्ठा file *filp, पूर्णांक on)
+अणु
+	काष्ठा mbox_test_device *tdev = filp->निजी_data;
 
-	return fasync_helper(fd, filp, on, &tdev->async_queue);
-}
+	वापस fasync_helper(fd, filp, on, &tdev->async_queue);
+पूर्ण
 
-static ssize_t mbox_test_message_write(struct file *filp,
-				       const char __user *userbuf,
-				       size_t count, loff_t *ppos)
-{
-	struct mbox_test_device *tdev = filp->private_data;
-	void *data;
-	int ret;
+अटल sमाप_प्रकार mbox_test_message_ग_लिखो(काष्ठा file *filp,
+				       स्थिर अक्षर __user *userbuf,
+				       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mbox_test_device *tdev = filp->निजी_data;
+	व्योम *data;
+	पूर्णांक ret;
 
-	if (!tdev->tx_channel) {
+	अगर (!tdev->tx_channel) अणु
 		dev_err(tdev->dev, "Channel cannot do Tx\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (count > MBOX_MAX_MSG_LEN) {
+	अगर (count > MBOX_MAX_MSG_LEN) अणु
 		dev_err(tdev->dev,
 			"Message length %zd greater than max allowed %d\n",
 			count, MBOX_MAX_MSG_LEN);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	tdev->message = kzalloc(MBOX_MAX_MSG_LEN, GFP_KERNEL);
-	if (!tdev->message)
-		return -ENOMEM;
+	अगर (!tdev->message)
+		वापस -ENOMEM;
 
 	ret = copy_from_user(tdev->message, userbuf, count);
-	if (ret) {
+	अगर (ret) अणु
 		ret = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * A separate signal is only of use if there is
+	 * A separate संकेत is only of use अगर there is
 	 * MMIO to subsequently pass the message through
 	 */
-	if (tdev->tx_mmio && tdev->signal) {
-		print_hex_dump_bytes("Client: Sending: Signal: ", DUMP_PREFIX_ADDRESS,
-				     tdev->signal, MBOX_MAX_SIG_LEN);
+	अगर (tdev->tx_mmio && tdev->संकेत) अणु
+		prपूर्णांक_hex_dump_bytes("Client: Sending: Signal: ", DUMP_PREFIX_ADDRESS,
+				     tdev->संकेत, MBOX_MAX_SIG_LEN);
 
-		data = tdev->signal;
-	} else
+		data = tdev->संकेत;
+	पूर्ण अन्यथा
 		data = tdev->message;
 
-	print_hex_dump_bytes("Client: Sending: Message: ", DUMP_PREFIX_ADDRESS,
+	prपूर्णांक_hex_dump_bytes("Client: Sending: Message: ", DUMP_PREFIX_ADDRESS,
 			     tdev->message, MBOX_MAX_MSG_LEN);
 
 	ret = mbox_send_message(tdev->tx_channel, data);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(tdev->dev, "Failed to send message via mailbox\n");
 
 out:
-	kfree(tdev->signal);
-	kfree(tdev->message);
-	tdev->signal = NULL;
+	kमुक्त(tdev->संकेत);
+	kमुक्त(tdev->message);
+	tdev->संकेत = शून्य;
 
-	return ret < 0 ? ret : count;
-}
+	वापस ret < 0 ? ret : count;
+पूर्ण
 
-static bool mbox_test_message_data_ready(struct mbox_test_device *tdev)
-{
-	bool data_ready;
-	unsigned long flags;
+अटल bool mbox_test_message_data_पढ़ोy(काष्ठा mbox_test_device *tdev)
+अणु
+	bool data_पढ़ोy;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&tdev->lock, flags);
-	data_ready = mbox_data_ready;
+	data_पढ़ोy = mbox_data_पढ़ोy;
 	spin_unlock_irqrestore(&tdev->lock, flags);
 
-	return data_ready;
-}
+	वापस data_पढ़ोy;
+पूर्ण
 
-static ssize_t mbox_test_message_read(struct file *filp, char __user *userbuf,
-				      size_t count, loff_t *ppos)
-{
-	struct mbox_test_device *tdev = filp->private_data;
-	unsigned long flags;
-	char *touser, *ptr;
-	int l = 0;
-	int ret;
+अटल sमाप_प्रकार mbox_test_message_पढ़ो(काष्ठा file *filp, अक्षर __user *userbuf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mbox_test_device *tdev = filp->निजी_data;
+	अचिन्हित दीर्घ flags;
+	अक्षर *touser, *ptr;
+	पूर्णांक l = 0;
+	पूर्णांक ret;
 
-	DECLARE_WAITQUEUE(wait, current);
+	DECLARE_WAITQUEUE(रुको, current);
 
 	touser = kzalloc(MBOX_HEXDUMP_MAX_LEN + 1, GFP_KERNEL);
-	if (!touser)
-		return -ENOMEM;
+	अगर (!touser)
+		वापस -ENOMEM;
 
-	if (!tdev->rx_channel) {
-		ret = snprintf(touser, 20, "<NO RX CAPABILITY>\n");
-		ret = simple_read_from_buffer(userbuf, count, ppos,
+	अगर (!tdev->rx_channel) अणु
+		ret = snम_लिखो(touser, 20, "<NO RX CAPABILITY>\n");
+		ret = simple_पढ़ो_from_buffer(userbuf, count, ppos,
 					      touser, ret);
-		goto kfree_err;
-	}
+		जाओ kमुक्त_err;
+	पूर्ण
 
-	add_wait_queue(&tdev->waitq, &wait);
+	add_रुको_queue(&tdev->रुकोq, &रुको);
 
-	do {
+	करो अणु
 		__set_current_state(TASK_INTERRUPTIBLE);
 
-		if (mbox_test_message_data_ready(tdev))
-			break;
+		अगर (mbox_test_message_data_पढ़ोy(tdev))
+			अवरोध;
 
-		if (filp->f_flags & O_NONBLOCK) {
+		अगर (filp->f_flags & O_NONBLOCK) अणु
 			ret = -EAGAIN;
-			goto waitq_err;
-		}
+			जाओ रुकोq_err;
+		पूर्ण
 
-		if (signal_pending(current)) {
+		अगर (संकेत_pending(current)) अणु
 			ret = -ERESTARTSYS;
-			goto waitq_err;
-		}
+			जाओ रुकोq_err;
+		पूर्ण
 		schedule();
 
-	} while (1);
+	पूर्ण जबतक (1);
 
 	spin_lock_irqsave(&tdev->lock, flags);
 
 	ptr = tdev->rx_buffer;
-	while (l < MBOX_HEXDUMP_MAX_LEN) {
+	जबतक (l < MBOX_HEXDUMP_MAX_LEN) अणु
 		hex_dump_to_buffer(ptr,
 				   MBOX_BYTES_PER_LINE,
 				   MBOX_BYTES_PER_LINE, 1, touser + l,
@@ -214,231 +215,231 @@ static ssize_t mbox_test_message_read(struct file *filp, char __user *userbuf,
 		ptr += MBOX_BYTES_PER_LINE;
 		l += MBOX_HEXDUMP_LINE_LEN;
 		*(touser + (l - 1)) = '\n';
-	}
+	पूर्ण
 	*(touser + l) = '\0';
 
-	memset(tdev->rx_buffer, 0, MBOX_MAX_MSG_LEN);
-	mbox_data_ready = false;
+	स_रखो(tdev->rx_buffer, 0, MBOX_MAX_MSG_LEN);
+	mbox_data_पढ़ोy = false;
 
 	spin_unlock_irqrestore(&tdev->lock, flags);
 
-	ret = simple_read_from_buffer(userbuf, count, ppos, touser, MBOX_HEXDUMP_MAX_LEN);
-waitq_err:
+	ret = simple_पढ़ो_from_buffer(userbuf, count, ppos, touser, MBOX_HEXDUMP_MAX_LEN);
+रुकोq_err:
 	__set_current_state(TASK_RUNNING);
-	remove_wait_queue(&tdev->waitq, &wait);
-kfree_err:
-	kfree(touser);
-	return ret;
-}
+	हटाओ_रुको_queue(&tdev->रुकोq, &रुको);
+kमुक्त_err:
+	kमुक्त(touser);
+	वापस ret;
+पूर्ण
 
-static __poll_t
-mbox_test_message_poll(struct file *filp, struct poll_table_struct *wait)
-{
-	struct mbox_test_device *tdev = filp->private_data;
+अटल __poll_t
+mbox_test_message_poll(काष्ठा file *filp, काष्ठा poll_table_काष्ठा *रुको)
+अणु
+	काष्ठा mbox_test_device *tdev = filp->निजी_data;
 
-	poll_wait(filp, &tdev->waitq, wait);
+	poll_रुको(filp, &tdev->रुकोq, रुको);
 
-	if (mbox_test_message_data_ready(tdev))
-		return EPOLLIN | EPOLLRDNORM;
-	return 0;
-}
+	अगर (mbox_test_message_data_पढ़ोy(tdev))
+		वापस EPOLLIN | EPOLLRDNORM;
+	वापस 0;
+पूर्ण
 
-static const struct file_operations mbox_test_message_ops = {
-	.write	= mbox_test_message_write,
-	.read	= mbox_test_message_read,
+अटल स्थिर काष्ठा file_operations mbox_test_message_ops = अणु
+	.ग_लिखो	= mbox_test_message_ग_लिखो,
+	.पढ़ो	= mbox_test_message_पढ़ो,
 	.fasync	= mbox_test_message_fasync,
 	.poll	= mbox_test_message_poll,
-	.open	= simple_open,
+	.खोलो	= simple_खोलो,
 	.llseek	= generic_file_llseek,
-};
+पूर्ण;
 
-static int mbox_test_add_debugfs(struct platform_device *pdev,
-				 struct mbox_test_device *tdev)
-{
-	if (!debugfs_initialized())
-		return 0;
+अटल पूर्णांक mbox_test_add_debugfs(काष्ठा platक्रमm_device *pdev,
+				 काष्ठा mbox_test_device *tdev)
+अणु
+	अगर (!debugfs_initialized())
+		वापस 0;
 
-	tdev->root_debugfs_dir = debugfs_create_dir(dev_name(&pdev->dev), NULL);
-	if (!tdev->root_debugfs_dir) {
+	tdev->root_debugfs_dir = debugfs_create_dir(dev_name(&pdev->dev), शून्य);
+	अगर (!tdev->root_debugfs_dir) अणु
 		dev_err(&pdev->dev, "Failed to create Mailbox debugfs\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	debugfs_create_file("message", 0600, tdev->root_debugfs_dir,
 			    tdev, &mbox_test_message_ops);
 
 	debugfs_create_file("signal", 0200, tdev->root_debugfs_dir,
-			    tdev, &mbox_test_signal_ops);
+			    tdev, &mbox_test_संकेत_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mbox_test_receive_message(struct mbox_client *client, void *message)
-{
-	struct mbox_test_device *tdev = dev_get_drvdata(client->dev);
-	unsigned long flags;
+अटल व्योम mbox_test_receive_message(काष्ठा mbox_client *client, व्योम *message)
+अणु
+	काष्ठा mbox_test_device *tdev = dev_get_drvdata(client->dev);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&tdev->lock, flags);
-	if (tdev->rx_mmio) {
-		memcpy_fromio(tdev->rx_buffer, tdev->rx_mmio, MBOX_MAX_MSG_LEN);
-		print_hex_dump_bytes("Client: Received [MMIO]: ", DUMP_PREFIX_ADDRESS,
+	अगर (tdev->rx_mmio) अणु
+		स_नकल_fromio(tdev->rx_buffer, tdev->rx_mmio, MBOX_MAX_MSG_LEN);
+		prपूर्णांक_hex_dump_bytes("Client: Received [MMIO]: ", DUMP_PREFIX_ADDRESS,
 				     tdev->rx_buffer, MBOX_MAX_MSG_LEN);
-	} else if (message) {
-		print_hex_dump_bytes("Client: Received [API]: ", DUMP_PREFIX_ADDRESS,
+	पूर्ण अन्यथा अगर (message) अणु
+		prपूर्णांक_hex_dump_bytes("Client: Received [API]: ", DUMP_PREFIX_ADDRESS,
 				     message, MBOX_MAX_MSG_LEN);
-		memcpy(tdev->rx_buffer, message, MBOX_MAX_MSG_LEN);
-	}
-	mbox_data_ready = true;
+		स_नकल(tdev->rx_buffer, message, MBOX_MAX_MSG_LEN);
+	पूर्ण
+	mbox_data_पढ़ोy = true;
 	spin_unlock_irqrestore(&tdev->lock, flags);
 
-	wake_up_interruptible(&tdev->waitq);
+	wake_up_पूर्णांकerruptible(&tdev->रुकोq);
 
-	kill_fasync(&tdev->async_queue, SIGIO, POLL_IN);
-}
+	समाप्त_fasync(&tdev->async_queue, SIGIO, POLL_IN);
+पूर्ण
 
-static void mbox_test_prepare_message(struct mbox_client *client, void *message)
-{
-	struct mbox_test_device *tdev = dev_get_drvdata(client->dev);
+अटल व्योम mbox_test_prepare_message(काष्ठा mbox_client *client, व्योम *message)
+अणु
+	काष्ठा mbox_test_device *tdev = dev_get_drvdata(client->dev);
 
-	if (tdev->tx_mmio) {
-		if (tdev->signal)
-			memcpy_toio(tdev->tx_mmio, tdev->message, MBOX_MAX_MSG_LEN);
-		else
-			memcpy_toio(tdev->tx_mmio, message, MBOX_MAX_MSG_LEN);
-	}
-}
+	अगर (tdev->tx_mmio) अणु
+		अगर (tdev->संकेत)
+			स_नकल_toio(tdev->tx_mmio, tdev->message, MBOX_MAX_MSG_LEN);
+		अन्यथा
+			स_नकल_toio(tdev->tx_mmio, message, MBOX_MAX_MSG_LEN);
+	पूर्ण
+पूर्ण
 
-static void mbox_test_message_sent(struct mbox_client *client,
-				   void *message, int r)
-{
-	if (r)
+अटल व्योम mbox_test_message_sent(काष्ठा mbox_client *client,
+				   व्योम *message, पूर्णांक r)
+अणु
+	अगर (r)
 		dev_warn(client->dev,
 			 "Client: Message could not be sent: %d\n", r);
-	else
+	अन्यथा
 		dev_info(client->dev,
 			 "Client: Message sent\n");
-}
+पूर्ण
 
-static struct mbox_chan *
-mbox_test_request_channel(struct platform_device *pdev, const char *name)
-{
-	struct mbox_client *client;
-	struct mbox_chan *channel;
+अटल काष्ठा mbox_chan *
+mbox_test_request_channel(काष्ठा platक्रमm_device *pdev, स्थिर अक्षर *name)
+अणु
+	काष्ठा mbox_client *client;
+	काष्ठा mbox_chan *channel;
 
-	client = devm_kzalloc(&pdev->dev, sizeof(*client), GFP_KERNEL);
-	if (!client)
-		return ERR_PTR(-ENOMEM);
+	client = devm_kzalloc(&pdev->dev, माप(*client), GFP_KERNEL);
+	अगर (!client)
+		वापस ERR_PTR(-ENOMEM);
 
 	client->dev		= &pdev->dev;
 	client->rx_callback	= mbox_test_receive_message;
 	client->tx_prepare	= mbox_test_prepare_message;
-	client->tx_done		= mbox_test_message_sent;
+	client->tx_करोne		= mbox_test_message_sent;
 	client->tx_block	= true;
-	client->knows_txdone	= false;
+	client->knows_txकरोne	= false;
 	client->tx_tout		= 500;
 
 	channel = mbox_request_channel_byname(client, name);
-	if (IS_ERR(channel)) {
+	अगर (IS_ERR(channel)) अणु
 		dev_warn(&pdev->dev, "Failed to request %s channel\n", name);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return channel;
-}
+	वापस channel;
+पूर्ण
 
-static int mbox_test_probe(struct platform_device *pdev)
-{
-	struct mbox_test_device *tdev;
-	struct resource *res;
-	resource_size_t size;
-	int ret;
+अटल पूर्णांक mbox_test_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mbox_test_device *tdev;
+	काष्ठा resource *res;
+	resource_माप_प्रकार size;
+	पूर्णांक ret;
 
-	tdev = devm_kzalloc(&pdev->dev, sizeof(*tdev), GFP_KERNEL);
-	if (!tdev)
-		return -ENOMEM;
+	tdev = devm_kzalloc(&pdev->dev, माप(*tdev), GFP_KERNEL);
+	अगर (!tdev)
+		वापस -ENOMEM;
 
-	/* It's okay for MMIO to be NULL */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	/* It's okay क्रम MMIO to be शून्य */
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	tdev->tx_mmio = devm_ioremap_resource(&pdev->dev, res);
-	if (PTR_ERR(tdev->tx_mmio) == -EBUSY) {
-		/* if reserved area in SRAM, try just ioremap */
+	अगर (PTR_ERR(tdev->tx_mmio) == -EBUSY) अणु
+		/* अगर reserved area in SRAM, try just ioremap */
 		size = resource_size(res);
 		tdev->tx_mmio = devm_ioremap(&pdev->dev, res->start, size);
-	} else if (IS_ERR(tdev->tx_mmio)) {
-		tdev->tx_mmio = NULL;
-	}
+	पूर्ण अन्यथा अगर (IS_ERR(tdev->tx_mmio)) अणु
+		tdev->tx_mmio = शून्य;
+	पूर्ण
 
-	/* If specified, second reg entry is Rx MMIO */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	/* If specअगरied, second reg entry is Rx MMIO */
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
 	tdev->rx_mmio = devm_ioremap_resource(&pdev->dev, res);
-	if (PTR_ERR(tdev->rx_mmio) == -EBUSY) {
+	अगर (PTR_ERR(tdev->rx_mmio) == -EBUSY) अणु
 		size = resource_size(res);
 		tdev->rx_mmio = devm_ioremap(&pdev->dev, res->start, size);
-	} else if (IS_ERR(tdev->rx_mmio)) {
+	पूर्ण अन्यथा अगर (IS_ERR(tdev->rx_mmio)) अणु
 		tdev->rx_mmio = tdev->tx_mmio;
-	}
+	पूर्ण
 
 	tdev->tx_channel = mbox_test_request_channel(pdev, "tx");
 	tdev->rx_channel = mbox_test_request_channel(pdev, "rx");
 
-	if (!tdev->tx_channel && !tdev->rx_channel)
-		return -EPROBE_DEFER;
+	अगर (!tdev->tx_channel && !tdev->rx_channel)
+		वापस -EPROBE_DEFER;
 
-	/* If Rx is not specified but has Rx MMIO, then Rx = Tx */
-	if (!tdev->rx_channel && (tdev->rx_mmio != tdev->tx_mmio))
+	/* If Rx is not specअगरied but has Rx MMIO, then Rx = Tx */
+	अगर (!tdev->rx_channel && (tdev->rx_mmio != tdev->tx_mmio))
 		tdev->rx_channel = tdev->tx_channel;
 
 	tdev->dev = &pdev->dev;
-	platform_set_drvdata(pdev, tdev);
+	platक्रमm_set_drvdata(pdev, tdev);
 
 	spin_lock_init(&tdev->lock);
 
-	if (tdev->rx_channel) {
+	अगर (tdev->rx_channel) अणु
 		tdev->rx_buffer = devm_kzalloc(&pdev->dev,
 					       MBOX_MAX_MSG_LEN, GFP_KERNEL);
-		if (!tdev->rx_buffer)
-			return -ENOMEM;
-	}
+		अगर (!tdev->rx_buffer)
+			वापस -ENOMEM;
+	पूर्ण
 
 	ret = mbox_test_add_debugfs(pdev, tdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	init_waitqueue_head(&tdev->waitq);
+	init_रुकोqueue_head(&tdev->रुकोq);
 	dev_info(&pdev->dev, "Successfully registered\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mbox_test_remove(struct platform_device *pdev)
-{
-	struct mbox_test_device *tdev = platform_get_drvdata(pdev);
+अटल पूर्णांक mbox_test_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mbox_test_device *tdev = platक्रमm_get_drvdata(pdev);
 
-	debugfs_remove_recursive(tdev->root_debugfs_dir);
+	debugfs_हटाओ_recursive(tdev->root_debugfs_dir);
 
-	if (tdev->tx_channel)
-		mbox_free_channel(tdev->tx_channel);
-	if (tdev->rx_channel)
-		mbox_free_channel(tdev->rx_channel);
+	अगर (tdev->tx_channel)
+		mbox_मुक्त_channel(tdev->tx_channel);
+	अगर (tdev->rx_channel)
+		mbox_मुक्त_channel(tdev->rx_channel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id mbox_test_match[] = {
-	{ .compatible = "mailbox-test" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id mbox_test_match[] = अणु
+	अणु .compatible = "mailbox-test" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mbox_test_match);
 
-static struct platform_driver mbox_test_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mbox_test_driver = अणु
+	.driver = अणु
 		.name = "mailbox_test",
 		.of_match_table = mbox_test_match,
-	},
+	पूर्ण,
 	.probe  = mbox_test_probe,
-	.remove = mbox_test_remove,
-};
-module_platform_driver(mbox_test_driver);
+	.हटाओ = mbox_test_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(mbox_test_driver);
 
 MODULE_DESCRIPTION("Generic Mailbox Testing Facility");
 MODULE_AUTHOR("Lee Jones <lee.jones@linaro.org");

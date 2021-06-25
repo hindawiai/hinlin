@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: LGPL-2.1
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
 
-#ifndef _PERF_BPF_PID_FILTER_
-#define _PERF_BPF_PID_FILTER_
+#अगर_अघोषित _PERF_BPF_PID_FILTER_
+#घोषणा _PERF_BPF_PID_FILTER_
 
-#include <bpf.h>
+#समावेश <bpf.h>
 
-#define pid_filter(name) pid_map(name, bool)
+#घोषणा pid_filter(name) pid_map(name, bool)
 
-static int pid_filter__add(struct bpf_map *pids, pid_t pid)
-{
+अटल पूर्णांक pid_filter__add(काष्ठा bpf_map *pids, pid_t pid)
+अणु
 	bool value = true;
-	return bpf_map_update_elem(pids, &pid, &value, BPF_NOEXIST);
-}
+	वापस bpf_map_update_elem(pids, &pid, &value, BPF_NOEXIST);
+पूर्ण
 
-static bool pid_filter__has(struct bpf_map *pids, pid_t pid)
-{
-	return bpf_map_lookup_elem(pids, &pid) != NULL;
-}
+अटल bool pid_filter__has(काष्ठा bpf_map *pids, pid_t pid)
+अणु
+	वापस bpf_map_lookup_elem(pids, &pid) != शून्य;
+पूर्ण
 
-#endif // _PERF_BPF_PID_FILTER_
+#पूर्ण_अगर // _PERF_BPF_PID_FILTER_

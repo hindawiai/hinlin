@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Support for IDE interfaces on PowerMacs.
+ * Support क्रम IDE पूर्णांकerfaces on PowerMacs.
  *
- * These IDE interfaces are memory-mapped and have a DBDMA channel
- * for doing DMA.
+ * These IDE पूर्णांकerfaces are memory-mapped and have a DBDMA channel
+ * क्रम करोing DMA.
  *
  *  Copyright (C) 1998-2003 Paul Mackerras & Ben. Herrenschmidt
  *  Copyright (C) 2007-2008 Bartlomiej Zolnierkiewicz
@@ -12,64 +13,64 @@
  *
  *  Copyright (c) 1995-1998  Mark Lord
  *
- * TODO: - Use pre-calculated (kauai) timing tables all the time and
+ * TODO: - Use pre-calculated (kauai) timing tables all the समय and
  * get rid of the "rounded" tables used previously, so we have the
- * same table format for all controllers and can then just have one
+ * same table क्रमmat क्रम all controllers and can then just have one
  * big table
  */
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/ide.h>
-#include <linux/notifier.h>
-#include <linux/module.h>
-#include <linux/reboot.h>
-#include <linux/pci.h>
-#include <linux/adb.h>
-#include <linux/pmu.h>
-#include <linux/scatterlist.h>
-#include <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/ide.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/module.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/adb.h>
+#समावेश <linux/pmu.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/slab.h>
 
-#include <asm/prom.h>
-#include <asm/io.h>
-#include <asm/dbdma.h>
-#include <asm/ide.h>
-#include <asm/machdep.h>
-#include <asm/pmac_feature.h>
-#include <asm/sections.h>
-#include <asm/irq.h>
-#include <asm/mediabay.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/dbdma.h>
+#समावेश <यंत्र/ide.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/pmac_feature.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/mediabay.h>
 
-#define DRV_NAME "ide-pmac"
+#घोषणा DRV_NAME "ide-pmac"
 
-#undef IDE_PMAC_DEBUG
+#अघोषित IDE_PMAC_DEBUG
 
-#define DMA_WAIT_TIMEOUT	50
+#घोषणा DMA_WAIT_TIMEOUT	50
 
-typedef struct pmac_ide_hwif {
-	unsigned long			regbase;
-	int				irq;
-	int				kind;
-	int				aapl_bus_id;
-	unsigned			broken_dma : 1;
-	unsigned			broken_dma_warn : 1;
-	struct device_node*		node;
-	struct macio_dev		*mdev;
+प्रकार काष्ठा pmac_ide_hwअगर अणु
+	अचिन्हित दीर्घ			regbase;
+	पूर्णांक				irq;
+	पूर्णांक				kind;
+	पूर्णांक				aapl_bus_id;
+	अचिन्हित			broken_dma : 1;
+	अचिन्हित			broken_dma_warn : 1;
+	काष्ठा device_node*		node;
+	काष्ठा macio_dev		*mdev;
 	u32				timings[4];
-	volatile u32 __iomem *		*kauai_fcr;
-	ide_hwif_t			*hwif;
+	अस्थिर u32 __iomem *		*kauai_fcr;
+	ide_hwअगर_t			*hwअगर;
 
-	/* Those fields are duplicating what is in hwif. We currently
-	 * can't use the hwif ones because of some assumptions that are
-	 * beeing done by the generic code about the kind of dma controller
-	 * and format of the dma table. This will have to be fixed though.
+	/* Those fields are duplicating what is in hwअगर. We currently
+	 * can't use the hwअगर ones because of some assumptions that are
+	 * beeing करोne by the generic code about the kind of dma controller
+	 * and क्रमmat of the dma table. This will have to be fixed though.
 	 */
-	volatile struct dbdma_regs __iomem *	dma_regs;
-	struct dbdma_cmd*		dma_table_cpu;
-} pmac_ide_hwif_t;
+	अस्थिर काष्ठा dbdma_regs __iomem *	dma_regs;
+	काष्ठा dbdma_cmd*		dma_table_cpu;
+पूर्ण pmac_ide_hwअगर_t;
 
-enum {
+क्रमागत अणु
 	controller_ohare,	/* OHare based */
 	controller_heathrow,	/* Heathrow/Paddington */
 	controller_kl_ata3,	/* KeyLargo ATA-3 */
@@ -77,9 +78,9 @@ enum {
 	controller_un_ata6,	/* UniNorth2 ATA-6 */
 	controller_k2_ata6,	/* K2 ATA-6 */
 	controller_sh_ata6,	/* Shasta ATA-6 */
-};
+पूर्ण;
 
-static const char* model_name[] = {
+अटल स्थिर अक्षर* model_name[] = अणु
 	"OHare ATA",		/* OHare based */
 	"Heathrow ATA",		/* Heathrow/Paddington */
 	"KeyLargo ATA-3",	/* KeyLargo ATA-3 (MDMA only) */
@@ -87,304 +88,304 @@ static const char* model_name[] = {
 	"UniNorth ATA-6",	/* UniNorth2 ATA-6 (UDMA/100) */
 	"K2 ATA-6",		/* K2 ATA-6 (UDMA/100) */
 	"Shasta ATA-6",		/* Shasta ATA-6 (UDMA/133) */
-};
+पूर्ण;
 
 /*
- * Extra registers, both 32-bit little-endian
+ * Extra रेजिस्टरs, both 32-bit little-endian
  */
-#define IDE_TIMING_CONFIG	0x200
-#define IDE_INTERRUPT		0x300
+#घोषणा IDE_TIMING_CONFIG	0x200
+#घोषणा IDE_INTERRUPT		0x300
 
-/* Kauai (U2) ATA has different register setup */
-#define IDE_KAUAI_PIO_CONFIG	0x200
-#define IDE_KAUAI_ULTRA_CONFIG	0x210
-#define IDE_KAUAI_POLL_CONFIG	0x220
+/* Kauai (U2) ATA has dअगरferent रेजिस्टर setup */
+#घोषणा IDE_KAUAI_PIO_CONFIG	0x200
+#घोषणा IDE_KAUAI_ULTRA_CONFIG	0x210
+#घोषणा IDE_KAUAI_POLL_CONFIG	0x220
 
 /*
- * Timing configuration register definitions
+ * Timing configuration रेजिस्टर definitions
  */
 
 /* Number of IDE_SYSCLK_NS ticks, argument is in nanoseconds */
-#define SYSCLK_TICKS(t)		(((t) + IDE_SYSCLK_NS - 1) / IDE_SYSCLK_NS)
-#define SYSCLK_TICKS_66(t)	(((t) + IDE_SYSCLK_66_NS - 1) / IDE_SYSCLK_66_NS)
-#define IDE_SYSCLK_NS		30	/* 33Mhz cell */
-#define IDE_SYSCLK_66_NS	15	/* 66Mhz cell */
+#घोषणा SYSCLK_TICKS(t)		(((t) + IDE_SYSCLK_NS - 1) / IDE_SYSCLK_NS)
+#घोषणा SYSCLK_TICKS_66(t)	(((t) + IDE_SYSCLK_66_NS - 1) / IDE_SYSCLK_66_NS)
+#घोषणा IDE_SYSCLK_NS		30	/* 33Mhz cell */
+#घोषणा IDE_SYSCLK_66_NS	15	/* 66Mhz cell */
 
 /* 133Mhz cell, found in shasta.
  * See comments about 100 Mhz Uninorth 2...
  * Note that PIO_MASK and MDMA_MASK seem to overlap
  */
-#define TR_133_PIOREG_PIO_MASK		0xff000fff
-#define TR_133_PIOREG_MDMA_MASK		0x00fff800
-#define TR_133_UDMAREG_UDMA_MASK	0x0003ffff
-#define TR_133_UDMAREG_UDMA_EN		0x00000001
+#घोषणा TR_133_PIOREG_PIO_MASK		0xff000fff
+#घोषणा TR_133_PIOREG_MDMA_MASK		0x00fff800
+#घोषणा TR_133_UDMAREG_UDMA_MASK	0x0003ffff
+#घोषणा TR_133_UDMAREG_UDMA_EN		0x00000001
 
-/* 100Mhz cell, found in Uninorth 2. I don't have much infos about
+/* 100Mhz cell, found in Uninorth 2. I करोn't have much infos about
  * this one yet, it appears as a pci device (106b/0033) on uninorth
- * internal PCI bus and it's clock is controlled like gem or fw. It
- * appears to be an evolution of keylargo ATA4 with a timing register
- * extended to 2 32bits registers and a similar DBDMA channel. Other
- * registers seem to exist but I can't tell much about them.
+ * पूर्णांकernal PCI bus and it's घड़ी is controlled like gem or fw. It
+ * appears to be an evolution of keylargo ATA4 with a timing रेजिस्टर
+ * extended to 2 32bits रेजिस्टरs and a similar DBDMA channel. Other
+ * रेजिस्टरs seem to exist but I can't tell much about them.
  * 
- * So far, I'm using pre-calculated tables for this extracted from
+ * So far, I'm using pre-calculated tables क्रम this extracted from
  * the values used by the MacOS X driver.
  * 
- * The "PIO" register controls PIO and MDMA timings, the "ULTRA"
- * register controls the UDMA timings. At least, it seems bit 0
+ * The "PIO" रेजिस्टर controls PIO and MDMA timings, the "ULTRA"
+ * रेजिस्टर controls the UDMA timings. At least, it seems bit 0
  * of this one enables UDMA vs. MDMA, and bits 4..7 are the
- * cycle time in units of 10ns. Bits 8..15 are used by I don't
+ * cycle समय in units of 10ns. Bits 8..15 are used by I करोn't
  * know their meaning yet
  */
-#define TR_100_PIOREG_PIO_MASK		0xff000fff
-#define TR_100_PIOREG_MDMA_MASK		0x00fff000
-#define TR_100_UDMAREG_UDMA_MASK	0x0000ffff
-#define TR_100_UDMAREG_UDMA_EN		0x00000001
+#घोषणा TR_100_PIOREG_PIO_MASK		0xff000fff
+#घोषणा TR_100_PIOREG_MDMA_MASK		0x00fff000
+#घोषणा TR_100_UDMAREG_UDMA_MASK	0x0000ffff
+#घोषणा TR_100_UDMAREG_UDMA_EN		0x00000001
 
 
-/* 66Mhz cell, found in KeyLargo. Can do ultra mode 0 to 2 on
+/* 66Mhz cell, found in KeyLargo. Can करो ultra mode 0 to 2 on
  * 40 connector cable and to 4 on 80 connector one.
  * Clock unit is 15ns (66Mhz)
  * 
  * 3 Values can be programmed:
- *  - Write data setup, which appears to match the cycle time. They
+ *  - Write data setup, which appears to match the cycle समय. They
  *    also call it DIOW setup.
- *  - Ready to pause time (from spec)
- *  - Address setup. That one is weird. I don't see where exactly
+ *  - Ready to छोड़ो समय (from spec)
+ *  - Address setup. That one is weird. I करोn't see where exactly
  *    it fits in UDMA cycles, I got it's name from an obscure piece
- *    of commented out code in Darwin. They leave it to 0, we do as
+ *    of commented out code in Darwin. They leave it to 0, we करो as
  *    well, despite a comment that would lead to think it has a
  *    min value of 45ns.
- * Apple also add 60ns to the write data setup (or cycle time ?) on
- * reads.
+ * Apple also add 60ns to the ग_लिखो data setup (or cycle समय ?) on
+ * पढ़ोs.
  */
-#define TR_66_UDMA_MASK			0xfff00000
-#define TR_66_UDMA_EN			0x00100000 /* Enable Ultra mode for DMA */
-#define TR_66_UDMA_ADDRSETUP_MASK	0xe0000000 /* Address setup */
-#define TR_66_UDMA_ADDRSETUP_SHIFT	29
-#define TR_66_UDMA_RDY2PAUS_MASK	0x1e000000 /* Ready 2 pause time */
-#define TR_66_UDMA_RDY2PAUS_SHIFT	25
-#define TR_66_UDMA_WRDATASETUP_MASK	0x01e00000 /* Write data setup time */
-#define TR_66_UDMA_WRDATASETUP_SHIFT	21
-#define TR_66_MDMA_MASK			0x000ffc00
-#define TR_66_MDMA_RECOVERY_MASK	0x000f8000
-#define TR_66_MDMA_RECOVERY_SHIFT	15
-#define TR_66_MDMA_ACCESS_MASK		0x00007c00
-#define TR_66_MDMA_ACCESS_SHIFT		10
-#define TR_66_PIO_MASK			0x000003ff
-#define TR_66_PIO_RECOVERY_MASK		0x000003e0
-#define TR_66_PIO_RECOVERY_SHIFT	5
-#define TR_66_PIO_ACCESS_MASK		0x0000001f
-#define TR_66_PIO_ACCESS_SHIFT		0
+#घोषणा TR_66_UDMA_MASK			0xfff00000
+#घोषणा TR_66_UDMA_EN			0x00100000 /* Enable Ultra mode क्रम DMA */
+#घोषणा TR_66_UDMA_ADDRSETUP_MASK	0xe0000000 /* Address setup */
+#घोषणा TR_66_UDMA_ADDRSETUP_SHIFT	29
+#घोषणा TR_66_UDMA_RDY2PAUS_MASK	0x1e000000 /* Ready 2 छोड़ो समय */
+#घोषणा TR_66_UDMA_RDY2PAUS_SHIFT	25
+#घोषणा TR_66_UDMA_WRDATASETUP_MASK	0x01e00000 /* Write data setup समय */
+#घोषणा TR_66_UDMA_WRDATASETUP_SHIFT	21
+#घोषणा TR_66_MDMA_MASK			0x000ffc00
+#घोषणा TR_66_MDMA_RECOVERY_MASK	0x000f8000
+#घोषणा TR_66_MDMA_RECOVERY_SHIFT	15
+#घोषणा TR_66_MDMA_ACCESS_MASK		0x00007c00
+#घोषणा TR_66_MDMA_ACCESS_SHIFT		10
+#घोषणा TR_66_PIO_MASK			0x000003ff
+#घोषणा TR_66_PIO_RECOVERY_MASK		0x000003e0
+#घोषणा TR_66_PIO_RECOVERY_SHIFT	5
+#घोषणा TR_66_PIO_ACCESS_MASK		0x0000001f
+#घोषणा TR_66_PIO_ACCESS_SHIFT		0
 
 /* 33Mhz cell, found in OHare, Heathrow (& Paddington) and KeyLargo
- * Can do pio & mdma modes, clock unit is 30ns (33Mhz)
+ * Can करो pio & mdma modes, घड़ी unit is 30ns (33Mhz)
  * 
- * The access time and recovery time can be programmed. Some older
- * Darwin code base limit OHare to 150ns cycle time. I decided to do
- * the same here fore safety against broken old hardware ;)
- * The HalfTick bit, when set, adds half a clock (15ns) to the access
- * time and removes one from recovery. It's not supported on KeyLargo
- * implementation afaik. The E bit appears to be set for PIO mode 0 and
- * is used to reach long timings used in this mode.
+ * The access समय and recovery समय can be programmed. Some older
+ * Darwin code base limit OHare to 150ns cycle समय. I decided to करो
+ * the same here क्रमe safety against broken old hardware ;)
+ * The HalfTick bit, when set, adds half a घड़ी (15ns) to the access
+ * समय and हटाओs one from recovery. It's not supported on KeyLargo
+ * implementation afaik. The E bit appears to be set क्रम PIO mode 0 and
+ * is used to reach दीर्घ timings used in this mode.
  */
-#define TR_33_MDMA_MASK			0x003ff800
-#define TR_33_MDMA_RECOVERY_MASK	0x001f0000
-#define TR_33_MDMA_RECOVERY_SHIFT	16
-#define TR_33_MDMA_ACCESS_MASK		0x0000f800
-#define TR_33_MDMA_ACCESS_SHIFT		11
-#define TR_33_MDMA_HALFTICK		0x00200000
-#define TR_33_PIO_MASK			0x000007ff
-#define TR_33_PIO_E			0x00000400
-#define TR_33_PIO_RECOVERY_MASK		0x000003e0
-#define TR_33_PIO_RECOVERY_SHIFT	5
-#define TR_33_PIO_ACCESS_MASK		0x0000001f
-#define TR_33_PIO_ACCESS_SHIFT		0
+#घोषणा TR_33_MDMA_MASK			0x003ff800
+#घोषणा TR_33_MDMA_RECOVERY_MASK	0x001f0000
+#घोषणा TR_33_MDMA_RECOVERY_SHIFT	16
+#घोषणा TR_33_MDMA_ACCESS_MASK		0x0000f800
+#घोषणा TR_33_MDMA_ACCESS_SHIFT		11
+#घोषणा TR_33_MDMA_HALFTICK		0x00200000
+#घोषणा TR_33_PIO_MASK			0x000007ff
+#घोषणा TR_33_PIO_E			0x00000400
+#घोषणा TR_33_PIO_RECOVERY_MASK		0x000003e0
+#घोषणा TR_33_PIO_RECOVERY_SHIFT	5
+#घोषणा TR_33_PIO_ACCESS_MASK		0x0000001f
+#घोषणा TR_33_PIO_ACCESS_SHIFT		0
 
 /*
- * Interrupt register definitions
+ * Interrupt रेजिस्टर definitions
  */
-#define IDE_INTR_DMA			0x80000000
-#define IDE_INTR_DEVICE			0x40000000
+#घोषणा IDE_INTR_DMA			0x80000000
+#घोषणा IDE_INTR_DEVICE			0x40000000
 
 /*
  * FCR Register on Kauai. Not sure what bit 0x4 is  ...
  */
-#define KAUAI_FCR_UATA_MAGIC		0x00000004
-#define KAUAI_FCR_UATA_RESET_N		0x00000002
-#define KAUAI_FCR_UATA_ENABLE		0x00000001
+#घोषणा KAUAI_FCR_UATA_MAGIC		0x00000004
+#घोषणा KAUAI_FCR_UATA_RESET_N		0x00000002
+#घोषणा KAUAI_FCR_UATA_ENABLE		0x00000001
 
 /* Rounded Multiword DMA timings
  * 
- * I gave up finding a generic formula for all controller
+ * I gave up finding a generic क्रमmula क्रम all controller
  * types and instead, built tables based on timing values
  * used by Apple in Darwin's implementation.
  */
-struct mdma_timings_t {
-	int	accessTime;
-	int	recoveryTime;
-	int	cycleTime;
-};
+काष्ठा mdma_timings_t अणु
+	पूर्णांक	accessTime;
+	पूर्णांक	recoveryTime;
+	पूर्णांक	cycleTime;
+पूर्ण;
 
-struct mdma_timings_t mdma_timings_33[] =
-{
-    { 240, 240, 480 },
-    { 180, 180, 360 },
-    { 135, 135, 270 },
-    { 120, 120, 240 },
-    { 105, 105, 210 },
-    {  90,  90, 180 },
-    {  75,  75, 150 },
-    {  75,  45, 120 },
-    {   0,   0,   0 }
-};
+काष्ठा mdma_timings_t mdma_timings_33[] =
+अणु
+    अणु 240, 240, 480 पूर्ण,
+    अणु 180, 180, 360 पूर्ण,
+    अणु 135, 135, 270 पूर्ण,
+    अणु 120, 120, 240 पूर्ण,
+    अणु 105, 105, 210 पूर्ण,
+    अणु  90,  90, 180 पूर्ण,
+    अणु  75,  75, 150 पूर्ण,
+    अणु  75,  45, 120 पूर्ण,
+    अणु   0,   0,   0 पूर्ण
+पूर्ण;
 
-struct mdma_timings_t mdma_timings_33k[] =
-{
-    { 240, 240, 480 },
-    { 180, 180, 360 },
-    { 150, 150, 300 },
-    { 120, 120, 240 },
-    {  90, 120, 210 },
-    {  90,  90, 180 },
-    {  90,  60, 150 },
-    {  90,  30, 120 },
-    {   0,   0,   0 }
-};
+काष्ठा mdma_timings_t mdma_timings_33k[] =
+अणु
+    अणु 240, 240, 480 पूर्ण,
+    अणु 180, 180, 360 पूर्ण,
+    अणु 150, 150, 300 पूर्ण,
+    अणु 120, 120, 240 पूर्ण,
+    अणु  90, 120, 210 पूर्ण,
+    अणु  90,  90, 180 पूर्ण,
+    अणु  90,  60, 150 पूर्ण,
+    अणु  90,  30, 120 पूर्ण,
+    अणु   0,   0,   0 पूर्ण
+पूर्ण;
 
-struct mdma_timings_t mdma_timings_66[] =
-{
-    { 240, 240, 480 },
-    { 180, 180, 360 },
-    { 135, 135, 270 },
-    { 120, 120, 240 },
-    { 105, 105, 210 },
-    {  90,  90, 180 },
-    {  90,  75, 165 },
-    {  75,  45, 120 },
-    {   0,   0,   0 }
-};
+काष्ठा mdma_timings_t mdma_timings_66[] =
+अणु
+    अणु 240, 240, 480 पूर्ण,
+    अणु 180, 180, 360 पूर्ण,
+    अणु 135, 135, 270 पूर्ण,
+    अणु 120, 120, 240 पूर्ण,
+    अणु 105, 105, 210 पूर्ण,
+    अणु  90,  90, 180 पूर्ण,
+    अणु  90,  75, 165 पूर्ण,
+    अणु  75,  45, 120 पूर्ण,
+    अणु   0,   0,   0 पूर्ण
+पूर्ण;
 
 /* KeyLargo ATA-4 Ultra DMA timings (rounded) */
-struct {
-	int	addrSetup; /* ??? */
-	int	rdy2pause;
-	int	wrDataSetup;
-} kl66_udma_timings[] =
-{
-    {   0, 180,  120 },	/* Mode 0 */
-    {   0, 150,  90 },	/*      1 */
-    {   0, 120,  60 },	/*      2 */
-    {   0, 90,   45 },	/*      3 */
-    {   0, 90,   30 }	/*      4 */
-};
+काष्ठा अणु
+	पूर्णांक	addrSetup; /* ??? */
+	पूर्णांक	rdy2छोड़ो;
+	पूर्णांक	wrDataSetup;
+पूर्ण kl66_udma_timings[] =
+अणु
+    अणु   0, 180,  120 पूर्ण,	/* Mode 0 */
+    अणु   0, 150,  90 पूर्ण,	/*      1 */
+    अणु   0, 120,  60 पूर्ण,	/*      2 */
+    अणु   0, 90,   45 पूर्ण,	/*      3 */
+    अणु   0, 90,   30 पूर्ण	/*      4 */
+पूर्ण;
 
 /* UniNorth 2 ATA/100 timings */
-struct kauai_timing {
-	int	cycle_time;
+काष्ठा kauai_timing अणु
+	पूर्णांक	cycle_समय;
 	u32	timing_reg;
-};
+पूर्ण;
 
-static struct kauai_timing	kauai_pio_timings[] =
-{
-	{ 930	, 0x08000fff },
-	{ 600	, 0x08000a92 },
-	{ 383	, 0x0800060f },
-	{ 360	, 0x08000492 },
-	{ 330	, 0x0800048f },
-	{ 300	, 0x080003cf },
-	{ 270	, 0x080003cc },
-	{ 240	, 0x0800038b },
-	{ 239	, 0x0800030c },
-	{ 180	, 0x05000249 },
-	{ 120	, 0x04000148 },
-	{ 0	, 0 },
-};
+अटल काष्ठा kauai_timing	kauai_pio_timings[] =
+अणु
+	अणु 930	, 0x08000fff पूर्ण,
+	अणु 600	, 0x08000a92 पूर्ण,
+	अणु 383	, 0x0800060f पूर्ण,
+	अणु 360	, 0x08000492 पूर्ण,
+	अणु 330	, 0x0800048f पूर्ण,
+	अणु 300	, 0x080003cf पूर्ण,
+	अणु 270	, 0x080003cc पूर्ण,
+	अणु 240	, 0x0800038b पूर्ण,
+	अणु 239	, 0x0800030c पूर्ण,
+	अणु 180	, 0x05000249 पूर्ण,
+	अणु 120	, 0x04000148 पूर्ण,
+	अणु 0	, 0 पूर्ण,
+पूर्ण;
 
-static struct kauai_timing	kauai_mdma_timings[] =
-{
-	{ 1260	, 0x00fff000 },
-	{ 480	, 0x00618000 },
-	{ 360	, 0x00492000 },
-	{ 270	, 0x0038e000 },
-	{ 240	, 0x0030c000 },
-	{ 210	, 0x002cb000 },
-	{ 180	, 0x00249000 },
-	{ 150	, 0x00209000 },
-	{ 120	, 0x00148000 },
-	{ 0	, 0 },
-};
+अटल काष्ठा kauai_timing	kauai_mdma_timings[] =
+अणु
+	अणु 1260	, 0x00fff000 पूर्ण,
+	अणु 480	, 0x00618000 पूर्ण,
+	अणु 360	, 0x00492000 पूर्ण,
+	अणु 270	, 0x0038e000 पूर्ण,
+	अणु 240	, 0x0030c000 पूर्ण,
+	अणु 210	, 0x002cb000 पूर्ण,
+	अणु 180	, 0x00249000 पूर्ण,
+	अणु 150	, 0x00209000 पूर्ण,
+	अणु 120	, 0x00148000 पूर्ण,
+	अणु 0	, 0 पूर्ण,
+पूर्ण;
 
-static struct kauai_timing	kauai_udma_timings[] =
-{
-	{ 120	, 0x000070c0 },
-	{ 90	, 0x00005d80 },
-	{ 60	, 0x00004a60 },
-	{ 45	, 0x00003a50 },
-	{ 30	, 0x00002a30 },
-	{ 20	, 0x00002921 },
-	{ 0	, 0 },
-};
+अटल काष्ठा kauai_timing	kauai_udma_timings[] =
+अणु
+	अणु 120	, 0x000070c0 पूर्ण,
+	अणु 90	, 0x00005d80 पूर्ण,
+	अणु 60	, 0x00004a60 पूर्ण,
+	अणु 45	, 0x00003a50 पूर्ण,
+	अणु 30	, 0x00002a30 पूर्ण,
+	अणु 20	, 0x00002921 पूर्ण,
+	अणु 0	, 0 पूर्ण,
+पूर्ण;
 
-static struct kauai_timing	shasta_pio_timings[] =
-{
-	{ 930	, 0x08000fff },
-	{ 600	, 0x0A000c97 },
-	{ 383	, 0x07000712 },
-	{ 360	, 0x040003cd },
-	{ 330	, 0x040003cd },
-	{ 300	, 0x040003cd },
-	{ 270	, 0x040003cd },
-	{ 240	, 0x040003cd },
-	{ 239	, 0x040003cd },
-	{ 180	, 0x0400028b },
-	{ 120	, 0x0400010a },
-	{ 0	, 0 },
-};
+अटल काष्ठा kauai_timing	shasta_pio_timings[] =
+अणु
+	अणु 930	, 0x08000fff पूर्ण,
+	अणु 600	, 0x0A000c97 पूर्ण,
+	अणु 383	, 0x07000712 पूर्ण,
+	अणु 360	, 0x040003cd पूर्ण,
+	अणु 330	, 0x040003cd पूर्ण,
+	अणु 300	, 0x040003cd पूर्ण,
+	अणु 270	, 0x040003cd पूर्ण,
+	अणु 240	, 0x040003cd पूर्ण,
+	अणु 239	, 0x040003cd पूर्ण,
+	अणु 180	, 0x0400028b पूर्ण,
+	अणु 120	, 0x0400010a पूर्ण,
+	अणु 0	, 0 पूर्ण,
+पूर्ण;
 
-static struct kauai_timing	shasta_mdma_timings[] =
-{
-	{ 1260	, 0x00fff000 },
-	{ 480	, 0x00820800 },
-	{ 360	, 0x00820800 },
-	{ 270	, 0x00820800 },
-	{ 240	, 0x00820800 },
-	{ 210	, 0x00820800 },
-	{ 180	, 0x00820800 },
-	{ 150	, 0x0028b000 },
-	{ 120	, 0x001ca000 },
-	{ 0	, 0 },
-};
+अटल काष्ठा kauai_timing	shasta_mdma_timings[] =
+अणु
+	अणु 1260	, 0x00fff000 पूर्ण,
+	अणु 480	, 0x00820800 पूर्ण,
+	अणु 360	, 0x00820800 पूर्ण,
+	अणु 270	, 0x00820800 पूर्ण,
+	अणु 240	, 0x00820800 पूर्ण,
+	अणु 210	, 0x00820800 पूर्ण,
+	अणु 180	, 0x00820800 पूर्ण,
+	अणु 150	, 0x0028b000 पूर्ण,
+	अणु 120	, 0x001ca000 पूर्ण,
+	अणु 0	, 0 पूर्ण,
+पूर्ण;
 
-static struct kauai_timing	shasta_udma133_timings[] =
-{
-	{ 120   , 0x00035901, },
-	{ 90    , 0x000348b1, },
-	{ 60    , 0x00033881, },
-	{ 45    , 0x00033861, },
-	{ 30    , 0x00033841, },
-	{ 20    , 0x00033031, },
-	{ 15    , 0x00033021, },
-	{ 0	, 0 },
-};
+अटल काष्ठा kauai_timing	shasta_udma133_timings[] =
+अणु
+	अणु 120   , 0x00035901, पूर्ण,
+	अणु 90    , 0x000348b1, पूर्ण,
+	अणु 60    , 0x00033881, पूर्ण,
+	अणु 45    , 0x00033861, पूर्ण,
+	अणु 30    , 0x00033841, पूर्ण,
+	अणु 20    , 0x00033031, पूर्ण,
+	अणु 15    , 0x00033021, पूर्ण,
+	अणु 0	, 0 पूर्ण,
+पूर्ण;
 
 
-static inline u32
-kauai_lookup_timing(struct kauai_timing* table, int cycle_time)
-{
-	int i;
+अटल अंतरभूत u32
+kauai_lookup_timing(काष्ठा kauai_timing* table, पूर्णांक cycle_समय)
+अणु
+	पूर्णांक i;
 	
-	for (i=0; table[i].cycle_time; i++)
-		if (cycle_time > table[i+1].cycle_time)
-			return table[i].timing_reg;
+	क्रम (i=0; table[i].cycle_समय; i++)
+		अगर (cycle_समय > table[i+1].cycle_समय)
+			वापस table[i].timing_reg;
 	BUG();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* allow up to 256 DBDMA commands per xfer */
-#define MAX_DCMDS		256
+#घोषणा MAX_DCMDS		256
 
 /* 
- * Wait 1s for disk to answer on IDE bus after a hard reset
+ * Wait 1s क्रम disk to answer on IDE bus after a hard reset
  * of the device (via GPIO/FCR).
  * 
  * Some devices seem to "pollute" the bus even after dropping
@@ -392,136 +393,136 @@ kauai_lookup_timing(struct kauai_timing* table, int cycle_time)
  * bus) after a hard reset. Since we hard reset all drives on
  * KeyLargo ATA66, we have to keep that delay around. I may end
  * up not hard resetting anymore on these and keep the delay only
- * for older interfaces instead (we have to reset when coming
+ * क्रम older पूर्णांकerfaces instead (we have to reset when coming
  * from MacOS...) --BenH. 
  */
-#define IDE_WAKEUP_DELAY	(1*HZ)
+#घोषणा IDE_WAKEUP_DELAY	(1*HZ)
 
-static int pmac_ide_init_dma(ide_hwif_t *, const struct ide_port_info *);
+अटल पूर्णांक pmac_ide_init_dma(ide_hwअगर_t *, स्थिर काष्ठा ide_port_info *);
 
-#define PMAC_IDE_REG(x) \
-	((void __iomem *)((drive)->hwif->io_ports.data_addr + (x)))
-
-/*
- * Apply the timings of the proper unit (master/slave) to the shared
- * timing register when selecting that unit. This version is for
- * ASICs with a single timing register
- */
-static void pmac_ide_apply_timings(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
-
-	if (drive->dn & 1)
-		writel(pmif->timings[1], PMAC_IDE_REG(IDE_TIMING_CONFIG));
-	else
-		writel(pmif->timings[0], PMAC_IDE_REG(IDE_TIMING_CONFIG));
-	(void)readl(PMAC_IDE_REG(IDE_TIMING_CONFIG));
-}
+#घोषणा PMAC_IDE_REG(x) \
+	((व्योम __iomem *)((drive)->hwअगर->io_ports.data_addr + (x)))
 
 /*
  * Apply the timings of the proper unit (master/slave) to the shared
- * timing register when selecting that unit. This version is for
- * ASICs with a dual timing register (Kauai)
+ * timing रेजिस्टर when selecting that unit. This version is क्रम
+ * ASICs with a single timing रेजिस्टर
  */
-static void pmac_ide_kauai_apply_timings(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
+अटल व्योम pmac_ide_apply_timings(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
 
-	if (drive->dn & 1) {
-		writel(pmif->timings[1], PMAC_IDE_REG(IDE_KAUAI_PIO_CONFIG));
-		writel(pmif->timings[3], PMAC_IDE_REG(IDE_KAUAI_ULTRA_CONFIG));
-	} else {
-		writel(pmif->timings[0], PMAC_IDE_REG(IDE_KAUAI_PIO_CONFIG));
-		writel(pmif->timings[2], PMAC_IDE_REG(IDE_KAUAI_ULTRA_CONFIG));
-	}
-	(void)readl(PMAC_IDE_REG(IDE_KAUAI_PIO_CONFIG));
-}
+	अगर (drive->dn & 1)
+		ग_लिखोl(pmअगर->timings[1], PMAC_IDE_REG(IDE_TIMING_CONFIG));
+	अन्यथा
+		ग_लिखोl(pmअगर->timings[0], PMAC_IDE_REG(IDE_TIMING_CONFIG));
+	(व्योम)पढ़ोl(PMAC_IDE_REG(IDE_TIMING_CONFIG));
+पूर्ण
 
 /*
- * Force an update of controller timing values for a given drive
+ * Apply the timings of the proper unit (master/slave) to the shared
+ * timing रेजिस्टर when selecting that unit. This version is क्रम
+ * ASICs with a dual timing रेजिस्टर (Kauai)
  */
-static void
-pmac_ide_do_update_timings(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
+अटल व्योम pmac_ide_kauai_apply_timings(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
 
-	if (pmif->kind == controller_sh_ata6 ||
-	    pmif->kind == controller_un_ata6 ||
-	    pmif->kind == controller_k2_ata6)
+	अगर (drive->dn & 1) अणु
+		ग_लिखोl(pmअगर->timings[1], PMAC_IDE_REG(IDE_KAUAI_PIO_CONFIG));
+		ग_लिखोl(pmअगर->timings[3], PMAC_IDE_REG(IDE_KAUAI_ULTRA_CONFIG));
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(pmअगर->timings[0], PMAC_IDE_REG(IDE_KAUAI_PIO_CONFIG));
+		ग_लिखोl(pmअगर->timings[2], PMAC_IDE_REG(IDE_KAUAI_ULTRA_CONFIG));
+	पूर्ण
+	(व्योम)पढ़ोl(PMAC_IDE_REG(IDE_KAUAI_PIO_CONFIG));
+पूर्ण
+
+/*
+ * Force an update of controller timing values क्रम a given drive
+ */
+अटल व्योम
+pmac_ide_करो_update_timings(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
+
+	अगर (pmअगर->kind == controller_sh_ata6 ||
+	    pmअगर->kind == controller_un_ata6 ||
+	    pmअगर->kind == controller_k2_ata6)
 		pmac_ide_kauai_apply_timings(drive);
-	else
+	अन्यथा
 		pmac_ide_apply_timings(drive);
-}
+पूर्ण
 
-static void pmac_dev_select(ide_drive_t *drive)
-{
+अटल व्योम pmac_dev_select(ide_drive_t *drive)
+अणु
 	pmac_ide_apply_timings(drive);
 
-	writeb(drive->select | ATA_DEVICE_OBS,
-	       (void __iomem *)drive->hwif->io_ports.device_addr);
-}
+	ग_लिखोb(drive->select | ATA_DEVICE_OBS,
+	       (व्योम __iomem *)drive->hwअगर->io_ports.device_addr);
+पूर्ण
 
-static void pmac_kauai_dev_select(ide_drive_t *drive)
-{
+अटल व्योम pmac_kauai_dev_select(ide_drive_t *drive)
+अणु
 	pmac_ide_kauai_apply_timings(drive);
 
-	writeb(drive->select | ATA_DEVICE_OBS,
-	       (void __iomem *)drive->hwif->io_ports.device_addr);
-}
+	ग_लिखोb(drive->select | ATA_DEVICE_OBS,
+	       (व्योम __iomem *)drive->hwअगर->io_ports.device_addr);
+पूर्ण
 
-static void pmac_exec_command(ide_hwif_t *hwif, u8 cmd)
-{
-	writeb(cmd, (void __iomem *)hwif->io_ports.command_addr);
-	(void)readl((void __iomem *)(hwif->io_ports.data_addr
+अटल व्योम pmac_exec_command(ide_hwअगर_t *hwअगर, u8 cmd)
+अणु
+	ग_लिखोb(cmd, (व्योम __iomem *)hwअगर->io_ports.command_addr);
+	(व्योम)पढ़ोl((व्योम __iomem *)(hwअगर->io_ports.data_addr
 				     + IDE_TIMING_CONFIG));
-}
+पूर्ण
 
-static void pmac_write_devctl(ide_hwif_t *hwif, u8 ctl)
-{
-	writeb(ctl, (void __iomem *)hwif->io_ports.ctl_addr);
-	(void)readl((void __iomem *)(hwif->io_ports.data_addr
+अटल व्योम pmac_ग_लिखो_devctl(ide_hwअगर_t *hwअगर, u8 ctl)
+अणु
+	ग_लिखोb(ctl, (व्योम __iomem *)hwअगर->io_ports.ctl_addr);
+	(व्योम)पढ़ोl((व्योम __iomem *)(hwअगर->io_ports.data_addr
 				     + IDE_TIMING_CONFIG));
-}
+पूर्ण
 
 /*
  * Old tuning functions (called on hdparm -p), sets up drive PIO timings
  */
-static void pmac_ide_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
-	const u8 pio = drive->pio_mode - XFER_PIO_0;
-	struct ide_timing *tim = ide_timing_find_mode(XFER_PIO_0 + pio);
+अटल व्योम pmac_ide_set_pio_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
+	स्थिर u8 pio = drive->pio_mode - XFER_PIO_0;
+	काष्ठा ide_timing *tim = ide_timing_find_mode(XFER_PIO_0 + pio);
 	u32 *timings, t;
-	unsigned accessTicks, recTicks;
-	unsigned accessTime, recTime;
-	unsigned int cycle_time;
+	अचिन्हित accessTicks, recTicks;
+	अचिन्हित accessTime, recTime;
+	अचिन्हित पूर्णांक cycle_समय;
 
 	/* which drive is it ? */
-	timings = &pmif->timings[drive->dn & 1];
+	timings = &pmअगर->timings[drive->dn & 1];
 	t = *timings;
 
-	cycle_time = ide_pio_cycle_time(drive, pio);
+	cycle_समय = ide_pio_cycle_समय(drive, pio);
 
-	switch (pmif->kind) {
-	case controller_sh_ata6: {
+	चयन (pmअगर->kind) अणु
+	हाल controller_sh_ata6: अणु
 		/* 133Mhz cell */
-		u32 tr = kauai_lookup_timing(shasta_pio_timings, cycle_time);
+		u32 tr = kauai_lookup_timing(shasta_pio_timings, cycle_समय);
 		t = (t & ~TR_133_PIOREG_PIO_MASK) | tr;
-		break;
-		}
-	case controller_un_ata6:
-	case controller_k2_ata6: {
+		अवरोध;
+		पूर्ण
+	हाल controller_un_ata6:
+	हाल controller_k2_ata6: अणु
 		/* 100Mhz cell */
-		u32 tr = kauai_lookup_timing(kauai_pio_timings, cycle_time);
+		u32 tr = kauai_lookup_timing(kauai_pio_timings, cycle_समय);
 		t = (t & ~TR_100_PIOREG_PIO_MASK) | tr;
-		break;
-		}
-	case controller_kl_ata4:
+		अवरोध;
+		पूर्ण
+	हाल controller_kl_ata4:
 		/* 66Mhz cell */
-		recTime = cycle_time - tim->active - tim->setup;
+		recTime = cycle_समय - tim->active - tim->setup;
 		recTime = max(recTime, 150U);
 		accessTime = tim->active;
 		accessTime = max(accessTime, 150U);
@@ -532,11 +533,11 @@ static void pmac_ide_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
 		t = (t & ~TR_66_PIO_MASK) |
 			(accessTicks << TR_66_PIO_ACCESS_SHIFT) |
 			(recTicks << TR_66_PIO_RECOVERY_SHIFT);
-		break;
-	default: {
+		अवरोध;
+	शेष: अणु
 		/* 33Mhz cell */
-		int ebit = 0;
-		recTime = cycle_time - tim->active - tim->setup;
+		पूर्णांक ebit = 0;
+		recTime = cycle_समय - tim->active - tim->setup;
 		recTime = max(recTime, 150U);
 		accessTime = tim->active;
 		accessTime = max(accessTime, 150U);
@@ -546,40 +547,40 @@ static void pmac_ide_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
 		recTicks = SYSCLK_TICKS(recTime);
 		recTicks = min(recTicks, 0x1fU);
 		recTicks = max(recTicks, 5U) - 4;
-		if (recTicks > 9) {
-			recTicks--; /* guess, but it's only for PIO0, so... */
+		अगर (recTicks > 9) अणु
+			recTicks--; /* guess, but it's only क्रम PIO0, so... */
 			ebit = 1;
-		}
+		पूर्ण
 		t = (t & ~TR_33_PIO_MASK) |
 				(accessTicks << TR_33_PIO_ACCESS_SHIFT) |
 				(recTicks << TR_33_PIO_RECOVERY_SHIFT);
-		if (ebit)
+		अगर (ebit)
 			t |= TR_33_PIO_E;
-		break;
-		}
-	}
+		अवरोध;
+		पूर्ण
+	पूर्ण
 
-#ifdef IDE_PMAC_DEBUG
-	printk(KERN_ERR "%s: Set PIO timing for mode %d, reg: 0x%08x\n",
+#अगर_घोषित IDE_PMAC_DEBUG
+	prपूर्णांकk(KERN_ERR "%s: Set PIO timing for mode %d, reg: 0x%08x\n",
 		drive->name, pio,  *timings);
-#endif	
+#पूर्ण_अगर	
 
 	*timings = t;
-	pmac_ide_do_update_timings(drive);
-}
+	pmac_ide_करो_update_timings(drive);
+पूर्ण
 
 /*
  * Calculate KeyLargo ATA/66 UDMA timings
  */
-static int
+अटल पूर्णांक
 set_timings_udma_ata4(u32 *timings, u8 speed)
-{
-	unsigned rdyToPauseTicks, wrDataSetupTicks, addrTicks;
+अणु
+	अचिन्हित rdyToPauseTicks, wrDataSetupTicks, addrTicks;
 
-	if (speed > XFER_UDMA_4)
-		return 1;
+	अगर (speed > XFER_UDMA_4)
+		वापस 1;
 
-	rdyToPauseTicks = SYSCLK_TICKS_66(kl66_udma_timings[speed & 0xf].rdy2pause);
+	rdyToPauseTicks = SYSCLK_TICKS_66(kl66_udma_timings[speed & 0xf].rdy2छोड़ो);
 	wrDataSetupTicks = SYSCLK_TICKS_66(kl66_udma_timings[speed & 0xf].wrDataSetup);
 	addrTicks = SYSCLK_TICKS_66(kl66_udma_timings[speed & 0xf].addrSetup);
 
@@ -588,130 +589,130 @@ set_timings_udma_ata4(u32 *timings, u8 speed)
 			(rdyToPauseTicks << TR_66_UDMA_RDY2PAUS_SHIFT) |
 			(addrTicks <<TR_66_UDMA_ADDRSETUP_SHIFT) |
 			TR_66_UDMA_EN;
-#ifdef IDE_PMAC_DEBUG
-	printk(KERN_ERR "ide_pmac: Set UDMA timing for mode %d, reg: 0x%08x\n",
+#अगर_घोषित IDE_PMAC_DEBUG
+	prपूर्णांकk(KERN_ERR "ide_pmac: Set UDMA timing for mode %d, reg: 0x%08x\n",
 		speed & 0xf,  *timings);
-#endif	
+#पूर्ण_अगर	
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Calculate Kauai ATA/100 UDMA timings
  */
-static int
+अटल पूर्णांक
 set_timings_udma_ata6(u32 *pio_timings, u32 *ultra_timings, u8 speed)
-{
-	struct ide_timing *t = ide_timing_find_mode(speed);
+अणु
+	काष्ठा ide_timing *t = ide_timing_find_mode(speed);
 	u32 tr;
 
-	if (speed > XFER_UDMA_5 || t == NULL)
-		return 1;
-	tr = kauai_lookup_timing(kauai_udma_timings, (int)t->udma);
+	अगर (speed > XFER_UDMA_5 || t == शून्य)
+		वापस 1;
+	tr = kauai_lookup_timing(kauai_udma_timings, (पूर्णांक)t->udma);
 	*ultra_timings = ((*ultra_timings) & ~TR_100_UDMAREG_UDMA_MASK) | tr;
 	*ultra_timings = (*ultra_timings) | TR_100_UDMAREG_UDMA_EN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Calculate Shasta ATA/133 UDMA timings
  */
-static int
+अटल पूर्णांक
 set_timings_udma_shasta(u32 *pio_timings, u32 *ultra_timings, u8 speed)
-{
-	struct ide_timing *t = ide_timing_find_mode(speed);
+अणु
+	काष्ठा ide_timing *t = ide_timing_find_mode(speed);
 	u32 tr;
 
-	if (speed > XFER_UDMA_6 || t == NULL)
-		return 1;
-	tr = kauai_lookup_timing(shasta_udma133_timings, (int)t->udma);
+	अगर (speed > XFER_UDMA_6 || t == शून्य)
+		वापस 1;
+	tr = kauai_lookup_timing(shasta_udma133_timings, (पूर्णांक)t->udma);
 	*ultra_timings = ((*ultra_timings) & ~TR_133_UDMAREG_UDMA_MASK) | tr;
 	*ultra_timings = (*ultra_timings) | TR_133_UDMAREG_UDMA_EN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Calculate MDMA timings for all cells
+ * Calculate MDMA timings क्रम all cells
  */
-static void
-set_timings_mdma(ide_drive_t *drive, int intf_type, u32 *timings, u32 *timings2,
+अटल व्योम
+set_timings_mdma(ide_drive_t *drive, पूर्णांक पूर्णांकf_type, u32 *timings, u32 *timings2,
 		 	u8 speed)
-{
+अणु
 	u16 *id = drive->id;
-	int cycleTime, accessTime = 0, recTime = 0;
-	unsigned accessTicks, recTicks;
-	struct mdma_timings_t* tm = NULL;
-	int i;
+	पूर्णांक cycleTime, accessTime = 0, recTime = 0;
+	अचिन्हित accessTicks, recTicks;
+	काष्ठा mdma_timings_t* पंचांग = शून्य;
+	पूर्णांक i;
 
-	/* Get default cycle time for mode */
-	switch(speed & 0xf) {
-		case 0: cycleTime = 480; break;
-		case 1: cycleTime = 150; break;
-		case 2: cycleTime = 120; break;
-		default:
+	/* Get शेष cycle समय क्रम mode */
+	चयन(speed & 0xf) अणु
+		हाल 0: cycleTime = 480; अवरोध;
+		हाल 1: cycleTime = 150; अवरोध;
+		हाल 2: cycleTime = 120; अवरोध;
+		शेष:
 			BUG();
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	/* Check if drive provides explicit DMA cycle time */
-	if ((id[ATA_ID_FIELD_VALID] & 2) && id[ATA_ID_EIDE_DMA_TIME])
-		cycleTime = max_t(int, id[ATA_ID_EIDE_DMA_TIME], cycleTime);
+	/* Check अगर drive provides explicit DMA cycle समय */
+	अगर ((id[ATA_ID_FIELD_VALID] & 2) && id[ATA_ID_EIDE_DMA_TIME])
+		cycleTime = max_t(पूर्णांक, id[ATA_ID_EIDE_DMA_TIME], cycleTime);
 
 	/* OHare limits according to some old Apple sources */	
-	if ((intf_type == controller_ohare) && (cycleTime < 150))
+	अगर ((पूर्णांकf_type == controller_ohare) && (cycleTime < 150))
 		cycleTime = 150;
-	/* Get the proper timing array for this controller */
-	switch(intf_type) {
-	        case controller_sh_ata6:
-		case controller_un_ata6:
-		case controller_k2_ata6:
-			break;
-		case controller_kl_ata4:
-			tm = mdma_timings_66;
-			break;
-		case controller_kl_ata3:
-			tm = mdma_timings_33k;
-			break;
-		default:
-			tm = mdma_timings_33;
-			break;
-	}
-	if (tm != NULL) {
-		/* Lookup matching access & recovery times */
+	/* Get the proper timing array क्रम this controller */
+	चयन(पूर्णांकf_type) अणु
+	        हाल controller_sh_ata6:
+		हाल controller_un_ata6:
+		हाल controller_k2_ata6:
+			अवरोध;
+		हाल controller_kl_ata4:
+			पंचांग = mdma_timings_66;
+			अवरोध;
+		हाल controller_kl_ata3:
+			पंचांग = mdma_timings_33k;
+			अवरोध;
+		शेष:
+			पंचांग = mdma_timings_33;
+			अवरोध;
+	पूर्ण
+	अगर (पंचांग != शून्य) अणु
+		/* Lookup matching access & recovery बार */
 		i = -1;
-		for (;;) {
-			if (tm[i+1].cycleTime < cycleTime)
-				break;
+		क्रम (;;) अणु
+			अगर (पंचांग[i+1].cycleTime < cycleTime)
+				अवरोध;
 			i++;
-		}
-		cycleTime = tm[i].cycleTime;
-		accessTime = tm[i].accessTime;
-		recTime = tm[i].recoveryTime;
+		पूर्ण
+		cycleTime = पंचांग[i].cycleTime;
+		accessTime = पंचांग[i].accessTime;
+		recTime = पंचांग[i].recoveryTime;
 
-#ifdef IDE_PMAC_DEBUG
-		printk(KERN_ERR "%s: MDMA, cycleTime: %d, accessTime: %d, recTime: %d\n",
+#अगर_घोषित IDE_PMAC_DEBUG
+		prपूर्णांकk(KERN_ERR "%s: MDMA, cycleTime: %d, accessTime: %d, recTime: %d\n",
 			drive->name, cycleTime, accessTime, recTime);
-#endif
-	}
-	switch(intf_type) {
-	case controller_sh_ata6: {
+#पूर्ण_अगर
+	पूर्ण
+	चयन(पूर्णांकf_type) अणु
+	हाल controller_sh_ata6: अणु
 		/* 133Mhz cell */
 		u32 tr = kauai_lookup_timing(shasta_mdma_timings, cycleTime);
 		*timings = ((*timings) & ~TR_133_PIOREG_MDMA_MASK) | tr;
 		*timings2 = (*timings2) & ~TR_133_UDMAREG_UDMA_EN;
-		}
-		break;
-	case controller_un_ata6:
-	case controller_k2_ata6: {
+		पूर्ण
+		अवरोध;
+	हाल controller_un_ata6:
+	हाल controller_k2_ata6: अणु
 		/* 100Mhz cell */
 		u32 tr = kauai_lookup_timing(kauai_mdma_timings, cycleTime);
 		*timings = ((*timings) & ~TR_100_PIOREG_MDMA_MASK) | tr;
 		*timings2 = (*timings2) & ~TR_100_UDMAREG_UDMA_EN;
-		}
-		break;
-	case controller_kl_ata4:
+		पूर्ण
+		अवरोध;
+	हाल controller_kl_ata4:
 		/* 66Mhz cell */
 		accessTicks = SYSCLK_TICKS_66(accessTime);
 		accessTicks = min(accessTicks, 0x1fU);
@@ -723,8 +724,8 @@ set_timings_mdma(ide_drive_t *drive, int intf_type, u32 *timings, u32 *timings2,
 		*timings = ((*timings) & ~(TR_66_MDMA_MASK | TR_66_UDMA_MASK)) |
 			(accessTicks << TR_66_MDMA_ACCESS_SHIFT) |
 			(recTicks << TR_66_MDMA_RECOVERY_SHIFT);
-		break;
-	case controller_kl_ata3:
+		अवरोध;
+	हाल controller_kl_ata3:
 		/* 33Mhz cell on KeyLargo */
 		accessTicks = SYSCLK_TICKS(accessTime);
 		accessTicks = max(accessTicks, 1U);
@@ -736,12 +737,12 @@ set_timings_mdma(ide_drive_t *drive, int intf_type, u32 *timings, u32 *timings2,
 		*timings = ((*timings) & ~TR_33_MDMA_MASK) |
 				(accessTicks << TR_33_MDMA_ACCESS_SHIFT) |
 				(recTicks << TR_33_MDMA_RECOVERY_SHIFT);
-		break;
-	default: {
+		अवरोध;
+	शेष: अणु
 		/* 33Mhz cell on others */
-		int halfTick = 0;
-		int origAccessTime = accessTime;
-		int origRecTime = recTime;
+		पूर्णांक halfTick = 0;
+		पूर्णांक origAccessTime = accessTime;
+		पूर्णांक origRecTime = recTime;
 		
 		accessTicks = SYSCLK_TICKS(accessTime);
 		accessTicks = max(accessTicks, 1U);
@@ -751,251 +752,251 @@ set_timings_mdma(ide_drive_t *drive, int intf_type, u32 *timings, u32 *timings2,
 		recTicks = max(recTicks, 2U) - 1;
 		recTicks = min(recTicks, 0x1fU);
 		recTime = (recTicks + 1) * IDE_SYSCLK_NS;
-		if ((accessTicks > 1) &&
+		अगर ((accessTicks > 1) &&
 		    ((accessTime - IDE_SYSCLK_NS/2) >= origAccessTime) &&
-		    ((recTime - IDE_SYSCLK_NS/2) >= origRecTime)) {
+		    ((recTime - IDE_SYSCLK_NS/2) >= origRecTime)) अणु
             		halfTick = 1;
 			accessTicks--;
-		}
+		पूर्ण
 		*timings = ((*timings) & ~TR_33_MDMA_MASK) |
 				(accessTicks << TR_33_MDMA_ACCESS_SHIFT) |
 				(recTicks << TR_33_MDMA_RECOVERY_SHIFT);
-		if (halfTick)
+		अगर (halfTick)
 			*timings |= TR_33_MDMA_HALFTICK;
-		}
-	}
-#ifdef IDE_PMAC_DEBUG
-	printk(KERN_ERR "%s: Set MDMA timing for mode %d, reg: 0x%08x\n",
+		पूर्ण
+	पूर्ण
+#अगर_घोषित IDE_PMAC_DEBUG
+	prपूर्णांकk(KERN_ERR "%s: Set MDMA timing for mode %d, reg: 0x%08x\n",
 		drive->name, speed & 0xf,  *timings);
-#endif	
-}
+#पूर्ण_अगर	
+पूर्ण
 
-static void pmac_ide_set_dma_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
-	int ret = 0;
+अटल व्योम pmac_ide_set_dma_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
+	पूर्णांक ret = 0;
 	u32 *timings, *timings2, tl[2];
 	u8 unit = drive->dn & 1;
-	const u8 speed = drive->dma_mode;
+	स्थिर u8 speed = drive->dma_mode;
 
-	timings = &pmif->timings[unit];
-	timings2 = &pmif->timings[unit+2];
+	timings = &pmअगर->timings[unit];
+	timings2 = &pmअगर->timings[unit+2];
 
 	/* Copy timings to local image */
 	tl[0] = *timings;
 	tl[1] = *timings2;
 
-	if (speed >= XFER_UDMA_0) {
-		if (pmif->kind == controller_kl_ata4)
+	अगर (speed >= XFER_UDMA_0) अणु
+		अगर (pmअगर->kind == controller_kl_ata4)
 			ret = set_timings_udma_ata4(&tl[0], speed);
-		else if (pmif->kind == controller_un_ata6
-			 || pmif->kind == controller_k2_ata6)
+		अन्यथा अगर (pmअगर->kind == controller_un_ata6
+			 || pmअगर->kind == controller_k2_ata6)
 			ret = set_timings_udma_ata6(&tl[0], &tl[1], speed);
-		else if (pmif->kind == controller_sh_ata6)
+		अन्यथा अगर (pmअगर->kind == controller_sh_ata6)
 			ret = set_timings_udma_shasta(&tl[0], &tl[1], speed);
-		else
+		अन्यथा
 			ret = -1;
-	} else
-		set_timings_mdma(drive, pmif->kind, &tl[0], &tl[1], speed);
+	पूर्ण अन्यथा
+		set_timings_mdma(drive, pmअगर->kind, &tl[0], &tl[1], speed);
 
-	if (ret)
-		return;
+	अगर (ret)
+		वापस;
 
 	/* Apply timings to controller */
 	*timings = tl[0];
 	*timings2 = tl[1];
 
-	pmac_ide_do_update_timings(drive);	
-}
+	pmac_ide_करो_update_timings(drive);	
+पूर्ण
 
 /*
- * Blast some well known "safe" values to the timing registers at init or
- * wakeup from sleep time, before we do real calculation
+ * Blast some well known "safe" values to the timing रेजिस्टरs at init or
+ * wakeup from sleep समय, beक्रमe we करो real calculation
  */
-static void
-sanitize_timings(pmac_ide_hwif_t *pmif)
-{
-	unsigned int value, value2 = 0;
+अटल व्योम
+sanitize_timings(pmac_ide_hwअगर_t *pmअगर)
+अणु
+	अचिन्हित पूर्णांक value, value2 = 0;
 	
-	switch(pmif->kind) {
-		case controller_sh_ata6:
+	चयन(pmअगर->kind) अणु
+		हाल controller_sh_ata6:
 			value = 0x0a820c97;
 			value2 = 0x00033031;
-			break;
-		case controller_un_ata6:
-		case controller_k2_ata6:
+			अवरोध;
+		हाल controller_un_ata6:
+		हाल controller_k2_ata6:
 			value = 0x08618a92;
 			value2 = 0x00002921;
-			break;
-		case controller_kl_ata4:
+			अवरोध;
+		हाल controller_kl_ata4:
 			value = 0x0008438c;
-			break;
-		case controller_kl_ata3:
+			अवरोध;
+		हाल controller_kl_ata3:
 			value = 0x00084526;
-			break;
-		case controller_heathrow:
-		case controller_ohare:
-		default:
+			अवरोध;
+		हाल controller_heathrow:
+		हाल controller_ohare:
+		शेष:
 			value = 0x00074526;
-			break;
-	}
-	pmif->timings[0] = pmif->timings[1] = value;
-	pmif->timings[2] = pmif->timings[3] = value2;
-}
+			अवरोध;
+	पूर्ण
+	pmअगर->timings[0] = pmअगर->timings[1] = value;
+	pmअगर->timings[2] = pmअगर->timings[3] = value2;
+पूर्ण
 
-static int on_media_bay(pmac_ide_hwif_t *pmif)
-{
-	return pmif->mdev && pmif->mdev->media_bay != NULL;
-}
+अटल पूर्णांक on_media_bay(pmac_ide_hwअगर_t *pmअगर)
+अणु
+	वापस pmअगर->mdev && pmअगर->mdev->media_bay != शून्य;
+पूर्ण
 
 /* Suspend call back, should be called after the child devices
  * have actually been suspended
  */
-static int pmac_ide_do_suspend(pmac_ide_hwif_t *pmif)
-{
+अटल पूर्णांक pmac_ide_करो_suspend(pmac_ide_hwअगर_t *pmअगर)
+अणु
 	/* We clear the timings */
-	pmif->timings[0] = 0;
-	pmif->timings[1] = 0;
+	pmअगर->timings[0] = 0;
+	pmअगर->timings[1] = 0;
 	
-	disable_irq(pmif->irq);
+	disable_irq(pmअगर->irq);
 
 	/* The media bay will handle itself just fine */
-	if (on_media_bay(pmif))
-		return 0;
+	अगर (on_media_bay(pmअगर))
+		वापस 0;
 	
 	/* Kauai has bus control FCRs directly here */
-	if (pmif->kauai_fcr) {
-		u32 fcr = readl(pmif->kauai_fcr);
+	अगर (pmअगर->kauai_fcr) अणु
+		u32 fcr = पढ़ोl(pmअगर->kauai_fcr);
 		fcr &= ~(KAUAI_FCR_UATA_RESET_N | KAUAI_FCR_UATA_ENABLE);
-		writel(fcr, pmif->kauai_fcr);
-	}
+		ग_लिखोl(fcr, pmअगर->kauai_fcr);
+	पूर्ण
 
 	/* Disable the bus on older machines and the cell on kauai */
-	ppc_md.feature_call(PMAC_FTR_IDE_ENABLE, pmif->node, pmif->aapl_bus_id,
+	ppc_md.feature_call(PMAC_FTR_IDE_ENABLE, pmअगर->node, pmअगर->aapl_bus_id,
 			    0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Resume call back, should be called before the child devices
+/* Resume call back, should be called beक्रमe the child devices
  * are resumed
  */
-static int pmac_ide_do_resume(pmac_ide_hwif_t *pmif)
-{
-	/* Hard reset & re-enable controller (do we really need to reset ? -BenH) */
-	if (!on_media_bay(pmif)) {
-		ppc_md.feature_call(PMAC_FTR_IDE_RESET, pmif->node, pmif->aapl_bus_id, 1);
-		ppc_md.feature_call(PMAC_FTR_IDE_ENABLE, pmif->node, pmif->aapl_bus_id, 1);
+अटल पूर्णांक pmac_ide_करो_resume(pmac_ide_hwअगर_t *pmअगर)
+अणु
+	/* Hard reset & re-enable controller (करो we really need to reset ? -BenH) */
+	अगर (!on_media_bay(pmअगर)) अणु
+		ppc_md.feature_call(PMAC_FTR_IDE_RESET, pmअगर->node, pmअगर->aapl_bus_id, 1);
+		ppc_md.feature_call(PMAC_FTR_IDE_ENABLE, pmअगर->node, pmअगर->aapl_bus_id, 1);
 		msleep(10);
-		ppc_md.feature_call(PMAC_FTR_IDE_RESET, pmif->node, pmif->aapl_bus_id, 0);
+		ppc_md.feature_call(PMAC_FTR_IDE_RESET, pmअगर->node, pmअगर->aapl_bus_id, 0);
 
-		/* Kauai has it different */
-		if (pmif->kauai_fcr) {
-			u32 fcr = readl(pmif->kauai_fcr);
+		/* Kauai has it dअगरferent */
+		अगर (pmअगर->kauai_fcr) अणु
+			u32 fcr = पढ़ोl(pmअगर->kauai_fcr);
 			fcr |= KAUAI_FCR_UATA_RESET_N | KAUAI_FCR_UATA_ENABLE;
-			writel(fcr, pmif->kauai_fcr);
-		}
+			ग_लिखोl(fcr, pmअगर->kauai_fcr);
+		पूर्ण
 
-		msleep(jiffies_to_msecs(IDE_WAKEUP_DELAY));
-	}
+		msleep(jअगरfies_to_msecs(IDE_WAKEUP_DELAY));
+	पूर्ण
 
 	/* Sanitize drive timings */
-	sanitize_timings(pmif);
+	sanitize_timings(pmअगर);
 
-	enable_irq(pmif->irq);
+	enable_irq(pmअगर->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 pmac_ide_cable_detect(ide_hwif_t *hwif)
-{
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
-	struct device_node *np = pmif->node;
-	const char *cable = of_get_property(np, "cable-type", NULL);
-	struct device_node *root = of_find_node_by_path("/");
-	const char *model = of_get_property(root, "model", NULL);
+अटल u8 pmac_ide_cable_detect(ide_hwअगर_t *hwअगर)
+अणु
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
+	काष्ठा device_node *np = pmअगर->node;
+	स्थिर अक्षर *cable = of_get_property(np, "cable-type", शून्य);
+	काष्ठा device_node *root = of_find_node_by_path("/");
+	स्थिर अक्षर *model = of_get_property(root, "model", शून्य);
 
 	of_node_put(root);
 	/* Get cable type from device-tree. */
-	if (cable && !strncmp(cable, "80-", 3)) {
+	अगर (cable && !म_भेदन(cable, "80-", 3)) अणु
 		/* Some drives fail to detect 80c cable in PowerBook */
-		/* These machine use proprietary short IDE cable anyway */
-		if (!strncmp(model, "PowerBook", 9))
-			return ATA_CBL_PATA40_SHORT;
-		else
-			return ATA_CBL_PATA80;
-	}
+		/* These machine use proprietary लघु IDE cable anyway */
+		अगर (!म_भेदन(model, "PowerBook", 9))
+			वापस ATA_CBL_PATA40_SHORT;
+		अन्यथा
+			वापस ATA_CBL_PATA80;
+	पूर्ण
 
 	/*
 	 * G5's seem to have incorrect cable type in device-tree.
 	 * Let's assume they have a 80 conductor cable, this seem
-	 * to be always the case unless the user mucked around.
+	 * to be always the हाल unless the user mucked around.
 	 */
-	if (of_device_is_compatible(np, "K2-UATA") ||
+	अगर (of_device_is_compatible(np, "K2-UATA") ||
 	    of_device_is_compatible(np, "shasta-ata"))
-		return ATA_CBL_PATA80;
+		वापस ATA_CBL_PATA80;
 
-	return ATA_CBL_PATA40;
-}
+	वापस ATA_CBL_PATA40;
+पूर्ण
 
-static void pmac_ide_init_dev(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
+अटल व्योम pmac_ide_init_dev(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
 
-	if (on_media_bay(pmif)) {
-		if (check_media_bay(pmif->mdev->media_bay) == MB_CD) {
+	अगर (on_media_bay(pmअगर)) अणु
+		अगर (check_media_bay(pmअगर->mdev->media_bay) == MB_CD) अणु
 			drive->dev_flags &= ~IDE_DFLAG_NOPROBE;
-			return;
-		}
+			वापस;
+		पूर्ण
 		drive->dev_flags |= IDE_DFLAG_NOPROBE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct ide_tp_ops pmac_tp_ops = {
+अटल स्थिर काष्ठा ide_tp_ops pmac_tp_ops = अणु
 	.exec_command		= pmac_exec_command,
-	.read_status		= ide_read_status,
-	.read_altstatus		= ide_read_altstatus,
-	.write_devctl		= pmac_write_devctl,
+	.पढ़ो_status		= ide_पढ़ो_status,
+	.पढ़ो_altstatus		= ide_पढ़ो_altstatus,
+	.ग_लिखो_devctl		= pmac_ग_लिखो_devctl,
 
 	.dev_select		= pmac_dev_select,
 	.tf_load		= ide_tf_load,
-	.tf_read		= ide_tf_read,
+	.tf_पढ़ो		= ide_tf_पढ़ो,
 
 	.input_data		= ide_input_data,
 	.output_data		= ide_output_data,
-};
+पूर्ण;
 
-static const struct ide_tp_ops pmac_ata6_tp_ops = {
+अटल स्थिर काष्ठा ide_tp_ops pmac_ata6_tp_ops = अणु
 	.exec_command		= pmac_exec_command,
-	.read_status		= ide_read_status,
-	.read_altstatus		= ide_read_altstatus,
-	.write_devctl		= pmac_write_devctl,
+	.पढ़ो_status		= ide_पढ़ो_status,
+	.पढ़ो_altstatus		= ide_पढ़ो_altstatus,
+	.ग_लिखो_devctl		= pmac_ग_लिखो_devctl,
 
 	.dev_select		= pmac_kauai_dev_select,
 	.tf_load		= ide_tf_load,
-	.tf_read		= ide_tf_read,
+	.tf_पढ़ो		= ide_tf_पढ़ो,
 
 	.input_data		= ide_input_data,
 	.output_data		= ide_output_data,
-};
+पूर्ण;
 
-static const struct ide_port_ops pmac_ide_ata4_port_ops = {
+अटल स्थिर काष्ठा ide_port_ops pmac_ide_ata4_port_ops = अणु
 	.init_dev		= pmac_ide_init_dev,
 	.set_pio_mode		= pmac_ide_set_pio_mode,
 	.set_dma_mode		= pmac_ide_set_dma_mode,
 	.cable_detect		= pmac_ide_cable_detect,
-};
+पूर्ण;
 
-static const struct ide_port_ops pmac_ide_port_ops = {
+अटल स्थिर काष्ठा ide_port_ops pmac_ide_port_ops = अणु
 	.init_dev		= pmac_ide_init_dev,
 	.set_pio_mode		= pmac_ide_set_pio_mode,
 	.set_dma_mode		= pmac_ide_set_dma_mode,
-};
+पूर्ण;
 
-static const struct ide_dma_ops pmac_dma_ops;
+अटल स्थिर काष्ठा ide_dma_ops pmac_dma_ops;
 
-static const struct ide_port_info pmac_port_info = {
+अटल स्थिर काष्ठा ide_port_info pmac_port_info = अणु
 	.name			= DRV_NAME,
 	.init_dma		= pmac_ide_init_dma,
 	.chipset		= ide_pmac,
@@ -1008,490 +1009,490 @@ static const struct ide_port_info pmac_port_info = {
 				  IDE_HFLAG_UNMASK_IRQS,
 	.pio_mask		= ATA_PIO4,
 	.mwdma_mask		= ATA_MWDMA2,
-};
+पूर्ण;
 
 /*
- * Setup, register & probe an IDE channel driven by this driver, this is
+ * Setup, रेजिस्टर & probe an IDE channel driven by this driver, this is
  * called by one of the 2 probe functions (macio or PCI).
  */
-static int pmac_ide_setup_device(pmac_ide_hwif_t *pmif, struct ide_hw *hw)
-{
-	struct device_node *np = pmif->node;
-	const int *bidp;
-	struct ide_host *host;
-	struct ide_hw *hws[] = { hw };
-	struct ide_port_info d = pmac_port_info;
-	int rc;
+अटल पूर्णांक pmac_ide_setup_device(pmac_ide_hwअगर_t *pmअगर, काष्ठा ide_hw *hw)
+अणु
+	काष्ठा device_node *np = pmअगर->node;
+	स्थिर पूर्णांक *bidp;
+	काष्ठा ide_host *host;
+	काष्ठा ide_hw *hws[] = अणु hw पूर्ण;
+	काष्ठा ide_port_info d = pmac_port_info;
+	पूर्णांक rc;
 
-	pmif->broken_dma = pmif->broken_dma_warn = 0;
-	if (of_device_is_compatible(np, "shasta-ata")) {
-		pmif->kind = controller_sh_ata6;
+	pmअगर->broken_dma = pmअगर->broken_dma_warn = 0;
+	अगर (of_device_is_compatible(np, "shasta-ata")) अणु
+		pmअगर->kind = controller_sh_ata6;
 		d.tp_ops = &pmac_ata6_tp_ops;
 		d.port_ops = &pmac_ide_ata4_port_ops;
 		d.udma_mask = ATA_UDMA6;
-	} else if (of_device_is_compatible(np, "kauai-ata")) {
-		pmif->kind = controller_un_ata6;
+	पूर्ण अन्यथा अगर (of_device_is_compatible(np, "kauai-ata")) अणु
+		pmअगर->kind = controller_un_ata6;
 		d.tp_ops = &pmac_ata6_tp_ops;
 		d.port_ops = &pmac_ide_ata4_port_ops;
 		d.udma_mask = ATA_UDMA5;
-	} else if (of_device_is_compatible(np, "K2-UATA")) {
-		pmif->kind = controller_k2_ata6;
+	पूर्ण अन्यथा अगर (of_device_is_compatible(np, "K2-UATA")) अणु
+		pmअगर->kind = controller_k2_ata6;
 		d.tp_ops = &pmac_ata6_tp_ops;
 		d.port_ops = &pmac_ide_ata4_port_ops;
 		d.udma_mask = ATA_UDMA5;
-	} else if (of_device_is_compatible(np, "keylargo-ata")) {
-		if (of_node_name_eq(np, "ata-4")) {
-			pmif->kind = controller_kl_ata4;
+	पूर्ण अन्यथा अगर (of_device_is_compatible(np, "keylargo-ata")) अणु
+		अगर (of_node_name_eq(np, "ata-4")) अणु
+			pmअगर->kind = controller_kl_ata4;
 			d.port_ops = &pmac_ide_ata4_port_ops;
 			d.udma_mask = ATA_UDMA4;
-		} else
-			pmif->kind = controller_kl_ata3;
-	} else if (of_device_is_compatible(np, "heathrow-ata")) {
-		pmif->kind = controller_heathrow;
-	} else {
-		pmif->kind = controller_ohare;
-		pmif->broken_dma = 1;
-	}
+		पूर्ण अन्यथा
+			pmअगर->kind = controller_kl_ata3;
+	पूर्ण अन्यथा अगर (of_device_is_compatible(np, "heathrow-ata")) अणु
+		pmअगर->kind = controller_heathrow;
+	पूर्ण अन्यथा अणु
+		pmअगर->kind = controller_ohare;
+		pmअगर->broken_dma = 1;
+	पूर्ण
 
-	bidp = of_get_property(np, "AAPL,bus-id", NULL);
-	pmif->aapl_bus_id =  bidp ? *bidp : 0;
+	bidp = of_get_property(np, "AAPL,bus-id", शून्य);
+	pmअगर->aapl_bus_id =  bidp ? *bidp : 0;
 
 	/* On Kauai-type controllers, we make sure the FCR is correct */
-	if (pmif->kauai_fcr)
-		writel(KAUAI_FCR_UATA_MAGIC |
+	अगर (pmअगर->kauai_fcr)
+		ग_लिखोl(KAUAI_FCR_UATA_MAGIC |
 		       KAUAI_FCR_UATA_RESET_N |
-		       KAUAI_FCR_UATA_ENABLE, pmif->kauai_fcr);
+		       KAUAI_FCR_UATA_ENABLE, pmअगर->kauai_fcr);
 	
 	/* Make sure we have sane timings */
-	sanitize_timings(pmif);
+	sanitize_timings(pmअगर);
 
-	/* If we are on a media bay, wait for it to settle and lock it */
-	if (pmif->mdev)
-		lock_media_bay(pmif->mdev->media_bay);
+	/* If we are on a media bay, रुको क्रम it to settle and lock it */
+	अगर (pmअगर->mdev)
+		lock_media_bay(pmअगर->mdev->media_bay);
 
 	host = ide_host_alloc(&d, hws, 1);
-	if (host == NULL) {
+	अगर (host == शून्य) अणु
 		rc = -ENOMEM;
-		goto bail;
-	}
-	pmif->hwif = host->ports[0];
+		जाओ bail;
+	पूर्ण
+	pmअगर->hwअगर = host->ports[0];
 
-	if (on_media_bay(pmif)) {
-		/* Fixup bus ID for media bay */
-		if (!bidp)
-			pmif->aapl_bus_id = 1;
-	} else if (pmif->kind == controller_ohare) {
+	अगर (on_media_bay(pmअगर)) अणु
+		/* Fixup bus ID क्रम media bay */
+		अगर (!bidp)
+			pmअगर->aapl_bus_id = 1;
+	पूर्ण अन्यथा अगर (pmअगर->kind == controller_ohare) अणु
 		/* The code below is having trouble on some ohare machines
 		 * (timing related ?). Until I can put my hand on one of these
 		 * units, I keep the old way
 		 */
 		ppc_md.feature_call(PMAC_FTR_IDE_ENABLE, np, 0, 1);
-	} else {
+	पूर्ण अन्यथा अणु
  		/* This is necessary to enable IDE when net-booting */
-		ppc_md.feature_call(PMAC_FTR_IDE_RESET, np, pmif->aapl_bus_id, 1);
-		ppc_md.feature_call(PMAC_FTR_IDE_ENABLE, np, pmif->aapl_bus_id, 1);
+		ppc_md.feature_call(PMAC_FTR_IDE_RESET, np, pmअगर->aapl_bus_id, 1);
+		ppc_md.feature_call(PMAC_FTR_IDE_ENABLE, np, pmअगर->aapl_bus_id, 1);
 		msleep(10);
-		ppc_md.feature_call(PMAC_FTR_IDE_RESET, np, pmif->aapl_bus_id, 0);
-		msleep(jiffies_to_msecs(IDE_WAKEUP_DELAY));
-	}
+		ppc_md.feature_call(PMAC_FTR_IDE_RESET, np, pmअगर->aapl_bus_id, 0);
+		msleep(jअगरfies_to_msecs(IDE_WAKEUP_DELAY));
+	पूर्ण
 
-	printk(KERN_INFO DRV_NAME ": Found Apple %s controller (%s), "
-	       "bus ID %d%s, irq %d\n", model_name[pmif->kind],
-	       pmif->mdev ? "macio" : "PCI", pmif->aapl_bus_id,
-	       on_media_bay(pmif) ? " (mediabay)" : "", hw->irq);
+	prपूर्णांकk(KERN_INFO DRV_NAME ": Found Apple %s controller (%s), "
+	       "bus ID %d%s, irq %d\n", model_name[pmअगर->kind],
+	       pmअगर->mdev ? "macio" : "PCI", pmअगर->aapl_bus_id,
+	       on_media_bay(pmअगर) ? " (mediabay)" : "", hw->irq);
 
-	rc = ide_host_register(host, &d, hws);
-	if (rc)
-		pmif->hwif = NULL;
+	rc = ide_host_रेजिस्टर(host, &d, hws);
+	अगर (rc)
+		pmअगर->hwअगर = शून्य;
 
-	if (pmif->mdev)
-		unlock_media_bay(pmif->mdev->media_bay);
+	अगर (pmअगर->mdev)
+		unlock_media_bay(pmअगर->mdev->media_bay);
 
  bail:
-	if (rc && host)
-		ide_host_free(host);
-	return rc;
-}
+	अगर (rc && host)
+		ide_host_मुक्त(host);
+	वापस rc;
+पूर्ण
 
-static void pmac_ide_init_ports(struct ide_hw *hw, unsigned long base)
-{
-	int i;
+अटल व्योम pmac_ide_init_ports(काष्ठा ide_hw *hw, अचिन्हित दीर्घ base)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 8; ++i)
+	क्रम (i = 0; i < 8; ++i)
 		hw->io_ports_array[i] = base + i * 0x10;
 
 	hw->io_ports.ctl_addr = base + 0x160;
-}
+पूर्ण
 
 /*
- * Attach to a macio probed interface
+ * Attach to a macio probed पूर्णांकerface
  */
-static int pmac_ide_macio_attach(struct macio_dev *mdev,
-				 const struct of_device_id *match)
-{
-	void __iomem *base;
-	unsigned long regbase;
-	pmac_ide_hwif_t *pmif;
-	int irq, rc;
-	struct ide_hw hw;
+अटल पूर्णांक pmac_ide_macio_attach(काष्ठा macio_dev *mdev,
+				 स्थिर काष्ठा of_device_id *match)
+अणु
+	व्योम __iomem *base;
+	अचिन्हित दीर्घ regbase;
+	pmac_ide_hwअगर_t *pmअगर;
+	पूर्णांक irq, rc;
+	काष्ठा ide_hw hw;
 
-	pmif = kzalloc(sizeof(*pmif), GFP_KERNEL);
-	if (pmif == NULL)
-		return -ENOMEM;
+	pmअगर = kzalloc(माप(*pmअगर), GFP_KERNEL);
+	अगर (pmअगर == शून्य)
+		वापस -ENOMEM;
 
-	if (macio_resource_count(mdev) == 0) {
-		printk(KERN_WARNING "ide-pmac: no address for %pOF\n",
+	अगर (macio_resource_count(mdev) == 0) अणु
+		prपूर्णांकk(KERN_WARNING "ide-pmac: no address for %pOF\n",
 				    mdev->ofdev.dev.of_node);
 		rc = -ENXIO;
-		goto out_free_pmif;
-	}
+		जाओ out_मुक्त_pmअगर;
+	पूर्ण
 
-	/* Request memory resource for IO ports */
-	if (macio_request_resource(mdev, 0, "ide-pmac (ports)")) {
-		printk(KERN_ERR "ide-pmac: can't request MMIO resource for "
+	/* Request memory resource क्रम IO ports */
+	अगर (macio_request_resource(mdev, 0, "ide-pmac (ports)")) अणु
+		prपूर्णांकk(KERN_ERR "ide-pmac: can't request MMIO resource for "
 				"%pOF!\n", mdev->ofdev.dev.of_node);
 		rc = -EBUSY;
-		goto out_free_pmif;
-	}
+		जाओ out_मुक्त_pmअगर;
+	पूर्ण
 			
 	/* XXX This is bogus. Should be fixed in the registry by checking
-	 * the kind of host interrupt controller, a bit like gatwick
-	 * fixes in irq.c. That works well enough for the single case
+	 * the kind of host पूर्णांकerrupt controller, a bit like gatwick
+	 * fixes in irq.c. That works well enough क्रम the single हाल
 	 * where that happens though...
 	 */
-	if (macio_irq_count(mdev) == 0) {
-		printk(KERN_WARNING "ide-pmac: no intrs for device %pOF, using "
+	अगर (macio_irq_count(mdev) == 0) अणु
+		prपूर्णांकk(KERN_WARNING "ide-pmac: no intrs for device %pOF, using "
 				    "13\n", mdev->ofdev.dev.of_node);
-		irq = irq_create_mapping(NULL, 13);
-	} else
+		irq = irq_create_mapping(शून्य, 13);
+	पूर्ण अन्यथा
 		irq = macio_irq(mdev, 0);
 
 	base = ioremap(macio_resource_start(mdev, 0), 0x400);
-	regbase = (unsigned long) base;
+	regbase = (अचिन्हित दीर्घ) base;
 
-	pmif->mdev = mdev;
-	pmif->node = mdev->ofdev.dev.of_node;
-	pmif->regbase = regbase;
-	pmif->irq = irq;
-	pmif->kauai_fcr = NULL;
+	pmअगर->mdev = mdev;
+	pmअगर->node = mdev->ofdev.dev.of_node;
+	pmअगर->regbase = regbase;
+	pmअगर->irq = irq;
+	pmअगर->kauai_fcr = शून्य;
 
-	if (macio_resource_count(mdev) >= 2) {
-		if (macio_request_resource(mdev, 1, "ide-pmac (dma)"))
-			printk(KERN_WARNING "ide-pmac: can't request DMA "
+	अगर (macio_resource_count(mdev) >= 2) अणु
+		अगर (macio_request_resource(mdev, 1, "ide-pmac (dma)"))
+			prपूर्णांकk(KERN_WARNING "ide-pmac: can't request DMA "
 					    "resource for %pOF!\n",
 					    mdev->ofdev.dev.of_node);
-		else
-			pmif->dma_regs = ioremap(macio_resource_start(mdev, 1), 0x1000);
-	} else
-		pmif->dma_regs = NULL;
+		अन्यथा
+			pmअगर->dma_regs = ioremap(macio_resource_start(mdev, 1), 0x1000);
+	पूर्ण अन्यथा
+		pmअगर->dma_regs = शून्य;
 
-	dev_set_drvdata(&mdev->ofdev.dev, pmif);
+	dev_set_drvdata(&mdev->ofdev.dev, pmअगर);
 
-	memset(&hw, 0, sizeof(hw));
-	pmac_ide_init_ports(&hw, pmif->regbase);
+	स_रखो(&hw, 0, माप(hw));
+	pmac_ide_init_ports(&hw, pmअगर->regbase);
 	hw.irq = irq;
 	hw.dev = &mdev->bus->pdev->dev;
 	hw.parent = &mdev->ofdev.dev;
 
-	rc = pmac_ide_setup_device(pmif, &hw);
-	if (rc != 0) {
-		/* The inteface is released to the common IDE layer */
-		dev_set_drvdata(&mdev->ofdev.dev, NULL);
+	rc = pmac_ide_setup_device(pmअगर, &hw);
+	अगर (rc != 0) अणु
+		/* The पूर्णांकeface is released to the common IDE layer */
+		dev_set_drvdata(&mdev->ofdev.dev, शून्य);
 		iounmap(base);
-		if (pmif->dma_regs) {
-			iounmap(pmif->dma_regs);
+		अगर (pmअगर->dma_regs) अणु
+			iounmap(pmअगर->dma_regs);
 			macio_release_resource(mdev, 1);
-		}
+		पूर्ण
 		macio_release_resource(mdev, 0);
-		kfree(pmif);
-	}
+		kमुक्त(pmअगर);
+	पूर्ण
 
-	return rc;
+	वापस rc;
 
-out_free_pmif:
-	kfree(pmif);
-	return rc;
-}
+out_मुक्त_pmअगर:
+	kमुक्त(pmअगर);
+	वापस rc;
+पूर्ण
 
-static int
-pmac_ide_macio_suspend(struct macio_dev *mdev, pm_message_t mesg)
-{
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(&mdev->ofdev.dev);
-	int rc = 0;
+अटल पूर्णांक
+pmac_ide_macio_suspend(काष्ठा macio_dev *mdev, pm_message_t mesg)
+अणु
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(&mdev->ofdev.dev);
+	पूर्णांक rc = 0;
 
-	if (mesg.event != mdev->ofdev.dev.power.power_state.event
-			&& (mesg.event & PM_EVENT_SLEEP)) {
-		rc = pmac_ide_do_suspend(pmif);
-		if (rc == 0)
-			mdev->ofdev.dev.power.power_state = mesg;
-	}
+	अगर (mesg.event != mdev->ofdev.dev.घातer.घातer_state.event
+			&& (mesg.event & PM_EVENT_SLEEP)) अणु
+		rc = pmac_ide_करो_suspend(pmअगर);
+		अगर (rc == 0)
+			mdev->ofdev.dev.घातer.घातer_state = mesg;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-pmac_ide_macio_resume(struct macio_dev *mdev)
-{
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(&mdev->ofdev.dev);
-	int rc = 0;
+अटल पूर्णांक
+pmac_ide_macio_resume(काष्ठा macio_dev *mdev)
+अणु
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(&mdev->ofdev.dev);
+	पूर्णांक rc = 0;
 
-	if (mdev->ofdev.dev.power.power_state.event != PM_EVENT_ON) {
-		rc = pmac_ide_do_resume(pmif);
-		if (rc == 0)
-			mdev->ofdev.dev.power.power_state = PMSG_ON;
-	}
+	अगर (mdev->ofdev.dev.घातer.घातer_state.event != PM_EVENT_ON) अणु
+		rc = pmac_ide_करो_resume(pmअगर);
+		अगर (rc == 0)
+			mdev->ofdev.dev.घातer.घातer_state = PMSG_ON;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * Attach to a PCI probed interface
+ * Attach to a PCI probed पूर्णांकerface
  */
-static int pmac_ide_pci_attach(struct pci_dev *pdev,
-			       const struct pci_device_id *id)
-{
-	struct device_node *np;
-	pmac_ide_hwif_t *pmif;
-	void __iomem *base;
-	unsigned long rbase, rlen;
-	int rc;
-	struct ide_hw hw;
+अटल पूर्णांक pmac_ide_pci_attach(काष्ठा pci_dev *pdev,
+			       स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा device_node *np;
+	pmac_ide_hwअगर_t *pmअगर;
+	व्योम __iomem *base;
+	अचिन्हित दीर्घ rbase, rlen;
+	पूर्णांक rc;
+	काष्ठा ide_hw hw;
 
 	np = pci_device_to_OF_node(pdev);
-	if (np == NULL) {
-		printk(KERN_ERR "ide-pmac: cannot find MacIO node for Kauai ATA interface\n");
-		return -ENODEV;
-	}
+	अगर (np == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "ide-pmac: cannot find MacIO node for Kauai ATA interface\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	pmif = kzalloc(sizeof(*pmif), GFP_KERNEL);
-	if (pmif == NULL)
-		return -ENOMEM;
+	pmअगर = kzalloc(माप(*pmअगर), GFP_KERNEL);
+	अगर (pmअगर == शून्य)
+		वापस -ENOMEM;
 
-	if (pci_enable_device(pdev)) {
-		printk(KERN_WARNING "ide-pmac: Can't enable PCI device for "
+	अगर (pci_enable_device(pdev)) अणु
+		prपूर्णांकk(KERN_WARNING "ide-pmac: Can't enable PCI device for "
 				    "%pOF\n", np);
 		rc = -ENXIO;
-		goto out_free_pmif;
-	}
+		जाओ out_मुक्त_pmअगर;
+	पूर्ण
 	pci_set_master(pdev);
 			
-	if (pci_request_regions(pdev, "Kauai ATA")) {
-		printk(KERN_ERR "ide-pmac: Cannot obtain PCI resources for "
+	अगर (pci_request_regions(pdev, "Kauai ATA")) अणु
+		prपूर्णांकk(KERN_ERR "ide-pmac: Cannot obtain PCI resources for "
 				"%pOF\n", np);
 		rc = -ENXIO;
-		goto out_free_pmif;
-	}
+		जाओ out_मुक्त_pmअगर;
+	पूर्ण
 
-	pmif->mdev = NULL;
-	pmif->node = np;
+	pmअगर->mdev = शून्य;
+	pmअगर->node = np;
 
 	rbase = pci_resource_start(pdev, 0);
 	rlen = pci_resource_len(pdev, 0);
 
 	base = ioremap(rbase, rlen);
-	pmif->regbase = (unsigned long) base + 0x2000;
-	pmif->dma_regs = base + 0x1000;
-	pmif->kauai_fcr = base;
-	pmif->irq = pdev->irq;
+	pmअगर->regbase = (अचिन्हित दीर्घ) base + 0x2000;
+	pmअगर->dma_regs = base + 0x1000;
+	pmअगर->kauai_fcr = base;
+	pmअगर->irq = pdev->irq;
 
-	pci_set_drvdata(pdev, pmif);
+	pci_set_drvdata(pdev, pmअगर);
 
-	memset(&hw, 0, sizeof(hw));
-	pmac_ide_init_ports(&hw, pmif->regbase);
+	स_रखो(&hw, 0, माप(hw));
+	pmac_ide_init_ports(&hw, pmअगर->regbase);
 	hw.irq = pdev->irq;
 	hw.dev = &pdev->dev;
 
-	rc = pmac_ide_setup_device(pmif, &hw);
-	if (rc != 0) {
-		/* The inteface is released to the common IDE layer */
+	rc = pmac_ide_setup_device(pmअगर, &hw);
+	अगर (rc != 0) अणु
+		/* The पूर्णांकeface is released to the common IDE layer */
 		iounmap(base);
 		pci_release_regions(pdev);
-		kfree(pmif);
-	}
+		kमुक्त(pmअगर);
+	पूर्ण
 
-	return rc;
+	वापस rc;
 
-out_free_pmif:
-	kfree(pmif);
-	return rc;
-}
+out_मुक्त_pmअगर:
+	kमुक्त(pmअगर);
+	वापस rc;
+पूर्ण
 
-static int
-pmac_ide_pci_suspend(struct pci_dev *pdev, pm_message_t mesg)
-{
-	pmac_ide_hwif_t *pmif = pci_get_drvdata(pdev);
-	int rc = 0;
+अटल पूर्णांक
+pmac_ide_pci_suspend(काष्ठा pci_dev *pdev, pm_message_t mesg)
+अणु
+	pmac_ide_hwअगर_t *pmअगर = pci_get_drvdata(pdev);
+	पूर्णांक rc = 0;
 
-	if (mesg.event != pdev->dev.power.power_state.event
-			&& (mesg.event & PM_EVENT_SLEEP)) {
-		rc = pmac_ide_do_suspend(pmif);
-		if (rc == 0)
-			pdev->dev.power.power_state = mesg;
-	}
+	अगर (mesg.event != pdev->dev.घातer.घातer_state.event
+			&& (mesg.event & PM_EVENT_SLEEP)) अणु
+		rc = pmac_ide_करो_suspend(pmअगर);
+		अगर (rc == 0)
+			pdev->dev.घातer.घातer_state = mesg;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-pmac_ide_pci_resume(struct pci_dev *pdev)
-{
-	pmac_ide_hwif_t *pmif = pci_get_drvdata(pdev);
-	int rc = 0;
+अटल पूर्णांक
+pmac_ide_pci_resume(काष्ठा pci_dev *pdev)
+अणु
+	pmac_ide_hwअगर_t *pmअगर = pci_get_drvdata(pdev);
+	पूर्णांक rc = 0;
 
-	if (pdev->dev.power.power_state.event != PM_EVENT_ON) {
-		rc = pmac_ide_do_resume(pmif);
-		if (rc == 0)
-			pdev->dev.power.power_state = PMSG_ON;
-	}
+	अगर (pdev->dev.घातer.घातer_state.event != PM_EVENT_ON) अणु
+		rc = pmac_ide_करो_resume(pmअगर);
+		अगर (rc == 0)
+			pdev->dev.घातer.घातer_state = PMSG_ON;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#ifdef CONFIG_PMAC_MEDIABAY
-static void pmac_ide_macio_mb_event(struct macio_dev* mdev, int mb_state)
-{
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(&mdev->ofdev.dev);
+#अगर_घोषित CONFIG_PMAC_MEDIABAY
+अटल व्योम pmac_ide_macio_mb_event(काष्ठा macio_dev* mdev, पूर्णांक mb_state)
+अणु
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(&mdev->ofdev.dev);
 
-	switch(mb_state) {
-	case MB_CD:
-		if (!pmif->hwif->present)
-			ide_port_scan(pmif->hwif);
-		break;
-	default:
-		if (pmif->hwif->present)
-			ide_port_unregister_devices(pmif->hwif);
-	}
-}
-#endif /* CONFIG_PMAC_MEDIABAY */
+	चयन(mb_state) अणु
+	हाल MB_CD:
+		अगर (!pmअगर->hwअगर->present)
+			ide_port_scan(pmअगर->hwअगर);
+		अवरोध;
+	शेष:
+		अगर (pmअगर->hwअगर->present)
+			ide_port_unरेजिस्टर_devices(pmअगर->hwअगर);
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PMAC_MEDIABAY */
 
 
-static struct of_device_id pmac_ide_macio_match[] = 
-{
-	{
+अटल काष्ठा of_device_id pmac_ide_macio_match[] = 
+अणु
+	अणु
 	.name 		= "IDE",
-	},
-	{
+	पूर्ण,
+	अणु
 	.name 		= "ATA",
-	},
-	{
+	पूर्ण,
+	अणु
 	.type		= "ide",
-	},
-	{
+	पूर्ण,
+	अणु
 	.type		= "ata",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct macio_driver pmac_ide_macio_driver = 
-{
-	.driver = {
+अटल काष्ठा macio_driver pmac_ide_macio_driver = 
+अणु
+	.driver = अणु
 		.name 		= "ide-pmac",
 		.owner		= THIS_MODULE,
 		.of_match_table	= pmac_ide_macio_match,
-	},
+	पूर्ण,
 	.probe		= pmac_ide_macio_attach,
 	.suspend	= pmac_ide_macio_suspend,
 	.resume		= pmac_ide_macio_resume,
-#ifdef CONFIG_PMAC_MEDIABAY
+#अगर_घोषित CONFIG_PMAC_MEDIABAY
 	.mediabay_event	= pmac_ide_macio_mb_event,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct pci_device_id pmac_ide_pci_match[] = {
-	{ PCI_VDEVICE(APPLE, PCI_DEVICE_ID_APPLE_UNI_N_ATA),	0 },
-	{ PCI_VDEVICE(APPLE, PCI_DEVICE_ID_APPLE_IPID_ATA100),	0 },
-	{ PCI_VDEVICE(APPLE, PCI_DEVICE_ID_APPLE_K2_ATA100),	0 },
-	{ PCI_VDEVICE(APPLE, PCI_DEVICE_ID_APPLE_SH_ATA),	0 },
-	{ PCI_VDEVICE(APPLE, PCI_DEVICE_ID_APPLE_IPID2_ATA),	0 },
-	{},
-};
+अटल स्थिर काष्ठा pci_device_id pmac_ide_pci_match[] = अणु
+	अणु PCI_VDEVICE(APPLE, PCI_DEVICE_ID_APPLE_UNI_N_ATA),	0 पूर्ण,
+	अणु PCI_VDEVICE(APPLE, PCI_DEVICE_ID_APPLE_IPID_ATA100),	0 पूर्ण,
+	अणु PCI_VDEVICE(APPLE, PCI_DEVICE_ID_APPLE_K2_ATA100),	0 पूर्ण,
+	अणु PCI_VDEVICE(APPLE, PCI_DEVICE_ID_APPLE_SH_ATA),	0 पूर्ण,
+	अणु PCI_VDEVICE(APPLE, PCI_DEVICE_ID_APPLE_IPID2_ATA),	0 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct pci_driver pmac_ide_pci_driver = {
+अटल काष्ठा pci_driver pmac_ide_pci_driver = अणु
 	.name		= "ide-pmac",
 	.id_table	= pmac_ide_pci_match,
 	.probe		= pmac_ide_pci_attach,
 	.suspend	= pmac_ide_pci_suspend,
 	.resume		= pmac_ide_pci_resume,
-};
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, pmac_ide_pci_match);
 
-int __init pmac_ide_probe(void)
-{
-	int error;
+पूर्णांक __init pmac_ide_probe(व्योम)
+अणु
+	पूर्णांक error;
 
-	if (!machine_is(powermac))
-		return -ENODEV;
+	अगर (!machine_is(घातermac))
+		वापस -ENODEV;
 
-#ifdef CONFIG_BLK_DEV_IDE_PMAC_ATA100FIRST
-	error = pci_register_driver(&pmac_ide_pci_driver);
-	if (error)
-		goto out;
-	error = macio_register_driver(&pmac_ide_macio_driver);
-	if (error) {
-		pci_unregister_driver(&pmac_ide_pci_driver);
-		goto out;
-	}
-#else
-	error = macio_register_driver(&pmac_ide_macio_driver);
-	if (error)
-		goto out;
-	error = pci_register_driver(&pmac_ide_pci_driver);
-	if (error) {
-		macio_unregister_driver(&pmac_ide_macio_driver);
-		goto out;
-	}
-#endif
+#अगर_घोषित CONFIG_BLK_DEV_IDE_PMAC_ATA100FIRST
+	error = pci_रेजिस्टर_driver(&pmac_ide_pci_driver);
+	अगर (error)
+		जाओ out;
+	error = macio_रेजिस्टर_driver(&pmac_ide_macio_driver);
+	अगर (error) अणु
+		pci_unरेजिस्टर_driver(&pmac_ide_pci_driver);
+		जाओ out;
+	पूर्ण
+#अन्यथा
+	error = macio_रेजिस्टर_driver(&pmac_ide_macio_driver);
+	अगर (error)
+		जाओ out;
+	error = pci_रेजिस्टर_driver(&pmac_ide_pci_driver);
+	अगर (error) अणु
+		macio_unरेजिस्टर_driver(&pmac_ide_macio_driver);
+		जाओ out;
+	पूर्ण
+#पूर्ण_अगर
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * pmac_ide_build_dmatable builds the DBDMA command list
- * for a transfer and sets the DBDMA channel to point to it.
+ * क्रम a transfer and sets the DBDMA channel to poपूर्णांक to it.
  */
-static int pmac_ide_build_dmatable(ide_drive_t *drive, struct ide_cmd *cmd)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
-	struct dbdma_cmd *table;
-	volatile struct dbdma_regs __iomem *dma = pmif->dma_regs;
-	struct scatterlist *sg;
-	int wr = !!(cmd->tf_flags & IDE_TFLAG_WRITE);
-	int i = cmd->sg_nents, count = 0;
+अटल पूर्णांक pmac_ide_build_dmatable(ide_drive_t *drive, काष्ठा ide_cmd *cmd)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
+	काष्ठा dbdma_cmd *table;
+	अस्थिर काष्ठा dbdma_regs __iomem *dma = pmअगर->dma_regs;
+	काष्ठा scatterlist *sg;
+	पूर्णांक wr = !!(cmd->tf_flags & IDE_TFLAG_WRITE);
+	पूर्णांक i = cmd->sg_nents, count = 0;
 
-	/* DMA table is already aligned */
-	table = (struct dbdma_cmd *) pmif->dma_table_cpu;
+	/* DMA table is alपढ़ोy aligned */
+	table = (काष्ठा dbdma_cmd *) pmअगर->dma_table_cpu;
 
 	/* Make sure DMA controller is stopped (necessary ?) */
-	writel((RUN|PAUSE|FLUSH|WAKE|DEAD) << 16, &dma->control);
-	while (readl(&dma->status) & RUN)
+	ग_लिखोl((RUN|PAUSE|FLUSH|WAKE|DEAD) << 16, &dma->control);
+	जबतक (पढ़ोl(&dma->status) & RUN)
 		udelay(1);
 
 	/* Build DBDMA commands list */
-	sg = hwif->sg_table;
-	while (i && sg_dma_len(sg)) {
+	sg = hwअगर->sg_table;
+	जबतक (i && sg_dma_len(sg)) अणु
 		u32 cur_addr;
 		u32 cur_len;
 
 		cur_addr = sg_dma_address(sg);
 		cur_len = sg_dma_len(sg);
 
-		if (pmif->broken_dma && cur_addr & (L1_CACHE_BYTES - 1)) {
-			if (pmif->broken_dma_warn == 0) {
-				printk(KERN_WARNING "%s: DMA on non aligned address, "
+		अगर (pmअगर->broken_dma && cur_addr & (L1_CACHE_BYTES - 1)) अणु
+			अगर (pmअगर->broken_dma_warn == 0) अणु
+				prपूर्णांकk(KERN_WARNING "%s: DMA on non aligned address, "
 				       "switching to PIO on Ohare chipset\n", drive->name);
-				pmif->broken_dma_warn = 1;
-			}
-			return 0;
-		}
-		while (cur_len) {
-			unsigned int tc = (cur_len < 0xfe00)? cur_len: 0xfe00;
+				pmअगर->broken_dma_warn = 1;
+			पूर्ण
+			वापस 0;
+		पूर्ण
+		जबतक (cur_len) अणु
+			अचिन्हित पूर्णांक tc = (cur_len < 0xfe00)? cur_len: 0xfe00;
 
-			if (count++ >= MAX_DCMDS) {
-				printk(KERN_WARNING "%s: DMA table too small\n",
+			अगर (count++ >= MAX_DCMDS) अणु
+				prपूर्णांकk(KERN_WARNING "%s: DMA table too small\n",
 				       drive->name);
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 			table->command = cpu_to_le16(wr? OUTPUT_MORE: INPUT_MORE);
 			table->req_count = cpu_to_le16(tc);
 			table->phy_addr = cpu_to_le32(cur_addr);
@@ -1501,202 +1502,202 @@ static int pmac_ide_build_dmatable(ide_drive_t *drive, struct ide_cmd *cmd)
 			cur_addr += tc;
 			cur_len -= tc;
 			++table;
-		}
+		पूर्ण
 		sg = sg_next(sg);
 		i--;
-	}
+	पूर्ण
 
 	/* convert the last command to an input/output last command */
-	if (count) {
+	अगर (count) अणु
 		table[-1].command = cpu_to_le16(wr? OUTPUT_LAST: INPUT_LAST);
 		/* add the stop command to the end of the list */
-		memset(table, 0, sizeof(struct dbdma_cmd));
+		स_रखो(table, 0, माप(काष्ठा dbdma_cmd));
 		table->command = cpu_to_le16(DBDMA_STOP);
 		mb();
-		writel(hwif->dmatable_dma, &dma->cmdptr);
-		return 1;
-	}
+		ग_लिखोl(hwअगर->dmatable_dma, &dma->cmdptr);
+		वापस 1;
+	पूर्ण
 
-	printk(KERN_DEBUG "%s: empty DMA table?\n", drive->name);
+	prपूर्णांकk(KERN_DEBUG "%s: empty DMA table?\n", drive->name);
 
-	return 0; /* revert to PIO for this request */
-}
+	वापस 0; /* revert to PIO क्रम this request */
+पूर्ण
 
 /*
- * Prepare a DMA transfer. We build the DMA table, adjust the timings for
- * a read on KeyLargo ATA/66 and mark us as waiting for DMA completion
+ * Prepare a DMA transfer. We build the DMA table, adjust the timings क्रम
+ * a पढ़ो on KeyLargo ATA/66 and mark us as रुकोing क्रम DMA completion
  */
-static int pmac_ide_dma_setup(ide_drive_t *drive, struct ide_cmd *cmd)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
-	u8 unit = drive->dn & 1, ata4 = (pmif->kind == controller_kl_ata4);
-	u8 write = !!(cmd->tf_flags & IDE_TFLAG_WRITE);
+अटल पूर्णांक pmac_ide_dma_setup(ide_drive_t *drive, काष्ठा ide_cmd *cmd)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
+	u8 unit = drive->dn & 1, ata4 = (pmअगर->kind == controller_kl_ata4);
+	u8 ग_लिखो = !!(cmd->tf_flags & IDE_TFLAG_WRITE);
 
-	if (pmac_ide_build_dmatable(drive, cmd) == 0)
-		return 1;
+	अगर (pmac_ide_build_dmatable(drive, cmd) == 0)
+		वापस 1;
 
-	/* Apple adds 60ns to wrDataSetup on reads */
-	if (ata4 && (pmif->timings[unit] & TR_66_UDMA_EN)) {
-		writel(pmif->timings[unit] + (write ? 0 : 0x00800000UL),
+	/* Apple adds 60ns to wrDataSetup on पढ़ोs */
+	अगर (ata4 && (pmअगर->timings[unit] & TR_66_UDMA_EN)) अणु
+		ग_लिखोl(pmअगर->timings[unit] + (ग_लिखो ? 0 : 0x00800000UL),
 			PMAC_IDE_REG(IDE_TIMING_CONFIG));
-		(void)readl(PMAC_IDE_REG(IDE_TIMING_CONFIG));
-	}
+		(व्योम)पढ़ोl(PMAC_IDE_REG(IDE_TIMING_CONFIG));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Kick the DMA controller into life after the DMA command has been issued
+ * Kick the DMA controller पूर्णांकo lअगरe after the DMA command has been issued
  * to the drive.
  */
-static void
+अटल व्योम
 pmac_ide_dma_start(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
-	volatile struct dbdma_regs __iomem *dma;
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
+	अस्थिर काष्ठा dbdma_regs __iomem *dma;
 
-	dma = pmif->dma_regs;
+	dma = pmअगर->dma_regs;
 
-	writel((RUN << 16) | RUN, &dma->control);
-	/* Make sure it gets to the controller right now */
-	(void)readl(&dma->control);
-}
+	ग_लिखोl((RUN << 16) | RUN, &dma->control);
+	/* Make sure it माला_लो to the controller right now */
+	(व्योम)पढ़ोl(&dma->control);
+पूर्ण
 
 /*
  * After a DMA transfer, make sure the controller is stopped
  */
-static int
+अटल पूर्णांक
 pmac_ide_dma_end (ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
-	volatile struct dbdma_regs __iomem *dma = pmif->dma_regs;
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
+	अस्थिर काष्ठा dbdma_regs __iomem *dma = pmअगर->dma_regs;
 	u32 dstat;
 
-	dstat = readl(&dma->status);
-	writel(((RUN|WAKE|DEAD) << 16), &dma->control);
+	dstat = पढ़ोl(&dma->status);
+	ग_लिखोl(((RUN|WAKE|DEAD) << 16), &dma->control);
 
-	/* verify good dma status. we don't check for ACTIVE beeing 0. We should...
-	 * in theory, but with ATAPI decices doing buffer underruns, that would
+	/* verअगरy good dma status. we करोn't check क्रम ACTIVE beeing 0. We should...
+	 * in theory, but with ATAPI decices करोing buffer underruns, that would
 	 * cause us to disable DMA, which isn't what we want
 	 */
-	return (dstat & (RUN|DEAD)) != RUN;
-}
+	वापस (dstat & (RUN|DEAD)) != RUN;
+पूर्ण
 
 /*
- * Check out that the interrupt we got was for us. We can't always know this
- * for sure with those Apple interfaces (well, we could on the recent ones but
- * that's not implemented yet), on the other hand, we don't have shared interrupts
+ * Check out that the पूर्णांकerrupt we got was क्रम us. We can't always know this
+ * क्रम sure with those Apple पूर्णांकerfaces (well, we could on the recent ones but
+ * that's not implemented yet), on the other hand, we don't have shared पूर्णांकerrupts
  * so it's not really a problem
  */
-static int
+अटल पूर्णांक
 pmac_ide_dma_test_irq (ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
-	volatile struct dbdma_regs __iomem *dma = pmif->dma_regs;
-	unsigned long status, timeout;
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
+	अस्थिर काष्ठा dbdma_regs __iomem *dma = pmअगर->dma_regs;
+	अचिन्हित दीर्घ status, समयout;
 
 	/* We have to things to deal with here:
 	 * 
-	 * - The dbdma won't stop if the command was started
+	 * - The dbdma won't stop अगर the command was started
 	 * but completed with an error without transferring all
 	 * datas. This happens when bad blocks are met during
 	 * a multi-block transfer.
 	 * 
-	 * - The dbdma fifo hasn't yet finished flushing to
-	 * to system memory when the disk interrupt occurs.
+	 * - The dbdma fअगरo hasn't yet finished flushing to
+	 * to प्रणाली memory when the disk पूर्णांकerrupt occurs.
 	 * 
 	 */
 
 	/* If ACTIVE is cleared, the STOP command have passed and
 	 * transfer is complete.
 	 */
-	status = readl(&dma->status);
-	if (!(status & ACTIVE))
-		return 1;
+	status = पढ़ोl(&dma->status);
+	अगर (!(status & ACTIVE))
+		वापस 1;
 
 	/* If dbdma didn't execute the STOP command yet, the
 	 * active bit is still set. We consider that we aren't
-	 * sharing interrupts (which is hopefully the case with
+	 * sharing पूर्णांकerrupts (which is hopefully the हाल with
 	 * those controllers) and so we just try to flush the
-	 * channel for pending data in the fifo
+	 * channel क्रम pending data in the fअगरo
 	 */
 	udelay(1);
-	writel((FLUSH << 16) | FLUSH, &dma->control);
-	timeout = 0;
-	for (;;) {
+	ग_लिखोl((FLUSH << 16) | FLUSH, &dma->control);
+	समयout = 0;
+	क्रम (;;) अणु
 		udelay(1);
-		status = readl(&dma->status);
-		if ((status & FLUSH) == 0)
-			break;
-		if (++timeout > 100) {
-			printk(KERN_WARNING "ide%d, ide_dma_test_irq timeout flushing channel\n",
-			       hwif->index);
-			break;
-		}
-	}	
-	return 1;
-}
+		status = पढ़ोl(&dma->status);
+		अगर ((status & FLUSH) == 0)
+			अवरोध;
+		अगर (++समयout > 100) अणु
+			prपूर्णांकk(KERN_WARNING "ide%d, ide_dma_test_irq timeout flushing channel\n",
+			       hwअगर->index);
+			अवरोध;
+		पूर्ण
+	पूर्ण	
+	वापस 1;
+पूर्ण
 
-static void pmac_ide_dma_host_set(ide_drive_t *drive, int on)
-{
-}
+अटल व्योम pmac_ide_dma_host_set(ide_drive_t *drive, पूर्णांक on)
+अणु
+पूर्ण
 
-static void
+अटल व्योम
 pmac_ide_dma_lost_irq (ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
-	volatile struct dbdma_regs __iomem *dma = pmif->dma_regs;
-	unsigned long status = readl(&dma->status);
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
+	अस्थिर काष्ठा dbdma_regs __iomem *dma = pmअगर->dma_regs;
+	अचिन्हित दीर्घ status = पढ़ोl(&dma->status);
 
-	printk(KERN_ERR "ide-pmac lost interrupt, dma status: %lx\n", status);
-}
+	prपूर्णांकk(KERN_ERR "ide-pmac lost interrupt, dma status: %lx\n", status);
+पूर्ण
 
-static const struct ide_dma_ops pmac_dma_ops = {
+अटल स्थिर काष्ठा ide_dma_ops pmac_dma_ops = अणु
 	.dma_host_set		= pmac_ide_dma_host_set,
 	.dma_setup		= pmac_ide_dma_setup,
 	.dma_start		= pmac_ide_dma_start,
 	.dma_end		= pmac_ide_dma_end,
 	.dma_test_irq		= pmac_ide_dma_test_irq,
 	.dma_lost_irq		= pmac_ide_dma_lost_irq,
-};
+पूर्ण;
 
 /*
- * Allocate the data structures needed for using DMA with an interface
- * and fill the proper list of functions pointers
+ * Allocate the data काष्ठाures needed क्रम using DMA with an पूर्णांकerface
+ * and fill the proper list of functions poपूर्णांकers
  */
-static int pmac_ide_init_dma(ide_hwif_t *hwif, const struct ide_port_info *d)
-{
-	pmac_ide_hwif_t *pmif = dev_get_drvdata(hwif->gendev.parent);
-	struct pci_dev *dev = to_pci_dev(hwif->dev);
+अटल पूर्णांक pmac_ide_init_dma(ide_hwअगर_t *hwअगर, स्थिर काष्ठा ide_port_info *d)
+अणु
+	pmac_ide_hwअगर_t *pmअगर = dev_get_drvdata(hwअगर->gendev.parent);
+	काष्ठा pci_dev *dev = to_pci_dev(hwअगर->dev);
 
-	/* We won't need pci_dev if we switch to generic consistent
+	/* We won't need pci_dev अगर we चयन to generic consistent
 	 * DMA routines ...
 	 */
-	if (dev == NULL || pmif->dma_regs == 0)
-		return -ENODEV;
+	अगर (dev == शून्य || pmअगर->dma_regs == 0)
+		वापस -ENODEV;
 	/*
-	 * Allocate space for the DBDMA commands.
-	 * The +2 is +1 for the stop command and +1 to allow for
+	 * Allocate space क्रम the DBDMA commands.
+	 * The +2 is +1 क्रम the stop command and +1 to allow क्रम
 	 * aligning the start address to a multiple of 16 bytes.
 	 */
-	pmif->dma_table_cpu = dma_alloc_coherent(&dev->dev,
-		(MAX_DCMDS + 2) * sizeof(struct dbdma_cmd),
-		&hwif->dmatable_dma, GFP_KERNEL);
-	if (pmif->dma_table_cpu == NULL) {
-		printk(KERN_ERR "%s: unable to allocate DMA command list\n",
-		       hwif->name);
-		return -ENOMEM;
-	}
+	pmअगर->dma_table_cpu = dma_alloc_coherent(&dev->dev,
+		(MAX_DCMDS + 2) * माप(काष्ठा dbdma_cmd),
+		&hwअगर->dmatable_dma, GFP_KERNEL);
+	अगर (pmअगर->dma_table_cpu == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "%s: unable to allocate DMA command list\n",
+		       hwअगर->name);
+		वापस -ENOMEM;
+	पूर्ण
 
-	hwif->sg_max_nents = MAX_DCMDS;
+	hwअगर->sg_max_nents = MAX_DCMDS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 module_init(pmac_ide_probe);
 

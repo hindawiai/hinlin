@@ -1,128 +1,129 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Masquerade.  Simple mapping which alters range to a local IP address
    (depending on route). */
 
 /* (C) 1999-2001 Paul `Rusty' Russell
  * (C) 2002-2006 Netfilter Core Team <coreteam@netfilter.org>
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/module.h>
-#include <linux/netfilter/x_tables.h>
-#include <net/netfilter/nf_nat.h>
-#include <net/netfilter/nf_nat_masquerade.h>
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/module.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <net/netfilter/nf_nat.h>
+#समावेश <net/netfilter/nf_nat_masquerade.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Netfilter Core Team <coreteam@netfilter.org>");
 MODULE_DESCRIPTION("Xtables: automatic-address SNAT");
 
-/* FIXME: Multiple targets. --RR */
-static int masquerade_tg_check(const struct xt_tgchk_param *par)
-{
-	const struct nf_nat_ipv4_multi_range_compat *mr = par->targinfo;
+/* FIXME: Multiple tarमाला_लो. --RR */
+अटल पूर्णांक masquerade_tg_check(स्थिर काष्ठा xt_tgchk_param *par)
+अणु
+	स्थिर काष्ठा nf_nat_ipv4_multi_range_compat *mr = par->targinfo;
 
-	if (mr->range[0].flags & NF_NAT_RANGE_MAP_IPS) {
+	अगर (mr->range[0].flags & NF_NAT_RANGE_MAP_IPS) अणु
 		pr_debug("bad MAP_IPS.\n");
-		return -EINVAL;
-	}
-	if (mr->rangesize != 1) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (mr->rangesize != 1) अणु
 		pr_debug("bad rangesize %u\n", mr->rangesize);
-		return -EINVAL;
-	}
-	return nf_ct_netns_get(par->net, par->family);
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस nf_ct_netns_get(par->net, par->family);
+पूर्ण
 
-static unsigned int
-masquerade_tg(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	struct nf_nat_range2 range;
-	const struct nf_nat_ipv4_multi_range_compat *mr;
+अटल अचिन्हित पूर्णांक
+masquerade_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	काष्ठा nf_nat_range2 range;
+	स्थिर काष्ठा nf_nat_ipv4_multi_range_compat *mr;
 
 	mr = par->targinfo;
 	range.flags = mr->range[0].flags;
 	range.min_proto = mr->range[0].min;
 	range.max_proto = mr->range[0].max;
 
-	return nf_nat_masquerade_ipv4(skb, xt_hooknum(par), &range,
+	वापस nf_nat_masquerade_ipv4(skb, xt_hooknum(par), &range,
 				      xt_out(par));
-}
+पूर्ण
 
-static void masquerade_tg_destroy(const struct xt_tgdtor_param *par)
-{
+अटल व्योम masquerade_tg_destroy(स्थिर काष्ठा xt_tgdtor_param *par)
+अणु
 	nf_ct_netns_put(par->net, par->family);
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-static unsigned int
-masquerade_tg6(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	return nf_nat_masquerade_ipv6(skb, par->targinfo, xt_out(par));
-}
+#अगर IS_ENABLED(CONFIG_IPV6)
+अटल अचिन्हित पूर्णांक
+masquerade_tg6(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	वापस nf_nat_masquerade_ipv6(skb, par->targinfo, xt_out(par));
+पूर्ण
 
-static int masquerade_tg6_checkentry(const struct xt_tgchk_param *par)
-{
-	const struct nf_nat_range2 *range = par->targinfo;
+अटल पूर्णांक masquerade_tg6_checkentry(स्थिर काष्ठा xt_tgchk_param *par)
+अणु
+	स्थिर काष्ठा nf_nat_range2 *range = par->targinfo;
 
-	if (range->flags & NF_NAT_RANGE_MAP_IPS)
-		return -EINVAL;
+	अगर (range->flags & NF_NAT_RANGE_MAP_IPS)
+		वापस -EINVAL;
 
-	return nf_ct_netns_get(par->net, par->family);
-}
-#endif
+	वापस nf_ct_netns_get(par->net, par->family);
+पूर्ण
+#पूर्ण_अगर
 
-static struct xt_target masquerade_tg_reg[] __read_mostly = {
-	{
-#if IS_ENABLED(CONFIG_IPV6)
+अटल काष्ठा xt_target masquerade_tg_reg[] __पढ़ो_mostly = अणु
+	अणु
+#अगर IS_ENABLED(CONFIG_IPV6)
 		.name		= "MASQUERADE",
 		.family		= NFPROTO_IPV6,
 		.target		= masquerade_tg6,
-		.targetsize	= sizeof(struct nf_nat_range),
+		.tarमाला_लोize	= माप(काष्ठा nf_nat_range),
 		.table		= "nat",
 		.hooks		= 1 << NF_INET_POST_ROUTING,
 		.checkentry	= masquerade_tg6_checkentry,
 		.destroy	= masquerade_tg_destroy,
 		.me		= THIS_MODULE,
-	}, {
-#endif
+	पूर्ण, अणु
+#पूर्ण_अगर
 		.name		= "MASQUERADE",
 		.family		= NFPROTO_IPV4,
 		.target		= masquerade_tg,
-		.targetsize	= sizeof(struct nf_nat_ipv4_multi_range_compat),
+		.tarमाला_लोize	= माप(काष्ठा nf_nat_ipv4_multi_range_compat),
 		.table		= "nat",
 		.hooks		= 1 << NF_INET_POST_ROUTING,
 		.checkentry	= masquerade_tg_check,
 		.destroy	= masquerade_tg_destroy,
 		.me		= THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init masquerade_tg_init(void)
-{
-	int ret;
+अटल पूर्णांक __init masquerade_tg_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = xt_register_targets(masquerade_tg_reg,
+	ret = xt_रेजिस्टर_tarमाला_लो(masquerade_tg_reg,
 				  ARRAY_SIZE(masquerade_tg_reg));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = nf_nat_masquerade_inet_register_notifiers();
-	if (ret) {
-		xt_unregister_targets(masquerade_tg_reg,
+	ret = nf_nat_masquerade_inet_रेजिस्टर_notअगरiers();
+	अगर (ret) अणु
+		xt_unरेजिस्टर_tarमाला_लो(masquerade_tg_reg,
 				      ARRAY_SIZE(masquerade_tg_reg));
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit masquerade_tg_exit(void)
-{
-	xt_unregister_targets(masquerade_tg_reg, ARRAY_SIZE(masquerade_tg_reg));
-	nf_nat_masquerade_inet_unregister_notifiers();
-}
+अटल व्योम __निकास masquerade_tg_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_tarमाला_लो(masquerade_tg_reg, ARRAY_SIZE(masquerade_tg_reg));
+	nf_nat_masquerade_inet_unरेजिस्टर_notअगरiers();
+पूर्ण
 
 module_init(masquerade_tg_init);
-module_exit(masquerade_tg_exit);
-#if IS_ENABLED(CONFIG_IPV6)
+module_निकास(masquerade_tg_निकास);
+#अगर IS_ENABLED(CONFIG_IPV6)
 MODULE_ALIAS("ip6t_MASQUERADE");
-#endif
+#पूर्ण_अगर
 MODULE_ALIAS("ipt_MASQUERADE");

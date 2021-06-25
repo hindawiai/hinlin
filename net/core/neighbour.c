@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	Generic address resolution entity
  *
@@ -7,404 +8,404 @@
  *	Alexey Kuznetsov	<kuznet@ms2.inr.ac.ru>
  *
  *	Fixes:
- *	Vitaly E. Lavrov	releasing NULL neighbor in neigh_add.
+ *	Vitaly E. Lavrov	releasing शून्य neighbor in neigh_add.
  *	Harald Welte		Add neighbour cache statistics like rtstat
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/slab.h>
-#include <linux/kmemleak.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/socket.h>
-#include <linux/netdevice.h>
-#include <linux/proc_fs.h>
-#ifdef CONFIG_SYSCTL
-#include <linux/sysctl.h>
-#endif
-#include <linux/times.h>
-#include <net/net_namespace.h>
-#include <net/neighbour.h>
-#include <net/arp.h>
-#include <net/dst.h>
-#include <net/sock.h>
-#include <net/netevent.h>
-#include <net/netlink.h>
-#include <linux/rtnetlink.h>
-#include <linux/random.h>
-#include <linux/string.h>
-#include <linux/log2.h>
-#include <linux/inetdevice.h>
-#include <net/addrconf.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kmemleak.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/proc_fs.h>
+#अगर_घोषित CONFIG_SYSCTL
+#समावेश <linux/sysctl.h>
+#पूर्ण_अगर
+#समावेश <linux/बार.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/neighbour.h>
+#समावेश <net/arp.h>
+#समावेश <net/dst.h>
+#समावेश <net/sock.h>
+#समावेश <net/netevent.h>
+#समावेश <net/netlink.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/log2.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <net/addrconf.h>
 
-#include <trace/events/neigh.h>
+#समावेश <trace/events/neigh.h>
 
-#define NEIGH_DEBUG 1
-#define neigh_dbg(level, fmt, ...)		\
-do {						\
-	if (level <= NEIGH_DEBUG)		\
+#घोषणा NEIGH_DEBUG 1
+#घोषणा neigh_dbg(level, fmt, ...)		\
+करो अणु						\
+	अगर (level <= NEIGH_DEBUG)		\
 		pr_debug(fmt, ##__VA_ARGS__);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define PNEIGH_HASHMASK		0xF
+#घोषणा PNEIGH_HASHMASK		0xF
 
-static void neigh_timer_handler(struct timer_list *t);
-static void __neigh_notify(struct neighbour *n, int type, int flags,
+अटल व्योम neigh_समयr_handler(काष्ठा समयr_list *t);
+अटल व्योम __neigh_notअगरy(काष्ठा neighbour *n, पूर्णांक type, पूर्णांक flags,
 			   u32 pid);
-static void neigh_update_notify(struct neighbour *neigh, u32 nlmsg_pid);
-static int pneigh_ifdown_and_unlock(struct neigh_table *tbl,
-				    struct net_device *dev);
+अटल व्योम neigh_update_notअगरy(काष्ठा neighbour *neigh, u32 nlmsg_pid);
+अटल पूर्णांक pneigh_अगरकरोwn_and_unlock(काष्ठा neigh_table *tbl,
+				    काष्ठा net_device *dev);
 
-#ifdef CONFIG_PROC_FS
-static const struct seq_operations neigh_stat_seq_ops;
-#endif
+#अगर_घोषित CONFIG_PROC_FS
+अटल स्थिर काष्ठा seq_operations neigh_stat_seq_ops;
+#पूर्ण_अगर
 
 /*
-   Neighbour hash table buckets are protected with rwlock tbl->lock.
+   Neighbour hash table buckets are रक्षित with rwlock tbl->lock.
 
    - All the scans/updates to hash buckets MUST be made under this lock.
    - NOTHING clever should be made under this lock: no callbacks
      to protocol backends, no attempts to send something to network.
-     It will result in deadlocks, if backend/driver wants to use neighbour
+     It will result in deadlocks, अगर backend/driver wants to use neighbour
      cache.
    - If the entry requires some non-trivial actions, increase
      its reference count and release table lock.
 
-   Neighbour entries are protected:
+   Neighbour entries are रक्षित:
    - with reference count.
    - with rwlock neigh->lock
 
-   Reference count prevents destruction.
+   Reference count prevents deकाष्ठाion.
 
-   neigh->lock mainly serializes ll address data and its validity state.
+   neigh->lock मुख्यly serializes ll address data and its validity state.
    However, the same lock is used to protect another entry fields:
-    - timer
+    - समयr
     - resolution queue
 
    Again, nothing clever shall be made under neigh->lock,
    the most complicated procedure, which we allow is dev->hard_header.
-   It is supposed, that dev->hard_header is simplistic and does
+   It is supposed, that dev->hard_header is simplistic and करोes
    not make callbacks to neighbour tables.
  */
 
-static int neigh_blackhole(struct neighbour *neigh, struct sk_buff *skb)
-{
-	kfree_skb(skb);
-	return -ENETDOWN;
-}
+अटल पूर्णांक neigh_blackhole(काष्ठा neighbour *neigh, काष्ठा sk_buff *skb)
+अणु
+	kमुक्त_skb(skb);
+	वापस -ENETDOWN;
+पूर्ण
 
-static void neigh_cleanup_and_release(struct neighbour *neigh)
-{
+अटल व्योम neigh_cleanup_and_release(काष्ठा neighbour *neigh)
+अणु
 	trace_neigh_cleanup_and_release(neigh, 0);
-	__neigh_notify(neigh, RTM_DELNEIGH, 0, 0);
-	call_netevent_notifiers(NETEVENT_NEIGH_UPDATE, neigh);
+	__neigh_notअगरy(neigh, RTM_DELNEIGH, 0, 0);
+	call_netevent_notअगरiers(NETEVENT_NEIGH_UPDATE, neigh);
 	neigh_release(neigh);
-}
+पूर्ण
 
 /*
- * It is random distribution in the interval (1/2)*base...(3/2)*base.
- * It corresponds to default IPv6 settings and is not overridable,
+ * It is अक्रमom distribution in the पूर्णांकerval (1/2)*base...(3/2)*base.
+ * It corresponds to शेष IPv6 settings and is not overridable,
  * because it is really reasonable choice.
  */
 
-unsigned long neigh_rand_reach_time(unsigned long base)
-{
-	return base ? (prandom_u32() % base) + (base >> 1) : 0;
-}
-EXPORT_SYMBOL(neigh_rand_reach_time);
+अचिन्हित दीर्घ neigh_अक्रम_reach_समय(अचिन्हित दीर्घ base)
+अणु
+	वापस base ? (pअक्रमom_u32() % base) + (base >> 1) : 0;
+पूर्ण
+EXPORT_SYMBOL(neigh_अक्रम_reach_समय);
 
-static void neigh_mark_dead(struct neighbour *n)
-{
+अटल व्योम neigh_mark_dead(काष्ठा neighbour *n)
+अणु
 	n->dead = 1;
-	if (!list_empty(&n->gc_list)) {
+	अगर (!list_empty(&n->gc_list)) अणु
 		list_del_init(&n->gc_list);
 		atomic_dec(&n->tbl->gc_entries);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void neigh_update_gc_list(struct neighbour *n)
-{
+अटल व्योम neigh_update_gc_list(काष्ठा neighbour *n)
+अणु
 	bool on_gc_list, exempt_from_gc;
 
-	write_lock_bh(&n->tbl->lock);
-	write_lock(&n->lock);
+	ग_लिखो_lock_bh(&n->tbl->lock);
+	ग_लिखो_lock(&n->lock);
 
-	if (n->dead)
-		goto out;
+	अगर (n->dead)
+		जाओ out;
 
-	/* remove from the gc list if new state is permanent or if neighbor
-	 * is externally learned; otherwise entry should be on the gc list
+	/* हटाओ from the gc list अगर new state is permanent or अगर neighbor
+	 * is बाह्यally learned; otherwise entry should be on the gc list
 	 */
 	exempt_from_gc = n->nud_state & NUD_PERMANENT ||
 			 n->flags & NTF_EXT_LEARNED;
 	on_gc_list = !list_empty(&n->gc_list);
 
-	if (exempt_from_gc && on_gc_list) {
+	अगर (exempt_from_gc && on_gc_list) अणु
 		list_del_init(&n->gc_list);
 		atomic_dec(&n->tbl->gc_entries);
-	} else if (!exempt_from_gc && !on_gc_list) {
-		/* add entries to the tail; cleaning removes from the front */
+	पूर्ण अन्यथा अगर (!exempt_from_gc && !on_gc_list) अणु
+		/* add entries to the tail; cleaning हटाओs from the front */
 		list_add_tail(&n->gc_list, &n->tbl->gc_list);
 		atomic_inc(&n->tbl->gc_entries);
-	}
+	पूर्ण
 
 out:
-	write_unlock(&n->lock);
-	write_unlock_bh(&n->tbl->lock);
-}
+	ग_लिखो_unlock(&n->lock);
+	ग_लिखो_unlock_bh(&n->tbl->lock);
+पूर्ण
 
-static bool neigh_update_ext_learned(struct neighbour *neigh, u32 flags,
-				     int *notify)
-{
+अटल bool neigh_update_ext_learned(काष्ठा neighbour *neigh, u32 flags,
+				     पूर्णांक *notअगरy)
+अणु
 	bool rc = false;
 	u8 ndm_flags;
 
-	if (!(flags & NEIGH_UPDATE_F_ADMIN))
-		return rc;
+	अगर (!(flags & NEIGH_UPDATE_F_ADMIN))
+		वापस rc;
 
 	ndm_flags = (flags & NEIGH_UPDATE_F_EXT_LEARNED) ? NTF_EXT_LEARNED : 0;
-	if ((neigh->flags ^ ndm_flags) & NTF_EXT_LEARNED) {
-		if (ndm_flags & NTF_EXT_LEARNED)
+	अगर ((neigh->flags ^ ndm_flags) & NTF_EXT_LEARNED) अणु
+		अगर (ndm_flags & NTF_EXT_LEARNED)
 			neigh->flags |= NTF_EXT_LEARNED;
-		else
+		अन्यथा
 			neigh->flags &= ~NTF_EXT_LEARNED;
 		rc = true;
-		*notify = 1;
-	}
+		*notअगरy = 1;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static bool neigh_del(struct neighbour *n, struct neighbour __rcu **np,
-		      struct neigh_table *tbl)
-{
+अटल bool neigh_del(काष्ठा neighbour *n, काष्ठा neighbour __rcu **np,
+		      काष्ठा neigh_table *tbl)
+अणु
 	bool retval = false;
 
-	write_lock(&n->lock);
-	if (refcount_read(&n->refcnt) == 1) {
-		struct neighbour *neigh;
+	ग_लिखो_lock(&n->lock);
+	अगर (refcount_पढ़ो(&n->refcnt) == 1) अणु
+		काष्ठा neighbour *neigh;
 
-		neigh = rcu_dereference_protected(n->next,
+		neigh = rcu_dereference_रक्षित(n->next,
 						  lockdep_is_held(&tbl->lock));
-		rcu_assign_pointer(*np, neigh);
+		rcu_assign_poपूर्णांकer(*np, neigh);
 		neigh_mark_dead(n);
 		retval = true;
-	}
-	write_unlock(&n->lock);
-	if (retval)
+	पूर्ण
+	ग_लिखो_unlock(&n->lock);
+	अगर (retval)
 		neigh_cleanup_and_release(n);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-bool neigh_remove_one(struct neighbour *ndel, struct neigh_table *tbl)
-{
-	struct neigh_hash_table *nht;
-	void *pkey = ndel->primary_key;
+bool neigh_हटाओ_one(काष्ठा neighbour *ndel, काष्ठा neigh_table *tbl)
+अणु
+	काष्ठा neigh_hash_table *nht;
+	व्योम *pkey = ndel->primary_key;
 	u32 hash_val;
-	struct neighbour *n;
-	struct neighbour __rcu **np;
+	काष्ठा neighbour *n;
+	काष्ठा neighbour __rcu **np;
 
-	nht = rcu_dereference_protected(tbl->nht,
+	nht = rcu_dereference_रक्षित(tbl->nht,
 					lockdep_is_held(&tbl->lock));
 	hash_val = tbl->hash(pkey, ndel->dev, nht->hash_rnd);
-	hash_val = hash_val >> (32 - nht->hash_shift);
+	hash_val = hash_val >> (32 - nht->hash_shअगरt);
 
 	np = &nht->hash_buckets[hash_val];
-	while ((n = rcu_dereference_protected(*np,
-					      lockdep_is_held(&tbl->lock)))) {
-		if (n == ndel)
-			return neigh_del(n, np, tbl);
+	जबतक ((n = rcu_dereference_रक्षित(*np,
+					      lockdep_is_held(&tbl->lock)))) अणु
+		अगर (n == ndel)
+			वापस neigh_del(n, np, tbl);
 		np = &n->next;
-	}
-	return false;
-}
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static int neigh_forced_gc(struct neigh_table *tbl)
-{
-	int max_clean = atomic_read(&tbl->gc_entries) - tbl->gc_thresh2;
-	unsigned long tref = jiffies - 5 * HZ;
-	struct neighbour *n, *tmp;
-	int shrunk = 0;
+अटल पूर्णांक neigh_क्रमced_gc(काष्ठा neigh_table *tbl)
+अणु
+	पूर्णांक max_clean = atomic_पढ़ो(&tbl->gc_entries) - tbl->gc_thresh2;
+	अचिन्हित दीर्घ tref = jअगरfies - 5 * HZ;
+	काष्ठा neighbour *n, *पंचांगp;
+	पूर्णांक shrunk = 0;
 
-	NEIGH_CACHE_STAT_INC(tbl, forced_gc_runs);
+	NEIGH_CACHE_STAT_INC(tbl, क्रमced_gc_runs);
 
-	write_lock_bh(&tbl->lock);
+	ग_लिखो_lock_bh(&tbl->lock);
 
-	list_for_each_entry_safe(n, tmp, &tbl->gc_list, gc_list) {
-		if (refcount_read(&n->refcnt) == 1) {
-			bool remove = false;
+	list_क्रम_each_entry_safe(n, पंचांगp, &tbl->gc_list, gc_list) अणु
+		अगर (refcount_पढ़ो(&n->refcnt) == 1) अणु
+			bool हटाओ = false;
 
-			write_lock(&n->lock);
-			if ((n->nud_state == NUD_FAILED) ||
+			ग_लिखो_lock(&n->lock);
+			अगर ((n->nud_state == NUD_FAILED) ||
 			    (n->nud_state == NUD_NOARP) ||
 			    (tbl->is_multicast &&
 			     tbl->is_multicast(n->primary_key)) ||
-			    time_after(tref, n->updated))
-				remove = true;
-			write_unlock(&n->lock);
+			    समय_after(tref, n->updated))
+				हटाओ = true;
+			ग_लिखो_unlock(&n->lock);
 
-			if (remove && neigh_remove_one(n, tbl))
+			अगर (हटाओ && neigh_हटाओ_one(n, tbl))
 				shrunk++;
-			if (shrunk >= max_clean)
-				break;
-		}
-	}
+			अगर (shrunk >= max_clean)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	tbl->last_flush = jiffies;
+	tbl->last_flush = jअगरfies;
 
-	write_unlock_bh(&tbl->lock);
+	ग_लिखो_unlock_bh(&tbl->lock);
 
-	return shrunk;
-}
+	वापस shrunk;
+पूर्ण
 
-static void neigh_add_timer(struct neighbour *n, unsigned long when)
-{
+अटल व्योम neigh_add_समयr(काष्ठा neighbour *n, अचिन्हित दीर्घ when)
+अणु
 	neigh_hold(n);
-	if (unlikely(mod_timer(&n->timer, when))) {
-		printk("NEIGH: BUG, double timer add, state is %x\n",
+	अगर (unlikely(mod_समयr(&n->समयr, when))) अणु
+		prपूर्णांकk("NEIGH: BUG, double timer add, state is %x\n",
 		       n->nud_state);
 		dump_stack();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int neigh_del_timer(struct neighbour *n)
-{
-	if ((n->nud_state & NUD_IN_TIMER) &&
-	    del_timer(&n->timer)) {
+अटल पूर्णांक neigh_del_समयr(काष्ठा neighbour *n)
+अणु
+	अगर ((n->nud_state & NUD_IN_TIMER) &&
+	    del_समयr(&n->समयr)) अणु
 		neigh_release(n);
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void pneigh_queue_purge(struct sk_buff_head *list)
-{
-	struct sk_buff *skb;
+अटल व्योम pneigh_queue_purge(काष्ठा sk_buff_head *list)
+अणु
+	काष्ठा sk_buff *skb;
 
-	while ((skb = skb_dequeue(list)) != NULL) {
+	जबतक ((skb = skb_dequeue(list)) != शून्य) अणु
 		dev_put(skb->dev);
-		kfree_skb(skb);
-	}
-}
+		kमुक्त_skb(skb);
+	पूर्ण
+पूर्ण
 
-static void neigh_flush_dev(struct neigh_table *tbl, struct net_device *dev,
+अटल व्योम neigh_flush_dev(काष्ठा neigh_table *tbl, काष्ठा net_device *dev,
 			    bool skip_perm)
-{
-	int i;
-	struct neigh_hash_table *nht;
+अणु
+	पूर्णांक i;
+	काष्ठा neigh_hash_table *nht;
 
-	nht = rcu_dereference_protected(tbl->nht,
+	nht = rcu_dereference_रक्षित(tbl->nht,
 					lockdep_is_held(&tbl->lock));
 
-	for (i = 0; i < (1 << nht->hash_shift); i++) {
-		struct neighbour *n;
-		struct neighbour __rcu **np = &nht->hash_buckets[i];
+	क्रम (i = 0; i < (1 << nht->hash_shअगरt); i++) अणु
+		काष्ठा neighbour *n;
+		काष्ठा neighbour __rcu **np = &nht->hash_buckets[i];
 
-		while ((n = rcu_dereference_protected(*np,
-					lockdep_is_held(&tbl->lock))) != NULL) {
-			if (dev && n->dev != dev) {
+		जबतक ((n = rcu_dereference_रक्षित(*np,
+					lockdep_is_held(&tbl->lock))) != शून्य) अणु
+			अगर (dev && n->dev != dev) अणु
 				np = &n->next;
-				continue;
-			}
-			if (skip_perm && n->nud_state & NUD_PERMANENT) {
+				जारी;
+			पूर्ण
+			अगर (skip_perm && n->nud_state & NUD_PERMANENT) अणु
 				np = &n->next;
-				continue;
-			}
-			rcu_assign_pointer(*np,
-				   rcu_dereference_protected(n->next,
+				जारी;
+			पूर्ण
+			rcu_assign_poपूर्णांकer(*np,
+				   rcu_dereference_रक्षित(n->next,
 						lockdep_is_held(&tbl->lock)));
-			write_lock(&n->lock);
-			neigh_del_timer(n);
+			ग_लिखो_lock(&n->lock);
+			neigh_del_समयr(n);
 			neigh_mark_dead(n);
-			if (refcount_read(&n->refcnt) != 1) {
+			अगर (refcount_पढ़ो(&n->refcnt) != 1) अणु
 				/* The most unpleasant situation.
 				   We must destroy neighbour entry,
 				   but someone still uses it.
 
 				   The destroy will be delayed until
 				   the last user releases us, but
-				   we must kill timers etc. and move
+				   we must समाप्त समयrs etc. and move
 				   it to safe state.
 				 */
 				__skb_queue_purge(&n->arp_queue);
 				n->arp_queue_len_bytes = 0;
 				n->output = neigh_blackhole;
-				if (n->nud_state & NUD_VALID)
+				अगर (n->nud_state & NUD_VALID)
 					n->nud_state = NUD_NOARP;
-				else
+				अन्यथा
 					n->nud_state = NUD_NONE;
 				neigh_dbg(2, "neigh %p is stray\n", n);
-			}
-			write_unlock(&n->lock);
+			पूर्ण
+			ग_लिखो_unlock(&n->lock);
 			neigh_cleanup_and_release(n);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void neigh_changeaddr(struct neigh_table *tbl, struct net_device *dev)
-{
-	write_lock_bh(&tbl->lock);
+व्योम neigh_changeaddr(काष्ठा neigh_table *tbl, काष्ठा net_device *dev)
+अणु
+	ग_लिखो_lock_bh(&tbl->lock);
 	neigh_flush_dev(tbl, dev, false);
-	write_unlock_bh(&tbl->lock);
-}
+	ग_लिखो_unlock_bh(&tbl->lock);
+पूर्ण
 EXPORT_SYMBOL(neigh_changeaddr);
 
-static int __neigh_ifdown(struct neigh_table *tbl, struct net_device *dev,
+अटल पूर्णांक __neigh_अगरकरोwn(काष्ठा neigh_table *tbl, काष्ठा net_device *dev,
 			  bool skip_perm)
-{
-	write_lock_bh(&tbl->lock);
+अणु
+	ग_लिखो_lock_bh(&tbl->lock);
 	neigh_flush_dev(tbl, dev, skip_perm);
-	pneigh_ifdown_and_unlock(tbl, dev);
+	pneigh_अगरकरोwn_and_unlock(tbl, dev);
 
-	del_timer_sync(&tbl->proxy_timer);
+	del_समयr_sync(&tbl->proxy_समयr);
 	pneigh_queue_purge(&tbl->proxy_queue);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int neigh_carrier_down(struct neigh_table *tbl, struct net_device *dev)
-{
-	__neigh_ifdown(tbl, dev, true);
-	return 0;
-}
-EXPORT_SYMBOL(neigh_carrier_down);
+पूर्णांक neigh_carrier_करोwn(काष्ठा neigh_table *tbl, काष्ठा net_device *dev)
+अणु
+	__neigh_अगरकरोwn(tbl, dev, true);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(neigh_carrier_करोwn);
 
-int neigh_ifdown(struct neigh_table *tbl, struct net_device *dev)
-{
-	__neigh_ifdown(tbl, dev, false);
-	return 0;
-}
-EXPORT_SYMBOL(neigh_ifdown);
+पूर्णांक neigh_अगरकरोwn(काष्ठा neigh_table *tbl, काष्ठा net_device *dev)
+अणु
+	__neigh_अगरकरोwn(tbl, dev, false);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(neigh_अगरकरोwn);
 
-static struct neighbour *neigh_alloc(struct neigh_table *tbl,
-				     struct net_device *dev,
+अटल काष्ठा neighbour *neigh_alloc(काष्ठा neigh_table *tbl,
+				     काष्ठा net_device *dev,
 				     bool exempt_from_gc)
-{
-	struct neighbour *n = NULL;
-	unsigned long now = jiffies;
-	int entries;
+अणु
+	काष्ठा neighbour *n = शून्य;
+	अचिन्हित दीर्घ now = jअगरfies;
+	पूर्णांक entries;
 
-	if (exempt_from_gc)
-		goto do_alloc;
+	अगर (exempt_from_gc)
+		जाओ करो_alloc;
 
-	entries = atomic_inc_return(&tbl->gc_entries) - 1;
-	if (entries >= tbl->gc_thresh3 ||
+	entries = atomic_inc_वापस(&tbl->gc_entries) - 1;
+	अगर (entries >= tbl->gc_thresh3 ||
 	    (entries >= tbl->gc_thresh2 &&
-	     time_after(now, tbl->last_flush + 5 * HZ))) {
-		if (!neigh_forced_gc(tbl) &&
-		    entries >= tbl->gc_thresh3) {
+	     समय_after(now, tbl->last_flush + 5 * HZ))) अणु
+		अगर (!neigh_क्रमced_gc(tbl) &&
+		    entries >= tbl->gc_thresh3) अणु
 			net_info_ratelimited("%s: neighbor table overflow!\n",
 					     tbl->id);
 			NEIGH_CACHE_STAT_INC(tbl, table_fulls);
-			goto out_entries;
-		}
-	}
+			जाओ out_entries;
+		पूर्ण
+	पूर्ण
 
-do_alloc:
+करो_alloc:
 	n = kzalloc(tbl->entry_size + dev->neigh_priv_len, GFP_ATOMIC);
-	if (!n)
-		goto out_entries;
+	अगर (!n)
+		जाओ out_entries;
 
 	__skb_queue_head_init(&n->arp_queue);
 	rwlock_init(&n->lock);
@@ -414,7 +415,7 @@ do_alloc:
 	n->output	  = neigh_blackhole;
 	seqlock_init(&n->hh.hh_lock);
 	n->parms	  = neigh_parms_clone(&tbl->parms);
-	timer_setup(&n->timer, neigh_timer_handler, 0);
+	समयr_setup(&n->समयr, neigh_समयr_handler, 0);
 
 	NEIGH_CACHE_STAT_INC(tbl, allocs);
 	n->tbl		  = tbl;
@@ -424,435 +425,435 @@ do_alloc:
 
 	atomic_inc(&tbl->entries);
 out:
-	return n;
+	वापस n;
 
 out_entries:
-	if (!exempt_from_gc)
+	अगर (!exempt_from_gc)
 		atomic_dec(&tbl->gc_entries);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static void neigh_get_hash_rnd(u32 *x)
-{
-	*x = get_random_u32() | 1;
-}
+अटल व्योम neigh_get_hash_rnd(u32 *x)
+अणु
+	*x = get_अक्रमom_u32() | 1;
+पूर्ण
 
-static struct neigh_hash_table *neigh_hash_alloc(unsigned int shift)
-{
-	size_t size = (1 << shift) * sizeof(struct neighbour *);
-	struct neigh_hash_table *ret;
-	struct neighbour __rcu **buckets;
-	int i;
+अटल काष्ठा neigh_hash_table *neigh_hash_alloc(अचिन्हित पूर्णांक shअगरt)
+अणु
+	माप_प्रकार size = (1 << shअगरt) * माप(काष्ठा neighbour *);
+	काष्ठा neigh_hash_table *ret;
+	काष्ठा neighbour __rcu **buckets;
+	पूर्णांक i;
 
-	ret = kmalloc(sizeof(*ret), GFP_ATOMIC);
-	if (!ret)
-		return NULL;
-	if (size <= PAGE_SIZE) {
+	ret = kदो_स्मृति(माप(*ret), GFP_ATOMIC);
+	अगर (!ret)
+		वापस शून्य;
+	अगर (size <= PAGE_SIZE) अणु
 		buckets = kzalloc(size, GFP_ATOMIC);
-	} else {
-		buckets = (struct neighbour __rcu **)
-			  __get_free_pages(GFP_ATOMIC | __GFP_ZERO,
+	पूर्ण अन्यथा अणु
+		buckets = (काष्ठा neighbour __rcu **)
+			  __get_मुक्त_pages(GFP_ATOMIC | __GFP_ZERO,
 					   get_order(size));
 		kmemleak_alloc(buckets, size, 1, GFP_ATOMIC);
-	}
-	if (!buckets) {
-		kfree(ret);
-		return NULL;
-	}
+	पूर्ण
+	अगर (!buckets) अणु
+		kमुक्त(ret);
+		वापस शून्य;
+	पूर्ण
 	ret->hash_buckets = buckets;
-	ret->hash_shift = shift;
-	for (i = 0; i < NEIGH_NUM_HASH_RND; i++)
+	ret->hash_shअगरt = shअगरt;
+	क्रम (i = 0; i < NEIGH_NUM_HASH_RND; i++)
 		neigh_get_hash_rnd(&ret->hash_rnd[i]);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void neigh_hash_free_rcu(struct rcu_head *head)
-{
-	struct neigh_hash_table *nht = container_of(head,
-						    struct neigh_hash_table,
+अटल व्योम neigh_hash_मुक्त_rcu(काष्ठा rcu_head *head)
+अणु
+	काष्ठा neigh_hash_table *nht = container_of(head,
+						    काष्ठा neigh_hash_table,
 						    rcu);
-	size_t size = (1 << nht->hash_shift) * sizeof(struct neighbour *);
-	struct neighbour __rcu **buckets = nht->hash_buckets;
+	माप_प्रकार size = (1 << nht->hash_shअगरt) * माप(काष्ठा neighbour *);
+	काष्ठा neighbour __rcu **buckets = nht->hash_buckets;
 
-	if (size <= PAGE_SIZE) {
-		kfree(buckets);
-	} else {
-		kmemleak_free(buckets);
-		free_pages((unsigned long)buckets, get_order(size));
-	}
-	kfree(nht);
-}
+	अगर (size <= PAGE_SIZE) अणु
+		kमुक्त(buckets);
+	पूर्ण अन्यथा अणु
+		kmemleak_मुक्त(buckets);
+		मुक्त_pages((अचिन्हित दीर्घ)buckets, get_order(size));
+	पूर्ण
+	kमुक्त(nht);
+पूर्ण
 
-static struct neigh_hash_table *neigh_hash_grow(struct neigh_table *tbl,
-						unsigned long new_shift)
-{
-	unsigned int i, hash;
-	struct neigh_hash_table *new_nht, *old_nht;
+अटल काष्ठा neigh_hash_table *neigh_hash_grow(काष्ठा neigh_table *tbl,
+						अचिन्हित दीर्घ new_shअगरt)
+अणु
+	अचिन्हित पूर्णांक i, hash;
+	काष्ठा neigh_hash_table *new_nht, *old_nht;
 
 	NEIGH_CACHE_STAT_INC(tbl, hash_grows);
 
-	old_nht = rcu_dereference_protected(tbl->nht,
+	old_nht = rcu_dereference_रक्षित(tbl->nht,
 					    lockdep_is_held(&tbl->lock));
-	new_nht = neigh_hash_alloc(new_shift);
-	if (!new_nht)
-		return old_nht;
+	new_nht = neigh_hash_alloc(new_shअगरt);
+	अगर (!new_nht)
+		वापस old_nht;
 
-	for (i = 0; i < (1 << old_nht->hash_shift); i++) {
-		struct neighbour *n, *next;
+	क्रम (i = 0; i < (1 << old_nht->hash_shअगरt); i++) अणु
+		काष्ठा neighbour *n, *next;
 
-		for (n = rcu_dereference_protected(old_nht->hash_buckets[i],
+		क्रम (n = rcu_dereference_रक्षित(old_nht->hash_buckets[i],
 						   lockdep_is_held(&tbl->lock));
-		     n != NULL;
-		     n = next) {
+		     n != शून्य;
+		     n = next) अणु
 			hash = tbl->hash(n->primary_key, n->dev,
 					 new_nht->hash_rnd);
 
-			hash >>= (32 - new_nht->hash_shift);
-			next = rcu_dereference_protected(n->next,
+			hash >>= (32 - new_nht->hash_shअगरt);
+			next = rcu_dereference_रक्षित(n->next,
 						lockdep_is_held(&tbl->lock));
 
-			rcu_assign_pointer(n->next,
-					   rcu_dereference_protected(
+			rcu_assign_poपूर्णांकer(n->next,
+					   rcu_dereference_रक्षित(
 						new_nht->hash_buckets[hash],
 						lockdep_is_held(&tbl->lock)));
-			rcu_assign_pointer(new_nht->hash_buckets[hash], n);
-		}
-	}
+			rcu_assign_poपूर्णांकer(new_nht->hash_buckets[hash], n);
+		पूर्ण
+	पूर्ण
 
-	rcu_assign_pointer(tbl->nht, new_nht);
-	call_rcu(&old_nht->rcu, neigh_hash_free_rcu);
-	return new_nht;
-}
+	rcu_assign_poपूर्णांकer(tbl->nht, new_nht);
+	call_rcu(&old_nht->rcu, neigh_hash_मुक्त_rcu);
+	वापस new_nht;
+पूर्ण
 
-struct neighbour *neigh_lookup(struct neigh_table *tbl, const void *pkey,
-			       struct net_device *dev)
-{
-	struct neighbour *n;
+काष्ठा neighbour *neigh_lookup(काष्ठा neigh_table *tbl, स्थिर व्योम *pkey,
+			       काष्ठा net_device *dev)
+अणु
+	काष्ठा neighbour *n;
 
 	NEIGH_CACHE_STAT_INC(tbl, lookups);
 
-	rcu_read_lock_bh();
+	rcu_पढ़ो_lock_bh();
 	n = __neigh_lookup_noref(tbl, pkey, dev);
-	if (n) {
-		if (!refcount_inc_not_zero(&n->refcnt))
-			n = NULL;
+	अगर (n) अणु
+		अगर (!refcount_inc_not_zero(&n->refcnt))
+			n = शून्य;
 		NEIGH_CACHE_STAT_INC(tbl, hits);
-	}
+	पूर्ण
 
-	rcu_read_unlock_bh();
-	return n;
-}
+	rcu_पढ़ो_unlock_bh();
+	वापस n;
+पूर्ण
 EXPORT_SYMBOL(neigh_lookup);
 
-struct neighbour *neigh_lookup_nodev(struct neigh_table *tbl, struct net *net,
-				     const void *pkey)
-{
-	struct neighbour *n;
-	unsigned int key_len = tbl->key_len;
+काष्ठा neighbour *neigh_lookup_nodev(काष्ठा neigh_table *tbl, काष्ठा net *net,
+				     स्थिर व्योम *pkey)
+अणु
+	काष्ठा neighbour *n;
+	अचिन्हित पूर्णांक key_len = tbl->key_len;
 	u32 hash_val;
-	struct neigh_hash_table *nht;
+	काष्ठा neigh_hash_table *nht;
 
 	NEIGH_CACHE_STAT_INC(tbl, lookups);
 
-	rcu_read_lock_bh();
+	rcu_पढ़ो_lock_bh();
 	nht = rcu_dereference_bh(tbl->nht);
-	hash_val = tbl->hash(pkey, NULL, nht->hash_rnd) >> (32 - nht->hash_shift);
+	hash_val = tbl->hash(pkey, शून्य, nht->hash_rnd) >> (32 - nht->hash_shअगरt);
 
-	for (n = rcu_dereference_bh(nht->hash_buckets[hash_val]);
-	     n != NULL;
-	     n = rcu_dereference_bh(n->next)) {
-		if (!memcmp(n->primary_key, pkey, key_len) &&
-		    net_eq(dev_net(n->dev), net)) {
-			if (!refcount_inc_not_zero(&n->refcnt))
-				n = NULL;
+	क्रम (n = rcu_dereference_bh(nht->hash_buckets[hash_val]);
+	     n != शून्य;
+	     n = rcu_dereference_bh(n->next)) अणु
+		अगर (!स_भेद(n->primary_key, pkey, key_len) &&
+		    net_eq(dev_net(n->dev), net)) अणु
+			अगर (!refcount_inc_not_zero(&n->refcnt))
+				n = शून्य;
 			NEIGH_CACHE_STAT_INC(tbl, hits);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	rcu_read_unlock_bh();
-	return n;
-}
+	rcu_पढ़ो_unlock_bh();
+	वापस n;
+पूर्ण
 EXPORT_SYMBOL(neigh_lookup_nodev);
 
-static struct neighbour *___neigh_create(struct neigh_table *tbl,
-					 const void *pkey,
-					 struct net_device *dev,
+अटल काष्ठा neighbour *___neigh_create(काष्ठा neigh_table *tbl,
+					 स्थिर व्योम *pkey,
+					 काष्ठा net_device *dev,
 					 bool exempt_from_gc, bool want_ref)
-{
-	struct neighbour *n1, *rc, *n = neigh_alloc(tbl, dev, exempt_from_gc);
+अणु
+	काष्ठा neighbour *n1, *rc, *n = neigh_alloc(tbl, dev, exempt_from_gc);
 	u32 hash_val;
-	unsigned int key_len = tbl->key_len;
-	int error;
-	struct neigh_hash_table *nht;
+	अचिन्हित पूर्णांक key_len = tbl->key_len;
+	पूर्णांक error;
+	काष्ठा neigh_hash_table *nht;
 
 	trace_neigh_create(tbl, dev, pkey, n, exempt_from_gc);
 
-	if (!n) {
+	अगर (!n) अणु
 		rc = ERR_PTR(-ENOBUFS);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memcpy(n->primary_key, pkey, key_len);
+	स_नकल(n->primary_key, pkey, key_len);
 	n->dev = dev;
 	dev_hold(dev);
 
-	/* Protocol specific setup. */
-	if (tbl->constructor &&	(error = tbl->constructor(n)) < 0) {
+	/* Protocol specअगरic setup. */
+	अगर (tbl->स्थिरructor &&	(error = tbl->स्थिरructor(n)) < 0) अणु
 		rc = ERR_PTR(error);
-		goto out_neigh_release;
-	}
+		जाओ out_neigh_release;
+	पूर्ण
 
-	if (dev->netdev_ops->ndo_neigh_construct) {
-		error = dev->netdev_ops->ndo_neigh_construct(dev, n);
-		if (error < 0) {
+	अगर (dev->netdev_ops->nकरो_neigh_स्थिरruct) अणु
+		error = dev->netdev_ops->nकरो_neigh_स्थिरruct(dev, n);
+		अगर (error < 0) अणु
 			rc = ERR_PTR(error);
-			goto out_neigh_release;
-		}
-	}
+			जाओ out_neigh_release;
+		पूर्ण
+	पूर्ण
 
-	/* Device specific setup. */
-	if (n->parms->neigh_setup &&
-	    (error = n->parms->neigh_setup(n)) < 0) {
+	/* Device specअगरic setup. */
+	अगर (n->parms->neigh_setup &&
+	    (error = n->parms->neigh_setup(n)) < 0) अणु
 		rc = ERR_PTR(error);
-		goto out_neigh_release;
-	}
+		जाओ out_neigh_release;
+	पूर्ण
 
-	n->confirmed = jiffies - (NEIGH_VAR(n->parms, BASE_REACHABLE_TIME) << 1);
+	n->confirmed = jअगरfies - (NEIGH_VAR(n->parms, BASE_REACHABLE_TIME) << 1);
 
-	write_lock_bh(&tbl->lock);
-	nht = rcu_dereference_protected(tbl->nht,
+	ग_लिखो_lock_bh(&tbl->lock);
+	nht = rcu_dereference_रक्षित(tbl->nht,
 					lockdep_is_held(&tbl->lock));
 
-	if (atomic_read(&tbl->entries) > (1 << nht->hash_shift))
-		nht = neigh_hash_grow(tbl, nht->hash_shift + 1);
+	अगर (atomic_पढ़ो(&tbl->entries) > (1 << nht->hash_shअगरt))
+		nht = neigh_hash_grow(tbl, nht->hash_shअगरt + 1);
 
-	hash_val = tbl->hash(n->primary_key, dev, nht->hash_rnd) >> (32 - nht->hash_shift);
+	hash_val = tbl->hash(n->primary_key, dev, nht->hash_rnd) >> (32 - nht->hash_shअगरt);
 
-	if (n->parms->dead) {
+	अगर (n->parms->dead) अणु
 		rc = ERR_PTR(-EINVAL);
-		goto out_tbl_unlock;
-	}
+		जाओ out_tbl_unlock;
+	पूर्ण
 
-	for (n1 = rcu_dereference_protected(nht->hash_buckets[hash_val],
+	क्रम (n1 = rcu_dereference_रक्षित(nht->hash_buckets[hash_val],
 					    lockdep_is_held(&tbl->lock));
-	     n1 != NULL;
-	     n1 = rcu_dereference_protected(n1->next,
-			lockdep_is_held(&tbl->lock))) {
-		if (dev == n1->dev && !memcmp(n1->primary_key, n->primary_key, key_len)) {
-			if (want_ref)
+	     n1 != शून्य;
+	     n1 = rcu_dereference_रक्षित(n1->next,
+			lockdep_is_held(&tbl->lock))) अणु
+		अगर (dev == n1->dev && !स_भेद(n1->primary_key, n->primary_key, key_len)) अणु
+			अगर (want_ref)
 				neigh_hold(n1);
 			rc = n1;
-			goto out_tbl_unlock;
-		}
-	}
+			जाओ out_tbl_unlock;
+		पूर्ण
+	पूर्ण
 
 	n->dead = 0;
-	if (!exempt_from_gc)
+	अगर (!exempt_from_gc)
 		list_add_tail(&n->gc_list, &n->tbl->gc_list);
 
-	if (want_ref)
+	अगर (want_ref)
 		neigh_hold(n);
-	rcu_assign_pointer(n->next,
-			   rcu_dereference_protected(nht->hash_buckets[hash_val],
+	rcu_assign_poपूर्णांकer(n->next,
+			   rcu_dereference_रक्षित(nht->hash_buckets[hash_val],
 						     lockdep_is_held(&tbl->lock)));
-	rcu_assign_pointer(nht->hash_buckets[hash_val], n);
-	write_unlock_bh(&tbl->lock);
+	rcu_assign_poपूर्णांकer(nht->hash_buckets[hash_val], n);
+	ग_लिखो_unlock_bh(&tbl->lock);
 	neigh_dbg(2, "neigh %p is created\n", n);
 	rc = n;
 out:
-	return rc;
+	वापस rc;
 out_tbl_unlock:
-	write_unlock_bh(&tbl->lock);
+	ग_लिखो_unlock_bh(&tbl->lock);
 out_neigh_release:
-	if (!exempt_from_gc)
+	अगर (!exempt_from_gc)
 		atomic_dec(&tbl->gc_entries);
 	neigh_release(n);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-struct neighbour *__neigh_create(struct neigh_table *tbl, const void *pkey,
-				 struct net_device *dev, bool want_ref)
-{
-	return ___neigh_create(tbl, pkey, dev, false, want_ref);
-}
+काष्ठा neighbour *__neigh_create(काष्ठा neigh_table *tbl, स्थिर व्योम *pkey,
+				 काष्ठा net_device *dev, bool want_ref)
+अणु
+	वापस ___neigh_create(tbl, pkey, dev, false, want_ref);
+पूर्ण
 EXPORT_SYMBOL(__neigh_create);
 
-static u32 pneigh_hash(const void *pkey, unsigned int key_len)
-{
+अटल u32 pneigh_hash(स्थिर व्योम *pkey, अचिन्हित पूर्णांक key_len)
+अणु
 	u32 hash_val = *(u32 *)(pkey + key_len - 4);
 	hash_val ^= (hash_val >> 16);
 	hash_val ^= hash_val >> 8;
 	hash_val ^= hash_val >> 4;
 	hash_val &= PNEIGH_HASHMASK;
-	return hash_val;
-}
+	वापस hash_val;
+पूर्ण
 
-static struct pneigh_entry *__pneigh_lookup_1(struct pneigh_entry *n,
-					      struct net *net,
-					      const void *pkey,
-					      unsigned int key_len,
-					      struct net_device *dev)
-{
-	while (n) {
-		if (!memcmp(n->key, pkey, key_len) &&
+अटल काष्ठा pneigh_entry *__pneigh_lookup_1(काष्ठा pneigh_entry *n,
+					      काष्ठा net *net,
+					      स्थिर व्योम *pkey,
+					      अचिन्हित पूर्णांक key_len,
+					      काष्ठा net_device *dev)
+अणु
+	जबतक (n) अणु
+		अगर (!स_भेद(n->key, pkey, key_len) &&
 		    net_eq(pneigh_net(n), net) &&
 		    (n->dev == dev || !n->dev))
-			return n;
+			वापस n;
 		n = n->next;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-struct pneigh_entry *__pneigh_lookup(struct neigh_table *tbl,
-		struct net *net, const void *pkey, struct net_device *dev)
-{
-	unsigned int key_len = tbl->key_len;
+काष्ठा pneigh_entry *__pneigh_lookup(काष्ठा neigh_table *tbl,
+		काष्ठा net *net, स्थिर व्योम *pkey, काष्ठा net_device *dev)
+अणु
+	अचिन्हित पूर्णांक key_len = tbl->key_len;
 	u32 hash_val = pneigh_hash(pkey, key_len);
 
-	return __pneigh_lookup_1(tbl->phash_buckets[hash_val],
+	वापस __pneigh_lookup_1(tbl->phash_buckets[hash_val],
 				 net, pkey, key_len, dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__pneigh_lookup);
 
-struct pneigh_entry * pneigh_lookup(struct neigh_table *tbl,
-				    struct net *net, const void *pkey,
-				    struct net_device *dev, int creat)
-{
-	struct pneigh_entry *n;
-	unsigned int key_len = tbl->key_len;
+काष्ठा pneigh_entry * pneigh_lookup(काष्ठा neigh_table *tbl,
+				    काष्ठा net *net, स्थिर व्योम *pkey,
+				    काष्ठा net_device *dev, पूर्णांक creat)
+अणु
+	काष्ठा pneigh_entry *n;
+	अचिन्हित पूर्णांक key_len = tbl->key_len;
 	u32 hash_val = pneigh_hash(pkey, key_len);
 
-	read_lock_bh(&tbl->lock);
+	पढ़ो_lock_bh(&tbl->lock);
 	n = __pneigh_lookup_1(tbl->phash_buckets[hash_val],
 			      net, pkey, key_len, dev);
-	read_unlock_bh(&tbl->lock);
+	पढ़ो_unlock_bh(&tbl->lock);
 
-	if (n || !creat)
-		goto out;
+	अगर (n || !creat)
+		जाओ out;
 
 	ASSERT_RTNL();
 
-	n = kmalloc(sizeof(*n) + key_len, GFP_KERNEL);
-	if (!n)
-		goto out;
+	n = kदो_स्मृति(माप(*n) + key_len, GFP_KERNEL);
+	अगर (!n)
+		जाओ out;
 
 	n->protocol = 0;
-	write_pnet(&n->net, net);
-	memcpy(n->key, pkey, key_len);
+	ग_लिखो_pnet(&n->net, net);
+	स_नकल(n->key, pkey, key_len);
 	n->dev = dev;
-	if (dev)
+	अगर (dev)
 		dev_hold(dev);
 
-	if (tbl->pconstructor && tbl->pconstructor(n)) {
-		if (dev)
+	अगर (tbl->pस्थिरructor && tbl->pस्थिरructor(n)) अणु
+		अगर (dev)
 			dev_put(dev);
-		kfree(n);
-		n = NULL;
-		goto out;
-	}
+		kमुक्त(n);
+		n = शून्य;
+		जाओ out;
+	पूर्ण
 
-	write_lock_bh(&tbl->lock);
+	ग_लिखो_lock_bh(&tbl->lock);
 	n->next = tbl->phash_buckets[hash_val];
 	tbl->phash_buckets[hash_val] = n;
-	write_unlock_bh(&tbl->lock);
+	ग_लिखो_unlock_bh(&tbl->lock);
 out:
-	return n;
-}
+	वापस n;
+पूर्ण
 EXPORT_SYMBOL(pneigh_lookup);
 
 
-int pneigh_delete(struct neigh_table *tbl, struct net *net, const void *pkey,
-		  struct net_device *dev)
-{
-	struct pneigh_entry *n, **np;
-	unsigned int key_len = tbl->key_len;
+पूर्णांक pneigh_delete(काष्ठा neigh_table *tbl, काष्ठा net *net, स्थिर व्योम *pkey,
+		  काष्ठा net_device *dev)
+अणु
+	काष्ठा pneigh_entry *n, **np;
+	अचिन्हित पूर्णांक key_len = tbl->key_len;
 	u32 hash_val = pneigh_hash(pkey, key_len);
 
-	write_lock_bh(&tbl->lock);
-	for (np = &tbl->phash_buckets[hash_val]; (n = *np) != NULL;
-	     np = &n->next) {
-		if (!memcmp(n->key, pkey, key_len) && n->dev == dev &&
-		    net_eq(pneigh_net(n), net)) {
+	ग_लिखो_lock_bh(&tbl->lock);
+	क्रम (np = &tbl->phash_buckets[hash_val]; (n = *np) != शून्य;
+	     np = &n->next) अणु
+		अगर (!स_भेद(n->key, pkey, key_len) && n->dev == dev &&
+		    net_eq(pneigh_net(n), net)) अणु
 			*np = n->next;
-			write_unlock_bh(&tbl->lock);
-			if (tbl->pdestructor)
-				tbl->pdestructor(n);
-			if (n->dev)
+			ग_लिखो_unlock_bh(&tbl->lock);
+			अगर (tbl->pdeकाष्ठाor)
+				tbl->pdeकाष्ठाor(n);
+			अगर (n->dev)
 				dev_put(n->dev);
-			kfree(n);
-			return 0;
-		}
-	}
-	write_unlock_bh(&tbl->lock);
-	return -ENOENT;
-}
+			kमुक्त(n);
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	ग_लिखो_unlock_bh(&tbl->lock);
+	वापस -ENOENT;
+पूर्ण
 
-static int pneigh_ifdown_and_unlock(struct neigh_table *tbl,
-				    struct net_device *dev)
-{
-	struct pneigh_entry *n, **np, *freelist = NULL;
+अटल पूर्णांक pneigh_अगरकरोwn_and_unlock(काष्ठा neigh_table *tbl,
+				    काष्ठा net_device *dev)
+अणु
+	काष्ठा pneigh_entry *n, **np, *मुक्तlist = शून्य;
 	u32 h;
 
-	for (h = 0; h <= PNEIGH_HASHMASK; h++) {
+	क्रम (h = 0; h <= PNEIGH_HASHMASK; h++) अणु
 		np = &tbl->phash_buckets[h];
-		while ((n = *np) != NULL) {
-			if (!dev || n->dev == dev) {
+		जबतक ((n = *np) != शून्य) अणु
+			अगर (!dev || n->dev == dev) अणु
 				*np = n->next;
-				n->next = freelist;
-				freelist = n;
-				continue;
-			}
+				n->next = मुक्तlist;
+				मुक्तlist = n;
+				जारी;
+			पूर्ण
 			np = &n->next;
-		}
-	}
-	write_unlock_bh(&tbl->lock);
-	while ((n = freelist)) {
-		freelist = n->next;
-		n->next = NULL;
-		if (tbl->pdestructor)
-			tbl->pdestructor(n);
-		if (n->dev)
+		पूर्ण
+	पूर्ण
+	ग_लिखो_unlock_bh(&tbl->lock);
+	जबतक ((n = मुक्तlist)) अणु
+		मुक्तlist = n->next;
+		n->next = शून्य;
+		अगर (tbl->pdeकाष्ठाor)
+			tbl->pdeकाष्ठाor(n);
+		अगर (n->dev)
 			dev_put(n->dev);
-		kfree(n);
-	}
-	return -ENOENT;
-}
+		kमुक्त(n);
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 
-static void neigh_parms_destroy(struct neigh_parms *parms);
+अटल व्योम neigh_parms_destroy(काष्ठा neigh_parms *parms);
 
-static inline void neigh_parms_put(struct neigh_parms *parms)
-{
-	if (refcount_dec_and_test(&parms->refcnt))
+अटल अंतरभूत व्योम neigh_parms_put(काष्ठा neigh_parms *parms)
+अणु
+	अगर (refcount_dec_and_test(&parms->refcnt))
 		neigh_parms_destroy(parms);
-}
+पूर्ण
 
 /*
- *	neighbour must already be out of the table;
+ *	neighbour must alपढ़ोy be out of the table;
  *
  */
-void neigh_destroy(struct neighbour *neigh)
-{
-	struct net_device *dev = neigh->dev;
+व्योम neigh_destroy(काष्ठा neighbour *neigh)
+अणु
+	काष्ठा net_device *dev = neigh->dev;
 
 	NEIGH_CACHE_STAT_INC(neigh->tbl, destroys);
 
-	if (!neigh->dead) {
+	अगर (!neigh->dead) अणु
 		pr_warn("Destroying alive neighbour %p\n", neigh);
 		dump_stack();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (neigh_del_timer(neigh))
+	अगर (neigh_del_समयr(neigh))
 		pr_warn("Impossible event\n");
 
-	write_lock_bh(&neigh->lock);
+	ग_लिखो_lock_bh(&neigh->lock);
 	__skb_queue_purge(&neigh->arp_queue);
-	write_unlock_bh(&neigh->lock);
+	ग_लिखो_unlock_bh(&neigh->lock);
 	neigh->arp_queue_len_bytes = 0;
 
-	if (dev->netdev_ops->ndo_neigh_destroy)
-		dev->netdev_ops->ndo_neigh_destroy(dev, neigh);
+	अगर (dev->netdev_ops->nकरो_neigh_destroy)
+		dev->netdev_ops->nकरो_neigh_destroy(dev, neigh);
 
 	dev_put(dev);
 	neigh_parms_put(neigh->parms);
@@ -860,1146 +861,1146 @@ void neigh_destroy(struct neighbour *neigh)
 	neigh_dbg(2, "neigh %p is destroyed\n", neigh);
 
 	atomic_dec(&neigh->tbl->entries);
-	kfree_rcu(neigh, rcu);
-}
+	kमुक्त_rcu(neigh, rcu);
+पूर्ण
 EXPORT_SYMBOL(neigh_destroy);
 
 /* Neighbour state is suspicious;
    disable fast path.
 
-   Called with write_locked neigh.
+   Called with ग_लिखो_locked neigh.
  */
-static void neigh_suspect(struct neighbour *neigh)
-{
+अटल व्योम neigh_suspect(काष्ठा neighbour *neigh)
+अणु
 	neigh_dbg(2, "neigh %p is suspected\n", neigh);
 
 	neigh->output = neigh->ops->output;
-}
+पूर्ण
 
 /* Neighbour state is OK;
    enable fast path.
 
-   Called with write_locked neigh.
+   Called with ग_लिखो_locked neigh.
  */
-static void neigh_connect(struct neighbour *neigh)
-{
+अटल व्योम neigh_connect(काष्ठा neighbour *neigh)
+अणु
 	neigh_dbg(2, "neigh %p is connected\n", neigh);
 
 	neigh->output = neigh->ops->connected_output;
-}
+पूर्ण
 
-static void neigh_periodic_work(struct work_struct *work)
-{
-	struct neigh_table *tbl = container_of(work, struct neigh_table, gc_work.work);
-	struct neighbour *n;
-	struct neighbour __rcu **np;
-	unsigned int i;
-	struct neigh_hash_table *nht;
+अटल व्योम neigh_periodic_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा neigh_table *tbl = container_of(work, काष्ठा neigh_table, gc_work.work);
+	काष्ठा neighbour *n;
+	काष्ठा neighbour __rcu **np;
+	अचिन्हित पूर्णांक i;
+	काष्ठा neigh_hash_table *nht;
 
 	NEIGH_CACHE_STAT_INC(tbl, periodic_gc_runs);
 
-	write_lock_bh(&tbl->lock);
-	nht = rcu_dereference_protected(tbl->nht,
+	ग_लिखो_lock_bh(&tbl->lock);
+	nht = rcu_dereference_रक्षित(tbl->nht,
 					lockdep_is_held(&tbl->lock));
 
 	/*
-	 *	periodically recompute ReachableTime from random function
+	 *	periodically recompute ReachableTime from अक्रमom function
 	 */
 
-	if (time_after(jiffies, tbl->last_rand + 300 * HZ)) {
-		struct neigh_parms *p;
-		tbl->last_rand = jiffies;
-		list_for_each_entry(p, &tbl->parms_list, list)
-			p->reachable_time =
-				neigh_rand_reach_time(NEIGH_VAR(p, BASE_REACHABLE_TIME));
-	}
+	अगर (समय_after(jअगरfies, tbl->last_अक्रम + 300 * HZ)) अणु
+		काष्ठा neigh_parms *p;
+		tbl->last_अक्रम = jअगरfies;
+		list_क्रम_each_entry(p, &tbl->parms_list, list)
+			p->reachable_समय =
+				neigh_अक्रम_reach_समय(NEIGH_VAR(p, BASE_REACHABLE_TIME));
+	पूर्ण
 
-	if (atomic_read(&tbl->entries) < tbl->gc_thresh1)
-		goto out;
+	अगर (atomic_पढ़ो(&tbl->entries) < tbl->gc_thresh1)
+		जाओ out;
 
-	for (i = 0 ; i < (1 << nht->hash_shift); i++) {
+	क्रम (i = 0 ; i < (1 << nht->hash_shअगरt); i++) अणु
 		np = &nht->hash_buckets[i];
 
-		while ((n = rcu_dereference_protected(*np,
-				lockdep_is_held(&tbl->lock))) != NULL) {
-			unsigned int state;
+		जबतक ((n = rcu_dereference_रक्षित(*np,
+				lockdep_is_held(&tbl->lock))) != शून्य) अणु
+			अचिन्हित पूर्णांक state;
 
-			write_lock(&n->lock);
+			ग_लिखो_lock(&n->lock);
 
 			state = n->nud_state;
-			if ((state & (NUD_PERMANENT | NUD_IN_TIMER)) ||
-			    (n->flags & NTF_EXT_LEARNED)) {
-				write_unlock(&n->lock);
-				goto next_elt;
-			}
+			अगर ((state & (NUD_PERMANENT | NUD_IN_TIMER)) ||
+			    (n->flags & NTF_EXT_LEARNED)) अणु
+				ग_लिखो_unlock(&n->lock);
+				जाओ next_elt;
+			पूर्ण
 
-			if (time_before(n->used, n->confirmed))
+			अगर (समय_beक्रमe(n->used, n->confirmed))
 				n->used = n->confirmed;
 
-			if (refcount_read(&n->refcnt) == 1 &&
+			अगर (refcount_पढ़ो(&n->refcnt) == 1 &&
 			    (state == NUD_FAILED ||
-			     time_after(jiffies, n->used + NEIGH_VAR(n->parms, GC_STALETIME)))) {
+			     समय_after(jअगरfies, n->used + NEIGH_VAR(n->parms, GC_STALETIME)))) अणु
 				*np = n->next;
 				neigh_mark_dead(n);
-				write_unlock(&n->lock);
+				ग_लिखो_unlock(&n->lock);
 				neigh_cleanup_and_release(n);
-				continue;
-			}
-			write_unlock(&n->lock);
+				जारी;
+			पूर्ण
+			ग_लिखो_unlock(&n->lock);
 
 next_elt:
 			np = &n->next;
-		}
+		पूर्ण
 		/*
-		 * It's fine to release lock here, even if hash table
-		 * grows while we are preempted.
+		 * It's fine to release lock here, even अगर hash table
+		 * grows जबतक we are preempted.
 		 */
-		write_unlock_bh(&tbl->lock);
+		ग_लिखो_unlock_bh(&tbl->lock);
 		cond_resched();
-		write_lock_bh(&tbl->lock);
-		nht = rcu_dereference_protected(tbl->nht,
+		ग_लिखो_lock_bh(&tbl->lock);
+		nht = rcu_dereference_रक्षित(tbl->nht,
 						lockdep_is_held(&tbl->lock));
-	}
+	पूर्ण
 out:
 	/* Cycle through all hash buckets every BASE_REACHABLE_TIME/2 ticks.
-	 * ARP entry timeouts range from 1/2 BASE_REACHABLE_TIME to 3/2
+	 * ARP entry समयouts range from 1/2 BASE_REACHABLE_TIME to 3/2
 	 * BASE_REACHABLE_TIME.
 	 */
-	queue_delayed_work(system_power_efficient_wq, &tbl->gc_work,
+	queue_delayed_work(प्रणाली_घातer_efficient_wq, &tbl->gc_work,
 			      NEIGH_VAR(&tbl->parms, BASE_REACHABLE_TIME) >> 1);
-	write_unlock_bh(&tbl->lock);
-}
+	ग_लिखो_unlock_bh(&tbl->lock);
+पूर्ण
 
-static __inline__ int neigh_max_probes(struct neighbour *n)
-{
-	struct neigh_parms *p = n->parms;
-	return NEIGH_VAR(p, UCAST_PROBES) + NEIGH_VAR(p, APP_PROBES) +
+अटल __अंतरभूत__ पूर्णांक neigh_max_probes(काष्ठा neighbour *n)
+अणु
+	काष्ठा neigh_parms *p = n->parms;
+	वापस NEIGH_VAR(p, UCAST_PROBES) + NEIGH_VAR(p, APP_PROBES) +
 	       (n->nud_state & NUD_PROBE ? NEIGH_VAR(p, MCAST_REPROBES) :
 	        NEIGH_VAR(p, MCAST_PROBES));
-}
+पूर्ण
 
-static void neigh_invalidate(struct neighbour *neigh)
+अटल व्योम neigh_invalidate(काष्ठा neighbour *neigh)
 	__releases(neigh->lock)
 	__acquires(neigh->lock)
-{
-	struct sk_buff *skb;
+अणु
+	काष्ठा sk_buff *skb;
 
 	NEIGH_CACHE_STAT_INC(neigh->tbl, res_failed);
 	neigh_dbg(2, "neigh %p is failed\n", neigh);
-	neigh->updated = jiffies;
+	neigh->updated = jअगरfies;
 
 	/* It is very thin place. report_unreachable is very complicated
 	   routine. Particularly, it can hit the same neighbour entry!
 
-	   So that, we try to be accurate and avoid dead loop. --ANK
+	   So that, we try to be accurate and aव्योम dead loop. --ANK
 	 */
-	while (neigh->nud_state == NUD_FAILED &&
-	       (skb = __skb_dequeue(&neigh->arp_queue)) != NULL) {
-		write_unlock(&neigh->lock);
+	जबतक (neigh->nud_state == NUD_FAILED &&
+	       (skb = __skb_dequeue(&neigh->arp_queue)) != शून्य) अणु
+		ग_लिखो_unlock(&neigh->lock);
 		neigh->ops->error_report(neigh, skb);
-		write_lock(&neigh->lock);
-	}
+		ग_लिखो_lock(&neigh->lock);
+	पूर्ण
 	__skb_queue_purge(&neigh->arp_queue);
 	neigh->arp_queue_len_bytes = 0;
-}
+पूर्ण
 
-static void neigh_probe(struct neighbour *neigh)
+अटल व्योम neigh_probe(काष्ठा neighbour *neigh)
 	__releases(neigh->lock)
-{
-	struct sk_buff *skb = skb_peek_tail(&neigh->arp_queue);
-	/* keep skb alive even if arp_queue overflows */
-	if (skb)
+अणु
+	काष्ठा sk_buff *skb = skb_peek_tail(&neigh->arp_queue);
+	/* keep skb alive even अगर arp_queue overflows */
+	अगर (skb)
 		skb = skb_clone(skb, GFP_ATOMIC);
-	write_unlock(&neigh->lock);
-	if (neigh->ops->solicit)
+	ग_लिखो_unlock(&neigh->lock);
+	अगर (neigh->ops->solicit)
 		neigh->ops->solicit(neigh, skb);
 	atomic_inc(&neigh->probes);
 	consume_skb(skb);
-}
+पूर्ण
 
-/* Called when a timer expires for a neighbour entry. */
+/* Called when a समयr expires क्रम a neighbour entry. */
 
-static void neigh_timer_handler(struct timer_list *t)
-{
-	unsigned long now, next;
-	struct neighbour *neigh = from_timer(neigh, t, timer);
-	unsigned int state;
-	int notify = 0;
+अटल व्योम neigh_समयr_handler(काष्ठा समयr_list *t)
+अणु
+	अचिन्हित दीर्घ now, next;
+	काष्ठा neighbour *neigh = from_समयr(neigh, t, समयr);
+	अचिन्हित पूर्णांक state;
+	पूर्णांक notअगरy = 0;
 
-	write_lock(&neigh->lock);
+	ग_लिखो_lock(&neigh->lock);
 
 	state = neigh->nud_state;
-	now = jiffies;
+	now = jअगरfies;
 	next = now + HZ;
 
-	if (!(state & NUD_IN_TIMER))
-		goto out;
+	अगर (!(state & NUD_IN_TIMER))
+		जाओ out;
 
-	if (state & NUD_REACHABLE) {
-		if (time_before_eq(now,
-				   neigh->confirmed + neigh->parms->reachable_time)) {
+	अगर (state & NUD_REACHABLE) अणु
+		अगर (समय_beक्रमe_eq(now,
+				   neigh->confirmed + neigh->parms->reachable_समय)) अणु
 			neigh_dbg(2, "neigh %p is still alive\n", neigh);
-			next = neigh->confirmed + neigh->parms->reachable_time;
-		} else if (time_before_eq(now,
+			next = neigh->confirmed + neigh->parms->reachable_समय;
+		पूर्ण अन्यथा अगर (समय_beक्रमe_eq(now,
 					  neigh->used +
-					  NEIGH_VAR(neigh->parms, DELAY_PROBE_TIME))) {
+					  NEIGH_VAR(neigh->parms, DELAY_PROBE_TIME))) अणु
 			neigh_dbg(2, "neigh %p is delayed\n", neigh);
 			neigh->nud_state = NUD_DELAY;
-			neigh->updated = jiffies;
+			neigh->updated = jअगरfies;
 			neigh_suspect(neigh);
 			next = now + NEIGH_VAR(neigh->parms, DELAY_PROBE_TIME);
-		} else {
+		पूर्ण अन्यथा अणु
 			neigh_dbg(2, "neigh %p is suspected\n", neigh);
 			neigh->nud_state = NUD_STALE;
-			neigh->updated = jiffies;
+			neigh->updated = jअगरfies;
 			neigh_suspect(neigh);
-			notify = 1;
-		}
-	} else if (state & NUD_DELAY) {
-		if (time_before_eq(now,
+			notअगरy = 1;
+		पूर्ण
+	पूर्ण अन्यथा अगर (state & NUD_DELAY) अणु
+		अगर (समय_beक्रमe_eq(now,
 				   neigh->confirmed +
-				   NEIGH_VAR(neigh->parms, DELAY_PROBE_TIME))) {
+				   NEIGH_VAR(neigh->parms, DELAY_PROBE_TIME))) अणु
 			neigh_dbg(2, "neigh %p is now reachable\n", neigh);
 			neigh->nud_state = NUD_REACHABLE;
-			neigh->updated = jiffies;
+			neigh->updated = jअगरfies;
 			neigh_connect(neigh);
-			notify = 1;
-			next = neigh->confirmed + neigh->parms->reachable_time;
-		} else {
+			notअगरy = 1;
+			next = neigh->confirmed + neigh->parms->reachable_समय;
+		पूर्ण अन्यथा अणु
 			neigh_dbg(2, "neigh %p is probed\n", neigh);
 			neigh->nud_state = NUD_PROBE;
-			neigh->updated = jiffies;
+			neigh->updated = jअगरfies;
 			atomic_set(&neigh->probes, 0);
-			notify = 1;
+			notअगरy = 1;
 			next = now + max(NEIGH_VAR(neigh->parms, RETRANS_TIME),
 					 HZ/100);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* NUD_PROBE|NUD_INCOMPLETE */
 		next = now + max(NEIGH_VAR(neigh->parms, RETRANS_TIME), HZ/100);
-	}
+	पूर्ण
 
-	if ((neigh->nud_state & (NUD_INCOMPLETE | NUD_PROBE)) &&
-	    atomic_read(&neigh->probes) >= neigh_max_probes(neigh)) {
+	अगर ((neigh->nud_state & (NUD_INCOMPLETE | NUD_PROBE)) &&
+	    atomic_पढ़ो(&neigh->probes) >= neigh_max_probes(neigh)) अणु
 		neigh->nud_state = NUD_FAILED;
-		notify = 1;
+		notअगरy = 1;
 		neigh_invalidate(neigh);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (neigh->nud_state & NUD_IN_TIMER) {
-		if (time_before(next, jiffies + HZ/100))
-			next = jiffies + HZ/100;
-		if (!mod_timer(&neigh->timer, next))
+	अगर (neigh->nud_state & NUD_IN_TIMER) अणु
+		अगर (समय_beक्रमe(next, jअगरfies + HZ/100))
+			next = jअगरfies + HZ/100;
+		अगर (!mod_समयr(&neigh->समयr, next))
 			neigh_hold(neigh);
-	}
-	if (neigh->nud_state & (NUD_INCOMPLETE | NUD_PROBE)) {
+	पूर्ण
+	अगर (neigh->nud_state & (NUD_INCOMPLETE | NUD_PROBE)) अणु
 		neigh_probe(neigh);
-	} else {
+	पूर्ण अन्यथा अणु
 out:
-		write_unlock(&neigh->lock);
-	}
+		ग_लिखो_unlock(&neigh->lock);
+	पूर्ण
 
-	if (notify)
-		neigh_update_notify(neigh, 0);
+	अगर (notअगरy)
+		neigh_update_notअगरy(neigh, 0);
 
-	trace_neigh_timer_handler(neigh, 0);
+	trace_neigh_समयr_handler(neigh, 0);
 
 	neigh_release(neigh);
-}
+पूर्ण
 
-int __neigh_event_send(struct neighbour *neigh, struct sk_buff *skb)
-{
-	int rc;
+पूर्णांक __neigh_event_send(काष्ठा neighbour *neigh, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक rc;
 	bool immediate_probe = false;
 
-	write_lock_bh(&neigh->lock);
+	ग_लिखो_lock_bh(&neigh->lock);
 
 	rc = 0;
-	if (neigh->nud_state & (NUD_CONNECTED | NUD_DELAY | NUD_PROBE))
-		goto out_unlock_bh;
-	if (neigh->dead)
-		goto out_dead;
+	अगर (neigh->nud_state & (NUD_CONNECTED | NUD_DELAY | NUD_PROBE))
+		जाओ out_unlock_bh;
+	अगर (neigh->dead)
+		जाओ out_dead;
 
-	if (!(neigh->nud_state & (NUD_STALE | NUD_INCOMPLETE))) {
-		if (NEIGH_VAR(neigh->parms, MCAST_PROBES) +
-		    NEIGH_VAR(neigh->parms, APP_PROBES)) {
-			unsigned long next, now = jiffies;
+	अगर (!(neigh->nud_state & (NUD_STALE | NUD_INCOMPLETE))) अणु
+		अगर (NEIGH_VAR(neigh->parms, MCAST_PROBES) +
+		    NEIGH_VAR(neigh->parms, APP_PROBES)) अणु
+			अचिन्हित दीर्घ next, now = jअगरfies;
 
 			atomic_set(&neigh->probes,
 				   NEIGH_VAR(neigh->parms, UCAST_PROBES));
-			neigh_del_timer(neigh);
+			neigh_del_समयr(neigh);
 			neigh->nud_state     = NUD_INCOMPLETE;
 			neigh->updated = now;
 			next = now + max(NEIGH_VAR(neigh->parms, RETRANS_TIME),
 					 HZ/100);
-			neigh_add_timer(neigh, next);
+			neigh_add_समयr(neigh, next);
 			immediate_probe = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			neigh->nud_state = NUD_FAILED;
-			neigh->updated = jiffies;
-			write_unlock_bh(&neigh->lock);
+			neigh->updated = jअगरfies;
+			ग_लिखो_unlock_bh(&neigh->lock);
 
-			kfree_skb(skb);
-			return 1;
-		}
-	} else if (neigh->nud_state & NUD_STALE) {
+			kमुक्त_skb(skb);
+			वापस 1;
+		पूर्ण
+	पूर्ण अन्यथा अगर (neigh->nud_state & NUD_STALE) अणु
 		neigh_dbg(2, "neigh %p is delayed\n", neigh);
-		neigh_del_timer(neigh);
+		neigh_del_समयr(neigh);
 		neigh->nud_state = NUD_DELAY;
-		neigh->updated = jiffies;
-		neigh_add_timer(neigh, jiffies +
+		neigh->updated = jअगरfies;
+		neigh_add_समयr(neigh, jअगरfies +
 				NEIGH_VAR(neigh->parms, DELAY_PROBE_TIME));
-	}
+	पूर्ण
 
-	if (neigh->nud_state == NUD_INCOMPLETE) {
-		if (skb) {
-			while (neigh->arp_queue_len_bytes + skb->truesize >
-			       NEIGH_VAR(neigh->parms, QUEUE_LEN_BYTES)) {
-				struct sk_buff *buff;
+	अगर (neigh->nud_state == NUD_INCOMPLETE) अणु
+		अगर (skb) अणु
+			जबतक (neigh->arp_queue_len_bytes + skb->truesize >
+			       NEIGH_VAR(neigh->parms, QUEUE_LEN_BYTES)) अणु
+				काष्ठा sk_buff *buff;
 
 				buff = __skb_dequeue(&neigh->arp_queue);
-				if (!buff)
-					break;
+				अगर (!buff)
+					अवरोध;
 				neigh->arp_queue_len_bytes -= buff->truesize;
-				kfree_skb(buff);
+				kमुक्त_skb(buff);
 				NEIGH_CACHE_STAT_INC(neigh->tbl, unres_discards);
-			}
-			skb_dst_force(skb);
+			पूर्ण
+			skb_dst_क्रमce(skb);
 			__skb_queue_tail(&neigh->arp_queue, skb);
 			neigh->arp_queue_len_bytes += skb->truesize;
-		}
+		पूर्ण
 		rc = 1;
-	}
+	पूर्ण
 out_unlock_bh:
-	if (immediate_probe)
+	अगर (immediate_probe)
 		neigh_probe(neigh);
-	else
-		write_unlock(&neigh->lock);
+	अन्यथा
+		ग_लिखो_unlock(&neigh->lock);
 	local_bh_enable();
-	trace_neigh_event_send_done(neigh, rc);
-	return rc;
+	trace_neigh_event_send_करोne(neigh, rc);
+	वापस rc;
 
 out_dead:
-	if (neigh->nud_state & NUD_STALE)
-		goto out_unlock_bh;
-	write_unlock_bh(&neigh->lock);
-	kfree_skb(skb);
+	अगर (neigh->nud_state & NUD_STALE)
+		जाओ out_unlock_bh;
+	ग_लिखो_unlock_bh(&neigh->lock);
+	kमुक्त_skb(skb);
 	trace_neigh_event_send_dead(neigh, 1);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL(__neigh_event_send);
 
-static void neigh_update_hhs(struct neighbour *neigh)
-{
-	struct hh_cache *hh;
-	void (*update)(struct hh_cache*, const struct net_device*, const unsigned char *)
-		= NULL;
+अटल व्योम neigh_update_hhs(काष्ठा neighbour *neigh)
+अणु
+	काष्ठा hh_cache *hh;
+	व्योम (*update)(काष्ठा hh_cache*, स्थिर काष्ठा net_device*, स्थिर अचिन्हित अक्षर *)
+		= शून्य;
 
-	if (neigh->dev->header_ops)
+	अगर (neigh->dev->header_ops)
 		update = neigh->dev->header_ops->cache_update;
 
-	if (update) {
+	अगर (update) अणु
 		hh = &neigh->hh;
-		if (READ_ONCE(hh->hh_len)) {
-			write_seqlock_bh(&hh->hh_lock);
+		अगर (READ_ONCE(hh->hh_len)) अणु
+			ग_लिखो_seqlock_bh(&hh->hh_lock);
 			update(hh, neigh->dev, neigh->ha);
-			write_sequnlock_bh(&hh->hh_lock);
-		}
-	}
-}
+			ग_लिखो_sequnlock_bh(&hh->hh_lock);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
 
 /* Generic update routine.
-   -- lladdr is new lladdr or NULL, if it is not supplied.
+   -- lladdr is new lladdr or शून्य, अगर it is not supplied.
    -- new    is new state.
    -- flags
 	NEIGH_UPDATE_F_OVERRIDE allows to override existing lladdr,
-				if it is different.
+				अगर it is dअगरferent.
 	NEIGH_UPDATE_F_WEAK_OVERRIDE will suspect existing "connected"
 				lladdr instead of overriding it
-				if it is different.
+				अगर it is dअगरferent.
 	NEIGH_UPDATE_F_ADMIN	means that the change is administrative.
 
 	NEIGH_UPDATE_F_OVERRIDE_ISROUTER allows to override existing
 				NTF_ROUTER flag.
-	NEIGH_UPDATE_F_ISROUTER	indicates if the neighbour is known as
+	NEIGH_UPDATE_F_ISROUTER	indicates अगर the neighbour is known as
 				a router.
 
    Caller MUST hold reference count on the entry.
  */
 
-static int __neigh_update(struct neighbour *neigh, const u8 *lladdr,
+अटल पूर्णांक __neigh_update(काष्ठा neighbour *neigh, स्थिर u8 *lladdr,
 			  u8 new, u32 flags, u32 nlmsg_pid,
-			  struct netlink_ext_ack *extack)
-{
+			  काष्ठा netlink_ext_ack *extack)
+अणु
 	bool ext_learn_change = false;
 	u8 old;
-	int err;
-	int notify = 0;
-	struct net_device *dev;
-	int update_isrouter = 0;
+	पूर्णांक err;
+	पूर्णांक notअगरy = 0;
+	काष्ठा net_device *dev;
+	पूर्णांक update_isrouter = 0;
 
 	trace_neigh_update(neigh, lladdr, new, flags, nlmsg_pid);
 
-	write_lock_bh(&neigh->lock);
+	ग_लिखो_lock_bh(&neigh->lock);
 
 	dev    = neigh->dev;
 	old    = neigh->nud_state;
 	err    = -EPERM;
 
-	if (neigh->dead) {
+	अगर (neigh->dead) अणु
 		NL_SET_ERR_MSG(extack, "Neighbor entry is now dead");
 		new = old;
-		goto out;
-	}
-	if (!(flags & NEIGH_UPDATE_F_ADMIN) &&
+		जाओ out;
+	पूर्ण
+	अगर (!(flags & NEIGH_UPDATE_F_ADMIN) &&
 	    (old & (NUD_NOARP | NUD_PERMANENT)))
-		goto out;
+		जाओ out;
 
-	ext_learn_change = neigh_update_ext_learned(neigh, flags, &notify);
+	ext_learn_change = neigh_update_ext_learned(neigh, flags, &notअगरy);
 
-	if (!(new & NUD_VALID)) {
-		neigh_del_timer(neigh);
-		if (old & NUD_CONNECTED)
+	अगर (!(new & NUD_VALID)) अणु
+		neigh_del_समयr(neigh);
+		अगर (old & NUD_CONNECTED)
 			neigh_suspect(neigh);
 		neigh->nud_state = new;
 		err = 0;
-		notify = old & NUD_VALID;
-		if ((old & (NUD_INCOMPLETE | NUD_PROBE)) &&
-		    (new & NUD_FAILED)) {
+		notअगरy = old & NUD_VALID;
+		अगर ((old & (NUD_INCOMPLETE | NUD_PROBE)) &&
+		    (new & NUD_FAILED)) अणु
 			neigh_invalidate(neigh);
-			notify = 1;
-		}
-		goto out;
-	}
+			notअगरy = 1;
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
 	/* Compare new lladdr with cached one */
-	if (!dev->addr_len) {
-		/* First case: device needs no address. */
+	अगर (!dev->addr_len) अणु
+		/* First हाल: device needs no address. */
 		lladdr = neigh->ha;
-	} else if (lladdr) {
-		/* The second case: if something is already cached
+	पूर्ण अन्यथा अगर (lladdr) अणु
+		/* The second हाल: अगर something is alपढ़ोy cached
 		   and a new address is proposed:
 		   - compare new & old
-		   - if they are different, check override flag
+		   - अगर they are dअगरferent, check override flag
 		 */
-		if ((old & NUD_VALID) &&
-		    !memcmp(lladdr, neigh->ha, dev->addr_len))
+		अगर ((old & NUD_VALID) &&
+		    !स_भेद(lladdr, neigh->ha, dev->addr_len))
 			lladdr = neigh->ha;
-	} else {
-		/* No address is supplied; if we know something,
+	पूर्ण अन्यथा अणु
+		/* No address is supplied; अगर we know something,
 		   use it, otherwise discard the request.
 		 */
 		err = -EINVAL;
-		if (!(old & NUD_VALID)) {
+		अगर (!(old & NUD_VALID)) अणु
 			NL_SET_ERR_MSG(extack, "No link layer address given");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		lladdr = neigh->ha;
-	}
+	पूर्ण
 
-	/* Update confirmed timestamp for neighbour entry after we
-	 * received ARP packet even if it doesn't change IP to MAC binding.
+	/* Update confirmed बारtamp क्रम neighbour entry after we
+	 * received ARP packet even अगर it करोesn't change IP to MAC binding.
 	 */
-	if (new & NUD_CONNECTED)
-		neigh->confirmed = jiffies;
+	अगर (new & NUD_CONNECTED)
+		neigh->confirmed = jअगरfies;
 
 	/* If entry was valid and address is not changed,
-	   do not change entry state, if new one is STALE.
+	   करो not change entry state, अगर new one is STALE.
 	 */
 	err = 0;
 	update_isrouter = flags & NEIGH_UPDATE_F_OVERRIDE_ISROUTER;
-	if (old & NUD_VALID) {
-		if (lladdr != neigh->ha && !(flags & NEIGH_UPDATE_F_OVERRIDE)) {
+	अगर (old & NUD_VALID) अणु
+		अगर (lladdr != neigh->ha && !(flags & NEIGH_UPDATE_F_OVERRIDE)) अणु
 			update_isrouter = 0;
-			if ((flags & NEIGH_UPDATE_F_WEAK_OVERRIDE) &&
-			    (old & NUD_CONNECTED)) {
+			अगर ((flags & NEIGH_UPDATE_F_WEAK_OVERRIDE) &&
+			    (old & NUD_CONNECTED)) अणु
 				lladdr = neigh->ha;
 				new = NUD_STALE;
-			} else
-				goto out;
-		} else {
-			if (lladdr == neigh->ha && new == NUD_STALE &&
+			पूर्ण अन्यथा
+				जाओ out;
+		पूर्ण अन्यथा अणु
+			अगर (lladdr == neigh->ha && new == NUD_STALE &&
 			    !(flags & NEIGH_UPDATE_F_ADMIN))
 				new = old;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Update timestamp only once we know we will make a change to the
-	 * neighbour entry. Otherwise we risk to move the locktime window with
+	/* Update बारtamp only once we know we will make a change to the
+	 * neighbour entry. Otherwise we risk to move the lockसमय winकरोw with
 	 * noop updates and ignore relevant ARP updates.
 	 */
-	if (new != old || lladdr != neigh->ha)
-		neigh->updated = jiffies;
+	अगर (new != old || lladdr != neigh->ha)
+		neigh->updated = jअगरfies;
 
-	if (new != old) {
-		neigh_del_timer(neigh);
-		if (new & NUD_PROBE)
+	अगर (new != old) अणु
+		neigh_del_समयr(neigh);
+		अगर (new & NUD_PROBE)
 			atomic_set(&neigh->probes, 0);
-		if (new & NUD_IN_TIMER)
-			neigh_add_timer(neigh, (jiffies +
+		अगर (new & NUD_IN_TIMER)
+			neigh_add_समयr(neigh, (jअगरfies +
 						((new & NUD_REACHABLE) ?
-						 neigh->parms->reachable_time :
+						 neigh->parms->reachable_समय :
 						 0)));
 		neigh->nud_state = new;
-		notify = 1;
-	}
+		notअगरy = 1;
+	पूर्ण
 
-	if (lladdr != neigh->ha) {
-		write_seqlock(&neigh->ha_lock);
-		memcpy(&neigh->ha, lladdr, dev->addr_len);
-		write_sequnlock(&neigh->ha_lock);
+	अगर (lladdr != neigh->ha) अणु
+		ग_लिखो_seqlock(&neigh->ha_lock);
+		स_नकल(&neigh->ha, lladdr, dev->addr_len);
+		ग_लिखो_sequnlock(&neigh->ha_lock);
 		neigh_update_hhs(neigh);
-		if (!(new & NUD_CONNECTED))
-			neigh->confirmed = jiffies -
+		अगर (!(new & NUD_CONNECTED))
+			neigh->confirmed = jअगरfies -
 				      (NEIGH_VAR(neigh->parms, BASE_REACHABLE_TIME) << 1);
-		notify = 1;
-	}
-	if (new == old)
-		goto out;
-	if (new & NUD_CONNECTED)
+		notअगरy = 1;
+	पूर्ण
+	अगर (new == old)
+		जाओ out;
+	अगर (new & NUD_CONNECTED)
 		neigh_connect(neigh);
-	else
+	अन्यथा
 		neigh_suspect(neigh);
-	if (!(old & NUD_VALID)) {
-		struct sk_buff *skb;
+	अगर (!(old & NUD_VALID)) अणु
+		काष्ठा sk_buff *skb;
 
-		/* Again: avoid dead loop if something went wrong */
+		/* Again: aव्योम dead loop अगर something went wrong */
 
-		while (neigh->nud_state & NUD_VALID &&
-		       (skb = __skb_dequeue(&neigh->arp_queue)) != NULL) {
-			struct dst_entry *dst = skb_dst(skb);
-			struct neighbour *n2, *n1 = neigh;
-			write_unlock_bh(&neigh->lock);
+		जबतक (neigh->nud_state & NUD_VALID &&
+		       (skb = __skb_dequeue(&neigh->arp_queue)) != शून्य) अणु
+			काष्ठा dst_entry *dst = skb_dst(skb);
+			काष्ठा neighbour *n2, *n1 = neigh;
+			ग_लिखो_unlock_bh(&neigh->lock);
 
-			rcu_read_lock();
+			rcu_पढ़ो_lock();
 
 			/* Why not just use 'neigh' as-is?  The problem is that
 			 * things such as shaper, eql, and sch_teql can end up
-			 * using alternative, different, neigh objects to output
-			 * the packet in the output path.  So what we need to do
+			 * using alternative, dअगरferent, neigh objects to output
+			 * the packet in the output path.  So what we need to करो
 			 * here is re-lookup the top-level neigh in the path so
 			 * we can reinject the packet there.
 			 */
-			n2 = NULL;
-			if (dst && dst->obsolete != DST_OBSOLETE_DEAD) {
+			n2 = शून्य;
+			अगर (dst && dst->obsolete != DST_OBSOLETE_DEAD) अणु
 				n2 = dst_neigh_lookup_skb(dst, skb);
-				if (n2)
+				अगर (n2)
 					n1 = n2;
-			}
+			पूर्ण
 			n1->output(n1, skb);
-			if (n2)
+			अगर (n2)
 				neigh_release(n2);
-			rcu_read_unlock();
+			rcu_पढ़ो_unlock();
 
-			write_lock_bh(&neigh->lock);
-		}
+			ग_लिखो_lock_bh(&neigh->lock);
+		पूर्ण
 		__skb_queue_purge(&neigh->arp_queue);
 		neigh->arp_queue_len_bytes = 0;
-	}
+	पूर्ण
 out:
-	if (update_isrouter)
-		neigh_update_is_router(neigh, flags, &notify);
-	write_unlock_bh(&neigh->lock);
+	अगर (update_isrouter)
+		neigh_update_is_router(neigh, flags, &notअगरy);
+	ग_लिखो_unlock_bh(&neigh->lock);
 
-	if (((new ^ old) & NUD_PERMANENT) || ext_learn_change)
+	अगर (((new ^ old) & NUD_PERMANENT) || ext_learn_change)
 		neigh_update_gc_list(neigh);
 
-	if (notify)
-		neigh_update_notify(neigh, nlmsg_pid);
+	अगर (notअगरy)
+		neigh_update_notअगरy(neigh, nlmsg_pid);
 
-	trace_neigh_update_done(neigh, err);
+	trace_neigh_update_करोne(neigh, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int neigh_update(struct neighbour *neigh, const u8 *lladdr, u8 new,
+पूर्णांक neigh_update(काष्ठा neighbour *neigh, स्थिर u8 *lladdr, u8 new,
 		 u32 flags, u32 nlmsg_pid)
-{
-	return __neigh_update(neigh, lladdr, new, flags, nlmsg_pid, NULL);
-}
+अणु
+	वापस __neigh_update(neigh, lladdr, new, flags, nlmsg_pid, शून्य);
+पूर्ण
 EXPORT_SYMBOL(neigh_update);
 
-/* Update the neigh to listen temporarily for probe responses, even if it is
- * in a NUD_FAILED state. The caller has to hold neigh->lock for writing.
+/* Update the neigh to listen temporarily क्रम probe responses, even अगर it is
+ * in a NUD_FAILED state. The caller has to hold neigh->lock क्रम writing.
  */
-void __neigh_set_probe_once(struct neighbour *neigh)
-{
-	if (neigh->dead)
-		return;
-	neigh->updated = jiffies;
-	if (!(neigh->nud_state & NUD_FAILED))
-		return;
+व्योम __neigh_set_probe_once(काष्ठा neighbour *neigh)
+अणु
+	अगर (neigh->dead)
+		वापस;
+	neigh->updated = jअगरfies;
+	अगर (!(neigh->nud_state & NUD_FAILED))
+		वापस;
 	neigh->nud_state = NUD_INCOMPLETE;
 	atomic_set(&neigh->probes, neigh_max_probes(neigh));
-	neigh_add_timer(neigh,
-			jiffies + max(NEIGH_VAR(neigh->parms, RETRANS_TIME),
+	neigh_add_समयr(neigh,
+			jअगरfies + max(NEIGH_VAR(neigh->parms, RETRANS_TIME),
 				      HZ/100));
-}
+पूर्ण
 EXPORT_SYMBOL(__neigh_set_probe_once);
 
-struct neighbour *neigh_event_ns(struct neigh_table *tbl,
-				 u8 *lladdr, void *saddr,
-				 struct net_device *dev)
-{
-	struct neighbour *neigh = __neigh_lookup(tbl, saddr, dev,
+काष्ठा neighbour *neigh_event_ns(काष्ठा neigh_table *tbl,
+				 u8 *lladdr, व्योम *saddr,
+				 काष्ठा net_device *dev)
+अणु
+	काष्ठा neighbour *neigh = __neigh_lookup(tbl, saddr, dev,
 						 lladdr || !dev->addr_len);
-	if (neigh)
+	अगर (neigh)
 		neigh_update(neigh, lladdr, NUD_STALE,
 			     NEIGH_UPDATE_F_OVERRIDE, 0);
-	return neigh;
-}
+	वापस neigh;
+पूर्ण
 EXPORT_SYMBOL(neigh_event_ns);
 
-/* called with read_lock_bh(&n->lock); */
-static void neigh_hh_init(struct neighbour *n)
-{
-	struct net_device *dev = n->dev;
+/* called with पढ़ो_lock_bh(&n->lock); */
+अटल व्योम neigh_hh_init(काष्ठा neighbour *n)
+अणु
+	काष्ठा net_device *dev = n->dev;
 	__be16 prot = n->tbl->protocol;
-	struct hh_cache	*hh = &n->hh;
+	काष्ठा hh_cache	*hh = &n->hh;
 
-	write_lock_bh(&n->lock);
+	ग_लिखो_lock_bh(&n->lock);
 
-	/* Only one thread can come in here and initialize the
+	/* Only one thपढ़ो can come in here and initialize the
 	 * hh_cache entry.
 	 */
-	if (!hh->hh_len)
+	अगर (!hh->hh_len)
 		dev->header_ops->cache(n, hh, prot);
 
-	write_unlock_bh(&n->lock);
-}
+	ग_लिखो_unlock_bh(&n->lock);
+पूर्ण
 
 /* Slow and careful. */
 
-int neigh_resolve_output(struct neighbour *neigh, struct sk_buff *skb)
-{
-	int rc = 0;
+पूर्णांक neigh_resolve_output(काष्ठा neighbour *neigh, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक rc = 0;
 
-	if (!neigh_event_send(neigh, skb)) {
-		int err;
-		struct net_device *dev = neigh->dev;
-		unsigned int seq;
+	अगर (!neigh_event_send(neigh, skb)) अणु
+		पूर्णांक err;
+		काष्ठा net_device *dev = neigh->dev;
+		अचिन्हित पूर्णांक seq;
 
-		if (dev->header_ops->cache && !READ_ONCE(neigh->hh.hh_len))
+		अगर (dev->header_ops->cache && !READ_ONCE(neigh->hh.hh_len))
 			neigh_hh_init(neigh);
 
-		do {
+		करो अणु
 			__skb_pull(skb, skb_network_offset(skb));
-			seq = read_seqbegin(&neigh->ha_lock);
+			seq = पढ़ो_seqbegin(&neigh->ha_lock);
 			err = dev_hard_header(skb, dev, ntohs(skb->protocol),
-					      neigh->ha, NULL, skb->len);
-		} while (read_seqretry(&neigh->ha_lock, seq));
+					      neigh->ha, शून्य, skb->len);
+		पूर्ण जबतक (पढ़ो_seqretry(&neigh->ha_lock, seq));
 
-		if (err >= 0)
+		अगर (err >= 0)
 			rc = dev_queue_xmit(skb);
-		else
-			goto out_kfree_skb;
-	}
+		अन्यथा
+			जाओ out_kमुक्त_skb;
+	पूर्ण
 out:
-	return rc;
-out_kfree_skb:
+	वापस rc;
+out_kमुक्त_skb:
 	rc = -EINVAL;
-	kfree_skb(skb);
-	goto out;
-}
+	kमुक्त_skb(skb);
+	जाओ out;
+पूर्ण
 EXPORT_SYMBOL(neigh_resolve_output);
 
 /* As fast as possible without hh cache */
 
-int neigh_connected_output(struct neighbour *neigh, struct sk_buff *skb)
-{
-	struct net_device *dev = neigh->dev;
-	unsigned int seq;
-	int err;
+पूर्णांक neigh_connected_output(काष्ठा neighbour *neigh, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *dev = neigh->dev;
+	अचिन्हित पूर्णांक seq;
+	पूर्णांक err;
 
-	do {
+	करो अणु
 		__skb_pull(skb, skb_network_offset(skb));
-		seq = read_seqbegin(&neigh->ha_lock);
+		seq = पढ़ो_seqbegin(&neigh->ha_lock);
 		err = dev_hard_header(skb, dev, ntohs(skb->protocol),
-				      neigh->ha, NULL, skb->len);
-	} while (read_seqretry(&neigh->ha_lock, seq));
+				      neigh->ha, शून्य, skb->len);
+	पूर्ण जबतक (पढ़ो_seqretry(&neigh->ha_lock, seq));
 
-	if (err >= 0)
+	अगर (err >= 0)
 		err = dev_queue_xmit(skb);
-	else {
+	अन्यथा अणु
 		err = -EINVAL;
-		kfree_skb(skb);
-	}
-	return err;
-}
+		kमुक्त_skb(skb);
+	पूर्ण
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(neigh_connected_output);
 
-int neigh_direct_output(struct neighbour *neigh, struct sk_buff *skb)
-{
-	return dev_queue_xmit(skb);
-}
+पूर्णांक neigh_direct_output(काष्ठा neighbour *neigh, काष्ठा sk_buff *skb)
+अणु
+	वापस dev_queue_xmit(skb);
+पूर्ण
 EXPORT_SYMBOL(neigh_direct_output);
 
-static void neigh_proxy_process(struct timer_list *t)
-{
-	struct neigh_table *tbl = from_timer(tbl, t, proxy_timer);
-	long sched_next = 0;
-	unsigned long now = jiffies;
-	struct sk_buff *skb, *n;
+अटल व्योम neigh_proxy_process(काष्ठा समयr_list *t)
+अणु
+	काष्ठा neigh_table *tbl = from_समयr(tbl, t, proxy_समयr);
+	दीर्घ sched_next = 0;
+	अचिन्हित दीर्घ now = jअगरfies;
+	काष्ठा sk_buff *skb, *n;
 
 	spin_lock(&tbl->proxy_queue.lock);
 
-	skb_queue_walk_safe(&tbl->proxy_queue, skb, n) {
-		long tdif = NEIGH_CB(skb)->sched_next - now;
+	skb_queue_walk_safe(&tbl->proxy_queue, skb, n) अणु
+		दीर्घ tdअगर = NEIGH_CB(skb)->sched_next - now;
 
-		if (tdif <= 0) {
-			struct net_device *dev = skb->dev;
+		अगर (tdअगर <= 0) अणु
+			काष्ठा net_device *dev = skb->dev;
 
 			__skb_unlink(skb, &tbl->proxy_queue);
-			if (tbl->proxy_redo && netif_running(dev)) {
-				rcu_read_lock();
-				tbl->proxy_redo(skb);
-				rcu_read_unlock();
-			} else {
-				kfree_skb(skb);
-			}
+			अगर (tbl->proxy_reकरो && netअगर_running(dev)) अणु
+				rcu_पढ़ो_lock();
+				tbl->proxy_reकरो(skb);
+				rcu_पढ़ो_unlock();
+			पूर्ण अन्यथा अणु
+				kमुक्त_skb(skb);
+			पूर्ण
 
 			dev_put(dev);
-		} else if (!sched_next || tdif < sched_next)
-			sched_next = tdif;
-	}
-	del_timer(&tbl->proxy_timer);
-	if (sched_next)
-		mod_timer(&tbl->proxy_timer, jiffies + sched_next);
+		पूर्ण अन्यथा अगर (!sched_next || tdअगर < sched_next)
+			sched_next = tdअगर;
+	पूर्ण
+	del_समयr(&tbl->proxy_समयr);
+	अगर (sched_next)
+		mod_समयr(&tbl->proxy_समयr, jअगरfies + sched_next);
 	spin_unlock(&tbl->proxy_queue.lock);
-}
+पूर्ण
 
-void pneigh_enqueue(struct neigh_table *tbl, struct neigh_parms *p,
-		    struct sk_buff *skb)
-{
-	unsigned long sched_next = jiffies +
-			prandom_u32_max(NEIGH_VAR(p, PROXY_DELAY));
+व्योम pneigh_enqueue(काष्ठा neigh_table *tbl, काष्ठा neigh_parms *p,
+		    काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित दीर्घ sched_next = jअगरfies +
+			pअक्रमom_u32_max(NEIGH_VAR(p, PROXY_DELAY));
 
-	if (tbl->proxy_queue.qlen > NEIGH_VAR(p, PROXY_QLEN)) {
-		kfree_skb(skb);
-		return;
-	}
+	अगर (tbl->proxy_queue.qlen > NEIGH_VAR(p, PROXY_QLEN)) अणु
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	NEIGH_CB(skb)->sched_next = sched_next;
 	NEIGH_CB(skb)->flags |= LOCALLY_ENQUEUED;
 
 	spin_lock(&tbl->proxy_queue.lock);
-	if (del_timer(&tbl->proxy_timer)) {
-		if (time_before(tbl->proxy_timer.expires, sched_next))
-			sched_next = tbl->proxy_timer.expires;
-	}
+	अगर (del_समयr(&tbl->proxy_समयr)) अणु
+		अगर (समय_beक्रमe(tbl->proxy_समयr.expires, sched_next))
+			sched_next = tbl->proxy_समयr.expires;
+	पूर्ण
 	skb_dst_drop(skb);
 	dev_hold(skb->dev);
 	__skb_queue_tail(&tbl->proxy_queue, skb);
-	mod_timer(&tbl->proxy_timer, sched_next);
+	mod_समयr(&tbl->proxy_समयr, sched_next);
 	spin_unlock(&tbl->proxy_queue.lock);
-}
+पूर्ण
 EXPORT_SYMBOL(pneigh_enqueue);
 
-static inline struct neigh_parms *lookup_neigh_parms(struct neigh_table *tbl,
-						      struct net *net, int ifindex)
-{
-	struct neigh_parms *p;
+अटल अंतरभूत काष्ठा neigh_parms *lookup_neigh_parms(काष्ठा neigh_table *tbl,
+						      काष्ठा net *net, पूर्णांक अगरindex)
+अणु
+	काष्ठा neigh_parms *p;
 
-	list_for_each_entry(p, &tbl->parms_list, list) {
-		if ((p->dev && p->dev->ifindex == ifindex && net_eq(neigh_parms_net(p), net)) ||
-		    (!p->dev && !ifindex && net_eq(net, &init_net)))
-			return p;
-	}
+	list_क्रम_each_entry(p, &tbl->parms_list, list) अणु
+		अगर ((p->dev && p->dev->अगरindex == अगरindex && net_eq(neigh_parms_net(p), net)) ||
+		    (!p->dev && !अगरindex && net_eq(net, &init_net)))
+			वापस p;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct neigh_parms *neigh_parms_alloc(struct net_device *dev,
-				      struct neigh_table *tbl)
-{
-	struct neigh_parms *p;
-	struct net *net = dev_net(dev);
-	const struct net_device_ops *ops = dev->netdev_ops;
+काष्ठा neigh_parms *neigh_parms_alloc(काष्ठा net_device *dev,
+				      काष्ठा neigh_table *tbl)
+अणु
+	काष्ठा neigh_parms *p;
+	काष्ठा net *net = dev_net(dev);
+	स्थिर काष्ठा net_device_ops *ops = dev->netdev_ops;
 
-	p = kmemdup(&tbl->parms, sizeof(*p), GFP_KERNEL);
-	if (p) {
+	p = kmemdup(&tbl->parms, माप(*p), GFP_KERNEL);
+	अगर (p) अणु
 		p->tbl		  = tbl;
 		refcount_set(&p->refcnt, 1);
-		p->reachable_time =
-				neigh_rand_reach_time(NEIGH_VAR(p, BASE_REACHABLE_TIME));
+		p->reachable_समय =
+				neigh_अक्रम_reach_समय(NEIGH_VAR(p, BASE_REACHABLE_TIME));
 		dev_hold(dev);
 		p->dev = dev;
-		write_pnet(&p->net, net);
-		p->sysctl_table = NULL;
+		ग_लिखो_pnet(&p->net, net);
+		p->sysctl_table = शून्य;
 
-		if (ops->ndo_neigh_setup && ops->ndo_neigh_setup(dev, p)) {
+		अगर (ops->nकरो_neigh_setup && ops->nकरो_neigh_setup(dev, p)) अणु
 			dev_put(dev);
-			kfree(p);
-			return NULL;
-		}
+			kमुक्त(p);
+			वापस शून्य;
+		पूर्ण
 
-		write_lock_bh(&tbl->lock);
+		ग_लिखो_lock_bh(&tbl->lock);
 		list_add(&p->list, &tbl->parms.list);
-		write_unlock_bh(&tbl->lock);
+		ग_लिखो_unlock_bh(&tbl->lock);
 
 		neigh_parms_data_state_cleanall(p);
-	}
-	return p;
-}
+	पूर्ण
+	वापस p;
+पूर्ण
 EXPORT_SYMBOL(neigh_parms_alloc);
 
-static void neigh_rcu_free_parms(struct rcu_head *head)
-{
-	struct neigh_parms *parms =
-		container_of(head, struct neigh_parms, rcu_head);
+अटल व्योम neigh_rcu_मुक्त_parms(काष्ठा rcu_head *head)
+अणु
+	काष्ठा neigh_parms *parms =
+		container_of(head, काष्ठा neigh_parms, rcu_head);
 
 	neigh_parms_put(parms);
-}
+पूर्ण
 
-void neigh_parms_release(struct neigh_table *tbl, struct neigh_parms *parms)
-{
-	if (!parms || parms == &tbl->parms)
-		return;
-	write_lock_bh(&tbl->lock);
+व्योम neigh_parms_release(काष्ठा neigh_table *tbl, काष्ठा neigh_parms *parms)
+अणु
+	अगर (!parms || parms == &tbl->parms)
+		वापस;
+	ग_लिखो_lock_bh(&tbl->lock);
 	list_del(&parms->list);
 	parms->dead = 1;
-	write_unlock_bh(&tbl->lock);
-	if (parms->dev)
+	ग_लिखो_unlock_bh(&tbl->lock);
+	अगर (parms->dev)
 		dev_put(parms->dev);
-	call_rcu(&parms->rcu_head, neigh_rcu_free_parms);
-}
+	call_rcu(&parms->rcu_head, neigh_rcu_मुक्त_parms);
+पूर्ण
 EXPORT_SYMBOL(neigh_parms_release);
 
-static void neigh_parms_destroy(struct neigh_parms *parms)
-{
-	kfree(parms);
-}
+अटल व्योम neigh_parms_destroy(काष्ठा neigh_parms *parms)
+अणु
+	kमुक्त(parms);
+पूर्ण
 
-static struct lock_class_key neigh_table_proxy_queue_class;
+अटल काष्ठा lock_class_key neigh_table_proxy_queue_class;
 
-static struct neigh_table *neigh_tables[NEIGH_NR_TABLES] __read_mostly;
+अटल काष्ठा neigh_table *neigh_tables[NEIGH_NR_TABLES] __पढ़ो_mostly;
 
-void neigh_table_init(int index, struct neigh_table *tbl)
-{
-	unsigned long now = jiffies;
-	unsigned long phsize;
+व्योम neigh_table_init(पूर्णांक index, काष्ठा neigh_table *tbl)
+अणु
+	अचिन्हित दीर्घ now = jअगरfies;
+	अचिन्हित दीर्घ phsize;
 
 	INIT_LIST_HEAD(&tbl->parms_list);
 	INIT_LIST_HEAD(&tbl->gc_list);
 	list_add(&tbl->parms.list, &tbl->parms_list);
-	write_pnet(&tbl->parms.net, &init_net);
+	ग_लिखो_pnet(&tbl->parms.net, &init_net);
 	refcount_set(&tbl->parms.refcnt, 1);
-	tbl->parms.reachable_time =
-			  neigh_rand_reach_time(NEIGH_VAR(&tbl->parms, BASE_REACHABLE_TIME));
+	tbl->parms.reachable_समय =
+			  neigh_अक्रम_reach_समय(NEIGH_VAR(&tbl->parms, BASE_REACHABLE_TIME));
 
-	tbl->stats = alloc_percpu(struct neigh_statistics);
-	if (!tbl->stats)
+	tbl->stats = alloc_percpu(काष्ठा neigh_statistics);
+	अगर (!tbl->stats)
 		panic("cannot create neighbour cache statistics");
 
-#ifdef CONFIG_PROC_FS
-	if (!proc_create_seq_data(tbl->id, 0, init_net.proc_net_stat,
+#अगर_घोषित CONFIG_PROC_FS
+	अगर (!proc_create_seq_data(tbl->id, 0, init_net.proc_net_stat,
 			      &neigh_stat_seq_ops, tbl))
 		panic("cannot create neighbour proc dir entry");
-#endif
+#पूर्ण_अगर
 
 	RCU_INIT_POINTER(tbl->nht, neigh_hash_alloc(3));
 
-	phsize = (PNEIGH_HASHMASK + 1) * sizeof(struct pneigh_entry *);
+	phsize = (PNEIGH_HASHMASK + 1) * माप(काष्ठा pneigh_entry *);
 	tbl->phash_buckets = kzalloc(phsize, GFP_KERNEL);
 
-	if (!tbl->nht || !tbl->phash_buckets)
+	अगर (!tbl->nht || !tbl->phash_buckets)
 		panic("cannot allocate neighbour cache hashes");
 
-	if (!tbl->entry_size)
-		tbl->entry_size = ALIGN(offsetof(struct neighbour, primary_key) +
+	अगर (!tbl->entry_size)
+		tbl->entry_size = ALIGN(दुरत्व(काष्ठा neighbour, primary_key) +
 					tbl->key_len, NEIGH_PRIV_ALIGN);
-	else
+	अन्यथा
 		WARN_ON(tbl->entry_size % NEIGH_PRIV_ALIGN);
 
 	rwlock_init(&tbl->lock);
 	INIT_DEFERRABLE_WORK(&tbl->gc_work, neigh_periodic_work);
-	queue_delayed_work(system_power_efficient_wq, &tbl->gc_work,
-			tbl->parms.reachable_time);
-	timer_setup(&tbl->proxy_timer, neigh_proxy_process, 0);
+	queue_delayed_work(प्रणाली_घातer_efficient_wq, &tbl->gc_work,
+			tbl->parms.reachable_समय);
+	समयr_setup(&tbl->proxy_समयr, neigh_proxy_process, 0);
 	skb_queue_head_init_class(&tbl->proxy_queue,
 			&neigh_table_proxy_queue_class);
 
 	tbl->last_flush = now;
-	tbl->last_rand	= now + tbl->parms.reachable_time * 20;
+	tbl->last_अक्रम	= now + tbl->parms.reachable_समय * 20;
 
 	neigh_tables[index] = tbl;
-}
+पूर्ण
 EXPORT_SYMBOL(neigh_table_init);
 
-int neigh_table_clear(int index, struct neigh_table *tbl)
-{
-	neigh_tables[index] = NULL;
+पूर्णांक neigh_table_clear(पूर्णांक index, काष्ठा neigh_table *tbl)
+अणु
+	neigh_tables[index] = शून्य;
 	/* It is not clean... Fix it to unload IPv6 module safely */
 	cancel_delayed_work_sync(&tbl->gc_work);
-	del_timer_sync(&tbl->proxy_timer);
+	del_समयr_sync(&tbl->proxy_समयr);
 	pneigh_queue_purge(&tbl->proxy_queue);
-	neigh_ifdown(tbl, NULL);
-	if (atomic_read(&tbl->entries))
+	neigh_अगरकरोwn(tbl, शून्य);
+	अगर (atomic_पढ़ो(&tbl->entries))
 		pr_crit("neighbour leakage\n");
 
-	call_rcu(&rcu_dereference_protected(tbl->nht, 1)->rcu,
-		 neigh_hash_free_rcu);
-	tbl->nht = NULL;
+	call_rcu(&rcu_dereference_रक्षित(tbl->nht, 1)->rcu,
+		 neigh_hash_मुक्त_rcu);
+	tbl->nht = शून्य;
 
-	kfree(tbl->phash_buckets);
-	tbl->phash_buckets = NULL;
+	kमुक्त(tbl->phash_buckets);
+	tbl->phash_buckets = शून्य;
 
-	remove_proc_entry(tbl->id, init_net.proc_net_stat);
+	हटाओ_proc_entry(tbl->id, init_net.proc_net_stat);
 
-	free_percpu(tbl->stats);
-	tbl->stats = NULL;
+	मुक्त_percpu(tbl->stats);
+	tbl->stats = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(neigh_table_clear);
 
-static struct neigh_table *neigh_find_table(int family)
-{
-	struct neigh_table *tbl = NULL;
+अटल काष्ठा neigh_table *neigh_find_table(पूर्णांक family)
+अणु
+	काष्ठा neigh_table *tbl = शून्य;
 
-	switch (family) {
-	case AF_INET:
+	चयन (family) अणु
+	हाल AF_INET:
 		tbl = neigh_tables[NEIGH_ARP_TABLE];
-		break;
-	case AF_INET6:
+		अवरोध;
+	हाल AF_INET6:
 		tbl = neigh_tables[NEIGH_ND_TABLE];
-		break;
-	case AF_DECnet:
+		अवरोध;
+	हाल AF_DECnet:
 		tbl = neigh_tables[NEIGH_DN_TABLE];
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return tbl;
-}
+	वापस tbl;
+पूर्ण
 
-const struct nla_policy nda_policy[NDA_MAX+1] = {
-	[NDA_UNSPEC]		= { .strict_start_type = NDA_NH_ID },
-	[NDA_DST]		= { .type = NLA_BINARY, .len = MAX_ADDR_LEN },
-	[NDA_LLADDR]		= { .type = NLA_BINARY, .len = MAX_ADDR_LEN },
-	[NDA_CACHEINFO]		= { .len = sizeof(struct nda_cacheinfo) },
-	[NDA_PROBES]		= { .type = NLA_U32 },
-	[NDA_VLAN]		= { .type = NLA_U16 },
-	[NDA_PORT]		= { .type = NLA_U16 },
-	[NDA_VNI]		= { .type = NLA_U32 },
-	[NDA_IFINDEX]		= { .type = NLA_U32 },
-	[NDA_MASTER]		= { .type = NLA_U32 },
-	[NDA_PROTOCOL]		= { .type = NLA_U8 },
-	[NDA_NH_ID]		= { .type = NLA_U32 },
-	[NDA_FDB_EXT_ATTRS]	= { .type = NLA_NESTED },
-};
+स्थिर काष्ठा nla_policy nda_policy[NDA_MAX+1] = अणु
+	[NDA_UNSPEC]		= अणु .strict_start_type = NDA_NH_ID पूर्ण,
+	[NDA_DST]		= अणु .type = NLA_BINARY, .len = MAX_ADDR_LEN पूर्ण,
+	[NDA_LLADDR]		= अणु .type = NLA_BINARY, .len = MAX_ADDR_LEN पूर्ण,
+	[NDA_CACHEINFO]		= अणु .len = माप(काष्ठा nda_cacheinfo) पूर्ण,
+	[NDA_PROBES]		= अणु .type = NLA_U32 पूर्ण,
+	[NDA_VLAN]		= अणु .type = NLA_U16 पूर्ण,
+	[NDA_PORT]		= अणु .type = NLA_U16 पूर्ण,
+	[NDA_VNI]		= अणु .type = NLA_U32 पूर्ण,
+	[NDA_IFINDEX]		= अणु .type = NLA_U32 पूर्ण,
+	[NDA_MASTER]		= अणु .type = NLA_U32 पूर्ण,
+	[NDA_PROTOCOL]		= अणु .type = NLA_U8 पूर्ण,
+	[NDA_NH_ID]		= अणु .type = NLA_U32 पूर्ण,
+	[NDA_FDB_EXT_ATTRS]	= अणु .type = NLA_NESTED पूर्ण,
+पूर्ण;
 
-static int neigh_delete(struct sk_buff *skb, struct nlmsghdr *nlh,
-			struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct ndmsg *ndm;
-	struct nlattr *dst_attr;
-	struct neigh_table *tbl;
-	struct neighbour *neigh;
-	struct net_device *dev = NULL;
-	int err = -EINVAL;
+अटल पूर्णांक neigh_delete(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा ndmsg *ndm;
+	काष्ठा nlattr *dst_attr;
+	काष्ठा neigh_table *tbl;
+	काष्ठा neighbour *neigh;
+	काष्ठा net_device *dev = शून्य;
+	पूर्णांक err = -EINVAL;
 
 	ASSERT_RTNL();
-	if (nlmsg_len(nlh) < sizeof(*ndm))
-		goto out;
+	अगर (nlmsg_len(nlh) < माप(*ndm))
+		जाओ out;
 
-	dst_attr = nlmsg_find_attr(nlh, sizeof(*ndm), NDA_DST);
-	if (!dst_attr) {
+	dst_attr = nlmsg_find_attr(nlh, माप(*ndm), NDA_DST);
+	अगर (!dst_attr) अणु
 		NL_SET_ERR_MSG(extack, "Network address not specified");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ndm = nlmsg_data(nlh);
-	if (ndm->ndm_ifindex) {
-		dev = __dev_get_by_index(net, ndm->ndm_ifindex);
-		if (dev == NULL) {
+	अगर (ndm->ndm_अगरindex) अणु
+		dev = __dev_get_by_index(net, ndm->ndm_अगरindex);
+		अगर (dev == शून्य) अणु
 			err = -ENODEV;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	tbl = neigh_find_table(ndm->ndm_family);
-	if (tbl == NULL)
-		return -EAFNOSUPPORT;
+	अगर (tbl == शून्य)
+		वापस -EAFNOSUPPORT;
 
-	if (nla_len(dst_attr) < (int)tbl->key_len) {
+	अगर (nla_len(dst_attr) < (पूर्णांक)tbl->key_len) अणु
 		NL_SET_ERR_MSG(extack, "Invalid network address");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (ndm->ndm_flags & NTF_PROXY) {
+	अगर (ndm->ndm_flags & NTF_PROXY) अणु
 		err = pneigh_delete(tbl, net, nla_data(dst_attr), dev);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (dev == NULL)
-		goto out;
+	अगर (dev == शून्य)
+		जाओ out;
 
 	neigh = neigh_lookup(tbl, nla_data(dst_attr), dev);
-	if (neigh == NULL) {
+	अगर (neigh == शून्य) अणु
 		err = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = __neigh_update(neigh, NULL, NUD_FAILED,
+	err = __neigh_update(neigh, शून्य, NUD_FAILED,
 			     NEIGH_UPDATE_F_OVERRIDE | NEIGH_UPDATE_F_ADMIN,
 			     NETLINK_CB(skb).portid, extack);
-	write_lock_bh(&tbl->lock);
+	ग_लिखो_lock_bh(&tbl->lock);
 	neigh_release(neigh);
-	neigh_remove_one(neigh, tbl);
-	write_unlock_bh(&tbl->lock);
+	neigh_हटाओ_one(neigh, tbl);
+	ग_लिखो_unlock_bh(&tbl->lock);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int neigh_add(struct sk_buff *skb, struct nlmsghdr *nlh,
-		     struct netlink_ext_ack *extack)
-{
-	int flags = NEIGH_UPDATE_F_ADMIN | NEIGH_UPDATE_F_OVERRIDE |
+अटल पूर्णांक neigh_add(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+		     काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक flags = NEIGH_UPDATE_F_ADMIN | NEIGH_UPDATE_F_OVERRIDE |
 		NEIGH_UPDATE_F_OVERRIDE_ISROUTER;
-	struct net *net = sock_net(skb->sk);
-	struct ndmsg *ndm;
-	struct nlattr *tb[NDA_MAX+1];
-	struct neigh_table *tbl;
-	struct net_device *dev = NULL;
-	struct neighbour *neigh;
-	void *dst, *lladdr;
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा ndmsg *ndm;
+	काष्ठा nlattr *tb[NDA_MAX+1];
+	काष्ठा neigh_table *tbl;
+	काष्ठा net_device *dev = शून्य;
+	काष्ठा neighbour *neigh;
+	व्योम *dst, *lladdr;
 	u8 protocol = 0;
-	int err;
+	पूर्णांक err;
 
 	ASSERT_RTNL();
-	err = nlmsg_parse_deprecated(nlh, sizeof(*ndm), tb, NDA_MAX,
+	err = nlmsg_parse_deprecated(nlh, माप(*ndm), tb, NDA_MAX,
 				     nda_policy, extack);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
 	err = -EINVAL;
-	if (!tb[NDA_DST]) {
+	अगर (!tb[NDA_DST]) अणु
 		NL_SET_ERR_MSG(extack, "Network address not specified");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ndm = nlmsg_data(nlh);
-	if (ndm->ndm_ifindex) {
-		dev = __dev_get_by_index(net, ndm->ndm_ifindex);
-		if (dev == NULL) {
+	अगर (ndm->ndm_अगरindex) अणु
+		dev = __dev_get_by_index(net, ndm->ndm_अगरindex);
+		अगर (dev == शून्य) अणु
 			err = -ENODEV;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (tb[NDA_LLADDR] && nla_len(tb[NDA_LLADDR]) < dev->addr_len) {
+		अगर (tb[NDA_LLADDR] && nla_len(tb[NDA_LLADDR]) < dev->addr_len) अणु
 			NL_SET_ERR_MSG(extack, "Invalid link address");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	tbl = neigh_find_table(ndm->ndm_family);
-	if (tbl == NULL)
-		return -EAFNOSUPPORT;
+	अगर (tbl == शून्य)
+		वापस -EAFNOSUPPORT;
 
-	if (nla_len(tb[NDA_DST]) < (int)tbl->key_len) {
+	अगर (nla_len(tb[NDA_DST]) < (पूर्णांक)tbl->key_len) अणु
 		NL_SET_ERR_MSG(extack, "Invalid network address");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dst = nla_data(tb[NDA_DST]);
-	lladdr = tb[NDA_LLADDR] ? nla_data(tb[NDA_LLADDR]) : NULL;
+	lladdr = tb[NDA_LLADDR] ? nla_data(tb[NDA_LLADDR]) : शून्य;
 
-	if (tb[NDA_PROTOCOL])
+	अगर (tb[NDA_PROTOCOL])
 		protocol = nla_get_u8(tb[NDA_PROTOCOL]);
 
-	if (ndm->ndm_flags & NTF_PROXY) {
-		struct pneigh_entry *pn;
+	अगर (ndm->ndm_flags & NTF_PROXY) अणु
+		काष्ठा pneigh_entry *pn;
 
 		err = -ENOBUFS;
 		pn = pneigh_lookup(tbl, net, dst, dev, 1);
-		if (pn) {
+		अगर (pn) अणु
 			pn->flags = ndm->ndm_flags;
-			if (protocol)
+			अगर (protocol)
 				pn->protocol = protocol;
 			err = 0;
-		}
-		goto out;
-	}
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
-	if (!dev) {
+	अगर (!dev) अणु
 		NL_SET_ERR_MSG(extack, "Device not specified");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (tbl->allow_add && !tbl->allow_add(dev, extack)) {
+	अगर (tbl->allow_add && !tbl->allow_add(dev, extack)) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	neigh = neigh_lookup(tbl, dst, dev);
-	if (neigh == NULL) {
+	अगर (neigh == शून्य) अणु
 		bool exempt_from_gc;
 
-		if (!(nlh->nlmsg_flags & NLM_F_CREATE)) {
+		अगर (!(nlh->nlmsg_flags & NLM_F_CREATE)) अणु
 			err = -ENOENT;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		exempt_from_gc = ndm->ndm_state & NUD_PERMANENT ||
 				 ndm->ndm_flags & NTF_EXT_LEARNED;
 		neigh = ___neigh_create(tbl, dst, dev, exempt_from_gc, true);
-		if (IS_ERR(neigh)) {
+		अगर (IS_ERR(neigh)) अणु
 			err = PTR_ERR(neigh);
-			goto out;
-		}
-	} else {
-		if (nlh->nlmsg_flags & NLM_F_EXCL) {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (nlh->nlmsg_flags & NLM_F_EXCL) अणु
 			err = -EEXIST;
 			neigh_release(neigh);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!(nlh->nlmsg_flags & NLM_F_REPLACE))
+		अगर (!(nlh->nlmsg_flags & NLM_F_REPLACE))
 			flags &= ~(NEIGH_UPDATE_F_OVERRIDE |
 				   NEIGH_UPDATE_F_OVERRIDE_ISROUTER);
-	}
+	पूर्ण
 
-	if (protocol)
+	अगर (protocol)
 		neigh->protocol = protocol;
 
-	if (ndm->ndm_flags & NTF_EXT_LEARNED)
+	अगर (ndm->ndm_flags & NTF_EXT_LEARNED)
 		flags |= NEIGH_UPDATE_F_EXT_LEARNED;
 
-	if (ndm->ndm_flags & NTF_ROUTER)
+	अगर (ndm->ndm_flags & NTF_ROUTER)
 		flags |= NEIGH_UPDATE_F_ISROUTER;
 
-	if (ndm->ndm_flags & NTF_USE) {
-		neigh_event_send(neigh, NULL);
+	अगर (ndm->ndm_flags & NTF_USE) अणु
+		neigh_event_send(neigh, शून्य);
 		err = 0;
-	} else
+	पूर्ण अन्यथा
 		err = __neigh_update(neigh, lladdr, ndm->ndm_state, flags,
 				     NETLINK_CB(skb).portid, extack);
 
 	neigh_release(neigh);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int neightbl_fill_parms(struct sk_buff *skb, struct neigh_parms *parms)
-{
-	struct nlattr *nest;
+अटल पूर्णांक neightbl_fill_parms(काष्ठा sk_buff *skb, काष्ठा neigh_parms *parms)
+अणु
+	काष्ठा nlattr *nest;
 
 	nest = nla_nest_start_noflag(skb, NDTA_PARMS);
-	if (nest == NULL)
-		return -ENOBUFS;
+	अगर (nest == शून्य)
+		वापस -ENOBUFS;
 
-	if ((parms->dev &&
-	     nla_put_u32(skb, NDTPA_IFINDEX, parms->dev->ifindex)) ||
-	    nla_put_u32(skb, NDTPA_REFCNT, refcount_read(&parms->refcnt)) ||
+	अगर ((parms->dev &&
+	     nla_put_u32(skb, NDTPA_IFINDEX, parms->dev->अगरindex)) ||
+	    nla_put_u32(skb, NDTPA_REFCNT, refcount_पढ़ो(&parms->refcnt)) ||
 	    nla_put_u32(skb, NDTPA_QUEUE_LENBYTES,
 			NEIGH_VAR(parms, QUEUE_LEN_BYTES)) ||
-	    /* approximative value for deprecated QUEUE_LEN (in packets) */
+	    /* approximative value क्रम deprecated QUEUE_LEN (in packets) */
 	    nla_put_u32(skb, NDTPA_QUEUE_LEN,
 			NEIGH_VAR(parms, QUEUE_LEN_BYTES) / SKB_TRUESIZE(ETH_FRAME_LEN)) ||
 	    nla_put_u32(skb, NDTPA_PROXY_QLEN, NEIGH_VAR(parms, PROXY_QLEN)) ||
@@ -2010,7 +2011,7 @@ static int neightbl_fill_parms(struct sk_buff *skb, struct neigh_parms *parms)
 			NEIGH_VAR(parms, MCAST_PROBES)) ||
 	    nla_put_u32(skb, NDTPA_MCAST_REPROBES,
 			NEIGH_VAR(parms, MCAST_REPROBES)) ||
-	    nla_put_msecs(skb, NDTPA_REACHABLE_TIME, parms->reachable_time,
+	    nla_put_msecs(skb, NDTPA_REACHABLE_TIME, parms->reachable_समय,
 			  NDTPA_PAD) ||
 	    nla_put_msecs(skb, NDTPA_BASE_REACHABLE_TIME,
 			  NEIGH_VAR(parms, BASE_REACHABLE_TIME), NDTPA_PAD) ||
@@ -2026,69 +2027,69 @@ static int neightbl_fill_parms(struct sk_buff *skb, struct neigh_parms *parms)
 			  NEIGH_VAR(parms, PROXY_DELAY), NDTPA_PAD) ||
 	    nla_put_msecs(skb, NDTPA_LOCKTIME,
 			  NEIGH_VAR(parms, LOCKTIME), NDTPA_PAD))
-		goto nla_put_failure;
-	return nla_nest_end(skb, nest);
+		जाओ nla_put_failure;
+	वापस nla_nest_end(skb, nest);
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int neightbl_fill_info(struct sk_buff *skb, struct neigh_table *tbl,
-			      u32 pid, u32 seq, int type, int flags)
-{
-	struct nlmsghdr *nlh;
-	struct ndtmsg *ndtmsg;
+अटल पूर्णांक neightbl_fill_info(काष्ठा sk_buff *skb, काष्ठा neigh_table *tbl,
+			      u32 pid, u32 seq, पूर्णांक type, पूर्णांक flags)
+अणु
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा ndपंचांगsg *ndपंचांगsg;
 
-	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*ndtmsg), flags);
-	if (nlh == NULL)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, pid, seq, type, माप(*ndपंचांगsg), flags);
+	अगर (nlh == शून्य)
+		वापस -EMSGSIZE;
 
-	ndtmsg = nlmsg_data(nlh);
+	ndपंचांगsg = nlmsg_data(nlh);
 
-	read_lock_bh(&tbl->lock);
-	ndtmsg->ndtm_family = tbl->family;
-	ndtmsg->ndtm_pad1   = 0;
-	ndtmsg->ndtm_pad2   = 0;
+	पढ़ो_lock_bh(&tbl->lock);
+	ndपंचांगsg->ndपंचांग_family = tbl->family;
+	ndपंचांगsg->ndपंचांग_pad1   = 0;
+	ndपंचांगsg->ndपंचांग_pad2   = 0;
 
-	if (nla_put_string(skb, NDTA_NAME, tbl->id) ||
-	    nla_put_msecs(skb, NDTA_GC_INTERVAL, tbl->gc_interval, NDTA_PAD) ||
+	अगर (nla_put_string(skb, NDTA_NAME, tbl->id) ||
+	    nla_put_msecs(skb, NDTA_GC_INTERVAL, tbl->gc_पूर्णांकerval, NDTA_PAD) ||
 	    nla_put_u32(skb, NDTA_THRESH1, tbl->gc_thresh1) ||
 	    nla_put_u32(skb, NDTA_THRESH2, tbl->gc_thresh2) ||
 	    nla_put_u32(skb, NDTA_THRESH3, tbl->gc_thresh3))
-		goto nla_put_failure;
-	{
-		unsigned long now = jiffies;
-		long flush_delta = now - tbl->last_flush;
-		long rand_delta = now - tbl->last_rand;
-		struct neigh_hash_table *nht;
-		struct ndt_config ndc = {
+		जाओ nla_put_failure;
+	अणु
+		अचिन्हित दीर्घ now = jअगरfies;
+		दीर्घ flush_delta = now - tbl->last_flush;
+		दीर्घ अक्रम_delta = now - tbl->last_अक्रम;
+		काष्ठा neigh_hash_table *nht;
+		काष्ठा ndt_config ndc = अणु
 			.ndtc_key_len		= tbl->key_len,
 			.ndtc_entry_size	= tbl->entry_size,
-			.ndtc_entries		= atomic_read(&tbl->entries),
-			.ndtc_last_flush	= jiffies_to_msecs(flush_delta),
-			.ndtc_last_rand		= jiffies_to_msecs(rand_delta),
+			.ndtc_entries		= atomic_पढ़ो(&tbl->entries),
+			.ndtc_last_flush	= jअगरfies_to_msecs(flush_delta),
+			.ndtc_last_अक्रम		= jअगरfies_to_msecs(अक्रम_delta),
 			.ndtc_proxy_qlen	= tbl->proxy_queue.qlen,
-		};
+		पूर्ण;
 
-		rcu_read_lock_bh();
+		rcu_पढ़ो_lock_bh();
 		nht = rcu_dereference_bh(tbl->nht);
 		ndc.ndtc_hash_rnd = nht->hash_rnd[0];
-		ndc.ndtc_hash_mask = ((1 << nht->hash_shift) - 1);
-		rcu_read_unlock_bh();
+		ndc.ndtc_hash_mask = ((1 << nht->hash_shअगरt) - 1);
+		rcu_पढ़ो_unlock_bh();
 
-		if (nla_put(skb, NDTA_CONFIG, sizeof(ndc), &ndc))
-			goto nla_put_failure;
-	}
+		अगर (nla_put(skb, NDTA_CONFIG, माप(ndc), &ndc))
+			जाओ nla_put_failure;
+	पूर्ण
 
-	{
-		int cpu;
-		struct ndt_stats ndst;
+	अणु
+		पूर्णांक cpu;
+		काष्ठा ndt_stats ndst;
 
-		memset(&ndst, 0, sizeof(ndst));
+		स_रखो(&ndst, 0, माप(ndst));
 
-		for_each_possible_cpu(cpu) {
-			struct neigh_statistics	*st;
+		क्रम_each_possible_cpu(cpu) अणु
+			काष्ठा neigh_statistics	*st;
 
 			st = per_cpu_ptr(tbl->stats, cpu);
 			ndst.ndts_allocs		+= st->allocs;
@@ -2100,346 +2101,346 @@ static int neightbl_fill_info(struct sk_buff *skb, struct neigh_table *tbl,
 			ndst.ndts_rcv_probes_mcast	+= st->rcv_probes_mcast;
 			ndst.ndts_rcv_probes_ucast	+= st->rcv_probes_ucast;
 			ndst.ndts_periodic_gc_runs	+= st->periodic_gc_runs;
-			ndst.ndts_forced_gc_runs	+= st->forced_gc_runs;
+			ndst.ndts_क्रमced_gc_runs	+= st->क्रमced_gc_runs;
 			ndst.ndts_table_fulls		+= st->table_fulls;
-		}
+		पूर्ण
 
-		if (nla_put_64bit(skb, NDTA_STATS, sizeof(ndst), &ndst,
+		अगर (nla_put_64bit(skb, NDTA_STATS, माप(ndst), &ndst,
 				  NDTA_PAD))
-			goto nla_put_failure;
-	}
+			जाओ nla_put_failure;
+	पूर्ण
 
 	BUG_ON(tbl->parms.dev);
-	if (neightbl_fill_parms(skb, &tbl->parms) < 0)
-		goto nla_put_failure;
+	अगर (neightbl_fill_parms(skb, &tbl->parms) < 0)
+		जाओ nla_put_failure;
 
-	read_unlock_bh(&tbl->lock);
+	पढ़ो_unlock_bh(&tbl->lock);
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	read_unlock_bh(&tbl->lock);
+	पढ़ो_unlock_bh(&tbl->lock);
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int neightbl_fill_param_info(struct sk_buff *skb,
-				    struct neigh_table *tbl,
-				    struct neigh_parms *parms,
-				    u32 pid, u32 seq, int type,
-				    unsigned int flags)
-{
-	struct ndtmsg *ndtmsg;
-	struct nlmsghdr *nlh;
+अटल पूर्णांक neightbl_fill_param_info(काष्ठा sk_buff *skb,
+				    काष्ठा neigh_table *tbl,
+				    काष्ठा neigh_parms *parms,
+				    u32 pid, u32 seq, पूर्णांक type,
+				    अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा ndपंचांगsg *ndपंचांगsg;
+	काष्ठा nlmsghdr *nlh;
 
-	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*ndtmsg), flags);
-	if (nlh == NULL)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, pid, seq, type, माप(*ndपंचांगsg), flags);
+	अगर (nlh == शून्य)
+		वापस -EMSGSIZE;
 
-	ndtmsg = nlmsg_data(nlh);
+	ndपंचांगsg = nlmsg_data(nlh);
 
-	read_lock_bh(&tbl->lock);
-	ndtmsg->ndtm_family = tbl->family;
-	ndtmsg->ndtm_pad1   = 0;
-	ndtmsg->ndtm_pad2   = 0;
+	पढ़ो_lock_bh(&tbl->lock);
+	ndपंचांगsg->ndपंचांग_family = tbl->family;
+	ndपंचांगsg->ndपंचांग_pad1   = 0;
+	ndपंचांगsg->ndपंचांग_pad2   = 0;
 
-	if (nla_put_string(skb, NDTA_NAME, tbl->id) < 0 ||
+	अगर (nla_put_string(skb, NDTA_NAME, tbl->id) < 0 ||
 	    neightbl_fill_parms(skb, parms) < 0)
-		goto errout;
+		जाओ errout;
 
-	read_unlock_bh(&tbl->lock);
+	पढ़ो_unlock_bh(&tbl->lock);
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 errout:
-	read_unlock_bh(&tbl->lock);
+	पढ़ो_unlock_bh(&tbl->lock);
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static const struct nla_policy nl_neightbl_policy[NDTA_MAX+1] = {
-	[NDTA_NAME]		= { .type = NLA_STRING },
-	[NDTA_THRESH1]		= { .type = NLA_U32 },
-	[NDTA_THRESH2]		= { .type = NLA_U32 },
-	[NDTA_THRESH3]		= { .type = NLA_U32 },
-	[NDTA_GC_INTERVAL]	= { .type = NLA_U64 },
-	[NDTA_PARMS]		= { .type = NLA_NESTED },
-};
+अटल स्थिर काष्ठा nla_policy nl_neightbl_policy[NDTA_MAX+1] = अणु
+	[NDTA_NAME]		= अणु .type = NLA_STRING पूर्ण,
+	[NDTA_THRESH1]		= अणु .type = NLA_U32 पूर्ण,
+	[NDTA_THRESH2]		= अणु .type = NLA_U32 पूर्ण,
+	[NDTA_THRESH3]		= अणु .type = NLA_U32 पूर्ण,
+	[NDTA_GC_INTERVAL]	= अणु .type = NLA_U64 पूर्ण,
+	[NDTA_PARMS]		= अणु .type = NLA_NESTED पूर्ण,
+पूर्ण;
 
-static const struct nla_policy nl_ntbl_parm_policy[NDTPA_MAX+1] = {
-	[NDTPA_IFINDEX]			= { .type = NLA_U32 },
-	[NDTPA_QUEUE_LEN]		= { .type = NLA_U32 },
-	[NDTPA_PROXY_QLEN]		= { .type = NLA_U32 },
-	[NDTPA_APP_PROBES]		= { .type = NLA_U32 },
-	[NDTPA_UCAST_PROBES]		= { .type = NLA_U32 },
-	[NDTPA_MCAST_PROBES]		= { .type = NLA_U32 },
-	[NDTPA_MCAST_REPROBES]		= { .type = NLA_U32 },
-	[NDTPA_BASE_REACHABLE_TIME]	= { .type = NLA_U64 },
-	[NDTPA_GC_STALETIME]		= { .type = NLA_U64 },
-	[NDTPA_DELAY_PROBE_TIME]	= { .type = NLA_U64 },
-	[NDTPA_RETRANS_TIME]		= { .type = NLA_U64 },
-	[NDTPA_ANYCAST_DELAY]		= { .type = NLA_U64 },
-	[NDTPA_PROXY_DELAY]		= { .type = NLA_U64 },
-	[NDTPA_LOCKTIME]		= { .type = NLA_U64 },
-};
+अटल स्थिर काष्ठा nla_policy nl_ntbl_parm_policy[NDTPA_MAX+1] = अणु
+	[NDTPA_IFINDEX]			= अणु .type = NLA_U32 पूर्ण,
+	[NDTPA_QUEUE_LEN]		= अणु .type = NLA_U32 पूर्ण,
+	[NDTPA_PROXY_QLEN]		= अणु .type = NLA_U32 पूर्ण,
+	[NDTPA_APP_PROBES]		= अणु .type = NLA_U32 पूर्ण,
+	[NDTPA_UCAST_PROBES]		= अणु .type = NLA_U32 पूर्ण,
+	[NDTPA_MCAST_PROBES]		= अणु .type = NLA_U32 पूर्ण,
+	[NDTPA_MCAST_REPROBES]		= अणु .type = NLA_U32 पूर्ण,
+	[NDTPA_BASE_REACHABLE_TIME]	= अणु .type = NLA_U64 पूर्ण,
+	[NDTPA_GC_STALETIME]		= अणु .type = NLA_U64 पूर्ण,
+	[NDTPA_DELAY_PROBE_TIME]	= अणु .type = NLA_U64 पूर्ण,
+	[NDTPA_RETRANS_TIME]		= अणु .type = NLA_U64 पूर्ण,
+	[NDTPA_ANYCAST_DELAY]		= अणु .type = NLA_U64 पूर्ण,
+	[NDTPA_PROXY_DELAY]		= अणु .type = NLA_U64 पूर्ण,
+	[NDTPA_LOCKTIME]		= अणु .type = NLA_U64 पूर्ण,
+पूर्ण;
 
-static int neightbl_set(struct sk_buff *skb, struct nlmsghdr *nlh,
-			struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct neigh_table *tbl;
-	struct ndtmsg *ndtmsg;
-	struct nlattr *tb[NDTA_MAX+1];
+अटल पूर्णांक neightbl_set(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा neigh_table *tbl;
+	काष्ठा ndपंचांगsg *ndपंचांगsg;
+	काष्ठा nlattr *tb[NDTA_MAX+1];
 	bool found = false;
-	int err, tidx;
+	पूर्णांक err, tidx;
 
-	err = nlmsg_parse_deprecated(nlh, sizeof(*ndtmsg), tb, NDTA_MAX,
+	err = nlmsg_parse_deprecated(nlh, माप(*ndपंचांगsg), tb, NDTA_MAX,
 				     nl_neightbl_policy, extack);
-	if (err < 0)
-		goto errout;
+	अगर (err < 0)
+		जाओ errout;
 
-	if (tb[NDTA_NAME] == NULL) {
+	अगर (tb[NDTA_NAME] == शून्य) अणु
 		err = -EINVAL;
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
-	ndtmsg = nlmsg_data(nlh);
+	ndपंचांगsg = nlmsg_data(nlh);
 
-	for (tidx = 0; tidx < NEIGH_NR_TABLES; tidx++) {
+	क्रम (tidx = 0; tidx < NEIGH_NR_TABLES; tidx++) अणु
 		tbl = neigh_tables[tidx];
-		if (!tbl)
-			continue;
-		if (ndtmsg->ndtm_family && tbl->family != ndtmsg->ndtm_family)
-			continue;
-		if (nla_strcmp(tb[NDTA_NAME], tbl->id) == 0) {
+		अगर (!tbl)
+			जारी;
+		अगर (ndपंचांगsg->ndपंचांग_family && tbl->family != ndपंचांगsg->ndपंचांग_family)
+			जारी;
+		अगर (nla_म_भेद(tb[NDTA_NAME], tbl->id) == 0) अणु
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found)
-		return -ENOENT;
+	अगर (!found)
+		वापस -ENOENT;
 
 	/*
-	 * We acquire tbl->lock to be nice to the periodic timers and
+	 * We acquire tbl->lock to be nice to the periodic समयrs and
 	 * make sure they always see a consistent set of values.
 	 */
-	write_lock_bh(&tbl->lock);
+	ग_लिखो_lock_bh(&tbl->lock);
 
-	if (tb[NDTA_PARMS]) {
-		struct nlattr *tbp[NDTPA_MAX+1];
-		struct neigh_parms *p;
-		int i, ifindex = 0;
+	अगर (tb[NDTA_PARMS]) अणु
+		काष्ठा nlattr *tbp[NDTPA_MAX+1];
+		काष्ठा neigh_parms *p;
+		पूर्णांक i, अगरindex = 0;
 
 		err = nla_parse_nested_deprecated(tbp, NDTPA_MAX,
 						  tb[NDTA_PARMS],
 						  nl_ntbl_parm_policy, extack);
-		if (err < 0)
-			goto errout_tbl_lock;
+		अगर (err < 0)
+			जाओ errout_tbl_lock;
 
-		if (tbp[NDTPA_IFINDEX])
-			ifindex = nla_get_u32(tbp[NDTPA_IFINDEX]);
+		अगर (tbp[NDTPA_IFINDEX])
+			अगरindex = nla_get_u32(tbp[NDTPA_IFINDEX]);
 
-		p = lookup_neigh_parms(tbl, net, ifindex);
-		if (p == NULL) {
+		p = lookup_neigh_parms(tbl, net, अगरindex);
+		अगर (p == शून्य) अणु
 			err = -ENOENT;
-			goto errout_tbl_lock;
-		}
+			जाओ errout_tbl_lock;
+		पूर्ण
 
-		for (i = 1; i <= NDTPA_MAX; i++) {
-			if (tbp[i] == NULL)
-				continue;
+		क्रम (i = 1; i <= NDTPA_MAX; i++) अणु
+			अगर (tbp[i] == शून्य)
+				जारी;
 
-			switch (i) {
-			case NDTPA_QUEUE_LEN:
+			चयन (i) अणु
+			हाल NDTPA_QUEUE_LEN:
 				NEIGH_VAR_SET(p, QUEUE_LEN_BYTES,
 					      nla_get_u32(tbp[i]) *
 					      SKB_TRUESIZE(ETH_FRAME_LEN));
-				break;
-			case NDTPA_QUEUE_LENBYTES:
+				अवरोध;
+			हाल NDTPA_QUEUE_LENBYTES:
 				NEIGH_VAR_SET(p, QUEUE_LEN_BYTES,
 					      nla_get_u32(tbp[i]));
-				break;
-			case NDTPA_PROXY_QLEN:
+				अवरोध;
+			हाल NDTPA_PROXY_QLEN:
 				NEIGH_VAR_SET(p, PROXY_QLEN,
 					      nla_get_u32(tbp[i]));
-				break;
-			case NDTPA_APP_PROBES:
+				अवरोध;
+			हाल NDTPA_APP_PROBES:
 				NEIGH_VAR_SET(p, APP_PROBES,
 					      nla_get_u32(tbp[i]));
-				break;
-			case NDTPA_UCAST_PROBES:
+				अवरोध;
+			हाल NDTPA_UCAST_PROBES:
 				NEIGH_VAR_SET(p, UCAST_PROBES,
 					      nla_get_u32(tbp[i]));
-				break;
-			case NDTPA_MCAST_PROBES:
+				अवरोध;
+			हाल NDTPA_MCAST_PROBES:
 				NEIGH_VAR_SET(p, MCAST_PROBES,
 					      nla_get_u32(tbp[i]));
-				break;
-			case NDTPA_MCAST_REPROBES:
+				अवरोध;
+			हाल NDTPA_MCAST_REPROBES:
 				NEIGH_VAR_SET(p, MCAST_REPROBES,
 					      nla_get_u32(tbp[i]));
-				break;
-			case NDTPA_BASE_REACHABLE_TIME:
+				अवरोध;
+			हाल NDTPA_BASE_REACHABLE_TIME:
 				NEIGH_VAR_SET(p, BASE_REACHABLE_TIME,
 					      nla_get_msecs(tbp[i]));
-				/* update reachable_time as well, otherwise, the change will
-				 * only be effective after the next time neigh_periodic_work
+				/* update reachable_समय as well, otherwise, the change will
+				 * only be effective after the next समय neigh_periodic_work
 				 * decides to recompute it (can be multiple minutes)
 				 */
-				p->reachable_time =
-					neigh_rand_reach_time(NEIGH_VAR(p, BASE_REACHABLE_TIME));
-				break;
-			case NDTPA_GC_STALETIME:
+				p->reachable_समय =
+					neigh_अक्रम_reach_समय(NEIGH_VAR(p, BASE_REACHABLE_TIME));
+				अवरोध;
+			हाल NDTPA_GC_STALETIME:
 				NEIGH_VAR_SET(p, GC_STALETIME,
 					      nla_get_msecs(tbp[i]));
-				break;
-			case NDTPA_DELAY_PROBE_TIME:
+				अवरोध;
+			हाल NDTPA_DELAY_PROBE_TIME:
 				NEIGH_VAR_SET(p, DELAY_PROBE_TIME,
 					      nla_get_msecs(tbp[i]));
-				call_netevent_notifiers(NETEVENT_DELAY_PROBE_TIME_UPDATE, p);
-				break;
-			case NDTPA_RETRANS_TIME:
+				call_netevent_notअगरiers(NETEVENT_DELAY_PROBE_TIME_UPDATE, p);
+				अवरोध;
+			हाल NDTPA_RETRANS_TIME:
 				NEIGH_VAR_SET(p, RETRANS_TIME,
 					      nla_get_msecs(tbp[i]));
-				break;
-			case NDTPA_ANYCAST_DELAY:
+				अवरोध;
+			हाल NDTPA_ANYCAST_DELAY:
 				NEIGH_VAR_SET(p, ANYCAST_DELAY,
 					      nla_get_msecs(tbp[i]));
-				break;
-			case NDTPA_PROXY_DELAY:
+				अवरोध;
+			हाल NDTPA_PROXY_DELAY:
 				NEIGH_VAR_SET(p, PROXY_DELAY,
 					      nla_get_msecs(tbp[i]));
-				break;
-			case NDTPA_LOCKTIME:
+				अवरोध;
+			हाल NDTPA_LOCKTIME:
 				NEIGH_VAR_SET(p, LOCKTIME,
 					      nla_get_msecs(tbp[i]));
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	err = -ENOENT;
-	if ((tb[NDTA_THRESH1] || tb[NDTA_THRESH2] ||
+	अगर ((tb[NDTA_THRESH1] || tb[NDTA_THRESH2] ||
 	     tb[NDTA_THRESH3] || tb[NDTA_GC_INTERVAL]) &&
 	    !net_eq(net, &init_net))
-		goto errout_tbl_lock;
+		जाओ errout_tbl_lock;
 
-	if (tb[NDTA_THRESH1])
+	अगर (tb[NDTA_THRESH1])
 		tbl->gc_thresh1 = nla_get_u32(tb[NDTA_THRESH1]);
 
-	if (tb[NDTA_THRESH2])
+	अगर (tb[NDTA_THRESH2])
 		tbl->gc_thresh2 = nla_get_u32(tb[NDTA_THRESH2]);
 
-	if (tb[NDTA_THRESH3])
+	अगर (tb[NDTA_THRESH3])
 		tbl->gc_thresh3 = nla_get_u32(tb[NDTA_THRESH3]);
 
-	if (tb[NDTA_GC_INTERVAL])
-		tbl->gc_interval = nla_get_msecs(tb[NDTA_GC_INTERVAL]);
+	अगर (tb[NDTA_GC_INTERVAL])
+		tbl->gc_पूर्णांकerval = nla_get_msecs(tb[NDTA_GC_INTERVAL]);
 
 	err = 0;
 
 errout_tbl_lock:
-	write_unlock_bh(&tbl->lock);
+	ग_लिखो_unlock_bh(&tbl->lock);
 errout:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int neightbl_valid_dump_info(const struct nlmsghdr *nlh,
-				    struct netlink_ext_ack *extack)
-{
-	struct ndtmsg *ndtm;
+अटल पूर्णांक neightbl_valid_dump_info(स्थिर काष्ठा nlmsghdr *nlh,
+				    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ndपंचांगsg *ndपंचांग;
 
-	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ndtm))) {
+	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*ndपंचांग))) अणु
 		NL_SET_ERR_MSG(extack, "Invalid header for neighbor table dump request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ndtm = nlmsg_data(nlh);
-	if (ndtm->ndtm_pad1  || ndtm->ndtm_pad2) {
+	ndपंचांग = nlmsg_data(nlh);
+	अगर (ndपंचांग->ndपंचांग_pad1  || ndपंचांग->ndपंचांग_pad2) अणु
 		NL_SET_ERR_MSG(extack, "Invalid values in header for neighbor table dump request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (nlmsg_attrlen(nlh, sizeof(*ndtm))) {
+	अगर (nlmsg_attrlen(nlh, माप(*ndपंचांग))) अणु
 		NL_SET_ERR_MSG(extack, "Invalid data after header in neighbor table dump request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int neightbl_dump_info(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	const struct nlmsghdr *nlh = cb->nlh;
-	struct net *net = sock_net(skb->sk);
-	int family, tidx, nidx = 0;
-	int tbl_skip = cb->args[0];
-	int neigh_skip = cb->args[1];
-	struct neigh_table *tbl;
+अटल पूर्णांक neightbl_dump_info(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	स्थिर काष्ठा nlmsghdr *nlh = cb->nlh;
+	काष्ठा net *net = sock_net(skb->sk);
+	पूर्णांक family, tidx, nidx = 0;
+	पूर्णांक tbl_skip = cb->args[0];
+	पूर्णांक neigh_skip = cb->args[1];
+	काष्ठा neigh_table *tbl;
 
-	if (cb->strict_check) {
-		int err = neightbl_valid_dump_info(nlh, cb->extack);
+	अगर (cb->strict_check) अणु
+		पूर्णांक err = neightbl_valid_dump_info(nlh, cb->extack);
 
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	family = ((struct rtgenmsg *)nlmsg_data(nlh))->rtgen_family;
+	family = ((काष्ठा rtgenmsg *)nlmsg_data(nlh))->rtgen_family;
 
-	for (tidx = 0; tidx < NEIGH_NR_TABLES; tidx++) {
-		struct neigh_parms *p;
+	क्रम (tidx = 0; tidx < NEIGH_NR_TABLES; tidx++) अणु
+		काष्ठा neigh_parms *p;
 
 		tbl = neigh_tables[tidx];
-		if (!tbl)
-			continue;
+		अगर (!tbl)
+			जारी;
 
-		if (tidx < tbl_skip || (family && tbl->family != family))
-			continue;
+		अगर (tidx < tbl_skip || (family && tbl->family != family))
+			जारी;
 
-		if (neightbl_fill_info(skb, tbl, NETLINK_CB(cb->skb).portid,
+		अगर (neightbl_fill_info(skb, tbl, NETLINK_CB(cb->skb).portid,
 				       nlh->nlmsg_seq, RTM_NEWNEIGHTBL,
 				       NLM_F_MULTI) < 0)
-			break;
+			अवरोध;
 
 		nidx = 0;
 		p = list_next_entry(&tbl->parms, list);
-		list_for_each_entry_from(p, &tbl->parms_list, list) {
-			if (!net_eq(neigh_parms_net(p), net))
-				continue;
+		list_क्रम_each_entry_from(p, &tbl->parms_list, list) अणु
+			अगर (!net_eq(neigh_parms_net(p), net))
+				जारी;
 
-			if (nidx < neigh_skip)
-				goto next;
+			अगर (nidx < neigh_skip)
+				जाओ next;
 
-			if (neightbl_fill_param_info(skb, tbl, p,
+			अगर (neightbl_fill_param_info(skb, tbl, p,
 						     NETLINK_CB(cb->skb).portid,
 						     nlh->nlmsg_seq,
 						     RTM_NEWNEIGHTBL,
 						     NLM_F_MULTI) < 0)
-				goto out;
+				जाओ out;
 		next:
 			nidx++;
-		}
+		पूर्ण
 
 		neigh_skip = 0;
-	}
+	पूर्ण
 out:
 	cb->args[0] = tidx;
 	cb->args[1] = nidx;
 
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-static int neigh_fill_info(struct sk_buff *skb, struct neighbour *neigh,
-			   u32 pid, u32 seq, int type, unsigned int flags)
-{
-	unsigned long now = jiffies;
-	struct nda_cacheinfo ci;
-	struct nlmsghdr *nlh;
-	struct ndmsg *ndm;
+अटल पूर्णांक neigh_fill_info(काष्ठा sk_buff *skb, काष्ठा neighbour *neigh,
+			   u32 pid, u32 seq, पूर्णांक type, अचिन्हित पूर्णांक flags)
+अणु
+	अचिन्हित दीर्घ now = jअगरfies;
+	काष्ठा nda_cacheinfo ci;
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा ndmsg *ndm;
 
-	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*ndm), flags);
-	if (nlh == NULL)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, pid, seq, type, माप(*ndm), flags);
+	अगर (nlh == शून्य)
+		वापस -EMSGSIZE;
 
 	ndm = nlmsg_data(nlh);
 	ndm->ndm_family	 = neigh->ops->family;
@@ -2447,54 +2448,54 @@ static int neigh_fill_info(struct sk_buff *skb, struct neighbour *neigh,
 	ndm->ndm_pad2    = 0;
 	ndm->ndm_flags	 = neigh->flags;
 	ndm->ndm_type	 = neigh->type;
-	ndm->ndm_ifindex = neigh->dev->ifindex;
+	ndm->ndm_अगरindex = neigh->dev->अगरindex;
 
-	if (nla_put(skb, NDA_DST, neigh->tbl->key_len, neigh->primary_key))
-		goto nla_put_failure;
+	अगर (nla_put(skb, NDA_DST, neigh->tbl->key_len, neigh->primary_key))
+		जाओ nla_put_failure;
 
-	read_lock_bh(&neigh->lock);
+	पढ़ो_lock_bh(&neigh->lock);
 	ndm->ndm_state	 = neigh->nud_state;
-	if (neigh->nud_state & NUD_VALID) {
-		char haddr[MAX_ADDR_LEN];
+	अगर (neigh->nud_state & NUD_VALID) अणु
+		अक्षर haddr[MAX_ADDR_LEN];
 
 		neigh_ha_snapshot(haddr, neigh, neigh->dev);
-		if (nla_put(skb, NDA_LLADDR, neigh->dev->addr_len, haddr) < 0) {
-			read_unlock_bh(&neigh->lock);
-			goto nla_put_failure;
-		}
-	}
+		अगर (nla_put(skb, NDA_LLADDR, neigh->dev->addr_len, haddr) < 0) अणु
+			पढ़ो_unlock_bh(&neigh->lock);
+			जाओ nla_put_failure;
+		पूर्ण
+	पूर्ण
 
-	ci.ndm_used	 = jiffies_to_clock_t(now - neigh->used);
-	ci.ndm_confirmed = jiffies_to_clock_t(now - neigh->confirmed);
-	ci.ndm_updated	 = jiffies_to_clock_t(now - neigh->updated);
-	ci.ndm_refcnt	 = refcount_read(&neigh->refcnt) - 1;
-	read_unlock_bh(&neigh->lock);
+	ci.ndm_used	 = jअगरfies_to_घड़ी_प्रकार(now - neigh->used);
+	ci.ndm_confirmed = jअगरfies_to_घड़ी_प्रकार(now - neigh->confirmed);
+	ci.ndm_updated	 = jअगरfies_to_घड़ी_प्रकार(now - neigh->updated);
+	ci.ndm_refcnt	 = refcount_पढ़ो(&neigh->refcnt) - 1;
+	पढ़ो_unlock_bh(&neigh->lock);
 
-	if (nla_put_u32(skb, NDA_PROBES, atomic_read(&neigh->probes)) ||
-	    nla_put(skb, NDA_CACHEINFO, sizeof(ci), &ci))
-		goto nla_put_failure;
+	अगर (nla_put_u32(skb, NDA_PROBES, atomic_पढ़ो(&neigh->probes)) ||
+	    nla_put(skb, NDA_CACHEINFO, माप(ci), &ci))
+		जाओ nla_put_failure;
 
-	if (neigh->protocol && nla_put_u8(skb, NDA_PROTOCOL, neigh->protocol))
-		goto nla_put_failure;
+	अगर (neigh->protocol && nla_put_u8(skb, NDA_PROTOCOL, neigh->protocol))
+		जाओ nla_put_failure;
 
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int pneigh_fill_info(struct sk_buff *skb, struct pneigh_entry *pn,
-			    u32 pid, u32 seq, int type, unsigned int flags,
-			    struct neigh_table *tbl)
-{
-	struct nlmsghdr *nlh;
-	struct ndmsg *ndm;
+अटल पूर्णांक pneigh_fill_info(काष्ठा sk_buff *skb, काष्ठा pneigh_entry *pn,
+			    u32 pid, u32 seq, पूर्णांक type, अचिन्हित पूर्णांक flags,
+			    काष्ठा neigh_table *tbl)
+अणु
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा ndmsg *ndm;
 
-	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*ndm), flags);
-	if (nlh == NULL)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, pid, seq, type, माप(*ndm), flags);
+	अगर (nlh == शून्य)
+		वापस -EMSGSIZE;
 
 	ndm = nlmsg_data(nlh);
 	ndm->ndm_family	 = tbl->family;
@@ -2502,826 +2503,826 @@ static int pneigh_fill_info(struct sk_buff *skb, struct pneigh_entry *pn,
 	ndm->ndm_pad2    = 0;
 	ndm->ndm_flags	 = pn->flags | NTF_PROXY;
 	ndm->ndm_type	 = RTN_UNICAST;
-	ndm->ndm_ifindex = pn->dev ? pn->dev->ifindex : 0;
+	ndm->ndm_अगरindex = pn->dev ? pn->dev->अगरindex : 0;
 	ndm->ndm_state	 = NUD_NONE;
 
-	if (nla_put(skb, NDA_DST, tbl->key_len, pn->key))
-		goto nla_put_failure;
+	अगर (nla_put(skb, NDA_DST, tbl->key_len, pn->key))
+		जाओ nla_put_failure;
 
-	if (pn->protocol && nla_put_u8(skb, NDA_PROTOCOL, pn->protocol))
-		goto nla_put_failure;
+	अगर (pn->protocol && nla_put_u8(skb, NDA_PROTOCOL, pn->protocol))
+		जाओ nla_put_failure;
 
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static void neigh_update_notify(struct neighbour *neigh, u32 nlmsg_pid)
-{
-	call_netevent_notifiers(NETEVENT_NEIGH_UPDATE, neigh);
-	__neigh_notify(neigh, RTM_NEWNEIGH, 0, nlmsg_pid);
-}
+अटल व्योम neigh_update_notअगरy(काष्ठा neighbour *neigh, u32 nlmsg_pid)
+अणु
+	call_netevent_notअगरiers(NETEVENT_NEIGH_UPDATE, neigh);
+	__neigh_notअगरy(neigh, RTM_NEWNEIGH, 0, nlmsg_pid);
+पूर्ण
 
-static bool neigh_master_filtered(struct net_device *dev, int master_idx)
-{
-	struct net_device *master;
+अटल bool neigh_master_filtered(काष्ठा net_device *dev, पूर्णांक master_idx)
+अणु
+	काष्ठा net_device *master;
 
-	if (!master_idx)
-		return false;
+	अगर (!master_idx)
+		वापस false;
 
-	master = dev ? netdev_master_upper_dev_get(dev) : NULL;
-	if (!master || master->ifindex != master_idx)
-		return true;
+	master = dev ? netdev_master_upper_dev_get(dev) : शून्य;
+	अगर (!master || master->अगरindex != master_idx)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool neigh_ifindex_filtered(struct net_device *dev, int filter_idx)
-{
-	if (filter_idx && (!dev || dev->ifindex != filter_idx))
-		return true;
+अटल bool neigh_अगरindex_filtered(काष्ठा net_device *dev, पूर्णांक filter_idx)
+अणु
+	अगर (filter_idx && (!dev || dev->अगरindex != filter_idx))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-struct neigh_dump_filter {
-	int master_idx;
-	int dev_idx;
-};
+काष्ठा neigh_dump_filter अणु
+	पूर्णांक master_idx;
+	पूर्णांक dev_idx;
+पूर्ण;
 
-static int neigh_dump_table(struct neigh_table *tbl, struct sk_buff *skb,
-			    struct netlink_callback *cb,
-			    struct neigh_dump_filter *filter)
-{
-	struct net *net = sock_net(skb->sk);
-	struct neighbour *n;
-	int rc, h, s_h = cb->args[1];
-	int idx, s_idx = idx = cb->args[2];
-	struct neigh_hash_table *nht;
-	unsigned int flags = NLM_F_MULTI;
+अटल पूर्णांक neigh_dump_table(काष्ठा neigh_table *tbl, काष्ठा sk_buff *skb,
+			    काष्ठा netlink_callback *cb,
+			    काष्ठा neigh_dump_filter *filter)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा neighbour *n;
+	पूर्णांक rc, h, s_h = cb->args[1];
+	पूर्णांक idx, s_idx = idx = cb->args[2];
+	काष्ठा neigh_hash_table *nht;
+	अचिन्हित पूर्णांक flags = NLM_F_MULTI;
 
-	if (filter->dev_idx || filter->master_idx)
+	अगर (filter->dev_idx || filter->master_idx)
 		flags |= NLM_F_DUMP_FILTERED;
 
-	rcu_read_lock_bh();
+	rcu_पढ़ो_lock_bh();
 	nht = rcu_dereference_bh(tbl->nht);
 
-	for (h = s_h; h < (1 << nht->hash_shift); h++) {
-		if (h > s_h)
+	क्रम (h = s_h; h < (1 << nht->hash_shअगरt); h++) अणु
+		अगर (h > s_h)
 			s_idx = 0;
-		for (n = rcu_dereference_bh(nht->hash_buckets[h]), idx = 0;
-		     n != NULL;
-		     n = rcu_dereference_bh(n->next)) {
-			if (idx < s_idx || !net_eq(dev_net(n->dev), net))
-				goto next;
-			if (neigh_ifindex_filtered(n->dev, filter->dev_idx) ||
+		क्रम (n = rcu_dereference_bh(nht->hash_buckets[h]), idx = 0;
+		     n != शून्य;
+		     n = rcu_dereference_bh(n->next)) अणु
+			अगर (idx < s_idx || !net_eq(dev_net(n->dev), net))
+				जाओ next;
+			अगर (neigh_अगरindex_filtered(n->dev, filter->dev_idx) ||
 			    neigh_master_filtered(n->dev, filter->master_idx))
-				goto next;
-			if (neigh_fill_info(skb, n, NETLINK_CB(cb->skb).portid,
+				जाओ next;
+			अगर (neigh_fill_info(skb, n, NETLINK_CB(cb->skb).portid,
 					    cb->nlh->nlmsg_seq,
 					    RTM_NEWNEIGH,
-					    flags) < 0) {
+					    flags) < 0) अणु
 				rc = -1;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 next:
 			idx++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	rc = skb->len;
 out:
-	rcu_read_unlock_bh();
+	rcu_पढ़ो_unlock_bh();
 	cb->args[1] = h;
 	cb->args[2] = idx;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pneigh_dump_table(struct neigh_table *tbl, struct sk_buff *skb,
-			     struct netlink_callback *cb,
-			     struct neigh_dump_filter *filter)
-{
-	struct pneigh_entry *n;
-	struct net *net = sock_net(skb->sk);
-	int rc, h, s_h = cb->args[3];
-	int idx, s_idx = idx = cb->args[4];
-	unsigned int flags = NLM_F_MULTI;
+अटल पूर्णांक pneigh_dump_table(काष्ठा neigh_table *tbl, काष्ठा sk_buff *skb,
+			     काष्ठा netlink_callback *cb,
+			     काष्ठा neigh_dump_filter *filter)
+अणु
+	काष्ठा pneigh_entry *n;
+	काष्ठा net *net = sock_net(skb->sk);
+	पूर्णांक rc, h, s_h = cb->args[3];
+	पूर्णांक idx, s_idx = idx = cb->args[4];
+	अचिन्हित पूर्णांक flags = NLM_F_MULTI;
 
-	if (filter->dev_idx || filter->master_idx)
+	अगर (filter->dev_idx || filter->master_idx)
 		flags |= NLM_F_DUMP_FILTERED;
 
-	read_lock_bh(&tbl->lock);
+	पढ़ो_lock_bh(&tbl->lock);
 
-	for (h = s_h; h <= PNEIGH_HASHMASK; h++) {
-		if (h > s_h)
+	क्रम (h = s_h; h <= PNEIGH_HASHMASK; h++) अणु
+		अगर (h > s_h)
 			s_idx = 0;
-		for (n = tbl->phash_buckets[h], idx = 0; n; n = n->next) {
-			if (idx < s_idx || pneigh_net(n) != net)
-				goto next;
-			if (neigh_ifindex_filtered(n->dev, filter->dev_idx) ||
+		क्रम (n = tbl->phash_buckets[h], idx = 0; n; n = n->next) अणु
+			अगर (idx < s_idx || pneigh_net(n) != net)
+				जाओ next;
+			अगर (neigh_अगरindex_filtered(n->dev, filter->dev_idx) ||
 			    neigh_master_filtered(n->dev, filter->master_idx))
-				goto next;
-			if (pneigh_fill_info(skb, n, NETLINK_CB(cb->skb).portid,
+				जाओ next;
+			अगर (pneigh_fill_info(skb, n, NETLINK_CB(cb->skb).portid,
 					    cb->nlh->nlmsg_seq,
-					    RTM_NEWNEIGH, flags, tbl) < 0) {
-				read_unlock_bh(&tbl->lock);
+					    RTM_NEWNEIGH, flags, tbl) < 0) अणु
+				पढ़ो_unlock_bh(&tbl->lock);
 				rc = -1;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 		next:
 			idx++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	read_unlock_bh(&tbl->lock);
+	पढ़ो_unlock_bh(&tbl->lock);
 	rc = skb->len;
 out:
 	cb->args[3] = h;
 	cb->args[4] = idx;
-	return rc;
+	वापस rc;
 
-}
+पूर्ण
 
-static int neigh_valid_dump_req(const struct nlmsghdr *nlh,
+अटल पूर्णांक neigh_valid_dump_req(स्थिर काष्ठा nlmsghdr *nlh,
 				bool strict_check,
-				struct neigh_dump_filter *filter,
-				struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[NDA_MAX + 1];
-	int err, i;
+				काष्ठा neigh_dump_filter *filter,
+				काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[NDA_MAX + 1];
+	पूर्णांक err, i;
 
-	if (strict_check) {
-		struct ndmsg *ndm;
+	अगर (strict_check) अणु
+		काष्ठा ndmsg *ndm;
 
-		if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ndm))) {
+		अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*ndm))) अणु
 			NL_SET_ERR_MSG(extack, "Invalid header for neighbor dump request");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		ndm = nlmsg_data(nlh);
-		if (ndm->ndm_pad1  || ndm->ndm_pad2  || ndm->ndm_ifindex ||
-		    ndm->ndm_state || ndm->ndm_type) {
+		अगर (ndm->ndm_pad1  || ndm->ndm_pad2  || ndm->ndm_अगरindex ||
+		    ndm->ndm_state || ndm->ndm_type) अणु
 			NL_SET_ERR_MSG(extack, "Invalid values in header for neighbor dump request");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (ndm->ndm_flags & ~NTF_PROXY) {
+		अगर (ndm->ndm_flags & ~NTF_PROXY) अणु
 			NL_SET_ERR_MSG(extack, "Invalid flags in header for neighbor dump request");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		err = nlmsg_parse_deprecated_strict(nlh, sizeof(struct ndmsg),
+		err = nlmsg_parse_deprecated_strict(nlh, माप(काष्ठा ndmsg),
 						    tb, NDA_MAX, nda_policy,
 						    extack);
-	} else {
-		err = nlmsg_parse_deprecated(nlh, sizeof(struct ndmsg), tb,
+	पूर्ण अन्यथा अणु
+		err = nlmsg_parse_deprecated(nlh, माप(काष्ठा ndmsg), tb,
 					     NDA_MAX, nda_policy, extack);
-	}
-	if (err < 0)
-		return err;
+	पूर्ण
+	अगर (err < 0)
+		वापस err;
 
-	for (i = 0; i <= NDA_MAX; ++i) {
-		if (!tb[i])
-			continue;
+	क्रम (i = 0; i <= NDA_MAX; ++i) अणु
+		अगर (!tb[i])
+			जारी;
 
 		/* all new attributes should require strict_check */
-		switch (i) {
-		case NDA_IFINDEX:
+		चयन (i) अणु
+		हाल NDA_IFINDEX:
 			filter->dev_idx = nla_get_u32(tb[i]);
-			break;
-		case NDA_MASTER:
+			अवरोध;
+		हाल NDA_MASTER:
 			filter->master_idx = nla_get_u32(tb[i]);
-			break;
-		default:
-			if (strict_check) {
+			अवरोध;
+		शेष:
+			अगर (strict_check) अणु
 				NL_SET_ERR_MSG(extack, "Unsupported attribute in neighbor dump request");
-				return -EINVAL;
-			}
-		}
-	}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int neigh_dump_info(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	const struct nlmsghdr *nlh = cb->nlh;
-	struct neigh_dump_filter filter = {};
-	struct neigh_table *tbl;
-	int t, family, s_t;
-	int proxy = 0;
-	int err;
+अटल पूर्णांक neigh_dump_info(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	स्थिर काष्ठा nlmsghdr *nlh = cb->nlh;
+	काष्ठा neigh_dump_filter filter = अणुपूर्ण;
+	काष्ठा neigh_table *tbl;
+	पूर्णांक t, family, s_t;
+	पूर्णांक proxy = 0;
+	पूर्णांक err;
 
-	family = ((struct rtgenmsg *)nlmsg_data(nlh))->rtgen_family;
+	family = ((काष्ठा rtgenmsg *)nlmsg_data(nlh))->rtgen_family;
 
-	/* check for full ndmsg structure presence, family member is
-	 * the same for both structures
+	/* check क्रम full ndmsg काष्ठाure presence, family member is
+	 * the same क्रम both काष्ठाures
 	 */
-	if (nlmsg_len(nlh) >= sizeof(struct ndmsg) &&
-	    ((struct ndmsg *)nlmsg_data(nlh))->ndm_flags == NTF_PROXY)
+	अगर (nlmsg_len(nlh) >= माप(काष्ठा ndmsg) &&
+	    ((काष्ठा ndmsg *)nlmsg_data(nlh))->ndm_flags == NTF_PROXY)
 		proxy = 1;
 
 	err = neigh_valid_dump_req(nlh, cb->strict_check, &filter, cb->extack);
-	if (err < 0 && cb->strict_check)
-		return err;
+	अगर (err < 0 && cb->strict_check)
+		वापस err;
 
 	s_t = cb->args[0];
 
-	for (t = 0; t < NEIGH_NR_TABLES; t++) {
+	क्रम (t = 0; t < NEIGH_NR_TABLES; t++) अणु
 		tbl = neigh_tables[t];
 
-		if (!tbl)
-			continue;
-		if (t < s_t || (family && tbl->family != family))
-			continue;
-		if (t > s_t)
-			memset(&cb->args[1], 0, sizeof(cb->args) -
-						sizeof(cb->args[0]));
-		if (proxy)
+		अगर (!tbl)
+			जारी;
+		अगर (t < s_t || (family && tbl->family != family))
+			जारी;
+		अगर (t > s_t)
+			स_रखो(&cb->args[1], 0, माप(cb->args) -
+						माप(cb->args[0]));
+		अगर (proxy)
 			err = pneigh_dump_table(tbl, skb, cb, &filter);
-		else
+		अन्यथा
 			err = neigh_dump_table(tbl, skb, cb, &filter);
-		if (err < 0)
-			break;
-	}
+		अगर (err < 0)
+			अवरोध;
+	पूर्ण
 
 	cb->args[0] = t;
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-static int neigh_valid_get_req(const struct nlmsghdr *nlh,
-			       struct neigh_table **tbl,
-			       void **dst, int *dev_idx, u8 *ndm_flags,
-			       struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[NDA_MAX + 1];
-	struct ndmsg *ndm;
-	int err, i;
+अटल पूर्णांक neigh_valid_get_req(स्थिर काष्ठा nlmsghdr *nlh,
+			       काष्ठा neigh_table **tbl,
+			       व्योम **dst, पूर्णांक *dev_idx, u8 *ndm_flags,
+			       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[NDA_MAX + 1];
+	काष्ठा ndmsg *ndm;
+	पूर्णांक err, i;
 
-	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ndm))) {
+	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*ndm))) अणु
 		NL_SET_ERR_MSG(extack, "Invalid header for neighbor get request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ndm = nlmsg_data(nlh);
-	if (ndm->ndm_pad1  || ndm->ndm_pad2  || ndm->ndm_state ||
-	    ndm->ndm_type) {
+	अगर (ndm->ndm_pad1  || ndm->ndm_pad2  || ndm->ndm_state ||
+	    ndm->ndm_type) अणु
 		NL_SET_ERR_MSG(extack, "Invalid values in header for neighbor get request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ndm->ndm_flags & ~NTF_PROXY) {
+	अगर (ndm->ndm_flags & ~NTF_PROXY) अणु
 		NL_SET_ERR_MSG(extack, "Invalid flags in header for neighbor get request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	err = nlmsg_parse_deprecated_strict(nlh, sizeof(struct ndmsg), tb,
+	err = nlmsg_parse_deprecated_strict(nlh, माप(काष्ठा ndmsg), tb,
 					    NDA_MAX, nda_policy, extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	*ndm_flags = ndm->ndm_flags;
-	*dev_idx = ndm->ndm_ifindex;
+	*dev_idx = ndm->ndm_अगरindex;
 	*tbl = neigh_find_table(ndm->ndm_family);
-	if (*tbl == NULL) {
+	अगर (*tbl == शून्य) अणु
 		NL_SET_ERR_MSG(extack, "Unsupported family in header for neighbor get request");
-		return -EAFNOSUPPORT;
-	}
+		वापस -EAFNOSUPPORT;
+	पूर्ण
 
-	for (i = 0; i <= NDA_MAX; ++i) {
-		if (!tb[i])
-			continue;
+	क्रम (i = 0; i <= NDA_MAX; ++i) अणु
+		अगर (!tb[i])
+			जारी;
 
-		switch (i) {
-		case NDA_DST:
-			if (nla_len(tb[i]) != (int)(*tbl)->key_len) {
+		चयन (i) अणु
+		हाल NDA_DST:
+			अगर (nla_len(tb[i]) != (पूर्णांक)(*tbl)->key_len) अणु
 				NL_SET_ERR_MSG(extack, "Invalid network address in neighbor get request");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			*dst = nla_data(tb[i]);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			NL_SET_ERR_MSG(extack, "Unsupported attribute in neighbor get request");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline size_t neigh_nlmsg_size(void)
-{
-	return NLMSG_ALIGN(sizeof(struct ndmsg))
+अटल अंतरभूत माप_प्रकार neigh_nlmsg_size(व्योम)
+अणु
+	वापस NLMSG_ALIGN(माप(काष्ठा ndmsg))
 	       + nla_total_size(MAX_ADDR_LEN) /* NDA_DST */
 	       + nla_total_size(MAX_ADDR_LEN) /* NDA_LLADDR */
-	       + nla_total_size(sizeof(struct nda_cacheinfo))
+	       + nla_total_size(माप(काष्ठा nda_cacheinfo))
 	       + nla_total_size(4)  /* NDA_PROBES */
 	       + nla_total_size(1); /* NDA_PROTOCOL */
-}
+पूर्ण
 
-static int neigh_get_reply(struct net *net, struct neighbour *neigh,
+अटल पूर्णांक neigh_get_reply(काष्ठा net *net, काष्ठा neighbour *neigh,
 			   u32 pid, u32 seq)
-{
-	struct sk_buff *skb;
-	int err = 0;
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = 0;
 
 	skb = nlmsg_new(neigh_nlmsg_size(), GFP_KERNEL);
-	if (!skb)
-		return -ENOBUFS;
+	अगर (!skb)
+		वापस -ENOBUFS;
 
 	err = neigh_fill_info(skb, neigh, pid, seq, RTM_NEWNEIGH, 0);
-	if (err) {
-		kfree_skb(skb);
-		goto errout;
-	}
+	अगर (err) अणु
+		kमुक्त_skb(skb);
+		जाओ errout;
+	पूर्ण
 
 	err = rtnl_unicast(skb, net, pid);
 errout:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline size_t pneigh_nlmsg_size(void)
-{
-	return NLMSG_ALIGN(sizeof(struct ndmsg))
+अटल अंतरभूत माप_प्रकार pneigh_nlmsg_size(व्योम)
+अणु
+	वापस NLMSG_ALIGN(माप(काष्ठा ndmsg))
 	       + nla_total_size(MAX_ADDR_LEN) /* NDA_DST */
 	       + nla_total_size(1); /* NDA_PROTOCOL */
-}
+पूर्ण
 
-static int pneigh_get_reply(struct net *net, struct pneigh_entry *neigh,
-			    u32 pid, u32 seq, struct neigh_table *tbl)
-{
-	struct sk_buff *skb;
-	int err = 0;
+अटल पूर्णांक pneigh_get_reply(काष्ठा net *net, काष्ठा pneigh_entry *neigh,
+			    u32 pid, u32 seq, काष्ठा neigh_table *tbl)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = 0;
 
 	skb = nlmsg_new(pneigh_nlmsg_size(), GFP_KERNEL);
-	if (!skb)
-		return -ENOBUFS;
+	अगर (!skb)
+		वापस -ENOBUFS;
 
 	err = pneigh_fill_info(skb, neigh, pid, seq, RTM_NEWNEIGH, 0, tbl);
-	if (err) {
-		kfree_skb(skb);
-		goto errout;
-	}
+	अगर (err) अणु
+		kमुक्त_skb(skb);
+		जाओ errout;
+	पूर्ण
 
 	err = rtnl_unicast(skb, net, pid);
 errout:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int neigh_get(struct sk_buff *in_skb, struct nlmsghdr *nlh,
-		     struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(in_skb->sk);
-	struct net_device *dev = NULL;
-	struct neigh_table *tbl = NULL;
-	struct neighbour *neigh;
-	void *dst = NULL;
+अटल पूर्णांक neigh_get(काष्ठा sk_buff *in_skb, काष्ठा nlmsghdr *nlh,
+		     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(in_skb->sk);
+	काष्ठा net_device *dev = शून्य;
+	काष्ठा neigh_table *tbl = शून्य;
+	काष्ठा neighbour *neigh;
+	व्योम *dst = शून्य;
 	u8 ndm_flags = 0;
-	int dev_idx = 0;
-	int err;
+	पूर्णांक dev_idx = 0;
+	पूर्णांक err;
 
 	err = neigh_valid_get_req(nlh, &tbl, &dst, &dev_idx, &ndm_flags,
 				  extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (dev_idx) {
+	अगर (dev_idx) अणु
 		dev = __dev_get_by_index(net, dev_idx);
-		if (!dev) {
+		अगर (!dev) अणु
 			NL_SET_ERR_MSG(extack, "Unknown device ifindex");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
-	if (!dst) {
+	अगर (!dst) अणु
 		NL_SET_ERR_MSG(extack, "Network address not specified");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ndm_flags & NTF_PROXY) {
-		struct pneigh_entry *pn;
+	अगर (ndm_flags & NTF_PROXY) अणु
+		काष्ठा pneigh_entry *pn;
 
 		pn = pneigh_lookup(tbl, net, dst, dev, 0);
-		if (!pn) {
+		अगर (!pn) अणु
 			NL_SET_ERR_MSG(extack, "Proxy neighbour entry not found");
-			return -ENOENT;
-		}
-		return pneigh_get_reply(net, pn, NETLINK_CB(in_skb).portid,
+			वापस -ENOENT;
+		पूर्ण
+		वापस pneigh_get_reply(net, pn, NETLINK_CB(in_skb).portid,
 					nlh->nlmsg_seq, tbl);
-	}
+	पूर्ण
 
-	if (!dev) {
+	अगर (!dev) अणु
 		NL_SET_ERR_MSG(extack, "No device specified");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	neigh = neigh_lookup(tbl, dst, dev);
-	if (!neigh) {
+	अगर (!neigh) अणु
 		NL_SET_ERR_MSG(extack, "Neighbour entry not found");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	err = neigh_get_reply(net, neigh, NETLINK_CB(in_skb).portid,
 			      nlh->nlmsg_seq);
 
 	neigh_release(neigh);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void neigh_for_each(struct neigh_table *tbl, void (*cb)(struct neighbour *, void *), void *cookie)
-{
-	int chain;
-	struct neigh_hash_table *nht;
+व्योम neigh_क्रम_each(काष्ठा neigh_table *tbl, व्योम (*cb)(काष्ठा neighbour *, व्योम *), व्योम *cookie)
+अणु
+	पूर्णांक chain;
+	काष्ठा neigh_hash_table *nht;
 
-	rcu_read_lock_bh();
+	rcu_पढ़ो_lock_bh();
 	nht = rcu_dereference_bh(tbl->nht);
 
-	read_lock(&tbl->lock); /* avoid resizes */
-	for (chain = 0; chain < (1 << nht->hash_shift); chain++) {
-		struct neighbour *n;
+	पढ़ो_lock(&tbl->lock); /* aव्योम resizes */
+	क्रम (chain = 0; chain < (1 << nht->hash_shअगरt); chain++) अणु
+		काष्ठा neighbour *n;
 
-		for (n = rcu_dereference_bh(nht->hash_buckets[chain]);
-		     n != NULL;
+		क्रम (n = rcu_dereference_bh(nht->hash_buckets[chain]);
+		     n != शून्य;
 		     n = rcu_dereference_bh(n->next))
 			cb(n, cookie);
-	}
-	read_unlock(&tbl->lock);
-	rcu_read_unlock_bh();
-}
-EXPORT_SYMBOL(neigh_for_each);
+	पूर्ण
+	पढ़ो_unlock(&tbl->lock);
+	rcu_पढ़ो_unlock_bh();
+पूर्ण
+EXPORT_SYMBOL(neigh_क्रम_each);
 
-/* The tbl->lock must be held as a writer and BH disabled. */
-void __neigh_for_each_release(struct neigh_table *tbl,
-			      int (*cb)(struct neighbour *))
-{
-	int chain;
-	struct neigh_hash_table *nht;
+/* The tbl->lock must be held as a ग_लिखोr and BH disabled. */
+व्योम __neigh_क्रम_each_release(काष्ठा neigh_table *tbl,
+			      पूर्णांक (*cb)(काष्ठा neighbour *))
+अणु
+	पूर्णांक chain;
+	काष्ठा neigh_hash_table *nht;
 
-	nht = rcu_dereference_protected(tbl->nht,
+	nht = rcu_dereference_रक्षित(tbl->nht,
 					lockdep_is_held(&tbl->lock));
-	for (chain = 0; chain < (1 << nht->hash_shift); chain++) {
-		struct neighbour *n;
-		struct neighbour __rcu **np;
+	क्रम (chain = 0; chain < (1 << nht->hash_shअगरt); chain++) अणु
+		काष्ठा neighbour *n;
+		काष्ठा neighbour __rcu **np;
 
 		np = &nht->hash_buckets[chain];
-		while ((n = rcu_dereference_protected(*np,
-					lockdep_is_held(&tbl->lock))) != NULL) {
-			int release;
+		जबतक ((n = rcu_dereference_रक्षित(*np,
+					lockdep_is_held(&tbl->lock))) != शून्य) अणु
+			पूर्णांक release;
 
-			write_lock(&n->lock);
+			ग_लिखो_lock(&n->lock);
 			release = cb(n);
-			if (release) {
-				rcu_assign_pointer(*np,
-					rcu_dereference_protected(n->next,
+			अगर (release) अणु
+				rcu_assign_poपूर्णांकer(*np,
+					rcu_dereference_रक्षित(n->next,
 						lockdep_is_held(&tbl->lock)));
 				neigh_mark_dead(n);
-			} else
+			पूर्ण अन्यथा
 				np = &n->next;
-			write_unlock(&n->lock);
-			if (release)
+			ग_लिखो_unlock(&n->lock);
+			अगर (release)
 				neigh_cleanup_and_release(n);
-		}
-	}
-}
-EXPORT_SYMBOL(__neigh_for_each_release);
+		पूर्ण
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(__neigh_क्रम_each_release);
 
-int neigh_xmit(int index, struct net_device *dev,
-	       const void *addr, struct sk_buff *skb)
-{
-	int err = -EAFNOSUPPORT;
-	if (likely(index < NEIGH_NR_TABLES)) {
-		struct neigh_table *tbl;
-		struct neighbour *neigh;
+पूर्णांक neigh_xmit(पूर्णांक index, काष्ठा net_device *dev,
+	       स्थिर व्योम *addr, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err = -EAFNOSUPPORT;
+	अगर (likely(index < NEIGH_NR_TABLES)) अणु
+		काष्ठा neigh_table *tbl;
+		काष्ठा neighbour *neigh;
 
 		tbl = neigh_tables[index];
-		if (!tbl)
-			goto out;
-		rcu_read_lock_bh();
-		if (index == NEIGH_ARP_TABLE) {
+		अगर (!tbl)
+			जाओ out;
+		rcu_पढ़ो_lock_bh();
+		अगर (index == NEIGH_ARP_TABLE) अणु
 			u32 key = *((u32 *)addr);
 
 			neigh = __ipv4_neigh_lookup_noref(dev, key);
-		} else {
+		पूर्ण अन्यथा अणु
 			neigh = __neigh_lookup_noref(tbl, addr, dev);
-		}
-		if (!neigh)
+		पूर्ण
+		अगर (!neigh)
 			neigh = __neigh_create(tbl, addr, dev, false);
 		err = PTR_ERR(neigh);
-		if (IS_ERR(neigh)) {
-			rcu_read_unlock_bh();
-			goto out_kfree_skb;
-		}
+		अगर (IS_ERR(neigh)) अणु
+			rcu_पढ़ो_unlock_bh();
+			जाओ out_kमुक्त_skb;
+		पूर्ण
 		err = neigh->output(neigh, skb);
-		rcu_read_unlock_bh();
-	}
-	else if (index == NEIGH_LINK_TABLE) {
+		rcu_पढ़ो_unlock_bh();
+	पूर्ण
+	अन्यथा अगर (index == NEIGH_LINK_TABLE) अणु
 		err = dev_hard_header(skb, dev, ntohs(skb->protocol),
-				      addr, NULL, skb->len);
-		if (err < 0)
-			goto out_kfree_skb;
+				      addr, शून्य, skb->len);
+		अगर (err < 0)
+			जाओ out_kमुक्त_skb;
 		err = dev_queue_xmit(skb);
-	}
+	पूर्ण
 out:
-	return err;
-out_kfree_skb:
-	kfree_skb(skb);
-	goto out;
-}
+	वापस err;
+out_kमुक्त_skb:
+	kमुक्त_skb(skb);
+	जाओ out;
+पूर्ण
 EXPORT_SYMBOL(neigh_xmit);
 
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 
-static struct neighbour *neigh_get_first(struct seq_file *seq)
-{
-	struct neigh_seq_state *state = seq->private;
-	struct net *net = seq_file_net(seq);
-	struct neigh_hash_table *nht = state->nht;
-	struct neighbour *n = NULL;
-	int bucket;
+अटल काष्ठा neighbour *neigh_get_first(काष्ठा seq_file *seq)
+अणु
+	काष्ठा neigh_seq_state *state = seq->निजी;
+	काष्ठा net *net = seq_file_net(seq);
+	काष्ठा neigh_hash_table *nht = state->nht;
+	काष्ठा neighbour *n = शून्य;
+	पूर्णांक bucket;
 
 	state->flags &= ~NEIGH_SEQ_IS_PNEIGH;
-	for (bucket = 0; bucket < (1 << nht->hash_shift); bucket++) {
+	क्रम (bucket = 0; bucket < (1 << nht->hash_shअगरt); bucket++) अणु
 		n = rcu_dereference_bh(nht->hash_buckets[bucket]);
 
-		while (n) {
-			if (!net_eq(dev_net(n->dev), net))
-				goto next;
-			if (state->neigh_sub_iter) {
+		जबतक (n) अणु
+			अगर (!net_eq(dev_net(n->dev), net))
+				जाओ next;
+			अगर (state->neigh_sub_iter) अणु
 				loff_t fakep = 0;
-				void *v;
+				व्योम *v;
 
 				v = state->neigh_sub_iter(state, n, &fakep);
-				if (!v)
-					goto next;
-			}
-			if (!(state->flags & NEIGH_SEQ_SKIP_NOARP))
-				break;
-			if (n->nud_state & ~NUD_NOARP)
-				break;
+				अगर (!v)
+					जाओ next;
+			पूर्ण
+			अगर (!(state->flags & NEIGH_SEQ_SKIP_NOARP))
+				अवरोध;
+			अगर (n->nud_state & ~NUD_NOARP)
+				अवरोध;
 next:
 			n = rcu_dereference_bh(n->next);
-		}
+		पूर्ण
 
-		if (n)
-			break;
-	}
+		अगर (n)
+			अवरोध;
+	पूर्ण
 	state->bucket = bucket;
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static struct neighbour *neigh_get_next(struct seq_file *seq,
-					struct neighbour *n,
+अटल काष्ठा neighbour *neigh_get_next(काष्ठा seq_file *seq,
+					काष्ठा neighbour *n,
 					loff_t *pos)
-{
-	struct neigh_seq_state *state = seq->private;
-	struct net *net = seq_file_net(seq);
-	struct neigh_hash_table *nht = state->nht;
+अणु
+	काष्ठा neigh_seq_state *state = seq->निजी;
+	काष्ठा net *net = seq_file_net(seq);
+	काष्ठा neigh_hash_table *nht = state->nht;
 
-	if (state->neigh_sub_iter) {
-		void *v = state->neigh_sub_iter(state, n, pos);
-		if (v)
-			return n;
-	}
+	अगर (state->neigh_sub_iter) अणु
+		व्योम *v = state->neigh_sub_iter(state, n, pos);
+		अगर (v)
+			वापस n;
+	पूर्ण
 	n = rcu_dereference_bh(n->next);
 
-	while (1) {
-		while (n) {
-			if (!net_eq(dev_net(n->dev), net))
-				goto next;
-			if (state->neigh_sub_iter) {
-				void *v = state->neigh_sub_iter(state, n, pos);
-				if (v)
-					return n;
-				goto next;
-			}
-			if (!(state->flags & NEIGH_SEQ_SKIP_NOARP))
-				break;
+	जबतक (1) अणु
+		जबतक (n) अणु
+			अगर (!net_eq(dev_net(n->dev), net))
+				जाओ next;
+			अगर (state->neigh_sub_iter) अणु
+				व्योम *v = state->neigh_sub_iter(state, n, pos);
+				अगर (v)
+					वापस n;
+				जाओ next;
+			पूर्ण
+			अगर (!(state->flags & NEIGH_SEQ_SKIP_NOARP))
+				अवरोध;
 
-			if (n->nud_state & ~NUD_NOARP)
-				break;
+			अगर (n->nud_state & ~NUD_NOARP)
+				अवरोध;
 next:
 			n = rcu_dereference_bh(n->next);
-		}
+		पूर्ण
 
-		if (n)
-			break;
+		अगर (n)
+			अवरोध;
 
-		if (++state->bucket >= (1 << nht->hash_shift))
-			break;
+		अगर (++state->bucket >= (1 << nht->hash_shअगरt))
+			अवरोध;
 
 		n = rcu_dereference_bh(nht->hash_buckets[state->bucket]);
-	}
+	पूर्ण
 
-	if (n && pos)
+	अगर (n && pos)
 		--(*pos);
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static struct neighbour *neigh_get_idx(struct seq_file *seq, loff_t *pos)
-{
-	struct neighbour *n = neigh_get_first(seq);
+अटल काष्ठा neighbour *neigh_get_idx(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा neighbour *n = neigh_get_first(seq);
 
-	if (n) {
+	अगर (n) अणु
 		--(*pos);
-		while (*pos) {
+		जबतक (*pos) अणु
 			n = neigh_get_next(seq, n, pos);
-			if (!n)
-				break;
-		}
-	}
-	return *pos ? NULL : n;
-}
+			अगर (!n)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस *pos ? शून्य : n;
+पूर्ण
 
-static struct pneigh_entry *pneigh_get_first(struct seq_file *seq)
-{
-	struct neigh_seq_state *state = seq->private;
-	struct net *net = seq_file_net(seq);
-	struct neigh_table *tbl = state->tbl;
-	struct pneigh_entry *pn = NULL;
-	int bucket = state->bucket;
+अटल काष्ठा pneigh_entry *pneigh_get_first(काष्ठा seq_file *seq)
+अणु
+	काष्ठा neigh_seq_state *state = seq->निजी;
+	काष्ठा net *net = seq_file_net(seq);
+	काष्ठा neigh_table *tbl = state->tbl;
+	काष्ठा pneigh_entry *pn = शून्य;
+	पूर्णांक bucket = state->bucket;
 
 	state->flags |= NEIGH_SEQ_IS_PNEIGH;
-	for (bucket = 0; bucket <= PNEIGH_HASHMASK; bucket++) {
+	क्रम (bucket = 0; bucket <= PNEIGH_HASHMASK; bucket++) अणु
 		pn = tbl->phash_buckets[bucket];
-		while (pn && !net_eq(pneigh_net(pn), net))
+		जबतक (pn && !net_eq(pneigh_net(pn), net))
 			pn = pn->next;
-		if (pn)
-			break;
-	}
+		अगर (pn)
+			अवरोध;
+	पूर्ण
 	state->bucket = bucket;
 
-	return pn;
-}
+	वापस pn;
+पूर्ण
 
-static struct pneigh_entry *pneigh_get_next(struct seq_file *seq,
-					    struct pneigh_entry *pn,
+अटल काष्ठा pneigh_entry *pneigh_get_next(काष्ठा seq_file *seq,
+					    काष्ठा pneigh_entry *pn,
 					    loff_t *pos)
-{
-	struct neigh_seq_state *state = seq->private;
-	struct net *net = seq_file_net(seq);
-	struct neigh_table *tbl = state->tbl;
+अणु
+	काष्ठा neigh_seq_state *state = seq->निजी;
+	काष्ठा net *net = seq_file_net(seq);
+	काष्ठा neigh_table *tbl = state->tbl;
 
-	do {
+	करो अणु
 		pn = pn->next;
-	} while (pn && !net_eq(pneigh_net(pn), net));
+	पूर्ण जबतक (pn && !net_eq(pneigh_net(pn), net));
 
-	while (!pn) {
-		if (++state->bucket > PNEIGH_HASHMASK)
-			break;
+	जबतक (!pn) अणु
+		अगर (++state->bucket > PNEIGH_HASHMASK)
+			अवरोध;
 		pn = tbl->phash_buckets[state->bucket];
-		while (pn && !net_eq(pneigh_net(pn), net))
+		जबतक (pn && !net_eq(pneigh_net(pn), net))
 			pn = pn->next;
-		if (pn)
-			break;
-	}
+		अगर (pn)
+			अवरोध;
+	पूर्ण
 
-	if (pn && pos)
+	अगर (pn && pos)
 		--(*pos);
 
-	return pn;
-}
+	वापस pn;
+पूर्ण
 
-static struct pneigh_entry *pneigh_get_idx(struct seq_file *seq, loff_t *pos)
-{
-	struct pneigh_entry *pn = pneigh_get_first(seq);
+अटल काष्ठा pneigh_entry *pneigh_get_idx(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा pneigh_entry *pn = pneigh_get_first(seq);
 
-	if (pn) {
+	अगर (pn) अणु
 		--(*pos);
-		while (*pos) {
+		जबतक (*pos) अणु
 			pn = pneigh_get_next(seq, pn, pos);
-			if (!pn)
-				break;
-		}
-	}
-	return *pos ? NULL : pn;
-}
+			अगर (!pn)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस *pos ? शून्य : pn;
+पूर्ण
 
-static void *neigh_get_idx_any(struct seq_file *seq, loff_t *pos)
-{
-	struct neigh_seq_state *state = seq->private;
-	void *rc;
+अटल व्योम *neigh_get_idx_any(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा neigh_seq_state *state = seq->निजी;
+	व्योम *rc;
 	loff_t idxpos = *pos;
 
 	rc = neigh_get_idx(seq, &idxpos);
-	if (!rc && !(state->flags & NEIGH_SEQ_NEIGH_ONLY))
+	अगर (!rc && !(state->flags & NEIGH_SEQ_NEIGH_ONLY))
 		rc = pneigh_get_idx(seq, &idxpos);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void *neigh_seq_start(struct seq_file *seq, loff_t *pos, struct neigh_table *tbl, unsigned int neigh_seq_flags)
+व्योम *neigh_seq_start(काष्ठा seq_file *seq, loff_t *pos, काष्ठा neigh_table *tbl, अचिन्हित पूर्णांक neigh_seq_flags)
 	__acquires(tbl->lock)
 	__acquires(rcu_bh)
-{
-	struct neigh_seq_state *state = seq->private;
+अणु
+	काष्ठा neigh_seq_state *state = seq->निजी;
 
 	state->tbl = tbl;
 	state->bucket = 0;
 	state->flags = (neigh_seq_flags & ~NEIGH_SEQ_IS_PNEIGH);
 
-	rcu_read_lock_bh();
+	rcu_पढ़ो_lock_bh();
 	state->nht = rcu_dereference_bh(tbl->nht);
-	read_lock(&tbl->lock);
+	पढ़ो_lock(&tbl->lock);
 
-	return *pos ? neigh_get_idx_any(seq, pos) : SEQ_START_TOKEN;
-}
+	वापस *pos ? neigh_get_idx_any(seq, pos) : SEQ_START_TOKEN;
+पूर्ण
 EXPORT_SYMBOL(neigh_seq_start);
 
-void *neigh_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct neigh_seq_state *state;
-	void *rc;
+व्योम *neigh_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा neigh_seq_state *state;
+	व्योम *rc;
 
-	if (v == SEQ_START_TOKEN) {
+	अगर (v == SEQ_START_TOKEN) अणु
 		rc = neigh_get_first(seq);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	state = seq->private;
-	if (!(state->flags & NEIGH_SEQ_IS_PNEIGH)) {
-		rc = neigh_get_next(seq, v, NULL);
-		if (rc)
-			goto out;
-		if (!(state->flags & NEIGH_SEQ_NEIGH_ONLY))
+	state = seq->निजी;
+	अगर (!(state->flags & NEIGH_SEQ_IS_PNEIGH)) अणु
+		rc = neigh_get_next(seq, v, शून्य);
+		अगर (rc)
+			जाओ out;
+		अगर (!(state->flags & NEIGH_SEQ_NEIGH_ONLY))
 			rc = pneigh_get_first(seq);
-	} else {
+	पूर्ण अन्यथा अणु
 		BUG_ON(state->flags & NEIGH_SEQ_NEIGH_ONLY);
-		rc = pneigh_get_next(seq, v, NULL);
-	}
+		rc = pneigh_get_next(seq, v, शून्य);
+	पूर्ण
 out:
 	++(*pos);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL(neigh_seq_next);
 
-void neigh_seq_stop(struct seq_file *seq, void *v)
+व्योम neigh_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(tbl->lock)
 	__releases(rcu_bh)
-{
-	struct neigh_seq_state *state = seq->private;
-	struct neigh_table *tbl = state->tbl;
+अणु
+	काष्ठा neigh_seq_state *state = seq->निजी;
+	काष्ठा neigh_table *tbl = state->tbl;
 
-	read_unlock(&tbl->lock);
-	rcu_read_unlock_bh();
-}
+	पढ़ो_unlock(&tbl->lock);
+	rcu_पढ़ो_unlock_bh();
+पूर्ण
 EXPORT_SYMBOL(neigh_seq_stop);
 
 /* statistics via seq_file */
 
-static void *neigh_stat_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	struct neigh_table *tbl = PDE_DATA(file_inode(seq->file));
-	int cpu;
+अटल व्योम *neigh_stat_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा neigh_table *tbl = PDE_DATA(file_inode(seq->file));
+	पूर्णांक cpu;
 
-	if (*pos == 0)
-		return SEQ_START_TOKEN;
+	अगर (*pos == 0)
+		वापस SEQ_START_TOKEN;
 
-	for (cpu = *pos-1; cpu < nr_cpu_ids; ++cpu) {
-		if (!cpu_possible(cpu))
-			continue;
+	क्रम (cpu = *pos-1; cpu < nr_cpu_ids; ++cpu) अणु
+		अगर (!cpu_possible(cpu))
+			जारी;
 		*pos = cpu+1;
-		return per_cpu_ptr(tbl->stats, cpu);
-	}
-	return NULL;
-}
+		वापस per_cpu_ptr(tbl->stats, cpu);
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void *neigh_stat_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct neigh_table *tbl = PDE_DATA(file_inode(seq->file));
-	int cpu;
+अटल व्योम *neigh_stat_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा neigh_table *tbl = PDE_DATA(file_inode(seq->file));
+	पूर्णांक cpu;
 
-	for (cpu = *pos; cpu < nr_cpu_ids; ++cpu) {
-		if (!cpu_possible(cpu))
-			continue;
+	क्रम (cpu = *pos; cpu < nr_cpu_ids; ++cpu) अणु
+		अगर (!cpu_possible(cpu))
+			जारी;
 		*pos = cpu+1;
-		return per_cpu_ptr(tbl->stats, cpu);
-	}
+		वापस per_cpu_ptr(tbl->stats, cpu);
+	पूर्ण
 	(*pos)++;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void neigh_stat_seq_stop(struct seq_file *seq, void *v)
-{
+अटल व्योम neigh_stat_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+अणु
 
-}
+पूर्ण
 
-static int neigh_stat_seq_show(struct seq_file *seq, void *v)
-{
-	struct neigh_table *tbl = PDE_DATA(file_inode(seq->file));
-	struct neigh_statistics *st = v;
+अटल पूर्णांक neigh_stat_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा neigh_table *tbl = PDE_DATA(file_inode(seq->file));
+	काष्ठा neigh_statistics *st = v;
 
-	if (v == SEQ_START_TOKEN) {
-		seq_printf(seq, "entries  allocs destroys hash_grows  lookups hits  res_failed  rcv_probes_mcast rcv_probes_ucast  periodic_gc_runs forced_gc_runs unresolved_discards table_fulls\n");
-		return 0;
-	}
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_म_लिखो(seq, "entries  allocs destroys hash_grows  lookups hits  res_failed  rcv_probes_mcast rcv_probes_ucast  periodic_gc_runs forced_gc_runs unresolved_discards table_fulls\n");
+		वापस 0;
+	पूर्ण
 
-	seq_printf(seq, "%08x  %08lx %08lx %08lx  %08lx %08lx  %08lx  "
+	seq_म_लिखो(seq, "%08x  %08lx %08lx %08lx  %08lx %08lx  %08lx  "
 			"%08lx %08lx  %08lx %08lx %08lx %08lx\n",
-		   atomic_read(&tbl->entries),
+		   atomic_पढ़ो(&tbl->entries),
 
 		   st->allocs,
 		   st->destroys,
@@ -3336,242 +3337,242 @@ static int neigh_stat_seq_show(struct seq_file *seq, void *v)
 		   st->rcv_probes_ucast,
 
 		   st->periodic_gc_runs,
-		   st->forced_gc_runs,
+		   st->क्रमced_gc_runs,
 		   st->unres_discards,
 		   st->table_fulls
 		   );
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations neigh_stat_seq_ops = {
+अटल स्थिर काष्ठा seq_operations neigh_stat_seq_ops = अणु
 	.start	= neigh_stat_seq_start,
 	.next	= neigh_stat_seq_next,
 	.stop	= neigh_stat_seq_stop,
 	.show	= neigh_stat_seq_show,
-};
-#endif /* CONFIG_PROC_FS */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_PROC_FS */
 
-static void __neigh_notify(struct neighbour *n, int type, int flags,
+अटल व्योम __neigh_notअगरy(काष्ठा neighbour *n, पूर्णांक type, पूर्णांक flags,
 			   u32 pid)
-{
-	struct net *net = dev_net(n->dev);
-	struct sk_buff *skb;
-	int err = -ENOBUFS;
+अणु
+	काष्ठा net *net = dev_net(n->dev);
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = -ENOBUFS;
 
 	skb = nlmsg_new(neigh_nlmsg_size(), GFP_ATOMIC);
-	if (skb == NULL)
-		goto errout;
+	अगर (skb == शून्य)
+		जाओ errout;
 
 	err = neigh_fill_info(skb, n, pid, 0, type, flags);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		/* -EMSGSIZE implies BUG in neigh_nlmsg_size() */
 		WARN_ON(err == -EMSGSIZE);
-		kfree_skb(skb);
-		goto errout;
-	}
-	rtnl_notify(skb, net, 0, RTNLGRP_NEIGH, NULL, GFP_ATOMIC);
-	return;
+		kमुक्त_skb(skb);
+		जाओ errout;
+	पूर्ण
+	rtnl_notअगरy(skb, net, 0, RTNLGRP_NEIGH, शून्य, GFP_ATOMIC);
+	वापस;
 errout:
-	if (err < 0)
+	अगर (err < 0)
 		rtnl_set_sk_err(net, RTNLGRP_NEIGH, err);
-}
+पूर्ण
 
-void neigh_app_ns(struct neighbour *n)
-{
-	__neigh_notify(n, RTM_GETNEIGH, NLM_F_REQUEST, 0);
-}
+व्योम neigh_app_ns(काष्ठा neighbour *n)
+अणु
+	__neigh_notअगरy(n, RTM_GETNEIGH, NLM_F_REQUEST, 0);
+पूर्ण
 EXPORT_SYMBOL(neigh_app_ns);
 
-#ifdef CONFIG_SYSCTL
-static int unres_qlen_max = INT_MAX / SKB_TRUESIZE(ETH_FRAME_LEN);
+#अगर_घोषित CONFIG_SYSCTL
+अटल पूर्णांक unres_qlen_max = पूर्णांक_उच्च / SKB_TRUESIZE(ETH_FRAME_LEN);
 
-static int proc_unres_qlen(struct ctl_table *ctl, int write,
-			   void *buffer, size_t *lenp, loff_t *ppos)
-{
-	int size, ret;
-	struct ctl_table tmp = *ctl;
+अटल पूर्णांक proc_unres_qlen(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+			   व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक size, ret;
+	काष्ठा ctl_table पंचांगp = *ctl;
 
-	tmp.extra1 = SYSCTL_ZERO;
-	tmp.extra2 = &unres_qlen_max;
-	tmp.data = &size;
+	पंचांगp.extra1 = SYSCTL_ZERO;
+	पंचांगp.extra2 = &unres_qlen_max;
+	पंचांगp.data = &size;
 
-	size = *(int *)ctl->data / SKB_TRUESIZE(ETH_FRAME_LEN);
-	ret = proc_dointvec_minmax(&tmp, write, buffer, lenp, ppos);
+	size = *(पूर्णांक *)ctl->data / SKB_TRUESIZE(ETH_FRAME_LEN);
+	ret = proc_करोपूर्णांकvec_minmax(&पंचांगp, ग_लिखो, buffer, lenp, ppos);
 
-	if (write && !ret)
-		*(int *)ctl->data = size * SKB_TRUESIZE(ETH_FRAME_LEN);
-	return ret;
-}
+	अगर (ग_लिखो && !ret)
+		*(पूर्णांक *)ctl->data = size * SKB_TRUESIZE(ETH_FRAME_LEN);
+	वापस ret;
+पूर्ण
 
-static struct neigh_parms *neigh_get_dev_parms_rcu(struct net_device *dev,
-						   int family)
-{
-	switch (family) {
-	case AF_INET:
-		return __in_dev_arp_parms_get_rcu(dev);
-	case AF_INET6:
-		return __in6_dev_nd_parms_get_rcu(dev);
-	}
-	return NULL;
-}
+अटल काष्ठा neigh_parms *neigh_get_dev_parms_rcu(काष्ठा net_device *dev,
+						   पूर्णांक family)
+अणु
+	चयन (family) अणु
+	हाल AF_INET:
+		वापस __in_dev_arp_parms_get_rcu(dev);
+	हाल AF_INET6:
+		वापस __in6_dev_nd_parms_get_rcu(dev);
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void neigh_copy_dflt_parms(struct net *net, struct neigh_parms *p,
-				  int index)
-{
-	struct net_device *dev;
-	int family = neigh_parms_family(p);
+अटल व्योम neigh_copy_dflt_parms(काष्ठा net *net, काष्ठा neigh_parms *p,
+				  पूर्णांक index)
+अणु
+	काष्ठा net_device *dev;
+	पूर्णांक family = neigh_parms_family(p);
 
-	rcu_read_lock();
-	for_each_netdev_rcu(net, dev) {
-		struct neigh_parms *dst_p =
+	rcu_पढ़ो_lock();
+	क्रम_each_netdev_rcu(net, dev) अणु
+		काष्ठा neigh_parms *dst_p =
 				neigh_get_dev_parms_rcu(dev, family);
 
-		if (dst_p && !test_bit(index, dst_p->data_state))
+		अगर (dst_p && !test_bit(index, dst_p->data_state))
 			dst_p->data[index] = p->data[index];
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void neigh_proc_update(struct ctl_table *ctl, int write)
-{
-	struct net_device *dev = ctl->extra1;
-	struct neigh_parms *p = ctl->extra2;
-	struct net *net = neigh_parms_net(p);
-	int index = (int *) ctl->data - p->data;
+अटल व्योम neigh_proc_update(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो)
+अणु
+	काष्ठा net_device *dev = ctl->extra1;
+	काष्ठा neigh_parms *p = ctl->extra2;
+	काष्ठा net *net = neigh_parms_net(p);
+	पूर्णांक index = (पूर्णांक *) ctl->data - p->data;
 
-	if (!write)
-		return;
+	अगर (!ग_लिखो)
+		वापस;
 
 	set_bit(index, p->data_state);
-	if (index == NEIGH_VAR_DELAY_PROBE_TIME)
-		call_netevent_notifiers(NETEVENT_DELAY_PROBE_TIME_UPDATE, p);
-	if (!dev) /* NULL dev means this is default value */
+	अगर (index == NEIGH_VAR_DELAY_PROBE_TIME)
+		call_netevent_notअगरiers(NETEVENT_DELAY_PROBE_TIME_UPDATE, p);
+	अगर (!dev) /* शून्य dev means this is शेष value */
 		neigh_copy_dflt_parms(net, p, index);
-}
+पूर्ण
 
-static int neigh_proc_dointvec_zero_intmax(struct ctl_table *ctl, int write,
-					   void *buffer, size_t *lenp,
+अटल पूर्णांक neigh_proc_करोपूर्णांकvec_zero_पूर्णांकmax(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+					   व्योम *buffer, माप_प्रकार *lenp,
 					   loff_t *ppos)
-{
-	struct ctl_table tmp = *ctl;
-	int ret;
+अणु
+	काष्ठा ctl_table पंचांगp = *ctl;
+	पूर्णांक ret;
 
-	tmp.extra1 = SYSCTL_ZERO;
-	tmp.extra2 = SYSCTL_INT_MAX;
+	पंचांगp.extra1 = SYSCTL_ZERO;
+	पंचांगp.extra2 = SYSCTL_पूर्णांक_उच्च;
 
-	ret = proc_dointvec_minmax(&tmp, write, buffer, lenp, ppos);
-	neigh_proc_update(ctl, write);
-	return ret;
-}
+	ret = proc_करोपूर्णांकvec_minmax(&पंचांगp, ग_लिखो, buffer, lenp, ppos);
+	neigh_proc_update(ctl, ग_लिखो);
+	वापस ret;
+पूर्ण
 
-int neigh_proc_dointvec(struct ctl_table *ctl, int write, void *buffer,
-			size_t *lenp, loff_t *ppos)
-{
-	int ret = proc_dointvec(ctl, write, buffer, lenp, ppos);
+पूर्णांक neigh_proc_करोपूर्णांकvec(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो, व्योम *buffer,
+			माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक ret = proc_करोपूर्णांकvec(ctl, ग_लिखो, buffer, lenp, ppos);
 
-	neigh_proc_update(ctl, write);
-	return ret;
-}
-EXPORT_SYMBOL(neigh_proc_dointvec);
+	neigh_proc_update(ctl, ग_लिखो);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(neigh_proc_करोपूर्णांकvec);
 
-int neigh_proc_dointvec_jiffies(struct ctl_table *ctl, int write, void *buffer,
-				size_t *lenp, loff_t *ppos)
-{
-	int ret = proc_dointvec_jiffies(ctl, write, buffer, lenp, ppos);
+पूर्णांक neigh_proc_करोपूर्णांकvec_jअगरfies(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो, व्योम *buffer,
+				माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक ret = proc_करोपूर्णांकvec_jअगरfies(ctl, ग_लिखो, buffer, lenp, ppos);
 
-	neigh_proc_update(ctl, write);
-	return ret;
-}
-EXPORT_SYMBOL(neigh_proc_dointvec_jiffies);
+	neigh_proc_update(ctl, ग_लिखो);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(neigh_proc_करोपूर्णांकvec_jअगरfies);
 
-static int neigh_proc_dointvec_userhz_jiffies(struct ctl_table *ctl, int write,
-					      void *buffer, size_t *lenp,
+अटल पूर्णांक neigh_proc_करोपूर्णांकvec_userhz_jअगरfies(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+					      व्योम *buffer, माप_प्रकार *lenp,
 					      loff_t *ppos)
-{
-	int ret = proc_dointvec_userhz_jiffies(ctl, write, buffer, lenp, ppos);
+अणु
+	पूर्णांक ret = proc_करोपूर्णांकvec_userhz_jअगरfies(ctl, ग_लिखो, buffer, lenp, ppos);
 
-	neigh_proc_update(ctl, write);
-	return ret;
-}
+	neigh_proc_update(ctl, ग_लिखो);
+	वापस ret;
+पूर्ण
 
-int neigh_proc_dointvec_ms_jiffies(struct ctl_table *ctl, int write,
-				   void *buffer, size_t *lenp, loff_t *ppos)
-{
-	int ret = proc_dointvec_ms_jiffies(ctl, write, buffer, lenp, ppos);
+पूर्णांक neigh_proc_करोपूर्णांकvec_ms_jअगरfies(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+				   व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक ret = proc_करोपूर्णांकvec_ms_jअगरfies(ctl, ग_लिखो, buffer, lenp, ppos);
 
-	neigh_proc_update(ctl, write);
-	return ret;
-}
-EXPORT_SYMBOL(neigh_proc_dointvec_ms_jiffies);
+	neigh_proc_update(ctl, ग_लिखो);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(neigh_proc_करोपूर्णांकvec_ms_jअगरfies);
 
-static int neigh_proc_dointvec_unres_qlen(struct ctl_table *ctl, int write,
-					  void *buffer, size_t *lenp,
+अटल पूर्णांक neigh_proc_करोपूर्णांकvec_unres_qlen(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+					  व्योम *buffer, माप_प्रकार *lenp,
 					  loff_t *ppos)
-{
-	int ret = proc_unres_qlen(ctl, write, buffer, lenp, ppos);
+अणु
+	पूर्णांक ret = proc_unres_qlen(ctl, ग_लिखो, buffer, lenp, ppos);
 
-	neigh_proc_update(ctl, write);
-	return ret;
-}
+	neigh_proc_update(ctl, ग_लिखो);
+	वापस ret;
+पूर्ण
 
-static int neigh_proc_base_reachable_time(struct ctl_table *ctl, int write,
-					  void *buffer, size_t *lenp,
+अटल पूर्णांक neigh_proc_base_reachable_समय(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+					  व्योम *buffer, माप_प्रकार *lenp,
 					  loff_t *ppos)
-{
-	struct neigh_parms *p = ctl->extra2;
-	int ret;
+अणु
+	काष्ठा neigh_parms *p = ctl->extra2;
+	पूर्णांक ret;
 
-	if (strcmp(ctl->procname, "base_reachable_time") == 0)
-		ret = neigh_proc_dointvec_jiffies(ctl, write, buffer, lenp, ppos);
-	else if (strcmp(ctl->procname, "base_reachable_time_ms") == 0)
-		ret = neigh_proc_dointvec_ms_jiffies(ctl, write, buffer, lenp, ppos);
-	else
+	अगर (म_भेद(ctl->procname, "base_reachable_time") == 0)
+		ret = neigh_proc_करोपूर्णांकvec_jअगरfies(ctl, ग_लिखो, buffer, lenp, ppos);
+	अन्यथा अगर (म_भेद(ctl->procname, "base_reachable_time_ms") == 0)
+		ret = neigh_proc_करोपूर्णांकvec_ms_jअगरfies(ctl, ग_लिखो, buffer, lenp, ppos);
+	अन्यथा
 		ret = -1;
 
-	if (write && ret == 0) {
-		/* update reachable_time as well, otherwise, the change will
-		 * only be effective after the next time neigh_periodic_work
+	अगर (ग_लिखो && ret == 0) अणु
+		/* update reachable_समय as well, otherwise, the change will
+		 * only be effective after the next समय neigh_periodic_work
 		 * decides to recompute it
 		 */
-		p->reachable_time =
-			neigh_rand_reach_time(NEIGH_VAR(p, BASE_REACHABLE_TIME));
-	}
-	return ret;
-}
+		p->reachable_समय =
+			neigh_अक्रम_reach_समय(NEIGH_VAR(p, BASE_REACHABLE_TIME));
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-#define NEIGH_PARMS_DATA_OFFSET(index)	\
-	(&((struct neigh_parms *) 0)->data[index])
+#घोषणा NEIGH_PARMS_DATA_OFFSET(index)	\
+	(&((काष्ठा neigh_parms *) 0)->data[index])
 
-#define NEIGH_SYSCTL_ENTRY(attr, data_attr, name, mval, proc) \
-	[NEIGH_VAR_ ## attr] = { \
+#घोषणा NEIGH_SYSCTL_ENTRY(attr, data_attr, name, mval, proc) \
+	[NEIGH_VAR_ ## attr] = अणु \
 		.procname	= name, \
 		.data		= NEIGH_PARMS_DATA_OFFSET(NEIGH_VAR_ ## data_attr), \
-		.maxlen		= sizeof(int), \
+		.maxlen		= माप(पूर्णांक), \
 		.mode		= mval, \
 		.proc_handler	= proc, \
-	}
+	पूर्ण
 
-#define NEIGH_SYSCTL_ZERO_INTMAX_ENTRY(attr, name) \
-	NEIGH_SYSCTL_ENTRY(attr, attr, name, 0644, neigh_proc_dointvec_zero_intmax)
+#घोषणा NEIGH_SYSCTL_ZERO_INTMAX_ENTRY(attr, name) \
+	NEIGH_SYSCTL_ENTRY(attr, attr, name, 0644, neigh_proc_करोपूर्णांकvec_zero_पूर्णांकmax)
 
-#define NEIGH_SYSCTL_JIFFIES_ENTRY(attr, name) \
-	NEIGH_SYSCTL_ENTRY(attr, attr, name, 0644, neigh_proc_dointvec_jiffies)
+#घोषणा NEIGH_SYSCTL_JIFFIES_ENTRY(attr, name) \
+	NEIGH_SYSCTL_ENTRY(attr, attr, name, 0644, neigh_proc_करोपूर्णांकvec_jअगरfies)
 
-#define NEIGH_SYSCTL_USERHZ_JIFFIES_ENTRY(attr, name) \
-	NEIGH_SYSCTL_ENTRY(attr, attr, name, 0644, neigh_proc_dointvec_userhz_jiffies)
+#घोषणा NEIGH_SYSCTL_USERHZ_JIFFIES_ENTRY(attr, name) \
+	NEIGH_SYSCTL_ENTRY(attr, attr, name, 0644, neigh_proc_करोपूर्णांकvec_userhz_jअगरfies)
 
-#define NEIGH_SYSCTL_MS_JIFFIES_REUSED_ENTRY(attr, data_attr, name) \
-	NEIGH_SYSCTL_ENTRY(attr, data_attr, name, 0644, neigh_proc_dointvec_ms_jiffies)
+#घोषणा NEIGH_SYSCTL_MS_JIFFIES_REUSED_ENTRY(attr, data_attr, name) \
+	NEIGH_SYSCTL_ENTRY(attr, data_attr, name, 0644, neigh_proc_करोपूर्णांकvec_ms_jअगरfies)
 
-#define NEIGH_SYSCTL_UNRES_QLEN_REUSED_ENTRY(attr, data_attr, name) \
-	NEIGH_SYSCTL_ENTRY(attr, data_attr, name, 0644, neigh_proc_dointvec_unres_qlen)
+#घोषणा NEIGH_SYSCTL_UNRES_QLEN_REUSED_ENTRY(attr, data_attr, name) \
+	NEIGH_SYSCTL_ENTRY(attr, data_attr, name, 0644, neigh_proc_करोपूर्णांकvec_unres_qlen)
 
-static struct neigh_sysctl_table {
-	struct ctl_table_header *sysctl_header;
-	struct ctl_table neigh_vars[NEIGH_VAR_MAX + 1];
-} neigh_sysctl_template __read_mostly = {
-	.neigh_vars = {
+अटल काष्ठा neigh_sysctl_table अणु
+	काष्ठा ctl_table_header *sysctl_header;
+	काष्ठा ctl_table neigh_vars[NEIGH_VAR_MAX + 1];
+पूर्ण neigh_sysctl_ढाँचा __पढ़ो_mostly = अणु
+	.neigh_vars = अणु
 		NEIGH_SYSCTL_ZERO_INTMAX_ENTRY(MCAST_PROBES, "mcast_solicit"),
 		NEIGH_SYSCTL_ZERO_INTMAX_ENTRY(UCAST_PROBES, "ucast_solicit"),
 		NEIGH_SYSCTL_ZERO_INTMAX_ENTRY(APP_PROBES, "app_solicit"),
@@ -3588,74 +3589,74 @@ static struct neigh_sysctl_table {
 		NEIGH_SYSCTL_UNRES_QLEN_REUSED_ENTRY(QUEUE_LEN, QUEUE_LEN_BYTES, "unres_qlen"),
 		NEIGH_SYSCTL_MS_JIFFIES_REUSED_ENTRY(RETRANS_TIME_MS, RETRANS_TIME, "retrans_time_ms"),
 		NEIGH_SYSCTL_MS_JIFFIES_REUSED_ENTRY(BASE_REACHABLE_TIME_MS, BASE_REACHABLE_TIME, "base_reachable_time_ms"),
-		[NEIGH_VAR_GC_INTERVAL] = {
+		[NEIGH_VAR_GC_INTERVAL] = अणु
 			.procname	= "gc_interval",
-			.maxlen		= sizeof(int),
+			.maxlen		= माप(पूर्णांक),
 			.mode		= 0644,
-			.proc_handler	= proc_dointvec_jiffies,
-		},
-		[NEIGH_VAR_GC_THRESH1] = {
+			.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+		पूर्ण,
+		[NEIGH_VAR_GC_THRESH1] = अणु
 			.procname	= "gc_thresh1",
-			.maxlen		= sizeof(int),
+			.maxlen		= माप(पूर्णांक),
 			.mode		= 0644,
 			.extra1		= SYSCTL_ZERO,
-			.extra2		= SYSCTL_INT_MAX,
-			.proc_handler	= proc_dointvec_minmax,
-		},
-		[NEIGH_VAR_GC_THRESH2] = {
+			.extra2		= SYSCTL_पूर्णांक_उच्च,
+			.proc_handler	= proc_करोपूर्णांकvec_minmax,
+		पूर्ण,
+		[NEIGH_VAR_GC_THRESH2] = अणु
 			.procname	= "gc_thresh2",
-			.maxlen		= sizeof(int),
+			.maxlen		= माप(पूर्णांक),
 			.mode		= 0644,
 			.extra1		= SYSCTL_ZERO,
-			.extra2		= SYSCTL_INT_MAX,
-			.proc_handler	= proc_dointvec_minmax,
-		},
-		[NEIGH_VAR_GC_THRESH3] = {
+			.extra2		= SYSCTL_पूर्णांक_उच्च,
+			.proc_handler	= proc_करोपूर्णांकvec_minmax,
+		पूर्ण,
+		[NEIGH_VAR_GC_THRESH3] = अणु
 			.procname	= "gc_thresh3",
-			.maxlen		= sizeof(int),
+			.maxlen		= माप(पूर्णांक),
 			.mode		= 0644,
 			.extra1		= SYSCTL_ZERO,
-			.extra2		= SYSCTL_INT_MAX,
-			.proc_handler	= proc_dointvec_minmax,
-		},
-		{},
-	},
-};
+			.extra2		= SYSCTL_पूर्णांक_उच्च,
+			.proc_handler	= proc_करोपूर्णांकvec_minmax,
+		पूर्ण,
+		अणुपूर्ण,
+	पूर्ण,
+पूर्ण;
 
-int neigh_sysctl_register(struct net_device *dev, struct neigh_parms *p,
+पूर्णांक neigh_sysctl_रेजिस्टर(काष्ठा net_device *dev, काष्ठा neigh_parms *p,
 			  proc_handler *handler)
-{
-	int i;
-	struct neigh_sysctl_table *t;
-	const char *dev_name_source;
-	char neigh_path[ sizeof("net//neigh/") + IFNAMSIZ + IFNAMSIZ ];
-	char *p_name;
+अणु
+	पूर्णांक i;
+	काष्ठा neigh_sysctl_table *t;
+	स्थिर अक्षर *dev_name_source;
+	अक्षर neigh_path[ माप("net//neigh/") + IFNAMSIZ + IFNAMSIZ ];
+	अक्षर *p_name;
 
-	t = kmemdup(&neigh_sysctl_template, sizeof(*t), GFP_KERNEL);
-	if (!t)
-		goto err;
+	t = kmemdup(&neigh_sysctl_ढाँचा, माप(*t), GFP_KERNEL);
+	अगर (!t)
+		जाओ err;
 
-	for (i = 0; i < NEIGH_VAR_GC_INTERVAL; i++) {
-		t->neigh_vars[i].data += (long) p;
+	क्रम (i = 0; i < NEIGH_VAR_GC_INTERVAL; i++) अणु
+		t->neigh_vars[i].data += (दीर्घ) p;
 		t->neigh_vars[i].extra1 = dev;
 		t->neigh_vars[i].extra2 = p;
-	}
+	पूर्ण
 
-	if (dev) {
+	अगर (dev) अणु
 		dev_name_source = dev->name;
 		/* Terminate the table early */
-		memset(&t->neigh_vars[NEIGH_VAR_GC_INTERVAL], 0,
-		       sizeof(t->neigh_vars[NEIGH_VAR_GC_INTERVAL]));
-	} else {
-		struct neigh_table *tbl = p->tbl;
+		स_रखो(&t->neigh_vars[NEIGH_VAR_GC_INTERVAL], 0,
+		       माप(t->neigh_vars[NEIGH_VAR_GC_INTERVAL]));
+	पूर्ण अन्यथा अणु
+		काष्ठा neigh_table *tbl = p->tbl;
 		dev_name_source = "default";
-		t->neigh_vars[NEIGH_VAR_GC_INTERVAL].data = &tbl->gc_interval;
+		t->neigh_vars[NEIGH_VAR_GC_INTERVAL].data = &tbl->gc_पूर्णांकerval;
 		t->neigh_vars[NEIGH_VAR_GC_THRESH1].data = &tbl->gc_thresh1;
 		t->neigh_vars[NEIGH_VAR_GC_THRESH2].data = &tbl->gc_thresh2;
 		t->neigh_vars[NEIGH_VAR_GC_THRESH3].data = &tbl->gc_thresh3;
-	}
+	पूर्ण
 
-	if (handler) {
+	अगर (handler) अणु
 		/* RetransTime */
 		t->neigh_vars[NEIGH_VAR_RETRANS_TIME].proc_handler = handler;
 		/* ReachableTime */
@@ -3664,77 +3665,77 @@ int neigh_sysctl_register(struct net_device *dev, struct neigh_parms *p,
 		t->neigh_vars[NEIGH_VAR_RETRANS_TIME_MS].proc_handler = handler;
 		/* ReachableTime (in milliseconds) */
 		t->neigh_vars[NEIGH_VAR_BASE_REACHABLE_TIME_MS].proc_handler = handler;
-	} else {
-		/* Those handlers will update p->reachable_time after
-		 * base_reachable_time(_ms) is set to ensure the new timer starts being
-		 * applied after the next neighbour update instead of waiting for
+	पूर्ण अन्यथा अणु
+		/* Those handlers will update p->reachable_समय after
+		 * base_reachable_समय(_ms) is set to ensure the new समयr starts being
+		 * applied after the next neighbour update instead of रुकोing क्रम
 		 * neigh_periodic_work to update its value (can be multiple minutes)
-		 * So any handler that replaces them should do this as well
+		 * So any handler that replaces them should करो this as well
 		 */
 		/* ReachableTime */
 		t->neigh_vars[NEIGH_VAR_BASE_REACHABLE_TIME].proc_handler =
-			neigh_proc_base_reachable_time;
+			neigh_proc_base_reachable_समय;
 		/* ReachableTime (in milliseconds) */
 		t->neigh_vars[NEIGH_VAR_BASE_REACHABLE_TIME_MS].proc_handler =
-			neigh_proc_base_reachable_time;
-	}
+			neigh_proc_base_reachable_समय;
+	पूर्ण
 
 	/* Don't export sysctls to unprivileged users */
-	if (neigh_parms_net(p)->user_ns != &init_user_ns)
-		t->neigh_vars[0].procname = NULL;
+	अगर (neigh_parms_net(p)->user_ns != &init_user_ns)
+		t->neigh_vars[0].procname = शून्य;
 
-	switch (neigh_parms_family(p)) {
-	case AF_INET:
+	चयन (neigh_parms_family(p)) अणु
+	हाल AF_INET:
 	      p_name = "ipv4";
-	      break;
-	case AF_INET6:
+	      अवरोध;
+	हाल AF_INET6:
 	      p_name = "ipv6";
-	      break;
-	default:
+	      अवरोध;
+	शेष:
 	      BUG();
-	}
+	पूर्ण
 
-	snprintf(neigh_path, sizeof(neigh_path), "net/%s/neigh/%s",
+	snम_लिखो(neigh_path, माप(neigh_path), "net/%s/neigh/%s",
 		p_name, dev_name_source);
 	t->sysctl_header =
-		register_net_sysctl(neigh_parms_net(p), neigh_path, t->neigh_vars);
-	if (!t->sysctl_header)
-		goto free;
+		रेजिस्टर_net_sysctl(neigh_parms_net(p), neigh_path, t->neigh_vars);
+	अगर (!t->sysctl_header)
+		जाओ मुक्त;
 
 	p->sysctl_table = t;
-	return 0;
+	वापस 0;
 
-free:
-	kfree(t);
+मुक्त:
+	kमुक्त(t);
 err:
-	return -ENOBUFS;
-}
-EXPORT_SYMBOL(neigh_sysctl_register);
+	वापस -ENOBUFS;
+पूर्ण
+EXPORT_SYMBOL(neigh_sysctl_रेजिस्टर);
 
-void neigh_sysctl_unregister(struct neigh_parms *p)
-{
-	if (p->sysctl_table) {
-		struct neigh_sysctl_table *t = p->sysctl_table;
-		p->sysctl_table = NULL;
-		unregister_net_sysctl_table(t->sysctl_header);
-		kfree(t);
-	}
-}
-EXPORT_SYMBOL(neigh_sysctl_unregister);
+व्योम neigh_sysctl_unरेजिस्टर(काष्ठा neigh_parms *p)
+अणु
+	अगर (p->sysctl_table) अणु
+		काष्ठा neigh_sysctl_table *t = p->sysctl_table;
+		p->sysctl_table = शून्य;
+		unरेजिस्टर_net_sysctl_table(t->sysctl_header);
+		kमुक्त(t);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(neigh_sysctl_unरेजिस्टर);
 
-#endif	/* CONFIG_SYSCTL */
+#पूर्ण_अगर	/* CONFIG_SYSCTL */
 
-static int __init neigh_init(void)
-{
-	rtnl_register(PF_UNSPEC, RTM_NEWNEIGH, neigh_add, NULL, 0);
-	rtnl_register(PF_UNSPEC, RTM_DELNEIGH, neigh_delete, NULL, 0);
-	rtnl_register(PF_UNSPEC, RTM_GETNEIGH, neigh_get, neigh_dump_info, 0);
+अटल पूर्णांक __init neigh_init(व्योम)
+अणु
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_NEWNEIGH, neigh_add, शून्य, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_DELNEIGH, neigh_delete, शून्य, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_GETNEIGH, neigh_get, neigh_dump_info, 0);
 
-	rtnl_register(PF_UNSPEC, RTM_GETNEIGHTBL, NULL, neightbl_dump_info,
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_GETNEIGHTBL, शून्य, neightbl_dump_info,
 		      0);
-	rtnl_register(PF_UNSPEC, RTM_SETNEIGHTBL, neightbl_set, NULL, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_SETNEIGHTBL, neightbl_set, शून्य, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 subsys_initcall(neigh_init);

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,211 +26,211 @@
 
 /* QXL cmd/ring handling */
 
-#include <linux/delay.h>
+#समावेश <linux/delay.h>
 
-#include <drm/drm_util.h>
+#समावेश <drm/drm_util.h>
 
-#include "qxl_drv.h"
-#include "qxl_object.h"
+#समावेश "qxl_drv.h"
+#समावेश "qxl_object.h"
 
-static int qxl_reap_surface_id(struct qxl_device *qdev, int max_to_reap);
+अटल पूर्णांक qxl_reap_surface_id(काष्ठा qxl_device *qdev, पूर्णांक max_to_reap);
 
-struct ring {
-	struct qxl_ring_header      header;
-	uint8_t                     elements[];
-};
+काष्ठा ring अणु
+	काष्ठा qxl_ring_header      header;
+	uपूर्णांक8_t                     elements[];
+पूर्ण;
 
-struct qxl_ring {
-	struct ring	       *ring;
-	int			element_size;
-	int			n_elements;
-	int			prod_notify;
-	wait_queue_head_t      *push_event;
+काष्ठा qxl_ring अणु
+	काष्ठा ring	       *ring;
+	पूर्णांक			element_size;
+	पूर्णांक			n_elements;
+	पूर्णांक			prod_notअगरy;
+	रुको_queue_head_t      *push_event;
 	spinlock_t             lock;
-};
+पूर्ण;
 
-void qxl_ring_free(struct qxl_ring *ring)
-{
-	kfree(ring);
-}
+व्योम qxl_ring_मुक्त(काष्ठा qxl_ring *ring)
+अणु
+	kमुक्त(ring);
+पूर्ण
 
-void qxl_ring_init_hdr(struct qxl_ring *ring)
-{
-	ring->ring->header.notify_on_prod = ring->n_elements;
-}
+व्योम qxl_ring_init_hdr(काष्ठा qxl_ring *ring)
+अणु
+	ring->ring->header.notअगरy_on_prod = ring->n_elements;
+पूर्ण
 
-struct qxl_ring *
-qxl_ring_create(struct qxl_ring_header *header,
-		int element_size,
-		int n_elements,
-		int prod_notify,
-		bool set_prod_notify,
-		wait_queue_head_t *push_event)
-{
-	struct qxl_ring *ring;
+काष्ठा qxl_ring *
+qxl_ring_create(काष्ठा qxl_ring_header *header,
+		पूर्णांक element_size,
+		पूर्णांक n_elements,
+		पूर्णांक prod_notअगरy,
+		bool set_prod_notअगरy,
+		रुको_queue_head_t *push_event)
+अणु
+	काष्ठा qxl_ring *ring;
 
-	ring = kmalloc(sizeof(*ring), GFP_KERNEL);
-	if (!ring)
-		return NULL;
+	ring = kदो_स्मृति(माप(*ring), GFP_KERNEL);
+	अगर (!ring)
+		वापस शून्य;
 
-	ring->ring = (struct ring *)header;
+	ring->ring = (काष्ठा ring *)header;
 	ring->element_size = element_size;
 	ring->n_elements = n_elements;
-	ring->prod_notify = prod_notify;
+	ring->prod_notअगरy = prod_notअगरy;
 	ring->push_event = push_event;
-	if (set_prod_notify)
+	अगर (set_prod_notअगरy)
 		qxl_ring_init_hdr(ring);
 	spin_lock_init(&ring->lock);
-	return ring;
-}
+	वापस ring;
+पूर्ण
 
-static int qxl_check_header(struct qxl_ring *ring)
-{
-	int ret;
-	struct qxl_ring_header *header = &(ring->ring->header);
-	unsigned long flags;
+अटल पूर्णांक qxl_check_header(काष्ठा qxl_ring *ring)
+अणु
+	पूर्णांक ret;
+	काष्ठा qxl_ring_header *header = &(ring->ring->header);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ring->lock, flags);
 	ret = header->prod - header->cons < header->num_items;
-	if (ret == 0)
-		header->notify_on_cons = header->cons + 1;
+	अगर (ret == 0)
+		header->notअगरy_on_cons = header->cons + 1;
 	spin_unlock_irqrestore(&ring->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int qxl_check_idle(struct qxl_ring *ring)
-{
-	int ret;
-	struct qxl_ring_header *header = &(ring->ring->header);
-	unsigned long flags;
+पूर्णांक qxl_check_idle(काष्ठा qxl_ring *ring)
+अणु
+	पूर्णांक ret;
+	काष्ठा qxl_ring_header *header = &(ring->ring->header);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ring->lock, flags);
 	ret = header->prod == header->cons;
 	spin_unlock_irqrestore(&ring->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int qxl_ring_push(struct qxl_ring *ring,
-		  const void *new_elt, bool interruptible)
-{
-	struct qxl_ring_header *header = &(ring->ring->header);
-	uint8_t *elt;
-	int idx, ret;
-	unsigned long flags;
+पूर्णांक qxl_ring_push(काष्ठा qxl_ring *ring,
+		  स्थिर व्योम *new_elt, bool पूर्णांकerruptible)
+अणु
+	काष्ठा qxl_ring_header *header = &(ring->ring->header);
+	uपूर्णांक8_t *elt;
+	पूर्णांक idx, ret;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ring->lock, flags);
-	if (header->prod - header->cons == header->num_items) {
-		header->notify_on_cons = header->cons + 1;
+	अगर (header->prod - header->cons == header->num_items) अणु
+		header->notअगरy_on_cons = header->cons + 1;
 		mb();
 		spin_unlock_irqrestore(&ring->lock, flags);
-		if (!drm_can_sleep()) {
-			while (!qxl_check_header(ring))
+		अगर (!drm_can_sleep()) अणु
+			जबतक (!qxl_check_header(ring))
 				udelay(1);
-		} else {
-			if (interruptible) {
-				ret = wait_event_interruptible(*ring->push_event,
+		पूर्ण अन्यथा अणु
+			अगर (पूर्णांकerruptible) अणु
+				ret = रुको_event_पूर्णांकerruptible(*ring->push_event,
 							       qxl_check_header(ring));
-				if (ret)
-					return ret;
-			} else {
-				wait_event(*ring->push_event,
+				अगर (ret)
+					वापस ret;
+			पूर्ण अन्यथा अणु
+				रुको_event(*ring->push_event,
 					   qxl_check_header(ring));
-			}
+			पूर्ण
 
-		}
+		पूर्ण
 		spin_lock_irqsave(&ring->lock, flags);
-	}
+	पूर्ण
 
 	idx = header->prod & (ring->n_elements - 1);
 	elt = ring->ring->elements + idx * ring->element_size;
 
-	memcpy((void *)elt, new_elt, ring->element_size);
+	स_नकल((व्योम *)elt, new_elt, ring->element_size);
 
 	header->prod++;
 
 	mb();
 
-	if (header->prod == header->notify_on_prod)
-		outb(0, ring->prod_notify);
+	अगर (header->prod == header->notअगरy_on_prod)
+		outb(0, ring->prod_notअगरy);
 
 	spin_unlock_irqrestore(&ring->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool qxl_ring_pop(struct qxl_ring *ring,
-			 void *element)
-{
-	volatile struct qxl_ring_header *header = &(ring->ring->header);
-	volatile uint8_t *ring_elt;
-	int idx;
-	unsigned long flags;
+अटल bool qxl_ring_pop(काष्ठा qxl_ring *ring,
+			 व्योम *element)
+अणु
+	अस्थिर काष्ठा qxl_ring_header *header = &(ring->ring->header);
+	अस्थिर uपूर्णांक8_t *ring_elt;
+	पूर्णांक idx;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ring->lock, flags);
-	if (header->cons == header->prod) {
-		header->notify_on_prod = header->cons + 1;
+	अगर (header->cons == header->prod) अणु
+		header->notअगरy_on_prod = header->cons + 1;
 		spin_unlock_irqrestore(&ring->lock, flags);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	idx = header->cons & (ring->n_elements - 1);
 	ring_elt = ring->ring->elements + idx * ring->element_size;
 
-	memcpy(element, (void *)ring_elt, ring->element_size);
+	स_नकल(element, (व्योम *)ring_elt, ring->element_size);
 
 	header->cons++;
 
 	spin_unlock_irqrestore(&ring->lock, flags);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-int
-qxl_push_command_ring_release(struct qxl_device *qdev, struct qxl_release *release,
-			      uint32_t type, bool interruptible)
-{
-	struct qxl_command cmd;
-
-	cmd.type = type;
-	cmd.data = qxl_bo_physical_address(qdev, release->release_bo, release->release_offset);
-
-	return qxl_ring_push(qdev->command_ring, &cmd, interruptible);
-}
-
-int
-qxl_push_cursor_ring_release(struct qxl_device *qdev, struct qxl_release *release,
-			     uint32_t type, bool interruptible)
-{
-	struct qxl_command cmd;
+पूर्णांक
+qxl_push_command_ring_release(काष्ठा qxl_device *qdev, काष्ठा qxl_release *release,
+			      uपूर्णांक32_t type, bool पूर्णांकerruptible)
+अणु
+	काष्ठा qxl_command cmd;
 
 	cmd.type = type;
 	cmd.data = qxl_bo_physical_address(qdev, release->release_bo, release->release_offset);
 
-	return qxl_ring_push(qdev->cursor_ring, &cmd, interruptible);
-}
+	वापस qxl_ring_push(qdev->command_ring, &cmd, पूर्णांकerruptible);
+पूर्ण
 
-bool qxl_queue_garbage_collect(struct qxl_device *qdev, bool flush)
-{
-	if (!qxl_check_idle(qdev->release_ring)) {
+पूर्णांक
+qxl_push_cursor_ring_release(काष्ठा qxl_device *qdev, काष्ठा qxl_release *release,
+			     uपूर्णांक32_t type, bool पूर्णांकerruptible)
+अणु
+	काष्ठा qxl_command cmd;
+
+	cmd.type = type;
+	cmd.data = qxl_bo_physical_address(qdev, release->release_bo, release->release_offset);
+
+	वापस qxl_ring_push(qdev->cursor_ring, &cmd, पूर्णांकerruptible);
+पूर्ण
+
+bool qxl_queue_garbage_collect(काष्ठा qxl_device *qdev, bool flush)
+अणु
+	अगर (!qxl_check_idle(qdev->release_ring)) अणु
 		schedule_work(&qdev->gc_work);
-		if (flush)
+		अगर (flush)
 			flush_work(&qdev->gc_work);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-int qxl_garbage_collect(struct qxl_device *qdev)
-{
-	struct qxl_release *release;
-	uint64_t id, next_id;
-	int i = 0;
-	union qxl_release_info *info;
+पूर्णांक qxl_garbage_collect(काष्ठा qxl_device *qdev)
+अणु
+	काष्ठा qxl_release *release;
+	uपूर्णांक64_t id, next_id;
+	पूर्णांक i = 0;
+	जोड़ qxl_release_info *info;
 
-	while (qxl_ring_pop(qdev->release_ring, &id)) {
+	जबतक (qxl_ring_pop(qdev->release_ring, &id)) अणु
 		DRM_DEBUG_DRIVER("popped %lld\n", id);
-		while (id) {
+		जबतक (id) अणु
 			release = qxl_release_from_id_locked(qdev, id);
-			if (release == NULL)
-				break;
+			अगर (release == शून्य)
+				अवरोध;
 
 			info = qxl_release_map(qdev, release);
 			next_id = info->next;
@@ -238,160 +239,160 @@ int qxl_garbage_collect(struct qxl_device *qdev)
 			DRM_DEBUG_DRIVER("popped %lld, next %lld\n", id,
 					 next_id);
 
-			switch (release->type) {
-			case QXL_RELEASE_DRAWABLE:
-			case QXL_RELEASE_SURFACE_CMD:
-			case QXL_RELEASE_CURSOR_CMD:
-				break;
-			default:
+			चयन (release->type) अणु
+			हाल QXL_RELEASE_DRAWABLE:
+			हाल QXL_RELEASE_SURFACE_CMD:
+			हाल QXL_RELEASE_CURSOR_CMD:
+				अवरोध;
+			शेष:
 				DRM_ERROR("unexpected release type\n");
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			id = next_id;
 
-			qxl_release_free(qdev, release);
+			qxl_release_मुक्त(qdev, release);
 			++i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	wake_up_all(&qdev->release_event);
 	DRM_DEBUG_DRIVER("%d\n", i);
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-int qxl_alloc_bo_reserved(struct qxl_device *qdev,
-			  struct qxl_release *release,
-			  unsigned long size,
-			  struct qxl_bo **_bo)
-{
-	struct qxl_bo *bo;
-	int ret;
+पूर्णांक qxl_alloc_bo_reserved(काष्ठा qxl_device *qdev,
+			  काष्ठा qxl_release *release,
+			  अचिन्हित दीर्घ size,
+			  काष्ठा qxl_bo **_bo)
+अणु
+	काष्ठा qxl_bo *bo;
+	पूर्णांक ret;
 
 	ret = qxl_bo_create(qdev, size, false /* not kernel - device */,
-			    false, QXL_GEM_DOMAIN_VRAM, 0, NULL, &bo);
-	if (ret) {
+			    false, QXL_GEM_DOMAIN_VRAM, 0, शून्य, &bo);
+	अगर (ret) अणु
 		DRM_ERROR("failed to allocate VRAM BO\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = qxl_release_list_add(release, bo);
-	if (ret)
-		goto out_unref;
+	अगर (ret)
+		जाओ out_unref;
 
 	*_bo = bo;
-	return 0;
+	वापस 0;
 out_unref:
 	qxl_bo_unref(&bo);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wait_for_io_cmd_user(struct qxl_device *qdev, uint8_t val, long port, bool intr)
-{
-	int irq_num;
-	long addr = qdev->io_base + port;
-	int ret;
+अटल पूर्णांक रुको_क्रम_io_cmd_user(काष्ठा qxl_device *qdev, uपूर्णांक8_t val, दीर्घ port, bool पूर्णांकr)
+अणु
+	पूर्णांक irq_num;
+	दीर्घ addr = qdev->io_base + port;
+	पूर्णांक ret;
 
 	mutex_lock(&qdev->async_io_mutex);
-	irq_num = atomic_read(&qdev->irq_received_io_cmd);
-	if (qdev->last_sent_io_cmd > irq_num) {
-		if (intr)
-			ret = wait_event_interruptible_timeout(qdev->io_cmd_event,
-							       atomic_read(&qdev->irq_received_io_cmd) > irq_num, 5*HZ);
-		else
-			ret = wait_event_timeout(qdev->io_cmd_event,
-						 atomic_read(&qdev->irq_received_io_cmd) > irq_num, 5*HZ);
-		/* 0 is timeout, just bail the "hw" has gone away */
-		if (ret <= 0)
-			goto out;
-		irq_num = atomic_read(&qdev->irq_received_io_cmd);
-	}
+	irq_num = atomic_पढ़ो(&qdev->irq_received_io_cmd);
+	अगर (qdev->last_sent_io_cmd > irq_num) अणु
+		अगर (पूर्णांकr)
+			ret = रुको_event_पूर्णांकerruptible_समयout(qdev->io_cmd_event,
+							       atomic_पढ़ो(&qdev->irq_received_io_cmd) > irq_num, 5*HZ);
+		अन्यथा
+			ret = रुको_event_समयout(qdev->io_cmd_event,
+						 atomic_पढ़ो(&qdev->irq_received_io_cmd) > irq_num, 5*HZ);
+		/* 0 is समयout, just bail the "hw" has gone away */
+		अगर (ret <= 0)
+			जाओ out;
+		irq_num = atomic_पढ़ो(&qdev->irq_received_io_cmd);
+	पूर्ण
 	outb(val, addr);
 	qdev->last_sent_io_cmd = irq_num + 1;
-	if (intr)
-		ret = wait_event_interruptible_timeout(qdev->io_cmd_event,
-						       atomic_read(&qdev->irq_received_io_cmd) > irq_num, 5*HZ);
-	else
-		ret = wait_event_timeout(qdev->io_cmd_event,
-					 atomic_read(&qdev->irq_received_io_cmd) > irq_num, 5*HZ);
+	अगर (पूर्णांकr)
+		ret = रुको_event_पूर्णांकerruptible_समयout(qdev->io_cmd_event,
+						       atomic_पढ़ो(&qdev->irq_received_io_cmd) > irq_num, 5*HZ);
+	अन्यथा
+		ret = रुको_event_समयout(qdev->io_cmd_event,
+					 atomic_पढ़ो(&qdev->irq_received_io_cmd) > irq_num, 5*HZ);
 out:
-	if (ret > 0)
+	अगर (ret > 0)
 		ret = 0;
 	mutex_unlock(&qdev->async_io_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void wait_for_io_cmd(struct qxl_device *qdev, uint8_t val, long port)
-{
-	int ret;
+अटल व्योम रुको_क्रम_io_cmd(काष्ठा qxl_device *qdev, uपूर्णांक8_t val, दीर्घ port)
+अणु
+	पूर्णांक ret;
 
 restart:
-	ret = wait_for_io_cmd_user(qdev, val, port, false);
-	if (ret == -ERESTARTSYS)
-		goto restart;
-}
+	ret = रुको_क्रम_io_cmd_user(qdev, val, port, false);
+	अगर (ret == -ERESTARTSYS)
+		जाओ restart;
+पूर्ण
 
-int qxl_io_update_area(struct qxl_device *qdev, struct qxl_bo *surf,
-			const struct qxl_rect *area)
-{
-	int surface_id;
-	uint32_t surface_width, surface_height;
-	int ret;
+पूर्णांक qxl_io_update_area(काष्ठा qxl_device *qdev, काष्ठा qxl_bo *surf,
+			स्थिर काष्ठा qxl_rect *area)
+अणु
+	पूर्णांक surface_id;
+	uपूर्णांक32_t surface_width, surface_height;
+	पूर्णांक ret;
 
-	if (!surf->hw_surf_alloc)
+	अगर (!surf->hw_surf_alloc)
 		DRM_ERROR("got io update area with no hw surface\n");
 
-	if (surf->is_primary)
+	अगर (surf->is_primary)
 		surface_id = 0;
-	else
+	अन्यथा
 		surface_id = surf->surface_id;
 	surface_width = surf->surf.width;
 	surface_height = surf->surf.height;
 
-	if (area->left < 0 || area->top < 0 ||
+	अगर (area->left < 0 || area->top < 0 ||
 	    area->right > surface_width || area->bottom > surface_height)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mutex_lock(&qdev->update_area_mutex);
 	qdev->ram_header->update_area = *area;
 	qdev->ram_header->update_surface = surface_id;
-	ret = wait_for_io_cmd_user(qdev, 0, QXL_IO_UPDATE_AREA_ASYNC, true);
+	ret = रुको_क्रम_io_cmd_user(qdev, 0, QXL_IO_UPDATE_AREA_ASYNC, true);
 	mutex_unlock(&qdev->update_area_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void qxl_io_notify_oom(struct qxl_device *qdev)
-{
+व्योम qxl_io_notअगरy_oom(काष्ठा qxl_device *qdev)
+अणु
 	outb(0, qdev->io_base + QXL_IO_NOTIFY_OOM);
-}
+पूर्ण
 
-void qxl_io_flush_release(struct qxl_device *qdev)
-{
+व्योम qxl_io_flush_release(काष्ठा qxl_device *qdev)
+अणु
 	outb(0, qdev->io_base + QXL_IO_FLUSH_RELEASE);
-}
+पूर्ण
 
-void qxl_io_flush_surfaces(struct qxl_device *qdev)
-{
-	wait_for_io_cmd(qdev, 0, QXL_IO_FLUSH_SURFACES_ASYNC);
-}
+व्योम qxl_io_flush_surfaces(काष्ठा qxl_device *qdev)
+अणु
+	रुको_क्रम_io_cmd(qdev, 0, QXL_IO_FLUSH_SURFACES_ASYNC);
+पूर्ण
 
-void qxl_io_destroy_primary(struct qxl_device *qdev)
-{
-	wait_for_io_cmd(qdev, 0, QXL_IO_DESTROY_PRIMARY_ASYNC);
+व्योम qxl_io_destroy_primary(काष्ठा qxl_device *qdev)
+अणु
+	रुको_क्रम_io_cmd(qdev, 0, QXL_IO_DESTROY_PRIMARY_ASYNC);
 	qdev->primary_bo->is_primary = false;
 	drm_gem_object_put(&qdev->primary_bo->tbo.base);
-	qdev->primary_bo = NULL;
-}
+	qdev->primary_bo = शून्य;
+पूर्ण
 
-void qxl_io_create_primary(struct qxl_device *qdev, struct qxl_bo *bo)
-{
-	struct qxl_surface_create *create;
+व्योम qxl_io_create_primary(काष्ठा qxl_device *qdev, काष्ठा qxl_bo *bo)
+अणु
+	काष्ठा qxl_surface_create *create;
 
-	if (WARN_ON(qdev->primary_bo))
-		return;
+	अगर (WARN_ON(qdev->primary_bo))
+		वापस;
 
 	DRM_DEBUG_DRIVER("qdev %p, ram_header %p\n", qdev, qdev->ram_header);
 	create = &qdev->ram_header->create_surface;
-	create->format = bo->surf.format;
+	create->क्रमmat = bo->surf.क्रमmat;
 	create->width = bo->surf.width;
 	create->height = bo->surf.height;
 	create->stride = bo->surf.stride;
@@ -402,93 +403,93 @@ void qxl_io_create_primary(struct qxl_device *qdev, struct qxl_bo *bo)
 	create->flags = QXL_SURF_FLAG_KEEP_DATA;
 	create->type = QXL_SURF_TYPE_PRIMARY;
 
-	wait_for_io_cmd(qdev, 0, QXL_IO_CREATE_PRIMARY_ASYNC);
+	रुको_क्रम_io_cmd(qdev, 0, QXL_IO_CREATE_PRIMARY_ASYNC);
 	qdev->primary_bo = bo;
 	qdev->primary_bo->is_primary = true;
 	drm_gem_object_get(&qdev->primary_bo->tbo.base);
-}
+पूर्ण
 
-void qxl_io_memslot_add(struct qxl_device *qdev, uint8_t id)
-{
+व्योम qxl_io_memslot_add(काष्ठा qxl_device *qdev, uपूर्णांक8_t id)
+अणु
 	DRM_DEBUG_DRIVER("qxl_memslot_add %d\n", id);
-	wait_for_io_cmd(qdev, id, QXL_IO_MEMSLOT_ADD_ASYNC);
-}
+	रुको_क्रम_io_cmd(qdev, id, QXL_IO_MEMSLOT_ADD_ASYNC);
+पूर्ण
 
-void qxl_io_reset(struct qxl_device *qdev)
-{
+व्योम qxl_io_reset(काष्ठा qxl_device *qdev)
+अणु
 	outb(0, qdev->io_base + QXL_IO_RESET);
-}
+पूर्ण
 
-void qxl_io_monitors_config(struct qxl_device *qdev)
-{
-	wait_for_io_cmd(qdev, 0, QXL_IO_MONITORS_CONFIG_ASYNC);
-}
+व्योम qxl_io_monitors_config(काष्ठा qxl_device *qdev)
+अणु
+	रुको_क्रम_io_cmd(qdev, 0, QXL_IO_MONITORS_CONFIG_ASYNC);
+पूर्ण
 
-int qxl_surface_id_alloc(struct qxl_device *qdev,
-		      struct qxl_bo *surf)
-{
-	uint32_t handle;
-	int idr_ret;
-	int count = 0;
+पूर्णांक qxl_surface_id_alloc(काष्ठा qxl_device *qdev,
+		      काष्ठा qxl_bo *surf)
+अणु
+	uपूर्णांक32_t handle;
+	पूर्णांक idr_ret;
+	पूर्णांक count = 0;
 again:
 	idr_preload(GFP_ATOMIC);
 	spin_lock(&qdev->surf_id_idr_lock);
-	idr_ret = idr_alloc(&qdev->surf_id_idr, NULL, 1, 0, GFP_NOWAIT);
+	idr_ret = idr_alloc(&qdev->surf_id_idr, शून्य, 1, 0, GFP_NOWAIT);
 	spin_unlock(&qdev->surf_id_idr_lock);
 	idr_preload_end();
-	if (idr_ret < 0)
-		return idr_ret;
+	अगर (idr_ret < 0)
+		वापस idr_ret;
 	handle = idr_ret;
 
-	if (handle >= qdev->rom->n_surfaces) {
+	अगर (handle >= qdev->rom->n_surfaces) अणु
 		count++;
 		spin_lock(&qdev->surf_id_idr_lock);
-		idr_remove(&qdev->surf_id_idr, handle);
+		idr_हटाओ(&qdev->surf_id_idr, handle);
 		spin_unlock(&qdev->surf_id_idr_lock);
 		qxl_reap_surface_id(qdev, 2);
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 	surf->surface_id = handle;
 
 	spin_lock(&qdev->surf_id_idr_lock);
 	qdev->last_alloced_surf_id = handle;
 	spin_unlock(&qdev->surf_id_idr_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void qxl_surface_id_dealloc(struct qxl_device *qdev,
-			    uint32_t surface_id)
-{
+व्योम qxl_surface_id_dealloc(काष्ठा qxl_device *qdev,
+			    uपूर्णांक32_t surface_id)
+अणु
 	spin_lock(&qdev->surf_id_idr_lock);
-	idr_remove(&qdev->surf_id_idr, surface_id);
+	idr_हटाओ(&qdev->surf_id_idr, surface_id);
 	spin_unlock(&qdev->surf_id_idr_lock);
-}
+पूर्ण
 
-int qxl_hw_surface_alloc(struct qxl_device *qdev,
-			 struct qxl_bo *surf)
-{
-	struct qxl_surface_cmd *cmd;
-	struct qxl_release *release;
-	int ret;
+पूर्णांक qxl_hw_surface_alloc(काष्ठा qxl_device *qdev,
+			 काष्ठा qxl_bo *surf)
+अणु
+	काष्ठा qxl_surface_cmd *cmd;
+	काष्ठा qxl_release *release;
+	पूर्णांक ret;
 
-	if (surf->hw_surf_alloc)
-		return 0;
+	अगर (surf->hw_surf_alloc)
+		वापस 0;
 
 	ret = qxl_alloc_surface_release_reserved(qdev, QXL_SURFACE_CMD_CREATE,
-						 NULL,
+						 शून्य,
 						 &release);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = qxl_release_reserve_list(release, true);
-	if (ret) {
-		qxl_release_free(qdev, release);
-		return ret;
-	}
-	cmd = (struct qxl_surface_cmd *)qxl_release_map(qdev, release);
+	अगर (ret) अणु
+		qxl_release_मुक्त(qdev, release);
+		वापस ret;
+	पूर्ण
+	cmd = (काष्ठा qxl_surface_cmd *)qxl_release_map(qdev, release);
 	cmd->type = QXL_SURFACE_CMD_CREATE;
 	cmd->flags = QXL_SURF_FLAG_KEEP_DATA;
-	cmd->u.surface_create.format = surf->surf.format;
+	cmd->u.surface_create.क्रमmat = surf->surf.क्रमmat;
 	cmd->u.surface_create.width = surf->surf.width;
 	cmd->u.surface_create.height = surf->surf.height;
 	cmd->u.surface_create.stride = surf->surf.stride;
@@ -498,9 +499,9 @@ int qxl_hw_surface_alloc(struct qxl_device *qdev,
 
 	surf->surf_create = release;
 
-	/* no need to add a release to the fence for this surface bo,
+	/* no need to add a release to the fence क्रम this surface bo,
 	   since it is only released when we ask to destroy the surface
-	   and it would never signal otherwise */
+	   and it would never संकेत otherwise */
 	qxl_release_fence_buffer_objects(release);
 	qxl_push_command_ring_release(qdev, release, QXL_CMD_SURFACE, false);
 
@@ -508,30 +509,30 @@ int qxl_hw_surface_alloc(struct qxl_device *qdev,
 	spin_lock(&qdev->surf_id_idr_lock);
 	idr_replace(&qdev->surf_id_idr, surf, surf->surface_id);
 	spin_unlock(&qdev->surf_id_idr_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int qxl_hw_surface_dealloc(struct qxl_device *qdev,
-			   struct qxl_bo *surf)
-{
-	struct qxl_surface_cmd *cmd;
-	struct qxl_release *release;
-	int ret;
-	int id;
+पूर्णांक qxl_hw_surface_dealloc(काष्ठा qxl_device *qdev,
+			   काष्ठा qxl_bo *surf)
+अणु
+	काष्ठा qxl_surface_cmd *cmd;
+	काष्ठा qxl_release *release;
+	पूर्णांक ret;
+	पूर्णांक id;
 
-	if (!surf->hw_surf_alloc)
-		return 0;
+	अगर (!surf->hw_surf_alloc)
+		वापस 0;
 
 	ret = qxl_alloc_surface_release_reserved(qdev, QXL_SURFACE_CMD_DESTROY,
 						 surf->surf_create,
 						 &release);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	surf->surf_create = NULL;
-	/* remove the surface from the idr, but not the surface id yet */
+	surf->surf_create = शून्य;
+	/* हटाओ the surface from the idr, but not the surface id yet */
 	spin_lock(&qdev->surf_id_idr_lock);
-	idr_replace(&qdev->surf_id_idr, NULL, surf->surface_id);
+	idr_replace(&qdev->surf_id_idr, शून्य, surf->surface_id);
 	spin_unlock(&qdev->surf_id_idr_lock);
 	surf->hw_surf_alloc = false;
 
@@ -539,7 +540,7 @@ int qxl_hw_surface_dealloc(struct qxl_device *qdev,
 	surf->surface_id = 0;
 
 	release->surface_release_id = id;
-	cmd = (struct qxl_surface_cmd *)qxl_release_map(qdev, release);
+	cmd = (काष्ठा qxl_surface_cmd *)qxl_release_map(qdev, release);
 	cmd->type = QXL_SURFACE_CMD_DESTROY;
 	cmd->surface_id = id;
 	qxl_release_unmap(qdev, release, &cmd->release_info);
@@ -547,15 +548,15 @@ int qxl_hw_surface_dealloc(struct qxl_device *qdev,
 	qxl_release_fence_buffer_objects(release);
 	qxl_push_command_ring_release(qdev, release, QXL_CMD_SURFACE, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qxl_update_surface(struct qxl_device *qdev, struct qxl_bo *surf)
-{
-	struct qxl_rect rect;
-	int ret;
+अटल पूर्णांक qxl_update_surface(काष्ठा qxl_device *qdev, काष्ठा qxl_bo *surf)
+अणु
+	काष्ठा qxl_rect rect;
+	पूर्णांक ret;
 
-	/* if we are evicting, we need to make sure the surface is up
+	/* अगर we are evicting, we need to make sure the surface is up
 	   to date */
 	rect.left = 0;
 	rect.right = surf->surf.width;
@@ -563,59 +564,59 @@ static int qxl_update_surface(struct qxl_device *qdev, struct qxl_bo *surf)
 	rect.bottom = surf->surf.height;
 retry:
 	ret = qxl_io_update_area(qdev, surf, &rect);
-	if (ret == -ERESTARTSYS)
-		goto retry;
-	return ret;
-}
+	अगर (ret == -ERESTARTSYS)
+		जाओ retry;
+	वापस ret;
+पूर्ण
 
-static void qxl_surface_evict_locked(struct qxl_device *qdev, struct qxl_bo *surf, bool do_update_area)
-{
-	/* no need to update area if we are just freeing the surface normally */
-	if (do_update_area)
+अटल व्योम qxl_surface_evict_locked(काष्ठा qxl_device *qdev, काष्ठा qxl_bo *surf, bool करो_update_area)
+अणु
+	/* no need to update area अगर we are just मुक्तing the surface normally */
+	अगर (करो_update_area)
 		qxl_update_surface(qdev, surf);
 
 	/* nuke the surface id at the hw */
 	qxl_hw_surface_dealloc(qdev, surf);
-}
+पूर्ण
 
-void qxl_surface_evict(struct qxl_device *qdev, struct qxl_bo *surf, bool do_update_area)
-{
+व्योम qxl_surface_evict(काष्ठा qxl_device *qdev, काष्ठा qxl_bo *surf, bool करो_update_area)
+अणु
 	mutex_lock(&qdev->surf_evict_mutex);
-	qxl_surface_evict_locked(qdev, surf, do_update_area);
+	qxl_surface_evict_locked(qdev, surf, करो_update_area);
 	mutex_unlock(&qdev->surf_evict_mutex);
-}
+पूर्ण
 
-static int qxl_reap_surf(struct qxl_device *qdev, struct qxl_bo *surf, bool stall)
-{
-	int ret;
+अटल पूर्णांक qxl_reap_surf(काष्ठा qxl_device *qdev, काष्ठा qxl_bo *surf, bool stall)
+अणु
+	पूर्णांक ret;
 
 	ret = qxl_bo_reserve(surf);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (stall)
+	अगर (stall)
 		mutex_unlock(&qdev->surf_evict_mutex);
 
-	ret = ttm_bo_wait(&surf->tbo, true, !stall);
+	ret = tपंचांग_bo_रुको(&surf->tbo, true, !stall);
 
-	if (stall)
+	अगर (stall)
 		mutex_lock(&qdev->surf_evict_mutex);
-	if (ret) {
+	अगर (ret) अणु
 		qxl_bo_unreserve(surf);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	qxl_surface_evict_locked(qdev, surf, true);
 	qxl_bo_unreserve(surf);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qxl_reap_surface_id(struct qxl_device *qdev, int max_to_reap)
-{
-	int num_reaped = 0;
-	int i, ret;
+अटल पूर्णांक qxl_reap_surface_id(काष्ठा qxl_device *qdev, पूर्णांक max_to_reap)
+अणु
+	पूर्णांक num_reaped = 0;
+	पूर्णांक i, ret;
 	bool stall = false;
-	int start = 0;
+	पूर्णांक start = 0;
 
 	mutex_lock(&qdev->surf_evict_mutex);
 again:
@@ -624,36 +625,36 @@ again:
 	start = qdev->last_alloced_surf_id + 1;
 	spin_unlock(&qdev->surf_id_idr_lock);
 
-	for (i = start; i < start + qdev->rom->n_surfaces; i++) {
-		void *objptr;
-		int surfid = i % qdev->rom->n_surfaces;
+	क्रम (i = start; i < start + qdev->rom->n_surfaces; i++) अणु
+		व्योम *objptr;
+		पूर्णांक surfid = i % qdev->rom->n_surfaces;
 
-		/* this avoids the case where the objects is in the
+		/* this aव्योमs the हाल where the objects is in the
 		   idr but has been evicted half way - its makes
 		   the idr lookup atomic with the eviction */
 		spin_lock(&qdev->surf_id_idr_lock);
 		objptr = idr_find(&qdev->surf_id_idr, surfid);
 		spin_unlock(&qdev->surf_id_idr_lock);
 
-		if (!objptr)
-			continue;
+		अगर (!objptr)
+			जारी;
 
 		ret = qxl_reap_surf(qdev, objptr, stall);
-		if (ret == 0)
+		अगर (ret == 0)
 			num_reaped++;
-		if (num_reaped >= max_to_reap)
-			break;
-	}
-	if (num_reaped == 0 && stall == false) {
+		अगर (num_reaped >= max_to_reap)
+			अवरोध;
+	पूर्ण
+	अगर (num_reaped == 0 && stall == false) अणु
 		stall = true;
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
 	mutex_unlock(&qdev->surf_evict_mutex);
-	if (num_reaped) {
+	अगर (num_reaped) अणु
 		usleep_range(500, 1000);
 		qxl_queue_garbage_collect(qdev, true);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

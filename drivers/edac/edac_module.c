@@ -1,167 +1,168 @@
+<शैली गुरु>
 /*
  * edac_module.c
  *
- * (C) 2007 www.softwarebitmaker.com
+ * (C) 2007 www.softwarebiपंचांगaker.com
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2. This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  *
- * Author: Doug Thompson <dougthompson@xmission.com>
+ * Author: Doug Thompson <करोugthompson@xmission.com>
  *
  */
-#include <linux/edac.h>
+#समावेश <linux/edac.h>
 
-#include "edac_mc.h"
-#include "edac_module.h"
+#समावेश "edac_mc.h"
+#समावेश "edac_module.h"
 
-#define EDAC_VERSION "Ver: 3.0.0"
+#घोषणा EDAC_VERSION "Ver: 3.0.0"
 
-#ifdef CONFIG_EDAC_DEBUG
+#अगर_घोषित CONFIG_EDAC_DEBUG
 
-static int edac_set_debug_level(const char *buf,
-				const struct kernel_param *kp)
-{
-	unsigned long val;
-	int ret;
+अटल पूर्णांक edac_set_debug_level(स्थिर अक्षर *buf,
+				स्थिर काष्ठा kernel_param *kp)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 0, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 0, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val > 4)
-		return -EINVAL;
+	अगर (val > 4)
+		वापस -EINVAL;
 
-	return param_set_int(buf, kp);
-}
+	वापस param_set_पूर्णांक(buf, kp);
+पूर्ण
 
 /* Values of 0 to 4 will generate output */
-int edac_debug_level = 2;
+पूर्णांक edac_debug_level = 2;
 EXPORT_SYMBOL_GPL(edac_debug_level);
 
-module_param_call(edac_debug_level, edac_set_debug_level, param_get_int,
+module_param_call(edac_debug_level, edac_set_debug_level, param_get_पूर्णांक,
 		  &edac_debug_level, 0644);
 MODULE_PARM_DESC(edac_debug_level, "EDAC debug level: [0-4], default: 2");
-#endif
+#पूर्ण_अगर
 
 /*
  * edac_op_state_to_string()
  */
-char *edac_op_state_to_string(int opstate)
-{
-	if (opstate == OP_RUNNING_POLL)
-		return "POLLED";
-	else if (opstate == OP_RUNNING_INTERRUPT)
-		return "INTERRUPT";
-	else if (opstate == OP_RUNNING_POLL_INTR)
-		return "POLL-INTR";
-	else if (opstate == OP_ALLOC)
-		return "ALLOC";
-	else if (opstate == OP_OFFLINE)
-		return "OFFLINE";
+अक्षर *edac_op_state_to_string(पूर्णांक opstate)
+अणु
+	अगर (opstate == OP_RUNNING_POLL)
+		वापस "POLLED";
+	अन्यथा अगर (opstate == OP_RUNNING_INTERRUPT)
+		वापस "INTERRUPT";
+	अन्यथा अगर (opstate == OP_RUNNING_POLL_INTR)
+		वापस "POLL-INTR";
+	अन्यथा अगर (opstate == OP_ALLOC)
+		वापस "ALLOC";
+	अन्यथा अगर (opstate == OP_OFFLINE)
+		वापस "OFFLINE";
 
-	return "UNKNOWN";
-}
+	वापस "UNKNOWN";
+पूर्ण
 
 /*
- * sysfs object: /sys/devices/system/edac
+ * sysfs object: /sys/devices/प्रणाली/edac
  *	need to export to other files
  */
-static struct bus_type edac_subsys = {
+अटल काष्ठा bus_type edac_subsys = अणु
 	.name = "edac",
 	.dev_name = "edac",
-};
+पूर्ण;
 
-static int edac_subsys_init(void)
-{
-	int err;
+अटल पूर्णांक edac_subsys_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	/* create the /sys/devices/system/edac directory */
-	err = subsys_system_register(&edac_subsys, NULL);
-	if (err)
-		printk(KERN_ERR "Error registering toplevel EDAC sysfs dir\n");
+	/* create the /sys/devices/प्रणाली/edac directory */
+	err = subsys_प्रणाली_रेजिस्टर(&edac_subsys, शून्य);
+	अगर (err)
+		prपूर्णांकk(KERN_ERR "Error registering toplevel EDAC sysfs dir\n");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void edac_subsys_exit(void)
-{
-	bus_unregister(&edac_subsys);
-}
+अटल व्योम edac_subsys_निकास(व्योम)
+अणु
+	bus_unरेजिस्टर(&edac_subsys);
+पूर्ण
 
-/* return pointer to the 'edac' node in sysfs */
-struct bus_type *edac_get_sysfs_subsys(void)
-{
-	return &edac_subsys;
-}
+/* वापस poपूर्णांकer to the 'edac' node in sysfs */
+काष्ठा bus_type *edac_get_sysfs_subsys(व्योम)
+अणु
+	वापस &edac_subsys;
+पूर्ण
 EXPORT_SYMBOL_GPL(edac_get_sysfs_subsys);
 /*
  * edac_init
- *      module initialization entry point
+ *      module initialization entry poपूर्णांक
  */
-static int __init edac_init(void)
-{
-	int err = 0;
+अटल पूर्णांक __init edac_init(व्योम)
+अणु
+	पूर्णांक err = 0;
 
-	edac_printk(KERN_INFO, EDAC_MC, EDAC_VERSION "\n");
+	edac_prपूर्णांकk(KERN_INFO, EDAC_MC, EDAC_VERSION "\n");
 
 	err = edac_subsys_init();
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/*
 	 * Harvest and clear any boot/initialization PCI parity errors
 	 *
-	 * FIXME: This only clears errors logged by devices present at time of
-	 *      module initialization.  We should also do an initial clear
+	 * FIXME: This only clears errors logged by devices present at समय of
+	 *      module initialization.  We should also करो an initial clear
 	 *      of each newly hotplugged device.
 	 */
 	edac_pci_clear_parity_errors();
 
 	err = edac_mc_sysfs_init();
-	if (err)
-		goto err_sysfs;
+	अगर (err)
+		जाओ err_sysfs;
 
 	edac_debugfs_init();
 
 	err = edac_workqueue_setup();
-	if (err) {
-		edac_printk(KERN_ERR, EDAC_MC, "Failure initializing workqueue\n");
-		goto err_wq;
-	}
+	अगर (err) अणु
+		edac_prपूर्णांकk(KERN_ERR, EDAC_MC, "Failure initializing workqueue\n");
+		जाओ err_wq;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_wq:
-	edac_debugfs_exit();
-	edac_mc_sysfs_exit();
+	edac_debugfs_निकास();
+	edac_mc_sysfs_निकास();
 
 err_sysfs:
-	edac_subsys_exit();
+	edac_subsys_निकास();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * edac_exit()
- *      module exit/termination function
+ * edac_निकास()
+ *      module निकास/termination function
  */
-static void __exit edac_exit(void)
-{
+अटल व्योम __निकास edac_निकास(व्योम)
+अणु
 	edac_dbg(0, "\n");
 
-	/* tear down the various subsystems */
-	edac_workqueue_teardown();
-	edac_mc_sysfs_exit();
-	edac_debugfs_exit();
-	edac_subsys_exit();
-}
+	/* tear करोwn the various subप्रणालीs */
+	edac_workqueue_tearकरोwn();
+	edac_mc_sysfs_निकास();
+	edac_debugfs_निकास();
+	edac_subsys_निकास();
+पूर्ण
 
 /*
- * Inform the kernel of our entry and exit points
+ * Inक्रमm the kernel of our entry and निकास poपूर्णांकs
  */
 subsys_initcall(edac_init);
-module_exit(edac_exit);
+module_निकास(edac_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Doug Thompson www.softwarebitmaker.com, et al");

@@ -1,101 +1,102 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2014 Freescale Semiconductor, Inc.
  *
  * Author: Jun Li
  */
 
-#ifndef __DRIVERS_USB_CHIPIDEA_OTG_FSM_H
-#define __DRIVERS_USB_CHIPIDEA_OTG_FSM_H
+#अगर_अघोषित __DRIVERS_USB_CHIPIDEA_OTG_FSM_H
+#घोषणा __DRIVERS_USB_CHIPIDEA_OTG_FSM_H
 
-#include <linux/usb/otg-fsm.h>
+#समावेश <linux/usb/otg-fsm.h>
 
 /*
- *  A-DEVICE timing  constants
+ *  A-DEVICE timing  स्थिरants
  */
 
-/* Wait for VBUS Rise  */
-#define TA_WAIT_VRISE        (100)	/* a_wait_vrise: section 7.1.2
-					 * a_wait_vrise_tmr: section 7.4.5.1
+/* Wait क्रम VBUS Rise  */
+#घोषणा TA_WAIT_VRISE        (100)	/* a_रुको_vrise: section 7.1.2
+					 * a_रुको_vrise_पंचांगr: section 7.4.5.1
 					 * TA_VBUS_RISE <= 100ms, section 4.4
 					 * Table 4-1: Electrical Characteristics
 					 * ->DC Electrical Timing
 					 */
-/* Wait for VBUS Fall  */
-#define TA_WAIT_VFALL        (1000)	/* a_wait_vfall: section 7.1.7
-					 * a_wait_vfall_tmr: section: 7.4.5.2
+/* Wait क्रम VBUS Fall  */
+#घोषणा TA_WAIT_VFALL        (1000)	/* a_रुको_vfall: section 7.1.7
+					 * a_रुको_vfall_पंचांगr: section: 7.4.5.2
 					 */
-/* Wait for B-Connect */
-#define TA_WAIT_BCON         (10000)	/* a_wait_bcon: section 7.1.3
+/* Wait क्रम B-Connect */
+#घोषणा TA_WAIT_BCON         (10000)	/* a_रुको_bcon: section 7.1.3
 					 * TA_WAIT_BCON: should be between 1100
 					 * and 30000 ms, section 5.5, Table 5-1
 					 */
 /* A-Idle to B-Disconnect */
-#define TA_AIDL_BDIS         (5000)	/* a_suspend min 200 ms, section 5.2.1
+#घोषणा TA_AIDL_BDIS         (5000)	/* a_suspend min 200 ms, section 5.2.1
 					 * TA_AIDL_BDIS: section 5.5, Table 5-1
 					 */
 /* B-Idle to A-Disconnect */
-#define TA_BIDL_ADIS         (500)	/* TA_BIDL_ADIS: section 5.2.1
-					 * 500ms is used for B switch to host
-					 * for safe
+#घोषणा TA_BIDL_ADIS         (500)	/* TA_BIDL_ADIS: section 5.2.1
+					 * 500ms is used क्रम B चयन to host
+					 * क्रम safe
 					 */
 
 /*
- * B-device timing constants
+ * B-device timing स्थिरants
  */
 
 /* Data-Line Pulse Time*/
-#define TB_DATA_PLS          (10)	/* b_srp_init,continue 5~10ms
+#घोषणा TB_DATA_PLS          (10)	/* b_srp_init,जारी 5~10ms
 					 * section:5.1.3
 					 */
 /* SRP Fail Time  */
-#define TB_SRP_FAIL          (6000)	/* b_srp_init,fail time 5~6s
+#घोषणा TB_SRP_FAIL          (6000)	/* b_srp_init,fail समय 5~6s
 					 * section:5.1.6
 					 */
 /* A-SE0 to B-Reset  */
-#define TB_ASE0_BRST         (155)	/* minimum 155 ms, section:5.3.1 */
-/* SE0 Time Before SRP */
-#define TB_SE0_SRP           (1000)	/* b_idle,minimum 1s, section:5.1.2 */
-/* SSEND time before SRP */
-#define TB_SSEND_SRP         (1500)	/* minimum 1.5 sec, section:5.1.2 */
+#घोषणा TB_ASE0_BRST         (155)	/* minimum 155 ms, section:5.3.1 */
+/* SE0 Time Beक्रमe SRP */
+#घोषणा TB_SE0_SRP           (1000)	/* b_idle,minimum 1s, section:5.1.2 */
+/* SSEND समय beक्रमe SRP */
+#घोषणा TB_SSEND_SRP         (1500)	/* minimum 1.5 sec, section:5.1.2 */
 
-#define TB_AIDL_BDIS         (20)	/* 4ms ~ 150ms, section 5.2.1 */
+#घोषणा TB_AIDL_BDIS         (20)	/* 4ms ~ 150ms, section 5.2.1 */
 
-#if IS_ENABLED(CONFIG_USB_OTG_FSM)
+#अगर IS_ENABLED(CONFIG_USB_OTG_FSM)
 
-int ci_hdrc_otg_fsm_init(struct ci_hdrc *ci);
-int ci_otg_fsm_work(struct ci_hdrc *ci);
-irqreturn_t ci_otg_fsm_irq(struct ci_hdrc *ci);
-void ci_hdrc_otg_fsm_start(struct ci_hdrc *ci);
-void ci_hdrc_otg_fsm_remove(struct ci_hdrc *ci);
+पूर्णांक ci_hdrc_otg_fsm_init(काष्ठा ci_hdrc *ci);
+पूर्णांक ci_otg_fsm_work(काष्ठा ci_hdrc *ci);
+irqवापस_t ci_otg_fsm_irq(काष्ठा ci_hdrc *ci);
+व्योम ci_hdrc_otg_fsm_start(काष्ठा ci_hdrc *ci);
+व्योम ci_hdrc_otg_fsm_हटाओ(काष्ठा ci_hdrc *ci);
 
-#else
+#अन्यथा
 
-static inline int ci_hdrc_otg_fsm_init(struct ci_hdrc *ci)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ci_hdrc_otg_fsm_init(काष्ठा ci_hdrc *ci)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int ci_otg_fsm_work(struct ci_hdrc *ci)
-{
-	return -ENXIO;
-}
+अटल अंतरभूत पूर्णांक ci_otg_fsm_work(काष्ठा ci_hdrc *ci)
+अणु
+	वापस -ENXIO;
+पूर्ण
 
-static inline irqreturn_t ci_otg_fsm_irq(struct ci_hdrc *ci)
-{
-	return IRQ_NONE;
-}
+अटल अंतरभूत irqवापस_t ci_otg_fsm_irq(काष्ठा ci_hdrc *ci)
+अणु
+	वापस IRQ_NONE;
+पूर्ण
 
-static inline void ci_hdrc_otg_fsm_start(struct ci_hdrc *ci)
-{
+अटल अंतरभूत व्योम ci_hdrc_otg_fsm_start(काष्ठा ci_hdrc *ci)
+अणु
 
-}
+पूर्ण
 
-static inline void ci_hdrc_otg_fsm_remove(struct ci_hdrc *ci)
-{
+अटल अंतरभूत व्योम ci_hdrc_otg_fsm_हटाओ(काष्ठा ci_hdrc *ci)
+अणु
 
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* __DRIVERS_USB_CHIPIDEA_OTG_FSM_H */
+#पूर्ण_अगर /* __DRIVERS_USB_CHIPIDEA_OTG_FSM_H */

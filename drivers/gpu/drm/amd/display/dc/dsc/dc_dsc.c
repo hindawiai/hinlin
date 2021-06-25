@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,455 +23,455 @@
  * Author: AMD
  */
 
-#include <drm/drm_dsc.h>
-#include "dc_hw_types.h"
-#include "dsc.h"
-#include <drm/drm_dp_helper.h>
-#include "dc.h"
-#include "rc_calc.h"
+#समावेश <drm/drm_dsc.h>
+#समावेश "dc_hw_types.h"
+#समावेश "dsc.h"
+#समावेश <drm/drm_dp_helper.h>
+#समावेश "dc.h"
+#समावेश "rc_calc.h"
 
-/* This module's internal functions */
+/* This module's पूर्णांकernal functions */
 
-/* default DSC policy target bitrate limit is 16bpp */
-static uint32_t dsc_policy_max_target_bpp_limit = 16;
+/* शेष DSC policy target bitrate limit is 16bpp */
+अटल uपूर्णांक32_t dsc_policy_max_target_bpp_limit = 16;
 
-/* default DSC policy enables DSC only when needed */
-static bool dsc_policy_enable_dsc_when_not_needed;
+/* शेष DSC policy enables DSC only when needed */
+अटल bool dsc_policy_enable_dsc_when_not_needed;
 
-static bool dsc_buff_block_size_from_dpcd(int dpcd_buff_block_size, int *buff_block_size)
-{
+अटल bool dsc_buff_block_size_from_dpcd(पूर्णांक dpcd_buff_block_size, पूर्णांक *buff_block_size)
+अणु
 
-	switch (dpcd_buff_block_size) {
-	case DP_DSC_RC_BUF_BLK_SIZE_1:
+	चयन (dpcd_buff_block_size) अणु
+	हाल DP_DSC_RC_BUF_BLK_SIZE_1:
 		*buff_block_size = 1024;
-		break;
-	case DP_DSC_RC_BUF_BLK_SIZE_4:
+		अवरोध;
+	हाल DP_DSC_RC_BUF_BLK_SIZE_4:
 		*buff_block_size = 4 * 1024;
-		break;
-	case DP_DSC_RC_BUF_BLK_SIZE_16:
+		अवरोध;
+	हाल DP_DSC_RC_BUF_BLK_SIZE_16:
 		*buff_block_size = 16 * 1024;
-		break;
-	case DP_DSC_RC_BUF_BLK_SIZE_64:
+		अवरोध;
+	हाल DP_DSC_RC_BUF_BLK_SIZE_64:
 		*buff_block_size = 64 * 1024;
-		break;
-	default: {
+		अवरोध;
+	शेष: अणु
 			dm_error("%s: DPCD DSC buffer size not recognized.\n", __func__);
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 
-static bool dsc_line_buff_depth_from_dpcd(int dpcd_line_buff_bit_depth, int *line_buff_bit_depth)
-{
-	if (0 <= dpcd_line_buff_bit_depth && dpcd_line_buff_bit_depth <= 7)
+अटल bool dsc_line_buff_depth_from_dpcd(पूर्णांक dpcd_line_buff_bit_depth, पूर्णांक *line_buff_bit_depth)
+अणु
+	अगर (0 <= dpcd_line_buff_bit_depth && dpcd_line_buff_bit_depth <= 7)
 		*line_buff_bit_depth = dpcd_line_buff_bit_depth + 9;
-	else if (dpcd_line_buff_bit_depth == 8)
+	अन्यथा अगर (dpcd_line_buff_bit_depth == 8)
 		*line_buff_bit_depth = 8;
-	else {
+	अन्यथा अणु
 		dm_error("%s: DPCD DSC buffer depth not recognized.\n", __func__);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 
-static bool dsc_throughput_from_dpcd(int dpcd_throughput, int *throughput)
-{
-	switch (dpcd_throughput) {
-	case DP_DSC_THROUGHPUT_MODE_0_UNSUPPORTED:
+अटल bool dsc_throughput_from_dpcd(पूर्णांक dpcd_throughput, पूर्णांक *throughput)
+अणु
+	चयन (dpcd_throughput) अणु
+	हाल DP_DSC_THROUGHPUT_MODE_0_UNSUPPORTED:
 		*throughput = 0;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_170:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_170:
 		*throughput = 170;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_340:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_340:
 		*throughput = 340;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_400:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_400:
 		*throughput = 400;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_450:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_450:
 		*throughput = 450;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_500:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_500:
 		*throughput = 500;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_550:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_550:
 		*throughput = 550;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_600:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_600:
 		*throughput = 600;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_650:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_650:
 		*throughput = 650;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_700:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_700:
 		*throughput = 700;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_750:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_750:
 		*throughput = 750;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_800:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_800:
 		*throughput = 800;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_850:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_850:
 		*throughput = 850;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_900:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_900:
 		*throughput = 900;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_950:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_950:
 		*throughput = 950;
-		break;
-	case DP_DSC_THROUGHPUT_MODE_0_1000:
+		अवरोध;
+	हाल DP_DSC_THROUGHPUT_MODE_0_1000:
 		*throughput = 1000;
-		break;
-	default: {
+		अवरोध;
+	शेष: अणु
 			dm_error("%s: DPCD DSC throughput mode not recognized.\n", __func__);
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 
-static bool dsc_bpp_increment_div_from_dpcd(uint8_t bpp_increment_dpcd, uint32_t *bpp_increment_div)
-{
-	// Mask bpp increment dpcd field to avoid reading other fields
+अटल bool dsc_bpp_increment_भाग_from_dpcd(uपूर्णांक8_t bpp_increment_dpcd, uपूर्णांक32_t *bpp_increment_भाग)
+अणु
+	// Mask bpp increment dpcd field to aव्योम पढ़ोing other fields
 	bpp_increment_dpcd &= 0x7;
 
-	switch (bpp_increment_dpcd) {
-	case 0:
-		*bpp_increment_div = 16;
-		break;
-	case 1:
-		*bpp_increment_div = 8;
-		break;
-	case 2:
-		*bpp_increment_div = 4;
-		break;
-	case 3:
-		*bpp_increment_div = 2;
-		break;
-	case 4:
-		*bpp_increment_div = 1;
-		break;
-	default: {
+	चयन (bpp_increment_dpcd) अणु
+	हाल 0:
+		*bpp_increment_भाग = 16;
+		अवरोध;
+	हाल 1:
+		*bpp_increment_भाग = 8;
+		अवरोध;
+	हाल 2:
+		*bpp_increment_भाग = 4;
+		अवरोध;
+	हाल 3:
+		*bpp_increment_भाग = 2;
+		अवरोध;
+	हाल 4:
+		*bpp_increment_भाग = 1;
+		अवरोध;
+	शेष: अणु
 		dm_error("%s: DPCD DSC bits-per-pixel increment not recognized.\n", __func__);
-		return false;
-	}
-	}
+		वापस false;
+	पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void get_dsc_enc_caps(
-	const struct display_stream_compressor *dsc,
-	struct dsc_enc_caps *dsc_enc_caps,
-	int pixel_clock_100Hz)
-{
-	// This is a static HW query, so we can use any DSC
+अटल व्योम get_dsc_enc_caps(
+	स्थिर काष्ठा display_stream_compressor *dsc,
+	काष्ठा dsc_enc_caps *dsc_enc_caps,
+	पूर्णांक pixel_घड़ी_100Hz)
+अणु
+	// This is a अटल HW query, so we can use any DSC
 
-	memset(dsc_enc_caps, 0, sizeof(struct dsc_enc_caps));
-	if (dsc) {
-		if (!dsc->ctx->dc->debug.disable_dsc)
-			dsc->funcs->dsc_get_enc_caps(dsc_enc_caps, pixel_clock_100Hz);
-		if (dsc->ctx->dc->debug.native422_support)
-			dsc_enc_caps->color_formats.bits.YCBCR_NATIVE_422 = 1;
-	}
-}
+	स_रखो(dsc_enc_caps, 0, माप(काष्ठा dsc_enc_caps));
+	अगर (dsc) अणु
+		अगर (!dsc->ctx->dc->debug.disable_dsc)
+			dsc->funcs->dsc_get_enc_caps(dsc_enc_caps, pixel_घड़ी_100Hz);
+		अगर (dsc->ctx->dc->debug.native422_support)
+			dsc_enc_caps->color_क्रमmats.bits.YCBCR_NATIVE_422 = 1;
+	पूर्ण
+पूर्ण
 
-/* Returns 'false' if no intersection was found for at least one capablity.
+/* Returns 'false' अगर no पूर्णांकersection was found क्रम at least one capablity.
  * It also implicitly validates some sink caps against invalid value of zero.
  */
-static bool intersect_dsc_caps(
-	const struct dsc_dec_dpcd_caps *dsc_sink_caps,
-	const struct dsc_enc_caps *dsc_enc_caps,
-	enum dc_pixel_encoding pixel_encoding,
-	struct dsc_enc_caps *dsc_common_caps)
-{
-	int32_t max_slices;
-	int32_t total_sink_throughput;
+अटल bool पूर्णांकersect_dsc_caps(
+	स्थिर काष्ठा dsc_dec_dpcd_caps *dsc_sink_caps,
+	स्थिर काष्ठा dsc_enc_caps *dsc_enc_caps,
+	क्रमागत dc_pixel_encoding pixel_encoding,
+	काष्ठा dsc_enc_caps *dsc_common_caps)
+अणु
+	पूर्णांक32_t max_slices;
+	पूर्णांक32_t total_sink_throughput;
 
-	memset(dsc_common_caps, 0, sizeof(struct dsc_enc_caps));
+	स_रखो(dsc_common_caps, 0, माप(काष्ठा dsc_enc_caps));
 
 	dsc_common_caps->dsc_version = min(dsc_sink_caps->dsc_version, dsc_enc_caps->dsc_version);
-	if (!dsc_common_caps->dsc_version)
-		return false;
+	अगर (!dsc_common_caps->dsc_version)
+		वापस false;
 
 	dsc_common_caps->slice_caps.bits.NUM_SLICES_1 = dsc_sink_caps->slice_caps1.bits.NUM_SLICES_1 && dsc_enc_caps->slice_caps.bits.NUM_SLICES_1;
 	dsc_common_caps->slice_caps.bits.NUM_SLICES_2 = dsc_sink_caps->slice_caps1.bits.NUM_SLICES_2 && dsc_enc_caps->slice_caps.bits.NUM_SLICES_2;
 	dsc_common_caps->slice_caps.bits.NUM_SLICES_4 = dsc_sink_caps->slice_caps1.bits.NUM_SLICES_4 && dsc_enc_caps->slice_caps.bits.NUM_SLICES_4;
 	dsc_common_caps->slice_caps.bits.NUM_SLICES_8 = dsc_sink_caps->slice_caps1.bits.NUM_SLICES_8 && dsc_enc_caps->slice_caps.bits.NUM_SLICES_8;
-	if (!dsc_common_caps->slice_caps.raw)
-		return false;
+	अगर (!dsc_common_caps->slice_caps.raw)
+		वापस false;
 
 	dsc_common_caps->lb_bit_depth = min(dsc_sink_caps->lb_bit_depth, dsc_enc_caps->lb_bit_depth);
-	if (!dsc_common_caps->lb_bit_depth)
-		return false;
+	अगर (!dsc_common_caps->lb_bit_depth)
+		वापस false;
 
 	dsc_common_caps->is_block_pred_supported = dsc_sink_caps->is_block_pred_supported && dsc_enc_caps->is_block_pred_supported;
 
-	dsc_common_caps->color_formats.raw = dsc_sink_caps->color_formats.raw & dsc_enc_caps->color_formats.raw;
-	if (!dsc_common_caps->color_formats.raw)
-		return false;
+	dsc_common_caps->color_क्रमmats.raw = dsc_sink_caps->color_क्रमmats.raw & dsc_enc_caps->color_क्रमmats.raw;
+	अगर (!dsc_common_caps->color_क्रमmats.raw)
+		वापस false;
 
 	dsc_common_caps->color_depth.raw = dsc_sink_caps->color_depth.raw & dsc_enc_caps->color_depth.raw;
-	if (!dsc_common_caps->color_depth.raw)
-		return false;
+	अगर (!dsc_common_caps->color_depth.raw)
+		वापस false;
 
 	max_slices = 0;
-	if (dsc_common_caps->slice_caps.bits.NUM_SLICES_1)
+	अगर (dsc_common_caps->slice_caps.bits.NUM_SLICES_1)
 		max_slices = 1;
 
-	if (dsc_common_caps->slice_caps.bits.NUM_SLICES_2)
+	अगर (dsc_common_caps->slice_caps.bits.NUM_SLICES_2)
 		max_slices = 2;
 
-	if (dsc_common_caps->slice_caps.bits.NUM_SLICES_4)
+	अगर (dsc_common_caps->slice_caps.bits.NUM_SLICES_4)
 		max_slices = 4;
 
 	total_sink_throughput = max_slices * dsc_sink_caps->throughput_mode_0_mps;
-	if (pixel_encoding == PIXEL_ENCODING_YCBCR422 || pixel_encoding == PIXEL_ENCODING_YCBCR420)
+	अगर (pixel_encoding == PIXEL_ENCODING_YCBCR422 || pixel_encoding == PIXEL_ENCODING_YCBCR420)
 		total_sink_throughput = max_slices * dsc_sink_caps->throughput_mode_1_mps;
 
 	dsc_common_caps->max_total_throughput_mps = min(total_sink_throughput, dsc_enc_caps->max_total_throughput_mps);
 
 	dsc_common_caps->max_slice_width = min(dsc_sink_caps->max_slice_width, dsc_enc_caps->max_slice_width);
-	if (!dsc_common_caps->max_slice_width)
-		return false;
+	अगर (!dsc_common_caps->max_slice_width)
+		वापस false;
 
-	dsc_common_caps->bpp_increment_div = min(dsc_sink_caps->bpp_increment_div, dsc_enc_caps->bpp_increment_div);
+	dsc_common_caps->bpp_increment_भाग = min(dsc_sink_caps->bpp_increment_भाग, dsc_enc_caps->bpp_increment_भाग);
 
-	// TODO DSC: Remove this workaround for N422 and 420 once it's fixed, or move it to get_dsc_encoder_caps()
-	if (pixel_encoding == PIXEL_ENCODING_YCBCR422 || pixel_encoding == PIXEL_ENCODING_YCBCR420)
-		dsc_common_caps->bpp_increment_div = min(dsc_common_caps->bpp_increment_div, (uint32_t)8);
+	// TODO DSC: Remove this workaround क्रम N422 and 420 once it's fixed, or move it to get_dsc_encoder_caps()
+	अगर (pixel_encoding == PIXEL_ENCODING_YCBCR422 || pixel_encoding == PIXEL_ENCODING_YCBCR420)
+		dsc_common_caps->bpp_increment_भाग = min(dsc_common_caps->bpp_increment_भाग, (uपूर्णांक32_t)8);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline uint32_t dsc_div_by_10_round_up(uint32_t value)
-{
-	return (value + 9) / 10;
-}
+अटल अंतरभूत uपूर्णांक32_t dsc_भाग_by_10_round_up(uपूर्णांक32_t value)
+अणु
+	वापस (value + 9) / 10;
+पूर्ण
 
-/* Get DSC bandwidth range based on [min_bpp, max_bpp] target bitrate range, and timing's pixel clock
+/* Get DSC bandwidth range based on [min_bpp, max_bpp] target bitrate range, and timing's pixel घड़ी
  * and uncompressed bandwidth.
  */
-static void get_dsc_bandwidth_range(
-		const uint32_t min_bpp_x16,
-		const uint32_t max_bpp_x16,
-		const struct dsc_enc_caps *dsc_caps,
-		const struct dc_crtc_timing *timing,
-		struct dc_dsc_bw_range *range)
-{
+अटल व्योम get_dsc_bandwidth_range(
+		स्थिर uपूर्णांक32_t min_bpp_x16,
+		स्थिर uपूर्णांक32_t max_bpp_x16,
+		स्थिर काष्ठा dsc_enc_caps *dsc_caps,
+		स्थिर काष्ठा dc_crtc_timing *timing,
+		काष्ठा dc_dsc_bw_range *range)
+अणु
 	/* native stream bandwidth */
 	range->stream_kbps = dc_bandwidth_in_kbps_from_timing(timing);
 
 	/* max dsc target bpp */
 	range->max_kbps = dc_dsc_stream_bandwidth_in_kbps(timing->pix_clk_100hz, max_bpp_x16);
 	range->max_target_bpp_x16 = max_bpp_x16;
-	if (range->max_kbps > range->stream_kbps) {
+	अगर (range->max_kbps > range->stream_kbps) अणु
 		/* max dsc target bpp is capped to native bandwidth */
 		range->max_kbps = range->stream_kbps;
-		range->max_target_bpp_x16 = calc_dsc_bpp_x16(range->stream_kbps, timing->pix_clk_100hz, dsc_caps->bpp_increment_div);
-	}
+		range->max_target_bpp_x16 = calc_dsc_bpp_x16(range->stream_kbps, timing->pix_clk_100hz, dsc_caps->bpp_increment_भाग);
+	पूर्ण
 
 	/* min dsc target bpp */
 	range->min_kbps = dc_dsc_stream_bandwidth_in_kbps(timing->pix_clk_100hz, min_bpp_x16);
 	range->min_target_bpp_x16 = min_bpp_x16;
-	if (range->min_kbps > range->max_kbps) {
+	अगर (range->min_kbps > range->max_kbps) अणु
 		/* min dsc target bpp is capped to max dsc bandwidth*/
 		range->min_kbps = range->max_kbps;
 		range->min_target_bpp_x16 = range->max_target_bpp_x16;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-/* Decides if DSC should be used and calculates target bpp if it should, applying DSC policy.
+/* Decides अगर DSC should be used and calculates target bpp अगर it should, applying DSC policy.
  *
  * Returns:
- *     - 'true' if DSC was required by policy and was successfully applied
+ *     - 'true' अगर DSC was required by policy and was successfully applied
  *     - 'false' if DSC was not necessary (e.g. if uncompressed stream fits 'target_bandwidth_kbps'),
- *        or if it couldn't be applied based on DSC policy.
+ *        or अगर it couldn't be applied based on DSC policy.
  */
-static bool decide_dsc_target_bpp_x16(
-		const struct dc_dsc_policy *policy,
-		const struct dsc_enc_caps *dsc_common_caps,
-		const int target_bandwidth_kbps,
-		const struct dc_crtc_timing *timing,
-		int *target_bpp_x16)
-{
+अटल bool decide_dsc_target_bpp_x16(
+		स्थिर काष्ठा dc_dsc_policy *policy,
+		स्थिर काष्ठा dsc_enc_caps *dsc_common_caps,
+		स्थिर पूर्णांक target_bandwidth_kbps,
+		स्थिर काष्ठा dc_crtc_timing *timing,
+		पूर्णांक *target_bpp_x16)
+अणु
 	bool should_use_dsc = false;
-	struct dc_dsc_bw_range range;
+	काष्ठा dc_dsc_bw_range range;
 
-	memset(&range, 0, sizeof(range));
+	स_रखो(&range, 0, माप(range));
 
 	get_dsc_bandwidth_range(policy->min_target_bpp * 16, policy->max_target_bpp * 16,
 			dsc_common_caps, timing, &range);
-	if (!policy->enable_dsc_when_not_needed && target_bandwidth_kbps >= range.stream_kbps) {
+	अगर (!policy->enable_dsc_when_not_needed && target_bandwidth_kbps >= range.stream_kbps) अणु
 		/* enough bandwidth without dsc */
 		*target_bpp_x16 = 0;
 		should_use_dsc = false;
-	} else if (policy->preferred_bpp_x16 > 0 &&
+	पूर्ण अन्यथा अगर (policy->preferred_bpp_x16 > 0 &&
 			policy->preferred_bpp_x16 <= range.max_target_bpp_x16 &&
-			policy->preferred_bpp_x16 >= range.min_target_bpp_x16) {
+			policy->preferred_bpp_x16 >= range.min_target_bpp_x16) अणु
 		*target_bpp_x16 = policy->preferred_bpp_x16;
 		should_use_dsc = true;
-	} else if (target_bandwidth_kbps >= range.max_kbps) {
+	पूर्ण अन्यथा अगर (target_bandwidth_kbps >= range.max_kbps) अणु
 		/* use max target bpp allowed */
 		*target_bpp_x16 = range.max_target_bpp_x16;
 		should_use_dsc = true;
-	} else if (target_bandwidth_kbps >= range.min_kbps) {
+	पूर्ण अन्यथा अगर (target_bandwidth_kbps >= range.min_kbps) अणु
 		/* use target bpp that can take entire target bandwidth */
-		*target_bpp_x16 = calc_dsc_bpp_x16(target_bandwidth_kbps, timing->pix_clk_100hz, dsc_common_caps->bpp_increment_div);
+		*target_bpp_x16 = calc_dsc_bpp_x16(target_bandwidth_kbps, timing->pix_clk_100hz, dsc_common_caps->bpp_increment_भाग);
 		should_use_dsc = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* not enough bandwidth to fulfill minimum requirement */
 		*target_bpp_x16 = 0;
 		should_use_dsc = false;
-	}
+	पूर्ण
 
-	return should_use_dsc;
-}
+	वापस should_use_dsc;
+पूर्ण
 
-#define MIN_AVAILABLE_SLICES_SIZE  4
+#घोषणा MIN_AVAILABLE_SLICES_SIZE  4
 
-static int get_available_dsc_slices(union dsc_enc_slice_caps slice_caps, int *available_slices)
-{
-	int idx = 0;
+अटल पूर्णांक get_available_dsc_slices(जोड़ dsc_enc_slice_caps slice_caps, पूर्णांक *available_slices)
+अणु
+	पूर्णांक idx = 0;
 
-	memset(available_slices, -1, MIN_AVAILABLE_SLICES_SIZE);
+	स_रखो(available_slices, -1, MIN_AVAILABLE_SLICES_SIZE);
 
-	if (slice_caps.bits.NUM_SLICES_1)
+	अगर (slice_caps.bits.NUM_SLICES_1)
 		available_slices[idx++] = 1;
 
-	if (slice_caps.bits.NUM_SLICES_2)
+	अगर (slice_caps.bits.NUM_SLICES_2)
 		available_slices[idx++] = 2;
 
-	if (slice_caps.bits.NUM_SLICES_4)
+	अगर (slice_caps.bits.NUM_SLICES_4)
 		available_slices[idx++] = 4;
 
-	if (slice_caps.bits.NUM_SLICES_8)
+	अगर (slice_caps.bits.NUM_SLICES_8)
 		available_slices[idx++] = 8;
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
 
-static int get_max_dsc_slices(union dsc_enc_slice_caps slice_caps)
-{
-	int max_slices = 0;
-	int available_slices[MIN_AVAILABLE_SLICES_SIZE];
-	int end_idx = get_available_dsc_slices(slice_caps, &available_slices[0]);
+अटल पूर्णांक get_max_dsc_slices(जोड़ dsc_enc_slice_caps slice_caps)
+अणु
+	पूर्णांक max_slices = 0;
+	पूर्णांक available_slices[MIN_AVAILABLE_SLICES_SIZE];
+	पूर्णांक end_idx = get_available_dsc_slices(slice_caps, &available_slices[0]);
 
-	if (end_idx > 0)
+	अगर (end_idx > 0)
 		max_slices = available_slices[end_idx - 1];
 
-	return max_slices;
-}
+	वापस max_slices;
+पूर्ण
 
 
-// Increment sice number in available sice numbers stops if possible, or just increment if not
-static int inc_num_slices(union dsc_enc_slice_caps slice_caps, int num_slices)
-{
+// Increment sice number in available sice numbers stops अगर possible, or just increment अगर not
+अटल पूर्णांक inc_num_slices(जोड़ dsc_enc_slice_caps slice_caps, पूर्णांक num_slices)
+अणु
 	// Get next bigger num slices available in common caps
-	int available_slices[MIN_AVAILABLE_SLICES_SIZE];
-	int end_idx;
-	int i;
-	int new_num_slices = num_slices;
+	पूर्णांक available_slices[MIN_AVAILABLE_SLICES_SIZE];
+	पूर्णांक end_idx;
+	पूर्णांक i;
+	पूर्णांक new_num_slices = num_slices;
 
 	end_idx = get_available_dsc_slices(slice_caps, &available_slices[0]);
-	if (end_idx == 0) {
+	अगर (end_idx == 0) अणु
 		// No available slices found
 		new_num_slices++;
-		return new_num_slices;
-	}
+		वापस new_num_slices;
+	पूर्ण
 
 	// Numbers of slices found - get the next bigger number
-	for (i = 0; i < end_idx; i++) {
-		if (new_num_slices < available_slices[i]) {
+	क्रम (i = 0; i < end_idx; i++) अणु
+		अगर (new_num_slices < available_slices[i]) अणु
 			new_num_slices = available_slices[i];
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (new_num_slices == num_slices) // No biger number of slices found
+	अगर (new_num_slices == num_slices) // No biger number of slices found
 		new_num_slices++;
 
-	return new_num_slices;
-}
+	वापस new_num_slices;
+पूर्ण
 
 
-// Decrement sice number in available sice numbers stops if possible, or just decrement if not. Stop at zero.
-static int dec_num_slices(union dsc_enc_slice_caps slice_caps, int num_slices)
-{
+// Decrement sice number in available sice numbers stops अगर possible, or just decrement अगर not. Stop at zero.
+अटल पूर्णांक dec_num_slices(जोड़ dsc_enc_slice_caps slice_caps, पूर्णांक num_slices)
+अणु
 	// Get next bigger num slices available in common caps
-	int available_slices[MIN_AVAILABLE_SLICES_SIZE];
-	int end_idx;
-	int i;
-	int new_num_slices = num_slices;
+	पूर्णांक available_slices[MIN_AVAILABLE_SLICES_SIZE];
+	पूर्णांक end_idx;
+	पूर्णांक i;
+	पूर्णांक new_num_slices = num_slices;
 
 	end_idx = get_available_dsc_slices(slice_caps, &available_slices[0]);
-	if (end_idx == 0 && new_num_slices > 0) {
+	अगर (end_idx == 0 && new_num_slices > 0) अणु
 		// No numbers of slices found
 		new_num_slices++;
-		return new_num_slices;
-	}
+		वापस new_num_slices;
+	पूर्ण
 
 	// Numbers of slices found - get the next smaller number
-	for (i = end_idx - 1; i >= 0; i--) {
-		if (new_num_slices > available_slices[i]) {
+	क्रम (i = end_idx - 1; i >= 0; i--) अणु
+		अगर (new_num_slices > available_slices[i]) अणु
 			new_num_slices = available_slices[i];
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (new_num_slices == num_slices) {
+	अगर (new_num_slices == num_slices) अणु
 		// No smaller number of slices found
 		new_num_slices--;
-		if (new_num_slices < 0)
+		अगर (new_num_slices < 0)
 			new_num_slices = 0;
-	}
+	पूर्ण
 
-	return new_num_slices;
-}
+	वापस new_num_slices;
+पूर्ण
 
 
-// Choose next bigger number of slices if the requested number of slices is not available
-static int fit_num_slices_up(union dsc_enc_slice_caps slice_caps, int num_slices)
-{
+// Choose next bigger number of slices अगर the requested number of slices is not available
+अटल पूर्णांक fit_num_slices_up(जोड़ dsc_enc_slice_caps slice_caps, पूर्णांक num_slices)
+अणु
 	// Get next bigger num slices available in common caps
-	int available_slices[MIN_AVAILABLE_SLICES_SIZE];
-	int end_idx;
-	int i;
-	int new_num_slices = num_slices;
+	पूर्णांक available_slices[MIN_AVAILABLE_SLICES_SIZE];
+	पूर्णांक end_idx;
+	पूर्णांक i;
+	पूर्णांक new_num_slices = num_slices;
 
 	end_idx = get_available_dsc_slices(slice_caps, &available_slices[0]);
-	if (end_idx == 0) {
+	अगर (end_idx == 0) अणु
 		// No available slices found
 		new_num_slices++;
-		return new_num_slices;
-	}
+		वापस new_num_slices;
+	पूर्ण
 
 	// Numbers of slices found - get the equal or next bigger number
-	for (i = 0; i < end_idx; i++) {
-		if (new_num_slices <= available_slices[i]) {
+	क्रम (i = 0; i < end_idx; i++) अणु
+		अगर (new_num_slices <= available_slices[i]) अणु
 			new_num_slices = available_slices[i];
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return new_num_slices;
-}
+	वापस new_num_slices;
+पूर्ण
 
 
-/* Attempts to set DSC configuration for the stream, applying DSC policy.
- * Returns 'true' if successful or 'false' if not.
+/* Attempts to set DSC configuration क्रम the stream, applying DSC policy.
+ * Returns 'true' if successful or 'false' अगर not.
  *
  * Parameters:
  *
@@ -478,60 +479,60 @@ static int fit_num_slices_up(union dsc_enc_slice_caps slice_caps, int num_slices
  *
  * dsc_enc_caps        - DSC encoder capabilities
  *
- * target_bandwidth_kbps  - Target bandwidth to fit the stream into.
- *                          If 0, do not calculate target bpp.
+ * target_bandwidth_kbps  - Target bandwidth to fit the stream पूर्णांकo.
+ *                          If 0, करो not calculate target bpp.
  *
- * timing              - The stream timing to fit into 'target_bandwidth_kbps' or apply
- *                       maximum compression to, if 'target_badwidth == 0'
+ * timing              - The stream timing to fit पूर्णांकo 'target_bandwidth_kbps' or apply
+ *                       maximum compression to, अगर 'target_badwidth == 0'
  *
- * dsc_cfg             - DSC configuration to use if it was possible to come up with
- *                       one for the given inputs.
+ * dsc_cfg             - DSC configuration to use अगर it was possible to come up with
+ *                       one क्रम the given inमाला_दो.
  *                       The target bitrate after DSC can be calculated by multiplying
- *                       dsc_cfg.bits_per_pixel (in U6.4 format) by pixel rate, e.g.
+ *                       dsc_cfg.bits_per_pixel (in U6.4 क्रमmat) by pixel rate, e.g.
  *
- *                       dsc_stream_bitrate_kbps = (int)ceil(timing->pix_clk_khz * dsc_cfg.bits_per_pixel / 16.0);
+ *                       dsc_stream_bitrate_kbps = (पूर्णांक)उच्चमान(timing->pix_clk_khz * dsc_cfg.bits_per_pixel / 16.0);
  */
-static bool setup_dsc_config(
-		const struct dsc_dec_dpcd_caps *dsc_sink_caps,
-		const struct dsc_enc_caps *dsc_enc_caps,
-		int target_bandwidth_kbps,
-		const struct dc_crtc_timing *timing,
-		int min_slice_height_override,
-		int max_dsc_target_bpp_limit_override_x16,
-		struct dc_dsc_config *dsc_cfg)
-{
-	struct dsc_enc_caps dsc_common_caps;
-	int max_slices_h;
-	int min_slices_h;
-	int num_slices_h;
-	int pic_width;
-	int slice_width;
-	int target_bpp;
-	int sink_per_slice_throughput_mps;
-	int branch_max_throughput_mps = 0;
+अटल bool setup_dsc_config(
+		स्थिर काष्ठा dsc_dec_dpcd_caps *dsc_sink_caps,
+		स्थिर काष्ठा dsc_enc_caps *dsc_enc_caps,
+		पूर्णांक target_bandwidth_kbps,
+		स्थिर काष्ठा dc_crtc_timing *timing,
+		पूर्णांक min_slice_height_override,
+		पूर्णांक max_dsc_target_bpp_limit_override_x16,
+		काष्ठा dc_dsc_config *dsc_cfg)
+अणु
+	काष्ठा dsc_enc_caps dsc_common_caps;
+	पूर्णांक max_slices_h;
+	पूर्णांक min_slices_h;
+	पूर्णांक num_slices_h;
+	पूर्णांक pic_width;
+	पूर्णांक slice_width;
+	पूर्णांक target_bpp;
+	पूर्णांक sink_per_slice_throughput_mps;
+	पूर्णांक branch_max_throughput_mps = 0;
 	bool is_dsc_possible = false;
-	int pic_height;
-	int slice_height;
-	struct dc_dsc_policy policy;
+	पूर्णांक pic_height;
+	पूर्णांक slice_height;
+	काष्ठा dc_dsc_policy policy;
 
-	memset(dsc_cfg, 0, sizeof(struct dc_dsc_config));
+	स_रखो(dsc_cfg, 0, माप(काष्ठा dc_dsc_config));
 
-	dc_dsc_get_policy_for_timing(timing, max_dsc_target_bpp_limit_override_x16, &policy);
+	dc_dsc_get_policy_क्रम_timing(timing, max_dsc_target_bpp_limit_override_x16, &policy);
 	pic_width = timing->h_addressable + timing->h_border_left + timing->h_border_right;
 	pic_height = timing->v_addressable + timing->v_border_top + timing->v_border_bottom;
 
-	if (!dsc_sink_caps->is_dsc_supported)
-		goto done;
+	अगर (!dsc_sink_caps->is_dsc_supported)
+		जाओ करोne;
 
-	if (dsc_sink_caps->branch_max_line_width && dsc_sink_caps->branch_max_line_width < pic_width)
-		goto done;
+	अगर (dsc_sink_caps->branch_max_line_width && dsc_sink_caps->branch_max_line_width < pic_width)
+		जाओ करोne;
 
 	// Intersect decoder with encoder DSC caps and validate DSC settings
-	is_dsc_possible = intersect_dsc_caps(dsc_sink_caps, dsc_enc_caps, timing->pixel_encoding, &dsc_common_caps);
-	if (!is_dsc_possible)
-		goto done;
+	is_dsc_possible = पूर्णांकersect_dsc_caps(dsc_sink_caps, dsc_enc_caps, timing->pixel_encoding, &dsc_common_caps);
+	अगर (!is_dsc_possible)
+		जाओ करोne;
 
-	if (target_bandwidth_kbps > 0) {
+	अगर (target_bandwidth_kbps > 0) अणु
 		is_dsc_possible = decide_dsc_target_bpp_x16(
 				&policy,
 				&dsc_common_caps,
@@ -539,197 +540,197 @@ static bool setup_dsc_config(
 				timing,
 				&target_bpp);
 		dsc_cfg->bits_per_pixel = target_bpp;
-	}
-	if (!is_dsc_possible)
-		goto done;
+	पूर्ण
+	अगर (!is_dsc_possible)
+		जाओ करोne;
 
 	sink_per_slice_throughput_mps = 0;
 
 	// Validate available DSC settings against the mode timing
 
-	// Validate color format (and pick up the throughput values)
+	// Validate color क्रमmat (and pick up the throughput values)
 	dsc_cfg->ycbcr422_simple = false;
-	switch (timing->pixel_encoding)	{
-	case PIXEL_ENCODING_RGB:
-		is_dsc_possible = (bool)dsc_common_caps.color_formats.bits.RGB;
+	चयन (timing->pixel_encoding)	अणु
+	हाल PIXEL_ENCODING_RGB:
+		is_dsc_possible = (bool)dsc_common_caps.color_क्रमmats.bits.RGB;
 		sink_per_slice_throughput_mps = dsc_sink_caps->throughput_mode_0_mps;
 		branch_max_throughput_mps = dsc_sink_caps->branch_overall_throughput_0_mps;
-		break;
-	case PIXEL_ENCODING_YCBCR444:
-		is_dsc_possible = (bool)dsc_common_caps.color_formats.bits.YCBCR_444;
+		अवरोध;
+	हाल PIXEL_ENCODING_YCBCR444:
+		is_dsc_possible = (bool)dsc_common_caps.color_क्रमmats.bits.YCBCR_444;
 		sink_per_slice_throughput_mps = dsc_sink_caps->throughput_mode_0_mps;
 		branch_max_throughput_mps = dsc_sink_caps->branch_overall_throughput_0_mps;
-		break;
-	case PIXEL_ENCODING_YCBCR422:
-		is_dsc_possible = (bool)dsc_common_caps.color_formats.bits.YCBCR_NATIVE_422;
+		अवरोध;
+	हाल PIXEL_ENCODING_YCBCR422:
+		is_dsc_possible = (bool)dsc_common_caps.color_क्रमmats.bits.YCBCR_NATIVE_422;
 		sink_per_slice_throughput_mps = dsc_sink_caps->throughput_mode_1_mps;
 		branch_max_throughput_mps = dsc_sink_caps->branch_overall_throughput_1_mps;
-		if (!is_dsc_possible) {
-			is_dsc_possible = (bool)dsc_common_caps.color_formats.bits.YCBCR_SIMPLE_422;
+		अगर (!is_dsc_possible) अणु
+			is_dsc_possible = (bool)dsc_common_caps.color_क्रमmats.bits.YCBCR_SIMPLE_422;
 			dsc_cfg->ycbcr422_simple = is_dsc_possible;
 			sink_per_slice_throughput_mps = dsc_sink_caps->throughput_mode_0_mps;
-		}
-		break;
-	case PIXEL_ENCODING_YCBCR420:
-		is_dsc_possible = (bool)dsc_common_caps.color_formats.bits.YCBCR_NATIVE_420;
+		पूर्ण
+		अवरोध;
+	हाल PIXEL_ENCODING_YCBCR420:
+		is_dsc_possible = (bool)dsc_common_caps.color_क्रमmats.bits.YCBCR_NATIVE_420;
 		sink_per_slice_throughput_mps = dsc_sink_caps->throughput_mode_1_mps;
 		branch_max_throughput_mps = dsc_sink_caps->branch_overall_throughput_1_mps;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		is_dsc_possible = false;
-	}
+	पूर्ण
 
 	// Validate branch's maximum throughput
-	if (branch_max_throughput_mps && dsc_div_by_10_round_up(timing->pix_clk_100hz) > branch_max_throughput_mps * 1000)
+	अगर (branch_max_throughput_mps && dsc_भाग_by_10_round_up(timing->pix_clk_100hz) > branch_max_throughput_mps * 1000)
 		is_dsc_possible = false;
 
-	if (!is_dsc_possible)
-		goto done;
+	अगर (!is_dsc_possible)
+		जाओ करोne;
 
 	// Color depth
-	switch (timing->display_color_depth) {
-	case COLOR_DEPTH_888:
+	चयन (timing->display_color_depth) अणु
+	हाल COLOR_DEPTH_888:
 		is_dsc_possible = (bool)dsc_common_caps.color_depth.bits.COLOR_DEPTH_8_BPC;
-		break;
-	case COLOR_DEPTH_101010:
+		अवरोध;
+	हाल COLOR_DEPTH_101010:
 		is_dsc_possible = (bool)dsc_common_caps.color_depth.bits.COLOR_DEPTH_10_BPC;
-		break;
-	case COLOR_DEPTH_121212:
+		अवरोध;
+	हाल COLOR_DEPTH_121212:
 		is_dsc_possible = (bool)dsc_common_caps.color_depth.bits.COLOR_DEPTH_12_BPC;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		is_dsc_possible = false;
-	}
+	पूर्ण
 
-	if (!is_dsc_possible)
-		goto done;
+	अगर (!is_dsc_possible)
+		जाओ करोne;
 
 	// Slice width (i.e. number of slices per line)
 	max_slices_h = get_max_dsc_slices(dsc_common_caps.slice_caps);
 
-	while (max_slices_h > 0) {
-		if (pic_width % max_slices_h == 0)
-			break;
+	जबतक (max_slices_h > 0) अणु
+		अगर (pic_width % max_slices_h == 0)
+			अवरोध;
 
 		max_slices_h = dec_num_slices(dsc_common_caps.slice_caps, max_slices_h);
-	}
+	पूर्ण
 
 	is_dsc_possible = (dsc_common_caps.max_slice_width > 0);
-	if (!is_dsc_possible)
-		goto done;
+	अगर (!is_dsc_possible)
+		जाओ करोne;
 
 	min_slices_h = pic_width / dsc_common_caps.max_slice_width;
-	if (pic_width % dsc_common_caps.max_slice_width)
+	अगर (pic_width % dsc_common_caps.max_slice_width)
 		min_slices_h++;
 
 	min_slices_h = fit_num_slices_up(dsc_common_caps.slice_caps, min_slices_h);
 
-	while (min_slices_h <= max_slices_h) {
-		int pix_clk_per_slice_khz = dsc_div_by_10_round_up(timing->pix_clk_100hz) / min_slices_h;
-		if (pix_clk_per_slice_khz <= sink_per_slice_throughput_mps * 1000)
-			break;
+	जबतक (min_slices_h <= max_slices_h) अणु
+		पूर्णांक pix_clk_per_slice_khz = dsc_भाग_by_10_round_up(timing->pix_clk_100hz) / min_slices_h;
+		अगर (pix_clk_per_slice_khz <= sink_per_slice_throughput_mps * 1000)
+			अवरोध;
 
 		min_slices_h = inc_num_slices(dsc_common_caps.slice_caps, min_slices_h);
-	}
+	पूर्ण
 
-	if (pic_width % min_slices_h != 0)
+	अगर (pic_width % min_slices_h != 0)
 		min_slices_h = 0; // DSC TODO: Maybe try increasing the number of slices first?
 
 	is_dsc_possible = (min_slices_h <= max_slices_h);
-	if (!is_dsc_possible)
-		goto done;
+	अगर (!is_dsc_possible)
+		जाओ करोne;
 
-	if (policy.use_min_slices_h) {
-		if (min_slices_h > 0)
+	अगर (policy.use_min_slices_h) अणु
+		अगर (min_slices_h > 0)
 			num_slices_h = min_slices_h;
-		else if (max_slices_h > 0) { // Fall back to max slices if min slices is not working out
-			if (policy.max_slices_h)
+		अन्यथा अगर (max_slices_h > 0) अणु // Fall back to max slices अगर min slices is not working out
+			अगर (policy.max_slices_h)
 				num_slices_h = min(policy.max_slices_h, max_slices_h);
-			else
+			अन्यथा
 				num_slices_h = max_slices_h;
-		} else
+		पूर्ण अन्यथा
 			is_dsc_possible = false;
-	} else {
-		if (max_slices_h > 0) {
-			if (policy.max_slices_h)
+	पूर्ण अन्यथा अणु
+		अगर (max_slices_h > 0) अणु
+			अगर (policy.max_slices_h)
 				num_slices_h = min(policy.max_slices_h, max_slices_h);
-			else
+			अन्यथा
 				num_slices_h = max_slices_h;
-		} else if (min_slices_h > 0) // Fall back to min slices if max slices is not possible
+		पूर्ण अन्यथा अगर (min_slices_h > 0) // Fall back to min slices अगर max slices is not possible
 			num_slices_h = min_slices_h;
-		else
+		अन्यथा
 			is_dsc_possible = false;
-	}
+	पूर्ण
 
-	if (!is_dsc_possible)
-		goto done;
+	अगर (!is_dsc_possible)
+		जाओ करोne;
 
 	dsc_cfg->num_slices_h = num_slices_h;
 	slice_width = pic_width / num_slices_h;
 
 	is_dsc_possible = slice_width <= dsc_common_caps.max_slice_width;
-	if (!is_dsc_possible)
-		goto done;
+	अगर (!is_dsc_possible)
+		जाओ करोne;
 
-	// Slice height (i.e. number of slices per column): start with policy and pick the first one that height is divisible by.
-	// For 4:2:0 make sure the slice height is divisible by 2 as well.
-	if (min_slice_height_override == 0)
+	// Slice height (i.e. number of slices per column): start with policy and pick the first one that height is भागisible by.
+	// For 4:2:0 make sure the slice height is भागisible by 2 as well.
+	अगर (min_slice_height_override == 0)
 		slice_height = min(policy.min_slice_height, pic_height);
-	else
+	अन्यथा
 		slice_height = min(min_slice_height_override, pic_height);
 
-	while (slice_height < pic_height && (pic_height % slice_height != 0 ||
+	जबतक (slice_height < pic_height && (pic_height % slice_height != 0 ||
 		(timing->pixel_encoding == PIXEL_ENCODING_YCBCR420 && slice_height % 2 != 0)))
 		slice_height++;
 
-	if (timing->pixel_encoding == PIXEL_ENCODING_YCBCR420) // For the case when pic_height < dsc_policy.min_sice_height
+	अगर (timing->pixel_encoding == PIXEL_ENCODING_YCBCR420) // For the हाल when pic_height < dsc_policy.min_sice_height
 		is_dsc_possible = (slice_height % 2 == 0);
 
-	if (!is_dsc_possible)
-		goto done;
+	अगर (!is_dsc_possible)
+		जाओ करोne;
 
 	dsc_cfg->num_slices_v = pic_height/slice_height;
 
-	// Final decission: can we do DSC or not?
-	if (is_dsc_possible) {
+	// Final decission: can we करो DSC or not?
+	अगर (is_dsc_possible) अणु
 		// Fill out the rest of DSC settings
 		dsc_cfg->block_pred_enable = dsc_common_caps.is_block_pred_supported;
 		dsc_cfg->linebuf_depth = dsc_common_caps.lb_bit_depth;
 		dsc_cfg->version_minor = (dsc_common_caps.dsc_version & 0xf0) >> 4;
-	}
+	पूर्ण
 
-done:
-	if (!is_dsc_possible)
-		memset(dsc_cfg, 0, sizeof(struct dc_dsc_config));
+करोne:
+	अगर (!is_dsc_possible)
+		स_रखो(dsc_cfg, 0, माप(काष्ठा dc_dsc_config));
 
-	return is_dsc_possible;
-}
+	वापस is_dsc_possible;
+पूर्ण
 
-bool dc_dsc_parse_dsc_dpcd(const struct dc *dc, const uint8_t *dpcd_dsc_basic_data, const uint8_t *dpcd_dsc_branch_decoder_caps, struct dsc_dec_dpcd_caps *dsc_sink_caps)
-{
-	if (!dpcd_dsc_basic_data)
-		return false;
+bool dc_dsc_parse_dsc_dpcd(स्थिर काष्ठा dc *dc, स्थिर uपूर्णांक8_t *dpcd_dsc_basic_data, स्थिर uपूर्णांक8_t *dpcd_dsc_branch_decoder_caps, काष्ठा dsc_dec_dpcd_caps *dsc_sink_caps)
+अणु
+	अगर (!dpcd_dsc_basic_data)
+		वापस false;
 
 	dsc_sink_caps->is_dsc_supported = (dpcd_dsc_basic_data[DP_DSC_SUPPORT - DP_DSC_SUPPORT] & DP_DSC_DECOMPRESSION_IS_SUPPORTED) != 0;
-	if (!dsc_sink_caps->is_dsc_supported)
-		return false;
+	अगर (!dsc_sink_caps->is_dsc_supported)
+		वापस false;
 
 	dsc_sink_caps->dsc_version = dpcd_dsc_basic_data[DP_DSC_REV - DP_DSC_SUPPORT];
 
-	{
-		int buff_block_size;
-		int buff_size;
+	अणु
+		पूर्णांक buff_block_size;
+		पूर्णांक buff_size;
 
-		if (!dsc_buff_block_size_from_dpcd(dpcd_dsc_basic_data[DP_DSC_RC_BUF_BLK_SIZE - DP_DSC_SUPPORT], &buff_block_size))
-			return false;
+		अगर (!dsc_buff_block_size_from_dpcd(dpcd_dsc_basic_data[DP_DSC_RC_BUF_BLK_SIZE - DP_DSC_SUPPORT], &buff_block_size))
+			वापस false;
 
 		buff_size = dpcd_dsc_basic_data[DP_DSC_RC_BUF_SIZE - DP_DSC_SUPPORT] + 1;
 		dsc_sink_caps->rc_buffer_size = buff_size * buff_block_size;
-	}
+	पूर्ण
 
 	dsc_sink_caps->slice_caps1.raw = dpcd_dsc_basic_data[DP_DSC_SLICE_CAP_1 - DP_DSC_SUPPORT];
-	if (!dsc_line_buff_depth_from_dpcd(dpcd_dsc_basic_data[DP_DSC_LINE_BUF_BIT_DEPTH - DP_DSC_SUPPORT], &dsc_sink_caps->lb_bit_depth))
-		return false;
+	अगर (!dsc_line_buff_depth_from_dpcd(dpcd_dsc_basic_data[DP_DSC_LINE_BUF_BIT_DEPTH - DP_DSC_SUPPORT], &dsc_sink_caps->lb_bit_depth))
+		वापस false;
 
 	dsc_sink_caps->is_block_pred_supported =
 		(dpcd_dsc_basic_data[DP_DSC_BLK_PREDICTION_SUPPORT - DP_DSC_SUPPORT] & DP_DSC_BLK_PREDICTION_IS_SUPPORTED) != 0;
@@ -738,122 +739,122 @@ bool dc_dsc_parse_dsc_dpcd(const struct dc *dc, const uint8_t *dpcd_dsc_basic_da
 		dpcd_dsc_basic_data[DP_DSC_MAX_BITS_PER_PIXEL_LOW - DP_DSC_SUPPORT] |
 		dpcd_dsc_basic_data[DP_DSC_MAX_BITS_PER_PIXEL_HI - DP_DSC_SUPPORT] << 8;
 
-	dsc_sink_caps->color_formats.raw = dpcd_dsc_basic_data[DP_DSC_DEC_COLOR_FORMAT_CAP - DP_DSC_SUPPORT];
+	dsc_sink_caps->color_क्रमmats.raw = dpcd_dsc_basic_data[DP_DSC_DEC_COLOR_FORMAT_CAP - DP_DSC_SUPPORT];
 	dsc_sink_caps->color_depth.raw = dpcd_dsc_basic_data[DP_DSC_DEC_COLOR_DEPTH_CAP - DP_DSC_SUPPORT];
 
-	{
-		int dpcd_throughput = dpcd_dsc_basic_data[DP_DSC_PEAK_THROUGHPUT - DP_DSC_SUPPORT];
+	अणु
+		पूर्णांक dpcd_throughput = dpcd_dsc_basic_data[DP_DSC_PEAK_THROUGHPUT - DP_DSC_SUPPORT];
 
-		if (!dsc_throughput_from_dpcd(dpcd_throughput & DP_DSC_THROUGHPUT_MODE_0_MASK, &dsc_sink_caps->throughput_mode_0_mps))
-			return false;
+		अगर (!dsc_throughput_from_dpcd(dpcd_throughput & DP_DSC_THROUGHPUT_MODE_0_MASK, &dsc_sink_caps->throughput_mode_0_mps))
+			वापस false;
 
 		dpcd_throughput = (dpcd_throughput & DP_DSC_THROUGHPUT_MODE_1_MASK) >> DP_DSC_THROUGHPUT_MODE_1_SHIFT;
-		if (!dsc_throughput_from_dpcd(dpcd_throughput, &dsc_sink_caps->throughput_mode_1_mps))
-			return false;
-	}
+		अगर (!dsc_throughput_from_dpcd(dpcd_throughput, &dsc_sink_caps->throughput_mode_1_mps))
+			वापस false;
+	पूर्ण
 
 	dsc_sink_caps->max_slice_width = dpcd_dsc_basic_data[DP_DSC_MAX_SLICE_WIDTH - DP_DSC_SUPPORT] * 320;
 	dsc_sink_caps->slice_caps2.raw = dpcd_dsc_basic_data[DP_DSC_SLICE_CAP_2 - DP_DSC_SUPPORT];
 
-	if (!dsc_bpp_increment_div_from_dpcd(dpcd_dsc_basic_data[DP_DSC_BITS_PER_PIXEL_INC - DP_DSC_SUPPORT], &dsc_sink_caps->bpp_increment_div))
-		return false;
+	अगर (!dsc_bpp_increment_भाग_from_dpcd(dpcd_dsc_basic_data[DP_DSC_BITS_PER_PIXEL_INC - DP_DSC_SUPPORT], &dsc_sink_caps->bpp_increment_भाग))
+		वापस false;
 
-	if (dc->debug.dsc_bpp_increment_div) {
-		/* dsc_bpp_increment_div should onl be 1, 2, 4, 8 or 16, but rather than rejecting invalid values,
-		 * we'll accept all and get it into range. This also makes the above check against 0 redundant,
-		 * but that one stresses out the override will be only used if it's not 0.
+	अगर (dc->debug.dsc_bpp_increment_भाग) अणु
+		/* dsc_bpp_increment_भाग should onl be 1, 2, 4, 8 or 16, but rather than rejecting invalid values,
+		 * we'll accept all and get it पूर्णांकo range. This also makes the above check against 0 redundant,
+		 * but that one stresses out the override will be only used अगर it's not 0.
 		 */
-		if (dc->debug.dsc_bpp_increment_div >= 1)
-			dsc_sink_caps->bpp_increment_div = 1;
-		if (dc->debug.dsc_bpp_increment_div >= 2)
-			dsc_sink_caps->bpp_increment_div = 2;
-		if (dc->debug.dsc_bpp_increment_div >= 4)
-			dsc_sink_caps->bpp_increment_div = 4;
-		if (dc->debug.dsc_bpp_increment_div >= 8)
-			dsc_sink_caps->bpp_increment_div = 8;
-		if (dc->debug.dsc_bpp_increment_div >= 16)
-			dsc_sink_caps->bpp_increment_div = 16;
-	}
+		अगर (dc->debug.dsc_bpp_increment_भाग >= 1)
+			dsc_sink_caps->bpp_increment_भाग = 1;
+		अगर (dc->debug.dsc_bpp_increment_भाग >= 2)
+			dsc_sink_caps->bpp_increment_भाग = 2;
+		अगर (dc->debug.dsc_bpp_increment_भाग >= 4)
+			dsc_sink_caps->bpp_increment_भाग = 4;
+		अगर (dc->debug.dsc_bpp_increment_भाग >= 8)
+			dsc_sink_caps->bpp_increment_भाग = 8;
+		अगर (dc->debug.dsc_bpp_increment_भाग >= 16)
+			dsc_sink_caps->bpp_increment_भाग = 16;
+	पूर्ण
 
 	/* Extended caps */
-	if (dpcd_dsc_branch_decoder_caps == NULL) { // branch decoder DPCD DSC data can be null for non branch device
+	अगर (dpcd_dsc_branch_decoder_caps == शून्य) अणु // branch decoder DPCD DSC data can be null क्रम non branch device
 		dsc_sink_caps->branch_overall_throughput_0_mps = 0;
 		dsc_sink_caps->branch_overall_throughput_1_mps = 0;
 		dsc_sink_caps->branch_max_line_width = 0;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	dsc_sink_caps->branch_overall_throughput_0_mps = dpcd_dsc_branch_decoder_caps[DP_DSC_BRANCH_OVERALL_THROUGHPUT_0 - DP_DSC_BRANCH_OVERALL_THROUGHPUT_0];
-	if (dsc_sink_caps->branch_overall_throughput_0_mps == 0)
+	अगर (dsc_sink_caps->branch_overall_throughput_0_mps == 0)
 		dsc_sink_caps->branch_overall_throughput_0_mps = 0;
-	else if (dsc_sink_caps->branch_overall_throughput_0_mps == 1)
+	अन्यथा अगर (dsc_sink_caps->branch_overall_throughput_0_mps == 1)
 		dsc_sink_caps->branch_overall_throughput_0_mps = 680;
-	else {
+	अन्यथा अणु
 		dsc_sink_caps->branch_overall_throughput_0_mps *= 50;
 		dsc_sink_caps->branch_overall_throughput_0_mps += 600;
-	}
+	पूर्ण
 
 	dsc_sink_caps->branch_overall_throughput_1_mps = dpcd_dsc_branch_decoder_caps[DP_DSC_BRANCH_OVERALL_THROUGHPUT_1 - DP_DSC_BRANCH_OVERALL_THROUGHPUT_0];
-	if (dsc_sink_caps->branch_overall_throughput_1_mps == 0)
+	अगर (dsc_sink_caps->branch_overall_throughput_1_mps == 0)
 		dsc_sink_caps->branch_overall_throughput_1_mps = 0;
-	else if (dsc_sink_caps->branch_overall_throughput_1_mps == 1)
+	अन्यथा अगर (dsc_sink_caps->branch_overall_throughput_1_mps == 1)
 		dsc_sink_caps->branch_overall_throughput_1_mps = 680;
-	else {
+	अन्यथा अणु
 		dsc_sink_caps->branch_overall_throughput_1_mps *= 50;
 		dsc_sink_caps->branch_overall_throughput_1_mps += 600;
-	}
+	पूर्ण
 
 	dsc_sink_caps->branch_max_line_width = dpcd_dsc_branch_decoder_caps[DP_DSC_BRANCH_MAX_LINE_WIDTH - DP_DSC_BRANCH_OVERALL_THROUGHPUT_0] * 320;
 	ASSERT(dsc_sink_caps->branch_max_line_width == 0 || dsc_sink_caps->branch_max_line_width >= 5120);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 
 /* If DSC is possbile, get DSC bandwidth range based on [min_bpp, max_bpp] target bitrate range and
- * timing's pixel clock and uncompressed bandwidth.
+ * timing's pixel घड़ी and uncompressed bandwidth.
  * If DSC is not possible, leave '*range' untouched.
  */
 bool dc_dsc_compute_bandwidth_range(
-		const struct display_stream_compressor *dsc,
-		uint32_t dsc_min_slice_height_override,
-		uint32_t min_bpp_x16,
-		uint32_t max_bpp_x16,
-		const struct dsc_dec_dpcd_caps *dsc_sink_caps,
-		const struct dc_crtc_timing *timing,
-		struct dc_dsc_bw_range *range)
-{
+		स्थिर काष्ठा display_stream_compressor *dsc,
+		uपूर्णांक32_t dsc_min_slice_height_override,
+		uपूर्णांक32_t min_bpp_x16,
+		uपूर्णांक32_t max_bpp_x16,
+		स्थिर काष्ठा dsc_dec_dpcd_caps *dsc_sink_caps,
+		स्थिर काष्ठा dc_crtc_timing *timing,
+		काष्ठा dc_dsc_bw_range *range)
+अणु
 	bool is_dsc_possible = false;
-	struct dsc_enc_caps dsc_enc_caps;
-	struct dsc_enc_caps dsc_common_caps;
-	struct dc_dsc_config config;
+	काष्ठा dsc_enc_caps dsc_enc_caps;
+	काष्ठा dsc_enc_caps dsc_common_caps;
+	काष्ठा dc_dsc_config config;
 
 	get_dsc_enc_caps(dsc, &dsc_enc_caps, timing->pix_clk_100hz);
 
-	is_dsc_possible = intersect_dsc_caps(dsc_sink_caps, &dsc_enc_caps,
+	is_dsc_possible = पूर्णांकersect_dsc_caps(dsc_sink_caps, &dsc_enc_caps,
 			timing->pixel_encoding, &dsc_common_caps);
 
-	if (is_dsc_possible)
+	अगर (is_dsc_possible)
 		is_dsc_possible = setup_dsc_config(dsc_sink_caps, &dsc_enc_caps, 0, timing,
 				dsc_min_slice_height_override, max_bpp_x16, &config);
 
-	if (is_dsc_possible)
+	अगर (is_dsc_possible)
 		get_dsc_bandwidth_range(min_bpp_x16, max_bpp_x16, &dsc_common_caps, timing, range);
 
-	return is_dsc_possible;
-}
+	वापस is_dsc_possible;
+पूर्ण
 
 bool dc_dsc_compute_config(
-		const struct display_stream_compressor *dsc,
-		const struct dsc_dec_dpcd_caps *dsc_sink_caps,
-		uint32_t dsc_min_slice_height_override,
-		uint32_t max_target_bpp_limit_override,
-		uint32_t target_bandwidth_kbps,
-		const struct dc_crtc_timing *timing,
-		struct dc_dsc_config *dsc_cfg)
-{
+		स्थिर काष्ठा display_stream_compressor *dsc,
+		स्थिर काष्ठा dsc_dec_dpcd_caps *dsc_sink_caps,
+		uपूर्णांक32_t dsc_min_slice_height_override,
+		uपूर्णांक32_t max_target_bpp_limit_override,
+		uपूर्णांक32_t target_bandwidth_kbps,
+		स्थिर काष्ठा dc_crtc_timing *timing,
+		काष्ठा dc_dsc_config *dsc_cfg)
+अणु
 	bool is_dsc_possible = false;
-	struct dsc_enc_caps dsc_enc_caps;
+	काष्ठा dsc_enc_caps dsc_enc_caps;
 
 	get_dsc_enc_caps(dsc, &dsc_enc_caps, timing->pix_clk_100hz);
 	is_dsc_possible = setup_dsc_config(dsc_sink_caps,
@@ -861,96 +862,96 @@ bool dc_dsc_compute_config(
 			target_bandwidth_kbps,
 			timing, dsc_min_slice_height_override,
 			max_target_bpp_limit_override * 16, dsc_cfg);
-	return is_dsc_possible;
-}
+	वापस is_dsc_possible;
+पूर्ण
 
-uint32_t dc_dsc_stream_bandwidth_in_kbps(uint32_t pix_clk_100hz, uint32_t bpp_x16)
-{
-	struct fixed31_32 link_bw_kbps;
-	link_bw_kbps = dc_fixpt_from_int(pix_clk_100hz);
-	link_bw_kbps = dc_fixpt_div_int(link_bw_kbps, 160);
-	link_bw_kbps = dc_fixpt_mul_int(link_bw_kbps, bpp_x16);
-	return dc_fixpt_ceil(link_bw_kbps);
-}
+uपूर्णांक32_t dc_dsc_stream_bandwidth_in_kbps(uपूर्णांक32_t pix_clk_100hz, uपूर्णांक32_t bpp_x16)
+अणु
+	काष्ठा fixed31_32 link_bw_kbps;
+	link_bw_kbps = dc_fixpt_from_पूर्णांक(pix_clk_100hz);
+	link_bw_kbps = dc_fixpt_भाग_पूर्णांक(link_bw_kbps, 160);
+	link_bw_kbps = dc_fixpt_mul_पूर्णांक(link_bw_kbps, bpp_x16);
+	वापस dc_fixpt_उच्चमान(link_bw_kbps);
+पूर्ण
 
-void dc_dsc_get_policy_for_timing(const struct dc_crtc_timing *timing, uint32_t max_target_bpp_limit_override_x16, struct dc_dsc_policy *policy)
-{
-	uint32_t bpc = 0;
+व्योम dc_dsc_get_policy_क्रम_timing(स्थिर काष्ठा dc_crtc_timing *timing, uपूर्णांक32_t max_target_bpp_limit_override_x16, काष्ठा dc_dsc_policy *policy)
+अणु
+	uपूर्णांक32_t bpc = 0;
 
 	policy->min_target_bpp = 0;
 	policy->max_target_bpp = 0;
 
-	/* DSC Policy: Use minimum number of slices that fits the pixel clock */
+	/* DSC Policy: Use minimum number of slices that fits the pixel घड़ी */
 	policy->use_min_slices_h = true;
 
 	/* DSC Policy: Use max available slices
-	 * (in our case 4 for or 8, depending on the mode)
+	 * (in our हाल 4 क्रम or 8, depending on the mode)
 	 */
 	policy->max_slices_h = 0;
 
 	/* DSC Policy: Use slice height recommended
-	 * by VESA DSC Spreadsheet user guide
+	 * by VESA DSC Spपढ़ोsheet user guide
 	 */
 	policy->min_slice_height = 108;
 
-	/* DSC Policy: follow DP specs with an internal upper limit to 16 bpp
-	 * for better interoperability
+	/* DSC Policy: follow DP specs with an पूर्णांकernal upper limit to 16 bpp
+	 * क्रम better पूर्णांकeroperability
 	 */
-	switch (timing->display_color_depth) {
-	case COLOR_DEPTH_888:
+	चयन (timing->display_color_depth) अणु
+	हाल COLOR_DEPTH_888:
 		bpc = 8;
-		break;
-	case COLOR_DEPTH_101010:
+		अवरोध;
+	हाल COLOR_DEPTH_101010:
 		bpc = 10;
-		break;
-	case COLOR_DEPTH_121212:
+		अवरोध;
+	हाल COLOR_DEPTH_121212:
 		bpc = 12;
-		break;
-	default:
-		return;
-	}
-	switch (timing->pixel_encoding) {
-	case PIXEL_ENCODING_RGB:
-	case PIXEL_ENCODING_YCBCR444:
-	case PIXEL_ENCODING_YCBCR422: /* assume no YCbCr422 native support */
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
+	चयन (timing->pixel_encoding) अणु
+	हाल PIXEL_ENCODING_RGB:
+	हाल PIXEL_ENCODING_YCBCR444:
+	हाल PIXEL_ENCODING_YCBCR422: /* assume no YCbCr422 native support */
 		/* DP specs limits to 8 */
 		policy->min_target_bpp = 8;
 		/* DP specs limits to 3 x bpc */
 		policy->max_target_bpp = 3 * bpc;
-		break;
-	case PIXEL_ENCODING_YCBCR420:
+		अवरोध;
+	हाल PIXEL_ENCODING_YCBCR420:
 		/* DP specs limits to 6 */
 		policy->min_target_bpp = 6;
 		/* DP specs limits to 1.5 x bpc assume bpc is an even number */
 		policy->max_target_bpp = bpc * 3 / 2;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
 	policy->preferred_bpp_x16 = timing->dsc_fixed_bits_per_pixel_x16;
 
-	/* internal upper limit, default 16 bpp */
-	if (policy->max_target_bpp > dsc_policy_max_target_bpp_limit)
+	/* पूर्णांकernal upper limit, शेष 16 bpp */
+	अगर (policy->max_target_bpp > dsc_policy_max_target_bpp_limit)
 		policy->max_target_bpp = dsc_policy_max_target_bpp_limit;
 
 	/* apply override */
-	if (max_target_bpp_limit_override_x16 && policy->max_target_bpp > max_target_bpp_limit_override_x16 / 16)
+	अगर (max_target_bpp_limit_override_x16 && policy->max_target_bpp > max_target_bpp_limit_override_x16 / 16)
 		policy->max_target_bpp = max_target_bpp_limit_override_x16 / 16;
 
-	/* enable DSC when not needed, default false */
-	if (dsc_policy_enable_dsc_when_not_needed)
+	/* enable DSC when not needed, शेष false */
+	अगर (dsc_policy_enable_dsc_when_not_needed)
 		policy->enable_dsc_when_not_needed = dsc_policy_enable_dsc_when_not_needed;
-	else
+	अन्यथा
 		policy->enable_dsc_when_not_needed = false;
-}
+पूर्ण
 
-void dc_dsc_policy_set_max_target_bpp_limit(uint32_t limit)
-{
+व्योम dc_dsc_policy_set_max_target_bpp_limit(uपूर्णांक32_t limit)
+अणु
 	dsc_policy_max_target_bpp_limit = limit;
-}
+पूर्ण
 
-void dc_dsc_policy_set_enable_dsc_when_not_needed(bool enable)
-{
+व्योम dc_dsc_policy_set_enable_dsc_when_not_needed(bool enable)
+अणु
 	dsc_policy_enable_dsc_when_not_needed = enable;
-}
+पूर्ण

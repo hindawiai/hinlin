@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2016 MediaTek Inc.
  * Author: PC Chen <pc.chen@mediatek.com>
  */
 
-#ifndef _VDEC_DRV_BASE_
-#define _VDEC_DRV_BASE_
+#अगर_अघोषित _VDEC_DRV_BASE_
+#घोषणा _VDEC_DRV_BASE_
 
-#include "vdec_drv_if.h"
+#समावेश "vdec_drv_if.h"
 
-struct vdec_common_if {
+काष्ठा vdec_common_अगर अणु
 	/**
 	 * (*init)() - initialize decode driver
 	 * @ctx     : [in] mtk v4l2 context
 	 * @h_vdec  : [out] driver handle
 	 */
-	int (*init)(struct mtk_vcodec_ctx *ctx);
+	पूर्णांक (*init)(काष्ठा mtk_vcodec_ctx *ctx);
 
 	/**
 	 * (*decode)() - trigger decode
@@ -24,8 +25,8 @@ struct vdec_common_if {
 	 * @fb      : [in] frame buffer to store decoded frame
 	 * @res_chg : [out] resolution change happen
 	 */
-	int (*decode)(void *h_vdec, struct mtk_vcodec_mem *bs,
-		      struct vdec_fb *fb, bool *res_chg);
+	पूर्णांक (*decode)(व्योम *h_vdec, काष्ठा mtk_vcodec_mem *bs,
+		      काष्ठा vdec_fb *fb, bool *res_chg);
 
 	/**
 	 * (*get_param)() - get driver's parameter
@@ -33,14 +34,14 @@ struct vdec_common_if {
 	 * @type   : [in] input parameter type
 	 * @out    : [out] buffer to store query result
 	 */
-	int (*get_param)(void *h_vdec, enum vdec_get_param_type type,
-			 void *out);
+	पूर्णांक (*get_param)(व्योम *h_vdec, क्रमागत vdec_get_param_type type,
+			 व्योम *out);
 
 	/**
 	 * (*deinit)() - deinitialize driver.
 	 * @h_vdec : [in] driver handle to be deinit
 	 */
-	void (*deinit)(void *h_vdec);
-};
+	व्योम (*deinit)(व्योम *h_vdec);
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

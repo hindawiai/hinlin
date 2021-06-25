@@ -1,178 +1,179 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_FRAG_H__
-#define __NET_FRAG_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_FRAG_H__
+#घोषणा __NET_FRAG_H__
 
-#include <linux/rhashtable-types.h>
-#include <linux/completion.h>
+#समावेश <linux/rhashtable-types.h>
+#समावेश <linux/completion.h>
 
 /* Per netns frag queues directory */
-struct fqdir {
+काष्ठा fqdir अणु
 	/* sysctls */
-	long			high_thresh;
-	long			low_thresh;
-	int			timeout;
-	int			max_dist;
-	struct inet_frags	*f;
-	struct net		*net;
+	दीर्घ			high_thresh;
+	दीर्घ			low_thresh;
+	पूर्णांक			समयout;
+	पूर्णांक			max_dist;
+	काष्ठा inet_frags	*f;
+	काष्ठा net		*net;
 	bool			dead;
 
-	struct rhashtable       rhashtable ____cacheline_aligned_in_smp;
+	काष्ठा rhashtable       rhashtable ____cacheline_aligned_in_smp;
 
-	/* Keep atomic mem on separate cachelines in structs that include it */
-	atomic_long_t		mem ____cacheline_aligned_in_smp;
-	struct work_struct	destroy_work;
-	struct llist_node	free_list;
-};
+	/* Keep atomic mem on separate cachelines in काष्ठाs that include it */
+	atomic_दीर्घ_t		mem ____cacheline_aligned_in_smp;
+	काष्ठा work_काष्ठा	destroy_work;
+	काष्ठा llist_node	मुक्त_list;
+पूर्ण;
 
 /**
  * fragment queue flags
  *
  * @INET_FRAG_FIRST_IN: first fragment has arrived
  * @INET_FRAG_LAST_IN: final fragment has arrived
- * @INET_FRAG_COMPLETE: frag queue has been processed and is due for destruction
- * @INET_FRAG_HASH_DEAD: inet_frag_kill() has not removed fq from rhashtable
+ * @INET_FRAG_COMPLETE: frag queue has been processed and is due क्रम deकाष्ठाion
+ * @INET_FRAG_HASH_DEAD: inet_frag_समाप्त() has not हटाओd fq from rhashtable
  */
-enum {
+क्रमागत अणु
 	INET_FRAG_FIRST_IN	= BIT(0),
 	INET_FRAG_LAST_IN	= BIT(1),
 	INET_FRAG_COMPLETE	= BIT(2),
 	INET_FRAG_HASH_DEAD	= BIT(3),
-};
+पूर्ण;
 
-struct frag_v4_compare_key {
+काष्ठा frag_v4_compare_key अणु
 	__be32		saddr;
 	__be32		daddr;
 	u32		user;
-	u32		vif;
+	u32		vअगर;
 	__be16		id;
 	u16		protocol;
-};
+पूर्ण;
 
-struct frag_v6_compare_key {
-	struct in6_addr	saddr;
-	struct in6_addr	daddr;
+काष्ठा frag_v6_compare_key अणु
+	काष्ठा in6_addr	saddr;
+	काष्ठा in6_addr	daddr;
 	u32		user;
 	__be32		id;
-	u32		iif;
-};
+	u32		iअगर;
+पूर्ण;
 
 /**
- * struct inet_frag_queue - fragment queue
+ * काष्ठा inet_frag_queue - fragment queue
  *
  * @node: rhash node
- * @key: keys identifying this frag.
- * @timer: queue expiration timer
+ * @key: keys identअगरying this frag.
+ * @समयr: queue expiration समयr
  * @lock: spinlock protecting this frag
  * @refcnt: reference count of the queue
  * @rb_fragments: received fragments rb-tree root
  * @fragments_tail: received fragments tail
  * @last_run_head: the head of the last "run". see ip_fragment.c
- * @stamp: timestamp of the last received fragment
+ * @stamp: बारtamp of the last received fragment
  * @len: total length of the original datagram
  * @meat: length of received fragments so far
  * @flags: fragment queue flags
  * @max_size: maximum received fragment size
- * @fqdir: pointer to struct fqdir
- * @rcu: rcu head for freeing deferall
+ * @fqdir: poपूर्णांकer to काष्ठा fqdir
+ * @rcu: rcu head क्रम मुक्तing deferall
  */
-struct inet_frag_queue {
-	struct rhash_head	node;
-	union {
-		struct frag_v4_compare_key v4;
-		struct frag_v6_compare_key v6;
-	} key;
-	struct timer_list	timer;
+काष्ठा inet_frag_queue अणु
+	काष्ठा rhash_head	node;
+	जोड़ अणु
+		काष्ठा frag_v4_compare_key v4;
+		काष्ठा frag_v6_compare_key v6;
+	पूर्ण key;
+	काष्ठा समयr_list	समयr;
 	spinlock_t		lock;
 	refcount_t		refcnt;
-	struct rb_root		rb_fragments;
-	struct sk_buff		*fragments_tail;
-	struct sk_buff		*last_run_head;
-	ktime_t			stamp;
-	int			len;
-	int			meat;
+	काष्ठा rb_root		rb_fragments;
+	काष्ठा sk_buff		*fragments_tail;
+	काष्ठा sk_buff		*last_run_head;
+	kसमय_प्रकार			stamp;
+	पूर्णांक			len;
+	पूर्णांक			meat;
 	__u8			flags;
 	u16			max_size;
-	struct fqdir		*fqdir;
-	struct rcu_head		rcu;
-};
+	काष्ठा fqdir		*fqdir;
+	काष्ठा rcu_head		rcu;
+पूर्ण;
 
-struct inet_frags {
-	unsigned int		qsize;
+काष्ठा inet_frags अणु
+	अचिन्हित पूर्णांक		qsize;
 
-	void			(*constructor)(struct inet_frag_queue *q,
-					       const void *arg);
-	void			(*destructor)(struct inet_frag_queue *);
-	void			(*frag_expire)(struct timer_list *t);
-	struct kmem_cache	*frags_cachep;
-	const char		*frags_cache_name;
-	struct rhashtable_params rhash_params;
+	व्योम			(*स्थिरructor)(काष्ठा inet_frag_queue *q,
+					       स्थिर व्योम *arg);
+	व्योम			(*deकाष्ठाor)(काष्ठा inet_frag_queue *);
+	व्योम			(*frag_expire)(काष्ठा समयr_list *t);
+	काष्ठा kmem_cache	*frags_cachep;
+	स्थिर अक्षर		*frags_cache_name;
+	काष्ठा rhashtable_params rhash_params;
 	refcount_t		refcnt;
-	struct completion	completion;
-};
+	काष्ठा completion	completion;
+पूर्ण;
 
-int inet_frags_init(struct inet_frags *);
-void inet_frags_fini(struct inet_frags *);
+पूर्णांक inet_frags_init(काष्ठा inet_frags *);
+व्योम inet_frags_fini(काष्ठा inet_frags *);
 
-int fqdir_init(struct fqdir **fqdirp, struct inet_frags *f, struct net *net);
+पूर्णांक fqdir_init(काष्ठा fqdir **fqdirp, काष्ठा inet_frags *f, काष्ठा net *net);
 
-static inline void fqdir_pre_exit(struct fqdir *fqdir)
-{
+अटल अंतरभूत व्योम fqdir_pre_निकास(काष्ठा fqdir *fqdir)
+अणु
 	fqdir->high_thresh = 0; /* prevent creation of new frags */
 	fqdir->dead = true;
-}
-void fqdir_exit(struct fqdir *fqdir);
+पूर्ण
+व्योम fqdir_निकास(काष्ठा fqdir *fqdir);
 
-void inet_frag_kill(struct inet_frag_queue *q);
-void inet_frag_destroy(struct inet_frag_queue *q);
-struct inet_frag_queue *inet_frag_find(struct fqdir *fqdir, void *key);
+व्योम inet_frag_समाप्त(काष्ठा inet_frag_queue *q);
+व्योम inet_frag_destroy(काष्ठा inet_frag_queue *q);
+काष्ठा inet_frag_queue *inet_frag_find(काष्ठा fqdir *fqdir, व्योम *key);
 
-/* Free all skbs in the queue; return the sum of their truesizes. */
-unsigned int inet_frag_rbtree_purge(struct rb_root *root);
+/* Free all skbs in the queue; वापस the sum of their truesizes. */
+अचिन्हित पूर्णांक inet_frag_rbtree_purge(काष्ठा rb_root *root);
 
-static inline void inet_frag_put(struct inet_frag_queue *q)
-{
-	if (refcount_dec_and_test(&q->refcnt))
+अटल अंतरभूत व्योम inet_frag_put(काष्ठा inet_frag_queue *q)
+अणु
+	अगर (refcount_dec_and_test(&q->refcnt))
 		inet_frag_destroy(q);
-}
+पूर्ण
 
 /* Memory Tracking Functions. */
 
-static inline long frag_mem_limit(const struct fqdir *fqdir)
-{
-	return atomic_long_read(&fqdir->mem);
-}
+अटल अंतरभूत दीर्घ frag_mem_limit(स्थिर काष्ठा fqdir *fqdir)
+अणु
+	वापस atomic_दीर्घ_पढ़ो(&fqdir->mem);
+पूर्ण
 
-static inline void sub_frag_mem_limit(struct fqdir *fqdir, long val)
-{
-	atomic_long_sub(val, &fqdir->mem);
-}
+अटल अंतरभूत व्योम sub_frag_mem_limit(काष्ठा fqdir *fqdir, दीर्घ val)
+अणु
+	atomic_दीर्घ_sub(val, &fqdir->mem);
+पूर्ण
 
-static inline void add_frag_mem_limit(struct fqdir *fqdir, long val)
-{
-	atomic_long_add(val, &fqdir->mem);
-}
+अटल अंतरभूत व्योम add_frag_mem_limit(काष्ठा fqdir *fqdir, दीर्घ val)
+अणु
+	atomic_दीर्घ_add(val, &fqdir->mem);
+पूर्ण
 
 /* RFC 3168 support :
- * We want to check ECN values of all fragments, do detect invalid combinations.
+ * We want to check ECN values of all fragments, करो detect invalid combinations.
  * In ipq->ecn, we store the OR value of each ip4_frag_ecn() fragment value.
  */
-#define	IPFRAG_ECN_NOT_ECT	0x01 /* one frag had ECN_NOT_ECT */
-#define	IPFRAG_ECN_ECT_1	0x02 /* one frag had ECN_ECT_1 */
-#define	IPFRAG_ECN_ECT_0	0x04 /* one frag had ECN_ECT_0 */
-#define	IPFRAG_ECN_CE		0x08 /* one frag had ECN_CE */
+#घोषणा	IPFRAG_ECN_NOT_ECT	0x01 /* one frag had ECN_NOT_ECT */
+#घोषणा	IPFRAG_ECN_ECT_1	0x02 /* one frag had ECN_ECT_1 */
+#घोषणा	IPFRAG_ECN_ECT_0	0x04 /* one frag had ECN_ECT_0 */
+#घोषणा	IPFRAG_ECN_CE		0x08 /* one frag had ECN_CE */
 
-extern const u8 ip_frag_ecn_table[16];
+बाह्य स्थिर u8 ip_frag_ecn_table[16];
 
 /* Return values of inet_frag_queue_insert() */
-#define IPFRAG_OK	0
-#define IPFRAG_DUP	1
-#define IPFRAG_OVERLAP	2
-int inet_frag_queue_insert(struct inet_frag_queue *q, struct sk_buff *skb,
-			   int offset, int end);
-void *inet_frag_reasm_prepare(struct inet_frag_queue *q, struct sk_buff *skb,
-			      struct sk_buff *parent);
-void inet_frag_reasm_finish(struct inet_frag_queue *q, struct sk_buff *head,
-			    void *reasm_data, bool try_coalesce);
-struct sk_buff *inet_frag_pull_head(struct inet_frag_queue *q);
+#घोषणा IPFRAG_OK	0
+#घोषणा IPFRAG_DUP	1
+#घोषणा IPFRAG_OVERLAP	2
+पूर्णांक inet_frag_queue_insert(काष्ठा inet_frag_queue *q, काष्ठा sk_buff *skb,
+			   पूर्णांक offset, पूर्णांक end);
+व्योम *inet_frag_reयंत्र_prepare(काष्ठा inet_frag_queue *q, काष्ठा sk_buff *skb,
+			      काष्ठा sk_buff *parent);
+व्योम inet_frag_reयंत्र_finish(काष्ठा inet_frag_queue *q, काष्ठा sk_buff *head,
+			    व्योम *reयंत्र_data, bool try_coalesce);
+काष्ठा sk_buff *inet_frag_pull_head(काष्ठा inet_frag_queue *q);
 
-#endif
+#पूर्ण_अगर

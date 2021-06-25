@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_S390_EXPOLINE_H
-#define _ASM_S390_EXPOLINE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_S390_EXPOLINE_H
+#घोषणा _ASM_S390_EXPOLINE_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-extern int nospec_disable;
+बाह्य पूर्णांक nospec_disable;
 
-void nospec_init_branches(void);
-void nospec_auto_detect(void);
-void nospec_revert(s32 *start, s32 *end);
+व्योम nospec_init_branches(व्योम);
+व्योम nospec_स्वतः_detect(व्योम);
+व्योम nospec_revert(s32 *start, s32 *end);
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* _ASM_S390_EXPOLINE_H */
+#पूर्ण_अगर /* _ASM_S390_EXPOLINE_H */

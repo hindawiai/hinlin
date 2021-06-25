@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2020 Facebook
-#define _GNU_SOURCE
-#include <test_progs.h>
-#include "test_core_retro.skel.h"
+#घोषणा _GNU_SOURCE
+#समावेश <test_progs.h>
+#समावेश "test_core_retro.skel.h"
 
-void test_core_retro(void)
-{
-	int err, zero = 0, res, duration = 0, my_pid = getpid();
-	struct test_core_retro *skel;
+व्योम test_core_retro(व्योम)
+अणु
+	पूर्णांक err, zero = 0, res, duration = 0, my_pid = getpid();
+	काष्ठा test_core_retro *skel;
 
 	/* load program */
-	skel = test_core_retro__open_and_load();
-	if (CHECK(!skel, "skel_load", "skeleton open/load failed\n"))
-		goto out_close;
+	skel = test_core_retro__खोलो_and_load();
+	अगर (CHECK(!skel, "skel_load", "skeleton open/load failed\n"))
+		जाओ out_बंद;
 
 	err = bpf_map_update_elem(bpf_map__fd(skel->maps.exp_tgid_map), &zero, &my_pid, 0);
-	if (CHECK(err, "map_update", "failed to set expected PID: %d\n", errno))
-		goto out_close;
+	अगर (CHECK(err, "map_update", "failed to set expected PID: %d\n", त्रुटि_सं))
+		जाओ out_बंद;
 
 	/* attach probe */
 	err = test_core_retro__attach(skel);
-	if (CHECK(err, "attach_kprobe", "err %d\n", err))
-		goto out_close;
+	अगर (CHECK(err, "attach_kprobe", "err %d\n", err))
+		जाओ out_बंद;
 
 	/* trigger */
 	usleep(1);
 
 	err = bpf_map_lookup_elem(bpf_map__fd(skel->maps.results), &zero, &res);
-	if (CHECK(err, "map_lookup", "failed to lookup result: %d\n", errno))
-		goto out_close;
+	अगर (CHECK(err, "map_lookup", "failed to lookup result: %d\n", त्रुटि_सं))
+		जाओ out_बंद;
 
 	CHECK(res != my_pid, "pid_check", "got %d != exp %d\n", res, my_pid);
 
-out_close:
+out_बंद:
 	test_core_retro__destroy(skel);
-}
+पूर्ण

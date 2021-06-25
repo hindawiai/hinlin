@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM intel-sst
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM पूर्णांकel-sst
 
 /*
- * The TRACE_SYSTEM_VAR defaults to TRACE_SYSTEM, but must be a
+ * The TRACE_SYSTEM_VAR शेषs to TRACE_SYSTEM, but must be a
  * legitimate C variable. It is not exported to user space.
  */
-#undef TRACE_SYSTEM_VAR
-#define TRACE_SYSTEM_VAR intel_sst
+#अघोषित TRACE_SYSTEM_VAR
+#घोषणा TRACE_SYSTEM_VAR पूर्णांकel_sst
 
-#if !defined(_TRACE_INTEL_SST_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_INTEL_SST_H
+#अगर !defined(_TRACE_INTEL_SST_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_INTEL_SST_H
 
-#include <linux/types.h>
-#include <linux/ktime.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 DECLARE_EVENT_CLASS(sst_ipc_msg,
 
-	TP_PROTO(unsigned int val),
+	TP_PROTO(अचिन्हित पूर्णांक val),
 
 	TP_ARGS(val),
 
 	TP_STRUCT__entry(
-		__field(	unsigned int,	val		)
+		__field(	अचिन्हित पूर्णांक,	val		)
 	),
 
 	TP_fast_assign(
 		__entry->val = val;
 	),
 
-	TP_printk("0x%8.8x", (unsigned int)__entry->val)
+	TP_prपूर्णांकk("0x%8.8x", (अचिन्हित पूर्णांक)__entry->val)
 );
 
 DEFINE_EVENT(sst_ipc_msg, sst_ipc_msg_tx,
 
-	TP_PROTO(unsigned int val),
+	TP_PROTO(अचिन्हित पूर्णांक val),
 
 	TP_ARGS(val)
 
@@ -43,7 +44,7 @@ DEFINE_EVENT(sst_ipc_msg, sst_ipc_msg_tx,
 
 DEFINE_EVENT(sst_ipc_msg, sst_ipc_msg_rx,
 
-	TP_PROTO(unsigned int val),
+	TP_PROTO(अचिन्हित पूर्णांक val),
 
 	TP_ARGS(val)
 
@@ -51,13 +52,13 @@ DEFINE_EVENT(sst_ipc_msg, sst_ipc_msg_rx,
 
 DECLARE_EVENT_CLASS(sst_ipc_mailbox,
 
-	TP_PROTO(unsigned int offset, unsigned int val),
+	TP_PROTO(अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक val),
 
 	TP_ARGS(offset, val),
 
 	TP_STRUCT__entry(
-		__field(	unsigned int,	offset		)
-		__field(	unsigned int,	val		)
+		__field(	अचिन्हित पूर्णांक,	offset		)
+		__field(	अचिन्हित पूर्णांक,	val		)
 	),
 
 	TP_fast_assign(
@@ -65,13 +66,13 @@ DECLARE_EVENT_CLASS(sst_ipc_mailbox,
 		__entry->val = val;
 	),
 
-	TP_printk(" 0x%4.4x = 0x%8.8x",
-		(unsigned int)__entry->offset, (unsigned int)__entry->val)
+	TP_prपूर्णांकk(" 0x%4.4x = 0x%8.8x",
+		(अचिन्हित पूर्णांक)__entry->offset, (अचिन्हित पूर्णांक)__entry->val)
 );
 
 DEFINE_EVENT(sst_ipc_mailbox, sst_ipc_inbox_rdata,
 
-	TP_PROTO(unsigned int offset, unsigned int val),
+	TP_PROTO(अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक val),
 
 	TP_ARGS(offset, val)
 
@@ -79,7 +80,7 @@ DEFINE_EVENT(sst_ipc_mailbox, sst_ipc_inbox_rdata,
 
 DEFINE_EVENT(sst_ipc_mailbox, sst_ipc_inbox_wdata,
 
-	TP_PROTO(unsigned int offset, unsigned int val),
+	TP_PROTO(अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक val),
 
 	TP_ARGS(offset, val)
 
@@ -87,7 +88,7 @@ DEFINE_EVENT(sst_ipc_mailbox, sst_ipc_inbox_wdata,
 
 DEFINE_EVENT(sst_ipc_mailbox, sst_ipc_outbox_rdata,
 
-	TP_PROTO(unsigned int offset, unsigned int val),
+	TP_PROTO(अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक val),
 
 	TP_ARGS(offset, val)
 
@@ -95,7 +96,7 @@ DEFINE_EVENT(sst_ipc_mailbox, sst_ipc_outbox_rdata,
 
 DEFINE_EVENT(sst_ipc_mailbox, sst_ipc_outbox_wdata,
 
-	TP_PROTO(unsigned int offset, unsigned int val),
+	TP_PROTO(अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक val),
 
 	TP_ARGS(offset, val)
 
@@ -103,54 +104,54 @@ DEFINE_EVENT(sst_ipc_mailbox, sst_ipc_outbox_wdata,
 
 DECLARE_EVENT_CLASS(sst_ipc_mailbox_info,
 
-	TP_PROTO(unsigned int size),
+	TP_PROTO(अचिन्हित पूर्णांक size),
 
 	TP_ARGS(size),
 
 	TP_STRUCT__entry(
-		__field(	unsigned int,	size		)
+		__field(	अचिन्हित पूर्णांक,	size		)
 	),
 
 	TP_fast_assign(
 		__entry->size = size;
 	),
 
-	TP_printk("Mailbox bytes 0x%8.8x", (unsigned int)__entry->size)
+	TP_prपूर्णांकk("Mailbox bytes 0x%8.8x", (अचिन्हित पूर्णांक)__entry->size)
 );
 
-DEFINE_EVENT(sst_ipc_mailbox_info, sst_ipc_inbox_read,
+DEFINE_EVENT(sst_ipc_mailbox_info, sst_ipc_inbox_पढ़ो,
 
-	TP_PROTO(unsigned int size),
+	TP_PROTO(अचिन्हित पूर्णांक size),
 
 	TP_ARGS(size)
 
 );
 
-DEFINE_EVENT(sst_ipc_mailbox_info, sst_ipc_inbox_write,
+DEFINE_EVENT(sst_ipc_mailbox_info, sst_ipc_inbox_ग_लिखो,
 
-	TP_PROTO(unsigned int size),
-
-	TP_ARGS(size)
-
-);
-
-DEFINE_EVENT(sst_ipc_mailbox_info, sst_ipc_outbox_read,
-
-	TP_PROTO(unsigned int size),
+	TP_PROTO(अचिन्हित पूर्णांक size),
 
 	TP_ARGS(size)
 
 );
 
-DEFINE_EVENT(sst_ipc_mailbox_info, sst_ipc_outbox_write,
+DEFINE_EVENT(sst_ipc_mailbox_info, sst_ipc_outbox_पढ़ो,
 
-	TP_PROTO(unsigned int size),
+	TP_PROTO(अचिन्हित पूर्णांक size),
 
 	TP_ARGS(size)
 
 );
 
-#endif /* _TRACE_SST_H */
+DEFINE_EVENT(sst_ipc_mailbox_info, sst_ipc_outbox_ग_लिखो,
+
+	TP_PROTO(अचिन्हित पूर्णांक size),
+
+	TP_ARGS(size)
+
+);
+
+#पूर्ण_अगर /* _TRACE_SST_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

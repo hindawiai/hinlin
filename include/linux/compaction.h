@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_COMPACTION_H
-#define _LINUX_COMPACTION_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_COMPACTION_H
+#घोषणा _LINUX_COMPACTION_H
 
 /*
  * Determines how hard direct compaction should try to succeed.
  * Lower value means higher priority, analogically to reclaim priority.
  */
-enum compact_priority {
+क्रमागत compact_priority अणु
 	COMPACT_PRIO_SYNC_FULL,
 	MIN_COMPACT_PRIORITY = COMPACT_PRIO_SYNC_FULL,
 	COMPACT_PRIO_SYNC_LIGHT,
@@ -14,12 +15,12 @@ enum compact_priority {
 	DEF_COMPACT_PRIORITY = COMPACT_PRIO_SYNC_LIGHT,
 	COMPACT_PRIO_ASYNC,
 	INIT_COMPACT_PRIORITY = COMPACT_PRIO_ASYNC
-};
+पूर्ण;
 
-/* Return values for compact_zone() and try_to_compact_pages() */
+/* Return values क्रम compact_zone() and try_to_compact_pages() */
 /* When adding new states, please adjust include/trace/events/compaction.h */
-enum compact_result {
-	/* For more detailed tracepoint output - internal to compaction */
+क्रमागत compact_result अणु
+	/* For more detailed tracepoपूर्णांक output - पूर्णांकernal to compaction */
 	COMPACT_NOT_SUITABLE_ZONE,
 	/*
 	 * compaction didn't start as it was not possible or direct reclaim
@@ -29,9 +30,9 @@ enum compact_result {
 	/* compaction didn't start as it was deferred due to past failures */
 	COMPACT_DEFERRED,
 
-	/* For more detailed tracepoint output - internal to compaction */
+	/* For more detailed tracepoपूर्णांक output - पूर्णांकernal to compaction */
 	COMPACT_NO_SUITABLE_PAGE,
-	/* compaction should continue to another pageblock */
+	/* compaction should जारी to another pageblock */
 	COMPACT_CONTINUE,
 
 	/*
@@ -53,193 +54,193 @@ enum compact_result {
 	 * should now succeed
 	 */
 	COMPACT_SUCCESS,
-};
+पूर्ण;
 
-struct alloc_context; /* in mm/internal.h */
+काष्ठा alloc_context; /* in mm/पूर्णांकernal.h */
 
 /*
- * Number of free order-0 pages that should be available above given watermark
- * to make sure compaction has reasonable chance of not running out of free
+ * Number of मुक्त order-0 pages that should be available above given watermark
+ * to make sure compaction has reasonable chance of not running out of मुक्त
  * pages that it needs to isolate as migration target during its work.
  */
-static inline unsigned long compact_gap(unsigned int order)
-{
+अटल अंतरभूत अचिन्हित दीर्घ compact_gap(अचिन्हित पूर्णांक order)
+अणु
 	/*
-	 * Although all the isolations for migration are temporary, compaction
-	 * free scanner may have up to 1 << order pages on its list and then
-	 * try to split an (order - 1) free page. At that point, a gap of
+	 * Although all the isolations क्रम migration are temporary, compaction
+	 * मुक्त scanner may have up to 1 << order pages on its list and then
+	 * try to split an (order - 1) मुक्त page. At that poपूर्णांक, a gap of
 	 * 1 << order might not be enough, so it's safer to require twice that
 	 * amount. Note that the number of pages on the list is also
 	 * effectively limited by COMPACT_CLUSTER_MAX, as that's the maximum
-	 * that the migrate scanner can have isolated on migrate list, and free
-	 * scanner is only invoked when the number of isolated free pages is
-	 * lower than that. But it's not worth to complicate the formula here
-	 * as a bigger gap for higher orders than strictly necessary can also
+	 * that the migrate scanner can have isolated on migrate list, and मुक्त
+	 * scanner is only invoked when the number of isolated मुक्त pages is
+	 * lower than that. But it's not worth to complicate the क्रमmula here
+	 * as a bigger gap क्रम higher orders than strictly necessary can also
 	 * improve chances of compaction success.
 	 */
-	return 2UL << order;
-}
+	वापस 2UL << order;
+पूर्ण
 
-#ifdef CONFIG_COMPACTION
-extern unsigned int sysctl_compaction_proactiveness;
-extern int sysctl_compaction_handler(struct ctl_table *table, int write,
-			void *buffer, size_t *length, loff_t *ppos);
-extern int sysctl_extfrag_threshold;
-extern int sysctl_compact_unevictable_allowed;
+#अगर_घोषित CONFIG_COMPACTION
+बाह्य अचिन्हित पूर्णांक sysctl_compaction_proactiveness;
+बाह्य पूर्णांक sysctl_compaction_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+			व्योम *buffer, माप_प्रकार *length, loff_t *ppos);
+बाह्य पूर्णांक sysctl_extfrag_threshold;
+बाह्य पूर्णांक sysctl_compact_unevictable_allowed;
 
-extern unsigned int extfrag_for_order(struct zone *zone, unsigned int order);
-extern int fragmentation_index(struct zone *zone, unsigned int order);
-extern enum compact_result try_to_compact_pages(gfp_t gfp_mask,
-		unsigned int order, unsigned int alloc_flags,
-		const struct alloc_context *ac, enum compact_priority prio,
-		struct page **page);
-extern void reset_isolation_suitable(pg_data_t *pgdat);
-extern enum compact_result compaction_suitable(struct zone *zone, int order,
-		unsigned int alloc_flags, int highest_zoneidx);
+बाह्य अचिन्हित पूर्णांक extfrag_क्रम_order(काष्ठा zone *zone, अचिन्हित पूर्णांक order);
+बाह्य पूर्णांक fragmentation_index(काष्ठा zone *zone, अचिन्हित पूर्णांक order);
+बाह्य क्रमागत compact_result try_to_compact_pages(gfp_t gfp_mask,
+		अचिन्हित पूर्णांक order, अचिन्हित पूर्णांक alloc_flags,
+		स्थिर काष्ठा alloc_context *ac, क्रमागत compact_priority prio,
+		काष्ठा page **page);
+बाह्य व्योम reset_isolation_suitable(pg_data_t *pgdat);
+बाह्य क्रमागत compact_result compaction_suitable(काष्ठा zone *zone, पूर्णांक order,
+		अचिन्हित पूर्णांक alloc_flags, पूर्णांक highest_zoneidx);
 
-extern void compaction_defer_reset(struct zone *zone, int order,
+बाह्य व्योम compaction_defer_reset(काष्ठा zone *zone, पूर्णांक order,
 				bool alloc_success);
 
 /* Compaction has made some progress and retrying makes sense */
-static inline bool compaction_made_progress(enum compact_result result)
-{
+अटल अंतरभूत bool compaction_made_progress(क्रमागत compact_result result)
+अणु
 	/*
 	 * Even though this might sound confusing this in fact tells us
 	 * that the compaction successfully isolated and migrated some
 	 * pageblocks.
 	 */
-	if (result == COMPACT_SUCCESS)
-		return true;
+	अगर (result == COMPACT_SUCCESS)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* Compaction has failed and it doesn't make much sense to keep retrying. */
-static inline bool compaction_failed(enum compact_result result)
-{
+/* Compaction has failed and it करोesn't make much sense to keep retrying. */
+अटल अंतरभूत bool compaction_failed(क्रमागत compact_result result)
+अणु
 	/* All zones were scanned completely and still not result. */
-	if (result == COMPACT_COMPLETE)
-		return true;
+	अगर (result == COMPACT_COMPLETE)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* Compaction needs reclaim to be performed first, so it can continue. */
-static inline bool compaction_needs_reclaim(enum compact_result result)
-{
+/* Compaction needs reclaim to be perक्रमmed first, so it can जारी. */
+अटल अंतरभूत bool compaction_needs_reclaim(क्रमागत compact_result result)
+अणु
 	/*
-	 * Compaction backed off due to watermark checks for order-0
+	 * Compaction backed off due to watermark checks क्रम order-0
 	 * so the regular reclaim has to try harder and reclaim something.
 	 */
-	if (result == COMPACT_SKIPPED)
-		return true;
+	अगर (result == COMPACT_SKIPPED)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Compaction has backed off for some reason after doing some work or none
+ * Compaction has backed off क्रम some reason after करोing some work or none
  * at all. It might be throttling or lock contention. Retrying might be still
- * worthwhile, but with a higher priority if allowed.
+ * worthजबतक, but with a higher priority अगर allowed.
  */
-static inline bool compaction_withdrawn(enum compact_result result)
-{
+अटल अंतरभूत bool compaction_withdrawn(क्रमागत compact_result result)
+अणु
 	/*
-	 * If compaction is deferred for high-order allocations, it is
-	 * because sync compaction recently failed. If this is the case
-	 * and the caller requested a THP allocation, we do not want
-	 * to heavily disrupt the system, so we fail the allocation
+	 * If compaction is deferred क्रम high-order allocations, it is
+	 * because sync compaction recently failed. If this is the हाल
+	 * and the caller requested a THP allocation, we करो not want
+	 * to heavily disrupt the प्रणाली, so we fail the allocation
 	 * instead of entering direct reclaim.
 	 */
-	if (result == COMPACT_DEFERRED)
-		return true;
+	अगर (result == COMPACT_DEFERRED)
+		वापस true;
 
 	/*
 	 * If compaction in async mode encounters contention or blocks higher
 	 * priority task we back off early rather than cause stalls.
 	 */
-	if (result == COMPACT_CONTENDED)
-		return true;
+	अगर (result == COMPACT_CONTENDED)
+		वापस true;
 
 	/*
 	 * Page scanners have met but we haven't scanned full zones so this
 	 * is a back off in fact.
 	 */
-	if (result == COMPACT_PARTIAL_SKIPPED)
-		return true;
+	अगर (result == COMPACT_PARTIAL_SKIPPED)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 
-bool compaction_zonelist_suitable(struct alloc_context *ac, int order,
-					int alloc_flags);
+bool compaction_zonelist_suitable(काष्ठा alloc_context *ac, पूर्णांक order,
+					पूर्णांक alloc_flags);
 
-extern int kcompactd_run(int nid);
-extern void kcompactd_stop(int nid);
-extern void wakeup_kcompactd(pg_data_t *pgdat, int order, int highest_zoneidx);
+बाह्य पूर्णांक kcompactd_run(पूर्णांक nid);
+बाह्य व्योम kcompactd_stop(पूर्णांक nid);
+बाह्य व्योम wakeup_kcompactd(pg_data_t *pgdat, पूर्णांक order, पूर्णांक highest_zoneidx);
 
-#else
-static inline void reset_isolation_suitable(pg_data_t *pgdat)
-{
-}
+#अन्यथा
+अटल अंतरभूत व्योम reset_isolation_suitable(pg_data_t *pgdat)
+अणु
+पूर्ण
 
-static inline enum compact_result compaction_suitable(struct zone *zone, int order,
-					int alloc_flags, int highest_zoneidx)
-{
-	return COMPACT_SKIPPED;
-}
+अटल अंतरभूत क्रमागत compact_result compaction_suitable(काष्ठा zone *zone, पूर्णांक order,
+					पूर्णांक alloc_flags, पूर्णांक highest_zoneidx)
+अणु
+	वापस COMPACT_SKIPPED;
+पूर्ण
 
-static inline bool compaction_made_progress(enum compact_result result)
-{
-	return false;
-}
+अटल अंतरभूत bool compaction_made_progress(क्रमागत compact_result result)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool compaction_failed(enum compact_result result)
-{
-	return false;
-}
+अटल अंतरभूत bool compaction_failed(क्रमागत compact_result result)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool compaction_needs_reclaim(enum compact_result result)
-{
-	return false;
-}
+अटल अंतरभूत bool compaction_needs_reclaim(क्रमागत compact_result result)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool compaction_withdrawn(enum compact_result result)
-{
-	return true;
-}
+अटल अंतरभूत bool compaction_withdrawn(क्रमागत compact_result result)
+अणु
+	वापस true;
+पूर्ण
 
-static inline int kcompactd_run(int nid)
-{
-	return 0;
-}
-static inline void kcompactd_stop(int nid)
-{
-}
+अटल अंतरभूत पूर्णांक kcompactd_run(पूर्णांक nid)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम kcompactd_stop(पूर्णांक nid)
+अणु
+पूर्ण
 
-static inline void wakeup_kcompactd(pg_data_t *pgdat,
-				int order, int highest_zoneidx)
-{
-}
+अटल अंतरभूत व्योम wakeup_kcompactd(pg_data_t *pgdat,
+				पूर्णांक order, पूर्णांक highest_zoneidx)
+अणु
+पूर्ण
 
-#endif /* CONFIG_COMPACTION */
+#पूर्ण_अगर /* CONFIG_COMPACTION */
 
-struct node;
-#if defined(CONFIG_COMPACTION) && defined(CONFIG_SYSFS) && defined(CONFIG_NUMA)
-extern int compaction_register_node(struct node *node);
-extern void compaction_unregister_node(struct node *node);
+काष्ठा node;
+#अगर defined(CONFIG_COMPACTION) && defined(CONFIG_SYSFS) && defined(CONFIG_NUMA)
+बाह्य पूर्णांक compaction_रेजिस्टर_node(काष्ठा node *node);
+बाह्य व्योम compaction_unरेजिस्टर_node(काष्ठा node *node);
 
-#else
+#अन्यथा
 
-static inline int compaction_register_node(struct node *node)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक compaction_रेजिस्टर_node(काष्ठा node *node)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void compaction_unregister_node(struct node *node)
-{
-}
-#endif /* CONFIG_COMPACTION && CONFIG_SYSFS && CONFIG_NUMA */
+अटल अंतरभूत व्योम compaction_unरेजिस्टर_node(काष्ठा node *node)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_COMPACTION && CONFIG_SYSFS && CONFIG_NUMA */
 
-#endif /* _LINUX_COMPACTION_H */
+#पूर्ण_अगर /* _LINUX_COMPACTION_H */

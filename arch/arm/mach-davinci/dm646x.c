@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * TI DaVinci DM646x chip specific setup
+ * TI DaVinci DM646x chip specअगरic setup
  *
  * Author: Kevin Hilman, Deep Root Systems, LLC
  *
@@ -9,116 +10,116 @@
  * or implied.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/clk/davinci.h>
-#include <linux/clkdev.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/irqchip/irq-davinci-aintc.h>
-#include <linux/platform_data/edma.h>
-#include <linux/platform_data/gpio-davinci.h>
-#include <linux/platform_device.h>
-#include <linux/serial_8250.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clk/davinci.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irqchip/irq-davinci-aपूर्णांकc.h>
+#समावेश <linux/platक्रमm_data/edma.h>
+#समावेश <linux/platक्रमm_data/gpio-davinci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/serial_8250.h>
 
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include <mach/common.h>
-#include <mach/cputype.h>
-#include <mach/mux.h>
-#include <mach/serial.h>
+#समावेश <mach/common.h>
+#समावेश <mach/cputype.h>
+#समावेश <mach/mux.h>
+#समावेश <mach/serial.h>
 
-#include <clocksource/timer-davinci.h>
+#समावेश <घड़ीsource/समयr-davinci.h>
 
-#include "asp.h"
-#include "davinci.h"
-#include "irqs.h"
-#include "mux.h"
+#समावेश "asp.h"
+#समावेश "davinci.h"
+#समावेश "irqs.h"
+#समावेश "mux.h"
 
-#define DAVINCI_VPIF_BASE       (0x01C12000)
+#घोषणा DAVINCI_VPIF_BASE       (0x01C12000)
 
-#define VDD3P3V_VID_MASK	(BIT_MASK(3) | BIT_MASK(2) | BIT_MASK(1) |\
+#घोषणा VDD3P3V_VID_MASK	(BIT_MASK(3) | BIT_MASK(2) | BIT_MASK(1) |\
 					BIT_MASK(0))
-#define VSCLKDIS_MASK		(BIT_MASK(11) | BIT_MASK(10) | BIT_MASK(9) |\
+#घोषणा VSCLKDIS_MASK		(BIT_MASK(11) | BIT_MASK(10) | BIT_MASK(9) |\
 					BIT_MASK(8))
 
-#define DM646X_EMAC_BASE		0x01c80000
-#define DM646X_EMAC_MDIO_BASE		(DM646X_EMAC_BASE + 0x4000)
-#define DM646X_EMAC_CNTRL_OFFSET	0x0000
-#define DM646X_EMAC_CNTRL_MOD_OFFSET	0x1000
-#define DM646X_EMAC_CNTRL_RAM_OFFSET	0x2000
-#define DM646X_EMAC_CNTRL_RAM_SIZE	0x2000
+#घोषणा DM646X_EMAC_BASE		0x01c80000
+#घोषणा DM646X_EMAC_MDIO_BASE		(DM646X_EMAC_BASE + 0x4000)
+#घोषणा DM646X_EMAC_CNTRL_OFFSET	0x0000
+#घोषणा DM646X_EMAC_CNTRL_MOD_OFFSET	0x1000
+#घोषणा DM646X_EMAC_CNTRL_RAM_OFFSET	0x2000
+#घोषणा DM646X_EMAC_CNTRL_RAM_SIZE	0x2000
 
-static struct emac_platform_data dm646x_emac_pdata = {
+अटल काष्ठा emac_platक्रमm_data dm646x_emac_pdata = अणु
 	.ctrl_reg_offset	= DM646X_EMAC_CNTRL_OFFSET,
 	.ctrl_mod_reg_offset	= DM646X_EMAC_CNTRL_MOD_OFFSET,
 	.ctrl_ram_offset	= DM646X_EMAC_CNTRL_RAM_OFFSET,
 	.ctrl_ram_size		= DM646X_EMAC_CNTRL_RAM_SIZE,
 	.version		= EMAC_VERSION_2,
-};
+पूर्ण;
 
-static struct resource dm646x_emac_resources[] = {
-	{
+अटल काष्ठा resource dm646x_emac_resources[] = अणु
+	अणु
 		.start	= DM646X_EMAC_BASE,
 		.end	= DM646X_EMAC_BASE + SZ_16K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM646X_EMACRXTHINT),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM646X_EMACRXTHINT),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM646X_EMACRXINT),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM646X_EMACRXINT),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM646X_EMACTXINT),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM646X_EMACTXINT),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM646X_EMACMISCINT),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM646X_EMACMISCINT),
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device dm646x_emac_device = {
+अटल काष्ठा platक्रमm_device dm646x_emac_device = अणु
 	.name		= "davinci_emac",
 	.id		= 1,
-	.dev = {
-		.platform_data	= &dm646x_emac_pdata,
-	},
+	.dev = अणु
+		.platक्रमm_data	= &dm646x_emac_pdata,
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(dm646x_emac_resources),
 	.resource	= dm646x_emac_resources,
-};
+पूर्ण;
 
-static struct resource dm646x_mdio_resources[] = {
-	{
+अटल काष्ठा resource dm646x_mdio_resources[] = अणु
+	अणु
 		.start	= DM646X_EMAC_MDIO_BASE,
 		.end	= DM646X_EMAC_MDIO_BASE + SZ_4K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device dm646x_mdio_device = {
+अटल काष्ठा platक्रमm_device dm646x_mdio_device = अणु
 	.name		= "davinci_mdio",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(dm646x_mdio_resources),
 	.resource	= dm646x_mdio_resources,
-};
+पूर्ण;
 
 /*
- * Device specific mux setup
+ * Device specअगरic mux setup
  *
  *	soc	description	mux  mode   mode  mux	 dbg
  *				reg  offset mask  mode
  */
-static const struct mux_config dm646x_pins[] = {
-#ifdef CONFIG_DAVINCI_MUX
+अटल स्थिर काष्ठा mux_config dm646x_pins[] = अणु
+#अगर_घोषित CONFIG_DAVINCI_MUX
 MUX_CFG(DM646X, ATAEN,		0,   0,     5,	  1,	 true)
 
 MUX_CFG(DM646X, AUDCK1,		0,   29,    1,	  0,	 false)
@@ -146,10 +147,10 @@ MUX_CFG(DM646X, PTSIMUX_PARALLEL,	0,   16,    3,    2,	 true)
 MUX_CFG(DM646X, PTSOMUX_SERIAL,		0,   18,    3,    3,	 true)
 
 MUX_CFG(DM646X, PTSIMUX_SERIAL,		0,   16,    3,    3,	 true)
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static u8 dm646x_default_priorities[DAVINCI_N_AINTC_IRQ] = {
+अटल u8 dm646x_शेष_priorities[DAVINCI_N_AINTC_IRQ] = अणु
 	[IRQ_DM646X_VP_VERTINT0]        = 7,
 	[IRQ_DM646X_VP_VERTINT1]        = 7,
 	[IRQ_DM646X_VP_VERTINT2]        = 7,
@@ -182,10 +183,10 @@ static u8 dm646x_default_priorities[DAVINCI_N_AINTC_IRQ] = {
 	[IRQ_DM646X_MCASP0RXINT]        = 7,
 	[IRQ_DM646X_RESERVED_3]         = 7,
 	[IRQ_DM646X_MCASP1TXINT]        = 7,
-	[IRQ_TINT0_TINT12]              = 7,    /* clockevent */
-	[IRQ_TINT0_TINT34]              = 7,    /* clocksource */
-	[IRQ_TINT1_TINT12]              = 7,    /* DSP timer */
-	[IRQ_TINT1_TINT34]              = 7,    /* system tick */
+	[IRQ_TINT0_TINT12]              = 7,    /* घड़ीevent */
+	[IRQ_TINT0_TINT34]              = 7,    /* घड़ीsource */
+	[IRQ_TINT1_TINT12]              = 7,    /* DSP समयr */
+	[IRQ_TINT1_TINT34]              = 7,    /* प्रणाली tick */
 	[IRQ_PWMINT0]                   = 7,
 	[IRQ_PWMINT1]                   = 7,
 	[IRQ_DM646X_VLQINT]             = 7,
@@ -214,372 +215,372 @@ static u8 dm646x_default_priorities[DAVINCI_N_AINTC_IRQ] = {
 	[IRQ_COMMTX]                    = 7,
 	[IRQ_COMMRX]                    = 7,
 	[IRQ_EMUINT]                    = 7,
-};
+पूर्ण;
 
 /*----------------------------------------------------------------------*/
 
 /* Four Transfer Controllers on DM646x */
-static s8 dm646x_queue_priority_mapping[][2] = {
-	/* {event queue no, Priority} */
-	{0, 4},
-	{1, 0},
-	{2, 5},
-	{3, 1},
-	{-1, -1},
-};
+अटल s8 dm646x_queue_priority_mapping[][2] = अणु
+	/* अणुevent queue no, Priorityपूर्ण */
+	अणु0, 4पूर्ण,
+	अणु1, 0पूर्ण,
+	अणु2, 5पूर्ण,
+	अणु3, 1पूर्ण,
+	अणु-1, -1पूर्ण,
+पूर्ण;
 
-static const struct dma_slave_map dm646x_edma_map[] = {
-	{ "davinci-mcasp.0", "tx", EDMA_FILTER_PARAM(0, 6) },
-	{ "davinci-mcasp.0", "rx", EDMA_FILTER_PARAM(0, 9) },
-	{ "davinci-mcasp.1", "tx", EDMA_FILTER_PARAM(0, 12) },
-	{ "spi_davinci", "tx", EDMA_FILTER_PARAM(0, 16) },
-	{ "spi_davinci", "rx", EDMA_FILTER_PARAM(0, 17) },
-};
+अटल स्थिर काष्ठा dma_slave_map dm646x_edma_map[] = अणु
+	अणु "davinci-mcasp.0", "tx", EDMA_FILTER_PARAM(0, 6) पूर्ण,
+	अणु "davinci-mcasp.0", "rx", EDMA_FILTER_PARAM(0, 9) पूर्ण,
+	अणु "davinci-mcasp.1", "tx", EDMA_FILTER_PARAM(0, 12) पूर्ण,
+	अणु "spi_davinci", "tx", EDMA_FILTER_PARAM(0, 16) पूर्ण,
+	अणु "spi_davinci", "rx", EDMA_FILTER_PARAM(0, 17) पूर्ण,
+पूर्ण;
 
-static struct edma_soc_info dm646x_edma_pdata = {
+अटल काष्ठा edma_soc_info dm646x_edma_pdata = अणु
 	.queue_priority_mapping	= dm646x_queue_priority_mapping,
-	.default_queue		= EVENTQ_1,
+	.शेष_queue		= EVENTQ_1,
 	.slave_map		= dm646x_edma_map,
 	.slavecnt		= ARRAY_SIZE(dm646x_edma_map),
-};
+पूर्ण;
 
-static struct resource edma_resources[] = {
-	{
+अटल काष्ठा resource edma_resources[] = अणु
+	अणु
 		.name	= "edma3_cc",
 		.start	= 0x01c00000,
 		.end	= 0x01c00000 + SZ_64K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "edma3_tc0",
 		.start	= 0x01c10000,
 		.end	= 0x01c10000 + SZ_1K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "edma3_tc1",
 		.start	= 0x01c10400,
 		.end	= 0x01c10400 + SZ_1K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "edma3_tc2",
 		.start	= 0x01c10800,
 		.end	= 0x01c10800 + SZ_1K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "edma3_tc3",
 		.start	= 0x01c10c00,
 		.end	= 0x01c10c00 + SZ_1K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "edma3_ccint",
 		.start	= DAVINCI_INTC_IRQ(IRQ_CCINT0),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "edma3_ccerrint",
 		.start	= DAVINCI_INTC_IRQ(IRQ_CCERRINT),
 		.flags	= IORESOURCE_IRQ,
-	},
+	पूर्ण,
 	/* not using TC*_ERR */
-};
+पूर्ण;
 
-static const struct platform_device_info dm646x_edma_device __initconst = {
+अटल स्थिर काष्ठा platक्रमm_device_info dm646x_edma_device __initस्थिर = अणु
 	.name		= "edma",
 	.id		= 0,
 	.dma_mask	= DMA_BIT_MASK(32),
 	.res		= edma_resources,
 	.num_res	= ARRAY_SIZE(edma_resources),
 	.data		= &dm646x_edma_pdata,
-	.size_data	= sizeof(dm646x_edma_pdata),
-};
+	.size_data	= माप(dm646x_edma_pdata),
+पूर्ण;
 
-static struct resource dm646x_mcasp0_resources[] = {
-	{
+अटल काष्ठा resource dm646x_mcasp0_resources[] = अणु
+	अणु
 		.name	= "mpu",
 		.start 	= DAVINCI_DM646X_MCASP0_REG_BASE,
 		.end 	= DAVINCI_DM646X_MCASP0_REG_BASE + (SZ_1K << 1) - 1,
 		.flags 	= IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "tx",
 		.start	= DAVINCI_DM646X_DMA_MCASP0_AXEVT0,
 		.end	= DAVINCI_DM646X_DMA_MCASP0_AXEVT0,
 		.flags	= IORESOURCE_DMA,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "rx",
 		.start	= DAVINCI_DM646X_DMA_MCASP0_AREVT0,
 		.end	= DAVINCI_DM646X_DMA_MCASP0_AREVT0,
 		.flags	= IORESOURCE_DMA,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "tx",
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM646X_MCASP0TXINT),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "rx",
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM646X_MCASP0RXINT),
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* DIT mode only, rx is not supported */
-static struct resource dm646x_mcasp1_resources[] = {
-	{
+अटल काष्ठा resource dm646x_mcasp1_resources[] = अणु
+	अणु
 		.name	= "mpu",
 		.start	= DAVINCI_DM646X_MCASP1_REG_BASE,
 		.end	= DAVINCI_DM646X_MCASP1_REG_BASE + (SZ_1K << 1) - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "tx",
 		.start	= DAVINCI_DM646X_DMA_MCASP1_AXEVT1,
 		.end	= DAVINCI_DM646X_DMA_MCASP1_AXEVT1,
 		.flags	= IORESOURCE_DMA,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "tx",
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM646X_MCASP1TXINT),
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device dm646x_mcasp0_device = {
+अटल काष्ठा platक्रमm_device dm646x_mcasp0_device = अणु
 	.name		= "davinci-mcasp",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(dm646x_mcasp0_resources),
 	.resource	= dm646x_mcasp0_resources,
-};
+पूर्ण;
 
-static struct platform_device dm646x_mcasp1_device = {
+अटल काष्ठा platक्रमm_device dm646x_mcasp1_device = अणु
 	.name		= "davinci-mcasp",
 	.id		= 1,
 	.num_resources	= ARRAY_SIZE(dm646x_mcasp1_resources),
 	.resource	= dm646x_mcasp1_resources,
-};
+पूर्ण;
 
-static struct platform_device dm646x_dit_device = {
+अटल काष्ठा platक्रमm_device dm646x_dit_device = अणु
 	.name	= "spdif-dit",
 	.id	= -1,
-};
+पूर्ण;
 
-static u64 vpif_dma_mask = DMA_BIT_MASK(32);
+अटल u64 vpअगर_dma_mask = DMA_BIT_MASK(32);
 
-static struct resource vpif_resource[] = {
-	{
+अटल काष्ठा resource vpअगर_resource[] = अणु
+	अणु
 		.start	= DAVINCI_VPIF_BASE,
 		.end	= DAVINCI_VPIF_BASE + 0x03ff,
 		.flags	= IORESOURCE_MEM,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct platform_device vpif_dev = {
+अटल काष्ठा platक्रमm_device vpअगर_dev = अणु
 	.name		= "vpif",
 	.id		= -1,
-	.dev		= {
-			.dma_mask 		= &vpif_dma_mask,
+	.dev		= अणु
+			.dma_mask 		= &vpअगर_dma_mask,
 			.coherent_dma_mask	= DMA_BIT_MASK(32),
-	},
-	.resource	= vpif_resource,
-	.num_resources	= ARRAY_SIZE(vpif_resource),
-};
+	पूर्ण,
+	.resource	= vpअगर_resource,
+	.num_resources	= ARRAY_SIZE(vpअगर_resource),
+पूर्ण;
 
-static struct resource vpif_display_resource[] = {
-	{
+अटल काष्ठा resource vpअगर_display_resource[] = अणु
+	अणु
 		.start = DAVINCI_INTC_IRQ(IRQ_DM646X_VP_VERTINT2),
 		.end   = DAVINCI_INTC_IRQ(IRQ_DM646X_VP_VERTINT2),
 		.flags = IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start = DAVINCI_INTC_IRQ(IRQ_DM646X_VP_VERTINT3),
 		.end   = DAVINCI_INTC_IRQ(IRQ_DM646X_VP_VERTINT3),
 		.flags = IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device vpif_display_dev = {
+अटल काष्ठा platक्रमm_device vpअगर_display_dev = अणु
 	.name		= "vpif_display",
 	.id		= -1,
-	.dev		= {
-			.dma_mask 		= &vpif_dma_mask,
+	.dev		= अणु
+			.dma_mask 		= &vpअगर_dma_mask,
 			.coherent_dma_mask	= DMA_BIT_MASK(32),
-	},
-	.resource	= vpif_display_resource,
-	.num_resources	= ARRAY_SIZE(vpif_display_resource),
-};
+	पूर्ण,
+	.resource	= vpअगर_display_resource,
+	.num_resources	= ARRAY_SIZE(vpअगर_display_resource),
+पूर्ण;
 
-static struct resource vpif_capture_resource[] = {
-	{
+अटल काष्ठा resource vpअगर_capture_resource[] = अणु
+	अणु
 		.start = DAVINCI_INTC_IRQ(IRQ_DM646X_VP_VERTINT0),
 		.end   = DAVINCI_INTC_IRQ(IRQ_DM646X_VP_VERTINT0),
 		.flags = IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start = DAVINCI_INTC_IRQ(IRQ_DM646X_VP_VERTINT1),
 		.end   = DAVINCI_INTC_IRQ(IRQ_DM646X_VP_VERTINT1),
 		.flags = IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device vpif_capture_dev = {
+अटल काष्ठा platक्रमm_device vpअगर_capture_dev = अणु
 	.name		= "vpif_capture",
 	.id		= -1,
-	.dev		= {
-			.dma_mask 		= &vpif_dma_mask,
+	.dev		= अणु
+			.dma_mask 		= &vpअगर_dma_mask,
 			.coherent_dma_mask	= DMA_BIT_MASK(32),
-	},
-	.resource	= vpif_capture_resource,
-	.num_resources	= ARRAY_SIZE(vpif_capture_resource),
-};
+	पूर्ण,
+	.resource	= vpअगर_capture_resource,
+	.num_resources	= ARRAY_SIZE(vpअगर_capture_resource),
+पूर्ण;
 
-static struct resource dm646x_gpio_resources[] = {
-	{	/* registers */
+अटल काष्ठा resource dm646x_gpio_resources[] = अणु
+	अणु	/* रेजिस्टरs */
 		.start	= DAVINCI_GPIO_BASE,
 		.end	= DAVINCI_GPIO_BASE + SZ_4K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	{	/* interrupt */
+	पूर्ण,
+	अणु	/* पूर्णांकerrupt */
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM646X_GPIOBNK0),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM646X_GPIOBNK0),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM646X_GPIOBNK1),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM646X_GPIOBNK1),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM646X_GPIOBNK2),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM646X_GPIOBNK2),
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct davinci_gpio_platform_data dm646x_gpio_platform_data = {
-	.no_auto_base	= true,
+अटल काष्ठा davinci_gpio_platक्रमm_data dm646x_gpio_platक्रमm_data = अणु
+	.no_स्वतः_base	= true,
 	.base		= 0,
 	.ngpio		= 43,
-};
+पूर्ण;
 
-int __init dm646x_gpio_register(void)
-{
-	return davinci_gpio_register(dm646x_gpio_resources,
+पूर्णांक __init dm646x_gpio_रेजिस्टर(व्योम)
+अणु
+	वापस davinci_gpio_रेजिस्टर(dm646x_gpio_resources,
 				     ARRAY_SIZE(dm646x_gpio_resources),
-				     &dm646x_gpio_platform_data);
-}
+				     &dm646x_gpio_platक्रमm_data);
+पूर्ण
 /*----------------------------------------------------------------------*/
 
-static struct map_desc dm646x_io_desc[] = {
-	{
-		.virtual	= IO_VIRT,
+अटल काष्ठा map_desc dm646x_io_desc[] = अणु
+	अणु
+		.भव	= IO_VIRT,
 		.pfn		= __phys_to_pfn(IO_PHYS),
 		.length		= IO_SIZE,
 		.type		= MT_DEVICE
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* Contents of JTAG ID register used to identify exact cpu type */
-static struct davinci_id dm646x_ids[] = {
-	{
+/* Contents of JTAG ID रेजिस्टर used to identअगरy exact cpu type */
+अटल काष्ठा davinci_id dm646x_ids[] = अणु
+	अणु
 		.variant	= 0x0,
 		.part_no	= 0xb770,
 		.manufacturer	= 0x017,
 		.cpu_id		= DAVINCI_CPU_ID_DM6467,
 		.name		= "dm6467_rev1.x",
-	},
-	{
+	पूर्ण,
+	अणु
 		.variant	= 0x1,
 		.part_no	= 0xb770,
 		.manufacturer	= 0x017,
 		.cpu_id		= DAVINCI_CPU_ID_DM6467,
 		.name		= "dm6467_rev3.x",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * Bottom half of timer0 is used for clockevent, top half is used for
- * clocksource.
+ * Bottom half of समयr0 is used क्रम घड़ीevent, top half is used क्रम
+ * घड़ीsource.
  */
-static const struct davinci_timer_cfg dm646x_timer_cfg = {
+अटल स्थिर काष्ठा davinci_समयr_cfg dm646x_समयr_cfg = अणु
 	.reg = DEFINE_RES_IO(DAVINCI_TIMER0_BASE, SZ_4K),
-	.irq = {
+	.irq = अणु
 		DEFINE_RES_IRQ(DAVINCI_INTC_IRQ(IRQ_TINT0_TINT12)),
 		DEFINE_RES_IRQ(DAVINCI_INTC_IRQ(IRQ_TINT0_TINT34)),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct plat_serial8250_port dm646x_serial0_platform_data[] = {
-	{
+अटल काष्ठा plat_serial8250_port dm646x_serial0_platक्रमm_data[] = अणु
+	अणु
 		.mapbase	= DAVINCI_UART0_BASE,
 		.irq		= DAVINCI_INTC_IRQ(IRQ_UARTINT0),
 		.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST |
 				  UPF_IOREMAP,
 		.iotype		= UPIO_MEM32,
-		.regshift	= 2,
-	},
-	{
+		.regshअगरt	= 2,
+	पूर्ण,
+	अणु
 		.flags	= 0,
-	}
-};
-static struct plat_serial8250_port dm646x_serial1_platform_data[] = {
-	{
+	पूर्ण
+पूर्ण;
+अटल काष्ठा plat_serial8250_port dm646x_serial1_platक्रमm_data[] = अणु
+	अणु
 		.mapbase	= DAVINCI_UART1_BASE,
 		.irq		= DAVINCI_INTC_IRQ(IRQ_UARTINT1),
 		.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST |
 				  UPF_IOREMAP,
 		.iotype		= UPIO_MEM32,
-		.regshift	= 2,
-	},
-	{
+		.regshअगरt	= 2,
+	पूर्ण,
+	अणु
 		.flags	= 0,
-	}
-};
-static struct plat_serial8250_port dm646x_serial2_platform_data[] = {
-	{
+	पूर्ण
+पूर्ण;
+अटल काष्ठा plat_serial8250_port dm646x_serial2_platक्रमm_data[] = अणु
+	अणु
 		.mapbase	= DAVINCI_UART2_BASE,
 		.irq		= DAVINCI_INTC_IRQ(IRQ_DM646X_UARTINT2),
 		.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST |
 				  UPF_IOREMAP,
 		.iotype		= UPIO_MEM32,
-		.regshift	= 2,
-	},
-	{
+		.regshअगरt	= 2,
+	पूर्ण,
+	अणु
 		.flags	= 0,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-struct platform_device dm646x_serial_device[] = {
-	{
+काष्ठा platक्रमm_device dm646x_serial_device[] = अणु
+	अणु
 		.name			= "serial8250",
 		.id			= PLAT8250_DEV_PLATFORM,
-		.dev			= {
-			.platform_data	= dm646x_serial0_platform_data,
-		}
-	},
-	{
+		.dev			= अणु
+			.platक्रमm_data	= dm646x_serial0_platक्रमm_data,
+		पूर्ण
+	पूर्ण,
+	अणु
 		.name			= "serial8250",
 		.id			= PLAT8250_DEV_PLATFORM1,
-		.dev			= {
-			.platform_data	= dm646x_serial1_platform_data,
-		}
-	},
-	{
+		.dev			= अणु
+			.platक्रमm_data	= dm646x_serial1_platक्रमm_data,
+		पूर्ण
+	पूर्ण,
+	अणु
 		.name			= "serial8250",
 		.id			= PLAT8250_DEV_PLATFORM2,
-		.dev			= {
-			.platform_data	= dm646x_serial2_platform_data,
-		}
-	},
-	{
-	}
-};
+		.dev			= अणु
+			.platक्रमm_data	= dm646x_serial2_platक्रमm_data,
+		पूर्ण
+	पूर्ण,
+	अणु
+	पूर्ण
+पूर्ण;
 
-static const struct davinci_soc_info davinci_soc_info_dm646x = {
+अटल स्थिर काष्ठा davinci_soc_info davinci_soc_info_dm646x = अणु
 	.io_desc		= dm646x_io_desc,
 	.io_desc_num		= ARRAY_SIZE(dm646x_io_desc),
 	.jtag_id_reg		= 0x01c40028,
@@ -591,138 +592,138 @@ static const struct davinci_soc_info davinci_soc_info_dm646x = {
 	.emac_pdata		= &dm646x_emac_pdata,
 	.sram_dma		= 0x10010000,
 	.sram_len		= SZ_32K,
-};
+पूर्ण;
 
-void __init dm646x_init_mcasp0(struct snd_platform_data *pdata)
-{
-	dm646x_mcasp0_device.dev.platform_data = pdata;
-	platform_device_register(&dm646x_mcasp0_device);
-}
+व्योम __init dm646x_init_mcasp0(काष्ठा snd_platक्रमm_data *pdata)
+अणु
+	dm646x_mcasp0_device.dev.platक्रमm_data = pdata;
+	platक्रमm_device_रेजिस्टर(&dm646x_mcasp0_device);
+पूर्ण
 
-void __init dm646x_init_mcasp1(struct snd_platform_data *pdata)
-{
-	dm646x_mcasp1_device.dev.platform_data = pdata;
-	platform_device_register(&dm646x_mcasp1_device);
-	platform_device_register(&dm646x_dit_device);
-}
+व्योम __init dm646x_init_mcasp1(काष्ठा snd_platक्रमm_data *pdata)
+अणु
+	dm646x_mcasp1_device.dev.platक्रमm_data = pdata;
+	platक्रमm_device_रेजिस्टर(&dm646x_mcasp1_device);
+	platक्रमm_device_रेजिस्टर(&dm646x_dit_device);
+पूर्ण
 
-void dm646x_setup_vpif(struct vpif_display_config *display_config,
-		       struct vpif_capture_config *capture_config)
-{
-	unsigned int value;
+व्योम dm646x_setup_vpअगर(काष्ठा vpअगर_display_config *display_config,
+		       काष्ठा vpअगर_capture_config *capture_config)
+अणु
+	अचिन्हित पूर्णांक value;
 
-	value = __raw_readl(DAVINCI_SYSMOD_VIRT(SYSMOD_VSCLKDIS));
+	value = __raw_पढ़ोl(DAVINCI_SYSMOD_VIRT(SYSMOD_VSCLKDIS));
 	value &= ~VSCLKDIS_MASK;
-	__raw_writel(value, DAVINCI_SYSMOD_VIRT(SYSMOD_VSCLKDIS));
+	__raw_ग_लिखोl(value, DAVINCI_SYSMOD_VIRT(SYSMOD_VSCLKDIS));
 
-	value = __raw_readl(DAVINCI_SYSMOD_VIRT(SYSMOD_VDD3P3VPWDN));
+	value = __raw_पढ़ोl(DAVINCI_SYSMOD_VIRT(SYSMOD_VDD3P3VPWDN));
 	value &= ~VDD3P3V_VID_MASK;
-	__raw_writel(value, DAVINCI_SYSMOD_VIRT(SYSMOD_VDD3P3VPWDN));
+	__raw_ग_लिखोl(value, DAVINCI_SYSMOD_VIRT(SYSMOD_VDD3P3VPWDN));
 
 	davinci_cfg_reg(DM646X_STSOMUX_DISABLE);
 	davinci_cfg_reg(DM646X_STSIMUX_DISABLE);
 	davinci_cfg_reg(DM646X_PTSOMUX_DISABLE);
 	davinci_cfg_reg(DM646X_PTSIMUX_DISABLE);
 
-	vpif_display_dev.dev.platform_data = display_config;
-	vpif_capture_dev.dev.platform_data = capture_config;
-	platform_device_register(&vpif_dev);
-	platform_device_register(&vpif_display_dev);
-	platform_device_register(&vpif_capture_dev);
-}
+	vpअगर_display_dev.dev.platक्रमm_data = display_config;
+	vpअगर_capture_dev.dev.platक्रमm_data = capture_config;
+	platक्रमm_device_रेजिस्टर(&vpअगर_dev);
+	platक्रमm_device_रेजिस्टर(&vpअगर_display_dev);
+	platक्रमm_device_रेजिस्टर(&vpअगर_capture_dev);
+पूर्ण
 
-int __init dm646x_init_edma(struct edma_rsv_info *rsv)
-{
-	struct platform_device *edma_pdev;
+पूर्णांक __init dm646x_init_edma(काष्ठा edma_rsv_info *rsv)
+अणु
+	काष्ठा platक्रमm_device *edma_pdev;
 
 	dm646x_edma_pdata.rsv = rsv;
 
-	edma_pdev = platform_device_register_full(&dm646x_edma_device);
-	return PTR_ERR_OR_ZERO(edma_pdev);
-}
+	edma_pdev = platक्रमm_device_रेजिस्टर_full(&dm646x_edma_device);
+	वापस PTR_ERR_OR_ZERO(edma_pdev);
+पूर्ण
 
-void __init dm646x_init(void)
-{
+व्योम __init dm646x_init(व्योम)
+अणु
 	davinci_common_init(&davinci_soc_info_dm646x);
 	davinci_map_sysmod();
-}
+पूर्ण
 
-void __init dm646x_init_time(unsigned long ref_clk_rate,
-			     unsigned long aux_clkin_rate)
-{
-	void __iomem *pll1, *psc;
-	struct clk *clk;
-	int rv;
+व्योम __init dm646x_init_समय(अचिन्हित दीर्घ ref_clk_rate,
+			     अचिन्हित दीर्घ aux_clkin_rate)
+अणु
+	व्योम __iomem *pll1, *psc;
+	काष्ठा clk *clk;
+	पूर्णांक rv;
 
-	clk_register_fixed_rate(NULL, "ref_clk", NULL, 0, ref_clk_rate);
-	clk_register_fixed_rate(NULL, "aux_clkin", NULL, 0, aux_clkin_rate);
+	clk_रेजिस्टर_fixed_rate(शून्य, "ref_clk", शून्य, 0, ref_clk_rate);
+	clk_रेजिस्टर_fixed_rate(शून्य, "aux_clkin", शून्य, 0, aux_clkin_rate);
 
 	pll1 = ioremap(DAVINCI_PLL1_BASE, SZ_1K);
-	dm646x_pll1_init(NULL, pll1, NULL);
+	dm646x_pll1_init(शून्य, pll1, शून्य);
 
 	psc = ioremap(DAVINCI_PWR_SLEEP_CNTRL_BASE, SZ_4K);
-	dm646x_psc_init(NULL, psc);
+	dm646x_psc_init(शून्य, psc);
 
-	clk = clk_get(NULL, "timer0");
-	if (WARN_ON(IS_ERR(clk))) {
+	clk = clk_get(शून्य, "timer0");
+	अगर (WARN_ON(IS_ERR(clk))) अणु
 		pr_err("Unable to get the timer clock\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	rv = davinci_timer_register(clk, &dm646x_timer_cfg);
+	rv = davinci_समयr_रेजिस्टर(clk, &dm646x_समयr_cfg);
 	WARN(rv, "Unable to register the timer: %d\n", rv);
-}
+पूर्ण
 
-static struct resource dm646x_pll2_resources[] = {
-	{
+अटल काष्ठा resource dm646x_pll2_resources[] = अणु
+	अणु
 		.start	= DAVINCI_PLL2_BASE,
 		.end	= DAVINCI_PLL2_BASE + SZ_1K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device dm646x_pll2_device = {
+अटल काष्ठा platक्रमm_device dm646x_pll2_device = अणु
 	.name		= "dm646x-pll2",
 	.id		= -1,
 	.resource	= dm646x_pll2_resources,
 	.num_resources	= ARRAY_SIZE(dm646x_pll2_resources),
-};
+पूर्ण;
 
-void __init dm646x_register_clocks(void)
-{
-	/* PLL1 and PSC are registered in dm646x_init_time() */
-	platform_device_register(&dm646x_pll2_device);
-}
+व्योम __init dm646x_रेजिस्टर_घड़ीs(व्योम)
+अणु
+	/* PLL1 and PSC are रेजिस्टरed in dm646x_init_समय() */
+	platक्रमm_device_रेजिस्टर(&dm646x_pll2_device);
+पूर्ण
 
-static const struct davinci_aintc_config dm646x_aintc_config = {
-	.reg = {
+अटल स्थिर काष्ठा davinci_aपूर्णांकc_config dm646x_aपूर्णांकc_config = अणु
+	.reg = अणु
 		.start		= DAVINCI_ARM_INTC_BASE,
 		.end		= DAVINCI_ARM_INTC_BASE + SZ_4K - 1,
 		.flags		= IORESOURCE_MEM,
-	},
+	पूर्ण,
 	.num_irqs		= 64,
-	.prios			= dm646x_default_priorities,
-};
+	.prios			= dm646x_शेष_priorities,
+पूर्ण;
 
-void __init dm646x_init_irq(void)
-{
-	davinci_aintc_init(&dm646x_aintc_config);
-}
+व्योम __init dm646x_init_irq(व्योम)
+अणु
+	davinci_aपूर्णांकc_init(&dm646x_aपूर्णांकc_config);
+पूर्ण
 
-static int __init dm646x_init_devices(void)
-{
-	int ret = 0;
+अटल पूर्णांक __init dm646x_init_devices(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!cpu_is_davinci_dm646x())
-		return 0;
+	अगर (!cpu_is_davinci_dm646x())
+		वापस 0;
 
-	platform_device_register(&dm646x_mdio_device);
-	platform_device_register(&dm646x_emac_device);
+	platक्रमm_device_रेजिस्टर(&dm646x_mdio_device);
+	platक्रमm_device_रेजिस्टर(&dm646x_emac_device);
 
 	ret = davinci_init_wdt();
-	if (ret)
+	अगर (ret)
 		pr_warn("%s: watchdog init failed: %d\n", __func__, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 postcore_initcall(dm646x_init_devices);

@@ -1,72 +1,73 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Makes a tree bootable image for IBM Evaluation boards.
+ * Makes a tree bootable image क्रम IBM Evaluation boards.
  * Basically, just take a zImage, skip the ELF header, and stuff
  * a 32 byte header on the front.
  *
- * We use htonl, which is a network macro, to make sure we're doing
+ * We use htonl, which is a network macro, to make sure we're करोing
  * The Right Thing on an LE machine.  It's non-obvious, but it should
  * work on anything BSD'ish.
  */
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <netinet/in.h>
-#ifdef __sun__
-#include <inttypes.h>
-#else
-#include <stdint.h>
-#endif
+#समावेश <fcntl.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/स्थिति.स>
+#समावेश <unistd.h>
+#समावेश <netinet/in.h>
+#अगर_घोषित __sun__
+#समावेश <पूर्णांकtypes.h>
+#अन्यथा
+#समावेश <मानक_निवेशt.h>
+#पूर्ण_अगर
 
-/* This gets tacked on the front of the image.  There are also a few
+/* This माला_लो tacked on the front of the image.  There are also a few
  * bytes allocated after the _start label used by the boot rom (see
- * head.S for details).
+ * head.S क्रम details).
  */
-typedef struct boot_block {
-	uint32_t bb_magic;		/* 0x0052504F */
-	uint32_t bb_dest;		/* Target address of the image */
-	uint32_t bb_num_512blocks;	/* Size, rounded-up, in 512 byte blks */
-	uint32_t bb_debug_flag;	/* Run debugger or image after load */
-	uint32_t bb_entry_point;	/* The image address to start */
-	uint32_t bb_checksum;	/* 32 bit checksum including header */
-	uint32_t reserved[2];
-} boot_block_t;
+प्रकार काष्ठा boot_block अणु
+	uपूर्णांक32_t bb_magic;		/* 0x0052504F */
+	uपूर्णांक32_t bb_dest;		/* Target address of the image */
+	uपूर्णांक32_t bb_num_512blocks;	/* Size, rounded-up, in 512 byte blks */
+	uपूर्णांक32_t bb_debug_flag;	/* Run debugger or image after load */
+	uपूर्णांक32_t bb_entry_poपूर्णांक;	/* The image address to start */
+	uपूर्णांक32_t bb_checksum;	/* 32 bit checksum including header */
+	uपूर्णांक32_t reserved[2];
+पूर्ण boot_block_t;
 
-#define IMGBLK	512
-unsigned int	tmpbuf[IMGBLK / sizeof(unsigned int)];
+#घोषणा IMGBLK	512
+अचिन्हित पूर्णांक	पंचांगpbuf[IMGBLK / माप(अचिन्हित पूर्णांक)];
 
-int main(int argc, char *argv[])
-{
-	int	in_fd, out_fd;
-	int	nblks, i;
-	unsigned int	cksum, *cp;
-	struct	stat	st;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	पूर्णांक	in_fd, out_fd;
+	पूर्णांक	nblks, i;
+	अचिन्हित पूर्णांक	cksum, *cp;
+	काष्ठा	stat	st;
 	boot_block_t	bt;
 
-	if (argc < 5) {
-		fprintf(stderr, "usage: %s <zImage-file> <boot-image> <load address> <entry point>\n",argv[0]);
-		exit(1);
-	}
+	अगर (argc < 5) अणु
+		ख_लिखो(मानक_त्रुटि, "usage: %s <zImage-file> <boot-image> <load address> <entry point>\n",argv[0]);
+		निकास(1);
+	पूर्ण
 
-	if (stat(argv[1], &st) < 0) {
-		perror("stat");
-		exit(2);
-	}
+	अगर (stat(argv[1], &st) < 0) अणु
+		लिखो_त्रुटि("stat");
+		निकास(2);
+	पूर्ण
 
 	nblks = (st.st_size + IMGBLK) / IMGBLK;
 
 	bt.bb_magic = htonl(0x0052504F);
 
-	/* If we have the optional entry point parameter, use it */
-	bt.bb_dest = htonl(strtoul(argv[3], NULL, 0));
-	bt.bb_entry_point = htonl(strtoul(argv[4], NULL, 0));
+	/* If we have the optional entry poपूर्णांक parameter, use it */
+	bt.bb_dest = htonl(म_से_अदीर्घ(argv[3], शून्य, 0));
+	bt.bb_entry_poपूर्णांक = htonl(म_से_अदीर्घ(argv[4], शून्य, 0));
 
 	/* We know these from the linker command.
-	 * ...and then move it up into memory a little more so the
+	 * ...and then move it up पूर्णांकo memory a little more so the
 	 * relocation can happen.
 	 */
 	bt.bb_num_512blocks = htonl(nblks);
@@ -79,73 +80,73 @@ int main(int argc, char *argv[])
 	bt.reserved[0] = 0;
 	bt.reserved[1] = 0;
 
-	if ((in_fd = open(argv[1], O_RDONLY)) < 0) {
-		perror("zImage open");
-		exit(3);
-	}
+	अगर ((in_fd = खोलो(argv[1], O_RDONLY)) < 0) अणु
+		लिखो_त्रुटि("zImage open");
+		निकास(3);
+	पूर्ण
 
-	if ((out_fd = open(argv[2], (O_RDWR | O_CREAT | O_TRUNC), 0666)) < 0) {
-		perror("bootfile open");
-		exit(3);
-	}
+	अगर ((out_fd = खोलो(argv[2], (O_RDWR | O_CREAT | O_TRUNC), 0666)) < 0) अणु
+		लिखो_त्रुटि("bootfile open");
+		निकास(3);
+	पूर्ण
 
 	cksum = 0;
-	cp = (void *)&bt;
-	for (i = 0; i < sizeof(bt) / sizeof(unsigned int); i++)
+	cp = (व्योम *)&bt;
+	क्रम (i = 0; i < माप(bt) / माप(अचिन्हित पूर्णांक); i++)
 		cksum += *cp++;
 
 	/* Assume zImage is an ELF file, and skip the 64K header.
 	*/
-	if (read(in_fd, tmpbuf, sizeof(tmpbuf)) != sizeof(tmpbuf)) {
-		fprintf(stderr, "%s is too small to be an ELF image\n",
+	अगर (पढ़ो(in_fd, पंचांगpbuf, माप(पंचांगpbuf)) != माप(पंचांगpbuf)) अणु
+		ख_लिखो(मानक_त्रुटि, "%s is too small to be an ELF image\n",
 				argv[1]);
-		exit(4);
-	}
+		निकास(4);
+	पूर्ण
 
-	if (tmpbuf[0] != htonl(0x7f454c46)) {
-		fprintf(stderr, "%s is not an ELF image\n", argv[1]);
-		exit(4);
-	}
+	अगर (पंचांगpbuf[0] != htonl(0x7f454c46)) अणु
+		ख_लिखो(मानक_त्रुटि, "%s is not an ELF image\n", argv[1]);
+		निकास(4);
+	पूर्ण
 
-	if (lseek(in_fd, (64 * 1024), SEEK_SET) < 0) {
-		fprintf(stderr, "%s failed to seek in ELF image\n", argv[1]);
-		exit(4);
-	}
+	अगर (lseek(in_fd, (64 * 1024), शुरू_से) < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "%s failed to seek in ELF image\n", argv[1]);
+		निकास(4);
+	पूर्ण
 
 	nblks -= (64 * 1024) / IMGBLK;
 
 	/* And away we go......
 	*/
-	if (write(out_fd, &bt, sizeof(bt)) != sizeof(bt)) {
-		perror("boot-image write");
-		exit(5);
-	}
+	अगर (ग_लिखो(out_fd, &bt, माप(bt)) != माप(bt)) अणु
+		लिखो_त्रुटि("boot-image write");
+		निकास(5);
+	पूर्ण
 
-	while (nblks-- > 0) {
-		if (read(in_fd, tmpbuf, sizeof(tmpbuf)) < 0) {
-			perror("zImage read");
-			exit(5);
-		}
-		cp = tmpbuf;
-		for (i = 0; i < sizeof(tmpbuf) / sizeof(unsigned int); i++)
+	जबतक (nblks-- > 0) अणु
+		अगर (पढ़ो(in_fd, पंचांगpbuf, माप(पंचांगpbuf)) < 0) अणु
+			लिखो_त्रुटि("zImage read");
+			निकास(5);
+		पूर्ण
+		cp = पंचांगpbuf;
+		क्रम (i = 0; i < माप(पंचांगpbuf) / माप(अचिन्हित पूर्णांक); i++)
 			cksum += *cp++;
-		if (write(out_fd, tmpbuf, sizeof(tmpbuf)) != sizeof(tmpbuf)) {
-			perror("boot-image write");
-			exit(5);
-		}
-	}
+		अगर (ग_लिखो(out_fd, पंचांगpbuf, माप(पंचांगpbuf)) != माप(पंचांगpbuf)) अणु
+			लिखो_त्रुटि("boot-image write");
+			निकास(5);
+		पूर्ण
+	पूर्ण
 
-	/* rewrite the header with the computed checksum.
+	/* reग_लिखो the header with the computed checksum.
 	*/
 	bt.bb_checksum = htonl(cksum);
-	if (lseek(out_fd, 0, SEEK_SET) < 0) {
-		perror("rewrite seek");
-		exit(1);
-	}
-	if (write(out_fd, &bt, sizeof(bt)) != sizeof(bt)) {
-		perror("boot-image rewrite");
-		exit(1);
-	}
+	अगर (lseek(out_fd, 0, शुरू_से) < 0) अणु
+		लिखो_त्रुटि("rewrite seek");
+		निकास(1);
+	पूर्ण
+	अगर (ग_लिखो(out_fd, &bt, माप(bt)) != माप(bt)) अणु
+		लिखो_त्रुटि("boot-image rewrite");
+		निकास(1);
+	पूर्ण
 
-	exit(0);
-}
+	निकास(0);
+पूर्ण

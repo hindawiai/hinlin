@@ -1,178 +1,179 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * VFIO based driver for Mediated device
+ * VFIO based driver क्रम Mediated device
  *
  * Copyright (c) 2016, NVIDIA CORPORATION. All rights reserved.
  *     Author: Neo Jia <cjia@nvidia.com>
  *             Kirti Wankhede <kwankhede@nvidia.com>
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/vfio.h>
-#include <linux/mdev.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vfपन.स>
+#समावेश <linux/mdev.h>
 
-#include "mdev_private.h"
+#समावेश "mdev_private.h"
 
-#define DRIVER_VERSION  "0.1"
-#define DRIVER_AUTHOR   "NVIDIA Corporation"
-#define DRIVER_DESC     "VFIO based driver for Mediated device"
+#घोषणा DRIVER_VERSION  "0.1"
+#घोषणा DRIVER_AUTHOR   "NVIDIA Corporation"
+#घोषणा DRIVER_DESC     "VFIO based driver for Mediated device"
 
-static int vfio_mdev_open(struct vfio_device *core_vdev)
-{
-	struct mdev_device *mdev = to_mdev_device(core_vdev->dev);
-	struct mdev_parent *parent = mdev->type->parent;
+अटल पूर्णांक vfio_mdev_खोलो(काष्ठा vfio_device *core_vdev)
+अणु
+	काष्ठा mdev_device *mdev = to_mdev_device(core_vdev->dev);
+	काष्ठा mdev_parent *parent = mdev->type->parent;
 
-	int ret;
+	पूर्णांक ret;
 
-	if (unlikely(!parent->ops->open))
-		return -EINVAL;
+	अगर (unlikely(!parent->ops->खोलो))
+		वापस -EINVAL;
 
-	if (!try_module_get(THIS_MODULE))
-		return -ENODEV;
+	अगर (!try_module_get(THIS_MODULE))
+		वापस -ENODEV;
 
-	ret = parent->ops->open(mdev);
-	if (ret)
+	ret = parent->ops->खोलो(mdev);
+	अगर (ret)
 		module_put(THIS_MODULE);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vfio_mdev_release(struct vfio_device *core_vdev)
-{
-	struct mdev_device *mdev = to_mdev_device(core_vdev->dev);
-	struct mdev_parent *parent = mdev->type->parent;
+अटल व्योम vfio_mdev_release(काष्ठा vfio_device *core_vdev)
+अणु
+	काष्ठा mdev_device *mdev = to_mdev_device(core_vdev->dev);
+	काष्ठा mdev_parent *parent = mdev->type->parent;
 
-	if (likely(parent->ops->release))
+	अगर (likely(parent->ops->release))
 		parent->ops->release(mdev);
 
 	module_put(THIS_MODULE);
-}
+पूर्ण
 
-static long vfio_mdev_unlocked_ioctl(struct vfio_device *core_vdev,
-				     unsigned int cmd, unsigned long arg)
-{
-	struct mdev_device *mdev = to_mdev_device(core_vdev->dev);
-	struct mdev_parent *parent = mdev->type->parent;
+अटल दीर्घ vfio_mdev_unlocked_ioctl(काष्ठा vfio_device *core_vdev,
+				     अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा mdev_device *mdev = to_mdev_device(core_vdev->dev);
+	काष्ठा mdev_parent *parent = mdev->type->parent;
 
-	if (unlikely(!parent->ops->ioctl))
-		return -EINVAL;
+	अगर (unlikely(!parent->ops->ioctl))
+		वापस -EINVAL;
 
-	return parent->ops->ioctl(mdev, cmd, arg);
-}
+	वापस parent->ops->ioctl(mdev, cmd, arg);
+पूर्ण
 
-static ssize_t vfio_mdev_read(struct vfio_device *core_vdev, char __user *buf,
-			      size_t count, loff_t *ppos)
-{
-	struct mdev_device *mdev = to_mdev_device(core_vdev->dev);
-	struct mdev_parent *parent = mdev->type->parent;
+अटल sमाप_प्रकार vfio_mdev_पढ़ो(काष्ठा vfio_device *core_vdev, अक्षर __user *buf,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mdev_device *mdev = to_mdev_device(core_vdev->dev);
+	काष्ठा mdev_parent *parent = mdev->type->parent;
 
-	if (unlikely(!parent->ops->read))
-		return -EINVAL;
+	अगर (unlikely(!parent->ops->पढ़ो))
+		वापस -EINVAL;
 
-	return parent->ops->read(mdev, buf, count, ppos);
-}
+	वापस parent->ops->पढ़ो(mdev, buf, count, ppos);
+पूर्ण
 
-static ssize_t vfio_mdev_write(struct vfio_device *core_vdev,
-			       const char __user *buf, size_t count,
+अटल sमाप_प्रकार vfio_mdev_ग_लिखो(काष्ठा vfio_device *core_vdev,
+			       स्थिर अक्षर __user *buf, माप_प्रकार count,
 			       loff_t *ppos)
-{
-	struct mdev_device *mdev = to_mdev_device(core_vdev->dev);
-	struct mdev_parent *parent = mdev->type->parent;
+अणु
+	काष्ठा mdev_device *mdev = to_mdev_device(core_vdev->dev);
+	काष्ठा mdev_parent *parent = mdev->type->parent;
 
-	if (unlikely(!parent->ops->write))
-		return -EINVAL;
+	अगर (unlikely(!parent->ops->ग_लिखो))
+		वापस -EINVAL;
 
-	return parent->ops->write(mdev, buf, count, ppos);
-}
+	वापस parent->ops->ग_लिखो(mdev, buf, count, ppos);
+पूर्ण
 
-static int vfio_mdev_mmap(struct vfio_device *core_vdev,
-			  struct vm_area_struct *vma)
-{
-	struct mdev_device *mdev = to_mdev_device(core_vdev->dev);
-	struct mdev_parent *parent = mdev->type->parent;
+अटल पूर्णांक vfio_mdev_mmap(काष्ठा vfio_device *core_vdev,
+			  काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा mdev_device *mdev = to_mdev_device(core_vdev->dev);
+	काष्ठा mdev_parent *parent = mdev->type->parent;
 
-	if (unlikely(!parent->ops->mmap))
-		return -EINVAL;
+	अगर (unlikely(!parent->ops->mmap))
+		वापस -EINVAL;
 
-	return parent->ops->mmap(mdev, vma);
-}
+	वापस parent->ops->mmap(mdev, vma);
+पूर्ण
 
-static void vfio_mdev_request(struct vfio_device *core_vdev, unsigned int count)
-{
-	struct mdev_device *mdev = to_mdev_device(core_vdev->dev);
-	struct mdev_parent *parent = mdev->type->parent;
+अटल व्योम vfio_mdev_request(काष्ठा vfio_device *core_vdev, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा mdev_device *mdev = to_mdev_device(core_vdev->dev);
+	काष्ठा mdev_parent *parent = mdev->type->parent;
 
-	if (parent->ops->request)
+	अगर (parent->ops->request)
 		parent->ops->request(mdev, count);
-	else if (count == 0)
+	अन्यथा अगर (count == 0)
 		dev_notice(mdev_dev(mdev),
 			   "No mdev vendor driver request callback support, blocked until released by user\n");
-}
+पूर्ण
 
-static const struct vfio_device_ops vfio_mdev_dev_ops = {
+अटल स्थिर काष्ठा vfio_device_ops vfio_mdev_dev_ops = अणु
 	.name		= "vfio-mdev",
-	.open		= vfio_mdev_open,
+	.खोलो		= vfio_mdev_खोलो,
 	.release	= vfio_mdev_release,
 	.ioctl		= vfio_mdev_unlocked_ioctl,
-	.read		= vfio_mdev_read,
-	.write		= vfio_mdev_write,
+	.पढ़ो		= vfio_mdev_पढ़ो,
+	.ग_लिखो		= vfio_mdev_ग_लिखो,
 	.mmap		= vfio_mdev_mmap,
 	.request	= vfio_mdev_request,
-};
+पूर्ण;
 
-static int vfio_mdev_probe(struct mdev_device *mdev)
-{
-	struct vfio_device *vdev;
-	int ret;
+अटल पूर्णांक vfio_mdev_probe(काष्ठा mdev_device *mdev)
+अणु
+	काष्ठा vfio_device *vdev;
+	पूर्णांक ret;
 
-	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
-	if (!vdev)
-		return -ENOMEM;
+	vdev = kzalloc(माप(*vdev), GFP_KERNEL);
+	अगर (!vdev)
+		वापस -ENOMEM;
 
 	vfio_init_group_dev(vdev, &mdev->dev, &vfio_mdev_dev_ops);
-	ret = vfio_register_group_dev(vdev);
-	if (ret) {
-		kfree(vdev);
-		return ret;
-	}
+	ret = vfio_रेजिस्टर_group_dev(vdev);
+	अगर (ret) अणु
+		kमुक्त(vdev);
+		वापस ret;
+	पूर्ण
 	dev_set_drvdata(&mdev->dev, vdev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vfio_mdev_remove(struct mdev_device *mdev)
-{
-	struct vfio_device *vdev = dev_get_drvdata(&mdev->dev);
+अटल व्योम vfio_mdev_हटाओ(काष्ठा mdev_device *mdev)
+अणु
+	काष्ठा vfio_device *vdev = dev_get_drvdata(&mdev->dev);
 
-	vfio_unregister_group_dev(vdev);
-	kfree(vdev);
-}
+	vfio_unरेजिस्टर_group_dev(vdev);
+	kमुक्त(vdev);
+पूर्ण
 
-static struct mdev_driver vfio_mdev_driver = {
-	.driver = {
+अटल काष्ठा mdev_driver vfio_mdev_driver = अणु
+	.driver = अणु
 		.name = "vfio_mdev",
 		.owner = THIS_MODULE,
 		.mod_name = KBUILD_MODNAME,
-	},
+	पूर्ण,
 	.probe	= vfio_mdev_probe,
-	.remove	= vfio_mdev_remove,
-};
+	.हटाओ	= vfio_mdev_हटाओ,
+पूर्ण;
 
-static int __init vfio_mdev_init(void)
-{
-	return mdev_register_driver(&vfio_mdev_driver);
-}
+अटल पूर्णांक __init vfio_mdev_init(व्योम)
+अणु
+	वापस mdev_रेजिस्टर_driver(&vfio_mdev_driver);
+पूर्ण
 
-static void __exit vfio_mdev_exit(void)
-{
-	mdev_unregister_driver(&vfio_mdev_driver);
-}
+अटल व्योम __निकास vfio_mdev_निकास(व्योम)
+अणु
+	mdev_unरेजिस्टर_driver(&vfio_mdev_driver);
+पूर्ण
 
 module_init(vfio_mdev_init)
-module_exit(vfio_mdev_exit)
+module_निकास(vfio_mdev_निकास)
 
 MODULE_VERSION(DRIVER_VERSION);
 MODULE_LICENSE("GPL v2");

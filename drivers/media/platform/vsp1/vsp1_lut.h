@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * vsp1_lut.h  --  R-Car VSP1 Look-Up Table
  *
  * Copyright (C) 2013 Renesas Corporation
  *
- * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
-#ifndef __VSP1_LUT_H__
-#define __VSP1_LUT_H__
+#अगर_अघोषित __VSP1_LUT_H__
+#घोषणा __VSP1_LUT_H__
 
-#include <linux/spinlock.h>
+#समावेश <linux/spinlock.h>
 
-#include <media/media-entity.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-subdev.h>
+#समावेश <media/media-entity.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-subdev.h>
 
-#include "vsp1_entity.h"
+#समावेश "vsp1_entity.h"
 
-struct vsp1_device;
+काष्ठा vsp1_device;
 
-#define LUT_PAD_SINK				0
-#define LUT_PAD_SOURCE				1
+#घोषणा LUT_PAD_SINK				0
+#घोषणा LUT_PAD_SOURCE				1
 
-struct vsp1_lut {
-	struct vsp1_entity entity;
+काष्ठा vsp1_lut अणु
+	काष्ठा vsp1_entity entity;
 
-	struct v4l2_ctrl_handler ctrls;
+	काष्ठा v4l2_ctrl_handler ctrls;
 
 	spinlock_t lock;
-	struct vsp1_dl_body *lut;
-	struct vsp1_dl_body_pool *pool;
-};
+	काष्ठा vsp1_dl_body *lut;
+	काष्ठा vsp1_dl_body_pool *pool;
+पूर्ण;
 
-static inline struct vsp1_lut *to_lut(struct v4l2_subdev *subdev)
-{
-	return container_of(subdev, struct vsp1_lut, entity.subdev);
-}
+अटल अंतरभूत काष्ठा vsp1_lut *to_lut(काष्ठा v4l2_subdev *subdev)
+अणु
+	वापस container_of(subdev, काष्ठा vsp1_lut, entity.subdev);
+पूर्ण
 
-struct vsp1_lut *vsp1_lut_create(struct vsp1_device *vsp1);
+काष्ठा vsp1_lut *vsp1_lut_create(काष्ठा vsp1_device *vsp1);
 
-#endif /* __VSP1_LUT_H__ */
+#पूर्ण_अगर /* __VSP1_LUT_H__ */

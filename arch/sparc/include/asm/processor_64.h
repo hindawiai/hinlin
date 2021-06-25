@@ -1,115 +1,116 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * include/asm/processor.h
+ * include/यंत्र/processor.h
  *
  * Copyright (C) 1996 David S. Miller (davem@caip.rutgers.edu)
  */
 
-#ifndef __ASM_SPARC64_PROCESSOR_H
-#define __ASM_SPARC64_PROCESSOR_H
+#अगर_अघोषित __ASM_SPARC64_PROCESSOR_H
+#घोषणा __ASM_SPARC64_PROCESSOR_H
 
-#include <asm/asi.h>
-#include <asm/pstate.h>
-#include <asm/ptrace.h>
-#include <asm/page.h>
+#समावेश <यंत्र/asi.h>
+#समावेश <यंत्र/pstate.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/page.h>
 
 /*
  * User lives in his very own context, and cannot reference us. Note
- * that TASK_SIZE is a misnomer, it really gives maximum user virtual
+ * that TASK_SIZE is a misnomer, it really gives maximum user भव
  * address that the kernel will allocate out.
  *
- * XXX No longer using virtual page tables, kill this upper limit...
+ * XXX No दीर्घer using भव page tables, समाप्त this upper limit...
  */
-#define VA_BITS		44
-#ifndef __ASSEMBLY__
-#define VPTE_SIZE	(1UL << (VA_BITS - PAGE_SHIFT + 3))
-#else
-#define VPTE_SIZE	(1 << (VA_BITS - PAGE_SHIFT + 3))
-#endif
+#घोषणा VA_BITS		44
+#अगर_अघोषित __ASSEMBLY__
+#घोषणा VPTE_SIZE	(1UL << (VA_BITS - PAGE_SHIFT + 3))
+#अन्यथा
+#घोषणा VPTE_SIZE	(1 << (VA_BITS - PAGE_SHIFT + 3))
+#पूर्ण_अगर
 
-#define TASK_SIZE_OF(tsk) \
-	(test_tsk_thread_flag(tsk,TIF_32BIT) ? \
-	 (1UL << 32UL) : ((unsigned long)-VPTE_SIZE))
-#define TASK_SIZE \
-	(test_thread_flag(TIF_32BIT) ? \
-	 (1UL << 32UL) : ((unsigned long)-VPTE_SIZE))
-#ifdef __KERNEL__
+#घोषणा TASK_SIZE_OF(tsk) \
+	(test_tsk_thपढ़ो_flag(tsk,TIF_32BIT) ? \
+	 (1UL << 32UL) : ((अचिन्हित दीर्घ)-VPTE_SIZE))
+#घोषणा TASK_SIZE \
+	(test_thपढ़ो_flag(TIF_32BIT) ? \
+	 (1UL << 32UL) : ((अचिन्हित दीर्घ)-VPTE_SIZE))
+#अगर_घोषित __KERNEL__
 
-#define STACK_TOP32	((1UL << 32UL) - PAGE_SIZE)
-#define STACK_TOP64	(0x0000080000000000UL - (1UL << 32UL))
+#घोषणा STACK_TOP32	((1UL << 32UL) - PAGE_SIZE)
+#घोषणा STACK_TOP64	(0x0000080000000000UL - (1UL << 32UL))
 
-#define STACK_TOP	(test_thread_flag(TIF_32BIT) ? \
+#घोषणा STACK_TOP	(test_thपढ़ो_flag(TIF_32BIT) ? \
 			 STACK_TOP32 : STACK_TOP64)
 
-#define STACK_TOP_MAX	STACK_TOP64
+#घोषणा STACK_TOP_MAX	STACK_TOP64
 
-#endif
+#पूर्ण_अगर
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-typedef struct {
-	unsigned char seg;
-} mm_segment_t;
+प्रकार काष्ठा अणु
+	अचिन्हित अक्षर seg;
+पूर्ण mm_segment_t;
 
-/* The Sparc processor specific thread struct. */
-/* XXX This should die, everything can go into thread_info now. */
-struct thread_struct {
-#ifdef CONFIG_DEBUG_SPINLOCK
-	/* How many spinlocks held by this thread.
+/* The Sparc processor specअगरic thपढ़ो काष्ठा. */
+/* XXX This should die, everything can go पूर्णांकo thपढ़ो_info now. */
+काष्ठा thपढ़ो_काष्ठा अणु
+#अगर_घोषित CONFIG_DEBUG_SPINLOCK
+	/* How many spinlocks held by this thपढ़ो.
 	 * Used with spin lock debugging to catch tasks
 	 * sleeping illegally with locks held.
 	 */
-	int smp_lock_count;
-	unsigned int smp_lock_pc;
-#else
-	int dummy; /* f'in gcc bug... */
-#endif
-};
+	पूर्णांक smp_lock_count;
+	अचिन्हित पूर्णांक smp_lock_pc;
+#अन्यथा
+	पूर्णांक dummy; /* f'in gcc bug... */
+#पूर्ण_अगर
+पूर्ण;
 
-#endif /* !(__ASSEMBLY__) */
+#पूर्ण_अगर /* !(__ASSEMBLY__) */
 
-#ifndef CONFIG_DEBUG_SPINLOCK
-#define INIT_THREAD  {			\
+#अगर_अघोषित CONFIG_DEBUG_SPINLOCK
+#घोषणा INIT_THREAD  अणु			\
 	0,				\
-}
-#else /* CONFIG_DEBUG_SPINLOCK */
-#define INIT_THREAD  {					\
+पूर्ण
+#अन्यथा /* CONFIG_DEBUG_SPINLOCK */
+#घोषणा INIT_THREAD  अणु					\
 /* smp_lock_count, smp_lock_pc, */			\
    0,		   0,					\
-}
-#endif /* !(CONFIG_DEBUG_SPINLOCK) */
+पूर्ण
+#पूर्ण_अगर /* !(CONFIG_DEBUG_SPINLOCK) */
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/types.h>
-#include <asm/fpumacro.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/fpumacro.h>
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
 /* On Uniprocessor, even in RMO processes see TSO semantics */
-#ifdef CONFIG_SMP
-#define TSTATE_INITIAL_MM	TSTATE_TSO
-#else
-#define TSTATE_INITIAL_MM	TSTATE_RMO
-#endif
+#अगर_घोषित CONFIG_SMP
+#घोषणा TSTATE_INITIAL_MM	TSTATE_TSO
+#अन्यथा
+#घोषणा TSTATE_INITIAL_MM	TSTATE_RMO
+#पूर्ण_अगर
 
-/* Do necessary setup to start up a newly executed thread. */
-#define start_thread(regs, pc, sp) \
-do { \
-	unsigned long __asi = ASI_PNF; \
+/* Do necessary setup to start up a newly executed thपढ़ो. */
+#घोषणा start_thपढ़ो(regs, pc, sp) \
+करो अणु \
+	अचिन्हित दीर्घ __asi = ASI_PNF; \
 	regs->tstate = (regs->tstate & (TSTATE_CWP)) | (TSTATE_INITIAL_MM|TSTATE_IE) | (__asi << 24UL); \
 	regs->tpc = ((pc & (~3)) - 4); \
 	regs->tnpc = regs->tpc + 4; \
 	regs->y = 0; \
-	set_thread_wstate(1 << 3); \
-	if (current_thread_info()->utraps) { \
-		if (*(current_thread_info()->utraps) < 2) \
-			kfree(current_thread_info()->utraps); \
-		else \
-			(*(current_thread_info()->utraps))--; \
-		current_thread_info()->utraps = NULL; \
-	} \
-	__asm__ __volatile__( \
+	set_thपढ़ो_wstate(1 << 3); \
+	अगर (current_thपढ़ो_info()->utraps) अणु \
+		अगर (*(current_thपढ़ो_info()->utraps) < 2) \
+			kमुक्त(current_thपढ़ो_info()->utraps); \
+		अन्यथा \
+			(*(current_thपढ़ो_info()->utraps))--; \
+		current_thपढ़ो_info()->utraps = शून्य; \
+	पूर्ण \
+	__यंत्र__ __अस्थिर__( \
 	"stx		%%g0, [%0 + %2 + 0x00]\n\t" \
 	"stx		%%g0, [%0 + %2 + 0x08]\n\t" \
 	"stx		%%g0, [%0 + %2 + 0x10]\n\t" \
@@ -128,32 +129,32 @@ do { \
 	"stx		%%g0, [%0 + %2 + 0x78]\n\t" \
 	"wrpr		%%g0, (1 << 3), %%wstate\n\t" \
 	: \
-	: "r" (regs), "r" (sp - sizeof(struct reg_window) - STACK_BIAS), \
-	  "i" ((const unsigned long)(&((struct pt_regs *)0)->u_regs[0]))); \
-	fprs_write(0);	\
-	current_thread_info()->xfsr[0] = 0;	\
-	current_thread_info()->fpsaved[0] = 0;	\
+	: "r" (regs), "r" (sp - माप(काष्ठा reg_winकरोw) - STACK_BIAS), \
+	  "i" ((स्थिर अचिन्हित दीर्घ)(&((काष्ठा pt_regs *)0)->u_regs[0]))); \
+	fprs_ग_लिखो(0);	\
+	current_thपढ़ो_info()->xfsr[0] = 0;	\
+	current_thपढ़ो_info()->fpsaved[0] = 0;	\
 	regs->tstate &= ~TSTATE_PEF;	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define start_thread32(regs, pc, sp) \
-do { \
-	unsigned long __asi = ASI_PNF; \
+#घोषणा start_thपढ़ो32(regs, pc, sp) \
+करो अणु \
+	अचिन्हित दीर्घ __asi = ASI_PNF; \
 	pc &= 0x00000000ffffffffUL; \
 	sp &= 0x00000000ffffffffUL; \
 	regs->tstate = (regs->tstate & (TSTATE_CWP))|(TSTATE_INITIAL_MM|TSTATE_IE|TSTATE_AM) | (__asi << 24UL); \
 	regs->tpc = ((pc & (~3)) - 4); \
 	regs->tnpc = regs->tpc + 4; \
 	regs->y = 0; \
-	set_thread_wstate(2 << 3); \
-	if (current_thread_info()->utraps) { \
-		if (*(current_thread_info()->utraps) < 2) \
-			kfree(current_thread_info()->utraps); \
-		else \
-			(*(current_thread_info()->utraps))--; \
-		current_thread_info()->utraps = NULL; \
-	} \
-	__asm__ __volatile__( \
+	set_thपढ़ो_wstate(2 << 3); \
+	अगर (current_thपढ़ो_info()->utraps) अणु \
+		अगर (*(current_thपढ़ो_info()->utraps) < 2) \
+			kमुक्त(current_thपढ़ो_info()->utraps); \
+		अन्यथा \
+			(*(current_thपढ़ो_info()->utraps))--; \
+		current_thपढ़ो_info()->utraps = शून्य; \
+	पूर्ण \
+	__यंत्र__ __अस्थिर__( \
 	"stx		%%g0, [%0 + %2 + 0x00]\n\t" \
 	"stx		%%g0, [%0 + %2 + 0x08]\n\t" \
 	"stx		%%g0, [%0 + %2 + 0x10]\n\t" \
@@ -172,36 +173,36 @@ do { \
 	"stx		%%g0, [%0 + %2 + 0x78]\n\t" \
 	"wrpr		%%g0, (2 << 3), %%wstate\n\t" \
 	: \
-	: "r" (regs), "r" (sp - sizeof(struct reg_window32)), \
-	  "i" ((const unsigned long)(&((struct pt_regs *)0)->u_regs[0]))); \
-	fprs_write(0);	\
-	current_thread_info()->xfsr[0] = 0;	\
-	current_thread_info()->fpsaved[0] = 0;	\
+	: "r" (regs), "r" (sp - माप(काष्ठा reg_winकरोw32)), \
+	  "i" ((स्थिर अचिन्हित दीर्घ)(&((काष्ठा pt_regs *)0)->u_regs[0]))); \
+	fprs_ग_लिखो(0);	\
+	current_thपढ़ो_info()->xfsr[0] = 0;	\
+	current_thपढ़ो_info()->fpsaved[0] = 0;	\
 	regs->tstate &= ~TSTATE_PEF;	\
-} while (0)
+पूर्ण जबतक (0)
 
-/* Free all resources held by a thread. */
-#define release_thread(tsk)		do { } while (0)
+/* Free all resources held by a thपढ़ो. */
+#घोषणा release_thपढ़ो(tsk)		करो अणु पूर्ण जबतक (0)
 
-unsigned long get_wchan(struct task_struct *task);
+अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *task);
 
-#define task_pt_regs(tsk) (task_thread_info(tsk)->kregs)
-#define KSTK_EIP(tsk)  (task_pt_regs(tsk)->tpc)
-#define KSTK_ESP(tsk)  (task_pt_regs(tsk)->u_regs[UREG_FP])
+#घोषणा task_pt_regs(tsk) (task_thपढ़ो_info(tsk)->kregs)
+#घोषणा KSTK_EIP(tsk)  (task_pt_regs(tsk)->tpc)
+#घोषणा KSTK_ESP(tsk)  (task_pt_regs(tsk)->u_regs[UREG_FP])
 
-/* Please see the commentary in asm/backoff.h for a description of
- * what these instructions are doing and how they have been chosen.
- * To make a long story short, we are trying to yield the current cpu
- * strand during busy loops.
+/* Please see the commentary in यंत्र/backoff.h क्रम a description of
+ * what these inकाष्ठाions are करोing and how they have been chosen.
+ * To make a दीर्घ story लघु, we are trying to yield the current cpu
+ * stअक्रम during busy loops.
  */
-#ifdef	BUILD_VDSO
-#define	cpu_relax()	asm volatile("\n99:\n\t"			\
+#अगर_घोषित	BUILD_VDSO
+#घोषणा	cpu_relax()	यंत्र अस्थिर("\n99:\n\t"			\
 				     "rd	%%ccr, %%g0\n\t"	\
 				     "rd	%%ccr, %%g0\n\t"	\
 				     "rd	%%ccr, %%g0\n\t"	\
 				     ::: "memory")
-#else /* ! BUILD_VDSO */
-#define cpu_relax()	asm volatile("\n99:\n\t"			\
+#अन्यथा /* ! BUILD_VDSO */
+#घोषणा cpu_relax()	यंत्र अस्थिर("\n99:\n\t"			\
 				     "rd	%%ccr, %%g0\n\t"	\
 				     "rd	%%ccr, %%g0\n\t"	\
 				     "rd	%%ccr, %%g0\n\t"	\
@@ -212,46 +213,46 @@ unsigned long get_wchan(struct task_struct *task);
 				     "nop\n\t"				\
 				     ".previous"			\
 				     ::: "memory")
-#endif
+#पूर्ण_अगर
 
-/* Prefetch support.  This is tuned for UltraSPARC-III and later.
+/* Prefetch support.  This is tuned क्रम UltraSPARC-III and later.
  * UltraSPARC-I will treat these as nops, and UltraSPARC-II has
  * a shallower prefetch queue than later chips.
  */
-#define ARCH_HAS_PREFETCH
-#define ARCH_HAS_PREFETCHW
-#define ARCH_HAS_SPINLOCK_PREFETCH
+#घोषणा ARCH_HAS_PREFETCH
+#घोषणा ARCH_HAS_PREFETCHW
+#घोषणा ARCH_HAS_SPINLOCK_PREFETCH
 
-static inline void prefetch(const void *x)
-{
-	/* We do not use the read prefetch mnemonic because that
-	 * prefetches into the prefetch-cache which only is accessible
-	 * by floating point operations in UltraSPARC-III and later.
-	 * By contrast, "#one_write" prefetches into the L2 cache
+अटल अंतरभूत व्योम prefetch(स्थिर व्योम *x)
+अणु
+	/* We करो not use the पढ़ो prefetch mnemonic because that
+	 * prefetches पूर्णांकo the prefetch-cache which only is accessible
+	 * by भग्नing poपूर्णांक operations in UltraSPARC-III and later.
+	 * By contrast, "#one_write" prefetches पूर्णांकo the L2 cache
 	 * in shared state.
 	 */
-	__asm__ __volatile__("prefetch [%0], #one_write"
-			     : /* no outputs */
+	__यंत्र__ __अस्थिर__("prefetch [%0], #one_write"
+			     : /* no outमाला_दो */
 			     : "r" (x));
-}
+पूर्ण
 
-static inline void prefetchw(const void *x)
-{
-	/* The most optimal prefetch to use for writes is
-	 * "#n_writes".  This brings the cacheline into the
+अटल अंतरभूत व्योम prefetchw(स्थिर व्योम *x)
+अणु
+	/* The most optimal prefetch to use क्रम ग_लिखोs is
+	 * "#n_writes".  This brings the cacheline पूर्णांकo the
 	 * L2 cache in "owned" state.
 	 */
-	__asm__ __volatile__("prefetch [%0], #n_writes"
-			     : /* no outputs */
+	__यंत्र__ __अस्थिर__("prefetch [%0], #n_writes"
+			     : /* no outमाला_दो */
 			     : "r" (x));
-}
+पूर्ण
 
-#define spin_lock_prefetch(x)	prefetchw(x)
+#घोषणा spin_lock_prefetch(x)	prefetchw(x)
 
-#define HAVE_ARCH_PICK_MMAP_LAYOUT
+#घोषणा HAVE_ARCH_PICK_MMAP_LAYOUT
 
-int do_mathemu(struct pt_regs *regs, struct fpustate *f, bool illegal_insn_trap);
+पूर्णांक करो_mathemu(काष्ठा pt_regs *regs, काष्ठा fpustate *f, bool illegal_insn_trap);
 
-#endif /* !(__ASSEMBLY__) */
+#पूर्ण_अगर /* !(__ASSEMBLY__) */
 
-#endif /* !(__ASM_SPARC64_PROCESSOR_H) */
+#पूर्ण_अगर /* !(__ASM_SPARC64_PROCESSOR_H) */

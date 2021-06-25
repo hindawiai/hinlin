@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SPARC_EBUS_DMA_H
-#define __ASM_SPARC_EBUS_DMA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SPARC_EBUS_DMA_H
+#घोषणा __ASM_SPARC_EBUS_DMA_H
 
-struct ebus_dma_info {
+काष्ठा ebus_dma_info अणु
 	spinlock_t	lock;
-	void __iomem	*regs;
+	व्योम __iomem	*regs;
 
-	unsigned int	flags;
-#define EBUS_DMA_FLAG_USE_EBDMA_HANDLER		0x00000001
-#define EBUS_DMA_FLAG_TCI_DISABLE		0x00000002
+	अचिन्हित पूर्णांक	flags;
+#घोषणा EBUS_DMA_FLAG_USE_EBDMA_HANDLER		0x00000001
+#घोषणा EBUS_DMA_FLAG_TCI_DISABLE		0x00000002
 
 	/* These are only valid is EBUS_DMA_FLAG_USE_EBDMA_HANDLER is
 	 * set.
 	 */
-	void (*callback)(struct ebus_dma_info *p, int event, void *cookie);
-	void *client_cookie;
-	unsigned int	irq;
-#define EBUS_DMA_EVENT_ERROR	1
-#define EBUS_DMA_EVENT_DMA	2
-#define EBUS_DMA_EVENT_DEVICE	4
+	व्योम (*callback)(काष्ठा ebus_dma_info *p, पूर्णांक event, व्योम *cookie);
+	व्योम *client_cookie;
+	अचिन्हित पूर्णांक	irq;
+#घोषणा EBUS_DMA_EVENT_ERROR	1
+#घोषणा EBUS_DMA_EVENT_DMA	2
+#घोषणा EBUS_DMA_EVENT_DEVICE	4
 
-	unsigned char	name[64];
-};
+	अचिन्हित अक्षर	name[64];
+पूर्ण;
 
-int ebus_dma_register(struct ebus_dma_info *p);
-int ebus_dma_irq_enable(struct ebus_dma_info *p, int on);
-void ebus_dma_unregister(struct ebus_dma_info *p);
-int ebus_dma_request(struct ebus_dma_info *p, dma_addr_t bus_addr,
-			    size_t len);
-void ebus_dma_prepare(struct ebus_dma_info *p, int write);
-unsigned int ebus_dma_residue(struct ebus_dma_info *p);
-unsigned int ebus_dma_addr(struct ebus_dma_info *p);
-void ebus_dma_enable(struct ebus_dma_info *p, int on);
+पूर्णांक ebus_dma_रेजिस्टर(काष्ठा ebus_dma_info *p);
+पूर्णांक ebus_dma_irq_enable(काष्ठा ebus_dma_info *p, पूर्णांक on);
+व्योम ebus_dma_unरेजिस्टर(काष्ठा ebus_dma_info *p);
+पूर्णांक ebus_dma_request(काष्ठा ebus_dma_info *p, dma_addr_t bus_addr,
+			    माप_प्रकार len);
+व्योम ebus_dma_prepare(काष्ठा ebus_dma_info *p, पूर्णांक ग_लिखो);
+अचिन्हित पूर्णांक ebus_dma_residue(काष्ठा ebus_dma_info *p);
+अचिन्हित पूर्णांक ebus_dma_addr(काष्ठा ebus_dma_info *p);
+व्योम ebus_dma_enable(काष्ठा ebus_dma_info *p, पूर्णांक on);
 
-#endif /* __ASM_SPARC_EBUS_DMA_H */
+#पूर्ण_अगर /* __ASM_SPARC_EBUS_DMA_H */

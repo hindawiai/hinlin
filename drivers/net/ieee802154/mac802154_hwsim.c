@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * HWSIM IEEE 802.15.4 interface
+ * HWSIM IEEE 802.15.4 पूर्णांकerface
  *
  * (C) 2018 Mojatau, Alexander Aring <aring@mojatau.com>
  * Copyright 2007-2012 Siemens AG
@@ -11,160 +12,160 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
-#include <linux/module.h>
-#include <linux/timer.h>
-#include <linux/platform_device.h>
-#include <linux/rtnetlink.h>
-#include <linux/netdevice.h>
-#include <linux/device.h>
-#include <linux/spinlock.h>
-#include <net/mac802154.h>
-#include <net/cfg802154.h>
-#include <net/genetlink.h>
-#include "mac802154_hwsim.h"
+#समावेश <linux/module.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/device.h>
+#समावेश <linux/spinlock.h>
+#समावेश <net/mac802154.h>
+#समावेश <net/cfg802154.h>
+#समावेश <net/genetlink.h>
+#समावेश "mac802154_hwsim.h"
 
 MODULE_DESCRIPTION("Software simulator of IEEE 802.15.4 radio(s) for mac802154");
 MODULE_LICENSE("GPL");
 
-static LIST_HEAD(hwsim_phys);
-static DEFINE_MUTEX(hwsim_phys_lock);
+अटल LIST_HEAD(hwsim_phys);
+अटल DEFINE_MUTEX(hwsim_phys_lock);
 
-static struct platform_device *mac802154hwsim_dev;
+अटल काष्ठा platक्रमm_device *mac802154hwsim_dev;
 
 /* MAC802154_HWSIM netlink family */
-static struct genl_family hwsim_genl_family;
+अटल काष्ठा genl_family hwsim_genl_family;
 
-static int hwsim_radio_idx;
+अटल पूर्णांक hwsim_radio_idx;
 
-enum hwsim_multicast_groups {
+क्रमागत hwsim_multicast_groups अणु
 	HWSIM_MCGRP_CONFIG,
-};
+पूर्ण;
 
-static const struct genl_multicast_group hwsim_mcgrps[] = {
-	[HWSIM_MCGRP_CONFIG] = { .name = "config", },
-};
+अटल स्थिर काष्ठा genl_multicast_group hwsim_mcgrps[] = अणु
+	[HWSIM_MCGRP_CONFIG] = अणु .name = "config", पूर्ण,
+पूर्ण;
 
-struct hwsim_pib {
+काष्ठा hwsim_pib अणु
 	u8 page;
 	u8 channel;
 
-	struct rcu_head rcu;
-};
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-struct hwsim_edge_info {
+काष्ठा hwsim_edge_info अणु
 	u8 lqi;
 
-	struct rcu_head rcu;
-};
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-struct hwsim_edge {
-	struct hwsim_phy *endpoint;
-	struct hwsim_edge_info __rcu *info;
+काष्ठा hwsim_edge अणु
+	काष्ठा hwsim_phy *endpoपूर्णांक;
+	काष्ठा hwsim_edge_info __rcu *info;
 
-	struct list_head list;
-	struct rcu_head rcu;
-};
+	काष्ठा list_head list;
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-struct hwsim_phy {
-	struct ieee802154_hw *hw;
+काष्ठा hwsim_phy अणु
+	काष्ठा ieee802154_hw *hw;
 	u32 idx;
 
-	struct hwsim_pib __rcu *pib;
+	काष्ठा hwsim_pib __rcu *pib;
 
 	bool suspended;
-	struct list_head edges;
+	काष्ठा list_head edges;
 
-	struct list_head list;
-};
+	काष्ठा list_head list;
+पूर्ण;
 
-static int hwsim_add_one(struct genl_info *info, struct device *dev,
+अटल पूर्णांक hwsim_add_one(काष्ठा genl_info *info, काष्ठा device *dev,
 			 bool init);
-static void hwsim_del(struct hwsim_phy *phy);
+अटल व्योम hwsim_del(काष्ठा hwsim_phy *phy);
 
-static int hwsim_hw_ed(struct ieee802154_hw *hw, u8 *level)
-{
+अटल पूर्णांक hwsim_hw_ed(काष्ठा ieee802154_hw *hw, u8 *level)
+अणु
 	*level = 0xbe;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hwsim_hw_channel(struct ieee802154_hw *hw, u8 page, u8 channel)
-{
-	struct hwsim_phy *phy = hw->priv;
-	struct hwsim_pib *pib, *pib_old;
+अटल पूर्णांक hwsim_hw_channel(काष्ठा ieee802154_hw *hw, u8 page, u8 channel)
+अणु
+	काष्ठा hwsim_phy *phy = hw->priv;
+	काष्ठा hwsim_pib *pib, *pib_old;
 
-	pib = kzalloc(sizeof(*pib), GFP_KERNEL);
-	if (!pib)
-		return -ENOMEM;
+	pib = kzalloc(माप(*pib), GFP_KERNEL);
+	अगर (!pib)
+		वापस -ENOMEM;
 
 	pib->page = page;
 	pib->channel = channel;
 
 	pib_old = rtnl_dereference(phy->pib);
-	rcu_assign_pointer(phy->pib, pib);
-	kfree_rcu(pib_old, rcu);
-	return 0;
-}
+	rcu_assign_poपूर्णांकer(phy->pib, pib);
+	kमुक्त_rcu(pib_old, rcu);
+	वापस 0;
+पूर्ण
 
-static int hwsim_hw_xmit(struct ieee802154_hw *hw, struct sk_buff *skb)
-{
-	struct hwsim_phy *current_phy = hw->priv;
-	struct hwsim_pib *current_pib, *endpoint_pib;
-	struct hwsim_edge_info *einfo;
-	struct hwsim_edge *e;
+अटल पूर्णांक hwsim_hw_xmit(काष्ठा ieee802154_hw *hw, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा hwsim_phy *current_phy = hw->priv;
+	काष्ठा hwsim_pib *current_pib, *endpoपूर्णांक_pib;
+	काष्ठा hwsim_edge_info *einfo;
+	काष्ठा hwsim_edge *e;
 
 	WARN_ON(current_phy->suspended);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	current_pib = rcu_dereference(current_phy->pib);
-	list_for_each_entry_rcu(e, &current_phy->edges, list) {
+	list_क्रम_each_entry_rcu(e, &current_phy->edges, list) अणु
 		/* Can be changed later in rx_irqsafe, but this is only a
-		 * performance tweak. Received radio should drop the frame
-		 * in mac802154 stack anyway... so we don't need to be
+		 * perक्रमmance tweak. Received radio should drop the frame
+		 * in mac802154 stack anyway... so we करोn't need to be
 		 * 100% of locking here to check on suspended
 		 */
-		if (e->endpoint->suspended)
-			continue;
+		अगर (e->endpoपूर्णांक->suspended)
+			जारी;
 
-		endpoint_pib = rcu_dereference(e->endpoint->pib);
-		if (current_pib->page == endpoint_pib->page &&
-		    current_pib->channel == endpoint_pib->channel) {
-			struct sk_buff *newskb = pskb_copy(skb, GFP_ATOMIC);
+		endpoपूर्णांक_pib = rcu_dereference(e->endpoपूर्णांक->pib);
+		अगर (current_pib->page == endpoपूर्णांक_pib->page &&
+		    current_pib->channel == endpoपूर्णांक_pib->channel) अणु
+			काष्ठा sk_buff *newskb = pskb_copy(skb, GFP_ATOMIC);
 
 			einfo = rcu_dereference(e->info);
-			if (newskb)
-				ieee802154_rx_irqsafe(e->endpoint->hw, newskb,
+			अगर (newskb)
+				ieee802154_rx_irqsafe(e->endpoपूर्णांक->hw, newskb,
 						      einfo->lqi);
-		}
-	}
-	rcu_read_unlock();
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	ieee802154_xmit_complete(hw, skb, false);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hwsim_hw_start(struct ieee802154_hw *hw)
-{
-	struct hwsim_phy *phy = hw->priv;
+अटल पूर्णांक hwsim_hw_start(काष्ठा ieee802154_hw *hw)
+अणु
+	काष्ठा hwsim_phy *phy = hw->priv;
 
 	phy->suspended = false;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hwsim_hw_stop(struct ieee802154_hw *hw)
-{
-	struct hwsim_phy *phy = hw->priv;
+अटल व्योम hwsim_hw_stop(काष्ठा ieee802154_hw *hw)
+अणु
+	काष्ठा hwsim_phy *phy = hw->priv;
 
 	phy->suspended = true;
-}
+पूर्ण
 
-static int
-hwsim_set_promiscuous_mode(struct ieee802154_hw *hw, const bool on)
-{
-	return 0;
-}
+अटल पूर्णांक
+hwsim_set_promiscuous_mode(काष्ठा ieee802154_hw *hw, स्थिर bool on)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct ieee802154_ops hwsim_ops = {
+अटल स्थिर काष्ठा ieee802154_ops hwsim_ops = अणु
 	.owner = THIS_MODULE,
 	.xmit_async = hwsim_hw_xmit,
 	.ed = hwsim_hw_ed,
@@ -172,372 +173,372 @@ static const struct ieee802154_ops hwsim_ops = {
 	.start = hwsim_hw_start,
 	.stop = hwsim_hw_stop,
 	.set_promiscuous_mode = hwsim_set_promiscuous_mode,
-};
+पूर्ण;
 
-static int hwsim_new_radio_nl(struct sk_buff *msg, struct genl_info *info)
-{
-	return hwsim_add_one(info, &mac802154hwsim_dev->dev, false);
-}
+अटल पूर्णांक hwsim_new_radio_nl(काष्ठा sk_buff *msg, काष्ठा genl_info *info)
+अणु
+	वापस hwsim_add_one(info, &mac802154hwsim_dev->dev, false);
+पूर्ण
 
-static int hwsim_del_radio_nl(struct sk_buff *msg, struct genl_info *info)
-{
-	struct hwsim_phy *phy, *tmp;
+अटल पूर्णांक hwsim_del_radio_nl(काष्ठा sk_buff *msg, काष्ठा genl_info *info)
+अणु
+	काष्ठा hwsim_phy *phy, *पंचांगp;
 	s64 idx = -1;
 
-	if (!info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID])
-		return -EINVAL;
+	अगर (!info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID])
+		वापस -EINVAL;
 
 	idx = nla_get_u32(info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID]);
 
 	mutex_lock(&hwsim_phys_lock);
-	list_for_each_entry_safe(phy, tmp, &hwsim_phys, list) {
-		if (idx == phy->idx) {
+	list_क्रम_each_entry_safe(phy, पंचांगp, &hwsim_phys, list) अणु
+		अगर (idx == phy->idx) अणु
 			hwsim_del(phy);
 			mutex_unlock(&hwsim_phys_lock);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&hwsim_phys_lock);
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int append_radio_msg(struct sk_buff *skb, struct hwsim_phy *phy)
-{
-	struct nlattr *nl_edges, *nl_edge;
-	struct hwsim_edge_info *einfo;
-	struct hwsim_edge *e;
-	int ret;
+अटल पूर्णांक append_radio_msg(काष्ठा sk_buff *skb, काष्ठा hwsim_phy *phy)
+अणु
+	काष्ठा nlattr *nl_edges, *nl_edge;
+	काष्ठा hwsim_edge_info *einfo;
+	काष्ठा hwsim_edge *e;
+	पूर्णांक ret;
 
 	ret = nla_put_u32(skb, MAC802154_HWSIM_ATTR_RADIO_ID, phy->idx);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	rcu_read_lock();
-	if (list_empty(&phy->edges)) {
-		rcu_read_unlock();
-		return 0;
-	}
+	rcu_पढ़ो_lock();
+	अगर (list_empty(&phy->edges)) अणु
+		rcu_पढ़ो_unlock();
+		वापस 0;
+	पूर्ण
 
 	nl_edges = nla_nest_start_noflag(skb,
 					 MAC802154_HWSIM_ATTR_RADIO_EDGES);
-	if (!nl_edges) {
-		rcu_read_unlock();
-		return -ENOBUFS;
-	}
+	अगर (!nl_edges) अणु
+		rcu_पढ़ो_unlock();
+		वापस -ENOBUFS;
+	पूर्ण
 
-	list_for_each_entry_rcu(e, &phy->edges, list) {
+	list_क्रम_each_entry_rcu(e, &phy->edges, list) अणु
 		nl_edge = nla_nest_start_noflag(skb,
 						MAC802154_HWSIM_ATTR_RADIO_EDGE);
-		if (!nl_edge) {
-			rcu_read_unlock();
+		अगर (!nl_edge) अणु
+			rcu_पढ़ो_unlock();
 			nla_nest_cancel(skb, nl_edges);
-			return -ENOBUFS;
-		}
+			वापस -ENOBUFS;
+		पूर्ण
 
 		ret = nla_put_u32(skb, MAC802154_HWSIM_EDGE_ATTR_ENDPOINT_ID,
-				  e->endpoint->idx);
-		if (ret < 0) {
-			rcu_read_unlock();
+				  e->endpoपूर्णांक->idx);
+		अगर (ret < 0) अणु
+			rcu_पढ़ो_unlock();
 			nla_nest_cancel(skb, nl_edge);
 			nla_nest_cancel(skb, nl_edges);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		einfo = rcu_dereference(e->info);
 		ret = nla_put_u8(skb, MAC802154_HWSIM_EDGE_ATTR_LQI,
 				 einfo->lqi);
-		if (ret < 0) {
-			rcu_read_unlock();
+		अगर (ret < 0) अणु
+			rcu_पढ़ो_unlock();
 			nla_nest_cancel(skb, nl_edge);
 			nla_nest_cancel(skb, nl_edges);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		nla_nest_end(skb, nl_edge);
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	nla_nest_end(skb, nl_edges);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hwsim_get_radio(struct sk_buff *skb, struct hwsim_phy *phy,
+अटल पूर्णांक hwsim_get_radio(काष्ठा sk_buff *skb, काष्ठा hwsim_phy *phy,
 			   u32 portid, u32 seq,
-			   struct netlink_callback *cb, int flags)
-{
-	void *hdr;
-	int res;
+			   काष्ठा netlink_callback *cb, पूर्णांक flags)
+अणु
+	व्योम *hdr;
+	पूर्णांक res;
 
 	hdr = genlmsg_put(skb, portid, seq, &hwsim_genl_family, flags,
 			  MAC802154_HWSIM_CMD_GET_RADIO);
-	if (!hdr)
-		return -EMSGSIZE;
+	अगर (!hdr)
+		वापस -EMSGSIZE;
 
-	if (cb)
+	अगर (cb)
 		genl_dump_check_consistent(cb, hdr);
 
 	res = append_radio_msg(skb, phy);
-	if (res < 0)
-		goto out_err;
+	अगर (res < 0)
+		जाओ out_err;
 
 	genlmsg_end(skb, hdr);
-	return 0;
+	वापस 0;
 
 out_err:
 	genlmsg_cancel(skb, hdr);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int hwsim_get_radio_nl(struct sk_buff *msg, struct genl_info *info)
-{
-	struct hwsim_phy *phy;
-	struct sk_buff *skb;
-	int idx, res = -ENODEV;
+अटल पूर्णांक hwsim_get_radio_nl(काष्ठा sk_buff *msg, काष्ठा genl_info *info)
+अणु
+	काष्ठा hwsim_phy *phy;
+	काष्ठा sk_buff *skb;
+	पूर्णांक idx, res = -ENODEV;
 
-	if (!info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID])
-		return -EINVAL;
+	अगर (!info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID])
+		वापस -EINVAL;
 	idx = nla_get_u32(info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID]);
 
 	mutex_lock(&hwsim_phys_lock);
-	list_for_each_entry(phy, &hwsim_phys, list) {
-		if (phy->idx != idx)
-			continue;
+	list_क्रम_each_entry(phy, &hwsim_phys, list) अणु
+		अगर (phy->idx != idx)
+			जारी;
 
 		skb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_ATOMIC);
-		if (!skb) {
+		अगर (!skb) अणु
 			res = -ENOMEM;
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 
 		res = hwsim_get_radio(skb, phy, info->snd_portid,
-				      info->snd_seq, NULL, 0);
-		if (res < 0) {
-			nlmsg_free(skb);
-			goto out_err;
-		}
+				      info->snd_seq, शून्य, 0);
+		अगर (res < 0) अणु
+			nlmsg_मुक्त(skb);
+			जाओ out_err;
+		पूर्ण
 
 		res = genlmsg_reply(skb, info);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out_err:
 	mutex_unlock(&hwsim_phys_lock);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int hwsim_dump_radio_nl(struct sk_buff *skb,
-			       struct netlink_callback *cb)
-{
-	int idx = cb->args[0];
-	struct hwsim_phy *phy;
-	int res;
+अटल पूर्णांक hwsim_dump_radio_nl(काष्ठा sk_buff *skb,
+			       काष्ठा netlink_callback *cb)
+अणु
+	पूर्णांक idx = cb->args[0];
+	काष्ठा hwsim_phy *phy;
+	पूर्णांक res;
 
 	mutex_lock(&hwsim_phys_lock);
 
-	if (idx == hwsim_radio_idx)
-		goto done;
+	अगर (idx == hwsim_radio_idx)
+		जाओ करोne;
 
-	list_for_each_entry(phy, &hwsim_phys, list) {
-		if (phy->idx < idx)
-			continue;
+	list_क्रम_each_entry(phy, &hwsim_phys, list) अणु
+		अगर (phy->idx < idx)
+			जारी;
 
 		res = hwsim_get_radio(skb, phy, NETLINK_CB(cb->skb).portid,
 				      cb->nlh->nlmsg_seq, cb, NLM_F_MULTI);
-		if (res < 0)
-			break;
+		अगर (res < 0)
+			अवरोध;
 
 		idx = phy->idx + 1;
-	}
+	पूर्ण
 
 	cb->args[0] = idx;
 
-done:
+करोne:
 	mutex_unlock(&hwsim_phys_lock);
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
 /* caller need to held hwsim_phys_lock */
-static struct hwsim_phy *hwsim_get_radio_by_id(uint32_t idx)
-{
-	struct hwsim_phy *phy;
+अटल काष्ठा hwsim_phy *hwsim_get_radio_by_id(uपूर्णांक32_t idx)
+अणु
+	काष्ठा hwsim_phy *phy;
 
-	list_for_each_entry(phy, &hwsim_phys, list) {
-		if (phy->idx == idx)
-			return phy;
-	}
+	list_क्रम_each_entry(phy, &hwsim_phys, list) अणु
+		अगर (phy->idx == idx)
+			वापस phy;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static const struct nla_policy hwsim_edge_policy[MAC802154_HWSIM_EDGE_ATTR_MAX + 1] = {
-	[MAC802154_HWSIM_EDGE_ATTR_ENDPOINT_ID] = { .type = NLA_U32 },
-	[MAC802154_HWSIM_EDGE_ATTR_LQI] = { .type = NLA_U8 },
-};
+अटल स्थिर काष्ठा nla_policy hwsim_edge_policy[MAC802154_HWSIM_EDGE_ATTR_MAX + 1] = अणु
+	[MAC802154_HWSIM_EDGE_ATTR_ENDPOINT_ID] = अणु .type = NLA_U32 पूर्ण,
+	[MAC802154_HWSIM_EDGE_ATTR_LQI] = अणु .type = NLA_U8 पूर्ण,
+पूर्ण;
 
-static struct hwsim_edge *hwsim_alloc_edge(struct hwsim_phy *endpoint, u8 lqi)
-{
-	struct hwsim_edge_info *einfo;
-	struct hwsim_edge *e;
+अटल काष्ठा hwsim_edge *hwsim_alloc_edge(काष्ठा hwsim_phy *endpoपूर्णांक, u8 lqi)
+अणु
+	काष्ठा hwsim_edge_info *einfo;
+	काष्ठा hwsim_edge *e;
 
-	e = kzalloc(sizeof(*e), GFP_KERNEL);
-	if (!e)
-		return NULL;
+	e = kzalloc(माप(*e), GFP_KERNEL);
+	अगर (!e)
+		वापस शून्य;
 
-	einfo = kzalloc(sizeof(*einfo), GFP_KERNEL);
-	if (!einfo) {
-		kfree(e);
-		return NULL;
-	}
+	einfo = kzalloc(माप(*einfo), GFP_KERNEL);
+	अगर (!einfo) अणु
+		kमुक्त(e);
+		वापस शून्य;
+	पूर्ण
 
 	einfo->lqi = 0xff;
-	rcu_assign_pointer(e->info, einfo);
-	e->endpoint = endpoint;
+	rcu_assign_poपूर्णांकer(e->info, einfo);
+	e->endpoपूर्णांक = endpoपूर्णांक;
 
-	return e;
-}
+	वापस e;
+पूर्ण
 
-static void hwsim_free_edge(struct hwsim_edge *e)
-{
-	struct hwsim_edge_info *einfo;
+अटल व्योम hwsim_मुक्त_edge(काष्ठा hwsim_edge *e)
+अणु
+	काष्ठा hwsim_edge_info *einfo;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	einfo = rcu_dereference(e->info);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	kfree_rcu(einfo, rcu);
-	kfree_rcu(e, rcu);
-}
+	kमुक्त_rcu(einfo, rcu);
+	kमुक्त_rcu(e, rcu);
+पूर्ण
 
-static int hwsim_new_edge_nl(struct sk_buff *msg, struct genl_info *info)
-{
-	struct nlattr *edge_attrs[MAC802154_HWSIM_EDGE_ATTR_MAX + 1];
-	struct hwsim_phy *phy_v0, *phy_v1;
-	struct hwsim_edge *e;
+अटल पूर्णांक hwsim_new_edge_nl(काष्ठा sk_buff *msg, काष्ठा genl_info *info)
+अणु
+	काष्ठा nlattr *edge_attrs[MAC802154_HWSIM_EDGE_ATTR_MAX + 1];
+	काष्ठा hwsim_phy *phy_v0, *phy_v1;
+	काष्ठा hwsim_edge *e;
 	u32 v0, v1;
 
-	if (!info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID] &&
+	अगर (!info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID] &&
 	    !info->attrs[MAC802154_HWSIM_ATTR_RADIO_EDGE])
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (nla_parse_nested_deprecated(edge_attrs, MAC802154_HWSIM_EDGE_ATTR_MAX, info->attrs[MAC802154_HWSIM_ATTR_RADIO_EDGE], hwsim_edge_policy, NULL))
-		return -EINVAL;
+	अगर (nla_parse_nested_deprecated(edge_attrs, MAC802154_HWSIM_EDGE_ATTR_MAX, info->attrs[MAC802154_HWSIM_ATTR_RADIO_EDGE], hwsim_edge_policy, शून्य))
+		वापस -EINVAL;
 
-	if (!edge_attrs[MAC802154_HWSIM_EDGE_ATTR_ENDPOINT_ID])
-		return -EINVAL;
+	अगर (!edge_attrs[MAC802154_HWSIM_EDGE_ATTR_ENDPOINT_ID])
+		वापस -EINVAL;
 
 	v0 = nla_get_u32(info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID]);
 	v1 = nla_get_u32(edge_attrs[MAC802154_HWSIM_EDGE_ATTR_ENDPOINT_ID]);
 
-	if (v0 == v1)
-		return -EINVAL;
+	अगर (v0 == v1)
+		वापस -EINVAL;
 
 	mutex_lock(&hwsim_phys_lock);
 	phy_v0 = hwsim_get_radio_by_id(v0);
-	if (!phy_v0) {
+	अगर (!phy_v0) अणु
 		mutex_unlock(&hwsim_phys_lock);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	phy_v1 = hwsim_get_radio_by_id(v1);
-	if (!phy_v1) {
+	अगर (!phy_v1) अणु
 		mutex_unlock(&hwsim_phys_lock);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(e, &phy_v0->edges, list) {
-		if (e->endpoint->idx == v1) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(e, &phy_v0->edges, list) अणु
+		अगर (e->endpoपूर्णांक->idx == v1) अणु
 			mutex_unlock(&hwsim_phys_lock);
-			rcu_read_unlock();
-			return -EEXIST;
-		}
-	}
-	rcu_read_unlock();
+			rcu_पढ़ो_unlock();
+			वापस -EEXIST;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	e = hwsim_alloc_edge(phy_v1, 0xff);
-	if (!e) {
+	अगर (!e) अणु
 		mutex_unlock(&hwsim_phys_lock);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	list_add_rcu(&e->list, &phy_v0->edges);
-	/* wait until changes are done under hwsim_phys_lock lock
-	 * should prevent of calling this function twice while
+	/* रुको until changes are करोne under hwsim_phys_lock lock
+	 * should prevent of calling this function twice जबतक
 	 * edges list has not the changes yet.
 	 */
 	synchronize_rcu();
 	mutex_unlock(&hwsim_phys_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hwsim_del_edge_nl(struct sk_buff *msg, struct genl_info *info)
-{
-	struct nlattr *edge_attrs[MAC802154_HWSIM_EDGE_ATTR_MAX + 1];
-	struct hwsim_phy *phy_v0;
-	struct hwsim_edge *e;
+अटल पूर्णांक hwsim_del_edge_nl(काष्ठा sk_buff *msg, काष्ठा genl_info *info)
+अणु
+	काष्ठा nlattr *edge_attrs[MAC802154_HWSIM_EDGE_ATTR_MAX + 1];
+	काष्ठा hwsim_phy *phy_v0;
+	काष्ठा hwsim_edge *e;
 	u32 v0, v1;
 
-	if (!info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID] &&
+	अगर (!info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID] &&
 	    !info->attrs[MAC802154_HWSIM_ATTR_RADIO_EDGE])
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (nla_parse_nested_deprecated(edge_attrs, MAC802154_HWSIM_EDGE_ATTR_MAX, info->attrs[MAC802154_HWSIM_ATTR_RADIO_EDGE], hwsim_edge_policy, NULL))
-		return -EINVAL;
+	अगर (nla_parse_nested_deprecated(edge_attrs, MAC802154_HWSIM_EDGE_ATTR_MAX, info->attrs[MAC802154_HWSIM_ATTR_RADIO_EDGE], hwsim_edge_policy, शून्य))
+		वापस -EINVAL;
 
-	if (!edge_attrs[MAC802154_HWSIM_EDGE_ATTR_ENDPOINT_ID])
-		return -EINVAL;
+	अगर (!edge_attrs[MAC802154_HWSIM_EDGE_ATTR_ENDPOINT_ID])
+		वापस -EINVAL;
 
 	v0 = nla_get_u32(info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID]);
 	v1 = nla_get_u32(edge_attrs[MAC802154_HWSIM_EDGE_ATTR_ENDPOINT_ID]);
 
 	mutex_lock(&hwsim_phys_lock);
 	phy_v0 = hwsim_get_radio_by_id(v0);
-	if (!phy_v0) {
+	अगर (!phy_v0) अणु
 		mutex_unlock(&hwsim_phys_lock);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(e, &phy_v0->edges, list) {
-		if (e->endpoint->idx == v1) {
-			rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(e, &phy_v0->edges, list) अणु
+		अगर (e->endpoपूर्णांक->idx == v1) अणु
+			rcu_पढ़ो_unlock();
 			list_del_rcu(&e->list);
-			hwsim_free_edge(e);
-			/* same again - wait until list changes are done */
+			hwsim_मुक्त_edge(e);
+			/* same again - रुको until list changes are करोne */
 			synchronize_rcu();
 			mutex_unlock(&hwsim_phys_lock);
-			return 0;
-		}
-	}
-	rcu_read_unlock();
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	mutex_unlock(&hwsim_phys_lock);
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static int hwsim_set_edge_lqi(struct sk_buff *msg, struct genl_info *info)
-{
-	struct nlattr *edge_attrs[MAC802154_HWSIM_EDGE_ATTR_MAX + 1];
-	struct hwsim_edge_info *einfo;
-	struct hwsim_phy *phy_v0;
-	struct hwsim_edge *e;
+अटल पूर्णांक hwsim_set_edge_lqi(काष्ठा sk_buff *msg, काष्ठा genl_info *info)
+अणु
+	काष्ठा nlattr *edge_attrs[MAC802154_HWSIM_EDGE_ATTR_MAX + 1];
+	काष्ठा hwsim_edge_info *einfo;
+	काष्ठा hwsim_phy *phy_v0;
+	काष्ठा hwsim_edge *e;
 	u32 v0, v1;
 	u8 lqi;
 
-	if (!info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID] &&
+	अगर (!info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID] &&
 	    !info->attrs[MAC802154_HWSIM_ATTR_RADIO_EDGE])
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (nla_parse_nested_deprecated(edge_attrs, MAC802154_HWSIM_EDGE_ATTR_MAX, info->attrs[MAC802154_HWSIM_ATTR_RADIO_EDGE], hwsim_edge_policy, NULL))
-		return -EINVAL;
+	अगर (nla_parse_nested_deprecated(edge_attrs, MAC802154_HWSIM_EDGE_ATTR_MAX, info->attrs[MAC802154_HWSIM_ATTR_RADIO_EDGE], hwsim_edge_policy, शून्य))
+		वापस -EINVAL;
 
-	if (!edge_attrs[MAC802154_HWSIM_EDGE_ATTR_ENDPOINT_ID] &&
+	अगर (!edge_attrs[MAC802154_HWSIM_EDGE_ATTR_ENDPOINT_ID] &&
 	    !edge_attrs[MAC802154_HWSIM_EDGE_ATTR_LQI])
-		return -EINVAL;
+		वापस -EINVAL;
 
 	v0 = nla_get_u32(info->attrs[MAC802154_HWSIM_ATTR_RADIO_ID]);
 	v1 = nla_get_u32(edge_attrs[MAC802154_HWSIM_EDGE_ATTR_ENDPOINT_ID]);
@@ -545,84 +546,84 @@ static int hwsim_set_edge_lqi(struct sk_buff *msg, struct genl_info *info)
 
 	mutex_lock(&hwsim_phys_lock);
 	phy_v0 = hwsim_get_radio_by_id(v0);
-	if (!phy_v0) {
+	अगर (!phy_v0) अणु
 		mutex_unlock(&hwsim_phys_lock);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	einfo = kzalloc(sizeof(*einfo), GFP_KERNEL);
-	if (!einfo) {
+	einfo = kzalloc(माप(*einfo), GFP_KERNEL);
+	अगर (!einfo) अणु
 		mutex_unlock(&hwsim_phys_lock);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(e, &phy_v0->edges, list) {
-		if (e->endpoint->idx == v1) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(e, &phy_v0->edges, list) अणु
+		अगर (e->endpoपूर्णांक->idx == v1) अणु
 			einfo->lqi = lqi;
-			rcu_assign_pointer(e->info, einfo);
-			rcu_read_unlock();
+			rcu_assign_poपूर्णांकer(e->info, einfo);
+			rcu_पढ़ो_unlock();
 			mutex_unlock(&hwsim_phys_lock);
-			return 0;
-		}
-	}
-	rcu_read_unlock();
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	kfree(einfo);
+	kमुक्त(einfo);
 	mutex_unlock(&hwsim_phys_lock);
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
 /* MAC802154_HWSIM netlink policy */
 
-static const struct nla_policy hwsim_genl_policy[MAC802154_HWSIM_ATTR_MAX + 1] = {
-	[MAC802154_HWSIM_ATTR_RADIO_ID] = { .type = NLA_U32 },
-	[MAC802154_HWSIM_ATTR_RADIO_EDGE] = { .type = NLA_NESTED },
-	[MAC802154_HWSIM_ATTR_RADIO_EDGES] = { .type = NLA_NESTED },
-};
+अटल स्थिर काष्ठा nla_policy hwsim_genl_policy[MAC802154_HWSIM_ATTR_MAX + 1] = अणु
+	[MAC802154_HWSIM_ATTR_RADIO_ID] = अणु .type = NLA_U32 पूर्ण,
+	[MAC802154_HWSIM_ATTR_RADIO_EDGE] = अणु .type = NLA_NESTED पूर्ण,
+	[MAC802154_HWSIM_ATTR_RADIO_EDGES] = अणु .type = NLA_NESTED पूर्ण,
+पूर्ण;
 
 /* Generic Netlink operations array */
-static const struct genl_small_ops hwsim_nl_ops[] = {
-	{
+अटल स्थिर काष्ठा genl_small_ops hwsim_nl_ops[] = अणु
+	अणु
 		.cmd = MAC802154_HWSIM_CMD_NEW_RADIO,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = hwsim_new_radio_nl,
+		.करोit = hwsim_new_radio_nl,
 		.flags = GENL_UNS_ADMIN_PERM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.cmd = MAC802154_HWSIM_CMD_DEL_RADIO,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = hwsim_del_radio_nl,
+		.करोit = hwsim_del_radio_nl,
 		.flags = GENL_UNS_ADMIN_PERM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.cmd = MAC802154_HWSIM_CMD_GET_RADIO,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = hwsim_get_radio_nl,
+		.करोit = hwsim_get_radio_nl,
 		.dumpit = hwsim_dump_radio_nl,
-	},
-	{
+	पूर्ण,
+	अणु
 		.cmd = MAC802154_HWSIM_CMD_NEW_EDGE,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = hwsim_new_edge_nl,
+		.करोit = hwsim_new_edge_nl,
 		.flags = GENL_UNS_ADMIN_PERM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.cmd = MAC802154_HWSIM_CMD_DEL_EDGE,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = hwsim_del_edge_nl,
+		.करोit = hwsim_del_edge_nl,
 		.flags = GENL_UNS_ADMIN_PERM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.cmd = MAC802154_HWSIM_CMD_SET_EDGE,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = hwsim_set_edge_lqi,
+		.करोit = hwsim_set_edge_lqi,
 		.flags = GENL_UNS_ADMIN_PERM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct genl_family hwsim_genl_family __ro_after_init = {
+अटल काष्ठा genl_family hwsim_genl_family __ro_after_init = अणु
 	.name = "MAC802154_HWSIM",
 	.version = 1,
 	.maxattr = MAC802154_HWSIM_ATTR_MAX,
@@ -632,115 +633,115 @@ static struct genl_family hwsim_genl_family __ro_after_init = {
 	.n_small_ops = ARRAY_SIZE(hwsim_nl_ops),
 	.mcgrps = hwsim_mcgrps,
 	.n_mcgrps = ARRAY_SIZE(hwsim_mcgrps),
-};
+पूर्ण;
 
-static void hwsim_mcast_config_msg(struct sk_buff *mcast_skb,
-				   struct genl_info *info)
-{
-	if (info)
-		genl_notify(&hwsim_genl_family, mcast_skb, info,
+अटल व्योम hwsim_mcast_config_msg(काष्ठा sk_buff *mcast_skb,
+				   काष्ठा genl_info *info)
+अणु
+	अगर (info)
+		genl_notअगरy(&hwsim_genl_family, mcast_skb, info,
 			    HWSIM_MCGRP_CONFIG, GFP_KERNEL);
-	else
+	अन्यथा
 		genlmsg_multicast(&hwsim_genl_family, mcast_skb, 0,
 				  HWSIM_MCGRP_CONFIG, GFP_KERNEL);
-}
+पूर्ण
 
-static void hwsim_mcast_new_radio(struct genl_info *info, struct hwsim_phy *phy)
-{
-	struct sk_buff *mcast_skb;
-	void *data;
+अटल व्योम hwsim_mcast_new_radio(काष्ठा genl_info *info, काष्ठा hwsim_phy *phy)
+अणु
+	काष्ठा sk_buff *mcast_skb;
+	व्योम *data;
 
 	mcast_skb = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!mcast_skb)
-		return;
+	अगर (!mcast_skb)
+		वापस;
 
 	data = genlmsg_put(mcast_skb, 0, 0, &hwsim_genl_family, 0,
 			   MAC802154_HWSIM_CMD_NEW_RADIO);
-	if (!data)
-		goto out_err;
+	अगर (!data)
+		जाओ out_err;
 
-	if (append_radio_msg(mcast_skb, phy) < 0)
-		goto out_err;
+	अगर (append_radio_msg(mcast_skb, phy) < 0)
+		जाओ out_err;
 
 	genlmsg_end(mcast_skb, data);
 
 	hwsim_mcast_config_msg(mcast_skb, info);
-	return;
+	वापस;
 
 out_err:
 	genlmsg_cancel(mcast_skb, data);
-	nlmsg_free(mcast_skb);
-}
+	nlmsg_मुक्त(mcast_skb);
+पूर्ण
 
-static void hwsim_edge_unsubscribe_me(struct hwsim_phy *phy)
-{
-	struct hwsim_phy *tmp;
-	struct hwsim_edge *e;
+अटल व्योम hwsim_edge_unsubscribe_me(काष्ठा hwsim_phy *phy)
+अणु
+	काष्ठा hwsim_phy *पंचांगp;
+	काष्ठा hwsim_edge *e;
 
-	rcu_read_lock();
-	/* going to all phy edges and remove phy from it */
-	list_for_each_entry(tmp, &hwsim_phys, list) {
-		list_for_each_entry_rcu(e, &tmp->edges, list) {
-			if (e->endpoint->idx == phy->idx) {
+	rcu_पढ़ो_lock();
+	/* going to all phy edges and हटाओ phy from it */
+	list_क्रम_each_entry(पंचांगp, &hwsim_phys, list) अणु
+		list_क्रम_each_entry_rcu(e, &पंचांगp->edges, list) अणु
+			अगर (e->endpoपूर्णांक->idx == phy->idx) अणु
 				list_del_rcu(&e->list);
-				hwsim_free_edge(e);
-			}
-		}
-	}
-	rcu_read_unlock();
+				hwsim_मुक्त_edge(e);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	synchronize_rcu();
-}
+पूर्ण
 
-static int hwsim_subscribe_all_others(struct hwsim_phy *phy)
-{
-	struct hwsim_phy *sub;
-	struct hwsim_edge *e;
+अटल पूर्णांक hwsim_subscribe_all_others(काष्ठा hwsim_phy *phy)
+अणु
+	काष्ठा hwsim_phy *sub;
+	काष्ठा hwsim_edge *e;
 
-	list_for_each_entry(sub, &hwsim_phys, list) {
+	list_क्रम_each_entry(sub, &hwsim_phys, list) अणु
 		e = hwsim_alloc_edge(sub, 0xff);
-		if (!e)
-			goto me_fail;
+		अगर (!e)
+			जाओ me_fail;
 
 		list_add_rcu(&e->list, &phy->edges);
-	}
+	पूर्ण
 
-	list_for_each_entry(sub, &hwsim_phys, list) {
+	list_क्रम_each_entry(sub, &hwsim_phys, list) अणु
 		e = hwsim_alloc_edge(phy, 0xff);
-		if (!e)
-			goto sub_fail;
+		अगर (!e)
+			जाओ sub_fail;
 
 		list_add_rcu(&e->list, &sub->edges);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 me_fail:
-	rcu_read_lock();
-	list_for_each_entry_rcu(e, &phy->edges, list) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(e, &phy->edges, list) अणु
 		list_del_rcu(&e->list);
-		hwsim_free_edge(e);
-	}
-	rcu_read_unlock();
+		hwsim_मुक्त_edge(e);
+	पूर्ण
+	rcu_पढ़ो_unlock();
 sub_fail:
 	hwsim_edge_unsubscribe_me(phy);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int hwsim_add_one(struct genl_info *info, struct device *dev,
+अटल पूर्णांक hwsim_add_one(काष्ठा genl_info *info, काष्ठा device *dev,
 			 bool init)
-{
-	struct ieee802154_hw *hw;
-	struct hwsim_phy *phy;
-	struct hwsim_pib *pib;
-	int idx;
-	int err;
+अणु
+	काष्ठा ieee802154_hw *hw;
+	काष्ठा hwsim_phy *phy;
+	काष्ठा hwsim_pib *pib;
+	पूर्णांक idx;
+	पूर्णांक err;
 
 	idx = hwsim_radio_idx++;
 
-	hw = ieee802154_alloc_hw(sizeof(*phy), &hwsim_ops);
-	if (!hw)
-		return -ENOMEM;
+	hw = ieee802154_alloc_hw(माप(*phy), &hwsim_ops);
+	अगर (!hw)
+		वापस -ENOMEM;
 
 	phy = hw->priv;
 	phy->hw = hw;
@@ -776,145 +777,145 @@ static int hwsim_add_one(struct genl_info *info, struct device *dev,
 	/* 950 MHz GFSK 802.15.4d-2009 */
 	hw->phy->supported.channels[6] |= 0x3ffc00;
 
-	ieee802154_random_extended_addr(&hw->phy->perm_extended_addr);
+	ieee802154_अक्रमom_extended_addr(&hw->phy->perm_extended_addr);
 
-	/* hwsim phy channel 13 as default */
+	/* hwsim phy channel 13 as शेष */
 	hw->phy->current_channel = 13;
-	pib = kzalloc(sizeof(*pib), GFP_KERNEL);
-	if (!pib) {
+	pib = kzalloc(माप(*pib), GFP_KERNEL);
+	अगर (!pib) अणु
 		err = -ENOMEM;
-		goto err_pib;
-	}
+		जाओ err_pib;
+	पूर्ण
 
-	rcu_assign_pointer(phy->pib, pib);
+	rcu_assign_poपूर्णांकer(phy->pib, pib);
 	phy->idx = idx;
 	INIT_LIST_HEAD(&phy->edges);
 
 	hw->flags = IEEE802154_HW_PROMISCUOUS;
 	hw->parent = dev;
 
-	err = ieee802154_register_hw(hw);
-	if (err)
-		goto err_reg;
+	err = ieee802154_रेजिस्टर_hw(hw);
+	अगर (err)
+		जाओ err_reg;
 
 	mutex_lock(&hwsim_phys_lock);
-	if (init) {
+	अगर (init) अणु
 		err = hwsim_subscribe_all_others(phy);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			mutex_unlock(&hwsim_phys_lock);
-			goto err_subscribe;
-		}
-	}
+			जाओ err_subscribe;
+		पूर्ण
+	पूर्ण
 	list_add_tail(&phy->list, &hwsim_phys);
 	mutex_unlock(&hwsim_phys_lock);
 
 	hwsim_mcast_new_radio(info, phy);
 
-	return idx;
+	वापस idx;
 
 err_subscribe:
-	ieee802154_unregister_hw(phy->hw);
+	ieee802154_unरेजिस्टर_hw(phy->hw);
 err_reg:
-	kfree(pib);
+	kमुक्त(pib);
 err_pib:
-	ieee802154_free_hw(phy->hw);
-	return err;
-}
+	ieee802154_मुक्त_hw(phy->hw);
+	वापस err;
+पूर्ण
 
-static void hwsim_del(struct hwsim_phy *phy)
-{
-	struct hwsim_pib *pib;
+अटल व्योम hwsim_del(काष्ठा hwsim_phy *phy)
+अणु
+	काष्ठा hwsim_pib *pib;
 
 	hwsim_edge_unsubscribe_me(phy);
 
 	list_del(&phy->list);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	pib = rcu_dereference(phy->pib);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	kfree_rcu(pib, rcu);
+	kमुक्त_rcu(pib, rcu);
 
-	ieee802154_unregister_hw(phy->hw);
-	ieee802154_free_hw(phy->hw);
-}
+	ieee802154_unरेजिस्टर_hw(phy->hw);
+	ieee802154_मुक्त_hw(phy->hw);
+पूर्ण
 
-static int hwsim_probe(struct platform_device *pdev)
-{
-	struct hwsim_phy *phy, *tmp;
-	int err, i;
+अटल पूर्णांक hwsim_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा hwsim_phy *phy, *पंचांगp;
+	पूर्णांक err, i;
 
-	for (i = 0; i < 2; i++) {
-		err = hwsim_add_one(NULL, &pdev->dev, true);
-		if (err < 0)
-			goto err_slave;
-	}
+	क्रम (i = 0; i < 2; i++) अणु
+		err = hwsim_add_one(शून्य, &pdev->dev, true);
+		अगर (err < 0)
+			जाओ err_slave;
+	पूर्ण
 
 	dev_info(&pdev->dev, "Added 2 mac802154 hwsim hardware radios\n");
-	return 0;
+	वापस 0;
 
 err_slave:
 	mutex_lock(&hwsim_phys_lock);
-	list_for_each_entry_safe(phy, tmp, &hwsim_phys, list)
+	list_क्रम_each_entry_safe(phy, पंचांगp, &hwsim_phys, list)
 		hwsim_del(phy);
 	mutex_unlock(&hwsim_phys_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hwsim_remove(struct platform_device *pdev)
-{
-	struct hwsim_phy *phy, *tmp;
+अटल पूर्णांक hwsim_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा hwsim_phy *phy, *पंचांगp;
 
 	mutex_lock(&hwsim_phys_lock);
-	list_for_each_entry_safe(phy, tmp, &hwsim_phys, list)
+	list_क्रम_each_entry_safe(phy, पंचांगp, &hwsim_phys, list)
 		hwsim_del(phy);
 	mutex_unlock(&hwsim_phys_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mac802154hwsim_driver = {
+अटल काष्ठा platक्रमm_driver mac802154hwsim_driver = अणु
 	.probe = hwsim_probe,
-	.remove = hwsim_remove,
-	.driver = {
+	.हटाओ = hwsim_हटाओ,
+	.driver = अणु
 			.name = "mac802154_hwsim",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static __init int hwsim_init_module(void)
-{
-	int rc;
+अटल __init पूर्णांक hwsim_init_module(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = genl_register_family(&hwsim_genl_family);
-	if (rc)
-		return rc;
+	rc = genl_रेजिस्टर_family(&hwsim_genl_family);
+	अगर (rc)
+		वापस rc;
 
-	mac802154hwsim_dev = platform_device_register_simple("mac802154_hwsim",
-							     -1, NULL, 0);
-	if (IS_ERR(mac802154hwsim_dev)) {
+	mac802154hwsim_dev = platक्रमm_device_रेजिस्टर_simple("mac802154_hwsim",
+							     -1, शून्य, 0);
+	अगर (IS_ERR(mac802154hwsim_dev)) अणु
 		rc = PTR_ERR(mac802154hwsim_dev);
-		goto platform_dev;
-	}
+		जाओ platक्रमm_dev;
+	पूर्ण
 
-	rc = platform_driver_register(&mac802154hwsim_driver);
-	if (rc < 0)
-		goto platform_drv;
+	rc = platक्रमm_driver_रेजिस्टर(&mac802154hwsim_driver);
+	अगर (rc < 0)
+		जाओ platक्रमm_drv;
 
-	return 0;
+	वापस 0;
 
-platform_drv:
-	platform_device_unregister(mac802154hwsim_dev);
-platform_dev:
-	genl_unregister_family(&hwsim_genl_family);
-	return rc;
-}
+platक्रमm_drv:
+	platक्रमm_device_unरेजिस्टर(mac802154hwsim_dev);
+platक्रमm_dev:
+	genl_unरेजिस्टर_family(&hwsim_genl_family);
+	वापस rc;
+पूर्ण
 
-static __exit void hwsim_remove_module(void)
-{
-	genl_unregister_family(&hwsim_genl_family);
-	platform_driver_unregister(&mac802154hwsim_driver);
-	platform_device_unregister(mac802154hwsim_dev);
-}
+अटल __निकास व्योम hwsim_हटाओ_module(व्योम)
+अणु
+	genl_unरेजिस्टर_family(&hwsim_genl_family);
+	platक्रमm_driver_unरेजिस्टर(&mac802154hwsim_driver);
+	platक्रमm_device_unरेजिस्टर(mac802154hwsim_dev);
+पूर्ण
 
 module_init(hwsim_init_module);
-module_exit(hwsim_remove_module);
+module_निकास(hwsim_हटाओ_module);

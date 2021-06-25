@@ -1,151 +1,152 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * SCPI Generic power domain support.
+ * SCPI Generic घातer करोमुख्य support.
  *
  * Copyright (C) 2016 ARM Ltd.
  */
 
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/pm_domain.h>
-#include <linux/scpi_protocol.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/scpi_protocol.h>
 
-struct scpi_pm_domain {
-	struct generic_pm_domain genpd;
-	struct scpi_ops *ops;
-	u32 domain;
-	char name[30];
-};
+काष्ठा scpi_pm_करोमुख्य अणु
+	काष्ठा generic_pm_करोमुख्य genpd;
+	काष्ठा scpi_ops *ops;
+	u32 करोमुख्य;
+	अक्षर name[30];
+पूर्ण;
 
 /*
- * These device power state values are not well-defined in the specification.
- * In case, different implementations use different values, we can make these
- * specific to compatibles rather than getting these values from device tree.
+ * These device घातer state values are not well-defined in the specअगरication.
+ * In हाल, dअगरferent implementations use dअगरferent values, we can make these
+ * specअगरic to compatibles rather than getting these values from device tree.
  */
-enum scpi_power_domain_state {
+क्रमागत scpi_घातer_करोमुख्य_state अणु
 	SCPI_PD_STATE_ON = 0,
 	SCPI_PD_STATE_OFF = 3,
-};
+पूर्ण;
 
-#define to_scpi_pd(gpd) container_of(gpd, struct scpi_pm_domain, genpd)
+#घोषणा to_scpi_pd(gpd) container_of(gpd, काष्ठा scpi_pm_करोमुख्य, genpd)
 
-static int scpi_pd_power(struct scpi_pm_domain *pd, bool power_on)
-{
-	int ret;
-	enum scpi_power_domain_state state;
+अटल पूर्णांक scpi_pd_घातer(काष्ठा scpi_pm_करोमुख्य *pd, bool घातer_on)
+अणु
+	पूर्णांक ret;
+	क्रमागत scpi_घातer_करोमुख्य_state state;
 
-	if (power_on)
+	अगर (घातer_on)
 		state = SCPI_PD_STATE_ON;
-	else
+	अन्यथा
 		state = SCPI_PD_STATE_OFF;
 
-	ret = pd->ops->device_set_power_state(pd->domain, state);
-	if (ret)
-		return ret;
+	ret = pd->ops->device_set_घातer_state(pd->करोमुख्य, state);
+	अगर (ret)
+		वापस ret;
 
-	return !(state == pd->ops->device_get_power_state(pd->domain));
-}
+	वापस !(state == pd->ops->device_get_घातer_state(pd->करोमुख्य));
+पूर्ण
 
-static int scpi_pd_power_on(struct generic_pm_domain *domain)
-{
-	struct scpi_pm_domain *pd = to_scpi_pd(domain);
+अटल पूर्णांक scpi_pd_घातer_on(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा scpi_pm_करोमुख्य *pd = to_scpi_pd(करोमुख्य);
 
-	return scpi_pd_power(pd, true);
-}
+	वापस scpi_pd_घातer(pd, true);
+पूर्ण
 
-static int scpi_pd_power_off(struct generic_pm_domain *domain)
-{
-	struct scpi_pm_domain *pd = to_scpi_pd(domain);
+अटल पूर्णांक scpi_pd_घातer_off(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा scpi_pm_करोमुख्य *pd = to_scpi_pd(करोमुख्य);
 
-	return scpi_pd_power(pd, false);
-}
+	वापस scpi_pd_घातer(pd, false);
+पूर्ण
 
-static int scpi_pm_domain_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct scpi_pm_domain *scpi_pd;
-	struct genpd_onecell_data *scpi_pd_data;
-	struct generic_pm_domain **domains;
-	struct scpi_ops *scpi_ops;
-	int ret, num_domains, i;
+अटल पूर्णांक scpi_pm_करोमुख्य_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा scpi_pm_करोमुख्य *scpi_pd;
+	काष्ठा genpd_onecell_data *scpi_pd_data;
+	काष्ठा generic_pm_करोमुख्य **करोमुख्यs;
+	काष्ठा scpi_ops *scpi_ops;
+	पूर्णांक ret, num_करोमुख्यs, i;
 
 	scpi_ops = get_scpi_ops();
-	if (!scpi_ops)
-		return -EPROBE_DEFER;
+	अगर (!scpi_ops)
+		वापस -EPROBE_DEFER;
 
-	if (!np) {
+	अगर (!np) अणु
 		dev_err(dev, "device tree node not found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!scpi_ops->device_set_power_state ||
-	    !scpi_ops->device_get_power_state) {
+	अगर (!scpi_ops->device_set_घातer_state ||
+	    !scpi_ops->device_get_घातer_state) अणु
 		dev_err(dev, "power domains not supported in the firmware\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = of_property_read_u32(np, "num-domains", &num_domains);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(np, "num-domains", &num_करोमुख्यs);
+	अगर (ret) अणु
 		dev_err(dev, "number of domains not found\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	scpi_pd = devm_kcalloc(dev, num_domains, sizeof(*scpi_pd), GFP_KERNEL);
-	if (!scpi_pd)
-		return -ENOMEM;
+	scpi_pd = devm_kसुस्मृति(dev, num_करोमुख्यs, माप(*scpi_pd), GFP_KERNEL);
+	अगर (!scpi_pd)
+		वापस -ENOMEM;
 
-	scpi_pd_data = devm_kzalloc(dev, sizeof(*scpi_pd_data), GFP_KERNEL);
-	if (!scpi_pd_data)
-		return -ENOMEM;
+	scpi_pd_data = devm_kzalloc(dev, माप(*scpi_pd_data), GFP_KERNEL);
+	अगर (!scpi_pd_data)
+		वापस -ENOMEM;
 
-	domains = devm_kcalloc(dev, num_domains, sizeof(*domains), GFP_KERNEL);
-	if (!domains)
-		return -ENOMEM;
+	करोमुख्यs = devm_kसुस्मृति(dev, num_करोमुख्यs, माप(*करोमुख्यs), GFP_KERNEL);
+	अगर (!करोमुख्यs)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num_domains; i++, scpi_pd++) {
-		domains[i] = &scpi_pd->genpd;
+	क्रम (i = 0; i < num_करोमुख्यs; i++, scpi_pd++) अणु
+		करोमुख्यs[i] = &scpi_pd->genpd;
 
-		scpi_pd->domain = i;
+		scpi_pd->करोमुख्य = i;
 		scpi_pd->ops = scpi_ops;
-		sprintf(scpi_pd->name, "%pOFn.%d", np, i);
+		प्र_लिखो(scpi_pd->name, "%pOFn.%d", np, i);
 		scpi_pd->genpd.name = scpi_pd->name;
-		scpi_pd->genpd.power_off = scpi_pd_power_off;
-		scpi_pd->genpd.power_on = scpi_pd_power_on;
+		scpi_pd->genpd.घातer_off = scpi_pd_घातer_off;
+		scpi_pd->genpd.घातer_on = scpi_pd_घातer_on;
 
 		/*
-		 * Treat all power domains as off at boot.
+		 * Treat all घातer करोमुख्यs as off at boot.
 		 *
-		 * The SCP firmware itself may have switched on some domains,
-		 * but for reference counting purpose, keep it this way.
+		 * The SCP firmware itself may have चयनed on some करोमुख्यs,
+		 * but क्रम reference counting purpose, keep it this way.
 		 */
-		pm_genpd_init(&scpi_pd->genpd, NULL, true);
-	}
+		pm_genpd_init(&scpi_pd->genpd, शून्य, true);
+	पूर्ण
 
-	scpi_pd_data->domains = domains;
-	scpi_pd_data->num_domains = num_domains;
+	scpi_pd_data->करोमुख्यs = करोमुख्यs;
+	scpi_pd_data->num_करोमुख्यs = num_करोमुख्यs;
 
 	of_genpd_add_provider_onecell(np, scpi_pd_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id scpi_power_domain_ids[] = {
-	{ .compatible = "arm,scpi-power-domains", },
-	{ /* sentinel */ }
-};
-MODULE_DEVICE_TABLE(of, scpi_power_domain_ids);
+अटल स्थिर काष्ठा of_device_id scpi_घातer_करोमुख्य_ids[] = अणु
+	अणु .compatible = "arm,scpi-power-domains", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, scpi_घातer_करोमुख्य_ids);
 
-static struct platform_driver scpi_power_domain_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver scpi_घातer_करोमुख्य_driver = अणु
+	.driver	= अणु
 		.name = "scpi_power_domain",
-		.of_match_table = scpi_power_domain_ids,
-	},
-	.probe = scpi_pm_domain_probe,
-};
-module_platform_driver(scpi_power_domain_driver);
+		.of_match_table = scpi_घातer_करोमुख्य_ids,
+	पूर्ण,
+	.probe = scpi_pm_करोमुख्य_probe,
+पूर्ण;
+module_platक्रमm_driver(scpi_घातer_करोमुख्य_driver);
 
 MODULE_AUTHOR("Sudeep Holla <sudeep.holla@arm.com>");
 MODULE_DESCRIPTION("ARM SCPI power domain driver");

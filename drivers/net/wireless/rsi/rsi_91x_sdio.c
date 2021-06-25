@@ -1,212 +1,213 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2014 Redpine Signals Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
 
-#include <linux/module.h>
-#include "rsi_sdio.h"
-#include "rsi_common.h"
-#include "rsi_coex.h"
-#include "rsi_hal.h"
+#समावेश <linux/module.h>
+#समावेश "rsi_sdio.h"
+#समावेश "rsi_common.h"
+#समावेश "rsi_coex.h"
+#समावेश "rsi_hal.h"
 
 /* Default operating mode is wlan STA + BT */
-static u16 dev_oper_mode = DEV_OPMODE_STA_BT_DUAL;
-module_param(dev_oper_mode, ushort, 0444);
+अटल u16 dev_oper_mode = DEV_OPMODE_STA_BT_DUAL;
+module_param(dev_oper_mode, uलघु, 0444);
 MODULE_PARM_DESC(dev_oper_mode,
 		 "1[Wi-Fi], 4[BT], 8[BT LE], 5[Wi-Fi STA + BT classic]\n"
 		 "9[Wi-Fi STA + BT LE], 13[Wi-Fi STA + BT classic + BT LE]\n"
 		 "6[AP + BT classic], 14[AP + BT classic + BT LE]");
 
 /**
- * rsi_sdio_set_cmd52_arg() - This function prepares cmd 52 read/write arg.
- * @rw: Read/write
+ * rsi_sdio_set_cmd52_arg() - This function prepares cmd 52 पढ़ो/ग_लिखो arg.
+ * @rw: Read/ग_लिखो
  * @func: function number
- * @raw: indicates whether to perform read after write
- * @address: address to which to read/write
- * @writedata: data to write
+ * @raw: indicates whether to perक्रमm पढ़ो after ग_लिखो
+ * @address: address to which to पढ़ो/ग_लिखो
+ * @ग_लिखोdata: data to ग_लिखो
  *
  * Return: argument
  */
-static u32 rsi_sdio_set_cmd52_arg(bool rw,
+अटल u32 rsi_sdio_set_cmd52_arg(bool rw,
 				  u8 func,
 				  u8 raw,
 				  u32 address,
-				  u8 writedata)
-{
-	return ((rw & 1) << 31) | ((func & 0x7) << 28) |
+				  u8 ग_लिखोdata)
+अणु
+	वापस ((rw & 1) << 31) | ((func & 0x7) << 28) |
 		((raw & 1) << 27) | (1 << 26) |
 		((address & 0x1FFFF) << 9) | (1 << 8) |
-		(writedata & 0xFF);
-}
+		(ग_लिखोdata & 0xFF);
+पूर्ण
 
 /**
- * rsi_cmd52writebyte() - This function issues cmd52 byte write onto the card.
- * @card: Pointer to the mmc_card.
- * @address: Address to write.
- * @byte: Data to write.
+ * rsi_cmd52ग_लिखोbyte() - This function issues cmd52 byte ग_लिखो onto the card.
+ * @card: Poपूर्णांकer to the mmc_card.
+ * @address: Address to ग_लिखो.
+ * @byte: Data to ग_लिखो.
  *
  * Return: Write status.
  */
-static int rsi_cmd52writebyte(struct mmc_card *card,
+अटल पूर्णांक rsi_cmd52ग_लिखोbyte(काष्ठा mmc_card *card,
 			      u32 address,
 			      u8 byte)
-{
-	struct mmc_command io_cmd;
+अणु
+	काष्ठा mmc_command io_cmd;
 	u32 arg;
 
-	memset(&io_cmd, 0, sizeof(io_cmd));
+	स_रखो(&io_cmd, 0, माप(io_cmd));
 	arg = rsi_sdio_set_cmd52_arg(1, 0, 0, address, byte);
-	io_cmd.opcode = SD_IO_RW_DIRECT;
+	io_cmd.opcode = SD_IO_RW_सूचीECT;
 	io_cmd.arg = arg;
 	io_cmd.flags = MMC_RSP_R5 | MMC_CMD_AC;
 
-	return mmc_wait_for_cmd(card->host, &io_cmd, 0);
-}
+	वापस mmc_रुको_क्रम_cmd(card->host, &io_cmd, 0);
+पूर्ण
 
 /**
- * rsi_cmd52readbyte() - This function issues cmd52 byte read onto the card.
- * @card: Pointer to the mmc_card.
- * @address: Address to read from.
- * @byte: Variable to store read value.
+ * rsi_cmd52पढ़ोbyte() - This function issues cmd52 byte पढ़ो onto the card.
+ * @card: Poपूर्णांकer to the mmc_card.
+ * @address: Address to पढ़ो from.
+ * @byte: Variable to store पढ़ो value.
  *
  * Return: Read status.
  */
-static int rsi_cmd52readbyte(struct mmc_card *card,
+अटल पूर्णांक rsi_cmd52पढ़ोbyte(काष्ठा mmc_card *card,
 			     u32 address,
 			     u8 *byte)
-{
-	struct mmc_command io_cmd;
+अणु
+	काष्ठा mmc_command io_cmd;
 	u32 arg;
-	int err;
+	पूर्णांक err;
 
-	memset(&io_cmd, 0, sizeof(io_cmd));
+	स_रखो(&io_cmd, 0, माप(io_cmd));
 	arg = rsi_sdio_set_cmd52_arg(0, 0, 0, address, 0);
-	io_cmd.opcode = SD_IO_RW_DIRECT;
+	io_cmd.opcode = SD_IO_RW_सूचीECT;
 	io_cmd.arg = arg;
 	io_cmd.flags = MMC_RSP_R5 | MMC_CMD_AC;
 
-	err = mmc_wait_for_cmd(card->host, &io_cmd, 0);
-	if ((!err) && (byte))
+	err = mmc_रुको_क्रम_cmd(card->host, &io_cmd, 0);
+	अगर ((!err) && (byte))
 		*byte =  io_cmd.resp[0] & 0xFF;
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * rsi_issue_sdiocommand() - This function issues sdio commands.
- * @func: Pointer to the sdio_func structure.
+ * @func: Poपूर्णांकer to the sdio_func काष्ठाure.
  * @opcode: Opcode value.
  * @arg: Arguments to pass.
  * @flags: Flags which are set.
- * @resp: Pointer to store response.
+ * @resp: Poपूर्णांकer to store response.
  *
  * Return: err: command status as 0 or -1.
  */
-static int rsi_issue_sdiocommand(struct sdio_func *func,
+अटल पूर्णांक rsi_issue_sdiocommand(काष्ठा sdio_func *func,
 				 u32 opcode,
 				 u32 arg,
 				 u32 flags,
 				 u32 *resp)
-{
-	struct mmc_command cmd;
-	struct mmc_host *host;
-	int err;
+अणु
+	काष्ठा mmc_command cmd;
+	काष्ठा mmc_host *host;
+	पूर्णांक err;
 
 	host = func->card->host;
 
-	memset(&cmd, 0, sizeof(struct mmc_command));
+	स_रखो(&cmd, 0, माप(काष्ठा mmc_command));
 	cmd.opcode = opcode;
 	cmd.arg = arg;
 	cmd.flags = flags;
-	err = mmc_wait_for_cmd(host, &cmd, 3);
+	err = mmc_रुको_क्रम_cmd(host, &cmd, 3);
 
-	if ((!err) && (resp))
+	अगर ((!err) && (resp))
 		*resp = cmd.resp[0];
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * rsi_handle_interrupt() - This function is called upon the occurrence
- *			    of an interrupt.
- * @function: Pointer to the sdio_func structure.
+ * rsi_handle_पूर्णांकerrupt() - This function is called upon the occurrence
+ *			    of an पूर्णांकerrupt.
+ * @function: Poपूर्णांकer to the sdio_func काष्ठाure.
  *
  * Return: None.
  */
-static void rsi_handle_interrupt(struct sdio_func *function)
-{
-	struct rsi_hw *adapter = sdio_get_drvdata(function);
-	struct rsi_91x_sdiodev *dev =
-		(struct rsi_91x_sdiodev *)adapter->rsi_dev;
+अटल व्योम rsi_handle_पूर्णांकerrupt(काष्ठा sdio_func *function)
+अणु
+	काष्ठा rsi_hw *adapter = sdio_get_drvdata(function);
+	काष्ठा rsi_91x_sdiodev *dev =
+		(काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
 
-	if (adapter->priv->fsm_state == FSM_FW_NOT_LOADED)
-		return;
+	अगर (adapter->priv->fsm_state == FSM_FW_NOT_LOADED)
+		वापस;
 
-	rsi_set_event(&dev->rx_thread.event);
-}
+	rsi_set_event(&dev->rx_thपढ़ो.event);
+पूर्ण
 
 /**
  * rsi_reset_card() - This function resets and re-initializes the card.
- * @pfunction: Pointer to the sdio_func structure.
+ * @pfunction: Poपूर्णांकer to the sdio_func काष्ठाure.
  *
  * Return: None.
  */
-static void rsi_reset_card(struct sdio_func *pfunction)
-{
-	int ret = 0;
-	int err;
-	struct mmc_card *card = pfunction->card;
-	struct mmc_host *host = card->host;
+अटल व्योम rsi_reset_card(काष्ठा sdio_func *pfunction)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक err;
+	काष्ठा mmc_card *card = pfunction->card;
+	काष्ठा mmc_host *host = card->host;
 	u8 cmd52_resp;
-	u32 clock, resp, i;
+	u32 घड़ी, resp, i;
 	u16 rca;
 
 	/* Reset 9110 chip */
-	ret = rsi_cmd52writebyte(pfunction->card,
+	ret = rsi_cmd52ग_लिखोbyte(pfunction->card,
 				 SDIO_CCCR_ABORT,
 				 (1 << 3));
 
 	/* Card will not send any response as it is getting reset immediately
-	 * Hence expect a timeout status from host controller
+	 * Hence expect a समयout status from host controller
 	 */
-	if (ret != -ETIMEDOUT)
+	अगर (ret != -ETIMEDOUT)
 		rsi_dbg(ERR_ZONE, "%s: Reset failed : %d\n", __func__, ret);
 
-	/* Wait for few milli seconds to get rid of residue charges if any */
+	/* Wait क्रम few milli seconds to get rid of residue अक्षरges अगर any */
 	msleep(20);
 
 	/* Initialize the SDIO card */
 	host->ios.chip_select = MMC_CS_DONTCARE;
 	host->ios.bus_mode = MMC_BUSMODE_OPENDRAIN;
-	host->ios.power_mode = MMC_POWER_UP;
+	host->ios.घातer_mode = MMC_POWER_UP;
 	host->ios.bus_width = MMC_BUS_WIDTH_1;
 	host->ios.timing = MMC_TIMING_LEGACY;
 	host->ops->set_ios(host, &host->ios);
 
 	/*
-	 * This delay should be sufficient to allow the power supply
+	 * This delay should be sufficient to allow the घातer supply
 	 * to reach the minimum voltage.
 	 */
 	msleep(20);
 
-	host->ios.clock = host->f_min;
-	host->ios.power_mode = MMC_POWER_ON;
+	host->ios.घड़ी = host->f_min;
+	host->ios.घातer_mode = MMC_POWER_ON;
 	host->ops->set_ios(host, &host->ios);
 
 	/*
-	 * This delay must be at least 74 clock sizes, or 1 ms, or the
-	 * time required to reach a stable voltage.
+	 * This delay must be at least 74 घड़ी sizes, or 1 ms, or the
+	 * समय required to reach a stable voltage.
 	 */
 	msleep(20);
 
@@ -218,43 +219,43 @@ static void rsi_reset_card(struct sdio_func *pfunction)
 				    MMC_GO_IDLE_STATE,
 				    0,
 				    (MMC_RSP_NONE | MMC_CMD_BC),
-				    NULL);
+				    शून्य);
 	host->ios.chip_select = MMC_CS_DONTCARE;
 	host->ops->set_ios(host, &host->ios);
 	msleep(20);
 	host->use_spi_crc = 0;
 
-	if (err)
+	अगर (err)
 		rsi_dbg(ERR_ZONE, "%s: CMD0 failed : %d\n", __func__, err);
 
 	/* Issue CMD5, arg = 0 */
 	err = rsi_issue_sdiocommand(pfunction,	SD_IO_SEND_OP_COND, 0,
 				    (MMC_RSP_R4 | MMC_CMD_BCR), &resp);
-	if (err)
+	अगर (err)
 		rsi_dbg(ERR_ZONE, "%s: CMD5 failed : %d\n",
 			__func__, err);
 	card->ocr = resp;
-	/* Issue CMD5, arg = ocr. Wait till card is ready  */
-	for (i = 0; i < 100; i++) {
+	/* Issue CMD5, arg = ocr. Wait till card is पढ़ोy  */
+	क्रम (i = 0; i < 100; i++) अणु
 		err = rsi_issue_sdiocommand(pfunction, SD_IO_SEND_OP_COND,
 					    card->ocr,
 					    (MMC_RSP_R4 | MMC_CMD_BCR), &resp);
-		if (err) {
+		अगर (err) अणु
 			rsi_dbg(ERR_ZONE, "%s: CMD5 failed : %d\n",
 				__func__, err);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (resp & MMC_CARD_BUSY)
-			break;
+		अगर (resp & MMC_CARD_BUSY)
+			अवरोध;
 		msleep(20);
-	}
+	पूर्ण
 
-	if ((i == 100) || (err)) {
+	अगर ((i == 100) || (err)) अणु
 		rsi_dbg(ERR_ZONE, "%s: card in not ready : %d %d\n",
 			__func__, i, err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Issue CMD3, get RCA */
 	err = rsi_issue_sdiocommand(pfunction,
@@ -262,10 +263,10 @@ static void rsi_reset_card(struct sdio_func *pfunction)
 				    0,
 				    (MMC_RSP_R6 | MMC_CMD_BCR),
 				    &resp);
-	if (err) {
+	अगर (err) अणु
 		rsi_dbg(ERR_ZONE, "%s: CMD3 failed : %d\n", __func__, err);
-		return;
-	}
+		वापस;
+	पूर्ण
 	rca = resp >> 16;
 	host->ios.bus_mode = MMC_BUSMODE_PUSHPULL;
 	host->ops->set_ios(host, &host->ios);
@@ -275,95 +276,95 @@ static void rsi_reset_card(struct sdio_func *pfunction)
 				    MMC_SELECT_CARD,
 				    (rca << 16),
 				    (MMC_RSP_R1 | MMC_CMD_AC),
-				    NULL);
-	if (err) {
+				    शून्य);
+	अगर (err) अणु
 		rsi_dbg(ERR_ZONE, "%s: CMD7 failed : %d\n", __func__, err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Enable high speed */
-	if (card->host->caps & MMC_CAP_SD_HIGHSPEED) {
+	अगर (card->host->caps & MMC_CAP_SD_HIGHSPEED) अणु
 		rsi_dbg(ERR_ZONE, "%s: Set high speed mode\n", __func__);
-		err = rsi_cmd52readbyte(card, SDIO_CCCR_SPEED, &cmd52_resp);
-		if (err) {
+		err = rsi_cmd52पढ़ोbyte(card, SDIO_CCCR_SPEED, &cmd52_resp);
+		अगर (err) अणु
 			rsi_dbg(ERR_ZONE, "%s: CCCR speed reg read failed: %d\n",
 				__func__, err);
-		} else {
-			err = rsi_cmd52writebyte(card,
+		पूर्ण अन्यथा अणु
+			err = rsi_cmd52ग_लिखोbyte(card,
 						 SDIO_CCCR_SPEED,
 						 (cmd52_resp | SDIO_SPEED_EHS));
-			if (err) {
+			अगर (err) अणु
 				rsi_dbg(ERR_ZONE,
 					"%s: CCR speed regwrite failed %d\n",
 					__func__, err);
-				return;
-			}
+				वापस;
+			पूर्ण
 			host->ios.timing = MMC_TIMING_SD_HS;
 			host->ops->set_ios(host, &host->ios);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Set clock */
-	if (mmc_card_hs(card))
-		clock = 50000000;
-	else
-		clock = card->cis.max_dtr;
+	/* Set घड़ी */
+	अगर (mmc_card_hs(card))
+		घड़ी = 50000000;
+	अन्यथा
+		घड़ी = card->cis.max_dtr;
 
-	if (clock > host->f_max)
-		clock = host->f_max;
+	अगर (घड़ी > host->f_max)
+		घड़ी = host->f_max;
 
-	host->ios.clock = clock;
+	host->ios.घड़ी = घड़ी;
 	host->ops->set_ios(host, &host->ios);
 
-	if (card->host->caps & MMC_CAP_4_BIT_DATA) {
+	अगर (card->host->caps & MMC_CAP_4_BIT_DATA) अणु
 		/* CMD52: Set bus width & disable card detect resistor */
-		err = rsi_cmd52writebyte(card,
+		err = rsi_cmd52ग_लिखोbyte(card,
 					 SDIO_CCCR_IF,
 					 (SDIO_BUS_CD_DISABLE |
 					  SDIO_BUS_WIDTH_4BIT));
-		if (err) {
+		अगर (err) अणु
 			rsi_dbg(ERR_ZONE, "%s: Set bus mode failed : %d\n",
 				__func__, err);
-			return;
-		}
+			वापस;
+		पूर्ण
 		host->ios.bus_width = MMC_BUS_WIDTH_4;
 		host->ops->set_ios(host, &host->ios);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * rsi_setclock() - This function sets the clock frequency.
- * @adapter: Pointer to the adapter structure.
+ * rsi_setघड़ी() - This function sets the घड़ी frequency.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
  * @freq: Clock frequency.
  *
  * Return: None.
  */
-static void rsi_setclock(struct rsi_hw *adapter, u32 freq)
-{
-	struct rsi_91x_sdiodev *dev =
-		(struct rsi_91x_sdiodev *)adapter->rsi_dev;
-	struct mmc_host *host = dev->pfunction->card->host;
-	u32 clock;
+अटल व्योम rsi_setघड़ी(काष्ठा rsi_hw *adapter, u32 freq)
+अणु
+	काष्ठा rsi_91x_sdiodev *dev =
+		(काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
+	काष्ठा mmc_host *host = dev->pfunction->card->host;
+	u32 घड़ी;
 
-	clock = freq * 1000;
-	if (clock > host->f_max)
-		clock = host->f_max;
-	host->ios.clock = clock;
+	घड़ी = freq * 1000;
+	अगर (घड़ी > host->f_max)
+		घड़ी = host->f_max;
+	host->ios.घड़ी = घड़ी;
 	host->ops->set_ios(host, &host->ios);
-}
+पूर्ण
 
 /**
  * rsi_setblocklength() - This function sets the host block length.
- * @adapter: Pointer to the adapter structure.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
  * @length: Block length to be set.
  *
  * Return: status: 0 on success, -1 on failure.
  */
-static int rsi_setblocklength(struct rsi_hw *adapter, u32 length)
-{
-	struct rsi_91x_sdiodev *dev =
-		(struct rsi_91x_sdiodev *)adapter->rsi_dev;
-	int status;
+अटल पूर्णांक rsi_setblocklength(काष्ठा rsi_hw *adapter, u32 length)
+अणु
+	काष्ठा rsi_91x_sdiodev *dev =
+		(काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
+	पूर्णांक status;
 	rsi_dbg(INIT_ZONE, "%s: Setting the block length\n", __func__);
 
 	status = sdio_set_block_size(dev->pfunction, length);
@@ -372,489 +373,489 @@ static int rsi_setblocklength(struct rsi_hw *adapter, u32 length)
 
 	rsi_dbg(INFO_ZONE,
 		"%s: Operational blk length is %d\n", __func__, length);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
  * rsi_setupcard() - This function queries and sets the card's features.
- * @adapter: Pointer to the adapter structure.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
  *
  * Return: status: 0 on success, -1 on failure.
  */
-static int rsi_setupcard(struct rsi_hw *adapter)
-{
-	struct rsi_91x_sdiodev *dev =
-		(struct rsi_91x_sdiodev *)adapter->rsi_dev;
-	int status = 0;
+अटल पूर्णांक rsi_setupcard(काष्ठा rsi_hw *adapter)
+अणु
+	काष्ठा rsi_91x_sdiodev *dev =
+		(काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
+	पूर्णांक status = 0;
 
-	rsi_setclock(adapter, 50000);
+	rsi_setघड़ी(adapter, 50000);
 
 	dev->tx_blk_size = 256;
 	status = rsi_setblocklength(adapter, dev->tx_blk_size);
-	if (status)
+	अगर (status)
 		rsi_dbg(ERR_ZONE,
 			"%s: Unable to set block length\n", __func__);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- * rsi_sdio_read_register() - This function reads one byte of information
- *			      from a register.
- * @adapter: Pointer to the adapter structure.
- * @addr: Address of the register.
- * @data: Pointer to the data that stores the data read.
+ * rsi_sdio_पढ़ो_रेजिस्टर() - This function पढ़ोs one byte of inक्रमmation
+ *			      from a रेजिस्टर.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
+ * @addr: Address of the रेजिस्टर.
+ * @data: Poपूर्णांकer to the data that stores the data पढ़ो.
  *
  * Return: 0 on success, -1 on failure.
  */
-int rsi_sdio_read_register(struct rsi_hw *adapter,
+पूर्णांक rsi_sdio_पढ़ो_रेजिस्टर(काष्ठा rsi_hw *adapter,
 			   u32 addr,
 			   u8 *data)
-{
-	struct rsi_91x_sdiodev *dev =
-		(struct rsi_91x_sdiodev *)adapter->rsi_dev;
+अणु
+	काष्ठा rsi_91x_sdiodev *dev =
+		(काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
 	u8 fun_num = 0;
-	int status;
+	पूर्णांक status;
 
-	if (likely(dev->sdio_irq_task != current))
+	अगर (likely(dev->sdio_irq_task != current))
 		sdio_claim_host(dev->pfunction);
 
-	if (fun_num == 0)
-		*data = sdio_f0_readb(dev->pfunction, addr, &status);
-	else
-		*data = sdio_readb(dev->pfunction, addr, &status);
+	अगर (fun_num == 0)
+		*data = sdio_f0_पढ़ोb(dev->pfunction, addr, &status);
+	अन्यथा
+		*data = sdio_पढ़ोb(dev->pfunction, addr, &status);
 
-	if (likely(dev->sdio_irq_task != current))
+	अगर (likely(dev->sdio_irq_task != current))
 		sdio_release_host(dev->pfunction);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- * rsi_sdio_write_register() - This function writes one byte of information
- *			       into a register.
- * @adapter: Pointer to the adapter structure.
+ * rsi_sdio_ग_लिखो_रेजिस्टर() - This function ग_लिखोs one byte of inक्रमmation
+ *			       पूर्णांकo a रेजिस्टर.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
  * @function: Function Number.
- * @addr: Address of the register.
- * @data: Pointer to the data tha has to be written.
+ * @addr: Address of the रेजिस्टर.
+ * @data: Poपूर्णांकer to the data tha has to be written.
  *
  * Return: 0 on success, -1 on failure.
  */
-int rsi_sdio_write_register(struct rsi_hw *adapter,
+पूर्णांक rsi_sdio_ग_लिखो_रेजिस्टर(काष्ठा rsi_hw *adapter,
 			    u8 function,
 			    u32 addr,
 			    u8 *data)
-{
-	struct rsi_91x_sdiodev *dev =
-		(struct rsi_91x_sdiodev *)adapter->rsi_dev;
-	int status = 0;
+अणु
+	काष्ठा rsi_91x_sdiodev *dev =
+		(काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
+	पूर्णांक status = 0;
 
-	if (likely(dev->sdio_irq_task != current))
+	अगर (likely(dev->sdio_irq_task != current))
 		sdio_claim_host(dev->pfunction);
 
-	if (function == 0)
-		sdio_f0_writeb(dev->pfunction, *data, addr, &status);
-	else
-		sdio_writeb(dev->pfunction, *data, addr, &status);
+	अगर (function == 0)
+		sdio_f0_ग_लिखोb(dev->pfunction, *data, addr, &status);
+	अन्यथा
+		sdio_ग_लिखोb(dev->pfunction, *data, addr, &status);
 
-	if (likely(dev->sdio_irq_task != current))
+	अगर (likely(dev->sdio_irq_task != current))
 		sdio_release_host(dev->pfunction);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- * rsi_sdio_ack_intr() - This function acks the interrupt received.
- * @adapter: Pointer to the adapter structure.
- * @int_bit: Interrupt bit to write into register.
+ * rsi_sdio_ack_पूर्णांकr() - This function acks the पूर्णांकerrupt received.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
+ * @पूर्णांक_bit: Interrupt bit to ग_लिखो पूर्णांकo रेजिस्टर.
  *
  * Return: None.
  */
-void rsi_sdio_ack_intr(struct rsi_hw *adapter, u8 int_bit)
-{
-	int status;
-	status = rsi_sdio_write_register(adapter,
+व्योम rsi_sdio_ack_पूर्णांकr(काष्ठा rsi_hw *adapter, u8 पूर्णांक_bit)
+अणु
+	पूर्णांक status;
+	status = rsi_sdio_ग_लिखो_रेजिस्टर(adapter,
 					 1,
 					 (SDIO_FUN1_INTR_CLR_REG |
 					  RSI_SD_REQUEST_MASTER),
-					 &int_bit);
-	if (status)
+					 &पूर्णांक_bit);
+	अगर (status)
 		rsi_dbg(ERR_ZONE, "%s: unable to send ack\n", __func__);
-}
+पूर्ण
 
 
 
 /**
- * rsi_sdio_read_register_multiple() - This function read multiple bytes of
- *				       information from the SD card.
- * @adapter: Pointer to the adapter structure.
- * @addr: Address of the register.
- * @count: Number of multiple bytes to be read.
- * @data: Pointer to the read data.
+ * rsi_sdio_पढ़ो_रेजिस्टर_multiple() - This function पढ़ो multiple bytes of
+ *				       inक्रमmation from the SD card.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
+ * @addr: Address of the रेजिस्टर.
+ * @count: Number of multiple bytes to be पढ़ो.
+ * @data: Poपूर्णांकer to the पढ़ो data.
  *
  * Return: 0 on success, -1 on failure.
  */
-static int rsi_sdio_read_register_multiple(struct rsi_hw *adapter,
+अटल पूर्णांक rsi_sdio_पढ़ो_रेजिस्टर_multiple(काष्ठा rsi_hw *adapter,
 					   u32 addr,
 					   u8 *data,
 					   u16 count)
-{
-	struct rsi_91x_sdiodev *dev =
-		(struct rsi_91x_sdiodev *)adapter->rsi_dev;
+अणु
+	काष्ठा rsi_91x_sdiodev *dev =
+		(काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
 	u32 status;
 
-	if (likely(dev->sdio_irq_task != current))
+	अगर (likely(dev->sdio_irq_task != current))
 		sdio_claim_host(dev->pfunction);
 
-	status =  sdio_readsb(dev->pfunction, data, addr, count);
+	status =  sdio_पढ़ोsb(dev->pfunction, data, addr, count);
 
-	if (likely(dev->sdio_irq_task != current))
+	अगर (likely(dev->sdio_irq_task != current))
 		sdio_release_host(dev->pfunction);
 
-	if (status != 0)
+	अगर (status != 0)
 		rsi_dbg(ERR_ZONE, "%s: Synch Cmd53 read failed\n", __func__);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- * rsi_sdio_write_register_multiple() - This function writes multiple bytes of
- *					information to the SD card.
- * @adapter: Pointer to the adapter structure.
- * @addr: Address of the register.
- * @data: Pointer to the data that has to be written.
+ * rsi_sdio_ग_लिखो_रेजिस्टर_multiple() - This function ग_लिखोs multiple bytes of
+ *					inक्रमmation to the SD card.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
+ * @addr: Address of the रेजिस्टर.
+ * @data: Poपूर्णांकer to the data that has to be written.
  * @count: Number of multiple bytes to be written.
  *
  * Return: 0 on success, -1 on failure.
  */
-int rsi_sdio_write_register_multiple(struct rsi_hw *adapter,
+पूर्णांक rsi_sdio_ग_लिखो_रेजिस्टर_multiple(काष्ठा rsi_hw *adapter,
 				     u32 addr,
 				     u8 *data,
 				     u16 count)
-{
-	struct rsi_91x_sdiodev *dev =
-		(struct rsi_91x_sdiodev *)adapter->rsi_dev;
-	int status;
+अणु
+	काष्ठा rsi_91x_sdiodev *dev =
+		(काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
+	पूर्णांक status;
 
-	if (dev->write_fail > 1) {
+	अगर (dev->ग_लिखो_fail > 1) अणु
 		rsi_dbg(ERR_ZONE, "%s: Stopping card writes\n", __func__);
-		return 0;
-	} else if (dev->write_fail == 1) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (dev->ग_लिखो_fail == 1) अणु
 		/**
 		 * Assuming it is a CRC failure, we want to allow another
-		 *  card write
+		 *  card ग_लिखो
 		 */
 		rsi_dbg(ERR_ZONE, "%s: Continue card writes\n", __func__);
-		dev->write_fail++;
-	}
+		dev->ग_लिखो_fail++;
+	पूर्ण
 
-	if (likely(dev->sdio_irq_task != current))
+	अगर (likely(dev->sdio_irq_task != current))
 		sdio_claim_host(dev->pfunction);
 
-	status = sdio_writesb(dev->pfunction, addr, data, count);
+	status = sdio_ग_लिखोsb(dev->pfunction, addr, data, count);
 
-	if (likely(dev->sdio_irq_task != current))
+	अगर (likely(dev->sdio_irq_task != current))
 		sdio_release_host(dev->pfunction);
 
-	if (status) {
+	अगर (status) अणु
 		rsi_dbg(ERR_ZONE, "%s: Synch Cmd53 write failed %d\n",
 			__func__, status);
-		dev->write_fail = 2;
-	} else {
-		memcpy(dev->prev_desc, data, FRAME_DESC_SZ);
-	}
-	return status;
-}
+		dev->ग_लिखो_fail = 2;
+	पूर्ण अन्यथा अणु
+		स_नकल(dev->prev_desc, data, FRAME_DESC_SZ);
+	पूर्ण
+	वापस status;
+पूर्ण
 
-static int rsi_sdio_load_data_master_write(struct rsi_hw *adapter,
+अटल पूर्णांक rsi_sdio_load_data_master_ग_लिखो(काष्ठा rsi_hw *adapter,
 					   u32 base_address,
-					   u32 instructions_sz,
+					   u32 inकाष्ठाions_sz,
 					   u16 block_size,
 					   u8 *ta_firmware)
-{
+अणु
 	u32 num_blocks, offset, i;
 	u16 msb_address, lsb_address;
 	u8 *temp_buf;
-	int status;
+	पूर्णांक status;
 
-	num_blocks = instructions_sz / block_size;
+	num_blocks = inकाष्ठाions_sz / block_size;
 	msb_address = base_address >> 16;
 
 	rsi_dbg(INFO_ZONE, "ins_size: %d, num_blocks: %d\n",
-		instructions_sz, num_blocks);
+		inकाष्ठाions_sz, num_blocks);
 
-	temp_buf = kmalloc(block_size, GFP_KERNEL);
-	if (!temp_buf)
-		return -ENOMEM;
+	temp_buf = kदो_स्मृति(block_size, GFP_KERNEL);
+	अगर (!temp_buf)
+		वापस -ENOMEM;
 
 	/* Loading DM ms word in the sdio slave */
 	status = rsi_sdio_master_access_msword(adapter, msb_address);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE, "%s: Unable to set ms word reg\n", __func__);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	for (offset = 0, i = 0; i < num_blocks; i++, offset += block_size) {
-		memcpy(temp_buf, ta_firmware + offset, block_size);
+	क्रम (offset = 0, i = 0; i < num_blocks; i++, offset += block_size) अणु
+		स_नकल(temp_buf, ta_firmware + offset, block_size);
 		lsb_address = (u16)base_address;
-		status = rsi_sdio_write_register_multiple
+		status = rsi_sdio_ग_लिखो_रेजिस्टर_multiple
 					(adapter,
 					 lsb_address | RSI_SD_REQUEST_MASTER,
 					 temp_buf, block_size);
-		if (status < 0) {
+		अगर (status < 0) अणु
 			rsi_dbg(ERR_ZONE, "%s: failed to write\n", __func__);
-			goto out_free;
-		}
+			जाओ out_मुक्त;
+		पूर्ण
 		rsi_dbg(INFO_ZONE, "%s: loading block: %d\n", __func__, i);
 		base_address += block_size;
 
-		if ((base_address >> 16) != msb_address) {
+		अगर ((base_address >> 16) != msb_address) अणु
 			msb_address += 1;
 
 			/* Loading DM ms word in the sdio slave */
 			status = rsi_sdio_master_access_msword(adapter,
 							       msb_address);
-			if (status < 0) {
+			अगर (status < 0) अणु
 				rsi_dbg(ERR_ZONE,
 					"%s: Unable to set ms word reg\n",
 					__func__);
-				goto out_free;
-			}
-		}
-	}
+				जाओ out_मुक्त;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (instructions_sz % block_size) {
-		memset(temp_buf, 0, block_size);
-		memcpy(temp_buf, ta_firmware + offset,
-		       instructions_sz % block_size);
+	अगर (inकाष्ठाions_sz % block_size) अणु
+		स_रखो(temp_buf, 0, block_size);
+		स_नकल(temp_buf, ta_firmware + offset,
+		       inकाष्ठाions_sz % block_size);
 		lsb_address = (u16)base_address;
-		status = rsi_sdio_write_register_multiple
+		status = rsi_sdio_ग_लिखो_रेजिस्टर_multiple
 					(adapter,
 					 lsb_address | RSI_SD_REQUEST_MASTER,
 					 temp_buf,
-					 instructions_sz % block_size);
-		if (status < 0)
-			goto out_free;
+					 inकाष्ठाions_sz % block_size);
+		अगर (status < 0)
+			जाओ out_मुक्त;
 		rsi_dbg(INFO_ZONE,
 			"Written Last Block in Address 0x%x Successfully\n",
 			offset | RSI_SD_REQUEST_MASTER);
-	}
+	पूर्ण
 
 	status = 0;
-out_free:
-	kfree(temp_buf);
-	return status;
-}
+out_मुक्त:
+	kमुक्त(temp_buf);
+	वापस status;
+पूर्ण
 
-#define FLASH_SIZE_ADDR                 0x04000016
-static int rsi_sdio_master_reg_read(struct rsi_hw *adapter, u32 addr,
-				    u32 *read_buf, u16 size)
-{
+#घोषणा FLASH_SIZE_ADDR                 0x04000016
+अटल पूर्णांक rsi_sdio_master_reg_पढ़ो(काष्ठा rsi_hw *adapter, u32 addr,
+				    u32 *पढ़ो_buf, u16 size)
+अणु
 	u32 addr_on_bus, *data;
 	u16 ms_addr;
-	int status;
+	पूर्णांक status;
 
 	data = kzalloc(RSI_MASTER_REG_BUF_SIZE, GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
 	ms_addr = (addr >> 16);
 	status = rsi_sdio_master_access_msword(adapter, ms_addr);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Unable to set ms word to common reg\n",
 			__func__);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	addr &= 0xFFFF;
 
 	addr_on_bus = (addr & 0xFF000000);
-	if ((addr_on_bus == (FLASH_SIZE_ADDR & 0xFF000000)) ||
+	अगर ((addr_on_bus == (FLASH_SIZE_ADDR & 0xFF000000)) ||
 	    (addr_on_bus == 0x0))
 		addr_on_bus = (addr & ~(0x3));
-	else
+	अन्यथा
 		addr_on_bus = addr;
 
 	/* Bring TA out of reset */
-	status = rsi_sdio_read_register_multiple
+	status = rsi_sdio_पढ़ो_रेजिस्टर_multiple
 					(adapter,
 					 (addr_on_bus | RSI_SD_REQUEST_MASTER),
 					 (u8 *)data, 4);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE, "%s: AHB register read failed\n", __func__);
-		goto err;
-	}
-	if (size == 2) {
-		if ((addr & 0x3) == 0)
-			*read_buf = *data;
-		else
-			*read_buf  = (*data >> 16);
-		*read_buf = (*read_buf & 0xFFFF);
-	} else if (size == 1) {
-		if ((addr & 0x3) == 0)
-			*read_buf = *data;
-		else if ((addr & 0x3) == 1)
-			*read_buf = (*data >> 8);
-		else if ((addr & 0x3) == 2)
-			*read_buf = (*data >> 16);
-		else
-			*read_buf = (*data >> 24);
-		*read_buf = (*read_buf & 0xFF);
-	} else {
-		*read_buf = *data;
-	}
+		जाओ err;
+	पूर्ण
+	अगर (size == 2) अणु
+		अगर ((addr & 0x3) == 0)
+			*पढ़ो_buf = *data;
+		अन्यथा
+			*पढ़ो_buf  = (*data >> 16);
+		*पढ़ो_buf = (*पढ़ो_buf & 0xFFFF);
+	पूर्ण अन्यथा अगर (size == 1) अणु
+		अगर ((addr & 0x3) == 0)
+			*पढ़ो_buf = *data;
+		अन्यथा अगर ((addr & 0x3) == 1)
+			*पढ़ो_buf = (*data >> 8);
+		अन्यथा अगर ((addr & 0x3) == 2)
+			*पढ़ो_buf = (*data >> 16);
+		अन्यथा
+			*पढ़ो_buf = (*data >> 24);
+		*पढ़ो_buf = (*पढ़ो_buf & 0xFF);
+	पूर्ण अन्यथा अणु
+		*पढ़ो_buf = *data;
+	पूर्ण
 
 err:
-	kfree(data);
-	return status;
-}
+	kमुक्त(data);
+	वापस status;
+पूर्ण
 
-static int rsi_sdio_master_reg_write(struct rsi_hw *adapter,
-				     unsigned long addr,
-				     unsigned long data, u16 size)
-{
-	unsigned long *data_aligned;
-	int status;
+अटल पूर्णांक rsi_sdio_master_reg_ग_लिखो(काष्ठा rsi_hw *adapter,
+				     अचिन्हित दीर्घ addr,
+				     अचिन्हित दीर्घ data, u16 size)
+अणु
+	अचिन्हित दीर्घ *data_aligned;
+	पूर्णांक status;
 
 	data_aligned = kzalloc(RSI_MASTER_REG_BUF_SIZE, GFP_KERNEL);
-	if (!data_aligned)
-		return -ENOMEM;
+	अगर (!data_aligned)
+		वापस -ENOMEM;
 
-	if (size == 2) {
+	अगर (size == 2) अणु
 		*data_aligned = ((data << 16) | (data & 0xFFFF));
-	} else if (size == 1) {
+	पूर्ण अन्यथा अगर (size == 1) अणु
 		u32 temp_data = data & 0xFF;
 
 		*data_aligned = ((temp_data << 24) | (temp_data << 16) |
 				 (temp_data << 8) | temp_data);
-	} else {
+	पूर्ण अन्यथा अणु
 		*data_aligned = data;
-	}
+	पूर्ण
 	size = 4;
 
 	status = rsi_sdio_master_access_msword(adapter, (addr >> 16));
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Unable to set ms word to common reg\n",
 			__func__);
-		kfree(data_aligned);
-		return -EIO;
-	}
+		kमुक्त(data_aligned);
+		वापस -EIO;
+	पूर्ण
 	addr = addr & 0xFFFF;
 
 	/* Bring TA out of reset */
-	status = rsi_sdio_write_register_multiple
+	status = rsi_sdio_ग_लिखो_रेजिस्टर_multiple
 					(adapter,
 					 (addr | RSI_SD_REQUEST_MASTER),
 					 (u8 *)data_aligned, size);
-	if (status < 0)
+	अगर (status < 0)
 		rsi_dbg(ERR_ZONE,
 			"%s: Unable to do AHB reg write\n", __func__);
 
-	kfree(data_aligned);
-	return status;
-}
+	kमुक्त(data_aligned);
+	वापस status;
+पूर्ण
 
 /**
- * rsi_sdio_host_intf_write_pkt() - This function writes the packet to device.
- * @adapter: Pointer to the adapter structure.
- * @pkt: Pointer to the data to be written on to the device.
+ * rsi_sdio_host_पूर्णांकf_ग_लिखो_pkt() - This function ग_लिखोs the packet to device.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
+ * @pkt: Poपूर्णांकer to the data to be written on to the device.
  * @len: length of the data to be written on to the device.
  *
  * Return: 0 on success, -1 on failure.
  */
-static int rsi_sdio_host_intf_write_pkt(struct rsi_hw *adapter,
+अटल पूर्णांक rsi_sdio_host_पूर्णांकf_ग_लिखो_pkt(काष्ठा rsi_hw *adapter,
 					u8 *pkt,
 					u32 len)
-{
-	struct rsi_91x_sdiodev *dev =
-		(struct rsi_91x_sdiodev *)adapter->rsi_dev;
+अणु
+	काष्ठा rsi_91x_sdiodev *dev =
+		(काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
 	u32 block_size = dev->tx_blk_size;
 	u32 num_blocks, address, length;
 	u32 queueno;
-	int status;
+	पूर्णांक status;
 
 	queueno = ((pkt[1] >> 4) & 0xf);
-	if (queueno == RSI_BT_MGMT_Q || queueno == RSI_BT_DATA_Q)
+	अगर (queueno == RSI_BT_MGMT_Q || queueno == RSI_BT_DATA_Q)
 		queueno = RSI_BT_Q;
 
 	num_blocks = len / block_size;
 
-	if (len % block_size)
+	अगर (len % block_size)
 		num_blocks++;
 
 	address = (num_blocks * block_size | (queueno << 12));
 	length  = num_blocks * block_size;
 
-	status = rsi_sdio_write_register_multiple(adapter,
+	status = rsi_sdio_ग_लिखो_रेजिस्टर_multiple(adapter,
 						  address,
 						  (u8 *)pkt,
 						  length);
-	if (status)
+	अगर (status)
 		rsi_dbg(ERR_ZONE, "%s: Unable to write onto the card: %d\n",
 			__func__, status);
 	rsi_dbg(DATA_TX_ZONE, "%s: Successfully written onto card\n", __func__);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- * rsi_sdio_host_intf_read_pkt() - This function reads the packet
+ * rsi_sdio_host_पूर्णांकf_पढ़ो_pkt() - This function पढ़ोs the packet
  *				   from the device.
- * @adapter: Pointer to the adapter data structure.
- * @pkt: Pointer to the packet data to be read from the the device.
- * @length: Length of the data to be read from the device.
+ * @adapter: Poपूर्णांकer to the adapter data काष्ठाure.
+ * @pkt: Poपूर्णांकer to the packet data to be पढ़ो from the the device.
+ * @length: Length of the data to be पढ़ो from the device.
  *
  * Return: 0 on success, -1 on failure.
  */
-int rsi_sdio_host_intf_read_pkt(struct rsi_hw *adapter,
+पूर्णांक rsi_sdio_host_पूर्णांकf_पढ़ो_pkt(काष्ठा rsi_hw *adapter,
 				u8 *pkt,
 				u32 length)
-{
-	int status = -EINVAL;
+अणु
+	पूर्णांक status = -EINVAL;
 
-	if (!length) {
+	अगर (!length) अणु
 		rsi_dbg(ERR_ZONE, "%s: Pkt size is zero\n", __func__);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	status = rsi_sdio_read_register_multiple(adapter,
+	status = rsi_sdio_पढ़ो_रेजिस्टर_multiple(adapter,
 						 length,
 						 (u8 *)pkt,
 						 length); /*num of bytes*/
 
-	if (status)
+	अगर (status)
 		rsi_dbg(ERR_ZONE, "%s: Failed to read frame: %d\n", __func__,
 			status);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- * rsi_init_sdio_interface() - This function does init specific to SDIO.
+ * rsi_init_sdio_पूर्णांकerface() - This function करोes init specअगरic to SDIO.
  *
- * @adapter: Pointer to the adapter data structure.
- * @pfunction: Pointer to the sdio_func structure.
+ * @adapter: Poपूर्णांकer to the adapter data काष्ठाure.
+ * @pfunction: Poपूर्णांकer to the sdio_func काष्ठाure.
  *
  * Return: 0 on success, -1 on failure.
  */
-static int rsi_init_sdio_interface(struct rsi_hw *adapter,
-				   struct sdio_func *pfunction)
-{
-	struct rsi_91x_sdiodev *rsi_91x_dev;
-	int status;
+अटल पूर्णांक rsi_init_sdio_पूर्णांकerface(काष्ठा rsi_hw *adapter,
+				   काष्ठा sdio_func *pfunction)
+अणु
+	काष्ठा rsi_91x_sdiodev *rsi_91x_dev;
+	पूर्णांक status;
 
-	rsi_91x_dev = kzalloc(sizeof(*rsi_91x_dev), GFP_KERNEL);
-	if (!rsi_91x_dev)
-		return -ENOMEM;
+	rsi_91x_dev = kzalloc(माप(*rsi_91x_dev), GFP_KERNEL);
+	अगर (!rsi_91x_dev)
+		वापस -ENOMEM;
 
 	adapter->rsi_dev = rsi_91x_dev;
 
 	sdio_claim_host(pfunction);
 
-	pfunction->enable_timeout = 100;
+	pfunction->enable_समयout = 100;
 	status = sdio_enable_func(pfunction);
-	if (status) {
+	अगर (status) अणु
 		rsi_dbg(ERR_ZONE, "%s: Failed to enable interface\n", __func__);
 		sdio_release_host(pfunction);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
 	rsi_dbg(INIT_ZONE, "%s: Enabled the interface\n", __func__);
 
@@ -864,40 +865,40 @@ static int rsi_init_sdio_interface(struct rsi_hw *adapter,
 	sdio_set_drvdata(pfunction, adapter);
 
 	status = rsi_setupcard(adapter);
-	if (status) {
+	अगर (status) अणु
 		rsi_dbg(ERR_ZONE, "%s: Failed to setup card\n", __func__);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	rsi_dbg(INIT_ZONE, "%s: Setup card successfully\n", __func__);
 
 	status = rsi_init_sdio_slave_regs(adapter);
-	if (status) {
+	अगर (status) अणु
 		rsi_dbg(ERR_ZONE, "%s: Failed to init slave regs\n", __func__);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	sdio_release_host(pfunction);
 
-	adapter->determine_event_timeout = rsi_sdio_determine_event_timeout;
+	adapter->determine_event_समयout = rsi_sdio_determine_event_समयout;
 	adapter->check_hw_queue_status = rsi_sdio_check_buffer_status;
 
-#ifdef CONFIG_RSI_DEBUGFS
+#अगर_घोषित CONFIG_RSI_DEBUGFS
 	adapter->num_debugfs_entries = MAX_DEBUGFS_ENTRIES;
-#endif
-	return 0;
+#पूर्ण_अगर
+	वापस 0;
 fail:
 	sdio_disable_func(pfunction);
 	sdio_release_host(pfunction);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int rsi_sdio_reinit_device(struct rsi_hw *adapter)
-{
-	struct rsi_91x_sdiodev *sdev = adapter->rsi_dev;
-	struct sdio_func *pfunction = sdev->pfunction;
-	int ii;
+अटल पूर्णांक rsi_sdio_reinit_device(काष्ठा rsi_hw *adapter)
+अणु
+	काष्ठा rsi_91x_sdiodev *sdev = adapter->rsi_dev;
+	काष्ठा sdio_func *pfunction = sdev->pfunction;
+	पूर्णांक ii;
 
-	for (ii = 0; ii < NUM_SOFT_QUEUES; ii++)
+	क्रम (ii = 0; ii < NUM_SOFT_QUEUES; ii++)
 		skb_queue_purge(&adapter->priv->tx_queue[ii]);
 
 	/* Initialize device again */
@@ -909,324 +910,324 @@ static int rsi_sdio_reinit_device(struct rsi_hw *adapter)
 	sdio_enable_func(pfunction);
 	rsi_setupcard(adapter);
 	rsi_init_sdio_slave_regs(adapter);
-	sdio_claim_irq(pfunction, rsi_handle_interrupt);
+	sdio_claim_irq(pfunction, rsi_handle_पूर्णांकerrupt);
 	rsi_hal_device_init(adapter);
 
 	sdio_release_host(pfunction);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsi_sdio_ta_reset(struct rsi_hw *adapter)
-{
-	int status;
+अटल पूर्णांक rsi_sdio_ta_reset(काष्ठा rsi_hw *adapter)
+अणु
+	पूर्णांक status;
 	u32 addr;
 	u8 *data;
 
 	data = kzalloc(RSI_9116_REG_SIZE, GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
 	status = rsi_sdio_master_access_msword(adapter, TA_BASE_ADDR);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"Unable to set ms word to common reg\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	rsi_dbg(INIT_ZONE, "%s: Bring TA out of reset\n", __func__);
 	put_unaligned_le32(TA_HOLD_THREAD_VALUE, data);
 	addr = TA_HOLD_THREAD_REG | RSI_SD_REQUEST_MASTER;
-	status = rsi_sdio_write_register_multiple(adapter, addr,
+	status = rsi_sdio_ग_लिखो_रेजिस्टर_multiple(adapter, addr,
 						  (u8 *)data,
 						  RSI_9116_REG_SIZE);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE, "Unable to hold TA threads\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	put_unaligned_le32(TA_SOFT_RST_CLR, data);
 	addr = TA_SOFT_RESET_REG | RSI_SD_REQUEST_MASTER;
-	status = rsi_sdio_write_register_multiple(adapter, addr,
+	status = rsi_sdio_ग_लिखो_रेजिस्टर_multiple(adapter, addr,
 						  (u8 *)data,
 						  RSI_9116_REG_SIZE);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE, "Unable to get TA out of reset\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	put_unaligned_le32(TA_PC_ZERO, data);
 	addr = TA_TH0_PC_REG | RSI_SD_REQUEST_MASTER;
-	status = rsi_sdio_write_register_multiple(adapter, addr,
+	status = rsi_sdio_ग_लिखो_रेजिस्टर_multiple(adapter, addr,
 						  (u8 *)data,
 						  RSI_9116_REG_SIZE);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE, "Unable to Reset TA PC value\n");
 		status = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	put_unaligned_le32(TA_RELEASE_THREAD_VALUE, data);
 	addr = TA_RELEASE_THREAD_REG | RSI_SD_REQUEST_MASTER;
-	status = rsi_sdio_write_register_multiple(adapter, addr,
+	status = rsi_sdio_ग_लिखो_रेजिस्टर_multiple(adapter, addr,
 						  (u8 *)data,
 						  RSI_9116_REG_SIZE);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE, "Unable to release TA threads\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	status = rsi_sdio_master_access_msword(adapter, MISC_CFG_BASE_ADDR);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE, "Unable to set ms word to common reg\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	rsi_dbg(INIT_ZONE, "***** TA Reset done *****\n");
 
 err:
-	kfree(data);
-	return status;
-}
+	kमुक्त(data);
+	वापस status;
+पूर्ण
 
-static struct rsi_host_intf_ops sdio_host_intf_ops = {
-	.write_pkt		= rsi_sdio_host_intf_write_pkt,
-	.read_pkt		= rsi_sdio_host_intf_read_pkt,
+अटल काष्ठा rsi_host_पूर्णांकf_ops sdio_host_पूर्णांकf_ops = अणु
+	.ग_लिखो_pkt		= rsi_sdio_host_पूर्णांकf_ग_लिखो_pkt,
+	.पढ़ो_pkt		= rsi_sdio_host_पूर्णांकf_पढ़ो_pkt,
 	.master_access_msword	= rsi_sdio_master_access_msword,
-	.read_reg_multiple	= rsi_sdio_read_register_multiple,
-	.write_reg_multiple	= rsi_sdio_write_register_multiple,
-	.master_reg_read	= rsi_sdio_master_reg_read,
-	.master_reg_write	= rsi_sdio_master_reg_write,
-	.load_data_master_write	= rsi_sdio_load_data_master_write,
+	.पढ़ो_reg_multiple	= rsi_sdio_पढ़ो_रेजिस्टर_multiple,
+	.ग_लिखो_reg_multiple	= rsi_sdio_ग_लिखो_रेजिस्टर_multiple,
+	.master_reg_पढ़ो	= rsi_sdio_master_reg_पढ़ो,
+	.master_reg_ग_लिखो	= rsi_sdio_master_reg_ग_लिखो,
+	.load_data_master_ग_लिखो	= rsi_sdio_load_data_master_ग_लिखो,
 	.reinit_device          = rsi_sdio_reinit_device,
 	.ta_reset		= rsi_sdio_ta_reset,
-};
+पूर्ण;
 
 /**
  * rsi_probe() - This function is called by kernel when the driver provided
- *		 Vendor and device IDs are matched. All the initialization
- *		 work is done here.
- * @pfunction: Pointer to the sdio_func structure.
- * @id: Pointer to sdio_device_id structure.
+ *		 Venकरोr and device IDs are matched. All the initialization
+ *		 work is करोne here.
+ * @pfunction: Poपूर्णांकer to the sdio_func काष्ठाure.
+ * @id: Poपूर्णांकer to sdio_device_id काष्ठाure.
  *
  * Return: 0 on success, 1 on failure.
  */
-static int rsi_probe(struct sdio_func *pfunction,
-		     const struct sdio_device_id *id)
-{
-	struct rsi_hw *adapter;
-	struct rsi_91x_sdiodev *sdev;
-	int status = -EINVAL;
+अटल पूर्णांक rsi_probe(काष्ठा sdio_func *pfunction,
+		     स्थिर काष्ठा sdio_device_id *id)
+अणु
+	काष्ठा rsi_hw *adapter;
+	काष्ठा rsi_91x_sdiodev *sdev;
+	पूर्णांक status = -EINVAL;
 
 	rsi_dbg(INIT_ZONE, "%s: Init function called\n", __func__);
 
 	adapter = rsi_91x_init(dev_oper_mode);
-	if (!adapter) {
+	अगर (!adapter) अणु
 		rsi_dbg(ERR_ZONE, "%s: Failed to init os intf ops\n",
 			__func__);
-		return -EINVAL;
-	}
-	adapter->rsi_host_intf = RSI_HOST_INTF_SDIO;
-	adapter->host_intf_ops = &sdio_host_intf_ops;
+		वापस -EINVAL;
+	पूर्ण
+	adapter->rsi_host_पूर्णांकf = RSI_HOST_INTF_SDIO;
+	adapter->host_पूर्णांकf_ops = &sdio_host_पूर्णांकf_ops;
 
-	if (rsi_init_sdio_interface(adapter, pfunction)) {
+	अगर (rsi_init_sdio_पूर्णांकerface(adapter, pfunction)) अणु
 		rsi_dbg(ERR_ZONE, "%s: Failed to init sdio interface\n",
 			__func__);
 		status = -EIO;
-		goto fail_free_adapter;
-	}
+		जाओ fail_मुक्त_adapter;
+	पूर्ण
 
-	if (pfunction->device == SDIO_DEVICE_ID_RSI_9113) {
+	अगर (pfunction->device == SDIO_DEVICE_ID_RSI_9113) अणु
 		rsi_dbg(ERR_ZONE, "%s: 9113 module detected\n", __func__);
 		adapter->device_model = RSI_DEV_9113;
-	} else  if (pfunction->device == SDIO_DEVICE_ID_RSI_9116) {
+	पूर्ण अन्यथा  अगर (pfunction->device == SDIO_DEVICE_ID_RSI_9116) अणु
 		rsi_dbg(ERR_ZONE, "%s: 9116 module detected\n", __func__);
 		adapter->device_model = RSI_DEV_9116;
-	} else {
+	पूर्ण अन्यथा अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Unsupported RSI device id 0x%x\n", __func__,
 			pfunction->device);
-		goto fail_free_adapter;
-	}
+		जाओ fail_मुक्त_adapter;
+	पूर्ण
 
-	sdev = (struct rsi_91x_sdiodev *)adapter->rsi_dev;
-	rsi_init_event(&sdev->rx_thread.event);
-	status = rsi_create_kthread(adapter->priv, &sdev->rx_thread,
-				    rsi_sdio_rx_thread, "SDIO-RX-Thread");
-	if (status) {
+	sdev = (काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
+	rsi_init_event(&sdev->rx_thपढ़ो.event);
+	status = rsi_create_kthपढ़ो(adapter->priv, &sdev->rx_thपढ़ो,
+				    rsi_sdio_rx_thपढ़ो, "SDIO-RX-Thread");
+	अगर (status) अणु
 		rsi_dbg(ERR_ZONE, "%s: Unable to init rx thrd\n", __func__);
-		goto fail_kill_thread;
-	}
+		जाओ fail_समाप्त_thपढ़ो;
+	पूर्ण
 
 	sdio_claim_host(pfunction);
-	if (sdio_claim_irq(pfunction, rsi_handle_interrupt)) {
+	अगर (sdio_claim_irq(pfunction, rsi_handle_पूर्णांकerrupt)) अणु
 		rsi_dbg(ERR_ZONE, "%s: Failed to request IRQ\n", __func__);
 		sdio_release_host(pfunction);
 		status = -EIO;
-		goto fail_claim_irq;
-	}
+		जाओ fail_claim_irq;
+	पूर्ण
 	sdio_release_host(pfunction);
 	rsi_dbg(INIT_ZONE, "%s: Registered Interrupt handler\n", __func__);
 
-	if (rsi_hal_device_init(adapter)) {
+	अगर (rsi_hal_device_init(adapter)) अणु
 		rsi_dbg(ERR_ZONE, "%s: Failed in device init\n", __func__);
 		status = -EINVAL;
-		goto fail_dev_init;
-	}
+		जाओ fail_dev_init;
+	पूर्ण
 	rsi_dbg(INFO_ZONE, "===> RSI Device Init Done <===\n");
 
-	if (rsi_sdio_master_access_msword(adapter, MISC_CFG_BASE_ADDR)) {
+	अगर (rsi_sdio_master_access_msword(adapter, MISC_CFG_BASE_ADDR)) अणु
 		rsi_dbg(ERR_ZONE, "%s: Unable to set ms word reg\n", __func__);
 		status = -EIO;
-		goto fail_dev_init;
-	}
+		जाओ fail_dev_init;
+	पूर्ण
 
 	adapter->priv->hibernate_resume = false;
 	adapter->priv->reinit_hw = false;
-	return 0;
+	वापस 0;
 
 fail_dev_init:
 	sdio_claim_host(pfunction);
 	sdio_release_irq(pfunction);
 	sdio_release_host(pfunction);
 fail_claim_irq:
-	rsi_kill_thread(&sdev->rx_thread);
-fail_kill_thread:
+	rsi_समाप्त_thपढ़ो(&sdev->rx_thपढ़ो);
+fail_समाप्त_thपढ़ो:
 	sdio_claim_host(pfunction);
 	sdio_disable_func(pfunction);
 	sdio_release_host(pfunction);
-fail_free_adapter:
+fail_मुक्त_adapter:
 	rsi_91x_deinit(adapter);
 	rsi_dbg(ERR_ZONE, "%s: Failed in probe...Exiting\n", __func__);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void ulp_read_write(struct rsi_hw *adapter, u16 addr, u32 data,
+अटल व्योम ulp_पढ़ो_ग_लिखो(काष्ठा rsi_hw *adapter, u16 addr, u32 data,
 			   u16 len_in_bits)
-{
-	rsi_sdio_master_reg_write(adapter, RSI_GSPI_DATA_REG1,
+अणु
+	rsi_sdio_master_reg_ग_लिखो(adapter, RSI_GSPI_DATA_REG1,
 				  ((addr << 6) | ((data >> 16) & 0xffff)), 2);
-	rsi_sdio_master_reg_write(adapter, RSI_GSPI_DATA_REG0,
+	rsi_sdio_master_reg_ग_लिखो(adapter, RSI_GSPI_DATA_REG0,
 				  (data & 0xffff), 2);
-	rsi_sdio_master_reg_write(adapter, RSI_GSPI_CTRL_REG0,
+	rsi_sdio_master_reg_ग_लिखो(adapter, RSI_GSPI_CTRL_REG0,
 				  RSI_GSPI_CTRL_REG0_VALUE, 2);
-	rsi_sdio_master_reg_write(adapter, RSI_GSPI_CTRL_REG1,
+	rsi_sdio_master_reg_ग_लिखो(adapter, RSI_GSPI_CTRL_REG1,
 				  ((len_in_bits - 1) | RSI_GSPI_TRIG), 2);
 	msleep(20);
-}
+पूर्ण
 
 /*This function resets and re-initializes the chip.*/
-static void rsi_reset_chip(struct rsi_hw *adapter)
-{
+अटल व्योम rsi_reset_chip(काष्ठा rsi_hw *adapter)
+अणु
 	u8 *data;
-	u8 sdio_interrupt_status = 0;
+	u8 sdio_पूर्णांकerrupt_status = 0;
 	u8 request = 1;
-	int ret;
+	पूर्णांक ret;
 
-	data = kzalloc(sizeof(u32), GFP_KERNEL);
-	if (!data)
-		return;
+	data = kzalloc(माप(u32), GFP_KERNEL);
+	अगर (!data)
+		वापस;
 
 	rsi_dbg(INFO_ZONE, "Writing disable to wakeup register\n");
-	ret =  rsi_sdio_write_register(adapter, 0, SDIO_WAKEUP_REG, &request);
-	if (ret < 0) {
+	ret =  rsi_sdio_ग_लिखो_रेजिस्टर(adapter, 0, SDIO_WAKEUP_REG, &request);
+	अगर (ret < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Failed to write SDIO wakeup register\n", __func__);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	msleep(20);
-	ret =  rsi_sdio_read_register(adapter, RSI_FN1_INT_REGISTER,
-				      &sdio_interrupt_status);
-	if (ret < 0) {
+	ret =  rsi_sdio_पढ़ो_रेजिस्टर(adapter, RSI_FN1_INT_REGISTER,
+				      &sdio_पूर्णांकerrupt_status);
+	अगर (ret < 0) अणु
 		rsi_dbg(ERR_ZONE, "%s: Failed to Read Intr Status Register\n",
 			__func__);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	rsi_dbg(INFO_ZONE, "%s: Intr Status Register value = %d\n",
-		__func__, sdio_interrupt_status);
+		__func__, sdio_पूर्णांकerrupt_status);
 
-	/* Put Thread-Arch processor on hold */
-	if (rsi_sdio_master_access_msword(adapter, TA_BASE_ADDR)) {
+	/* Put Thपढ़ो-Arch processor on hold */
+	अगर (rsi_sdio_master_access_msword(adapter, TA_BASE_ADDR)) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Unable to set ms word to common reg\n",
 			__func__);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	put_unaligned_le32(TA_HOLD_THREAD_VALUE, data);
-	if (rsi_sdio_write_register_multiple(adapter, TA_HOLD_THREAD_REG |
+	अगर (rsi_sdio_ग_लिखो_रेजिस्टर_multiple(adapter, TA_HOLD_THREAD_REG |
 					     RSI_SD_REQUEST_MASTER,
-					     data, 4)) {
+					     data, 4)) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Unable to hold Thread-Arch processor threads\n",
 			__func__);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* This msleep will ensure Thread-Arch processor to go to hold
+	/* This msleep will ensure Thपढ़ो-Arch processor to go to hold
 	 * and any pending dma transfers to rf spi in device to finish.
 	 */
 	msleep(100);
-	if (adapter->device_model != RSI_DEV_9116) {
-		ulp_read_write(adapter, RSI_ULP_RESET_REG, RSI_ULP_WRITE_0, 32);
-		ulp_read_write(adapter,
+	अगर (adapter->device_model != RSI_DEV_9116) अणु
+		ulp_पढ़ो_ग_लिखो(adapter, RSI_ULP_RESET_REG, RSI_ULP_WRITE_0, 32);
+		ulp_पढ़ो_ग_लिखो(adapter,
 			       RSI_WATCH_DOG_TIMER_1, RSI_ULP_WRITE_2, 32);
-		ulp_read_write(adapter, RSI_WATCH_DOG_TIMER_2, RSI_ULP_WRITE_0,
+		ulp_पढ़ो_ग_लिखो(adapter, RSI_WATCH_DOG_TIMER_2, RSI_ULP_WRITE_0,
 			       32);
-		ulp_read_write(adapter, RSI_WATCH_DOG_DELAY_TIMER_1,
+		ulp_पढ़ो_ग_लिखो(adapter, RSI_WATCH_DOG_DELAY_TIMER_1,
 			       RSI_ULP_WRITE_50, 32);
-		ulp_read_write(adapter, RSI_WATCH_DOG_DELAY_TIMER_2,
+		ulp_पढ़ो_ग_लिखो(adapter, RSI_WATCH_DOG_DELAY_TIMER_2,
 			       RSI_ULP_WRITE_0, 32);
-		ulp_read_write(adapter, RSI_WATCH_DOG_TIMER_ENABLE,
+		ulp_पढ़ो_ग_लिखो(adapter, RSI_WATCH_DOG_TIMER_ENABLE,
 			       RSI_ULP_TIMER_ENABLE, 32);
-	} else {
-		if ((rsi_sdio_master_reg_write(adapter,
+	पूर्ण अन्यथा अणु
+		अगर ((rsi_sdio_master_reg_ग_लिखो(adapter,
 					       NWP_WWD_INTERRUPT_TIMER,
 					       NWP_WWD_INT_TIMER_CLKS,
-					       RSI_9116_REG_SIZE)) < 0) {
+					       RSI_9116_REG_SIZE)) < 0) अणु
 			rsi_dbg(ERR_ZONE, "Failed to write to intr timer\n");
-		}
-		if ((rsi_sdio_master_reg_write(adapter,
+		पूर्ण
+		अगर ((rsi_sdio_master_reg_ग_लिखो(adapter,
 					       NWP_WWD_SYSTEM_RESET_TIMER,
 					       NWP_WWD_SYS_RESET_TIMER_CLKS,
-					       RSI_9116_REG_SIZE)) < 0) {
+					       RSI_9116_REG_SIZE)) < 0) अणु
 			rsi_dbg(ERR_ZONE,
 				"Failed to write to system reset timer\n");
-		}
-		if ((rsi_sdio_master_reg_write(adapter,
+		पूर्ण
+		अगर ((rsi_sdio_master_reg_ग_लिखो(adapter,
 					       NWP_WWD_MODE_AND_RSTART,
 					       NWP_WWD_TIMER_DISABLE,
-					       RSI_9116_REG_SIZE)) < 0) {
+					       RSI_9116_REG_SIZE)) < 0) अणु
 			rsi_dbg(ERR_ZONE,
 				"Failed to write to mode and restart\n");
-		}
+		पूर्ण
 		rsi_dbg(ERR_ZONE, "***** Watch Dog Reset Successful *****\n");
-	}
-	/* This msleep will be sufficient for the ulp
-	 * read write operations to complete for chip reset.
+	पूर्ण
+	/* This msleep will be sufficient क्रम the ulp
+	 * पढ़ो ग_लिखो operations to complete क्रम chip reset.
 	 */
 	msleep(500);
 err:
-	kfree(data);
-	return;
-}
+	kमुक्त(data);
+	वापस;
+पूर्ण
 
 /**
- * rsi_disconnect() - This function performs the reverse of the probe function.
- * @pfunction: Pointer to the sdio_func structure.
+ * rsi_disconnect() - This function perक्रमms the reverse of the probe function.
+ * @pfunction: Poपूर्णांकer to the sdio_func काष्ठाure.
  *
- * Return: void.
+ * Return: व्योम.
  */
-static void rsi_disconnect(struct sdio_func *pfunction)
-{
-	struct rsi_hw *adapter = sdio_get_drvdata(pfunction);
-	struct rsi_91x_sdiodev *dev;
+अटल व्योम rsi_disconnect(काष्ठा sdio_func *pfunction)
+अणु
+	काष्ठा rsi_hw *adapter = sdio_get_drvdata(pfunction);
+	काष्ठा rsi_91x_sdiodev *dev;
 
-	if (!adapter)
-		return;
+	अगर (!adapter)
+		वापस;
 
-	dev = (struct rsi_91x_sdiodev *)adapter->rsi_dev;
+	dev = (काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
 
-	rsi_kill_thread(&dev->rx_thread);
+	rsi_समाप्त_thपढ़ो(&dev->rx_thपढ़ो);
 	sdio_claim_host(pfunction);
 	sdio_release_irq(pfunction);
 	sdio_release_host(pfunction);
@@ -1235,339 +1236,339 @@ static void rsi_disconnect(struct sdio_func *pfunction)
 	rsi_mac80211_detach(adapter);
 	mdelay(10);
 
-	if (IS_ENABLED(CONFIG_RSI_COEX) && adapter->priv->coex_mode > 1 &&
-	    adapter->priv->bt_adapter) {
+	अगर (IS_ENABLED(CONFIG_RSI_COEX) && adapter->priv->coex_mode > 1 &&
+	    adapter->priv->bt_adapter) अणु
 		rsi_bt_ops.detach(adapter->priv->bt_adapter);
-		adapter->priv->bt_adapter = NULL;
-	}
+		adapter->priv->bt_adapter = शून्य;
+	पूर्ण
 
 	/* Reset Chip */
 	rsi_reset_chip(adapter);
 
-	/* Resetting to take care of the case, where-in driver is re-loaded */
+	/* Resetting to take care of the हाल, where-in driver is re-loaded */
 	sdio_claim_host(pfunction);
 	rsi_reset_card(pfunction);
 	sdio_disable_func(pfunction);
 	sdio_release_host(pfunction);
-	dev->write_fail = 2;
+	dev->ग_लिखो_fail = 2;
 	rsi_91x_deinit(adapter);
 	rsi_dbg(ERR_ZONE, "##### RSI SDIO device disconnected #####\n");
 
-}
+पूर्ण
 
-#ifdef CONFIG_PM
-static int rsi_set_sdio_pm_caps(struct rsi_hw *adapter)
-{
-	struct rsi_91x_sdiodev *dev =
-		(struct rsi_91x_sdiodev *)adapter->rsi_dev;
-	struct sdio_func *func = dev->pfunction;
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक rsi_set_sdio_pm_caps(काष्ठा rsi_hw *adapter)
+अणु
+	काष्ठा rsi_91x_sdiodev *dev =
+		(काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
+	काष्ठा sdio_func *func = dev->pfunction;
+	पूर्णांक ret;
 
 	ret = sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER);
-	if (ret)
+	अगर (ret)
 		rsi_dbg(ERR_ZONE, "Set sdio keep pwr flag failed: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rsi_sdio_disable_interrupts(struct sdio_func *pfunc)
-{
-	struct rsi_hw *adapter = sdio_get_drvdata(pfunc);
+अटल पूर्णांक rsi_sdio_disable_पूर्णांकerrupts(काष्ठा sdio_func *pfunc)
+अणु
+	काष्ठा rsi_hw *adapter = sdio_get_drvdata(pfunc);
 	u8 isr_status = 0, data = 0;
-	int ret;
-	unsigned long t1;
+	पूर्णांक ret;
+	अचिन्हित दीर्घ t1;
 
 	rsi_dbg(INFO_ZONE, "Waiting for interrupts to be cleared..");
-	t1 = jiffies;
-	do {
-		rsi_sdio_read_register(adapter, RSI_FN1_INT_REGISTER,
+	t1 = jअगरfies;
+	करो अणु
+		rsi_sdio_पढ़ो_रेजिस्टर(adapter, RSI_FN1_INT_REGISTER,
 				       &isr_status);
 		rsi_dbg(INFO_ZONE, ".");
-	} while ((isr_status) && (jiffies_to_msecs(jiffies - t1) < 20));
+	पूर्ण जबतक ((isr_status) && (jअगरfies_to_msecs(jअगरfies - t1) < 20));
 	rsi_dbg(INFO_ZONE, "Interrupts cleared\n");
 
 	sdio_claim_host(pfunc);
-	ret = rsi_cmd52readbyte(pfunc->card, RSI_INT_ENABLE_REGISTER, &data);
-	if (ret < 0) {
+	ret = rsi_cmd52पढ़ोbyte(pfunc->card, RSI_INT_ENABLE_REGISTER, &data);
+	अगर (ret < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Failed to read int enable register\n",
 			__func__);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	data &= RSI_INT_ENABLE_MASK;
-	ret = rsi_cmd52writebyte(pfunc->card, RSI_INT_ENABLE_REGISTER, data);
-	if (ret < 0) {
+	ret = rsi_cmd52ग_लिखोbyte(pfunc->card, RSI_INT_ENABLE_REGISTER, data);
+	अगर (ret < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Failed to write to int enable register\n",
 			__func__);
-		goto done;
-	}
-	ret = rsi_cmd52readbyte(pfunc->card, RSI_INT_ENABLE_REGISTER, &data);
-	if (ret < 0) {
+		जाओ करोne;
+	पूर्ण
+	ret = rsi_cmd52पढ़ोbyte(pfunc->card, RSI_INT_ENABLE_REGISTER, &data);
+	अगर (ret < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Failed to read int enable register\n",
 			__func__);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	rsi_dbg(INFO_ZONE, "int enable reg content = %x\n", data);
 
-done:
+करोne:
 	sdio_release_host(pfunc);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rsi_sdio_enable_interrupts(struct sdio_func *pfunc)
-{
+अटल पूर्णांक rsi_sdio_enable_पूर्णांकerrupts(काष्ठा sdio_func *pfunc)
+अणु
 	u8 data;
-	int ret;
-	struct rsi_hw *adapter = sdio_get_drvdata(pfunc);
-	struct rsi_common *common = adapter->priv;
+	पूर्णांक ret;
+	काष्ठा rsi_hw *adapter = sdio_get_drvdata(pfunc);
+	काष्ठा rsi_common *common = adapter->priv;
 
 	sdio_claim_host(pfunc);
-	ret = rsi_cmd52readbyte(pfunc->card, RSI_INT_ENABLE_REGISTER, &data);
-	if (ret < 0) {
+	ret = rsi_cmd52पढ़ोbyte(pfunc->card, RSI_INT_ENABLE_REGISTER, &data);
+	अगर (ret < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Failed to read int enable register\n", __func__);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	data |= ~RSI_INT_ENABLE_MASK & 0xff;
 
-	ret = rsi_cmd52writebyte(pfunc->card, RSI_INT_ENABLE_REGISTER, data);
-	if (ret < 0) {
+	ret = rsi_cmd52ग_लिखोbyte(pfunc->card, RSI_INT_ENABLE_REGISTER, data);
+	अगर (ret < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Failed to write to int enable register\n",
 			__func__);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if ((common->wow_flags & RSI_WOW_ENABLED) &&
+	अगर ((common->wow_flags & RSI_WOW_ENABLED) &&
 	    (common->wow_flags & RSI_WOW_NO_CONNECTION))
 		rsi_dbg(ERR_ZONE,
 			"##### Device can not wake up through WLAN\n");
 
-	ret = rsi_cmd52readbyte(pfunc->card, RSI_INT_ENABLE_REGISTER, &data);
-	if (ret < 0) {
+	ret = rsi_cmd52पढ़ोbyte(pfunc->card, RSI_INT_ENABLE_REGISTER, &data);
+	अगर (ret < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Failed to read int enable register\n", __func__);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	rsi_dbg(INFO_ZONE, "int enable reg content = %x\n", data);
 
-done:
+करोne:
 	sdio_release_host(pfunc);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rsi_suspend(struct device *dev)
-{
-	int ret;
-	struct sdio_func *pfunction = dev_to_sdio_func(dev);
-	struct rsi_hw *adapter = sdio_get_drvdata(pfunction);
-	struct rsi_common *common;
+अटल पूर्णांक rsi_suspend(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा sdio_func *pfunction = dev_to_sdio_func(dev);
+	काष्ठा rsi_hw *adapter = sdio_get_drvdata(pfunction);
+	काष्ठा rsi_common *common;
 
-	if (!adapter) {
+	अगर (!adapter) अणु
 		rsi_dbg(ERR_ZONE, "Device is not ready\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	common = adapter->priv;
-	rsi_sdio_disable_interrupts(pfunction);
+	rsi_sdio_disable_पूर्णांकerrupts(pfunction);
 
 	ret = rsi_set_sdio_pm_caps(adapter);
-	if (ret)
+	अगर (ret)
 		rsi_dbg(INFO_ZONE,
 			"Setting power management caps failed\n");
 	common->fsm_state = FSM_CARD_NOT_READY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsi_resume(struct device *dev)
-{
-	struct sdio_func *pfunction = dev_to_sdio_func(dev);
-	struct rsi_hw *adapter = sdio_get_drvdata(pfunction);
-	struct rsi_common *common = adapter->priv;
+अटल पूर्णांक rsi_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sdio_func *pfunction = dev_to_sdio_func(dev);
+	काष्ठा rsi_hw *adapter = sdio_get_drvdata(pfunction);
+	काष्ठा rsi_common *common = adapter->priv;
 
 	common->fsm_state = FSM_MAC_INIT_DONE;
-	rsi_sdio_enable_interrupts(pfunction);
+	rsi_sdio_enable_पूर्णांकerrupts(pfunction);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsi_freeze(struct device *dev)
-{
-	int ret;
-	struct sdio_func *pfunction = dev_to_sdio_func(dev);
-	struct rsi_hw *adapter = sdio_get_drvdata(pfunction);
-	struct rsi_common *common;
-	struct rsi_91x_sdiodev *sdev;
+अटल पूर्णांक rsi_मुक्तze(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा sdio_func *pfunction = dev_to_sdio_func(dev);
+	काष्ठा rsi_hw *adapter = sdio_get_drvdata(pfunction);
+	काष्ठा rsi_common *common;
+	काष्ठा rsi_91x_sdiodev *sdev;
 
 	rsi_dbg(INFO_ZONE, "SDIO Bus freeze ===>\n");
 
-	if (!adapter) {
+	अगर (!adapter) अणु
 		rsi_dbg(ERR_ZONE, "Device is not ready\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	common = adapter->priv;
-	sdev = (struct rsi_91x_sdiodev *)adapter->rsi_dev;
+	sdev = (काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
 
-	if ((common->wow_flags & RSI_WOW_ENABLED) &&
+	अगर ((common->wow_flags & RSI_WOW_ENABLED) &&
 	    (common->wow_flags & RSI_WOW_NO_CONNECTION))
 		rsi_dbg(ERR_ZONE,
 			"##### Device can not wake up through WLAN\n");
 
-	if (IS_ENABLED(CONFIG_RSI_COEX) && common->coex_mode > 1 &&
-	    common->bt_adapter) {
+	अगर (IS_ENABLED(CONFIG_RSI_COEX) && common->coex_mode > 1 &&
+	    common->bt_adapter) अणु
 		rsi_bt_ops.detach(common->bt_adapter);
-		common->bt_adapter = NULL;
-	}
+		common->bt_adapter = शून्य;
+	पूर्ण
 
-	ret = rsi_sdio_disable_interrupts(pfunction);
+	ret = rsi_sdio_disable_पूर्णांकerrupts(pfunction);
 
-	if (sdev->write_fail)
+	अगर (sdev->ग_लिखो_fail)
 		rsi_dbg(INFO_ZONE, "###### Device is not ready #######\n");
 
 	ret = rsi_set_sdio_pm_caps(adapter);
-	if (ret)
+	अगर (ret)
 		rsi_dbg(INFO_ZONE, "Setting power management caps failed\n");
 
 	rsi_dbg(INFO_ZONE, "***** RSI module freezed *****\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsi_thaw(struct device *dev)
-{
-	struct sdio_func *pfunction = dev_to_sdio_func(dev);
-	struct rsi_hw *adapter = sdio_get_drvdata(pfunction);
-	struct rsi_common *common = adapter->priv;
+अटल पूर्णांक rsi_thaw(काष्ठा device *dev)
+अणु
+	काष्ठा sdio_func *pfunction = dev_to_sdio_func(dev);
+	काष्ठा rsi_hw *adapter = sdio_get_drvdata(pfunction);
+	काष्ठा rsi_common *common = adapter->priv;
 
 	rsi_dbg(ERR_ZONE, "SDIO Bus thaw =====>\n");
 
 	common->hibernate_resume = true;
 	common->fsm_state = FSM_CARD_NOT_READY;
-	common->iface_down = true;
+	common->अगरace_करोwn = true;
 
-	rsi_sdio_enable_interrupts(pfunction);
+	rsi_sdio_enable_पूर्णांकerrupts(pfunction);
 
 	rsi_dbg(INFO_ZONE, "***** RSI module thaw done *****\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rsi_shutdown(struct device *dev)
-{
-	struct sdio_func *pfunction = dev_to_sdio_func(dev);
-	struct rsi_hw *adapter = sdio_get_drvdata(pfunction);
-	struct rsi_91x_sdiodev *sdev =
-		(struct rsi_91x_sdiodev *)adapter->rsi_dev;
-	struct ieee80211_hw *hw = adapter->hw;
+अटल व्योम rsi_shutकरोwn(काष्ठा device *dev)
+अणु
+	काष्ठा sdio_func *pfunction = dev_to_sdio_func(dev);
+	काष्ठा rsi_hw *adapter = sdio_get_drvdata(pfunction);
+	काष्ठा rsi_91x_sdiodev *sdev =
+		(काष्ठा rsi_91x_sdiodev *)adapter->rsi_dev;
+	काष्ठा ieee80211_hw *hw = adapter->hw;
 
 	rsi_dbg(ERR_ZONE, "SDIO Bus shutdown =====>\n");
 
-	if (hw) {
-		struct cfg80211_wowlan *wowlan = hw->wiphy->wowlan_config;
+	अगर (hw) अणु
+		काष्ठा cfg80211_wowlan *wowlan = hw->wiphy->wowlan_config;
 
-		if (rsi_config_wowlan(adapter, wowlan))
+		अगर (rsi_config_wowlan(adapter, wowlan))
 			rsi_dbg(ERR_ZONE, "Failed to configure WoWLAN\n");
-	}
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_RSI_COEX) && adapter->priv->coex_mode > 1 &&
-	    adapter->priv->bt_adapter) {
+	अगर (IS_ENABLED(CONFIG_RSI_COEX) && adapter->priv->coex_mode > 1 &&
+	    adapter->priv->bt_adapter) अणु
 		rsi_bt_ops.detach(adapter->priv->bt_adapter);
-		adapter->priv->bt_adapter = NULL;
-	}
+		adapter->priv->bt_adapter = शून्य;
+	पूर्ण
 
-	rsi_sdio_disable_interrupts(sdev->pfunction);
+	rsi_sdio_disable_पूर्णांकerrupts(sdev->pfunction);
 
-	if (sdev->write_fail)
+	अगर (sdev->ग_लिखो_fail)
 		rsi_dbg(INFO_ZONE, "###### Device is not ready #######\n");
 
-	if (rsi_set_sdio_pm_caps(adapter))
+	अगर (rsi_set_sdio_pm_caps(adapter))
 		rsi_dbg(INFO_ZONE, "Setting power management caps failed\n");
 
 	rsi_dbg(INFO_ZONE, "***** RSI module shut down *****\n");
-}
+पूर्ण
 
-static int rsi_restore(struct device *dev)
-{
-	struct sdio_func *pfunction = dev_to_sdio_func(dev);
-	struct rsi_hw *adapter = sdio_get_drvdata(pfunction);
-	struct rsi_common *common = adapter->priv;
+अटल पूर्णांक rsi_restore(काष्ठा device *dev)
+अणु
+	काष्ठा sdio_func *pfunction = dev_to_sdio_func(dev);
+	काष्ठा rsi_hw *adapter = sdio_get_drvdata(pfunction);
+	काष्ठा rsi_common *common = adapter->priv;
 
 	rsi_dbg(INFO_ZONE, "SDIO Bus restore ======>\n");
 	common->hibernate_resume = true;
 	common->fsm_state = FSM_FW_NOT_LOADED;
-	common->iface_down = true;
+	common->अगरace_करोwn = true;
 
-	adapter->sc_nvifs = 0;
+	adapter->sc_nvअगरs = 0;
 	adapter->ps_state = PS_NONE;
 
 	common->wow_flags = 0;
-	common->iface_down = false;
+	common->अगरace_करोwn = false;
 
 	rsi_dbg(INFO_ZONE, "RSI module restored\n");
 
-	return 0;
-}
-static const struct dev_pm_ops rsi_pm_ops = {
+	वापस 0;
+पूर्ण
+अटल स्थिर काष्ठा dev_pm_ops rsi_pm_ops = अणु
 	.suspend = rsi_suspend,
 	.resume_noirq = rsi_resume,
-	.freeze = rsi_freeze,
+	.मुक्तze = rsi_मुक्तze,
 	.thaw = rsi_thaw,
 	.restore = rsi_restore,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static const struct sdio_device_id rsi_dev_table[] =  {
-	{ SDIO_DEVICE(SDIO_VENDOR_ID_RSI, SDIO_DEVICE_ID_RSI_9113) },
-	{ SDIO_DEVICE(SDIO_VENDOR_ID_RSI, SDIO_DEVICE_ID_RSI_9116) },
-	{ /* Blank */},
-};
+अटल स्थिर काष्ठा sdio_device_id rsi_dev_table[] =  अणु
+	अणु SDIO_DEVICE(SDIO_VENDOR_ID_RSI, SDIO_DEVICE_ID_RSI_9113) पूर्ण,
+	अणु SDIO_DEVICE(SDIO_VENDOR_ID_RSI, SDIO_DEVICE_ID_RSI_9116) पूर्ण,
+	अणु /* Blank */पूर्ण,
+पूर्ण;
 
-static struct sdio_driver rsi_driver = {
+अटल काष्ठा sdio_driver rsi_driver = अणु
 	.name       = "RSI-SDIO WLAN",
 	.probe      = rsi_probe,
-	.remove     = rsi_disconnect,
+	.हटाओ     = rsi_disconnect,
 	.id_table   = rsi_dev_table,
-#ifdef CONFIG_PM
-	.drv = {
+#अगर_घोषित CONFIG_PM
+	.drv = अणु
 		.pm = &rsi_pm_ops,
-		.shutdown   = rsi_shutdown,
-	}
-#endif
-};
+		.shutकरोwn   = rsi_shutकरोwn,
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण;
 
 /**
- * rsi_module_init() - This function registers the sdio module.
- * @void: Void.
+ * rsi_module_init() - This function रेजिस्टरs the sdio module.
+ * @व्योम: Void.
  *
  * Return: 0 on success.
  */
-static int rsi_module_init(void)
-{
-	int ret;
+अटल पूर्णांक rsi_module_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = sdio_register_driver(&rsi_driver);
+	ret = sdio_रेजिस्टर_driver(&rsi_driver);
 	rsi_dbg(INIT_ZONE, "%s: Registering driver\n", __func__);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * rsi_module_exit() - This function unregisters the sdio module.
- * @void: Void.
+ * rsi_module_निकास() - This function unरेजिस्टरs the sdio module.
+ * @व्योम: Void.
  *
  * Return: None.
  */
-static void rsi_module_exit(void)
-{
-	sdio_unregister_driver(&rsi_driver);
+अटल व्योम rsi_module_निकास(व्योम)
+अणु
+	sdio_unरेजिस्टर_driver(&rsi_driver);
 	rsi_dbg(INFO_ZONE, "%s: Unregistering driver\n", __func__);
-}
+पूर्ण
 
 module_init(rsi_module_init);
-module_exit(rsi_module_exit);
+module_निकास(rsi_module_निकास);
 
 MODULE_AUTHOR("Redpine Signals Inc");
 MODULE_DESCRIPTION("Common SDIO layer for RSI drivers");

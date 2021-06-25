@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2006 Intel Corporation.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,307 +31,307 @@
  * SOFTWARE.
  */
 
-#include <linux/completion.h>
-#include <linux/dma-mapping.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/bitops.h>
-#include <linux/random.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/अक्रमom.h>
 
-#include <rdma/ib_cache.h>
-#include "sa.h"
+#समावेश <rdma/ib_cache.h>
+#समावेश "sa.h"
 
-static int mcast_add_one(struct ib_device *device);
-static void mcast_remove_one(struct ib_device *device, void *client_data);
+अटल पूर्णांक mcast_add_one(काष्ठा ib_device *device);
+अटल व्योम mcast_हटाओ_one(काष्ठा ib_device *device, व्योम *client_data);
 
-static struct ib_client mcast_client = {
+अटल काष्ठा ib_client mcast_client = अणु
 	.name   = "ib_multicast",
 	.add    = mcast_add_one,
-	.remove = mcast_remove_one
-};
+	.हटाओ = mcast_हटाओ_one
+पूर्ण;
 
-static struct ib_sa_client	sa_client;
-static struct workqueue_struct	*mcast_wq;
-static union ib_gid mgid0;
+अटल काष्ठा ib_sa_client	sa_client;
+अटल काष्ठा workqueue_काष्ठा	*mcast_wq;
+अटल जोड़ ib_gid mgid0;
 
-struct mcast_device;
+काष्ठा mcast_device;
 
-struct mcast_port {
-	struct mcast_device	*dev;
+काष्ठा mcast_port अणु
+	काष्ठा mcast_device	*dev;
 	spinlock_t		lock;
-	struct rb_root		table;
+	काष्ठा rb_root		table;
 	atomic_t		refcount;
-	struct completion	comp;
+	काष्ठा completion	comp;
 	u32			port_num;
-};
+पूर्ण;
 
-struct mcast_device {
-	struct ib_device	*device;
-	struct ib_event_handler	event_handler;
-	int			start_port;
-	int			end_port;
-	struct mcast_port	port[];
-};
+काष्ठा mcast_device अणु
+	काष्ठा ib_device	*device;
+	काष्ठा ib_event_handler	event_handler;
+	पूर्णांक			start_port;
+	पूर्णांक			end_port;
+	काष्ठा mcast_port	port[];
+पूर्ण;
 
-enum mcast_state {
+क्रमागत mcast_state अणु
 	MCAST_JOINING,
 	MCAST_MEMBER,
 	MCAST_ERROR,
-};
+पूर्ण;
 
-enum mcast_group_state {
+क्रमागत mcast_group_state अणु
 	MCAST_IDLE,
 	MCAST_BUSY,
 	MCAST_GROUP_ERROR,
 	MCAST_PKEY_EVENT
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MCAST_INVALID_PKEY_INDEX = 0xFFFF
-};
+पूर्ण;
 
-struct mcast_member;
+काष्ठा mcast_member;
 
-struct mcast_group {
-	struct ib_sa_mcmember_rec rec;
-	struct rb_node		node;
-	struct mcast_port	*port;
+काष्ठा mcast_group अणु
+	काष्ठा ib_sa_mcmember_rec rec;
+	काष्ठा rb_node		node;
+	काष्ठा mcast_port	*port;
 	spinlock_t		lock;
-	struct work_struct	work;
-	struct list_head	pending_list;
-	struct list_head	active_list;
-	struct mcast_member	*last_join;
-	int			members[NUM_JOIN_MEMBERSHIP_TYPES];
+	काष्ठा work_काष्ठा	work;
+	काष्ठा list_head	pending_list;
+	काष्ठा list_head	active_list;
+	काष्ठा mcast_member	*last_join;
+	पूर्णांक			members[NUM_JOIN_MEMBERSHIP_TYPES];
 	atomic_t		refcount;
-	enum mcast_group_state	state;
-	struct ib_sa_query	*query;
+	क्रमागत mcast_group_state	state;
+	काष्ठा ib_sa_query	*query;
 	u16			pkey_index;
 	u8			leave_state;
-	int			retries;
-};
+	पूर्णांक			retries;
+पूर्ण;
 
-struct mcast_member {
-	struct ib_sa_multicast	multicast;
-	struct ib_sa_client	*client;
-	struct mcast_group	*group;
-	struct list_head	list;
-	enum mcast_state	state;
+काष्ठा mcast_member अणु
+	काष्ठा ib_sa_multicast	multicast;
+	काष्ठा ib_sa_client	*client;
+	काष्ठा mcast_group	*group;
+	काष्ठा list_head	list;
+	क्रमागत mcast_state	state;
 	atomic_t		refcount;
-	struct completion	comp;
-};
+	काष्ठा completion	comp;
+पूर्ण;
 
-static void join_handler(int status, struct ib_sa_mcmember_rec *rec,
-			 void *context);
-static void leave_handler(int status, struct ib_sa_mcmember_rec *rec,
-			  void *context);
+अटल व्योम join_handler(पूर्णांक status, काष्ठा ib_sa_mcmember_rec *rec,
+			 व्योम *context);
+अटल व्योम leave_handler(पूर्णांक status, काष्ठा ib_sa_mcmember_rec *rec,
+			  व्योम *context);
 
-static struct mcast_group *mcast_find(struct mcast_port *port,
-				      union ib_gid *mgid)
-{
-	struct rb_node *node = port->table.rb_node;
-	struct mcast_group *group;
-	int ret;
+अटल काष्ठा mcast_group *mcast_find(काष्ठा mcast_port *port,
+				      जोड़ ib_gid *mgid)
+अणु
+	काष्ठा rb_node *node = port->table.rb_node;
+	काष्ठा mcast_group *group;
+	पूर्णांक ret;
 
-	while (node) {
-		group = rb_entry(node, struct mcast_group, node);
-		ret = memcmp(mgid->raw, group->rec.mgid.raw, sizeof *mgid);
-		if (!ret)
-			return group;
+	जबतक (node) अणु
+		group = rb_entry(node, काष्ठा mcast_group, node);
+		ret = स_भेद(mgid->raw, group->rec.mgid.raw, माप *mgid);
+		अगर (!ret)
+			वापस group;
 
-		if (ret < 0)
+		अगर (ret < 0)
 			node = node->rb_left;
-		else
+		अन्यथा
 			node = node->rb_right;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct mcast_group *mcast_insert(struct mcast_port *port,
-					struct mcast_group *group,
-					int allow_duplicates)
-{
-	struct rb_node **link = &port->table.rb_node;
-	struct rb_node *parent = NULL;
-	struct mcast_group *cur_group;
-	int ret;
+अटल काष्ठा mcast_group *mcast_insert(काष्ठा mcast_port *port,
+					काष्ठा mcast_group *group,
+					पूर्णांक allow_duplicates)
+अणु
+	काष्ठा rb_node **link = &port->table.rb_node;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा mcast_group *cur_group;
+	पूर्णांक ret;
 
-	while (*link) {
+	जबतक (*link) अणु
 		parent = *link;
-		cur_group = rb_entry(parent, struct mcast_group, node);
+		cur_group = rb_entry(parent, काष्ठा mcast_group, node);
 
-		ret = memcmp(group->rec.mgid.raw, cur_group->rec.mgid.raw,
-			     sizeof group->rec.mgid);
-		if (ret < 0)
+		ret = स_भेद(group->rec.mgid.raw, cur_group->rec.mgid.raw,
+			     माप group->rec.mgid);
+		अगर (ret < 0)
 			link = &(*link)->rb_left;
-		else if (ret > 0)
+		अन्यथा अगर (ret > 0)
 			link = &(*link)->rb_right;
-		else if (allow_duplicates)
+		अन्यथा अगर (allow_duplicates)
 			link = &(*link)->rb_left;
-		else
-			return cur_group;
-	}
+		अन्यथा
+			वापस cur_group;
+	पूर्ण
 	rb_link_node(&group->node, parent, link);
 	rb_insert_color(&group->node, &port->table);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void deref_port(struct mcast_port *port)
-{
-	if (atomic_dec_and_test(&port->refcount))
+अटल व्योम deref_port(काष्ठा mcast_port *port)
+अणु
+	अगर (atomic_dec_and_test(&port->refcount))
 		complete(&port->comp);
-}
+पूर्ण
 
-static void release_group(struct mcast_group *group)
-{
-	struct mcast_port *port = group->port;
-	unsigned long flags;
+अटल व्योम release_group(काष्ठा mcast_group *group)
+अणु
+	काष्ठा mcast_port *port = group->port;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
-	if (atomic_dec_and_test(&group->refcount)) {
+	अगर (atomic_dec_and_test(&group->refcount)) अणु
 		rb_erase(&group->node, &port->table);
 		spin_unlock_irqrestore(&port->lock, flags);
-		kfree(group);
+		kमुक्त(group);
 		deref_port(port);
-	} else
+	पूर्ण अन्यथा
 		spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void deref_member(struct mcast_member *member)
-{
-	if (atomic_dec_and_test(&member->refcount))
+अटल व्योम deref_member(काष्ठा mcast_member *member)
+अणु
+	अगर (atomic_dec_and_test(&member->refcount))
 		complete(&member->comp);
-}
+पूर्ण
 
-static void queue_join(struct mcast_member *member)
-{
-	struct mcast_group *group = member->group;
-	unsigned long flags;
+अटल व्योम queue_join(काष्ठा mcast_member *member)
+अणु
+	काष्ठा mcast_group *group = member->group;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&group->lock, flags);
 	list_add_tail(&member->list, &group->pending_list);
-	if (group->state == MCAST_IDLE) {
+	अगर (group->state == MCAST_IDLE) अणु
 		group->state = MCAST_BUSY;
 		atomic_inc(&group->refcount);
 		queue_work(mcast_wq, &group->work);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&group->lock, flags);
-}
+पूर्ण
 
 /*
  * A multicast group has four types of members: full member, non member,
- * sendonly non member and sendonly full member.
+ * senकरोnly non member and senकरोnly full member.
  * We need to keep track of the number of members of each
- * type based on their join state.  Adjust the number of members the belong to
- * the specified join states.
+ * type based on their join state.  Adjust the number of members the beदीर्घ to
+ * the specअगरied join states.
  */
-static void adjust_membership(struct mcast_group *group, u8 join_state, int inc)
-{
-	int i;
+अटल व्योम adjust_membership(काष्ठा mcast_group *group, u8 join_state, पूर्णांक inc)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NUM_JOIN_MEMBERSHIP_TYPES; i++, join_state >>= 1)
-		if (join_state & 0x1)
+	क्रम (i = 0; i < NUM_JOIN_MEMBERSHIP_TYPES; i++, join_state >>= 1)
+		अगर (join_state & 0x1)
 			group->members[i] += inc;
-}
+पूर्ण
 
 /*
- * If a multicast group has zero members left for a particular join state, but
+ * If a multicast group has zero members left क्रम a particular join state, but
  * the group is still a member with the SA, we need to leave that join state.
- * Determine which join states we still belong to, but that do not have any
+ * Determine which join states we still beदीर्घ to, but that करो not have any
  * active members.
  */
-static u8 get_leave_state(struct mcast_group *group)
-{
+अटल u8 get_leave_state(काष्ठा mcast_group *group)
+अणु
 	u8 leave_state = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < NUM_JOIN_MEMBERSHIP_TYPES; i++)
-		if (!group->members[i])
+	क्रम (i = 0; i < NUM_JOIN_MEMBERSHIP_TYPES; i++)
+		अगर (!group->members[i])
 			leave_state |= (0x1 << i);
 
-	return leave_state & group->rec.join_state;
-}
+	वापस leave_state & group->rec.join_state;
+पूर्ण
 
-static int check_selector(ib_sa_comp_mask comp_mask,
+अटल पूर्णांक check_selector(ib_sa_comp_mask comp_mask,
 			  ib_sa_comp_mask selector_mask,
 			  ib_sa_comp_mask value_mask,
 			  u8 selector, u8 src_value, u8 dst_value)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
-	if (!(comp_mask & selector_mask) || !(comp_mask & value_mask))
-		return 0;
+	अगर (!(comp_mask & selector_mask) || !(comp_mask & value_mask))
+		वापस 0;
 
-	switch (selector) {
-	case IB_SA_GT:
+	चयन (selector) अणु
+	हाल IB_SA_GT:
 		err = (src_value <= dst_value);
-		break;
-	case IB_SA_LT:
+		अवरोध;
+	हाल IB_SA_LT:
 		err = (src_value >= dst_value);
-		break;
-	case IB_SA_EQ:
+		अवरोध;
+	हाल IB_SA_EQ:
 		err = (src_value != dst_value);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int cmp_rec(struct ib_sa_mcmember_rec *src,
-		   struct ib_sa_mcmember_rec *dst, ib_sa_comp_mask comp_mask)
-{
-	/* MGID must already match */
+अटल पूर्णांक cmp_rec(काष्ठा ib_sa_mcmember_rec *src,
+		   काष्ठा ib_sa_mcmember_rec *dst, ib_sa_comp_mask comp_mask)
+अणु
+	/* MGID must alपढ़ोy match */
 
-	if (comp_mask & IB_SA_MCMEMBER_REC_PORT_GID &&
-	    memcmp(&src->port_gid, &dst->port_gid, sizeof src->port_gid))
-		return -EINVAL;
-	if (comp_mask & IB_SA_MCMEMBER_REC_QKEY && src->qkey != dst->qkey)
-		return -EINVAL;
-	if (comp_mask & IB_SA_MCMEMBER_REC_MLID && src->mlid != dst->mlid)
-		return -EINVAL;
-	if (check_selector(comp_mask, IB_SA_MCMEMBER_REC_MTU_SELECTOR,
+	अगर (comp_mask & IB_SA_MCMEMBER_REC_PORT_GID &&
+	    स_भेद(&src->port_gid, &dst->port_gid, माप src->port_gid))
+		वापस -EINVAL;
+	अगर (comp_mask & IB_SA_MCMEMBER_REC_QKEY && src->qkey != dst->qkey)
+		वापस -EINVAL;
+	अगर (comp_mask & IB_SA_MCMEMBER_REC_MLID && src->mlid != dst->mlid)
+		वापस -EINVAL;
+	अगर (check_selector(comp_mask, IB_SA_MCMEMBER_REC_MTU_SELECTOR,
 			   IB_SA_MCMEMBER_REC_MTU, dst->mtu_selector,
 			   src->mtu, dst->mtu))
-		return -EINVAL;
-	if (comp_mask & IB_SA_MCMEMBER_REC_TRAFFIC_CLASS &&
+		वापस -EINVAL;
+	अगर (comp_mask & IB_SA_MCMEMBER_REC_TRAFFIC_CLASS &&
 	    src->traffic_class != dst->traffic_class)
-		return -EINVAL;
-	if (comp_mask & IB_SA_MCMEMBER_REC_PKEY && src->pkey != dst->pkey)
-		return -EINVAL;
-	if (check_selector(comp_mask, IB_SA_MCMEMBER_REC_RATE_SELECTOR,
+		वापस -EINVAL;
+	अगर (comp_mask & IB_SA_MCMEMBER_REC_PKEY && src->pkey != dst->pkey)
+		वापस -EINVAL;
+	अगर (check_selector(comp_mask, IB_SA_MCMEMBER_REC_RATE_SELECTOR,
 			   IB_SA_MCMEMBER_REC_RATE, dst->rate_selector,
 			   src->rate, dst->rate))
-		return -EINVAL;
-	if (check_selector(comp_mask,
+		वापस -EINVAL;
+	अगर (check_selector(comp_mask,
 			   IB_SA_MCMEMBER_REC_PACKET_LIFE_TIME_SELECTOR,
 			   IB_SA_MCMEMBER_REC_PACKET_LIFE_TIME,
-			   dst->packet_life_time_selector,
-			   src->packet_life_time, dst->packet_life_time))
-		return -EINVAL;
-	if (comp_mask & IB_SA_MCMEMBER_REC_SL && src->sl != dst->sl)
-		return -EINVAL;
-	if (comp_mask & IB_SA_MCMEMBER_REC_FLOW_LABEL &&
+			   dst->packet_lअगरe_समय_selector,
+			   src->packet_lअगरe_समय, dst->packet_lअगरe_समय))
+		वापस -EINVAL;
+	अगर (comp_mask & IB_SA_MCMEMBER_REC_SL && src->sl != dst->sl)
+		वापस -EINVAL;
+	अगर (comp_mask & IB_SA_MCMEMBER_REC_FLOW_LABEL &&
 	    src->flow_label != dst->flow_label)
-		return -EINVAL;
-	if (comp_mask & IB_SA_MCMEMBER_REC_HOP_LIMIT &&
+		वापस -EINVAL;
+	अगर (comp_mask & IB_SA_MCMEMBER_REC_HOP_LIMIT &&
 	    src->hop_limit != dst->hop_limit)
-		return -EINVAL;
-	if (comp_mask & IB_SA_MCMEMBER_REC_SCOPE && src->scope != dst->scope)
-		return -EINVAL;
+		वापस -EINVAL;
+	अगर (comp_mask & IB_SA_MCMEMBER_REC_SCOPE && src->scope != dst->scope)
+		वापस -EINVAL;
 
 	/* join_state checked separately, proxy_join ignored */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int send_join(struct mcast_group *group, struct mcast_member *member)
-{
-	struct mcast_port *port = group->port;
-	int ret;
+अटल पूर्णांक send_join(काष्ठा mcast_group *group, काष्ठा mcast_member *member)
+अणु
+	काष्ठा mcast_port *port = group->port;
+	पूर्णांक ret;
 
 	group->last_join = member;
 	ret = ib_sa_mcmember_rec_query(&sa_client, port->dev->device,
@@ -339,14 +340,14 @@ static int send_join(struct mcast_group *group, struct mcast_member *member)
 				       member->multicast.comp_mask,
 				       3000, GFP_KERNEL, join_handler, group,
 				       &group->query);
-	return (ret > 0) ? 0 : ret;
-}
+	वापस (ret > 0) ? 0 : ret;
+पूर्ण
 
-static int send_leave(struct mcast_group *group, u8 leave_state)
-{
-	struct mcast_port *port = group->port;
-	struct ib_sa_mcmember_rec rec;
-	int ret;
+अटल पूर्णांक send_leave(काष्ठा mcast_group *group, u8 leave_state)
+अणु
+	काष्ठा mcast_port *port = group->port;
+	काष्ठा ib_sa_mcmember_rec rec;
+	पूर्णांक ret;
 
 	rec = group->rec;
 	rec.join_state = leave_state;
@@ -359,48 +360,48 @@ static int send_leave(struct mcast_group *group, u8 leave_state)
 				       IB_SA_MCMEMBER_REC_JOIN_STATE,
 				       3000, GFP_KERNEL, leave_handler,
 				       group, &group->query);
-	return (ret > 0) ? 0 : ret;
-}
+	वापस (ret > 0) ? 0 : ret;
+पूर्ण
 
-static void join_group(struct mcast_group *group, struct mcast_member *member,
+अटल व्योम join_group(काष्ठा mcast_group *group, काष्ठा mcast_member *member,
 		       u8 join_state)
-{
+अणु
 	member->state = MCAST_MEMBER;
 	adjust_membership(group, join_state, 1);
 	group->rec.join_state |= join_state;
 	member->multicast.rec = group->rec;
 	member->multicast.rec.join_state = join_state;
 	list_move(&member->list, &group->active_list);
-}
+पूर्ण
 
-static int fail_join(struct mcast_group *group, struct mcast_member *member,
-		     int status)
-{
+अटल पूर्णांक fail_join(काष्ठा mcast_group *group, काष्ठा mcast_member *member,
+		     पूर्णांक status)
+अणु
 	spin_lock_irq(&group->lock);
 	list_del_init(&member->list);
 	spin_unlock_irq(&group->lock);
-	return member->multicast.callback(status, &member->multicast);
-}
+	वापस member->multicast.callback(status, &member->multicast);
+पूर्ण
 
-static void process_group_error(struct mcast_group *group)
-{
-	struct mcast_member *member;
-	int ret = 0;
+अटल व्योम process_group_error(काष्ठा mcast_group *group)
+अणु
+	काष्ठा mcast_member *member;
+	पूर्णांक ret = 0;
 	u16 pkey_index;
 
-	if (group->state == MCAST_PKEY_EVENT)
+	अगर (group->state == MCAST_PKEY_EVENT)
 		ret = ib_find_pkey(group->port->dev->device,
 				   group->port->port_num,
 				   be16_to_cpu(group->rec.pkey), &pkey_index);
 
 	spin_lock_irq(&group->lock);
-	if (group->state == MCAST_PKEY_EVENT && !ret &&
+	अगर (group->state == MCAST_PKEY_EVENT && !ret &&
 	    group->pkey_index == pkey_index)
-		goto out;
+		जाओ out;
 
-	while (!list_empty(&group->active_list)) {
+	जबतक (!list_empty(&group->active_list)) अणु
 		member = list_entry(group->active_list.next,
-				    struct mcast_member, list);
+				    काष्ठा mcast_member, list);
 		atomic_inc(&member->refcount);
 		list_del_init(&member->list);
 		adjust_membership(group, member->multicast.rec.join_state, -1);
@@ -410,169 +411,169 @@ static void process_group_error(struct mcast_group *group)
 		ret = member->multicast.callback(-ENETRESET,
 						 &member->multicast);
 		deref_member(member);
-		if (ret)
-			ib_sa_free_multicast(&member->multicast);
+		अगर (ret)
+			ib_sa_मुक्त_multicast(&member->multicast);
 		spin_lock_irq(&group->lock);
-	}
+	पूर्ण
 
 	group->rec.join_state = 0;
 out:
 	group->state = MCAST_BUSY;
 	spin_unlock_irq(&group->lock);
-}
+पूर्ण
 
-static void mcast_work_handler(struct work_struct *work)
-{
-	struct mcast_group *group;
-	struct mcast_member *member;
-	struct ib_sa_multicast *multicast;
-	int status, ret;
+अटल व्योम mcast_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mcast_group *group;
+	काष्ठा mcast_member *member;
+	काष्ठा ib_sa_multicast *multicast;
+	पूर्णांक status, ret;
 	u8 join_state;
 
 	group = container_of(work, typeof(*group), work);
 retest:
 	spin_lock_irq(&group->lock);
-	while (!list_empty(&group->pending_list) ||
-	       (group->state != MCAST_BUSY)) {
+	जबतक (!list_empty(&group->pending_list) ||
+	       (group->state != MCAST_BUSY)) अणु
 
-		if (group->state != MCAST_BUSY) {
+		अगर (group->state != MCAST_BUSY) अणु
 			spin_unlock_irq(&group->lock);
 			process_group_error(group);
-			goto retest;
-		}
+			जाओ retest;
+		पूर्ण
 
 		member = list_entry(group->pending_list.next,
-				    struct mcast_member, list);
+				    काष्ठा mcast_member, list);
 		multicast = &member->multicast;
 		join_state = multicast->rec.join_state;
 		atomic_inc(&member->refcount);
 
-		if (join_state == (group->rec.join_state & join_state)) {
+		अगर (join_state == (group->rec.join_state & join_state)) अणु
 			status = cmp_rec(&group->rec, &multicast->rec,
 					 multicast->comp_mask);
-			if (!status)
+			अगर (!status)
 				join_group(group, member, join_state);
-			else
+			अन्यथा
 				list_del_init(&member->list);
 			spin_unlock_irq(&group->lock);
 			ret = multicast->callback(status, multicast);
-		} else {
+		पूर्ण अन्यथा अणु
 			spin_unlock_irq(&group->lock);
 			status = send_join(group, member);
-			if (!status) {
+			अगर (!status) अणु
 				deref_member(member);
-				return;
-			}
+				वापस;
+			पूर्ण
 			ret = fail_join(group, member, status);
-		}
+		पूर्ण
 
 		deref_member(member);
-		if (ret)
-			ib_sa_free_multicast(&member->multicast);
+		अगर (ret)
+			ib_sa_मुक्त_multicast(&member->multicast);
 		spin_lock_irq(&group->lock);
-	}
+	पूर्ण
 
 	join_state = get_leave_state(group);
-	if (join_state) {
+	अगर (join_state) अणु
 		group->rec.join_state &= ~join_state;
 		spin_unlock_irq(&group->lock);
-		if (send_leave(group, join_state))
-			goto retest;
-	} else {
+		अगर (send_leave(group, join_state))
+			जाओ retest;
+	पूर्ण अन्यथा अणु
 		group->state = MCAST_IDLE;
 		spin_unlock_irq(&group->lock);
 		release_group(group);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Fail a join request if it is still active - at the head of the pending queue.
+ * Fail a join request अगर it is still active - at the head of the pending queue.
  */
-static void process_join_error(struct mcast_group *group, int status)
-{
-	struct mcast_member *member;
-	int ret;
+अटल व्योम process_join_error(काष्ठा mcast_group *group, पूर्णांक status)
+अणु
+	काष्ठा mcast_member *member;
+	पूर्णांक ret;
 
 	spin_lock_irq(&group->lock);
 	member = list_entry(group->pending_list.next,
-			    struct mcast_member, list);
-	if (group->last_join == member) {
+			    काष्ठा mcast_member, list);
+	अगर (group->last_join == member) अणु
 		atomic_inc(&member->refcount);
 		list_del_init(&member->list);
 		spin_unlock_irq(&group->lock);
 		ret = member->multicast.callback(status, &member->multicast);
 		deref_member(member);
-		if (ret)
-			ib_sa_free_multicast(&member->multicast);
-	} else
+		अगर (ret)
+			ib_sa_मुक्त_multicast(&member->multicast);
+	पूर्ण अन्यथा
 		spin_unlock_irq(&group->lock);
-}
+पूर्ण
 
-static void join_handler(int status, struct ib_sa_mcmember_rec *rec,
-			 void *context)
-{
-	struct mcast_group *group = context;
+अटल व्योम join_handler(पूर्णांक status, काष्ठा ib_sa_mcmember_rec *rec,
+			 व्योम *context)
+अणु
+	काष्ठा mcast_group *group = context;
 	u16 pkey_index = MCAST_INVALID_PKEY_INDEX;
 
-	if (status)
+	अगर (status)
 		process_join_error(group, status);
-	else {
-		int mgids_changed, is_mgid0;
+	अन्यथा अणु
+		पूर्णांक mgids_changed, is_mgid0;
 
-		if (ib_find_pkey(group->port->dev->device,
+		अगर (ib_find_pkey(group->port->dev->device,
 				 group->port->port_num, be16_to_cpu(rec->pkey),
 				 &pkey_index))
 			pkey_index = MCAST_INVALID_PKEY_INDEX;
 
 		spin_lock_irq(&group->port->lock);
-		if (group->state == MCAST_BUSY &&
+		अगर (group->state == MCAST_BUSY &&
 		    group->pkey_index == MCAST_INVALID_PKEY_INDEX)
 			group->pkey_index = pkey_index;
-		mgids_changed = memcmp(&rec->mgid, &group->rec.mgid,
-				       sizeof(group->rec.mgid));
+		mgids_changed = स_भेद(&rec->mgid, &group->rec.mgid,
+				       माप(group->rec.mgid));
 		group->rec = *rec;
-		if (mgids_changed) {
+		अगर (mgids_changed) अणु
 			rb_erase(&group->node, &group->port->table);
-			is_mgid0 = !memcmp(&mgid0, &group->rec.mgid,
-					   sizeof(mgid0));
+			is_mgid0 = !स_भेद(&mgid0, &group->rec.mgid,
+					   माप(mgid0));
 			mcast_insert(group->port, group, is_mgid0);
-		}
+		पूर्ण
 		spin_unlock_irq(&group->port->lock);
-	}
+	पूर्ण
 	mcast_work_handler(&group->work);
-}
+पूर्ण
 
-static void leave_handler(int status, struct ib_sa_mcmember_rec *rec,
-			  void *context)
-{
-	struct mcast_group *group = context;
+अटल व्योम leave_handler(पूर्णांक status, काष्ठा ib_sa_mcmember_rec *rec,
+			  व्योम *context)
+अणु
+	काष्ठा mcast_group *group = context;
 
-	if (status && group->retries > 0 &&
+	अगर (status && group->retries > 0 &&
 	    !send_leave(group, group->leave_state))
 		group->retries--;
-	else
+	अन्यथा
 		mcast_work_handler(&group->work);
-}
+पूर्ण
 
-static struct mcast_group *acquire_group(struct mcast_port *port,
-					 union ib_gid *mgid, gfp_t gfp_mask)
-{
-	struct mcast_group *group, *cur_group;
-	unsigned long flags;
-	int is_mgid0;
+अटल काष्ठा mcast_group *acquire_group(काष्ठा mcast_port *port,
+					 जोड़ ib_gid *mgid, gfp_t gfp_mask)
+अणु
+	काष्ठा mcast_group *group, *cur_group;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक is_mgid0;
 
-	is_mgid0 = !memcmp(&mgid0, mgid, sizeof mgid0);
-	if (!is_mgid0) {
+	is_mgid0 = !स_भेद(&mgid0, mgid, माप mgid0);
+	अगर (!is_mgid0) अणु
 		spin_lock_irqsave(&port->lock, flags);
 		group = mcast_find(port, mgid);
-		if (group)
-			goto found;
+		अगर (group)
+			जाओ found;
 		spin_unlock_irqrestore(&port->lock, flags);
-	}
+	पूर्ण
 
-	group = kzalloc(sizeof *group, gfp_mask);
-	if (!group)
-		return NULL;
+	group = kzalloc(माप *group, gfp_mask);
+	अगर (!group)
+		वापस शून्य;
 
 	group->retries = 3;
 	group->port = port;
@@ -585,45 +586,45 @@ static struct mcast_group *acquire_group(struct mcast_port *port,
 
 	spin_lock_irqsave(&port->lock, flags);
 	cur_group = mcast_insert(port, group, is_mgid0);
-	if (cur_group) {
-		kfree(group);
+	अगर (cur_group) अणु
+		kमुक्त(group);
 		group = cur_group;
-	} else
+	पूर्ण अन्यथा
 		atomic_inc(&port->refcount);
 found:
 	atomic_inc(&group->refcount);
 	spin_unlock_irqrestore(&port->lock, flags);
-	return group;
-}
+	वापस group;
+पूर्ण
 
 /*
  * We serialize all join requests to a single group to make our lives much
  * easier.  Otherwise, two users could try to join the same group
- * simultaneously, with different configurations, one could leave while the
+ * simultaneously, with dअगरferent configurations, one could leave जबतक the
  * join is in progress, etc., which makes locking around error recovery
- * difficult.
+ * dअगरficult.
  */
-struct ib_sa_multicast *
-ib_sa_join_multicast(struct ib_sa_client *client,
-		     struct ib_device *device, u32 port_num,
-		     struct ib_sa_mcmember_rec *rec,
+काष्ठा ib_sa_multicast *
+ib_sa_join_multicast(काष्ठा ib_sa_client *client,
+		     काष्ठा ib_device *device, u32 port_num,
+		     काष्ठा ib_sa_mcmember_rec *rec,
 		     ib_sa_comp_mask comp_mask, gfp_t gfp_mask,
-		     int (*callback)(int status,
-				     struct ib_sa_multicast *multicast),
-		     void *context)
-{
-	struct mcast_device *dev;
-	struct mcast_member *member;
-	struct ib_sa_multicast *multicast;
-	int ret;
+		     पूर्णांक (*callback)(पूर्णांक status,
+				     काष्ठा ib_sa_multicast *multicast),
+		     व्योम *context)
+अणु
+	काष्ठा mcast_device *dev;
+	काष्ठा mcast_member *member;
+	काष्ठा ib_sa_multicast *multicast;
+	पूर्णांक ret;
 
 	dev = ib_get_client_data(device, &mcast_client);
-	if (!dev)
-		return ERR_PTR(-ENODEV);
+	अगर (!dev)
+		वापस ERR_PTR(-ENODEV);
 
-	member = kmalloc(sizeof *member, gfp_mask);
-	if (!member)
-		return ERR_PTR(-ENOMEM);
+	member = kदो_स्मृति(माप *member, gfp_mask);
+	अगर (!member)
+		वापस ERR_PTR(-ENOMEM);
 
 	ib_sa_client_get(client);
 	member->client = client;
@@ -637,83 +638,83 @@ ib_sa_join_multicast(struct ib_sa_client *client,
 
 	member->group = acquire_group(&dev->port[port_num - dev->start_port],
 				      &rec->mgid, gfp_mask);
-	if (!member->group) {
+	अगर (!member->group) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/*
-	 * The user will get the multicast structure in their callback.  They
-	 * could then free the multicast structure before we can return from
-	 * this routine.  So we save the pointer to return before queuing
+	 * The user will get the multicast काष्ठाure in their callback.  They
+	 * could then मुक्त the multicast काष्ठाure beक्रमe we can वापस from
+	 * this routine.  So we save the poपूर्णांकer to वापस beक्रमe queuing
 	 * any callback.
 	 */
 	multicast = &member->multicast;
 	queue_join(member);
-	return multicast;
+	वापस multicast;
 
 err:
 	ib_sa_client_put(client);
-	kfree(member);
-	return ERR_PTR(ret);
-}
+	kमुक्त(member);
+	वापस ERR_PTR(ret);
+पूर्ण
 EXPORT_SYMBOL(ib_sa_join_multicast);
 
-void ib_sa_free_multicast(struct ib_sa_multicast *multicast)
-{
-	struct mcast_member *member;
-	struct mcast_group *group;
+व्योम ib_sa_मुक्त_multicast(काष्ठा ib_sa_multicast *multicast)
+अणु
+	काष्ठा mcast_member *member;
+	काष्ठा mcast_group *group;
 
-	member = container_of(multicast, struct mcast_member, multicast);
+	member = container_of(multicast, काष्ठा mcast_member, multicast);
 	group = member->group;
 
 	spin_lock_irq(&group->lock);
-	if (member->state == MCAST_MEMBER)
+	अगर (member->state == MCAST_MEMBER)
 		adjust_membership(group, multicast->rec.join_state, -1);
 
 	list_del_init(&member->list);
 
-	if (group->state == MCAST_IDLE) {
+	अगर (group->state == MCAST_IDLE) अणु
 		group->state = MCAST_BUSY;
 		spin_unlock_irq(&group->lock);
 		/* Continue to hold reference on group until callback */
 		queue_work(mcast_wq, &group->work);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock_irq(&group->lock);
 		release_group(group);
-	}
+	पूर्ण
 
 	deref_member(member);
-	wait_for_completion(&member->comp);
+	रुको_क्रम_completion(&member->comp);
 	ib_sa_client_put(member->client);
-	kfree(member);
-}
-EXPORT_SYMBOL(ib_sa_free_multicast);
+	kमुक्त(member);
+पूर्ण
+EXPORT_SYMBOL(ib_sa_मुक्त_multicast);
 
-int ib_sa_get_mcmember_rec(struct ib_device *device, u32 port_num,
-			   union ib_gid *mgid, struct ib_sa_mcmember_rec *rec)
-{
-	struct mcast_device *dev;
-	struct mcast_port *port;
-	struct mcast_group *group;
-	unsigned long flags;
-	int ret = 0;
+पूर्णांक ib_sa_get_mcmember_rec(काष्ठा ib_device *device, u32 port_num,
+			   जोड़ ib_gid *mgid, काष्ठा ib_sa_mcmember_rec *rec)
+अणु
+	काष्ठा mcast_device *dev;
+	काष्ठा mcast_port *port;
+	काष्ठा mcast_group *group;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	dev = ib_get_client_data(device, &mcast_client);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	port = &dev->port[port_num - dev->start_port];
 	spin_lock_irqsave(&port->lock, flags);
 	group = mcast_find(port, mgid);
-	if (group)
+	अगर (group)
 		*rec = group->rec;
-	else
+	अन्यथा
 		ret = -EADDRNOTAVAIL;
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(ib_sa_get_mcmember_rec);
 
 /**
@@ -722,7 +723,7 @@ EXPORT_SYMBOL(ib_sa_get_mcmember_rec);
  * @device:	RDMA device
  * @port_num:	Port of the rdma device to consider
  * @rec:	Multicast member record to use
- * @ndev:	Optional netdevice, applicable only for RoCE
+ * @ndev:	Optional netdevice, applicable only क्रम RoCE
  * @gid_type:	GID type to consider
  * @ah_attr:	AH attribute to fillup on successful completion
  *
@@ -732,108 +733,108 @@ EXPORT_SYMBOL(ib_sa_get_mcmember_rec);
  * success or appropriate error code.
  *
  */
-int ib_init_ah_from_mcmember(struct ib_device *device, u32 port_num,
-			     struct ib_sa_mcmember_rec *rec,
-			     struct net_device *ndev,
-			     enum ib_gid_type gid_type,
-			     struct rdma_ah_attr *ah_attr)
-{
-	const struct ib_gid_attr *sgid_attr;
+पूर्णांक ib_init_ah_from_mcmember(काष्ठा ib_device *device, u32 port_num,
+			     काष्ठा ib_sa_mcmember_rec *rec,
+			     काष्ठा net_device *ndev,
+			     क्रमागत ib_gid_type gid_type,
+			     काष्ठा rdma_ah_attr *ah_attr)
+अणु
+	स्थिर काष्ठा ib_gid_attr *sgid_attr;
 
-	/* GID table is not based on the netdevice for IB link layer,
+	/* GID table is not based on the netdevice क्रम IB link layer,
 	 * so ignore ndev during search.
 	 */
-	if (rdma_protocol_ib(device, port_num))
-		ndev = NULL;
-	else if (!rdma_protocol_roce(device, port_num))
-		return -EINVAL;
+	अगर (rdma_protocol_ib(device, port_num))
+		ndev = शून्य;
+	अन्यथा अगर (!rdma_protocol_roce(device, port_num))
+		वापस -EINVAL;
 
 	sgid_attr = rdma_find_gid_by_port(device, &rec->port_gid,
 					  gid_type, port_num, ndev);
-	if (IS_ERR(sgid_attr))
-		return PTR_ERR(sgid_attr);
+	अगर (IS_ERR(sgid_attr))
+		वापस PTR_ERR(sgid_attr);
 
-	memset(ah_attr, 0, sizeof(*ah_attr));
+	स_रखो(ah_attr, 0, माप(*ah_attr));
 	ah_attr->type = rdma_ah_find_type(device, port_num);
 
 	rdma_ah_set_dlid(ah_attr, be16_to_cpu(rec->mlid));
 	rdma_ah_set_sl(ah_attr, rec->sl);
 	rdma_ah_set_port_num(ah_attr, port_num);
-	rdma_ah_set_static_rate(ah_attr, rec->rate);
+	rdma_ah_set_अटल_rate(ah_attr, rec->rate);
 	rdma_move_grh_sgid_attr(ah_attr, &rec->mgid,
 				be32_to_cpu(rec->flow_label),
 				rec->hop_limit,	rec->traffic_class,
 				sgid_attr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ib_init_ah_from_mcmember);
 
-static void mcast_groups_event(struct mcast_port *port,
-			       enum mcast_group_state state)
-{
-	struct mcast_group *group;
-	struct rb_node *node;
-	unsigned long flags;
+अटल व्योम mcast_groups_event(काष्ठा mcast_port *port,
+			       क्रमागत mcast_group_state state)
+अणु
+	काष्ठा mcast_group *group;
+	काष्ठा rb_node *node;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
-	for (node = rb_first(&port->table); node; node = rb_next(node)) {
-		group = rb_entry(node, struct mcast_group, node);
+	क्रम (node = rb_first(&port->table); node; node = rb_next(node)) अणु
+		group = rb_entry(node, काष्ठा mcast_group, node);
 		spin_lock(&group->lock);
-		if (group->state == MCAST_IDLE) {
+		अगर (group->state == MCAST_IDLE) अणु
 			atomic_inc(&group->refcount);
 			queue_work(mcast_wq, &group->work);
-		}
-		if (group->state != MCAST_GROUP_ERROR)
+		पूर्ण
+		अगर (group->state != MCAST_GROUP_ERROR)
 			group->state = state;
 		spin_unlock(&group->lock);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void mcast_event_handler(struct ib_event_handler *handler,
-				struct ib_event *event)
-{
-	struct mcast_device *dev;
-	int index;
+अटल व्योम mcast_event_handler(काष्ठा ib_event_handler *handler,
+				काष्ठा ib_event *event)
+अणु
+	काष्ठा mcast_device *dev;
+	पूर्णांक index;
 
-	dev = container_of(handler, struct mcast_device, event_handler);
-	if (!rdma_cap_ib_mcast(dev->device, event->element.port_num))
-		return;
+	dev = container_of(handler, काष्ठा mcast_device, event_handler);
+	अगर (!rdma_cap_ib_mcast(dev->device, event->element.port_num))
+		वापस;
 
 	index = event->element.port_num - dev->start_port;
 
-	switch (event->event) {
-	case IB_EVENT_PORT_ERR:
-	case IB_EVENT_LID_CHANGE:
-	case IB_EVENT_CLIENT_REREGISTER:
+	चयन (event->event) अणु
+	हाल IB_EVENT_PORT_ERR:
+	हाल IB_EVENT_LID_CHANGE:
+	हाल IB_EVENT_CLIENT_REREGISTER:
 		mcast_groups_event(&dev->port[index], MCAST_GROUP_ERROR);
-		break;
-	case IB_EVENT_PKEY_CHANGE:
+		अवरोध;
+	हाल IB_EVENT_PKEY_CHANGE:
 		mcast_groups_event(&dev->port[index], MCAST_PKEY_EVENT);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int mcast_add_one(struct ib_device *device)
-{
-	struct mcast_device *dev;
-	struct mcast_port *port;
-	int i;
-	int count = 0;
+अटल पूर्णांक mcast_add_one(काष्ठा ib_device *device)
+अणु
+	काष्ठा mcast_device *dev;
+	काष्ठा mcast_port *port;
+	पूर्णांक i;
+	पूर्णांक count = 0;
 
-	dev = kmalloc(struct_size(dev, port, device->phys_port_cnt),
+	dev = kदो_स्मृति(काष्ठा_size(dev, port, device->phys_port_cnt),
 		      GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	dev->start_port = rdma_start_port(device);
 	dev->end_port = rdma_end_port(device);
 
-	for (i = 0; i <= dev->end_port - dev->start_port; i++) {
-		if (!rdma_cap_ib_mcast(device, dev->start_port + i))
-			continue;
+	क्रम (i = 0; i <= dev->end_port - dev->start_port; i++) अणु
+		अगर (!rdma_cap_ib_mcast(device, dev->start_port + i))
+			जारी;
 		port = &dev->port[i];
 		port->dev = dev;
 		port->port_num = dev->start_port + i;
@@ -842,65 +843,65 @@ static int mcast_add_one(struct ib_device *device)
 		init_completion(&port->comp);
 		atomic_set(&port->refcount, 1);
 		++count;
-	}
+	पूर्ण
 
-	if (!count) {
-		kfree(dev);
-		return -EOPNOTSUPP;
-	}
+	अगर (!count) अणु
+		kमुक्त(dev);
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	dev->device = device;
 	ib_set_client_data(device, &mcast_client, dev);
 
 	INIT_IB_EVENT_HANDLER(&dev->event_handler, device, mcast_event_handler);
-	ib_register_event_handler(&dev->event_handler);
-	return 0;
-}
+	ib_रेजिस्टर_event_handler(&dev->event_handler);
+	वापस 0;
+पूर्ण
 
-static void mcast_remove_one(struct ib_device *device, void *client_data)
-{
-	struct mcast_device *dev = client_data;
-	struct mcast_port *port;
-	int i;
+अटल व्योम mcast_हटाओ_one(काष्ठा ib_device *device, व्योम *client_data)
+अणु
+	काष्ठा mcast_device *dev = client_data;
+	काष्ठा mcast_port *port;
+	पूर्णांक i;
 
-	ib_unregister_event_handler(&dev->event_handler);
+	ib_unरेजिस्टर_event_handler(&dev->event_handler);
 	flush_workqueue(mcast_wq);
 
-	for (i = 0; i <= dev->end_port - dev->start_port; i++) {
-		if (rdma_cap_ib_mcast(device, dev->start_port + i)) {
+	क्रम (i = 0; i <= dev->end_port - dev->start_port; i++) अणु
+		अगर (rdma_cap_ib_mcast(device, dev->start_port + i)) अणु
 			port = &dev->port[i];
 			deref_port(port);
-			wait_for_completion(&port->comp);
-		}
-	}
+			रुको_क्रम_completion(&port->comp);
+		पूर्ण
+	पूर्ण
 
-	kfree(dev);
-}
+	kमुक्त(dev);
+पूर्ण
 
-int mcast_init(void)
-{
-	int ret;
+पूर्णांक mcast_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	mcast_wq = alloc_ordered_workqueue("ib_mcast", WQ_MEM_RECLAIM);
-	if (!mcast_wq)
-		return -ENOMEM;
+	अगर (!mcast_wq)
+		वापस -ENOMEM;
 
-	ib_sa_register_client(&sa_client);
+	ib_sa_रेजिस्टर_client(&sa_client);
 
-	ret = ib_register_client(&mcast_client);
-	if (ret)
-		goto err;
-	return 0;
+	ret = ib_रेजिस्टर_client(&mcast_client);
+	अगर (ret)
+		जाओ err;
+	वापस 0;
 
 err:
-	ib_sa_unregister_client(&sa_client);
+	ib_sa_unरेजिस्टर_client(&sa_client);
 	destroy_workqueue(mcast_wq);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void mcast_cleanup(void)
-{
-	ib_unregister_client(&mcast_client);
-	ib_sa_unregister_client(&sa_client);
+व्योम mcast_cleanup(व्योम)
+अणु
+	ib_unरेजिस्टर_client(&mcast_client);
+	ib_sa_unरेजिस्टर_client(&sa_client);
 	destroy_workqueue(mcast_wq);
-}
+पूर्ण

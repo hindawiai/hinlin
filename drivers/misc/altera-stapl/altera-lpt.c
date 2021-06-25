@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * altera-lpt.c
  *
@@ -9,48 +10,48 @@
  * Copyright (C) 2010 Abylay Ospan <aospan@netup.ru>
  */
 
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include "altera-exprt.h"
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश "altera-exprt.h"
 
-static int lpt_hardware_initialized;
+अटल पूर्णांक lpt_hardware_initialized;
 
-static void byteblaster_write(int port, int data)
-{
+अटल व्योम byteblaster_ग_लिखो(पूर्णांक port, पूर्णांक data)
+अणु
 	outb((u8)data, (u16)(port + 0x378));
-};
+पूर्ण;
 
-static int byteblaster_read(int port)
-{
-	int data = 0;
+अटल पूर्णांक byteblaster_पढ़ो(पूर्णांक port)
+अणु
+	पूर्णांक data = 0;
 	data = inb((u16)(port + 0x378));
-	return data & 0xff;
-};
+	वापस data & 0xff;
+पूर्ण;
 
-int netup_jtag_io_lpt(void *device, int tms, int tdi, int read_tdo)
-{
-	int data = 0;
-	int tdo = 0;
-	int initial_lpt_ctrl = 0;
+पूर्णांक netup_jtag_io_lpt(व्योम *device, पूर्णांक पंचांगs, पूर्णांक tdi, पूर्णांक पढ़ो_tकरो)
+अणु
+	पूर्णांक data = 0;
+	पूर्णांक tकरो = 0;
+	पूर्णांक initial_lpt_ctrl = 0;
 
-	if (!lpt_hardware_initialized) {
-		initial_lpt_ctrl = byteblaster_read(2);
-		byteblaster_write(2, (initial_lpt_ctrl | 0x02) & 0xdf);
+	अगर (!lpt_hardware_initialized) अणु
+		initial_lpt_ctrl = byteblaster_पढ़ो(2);
+		byteblaster_ग_लिखो(2, (initial_lpt_ctrl | 0x02) & 0xdf);
 		lpt_hardware_initialized = 1;
-	}
+	पूर्ण
 
-	data = ((tdi ? 0x40 : 0) | (tms ? 0x02 : 0));
+	data = ((tdi ? 0x40 : 0) | (पंचांगs ? 0x02 : 0));
 
-	byteblaster_write(0, data);
+	byteblaster_ग_लिखो(0, data);
 
-	if (read_tdo) {
-		tdo = byteblaster_read(1);
-		tdo = ((tdo & 0x80) ? 0 : 1);
-	}
+	अगर (पढ़ो_tकरो) अणु
+		tकरो = byteblaster_पढ़ो(1);
+		tकरो = ((tकरो & 0x80) ? 0 : 1);
+	पूर्ण
 
-	byteblaster_write(0, data | 0x01);
+	byteblaster_ग_लिखो(0, data | 0x01);
 
-	byteblaster_write(0, data);
+	byteblaster_ग_लिखो(0, data);
 
-	return tdo;
-}
+	वापस tकरो;
+पूर्ण

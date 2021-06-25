@@ -1,18 +1,19 @@
+<शैली गुरु>
 /*
- * Xtensa built-in interrupt controller
+ * Xtensa built-in पूर्णांकerrupt controller
  *
  * Copyright (C) 2002 - 2013 Tensilica, Inc.
  * Copyright (C) 1992, 1998 Linus Torvalds, Ingo Molnar
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#ifndef __LINUX_IRQCHIP_XTENSA_PIC_H
-#define __LINUX_IRQCHIP_XTENSA_PIC_H
+#अगर_अघोषित __LINUX_IRQCHIP_XTENSA_PIC_H
+#घोषणा __LINUX_IRQCHIP_XTENSA_PIC_H
 
-struct device_node;
-int xtensa_pic_init_legacy(struct device_node *interrupt_parent);
+काष्ठा device_node;
+पूर्णांक xtensa_pic_init_legacy(काष्ठा device_node *पूर्णांकerrupt_parent);
 
-#endif /* __LINUX_IRQCHIP_XTENSA_PIC_H */
+#पूर्ण_अगर /* __LINUX_IRQCHIP_XTENSA_PIC_H */

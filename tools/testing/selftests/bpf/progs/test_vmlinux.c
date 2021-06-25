@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
 
-#include "vmlinux.h"
-#include <asm/unistd.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
-#include <bpf/bpf_core_read.h>
+#समावेश "vmlinux.h"
+#समावेश <यंत्र/unistd.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
+#समावेश <bpf/bpf_core_पढ़ो.h>
 
-#define MY_TV_NSEC 1337
+#घोषणा MY_TV_NSEC 1337
 
 bool tp_called = false;
 bool raw_tp_called = false;
@@ -16,75 +17,75 @@ bool kprobe_called = false;
 bool fentry_called = false;
 
 SEC("tp/syscalls/sys_enter_nanosleep")
-int handle__tp(struct trace_event_raw_sys_enter *args)
-{
-	struct __kernel_timespec *ts;
-	long tv_nsec;
+पूर्णांक handle__tp(काष्ठा trace_event_raw_sys_enter *args)
+अणु
+	काष्ठा __kernel_बारpec *ts;
+	दीर्घ tv_nsec;
 
-	if (args->id != __NR_nanosleep)
-		return 0;
+	अगर (args->id != __NR_nanosleep)
+		वापस 0;
 
-	ts = (void *)args->args[0];
-	if (bpf_probe_read_user(&tv_nsec, sizeof(ts->tv_nsec), &ts->tv_nsec) ||
+	ts = (व्योम *)args->args[0];
+	अगर (bpf_probe_पढ़ो_user(&tv_nsec, माप(ts->tv_nsec), &ts->tv_nsec) ||
 	    tv_nsec != MY_TV_NSEC)
-		return 0;
+		वापस 0;
 
 	tp_called = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEC("raw_tp/sys_enter")
-int BPF_PROG(handle__raw_tp, struct pt_regs *regs, long id)
-{
-	struct __kernel_timespec *ts;
-	long tv_nsec;
+पूर्णांक BPF_PROG(handle__raw_tp, काष्ठा pt_regs *regs, दीर्घ id)
+अणु
+	काष्ठा __kernel_बारpec *ts;
+	दीर्घ tv_nsec;
 
-	if (id != __NR_nanosleep)
-		return 0;
+	अगर (id != __NR_nanosleep)
+		वापस 0;
 
-	ts = (void *)PT_REGS_PARM1_CORE(regs);
-	if (bpf_probe_read_user(&tv_nsec, sizeof(ts->tv_nsec), &ts->tv_nsec) ||
+	ts = (व्योम *)PT_REGS_PARM1_CORE(regs);
+	अगर (bpf_probe_पढ़ो_user(&tv_nsec, माप(ts->tv_nsec), &ts->tv_nsec) ||
 	    tv_nsec != MY_TV_NSEC)
-		return 0;
+		वापस 0;
 
 	raw_tp_called = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEC("tp_btf/sys_enter")
-int BPF_PROG(handle__tp_btf, struct pt_regs *regs, long id)
-{
-	struct __kernel_timespec *ts;
-	long tv_nsec;
+पूर्णांक BPF_PROG(handle__tp_btf, काष्ठा pt_regs *regs, दीर्घ id)
+अणु
+	काष्ठा __kernel_बारpec *ts;
+	दीर्घ tv_nsec;
 
-	if (id != __NR_nanosleep)
-		return 0;
+	अगर (id != __NR_nanosleep)
+		वापस 0;
 
-	ts = (void *)PT_REGS_PARM1_CORE(regs);
-	if (bpf_probe_read_user(&tv_nsec, sizeof(ts->tv_nsec), &ts->tv_nsec) ||
+	ts = (व्योम *)PT_REGS_PARM1_CORE(regs);
+	अगर (bpf_probe_पढ़ो_user(&tv_nsec, माप(ts->tv_nsec), &ts->tv_nsec) ||
 	    tv_nsec != MY_TV_NSEC)
-		return 0;
+		वापस 0;
 
 	tp_btf_called = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEC("kprobe/hrtimer_start_range_ns")
-int BPF_KPROBE(handle__kprobe, struct hrtimer *timer, ktime_t tim, u64 delta_ns,
-	       const enum hrtimer_mode mode)
-{
-	if (tim == MY_TV_NSEC)
+पूर्णांक BPF_KPROBE(handle__kprobe, काष्ठा hrसमयr *समयr, kसमय_प्रकार tim, u64 delta_ns,
+	       स्थिर क्रमागत hrसमयr_mode mode)
+अणु
+	अगर (tim == MY_TV_NSEC)
 		kprobe_called = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEC("fentry/hrtimer_start_range_ns")
-int BPF_PROG(handle__fentry, struct hrtimer *timer, ktime_t tim, u64 delta_ns,
-	     const enum hrtimer_mode mode)
-{
-	if (tim == MY_TV_NSEC)
+पूर्णांक BPF_PROG(handle__fentry, काष्ठा hrसमयr *समयr, kसमय_प्रकार tim, u64 delta_ns,
+	     स्थिर क्रमागत hrसमयr_mode mode)
+अणु
+	अगर (tim == MY_TV_NSEC)
 		fentry_called = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * PING: ultrasonic sensor for distance measuring by using only one GPIOs
+ * PING: ultrasonic sensor क्रम distance measuring by using only one GPIOs
  *
  * Copyright (c) 2019 Andreas Klinger <ak@it-klinger.de>
  *
  * For details about the devices see:
- * http://parallax.com/sites/default/files/downloads/28041-LaserPING-2m-Rangefinder-Guide.pdf
- * http://parallax.com/sites/default/files/downloads/28015-PING-Documentation-v1.6.pdf
+ * http://parallax.com/sites/शेष/files/करोwnloads/28041-LaserPING-2m-Rangefinder-Guide.pdf
+ * http://parallax.com/sites/शेष/files/करोwnloads/28015-PING-Documentation-v1.6.pdf
  *
  * the measurement cycle as timing diagram looks like:
  *
  * GPIO      ___              ________________________
  * ping:  __/   \____________/                        \________________
  *          ^   ^            ^                        ^
- *          |<->|            interrupt                interrupt
+ *          |<->|            पूर्णांकerrupt                पूर्णांकerrupt
  *         udelay(5)         (ts_rising)              (ts_falling)
  *                           |<---------------------->|
- *                           .  pulse time measured   .
+ *                           .  pulse समय measured   .
  *                           .  --> one round trip of ultra sonic waves
  * ultra                     .                        .
  * sonic            _   _   _.                        .
@@ -26,81 +27,81 @@
  * sonic                                     _   _   _.
  * echo:  __________________________________/ \_/ \_/ \________________
  */
-#include <linux/err.h>
-#include <linux/gpio/consumer.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/property.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/property.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
 
-struct ping_cfg {
-	unsigned long	trigger_pulse_us;	/* length of trigger pulse */
-	int		laserping_error;	/* support error code in */
+काष्ठा ping_cfg अणु
+	अचिन्हित दीर्घ	trigger_pulse_us;	/* length of trigger pulse */
+	पूर्णांक		laserping_error;	/* support error code in */
 						/*   pulse width of laser */
 						/*   ping sensors */
-	s64		timeout_ns;		/* timeout in ns */
-};
+	s64		समयout_ns;		/* समयout in ns */
+पूर्ण;
 
-struct ping_data {
-	struct device		*dev;
-	struct gpio_desc	*gpiod_ping;
-	struct mutex		lock;
-	int			irqnr;
-	ktime_t			ts_rising;
-	ktime_t			ts_falling;
-	struct completion	rising;
-	struct completion	falling;
-	const struct ping_cfg	*cfg;
-};
+काष्ठा ping_data अणु
+	काष्ठा device		*dev;
+	काष्ठा gpio_desc	*gpiod_ping;
+	काष्ठा mutex		lock;
+	पूर्णांक			irqnr;
+	kसमय_प्रकार			ts_rising;
+	kसमय_प्रकार			ts_falling;
+	काष्ठा completion	rising;
+	काष्ठा completion	falling;
+	स्थिर काष्ठा ping_cfg	*cfg;
+पूर्ण;
 
-static const struct ping_cfg pa_ping_cfg = {
+अटल स्थिर काष्ठा ping_cfg pa_ping_cfg = अणु
 	.trigger_pulse_us	= 5,
 	.laserping_error	= 0,
-	.timeout_ns		= 18500000,	/* 3 meters */
-};
+	.समयout_ns		= 18500000,	/* 3 meters */
+पूर्ण;
 
-static const struct ping_cfg pa_laser_ping_cfg = {
+अटल स्थिर काष्ठा ping_cfg pa_laser_ping_cfg = अणु
 	.trigger_pulse_us	= 5,
 	.laserping_error	= 1,
-	.timeout_ns		= 15500000,	/* 2 meters plus error codes */
-};
+	.समयout_ns		= 15500000,	/* 2 meters plus error codes */
+पूर्ण;
 
-static irqreturn_t ping_handle_irq(int irq, void *dev_id)
-{
-	struct iio_dev *indio_dev = dev_id;
-	struct ping_data *data = iio_priv(indio_dev);
-	ktime_t now = ktime_get();
+अटल irqवापस_t ping_handle_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_id;
+	काष्ठा ping_data *data = iio_priv(indio_dev);
+	kसमय_प्रकार now = kसमय_get();
 
-	if (gpiod_get_value(data->gpiod_ping)) {
+	अगर (gpiod_get_value(data->gpiod_ping)) अणु
 		data->ts_rising = now;
 		complete(&data->rising);
-	} else {
+	पूर्ण अन्यथा अणु
 		data->ts_falling = now;
 		complete(&data->falling);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int ping_read(struct iio_dev *indio_dev)
-{
-	struct ping_data *data = iio_priv(indio_dev);
-	int ret;
-	ktime_t ktime_dt;
+अटल पूर्णांक ping_पढ़ो(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा ping_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
+	kसमय_प्रकार kसमय_dt;
 	s64 dt_ns;
-	u32 time_ns, distance_mm;
-	struct platform_device *pdev = to_platform_device(data->dev);
+	u32 समय_ns, distance_mm;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(data->dev);
 
 	/*
-	 * just one read-echo-cycle can take place at a time
-	 * ==> lock against concurrent reading calls
+	 * just one पढ़ो-echo-cycle can take place at a समय
+	 * ==> lock against concurrent पढ़ोing calls
 	 */
 	mutex_lock(&data->lock);
 
@@ -112,179 +113,179 @@ static int ping_read(struct iio_dev *indio_dev)
 	gpiod_set_value(data->gpiod_ping, 0);
 
 	ret = gpiod_direction_input(data->gpiod_ping);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		mutex_unlock(&data->lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	data->irqnr = gpiod_to_irq(data->gpiod_ping);
-	if (data->irqnr < 0) {
+	अगर (data->irqnr < 0) अणु
 		dev_err(data->dev, "gpiod_to_irq: %d\n", data->irqnr);
 		mutex_unlock(&data->lock);
-		return data->irqnr;
-	}
+		वापस data->irqnr;
+	पूर्ण
 
 	ret = request_irq(data->irqnr, ping_handle_irq,
 				IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
 							pdev->name, indio_dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(data->dev, "request_irq: %d\n", ret);
 		mutex_unlock(&data->lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* it should not take more than 20 ms until echo is rising */
-	ret = wait_for_completion_killable_timeout(&data->rising, HZ/50);
-	if (ret < 0)
-		goto err_reset_direction;
-	else if (ret == 0) {
+	ret = रुको_क्रम_completion_समाप्तable_समयout(&data->rising, HZ/50);
+	अगर (ret < 0)
+		जाओ err_reset_direction;
+	अन्यथा अगर (ret == 0) अणु
 		ret = -ETIMEDOUT;
-		goto err_reset_direction;
-	}
+		जाओ err_reset_direction;
+	पूर्ण
 
 	/* it cannot take more than 50 ms until echo is falling */
-	ret = wait_for_completion_killable_timeout(&data->falling, HZ/20);
-	if (ret < 0)
-		goto err_reset_direction;
-	else if (ret == 0) {
+	ret = रुको_क्रम_completion_समाप्तable_समयout(&data->falling, HZ/20);
+	अगर (ret < 0)
+		जाओ err_reset_direction;
+	अन्यथा अगर (ret == 0) अणु
 		ret = -ETIMEDOUT;
-		goto err_reset_direction;
-	}
+		जाओ err_reset_direction;
+	पूर्ण
 
-	ktime_dt = ktime_sub(data->ts_falling, data->ts_rising);
+	kसमय_dt = kसमय_sub(data->ts_falling, data->ts_rising);
 
-	free_irq(data->irqnr, indio_dev);
+	मुक्त_irq(data->irqnr, indio_dev);
 
 	ret = gpiod_direction_output(data->gpiod_ping, GPIOD_OUT_LOW);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		mutex_unlock(&data->lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	mutex_unlock(&data->lock);
 
-	dt_ns = ktime_to_ns(ktime_dt);
-	if (dt_ns > data->cfg->timeout_ns) {
+	dt_ns = kसमय_प्रकारo_ns(kसमय_dt);
+	अगर (dt_ns > data->cfg->समयout_ns) अणु
 		dev_dbg(data->dev, "distance out of range: dt=%lldns\n",
 								dt_ns);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	time_ns = dt_ns;
+	समय_ns = dt_ns;
 
 	/*
-	 * read error code of laser ping sensor and give users chance to
+	 * पढ़ो error code of laser ping sensor and give users chance to
 	 * figure out error by using dynamic debuggging
 	 */
-	if (data->cfg->laserping_error) {
-		if ((time_ns > 12500000) && (time_ns <= 13500000)) {
+	अगर (data->cfg->laserping_error) अणु
+		अगर ((समय_ns > 12500000) && (समय_ns <= 13500000)) अणु
 			dev_dbg(data->dev, "target too close or to far\n");
-			return -EIO;
-		}
-		if ((time_ns > 13500000) && (time_ns <= 14500000)) {
+			वापस -EIO;
+		पूर्ण
+		अगर ((समय_ns > 13500000) && (समय_ns <= 14500000)) अणु
 			dev_dbg(data->dev, "internal sensor error\n");
-			return -EIO;
-		}
-		if ((time_ns > 14500000) && (time_ns <= 15500000)) {
+			वापस -EIO;
+		पूर्ण
+		अगर ((समय_ns > 14500000) && (समय_ns <= 15500000)) अणु
 			dev_dbg(data->dev, "internal sensor timeout\n");
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * the speed as function of the temperature is approximately:
 	 *
 	 * speed = 331,5 + 0,6 * Temp
-	 *   with Temp in °C
+	 *   with Temp in तओC
 	 *   and speed in m/s
 	 *
-	 * use 343,5 m/s as ultrasonic speed at 20 °C here in absence of the
+	 * use 343,5 m/s as ultrasonic speed at 20 तओC here in असलence of the
 	 * temperature
 	 *
-	 * therefore:
-	 *             time     343,5     time * 232
+	 * thereक्रमe:
+	 *             समय     343,5     समय * 232
 	 * distance = ------ * ------- = ------------
 	 *             10^6         2        1350800
-	 *   with time in ns
+	 *   with समय in ns
 	 *   and distance in mm (one way)
 	 *
 	 * because we limit to 3 meters the multiplication with 232 just
-	 * fits into 32 bit
+	 * fits पूर्णांकo 32 bit
 	 */
-	distance_mm = time_ns * 232 / 1350800;
+	distance_mm = समय_ns * 232 / 1350800;
 
-	return distance_mm;
+	वापस distance_mm;
 
 err_reset_direction:
-	free_irq(data->irqnr, indio_dev);
+	मुक्त_irq(data->irqnr, indio_dev);
 	mutex_unlock(&data->lock);
 
-	if (gpiod_direction_output(data->gpiod_ping, GPIOD_OUT_LOW))
+	अगर (gpiod_direction_output(data->gpiod_ping, GPIOD_OUT_LOW))
 		dev_dbg(data->dev, "error in gpiod_direction_output\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ping_read_raw(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *channel, int *val,
-			    int *val2, long info)
-{
-	int ret;
+अटल पूर्णांक ping_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			    काष्ठा iio_chan_spec स्थिर *channel, पूर्णांक *val,
+			    पूर्णांक *val2, दीर्घ info)
+अणु
+	पूर्णांक ret;
 
-	if (channel->type != IIO_DISTANCE)
-		return -EINVAL;
+	अगर (channel->type != IIO_DISTANCE)
+		वापस -EINVAL;
 
-	switch (info) {
-	case IIO_CHAN_INFO_RAW:
-		ret = ping_read(indio_dev);
-		if (ret < 0)
-			return ret;
+	चयन (info) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		ret = ping_पढ़ो(indio_dev);
+		अगर (ret < 0)
+			वापस ret;
 		*val = ret;
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SCALE:
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SCALE:
 		/*
 		 * maximum resolution in datasheet is 1 mm
 		 * 1 LSB is 1 mm
 		 */
 		*val = 0;
 		*val2 = 1000;
-		return IIO_VAL_INT_PLUS_MICRO;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct iio_info ping_iio_info = {
-	.read_raw		= ping_read_raw,
-};
+अटल स्थिर काष्ठा iio_info ping_iio_info = अणु
+	.पढ़ो_raw		= ping_पढ़ो_raw,
+पूर्ण;
 
-static const struct iio_chan_spec ping_chan_spec[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec ping_chan_spec[] = अणु
+	अणु
 		.type = IIO_DISTANCE,
 		.info_mask_separate =
 				BIT(IIO_CHAN_INFO_RAW) |
 				BIT(IIO_CHAN_INFO_SCALE),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct of_device_id of_ping_match[] = {
-	{ .compatible = "parallax,ping", .data = &pa_ping_cfg},
-	{ .compatible = "parallax,laserping", .data = &pa_laser_ping_cfg},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id of_ping_match[] = अणु
+	अणु .compatible = "parallax,ping", .data = &pa_ping_cfgपूर्ण,
+	अणु .compatible = "parallax,laserping", .data = &pa_laser_ping_cfgपूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, of_ping_match);
 
-static int ping_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct ping_data *data;
-	struct iio_dev *indio_dev;
+अटल पूर्णांक ping_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा ping_data *data;
+	काष्ठा iio_dev *indio_dev;
 
-	indio_dev = devm_iio_device_alloc(dev, sizeof(struct ping_data));
-	if (!indio_dev) {
+	indio_dev = devm_iio_device_alloc(dev, माप(काष्ठा ping_data));
+	अगर (!indio_dev) अणु
 		dev_err(dev, "failed to allocate IIO device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	data = iio_priv(indio_dev);
 	data->dev = dev;
@@ -295,37 +296,37 @@ static int ping_probe(struct platform_device *pdev)
 	init_completion(&data->falling);
 
 	data->gpiod_ping = devm_gpiod_get(dev, "ping", GPIOD_OUT_LOW);
-	if (IS_ERR(data->gpiod_ping)) {
+	अगर (IS_ERR(data->gpiod_ping)) अणु
 		dev_err(dev, "failed to get ping-gpios: err=%ld\n",
 						PTR_ERR(data->gpiod_ping));
-		return PTR_ERR(data->gpiod_ping);
-	}
+		वापस PTR_ERR(data->gpiod_ping);
+	पूर्ण
 
-	if (gpiod_cansleep(data->gpiod_ping)) {
+	अगर (gpiod_cansleep(data->gpiod_ping)) अणु
 		dev_err(data->dev, "cansleep-GPIOs not supported\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	platform_set_drvdata(pdev, indio_dev);
+	platक्रमm_set_drvdata(pdev, indio_dev);
 
 	indio_dev->name = "ping";
 	indio_dev->info = &ping_iio_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = ping_chan_spec;
 	indio_dev->num_channels = ARRAY_SIZE(ping_chan_spec);
 
-	return devm_iio_device_register(dev, indio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
+पूर्ण
 
-static struct platform_driver ping_driver = {
+अटल काष्ठा platक्रमm_driver ping_driver = अणु
 	.probe		= ping_probe,
-	.driver		= {
+	.driver		= अणु
 		.name		= "ping-gpio",
 		.of_match_table	= of_ping_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(ping_driver);
+module_platक्रमm_driver(ping_driver);
 
 MODULE_AUTHOR("Andreas Klinger <ak@it-klinger.de>");
 MODULE_DESCRIPTION("PING sensors for distance measuring using one GPIOs");

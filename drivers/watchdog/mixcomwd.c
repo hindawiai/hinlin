@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * MixCom Watchdog: A Simple Hardware Watchdog Device
- * Based on Softdog driver by Alan Cox and PC Watchdog driver by Ken Hollis
+ * MixCom Watchकरोg: A Simple Hardware Watchकरोg Device
+ * Based on Softकरोg driver by Alan Cox and PC Watchकरोg driver by Ken Hollis
  *
  * Author: Gergely Madarasz <gorgo@itc.hu>
  *
@@ -11,47 +12,47 @@
  *		- first version
  *
  * Version 0.2 (99/06/16):
- *		- added kernel timer watchdog ping after close
- *		  since the hardware does not support watchdog shutdown
+ *		- added kernel समयr watchकरोg ping after बंद
+ *		  since the hardware करोes not support watchकरोg shutकरोwn
  *
  * Version 0.3 (99/06/21):
  *		- added WDIOC_GETSTATUS and WDIOC_GETSUPPORT ioctl calls
  *
  * Version 0.3.1 (99/06/22):
- *		- allow module removal while internal timer is active,
- *		  print warning about probable reset
+ *		- allow module removal जबतक पूर्णांकernal समयr is active,
+ *		  prपूर्णांक warning about probable reset
  *
  * Version 0.4 (99/11/15):
- *		- support for one more type board
+ *		- support क्रम one more type board
  *
  * Version 0.5 (2001/12/14) Matt Domsch <Matt_Domsch@dell.com>
  *		- added nowayout module option to override
  *		  CONFIG_WATCHDOG_NOWAYOUT
  *
  * Version 0.6 (2002/04/12): Rob Radez <rob@osinvestor.com>
- *		- make mixcomwd_opened unsigned,
- *		  removed lock_kernel/unlock_kernel from mixcomwd_release,
- *		  modified ioctl a bit to conform to API
+ *		- make mixcomwd_खोलोed अचिन्हित,
+ *		  हटाओd lock_kernel/unlock_kernel from mixcomwd_release,
+ *		  modअगरied ioctl a bit to conक्रमm to API
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#define VERSION "0.6"
-#define WATCHDOG_NAME "mixcomwd"
+#घोषणा VERSION "0.6"
+#घोषणा WATCHDOG_NAME "mixcomwd"
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/miscdevice.h>
-#include <linux/ioport.h>
-#include <linux/watchdog.h>
-#include <linux/fs.h>
-#include <linux/reboot.h>
-#include <linux/init.h>
-#include <linux/jiffies.h>
-#include <linux/timer.h>
-#include <linux/uaccess.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/init.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/पन.स>
 
 /*
  * We have two types of cards that can be probed:
@@ -63,249 +64,249 @@
  *    (Or 0x304 -> 0x37c in 0x8 jumps).
  *    Each card has it's own ID.
  */
-#define MIXCOM_ID 0x11
-#define FLASHCOM_ID 0x18
-static struct {
-	int ioport;
-	int id;
-} mixcomwd_io_info[] = {
+#घोषणा MIXCOM_ID 0x11
+#घोषणा FLASHCOM_ID 0x18
+अटल काष्ठा अणु
+	पूर्णांक ioport;
+	पूर्णांक id;
+पूर्ण mixcomwd_io_info[] = अणु
 	/* The Mixcom cards */
-	{0x0d90, MIXCOM_ID},
-	{0x0e90, MIXCOM_ID},
-	{0x0f90, MIXCOM_ID},
+	अणु0x0d90, MIXCOM_IDपूर्ण,
+	अणु0x0e90, MIXCOM_IDपूर्ण,
+	अणु0x0f90, MIXCOM_IDपूर्ण,
 	/* The FlashCOM cards */
-	{0x0304, FLASHCOM_ID},
-	{0x030c, FLASHCOM_ID},
-	{0x0314, FLASHCOM_ID},
-	{0x031c, FLASHCOM_ID},
-	{0x0324, FLASHCOM_ID},
-	{0x032c, FLASHCOM_ID},
-	{0x0334, FLASHCOM_ID},
-	{0x033c, FLASHCOM_ID},
-	{0x0344, FLASHCOM_ID},
-	{0x034c, FLASHCOM_ID},
-	{0x0354, FLASHCOM_ID},
-	{0x035c, FLASHCOM_ID},
-	{0x0364, FLASHCOM_ID},
-	{0x036c, FLASHCOM_ID},
-	{0x0374, FLASHCOM_ID},
-	{0x037c, FLASHCOM_ID},
+	अणु0x0304, FLASHCOM_IDपूर्ण,
+	अणु0x030c, FLASHCOM_IDपूर्ण,
+	अणु0x0314, FLASHCOM_IDपूर्ण,
+	अणु0x031c, FLASHCOM_IDपूर्ण,
+	अणु0x0324, FLASHCOM_IDपूर्ण,
+	अणु0x032c, FLASHCOM_IDपूर्ण,
+	अणु0x0334, FLASHCOM_IDपूर्ण,
+	अणु0x033c, FLASHCOM_IDपूर्ण,
+	अणु0x0344, FLASHCOM_IDपूर्ण,
+	अणु0x034c, FLASHCOM_IDपूर्ण,
+	अणु0x0354, FLASHCOM_IDपूर्ण,
+	अणु0x035c, FLASHCOM_IDपूर्ण,
+	अणु0x0364, FLASHCOM_IDपूर्ण,
+	अणु0x036c, FLASHCOM_IDपूर्ण,
+	अणु0x0374, FLASHCOM_IDपूर्ण,
+	अणु0x037c, FLASHCOM_IDपूर्ण,
 	/* The end of the list */
-	{0x0000, 0},
-};
+	अणु0x0000, 0पूर्ण,
+पूर्ण;
 
-static void mixcomwd_timerfun(struct timer_list *unused);
+अटल व्योम mixcomwd_समयrfun(काष्ठा समयr_list *unused);
 
-static unsigned long mixcomwd_opened; /* long req'd for setbit --RR */
+अटल अचिन्हित दीर्घ mixcomwd_खोलोed; /* दीर्घ req'd क्रम setbit --RR */
 
-static int watchdog_port;
-static int mixcomwd_timer_alive;
-static DEFINE_TIMER(mixcomwd_timer, mixcomwd_timerfun);
-static char expect_close;
+अटल पूर्णांक watchकरोg_port;
+अटल पूर्णांक mixcomwd_समयr_alive;
+अटल DEFINE_TIMER(mixcomwd_समयr, mixcomwd_समयrfun);
+अटल अक्षर expect_बंद;
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		"Watchdog cannot be stopped once started (default="
 				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-static void mixcomwd_ping(void)
-{
-	outb_p(55, watchdog_port);
-	return;
-}
+अटल व्योम mixcomwd_ping(व्योम)
+अणु
+	outb_p(55, watchकरोg_port);
+	वापस;
+पूर्ण
 
-static void mixcomwd_timerfun(struct timer_list *unused)
-{
+अटल व्योम mixcomwd_समयrfun(काष्ठा समयr_list *unused)
+अणु
 	mixcomwd_ping();
-	mod_timer(&mixcomwd_timer, jiffies + 5 * HZ);
-}
+	mod_समयr(&mixcomwd_समयr, jअगरfies + 5 * HZ);
+पूर्ण
 
 /*
- *	Allow only one person to hold it open
+ *	Allow only one person to hold it खोलो
  */
 
-static int mixcomwd_open(struct inode *inode, struct file *file)
-{
-	if (test_and_set_bit(0, &mixcomwd_opened))
-		return -EBUSY;
+अटल पूर्णांक mixcomwd_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (test_and_set_bit(0, &mixcomwd_खोलोed))
+		वापस -EBUSY;
 
 	mixcomwd_ping();
 
-	if (nowayout)
+	अगर (nowayout)
 		/*
-		 * fops_get() code via open() has already done
-		 * a try_module_get() so it is safe to do the
+		 * fops_get() code via खोलो() has alपढ़ोy करोne
+		 * a try_module_get() so it is safe to करो the
 		 * __module_get().
 		 */
 		__module_get(THIS_MODULE);
-	else {
-		if (mixcomwd_timer_alive) {
-			del_timer(&mixcomwd_timer);
-			mixcomwd_timer_alive = 0;
-		}
-	}
-	return stream_open(inode, file);
-}
+	अन्यथा अणु
+		अगर (mixcomwd_समयr_alive) अणु
+			del_समयr(&mixcomwd_समयr);
+			mixcomwd_समयr_alive = 0;
+		पूर्ण
+	पूर्ण
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int mixcomwd_release(struct inode *inode, struct file *file)
-{
-	if (expect_close == 42) {
-		if (mixcomwd_timer_alive) {
+अटल पूर्णांक mixcomwd_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (expect_बंद == 42) अणु
+		अगर (mixcomwd_समयr_alive) अणु
 			pr_err("release called while internal timer alive\n");
-			return -EBUSY;
-		}
-		mixcomwd_timer_alive = 1;
-		mod_timer(&mixcomwd_timer, jiffies + 5 * HZ);
-	} else
+			वापस -EBUSY;
+		पूर्ण
+		mixcomwd_समयr_alive = 1;
+		mod_समयr(&mixcomwd_समयr, jअगरfies + 5 * HZ);
+	पूर्ण अन्यथा
 		pr_crit("WDT device closed unexpectedly.  WDT will not stop!\n");
 
-	clear_bit(0, &mixcomwd_opened);
-	expect_close = 0;
-	return 0;
-}
+	clear_bit(0, &mixcomwd_खोलोed);
+	expect_बंद = 0;
+	वापस 0;
+पूर्ण
 
 
-static ssize_t mixcomwd_write(struct file *file, const char __user *data,
-						size_t len, loff_t *ppos)
-{
-	if (len) {
-		if (!nowayout) {
-			size_t i;
+अटल sमाप_प्रकार mixcomwd_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
+						माप_प्रकार len, loff_t *ppos)
+अणु
+	अगर (len) अणु
+		अगर (!nowayout) अणु
+			माप_प्रकार i;
 
-			/* In case it was set long ago */
-			expect_close = 0;
+			/* In हाल it was set दीर्घ ago */
+			expect_बंद = 0;
 
-			for (i = 0; i != len; i++) {
-				char c;
-				if (get_user(c, data + i))
-					return -EFAULT;
-				if (c == 'V')
-					expect_close = 42;
-			}
-		}
+			क्रम (i = 0; i != len; i++) अणु
+				अक्षर c;
+				अगर (get_user(c, data + i))
+					वापस -EFAULT;
+				अगर (c == 'V')
+					expect_बंद = 42;
+			पूर्ण
+		पूर्ण
 		mixcomwd_ping();
-	}
-	return len;
-}
+	पूर्ण
+	वापस len;
+पूर्ण
 
-static long mixcomwd_ioctl(struct file *file,
-				unsigned int cmd, unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
-	int __user *p = argp;
-	int status;
-	static const struct watchdog_info ident = {
+अटल दीर्घ mixcomwd_ioctl(काष्ठा file *file,
+				अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक __user *p = argp;
+	पूर्णांक status;
+	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
 		.options = WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 		.firmware_version = 1,
 		.identity = "MixCOM watchdog",
-	};
+	पूर्ण;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		if (copy_to_user(argp, &ident, sizeof(ident)))
-			return -EFAULT;
-		break;
-	case WDIOC_GETSTATUS:
-		status = mixcomwd_opened;
-		if (!nowayout)
-			status |= mixcomwd_timer_alive;
-		return put_user(status, p);
-	case WDIOC_GETBOOTSTATUS:
-		return put_user(0, p);
-	case WDIOC_KEEPALIVE:
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		अगर (copy_to_user(argp, &ident, माप(ident)))
+			वापस -EFAULT;
+		अवरोध;
+	हाल WDIOC_GETSTATUS:
+		status = mixcomwd_खोलोed;
+		अगर (!nowayout)
+			status |= mixcomwd_समयr_alive;
+		वापस put_user(status, p);
+	हाल WDIOC_GETBOOTSTATUS:
+		वापस put_user(0, p);
+	हाल WDIOC_KEEPALIVE:
 		mixcomwd_ping();
-		break;
-	default:
-		return -ENOTTY;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct file_operations mixcomwd_fops = {
+अटल स्थिर काष्ठा file_operations mixcomwd_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.write		= mixcomwd_write,
+	.ग_लिखो		= mixcomwd_ग_लिखो,
 	.unlocked_ioctl	= mixcomwd_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.open		= mixcomwd_open,
+	.खोलो		= mixcomwd_खोलो,
 	.release	= mixcomwd_release,
-};
+पूर्ण;
 
-static struct miscdevice mixcomwd_miscdev = {
+अटल काष्ठा miscdevice mixcomwd_miscdev = अणु
 	.minor	= WATCHDOG_MINOR,
 	.name	= "watchdog",
 	.fops	= &mixcomwd_fops,
-};
+पूर्ण;
 
-static int __init checkcard(int port, int card_id)
-{
-	int id;
+अटल पूर्णांक __init checkcard(पूर्णांक port, पूर्णांक card_id)
+अणु
+	पूर्णांक id;
 
-	if (!request_region(port, 1, "MixCOM watchdog"))
-		return 0;
+	अगर (!request_region(port, 1, "MixCOM watchdog"))
+		वापस 0;
 
 	id = inb_p(port);
-	if (card_id == MIXCOM_ID)
+	अगर (card_id == MIXCOM_ID)
 		id &= 0x3f;
 
-	if (id != card_id) {
+	अगर (id != card_id) अणु
 		release_region(port, 1);
-		return 0;
-	}
-	return 1;
-}
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int __init mixcomwd_init(void)
-{
-	int i, ret, found = 0;
+अटल पूर्णांक __init mixcomwd_init(व्योम)
+अणु
+	पूर्णांक i, ret, found = 0;
 
-	for (i = 0; !found && mixcomwd_io_info[i].ioport != 0; i++) {
-		if (checkcard(mixcomwd_io_info[i].ioport,
-			      mixcomwd_io_info[i].id)) {
+	क्रम (i = 0; !found && mixcomwd_io_info[i].ioport != 0; i++) अणु
+		अगर (checkcard(mixcomwd_io_info[i].ioport,
+			      mixcomwd_io_info[i].id)) अणु
 			found = 1;
-			watchdog_port = mixcomwd_io_info[i].ioport;
-		}
-	}
+			watchकरोg_port = mixcomwd_io_info[i].ioport;
+		पूर्ण
+	पूर्ण
 
-	if (!found) {
+	अगर (!found) अणु
 		pr_err("No card detected, or port not available\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = misc_register(&mixcomwd_miscdev);
-	if (ret) {
+	ret = misc_रेजिस्टर(&mixcomwd_miscdev);
+	अगर (ret) अणु
 		pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 		       WATCHDOG_MINOR, ret);
-		goto error_misc_register_watchdog;
-	}
+		जाओ error_misc_रेजिस्टर_watchकरोg;
+	पूर्ण
 
 	pr_info("MixCOM watchdog driver v%s, watchdog port at 0x%3x\n",
-		VERSION, watchdog_port);
+		VERSION, watchकरोg_port);
 
-	return 0;
+	वापस 0;
 
-error_misc_register_watchdog:
-	release_region(watchdog_port, 1);
-	watchdog_port = 0x0000;
-	return ret;
-}
+error_misc_रेजिस्टर_watchकरोg:
+	release_region(watchकरोg_port, 1);
+	watchकरोg_port = 0x0000;
+	वापस ret;
+पूर्ण
 
-static void __exit mixcomwd_exit(void)
-{
-	if (!nowayout) {
-		if (mixcomwd_timer_alive) {
+अटल व्योम __निकास mixcomwd_निकास(व्योम)
+अणु
+	अगर (!nowayout) अणु
+		अगर (mixcomwd_समयr_alive) अणु
 			pr_warn("I quit now, hardware will probably reboot!\n");
-			del_timer_sync(&mixcomwd_timer);
-			mixcomwd_timer_alive = 0;
-		}
-	}
-	misc_deregister(&mixcomwd_miscdev);
-	release_region(watchdog_port, 1);
-}
+			del_समयr_sync(&mixcomwd_समयr);
+			mixcomwd_समयr_alive = 0;
+		पूर्ण
+	पूर्ण
+	misc_deरेजिस्टर(&mixcomwd_miscdev);
+	release_region(watchकरोg_port, 1);
+पूर्ण
 
 module_init(mixcomwd_init);
-module_exit(mixcomwd_exit);
+module_निकास(mixcomwd_निकास);
 
 MODULE_AUTHOR("Gergely Madarasz <gorgo@itc.hu>");
 MODULE_DESCRIPTION("MixCom Watchdog driver");

@@ -1,352 +1,353 @@
+<शैली गुरु>
 /*
- * Atmel AT91 AIC5 (Advanced Interrupt Controller) driver
+ * Aपंचांगel AT91 AIC5 (Advanced Interrupt Controller) driver
  *
  *  Copyright (C) 2004 SAN People
  *  Copyright (C) 2004 ATMEL
  *  Copyright (C) Rick Bronson
  *  Copyright (C) 2014 Free Electrons
  *
- *  Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
+ *  Author: Boris BREZILLON <boris.brezillon@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/bitmap.h>
-#include <linux/types.h>
-#include <linux/irq.h>
-#include <linux/irqchip.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/irqdomain.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/io.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/types.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
 
-#include <asm/exception.h>
-#include <asm/mach/irq.h>
+#समावेश <यंत्र/exception.h>
+#समावेश <यंत्र/mach/irq.h>
 
-#include "irq-atmel-aic-common.h"
+#समावेश "irq-atmel-aic-common.h"
 
 /* Number of irq lines managed by AIC */
-#define NR_AIC5_IRQS	128
+#घोषणा NR_AIC5_IRQS	128
 
-#define AT91_AIC5_SSR		0x0
-#define AT91_AIC5_INTSEL_MSK	(0x7f << 0)
+#घोषणा AT91_AIC5_SSR		0x0
+#घोषणा AT91_AIC5_INTSEL_MSK	(0x7f << 0)
 
-#define AT91_AIC5_SMR			0x4
+#घोषणा AT91_AIC5_SMR			0x4
 
-#define AT91_AIC5_SVR			0x8
-#define AT91_AIC5_IVR			0x10
-#define AT91_AIC5_FVR			0x14
-#define AT91_AIC5_ISR			0x18
+#घोषणा AT91_AIC5_SVR			0x8
+#घोषणा AT91_AIC5_IVR			0x10
+#घोषणा AT91_AIC5_FVR			0x14
+#घोषणा AT91_AIC5_ISR			0x18
 
-#define AT91_AIC5_IPR0			0x20
-#define AT91_AIC5_IPR1			0x24
-#define AT91_AIC5_IPR2			0x28
-#define AT91_AIC5_IPR3			0x2c
-#define AT91_AIC5_IMR			0x30
-#define AT91_AIC5_CISR			0x34
+#घोषणा AT91_AIC5_IPR0			0x20
+#घोषणा AT91_AIC5_IPR1			0x24
+#घोषणा AT91_AIC5_IPR2			0x28
+#घोषणा AT91_AIC5_IPR3			0x2c
+#घोषणा AT91_AIC5_IMR			0x30
+#घोषणा AT91_AIC5_CISR			0x34
 
-#define AT91_AIC5_IECR			0x40
-#define AT91_AIC5_IDCR			0x44
-#define AT91_AIC5_ICCR			0x48
-#define AT91_AIC5_ISCR			0x4c
-#define AT91_AIC5_EOICR			0x38
-#define AT91_AIC5_SPU			0x3c
-#define AT91_AIC5_DCR			0x6c
+#घोषणा AT91_AIC5_IECR			0x40
+#घोषणा AT91_AIC5_IDCR			0x44
+#घोषणा AT91_AIC5_ICCR			0x48
+#घोषणा AT91_AIC5_ISCR			0x4c
+#घोषणा AT91_AIC5_EOICR			0x38
+#घोषणा AT91_AIC5_SPU			0x3c
+#घोषणा AT91_AIC5_DCR			0x6c
 
-#define AT91_AIC5_FFER			0x50
-#define AT91_AIC5_FFDR			0x54
-#define AT91_AIC5_FFSR			0x58
+#घोषणा AT91_AIC5_FFER			0x50
+#घोषणा AT91_AIC5_FFDR			0x54
+#घोषणा AT91_AIC5_FFSR			0x58
 
-static struct irq_domain *aic5_domain;
+अटल काष्ठा irq_करोमुख्य *aic5_करोमुख्य;
 
-static asmlinkage void __exception_irq_entry
-aic5_handle(struct pt_regs *regs)
-{
-	struct irq_chip_generic *bgc = irq_get_domain_generic_chip(aic5_domain, 0);
+अटल यंत्रlinkage व्योम __exception_irq_entry
+aic5_handle(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा irq_chip_generic *bgc = irq_get_करोमुख्य_generic_chip(aic5_करोमुख्य, 0);
 	u32 irqnr;
 	u32 irqstat;
 
-	irqnr = irq_reg_readl(bgc, AT91_AIC5_IVR);
-	irqstat = irq_reg_readl(bgc, AT91_AIC5_ISR);
+	irqnr = irq_reg_पढ़ोl(bgc, AT91_AIC5_IVR);
+	irqstat = irq_reg_पढ़ोl(bgc, AT91_AIC5_ISR);
 
-	if (!irqstat)
-		irq_reg_writel(bgc, 0, AT91_AIC5_EOICR);
-	else
-		handle_domain_irq(aic5_domain, irqnr, regs);
-}
+	अगर (!irqstat)
+		irq_reg_ग_लिखोl(bgc, 0, AT91_AIC5_EOICR);
+	अन्यथा
+		handle_करोमुख्य_irq(aic5_करोमुख्य, irqnr, regs);
+पूर्ण
 
-static void aic5_mask(struct irq_data *d)
-{
-	struct irq_domain *domain = d->domain;
-	struct irq_chip_generic *bgc = irq_get_domain_generic_chip(domain, 0);
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+अटल व्योम aic5_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य = d->करोमुख्य;
+	काष्ठा irq_chip_generic *bgc = irq_get_करोमुख्य_generic_chip(करोमुख्य, 0);
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
 
 	/*
-	 * Disable interrupt on AIC5. We always take the lock of the
-	 * first irq chip as all chips share the same registers.
+	 * Disable पूर्णांकerrupt on AIC5. We always take the lock of the
+	 * first irq chip as all chips share the same रेजिस्टरs.
 	 */
 	irq_gc_lock(bgc);
-	irq_reg_writel(gc, d->hwirq, AT91_AIC5_SSR);
-	irq_reg_writel(gc, 1, AT91_AIC5_IDCR);
+	irq_reg_ग_लिखोl(gc, d->hwirq, AT91_AIC5_SSR);
+	irq_reg_ग_लिखोl(gc, 1, AT91_AIC5_IDCR);
 	gc->mask_cache &= ~d->mask;
 	irq_gc_unlock(bgc);
-}
+पूर्ण
 
-static void aic5_unmask(struct irq_data *d)
-{
-	struct irq_domain *domain = d->domain;
-	struct irq_chip_generic *bgc = irq_get_domain_generic_chip(domain, 0);
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+अटल व्योम aic5_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य = d->करोमुख्य;
+	काष्ठा irq_chip_generic *bgc = irq_get_करोमुख्य_generic_chip(करोमुख्य, 0);
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
 
 	/*
-	 * Enable interrupt on AIC5. We always take the lock of the
-	 * first irq chip as all chips share the same registers.
+	 * Enable पूर्णांकerrupt on AIC5. We always take the lock of the
+	 * first irq chip as all chips share the same रेजिस्टरs.
 	 */
 	irq_gc_lock(bgc);
-	irq_reg_writel(gc, d->hwirq, AT91_AIC5_SSR);
-	irq_reg_writel(gc, 1, AT91_AIC5_IECR);
+	irq_reg_ग_लिखोl(gc, d->hwirq, AT91_AIC5_SSR);
+	irq_reg_ग_लिखोl(gc, 1, AT91_AIC5_IECR);
 	gc->mask_cache |= d->mask;
 	irq_gc_unlock(bgc);
-}
+पूर्ण
 
-static int aic5_retrigger(struct irq_data *d)
-{
-	struct irq_domain *domain = d->domain;
-	struct irq_chip_generic *bgc = irq_get_domain_generic_chip(domain, 0);
+अटल पूर्णांक aic5_retrigger(काष्ठा irq_data *d)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य = d->करोमुख्य;
+	काष्ठा irq_chip_generic *bgc = irq_get_करोमुख्य_generic_chip(करोमुख्य, 0);
 
-	/* Enable interrupt on AIC5 */
+	/* Enable पूर्णांकerrupt on AIC5 */
 	irq_gc_lock(bgc);
-	irq_reg_writel(bgc, d->hwirq, AT91_AIC5_SSR);
-	irq_reg_writel(bgc, 1, AT91_AIC5_ISCR);
+	irq_reg_ग_लिखोl(bgc, d->hwirq, AT91_AIC5_SSR);
+	irq_reg_ग_लिखोl(bgc, 1, AT91_AIC5_ISCR);
 	irq_gc_unlock(bgc);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int aic5_set_type(struct irq_data *d, unsigned type)
-{
-	struct irq_domain *domain = d->domain;
-	struct irq_chip_generic *bgc = irq_get_domain_generic_chip(domain, 0);
-	unsigned int smr;
-	int ret;
+अटल पूर्णांक aic5_set_type(काष्ठा irq_data *d, अचिन्हित type)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य = d->करोमुख्य;
+	काष्ठा irq_chip_generic *bgc = irq_get_करोमुख्य_generic_chip(करोमुख्य, 0);
+	अचिन्हित पूर्णांक smr;
+	पूर्णांक ret;
 
 	irq_gc_lock(bgc);
-	irq_reg_writel(bgc, d->hwirq, AT91_AIC5_SSR);
-	smr = irq_reg_readl(bgc, AT91_AIC5_SMR);
+	irq_reg_ग_लिखोl(bgc, d->hwirq, AT91_AIC5_SSR);
+	smr = irq_reg_पढ़ोl(bgc, AT91_AIC5_SMR);
 	ret = aic_common_set_type(d, type, &smr);
-	if (!ret)
-		irq_reg_writel(bgc, smr, AT91_AIC5_SMR);
+	अगर (!ret)
+		irq_reg_ग_लिखोl(bgc, smr, AT91_AIC5_SMR);
 	irq_gc_unlock(bgc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_PM
-static u32 *smr_cache;
+#अगर_घोषित CONFIG_PM
+अटल u32 *smr_cache;
 
-static void aic5_suspend(struct irq_data *d)
-{
-	struct irq_domain *domain = d->domain;
-	struct irq_domain_chip_generic *dgc = domain->gc;
-	struct irq_chip_generic *bgc = irq_get_domain_generic_chip(domain, 0);
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	int i;
+अटल व्योम aic5_suspend(काष्ठा irq_data *d)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य = d->करोमुख्य;
+	काष्ठा irq_करोमुख्य_chip_generic *dgc = करोमुख्य->gc;
+	काष्ठा irq_chip_generic *bgc = irq_get_करोमुख्य_generic_chip(करोमुख्य, 0);
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	पूर्णांक i;
 	u32 mask;
 
-	if (smr_cache)
-		for (i = 0; i < domain->revmap_size; i++) {
-			irq_reg_writel(bgc, i, AT91_AIC5_SSR);
-			smr_cache[i] = irq_reg_readl(bgc, AT91_AIC5_SMR);
-		}
+	अगर (smr_cache)
+		क्रम (i = 0; i < करोमुख्य->revmap_size; i++) अणु
+			irq_reg_ग_लिखोl(bgc, i, AT91_AIC5_SSR);
+			smr_cache[i] = irq_reg_पढ़ोl(bgc, AT91_AIC5_SMR);
+		पूर्ण
 
 	irq_gc_lock(bgc);
-	for (i = 0; i < dgc->irqs_per_chip; i++) {
+	क्रम (i = 0; i < dgc->irqs_per_chip; i++) अणु
 		mask = 1 << i;
-		if ((mask & gc->mask_cache) == (mask & gc->wake_active))
-			continue;
+		अगर ((mask & gc->mask_cache) == (mask & gc->wake_active))
+			जारी;
 
-		irq_reg_writel(bgc, i + gc->irq_base, AT91_AIC5_SSR);
-		if (mask & gc->wake_active)
-			irq_reg_writel(bgc, 1, AT91_AIC5_IECR);
-		else
-			irq_reg_writel(bgc, 1, AT91_AIC5_IDCR);
-	}
+		irq_reg_ग_लिखोl(bgc, i + gc->irq_base, AT91_AIC5_SSR);
+		अगर (mask & gc->wake_active)
+			irq_reg_ग_लिखोl(bgc, 1, AT91_AIC5_IECR);
+		अन्यथा
+			irq_reg_ग_लिखोl(bgc, 1, AT91_AIC5_IDCR);
+	पूर्ण
 	irq_gc_unlock(bgc);
-}
+पूर्ण
 
-static void aic5_resume(struct irq_data *d)
-{
-	struct irq_domain *domain = d->domain;
-	struct irq_domain_chip_generic *dgc = domain->gc;
-	struct irq_chip_generic *bgc = irq_get_domain_generic_chip(domain, 0);
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	int i;
+अटल व्योम aic5_resume(काष्ठा irq_data *d)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य = d->करोमुख्य;
+	काष्ठा irq_करोमुख्य_chip_generic *dgc = करोमुख्य->gc;
+	काष्ठा irq_chip_generic *bgc = irq_get_करोमुख्य_generic_chip(करोमुख्य, 0);
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	पूर्णांक i;
 	u32 mask;
 
 	irq_gc_lock(bgc);
 
-	if (smr_cache) {
-		irq_reg_writel(bgc, 0xffffffff, AT91_AIC5_SPU);
-		for (i = 0; i < domain->revmap_size; i++) {
-			irq_reg_writel(bgc, i, AT91_AIC5_SSR);
-			irq_reg_writel(bgc, i, AT91_AIC5_SVR);
-			irq_reg_writel(bgc, smr_cache[i], AT91_AIC5_SMR);
-		}
-	}
+	अगर (smr_cache) अणु
+		irq_reg_ग_लिखोl(bgc, 0xffffffff, AT91_AIC5_SPU);
+		क्रम (i = 0; i < करोमुख्य->revmap_size; i++) अणु
+			irq_reg_ग_लिखोl(bgc, i, AT91_AIC5_SSR);
+			irq_reg_ग_लिखोl(bgc, i, AT91_AIC5_SVR);
+			irq_reg_ग_लिखोl(bgc, smr_cache[i], AT91_AIC5_SMR);
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < dgc->irqs_per_chip; i++) {
+	क्रम (i = 0; i < dgc->irqs_per_chip; i++) अणु
 		mask = 1 << i;
 
-		if (!smr_cache &&
+		अगर (!smr_cache &&
 		    ((mask & gc->mask_cache) == (mask & gc->wake_active)))
-			continue;
+			जारी;
 
-		irq_reg_writel(bgc, i + gc->irq_base, AT91_AIC5_SSR);
-		if (mask & gc->mask_cache)
-			irq_reg_writel(bgc, 1, AT91_AIC5_IECR);
-		else
-			irq_reg_writel(bgc, 1, AT91_AIC5_IDCR);
-	}
+		irq_reg_ग_लिखोl(bgc, i + gc->irq_base, AT91_AIC5_SSR);
+		अगर (mask & gc->mask_cache)
+			irq_reg_ग_लिखोl(bgc, 1, AT91_AIC5_IECR);
+		अन्यथा
+			irq_reg_ग_लिखोl(bgc, 1, AT91_AIC5_IDCR);
+	पूर्ण
 	irq_gc_unlock(bgc);
-}
+पूर्ण
 
-static void aic5_pm_shutdown(struct irq_data *d)
-{
-	struct irq_domain *domain = d->domain;
-	struct irq_domain_chip_generic *dgc = domain->gc;
-	struct irq_chip_generic *bgc = irq_get_domain_generic_chip(domain, 0);
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	int i;
+अटल व्योम aic5_pm_shutकरोwn(काष्ठा irq_data *d)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य = d->करोमुख्य;
+	काष्ठा irq_करोमुख्य_chip_generic *dgc = करोमुख्य->gc;
+	काष्ठा irq_chip_generic *bgc = irq_get_करोमुख्य_generic_chip(करोमुख्य, 0);
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	पूर्णांक i;
 
 	irq_gc_lock(bgc);
-	for (i = 0; i < dgc->irqs_per_chip; i++) {
-		irq_reg_writel(bgc, i + gc->irq_base, AT91_AIC5_SSR);
-		irq_reg_writel(bgc, 1, AT91_AIC5_IDCR);
-		irq_reg_writel(bgc, 1, AT91_AIC5_ICCR);
-	}
+	क्रम (i = 0; i < dgc->irqs_per_chip; i++) अणु
+		irq_reg_ग_लिखोl(bgc, i + gc->irq_base, AT91_AIC5_SSR);
+		irq_reg_ग_लिखोl(bgc, 1, AT91_AIC5_IDCR);
+		irq_reg_ग_लिखोl(bgc, 1, AT91_AIC5_ICCR);
+	पूर्ण
 	irq_gc_unlock(bgc);
-}
-#else
-#define aic5_suspend		NULL
-#define aic5_resume		NULL
-#define aic5_pm_shutdown	NULL
-#endif /* CONFIG_PM */
+पूर्ण
+#अन्यथा
+#घोषणा aic5_suspend		शून्य
+#घोषणा aic5_resume		शून्य
+#घोषणा aic5_pm_shutकरोwn	शून्य
+#पूर्ण_अगर /* CONFIG_PM */
 
-static void __init aic5_hw_init(struct irq_domain *domain)
-{
-	struct irq_chip_generic *gc = irq_get_domain_generic_chip(domain, 0);
-	int i;
+अटल व्योम __init aic5_hw_init(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा irq_chip_generic *gc = irq_get_करोमुख्य_generic_chip(करोमुख्य, 0);
+	पूर्णांक i;
 
 	/*
-	 * Perform 8 End Of Interrupt Command to make sure AIC
+	 * Perक्रमm 8 End Of Interrupt Command to make sure AIC
 	 * will not Lock out nIRQ
 	 */
-	for (i = 0; i < 8; i++)
-		irq_reg_writel(gc, 0, AT91_AIC5_EOICR);
+	क्रम (i = 0; i < 8; i++)
+		irq_reg_ग_लिखोl(gc, 0, AT91_AIC5_EOICR);
 
 	/*
 	 * Spurious Interrupt ID in Spurious Vector Register.
-	 * When there is no current interrupt, the IRQ Vector Register
-	 * reads the value stored in AIC_SPU
+	 * When there is no current पूर्णांकerrupt, the IRQ Vector Register
+	 * पढ़ोs the value stored in AIC_SPU
 	 */
-	irq_reg_writel(gc, 0xffffffff, AT91_AIC5_SPU);
+	irq_reg_ग_लिखोl(gc, 0xffffffff, AT91_AIC5_SPU);
 
 	/* No debugging in AIC: Debug (Protect) Control Register */
-	irq_reg_writel(gc, 0, AT91_AIC5_DCR);
+	irq_reg_ग_लिखोl(gc, 0, AT91_AIC5_DCR);
 
-	/* Disable and clear all interrupts initially */
-	for (i = 0; i < domain->revmap_size; i++) {
-		irq_reg_writel(gc, i, AT91_AIC5_SSR);
-		irq_reg_writel(gc, i, AT91_AIC5_SVR);
-		irq_reg_writel(gc, 1, AT91_AIC5_IDCR);
-		irq_reg_writel(gc, 1, AT91_AIC5_ICCR);
-	}
-}
+	/* Disable and clear all पूर्णांकerrupts initially */
+	क्रम (i = 0; i < करोमुख्य->revmap_size; i++) अणु
+		irq_reg_ग_लिखोl(gc, i, AT91_AIC5_SSR);
+		irq_reg_ग_लिखोl(gc, i, AT91_AIC5_SVR);
+		irq_reg_ग_लिखोl(gc, 1, AT91_AIC5_IDCR);
+		irq_reg_ग_लिखोl(gc, 1, AT91_AIC5_ICCR);
+	पूर्ण
+पूर्ण
 
-static int aic5_irq_domain_xlate(struct irq_domain *d,
-				 struct device_node *ctrlr,
-				 const u32 *intspec, unsigned int intsize,
+अटल पूर्णांक aic5_irq_करोमुख्य_xlate(काष्ठा irq_करोमुख्य *d,
+				 काष्ठा device_node *ctrlr,
+				 स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
 				 irq_hw_number_t *out_hwirq,
-				 unsigned int *out_type)
-{
-	struct irq_chip_generic *bgc = irq_get_domain_generic_chip(d, 0);
-	unsigned long flags;
-	unsigned smr;
-	int ret;
+				 अचिन्हित पूर्णांक *out_type)
+अणु
+	काष्ठा irq_chip_generic *bgc = irq_get_करोमुख्य_generic_chip(d, 0);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित smr;
+	पूर्णांक ret;
 
-	if (!bgc)
-		return -EINVAL;
+	अगर (!bgc)
+		वापस -EINVAL;
 
-	ret = aic_common_irq_domain_xlate(d, ctrlr, intspec, intsize,
+	ret = aic_common_irq_करोमुख्य_xlate(d, ctrlr, पूर्णांकspec, पूर्णांकsize,
 					  out_hwirq, out_type);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	irq_gc_lock_irqsave(bgc, flags);
-	irq_reg_writel(bgc, *out_hwirq, AT91_AIC5_SSR);
-	smr = irq_reg_readl(bgc, AT91_AIC5_SMR);
-	aic_common_set_priority(intspec[2], &smr);
-	irq_reg_writel(bgc, smr, AT91_AIC5_SMR);
+	irq_reg_ग_लिखोl(bgc, *out_hwirq, AT91_AIC5_SSR);
+	smr = irq_reg_पढ़ोl(bgc, AT91_AIC5_SMR);
+	aic_common_set_priority(पूर्णांकspec[2], &smr);
+	irq_reg_ग_लिखोl(bgc, smr, AT91_AIC5_SMR);
 	irq_gc_unlock_irqrestore(bgc, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct irq_domain_ops aic5_irq_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops aic5_irq_ops = अणु
 	.map	= irq_map_generic_chip,
-	.xlate	= aic5_irq_domain_xlate,
-};
+	.xlate	= aic5_irq_करोमुख्य_xlate,
+पूर्ण;
 
-static void __init sama5d3_aic_irq_fixup(void)
-{
+अटल व्योम __init sama5d3_aic_irq_fixup(व्योम)
+अणु
 	aic_common_rtc_irq_fixup();
-}
+पूर्ण
 
-static void __init sam9x60_aic_irq_fixup(void)
-{
+अटल व्योम __init sam9x60_aic_irq_fixup(व्योम)
+अणु
 	aic_common_rtc_irq_fixup();
 	aic_common_rtt_irq_fixup();
-}
+पूर्ण
 
-static const struct of_device_id aic5_irq_fixups[] __initconst = {
-	{ .compatible = "atmel,sama5d3", .data = sama5d3_aic_irq_fixup },
-	{ .compatible = "atmel,sama5d4", .data = sama5d3_aic_irq_fixup },
-	{ .compatible = "microchip,sam9x60", .data = sam9x60_aic_irq_fixup },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id aic5_irq_fixups[] __initस्थिर = अणु
+	अणु .compatible = "atmel,sama5d3", .data = sama5d3_aic_irq_fixup पूर्ण,
+	अणु .compatible = "atmel,sama5d4", .data = sama5d3_aic_irq_fixup पूर्ण,
+	अणु .compatible = "microchip,sam9x60", .data = sam9x60_aic_irq_fixup पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 
-static int __init aic5_of_init(struct device_node *node,
-			       struct device_node *parent,
-			       int nirqs)
-{
-	struct irq_chip_generic *gc;
-	struct irq_domain *domain;
-	int nchips;
-	int i;
+अटल पूर्णांक __init aic5_of_init(काष्ठा device_node *node,
+			       काष्ठा device_node *parent,
+			       पूर्णांक nirqs)
+अणु
+	काष्ठा irq_chip_generic *gc;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
+	पूर्णांक nchips;
+	पूर्णांक i;
 
-	if (nirqs > NR_AIC5_IRQS)
-		return -EINVAL;
+	अगर (nirqs > NR_AIC5_IRQS)
+		वापस -EINVAL;
 
-	if (aic5_domain)
-		return -EEXIST;
+	अगर (aic5_करोमुख्य)
+		वापस -EEXIST;
 
-	domain = aic_common_of_init(node, &aic5_irq_ops, "atmel-aic5",
+	करोमुख्य = aic_common_of_init(node, &aic5_irq_ops, "atmel-aic5",
 				    nirqs, aic5_irq_fixups);
-	if (IS_ERR(domain))
-		return PTR_ERR(domain);
+	अगर (IS_ERR(करोमुख्य))
+		वापस PTR_ERR(करोमुख्य);
 
-	aic5_domain = domain;
-	nchips = aic5_domain->revmap_size / 32;
-	for (i = 0; i < nchips; i++) {
-		gc = irq_get_domain_generic_chip(domain, i * 32);
+	aic5_करोमुख्य = करोमुख्य;
+	nchips = aic5_करोमुख्य->revmap_size / 32;
+	क्रम (i = 0; i < nchips; i++) अणु
+		gc = irq_get_करोमुख्य_generic_chip(करोमुख्य, i * 32);
 
 		gc->chip_types[0].regs.eoi = AT91_AIC5_EOICR;
 		gc->chip_types[0].chip.irq_mask = aic5_mask;
@@ -355,54 +356,54 @@ static int __init aic5_of_init(struct device_node *node,
 		gc->chip_types[0].chip.irq_set_type = aic5_set_type;
 		gc->chip_types[0].chip.irq_suspend = aic5_suspend;
 		gc->chip_types[0].chip.irq_resume = aic5_resume;
-		gc->chip_types[0].chip.irq_pm_shutdown = aic5_pm_shutdown;
-	}
+		gc->chip_types[0].chip.irq_pm_shutकरोwn = aic5_pm_shutकरोwn;
+	पूर्ण
 
-	aic5_hw_init(domain);
+	aic5_hw_init(करोमुख्य);
 	set_handle_irq(aic5_handle);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define NR_SAMA5D2_IRQS		77
+#घोषणा NR_SAMA5D2_IRQS		77
 
-static int __init sama5d2_aic5_of_init(struct device_node *node,
-				       struct device_node *parent)
-{
-#ifdef CONFIG_PM
-	smr_cache = kcalloc(DIV_ROUND_UP(NR_SAMA5D2_IRQS, 32) * 32,
-			    sizeof(*smr_cache), GFP_KERNEL);
-	if (!smr_cache)
-		return -ENOMEM;
-#endif
+अटल पूर्णांक __init sama5d2_aic5_of_init(काष्ठा device_node *node,
+				       काष्ठा device_node *parent)
+अणु
+#अगर_घोषित CONFIG_PM
+	smr_cache = kसुस्मृति(DIV_ROUND_UP(NR_SAMA5D2_IRQS, 32) * 32,
+			    माप(*smr_cache), GFP_KERNEL);
+	अगर (!smr_cache)
+		वापस -ENOMEM;
+#पूर्ण_अगर
 
-	return aic5_of_init(node, parent, NR_SAMA5D2_IRQS);
-}
+	वापस aic5_of_init(node, parent, NR_SAMA5D2_IRQS);
+पूर्ण
 IRQCHIP_DECLARE(sama5d2_aic5, "atmel,sama5d2-aic", sama5d2_aic5_of_init);
 
-#define NR_SAMA5D3_IRQS		48
+#घोषणा NR_SAMA5D3_IRQS		48
 
-static int __init sama5d3_aic5_of_init(struct device_node *node,
-				       struct device_node *parent)
-{
-	return aic5_of_init(node, parent, NR_SAMA5D3_IRQS);
-}
+अटल पूर्णांक __init sama5d3_aic5_of_init(काष्ठा device_node *node,
+				       काष्ठा device_node *parent)
+अणु
+	वापस aic5_of_init(node, parent, NR_SAMA5D3_IRQS);
+पूर्ण
 IRQCHIP_DECLARE(sama5d3_aic5, "atmel,sama5d3-aic", sama5d3_aic5_of_init);
 
-#define NR_SAMA5D4_IRQS		68
+#घोषणा NR_SAMA5D4_IRQS		68
 
-static int __init sama5d4_aic5_of_init(struct device_node *node,
-				       struct device_node *parent)
-{
-	return aic5_of_init(node, parent, NR_SAMA5D4_IRQS);
-}
+अटल पूर्णांक __init sama5d4_aic5_of_init(काष्ठा device_node *node,
+				       काष्ठा device_node *parent)
+अणु
+	वापस aic5_of_init(node, parent, NR_SAMA5D4_IRQS);
+पूर्ण
 IRQCHIP_DECLARE(sama5d4_aic5, "atmel,sama5d4-aic", sama5d4_aic5_of_init);
 
-#define NR_SAM9X60_IRQS		50
+#घोषणा NR_SAM9X60_IRQS		50
 
-static int __init sam9x60_aic5_of_init(struct device_node *node,
-				       struct device_node *parent)
-{
-	return aic5_of_init(node, parent, NR_SAM9X60_IRQS);
-}
+अटल पूर्णांक __init sam9x60_aic5_of_init(काष्ठा device_node *node,
+				       काष्ठा device_node *parent)
+अणु
+	वापस aic5_of_init(node, parent, NR_SAM9X60_IRQS);
+पूर्ण
 IRQCHIP_DECLARE(sam9x60_aic5, "microchip,sam9x60-aic", sam9x60_aic5_of_init);

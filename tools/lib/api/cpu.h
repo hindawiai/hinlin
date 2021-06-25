@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __API_CPU__
-#define __API_CPU__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __API_CPU__
+#घोषणा __API_CPU__
 
-int cpu__get_max_freq(unsigned long long *freq);
+पूर्णांक cpu__get_max_freq(अचिन्हित दीर्घ दीर्घ *freq);
 
-#endif /* __API_CPU__ */
+#पूर्ण_अगर /* __API_CPU__ */

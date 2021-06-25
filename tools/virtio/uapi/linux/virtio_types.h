@@ -1,1 +1,2 @@
-#include "../../include/uapi/linux/virtio_types.h"
+<शैली गुरु>
+#समावेश "../../include/uapi/linux/virtio_types.h"

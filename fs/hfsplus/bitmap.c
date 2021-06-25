@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  linux/fs/hfsplus/bitmap.c
+ *  linux/fs/hfsplus/biपंचांगap.c
  *
  * Copyright (C) 2001
  * Brad Boyer (flar@allandria.com)
@@ -9,238 +10,238 @@
  * Handling of allocation file
  */
 
-#include <linux/pagemap.h>
+#समावेश <linux/pagemap.h>
 
-#include "hfsplus_fs.h"
-#include "hfsplus_raw.h"
+#समावेश "hfsplus_fs.h"
+#समावेश "hfsplus_raw.h"
 
-#define PAGE_CACHE_BITS	(PAGE_SIZE * 8)
+#घोषणा PAGE_CACHE_BITS	(PAGE_SIZE * 8)
 
-int hfsplus_block_allocate(struct super_block *sb, u32 size,
+पूर्णांक hfsplus_block_allocate(काष्ठा super_block *sb, u32 size,
 		u32 offset, u32 *max)
-{
-	struct hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
-	struct page *page;
-	struct address_space *mapping;
+अणु
+	काष्ठा hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
+	काष्ठा page *page;
+	काष्ठा address_space *mapping;
 	__be32 *pptr, *curr, *end;
 	u32 mask, start, len, n;
 	__be32 val;
-	int i;
+	पूर्णांक i;
 
 	len = *max;
-	if (!len)
-		return size;
+	अगर (!len)
+		वापस size;
 
 	hfs_dbg(BITMAP, "block_allocate: %u,%u,%u\n", size, offset, len);
 	mutex_lock(&sbi->alloc_mutex);
 	mapping = sbi->alloc_file->i_mapping;
-	page = read_mapping_page(mapping, offset / PAGE_CACHE_BITS, NULL);
-	if (IS_ERR(page)) {
+	page = पढ़ो_mapping_page(mapping, offset / PAGE_CACHE_BITS, शून्य);
+	अगर (IS_ERR(page)) अणु
 		start = size;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pptr = kmap(page);
 	curr = pptr + (offset & (PAGE_CACHE_BITS - 1)) / 32;
 	i = offset % 32;
 	offset &= ~(PAGE_CACHE_BITS - 1);
-	if ((size ^ offset) / PAGE_CACHE_BITS)
+	अगर ((size ^ offset) / PAGE_CACHE_BITS)
 		end = pptr + PAGE_CACHE_BITS / 32;
-	else
+	अन्यथा
 		end = pptr + ((size + 31) & (PAGE_CACHE_BITS - 1)) / 32;
 
-	/* scan the first partial u32 for zero bits */
+	/* scan the first partial u32 क्रम zero bits */
 	val = *curr;
-	if (~val) {
+	अगर (~val) अणु
 		n = be32_to_cpu(val);
 		mask = (1U << 31) >> i;
-		for (; i < 32; mask >>= 1, i++) {
-			if (!(n & mask))
-				goto found;
-		}
-	}
+		क्रम (; i < 32; mask >>= 1, i++) अणु
+			अगर (!(n & mask))
+				जाओ found;
+		पूर्ण
+	पूर्ण
 	curr++;
 
-	/* scan complete u32s for the first zero bit */
-	while (1) {
-		while (curr < end) {
+	/* scan complete u32s क्रम the first zero bit */
+	जबतक (1) अणु
+		जबतक (curr < end) अणु
 			val = *curr;
-			if (~val) {
+			अगर (~val) अणु
 				n = be32_to_cpu(val);
 				mask = 1 << 31;
-				for (i = 0; i < 32; mask >>= 1, i++) {
-					if (!(n & mask))
-						goto found;
-				}
-			}
+				क्रम (i = 0; i < 32; mask >>= 1, i++) अणु
+					अगर (!(n & mask))
+						जाओ found;
+				पूर्ण
+			पूर्ण
 			curr++;
-		}
+		पूर्ण
 		kunmap(page);
 		offset += PAGE_CACHE_BITS;
-		if (offset >= size)
-			break;
-		page = read_mapping_page(mapping, offset / PAGE_CACHE_BITS,
-					 NULL);
-		if (IS_ERR(page)) {
+		अगर (offset >= size)
+			अवरोध;
+		page = पढ़ो_mapping_page(mapping, offset / PAGE_CACHE_BITS,
+					 शून्य);
+		अगर (IS_ERR(page)) अणु
 			start = size;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		curr = pptr = kmap(page);
-		if ((size ^ offset) / PAGE_CACHE_BITS)
+		अगर ((size ^ offset) / PAGE_CACHE_BITS)
 			end = pptr + PAGE_CACHE_BITS / 32;
-		else
+		अन्यथा
 			end = pptr + ((size + 31) & (PAGE_CACHE_BITS - 1)) / 32;
-	}
+	पूर्ण
 	hfs_dbg(BITMAP, "bitmap full\n");
 	start = size;
-	goto out;
+	जाओ out;
 
 found:
 	start = offset + (curr - pptr) * 32 + i;
-	if (start >= size) {
+	अगर (start >= size) अणु
 		hfs_dbg(BITMAP, "bitmap full\n");
-		goto out;
-	}
-	/* do any partial u32 at the start */
+		जाओ out;
+	पूर्ण
+	/* करो any partial u32 at the start */
 	len = min(size - start, len);
-	while (1) {
+	जबतक (1) अणु
 		n |= mask;
-		if (++i >= 32)
-			break;
+		अगर (++i >= 32)
+			अवरोध;
 		mask >>= 1;
-		if (!--len || n & mask)
-			goto done;
-	}
-	if (!--len)
-		goto done;
+		अगर (!--len || n & mask)
+			जाओ करोne;
+	पूर्ण
+	अगर (!--len)
+		जाओ करोne;
 	*curr++ = cpu_to_be32(n);
-	/* do full u32s */
-	while (1) {
-		while (curr < end) {
+	/* करो full u32s */
+	जबतक (1) अणु
+		जबतक (curr < end) अणु
 			n = be32_to_cpu(*curr);
-			if (len < 32)
-				goto last;
-			if (n) {
+			अगर (len < 32)
+				जाओ last;
+			अगर (n) अणु
 				len = 32;
-				goto last;
-			}
+				जाओ last;
+			पूर्ण
 			*curr++ = cpu_to_be32(0xffffffff);
 			len -= 32;
-		}
+		पूर्ण
 		set_page_dirty(page);
 		kunmap(page);
 		offset += PAGE_CACHE_BITS;
-		page = read_mapping_page(mapping, offset / PAGE_CACHE_BITS,
-					 NULL);
-		if (IS_ERR(page)) {
+		page = पढ़ो_mapping_page(mapping, offset / PAGE_CACHE_BITS,
+					 शून्य);
+		अगर (IS_ERR(page)) अणु
 			start = size;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		pptr = kmap(page);
 		curr = pptr;
 		end = pptr + PAGE_CACHE_BITS / 32;
-	}
+	पूर्ण
 last:
-	/* do any partial u32 at end */
+	/* करो any partial u32 at end */
 	mask = 1U << 31;
-	for (i = 0; i < len; i++) {
-		if (n & mask)
-			break;
+	क्रम (i = 0; i < len; i++) अणु
+		अगर (n & mask)
+			अवरोध;
 		n |= mask;
 		mask >>= 1;
-	}
-done:
+	पूर्ण
+करोne:
 	*curr = cpu_to_be32(n);
 	set_page_dirty(page);
 	kunmap(page);
 	*max = offset + (curr - pptr) * 32 + i - start;
-	sbi->free_blocks -= *max;
+	sbi->मुक्त_blocks -= *max;
 	hfsplus_mark_mdb_dirty(sb);
 	hfs_dbg(BITMAP, "-> %u,%u\n", start, *max);
 out:
 	mutex_unlock(&sbi->alloc_mutex);
-	return start;
-}
+	वापस start;
+पूर्ण
 
-int hfsplus_block_free(struct super_block *sb, u32 offset, u32 count)
-{
-	struct hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
-	struct page *page;
-	struct address_space *mapping;
+पूर्णांक hfsplus_block_मुक्त(काष्ठा super_block *sb, u32 offset, u32 count)
+अणु
+	काष्ठा hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
+	काष्ठा page *page;
+	काष्ठा address_space *mapping;
 	__be32 *pptr, *curr, *end;
 	u32 mask, len, pnr;
-	int i;
+	पूर्णांक i;
 
-	/* is there any actual work to be done? */
-	if (!count)
-		return 0;
+	/* is there any actual work to be करोne? */
+	अगर (!count)
+		वापस 0;
 
 	hfs_dbg(BITMAP, "block_free: %u,%u\n", offset, count);
 	/* are all of the bits in range? */
-	if ((offset + count) > sbi->total_blocks)
-		return -ENOENT;
+	अगर ((offset + count) > sbi->total_blocks)
+		वापस -ENOENT;
 
 	mutex_lock(&sbi->alloc_mutex);
 	mapping = sbi->alloc_file->i_mapping;
 	pnr = offset / PAGE_CACHE_BITS;
-	page = read_mapping_page(mapping, pnr, NULL);
-	if (IS_ERR(page))
-		goto kaboom;
+	page = पढ़ो_mapping_page(mapping, pnr, शून्य);
+	अगर (IS_ERR(page))
+		जाओ kaboom;
 	pptr = kmap(page);
 	curr = pptr + (offset & (PAGE_CACHE_BITS - 1)) / 32;
 	end = pptr + PAGE_CACHE_BITS / 32;
 	len = count;
 
-	/* do any partial u32 at the start */
+	/* करो any partial u32 at the start */
 	i = offset % 32;
-	if (i) {
-		int j = 32 - i;
+	अगर (i) अणु
+		पूर्णांक j = 32 - i;
 		mask = 0xffffffffU << j;
-		if (j > count) {
+		अगर (j > count) अणु
 			mask |= 0xffffffffU >> (i + count);
 			*curr++ &= cpu_to_be32(mask);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		*curr++ &= cpu_to_be32(mask);
 		count -= j;
-	}
+	पूर्ण
 
-	/* do full u32s */
-	while (1) {
-		while (curr < end) {
-			if (count < 32)
-				goto done;
+	/* करो full u32s */
+	जबतक (1) अणु
+		जबतक (curr < end) अणु
+			अगर (count < 32)
+				जाओ करोne;
 			*curr++ = 0;
 			count -= 32;
-		}
-		if (!count)
-			break;
+		पूर्ण
+		अगर (!count)
+			अवरोध;
 		set_page_dirty(page);
 		kunmap(page);
-		page = read_mapping_page(mapping, ++pnr, NULL);
-		if (IS_ERR(page))
-			goto kaboom;
+		page = पढ़ो_mapping_page(mapping, ++pnr, शून्य);
+		अगर (IS_ERR(page))
+			जाओ kaboom;
 		pptr = kmap(page);
 		curr = pptr;
 		end = pptr + PAGE_CACHE_BITS / 32;
-	}
-done:
-	/* do any partial u32 at end */
-	if (count) {
+	पूर्ण
+करोne:
+	/* करो any partial u32 at end */
+	अगर (count) अणु
 		mask = 0xffffffffU >> count;
 		*curr &= cpu_to_be32(mask);
-	}
+	पूर्ण
 out:
 	set_page_dirty(page);
 	kunmap(page);
-	sbi->free_blocks += len;
+	sbi->मुक्त_blocks += len;
 	hfsplus_mark_mdb_dirty(sb);
 	mutex_unlock(&sbi->alloc_mutex);
 
-	return 0;
+	वापस 0;
 
 kaboom:
 	pr_crit("unable to mark blocks free: error %ld\n", PTR_ERR(page));
 	mutex_unlock(&sbi->alloc_mutex);
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण

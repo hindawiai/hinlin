@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/fs/jfs/ioctl.c
  *
@@ -6,141 +7,141 @@
  * adapted from Remy Card's ext2/ioctl.c
  */
 
-#include <linux/fs.h>
-#include <linux/ctype.h>
-#include <linux/capability.h>
-#include <linux/mount.h>
-#include <linux/time.h>
-#include <linux/sched.h>
-#include <linux/blkdev.h>
-#include <asm/current.h>
-#include <linux/uaccess.h>
-#include <linux/fileattr.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/capability.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/blkdev.h>
+#समावेश <यंत्र/current.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/fileattr.h>
 
-#include "jfs_filsys.h"
-#include "jfs_debug.h"
-#include "jfs_incore.h"
-#include "jfs_dinode.h"
-#include "jfs_inode.h"
-#include "jfs_dmap.h"
-#include "jfs_discard.h"
+#समावेश "jfs_filsys.h"
+#समावेश "jfs_debug.h"
+#समावेश "jfs_incore.h"
+#समावेश "jfs_dinode.h"
+#समावेश "jfs_inode.h"
+#समावेश "jfs_dmap.h"
+#समावेश "jfs_discard.h"
 
-static struct {
-	long jfs_flag;
-	long ext2_flag;
-} jfs_map[] = {
-	{JFS_NOATIME_FL,	FS_NOATIME_FL},
-	{JFS_DIRSYNC_FL,	FS_DIRSYNC_FL},
-	{JFS_SYNC_FL,		FS_SYNC_FL},
-	{JFS_SECRM_FL,		FS_SECRM_FL},
-	{JFS_UNRM_FL,		FS_UNRM_FL},
-	{JFS_APPEND_FL,		FS_APPEND_FL},
-	{JFS_IMMUTABLE_FL,	FS_IMMUTABLE_FL},
-	{0, 0},
-};
+अटल काष्ठा अणु
+	दीर्घ jfs_flag;
+	दीर्घ ext2_flag;
+पूर्ण jfs_map[] = अणु
+	अणुJFS_NOATIME_FL,	FS_NOATIME_FLपूर्ण,
+	अणुJFS_सूचीSYNC_FL,	FS_सूचीSYNC_FLपूर्ण,
+	अणुJFS_SYNC_FL,		FS_SYNC_FLपूर्ण,
+	अणुJFS_SECRM_FL,		FS_SECRM_FLपूर्ण,
+	अणुJFS_UNRM_FL,		FS_UNRM_FLपूर्ण,
+	अणुJFS_APPEND_FL,		FS_APPEND_FLपूर्ण,
+	अणुJFS_IMMUTABLE_FL,	FS_IMMUTABLE_FLपूर्ण,
+	अणु0, 0पूर्ण,
+पूर्ण;
 
-static long jfs_map_ext2(unsigned long flags, int from)
-{
-	int index=0;
-	long mapped=0;
+अटल दीर्घ jfs_map_ext2(अचिन्हित दीर्घ flags, पूर्णांक from)
+अणु
+	पूर्णांक index=0;
+	दीर्घ mapped=0;
 
-	while (jfs_map[index].jfs_flag) {
-		if (from) {
-			if (jfs_map[index].ext2_flag & flags)
+	जबतक (jfs_map[index].jfs_flag) अणु
+		अगर (from) अणु
+			अगर (jfs_map[index].ext2_flag & flags)
 				mapped |= jfs_map[index].jfs_flag;
-		} else {
-			if (jfs_map[index].jfs_flag & flags)
+		पूर्ण अन्यथा अणु
+			अगर (jfs_map[index].jfs_flag & flags)
 				mapped |= jfs_map[index].ext2_flag;
-		}
+		पूर्ण
 		index++;
-	}
-	return mapped;
-}
+	पूर्ण
+	वापस mapped;
+पूर्ण
 
-int jfs_fileattr_get(struct dentry *dentry, struct fileattr *fa)
-{
-	struct jfs_inode_info *jfs_inode = JFS_IP(d_inode(dentry));
-	unsigned int flags = jfs_inode->mode2 & JFS_FL_USER_VISIBLE;
+पूर्णांक jfs_fileattr_get(काष्ठा dentry *dentry, काष्ठा fileattr *fa)
+अणु
+	काष्ठा jfs_inode_info *jfs_inode = JFS_IP(d_inode(dentry));
+	अचिन्हित पूर्णांक flags = jfs_inode->mode2 & JFS_FL_USER_VISIBLE;
 
-	if (d_is_special(dentry))
-		return -ENOTTY;
+	अगर (d_is_special(dentry))
+		वापस -ENOTTY;
 
 	fileattr_fill_flags(fa, jfs_map_ext2(flags, 0));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int jfs_fileattr_set(struct user_namespace *mnt_userns,
-		     struct dentry *dentry, struct fileattr *fa)
-{
-	struct inode *inode = d_inode(dentry);
-	struct jfs_inode_info *jfs_inode = JFS_IP(inode);
-	unsigned int flags;
+पूर्णांक jfs_fileattr_set(काष्ठा user_namespace *mnt_userns,
+		     काष्ठा dentry *dentry, काष्ठा fileattr *fa)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा jfs_inode_info *jfs_inode = JFS_IP(inode);
+	अचिन्हित पूर्णांक flags;
 
-	if (d_is_special(dentry))
-		return -ENOTTY;
+	अगर (d_is_special(dentry))
+		वापस -ENOTTY;
 
-	if (fileattr_has_fsx(fa))
-		return -EOPNOTSUPP;
+	अगर (fileattr_has_fsx(fa))
+		वापस -EOPNOTSUPP;
 
 	flags = jfs_map_ext2(fa->flags, 1);
-	if (!S_ISDIR(inode->i_mode))
-		flags &= ~JFS_DIRSYNC_FL;
+	अगर (!S_ISसूची(inode->i_mode))
+		flags &= ~JFS_सूचीSYNC_FL;
 
 	/* Is it quota file? Do not allow user to mess with it */
-	if (IS_NOQUOTA(inode))
-		return -EPERM;
+	अगर (IS_NOQUOTA(inode))
+		वापस -EPERM;
 
 	flags = flags & JFS_FL_USER_MODIFIABLE;
 	flags |= jfs_inode->mode2 & ~JFS_FL_USER_MODIFIABLE;
 	jfs_inode->mode2 = flags;
 
 	jfs_set_inode_flags(inode);
-	inode->i_ctime = current_time(inode);
+	inode->i_स_समय = current_समय(inode);
 	mark_inode_dirty(inode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-long jfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	struct inode *inode = file_inode(filp);
+दीर्घ jfs_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा inode *inode = file_inode(filp);
 
-	switch (cmd) {
-	case FITRIM:
-	{
-		struct super_block *sb = inode->i_sb;
-		struct request_queue *q = bdev_get_queue(sb->s_bdev);
-		struct fstrim_range range;
+	चयन (cmd) अणु
+	हाल FITRIM:
+	अणु
+		काष्ठा super_block *sb = inode->i_sb;
+		काष्ठा request_queue *q = bdev_get_queue(sb->s_bdev);
+		काष्ठा fstrim_range range;
 		s64 ret = 0;
 
-		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+		अगर (!capable(CAP_SYS_ADMIN))
+			वापस -EPERM;
 
-		if (!blk_queue_discard(q)) {
+		अगर (!blk_queue_discard(q)) अणु
 			jfs_warn("FITRIM not supported on device");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
-		if (copy_from_user(&range, (struct fstrim_range __user *)arg,
-		    sizeof(range)))
-			return -EFAULT;
+		अगर (copy_from_user(&range, (काष्ठा fstrim_range __user *)arg,
+		    माप(range)))
+			वापस -EFAULT;
 
-		range.minlen = max_t(unsigned int, range.minlen,
+		range.minlen = max_t(अचिन्हित पूर्णांक, range.minlen,
 			q->limits.discard_granularity);
 
 		ret = jfs_ioc_trim(inode, &range);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		if (copy_to_user((struct fstrim_range __user *)arg, &range,
-		    sizeof(range)))
-			return -EFAULT;
+		अगर (copy_to_user((काष्ठा fstrim_range __user *)arg, &range,
+		    माप(range)))
+			वापस -EFAULT;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	default:
-		return -ENOTTY;
-	}
-}
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+पूर्ण

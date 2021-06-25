@@ -1,619 +1,620 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * rtc-ab-b5ze-s3 - Driver for Abracon AB-RTCMC-32.768Khz-B5ZE-S3
+ * rtc-ab-b5ze-s3 - Driver क्रम Abracon AB-RTCMC-32.768Khz-B5ZE-S3
  *                  I2C RTC / Alarm chip
  *
  * Copyright (C) 2014, Arnaud EBALARD <arno@natisbad.org>
  *
  * Detailed datasheet of the chip is available here:
  *
- *  https://www.abracon.com/realtimeclock/AB-RTCMC-32.768kHz-B5ZE-S3-Application-Manual.pdf
+ *  https://www.abracon.com/realसमयघड़ी/AB-RTCMC-32.768kHz-B5ZE-S3-Application-Manual.pdf
  *
  * This work is based on ISL12057 driver (drivers/rtc/rtc-isl12057.c).
  *
  */
 
-#include <linux/module.h>
-#include <linux/rtc.h>
-#include <linux/i2c.h>
-#include <linux/bcd.h>
-#include <linux/of.h>
-#include <linux/regmap.h>
-#include <linux/interrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#define DRV_NAME "rtc-ab-b5ze-s3"
+#घोषणा DRV_NAME "rtc-ab-b5ze-s3"
 
 /* Control section */
-#define ABB5ZES3_REG_CTRL1	   0x00	   /* Control 1 register */
-#define ABB5ZES3_REG_CTRL1_CIE	   BIT(0)  /* Pulse interrupt enable */
-#define ABB5ZES3_REG_CTRL1_AIE	   BIT(1)  /* Alarm interrupt enable */
-#define ABB5ZES3_REG_CTRL1_SIE	   BIT(2)  /* Second interrupt enable */
-#define ABB5ZES3_REG_CTRL1_PM	   BIT(3)  /* 24h/12h mode */
-#define ABB5ZES3_REG_CTRL1_SR	   BIT(4)  /* Software reset */
-#define ABB5ZES3_REG_CTRL1_STOP	   BIT(5)  /* RTC circuit enable */
-#define ABB5ZES3_REG_CTRL1_CAP	   BIT(7)
+#घोषणा ABB5ZES3_REG_CTRL1	   0x00	   /* Control 1 रेजिस्टर */
+#घोषणा ABB5ZES3_REG_CTRL1_CIE	   BIT(0)  /* Pulse पूर्णांकerrupt enable */
+#घोषणा ABB5ZES3_REG_CTRL1_AIE	   BIT(1)  /* Alarm पूर्णांकerrupt enable */
+#घोषणा ABB5ZES3_REG_CTRL1_SIE	   BIT(2)  /* Second पूर्णांकerrupt enable */
+#घोषणा ABB5ZES3_REG_CTRL1_PM	   BIT(3)  /* 24h/12h mode */
+#घोषणा ABB5ZES3_REG_CTRL1_SR	   BIT(4)  /* Software reset */
+#घोषणा ABB5ZES3_REG_CTRL1_STOP	   BIT(5)  /* RTC circuit enable */
+#घोषणा ABB5ZES3_REG_CTRL1_CAP	   BIT(7)
 
-#define ABB5ZES3_REG_CTRL2	   0x01	   /* Control 2 register */
-#define ABB5ZES3_REG_CTRL2_CTBIE   BIT(0)  /* Countdown timer B int. enable */
-#define ABB5ZES3_REG_CTRL2_CTAIE   BIT(1)  /* Countdown timer A int. enable */
-#define ABB5ZES3_REG_CTRL2_WTAIE   BIT(2)  /* Watchdog timer A int. enable */
-#define ABB5ZES3_REG_CTRL2_AF	   BIT(3)  /* Alarm interrupt status */
-#define ABB5ZES3_REG_CTRL2_SF	   BIT(4)  /* Second interrupt status */
-#define ABB5ZES3_REG_CTRL2_CTBF	   BIT(5)  /* Countdown timer B int. status */
-#define ABB5ZES3_REG_CTRL2_CTAF	   BIT(6)  /* Countdown timer A int. status */
-#define ABB5ZES3_REG_CTRL2_WTAF	   BIT(7)  /* Watchdog timer A int. status */
+#घोषणा ABB5ZES3_REG_CTRL2	   0x01	   /* Control 2 रेजिस्टर */
+#घोषणा ABB5ZES3_REG_CTRL2_CTBIE   BIT(0)  /* Countकरोwn समयr B पूर्णांक. enable */
+#घोषणा ABB5ZES3_REG_CTRL2_CTAIE   BIT(1)  /* Countकरोwn समयr A पूर्णांक. enable */
+#घोषणा ABB5ZES3_REG_CTRL2_WTAIE   BIT(2)  /* Watchकरोg समयr A पूर्णांक. enable */
+#घोषणा ABB5ZES3_REG_CTRL2_AF	   BIT(3)  /* Alarm पूर्णांकerrupt status */
+#घोषणा ABB5ZES3_REG_CTRL2_SF	   BIT(4)  /* Second पूर्णांकerrupt status */
+#घोषणा ABB5ZES3_REG_CTRL2_CTBF	   BIT(5)  /* Countकरोwn समयr B पूर्णांक. status */
+#घोषणा ABB5ZES3_REG_CTRL2_CTAF	   BIT(6)  /* Countकरोwn समयr A पूर्णांक. status */
+#घोषणा ABB5ZES3_REG_CTRL2_WTAF	   BIT(7)  /* Watchकरोg समयr A पूर्णांक. status */
 
-#define ABB5ZES3_REG_CTRL3	   0x02	   /* Control 3 register */
-#define ABB5ZES3_REG_CTRL3_PM2	   BIT(7)  /* Power Management bit 2 */
-#define ABB5ZES3_REG_CTRL3_PM1	   BIT(6)  /* Power Management bit 1 */
-#define ABB5ZES3_REG_CTRL3_PM0	   BIT(5)  /* Power Management bit 0 */
-#define ABB5ZES3_REG_CTRL3_BSF	   BIT(3)  /* Battery switchover int. status */
-#define ABB5ZES3_REG_CTRL3_BLF	   BIT(2)  /* Battery low int. status */
-#define ABB5ZES3_REG_CTRL3_BSIE	   BIT(1)  /* Battery switchover int. enable */
-#define ABB5ZES3_REG_CTRL3_BLIE	   BIT(0)  /* Battery low int. enable */
+#घोषणा ABB5ZES3_REG_CTRL3	   0x02	   /* Control 3 रेजिस्टर */
+#घोषणा ABB5ZES3_REG_CTRL3_PM2	   BIT(7)  /* Power Management bit 2 */
+#घोषणा ABB5ZES3_REG_CTRL3_PM1	   BIT(6)  /* Power Management bit 1 */
+#घोषणा ABB5ZES3_REG_CTRL3_PM0	   BIT(5)  /* Power Management bit 0 */
+#घोषणा ABB5ZES3_REG_CTRL3_BSF	   BIT(3)  /* Battery चयनover पूर्णांक. status */
+#घोषणा ABB5ZES3_REG_CTRL3_BLF	   BIT(2)  /* Battery low पूर्णांक. status */
+#घोषणा ABB5ZES3_REG_CTRL3_BSIE	   BIT(1)  /* Battery चयनover पूर्णांक. enable */
+#घोषणा ABB5ZES3_REG_CTRL3_BLIE	   BIT(0)  /* Battery low पूर्णांक. enable */
 
-#define ABB5ZES3_CTRL_SEC_LEN	   3
+#घोषणा ABB5ZES3_CTRL_SEC_LEN	   3
 
 /* RTC section */
-#define ABB5ZES3_REG_RTC_SC	   0x03	   /* RTC Seconds register */
-#define ABB5ZES3_REG_RTC_SC_OSC	   BIT(7)  /* Clock integrity status */
-#define ABB5ZES3_REG_RTC_MN	   0x04	   /* RTC Minutes register */
-#define ABB5ZES3_REG_RTC_HR	   0x05	   /* RTC Hours register */
-#define ABB5ZES3_REG_RTC_HR_PM	   BIT(5)  /* RTC Hours PM bit */
-#define ABB5ZES3_REG_RTC_DT	   0x06	   /* RTC Date register */
-#define ABB5ZES3_REG_RTC_DW	   0x07	   /* RTC Day of the week register */
-#define ABB5ZES3_REG_RTC_MO	   0x08	   /* RTC Month register */
-#define ABB5ZES3_REG_RTC_YR	   0x09	   /* RTC Year register */
+#घोषणा ABB5ZES3_REG_RTC_SC	   0x03	   /* RTC Seconds रेजिस्टर */
+#घोषणा ABB5ZES3_REG_RTC_SC_OSC	   BIT(7)  /* Clock पूर्णांकegrity status */
+#घोषणा ABB5ZES3_REG_RTC_MN	   0x04	   /* RTC Minutes रेजिस्टर */
+#घोषणा ABB5ZES3_REG_RTC_HR	   0x05	   /* RTC Hours रेजिस्टर */
+#घोषणा ABB5ZES3_REG_RTC_HR_PM	   BIT(5)  /* RTC Hours PM bit */
+#घोषणा ABB5ZES3_REG_RTC_DT	   0x06	   /* RTC Date रेजिस्टर */
+#घोषणा ABB5ZES3_REG_RTC_DW	   0x07	   /* RTC Day of the week रेजिस्टर */
+#घोषणा ABB5ZES3_REG_RTC_MO	   0x08	   /* RTC Month रेजिस्टर */
+#घोषणा ABB5ZES3_REG_RTC_YR	   0x09	   /* RTC Year रेजिस्टर */
 
-#define ABB5ZES3_RTC_SEC_LEN	   7
+#घोषणा ABB5ZES3_RTC_SEC_LEN	   7
 
 /* Alarm section (enable bits are all active low) */
-#define ABB5ZES3_REG_ALRM_MN	   0x0A	   /* Alarm - minute register */
-#define ABB5ZES3_REG_ALRM_MN_AE	   BIT(7)  /* Minute enable */
-#define ABB5ZES3_REG_ALRM_HR	   0x0B	   /* Alarm - hours register */
-#define ABB5ZES3_REG_ALRM_HR_AE	   BIT(7)  /* Hour enable */
-#define ABB5ZES3_REG_ALRM_DT	   0x0C	   /* Alarm - date register */
-#define ABB5ZES3_REG_ALRM_DT_AE	   BIT(7)  /* Date (day of the month) enable */
-#define ABB5ZES3_REG_ALRM_DW	   0x0D	   /* Alarm - day of the week reg. */
-#define ABB5ZES3_REG_ALRM_DW_AE	   BIT(7)  /* Day of the week enable */
+#घोषणा ABB5ZES3_REG_ALRM_MN	   0x0A	   /* Alarm - minute रेजिस्टर */
+#घोषणा ABB5ZES3_REG_ALRM_MN_AE	   BIT(7)  /* Minute enable */
+#घोषणा ABB5ZES3_REG_ALRM_HR	   0x0B	   /* Alarm - hours रेजिस्टर */
+#घोषणा ABB5ZES3_REG_ALRM_HR_AE	   BIT(7)  /* Hour enable */
+#घोषणा ABB5ZES3_REG_ALRM_DT	   0x0C	   /* Alarm - date रेजिस्टर */
+#घोषणा ABB5ZES3_REG_ALRM_DT_AE	   BIT(7)  /* Date (day of the month) enable */
+#घोषणा ABB5ZES3_REG_ALRM_DW	   0x0D	   /* Alarm - day of the week reg. */
+#घोषणा ABB5ZES3_REG_ALRM_DW_AE	   BIT(7)  /* Day of the week enable */
 
-#define ABB5ZES3_ALRM_SEC_LEN	   4
+#घोषणा ABB5ZES3_ALRM_SEC_LEN	   4
 
 /* Frequency offset section */
-#define ABB5ZES3_REG_FREQ_OF	   0x0E	   /* Frequency offset register */
-#define ABB5ZES3_REG_FREQ_OF_MODE  0x0E	   /* Offset mode: 2 hours / minute */
+#घोषणा ABB5ZES3_REG_FREQ_OF	   0x0E	   /* Frequency offset रेजिस्टर */
+#घोषणा ABB5ZES3_REG_FREQ_OF_MODE  0x0E	   /* Offset mode: 2 hours / minute */
 
 /* CLOCKOUT section */
-#define ABB5ZES3_REG_TIM_CLK	   0x0F	   /* Timer & Clockout register */
-#define ABB5ZES3_REG_TIM_CLK_TAM   BIT(7)  /* Permanent/pulsed timer A/int. 2 */
-#define ABB5ZES3_REG_TIM_CLK_TBM   BIT(6)  /* Permanent/pulsed timer B */
-#define ABB5ZES3_REG_TIM_CLK_COF2  BIT(5)  /* Clkout Freq bit 2 */
-#define ABB5ZES3_REG_TIM_CLK_COF1  BIT(4)  /* Clkout Freq bit 1 */
-#define ABB5ZES3_REG_TIM_CLK_COF0  BIT(3)  /* Clkout Freq bit 0 */
-#define ABB5ZES3_REG_TIM_CLK_TAC1  BIT(2)  /* Timer A: - 01 : countdown */
-#define ABB5ZES3_REG_TIM_CLK_TAC0  BIT(1)  /*	       - 10 : timer	*/
-#define ABB5ZES3_REG_TIM_CLK_TBC   BIT(0)  /* Timer B enable */
+#घोषणा ABB5ZES3_REG_TIM_CLK	   0x0F	   /* Timer & Clockout रेजिस्टर */
+#घोषणा ABB5ZES3_REG_TIM_CLK_TAM   BIT(7)  /* Permanent/pulsed समयr A/पूर्णांक. 2 */
+#घोषणा ABB5ZES3_REG_TIM_CLK_TBM   BIT(6)  /* Permanent/pulsed समयr B */
+#घोषणा ABB5ZES3_REG_TIM_CLK_COF2  BIT(5)  /* Clkout Freq bit 2 */
+#घोषणा ABB5ZES3_REG_TIM_CLK_COF1  BIT(4)  /* Clkout Freq bit 1 */
+#घोषणा ABB5ZES3_REG_TIM_CLK_COF0  BIT(3)  /* Clkout Freq bit 0 */
+#घोषणा ABB5ZES3_REG_TIM_CLK_TAC1  BIT(2)  /* Timer A: - 01 : countकरोwn */
+#घोषणा ABB5ZES3_REG_TIM_CLK_TAC0  BIT(1)  /*	       - 10 : समयr	*/
+#घोषणा ABB5ZES3_REG_TIM_CLK_TBC   BIT(0)  /* Timer B enable */
 
 /* Timer A Section */
-#define ABB5ZES3_REG_TIMA_CLK	   0x10	   /* Timer A clock register */
-#define ABB5ZES3_REG_TIMA_CLK_TAQ2 BIT(2)  /* Freq bit 2 */
-#define ABB5ZES3_REG_TIMA_CLK_TAQ1 BIT(1)  /* Freq bit 1 */
-#define ABB5ZES3_REG_TIMA_CLK_TAQ0 BIT(0)  /* Freq bit 0 */
-#define ABB5ZES3_REG_TIMA	   0x11	   /* Timer A register */
+#घोषणा ABB5ZES3_REG_TIMA_CLK	   0x10	   /* Timer A घड़ी रेजिस्टर */
+#घोषणा ABB5ZES3_REG_TIMA_CLK_TAQ2 BIT(2)  /* Freq bit 2 */
+#घोषणा ABB5ZES3_REG_TIMA_CLK_TAQ1 BIT(1)  /* Freq bit 1 */
+#घोषणा ABB5ZES3_REG_TIMA_CLK_TAQ0 BIT(0)  /* Freq bit 0 */
+#घोषणा ABB5ZES3_REG_TIMA	   0x11	   /* Timer A रेजिस्टर */
 
-#define ABB5ZES3_TIMA_SEC_LEN	   2
+#घोषणा ABB5ZES3_TIMA_SEC_LEN	   2
 
 /* Timer B Section */
-#define ABB5ZES3_REG_TIMB_CLK	   0x12	   /* Timer B clock register */
-#define ABB5ZES3_REG_TIMB_CLK_TBW2 BIT(6)
-#define ABB5ZES3_REG_TIMB_CLK_TBW1 BIT(5)
-#define ABB5ZES3_REG_TIMB_CLK_TBW0 BIT(4)
-#define ABB5ZES3_REG_TIMB_CLK_TAQ2 BIT(2)
-#define ABB5ZES3_REG_TIMB_CLK_TAQ1 BIT(1)
-#define ABB5ZES3_REG_TIMB_CLK_TAQ0 BIT(0)
-#define ABB5ZES3_REG_TIMB	   0x13	   /* Timer B register */
-#define ABB5ZES3_TIMB_SEC_LEN	   2
+#घोषणा ABB5ZES3_REG_TIMB_CLK	   0x12	   /* Timer B घड़ी रेजिस्टर */
+#घोषणा ABB5ZES3_REG_TIMB_CLK_TBW2 BIT(6)
+#घोषणा ABB5ZES3_REG_TIMB_CLK_TBW1 BIT(5)
+#घोषणा ABB5ZES3_REG_TIMB_CLK_TBW0 BIT(4)
+#घोषणा ABB5ZES3_REG_TIMB_CLK_TAQ2 BIT(2)
+#घोषणा ABB5ZES3_REG_TIMB_CLK_TAQ1 BIT(1)
+#घोषणा ABB5ZES3_REG_TIMB_CLK_TAQ0 BIT(0)
+#घोषणा ABB5ZES3_REG_TIMB	   0x13	   /* Timer B रेजिस्टर */
+#घोषणा ABB5ZES3_TIMB_SEC_LEN	   2
 
-#define ABB5ZES3_MEM_MAP_LEN	   0x14
+#घोषणा ABB5ZES3_MEM_MAP_LEN	   0x14
 
-struct abb5zes3_rtc_data {
-	struct rtc_device *rtc;
-	struct regmap *regmap;
+काष्ठा abb5zes3_rtc_data अणु
+	काष्ठा rtc_device *rtc;
+	काष्ठा regmap *regmap;
 
-	int irq;
+	पूर्णांक irq;
 
 	bool battery_low;
-	bool timer_alarm; /* current alarm is via timer A */
-};
+	bool समयr_alarm; /* current alarm is via समयr A */
+पूर्ण;
 
 /*
- * Try and match register bits w/ fixed null values to see whether we
+ * Try and match रेजिस्टर bits w/ fixed null values to see whether we
  * are dealing with an ABB5ZES3.
  */
-static int abb5zes3_i2c_validate_chip(struct regmap *regmap)
-{
+अटल पूर्णांक abb5zes3_i2c_validate_chip(काष्ठा regmap *regmap)
+अणु
 	u8 regs[ABB5ZES3_MEM_MAP_LEN];
-	static const u8 mask[ABB5ZES3_MEM_MAP_LEN] = { 0x00, 0x00, 0x10, 0x00,
+	अटल स्थिर u8 mask[ABB5ZES3_MEM_MAP_LEN] = अणु 0x00, 0x00, 0x10, 0x00,
 						       0x80, 0xc0, 0xc0, 0xf8,
 						       0xe0, 0x00, 0x00, 0x40,
 						       0x40, 0x78, 0x00, 0x00,
-						       0xf8, 0x00, 0x88, 0x00 };
-	int ret, i;
+						       0xf8, 0x00, 0x88, 0x00 पूर्ण;
+	पूर्णांक ret, i;
 
-	ret = regmap_bulk_read(regmap, 0, regs, ABB5ZES3_MEM_MAP_LEN);
-	if (ret)
-		return ret;
+	ret = regmap_bulk_पढ़ो(regmap, 0, regs, ABB5ZES3_MEM_MAP_LEN);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < ABB5ZES3_MEM_MAP_LEN; ++i) {
-		if (regs[i] & mask[i]) /* check if bits are cleared */
-			return -ENODEV;
-	}
+	क्रम (i = 0; i < ABB5ZES3_MEM_MAP_LEN; ++i) अणु
+		अगर (regs[i] & mask[i]) /* check अगर bits are cleared */
+			वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Clear alarm status bit. */
-static int _abb5zes3_rtc_clear_alarm(struct device *dev)
-{
-	struct abb5zes3_rtc_data *data = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक _abb5zes3_rtc_clear_alarm(काष्ठा device *dev)
+अणु
+	काष्ठा abb5zes3_rtc_data *data = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = regmap_update_bits(data->regmap, ABB5ZES3_REG_CTRL2,
 				 ABB5ZES3_REG_CTRL2_AF, 0);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "%s: clearing alarm failed (%d)\n", __func__, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Enable or disable alarm (i.e. alarm interrupt generation) */
-static int _abb5zes3_rtc_update_alarm(struct device *dev, bool enable)
-{
-	struct abb5zes3_rtc_data *data = dev_get_drvdata(dev);
-	int ret;
+/* Enable or disable alarm (i.e. alarm पूर्णांकerrupt generation) */
+अटल पूर्णांक _abb5zes3_rtc_update_alarm(काष्ठा device *dev, bool enable)
+अणु
+	काष्ठा abb5zes3_rtc_data *data = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = regmap_update_bits(data->regmap, ABB5ZES3_REG_CTRL1,
 				 ABB5ZES3_REG_CTRL1_AIE,
 				 enable ? ABB5ZES3_REG_CTRL1_AIE : 0);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "%s: writing alarm INT failed (%d)\n",
 			__func__, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Enable or disable timer (watchdog timer A interrupt generation) */
-static int _abb5zes3_rtc_update_timer(struct device *dev, bool enable)
-{
-	struct abb5zes3_rtc_data *data = dev_get_drvdata(dev);
-	int ret;
+/* Enable or disable समयr (watchकरोg समयr A पूर्णांकerrupt generation) */
+अटल पूर्णांक _abb5zes3_rtc_update_समयr(काष्ठा device *dev, bool enable)
+अणु
+	काष्ठा abb5zes3_rtc_data *data = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = regmap_update_bits(data->regmap, ABB5ZES3_REG_CTRL2,
 				 ABB5ZES3_REG_CTRL2_WTAIE,
 				 enable ? ABB5ZES3_REG_CTRL2_WTAIE : 0);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "%s: writing timer INT failed (%d)\n",
 			__func__, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Note: we only read, so regmap inner lock protection is sufficient, i.e.
- * we do not need driver's main lock protection.
+ * Note: we only पढ़ो, so regmap inner lock protection is sufficient, i.e.
+ * we करो not need driver's मुख्य lock protection.
  */
-static int _abb5zes3_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct abb5zes3_rtc_data *data = dev_get_drvdata(dev);
+अटल पूर्णांक _abb5zes3_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा abb5zes3_rtc_data *data = dev_get_drvdata(dev);
 	u8 regs[ABB5ZES3_REG_RTC_SC + ABB5ZES3_RTC_SEC_LEN];
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	/*
-	 * As we need to read CTRL1 register anyway to access 24/12h
-	 * mode bit, we do a single bulk read of both control and RTC
+	 * As we need to पढ़ो CTRL1 रेजिस्टर anyway to access 24/12h
+	 * mode bit, we करो a single bulk पढ़ो of both control and RTC
 	 * sections (they are consecutive). This also ease indexing
-	 * of register values after bulk read.
+	 * of रेजिस्टर values after bulk पढ़ो.
 	 */
-	ret = regmap_bulk_read(data->regmap, ABB5ZES3_REG_CTRL1, regs,
-			       sizeof(regs));
-	if (ret) {
+	ret = regmap_bulk_पढ़ो(data->regmap, ABB5ZES3_REG_CTRL1, regs,
+			       माप(regs));
+	अगर (ret) अणु
 		dev_err(dev, "%s: reading RTC time failed (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* If clock integrity is not guaranteed, do not return a time value */
-	if (regs[ABB5ZES3_REG_RTC_SC] & ABB5ZES3_REG_RTC_SC_OSC)
-		return -ENODATA;
+	/* If घड़ी पूर्णांकegrity is not guaranteed, करो not वापस a समय value */
+	अगर (regs[ABB5ZES3_REG_RTC_SC] & ABB5ZES3_REG_RTC_SC_OSC)
+		वापस -ENODATA;
 
-	tm->tm_sec = bcd2bin(regs[ABB5ZES3_REG_RTC_SC] & 0x7F);
-	tm->tm_min = bcd2bin(regs[ABB5ZES3_REG_RTC_MN]);
+	पंचांग->पंचांग_sec = bcd2bin(regs[ABB5ZES3_REG_RTC_SC] & 0x7F);
+	पंचांग->पंचांग_min = bcd2bin(regs[ABB5ZES3_REG_RTC_MN]);
 
-	if (regs[ABB5ZES3_REG_CTRL1] & ABB5ZES3_REG_CTRL1_PM) { /* 12hr mode */
-		tm->tm_hour = bcd2bin(regs[ABB5ZES3_REG_RTC_HR] & 0x1f);
-		if (regs[ABB5ZES3_REG_RTC_HR] & ABB5ZES3_REG_RTC_HR_PM) /* PM */
-			tm->tm_hour += 12;
-	} else {						/* 24hr mode */
-		tm->tm_hour = bcd2bin(regs[ABB5ZES3_REG_RTC_HR]);
-	}
+	अगर (regs[ABB5ZES3_REG_CTRL1] & ABB5ZES3_REG_CTRL1_PM) अणु /* 12hr mode */
+		पंचांग->पंचांग_hour = bcd2bin(regs[ABB5ZES3_REG_RTC_HR] & 0x1f);
+		अगर (regs[ABB5ZES3_REG_RTC_HR] & ABB5ZES3_REG_RTC_HR_PM) /* PM */
+			पंचांग->पंचांग_hour += 12;
+	पूर्ण अन्यथा अणु						/* 24hr mode */
+		पंचांग->पंचांग_hour = bcd2bin(regs[ABB5ZES3_REG_RTC_HR]);
+	पूर्ण
 
-	tm->tm_mday = bcd2bin(regs[ABB5ZES3_REG_RTC_DT]);
-	tm->tm_wday = bcd2bin(regs[ABB5ZES3_REG_RTC_DW]);
-	tm->tm_mon  = bcd2bin(regs[ABB5ZES3_REG_RTC_MO]) - 1; /* starts at 1 */
-	tm->tm_year = bcd2bin(regs[ABB5ZES3_REG_RTC_YR]) + 100;
+	पंचांग->पंचांग_mday = bcd2bin(regs[ABB5ZES3_REG_RTC_DT]);
+	पंचांग->पंचांग_wday = bcd2bin(regs[ABB5ZES3_REG_RTC_DW]);
+	पंचांग->पंचांग_mon  = bcd2bin(regs[ABB5ZES3_REG_RTC_MO]) - 1; /* starts at 1 */
+	पंचांग->पंचांग_year = bcd2bin(regs[ABB5ZES3_REG_RTC_YR]) + 100;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int abb5zes3_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct abb5zes3_rtc_data *data = dev_get_drvdata(dev);
+अटल पूर्णांक abb5zes3_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा abb5zes3_rtc_data *data = dev_get_drvdata(dev);
 	u8 regs[ABB5ZES3_REG_RTC_SC + ABB5ZES3_RTC_SEC_LEN];
-	int ret;
+	पूर्णांक ret;
 
-	regs[ABB5ZES3_REG_RTC_SC] = bin2bcd(tm->tm_sec); /* MSB=0 clears OSC */
-	regs[ABB5ZES3_REG_RTC_MN] = bin2bcd(tm->tm_min);
-	regs[ABB5ZES3_REG_RTC_HR] = bin2bcd(tm->tm_hour); /* 24-hour format */
-	regs[ABB5ZES3_REG_RTC_DT] = bin2bcd(tm->tm_mday);
-	regs[ABB5ZES3_REG_RTC_DW] = bin2bcd(tm->tm_wday);
-	regs[ABB5ZES3_REG_RTC_MO] = bin2bcd(tm->tm_mon + 1);
-	regs[ABB5ZES3_REG_RTC_YR] = bin2bcd(tm->tm_year - 100);
+	regs[ABB5ZES3_REG_RTC_SC] = bin2bcd(पंचांग->पंचांग_sec); /* MSB=0 clears OSC */
+	regs[ABB5ZES3_REG_RTC_MN] = bin2bcd(पंचांग->पंचांग_min);
+	regs[ABB5ZES3_REG_RTC_HR] = bin2bcd(पंचांग->पंचांग_hour); /* 24-hour क्रमmat */
+	regs[ABB5ZES3_REG_RTC_DT] = bin2bcd(पंचांग->पंचांग_mday);
+	regs[ABB5ZES3_REG_RTC_DW] = bin2bcd(पंचांग->पंचांग_wday);
+	regs[ABB5ZES3_REG_RTC_MO] = bin2bcd(पंचांग->पंचांग_mon + 1);
+	regs[ABB5ZES3_REG_RTC_YR] = bin2bcd(पंचांग->पंचांग_year - 100);
 
-	ret = regmap_bulk_write(data->regmap, ABB5ZES3_REG_RTC_SC,
+	ret = regmap_bulk_ग_लिखो(data->regmap, ABB5ZES3_REG_RTC_SC,
 				regs + ABB5ZES3_REG_RTC_SC,
 				ABB5ZES3_RTC_SEC_LEN);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Set provided TAQ and Timer A registers (TIMA_CLK and TIMA) based on
+ * Set provided TAQ and Timer A रेजिस्टरs (TIMA_CLK and TIMA) based on
  * given number of seconds.
  */
-static inline void sec_to_timer_a(u8 secs, u8 *taq, u8 *timer_a)
-{
+अटल अंतरभूत व्योम sec_to_समयr_a(u8 secs, u8 *taq, u8 *समयr_a)
+अणु
 	*taq = ABB5ZES3_REG_TIMA_CLK_TAQ1; /* 1Hz */
-	*timer_a = secs;
-}
+	*समयr_a = secs;
+पूर्ण
 
 /*
  * Return current number of seconds in Timer A. As we only use
- * timer A with a 1Hz freq, this is what we expect to have.
+ * समयr A with a 1Hz freq, this is what we expect to have.
  */
-static inline int sec_from_timer_a(u8 *secs, u8 taq, u8 timer_a)
-{
-	if (taq != ABB5ZES3_REG_TIMA_CLK_TAQ1) /* 1Hz */
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक sec_from_समयr_a(u8 *secs, u8 taq, u8 समयr_a)
+अणु
+	अगर (taq != ABB5ZES3_REG_TIMA_CLK_TAQ1) /* 1Hz */
+		वापस -EINVAL;
 
-	*secs = timer_a;
+	*secs = समयr_a;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Read alarm currently configured via a watchdog timer using timer A. This
- * is done by reading current RTC time and adding remaining timer time.
+ * Read alarm currently configured via a watchकरोg समयr using समयr A. This
+ * is करोne by पढ़ोing current RTC समय and adding reमुख्यing समयr समय.
  */
-static int _abb5zes3_rtc_read_timer(struct device *dev,
-				    struct rtc_wkalrm *alarm)
-{
-	struct abb5zes3_rtc_data *data = dev_get_drvdata(dev);
-	struct rtc_time rtc_tm, *alarm_tm = &alarm->time;
+अटल पूर्णांक _abb5zes3_rtc_पढ़ो_समयr(काष्ठा device *dev,
+				    काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा abb5zes3_rtc_data *data = dev_get_drvdata(dev);
+	काष्ठा rtc_समय rtc_पंचांग, *alarm_पंचांग = &alarm->समय;
 	u8 regs[ABB5ZES3_TIMA_SEC_LEN + 1];
-	unsigned long rtc_secs;
-	unsigned int reg;
-	u8 timer_secs;
-	int ret;
+	अचिन्हित दीर्घ rtc_secs;
+	अचिन्हित पूर्णांक reg;
+	u8 समयr_secs;
+	पूर्णांक ret;
 
 	/*
-	 * Instead of doing two separate calls, because they are consecutive,
-	 * we grab both clockout register and Timer A section. The latter is
-	 * used to decide if timer A is enabled (as a watchdog timer).
+	 * Instead of करोing two separate calls, because they are consecutive,
+	 * we grab both घड़ीout रेजिस्टर and Timer A section. The latter is
+	 * used to decide अगर समयr A is enabled (as a watchकरोg समयr).
 	 */
-	ret = regmap_bulk_read(data->regmap, ABB5ZES3_REG_TIM_CLK, regs,
+	ret = regmap_bulk_पढ़ो(data->regmap, ABB5ZES3_REG_TIM_CLK, regs,
 			       ABB5ZES3_TIMA_SEC_LEN + 1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "%s: reading Timer A section failed (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* get current time ... */
-	ret = _abb5zes3_rtc_read_time(dev, &rtc_tm);
-	if (ret)
-		return ret;
+	/* get current समय ... */
+	ret = _abb5zes3_rtc_पढ़ो_समय(dev, &rtc_पंचांग);
+	अगर (ret)
+		वापस ret;
 
 	/* ... convert to seconds ... */
-	rtc_secs = rtc_tm_to_time64(&rtc_tm);
+	rtc_secs = rtc_पंचांग_to_समय64(&rtc_पंचांग);
 
-	/* ... add remaining timer A time ... */
-	ret = sec_from_timer_a(&timer_secs, regs[1], regs[2]);
-	if (ret)
-		return ret;
+	/* ... add reमुख्यing समयr A समय ... */
+	ret = sec_from_समयr_a(&समयr_secs, regs[1], regs[2]);
+	अगर (ret)
+		वापस ret;
 
 	/* ... and convert back. */
-	rtc_time64_to_tm(rtc_secs + timer_secs, alarm_tm);
+	rtc_समय64_to_पंचांग(rtc_secs + समयr_secs, alarm_पंचांग);
 
-	ret = regmap_read(data->regmap, ABB5ZES3_REG_CTRL2, &reg);
-	if (ret) {
+	ret = regmap_पढ़ो(data->regmap, ABB5ZES3_REG_CTRL2, &reg);
+	अगर (ret) अणु
 		dev_err(dev, "%s: reading ctrl reg failed (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	alarm->enabled = !!(reg & ABB5ZES3_REG_CTRL2_WTAIE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Read alarm currently configured via a RTC alarm registers. */
-static int _abb5zes3_rtc_read_alarm(struct device *dev,
-				    struct rtc_wkalrm *alarm)
-{
-	struct abb5zes3_rtc_data *data = dev_get_drvdata(dev);
-	struct rtc_time rtc_tm, *alarm_tm = &alarm->time;
-	unsigned long rtc_secs, alarm_secs;
+/* Read alarm currently configured via a RTC alarm रेजिस्टरs. */
+अटल पूर्णांक _abb5zes3_rtc_पढ़ो_alarm(काष्ठा device *dev,
+				    काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा abb5zes3_rtc_data *data = dev_get_drvdata(dev);
+	काष्ठा rtc_समय rtc_पंचांग, *alarm_पंचांग = &alarm->समय;
+	अचिन्हित दीर्घ rtc_secs, alarm_secs;
 	u8 regs[ABB5ZES3_ALRM_SEC_LEN];
-	unsigned int reg;
-	int ret;
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक ret;
 
-	ret = regmap_bulk_read(data->regmap, ABB5ZES3_REG_ALRM_MN, regs,
+	ret = regmap_bulk_पढ़ो(data->regmap, ABB5ZES3_REG_ALRM_MN, regs,
 			       ABB5ZES3_ALRM_SEC_LEN);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "%s: reading alarm section failed (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	alarm_tm->tm_sec  = 0;
-	alarm_tm->tm_min  = bcd2bin(regs[0] & 0x7f);
-	alarm_tm->tm_hour = bcd2bin(regs[1] & 0x3f);
-	alarm_tm->tm_mday = bcd2bin(regs[2] & 0x3f);
-	alarm_tm->tm_wday = -1;
+	alarm_पंचांग->पंचांग_sec  = 0;
+	alarm_पंचांग->पंचांग_min  = bcd2bin(regs[0] & 0x7f);
+	alarm_पंचांग->पंचांग_hour = bcd2bin(regs[1] & 0x3f);
+	alarm_पंचांग->पंचांग_mday = bcd2bin(regs[2] & 0x3f);
+	alarm_पंचांग->पंचांग_wday = -1;
 
 	/*
-	 * The alarm section does not store year/month. We use the ones in rtc
-	 * section as a basis and increment month and then year if needed to get
-	 * alarm after current time.
+	 * The alarm section करोes not store year/month. We use the ones in rtc
+	 * section as a basis and increment month and then year अगर needed to get
+	 * alarm after current समय.
 	 */
-	ret = _abb5zes3_rtc_read_time(dev, &rtc_tm);
-	if (ret)
-		return ret;
+	ret = _abb5zes3_rtc_पढ़ो_समय(dev, &rtc_पंचांग);
+	अगर (ret)
+		वापस ret;
 
-	alarm_tm->tm_year = rtc_tm.tm_year;
-	alarm_tm->tm_mon = rtc_tm.tm_mon;
+	alarm_पंचांग->पंचांग_year = rtc_पंचांग.पंचांग_year;
+	alarm_पंचांग->पंचांग_mon = rtc_पंचांग.पंचांग_mon;
 
-	rtc_secs = rtc_tm_to_time64(&rtc_tm);
-	alarm_secs = rtc_tm_to_time64(alarm_tm);
+	rtc_secs = rtc_पंचांग_to_समय64(&rtc_पंचांग);
+	alarm_secs = rtc_पंचांग_to_समय64(alarm_पंचांग);
 
-	if (alarm_secs < rtc_secs) {
-		if (alarm_tm->tm_mon == 11) {
-			alarm_tm->tm_mon = 0;
-			alarm_tm->tm_year += 1;
-		} else {
-			alarm_tm->tm_mon += 1;
-		}
-	}
+	अगर (alarm_secs < rtc_secs) अणु
+		अगर (alarm_पंचांग->पंचांग_mon == 11) अणु
+			alarm_पंचांग->पंचांग_mon = 0;
+			alarm_पंचांग->पंचांग_year += 1;
+		पूर्ण अन्यथा अणु
+			alarm_पंचांग->पंचांग_mon += 1;
+		पूर्ण
+	पूर्ण
 
-	ret = regmap_read(data->regmap, ABB5ZES3_REG_CTRL1, &reg);
-	if (ret) {
+	ret = regmap_पढ़ो(data->regmap, ABB5ZES3_REG_CTRL1, &reg);
+	अगर (ret) अणु
 		dev_err(dev, "%s: reading ctrl reg failed (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	alarm->enabled = !!(reg & ABB5ZES3_REG_CTRL1_AIE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * As the Alarm mechanism supported by the chip is only accurate to the
- * minute, we use the watchdog timer mechanism provided by timer A
- * (up to 256 seconds w/ a second accuracy) for low alarm values (below
+ * minute, we use the watchकरोg समयr mechanism provided by समयr A
+ * (up to 256 seconds w/ a second accuracy) क्रम low alarm values (below
  * 4 minutes). Otherwise, we use the common alarm mechanism provided
- * by the chip. In order for that to work, we keep track of currently
- * configured timer type via 'timer_alarm' flag in our private data
- * structure.
+ * by the chip. In order क्रम that to work, we keep track of currently
+ * configured समयr type via 'timer_alarm' flag in our निजी data
+ * काष्ठाure.
  */
-static int abb5zes3_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alarm)
-{
-	struct abb5zes3_rtc_data *data = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक abb5zes3_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा abb5zes3_rtc_data *data = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if (data->timer_alarm)
-		ret = _abb5zes3_rtc_read_timer(dev, alarm);
-	else
-		ret = _abb5zes3_rtc_read_alarm(dev, alarm);
+	अगर (data->समयr_alarm)
+		ret = _abb5zes3_rtc_पढ़ो_समयr(dev, alarm);
+	अन्यथा
+		ret = _abb5zes3_rtc_पढ़ो_alarm(dev, alarm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Set alarm using chip alarm mechanism. It is only accurate to the
- * minute (not the second). The function expects alarm interrupt to
+ * minute (not the second). The function expects alarm पूर्णांकerrupt to
  * be disabled.
  */
-static int _abb5zes3_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alarm)
-{
-	struct abb5zes3_rtc_data *data = dev_get_drvdata(dev);
-	struct rtc_time *alarm_tm = &alarm->time;
+अटल पूर्णांक _abb5zes3_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा abb5zes3_rtc_data *data = dev_get_drvdata(dev);
+	काष्ठा rtc_समय *alarm_पंचांग = &alarm->समय;
 	u8 regs[ABB5ZES3_ALRM_SEC_LEN];
-	struct rtc_time rtc_tm;
-	int ret, enable = 1;
+	काष्ठा rtc_समय rtc_पंचांग;
+	पूर्णांक ret, enable = 1;
 
-	if (!alarm->enabled) {
+	अगर (!alarm->enabled) अणु
 		enable = 0;
-	} else {
-		unsigned long rtc_secs, alarm_secs;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ rtc_secs, alarm_secs;
 
 		/*
 		 * Chip only support alarms up to one month in the future. Let's
-		 * return an error if we get something after that limit.
-		 * Comparison is done by incrementing rtc_tm month field by one
+		 * वापस an error अगर we get something after that limit.
+		 * Comparison is करोne by incrementing rtc_पंचांग month field by one
 		 * and checking alarm value is still below.
 		 */
-		ret = _abb5zes3_rtc_read_time(dev, &rtc_tm);
-		if (ret)
-			return ret;
+		ret = _abb5zes3_rtc_पढ़ो_समय(dev, &rtc_पंचांग);
+		अगर (ret)
+			वापस ret;
 
-		if (rtc_tm.tm_mon == 11) { /* handle year wrapping */
-			rtc_tm.tm_mon = 0;
-			rtc_tm.tm_year += 1;
-		} else {
-			rtc_tm.tm_mon += 1;
-		}
+		अगर (rtc_पंचांग.पंचांग_mon == 11) अणु /* handle year wrapping */
+			rtc_पंचांग.पंचांग_mon = 0;
+			rtc_पंचांग.पंचांग_year += 1;
+		पूर्ण अन्यथा अणु
+			rtc_पंचांग.पंचांग_mon += 1;
+		पूर्ण
 
-		rtc_secs = rtc_tm_to_time64(&rtc_tm);
-		alarm_secs = rtc_tm_to_time64(alarm_tm);
+		rtc_secs = rtc_पंचांग_to_समय64(&rtc_पंचांग);
+		alarm_secs = rtc_पंचांग_to_समय64(alarm_पंचांग);
 
-		if (alarm_secs > rtc_secs) {
+		अगर (alarm_secs > rtc_secs) अणु
 			dev_err(dev, "%s: alarm maximum is one month in the future (%d)\n",
 				__func__, ret);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Program all alarm registers but DW one. For each register, setting
+	 * Program all alarm रेजिस्टरs but DW one. For each रेजिस्टर, setting
 	 * MSB to 0 enables associated alarm.
 	 */
-	regs[0] = bin2bcd(alarm_tm->tm_min) & 0x7f;
-	regs[1] = bin2bcd(alarm_tm->tm_hour) & 0x3f;
-	regs[2] = bin2bcd(alarm_tm->tm_mday) & 0x3f;
-	regs[3] = ABB5ZES3_REG_ALRM_DW_AE; /* do not match day of the week */
+	regs[0] = bin2bcd(alarm_पंचांग->पंचांग_min) & 0x7f;
+	regs[1] = bin2bcd(alarm_पंचांग->पंचांग_hour) & 0x3f;
+	regs[2] = bin2bcd(alarm_पंचांग->पंचांग_mday) & 0x3f;
+	regs[3] = ABB5ZES3_REG_ALRM_DW_AE; /* करो not match day of the week */
 
-	ret = regmap_bulk_write(data->regmap, ABB5ZES3_REG_ALRM_MN, regs,
+	ret = regmap_bulk_ग_लिखो(data->regmap, ABB5ZES3_REG_ALRM_MN, regs,
 				ABB5ZES3_ALRM_SEC_LEN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: writing ALARM section failed (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Record currently configured alarm is not a timer */
-	data->timer_alarm = 0;
+	/* Record currently configured alarm is not a समयr */
+	data->समयr_alarm = 0;
 
-	/* Enable or disable alarm interrupt generation */
-	return _abb5zes3_rtc_update_alarm(dev, enable);
-}
+	/* Enable or disable alarm पूर्णांकerrupt generation */
+	वापस _abb5zes3_rtc_update_alarm(dev, enable);
+पूर्ण
 
 /*
- * Set alarm using timer watchdog (via timer A) mechanism. The function expects
- * timer A interrupt to be disabled.
+ * Set alarm using समयr watchकरोg (via समयr A) mechanism. The function expects
+ * समयr A पूर्णांकerrupt to be disabled.
  */
-static int _abb5zes3_rtc_set_timer(struct device *dev, struct rtc_wkalrm *alarm,
+अटल पूर्णांक _abb5zes3_rtc_set_समयr(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm,
 				   u8 secs)
-{
-	struct abb5zes3_rtc_data *data = dev_get_drvdata(dev);
+अणु
+	काष्ठा abb5zes3_rtc_data *data = dev_get_drvdata(dev);
 	u8 regs[ABB5ZES3_TIMA_SEC_LEN];
 	u8 mask = ABB5ZES3_REG_TIM_CLK_TAC0 | ABB5ZES3_REG_TIM_CLK_TAC1;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	/* Program given number of seconds to Timer A registers */
-	sec_to_timer_a(secs, &regs[0], &regs[1]);
-	ret = regmap_bulk_write(data->regmap, ABB5ZES3_REG_TIMA_CLK, regs,
+	/* Program given number of seconds to Timer A रेजिस्टरs */
+	sec_to_समयr_a(secs, &regs[0], &regs[1]);
+	ret = regmap_bulk_ग_लिखो(data->regmap, ABB5ZES3_REG_TIMA_CLK, regs,
 				ABB5ZES3_TIMA_SEC_LEN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: writing timer section failed\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Configure Timer A as a watchdog timer */
+	/* Configure Timer A as a watchकरोg समयr */
 	ret = regmap_update_bits(data->regmap, ABB5ZES3_REG_TIM_CLK,
 				 mask, ABB5ZES3_REG_TIM_CLK_TAC1);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "%s: failed to update timer\n", __func__);
 
-	/* Record currently configured alarm is a timer */
-	data->timer_alarm = 1;
+	/* Record currently configured alarm is a समयr */
+	data->समयr_alarm = 1;
 
-	/* Enable or disable timer interrupt generation */
-	return _abb5zes3_rtc_update_timer(dev, alarm->enabled);
-}
+	/* Enable or disable समयr पूर्णांकerrupt generation */
+	वापस _abb5zes3_rtc_update_समयr(dev, alarm->enabled);
+पूर्ण
 
 /*
  * The chip has an alarm which is only accurate to the minute. In order to
- * handle alarms below that limit, we use the watchdog timer function of
- * timer A. More precisely, the timer method is used for alarms below 240
+ * handle alarms below that limit, we use the watchकरोg समयr function of
+ * समयr A. More precisely, the समयr method is used क्रम alarms below 240
  * seconds.
  */
-static int abb5zes3_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alarm)
-{
-	struct abb5zes3_rtc_data *data = dev_get_drvdata(dev);
-	struct rtc_time *alarm_tm = &alarm->time;
-	unsigned long rtc_secs, alarm_secs;
-	struct rtc_time rtc_tm;
-	int ret;
+अटल पूर्णांक abb5zes3_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा abb5zes3_rtc_data *data = dev_get_drvdata(dev);
+	काष्ठा rtc_समय *alarm_पंचांग = &alarm->समय;
+	अचिन्हित दीर्घ rtc_secs, alarm_secs;
+	काष्ठा rtc_समय rtc_पंचांग;
+	पूर्णांक ret;
 
-	ret = _abb5zes3_rtc_read_time(dev, &rtc_tm);
-	if (ret)
-		return ret;
+	ret = _abb5zes3_rtc_पढ़ो_समय(dev, &rtc_पंचांग);
+	अगर (ret)
+		वापस ret;
 
-	rtc_secs = rtc_tm_to_time64(&rtc_tm);
-	alarm_secs = rtc_tm_to_time64(alarm_tm);
+	rtc_secs = rtc_पंचांग_to_समय64(&rtc_पंचांग);
+	alarm_secs = rtc_पंचांग_to_समय64(alarm_पंचांग);
 
-	/* Let's first disable both the alarm and the timer interrupts */
+	/* Let's first disable both the alarm and the समयr पूर्णांकerrupts */
 	ret = _abb5zes3_rtc_update_alarm(dev, false);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: unable to disable alarm (%d)\n", __func__,
 			ret);
-		return ret;
-	}
-	ret = _abb5zes3_rtc_update_timer(dev, false);
-	if (ret < 0) {
+		वापस ret;
+	पूर्ण
+	ret = _abb5zes3_rtc_update_समयr(dev, false);
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: unable to disable timer (%d)\n", __func__,
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	data->timer_alarm = 0;
+	data->समयr_alarm = 0;
 
 	/*
-	 * Let's now configure the alarm; if we are expected to ring in
-	 * more than 240s, then we setup an alarm. Otherwise, a timer.
+	 * Let's now configure the alarm; अगर we are expected to ring in
+	 * more than 240s, then we setup an alarm. Otherwise, a समयr.
 	 */
-	if ((alarm_secs > rtc_secs) && ((alarm_secs - rtc_secs) <= 240))
-		ret = _abb5zes3_rtc_set_timer(dev, alarm,
+	अगर ((alarm_secs > rtc_secs) && ((alarm_secs - rtc_secs) <= 240))
+		ret = _abb5zes3_rtc_set_समयr(dev, alarm,
 					      alarm_secs - rtc_secs);
-	else
+	अन्यथा
 		ret = _abb5zes3_rtc_set_alarm(dev, alarm);
 
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "%s: unable to configure alarm (%d)\n", __func__,
 			ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Enable or disable battery low irq generation */
-static inline int _abb5zes3_rtc_battery_low_irq_enable(struct regmap *regmap,
+अटल अंतरभूत पूर्णांक _abb5zes3_rtc_battery_low_irq_enable(काष्ठा regmap *regmap,
 						       bool enable)
-{
-	return regmap_update_bits(regmap, ABB5ZES3_REG_CTRL3,
+अणु
+	वापस regmap_update_bits(regmap, ABB5ZES3_REG_CTRL3,
 				  ABB5ZES3_REG_CTRL3_BLIE,
 				  enable ? ABB5ZES3_REG_CTRL3_BLIE : 0);
-}
+पूर्ण
 
 /*
- * Check current RTC status and enable/disable what needs to be. Return 0 if
+ * Check current RTC status and enable/disable what needs to be. Return 0 अगर
  * everything went ok and a negative value upon error.
  */
-static int abb5zes3_rtc_check_setup(struct device *dev)
-{
-	struct abb5zes3_rtc_data *data = dev_get_drvdata(dev);
-	struct regmap *regmap = data->regmap;
-	unsigned int reg;
-	int ret;
+अटल पूर्णांक abb5zes3_rtc_check_setup(काष्ठा device *dev)
+अणु
+	काष्ठा abb5zes3_rtc_data *data = dev_get_drvdata(dev);
+	काष्ठा regmap *regmap = data->regmap;
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक ret;
 	u8 mask;
 
 	/*
-	 * By default, the devices generates a 32.768KHz signal on IRQ#1 pin. It
-	 * is disabled here to prevent polluting the interrupt line and
-	 * uselessly triggering the IRQ handler we install for alarm and battery
-	 * low events. Note: this is done before clearing int. status below
+	 * By शेष, the devices generates a 32.768KHz संकेत on IRQ#1 pin. It
+	 * is disabled here to prevent polluting the पूर्णांकerrupt line and
+	 * uselessly triggering the IRQ handler we install क्रम alarm and battery
+	 * low events. Note: this is करोne beक्रमe clearing पूर्णांक. status below
 	 * in this function.
-	 * We also disable all timers and set timer interrupt to permanent (not
+	 * We also disable all समयrs and set समयr पूर्णांकerrupt to permanent (not
 	 * pulsed).
 	 */
 	mask = (ABB5ZES3_REG_TIM_CLK_TBC | ABB5ZES3_REG_TIM_CLK_TAC0 |
@@ -624,155 +625,155 @@ static int abb5zes3_rtc_check_setup(struct device *dev)
 				 ABB5ZES3_REG_TIM_CLK_COF0 |
 				 ABB5ZES3_REG_TIM_CLK_COF1 |
 				 ABB5ZES3_REG_TIM_CLK_COF2);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: unable to initialize clkout register (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Each component of the alarm (MN, HR, DT, DW) can be enabled/disabled
-	 * individually by clearing/setting MSB of each associated register. So,
+	 * inभागidually by clearing/setting MSB of each associated रेजिस्टर. So,
 	 * we set all alarm enable bits to disable current alarm setting.
 	 */
 	mask = (ABB5ZES3_REG_ALRM_MN_AE | ABB5ZES3_REG_ALRM_HR_AE |
 		ABB5ZES3_REG_ALRM_DT_AE | ABB5ZES3_REG_ALRM_DW_AE);
 	ret = regmap_update_bits(regmap, ABB5ZES3_REG_CTRL2, mask, mask);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: unable to disable alarm setting (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Set Control 1 register (RTC enabled, 24hr mode, all int. disabled) */
+	/* Set Control 1 रेजिस्टर (RTC enabled, 24hr mode, all पूर्णांक. disabled) */
 	mask = (ABB5ZES3_REG_CTRL1_CIE | ABB5ZES3_REG_CTRL1_AIE |
 		ABB5ZES3_REG_CTRL1_SIE | ABB5ZES3_REG_CTRL1_PM |
 		ABB5ZES3_REG_CTRL1_CAP | ABB5ZES3_REG_CTRL1_STOP);
 	ret = regmap_update_bits(regmap, ABB5ZES3_REG_CTRL1, mask, 0);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: unable to initialize CTRL1 register (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Set Control 2 register (timer int. disabled, alarm status cleared).
-	 * WTAF is read-only and cleared automatically by reading the register.
+	 * Set Control 2 रेजिस्टर (समयr पूर्णांक. disabled, alarm status cleared).
+	 * WTAF is पढ़ो-only and cleared स्वतःmatically by पढ़ोing the रेजिस्टर.
 	 */
 	mask = (ABB5ZES3_REG_CTRL2_CTBIE | ABB5ZES3_REG_CTRL2_CTAIE |
 		ABB5ZES3_REG_CTRL2_WTAIE | ABB5ZES3_REG_CTRL2_AF |
 		ABB5ZES3_REG_CTRL2_SF | ABB5ZES3_REG_CTRL2_CTBF |
 		ABB5ZES3_REG_CTRL2_CTAF);
 	ret = regmap_update_bits(regmap, ABB5ZES3_REG_CTRL2, mask, 0);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: unable to initialize CTRL2 register (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Enable battery low detection function and battery switchover function
-	 * (standard mode). Disable associated interrupts. Clear battery
-	 * switchover flag but not battery low flag. The latter is checked
+	 * Enable battery low detection function and battery चयनover function
+	 * (standard mode). Disable associated पूर्णांकerrupts. Clear battery
+	 * चयनover flag but not battery low flag. The latter is checked
 	 * later below.
 	 */
 	mask = (ABB5ZES3_REG_CTRL3_PM0  | ABB5ZES3_REG_CTRL3_PM1 |
 		ABB5ZES3_REG_CTRL3_PM2  | ABB5ZES3_REG_CTRL3_BLIE |
 		ABB5ZES3_REG_CTRL3_BSIE | ABB5ZES3_REG_CTRL3_BSF);
 	ret = regmap_update_bits(regmap, ABB5ZES3_REG_CTRL3, mask, 0);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: unable to initialize CTRL3 register (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Check oscillator integrity flag */
-	ret = regmap_read(regmap, ABB5ZES3_REG_RTC_SC, &reg);
-	if (ret < 0) {
+	/* Check oscillator पूर्णांकegrity flag */
+	ret = regmap_पढ़ो(regmap, ABB5ZES3_REG_RTC_SC, &reg);
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: unable to read osc. integrity flag (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (reg & ABB5ZES3_REG_RTC_SC_OSC) {
+	अगर (reg & ABB5ZES3_REG_RTC_SC_OSC) अणु
 		dev_err(dev, "clock integrity not guaranteed. Osc. has stopped or has been interrupted.\n");
 		dev_err(dev, "change battery (if not already done) and then set time to reset osc. failure flag.\n");
-	}
+	पूर्ण
 
 	/*
 	 * Check battery low flag at startup: this allows reporting battery
 	 * is low at startup when IRQ line is not connected. Note: we record
-	 * current status to avoid reenabling this interrupt later in probe
-	 * function if battery is low.
+	 * current status to aव्योम reenabling this पूर्णांकerrupt later in probe
+	 * function अगर battery is low.
 	 */
-	ret = regmap_read(regmap, ABB5ZES3_REG_CTRL3, &reg);
-	if (ret < 0) {
+	ret = regmap_पढ़ो(regmap, ABB5ZES3_REG_CTRL3, &reg);
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: unable to read battery low flag (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	data->battery_low = reg & ABB5ZES3_REG_CTRL3_BLF;
-	if (data->battery_low) {
+	अगर (data->battery_low) अणु
 		dev_err(dev, "RTC battery is low; please, consider changing it!\n");
 
 		ret = _abb5zes3_rtc_battery_low_irq_enable(regmap, false);
-		if (ret)
+		अगर (ret)
 			dev_err(dev, "%s: disabling battery low interrupt generation failed (%d)\n",
 				__func__, ret);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int abb5zes3_rtc_alarm_irq_enable(struct device *dev,
-					 unsigned int enable)
-{
-	struct abb5zes3_rtc_data *rtc_data = dev_get_drvdata(dev);
-	int ret = 0;
+अटल पूर्णांक abb5zes3_rtc_alarm_irq_enable(काष्ठा device *dev,
+					 अचिन्हित पूर्णांक enable)
+अणु
+	काष्ठा abb5zes3_rtc_data *rtc_data = dev_get_drvdata(dev);
+	पूर्णांक ret = 0;
 
-	if (rtc_data->irq) {
-		if (rtc_data->timer_alarm)
-			ret = _abb5zes3_rtc_update_timer(dev, enable);
-		else
+	अगर (rtc_data->irq) अणु
+		अगर (rtc_data->समयr_alarm)
+			ret = _abb5zes3_rtc_update_समयr(dev, enable);
+		अन्यथा
 			ret = _abb5zes3_rtc_update_alarm(dev, enable);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t _abb5zes3_rtc_interrupt(int irq, void *data)
-{
-	struct i2c_client *client = data;
-	struct device *dev = &client->dev;
-	struct abb5zes3_rtc_data *rtc_data = dev_get_drvdata(dev);
-	struct rtc_device *rtc = rtc_data->rtc;
+अटल irqवापस_t _abb5zes3_rtc_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा i2c_client *client = data;
+	काष्ठा device *dev = &client->dev;
+	काष्ठा abb5zes3_rtc_data *rtc_data = dev_get_drvdata(dev);
+	काष्ठा rtc_device *rtc = rtc_data->rtc;
 	u8 regs[ABB5ZES3_CTRL_SEC_LEN];
-	int ret, handled = IRQ_NONE;
+	पूर्णांक ret, handled = IRQ_NONE;
 
-	ret = regmap_bulk_read(rtc_data->regmap, 0, regs,
+	ret = regmap_bulk_पढ़ो(rtc_data->regmap, 0, regs,
 			       ABB5ZES3_CTRL_SEC_LEN);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "%s: unable to read control section (%d)!\n",
 			__func__, ret);
-		return handled;
-	}
+		वापस handled;
+	पूर्ण
 
 	/*
-	 * Check battery low detection flag and disable battery low interrupt
-	 * generation if flag is set (interrupt can only be cleared when
+	 * Check battery low detection flag and disable battery low पूर्णांकerrupt
+	 * generation अगर flag is set (पूर्णांकerrupt can only be cleared when
 	 * battery is replaced).
 	 */
-	if (regs[ABB5ZES3_REG_CTRL3] & ABB5ZES3_REG_CTRL3_BLF) {
+	अगर (regs[ABB5ZES3_REG_CTRL3] & ABB5ZES3_REG_CTRL3_BLF) अणु
 		dev_err(dev, "RTC battery is low; please change it!\n");
 
 		_abb5zes3_rtc_battery_low_irq_enable(rtc_data->regmap, false);
 
 		handled = IRQ_HANDLED;
-	}
+	पूर्ण
 
 	/* Check alarm flag */
-	if (regs[ABB5ZES3_REG_CTRL2] & ABB5ZES3_REG_CTRL2_AF) {
+	अगर (regs[ABB5ZES3_REG_CTRL2] & ABB5ZES3_REG_CTRL2_AF) अणु
 		dev_dbg(dev, "RTC alarm!\n");
 
 		rtc_update_irq(rtc, 1, RTC_IRQF | RTC_AF);
@@ -782,172 +783,172 @@ static irqreturn_t _abb5zes3_rtc_interrupt(int irq, void *data)
 		_abb5zes3_rtc_update_alarm(dev, 0);
 
 		handled = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	/* Check watchdog Timer A flag */
-	if (regs[ABB5ZES3_REG_CTRL2] & ABB5ZES3_REG_CTRL2_WTAF) {
+	/* Check watchकरोg Timer A flag */
+	अगर (regs[ABB5ZES3_REG_CTRL2] & ABB5ZES3_REG_CTRL2_WTAF) अणु
 		dev_dbg(dev, "RTC timer!\n");
 
 		rtc_update_irq(rtc, 1, RTC_IRQF | RTC_AF);
 
 		/*
 		 * Acknowledge and disable the alarm. Note: WTAF
-		 * flag had been cleared when reading CTRL2
+		 * flag had been cleared when पढ़ोing CTRL2
 		 */
-		_abb5zes3_rtc_update_timer(dev, 0);
+		_abb5zes3_rtc_update_समयr(dev, 0);
 
-		rtc_data->timer_alarm = 0;
+		rtc_data->समयr_alarm = 0;
 
 		handled = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	return handled;
-}
+	वापस handled;
+पूर्ण
 
-static const struct rtc_class_ops rtc_ops = {
-	.read_time = _abb5zes3_rtc_read_time,
-	.set_time = abb5zes3_rtc_set_time,
-	.read_alarm = abb5zes3_rtc_read_alarm,
+अटल स्थिर काष्ठा rtc_class_ops rtc_ops = अणु
+	.पढ़ो_समय = _abb5zes3_rtc_पढ़ो_समय,
+	.set_समय = abb5zes3_rtc_set_समय,
+	.पढ़ो_alarm = abb5zes3_rtc_पढ़ो_alarm,
 	.set_alarm = abb5zes3_rtc_set_alarm,
 	.alarm_irq_enable = abb5zes3_rtc_alarm_irq_enable,
-};
+पूर्ण;
 
-static const struct regmap_config abb5zes3_rtc_regmap_config = {
+अटल स्थिर काष्ठा regmap_config abb5zes3_rtc_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-};
+पूर्ण;
 
-static int abb5zes3_probe(struct i2c_client *client,
-			  const struct i2c_device_id *id)
-{
-	struct abb5zes3_rtc_data *data = NULL;
-	struct device *dev = &client->dev;
-	struct regmap *regmap;
-	int ret;
+अटल पूर्णांक abb5zes3_probe(काष्ठा i2c_client *client,
+			  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा abb5zes3_rtc_data *data = शून्य;
+	काष्ठा device *dev = &client->dev;
+	काष्ठा regmap *regmap;
+	पूर्णांक ret;
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C |
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C |
 				     I2C_FUNC_SMBUS_BYTE_DATA |
 				     I2C_FUNC_SMBUS_I2C_BLOCK))
-		return -ENODEV;
+		वापस -ENODEV;
 
 	regmap = devm_regmap_init_i2c(client, &abb5zes3_rtc_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		ret = PTR_ERR(regmap);
 		dev_err(dev, "%s: regmap allocation failed: %d\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = abb5zes3_i2c_validate_chip(regmap);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->regmap = regmap;
 	dev_set_drvdata(dev, data);
 
 	ret = abb5zes3_rtc_check_setup(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	data->rtc = devm_rtc_allocate_device(dev);
 	ret = PTR_ERR_OR_ZERO(data->rtc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "%s: unable to allocate RTC device (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (client->irq > 0) {
-		ret = devm_request_threaded_irq(dev, client->irq, NULL,
-						_abb5zes3_rtc_interrupt,
+	अगर (client->irq > 0) अणु
+		ret = devm_request_thपढ़ोed_irq(dev, client->irq, शून्य,
+						_abb5zes3_rtc_पूर्णांकerrupt,
 						IRQF_SHARED | IRQF_ONESHOT,
 						DRV_NAME, client);
-		if (!ret) {
+		अगर (!ret) अणु
 			device_init_wakeup(dev, true);
 			data->irq = client->irq;
 			dev_dbg(dev, "%s: irq %d used by RTC\n", __func__,
 				client->irq);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(dev, "%s: irq %d unavailable (%d)\n",
 				__func__, client->irq, ret);
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 	data->rtc->ops = &rtc_ops;
 	data->rtc->range_min = RTC_TIMESTAMP_BEGIN_2000;
 	data->rtc->range_max = RTC_TIMESTAMP_END_2099;
 
-	/* Enable battery low detection interrupt if battery not already low */
-	if (!data->battery_low && data->irq) {
+	/* Enable battery low detection पूर्णांकerrupt अगर battery not alपढ़ोy low */
+	अगर (!data->battery_low && data->irq) अणु
 		ret = _abb5zes3_rtc_battery_low_irq_enable(regmap, true);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "%s: enabling battery low interrupt generation failed (%d)\n",
 				__func__, ret);
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	ret = devm_rtc_register_device(data->rtc);
+	ret = devm_rtc_रेजिस्टर_device(data->rtc);
 
 err:
-	if (ret && data->irq)
+	अगर (ret && data->irq)
 		device_init_wakeup(dev, false);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int abb5zes3_rtc_suspend(struct device *dev)
-{
-	struct abb5zes3_rtc_data *rtc_data = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक abb5zes3_rtc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा abb5zes3_rtc_data *rtc_data = dev_get_drvdata(dev);
 
-	if (device_may_wakeup(dev))
-		return enable_irq_wake(rtc_data->irq);
+	अगर (device_may_wakeup(dev))
+		वापस enable_irq_wake(rtc_data->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int abb5zes3_rtc_resume(struct device *dev)
-{
-	struct abb5zes3_rtc_data *rtc_data = dev_get_drvdata(dev);
+अटल पूर्णांक abb5zes3_rtc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा abb5zes3_rtc_data *rtc_data = dev_get_drvdata(dev);
 
-	if (device_may_wakeup(dev))
-		return disable_irq_wake(rtc_data->irq);
+	अगर (device_may_wakeup(dev))
+		वापस disable_irq_wake(rtc_data->irq);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(abb5zes3_rtc_pm_ops, abb5zes3_rtc_suspend,
+अटल SIMPLE_DEV_PM_OPS(abb5zes3_rtc_pm_ops, abb5zes3_rtc_suspend,
 			 abb5zes3_rtc_resume);
 
-#ifdef CONFIG_OF
-static const struct of_device_id abb5zes3_dt_match[] = {
-	{ .compatible = "abracon,abb5zes3" },
-	{ },
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id abb5zes3_dt_match[] = अणु
+	अणु .compatible = "abracon,abb5zes3" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, abb5zes3_dt_match);
-#endif
+#पूर्ण_अगर
 
-static const struct i2c_device_id abb5zes3_id[] = {
-	{ "abb5zes3", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id abb5zes3_id[] = अणु
+	अणु "abb5zes3", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, abb5zes3_id);
 
-static struct i2c_driver abb5zes3_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver abb5zes3_driver = अणु
+	.driver = अणु
 		.name = DRV_NAME,
 		.pm = &abb5zes3_rtc_pm_ops,
 		.of_match_table = of_match_ptr(abb5zes3_dt_match),
-	},
+	पूर्ण,
 	.probe	  = abb5zes3_probe,
 	.id_table = abb5zes3_id,
-};
+पूर्ण;
 module_i2c_driver(abb5zes3_driver);
 
 MODULE_AUTHOR("Arnaud EBALARD <arno@natisbad.org>");

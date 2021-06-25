@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  boot.c - Architecture-Specific Low-Level ACPI Boot Support
+ *  boot.c - Architecture-Specअगरic Low-Level ACPI Boot Support
  *
- *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
- *  Copyright (C) 2001 Jun Nakajima <jun.nakajima@intel.com>
+ *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
+ *  Copyright (C) 2001 Jun Nakajima <jun.nakajima@पूर्णांकel.com>
  */
 
-#include <linux/init.h>
-#include <linux/acpi.h>
-#include <linux/acpi_pmtmr.h>
-#include <linux/efi.h>
-#include <linux/cpumask.h>
-#include <linux/export.h>
-#include <linux/dmi.h>
-#include <linux/irq.h>
-#include <linux/slab.h>
-#include <linux/memblock.h>
-#include <linux/ioport.h>
-#include <linux/pci.h>
-#include <linux/efi-bgrt.h>
-#include <linux/serial_core.h>
-#include <linux/pgtable.h>
+#समावेश <linux/init.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/acpi_pmपंचांगr.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/export.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/efi-bgrt.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/e820/api.h>
-#include <asm/irqdomain.h>
-#include <asm/pci_x86.h>
-#include <asm/io_apic.h>
-#include <asm/apic.h>
-#include <asm/io.h>
-#include <asm/mpspec.h>
-#include <asm/smp.h>
-#include <asm/i8259.h>
-#include <asm/setup.h>
+#समावेश <यंत्र/e820/api.h>
+#समावेश <यंत्र/irqकरोमुख्य.h>
+#समावेश <यंत्र/pci_x86.h>
+#समावेश <यंत्र/io_apic.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/mpspec.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/i8259.h>
+#समावेश <यंत्र/setup.h>
 
-#include "sleep.h" /* To include x86_acpi_suspend_lowlevel */
-static int __initdata acpi_force = 0;
-int acpi_disabled;
+#समावेश "sleep.h" /* To include x86_acpi_suspend_lowlevel */
+अटल पूर्णांक __initdata acpi_क्रमce = 0;
+पूर्णांक acpi_disabled;
 EXPORT_SYMBOL(acpi_disabled);
 
-#ifdef	CONFIG_X86_64
-# include <asm/proto.h>
-#endif				/* X86 */
+#अगर_घोषित	CONFIG_X86_64
+# include <यंत्र/proto.h>
+#पूर्ण_अगर				/* X86 */
 
-#define PREFIX			"ACPI: "
+#घोषणा PREFIX			"ACPI: "
 
-int acpi_noirq;				/* skip ACPI IRQ initialization */
-static int acpi_nobgrt;			/* skip ACPI BGRT */
-int acpi_pci_disabled;		/* skip ACPI PCI scan and IRQ initialization */
+पूर्णांक acpi_noirq;				/* skip ACPI IRQ initialization */
+अटल पूर्णांक acpi_nobgrt;			/* skip ACPI BGRT */
+पूर्णांक acpi_pci_disabled;		/* skip ACPI PCI scan and IRQ initialization */
 EXPORT_SYMBOL(acpi_pci_disabled);
 
-int acpi_lapic;
-int acpi_ioapic;
-int acpi_strict;
-int acpi_disable_cmcff;
+पूर्णांक acpi_lapic;
+पूर्णांक acpi_ioapic;
+पूर्णांक acpi_strict;
+पूर्णांक acpi_disable_cmcff;
 
 /* ACPI SCI override configuration */
 u8 acpi_sci_flags __initdata;
 u32 acpi_sci_override_gsi __initdata = INVALID_ACPI_IRQ;
-int acpi_skip_timer_override __initdata;
-int acpi_use_timer_override __initdata;
-int acpi_fix_pin2_polarity __initdata;
+पूर्णांक acpi_skip_समयr_override __initdata;
+पूर्णांक acpi_use_समयr_override __initdata;
+पूर्णांक acpi_fix_pin2_polarity __initdata;
 
-#ifdef CONFIG_X86_LOCAL_APIC
-static u64 acpi_lapic_addr __initdata = APIC_DEFAULT_PHYS_BASE;
-#endif
+#अगर_घोषित CONFIG_X86_LOCAL_APIC
+अटल u64 acpi_lapic_addr __initdata = APIC_DEFAULT_PHYS_BASE;
+#पूर्ण_अगर
 
-#ifdef CONFIG_X86_IO_APIC
+#अगर_घोषित CONFIG_X86_IO_APIC
 /*
  * Locks related to IOAPIC hotplug
  * Hotplug side:
@@ -77,318 +78,318 @@ static u64 acpi_lapic_addr __initdata = APIC_DEFAULT_PHYS_BASE;
  *		->ioapic_mutex
  *			->ioapic_lock
  */
-static DEFINE_MUTEX(acpi_ioapic_lock);
-#endif
+अटल DEFINE_MUTEX(acpi_ioapic_lock);
+#पूर्ण_अगर
 
 /* --------------------------------------------------------------------------
-                              Boot-time Configuration
+                              Boot-समय Configuration
    -------------------------------------------------------------------------- */
 
 /*
- * The default interrupt routing model is PIC (8259).  This gets
- * overridden if IOAPICs are enumerated (below).
+ * The शेष पूर्णांकerrupt routing model is PIC (8259).  This माला_लो
+ * overridden अगर IOAPICs are क्रमागतerated (below).
  */
-enum acpi_irq_model_id acpi_irq_model = ACPI_IRQ_MODEL_PIC;
+क्रमागत acpi_irq_model_id acpi_irq_model = ACPI_IRQ_MODEL_PIC;
 
 
 /*
- * ISA irqs by default are the first 16 gsis but can be
- * any gsi as specified by an interrupt source override.
+ * ISA irqs by शेष are the first 16 gsis but can be
+ * any gsi as specअगरied by an पूर्णांकerrupt source override.
  */
-static u32 isa_irq_to_gsi[NR_IRQS_LEGACY] __read_mostly = {
+अटल u32 isa_irq_to_gsi[NR_IRQS_LEGACY] __पढ़ो_mostly = अणु
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-};
+पूर्ण;
 
 /*
  * This is just a simple wrapper around early_memremap(),
- * with sanity checks for phys == 0 and size == 0.
+ * with sanity checks क्रम phys == 0 and size == 0.
  */
-void __init __iomem *__acpi_map_table(unsigned long phys, unsigned long size)
-{
+व्योम __init __iomem *__acpi_map_table(अचिन्हित दीर्घ phys, अचिन्हित दीर्घ size)
+अणु
 
-	if (!phys || !size)
-		return NULL;
+	अगर (!phys || !size)
+		वापस शून्य;
 
-	return early_memremap(phys, size);
-}
+	वापस early_memremap(phys, size);
+पूर्ण
 
-void __init __acpi_unmap_table(void __iomem *map, unsigned long size)
-{
-	if (!map || !size)
-		return;
+व्योम __init __acpi_unmap_table(व्योम __iomem *map, अचिन्हित दीर्घ size)
+अणु
+	अगर (!map || !size)
+		वापस;
 
 	early_memunmap(map, size);
-}
+पूर्ण
 
-#ifdef CONFIG_X86_LOCAL_APIC
-static int __init acpi_parse_madt(struct acpi_table_header *table)
-{
-	struct acpi_table_madt *madt = NULL;
+#अगर_घोषित CONFIG_X86_LOCAL_APIC
+अटल पूर्णांक __init acpi_parse_madt(काष्ठा acpi_table_header *table)
+अणु
+	काष्ठा acpi_table_madt *madt = शून्य;
 
-	if (!boot_cpu_has(X86_FEATURE_APIC))
-		return -EINVAL;
+	अगर (!boot_cpu_has(X86_FEATURE_APIC))
+		वापस -EINVAL;
 
-	madt = (struct acpi_table_madt *)table;
-	if (!madt) {
-		printk(KERN_WARNING PREFIX "Unable to map MADT\n");
-		return -ENODEV;
-	}
+	madt = (काष्ठा acpi_table_madt *)table;
+	अगर (!madt) अणु
+		prपूर्णांकk(KERN_WARNING PREFIX "Unable to map MADT\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	if (madt->address) {
+	अगर (madt->address) अणु
 		acpi_lapic_addr = (u64) madt->address;
 
-		printk(KERN_DEBUG PREFIX "Local APIC address 0x%08x\n",
+		prपूर्णांकk(KERN_DEBUG PREFIX "Local APIC address 0x%08x\n",
 		       madt->address);
-	}
+	पूर्ण
 
-	default_acpi_madt_oem_check(madt->header.oem_id,
+	शेष_acpi_madt_oem_check(madt->header.oem_id,
 				    madt->header.oem_table_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * acpi_register_lapic - register a local apic and generates a logic cpu number
- * @id: local apic id to register
- * @acpiid: ACPI id to register
+ * acpi_रेजिस्टर_lapic - रेजिस्टर a local apic and generates a logic cpu number
+ * @id: local apic id to रेजिस्टर
+ * @acpiid: ACPI id to रेजिस्टर
  * @enabled: this cpu is enabled or not
  *
  * Returns the logic cpu number which maps to the local apic
  */
-static int acpi_register_lapic(int id, u32 acpiid, u8 enabled)
-{
-	unsigned int ver = 0;
-	int cpu;
+अटल पूर्णांक acpi_रेजिस्टर_lapic(पूर्णांक id, u32 acpiid, u8 enabled)
+अणु
+	अचिन्हित पूर्णांक ver = 0;
+	पूर्णांक cpu;
 
-	if (id >= MAX_LOCAL_APIC) {
-		printk(KERN_INFO PREFIX "skipped apicid that is too big\n");
-		return -EINVAL;
-	}
+	अगर (id >= MAX_LOCAL_APIC) अणु
+		prपूर्णांकk(KERN_INFO PREFIX "skipped apicid that is too big\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!enabled) {
+	अगर (!enabled) अणु
 		++disabled_cpus;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (boot_cpu_physical_apicid != -1U)
+	अगर (boot_cpu_physical_apicid != -1U)
 		ver = boot_cpu_apic_version;
 
 	cpu = generic_processor_info(id, ver);
-	if (cpu >= 0)
+	अगर (cpu >= 0)
 		early_per_cpu(x86_cpu_to_acpiid, cpu) = acpiid;
 
-	return cpu;
-}
+	वापस cpu;
+पूर्ण
 
-static int __init
-acpi_parse_x2apic(union acpi_subtable_headers *header, const unsigned long end)
-{
-	struct acpi_madt_local_x2apic *processor = NULL;
-#ifdef CONFIG_X86_X2APIC
+अटल पूर्णांक __init
+acpi_parse_x2apic(जोड़ acpi_subtable_headers *header, स्थिर अचिन्हित दीर्घ end)
+अणु
+	काष्ठा acpi_madt_local_x2apic *processor = शून्य;
+#अगर_घोषित CONFIG_X86_X2APIC
 	u32 apic_id;
 	u8 enabled;
-#endif
+#पूर्ण_अगर
 
-	processor = (struct acpi_madt_local_x2apic *)header;
+	processor = (काष्ठा acpi_madt_local_x2apic *)header;
 
-	if (BAD_MADT_ENTRY(processor, end))
-		return -EINVAL;
+	अगर (BAD_MADT_ENTRY(processor, end))
+		वापस -EINVAL;
 
-	acpi_table_print_madt_entry(&header->common);
+	acpi_table_prपूर्णांक_madt_entry(&header->common);
 
-#ifdef CONFIG_X86_X2APIC
+#अगर_घोषित CONFIG_X86_X2APIC
 	apic_id = processor->local_apic_id;
 	enabled = processor->lapic_flags & ACPI_MADT_ENABLED;
 
 	/* Ignore invalid ID */
-	if (apic_id == 0xffffffff)
-		return 0;
+	अगर (apic_id == 0xffffffff)
+		वापस 0;
 
 	/*
-	 * We need to register disabled CPU as well to permit
+	 * We need to रेजिस्टर disabled CPU as well to permit
 	 * counting disabled CPUs. This allows us to size
 	 * cpus_possible_map more accurately, to permit
-	 * to not preallocating memory for all NR_CPUS
+	 * to not pपुनः_स्मृतिating memory क्रम all NR_CPUS
 	 * when we use CPU hotplug.
 	 */
-	if (!apic->apic_id_valid(apic_id)) {
-		if (enabled)
+	अगर (!apic->apic_id_valid(apic_id)) अणु
+		अगर (enabled)
 			pr_warn(PREFIX "x2apic entry ignored\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	acpi_register_lapic(apic_id, processor->uid, enabled);
-#else
-	printk(KERN_WARNING PREFIX "x2apic entry ignored\n");
-#endif
+	acpi_रेजिस्टर_lapic(apic_id, processor->uid, enabled);
+#अन्यथा
+	prपूर्णांकk(KERN_WARNING PREFIX "x2apic entry ignored\n");
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init
-acpi_parse_lapic(union acpi_subtable_headers * header, const unsigned long end)
-{
-	struct acpi_madt_local_apic *processor = NULL;
+अटल पूर्णांक __init
+acpi_parse_lapic(जोड़ acpi_subtable_headers * header, स्थिर अचिन्हित दीर्घ end)
+अणु
+	काष्ठा acpi_madt_local_apic *processor = शून्य;
 
-	processor = (struct acpi_madt_local_apic *)header;
+	processor = (काष्ठा acpi_madt_local_apic *)header;
 
-	if (BAD_MADT_ENTRY(processor, end))
-		return -EINVAL;
+	अगर (BAD_MADT_ENTRY(processor, end))
+		वापस -EINVAL;
 
-	acpi_table_print_madt_entry(&header->common);
+	acpi_table_prपूर्णांक_madt_entry(&header->common);
 
 	/* Ignore invalid ID */
-	if (processor->id == 0xff)
-		return 0;
+	अगर (processor->id == 0xff)
+		वापस 0;
 
 	/*
-	 * We need to register disabled CPU as well to permit
+	 * We need to रेजिस्टर disabled CPU as well to permit
 	 * counting disabled CPUs. This allows us to size
 	 * cpus_possible_map more accurately, to permit
-	 * to not preallocating memory for all NR_CPUS
+	 * to not pपुनः_स्मृतिating memory क्रम all NR_CPUS
 	 * when we use CPU hotplug.
 	 */
-	acpi_register_lapic(processor->id,	/* APIC ID */
+	acpi_रेजिस्टर_lapic(processor->id,	/* APIC ID */
 			    processor->processor_id, /* ACPI ID */
 			    processor->lapic_flags & ACPI_MADT_ENABLED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init
-acpi_parse_sapic(union acpi_subtable_headers *header, const unsigned long end)
-{
-	struct acpi_madt_local_sapic *processor = NULL;
+अटल पूर्णांक __init
+acpi_parse_sapic(जोड़ acpi_subtable_headers *header, स्थिर अचिन्हित दीर्घ end)
+अणु
+	काष्ठा acpi_madt_local_sapic *processor = शून्य;
 
-	processor = (struct acpi_madt_local_sapic *)header;
+	processor = (काष्ठा acpi_madt_local_sapic *)header;
 
-	if (BAD_MADT_ENTRY(processor, end))
-		return -EINVAL;
+	अगर (BAD_MADT_ENTRY(processor, end))
+		वापस -EINVAL;
 
-	acpi_table_print_madt_entry(&header->common);
+	acpi_table_prपूर्णांक_madt_entry(&header->common);
 
-	acpi_register_lapic((processor->id << 8) | processor->eid,/* APIC ID */
+	acpi_रेजिस्टर_lapic((processor->id << 8) | processor->eid,/* APIC ID */
 			    processor->processor_id, /* ACPI ID */
 			    processor->lapic_flags & ACPI_MADT_ENABLED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init
-acpi_parse_lapic_addr_ovr(union acpi_subtable_headers * header,
-			  const unsigned long end)
-{
-	struct acpi_madt_local_apic_override *lapic_addr_ovr = NULL;
+अटल पूर्णांक __init
+acpi_parse_lapic_addr_ovr(जोड़ acpi_subtable_headers * header,
+			  स्थिर अचिन्हित दीर्घ end)
+अणु
+	काष्ठा acpi_madt_local_apic_override *lapic_addr_ovr = शून्य;
 
-	lapic_addr_ovr = (struct acpi_madt_local_apic_override *)header;
+	lapic_addr_ovr = (काष्ठा acpi_madt_local_apic_override *)header;
 
-	if (BAD_MADT_ENTRY(lapic_addr_ovr, end))
-		return -EINVAL;
+	अगर (BAD_MADT_ENTRY(lapic_addr_ovr, end))
+		वापस -EINVAL;
 
-	acpi_table_print_madt_entry(&header->common);
+	acpi_table_prपूर्णांक_madt_entry(&header->common);
 
 	acpi_lapic_addr = lapic_addr_ovr->address;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init
-acpi_parse_x2apic_nmi(union acpi_subtable_headers *header,
-		      const unsigned long end)
-{
-	struct acpi_madt_local_x2apic_nmi *x2apic_nmi = NULL;
+अटल पूर्णांक __init
+acpi_parse_x2apic_nmi(जोड़ acpi_subtable_headers *header,
+		      स्थिर अचिन्हित दीर्घ end)
+अणु
+	काष्ठा acpi_madt_local_x2apic_nmi *x2apic_nmi = शून्य;
 
-	x2apic_nmi = (struct acpi_madt_local_x2apic_nmi *)header;
+	x2apic_nmi = (काष्ठा acpi_madt_local_x2apic_nmi *)header;
 
-	if (BAD_MADT_ENTRY(x2apic_nmi, end))
-		return -EINVAL;
+	अगर (BAD_MADT_ENTRY(x2apic_nmi, end))
+		वापस -EINVAL;
 
-	acpi_table_print_madt_entry(&header->common);
+	acpi_table_prपूर्णांक_madt_entry(&header->common);
 
-	if (x2apic_nmi->lint != 1)
-		printk(KERN_WARNING PREFIX "NMI not connected to LINT 1!\n");
+	अगर (x2apic_nmi->lपूर्णांक != 1)
+		prपूर्णांकk(KERN_WARNING PREFIX "NMI not connected to LINT 1!\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init
-acpi_parse_lapic_nmi(union acpi_subtable_headers * header, const unsigned long end)
-{
-	struct acpi_madt_local_apic_nmi *lapic_nmi = NULL;
+अटल पूर्णांक __init
+acpi_parse_lapic_nmi(जोड़ acpi_subtable_headers * header, स्थिर अचिन्हित दीर्घ end)
+अणु
+	काष्ठा acpi_madt_local_apic_nmi *lapic_nmi = शून्य;
 
-	lapic_nmi = (struct acpi_madt_local_apic_nmi *)header;
+	lapic_nmi = (काष्ठा acpi_madt_local_apic_nmi *)header;
 
-	if (BAD_MADT_ENTRY(lapic_nmi, end))
-		return -EINVAL;
+	अगर (BAD_MADT_ENTRY(lapic_nmi, end))
+		वापस -EINVAL;
 
-	acpi_table_print_madt_entry(&header->common);
+	acpi_table_prपूर्णांक_madt_entry(&header->common);
 
-	if (lapic_nmi->lint != 1)
-		printk(KERN_WARNING PREFIX "NMI not connected to LINT 1!\n");
+	अगर (lapic_nmi->lपूर्णांक != 1)
+		prपूर्णांकk(KERN_WARNING PREFIX "NMI not connected to LINT 1!\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif				/*CONFIG_X86_LOCAL_APIC */
+#पूर्ण_अगर				/*CONFIG_X86_LOCAL_APIC */
 
-#ifdef CONFIG_X86_IO_APIC
-#define MP_ISA_BUS		0
+#अगर_घोषित CONFIG_X86_IO_APIC
+#घोषणा MP_ISA_BUS		0
 
-static int __init mp_register_ioapic_irq(u8 bus_irq, u8 polarity,
+अटल पूर्णांक __init mp_रेजिस्टर_ioapic_irq(u8 bus_irq, u8 polarity,
 						u8 trigger, u32 gsi);
 
-static void __init mp_override_legacy_irq(u8 bus_irq, u8 polarity, u8 trigger,
+अटल व्योम __init mp_override_legacy_irq(u8 bus_irq, u8 polarity, u8 trigger,
 					  u32 gsi)
-{
+अणु
 	/*
 	 * Check bus_irq boundary.
 	 */
-	if (bus_irq >= NR_IRQS_LEGACY) {
+	अगर (bus_irq >= NR_IRQS_LEGACY) अणु
 		pr_warn("Invalid bus_irq %u for legacy override\n", bus_irq);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * TBD: This check is for faulty timer entries, where the override
+	 * TBD: This check is क्रम faulty समयr entries, where the override
 	 *      erroneously sets the trigger to level, resulting in a HUGE
-	 *      increase of timer interrupts!
+	 *      increase of समयr पूर्णांकerrupts!
 	 */
-	if ((bus_irq == 0) && (trigger == 3))
+	अगर ((bus_irq == 0) && (trigger == 3))
 		trigger = 1;
 
-	if (mp_register_ioapic_irq(bus_irq, polarity, trigger, gsi) < 0)
-		return;
+	अगर (mp_रेजिस्टर_ioapic_irq(bus_irq, polarity, trigger, gsi) < 0)
+		वापस;
 	/*
-	 * Reset default identity mapping if gsi is also an legacy IRQ,
+	 * Reset शेष identity mapping अगर gsi is also an legacy IRQ,
 	 * otherwise there will be more than one entry with the same GSI
 	 * and acpi_isa_irq_to_gsi() may give wrong result.
 	 */
-	if (gsi < nr_legacy_irqs() && isa_irq_to_gsi[gsi] == gsi)
+	अगर (gsi < nr_legacy_irqs() && isa_irq_to_gsi[gsi] == gsi)
 		isa_irq_to_gsi[gsi] = INVALID_ACPI_IRQ;
 	isa_irq_to_gsi[bus_irq] = gsi;
-}
+पूर्ण
 
-static int mp_config_acpi_gsi(struct device *dev, u32 gsi, int trigger,
-			int polarity)
-{
-#ifdef CONFIG_X86_MPPARSE
-	struct mpc_intsrc mp_irq;
-	struct pci_dev *pdev;
-	unsigned char number;
-	unsigned int devfn;
-	int ioapic;
+अटल पूर्णांक mp_config_acpi_gsi(काष्ठा device *dev, u32 gsi, पूर्णांक trigger,
+			पूर्णांक polarity)
+अणु
+#अगर_घोषित CONFIG_X86_MPPARSE
+	काष्ठा mpc_पूर्णांकsrc mp_irq;
+	काष्ठा pci_dev *pdev;
+	अचिन्हित अक्षर number;
+	अचिन्हित पूर्णांक devfn;
+	पूर्णांक ioapic;
 	u8 pin;
 
-	if (!acpi_ioapic)
-		return 0;
-	if (!dev || !dev_is_pci(dev))
-		return 0;
+	अगर (!acpi_ioapic)
+		वापस 0;
+	अगर (!dev || !dev_is_pci(dev))
+		वापस 0;
 
 	pdev = to_pci_dev(dev);
 	number = pdev->bus->number;
 	devfn = pdev->devfn;
 	pin = pdev->pin;
-	/* print the entry should happen on mptable identically */
+	/* prपूर्णांक the entry should happen on mptable identically */
 	mp_irq.type = MP_INTSRC;
 	mp_irq.irqtype = mp_INT;
 	mp_irq.irqflag = (trigger == ACPI_EDGE_SENSITIVE ? 4 : 0x0c) |
@@ -400,22 +401,22 @@ static int mp_config_acpi_gsi(struct device *dev, u32 gsi, int trigger,
 	mp_irq.dstirq = mp_find_ioapic_pin(ioapic, gsi);
 
 	mp_save_irq(&mp_irq);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int __init mp_register_ioapic_irq(u8 bus_irq, u8 polarity,
+अटल पूर्णांक __init mp_रेजिस्टर_ioapic_irq(u8 bus_irq, u8 polarity,
 						u8 trigger, u32 gsi)
-{
-	struct mpc_intsrc mp_irq;
-	int ioapic, pin;
+अणु
+	काष्ठा mpc_पूर्णांकsrc mp_irq;
+	पूर्णांक ioapic, pin;
 
 	/* Convert 'gsi' to 'ioapic.pin'(INTIN#) */
 	ioapic = mp_find_ioapic(gsi);
-	if (ioapic < 0) {
+	अगर (ioapic < 0) अणु
 		pr_warn("Failed to find ioapic for gsi : %u\n", gsi);
-		return ioapic;
-	}
+		वापस ioapic;
+	पूर्ण
 
 	pin = mp_find_ioapic_pin(ioapic, gsi);
 
@@ -429,147 +430,147 @@ static int __init mp_register_ioapic_irq(u8 bus_irq, u8 polarity,
 
 	mp_save_irq(&mp_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init
-acpi_parse_ioapic(union acpi_subtable_headers * header, const unsigned long end)
-{
-	struct acpi_madt_io_apic *ioapic = NULL;
-	struct ioapic_domain_cfg cfg = {
+अटल पूर्णांक __init
+acpi_parse_ioapic(जोड़ acpi_subtable_headers * header, स्थिर अचिन्हित दीर्घ end)
+अणु
+	काष्ठा acpi_madt_io_apic *ioapic = शून्य;
+	काष्ठा ioapic_करोमुख्य_cfg cfg = अणु
 		.type = IOAPIC_DOMAIN_DYNAMIC,
-		.ops = &mp_ioapic_irqdomain_ops,
-	};
+		.ops = &mp_ioapic_irqकरोमुख्य_ops,
+	पूर्ण;
 
-	ioapic = (struct acpi_madt_io_apic *)header;
+	ioapic = (काष्ठा acpi_madt_io_apic *)header;
 
-	if (BAD_MADT_ENTRY(ioapic, end))
-		return -EINVAL;
+	अगर (BAD_MADT_ENTRY(ioapic, end))
+		वापस -EINVAL;
 
-	acpi_table_print_madt_entry(&header->common);
+	acpi_table_prपूर्णांक_madt_entry(&header->common);
 
-	/* Statically assign IRQ numbers for IOAPICs hosting legacy IRQs */
-	if (ioapic->global_irq_base < nr_legacy_irqs())
+	/* Statically assign IRQ numbers क्रम IOAPICs hosting legacy IRQs */
+	अगर (ioapic->global_irq_base < nr_legacy_irqs())
 		cfg.type = IOAPIC_DOMAIN_LEGACY;
 
-	mp_register_ioapic(ioapic->id, ioapic->address, ioapic->global_irq_base,
+	mp_रेजिस्टर_ioapic(ioapic->id, ioapic->address, ioapic->global_irq_base,
 			   &cfg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Parse Interrupt Source Override for the ACPI SCI
+ * Parse Interrupt Source Override क्रम the ACPI SCI
  */
-static void __init acpi_sci_ioapic_setup(u8 bus_irq, u16 polarity, u16 trigger, u32 gsi)
-{
-	if (trigger == 0)	/* compatible SCI trigger is level */
+अटल व्योम __init acpi_sci_ioapic_setup(u8 bus_irq, u16 polarity, u16 trigger, u32 gsi)
+अणु
+	अगर (trigger == 0)	/* compatible SCI trigger is level */
 		trigger = 3;
 
-	if (polarity == 0)	/* compatible SCI polarity is low */
+	अगर (polarity == 0)	/* compatible SCI polarity is low */
 		polarity = 3;
 
 	/* Command-line over-ride via acpi_sci= */
-	if (acpi_sci_flags & ACPI_MADT_TRIGGER_MASK)
+	अगर (acpi_sci_flags & ACPI_MADT_TRIGGER_MASK)
 		trigger = (acpi_sci_flags & ACPI_MADT_TRIGGER_MASK) >> 2;
 
-	if (acpi_sci_flags & ACPI_MADT_POLARITY_MASK)
+	अगर (acpi_sci_flags & ACPI_MADT_POLARITY_MASK)
 		polarity = acpi_sci_flags & ACPI_MADT_POLARITY_MASK;
 
-	if (bus_irq < NR_IRQS_LEGACY)
+	अगर (bus_irq < NR_IRQS_LEGACY)
 		mp_override_legacy_irq(bus_irq, polarity, trigger, gsi);
-	else
-		mp_register_ioapic_irq(bus_irq, polarity, trigger, gsi);
+	अन्यथा
+		mp_रेजिस्टर_ioapic_irq(bus_irq, polarity, trigger, gsi);
 
 	acpi_penalize_sci_irq(bus_irq, trigger, polarity);
 
 	/*
 	 * stash over-ride to indicate we've been here
-	 * and for later update of acpi_gbl_FADT
+	 * and क्रम later update of acpi_gbl_FADT
 	 */
 	acpi_sci_override_gsi = gsi;
-	return;
-}
+	वापस;
+पूर्ण
 
-static int __init
-acpi_parse_int_src_ovr(union acpi_subtable_headers * header,
-		       const unsigned long end)
-{
-	struct acpi_madt_interrupt_override *intsrc = NULL;
+अटल पूर्णांक __init
+acpi_parse_पूर्णांक_src_ovr(जोड़ acpi_subtable_headers * header,
+		       स्थिर अचिन्हित दीर्घ end)
+अणु
+	काष्ठा acpi_madt_पूर्णांकerrupt_override *पूर्णांकsrc = शून्य;
 
-	intsrc = (struct acpi_madt_interrupt_override *)header;
+	पूर्णांकsrc = (काष्ठा acpi_madt_पूर्णांकerrupt_override *)header;
 
-	if (BAD_MADT_ENTRY(intsrc, end))
-		return -EINVAL;
+	अगर (BAD_MADT_ENTRY(पूर्णांकsrc, end))
+		वापस -EINVAL;
 
-	acpi_table_print_madt_entry(&header->common);
+	acpi_table_prपूर्णांक_madt_entry(&header->common);
 
-	if (intsrc->source_irq == acpi_gbl_FADT.sci_interrupt) {
-		acpi_sci_ioapic_setup(intsrc->source_irq,
-				      intsrc->inti_flags & ACPI_MADT_POLARITY_MASK,
-				      (intsrc->inti_flags & ACPI_MADT_TRIGGER_MASK) >> 2,
-				      intsrc->global_irq);
-		return 0;
-	}
+	अगर (पूर्णांकsrc->source_irq == acpi_gbl_FADT.sci_पूर्णांकerrupt) अणु
+		acpi_sci_ioapic_setup(पूर्णांकsrc->source_irq,
+				      पूर्णांकsrc->पूर्णांकi_flags & ACPI_MADT_POLARITY_MASK,
+				      (पूर्णांकsrc->पूर्णांकi_flags & ACPI_MADT_TRIGGER_MASK) >> 2,
+				      पूर्णांकsrc->global_irq);
+		वापस 0;
+	पूर्ण
 
-	if (intsrc->source_irq == 0) {
-		if (acpi_skip_timer_override) {
-			printk(PREFIX "BIOS IRQ0 override ignored.\n");
-			return 0;
-		}
+	अगर (पूर्णांकsrc->source_irq == 0) अणु
+		अगर (acpi_skip_समयr_override) अणु
+			prपूर्णांकk(PREFIX "BIOS IRQ0 override ignored.\n");
+			वापस 0;
+		पूर्ण
 
-		if ((intsrc->global_irq == 2) && acpi_fix_pin2_polarity
-			&& (intsrc->inti_flags & ACPI_MADT_POLARITY_MASK)) {
-			intsrc->inti_flags &= ~ACPI_MADT_POLARITY_MASK;
-			printk(PREFIX "BIOS IRQ0 pin2 override: forcing polarity to high active.\n");
-		}
-	}
+		अगर ((पूर्णांकsrc->global_irq == 2) && acpi_fix_pin2_polarity
+			&& (पूर्णांकsrc->पूर्णांकi_flags & ACPI_MADT_POLARITY_MASK)) अणु
+			पूर्णांकsrc->पूर्णांकi_flags &= ~ACPI_MADT_POLARITY_MASK;
+			prपूर्णांकk(PREFIX "BIOS IRQ0 pin2 override: forcing polarity to high active.\n");
+		पूर्ण
+	पूर्ण
 
-	mp_override_legacy_irq(intsrc->source_irq,
-				intsrc->inti_flags & ACPI_MADT_POLARITY_MASK,
-				(intsrc->inti_flags & ACPI_MADT_TRIGGER_MASK) >> 2,
-				intsrc->global_irq);
+	mp_override_legacy_irq(पूर्णांकsrc->source_irq,
+				पूर्णांकsrc->पूर्णांकi_flags & ACPI_MADT_POLARITY_MASK,
+				(पूर्णांकsrc->पूर्णांकi_flags & ACPI_MADT_TRIGGER_MASK) >> 2,
+				पूर्णांकsrc->global_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init
-acpi_parse_nmi_src(union acpi_subtable_headers * header, const unsigned long end)
-{
-	struct acpi_madt_nmi_source *nmi_src = NULL;
+अटल पूर्णांक __init
+acpi_parse_nmi_src(जोड़ acpi_subtable_headers * header, स्थिर अचिन्हित दीर्घ end)
+अणु
+	काष्ठा acpi_madt_nmi_source *nmi_src = शून्य;
 
-	nmi_src = (struct acpi_madt_nmi_source *)header;
+	nmi_src = (काष्ठा acpi_madt_nmi_source *)header;
 
-	if (BAD_MADT_ENTRY(nmi_src, end))
-		return -EINVAL;
+	अगर (BAD_MADT_ENTRY(nmi_src, end))
+		वापस -EINVAL;
 
-	acpi_table_print_madt_entry(&header->common);
+	acpi_table_prपूर्णांक_madt_entry(&header->common);
 
 	/* TBD: Support nimsrc entries? */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif				/* CONFIG_X86_IO_APIC */
+#पूर्ण_अगर				/* CONFIG_X86_IO_APIC */
 
 /*
  * acpi_pic_sci_set_trigger()
  *
- * use ELCR to set PIC-mode trigger type for SCI
+ * use ELCR to set PIC-mode trigger type क्रम SCI
  *
  * If a PIC-mode SCI is not recognized or gives spurious IRQ7's
  * it may require Edge Trigger -- use "acpi_sci=edge"
  *
  * Port 0x4d0-4d1 are ECLR1 and ECLR2, the Edge/Level Control Registers
- * for the 8259 PIC.  bit[n] = 1 means irq[n] is Level, otherwise Edge.
+ * क्रम the 8259 PIC.  bit[n] = 1 means irq[n] is Level, otherwise Edge.
  * ECLR1 is IRQs 0-7 (IRQ 0, 1, 2 must be 0)
  * ECLR2 is IRQs 8-15 (IRQ 8, 13 must be 0)
  */
 
-void __init acpi_pic_sci_set_trigger(unsigned int irq, u16 trigger)
-{
-	unsigned int mask = 1 << irq;
-	unsigned int old, new;
+व्योम __init acpi_pic_sci_set_trigger(अचिन्हित पूर्णांक irq, u16 trigger)
+अणु
+	अचिन्हित पूर्णांक mask = 1 << irq;
+	अचिन्हित पूर्णांक old, new;
 
 	/* Real old ELCR mask */
 	old = inb(0x4d0) | (inb(0x4d1) << 8);
@@ -582,83 +583,83 @@ void __init acpi_pic_sci_set_trigger(unsigned int irq, u16 trigger)
 	new = acpi_noirq ? old : 0;
 
 	/*
-	 * Update SCI information in the ELCR, it isn't in the PCI
+	 * Update SCI inक्रमmation in the ELCR, it isn't in the PCI
 	 * routing tables..
 	 */
-	switch (trigger) {
-	case 1:		/* Edge - clear */
+	चयन (trigger) अणु
+	हाल 1:		/* Edge - clear */
 		new &= ~mask;
-		break;
-	case 3:		/* Level - set */
+		अवरोध;
+	हाल 3:		/* Level - set */
 		new |= mask;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (old == new)
-		return;
+	अगर (old == new)
+		वापस;
 
-	printk(PREFIX "setting ELCR to %04x (from %04x)\n", new, old);
+	prपूर्णांकk(PREFIX "setting ELCR to %04x (from %04x)\n", new, old);
 	outb(new, 0x4d0);
 	outb(new >> 8, 0x4d1);
-}
+पूर्ण
 
-int acpi_gsi_to_irq(u32 gsi, unsigned int *irqp)
-{
-	int rc, irq, trigger, polarity;
+पूर्णांक acpi_gsi_to_irq(u32 gsi, अचिन्हित पूर्णांक *irqp)
+अणु
+	पूर्णांक rc, irq, trigger, polarity;
 
-	if (acpi_irq_model == ACPI_IRQ_MODEL_PIC) {
+	अगर (acpi_irq_model == ACPI_IRQ_MODEL_PIC) अणु
 		*irqp = gsi;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	rc = acpi_get_override_irq(gsi, &trigger, &polarity);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	trigger = trigger ? ACPI_LEVEL_SENSITIVE : ACPI_EDGE_SENSITIVE;
 	polarity = polarity ? ACPI_ACTIVE_LOW : ACPI_ACTIVE_HIGH;
-	irq = acpi_register_gsi(NULL, gsi, trigger, polarity);
-	if (irq < 0)
-		return irq;
+	irq = acpi_रेजिस्टर_gsi(शून्य, gsi, trigger, polarity);
+	अगर (irq < 0)
+		वापस irq;
 
 	*irqp = irq;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_gsi_to_irq);
 
-int acpi_isa_irq_to_gsi(unsigned isa_irq, u32 *gsi)
-{
-	if (isa_irq < nr_legacy_irqs() &&
-	    isa_irq_to_gsi[isa_irq] != INVALID_ACPI_IRQ) {
+पूर्णांक acpi_isa_irq_to_gsi(अचिन्हित isa_irq, u32 *gsi)
+अणु
+	अगर (isa_irq < nr_legacy_irqs() &&
+	    isa_irq_to_gsi[isa_irq] != INVALID_ACPI_IRQ) अणु
 		*gsi = isa_irq_to_gsi[isa_irq];
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int acpi_register_gsi_pic(struct device *dev, u32 gsi,
-				 int trigger, int polarity)
-{
-#ifdef CONFIG_PCI
+अटल पूर्णांक acpi_रेजिस्टर_gsi_pic(काष्ठा device *dev, u32 gsi,
+				 पूर्णांक trigger, पूर्णांक polarity)
+अणु
+#अगर_घोषित CONFIG_PCI
 	/*
 	 * Make sure all (legacy) PCI IRQs are set as level-triggered.
 	 */
-	if (trigger == ACPI_LEVEL_SENSITIVE)
+	अगर (trigger == ACPI_LEVEL_SENSITIVE)
 		elcr_set_level_irq(gsi);
-#endif
+#पूर्ण_अगर
 
-	return gsi;
-}
+	वापस gsi;
+पूर्ण
 
-#ifdef CONFIG_X86_LOCAL_APIC
-static int acpi_register_gsi_ioapic(struct device *dev, u32 gsi,
-				    int trigger, int polarity)
-{
-	int irq = gsi;
-#ifdef CONFIG_X86_IO_APIC
-	int node;
-	struct irq_alloc_info info;
+#अगर_घोषित CONFIG_X86_LOCAL_APIC
+अटल पूर्णांक acpi_रेजिस्टर_gsi_ioapic(काष्ठा device *dev, u32 gsi,
+				    पूर्णांक trigger, पूर्णांक polarity)
+अणु
+	पूर्णांक irq = gsi;
+#अगर_घोषित CONFIG_X86_IO_APIC
+	पूर्णांक node;
+	काष्ठा irq_alloc_info info;
 
 	node = dev ? dev_to_node(dev) : NUMA_NO_NODE;
 	trigger = trigger == ACPI_EDGE_SENSITIVE ? 0 : 1;
@@ -667,354 +668,354 @@ static int acpi_register_gsi_ioapic(struct device *dev, u32 gsi,
 
 	mutex_lock(&acpi_ioapic_lock);
 	irq = mp_map_gsi_to_irq(gsi, IOAPIC_MAP_ALLOC, &info);
-	/* Don't set up the ACPI SCI because it's already set up */
-	if (irq >= 0 && enable_update_mptable && gsi != acpi_gbl_FADT.sci_interrupt)
+	/* Don't set up the ACPI SCI because it's alपढ़ोy set up */
+	अगर (irq >= 0 && enable_update_mptable && gsi != acpi_gbl_FADT.sci_पूर्णांकerrupt)
 		mp_config_acpi_gsi(dev, gsi, trigger, polarity);
 	mutex_unlock(&acpi_ioapic_lock);
-#endif
+#पूर्ण_अगर
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static void acpi_unregister_gsi_ioapic(u32 gsi)
-{
-#ifdef CONFIG_X86_IO_APIC
-	int irq;
+अटल व्योम acpi_unरेजिस्टर_gsi_ioapic(u32 gsi)
+अणु
+#अगर_घोषित CONFIG_X86_IO_APIC
+	पूर्णांक irq;
 
 	mutex_lock(&acpi_ioapic_lock);
-	irq = mp_map_gsi_to_irq(gsi, 0, NULL);
-	if (irq > 0)
+	irq = mp_map_gsi_to_irq(gsi, 0, शून्य);
+	अगर (irq > 0)
 		mp_unmap_irq(irq);
 	mutex_unlock(&acpi_ioapic_lock);
-#endif
-}
-#endif
+#पूर्ण_अगर
+पूर्ण
+#पूर्ण_अगर
 
-int (*__acpi_register_gsi)(struct device *dev, u32 gsi,
-			   int trigger, int polarity) = acpi_register_gsi_pic;
-void (*__acpi_unregister_gsi)(u32 gsi) = NULL;
+पूर्णांक (*__acpi_रेजिस्टर_gsi)(काष्ठा device *dev, u32 gsi,
+			   पूर्णांक trigger, पूर्णांक polarity) = acpi_रेजिस्टर_gsi_pic;
+व्योम (*__acpi_unरेजिस्टर_gsi)(u32 gsi) = शून्य;
 
-#ifdef CONFIG_ACPI_SLEEP
-int (*acpi_suspend_lowlevel)(void) = x86_acpi_suspend_lowlevel;
-#else
-int (*acpi_suspend_lowlevel)(void);
-#endif
+#अगर_घोषित CONFIG_ACPI_SLEEP
+पूर्णांक (*acpi_suspend_lowlevel)(व्योम) = x86_acpi_suspend_lowlevel;
+#अन्यथा
+पूर्णांक (*acpi_suspend_lowlevel)(व्योम);
+#पूर्ण_अगर
 
 /*
- * success: return IRQ number (>=0)
- * failure: return < 0
+ * success: वापस IRQ number (>=0)
+ * failure: वापस < 0
  */
-int acpi_register_gsi(struct device *dev, u32 gsi, int trigger, int polarity)
-{
-	return __acpi_register_gsi(dev, gsi, trigger, polarity);
-}
-EXPORT_SYMBOL_GPL(acpi_register_gsi);
+पूर्णांक acpi_रेजिस्टर_gsi(काष्ठा device *dev, u32 gsi, पूर्णांक trigger, पूर्णांक polarity)
+अणु
+	वापस __acpi_रेजिस्टर_gsi(dev, gsi, trigger, polarity);
+पूर्ण
+EXPORT_SYMBOL_GPL(acpi_रेजिस्टर_gsi);
 
-void acpi_unregister_gsi(u32 gsi)
-{
-	if (__acpi_unregister_gsi)
-		__acpi_unregister_gsi(gsi);
-}
-EXPORT_SYMBOL_GPL(acpi_unregister_gsi);
+व्योम acpi_unरेजिस्टर_gsi(u32 gsi)
+अणु
+	अगर (__acpi_unरेजिस्टर_gsi)
+		__acpi_unरेजिस्टर_gsi(gsi);
+पूर्ण
+EXPORT_SYMBOL_GPL(acpi_unरेजिस्टर_gsi);
 
-#ifdef CONFIG_X86_LOCAL_APIC
-static void __init acpi_set_irq_model_ioapic(void)
-{
+#अगर_घोषित CONFIG_X86_LOCAL_APIC
+अटल व्योम __init acpi_set_irq_model_ioapic(व्योम)
+अणु
 	acpi_irq_model = ACPI_IRQ_MODEL_IOAPIC;
-	__acpi_register_gsi = acpi_register_gsi_ioapic;
-	__acpi_unregister_gsi = acpi_unregister_gsi_ioapic;
+	__acpi_रेजिस्टर_gsi = acpi_रेजिस्टर_gsi_ioapic;
+	__acpi_unरेजिस्टर_gsi = acpi_unरेजिस्टर_gsi_ioapic;
 	acpi_ioapic = 1;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
- *  ACPI based hotplug support for CPU
+ *  ACPI based hotplug support क्रम CPU
  */
-#ifdef CONFIG_ACPI_HOTPLUG_CPU
-#include <acpi/processor.h>
+#अगर_घोषित CONFIG_ACPI_HOTPLUG_CPU
+#समावेश <acpi/processor.h>
 
-static int acpi_map_cpu2node(acpi_handle handle, int cpu, int physid)
-{
-#ifdef CONFIG_ACPI_NUMA
-	int nid;
+अटल पूर्णांक acpi_map_cpu2node(acpi_handle handle, पूर्णांक cpu, पूर्णांक physid)
+अणु
+#अगर_घोषित CONFIG_ACPI_NUMA
+	पूर्णांक nid;
 
 	nid = acpi_get_node(handle);
-	if (nid != NUMA_NO_NODE) {
+	अगर (nid != NUMA_NO_NODE) अणु
 		set_apicid_to_node(physid, nid);
 		numa_set_node(cpu, nid);
-	}
-#endif
-	return 0;
-}
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-int acpi_map_cpu(acpi_handle handle, phys_cpuid_t physid, u32 acpi_id,
-		 int *pcpu)
-{
-	int cpu;
+पूर्णांक acpi_map_cpu(acpi_handle handle, phys_cpuid_t physid, u32 acpi_id,
+		 पूर्णांक *pcpu)
+अणु
+	पूर्णांक cpu;
 
-	cpu = acpi_register_lapic(physid, acpi_id, ACPI_MADT_ENABLED);
-	if (cpu < 0) {
+	cpu = acpi_रेजिस्टर_lapic(physid, acpi_id, ACPI_MADT_ENABLED);
+	अगर (cpu < 0) अणु
 		pr_info(PREFIX "Unable to map lapic to logical cpu number\n");
-		return cpu;
-	}
+		वापस cpu;
+	पूर्ण
 
 	acpi_processor_set_pdc(handle);
 	acpi_map_cpu2node(handle, cpu, physid);
 
 	*pcpu = cpu;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(acpi_map_cpu);
 
-int acpi_unmap_cpu(int cpu)
-{
-#ifdef CONFIG_ACPI_NUMA
+पूर्णांक acpi_unmap_cpu(पूर्णांक cpu)
+अणु
+#अगर_घोषित CONFIG_ACPI_NUMA
 	set_apicid_to_node(per_cpu(x86_cpu_to_apicid, cpu), NUMA_NO_NODE);
-#endif
+#पूर्ण_अगर
 
 	per_cpu(x86_cpu_to_apicid, cpu) = -1;
 	set_cpu_present(cpu, false);
 	num_processors--;
 
-	return (0);
-}
+	वापस (0);
+पूर्ण
 EXPORT_SYMBOL(acpi_unmap_cpu);
-#endif				/* CONFIG_ACPI_HOTPLUG_CPU */
+#पूर्ण_अगर				/* CONFIG_ACPI_HOTPLUG_CPU */
 
-int acpi_register_ioapic(acpi_handle handle, u64 phys_addr, u32 gsi_base)
-{
-	int ret = -ENOSYS;
-#ifdef CONFIG_ACPI_HOTPLUG_IOAPIC
-	int ioapic_id;
+पूर्णांक acpi_रेजिस्टर_ioapic(acpi_handle handle, u64 phys_addr, u32 gsi_base)
+अणु
+	पूर्णांक ret = -ENOSYS;
+#अगर_घोषित CONFIG_ACPI_HOTPLUG_IOAPIC
+	पूर्णांक ioapic_id;
 	u64 addr;
-	struct ioapic_domain_cfg cfg = {
+	काष्ठा ioapic_करोमुख्य_cfg cfg = अणु
 		.type = IOAPIC_DOMAIN_DYNAMIC,
-		.ops = &mp_ioapic_irqdomain_ops,
-	};
+		.ops = &mp_ioapic_irqकरोमुख्य_ops,
+	पूर्ण;
 
 	ioapic_id = acpi_get_ioapic_id(handle, gsi_base, &addr);
-	if (ioapic_id < 0) {
-		unsigned long long uid;
+	अगर (ioapic_id < 0) अणु
+		अचिन्हित दीर्घ दीर्घ uid;
 		acpi_status status;
 
-		status = acpi_evaluate_integer(handle, METHOD_NAME__UID,
-					       NULL, &uid);
-		if (ACPI_FAILURE(status)) {
+		status = acpi_evaluate_पूर्णांकeger(handle, METHOD_NAME__UID,
+					       शून्य, &uid);
+		अगर (ACPI_FAILURE(status)) अणु
 			acpi_handle_warn(handle, "failed to get IOAPIC ID.\n");
-			return -EINVAL;
-		}
-		ioapic_id = (int)uid;
-	}
+			वापस -EINVAL;
+		पूर्ण
+		ioapic_id = (पूर्णांक)uid;
+	पूर्ण
 
 	mutex_lock(&acpi_ioapic_lock);
-	ret  = mp_register_ioapic(ioapic_id, phys_addr, gsi_base, &cfg);
+	ret  = mp_रेजिस्टर_ioapic(ioapic_id, phys_addr, gsi_base, &cfg);
 	mutex_unlock(&acpi_ioapic_lock);
-#endif
+#पूर्ण_अगर
 
-	return ret;
-}
-EXPORT_SYMBOL(acpi_register_ioapic);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(acpi_रेजिस्टर_ioapic);
 
-int acpi_unregister_ioapic(acpi_handle handle, u32 gsi_base)
-{
-	int ret = -ENOSYS;
+पूर्णांक acpi_unरेजिस्टर_ioapic(acpi_handle handle, u32 gsi_base)
+अणु
+	पूर्णांक ret = -ENOSYS;
 
-#ifdef CONFIG_ACPI_HOTPLUG_IOAPIC
+#अगर_घोषित CONFIG_ACPI_HOTPLUG_IOAPIC
 	mutex_lock(&acpi_ioapic_lock);
-	ret  = mp_unregister_ioapic(gsi_base);
+	ret  = mp_unरेजिस्टर_ioapic(gsi_base);
 	mutex_unlock(&acpi_ioapic_lock);
-#endif
+#पूर्ण_अगर
 
-	return ret;
-}
-EXPORT_SYMBOL(acpi_unregister_ioapic);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(acpi_unरेजिस्टर_ioapic);
 
 /**
- * acpi_ioapic_registered - Check whether IOAPIC associated with @gsi_base
- *			    has been registered
+ * acpi_ioapic_रेजिस्टरed - Check whether IOAPIC associated with @gsi_base
+ *			    has been रेजिस्टरed
  * @handle:	ACPI handle of the IOAPIC device
  * @gsi_base:	GSI base associated with the IOAPIC
  *
- * Assume caller holds some type of lock to serialize acpi_ioapic_registered()
- * with acpi_register_ioapic()/acpi_unregister_ioapic().
+ * Assume caller holds some type of lock to serialize acpi_ioapic_रेजिस्टरed()
+ * with acpi_रेजिस्टर_ioapic()/acpi_unरेजिस्टर_ioapic().
  */
-int acpi_ioapic_registered(acpi_handle handle, u32 gsi_base)
-{
-	int ret = 0;
+पूर्णांक acpi_ioapic_रेजिस्टरed(acpi_handle handle, u32 gsi_base)
+अणु
+	पूर्णांक ret = 0;
 
-#ifdef CONFIG_ACPI_HOTPLUG_IOAPIC
+#अगर_घोषित CONFIG_ACPI_HOTPLUG_IOAPIC
 	mutex_lock(&acpi_ioapic_lock);
-	ret  = mp_ioapic_registered(gsi_base);
+	ret  = mp_ioapic_रेजिस्टरed(gsi_base);
 	mutex_unlock(&acpi_ioapic_lock);
-#endif
+#पूर्ण_अगर
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __init acpi_parse_sbf(struct acpi_table_header *table)
-{
-	struct acpi_table_boot *sb = (struct acpi_table_boot *)table;
+अटल पूर्णांक __init acpi_parse_sbf(काष्ठा acpi_table_header *table)
+अणु
+	काष्ठा acpi_table_boot *sb = (काष्ठा acpi_table_boot *)table;
 
 	sbf_port = sb->cmos_index;	/* Save CMOS port */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_HPET_TIMER
-#include <asm/hpet.h>
+#अगर_घोषित CONFIG_HPET_TIMER
+#समावेश <यंत्र/hpet.h>
 
-static struct resource *hpet_res __initdata;
+अटल काष्ठा resource *hpet_res __initdata;
 
-static int __init acpi_parse_hpet(struct acpi_table_header *table)
-{
-	struct acpi_table_hpet *hpet_tbl = (struct acpi_table_hpet *)table;
+अटल पूर्णांक __init acpi_parse_hpet(काष्ठा acpi_table_header *table)
+अणु
+	काष्ठा acpi_table_hpet *hpet_tbl = (काष्ठा acpi_table_hpet *)table;
 
-	if (hpet_tbl->address.space_id != ACPI_SPACE_MEM) {
-		printk(KERN_WARNING PREFIX "HPET timers must be located in "
+	अगर (hpet_tbl->address.space_id != ACPI_SPACE_MEM) अणु
+		prपूर्णांकk(KERN_WARNING PREFIX "HPET timers must be located in "
 		       "memory.\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	hpet_address = hpet_tbl->address.address;
 	hpet_blockid = hpet_tbl->sequence;
 
 	/*
-	 * Some broken BIOSes advertise HPET at 0x0. We really do not
+	 * Some broken BIOSes advertise HPET at 0x0. We really करो not
 	 * want to allocate a resource there.
 	 */
-	if (!hpet_address) {
-		printk(KERN_WARNING PREFIX
+	अगर (!hpet_address) अणु
+		prपूर्णांकk(KERN_WARNING PREFIX
 		       "HPET id: %#x base: %#lx is invalid\n",
 		       hpet_tbl->id, hpet_address);
-		return 0;
-	}
-#ifdef CONFIG_X86_64
+		वापस 0;
+	पूर्ण
+#अगर_घोषित CONFIG_X86_64
 	/*
 	 * Some even more broken BIOSes advertise HPET at
 	 * 0xfed0000000000000 instead of 0xfed00000. Fix it up and add
 	 * some noise:
 	 */
-	if (hpet_address == 0xfed0000000000000UL) {
-		if (!hpet_force_user) {
-			printk(KERN_WARNING PREFIX "HPET id: %#x "
+	अगर (hpet_address == 0xfed0000000000000UL) अणु
+		अगर (!hpet_क्रमce_user) अणु
+			prपूर्णांकk(KERN_WARNING PREFIX "HPET id: %#x "
 			       "base: 0xfed0000000000000 is bogus\n "
 			       "try hpet=force on the kernel command line to "
 			       "fix it up to 0xfed00000.\n", hpet_tbl->id);
 			hpet_address = 0;
-			return 0;
-		}
-		printk(KERN_WARNING PREFIX
+			वापस 0;
+		पूर्ण
+		prपूर्णांकk(KERN_WARNING PREFIX
 		       "HPET id: %#x base: 0xfed0000000000000 fixed up "
 		       "to 0xfed00000.\n", hpet_tbl->id);
 		hpet_address >>= 32;
-	}
-#endif
-	printk(KERN_INFO PREFIX "HPET id: %#x base: %#lx\n",
+	पूर्ण
+#पूर्ण_अगर
+	prपूर्णांकk(KERN_INFO PREFIX "HPET id: %#x base: %#lx\n",
 	       hpet_tbl->id, hpet_address);
 
 	/*
-	 * Allocate and initialize the HPET firmware resource for adding into
-	 * the resource tree during the lateinit timeframe.
+	 * Allocate and initialize the HPET firmware resource क्रम adding पूर्णांकo
+	 * the resource tree during the lateinit समयframe.
 	 */
-#define HPET_RESOURCE_NAME_SIZE 9
-	hpet_res = memblock_alloc(sizeof(*hpet_res) + HPET_RESOURCE_NAME_SIZE,
+#घोषणा HPET_RESOURCE_NAME_SIZE 9
+	hpet_res = memblock_alloc(माप(*hpet_res) + HPET_RESOURCE_NAME_SIZE,
 				  SMP_CACHE_BYTES);
-	if (!hpet_res)
+	अगर (!hpet_res)
 		panic("%s: Failed to allocate %zu bytes\n", __func__,
-		      sizeof(*hpet_res) + HPET_RESOURCE_NAME_SIZE);
+		      माप(*hpet_res) + HPET_RESOURCE_NAME_SIZE);
 
-	hpet_res->name = (void *)&hpet_res[1];
+	hpet_res->name = (व्योम *)&hpet_res[1];
 	hpet_res->flags = IORESOURCE_MEM;
-	snprintf((char *)hpet_res->name, HPET_RESOURCE_NAME_SIZE, "HPET %u",
+	snम_लिखो((अक्षर *)hpet_res->name, HPET_RESOURCE_NAME_SIZE, "HPET %u",
 		 hpet_tbl->sequence);
 
 	hpet_res->start = hpet_address;
 	hpet_res->end = hpet_address + (1 * 1024) - 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * hpet_insert_resource inserts the HPET resources used into the resource
+ * hpet_insert_resource inserts the HPET resources used पूर्णांकo the resource
  * tree.
  */
-static __init int hpet_insert_resource(void)
-{
-	if (!hpet_res)
-		return 1;
+अटल __init पूर्णांक hpet_insert_resource(व्योम)
+अणु
+	अगर (!hpet_res)
+		वापस 1;
 
-	return insert_resource(&iomem_resource, hpet_res);
-}
+	वापस insert_resource(&iomem_resource, hpet_res);
+पूर्ण
 
 late_initcall(hpet_insert_resource);
 
-#else
-#define	acpi_parse_hpet	NULL
-#endif
+#अन्यथा
+#घोषणा	acpi_parse_hpet	शून्य
+#पूर्ण_अगर
 
-static int __init acpi_parse_fadt(struct acpi_table_header *table)
-{
-	if (!(acpi_gbl_FADT.boot_flags & ACPI_FADT_LEGACY_DEVICES)) {
+अटल पूर्णांक __init acpi_parse_fadt(काष्ठा acpi_table_header *table)
+अणु
+	अगर (!(acpi_gbl_FADT.boot_flags & ACPI_FADT_LEGACY_DEVICES)) अणु
 		pr_debug("ACPI: no legacy devices present\n");
-		x86_platform.legacy.devices.pnpbios = 0;
-	}
+		x86_platक्रमm.legacy.devices.pnpbios = 0;
+	पूर्ण
 
-	if (acpi_gbl_FADT.header.revision >= FADT2_REVISION_ID &&
+	अगर (acpi_gbl_FADT.header.revision >= FADT2_REVISION_ID &&
 	    !(acpi_gbl_FADT.boot_flags & ACPI_FADT_8042) &&
-	    x86_platform.legacy.i8042 != X86_LEGACY_I8042_PLATFORM_ABSENT) {
+	    x86_platक्रमm.legacy.i8042 != X86_LEGACY_I8042_PLATFORM_ABSENT) अणु
 		pr_debug("ACPI: i8042 controller is absent\n");
-		x86_platform.legacy.i8042 = X86_LEGACY_I8042_FIRMWARE_ABSENT;
-	}
+		x86_platक्रमm.legacy.i8042 = X86_LEGACY_I8042_FIRMWARE_ABSENT;
+	पूर्ण
 
-	if (acpi_gbl_FADT.boot_flags & ACPI_FADT_NO_CMOS_RTC) {
+	अगर (acpi_gbl_FADT.boot_flags & ACPI_FADT_NO_CMOS_RTC) अणु
 		pr_debug("ACPI: not registering RTC platform device\n");
-		x86_platform.legacy.rtc = 0;
-	}
+		x86_platक्रमm.legacy.rtc = 0;
+	पूर्ण
 
-	if (acpi_gbl_FADT.boot_flags & ACPI_FADT_NO_VGA) {
+	अगर (acpi_gbl_FADT.boot_flags & ACPI_FADT_NO_VGA) अणु
 		pr_debug("ACPI: probing for VGA not safe\n");
-		x86_platform.legacy.no_vga = 1;
-	}
+		x86_platक्रमm.legacy.no_vga = 1;
+	पूर्ण
 
-#ifdef CONFIG_X86_PM_TIMER
+#अगर_घोषित CONFIG_X86_PM_TIMER
 	/* detect the location of the ACPI PM Timer */
-	if (acpi_gbl_FADT.header.revision >= FADT2_REVISION_ID) {
+	अगर (acpi_gbl_FADT.header.revision >= FADT2_REVISION_ID) अणु
 		/* FADT rev. 2 */
-		if (acpi_gbl_FADT.xpm_timer_block.space_id !=
+		अगर (acpi_gbl_FADT.xpm_समयr_block.space_id !=
 		    ACPI_ADR_SPACE_SYSTEM_IO)
-			return 0;
+			वापस 0;
 
-		pmtmr_ioport = acpi_gbl_FADT.xpm_timer_block.address;
+		pmपंचांगr_ioport = acpi_gbl_FADT.xpm_समयr_block.address;
 		/*
 		 * "X" fields are optional extensions to the original V1.0
-		 * fields, so we must selectively expand V1.0 fields if the
+		 * fields, so we must selectively expand V1.0 fields अगर the
 		 * corresponding X field is zero.
 	 	 */
-		if (!pmtmr_ioport)
-			pmtmr_ioport = acpi_gbl_FADT.pm_timer_block;
-	} else {
+		अगर (!pmपंचांगr_ioport)
+			pmपंचांगr_ioport = acpi_gbl_FADT.pm_समयr_block;
+	पूर्ण अन्यथा अणु
 		/* FADT rev. 1 */
-		pmtmr_ioport = acpi_gbl_FADT.pm_timer_block;
-	}
-	if (pmtmr_ioport)
-		printk(KERN_INFO PREFIX "PM-Timer IO Port: %#x\n",
-		       pmtmr_ioport);
-#endif
-	return 0;
-}
+		pmपंचांगr_ioport = acpi_gbl_FADT.pm_समयr_block;
+	पूर्ण
+	अगर (pmपंचांगr_ioport)
+		prपूर्णांकk(KERN_INFO PREFIX "PM-Timer IO Port: %#x\n",
+		       pmपंचांगr_ioport);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-#ifdef	CONFIG_X86_LOCAL_APIC
+#अगर_घोषित	CONFIG_X86_LOCAL_APIC
 /*
  * Parse LAPIC entries in MADT
- * returns 0 on success, < 0 on error
+ * वापसs 0 on success, < 0 on error
  */
 
-static int __init early_acpi_parse_madt_lapic_addr_ovr(void)
-{
-	int count;
+अटल पूर्णांक __init early_acpi_parse_madt_lapic_addr_ovr(व्योम)
+अणु
+	पूर्णांक count;
 
-	if (!boot_cpu_has(X86_FEATURE_APIC))
-		return -ENODEV;
+	अगर (!boot_cpu_has(X86_FEATURE_APIC))
+		वापस -ENODEV;
 
 	/*
 	 * Note that the LAPIC address is obtained from the MADT (32-bit value)
@@ -1023,128 +1024,128 @@ static int __init early_acpi_parse_madt_lapic_addr_ovr(void)
 
 	count = acpi_table_parse_madt(ACPI_MADT_TYPE_LOCAL_APIC_OVERRIDE,
 				      acpi_parse_lapic_addr_ovr, 0);
-	if (count < 0) {
-		printk(KERN_ERR PREFIX
+	अगर (count < 0) अणु
+		prपूर्णांकk(KERN_ERR PREFIX
 		       "Error parsing LAPIC address override entry\n");
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
-	register_lapic_address(acpi_lapic_addr);
+	रेजिस्टर_lapic_address(acpi_lapic_addr);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int __init acpi_parse_madt_lapic_entries(void)
-{
-	int count;
-	int x2count = 0;
-	int ret;
-	struct acpi_subtable_proc madt_proc[2];
+अटल पूर्णांक __init acpi_parse_madt_lapic_entries(व्योम)
+अणु
+	पूर्णांक count;
+	पूर्णांक x2count = 0;
+	पूर्णांक ret;
+	काष्ठा acpi_subtable_proc madt_proc[2];
 
-	if (!boot_cpu_has(X86_FEATURE_APIC))
-		return -ENODEV;
+	अगर (!boot_cpu_has(X86_FEATURE_APIC))
+		वापस -ENODEV;
 
 	count = acpi_table_parse_madt(ACPI_MADT_TYPE_LOCAL_SAPIC,
 				      acpi_parse_sapic, MAX_LOCAL_APIC);
 
-	if (!count) {
-		memset(madt_proc, 0, sizeof(madt_proc));
+	अगर (!count) अणु
+		स_रखो(madt_proc, 0, माप(madt_proc));
 		madt_proc[0].id = ACPI_MADT_TYPE_LOCAL_APIC;
 		madt_proc[0].handler = acpi_parse_lapic;
 		madt_proc[1].id = ACPI_MADT_TYPE_LOCAL_X2APIC;
 		madt_proc[1].handler = acpi_parse_x2apic;
 		ret = acpi_table_parse_entries_array(ACPI_SIG_MADT,
-				sizeof(struct acpi_table_madt),
+				माप(काष्ठा acpi_table_madt),
 				madt_proc, ARRAY_SIZE(madt_proc), MAX_LOCAL_APIC);
-		if (ret < 0) {
-			printk(KERN_ERR PREFIX
+		अगर (ret < 0) अणु
+			prपूर्णांकk(KERN_ERR PREFIX
 					"Error parsing LAPIC/X2APIC entries\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		count = madt_proc[0].count;
 		x2count = madt_proc[1].count;
-	}
-	if (!count && !x2count) {
-		printk(KERN_ERR PREFIX "No LAPIC entries present\n");
+	पूर्ण
+	अगर (!count && !x2count) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "No LAPIC entries present\n");
 		/* TBD: Cleanup to allow fallback to MPS */
-		return -ENODEV;
-	} else if (count < 0 || x2count < 0) {
-		printk(KERN_ERR PREFIX "Error parsing LAPIC entry\n");
+		वापस -ENODEV;
+	पूर्ण अन्यथा अगर (count < 0 || x2count < 0) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Error parsing LAPIC entry\n");
 		/* TBD: Cleanup to allow fallback to MPS */
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
 	x2count = acpi_table_parse_madt(ACPI_MADT_TYPE_LOCAL_X2APIC_NMI,
 					acpi_parse_x2apic_nmi, 0);
 	count = acpi_table_parse_madt(ACPI_MADT_TYPE_LOCAL_APIC_NMI,
 				      acpi_parse_lapic_nmi, 0);
-	if (count < 0 || x2count < 0) {
-		printk(KERN_ERR PREFIX "Error parsing LAPIC NMI entry\n");
+	अगर (count < 0 || x2count < 0) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Error parsing LAPIC NMI entry\n");
 		/* TBD: Cleanup to allow fallback to MPS */
-		return count;
-	}
-	return 0;
-}
-#endif				/* CONFIG_X86_LOCAL_APIC */
+		वापस count;
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर				/* CONFIG_X86_LOCAL_APIC */
 
-#ifdef	CONFIG_X86_IO_APIC
-static void __init mp_config_acpi_legacy_irqs(void)
-{
-	int i;
-	struct mpc_intsrc mp_irq;
+#अगर_घोषित	CONFIG_X86_IO_APIC
+अटल व्योम __init mp_config_acpi_legacy_irqs(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा mpc_पूर्णांकsrc mp_irq;
 
-#ifdef CONFIG_EISA
+#अगर_घोषित CONFIG_EISA
 	/*
 	 * Fabricate the legacy ISA bus (bus #31).
 	 */
 	mp_bus_id_to_type[MP_ISA_BUS] = MP_BUS_ISA;
-#endif
+#पूर्ण_अगर
 	set_bit(MP_ISA_BUS, mp_bus_not_pci);
 	pr_debug("Bus #%d is ISA (nIRQs: %d)\n", MP_ISA_BUS, nr_legacy_irqs());
 
 	/*
-	 * Use the default configuration for the IRQs 0-15.  Unless
-	 * overridden by (MADT) interrupt source override entries.
+	 * Use the शेष configuration क्रम the IRQs 0-15.  Unless
+	 * overridden by (MADT) पूर्णांकerrupt source override entries.
 	 */
-	for (i = 0; i < nr_legacy_irqs(); i++) {
-		int ioapic, pin;
-		unsigned int dstapic;
-		int idx;
+	क्रम (i = 0; i < nr_legacy_irqs(); i++) अणु
+		पूर्णांक ioapic, pin;
+		अचिन्हित पूर्णांक dstapic;
+		पूर्णांक idx;
 		u32 gsi;
 
 		/* Locate the gsi that irq i maps to. */
-		if (acpi_isa_irq_to_gsi(i, &gsi))
-			continue;
+		अगर (acpi_isa_irq_to_gsi(i, &gsi))
+			जारी;
 
 		/*
 		 * Locate the IOAPIC that manages the ISA IRQ.
 		 */
 		ioapic = mp_find_ioapic(gsi);
-		if (ioapic < 0)
-			continue;
+		अगर (ioapic < 0)
+			जारी;
 		pin = mp_find_ioapic_pin(ioapic, gsi);
 		dstapic = mpc_ioapic_id(ioapic);
 
-		for (idx = 0; idx < mp_irq_entries; idx++) {
-			struct mpc_intsrc *irq = mp_irqs + idx;
+		क्रम (idx = 0; idx < mp_irq_entries; idx++) अणु
+			काष्ठा mpc_पूर्णांकsrc *irq = mp_irqs + idx;
 
-			/* Do we already have a mapping for this ISA IRQ? */
-			if (irq->srcbus == MP_ISA_BUS && irq->srcbusirq == i)
-				break;
+			/* Do we alपढ़ोy have a mapping क्रम this ISA IRQ? */
+			अगर (irq->srcbus == MP_ISA_BUS && irq->srcbusirq == i)
+				अवरोध;
 
-			/* Do we already have a mapping for this IOAPIC pin */
-			if (irq->dstapic == dstapic && irq->dstirq == pin)
-				break;
-		}
+			/* Do we alपढ़ोy have a mapping क्रम this IOAPIC pin */
+			अगर (irq->dstapic == dstapic && irq->dstirq == pin)
+				अवरोध;
+		पूर्ण
 
-		if (idx != mp_irq_entries) {
-			printk(KERN_DEBUG "ACPI: IRQ%d used by override.\n", i);
-			continue;	/* IRQ already used */
-		}
+		अगर (idx != mp_irq_entries) अणु
+			prपूर्णांकk(KERN_DEBUG "ACPI: IRQ%d used by override.\n", i);
+			जारी;	/* IRQ alपढ़ोy used */
+		पूर्ण
 
 		mp_irq.type = MP_INTSRC;
-		mp_irq.irqflag = 0;	/* Conforming */
+		mp_irq.irqflag = 0;	/* Conक्रमming */
 		mp_irq.srcbus = MP_ISA_BUS;
 		mp_irq.dstapic = dstapic;
 		mp_irq.irqtype = mp_INT;
@@ -1152,125 +1153,125 @@ static void __init mp_config_acpi_legacy_irqs(void)
 		mp_irq.dstirq = pin;
 
 		mp_save_irq(&mp_irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Parse IOAPIC related entries in MADT
- * returns 0 on success, < 0 on error
+ * वापसs 0 on success, < 0 on error
  */
-static int __init acpi_parse_madt_ioapic_entries(void)
-{
-	int count;
+अटल पूर्णांक __init acpi_parse_madt_ioapic_entries(व्योम)
+अणु
+	पूर्णांक count;
 
 	/*
-	 * ACPI interpreter is required to complete interrupt setup,
-	 * so if it is off, don't enumerate the io-apics with ACPI.
+	 * ACPI पूर्णांकerpreter is required to complete पूर्णांकerrupt setup,
+	 * so अगर it is off, करोn't क्रमागतerate the io-apics with ACPI.
 	 * If MPS is present, it will handle them,
-	 * otherwise the system will stay in PIC mode
+	 * otherwise the प्रणाली will stay in PIC mode
 	 */
-	if (acpi_disabled || acpi_noirq)
-		return -ENODEV;
+	अगर (acpi_disabled || acpi_noirq)
+		वापस -ENODEV;
 
-	if (!boot_cpu_has(X86_FEATURE_APIC))
-		return -ENODEV;
+	अगर (!boot_cpu_has(X86_FEATURE_APIC))
+		वापस -ENODEV;
 
 	/*
-	 * if "noapic" boot option, don't look for IO-APICs
+	 * अगर "noapic" boot option, करोn't look क्रम IO-APICs
 	 */
-	if (skip_ioapic_setup) {
-		printk(KERN_INFO PREFIX "Skipping IOAPIC probe "
+	अगर (skip_ioapic_setup) अणु
+		prपूर्णांकk(KERN_INFO PREFIX "Skipping IOAPIC probe "
 		       "due to 'noapic' option.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	count = acpi_table_parse_madt(ACPI_MADT_TYPE_IO_APIC, acpi_parse_ioapic,
 				      MAX_IO_APICS);
-	if (!count) {
-		printk(KERN_ERR PREFIX "No IOAPIC entries present\n");
-		return -ENODEV;
-	} else if (count < 0) {
-		printk(KERN_ERR PREFIX "Error parsing IOAPIC entry\n");
-		return count;
-	}
+	अगर (!count) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "No IOAPIC entries present\n");
+		वापस -ENODEV;
+	पूर्ण अन्यथा अगर (count < 0) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Error parsing IOAPIC entry\n");
+		वापस count;
+	पूर्ण
 
 	count = acpi_table_parse_madt(ACPI_MADT_TYPE_INTERRUPT_OVERRIDE,
-				      acpi_parse_int_src_ovr, nr_irqs);
-	if (count < 0) {
-		printk(KERN_ERR PREFIX
+				      acpi_parse_पूर्णांक_src_ovr, nr_irqs);
+	अगर (count < 0) अणु
+		prपूर्णांकk(KERN_ERR PREFIX
 		       "Error parsing interrupt source overrides entry\n");
 		/* TBD: Cleanup to allow fallback to MPS */
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
 	/*
-	 * If BIOS did not supply an INT_SRC_OVR for the SCI
+	 * If BIOS did not supply an INT_SRC_OVR क्रम the SCI
 	 * pretend we got one so we can set the SCI flags.
-	 * But ignore setting up SCI on hardware reduced platforms.
+	 * But ignore setting up SCI on hardware reduced platक्रमms.
 	 */
-	if (acpi_sci_override_gsi == INVALID_ACPI_IRQ && !acpi_gbl_reduced_hardware)
-		acpi_sci_ioapic_setup(acpi_gbl_FADT.sci_interrupt, 0, 0,
-				      acpi_gbl_FADT.sci_interrupt);
+	अगर (acpi_sci_override_gsi == INVALID_ACPI_IRQ && !acpi_gbl_reduced_hardware)
+		acpi_sci_ioapic_setup(acpi_gbl_FADT.sci_पूर्णांकerrupt, 0, 0,
+				      acpi_gbl_FADT.sci_पूर्णांकerrupt);
 
 	/* Fill in identity legacy mappings where no override */
 	mp_config_acpi_legacy_irqs();
 
 	count = acpi_table_parse_madt(ACPI_MADT_TYPE_NMI_SOURCE,
 				      acpi_parse_nmi_src, nr_irqs);
-	if (count < 0) {
-		printk(KERN_ERR PREFIX "Error parsing NMI SRC entry\n");
+	अगर (count < 0) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Error parsing NMI SRC entry\n");
 		/* TBD: Cleanup to allow fallback to MPS */
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
-	return 0;
-}
-#else
-static inline int acpi_parse_madt_ioapic_entries(void)
-{
-	return -1;
-}
-#endif	/* !CONFIG_X86_IO_APIC */
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_parse_madt_ioapic_entries(व्योम)
+अणु
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर	/* !CONFIG_X86_IO_APIC */
 
-static void __init early_acpi_process_madt(void)
-{
-#ifdef CONFIG_X86_LOCAL_APIC
-	int error;
+अटल व्योम __init early_acpi_process_madt(व्योम)
+अणु
+#अगर_घोषित CONFIG_X86_LOCAL_APIC
+	पूर्णांक error;
 
-	if (!acpi_table_parse(ACPI_SIG_MADT, acpi_parse_madt)) {
+	अगर (!acpi_table_parse(ACPI_SIG_MADT, acpi_parse_madt)) अणु
 
 		/*
 		 * Parse MADT LAPIC entries
 		 */
 		error = early_acpi_parse_madt_lapic_addr_ovr();
-		if (!error) {
+		अगर (!error) अणु
 			acpi_lapic = 1;
 			smp_found_config = 1;
-		}
-		if (error == -EINVAL) {
+		पूर्ण
+		अगर (error == -EINVAL) अणु
 			/*
 			 * Dell Precision Workstation 410, 610 come here.
 			 */
-			printk(KERN_ERR PREFIX
+			prपूर्णांकk(KERN_ERR PREFIX
 			       "Invalid BIOS MADT, disabling ACPI\n");
 			disable_acpi();
-		}
-	}
-#endif
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static void __init acpi_process_madt(void)
-{
-#ifdef CONFIG_X86_LOCAL_APIC
-	int error;
+अटल व्योम __init acpi_process_madt(व्योम)
+अणु
+#अगर_घोषित CONFIG_X86_LOCAL_APIC
+	पूर्णांक error;
 
-	if (!acpi_table_parse(ACPI_SIG_MADT, acpi_parse_madt)) {
+	अगर (!acpi_table_parse(ACPI_SIG_MADT, acpi_parse_madt)) अणु
 
 		/*
 		 * Parse MADT LAPIC entries
 		 */
 		error = acpi_parse_madt_lapic_entries();
-		if (!error) {
+		अगर (!error) अणु
 			acpi_lapic = 1;
 
 			/*
@@ -1279,291 +1280,291 @@ static void __init acpi_process_madt(void)
 			mutex_lock(&acpi_ioapic_lock);
 			error = acpi_parse_madt_ioapic_entries();
 			mutex_unlock(&acpi_ioapic_lock);
-			if (!error) {
+			अगर (!error) अणु
 				acpi_set_irq_model_ioapic();
 
 				smp_found_config = 1;
-			}
-		}
-		if (error == -EINVAL) {
+			पूर्ण
+		पूर्ण
+		अगर (error == -EINVAL) अणु
 			/*
 			 * Dell Precision Workstation 410, 610 come here.
 			 */
-			printk(KERN_ERR PREFIX
+			prपूर्णांकk(KERN_ERR PREFIX
 			       "Invalid BIOS MADT, disabling ACPI\n");
 			disable_acpi();
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
  		 * ACPI found no MADT, and so ACPI wants UP PIC mode.
- 		 * In the event an MPS table was found, forget it.
- 		 * Boot with "acpi=off" to use MPS on such a system.
+ 		 * In the event an MPS table was found, क्रमget it.
+ 		 * Boot with "acpi=off" to use MPS on such a प्रणाली.
  		 */
-		if (smp_found_config) {
-			printk(KERN_WARNING PREFIX
+		अगर (smp_found_config) अणु
+			prपूर्णांकk(KERN_WARNING PREFIX
 				"No APIC-table, disabling MPS\n");
 			smp_found_config = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * ACPI supports both logical (e.g. Hyper-Threading) and physical
+	 * ACPI supports both logical (e.g. Hyper-Thपढ़ोing) and physical
 	 * processors, where MPS only supports physical.
 	 */
-	if (acpi_lapic && acpi_ioapic)
-		printk(KERN_INFO "Using ACPI (MADT) for SMP configuration "
+	अगर (acpi_lapic && acpi_ioapic)
+		prपूर्णांकk(KERN_INFO "Using ACPI (MADT) for SMP configuration "
 		       "information\n");
-	else if (acpi_lapic)
-		printk(KERN_INFO "Using ACPI for processor (LAPIC) "
+	अन्यथा अगर (acpi_lapic)
+		prपूर्णांकk(KERN_INFO "Using ACPI for processor (LAPIC) "
 		       "configuration information\n");
-#endif
-	return;
-}
+#पूर्ण_अगर
+	वापस;
+पूर्ण
 
-static int __init disable_acpi_irq(const struct dmi_system_id *d)
-{
-	if (!acpi_force) {
-		printk(KERN_NOTICE "%s detected: force use of acpi=noirq\n",
+अटल पूर्णांक __init disable_acpi_irq(स्थिर काष्ठा dmi_प्रणाली_id *d)
+अणु
+	अगर (!acpi_क्रमce) अणु
+		prपूर्णांकk(KERN_NOTICE "%s detected: force use of acpi=noirq\n",
 		       d->ident);
 		acpi_noirq_set();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int __init disable_acpi_pci(const struct dmi_system_id *d)
-{
-	if (!acpi_force) {
-		printk(KERN_NOTICE "%s detected: force use of pci=noacpi\n",
+अटल पूर्णांक __init disable_acpi_pci(स्थिर काष्ठा dmi_प्रणाली_id *d)
+अणु
+	अगर (!acpi_क्रमce) अणु
+		prपूर्णांकk(KERN_NOTICE "%s detected: force use of pci=noacpi\n",
 		       d->ident);
 		acpi_disable_pci();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int __init dmi_disable_acpi(const struct dmi_system_id *d)
-{
-	if (!acpi_force) {
-		printk(KERN_NOTICE "%s detected: acpi off\n", d->ident);
+अटल पूर्णांक __init dmi_disable_acpi(स्थिर काष्ठा dmi_प्रणाली_id *d)
+अणु
+	अगर (!acpi_क्रमce) अणु
+		prपूर्णांकk(KERN_NOTICE "%s detected: acpi off\n", d->ident);
 		disable_acpi();
-	} else {
-		printk(KERN_NOTICE
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_NOTICE
 		       "Warning: DMI blacklist says broken, but acpi forced\n");
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Force ignoring BIOS IRQ0 override
  */
-static int __init dmi_ignore_irq0_timer_override(const struct dmi_system_id *d)
-{
-	if (!acpi_skip_timer_override) {
+अटल पूर्णांक __init dmi_ignore_irq0_समयr_override(स्थिर काष्ठा dmi_प्रणाली_id *d)
+अणु
+	अगर (!acpi_skip_समयr_override) अणु
 		pr_notice("%s detected: Ignoring BIOS IRQ0 override\n",
 			d->ident);
-		acpi_skip_timer_override = 1;
-	}
-	return 0;
-}
+		acpi_skip_समयr_override = 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * ACPI offers an alternative platform interface model that removes
- * ACPI hardware requirements for platforms that do not implement
+ * ACPI offers an alternative platक्रमm पूर्णांकerface model that हटाओs
+ * ACPI hardware requirements क्रम platक्रमms that करो not implement
  * the PC Architecture.
  *
  * We initialize the Hardware-reduced ACPI model here:
  */
-void __init acpi_generic_reduced_hw_init(void)
-{
+व्योम __init acpi_generic_reduced_hw_init(व्योम)
+अणु
 	/*
 	 * Override x86_init functions and bypass legacy PIC in
 	 * hardware reduced ACPI mode.
 	 */
-	x86_init.timers.timer_init	= x86_init_noop;
+	x86_init.समयrs.समयr_init	= x86_init_noop;
 	x86_init.irqs.pre_vector_init	= x86_init_noop;
 	legacy_pic			= &null_legacy_pic;
-}
+पूर्ण
 
-static void __init acpi_reduced_hw_init(void)
-{
-	if (acpi_gbl_reduced_hardware)
+अटल व्योम __init acpi_reduced_hw_init(व्योम)
+अणु
+	अगर (acpi_gbl_reduced_hardware)
 		x86_init.acpi.reduced_hw_early_init();
-}
+पूर्ण
 
 /*
- * If your system is blacklisted here, but you find that acpi=force
- * works for you, please contact linux-acpi@vger.kernel.org
+ * If your प्रणाली is blacklisted here, but you find that acpi=क्रमce
+ * works क्रम you, please contact linux-acpi@vger.kernel.org
  */
-static const struct dmi_system_id acpi_dmi_table[] __initconst = {
+अटल स्थिर काष्ठा dmi_प्रणाली_id acpi_dmi_table[] __initस्थिर = अणु
 	/*
 	 * Boxes that need ACPI disabled
 	 */
-	{
+	अणु
 	 .callback = dmi_disable_acpi,
 	 .ident = "IBM Thinkpad",
-	 .matches = {
+	 .matches = अणु
 		     DMI_MATCH(DMI_BOARD_VENDOR, "IBM"),
 		     DMI_MATCH(DMI_BOARD_NAME, "2629H1G"),
-		     },
-	 },
+		     पूर्ण,
+	 पूर्ण,
 
 	/*
 	 * Boxes that need ACPI PCI IRQ routing disabled
 	 */
-	{
+	अणु
 	 .callback = disable_acpi_irq,
 	 .ident = "ASUS A7V",
-	 .matches = {
+	 .matches = अणु
 		     DMI_MATCH(DMI_BOARD_VENDOR, "ASUSTeK Computer INC"),
 		     DMI_MATCH(DMI_BOARD_NAME, "<A7V>"),
-		     /* newer BIOS, Revision 1011, does work */
+		     /* newer BIOS, Revision 1011, करोes work */
 		     DMI_MATCH(DMI_BIOS_VERSION,
 			       "ASUS A7V ACPI BIOS Revision 1007"),
-		     },
-	 },
-	{
+		     पूर्ण,
+	 पूर्ण,
+	अणु
 		/*
-		 * Latest BIOS for IBM 600E (1.16) has bad pcinum
-		 * for LPC bridge, which is needed for the PCI
-		 * interrupt links to work. DSDT fix is in bug 5966.
+		 * Latest BIOS क्रम IBM 600E (1.16) has bad pcinum
+		 * क्रम LPC bridge, which is needed क्रम the PCI
+		 * पूर्णांकerrupt links to work. DSDT fix is in bug 5966.
 		 * 2645, 2646 model numbers are shared with 600/600E/600X
 		 */
 	 .callback = disable_acpi_irq,
 	 .ident = "IBM Thinkpad 600 Series 2645",
-	 .matches = {
+	 .matches = अणु
 		     DMI_MATCH(DMI_BOARD_VENDOR, "IBM"),
 		     DMI_MATCH(DMI_BOARD_NAME, "2645"),
-		     },
-	 },
-	{
+		     पूर्ण,
+	 पूर्ण,
+	अणु
 	 .callback = disable_acpi_irq,
 	 .ident = "IBM Thinkpad 600 Series 2646",
-	 .matches = {
+	 .matches = अणु
 		     DMI_MATCH(DMI_BOARD_VENDOR, "IBM"),
 		     DMI_MATCH(DMI_BOARD_NAME, "2646"),
-		     },
-	 },
+		     पूर्ण,
+	 पूर्ण,
 	/*
 	 * Boxes that need ACPI PCI IRQ routing and PCI scan disabled
 	 */
-	{			/* _BBN 0 bug */
+	अणु			/* _BBN 0 bug */
 	 .callback = disable_acpi_pci,
 	 .ident = "ASUS PR-DLS",
-	 .matches = {
+	 .matches = अणु
 		     DMI_MATCH(DMI_BOARD_VENDOR, "ASUSTeK Computer INC."),
 		     DMI_MATCH(DMI_BOARD_NAME, "PR-DLS"),
 		     DMI_MATCH(DMI_BIOS_VERSION,
 			       "ASUS PR-DLS ACPI BIOS Revision 1010"),
 		     DMI_MATCH(DMI_BIOS_DATE, "03/21/2003")
-		     },
-	 },
-	{
+		     पूर्ण,
+	 पूर्ण,
+	अणु
 	 .callback = disable_acpi_pci,
 	 .ident = "Acer TravelMate 36x Laptop",
-	 .matches = {
+	 .matches = अणु
 		     DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 		     DMI_MATCH(DMI_PRODUCT_NAME, "TravelMate 360"),
-		     },
-	 },
-	{}
-};
+		     पूर्ण,
+	 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-/* second table for DMI checks that should run after early-quirks */
-static const struct dmi_system_id acpi_dmi_table_late[] __initconst = {
+/* second table क्रम DMI checks that should run after early-quirks */
+अटल स्थिर काष्ठा dmi_प्रणाली_id acpi_dmi_table_late[] __initस्थिर = अणु
 	/*
 	 * HP laptops which use a DSDT reporting as HP/SB400/10000,
 	 * which includes some code which overrides all temperature
-	 * trip points to 16C if the INTIN2 input of the I/O APIC
+	 * trip poपूर्णांकs to 16C अगर the INTIN2 input of the I/O APIC
 	 * is enabled.  This input is incorrectly designated the
-	 * ISA IRQ 0 via an interrupt source override even though
+	 * ISA IRQ 0 via an पूर्णांकerrupt source override even though
 	 * it is wired to the output of the master 8259A and INTIN0
 	 * is not connected at all.  Force ignoring BIOS IRQ0
-	 * override in that cases.
+	 * override in that हालs.
 	 */
-	{
-	 .callback = dmi_ignore_irq0_timer_override,
+	अणु
+	 .callback = dmi_ignore_irq0_समयr_override,
 	 .ident = "HP nx6115 laptop",
-	 .matches = {
+	 .matches = अणु
 		     DMI_MATCH(DMI_SYS_VENDOR, "Hewlett-Packard"),
 		     DMI_MATCH(DMI_PRODUCT_NAME, "HP Compaq nx6115"),
-		     },
-	 },
-	{
-	 .callback = dmi_ignore_irq0_timer_override,
+		     पूर्ण,
+	 पूर्ण,
+	अणु
+	 .callback = dmi_ignore_irq0_समयr_override,
 	 .ident = "HP NX6125 laptop",
-	 .matches = {
+	 .matches = अणु
 		     DMI_MATCH(DMI_SYS_VENDOR, "Hewlett-Packard"),
 		     DMI_MATCH(DMI_PRODUCT_NAME, "HP Compaq nx6125"),
-		     },
-	 },
-	{
-	 .callback = dmi_ignore_irq0_timer_override,
+		     पूर्ण,
+	 पूर्ण,
+	अणु
+	 .callback = dmi_ignore_irq0_समयr_override,
 	 .ident = "HP NX6325 laptop",
-	 .matches = {
+	 .matches = अणु
 		     DMI_MATCH(DMI_SYS_VENDOR, "Hewlett-Packard"),
 		     DMI_MATCH(DMI_PRODUCT_NAME, "HP Compaq nx6325"),
-		     },
-	 },
-	{
-	 .callback = dmi_ignore_irq0_timer_override,
+		     पूर्ण,
+	 पूर्ण,
+	अणु
+	 .callback = dmi_ignore_irq0_समयr_override,
 	 .ident = "HP 6715b laptop",
-	 .matches = {
+	 .matches = अणु
 		     DMI_MATCH(DMI_SYS_VENDOR, "Hewlett-Packard"),
 		     DMI_MATCH(DMI_PRODUCT_NAME, "HP Compaq 6715b"),
-		     },
-	 },
-	{
-	 .callback = dmi_ignore_irq0_timer_override,
+		     पूर्ण,
+	 पूर्ण,
+	अणु
+	 .callback = dmi_ignore_irq0_समयr_override,
 	 .ident = "FUJITSU SIEMENS",
-	 .matches = {
+	 .matches = अणु
 		     DMI_MATCH(DMI_SYS_VENDOR, "FUJITSU SIEMENS"),
 		     DMI_MATCH(DMI_PRODUCT_NAME, "AMILO PRO V2030"),
-		     },
-	 },
-	{}
-};
+		     पूर्ण,
+	 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
  * acpi_boot_table_init() and acpi_boot_init()
  *  called from setup_arch(), always.
  *	1. checksums all tables
- *	2. enumerates lapics
- *	3. enumerates io-apics
+ *	2. क्रमागतerates lapics
+ *	3. क्रमागतerates io-apics
  *
- * acpi_table_init() is separate to allow reading SRAT without
+ * acpi_table_init() is separate to allow पढ़ोing SRAT without
  * other side effects.
  *
  * side effects of acpi_boot_init:
- *	acpi_lapic = 1 if LAPIC found
- *	acpi_ioapic = 1 if IOAPIC found
- *	if (acpi_lapic && acpi_ioapic) smp_found_config = 1;
- *	if acpi_blacklisted() acpi_disabled = 1;
+ *	acpi_lapic = 1 अगर LAPIC found
+ *	acpi_ioapic = 1 अगर IOAPIC found
+ *	अगर (acpi_lapic && acpi_ioapic) smp_found_config = 1;
+ *	अगर acpi_blacklisted() acpi_disabled = 1;
  *	acpi_irq_model=...
  *	...
  */
 
-void __init acpi_boot_table_init(void)
-{
-	dmi_check_system(acpi_dmi_table);
+व्योम __init acpi_boot_table_init(व्योम)
+अणु
+	dmi_check_प्रणाली(acpi_dmi_table);
 
 	/*
 	 * If acpi_disabled, bail out
 	 */
-	if (acpi_disabled)
-		return;
+	अगर (acpi_disabled)
+		वापस;
 
 	/*
-	 * Initialize the ACPI boot-time table parser.
+	 * Initialize the ACPI boot-समय table parser.
 	 */
-	if (acpi_locate_initial_tables())
+	अगर (acpi_locate_initial_tables())
 		disable_acpi();
-	else
+	अन्यथा
 		acpi_reserve_initial_tables();
-}
+पूर्ण
 
-int __init early_acpi_boot_init(void)
-{
-	if (acpi_disabled)
-		return 1;
+पूर्णांक __init early_acpi_boot_init(व्योम)
+अणु
+	अगर (acpi_disabled)
+		वापस 1;
 
 	acpi_table_init_complete();
 
@@ -1572,18 +1573,18 @@ int __init early_acpi_boot_init(void)
 	/*
 	 * blacklist may disable ACPI entirely
 	 */
-	if (acpi_blacklisted()) {
-		if (acpi_force) {
-			printk(KERN_WARNING PREFIX "acpi=force override\n");
-		} else {
-			printk(KERN_WARNING PREFIX "Disabling ACPI support\n");
+	अगर (acpi_blacklisted()) अणु
+		अगर (acpi_क्रमce) अणु
+			prपूर्णांकk(KERN_WARNING PREFIX "acpi=force override\n");
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk(KERN_WARNING PREFIX "Disabling ACPI support\n");
 			disable_acpi();
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Process the Multiple APIC Description Table (MADT), if present
+	 * Process the Multiple APIC Description Table (MADT), अगर present
 	 */
 	early_acpi_process_madt();
 
@@ -1592,187 +1593,187 @@ int __init early_acpi_boot_init(void)
 	 */
 	acpi_reduced_hw_init();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __init acpi_boot_init(void)
-{
+पूर्णांक __init acpi_boot_init(व्योम)
+अणु
 	/* those are executed after early-quirks are executed */
-	dmi_check_system(acpi_dmi_table_late);
+	dmi_check_प्रणाली(acpi_dmi_table_late);
 
 	/*
 	 * If acpi_disabled, bail out
 	 */
-	if (acpi_disabled)
-		return 1;
+	अगर (acpi_disabled)
+		वापस 1;
 
 	acpi_table_parse(ACPI_SIG_BOOT, acpi_parse_sbf);
 
 	/*
-	 * set sci_int and PM timer address
+	 * set sci_पूर्णांक and PM समयr address
 	 */
 	acpi_table_parse(ACPI_SIG_FADT, acpi_parse_fadt);
 
 	/*
-	 * Process the Multiple APIC Description Table (MADT), if present
+	 * Process the Multiple APIC Description Table (MADT), अगर present
 	 */
 	acpi_process_madt();
 
 	acpi_table_parse(ACPI_SIG_HPET, acpi_parse_hpet);
-	if (IS_ENABLED(CONFIG_ACPI_BGRT) && !acpi_nobgrt)
+	अगर (IS_ENABLED(CONFIG_ACPI_BGRT) && !acpi_nobgrt)
 		acpi_table_parse(ACPI_SIG_BGRT, acpi_parse_bgrt);
 
-	if (!acpi_noirq)
+	अगर (!acpi_noirq)
 		x86_init.pci.init = pci_acpi_init;
 
-	/* Do not enable ACPI SPCR console by default */
+	/* Do not enable ACPI SPCR console by शेष */
 	acpi_parse_spcr(earlycon_acpi_spcr_enable, false);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init parse_acpi(char *arg)
-{
-	if (!arg)
-		return -EINVAL;
+अटल पूर्णांक __init parse_acpi(अक्षर *arg)
+अणु
+	अगर (!arg)
+		वापस -EINVAL;
 
-	/* "acpi=off" disables both ACPI table parsing and interpreter */
-	if (strcmp(arg, "off") == 0) {
+	/* "acpi=off" disables both ACPI table parsing and पूर्णांकerpreter */
+	अगर (म_भेद(arg, "off") == 0) अणु
 		disable_acpi();
-	}
-	/* acpi=force to over-ride black-list */
-	else if (strcmp(arg, "force") == 0) {
-		acpi_force = 1;
+	पूर्ण
+	/* acpi=क्रमce to over-ride black-list */
+	अन्यथा अगर (म_भेद(arg, "force") == 0) अणु
+		acpi_क्रमce = 1;
 		acpi_disabled = 0;
-	}
+	पूर्ण
 	/* acpi=strict disables out-of-spec workarounds */
-	else if (strcmp(arg, "strict") == 0) {
+	अन्यथा अगर (म_भेद(arg, "strict") == 0) अणु
 		acpi_strict = 1;
-	}
+	पूर्ण
 	/* acpi=rsdt use RSDT instead of XSDT */
-	else if (strcmp(arg, "rsdt") == 0) {
-		acpi_gbl_do_not_use_xsdt = TRUE;
-	}
-	/* "acpi=noirq" disables ACPI interrupt routing */
-	else if (strcmp(arg, "noirq") == 0) {
+	अन्यथा अगर (म_भेद(arg, "rsdt") == 0) अणु
+		acpi_gbl_करो_not_use_xsdt = TRUE;
+	पूर्ण
+	/* "acpi=noirq" disables ACPI पूर्णांकerrupt routing */
+	अन्यथा अगर (म_भेद(arg, "noirq") == 0) अणु
 		acpi_noirq_set();
-	}
+	पूर्ण
 	/* "acpi=copy_dsdt" copies DSDT */
-	else if (strcmp(arg, "copy_dsdt") == 0) {
+	अन्यथा अगर (म_भेद(arg, "copy_dsdt") == 0) अणु
 		acpi_gbl_copy_dsdt_locally = 1;
-	}
-	/* "acpi=nocmcff" disables FF mode for corrected errors */
-	else if (strcmp(arg, "nocmcff") == 0) {
+	पूर्ण
+	/* "acpi=nocmcff" disables FF mode क्रम corrected errors */
+	अन्यथा अगर (म_भेद(arg, "nocmcff") == 0) अणु
 		acpi_disable_cmcff = 1;
-	} else {
-		/* Core will printk when we return error. */
-		return -EINVAL;
-	}
-	return 0;
-}
+	पूर्ण अन्यथा अणु
+		/* Core will prपूर्णांकk when we वापस error. */
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 early_param("acpi", parse_acpi);
 
-static int __init parse_acpi_bgrt(char *arg)
-{
+अटल पूर्णांक __init parse_acpi_bgrt(अक्षर *arg)
+अणु
 	acpi_nobgrt = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("bgrt_disable", parse_acpi_bgrt);
 
-/* FIXME: Using pci= for an ACPI parameter is a travesty. */
-static int __init parse_pci(char *arg)
-{
-	if (arg && strcmp(arg, "noacpi") == 0)
+/* FIXME: Using pci= क्रम an ACPI parameter is a travesty. */
+अटल पूर्णांक __init parse_pci(अक्षर *arg)
+अणु
+	अगर (arg && म_भेद(arg, "noacpi") == 0)
 		acpi_disable_pci();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("pci", parse_pci);
 
-int __init acpi_mps_check(void)
-{
-#if defined(CONFIG_X86_LOCAL_APIC) && !defined(CONFIG_X86_MPPARSE)
+पूर्णांक __init acpi_mps_check(व्योम)
+अणु
+#अगर defined(CONFIG_X86_LOCAL_APIC) && !defined(CONFIG_X86_MPPARSE)
 /* mptable code is not built-in*/
-	if (acpi_disabled || acpi_noirq) {
-		printk(KERN_WARNING "MPS support code is not built-in.\n"
+	अगर (acpi_disabled || acpi_noirq) अणु
+		prपूर्णांकk(KERN_WARNING "MPS support code is not built-in.\n"
 		       "Using acpi=off or acpi=noirq or pci=noacpi "
 		       "may have problem\n");
-		return 1;
-	}
-#endif
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_X86_IO_APIC
-static int __init parse_acpi_skip_timer_override(char *arg)
-{
-	acpi_skip_timer_override = 1;
-	return 0;
-}
-early_param("acpi_skip_timer_override", parse_acpi_skip_timer_override);
+#अगर_घोषित CONFIG_X86_IO_APIC
+अटल पूर्णांक __init parse_acpi_skip_समयr_override(अक्षर *arg)
+अणु
+	acpi_skip_समयr_override = 1;
+	वापस 0;
+पूर्ण
+early_param("acpi_skip_timer_override", parse_acpi_skip_समयr_override);
 
-static int __init parse_acpi_use_timer_override(char *arg)
-{
-	acpi_use_timer_override = 1;
-	return 0;
-}
-early_param("acpi_use_timer_override", parse_acpi_use_timer_override);
-#endif /* CONFIG_X86_IO_APIC */
+अटल पूर्णांक __init parse_acpi_use_समयr_override(अक्षर *arg)
+अणु
+	acpi_use_समयr_override = 1;
+	वापस 0;
+पूर्ण
+early_param("acpi_use_timer_override", parse_acpi_use_समयr_override);
+#पूर्ण_अगर /* CONFIG_X86_IO_APIC */
 
-static int __init setup_acpi_sci(char *s)
-{
-	if (!s)
-		return -EINVAL;
-	if (!strcmp(s, "edge"))
+अटल पूर्णांक __init setup_acpi_sci(अक्षर *s)
+अणु
+	अगर (!s)
+		वापस -EINVAL;
+	अगर (!म_भेद(s, "edge"))
 		acpi_sci_flags =  ACPI_MADT_TRIGGER_EDGE |
 			(acpi_sci_flags & ~ACPI_MADT_TRIGGER_MASK);
-	else if (!strcmp(s, "level"))
+	अन्यथा अगर (!म_भेद(s, "level"))
 		acpi_sci_flags = ACPI_MADT_TRIGGER_LEVEL |
 			(acpi_sci_flags & ~ACPI_MADT_TRIGGER_MASK);
-	else if (!strcmp(s, "high"))
+	अन्यथा अगर (!म_भेद(s, "high"))
 		acpi_sci_flags = ACPI_MADT_POLARITY_ACTIVE_HIGH |
 			(acpi_sci_flags & ~ACPI_MADT_POLARITY_MASK);
-	else if (!strcmp(s, "low"))
+	अन्यथा अगर (!म_भेद(s, "low"))
 		acpi_sci_flags = ACPI_MADT_POLARITY_ACTIVE_LOW |
 			(acpi_sci_flags & ~ACPI_MADT_POLARITY_MASK);
-	else
-		return -EINVAL;
-	return 0;
-}
+	अन्यथा
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 early_param("acpi_sci", setup_acpi_sci);
 
-int __acpi_acquire_global_lock(unsigned int *lock)
-{
-	unsigned int old, new, val;
-	do {
+पूर्णांक __acpi_acquire_global_lock(अचिन्हित पूर्णांक *lock)
+अणु
+	अचिन्हित पूर्णांक old, new, val;
+	करो अणु
 		old = *lock;
 		new = (((old & ~0x3) + 2) + ((old >> 1) & 0x1));
 		val = cmpxchg(lock, old, new);
-	} while (unlikely (val != old));
-	return ((new & 0x3) < 3) ? -1 : 0;
-}
+	पूर्ण जबतक (unlikely (val != old));
+	वापस ((new & 0x3) < 3) ? -1 : 0;
+पूर्ण
 
-int __acpi_release_global_lock(unsigned int *lock)
-{
-	unsigned int old, new, val;
-	do {
+पूर्णांक __acpi_release_global_lock(अचिन्हित पूर्णांक *lock)
+अणु
+	अचिन्हित पूर्णांक old, new, val;
+	करो अणु
 		old = *lock;
 		new = old & ~0x3;
 		val = cmpxchg(lock, old, new);
-	} while (unlikely (val != old));
-	return old & 0x1;
-}
+	पूर्ण जबतक (unlikely (val != old));
+	वापस old & 0x1;
+पूर्ण
 
-void __init arch_reserve_mem_area(acpi_physical_address addr, size_t size)
-{
+व्योम __init arch_reserve_mem_area(acpi_physical_address addr, माप_प्रकार size)
+अणु
 	e820__range_add(addr, size, E820_TYPE_ACPI);
-	e820__update_table_print();
-}
+	e820__update_table_prपूर्णांक();
+पूर्ण
 
-void x86_default_set_root_pointer(u64 addr)
-{
+व्योम x86_शेष_set_root_poपूर्णांकer(u64 addr)
+अणु
 	boot_params.acpi_rsdp_addr = addr;
-}
+पूर्ण
 
-u64 x86_default_get_root_pointer(void)
-{
-	return boot_params.acpi_rsdp_addr;
-}
+u64 x86_शेष_get_root_poपूर्णांकer(व्योम)
+अणु
+	वापस boot_params.acpi_rsdp_addr;
+पूर्ण

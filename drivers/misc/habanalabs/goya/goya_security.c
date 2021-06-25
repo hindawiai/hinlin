@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Copyright 2016-2019 HabanaLabs, Ltd.
+ * Copyright 2016-2019 HabanaLअसल, Ltd.
  * All Rights Reserved.
  */
 
-#include "goyaP.h"
-#include "../include/goya/asic_reg/goya_regs.h"
+#समावेश "goyaP.h"
+#समावेश "../include/goya/asic_reg/goya_regs.h"
 
 /*
- * goya_set_block_as_protected - set the given block as protected
+ * goya_set_block_as_रक्षित - set the given block as रक्षित
  *
- * @hdev: pointer to hl_device structure
+ * @hdev: poपूर्णांकer to hl_device काष्ठाure
  * @block: block base address
  *
  */
-static void goya_pb_set_block(struct hl_device *hdev, u64 base)
-{
+अटल व्योम goya_pb_set_block(काष्ठा hl_device *hdev, u64 base)
+अणु
 	u32 pb_addr = base - CFG_BASE + PROT_BITS_OFFS;
 
-	while (pb_addr & 0xFFF) {
+	जबतक (pb_addr & 0xFFF) अणु
 		WREG32(pb_addr, 0);
 		pb_addr += 4;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void goya_init_mme_protection_bits(struct hl_device *hdev)
-{
+अटल व्योम goya_init_mme_protection_bits(काष्ठा hl_device *hdev)
+अणु
 	u32 pb_addr, mask;
 	u8 word_offset;
 
@@ -267,10 +268,10 @@ static void goya_init_mme_protection_bits(struct hl_device *hdev)
 	mask |= 1 << ((mmMME_SBB_POWER_ECO2 & 0x7F) >> 2);
 
 	WREG32(pb_addr + word_offset, ~mask);
-}
+पूर्ण
 
-static void goya_init_dma_protection_bits(struct hl_device *hdev)
-{
+अटल व्योम goya_init_dma_protection_bits(काष्ठा hl_device *hdev)
+अणु
 	u32 pb_addr, mask;
 	u8 word_offset;
 
@@ -667,10 +668,10 @@ static void goya_init_dma_protection_bits(struct hl_device *hdev)
 	WREG32(pb_addr + word_offset, ~mask);
 
 	goya_pb_set_block(hdev, mmDMA_CH_4_BASE);
-}
+पूर्ण
 
-static void goya_init_tpc_protection_bits(struct hl_device *hdev)
-{
+अटल व्योम goya_init_tpc_protection_bits(काष्ठा hl_device *hdev)
+अणु
 	u32 pb_addr, mask;
 	u8 word_offset;
 
@@ -2240,24 +2241,24 @@ static void goya_init_tpc_protection_bits(struct hl_device *hdev)
 	mask |= 1 << ((mmTPC7_CMDQ_CQ_BUF_RDATA & 0x7F) >> 2);
 
 	WREG32(pb_addr + word_offset, ~mask);
-}
+पूर्ण
 
 /*
- * goya_init_protection_bits - Initialize protection bits for specific registers
+ * goya_init_protection_bits - Initialize protection bits क्रम specअगरic रेजिस्टरs
  *
- * @hdev: pointer to hl_device structure
+ * @hdev: poपूर्णांकer to hl_device काष्ठाure
  *
- * All protection bits are 1 by default, means not protected. Need to set to 0
- * each bit that belongs to a protected register.
+ * All protection bits are 1 by शेष, means not रक्षित. Need to set to 0
+ * each bit that beदीर्घs to a रक्षित रेजिस्टर.
  *
  */
-static void goya_init_protection_bits(struct hl_device *hdev)
-{
+अटल व्योम goya_init_protection_bits(काष्ठा hl_device *hdev)
+अणु
 	/*
-	 * In each 4K block of registers, the last 128 bytes are protection
-	 * bits - total of 1024 bits, one for each register. Each bit is related
-	 * to a specific register, by the order of the registers.
-	 * So in order to calculate the bit that is related to a given register,
+	 * In each 4K block of रेजिस्टरs, the last 128 bytes are protection
+	 * bits - total of 1024 bits, one क्रम each रेजिस्टर. Each bit is related
+	 * to a specअगरic रेजिस्टर, by the order of the रेजिस्टरs.
+	 * So in order to calculate the bit that is related to a given रेजिस्टर,
 	 * we need to calculate its word offset and then the exact bit inside
 	 * the word (which is 4 bytes).
 	 *
@@ -2366,20 +2367,20 @@ static void goya_init_protection_bits(struct hl_device *hdev)
 	goya_init_dma_protection_bits(hdev);
 
 	goya_init_tpc_protection_bits(hdev);
-}
+पूर्ण
 
 /*
  * goya_init_security - Initialize security model
  *
- * @hdev: pointer to hl_device structure
+ * @hdev: poपूर्णांकer to hl_device काष्ठाure
  *
  * Initialize the security model of the device
- * That includes range registers and protection bit per register
+ * That includes range रेजिस्टरs and protection bit per रेजिस्टर
  *
  */
-void goya_init_security(struct hl_device *hdev)
-{
-	struct goya_device *goya = hdev->asic_specific;
+व्योम goya_init_security(काष्ठा hl_device *hdev)
+अणु
+	काष्ठा goya_device *goya = hdev->asic_specअगरic;
 
 	u32 dram_addr_lo = lower_32_bits(DRAM_PHYS_BASE);
 	u32 dram_addr_hi = upper_32_bits(DRAM_PHYS_BASE);
@@ -2429,7 +2430,7 @@ void goya_init_security(struct hl_device *hdev)
 	WREG32(mmDMA_MACRO_LBW_RANGE_HIT_BLOCK, 0xFFFF);
 	WREG32(mmDMA_MACRO_HBW_RANGE_HIT_BLOCK, 0xFF);
 
-	if (!(goya->hw_cap_initialized & HW_CAP_MMU)) {
+	अगर (!(goya->hw_cap_initialized & HW_CAP_MMU)) अणु
 		WREG32(mmDMA_MACRO_HBW_RANGE_HIT_BLOCK, 0xFE);
 
 		/* Protect HOST */
@@ -2437,7 +2438,7 @@ void goya_init_security(struct hl_device *hdev)
 		WREG32(mmDMA_MACRO_HBW_RANGE_BASE_49_32_0, 0);
 		WREG32(mmDMA_MACRO_HBW_RANGE_MASK_31_0_0, 0);
 		WREG32(mmDMA_MACRO_HBW_RANGE_MASK_49_32_0, 0xFFF80);
-	}
+	पूर्ण
 
 	/*
 	 * Protect DDR @
@@ -2449,7 +2450,7 @@ void goya_init_security(struct hl_device *hdev)
 	WREG32(mmDMA_MACRO_HBW_RANGE_MASK_31_0_1, 0xE0000000);
 	WREG32(mmDMA_MACRO_HBW_RANGE_MASK_49_32_1, 0x3FFFF);
 
-	/* Protect registers */
+	/* Protect रेजिस्टरs */
 
 	WREG32(mmDMA_MACRO_LBW_RANGE_BASE_0, lbw_rng0_base);
 	WREG32(mmDMA_MACRO_LBW_RANGE_MASK_0, lbw_rng0_mask);
@@ -3119,9 +3120,9 @@ void goya_init_security(struct hl_device *hdev)
 	WREG32(mmTPC7_NRTR_LBW_RANGE_MASK_13, lbw_rng13_mask);
 
 	goya_init_protection_bits(hdev);
-}
+पूर्ण
 
-void goya_ack_protection_bits_errors(struct hl_device *hdev)
-{
+व्योम goya_ack_protection_bits_errors(काष्ठा hl_device *hdev)
+अणु
 
-}
+पूर्ण

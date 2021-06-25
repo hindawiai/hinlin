@@ -1,96 +1,97 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /*
  * Copyright (C) 2005-2014 Intel Corporation
  * Copyright (C) 2015-2017 Intel Deutschland GmbH
  */
-#ifndef __iwl_notif_wait_h__
-#define __iwl_notif_wait_h__
+#अगर_अघोषित __iwl_notअगर_रुको_h__
+#घोषणा __iwl_notअगर_रुको_h__
 
-#include <linux/wait.h>
+#समावेश <linux/रुको.h>
 
-#include "iwl-trans.h"
+#समावेश "iwl-trans.h"
 
-struct iwl_notif_wait_data {
-	struct list_head notif_waits;
-	spinlock_t notif_wait_lock;
-	wait_queue_head_t notif_waitq;
-};
+काष्ठा iwl_notअगर_रुको_data अणु
+	काष्ठा list_head notअगर_रुकोs;
+	spinlock_t notअगर_रुको_lock;
+	रुको_queue_head_t notअगर_रुकोq;
+पूर्ण;
 
-#define MAX_NOTIF_CMDS	5
+#घोषणा MAX_NOTIF_CMDS	5
 
 /**
- * struct iwl_notification_wait - notification wait entry
- * @list: list head for global list
- * @fn: Function called with the notification. If the function
- *	returns true, the wait is over, if it returns false then
- *	the waiter stays blocked. If no function is given, any
- *	of the listed commands will unblock the waiter.
+ * काष्ठा iwl_notअगरication_रुको - notअगरication रुको entry
+ * @list: list head क्रम global list
+ * @fn: Function called with the notअगरication. If the function
+ *	वापसs true, the रुको is over, अगर it वापसs false then
+ *	the रुकोer stays blocked. If no function is given, any
+ *	of the listed commands will unblock the रुकोer.
  * @cmds: command IDs
  * @n_cmds: number of command IDs
- * @triggered: waiter should be woken up
- * @aborted: wait was aborted
+ * @triggered: रुकोer should be woken up
+ * @पातed: रुको was पातed
  *
- * This structure is not used directly, to wait for a
- * notification declare it on the stack, and call
- * iwl_init_notification_wait() with appropriate
- * parameters. Then do whatever will cause the ucode
- * to notify the driver, and to wait for that then
- * call iwl_wait_notification().
+ * This काष्ठाure is not used directly, to रुको क्रम a
+ * notअगरication declare it on the stack, and call
+ * iwl_init_notअगरication_रुको() with appropriate
+ * parameters. Then करो whatever will cause the ucode
+ * to notअगरy the driver, and to रुको क्रम that then
+ * call iwl_रुको_notअगरication().
  *
- * Each notification is one-shot. If at some point we
- * need to support multi-shot notifications (which
- * can't be allocated on the stack) we need to modify
- * the code for them.
+ * Each notअगरication is one-shot. If at some poपूर्णांक we
+ * need to support multi-shot notअगरications (which
+ * can't be allocated on the stack) we need to modअगरy
+ * the code क्रम them.
  */
-struct iwl_notification_wait {
-	struct list_head list;
+काष्ठा iwl_notअगरication_रुको अणु
+	काष्ठा list_head list;
 
-	bool (*fn)(struct iwl_notif_wait_data *notif_data,
-		   struct iwl_rx_packet *pkt, void *data);
-	void *fn_data;
+	bool (*fn)(काष्ठा iwl_notअगर_रुको_data *notअगर_data,
+		   काष्ठा iwl_rx_packet *pkt, व्योम *data);
+	व्योम *fn_data;
 
 	u16 cmds[MAX_NOTIF_CMDS];
 	u8 n_cmds;
-	bool triggered, aborted;
-};
+	bool triggered, पातed;
+पूर्ण;
 
 
 /* caller functions */
-void iwl_notification_wait_init(struct iwl_notif_wait_data *notif_data);
-bool iwl_notification_wait(struct iwl_notif_wait_data *notif_data,
-			   struct iwl_rx_packet *pkt);
-void iwl_abort_notification_waits(struct iwl_notif_wait_data *notif_data);
+व्योम iwl_notअगरication_रुको_init(काष्ठा iwl_notअगर_रुको_data *notअगर_data);
+bool iwl_notअगरication_रुको(काष्ठा iwl_notअगर_रुको_data *notअगर_data,
+			   काष्ठा iwl_rx_packet *pkt);
+व्योम iwl_पात_notअगरication_रुकोs(काष्ठा iwl_notअगर_रुको_data *notअगर_data);
 
-static inline void
-iwl_notification_notify(struct iwl_notif_wait_data *notif_data)
-{
-	wake_up_all(&notif_data->notif_waitq);
-}
+अटल अंतरभूत व्योम
+iwl_notअगरication_notअगरy(काष्ठा iwl_notअगर_रुको_data *notअगर_data)
+अणु
+	wake_up_all(&notअगर_data->notअगर_रुकोq);
+पूर्ण
 
-static inline void
-iwl_notification_wait_notify(struct iwl_notif_wait_data *notif_data,
-			     struct iwl_rx_packet *pkt)
-{
-	if (iwl_notification_wait(notif_data, pkt))
-		iwl_notification_notify(notif_data);
-}
+अटल अंतरभूत व्योम
+iwl_notअगरication_रुको_notअगरy(काष्ठा iwl_notअगर_रुको_data *notअगर_data,
+			     काष्ठा iwl_rx_packet *pkt)
+अणु
+	अगर (iwl_notअगरication_रुको(notअगर_data, pkt))
+		iwl_notअगरication_notअगरy(notअगर_data);
+पूर्ण
 
 /* user functions */
-void __acquires(wait_entry)
-iwl_init_notification_wait(struct iwl_notif_wait_data *notif_data,
-			   struct iwl_notification_wait *wait_entry,
-			   const u16 *cmds, int n_cmds,
-			   bool (*fn)(struct iwl_notif_wait_data *notif_data,
-				      struct iwl_rx_packet *pkt, void *data),
-			   void *fn_data);
+व्योम __acquires(रुको_entry)
+iwl_init_notअगरication_रुको(काष्ठा iwl_notअगर_रुको_data *notअगर_data,
+			   काष्ठा iwl_notअगरication_रुको *रुको_entry,
+			   स्थिर u16 *cmds, पूर्णांक n_cmds,
+			   bool (*fn)(काष्ठा iwl_notअगर_रुको_data *notअगर_data,
+				      काष्ठा iwl_rx_packet *pkt, व्योम *data),
+			   व्योम *fn_data);
 
-int __must_check __releases(wait_entry)
-iwl_wait_notification(struct iwl_notif_wait_data *notif_data,
-		      struct iwl_notification_wait *wait_entry,
-		      unsigned long timeout);
+पूर्णांक __must_check __releases(रुको_entry)
+iwl_रुको_notअगरication(काष्ठा iwl_notअगर_रुको_data *notअगर_data,
+		      काष्ठा iwl_notअगरication_रुको *रुको_entry,
+		      अचिन्हित दीर्घ समयout);
 
-void __releases(wait_entry)
-iwl_remove_notification(struct iwl_notif_wait_data *notif_data,
-			struct iwl_notification_wait *wait_entry);
+व्योम __releases(रुको_entry)
+iwl_हटाओ_notअगरication(काष्ठा iwl_notअगर_रुको_data *notअगर_data,
+			काष्ठा iwl_notअगरication_रुको *रुको_entry);
 
-#endif /* __iwl_notif_wait_h__ */
+#पूर्ण_अगर /* __iwl_notअगर_रुको_h__ */

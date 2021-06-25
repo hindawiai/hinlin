@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/memblock.h>
-#include <linux/gfp.h>
-#include <linux/export.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/dma-mapping.h>
-#include <linux/vmalloc.h>
-#include <linux/swiotlb.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/memblock.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/export.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/swiotlb.h>
 
-#include <xen/xen.h>
-#include <xen/interface/memory.h>
-#include <xen/grant_table.h>
-#include <xen/page.h>
-#include <xen/swiotlb-xen.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/पूर्णांकerface/memory.h>
+#समावेश <xen/grant_table.h>
+#समावेश <xen/page.h>
+#समावेश <xen/swiotlb-xen.h>
 
-#include <asm/cacheflush.h>
-#include <asm/xen/hypercall.h>
-#include <asm/xen/interface.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/xen/hypercall.h>
+#समावेश <यंत्र/xen/पूर्णांकerface.h>
 
-struct xen_p2m_entry {
-	unsigned long pfn;
-	unsigned long mfn;
-	unsigned long nr_pages;
-	struct rb_node rbnode_phys;
-};
+काष्ठा xen_p2m_entry अणु
+	अचिन्हित दीर्घ pfn;
+	अचिन्हित दीर्घ mfn;
+	अचिन्हित दीर्घ nr_pages;
+	काष्ठा rb_node rbnode_phys;
+पूर्ण;
 
-static rwlock_t p2m_lock;
-struct rb_root phys_to_mach = RB_ROOT;
+अटल rwlock_t p2m_lock;
+काष्ठा rb_root phys_to_mach = RB_ROOT;
 EXPORT_SYMBOL_GPL(phys_to_mach);
 
-static int xen_add_phys_to_mach_entry(struct xen_p2m_entry *new)
-{
-	struct rb_node **link = &phys_to_mach.rb_node;
-	struct rb_node *parent = NULL;
-	struct xen_p2m_entry *entry;
-	int rc = 0;
+अटल पूर्णांक xen_add_phys_to_mach_entry(काष्ठा xen_p2m_entry *new)
+अणु
+	काष्ठा rb_node **link = &phys_to_mach.rb_node;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा xen_p2m_entry *entry;
+	पूर्णांक rc = 0;
 
-	while (*link) {
+	जबतक (*link) अणु
 		parent = *link;
-		entry = rb_entry(parent, struct xen_p2m_entry, rbnode_phys);
+		entry = rb_entry(parent, काष्ठा xen_p2m_entry, rbnode_phys);
 
-		if (new->pfn == entry->pfn)
-			goto err_out;
+		अगर (new->pfn == entry->pfn)
+			जाओ err_out;
 
-		if (new->pfn < entry->pfn)
+		अगर (new->pfn < entry->pfn)
 			link = &(*link)->rb_left;
-		else
+		अन्यथा
 			link = &(*link)->rb_right;
-	}
+	पूर्ण
 	rb_link_node(&new->rbnode_phys, parent, link);
 	rb_insert_color(&new->rbnode_phys, &phys_to_mach);
-	goto out;
+	जाओ out;
 
 err_out:
 	rc = -EINVAL;
 	pr_warn("%s: cannot add pfn=%pa -> mfn=%pa: pfn=%pa -> mfn=%pa already exists\n",
 			__func__, &new->pfn, &new->mfn, &entry->pfn, &entry->mfn);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-unsigned long __pfn_to_mfn(unsigned long pfn)
-{
-	struct rb_node *n = phys_to_mach.rb_node;
-	struct xen_p2m_entry *entry;
-	unsigned long irqflags;
+अचिन्हित दीर्घ __pfn_to_mfn(अचिन्हित दीर्घ pfn)
+अणु
+	काष्ठा rb_node *n = phys_to_mach.rb_node;
+	काष्ठा xen_p2m_entry *entry;
+	अचिन्हित दीर्घ irqflags;
 
-	read_lock_irqsave(&p2m_lock, irqflags);
-	while (n) {
-		entry = rb_entry(n, struct xen_p2m_entry, rbnode_phys);
-		if (entry->pfn <= pfn &&
-				entry->pfn + entry->nr_pages > pfn) {
-			unsigned long mfn = entry->mfn + (pfn - entry->pfn);
-			read_unlock_irqrestore(&p2m_lock, irqflags);
-			return mfn;
-		}
-		if (pfn < entry->pfn)
+	पढ़ो_lock_irqsave(&p2m_lock, irqflags);
+	जबतक (n) अणु
+		entry = rb_entry(n, काष्ठा xen_p2m_entry, rbnode_phys);
+		अगर (entry->pfn <= pfn &&
+				entry->pfn + entry->nr_pages > pfn) अणु
+			अचिन्हित दीर्घ mfn = entry->mfn + (pfn - entry->pfn);
+			पढ़ो_unlock_irqrestore(&p2m_lock, irqflags);
+			वापस mfn;
+		पूर्ण
+		अगर (pfn < entry->pfn)
 			n = n->rb_left;
-		else
+		अन्यथा
 			n = n->rb_right;
-	}
-	read_unlock_irqrestore(&p2m_lock, irqflags);
+	पूर्ण
+	पढ़ो_unlock_irqrestore(&p2m_lock, irqflags);
 
-	return INVALID_P2M_ENTRY;
-}
+	वापस INVALID_P2M_ENTRY;
+पूर्ण
 EXPORT_SYMBOL_GPL(__pfn_to_mfn);
 
-int set_foreign_p2m_mapping(struct gnttab_map_grant_ref *map_ops,
-			    struct gnttab_map_grant_ref *kmap_ops,
-			    struct page **pages, unsigned int count)
-{
-	int i;
+पूर्णांक set_क्रमeign_p2m_mapping(काष्ठा gnttab_map_grant_ref *map_ops,
+			    काष्ठा gnttab_map_grant_ref *kmap_ops,
+			    काष्ठा page **pages, अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++) {
-		struct gnttab_unmap_grant_ref unmap;
-		int rc;
+	क्रम (i = 0; i < count; i++) अणु
+		काष्ठा gnttab_unmap_grant_ref unmap;
+		पूर्णांक rc;
 
-		if (map_ops[i].status)
-			continue;
-		if (likely(set_phys_to_machine(map_ops[i].host_addr >> XEN_PAGE_SHIFT,
+		अगर (map_ops[i].status)
+			जारी;
+		अगर (likely(set_phys_to_machine(map_ops[i].host_addr >> XEN_PAGE_SHIFT,
 				    map_ops[i].dev_bus_addr >> XEN_PAGE_SHIFT)))
-			continue;
+			जारी;
 
 		/*
-		 * Signal an error for this slot. This in turn requires
+		 * Signal an error क्रम this slot. This in turn requires
 		 * immediate unmapping.
 		 */
 		map_ops[i].status = GNTST_general_error;
 		unmap.host_addr = map_ops[i].host_addr,
 		unmap.handle = map_ops[i].handle;
 		map_ops[i].handle = INVALID_GRANT_HANDLE;
-		if (map_ops[i].flags & GNTMAP_device_map)
+		अगर (map_ops[i].flags & GNTMAP_device_map)
 			unmap.dev_bus_addr = map_ops[i].dev_bus_addr;
-		else
+		अन्यथा
 			unmap.dev_bus_addr = 0;
 
 		/*
@@ -124,85 +125,85 @@ int set_foreign_p2m_mapping(struct gnttab_map_grant_ref *map_ops,
 
 		rc = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
 					       &unmap, 1);
-		if (rc || unmap.status != GNTST_okay)
+		अगर (rc || unmap.status != GNTST_okay)
 			pr_err_once("gnttab unmap failed: rc=%d st=%d\n",
 				    rc, unmap.status);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int clear_foreign_p2m_mapping(struct gnttab_unmap_grant_ref *unmap_ops,
-			      struct gnttab_unmap_grant_ref *kunmap_ops,
-			      struct page **pages, unsigned int count)
-{
-	int i;
+पूर्णांक clear_क्रमeign_p2m_mapping(काष्ठा gnttab_unmap_grant_ref *unmap_ops,
+			      काष्ठा gnttab_unmap_grant_ref *kunmap_ops,
+			      काष्ठा page **pages, अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		set_phys_to_machine(unmap_ops[i].host_addr >> XEN_PAGE_SHIFT,
 				    INVALID_P2M_ENTRY);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool __set_phys_to_machine_multi(unsigned long pfn,
-		unsigned long mfn, unsigned long nr_pages)
-{
-	int rc;
-	unsigned long irqflags;
-	struct xen_p2m_entry *p2m_entry;
-	struct rb_node *n = phys_to_mach.rb_node;
+bool __set_phys_to_machine_multi(अचिन्हित दीर्घ pfn,
+		अचिन्हित दीर्घ mfn, अचिन्हित दीर्घ nr_pages)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ irqflags;
+	काष्ठा xen_p2m_entry *p2m_entry;
+	काष्ठा rb_node *n = phys_to_mach.rb_node;
 
-	if (mfn == INVALID_P2M_ENTRY) {
-		write_lock_irqsave(&p2m_lock, irqflags);
-		while (n) {
-			p2m_entry = rb_entry(n, struct xen_p2m_entry, rbnode_phys);
-			if (p2m_entry->pfn <= pfn &&
-					p2m_entry->pfn + p2m_entry->nr_pages > pfn) {
+	अगर (mfn == INVALID_P2M_ENTRY) अणु
+		ग_लिखो_lock_irqsave(&p2m_lock, irqflags);
+		जबतक (n) अणु
+			p2m_entry = rb_entry(n, काष्ठा xen_p2m_entry, rbnode_phys);
+			अगर (p2m_entry->pfn <= pfn &&
+					p2m_entry->pfn + p2m_entry->nr_pages > pfn) अणु
 				rb_erase(&p2m_entry->rbnode_phys, &phys_to_mach);
-				write_unlock_irqrestore(&p2m_lock, irqflags);
-				kfree(p2m_entry);
-				return true;
-			}
-			if (pfn < p2m_entry->pfn)
+				ग_लिखो_unlock_irqrestore(&p2m_lock, irqflags);
+				kमुक्त(p2m_entry);
+				वापस true;
+			पूर्ण
+			अगर (pfn < p2m_entry->pfn)
 				n = n->rb_left;
-			else
+			अन्यथा
 				n = n->rb_right;
-		}
-		write_unlock_irqrestore(&p2m_lock, irqflags);
-		return true;
-	}
+		पूर्ण
+		ग_लिखो_unlock_irqrestore(&p2m_lock, irqflags);
+		वापस true;
+	पूर्ण
 
-	p2m_entry = kzalloc(sizeof(*p2m_entry), GFP_NOWAIT);
-	if (!p2m_entry)
-		return false;
+	p2m_entry = kzalloc(माप(*p2m_entry), GFP_NOWAIT);
+	अगर (!p2m_entry)
+		वापस false;
 
 	p2m_entry->pfn = pfn;
 	p2m_entry->nr_pages = nr_pages;
 	p2m_entry->mfn = mfn;
 
-	write_lock_irqsave(&p2m_lock, irqflags);
+	ग_लिखो_lock_irqsave(&p2m_lock, irqflags);
 	rc = xen_add_phys_to_mach_entry(p2m_entry);
-	if (rc < 0) {
-		write_unlock_irqrestore(&p2m_lock, irqflags);
-		kfree(p2m_entry);
-		return false;
-	}
-	write_unlock_irqrestore(&p2m_lock, irqflags);
-	return true;
-}
+	अगर (rc < 0) अणु
+		ग_लिखो_unlock_irqrestore(&p2m_lock, irqflags);
+		kमुक्त(p2m_entry);
+		वापस false;
+	पूर्ण
+	ग_लिखो_unlock_irqrestore(&p2m_lock, irqflags);
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(__set_phys_to_machine_multi);
 
-bool __set_phys_to_machine(unsigned long pfn, unsigned long mfn)
-{
-	return __set_phys_to_machine_multi(pfn, mfn, 1);
-}
+bool __set_phys_to_machine(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ mfn)
+अणु
+	वापस __set_phys_to_machine_multi(pfn, mfn, 1);
+पूर्ण
 EXPORT_SYMBOL_GPL(__set_phys_to_machine);
 
-static int p2m_init(void)
-{
+अटल पूर्णांक p2m_init(व्योम)
+अणु
 	rwlock_init(&p2m_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 arch_initcall(p2m_init);

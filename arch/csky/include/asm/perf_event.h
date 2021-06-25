@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_PERF_EVENT_H
-#define __ASM_CSKY_PERF_EVENT_H
+#अगर_अघोषित __ASM_CSKY_PERF_EVENT_H
+#घोषणा __ASM_CSKY_PERF_EVENT_H
 
-#include <abi/regdef.h>
+#समावेश <abi/regdef.h>
 
-#define perf_arch_fetch_caller_regs(regs, __ip) { \
+#घोषणा perf_arch_fetch_caller_regs(regs, __ip) अणु \
 	(regs)->pc = (__ip); \
-	regs_fp(regs) = (unsigned long) __builtin_frame_address(0); \
-	asm volatile("mov %0, sp\n":"=r"((regs)->usp)); \
-}
+	regs_fp(regs) = (अचिन्हित दीर्घ) __builtin_frame_address(0); \
+	यंत्र अस्थिर("mov %0, sp\n":"=r"((regs)->usp)); \
+पूर्ण
 
-#endif /* __ASM_PERF_EVENT_ELF_H */
+#पूर्ण_अगर /* __ASM_PERF_EVENT_ELF_H */

@@ -1,19 +1,20 @@
+<शैली गुरु>
 /*
  * linux/fs/nls/nls_cp857.c
  *
  * Charset cp857 translation tables.
- * Generated automatically from the Unicode and charset
+ * Generated स्वतःmatically from the Unicode and अक्षरset
  * tables from the Unicode Organization (www.unicode.org).
- * The Unicode to charset table has only exact mappings.
+ * The Unicode to अक्षरset table has only exact mappings.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/nls.h>
-#include <linux/errno.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/nls.h>
+#समावेश <linux/त्रुटिसं.स>
 
-static const wchar_t charset2uni[256] = {
+अटल स्थिर ब_अक्षर_प्रकार अक्षरset2uni[256] = अणु
 	/* 0x00*/
 	0x0000, 0x0001, 0x0002, 0x0003,
 	0x0004, 0x0005, 0x0006, 0x0007,
@@ -94,9 +95,9 @@ static const wchar_t charset2uni[256] = {
 	0x00b6, 0x00a7, 0x00f7, 0x00b8,
 	0x00b0, 0x00a8, 0x00b7, 0x00b9,
 	0x00b3, 0x00b2, 0x25a0, 0x00a0,
-};
+पूर्ण;
 
-static const unsigned char page00[256] = {
+अटल स्थिर अचिन्हित अक्षर page00[256] = अणु
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, /* 0x00-0x07 */
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, /* 0x08-0x0f */
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, /* 0x10-0x17 */
@@ -130,9 +131,9 @@ static const unsigned char page00[256] = {
 	0x8a, 0x82, 0x88, 0x89, 0xec, 0xa1, 0x8c, 0x8b, /* 0xe8-0xef */
 	0x00, 0xa4, 0x95, 0xa2, 0x93, 0xe4, 0x94, 0xf6, /* 0xf0-0xf7 */
 	0x9b, 0x97, 0xa3, 0x96, 0x81, 0x00, 0x00, 0xed, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char page01[256] = {
+अटल स्थिर अचिन्हित अक्षर page01[256] = अणु
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x00-0x07 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x08-0x0f */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x10-0x17 */
@@ -145,9 +146,9 @@ static const unsigned char page01[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x48-0x4f */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x50-0x57 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x9e, 0x9f, /* 0x58-0x5f */
-};
+पूर्ण;
 
-static const unsigned char page25[256] = {
+अटल स्थिर अचिन्हित अक्षर page25[256] = अणु
 	0xc4, 0x00, 0xb3, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x00-0x07 */
 	0x00, 0x00, 0x00, 0x00, 0xda, 0x00, 0x00, 0x00, /* 0x08-0x0f */
 	0xbf, 0x00, 0x00, 0x00, 0xc0, 0x00, 0x00, 0x00, /* 0x10-0x17 */
@@ -170,17 +171,17 @@ static const unsigned char page25[256] = {
 	0x00, 0xb0, 0xb1, 0xb2, 0x00, 0x00, 0x00, 0x00, /* 0x90-0x97 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x98-0x9f */
 	0xfe, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xa0-0xa7 */
-};
+पूर्ण;
 
-static const unsigned char *const page_uni2charset[256] = {
-	page00, page01, NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   
-	NULL,   NULL,   NULL,   NULL,   NULL,   page25, NULL,   NULL,   
-};
+अटल स्थिर अचिन्हित अक्षर *स्थिर page_uni2अक्षरset[256] = अणु
+	page00, page01, शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   page25, शून्य,   शून्य,   
+पूर्ण;
 
-static const unsigned char charset2lower[256] = {
+अटल स्थिर अचिन्हित अक्षर अक्षरset2lower[256] = अणु
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, /* 0x00-0x07 */
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, /* 0x08-0x0f */
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, /* 0x10-0x17 */
@@ -214,9 +215,9 @@ static const unsigned char charset2lower[256] = {
 	0xe8, 0xa3, 0x96, 0x97, 0xec, 0xed, 0xee, 0xef, /* 0xe8-0xef */
 	0xf0, 0xf1, 0x00, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, /* 0xf0-0xf7 */
 	0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char charset2upper[256] = {
+अटल स्थिर अचिन्हित अक्षर अक्षरset2upper[256] = अणु
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, /* 0x00-0x07 */
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, /* 0x08-0x0f */
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, /* 0x10-0x17 */
@@ -250,52 +251,52 @@ static const unsigned char charset2upper[256] = {
 	0xe8, 0xe9, 0xea, 0xeb, 0xde, 0x00, 0xee, 0xef, /* 0xe8-0xef */
 	0xf0, 0xf1, 0x00, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, /* 0xf0-0xf7 */
 	0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static int uni2char(wchar_t uni, unsigned char *out, int boundlen)
-{
-	const unsigned char *uni2charset;
-	unsigned char cl = uni & 0x00ff;
-	unsigned char ch = (uni & 0xff00) >> 8;
+अटल पूर्णांक uni2अक्षर(ब_अक्षर_प्रकार uni, अचिन्हित अक्षर *out, पूर्णांक boundlen)
+अणु
+	स्थिर अचिन्हित अक्षर *uni2अक्षरset;
+	अचिन्हित अक्षर cl = uni & 0x00ff;
+	अचिन्हित अक्षर ch = (uni & 0xff00) >> 8;
 
-	if (boundlen <= 0)
-		return -ENAMETOOLONG;
+	अगर (boundlen <= 0)
+		वापस -ENAMETOOLONG;
 
-	uni2charset = page_uni2charset[ch];
-	if (uni2charset && uni2charset[cl])
-		out[0] = uni2charset[cl];
-	else
-		return -EINVAL;
-	return 1;
-}
+	uni2अक्षरset = page_uni2अक्षरset[ch];
+	अगर (uni2अक्षरset && uni2अक्षरset[cl])
+		out[0] = uni2अक्षरset[cl];
+	अन्यथा
+		वापस -EINVAL;
+	वापस 1;
+पूर्ण
 
-static int char2uni(const unsigned char *rawstring, int boundlen, wchar_t *uni)
-{
-	*uni = charset2uni[*rawstring];
-	if (*uni == 0x0000)
-		return -EINVAL;
-	return 1;
-}
+अटल पूर्णांक अक्षर2uni(स्थिर अचिन्हित अक्षर *rawstring, पूर्णांक boundlen, ब_अक्षर_प्रकार *uni)
+अणु
+	*uni = अक्षरset2uni[*rawstring];
+	अगर (*uni == 0x0000)
+		वापस -EINVAL;
+	वापस 1;
+पूर्ण
 
-static struct nls_table table = {
-	.charset	= "cp857",
-	.uni2char	= uni2char,
-	.char2uni	= char2uni,
-	.charset2lower	= charset2lower,
-	.charset2upper	= charset2upper,
-};
+अटल काष्ठा nls_table table = अणु
+	.अक्षरset	= "cp857",
+	.uni2अक्षर	= uni2अक्षर,
+	.अक्षर2uni	= अक्षर2uni,
+	.अक्षरset2lower	= अक्षरset2lower,
+	.अक्षरset2upper	= अक्षरset2upper,
+पूर्ण;
 
-static int __init init_nls_cp857(void)
-{
-	return register_nls(&table);
-}
+अटल पूर्णांक __init init_nls_cp857(व्योम)
+अणु
+	वापस रेजिस्टर_nls(&table);
+पूर्ण
 
-static void __exit exit_nls_cp857(void)
-{
-	unregister_nls(&table);
-}
+अटल व्योम __निकास निकास_nls_cp857(व्योम)
+अणु
+	unरेजिस्टर_nls(&table);
+पूर्ण
 
 module_init(init_nls_cp857)
-module_exit(exit_nls_cp857)
+module_निकास(निकास_nls_cp857)
 
 MODULE_LICENSE("Dual BSD/GPL");

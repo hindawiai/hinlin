@@ -1,348 +1,349 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Card-specific functions for the Siano SMS1xxx USB dongle
+ *  Card-specअगरic functions क्रम the Siano SMS1xxx USB करोngle
  *
  *  Copyright (c) 2008 Michael Krufky <mkrufky@linuxtv.org>
  */
 
-#include "sms-cards.h"
-#include "smsir.h"
-#include <linux/module.h>
+#समावेश "sms-cards.h"
+#समावेश "smsir.h"
+#समावेश <linux/module.h>
 
-static struct sms_board sms_boards[] = {
-	[SMS_BOARD_UNKNOWN] = {
+अटल काष्ठा sms_board sms_boards[] = अणु
+	[SMS_BOARD_UNKNOWN] = अणु
 		.name	= "Unknown board",
 		.type = SMS_UNKNOWN_TYPE,
-		.default_mode = DEVICE_MODE_NONE,
-	},
-	[SMS1XXX_BOARD_SIANO_STELLAR] = {
+		.शेष_mode = DEVICE_MODE_NONE,
+	पूर्ण,
+	[SMS1XXX_BOARD_SIANO_STELLAR] = अणु
 		.name	= "Siano Stellar Digital Receiver",
 		.type	= SMS_STELLAR,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
-	},
-	[SMS1XXX_BOARD_SIANO_NOVA_A] = {
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
+	पूर्ण,
+	[SMS1XXX_BOARD_SIANO_NOVA_A] = अणु
 		.name	= "Siano Nova A Digital Receiver",
 		.type	= SMS_NOVA_A0,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
-	},
-	[SMS1XXX_BOARD_SIANO_NOVA_B] = {
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
+	पूर्ण,
+	[SMS1XXX_BOARD_SIANO_NOVA_B] = अणु
 		.name	= "Siano Nova B Digital Receiver",
 		.type	= SMS_NOVA_B0,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
-	},
-	[SMS1XXX_BOARD_SIANO_VEGA] = {
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
+	पूर्ण,
+	[SMS1XXX_BOARD_SIANO_VEGA] = अणु
 		.name	= "Siano Vega Digital Receiver",
 		.type	= SMS_VEGA,
-		.default_mode = DEVICE_MODE_CMMB,
-	},
-	[SMS1XXX_BOARD_HAUPPAUGE_CATAMOUNT] = {
+		.शेष_mode = DEVICE_MODE_CMMB,
+	पूर्ण,
+	[SMS1XXX_BOARD_HAUPPAUGE_CATAMOUNT] = अणु
 		.name	= "Hauppauge Catamount",
 		.type	= SMS_STELLAR,
 		.fw[DEVICE_MODE_DVBT_BDA] = SMS_FW_DVBT_STELLAR,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
-	},
-	[SMS1XXX_BOARD_HAUPPAUGE_OKEMO_A] = {
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
+	पूर्ण,
+	[SMS1XXX_BOARD_HAUPPAUGE_OKEMO_A] = अणु
 		.name	= "Hauppauge Okemo-A",
 		.type	= SMS_NOVA_A0,
 		.fw[DEVICE_MODE_DVBT_BDA] = SMS_FW_DVBT_NOVA_A,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
-	},
-	[SMS1XXX_BOARD_HAUPPAUGE_OKEMO_B] = {
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
+	पूर्ण,
+	[SMS1XXX_BOARD_HAUPPAUGE_OKEMO_B] = अणु
 		.name	= "Hauppauge Okemo-B",
 		.type	= SMS_NOVA_B0,
 		.fw[DEVICE_MODE_DVBT_BDA] = SMS_FW_DVBT_NOVA_B,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
-	},
-	[SMS1XXX_BOARD_HAUPPAUGE_WINDHAM] = {
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
+	पूर्ण,
+	[SMS1XXX_BOARD_HAUPPAUGE_WINDHAM] = अणु
 		.name	= "Hauppauge WinTV MiniStick",
 		.type	= SMS_NOVA_B0,
 		.fw[DEVICE_MODE_ISDBT_BDA] = SMS_FW_ISDBT_HCW_55XXX,
 		.fw[DEVICE_MODE_DVBT_BDA]  = SMS_FW_DVBT_HCW_55XXX,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
 		.rc_codes = RC_MAP_HAUPPAUGE,
-		.board_cfg.leds_power = 26,
+		.board_cfg.leds_घातer = 26,
 		.board_cfg.led0 = 27,
 		.board_cfg.led1 = 28,
 		.board_cfg.ir = 9,
-		.led_power = 26,
+		.led_घातer = 26,
 		.led_lo    = 27,
 		.led_hi    = 28,
-	},
-	[SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD] = {
+	पूर्ण,
+	[SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD] = अणु
 		.name	= "Hauppauge WinTV MiniCard",
 		.type	= SMS_NOVA_B0,
 		.fw[DEVICE_MODE_DVBT_BDA] = SMS_FW_DVBT_HCW_55XXX,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
 		.lna_ctrl  = 29,
-		.board_cfg.foreign_lna0_ctrl = 29,
-		.rf_switch = 17,
-		.board_cfg.rf_switch_uhf = 17,
-	},
-	[SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD_R2] = {
+		.board_cfg.क्रमeign_lna0_ctrl = 29,
+		.rf_चयन = 17,
+		.board_cfg.rf_चयन_uhf = 17,
+	पूर्ण,
+	[SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD_R2] = अणु
 		.name	= "Hauppauge WinTV MiniCard Rev 2",
 		.type	= SMS_NOVA_B0,
 		.fw[DEVICE_MODE_DVBT_BDA] = SMS_FW_DVBT_HCW_55XXX,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
 		.lna_ctrl  = -1,
-	},
-	[SMS1XXX_BOARD_SIANO_NICE] = {
+	पूर्ण,
+	[SMS1XXX_BOARD_SIANO_NICE] = अणु
 		.name = "Siano Nice Digital Receiver",
 		.type = SMS_NOVA_B0,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
-	},
-	[SMS1XXX_BOARD_SIANO_VENICE] = {
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
+	पूर्ण,
+	[SMS1XXX_BOARD_SIANO_VENICE] = अणु
 		.name = "Siano Venice Digital Receiver",
 		.type = SMS_VEGA,
-		.default_mode = DEVICE_MODE_CMMB,
-	},
-	[SMS1XXX_BOARD_SIANO_STELLAR_ROM] = {
+		.शेष_mode = DEVICE_MODE_CMMB,
+	पूर्ण,
+	[SMS1XXX_BOARD_SIANO_STELLAR_ROM] = अणु
 		.name = "Siano Stellar Digital Receiver ROM",
 		.type = SMS_STELLAR,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
-		.intf_num = 1,
-	},
-	[SMS1XXX_BOARD_ZTE_DVB_DATA_CARD] = {
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
+		.पूर्णांकf_num = 1,
+	पूर्ण,
+	[SMS1XXX_BOARD_ZTE_DVB_DATA_CARD] = अणु
 		.name = "ZTE Data Card Digital Receiver",
 		.type = SMS_NOVA_B0,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
-		.intf_num = 5,
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
+		.पूर्णांकf_num = 5,
 		.mtu = 15792,
-	},
-	[SMS1XXX_BOARD_ONDA_MDTV_DATA_CARD] = {
+	पूर्ण,
+	[SMS1XXX_BOARD_ONDA_MDTV_DATA_CARD] = अणु
 		.name = "ONDA Data Card Digital Receiver",
 		.type = SMS_NOVA_B0,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
-		.intf_num = 6,
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
+		.पूर्णांकf_num = 6,
 		.mtu = 15792,
-	},
-	[SMS1XXX_BOARD_SIANO_MING] = {
+	पूर्ण,
+	[SMS1XXX_BOARD_SIANO_MING] = अणु
 		.name = "Siano Ming Digital Receiver",
 		.type = SMS_MING,
-		.default_mode = DEVICE_MODE_CMMB,
-	},
-	[SMS1XXX_BOARD_SIANO_PELE] = {
+		.शेष_mode = DEVICE_MODE_CMMB,
+	पूर्ण,
+	[SMS1XXX_BOARD_SIANO_PELE] = अणु
 		.name = "Siano Pele Digital Receiver",
 		.type = SMS_PELE,
-		.default_mode = DEVICE_MODE_ISDBT_BDA,
-	},
-	[SMS1XXX_BOARD_SIANO_RIO] = {
+		.शेष_mode = DEVICE_MODE_ISDBT_BDA,
+	पूर्ण,
+	[SMS1XXX_BOARD_SIANO_RIO] = अणु
 		.name = "Siano Rio Digital Receiver",
 		.type = SMS_RIO,
-		.default_mode = DEVICE_MODE_ISDBT_BDA,
-	},
-	[SMS1XXX_BOARD_SIANO_DENVER_1530] = {
+		.शेष_mode = DEVICE_MODE_ISDBT_BDA,
+	पूर्ण,
+	[SMS1XXX_BOARD_SIANO_DENVER_1530] = अणु
 		.name = "Siano Denver (ATSC-M/H) Digital Receiver",
 		.type = SMS_DENVER_1530,
-		.default_mode = DEVICE_MODE_ATSC,
+		.शेष_mode = DEVICE_MODE_ATSC,
 		.crystal = 2400,
-	},
-	[SMS1XXX_BOARD_SIANO_DENVER_2160] = {
+	पूर्ण,
+	[SMS1XXX_BOARD_SIANO_DENVER_2160] = अणु
 		.name = "Siano Denver (TDMB) Digital Receiver",
 		.type = SMS_DENVER_2160,
-		.default_mode = DEVICE_MODE_DAB_TDMB,
-	},
-	[SMS1XXX_BOARD_PCTV_77E] = {
+		.शेष_mode = DEVICE_MODE_DAB_TDMB,
+	पूर्ण,
+	[SMS1XXX_BOARD_PCTV_77E] = अणु
 		.name	= "Hauppauge microStick 77e",
 		.type	= SMS_NOVA_B0,
 		.fw[DEVICE_MODE_DVBT_BDA] = SMS_FW_DVB_NOVA_12MHZ_B0,
-		.default_mode = DEVICE_MODE_DVBT_BDA,
-	},
-};
+		.शेष_mode = DEVICE_MODE_DVBT_BDA,
+	पूर्ण,
+पूर्ण;
 
-struct sms_board *sms_get_board(unsigned id)
-{
+काष्ठा sms_board *sms_get_board(अचिन्हित id)
+अणु
 	BUG_ON(id >= ARRAY_SIZE(sms_boards));
 
-	return &sms_boards[id];
-}
+	वापस &sms_boards[id];
+पूर्ण
 EXPORT_SYMBOL_GPL(sms_get_board);
-static inline void sms_gpio_assign_11xx_default_led_config(
-		struct smscore_config_gpio *p_gpio_config) {
-	p_gpio_config->direction = SMS_GPIO_DIRECTION_OUTPUT;
-	p_gpio_config->inputcharacteristics =
+अटल अंतरभूत व्योम sms_gpio_assign_11xx_शेष_led_config(
+		काष्ठा smscore_config_gpio *p_gpio_config) अणु
+	p_gpio_config->direction = SMS_GPIO_सूचीECTION_OUTPUT;
+	p_gpio_config->inअक्षर_दोacteristics =
 		SMS_GPIO_INPUTCHARACTERISTICS_NORMAL;
 	p_gpio_config->outputdriving = SMS_GPIO_OUTPUTDRIVING_4mA;
-	p_gpio_config->outputslewrate = SMS_GPIO_OUTPUT_SLEW_RATE_0_45_V_NS;
-	p_gpio_config->pullupdown = SMS_GPIO_PULLUPDOWN_NONE;
-}
+	p_gpio_config->outमाला_दोlewrate = SMS_GPIO_OUTPUT_SLEW_RATE_0_45_V_NS;
+	p_gpio_config->pullupकरोwn = SMS_GPIO_PULLUPDOWN_NONE;
+पूर्ण
 
-int sms_board_event(struct smscore_device_t *coredev,
-		    enum SMS_BOARD_EVENTS gevent)
-{
-	struct smscore_config_gpio my_gpio_config;
+पूर्णांक sms_board_event(काष्ठा smscore_device_t *coredev,
+		    क्रमागत SMS_BOARD_EVENTS gevent)
+अणु
+	काष्ठा smscore_config_gpio my_gpio_config;
 
-	sms_gpio_assign_11xx_default_led_config(&my_gpio_config);
+	sms_gpio_assign_11xx_शेष_led_config(&my_gpio_config);
 
-	switch (gevent) {
-	case BOARD_EVENT_POWER_INIT: /* including hotplug */
-		break; /* BOARD_EVENT_BIND */
+	चयन (gevent) अणु
+	हाल BOARD_EVENT_POWER_INIT: /* including hotplug */
+		अवरोध; /* BOARD_EVENT_BIND */
 
-	case BOARD_EVENT_POWER_SUSPEND:
-		break; /* BOARD_EVENT_POWER_SUSPEND */
+	हाल BOARD_EVENT_POWER_SUSPEND:
+		अवरोध; /* BOARD_EVENT_POWER_SUSPEND */
 
-	case BOARD_EVENT_POWER_RESUME:
-		break; /* BOARD_EVENT_POWER_RESUME */
+	हाल BOARD_EVENT_POWER_RESUME:
+		अवरोध; /* BOARD_EVENT_POWER_RESUME */
 
-	case BOARD_EVENT_BIND:
-		break; /* BOARD_EVENT_BIND */
+	हाल BOARD_EVENT_BIND:
+		अवरोध; /* BOARD_EVENT_BIND */
 
-	case BOARD_EVENT_SCAN_PROG:
-		break; /* BOARD_EVENT_SCAN_PROG */
-	case BOARD_EVENT_SCAN_COMP:
-		break; /* BOARD_EVENT_SCAN_COMP */
-	case BOARD_EVENT_EMERGENCY_WARNING_SIGNAL:
-		break; /* BOARD_EVENT_EMERGENCY_WARNING_SIGNAL */
-	case BOARD_EVENT_FE_LOCK:
-		break; /* BOARD_EVENT_FE_LOCK */
-	case BOARD_EVENT_FE_UNLOCK:
-		break; /* BOARD_EVENT_FE_UNLOCK */
-	case BOARD_EVENT_DEMOD_LOCK:
-		break; /* BOARD_EVENT_DEMOD_LOCK */
-	case BOARD_EVENT_DEMOD_UNLOCK:
-		break; /* BOARD_EVENT_DEMOD_UNLOCK */
-	case BOARD_EVENT_RECEPTION_MAX_4:
-		break; /* BOARD_EVENT_RECEPTION_MAX_4 */
-	case BOARD_EVENT_RECEPTION_3:
-		break; /* BOARD_EVENT_RECEPTION_3 */
-	case BOARD_EVENT_RECEPTION_2:
-		break; /* BOARD_EVENT_RECEPTION_2 */
-	case BOARD_EVENT_RECEPTION_1:
-		break; /* BOARD_EVENT_RECEPTION_1 */
-	case BOARD_EVENT_RECEPTION_LOST_0:
-		break; /* BOARD_EVENT_RECEPTION_LOST_0 */
-	case BOARD_EVENT_MULTIPLEX_OK:
-		break; /* BOARD_EVENT_MULTIPLEX_OK */
-	case BOARD_EVENT_MULTIPLEX_ERRORS:
-		break; /* BOARD_EVENT_MULTIPLEX_ERRORS */
+	हाल BOARD_EVENT_SCAN_PROG:
+		अवरोध; /* BOARD_EVENT_SCAN_PROG */
+	हाल BOARD_EVENT_SCAN_COMP:
+		अवरोध; /* BOARD_EVENT_SCAN_COMP */
+	हाल BOARD_EVENT_EMERGENCY_WARNING_SIGNAL:
+		अवरोध; /* BOARD_EVENT_EMERGENCY_WARNING_SIGNAL */
+	हाल BOARD_EVENT_FE_LOCK:
+		अवरोध; /* BOARD_EVENT_FE_LOCK */
+	हाल BOARD_EVENT_FE_UNLOCK:
+		अवरोध; /* BOARD_EVENT_FE_UNLOCK */
+	हाल BOARD_EVENT_DEMOD_LOCK:
+		अवरोध; /* BOARD_EVENT_DEMOD_LOCK */
+	हाल BOARD_EVENT_DEMOD_UNLOCK:
+		अवरोध; /* BOARD_EVENT_DEMOD_UNLOCK */
+	हाल BOARD_EVENT_RECEPTION_MAX_4:
+		अवरोध; /* BOARD_EVENT_RECEPTION_MAX_4 */
+	हाल BOARD_EVENT_RECEPTION_3:
+		अवरोध; /* BOARD_EVENT_RECEPTION_3 */
+	हाल BOARD_EVENT_RECEPTION_2:
+		अवरोध; /* BOARD_EVENT_RECEPTION_2 */
+	हाल BOARD_EVENT_RECEPTION_1:
+		अवरोध; /* BOARD_EVENT_RECEPTION_1 */
+	हाल BOARD_EVENT_RECEPTION_LOST_0:
+		अवरोध; /* BOARD_EVENT_RECEPTION_LOST_0 */
+	हाल BOARD_EVENT_MULTIPLEX_OK:
+		अवरोध; /* BOARD_EVENT_MULTIPLEX_OK */
+	हाल BOARD_EVENT_MULTIPLEX_ERRORS:
+		अवरोध; /* BOARD_EVENT_MULTIPLEX_ERRORS */
 
-	default:
+	शेष:
 		pr_err("Unknown SMS board event\n");
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(sms_board_event);
 
-static int sms_set_gpio(struct smscore_device_t *coredev, int pin, int enable)
-{
-	int lvl, ret;
+अटल पूर्णांक sms_set_gpio(काष्ठा smscore_device_t *coredev, पूर्णांक pin, पूर्णांक enable)
+अणु
+	पूर्णांक lvl, ret;
 	u32 gpio;
-	struct smscore_config_gpio gpioconfig = {
-		.direction            = SMS_GPIO_DIRECTION_OUTPUT,
-		.pullupdown           = SMS_GPIO_PULLUPDOWN_NONE,
-		.inputcharacteristics = SMS_GPIO_INPUTCHARACTERISTICS_NORMAL,
-		.outputslewrate       = SMS_GPIO_OUTPUT_SLEW_RATE_FAST,
+	काष्ठा smscore_config_gpio gpioconfig = अणु
+		.direction            = SMS_GPIO_सूचीECTION_OUTPUT,
+		.pullupकरोwn           = SMS_GPIO_PULLUPDOWN_NONE,
+		.inअक्षर_दोacteristics = SMS_GPIO_INPUTCHARACTERISTICS_NORMAL,
+		.outमाला_दोlewrate       = SMS_GPIO_OUTPUT_SLEW_RATE_FAST,
 		.outputdriving        = SMS_GPIO_OUTPUTDRIVING_S_4mA,
-	};
+	पूर्ण;
 
-	if (pin == 0)
-		return -EINVAL;
+	अगर (pin == 0)
+		वापस -EINVAL;
 
-	if (pin < 0) {
+	अगर (pin < 0) अणु
 		/* inverted gpio */
 		gpio = pin * -1;
 		lvl = enable ? 0 : 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		gpio = pin;
 		lvl = enable ? 1 : 0;
-	}
+	पूर्ण
 
 	ret = smscore_configure_gpio(coredev, gpio, &gpioconfig);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return smscore_set_gpio(coredev, gpio, lvl);
-}
+	वापस smscore_set_gpio(coredev, gpio, lvl);
+पूर्ण
 
-int sms_board_setup(struct smscore_device_t *coredev)
-{
-	int board_id = smscore_get_board_id(coredev);
-	struct sms_board *board = sms_get_board(board_id);
+पूर्णांक sms_board_setup(काष्ठा smscore_device_t *coredev)
+अणु
+	पूर्णांक board_id = smscore_get_board_id(coredev);
+	काष्ठा sms_board *board = sms_get_board(board_id);
 
-	switch (board_id) {
-	case SMS1XXX_BOARD_HAUPPAUGE_WINDHAM:
+	चयन (board_id) अणु
+	हाल SMS1XXX_BOARD_HAUPPAUGE_WINDHAM:
 		/* turn off all LEDs */
-		sms_set_gpio(coredev, board->led_power, 0);
+		sms_set_gpio(coredev, board->led_घातer, 0);
 		sms_set_gpio(coredev, board->led_hi, 0);
 		sms_set_gpio(coredev, board->led_lo, 0);
-		break;
-	case SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD_R2:
-	case SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD:
+		अवरोध;
+	हाल SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD_R2:
+	हाल SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD:
 		/* turn off LNA */
 		sms_set_gpio(coredev, board->lna_ctrl, 0);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(sms_board_setup);
 
-int sms_board_power(struct smscore_device_t *coredev, int onoff)
-{
-	int board_id = smscore_get_board_id(coredev);
-	struct sms_board *board = sms_get_board(board_id);
+पूर्णांक sms_board_घातer(काष्ठा smscore_device_t *coredev, पूर्णांक onoff)
+अणु
+	पूर्णांक board_id = smscore_get_board_id(coredev);
+	काष्ठा sms_board *board = sms_get_board(board_id);
 
-	switch (board_id) {
-	case SMS1XXX_BOARD_HAUPPAUGE_WINDHAM:
-		/* power LED */
+	चयन (board_id) अणु
+	हाल SMS1XXX_BOARD_HAUPPAUGE_WINDHAM:
+		/* घातer LED */
 		sms_set_gpio(coredev,
-			     board->led_power, onoff ? 1 : 0);
-		break;
-	case SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD_R2:
-	case SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD:
+			     board->led_घातer, onoff ? 1 : 0);
+		अवरोध;
+	हाल SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD_R2:
+	हाल SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD:
 		/* LNA */
-		if (!onoff)
+		अगर (!onoff)
 			sms_set_gpio(coredev, board->lna_ctrl, 0);
-		break;
-	}
-	return 0;
-}
-EXPORT_SYMBOL_GPL(sms_board_power);
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(sms_board_घातer);
 
-int sms_board_led_feedback(struct smscore_device_t *coredev, int led)
-{
-	int board_id = smscore_get_board_id(coredev);
-	struct sms_board *board = sms_get_board(board_id);
+पूर्णांक sms_board_led_feedback(काष्ठा smscore_device_t *coredev, पूर्णांक led)
+अणु
+	पूर्णांक board_id = smscore_get_board_id(coredev);
+	काष्ठा sms_board *board = sms_get_board(board_id);
 
-	/* don't touch GPIO if LEDs are already set */
-	if (smscore_led_state(coredev, -1) == led)
-		return 0;
+	/* करोn't touch GPIO अगर LEDs are alपढ़ोy set */
+	अगर (smscore_led_state(coredev, -1) == led)
+		वापस 0;
 
-	switch (board_id) {
-	case SMS1XXX_BOARD_HAUPPAUGE_WINDHAM:
+	चयन (board_id) अणु
+	हाल SMS1XXX_BOARD_HAUPPAUGE_WINDHAM:
 		sms_set_gpio(coredev,
 			     board->led_lo, (led & SMS_LED_LO) ? 1 : 0);
 		sms_set_gpio(coredev,
 			     board->led_hi, (led & SMS_LED_HI) ? 1 : 0);
 
 		smscore_led_state(coredev, led);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(sms_board_led_feedback);
 
-int sms_board_lna_control(struct smscore_device_t *coredev, int onoff)
-{
-	int board_id = smscore_get_board_id(coredev);
-	struct sms_board *board = sms_get_board(board_id);
+पूर्णांक sms_board_lna_control(काष्ठा smscore_device_t *coredev, पूर्णांक onoff)
+अणु
+	पूर्णांक board_id = smscore_get_board_id(coredev);
+	काष्ठा sms_board *board = sms_get_board(board_id);
 
 	pr_debug("%s: LNA %s\n", __func__, onoff ? "enabled" : "disabled");
 
-	switch (board_id) {
-	case SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD_R2:
-	case SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD:
+	चयन (board_id) अणु
+	हाल SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD_R2:
+	हाल SMS1XXX_BOARD_HAUPPAUGE_TIGER_MINICARD:
 		sms_set_gpio(coredev,
-			     board->rf_switch, onoff ? 1 : 0);
-		return sms_set_gpio(coredev,
+			     board->rf_चयन, onoff ? 1 : 0);
+		वापस sms_set_gpio(coredev,
 				    board->lna_ctrl, onoff ? 1 : 0);
-	}
-	return -EINVAL;
-}
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(sms_board_lna_control);
 
-int sms_board_load_modules(int id)
-{
+पूर्णांक sms_board_load_modules(पूर्णांक id)
+अणु
 	request_module("smsdvb");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(sms_board_load_modules);

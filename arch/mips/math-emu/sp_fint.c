@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* IEEE754 floating point arithmetic
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* IEEE754 भग्नing poपूर्णांक arithmetic
  * single precision
  */
 /*
- * MIPS floating point support
+ * MIPS भग्नing poपूर्णांक support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
  */
 
-#include "ieee754sp.h"
+#समावेश "ieee754sp.h"
 
-union ieee754sp ieee754sp_fint(int x)
-{
-	unsigned int xm;
-	int xe;
-	int xs;
+जोड़ ieee754sp ieee754sp_fपूर्णांक(पूर्णांक x)
+अणु
+	अचिन्हित पूर्णांक xm;
+	पूर्णांक xe;
+	पूर्णांक xs;
 
 	ieee754_clearcx();
 
-	if (x == 0)
-		return ieee754sp_zero(0);
-	if (x == 1 || x == -1)
-		return ieee754sp_one(x < 0);
-	if (x == 10 || x == -10)
-		return ieee754sp_ten(x < 0);
+	अगर (x == 0)
+		वापस ieee754sp_zero(0);
+	अगर (x == 1 || x == -1)
+		वापस ieee754sp_one(x < 0);
+	अगर (x == 10 || x == -10)
+		वापस ieee754sp_ten(x < 0);
 
 	xs = (x < 0);
-	if (xs) {
-		if (x == (1 << 31))
-			xm = ((unsigned) 1 << 31);	/* max neg can't be safely negated */
-		else
+	अगर (xs) अणु
+		अगर (x == (1 << 31))
+			xm = ((अचिन्हित) 1 << 31);	/* max neg can't be safely negated */
+		अन्यथा
 			xm = -x;
-	} else {
+	पूर्ण अन्यथा अणु
 		xm = x;
-	}
+	पूर्ण
 	xe = SP_FBITS + 3;
 
-	if (xm >> (SP_FBITS + 1 + 3)) {
+	अगर (xm >> (SP_FBITS + 1 + 3)) अणु
 		/* shunt out overflow bits
 		 */
-		while (xm >> (SP_FBITS + 1 + 3)) {
+		जबतक (xm >> (SP_FBITS + 1 + 3)) अणु
 			SPXSRSX1();
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* normalize in grs extended single precision
 		 */
-		while ((xm >> (SP_FBITS + 3)) == 0) {
+		जबतक ((xm >> (SP_FBITS + 3)) == 0) अणु
 			xm <<= 1;
 			xe--;
-		}
-	}
-	return ieee754sp_format(xs, xe, xm);
-}
+		पूर्ण
+	पूर्ण
+	वापस ieee754sp_क्रमmat(xs, xe, xm);
+पूर्ण

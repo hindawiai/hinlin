@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Samuel Pitosiet
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,27 +22,27 @@
  *
  * Authors: Samuel Pitoiset
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-static int
-gf117_privring_init(struct nvkm_subdev *privring)
-{
-	struct nvkm_device *device = privring->device;
+अटल पूर्णांक
+gf117_privring_init(काष्ठा nvkm_subdev *privring)
+अणु
+	काष्ठा nvkm_device *device = privring->device;
 	nvkm_mask(device, 0x122310, 0x0003ffff, 0x00000800);
 	nvkm_mask(device, 0x122348, 0x0003ffff, 0x00000100);
 	nvkm_mask(device, 0x1223b0, 0x0003ffff, 0x00000fff);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_subdev_func
-gf117_privring = {
+अटल स्थिर काष्ठा nvkm_subdev_func
+gf117_privring = अणु
 	.init = gf117_privring_init,
-	.intr = gf100_privring_intr,
-};
+	.पूर्णांकr = gf100_privring_पूर्णांकr,
+पूर्ण;
 
-int
-gf117_privring_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-		   struct nvkm_subdev **pprivring)
-{
-	return nvkm_subdev_new_(&gf117_privring, device, type, inst, pprivring);
-}
+पूर्णांक
+gf117_privring_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+		   काष्ठा nvkm_subdev **pprivring)
+अणु
+	वापस nvkm_subdev_new_(&gf117_privring, device, type, inst, pprivring);
+पूर्ण

@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/ptrace.h>
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <linux/export.h>
-#include <asm/syscall.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/ptrace.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/export.h>
+#समावेश <यंत्र/syscall.h>
 
-static int collect_syscall(struct task_struct *target, struct syscall_info *info)
-{
-	unsigned long args[6] = { };
-	struct pt_regs *regs;
+अटल पूर्णांक collect_syscall(काष्ठा task_काष्ठा *target, काष्ठा syscall_info *info)
+अणु
+	अचिन्हित दीर्घ args[6] = अणु पूर्ण;
+	काष्ठा pt_regs *regs;
 
-	if (!try_get_task_stack(target)) {
+	अगर (!try_get_task_stack(target)) अणु
 		/* Task has no stack, so the task isn't in a syscall. */
-		memset(info, 0, sizeof(*info));
+		स_रखो(info, 0, माप(*info));
 		info->data.nr = -1;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	regs = task_pt_regs(target);
-	if (unlikely(!regs)) {
+	अगर (unlikely(!regs)) अणु
 		put_task_stack(target);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	info->sp = user_stack_pointer(regs);
-	info->data.instruction_pointer = instruction_pointer(regs);
+	info->sp = user_stack_poपूर्णांकer(regs);
+	info->data.inकाष्ठाion_poपूर्णांकer = inकाष्ठाion_poपूर्णांकer(regs);
 
 	info->data.nr = syscall_get_nr(target, regs);
-	if (info->data.nr != -1L)
+	अगर (info->data.nr != -1L)
 		syscall_get_arguments(target, regs, args);
 
 	info->data.args[0] = args[0];
@@ -38,51 +39,51 @@ static int collect_syscall(struct task_struct *target, struct syscall_info *info
 	info->data.args[5] = args[5];
 
 	put_task_stack(target);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * task_current_syscall - Discover what a blocked task is doing.
- * @target:		thread to examine
- * @info:		structure with the following fields:
- *			 .sp        - filled with user stack pointer
- *			 .data.nr   - filled with system call number or -1
- *			 .data.args - filled with @maxargs system call arguments
- *			 .data.instruction_pointer - filled with user PC
+ * task_current_syscall - Discover what a blocked task is करोing.
+ * @target:		thपढ़ो to examine
+ * @info:		काष्ठाure with the following fields:
+ *			 .sp        - filled with user stack poपूर्णांकer
+ *			 .data.nr   - filled with प्रणाली call number or -1
+ *			 .data.args - filled with @maxargs प्रणाली call arguments
+ *			 .data.inकाष्ठाion_poपूर्णांकer - filled with user PC
  *
- * If @target is blocked in a system call, returns zero with @info.data.nr
+ * If @target is blocked in a प्रणाली call, वापसs zero with @info.data.nr
  * set to the call's number and @info.data.args filled in with its
- * arguments. Registers not used for system call arguments may not be available
- * and it is not kosher to use &struct user_regset calls while the system
- * call is still in progress.  Note we may get this result if @target
- * has finished its system call but not yet returned to user mode, such
- * as when it's stopped for signal handling or syscall exit tracing.
+ * arguments. Registers not used क्रम प्रणाली call arguments may not be available
+ * and it is not kosher to use &काष्ठा user_regset calls जबतक the प्रणाली
+ * call is still in progress.  Note we may get this result अगर @target
+ * has finished its प्रणाली call but not yet वापसed to user mode, such
+ * as when it's stopped क्रम संकेत handling or syscall निकास tracing.
  *
  * If @target is blocked in the kernel during a fault or exception,
- * returns zero with *@info.data.nr set to -1 and does not fill in
+ * वापसs zero with *@info.data.nr set to -1 and करोes not fill in
  * @info.data.args. If so, it's now safe to examine @target using
- * &struct user_regset get() calls as long as we're sure @target won't return
+ * &काष्ठा user_regset get() calls as दीर्घ as we're sure @target won't वापस
  * to user mode.
  *
- * Returns -%EAGAIN if @target does not remain blocked.
+ * Returns -%EAGAIN अगर @target करोes not reमुख्य blocked.
  */
-int task_current_syscall(struct task_struct *target, struct syscall_info *info)
-{
-	long state;
-	unsigned long ncsw;
+पूर्णांक task_current_syscall(काष्ठा task_काष्ठा *target, काष्ठा syscall_info *info)
+अणु
+	दीर्घ state;
+	अचिन्हित दीर्घ ncsw;
 
-	if (target == current)
-		return collect_syscall(target, info);
+	अगर (target == current)
+		वापस collect_syscall(target, info);
 
 	state = target->state;
-	if (unlikely(!state))
-		return -EAGAIN;
+	अगर (unlikely(!state))
+		वापस -EAGAIN;
 
-	ncsw = wait_task_inactive(target, state);
-	if (unlikely(!ncsw) ||
+	ncsw = रुको_task_inactive(target, state);
+	अगर (unlikely(!ncsw) ||
 	    unlikely(collect_syscall(target, info)) ||
-	    unlikely(wait_task_inactive(target, state) != ncsw))
-		return -EAGAIN;
+	    unlikely(रुको_task_inactive(target, state) != ncsw))
+		वापस -EAGAIN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

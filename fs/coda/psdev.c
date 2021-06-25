@@ -1,388 +1,389 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *      	An implementation of a loadable kernel mode driver providing
  *		multiple kernel/user space bidirectional communications links.
  *
  * 		Author: 	Alan Cox <alan@lxorguk.ukuu.org.uk>
  * 
- *              Adapted to become the Linux 2.0 Coda pseudo device
+ *              Adapted to become the Linux 2.0 Coda pseuकरो device
  *              Peter  Braam  <braam@maths.ox.ac.uk> 
  *              Michael Callahan <mjc@emmy.smith.edu>           
  *
- *              Changes for Linux 2.1
+ *              Changes क्रम Linux 2.1
  *              Copyright (c) 1997 Carnegie-Mellon University
  */
 
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/major.h>
-#include <linux/time.h>
-#include <linux/sched/signal.h>
-#include <linux/slab.h>
-#include <linux/ioport.h>
-#include <linux/fcntl.h>
-#include <linux/delay.h>
-#include <linux/skbuff.h>
-#include <linux/proc_fs.h>
-#include <linux/vmalloc.h>
-#include <linux/fs.h>
-#include <linux/file.h>
-#include <linux/poll.h>
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/device.h>
-#include <linux/pid_namespace.h>
-#include <asm/io.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/major.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/file.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/device.h>
+#समावेश <linux/pid_namespace.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
 
-#include <linux/coda.h>
-#include "coda_psdev.h"
-#include "coda_linux.h"
+#समावेश <linux/coda.h>
+#समावेश "coda_psdev.h"
+#समावेश "coda_linux.h"
 
-#include "coda_int.h"
+#समावेश "coda_int.h"
 
 /* statistics */
-int           coda_hard;         /* allows signals during upcalls */
-unsigned long coda_timeout = 30; /* .. secs, then signals will dequeue */
+पूर्णांक           coda_hard;         /* allows संकेतs during upcalls */
+अचिन्हित दीर्घ coda_समयout = 30; /* .. secs, then संकेतs will dequeue */
 
 
-struct venus_comm coda_comms[MAX_CODADEVS];
-static struct class *coda_psdev_class;
+काष्ठा venus_comm coda_comms[MAX_CODADEVS];
+अटल काष्ठा class *coda_psdev_class;
 
 /*
  * Device operations
  */
 
-static __poll_t coda_psdev_poll(struct file *file, poll_table * wait)
-{
-        struct venus_comm *vcp = (struct venus_comm *) file->private_data;
+अटल __poll_t coda_psdev_poll(काष्ठा file *file, poll_table * रुको)
+अणु
+        काष्ठा venus_comm *vcp = (काष्ठा venus_comm *) file->निजी_data;
 	__poll_t mask = EPOLLOUT | EPOLLWRNORM;
 
-	poll_wait(file, &vcp->vc_waitq, wait);
+	poll_रुको(file, &vcp->vc_रुकोq, रुको);
 	mutex_lock(&vcp->vc_mutex);
-	if (!list_empty(&vcp->vc_pending))
+	अगर (!list_empty(&vcp->vc_pending))
                 mask |= EPOLLIN | EPOLLRDNORM;
 	mutex_unlock(&vcp->vc_mutex);
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static long coda_psdev_ioctl(struct file * filp, unsigned int cmd, unsigned long arg)
-{
-	unsigned int data;
+अटल दीर्घ coda_psdev_ioctl(काष्ठा file * filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	अचिन्हित पूर्णांक data;
 
-	switch(cmd) {
-	case CIOC_KERNEL_VERSION:
+	चयन(cmd) अणु
+	हाल CIOC_KERNEL_VERSION:
 		data = CODA_KERNEL_VERSION;
-		return put_user(data, (int __user *) arg);
-	default:
-		return -ENOTTY;
-	}
+		वापस put_user(data, (पूर्णांक __user *) arg);
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *	Receive a message written by Venus to the psdev
  */
  
-static ssize_t coda_psdev_write(struct file *file, const char __user *buf, 
-				size_t nbytes, loff_t *off)
-{
-        struct venus_comm *vcp = (struct venus_comm *) file->private_data;
-        struct upc_req *req = NULL;
-        struct upc_req *tmp;
-	struct list_head *lh;
-	struct coda_in_hdr hdr;
-	ssize_t retval = 0, count = 0;
-	int error;
+अटल sमाप_प्रकार coda_psdev_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, 
+				माप_प्रकार nbytes, loff_t *off)
+अणु
+        काष्ठा venus_comm *vcp = (काष्ठा venus_comm *) file->निजी_data;
+        काष्ठा upc_req *req = शून्य;
+        काष्ठा upc_req *पंचांगp;
+	काष्ठा list_head *lh;
+	काष्ठा coda_in_hdr hdr;
+	sमाप_प्रकार retval = 0, count = 0;
+	पूर्णांक error;
 
 	/* make sure there is enough to copy out the (opcode, unique) values */
-	if (nbytes < (2 * sizeof(u_int32_t)))
-		return -EINVAL;
+	अगर (nbytes < (2 * माप(u_पूर्णांक32_t)))
+		वापस -EINVAL;
 
         /* Peek at the opcode, uniquefier */
-	if (copy_from_user(&hdr, buf, 2 * sizeof(u_int32_t)))
-	        return -EFAULT;
+	अगर (copy_from_user(&hdr, buf, 2 * माप(u_पूर्णांक32_t)))
+	        वापस -EFAULT;
 
-        if (DOWNCALL(hdr.opcode)) {
-		union outputArgs *dcbuf;
-		int size = sizeof(*dcbuf);
+        अगर (DOWNCALL(hdr.opcode)) अणु
+		जोड़ outputArgs *dcbuf;
+		पूर्णांक size = माप(*dcbuf);
 
-		if  ( nbytes < sizeof(struct coda_out_hdr) ) {
+		अगर  ( nbytes < माप(काष्ठा coda_out_hdr) ) अणु
 			pr_warn("coda_downcall opc %d uniq %d, not enough!\n",
 				hdr.opcode, hdr.unique);
 			count = nbytes;
-			goto out;
-		}
-		if ( nbytes > size ) {
+			जाओ out;
+		पूर्ण
+		अगर ( nbytes > size ) अणु
 			pr_warn("downcall opc %d, uniq %d, too much!",
 				hdr.opcode, hdr.unique);
 		        nbytes = size;
-		}
-		dcbuf = kvmalloc(nbytes, GFP_KERNEL);
-		if (!dcbuf) {
+		पूर्ण
+		dcbuf = kvदो_स्मृति(nbytes, GFP_KERNEL);
+		अगर (!dcbuf) अणु
 			retval = -ENOMEM;
-			goto out;
-		}
-		if (copy_from_user(dcbuf, buf, nbytes)) {
-			kvfree(dcbuf);
+			जाओ out;
+		पूर्ण
+		अगर (copy_from_user(dcbuf, buf, nbytes)) अणु
+			kvमुक्त(dcbuf);
 			retval = -EFAULT;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* what downcall errors does Venus handle ? */
-		error = coda_downcall(vcp, hdr.opcode, dcbuf, nbytes);
+		/* what करोwncall errors करोes Venus handle ? */
+		error = coda_करोwncall(vcp, hdr.opcode, dcbuf, nbytes);
 
-		kvfree(dcbuf);
-		if (error) {
+		kvमुक्त(dcbuf);
+		अगर (error) अणु
 			pr_warn("%s: coda_downcall error: %d\n",
 				__func__, error);
 			retval = error;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		count = nbytes;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
         
-	/* Look for the message on the processing queue. */
+	/* Look क्रम the message on the processing queue. */
 	mutex_lock(&vcp->vc_mutex);
-	list_for_each(lh, &vcp->vc_processing) {
-		tmp = list_entry(lh, struct upc_req , uc_chain);
-		if (tmp->uc_unique == hdr.unique) {
-			req = tmp;
+	list_क्रम_each(lh, &vcp->vc_processing) अणु
+		पंचांगp = list_entry(lh, काष्ठा upc_req , uc_chain);
+		अगर (पंचांगp->uc_unique == hdr.unique) अणु
+			req = पंचांगp;
 			list_del(&req->uc_chain);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&vcp->vc_mutex);
 
-	if (!req) {
+	अगर (!req) अणु
 		pr_warn("%s: msg (%d, %d) not found\n",
 			__func__, hdr.opcode, hdr.unique);
 		retval = -ESRCH;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-        /* move data into response buffer. */
-	if (req->uc_outSize < nbytes) {
+        /* move data पूर्णांकo response buffer. */
+	अगर (req->uc_outSize < nbytes) अणु
 		pr_warn("%s: too much cnt: %d, cnt: %ld, opc: %d, uniq: %d.\n",
-			__func__, req->uc_outSize, (long)nbytes,
+			__func__, req->uc_outSize, (दीर्घ)nbytes,
 			hdr.opcode, hdr.unique);
-		nbytes = req->uc_outSize; /* don't have more space! */
-	}
-        if (copy_from_user(req->uc_data, buf, nbytes)) {
+		nbytes = req->uc_outSize; /* करोn't have more space! */
+	पूर्ण
+        अगर (copy_from_user(req->uc_data, buf, nbytes)) अणु
 		req->uc_flags |= CODA_REQ_ABORT;
 		wake_up(&req->uc_sleep);
 		retval = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* adjust outsize. is this useful ?? */
 	req->uc_outSize = nbytes;
 	req->uc_flags |= CODA_REQ_WRITE;
 	count = nbytes;
 
-	/* Convert filedescriptor into a file handle */
-	if (req->uc_opcode == CODA_OPEN_BY_FD) {
-		struct coda_open_by_fd_out *outp =
-			(struct coda_open_by_fd_out *)req->uc_data;
-		if (!outp->oh.result) {
+	/* Convert filedescriptor पूर्णांकo a file handle */
+	अगर (req->uc_opcode == CODA_OPEN_BY_FD) अणु
+		काष्ठा coda_खोलो_by_fd_out *outp =
+			(काष्ठा coda_खोलो_by_fd_out *)req->uc_data;
+		अगर (!outp->oh.result) अणु
 			outp->fh = fget(outp->fd);
-			if (!outp->fh)
-				return -EBADF;
-		}
-	}
+			अगर (!outp->fh)
+				वापस -EBADF;
+		पूर्ण
+	पूर्ण
 
         wake_up(&req->uc_sleep);
 out:
-        return(count ? count : retval);  
-}
+        वापस(count ? count : retval);  
+पूर्ण
 
 /*
  *	Read a message from the kernel to Venus
  */
 
-static ssize_t coda_psdev_read(struct file * file, char __user * buf, 
-			       size_t nbytes, loff_t *off)
-{
-	DECLARE_WAITQUEUE(wait, current);
-        struct venus_comm *vcp = (struct venus_comm *) file->private_data;
-        struct upc_req *req;
-	ssize_t retval = 0, count = 0;
+अटल sमाप_प्रकार coda_psdev_पढ़ो(काष्ठा file * file, अक्षर __user * buf, 
+			       माप_प्रकार nbytes, loff_t *off)
+अणु
+	DECLARE_WAITQUEUE(रुको, current);
+        काष्ठा venus_comm *vcp = (काष्ठा venus_comm *) file->निजी_data;
+        काष्ठा upc_req *req;
+	sमाप_प्रकार retval = 0, count = 0;
 
-	if (nbytes == 0)
-		return 0;
+	अगर (nbytes == 0)
+		वापस 0;
 
 	mutex_lock(&vcp->vc_mutex);
 
-	add_wait_queue(&vcp->vc_waitq, &wait);
+	add_रुको_queue(&vcp->vc_रुकोq, &रुको);
 	set_current_state(TASK_INTERRUPTIBLE);
 
-	while (list_empty(&vcp->vc_pending)) {
-		if (file->f_flags & O_NONBLOCK) {
+	जबतक (list_empty(&vcp->vc_pending)) अणु
+		अगर (file->f_flags & O_NONBLOCK) अणु
 			retval = -EAGAIN;
-			break;
-		}
-		if (signal_pending(current)) {
+			अवरोध;
+		पूर्ण
+		अगर (संकेत_pending(current)) अणु
 			retval = -ERESTARTSYS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mutex_unlock(&vcp->vc_mutex);
 		schedule();
 		mutex_lock(&vcp->vc_mutex);
-	}
+	पूर्ण
 
 	set_current_state(TASK_RUNNING);
-	remove_wait_queue(&vcp->vc_waitq, &wait);
+	हटाओ_रुको_queue(&vcp->vc_रुकोq, &रुको);
 
-	if (retval)
-		goto out;
+	अगर (retval)
+		जाओ out;
 
-	req = list_entry(vcp->vc_pending.next, struct upc_req,uc_chain);
+	req = list_entry(vcp->vc_pending.next, काष्ठा upc_req,uc_chain);
 	list_del(&req->uc_chain);
 
-	/* Move the input args into userspace */
+	/* Move the input args पूर्णांकo userspace */
 	count = req->uc_inSize;
-	if (nbytes < req->uc_inSize) {
+	अगर (nbytes < req->uc_inSize) अणु
 		pr_warn("%s: Venus read %ld bytes of %d in message\n",
-			__func__, (long)nbytes, req->uc_inSize);
+			__func__, (दीर्घ)nbytes, req->uc_inSize);
 		count = nbytes;
-        }
+        पूर्ण
 
-	if (copy_to_user(buf, req->uc_data, count))
+	अगर (copy_to_user(buf, req->uc_data, count))
 	        retval = -EFAULT;
         
-	/* If request was not a signal, enqueue and don't free */
-	if (!(req->uc_flags & CODA_REQ_ASYNC)) {
+	/* If request was not a संकेत, enqueue and करोn't मुक्त */
+	अगर (!(req->uc_flags & CODA_REQ_ASYNC)) अणु
 		req->uc_flags |= CODA_REQ_READ;
 		list_add_tail(&(req->uc_chain), &vcp->vc_processing);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	kvfree(req->uc_data);
-	kfree(req);
+	kvमुक्त(req->uc_data);
+	kमुक्त(req);
 out:
 	mutex_unlock(&vcp->vc_mutex);
-	return (count ? count : retval);
-}
+	वापस (count ? count : retval);
+पूर्ण
 
-static int coda_psdev_open(struct inode * inode, struct file * file)
-{
-	struct venus_comm *vcp;
-	int idx, err;
+अटल पूर्णांक coda_psdev_खोलो(काष्ठा inode * inode, काष्ठा file * file)
+अणु
+	काष्ठा venus_comm *vcp;
+	पूर्णांक idx, err;
 
-	if (task_active_pid_ns(current) != &init_pid_ns)
-		return -EINVAL;
+	अगर (task_active_pid_ns(current) != &init_pid_ns)
+		वापस -EINVAL;
 
-	if (current_user_ns() != &init_user_ns)
-		return -EINVAL;
+	अगर (current_user_ns() != &init_user_ns)
+		वापस -EINVAL;
 
 	idx = iminor(inode);
-	if (idx < 0 || idx >= MAX_CODADEVS)
-		return -ENODEV;
+	अगर (idx < 0 || idx >= MAX_CODADEVS)
+		वापस -ENODEV;
 
 	err = -EBUSY;
 	vcp = &coda_comms[idx];
 	mutex_lock(&vcp->vc_mutex);
 
-	if (!vcp->vc_inuse) {
+	अगर (!vcp->vc_inuse) अणु
 		vcp->vc_inuse++;
 
 		INIT_LIST_HEAD(&vcp->vc_pending);
 		INIT_LIST_HEAD(&vcp->vc_processing);
-		init_waitqueue_head(&vcp->vc_waitq);
-		vcp->vc_sb = NULL;
+		init_रुकोqueue_head(&vcp->vc_रुकोq);
+		vcp->vc_sb = शून्य;
 		vcp->vc_seq = 0;
 
-		file->private_data = vcp;
+		file->निजी_data = vcp;
 		err = 0;
-	}
+	पूर्ण
 
 	mutex_unlock(&vcp->vc_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
-static int coda_psdev_release(struct inode * inode, struct file * file)
-{
-	struct venus_comm *vcp = (struct venus_comm *) file->private_data;
-	struct upc_req *req, *tmp;
+अटल पूर्णांक coda_psdev_release(काष्ठा inode * inode, काष्ठा file * file)
+अणु
+	काष्ठा venus_comm *vcp = (काष्ठा venus_comm *) file->निजी_data;
+	काष्ठा upc_req *req, *पंचांगp;
 
-	if (!vcp || !vcp->vc_inuse ) {
+	अगर (!vcp || !vcp->vc_inuse ) अणु
 		pr_warn("%s: Not open.\n", __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	mutex_lock(&vcp->vc_mutex);
 
-	/* Wakeup clients so they can return. */
-	list_for_each_entry_safe(req, tmp, &vcp->vc_pending, uc_chain) {
+	/* Wakeup clients so they can वापस. */
+	list_क्रम_each_entry_safe(req, पंचांगp, &vcp->vc_pending, uc_chain) अणु
 		list_del(&req->uc_chain);
 
-		/* Async requests need to be freed here */
-		if (req->uc_flags & CODA_REQ_ASYNC) {
-			kvfree(req->uc_data);
-			kfree(req);
-			continue;
-		}
+		/* Async requests need to be मुक्तd here */
+		अगर (req->uc_flags & CODA_REQ_ASYNC) अणु
+			kvमुक्त(req->uc_data);
+			kमुक्त(req);
+			जारी;
+		पूर्ण
 		req->uc_flags |= CODA_REQ_ABORT;
 		wake_up(&req->uc_sleep);
-	}
+	पूर्ण
 
-	list_for_each_entry_safe(req, tmp, &vcp->vc_processing, uc_chain) {
+	list_क्रम_each_entry_safe(req, पंचांगp, &vcp->vc_processing, uc_chain) अणु
 		list_del(&req->uc_chain);
 
 		req->uc_flags |= CODA_REQ_ABORT;
 		wake_up(&req->uc_sleep);
-	}
+	पूर्ण
 
-	file->private_data = NULL;
+	file->निजी_data = शून्य;
 	vcp->vc_inuse--;
 	mutex_unlock(&vcp->vc_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct file_operations coda_psdev_fops = {
+अटल स्थिर काष्ठा file_operations coda_psdev_fops = अणु
 	.owner		= THIS_MODULE,
-	.read		= coda_psdev_read,
-	.write		= coda_psdev_write,
+	.पढ़ो		= coda_psdev_पढ़ो,
+	.ग_लिखो		= coda_psdev_ग_लिखो,
 	.poll		= coda_psdev_poll,
 	.unlocked_ioctl	= coda_psdev_ioctl,
-	.open		= coda_psdev_open,
+	.खोलो		= coda_psdev_खोलो,
 	.release	= coda_psdev_release,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-static int __init init_coda_psdev(void)
-{
-	int i, err = 0;
-	if (register_chrdev(CODA_PSDEV_MAJOR, "coda", &coda_psdev_fops)) {
+अटल पूर्णांक __init init_coda_psdev(व्योम)
+अणु
+	पूर्णांक i, err = 0;
+	अगर (रेजिस्टर_chrdev(CODA_PSDEV_MAJOR, "coda", &coda_psdev_fops)) अणु
 		pr_err("%s: unable to get major %d\n",
 		       __func__, CODA_PSDEV_MAJOR);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	coda_psdev_class = class_create(THIS_MODULE, "coda");
-	if (IS_ERR(coda_psdev_class)) {
+	अगर (IS_ERR(coda_psdev_class)) अणु
 		err = PTR_ERR(coda_psdev_class);
-		goto out_chrdev;
-	}		
-	for (i = 0; i < MAX_CODADEVS; i++) {
+		जाओ out_chrdev;
+	पूर्ण		
+	क्रम (i = 0; i < MAX_CODADEVS; i++) अणु
 		mutex_init(&(&coda_comms[i])->vc_mutex);
-		device_create(coda_psdev_class, NULL,
-			      MKDEV(CODA_PSDEV_MAJOR, i), NULL, "cfs%d", i);
-	}
+		device_create(coda_psdev_class, शून्य,
+			      MKDEV(CODA_PSDEV_MAJOR, i), शून्य, "cfs%d", i);
+	पूर्ण
 	coda_sysctl_init();
-	goto out;
+	जाओ out;
 
 out_chrdev:
-	unregister_chrdev(CODA_PSDEV_MAJOR, "coda");
+	unरेजिस्टर_chrdev(CODA_PSDEV_MAJOR, "coda");
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 MODULE_AUTHOR("Jan Harkes, Peter J. Braam");
 MODULE_DESCRIPTION("Coda Distributed File System VFS interface");
@@ -390,53 +391,53 @@ MODULE_ALIAS_CHARDEV_MAJOR(CODA_PSDEV_MAJOR);
 MODULE_LICENSE("GPL");
 MODULE_VERSION("7.0");
 
-static int __init init_coda(void)
-{
-	int status;
-	int i;
+अटल पूर्णांक __init init_coda(व्योम)
+अणु
+	पूर्णांक status;
+	पूर्णांक i;
 
 	status = coda_init_inodecache();
-	if (status)
-		goto out2;
+	अगर (status)
+		जाओ out2;
 	status = init_coda_psdev();
-	if ( status ) {
+	अगर ( status ) अणु
 		pr_warn("Problem (%d) in init_coda_psdev\n", status);
-		goto out1;
-	}
+		जाओ out1;
+	पूर्ण
 	
-	status = register_filesystem(&coda_fs_type);
-	if (status) {
+	status = रेजिस्टर_fileप्रणाली(&coda_fs_type);
+	अगर (status) अणु
 		pr_warn("failed to register filesystem!\n");
-		goto out;
-	}
-	return 0;
+		जाओ out;
+	पूर्ण
+	वापस 0;
 out:
-	for (i = 0; i < MAX_CODADEVS; i++)
+	क्रम (i = 0; i < MAX_CODADEVS; i++)
 		device_destroy(coda_psdev_class, MKDEV(CODA_PSDEV_MAJOR, i));
 	class_destroy(coda_psdev_class);
-	unregister_chrdev(CODA_PSDEV_MAJOR, "coda");
+	unरेजिस्टर_chrdev(CODA_PSDEV_MAJOR, "coda");
 	coda_sysctl_clean();
 out1:
 	coda_destroy_inodecache();
 out2:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void __exit exit_coda(void)
-{
-        int err, i;
+अटल व्योम __निकास निकास_coda(व्योम)
+अणु
+        पूर्णांक err, i;
 
-	err = unregister_filesystem(&coda_fs_type);
-	if (err != 0)
+	err = unरेजिस्टर_fileप्रणाली(&coda_fs_type);
+	अगर (err != 0)
 		pr_warn("failed to unregister filesystem\n");
-	for (i = 0; i < MAX_CODADEVS; i++)
+	क्रम (i = 0; i < MAX_CODADEVS; i++)
 		device_destroy(coda_psdev_class, MKDEV(CODA_PSDEV_MAJOR, i));
 	class_destroy(coda_psdev_class);
-	unregister_chrdev(CODA_PSDEV_MAJOR, "coda");
+	unरेजिस्टर_chrdev(CODA_PSDEV_MAJOR, "coda");
 	coda_sysctl_clean();
 	coda_destroy_inodecache();
-}
+पूर्ण
 
 module_init(init_coda);
-module_exit(exit_coda);
+module_निकास(निकास_coda);
 

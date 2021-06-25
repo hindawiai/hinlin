@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *   Copyright (C) 2020, Microsoft Corporation.
  *
@@ -7,63 +8,63 @@
  *              Jeff Layton <jlayton@kernel.org>
  */
 
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include <linux/inet.h>
-#include <linux/ctype.h>
-#include "cifsglob.h"
-#include "cifsproto.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/प्रकार.स>
+#समावेश "cifsglob.h"
+#समावेश "cifsproto.h"
 
 /* extract the host portion of the UNC string */
-char *extract_hostname(const char *unc)
-{
-	const char *src;
-	char *dst, *delim;
-	unsigned int len;
+अक्षर *extract_hostname(स्थिर अक्षर *unc)
+अणु
+	स्थिर अक्षर *src;
+	अक्षर *dst, *delim;
+	अचिन्हित पूर्णांक len;
 
-	/* skip double chars at beginning of string */
+	/* skip द्विगुन अक्षरs at beginning of string */
 	/* BB: check validity of these bytes? */
-	if (strlen(unc) < 3)
-		return ERR_PTR(-EINVAL);
-	for (src = unc; *src && *src == '\\'; src++)
+	अगर (म_माप(unc) < 3)
+		वापस ERR_PTR(-EINVAL);
+	क्रम (src = unc; *src && *src == '\\'; src++)
 		;
-	if (!*src)
-		return ERR_PTR(-EINVAL);
+	अगर (!*src)
+		वापस ERR_PTR(-EINVAL);
 
-	/* delimiter between hostname and sharename is always '\\' now */
-	delim = strchr(src, '\\');
-	if (!delim)
-		return ERR_PTR(-EINVAL);
+	/* delimiter between hostname and shaनाम is always '\\' now */
+	delim = म_अक्षर(src, '\\');
+	अगर (!delim)
+		वापस ERR_PTR(-EINVAL);
 
 	len = delim - src;
-	dst = kmalloc((len + 1), GFP_KERNEL);
-	if (dst == NULL)
-		return ERR_PTR(-ENOMEM);
+	dst = kदो_स्मृति((len + 1), GFP_KERNEL);
+	अगर (dst == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 
-	memcpy(dst, src, len);
+	स_नकल(dst, src, len);
 	dst[len] = '\0';
 
-	return dst;
-}
+	वापस dst;
+पूर्ण
 
-char *extract_sharename(const char *unc)
-{
-	const char *src;
-	char *delim, *dst;
+अक्षर *extract_shaनाम(स्थिर अक्षर *unc)
+अणु
+	स्थिर अक्षर *src;
+	अक्षर *delim, *dst;
 
-	/* skip double chars at the beginning */
+	/* skip द्विगुन अक्षरs at the beginning */
 	src = unc + 2;
 
 	/* share name is always preceded by '\\' now */
-	delim = strchr(src, '\\');
-	if (!delim)
-		return ERR_PTR(-EINVAL);
+	delim = म_अक्षर(src, '\\');
+	अगर (!delim)
+		वापस ERR_PTR(-EINVAL);
 	delim++;
 
-	/* caller has to free the memory */
+	/* caller has to मुक्त the memory */
 	dst = kstrdup(delim, GFP_KERNEL);
-	if (!dst)
-		return ERR_PTR(-ENOMEM);
+	अगर (!dst)
+		वापस ERR_PTR(-ENOMEM);
 
-	return dst;
-}
+	वापस dst;
+पूर्ण

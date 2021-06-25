@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/screen_info.h>
-#include <linux/init.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/screen_info.h>
+#समावेश <linux/init.h>
 
-#include <asm/bootparam.h>
-#include <asm/setup.h>
+#समावेश <यंत्र/bootparam.h>
+#समावेश <यंत्र/setup.h>
 
-#include <xen/interface/xen.h>
+#समावेश <xen/पूर्णांकerface/xen.h>
 
-#include "xen-ops.h"
+#समावेश "xen-ops.h"
 
-void __init xen_init_vga(const struct dom0_vga_console_info *info, size_t size)
-{
-	struct screen_info *screen_info = &boot_params.screen_info;
+व्योम __init xen_init_vga(स्थिर काष्ठा करोm0_vga_console_info *info, माप_प्रकार size)
+अणु
+	काष्ठा screen_info *screen_info = &boot_params.screen_info;
 
 	/* This is drawn from a dump from vgacon:startup in
 	 * standard Linux. */
@@ -20,27 +21,27 @@ void __init xen_init_vga(const struct dom0_vga_console_info *info, size_t size)
 	screen_info->orig_video_lines = 25;
 	screen_info->orig_video_cols = 80;
 	screen_info->orig_video_ega_bx = 3;
-	screen_info->orig_video_points = 16;
+	screen_info->orig_video_poपूर्णांकs = 16;
 	screen_info->orig_y = screen_info->orig_video_lines - 1;
 
-	switch (info->video_type) {
-	case XEN_VGATYPE_TEXT_MODE_3:
-		if (size < offsetof(struct dom0_vga_console_info, u.text_mode_3)
-		    + sizeof(info->u.text_mode_3))
-			break;
+	चयन (info->video_type) अणु
+	हाल XEN_VGATYPE_TEXT_MODE_3:
+		अगर (size < दुरत्व(काष्ठा करोm0_vga_console_info, u.text_mode_3)
+		    + माप(info->u.text_mode_3))
+			अवरोध;
 		screen_info->orig_video_lines = info->u.text_mode_3.rows;
 		screen_info->orig_video_cols = info->u.text_mode_3.columns;
 		screen_info->orig_x = info->u.text_mode_3.cursor_x;
 		screen_info->orig_y = info->u.text_mode_3.cursor_y;
-		screen_info->orig_video_points =
+		screen_info->orig_video_poपूर्णांकs =
 			info->u.text_mode_3.font_height;
-		break;
+		अवरोध;
 
-	case XEN_VGATYPE_EFI_LFB:
-	case XEN_VGATYPE_VESA_LFB:
-		if (size < offsetof(struct dom0_vga_console_info,
+	हाल XEN_VGATYPE_EFI_LFB:
+	हाल XEN_VGATYPE_VESA_LFB:
+		अगर (size < दुरत्व(काष्ठा करोm0_vga_console_info,
 				    u.vesa_lfb.gbl_caps))
-			break;
+			अवरोध;
 		screen_info->orig_video_isVGA = VIDEO_TYPE_VLFB;
 		screen_info->lfb_width = info->u.vesa_lfb.width;
 		screen_info->lfb_height = info->u.vesa_lfb.height;
@@ -57,19 +58,19 @@ void __init xen_init_vga(const struct dom0_vga_console_info *info, size_t size)
 		screen_info->rsvd_size = info->u.vesa_lfb.rsvd_size;
 		screen_info->rsvd_pos = info->u.vesa_lfb.rsvd_pos;
 
-		if (info->video_type == XEN_VGATYPE_EFI_LFB) {
+		अगर (info->video_type == XEN_VGATYPE_EFI_LFB) अणु
 			screen_info->orig_video_isVGA = VIDEO_TYPE_EFI;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (size >= offsetof(struct dom0_vga_console_info,
+		अगर (size >= दुरत्व(काष्ठा करोm0_vga_console_info,
 				     u.vesa_lfb.gbl_caps)
-		    + sizeof(info->u.vesa_lfb.gbl_caps))
+		    + माप(info->u.vesa_lfb.gbl_caps))
 			screen_info->capabilities = info->u.vesa_lfb.gbl_caps;
-		if (size >= offsetof(struct dom0_vga_console_info,
+		अगर (size >= दुरत्व(काष्ठा करोm0_vga_console_info,
 				     u.vesa_lfb.mode_attrs)
-		    + sizeof(info->u.vesa_lfb.mode_attrs))
+		    + माप(info->u.vesa_lfb.mode_attrs))
 			screen_info->vesa_attributes = info->u.vesa_lfb.mode_attrs;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण

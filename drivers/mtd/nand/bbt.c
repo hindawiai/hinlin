@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2017 Free Electrons
  *
  * Authors:
- *	Boris Brezillon <boris.brezillon@free-electrons.com>
- *	Peter Pan <peterpandong@micron.com>
+ *	Boris Brezillon <boris.brezillon@मुक्त-electrons.com>
+ *	Peter Pan <peterpanकरोng@micron.com>
  */
 
-#define pr_fmt(fmt)	"nand-bbt: " fmt
+#घोषणा pr_fmt(fmt)	"nand-bbt: " fmt
 
-#include <linux/mtd/nand.h>
-#include <linux/slab.h>
+#समावेश <linux/mtd/nand.h>
+#समावेश <linux/slab.h>
 
 /**
  * nanddev_bbt_init() - Initialize the BBT (Bad Block Table)
- * @nand: NAND device
+ * @nand: न_अंकD device
  *
  * Initialize the in-memory BBT.
  *
- * Return: 0 in case of success, a negative error code otherwise.
+ * Return: 0 in हाल of success, a negative error code otherwise.
  */
-int nanddev_bbt_init(struct nand_device *nand)
-{
-	unsigned int bits_per_block = fls(NAND_BBT_BLOCK_NUM_STATUS);
-	unsigned int nblocks = nanddev_neraseblocks(nand);
-	unsigned int nwords = DIV_ROUND_UP(nblocks * bits_per_block,
+पूर्णांक nanddev_bbt_init(काष्ठा nand_device *nand)
+अणु
+	अचिन्हित पूर्णांक bits_per_block = fls(न_अंकD_BBT_BLOCK_NUM_STATUS);
+	अचिन्हित पूर्णांक nblocks = nanddev_neraseblocks(nand);
+	अचिन्हित पूर्णांक nwords = DIV_ROUND_UP(nblocks * bits_per_block,
 					   BITS_PER_LONG);
 
-	nand->bbt.cache = kcalloc(nwords, sizeof(*nand->bbt.cache),
+	nand->bbt.cache = kसुस्मृति(nwords, माप(*nand->bbt.cache),
 				  GFP_KERNEL);
-	if (!nand->bbt.cache)
-		return -ENOMEM;
+	अगर (!nand->bbt.cache)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nanddev_bbt_init);
 
 /**
  * nanddev_bbt_cleanup() - Cleanup the BBT (Bad Block Table)
- * @nand: NAND device
+ * @nand: न_अंकD device
  *
- * Undoes what has been done in nanddev_bbt_init()
+ * Unकरोes what has been करोne in nanddev_bbt_init()
  */
-void nanddev_bbt_cleanup(struct nand_device *nand)
-{
-	kfree(nand->bbt.cache);
-}
+व्योम nanddev_bbt_cleanup(काष्ठा nand_device *nand)
+अणु
+	kमुक्त(nand->bbt.cache);
+पूर्ण
 EXPORT_SYMBOL_GPL(nanddev_bbt_cleanup);
 
 /**
@@ -55,12 +56,12 @@ EXPORT_SYMBOL_GPL(nanddev_bbt_cleanup);
  * Update the BBT. Currently a NOP function since on-flash bbt is not yet
  * supported.
  *
- * Return: 0 in case of success, a negative error code otherwise.
+ * Return: 0 in हाल of success, a negative error code otherwise.
  */
-int nanddev_bbt_update(struct nand_device *nand)
-{
-	return 0;
-}
+पूर्णांक nanddev_bbt_update(काष्ठा nand_device *nand)
+अणु
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nanddev_bbt_update);
 
 /**
@@ -68,27 +69,27 @@ EXPORT_SYMBOL_GPL(nanddev_bbt_update);
  * @nand: nand device
  * @entry: the BBT entry
  *
- * Return: a positive number nand_bbt_block_status status or -%ERANGE if @entry
+ * Return: a positive number nand_bbt_block_status status or -%दुस्फल अगर @entry
  *	   is bigger than the BBT size.
  */
-int nanddev_bbt_get_block_status(const struct nand_device *nand,
-				 unsigned int entry)
-{
-	unsigned int bits_per_block = fls(NAND_BBT_BLOCK_NUM_STATUS);
-	unsigned long *pos = nand->bbt.cache +
+पूर्णांक nanddev_bbt_get_block_status(स्थिर काष्ठा nand_device *nand,
+				 अचिन्हित पूर्णांक entry)
+अणु
+	अचिन्हित पूर्णांक bits_per_block = fls(न_अंकD_BBT_BLOCK_NUM_STATUS);
+	अचिन्हित दीर्घ *pos = nand->bbt.cache +
 			     ((entry * bits_per_block) / BITS_PER_LONG);
-	unsigned int offs = (entry * bits_per_block) % BITS_PER_LONG;
-	unsigned long status;
+	अचिन्हित पूर्णांक offs = (entry * bits_per_block) % BITS_PER_LONG;
+	अचिन्हित दीर्घ status;
 
-	if (entry >= nanddev_neraseblocks(nand))
-		return -ERANGE;
+	अगर (entry >= nanddev_neraseblocks(nand))
+		वापस -दुस्फल;
 
 	status = pos[0] >> offs;
-	if (bits_per_block + offs > BITS_PER_LONG)
+	अगर (bits_per_block + offs > BITS_PER_LONG)
 		status |= pos[1] << (BITS_PER_LONG - offs);
 
-	return status & GENMASK(bits_per_block - 1, 0);
-}
+	वापस status & GENMASK(bits_per_block - 1, 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(nanddev_bbt_get_block_status);
 
 /**
@@ -99,33 +100,33 @@ EXPORT_SYMBOL_GPL(nanddev_bbt_get_block_status);
  * @status: the new status
  *
  * Update an entry of the in-memory BBT. If you want to push the updated BBT
- * the NAND you should call nanddev_bbt_update().
+ * the न_अंकD you should call nanddev_bbt_update().
  *
- * Return: 0 in case of success or -%ERANGE if @entry is bigger than the BBT
+ * Return: 0 in हाल of success or -%दुस्फल अगर @entry is bigger than the BBT
  *	   size.
  */
-int nanddev_bbt_set_block_status(struct nand_device *nand, unsigned int entry,
-				 enum nand_bbt_block_status status)
-{
-	unsigned int bits_per_block = fls(NAND_BBT_BLOCK_NUM_STATUS);
-	unsigned long *pos = nand->bbt.cache +
+पूर्णांक nanddev_bbt_set_block_status(काष्ठा nand_device *nand, अचिन्हित पूर्णांक entry,
+				 क्रमागत nand_bbt_block_status status)
+अणु
+	अचिन्हित पूर्णांक bits_per_block = fls(न_अंकD_BBT_BLOCK_NUM_STATUS);
+	अचिन्हित दीर्घ *pos = nand->bbt.cache +
 			     ((entry * bits_per_block) / BITS_PER_LONG);
-	unsigned int offs = (entry * bits_per_block) % BITS_PER_LONG;
-	unsigned long val = status & GENMASK(bits_per_block - 1, 0);
+	अचिन्हित पूर्णांक offs = (entry * bits_per_block) % BITS_PER_LONG;
+	अचिन्हित दीर्घ val = status & GENMASK(bits_per_block - 1, 0);
 
-	if (entry >= nanddev_neraseblocks(nand))
-		return -ERANGE;
+	अगर (entry >= nanddev_neraseblocks(nand))
+		वापस -दुस्फल;
 
 	pos[0] &= ~GENMASK(offs + bits_per_block - 1, offs);
 	pos[0] |= val << offs;
 
-	if (bits_per_block + offs > BITS_PER_LONG) {
-		unsigned int rbits = bits_per_block + offs - BITS_PER_LONG;
+	अगर (bits_per_block + offs > BITS_PER_LONG) अणु
+		अचिन्हित पूर्णांक rbits = bits_per_block + offs - BITS_PER_LONG;
 
 		pos[1] &= ~GENMASK(rbits - 1, 0);
 		pos[1] |= val >> rbits;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nanddev_bbt_set_block_status);

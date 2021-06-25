@@ -1,130 +1,131 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2004 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
-#include <linux/spinlock.h>
-#include <linux/list.h>
-#include <linux/sched/signal.h>
-#include <linux/delay.h>
-#include <linux/export.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/list.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/export.h>
 
-#include "w1_internal.h"
+#समावेश "w1_internal.h"
 
 DEFINE_SPINLOCK(w1_flock);
-static LIST_HEAD(w1_families);
+अटल LIST_HEAD(w1_families);
 
 /**
- * w1_register_family() - register a device family driver
- * @newf:	family to register
+ * w1_रेजिस्टर_family() - रेजिस्टर a device family driver
+ * @newf:	family to रेजिस्टर
  */
-int w1_register_family(struct w1_family *newf)
-{
-	struct list_head *ent, *n;
-	struct w1_family *f;
-	int ret = 0;
+पूर्णांक w1_रेजिस्टर_family(काष्ठा w1_family *newf)
+अणु
+	काष्ठा list_head *ent, *n;
+	काष्ठा w1_family *f;
+	पूर्णांक ret = 0;
 
 	spin_lock(&w1_flock);
-	list_for_each_safe(ent, n, &w1_families) {
-		f = list_entry(ent, struct w1_family, family_entry);
+	list_क्रम_each_safe(ent, n, &w1_families) अणु
+		f = list_entry(ent, काष्ठा w1_family, family_entry);
 
-		if (f->fid == newf->fid) {
+		अगर (f->fid == newf->fid) अणु
 			ret = -EEXIST;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!ret) {
+	अगर (!ret) अणु
 		atomic_set(&newf->refcnt, 0);
 		list_add_tail(&newf->family_entry, &w1_families);
-	}
+	पूर्ण
 	spin_unlock(&w1_flock);
 
-	/* check default devices against the new set of drivers */
+	/* check शेष devices against the new set of drivers */
 	w1_reconnect_slaves(newf, 1);
 
-	return ret;
-}
-EXPORT_SYMBOL(w1_register_family);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(w1_रेजिस्टर_family);
 
 /**
- * w1_unregister_family() - unregister a device family driver
- * @fent:	family to unregister
+ * w1_unरेजिस्टर_family() - unरेजिस्टर a device family driver
+ * @fent:	family to unरेजिस्टर
  */
-void w1_unregister_family(struct w1_family *fent)
-{
-	struct list_head *ent, *n;
-	struct w1_family *f;
+व्योम w1_unरेजिस्टर_family(काष्ठा w1_family *fent)
+अणु
+	काष्ठा list_head *ent, *n;
+	काष्ठा w1_family *f;
 
 	spin_lock(&w1_flock);
-	list_for_each_safe(ent, n, &w1_families) {
-		f = list_entry(ent, struct w1_family, family_entry);
+	list_क्रम_each_safe(ent, n, &w1_families) अणु
+		f = list_entry(ent, काष्ठा w1_family, family_entry);
 
-		if (f->fid == fent->fid) {
+		अगर (f->fid == fent->fid) अणु
 			list_del(&fent->family_entry);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&w1_flock);
 
 	/* deatch devices using this family code */
 	w1_reconnect_slaves(fent, 0);
 
-	while (atomic_read(&fent->refcnt)) {
+	जबतक (atomic_पढ़ो(&fent->refcnt)) अणु
 		pr_info("Waiting for family %u to become free: refcnt=%d.\n",
-				fent->fid, atomic_read(&fent->refcnt));
+				fent->fid, atomic_पढ़ो(&fent->refcnt));
 
-		if (msleep_interruptible(1000))
-			flush_signals(current);
-	}
-}
-EXPORT_SYMBOL(w1_unregister_family);
+		अगर (msleep_पूर्णांकerruptible(1000))
+			flush_संकेतs(current);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(w1_unरेजिस्टर_family);
 
 /*
  * Should be called under w1_flock held.
  */
-struct w1_family * w1_family_registered(u8 fid)
-{
-	struct list_head *ent, *n;
-	struct w1_family *f = NULL;
-	int ret = 0;
+काष्ठा w1_family * w1_family_रेजिस्टरed(u8 fid)
+अणु
+	काष्ठा list_head *ent, *n;
+	काष्ठा w1_family *f = शून्य;
+	पूर्णांक ret = 0;
 
-	list_for_each_safe(ent, n, &w1_families) {
-		f = list_entry(ent, struct w1_family, family_entry);
+	list_क्रम_each_safe(ent, n, &w1_families) अणु
+		f = list_entry(ent, काष्ठा w1_family, family_entry);
 
-		if (f->fid == fid) {
+		अगर (f->fid == fid) अणु
 			ret = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return (ret) ? f : NULL;
-}
+	वापस (ret) ? f : शून्य;
+पूर्ण
 
-static void __w1_family_put(struct w1_family *f)
-{
+अटल व्योम __w1_family_put(काष्ठा w1_family *f)
+अणु
 	atomic_dec(&f->refcnt);
-}
+पूर्ण
 
-void w1_family_put(struct w1_family *f)
-{
+व्योम w1_family_put(काष्ठा w1_family *f)
+अणु
 	spin_lock(&w1_flock);
 	__w1_family_put(f);
 	spin_unlock(&w1_flock);
-}
+पूर्ण
 
-#if 0
-void w1_family_get(struct w1_family *f)
-{
+#अगर 0
+व्योम w1_family_get(काष्ठा w1_family *f)
+अणु
 	spin_lock(&w1_flock);
 	__w1_family_get(f);
 	spin_unlock(&w1_flock);
-}
-#endif  /*  0  */
+पूर्ण
+#पूर्ण_अगर  /*  0  */
 
-void __w1_family_get(struct w1_family *f)
-{
-	smp_mb__before_atomic();
+व्योम __w1_family_get(काष्ठा w1_family *f)
+अणु
+	smp_mb__beक्रमe_atomic();
 	atomic_inc(&f->refcnt);
 	smp_mb__after_atomic();
-}
+पूर्ण

@@ -1,118 +1,119 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  * Author: Chanwoo Choi <cw00.choi@samsung.com>
  *
- * Common Clock Framework support for Exynos5433 SoC.
+ * Common Clock Framework support क्रम Exynos5433 SoC.
  */
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
 
-#include <dt-bindings/clock/exynos5433.h>
+#समावेश <dt-bindings/घड़ी/exynos5433.h>
 
-#include "clk.h"
-#include "clk-cpu.h"
-#include "clk-pll.h"
+#समावेश "clk.h"
+#समावेश "clk-cpu.h"
+#समावेश "clk-pll.h"
 
 /*
- * Register offset definitions for CMU_TOP
+ * Register offset definitions क्रम CMU_TOP
  */
-#define ISP_PLL_LOCK			0x0000
-#define AUD_PLL_LOCK			0x0004
-#define ISP_PLL_CON0			0x0100
-#define ISP_PLL_CON1			0x0104
-#define ISP_PLL_FREQ_DET		0x0108
-#define AUD_PLL_CON0			0x0110
-#define AUD_PLL_CON1			0x0114
-#define AUD_PLL_CON2			0x0118
-#define AUD_PLL_FREQ_DET		0x011c
-#define MUX_SEL_TOP0			0x0200
-#define MUX_SEL_TOP1			0x0204
-#define MUX_SEL_TOP2			0x0208
-#define MUX_SEL_TOP3			0x020c
-#define MUX_SEL_TOP4			0x0210
-#define MUX_SEL_TOP_MSCL		0x0220
-#define MUX_SEL_TOP_CAM1		0x0224
-#define MUX_SEL_TOP_DISP		0x0228
-#define MUX_SEL_TOP_FSYS0		0x0230
-#define MUX_SEL_TOP_FSYS1		0x0234
-#define MUX_SEL_TOP_PERIC0		0x0238
-#define MUX_SEL_TOP_PERIC1		0x023c
-#define MUX_ENABLE_TOP0			0x0300
-#define MUX_ENABLE_TOP1			0x0304
-#define MUX_ENABLE_TOP2			0x0308
-#define MUX_ENABLE_TOP3			0x030c
-#define MUX_ENABLE_TOP4			0x0310
-#define MUX_ENABLE_TOP_MSCL		0x0320
-#define MUX_ENABLE_TOP_CAM1		0x0324
-#define MUX_ENABLE_TOP_DISP		0x0328
-#define MUX_ENABLE_TOP_FSYS0		0x0330
-#define MUX_ENABLE_TOP_FSYS1		0x0334
-#define MUX_ENABLE_TOP_PERIC0		0x0338
-#define MUX_ENABLE_TOP_PERIC1		0x033c
-#define MUX_STAT_TOP0			0x0400
-#define MUX_STAT_TOP1			0x0404
-#define MUX_STAT_TOP2			0x0408
-#define MUX_STAT_TOP3			0x040c
-#define MUX_STAT_TOP4			0x0410
-#define MUX_STAT_TOP_MSCL		0x0420
-#define MUX_STAT_TOP_CAM1		0x0424
-#define MUX_STAT_TOP_FSYS0		0x0430
-#define MUX_STAT_TOP_FSYS1		0x0434
-#define MUX_STAT_TOP_PERIC0		0x0438
-#define MUX_STAT_TOP_PERIC1		0x043c
-#define DIV_TOP0			0x0600
-#define DIV_TOP1			0x0604
-#define DIV_TOP2			0x0608
-#define DIV_TOP3			0x060c
-#define DIV_TOP4			0x0610
-#define DIV_TOP_MSCL			0x0618
-#define DIV_TOP_CAM10			0x061c
-#define DIV_TOP_CAM11			0x0620
-#define DIV_TOP_FSYS0			0x062c
-#define DIV_TOP_FSYS1			0x0630
-#define DIV_TOP_FSYS2			0x0634
-#define DIV_TOP_PERIC0			0x0638
-#define DIV_TOP_PERIC1			0x063c
-#define DIV_TOP_PERIC2			0x0640
-#define DIV_TOP_PERIC3			0x0644
-#define DIV_TOP_PERIC4			0x0648
-#define DIV_TOP_PLL_FREQ_DET		0x064c
-#define DIV_STAT_TOP0			0x0700
-#define DIV_STAT_TOP1			0x0704
-#define DIV_STAT_TOP2			0x0708
-#define DIV_STAT_TOP3			0x070c
-#define DIV_STAT_TOP4			0x0710
-#define DIV_STAT_TOP_MSCL		0x0718
-#define DIV_STAT_TOP_CAM10		0x071c
-#define DIV_STAT_TOP_CAM11		0x0720
-#define DIV_STAT_TOP_FSYS0		0x072c
-#define DIV_STAT_TOP_FSYS1		0x0730
-#define DIV_STAT_TOP_FSYS2		0x0734
-#define DIV_STAT_TOP_PERIC0		0x0738
-#define DIV_STAT_TOP_PERIC1		0x073c
-#define DIV_STAT_TOP_PERIC2		0x0740
-#define DIV_STAT_TOP_PERIC3		0x0744
-#define DIV_STAT_TOP_PLL_FREQ_DET	0x074c
-#define ENABLE_ACLK_TOP			0x0800
-#define ENABLE_SCLK_TOP			0x0a00
-#define ENABLE_SCLK_TOP_MSCL		0x0a04
-#define ENABLE_SCLK_TOP_CAM1		0x0a08
-#define ENABLE_SCLK_TOP_DISP		0x0a0c
-#define ENABLE_SCLK_TOP_FSYS		0x0a10
-#define ENABLE_SCLK_TOP_PERIC		0x0a14
-#define ENABLE_IP_TOP			0x0b00
-#define ENABLE_CMU_TOP			0x0c00
-#define ENABLE_CMU_TOP_DIV_STAT		0x0c04
+#घोषणा ISP_PLL_LOCK			0x0000
+#घोषणा AUD_PLL_LOCK			0x0004
+#घोषणा ISP_PLL_CON0			0x0100
+#घोषणा ISP_PLL_CON1			0x0104
+#घोषणा ISP_PLL_FREQ_DET		0x0108
+#घोषणा AUD_PLL_CON0			0x0110
+#घोषणा AUD_PLL_CON1			0x0114
+#घोषणा AUD_PLL_CON2			0x0118
+#घोषणा AUD_PLL_FREQ_DET		0x011c
+#घोषणा MUX_SEL_TOP0			0x0200
+#घोषणा MUX_SEL_TOP1			0x0204
+#घोषणा MUX_SEL_TOP2			0x0208
+#घोषणा MUX_SEL_TOP3			0x020c
+#घोषणा MUX_SEL_TOP4			0x0210
+#घोषणा MUX_SEL_TOP_MSCL		0x0220
+#घोषणा MUX_SEL_TOP_CAM1		0x0224
+#घोषणा MUX_SEL_TOP_DISP		0x0228
+#घोषणा MUX_SEL_TOP_FSYS0		0x0230
+#घोषणा MUX_SEL_TOP_FSYS1		0x0234
+#घोषणा MUX_SEL_TOP_PERIC0		0x0238
+#घोषणा MUX_SEL_TOP_PERIC1		0x023c
+#घोषणा MUX_ENABLE_TOP0			0x0300
+#घोषणा MUX_ENABLE_TOP1			0x0304
+#घोषणा MUX_ENABLE_TOP2			0x0308
+#घोषणा MUX_ENABLE_TOP3			0x030c
+#घोषणा MUX_ENABLE_TOP4			0x0310
+#घोषणा MUX_ENABLE_TOP_MSCL		0x0320
+#घोषणा MUX_ENABLE_TOP_CAM1		0x0324
+#घोषणा MUX_ENABLE_TOP_DISP		0x0328
+#घोषणा MUX_ENABLE_TOP_FSYS0		0x0330
+#घोषणा MUX_ENABLE_TOP_FSYS1		0x0334
+#घोषणा MUX_ENABLE_TOP_PERIC0		0x0338
+#घोषणा MUX_ENABLE_TOP_PERIC1		0x033c
+#घोषणा MUX_STAT_TOP0			0x0400
+#घोषणा MUX_STAT_TOP1			0x0404
+#घोषणा MUX_STAT_TOP2			0x0408
+#घोषणा MUX_STAT_TOP3			0x040c
+#घोषणा MUX_STAT_TOP4			0x0410
+#घोषणा MUX_STAT_TOP_MSCL		0x0420
+#घोषणा MUX_STAT_TOP_CAM1		0x0424
+#घोषणा MUX_STAT_TOP_FSYS0		0x0430
+#घोषणा MUX_STAT_TOP_FSYS1		0x0434
+#घोषणा MUX_STAT_TOP_PERIC0		0x0438
+#घोषणा MUX_STAT_TOP_PERIC1		0x043c
+#घोषणा DIV_TOP0			0x0600
+#घोषणा DIV_TOP1			0x0604
+#घोषणा DIV_TOP2			0x0608
+#घोषणा DIV_TOP3			0x060c
+#घोषणा DIV_TOP4			0x0610
+#घोषणा DIV_TOP_MSCL			0x0618
+#घोषणा DIV_TOP_CAM10			0x061c
+#घोषणा DIV_TOP_CAM11			0x0620
+#घोषणा DIV_TOP_FSYS0			0x062c
+#घोषणा DIV_TOP_FSYS1			0x0630
+#घोषणा DIV_TOP_FSYS2			0x0634
+#घोषणा DIV_TOP_PERIC0			0x0638
+#घोषणा DIV_TOP_PERIC1			0x063c
+#घोषणा DIV_TOP_PERIC2			0x0640
+#घोषणा DIV_TOP_PERIC3			0x0644
+#घोषणा DIV_TOP_PERIC4			0x0648
+#घोषणा DIV_TOP_PLL_FREQ_DET		0x064c
+#घोषणा DIV_STAT_TOP0			0x0700
+#घोषणा DIV_STAT_TOP1			0x0704
+#घोषणा DIV_STAT_TOP2			0x0708
+#घोषणा DIV_STAT_TOP3			0x070c
+#घोषणा DIV_STAT_TOP4			0x0710
+#घोषणा DIV_STAT_TOP_MSCL		0x0718
+#घोषणा DIV_STAT_TOP_CAM10		0x071c
+#घोषणा DIV_STAT_TOP_CAM11		0x0720
+#घोषणा DIV_STAT_TOP_FSYS0		0x072c
+#घोषणा DIV_STAT_TOP_FSYS1		0x0730
+#घोषणा DIV_STAT_TOP_FSYS2		0x0734
+#घोषणा DIV_STAT_TOP_PERIC0		0x0738
+#घोषणा DIV_STAT_TOP_PERIC1		0x073c
+#घोषणा DIV_STAT_TOP_PERIC2		0x0740
+#घोषणा DIV_STAT_TOP_PERIC3		0x0744
+#घोषणा DIV_STAT_TOP_PLL_FREQ_DET	0x074c
+#घोषणा ENABLE_ACLK_TOP			0x0800
+#घोषणा ENABLE_SCLK_TOP			0x0a00
+#घोषणा ENABLE_SCLK_TOP_MSCL		0x0a04
+#घोषणा ENABLE_SCLK_TOP_CAM1		0x0a08
+#घोषणा ENABLE_SCLK_TOP_DISP		0x0a0c
+#घोषणा ENABLE_SCLK_TOP_FSYS		0x0a10
+#घोषणा ENABLE_SCLK_TOP_PERIC		0x0a14
+#घोषणा ENABLE_IP_TOP			0x0b00
+#घोषणा ENABLE_CMU_TOP			0x0c00
+#घोषणा ENABLE_CMU_TOP_DIV_STAT		0x0c04
 
-static const unsigned long top_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ top_clk_regs[] __initस्थिर = अणु
 	ISP_PLL_LOCK,
 	AUD_PLL_LOCK,
 	ISP_PLL_CON0,
@@ -173,87 +174,87 @@ static const unsigned long top_clk_regs[] __initconst = {
 	ENABLE_IP_TOP,
 	ENABLE_CMU_TOP,
 	ENABLE_CMU_TOP_DIV_STAT,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump top_suspend_regs[] = {
-	/* force all aclk clocks enabled */
-	{ ENABLE_ACLK_TOP, 0x67ecffed },
-	/* force all sclk_uart clocks enabled */
-	{ ENABLE_SCLK_TOP_PERIC, 0x38 },
-	/* ISP PLL has to be enabled for suspend: reset value + ENABLE bit */
-	{ ISP_PLL_CON0, 0x85cc0502 },
-	/* ISP PLL has to be enabled for suspend: reset value + ENABLE bit */
-	{ AUD_PLL_CON0, 0x84830202 },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump top_suspend_regs[] = अणु
+	/* क्रमce all aclk घड़ीs enabled */
+	अणु ENABLE_ACLK_TOP, 0x67ecffed पूर्ण,
+	/* क्रमce all sclk_uart घड़ीs enabled */
+	अणु ENABLE_SCLK_TOP_PERIC, 0x38 पूर्ण,
+	/* ISP PLL has to be enabled क्रम suspend: reset value + ENABLE bit */
+	अणु ISP_PLL_CON0, 0x85cc0502 पूर्ण,
+	/* ISP PLL has to be enabled क्रम suspend: reset value + ENABLE bit */
+	अणु AUD_PLL_CON0, 0x84830202 पूर्ण,
+पूर्ण;
 
-/* list of all parent clock list */
-PNAME(mout_aud_pll_p)		= { "oscclk", "fout_aud_pll", };
-PNAME(mout_isp_pll_p)		= { "oscclk", "fout_isp_pll", };
-PNAME(mout_aud_pll_user_p)	= { "oscclk", "mout_aud_pll", };
-PNAME(mout_mphy_pll_user_p)	= { "oscclk", "sclk_mphy_pll", };
-PNAME(mout_mfc_pll_user_p)	= { "oscclk", "sclk_mfc_pll", };
-PNAME(mout_bus_pll_user_p)	= { "oscclk", "sclk_bus_pll", };
-PNAME(mout_bus_pll_user_t_p)	= { "oscclk", "mout_bus_pll_user", };
-PNAME(mout_mphy_pll_user_t_p)	= { "oscclk", "mout_mphy_pll_user", };
+/* list of all parent घड़ी list */
+PNAME(mout_aud_pll_p)		= अणु "oscclk", "fout_aud_pll", पूर्ण;
+PNAME(mout_isp_pll_p)		= अणु "oscclk", "fout_isp_pll", पूर्ण;
+PNAME(mout_aud_pll_user_p)	= अणु "oscclk", "mout_aud_pll", पूर्ण;
+PNAME(mout_mphy_pll_user_p)	= अणु "oscclk", "sclk_mphy_pll", पूर्ण;
+PNAME(mout_mfc_pll_user_p)	= अणु "oscclk", "sclk_mfc_pll", पूर्ण;
+PNAME(mout_bus_pll_user_p)	= अणु "oscclk", "sclk_bus_pll", पूर्ण;
+PNAME(mout_bus_pll_user_t_p)	= अणु "oscclk", "mout_bus_pll_user", पूर्ण;
+PNAME(mout_mphy_pll_user_t_p)	= अणु "oscclk", "mout_mphy_pll_user", पूर्ण;
 
-PNAME(mout_bus_mfc_pll_user_p)	= { "mout_bus_pll_user", "mout_mfc_pll_user",};
-PNAME(mout_mfc_bus_pll_user_p)	= { "mout_mfc_pll_user", "mout_bus_pll_user",};
-PNAME(mout_aclk_cam1_552_b_p)	= { "mout_aclk_cam1_552_a",
-				    "mout_mfc_pll_user", };
-PNAME(mout_aclk_cam1_552_a_p)	= { "mout_isp_pll", "mout_bus_pll_user", };
+PNAME(mout_bus_mfc_pll_user_p)	= अणु "mout_bus_pll_user", "mout_mfc_pll_user",पूर्ण;
+PNAME(mout_mfc_bus_pll_user_p)	= अणु "mout_mfc_pll_user", "mout_bus_pll_user",पूर्ण;
+PNAME(mout_aclk_cam1_552_b_p)	= अणु "mout_aclk_cam1_552_a",
+				    "mout_mfc_pll_user", पूर्ण;
+PNAME(mout_aclk_cam1_552_a_p)	= अणु "mout_isp_pll", "mout_bus_pll_user", पूर्ण;
 
-PNAME(mout_aclk_mfc_400_c_p)	= { "mout_aclk_mfc_400_b",
-				    "mout_mphy_pll_user", };
-PNAME(mout_aclk_mfc_400_b_p)	= { "mout_aclk_mfc_400_a",
-				    "mout_bus_pll_user", };
-PNAME(mout_aclk_mfc_400_a_p)	= { "mout_mfc_pll_user", "mout_isp_pll", };
+PNAME(mout_aclk_mfc_400_c_p)	= अणु "mout_aclk_mfc_400_b",
+				    "mout_mphy_pll_user", पूर्ण;
+PNAME(mout_aclk_mfc_400_b_p)	= अणु "mout_aclk_mfc_400_a",
+				    "mout_bus_pll_user", पूर्ण;
+PNAME(mout_aclk_mfc_400_a_p)	= अणु "mout_mfc_pll_user", "mout_isp_pll", पूर्ण;
 
-PNAME(mout_bus_mphy_pll_user_p)	= { "mout_bus_pll_user",
-				    "mout_mphy_pll_user", };
-PNAME(mout_aclk_mscl_b_p)	= { "mout_aclk_mscl_400_a",
-				    "mout_mphy_pll_user", };
-PNAME(mout_aclk_g2d_400_b_p)	= { "mout_aclk_g2d_400_a",
-				    "mout_mphy_pll_user", };
+PNAME(mout_bus_mphy_pll_user_p)	= अणु "mout_bus_pll_user",
+				    "mout_mphy_pll_user", पूर्ण;
+PNAME(mout_aclk_mscl_b_p)	= अणु "mout_aclk_mscl_400_a",
+				    "mout_mphy_pll_user", पूर्ण;
+PNAME(mout_aclk_g2d_400_b_p)	= अणु "mout_aclk_g2d_400_a",
+				    "mout_mphy_pll_user", पूर्ण;
 
-PNAME(mout_sclk_jpeg_c_p)	= { "mout_sclk_jpeg_b", "mout_mphy_pll_user",};
-PNAME(mout_sclk_jpeg_b_p)	= { "mout_sclk_jpeg_a", "mout_mfc_pll_user", };
+PNAME(mout_sclk_jpeg_c_p)	= अणु "mout_sclk_jpeg_b", "mout_mphy_pll_user",पूर्ण;
+PNAME(mout_sclk_jpeg_b_p)	= अणु "mout_sclk_jpeg_a", "mout_mfc_pll_user", पूर्ण;
 
-PNAME(mout_sclk_mmc2_b_p)	= { "mout_sclk_mmc2_a", "mout_mfc_pll_user",};
-PNAME(mout_sclk_mmc1_b_p)	= { "mout_sclk_mmc1_a", "mout_mfc_pll_user",};
-PNAME(mout_sclk_mmc0_d_p)	= { "mout_sclk_mmc0_c", "mout_isp_pll", };
-PNAME(mout_sclk_mmc0_c_p)	= { "mout_sclk_mmc0_b", "mout_mphy_pll_user",};
-PNAME(mout_sclk_mmc0_b_p)	= { "mout_sclk_mmc0_a", "mout_mfc_pll_user", };
+PNAME(mout_sclk_mmc2_b_p)	= अणु "mout_sclk_mmc2_a", "mout_mfc_pll_user",पूर्ण;
+PNAME(mout_sclk_mmc1_b_p)	= अणु "mout_sclk_mmc1_a", "mout_mfc_pll_user",पूर्ण;
+PNAME(mout_sclk_mmc0_d_p)	= अणु "mout_sclk_mmc0_c", "mout_isp_pll", पूर्ण;
+PNAME(mout_sclk_mmc0_c_p)	= अणु "mout_sclk_mmc0_b", "mout_mphy_pll_user",पूर्ण;
+PNAME(mout_sclk_mmc0_b_p)	= अणु "mout_sclk_mmc0_a", "mout_mfc_pll_user", पूर्ण;
 
-PNAME(mout_sclk_spdif_p)	= { "sclk_audio0", "sclk_audio1",
-				    "oscclk", "ioclk_spdif_extclk", };
-PNAME(mout_sclk_audio1_p)	= { "ioclk_audiocdclk1", "oscclk",
-				    "mout_aud_pll_user_t",};
-PNAME(mout_sclk_audio0_p)	= { "ioclk_audiocdclk0", "oscclk",
-				    "mout_aud_pll_user_t",};
+PNAME(mout_sclk_spdअगर_p)	= अणु "sclk_audio0", "sclk_audio1",
+				    "oscclk", "ioclk_spdif_extclk", पूर्ण;
+PNAME(mout_sclk_audio1_p)	= अणु "ioclk_audiocdclk1", "oscclk",
+				    "mout_aud_pll_user_t",पूर्ण;
+PNAME(mout_sclk_audio0_p)	= अणु "ioclk_audiocdclk0", "oscclk",
+				    "mout_aud_pll_user_t",पूर्ण;
 
-PNAME(mout_sclk_hdmi_spdif_p)	= { "sclk_audio1", "ioclk_spdif_extclk", };
+PNAME(mout_sclk_hdmi_spdअगर_p)	= अणु "sclk_audio1", "ioclk_spdif_extclk", पूर्ण;
 
-static const struct samsung_fixed_factor_clock top_fixed_factor_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_fixed_factor_घड़ी top_fixed_factor_clks[] __initस्थिर = अणु
 	FFACTOR(0, "oscclk_efuse_common", "oscclk", 1, 1, 0),
-};
+पूर्ण;
 
-static const struct samsung_fixed_rate_clock top_fixed_clks[] __initconst = {
-	/* Xi2s{0|1}CDCLK input clock for I2S/PCM */
-	FRATE(0, "ioclk_audiocdclk1", NULL, 0, 100000000),
-	FRATE(0, "ioclk_audiocdclk0", NULL, 0, 100000000),
-	/* Xi2s1SDI input clock for SPDIF */
-	FRATE(0, "ioclk_spdif_extclk", NULL, 0, 100000000),
-	/* XspiCLK[4:0] input clock for SPI */
-	FRATE(0, "ioclk_spi4_clk_in", NULL, 0, 50000000),
-	FRATE(0, "ioclk_spi3_clk_in", NULL, 0, 50000000),
-	FRATE(0, "ioclk_spi2_clk_in", NULL, 0, 50000000),
-	FRATE(0, "ioclk_spi1_clk_in", NULL, 0, 50000000),
-	FRATE(0, "ioclk_spi0_clk_in", NULL, 0, 50000000),
-	/* Xi2s1SCLK input clock for I2S1_BCLK */
-	FRATE(0, "ioclk_i2s1_bclk_in", NULL, 0, 12288000),
-};
+अटल स्थिर काष्ठा samsung_fixed_rate_घड़ी top_fixed_clks[] __initस्थिर = अणु
+	/* Xi2sअणु0|1पूर्णCDCLK input घड़ी क्रम I2S/PCM */
+	FRATE(0, "ioclk_audiocdclk1", शून्य, 0, 100000000),
+	FRATE(0, "ioclk_audiocdclk0", शून्य, 0, 100000000),
+	/* Xi2s1SDI input घड़ी क्रम SPDIF */
+	FRATE(0, "ioclk_spdif_extclk", शून्य, 0, 100000000),
+	/* XspiCLK[4:0] input घड़ी क्रम SPI */
+	FRATE(0, "ioclk_spi4_clk_in", शून्य, 0, 50000000),
+	FRATE(0, "ioclk_spi3_clk_in", शून्य, 0, 50000000),
+	FRATE(0, "ioclk_spi2_clk_in", शून्य, 0, 50000000),
+	FRATE(0, "ioclk_spi1_clk_in", शून्य, 0, 50000000),
+	FRATE(0, "ioclk_spi0_clk_in", शून्य, 0, 50000000),
+	/* Xi2s1SCLK input घड़ी क्रम I2S1_BCLK */
+	FRATE(0, "ioclk_i2s1_bclk_in", शून्य, 0, 12288000),
+पूर्ण;
 
-static const struct samsung_mux_clock top_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी top_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_TOP0 */
 	MUX(CLK_MOUT_AUD_PLL, "mout_aud_pll", mout_aud_pll_p, MUX_SEL_TOP0,
 			4, 1),
@@ -377,7 +378,7 @@ static const struct samsung_mux_clock top_mux_clks[] __initconst = {
 	/* MUX_SEL_TOP_PERIC1 */
 	MUX(CLK_MOUT_SCLK_SLIMBUS, "mout_sclk_slimbus", mout_aud_pll_user_p,
 			MUX_SEL_TOP_PERIC1, 16, 1),
-	MUX(CLK_MOUT_SCLK_SPDIF, "mout_sclk_spdif", mout_sclk_spdif_p,
+	MUX(CLK_MOUT_SCLK_SPDIF, "mout_sclk_spdif", mout_sclk_spdअगर_p,
 			MUX_SEL_TOP_PERIC1, 12, 2),
 	MUX(CLK_MOUT_SCLK_AUDIO1, "mout_sclk_audio1", mout_sclk_audio1_p,
 			MUX_SEL_TOP_PERIC1, 4, 2),
@@ -386,10 +387,10 @@ static const struct samsung_mux_clock top_mux_clks[] __initconst = {
 
 	/* MUX_SEL_TOP_DISP */
 	MUX(CLK_MOUT_SCLK_HDMI_SPDIF, "mout_sclk_hdmi_spdif",
-			mout_sclk_hdmi_spdif_p, MUX_SEL_TOP_DISP, 0, 1),
-};
+			mout_sclk_hdmi_spdअगर_p, MUX_SEL_TOP_DISP, 0, 1),
+पूर्ण;
 
-static const struct samsung_div_clock top_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी top_भाग_clks[] __initस्थिर = अणु
 	/* DIV_TOP0 */
 	DIV(CLK_DIV_ACLK_CAM1_333, "div_aclk_cam1_333", "mout_aclk_cam1_333",
 			DIV_TOP0, 28, 3),
@@ -551,9 +552,9 @@ static const struct samsung_div_clock top_div_clks[] __initconst = {
 			DIV_TOP_PERIC4, 4, 8),
 	DIV(CLK_DIV_SCLK_SPI3_A, "div_sclk_spi3_a", "mout_sclk_spi3",
 			DIV_TOP_PERIC4, 0, 4),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock top_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी top_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_TOP */
 	GATE(CLK_ACLK_G3D_400, "aclk_g3d_400", "div_aclk_g3d_400",
 			ENABLE_ACLK_TOP, 30, CLK_IS_CRITICAL, 0),
@@ -705,13 +706,13 @@ static const struct samsung_gate_clock top_gate_clks[] __initconst = {
 			MUX_ENABLE_TOP_PERIC1, 4, 0, 0),
 	GATE(CLK_SCLK_AUDIO0, "sclk_audio0", "div_sclk_audio0",
 			MUX_ENABLE_TOP_PERIC1, 0, 0, 0),
-};
+पूर्ण;
 
 /*
  * ATLAS_PLL & APOLLO_PLL & MEM0_PLL & MEM1_PLL & BUS_PLL & MFC_PLL
  * & MPHY_PLL & G3D_PLL & DISP_PLL & ISP_PLL
  */
-static const struct samsung_pll_rate_table exynos5433_pll_rates[] __initconst = {
+अटल स्थिर काष्ठा samsung_pll_rate_table exynos5433_pll_rates[] __initस्थिर = अणु
 	PLL_35XX_RATE(24 * MHZ, 2500000000U, 625, 6,  0),
 	PLL_35XX_RATE(24 * MHZ, 2400000000U, 500, 5,  0),
 	PLL_35XX_RATE(24 * MHZ, 2300000000U, 575, 6,  0),
@@ -760,11 +761,11 @@ static const struct samsung_pll_rate_table exynos5433_pll_rates[] __initconst = 
 	PLL_35XX_RATE(24 * MHZ, 160000000U,  320, 6,  3),
 	PLL_35XX_RATE(24 * MHZ, 133000000U,  532, 6,  4),
 	PLL_35XX_RATE(24 * MHZ, 100000000U,  400, 6,  4),
-	{ /* sentinel */ }
-};
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
 /* AUD_PLL */
-static const struct samsung_pll_rate_table exynos5433_aud_pll_rates[] __initconst = {
+अटल स्थिर काष्ठा samsung_pll_rate_table exynos5433_aud_pll_rates[] __initस्थिर = अणु
 	PLL_36XX_RATE(24 * MHZ, 400000000U, 200, 3, 2,      0),
 	PLL_36XX_RATE(24 * MHZ, 393216003U, 197, 3, 2, -25690),
 	PLL_36XX_RATE(24 * MHZ, 384000000U, 128, 2, 2,      0),
@@ -775,23 +776,23 @@ static const struct samsung_pll_rate_table exynos5433_aud_pll_rates[] __initcons
 	PLL_36XX_RATE(24 * MHZ, 288000000U,  96, 1, 3,      0),
 	PLL_36XX_RATE(24 * MHZ, 252000000U,  84, 1, 3,      0),
 	PLL_36XX_RATE(24 * MHZ, 196608001U, 197, 3, 3, -25690),
-	{ /* sentinel */ }
-};
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static const struct samsung_pll_clock top_pll_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_pll_घड़ी top_pll_clks[] __initस्थिर = अणु
 	PLL(pll_35xx, CLK_FOUT_ISP_PLL, "fout_isp_pll", "oscclk",
 		ISP_PLL_LOCK, ISP_PLL_CON0, exynos5433_pll_rates),
 	PLL(pll_36xx, CLK_FOUT_AUD_PLL, "fout_aud_pll", "oscclk",
 		AUD_PLL_LOCK, AUD_PLL_CON0, exynos5433_aud_pll_rates),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info top_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info top_cmu_info __initस्थिर = अणु
 	.pll_clks		= top_pll_clks,
 	.nr_pll_clks		= ARRAY_SIZE(top_pll_clks),
 	.mux_clks		= top_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(top_mux_clks),
-	.div_clks		= top_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(top_div_clks),
+	.भाग_clks		= top_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(top_भाग_clks),
 	.gate_clks		= top_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(top_gate_clks),
 	.fixed_clks		= top_fixed_clks,
@@ -803,27 +804,27 @@ static const struct samsung_cmu_info top_cmu_info __initconst = {
 	.nr_clk_regs		= ARRAY_SIZE(top_clk_regs),
 	.suspend_regs		= top_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(top_suspend_regs),
-};
+पूर्ण;
 
-static void __init exynos5433_cmu_top_init(struct device_node *np)
-{
-	samsung_cmu_register_one(np, &top_cmu_info);
-}
+अटल व्योम __init exynos5433_cmu_top_init(काष्ठा device_node *np)
+अणु
+	samsung_cmu_रेजिस्टर_one(np, &top_cmu_info);
+पूर्ण
 CLK_OF_DECLARE(exynos5433_cmu_top, "samsung,exynos5433-cmu-top",
 		exynos5433_cmu_top_init);
 
 /*
- * Register offset definitions for CMU_CPIF
+ * Register offset definitions क्रम CMU_CPIF
  */
-#define MPHY_PLL_LOCK		0x0000
-#define MPHY_PLL_CON0		0x0100
-#define MPHY_PLL_CON1		0x0104
-#define MPHY_PLL_FREQ_DET	0x010c
-#define MUX_SEL_CPIF0		0x0200
-#define DIV_CPIF		0x0600
-#define ENABLE_SCLK_CPIF	0x0a00
+#घोषणा MPHY_PLL_LOCK		0x0000
+#घोषणा MPHY_PLL_CON0		0x0100
+#घोषणा MPHY_PLL_CON1		0x0104
+#घोषणा MPHY_PLL_FREQ_DET	0x010c
+#घोषणा MUX_SEL_CPIF0		0x0200
+#घोषणा DIV_CPIF		0x0600
+#घोषणा ENABLE_SCLK_CPIF	0x0a00
 
-static const unsigned long cpif_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ cpअगर_clk_regs[] __initस्थिर = अणु
 	MPHY_PLL_LOCK,
 	MPHY_PLL_CON0,
 	MPHY_PLL_CON1,
@@ -831,147 +832,147 @@ static const unsigned long cpif_clk_regs[] __initconst = {
 	MUX_SEL_CPIF0,
 	DIV_CPIF,
 	ENABLE_SCLK_CPIF,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump cpif_suspend_regs[] = {
-	/* force all sclk clocks enabled */
-	{ ENABLE_SCLK_CPIF, 0x3ff },
-	/* MPHY PLL has to be enabled for suspend: reset value + ENABLE bit */
-	{ MPHY_PLL_CON0, 0x81c70601 },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump cpअगर_suspend_regs[] = अणु
+	/* क्रमce all sclk घड़ीs enabled */
+	अणु ENABLE_SCLK_CPIF, 0x3ff पूर्ण,
+	/* MPHY PLL has to be enabled क्रम suspend: reset value + ENABLE bit */
+	अणु MPHY_PLL_CON0, 0x81c70601 पूर्ण,
+पूर्ण;
 
-/* list of all parent clock list */
-PNAME(mout_mphy_pll_p)		= { "oscclk", "fout_mphy_pll", };
+/* list of all parent घड़ी list */
+PNAME(mout_mphy_pll_p)		= अणु "oscclk", "fout_mphy_pll", पूर्ण;
 
-static const struct samsung_pll_clock cpif_pll_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_pll_घड़ी cpअगर_pll_clks[] __initस्थिर = अणु
 	PLL(pll_35xx, CLK_FOUT_MPHY_PLL, "fout_mphy_pll", "oscclk",
 		MPHY_PLL_LOCK, MPHY_PLL_CON0, exynos5433_pll_rates),
-};
+पूर्ण;
 
-static const struct samsung_mux_clock cpif_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी cpअगर_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_CPIF0 */
 	MUX(CLK_MOUT_MPHY_PLL, "mout_mphy_pll", mout_mphy_pll_p, MUX_SEL_CPIF0,
 			0, 1),
-};
+पूर्ण;
 
-static const struct samsung_div_clock cpif_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी cpअगर_भाग_clks[] __initस्थिर = अणु
 	/* DIV_CPIF */
 	DIV(CLK_DIV_SCLK_MPHY, "div_sclk_mphy", "mout_mphy_pll", DIV_CPIF,
 			0, 6),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock cpif_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी cpअगर_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_SCLK_CPIF */
 	GATE(CLK_SCLK_MPHY_PLL, "sclk_mphy_pll", "mout_mphy_pll",
 			ENABLE_SCLK_CPIF, 9, CLK_IGNORE_UNUSED, 0),
 	GATE(CLK_SCLK_UFS_MPHY, "sclk_ufs_mphy", "div_sclk_mphy",
 			ENABLE_SCLK_CPIF, 4, 0, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info cpif_cmu_info __initconst = {
-	.pll_clks		= cpif_pll_clks,
-	.nr_pll_clks		= ARRAY_SIZE(cpif_pll_clks),
-	.mux_clks		= cpif_mux_clks,
-	.nr_mux_clks		= ARRAY_SIZE(cpif_mux_clks),
-	.div_clks		= cpif_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(cpif_div_clks),
-	.gate_clks		= cpif_gate_clks,
-	.nr_gate_clks		= ARRAY_SIZE(cpif_gate_clks),
+अटल स्थिर काष्ठा samsung_cmu_info cpअगर_cmu_info __initस्थिर = अणु
+	.pll_clks		= cpअगर_pll_clks,
+	.nr_pll_clks		= ARRAY_SIZE(cpअगर_pll_clks),
+	.mux_clks		= cpअगर_mux_clks,
+	.nr_mux_clks		= ARRAY_SIZE(cpअगर_mux_clks),
+	.भाग_clks		= cpअगर_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(cpअगर_भाग_clks),
+	.gate_clks		= cpअगर_gate_clks,
+	.nr_gate_clks		= ARRAY_SIZE(cpअगर_gate_clks),
 	.nr_clk_ids		= CPIF_NR_CLK,
-	.clk_regs		= cpif_clk_regs,
-	.nr_clk_regs		= ARRAY_SIZE(cpif_clk_regs),
-	.suspend_regs		= cpif_suspend_regs,
-	.nr_suspend_regs	= ARRAY_SIZE(cpif_suspend_regs),
-};
+	.clk_regs		= cpअगर_clk_regs,
+	.nr_clk_regs		= ARRAY_SIZE(cpअगर_clk_regs),
+	.suspend_regs		= cpअगर_suspend_regs,
+	.nr_suspend_regs	= ARRAY_SIZE(cpअगर_suspend_regs),
+पूर्ण;
 
-static void __init exynos5433_cmu_cpif_init(struct device_node *np)
-{
-	samsung_cmu_register_one(np, &cpif_cmu_info);
-}
-CLK_OF_DECLARE(exynos5433_cmu_cpif, "samsung,exynos5433-cmu-cpif",
-		exynos5433_cmu_cpif_init);
+अटल व्योम __init exynos5433_cmu_cpअगर_init(काष्ठा device_node *np)
+अणु
+	samsung_cmu_रेजिस्टर_one(np, &cpअगर_cmu_info);
+पूर्ण
+CLK_OF_DECLARE(exynos5433_cmu_cpअगर, "samsung,exynos5433-cmu-cpif",
+		exynos5433_cmu_cpअगर_init);
 
 /*
- * Register offset definitions for CMU_MIF
+ * Register offset definitions क्रम CMU_MIF
  */
-#define MEM0_PLL_LOCK			0x0000
-#define MEM1_PLL_LOCK			0x0004
-#define BUS_PLL_LOCK			0x0008
-#define MFC_PLL_LOCK			0x000c
-#define MEM0_PLL_CON0			0x0100
-#define MEM0_PLL_CON1			0x0104
-#define MEM0_PLL_FREQ_DET		0x010c
-#define MEM1_PLL_CON0			0x0110
-#define MEM1_PLL_CON1			0x0114
-#define MEM1_PLL_FREQ_DET		0x011c
-#define BUS_PLL_CON0			0x0120
-#define BUS_PLL_CON1			0x0124
-#define BUS_PLL_FREQ_DET		0x012c
-#define MFC_PLL_CON0			0x0130
-#define MFC_PLL_CON1			0x0134
-#define MFC_PLL_FREQ_DET		0x013c
-#define MUX_SEL_MIF0			0x0200
-#define MUX_SEL_MIF1			0x0204
-#define MUX_SEL_MIF2			0x0208
-#define MUX_SEL_MIF3			0x020c
-#define MUX_SEL_MIF4			0x0210
-#define MUX_SEL_MIF5			0x0214
-#define MUX_SEL_MIF6			0x0218
-#define MUX_SEL_MIF7			0x021c
-#define MUX_ENABLE_MIF0			0x0300
-#define MUX_ENABLE_MIF1			0x0304
-#define MUX_ENABLE_MIF2			0x0308
-#define MUX_ENABLE_MIF3			0x030c
-#define MUX_ENABLE_MIF4			0x0310
-#define MUX_ENABLE_MIF5			0x0314
-#define MUX_ENABLE_MIF6			0x0318
-#define MUX_ENABLE_MIF7			0x031c
-#define MUX_STAT_MIF0			0x0400
-#define MUX_STAT_MIF1			0x0404
-#define MUX_STAT_MIF2			0x0408
-#define MUX_STAT_MIF3			0x040c
-#define MUX_STAT_MIF4			0x0410
-#define MUX_STAT_MIF5			0x0414
-#define MUX_STAT_MIF6			0x0418
-#define MUX_STAT_MIF7			0x041c
-#define DIV_MIF1			0x0604
-#define DIV_MIF2			0x0608
-#define DIV_MIF3			0x060c
-#define DIV_MIF4			0x0610
-#define DIV_MIF5			0x0614
-#define DIV_MIF_PLL_FREQ_DET		0x0618
-#define DIV_STAT_MIF1			0x0704
-#define DIV_STAT_MIF2			0x0708
-#define DIV_STAT_MIF3			0x070c
-#define DIV_STAT_MIF4			0x0710
-#define DIV_STAT_MIF5			0x0714
-#define DIV_STAT_MIF_PLL_FREQ_DET	0x0718
-#define ENABLE_ACLK_MIF0		0x0800
-#define ENABLE_ACLK_MIF1		0x0804
-#define ENABLE_ACLK_MIF2		0x0808
-#define ENABLE_ACLK_MIF3		0x080c
-#define ENABLE_PCLK_MIF			0x0900
-#define ENABLE_PCLK_MIF_SECURE_DREX0_TZ	0x0904
-#define ENABLE_PCLK_MIF_SECURE_DREX1_TZ	0x0908
-#define ENABLE_PCLK_MIF_SECURE_MONOTONIC_CNT	0x090c
-#define ENABLE_PCLK_MIF_SECURE_RTC	0x0910
-#define ENABLE_SCLK_MIF			0x0a00
-#define ENABLE_IP_MIF0			0x0b00
-#define ENABLE_IP_MIF1			0x0b04
-#define ENABLE_IP_MIF2			0x0b08
-#define ENABLE_IP_MIF3			0x0b0c
-#define ENABLE_IP_MIF_SECURE_DREX0_TZ	0x0b10
-#define ENABLE_IP_MIF_SECURE_DREX1_TZ	0x0b14
-#define ENABLE_IP_MIF_SECURE_MONOTONIC_CNT	0x0b18
-#define ENABLE_IP_MIF_SECURE_RTC	0x0b1c
-#define CLKOUT_CMU_MIF			0x0c00
-#define CLKOUT_CMU_MIF_DIV_STAT		0x0c04
-#define DREX_FREQ_CTRL0			0x1000
-#define DREX_FREQ_CTRL1			0x1004
-#define PAUSE				0x1008
-#define DDRPHY_LOCK_CTRL		0x100c
+#घोषणा MEM0_PLL_LOCK			0x0000
+#घोषणा MEM1_PLL_LOCK			0x0004
+#घोषणा BUS_PLL_LOCK			0x0008
+#घोषणा MFC_PLL_LOCK			0x000c
+#घोषणा MEM0_PLL_CON0			0x0100
+#घोषणा MEM0_PLL_CON1			0x0104
+#घोषणा MEM0_PLL_FREQ_DET		0x010c
+#घोषणा MEM1_PLL_CON0			0x0110
+#घोषणा MEM1_PLL_CON1			0x0114
+#घोषणा MEM1_PLL_FREQ_DET		0x011c
+#घोषणा BUS_PLL_CON0			0x0120
+#घोषणा BUS_PLL_CON1			0x0124
+#घोषणा BUS_PLL_FREQ_DET		0x012c
+#घोषणा MFC_PLL_CON0			0x0130
+#घोषणा MFC_PLL_CON1			0x0134
+#घोषणा MFC_PLL_FREQ_DET		0x013c
+#घोषणा MUX_SEL_MIF0			0x0200
+#घोषणा MUX_SEL_MIF1			0x0204
+#घोषणा MUX_SEL_MIF2			0x0208
+#घोषणा MUX_SEL_MIF3			0x020c
+#घोषणा MUX_SEL_MIF4			0x0210
+#घोषणा MUX_SEL_MIF5			0x0214
+#घोषणा MUX_SEL_MIF6			0x0218
+#घोषणा MUX_SEL_MIF7			0x021c
+#घोषणा MUX_ENABLE_MIF0			0x0300
+#घोषणा MUX_ENABLE_MIF1			0x0304
+#घोषणा MUX_ENABLE_MIF2			0x0308
+#घोषणा MUX_ENABLE_MIF3			0x030c
+#घोषणा MUX_ENABLE_MIF4			0x0310
+#घोषणा MUX_ENABLE_MIF5			0x0314
+#घोषणा MUX_ENABLE_MIF6			0x0318
+#घोषणा MUX_ENABLE_MIF7			0x031c
+#घोषणा MUX_STAT_MIF0			0x0400
+#घोषणा MUX_STAT_MIF1			0x0404
+#घोषणा MUX_STAT_MIF2			0x0408
+#घोषणा MUX_STAT_MIF3			0x040c
+#घोषणा MUX_STAT_MIF4			0x0410
+#घोषणा MUX_STAT_MIF5			0x0414
+#घोषणा MUX_STAT_MIF6			0x0418
+#घोषणा MUX_STAT_MIF7			0x041c
+#घोषणा DIV_MIF1			0x0604
+#घोषणा DIV_MIF2			0x0608
+#घोषणा DIV_MIF3			0x060c
+#घोषणा DIV_MIF4			0x0610
+#घोषणा DIV_MIF5			0x0614
+#घोषणा DIV_MIF_PLL_FREQ_DET		0x0618
+#घोषणा DIV_STAT_MIF1			0x0704
+#घोषणा DIV_STAT_MIF2			0x0708
+#घोषणा DIV_STAT_MIF3			0x070c
+#घोषणा DIV_STAT_MIF4			0x0710
+#घोषणा DIV_STAT_MIF5			0x0714
+#घोषणा DIV_STAT_MIF_PLL_FREQ_DET	0x0718
+#घोषणा ENABLE_ACLK_MIF0		0x0800
+#घोषणा ENABLE_ACLK_MIF1		0x0804
+#घोषणा ENABLE_ACLK_MIF2		0x0808
+#घोषणा ENABLE_ACLK_MIF3		0x080c
+#घोषणा ENABLE_PCLK_MIF			0x0900
+#घोषणा ENABLE_PCLK_MIF_SECURE_DREX0_TZ	0x0904
+#घोषणा ENABLE_PCLK_MIF_SECURE_DREX1_TZ	0x0908
+#घोषणा ENABLE_PCLK_MIF_SECURE_MONOTONIC_CNT	0x090c
+#घोषणा ENABLE_PCLK_MIF_SECURE_RTC	0x0910
+#घोषणा ENABLE_SCLK_MIF			0x0a00
+#घोषणा ENABLE_IP_MIF0			0x0b00
+#घोषणा ENABLE_IP_MIF1			0x0b04
+#घोषणा ENABLE_IP_MIF2			0x0b08
+#घोषणा ENABLE_IP_MIF3			0x0b0c
+#घोषणा ENABLE_IP_MIF_SECURE_DREX0_TZ	0x0b10
+#घोषणा ENABLE_IP_MIF_SECURE_DREX1_TZ	0x0b14
+#घोषणा ENABLE_IP_MIF_SECURE_MONOTONIC_CNT	0x0b18
+#घोषणा ENABLE_IP_MIF_SECURE_RTC	0x0b1c
+#घोषणा CLKOUT_CMU_MIF			0x0c00
+#घोषणा CLKOUT_CMU_MIF_DIV_STAT		0x0c04
+#घोषणा DREX_FREQ_CTRL0			0x1000
+#घोषणा DREX_FREQ_CTRL1			0x1004
+#घोषणा PAUSE				0x1008
+#घोषणा DDRPHY_LOCK_CTRL		0x100c
 
-static const unsigned long mif_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ mअगर_clk_regs[] __initस्थिर = अणु
 	MEM0_PLL_LOCK,
 	MEM1_PLL_LOCK,
 	BUS_PLL_LOCK,
@@ -1034,9 +1035,9 @@ static const unsigned long mif_clk_regs[] __initconst = {
 	DREX_FREQ_CTRL1,
 	PAUSE,
 	DDRPHY_LOCK_CTRL,
-};
+पूर्ण;
 
-static const struct samsung_pll_clock mif_pll_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_pll_घड़ी mअगर_pll_clks[] __initस्थिर = अणु
 	PLL(pll_35xx, CLK_FOUT_MEM0_PLL, "fout_mem0_pll", "oscclk",
 		MEM0_PLL_LOCK, MEM0_PLL_CON0, exynos5433_pll_rates),
 	PLL(pll_35xx, CLK_FOUT_MEM1_PLL, "fout_mem1_pll", "oscclk",
@@ -1045,75 +1046,75 @@ static const struct samsung_pll_clock mif_pll_clks[] __initconst = {
 		BUS_PLL_LOCK, BUS_PLL_CON0, exynos5433_pll_rates),
 	PLL(pll_35xx, CLK_FOUT_MFC_PLL, "fout_mfc_pll", "oscclk",
 		MFC_PLL_LOCK, MFC_PLL_CON0, exynos5433_pll_rates),
-};
+पूर्ण;
 
-/* list of all parent clock list */
-PNAME(mout_mfc_pll_div2_p)	= { "mout_mfc_pll", "dout_mfc_pll", };
-PNAME(mout_bus_pll_div2_p)	= { "mout_bus_pll", "dout_bus_pll", };
-PNAME(mout_mem1_pll_div2_p)	= { "mout_mem1_pll", "dout_mem1_pll", };
-PNAME(mout_mem0_pll_div2_p)	= { "mout_mem0_pll", "dout_mem0_pll", };
-PNAME(mout_mfc_pll_p)		= { "oscclk", "fout_mfc_pll", };
-PNAME(mout_bus_pll_p)		= { "oscclk", "fout_bus_pll", };
-PNAME(mout_mem1_pll_p)		= { "oscclk", "fout_mem1_pll", };
-PNAME(mout_mem0_pll_p)		= { "oscclk", "fout_mem0_pll", };
+/* list of all parent घड़ी list */
+PNAME(mout_mfc_pll_भाग2_p)	= अणु "mout_mfc_pll", "dout_mfc_pll", पूर्ण;
+PNAME(mout_bus_pll_भाग2_p)	= अणु "mout_bus_pll", "dout_bus_pll", पूर्ण;
+PNAME(mout_mem1_pll_भाग2_p)	= अणु "mout_mem1_pll", "dout_mem1_pll", पूर्ण;
+PNAME(mout_mem0_pll_भाग2_p)	= अणु "mout_mem0_pll", "dout_mem0_pll", पूर्ण;
+PNAME(mout_mfc_pll_p)		= अणु "oscclk", "fout_mfc_pll", पूर्ण;
+PNAME(mout_bus_pll_p)		= अणु "oscclk", "fout_bus_pll", पूर्ण;
+PNAME(mout_mem1_pll_p)		= अणु "oscclk", "fout_mem1_pll", पूर्ण;
+PNAME(mout_mem0_pll_p)		= अणु "oscclk", "fout_mem0_pll", पूर्ण;
 
-PNAME(mout_clk2x_phy_c_p)	= { "mout_mem0_pll_div2", "mout_clkm_phy_b", };
-PNAME(mout_clk2x_phy_b_p)	= { "mout_bus_pll_div2", "mout_clkm_phy_a", };
-PNAME(mout_clk2x_phy_a_p)	= { "mout_bus_pll_div2", "mout_mfc_pll_div2", };
-PNAME(mout_clkm_phy_b_p)	= { "mout_mem1_pll_div2", "mout_clkm_phy_a", };
+PNAME(mout_clk2x_phy_c_p)	= अणु "mout_mem0_pll_div2", "mout_clkm_phy_b", पूर्ण;
+PNAME(mout_clk2x_phy_b_p)	= अणु "mout_bus_pll_div2", "mout_clkm_phy_a", पूर्ण;
+PNAME(mout_clk2x_phy_a_p)	= अणु "mout_bus_pll_div2", "mout_mfc_pll_div2", पूर्ण;
+PNAME(mout_clkm_phy_b_p)	= अणु "mout_mem1_pll_div2", "mout_clkm_phy_a", पूर्ण;
 
-PNAME(mout_aclk_mifnm_200_p)	= { "mout_mem0_pll_div2", "div_mif_pre", };
-PNAME(mout_aclk_mifnm_400_p)	= { "mout_mem1_pll_div2", "mout_bus_pll_div2",};
+PNAME(mout_aclk_mअगरnm_200_p)	= अणु "mout_mem0_pll_div2", "div_mif_pre", पूर्ण;
+PNAME(mout_aclk_mअगरnm_400_p)	= अणु "mout_mem1_pll_div2", "mout_bus_pll_div2",पूर्ण;
 
-PNAME(mout_aclk_disp_333_b_p)	= { "mout_aclk_disp_333_a",
-				    "mout_bus_pll_div2", };
-PNAME(mout_aclk_disp_333_a_p)	= { "mout_mfc_pll_div2", "sclk_mphy_pll", };
+PNAME(mout_aclk_disp_333_b_p)	= अणु "mout_aclk_disp_333_a",
+				    "mout_bus_pll_div2", पूर्ण;
+PNAME(mout_aclk_disp_333_a_p)	= अणु "mout_mfc_pll_div2", "sclk_mphy_pll", पूर्ण;
 
-PNAME(mout_sclk_decon_vclk_c_p)	= { "mout_sclk_decon_vclk_b",
-				    "sclk_mphy_pll", };
-PNAME(mout_sclk_decon_vclk_b_p)	= { "mout_sclk_decon_vclk_a",
-				    "mout_mfc_pll_div2", };
-PNAME(mout_sclk_decon_p)	= { "oscclk", "mout_bus_pll_div2", };
-PNAME(mout_sclk_decon_eclk_c_p)	= { "mout_sclk_decon_eclk_b",
-				    "sclk_mphy_pll", };
-PNAME(mout_sclk_decon_eclk_b_p)	= { "mout_sclk_decon_eclk_a",
-				    "mout_mfc_pll_div2", };
+PNAME(mout_sclk_decon_vclk_c_p)	= अणु "mout_sclk_decon_vclk_b",
+				    "sclk_mphy_pll", पूर्ण;
+PNAME(mout_sclk_decon_vclk_b_p)	= अणु "mout_sclk_decon_vclk_a",
+				    "mout_mfc_pll_div2", पूर्ण;
+PNAME(mout_sclk_decon_p)	= अणु "oscclk", "mout_bus_pll_div2", पूर्ण;
+PNAME(mout_sclk_decon_eclk_c_p)	= अणु "mout_sclk_decon_eclk_b",
+				    "sclk_mphy_pll", पूर्ण;
+PNAME(mout_sclk_decon_eclk_b_p)	= अणु "mout_sclk_decon_eclk_a",
+				    "mout_mfc_pll_div2", पूर्ण;
 
-PNAME(mout_sclk_decon_tv_eclk_c_p) = { "mout_sclk_decon_tv_eclk_b",
-				       "sclk_mphy_pll", };
-PNAME(mout_sclk_decon_tv_eclk_b_p) = { "mout_sclk_decon_tv_eclk_a",
-				       "mout_mfc_pll_div2", };
-PNAME(mout_sclk_dsd_c_p)	= { "mout_sclk_dsd_b", "mout_bus_pll_div2", };
-PNAME(mout_sclk_dsd_b_p)	= { "mout_sclk_dsd_a", "sclk_mphy_pll", };
-PNAME(mout_sclk_dsd_a_p)	= { "oscclk", "mout_mfc_pll_div2", };
+PNAME(mout_sclk_decon_tv_eclk_c_p) = अणु "mout_sclk_decon_tv_eclk_b",
+				       "sclk_mphy_pll", पूर्ण;
+PNAME(mout_sclk_decon_tv_eclk_b_p) = अणु "mout_sclk_decon_tv_eclk_a",
+				       "mout_mfc_pll_div2", पूर्ण;
+PNAME(mout_sclk_dsd_c_p)	= अणु "mout_sclk_dsd_b", "mout_bus_pll_div2", पूर्ण;
+PNAME(mout_sclk_dsd_b_p)	= अणु "mout_sclk_dsd_a", "sclk_mphy_pll", पूर्ण;
+PNAME(mout_sclk_dsd_a_p)	= अणु "oscclk", "mout_mfc_pll_div2", पूर्ण;
 
-PNAME(mout_sclk_dsim0_c_p)	= { "mout_sclk_dsim0_b", "sclk_mphy_pll", };
-PNAME(mout_sclk_dsim0_b_p)	= { "mout_sclk_dsim0_a", "mout_mfc_pll_div2" };
+PNAME(mout_sclk_dsim0_c_p)	= अणु "mout_sclk_dsim0_b", "sclk_mphy_pll", पूर्ण;
+PNAME(mout_sclk_dsim0_b_p)	= अणु "mout_sclk_dsim0_a", "mout_mfc_pll_div2" पूर्ण;
 
-PNAME(mout_sclk_decon_tv_vclk_c_p) = { "mout_sclk_decon_tv_vclk_b",
-				       "sclk_mphy_pll", };
-PNAME(mout_sclk_decon_tv_vclk_b_p) = { "mout_sclk_decon_tv_vclk_a",
-				       "mout_mfc_pll_div2", };
-PNAME(mout_sclk_dsim1_c_p)	= { "mout_sclk_dsim1_b", "sclk_mphy_pll", };
-PNAME(mout_sclk_dsim1_b_p)	= { "mout_sclk_dsim1_a", "mout_mfc_pll_div2",};
+PNAME(mout_sclk_decon_tv_vclk_c_p) = अणु "mout_sclk_decon_tv_vclk_b",
+				       "sclk_mphy_pll", पूर्ण;
+PNAME(mout_sclk_decon_tv_vclk_b_p) = अणु "mout_sclk_decon_tv_vclk_a",
+				       "mout_mfc_pll_div2", पूर्ण;
+PNAME(mout_sclk_dsim1_c_p)	= अणु "mout_sclk_dsim1_b", "sclk_mphy_pll", पूर्ण;
+PNAME(mout_sclk_dsim1_b_p)	= अणु "mout_sclk_dsim1_a", "mout_mfc_pll_div2",पूर्ण;
 
-static const struct samsung_fixed_factor_clock mif_fixed_factor_clks[] __initconst = {
-	/* dout_{mfc|bus|mem1|mem0}_pll is half fixed rate from parent mux */
+अटल स्थिर काष्ठा samsung_fixed_factor_घड़ी mअगर_fixed_factor_clks[] __initस्थिर = अणु
+	/* करोut_अणुmfc|bus|mem1|mem0पूर्ण_pll is half fixed rate from parent mux */
 	FFACTOR(CLK_DOUT_MFC_PLL, "dout_mfc_pll", "mout_mfc_pll", 1, 1, 0),
 	FFACTOR(CLK_DOUT_BUS_PLL, "dout_bus_pll", "mout_bus_pll", 1, 1, 0),
 	FFACTOR(CLK_DOUT_MEM1_PLL, "dout_mem1_pll", "mout_mem1_pll", 1, 1, 0),
 	FFACTOR(CLK_DOUT_MEM0_PLL, "dout_mem0_pll", "mout_mem0_pll", 1, 1, 0),
-};
+पूर्ण;
 
-static const struct samsung_mux_clock mif_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी mअगर_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_MIF0 */
-	MUX(CLK_MOUT_MFC_PLL_DIV2, "mout_mfc_pll_div2", mout_mfc_pll_div2_p,
+	MUX(CLK_MOUT_MFC_PLL_DIV2, "mout_mfc_pll_div2", mout_mfc_pll_भाग2_p,
 			MUX_SEL_MIF0, 28, 1),
-	MUX(CLK_MOUT_BUS_PLL_DIV2, "mout_bus_pll_div2", mout_bus_pll_div2_p,
+	MUX(CLK_MOUT_BUS_PLL_DIV2, "mout_bus_pll_div2", mout_bus_pll_भाग2_p,
 			MUX_SEL_MIF0, 24, 1),
-	MUX(CLK_MOUT_MEM1_PLL_DIV2, "mout_mem1_pll_div2", mout_mem1_pll_div2_p,
+	MUX(CLK_MOUT_MEM1_PLL_DIV2, "mout_mem1_pll_div2", mout_mem1_pll_भाग2_p,
 			MUX_SEL_MIF0, 20, 1),
-	MUX(CLK_MOUT_MEM0_PLL_DIV2, "mout_mem0_pll_div2", mout_mem0_pll_div2_p,
+	MUX(CLK_MOUT_MEM0_PLL_DIV2, "mout_mem0_pll_div2", mout_mem0_pll_भाग2_p,
 			MUX_SEL_MIF0, 16, 1),
 	MUX(CLK_MOUT_MFC_PLL, "mout_mfc_pll", mout_mfc_pll_p, MUX_SEL_MIF0,
 			12, 1),
@@ -1140,9 +1141,9 @@ static const struct samsung_mux_clock mif_mux_clks[] __initconst = {
 
 	/* MUX_SEL_MIF2 */
 	MUX(CLK_MOUT_ACLK_MIFNM_200, "mout_aclk_mifnm_200",
-			mout_aclk_mifnm_200_p, MUX_SEL_MIF2, 8, 1),
+			mout_aclk_mअगरnm_200_p, MUX_SEL_MIF2, 8, 1),
 	MUX(CLK_MOUT_ACLK_MIFNM_400, "mout_aclk_mifnm_400",
-			mout_aclk_mifnm_400_p, MUX_SEL_MIF2, 0, 1),
+			mout_aclk_mअगरnm_400_p, MUX_SEL_MIF2, 0, 1),
 
 	/* MUX_SEL_MIF3 */
 	MUX(CLK_MOUT_ACLK_DISP_333_B, "mout_aclk_disp_333_b",
@@ -1199,9 +1200,9 @@ static const struct samsung_mux_clock mif_mux_clks[] __initconst = {
 			MUX_SEL_MIF7, 4, 1),
 	MUX(CLK_MOUT_SCLK_DSIM1_A, "mout_sclk_dsim1_a", mout_sclk_decon_p,
 			MUX_SEL_MIF7, 0, 1),
-};
+पूर्ण;
 
-static const struct samsung_div_clock mif_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी mअगर_भाग_clks[] __initस्थिर = अणु
 	/* DIV_MIF1 */
 	DIV(CLK_DIV_SCLK_HPM_MIF, "div_sclk_hpm_mif", "div_clk2x_phy",
 			DIV_MIF1, 16, 2),
@@ -1253,9 +1254,9 @@ static const struct samsung_div_clock mif_div_clks[] __initconst = {
 	/* DIV_MIF5 */
 	DIV(CLK_DIV_MIF_PRE, "div_mif_pre", "mout_bus_pll_div2", DIV_MIF5,
 			0, 3),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock mif_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी mअगर_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_MIF0 */
 	GATE(CLK_CLK2X_PHY1, "clk2k_phy1", "div_clk2x_phy", ENABLE_ACLK_MIF0,
 			19, CLK_IGNORE_UNUSED, 0),
@@ -1518,45 +1519,45 @@ static const struct samsung_gate_clock mif_gate_clks[] __initconst = {
 			ENABLE_SCLK_MIF, 1, CLK_IGNORE_UNUSED, 0),
 	GATE(CLK_SCLK_BUS_PLL_ATLAS, "sclk_bus_pll_atlas", "sclk_bus_pll",
 			ENABLE_SCLK_MIF, 0, CLK_IGNORE_UNUSED, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info mif_cmu_info __initconst = {
-	.pll_clks		= mif_pll_clks,
-	.nr_pll_clks		= ARRAY_SIZE(mif_pll_clks),
-	.mux_clks		= mif_mux_clks,
-	.nr_mux_clks		= ARRAY_SIZE(mif_mux_clks),
-	.div_clks		= mif_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(mif_div_clks),
-	.gate_clks		= mif_gate_clks,
-	.nr_gate_clks		= ARRAY_SIZE(mif_gate_clks),
-	.fixed_factor_clks	= mif_fixed_factor_clks,
-	.nr_fixed_factor_clks	= ARRAY_SIZE(mif_fixed_factor_clks),
+अटल स्थिर काष्ठा samsung_cmu_info mअगर_cmu_info __initस्थिर = अणु
+	.pll_clks		= mअगर_pll_clks,
+	.nr_pll_clks		= ARRAY_SIZE(mअगर_pll_clks),
+	.mux_clks		= mअगर_mux_clks,
+	.nr_mux_clks		= ARRAY_SIZE(mअगर_mux_clks),
+	.भाग_clks		= mअगर_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(mअगर_भाग_clks),
+	.gate_clks		= mअगर_gate_clks,
+	.nr_gate_clks		= ARRAY_SIZE(mअगर_gate_clks),
+	.fixed_factor_clks	= mअगर_fixed_factor_clks,
+	.nr_fixed_factor_clks	= ARRAY_SIZE(mअगर_fixed_factor_clks),
 	.nr_clk_ids		= MIF_NR_CLK,
-	.clk_regs		= mif_clk_regs,
-	.nr_clk_regs		= ARRAY_SIZE(mif_clk_regs),
-};
+	.clk_regs		= mअगर_clk_regs,
+	.nr_clk_regs		= ARRAY_SIZE(mअगर_clk_regs),
+पूर्ण;
 
-static void __init exynos5433_cmu_mif_init(struct device_node *np)
-{
-	samsung_cmu_register_one(np, &mif_cmu_info);
-}
-CLK_OF_DECLARE(exynos5433_cmu_mif, "samsung,exynos5433-cmu-mif",
-		exynos5433_cmu_mif_init);
+अटल व्योम __init exynos5433_cmu_mअगर_init(काष्ठा device_node *np)
+अणु
+	samsung_cmu_रेजिस्टर_one(np, &mअगर_cmu_info);
+पूर्ण
+CLK_OF_DECLARE(exynos5433_cmu_mअगर, "samsung,exynos5433-cmu-mif",
+		exynos5433_cmu_mअगर_init);
 
 /*
- * Register offset definitions for CMU_PERIC
+ * Register offset definitions क्रम CMU_PERIC
  */
-#define DIV_PERIC			0x0600
-#define DIV_STAT_PERIC			0x0700
-#define ENABLE_ACLK_PERIC		0x0800
-#define ENABLE_PCLK_PERIC0		0x0900
-#define ENABLE_PCLK_PERIC1		0x0904
-#define ENABLE_SCLK_PERIC		0x0A00
-#define ENABLE_IP_PERIC0		0x0B00
-#define ENABLE_IP_PERIC1		0x0B04
-#define ENABLE_IP_PERIC2		0x0B08
+#घोषणा DIV_PERIC			0x0600
+#घोषणा DIV_STAT_PERIC			0x0700
+#घोषणा ENABLE_ACLK_PERIC		0x0800
+#घोषणा ENABLE_PCLK_PERIC0		0x0900
+#घोषणा ENABLE_PCLK_PERIC1		0x0904
+#घोषणा ENABLE_SCLK_PERIC		0x0A00
+#घोषणा ENABLE_IP_PERIC0		0x0B00
+#घोषणा ENABLE_IP_PERIC1		0x0B04
+#घोषणा ENABLE_IP_PERIC2		0x0B08
 
-static const unsigned long peric_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ peric_clk_regs[] __initस्थिर = अणु
 	DIV_PERIC,
 	ENABLE_ACLK_PERIC,
 	ENABLE_PCLK_PERIC0,
@@ -1565,22 +1566,22 @@ static const unsigned long peric_clk_regs[] __initconst = {
 	ENABLE_IP_PERIC0,
 	ENABLE_IP_PERIC1,
 	ENABLE_IP_PERIC2,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump peric_suspend_regs[] = {
-	/* pclk: sci, pmu, sysreg, gpio_{finger, ese, touch, nfc}, uart2-0 */
-	{ ENABLE_PCLK_PERIC0, 0xe00ff000 },
+अटल स्थिर काष्ठा samsung_clk_reg_dump peric_suspend_regs[] = अणु
+	/* pclk: sci, pmu, sysreg, gpio_अणुfinger, ese, touch, nfcपूर्ण, uart2-0 */
+	अणु ENABLE_PCLK_PERIC0, 0xe00ff000 पूर्ण,
 	/* sclk: uart2-0 */
-	{ ENABLE_SCLK_PERIC, 0x7 },
-};
+	अणु ENABLE_SCLK_PERIC, 0x7 पूर्ण,
+पूर्ण;
 
-static const struct samsung_div_clock peric_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी peric_भाग_clks[] __initस्थिर = अणु
 	/* DIV_PERIC */
 	DIV(CLK_DIV_SCLK_SCI, "div_sclk_sci", "oscclk", DIV_PERIC, 4, 4),
 	DIV(CLK_DIV_SCLK_SC_IN, "div_sclk_sc_in", "oscclk", DIV_PERIC, 0, 4),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock peric_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी peric_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_PERIC */
 	GATE(CLK_ACLK_AHB2APB_PERIC2P, "aclk_ahb2apb_peric2p", "aclk_peric_66",
 			ENABLE_ACLK_PERIC, 3, CLK_IGNORE_UNUSED, 0),
@@ -1723,11 +1724,11 @@ static const struct samsung_gate_clock peric_gate_clks[] __initconst = {
 	GATE(CLK_SCLK_UART0, "sclk_uart0", "sclk_uart0_peric",
 			ENABLE_SCLK_PERIC, 0,
 			CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info peric_cmu_info __initconst = {
-	.div_clks		= peric_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(peric_div_clks),
+अटल स्थिर काष्ठा samsung_cmu_info peric_cmu_info __initस्थिर = अणु
+	.भाग_clks		= peric_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(peric_भाग_clks),
 	.gate_clks		= peric_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(peric_gate_clks),
 	.nr_clk_ids		= PERIC_NR_CLK,
@@ -1735,46 +1736,46 @@ static const struct samsung_cmu_info peric_cmu_info __initconst = {
 	.nr_clk_regs		= ARRAY_SIZE(peric_clk_regs),
 	.suspend_regs		= peric_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(peric_suspend_regs),
-};
+पूर्ण;
 
-static void __init exynos5433_cmu_peric_init(struct device_node *np)
-{
-	samsung_cmu_register_one(np, &peric_cmu_info);
-}
+अटल व्योम __init exynos5433_cmu_peric_init(काष्ठा device_node *np)
+अणु
+	samsung_cmu_रेजिस्टर_one(np, &peric_cmu_info);
+पूर्ण
 
 CLK_OF_DECLARE(exynos5433_cmu_peric, "samsung,exynos5433-cmu-peric",
 		exynos5433_cmu_peric_init);
 
 /*
- * Register offset definitions for CMU_PERIS
+ * Register offset definitions क्रम CMU_PERIS
  */
-#define ENABLE_ACLK_PERIS				0x0800
-#define ENABLE_PCLK_PERIS				0x0900
-#define ENABLE_PCLK_PERIS_SECURE_TZPC			0x0904
-#define ENABLE_PCLK_PERIS_SECURE_SECKEY_APBIF		0x0908
-#define ENABLE_PCLK_PERIS_SECURE_CHIPID_APBIF		0x090c
-#define ENABLE_PCLK_PERIS_SECURE_TOPRTC			0x0910
-#define ENABLE_PCLK_PERIS_SECURE_CUSTOM_EFUSE_APBIF	0x0914
-#define ENABLE_PCLK_PERIS_SECURE_ANTIRBK_CNT_APBIF	0x0918
-#define ENABLE_PCLK_PERIS_SECURE_OTP_CON_APBIF		0x091c
-#define ENABLE_SCLK_PERIS				0x0a00
-#define ENABLE_SCLK_PERIS_SECURE_SECKEY			0x0a04
-#define ENABLE_SCLK_PERIS_SECURE_CHIPID			0x0a08
-#define ENABLE_SCLK_PERIS_SECURE_TOPRTC			0x0a0c
-#define ENABLE_SCLK_PERIS_SECURE_CUSTOM_EFUSE		0x0a10
-#define ENABLE_SCLK_PERIS_SECURE_ANTIRBK_CNT		0x0a14
-#define ENABLE_SCLK_PERIS_SECURE_OTP_CON		0x0a18
-#define ENABLE_IP_PERIS0				0x0b00
-#define ENABLE_IP_PERIS1				0x0b04
-#define ENABLE_IP_PERIS_SECURE_TZPC			0x0b08
-#define ENABLE_IP_PERIS_SECURE_SECKEY			0x0b0c
-#define ENABLE_IP_PERIS_SECURE_CHIPID			0x0b10
-#define ENABLE_IP_PERIS_SECURE_TOPRTC			0x0b14
-#define ENABLE_IP_PERIS_SECURE_CUSTOM_EFUSE		0x0b18
-#define ENABLE_IP_PERIS_SECURE_ANTIBRK_CNT		0x0b1c
-#define ENABLE_IP_PERIS_SECURE_OTP_CON			0x0b20
+#घोषणा ENABLE_ACLK_PERIS				0x0800
+#घोषणा ENABLE_PCLK_PERIS				0x0900
+#घोषणा ENABLE_PCLK_PERIS_SECURE_TZPC			0x0904
+#घोषणा ENABLE_PCLK_PERIS_SECURE_SECKEY_APBIF		0x0908
+#घोषणा ENABLE_PCLK_PERIS_SECURE_CHIPID_APBIF		0x090c
+#घोषणा ENABLE_PCLK_PERIS_SECURE_TOPRTC			0x0910
+#घोषणा ENABLE_PCLK_PERIS_SECURE_CUSTOM_EFUSE_APBIF	0x0914
+#घोषणा ENABLE_PCLK_PERIS_SECURE_ANTIRBK_CNT_APBIF	0x0918
+#घोषणा ENABLE_PCLK_PERIS_SECURE_OTP_CON_APBIF		0x091c
+#घोषणा ENABLE_SCLK_PERIS				0x0a00
+#घोषणा ENABLE_SCLK_PERIS_SECURE_SECKEY			0x0a04
+#घोषणा ENABLE_SCLK_PERIS_SECURE_CHIPID			0x0a08
+#घोषणा ENABLE_SCLK_PERIS_SECURE_TOPRTC			0x0a0c
+#घोषणा ENABLE_SCLK_PERIS_SECURE_CUSTOM_EFUSE		0x0a10
+#घोषणा ENABLE_SCLK_PERIS_SECURE_ANTIRBK_CNT		0x0a14
+#घोषणा ENABLE_SCLK_PERIS_SECURE_OTP_CON		0x0a18
+#घोषणा ENABLE_IP_PERIS0				0x0b00
+#घोषणा ENABLE_IP_PERIS1				0x0b04
+#घोषणा ENABLE_IP_PERIS_SECURE_TZPC			0x0b08
+#घोषणा ENABLE_IP_PERIS_SECURE_SECKEY			0x0b0c
+#घोषणा ENABLE_IP_PERIS_SECURE_CHIPID			0x0b10
+#घोषणा ENABLE_IP_PERIS_SECURE_TOPRTC			0x0b14
+#घोषणा ENABLE_IP_PERIS_SECURE_CUSTOM_EFUSE		0x0b18
+#घोषणा ENABLE_IP_PERIS_SECURE_ANTIBRK_CNT		0x0b1c
+#घोषणा ENABLE_IP_PERIS_SECURE_OTP_CON			0x0b20
 
-static const unsigned long peris_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ peris_clk_regs[] __initस्थिर = अणु
 	ENABLE_ACLK_PERIS,
 	ENABLE_PCLK_PERIS,
 	ENABLE_PCLK_PERIS_SECURE_TZPC,
@@ -1800,9 +1801,9 @@ static const unsigned long peris_clk_regs[] __initconst = {
 	ENABLE_IP_PERIS_SECURE_CUSTOM_EFUSE,
 	ENABLE_IP_PERIS_SECURE_ANTIBRK_CNT,
 	ENABLE_IP_PERIS_SECURE_OTP_CON,
-};
+पूर्ण;
 
-static const struct samsung_gate_clock peris_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी peris_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_PERIS */
 	GATE(CLK_ACLK_AHB2APB_PERIS1P, "aclk_ahb2apb_peris1p", "aclk_peris_66",
 			ENABLE_ACLK_PERIS, 2, CLK_IGNORE_UNUSED, 0),
@@ -1919,93 +1920,93 @@ static const struct samsung_gate_clock peris_gate_clks[] __initconst = {
 	/* ENABLE_SCLK_PERIS_SECURE_OTP_CON */
 	GATE(CLK_SCLK_OTP_CON, "sclk_otp_con", "oscclk_efuse_common",
 			ENABLE_SCLK_PERIS_SECURE_OTP_CON, 0, 0, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info peris_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info peris_cmu_info __initस्थिर = अणु
 	.gate_clks		= peris_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(peris_gate_clks),
 	.nr_clk_ids		= PERIS_NR_CLK,
 	.clk_regs		= peris_clk_regs,
 	.nr_clk_regs		= ARRAY_SIZE(peris_clk_regs),
-};
+पूर्ण;
 
-static void __init exynos5433_cmu_peris_init(struct device_node *np)
-{
-	samsung_cmu_register_one(np, &peris_cmu_info);
-}
+अटल व्योम __init exynos5433_cmu_peris_init(काष्ठा device_node *np)
+अणु
+	samsung_cmu_रेजिस्टर_one(np, &peris_cmu_info);
+पूर्ण
 
 CLK_OF_DECLARE(exynos5433_cmu_peris, "samsung,exynos5433-cmu-peris",
 		exynos5433_cmu_peris_init);
 
 /*
- * Register offset definitions for CMU_FSYS
+ * Register offset definitions क्रम CMU_FSYS
  */
-#define MUX_SEL_FSYS0			0x0200
-#define MUX_SEL_FSYS1			0x0204
-#define MUX_SEL_FSYS2			0x0208
-#define MUX_SEL_FSYS3			0x020c
-#define MUX_SEL_FSYS4			0x0210
-#define MUX_ENABLE_FSYS0		0x0300
-#define MUX_ENABLE_FSYS1		0x0304
-#define MUX_ENABLE_FSYS2		0x0308
-#define MUX_ENABLE_FSYS3		0x030c
-#define MUX_ENABLE_FSYS4		0x0310
-#define MUX_STAT_FSYS0			0x0400
-#define MUX_STAT_FSYS1			0x0404
-#define MUX_STAT_FSYS2			0x0408
-#define MUX_STAT_FSYS3			0x040c
-#define MUX_STAT_FSYS4			0x0410
-#define MUX_IGNORE_FSYS2		0x0508
-#define MUX_IGNORE_FSYS3		0x050c
-#define ENABLE_ACLK_FSYS0		0x0800
-#define ENABLE_ACLK_FSYS1		0x0804
-#define ENABLE_PCLK_FSYS		0x0900
-#define ENABLE_SCLK_FSYS		0x0a00
-#define ENABLE_IP_FSYS0			0x0b00
-#define ENABLE_IP_FSYS1			0x0b04
+#घोषणा MUX_SEL_FSYS0			0x0200
+#घोषणा MUX_SEL_FSYS1			0x0204
+#घोषणा MUX_SEL_FSYS2			0x0208
+#घोषणा MUX_SEL_FSYS3			0x020c
+#घोषणा MUX_SEL_FSYS4			0x0210
+#घोषणा MUX_ENABLE_FSYS0		0x0300
+#घोषणा MUX_ENABLE_FSYS1		0x0304
+#घोषणा MUX_ENABLE_FSYS2		0x0308
+#घोषणा MUX_ENABLE_FSYS3		0x030c
+#घोषणा MUX_ENABLE_FSYS4		0x0310
+#घोषणा MUX_STAT_FSYS0			0x0400
+#घोषणा MUX_STAT_FSYS1			0x0404
+#घोषणा MUX_STAT_FSYS2			0x0408
+#घोषणा MUX_STAT_FSYS3			0x040c
+#घोषणा MUX_STAT_FSYS4			0x0410
+#घोषणा MUX_IGNORE_FSYS2		0x0508
+#घोषणा MUX_IGNORE_FSYS3		0x050c
+#घोषणा ENABLE_ACLK_FSYS0		0x0800
+#घोषणा ENABLE_ACLK_FSYS1		0x0804
+#घोषणा ENABLE_PCLK_FSYS		0x0900
+#घोषणा ENABLE_SCLK_FSYS		0x0a00
+#घोषणा ENABLE_IP_FSYS0			0x0b00
+#घोषणा ENABLE_IP_FSYS1			0x0b04
 
-/* list of all parent clock list */
-PNAME(mout_sclk_ufs_mphy_user_p)	= { "oscclk", "sclk_ufs_mphy", };
-PNAME(mout_aclk_fsys_200_user_p)	= { "oscclk", "aclk_fsys_200", };
-PNAME(mout_sclk_pcie_100_user_p)	= { "oscclk", "sclk_pcie_100_fsys",};
-PNAME(mout_sclk_ufsunipro_user_p)	= { "oscclk", "sclk_ufsunipro_fsys",};
-PNAME(mout_sclk_mmc2_user_p)		= { "oscclk", "sclk_mmc2_fsys", };
-PNAME(mout_sclk_mmc1_user_p)		= { "oscclk", "sclk_mmc1_fsys", };
-PNAME(mout_sclk_mmc0_user_p)		= { "oscclk", "sclk_mmc0_fsys", };
-PNAME(mout_sclk_usbhost30_user_p)	= { "oscclk", "sclk_usbhost30_fsys",};
-PNAME(mout_sclk_usbdrd30_user_p)	= { "oscclk", "sclk_usbdrd30_fsys", };
+/* list of all parent घड़ी list */
+PNAME(mout_sclk_ufs_mphy_user_p)	= अणु "oscclk", "sclk_ufs_mphy", पूर्ण;
+PNAME(mout_aclk_fsys_200_user_p)	= अणु "oscclk", "aclk_fsys_200", पूर्ण;
+PNAME(mout_sclk_pcie_100_user_p)	= अणु "oscclk", "sclk_pcie_100_fsys",पूर्ण;
+PNAME(mout_sclk_ufsunipro_user_p)	= अणु "oscclk", "sclk_ufsunipro_fsys",पूर्ण;
+PNAME(mout_sclk_mmc2_user_p)		= अणु "oscclk", "sclk_mmc2_fsys", पूर्ण;
+PNAME(mout_sclk_mmc1_user_p)		= अणु "oscclk", "sclk_mmc1_fsys", पूर्ण;
+PNAME(mout_sclk_mmc0_user_p)		= अणु "oscclk", "sclk_mmc0_fsys", पूर्ण;
+PNAME(mout_sclk_usbhost30_user_p)	= अणु "oscclk", "sclk_usbhost30_fsys",पूर्ण;
+PNAME(mout_sclk_usbdrd30_user_p)	= अणु "oscclk", "sclk_usbdrd30_fsys", पूर्ण;
 
 PNAME(mout_phyclk_usbhost30_uhost30_pipe_pclk_user_p)
-		= { "oscclk", "phyclk_usbhost30_uhost30_pipe_pclk_phy", };
-PNAME(mout_phyclk_usbhost30_uhost30_phyclock_user_p)
-		= { "oscclk", "phyclk_usbhost30_uhost30_phyclock_phy", };
+		= अणु "oscclk", "phyclk_usbhost30_uhost30_pipe_pclk_phy", पूर्ण;
+PNAME(mout_phyclk_usbhost30_uhost30_phyघड़ी_user_p)
+		= अणु "oscclk", "phyclk_usbhost30_uhost30_phyclock_phy", पूर्ण;
 PNAME(mout_phyclk_usbhost20_phy_hsic1_p)
-		= { "oscclk", "phyclk_usbhost20_phy_hsic1_phy", };
+		= अणु "oscclk", "phyclk_usbhost20_phy_hsic1_phy", पूर्ण;
 PNAME(mout_phyclk_usbhost20_phy_clk48mohci_user_p)
-		= { "oscclk", "phyclk_usbhost20_phy_clk48mohci_phy", };
-PNAME(mout_phyclk_usbhost20_phy_phyclock_user_p)
-		= { "oscclk", "phyclk_usbhost20_phy_phyclock_phy", };
-PNAME(mout_phyclk_usbhost20_phy_freeclk_user_p)
-		= { "oscclk", "phyclk_usbhost20_phy_freeclk_phy", };
+		= अणु "oscclk", "phyclk_usbhost20_phy_clk48mohci_phy", पूर्ण;
+PNAME(mout_phyclk_usbhost20_phy_phyघड़ी_user_p)
+		= अणु "oscclk", "phyclk_usbhost20_phy_phyclock_phy", पूर्ण;
+PNAME(mout_phyclk_usbhost20_phy_मुक्तclk_user_p)
+		= अणु "oscclk", "phyclk_usbhost20_phy_freeclk_phy", पूर्ण;
 PNAME(mout_phyclk_usbdrd30_udrd30_pipe_pclk_p)
-		= { "oscclk", "phyclk_usbdrd30_udrd30_pipe_pclk_phy", };
-PNAME(mout_phyclk_usbdrd30_udrd30_phyclock_user_p)
-		= { "oscclk", "phyclk_usbdrd30_udrd30_phyclock_phy", };
+		= अणु "oscclk", "phyclk_usbdrd30_udrd30_pipe_pclk_phy", पूर्ण;
+PNAME(mout_phyclk_usbdrd30_udrd30_phyघड़ी_user_p)
+		= अणु "oscclk", "phyclk_usbdrd30_udrd30_phyclock_phy", पूर्ण;
 PNAME(mout_phyclk_ufs_rx1_symbol_user_p)
-		= { "oscclk", "phyclk_ufs_rx1_symbol_phy", };
+		= अणु "oscclk", "phyclk_ufs_rx1_symbol_phy", पूर्ण;
 PNAME(mout_phyclk_ufs_rx0_symbol_user_p)
-		= { "oscclk", "phyclk_ufs_rx0_symbol_phy", };
+		= अणु "oscclk", "phyclk_ufs_rx0_symbol_phy", पूर्ण;
 PNAME(mout_phyclk_ufs_tx1_symbol_user_p)
-		= { "oscclk", "phyclk_ufs_tx1_symbol_phy", };
+		= अणु "oscclk", "phyclk_ufs_tx1_symbol_phy", पूर्ण;
 PNAME(mout_phyclk_ufs_tx0_symbol_user_p)
-		= { "oscclk", "phyclk_ufs_tx0_symbol_phy", };
+		= अणु "oscclk", "phyclk_ufs_tx0_symbol_phy", पूर्ण;
 PNAME(mout_phyclk_lli_mphy_to_ufs_user_p)
-		= { "oscclk", "phyclk_lli_mphy_to_ufs_phy", };
+		= अणु "oscclk", "phyclk_lli_mphy_to_ufs_phy", पूर्ण;
 PNAME(mout_sclk_mphy_p)
-		= { "mout_sclk_ufs_mphy_user",
-			    "mout_phyclk_lli_mphy_to_ufs_user", };
+		= अणु "mout_sclk_ufs_mphy_user",
+			    "mout_phyclk_lli_mphy_to_ufs_user", पूर्ण;
 
-static const unsigned long fsys_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ fsys_clk_regs[] __initस्थिर = अणु
 	MUX_SEL_FSYS0,
 	MUX_SEL_FSYS1,
 	MUX_SEL_FSYS2,
@@ -2024,57 +2025,57 @@ static const unsigned long fsys_clk_regs[] __initconst = {
 	ENABLE_SCLK_FSYS,
 	ENABLE_IP_FSYS0,
 	ENABLE_IP_FSYS1,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump fsys_suspend_regs[] = {
-	{ MUX_SEL_FSYS0, 0 },
-	{ MUX_SEL_FSYS1, 0 },
-	{ MUX_SEL_FSYS2, 0 },
-	{ MUX_SEL_FSYS3, 0 },
-	{ MUX_SEL_FSYS4, 0 },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump fsys_suspend_regs[] = अणु
+	अणु MUX_SEL_FSYS0, 0 पूर्ण,
+	अणु MUX_SEL_FSYS1, 0 पूर्ण,
+	अणु MUX_SEL_FSYS2, 0 पूर्ण,
+	अणु MUX_SEL_FSYS3, 0 पूर्ण,
+	अणु MUX_SEL_FSYS4, 0 पूर्ण,
+पूर्ण;
 
-static const struct samsung_fixed_rate_clock fsys_fixed_clks[] __initconst = {
-	/* PHY clocks from USBDRD30_PHY */
+अटल स्थिर काष्ठा samsung_fixed_rate_घड़ी fsys_fixed_clks[] __initस्थिर = अणु
+	/* PHY घड़ीs from USBDRD30_PHY */
 	FRATE(CLK_PHYCLK_USBDRD30_UDRD30_PHYCLOCK_PHY,
-			"phyclk_usbdrd30_udrd30_phyclock_phy", NULL,
+			"phyclk_usbdrd30_udrd30_phyclock_phy", शून्य,
 			0, 60000000),
 	FRATE(CLK_PHYCLK_USBDRD30_UDRD30_PIPE_PCLK_PHY,
-			"phyclk_usbdrd30_udrd30_pipe_pclk_phy", NULL,
+			"phyclk_usbdrd30_udrd30_pipe_pclk_phy", शून्य,
 			0, 125000000),
-	/* PHY clocks from USBHOST30_PHY */
+	/* PHY घड़ीs from USBHOST30_PHY */
 	FRATE(CLK_PHYCLK_USBHOST30_UHOST30_PHYCLOCK_PHY,
-			"phyclk_usbhost30_uhost30_phyclock_phy", NULL,
+			"phyclk_usbhost30_uhost30_phyclock_phy", शून्य,
 			0, 60000000),
 	FRATE(CLK_PHYCLK_USBHOST30_UHOST30_PIPE_PCLK_PHY,
-			"phyclk_usbhost30_uhost30_pipe_pclk_phy", NULL,
+			"phyclk_usbhost30_uhost30_pipe_pclk_phy", शून्य,
 			0, 125000000),
-	/* PHY clocks from USBHOST20_PHY */
+	/* PHY घड़ीs from USBHOST20_PHY */
 	FRATE(CLK_PHYCLK_USBHOST20_PHY_FREECLK_PHY,
-			"phyclk_usbhost20_phy_freeclk_phy", NULL, 0, 60000000),
+			"phyclk_usbhost20_phy_freeclk_phy", शून्य, 0, 60000000),
 	FRATE(CLK_PHYCLK_USBHOST20_PHY_PHYCLOCK_PHY,
-			"phyclk_usbhost20_phy_phyclock_phy", NULL, 0, 60000000),
+			"phyclk_usbhost20_phy_phyclock_phy", शून्य, 0, 60000000),
 	FRATE(CLK_PHYCLK_USBHOST20_PHY_CLK48MOHCI_PHY,
-			"phyclk_usbhost20_phy_clk48mohci_phy", NULL,
+			"phyclk_usbhost20_phy_clk48mohci_phy", शून्य,
 			0, 48000000),
 	FRATE(CLK_PHYCLK_USBHOST20_PHY_HSIC1_PHY,
-			"phyclk_usbhost20_phy_hsic1_phy", NULL, 0,
+			"phyclk_usbhost20_phy_hsic1_phy", शून्य, 0,
 			60000000),
-	/* PHY clocks from UFS_PHY */
+	/* PHY घड़ीs from UFS_PHY */
 	FRATE(CLK_PHYCLK_UFS_TX0_SYMBOL_PHY, "phyclk_ufs_tx0_symbol_phy",
-			NULL, 0, 300000000),
+			शून्य, 0, 300000000),
 	FRATE(CLK_PHYCLK_UFS_RX0_SYMBOL_PHY, "phyclk_ufs_rx0_symbol_phy",
-			NULL, 0, 300000000),
+			शून्य, 0, 300000000),
 	FRATE(CLK_PHYCLK_UFS_TX1_SYMBOL_PHY, "phyclk_ufs_tx1_symbol_phy",
-			NULL, 0, 300000000),
+			शून्य, 0, 300000000),
 	FRATE(CLK_PHYCLK_UFS_RX1_SYMBOL_PHY, "phyclk_ufs_rx1_symbol_phy",
-			NULL, 0, 300000000),
-	/* PHY clocks from LLI_PHY */
+			शून्य, 0, 300000000),
+	/* PHY घड़ीs from LLI_PHY */
 	FRATE(CLK_PHYCLK_LLI_MPHY_TO_UFS_PHY, "phyclk_lli_mphy_to_ufs_phy",
-			NULL, 0, 26000000),
-};
+			शून्य, 0, 26000000),
+पूर्ण;
 
-static const struct samsung_mux_clock fsys_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी fsys_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_FSYS0 */
 	MUX(CLK_MOUT_SCLK_UFS_MPHY_USER, "mout_sclk_ufs_mphy_user",
 			mout_sclk_ufs_mphy_user_p, MUX_SEL_FSYS0, 4, 1),
@@ -2104,7 +2105,7 @@ static const struct samsung_mux_clock fsys_mux_clks[] __initconst = {
 			MUX_SEL_FSYS2, 28, 1),
 	MUX(CLK_MOUT_PHYCLK_USBHOST30_UHOST30_PHYCLOCK_USER,
 			"mout_phyclk_usbhost30_uhost30_phyclock_user",
-			mout_phyclk_usbhost30_uhost30_phyclock_user_p,
+			mout_phyclk_usbhost30_uhost30_phyघड़ी_user_p,
 			MUX_SEL_FSYS2, 24, 1),
 	MUX(CLK_MOUT_PHYCLK_USBHOST20_PHY_HSIC1_USER,
 			"mout_phyclk_usbhost20_phy_hsic1",
@@ -2116,11 +2117,11 @@ static const struct samsung_mux_clock fsys_mux_clks[] __initconst = {
 			MUX_SEL_FSYS2, 16, 1),
 	MUX(CLK_MOUT_PHYCLK_USBHOST20_PHY_PHYCLOCK_USER,
 			"mout_phyclk_usbhost20_phy_phyclock_user",
-			mout_phyclk_usbhost20_phy_phyclock_user_p,
+			mout_phyclk_usbhost20_phy_phyघड़ी_user_p,
 			MUX_SEL_FSYS2, 12, 1),
 	MUX(CLK_MOUT_PHYCLK_USBHOST20_PHY_PHY_FREECLK_USER,
 			"mout_phyclk_usbhost20_phy_freeclk_user",
-			mout_phyclk_usbhost20_phy_freeclk_user_p,
+			mout_phyclk_usbhost20_phy_मुक्तclk_user_p,
 			MUX_SEL_FSYS2, 8, 1),
 	MUX(CLK_MOUT_PHYCLK_USBDRD30_UDRD30_PIPE_PCLK_USER,
 			"mout_phyclk_usbdrd30_udrd30_pipe_pclk_user",
@@ -2128,7 +2129,7 @@ static const struct samsung_mux_clock fsys_mux_clks[] __initconst = {
 			MUX_SEL_FSYS2, 4, 1),
 	MUX(CLK_MOUT_PHYCLK_USBDRD30_UDRD30_PHYCLOCK_USER,
 			"mout_phyclk_usbdrd30_udrd30_phyclock_user",
-			mout_phyclk_usbdrd30_udrd30_phyclock_user_p,
+			mout_phyclk_usbdrd30_udrd30_phyघड़ी_user_p,
 			MUX_SEL_FSYS2, 0, 1),
 
 	/* MUX_SEL_FSYS3 */
@@ -2156,9 +2157,9 @@ static const struct samsung_mux_clock fsys_mux_clks[] __initconst = {
 	/* MUX_SEL_FSYS4 */
 	MUX(CLK_MOUT_SCLK_MPHY, "mout_sclk_mphy", mout_sclk_mphy_p,
 			MUX_SEL_FSYS4, 0, 1),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock fsys_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी fsys_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_FSYS0 */
 	GATE(CLK_ACLK_PCIE, "aclk_pcie", "mout_aclk_fsys_200_user",
 			ENABLE_ACLK_FSYS0, 13, CLK_IGNORE_UNUSED, 0),
@@ -2327,9 +2328,9 @@ static const struct samsung_gate_clock fsys_gate_clks[] __initconst = {
 	GATE(CLK_PCIE, "pcie", "sclk_pcie_100", ENABLE_IP_FSYS0, 17, 0, 0),
 	GATE(CLK_PDMA1, "pdma1", "aclk_pdma1", ENABLE_IP_FSYS0, 15, 0, 0),
 	GATE(CLK_PDMA0, "pdma0", "aclk_pdma0", ENABLE_IP_FSYS0, 0, 0, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info fsys_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info fsys_cmu_info __initस्थिर = अणु
 	.mux_clks		= fsys_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(fsys_mux_clks),
 	.gate_clks		= fsys_gate_clks,
@@ -2342,25 +2343,25 @@ static const struct samsung_cmu_info fsys_cmu_info __initconst = {
 	.suspend_regs		= fsys_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(fsys_suspend_regs),
 	.clk_name		= "aclk_fsys_200",
-};
+पूर्ण;
 
 /*
- * Register offset definitions for CMU_G2D
+ * Register offset definitions क्रम CMU_G2D
  */
-#define MUX_SEL_G2D0				0x0200
-#define MUX_SEL_ENABLE_G2D0			0x0300
-#define MUX_SEL_STAT_G2D0			0x0400
-#define DIV_G2D					0x0600
-#define DIV_STAT_G2D				0x0700
-#define DIV_ENABLE_ACLK_G2D			0x0800
-#define DIV_ENABLE_ACLK_G2D_SECURE_SMMU_G2D	0x0804
-#define DIV_ENABLE_PCLK_G2D			0x0900
-#define DIV_ENABLE_PCLK_G2D_SECURE_SMMU_G2D	0x0904
-#define DIV_ENABLE_IP_G2D0			0x0b00
-#define DIV_ENABLE_IP_G2D1			0x0b04
-#define DIV_ENABLE_IP_G2D_SECURE_SMMU_G2D	0x0b08
+#घोषणा MUX_SEL_G2D0				0x0200
+#घोषणा MUX_SEL_ENABLE_G2D0			0x0300
+#घोषणा MUX_SEL_STAT_G2D0			0x0400
+#घोषणा DIV_G2D					0x0600
+#घोषणा DIV_STAT_G2D				0x0700
+#घोषणा DIV_ENABLE_ACLK_G2D			0x0800
+#घोषणा DIV_ENABLE_ACLK_G2D_SECURE_SMMU_G2D	0x0804
+#घोषणा DIV_ENABLE_PCLK_G2D			0x0900
+#घोषणा DIV_ENABLE_PCLK_G2D_SECURE_SMMU_G2D	0x0904
+#घोषणा DIV_ENABLE_IP_G2D0			0x0b00
+#घोषणा DIV_ENABLE_IP_G2D1			0x0b04
+#घोषणा DIV_ENABLE_IP_G2D_SECURE_SMMU_G2D	0x0b08
 
-static const unsigned long g2d_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ g2d_clk_regs[] __initस्थिर = अणु
 	MUX_SEL_G2D0,
 	MUX_SEL_ENABLE_G2D0,
 	DIV_G2D,
@@ -2371,31 +2372,31 @@ static const unsigned long g2d_clk_regs[] __initconst = {
 	DIV_ENABLE_IP_G2D0,
 	DIV_ENABLE_IP_G2D1,
 	DIV_ENABLE_IP_G2D_SECURE_SMMU_G2D,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump g2d_suspend_regs[] = {
-	{ MUX_SEL_G2D0, 0 },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump g2d_suspend_regs[] = अणु
+	अणु MUX_SEL_G2D0, 0 पूर्ण,
+पूर्ण;
 
-/* list of all parent clock list */
-PNAME(mout_aclk_g2d_266_user_p)		= { "oscclk", "aclk_g2d_266", };
-PNAME(mout_aclk_g2d_400_user_p)		= { "oscclk", "aclk_g2d_400", };
+/* list of all parent घड़ी list */
+PNAME(mout_aclk_g2d_266_user_p)		= अणु "oscclk", "aclk_g2d_266", पूर्ण;
+PNAME(mout_aclk_g2d_400_user_p)		= अणु "oscclk", "aclk_g2d_400", पूर्ण;
 
-static const struct samsung_mux_clock g2d_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी g2d_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_G2D0 */
 	MUX(CLK_MUX_ACLK_G2D_266_USER, "mout_aclk_g2d_266_user",
 			mout_aclk_g2d_266_user_p, MUX_SEL_G2D0, 4, 1),
 	MUX(CLK_MUX_ACLK_G2D_400_USER, "mout_aclk_g2d_400_user",
 			mout_aclk_g2d_400_user_p, MUX_SEL_G2D0, 0, 1),
-};
+पूर्ण;
 
-static const struct samsung_div_clock g2d_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी g2d_भाग_clks[] __initस्थिर = अणु
 	/* DIV_G2D */
 	DIV(CLK_DIV_PCLK_G2D, "div_pclk_g2d", "mout_aclk_g2d_266_user",
 			DIV_G2D, 0, 2),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock g2d_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी g2d_gate_clks[] __initस्थिर = अणु
 	/* DIV_ENABLE_ACLK_G2D */
 	GATE(CLK_ACLK_SMMU_MDMA1, "aclk_smmu_mdma1", "mout_aclk_g2d_266_user",
 			DIV_ENABLE_ACLK_G2D, 12, 0, 0),
@@ -2450,13 +2451,13 @@ static const struct samsung_gate_clock g2d_gate_clks[] __initconst = {
 	/* DIV_ENABLE_PCLK_G2D_SECURE_SMMU_G2D */
 	GATE(CLK_PCLK_SMMU_G2D, "pclk_smmu_g2d", "div_pclk_g2d",
 		DIV_ENABLE_PCLK_G2D_SECURE_SMMU_G2D, 0, 0, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info g2d_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info g2d_cmu_info __initस्थिर = अणु
 	.mux_clks		= g2d_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(g2d_mux_clks),
-	.div_clks		= g2d_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(g2d_div_clks),
+	.भाग_clks		= g2d_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(g2d_भाग_clks),
 	.gate_clks		= g2d_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(g2d_gate_clks),
 	.nr_clk_ids		= G2D_NR_CLK,
@@ -2465,45 +2466,45 @@ static const struct samsung_cmu_info g2d_cmu_info __initconst = {
 	.suspend_regs		= g2d_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(g2d_suspend_regs),
 	.clk_name		= "aclk_g2d_400",
-};
+पूर्ण;
 
 /*
- * Register offset definitions for CMU_DISP
+ * Register offset definitions क्रम CMU_DISP
  */
-#define DISP_PLL_LOCK			0x0000
-#define DISP_PLL_CON0			0x0100
-#define DISP_PLL_CON1			0x0104
-#define DISP_PLL_FREQ_DET		0x0108
-#define MUX_SEL_DISP0			0x0200
-#define MUX_SEL_DISP1			0x0204
-#define MUX_SEL_DISP2			0x0208
-#define MUX_SEL_DISP3			0x020c
-#define MUX_SEL_DISP4			0x0210
-#define MUX_ENABLE_DISP0		0x0300
-#define MUX_ENABLE_DISP1		0x0304
-#define MUX_ENABLE_DISP2		0x0308
-#define MUX_ENABLE_DISP3		0x030c
-#define MUX_ENABLE_DISP4		0x0310
-#define MUX_STAT_DISP0			0x0400
-#define MUX_STAT_DISP1			0x0404
-#define MUX_STAT_DISP2			0x0408
-#define MUX_STAT_DISP3			0x040c
-#define MUX_STAT_DISP4			0x0410
-#define MUX_IGNORE_DISP2		0x0508
-#define DIV_DISP			0x0600
-#define DIV_DISP_PLL_FREQ_DET		0x0604
-#define DIV_STAT_DISP			0x0700
-#define DIV_STAT_DISP_PLL_FREQ_DET	0x0704
-#define ENABLE_ACLK_DISP0		0x0800
-#define ENABLE_ACLK_DISP1		0x0804
-#define ENABLE_PCLK_DISP		0x0900
-#define ENABLE_SCLK_DISP		0x0a00
-#define ENABLE_IP_DISP0			0x0b00
-#define ENABLE_IP_DISP1			0x0b04
-#define CLKOUT_CMU_DISP			0x0c00
-#define CLKOUT_CMU_DISP_DIV_STAT	0x0c04
+#घोषणा DISP_PLL_LOCK			0x0000
+#घोषणा DISP_PLL_CON0			0x0100
+#घोषणा DISP_PLL_CON1			0x0104
+#घोषणा DISP_PLL_FREQ_DET		0x0108
+#घोषणा MUX_SEL_DISP0			0x0200
+#घोषणा MUX_SEL_DISP1			0x0204
+#घोषणा MUX_SEL_DISP2			0x0208
+#घोषणा MUX_SEL_DISP3			0x020c
+#घोषणा MUX_SEL_DISP4			0x0210
+#घोषणा MUX_ENABLE_DISP0		0x0300
+#घोषणा MUX_ENABLE_DISP1		0x0304
+#घोषणा MUX_ENABLE_DISP2		0x0308
+#घोषणा MUX_ENABLE_DISP3		0x030c
+#घोषणा MUX_ENABLE_DISP4		0x0310
+#घोषणा MUX_STAT_DISP0			0x0400
+#घोषणा MUX_STAT_DISP1			0x0404
+#घोषणा MUX_STAT_DISP2			0x0408
+#घोषणा MUX_STAT_DISP3			0x040c
+#घोषणा MUX_STAT_DISP4			0x0410
+#घोषणा MUX_IGNORE_DISP2		0x0508
+#घोषणा DIV_DISP			0x0600
+#घोषणा DIV_DISP_PLL_FREQ_DET		0x0604
+#घोषणा DIV_STAT_DISP			0x0700
+#घोषणा DIV_STAT_DISP_PLL_FREQ_DET	0x0704
+#घोषणा ENABLE_ACLK_DISP0		0x0800
+#घोषणा ENABLE_ACLK_DISP1		0x0804
+#घोषणा ENABLE_PCLK_DISP		0x0900
+#घोषणा ENABLE_SCLK_DISP		0x0a00
+#घोषणा ENABLE_IP_DISP0			0x0b00
+#घोषणा ENABLE_IP_DISP1			0x0b04
+#घोषणा CLKOUT_CMU_DISP			0x0c00
+#घोषणा CLKOUT_CMU_DISP_DIV_STAT	0x0c04
 
-static const unsigned long disp_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ disp_clk_regs[] __initस्थिर = अणु
 	DISP_PLL_LOCK,
 	DISP_PLL_CON0,
 	DISP_PLL_CON1,
@@ -2529,99 +2530,99 @@ static const unsigned long disp_clk_regs[] __initconst = {
 	ENABLE_IP_DISP1,
 	CLKOUT_CMU_DISP,
 	CLKOUT_CMU_DISP_DIV_STAT,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump disp_suspend_regs[] = {
-	/* PLL has to be enabled for suspend */
-	{ DISP_PLL_CON0, 0x85f40502 },
-	/* ignore status of external PHY muxes during suspend to avoid hangs */
-	{ MUX_IGNORE_DISP2, 0x00111111 },
-	{ MUX_SEL_DISP0, 0 },
-	{ MUX_SEL_DISP1, 0 },
-	{ MUX_SEL_DISP2, 0 },
-	{ MUX_SEL_DISP3, 0 },
-	{ MUX_SEL_DISP4, 0 },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump disp_suspend_regs[] = अणु
+	/* PLL has to be enabled क्रम suspend */
+	अणु DISP_PLL_CON0, 0x85f40502 पूर्ण,
+	/* ignore status of बाह्यal PHY muxes during suspend to aव्योम hangs */
+	अणु MUX_IGNORE_DISP2, 0x00111111 पूर्ण,
+	अणु MUX_SEL_DISP0, 0 पूर्ण,
+	अणु MUX_SEL_DISP1, 0 पूर्ण,
+	अणु MUX_SEL_DISP2, 0 पूर्ण,
+	अणु MUX_SEL_DISP3, 0 पूर्ण,
+	अणु MUX_SEL_DISP4, 0 पूर्ण,
+पूर्ण;
 
-/* list of all parent clock list */
-PNAME(mout_disp_pll_p)			= { "oscclk", "fout_disp_pll", };
-PNAME(mout_sclk_dsim1_user_p)		= { "oscclk", "sclk_dsim1_disp", };
-PNAME(mout_sclk_dsim0_user_p)		= { "oscclk", "sclk_dsim0_disp", };
-PNAME(mout_sclk_dsd_user_p)		= { "oscclk", "sclk_dsd_disp", };
-PNAME(mout_sclk_decon_tv_eclk_user_p)	= { "oscclk",
-					    "sclk_decon_tv_eclk_disp", };
-PNAME(mout_sclk_decon_vclk_user_p)	= { "oscclk",
-					    "sclk_decon_vclk_disp", };
-PNAME(mout_sclk_decon_eclk_user_p)	= { "oscclk",
-					    "sclk_decon_eclk_disp", };
-PNAME(mout_sclk_decon_tv_vlkc_user_p)	= { "oscclk",
-					    "sclk_decon_tv_vclk_disp", };
-PNAME(mout_aclk_disp_333_user_p)	= { "oscclk", "aclk_disp_333", };
+/* list of all parent घड़ी list */
+PNAME(mout_disp_pll_p)			= अणु "oscclk", "fout_disp_pll", पूर्ण;
+PNAME(mout_sclk_dsim1_user_p)		= अणु "oscclk", "sclk_dsim1_disp", पूर्ण;
+PNAME(mout_sclk_dsim0_user_p)		= अणु "oscclk", "sclk_dsim0_disp", पूर्ण;
+PNAME(mout_sclk_dsd_user_p)		= अणु "oscclk", "sclk_dsd_disp", पूर्ण;
+PNAME(mout_sclk_decon_tv_eclk_user_p)	= अणु "oscclk",
+					    "sclk_decon_tv_eclk_disp", पूर्ण;
+PNAME(mout_sclk_decon_vclk_user_p)	= अणु "oscclk",
+					    "sclk_decon_vclk_disp", पूर्ण;
+PNAME(mout_sclk_decon_eclk_user_p)	= अणु "oscclk",
+					    "sclk_decon_eclk_disp", पूर्ण;
+PNAME(mout_sclk_decon_tv_vlkc_user_p)	= अणु "oscclk",
+					    "sclk_decon_tv_vclk_disp", पूर्ण;
+PNAME(mout_aclk_disp_333_user_p)	= अणु "oscclk", "aclk_disp_333", पूर्ण;
 
-PNAME(mout_phyclk_mipidphy1_bitclkdiv8_user_p)	= { "oscclk",
-					"phyclk_mipidphy1_bitclkdiv8_phy", };
-PNAME(mout_phyclk_mipidphy1_rxclkesc0_user_p)	= { "oscclk",
-					"phyclk_mipidphy1_rxclkesc0_phy", };
-PNAME(mout_phyclk_mipidphy0_bitclkdiv8_user_p)	= { "oscclk",
-					"phyclk_mipidphy0_bitclkdiv8_phy", };
-PNAME(mout_phyclk_mipidphy0_rxclkesc0_user_p)	= { "oscclk",
-					"phyclk_mipidphy0_rxclkesc0_phy", };
-PNAME(mout_phyclk_hdmiphy_tmds_clko_user_p)	= { "oscclk",
-					"phyclk_hdmiphy_tmds_clko_phy", };
-PNAME(mout_phyclk_hdmiphy_pixel_clko_user_p)	= { "oscclk",
-					"phyclk_hdmiphy_pixel_clko_phy", };
+PNAME(mout_phyclk_mipidphy1_bitclkभाग8_user_p)	= अणु "oscclk",
+					"phyclk_mipidphy1_bitclkdiv8_phy", पूर्ण;
+PNAME(mout_phyclk_mipidphy1_rxclkesc0_user_p)	= अणु "oscclk",
+					"phyclk_mipidphy1_rxclkesc0_phy", पूर्ण;
+PNAME(mout_phyclk_mipidphy0_bitclkभाग8_user_p)	= अणु "oscclk",
+					"phyclk_mipidphy0_bitclkdiv8_phy", पूर्ण;
+PNAME(mout_phyclk_mipidphy0_rxclkesc0_user_p)	= अणु "oscclk",
+					"phyclk_mipidphy0_rxclkesc0_phy", पूर्ण;
+PNAME(mout_phyclk_hdmiphy_पंचांगds_clko_user_p)	= अणु "oscclk",
+					"phyclk_hdmiphy_tmds_clko_phy", पूर्ण;
+PNAME(mout_phyclk_hdmiphy_pixel_clko_user_p)	= अणु "oscclk",
+					"phyclk_hdmiphy_pixel_clko_phy", पूर्ण;
 
-PNAME(mout_sclk_dsim0_p)		= { "mout_disp_pll",
-					    "mout_sclk_dsim0_user", };
-PNAME(mout_sclk_decon_tv_eclk_p)	= { "mout_disp_pll",
-					    "mout_sclk_decon_tv_eclk_user", };
-PNAME(mout_sclk_decon_vclk_p)		= { "mout_disp_pll",
-					    "mout_sclk_decon_vclk_user", };
-PNAME(mout_sclk_decon_eclk_p)		= { "mout_disp_pll",
-					    "mout_sclk_decon_eclk_user", };
+PNAME(mout_sclk_dsim0_p)		= अणु "mout_disp_pll",
+					    "mout_sclk_dsim0_user", पूर्ण;
+PNAME(mout_sclk_decon_tv_eclk_p)	= अणु "mout_disp_pll",
+					    "mout_sclk_decon_tv_eclk_user", पूर्ण;
+PNAME(mout_sclk_decon_vclk_p)		= अणु "mout_disp_pll",
+					    "mout_sclk_decon_vclk_user", पूर्ण;
+PNAME(mout_sclk_decon_eclk_p)		= अणु "mout_disp_pll",
+					    "mout_sclk_decon_eclk_user", पूर्ण;
 
-PNAME(mout_sclk_dsim1_b_disp_p)		= { "mout_sclk_dsim1_a_disp",
-					    "mout_sclk_dsim1_user", };
-PNAME(mout_sclk_decon_tv_vclk_c_disp_p)	= {
+PNAME(mout_sclk_dsim1_b_disp_p)		= अणु "mout_sclk_dsim1_a_disp",
+					    "mout_sclk_dsim1_user", पूर्ण;
+PNAME(mout_sclk_decon_tv_vclk_c_disp_p)	= अणु
 				"mout_phyclk_hdmiphy_pixel_clko_user",
-				"mout_sclk_decon_tv_vclk_b_disp", };
-PNAME(mout_sclk_decon_tv_vclk_b_disp_p)	= { "mout_sclk_decon_tv_vclk_a_disp",
-					    "mout_sclk_decon_tv_vclk_user", };
+				"mout_sclk_decon_tv_vclk_b_disp", पूर्ण;
+PNAME(mout_sclk_decon_tv_vclk_b_disp_p)	= अणु "mout_sclk_decon_tv_vclk_a_disp",
+					    "mout_sclk_decon_tv_vclk_user", पूर्ण;
 
-static const struct samsung_pll_clock disp_pll_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_pll_घड़ी disp_pll_clks[] __initस्थिर = अणु
 	PLL(pll_35xx, CLK_FOUT_DISP_PLL, "fout_disp_pll", "oscclk",
 		DISP_PLL_LOCK, DISP_PLL_CON0, exynos5433_pll_rates),
-};
+पूर्ण;
 
-static const struct samsung_fixed_factor_clock disp_fixed_factor_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_fixed_factor_घड़ी disp_fixed_factor_clks[] __initस्थिर = अणु
 	/*
-	 * sclk_rgb_{vclk|tv_vclk} is half clock of sclk_decon_{vclk|tv_vclk}.
-	 * The divider has fixed value (2) between sclk_rgb_{vclk|tv_vclk}
-	 * and sclk_decon_{vclk|tv_vclk}.
+	 * sclk_rgb_अणुvclk|tv_vclkपूर्ण is half घड़ी of sclk_decon_अणुvclk|tv_vclkपूर्ण.
+	 * The भागider has fixed value (2) between sclk_rgb_अणुvclk|tv_vclkपूर्ण
+	 * and sclk_decon_अणुvclk|tv_vclkपूर्ण.
 	 */
 	FFACTOR(CLK_SCLK_RGB_VCLK, "sclk_rgb_vclk", "sclk_decon_vclk",
 			1, 2, 0),
 	FFACTOR(CLK_SCLK_RGB_TV_VCLK, "sclk_rgb_tv_vclk", "sclk_decon_tv_vclk",
 			1, 2, 0),
-};
+पूर्ण;
 
-static const struct samsung_fixed_rate_clock disp_fixed_clks[] __initconst = {
-	/* PHY clocks from MIPI_DPHY1 */
-	FRATE(0, "phyclk_mipidphy1_bitclkdiv8_phy", NULL, 0, 188000000),
-	FRATE(0, "phyclk_mipidphy1_rxclkesc0_phy", NULL, 0, 100000000),
-	/* PHY clocks from MIPI_DPHY0 */
+अटल स्थिर काष्ठा samsung_fixed_rate_घड़ी disp_fixed_clks[] __initस्थिर = अणु
+	/* PHY घड़ीs from MIPI_DPHY1 */
+	FRATE(0, "phyclk_mipidphy1_bitclkdiv8_phy", शून्य, 0, 188000000),
+	FRATE(0, "phyclk_mipidphy1_rxclkesc0_phy", शून्य, 0, 100000000),
+	/* PHY घड़ीs from MIPI_DPHY0 */
 	FRATE(CLK_PHYCLK_MIPIDPHY0_BITCLKDIV8_PHY, "phyclk_mipidphy0_bitclkdiv8_phy",
-			NULL, 0, 188000000),
+			शून्य, 0, 188000000),
 	FRATE(CLK_PHYCLK_MIPIDPHY0_RXCLKESC0_PHY, "phyclk_mipidphy0_rxclkesc0_phy",
-			NULL, 0, 100000000),
-	/* PHY clocks from HDMI_PHY */
+			शून्य, 0, 100000000),
+	/* PHY घड़ीs from HDMI_PHY */
 	FRATE(CLK_PHYCLK_HDMIPHY_TMDS_CLKO_PHY, "phyclk_hdmiphy_tmds_clko_phy",
-			NULL, 0, 300000000),
+			शून्य, 0, 300000000),
 	FRATE(CLK_PHYCLK_HDMIPHY_PIXEL_CLKO_PHY, "phyclk_hdmiphy_pixel_clko_phy",
-			NULL, 0, 166000000),
-};
+			शून्य, 0, 166000000),
+पूर्ण;
 
-static const struct samsung_mux_clock disp_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी disp_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_DISP0 */
 	MUX(CLK_MOUT_DISP_PLL, "mout_disp_pll", mout_disp_pll_p, MUX_SEL_DISP0,
 			0, 1),
@@ -2647,7 +2648,7 @@ static const struct samsung_mux_clock disp_mux_clks[] __initconst = {
 	/* MUX_SEL_DISP2 */
 	MUX(CLK_MOUT_PHYCLK_MIPIDPHY1_BITCLKDIV8_USER,
 			"mout_phyclk_mipidphy1_bitclkdiv8_user",
-			mout_phyclk_mipidphy1_bitclkdiv8_user_p, MUX_SEL_DISP2,
+			mout_phyclk_mipidphy1_bitclkभाग8_user_p, MUX_SEL_DISP2,
 			20, 1),
 	MUX(CLK_MOUT_PHYCLK_MIPIDPHY1_RXCLKESC0_USER,
 			"mout_phyclk_mipidphy1_rxclkesc0_user",
@@ -2655,7 +2656,7 @@ static const struct samsung_mux_clock disp_mux_clks[] __initconst = {
 			16, 1),
 	MUX(CLK_MOUT_PHYCLK_MIPIDPHY0_BITCLKDIV8_USER,
 			"mout_phyclk_mipidphy0_bitclkdiv8_user",
-			mout_phyclk_mipidphy0_bitclkdiv8_user_p, MUX_SEL_DISP2,
+			mout_phyclk_mipidphy0_bitclkभाग8_user_p, MUX_SEL_DISP2,
 			12, 1),
 	MUX(CLK_MOUT_PHYCLK_MIPIDPHY0_RXCLKESC0_USER,
 			"mout_phyclk_mipidphy0_rxclkesc0_user",
@@ -2663,7 +2664,7 @@ static const struct samsung_mux_clock disp_mux_clks[] __initconst = {
 			8, 1),
 	MUX(CLK_MOUT_PHYCLK_HDMIPHY_TMDS_CLKO_USER,
 			"mout_phyclk_hdmiphy_tmds_clko_user",
-			mout_phyclk_hdmiphy_tmds_clko_user_p, MUX_SEL_DISP2,
+			mout_phyclk_hdmiphy_पंचांगds_clko_user_p, MUX_SEL_DISP2,
 			4, 1),
 	MUX(CLK_MOUT_PHYCLK_HDMIPHY_PIXEL_CLKO_USER,
 			"mout_phyclk_hdmiphy_pixel_clko_user",
@@ -2694,9 +2695,9 @@ static const struct samsung_mux_clock disp_mux_clks[] __initconst = {
 	MUX(CLK_MOUT_SCLK_DECON_TV_VCLK_A_DISP,
 			"mout_sclk_decon_tv_vclk_a_disp",
 			mout_sclk_decon_vclk_p, MUX_SEL_DISP4, 0, 1),
-};
+पूर्ण;
 
-static const struct samsung_div_clock disp_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी disp_भाग_clks[] __initस्थिर = अणु
 	/* DIV_DISP */
 	DIV(CLK_DIV_SCLK_DSIM1_DISP, "div_sclk_dsim1_disp",
 			"mout_sclk_dsim1_b_disp", DIV_DISP, 24, 3),
@@ -2712,9 +2713,9 @@ static const struct samsung_div_clock disp_div_clks[] __initconst = {
 			"mout_sclk_decon_eclk", DIV_DISP, 4, 3),
 	DIV(CLK_DIV_PCLK_DISP, "div_pclk_disp", "mout_aclk_disp_333_user",
 			DIV_DISP, 0, 2),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock disp_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी disp_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_DISP0 */
 	GATE(CLK_ACLK_DECON_TV, "aclk_decon_tv", "mout_aclk_disp_333_user",
 			ENABLE_ACLK_DISP0, 2, 0, 0),
@@ -2872,15 +2873,15 @@ static const struct samsung_gate_clock disp_gate_clks[] __initconst = {
 			"div_sclk_decon_vclk_disp", ENABLE_SCLK_DISP, 3, 0, 0),
 	GATE(CLK_SCLK_DECON_ECLK, "sclk_decon_eclk",
 			"div_sclk_decon_eclk_disp", ENABLE_SCLK_DISP, 2, 0, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info disp_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info disp_cmu_info __initस्थिर = अणु
 	.pll_clks		= disp_pll_clks,
 	.nr_pll_clks		= ARRAY_SIZE(disp_pll_clks),
 	.mux_clks		= disp_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(disp_mux_clks),
-	.div_clks		= disp_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(disp_div_clks),
+	.भाग_clks		= disp_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(disp_भाग_clks),
 	.gate_clks		= disp_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(disp_gate_clks),
 	.fixed_clks		= disp_fixed_clks,
@@ -2893,28 +2894,28 @@ static const struct samsung_cmu_info disp_cmu_info __initconst = {
 	.suspend_regs		= disp_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(disp_suspend_regs),
 	.clk_name		= "aclk_disp_333",
-};
+पूर्ण;
 
 /*
- * Register offset definitions for CMU_AUD
+ * Register offset definitions क्रम CMU_AUD
  */
-#define MUX_SEL_AUD0			0x0200
-#define MUX_SEL_AUD1			0x0204
-#define MUX_ENABLE_AUD0			0x0300
-#define MUX_ENABLE_AUD1			0x0304
-#define MUX_STAT_AUD0			0x0400
-#define DIV_AUD0			0x0600
-#define DIV_AUD1			0x0604
-#define DIV_STAT_AUD0			0x0700
-#define DIV_STAT_AUD1			0x0704
-#define ENABLE_ACLK_AUD			0x0800
-#define ENABLE_PCLK_AUD			0x0900
-#define ENABLE_SCLK_AUD0		0x0a00
-#define ENABLE_SCLK_AUD1		0x0a04
-#define ENABLE_IP_AUD0			0x0b00
-#define ENABLE_IP_AUD1			0x0b04
+#घोषणा MUX_SEL_AUD0			0x0200
+#घोषणा MUX_SEL_AUD1			0x0204
+#घोषणा MUX_ENABLE_AUD0			0x0300
+#घोषणा MUX_ENABLE_AUD1			0x0304
+#घोषणा MUX_STAT_AUD0			0x0400
+#घोषणा DIV_AUD0			0x0600
+#घोषणा DIV_AUD1			0x0604
+#घोषणा DIV_STAT_AUD0			0x0700
+#घोषणा DIV_STAT_AUD1			0x0704
+#घोषणा ENABLE_ACLK_AUD			0x0800
+#घोषणा ENABLE_PCLK_AUD			0x0900
+#घोषणा ENABLE_SCLK_AUD0		0x0a00
+#घोषणा ENABLE_SCLK_AUD1		0x0a04
+#घोषणा ENABLE_IP_AUD0			0x0b00
+#घोषणा ENABLE_IP_AUD1			0x0b04
 
-static const unsigned long aud_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ aud_clk_regs[] __initस्थिर = अणु
 	MUX_SEL_AUD0,
 	MUX_SEL_AUD1,
 	MUX_ENABLE_AUD0,
@@ -2927,24 +2928,24 @@ static const unsigned long aud_clk_regs[] __initconst = {
 	ENABLE_SCLK_AUD1,
 	ENABLE_IP_AUD0,
 	ENABLE_IP_AUD1,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump aud_suspend_regs[] = {
-	{ MUX_SEL_AUD0, 0 },
-	{ MUX_SEL_AUD1, 0 },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump aud_suspend_regs[] = अणु
+	अणु MUX_SEL_AUD0, 0 पूर्ण,
+	अणु MUX_SEL_AUD1, 0 पूर्ण,
+पूर्ण;
 
-/* list of all parent clock list */
-PNAME(mout_aud_pll_user_aud_p)	= { "oscclk", "fout_aud_pll", };
-PNAME(mout_sclk_aud_pcm_p)	= { "mout_aud_pll_user", "ioclk_audiocdclk0",};
+/* list of all parent घड़ी list */
+PNAME(mout_aud_pll_user_aud_p)	= अणु "oscclk", "fout_aud_pll", पूर्ण;
+PNAME(mout_sclk_aud_pcm_p)	= अणु "mout_aud_pll_user", "ioclk_audiocdclk0",पूर्ण;
 
-static const struct samsung_fixed_rate_clock aud_fixed_clks[] __initconst = {
-	FRATE(0, "ioclk_jtag_tclk", NULL, 0, 33000000),
-	FRATE(0, "ioclk_slimbus_clk", NULL, 0, 25000000),
-	FRATE(0, "ioclk_i2s_bclk", NULL, 0, 50000000),
-};
+अटल स्थिर काष्ठा samsung_fixed_rate_घड़ी aud_fixed_clks[] __initस्थिर = अणु
+	FRATE(0, "ioclk_jtag_tclk", शून्य, 0, 33000000),
+	FRATE(0, "ioclk_slimbus_clk", शून्य, 0, 25000000),
+	FRATE(0, "ioclk_i2s_bclk", शून्य, 0, 50000000),
+पूर्ण;
 
-static const struct samsung_mux_clock aud_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी aud_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_AUD0 */
 	MUX(CLK_MOUT_AUD_PLL_USER, "mout_aud_pll_user",
 			mout_aud_pll_user_aud_p, MUX_SEL_AUD0, 0, 1),
@@ -2954,9 +2955,9 @@ static const struct samsung_mux_clock aud_mux_clks[] __initconst = {
 			MUX_SEL_AUD1, 8, 1),
 	MUX(CLK_MOUT_SCLK_AUD_I2S, "mout_sclk_aud_i2s", mout_sclk_aud_pcm_p,
 			MUX_SEL_AUD1, 0, 1),
-};
+पूर्ण;
 
-static const struct samsung_div_clock aud_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी aud_भाग_clks[] __initस्थिर = अणु
 	/* DIV_AUD0 */
 	DIV(CLK_DIV_ATCLK_AUD, "div_atclk_aud", "div_aud_ca5", DIV_AUD0,
 			12, 4),
@@ -2976,9 +2977,9 @@ static const struct samsung_div_clock aud_div_clks[] __initconst = {
 			DIV_AUD1, 4, 8),
 	DIV(CLK_DIV_SCLK_AUD_I2S, "div_sclk_aud_i2s",  "mout_sclk_aud_i2s",
 			DIV_AUD1, 0, 4),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock aud_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी aud_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_AUD */
 	GATE(CLK_ACLK_INTR_CTRL, "aclk_intr_ctrl", "div_aclk_aud",
 			ENABLE_ACLK_AUD, 12, 0, 0),
@@ -3046,13 +3047,13 @@ static const struct samsung_gate_clock aud_gate_clks[] __initconst = {
 			ENABLE_SCLK_AUD1, 1, CLK_IGNORE_UNUSED, 0),
 	GATE(CLK_SCLK_AUD_I2S, "sclk_aud_i2s", "div_sclk_aud_i2s",
 			ENABLE_SCLK_AUD1, 0, CLK_IGNORE_UNUSED, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info aud_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info aud_cmu_info __initस्थिर = अणु
 	.mux_clks		= aud_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(aud_mux_clks),
-	.div_clks		= aud_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(aud_div_clks),
+	.भाग_clks		= aud_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(aud_भाग_clks),
 	.gate_clks		= aud_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(aud_gate_clks),
 	.fixed_clks		= aud_fixed_clks,
@@ -3063,50 +3064,50 @@ static const struct samsung_cmu_info aud_cmu_info __initconst = {
 	.suspend_regs		= aud_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(aud_suspend_regs),
 	.clk_name		= "fout_aud_pll",
-};
+पूर्ण;
 
 /*
- * Register offset definitions for CMU_BUS{0|1|2}
+ * Register offset definitions क्रम CMU_BUSअणु0|1|2पूर्ण
  */
-#define DIV_BUS				0x0600
-#define DIV_STAT_BUS			0x0700
-#define ENABLE_ACLK_BUS			0x0800
-#define ENABLE_PCLK_BUS			0x0900
-#define ENABLE_IP_BUS0			0x0b00
-#define ENABLE_IP_BUS1			0x0b04
+#घोषणा DIV_BUS				0x0600
+#घोषणा DIV_STAT_BUS			0x0700
+#घोषणा ENABLE_ACLK_BUS			0x0800
+#घोषणा ENABLE_PCLK_BUS			0x0900
+#घोषणा ENABLE_IP_BUS0			0x0b00
+#घोषणा ENABLE_IP_BUS1			0x0b04
 
-#define MUX_SEL_BUS2			0x0200	/* Only for CMU_BUS2 */
-#define MUX_ENABLE_BUS2			0x0300	/* Only for CMU_BUS2 */
-#define MUX_STAT_BUS2			0x0400	/* Only for CMU_BUS2 */
+#घोषणा MUX_SEL_BUS2			0x0200	/* Only क्रम CMU_BUS2 */
+#घोषणा MUX_ENABLE_BUS2			0x0300	/* Only क्रम CMU_BUS2 */
+#घोषणा MUX_STAT_BUS2			0x0400	/* Only क्रम CMU_BUS2 */
 
-/* list of all parent clock list */
-PNAME(mout_aclk_bus2_400_p)	= { "oscclk", "aclk_bus2_400", };
+/* list of all parent घड़ी list */
+PNAME(mout_aclk_bus2_400_p)	= अणु "oscclk", "aclk_bus2_400", पूर्ण;
 
-#define CMU_BUS_COMMON_CLK_REGS	\
+#घोषणा CMU_BUS_COMMON_CLK_REGS	\
 	DIV_BUS,		\
 	ENABLE_ACLK_BUS,	\
 	ENABLE_PCLK_BUS,	\
 	ENABLE_IP_BUS0,		\
 	ENABLE_IP_BUS1
 
-static const unsigned long bus01_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ bus01_clk_regs[] __initस्थिर = अणु
 	CMU_BUS_COMMON_CLK_REGS,
-};
+पूर्ण;
 
-static const unsigned long bus2_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ bus2_clk_regs[] __initस्थिर = अणु
 	MUX_SEL_BUS2,
 	MUX_ENABLE_BUS2,
 	CMU_BUS_COMMON_CLK_REGS,
-};
+पूर्ण;
 
-static const struct samsung_div_clock bus0_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी bus0_भाग_clks[] __initस्थिर = अणु
 	/* DIV_BUS0 */
 	DIV(CLK_DIV_PCLK_BUS_133, "div_pclk_bus0_133", "aclk_bus0_400",
 			DIV_BUS, 0, 3),
-};
+पूर्ण;
 
-/* CMU_BUS0 clocks */
-static const struct samsung_gate_clock bus0_gate_clks[] __initconst = {
+/* CMU_BUS0 घड़ीs */
+अटल स्थिर काष्ठा samsung_gate_घड़ी bus0_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_BUS0 */
 	GATE(CLK_ACLK_AHB2APB_BUSP, "aclk_ahb2apb_bus0p", "div_pclk_bus0_133",
 			ENABLE_ACLK_BUS, 4, CLK_IGNORE_UNUSED, 0),
@@ -3122,16 +3123,16 @@ static const struct samsung_gate_clock bus0_gate_clks[] __initconst = {
 			ENABLE_PCLK_BUS, 1, CLK_IGNORE_UNUSED, 0),
 	GATE(CLK_PCLK_SYSREG_BUS, "pclk_sysreg_bus0", "div_pclk_bus0_133",
 			ENABLE_PCLK_BUS, 0, CLK_IGNORE_UNUSED, 0),
-};
+पूर्ण;
 
-/* CMU_BUS1 clocks */
-static const struct samsung_div_clock bus1_div_clks[] __initconst = {
+/* CMU_BUS1 घड़ीs */
+अटल स्थिर काष्ठा samsung_भाग_घड़ी bus1_भाग_clks[] __initस्थिर = अणु
 	/* DIV_BUS1 */
 	DIV(CLK_DIV_PCLK_BUS_133, "div_pclk_bus1_133", "aclk_bus1_400",
 			DIV_BUS, 0, 3),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock bus1_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी bus1_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_BUS1 */
 	GATE(CLK_ACLK_AHB2APB_BUSP, "aclk_ahb2apb_bus1p", "div_pclk_bus1_133",
 			ENABLE_ACLK_BUS, 4, CLK_IGNORE_UNUSED, 0),
@@ -3147,22 +3148,22 @@ static const struct samsung_gate_clock bus1_gate_clks[] __initconst = {
 			ENABLE_PCLK_BUS, 1, CLK_IGNORE_UNUSED, 0),
 	GATE(CLK_PCLK_SYSREG_BUS, "pclk_sysreg_bus1", "div_pclk_bus1_133",
 			ENABLE_PCLK_BUS, 0, CLK_IGNORE_UNUSED, 0),
-};
+पूर्ण;
 
-/* CMU_BUS2 clocks */
-static const struct samsung_mux_clock bus2_mux_clks[] __initconst = {
+/* CMU_BUS2 घड़ीs */
+अटल स्थिर काष्ठा samsung_mux_घड़ी bus2_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_BUS2 */
 	MUX(CLK_MOUT_ACLK_BUS2_400_USER, "mout_aclk_bus2_400_user",
 			mout_aclk_bus2_400_p, MUX_SEL_BUS2, 0, 1),
-};
+पूर्ण;
 
-static const struct samsung_div_clock bus2_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी bus2_भाग_clks[] __initस्थिर = अणु
 	/* DIV_BUS2 */
 	DIV(CLK_DIV_PCLK_BUS_133, "div_pclk_bus2_133",
 			"mout_aclk_bus2_400_user", DIV_BUS, 0, 3),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock bus2_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी bus2_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_BUS2 */
 	GATE(CLK_ACLK_AHB2APB_BUSP, "aclk_ahb2apb_bus2p", "div_pclk_bus2_133",
 			ENABLE_ACLK_BUS, 3, CLK_IGNORE_UNUSED, 0),
@@ -3182,40 +3183,40 @@ static const struct samsung_gate_clock bus2_gate_clks[] __initconst = {
 			ENABLE_PCLK_BUS, 1, CLK_IGNORE_UNUSED, 0),
 	GATE(CLK_PCLK_SYSREG_BUS, "pclk_sysreg_bus2", "div_pclk_bus2_133",
 			ENABLE_PCLK_BUS, 0, CLK_IGNORE_UNUSED, 0),
-};
+पूर्ण;
 
-#define CMU_BUS_INFO_CLKS(id)						\
-	.div_clks		= bus##id##_div_clks,			\
-	.nr_div_clks		= ARRAY_SIZE(bus##id##_div_clks),	\
+#घोषणा CMU_BUS_INFO_CLKS(id)						\
+	.भाग_clks		= bus##id##_भाग_clks,			\
+	.nr_भाग_clks		= ARRAY_SIZE(bus##id##_भाग_clks),	\
 	.gate_clks		= bus##id##_gate_clks,			\
 	.nr_gate_clks		= ARRAY_SIZE(bus##id##_gate_clks),	\
 	.nr_clk_ids		= BUSx_NR_CLK
 
-static const struct samsung_cmu_info bus0_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info bus0_cmu_info __initस्थिर = अणु
 	CMU_BUS_INFO_CLKS(0),
 	.clk_regs		= bus01_clk_regs,
 	.nr_clk_regs		= ARRAY_SIZE(bus01_clk_regs),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info bus1_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info bus1_cmu_info __initस्थिर = अणु
 	CMU_BUS_INFO_CLKS(1),
 	.clk_regs		= bus01_clk_regs,
 	.nr_clk_regs		= ARRAY_SIZE(bus01_clk_regs),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info bus2_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info bus2_cmu_info __initस्थिर = अणु
 	CMU_BUS_INFO_CLKS(2),
 	.mux_clks		= bus2_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(bus2_mux_clks),
 	.clk_regs		= bus2_clk_regs,
 	.nr_clk_regs		= ARRAY_SIZE(bus2_clk_regs),
-};
+पूर्ण;
 
-#define exynos5433_cmu_bus_init(id)					\
-static void __init exynos5433_cmu_bus##id##_init(struct device_node *np)\
-{									\
-	samsung_cmu_register_one(np, &bus##id##_cmu_info);		\
-}									\
+#घोषणा exynos5433_cmu_bus_init(id)					\
+अटल व्योम __init exynos5433_cmu_bus##id##_init(काष्ठा device_node *np)\
+अणु									\
+	samsung_cmu_रेजिस्टर_one(np, &bus##id##_cmu_info);		\
+पूर्ण									\
 CLK_OF_DECLARE(exynos5433_cmu_bus##id,					\
 		"samsung,exynos5433-cmu-bus"#id,			\
 		exynos5433_cmu_bus##id##_init)
@@ -3225,29 +3226,29 @@ exynos5433_cmu_bus_init(1);
 exynos5433_cmu_bus_init(2);
 
 /*
- * Register offset definitions for CMU_G3D
+ * Register offset definitions क्रम CMU_G3D
  */
-#define G3D_PLL_LOCK			0x0000
-#define G3D_PLL_CON0			0x0100
-#define G3D_PLL_CON1			0x0104
-#define G3D_PLL_FREQ_DET		0x010c
-#define MUX_SEL_G3D			0x0200
-#define MUX_ENABLE_G3D			0x0300
-#define MUX_STAT_G3D			0x0400
-#define DIV_G3D				0x0600
-#define DIV_G3D_PLL_FREQ_DET		0x0604
-#define DIV_STAT_G3D			0x0700
-#define DIV_STAT_G3D_PLL_FREQ_DET	0x0704
-#define ENABLE_ACLK_G3D			0x0800
-#define ENABLE_PCLK_G3D			0x0900
-#define ENABLE_SCLK_G3D			0x0a00
-#define ENABLE_IP_G3D0			0x0b00
-#define ENABLE_IP_G3D1			0x0b04
-#define CLKOUT_CMU_G3D			0x0c00
-#define CLKOUT_CMU_G3D_DIV_STAT		0x0c04
-#define CLK_STOPCTRL			0x1000
+#घोषणा G3D_PLL_LOCK			0x0000
+#घोषणा G3D_PLL_CON0			0x0100
+#घोषणा G3D_PLL_CON1			0x0104
+#घोषणा G3D_PLL_FREQ_DET		0x010c
+#घोषणा MUX_SEL_G3D			0x0200
+#घोषणा MUX_ENABLE_G3D			0x0300
+#घोषणा MUX_STAT_G3D			0x0400
+#घोषणा DIV_G3D				0x0600
+#घोषणा DIV_G3D_PLL_FREQ_DET		0x0604
+#घोषणा DIV_STAT_G3D			0x0700
+#घोषणा DIV_STAT_G3D_PLL_FREQ_DET	0x0704
+#घोषणा ENABLE_ACLK_G3D			0x0800
+#घोषणा ENABLE_PCLK_G3D			0x0900
+#घोषणा ENABLE_SCLK_G3D			0x0a00
+#घोषणा ENABLE_IP_G3D0			0x0b00
+#घोषणा ENABLE_IP_G3D1			0x0b04
+#घोषणा CLKOUT_CMU_G3D			0x0c00
+#घोषणा CLKOUT_CMU_G3D_DIV_STAT		0x0c04
+#घोषणा CLK_STOPCTRL			0x1000
 
-static const unsigned long g3d_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ g3d_clk_regs[] __initस्थिर = अणु
 	G3D_PLL_LOCK,
 	G3D_PLL_CON0,
 	G3D_PLL_CON1,
@@ -3264,30 +3265,30 @@ static const unsigned long g3d_clk_regs[] __initconst = {
 	CLKOUT_CMU_G3D,
 	CLKOUT_CMU_G3D_DIV_STAT,
 	CLK_STOPCTRL,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump g3d_suspend_regs[] = {
-	{ MUX_SEL_G3D, 0 },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump g3d_suspend_regs[] = अणु
+	अणु MUX_SEL_G3D, 0 पूर्ण,
+पूर्ण;
 
-/* list of all parent clock list */
-PNAME(mout_aclk_g3d_400_p)	= { "mout_g3d_pll", "aclk_g3d_400", };
-PNAME(mout_g3d_pll_p)		= { "oscclk", "fout_g3d_pll", };
+/* list of all parent घड़ी list */
+PNAME(mout_aclk_g3d_400_p)	= अणु "mout_g3d_pll", "aclk_g3d_400", पूर्ण;
+PNAME(mout_g3d_pll_p)		= अणु "oscclk", "fout_g3d_pll", पूर्ण;
 
-static const struct samsung_pll_clock g3d_pll_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_pll_घड़ी g3d_pll_clks[] __initस्थिर = अणु
 	PLL(pll_35xx, CLK_FOUT_G3D_PLL, "fout_g3d_pll", "oscclk",
 		G3D_PLL_LOCK, G3D_PLL_CON0, exynos5433_pll_rates),
-};
+पूर्ण;
 
-static const struct samsung_mux_clock g3d_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी g3d_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_G3D */
 	MUX_F(CLK_MOUT_ACLK_G3D_400, "mout_aclk_g3d_400", mout_aclk_g3d_400_p,
 			MUX_SEL_G3D, 8, 1, CLK_SET_RATE_PARENT, 0),
 	MUX_F(CLK_MOUT_G3D_PLL, "mout_g3d_pll", mout_g3d_pll_p,
 			MUX_SEL_G3D, 0, 1, CLK_SET_RATE_PARENT, 0),
-};
+पूर्ण;
 
-static const struct samsung_div_clock g3d_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी g3d_भाग_clks[] __initस्थिर = अणु
 	/* DIV_G3D */
 	DIV(CLK_DIV_SCLK_HPM_G3D, "div_sclk_hpm_g3d", "mout_g3d_pll", DIV_G3D,
 			8, 2),
@@ -3295,9 +3296,9 @@ static const struct samsung_div_clock g3d_div_clks[] __initconst = {
 			4, 3),
 	DIV_F(CLK_DIV_ACLK_G3D, "div_aclk_g3d", "mout_aclk_g3d_400", DIV_G3D,
 			0, 3, CLK_SET_RATE_PARENT, 0),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock g3d_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी g3d_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_G3D */
 	GATE(CLK_ACLK_BTS_G3D1, "aclk_bts_g3d1", "div_aclk_g3d",
 			ENABLE_ACLK_G3D, 7, 0, 0),
@@ -3329,15 +3330,15 @@ static const struct samsung_gate_clock g3d_gate_clks[] __initconst = {
 	/* ENABLE_SCLK_G3D */
 	GATE(CLK_SCLK_HPM_G3D, "sclk_hpm_g3d", "div_sclk_hpm_g3d",
 			ENABLE_SCLK_G3D, 0, 0, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info g3d_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info g3d_cmu_info __initस्थिर = अणु
 	.pll_clks		= g3d_pll_clks,
 	.nr_pll_clks		= ARRAY_SIZE(g3d_pll_clks),
 	.mux_clks		= g3d_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(g3d_mux_clks),
-	.div_clks		= g3d_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(g3d_div_clks),
+	.भाग_clks		= g3d_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(g3d_भाग_clks),
 	.gate_clks		= g3d_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(g3d_gate_clks),
 	.nr_clk_ids		= G3D_NR_CLK,
@@ -3346,29 +3347,29 @@ static const struct samsung_cmu_info g3d_cmu_info __initconst = {
 	.suspend_regs		= g3d_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(g3d_suspend_regs),
 	.clk_name		= "aclk_g3d_400",
-};
+पूर्ण;
 
 /*
- * Register offset definitions for CMU_GSCL
+ * Register offset definitions क्रम CMU_GSCL
  */
-#define MUX_SEL_GSCL				0x0200
-#define MUX_ENABLE_GSCL				0x0300
-#define MUX_STAT_GSCL				0x0400
-#define ENABLE_ACLK_GSCL			0x0800
-#define ENABLE_ACLK_GSCL_SECURE_SMMU_GSCL0	0x0804
-#define ENABLE_ACLK_GSCL_SECURE_SMMU_GSCL1	0x0808
-#define ENABLE_ACLK_GSCL_SECURE_SMMU_GSCL2	0x080c
-#define ENABLE_PCLK_GSCL			0x0900
-#define ENABLE_PCLK_GSCL_SECURE_SMMU_GSCL0	0x0904
-#define ENABLE_PCLK_GSCL_SECURE_SMMU_GSCL1	0x0908
-#define ENABLE_PCLK_GSCL_SECURE_SMMU_GSCL2	0x090c
-#define ENABLE_IP_GSCL0				0x0b00
-#define ENABLE_IP_GSCL1				0x0b04
-#define ENABLE_IP_GSCL_SECURE_SMMU_GSCL0	0x0b08
-#define ENABLE_IP_GSCL_SECURE_SMMU_GSCL1	0x0b0c
-#define ENABLE_IP_GSCL_SECURE_SMMU_GSCL2	0x0b10
+#घोषणा MUX_SEL_GSCL				0x0200
+#घोषणा MUX_ENABLE_GSCL				0x0300
+#घोषणा MUX_STAT_GSCL				0x0400
+#घोषणा ENABLE_ACLK_GSCL			0x0800
+#घोषणा ENABLE_ACLK_GSCL_SECURE_SMMU_GSCL0	0x0804
+#घोषणा ENABLE_ACLK_GSCL_SECURE_SMMU_GSCL1	0x0808
+#घोषणा ENABLE_ACLK_GSCL_SECURE_SMMU_GSCL2	0x080c
+#घोषणा ENABLE_PCLK_GSCL			0x0900
+#घोषणा ENABLE_PCLK_GSCL_SECURE_SMMU_GSCL0	0x0904
+#घोषणा ENABLE_PCLK_GSCL_SECURE_SMMU_GSCL1	0x0908
+#घोषणा ENABLE_PCLK_GSCL_SECURE_SMMU_GSCL2	0x090c
+#घोषणा ENABLE_IP_GSCL0				0x0b00
+#घोषणा ENABLE_IP_GSCL1				0x0b04
+#घोषणा ENABLE_IP_GSCL_SECURE_SMMU_GSCL0	0x0b08
+#घोषणा ENABLE_IP_GSCL_SECURE_SMMU_GSCL1	0x0b0c
+#घोषणा ENABLE_IP_GSCL_SECURE_SMMU_GSCL2	0x0b10
 
-static const unsigned long gscl_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ gscl_clk_regs[] __initस्थिर = अणु
 	MUX_SEL_GSCL,
 	MUX_ENABLE_GSCL,
 	ENABLE_ACLK_GSCL,
@@ -3384,27 +3385,27 @@ static const unsigned long gscl_clk_regs[] __initconst = {
 	ENABLE_IP_GSCL_SECURE_SMMU_GSCL0,
 	ENABLE_IP_GSCL_SECURE_SMMU_GSCL1,
 	ENABLE_IP_GSCL_SECURE_SMMU_GSCL2,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump gscl_suspend_regs[] = {
-	{ MUX_SEL_GSCL, 0 },
-	{ ENABLE_ACLK_GSCL, 0xfff },
-	{ ENABLE_PCLK_GSCL, 0xff },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump gscl_suspend_regs[] = अणु
+	अणु MUX_SEL_GSCL, 0 पूर्ण,
+	अणु ENABLE_ACLK_GSCL, 0xfff पूर्ण,
+	अणु ENABLE_PCLK_GSCL, 0xff पूर्ण,
+पूर्ण;
 
-/* list of all parent clock list */
-PNAME(aclk_gscl_111_user_p)	= { "oscclk", "aclk_gscl_111", };
-PNAME(aclk_gscl_333_user_p)	= { "oscclk", "aclk_gscl_333", };
+/* list of all parent घड़ी list */
+PNAME(aclk_gscl_111_user_p)	= अणु "oscclk", "aclk_gscl_111", पूर्ण;
+PNAME(aclk_gscl_333_user_p)	= अणु "oscclk", "aclk_gscl_333", पूर्ण;
 
-static const struct samsung_mux_clock gscl_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी gscl_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_GSCL */
 	MUX(CLK_MOUT_ACLK_GSCL_111_USER, "mout_aclk_gscl_111_user",
 			aclk_gscl_111_user_p, MUX_SEL_GSCL, 4, 1),
 	MUX(CLK_MOUT_ACLK_GSCL_333_USER, "mout_aclk_gscl_333_user",
 			aclk_gscl_333_user_p, MUX_SEL_GSCL, 0, 1),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock gscl_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी gscl_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_GSCL */
 	GATE(CLK_ACLK_BTS_GSCL2, "aclk_bts_gscl2", "mout_aclk_gscl_333_user",
 			ENABLE_ACLK_GSCL, 11, 0, 0),
@@ -3476,9 +3477,9 @@ static const struct samsung_gate_clock gscl_gate_clks[] __initconst = {
 	/* ENABLE_PCLK_GSCL_SECURE_SMMU_GSCL2 */
 	GATE(CLK_PCLK_SMMU_GSCL2, "pclk_smmu_gscl2", "mout_aclk_gscl_111_user",
 		ENABLE_PCLK_GSCL_SECURE_SMMU_GSCL2, 0, 0, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info gscl_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info gscl_cmu_info __initस्थिर = अणु
 	.mux_clks		= gscl_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(gscl_mux_clks),
 	.gate_clks		= gscl_gate_clks,
@@ -3489,45 +3490,45 @@ static const struct samsung_cmu_info gscl_cmu_info __initconst = {
 	.suspend_regs		= gscl_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(gscl_suspend_regs),
 	.clk_name		= "aclk_gscl_111",
-};
+पूर्ण;
 
 /*
- * Register offset definitions for CMU_APOLLO
+ * Register offset definitions क्रम CMU_APOLLO
  */
-#define APOLLO_PLL_LOCK				0x0000
-#define APOLLO_PLL_CON0				0x0100
-#define APOLLO_PLL_CON1				0x0104
-#define APOLLO_PLL_FREQ_DET			0x010c
-#define MUX_SEL_APOLLO0				0x0200
-#define MUX_SEL_APOLLO1				0x0204
-#define MUX_SEL_APOLLO2				0x0208
-#define MUX_ENABLE_APOLLO0			0x0300
-#define MUX_ENABLE_APOLLO1			0x0304
-#define MUX_ENABLE_APOLLO2			0x0308
-#define MUX_STAT_APOLLO0			0x0400
-#define MUX_STAT_APOLLO1			0x0404
-#define MUX_STAT_APOLLO2			0x0408
-#define DIV_APOLLO0				0x0600
-#define DIV_APOLLO1				0x0604
-#define DIV_APOLLO_PLL_FREQ_DET			0x0608
-#define DIV_STAT_APOLLO0			0x0700
-#define DIV_STAT_APOLLO1			0x0704
-#define DIV_STAT_APOLLO_PLL_FREQ_DET		0x0708
-#define ENABLE_ACLK_APOLLO			0x0800
-#define ENABLE_PCLK_APOLLO			0x0900
-#define ENABLE_SCLK_APOLLO			0x0a00
-#define ENABLE_IP_APOLLO0			0x0b00
-#define ENABLE_IP_APOLLO1			0x0b04
-#define CLKOUT_CMU_APOLLO			0x0c00
-#define CLKOUT_CMU_APOLLO_DIV_STAT		0x0c04
-#define ARMCLK_STOPCTRL				0x1000
-#define APOLLO_PWR_CTRL				0x1020
-#define APOLLO_PWR_CTRL2			0x1024
-#define APOLLO_INTR_SPREAD_ENABLE		0x1080
-#define APOLLO_INTR_SPREAD_USE_STANDBYWFI	0x1084
-#define APOLLO_INTR_SPREAD_BLOCKING_DURATION	0x1088
+#घोषणा APOLLO_PLL_LOCK				0x0000
+#घोषणा APOLLO_PLL_CON0				0x0100
+#घोषणा APOLLO_PLL_CON1				0x0104
+#घोषणा APOLLO_PLL_FREQ_DET			0x010c
+#घोषणा MUX_SEL_APOLLO0				0x0200
+#घोषणा MUX_SEL_APOLLO1				0x0204
+#घोषणा MUX_SEL_APOLLO2				0x0208
+#घोषणा MUX_ENABLE_APOLLO0			0x0300
+#घोषणा MUX_ENABLE_APOLLO1			0x0304
+#घोषणा MUX_ENABLE_APOLLO2			0x0308
+#घोषणा MUX_STAT_APOLLO0			0x0400
+#घोषणा MUX_STAT_APOLLO1			0x0404
+#घोषणा MUX_STAT_APOLLO2			0x0408
+#घोषणा DIV_APOLLO0				0x0600
+#घोषणा DIV_APOLLO1				0x0604
+#घोषणा DIV_APOLLO_PLL_FREQ_DET			0x0608
+#घोषणा DIV_STAT_APOLLO0			0x0700
+#घोषणा DIV_STAT_APOLLO1			0x0704
+#घोषणा DIV_STAT_APOLLO_PLL_FREQ_DET		0x0708
+#घोषणा ENABLE_ACLK_APOLLO			0x0800
+#घोषणा ENABLE_PCLK_APOLLO			0x0900
+#घोषणा ENABLE_SCLK_APOLLO			0x0a00
+#घोषणा ENABLE_IP_APOLLO0			0x0b00
+#घोषणा ENABLE_IP_APOLLO1			0x0b04
+#घोषणा CLKOUT_CMU_APOLLO			0x0c00
+#घोषणा CLKOUT_CMU_APOLLO_DIV_STAT		0x0c04
+#घोषणा ARMCLK_STOPCTRL				0x1000
+#घोषणा APOLLO_PWR_CTRL				0x1020
+#घोषणा APOLLO_PWR_CTRL2			0x1024
+#घोषणा APOLLO_INTR_SPREAD_ENABLE		0x1080
+#घोषणा APOLLO_INTR_SPREAD_USE_STANDBYWFI	0x1084
+#घोषणा APOLLO_INTR_SPREAD_BLOCKING_DURATION	0x1088
 
-static const unsigned long apollo_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ apollo_clk_regs[] __initस्थिर = अणु
 	APOLLO_PLL_LOCK,
 	APOLLO_PLL_CON0,
 	APOLLO_PLL_CON1,
@@ -3554,20 +3555,20 @@ static const unsigned long apollo_clk_regs[] __initconst = {
 	APOLLO_INTR_SPREAD_ENABLE,
 	APOLLO_INTR_SPREAD_USE_STANDBYWFI,
 	APOLLO_INTR_SPREAD_BLOCKING_DURATION,
-};
+पूर्ण;
 
-/* list of all parent clock list */
-PNAME(mout_apollo_pll_p)		= { "oscclk", "fout_apollo_pll", };
-PNAME(mout_bus_pll_apollo_user_p)	= { "oscclk", "sclk_bus_pll_apollo", };
-PNAME(mout_apollo_p)			= { "mout_apollo_pll",
-					    "mout_bus_pll_apollo_user", };
+/* list of all parent घड़ी list */
+PNAME(mout_apollo_pll_p)		= अणु "oscclk", "fout_apollo_pll", पूर्ण;
+PNAME(mout_bus_pll_apollo_user_p)	= अणु "oscclk", "sclk_bus_pll_apollo", पूर्ण;
+PNAME(mout_apollo_p)			= अणु "mout_apollo_pll",
+					    "mout_bus_pll_apollo_user", पूर्ण;
 
-static const struct samsung_pll_clock apollo_pll_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_pll_घड़ी apollo_pll_clks[] __initस्थिर = अणु
 	PLL(pll_35xx, CLK_FOUT_APOLLO_PLL, "fout_apollo_pll", "oscclk",
 		APOLLO_PLL_LOCK, APOLLO_PLL_CON0, exynos5433_pll_rates),
-};
+पूर्ण;
 
-static const struct samsung_mux_clock apollo_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी apollo_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_APOLLO0 */
 	MUX_F(CLK_MOUT_APOLLO_PLL, "mout_apollo_pll", mout_apollo_pll_p,
 			MUX_SEL_APOLLO0, 0, 1, CLK_SET_RATE_PARENT |
@@ -3580,9 +3581,9 @@ static const struct samsung_mux_clock apollo_mux_clks[] __initconst = {
 	/* MUX_SEL_APOLLO2 */
 	MUX_F(CLK_MOUT_APOLLO, "mout_apollo", mout_apollo_p, MUX_SEL_APOLLO2,
 			0, 1, CLK_SET_RATE_PARENT, 0),
-};
+पूर्ण;
 
-static const struct samsung_div_clock apollo_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी apollo_भाग_clks[] __initस्थिर = अणु
 	/* DIV_APOLLO0 */
 	DIV_F(CLK_DIV_CNTCLK_APOLLO, "div_cntclk_apollo", "div_apollo2",
 			DIV_APOLLO0, 24, 3, CLK_GET_RATE_NOCACHE,
@@ -3611,9 +3612,9 @@ static const struct samsung_div_clock apollo_div_clks[] __initconst = {
 	DIV_F(CLK_DIV_APOLLO_PLL, "div_apollo_pll", "mout_apollo",
 			DIV_APOLLO1, 0, 3, CLK_GET_RATE_NOCACHE,
 			CLK_DIVIDER_READ_ONLY),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock apollo_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी apollo_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_APOLLO */
 	GATE(CLK_ACLK_ASATBSLV_APOLLO_3_CSSYS, "aclk_asatbslv_apollo_3_cssys",
 			"div_atclk_apollo", ENABLE_ACLK_APOLLO,
@@ -3652,59 +3653,59 @@ static const struct samsung_gate_clock apollo_gate_clks[] __initconst = {
 			ENABLE_SCLK_APOLLO, 3, CLK_IGNORE_UNUSED, 0),
 	GATE(CLK_SCLK_HPM_APOLLO, "sclk_hpm_apollo", "div_sclk_hpm_apollo",
 			ENABLE_SCLK_APOLLO, 1, CLK_IGNORE_UNUSED, 0),
-};
+पूर्ण;
 
-#define E5433_APOLLO_DIV0(cntclk, pclk_dbg, atclk, pclk, aclk) \
+#घोषणा E5433_APOLLO_DIV0(cntclk, pclk_dbg, atclk, pclk, aclk) \
 		(((cntclk) << 24) | ((pclk_dbg) << 20) | ((atclk) << 16) | \
 		 ((pclk) << 12) | ((aclk) << 8))
 
-#define E5433_APOLLO_DIV1(hpm, copy) \
+#घोषणा E5433_APOLLO_DIV1(hpm, copy) \
 		(((hpm) << 4) | ((copy) << 0))
 
-static const struct exynos_cpuclk_cfg_data exynos5433_apolloclk_d[] __initconst = {
-	{ 1300000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), },
-	{ 1200000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), },
-	{ 1100000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), },
-	{ 1000000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), },
-	{  900000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), },
-	{  800000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), },
-	{  700000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), },
-	{  600000, E5433_APOLLO_DIV0(3, 7, 7, 7, 1), E5433_APOLLO_DIV1(7, 1), },
-	{  500000, E5433_APOLLO_DIV0(3, 7, 7, 7, 1), E5433_APOLLO_DIV1(7, 1), },
-	{  400000, E5433_APOLLO_DIV0(3, 7, 7, 7, 1), E5433_APOLLO_DIV1(7, 1), },
-	{  0 },
-};
+अटल स्थिर काष्ठा exynos_cpuclk_cfg_data exynos5433_apolloclk_d[] __initस्थिर = अणु
+	अणु 1300000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), पूर्ण,
+	अणु 1200000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), पूर्ण,
+	अणु 1100000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), पूर्ण,
+	अणु 1000000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), पूर्ण,
+	अणु  900000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), पूर्ण,
+	अणु  800000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), पूर्ण,
+	अणु  700000, E5433_APOLLO_DIV0(3, 7, 7, 7, 2), E5433_APOLLO_DIV1(7, 1), पूर्ण,
+	अणु  600000, E5433_APOLLO_DIV0(3, 7, 7, 7, 1), E5433_APOLLO_DIV1(7, 1), पूर्ण,
+	अणु  500000, E5433_APOLLO_DIV0(3, 7, 7, 7, 1), E5433_APOLLO_DIV1(7, 1), पूर्ण,
+	अणु  400000, E5433_APOLLO_DIV0(3, 7, 7, 7, 1), E5433_APOLLO_DIV1(7, 1), पूर्ण,
+	अणु  0 पूर्ण,
+पूर्ण;
 
-static void __init exynos5433_cmu_apollo_init(struct device_node *np)
-{
-	void __iomem *reg_base;
-	struct samsung_clk_provider *ctx;
-	struct clk_hw **hws;
+अटल व्योम __init exynos5433_cmu_apollo_init(काष्ठा device_node *np)
+अणु
+	व्योम __iomem *reg_base;
+	काष्ठा samsung_clk_provider *ctx;
+	काष्ठा clk_hw **hws;
 
 	reg_base = of_iomap(np, 0);
-	if (!reg_base) {
+	अगर (!reg_base) अणु
 		panic("%s: failed to map registers\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ctx = samsung_clk_init(np, reg_base, APOLLO_NR_CLK);
-	if (!ctx) {
+	अगर (!ctx) अणु
 		panic("%s: unable to allocate ctx\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	samsung_clk_register_pll(ctx, apollo_pll_clks,
+	samsung_clk_रेजिस्टर_pll(ctx, apollo_pll_clks,
 				 ARRAY_SIZE(apollo_pll_clks), reg_base);
-	samsung_clk_register_mux(ctx, apollo_mux_clks,
+	samsung_clk_रेजिस्टर_mux(ctx, apollo_mux_clks,
 				 ARRAY_SIZE(apollo_mux_clks));
-	samsung_clk_register_div(ctx, apollo_div_clks,
-				 ARRAY_SIZE(apollo_div_clks));
-	samsung_clk_register_gate(ctx, apollo_gate_clks,
+	samsung_clk_रेजिस्टर_भाग(ctx, apollo_भाग_clks,
+				 ARRAY_SIZE(apollo_भाग_clks));
+	samsung_clk_रेजिस्टर_gate(ctx, apollo_gate_clks,
 				  ARRAY_SIZE(apollo_gate_clks));
 
 	hws = ctx->clk_data.hws;
 
-	exynos_register_cpu_clock(ctx, CLK_SCLK_APOLLO, "apolloclk",
+	exynos_रेजिस्टर_cpu_घड़ी(ctx, CLK_SCLK_APOLLO, "apolloclk",
 		hws[CLK_MOUT_APOLLO_PLL], hws[CLK_MOUT_BUS_PLL_APOLLO_USER], 0x200,
 		exynos5433_apolloclk_d, ARRAY_SIZE(exynos5433_apolloclk_d),
 		CLK_CPU_HAS_E5433_REGS_LAYOUT);
@@ -3713,47 +3714,47 @@ static void __init exynos5433_cmu_apollo_init(struct device_node *np)
 			       ARRAY_SIZE(apollo_clk_regs));
 
 	samsung_clk_of_add_provider(np, ctx);
-}
+पूर्ण
 CLK_OF_DECLARE(exynos5433_cmu_apollo, "samsung,exynos5433-cmu-apollo",
 		exynos5433_cmu_apollo_init);
 
 /*
- * Register offset definitions for CMU_ATLAS
+ * Register offset definitions क्रम CMU_ATLAS
  */
-#define ATLAS_PLL_LOCK				0x0000
-#define ATLAS_PLL_CON0				0x0100
-#define ATLAS_PLL_CON1				0x0104
-#define ATLAS_PLL_FREQ_DET			0x010c
-#define MUX_SEL_ATLAS0				0x0200
-#define MUX_SEL_ATLAS1				0x0204
-#define MUX_SEL_ATLAS2				0x0208
-#define MUX_ENABLE_ATLAS0			0x0300
-#define MUX_ENABLE_ATLAS1			0x0304
-#define MUX_ENABLE_ATLAS2			0x0308
-#define MUX_STAT_ATLAS0				0x0400
-#define MUX_STAT_ATLAS1				0x0404
-#define MUX_STAT_ATLAS2				0x0408
-#define DIV_ATLAS0				0x0600
-#define DIV_ATLAS1				0x0604
-#define DIV_ATLAS_PLL_FREQ_DET			0x0608
-#define DIV_STAT_ATLAS0				0x0700
-#define DIV_STAT_ATLAS1				0x0704
-#define DIV_STAT_ATLAS_PLL_FREQ_DET		0x0708
-#define ENABLE_ACLK_ATLAS			0x0800
-#define ENABLE_PCLK_ATLAS			0x0900
-#define ENABLE_SCLK_ATLAS			0x0a00
-#define ENABLE_IP_ATLAS0			0x0b00
-#define ENABLE_IP_ATLAS1			0x0b04
-#define CLKOUT_CMU_ATLAS			0x0c00
-#define CLKOUT_CMU_ATLAS_DIV_STAT		0x0c04
-#define ARMCLK_STOPCTRL				0x1000
-#define ATLAS_PWR_CTRL				0x1020
-#define ATLAS_PWR_CTRL2				0x1024
-#define ATLAS_INTR_SPREAD_ENABLE		0x1080
-#define ATLAS_INTR_SPREAD_USE_STANDBYWFI	0x1084
-#define ATLAS_INTR_SPREAD_BLOCKING_DURATION	0x1088
+#घोषणा ATLAS_PLL_LOCK				0x0000
+#घोषणा ATLAS_PLL_CON0				0x0100
+#घोषणा ATLAS_PLL_CON1				0x0104
+#घोषणा ATLAS_PLL_FREQ_DET			0x010c
+#घोषणा MUX_SEL_ATLAS0				0x0200
+#घोषणा MUX_SEL_ATLAS1				0x0204
+#घोषणा MUX_SEL_ATLAS2				0x0208
+#घोषणा MUX_ENABLE_ATLAS0			0x0300
+#घोषणा MUX_ENABLE_ATLAS1			0x0304
+#घोषणा MUX_ENABLE_ATLAS2			0x0308
+#घोषणा MUX_STAT_ATLAS0				0x0400
+#घोषणा MUX_STAT_ATLAS1				0x0404
+#घोषणा MUX_STAT_ATLAS2				0x0408
+#घोषणा DIV_ATLAS0				0x0600
+#घोषणा DIV_ATLAS1				0x0604
+#घोषणा DIV_ATLAS_PLL_FREQ_DET			0x0608
+#घोषणा DIV_STAT_ATLAS0				0x0700
+#घोषणा DIV_STAT_ATLAS1				0x0704
+#घोषणा DIV_STAT_ATLAS_PLL_FREQ_DET		0x0708
+#घोषणा ENABLE_ACLK_ATLAS			0x0800
+#घोषणा ENABLE_PCLK_ATLAS			0x0900
+#घोषणा ENABLE_SCLK_ATLAS			0x0a00
+#घोषणा ENABLE_IP_ATLAS0			0x0b00
+#घोषणा ENABLE_IP_ATLAS1			0x0b04
+#घोषणा CLKOUT_CMU_ATLAS			0x0c00
+#घोषणा CLKOUT_CMU_ATLAS_DIV_STAT		0x0c04
+#घोषणा ARMCLK_STOPCTRL				0x1000
+#घोषणा ATLAS_PWR_CTRL				0x1020
+#घोषणा ATLAS_PWR_CTRL2				0x1024
+#घोषणा ATLAS_INTR_SPREAD_ENABLE		0x1080
+#घोषणा ATLAS_INTR_SPREAD_USE_STANDBYWFI	0x1084
+#घोषणा ATLAS_INTR_SPREAD_BLOCKING_DURATION	0x1088
 
-static const unsigned long atlas_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ atlas_clk_regs[] __initस्थिर = अणु
 	ATLAS_PLL_LOCK,
 	ATLAS_PLL_CON0,
 	ATLAS_PLL_CON1,
@@ -3780,20 +3781,20 @@ static const unsigned long atlas_clk_regs[] __initconst = {
 	ATLAS_INTR_SPREAD_ENABLE,
 	ATLAS_INTR_SPREAD_USE_STANDBYWFI,
 	ATLAS_INTR_SPREAD_BLOCKING_DURATION,
-};
+पूर्ण;
 
-/* list of all parent clock list */
-PNAME(mout_atlas_pll_p)			= { "oscclk", "fout_atlas_pll", };
-PNAME(mout_bus_pll_atlas_user_p)	= { "oscclk", "sclk_bus_pll_atlas", };
-PNAME(mout_atlas_p)			= { "mout_atlas_pll",
-					    "mout_bus_pll_atlas_user", };
+/* list of all parent घड़ी list */
+PNAME(mout_atlas_pll_p)			= अणु "oscclk", "fout_atlas_pll", पूर्ण;
+PNAME(mout_bus_pll_atlas_user_p)	= अणु "oscclk", "sclk_bus_pll_atlas", पूर्ण;
+PNAME(mout_atlas_p)			= अणु "mout_atlas_pll",
+					    "mout_bus_pll_atlas_user", पूर्ण;
 
-static const struct samsung_pll_clock atlas_pll_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_pll_घड़ी atlas_pll_clks[] __initस्थिर = अणु
 	PLL(pll_35xx, CLK_FOUT_ATLAS_PLL, "fout_atlas_pll", "oscclk",
 		ATLAS_PLL_LOCK, ATLAS_PLL_CON0, exynos5433_pll_rates),
-};
+पूर्ण;
 
-static const struct samsung_mux_clock atlas_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी atlas_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_ATLAS0 */
 	MUX_F(CLK_MOUT_ATLAS_PLL, "mout_atlas_pll", mout_atlas_pll_p,
 			MUX_SEL_ATLAS0, 0, 1, CLK_SET_RATE_PARENT |
@@ -3806,9 +3807,9 @@ static const struct samsung_mux_clock atlas_mux_clks[] __initconst = {
 	/* MUX_SEL_ATLAS2 */
 	MUX_F(CLK_MOUT_ATLAS, "mout_atlas", mout_atlas_p, MUX_SEL_ATLAS2,
 			0, 1, CLK_SET_RATE_PARENT, 0),
-};
+पूर्ण;
 
-static const struct samsung_div_clock atlas_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी atlas_भाग_clks[] __initस्थिर = अणु
 	/* DIV_ATLAS0 */
 	DIV_F(CLK_DIV_CNTCLK_ATLAS, "div_cntclk_atlas", "div_atlas2",
 			DIV_ATLAS0, 24, 3, CLK_GET_RATE_NOCACHE,
@@ -3837,9 +3838,9 @@ static const struct samsung_div_clock atlas_div_clks[] __initconst = {
 	DIV_F(CLK_DIV_ATLAS_PLL, "div_atlas_pll", "mout_atlas",
 			DIV_ATLAS1, 0, 3, CLK_GET_RATE_NOCACHE,
 			CLK_DIVIDER_READ_ONLY),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock atlas_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी atlas_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_ATLAS */
 	GATE(CLK_ACLK_ATB_AUD_CSSYS, "aclk_atb_aud_cssys",
 			"div_atclk_atlas", ENABLE_ACLK_ATLAS,
@@ -3904,64 +3905,64 @@ static const struct samsung_gate_clock atlas_gate_clks[] __initconst = {
 			ENABLE_SCLK_ATLAS, 2, CLK_IGNORE_UNUSED, 0),
 	GATE(CLK_ATCLK, "atclk", "div_atclk_atlas",
 			ENABLE_SCLK_ATLAS, 1, CLK_IGNORE_UNUSED, 0),
-};
+पूर्ण;
 
-#define E5433_ATLAS_DIV0(cntclk, pclk_dbg, atclk, pclk, aclk) \
+#घोषणा E5433_ATLAS_DIV0(cntclk, pclk_dbg, atclk, pclk, aclk) \
 		(((cntclk) << 24) | ((pclk_dbg) << 20) | ((atclk) << 16) | \
 		 ((pclk) << 12) | ((aclk) << 8))
 
-#define E5433_ATLAS_DIV1(hpm, copy) \
+#घोषणा E5433_ATLAS_DIV1(hpm, copy) \
 		(((hpm) << 4) | ((copy) << 0))
 
-static const struct exynos_cpuclk_cfg_data exynos5433_atlasclk_d[] __initconst = {
-	{ 1900000, E5433_ATLAS_DIV0(7, 7, 7, 7, 4), E5433_ATLAS_DIV1(7, 1), },
-	{ 1800000, E5433_ATLAS_DIV0(7, 7, 7, 7, 4), E5433_ATLAS_DIV1(7, 1), },
-	{ 1700000, E5433_ATLAS_DIV0(7, 7, 7, 7, 4), E5433_ATLAS_DIV1(7, 1), },
-	{ 1600000, E5433_ATLAS_DIV0(7, 7, 7, 7, 4), E5433_ATLAS_DIV1(7, 1), },
-	{ 1500000, E5433_ATLAS_DIV0(7, 7, 7, 7, 3), E5433_ATLAS_DIV1(7, 1), },
-	{ 1400000, E5433_ATLAS_DIV0(7, 7, 7, 7, 3), E5433_ATLAS_DIV1(7, 1), },
-	{ 1300000, E5433_ATLAS_DIV0(7, 7, 7, 7, 3), E5433_ATLAS_DIV1(7, 1), },
-	{ 1200000, E5433_ATLAS_DIV0(7, 7, 7, 7, 3), E5433_ATLAS_DIV1(7, 1), },
-	{ 1100000, E5433_ATLAS_DIV0(7, 7, 7, 7, 3), E5433_ATLAS_DIV1(7, 1), },
-	{ 1000000, E5433_ATLAS_DIV0(7, 7, 7, 7, 3), E5433_ATLAS_DIV1(7, 1), },
-	{  900000, E5433_ATLAS_DIV0(7, 7, 7, 7, 2), E5433_ATLAS_DIV1(7, 1), },
-	{  800000, E5433_ATLAS_DIV0(7, 7, 7, 7, 2), E5433_ATLAS_DIV1(7, 1), },
-	{  700000, E5433_ATLAS_DIV0(7, 7, 7, 7, 2), E5433_ATLAS_DIV1(7, 1), },
-	{  600000, E5433_ATLAS_DIV0(7, 7, 7, 7, 2), E5433_ATLAS_DIV1(7, 1), },
-	{  500000, E5433_ATLAS_DIV0(7, 7, 7, 7, 2), E5433_ATLAS_DIV1(7, 1), },
-	{  0 },
-};
+अटल स्थिर काष्ठा exynos_cpuclk_cfg_data exynos5433_atlasclk_d[] __initस्थिर = अणु
+	अणु 1900000, E5433_ATLAS_DIV0(7, 7, 7, 7, 4), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु 1800000, E5433_ATLAS_DIV0(7, 7, 7, 7, 4), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु 1700000, E5433_ATLAS_DIV0(7, 7, 7, 7, 4), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु 1600000, E5433_ATLAS_DIV0(7, 7, 7, 7, 4), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु 1500000, E5433_ATLAS_DIV0(7, 7, 7, 7, 3), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु 1400000, E5433_ATLAS_DIV0(7, 7, 7, 7, 3), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु 1300000, E5433_ATLAS_DIV0(7, 7, 7, 7, 3), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु 1200000, E5433_ATLAS_DIV0(7, 7, 7, 7, 3), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु 1100000, E5433_ATLAS_DIV0(7, 7, 7, 7, 3), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु 1000000, E5433_ATLAS_DIV0(7, 7, 7, 7, 3), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु  900000, E5433_ATLAS_DIV0(7, 7, 7, 7, 2), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु  800000, E5433_ATLAS_DIV0(7, 7, 7, 7, 2), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु  700000, E5433_ATLAS_DIV0(7, 7, 7, 7, 2), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु  600000, E5433_ATLAS_DIV0(7, 7, 7, 7, 2), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु  500000, E5433_ATLAS_DIV0(7, 7, 7, 7, 2), E5433_ATLAS_DIV1(7, 1), पूर्ण,
+	अणु  0 पूर्ण,
+पूर्ण;
 
-static void __init exynos5433_cmu_atlas_init(struct device_node *np)
-{
-	void __iomem *reg_base;
-	struct samsung_clk_provider *ctx;
-	struct clk_hw **hws;
+अटल व्योम __init exynos5433_cmu_atlas_init(काष्ठा device_node *np)
+अणु
+	व्योम __iomem *reg_base;
+	काष्ठा samsung_clk_provider *ctx;
+	काष्ठा clk_hw **hws;
 
 	reg_base = of_iomap(np, 0);
-	if (!reg_base) {
+	अगर (!reg_base) अणु
 		panic("%s: failed to map registers\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ctx = samsung_clk_init(np, reg_base, ATLAS_NR_CLK);
-	if (!ctx) {
+	अगर (!ctx) अणु
 		panic("%s: unable to allocate ctx\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	samsung_clk_register_pll(ctx, atlas_pll_clks,
+	samsung_clk_रेजिस्टर_pll(ctx, atlas_pll_clks,
 				 ARRAY_SIZE(atlas_pll_clks), reg_base);
-	samsung_clk_register_mux(ctx, atlas_mux_clks,
+	samsung_clk_रेजिस्टर_mux(ctx, atlas_mux_clks,
 				 ARRAY_SIZE(atlas_mux_clks));
-	samsung_clk_register_div(ctx, atlas_div_clks,
-				 ARRAY_SIZE(atlas_div_clks));
-	samsung_clk_register_gate(ctx, atlas_gate_clks,
+	samsung_clk_रेजिस्टर_भाग(ctx, atlas_भाग_clks,
+				 ARRAY_SIZE(atlas_भाग_clks));
+	samsung_clk_रेजिस्टर_gate(ctx, atlas_gate_clks,
 				  ARRAY_SIZE(atlas_gate_clks));
 
 	hws = ctx->clk_data.hws;
 
-	exynos_register_cpu_clock(ctx, CLK_SCLK_ATLAS, "atlasclk",
+	exynos_रेजिस्टर_cpu_घड़ी(ctx, CLK_SCLK_ATLAS, "atlasclk",
 		hws[CLK_MOUT_ATLAS_PLL], hws[CLK_MOUT_BUS_PLL_ATLAS_USER], 0x200,
 		exynos5433_atlasclk_d, ARRAY_SIZE(exynos5433_atlasclk_d),
 		CLK_CPU_HAS_E5433_REGS_LAYOUT);
@@ -3970,37 +3971,37 @@ static void __init exynos5433_cmu_atlas_init(struct device_node *np)
 			       ARRAY_SIZE(atlas_clk_regs));
 
 	samsung_clk_of_add_provider(np, ctx);
-}
+पूर्ण
 CLK_OF_DECLARE(exynos5433_cmu_atlas, "samsung,exynos5433-cmu-atlas",
 		exynos5433_cmu_atlas_init);
 
 /*
- * Register offset definitions for CMU_MSCL
+ * Register offset definitions क्रम CMU_MSCL
  */
-#define MUX_SEL_MSCL0					0x0200
-#define MUX_SEL_MSCL1					0x0204
-#define MUX_ENABLE_MSCL0				0x0300
-#define MUX_ENABLE_MSCL1				0x0304
-#define MUX_STAT_MSCL0					0x0400
-#define MUX_STAT_MSCL1					0x0404
-#define DIV_MSCL					0x0600
-#define DIV_STAT_MSCL					0x0700
-#define ENABLE_ACLK_MSCL				0x0800
-#define ENABLE_ACLK_MSCL_SECURE_SMMU_M2MSCALER0		0x0804
-#define ENABLE_ACLK_MSCL_SECURE_SMMU_M2MSCALER1		0x0808
-#define ENABLE_ACLK_MSCL_SECURE_SMMU_JPEG		0x080c
-#define ENABLE_PCLK_MSCL				0x0900
-#define ENABLE_PCLK_MSCL_SECURE_SMMU_M2MSCALER0		0x0904
-#define ENABLE_PCLK_MSCL_SECURE_SMMU_M2MSCALER1		0x0908
-#define ENABLE_PCLK_MSCL_SECURE_SMMU_JPEG		0x090c
-#define ENABLE_SCLK_MSCL				0x0a00
-#define ENABLE_IP_MSCL0					0x0b00
-#define ENABLE_IP_MSCL1					0x0b04
-#define ENABLE_IP_MSCL_SECURE_SMMU_M2MSCALER0		0x0b08
-#define ENABLE_IP_MSCL_SECURE_SMMU_M2MSCALER1		0x0b0c
-#define ENABLE_IP_MSCL_SECURE_SMMU_JPEG			0x0b10
+#घोषणा MUX_SEL_MSCL0					0x0200
+#घोषणा MUX_SEL_MSCL1					0x0204
+#घोषणा MUX_ENABLE_MSCL0				0x0300
+#घोषणा MUX_ENABLE_MSCL1				0x0304
+#घोषणा MUX_STAT_MSCL0					0x0400
+#घोषणा MUX_STAT_MSCL1					0x0404
+#घोषणा DIV_MSCL					0x0600
+#घोषणा DIV_STAT_MSCL					0x0700
+#घोषणा ENABLE_ACLK_MSCL				0x0800
+#घोषणा ENABLE_ACLK_MSCL_SECURE_SMMU_M2MSCALER0		0x0804
+#घोषणा ENABLE_ACLK_MSCL_SECURE_SMMU_M2MSCALER1		0x0808
+#घोषणा ENABLE_ACLK_MSCL_SECURE_SMMU_JPEG		0x080c
+#घोषणा ENABLE_PCLK_MSCL				0x0900
+#घोषणा ENABLE_PCLK_MSCL_SECURE_SMMU_M2MSCALER0		0x0904
+#घोषणा ENABLE_PCLK_MSCL_SECURE_SMMU_M2MSCALER1		0x0908
+#घोषणा ENABLE_PCLK_MSCL_SECURE_SMMU_JPEG		0x090c
+#घोषणा ENABLE_SCLK_MSCL				0x0a00
+#घोषणा ENABLE_IP_MSCL0					0x0b00
+#घोषणा ENABLE_IP_MSCL1					0x0b04
+#घोषणा ENABLE_IP_MSCL_SECURE_SMMU_M2MSCALER0		0x0b08
+#घोषणा ENABLE_IP_MSCL_SECURE_SMMU_M2MSCALER1		0x0b0c
+#घोषणा ENABLE_IP_MSCL_SECURE_SMMU_JPEG			0x0b10
 
-static const unsigned long mscl_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ mscl_clk_regs[] __initस्थिर = अणु
 	MUX_SEL_MSCL0,
 	MUX_SEL_MSCL1,
 	MUX_ENABLE_MSCL0,
@@ -4020,20 +4021,20 @@ static const unsigned long mscl_clk_regs[] __initconst = {
 	ENABLE_IP_MSCL_SECURE_SMMU_M2MSCALER0,
 	ENABLE_IP_MSCL_SECURE_SMMU_M2MSCALER1,
 	ENABLE_IP_MSCL_SECURE_SMMU_JPEG,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump mscl_suspend_regs[] = {
-	{ MUX_SEL_MSCL0, 0 },
-	{ MUX_SEL_MSCL1, 0 },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump mscl_suspend_regs[] = अणु
+	अणु MUX_SEL_MSCL0, 0 पूर्ण,
+	अणु MUX_SEL_MSCL1, 0 पूर्ण,
+पूर्ण;
 
-/* list of all parent clock list */
-PNAME(mout_sclk_jpeg_user_p)		= { "oscclk", "sclk_jpeg_mscl", };
-PNAME(mout_aclk_mscl_400_user_p)	= { "oscclk", "aclk_mscl_400", };
-PNAME(mout_sclk_jpeg_p)			= { "mout_sclk_jpeg_user",
-					"mout_aclk_mscl_400_user", };
+/* list of all parent घड़ी list */
+PNAME(mout_sclk_jpeg_user_p)		= अणु "oscclk", "sclk_jpeg_mscl", पूर्ण;
+PNAME(mout_aclk_mscl_400_user_p)	= अणु "oscclk", "aclk_mscl_400", पूर्ण;
+PNAME(mout_sclk_jpeg_p)			= अणु "mout_sclk_jpeg_user",
+					"mout_aclk_mscl_400_user", पूर्ण;
 
-static const struct samsung_mux_clock mscl_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी mscl_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_MSCL0 */
 	MUX(CLK_MOUT_SCLK_JPEG_USER, "mout_sclk_jpeg_user",
 			mout_sclk_jpeg_user_p, MUX_SEL_MSCL0, 4, 1),
@@ -4043,15 +4044,15 @@ static const struct samsung_mux_clock mscl_mux_clks[] __initconst = {
 	/* MUX_SEL_MSCL1 */
 	MUX(CLK_MOUT_SCLK_JPEG, "mout_sclk_jpeg", mout_sclk_jpeg_p,
 			MUX_SEL_MSCL1, 0, 1),
-};
+पूर्ण;
 
-static const struct samsung_div_clock mscl_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी mscl_भाग_clks[] __initस्थिर = अणु
 	/* DIV_MSCL */
 	DIV(CLK_DIV_PCLK_MSCL, "div_pclk_mscl", "mout_aclk_mscl_400_user",
 			DIV_MSCL, 0, 3),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock mscl_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी mscl_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_MSCL */
 	GATE(CLK_ACLK_BTS_JPEG, "aclk_bts_jpeg", "mout_aclk_mscl_400_user",
 			ENABLE_ACLK_MSCL, 9, 0, 0),
@@ -4127,13 +4128,13 @@ static const struct samsung_gate_clock mscl_gate_clks[] __initconst = {
 	/* ENABLE_SCLK_MSCL */
 	GATE(CLK_SCLK_JPEG, "sclk_jpeg", "mout_sclk_jpeg", ENABLE_SCLK_MSCL, 0,
 			CLK_IGNORE_UNUSED | CLK_SET_RATE_PARENT, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info mscl_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info mscl_cmu_info __initस्थिर = अणु
 	.mux_clks		= mscl_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(mscl_mux_clks),
-	.div_clks		= mscl_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(mscl_div_clks),
+	.भाग_clks		= mscl_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(mscl_भाग_clks),
 	.gate_clks		= mscl_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(mscl_gate_clks),
 	.nr_clk_ids		= MSCL_NR_CLK,
@@ -4142,25 +4143,25 @@ static const struct samsung_cmu_info mscl_cmu_info __initconst = {
 	.suspend_regs		= mscl_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(mscl_suspend_regs),
 	.clk_name		= "aclk_mscl_400",
-};
+पूर्ण;
 
 /*
- * Register offset definitions for CMU_MFC
+ * Register offset definitions क्रम CMU_MFC
  */
-#define MUX_SEL_MFC				0x0200
-#define MUX_ENABLE_MFC				0x0300
-#define MUX_STAT_MFC				0x0400
-#define DIV_MFC					0x0600
-#define DIV_STAT_MFC				0x0700
-#define ENABLE_ACLK_MFC				0x0800
-#define ENABLE_ACLK_MFC_SECURE_SMMU_MFC		0x0804
-#define ENABLE_PCLK_MFC				0x0900
-#define ENABLE_PCLK_MFC_SECURE_SMMU_MFC		0x0904
-#define ENABLE_IP_MFC0				0x0b00
-#define ENABLE_IP_MFC1				0x0b04
-#define ENABLE_IP_MFC_SECURE_SMMU_MFC		0x0b08
+#घोषणा MUX_SEL_MFC				0x0200
+#घोषणा MUX_ENABLE_MFC				0x0300
+#घोषणा MUX_STAT_MFC				0x0400
+#घोषणा DIV_MFC					0x0600
+#घोषणा DIV_STAT_MFC				0x0700
+#घोषणा ENABLE_ACLK_MFC				0x0800
+#घोषणा ENABLE_ACLK_MFC_SECURE_SMMU_MFC		0x0804
+#घोषणा ENABLE_PCLK_MFC				0x0900
+#घोषणा ENABLE_PCLK_MFC_SECURE_SMMU_MFC		0x0904
+#घोषणा ENABLE_IP_MFC0				0x0b00
+#घोषणा ENABLE_IP_MFC1				0x0b04
+#घोषणा ENABLE_IP_MFC_SECURE_SMMU_MFC		0x0b08
 
-static const unsigned long mfc_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ mfc_clk_regs[] __initस्थिर = अणु
 	MUX_SEL_MFC,
 	MUX_ENABLE_MFC,
 	DIV_MFC,
@@ -4171,27 +4172,27 @@ static const unsigned long mfc_clk_regs[] __initconst = {
 	ENABLE_IP_MFC0,
 	ENABLE_IP_MFC1,
 	ENABLE_IP_MFC_SECURE_SMMU_MFC,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump mfc_suspend_regs[] = {
-	{ MUX_SEL_MFC, 0 },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump mfc_suspend_regs[] = अणु
+	अणु MUX_SEL_MFC, 0 पूर्ण,
+पूर्ण;
 
-PNAME(mout_aclk_mfc_400_user_p)		= { "oscclk", "aclk_mfc_400", };
+PNAME(mout_aclk_mfc_400_user_p)		= अणु "oscclk", "aclk_mfc_400", पूर्ण;
 
-static const struct samsung_mux_clock mfc_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी mfc_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_MFC */
 	MUX(CLK_MOUT_ACLK_MFC_400_USER, "mout_aclk_mfc_400_user",
 			mout_aclk_mfc_400_user_p, MUX_SEL_MFC, 0, 0),
-};
+पूर्ण;
 
-static const struct samsung_div_clock mfc_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी mfc_भाग_clks[] __initस्थिर = अणु
 	/* DIV_MFC */
 	DIV(CLK_DIV_PCLK_MFC, "div_pclk_mfc", "mout_aclk_mfc_400_user",
 			DIV_MFC, 0, 2),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock mfc_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी mfc_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_MFC */
 	GATE(CLK_ACLK_BTS_MFC_1, "aclk_bts_mfc_1", "mout_aclk_mfc_400_user",
 			ENABLE_ACLK_MFC, 6, 0, 0),
@@ -4235,13 +4236,13 @@ static const struct samsung_gate_clock mfc_gate_clks[] __initconst = {
 	GATE(CLK_PCLK_SMMU_MFC_0, "pclk_smmu_mfc_0", "div_pclk_mfc",
 			ENABLE_PCLK_MFC_SECURE_SMMU_MFC,
 			0, CLK_IGNORE_UNUSED, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info mfc_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info mfc_cmu_info __initस्थिर = अणु
 	.mux_clks		= mfc_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(mfc_mux_clks),
-	.div_clks		= mfc_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(mfc_div_clks),
+	.भाग_clks		= mfc_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(mfc_भाग_clks),
 	.gate_clks		= mfc_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(mfc_gate_clks),
 	.nr_clk_ids		= MFC_NR_CLK,
@@ -4250,25 +4251,25 @@ static const struct samsung_cmu_info mfc_cmu_info __initconst = {
 	.suspend_regs		= mfc_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(mfc_suspend_regs),
 	.clk_name		= "aclk_mfc_400",
-};
+पूर्ण;
 
 /*
- * Register offset definitions for CMU_HEVC
+ * Register offset definitions क्रम CMU_HEVC
  */
-#define MUX_SEL_HEVC				0x0200
-#define MUX_ENABLE_HEVC				0x0300
-#define MUX_STAT_HEVC				0x0400
-#define DIV_HEVC				0x0600
-#define DIV_STAT_HEVC				0x0700
-#define ENABLE_ACLK_HEVC			0x0800
-#define ENABLE_ACLK_HEVC_SECURE_SMMU_HEVC	0x0804
-#define ENABLE_PCLK_HEVC			0x0900
-#define ENABLE_PCLK_HEVC_SECURE_SMMU_HEVC	0x0904
-#define ENABLE_IP_HEVC0				0x0b00
-#define ENABLE_IP_HEVC1				0x0b04
-#define ENABLE_IP_HEVC_SECURE_SMMU_HEVC		0x0b08
+#घोषणा MUX_SEL_HEVC				0x0200
+#घोषणा MUX_ENABLE_HEVC				0x0300
+#घोषणा MUX_STAT_HEVC				0x0400
+#घोषणा DIV_HEVC				0x0600
+#घोषणा DIV_STAT_HEVC				0x0700
+#घोषणा ENABLE_ACLK_HEVC			0x0800
+#घोषणा ENABLE_ACLK_HEVC_SECURE_SMMU_HEVC	0x0804
+#घोषणा ENABLE_PCLK_HEVC			0x0900
+#घोषणा ENABLE_PCLK_HEVC_SECURE_SMMU_HEVC	0x0904
+#घोषणा ENABLE_IP_HEVC0				0x0b00
+#घोषणा ENABLE_IP_HEVC1				0x0b04
+#घोषणा ENABLE_IP_HEVC_SECURE_SMMU_HEVC		0x0b08
 
-static const unsigned long hevc_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ hevc_clk_regs[] __initस्थिर = अणु
 	MUX_SEL_HEVC,
 	MUX_ENABLE_HEVC,
 	DIV_HEVC,
@@ -4279,27 +4280,27 @@ static const unsigned long hevc_clk_regs[] __initconst = {
 	ENABLE_IP_HEVC0,
 	ENABLE_IP_HEVC1,
 	ENABLE_IP_HEVC_SECURE_SMMU_HEVC,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump hevc_suspend_regs[] = {
-	{ MUX_SEL_HEVC, 0 },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump hevc_suspend_regs[] = अणु
+	अणु MUX_SEL_HEVC, 0 पूर्ण,
+पूर्ण;
 
-PNAME(mout_aclk_hevc_400_user_p)	= { "oscclk", "aclk_hevc_400", };
+PNAME(mout_aclk_hevc_400_user_p)	= अणु "oscclk", "aclk_hevc_400", पूर्ण;
 
-static const struct samsung_mux_clock hevc_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी hevc_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_HEVC */
 	MUX(CLK_MOUT_ACLK_HEVC_400_USER, "mout_aclk_hevc_400_user",
 			mout_aclk_hevc_400_user_p, MUX_SEL_HEVC, 0, 0),
-};
+पूर्ण;
 
-static const struct samsung_div_clock hevc_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी hevc_भाग_clks[] __initस्थिर = अणु
 	/* DIV_HEVC */
 	DIV(CLK_DIV_PCLK_HEVC, "div_pclk_hevc", "mout_aclk_hevc_400_user",
 			DIV_HEVC, 0, 2),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock hevc_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी hevc_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_HEVC */
 	GATE(CLK_ACLK_BTS_HEVC_1, "aclk_bts_hevc_1", "mout_aclk_hevc_400_user",
 			ENABLE_ACLK_HEVC, 6, 0, 0),
@@ -4345,13 +4346,13 @@ static const struct samsung_gate_clock hevc_gate_clks[] __initconst = {
 	GATE(CLK_PCLK_SMMU_HEVC_0, "pclk_smmu_hevc_0", "div_pclk_hevc",
 			ENABLE_PCLK_HEVC_SECURE_SMMU_HEVC,
 			0, CLK_IGNORE_UNUSED, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info hevc_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info hevc_cmu_info __initस्थिर = अणु
 	.mux_clks		= hevc_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(hevc_mux_clks),
-	.div_clks		= hevc_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(hevc_div_clks),
+	.भाग_clks		= hevc_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(hevc_भाग_clks),
 	.gate_clks		= hevc_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(hevc_gate_clks),
 	.nr_clk_ids		= HEVC_NR_CLK,
@@ -4360,27 +4361,27 @@ static const struct samsung_cmu_info hevc_cmu_info __initconst = {
 	.suspend_regs		= hevc_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(hevc_suspend_regs),
 	.clk_name		= "aclk_hevc_400",
-};
+पूर्ण;
 
 /*
- * Register offset definitions for CMU_ISP
+ * Register offset definitions क्रम CMU_ISP
  */
-#define MUX_SEL_ISP			0x0200
-#define MUX_ENABLE_ISP			0x0300
-#define MUX_STAT_ISP			0x0400
-#define DIV_ISP				0x0600
-#define DIV_STAT_ISP			0x0700
-#define ENABLE_ACLK_ISP0		0x0800
-#define ENABLE_ACLK_ISP1		0x0804
-#define ENABLE_ACLK_ISP2		0x0808
-#define ENABLE_PCLK_ISP			0x0900
-#define ENABLE_SCLK_ISP			0x0a00
-#define ENABLE_IP_ISP0			0x0b00
-#define ENABLE_IP_ISP1			0x0b04
-#define ENABLE_IP_ISP2			0x0b08
-#define ENABLE_IP_ISP3			0x0b0c
+#घोषणा MUX_SEL_ISP			0x0200
+#घोषणा MUX_ENABLE_ISP			0x0300
+#घोषणा MUX_STAT_ISP			0x0400
+#घोषणा DIV_ISP				0x0600
+#घोषणा DIV_STAT_ISP			0x0700
+#घोषणा ENABLE_ACLK_ISP0		0x0800
+#घोषणा ENABLE_ACLK_ISP1		0x0804
+#घोषणा ENABLE_ACLK_ISP2		0x0808
+#घोषणा ENABLE_PCLK_ISP			0x0900
+#घोषणा ENABLE_SCLK_ISP			0x0a00
+#घोषणा ENABLE_IP_ISP0			0x0b00
+#घोषणा ENABLE_IP_ISP1			0x0b04
+#घोषणा ENABLE_IP_ISP2			0x0b08
+#घोषणा ENABLE_IP_ISP3			0x0b0c
 
-static const unsigned long isp_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ isp_clk_regs[] __initस्थिर = अणु
 	MUX_SEL_ISP,
 	MUX_ENABLE_ISP,
 	DIV_ISP,
@@ -4393,24 +4394,24 @@ static const unsigned long isp_clk_regs[] __initconst = {
 	ENABLE_IP_ISP1,
 	ENABLE_IP_ISP2,
 	ENABLE_IP_ISP3,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump isp_suspend_regs[] = {
-	{ MUX_SEL_ISP, 0 },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump isp_suspend_regs[] = अणु
+	अणु MUX_SEL_ISP, 0 पूर्ण,
+पूर्ण;
 
-PNAME(mout_aclk_isp_dis_400_user_p)	= { "oscclk", "aclk_isp_dis_400", };
-PNAME(mout_aclk_isp_400_user_p)		= { "oscclk", "aclk_isp_400", };
+PNAME(mout_aclk_isp_dis_400_user_p)	= अणु "oscclk", "aclk_isp_dis_400", पूर्ण;
+PNAME(mout_aclk_isp_400_user_p)		= अणु "oscclk", "aclk_isp_400", पूर्ण;
 
-static const struct samsung_mux_clock isp_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी isp_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_ISP */
 	MUX(CLK_MOUT_ACLK_ISP_DIS_400_USER, "mout_aclk_isp_dis_400_user",
 			mout_aclk_isp_dis_400_user_p, MUX_SEL_ISP, 4, 0),
 	MUX(CLK_MOUT_ACLK_ISP_400_USER, "mout_aclk_isp_400_user",
 			mout_aclk_isp_400_user_p, MUX_SEL_ISP, 0, 0),
-};
+पूर्ण;
 
-static const struct samsung_div_clock isp_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी isp_भाग_clks[] __initस्थिर = अणु
 	/* DIV_ISP */
 	DIV(CLK_DIV_PCLK_ISP_DIS, "div_pclk_isp_dis",
 			"mout_aclk_isp_dis_400_user", DIV_ISP, 12, 3),
@@ -4420,9 +4421,9 @@ static const struct samsung_div_clock isp_div_clks[] __initconst = {
 			"mout_aclk_isp_400_user", DIV_ISP, 4, 3),
 	DIV(CLK_DIV_ACLK_ISP_C_200, "div_aclk_isp_c_200",
 			"mout_aclk_isp_400_user", DIV_ISP, 0, 3),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock isp_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी isp_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_ISP0 */
 	GATE(CLK_ACLK_ISP_D_GLUE, "aclk_isp_d_glue", "mout_aclk_isp_400_user",
 			ENABLE_ACLK_ISP0, 6, CLK_IGNORE_UNUSED, 0),
@@ -4598,13 +4599,13 @@ static const struct samsung_gate_clock isp_gate_clks[] __initconst = {
 	GATE(CLK_SCLK_PIXELASYNCM_ISPC, "sclk_pixelasyncm_ispc",
 			"mout_aclk_isp_400_user", ENABLE_SCLK_ISP,
 			0, CLK_IGNORE_UNUSED, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info isp_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info isp_cmu_info __initस्थिर = अणु
 	.mux_clks		= isp_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(isp_mux_clks),
-	.div_clks		= isp_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(isp_div_clks),
+	.भाग_clks		= isp_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(isp_भाग_clks),
 	.gate_clks		= isp_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(isp_gate_clks),
 	.nr_clk_ids		= ISP_NR_CLK,
@@ -4613,46 +4614,46 @@ static const struct samsung_cmu_info isp_cmu_info __initconst = {
 	.suspend_regs		= isp_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(isp_suspend_regs),
 	.clk_name		= "aclk_isp_400",
-};
+पूर्ण;
 
 /*
- * Register offset definitions for CMU_CAM0
+ * Register offset definitions क्रम CMU_CAM0
  */
-#define MUX_SEL_CAM00			0x0200
-#define MUX_SEL_CAM01			0x0204
-#define MUX_SEL_CAM02			0x0208
-#define MUX_SEL_CAM03			0x020c
-#define MUX_SEL_CAM04			0x0210
-#define MUX_ENABLE_CAM00		0x0300
-#define MUX_ENABLE_CAM01		0x0304
-#define MUX_ENABLE_CAM02		0x0308
-#define MUX_ENABLE_CAM03		0x030c
-#define MUX_ENABLE_CAM04		0x0310
-#define MUX_STAT_CAM00			0x0400
-#define MUX_STAT_CAM01			0x0404
-#define MUX_STAT_CAM02			0x0408
-#define MUX_STAT_CAM03			0x040c
-#define MUX_STAT_CAM04			0x0410
-#define MUX_IGNORE_CAM01		0x0504
-#define DIV_CAM00			0x0600
-#define DIV_CAM01			0x0604
-#define DIV_CAM02			0x0608
-#define DIV_CAM03			0x060c
-#define DIV_STAT_CAM00			0x0700
-#define DIV_STAT_CAM01			0x0704
-#define DIV_STAT_CAM02			0x0708
-#define DIV_STAT_CAM03			0x070c
-#define ENABLE_ACLK_CAM00		0X0800
-#define ENABLE_ACLK_CAM01		0X0804
-#define ENABLE_ACLK_CAM02		0X0808
-#define ENABLE_PCLK_CAM0		0X0900
-#define ENABLE_SCLK_CAM0		0X0a00
-#define ENABLE_IP_CAM00			0X0b00
-#define ENABLE_IP_CAM01			0X0b04
-#define ENABLE_IP_CAM02			0X0b08
-#define ENABLE_IP_CAM03			0X0b0C
+#घोषणा MUX_SEL_CAM00			0x0200
+#घोषणा MUX_SEL_CAM01			0x0204
+#घोषणा MUX_SEL_CAM02			0x0208
+#घोषणा MUX_SEL_CAM03			0x020c
+#घोषणा MUX_SEL_CAM04			0x0210
+#घोषणा MUX_ENABLE_CAM00		0x0300
+#घोषणा MUX_ENABLE_CAM01		0x0304
+#घोषणा MUX_ENABLE_CAM02		0x0308
+#घोषणा MUX_ENABLE_CAM03		0x030c
+#घोषणा MUX_ENABLE_CAM04		0x0310
+#घोषणा MUX_STAT_CAM00			0x0400
+#घोषणा MUX_STAT_CAM01			0x0404
+#घोषणा MUX_STAT_CAM02			0x0408
+#घोषणा MUX_STAT_CAM03			0x040c
+#घोषणा MUX_STAT_CAM04			0x0410
+#घोषणा MUX_IGNORE_CAM01		0x0504
+#घोषणा DIV_CAM00			0x0600
+#घोषणा DIV_CAM01			0x0604
+#घोषणा DIV_CAM02			0x0608
+#घोषणा DIV_CAM03			0x060c
+#घोषणा DIV_STAT_CAM00			0x0700
+#घोषणा DIV_STAT_CAM01			0x0704
+#घोषणा DIV_STAT_CAM02			0x0708
+#घोषणा DIV_STAT_CAM03			0x070c
+#घोषणा ENABLE_ACLK_CAM00		0X0800
+#घोषणा ENABLE_ACLK_CAM01		0X0804
+#घोषणा ENABLE_ACLK_CAM02		0X0808
+#घोषणा ENABLE_PCLK_CAM0		0X0900
+#घोषणा ENABLE_SCLK_CAM0		0X0a00
+#घोषणा ENABLE_IP_CAM00			0X0b00
+#घोषणा ENABLE_IP_CAM01			0X0b04
+#घोषणा ENABLE_IP_CAM02			0X0b08
+#घोषणा ENABLE_IP_CAM03			0X0b0C
 
-static const unsigned long cam0_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ cam0_clk_regs[] __initस्थिर = अणु
 	MUX_SEL_CAM00,
 	MUX_SEL_CAM01,
 	MUX_SEL_CAM02,
@@ -4677,82 +4678,82 @@ static const unsigned long cam0_clk_regs[] __initconst = {
 	ENABLE_IP_CAM01,
 	ENABLE_IP_CAM02,
 	ENABLE_IP_CAM03,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump cam0_suspend_regs[] = {
-	{ MUX_SEL_CAM00, 0 },
-	{ MUX_SEL_CAM01, 0 },
-	{ MUX_SEL_CAM02, 0 },
-	{ MUX_SEL_CAM03, 0 },
-	{ MUX_SEL_CAM04, 0 },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump cam0_suspend_regs[] = अणु
+	अणु MUX_SEL_CAM00, 0 पूर्ण,
+	अणु MUX_SEL_CAM01, 0 पूर्ण,
+	अणु MUX_SEL_CAM02, 0 पूर्ण,
+	अणु MUX_SEL_CAM03, 0 पूर्ण,
+	अणु MUX_SEL_CAM04, 0 पूर्ण,
+पूर्ण;
 
-PNAME(mout_aclk_cam0_333_user_p)	= { "oscclk", "aclk_cam0_333", };
-PNAME(mout_aclk_cam0_400_user_p)	= { "oscclk", "aclk_cam0_400", };
-PNAME(mout_aclk_cam0_552_user_p)	= { "oscclk", "aclk_cam0_552", };
+PNAME(mout_aclk_cam0_333_user_p)	= अणु "oscclk", "aclk_cam0_333", पूर्ण;
+PNAME(mout_aclk_cam0_400_user_p)	= अणु "oscclk", "aclk_cam0_400", पूर्ण;
+PNAME(mout_aclk_cam0_552_user_p)	= अणु "oscclk", "aclk_cam0_552", पूर्ण;
 
-PNAME(mout_phyclk_rxbyteclkhs0_s4_user_p) = { "oscclk",
-					      "phyclk_rxbyteclkhs0_s4_phy", };
-PNAME(mout_phyclk_rxbyteclkhs0_s2a_user_p) = { "oscclk",
-					       "phyclk_rxbyteclkhs0_s2a_phy", };
+PNAME(mout_phyclk_rxbyteclkhs0_s4_user_p) = अणु "oscclk",
+					      "phyclk_rxbyteclkhs0_s4_phy", पूर्ण;
+PNAME(mout_phyclk_rxbyteclkhs0_s2a_user_p) = अणु "oscclk",
+					       "phyclk_rxbyteclkhs0_s2a_phy", पूर्ण;
 
-PNAME(mout_aclk_lite_d_b_p)		= { "mout_aclk_lite_d_a",
-					    "mout_aclk_cam0_333_user", };
-PNAME(mout_aclk_lite_d_a_p)		= { "mout_aclk_cam0_552_user",
-					    "mout_aclk_cam0_400_user", };
-PNAME(mout_aclk_lite_b_b_p)		= { "mout_aclk_lite_b_a",
-					    "mout_aclk_cam0_333_user", };
-PNAME(mout_aclk_lite_b_a_p)		= { "mout_aclk_cam0_552_user",
-					    "mout_aclk_cam0_400_user", };
-PNAME(mout_aclk_lite_a_b_p)		= { "mout_aclk_lite_a_a",
-					    "mout_aclk_cam0_333_user", };
-PNAME(mout_aclk_lite_a_a_p)		= { "mout_aclk_cam0_552_user",
-					    "mout_aclk_cam0_400_user", };
-PNAME(mout_aclk_cam0_400_p)		= { "mout_aclk_cam0_400_user",
-					    "mout_aclk_cam0_333_user", };
+PNAME(mout_aclk_lite_d_b_p)		= अणु "mout_aclk_lite_d_a",
+					    "mout_aclk_cam0_333_user", पूर्ण;
+PNAME(mout_aclk_lite_d_a_p)		= अणु "mout_aclk_cam0_552_user",
+					    "mout_aclk_cam0_400_user", पूर्ण;
+PNAME(mout_aclk_lite_b_b_p)		= अणु "mout_aclk_lite_b_a",
+					    "mout_aclk_cam0_333_user", पूर्ण;
+PNAME(mout_aclk_lite_b_a_p)		= अणु "mout_aclk_cam0_552_user",
+					    "mout_aclk_cam0_400_user", पूर्ण;
+PNAME(mout_aclk_lite_a_b_p)		= अणु "mout_aclk_lite_a_a",
+					    "mout_aclk_cam0_333_user", पूर्ण;
+PNAME(mout_aclk_lite_a_a_p)		= अणु "mout_aclk_cam0_552_user",
+					    "mout_aclk_cam0_400_user", पूर्ण;
+PNAME(mout_aclk_cam0_400_p)		= अणु "mout_aclk_cam0_400_user",
+					    "mout_aclk_cam0_333_user", पूर्ण;
 
-PNAME(mout_aclk_csis1_b_p)		= { "mout_aclk_csis1_a",
-					    "mout_aclk_cam0_333_user" };
-PNAME(mout_aclk_csis1_a_p)		= { "mout_aclk_cam0_552_user",
-					    "mout_aclk_cam0_400_user", };
-PNAME(mout_aclk_csis0_b_p)		= { "mout_aclk_csis0_a",
-					    "mout_aclk_cam0_333_user", };
-PNAME(mout_aclk_csis0_a_p)		= { "mout_aclk_cam0_552_user",
-					    "mout_aclk-cam0_400_user", };
-PNAME(mout_aclk_3aa1_b_p)		= { "mout_aclk_3aa1_a",
-					    "mout_aclk_cam0_333_user", };
-PNAME(mout_aclk_3aa1_a_p)		= { "mout_aclk_cam0_552_user",
-					    "mout_aclk_cam0_400_user", };
-PNAME(mout_aclk_3aa0_b_p)		= { "mout_aclk_3aa0_a",
-					    "mout_aclk_cam0_333_user", };
-PNAME(mout_aclk_3aa0_a_p)		= { "mout_aclk_cam0_552_user",
-					    "mout_aclk_cam0_400_user", };
+PNAME(mout_aclk_csis1_b_p)		= अणु "mout_aclk_csis1_a",
+					    "mout_aclk_cam0_333_user" पूर्ण;
+PNAME(mout_aclk_csis1_a_p)		= अणु "mout_aclk_cam0_552_user",
+					    "mout_aclk_cam0_400_user", पूर्ण;
+PNAME(mout_aclk_csis0_b_p)		= अणु "mout_aclk_csis0_a",
+					    "mout_aclk_cam0_333_user", पूर्ण;
+PNAME(mout_aclk_csis0_a_p)		= अणु "mout_aclk_cam0_552_user",
+					    "mout_aclk-cam0_400_user", पूर्ण;
+PNAME(mout_aclk_3aa1_b_p)		= अणु "mout_aclk_3aa1_a",
+					    "mout_aclk_cam0_333_user", पूर्ण;
+PNAME(mout_aclk_3aa1_a_p)		= अणु "mout_aclk_cam0_552_user",
+					    "mout_aclk_cam0_400_user", पूर्ण;
+PNAME(mout_aclk_3aa0_b_p)		= अणु "mout_aclk_3aa0_a",
+					    "mout_aclk_cam0_333_user", पूर्ण;
+PNAME(mout_aclk_3aa0_a_p)		= अणु "mout_aclk_cam0_552_user",
+					    "mout_aclk_cam0_400_user", पूर्ण;
 
-PNAME(mout_sclk_lite_freecnt_c_p)	= { "mout_sclk_lite_freecnt_b",
-					    "div_pclk_lite_d", };
-PNAME(mout_sclk_lite_freecnt_b_p)	= { "mout_sclk_lite_freecnt_a",
-					    "div_pclk_pixelasync_lite_c", };
-PNAME(mout_sclk_lite_freecnt_a_p)	= { "div_pclk_lite_a",
-					    "div_pclk_lite_b", };
-PNAME(mout_sclk_pixelasync_lite_c_b_p)	= { "mout_sclk_pixelasync_lite_c_a",
-					    "mout_aclk_cam0_333_user", };
-PNAME(mout_sclk_pixelasync_lite_c_a_p)	= { "mout_aclk_cam0_552_user",
-					    "mout_aclk_cam0_400_user", };
-PNAME(mout_sclk_pixelasync_lite_c_init_b_p) = {
+PNAME(mout_sclk_lite_मुक्तcnt_c_p)	= अणु "mout_sclk_lite_freecnt_b",
+					    "div_pclk_lite_d", पूर्ण;
+PNAME(mout_sclk_lite_मुक्तcnt_b_p)	= अणु "mout_sclk_lite_freecnt_a",
+					    "div_pclk_pixelasync_lite_c", पूर्ण;
+PNAME(mout_sclk_lite_मुक्तcnt_a_p)	= अणु "div_pclk_lite_a",
+					    "div_pclk_lite_b", पूर्ण;
+PNAME(mout_sclk_pixelasync_lite_c_b_p)	= अणु "mout_sclk_pixelasync_lite_c_a",
+					    "mout_aclk_cam0_333_user", पूर्ण;
+PNAME(mout_sclk_pixelasync_lite_c_a_p)	= अणु "mout_aclk_cam0_552_user",
+					    "mout_aclk_cam0_400_user", पूर्ण;
+PNAME(mout_sclk_pixelasync_lite_c_init_b_p) = अणु
 					"mout_sclk_pixelasync_lite_c_init_a",
-					"mout_aclk_cam0_400_user", };
-PNAME(mout_sclk_pixelasync_lite_c_init_a_p) = {
+					"mout_aclk_cam0_400_user", पूर्ण;
+PNAME(mout_sclk_pixelasync_lite_c_init_a_p) = अणु
 					"mout_aclk_cam0_552_user",
-					"mout_aclk_cam0_400_user", };
+					"mout_aclk_cam0_400_user", पूर्ण;
 
-static const struct samsung_fixed_rate_clock cam0_fixed_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_fixed_rate_घड़ी cam0_fixed_clks[] __initस्थिर = अणु
 	FRATE(CLK_PHYCLK_RXBYTEECLKHS0_S4_PHY, "phyclk_rxbyteclkhs0_s4_phy",
-			NULL, 0, 100000000),
+			शून्य, 0, 100000000),
 	FRATE(CLK_PHYCLK_RXBYTEECLKHS0_S2A_PHY, "phyclk_rxbyteclkhs0_s2a_phy",
-			NULL, 0, 100000000),
-};
+			शून्य, 0, 100000000),
+पूर्ण;
 
-static const struct samsung_mux_clock cam0_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी cam0_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_CAM00 */
 	MUX(CLK_MOUT_ACLK_CAM0_333_USER, "mout_aclk_cam0_333_user",
 			mout_aclk_cam0_333_user_p, MUX_SEL_CAM00, 8, 1),
@@ -4807,11 +4808,11 @@ static const struct samsung_mux_clock cam0_mux_clks[] __initconst = {
 
 	/* MUX_SEL_CAM04 */
 	MUX(CLK_MOUT_SCLK_LITE_FREECNT_C, "mout_sclk_lite_freecnt_c",
-			mout_sclk_lite_freecnt_c_p, MUX_SEL_CAM04, 24, 1),
+			mout_sclk_lite_मुक्तcnt_c_p, MUX_SEL_CAM04, 24, 1),
 	MUX(CLK_MOUT_SCLK_LITE_FREECNT_B, "mout_sclk_lite_freecnt_b",
-			mout_sclk_lite_freecnt_b_p, MUX_SEL_CAM04, 20, 1),
+			mout_sclk_lite_मुक्तcnt_b_p, MUX_SEL_CAM04, 20, 1),
 	MUX(CLK_MOUT_SCLK_LITE_FREECNT_A, "mout_sclk_lite_freecnt_a",
-			mout_sclk_lite_freecnt_a_p, MUX_SEL_CAM04, 16, 1),
+			mout_sclk_lite_मुक्तcnt_a_p, MUX_SEL_CAM04, 16, 1),
 	MUX(CLK_MOUT_SCLK_PIXELASYNC_LITE_C_B, "mout_sclk_pixelasync_lite_c_b",
 			mout_sclk_pixelasync_lite_c_b_p, MUX_SEL_CAM04, 12, 1),
 	MUX(CLK_MOUT_SCLK_PIXELASYNC_LITE_C_A, "mout_sclk_pixelasync_lite_c_a",
@@ -4824,9 +4825,9 @@ static const struct samsung_mux_clock cam0_mux_clks[] __initconst = {
 			"mout_sclk_pixelasync_lite_c_init_a",
 			mout_sclk_pixelasync_lite_c_init_a_p,
 			MUX_SEL_CAM04, 0, 1),
-};
+पूर्ण;
 
-static const struct samsung_div_clock cam0_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी cam0_भाग_clks[] __initस्थिर = अणु
 	/* DIV_CAM00 */
 	DIV(CLK_DIV_PCLK_CAM0_50, "div_pclk_cam0_50", "div_aclk_cam0_200",
 			DIV_CAM00, 8, 2),
@@ -4871,9 +4872,9 @@ static const struct samsung_div_clock cam0_div_clks[] __initconst = {
 	DIV(CLK_DIV_SCLK_PIXELASYNC_LITE_C_INIT,
 			"div_sclk_pixelasync_lite_c_init",
 			"mout_sclk_pixelasync_lite_c_init_b", DIV_CAM03, 0, 3),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock cam0_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी cam0_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_CAM00 */
 	GATE(CLK_ACLK_CSIS1, "aclk_csis1", "div_aclk_csis1", ENABLE_ACLK_CAM00,
 			6, 0, 0),
@@ -5078,13 +5079,13 @@ static const struct samsung_gate_clock cam0_gate_clks[] __initconst = {
 	GATE(CLK_SCLK_PIXELASYNCS_LITE_C_INIT, "sclk_pixelasyncs_lite_c_init",
 			"div_sclk_pixelasync_lite_c",
 			ENABLE_SCLK_CAM0, 0, 0, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info cam0_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info cam0_cmu_info __initस्थिर = अणु
 	.mux_clks		= cam0_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(cam0_mux_clks),
-	.div_clks		= cam0_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(cam0_div_clks),
+	.भाग_clks		= cam0_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(cam0_भाग_clks),
 	.gate_clks		= cam0_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(cam0_gate_clks),
 	.fixed_clks		= cam0_fixed_clks,
@@ -5095,35 +5096,35 @@ static const struct samsung_cmu_info cam0_cmu_info __initconst = {
 	.suspend_regs		= cam0_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(cam0_suspend_regs),
 	.clk_name		= "aclk_cam0_400",
-};
+पूर्ण;
 
 /*
- * Register offset definitions for CMU_CAM1
+ * Register offset definitions क्रम CMU_CAM1
  */
-#define MUX_SEL_CAM10			0x0200
-#define MUX_SEL_CAM11			0x0204
-#define MUX_SEL_CAM12			0x0208
-#define MUX_ENABLE_CAM10		0x0300
-#define MUX_ENABLE_CAM11		0x0304
-#define MUX_ENABLE_CAM12		0x0308
-#define MUX_STAT_CAM10			0x0400
-#define MUX_STAT_CAM11			0x0404
-#define MUX_STAT_CAM12			0x0408
-#define MUX_IGNORE_CAM11		0x0504
-#define DIV_CAM10			0x0600
-#define DIV_CAM11			0x0604
-#define DIV_STAT_CAM10			0x0700
-#define DIV_STAT_CAM11			0x0704
-#define ENABLE_ACLK_CAM10		0X0800
-#define ENABLE_ACLK_CAM11		0X0804
-#define ENABLE_ACLK_CAM12		0X0808
-#define ENABLE_PCLK_CAM1		0X0900
-#define ENABLE_SCLK_CAM1		0X0a00
-#define ENABLE_IP_CAM10			0X0b00
-#define ENABLE_IP_CAM11			0X0b04
-#define ENABLE_IP_CAM12			0X0b08
+#घोषणा MUX_SEL_CAM10			0x0200
+#घोषणा MUX_SEL_CAM11			0x0204
+#घोषणा MUX_SEL_CAM12			0x0208
+#घोषणा MUX_ENABLE_CAM10		0x0300
+#घोषणा MUX_ENABLE_CAM11		0x0304
+#घोषणा MUX_ENABLE_CAM12		0x0308
+#घोषणा MUX_STAT_CAM10			0x0400
+#घोषणा MUX_STAT_CAM11			0x0404
+#घोषणा MUX_STAT_CAM12			0x0408
+#घोषणा MUX_IGNORE_CAM11		0x0504
+#घोषणा DIV_CAM10			0x0600
+#घोषणा DIV_CAM11			0x0604
+#घोषणा DIV_STAT_CAM10			0x0700
+#घोषणा DIV_STAT_CAM11			0x0704
+#घोषणा ENABLE_ACLK_CAM10		0X0800
+#घोषणा ENABLE_ACLK_CAM11		0X0804
+#घोषणा ENABLE_ACLK_CAM12		0X0808
+#घोषणा ENABLE_PCLK_CAM1		0X0900
+#घोषणा ENABLE_SCLK_CAM1		0X0a00
+#घोषणा ENABLE_IP_CAM10			0X0b00
+#घोषणा ENABLE_IP_CAM11			0X0b04
+#घोषणा ENABLE_IP_CAM12			0X0b08
 
-static const unsigned long cam1_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ cam1_clk_regs[] __initस्थिर = अणु
 	MUX_SEL_CAM10,
 	MUX_SEL_CAM11,
 	MUX_SEL_CAM12,
@@ -5141,46 +5142,46 @@ static const unsigned long cam1_clk_regs[] __initconst = {
 	ENABLE_IP_CAM10,
 	ENABLE_IP_CAM11,
 	ENABLE_IP_CAM12,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump cam1_suspend_regs[] = {
-	{ MUX_SEL_CAM10, 0 },
-	{ MUX_SEL_CAM11, 0 },
-	{ MUX_SEL_CAM12, 0 },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump cam1_suspend_regs[] = अणु
+	अणु MUX_SEL_CAM10, 0 पूर्ण,
+	अणु MUX_SEL_CAM11, 0 पूर्ण,
+	अणु MUX_SEL_CAM12, 0 पूर्ण,
+पूर्ण;
 
-PNAME(mout_sclk_isp_uart_user_p)	= { "oscclk", "sclk_isp_uart_cam1", };
-PNAME(mout_sclk_isp_spi1_user_p)	= { "oscclk", "sclk_isp_spi1_cam1", };
-PNAME(mout_sclk_isp_spi0_user_p)	= { "oscclk", "sclk_isp_spi0_cam1", };
+PNAME(mout_sclk_isp_uart_user_p)	= अणु "oscclk", "sclk_isp_uart_cam1", पूर्ण;
+PNAME(mout_sclk_isp_spi1_user_p)	= अणु "oscclk", "sclk_isp_spi1_cam1", पूर्ण;
+PNAME(mout_sclk_isp_spi0_user_p)	= अणु "oscclk", "sclk_isp_spi0_cam1", पूर्ण;
 
-PNAME(mout_aclk_cam1_333_user_p)	= { "oscclk", "aclk_cam1_333", };
-PNAME(mout_aclk_cam1_400_user_p)	= { "oscclk", "aclk_cam1_400", };
-PNAME(mout_aclk_cam1_552_user_p)	= { "oscclk", "aclk_cam1_552", };
+PNAME(mout_aclk_cam1_333_user_p)	= अणु "oscclk", "aclk_cam1_333", पूर्ण;
+PNAME(mout_aclk_cam1_400_user_p)	= अणु "oscclk", "aclk_cam1_400", पूर्ण;
+PNAME(mout_aclk_cam1_552_user_p)	= अणु "oscclk", "aclk_cam1_552", पूर्ण;
 
-PNAME(mout_phyclk_rxbyteclkhs0_s2b_user_p) = { "oscclk",
-					       "phyclk_rxbyteclkhs0_s2b_phy", };
+PNAME(mout_phyclk_rxbyteclkhs0_s2b_user_p) = अणु "oscclk",
+					       "phyclk_rxbyteclkhs0_s2b_phy", पूर्ण;
 
-PNAME(mout_aclk_csis2_b_p)		= { "mout_aclk_csis2_a",
-					    "mout_aclk_cam1_333_user", };
-PNAME(mout_aclk_csis2_a_p)		= { "mout_aclk_cam1_552_user",
-					    "mout_aclk_cam1_400_user", };
+PNAME(mout_aclk_csis2_b_p)		= अणु "mout_aclk_csis2_a",
+					    "mout_aclk_cam1_333_user", पूर्ण;
+PNAME(mout_aclk_csis2_a_p)		= अणु "mout_aclk_cam1_552_user",
+					    "mout_aclk_cam1_400_user", पूर्ण;
 
-PNAME(mout_aclk_fd_b_p)			= { "mout_aclk_fd_a",
-					    "mout_aclk_cam1_333_user", };
-PNAME(mout_aclk_fd_a_p)			= { "mout_aclk_cam1_552_user",
-					    "mout_aclk_cam1_400_user", };
+PNAME(mout_aclk_fd_b_p)			= अणु "mout_aclk_fd_a",
+					    "mout_aclk_cam1_333_user", पूर्ण;
+PNAME(mout_aclk_fd_a_p)			= अणु "mout_aclk_cam1_552_user",
+					    "mout_aclk_cam1_400_user", पूर्ण;
 
-PNAME(mout_aclk_lite_c_b_p)		= { "mout_aclk_lite_c_a",
-					    "mout_aclk_cam1_333_user", };
-PNAME(mout_aclk_lite_c_a_p)		= { "mout_aclk_cam1_552_user",
-					    "mout_aclk_cam1_400_user", };
+PNAME(mout_aclk_lite_c_b_p)		= अणु "mout_aclk_lite_c_a",
+					    "mout_aclk_cam1_333_user", पूर्ण;
+PNAME(mout_aclk_lite_c_a_p)		= अणु "mout_aclk_cam1_552_user",
+					    "mout_aclk_cam1_400_user", पूर्ण;
 
-static const struct samsung_fixed_rate_clock cam1_fixed_clks[] __initconst = {
-	FRATE(CLK_PHYCLK_RXBYTEECLKHS0_S2B, "phyclk_rxbyteclkhs0_s2b_phy", NULL,
+अटल स्थिर काष्ठा samsung_fixed_rate_घड़ी cam1_fixed_clks[] __initस्थिर = अणु
+	FRATE(CLK_PHYCLK_RXBYTEECLKHS0_S2B, "phyclk_rxbyteclkhs0_s2b_phy", शून्य,
 			0, 100000000),
-};
+पूर्ण;
 
-static const struct samsung_mux_clock cam1_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी cam1_mux_clks[] __initस्थिर = अणु
 	/* MUX_SEL_CAM10 */
 	MUX(CLK_MOUT_SCLK_ISP_UART_USER, "mout_sclk_isp_uart_user",
 			mout_sclk_isp_uart_user_p, MUX_SEL_CAM10, 20, 1),
@@ -5214,9 +5215,9 @@ static const struct samsung_mux_clock cam1_mux_clks[] __initconst = {
 			MUX_SEL_CAM12, 4, 1),
 	MUX(CLK_MOUT_ACLK_LITE_C_A, "mout_aclk_lite_c_a", mout_aclk_lite_c_a_p,
 			MUX_SEL_CAM12, 0, 1),
-};
+पूर्ण;
 
-static const struct samsung_div_clock cam1_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी cam1_भाग_clks[] __initस्थिर = अणु
 	/* DIV_CAM10 */
 	DIV(CLK_DIV_SCLK_ISP_MPWM, "div_sclk_isp_mpwm",
 			"div_pclk_cam1_83", DIV_CAM10, 16, 2),
@@ -5238,9 +5239,9 @@ static const struct samsung_div_clock cam1_div_clks[] __initconst = {
 			DIV_CAM11, 4, 2),
 	DIV(CLK_DIV_ACLK_LITE_C, "div_aclk_lite_c", "mout_aclk_lite_c_b",
 			DIV_CAM11, 0, 3),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock cam1_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी cam1_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_CAM10 */
 	GATE(CLK_ACLK_ISP_GIC, "aclk_isp_gic", "mout_aclk_cam1_333_user",
 			ENABLE_ACLK_CAM10, 4, 0, 0),
@@ -5453,13 +5454,13 @@ static const struct samsung_gate_clock cam1_gate_clks[] __initconst = {
 			ENABLE_SCLK_CAM1, 1, 0, 0),
 	GATE(CLK_SCLK_ISP_CA5, "sclk_isp_ca5", "mout_aclk_cam1_552_user",
 			ENABLE_SCLK_CAM1, 0, 0, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info cam1_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info cam1_cmu_info __initस्थिर = अणु
 	.mux_clks		= cam1_mux_clks,
 	.nr_mux_clks		= ARRAY_SIZE(cam1_mux_clks),
-	.div_clks		= cam1_div_clks,
-	.nr_div_clks		= ARRAY_SIZE(cam1_div_clks),
+	.भाग_clks		= cam1_भाग_clks,
+	.nr_भाग_clks		= ARRAY_SIZE(cam1_भाग_clks),
 	.gate_clks		= cam1_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(cam1_gate_clks),
 	.fixed_clks		= cam1_fixed_clks,
@@ -5470,20 +5471,20 @@ static const struct samsung_cmu_info cam1_cmu_info __initconst = {
 	.suspend_regs		= cam1_suspend_regs,
 	.nr_suspend_regs	= ARRAY_SIZE(cam1_suspend_regs),
 	.clk_name		= "aclk_cam1_400",
-};
+पूर्ण;
 
 /*
- * Register offset definitions for CMU_IMEM
+ * Register offset definitions क्रम CMU_IMEM
  */
-#define ENABLE_ACLK_IMEM_SLIMSSS		0x080c
-#define ENABLE_PCLK_IMEM_SLIMSSS		0x0908
+#घोषणा ENABLE_ACLK_IMEM_SLIMSSS		0x080c
+#घोषणा ENABLE_PCLK_IMEM_SLIMSSS		0x0908
 
-static const unsigned long imem_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ imem_clk_regs[] __initस्थिर = अणु
 	ENABLE_ACLK_IMEM_SLIMSSS,
 	ENABLE_PCLK_IMEM_SLIMSSS,
-};
+पूर्ण;
 
-static const struct samsung_gate_clock imem_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी imem_gate_clks[] __initस्थिर = अणु
 	/* ENABLE_ACLK_IMEM_SLIMSSS */
 	GATE(CLK_ACLK_SLIMSSS, "aclk_slimsss", "aclk_imem_sssx_266",
 			ENABLE_ACLK_IMEM_SLIMSSS, 0, CLK_IGNORE_UNUSED, 0),
@@ -5491,98 +5492,98 @@ static const struct samsung_gate_clock imem_gate_clks[] __initconst = {
 	/* ENABLE_PCLK_IMEM_SLIMSSS */
 	GATE(CLK_PCLK_SLIMSSS, "pclk_slimsss", "aclk_imem_200",
 			ENABLE_PCLK_IMEM_SLIMSSS, 0, CLK_IGNORE_UNUSED, 0),
-};
+पूर्ण;
 
-static const struct samsung_cmu_info imem_cmu_info __initconst = {
+अटल स्थिर काष्ठा samsung_cmu_info imem_cmu_info __initस्थिर = अणु
 	.gate_clks		= imem_gate_clks,
 	.nr_gate_clks		= ARRAY_SIZE(imem_gate_clks),
 	.nr_clk_ids		= IMEM_NR_CLK,
 	.clk_regs		= imem_clk_regs,
 	.nr_clk_regs		= ARRAY_SIZE(imem_clk_regs),
 	.clk_name		= "aclk_imem_200",
-};
+पूर्ण;
 
-struct exynos5433_cmu_data {
-	struct samsung_clk_reg_dump *clk_save;
-	unsigned int nr_clk_save;
-	const struct samsung_clk_reg_dump *clk_suspend;
-	unsigned int nr_clk_suspend;
+काष्ठा exynos5433_cmu_data अणु
+	काष्ठा samsung_clk_reg_dump *clk_save;
+	अचिन्हित पूर्णांक nr_clk_save;
+	स्थिर काष्ठा samsung_clk_reg_dump *clk_suspend;
+	अचिन्हित पूर्णांक nr_clk_suspend;
 
-	struct clk *clk;
-	struct clk **pclks;
-	int nr_pclks;
+	काष्ठा clk *clk;
+	काष्ठा clk **pclks;
+	पूर्णांक nr_pclks;
 
 	/* must be the last entry */
-	struct samsung_clk_provider ctx;
-};
+	काष्ठा samsung_clk_provider ctx;
+पूर्ण;
 
-static int __maybe_unused exynos5433_cmu_suspend(struct device *dev)
-{
-	struct exynos5433_cmu_data *data = dev_get_drvdata(dev);
-	int i;
+अटल पूर्णांक __maybe_unused exynos5433_cmu_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा exynos5433_cmu_data *data = dev_get_drvdata(dev);
+	पूर्णांक i;
 
 	samsung_clk_save(data->ctx.reg_base, data->clk_save,
 			 data->nr_clk_save);
 
-	for (i = 0; i < data->nr_pclks; i++)
+	क्रम (i = 0; i < data->nr_pclks; i++)
 		clk_prepare_enable(data->pclks[i]);
 
-	/* for suspend some registers have to be set to certain values */
+	/* क्रम suspend some रेजिस्टरs have to be set to certain values */
 	samsung_clk_restore(data->ctx.reg_base, data->clk_suspend,
 			    data->nr_clk_suspend);
 
-	for (i = 0; i < data->nr_pclks; i++)
+	क्रम (i = 0; i < data->nr_pclks; i++)
 		clk_disable_unprepare(data->pclks[i]);
 
 	clk_disable_unprepare(data->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused exynos5433_cmu_resume(struct device *dev)
-{
-	struct exynos5433_cmu_data *data = dev_get_drvdata(dev);
-	int i;
+अटल पूर्णांक __maybe_unused exynos5433_cmu_resume(काष्ठा device *dev)
+अणु
+	काष्ठा exynos5433_cmu_data *data = dev_get_drvdata(dev);
+	पूर्णांक i;
 
 	clk_prepare_enable(data->clk);
 
-	for (i = 0; i < data->nr_pclks; i++)
+	क्रम (i = 0; i < data->nr_pclks; i++)
 		clk_prepare_enable(data->pclks[i]);
 
 	samsung_clk_restore(data->ctx.reg_base, data->clk_save,
 			    data->nr_clk_save);
 
-	for (i = 0; i < data->nr_pclks; i++)
+	क्रम (i = 0; i < data->nr_pclks; i++)
 		clk_disable_unprepare(data->pclks[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init exynos5433_cmu_probe(struct platform_device *pdev)
-{
-	const struct samsung_cmu_info *info;
-	struct exynos5433_cmu_data *data;
-	struct samsung_clk_provider *ctx;
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	void __iomem *reg_base;
-	int i;
+अटल पूर्णांक __init exynos5433_cmu_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा samsung_cmu_info *info;
+	काष्ठा exynos5433_cmu_data *data;
+	काष्ठा samsung_clk_provider *ctx;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	व्योम __iomem *reg_base;
+	पूर्णांक i;
 
 	info = of_device_get_match_data(dev);
 
 	data = devm_kzalloc(dev,
-			    struct_size(data, ctx.clk_data.hws, info->nr_clk_ids),
+			    काष्ठा_size(data, ctx.clk_data.hws, info->nr_clk_ids),
 			    GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 	ctx = &data->ctx;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	reg_base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(reg_base))
-		return PTR_ERR(reg_base);
+	अगर (IS_ERR(reg_base))
+		वापस PTR_ERR(reg_base);
 
-	for (i = 0; i < info->nr_clk_ids; ++i)
+	क्रम (i = 0; i < info->nr_clk_ids; ++i)
 		ctx->clk_data.hws[i] = ERR_PTR(-ENOENT);
 
 	ctx->clk_data.num = info->nr_clk_ids;
@@ -5592,137 +5593,137 @@ static int __init exynos5433_cmu_probe(struct platform_device *pdev)
 
 	data->clk_save = samsung_clk_alloc_reg_dump(info->clk_regs,
 						    info->nr_clk_regs);
-	if (!data->clk_save)
-		return -ENOMEM;
+	अगर (!data->clk_save)
+		वापस -ENOMEM;
 	data->nr_clk_save = info->nr_clk_regs;
 	data->clk_suspend = info->suspend_regs;
 	data->nr_clk_suspend = info->nr_suspend_regs;
 	data->nr_pclks = of_clk_get_parent_count(dev->of_node);
 
-	if (data->nr_pclks > 0) {
-		data->pclks = devm_kcalloc(dev, sizeof(struct clk *),
+	अगर (data->nr_pclks > 0) अणु
+		data->pclks = devm_kसुस्मृति(dev, माप(काष्ठा clk *),
 					   data->nr_pclks, GFP_KERNEL);
-		if (!data->pclks) {
-			kfree(data->clk_save);
-			return -ENOMEM;
-		}
-		for (i = 0; i < data->nr_pclks; i++) {
-			struct clk *clk = of_clk_get(dev->of_node, i);
+		अगर (!data->pclks) अणु
+			kमुक्त(data->clk_save);
+			वापस -ENOMEM;
+		पूर्ण
+		क्रम (i = 0; i < data->nr_pclks; i++) अणु
+			काष्ठा clk *clk = of_clk_get(dev->of_node, i);
 
-			if (IS_ERR(clk)) {
-				kfree(data->clk_save);
-				while (--i >= 0)
+			अगर (IS_ERR(clk)) अणु
+				kमुक्त(data->clk_save);
+				जबतक (--i >= 0)
 					clk_put(data->pclks[i]);
-				return PTR_ERR(clk);
-			}
+				वापस PTR_ERR(clk);
+			पूर्ण
 			data->pclks[i] = clk;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (info->clk_name)
+	अगर (info->clk_name)
 		data->clk = clk_get(dev, info->clk_name);
 	clk_prepare_enable(data->clk);
 
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 
 	/*
-	 * Enable runtime PM here to allow the clock core using runtime PM
-	 * for the registered clocks. Additionally, we increase the runtime
-	 * PM usage count before registering the clocks, to prevent the
-	 * clock core from runtime suspending the device.
+	 * Enable runसमय PM here to allow the घड़ी core using runसमय PM
+	 * क्रम the रेजिस्टरed घड़ीs. Additionally, we increase the runसमय
+	 * PM usage count beक्रमe रेजिस्टरing the घड़ीs, to prevent the
+	 * घड़ी core from runसमय suspending the device.
 	 */
-	pm_runtime_get_noresume(dev);
-	pm_runtime_set_active(dev);
-	pm_runtime_enable(dev);
+	pm_runसमय_get_noresume(dev);
+	pm_runसमय_set_active(dev);
+	pm_runसमय_enable(dev);
 
-	if (info->pll_clks)
-		samsung_clk_register_pll(ctx, info->pll_clks, info->nr_pll_clks,
+	अगर (info->pll_clks)
+		samsung_clk_रेजिस्टर_pll(ctx, info->pll_clks, info->nr_pll_clks,
 					 reg_base);
-	if (info->mux_clks)
-		samsung_clk_register_mux(ctx, info->mux_clks,
+	अगर (info->mux_clks)
+		samsung_clk_रेजिस्टर_mux(ctx, info->mux_clks,
 					 info->nr_mux_clks);
-	if (info->div_clks)
-		samsung_clk_register_div(ctx, info->div_clks,
-					 info->nr_div_clks);
-	if (info->gate_clks)
-		samsung_clk_register_gate(ctx, info->gate_clks,
+	अगर (info->भाग_clks)
+		samsung_clk_रेजिस्टर_भाग(ctx, info->भाग_clks,
+					 info->nr_भाग_clks);
+	अगर (info->gate_clks)
+		samsung_clk_रेजिस्टर_gate(ctx, info->gate_clks,
 					  info->nr_gate_clks);
-	if (info->fixed_clks)
-		samsung_clk_register_fixed_rate(ctx, info->fixed_clks,
+	अगर (info->fixed_clks)
+		samsung_clk_रेजिस्टर_fixed_rate(ctx, info->fixed_clks,
 						info->nr_fixed_clks);
-	if (info->fixed_factor_clks)
-		samsung_clk_register_fixed_factor(ctx, info->fixed_factor_clks,
+	अगर (info->fixed_factor_clks)
+		samsung_clk_रेजिस्टर_fixed_factor(ctx, info->fixed_factor_clks,
 						  info->nr_fixed_factor_clks);
 
 	samsung_clk_of_add_provider(dev->of_node, ctx);
-	pm_runtime_put_sync(dev);
+	pm_runसमय_put_sync(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id exynos5433_cmu_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id exynos5433_cmu_of_match[] = अणु
+	अणु
 		.compatible = "samsung,exynos5433-cmu-aud",
 		.data = &aud_cmu_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-cmu-cam0",
 		.data = &cam0_cmu_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-cmu-cam1",
 		.data = &cam1_cmu_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-cmu-disp",
 		.data = &disp_cmu_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-cmu-g2d",
 		.data = &g2d_cmu_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-cmu-g3d",
 		.data = &g3d_cmu_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-cmu-fsys",
 		.data = &fsys_cmu_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-cmu-gscl",
 		.data = &gscl_cmu_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-cmu-mfc",
 		.data = &mfc_cmu_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-cmu-hevc",
 		.data = &hevc_cmu_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-cmu-isp",
 		.data = &isp_cmu_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-cmu-mscl",
 		.data = &mscl_cmu_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-cmu-imem",
 		.data = &imem_cmu_info,
-	}, {
-	},
-};
+	पूर्ण, अणु
+	पूर्ण,
+पूर्ण;
 
-static const struct dev_pm_ops exynos5433_cmu_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops exynos5433_cmu_pm_ops = अणु
 	SET_RUNTIME_PM_OPS(exynos5433_cmu_suspend, exynos5433_cmu_resume,
-			   NULL)
-	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				     pm_runtime_force_resume)
-};
+			   शून्य)
+	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				     pm_runसमय_क्रमce_resume)
+पूर्ण;
 
-static struct platform_driver exynos5433_cmu_driver __refdata = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver exynos5433_cmu_driver __refdata = अणु
+	.driver	= अणु
 		.name = "exynos5433-cmu",
 		.of_match_table = exynos5433_cmu_of_match,
 		.suppress_bind_attrs = true,
 		.pm = &exynos5433_cmu_pm_ops,
-	},
+	पूर्ण,
 	.probe = exynos5433_cmu_probe,
-};
+पूर्ण;
 
-static int __init exynos5433_cmu_init(void)
-{
-	return platform_driver_register(&exynos5433_cmu_driver);
-}
+अटल पूर्णांक __init exynos5433_cmu_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&exynos5433_cmu_driver);
+पूर्ण
 core_initcall(exynos5433_cmu_init);

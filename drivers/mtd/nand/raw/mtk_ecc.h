@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /*
  * MTK SDG1 ECC controller
  *
@@ -7,41 +8,41 @@
  *		Jorge Ramirez-Ortiz	<jorge.ramirez-ortiz@linaro.org>
  */
 
-#ifndef __DRIVERS_MTD_NAND_MTK_ECC_H__
-#define __DRIVERS_MTD_NAND_MTK_ECC_H__
+#अगर_अघोषित __DRIVERS_MTD_न_अंकD_MTK_ECC_H__
+#घोषणा __DRIVERS_MTD_न_अंकD_MTK_ECC_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum mtk_ecc_mode {ECC_DMA_MODE = 0, ECC_NFI_MODE = 1};
-enum mtk_ecc_operation {ECC_ENCODE, ECC_DECODE};
+क्रमागत mtk_ecc_mode अणुECC_DMA_MODE = 0, ECC_NFI_MODE = 1पूर्ण;
+क्रमागत mtk_ecc_operation अणुECC_ENCODE, ECC_DECODEपूर्ण;
 
-struct device_node;
-struct mtk_ecc;
+काष्ठा device_node;
+काष्ठा mtk_ecc;
 
-struct mtk_ecc_stats {
+काष्ठा mtk_ecc_stats अणु
 	u32 corrected;
 	u32 bitflips;
 	u32 failed;
-};
+पूर्ण;
 
-struct mtk_ecc_config {
-	enum mtk_ecc_operation op;
-	enum mtk_ecc_mode mode;
+काष्ठा mtk_ecc_config अणु
+	क्रमागत mtk_ecc_operation op;
+	क्रमागत mtk_ecc_mode mode;
 	dma_addr_t addr;
 	u32 strength;
 	u32 sectors;
 	u32 len;
-};
+पूर्ण;
 
-int mtk_ecc_encode(struct mtk_ecc *, struct mtk_ecc_config *, u8 *, u32);
-void mtk_ecc_get_stats(struct mtk_ecc *, struct mtk_ecc_stats *, int);
-int mtk_ecc_wait_done(struct mtk_ecc *, enum mtk_ecc_operation);
-int mtk_ecc_enable(struct mtk_ecc *, struct mtk_ecc_config *);
-void mtk_ecc_disable(struct mtk_ecc *);
-void mtk_ecc_adjust_strength(struct mtk_ecc *ecc, u32 *p);
-unsigned int mtk_ecc_get_parity_bits(struct mtk_ecc *ecc);
+पूर्णांक mtk_ecc_encode(काष्ठा mtk_ecc *, काष्ठा mtk_ecc_config *, u8 *, u32);
+व्योम mtk_ecc_get_stats(काष्ठा mtk_ecc *, काष्ठा mtk_ecc_stats *, पूर्णांक);
+पूर्णांक mtk_ecc_रुको_करोne(काष्ठा mtk_ecc *, क्रमागत mtk_ecc_operation);
+पूर्णांक mtk_ecc_enable(काष्ठा mtk_ecc *, काष्ठा mtk_ecc_config *);
+व्योम mtk_ecc_disable(काष्ठा mtk_ecc *);
+व्योम mtk_ecc_adjust_strength(काष्ठा mtk_ecc *ecc, u32 *p);
+अचिन्हित पूर्णांक mtk_ecc_get_parity_bits(काष्ठा mtk_ecc *ecc);
 
-struct mtk_ecc *of_mtk_ecc_get(struct device_node *);
-void mtk_ecc_release(struct mtk_ecc *);
+काष्ठा mtk_ecc *of_mtk_ecc_get(काष्ठा device_node *);
+व्योम mtk_ecc_release(काष्ठा mtk_ecc *);
 
-#endif
+#पूर्ण_अगर

@@ -1,134 +1,135 @@
-// SPDX-License-Identifier: GPL-2.0
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/mm.h>
-#include <linux/fs.h>
-#include <linux/miscdevice.h>
-#include <linux/init.h>
-#include <linux/capability.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/init.h>
+#समावेश <linux/capability.h>
 
-#include <xen/xen.h>
-#include <xen/page.h>
-#include <xen/xenbus.h>
-#include <xen/xenbus_dev.h>
-#include <xen/grant_table.h>
-#include <xen/events.h>
-#include <asm/xen/hypervisor.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/page.h>
+#समावेश <xen/xenbus.h>
+#समावेश <xen/xenbus_dev.h>
+#समावेश <xen/grant_table.h>
+#समावेश <xen/events.h>
+#समावेश <यंत्र/xen/hypervisor.h>
 
-#include "xenbus.h"
+#समावेश "xenbus.h"
 
-static int xenbus_backend_open(struct inode *inode, struct file *filp)
-{
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+अटल पूर्णांक xenbus_backend_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	return nonseekable_open(inode, filp);
-}
+	वापस nonseekable_खोलो(inode, filp);
+पूर्ण
 
-static long xenbus_alloc(domid_t domid)
-{
-	struct evtchn_alloc_unbound arg;
-	int err = -EEXIST;
+अटल दीर्घ xenbus_alloc(करोmid_t करोmid)
+अणु
+	काष्ठा evtchn_alloc_unbound arg;
+	पूर्णांक err = -EEXIST;
 
 	xs_suspend();
 
-	/* If xenstored_ready is nonzero, that means we have already talked to
+	/* If xenstored_पढ़ोy is nonzero, that means we have alपढ़ोy talked to
 	 * xenstore and set up watches. These watches will be restored by
 	 * xs_resume, but that requires communication over the port established
-	 * below that is not visible to anyone until the ioctl returns.
+	 * below that is not visible to anyone until the ioctl वापसs.
 	 *
-	 * This can be resolved by splitting the ioctl into two parts
+	 * This can be resolved by splitting the ioctl पूर्णांकo two parts
 	 * (postponing the resume until xenstored is active) but this is
-	 * unnecessarily complex for the intended use where xenstored is only
-	 * started once - so return -EEXIST if it's already running.
+	 * unnecessarily complex क्रम the पूर्णांकended use where xenstored is only
+	 * started once - so वापस -EEXIST अगर it's alपढ़ोy running.
 	 */
-	if (xenstored_ready)
-		goto out_err;
+	अगर (xenstored_पढ़ोy)
+		जाओ out_err;
 
-	gnttab_grant_foreign_access_ref(GNTTAB_RESERVED_XENSTORE, domid,
-			virt_to_gfn(xen_store_interface), 0 /* writable */);
+	gnttab_grant_क्रमeign_access_ref(GNTTAB_RESERVED_XENSTORE, करोmid,
+			virt_to_gfn(xen_store_पूर्णांकerface), 0 /* writable */);
 
-	arg.dom = DOMID_SELF;
-	arg.remote_dom = domid;
+	arg.करोm = DOMID_SELF;
+	arg.remote_करोm = करोmid;
 
 	err = HYPERVISOR_event_channel_op(EVTCHNOP_alloc_unbound, &arg);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
-	if (xen_store_evtchn > 0)
+	अगर (xen_store_evtchn > 0)
 		xb_deinit_comms();
 
 	xen_store_evtchn = arg.port;
 
 	xs_resume();
 
-	return arg.port;
+	वापस arg.port;
 
  out_err:
 	xs_suspend_cancel();
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static long xenbus_backend_ioctl(struct file *file, unsigned int cmd,
-				 unsigned long data)
-{
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+अटल दीर्घ xenbus_backend_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+				 अचिन्हित दीर्घ data)
+अणु
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	switch (cmd) {
-	case IOCTL_XENBUS_BACKEND_EVTCHN:
-		if (xen_store_evtchn > 0)
-			return xen_store_evtchn;
-		return -ENODEV;
-	case IOCTL_XENBUS_BACKEND_SETUP:
-		return xenbus_alloc(data);
-	default:
-		return -ENOTTY;
-	}
-}
+	चयन (cmd) अणु
+	हाल IOCTL_XENBUS_BACKEND_EVTCHN:
+		अगर (xen_store_evtchn > 0)
+			वापस xen_store_evtchn;
+		वापस -ENODEV;
+	हाल IOCTL_XENBUS_BACKEND_SETUP:
+		वापस xenbus_alloc(data);
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+पूर्ण
 
-static int xenbus_backend_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	size_t size = vma->vm_end - vma->vm_start;
+अटल पूर्णांक xenbus_backend_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	माप_प्रकार size = vma->vm_end - vma->vm_start;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	if ((size > PAGE_SIZE) || (vma->vm_pgoff != 0))
-		return -EINVAL;
+	अगर ((size > PAGE_SIZE) || (vma->vm_pgoff != 0))
+		वापस -EINVAL;
 
-	if (remap_pfn_range(vma, vma->vm_start,
-			    virt_to_pfn(xen_store_interface),
+	अगर (remap_pfn_range(vma, vma->vm_start,
+			    virt_to_pfn(xen_store_पूर्णांकerface),
 			    size, vma->vm_page_prot))
-		return -EAGAIN;
+		वापस -EAGAIN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations xenbus_backend_fops = {
-	.open = xenbus_backend_open,
+अटल स्थिर काष्ठा file_operations xenbus_backend_fops = अणु
+	.खोलो = xenbus_backend_खोलो,
 	.mmap = xenbus_backend_mmap,
 	.unlocked_ioctl = xenbus_backend_ioctl,
-};
+पूर्ण;
 
-static struct miscdevice xenbus_backend_dev = {
+अटल काष्ठा miscdevice xenbus_backend_dev = अणु
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "xen/xenbus_backend",
 	.fops = &xenbus_backend_fops,
-};
+पूर्ण;
 
-static int __init xenbus_backend_init(void)
-{
-	int err;
+अटल पूर्णांक __init xenbus_backend_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	if (!xen_initial_domain())
-		return -ENODEV;
+	अगर (!xen_initial_करोमुख्य())
+		वापस -ENODEV;
 
-	err = misc_register(&xenbus_backend_dev);
-	if (err)
+	err = misc_रेजिस्टर(&xenbus_backend_dev);
+	अगर (err)
 		pr_err("Could not register xenbus backend device\n");
-	return err;
-}
+	वापस err;
+पूर्ण
 device_initcall(xenbus_backend_init);

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,196 +24,196 @@
  *
  */
 
-#include "dm_services.h"
-#include "include/fixed31_32.h"
+#समावेश "dm_services.h"
+#समावेश "include/fixed31_32.h"
 
-static const struct fixed31_32 dc_fixpt_two_pi = { 26986075409LL };
-static const struct fixed31_32 dc_fixpt_ln2 = { 2977044471LL };
-static const struct fixed31_32 dc_fixpt_ln2_div_2 = { 1488522236LL };
+अटल स्थिर काष्ठा fixed31_32 dc_fixpt_two_pi = अणु 26986075409LL पूर्ण;
+अटल स्थिर काष्ठा fixed31_32 dc_fixpt_ln2 = अणु 2977044471LL पूर्ण;
+अटल स्थिर काष्ठा fixed31_32 dc_fixpt_ln2_भाग_2 = अणु 1488522236LL पूर्ण;
 
-static inline unsigned long long abs_i64(
-	long long arg)
-{
-	if (arg > 0)
-		return (unsigned long long)arg;
-	else
-		return (unsigned long long)(-arg);
-}
+अटल अंतरभूत अचिन्हित दीर्घ दीर्घ असल_i64(
+	दीर्घ दीर्घ arg)
+अणु
+	अगर (arg > 0)
+		वापस (अचिन्हित दीर्घ दीर्घ)arg;
+	अन्यथा
+		वापस (अचिन्हित दीर्घ दीर्घ)(-arg);
+पूर्ण
 
 /*
  * @brief
- * result = dividend / divisor
- * *remainder = dividend % divisor
+ * result = भागidend / भागisor
+ * *reमुख्यder = भागidend % भागisor
  */
-static inline unsigned long long complete_integer_division_u64(
-	unsigned long long dividend,
-	unsigned long long divisor,
-	unsigned long long *remainder)
-{
-	unsigned long long result;
+अटल अंतरभूत अचिन्हित दीर्घ दीर्घ complete_पूर्णांकeger_भागision_u64(
+	अचिन्हित दीर्घ दीर्घ भागidend,
+	अचिन्हित दीर्घ दीर्घ भागisor,
+	अचिन्हित दीर्घ दीर्घ *reमुख्यder)
+अणु
+	अचिन्हित दीर्घ दीर्घ result;
 
-	ASSERT(divisor);
+	ASSERT(भागisor);
 
-	result = div64_u64_rem(dividend, divisor, remainder);
+	result = भाग64_u64_rem(भागidend, भागisor, reमुख्यder);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 
-#define FRACTIONAL_PART_MASK \
+#घोषणा FRACTIONAL_PART_MASK \
 	((1ULL << FIXED31_32_BITS_PER_FRACTIONAL_PART) - 1)
 
-#define GET_INTEGER_PART(x) \
+#घोषणा GET_INTEGER_PART(x) \
 	((x) >> FIXED31_32_BITS_PER_FRACTIONAL_PART)
 
-#define GET_FRACTIONAL_PART(x) \
+#घोषणा GET_FRACTIONAL_PART(x) \
 	(FRACTIONAL_PART_MASK & (x))
 
-struct fixed31_32 dc_fixpt_from_fraction(long long numerator, long long denominator)
-{
-	struct fixed31_32 res;
+काष्ठा fixed31_32 dc_fixpt_from_fraction(दीर्घ दीर्घ numerator, दीर्घ दीर्घ denominator)
+अणु
+	काष्ठा fixed31_32 res;
 
 	bool arg1_negative = numerator < 0;
 	bool arg2_negative = denominator < 0;
 
-	unsigned long long arg1_value = arg1_negative ? -numerator : numerator;
-	unsigned long long arg2_value = arg2_negative ? -denominator : denominator;
+	अचिन्हित दीर्घ दीर्घ arg1_value = arg1_negative ? -numerator : numerator;
+	अचिन्हित दीर्घ दीर्घ arg2_value = arg2_negative ? -denominator : denominator;
 
-	unsigned long long remainder;
+	अचिन्हित दीर्घ दीर्घ reमुख्यder;
 
-	/* determine integer part */
+	/* determine पूर्णांकeger part */
 
-	unsigned long long res_value = complete_integer_division_u64(
-		arg1_value, arg2_value, &remainder);
+	अचिन्हित दीर्घ दीर्घ res_value = complete_पूर्णांकeger_भागision_u64(
+		arg1_value, arg2_value, &reमुख्यder);
 
-	ASSERT(res_value <= LONG_MAX);
+	ASSERT(res_value <= दीर्घ_उच्च);
 
 	/* determine fractional part */
-	{
-		unsigned int i = FIXED31_32_BITS_PER_FRACTIONAL_PART;
+	अणु
+		अचिन्हित पूर्णांक i = FIXED31_32_BITS_PER_FRACTIONAL_PART;
 
-		do {
-			remainder <<= 1;
+		करो अणु
+			reमुख्यder <<= 1;
 
 			res_value <<= 1;
 
-			if (remainder >= arg2_value) {
+			अगर (reमुख्यder >= arg2_value) अणु
 				res_value |= 1;
-				remainder -= arg2_value;
-			}
-		} while (--i != 0);
-	}
+				reमुख्यder -= arg2_value;
+			पूर्ण
+		पूर्ण जबतक (--i != 0);
+	पूर्ण
 
 	/* round up LSB */
-	{
-		unsigned long long summand = (remainder << 1) >= arg2_value;
+	अणु
+		अचिन्हित दीर्घ दीर्घ summand = (reमुख्यder << 1) >= arg2_value;
 
-		ASSERT(res_value <= LLONG_MAX - summand);
+		ASSERT(res_value <= Lदीर्घ_उच्च - summand);
 
 		res_value += summand;
-	}
+	पूर्ण
 
-	res.value = (long long)res_value;
+	res.value = (दीर्घ दीर्घ)res_value;
 
-	if (arg1_negative ^ arg2_negative)
+	अगर (arg1_negative ^ arg2_negative)
 		res.value = -res.value;
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-struct fixed31_32 dc_fixpt_mul(struct fixed31_32 arg1, struct fixed31_32 arg2)
-{
-	struct fixed31_32 res;
+काष्ठा fixed31_32 dc_fixpt_mul(काष्ठा fixed31_32 arg1, काष्ठा fixed31_32 arg2)
+अणु
+	काष्ठा fixed31_32 res;
 
 	bool arg1_negative = arg1.value < 0;
 	bool arg2_negative = arg2.value < 0;
 
-	unsigned long long arg1_value = arg1_negative ? -arg1.value : arg1.value;
-	unsigned long long arg2_value = arg2_negative ? -arg2.value : arg2.value;
+	अचिन्हित दीर्घ दीर्घ arg1_value = arg1_negative ? -arg1.value : arg1.value;
+	अचिन्हित दीर्घ दीर्घ arg2_value = arg2_negative ? -arg2.value : arg2.value;
 
-	unsigned long long arg1_int = GET_INTEGER_PART(arg1_value);
-	unsigned long long arg2_int = GET_INTEGER_PART(arg2_value);
+	अचिन्हित दीर्घ दीर्घ arg1_पूर्णांक = GET_INTEGER_PART(arg1_value);
+	अचिन्हित दीर्घ दीर्घ arg2_पूर्णांक = GET_INTEGER_PART(arg2_value);
 
-	unsigned long long arg1_fra = GET_FRACTIONAL_PART(arg1_value);
-	unsigned long long arg2_fra = GET_FRACTIONAL_PART(arg2_value);
+	अचिन्हित दीर्घ दीर्घ arg1_fra = GET_FRACTIONAL_PART(arg1_value);
+	अचिन्हित दीर्घ दीर्घ arg2_fra = GET_FRACTIONAL_PART(arg2_value);
 
-	unsigned long long tmp;
+	अचिन्हित दीर्घ दीर्घ पंचांगp;
 
-	res.value = arg1_int * arg2_int;
+	res.value = arg1_पूर्णांक * arg2_पूर्णांक;
 
-	ASSERT(res.value <= LONG_MAX);
+	ASSERT(res.value <= दीर्घ_उच्च);
 
 	res.value <<= FIXED31_32_BITS_PER_FRACTIONAL_PART;
 
-	tmp = arg1_int * arg2_fra;
+	पंचांगp = arg1_पूर्णांक * arg2_fra;
 
-	ASSERT(tmp <= (unsigned long long)(LLONG_MAX - res.value));
+	ASSERT(पंचांगp <= (अचिन्हित दीर्घ दीर्घ)(Lदीर्घ_उच्च - res.value));
 
-	res.value += tmp;
+	res.value += पंचांगp;
 
-	tmp = arg2_int * arg1_fra;
+	पंचांगp = arg2_पूर्णांक * arg1_fra;
 
-	ASSERT(tmp <= (unsigned long long)(LLONG_MAX - res.value));
+	ASSERT(पंचांगp <= (अचिन्हित दीर्घ दीर्घ)(Lदीर्घ_उच्च - res.value));
 
-	res.value += tmp;
+	res.value += पंचांगp;
 
-	tmp = arg1_fra * arg2_fra;
+	पंचांगp = arg1_fra * arg2_fra;
 
-	tmp = (tmp >> FIXED31_32_BITS_PER_FRACTIONAL_PART) +
-		(tmp >= (unsigned long long)dc_fixpt_half.value);
+	पंचांगp = (पंचांगp >> FIXED31_32_BITS_PER_FRACTIONAL_PART) +
+		(पंचांगp >= (अचिन्हित दीर्घ दीर्घ)dc_fixpt_half.value);
 
-	ASSERT(tmp <= (unsigned long long)(LLONG_MAX - res.value));
+	ASSERT(पंचांगp <= (अचिन्हित दीर्घ दीर्घ)(Lदीर्घ_उच्च - res.value));
 
-	res.value += tmp;
+	res.value += पंचांगp;
 
-	if (arg1_negative ^ arg2_negative)
+	अगर (arg1_negative ^ arg2_negative)
 		res.value = -res.value;
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-struct fixed31_32 dc_fixpt_sqr(struct fixed31_32 arg)
-{
-	struct fixed31_32 res;
+काष्ठा fixed31_32 dc_fixpt_sqr(काष्ठा fixed31_32 arg)
+अणु
+	काष्ठा fixed31_32 res;
 
-	unsigned long long arg_value = abs_i64(arg.value);
+	अचिन्हित दीर्घ दीर्घ arg_value = असल_i64(arg.value);
 
-	unsigned long long arg_int = GET_INTEGER_PART(arg_value);
+	अचिन्हित दीर्घ दीर्घ arg_पूर्णांक = GET_INTEGER_PART(arg_value);
 
-	unsigned long long arg_fra = GET_FRACTIONAL_PART(arg_value);
+	अचिन्हित दीर्घ दीर्घ arg_fra = GET_FRACTIONAL_PART(arg_value);
 
-	unsigned long long tmp;
+	अचिन्हित दीर्घ दीर्घ पंचांगp;
 
-	res.value = arg_int * arg_int;
+	res.value = arg_पूर्णांक * arg_पूर्णांक;
 
-	ASSERT(res.value <= LONG_MAX);
+	ASSERT(res.value <= दीर्घ_उच्च);
 
 	res.value <<= FIXED31_32_BITS_PER_FRACTIONAL_PART;
 
-	tmp = arg_int * arg_fra;
+	पंचांगp = arg_पूर्णांक * arg_fra;
 
-	ASSERT(tmp <= (unsigned long long)(LLONG_MAX - res.value));
+	ASSERT(पंचांगp <= (अचिन्हित दीर्घ दीर्घ)(Lदीर्घ_उच्च - res.value));
 
-	res.value += tmp;
+	res.value += पंचांगp;
 
-	ASSERT(tmp <= (unsigned long long)(LLONG_MAX - res.value));
+	ASSERT(पंचांगp <= (अचिन्हित दीर्घ दीर्घ)(Lदीर्घ_उच्च - res.value));
 
-	res.value += tmp;
+	res.value += पंचांगp;
 
-	tmp = arg_fra * arg_fra;
+	पंचांगp = arg_fra * arg_fra;
 
-	tmp = (tmp >> FIXED31_32_BITS_PER_FRACTIONAL_PART) +
-		(tmp >= (unsigned long long)dc_fixpt_half.value);
+	पंचांगp = (पंचांगp >> FIXED31_32_BITS_PER_FRACTIONAL_PART) +
+		(पंचांगp >= (अचिन्हित दीर्घ दीर्घ)dc_fixpt_half.value);
 
-	ASSERT(tmp <= (unsigned long long)(LLONG_MAX - res.value));
+	ASSERT(पंचांगp <= (अचिन्हित दीर्घ दीर्घ)(Lदीर्घ_उच्च - res.value));
 
-	res.value += tmp;
+	res.value += पंचांगp;
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-struct fixed31_32 dc_fixpt_recip(struct fixed31_32 arg)
-{
+काष्ठा fixed31_32 dc_fixpt_recip(काष्ठा fixed31_32 arg)
+अणु
 	/*
 	 * @note
 	 * Good idea to use Newton's method
@@ -220,124 +221,124 @@ struct fixed31_32 dc_fixpt_recip(struct fixed31_32 arg)
 
 	ASSERT(arg.value);
 
-	return dc_fixpt_from_fraction(
+	वापस dc_fixpt_from_fraction(
 		dc_fixpt_one.value,
 		arg.value);
-}
+पूर्ण
 
-struct fixed31_32 dc_fixpt_sinc(struct fixed31_32 arg)
-{
-	struct fixed31_32 square;
+काष्ठा fixed31_32 dc_fixpt_sinc(काष्ठा fixed31_32 arg)
+अणु
+	काष्ठा fixed31_32 square;
 
-	struct fixed31_32 res = dc_fixpt_one;
+	काष्ठा fixed31_32 res = dc_fixpt_one;
 
-	int n = 27;
+	पूर्णांक n = 27;
 
-	struct fixed31_32 arg_norm = arg;
+	काष्ठा fixed31_32 arg_norm = arg;
 
-	if (dc_fixpt_le(
+	अगर (dc_fixpt_le(
 		dc_fixpt_two_pi,
-		dc_fixpt_abs(arg))) {
+		dc_fixpt_असल(arg))) अणु
 		arg_norm = dc_fixpt_sub(
 			arg_norm,
-			dc_fixpt_mul_int(
+			dc_fixpt_mul_पूर्णांक(
 				dc_fixpt_two_pi,
-				(int)div64_s64(
+				(पूर्णांक)भाग64_s64(
 					arg_norm.value,
 					dc_fixpt_two_pi.value)));
-	}
+	पूर्ण
 
 	square = dc_fixpt_sqr(arg_norm);
 
-	do {
+	करो अणु
 		res = dc_fixpt_sub(
 			dc_fixpt_one,
-			dc_fixpt_div_int(
+			dc_fixpt_भाग_पूर्णांक(
 				dc_fixpt_mul(
 					square,
 					res),
 				n * (n - 1)));
 
 		n -= 2;
-	} while (n > 2);
+	पूर्ण जबतक (n > 2);
 
-	if (arg.value != arg_norm.value)
-		res = dc_fixpt_div(
+	अगर (arg.value != arg_norm.value)
+		res = dc_fixpt_भाग(
 			dc_fixpt_mul(res, arg_norm),
 			arg);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-struct fixed31_32 dc_fixpt_sin(struct fixed31_32 arg)
-{
-	return dc_fixpt_mul(
+काष्ठा fixed31_32 dc_fixpt_sin(काष्ठा fixed31_32 arg)
+अणु
+	वापस dc_fixpt_mul(
 		arg,
 		dc_fixpt_sinc(arg));
-}
+पूर्ण
 
-struct fixed31_32 dc_fixpt_cos(struct fixed31_32 arg)
-{
+काष्ठा fixed31_32 dc_fixpt_cos(काष्ठा fixed31_32 arg)
+अणु
 	/* TODO implement argument normalization */
 
-	const struct fixed31_32 square = dc_fixpt_sqr(arg);
+	स्थिर काष्ठा fixed31_32 square = dc_fixpt_sqr(arg);
 
-	struct fixed31_32 res = dc_fixpt_one;
+	काष्ठा fixed31_32 res = dc_fixpt_one;
 
-	int n = 26;
+	पूर्णांक n = 26;
 
-	do {
+	करो अणु
 		res = dc_fixpt_sub(
 			dc_fixpt_one,
-			dc_fixpt_div_int(
+			dc_fixpt_भाग_पूर्णांक(
 				dc_fixpt_mul(
 					square,
 					res),
 				n * (n - 1)));
 
 		n -= 2;
-	} while (n != 0);
+	पूर्ण जबतक (n != 0);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /*
  * @brief
  * result = exp(arg),
- * where abs(arg) < 1
+ * where असल(arg) < 1
  *
  * Calculated as Taylor series.
  */
-static struct fixed31_32 fixed31_32_exp_from_taylor_series(struct fixed31_32 arg)
-{
-	unsigned int n = 9;
+अटल काष्ठा fixed31_32 fixed31_32_exp_from_taylor_series(काष्ठा fixed31_32 arg)
+अणु
+	अचिन्हित पूर्णांक n = 9;
 
-	struct fixed31_32 res = dc_fixpt_from_fraction(
+	काष्ठा fixed31_32 res = dc_fixpt_from_fraction(
 		n + 2,
 		n + 1);
 	/* TODO find correct res */
 
 	ASSERT(dc_fixpt_lt(arg, dc_fixpt_one));
 
-	do
+	करो
 		res = dc_fixpt_add(
 			dc_fixpt_one,
-			dc_fixpt_div_int(
+			dc_fixpt_भाग_पूर्णांक(
 				dc_fixpt_mul(
 					arg,
 					res),
 				n));
-	while (--n != 1);
+	जबतक (--n != 1);
 
-	return dc_fixpt_add(
+	वापस dc_fixpt_add(
 		dc_fixpt_one,
 		dc_fixpt_mul(
 			arg,
 			res));
-}
+पूर्ण
 
-struct fixed31_32 dc_fixpt_exp(struct fixed31_32 arg)
-{
+काष्ठा fixed31_32 dc_fixpt_exp(काष्ठा fixed31_32 arg)
+अणु
 	/*
 	 * @brief
 	 * Main equation is:
@@ -345,57 +346,57 @@ struct fixed31_32 dc_fixpt_exp(struct fixed31_32 arg)
 	 * where m = round(x / ln(2)), r = x - m * ln(2)
 	 */
 
-	if (dc_fixpt_le(
-		dc_fixpt_ln2_div_2,
-		dc_fixpt_abs(arg))) {
-		int m = dc_fixpt_round(
-			dc_fixpt_div(
+	अगर (dc_fixpt_le(
+		dc_fixpt_ln2_भाग_2,
+		dc_fixpt_असल(arg))) अणु
+		पूर्णांक m = dc_fixpt_round(
+			dc_fixpt_भाग(
 				arg,
 				dc_fixpt_ln2));
 
-		struct fixed31_32 r = dc_fixpt_sub(
+		काष्ठा fixed31_32 r = dc_fixpt_sub(
 			arg,
-			dc_fixpt_mul_int(
+			dc_fixpt_mul_पूर्णांक(
 				dc_fixpt_ln2,
 				m));
 
 		ASSERT(m != 0);
 
 		ASSERT(dc_fixpt_lt(
-			dc_fixpt_abs(r),
+			dc_fixpt_असल(r),
 			dc_fixpt_one));
 
-		if (m > 0)
-			return dc_fixpt_shl(
+		अगर (m > 0)
+			वापस dc_fixpt_shl(
 				fixed31_32_exp_from_taylor_series(r),
-				(unsigned char)m);
-		else
-			return dc_fixpt_div_int(
+				(अचिन्हित अक्षर)m);
+		अन्यथा
+			वापस dc_fixpt_भाग_पूर्णांक(
 				fixed31_32_exp_from_taylor_series(r),
 				1LL << -m);
-	} else if (arg.value != 0)
-		return fixed31_32_exp_from_taylor_series(arg);
-	else
-		return dc_fixpt_one;
-}
+	पूर्ण अन्यथा अगर (arg.value != 0)
+		वापस fixed31_32_exp_from_taylor_series(arg);
+	अन्यथा
+		वापस dc_fixpt_one;
+पूर्ण
 
-struct fixed31_32 dc_fixpt_log(struct fixed31_32 arg)
-{
-	struct fixed31_32 res = dc_fixpt_neg(dc_fixpt_one);
+काष्ठा fixed31_32 dc_fixpt_log(काष्ठा fixed31_32 arg)
+अणु
+	काष्ठा fixed31_32 res = dc_fixpt_neg(dc_fixpt_one);
 	/* TODO improve 1st estimation */
 
-	struct fixed31_32 error;
+	काष्ठा fixed31_32 error;
 
 	ASSERT(arg.value > 0);
-	/* TODO if arg is negative, return NaN */
-	/* TODO if arg is zero, return -INF */
+	/* TODO अगर arg is negative, वापस NaN */
+	/* TODO अगर arg is zero, वापस -INF */
 
-	do {
-		struct fixed31_32 res1 = dc_fixpt_add(
+	करो अणु
+		काष्ठा fixed31_32 res1 = dc_fixpt_add(
 			dc_fixpt_sub(
 				res,
 				dc_fixpt_one),
-			dc_fixpt_div(
+			dc_fixpt_भाग(
 				arg,
 				dc_fixpt_exp(res)));
 
@@ -405,88 +406,88 @@ struct fixed31_32 dc_fixpt_log(struct fixed31_32 arg)
 
 		res = res1;
 		/* TODO determine max_allowed_error based on quality of exp() */
-	} while (abs_i64(error.value) > 100ULL);
+	पूर्ण जबतक (असल_i64(error.value) > 100ULL);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 
-/* this function is a generic helper to translate fixed point value to
- * specified integer format that will consist of integer_bits integer part and
+/* this function is a generic helper to translate fixed poपूर्णांक value to
+ * specअगरied पूर्णांकeger क्रमmat that will consist of पूर्णांकeger_bits पूर्णांकeger part and
  * fractional_bits fractional part. For example it is used in
- * dc_fixpt_u2d19 to receive 2 bits integer part and 19 bits fractional
+ * dc_fixpt_u2d19 to receive 2 bits पूर्णांकeger part and 19 bits fractional
  * part in 32 bits. It is used in hw programming (scaler)
  */
 
-static inline unsigned int ux_dy(
-	long long value,
-	unsigned int integer_bits,
-	unsigned int fractional_bits)
-{
-	/* 1. create mask of integer part */
-	unsigned int result = (1 << integer_bits) - 1;
+अटल अंतरभूत अचिन्हित पूर्णांक ux_dy(
+	दीर्घ दीर्घ value,
+	अचिन्हित पूर्णांक पूर्णांकeger_bits,
+	अचिन्हित पूर्णांक fractional_bits)
+अणु
+	/* 1. create mask of पूर्णांकeger part */
+	अचिन्हित पूर्णांक result = (1 << पूर्णांकeger_bits) - 1;
 	/* 2. mask out fractional part */
-	unsigned int fractional_part = FRACTIONAL_PART_MASK & value;
-	/* 3. shrink fixed point integer part to be of integer_bits width*/
+	अचिन्हित पूर्णांक fractional_part = FRACTIONAL_PART_MASK & value;
+	/* 3. shrink fixed poपूर्णांक पूर्णांकeger part to be of पूर्णांकeger_bits width*/
 	result &= GET_INTEGER_PART(value);
-	/* 4. make space for fractional part to be filled in after integer */
+	/* 4. make space क्रम fractional part to be filled in after पूर्णांकeger */
 	result <<= fractional_bits;
-	/* 5. shrink fixed point fractional part to of fractional_bits width*/
+	/* 5. shrink fixed poपूर्णांक fractional part to of fractional_bits width*/
 	fractional_part >>= FIXED31_32_BITS_PER_FRACTIONAL_PART - fractional_bits;
 	/* 6. merge the result */
-	return result | fractional_part;
-}
+	वापस result | fractional_part;
+पूर्ण
 
-static inline unsigned int clamp_ux_dy(
-	long long value,
-	unsigned int integer_bits,
-	unsigned int fractional_bits,
-	unsigned int min_clamp)
-{
-	unsigned int truncated_val = ux_dy(value, integer_bits, fractional_bits);
+अटल अंतरभूत अचिन्हित पूर्णांक clamp_ux_dy(
+	दीर्घ दीर्घ value,
+	अचिन्हित पूर्णांक पूर्णांकeger_bits,
+	अचिन्हित पूर्णांक fractional_bits,
+	अचिन्हित पूर्णांक min_clamp)
+अणु
+	अचिन्हित पूर्णांक truncated_val = ux_dy(value, पूर्णांकeger_bits, fractional_bits);
 
-	if (value >= (1LL << (integer_bits + FIXED31_32_BITS_PER_FRACTIONAL_PART)))
-		return (1 << (integer_bits + fractional_bits)) - 1;
-	else if (truncated_val > min_clamp)
-		return truncated_val;
-	else
-		return min_clamp;
-}
+	अगर (value >= (1LL << (पूर्णांकeger_bits + FIXED31_32_BITS_PER_FRACTIONAL_PART)))
+		वापस (1 << (पूर्णांकeger_bits + fractional_bits)) - 1;
+	अन्यथा अगर (truncated_val > min_clamp)
+		वापस truncated_val;
+	अन्यथा
+		वापस min_clamp;
+पूर्ण
 
-unsigned int dc_fixpt_u4d19(struct fixed31_32 arg)
-{
-	return ux_dy(arg.value, 4, 19);
-}
+अचिन्हित पूर्णांक dc_fixpt_u4d19(काष्ठा fixed31_32 arg)
+अणु
+	वापस ux_dy(arg.value, 4, 19);
+पूर्ण
 
-unsigned int dc_fixpt_u3d19(struct fixed31_32 arg)
-{
-	return ux_dy(arg.value, 3, 19);
-}
+अचिन्हित पूर्णांक dc_fixpt_u3d19(काष्ठा fixed31_32 arg)
+अणु
+	वापस ux_dy(arg.value, 3, 19);
+पूर्ण
 
-unsigned int dc_fixpt_u2d19(struct fixed31_32 arg)
-{
-	return ux_dy(arg.value, 2, 19);
-}
+अचिन्हित पूर्णांक dc_fixpt_u2d19(काष्ठा fixed31_32 arg)
+अणु
+	वापस ux_dy(arg.value, 2, 19);
+पूर्ण
 
-unsigned int dc_fixpt_u0d19(struct fixed31_32 arg)
-{
-	return ux_dy(arg.value, 0, 19);
-}
+अचिन्हित पूर्णांक dc_fixpt_u0d19(काष्ठा fixed31_32 arg)
+अणु
+	वापस ux_dy(arg.value, 0, 19);
+पूर्ण
 
-unsigned int dc_fixpt_clamp_u0d14(struct fixed31_32 arg)
-{
-	return clamp_ux_dy(arg.value, 0, 14, 1);
-}
+अचिन्हित पूर्णांक dc_fixpt_clamp_u0d14(काष्ठा fixed31_32 arg)
+अणु
+	वापस clamp_ux_dy(arg.value, 0, 14, 1);
+पूर्ण
 
-unsigned int dc_fixpt_clamp_u0d10(struct fixed31_32 arg)
-{
-	return clamp_ux_dy(arg.value, 0, 10, 1);
-}
+अचिन्हित पूर्णांक dc_fixpt_clamp_u0d10(काष्ठा fixed31_32 arg)
+अणु
+	वापस clamp_ux_dy(arg.value, 0, 10, 1);
+पूर्ण
 
-int dc_fixpt_s4d19(struct fixed31_32 arg)
-{
-	if (arg.value < 0)
-		return -(int)ux_dy(dc_fixpt_abs(arg).value, 4, 19);
-	else
-		return ux_dy(arg.value, 4, 19);
-}
+पूर्णांक dc_fixpt_s4d19(काष्ठा fixed31_32 arg)
+अणु
+	अगर (arg.value < 0)
+		वापस -(पूर्णांक)ux_dy(dc_fixpt_असल(arg).value, 4, 19);
+	अन्यथा
+		वापस ux_dy(arg.value, 4, 19);
+पूर्ण

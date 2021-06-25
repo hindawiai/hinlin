@@ -1,551 +1,552 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Kontron PLD watchdog driver
+ * Kontron PLD watchकरोg driver
  *
  * Copyright (c) 2010-2013 Kontron Europe GmbH
  * Author: Michael Brunner <michael.brunner@kontron.com>
  *
- * Note: From the PLD watchdog point of view timeout and pretimeout are
- *       defined differently than in the kernel.
- *       First the pretimeout stage runs out before the timeout stage gets
+ * Note: From the PLD watchकरोg poपूर्णांक of view समयout and preसमयout are
+ *       defined dअगरferently than in the kernel.
+ *       First the preसमयout stage runs out beक्रमe the समयout stage माला_लो
  *       active.
  *
- * Kernel/API:                     P-----| pretimeout
- *               |-----------------------T timeout
- * Watchdog:     |-----------------P       pretimeout_stage
- *                                 |-----T timeout_stage
+ * Kernel/API:                     P-----| preसमयout
+ *               |-----------------------T समयout
+ * Watchकरोg:     |-----------------P       preसमयout_stage
+ *                                 |-----T समयout_stage
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/uaccess.h>
-#include <linux/watchdog.h>
-#include <linux/platform_device.h>
-#include <linux/mfd/kempld.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mfd/kempld.h>
 
-#define KEMPLD_WDT_STAGE_TIMEOUT(x)	(0x1b + (x) * 4)
-#define KEMPLD_WDT_STAGE_CFG(x)		(0x18 + (x))
-#define STAGE_CFG_GET_PRESCALER(x)	(((x) & 0x30) >> 4)
-#define STAGE_CFG_SET_PRESCALER(x)	(((x) & 0x3) << 4)
-#define STAGE_CFG_PRESCALER_MASK	0x30
-#define STAGE_CFG_ACTION_MASK		0x7
-#define STAGE_CFG_ASSERT		(1 << 3)
+#घोषणा KEMPLD_WDT_STAGE_TIMEOUT(x)	(0x1b + (x) * 4)
+#घोषणा KEMPLD_WDT_STAGE_CFG(x)		(0x18 + (x))
+#घोषणा STAGE_CFG_GET_PRESCALER(x)	(((x) & 0x30) >> 4)
+#घोषणा STAGE_CFG_SET_PRESCALER(x)	(((x) & 0x3) << 4)
+#घोषणा STAGE_CFG_PRESCALER_MASK	0x30
+#घोषणा STAGE_CFG_ACTION_MASK		0x7
+#घोषणा STAGE_CFG_ASSERT		(1 << 3)
 
-#define KEMPLD_WDT_MAX_STAGES		2
-#define KEMPLD_WDT_KICK			0x16
-#define KEMPLD_WDT_CFG			0x17
-#define KEMPLD_WDT_CFG_ENABLE		0x10
-#define KEMPLD_WDT_CFG_ENABLE_LOCK	0x8
-#define KEMPLD_WDT_CFG_GLOBAL_LOCK	0x80
+#घोषणा KEMPLD_WDT_MAX_STAGES		2
+#घोषणा KEMPLD_WDT_KICK			0x16
+#घोषणा KEMPLD_WDT_CFG			0x17
+#घोषणा KEMPLD_WDT_CFG_ENABLE		0x10
+#घोषणा KEMPLD_WDT_CFG_ENABLE_LOCK	0x8
+#घोषणा KEMPLD_WDT_CFG_GLOBAL_LOCK	0x80
 
-enum {
+क्रमागत अणु
 	ACTION_NONE = 0,
 	ACTION_RESET,
 	ACTION_NMI,
 	ACTION_SMI,
 	ACTION_SCI,
 	ACTION_DELAY,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	STAGE_TIMEOUT = 0,
 	STAGE_PRETIMEOUT,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PRESCALER_21 = 0,
 	PRESCALER_17,
 	PRESCALER_12,
-};
+पूर्ण;
 
-static const u32 kempld_prescaler[] = {
+अटल स्थिर u32 kempld_prescaler[] = अणु
 	[PRESCALER_21] = (1 << 21) - 1,
 	[PRESCALER_17] = (1 << 17) - 1,
 	[PRESCALER_12] = (1 << 12) - 1,
 	0,
-};
+पूर्ण;
 
-struct kempld_wdt_stage {
-	unsigned int	id;
+काष्ठा kempld_wdt_stage अणु
+	अचिन्हित पूर्णांक	id;
 	u32		mask;
-};
+पूर्ण;
 
-struct kempld_wdt_data {
-	struct kempld_device_data	*pld;
-	struct watchdog_device		wdd;
-	unsigned int			pretimeout;
-	struct kempld_wdt_stage		stage[KEMPLD_WDT_MAX_STAGES];
-#ifdef CONFIG_PM
+काष्ठा kempld_wdt_data अणु
+	काष्ठा kempld_device_data	*pld;
+	काष्ठा watchकरोg_device		wdd;
+	अचिन्हित पूर्णांक			preसमयout;
+	काष्ठा kempld_wdt_stage		stage[KEMPLD_WDT_MAX_STAGES];
+#अगर_घोषित CONFIG_PM
 	u8				pm_status_store;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-#define DEFAULT_TIMEOUT		30 /* seconds */
-#define DEFAULT_PRETIMEOUT	0
+#घोषणा DEFAULT_TIMEOUT		30 /* seconds */
+#घोषणा DEFAULT_PRETIMEOUT	0
 
-static unsigned int timeout = DEFAULT_TIMEOUT;
-module_param(timeout, uint, 0);
-MODULE_PARM_DESC(timeout,
+अटल अचिन्हित पूर्णांक समयout = DEFAULT_TIMEOUT;
+module_param(समयout, uपूर्णांक, 0);
+MODULE_PARM_DESC(समयout,
 	"Watchdog timeout in seconds. (>=0, default="
 	__MODULE_STRING(DEFAULT_TIMEOUT) ")");
 
-static unsigned int pretimeout = DEFAULT_PRETIMEOUT;
-module_param(pretimeout, uint, 0);
-MODULE_PARM_DESC(pretimeout,
+अटल अचिन्हित पूर्णांक preसमयout = DEFAULT_PRETIMEOUT;
+module_param(preसमयout, uपूर्णांक, 0);
+MODULE_PARM_DESC(preसमयout,
 	"Watchdog pretimeout in seconds. (>=0, default="
 	__MODULE_STRING(DEFAULT_PRETIMEOUT) ")");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 	"Watchdog cannot be stopped once started (default="
 	__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-static int kempld_wdt_set_stage_action(struct kempld_wdt_data *wdt_data,
-					struct kempld_wdt_stage *stage,
+अटल पूर्णांक kempld_wdt_set_stage_action(काष्ठा kempld_wdt_data *wdt_data,
+					काष्ठा kempld_wdt_stage *stage,
 					u8 action)
-{
-	struct kempld_device_data *pld = wdt_data->pld;
+अणु
+	काष्ठा kempld_device_data *pld = wdt_data->pld;
 	u8 stage_cfg;
 
-	if (!stage || !stage->mask)
-		return -EINVAL;
+	अगर (!stage || !stage->mask)
+		वापस -EINVAL;
 
 	kempld_get_mutex(pld);
-	stage_cfg = kempld_read8(pld, KEMPLD_WDT_STAGE_CFG(stage->id));
+	stage_cfg = kempld_पढ़ो8(pld, KEMPLD_WDT_STAGE_CFG(stage->id));
 	stage_cfg &= ~STAGE_CFG_ACTION_MASK;
 	stage_cfg |= (action & STAGE_CFG_ACTION_MASK);
 
-	if (action == ACTION_RESET)
+	अगर (action == ACTION_RESET)
 		stage_cfg |= STAGE_CFG_ASSERT;
-	else
+	अन्यथा
 		stage_cfg &= ~STAGE_CFG_ASSERT;
 
-	kempld_write8(pld, KEMPLD_WDT_STAGE_CFG(stage->id), stage_cfg);
+	kempld_ग_लिखो8(pld, KEMPLD_WDT_STAGE_CFG(stage->id), stage_cfg);
 	kempld_release_mutex(pld);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kempld_wdt_set_stage_timeout(struct kempld_wdt_data *wdt_data,
-					struct kempld_wdt_stage *stage,
-					unsigned int timeout)
-{
-	struct kempld_device_data *pld = wdt_data->pld;
+अटल पूर्णांक kempld_wdt_set_stage_समयout(काष्ठा kempld_wdt_data *wdt_data,
+					काष्ठा kempld_wdt_stage *stage,
+					अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा kempld_device_data *pld = wdt_data->pld;
 	u32 prescaler;
-	u64 stage_timeout64;
-	u32 stage_timeout;
-	u32 remainder;
+	u64 stage_समयout64;
+	u32 stage_समयout;
+	u32 reमुख्यder;
 	u8 stage_cfg;
 
 	prescaler = kempld_prescaler[PRESCALER_21];
 
-	if (!stage)
-		return -EINVAL;
+	अगर (!stage)
+		वापस -EINVAL;
 
-	stage_timeout64 = (u64)timeout * pld->pld_clock;
-	remainder = do_div(stage_timeout64, prescaler);
-	if (remainder)
-		stage_timeout64++;
+	stage_समयout64 = (u64)समयout * pld->pld_घड़ी;
+	reमुख्यder = करो_भाग(stage_समयout64, prescaler);
+	अगर (reमुख्यder)
+		stage_समयout64++;
 
-	if (stage_timeout64 > stage->mask)
-		return -EINVAL;
+	अगर (stage_समयout64 > stage->mask)
+		वापस -EINVAL;
 
-	stage_timeout = stage_timeout64 & stage->mask;
+	stage_समयout = stage_समयout64 & stage->mask;
 
 	kempld_get_mutex(pld);
-	stage_cfg = kempld_read8(pld, KEMPLD_WDT_STAGE_CFG(stage->id));
+	stage_cfg = kempld_पढ़ो8(pld, KEMPLD_WDT_STAGE_CFG(stage->id));
 	stage_cfg &= ~STAGE_CFG_PRESCALER_MASK;
 	stage_cfg |= STAGE_CFG_SET_PRESCALER(PRESCALER_21);
-	kempld_write8(pld, KEMPLD_WDT_STAGE_CFG(stage->id), stage_cfg);
-	kempld_write32(pld, KEMPLD_WDT_STAGE_TIMEOUT(stage->id),
-			stage_timeout);
+	kempld_ग_लिखो8(pld, KEMPLD_WDT_STAGE_CFG(stage->id), stage_cfg);
+	kempld_ग_लिखो32(pld, KEMPLD_WDT_STAGE_TIMEOUT(stage->id),
+			stage_समयout);
 	kempld_release_mutex(pld);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * kempld_get_mutex must be called prior to calling this function.
  */
-static unsigned int kempld_wdt_get_timeout(struct kempld_wdt_data *wdt_data,
-						struct kempld_wdt_stage *stage)
-{
-	struct kempld_device_data *pld = wdt_data->pld;
-	unsigned int timeout;
-	u64 stage_timeout;
+अटल अचिन्हित पूर्णांक kempld_wdt_get_समयout(काष्ठा kempld_wdt_data *wdt_data,
+						काष्ठा kempld_wdt_stage *stage)
+अणु
+	काष्ठा kempld_device_data *pld = wdt_data->pld;
+	अचिन्हित पूर्णांक समयout;
+	u64 stage_समयout;
 	u32 prescaler;
-	u32 remainder;
+	u32 reमुख्यder;
 	u8 stage_cfg;
 
-	if (!stage->mask)
-		return 0;
+	अगर (!stage->mask)
+		वापस 0;
 
-	stage_cfg = kempld_read8(pld, KEMPLD_WDT_STAGE_CFG(stage->id));
-	stage_timeout = kempld_read32(pld, KEMPLD_WDT_STAGE_TIMEOUT(stage->id));
+	stage_cfg = kempld_पढ़ो8(pld, KEMPLD_WDT_STAGE_CFG(stage->id));
+	stage_समयout = kempld_पढ़ो32(pld, KEMPLD_WDT_STAGE_TIMEOUT(stage->id));
 	prescaler = kempld_prescaler[STAGE_CFG_GET_PRESCALER(stage_cfg)];
 
-	stage_timeout = (stage_timeout & stage->mask) * prescaler;
-	remainder = do_div(stage_timeout, pld->pld_clock);
-	if (remainder)
-		stage_timeout++;
+	stage_समयout = (stage_समयout & stage->mask) * prescaler;
+	reमुख्यder = करो_भाग(stage_समयout, pld->pld_घड़ी);
+	अगर (reमुख्यder)
+		stage_समयout++;
 
-	timeout = stage_timeout;
-	WARN_ON_ONCE(timeout != stage_timeout);
+	समयout = stage_समयout;
+	WARN_ON_ONCE(समयout != stage_समयout);
 
-	return timeout;
-}
+	वापस समयout;
+पूर्ण
 
-static int kempld_wdt_set_timeout(struct watchdog_device *wdd,
-					unsigned int timeout)
-{
-	struct kempld_wdt_data *wdt_data = watchdog_get_drvdata(wdd);
-	struct kempld_wdt_stage *pretimeout_stage;
-	struct kempld_wdt_stage *timeout_stage;
-	int ret;
+अटल पूर्णांक kempld_wdt_set_समयout(काष्ठा watchकरोg_device *wdd,
+					अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा kempld_wdt_data *wdt_data = watchकरोg_get_drvdata(wdd);
+	काष्ठा kempld_wdt_stage *preसमयout_stage;
+	काष्ठा kempld_wdt_stage *समयout_stage;
+	पूर्णांक ret;
 
-	timeout_stage = &wdt_data->stage[STAGE_TIMEOUT];
-	pretimeout_stage = &wdt_data->stage[STAGE_PRETIMEOUT];
+	समयout_stage = &wdt_data->stage[STAGE_TIMEOUT];
+	preसमयout_stage = &wdt_data->stage[STAGE_PRETIMEOUT];
 
-	if (pretimeout_stage->mask && wdt_data->pretimeout > 0)
-		timeout = wdt_data->pretimeout;
+	अगर (preसमयout_stage->mask && wdt_data->preसमयout > 0)
+		समयout = wdt_data->preसमयout;
 
-	ret = kempld_wdt_set_stage_action(wdt_data, timeout_stage,
+	ret = kempld_wdt_set_stage_action(wdt_data, समयout_stage,
 						ACTION_RESET);
-	if (ret)
-		return ret;
-	ret = kempld_wdt_set_stage_timeout(wdt_data, timeout_stage,
-						timeout);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
+	ret = kempld_wdt_set_stage_समयout(wdt_data, समयout_stage,
+						समयout);
+	अगर (ret)
+		वापस ret;
 
-	wdd->timeout = timeout;
-	return 0;
-}
+	wdd->समयout = समयout;
+	वापस 0;
+पूर्ण
 
-static int kempld_wdt_set_pretimeout(struct watchdog_device *wdd,
-					unsigned int pretimeout)
-{
-	struct kempld_wdt_data *wdt_data = watchdog_get_drvdata(wdd);
-	struct kempld_wdt_stage *pretimeout_stage;
+अटल पूर्णांक kempld_wdt_set_preसमयout(काष्ठा watchकरोg_device *wdd,
+					अचिन्हित पूर्णांक preसमयout)
+अणु
+	काष्ठा kempld_wdt_data *wdt_data = watchकरोg_get_drvdata(wdd);
+	काष्ठा kempld_wdt_stage *preसमयout_stage;
 	u8 action = ACTION_NONE;
-	int ret;
+	पूर्णांक ret;
 
-	pretimeout_stage = &wdt_data->stage[STAGE_PRETIMEOUT];
+	preसमयout_stage = &wdt_data->stage[STAGE_PRETIMEOUT];
 
-	if (!pretimeout_stage->mask)
-		return -ENXIO;
+	अगर (!preसमयout_stage->mask)
+		वापस -ENXIO;
 
-	if (pretimeout > wdd->timeout)
-		return -EINVAL;
+	अगर (preसमयout > wdd->समयout)
+		वापस -EINVAL;
 
-	if (pretimeout > 0)
+	अगर (preसमयout > 0)
 		action = ACTION_NMI;
 
-	ret = kempld_wdt_set_stage_action(wdt_data, pretimeout_stage,
+	ret = kempld_wdt_set_stage_action(wdt_data, preसमयout_stage,
 						action);
-	if (ret)
-		return ret;
-	ret = kempld_wdt_set_stage_timeout(wdt_data, pretimeout_stage,
-						wdd->timeout - pretimeout);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
+	ret = kempld_wdt_set_stage_समयout(wdt_data, preसमयout_stage,
+						wdd->समयout - preसमयout);
+	अगर (ret)
+		वापस ret;
 
-	wdt_data->pretimeout = pretimeout;
-	return 0;
-}
+	wdt_data->preसमयout = preसमयout;
+	वापस 0;
+पूर्ण
 
-static void kempld_wdt_update_timeouts(struct kempld_wdt_data *wdt_data)
-{
-	struct kempld_device_data *pld = wdt_data->pld;
-	struct kempld_wdt_stage *pretimeout_stage;
-	struct kempld_wdt_stage *timeout_stage;
-	unsigned int pretimeout, timeout;
+अटल व्योम kempld_wdt_update_समयouts(काष्ठा kempld_wdt_data *wdt_data)
+अणु
+	काष्ठा kempld_device_data *pld = wdt_data->pld;
+	काष्ठा kempld_wdt_stage *preसमयout_stage;
+	काष्ठा kempld_wdt_stage *समयout_stage;
+	अचिन्हित पूर्णांक preसमयout, समयout;
 
-	pretimeout_stage = &wdt_data->stage[STAGE_PRETIMEOUT];
-	timeout_stage = &wdt_data->stage[STAGE_TIMEOUT];
+	preसमयout_stage = &wdt_data->stage[STAGE_PRETIMEOUT];
+	समयout_stage = &wdt_data->stage[STAGE_TIMEOUT];
 
 	kempld_get_mutex(pld);
-	pretimeout = kempld_wdt_get_timeout(wdt_data, pretimeout_stage);
-	timeout = kempld_wdt_get_timeout(wdt_data, timeout_stage);
+	preसमयout = kempld_wdt_get_समयout(wdt_data, preसमयout_stage);
+	समयout = kempld_wdt_get_समयout(wdt_data, समयout_stage);
 	kempld_release_mutex(pld);
 
-	if (pretimeout)
-		wdt_data->pretimeout = timeout;
-	else
-		wdt_data->pretimeout = 0;
+	अगर (preसमयout)
+		wdt_data->preसमयout = समयout;
+	अन्यथा
+		wdt_data->preसमयout = 0;
 
-	wdt_data->wdd.timeout = pretimeout + timeout;
-}
+	wdt_data->wdd.समयout = preसमयout + समयout;
+पूर्ण
 
-static int kempld_wdt_start(struct watchdog_device *wdd)
-{
-	struct kempld_wdt_data *wdt_data = watchdog_get_drvdata(wdd);
-	struct kempld_device_data *pld = wdt_data->pld;
+अटल पूर्णांक kempld_wdt_start(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा kempld_wdt_data *wdt_data = watchकरोg_get_drvdata(wdd);
+	काष्ठा kempld_device_data *pld = wdt_data->pld;
 	u8 status;
-	int ret;
+	पूर्णांक ret;
 
-	ret = kempld_wdt_set_timeout(wdd, wdd->timeout);
-	if (ret)
-		return ret;
+	ret = kempld_wdt_set_समयout(wdd, wdd->समयout);
+	अगर (ret)
+		वापस ret;
 
 	kempld_get_mutex(pld);
-	status = kempld_read8(pld, KEMPLD_WDT_CFG);
+	status = kempld_पढ़ो8(pld, KEMPLD_WDT_CFG);
 	status |= KEMPLD_WDT_CFG_ENABLE;
-	kempld_write8(pld, KEMPLD_WDT_CFG, status);
-	status = kempld_read8(pld, KEMPLD_WDT_CFG);
+	kempld_ग_लिखो8(pld, KEMPLD_WDT_CFG, status);
+	status = kempld_पढ़ो8(pld, KEMPLD_WDT_CFG);
 	kempld_release_mutex(pld);
 
-	/* Check if the watchdog was enabled */
-	if (!(status & KEMPLD_WDT_CFG_ENABLE))
-		return -EACCES;
+	/* Check अगर the watchकरोg was enabled */
+	अगर (!(status & KEMPLD_WDT_CFG_ENABLE))
+		वापस -EACCES;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kempld_wdt_stop(struct watchdog_device *wdd)
-{
-	struct kempld_wdt_data *wdt_data = watchdog_get_drvdata(wdd);
-	struct kempld_device_data *pld = wdt_data->pld;
+अटल पूर्णांक kempld_wdt_stop(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा kempld_wdt_data *wdt_data = watchकरोg_get_drvdata(wdd);
+	काष्ठा kempld_device_data *pld = wdt_data->pld;
 	u8 status;
 
 	kempld_get_mutex(pld);
-	status = kempld_read8(pld, KEMPLD_WDT_CFG);
+	status = kempld_पढ़ो8(pld, KEMPLD_WDT_CFG);
 	status &= ~KEMPLD_WDT_CFG_ENABLE;
-	kempld_write8(pld, KEMPLD_WDT_CFG, status);
-	status = kempld_read8(pld, KEMPLD_WDT_CFG);
+	kempld_ग_लिखो8(pld, KEMPLD_WDT_CFG, status);
+	status = kempld_पढ़ो8(pld, KEMPLD_WDT_CFG);
 	kempld_release_mutex(pld);
 
-	/* Check if the watchdog was disabled */
-	if (status & KEMPLD_WDT_CFG_ENABLE)
-		return -EACCES;
+	/* Check अगर the watchकरोg was disabled */
+	अगर (status & KEMPLD_WDT_CFG_ENABLE)
+		वापस -EACCES;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kempld_wdt_keepalive(struct watchdog_device *wdd)
-{
-	struct kempld_wdt_data *wdt_data = watchdog_get_drvdata(wdd);
-	struct kempld_device_data *pld = wdt_data->pld;
+अटल पूर्णांक kempld_wdt_keepalive(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा kempld_wdt_data *wdt_data = watchकरोg_get_drvdata(wdd);
+	काष्ठा kempld_device_data *pld = wdt_data->pld;
 
 	kempld_get_mutex(pld);
-	kempld_write8(pld, KEMPLD_WDT_KICK, 'K');
+	kempld_ग_लिखो8(pld, KEMPLD_WDT_KICK, 'K');
 	kempld_release_mutex(pld);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long kempld_wdt_ioctl(struct watchdog_device *wdd, unsigned int cmd,
-				unsigned long arg)
-{
-	struct kempld_wdt_data *wdt_data = watchdog_get_drvdata(wdd);
-	void __user *argp = (void __user *)arg;
-	int ret = -ENOIOCTLCMD;
-	int __user *p = argp;
-	int new_value;
+अटल दीर्घ kempld_wdt_ioctl(काष्ठा watchकरोg_device *wdd, अचिन्हित पूर्णांक cmd,
+				अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा kempld_wdt_data *wdt_data = watchकरोg_get_drvdata(wdd);
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक ret = -ENOIOCTLCMD;
+	पूर्णांक __user *p = argp;
+	पूर्णांक new_value;
 
-	switch (cmd) {
-	case WDIOC_SETPRETIMEOUT:
-		if (get_user(new_value, p))
-			return -EFAULT;
-		ret = kempld_wdt_set_pretimeout(wdd, new_value);
-		if (ret)
-			return ret;
+	चयन (cmd) अणु
+	हाल WDIOC_SETPRETIMEOUT:
+		अगर (get_user(new_value, p))
+			वापस -EFAULT;
+		ret = kempld_wdt_set_preसमयout(wdd, new_value);
+		अगर (ret)
+			वापस ret;
 		ret = kempld_wdt_keepalive(wdd);
-		break;
-	case WDIOC_GETPRETIMEOUT:
-		ret = put_user(wdt_data->pretimeout, (int __user *)arg);
-		break;
-	}
+		अवरोध;
+	हाल WDIOC_GETPRETIMEOUT:
+		ret = put_user(wdt_data->preसमयout, (पूर्णांक __user *)arg);
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kempld_wdt_probe_stages(struct watchdog_device *wdd)
-{
-	struct kempld_wdt_data *wdt_data = watchdog_get_drvdata(wdd);
-	struct kempld_device_data *pld = wdt_data->pld;
-	struct kempld_wdt_stage *pretimeout_stage;
-	struct kempld_wdt_stage *timeout_stage;
+अटल पूर्णांक kempld_wdt_probe_stages(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा kempld_wdt_data *wdt_data = watchकरोg_get_drvdata(wdd);
+	काष्ठा kempld_device_data *pld = wdt_data->pld;
+	काष्ठा kempld_wdt_stage *preसमयout_stage;
+	काष्ठा kempld_wdt_stage *समयout_stage;
 	u8 index, data, data_orig;
 	u32 mask;
-	int i, j;
+	पूर्णांक i, j;
 
-	pretimeout_stage = &wdt_data->stage[STAGE_PRETIMEOUT];
-	timeout_stage = &wdt_data->stage[STAGE_TIMEOUT];
+	preसमयout_stage = &wdt_data->stage[STAGE_PRETIMEOUT];
+	समयout_stage = &wdt_data->stage[STAGE_TIMEOUT];
 
-	pretimeout_stage->mask = 0;
-	timeout_stage->mask = 0;
+	preसमयout_stage->mask = 0;
+	समयout_stage->mask = 0;
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		index = KEMPLD_WDT_STAGE_TIMEOUT(i);
 		mask = 0;
 
 		kempld_get_mutex(pld);
-		/* Probe each byte individually. */
-		for (j = 0; j < 4; j++) {
-			data_orig = kempld_read8(pld, index + j);
-			kempld_write8(pld, index + j, 0x00);
-			data = kempld_read8(pld, index + j);
-			/* A failed write means this byte is reserved */
-			if (data != 0x00)
-				break;
-			kempld_write8(pld, index + j, data_orig);
+		/* Probe each byte inभागidually. */
+		क्रम (j = 0; j < 4; j++) अणु
+			data_orig = kempld_पढ़ो8(pld, index + j);
+			kempld_ग_लिखो8(pld, index + j, 0x00);
+			data = kempld_पढ़ो8(pld, index + j);
+			/* A failed ग_लिखो means this byte is reserved */
+			अगर (data != 0x00)
+				अवरोध;
+			kempld_ग_लिखो8(pld, index + j, data_orig);
 			mask |= 0xff << (j * 8);
-		}
+		पूर्ण
 		kempld_release_mutex(pld);
 
-		/* Assign available stages to timeout and pretimeout */
-		if (!timeout_stage->mask) {
-			timeout_stage->mask = mask;
-			timeout_stage->id = i;
-		} else {
-			if (pld->feature_mask & KEMPLD_FEATURE_BIT_NMI) {
-				pretimeout_stage->mask = timeout_stage->mask;
-				timeout_stage->mask = mask;
-				pretimeout_stage->id = timeout_stage->id;
-				timeout_stage->id = i;
-			}
-			break;
-		}
-	}
+		/* Assign available stages to समयout and preसमयout */
+		अगर (!समयout_stage->mask) अणु
+			समयout_stage->mask = mask;
+			समयout_stage->id = i;
+		पूर्ण अन्यथा अणु
+			अगर (pld->feature_mask & KEMPLD_FEATURE_BIT_NMI) अणु
+				preसमयout_stage->mask = समयout_stage->mask;
+				समयout_stage->mask = mask;
+				preसमयout_stage->id = समयout_stage->id;
+				समयout_stage->id = i;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!timeout_stage->mask)
-		return -ENODEV;
+	अगर (!समयout_stage->mask)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct watchdog_info kempld_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info kempld_wdt_info = अणु
 	.identity	= "KEMPLD Watchdog",
 	.options	= WDIOF_SETTIMEOUT |
 			WDIOF_KEEPALIVEPING |
 			WDIOF_MAGICCLOSE |
 			WDIOF_PRETIMEOUT
-};
+पूर्ण;
 
-static const struct watchdog_ops kempld_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops kempld_wdt_ops = अणु
 	.owner		= THIS_MODULE,
 	.start		= kempld_wdt_start,
 	.stop		= kempld_wdt_stop,
 	.ping		= kempld_wdt_keepalive,
-	.set_timeout	= kempld_wdt_set_timeout,
+	.set_समयout	= kempld_wdt_set_समयout,
 	.ioctl		= kempld_wdt_ioctl,
-};
+पूर्ण;
 
-static int kempld_wdt_probe(struct platform_device *pdev)
-{
-	struct kempld_device_data *pld = dev_get_drvdata(pdev->dev.parent);
-	struct kempld_wdt_data *wdt_data;
-	struct device *dev = &pdev->dev;
-	struct watchdog_device *wdd;
+अटल पूर्णांक kempld_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा kempld_device_data *pld = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा kempld_wdt_data *wdt_data;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा watchकरोg_device *wdd;
 	u8 status;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	wdt_data = devm_kzalloc(dev, sizeof(*wdt_data), GFP_KERNEL);
-	if (!wdt_data)
-		return -ENOMEM;
+	wdt_data = devm_kzalloc(dev, माप(*wdt_data), GFP_KERNEL);
+	अगर (!wdt_data)
+		वापस -ENOMEM;
 
 	wdt_data->pld = pld;
 	wdd = &wdt_data->wdd;
 	wdd->parent = dev;
 
 	kempld_get_mutex(pld);
-	status = kempld_read8(pld, KEMPLD_WDT_CFG);
+	status = kempld_पढ़ो8(pld, KEMPLD_WDT_CFG);
 	kempld_release_mutex(pld);
 
-	/* Enable nowayout if watchdog is already locked */
-	if (status & (KEMPLD_WDT_CFG_ENABLE_LOCK |
-			KEMPLD_WDT_CFG_GLOBAL_LOCK)) {
-		if (!nowayout)
+	/* Enable nowayout अगर watchकरोg is alपढ़ोy locked */
+	अगर (status & (KEMPLD_WDT_CFG_ENABLE_LOCK |
+			KEMPLD_WDT_CFG_GLOBAL_LOCK)) अणु
+		अगर (!nowayout)
 			dev_warn(dev,
 				 "Forcing nowayout - watchdog lock enabled!\n");
 		nowayout = true;
-	}
+	पूर्ण
 
 	wdd->info = &kempld_wdt_info;
 	wdd->ops = &kempld_wdt_ops;
 
-	watchdog_set_drvdata(wdd, wdt_data);
-	watchdog_set_nowayout(wdd, nowayout);
+	watchकरोg_set_drvdata(wdd, wdt_data);
+	watchकरोg_set_nowayout(wdd, nowayout);
 
 	ret = kempld_wdt_probe_stages(wdd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	kempld_wdt_set_timeout(wdd, timeout);
-	kempld_wdt_set_pretimeout(wdd, pretimeout);
+	kempld_wdt_set_समयout(wdd, समयout);
+	kempld_wdt_set_preसमयout(wdd, preसमयout);
 
-	/* Check if watchdog is already enabled */
-	if (status & KEMPLD_WDT_CFG_ENABLE) {
-		/* Get current watchdog settings */
-		kempld_wdt_update_timeouts(wdt_data);
+	/* Check अगर watchकरोg is alपढ़ोy enabled */
+	अगर (status & KEMPLD_WDT_CFG_ENABLE) अणु
+		/* Get current watchकरोg settings */
+		kempld_wdt_update_समयouts(wdt_data);
 		dev_info(dev, "Watchdog was already enabled\n");
-	}
+	पूर्ण
 
-	platform_set_drvdata(pdev, wdt_data);
-	watchdog_stop_on_reboot(wdd);
-	watchdog_stop_on_unregister(wdd);
-	ret = devm_watchdog_register_device(dev, wdd);
-	if (ret)
-		return ret;
+	platक्रमm_set_drvdata(pdev, wdt_data);
+	watchकरोg_stop_on_reboot(wdd);
+	watchकरोg_stop_on_unरेजिस्टर(wdd);
+	ret = devm_watchकरोg_रेजिस्टर_device(dev, wdd);
+	अगर (ret)
+		वापस ret;
 
-	dev_info(dev, "Watchdog registered with %ds timeout\n", wdd->timeout);
+	dev_info(dev, "Watchdog registered with %ds timeout\n", wdd->समयout);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-/* Disable watchdog if it is active during suspend */
-static int kempld_wdt_suspend(struct platform_device *pdev,
+#अगर_घोषित CONFIG_PM
+/* Disable watchकरोg अगर it is active during suspend */
+अटल पूर्णांक kempld_wdt_suspend(काष्ठा platक्रमm_device *pdev,
 				pm_message_t message)
-{
-	struct kempld_wdt_data *wdt_data = platform_get_drvdata(pdev);
-	struct kempld_device_data *pld = wdt_data->pld;
-	struct watchdog_device *wdd = &wdt_data->wdd;
+अणु
+	काष्ठा kempld_wdt_data *wdt_data = platक्रमm_get_drvdata(pdev);
+	काष्ठा kempld_device_data *pld = wdt_data->pld;
+	काष्ठा watchकरोg_device *wdd = &wdt_data->wdd;
 
 	kempld_get_mutex(pld);
-	wdt_data->pm_status_store = kempld_read8(pld, KEMPLD_WDT_CFG);
+	wdt_data->pm_status_store = kempld_पढ़ो8(pld, KEMPLD_WDT_CFG);
 	kempld_release_mutex(pld);
 
-	kempld_wdt_update_timeouts(wdt_data);
+	kempld_wdt_update_समयouts(wdt_data);
 
-	if (wdt_data->pm_status_store & KEMPLD_WDT_CFG_ENABLE)
-		return kempld_wdt_stop(wdd);
+	अगर (wdt_data->pm_status_store & KEMPLD_WDT_CFG_ENABLE)
+		वापस kempld_wdt_stop(wdd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Enable watchdog and configure it if necessary */
-static int kempld_wdt_resume(struct platform_device *pdev)
-{
-	struct kempld_wdt_data *wdt_data = platform_get_drvdata(pdev);
-	struct watchdog_device *wdd = &wdt_data->wdd;
+/* Enable watchकरोg and configure it अगर necessary */
+अटल पूर्णांक kempld_wdt_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा kempld_wdt_data *wdt_data = platक्रमm_get_drvdata(pdev);
+	काष्ठा watchकरोg_device *wdd = &wdt_data->wdd;
 
 	/*
-	 * If watchdog was stopped before suspend be sure it gets disabled
-	 * again, for the case BIOS has enabled it during resume
+	 * If watchकरोg was stopped beक्रमe suspend be sure it माला_लो disabled
+	 * again, क्रम the हाल BIOS has enabled it during resume
 	 */
-	if (wdt_data->pm_status_store & KEMPLD_WDT_CFG_ENABLE)
-		return kempld_wdt_start(wdd);
-	else
-		return kempld_wdt_stop(wdd);
-}
-#else
-#define kempld_wdt_suspend	NULL
-#define kempld_wdt_resume	NULL
-#endif
+	अगर (wdt_data->pm_status_store & KEMPLD_WDT_CFG_ENABLE)
+		वापस kempld_wdt_start(wdd);
+	अन्यथा
+		वापस kempld_wdt_stop(wdd);
+पूर्ण
+#अन्यथा
+#घोषणा kempld_wdt_suspend	शून्य
+#घोषणा kempld_wdt_resume	शून्य
+#पूर्ण_अगर
 
-static struct platform_driver kempld_wdt_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver kempld_wdt_driver = अणु
+	.driver		= अणु
 		.name	= "kempld-wdt",
-	},
+	पूर्ण,
 	.probe		= kempld_wdt_probe,
 	.suspend	= kempld_wdt_suspend,
 	.resume		= kempld_wdt_resume,
-};
+पूर्ण;
 
-module_platform_driver(kempld_wdt_driver);
+module_platक्रमm_driver(kempld_wdt_driver);
 
 MODULE_DESCRIPTION("KEM PLD Watchdog Driver");
 MODULE_AUTHOR("Michael Brunner <michael.brunner@kontron.com>");

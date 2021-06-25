@@ -1,217 +1,218 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* AF_RXRPC sendmsg() implementation.
  *
  * Copyright (C) 2007, 2016 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/net.h>
-#include <linux/gfp.h>
-#include <linux/skbuff.h>
-#include <linux/export.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/net.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <net/sock.h>
-#include <net/af_rxrpc.h>
-#include "ar-internal.h"
+#समावेश <net/sock.h>
+#समावेश <net/af_rxrpc.h>
+#समावेश "ar-internal.h"
 
 /*
- * Return true if there's sufficient Tx queue space.
+ * Return true अगर there's sufficient Tx queue space.
  */
-static bool rxrpc_check_tx_space(struct rxrpc_call *call, rxrpc_seq_t *_tx_win)
-{
-	unsigned int win_size =
-		min_t(unsigned int, call->tx_winsize,
+अटल bool rxrpc_check_tx_space(काष्ठा rxrpc_call *call, rxrpc_seq_t *_tx_win)
+अणु
+	अचिन्हित पूर्णांक win_size =
+		min_t(अचिन्हित पूर्णांक, call->tx_winsize,
 		      call->cong_cwnd + call->cong_extra);
 	rxrpc_seq_t tx_win = READ_ONCE(call->tx_hard_ack);
 
-	if (_tx_win)
+	अगर (_tx_win)
 		*_tx_win = tx_win;
-	return call->tx_top - tx_win < win_size;
-}
+	वापस call->tx_top - tx_win < win_size;
+पूर्ण
 
 /*
- * Wait for space to appear in the Tx queue or a signal to occur.
+ * Wait क्रम space to appear in the Tx queue or a संकेत to occur.
  */
-static int rxrpc_wait_for_tx_window_intr(struct rxrpc_sock *rx,
-					 struct rxrpc_call *call,
-					 long *timeo)
-{
-	for (;;) {
+अटल पूर्णांक rxrpc_रुको_क्रम_tx_winकरोw_पूर्णांकr(काष्ठा rxrpc_sock *rx,
+					 काष्ठा rxrpc_call *call,
+					 दीर्घ *समयo)
+अणु
+	क्रम (;;) अणु
 		set_current_state(TASK_INTERRUPTIBLE);
-		if (rxrpc_check_tx_space(call, NULL))
-			return 0;
+		अगर (rxrpc_check_tx_space(call, शून्य))
+			वापस 0;
 
-		if (call->state >= RXRPC_CALL_COMPLETE)
-			return call->error;
+		अगर (call->state >= RXRPC_CALL_COMPLETE)
+			वापस call->error;
 
-		if (signal_pending(current))
-			return sock_intr_errno(*timeo);
+		अगर (संकेत_pending(current))
+			वापस sock_पूर्णांकr_त्रुटि_सं(*समयo);
 
-		trace_rxrpc_transmit(call, rxrpc_transmit_wait);
+		trace_rxrpc_transmit(call, rxrpc_transmit_रुको);
 		mutex_unlock(&call->user_mutex);
-		*timeo = schedule_timeout(*timeo);
-		if (mutex_lock_interruptible(&call->user_mutex) < 0)
-			return sock_intr_errno(*timeo);
-	}
-}
+		*समयo = schedule_समयout(*समयo);
+		अगर (mutex_lock_पूर्णांकerruptible(&call->user_mutex) < 0)
+			वापस sock_पूर्णांकr_त्रुटि_सं(*समयo);
+	पूर्ण
+पूर्ण
 
 /*
- * Wait for space to appear in the Tx queue uninterruptibly, but with
- * a timeout of 2*RTT if no progress was made and a signal occurred.
+ * Wait क्रम space to appear in the Tx queue unपूर्णांकerruptibly, but with
+ * a समयout of 2*RTT अगर no progress was made and a संकेत occurred.
  */
-static int rxrpc_wait_for_tx_window_waitall(struct rxrpc_sock *rx,
-					    struct rxrpc_call *call)
-{
+अटल पूर्णांक rxrpc_रुको_क्रम_tx_winकरोw_रुकोall(काष्ठा rxrpc_sock *rx,
+					    काष्ठा rxrpc_call *call)
+अणु
 	rxrpc_seq_t tx_start, tx_win;
-	signed long rtt, timeout;
+	चिन्हित दीर्घ rtt, समयout;
 
 	rtt = READ_ONCE(call->peer->srtt_us) >> 3;
-	rtt = usecs_to_jiffies(rtt) * 2;
-	if (rtt < 2)
+	rtt = usecs_to_jअगरfies(rtt) * 2;
+	अगर (rtt < 2)
 		rtt = 2;
 
-	timeout = rtt;
+	समयout = rtt;
 	tx_start = READ_ONCE(call->tx_hard_ack);
 
-	for (;;) {
+	क्रम (;;) अणु
 		set_current_state(TASK_UNINTERRUPTIBLE);
 
 		tx_win = READ_ONCE(call->tx_hard_ack);
-		if (rxrpc_check_tx_space(call, &tx_win))
-			return 0;
+		अगर (rxrpc_check_tx_space(call, &tx_win))
+			वापस 0;
 
-		if (call->state >= RXRPC_CALL_COMPLETE)
-			return call->error;
+		अगर (call->state >= RXRPC_CALL_COMPLETE)
+			वापस call->error;
 
-		if (timeout == 0 &&
-		    tx_win == tx_start && signal_pending(current))
-			return -EINTR;
+		अगर (समयout == 0 &&
+		    tx_win == tx_start && संकेत_pending(current))
+			वापस -EINTR;
 
-		if (tx_win != tx_start) {
-			timeout = rtt;
+		अगर (tx_win != tx_start) अणु
+			समयout = rtt;
 			tx_start = tx_win;
-		}
+		पूर्ण
 
-		trace_rxrpc_transmit(call, rxrpc_transmit_wait);
-		timeout = schedule_timeout(timeout);
-	}
-}
+		trace_rxrpc_transmit(call, rxrpc_transmit_रुको);
+		समयout = schedule_समयout(समयout);
+	पूर्ण
+पूर्ण
 
 /*
- * Wait for space to appear in the Tx queue uninterruptibly.
+ * Wait क्रम space to appear in the Tx queue unपूर्णांकerruptibly.
  */
-static int rxrpc_wait_for_tx_window_nonintr(struct rxrpc_sock *rx,
-					    struct rxrpc_call *call,
-					    long *timeo)
-{
-	for (;;) {
+अटल पूर्णांक rxrpc_रुको_क्रम_tx_winकरोw_nonपूर्णांकr(काष्ठा rxrpc_sock *rx,
+					    काष्ठा rxrpc_call *call,
+					    दीर्घ *समयo)
+अणु
+	क्रम (;;) अणु
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		if (rxrpc_check_tx_space(call, NULL))
-			return 0;
+		अगर (rxrpc_check_tx_space(call, शून्य))
+			वापस 0;
 
-		if (call->state >= RXRPC_CALL_COMPLETE)
-			return call->error;
+		अगर (call->state >= RXRPC_CALL_COMPLETE)
+			वापस call->error;
 
-		trace_rxrpc_transmit(call, rxrpc_transmit_wait);
-		*timeo = schedule_timeout(*timeo);
-	}
-}
+		trace_rxrpc_transmit(call, rxrpc_transmit_रुको);
+		*समयo = schedule_समयout(*समयo);
+	पूर्ण
+पूर्ण
 
 /*
- * wait for space to appear in the transmit/ACK window
+ * रुको क्रम space to appear in the transmit/ACK winकरोw
  * - caller holds the socket locked
  */
-static int rxrpc_wait_for_tx_window(struct rxrpc_sock *rx,
-				    struct rxrpc_call *call,
-				    long *timeo,
-				    bool waitall)
-{
+अटल पूर्णांक rxrpc_रुको_क्रम_tx_winकरोw(काष्ठा rxrpc_sock *rx,
+				    काष्ठा rxrpc_call *call,
+				    दीर्घ *समयo,
+				    bool रुकोall)
+अणु
 	DECLARE_WAITQUEUE(myself, current);
-	int ret;
+	पूर्णांक ret;
 
 	_enter(",{%u,%u,%u}",
 	       call->tx_hard_ack, call->tx_top, call->tx_winsize);
 
-	add_wait_queue(&call->waitq, &myself);
+	add_रुको_queue(&call->रुकोq, &myself);
 
-	switch (call->interruptibility) {
-	case RXRPC_INTERRUPTIBLE:
-		if (waitall)
-			ret = rxrpc_wait_for_tx_window_waitall(rx, call);
-		else
-			ret = rxrpc_wait_for_tx_window_intr(rx, call, timeo);
-		break;
-	case RXRPC_PREINTERRUPTIBLE:
-	case RXRPC_UNINTERRUPTIBLE:
-	default:
-		ret = rxrpc_wait_for_tx_window_nonintr(rx, call, timeo);
-		break;
-	}
+	चयन (call->पूर्णांकerruptibility) अणु
+	हाल RXRPC_INTERRUPTIBLE:
+		अगर (रुकोall)
+			ret = rxrpc_रुको_क्रम_tx_winकरोw_रुकोall(rx, call);
+		अन्यथा
+			ret = rxrpc_रुको_क्रम_tx_winकरोw_पूर्णांकr(rx, call, समयo);
+		अवरोध;
+	हाल RXRPC_PREINTERRUPTIBLE:
+	हाल RXRPC_UNINTERRUPTIBLE:
+	शेष:
+		ret = rxrpc_रुको_क्रम_tx_winकरोw_nonपूर्णांकr(rx, call, समयo);
+		अवरोध;
+	पूर्ण
 
-	remove_wait_queue(&call->waitq, &myself);
+	हटाओ_रुको_queue(&call->रुकोq, &myself);
 	set_current_state(TASK_RUNNING);
 	_leave(" = %d", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Schedule an instant Tx resend.
  */
-static inline void rxrpc_instant_resend(struct rxrpc_call *call, int ix)
-{
+अटल अंतरभूत व्योम rxrpc_instant_resend(काष्ठा rxrpc_call *call, पूर्णांक ix)
+अणु
 	spin_lock_bh(&call->lock);
 
-	if (call->state < RXRPC_CALL_COMPLETE) {
+	अगर (call->state < RXRPC_CALL_COMPLETE) अणु
 		call->rxtx_annotations[ix] =
 			(call->rxtx_annotations[ix] & RXRPC_TX_ANNO_LAST) |
 			RXRPC_TX_ANNO_RETRANS;
-		if (!test_and_set_bit(RXRPC_CALL_EV_RESEND, &call->events))
+		अगर (!test_and_set_bit(RXRPC_CALL_EV_RESEND, &call->events))
 			rxrpc_queue_call(call);
-	}
+	पूर्ण
 
 	spin_unlock_bh(&call->lock);
-}
+पूर्ण
 
 /*
- * Notify the owner of the call that the transmit phase is ended and the last
+ * Notअगरy the owner of the call that the transmit phase is ended and the last
  * packet has been queued.
  */
-static void rxrpc_notify_end_tx(struct rxrpc_sock *rx, struct rxrpc_call *call,
-				rxrpc_notify_end_tx_t notify_end_tx)
-{
-	if (notify_end_tx)
-		notify_end_tx(&rx->sk, call, call->user_call_ID);
-}
+अटल व्योम rxrpc_notअगरy_end_tx(काष्ठा rxrpc_sock *rx, काष्ठा rxrpc_call *call,
+				rxrpc_notअगरy_end_tx_t notअगरy_end_tx)
+अणु
+	अगर (notअगरy_end_tx)
+		notअगरy_end_tx(&rx->sk, call, call->user_call_ID);
+पूर्ण
 
 /*
- * Queue a DATA packet for transmission, set the resend timeout and send
+ * Queue a DATA packet क्रम transmission, set the resend समयout and send
  * the packet immediately.  Returns the error from rxrpc_send_data_packet()
- * in case the caller wants to do something with it.
+ * in हाल the caller wants to करो something with it.
  */
-static int rxrpc_queue_packet(struct rxrpc_sock *rx, struct rxrpc_call *call,
-			      struct sk_buff *skb, bool last,
-			      rxrpc_notify_end_tx_t notify_end_tx)
-{
-	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	unsigned long now;
+अटल पूर्णांक rxrpc_queue_packet(काष्ठा rxrpc_sock *rx, काष्ठा rxrpc_call *call,
+			      काष्ठा sk_buff *skb, bool last,
+			      rxrpc_notअगरy_end_tx_t notअगरy_end_tx)
+अणु
+	काष्ठा rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	अचिन्हित दीर्घ now;
 	rxrpc_seq_t seq = sp->hdr.seq;
-	int ret, ix;
+	पूर्णांक ret, ix;
 	u8 annotation = RXRPC_TX_ANNO_UNACK;
 
 	_net("queue skb %p [%d]", skb, seq);
 
 	ASSERTCMP(seq, ==, call->tx_top + 1);
 
-	if (last)
+	अगर (last)
 		annotation |= RXRPC_TX_ANNO_LAST;
 
-	/* We have to set the timestamp before queueing as the retransmit
+	/* We have to set the बारtamp beक्रमe queueing as the retransmit
 	 * algorithm can see the packet as soon as we queue it.
 	 */
-	skb->tstamp = ktime_get_real();
+	skb->tstamp = kसमय_get_real();
 
 	ix = seq & RXRPC_RXTX_BUFF_MASK;
 	rxrpc_get_skb(skb, rxrpc_skb_got);
@@ -219,146 +220,146 @@ static int rxrpc_queue_packet(struct rxrpc_sock *rx, struct rxrpc_call *call,
 	smp_wmb();
 	call->rxtx_buffer[ix] = skb;
 	call->tx_top = seq;
-	if (last)
+	अगर (last)
 		trace_rxrpc_transmit(call, rxrpc_transmit_queue_last);
-	else
+	अन्यथा
 		trace_rxrpc_transmit(call, rxrpc_transmit_queue);
 
-	if (last || call->state == RXRPC_CALL_SERVER_ACK_REQUEST) {
+	अगर (last || call->state == RXRPC_CALL_SERVER_ACK_REQUEST) अणु
 		_debug("________awaiting reply/ACK__________");
-		write_lock_bh(&call->state_lock);
-		switch (call->state) {
-		case RXRPC_CALL_CLIENT_SEND_REQUEST:
+		ग_लिखो_lock_bh(&call->state_lock);
+		चयन (call->state) अणु
+		हाल RXRPC_CALL_CLIENT_SEND_REQUEST:
 			call->state = RXRPC_CALL_CLIENT_AWAIT_REPLY;
-			rxrpc_notify_end_tx(rx, call, notify_end_tx);
-			break;
-		case RXRPC_CALL_SERVER_ACK_REQUEST:
+			rxrpc_notअगरy_end_tx(rx, call, notअगरy_end_tx);
+			अवरोध;
+		हाल RXRPC_CALL_SERVER_ACK_REQUEST:
 			call->state = RXRPC_CALL_SERVER_SEND_REPLY;
-			now = jiffies;
+			now = jअगरfies;
 			WRITE_ONCE(call->ack_at, now + MAX_JIFFY_OFFSET);
-			if (call->ackr_reason == RXRPC_ACK_DELAY)
+			अगर (call->ackr_reason == RXRPC_ACK_DELAY)
 				call->ackr_reason = 0;
-			trace_rxrpc_timer(call, rxrpc_timer_init_for_send_reply, now);
-			if (!last)
-				break;
+			trace_rxrpc_समयr(call, rxrpc_समयr_init_क्रम_send_reply, now);
+			अगर (!last)
+				अवरोध;
 			fallthrough;
-		case RXRPC_CALL_SERVER_SEND_REPLY:
+		हाल RXRPC_CALL_SERVER_SEND_REPLY:
 			call->state = RXRPC_CALL_SERVER_AWAIT_ACK;
-			rxrpc_notify_end_tx(rx, call, notify_end_tx);
-			break;
-		default:
-			break;
-		}
-		write_unlock_bh(&call->state_lock);
-	}
+			rxrpc_notअगरy_end_tx(rx, call, notअगरy_end_tx);
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		ग_लिखो_unlock_bh(&call->state_lock);
+	पूर्ण
 
-	if (seq == 1 && rxrpc_is_client_call(call))
+	अगर (seq == 1 && rxrpc_is_client_call(call))
 		rxrpc_expose_client_call(call);
 
 	ret = rxrpc_send_data_packet(call, skb, false);
-	if (ret < 0) {
-		switch (ret) {
-		case -ENETUNREACH:
-		case -EHOSTUNREACH:
-		case -ECONNREFUSED:
+	अगर (ret < 0) अणु
+		चयन (ret) अणु
+		हाल -ENETUNREACH:
+		हाल -EHOSTUNREACH:
+		हाल -ECONNREFUSED:
 			rxrpc_set_call_completion(call, RXRPC_CALL_LOCAL_ERROR,
 						  0, ret);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		_debug("need instant resend %d", ret);
 		rxrpc_instant_resend(call, ix);
-	} else {
-		unsigned long now = jiffies;
-		unsigned long resend_at = now + call->peer->rto_j;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ now = jअगरfies;
+		अचिन्हित दीर्घ resend_at = now + call->peer->rto_j;
 
 		WRITE_ONCE(call->resend_at, resend_at);
-		rxrpc_reduce_call_timer(call, resend_at, now,
-					rxrpc_timer_set_for_send);
-	}
+		rxrpc_reduce_call_समयr(call, resend_at, now,
+					rxrpc_समयr_set_क्रम_send);
+	पूर्ण
 
 out:
-	rxrpc_free_skb(skb, rxrpc_skb_freed);
+	rxrpc_मुक्त_skb(skb, rxrpc_skb_मुक्तd);
 	_leave(" = %d", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * send data through a socket
  * - must be called in process context
  * - The caller holds the call user access mutex, but not the socket lock.
  */
-static int rxrpc_send_data(struct rxrpc_sock *rx,
-			   struct rxrpc_call *call,
-			   struct msghdr *msg, size_t len,
-			   rxrpc_notify_end_tx_t notify_end_tx)
-{
-	struct rxrpc_skb_priv *sp;
-	struct sk_buff *skb;
-	struct sock *sk = &rx->sk;
-	long timeo;
+अटल पूर्णांक rxrpc_send_data(काष्ठा rxrpc_sock *rx,
+			   काष्ठा rxrpc_call *call,
+			   काष्ठा msghdr *msg, माप_प्रकार len,
+			   rxrpc_notअगरy_end_tx_t notअगरy_end_tx)
+अणु
+	काष्ठा rxrpc_skb_priv *sp;
+	काष्ठा sk_buff *skb;
+	काष्ठा sock *sk = &rx->sk;
+	दीर्घ समयo;
 	bool more;
-	int ret, copied;
+	पूर्णांक ret, copied;
 
-	timeo = sock_sndtimeo(sk, msg->msg_flags & MSG_DONTWAIT);
+	समयo = sock_sndसमयo(sk, msg->msg_flags & MSG_DONTWAIT);
 
 	/* this should be in poll */
 	sk_clear_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 
-	if (sk->sk_shutdown & SEND_SHUTDOWN)
-		return -EPIPE;
+	अगर (sk->sk_shutकरोwn & SEND_SHUTDOWN)
+		वापस -EPIPE;
 
 	more = msg->msg_flags & MSG_MORE;
 
-	if (call->tx_total_len != -1) {
-		if (len > call->tx_total_len)
-			return -EMSGSIZE;
-		if (!more && len != call->tx_total_len)
-			return -EMSGSIZE;
-	}
+	अगर (call->tx_total_len != -1) अणु
+		अगर (len > call->tx_total_len)
+			वापस -EMSGSIZE;
+		अगर (!more && len != call->tx_total_len)
+			वापस -EMSGSIZE;
+	पूर्ण
 
 	skb = call->tx_pending;
-	call->tx_pending = NULL;
+	call->tx_pending = शून्य;
 	rxrpc_see_skb(skb, rxrpc_skb_seen);
 
 	copied = 0;
-	do {
-		/* Check to see if there's a ping ACK to reply to. */
-		if (call->ackr_reason == RXRPC_ACK_PING_RESPONSE)
-			rxrpc_send_ack_packet(call, false, NULL);
+	करो अणु
+		/* Check to see अगर there's a ping ACK to reply to. */
+		अगर (call->ackr_reason == RXRPC_ACK_PING_RESPONSE)
+			rxrpc_send_ack_packet(call, false, शून्य);
 
-		if (!skb) {
-			size_t remain, bufsize, chunk, offset;
+		अगर (!skb) अणु
+			माप_प्रकार reमुख्य, bufsize, chunk, offset;
 
 			_debug("alloc");
 
-			if (!rxrpc_check_tx_space(call, NULL)) {
+			अगर (!rxrpc_check_tx_space(call, शून्य)) अणु
 				ret = -EAGAIN;
-				if (msg->msg_flags & MSG_DONTWAIT)
-					goto maybe_error;
-				ret = rxrpc_wait_for_tx_window(rx, call,
-							       &timeo,
+				अगर (msg->msg_flags & MSG_DONTWAIT)
+					जाओ maybe_error;
+				ret = rxrpc_रुको_क्रम_tx_winकरोw(rx, call,
+							       &समयo,
 							       msg->msg_flags & MSG_WAITALL);
-				if (ret < 0)
-					goto maybe_error;
-			}
+				अगर (ret < 0)
+					जाओ maybe_error;
+			पूर्ण
 
 			/* Work out the maximum size of a packet.  Assume that
 			 * the security header is going to be in the padded
 			 * region (enc blocksize), but the trailer is not.
 			 */
-			remain = more ? INT_MAX : msg_data_left(msg);
-			ret = call->conn->security->how_much_data(call, remain,
+			reमुख्य = more ? पूर्णांक_उच्च : msg_data_left(msg);
+			ret = call->conn->security->how_much_data(call, reमुख्य,
 								  &bufsize, &chunk, &offset);
-			if (ret < 0)
-				goto maybe_error;
+			अगर (ret < 0)
+				जाओ maybe_error;
 
 			_debug("SIZE: %zu/%zu @%zu", chunk, bufsize, offset);
 
 			/* create a buffer that we can retain until it's ACK'd */
 			skb = sock_alloc_send_skb(
 				sk, bufsize, msg->msg_flags & MSG_DONTWAIT, &ret);
-			if (!skb)
-				goto maybe_error;
+			अगर (!skb)
+				जाओ maybe_error;
 
 			sp = rxrpc_skb(skb);
 			sp->rx_flags |= RXRPC_SKB_TX_BUFFER;
@@ -370,53 +371,53 @@ static int rxrpc_send_data(struct rxrpc_sock *rx,
 
 			__skb_put(skb, offset);
 
-			sp->remain = chunk;
-			if (sp->remain > skb_tailroom(skb))
-				sp->remain = skb_tailroom(skb);
+			sp->reमुख्य = chunk;
+			अगर (sp->reमुख्य > skb_tailroom(skb))
+				sp->reमुख्य = skb_tailroom(skb);
 
 			_net("skb: hr %d, tr %d, hl %d, rm %d",
 			       skb_headroom(skb),
 			       skb_tailroom(skb),
 			       skb_headlen(skb),
-			       sp->remain);
+			       sp->reमुख्य);
 
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
-		}
+		पूर्ण
 
 		_debug("append");
 		sp = rxrpc_skb(skb);
 
 		/* append next segment of data to the current buffer */
-		if (msg_data_left(msg) > 0) {
-			int copy = skb_tailroom(skb);
+		अगर (msg_data_left(msg) > 0) अणु
+			पूर्णांक copy = skb_tailroom(skb);
 			ASSERTCMP(copy, >, 0);
-			if (copy > msg_data_left(msg))
+			अगर (copy > msg_data_left(msg))
 				copy = msg_data_left(msg);
-			if (copy > sp->remain)
-				copy = sp->remain;
+			अगर (copy > sp->reमुख्य)
+				copy = sp->reमुख्य;
 
 			_debug("add");
 			ret = skb_add_data(skb, &msg->msg_iter, copy);
 			_debug("added");
-			if (ret < 0)
-				goto efault;
-			sp->remain -= copy;
+			अगर (ret < 0)
+				जाओ efault;
+			sp->reमुख्य -= copy;
 			skb->mark += copy;
 			copied += copy;
-			if (call->tx_total_len != -1)
+			अगर (call->tx_total_len != -1)
 				call->tx_total_len -= copy;
-		}
+		पूर्ण
 
-		/* check for the far side aborting the call or a network error
+		/* check क्रम the far side पातing the call or a network error
 		 * occurring */
-		if (call->state == RXRPC_CALL_COMPLETE)
-			goto call_terminated;
+		अगर (call->state == RXRPC_CALL_COMPLETE)
+			जाओ call_terminated;
 
-		/* add the packet to the send queue if it's now full */
-		if (sp->remain <= 0 ||
-		    (msg_data_left(msg) == 0 && !more)) {
-			struct rxrpc_connection *conn = call->conn;
-			uint32_t seq;
+		/* add the packet to the send queue अगर it's now full */
+		अगर (sp->reमुख्य <= 0 ||
+		    (msg_data_left(msg) == 0 && !more)) अणु
+			काष्ठा rxrpc_connection *conn = call->conn;
+			uपूर्णांक32_t seq;
 
 			seq = call->tx_top + 1;
 
@@ -424,178 +425,178 @@ static int rxrpc_send_data(struct rxrpc_sock *rx,
 			sp->hdr._rsvd	= 0;
 			sp->hdr.flags	= conn->out_clientflag;
 
-			if (msg_data_left(msg) == 0 && !more)
+			अगर (msg_data_left(msg) == 0 && !more)
 				sp->hdr.flags |= RXRPC_LAST_PACKET;
-			else if (call->tx_top - call->tx_hard_ack <
+			अन्यथा अगर (call->tx_top - call->tx_hard_ack <
 				 call->tx_winsize)
 				sp->hdr.flags |= RXRPC_MORE_PACKETS;
 
 			ret = call->security->secure_packet(call, skb, skb->mark);
-			if (ret < 0)
-				goto out;
+			अगर (ret < 0)
+				जाओ out;
 
 			ret = rxrpc_queue_packet(rx, call, skb,
 						 !msg_data_left(msg) && !more,
-						 notify_end_tx);
-			/* Should check for failure here */
-			skb = NULL;
-		}
-	} while (msg_data_left(msg) > 0);
+						 notअगरy_end_tx);
+			/* Should check क्रम failure here */
+			skb = शून्य;
+		पूर्ण
+	पूर्ण जबतक (msg_data_left(msg) > 0);
 
 success:
 	ret = copied;
 out:
 	call->tx_pending = skb;
 	_leave(" = %d", ret);
-	return ret;
+	वापस ret;
 
 call_terminated:
-	rxrpc_free_skb(skb, rxrpc_skb_freed);
+	rxrpc_मुक्त_skb(skb, rxrpc_skb_मुक्तd);
 	_leave(" = %d", call->error);
-	return call->error;
+	वापस call->error;
 
 maybe_error:
-	if (copied)
-		goto success;
-	goto out;
+	अगर (copied)
+		जाओ success;
+	जाओ out;
 
 efault:
 	ret = -EFAULT;
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
 /*
  * extract control messages from the sendmsg() control buffer
  */
-static int rxrpc_sendmsg_cmsg(struct msghdr *msg, struct rxrpc_send_params *p)
-{
-	struct cmsghdr *cmsg;
+अटल पूर्णांक rxrpc_sendmsg_cmsg(काष्ठा msghdr *msg, काष्ठा rxrpc_send_params *p)
+अणु
+	काष्ठा cmsghdr *cmsg;
 	bool got_user_ID = false;
-	int len;
+	पूर्णांक len;
 
-	if (msg->msg_controllen == 0)
-		return -EINVAL;
+	अगर (msg->msg_controllen == 0)
+		वापस -EINVAL;
 
-	for_each_cmsghdr(cmsg, msg) {
-		if (!CMSG_OK(msg, cmsg))
-			return -EINVAL;
+	क्रम_each_cmsghdr(cmsg, msg) अणु
+		अगर (!CMSG_OK(msg, cmsg))
+			वापस -EINVAL;
 
-		len = cmsg->cmsg_len - sizeof(struct cmsghdr);
+		len = cmsg->cmsg_len - माप(काष्ठा cmsghdr);
 		_debug("CMSG %d, %d, %d",
 		       cmsg->cmsg_level, cmsg->cmsg_type, len);
 
-		if (cmsg->cmsg_level != SOL_RXRPC)
-			continue;
+		अगर (cmsg->cmsg_level != SOL_RXRPC)
+			जारी;
 
-		switch (cmsg->cmsg_type) {
-		case RXRPC_USER_CALL_ID:
-			if (msg->msg_flags & MSG_CMSG_COMPAT) {
-				if (len != sizeof(u32))
-					return -EINVAL;
+		चयन (cmsg->cmsg_type) अणु
+		हाल RXRPC_USER_CALL_ID:
+			अगर (msg->msg_flags & MSG_CMSG_COMPAT) अणु
+				अगर (len != माप(u32))
+					वापस -EINVAL;
 				p->call.user_call_ID = *(u32 *)CMSG_DATA(cmsg);
-			} else {
-				if (len != sizeof(unsigned long))
-					return -EINVAL;
-				p->call.user_call_ID = *(unsigned long *)
+			पूर्ण अन्यथा अणु
+				अगर (len != माप(अचिन्हित दीर्घ))
+					वापस -EINVAL;
+				p->call.user_call_ID = *(अचिन्हित दीर्घ *)
 					CMSG_DATA(cmsg);
-			}
+			पूर्ण
 			got_user_ID = true;
-			break;
+			अवरोध;
 
-		case RXRPC_ABORT:
-			if (p->command != RXRPC_CMD_SEND_DATA)
-				return -EINVAL;
+		हाल RXRPC_ABORT:
+			अगर (p->command != RXRPC_CMD_SEND_DATA)
+				वापस -EINVAL;
 			p->command = RXRPC_CMD_SEND_ABORT;
-			if (len != sizeof(p->abort_code))
-				return -EINVAL;
-			p->abort_code = *(unsigned int *)CMSG_DATA(cmsg);
-			if (p->abort_code == 0)
-				return -EINVAL;
-			break;
+			अगर (len != माप(p->पात_code))
+				वापस -EINVAL;
+			p->पात_code = *(अचिन्हित पूर्णांक *)CMSG_DATA(cmsg);
+			अगर (p->पात_code == 0)
+				वापस -EINVAL;
+			अवरोध;
 
-		case RXRPC_CHARGE_ACCEPT:
-			if (p->command != RXRPC_CMD_SEND_DATA)
-				return -EINVAL;
+		हाल RXRPC_CHARGE_ACCEPT:
+			अगर (p->command != RXRPC_CMD_SEND_DATA)
+				वापस -EINVAL;
 			p->command = RXRPC_CMD_CHARGE_ACCEPT;
-			if (len != 0)
-				return -EINVAL;
-			break;
+			अगर (len != 0)
+				वापस -EINVAL;
+			अवरोध;
 
-		case RXRPC_EXCLUSIVE_CALL:
+		हाल RXRPC_EXCLUSIVE_CALL:
 			p->exclusive = true;
-			if (len != 0)
-				return -EINVAL;
-			break;
+			अगर (len != 0)
+				वापस -EINVAL;
+			अवरोध;
 
-		case RXRPC_UPGRADE_SERVICE:
+		हाल RXRPC_UPGRADE_SERVICE:
 			p->upgrade = true;
-			if (len != 0)
-				return -EINVAL;
-			break;
+			अगर (len != 0)
+				वापस -EINVAL;
+			अवरोध;
 
-		case RXRPC_TX_LENGTH:
-			if (p->call.tx_total_len != -1 || len != sizeof(__s64))
-				return -EINVAL;
+		हाल RXRPC_TX_LENGTH:
+			अगर (p->call.tx_total_len != -1 || len != माप(__s64))
+				वापस -EINVAL;
 			p->call.tx_total_len = *(__s64 *)CMSG_DATA(cmsg);
-			if (p->call.tx_total_len < 0)
-				return -EINVAL;
-			break;
+			अगर (p->call.tx_total_len < 0)
+				वापस -EINVAL;
+			अवरोध;
 
-		case RXRPC_SET_CALL_TIMEOUT:
-			if (len & 3 || len < 4 || len > 12)
-				return -EINVAL;
-			memcpy(&p->call.timeouts, CMSG_DATA(cmsg), len);
-			p->call.nr_timeouts = len / 4;
-			if (p->call.timeouts.hard > INT_MAX / HZ)
-				return -ERANGE;
-			if (p->call.nr_timeouts >= 2 && p->call.timeouts.idle > 60 * 60 * 1000)
-				return -ERANGE;
-			if (p->call.nr_timeouts >= 3 && p->call.timeouts.normal > 60 * 60 * 1000)
-				return -ERANGE;
-			break;
+		हाल RXRPC_SET_CALL_TIMEOUT:
+			अगर (len & 3 || len < 4 || len > 12)
+				वापस -EINVAL;
+			स_नकल(&p->call.समयouts, CMSG_DATA(cmsg), len);
+			p->call.nr_समयouts = len / 4;
+			अगर (p->call.समयouts.hard > पूर्णांक_उच्च / HZ)
+				वापस -दुस्फल;
+			अगर (p->call.nr_समयouts >= 2 && p->call.समयouts.idle > 60 * 60 * 1000)
+				वापस -दुस्फल;
+			अगर (p->call.nr_समयouts >= 3 && p->call.समयouts.normal > 60 * 60 * 1000)
+				वापस -दुस्फल;
+			अवरोध;
 
-		default:
-			return -EINVAL;
-		}
-	}
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (!got_user_ID)
-		return -EINVAL;
-	if (p->call.tx_total_len != -1 && p->command != RXRPC_CMD_SEND_DATA)
-		return -EINVAL;
+	अगर (!got_user_ID)
+		वापस -EINVAL;
+	अगर (p->call.tx_total_len != -1 && p->command != RXRPC_CMD_SEND_DATA)
+		वापस -EINVAL;
 	_leave(" = 0");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Create a new client call for sendmsg().
+ * Create a new client call क्रम sendmsg().
  * - Called with the socket lock held, which it must release.
- * - If it returns a call, the call's lock will need releasing by the caller.
+ * - If it वापसs a call, the call's lock will need releasing by the caller.
  */
-static struct rxrpc_call *
-rxrpc_new_client_call_for_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg,
-				  struct rxrpc_send_params *p)
+अटल काष्ठा rxrpc_call *
+rxrpc_new_client_call_क्रम_sendmsg(काष्ठा rxrpc_sock *rx, काष्ठा msghdr *msg,
+				  काष्ठा rxrpc_send_params *p)
 	__releases(&rx->sk.sk_lock.slock)
 	__acquires(&call->user_mutex)
-{
-	struct rxrpc_conn_parameters cp;
-	struct rxrpc_call *call;
-	struct key *key;
+अणु
+	काष्ठा rxrpc_conn_parameters cp;
+	काष्ठा rxrpc_call *call;
+	काष्ठा key *key;
 
-	DECLARE_SOCKADDR(struct sockaddr_rxrpc *, srx, msg->msg_name);
+	DECLARE_SOCKADDR(काष्ठा sockaddr_rxrpc *, srx, msg->msg_name);
 
 	_enter("");
 
-	if (!msg->msg_name) {
+	अगर (!msg->msg_name) अणु
 		release_sock(&rx->sk);
-		return ERR_PTR(-EDESTADDRREQ);
-	}
+		वापस ERR_PTR(-EDESTADDRREQ);
+	पूर्ण
 
 	key = rx->key;
-	if (key && !rx->key->payload.data[0])
-		key = NULL;
+	अगर (key && !rx->key->payload.data[0])
+		key = शून्य;
 
-	memset(&cp, 0, sizeof(cp));
+	स_रखो(&cp, 0, माप(cp));
 	cp.local		= rx->local;
 	cp.key			= rx->key;
 	cp.security_level	= rx->min_sec_level;
@@ -603,158 +604,158 @@ rxrpc_new_client_call_for_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg,
 	cp.upgrade		= p->upgrade;
 	cp.service_id		= srx->srx_service;
 	call = rxrpc_new_client_call(rx, &cp, srx, &p->call, GFP_KERNEL,
-				     atomic_inc_return(&rxrpc_debug_id));
+				     atomic_inc_वापस(&rxrpc_debug_id));
 	/* The socket is now unlocked */
 
 	rxrpc_put_peer(cp.peer);
 	_leave(" = %p\n", call);
-	return call;
-}
+	वापस call;
+पूर्ण
 
 /*
- * send a message forming part of a client call through an RxRPC socket
+ * send a message क्रमming part of a client call through an RxRPC socket
  * - caller holds the socket locked
  * - the socket may be either a client socket or a server socket
  */
-int rxrpc_do_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg, size_t len)
+पूर्णांक rxrpc_करो_sendmsg(काष्ठा rxrpc_sock *rx, काष्ठा msghdr *msg, माप_प्रकार len)
 	__releases(&rx->sk.sk_lock.slock)
 	__releases(&call->user_mutex)
-{
-	enum rxrpc_call_state state;
-	struct rxrpc_call *call;
-	unsigned long now, j;
-	int ret;
+अणु
+	क्रमागत rxrpc_call_state state;
+	काष्ठा rxrpc_call *call;
+	अचिन्हित दीर्घ now, j;
+	पूर्णांक ret;
 
-	struct rxrpc_send_params p = {
+	काष्ठा rxrpc_send_params p = अणु
 		.call.tx_total_len	= -1,
 		.call.user_call_ID	= 0,
-		.call.nr_timeouts	= 0,
-		.call.interruptibility	= RXRPC_INTERRUPTIBLE,
-		.abort_code		= 0,
+		.call.nr_समयouts	= 0,
+		.call.पूर्णांकerruptibility	= RXRPC_INTERRUPTIBLE,
+		.पात_code		= 0,
 		.command		= RXRPC_CMD_SEND_DATA,
 		.exclusive		= false,
 		.upgrade		= false,
-	};
+	पूर्ण;
 
 	_enter("");
 
 	ret = rxrpc_sendmsg_cmsg(msg, &p);
-	if (ret < 0)
-		goto error_release_sock;
+	अगर (ret < 0)
+		जाओ error_release_sock;
 
-	if (p.command == RXRPC_CMD_CHARGE_ACCEPT) {
+	अगर (p.command == RXRPC_CMD_CHARGE_ACCEPT) अणु
 		ret = -EINVAL;
-		if (rx->sk.sk_state != RXRPC_SERVER_LISTENING)
-			goto error_release_sock;
-		ret = rxrpc_user_charge_accept(rx, p.call.user_call_ID);
-		goto error_release_sock;
-	}
+		अगर (rx->sk.sk_state != RXRPC_SERVER_LISTENING)
+			जाओ error_release_sock;
+		ret = rxrpc_user_अक्षरge_accept(rx, p.call.user_call_ID);
+		जाओ error_release_sock;
+	पूर्ण
 
 	call = rxrpc_find_call_by_user_ID(rx, p.call.user_call_ID);
-	if (!call) {
+	अगर (!call) अणु
 		ret = -EBADSLT;
-		if (p.command != RXRPC_CMD_SEND_DATA)
-			goto error_release_sock;
-		call = rxrpc_new_client_call_for_sendmsg(rx, msg, &p);
+		अगर (p.command != RXRPC_CMD_SEND_DATA)
+			जाओ error_release_sock;
+		call = rxrpc_new_client_call_क्रम_sendmsg(rx, msg, &p);
 		/* The socket is now unlocked... */
-		if (IS_ERR(call))
-			return PTR_ERR(call);
+		अगर (IS_ERR(call))
+			वापस PTR_ERR(call);
 		/* ... and we have the call lock. */
 		ret = 0;
-		if (READ_ONCE(call->state) == RXRPC_CALL_COMPLETE)
-			goto out_put_unlock;
-	} else {
-		switch (READ_ONCE(call->state)) {
-		case RXRPC_CALL_UNINITIALISED:
-		case RXRPC_CALL_CLIENT_AWAIT_CONN:
-		case RXRPC_CALL_SERVER_PREALLOC:
-		case RXRPC_CALL_SERVER_SECURING:
+		अगर (READ_ONCE(call->state) == RXRPC_CALL_COMPLETE)
+			जाओ out_put_unlock;
+	पूर्ण अन्यथा अणु
+		चयन (READ_ONCE(call->state)) अणु
+		हाल RXRPC_CALL_UNINITIALISED:
+		हाल RXRPC_CALL_CLIENT_AWAIT_CONN:
+		हाल RXRPC_CALL_SERVER_PREALLOC:
+		हाल RXRPC_CALL_SERVER_SECURING:
 			rxrpc_put_call(call, rxrpc_call_put);
 			ret = -EBUSY;
-			goto error_release_sock;
-		default:
-			break;
-		}
+			जाओ error_release_sock;
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		ret = mutex_lock_interruptible(&call->user_mutex);
+		ret = mutex_lock_पूर्णांकerruptible(&call->user_mutex);
 		release_sock(&rx->sk);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			ret = -ERESTARTSYS;
-			goto error_put;
-		}
+			जाओ error_put;
+		पूर्ण
 
-		if (p.call.tx_total_len != -1) {
+		अगर (p.call.tx_total_len != -1) अणु
 			ret = -EINVAL;
-			if (call->tx_total_len != -1 ||
+			अगर (call->tx_total_len != -1 ||
 			    call->tx_pending ||
 			    call->tx_top != 0)
-				goto error_put;
+				जाओ error_put;
 			call->tx_total_len = p.call.tx_total_len;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	switch (p.call.nr_timeouts) {
-	case 3:
-		j = msecs_to_jiffies(p.call.timeouts.normal);
-		if (p.call.timeouts.normal > 0 && j == 0)
+	चयन (p.call.nr_समयouts) अणु
+	हाल 3:
+		j = msecs_to_jअगरfies(p.call.समयouts.normal);
+		अगर (p.call.समयouts.normal > 0 && j == 0)
 			j = 1;
 		WRITE_ONCE(call->next_rx_timo, j);
 		fallthrough;
-	case 2:
-		j = msecs_to_jiffies(p.call.timeouts.idle);
-		if (p.call.timeouts.idle > 0 && j == 0)
+	हाल 2:
+		j = msecs_to_jअगरfies(p.call.समयouts.idle);
+		अगर (p.call.समयouts.idle > 0 && j == 0)
 			j = 1;
 		WRITE_ONCE(call->next_req_timo, j);
 		fallthrough;
-	case 1:
-		if (p.call.timeouts.hard > 0) {
-			j = msecs_to_jiffies(p.call.timeouts.hard);
-			now = jiffies;
+	हाल 1:
+		अगर (p.call.समयouts.hard > 0) अणु
+			j = msecs_to_jअगरfies(p.call.समयouts.hard);
+			now = jअगरfies;
 			j += now;
 			WRITE_ONCE(call->expect_term_by, j);
-			rxrpc_reduce_call_timer(call, j, now,
-						rxrpc_timer_set_for_hard);
-		}
-		break;
-	}
+			rxrpc_reduce_call_समयr(call, j, now,
+						rxrpc_समयr_set_क्रम_hard);
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	state = READ_ONCE(call->state);
 	_debug("CALL %d USR %lx ST %d on CONN %p",
 	       call->debug_id, call->user_call_ID, state, call->conn);
 
-	if (state >= RXRPC_CALL_COMPLETE) {
-		/* it's too late for this call */
+	अगर (state >= RXRPC_CALL_COMPLETE) अणु
+		/* it's too late क्रम this call */
 		ret = -ESHUTDOWN;
-	} else if (p.command == RXRPC_CMD_SEND_ABORT) {
+	पूर्ण अन्यथा अगर (p.command == RXRPC_CMD_SEND_ABORT) अणु
 		ret = 0;
-		if (rxrpc_abort_call("CMD", call, 0, p.abort_code, -ECONNABORTED))
-			ret = rxrpc_send_abort_packet(call);
-	} else if (p.command != RXRPC_CMD_SEND_DATA) {
+		अगर (rxrpc_पात_call("CMD", call, 0, p.पात_code, -ECONNABORTED))
+			ret = rxrpc_send_पात_packet(call);
+	पूर्ण अन्यथा अगर (p.command != RXRPC_CMD_SEND_DATA) अणु
 		ret = -EINVAL;
-	} else if (rxrpc_is_client_call(call) &&
-		   state != RXRPC_CALL_CLIENT_SEND_REQUEST) {
-		/* request phase complete for this client call */
+	पूर्ण अन्यथा अगर (rxrpc_is_client_call(call) &&
+		   state != RXRPC_CALL_CLIENT_SEND_REQUEST) अणु
+		/* request phase complete क्रम this client call */
 		ret = -EPROTO;
-	} else if (rxrpc_is_service_call(call) &&
+	पूर्ण अन्यथा अगर (rxrpc_is_service_call(call) &&
 		   state != RXRPC_CALL_SERVER_ACK_REQUEST &&
-		   state != RXRPC_CALL_SERVER_SEND_REPLY) {
-		/* Reply phase not begun or not complete for service call. */
+		   state != RXRPC_CALL_SERVER_SEND_REPLY) अणु
+		/* Reply phase not begun or not complete क्रम service call. */
 		ret = -EPROTO;
-	} else {
-		ret = rxrpc_send_data(rx, call, msg, len, NULL);
-	}
+	पूर्ण अन्यथा अणु
+		ret = rxrpc_send_data(rx, call, msg, len, शून्य);
+	पूर्ण
 
 out_put_unlock:
 	mutex_unlock(&call->user_mutex);
 error_put:
 	rxrpc_put_call(call, rxrpc_call_put);
 	_leave(" = %d", ret);
-	return ret;
+	वापस ret;
 
 error_release_sock:
 	release_sock(&rx->sk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * rxrpc_kernel_send_data - Allow a kernel service to send data on a call
@@ -762,99 +763,99 @@ error_release_sock:
  * @call: The call to send data through
  * @msg: The data to send
  * @len: The amount of data to send
- * @notify_end_tx: Notification that the last packet is queued.
+ * @notअगरy_end_tx: Notअगरication that the last packet is queued.
  *
  * Allow a kernel service to send data on a call.  The call must be in an state
  * appropriate to sending data.  No control data should be supplied in @msg,
- * nor should an address be supplied.  MSG_MORE should be flagged if there's
+ * nor should an address be supplied.  MSG_MORE should be flagged अगर there's
  * more data to come, otherwise this data will end the transmission phase.
  */
-int rxrpc_kernel_send_data(struct socket *sock, struct rxrpc_call *call,
-			   struct msghdr *msg, size_t len,
-			   rxrpc_notify_end_tx_t notify_end_tx)
-{
-	int ret;
+पूर्णांक rxrpc_kernel_send_data(काष्ठा socket *sock, काष्ठा rxrpc_call *call,
+			   काष्ठा msghdr *msg, माप_प्रकार len,
+			   rxrpc_notअगरy_end_tx_t notअगरy_end_tx)
+अणु
+	पूर्णांक ret;
 
 	_enter("{%d,%s},", call->debug_id, rxrpc_call_states[call->state]);
 
-	ASSERTCMP(msg->msg_name, ==, NULL);
-	ASSERTCMP(msg->msg_control, ==, NULL);
+	ASSERTCMP(msg->msg_name, ==, शून्य);
+	ASSERTCMP(msg->msg_control, ==, शून्य);
 
 	mutex_lock(&call->user_mutex);
 
 	_debug("CALL %d USR %lx ST %d on CONN %p",
 	       call->debug_id, call->user_call_ID, call->state, call->conn);
 
-	switch (READ_ONCE(call->state)) {
-	case RXRPC_CALL_CLIENT_SEND_REQUEST:
-	case RXRPC_CALL_SERVER_ACK_REQUEST:
-	case RXRPC_CALL_SERVER_SEND_REPLY:
+	चयन (READ_ONCE(call->state)) अणु
+	हाल RXRPC_CALL_CLIENT_SEND_REQUEST:
+	हाल RXRPC_CALL_SERVER_ACK_REQUEST:
+	हाल RXRPC_CALL_SERVER_SEND_REPLY:
 		ret = rxrpc_send_data(rxrpc_sk(sock->sk), call, msg, len,
-				      notify_end_tx);
-		break;
-	case RXRPC_CALL_COMPLETE:
-		read_lock_bh(&call->state_lock);
+				      notअगरy_end_tx);
+		अवरोध;
+	हाल RXRPC_CALL_COMPLETE:
+		पढ़ो_lock_bh(&call->state_lock);
 		ret = call->error;
-		read_unlock_bh(&call->state_lock);
-		break;
-	default:
-		/* Request phase complete for this client call */
-		trace_rxrpc_rx_eproto(call, 0, tracepoint_string("late_send"));
+		पढ़ो_unlock_bh(&call->state_lock);
+		अवरोध;
+	शेष:
+		/* Request phase complete क्रम this client call */
+		trace_rxrpc_rx_eproto(call, 0, tracepoपूर्णांक_string("late_send"));
 		ret = -EPROTO;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&call->user_mutex);
 	_leave(" = %d", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(rxrpc_kernel_send_data);
 
 /**
- * rxrpc_kernel_abort_call - Allow a kernel service to abort a call
+ * rxrpc_kernel_पात_call - Allow a kernel service to पात a call
  * @sock: The socket the call is on
- * @call: The call to be aborted
- * @abort_code: The abort code to stick into the ABORT packet
+ * @call: The call to be पातed
+ * @पात_code: The पात code to stick पूर्णांकo the ABORT packet
  * @error: Local error value
- * @why: 3-char string indicating why.
+ * @why: 3-अक्षर string indicating why.
  *
- * Allow a kernel service to abort a call, if it's still in an abortable state
- * and return true if the call was aborted, false if it was already complete.
+ * Allow a kernel service to पात a call, अगर it's still in an पातable state
+ * and वापस true अगर the call was पातed, false अगर it was alपढ़ोy complete.
  */
-bool rxrpc_kernel_abort_call(struct socket *sock, struct rxrpc_call *call,
-			     u32 abort_code, int error, const char *why)
-{
-	bool aborted;
+bool rxrpc_kernel_पात_call(काष्ठा socket *sock, काष्ठा rxrpc_call *call,
+			     u32 पात_code, पूर्णांक error, स्थिर अक्षर *why)
+अणु
+	bool पातed;
 
-	_enter("{%d},%d,%d,%s", call->debug_id, abort_code, error, why);
+	_enter("{%d},%d,%d,%s", call->debug_id, पात_code, error, why);
 
 	mutex_lock(&call->user_mutex);
 
-	aborted = rxrpc_abort_call(why, call, 0, abort_code, error);
-	if (aborted)
-		rxrpc_send_abort_packet(call);
+	पातed = rxrpc_पात_call(why, call, 0, पात_code, error);
+	अगर (पातed)
+		rxrpc_send_पात_packet(call);
 
 	mutex_unlock(&call->user_mutex);
-	return aborted;
-}
-EXPORT_SYMBOL(rxrpc_kernel_abort_call);
+	वापस पातed;
+पूर्ण
+EXPORT_SYMBOL(rxrpc_kernel_पात_call);
 
 /**
  * rxrpc_kernel_set_tx_length - Set the total Tx length on a call
  * @sock: The socket the call is on
- * @call: The call to be informed
- * @tx_total_len: The amount of data to be transmitted for this call
+ * @call: The call to be inक्रमmed
+ * @tx_total_len: The amount of data to be transmitted क्रम this call
  *
  * Allow a kernel service to set the total transmit length on a call.  This
- * allows buffer-to-packet encrypt-and-copy to be performed.
+ * allows buffer-to-packet encrypt-and-copy to be perक्रमmed.
  *
- * This function is primarily for use for setting the reply length since the
+ * This function is primarily क्रम use क्रम setting the reply length since the
  * request length can be set when beginning the call.
  */
-void rxrpc_kernel_set_tx_length(struct socket *sock, struct rxrpc_call *call,
+व्योम rxrpc_kernel_set_tx_length(काष्ठा socket *sock, काष्ठा rxrpc_call *call,
 				s64 tx_total_len)
-{
+अणु
 	WARN_ON(call->tx_total_len != -1);
 	call->tx_total_len = tx_total_len;
-}
+पूर्ण
 EXPORT_SYMBOL(rxrpc_kernel_set_tx_length);

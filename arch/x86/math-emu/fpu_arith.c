@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*---------------------------------------------------------------------------+
  |  fpu_arith.c                                                              |
  |                                                                           |
- | Code to implement the FPU register/register arithmetic instructions       |
+ | Code to implement the FPU रेजिस्टर/रेजिस्टर arithmetic inकाष्ठाions       |
  |                                                                           |
  | Copyright (C) 1992,1993,1997                                              |
  |                  W. Metzenthen, 22 Parker St, Ormond, Vic 3163, Australia |
@@ -11,143 +12,143 @@
  |                                                                           |
  +---------------------------------------------------------------------------*/
 
-#include "fpu_system.h"
-#include "fpu_emu.h"
-#include "control_w.h"
-#include "status_w.h"
+#समावेश "fpu_system.h"
+#समावेश "fpu_emu.h"
+#समावेश "control_w.h"
+#समावेश "status_w.h"
 
-void fadd__(void)
-{
+व्योम fadd__(व्योम)
+अणु
 	/* fadd st,st(i) */
-	int i = FPU_rm;
+	पूर्णांक i = FPU_rm;
 	clear_C1();
 	FPU_add(&st(i), FPU_gettagi(i), 0, control_word);
-}
+पूर्ण
 
-void fmul__(void)
-{
+व्योम fmul__(व्योम)
+अणु
 	/* fmul st,st(i) */
-	int i = FPU_rm;
+	पूर्णांक i = FPU_rm;
 	clear_C1();
 	FPU_mul(&st(i), FPU_gettagi(i), 0, control_word);
-}
+पूर्ण
 
-void fsub__(void)
-{
+व्योम fsub__(व्योम)
+अणु
 	/* fsub st,st(i) */
 	clear_C1();
 	FPU_sub(0, FPU_rm, control_word);
-}
+पूर्ण
 
-void fsubr_(void)
-{
+व्योम fsubr_(व्योम)
+अणु
 	/* fsubr st,st(i) */
 	clear_C1();
 	FPU_sub(REV, FPU_rm, control_word);
-}
+पूर्ण
 
-void fdiv__(void)
-{
-	/* fdiv st,st(i) */
+व्योम fभाग__(व्योम)
+अणु
+	/* fभाग st,st(i) */
 	clear_C1();
-	FPU_div(0, FPU_rm, control_word);
-}
+	FPU_भाग(0, FPU_rm, control_word);
+पूर्ण
 
-void fdivr_(void)
-{
-	/* fdivr st,st(i) */
+व्योम fभागr_(व्योम)
+अणु
+	/* fभागr st,st(i) */
 	clear_C1();
-	FPU_div(REV, FPU_rm, control_word);
-}
+	FPU_भाग(REV, FPU_rm, control_word);
+पूर्ण
 
-void fadd_i(void)
-{
+व्योम fadd_i(व्योम)
+अणु
 	/* fadd st(i),st */
-	int i = FPU_rm;
+	पूर्णांक i = FPU_rm;
 	clear_C1();
 	FPU_add(&st(i), FPU_gettagi(i), i, control_word);
-}
+पूर्ण
 
-void fmul_i(void)
-{
+व्योम fmul_i(व्योम)
+अणु
 	/* fmul st(i),st */
 	clear_C1();
 	FPU_mul(&st(0), FPU_gettag0(), FPU_rm, control_word);
-}
+पूर्ण
 
-void fsubri(void)
-{
+व्योम fsubri(व्योम)
+अणु
 	/* fsubr st(i),st */
 	clear_C1();
 	FPU_sub(DEST_RM, FPU_rm, control_word);
-}
+पूर्ण
 
-void fsub_i(void)
-{
+व्योम fsub_i(व्योम)
+अणु
 	/* fsub st(i),st */
 	clear_C1();
 	FPU_sub(REV | DEST_RM, FPU_rm, control_word);
-}
+पूर्ण
 
-void fdivri(void)
-{
-	/* fdivr st(i),st */
+व्योम fभागri(व्योम)
+अणु
+	/* fभागr st(i),st */
 	clear_C1();
-	FPU_div(DEST_RM, FPU_rm, control_word);
-}
+	FPU_भाग(DEST_RM, FPU_rm, control_word);
+पूर्ण
 
-void fdiv_i(void)
-{
-	/* fdiv st(i),st */
+व्योम fभाग_i(व्योम)
+अणु
+	/* fभाग st(i),st */
 	clear_C1();
-	FPU_div(REV | DEST_RM, FPU_rm, control_word);
-}
+	FPU_भाग(REV | DEST_RM, FPU_rm, control_word);
+पूर्ण
 
-void faddp_(void)
-{
+व्योम faddp_(व्योम)
+अणु
 	/* faddp st(i),st */
-	int i = FPU_rm;
+	पूर्णांक i = FPU_rm;
 	clear_C1();
-	if (FPU_add(&st(i), FPU_gettagi(i), i, control_word) >= 0)
+	अगर (FPU_add(&st(i), FPU_gettagi(i), i, control_word) >= 0)
 		FPU_pop();
-}
+पूर्ण
 
-void fmulp_(void)
-{
+व्योम fmulp_(व्योम)
+अणु
 	/* fmulp st(i),st */
 	clear_C1();
-	if (FPU_mul(&st(0), FPU_gettag0(), FPU_rm, control_word) >= 0)
+	अगर (FPU_mul(&st(0), FPU_gettag0(), FPU_rm, control_word) >= 0)
 		FPU_pop();
-}
+पूर्ण
 
-void fsubrp(void)
-{
+व्योम fsubrp(व्योम)
+अणु
 	/* fsubrp st(i),st */
 	clear_C1();
-	if (FPU_sub(DEST_RM, FPU_rm, control_word) >= 0)
+	अगर (FPU_sub(DEST_RM, FPU_rm, control_word) >= 0)
 		FPU_pop();
-}
+पूर्ण
 
-void fsubp_(void)
-{
+व्योम fsubp_(व्योम)
+अणु
 	/* fsubp st(i),st */
 	clear_C1();
-	if (FPU_sub(REV | DEST_RM, FPU_rm, control_word) >= 0)
+	अगर (FPU_sub(REV | DEST_RM, FPU_rm, control_word) >= 0)
 		FPU_pop();
-}
+पूर्ण
 
-void fdivrp(void)
-{
-	/* fdivrp st(i),st */
+व्योम fभागrp(व्योम)
+अणु
+	/* fभागrp st(i),st */
 	clear_C1();
-	if (FPU_div(DEST_RM, FPU_rm, control_word) >= 0)
+	अगर (FPU_भाग(DEST_RM, FPU_rm, control_word) >= 0)
 		FPU_pop();
-}
+पूर्ण
 
-void fdivp_(void)
-{
-	/* fdivp st(i),st */
+व्योम fभागp_(व्योम)
+अणु
+	/* fभागp st(i),st */
 	clear_C1();
-	if (FPU_div(REV | DEST_RM, FPU_rm, control_word) >= 0)
+	अगर (FPU_भाग(REV | DEST_RM, FPU_rm, control_word) >= 0)
 		FPU_pop();
-}
+पूर्ण

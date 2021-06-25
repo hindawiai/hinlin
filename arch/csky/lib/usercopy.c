@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <linux/uaccess.h>
-#include <linux/types.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/types.h>
 
-unsigned long raw_copy_from_user(void *to, const void *from,
-			unsigned long n)
-{
-	int tmp, nsave;
+अचिन्हित दीर्घ raw_copy_from_user(व्योम *to, स्थिर व्योम *from,
+			अचिन्हित दीर्घ n)
+अणु
+	पूर्णांक पंचांगp, nsave;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"0:     cmpnei  %1, 0           \n"
 	"       bf      7f              \n"
 	"       mov     %3, %1          \n"
@@ -67,20 +68,20 @@ unsigned long raw_copy_from_user(void *to, const void *from,
 	".previous                      \n"
 	"7:                             \n"
 	: "=r"(n), "=r"(to), "=r"(from), "=r"(nsave),
-	  "=r"(tmp)
+	  "=r"(पंचांगp)
 	: "0"(n), "1"(to), "2"(from)
 	: "memory");
 
-	return n;
-}
+	वापस n;
+पूर्ण
 EXPORT_SYMBOL(raw_copy_from_user);
 
-unsigned long raw_copy_to_user(void *to, const void *from,
-			unsigned long n)
-{
-	int w0, w1, w2, w3;
+अचिन्हित दीर्घ raw_copy_to_user(व्योम *to, स्थिर व्योम *from,
+			अचिन्हित दीर्घ n)
+अणु
+	पूर्णांक w0, w1, w2, w3;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"0:     cmpnei  %1, 0           \n"
 	"       bf      8f              \n"
 	"       mov     %3, %1          \n"
@@ -138,37 +139,37 @@ unsigned long raw_copy_to_user(void *to, const void *from,
 	: "0"(n), "1"(to), "2"(from)
 	: "memory");
 
-	return n;
-}
+	वापस n;
+पूर्ण
 EXPORT_SYMBOL(raw_copy_to_user);
 
 /*
- * __strncpy_from_user: - Copy a NUL terminated string from userspace,
+ * __म_नकलन_from_user: - Copy a NUL terminated string from userspace,
  * with less checking.
  * @dst:   Destination address, in kernel space.  This buffer must be at
- *         least @count bytes long.
+ *         least @count bytes दीर्घ.
  * @src:   Source address, in user space.
  * @count: Maximum number of bytes to copy, including the trailing NUL.
  *
  * Copies a NUL-terminated string from userspace to kernel space.
- * Caller must check the specified block with access_ok() before calling
+ * Caller must check the specअगरied block with access_ok() beक्रमe calling
  * this function.
  *
- * On success, returns the length of the string (not including the trailing
+ * On success, वापसs the length of the string (not including the trailing
  * NUL).
  *
- * If access to userspace fails, returns -EFAULT (some data may have been
+ * If access to userspace fails, वापसs -EFAULT (some data may have been
  * copied).
  *
  * If @count is smaller than the length of the string, copies @count bytes
- * and returns @count.
+ * and वापसs @count.
  */
-long __strncpy_from_user(char *dst, const char *src, long count)
-{
-	long res, faultres;
-	int tmp;
+दीर्घ __म_नकलन_from_user(अक्षर *dst, स्थिर अक्षर *src, दीर्घ count)
+अणु
+	दीर्घ res, faultres;
+	पूर्णांक पंचांगp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"       cmpnei  %3, 0           \n"
 	"       bf      4f              \n"
 	"1:     cmpnei  %1, 0          	\n"
@@ -191,14 +192,14 @@ long __strncpy_from_user(char *dst, const char *src, long count)
 	".previous                      \n"
 	"5:                             \n"
 	: "=r"(res), "=r"(count), "=r"(dst),
-	  "=r"(src), "=r"(tmp), "=r"(faultres)
+	  "=r"(src), "=r"(पंचांगp), "=r"(faultres)
 	: "5"(-EFAULT), "0"(count), "1"(count),
 	  "2"(dst), "3"(src)
 	: "memory");
 
-	return res;
-}
-EXPORT_SYMBOL(__strncpy_from_user);
+	वापस res;
+पूर्ण
+EXPORT_SYMBOL(__म_नकलन_from_user);
 
 /*
  * strnlen_user: - Get the size of a string in user space.
@@ -208,14 +209,14 @@ EXPORT_SYMBOL(__strncpy_from_user);
  * Get the size of a NUL-terminated string in user space.
  *
  * Returns the size of the string INCLUDING the terminating NUL.
- * On exception, returns 0.
- * If the string is too long, returns a value greater than @n.
+ * On exception, वापसs 0.
+ * If the string is too दीर्घ, वापसs a value greater than @n.
  */
-long __strnlen_user(const char *s, long n)
-{
-	unsigned long res, tmp;
+दीर्घ __strnlen_user(स्थिर अक्षर *s, दीर्घ n)
+अणु
+	अचिन्हित दीर्घ res, पंचांगp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"       cmpnei  %1, 0           \n"
 	"       bf      3f              \n"
 	"1:     cmpnei  %0, 0           \n"
@@ -236,12 +237,12 @@ long __strnlen_user(const char *s, long n)
 	".long    2b, 4b                \n"
 	".previous                      \n"
 	"5:                             \n"
-	: "=r"(n), "=r"(s), "=r"(res), "=r"(tmp)
+	: "=r"(n), "=r"(s), "=r"(res), "=r"(पंचांगp)
 	: "0"(n), "1"(s), "2"(n)
 	: "memory");
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(__strnlen_user);
 
 /*
@@ -250,17 +251,17 @@ EXPORT_SYMBOL(__strnlen_user);
  * @n:    Number of bytes to zero.
  *
  * Zero a block of memory in user space.  Caller must check
- * the specified block with access_ok() before calling this function.
+ * the specअगरied block with access_ok() beक्रमe calling this function.
  *
  * Returns number of bytes that could not be cleared.
  * On success, this will be zero.
  */
-unsigned long
-__clear_user(void __user *to, unsigned long n)
-{
-	int data, value, tmp;
+अचिन्हित दीर्घ
+__clear_user(व्योम __user *to, अचिन्हित दीर्घ n)
+अणु
+	पूर्णांक data, value, पंचांगp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"0:     cmpnei  %1, 0           \n"
 	"       bf      7f              \n"
 	"       mov     %3, %1          \n"
@@ -307,10 +308,10 @@ __clear_user(void __user *to, unsigned long n)
 	".long    6b, 9b                \n"
 	".previous                      \n"
 	"7:                             \n"
-	: "=r"(n), "=r" (data), "=r"(value), "=r"(tmp)
+	: "=r"(n), "=r" (data), "=r"(value), "=r"(पंचांगp)
 	: "0"(n), "1"(to), "2"(0)
 	: "memory");
 
-	return n;
-}
+	वापस n;
+पूर्ण
 EXPORT_SYMBOL(__clear_user);

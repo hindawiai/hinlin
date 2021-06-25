@@ -1,149 +1,150 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Wakeup statistics in sysfs
  *
  * Copyright (c) 2019 Linux Foundation
- * Copyright (c) 2019 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+ * Copyright (c) 2019 Greg Kroah-Harपंचांगan <gregkh@linuxfoundation.org>
  * Copyright (c) 2019 Google Inc.
  */
 
-#include <linux/device.h>
-#include <linux/idr.h>
-#include <linux/init.h>
-#include <linux/kdev_t.h>
-#include <linux/kernel.h>
-#include <linux/kobject.h>
-#include <linux/slab.h>
-#include <linux/timekeeping.h>
+#समावेश <linux/device.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समयkeeping.h>
 
-#include "power.h"
+#समावेश "power.h"
 
-static struct class *wakeup_class;
+अटल काष्ठा class *wakeup_class;
 
-#define wakeup_attr(_name)						\
-static ssize_t _name##_show(struct device *dev,				\
-			    struct device_attribute *attr, char *buf)	\
-{									\
-	struct wakeup_source *ws = dev_get_drvdata(dev);		\
+#घोषणा wakeup_attr(_name)						\
+अटल sमाप_प्रकार _name##_show(काष्ठा device *dev,				\
+			    काष्ठा device_attribute *attr, अक्षर *buf)	\
+अणु									\
+	काष्ठा wakeup_source *ws = dev_get_drvdata(dev);		\
 									\
-	return sysfs_emit(buf, "%lu\n", ws->_name);			\
-}									\
-static DEVICE_ATTR_RO(_name)
+	वापस sysfs_emit(buf, "%lu\n", ws->_name);			\
+पूर्ण									\
+अटल DEVICE_ATTR_RO(_name)
 
 wakeup_attr(active_count);
 wakeup_attr(event_count);
 wakeup_attr(wakeup_count);
 wakeup_attr(expire_count);
 
-static ssize_t active_time_ms_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct wakeup_source *ws = dev_get_drvdata(dev);
-	ktime_t active_time =
-		ws->active ? ktime_sub(ktime_get(), ws->last_time) : 0;
+अटल sमाप_प्रकार active_समय_ms_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा wakeup_source *ws = dev_get_drvdata(dev);
+	kसमय_प्रकार active_समय =
+		ws->active ? kसमय_sub(kसमय_get(), ws->last_समय) : 0;
 
-	return sysfs_emit(buf, "%lld\n", ktime_to_ms(active_time));
-}
-static DEVICE_ATTR_RO(active_time_ms);
+	वापस sysfs_emit(buf, "%lld\n", kसमय_प्रकारo_ms(active_समय));
+पूर्ण
+अटल DEVICE_ATTR_RO(active_समय_ms);
 
-static ssize_t total_time_ms_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct wakeup_source *ws = dev_get_drvdata(dev);
-	ktime_t active_time;
-	ktime_t total_time = ws->total_time;
+अटल sमाप_प्रकार total_समय_ms_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा wakeup_source *ws = dev_get_drvdata(dev);
+	kसमय_प्रकार active_समय;
+	kसमय_प्रकार total_समय = ws->total_समय;
 
-	if (ws->active) {
-		active_time = ktime_sub(ktime_get(), ws->last_time);
-		total_time = ktime_add(total_time, active_time);
-	}
+	अगर (ws->active) अणु
+		active_समय = kसमय_sub(kसमय_get(), ws->last_समय);
+		total_समय = kसमय_add(total_समय, active_समय);
+	पूर्ण
 
-	return sysfs_emit(buf, "%lld\n", ktime_to_ms(total_time));
-}
-static DEVICE_ATTR_RO(total_time_ms);
+	वापस sysfs_emit(buf, "%lld\n", kसमय_प्रकारo_ms(total_समय));
+पूर्ण
+अटल DEVICE_ATTR_RO(total_समय_ms);
 
-static ssize_t max_time_ms_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct wakeup_source *ws = dev_get_drvdata(dev);
-	ktime_t active_time;
-	ktime_t max_time = ws->max_time;
+अटल sमाप_प्रकार max_समय_ms_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा wakeup_source *ws = dev_get_drvdata(dev);
+	kसमय_प्रकार active_समय;
+	kसमय_प्रकार max_समय = ws->max_समय;
 
-	if (ws->active) {
-		active_time = ktime_sub(ktime_get(), ws->last_time);
-		if (active_time > max_time)
-			max_time = active_time;
-	}
+	अगर (ws->active) अणु
+		active_समय = kसमय_sub(kसमय_get(), ws->last_समय);
+		अगर (active_समय > max_समय)
+			max_समय = active_समय;
+	पूर्ण
 
-	return sysfs_emit(buf, "%lld\n", ktime_to_ms(max_time));
-}
-static DEVICE_ATTR_RO(max_time_ms);
+	वापस sysfs_emit(buf, "%lld\n", kसमय_प्रकारo_ms(max_समय));
+पूर्ण
+अटल DEVICE_ATTR_RO(max_समय_ms);
 
-static ssize_t last_change_ms_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct wakeup_source *ws = dev_get_drvdata(dev);
+अटल sमाप_प्रकार last_change_ms_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा wakeup_source *ws = dev_get_drvdata(dev);
 
-	return sysfs_emit(buf, "%lld\n", ktime_to_ms(ws->last_time));
-}
-static DEVICE_ATTR_RO(last_change_ms);
+	वापस sysfs_emit(buf, "%lld\n", kसमय_प्रकारo_ms(ws->last_समय));
+पूर्ण
+अटल DEVICE_ATTR_RO(last_change_ms);
 
-static ssize_t name_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct wakeup_source *ws = dev_get_drvdata(dev);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा wakeup_source *ws = dev_get_drvdata(dev);
 
-	return sysfs_emit(buf, "%s\n", ws->name);
-}
-static DEVICE_ATTR_RO(name);
+	वापस sysfs_emit(buf, "%s\n", ws->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static ssize_t prevent_suspend_time_ms_show(struct device *dev,
-					    struct device_attribute *attr,
-					    char *buf)
-{
-	struct wakeup_source *ws = dev_get_drvdata(dev);
-	ktime_t prevent_sleep_time = ws->prevent_sleep_time;
+अटल sमाप_प्रकार prevent_suspend_समय_ms_show(काष्ठा device *dev,
+					    काष्ठा device_attribute *attr,
+					    अक्षर *buf)
+अणु
+	काष्ठा wakeup_source *ws = dev_get_drvdata(dev);
+	kसमय_प्रकार prevent_sleep_समय = ws->prevent_sleep_समय;
 
-	if (ws->active && ws->autosleep_enabled) {
-		prevent_sleep_time = ktime_add(prevent_sleep_time,
-			ktime_sub(ktime_get(), ws->start_prevent_time));
-	}
+	अगर (ws->active && ws->स्वतःsleep_enabled) अणु
+		prevent_sleep_समय = kसमय_add(prevent_sleep_समय,
+			kसमय_sub(kसमय_get(), ws->start_prevent_समय));
+	पूर्ण
 
-	return sysfs_emit(buf, "%lld\n", ktime_to_ms(prevent_sleep_time));
-}
-static DEVICE_ATTR_RO(prevent_suspend_time_ms);
+	वापस sysfs_emit(buf, "%lld\n", kसमय_प्रकारo_ms(prevent_sleep_समय));
+पूर्ण
+अटल DEVICE_ATTR_RO(prevent_suspend_समय_ms);
 
-static struct attribute *wakeup_source_attrs[] = {
+अटल काष्ठा attribute *wakeup_source_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_active_count.attr,
 	&dev_attr_event_count.attr,
 	&dev_attr_wakeup_count.attr,
 	&dev_attr_expire_count.attr,
-	&dev_attr_active_time_ms.attr,
-	&dev_attr_total_time_ms.attr,
-	&dev_attr_max_time_ms.attr,
+	&dev_attr_active_समय_ms.attr,
+	&dev_attr_total_समय_ms.attr,
+	&dev_attr_max_समय_ms.attr,
 	&dev_attr_last_change_ms.attr,
-	&dev_attr_prevent_suspend_time_ms.attr,
-	NULL,
-};
+	&dev_attr_prevent_suspend_समय_ms.attr,
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(wakeup_source);
 
-static void device_create_release(struct device *dev)
-{
-	kfree(dev);
-}
+अटल व्योम device_create_release(काष्ठा device *dev)
+अणु
+	kमुक्त(dev);
+पूर्ण
 
-static struct device *wakeup_source_device_create(struct device *parent,
-						  struct wakeup_source *ws)
-{
-	struct device *dev = NULL;
-	int retval;
+अटल काष्ठा device *wakeup_source_device_create(काष्ठा device *parent,
+						  काष्ठा wakeup_source *ws)
+अणु
+	काष्ठा device *dev = शून्य;
+	पूर्णांक retval;
 
-	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-	if (!dev) {
+	dev = kzalloc(माप(*dev), GFP_KERNEL);
+	अगर (!dev) अणु
 		retval = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	device_initialize(dev);
 	dev->devt = MKDEV(0, 0);
@@ -155,63 +156,63 @@ static struct device *wakeup_source_device_create(struct device *parent,
 	device_set_pm_not_required(dev);
 
 	retval = dev_set_name(dev, "wakeup%d", ws->id);
-	if (retval)
-		goto error;
+	अगर (retval)
+		जाओ error;
 
 	retval = device_add(dev);
-	if (retval)
-		goto error;
+	अगर (retval)
+		जाओ error;
 
-	return dev;
+	वापस dev;
 
 error:
 	put_device(dev);
-	return ERR_PTR(retval);
-}
+	वापस ERR_PTR(retval);
+पूर्ण
 
 /**
  * wakeup_source_sysfs_add - Add wakeup_source attributes to sysfs.
- * @parent: Device given wakeup source is associated with (or NULL if virtual).
+ * @parent: Device given wakeup source is associated with (or शून्य अगर भव).
  * @ws: Wakeup source to be added in sysfs.
  */
-int wakeup_source_sysfs_add(struct device *parent, struct wakeup_source *ws)
-{
-	struct device *dev;
+पूर्णांक wakeup_source_sysfs_add(काष्ठा device *parent, काष्ठा wakeup_source *ws)
+अणु
+	काष्ठा device *dev;
 
 	dev = wakeup_source_device_create(parent, ws);
-	if (IS_ERR(dev))
-		return PTR_ERR(dev);
+	अगर (IS_ERR(dev))
+		वापस PTR_ERR(dev);
 	ws->dev = dev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pm_wakeup_source_sysfs_add - Add wakeup_source attributes to sysfs
- * for a device if they're missing.
+ * क्रम a device अगर they're missing.
  * @parent: Device given wakeup source is associated with
  */
-int pm_wakeup_source_sysfs_add(struct device *parent)
-{
-	if (!parent->power.wakeup || parent->power.wakeup->dev)
-		return 0;
+पूर्णांक pm_wakeup_source_sysfs_add(काष्ठा device *parent)
+अणु
+	अगर (!parent->घातer.wakeup || parent->घातer.wakeup->dev)
+		वापस 0;
 
-	return wakeup_source_sysfs_add(parent, parent->power.wakeup);
-}
+	वापस wakeup_source_sysfs_add(parent, parent->घातer.wakeup);
+पूर्ण
 
 /**
- * wakeup_source_sysfs_remove - Remove wakeup_source attributes from sysfs.
- * @ws: Wakeup source to be removed from sysfs.
+ * wakeup_source_sysfs_हटाओ - Remove wakeup_source attributes from sysfs.
+ * @ws: Wakeup source to be हटाओd from sysfs.
  */
-void wakeup_source_sysfs_remove(struct wakeup_source *ws)
-{
-	device_unregister(ws->dev);
-}
+व्योम wakeup_source_sysfs_हटाओ(काष्ठा wakeup_source *ws)
+अणु
+	device_unरेजिस्टर(ws->dev);
+पूर्ण
 
-static int __init wakeup_sources_sysfs_init(void)
-{
+अटल पूर्णांक __init wakeup_sources_sysfs_init(व्योम)
+अणु
 	wakeup_class = class_create(THIS_MODULE, "wakeup");
 
-	return PTR_ERR_OR_ZERO(wakeup_class);
-}
+	वापस PTR_ERR_OR_ZERO(wakeup_class);
+पूर्ण
 postcore_initcall(wakeup_sources_sysfs_init);

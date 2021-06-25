@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
@@ -6,13 +7,13 @@
  * File: channel.h
  */
 
-#ifndef _CHANNEL_H_
-#define _CHANNEL_H_
+#अगर_अघोषित _CHANNEL_H_
+#घोषणा _CHANNEL_H_
 
-#include "card.h"
+#समावेश "card.h"
 
-void vnt_init_bands(struct vnt_private *priv);
+व्योम vnt_init_bands(काष्ठा vnt_निजी *priv);
 
-bool set_channel(struct vnt_private *priv, struct ieee80211_channel *ch);
+bool set_channel(काष्ठा vnt_निजी *priv, काष्ठा ieee80211_channel *ch);
 
-#endif /* _CHANNEL_H_ */
+#पूर्ण_अगर /* _CHANNEL_H_ */

@@ -1,106 +1,107 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2014 Redpine Signals Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <linux/firmware.h>
-#include <net/bluetooth/bluetooth.h>
-#include "rsi_mgmt.h"
-#include "rsi_hal.h"
-#include "rsi_sdio.h"
-#include "rsi_common.h"
+#समावेश <linux/firmware.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश "rsi_mgmt.h"
+#समावेश "rsi_hal.h"
+#समावेश "rsi_sdio.h"
+#समावेश "rsi_common.h"
 
 /* FLASH Firmware */
-static struct ta_metadata metadata_flash_content[] = {
-	{"flash_content", 0x00010000},
-	{"rsi/rs9113_wlan_qspi.rps", 0x00010000},
-	{"rsi/rs9113_wlan_bt_dual_mode.rps", 0x00010000},
-	{"flash_content", 0x00010000},
-	{"rsi/rs9113_ap_bt_dual_mode.rps", 0x00010000},
+अटल काष्ठा ta_metadata metadata_flash_content[] = अणु
+	अणु"flash_content", 0x00010000पूर्ण,
+	अणु"rsi/rs9113_wlan_qspi.rps", 0x00010000पूर्ण,
+	अणु"rsi/rs9113_wlan_bt_dual_mode.rps", 0x00010000पूर्ण,
+	अणु"flash_content", 0x00010000पूर्ण,
+	अणु"rsi/rs9113_ap_bt_dual_mode.rps", 0x00010000पूर्ण,
 
-};
+पूर्ण;
 
-static struct ta_metadata metadata[] = {{"pmemdata_dummy", 0x00000000},
-	{"rsi/rs9116_wlan.rps", 0x00000000},
-	{"rsi/rs9116_wlan_bt_classic.rps", 0x00000000},
-	{"rsi/pmemdata_dummy", 0x00000000},
-	{"rsi/rs9116_wlan_bt_classic.rps", 0x00000000}
-};
+अटल काष्ठा ta_metadata metadata[] = अणुअणु"pmemdata_dummy", 0x00000000पूर्ण,
+	अणु"rsi/rs9116_wlan.rps", 0x00000000पूर्ण,
+	अणु"rsi/rs9116_wlan_bt_classic.rps", 0x00000000पूर्ण,
+	अणु"rsi/pmemdata_dummy", 0x00000000पूर्ण,
+	अणु"rsi/rs9116_wlan_bt_classic.rps", 0x00000000पूर्ण
+पूर्ण;
 
-int rsi_send_pkt_to_bus(struct rsi_common *common, struct sk_buff *skb)
-{
-	struct rsi_hw *adapter = common->priv;
-	int status;
+पूर्णांक rsi_send_pkt_to_bus(काष्ठा rsi_common *common, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rsi_hw *adapter = common->priv;
+	पूर्णांक status;
 
-	if (common->coex_mode > 1)
+	अगर (common->coex_mode > 1)
 		mutex_lock(&common->tx_bus_mutex);
 
-	status = adapter->host_intf_ops->write_pkt(common->priv,
+	status = adapter->host_पूर्णांकf_ops->ग_लिखो_pkt(common->priv,
 						   skb->data, skb->len);
 
-	if (common->coex_mode > 1)
+	अगर (common->coex_mode > 1)
 		mutex_unlock(&common->tx_bus_mutex);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int rsi_prepare_mgmt_desc(struct rsi_common *common, struct sk_buff *skb)
-{
-	struct rsi_hw *adapter = common->priv;
-	struct ieee80211_hdr *wh = NULL;
-	struct ieee80211_tx_info *info;
-	struct ieee80211_conf *conf = &adapter->hw->conf;
-	struct ieee80211_vif *vif;
-	struct rsi_mgmt_desc *mgmt_desc;
-	struct skb_info *tx_params;
-	struct rsi_xtended_desc *xtend_desc = NULL;
+पूर्णांक rsi_prepare_mgmt_desc(काष्ठा rsi_common *common, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rsi_hw *adapter = common->priv;
+	काष्ठा ieee80211_hdr *wh = शून्य;
+	काष्ठा ieee80211_tx_info *info;
+	काष्ठा ieee80211_conf *conf = &adapter->hw->conf;
+	काष्ठा ieee80211_vअगर *vअगर;
+	काष्ठा rsi_mgmt_desc *mgmt_desc;
+	काष्ठा skb_info *tx_params;
+	काष्ठा rsi_xtended_desc *xtend_desc = शून्य;
 	u8 header_size;
 	u32 dword_align_bytes = 0;
 
-	if (skb->len > MAX_MGMT_PKT_SIZE) {
+	अगर (skb->len > MAX_MGMT_PKT_SIZE) अणु
 		rsi_dbg(INFO_ZONE, "%s: Dropping mgmt pkt > 512\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	info = IEEE80211_SKB_CB(skb);
-	tx_params = (struct skb_info *)info->driver_data;
-	vif = tx_params->vif;
+	tx_params = (काष्ठा skb_info *)info->driver_data;
+	vअगर = tx_params->vअगर;
 
 	/* Update header size */
-	header_size = FRAME_DESC_SZ + sizeof(struct rsi_xtended_desc);
-	if (header_size > skb_headroom(skb)) {
+	header_size = FRAME_DESC_SZ + माप(काष्ठा rsi_xtended_desc);
+	अगर (header_size > skb_headroom(skb)) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Failed to add extended descriptor\n",
 			__func__);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 	skb_push(skb, header_size);
-	dword_align_bytes = ((unsigned long)skb->data & 0x3f);
-	if (dword_align_bytes > skb_headroom(skb)) {
+	dword_align_bytes = ((अचिन्हित दीर्घ)skb->data & 0x3f);
+	अगर (dword_align_bytes > skb_headroom(skb)) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Failed to add dword align\n", __func__);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 	skb_push(skb, dword_align_bytes);
 	header_size += dword_align_bytes;
 
-	tx_params->internal_hdr_size = header_size;
-	memset(&skb->data[0], 0, header_size);
-	wh = (struct ieee80211_hdr *)&skb->data[header_size];
+	tx_params->पूर्णांकernal_hdr_size = header_size;
+	स_रखो(&skb->data[0], 0, header_size);
+	wh = (काष्ठा ieee80211_hdr *)&skb->data[header_size];
 
-	mgmt_desc = (struct rsi_mgmt_desc *)skb->data;
-	xtend_desc = (struct rsi_xtended_desc *)&skb->data[FRAME_DESC_SZ];
+	mgmt_desc = (काष्ठा rsi_mgmt_desc *)skb->data;
+	xtend_desc = (काष्ठा rsi_xtended_desc *)&skb->data[FRAME_DESC_SZ];
 
 	rsi_set_len_qno(&mgmt_desc->len_qno, (skb->len - FRAME_DESC_SZ),
 			RSI_WIFI_MGMT_Q);
@@ -108,56 +109,56 @@ int rsi_prepare_mgmt_desc(struct rsi_common *common, struct sk_buff *skb)
 	mgmt_desc->header_len = MIN_802_11_HDR_LEN;
 	mgmt_desc->xtend_desc_size = header_size - FRAME_DESC_SZ;
 
-	if (ieee80211_is_probe_req(wh->frame_control))
+	अगर (ieee80211_is_probe_req(wh->frame_control))
 		mgmt_desc->frame_info = cpu_to_le16(RSI_INSERT_SEQ_IN_FW);
 	mgmt_desc->frame_info |= cpu_to_le16(RATE_INFO_ENABLE);
-	if (is_broadcast_ether_addr(wh->addr1))
+	अगर (is_broadcast_ether_addr(wh->addr1))
 		mgmt_desc->frame_info |= cpu_to_le16(RSI_BROADCAST_PKT);
 
 	mgmt_desc->seq_ctrl =
 		cpu_to_le16(IEEE80211_SEQ_TO_SN(le16_to_cpu(wh->seq_ctrl)));
-	if ((common->band == NL80211_BAND_2GHZ) && !common->p2p_enabled)
+	अगर ((common->band == NL80211_BAND_2GHZ) && !common->p2p_enabled)
 		mgmt_desc->rate_info = cpu_to_le16(RSI_RATE_1);
-	else
+	अन्यथा
 		mgmt_desc->rate_info = cpu_to_le16(RSI_RATE_6);
 
-	if (conf_is_ht40(conf))
+	अगर (conf_is_ht40(conf))
 		mgmt_desc->bbp_info = cpu_to_le16(FULL40M_ENABLE);
 
-	if (ieee80211_is_probe_resp(wh->frame_control)) {
+	अगर (ieee80211_is_probe_resp(wh->frame_control)) अणु
 		mgmt_desc->misc_flags |= (RSI_ADD_DELTA_TSF_VAP_ID |
 					  RSI_FETCH_RETRY_CNT_FRM_HST);
-#define PROBE_RESP_RETRY_CNT	3
+#घोषणा PROBE_RESP_RETRY_CNT	3
 		xtend_desc->retry_cnt = PROBE_RESP_RETRY_CNT;
-	}
+	पूर्ण
 
-	if (((vif->type == NL80211_IFTYPE_AP) ||
-	     (vif->type == NL80211_IFTYPE_P2P_GO)) &&
-	    (ieee80211_is_action(wh->frame_control))) {
-		struct rsi_sta *rsta = rsi_find_sta(common, wh->addr1);
+	अगर (((vअगर->type == NL80211_IFTYPE_AP) ||
+	     (vअगर->type == NL80211_IFTYPE_P2P_GO)) &&
+	    (ieee80211_is_action(wh->frame_control))) अणु
+		काष्ठा rsi_sta *rsta = rsi_find_sta(common, wh->addr1);
 
-		if (rsta)
+		अगर (rsta)
 			mgmt_desc->sta_id = tx_params->sta_id;
-		else
-			return -EINVAL;
-	}
+		अन्यथा
+			वापस -EINVAL;
+	पूर्ण
 	mgmt_desc->rate_info |=
 		cpu_to_le16((tx_params->vap_id << RSI_DESC_VAP_ID_OFST) &
 			    RSI_DESC_VAP_ID_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* This function prepares descriptor for given data packet */
-int rsi_prepare_data_desc(struct rsi_common *common, struct sk_buff *skb)
-{
-	struct rsi_hw *adapter = common->priv;
-	struct ieee80211_vif *vif;
-	struct ieee80211_hdr *wh = NULL;
-	struct ieee80211_tx_info *info;
-	struct skb_info *tx_params;
-	struct rsi_data_desc *data_desc;
-	struct rsi_xtended_desc *xtend_desc;
+/* This function prepares descriptor क्रम given data packet */
+पूर्णांक rsi_prepare_data_desc(काष्ठा rsi_common *common, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rsi_hw *adapter = common->priv;
+	काष्ठा ieee80211_vअगर *vअगर;
+	काष्ठा ieee80211_hdr *wh = शून्य;
+	काष्ठा ieee80211_tx_info *info;
+	काष्ठा skb_info *tx_params;
+	काष्ठा rsi_data_desc *data_desc;
+	काष्ठा rsi_xtended_desc *xtend_desc;
 	u8 ieee80211_size = MIN_802_11_HDR_LEN;
 	u8 header_size;
 	u8 vap_id = 0;
@@ -165,118 +166,118 @@ int rsi_prepare_data_desc(struct rsi_common *common, struct sk_buff *skb)
 	u16 seq_num;
 
 	info = IEEE80211_SKB_CB(skb);
-	vif = info->control.vif;
-	tx_params = (struct skb_info *)info->driver_data;
+	vअगर = info->control.vअगर;
+	tx_params = (काष्ठा skb_info *)info->driver_data;
 
-	header_size = FRAME_DESC_SZ + sizeof(struct rsi_xtended_desc);
-	if (header_size > skb_headroom(skb)) {
+	header_size = FRAME_DESC_SZ + माप(काष्ठा rsi_xtended_desc);
+	अगर (header_size > skb_headroom(skb)) अणु
 		rsi_dbg(ERR_ZONE, "%s: Unable to send pkt\n", __func__);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 	skb_push(skb, header_size);
-	dword_align_bytes = ((unsigned long)skb->data & 0x3f);
-	if (header_size > skb_headroom(skb)) {
+	dword_align_bytes = ((अचिन्हित दीर्घ)skb->data & 0x3f);
+	अगर (header_size > skb_headroom(skb)) अणु
 		rsi_dbg(ERR_ZONE, "%s: Not enough headroom\n", __func__);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 	skb_push(skb, dword_align_bytes);
 	header_size += dword_align_bytes;
 
-	tx_params->internal_hdr_size = header_size;
-	data_desc = (struct rsi_data_desc *)skb->data;
-	memset(data_desc, 0, header_size);
+	tx_params->पूर्णांकernal_hdr_size = header_size;
+	data_desc = (काष्ठा rsi_data_desc *)skb->data;
+	स_रखो(data_desc, 0, header_size);
 
-	xtend_desc = (struct rsi_xtended_desc *)&skb->data[FRAME_DESC_SZ];
-	wh = (struct ieee80211_hdr *)&skb->data[header_size];
+	xtend_desc = (काष्ठा rsi_xtended_desc *)&skb->data[FRAME_DESC_SZ];
+	wh = (काष्ठा ieee80211_hdr *)&skb->data[header_size];
 	seq_num = IEEE80211_SEQ_TO_SN(le16_to_cpu(wh->seq_ctrl));
 
 	data_desc->xtend_desc_size = header_size - FRAME_DESC_SZ;
 
-	if (ieee80211_is_data_qos(wh->frame_control)) {
+	अगर (ieee80211_is_data_qos(wh->frame_control)) अणु
 		ieee80211_size += 2;
 		data_desc->mac_flags |= cpu_to_le16(RSI_QOS_ENABLE);
-	}
+	पूर्ण
 
-	if (((vif->type == NL80211_IFTYPE_STATION) ||
-	     (vif->type == NL80211_IFTYPE_P2P_CLIENT)) &&
+	अगर (((vअगर->type == NL80211_IFTYPE_STATION) ||
+	     (vअगर->type == NL80211_IFTYPE_P2P_CLIENT)) &&
 	    (adapter->ps_state == PS_ENABLED))
 		wh->frame_control |= cpu_to_le16(RSI_SET_PS_ENABLE);
 
-	if ((!(info->flags & IEEE80211_TX_INTFL_DONT_ENCRYPT)) &&
-	    (common->secinfo.security_enable)) {
-		if (rsi_is_cipher_wep(common))
+	अगर ((!(info->flags & IEEE80211_TX_INTFL_DONT_ENCRYPT)) &&
+	    (common->secinfo.security_enable)) अणु
+		अगर (rsi_is_cipher_wep(common))
 			ieee80211_size += 4;
-		else
+		अन्यथा
 			ieee80211_size += 8;
 		data_desc->mac_flags |= cpu_to_le16(RSI_ENCRYPT_PKT);
-	}
+	पूर्ण
 	rsi_set_len_qno(&data_desc->len_qno, (skb->len - FRAME_DESC_SZ),
 			RSI_WIFI_DATA_Q);
 	data_desc->header_len = ieee80211_size;
 
-	if (common->min_rate != RSI_RATE_AUTO) {
+	अगर (common->min_rate != RSI_RATE_AUTO) अणु
 		/* Send fixed rate */
 		data_desc->frame_info = cpu_to_le16(RATE_INFO_ENABLE);
 		data_desc->rate_info = cpu_to_le16(common->min_rate);
 
-		if (conf_is_ht40(&common->priv->hw->conf))
+		अगर (conf_is_ht40(&common->priv->hw->conf))
 			data_desc->bbp_info = cpu_to_le16(FULL40M_ENABLE);
 
-		if ((common->vif_info[0].sgi) && (common->min_rate & 0x100)) {
+		अगर ((common->vअगर_info[0].sgi) && (common->min_rate & 0x100)) अणु
 		       /* Only MCS rates */
 			data_desc->rate_info |=
 				cpu_to_le16(ENABLE_SHORTGI_RATE);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (skb->protocol == cpu_to_be16(ETH_P_PAE)) {
+	अगर (skb->protocol == cpu_to_be16(ETH_P_PAE)) अणु
 		rsi_dbg(INFO_ZONE, "*** Tx EAPOL ***\n");
 
 		data_desc->frame_info = cpu_to_le16(RATE_INFO_ENABLE);
-		if (common->band == NL80211_BAND_5GHZ)
+		अगर (common->band == NL80211_BAND_5GHZ)
 			data_desc->rate_info = cpu_to_le16(RSI_RATE_6);
-		else
+		अन्यथा
 			data_desc->rate_info = cpu_to_le16(RSI_RATE_1);
 		data_desc->mac_flags |= cpu_to_le16(RSI_REKEY_PURPOSE);
 		data_desc->misc_flags |= RSI_FETCH_RETRY_CNT_FRM_HST;
-#define EAPOL_RETRY_CNT 15
+#घोषणा EAPOL_RETRY_CNT 15
 		xtend_desc->retry_cnt = EAPOL_RETRY_CNT;
 
-		if (common->eapol4_confirm)
+		अगर (common->eapol4_confirm)
 			skb->priority = VO_Q;
-		else
+		अन्यथा
 			rsi_set_len_qno(&data_desc->len_qno,
 					(skb->len - FRAME_DESC_SZ),
 					RSI_WIFI_MGMT_Q);
-		if (((skb->len - header_size) == EAPOL4_PACKET_LEN) ||
-		    ((skb->len - header_size) == EAPOL4_PACKET_LEN - 2)) {
+		अगर (((skb->len - header_size) == EAPOL4_PACKET_LEN) ||
+		    ((skb->len - header_size) == EAPOL4_PACKET_LEN - 2)) अणु
 			data_desc->misc_flags |=
 				RSI_DESC_REQUIRE_CFM_TO_HOST;
 			xtend_desc->confirm_frame_type = EAPOL4_CONFIRM;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	data_desc->mac_flags |= cpu_to_le16(seq_num & 0xfff);
 	data_desc->qid_tid = ((skb->priority & 0xf) |
 			      ((tx_params->tid & 0xf) << 4));
 	data_desc->sta_id = tx_params->sta_id;
 
-	if ((is_broadcast_ether_addr(wh->addr1)) ||
-	    (is_multicast_ether_addr(wh->addr1))) {
+	अगर ((is_broadcast_ether_addr(wh->addr1)) ||
+	    (is_multicast_ether_addr(wh->addr1))) अणु
 		data_desc->frame_info = cpu_to_le16(RATE_INFO_ENABLE);
 		data_desc->frame_info |= cpu_to_le16(RSI_BROADCAST_PKT);
 		data_desc->sta_id = vap_id;
 
-		if ((vif->type == NL80211_IFTYPE_AP) ||
-		    (vif->type == NL80211_IFTYPE_P2P_GO)) {
-			if (common->band == NL80211_BAND_5GHZ)
+		अगर ((vअगर->type == NL80211_IFTYPE_AP) ||
+		    (vअगर->type == NL80211_IFTYPE_P2P_GO)) अणु
+			अगर (common->band == NL80211_BAND_5GHZ)
 				data_desc->rate_info = cpu_to_le16(RSI_RATE_6);
-			else
+			अन्यथा
 				data_desc->rate_info = cpu_to_le16(RSI_RATE_1);
-		}
-	}
-	if (((vif->type == NL80211_IFTYPE_AP) ||
-	     (vif->type == NL80211_IFTYPE_P2P_GO)) &&
+		पूर्ण
+	पूर्ण
+	अगर (((vअगर->type == NL80211_IFTYPE_AP) ||
+	     (vअगर->type == NL80211_IFTYPE_P2P_GO)) &&
 	    (ieee80211_has_moredata(wh->frame_control)))
 		data_desc->frame_info |= cpu_to_le16(MORE_DATA_PRESENT);
 
@@ -284,172 +285,172 @@ int rsi_prepare_data_desc(struct rsi_common *common, struct sk_buff *skb)
 		cpu_to_le16((tx_params->vap_id << RSI_DESC_VAP_ID_OFST) &
 			    RSI_DESC_VAP_ID_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* This function sends received data packet from driver to device */
-int rsi_send_data_pkt(struct rsi_common *common, struct sk_buff *skb)
-{
-	struct rsi_hw *adapter = common->priv;
-	struct ieee80211_vif *vif;
-	struct ieee80211_tx_info *info;
-	struct ieee80211_bss_conf *bss;
-	int status = -EINVAL;
+पूर्णांक rsi_send_data_pkt(काष्ठा rsi_common *common, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rsi_hw *adapter = common->priv;
+	काष्ठा ieee80211_vअगर *vअगर;
+	काष्ठा ieee80211_tx_info *info;
+	काष्ठा ieee80211_bss_conf *bss;
+	पूर्णांक status = -EINVAL;
 
-	if (!skb)
-		return 0;
-	if (common->iface_down)
-		goto err;
+	अगर (!skb)
+		वापस 0;
+	अगर (common->अगरace_करोwn)
+		जाओ err;
 
 	info = IEEE80211_SKB_CB(skb);
-	if (!info->control.vif)
-		goto err;
-	vif = info->control.vif;
-	bss = &vif->bss_conf;
+	अगर (!info->control.vअगर)
+		जाओ err;
+	vअगर = info->control.vअगर;
+	bss = &vअगर->bss_conf;
 
-	if (((vif->type == NL80211_IFTYPE_STATION) ||
-	     (vif->type == NL80211_IFTYPE_P2P_CLIENT)) &&
+	अगर (((vअगर->type == NL80211_IFTYPE_STATION) ||
+	     (vअगर->type == NL80211_IFTYPE_P2P_CLIENT)) &&
 	    (!bss->assoc))
-		goto err;
+		जाओ err;
 
 	status = rsi_send_pkt_to_bus(common, skb);
-	if (status)
+	अगर (status)
 		rsi_dbg(ERR_ZONE, "%s: Failed to write pkt\n", __func__);
 
 err:
-	++common->tx_stats.total_tx_pkt_freed[skb->priority];
+	++common->tx_stats.total_tx_pkt_मुक्तd[skb->priority];
 	rsi_indicate_tx_status(adapter, skb, status);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
  * rsi_send_mgmt_pkt() - This functions sends the received management packet
  *			 from driver to device.
- * @common: Pointer to the driver private structure.
- * @skb: Pointer to the socket buffer structure.
+ * @common: Poपूर्णांकer to the driver निजी काष्ठाure.
+ * @skb: Poपूर्णांकer to the socket buffer काष्ठाure.
  *
  * Return: status: 0 on success, -1 on failure.
  */
-int rsi_send_mgmt_pkt(struct rsi_common *common,
-		      struct sk_buff *skb)
-{
-	struct rsi_hw *adapter = common->priv;
-	struct ieee80211_bss_conf *bss;
-	struct ieee80211_hdr *wh;
-	struct ieee80211_tx_info *info;
-	struct skb_info *tx_params;
-	struct rsi_mgmt_desc *mgmt_desc;
-	struct rsi_xtended_desc *xtend_desc;
-	int status = -E2BIG;
+पूर्णांक rsi_send_mgmt_pkt(काष्ठा rsi_common *common,
+		      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rsi_hw *adapter = common->priv;
+	काष्ठा ieee80211_bss_conf *bss;
+	काष्ठा ieee80211_hdr *wh;
+	काष्ठा ieee80211_tx_info *info;
+	काष्ठा skb_info *tx_params;
+	काष्ठा rsi_mgmt_desc *mgmt_desc;
+	काष्ठा rsi_xtended_desc *xtend_desc;
+	पूर्णांक status = -E2BIG;
 	u8 header_size;
 
 	info = IEEE80211_SKB_CB(skb);
-	tx_params = (struct skb_info *)info->driver_data;
-	header_size = tx_params->internal_hdr_size;
+	tx_params = (काष्ठा skb_info *)info->driver_data;
+	header_size = tx_params->पूर्णांकernal_hdr_size;
 
-	if (tx_params->flags & INTERNAL_MGMT_PKT) {
-		status = adapter->host_intf_ops->write_pkt(common->priv,
+	अगर (tx_params->flags & INTERNAL_MGMT_PKT) अणु
+		status = adapter->host_पूर्णांकf_ops->ग_लिखो_pkt(common->priv,
 							   (u8 *)skb->data,
 							   skb->len);
-		if (status) {
+		अगर (status) अणु
 			rsi_dbg(ERR_ZONE,
 				"%s: Failed to write the packet\n", __func__);
-		}
-		dev_kfree_skb(skb);
-		return status;
-	}
+		पूर्ण
+		dev_kमुक्त_skb(skb);
+		वापस status;
+	पूर्ण
 
-	bss = &info->control.vif->bss_conf;
-	wh = (struct ieee80211_hdr *)&skb->data[header_size];
-	mgmt_desc = (struct rsi_mgmt_desc *)skb->data;
-	xtend_desc = (struct rsi_xtended_desc *)&skb->data[FRAME_DESC_SZ];
+	bss = &info->control.vअगर->bss_conf;
+	wh = (काष्ठा ieee80211_hdr *)&skb->data[header_size];
+	mgmt_desc = (काष्ठा rsi_mgmt_desc *)skb->data;
+	xtend_desc = (काष्ठा rsi_xtended_desc *)&skb->data[FRAME_DESC_SZ];
 
-	/* Indicate to firmware to give cfm for probe */
-	if (ieee80211_is_probe_req(wh->frame_control) && !bss->assoc) {
+	/* Indicate to firmware to give cfm क्रम probe */
+	अगर (ieee80211_is_probe_req(wh->frame_control) && !bss->assoc) अणु
 		rsi_dbg(INFO_ZONE,
 			"%s: blocking mgmt queue\n", __func__);
 		mgmt_desc->misc_flags = RSI_DESC_REQUIRE_CFM_TO_HOST;
 		xtend_desc->confirm_frame_type = PROBEREQ_CONFIRM;
 		common->mgmt_q_block = true;
 		rsi_dbg(INFO_ZONE, "Mgmt queue blocked\n");
-	}
+	पूर्ण
 
 	status = rsi_send_pkt_to_bus(common, skb);
-	if (status)
+	अगर (status)
 		rsi_dbg(ERR_ZONE, "%s: Failed to write the packet\n", __func__);
 
 	rsi_indicate_tx_status(common->priv, skb, status);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int rsi_send_bt_pkt(struct rsi_common *common, struct sk_buff *skb)
-{
-	int status = -EINVAL;
+पूर्णांक rsi_send_bt_pkt(काष्ठा rsi_common *common, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक status = -EINVAL;
 	u8 header_size = 0;
-	struct rsi_bt_desc *bt_desc;
+	काष्ठा rsi_bt_desc *bt_desc;
 	u8 queueno = ((skb->data[1] >> 4) & 0xf);
 
-	if (queueno == RSI_BT_MGMT_Q) {
+	अगर (queueno == RSI_BT_MGMT_Q) अणु
 		status = rsi_send_pkt_to_bus(common, skb);
-		if (status)
+		अगर (status)
 			rsi_dbg(ERR_ZONE, "%s: Failed to write bt mgmt pkt\n",
 				__func__);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	header_size = FRAME_DESC_SZ;
-	if (header_size > skb_headroom(skb)) {
+	अगर (header_size > skb_headroom(skb)) अणु
 		rsi_dbg(ERR_ZONE, "%s: Not enough headroom\n", __func__);
 		status = -ENOSPC;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	skb_push(skb, header_size);
-	memset(skb->data, 0, header_size);
-	bt_desc = (struct rsi_bt_desc *)skb->data;
+	स_रखो(skb->data, 0, header_size);
+	bt_desc = (काष्ठा rsi_bt_desc *)skb->data;
 
 	rsi_set_len_qno(&bt_desc->len_qno, (skb->len - FRAME_DESC_SZ),
 			RSI_BT_DATA_Q);
 	bt_desc->bt_pkt_type = cpu_to_le16(bt_cb(skb)->pkt_type);
 
 	status = rsi_send_pkt_to_bus(common, skb);
-	if (status)
+	अगर (status)
 		rsi_dbg(ERR_ZONE, "%s: Failed to write bt pkt\n", __func__);
 
 out:
-	dev_kfree_skb(skb);
-	return status;
-}
+	dev_kमुक्त_skb(skb);
+	वापस status;
+पूर्ण
 
-int rsi_prepare_beacon(struct rsi_common *common, struct sk_buff *skb)
-{
-	struct rsi_hw *adapter = (struct rsi_hw *)common->priv;
-	struct rsi_data_desc *bcn_frm;
-	struct ieee80211_hw *hw = common->priv->hw;
-	struct ieee80211_conf *conf = &hw->conf;
-	struct ieee80211_vif *vif;
-	struct sk_buff *mac_bcn;
+पूर्णांक rsi_prepare_beacon(काष्ठा rsi_common *common, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rsi_hw *adapter = (काष्ठा rsi_hw *)common->priv;
+	काष्ठा rsi_data_desc *bcn_frm;
+	काष्ठा ieee80211_hw *hw = common->priv->hw;
+	काष्ठा ieee80211_conf *conf = &hw->conf;
+	काष्ठा ieee80211_vअगर *vअगर;
+	काष्ठा sk_buff *mac_bcn;
 	u8 vap_id = 0, i;
 	u16 tim_offset = 0;
 
-	for (i = 0; i < RSI_MAX_VIFS; i++) {
-		vif = adapter->vifs[i];
-		if (!vif)
-			continue;
-		if ((vif->type == NL80211_IFTYPE_AP) ||
-		    (vif->type == NL80211_IFTYPE_P2P_GO))
-			break;
-	}
-	if (!vif)
-		return -EINVAL;
+	क्रम (i = 0; i < RSI_MAX_VIFS; i++) अणु
+		vअगर = adapter->vअगरs[i];
+		अगर (!vअगर)
+			जारी;
+		अगर ((vअगर->type == NL80211_IFTYPE_AP) ||
+		    (vअगर->type == NL80211_IFTYPE_P2P_GO))
+			अवरोध;
+	पूर्ण
+	अगर (!vअगर)
+		वापस -EINVAL;
 	mac_bcn = ieee80211_beacon_get_tim(adapter->hw,
-					   vif,
-					   &tim_offset, NULL);
-	if (!mac_bcn) {
+					   vअगर,
+					   &tim_offset, शून्य);
+	अगर (!mac_bcn) अणु
 		rsi_dbg(ERR_ZONE, "Failed to get beacon from mac80211\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	common->beacon_cnt++;
-	bcn_frm = (struct rsi_data_desc *)skb->data;
+	bcn_frm = (काष्ठा rsi_data_desc *)skb->data;
 	rsi_set_len_qno(&bcn_frm->len_qno, mac_bcn->len, RSI_WIFI_DATA_Q);
 	bcn_frm->header_len = MIN_802_11_HDR_LEN;
 	bcn_frm->frame_info = cpu_to_le16(RSI_DATA_DESC_MAC_BBP_INFO |
@@ -461,192 +462,192 @@ int rsi_prepare_beacon(struct rsi_common *common, struct sk_buff *skb)
 	bcn_frm->rate_info = cpu_to_le16(vap_id << 14);
 	bcn_frm->qid_tid = BEACON_HW_Q;
 
-	if (conf_is_ht40_plus(conf)) {
+	अगर (conf_is_ht40_plus(conf)) अणु
 		bcn_frm->bbp_info = cpu_to_le16(LOWER_20_ENABLE);
 		bcn_frm->bbp_info |= cpu_to_le16(LOWER_20_ENABLE >> 12);
-	} else if (conf_is_ht40_minus(conf)) {
+	पूर्ण अन्यथा अगर (conf_is_ht40_minus(conf)) अणु
 		bcn_frm->bbp_info = cpu_to_le16(UPPER_20_ENABLE);
 		bcn_frm->bbp_info |= cpu_to_le16(UPPER_20_ENABLE >> 12);
-	}
+	पूर्ण
 
-	if (common->band == NL80211_BAND_2GHZ)
+	अगर (common->band == NL80211_BAND_2GHZ)
 		bcn_frm->bbp_info |= cpu_to_le16(RSI_RATE_1);
-	else
+	अन्यथा
 		bcn_frm->bbp_info |= cpu_to_le16(RSI_RATE_6);
 
-	if (mac_bcn->data[tim_offset + 2] == 0)
+	अगर (mac_bcn->data[tim_offset + 2] == 0)
 		bcn_frm->frame_info |= cpu_to_le16(RSI_DATA_DESC_DTIM_BEACON);
 
-	memcpy(&skb->data[FRAME_DESC_SZ], mac_bcn->data, mac_bcn->len);
+	स_नकल(&skb->data[FRAME_DESC_SZ], mac_bcn->data, mac_bcn->len);
 	skb_put(skb, mac_bcn->len + FRAME_DESC_SZ);
 
-	dev_kfree_skb(mac_bcn);
+	dev_kमुक्त_skb(mac_bcn);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bl_cmd_timeout(struct timer_list *t)
-{
-	struct rsi_hw *adapter = from_timer(adapter, t, bl_cmd_timer);
+अटल व्योम bl_cmd_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा rsi_hw *adapter = from_समयr(adapter, t, bl_cmd_समयr);
 
-	adapter->blcmd_timer_expired = true;
-	del_timer(&adapter->bl_cmd_timer);
-}
+	adapter->blcmd_समयr_expired = true;
+	del_समयr(&adapter->bl_cmd_समयr);
+पूर्ण
 
-static int bl_start_cmd_timer(struct rsi_hw *adapter, u32 timeout)
-{
-	timer_setup(&adapter->bl_cmd_timer, bl_cmd_timeout, 0);
-	adapter->bl_cmd_timer.expires = (msecs_to_jiffies(timeout) + jiffies);
+अटल पूर्णांक bl_start_cmd_समयr(काष्ठा rsi_hw *adapter, u32 समयout)
+अणु
+	समयr_setup(&adapter->bl_cmd_समयr, bl_cmd_समयout, 0);
+	adapter->bl_cmd_समयr.expires = (msecs_to_jअगरfies(समयout) + jअगरfies);
 
-	adapter->blcmd_timer_expired = false;
-	add_timer(&adapter->bl_cmd_timer);
+	adapter->blcmd_समयr_expired = false;
+	add_समयr(&adapter->bl_cmd_समयr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bl_stop_cmd_timer(struct rsi_hw *adapter)
-{
-	adapter->blcmd_timer_expired = false;
-	if (timer_pending(&adapter->bl_cmd_timer))
-		del_timer(&adapter->bl_cmd_timer);
+अटल पूर्णांक bl_stop_cmd_समयr(काष्ठा rsi_hw *adapter)
+अणु
+	adapter->blcmd_समयr_expired = false;
+	अगर (समयr_pending(&adapter->bl_cmd_समयr))
+		del_समयr(&adapter->bl_cmd_समयr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bl_write_cmd(struct rsi_hw *adapter, u8 cmd, u8 exp_resp,
+अटल पूर्णांक bl_ग_लिखो_cmd(काष्ठा rsi_hw *adapter, u8 cmd, u8 exp_resp,
 			u16 *cmd_resp)
-{
-	struct rsi_host_intf_ops *hif_ops = adapter->host_intf_ops;
+अणु
+	काष्ठा rsi_host_पूर्णांकf_ops *hअगर_ops = adapter->host_पूर्णांकf_ops;
 	u32 regin_val = 0, regout_val = 0;
 	u32 regin_input = 0;
 	u8 output = 0;
-	int status;
+	पूर्णांक status;
 
 	regin_input = (REGIN_INPUT | adapter->priv->coex_mode);
 
-	while (!adapter->blcmd_timer_expired) {
+	जबतक (!adapter->blcmd_समयr_expired) अणु
 		regin_val = 0;
-		status = hif_ops->master_reg_read(adapter, SWBL_REGIN,
+		status = hअगर_ops->master_reg_पढ़ो(adapter, SWBL_REGIN,
 						  &regin_val, 2);
-		if (status < 0) {
+		अगर (status < 0) अणु
 			rsi_dbg(ERR_ZONE,
 				"%s: Command %0x REGIN reading failed..\n",
 				__func__, cmd);
-			return status;
-		}
+			वापस status;
+		पूर्ण
 		mdelay(1);
-		if ((regin_val >> 12) != REGIN_VALID)
-			break;
-	}
-	if (adapter->blcmd_timer_expired) {
+		अगर ((regin_val >> 12) != REGIN_VALID)
+			अवरोध;
+	पूर्ण
+	अगर (adapter->blcmd_समयr_expired) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Command %0x REGIN reading timed out..\n",
 			__func__, cmd);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	rsi_dbg(INFO_ZONE,
 		"Issuing write to Regin val:%0x sending cmd:%0x\n",
 		regin_val, (cmd | regin_input << 8));
-	status = hif_ops->master_reg_write(adapter, SWBL_REGIN,
+	status = hअगर_ops->master_reg_ग_लिखो(adapter, SWBL_REGIN,
 					   (cmd | regin_input << 8), 2);
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 	mdelay(1);
 
-	if (cmd == LOAD_HOSTED_FW || cmd == JUMP_TO_ZERO_PC) {
-		/* JUMP_TO_ZERO_PC doesn't expect
-		 * any response. So return from here
+	अगर (cmd == LOAD_HOSTED_FW || cmd == JUMP_TO_ZERO_PC) अणु
+		/* JUMP_TO_ZERO_PC करोesn't expect
+		 * any response. So वापस from here
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	while (!adapter->blcmd_timer_expired) {
+	जबतक (!adapter->blcmd_समयr_expired) अणु
 		regout_val = 0;
-		status = hif_ops->master_reg_read(adapter, SWBL_REGOUT,
+		status = hअगर_ops->master_reg_पढ़ो(adapter, SWBL_REGOUT,
 					     &regout_val, 2);
-		if (status < 0) {
+		अगर (status < 0) अणु
 			rsi_dbg(ERR_ZONE,
 				"%s: Command %0x REGOUT reading failed..\n",
 				__func__, cmd);
-			return status;
-		}
+			वापस status;
+		पूर्ण
 		mdelay(1);
-		if ((regout_val >> 8) == REGOUT_VALID)
-			break;
-	}
-	if (adapter->blcmd_timer_expired) {
+		अगर ((regout_val >> 8) == REGOUT_VALID)
+			अवरोध;
+	पूर्ण
+	अगर (adapter->blcmd_समयr_expired) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Command %0x REGOUT reading timed out..\n",
 			__func__, cmd);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
 	*cmd_resp = ((u16 *)&regout_val)[0] & 0xffff;
 
 	output = ((u8 *)&regout_val)[0] & 0xff;
 
-	status = hif_ops->master_reg_write(adapter, SWBL_REGOUT,
+	status = hअगर_ops->master_reg_ग_लिखो(adapter, SWBL_REGOUT,
 					   (cmd | REGOUT_INVALID << 8), 2);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Command %0x REGOUT writing failed..\n",
 			__func__, cmd);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 	mdelay(1);
 
-	if (output != exp_resp) {
+	अगर (output != exp_resp) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Recvd resp %x for cmd %0x\n",
 			__func__, output, cmd);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	rsi_dbg(INFO_ZONE,
 		"%s: Recvd Expected resp %x for cmd %0x\n",
 		__func__, output, cmd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bl_cmd(struct rsi_hw *adapter, u8 cmd, u8 exp_resp, char *str)
-{
+अटल पूर्णांक bl_cmd(काष्ठा rsi_hw *adapter, u8 cmd, u8 exp_resp, अक्षर *str)
+अणु
 	u16 regout_val = 0;
-	u32 timeout;
-	int status;
+	u32 समयout;
+	पूर्णांक status;
 
-	if ((cmd == EOF_REACHED) || (cmd == PING_VALID) || (cmd == PONG_VALID))
-		timeout = BL_BURN_TIMEOUT;
-	else
-		timeout = BL_CMD_TIMEOUT;
+	अगर ((cmd == खातापूर्ण_REACHED) || (cmd == PING_VALID) || (cmd == PONG_VALID))
+		समयout = BL_BURN_TIMEOUT;
+	अन्यथा
+		समयout = BL_CMD_TIMEOUT;
 
-	bl_start_cmd_timer(adapter, timeout);
-	status = bl_write_cmd(adapter, cmd, exp_resp, &regout_val);
-	if (status < 0) {
-		bl_stop_cmd_timer(adapter);
+	bl_start_cmd_समयr(adapter, समयout);
+	status = bl_ग_लिखो_cmd(adapter, cmd, exp_resp, &regout_val);
+	अगर (status < 0) अणु
+		bl_stop_cmd_समयr(adapter);
 		rsi_dbg(ERR_ZONE,
 			"%s: Command %s (%0x) writing failed..\n",
 			__func__, str, cmd);
-		return status;
-	}
-	bl_stop_cmd_timer(adapter);
-	return 0;
-}
+		वापस status;
+	पूर्ण
+	bl_stop_cmd_समयr(adapter);
+	वापस 0;
+पूर्ण
 
-#define CHECK_SUM_OFFSET 20
-#define LEN_OFFSET 8
-#define ADDR_OFFSET 16
-static int bl_write_header(struct rsi_hw *adapter, u8 *flash_content,
+#घोषणा CHECK_SUM_OFFSET 20
+#घोषणा LEN_OFFSET 8
+#घोषणा ADDR_OFFSET 16
+अटल पूर्णांक bl_ग_लिखो_header(काष्ठा rsi_hw *adapter, u8 *flash_content,
 			   u32 content_size)
-{
-	struct rsi_host_intf_ops *hif_ops = adapter->host_intf_ops;
-	struct bl_header *bl_hdr;
-	u32 write_addr, write_len;
-	int status;
+अणु
+	काष्ठा rsi_host_पूर्णांकf_ops *hअगर_ops = adapter->host_पूर्णांकf_ops;
+	काष्ठा bl_header *bl_hdr;
+	u32 ग_लिखो_addr, ग_लिखो_len;
+	पूर्णांक status;
 
-	bl_hdr = kzalloc(sizeof(*bl_hdr), GFP_KERNEL);
-	if (!bl_hdr)
-		return -ENOMEM;
+	bl_hdr = kzalloc(माप(*bl_hdr), GFP_KERNEL);
+	अगर (!bl_hdr)
+		वापस -ENOMEM;
 
 	bl_hdr->flags = 0;
 	bl_hdr->image_no = cpu_to_le32(adapter->priv->coex_mode);
@@ -655,134 +656,134 @@ static int bl_write_header(struct rsi_hw *adapter, u8 *flash_content,
 	bl_hdr->flash_start_address =
 		cpu_to_le32(*(u32 *)&flash_content[ADDR_OFFSET]);
 	bl_hdr->flash_len = cpu_to_le32(*(u32 *)&flash_content[LEN_OFFSET]);
-	write_len = sizeof(struct bl_header);
+	ग_लिखो_len = माप(काष्ठा bl_header);
 
-	if (adapter->rsi_host_intf == RSI_HOST_INTF_USB) {
-		write_addr = PING_BUFFER_ADDRESS;
-		status = hif_ops->write_reg_multiple(adapter, write_addr,
-						 (u8 *)bl_hdr, write_len);
-		if (status < 0) {
+	अगर (adapter->rsi_host_पूर्णांकf == RSI_HOST_INTF_USB) अणु
+		ग_लिखो_addr = PING_BUFFER_ADDRESS;
+		status = hअगर_ops->ग_लिखो_reg_multiple(adapter, ग_लिखो_addr,
+						 (u8 *)bl_hdr, ग_लिखो_len);
+		अगर (status < 0) अणु
 			rsi_dbg(ERR_ZONE,
 				"%s: Failed to load Version/CRC structure\n",
 				__func__);
-			goto fail;
-		}
-	} else {
-		write_addr = PING_BUFFER_ADDRESS >> 16;
-		status = hif_ops->master_access_msword(adapter, write_addr);
-		if (status < 0) {
+			जाओ fail;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ग_लिखो_addr = PING_BUFFER_ADDRESS >> 16;
+		status = hअगर_ops->master_access_msword(adapter, ग_लिखो_addr);
+		अगर (status < 0) अणु
 			rsi_dbg(ERR_ZONE,
 				"%s: Unable to set ms word to common reg\n",
 				__func__);
-			goto fail;
-		}
-		write_addr = RSI_SD_REQUEST_MASTER |
+			जाओ fail;
+		पूर्ण
+		ग_लिखो_addr = RSI_SD_REQUEST_MASTER |
 			     (PING_BUFFER_ADDRESS & 0xFFFF);
-		status = hif_ops->write_reg_multiple(adapter, write_addr,
-						 (u8 *)bl_hdr, write_len);
-		if (status < 0) {
+		status = hअगर_ops->ग_लिखो_reg_multiple(adapter, ग_लिखो_addr,
+						 (u8 *)bl_hdr, ग_लिखो_len);
+		अगर (status < 0) अणु
 			rsi_dbg(ERR_ZONE,
 				"%s: Failed to load Version/CRC structure\n",
 				__func__);
-			goto fail;
-		}
-	}
+			जाओ fail;
+		पूर्ण
+	पूर्ण
 	status = 0;
 fail:
-	kfree(bl_hdr);
-	return status;
-}
+	kमुक्त(bl_hdr);
+	वापस status;
+पूर्ण
 
-static u32 read_flash_capacity(struct rsi_hw *adapter)
-{
+अटल u32 पढ़ो_flash_capacity(काष्ठा rsi_hw *adapter)
+अणु
 	u32 flash_sz = 0;
 
-	if ((adapter->host_intf_ops->master_reg_read(adapter, FLASH_SIZE_ADDR,
-						     &flash_sz, 2)) < 0) {
+	अगर ((adapter->host_पूर्णांकf_ops->master_reg_पढ़ो(adapter, FLASH_SIZE_ADDR,
+						     &flash_sz, 2)) < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Flash size reading failed..\n",
 			__func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	rsi_dbg(INIT_ZONE, "Flash capacity: %d KiloBytes\n", flash_sz);
 
-	return (flash_sz * 1024); /* Return size in kbytes */
-}
+	वापस (flash_sz * 1024); /* Return size in kbytes */
+पूर्ण
 
-static int ping_pong_write(struct rsi_hw *adapter, u8 cmd, u8 *addr, u32 size)
-{
-	struct rsi_host_intf_ops *hif_ops = adapter->host_intf_ops;
+अटल पूर्णांक ping_pong_ग_लिखो(काष्ठा rsi_hw *adapter, u8 cmd, u8 *addr, u32 size)
+अणु
+	काष्ठा rsi_host_पूर्णांकf_ops *hअगर_ops = adapter->host_पूर्णांकf_ops;
 	u32 block_size = adapter->block_size;
 	u32 cmd_addr;
 	u16 cmd_resp, cmd_req;
 	u8 *str;
-	int status;
+	पूर्णांक status;
 
-	if (cmd == PING_WRITE) {
+	अगर (cmd == PING_WRITE) अणु
 		cmd_addr = PING_BUFFER_ADDRESS;
 		cmd_resp = PONG_AVAIL;
 		cmd_req = PING_VALID;
 		str = "PING_VALID";
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd_addr = PONG_BUFFER_ADDRESS;
 		cmd_resp = PING_AVAIL;
 		cmd_req = PONG_VALID;
 		str = "PONG_VALID";
-	}
+	पूर्ण
 
-	status = hif_ops->load_data_master_write(adapter, cmd_addr, size,
+	status = hअगर_ops->load_data_master_ग_लिखो(adapter, cmd_addr, size,
 					    block_size, addr);
-	if (status) {
+	अगर (status) अणु
 		rsi_dbg(ERR_ZONE, "%s: Unable to write blk at addr %0x\n",
 			__func__, *addr);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
 	status = bl_cmd(adapter, cmd_req, cmd_resp, str);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int auto_fw_upgrade(struct rsi_hw *adapter, u8 *flash_content,
+अटल पूर्णांक स्वतः_fw_upgrade(काष्ठा rsi_hw *adapter, u8 *flash_content,
 			   u32 content_size)
-{
+अणु
 	u8 cmd;
 	u32 temp_content_size, num_flash, index;
 	u32 flash_start_address;
-	int status;
+	पूर्णांक status;
 
-	if (content_size > MAX_FLASH_FILE_SIZE) {
+	अगर (content_size > MAX_FLASH_खाता_SIZE) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Flash Content size is more than 400K %u\n",
-			__func__, MAX_FLASH_FILE_SIZE);
-		return -EINVAL;
-	}
+			__func__, MAX_FLASH_खाता_SIZE);
+		वापस -EINVAL;
+	पूर्ण
 
 	flash_start_address = *(u32 *)&flash_content[FLASH_START_ADDRESS];
 	rsi_dbg(INFO_ZONE, "flash start address: %08x\n", flash_start_address);
 
-	if (flash_start_address < FW_IMAGE_MIN_ADDRESS) {
+	अगर (flash_start_address < FW_IMAGE_MIN_ADDRESS) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Fw image Flash Start Address is less than 64K\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (flash_start_address % FLASH_SECTOR_SIZE) {
+	अगर (flash_start_address % FLASH_SECTOR_SIZE) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Flash Start Address is not multiple of 4K\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((flash_start_address + content_size) > adapter->flash_capacity) {
+	अगर ((flash_start_address + content_size) > adapter->flash_capacity) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Flash Content will cross max flash size\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	temp_content_size  = content_size;
 	num_flash = content_size / FLASH_WRITE_CHUNK_SIZE;
@@ -790,119 +791,119 @@ static int auto_fw_upgrade(struct rsi_hw *adapter, u8 *flash_content,
 	rsi_dbg(INFO_ZONE, "content_size: %d, num_flash: %d\n",
 		content_size, num_flash);
 
-	for (index = 0; index <= num_flash; index++) {
+	क्रम (index = 0; index <= num_flash; index++) अणु
 		rsi_dbg(INFO_ZONE, "flash index: %d\n", index);
-		if (index != num_flash) {
+		अगर (index != num_flash) अणु
 			content_size = FLASH_WRITE_CHUNK_SIZE;
 			rsi_dbg(INFO_ZONE, "QSPI content_size:%d\n",
 				content_size);
-		} else {
+		पूर्ण अन्यथा अणु
 			content_size =
 				temp_content_size % FLASH_WRITE_CHUNK_SIZE;
 			rsi_dbg(INFO_ZONE,
 				"Writing last sector content_size:%d\n",
 				content_size);
-			if (!content_size) {
+			अगर (!content_size) अणु
 				rsi_dbg(INFO_ZONE, "instruction size zero\n");
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (index % 2)
+		अगर (index % 2)
 			cmd = PING_WRITE;
-		else
+		अन्यथा
 			cmd = PONG_WRITE;
 
-		status = ping_pong_write(adapter, cmd, flash_content,
+		status = ping_pong_ग_लिखो(adapter, cmd, flash_content,
 					 content_size);
-		if (status) {
+		अगर (status) अणु
 			rsi_dbg(ERR_ZONE, "%s: Unable to load %d block\n",
 				__func__, index);
-			return status;
-		}
+			वापस status;
+		पूर्ण
 
 		rsi_dbg(INFO_ZONE,
 			"%s: Successfully loaded %d instructions\n",
 			__func__, index);
 		flash_content += content_size;
-	}
+	पूर्ण
 
-	status = bl_cmd(adapter, EOF_REACHED, FW_LOADING_SUCCESSFUL,
+	status = bl_cmd(adapter, खातापूर्ण_REACHED, FW_LOADING_SUCCESSFUL,
 			"EOF_REACHED");
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	rsi_dbg(INFO_ZONE, "FW loading is done and FW is running..\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsi_hal_prepare_fwload(struct rsi_hw *adapter)
-{
-	struct rsi_host_intf_ops *hif_ops = adapter->host_intf_ops;
+अटल पूर्णांक rsi_hal_prepare_fwload(काष्ठा rsi_hw *adapter)
+अणु
+	काष्ठा rsi_host_पूर्णांकf_ops *hअगर_ops = adapter->host_पूर्णांकf_ops;
 	u32 regout_val = 0;
-	int status;
+	पूर्णांक status;
 
-	bl_start_cmd_timer(adapter, BL_CMD_TIMEOUT);
+	bl_start_cmd_समयr(adapter, BL_CMD_TIMEOUT);
 
-	while (!adapter->blcmd_timer_expired) {
-		status = hif_ops->master_reg_read(adapter, SWBL_REGOUT,
+	जबतक (!adapter->blcmd_समयr_expired) अणु
+		status = hअगर_ops->master_reg_पढ़ो(adapter, SWBL_REGOUT,
 						  &regout_val,
 						  RSI_COMMON_REG_SIZE);
-		if (status < 0) {
-			bl_stop_cmd_timer(adapter);
+		अगर (status < 0) अणु
+			bl_stop_cmd_समयr(adapter);
 			rsi_dbg(ERR_ZONE,
 				"%s: REGOUT read failed\n", __func__);
-			return status;
-		}
+			वापस status;
+		पूर्ण
 		mdelay(1);
-		if ((regout_val >> 8) == REGOUT_VALID)
-			break;
-	}
-	if (adapter->blcmd_timer_expired) {
+		अगर ((regout_val >> 8) == REGOUT_VALID)
+			अवरोध;
+	पूर्ण
+	अगर (adapter->blcmd_समयr_expired) अणु
 		rsi_dbg(ERR_ZONE, "%s: REGOUT read timedout\n", __func__);
 		rsi_dbg(ERR_ZONE,
 			"%s: Soft boot loader not present\n", __func__);
-		return -ETIMEDOUT;
-	}
-	bl_stop_cmd_timer(adapter);
+		वापस -ETIMEDOUT;
+	पूर्ण
+	bl_stop_cmd_समयr(adapter);
 
 	rsi_dbg(INFO_ZONE, "Received Board Version Number: %x\n",
 		(regout_val & 0xff));
 
-	status = hif_ops->master_reg_write(adapter, SWBL_REGOUT,
+	status = hअगर_ops->master_reg_ग_लिखो(adapter, SWBL_REGOUT,
 					   (REGOUT_INVALID |
 					    REGOUT_INVALID << 8),
 					   RSI_COMMON_REG_SIZE);
-	if (status < 0)
+	अगर (status < 0)
 		rsi_dbg(ERR_ZONE, "%s: REGOUT writing failed..\n", __func__);
-	else
+	अन्यथा
 		rsi_dbg(INFO_ZONE,
 			"===> Device is ready to load firmware <===\n");
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int rsi_load_9113_firmware(struct rsi_hw *adapter)
-{
-	struct rsi_common *common = adapter->priv;
-	const struct firmware *fw_entry = NULL;
+अटल पूर्णांक rsi_load_9113_firmware(काष्ठा rsi_hw *adapter)
+अणु
+	काष्ठा rsi_common *common = adapter->priv;
+	स्थिर काष्ठा firmware *fw_entry = शून्य;
 	u32 content_size;
-	u16 tmp_regout_val = 0;
-	struct ta_metadata *metadata_p;
-	int status;
+	u16 पंचांगp_regout_val = 0;
+	काष्ठा ta_metadata *metadata_p;
+	पूर्णांक status;
 
 	status = bl_cmd(adapter, CONFIG_AUTO_READ_MODE, CMD_PASS,
 			"AUTO_READ_CMD");
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
-	adapter->flash_capacity = read_flash_capacity(adapter);
-	if (adapter->flash_capacity <= 0) {
+	adapter->flash_capacity = पढ़ो_flash_capacity(adapter);
+	अगर (adapter->flash_capacity <= 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Unable to read flash size from EEPROM\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	metadata_p = &metadata_flash_content[adapter->priv->coex_mode];
 
@@ -910,11 +911,11 @@ static int rsi_load_9113_firmware(struct rsi_hw *adapter)
 	adapter->fw_file_name = metadata_p->name;
 
 	status = request_firmware(&fw_entry, metadata_p->name, adapter->device);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE, "%s: Failed to open file %s\n",
 			__func__, metadata_p->name);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 	content_size = fw_entry->size;
 	rsi_dbg(INFO_ZONE, "FW Length = %d bytes\n", content_size);
 
@@ -930,119 +931,119 @@ static int rsi_load_9113_firmware(struct rsi_hw *adapter)
 	common->lmac_ver.minor =
 		fw_entry->data[LMAC_VER_OFFSET_9113 + 4] & 0xFF;
 	common->lmac_ver.patch_num = 0;
-	rsi_print_version(common);
+	rsi_prपूर्णांक_version(common);
 
-	status = bl_write_header(adapter, (u8 *)fw_entry->data, content_size);
-	if (status) {
+	status = bl_ग_लिखो_header(adapter, (u8 *)fw_entry->data, content_size);
+	अगर (status) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: RPS Image header loading failed\n",
 			__func__);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	bl_start_cmd_timer(adapter, BL_CMD_TIMEOUT);
-	status = bl_write_cmd(adapter, CHECK_CRC, CMD_PASS, &tmp_regout_val);
-	if (status) {
-		bl_stop_cmd_timer(adapter);
+	bl_start_cmd_समयr(adapter, BL_CMD_TIMEOUT);
+	status = bl_ग_लिखो_cmd(adapter, CHECK_CRC, CMD_PASS, &पंचांगp_regout_val);
+	अगर (status) अणु
+		bl_stop_cmd_समयr(adapter);
 		rsi_dbg(ERR_ZONE,
 			"%s: CHECK_CRC Command writing failed..\n",
 			__func__);
-		if ((tmp_regout_val & 0xff) == CMD_FAIL) {
+		अगर ((पंचांगp_regout_val & 0xff) == CMD_FAIL) अणु
 			rsi_dbg(ERR_ZONE,
 				"CRC Fail.. Proceeding to Upgrade mode\n");
-			goto fw_upgrade;
-		}
-	}
-	bl_stop_cmd_timer(adapter);
+			जाओ fw_upgrade;
+		पूर्ण
+	पूर्ण
+	bl_stop_cmd_समयr(adapter);
 
 	status = bl_cmd(adapter, POLLING_MODE, CMD_PASS, "POLLING_MODE");
-	if (status)
-		goto fail;
+	अगर (status)
+		जाओ fail;
 
 load_image_cmd:
 	status = bl_cmd(adapter, LOAD_HOSTED_FW, LOADING_INITIATED,
 			"LOAD_HOSTED_FW");
-	if (status)
-		goto fail;
+	अगर (status)
+		जाओ fail;
 	rsi_dbg(INFO_ZONE, "Load Image command passed..\n");
-	goto success;
+	जाओ success;
 
 fw_upgrade:
-	status = bl_cmd(adapter, BURN_HOSTED_FW, SEND_RPS_FILE, "FW_UPGRADE");
-	if (status)
-		goto fail;
+	status = bl_cmd(adapter, BURN_HOSTED_FW, SEND_RPS_खाता, "FW_UPGRADE");
+	अगर (status)
+		जाओ fail;
 
 	rsi_dbg(INFO_ZONE, "Burn Command Pass.. Upgrading the firmware\n");
 
-	status = auto_fw_upgrade(adapter, (u8 *)fw_entry->data, content_size);
-	if (status == 0) {
+	status = स्वतः_fw_upgrade(adapter, (u8 *)fw_entry->data, content_size);
+	अगर (status == 0) अणु
 		rsi_dbg(ERR_ZONE, "Firmware upgradation Done\n");
-		goto load_image_cmd;
-	}
+		जाओ load_image_cmd;
+	पूर्ण
 	rsi_dbg(ERR_ZONE, "Firmware upgrade failed\n");
 
 	status = bl_cmd(adapter, CONFIG_AUTO_READ_MODE, CMD_PASS,
 			"AUTO_READ_MODE");
-	if (status)
-		goto fail;
+	अगर (status)
+		जाओ fail;
 
 success:
 	rsi_dbg(ERR_ZONE, "***** Firmware Loading successful *****\n");
 	release_firmware(fw_entry);
-	return 0;
+	वापस 0;
 
 fail:
 	rsi_dbg(ERR_ZONE, "##### Firmware loading failed #####\n");
 	release_firmware(fw_entry);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int rsi_load_9116_firmware(struct rsi_hw *adapter)
-{
-	struct rsi_common *common = adapter->priv;
-	struct rsi_host_intf_ops *hif_ops = adapter->host_intf_ops;
-	const struct firmware *fw_entry;
-	struct ta_metadata *metadata_p;
+अटल पूर्णांक rsi_load_9116_firmware(काष्ठा rsi_hw *adapter)
+अणु
+	काष्ठा rsi_common *common = adapter->priv;
+	काष्ठा rsi_host_पूर्णांकf_ops *hअगर_ops = adapter->host_पूर्णांकf_ops;
+	स्थिर काष्ठा firmware *fw_entry;
+	काष्ठा ta_metadata *metadata_p;
 	u8 *ta_firmware, *fw_p;
-	struct bootload_ds bootload_ds;
-	u32 instructions_sz, base_address;
+	काष्ठा bootload_ds bootload_ds;
+	u32 inकाष्ठाions_sz, base_address;
 	u16 block_size = adapter->block_size;
 	u32 dest, len;
-	int status, cnt;
+	पूर्णांक status, cnt;
 
 	rsi_dbg(INIT_ZONE, "***** Load 9116 TA Instructions *****\n");
 
-	if (adapter->rsi_host_intf == RSI_HOST_INTF_USB) {
+	अगर (adapter->rsi_host_पूर्णांकf == RSI_HOST_INTF_USB) अणु
 		status = bl_cmd(adapter, POLLING_MODE, CMD_PASS,
 				"POLLING_MODE");
-		if (status < 0)
-			return status;
-	}
+		अगर (status < 0)
+			वापस status;
+	पूर्ण
 
-	status = hif_ops->master_reg_write(adapter, MEM_ACCESS_CTRL_FROM_HOST,
+	status = hअगर_ops->master_reg_ग_लिखो(adapter, MEM_ACCESS_CTRL_FROM_HOST,
 					   RAM_384K_ACCESS_FROM_TA,
 					   RSI_9116_REG_SIZE);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE, "%s: Unable to access full RAM memory\n",
 			__func__);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
 	metadata_p = &metadata[adapter->priv->coex_mode];
 	rsi_dbg(INIT_ZONE, "%s: loading file %s\n", __func__, metadata_p->name);
 	status = request_firmware(&fw_entry, metadata_p->name, adapter->device);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE, "%s: Failed to open file %s\n",
 			__func__, metadata_p->name);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
 	ta_firmware = kmemdup(fw_entry->data, fw_entry->size, GFP_KERNEL);
-	if (!ta_firmware)
-		goto fail_release_fw;
+	अगर (!ta_firmware)
+		जाओ fail_release_fw;
 	fw_p = ta_firmware;
-	instructions_sz = fw_entry->size;
-	rsi_dbg(INFO_ZONE, "FW Length = %d bytes\n", instructions_sz);
+	inकाष्ठाions_sz = fw_entry->size;
+	rsi_dbg(INFO_ZONE, "FW Length = %d bytes\n", inकाष्ठाions_sz);
 
 	common->lmac_ver.major = ta_firmware[LMAC_VER_OFFSET_9116];
 	common->lmac_ver.minor = ta_firmware[LMAC_VER_OFFSET_9116 + 1];
@@ -1051,18 +1052,18 @@ static int rsi_load_9116_firmware(struct rsi_hw *adapter)
 	common->lmac_ver.ver.info.fw_ver[0] =
 		ta_firmware[LMAC_VER_OFFSET_9116 + 4];
 
-	if (instructions_sz % FW_ALIGN_SIZE)
-		instructions_sz +=
-			(FW_ALIGN_SIZE - (instructions_sz % FW_ALIGN_SIZE));
-	rsi_dbg(INFO_ZONE, "instructions_sz : %d\n", instructions_sz);
+	अगर (inकाष्ठाions_sz % FW_ALIGN_SIZE)
+		inकाष्ठाions_sz +=
+			(FW_ALIGN_SIZE - (inकाष्ठाions_sz % FW_ALIGN_SIZE));
+	rsi_dbg(INFO_ZONE, "instructions_sz : %d\n", inकाष्ठाions_sz);
 
-	if (*(u16 *)fw_p == RSI_9116_FW_MAGIC_WORD) {
-		memcpy(&bootload_ds, fw_p, sizeof(struct bootload_ds));
+	अगर (*(u16 *)fw_p == RSI_9116_FW_MAGIC_WORD) अणु
+		स_नकल(&bootload_ds, fw_p, माप(काष्ठा bootload_ds));
 		fw_p += le16_to_cpu(bootload_ds.offset);
 		rsi_dbg(INFO_ZONE, "FW start = %x\n", *(u32 *)fw_p);
 
 		cnt = 0;
-		do {
+		करो अणु
 			rsi_dbg(ERR_ZONE, "%s: Loading chunk %d\n",
 				__func__, cnt);
 
@@ -1072,92 +1073,92 @@ static int rsi_load_9116_firmware(struct rsi_hw *adapter)
 			rsi_dbg(INFO_ZONE, "length %d destination %x\n",
 				len, dest);
 
-			status = hif_ops->load_data_master_write(adapter, dest,
+			status = hअगर_ops->load_data_master_ग_लिखो(adapter, dest,
 								 len,
 								 block_size,
 								 fw_p);
-			if (status < 0) {
+			अगर (status < 0) अणु
 				rsi_dbg(ERR_ZONE,
 					"Failed to load chunk %d\n", cnt);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			fw_p += len;
-			if (le32_to_cpu(bootload_ds.bl_entry[cnt].control) &
+			अगर (le32_to_cpu(bootload_ds.bl_entry[cnt].control) &
 			    RSI_BL_CTRL_LAST_ENTRY)
-				break;
+				अवरोध;
 			cnt++;
-		} while (1);
-	} else {
+		पूर्ण जबतक (1);
+	पूर्ण अन्यथा अणु
 		base_address = metadata_p->address;
-		status = hif_ops->load_data_master_write(adapter,
+		status = hअगर_ops->load_data_master_ग_लिखो(adapter,
 							 base_address,
-							 instructions_sz,
+							 inकाष्ठाions_sz,
 							 block_size,
 							 ta_firmware);
-	}
-	if (status) {
+	पूर्ण
+	अगर (status) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Unable to load %s blk\n",
 			__func__, metadata_p->name);
-		goto fail_free_fw;
-	}
+		जाओ fail_मुक्त_fw;
+	पूर्ण
 
 	rsi_dbg(INIT_ZONE, "%s: Successfully loaded %s instructions\n",
 		__func__, metadata_p->name);
 
-	if (adapter->rsi_host_intf == RSI_HOST_INTF_SDIO) {
-		if (hif_ops->ta_reset(adapter))
+	अगर (adapter->rsi_host_पूर्णांकf == RSI_HOST_INTF_SDIO) अणु
+		अगर (hअगर_ops->ta_reset(adapter))
 			rsi_dbg(ERR_ZONE, "Unable to put ta in reset\n");
-	} else {
-		if (bl_cmd(adapter, JUMP_TO_ZERO_PC,
+	पूर्ण अन्यथा अणु
+		अगर (bl_cmd(adapter, JUMP_TO_ZERO_PC,
 			   CMD_PASS, "JUMP_TO_ZERO") < 0)
 			rsi_dbg(INFO_ZONE, "Jump to zero command failed\n");
-		else
+		अन्यथा
 			rsi_dbg(INFO_ZONE, "Jump to zero command successful\n");
-	}
+	पूर्ण
 
-fail_free_fw:
-	kfree(ta_firmware);
+fail_मुक्त_fw:
+	kमुक्त(ta_firmware);
 fail_release_fw:
 	release_firmware(fw_entry);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int rsi_hal_device_init(struct rsi_hw *adapter)
-{
-	struct rsi_common *common = adapter->priv;
-	int status;
+पूर्णांक rsi_hal_device_init(काष्ठा rsi_hw *adapter)
+अणु
+	काष्ठा rsi_common *common = adapter->priv;
+	पूर्णांक status;
 
-	switch (adapter->device_model) {
-	case RSI_DEV_9113:
+	चयन (adapter->device_model) अणु
+	हाल RSI_DEV_9113:
 		status = rsi_hal_prepare_fwload(adapter);
-		if (status < 0)
-			return status;
-		if (rsi_load_9113_firmware(adapter)) {
+		अगर (status < 0)
+			वापस status;
+		अगर (rsi_load_9113_firmware(adapter)) अणु
 			rsi_dbg(ERR_ZONE,
 				"%s: Failed to load TA instructions\n",
 				__func__);
-			return -EINVAL;
-		}
-		break;
-	case RSI_DEV_9116:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल RSI_DEV_9116:
 		status = rsi_hal_prepare_fwload(adapter);
-		if (status < 0)
-			return status;
-		if (rsi_load_9116_firmware(adapter)) {
+		अगर (status < 0)
+			वापस status;
+		अगर (rsi_load_9116_firmware(adapter)) अणु
 			rsi_dbg(ERR_ZONE,
 				"%s: Failed to load firmware to 9116 device\n",
 				__func__);
-			return -EINVAL;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 	common->fsm_state = FSM_CARD_NOT_READY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rsi_hal_device_init);
 

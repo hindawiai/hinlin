@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: LGPL-2.1
-#ifndef PERF_FLAG_FD_NO_GROUP
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
+#अगर_अघोषित PERF_FLAG_FD_NO_GROUP
 # define PERF_FLAG_FD_NO_GROUP		(1UL << 0)
-#endif
+#पूर्ण_अगर
 
-#ifndef PERF_FLAG_FD_OUTPUT
+#अगर_अघोषित PERF_FLAG_FD_OUTPUT
 # define PERF_FLAG_FD_OUTPUT		(1UL << 1)
-#endif
+#पूर्ण_अगर
 
-#ifndef PERF_FLAG_PID_CGROUP
+#अगर_अघोषित PERF_FLAG_PID_CGROUP
 # define PERF_FLAG_PID_CGROUP		(1UL << 2) /* pid=cgroup id, per-cpu mode only */
-#endif
+#पूर्ण_अगर
 
-#ifndef PERF_FLAG_FD_CLOEXEC
+#अगर_अघोषित PERF_FLAG_FD_CLOEXEC
 # define PERF_FLAG_FD_CLOEXEC		(1UL << 3) /* O_CLOEXEC */
-#endif
+#पूर्ण_अगर
 
-static size_t syscall_arg__scnprintf_perf_flags(char *bf, size_t size,
-						struct syscall_arg *arg)
-{
+अटल माप_प्रकार syscall_arg__scnम_लिखो_perf_flags(अक्षर *bf, माप_प्रकार size,
+						काष्ठा syscall_arg *arg)
+अणु
 	bool show_prefix = arg->show_string_prefix;
-	const char *prefix = "PERF_";
-	int printed = 0, flags = arg->val;
+	स्थिर अक्षर *prefix = "PERF_";
+	पूर्णांक prपूर्णांकed = 0, flags = arg->val;
 
-	if (flags == 0)
-		return 0;
+	अगर (flags == 0)
+		वापस 0;
 
-#define	P_FLAG(n) \
-	if (flags & PERF_FLAG_##n) { \
-		printed += scnprintf(bf + printed, size - printed, "%s%s%s", printed ? "|" : "", show_prefix ? prefix : "", #n); \
+#घोषणा	P_FLAG(n) \
+	अगर (flags & PERF_FLAG_##n) अणु \
+		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%s%s", prपूर्णांकed ? "|" : "", show_prefix ? prefix : "", #n); \
 		flags &= ~PERF_FLAG_##n; \
-	}
+	पूर्ण
 
 	P_FLAG(FD_NO_GROUP);
 	P_FLAG(FD_OUTPUT);
 	P_FLAG(PID_CGROUP);
 	P_FLAG(FD_CLOEXEC);
-#undef P_FLAG
+#अघोषित P_FLAG
 
-	if (flags)
-		printed += scnprintf(bf + printed, size - printed, "%s%#x", printed ? "|" : "", flags);
+	अगर (flags)
+		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%#x", prपूर्णांकed ? "|" : "", flags);
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-#define SCA_PERF_FLAGS syscall_arg__scnprintf_perf_flags
+#घोषणा SCA_PERF_FLAGS syscall_arg__scnम_लिखो_perf_flags

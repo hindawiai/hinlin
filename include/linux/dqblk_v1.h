@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *	File with in-memory structures of old quota format
+ *	File with in-memory काष्ठाures of old quota क्रमmat
  */
 
-#ifndef _LINUX_DQBLK_V1_H
-#define _LINUX_DQBLK_V1_H
+#अगर_अघोषित _LINUX_DQBLK_V1_H
+#घोषणा _LINUX_DQBLK_V1_H
 
-/* Numbers of blocks needed for updates */
-#define V1_INIT_ALLOC 1
-#define V1_INIT_REWRITE 1
-#define V1_DEL_ALLOC 0
-#define V1_DEL_REWRITE 2
+/* Numbers of blocks needed क्रम updates */
+#घोषणा V1_INIT_ALLOC 1
+#घोषणा V1_INIT_REWRITE 1
+#घोषणा V1_DEL_ALLOC 0
+#घोषणा V1_DEL_REWRITE 2
 
-#endif	/* _LINUX_DQBLK_V1_H */
+#पूर्ण_अगर	/* _LINUX_DQBLK_V1_H */

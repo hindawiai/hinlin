@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_PERCPU_H
-#define _ASM_IA64_PERCPU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_PERCPU_H
+#घोषणा _ASM_IA64_PERCPU_H
 
 /*
  * Copyright (C) 2002-2003 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  */
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 # define THIS_CPU(var)	(var)  /* use this to mark accesses to per-CPU variables... */
-#else /* !__ASSEMBLY__ */
+#अन्यथा /* !__ASSEMBLY__ */
 
 
-#include <linux/threads.h>
+#समावेश <linux/thपढ़ोs.h>
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-#ifdef HAVE_MODEL_SMALL_ATTRIBUTE
+#अगर_घोषित HAVE_MODEL_SMALL_ATTRIBUTE
 # define PER_CPU_ATTRIBUTES	__attribute__((__model__ (__small__)))
-#endif
+#पूर्ण_अगर
 
-#define __my_cpu_offset	__ia64_per_cpu_var(local_per_cpu_offset)
+#घोषणा __my_cpu_offset	__ia64_per_cpu_var(local_per_cpu_offset)
 
-extern void *per_cpu_init(void);
+बाह्य व्योम *per_cpu_init(व्योम);
 
-#else /* ! SMP */
+#अन्यथा /* ! SMP */
 
-#define per_cpu_init()				(__phys_per_cpu_start)
+#घोषणा per_cpu_init()				(__phys_per_cpu_start)
 
-#endif	/* SMP */
+#पूर्ण_अगर	/* SMP */
 
-#define PER_CPU_BASE_SECTION ".data..percpu"
+#घोषणा PER_CPU_BASE_SECTION ".data..percpu"
 
 /*
- * Be extremely careful when taking the address of this variable!  Due to virtual
- * remapping, it is different from the canonical address returned by this_cpu_ptr(&var)!
+ * Be extremely careful when taking the address of this variable!  Due to भव
+ * remapping, it is dअगरferent from the canonical address वापसed by this_cpu_ptr(&var)!
  * On the positive side, using __ia64_per_cpu_var() instead of this_cpu_ptr() is slightly
  * more efficient.
  */
-#define __ia64_per_cpu_var(var) (*({					\
-	__verify_pcpu_ptr(&(var));					\
-	((typeof(var) __kernel __force *)&(var));			\
-}))
+#घोषणा __ia64_per_cpu_var(var) (*(अणु					\
+	__verअगरy_pcpu_ptr(&(var));					\
+	((typeof(var) __kernel __क्रमce *)&(var));			\
+पूर्ण))
 
-#include <asm-generic/percpu.h>
+#समावेश <यंत्र-generic/percpu.h>
 
 /* Equal to __per_cpu_offset[smp_processor_id()], but faster to access: */
-DECLARE_PER_CPU(unsigned long, local_per_cpu_offset);
+DECLARE_PER_CPU(अचिन्हित दीर्घ, local_per_cpu_offset);
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#endif /* _ASM_IA64_PERCPU_H */
+#पूर्ण_अगर /* _ASM_IA64_PERCPU_H */

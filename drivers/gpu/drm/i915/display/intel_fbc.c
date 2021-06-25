@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2014 Intel Corporation
+ * Copyright तऊ 2014 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -24,501 +25,501 @@
 /**
  * DOC: Frame Buffer Compression (FBC)
  *
- * FBC tries to save memory bandwidth (and so power consumption) by
+ * FBC tries to save memory bandwidth (and so घातer consumption) by
  * compressing the amount of memory used by the display. It is total
  * transparent to user space and completely handled in the kernel.
  *
  * The benefits of FBC are mostly visible with solid backgrounds and
- * variation-less patterns. It comes from keeping the memory footprint small
- * and having fewer memory pages opened and accessed for refreshing the display.
+ * variation-less patterns. It comes from keeping the memory footprपूर्णांक small
+ * and having fewer memory pages खोलोed and accessed क्रम refreshing the display.
  *
- * i915 is responsible to reserve stolen memory for FBC and configure its
- * offset on proper registers. The hardware takes care of all
- * compress/decompress. However there are many known cases where we have to
- * forcibly disable it to allow proper screen updates.
+ * i915 is responsible to reserve stolen memory क्रम FBC and configure its
+ * offset on proper रेजिस्टरs. The hardware takes care of all
+ * compress/decompress. However there are many known हालs where we have to
+ * क्रमcibly disable it to allow proper screen updates.
  */
 
-#include <drm/drm_fourcc.h>
+#समावेश <drm/drm_fourcc.h>
 
-#include "i915_drv.h"
-#include "i915_trace.h"
-#include "i915_vgpu.h"
-#include "intel_display_types.h"
-#include "intel_fbc.h"
-#include "intel_frontbuffer.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_trace.h"
+#समावेश "i915_vgpu.h"
+#समावेश "intel_display_types.h"
+#समावेश "intel_fbc.h"
+#समावेश "intel_frontbuffer.h"
 
 /*
  * For SKL+, the plane source size used by the hardware is based on the value we
- * write to the PLANE_SIZE register. For BDW-, the hardware looks at the value
+ * ग_लिखो to the PLANE_SIZE रेजिस्टर. For BDW-, the hardware looks at the value
  * we wrote to PIPESRC.
  */
-static void intel_fbc_get_plane_source_size(const struct intel_fbc_state_cache *cache,
-					    int *width, int *height)
-{
-	if (width)
+अटल व्योम पूर्णांकel_fbc_get_plane_source_size(स्थिर काष्ठा पूर्णांकel_fbc_state_cache *cache,
+					    पूर्णांक *width, पूर्णांक *height)
+अणु
+	अगर (width)
 		*width = cache->plane.src_w;
-	if (height)
+	अगर (height)
 		*height = cache->plane.src_h;
-}
+पूर्ण
 
-static int intel_fbc_calculate_cfb_size(struct drm_i915_private *dev_priv,
-					const struct intel_fbc_state_cache *cache)
-{
-	int lines;
+अटल पूर्णांक पूर्णांकel_fbc_calculate_cfb_size(काष्ठा drm_i915_निजी *dev_priv,
+					स्थिर काष्ठा पूर्णांकel_fbc_state_cache *cache)
+अणु
+	पूर्णांक lines;
 
-	intel_fbc_get_plane_source_size(cache, NULL, &lines);
-	if (IS_DISPLAY_VER(dev_priv, 7))
+	पूर्णांकel_fbc_get_plane_source_size(cache, शून्य, &lines);
+	अगर (IS_DISPLAY_VER(dev_priv, 7))
 		lines = min(lines, 2048);
-	else if (DISPLAY_VER(dev_priv) >= 8)
+	अन्यथा अगर (DISPLAY_VER(dev_priv) >= 8)
 		lines = min(lines, 2560);
 
 	/* Hardware needs the full buffer stride, not just the active area. */
-	return lines * cache->fb.stride;
-}
+	वापस lines * cache->fb.stride;
+पूर्ण
 
-static void i8xx_fbc_deactivate(struct drm_i915_private *dev_priv)
-{
+अटल व्योम i8xx_fbc_deactivate(काष्ठा drm_i915_निजी *dev_priv)
+अणु
 	u32 fbc_ctl;
 
 	/* Disable compression */
-	fbc_ctl = intel_de_read(dev_priv, FBC_CONTROL);
-	if ((fbc_ctl & FBC_CTL_EN) == 0)
-		return;
+	fbc_ctl = पूर्णांकel_de_पढ़ो(dev_priv, FBC_CONTROL);
+	अगर ((fbc_ctl & FBC_CTL_EN) == 0)
+		वापस;
 
 	fbc_ctl &= ~FBC_CTL_EN;
-	intel_de_write(dev_priv, FBC_CONTROL, fbc_ctl);
+	पूर्णांकel_de_ग_लिखो(dev_priv, FBC_CONTROL, fbc_ctl);
 
-	/* Wait for compressing bit to clear */
-	if (intel_de_wait_for_clear(dev_priv, FBC_STATUS,
-				    FBC_STAT_COMPRESSING, 10)) {
+	/* Wait क्रम compressing bit to clear */
+	अगर (पूर्णांकel_de_रुको_क्रम_clear(dev_priv, FBC_STATUS,
+				    FBC_STAT_COMPRESSING, 10)) अणु
 		drm_dbg_kms(&dev_priv->drm, "FBC idle timed out\n");
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void i8xx_fbc_activate(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc_reg_params *params = &dev_priv->fbc.params;
-	int cfb_pitch;
-	int i;
+अटल व्योम i8xx_fbc_activate(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc_reg_params *params = &dev_priv->fbc.params;
+	पूर्णांक cfb_pitch;
+	पूर्णांक i;
 	u32 fbc_ctl;
 
-	/* Note: fbc.threshold == 1 for i8xx */
+	/* Note: fbc.threshold == 1 क्रम i8xx */
 	cfb_pitch = params->cfb_size / FBC_LL_SIZE;
-	if (params->fb.stride < cfb_pitch)
+	अगर (params->fb.stride < cfb_pitch)
 		cfb_pitch = params->fb.stride;
 
 	/* FBC_CTL wants 32B or 64B units */
-	if (IS_DISPLAY_VER(dev_priv, 2))
+	अगर (IS_DISPLAY_VER(dev_priv, 2))
 		cfb_pitch = (cfb_pitch / 32) - 1;
-	else
+	अन्यथा
 		cfb_pitch = (cfb_pitch / 64) - 1;
 
 	/* Clear old tags */
-	for (i = 0; i < (FBC_LL_SIZE / 32) + 1; i++)
-		intel_de_write(dev_priv, FBC_TAG(i), 0);
+	क्रम (i = 0; i < (FBC_LL_SIZE / 32) + 1; i++)
+		पूर्णांकel_de_ग_लिखो(dev_priv, FBC_TAG(i), 0);
 
-	if (IS_DISPLAY_VER(dev_priv, 4)) {
+	अगर (IS_DISPLAY_VER(dev_priv, 4)) अणु
 		u32 fbc_ctl2;
 
 		/* Set it up... */
 		fbc_ctl2 = FBC_CTL_FENCE_DBL | FBC_CTL_IDLE_IMM;
 		fbc_ctl2 |= FBC_CTL_PLANE(params->crtc.i9xx_plane);
-		if (params->fence_id >= 0)
+		अगर (params->fence_id >= 0)
 			fbc_ctl2 |= FBC_CTL_CPU_FENCE;
-		intel_de_write(dev_priv, FBC_CONTROL2, fbc_ctl2);
-		intel_de_write(dev_priv, FBC_FENCE_OFF,
+		पूर्णांकel_de_ग_लिखो(dev_priv, FBC_CONTROL2, fbc_ctl2);
+		पूर्णांकel_de_ग_लिखो(dev_priv, FBC_FENCE_OFF,
 			       params->fence_y_offset);
-	}
+	पूर्ण
 
 	/* enable it... */
-	fbc_ctl = FBC_CTL_INTERVAL(params->interval);
+	fbc_ctl = FBC_CTL_INTERVAL(params->पूर्णांकerval);
 	fbc_ctl |= FBC_CTL_EN | FBC_CTL_PERIODIC;
-	if (IS_I945GM(dev_priv))
+	अगर (IS_I945GM(dev_priv))
 		fbc_ctl |= FBC_CTL_C3_IDLE; /* 945 needs special SR handling */
 	fbc_ctl |= FBC_CTL_STRIDE(cfb_pitch & 0xff);
-	if (params->fence_id >= 0)
+	अगर (params->fence_id >= 0)
 		fbc_ctl |= FBC_CTL_FENCENO(params->fence_id);
-	intel_de_write(dev_priv, FBC_CONTROL, fbc_ctl);
-}
+	पूर्णांकel_de_ग_लिखो(dev_priv, FBC_CONTROL, fbc_ctl);
+पूर्ण
 
-static bool i8xx_fbc_is_active(struct drm_i915_private *dev_priv)
-{
-	return intel_de_read(dev_priv, FBC_CONTROL) & FBC_CTL_EN;
-}
+अटल bool i8xx_fbc_is_active(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	वापस पूर्णांकel_de_पढ़ो(dev_priv, FBC_CONTROL) & FBC_CTL_EN;
+पूर्ण
 
-static void g4x_fbc_activate(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc_reg_params *params = &dev_priv->fbc.params;
+अटल व्योम g4x_fbc_activate(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc_reg_params *params = &dev_priv->fbc.params;
 	u32 dpfc_ctl;
 
 	dpfc_ctl = DPFC_CTL_PLANE(params->crtc.i9xx_plane) | DPFC_SR_EN;
-	if (params->fb.format->cpp[0] == 2)
+	अगर (params->fb.क्रमmat->cpp[0] == 2)
 		dpfc_ctl |= DPFC_CTL_LIMIT_2X;
-	else
+	अन्यथा
 		dpfc_ctl |= DPFC_CTL_LIMIT_1X;
 
-	if (params->fence_id >= 0) {
+	अगर (params->fence_id >= 0) अणु
 		dpfc_ctl |= DPFC_CTL_FENCE_EN | params->fence_id;
-		intel_de_write(dev_priv, DPFC_FENCE_YOFF,
+		पूर्णांकel_de_ग_लिखो(dev_priv, DPFC_FENCE_YOFF,
 			       params->fence_y_offset);
-	} else {
-		intel_de_write(dev_priv, DPFC_FENCE_YOFF, 0);
-	}
+	पूर्ण अन्यथा अणु
+		पूर्णांकel_de_ग_लिखो(dev_priv, DPFC_FENCE_YOFF, 0);
+	पूर्ण
 
 	/* enable it... */
-	intel_de_write(dev_priv, DPFC_CONTROL, dpfc_ctl | DPFC_CTL_EN);
-}
+	पूर्णांकel_de_ग_लिखो(dev_priv, DPFC_CONTROL, dpfc_ctl | DPFC_CTL_EN);
+पूर्ण
 
-static void g4x_fbc_deactivate(struct drm_i915_private *dev_priv)
-{
+अटल व्योम g4x_fbc_deactivate(काष्ठा drm_i915_निजी *dev_priv)
+अणु
 	u32 dpfc_ctl;
 
 	/* Disable compression */
-	dpfc_ctl = intel_de_read(dev_priv, DPFC_CONTROL);
-	if (dpfc_ctl & DPFC_CTL_EN) {
+	dpfc_ctl = पूर्णांकel_de_पढ़ो(dev_priv, DPFC_CONTROL);
+	अगर (dpfc_ctl & DPFC_CTL_EN) अणु
 		dpfc_ctl &= ~DPFC_CTL_EN;
-		intel_de_write(dev_priv, DPFC_CONTROL, dpfc_ctl);
-	}
-}
+		पूर्णांकel_de_ग_लिखो(dev_priv, DPFC_CONTROL, dpfc_ctl);
+	पूर्ण
+पूर्ण
 
-static bool g4x_fbc_is_active(struct drm_i915_private *dev_priv)
-{
-	return intel_de_read(dev_priv, DPFC_CONTROL) & DPFC_CTL_EN;
-}
+अटल bool g4x_fbc_is_active(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	वापस पूर्णांकel_de_पढ़ो(dev_priv, DPFC_CONTROL) & DPFC_CTL_EN;
+पूर्ण
 
-static void i8xx_fbc_recompress(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc_reg_params *params = &dev_priv->fbc.params;
-	enum i9xx_plane_id i9xx_plane = params->crtc.i9xx_plane;
-
-	spin_lock_irq(&dev_priv->uncore.lock);
-	intel_de_write_fw(dev_priv, DSPADDR(i9xx_plane),
-			  intel_de_read_fw(dev_priv, DSPADDR(i9xx_plane)));
-	spin_unlock_irq(&dev_priv->uncore.lock);
-}
-
-static void i965_fbc_recompress(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc_reg_params *params = &dev_priv->fbc.params;
-	enum i9xx_plane_id i9xx_plane = params->crtc.i9xx_plane;
+अटल व्योम i8xx_fbc_recompress(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc_reg_params *params = &dev_priv->fbc.params;
+	क्रमागत i9xx_plane_id i9xx_plane = params->crtc.i9xx_plane;
 
 	spin_lock_irq(&dev_priv->uncore.lock);
-	intel_de_write_fw(dev_priv, DSPSURF(i9xx_plane),
-			  intel_de_read_fw(dev_priv, DSPSURF(i9xx_plane)));
+	पूर्णांकel_de_ग_लिखो_fw(dev_priv, DSPADDR(i9xx_plane),
+			  पूर्णांकel_de_पढ़ो_fw(dev_priv, DSPADDR(i9xx_plane)));
 	spin_unlock_irq(&dev_priv->uncore.lock);
-}
+पूर्ण
 
-/* This function forces a CFB recompression through the nuke operation. */
-static void snb_fbc_recompress(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
+अटल व्योम i965_fbc_recompress(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc_reg_params *params = &dev_priv->fbc.params;
+	क्रमागत i9xx_plane_id i9xx_plane = params->crtc.i9xx_plane;
 
-	trace_intel_fbc_nuke(fbc->crtc);
+	spin_lock_irq(&dev_priv->uncore.lock);
+	पूर्णांकel_de_ग_लिखो_fw(dev_priv, DSPSURF(i9xx_plane),
+			  पूर्णांकel_de_पढ़ो_fw(dev_priv, DSPSURF(i9xx_plane)));
+	spin_unlock_irq(&dev_priv->uncore.lock);
+पूर्ण
 
-	intel_de_write(dev_priv, MSG_FBC_REND_STATE, FBC_REND_NUKE);
-	intel_de_posting_read(dev_priv, MSG_FBC_REND_STATE);
-}
+/* This function क्रमces a CFB recompression through the nuke operation. */
+अटल व्योम snb_fbc_recompress(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-static void intel_fbc_recompress(struct drm_i915_private *dev_priv)
-{
-	if (DISPLAY_VER(dev_priv) >= 6)
+	trace_पूर्णांकel_fbc_nuke(fbc->crtc);
+
+	पूर्णांकel_de_ग_लिखो(dev_priv, MSG_FBC_REND_STATE, FBC_REND_NUKE);
+	पूर्णांकel_de_posting_पढ़ो(dev_priv, MSG_FBC_REND_STATE);
+पूर्ण
+
+अटल व्योम पूर्णांकel_fbc_recompress(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	अगर (DISPLAY_VER(dev_priv) >= 6)
 		snb_fbc_recompress(dev_priv);
-	else if (DISPLAY_VER(dev_priv) >= 4)
+	अन्यथा अगर (DISPLAY_VER(dev_priv) >= 4)
 		i965_fbc_recompress(dev_priv);
-	else
+	अन्यथा
 		i8xx_fbc_recompress(dev_priv);
-}
+पूर्ण
 
-static void ilk_fbc_activate(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc_reg_params *params = &dev_priv->fbc.params;
+अटल व्योम ilk_fbc_activate(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc_reg_params *params = &dev_priv->fbc.params;
 	u32 dpfc_ctl;
-	int threshold = dev_priv->fbc.threshold;
+	पूर्णांक threshold = dev_priv->fbc.threshold;
 
 	dpfc_ctl = DPFC_CTL_PLANE(params->crtc.i9xx_plane);
-	if (params->fb.format->cpp[0] == 2)
+	अगर (params->fb.क्रमmat->cpp[0] == 2)
 		threshold++;
 
-	switch (threshold) {
-	case 4:
-	case 3:
+	चयन (threshold) अणु
+	हाल 4:
+	हाल 3:
 		dpfc_ctl |= DPFC_CTL_LIMIT_4X;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		dpfc_ctl |= DPFC_CTL_LIMIT_2X;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		dpfc_ctl |= DPFC_CTL_LIMIT_1X;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (params->fence_id >= 0) {
+	अगर (params->fence_id >= 0) अणु
 		dpfc_ctl |= DPFC_CTL_FENCE_EN;
-		if (IS_IRONLAKE(dev_priv))
+		अगर (IS_IRONLAKE(dev_priv))
 			dpfc_ctl |= params->fence_id;
-		if (IS_SANDYBRIDGE(dev_priv)) {
-			intel_de_write(dev_priv, SNB_DPFC_CTL_SA,
+		अगर (IS_SANDYBRIDGE(dev_priv)) अणु
+			पूर्णांकel_de_ग_लिखो(dev_priv, SNB_DPFC_CTL_SA,
 				       SNB_CPU_FENCE_ENABLE | params->fence_id);
-			intel_de_write(dev_priv, DPFC_CPU_FENCE_OFFSET,
+			पूर्णांकel_de_ग_लिखो(dev_priv, DPFC_CPU_FENCE_OFFSET,
 				       params->fence_y_offset);
-		}
-	} else {
-		if (IS_SANDYBRIDGE(dev_priv)) {
-			intel_de_write(dev_priv, SNB_DPFC_CTL_SA, 0);
-			intel_de_write(dev_priv, DPFC_CPU_FENCE_OFFSET, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (IS_SANDYBRIDGE(dev_priv)) अणु
+			पूर्णांकel_de_ग_लिखो(dev_priv, SNB_DPFC_CTL_SA, 0);
+			पूर्णांकel_de_ग_लिखो(dev_priv, DPFC_CPU_FENCE_OFFSET, 0);
+		पूर्ण
+	पूर्ण
 
-	intel_de_write(dev_priv, ILK_DPFC_FENCE_YOFF,
+	पूर्णांकel_de_ग_लिखो(dev_priv, ILK_DPFC_FENCE_YOFF,
 		       params->fence_y_offset);
 	/* enable it... */
-	intel_de_write(dev_priv, ILK_DPFC_CONTROL, dpfc_ctl | DPFC_CTL_EN);
+	पूर्णांकel_de_ग_लिखो(dev_priv, ILK_DPFC_CONTROL, dpfc_ctl | DPFC_CTL_EN);
 
-	intel_fbc_recompress(dev_priv);
-}
+	पूर्णांकel_fbc_recompress(dev_priv);
+पूर्ण
 
-static void ilk_fbc_deactivate(struct drm_i915_private *dev_priv)
-{
+अटल व्योम ilk_fbc_deactivate(काष्ठा drm_i915_निजी *dev_priv)
+अणु
 	u32 dpfc_ctl;
 
 	/* Disable compression */
-	dpfc_ctl = intel_de_read(dev_priv, ILK_DPFC_CONTROL);
-	if (dpfc_ctl & DPFC_CTL_EN) {
+	dpfc_ctl = पूर्णांकel_de_पढ़ो(dev_priv, ILK_DPFC_CONTROL);
+	अगर (dpfc_ctl & DPFC_CTL_EN) अणु
 		dpfc_ctl &= ~DPFC_CTL_EN;
-		intel_de_write(dev_priv, ILK_DPFC_CONTROL, dpfc_ctl);
-	}
-}
+		पूर्णांकel_de_ग_लिखो(dev_priv, ILK_DPFC_CONTROL, dpfc_ctl);
+	पूर्ण
+पूर्ण
 
-static bool ilk_fbc_is_active(struct drm_i915_private *dev_priv)
-{
-	return intel_de_read(dev_priv, ILK_DPFC_CONTROL) & DPFC_CTL_EN;
-}
+अटल bool ilk_fbc_is_active(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	वापस पूर्णांकel_de_पढ़ो(dev_priv, ILK_DPFC_CONTROL) & DPFC_CTL_EN;
+पूर्ण
 
-static void gen7_fbc_activate(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc_reg_params *params = &dev_priv->fbc.params;
+अटल व्योम gen7_fbc_activate(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc_reg_params *params = &dev_priv->fbc.params;
 	u32 dpfc_ctl;
-	int threshold = dev_priv->fbc.threshold;
+	पूर्णांक threshold = dev_priv->fbc.threshold;
 
 	/* Display WA #0529: skl, kbl, bxt. */
-	if (IS_GEN9_BC(dev_priv) || IS_BROXTON(dev_priv)) {
-		u32 val = intel_de_read(dev_priv, CHICKEN_MISC_4);
+	अगर (IS_GEN9_BC(dev_priv) || IS_BROXTON(dev_priv)) अणु
+		u32 val = पूर्णांकel_de_पढ़ो(dev_priv, CHICKEN_MISC_4);
 
 		val &= ~(FBC_STRIDE_OVERRIDE | FBC_STRIDE_MASK);
 
-		if (params->gen9_wa_cfb_stride)
+		अगर (params->gen9_wa_cfb_stride)
 			val |= FBC_STRIDE_OVERRIDE | params->gen9_wa_cfb_stride;
 
-		intel_de_write(dev_priv, CHICKEN_MISC_4, val);
-	}
+		पूर्णांकel_de_ग_लिखो(dev_priv, CHICKEN_MISC_4, val);
+	पूर्ण
 
 	dpfc_ctl = 0;
-	if (IS_IVYBRIDGE(dev_priv))
+	अगर (IS_IVYBRIDGE(dev_priv))
 		dpfc_ctl |= IVB_DPFC_CTL_PLANE(params->crtc.i9xx_plane);
 
-	if (params->fb.format->cpp[0] == 2)
+	अगर (params->fb.क्रमmat->cpp[0] == 2)
 		threshold++;
 
-	switch (threshold) {
-	case 4:
-	case 3:
+	चयन (threshold) अणु
+	हाल 4:
+	हाल 3:
 		dpfc_ctl |= DPFC_CTL_LIMIT_4X;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		dpfc_ctl |= DPFC_CTL_LIMIT_2X;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		dpfc_ctl |= DPFC_CTL_LIMIT_1X;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (params->fence_id >= 0) {
+	अगर (params->fence_id >= 0) अणु
 		dpfc_ctl |= IVB_DPFC_CTL_FENCE_EN;
-		intel_de_write(dev_priv, SNB_DPFC_CTL_SA,
+		पूर्णांकel_de_ग_लिखो(dev_priv, SNB_DPFC_CTL_SA,
 			       SNB_CPU_FENCE_ENABLE | params->fence_id);
-		intel_de_write(dev_priv, DPFC_CPU_FENCE_OFFSET,
+		पूर्णांकel_de_ग_लिखो(dev_priv, DPFC_CPU_FENCE_OFFSET,
 			       params->fence_y_offset);
-	} else if (dev_priv->ggtt.num_fences) {
-		intel_de_write(dev_priv, SNB_DPFC_CTL_SA, 0);
-		intel_de_write(dev_priv, DPFC_CPU_FENCE_OFFSET, 0);
-	}
+	पूर्ण अन्यथा अगर (dev_priv->ggtt.num_fences) अणु
+		पूर्णांकel_de_ग_लिखो(dev_priv, SNB_DPFC_CTL_SA, 0);
+		पूर्णांकel_de_ग_लिखो(dev_priv, DPFC_CPU_FENCE_OFFSET, 0);
+	पूर्ण
 
-	if (dev_priv->fbc.false_color)
+	अगर (dev_priv->fbc.false_color)
 		dpfc_ctl |= FBC_CTL_FALSE_COLOR;
 
-	intel_de_write(dev_priv, ILK_DPFC_CONTROL, dpfc_ctl | DPFC_CTL_EN);
+	पूर्णांकel_de_ग_लिखो(dev_priv, ILK_DPFC_CONTROL, dpfc_ctl | DPFC_CTL_EN);
 
-	intel_fbc_recompress(dev_priv);
-}
+	पूर्णांकel_fbc_recompress(dev_priv);
+पूर्ण
 
-static bool intel_fbc_hw_is_active(struct drm_i915_private *dev_priv)
-{
-	if (DISPLAY_VER(dev_priv) >= 5)
-		return ilk_fbc_is_active(dev_priv);
-	else if (IS_GM45(dev_priv))
-		return g4x_fbc_is_active(dev_priv);
-	else
-		return i8xx_fbc_is_active(dev_priv);
-}
+अटल bool पूर्णांकel_fbc_hw_is_active(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	अगर (DISPLAY_VER(dev_priv) >= 5)
+		वापस ilk_fbc_is_active(dev_priv);
+	अन्यथा अगर (IS_GM45(dev_priv))
+		वापस g4x_fbc_is_active(dev_priv);
+	अन्यथा
+		वापस i8xx_fbc_is_active(dev_priv);
+पूर्ण
 
-static void intel_fbc_hw_activate(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
+अटल व्योम पूर्णांकel_fbc_hw_activate(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-	trace_intel_fbc_activate(fbc->crtc);
+	trace_पूर्णांकel_fbc_activate(fbc->crtc);
 
 	fbc->active = true;
 	fbc->activated = true;
 
-	if (DISPLAY_VER(dev_priv) >= 7)
+	अगर (DISPLAY_VER(dev_priv) >= 7)
 		gen7_fbc_activate(dev_priv);
-	else if (DISPLAY_VER(dev_priv) >= 5)
+	अन्यथा अगर (DISPLAY_VER(dev_priv) >= 5)
 		ilk_fbc_activate(dev_priv);
-	else if (IS_GM45(dev_priv))
+	अन्यथा अगर (IS_GM45(dev_priv))
 		g4x_fbc_activate(dev_priv);
-	else
+	अन्यथा
 		i8xx_fbc_activate(dev_priv);
-}
+पूर्ण
 
-static void intel_fbc_hw_deactivate(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
+अटल व्योम पूर्णांकel_fbc_hw_deactivate(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-	trace_intel_fbc_deactivate(fbc->crtc);
+	trace_पूर्णांकel_fbc_deactivate(fbc->crtc);
 
 	fbc->active = false;
 
-	if (DISPLAY_VER(dev_priv) >= 5)
+	अगर (DISPLAY_VER(dev_priv) >= 5)
 		ilk_fbc_deactivate(dev_priv);
-	else if (IS_GM45(dev_priv))
+	अन्यथा अगर (IS_GM45(dev_priv))
 		g4x_fbc_deactivate(dev_priv);
-	else
+	अन्यथा
 		i8xx_fbc_deactivate(dev_priv);
-}
+पूर्ण
 
 /**
- * intel_fbc_is_active - Is FBC active?
+ * पूर्णांकel_fbc_is_active - Is FBC active?
  * @dev_priv: i915 device instance
  *
- * This function is used to verify the current state of FBC.
+ * This function is used to verअगरy the current state of FBC.
  *
  * FIXME: This should be tracked in the plane config eventually
- * instead of queried at runtime for most callers.
+ * instead of queried at runसमय क्रम most callers.
  */
-bool intel_fbc_is_active(struct drm_i915_private *dev_priv)
-{
-	return dev_priv->fbc.active;
-}
+bool पूर्णांकel_fbc_is_active(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	वापस dev_priv->fbc.active;
+पूर्ण
 
-static void intel_fbc_deactivate(struct drm_i915_private *dev_priv,
-				 const char *reason)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
+अटल व्योम पूर्णांकel_fbc_deactivate(काष्ठा drm_i915_निजी *dev_priv,
+				 स्थिर अक्षर *reason)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
 	drm_WARN_ON(&dev_priv->drm, !mutex_is_locked(&fbc->lock));
 
-	if (fbc->active)
-		intel_fbc_hw_deactivate(dev_priv);
+	अगर (fbc->active)
+		पूर्णांकel_fbc_hw_deactivate(dev_priv);
 
 	fbc->no_fbc_reason = reason;
-}
+पूर्ण
 
-static u64 intel_fbc_cfb_base_max(struct drm_i915_private *i915)
-{
-	if (DISPLAY_VER(i915) >= 5 || IS_G4X(i915))
-		return BIT_ULL(28);
-	else
-		return BIT_ULL(32);
-}
+अटल u64 पूर्णांकel_fbc_cfb_base_max(काष्ठा drm_i915_निजी *i915)
+अणु
+	अगर (DISPLAY_VER(i915) >= 5 || IS_G4X(i915))
+		वापस BIT_ULL(28);
+	अन्यथा
+		वापस BIT_ULL(32);
+पूर्ण
 
-static int find_compression_threshold(struct drm_i915_private *dev_priv,
-				      struct drm_mm_node *node,
-				      unsigned int size,
-				      unsigned int fb_cpp)
-{
-	int compression_threshold = 1;
-	int ret;
+अटल पूर्णांक find_compression_threshold(काष्ठा drm_i915_निजी *dev_priv,
+				      काष्ठा drm_mm_node *node,
+				      अचिन्हित पूर्णांक size,
+				      अचिन्हित पूर्णांक fb_cpp)
+अणु
+	पूर्णांक compression_threshold = 1;
+	पूर्णांक ret;
 	u64 end;
 
-	/* The FBC hardware for BDW/SKL doesn't have access to the stolen
+	/* The FBC hardware क्रम BDW/SKL करोesn't have access to the stolen
 	 * reserved range size, so it always assumes the maximum (8mb) is used.
 	 * If we enable FBC using a CFB on that memory range we'll get FIFO
-	 * underruns, even if that range is not reserved by the BIOS. */
-	if (IS_BROADWELL(dev_priv) || IS_GEN9_BC(dev_priv))
+	 * underruns, even अगर that range is not reserved by the BIOS. */
+	अगर (IS_BROADWELL(dev_priv) || IS_GEN9_BC(dev_priv))
 		end = resource_size(&dev_priv->dsm) - 8 * 1024 * 1024;
-	else
+	अन्यथा
 		end = U64_MAX;
 
-	end = min(end, intel_fbc_cfb_base_max(dev_priv));
+	end = min(end, पूर्णांकel_fbc_cfb_base_max(dev_priv));
 
-	/* HACK: This code depends on what we will do in *_enable_fbc. If that
+	/* HACK: This code depends on what we will करो in *_enable_fbc. If that
 	 * code changes, this code needs to change as well.
 	 *
 	 * The enable_fbc code will attempt to use one of our 2 compression
-	 * thresholds, therefore, in that case, we only have 1 resort.
+	 * thresholds, thereक्रमe, in that हाल, we only have 1 resort.
 	 */
 
-	/* Try to over-allocate to reduce reallocations and fragmentation. */
+	/* Try to over-allocate to reduce पुनः_स्मृतिations and fragmentation. */
 	ret = i915_gem_stolen_insert_node_in_range(dev_priv, node, size <<= 1,
 						   4096, 0, end);
-	if (ret == 0)
-		return compression_threshold;
+	अगर (ret == 0)
+		वापस compression_threshold;
 
 again:
 	/* HW's ability to limit the CFB is 1:4 */
-	if (compression_threshold > 4 ||
+	अगर (compression_threshold > 4 ||
 	    (fb_cpp == 2 && compression_threshold == 2))
-		return 0;
+		वापस 0;
 
 	ret = i915_gem_stolen_insert_node_in_range(dev_priv, node, size >>= 1,
 						   4096, 0, end);
-	if (ret && DISPLAY_VER(dev_priv) <= 4) {
-		return 0;
-	} else if (ret) {
+	अगर (ret && DISPLAY_VER(dev_priv) <= 4) अणु
+		वापस 0;
+	पूर्ण अन्यथा अगर (ret) अणु
 		compression_threshold <<= 1;
-		goto again;
-	} else {
-		return compression_threshold;
-	}
-}
+		जाओ again;
+	पूर्ण अन्यथा अणु
+		वापस compression_threshold;
+	पूर्ण
+पूर्ण
 
-static int intel_fbc_alloc_cfb(struct drm_i915_private *dev_priv,
-			       unsigned int size, unsigned int fb_cpp)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
-	struct drm_mm_node *compressed_llb;
-	int ret;
+अटल पूर्णांक पूर्णांकel_fbc_alloc_cfb(काष्ठा drm_i915_निजी *dev_priv,
+			       अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक fb_cpp)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
+	काष्ठा drm_mm_node *compressed_llb;
+	पूर्णांक ret;
 
 	drm_WARN_ON(&dev_priv->drm,
 		    drm_mm_node_allocated(&fbc->compressed_fb));
 
 	ret = find_compression_threshold(dev_priv, &fbc->compressed_fb,
 					 size, fb_cpp);
-	if (!ret)
-		goto err_llb;
-	else if (ret > 1) {
+	अगर (!ret)
+		जाओ err_llb;
+	अन्यथा अगर (ret > 1) अणु
 		drm_info_once(&dev_priv->drm,
 			      "Reducing the compressed framebuffer size. This may lead to less power savings than a non-reduced-size. Try to increase stolen memory size if available in BIOS.\n");
-	}
+	पूर्ण
 
 	fbc->threshold = ret;
 
-	if (DISPLAY_VER(dev_priv) >= 5)
-		intel_de_write(dev_priv, ILK_DPFC_CB_BASE,
+	अगर (DISPLAY_VER(dev_priv) >= 5)
+		पूर्णांकel_de_ग_लिखो(dev_priv, ILK_DPFC_CB_BASE,
 			       fbc->compressed_fb.start);
-	else if (IS_GM45(dev_priv)) {
-		intel_de_write(dev_priv, DPFC_CB_BASE,
+	अन्यथा अगर (IS_GM45(dev_priv)) अणु
+		पूर्णांकel_de_ग_लिखो(dev_priv, DPFC_CB_BASE,
 			       fbc->compressed_fb.start);
-	} else {
-		compressed_llb = kzalloc(sizeof(*compressed_llb), GFP_KERNEL);
-		if (!compressed_llb)
-			goto err_fb;
+	पूर्ण अन्यथा अणु
+		compressed_llb = kzalloc(माप(*compressed_llb), GFP_KERNEL);
+		अगर (!compressed_llb)
+			जाओ err_fb;
 
 		ret = i915_gem_stolen_insert_node(dev_priv, compressed_llb,
 						  4096, 4096);
-		if (ret)
-			goto err_fb;
+		अगर (ret)
+			जाओ err_fb;
 
 		fbc->compressed_llb = compressed_llb;
 
@@ -528,191 +529,191 @@ static int intel_fbc_alloc_cfb(struct drm_i915_private *dev_priv,
 		GEM_BUG_ON(range_overflows_end_t(u64, dev_priv->dsm.start,
 						 fbc->compressed_llb->start,
 						 U32_MAX));
-		intel_de_write(dev_priv, FBC_CFB_BASE,
+		पूर्णांकel_de_ग_लिखो(dev_priv, FBC_CFB_BASE,
 			       dev_priv->dsm.start + fbc->compressed_fb.start);
-		intel_de_write(dev_priv, FBC_LL_BASE,
+		पूर्णांकel_de_ग_लिखो(dev_priv, FBC_LL_BASE,
 			       dev_priv->dsm.start + compressed_llb->start);
-	}
+	पूर्ण
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "reserved %llu bytes of contiguous stolen space for FBC, threshold: %d\n",
 		    fbc->compressed_fb.size, fbc->threshold);
 
-	return 0;
+	वापस 0;
 
 err_fb:
-	kfree(compressed_llb);
-	i915_gem_stolen_remove_node(dev_priv, &fbc->compressed_fb);
+	kमुक्त(compressed_llb);
+	i915_gem_stolen_हटाओ_node(dev_priv, &fbc->compressed_fb);
 err_llb:
-	if (drm_mm_initialized(&dev_priv->mm.stolen))
+	अगर (drm_mm_initialized(&dev_priv->mm.stolen))
 		drm_info_once(&dev_priv->drm, "not enough stolen space for compressed buffer (need %d more bytes), disabling. Hint: you may be able to increase stolen memory size in the BIOS to avoid this.\n", size);
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 
-static void __intel_fbc_cleanup_cfb(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
+अटल व्योम __पूर्णांकel_fbc_cleanup_cfb(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-	if (WARN_ON(intel_fbc_hw_is_active(dev_priv)))
-		return;
+	अगर (WARN_ON(पूर्णांकel_fbc_hw_is_active(dev_priv)))
+		वापस;
 
-	if (!drm_mm_node_allocated(&fbc->compressed_fb))
-		return;
+	अगर (!drm_mm_node_allocated(&fbc->compressed_fb))
+		वापस;
 
-	if (fbc->compressed_llb) {
-		i915_gem_stolen_remove_node(dev_priv, fbc->compressed_llb);
-		kfree(fbc->compressed_llb);
-	}
+	अगर (fbc->compressed_llb) अणु
+		i915_gem_stolen_हटाओ_node(dev_priv, fbc->compressed_llb);
+		kमुक्त(fbc->compressed_llb);
+	पूर्ण
 
-	i915_gem_stolen_remove_node(dev_priv, &fbc->compressed_fb);
-}
+	i915_gem_stolen_हटाओ_node(dev_priv, &fbc->compressed_fb);
+पूर्ण
 
-void intel_fbc_cleanup_cfb(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
+व्योम पूर्णांकel_fbc_cleanup_cfb(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-	if (!HAS_FBC(dev_priv))
-		return;
+	अगर (!HAS_FBC(dev_priv))
+		वापस;
 
 	mutex_lock(&fbc->lock);
-	__intel_fbc_cleanup_cfb(dev_priv);
+	__पूर्णांकel_fbc_cleanup_cfb(dev_priv);
 	mutex_unlock(&fbc->lock);
-}
+पूर्ण
 
-static bool stride_is_valid(struct drm_i915_private *dev_priv,
-			    u64 modifier, unsigned int stride)
-{
+अटल bool stride_is_valid(काष्ठा drm_i915_निजी *dev_priv,
+			    u64 modअगरier, अचिन्हित पूर्णांक stride)
+अणु
 	/* This should have been caught earlier. */
-	if (drm_WARN_ON_ONCE(&dev_priv->drm, (stride & (64 - 1)) != 0))
-		return false;
+	अगर (drm_WARN_ON_ONCE(&dev_priv->drm, (stride & (64 - 1)) != 0))
+		वापस false;
 
 	/* Below are the additional FBC restrictions. */
-	if (stride < 512)
-		return false;
+	अगर (stride < 512)
+		वापस false;
 
-	if (IS_DISPLAY_VER(dev_priv, 2) || IS_DISPLAY_VER(dev_priv, 3))
-		return stride == 4096 || stride == 8192;
+	अगर (IS_DISPLAY_VER(dev_priv, 2) || IS_DISPLAY_VER(dev_priv, 3))
+		वापस stride == 4096 || stride == 8192;
 
-	if (IS_DISPLAY_VER(dev_priv, 4) && !IS_G4X(dev_priv) && stride < 2048)
-		return false;
+	अगर (IS_DISPLAY_VER(dev_priv, 4) && !IS_G4X(dev_priv) && stride < 2048)
+		वापस false;
 
 	/* Display WA #1105: skl,bxt,kbl,cfl,glk */
-	if ((IS_DISPLAY_VER(dev_priv, 9) || IS_GEMINILAKE(dev_priv)) &&
-	    modifier == DRM_FORMAT_MOD_LINEAR && stride & 511)
-		return false;
+	अगर ((IS_DISPLAY_VER(dev_priv, 9) || IS_GEMINILAKE(dev_priv)) &&
+	    modअगरier == DRM_FORMAT_MOD_LINEAR && stride & 511)
+		वापस false;
 
-	if (stride > 16384)
-		return false;
+	अगर (stride > 16384)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool pixel_format_is_valid(struct drm_i915_private *dev_priv,
-				  u32 pixel_format)
-{
-	switch (pixel_format) {
-	case DRM_FORMAT_XRGB8888:
-	case DRM_FORMAT_XBGR8888:
-		return true;
-	case DRM_FORMAT_XRGB1555:
-	case DRM_FORMAT_RGB565:
+अटल bool pixel_क्रमmat_is_valid(काष्ठा drm_i915_निजी *dev_priv,
+				  u32 pixel_क्रमmat)
+अणु
+	चयन (pixel_क्रमmat) अणु
+	हाल DRM_FORMAT_XRGB8888:
+	हाल DRM_FORMAT_XBGR8888:
+		वापस true;
+	हाल DRM_FORMAT_XRGB1555:
+	हाल DRM_FORMAT_RGB565:
 		/* 16bpp not supported on gen2 */
-		if (IS_DISPLAY_VER(dev_priv, 2))
-			return false;
+		अगर (IS_DISPLAY_VER(dev_priv, 2))
+			वापस false;
 		/* WaFbcOnly1to1Ratio:ctg */
-		if (IS_G4X(dev_priv))
-			return false;
-		return true;
-	default:
-		return false;
-	}
-}
+		अगर (IS_G4X(dev_priv))
+			वापस false;
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool rotation_is_valid(struct drm_i915_private *dev_priv,
-			      u32 pixel_format, unsigned int rotation)
-{
-	if (DISPLAY_VER(dev_priv) >= 9 && pixel_format == DRM_FORMAT_RGB565 &&
+अटल bool rotation_is_valid(काष्ठा drm_i915_निजी *dev_priv,
+			      u32 pixel_क्रमmat, अचिन्हित पूर्णांक rotation)
+अणु
+	अगर (DISPLAY_VER(dev_priv) >= 9 && pixel_क्रमmat == DRM_FORMAT_RGB565 &&
 	    drm_rotation_90_or_270(rotation))
-		return false;
-	else if (DISPLAY_VER(dev_priv) <= 4 && !IS_G4X(dev_priv) &&
+		वापस false;
+	अन्यथा अगर (DISPLAY_VER(dev_priv) <= 4 && !IS_G4X(dev_priv) &&
 		 rotation != DRM_MODE_ROTATE_0)
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * For some reason, the hardware tracking starts looking at whatever we
- * programmed as the display plane base address register. It does not look at
- * the X and Y offset registers. That's why we include the src x/y offsets
+ * programmed as the display plane base address रेजिस्टर. It करोes not look at
+ * the X and Y offset रेजिस्टरs. That's why we include the src x/y offsets
  * instead of just looking at the plane size.
  */
-static bool intel_fbc_hw_tracking_covers_screen(struct intel_crtc *crtc)
-{
-	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
-	struct intel_fbc *fbc = &dev_priv->fbc;
-	unsigned int effective_w, effective_h, max_w, max_h;
+अटल bool पूर्णांकel_fbc_hw_tracking_covers_screen(काष्ठा पूर्णांकel_crtc *crtc)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
+	अचिन्हित पूर्णांक effective_w, effective_h, max_w, max_h;
 
-	if (DISPLAY_VER(dev_priv) >= 10) {
+	अगर (DISPLAY_VER(dev_priv) >= 10) अणु
 		max_w = 5120;
 		max_h = 4096;
-	} else if (DISPLAY_VER(dev_priv) >= 8 || IS_HASWELL(dev_priv)) {
+	पूर्ण अन्यथा अगर (DISPLAY_VER(dev_priv) >= 8 || IS_HASWELL(dev_priv)) अणु
 		max_w = 4096;
 		max_h = 4096;
-	} else if (IS_G4X(dev_priv) || DISPLAY_VER(dev_priv) >= 5) {
+	पूर्ण अन्यथा अगर (IS_G4X(dev_priv) || DISPLAY_VER(dev_priv) >= 5) अणु
 		max_w = 4096;
 		max_h = 2048;
-	} else {
+	पूर्ण अन्यथा अणु
 		max_w = 2048;
 		max_h = 1536;
-	}
+	पूर्ण
 
-	intel_fbc_get_plane_source_size(&fbc->state_cache, &effective_w,
+	पूर्णांकel_fbc_get_plane_source_size(&fbc->state_cache, &effective_w,
 					&effective_h);
 	effective_w += fbc->state_cache.plane.adjusted_x;
 	effective_h += fbc->state_cache.plane.adjusted_y;
 
-	return effective_w <= max_w && effective_h <= max_h;
-}
+	वापस effective_w <= max_w && effective_h <= max_h;
+पूर्ण
 
-static bool tiling_is_valid(struct drm_i915_private *dev_priv,
-			    u64 modifier)
-{
-	switch (modifier) {
-	case DRM_FORMAT_MOD_LINEAR:
-		if (DISPLAY_VER(dev_priv) >= 9)
-			return true;
-		return false;
-	case I915_FORMAT_MOD_X_TILED:
-	case I915_FORMAT_MOD_Y_TILED:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool tiling_is_valid(काष्ठा drm_i915_निजी *dev_priv,
+			    u64 modअगरier)
+अणु
+	चयन (modअगरier) अणु
+	हाल DRM_FORMAT_MOD_LINEAR:
+		अगर (DISPLAY_VER(dev_priv) >= 9)
+			वापस true;
+		वापस false;
+	हाल I915_FORMAT_MOD_X_TILED:
+	हाल I915_FORMAT_MOD_Y_TILED:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static void intel_fbc_update_state_cache(struct intel_crtc *crtc,
-					 const struct intel_crtc_state *crtc_state,
-					 const struct intel_plane_state *plane_state)
-{
-	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
-	struct intel_fbc *fbc = &dev_priv->fbc;
-	struct intel_fbc_state_cache *cache = &fbc->state_cache;
-	struct drm_framebuffer *fb = plane_state->hw.fb;
+अटल व्योम पूर्णांकel_fbc_update_state_cache(काष्ठा पूर्णांकel_crtc *crtc,
+					 स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+					 स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
+	काष्ठा पूर्णांकel_fbc_state_cache *cache = &fbc->state_cache;
+	काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
 
 	cache->plane.visible = plane_state->uapi.visible;
-	if (!cache->plane.visible)
-		return;
+	अगर (!cache->plane.visible)
+		वापस;
 
 	cache->crtc.mode_flags = crtc_state->hw.adjusted_mode.flags;
-	if (IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv))
+	अगर (IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv))
 		cache->crtc.hsw_bdw_pixel_rate = crtc_state->pixel_rate;
 
 	cache->plane.rotation = plane_state->hw.rotation;
 	/*
-	 * Src coordinates are already rotated by 270 degrees for
-	 * the 90/270 degree plane rotation cases (to match the
-	 * GTT mapping), hence no need to account for rotation here.
+	 * Src coordinates are alपढ़ोy rotated by 270 degrees क्रम
+	 * the 90/270 degree plane rotation हालs (to match the
+	 * GTT mapping), hence no need to account क्रम rotation here.
 	 */
 	cache->plane.src_w = drm_rect_width(&plane_state->uapi.src) >> 16;
 	cache->plane.src_h = drm_rect_height(&plane_state->uapi.src) >> 16;
@@ -721,342 +722,342 @@ static void intel_fbc_update_state_cache(struct intel_crtc *crtc,
 
 	cache->plane.pixel_blend_mode = plane_state->hw.pixel_blend_mode;
 
-	cache->fb.format = fb->format;
-	cache->fb.modifier = fb->modifier;
+	cache->fb.क्रमmat = fb->क्रमmat;
+	cache->fb.modअगरier = fb->modअगरier;
 
 	/* FIXME is this correct? */
 	cache->fb.stride = plane_state->view.color_plane[0].stride;
-	if (drm_rotation_90_or_270(plane_state->hw.rotation))
-		cache->fb.stride *= fb->format->cpp[0];
+	अगर (drm_rotation_90_or_270(plane_state->hw.rotation))
+		cache->fb.stride *= fb->क्रमmat->cpp[0];
 
-	/* FBC1 compression interval: arbitrary choice of 1 second */
-	cache->interval = drm_mode_vrefresh(&crtc_state->hw.adjusted_mode);
+	/* FBC1 compression पूर्णांकerval: arbitrary choice of 1 second */
+	cache->पूर्णांकerval = drm_mode_vrefresh(&crtc_state->hw.adjusted_mode);
 
-	cache->fence_y_offset = intel_plane_fence_y_offset(plane_state);
+	cache->fence_y_offset = पूर्णांकel_plane_fence_y_offset(plane_state);
 
 	drm_WARN_ON(&dev_priv->drm, plane_state->flags & PLANE_HAS_FENCE &&
 		    !plane_state->vma->fence);
 
-	if (plane_state->flags & PLANE_HAS_FENCE &&
+	अगर (plane_state->flags & PLANE_HAS_FENCE &&
 	    plane_state->vma->fence)
 		cache->fence_id = plane_state->vma->fence->id;
-	else
+	अन्यथा
 		cache->fence_id = -1;
 
 	cache->psr2_active = crtc_state->has_psr2;
-}
+पूर्ण
 
-static bool intel_fbc_cfb_size_changed(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
+अटल bool पूर्णांकel_fbc_cfb_size_changed(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-	return intel_fbc_calculate_cfb_size(dev_priv, &fbc->state_cache) >
+	वापस पूर्णांकel_fbc_calculate_cfb_size(dev_priv, &fbc->state_cache) >
 		fbc->compressed_fb.size * fbc->threshold;
-}
+पूर्ण
 
-static u16 intel_fbc_gen9_wa_cfb_stride(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
-	struct intel_fbc_state_cache *cache = &fbc->state_cache;
+अटल u16 पूर्णांकel_fbc_gen9_wa_cfb_stride(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
+	काष्ठा पूर्णांकel_fbc_state_cache *cache = &fbc->state_cache;
 
-	if ((IS_GEN9_BC(dev_priv) || IS_BROXTON(dev_priv)) &&
-	    cache->fb.modifier != I915_FORMAT_MOD_X_TILED)
-		return DIV_ROUND_UP(cache->plane.src_w, 32 * fbc->threshold) * 8;
-	else
-		return 0;
-}
+	अगर ((IS_GEN9_BC(dev_priv) || IS_BROXTON(dev_priv)) &&
+	    cache->fb.modअगरier != I915_FORMAT_MOD_X_TILED)
+		वापस DIV_ROUND_UP(cache->plane.src_w, 32 * fbc->threshold) * 8;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static bool intel_fbc_gen9_wa_cfb_stride_changed(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
+अटल bool पूर्णांकel_fbc_gen9_wa_cfb_stride_changed(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-	return fbc->params.gen9_wa_cfb_stride != intel_fbc_gen9_wa_cfb_stride(dev_priv);
-}
+	वापस fbc->params.gen9_wa_cfb_stride != पूर्णांकel_fbc_gen9_wa_cfb_stride(dev_priv);
+पूर्ण
 
-static bool intel_fbc_can_enable(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
+अटल bool पूर्णांकel_fbc_can_enable(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-	if (intel_vgpu_active(dev_priv)) {
+	अगर (पूर्णांकel_vgpu_active(dev_priv)) अणु
 		fbc->no_fbc_reason = "VGPU is active";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!dev_priv->params.enable_fbc) {
+	अगर (!dev_priv->params.enable_fbc) अणु
 		fbc->no_fbc_reason = "disabled per module param or by default";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (fbc->underrun_detected) {
+	अगर (fbc->underrun_detected) अणु
 		fbc->no_fbc_reason = "underrun detected";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool intel_fbc_can_activate(struct intel_crtc *crtc)
-{
-	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
-	struct intel_fbc *fbc = &dev_priv->fbc;
-	struct intel_fbc_state_cache *cache = &fbc->state_cache;
+अटल bool पूर्णांकel_fbc_can_activate(काष्ठा पूर्णांकel_crtc *crtc)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
+	काष्ठा पूर्णांकel_fbc_state_cache *cache = &fbc->state_cache;
 
-	if (!intel_fbc_can_enable(dev_priv))
-		return false;
+	अगर (!पूर्णांकel_fbc_can_enable(dev_priv))
+		वापस false;
 
-	if (!cache->plane.visible) {
+	अगर (!cache->plane.visible) अणु
 		fbc->no_fbc_reason = "primary plane not visible";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* We don't need to use a state cache here since this information is
-	 * global for all CRTC.
+	/* We करोn't need to use a state cache here since this inक्रमmation is
+	 * global क्रम all CRTC.
 	 */
-	if (fbc->underrun_detected) {
+	अगर (fbc->underrun_detected) अणु
 		fbc->no_fbc_reason = "underrun detected";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (cache->crtc.mode_flags & DRM_MODE_FLAG_INTERLACE) {
+	अगर (cache->crtc.mode_flags & DRM_MODE_FLAG_INTERLACE) अणु
 		fbc->no_fbc_reason = "incompatible mode";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!intel_fbc_hw_tracking_covers_screen(crtc)) {
+	अगर (!पूर्णांकel_fbc_hw_tracking_covers_screen(crtc)) अणु
 		fbc->no_fbc_reason = "mode too large for compression";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* The use of a CPU fence is one of two ways to detect writes by the
+	/* The use of a CPU fence is one of two ways to detect ग_लिखोs by the
 	 * CPU to the scanout and trigger updates to the FBC.
 	 *
 	 * The other method is by software tracking (see
-	 * intel_fbc_invalidate/flush()), it will manually notify FBC and nuke
+	 * पूर्णांकel_fbc_invalidate/flush()), it will manually notअगरy FBC and nuke
 	 * the current compressed buffer and recompress it.
 	 *
-	 * Note that is possible for a tiled surface to be unmappable (and
-	 * so have no fence associated with it) due to aperture constraints
-	 * at the time of pinning.
+	 * Note that is possible क्रम a tiled surface to be unmappable (and
+	 * so have no fence associated with it) due to aperture स्थिरraपूर्णांकs
+	 * at the समय of pinning.
 	 *
 	 * FIXME with 90/270 degree rotation we should use the fence on
-	 * the normal GTT view (the rotated view doesn't even have a
+	 * the normal GTT view (the rotated view करोesn't even have a
 	 * fence). Would need changes to the FBC fence Y offset as well.
 	 * For now this will effectively disable FBC with 90/270 degree
 	 * rotation.
 	 */
-	if (DISPLAY_VER(dev_priv) < 9 && cache->fence_id < 0) {
+	अगर (DISPLAY_VER(dev_priv) < 9 && cache->fence_id < 0) अणु
 		fbc->no_fbc_reason = "framebuffer not tiled or fenced";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!pixel_format_is_valid(dev_priv, cache->fb.format->format)) {
+	अगर (!pixel_क्रमmat_is_valid(dev_priv, cache->fb.क्रमmat->क्रमmat)) अणु
 		fbc->no_fbc_reason = "pixel format is invalid";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!rotation_is_valid(dev_priv, cache->fb.format->format,
-			       cache->plane.rotation)) {
+	अगर (!rotation_is_valid(dev_priv, cache->fb.क्रमmat->क्रमmat,
+			       cache->plane.rotation)) अणु
 		fbc->no_fbc_reason = "rotation unsupported";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!tiling_is_valid(dev_priv, cache->fb.modifier)) {
+	अगर (!tiling_is_valid(dev_priv, cache->fb.modअगरier)) अणु
 		fbc->no_fbc_reason = "tiling unsupported";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!stride_is_valid(dev_priv, cache->fb.modifier, cache->fb.stride)) {
+	अगर (!stride_is_valid(dev_priv, cache->fb.modअगरier, cache->fb.stride)) अणु
 		fbc->no_fbc_reason = "framebuffer stride not supported";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (cache->plane.pixel_blend_mode != DRM_MODE_BLEND_PIXEL_NONE &&
-	    cache->fb.format->has_alpha) {
+	अगर (cache->plane.pixel_blend_mode != DRM_MODE_BLEND_PIXEL_NONE &&
+	    cache->fb.क्रमmat->has_alpha) अणु
 		fbc->no_fbc_reason = "per-pixel alpha blending is incompatible with FBC";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* WaFbcExceedCdClockThreshold:hsw,bdw */
-	if ((IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv)) &&
-	    cache->crtc.hsw_bdw_pixel_rate >= dev_priv->cdclk.hw.cdclk * 95 / 100) {
+	अगर ((IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv)) &&
+	    cache->crtc.hsw_bdw_pixel_rate >= dev_priv->cdclk.hw.cdclk * 95 / 100) अणु
 		fbc->no_fbc_reason = "pixel rate is too big";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* It is possible for the required CFB size change without a
+	/* It is possible क्रम the required CFB size change without a
 	 * crtc->disable + crtc->enable since it is possible to change the
 	 * stride without triggering a full modeset. Since we try to
 	 * over-allocate the CFB, there's a chance we may keep FBC enabled even
-	 * if this happens, but if we exceed the current CFB size we'll have to
-	 * disable FBC. Notice that it would be possible to disable FBC, wait
-	 * for a frame, free the stolen node, then try to reenable FBC in case
+	 * अगर this happens, but अगर we exceed the current CFB size we'll have to
+	 * disable FBC. Notice that it would be possible to disable FBC, रुको
+	 * क्रम a frame, मुक्त the stolen node, then try to reenable FBC in हाल
 	 * we didn't get any invalidate/deactivate calls, but this would require
-	 * a lot of tracking just for a specific case. If we conclude it's an
-	 * important case, we can implement it later. */
-	if (intel_fbc_cfb_size_changed(dev_priv)) {
+	 * a lot of tracking just क्रम a specअगरic हाल. If we conclude it's an
+	 * important हाल, we can implement it later. */
+	अगर (पूर्णांकel_fbc_cfb_size_changed(dev_priv)) अणु
 		fbc->no_fbc_reason = "CFB requirements changed";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/*
 	 * Work around a problem on GEN9+ HW, where enabling FBC on a plane
-	 * having a Y offset that isn't divisible by 4 causes FIFO underrun
+	 * having a Y offset that isn't भागisible by 4 causes FIFO underrun
 	 * and screen flicker.
 	 */
-	if (DISPLAY_VER(dev_priv) >= 9 &&
-	    (fbc->state_cache.plane.adjusted_y & 3)) {
+	अगर (DISPLAY_VER(dev_priv) >= 9 &&
+	    (fbc->state_cache.plane.adjusted_y & 3)) अणु
 		fbc->no_fbc_reason = "plane Y offset is misaligned";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* Wa_22010751166: icl, ehl, tgl, dg1, rkl */
-	if (DISPLAY_VER(dev_priv) >= 11 &&
-	    (cache->plane.src_h + cache->plane.adjusted_y) % 4) {
+	अगर (DISPLAY_VER(dev_priv) >= 11 &&
+	    (cache->plane.src_h + cache->plane.adjusted_y) % 4) अणु
 		fbc->no_fbc_reason = "plane height + offset is non-modulo of 4";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/*
 	 * Tigerlake is not supporting FBC with PSR2.
 	 * Recommendation is to keep this combination disabled
 	 * Bspec: 50422 HSD: 14010260002
 	 */
-	if (fbc->state_cache.psr2_active && IS_TIGERLAKE(dev_priv)) {
+	अगर (fbc->state_cache.psr2_active && IS_TIGERLAKE(dev_priv)) अणु
 		fbc->no_fbc_reason = "not supported with PSR2";
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void intel_fbc_get_reg_params(struct intel_crtc *crtc,
-				     struct intel_fbc_reg_params *params)
-{
-	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
-	struct intel_fbc *fbc = &dev_priv->fbc;
-	struct intel_fbc_state_cache *cache = &fbc->state_cache;
+अटल व्योम पूर्णांकel_fbc_get_reg_params(काष्ठा पूर्णांकel_crtc *crtc,
+				     काष्ठा पूर्णांकel_fbc_reg_params *params)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
+	काष्ठा पूर्णांकel_fbc_state_cache *cache = &fbc->state_cache;
 
-	/* Since all our fields are integer types, use memset here so the
-	 * comparison function can rely on memcmp because the padding will be
+	/* Since all our fields are पूर्णांकeger types, use स_रखो here so the
+	 * comparison function can rely on स_भेद because the padding will be
 	 * zero. */
-	memset(params, 0, sizeof(*params));
+	स_रखो(params, 0, माप(*params));
 
 	params->fence_id = cache->fence_id;
 	params->fence_y_offset = cache->fence_y_offset;
 
-	params->interval = cache->interval;
+	params->पूर्णांकerval = cache->पूर्णांकerval;
 
 	params->crtc.pipe = crtc->pipe;
-	params->crtc.i9xx_plane = to_intel_plane(crtc->base.primary)->i9xx_plane;
+	params->crtc.i9xx_plane = to_पूर्णांकel_plane(crtc->base.primary)->i9xx_plane;
 
-	params->fb.format = cache->fb.format;
-	params->fb.modifier = cache->fb.modifier;
+	params->fb.क्रमmat = cache->fb.क्रमmat;
+	params->fb.modअगरier = cache->fb.modअगरier;
 	params->fb.stride = cache->fb.stride;
 
-	params->cfb_size = intel_fbc_calculate_cfb_size(dev_priv, cache);
+	params->cfb_size = पूर्णांकel_fbc_calculate_cfb_size(dev_priv, cache);
 
 	params->gen9_wa_cfb_stride = cache->gen9_wa_cfb_stride;
 
 	params->plane_visible = cache->plane.visible;
-}
+पूर्ण
 
-static bool intel_fbc_can_flip_nuke(const struct intel_crtc_state *crtc_state)
-{
-	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
-	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
-	const struct intel_fbc *fbc = &dev_priv->fbc;
-	const struct intel_fbc_state_cache *cache = &fbc->state_cache;
-	const struct intel_fbc_reg_params *params = &fbc->params;
+अटल bool पूर्णांकel_fbc_can_flip_nuke(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
+अणु
+	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+	स्थिर काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
+	स्थिर काष्ठा पूर्णांकel_fbc_state_cache *cache = &fbc->state_cache;
+	स्थिर काष्ठा पूर्णांकel_fbc_reg_params *params = &fbc->params;
 
-	if (drm_atomic_crtc_needs_modeset(&crtc_state->uapi))
-		return false;
+	अगर (drm_atomic_crtc_needs_modeset(&crtc_state->uapi))
+		वापस false;
 
-	if (!params->plane_visible)
-		return false;
+	अगर (!params->plane_visible)
+		वापस false;
 
-	if (!intel_fbc_can_activate(crtc))
-		return false;
+	अगर (!पूर्णांकel_fbc_can_activate(crtc))
+		वापस false;
 
-	if (params->fb.format != cache->fb.format)
-		return false;
+	अगर (params->fb.क्रमmat != cache->fb.क्रमmat)
+		वापस false;
 
-	if (params->fb.modifier != cache->fb.modifier)
-		return false;
+	अगर (params->fb.modअगरier != cache->fb.modअगरier)
+		वापस false;
 
-	if (params->fb.stride != cache->fb.stride)
-		return false;
+	अगर (params->fb.stride != cache->fb.stride)
+		वापस false;
 
-	if (params->cfb_size != intel_fbc_calculate_cfb_size(dev_priv, cache))
-		return false;
+	अगर (params->cfb_size != पूर्णांकel_fbc_calculate_cfb_size(dev_priv, cache))
+		वापस false;
 
-	if (params->gen9_wa_cfb_stride != cache->gen9_wa_cfb_stride)
-		return false;
+	अगर (params->gen9_wa_cfb_stride != cache->gen9_wa_cfb_stride)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool intel_fbc_pre_update(struct intel_atomic_state *state,
-			  struct intel_crtc *crtc)
-{
-	struct intel_plane *plane = to_intel_plane(crtc->base.primary);
-	const struct intel_crtc_state *crtc_state =
-		intel_atomic_get_new_crtc_state(state, crtc);
-	const struct intel_plane_state *plane_state =
-		intel_atomic_get_new_plane_state(state, plane);
-	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
-	struct intel_fbc *fbc = &dev_priv->fbc;
-	const char *reason = "update pending";
-	bool need_vblank_wait = false;
+bool पूर्णांकel_fbc_pre_update(काष्ठा पूर्णांकel_atomic_state *state,
+			  काष्ठा पूर्णांकel_crtc *crtc)
+अणु
+	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(crtc->base.primary);
+	स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state =
+		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
+	स्थिर काष्ठा पूर्णांकel_plane_state *plane_state =
+		पूर्णांकel_atomic_get_new_plane_state(state, plane);
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
+	स्थिर अक्षर *reason = "update pending";
+	bool need_vblank_रुको = false;
 
-	if (!plane->has_fbc || !plane_state)
-		return need_vblank_wait;
+	अगर (!plane->has_fbc || !plane_state)
+		वापस need_vblank_रुको;
 
 	mutex_lock(&fbc->lock);
 
-	if (fbc->crtc != crtc)
-		goto unlock;
+	अगर (fbc->crtc != crtc)
+		जाओ unlock;
 
-	intel_fbc_update_state_cache(crtc, crtc_state, plane_state);
+	पूर्णांकel_fbc_update_state_cache(crtc, crtc_state, plane_state);
 	fbc->flip_pending = true;
 
-	if (!intel_fbc_can_flip_nuke(crtc_state)) {
-		intel_fbc_deactivate(dev_priv, reason);
+	अगर (!पूर्णांकel_fbc_can_flip_nuke(crtc_state)) अणु
+		पूर्णांकel_fbc_deactivate(dev_priv, reason);
 
 		/*
 		 * Display WA #1198: glk+
-		 * Need an extra vblank wait between FBC disable and most plane
-		 * updates. Bspec says this is only needed for plane disable, but
-		 * that is not true. Touching most plane registers will cause the
-		 * corruption to appear. Also SKL/derivatives do not seem to be
+		 * Need an extra vblank रुको between FBC disable and most plane
+		 * updates. Bspec says this is only needed क्रम plane disable, but
+		 * that is not true. Touching most plane रेजिस्टरs will cause the
+		 * corruption to appear. Also SKL/derivatives करो not seem to be
 		 * affected.
 		 *
 		 * TODO: could optimize this a bit by sampling the frame
-		 * counter when we disable FBC (if it was already done earlier)
-		 * and skipping the extra vblank wait before the plane update
-		 * if at least one frame has already passed.
+		 * counter when we disable FBC (अगर it was alपढ़ोy करोne earlier)
+		 * and skipping the extra vblank रुको beक्रमe the plane update
+		 * अगर at least one frame has alपढ़ोy passed.
 		 */
-		if (fbc->activated &&
+		अगर (fbc->activated &&
 		    DISPLAY_VER(dev_priv) >= 10)
-			need_vblank_wait = true;
+			need_vblank_रुको = true;
 		fbc->activated = false;
-	}
+	पूर्ण
 unlock:
 	mutex_unlock(&fbc->lock);
 
-	return need_vblank_wait;
-}
+	वापस need_vblank_रुको;
+पूर्ण
 
 /**
- * __intel_fbc_disable - disable FBC
+ * __पूर्णांकel_fbc_disable - disable FBC
  * @dev_priv: i915 device instance
  *
  * This is the low level function that actually disables FBC. Callers should
  * grab the FBC lock.
  */
-static void __intel_fbc_disable(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
-	struct intel_crtc *crtc = fbc->crtc;
+अटल व्योम __पूर्णांकel_fbc_disable(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
+	काष्ठा पूर्णांकel_crtc *crtc = fbc->crtc;
 
 	drm_WARN_ON(&dev_priv->drm, !mutex_is_locked(&fbc->lock));
 	drm_WARN_ON(&dev_priv->drm, !fbc->crtc);
@@ -1065,235 +1066,235 @@ static void __intel_fbc_disable(struct drm_i915_private *dev_priv)
 	drm_dbg_kms(&dev_priv->drm, "Disabling FBC on pipe %c\n",
 		    pipe_name(crtc->pipe));
 
-	__intel_fbc_cleanup_cfb(dev_priv);
+	__पूर्णांकel_fbc_cleanup_cfb(dev_priv);
 
-	fbc->crtc = NULL;
-}
+	fbc->crtc = शून्य;
+पूर्ण
 
-static void __intel_fbc_post_update(struct intel_crtc *crtc)
-{
-	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
-	struct intel_fbc *fbc = &dev_priv->fbc;
+अटल व्योम __पूर्णांकel_fbc_post_update(काष्ठा पूर्णांकel_crtc *crtc)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
 	drm_WARN_ON(&dev_priv->drm, !mutex_is_locked(&fbc->lock));
 
-	if (fbc->crtc != crtc)
-		return;
+	अगर (fbc->crtc != crtc)
+		वापस;
 
 	fbc->flip_pending = false;
 
-	if (!dev_priv->params.enable_fbc) {
-		intel_fbc_deactivate(dev_priv, "disabled at runtime per module param");
-		__intel_fbc_disable(dev_priv);
+	अगर (!dev_priv->params.enable_fbc) अणु
+		पूर्णांकel_fbc_deactivate(dev_priv, "disabled at runtime per module param");
+		__पूर्णांकel_fbc_disable(dev_priv);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	intel_fbc_get_reg_params(crtc, &fbc->params);
+	पूर्णांकel_fbc_get_reg_params(crtc, &fbc->params);
 
-	if (!intel_fbc_can_activate(crtc))
-		return;
+	अगर (!पूर्णांकel_fbc_can_activate(crtc))
+		वापस;
 
-	if (!fbc->busy_bits)
-		intel_fbc_hw_activate(dev_priv);
-	else
-		intel_fbc_deactivate(dev_priv, "frontbuffer write");
-}
+	अगर (!fbc->busy_bits)
+		पूर्णांकel_fbc_hw_activate(dev_priv);
+	अन्यथा
+		पूर्णांकel_fbc_deactivate(dev_priv, "frontbuffer write");
+पूर्ण
 
-void intel_fbc_post_update(struct intel_atomic_state *state,
-			   struct intel_crtc *crtc)
-{
-	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
-	struct intel_plane *plane = to_intel_plane(crtc->base.primary);
-	const struct intel_plane_state *plane_state =
-		intel_atomic_get_new_plane_state(state, plane);
-	struct intel_fbc *fbc = &dev_priv->fbc;
+व्योम पूर्णांकel_fbc_post_update(काष्ठा पूर्णांकel_atomic_state *state,
+			   काष्ठा पूर्णांकel_crtc *crtc)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(crtc->base.primary);
+	स्थिर काष्ठा पूर्णांकel_plane_state *plane_state =
+		पूर्णांकel_atomic_get_new_plane_state(state, plane);
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-	if (!plane->has_fbc || !plane_state)
-		return;
-
-	mutex_lock(&fbc->lock);
-	__intel_fbc_post_update(crtc);
-	mutex_unlock(&fbc->lock);
-}
-
-static unsigned int intel_fbc_get_frontbuffer_bit(struct intel_fbc *fbc)
-{
-	if (fbc->crtc)
-		return to_intel_plane(fbc->crtc->base.primary)->frontbuffer_bit;
-	else
-		return fbc->possible_framebuffer_bits;
-}
-
-void intel_fbc_invalidate(struct drm_i915_private *dev_priv,
-			  unsigned int frontbuffer_bits,
-			  enum fb_op_origin origin)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
-
-	if (!HAS_FBC(dev_priv))
-		return;
-
-	if (origin == ORIGIN_GTT || origin == ORIGIN_FLIP)
-		return;
+	अगर (!plane->has_fbc || !plane_state)
+		वापस;
 
 	mutex_lock(&fbc->lock);
+	__पूर्णांकel_fbc_post_update(crtc);
+	mutex_unlock(&fbc->lock);
+पूर्ण
 
-	fbc->busy_bits |= intel_fbc_get_frontbuffer_bit(fbc) & frontbuffer_bits;
+अटल अचिन्हित पूर्णांक पूर्णांकel_fbc_get_frontbuffer_bit(काष्ठा पूर्णांकel_fbc *fbc)
+अणु
+	अगर (fbc->crtc)
+		वापस to_पूर्णांकel_plane(fbc->crtc->base.primary)->frontbuffer_bit;
+	अन्यथा
+		वापस fbc->possible_framebuffer_bits;
+पूर्ण
 
-	if (fbc->crtc && fbc->busy_bits)
-		intel_fbc_deactivate(dev_priv, "frontbuffer write");
+व्योम पूर्णांकel_fbc_invalidate(काष्ठा drm_i915_निजी *dev_priv,
+			  अचिन्हित पूर्णांक frontbuffer_bits,
+			  क्रमागत fb_op_origin origin)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
+
+	अगर (!HAS_FBC(dev_priv))
+		वापस;
+
+	अगर (origin == ORIGIN_GTT || origin == ORIGIN_FLIP)
+		वापस;
+
+	mutex_lock(&fbc->lock);
+
+	fbc->busy_bits |= पूर्णांकel_fbc_get_frontbuffer_bit(fbc) & frontbuffer_bits;
+
+	अगर (fbc->crtc && fbc->busy_bits)
+		पूर्णांकel_fbc_deactivate(dev_priv, "frontbuffer write");
 
 	mutex_unlock(&fbc->lock);
-}
+पूर्ण
 
-void intel_fbc_flush(struct drm_i915_private *dev_priv,
-		     unsigned int frontbuffer_bits, enum fb_op_origin origin)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
+व्योम पूर्णांकel_fbc_flush(काष्ठा drm_i915_निजी *dev_priv,
+		     अचिन्हित पूर्णांक frontbuffer_bits, क्रमागत fb_op_origin origin)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-	if (!HAS_FBC(dev_priv))
-		return;
+	अगर (!HAS_FBC(dev_priv))
+		वापस;
 
 	/*
-	 * GTT tracking does not nuke the entire cfb
-	 * so don't clear busy_bits set for some other
+	 * GTT tracking करोes not nuke the entire cfb
+	 * so करोn't clear busy_bits set क्रम some other
 	 * reason.
 	 */
-	if (origin == ORIGIN_GTT)
-		return;
+	अगर (origin == ORIGIN_GTT)
+		वापस;
 
 	mutex_lock(&fbc->lock);
 
 	fbc->busy_bits &= ~frontbuffer_bits;
 
-	if (origin == ORIGIN_FLIP)
-		goto out;
+	अगर (origin == ORIGIN_FLIP)
+		जाओ out;
 
-	if (!fbc->busy_bits && fbc->crtc &&
-	    (frontbuffer_bits & intel_fbc_get_frontbuffer_bit(fbc))) {
-		if (fbc->active)
-			intel_fbc_recompress(dev_priv);
-		else if (!fbc->flip_pending)
-			__intel_fbc_post_update(fbc->crtc);
-	}
+	अगर (!fbc->busy_bits && fbc->crtc &&
+	    (frontbuffer_bits & पूर्णांकel_fbc_get_frontbuffer_bit(fbc))) अणु
+		अगर (fbc->active)
+			पूर्णांकel_fbc_recompress(dev_priv);
+		अन्यथा अगर (!fbc->flip_pending)
+			__पूर्णांकel_fbc_post_update(fbc->crtc);
+	पूर्ण
 
 out:
 	mutex_unlock(&fbc->lock);
-}
+पूर्ण
 
 /**
- * intel_fbc_choose_crtc - select a CRTC to enable FBC on
+ * पूर्णांकel_fbc_choose_crtc - select a CRTC to enable FBC on
  * @dev_priv: i915 device instance
- * @state: the atomic state structure
+ * @state: the atomic state काष्ठाure
  *
- * This function looks at the proposed state for CRTCs and planes, then chooses
- * which pipe is going to have FBC by setting intel_crtc_state->enable_fbc to
+ * This function looks at the proposed state क्रम CRTCs and planes, then chooses
+ * which pipe is going to have FBC by setting पूर्णांकel_crtc_state->enable_fbc to
  * true.
  *
- * Later, intel_fbc_enable is going to look for state->enable_fbc and then maybe
- * enable FBC for the chosen CRTC. If it does, it will set dev_priv->fbc.crtc.
+ * Later, पूर्णांकel_fbc_enable is going to look क्रम state->enable_fbc and then maybe
+ * enable FBC क्रम the chosen CRTC. If it करोes, it will set dev_priv->fbc.crtc.
  */
-void intel_fbc_choose_crtc(struct drm_i915_private *dev_priv,
-			   struct intel_atomic_state *state)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
-	struct intel_plane *plane;
-	struct intel_plane_state *plane_state;
+व्योम पूर्णांकel_fbc_choose_crtc(काष्ठा drm_i915_निजी *dev_priv,
+			   काष्ठा पूर्णांकel_atomic_state *state)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
+	काष्ठा पूर्णांकel_plane *plane;
+	काष्ठा पूर्णांकel_plane_state *plane_state;
 	bool crtc_chosen = false;
-	int i;
+	पूर्णांक i;
 
 	mutex_lock(&fbc->lock);
 
 	/* Does this atomic commit involve the CRTC currently tied to FBC? */
-	if (fbc->crtc &&
-	    !intel_atomic_get_new_crtc_state(state, fbc->crtc))
-		goto out;
+	अगर (fbc->crtc &&
+	    !पूर्णांकel_atomic_get_new_crtc_state(state, fbc->crtc))
+		जाओ out;
 
-	if (!intel_fbc_can_enable(dev_priv))
-		goto out;
+	अगर (!पूर्णांकel_fbc_can_enable(dev_priv))
+		जाओ out;
 
 	/* Simply choose the first CRTC that is compatible and has a visible
-	 * plane. We could go for fancier schemes such as checking the plane
-	 * size, but this would just affect the few platforms that don't tie FBC
+	 * plane. We could go क्रम fancier schemes such as checking the plane
+	 * size, but this would just affect the few platक्रमms that करोn't tie FBC
 	 * to pipe or plane A. */
-	for_each_new_intel_plane_in_state(state, plane, plane_state, i) {
-		struct intel_crtc_state *crtc_state;
-		struct intel_crtc *crtc = to_intel_crtc(plane_state->hw.crtc);
+	क्रम_each_new_पूर्णांकel_plane_in_state(state, plane, plane_state, i) अणु
+		काष्ठा पूर्णांकel_crtc_state *crtc_state;
+		काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(plane_state->hw.crtc);
 
-		if (!plane->has_fbc)
-			continue;
+		अगर (!plane->has_fbc)
+			जारी;
 
-		if (!plane_state->uapi.visible)
-			continue;
+		अगर (!plane_state->uapi.visible)
+			जारी;
 
-		crtc_state = intel_atomic_get_new_crtc_state(state, crtc);
+		crtc_state = पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
 
 		crtc_state->enable_fbc = true;
 		crtc_chosen = true;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!crtc_chosen)
+	अगर (!crtc_chosen)
 		fbc->no_fbc_reason = "no suitable CRTC for FBC";
 
 out:
 	mutex_unlock(&fbc->lock);
-}
+पूर्ण
 
 /**
- * intel_fbc_enable: tries to enable FBC on the CRTC
+ * पूर्णांकel_fbc_enable: tries to enable FBC on the CRTC
  * @crtc: the CRTC
- * @state: corresponding &drm_crtc_state for @crtc
+ * @state: corresponding &drm_crtc_state क्रम @crtc
  *
- * This function checks if the given CRTC was chosen for FBC, then enables it if
- * possible. Notice that it doesn't activate FBC. It is valid to call
- * intel_fbc_enable multiple times for the same pipe without an
- * intel_fbc_disable in the middle, as long as it is deactivated.
+ * This function checks अगर the given CRTC was chosen क्रम FBC, then enables it अगर
+ * possible. Notice that it करोesn't activate FBC. It is valid to call
+ * पूर्णांकel_fbc_enable multiple बार क्रम the same pipe without an
+ * पूर्णांकel_fbc_disable in the middle, as दीर्घ as it is deactivated.
  */
-void intel_fbc_enable(struct intel_atomic_state *state,
-		      struct intel_crtc *crtc)
-{
-	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
-	struct intel_plane *plane = to_intel_plane(crtc->base.primary);
-	const struct intel_crtc_state *crtc_state =
-		intel_atomic_get_new_crtc_state(state, crtc);
-	const struct intel_plane_state *plane_state =
-		intel_atomic_get_new_plane_state(state, plane);
-	struct intel_fbc *fbc = &dev_priv->fbc;
-	struct intel_fbc_state_cache *cache = &fbc->state_cache;
+व्योम पूर्णांकel_fbc_enable(काष्ठा पूर्णांकel_atomic_state *state,
+		      काष्ठा पूर्णांकel_crtc *crtc)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(crtc->base.primary);
+	स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state =
+		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
+	स्थिर काष्ठा पूर्णांकel_plane_state *plane_state =
+		पूर्णांकel_atomic_get_new_plane_state(state, plane);
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
+	काष्ठा पूर्णांकel_fbc_state_cache *cache = &fbc->state_cache;
 
-	if (!plane->has_fbc || !plane_state)
-		return;
+	अगर (!plane->has_fbc || !plane_state)
+		वापस;
 
 	mutex_lock(&fbc->lock);
 
-	if (fbc->crtc) {
-		if (fbc->crtc != crtc ||
-		    (!intel_fbc_cfb_size_changed(dev_priv) &&
-		     !intel_fbc_gen9_wa_cfb_stride_changed(dev_priv)))
-			goto out;
+	अगर (fbc->crtc) अणु
+		अगर (fbc->crtc != crtc ||
+		    (!पूर्णांकel_fbc_cfb_size_changed(dev_priv) &&
+		     !पूर्णांकel_fbc_gen9_wa_cfb_stride_changed(dev_priv)))
+			जाओ out;
 
-		__intel_fbc_disable(dev_priv);
-	}
+		__पूर्णांकel_fbc_disable(dev_priv);
+	पूर्ण
 
 	drm_WARN_ON(&dev_priv->drm, fbc->active);
 
-	intel_fbc_update_state_cache(crtc, crtc_state, plane_state);
+	पूर्णांकel_fbc_update_state_cache(crtc, crtc_state, plane_state);
 
 	/* FIXME crtc_state->enable_fbc lies :( */
-	if (!cache->plane.visible)
-		goto out;
+	अगर (!cache->plane.visible)
+		जाओ out;
 
-	if (intel_fbc_alloc_cfb(dev_priv,
-				intel_fbc_calculate_cfb_size(dev_priv, cache),
-				plane_state->hw.fb->format->cpp[0])) {
+	अगर (पूर्णांकel_fbc_alloc_cfb(dev_priv,
+				पूर्णांकel_fbc_calculate_cfb_size(dev_priv, cache),
+				plane_state->hw.fb->क्रमmat->cpp[0])) अणु
 		cache->plane.visible = false;
 		fbc->no_fbc_reason = "not enough stolen memory";
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	cache->gen9_wa_cfb_stride = intel_fbc_gen9_wa_cfb_stride(dev_priv);
+	cache->gen9_wa_cfb_stride = पूर्णांकel_fbc_gen9_wa_cfb_stride(dev_priv);
 
 	drm_dbg_kms(&dev_priv->drm, "Enabling FBC on pipe %c\n",
 		    pipe_name(crtc->pipe));
@@ -1302,200 +1303,200 @@ void intel_fbc_enable(struct intel_atomic_state *state,
 	fbc->crtc = crtc;
 out:
 	mutex_unlock(&fbc->lock);
-}
+पूर्ण
 
 /**
- * intel_fbc_disable - disable FBC if it's associated with crtc
+ * पूर्णांकel_fbc_disable - disable FBC अगर it's associated with crtc
  * @crtc: the CRTC
  *
- * This function disables FBC if it's associated with the provided CRTC.
+ * This function disables FBC अगर it's associated with the provided CRTC.
  */
-void intel_fbc_disable(struct intel_crtc *crtc)
-{
-	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
-	struct intel_plane *plane = to_intel_plane(crtc->base.primary);
-	struct intel_fbc *fbc = &dev_priv->fbc;
+व्योम पूर्णांकel_fbc_disable(काष्ठा पूर्णांकel_crtc *crtc)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(crtc->base.primary);
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-	if (!plane->has_fbc)
-		return;
+	अगर (!plane->has_fbc)
+		वापस;
 
 	mutex_lock(&fbc->lock);
-	if (fbc->crtc == crtc)
-		__intel_fbc_disable(dev_priv);
+	अगर (fbc->crtc == crtc)
+		__पूर्णांकel_fbc_disable(dev_priv);
 	mutex_unlock(&fbc->lock);
-}
+पूर्ण
 
 /**
- * intel_fbc_global_disable - globally disable FBC
+ * पूर्णांकel_fbc_global_disable - globally disable FBC
  * @dev_priv: i915 device instance
  *
  * This function disables FBC regardless of which CRTC is associated with it.
  */
-void intel_fbc_global_disable(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
+व्योम पूर्णांकel_fbc_global_disable(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-	if (!HAS_FBC(dev_priv))
-		return;
+	अगर (!HAS_FBC(dev_priv))
+		वापस;
 
 	mutex_lock(&fbc->lock);
-	if (fbc->crtc) {
+	अगर (fbc->crtc) अणु
 		drm_WARN_ON(&dev_priv->drm, fbc->crtc->active);
-		__intel_fbc_disable(dev_priv);
-	}
+		__पूर्णांकel_fbc_disable(dev_priv);
+	पूर्ण
 	mutex_unlock(&fbc->lock);
-}
+पूर्ण
 
-static void intel_fbc_underrun_work_fn(struct work_struct *work)
-{
-	struct drm_i915_private *dev_priv =
-		container_of(work, struct drm_i915_private, fbc.underrun_work);
-	struct intel_fbc *fbc = &dev_priv->fbc;
+अटल व्योम पूर्णांकel_fbc_underrun_work_fn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv =
+		container_of(work, काष्ठा drm_i915_निजी, fbc.underrun_work);
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
 	mutex_lock(&fbc->lock);
 
 	/* Maybe we were scheduled twice. */
-	if (fbc->underrun_detected || !fbc->crtc)
-		goto out;
+	अगर (fbc->underrun_detected || !fbc->crtc)
+		जाओ out;
 
 	drm_dbg_kms(&dev_priv->drm, "Disabling FBC due to FIFO underrun.\n");
 	fbc->underrun_detected = true;
 
-	intel_fbc_deactivate(dev_priv, "FIFO underrun");
+	पूर्णांकel_fbc_deactivate(dev_priv, "FIFO underrun");
 out:
 	mutex_unlock(&fbc->lock);
-}
+पूर्ण
 
 /*
- * intel_fbc_reset_underrun - reset FBC fifo underrun status.
+ * पूर्णांकel_fbc_reset_underrun - reset FBC fअगरo underrun status.
  * @dev_priv: i915 device instance
  *
- * See intel_fbc_handle_fifo_underrun_irq(). For automated testing we
+ * See पूर्णांकel_fbc_handle_fअगरo_underrun_irq(). For स्वतःmated testing we
  * want to re-enable FBC after an underrun to increase test coverage.
  */
-int intel_fbc_reset_underrun(struct drm_i915_private *dev_priv)
-{
-	int ret;
+पूर्णांक पूर्णांकel_fbc_reset_underrun(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	पूर्णांक ret;
 
 	cancel_work_sync(&dev_priv->fbc.underrun_work);
 
-	ret = mutex_lock_interruptible(&dev_priv->fbc.lock);
-	if (ret)
-		return ret;
+	ret = mutex_lock_पूर्णांकerruptible(&dev_priv->fbc.lock);
+	अगर (ret)
+		वापस ret;
 
-	if (dev_priv->fbc.underrun_detected) {
+	अगर (dev_priv->fbc.underrun_detected) अणु
 		drm_dbg_kms(&dev_priv->drm,
 			    "Re-allowing FBC after fifo underrun\n");
 		dev_priv->fbc.no_fbc_reason = "FIFO underrun cleared";
-	}
+	पूर्ण
 
 	dev_priv->fbc.underrun_detected = false;
 	mutex_unlock(&dev_priv->fbc.lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * intel_fbc_handle_fifo_underrun_irq - disable FBC when we get a FIFO underrun
+ * पूर्णांकel_fbc_handle_fअगरo_underrun_irq - disable FBC when we get a FIFO underrun
  * @dev_priv: i915 device instance
  *
- * Without FBC, most underruns are harmless and don't really cause too many
- * problems, except for an annoying message on dmesg. With FBC, underruns can
+ * Without FBC, most underruns are harmless and करोn't really cause too many
+ * problems, except क्रम an annoying message on dmesg. With FBC, underruns can
  * become black screens or even worse, especially when paired with bad
- * watermarks. So in order for us to be on the safe side, completely disable FBC
- * in case we ever detect a FIFO underrun on any pipe. An underrun on any pipe
- * already suggests that watermarks may be bad, so try to be as safe as
+ * watermarks. So in order क्रम us to be on the safe side, completely disable FBC
+ * in हाल we ever detect a FIFO underrun on any pipe. An underrun on any pipe
+ * alपढ़ोy suggests that watermarks may be bad, so try to be as safe as
  * possible.
  *
  * This function is called from the IRQ handler.
  */
-void intel_fbc_handle_fifo_underrun_irq(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
+व्योम पूर्णांकel_fbc_handle_fअगरo_underrun_irq(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-	if (!HAS_FBC(dev_priv))
-		return;
+	अगर (!HAS_FBC(dev_priv))
+		वापस;
 
 	/* There's no guarantee that underrun_detected won't be set to true
-	 * right after this check and before the work is scheduled, but that's
+	 * right after this check and beक्रमe the work is scheduled, but that's
 	 * not a problem since we'll check it again under the work function
-	 * while FBC is locked. This check here is just to prevent us from
+	 * जबतक FBC is locked. This check here is just to prevent us from
 	 * unnecessarily scheduling the work, and it relies on the fact that we
-	 * never switch underrun_detect back to false after it's true. */
-	if (READ_ONCE(fbc->underrun_detected))
-		return;
+	 * never चयन underrun_detect back to false after it's true. */
+	अगर (READ_ONCE(fbc->underrun_detected))
+		वापस;
 
 	schedule_work(&fbc->underrun_work);
-}
+पूर्ण
 
 /*
- * The DDX driver changes its behavior depending on the value it reads from
- * i915.enable_fbc, so sanitize it by translating the default value into either
+ * The DDX driver changes its behavior depending on the value it पढ़ोs from
+ * i915.enable_fbc, so sanitize it by translating the शेष value पूर्णांकo either
  * 0 or 1 in order to allow it to know what's going on.
  *
- * Notice that this is done at driver initialization and we still allow user
- * space to change the value during runtime without sanitizing it again. IGT
- * relies on being able to change i915.enable_fbc at runtime.
+ * Notice that this is करोne at driver initialization and we still allow user
+ * space to change the value during runसमय without sanitizing it again. IGT
+ * relies on being able to change i915.enable_fbc at runसमय.
  */
-static int intel_sanitize_fbc_option(struct drm_i915_private *dev_priv)
-{
-	if (dev_priv->params.enable_fbc >= 0)
-		return !!dev_priv->params.enable_fbc;
+अटल पूर्णांक पूर्णांकel_sanitize_fbc_option(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	अगर (dev_priv->params.enable_fbc >= 0)
+		वापस !!dev_priv->params.enable_fbc;
 
-	if (!HAS_FBC(dev_priv))
-		return 0;
+	अगर (!HAS_FBC(dev_priv))
+		वापस 0;
 
-	if (IS_BROADWELL(dev_priv) || DISPLAY_VER(dev_priv) >= 9)
-		return 1;
+	अगर (IS_BROADWELL(dev_priv) || DISPLAY_VER(dev_priv) >= 9)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool need_fbc_vtd_wa(struct drm_i915_private *dev_priv)
-{
+अटल bool need_fbc_vtd_wa(काष्ठा drm_i915_निजी *dev_priv)
+अणु
 	/* WaFbcTurnOffFbcWhenHyperVisorIsUsed:skl,bxt */
-	if (intel_vtd_active() &&
-	    (IS_SKYLAKE(dev_priv) || IS_BROXTON(dev_priv))) {
+	अगर (पूर्णांकel_vtd_active() &&
+	    (IS_SKYLAKE(dev_priv) || IS_BROXTON(dev_priv))) अणु
 		drm_info(&dev_priv->drm,
 			 "Disabling framebuffer compression (FBC) to prevent screen flicker with VT-d enabled\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * intel_fbc_init - Initialize FBC
+ * पूर्णांकel_fbc_init - Initialize FBC
  * @dev_priv: the i915 device
  *
  * This function might be called during PM init process.
  */
-void intel_fbc_init(struct drm_i915_private *dev_priv)
-{
-	struct intel_fbc *fbc = &dev_priv->fbc;
+व्योम पूर्णांकel_fbc_init(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
 
-	INIT_WORK(&fbc->underrun_work, intel_fbc_underrun_work_fn);
+	INIT_WORK(&fbc->underrun_work, पूर्णांकel_fbc_underrun_work_fn);
 	mutex_init(&fbc->lock);
 	fbc->active = false;
 
-	if (!drm_mm_initialized(&dev_priv->mm.stolen))
-		mkwrite_device_info(dev_priv)->display.has_fbc = false;
+	अगर (!drm_mm_initialized(&dev_priv->mm.stolen))
+		mkग_लिखो_device_info(dev_priv)->display.has_fbc = false;
 
-	if (need_fbc_vtd_wa(dev_priv))
-		mkwrite_device_info(dev_priv)->display.has_fbc = false;
+	अगर (need_fbc_vtd_wa(dev_priv))
+		mkग_लिखो_device_info(dev_priv)->display.has_fbc = false;
 
-	dev_priv->params.enable_fbc = intel_sanitize_fbc_option(dev_priv);
+	dev_priv->params.enable_fbc = पूर्णांकel_sanitize_fbc_option(dev_priv);
 	drm_dbg_kms(&dev_priv->drm, "Sanitized enable_fbc value: %d\n",
 		    dev_priv->params.enable_fbc);
 
-	if (!HAS_FBC(dev_priv)) {
+	अगर (!HAS_FBC(dev_priv)) अणु
 		fbc->no_fbc_reason = "unsupported by this chipset";
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* We still don't have any sort of hardware state readout for FBC, so
-	 * deactivate it in case the BIOS activated it to make sure software
+	/* We still करोn't have any sort of hardware state पढ़ोout क्रम FBC, so
+	 * deactivate it in हाल the BIOS activated it to make sure software
 	 * matches the hardware state. */
-	if (intel_fbc_hw_is_active(dev_priv))
-		intel_fbc_hw_deactivate(dev_priv);
-}
+	अगर (पूर्णांकel_fbc_hw_is_active(dev_priv))
+		पूर्णांकel_fbc_hw_deactivate(dev_priv);
+पूर्ण

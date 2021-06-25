@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Marvell OcteonTx2 RVU Virtual Function ethernet driver */
 
-#include <linux/etherdevice.h>
-#include <linux/module.h>
-#include <linux/pci.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
 
-#include "otx2_common.h"
-#include "otx2_reg.h"
-#include "cn10k.h"
+#समावेश "otx2_common.h"
+#समावेश "otx2_reg.h"
+#समावेश "cn10k.h"
 
-#define DRV_NAME	"rvu_nicvf"
-#define DRV_STRING	"Marvell RVU NIC Virtual Function Driver"
+#घोषणा DRV_NAME	"rvu_nicvf"
+#घोषणा DRV_STRING	"Marvell RVU NIC Virtual Function Driver"
 
-static const struct pci_device_id otx2_vf_id_table[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_CAVIUM, PCI_DEVID_OCTEONTX2_RVU_AFVF) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_CAVIUM, PCI_DEVID_OCTEONTX2_RVU_VF) },
-	{ }
-};
+अटल स्थिर काष्ठा pci_device_id otx2_vf_id_table[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_CAVIUM, PCI_DEVID_OCTEONTX2_RVU_AFVF) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_CAVIUM, PCI_DEVID_OCTEONTX2_RVU_VF) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_AUTHOR("Sunil Goutham <sgoutham@marvell.com>");
 MODULE_DESCRIPTION(DRV_STRING);
@@ -24,286 +25,286 @@ MODULE_LICENSE("GPL v2");
 MODULE_DEVICE_TABLE(pci, otx2_vf_id_table);
 
 /* RVU VF Interrupt Vector Enumeration */
-enum {
+क्रमागत अणु
 	RVU_VF_INT_VEC_MBOX = 0x0,
-};
+पूर्ण;
 
-static void otx2vf_process_vfaf_mbox_msg(struct otx2_nic *vf,
-					 struct mbox_msghdr *msg)
-{
-	if (msg->id >= MBOX_MSG_MAX) {
+अटल व्योम otx2vf_process_vfaf_mbox_msg(काष्ठा otx2_nic *vf,
+					 काष्ठा mbox_msghdr *msg)
+अणु
+	अगर (msg->id >= MBOX_MSG_MAX) अणु
 		dev_err(vf->dev,
 			"Mbox msg with unknown ID %d\n", msg->id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (msg->sig != OTX2_MBOX_RSP_SIG) {
+	अगर (msg->sig != OTX2_MBOX_RSP_SIG) अणु
 		dev_err(vf->dev,
 			"Mbox msg with wrong signature %x, ID %d\n",
 			msg->sig, msg->id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (msg->rc == MBOX_MSG_INVALID) {
+	अगर (msg->rc == MBOX_MSG_INVALID) अणु
 		dev_err(vf->dev,
 			"PF/AF says the sent msg(s) %d were invalid\n",
 			msg->id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (msg->id) {
-	case MBOX_MSG_READY:
-		vf->pcifunc = msg->pcifunc;
-		break;
-	case MBOX_MSG_MSIX_OFFSET:
-		mbox_handler_msix_offset(vf, (struct msix_offset_rsp *)msg);
-		break;
-	case MBOX_MSG_NPA_LF_ALLOC:
-		mbox_handler_npa_lf_alloc(vf, (struct npa_lf_alloc_rsp *)msg);
-		break;
-	case MBOX_MSG_NIX_LF_ALLOC:
-		mbox_handler_nix_lf_alloc(vf, (struct nix_lf_alloc_rsp *)msg);
-		break;
-	case MBOX_MSG_NIX_TXSCH_ALLOC:
+	चयन (msg->id) अणु
+	हाल MBOX_MSG_READY:
+		vf->pcअगरunc = msg->pcअगरunc;
+		अवरोध;
+	हाल MBOX_MSG_MSIX_OFFSET:
+		mbox_handler_msix_offset(vf, (काष्ठा msix_offset_rsp *)msg);
+		अवरोध;
+	हाल MBOX_MSG_NPA_LF_ALLOC:
+		mbox_handler_npa_lf_alloc(vf, (काष्ठा npa_lf_alloc_rsp *)msg);
+		अवरोध;
+	हाल MBOX_MSG_NIX_LF_ALLOC:
+		mbox_handler_nix_lf_alloc(vf, (काष्ठा nix_lf_alloc_rsp *)msg);
+		अवरोध;
+	हाल MBOX_MSG_NIX_TXSCH_ALLOC:
 		mbox_handler_nix_txsch_alloc(vf,
-					     (struct nix_txsch_alloc_rsp *)msg);
-		break;
-	case MBOX_MSG_NIX_BP_ENABLE:
-		mbox_handler_nix_bp_enable(vf, (struct nix_bp_cfg_rsp *)msg);
-		break;
-	default:
-		if (msg->rc)
+					     (काष्ठा nix_txsch_alloc_rsp *)msg);
+		अवरोध;
+	हाल MBOX_MSG_NIX_BP_ENABLE:
+		mbox_handler_nix_bp_enable(vf, (काष्ठा nix_bp_cfg_rsp *)msg);
+		अवरोध;
+	शेष:
+		अगर (msg->rc)
 			dev_err(vf->dev,
 				"Mbox msg response has err %d, ID %d\n",
 				msg->rc, msg->id);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void otx2vf_vfaf_mbox_handler(struct work_struct *work)
-{
-	struct otx2_mbox_dev *mdev;
-	struct mbox_hdr *rsp_hdr;
-	struct mbox_msghdr *msg;
-	struct otx2_mbox *mbox;
-	struct mbox *af_mbox;
-	int offset, id;
+अटल व्योम otx2vf_vfaf_mbox_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा otx2_mbox_dev *mdev;
+	काष्ठा mbox_hdr *rsp_hdr;
+	काष्ठा mbox_msghdr *msg;
+	काष्ठा otx2_mbox *mbox;
+	काष्ठा mbox *af_mbox;
+	पूर्णांक offset, id;
 
-	af_mbox = container_of(work, struct mbox, mbox_wrk);
+	af_mbox = container_of(work, काष्ठा mbox, mbox_wrk);
 	mbox = &af_mbox->mbox;
 	mdev = &mbox->dev[0];
-	rsp_hdr = (struct mbox_hdr *)(mdev->mbase + mbox->rx_start);
-	if (af_mbox->num_msgs == 0)
-		return;
-	offset = mbox->rx_start + ALIGN(sizeof(*rsp_hdr), MBOX_MSG_ALIGN);
+	rsp_hdr = (काष्ठा mbox_hdr *)(mdev->mbase + mbox->rx_start);
+	अगर (af_mbox->num_msgs == 0)
+		वापस;
+	offset = mbox->rx_start + ALIGN(माप(*rsp_hdr), MBOX_MSG_ALIGN);
 
-	for (id = 0; id < af_mbox->num_msgs; id++) {
-		msg = (struct mbox_msghdr *)(mdev->mbase + offset);
+	क्रम (id = 0; id < af_mbox->num_msgs; id++) अणु
+		msg = (काष्ठा mbox_msghdr *)(mdev->mbase + offset);
 		otx2vf_process_vfaf_mbox_msg(af_mbox->pfvf, msg);
 		offset = mbox->rx_start + msg->next_msgoff;
-		if (mdev->msgs_acked == (af_mbox->num_msgs - 1))
+		अगर (mdev->msgs_acked == (af_mbox->num_msgs - 1))
 			__otx2_mbox_reset(mbox, 0);
 		mdev->msgs_acked++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int otx2vf_process_mbox_msg_up(struct otx2_nic *vf,
-				      struct mbox_msghdr *req)
-{
-	struct msg_rsp *rsp;
-	int err;
+अटल पूर्णांक otx2vf_process_mbox_msg_up(काष्ठा otx2_nic *vf,
+				      काष्ठा mbox_msghdr *req)
+अणु
+	काष्ठा msg_rsp *rsp;
+	पूर्णांक err;
 
-	/* Check if valid, if not reply with a invalid msg */
-	if (req->sig != OTX2_MBOX_REQ_SIG) {
+	/* Check अगर valid, अगर not reply with a invalid msg */
+	अगर (req->sig != OTX2_MBOX_REQ_SIG) अणु
 		otx2_reply_invalid_msg(&vf->mbox.mbox_up, 0, 0, req->id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	switch (req->id) {
-	case MBOX_MSG_CGX_LINK_EVENT:
-		rsp = (struct msg_rsp *)otx2_mbox_alloc_msg(
+	चयन (req->id) अणु
+	हाल MBOX_MSG_CGX_LINK_EVENT:
+		rsp = (काष्ठा msg_rsp *)otx2_mbox_alloc_msg(
 						&vf->mbox.mbox_up, 0,
-						sizeof(struct msg_rsp));
-		if (!rsp)
-			return -ENOMEM;
+						माप(काष्ठा msg_rsp));
+		अगर (!rsp)
+			वापस -ENOMEM;
 
 		rsp->hdr.id = MBOX_MSG_CGX_LINK_EVENT;
 		rsp->hdr.sig = OTX2_MBOX_RSP_SIG;
-		rsp->hdr.pcifunc = 0;
+		rsp->hdr.pcअगरunc = 0;
 		rsp->hdr.rc = 0;
 		err = otx2_mbox_up_handler_cgx_link_event(
-				vf, (struct cgx_link_info_msg *)req, rsp);
-		return err;
-	default:
+				vf, (काष्ठा cgx_link_info_msg *)req, rsp);
+		वापस err;
+	शेष:
 		otx2_reply_invalid_msg(&vf->mbox.mbox_up, 0, 0, req->id);
-		return -ENODEV;
-	}
-	return 0;
-}
+		वापस -ENODEV;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void otx2vf_vfaf_mbox_up_handler(struct work_struct *work)
-{
-	struct otx2_mbox_dev *mdev;
-	struct mbox_hdr *rsp_hdr;
-	struct mbox_msghdr *msg;
-	struct otx2_mbox *mbox;
-	struct mbox *vf_mbox;
-	struct otx2_nic *vf;
-	int offset, id;
+अटल व्योम otx2vf_vfaf_mbox_up_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा otx2_mbox_dev *mdev;
+	काष्ठा mbox_hdr *rsp_hdr;
+	काष्ठा mbox_msghdr *msg;
+	काष्ठा otx2_mbox *mbox;
+	काष्ठा mbox *vf_mbox;
+	काष्ठा otx2_nic *vf;
+	पूर्णांक offset, id;
 
-	vf_mbox = container_of(work, struct mbox, mbox_up_wrk);
+	vf_mbox = container_of(work, काष्ठा mbox, mbox_up_wrk);
 	vf = vf_mbox->pfvf;
 	mbox = &vf_mbox->mbox_up;
 	mdev = &mbox->dev[0];
 
-	rsp_hdr = (struct mbox_hdr *)(mdev->mbase + mbox->rx_start);
-	if (vf_mbox->up_num_msgs == 0)
-		return;
+	rsp_hdr = (काष्ठा mbox_hdr *)(mdev->mbase + mbox->rx_start);
+	अगर (vf_mbox->up_num_msgs == 0)
+		वापस;
 
-	offset = mbox->rx_start + ALIGN(sizeof(*rsp_hdr), MBOX_MSG_ALIGN);
+	offset = mbox->rx_start + ALIGN(माप(*rsp_hdr), MBOX_MSG_ALIGN);
 
-	for (id = 0; id < vf_mbox->up_num_msgs; id++) {
-		msg = (struct mbox_msghdr *)(mdev->mbase + offset);
+	क्रम (id = 0; id < vf_mbox->up_num_msgs; id++) अणु
+		msg = (काष्ठा mbox_msghdr *)(mdev->mbase + offset);
 		otx2vf_process_mbox_msg_up(vf, msg);
 		offset = mbox->rx_start + msg->next_msgoff;
-	}
+	पूर्ण
 
 	otx2_mbox_msg_send(mbox, 0);
-}
+पूर्ण
 
-static irqreturn_t otx2vf_vfaf_mbox_intr_handler(int irq, void *vf_irq)
-{
-	struct otx2_nic *vf = (struct otx2_nic *)vf_irq;
-	struct otx2_mbox_dev *mdev;
-	struct otx2_mbox *mbox;
-	struct mbox_hdr *hdr;
+अटल irqवापस_t otx2vf_vfaf_mbox_पूर्णांकr_handler(पूर्णांक irq, व्योम *vf_irq)
+अणु
+	काष्ठा otx2_nic *vf = (काष्ठा otx2_nic *)vf_irq;
+	काष्ठा otx2_mbox_dev *mdev;
+	काष्ठा otx2_mbox *mbox;
+	काष्ठा mbox_hdr *hdr;
 
 	/* Clear the IRQ */
-	otx2_write64(vf, RVU_VF_INT, BIT_ULL(0));
+	otx2_ग_लिखो64(vf, RVU_VF_INT, BIT_ULL(0));
 
 	/* Read latest mbox data */
 	smp_rmb();
 
-	/* Check for PF => VF response messages */
+	/* Check क्रम PF => VF response messages */
 	mbox = &vf->mbox.mbox;
 	mdev = &mbox->dev[0];
 	otx2_sync_mbox_bbuf(mbox, 0);
 
-	trace_otx2_msg_interrupt(mbox->pdev, "PF to VF", BIT_ULL(0));
+	trace_otx2_msg_पूर्णांकerrupt(mbox->pdev, "PF to VF", BIT_ULL(0));
 
-	hdr = (struct mbox_hdr *)(mdev->mbase + mbox->rx_start);
-	if (hdr->num_msgs) {
+	hdr = (काष्ठा mbox_hdr *)(mdev->mbase + mbox->rx_start);
+	अगर (hdr->num_msgs) अणु
 		vf->mbox.num_msgs = hdr->num_msgs;
 		hdr->num_msgs = 0;
-		memset(mbox->hwbase + mbox->rx_start, 0,
-		       ALIGN(sizeof(struct mbox_hdr), sizeof(u64)));
+		स_रखो(mbox->hwbase + mbox->rx_start, 0,
+		       ALIGN(माप(काष्ठा mbox_hdr), माप(u64)));
 		queue_work(vf->mbox_wq, &vf->mbox.mbox_wrk);
-	}
-	/* Check for PF => VF notification messages */
+	पूर्ण
+	/* Check क्रम PF => VF notअगरication messages */
 	mbox = &vf->mbox.mbox_up;
 	mdev = &mbox->dev[0];
 	otx2_sync_mbox_bbuf(mbox, 0);
 
-	hdr = (struct mbox_hdr *)(mdev->mbase + mbox->rx_start);
-	if (hdr->num_msgs) {
+	hdr = (काष्ठा mbox_hdr *)(mdev->mbase + mbox->rx_start);
+	अगर (hdr->num_msgs) अणु
 		vf->mbox.up_num_msgs = hdr->num_msgs;
 		hdr->num_msgs = 0;
-		memset(mbox->hwbase + mbox->rx_start, 0,
-		       ALIGN(sizeof(struct mbox_hdr), sizeof(u64)));
+		स_रखो(mbox->hwbase + mbox->rx_start, 0,
+		       ALIGN(माप(काष्ठा mbox_hdr), माप(u64)));
 		queue_work(vf->mbox_wq, &vf->mbox.mbox_up_wrk);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void otx2vf_disable_mbox_intr(struct otx2_nic *vf)
-{
-	int vector = pci_irq_vector(vf->pdev, RVU_VF_INT_VEC_MBOX);
+अटल व्योम otx2vf_disable_mbox_पूर्णांकr(काष्ठा otx2_nic *vf)
+अणु
+	पूर्णांक vector = pci_irq_vector(vf->pdev, RVU_VF_INT_VEC_MBOX);
 
 	/* Disable VF => PF mailbox IRQ */
-	otx2_write64(vf, RVU_VF_INT_ENA_W1C, BIT_ULL(0));
-	free_irq(vector, vf);
-}
+	otx2_ग_लिखो64(vf, RVU_VF_INT_ENA_W1C, BIT_ULL(0));
+	मुक्त_irq(vector, vf);
+पूर्ण
 
-static int otx2vf_register_mbox_intr(struct otx2_nic *vf, bool probe_pf)
-{
-	struct otx2_hw *hw = &vf->hw;
-	struct msg_req *req;
-	char *irq_name;
-	int err;
+अटल पूर्णांक otx2vf_रेजिस्टर_mbox_पूर्णांकr(काष्ठा otx2_nic *vf, bool probe_pf)
+अणु
+	काष्ठा otx2_hw *hw = &vf->hw;
+	काष्ठा msg_req *req;
+	अक्षर *irq_name;
+	पूर्णांक err;
 
-	/* Register mailbox interrupt handler */
+	/* Register mailbox पूर्णांकerrupt handler */
 	irq_name = &hw->irq_name[RVU_VF_INT_VEC_MBOX * NAME_SIZE];
-	snprintf(irq_name, NAME_SIZE, "RVUVFAF Mbox");
+	snम_लिखो(irq_name, NAME_SIZE, "RVUVFAF Mbox");
 	err = request_irq(pci_irq_vector(vf->pdev, RVU_VF_INT_VEC_MBOX),
-			  otx2vf_vfaf_mbox_intr_handler, 0, irq_name, vf);
-	if (err) {
+			  otx2vf_vfaf_mbox_पूर्णांकr_handler, 0, irq_name, vf);
+	अगर (err) अणु
 		dev_err(vf->dev,
 			"RVUPF: IRQ registration failed for VFAF mbox irq\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* Enable mailbox interrupt for msgs coming from PF.
-	 * First clear to avoid spurious interrupts, if any.
+	/* Enable mailbox पूर्णांकerrupt क्रम msgs coming from PF.
+	 * First clear to aव्योम spurious पूर्णांकerrupts, अगर any.
 	 */
-	otx2_write64(vf, RVU_VF_INT, BIT_ULL(0));
-	otx2_write64(vf, RVU_VF_INT_ENA_W1S, BIT_ULL(0));
+	otx2_ग_लिखो64(vf, RVU_VF_INT, BIT_ULL(0));
+	otx2_ग_लिखो64(vf, RVU_VF_INT_ENA_W1S, BIT_ULL(0));
 
-	if (!probe_pf)
-		return 0;
+	अगर (!probe_pf)
+		वापस 0;
 
 	/* Check mailbox communication with PF */
-	req = otx2_mbox_alloc_msg_ready(&vf->mbox);
-	if (!req) {
-		otx2vf_disable_mbox_intr(vf);
-		return -ENOMEM;
-	}
+	req = otx2_mbox_alloc_msg_पढ़ोy(&vf->mbox);
+	अगर (!req) अणु
+		otx2vf_disable_mbox_पूर्णांकr(vf);
+		वापस -ENOMEM;
+	पूर्ण
 
 	err = otx2_sync_mbox_msg(&vf->mbox);
-	if (err) {
+	अगर (err) अणु
 		dev_warn(vf->dev,
 			 "AF not responding to mailbox, deferring probe\n");
-		otx2vf_disable_mbox_intr(vf);
-		return -EPROBE_DEFER;
-	}
-	return 0;
-}
+		otx2vf_disable_mbox_पूर्णांकr(vf);
+		वापस -EPROBE_DEFER;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void otx2vf_vfaf_mbox_destroy(struct otx2_nic *vf)
-{
-	struct mbox *mbox = &vf->mbox;
+अटल व्योम otx2vf_vfaf_mbox_destroy(काष्ठा otx2_nic *vf)
+अणु
+	काष्ठा mbox *mbox = &vf->mbox;
 
-	if (vf->mbox_wq) {
+	अगर (vf->mbox_wq) अणु
 		flush_workqueue(vf->mbox_wq);
 		destroy_workqueue(vf->mbox_wq);
-		vf->mbox_wq = NULL;
-	}
+		vf->mbox_wq = शून्य;
+	पूर्ण
 
-	if (mbox->mbox.hwbase && !test_bit(CN10K_MBOX, &vf->hw.cap_flag))
-		iounmap((void __iomem *)mbox->mbox.hwbase);
+	अगर (mbox->mbox.hwbase && !test_bit(CN10K_MBOX, &vf->hw.cap_flag))
+		iounmap((व्योम __iomem *)mbox->mbox.hwbase);
 
 	otx2_mbox_destroy(&mbox->mbox);
 	otx2_mbox_destroy(&mbox->mbox_up);
-}
+पूर्ण
 
-static int otx2vf_vfaf_mbox_init(struct otx2_nic *vf)
-{
-	struct mbox *mbox = &vf->mbox;
-	void __iomem *hwbase;
-	int err;
+अटल पूर्णांक otx2vf_vfaf_mbox_init(काष्ठा otx2_nic *vf)
+अणु
+	काष्ठा mbox *mbox = &vf->mbox;
+	व्योम __iomem *hwbase;
+	पूर्णांक err;
 
 	mbox->pfvf = vf;
 	vf->mbox_wq = alloc_workqueue("otx2_vfaf_mailbox",
 				      WQ_UNBOUND | WQ_HIGHPRI |
 				      WQ_MEM_RECLAIM, 1);
-	if (!vf->mbox_wq)
-		return -ENOMEM;
+	अगर (!vf->mbox_wq)
+		वापस -ENOMEM;
 
-	if (test_bit(CN10K_MBOX, &vf->hw.cap_flag)) {
-		/* For cn10k platform, VF mailbox region is in its BAR2
-		 * register space
+	अगर (test_bit(CN10K_MBOX, &vf->hw.cap_flag)) अणु
+		/* For cn10k platक्रमm, VF mailbox region is in its BAR2
+		 * रेजिस्टर space
 		 */
 		hwbase = vf->reg_base + RVU_VF_MBOX_REGION;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Mailbox is a reserved memory (in RAM) region shared between
 		 * admin function (i.e PF0) and this VF, shouldn't be mapped as
 		 * device memory to allow unaligned accesses.
@@ -312,187 +313,187 @@ static int otx2vf_vfaf_mbox_init(struct otx2_nic *vf)
 						       PCI_MBOX_BAR_NUM),
 				    pci_resource_len(vf->pdev,
 						     PCI_MBOX_BAR_NUM));
-		if (!hwbase) {
+		अगर (!hwbase) अणु
 			dev_err(vf->dev, "Unable to map VFAF mailbox region\n");
 			err = -ENOMEM;
-			goto exit;
-		}
-	}
+			जाओ निकास;
+		पूर्ण
+	पूर्ण
 
 	err = otx2_mbox_init(&mbox->mbox, hwbase, vf->pdev, vf->reg_base,
-			     MBOX_DIR_VFPF, 1);
-	if (err)
-		goto exit;
+			     MBOX_सूची_VFPF, 1);
+	अगर (err)
+		जाओ निकास;
 
 	err = otx2_mbox_init(&mbox->mbox_up, hwbase, vf->pdev, vf->reg_base,
-			     MBOX_DIR_VFPF_UP, 1);
-	if (err)
-		goto exit;
+			     MBOX_सूची_VFPF_UP, 1);
+	अगर (err)
+		जाओ निकास;
 
 	err = otx2_mbox_bbuf_init(mbox, vf->pdev);
-	if (err)
-		goto exit;
+	अगर (err)
+		जाओ निकास;
 
 	INIT_WORK(&mbox->mbox_wrk, otx2vf_vfaf_mbox_handler);
 	INIT_WORK(&mbox->mbox_up_wrk, otx2vf_vfaf_mbox_up_handler);
 	mutex_init(&mbox->lock);
 
-	return 0;
-exit:
-	if (hwbase && !test_bit(CN10K_MBOX, &vf->hw.cap_flag))
+	वापस 0;
+निकास:
+	अगर (hwbase && !test_bit(CN10K_MBOX, &vf->hw.cap_flag))
 		iounmap(hwbase);
 	destroy_workqueue(vf->mbox_wq);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int otx2vf_open(struct net_device *netdev)
-{
-	struct otx2_nic *vf;
-	int err;
+अटल पूर्णांक otx2vf_खोलो(काष्ठा net_device *netdev)
+अणु
+	काष्ठा otx2_nic *vf;
+	पूर्णांक err;
 
-	err = otx2_open(netdev);
-	if (err)
-		return err;
+	err = otx2_खोलो(netdev);
+	अगर (err)
+		वापस err;
 
-	/* LBKs do not receive link events so tell everyone we are up here */
+	/* LBKs करो not receive link events so tell everyone we are up here */
 	vf = netdev_priv(netdev);
-	if (is_otx2_lbkvf(vf->pdev)) {
+	अगर (is_otx2_lbkvf(vf->pdev)) अणु
 		pr_info("%s NIC Link is UP\n", netdev->name);
-		netif_carrier_on(netdev);
-		netif_tx_start_all_queues(netdev);
-	}
+		netअगर_carrier_on(netdev);
+		netअगर_tx_start_all_queues(netdev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int otx2vf_stop(struct net_device *netdev)
-{
-	return otx2_stop(netdev);
-}
+अटल पूर्णांक otx2vf_stop(काष्ठा net_device *netdev)
+अणु
+	वापस otx2_stop(netdev);
+पूर्ण
 
-static netdev_tx_t otx2vf_xmit(struct sk_buff *skb, struct net_device *netdev)
-{
-	struct otx2_nic *vf = netdev_priv(netdev);
-	int qidx = skb_get_queue_mapping(skb);
-	struct otx2_snd_queue *sq;
-	struct netdev_queue *txq;
+अटल netdev_tx_t otx2vf_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *netdev)
+अणु
+	काष्ठा otx2_nic *vf = netdev_priv(netdev);
+	पूर्णांक qidx = skb_get_queue_mapping(skb);
+	काष्ठा otx2_snd_queue *sq;
+	काष्ठा netdev_queue *txq;
 
 	sq = &vf->qset.sq[qidx];
 	txq = netdev_get_tx_queue(netdev, qidx);
 
-	if (!otx2_sq_append_skb(netdev, sq, skb, qidx)) {
-		netif_tx_stop_queue(txq);
+	अगर (!otx2_sq_append_skb(netdev, sq, skb, qidx)) अणु
+		netअगर_tx_stop_queue(txq);
 
-		/* Check again, incase SQBs got freed up */
+		/* Check again, inहाल SQBs got मुक्तd up */
 		smp_mb();
-		if (((sq->num_sqbs - *sq->aura_fc_addr) * sq->sqe_per_sqb)
+		अगर (((sq->num_sqbs - *sq->aura_fc_addr) * sq->sqe_per_sqb)
 							> sq->sqe_thresh)
-			netif_tx_wake_queue(txq);
+			netअगर_tx_wake_queue(txq);
 
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int otx2vf_change_mtu(struct net_device *netdev, int new_mtu)
-{
-	bool if_up = netif_running(netdev);
-	int err = 0;
+अटल पूर्णांक otx2vf_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
+अणु
+	bool अगर_up = netअगर_running(netdev);
+	पूर्णांक err = 0;
 
-	if (if_up)
+	अगर (अगर_up)
 		otx2vf_stop(netdev);
 
 	netdev_info(netdev, "Changing MTU from %d to %d\n",
 		    netdev->mtu, new_mtu);
 	netdev->mtu = new_mtu;
 
-	if (if_up)
-		err = otx2vf_open(netdev);
+	अगर (अगर_up)
+		err = otx2vf_खोलो(netdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void otx2vf_reset_task(struct work_struct *work)
-{
-	struct otx2_nic *vf = container_of(work, struct otx2_nic, reset_task);
+अटल व्योम otx2vf_reset_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा otx2_nic *vf = container_of(work, काष्ठा otx2_nic, reset_task);
 
 	rtnl_lock();
 
-	if (netif_running(vf->netdev)) {
+	अगर (netअगर_running(vf->netdev)) अणु
 		otx2vf_stop(vf->netdev);
 		vf->reset_count++;
-		otx2vf_open(vf->netdev);
-	}
+		otx2vf_खोलो(vf->netdev);
+	पूर्ण
 
 	rtnl_unlock();
-}
+पूर्ण
 
-static const struct net_device_ops otx2vf_netdev_ops = {
-	.ndo_open = otx2vf_open,
-	.ndo_stop = otx2vf_stop,
-	.ndo_start_xmit = otx2vf_xmit,
-	.ndo_set_mac_address = otx2_set_mac_address,
-	.ndo_change_mtu = otx2vf_change_mtu,
-	.ndo_get_stats64 = otx2_get_stats64,
-	.ndo_tx_timeout = otx2_tx_timeout,
-};
+अटल स्थिर काष्ठा net_device_ops otx2vf_netdev_ops = अणु
+	.nकरो_खोलो = otx2vf_खोलो,
+	.nकरो_stop = otx2vf_stop,
+	.nकरो_start_xmit = otx2vf_xmit,
+	.nकरो_set_mac_address = otx2_set_mac_address,
+	.nकरो_change_mtu = otx2vf_change_mtu,
+	.nकरो_get_stats64 = otx2_get_stats64,
+	.nकरो_tx_समयout = otx2_tx_समयout,
+पूर्ण;
 
-static int otx2vf_realloc_msix_vectors(struct otx2_nic *vf)
-{
-	struct otx2_hw *hw = &vf->hw;
-	int num_vec, err;
+अटल पूर्णांक otx2vf_पुनः_स्मृति_msix_vectors(काष्ठा otx2_nic *vf)
+अणु
+	काष्ठा otx2_hw *hw = &vf->hw;
+	पूर्णांक num_vec, err;
 
 	num_vec = hw->nix_msixoff;
 	num_vec += NIX_LF_CINT_VEC_START + hw->max_queues;
 
-	otx2vf_disable_mbox_intr(vf);
-	pci_free_irq_vectors(hw->pdev);
+	otx2vf_disable_mbox_पूर्णांकr(vf);
+	pci_मुक्त_irq_vectors(hw->pdev);
 	err = pci_alloc_irq_vectors(hw->pdev, num_vec, num_vec, PCI_IRQ_MSIX);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(vf->dev, "%s: Failed to realloc %d IRQ vectors\n",
 			__func__, num_vec);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return otx2vf_register_mbox_intr(vf, false);
-}
+	वापस otx2vf_रेजिस्टर_mbox_पूर्णांकr(vf, false);
+पूर्ण
 
-static int otx2vf_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	int num_vec = pci_msix_vec_count(pdev);
-	struct device *dev = &pdev->dev;
-	struct net_device *netdev;
-	struct otx2_nic *vf;
-	struct otx2_hw *hw;
-	int err, qcount;
+अटल पूर्णांक otx2vf_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	पूर्णांक num_vec = pci_msix_vec_count(pdev);
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा net_device *netdev;
+	काष्ठा otx2_nic *vf;
+	काष्ठा otx2_hw *hw;
+	पूर्णांक err, qcount;
 
 	err = pcim_enable_device(pdev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Failed to enable PCI device\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = pci_request_regions(pdev, DRV_NAME);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "PCI request regions failed 0x%x\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(48));
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "DMA mask config failed, abort\n");
-		goto err_release_regions;
-	}
+		जाओ err_release_regions;
+	पूर्ण
 
 	pci_set_master(pdev);
 
 	qcount = num_online_cpus();
-	netdev = alloc_etherdev_mqs(sizeof(*vf), qcount, qcount);
-	if (!netdev) {
+	netdev = alloc_etherdev_mqs(माप(*vf), qcount, qcount);
+	अगर (!netdev) अणु
 		err = -ENOMEM;
-		goto err_release_regions;
-	}
+		जाओ err_release_regions;
+	पूर्ण
 
 	pci_set_drvdata(pdev, netdev);
 	SET_NETDEV_DEV(netdev, &pdev->dev);
@@ -500,7 +501,7 @@ static int otx2vf_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	vf->netdev = netdev;
 	vf->pdev = pdev;
 	vf->dev = dev;
-	vf->iommu_domain = iommu_get_domain_for_dev(dev);
+	vf->iommu_करोमुख्य = iommu_get_करोमुख्य_क्रम_dev(dev);
 
 	vf->flags |= OTX2_FLAG_INTF_DOWN;
 	hw = &vf->hw;
@@ -509,63 +510,63 @@ static int otx2vf_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	hw->tx_queues = qcount;
 	hw->max_queues = qcount;
 
-	hw->irq_name = devm_kmalloc_array(&hw->pdev->dev, num_vec, NAME_SIZE,
+	hw->irq_name = devm_kदो_स्मृति_array(&hw->pdev->dev, num_vec, NAME_SIZE,
 					  GFP_KERNEL);
-	if (!hw->irq_name) {
+	अगर (!hw->irq_name) अणु
 		err = -ENOMEM;
-		goto err_free_netdev;
-	}
+		जाओ err_मुक्त_netdev;
+	पूर्ण
 
-	hw->affinity_mask = devm_kcalloc(&hw->pdev->dev, num_vec,
-					 sizeof(cpumask_var_t), GFP_KERNEL);
-	if (!hw->affinity_mask) {
+	hw->affinity_mask = devm_kसुस्मृति(&hw->pdev->dev, num_vec,
+					 माप(cpumask_var_t), GFP_KERNEL);
+	अगर (!hw->affinity_mask) अणु
 		err = -ENOMEM;
-		goto err_free_netdev;
-	}
+		जाओ err_मुक्त_netdev;
+	पूर्ण
 
 	err = pci_alloc_irq_vectors(hw->pdev, num_vec, num_vec, PCI_IRQ_MSIX);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "%s: Failed to alloc %d IRQ vectors\n",
 			__func__, num_vec);
-		goto err_free_netdev;
-	}
+		जाओ err_मुक्त_netdev;
+	पूर्ण
 
 	vf->reg_base = pcim_iomap(pdev, PCI_CFG_REG_BAR_NUM, 0);
-	if (!vf->reg_base) {
+	अगर (!vf->reg_base) अणु
 		dev_err(dev, "Unable to map physical function CSRs, aborting\n");
 		err = -ENOMEM;
-		goto err_free_irq_vectors;
-	}
+		जाओ err_मुक्त_irq_vectors;
+	पूर्ण
 
 	otx2_setup_dev_hw_settings(vf);
 	/* Init VF <=> PF mailbox stuff */
 	err = otx2vf_vfaf_mbox_init(vf);
-	if (err)
-		goto err_free_irq_vectors;
+	अगर (err)
+		जाओ err_मुक्त_irq_vectors;
 
-	/* Register mailbox interrupt */
-	err = otx2vf_register_mbox_intr(vf, true);
-	if (err)
-		goto err_mbox_destroy;
+	/* Register mailbox पूर्णांकerrupt */
+	err = otx2vf_रेजिस्टर_mbox_पूर्णांकr(vf, true);
+	अगर (err)
+		जाओ err_mbox_destroy;
 
 	/* Request AF to attach NPA and LIX LFs to this AF */
 	err = otx2_attach_npa_nix(vf);
-	if (err)
-		goto err_disable_mbox_intr;
+	अगर (err)
+		जाओ err_disable_mbox_पूर्णांकr;
 
-	err = otx2vf_realloc_msix_vectors(vf);
-	if (err)
-		goto err_mbox_destroy;
+	err = otx2vf_पुनः_स्मृति_msix_vectors(vf);
+	अगर (err)
+		जाओ err_mbox_destroy;
 
 	err = otx2_set_real_num_queues(netdev, qcount, qcount);
-	if (err)
-		goto err_detach_rsrc;
+	अगर (err)
+		जाओ err_detach_rsrc;
 
 	err = cn10k_vf_lmtst_init(vf);
-	if (err)
-		goto err_detach_rsrc;
+	अगर (err)
+		जाओ err_detach_rsrc;
 
-	/* Assign default mac address */
+	/* Assign शेष mac address */
 	otx2_get_mac_from_af(netdev);
 
 	netdev->hw_features = NETIF_F_RXCSUM | NETIF_F_IP_CSUM |
@@ -573,14 +574,14 @@ static int otx2vf_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 			      NETIF_F_SG | NETIF_F_TSO | NETIF_F_TSO6 |
 			      NETIF_F_GSO_UDP_L4;
 	netdev->features = netdev->hw_features;
-	/* Support TSO on tag interface */
+	/* Support TSO on tag पूर्णांकerface */
 	netdev->vlan_features |= netdev->features;
 	netdev->hw_features  |= NETIF_F_HW_VLAN_CTAG_TX |
 				NETIF_F_HW_VLAN_STAG_TX;
 	netdev->features |= netdev->hw_features;
 
 	netdev->gso_max_segs = OTX2_MAX_GSO_SEGS;
-	netdev->watchdog_timeo = OTX2_TX_TIMEOUT;
+	netdev->watchकरोg_समयo = OTX2_TX_TIMEOUT;
 
 	netdev->netdev_ops = &otx2vf_netdev_ops;
 
@@ -590,93 +591,93 @@ static int otx2vf_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 
 	INIT_WORK(&vf->reset_task, otx2vf_reset_task);
 
-	/* To distinguish, for LBK VFs set netdev name explicitly */
-	if (is_otx2_lbkvf(vf->pdev)) {
-		int n;
+	/* To distinguish, क्रम LBK VFs set netdev name explicitly */
+	अगर (is_otx2_lbkvf(vf->pdev)) अणु
+		पूर्णांक n;
 
-		n = (vf->pcifunc >> RVU_PFVF_FUNC_SHIFT) & RVU_PFVF_FUNC_MASK;
+		n = (vf->pcअगरunc >> RVU_PFVF_FUNC_SHIFT) & RVU_PFVF_FUNC_MASK;
 		/* Need to subtract 1 to get proper VF number */
 		n -= 1;
-		snprintf(netdev->name, sizeof(netdev->name), "lbk%d", n);
-	}
+		snम_लिखो(netdev->name, माप(netdev->name), "lbk%d", n);
+	पूर्ण
 
-	err = register_netdev(netdev);
-	if (err) {
+	err = रेजिस्टर_netdev(netdev);
+	अगर (err) अणु
 		dev_err(dev, "Failed to register netdevice\n");
-		goto err_detach_rsrc;
-	}
+		जाओ err_detach_rsrc;
+	पूर्ण
 
 	otx2vf_set_ethtool_ops(netdev);
 
-	/* Enable pause frames by default */
+	/* Enable छोड़ो frames by शेष */
 	vf->flags |= OTX2_FLAG_RX_PAUSE_ENABLED;
 	vf->flags |= OTX2_FLAG_TX_PAUSE_ENABLED;
 
-	return 0;
+	वापस 0;
 
 err_detach_rsrc:
-	if (hw->lmt_base)
+	अगर (hw->lmt_base)
 		iounmap(hw->lmt_base);
 	otx2_detach_resources(&vf->mbox);
-err_disable_mbox_intr:
-	otx2vf_disable_mbox_intr(vf);
+err_disable_mbox_पूर्णांकr:
+	otx2vf_disable_mbox_पूर्णांकr(vf);
 err_mbox_destroy:
 	otx2vf_vfaf_mbox_destroy(vf);
-err_free_irq_vectors:
-	pci_free_irq_vectors(hw->pdev);
-err_free_netdev:
-	pci_set_drvdata(pdev, NULL);
-	free_netdev(netdev);
+err_मुक्त_irq_vectors:
+	pci_मुक्त_irq_vectors(hw->pdev);
+err_मुक्त_netdev:
+	pci_set_drvdata(pdev, शून्य);
+	मुक्त_netdev(netdev);
 err_release_regions:
 	pci_release_regions(pdev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void otx2vf_remove(struct pci_dev *pdev)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct otx2_nic *vf;
+अटल व्योम otx2vf_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा otx2_nic *vf;
 
-	if (!netdev)
-		return;
+	अगर (!netdev)
+		वापस;
 
 	vf = netdev_priv(netdev);
 
 	cancel_work_sync(&vf->reset_task);
-	unregister_netdev(netdev);
-	otx2vf_disable_mbox_intr(vf);
+	unरेजिस्टर_netdev(netdev);
+	otx2vf_disable_mbox_पूर्णांकr(vf);
 	otx2_detach_resources(&vf->mbox);
 
-	if (vf->hw.lmt_base)
+	अगर (vf->hw.lmt_base)
 		iounmap(vf->hw.lmt_base);
 
 	otx2vf_vfaf_mbox_destroy(vf);
-	pci_free_irq_vectors(vf->pdev);
-	pci_set_drvdata(pdev, NULL);
-	free_netdev(netdev);
+	pci_मुक्त_irq_vectors(vf->pdev);
+	pci_set_drvdata(pdev, शून्य);
+	मुक्त_netdev(netdev);
 
 	pci_release_regions(pdev);
-}
+पूर्ण
 
-static struct pci_driver otx2vf_driver = {
+अटल काष्ठा pci_driver otx2vf_driver = अणु
 	.name = DRV_NAME,
 	.id_table = otx2_vf_id_table,
 	.probe = otx2vf_probe,
-	.remove = otx2vf_remove,
-	.shutdown = otx2vf_remove,
-};
+	.हटाओ = otx2vf_हटाओ,
+	.shutकरोwn = otx2vf_हटाओ,
+पूर्ण;
 
-static int __init otx2vf_init_module(void)
-{
+अटल पूर्णांक __init otx2vf_init_module(व्योम)
+अणु
 	pr_info("%s: %s\n", DRV_NAME, DRV_STRING);
 
-	return pci_register_driver(&otx2vf_driver);
-}
+	वापस pci_रेजिस्टर_driver(&otx2vf_driver);
+पूर्ण
 
-static void __exit otx2vf_cleanup_module(void)
-{
-	pci_unregister_driver(&otx2vf_driver);
-}
+अटल व्योम __निकास otx2vf_cleanup_module(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&otx2vf_driver);
+पूर्ण
 
 module_init(otx2vf_init_module);
-module_exit(otx2vf_cleanup_module);
+module_निकास(otx2vf_cleanup_module);

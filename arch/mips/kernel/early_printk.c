@@ -1,41 +1,42 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2002, 2003, 06, 07 Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2007 MIPS Technologies, Inc.
  *   written by Ralf Baechle (ralf@linux-mips.org)
  */
-#include <linux/kernel.h>
-#include <linux/console.h>
-#include <linux/printk.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/console.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/init.h>
 
-#include <asm/setup.h>
+#समावेश <यंत्र/setup.h>
 
-static void early_console_write(struct console *con, const char *s, unsigned n)
-{
-	while (n-- && *s) {
-		if (*s == '\n')
-			prom_putchar('\r');
-		prom_putchar(*s);
+अटल व्योम early_console_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित n)
+अणु
+	जबतक (n-- && *s) अणु
+		अगर (*s == '\n')
+			prom_अक्षर_दो('\r');
+		prom_अक्षर_दो(*s);
 		s++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct console early_console_prom = {
+अटल काष्ठा console early_console_prom = अणु
 	.name	= "early",
-	.write	= early_console_write,
+	.ग_लिखो	= early_console_ग_लिखो,
 	.flags	= CON_PRINTBUFFER | CON_BOOT,
 	.index	= -1
-};
+पूर्ण;
 
-void __init setup_early_printk(void)
-{
-	if (early_console)
-		return;
+व्योम __init setup_early_prपूर्णांकk(व्योम)
+अणु
+	अगर (early_console)
+		वापस;
 	early_console = &early_console_prom;
 
-	register_console(&early_console_prom);
-}
+	रेजिस्टर_console(&early_console_prom);
+पूर्ण

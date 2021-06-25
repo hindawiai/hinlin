@@ -1,242 +1,243 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * GNSS receiver core
  *
  * Copyright (C) 2018 Johan Hovold <johan@kernel.org>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/cdev.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/gnss.h>
-#include <linux/idr.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/poll.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/wait.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/gnss.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/रुको.h>
 
-#define GNSS_FLAG_HAS_WRITE_RAW		BIT(0)
+#घोषणा GNSS_FLAG_HAS_WRITE_RAW		BIT(0)
 
-#define GNSS_MINORS	16
+#घोषणा GNSS_MINORS	16
 
-static DEFINE_IDA(gnss_minors);
-static dev_t gnss_first;
+अटल DEFINE_IDA(gnss_minors);
+अटल dev_t gnss_first;
 
-/* FIFO size must be a power of two */
-#define GNSS_READ_FIFO_SIZE	4096
-#define GNSS_WRITE_BUF_SIZE	1024
+/* FIFO size must be a घातer of two */
+#घोषणा GNSS_READ_FIFO_SIZE	4096
+#घोषणा GNSS_WRITE_BUF_SIZE	1024
 
-#define to_gnss_device(d) container_of((d), struct gnss_device, dev)
+#घोषणा to_gnss_device(d) container_of((d), काष्ठा gnss_device, dev)
 
-static int gnss_open(struct inode *inode, struct file *file)
-{
-	struct gnss_device *gdev;
-	int ret = 0;
+अटल पूर्णांक gnss_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा gnss_device *gdev;
+	पूर्णांक ret = 0;
 
-	gdev = container_of(inode->i_cdev, struct gnss_device, cdev);
+	gdev = container_of(inode->i_cdev, काष्ठा gnss_device, cdev);
 
 	get_device(&gdev->dev);
 
-	stream_open(inode, file);
-	file->private_data = gdev;
+	stream_खोलो(inode, file);
+	file->निजी_data = gdev;
 
-	down_write(&gdev->rwsem);
-	if (gdev->disconnected) {
+	करोwn_ग_लिखो(&gdev->rwsem);
+	अगर (gdev->disconnected) अणु
 		ret = -ENODEV;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	if (gdev->count++ == 0) {
-		ret = gdev->ops->open(gdev);
-		if (ret)
+	अगर (gdev->count++ == 0) अणु
+		ret = gdev->ops->खोलो(gdev);
+		अगर (ret)
 			gdev->count--;
-	}
+	पूर्ण
 unlock:
-	up_write(&gdev->rwsem);
+	up_ग_लिखो(&gdev->rwsem);
 
-	if (ret)
+	अगर (ret)
 		put_device(&gdev->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gnss_release(struct inode *inode, struct file *file)
-{
-	struct gnss_device *gdev = file->private_data;
+अटल पूर्णांक gnss_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा gnss_device *gdev = file->निजी_data;
 
-	down_write(&gdev->rwsem);
-	if (gdev->disconnected)
-		goto unlock;
+	करोwn_ग_लिखो(&gdev->rwsem);
+	अगर (gdev->disconnected)
+		जाओ unlock;
 
-	if (--gdev->count == 0) {
-		gdev->ops->close(gdev);
-		kfifo_reset(&gdev->read_fifo);
-	}
+	अगर (--gdev->count == 0) अणु
+		gdev->ops->बंद(gdev);
+		kfअगरo_reset(&gdev->पढ़ो_fअगरo);
+	पूर्ण
 unlock:
-	up_write(&gdev->rwsem);
+	up_ग_लिखो(&gdev->rwsem);
 
 	put_device(&gdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t gnss_read(struct file *file, char __user *buf,
-				size_t count, loff_t *pos)
-{
-	struct gnss_device *gdev = file->private_data;
-	unsigned int copied;
-	int ret;
+अटल sमाप_प्रकार gnss_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				माप_प्रकार count, loff_t *pos)
+अणु
+	काष्ठा gnss_device *gdev = file->निजी_data;
+	अचिन्हित पूर्णांक copied;
+	पूर्णांक ret;
 
-	mutex_lock(&gdev->read_mutex);
-	while (kfifo_is_empty(&gdev->read_fifo)) {
-		mutex_unlock(&gdev->read_mutex);
+	mutex_lock(&gdev->पढ़ो_mutex);
+	जबतक (kfअगरo_is_empty(&gdev->पढ़ो_fअगरo)) अणु
+		mutex_unlock(&gdev->पढ़ो_mutex);
 
-		if (gdev->disconnected)
-			return 0;
+		अगर (gdev->disconnected)
+			वापस 0;
 
-		if (file->f_flags & O_NONBLOCK)
-			return -EAGAIN;
+		अगर (file->f_flags & O_NONBLOCK)
+			वापस -EAGAIN;
 
-		ret = wait_event_interruptible(gdev->read_queue,
+		ret = रुको_event_पूर्णांकerruptible(gdev->पढ़ो_queue,
 				gdev->disconnected ||
-				!kfifo_is_empty(&gdev->read_fifo));
-		if (ret)
-			return -ERESTARTSYS;
+				!kfअगरo_is_empty(&gdev->पढ़ो_fअगरo));
+		अगर (ret)
+			वापस -ERESTARTSYS;
 
-		mutex_lock(&gdev->read_mutex);
-	}
+		mutex_lock(&gdev->पढ़ो_mutex);
+	पूर्ण
 
-	ret = kfifo_to_user(&gdev->read_fifo, buf, count, &copied);
-	if (ret == 0)
+	ret = kfअगरo_to_user(&gdev->पढ़ो_fअगरo, buf, count, &copied);
+	अगर (ret == 0)
 		ret = copied;
 
-	mutex_unlock(&gdev->read_mutex);
+	mutex_unlock(&gdev->पढ़ो_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t gnss_write(struct file *file, const char __user *buf,
-				size_t count, loff_t *pos)
-{
-	struct gnss_device *gdev = file->private_data;
-	size_t written = 0;
-	int ret;
+अटल sमाप_प्रकार gnss_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				माप_प्रकार count, loff_t *pos)
+अणु
+	काष्ठा gnss_device *gdev = file->निजी_data;
+	माप_प्रकार written = 0;
+	पूर्णांक ret;
 
-	if (gdev->disconnected)
-		return -EIO;
+	अगर (gdev->disconnected)
+		वापस -EIO;
 
-	if (!count)
-		return 0;
+	अगर (!count)
+		वापस 0;
 
-	if (!(gdev->flags & GNSS_FLAG_HAS_WRITE_RAW))
-		return -EIO;
+	अगर (!(gdev->flags & GNSS_FLAG_HAS_WRITE_RAW))
+		वापस -EIO;
 
-	/* Ignoring O_NONBLOCK, write_raw() is synchronous. */
+	/* Ignoring O_NONBLOCK, ग_लिखो_raw() is synchronous. */
 
-	ret = mutex_lock_interruptible(&gdev->write_mutex);
-	if (ret)
-		return -ERESTARTSYS;
+	ret = mutex_lock_पूर्णांकerruptible(&gdev->ग_लिखो_mutex);
+	अगर (ret)
+		वापस -ERESTARTSYS;
 
-	for (;;) {
-		size_t n = count - written;
+	क्रम (;;) अणु
+		माप_प्रकार n = count - written;
 
-		if (n > GNSS_WRITE_BUF_SIZE)
+		अगर (n > GNSS_WRITE_BUF_SIZE)
 			n = GNSS_WRITE_BUF_SIZE;
 
-		if (copy_from_user(gdev->write_buf, buf, n)) {
+		अगर (copy_from_user(gdev->ग_लिखो_buf, buf, n)) अणु
 			ret = -EFAULT;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		/*
-		 * Assumes write_raw can always accept GNSS_WRITE_BUF_SIZE
+		 * Assumes ग_लिखो_raw can always accept GNSS_WRITE_BUF_SIZE
 		 * bytes.
 		 *
 		 * FIXME: revisit
 		 */
-		down_read(&gdev->rwsem);
-		if (!gdev->disconnected)
-			ret = gdev->ops->write_raw(gdev, gdev->write_buf, n);
-		else
+		करोwn_पढ़ो(&gdev->rwsem);
+		अगर (!gdev->disconnected)
+			ret = gdev->ops->ग_लिखो_raw(gdev, gdev->ग_लिखो_buf, n);
+		अन्यथा
 			ret = -EIO;
-		up_read(&gdev->rwsem);
+		up_पढ़ो(&gdev->rwsem);
 
-		if (ret < 0)
-			break;
+		अगर (ret < 0)
+			अवरोध;
 
 		written += ret;
 		buf += ret;
 
-		if (written == count)
-			break;
-	}
+		अगर (written == count)
+			अवरोध;
+	पूर्ण
 
-	if (written)
+	अगर (written)
 		ret = written;
 out_unlock:
-	mutex_unlock(&gdev->write_mutex);
+	mutex_unlock(&gdev->ग_लिखो_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __poll_t gnss_poll(struct file *file, poll_table *wait)
-{
-	struct gnss_device *gdev = file->private_data;
+अटल __poll_t gnss_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा gnss_device *gdev = file->निजी_data;
 	__poll_t mask = 0;
 
-	poll_wait(file, &gdev->read_queue, wait);
+	poll_रुको(file, &gdev->पढ़ो_queue, रुको);
 
-	if (!kfifo_is_empty(&gdev->read_fifo))
+	अगर (!kfअगरo_is_empty(&gdev->पढ़ो_fअगरo))
 		mask |= EPOLLIN | EPOLLRDNORM;
-	if (gdev->disconnected)
+	अगर (gdev->disconnected)
 		mask |= EPOLLHUP;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static const struct file_operations gnss_fops = {
+अटल स्थिर काष्ठा file_operations gnss_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= gnss_open,
+	.खोलो		= gnss_खोलो,
 	.release	= gnss_release,
-	.read		= gnss_read,
-	.write		= gnss_write,
+	.पढ़ो		= gnss_पढ़ो,
+	.ग_लिखो		= gnss_ग_लिखो,
 	.poll		= gnss_poll,
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
-static struct class *gnss_class;
+अटल काष्ठा class *gnss_class;
 
-static void gnss_device_release(struct device *dev)
-{
-	struct gnss_device *gdev = to_gnss_device(dev);
+अटल व्योम gnss_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा gnss_device *gdev = to_gnss_device(dev);
 
-	kfree(gdev->write_buf);
-	kfifo_free(&gdev->read_fifo);
-	ida_simple_remove(&gnss_minors, gdev->id);
-	kfree(gdev);
-}
+	kमुक्त(gdev->ग_लिखो_buf);
+	kfअगरo_मुक्त(&gdev->पढ़ो_fअगरo);
+	ida_simple_हटाओ(&gnss_minors, gdev->id);
+	kमुक्त(gdev);
+पूर्ण
 
-struct gnss_device *gnss_allocate_device(struct device *parent)
-{
-	struct gnss_device *gdev;
-	struct device *dev;
-	int id;
-	int ret;
+काष्ठा gnss_device *gnss_allocate_device(काष्ठा device *parent)
+अणु
+	काष्ठा gnss_device *gdev;
+	काष्ठा device *dev;
+	पूर्णांक id;
+	पूर्णांक ret;
 
-	gdev = kzalloc(sizeof(*gdev), GFP_KERNEL);
-	if (!gdev)
-		return NULL;
+	gdev = kzalloc(माप(*gdev), GFP_KERNEL);
+	अगर (!gdev)
+		वापस शून्य;
 
 	id = ida_simple_get(&gnss_minors, 0, GNSS_MINORS, GFP_KERNEL);
-	if (id < 0) {
-		kfree(gdev);
-		return NULL;
-	}
+	अगर (id < 0) अणु
+		kमुक्त(gdev);
+		वापस शून्य;
+	पूर्ण
 
 	gdev->id = id;
 
@@ -250,171 +251,171 @@ struct gnss_device *gnss_allocate_device(struct device *parent)
 	dev_set_name(dev, "gnss%d", id);
 
 	init_rwsem(&gdev->rwsem);
-	mutex_init(&gdev->read_mutex);
-	mutex_init(&gdev->write_mutex);
-	init_waitqueue_head(&gdev->read_queue);
+	mutex_init(&gdev->पढ़ो_mutex);
+	mutex_init(&gdev->ग_लिखो_mutex);
+	init_रुकोqueue_head(&gdev->पढ़ो_queue);
 
-	ret = kfifo_alloc(&gdev->read_fifo, GNSS_READ_FIFO_SIZE, GFP_KERNEL);
-	if (ret)
-		goto err_put_device;
+	ret = kfअगरo_alloc(&gdev->पढ़ो_fअगरo, GNSS_READ_FIFO_SIZE, GFP_KERNEL);
+	अगर (ret)
+		जाओ err_put_device;
 
-	gdev->write_buf = kzalloc(GNSS_WRITE_BUF_SIZE, GFP_KERNEL);
-	if (!gdev->write_buf)
-		goto err_put_device;
+	gdev->ग_लिखो_buf = kzalloc(GNSS_WRITE_BUF_SIZE, GFP_KERNEL);
+	अगर (!gdev->ग_लिखो_buf)
+		जाओ err_put_device;
 
 	cdev_init(&gdev->cdev, &gnss_fops);
 	gdev->cdev.owner = THIS_MODULE;
 
-	return gdev;
+	वापस gdev;
 
 err_put_device:
 	put_device(dev);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(gnss_allocate_device);
 
-void gnss_put_device(struct gnss_device *gdev)
-{
+व्योम gnss_put_device(काष्ठा gnss_device *gdev)
+अणु
 	put_device(&gdev->dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gnss_put_device);
 
-int gnss_register_device(struct gnss_device *gdev)
-{
-	int ret;
+पूर्णांक gnss_रेजिस्टर_device(काष्ठा gnss_device *gdev)
+अणु
+	पूर्णांक ret;
 
 	/* Set a flag which can be accessed without holding the rwsem. */
-	if (gdev->ops->write_raw != NULL)
+	अगर (gdev->ops->ग_लिखो_raw != शून्य)
 		gdev->flags |= GNSS_FLAG_HAS_WRITE_RAW;
 
 	ret = cdev_device_add(&gdev->cdev, &gdev->dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&gdev->dev, "failed to add device: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(gnss_register_device);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(gnss_रेजिस्टर_device);
 
-void gnss_deregister_device(struct gnss_device *gdev)
-{
-	down_write(&gdev->rwsem);
+व्योम gnss_deरेजिस्टर_device(काष्ठा gnss_device *gdev)
+अणु
+	करोwn_ग_लिखो(&gdev->rwsem);
 	gdev->disconnected = true;
-	if (gdev->count) {
-		wake_up_interruptible(&gdev->read_queue);
-		gdev->ops->close(gdev);
-	}
-	up_write(&gdev->rwsem);
+	अगर (gdev->count) अणु
+		wake_up_पूर्णांकerruptible(&gdev->पढ़ो_queue);
+		gdev->ops->बंद(gdev);
+	पूर्ण
+	up_ग_लिखो(&gdev->rwsem);
 
 	cdev_device_del(&gdev->cdev, &gdev->dev);
-}
-EXPORT_SYMBOL_GPL(gnss_deregister_device);
+पूर्ण
+EXPORT_SYMBOL_GPL(gnss_deरेजिस्टर_device);
 
 /*
  * Caller guarantees serialisation.
  *
- * Must not be called for a closed device.
+ * Must not be called क्रम a बंदd device.
  */
-int gnss_insert_raw(struct gnss_device *gdev, const unsigned char *buf,
-				size_t count)
-{
-	int ret;
+पूर्णांक gnss_insert_raw(काष्ठा gnss_device *gdev, स्थिर अचिन्हित अक्षर *buf,
+				माप_प्रकार count)
+अणु
+	पूर्णांक ret;
 
-	ret = kfifo_in(&gdev->read_fifo, buf, count);
+	ret = kfअगरo_in(&gdev->पढ़ो_fअगरo, buf, count);
 
-	wake_up_interruptible(&gdev->read_queue);
+	wake_up_पूर्णांकerruptible(&gdev->पढ़ो_queue);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(gnss_insert_raw);
 
-static const char * const gnss_type_names[GNSS_TYPE_COUNT] = {
+अटल स्थिर अक्षर * स्थिर gnss_type_names[GNSS_TYPE_COUNT] = अणु
 	[GNSS_TYPE_NMEA]	= "NMEA",
 	[GNSS_TYPE_SIRF]	= "SiRF",
 	[GNSS_TYPE_UBX]		= "UBX",
 	[GNSS_TYPE_MTK]		= "MTK",
-};
+पूर्ण;
 
-static const char *gnss_type_name(struct gnss_device *gdev)
-{
-	const char *name = NULL;
+अटल स्थिर अक्षर *gnss_type_name(काष्ठा gnss_device *gdev)
+अणु
+	स्थिर अक्षर *name = शून्य;
 
-	if (gdev->type < GNSS_TYPE_COUNT)
+	अगर (gdev->type < GNSS_TYPE_COUNT)
 		name = gnss_type_names[gdev->type];
 
-	if (!name)
+	अगर (!name)
 		dev_WARN(&gdev->dev, "type name not defined\n");
 
-	return name;
-}
+	वापस name;
+पूर्ण
 
-static ssize_t type_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct gnss_device *gdev = to_gnss_device(dev);
+अटल sमाप_प्रकार type_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा gnss_device *gdev = to_gnss_device(dev);
 
-	return sprintf(buf, "%s\n", gnss_type_name(gdev));
-}
-static DEVICE_ATTR_RO(type);
+	वापस प्र_लिखो(buf, "%s\n", gnss_type_name(gdev));
+पूर्ण
+अटल DEVICE_ATTR_RO(type);
 
-static struct attribute *gnss_attrs[] = {
+अटल काष्ठा attribute *gnss_attrs[] = अणु
 	&dev_attr_type.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(gnss);
 
-static int gnss_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct gnss_device *gdev = to_gnss_device(dev);
-	int ret;
+अटल पूर्णांक gnss_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा gnss_device *gdev = to_gnss_device(dev);
+	पूर्णांक ret;
 
 	ret = add_uevent_var(env, "GNSS_TYPE=%s", gnss_type_name(gdev));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init gnss_module_init(void)
-{
-	int ret;
+अटल पूर्णांक __init gnss_module_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = alloc_chrdev_region(&gnss_first, 0, GNSS_MINORS, "gnss");
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("failed to allocate device numbers: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	gnss_class = class_create(THIS_MODULE, "gnss");
-	if (IS_ERR(gnss_class)) {
+	अगर (IS_ERR(gnss_class)) अणु
 		ret = PTR_ERR(gnss_class);
 		pr_err("failed to create class: %d\n", ret);
-		goto err_unregister_chrdev;
-	}
+		जाओ err_unरेजिस्टर_chrdev;
+	पूर्ण
 
 	gnss_class->dev_groups = gnss_groups;
 	gnss_class->dev_uevent = gnss_uevent;
 
 	pr_info("GNSS driver registered with major %d\n", MAJOR(gnss_first));
 
-	return 0;
+	वापस 0;
 
-err_unregister_chrdev:
-	unregister_chrdev_region(gnss_first, GNSS_MINORS);
+err_unरेजिस्टर_chrdev:
+	unरेजिस्टर_chrdev_region(gnss_first, GNSS_MINORS);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 module_init(gnss_module_init);
 
-static void __exit gnss_module_exit(void)
-{
+अटल व्योम __निकास gnss_module_निकास(व्योम)
+अणु
 	class_destroy(gnss_class);
-	unregister_chrdev_region(gnss_first, GNSS_MINORS);
+	unरेजिस्टर_chrdev_region(gnss_first, GNSS_MINORS);
 	ida_destroy(&gnss_minors);
-}
-module_exit(gnss_module_exit);
+पूर्ण
+module_निकास(gnss_module_निकास);
 
 MODULE_AUTHOR("Johan Hovold <johan@kernel.org>");
 MODULE_DESCRIPTION("GNSS receiver core");

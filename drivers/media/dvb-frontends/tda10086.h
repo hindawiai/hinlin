@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
   /*
-     Driver for Philips tda10086 DVBS Frontend
+     Driver क्रम Philips tda10086 DVBS Frontend
 
      (c) 2006 Andrew de Quincey
 
 
    */
 
-#ifndef TDA10086_H
-#define TDA10086_H
+#अगर_अघोषित TDA10086_H
+#घोषणा TDA10086_H
 
-#include <linux/dvb/frontend.h>
-#include <linux/firmware.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <linux/firmware.h>
 
-enum tda10086_xtal {
+क्रमागत tda10086_xtal अणु
 	TDA10086_XTAL_16M,
 	TDA10086_XTAL_4M
-};
+पूर्ण;
 
-struct tda10086_config
-{
+काष्ठा tda10086_config
+अणु
 	/* the demodulator's i2c address */
 	u8 demod_address;
 
-	/* does the "inversion" need inverted? */
+	/* करोes the "inversion" need inverted? */
 	u8 invert;
 
-	/* do we need the diseqc signal with carrier? */
+	/* करो we need the diseqc संकेत with carrier? */
 	u8 diseqc_tone;
 
 	/* frequency of the reference xtal */
-	enum tda10086_xtal xtal_freq;
-};
+	क्रमागत tda10086_xtal xtal_freq;
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_TDA10086)
-extern struct dvb_frontend* tda10086_attach(const struct tda10086_config* config,
-					    struct i2c_adapter* i2c);
-#else
-static inline struct dvb_frontend* tda10086_attach(const struct tda10086_config* config,
-						   struct i2c_adapter* i2c)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif /* CONFIG_DVB_TDA10086 */
+#अगर IS_REACHABLE(CONFIG_DVB_TDA10086)
+बाह्य काष्ठा dvb_frontend* tda10086_attach(स्थिर काष्ठा tda10086_config* config,
+					    काष्ठा i2c_adapter* i2c);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend* tda10086_attach(स्थिर काष्ठा tda10086_config* config,
+						   काष्ठा i2c_adapter* i2c)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_DVB_TDA10086 */
 
-#endif /* TDA10086_H */
+#पूर्ण_अगर /* TDA10086_H */

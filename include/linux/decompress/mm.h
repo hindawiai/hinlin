@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * linux/compr_mm.h
  *
- * Memory management for pre-boot and ramdisk uncompressors
+ * Memory management क्रम pre-boot and ramdisk uncompressors
  *
  * Authors: Alain Knaff <alain@knaff.lu>
  *
  */
 
-#ifndef DECOMPR_MM_H
-#define DECOMPR_MM_H
+#अगर_अघोषित DECOMPR_MM_H
+#घोषणा DECOMPR_MM_H
 
-#ifdef STATIC
+#अगर_घोषित STATIC
 
 /* Code active when included from pre-boot environment: */
 
@@ -21,74 +22,74 @@
  * GOT references).  This is achieved by defining STATIC_RW_DATA to
  * be null.
  */
-#ifndef STATIC_RW_DATA
-#define STATIC_RW_DATA static
-#endif
+#अगर_अघोषित STATIC_RW_DATA
+#घोषणा STATIC_RW_DATA अटल
+#पूर्ण_अगर
 
-/* A trivial malloc implementation, adapted from
- *  malloc by Hannu Savolainen 1993 and Matthias Urlichs 1994
+/* A trivial दो_स्मृति implementation, adapted from
+ *  दो_स्मृति by Hannu Savolainen 1993 and Matthias Urlichs 1994
  */
-STATIC_RW_DATA unsigned long malloc_ptr;
-STATIC_RW_DATA int malloc_count;
+STATIC_RW_DATA अचिन्हित दीर्घ दो_स्मृति_ptr;
+STATIC_RW_DATA पूर्णांक दो_स्मृति_count;
 
-static void *malloc(int size)
-{
-	void *p;
+अटल व्योम *दो_स्मृति(पूर्णांक size)
+अणु
+	व्योम *p;
 
-	if (size < 0)
-		return NULL;
-	if (!malloc_ptr)
-		malloc_ptr = free_mem_ptr;
+	अगर (size < 0)
+		वापस शून्य;
+	अगर (!दो_स्मृति_ptr)
+		दो_स्मृति_ptr = मुक्त_mem_ptr;
 
-	malloc_ptr = (malloc_ptr + 3) & ~3;     /* Align */
+	दो_स्मृति_ptr = (दो_स्मृति_ptr + 3) & ~3;     /* Align */
 
-	p = (void *)malloc_ptr;
-	malloc_ptr += size;
+	p = (व्योम *)दो_स्मृति_ptr;
+	दो_स्मृति_ptr += size;
 
-	if (free_mem_end_ptr && malloc_ptr >= free_mem_end_ptr)
-		return NULL;
+	अगर (मुक्त_mem_end_ptr && दो_स्मृति_ptr >= मुक्त_mem_end_ptr)
+		वापस शून्य;
 
-	malloc_count++;
-	return p;
-}
+	दो_स्मृति_count++;
+	वापस p;
+पूर्ण
 
-static void free(void *where)
-{
-	malloc_count--;
-	if (!malloc_count)
-		malloc_ptr = free_mem_ptr;
-}
+अटल व्योम मुक्त(व्योम *where)
+अणु
+	दो_स्मृति_count--;
+	अगर (!दो_स्मृति_count)
+		दो_स्मृति_ptr = मुक्त_mem_ptr;
+पूर्ण
 
-#define large_malloc(a) malloc(a)
-#define large_free(a) free(a)
+#घोषणा large_दो_स्मृति(a) दो_स्मृति(a)
+#घोषणा large_मुक्त(a) मुक्त(a)
 
-#define INIT
+#घोषणा INIT
 
-#else /* STATIC */
+#अन्यथा /* STATIC */
 
-/* Code active when compiled standalone for use when loading ramdisk: */
+/* Code active when compiled standalone क्रम use when loading ramdisk: */
 
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-/* Use defines rather than static inline in order to avoid spurious
- * warnings when not needed (indeed large_malloc / large_free are not
+/* Use defines rather than अटल अंतरभूत in order to aव्योम spurious
+ * warnings when not needed (indeed large_दो_स्मृति / large_मुक्त are not
  * needed by inflate */
 
-#define malloc(a) kmalloc(a, GFP_KERNEL)
-#define free(a) kfree(a)
+#घोषणा दो_स्मृति(a) kदो_स्मृति(a, GFP_KERNEL)
+#घोषणा मुक्त(a) kमुक्त(a)
 
-#define large_malloc(a) vmalloc(a)
-#define large_free(a) vfree(a)
+#घोषणा large_दो_स्मृति(a) vदो_स्मृति(a)
+#घोषणा large_मुक्त(a) vमुक्त(a)
 
-#define INIT __init
-#define STATIC
+#घोषणा INIT __init
+#घोषणा STATIC
 
-#include <linux/init.h>
+#समावेश <linux/init.h>
 
-#endif /* STATIC */
+#पूर्ण_अगर /* STATIC */
 
-#endif /* DECOMPR_MM_H */
+#पूर्ण_अगर /* DECOMPR_MM_H */

@@ -1,11 +1,12 @@
+<शैली गुरु>
 /* Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,15 +23,15 @@
  *
  */
 
-#ifndef __DC_MPCC_DCN20_H__
-#define __DC_MPCC_DCN20_H__
+#अगर_अघोषित __DC_MPCC_DCN20_H__
+#घोषणा __DC_MPCC_DCN20_H__
 
-#include "dcn10/dcn10_mpc.h"
+#समावेश "dcn10/dcn10_mpc.h"
 
-#define TO_DCN20_MPC(mpc_base) \
-	container_of(mpc_base, struct dcn20_mpc, base)
+#घोषणा TO_DCN20_MPC(mpc_base) \
+	container_of(mpc_base, काष्ठा dcn20_mpc, base)
 
-#define MPC_REG_LIST_DCN2_0(inst)\
+#घोषणा MPC_REG_LIST_DCN2_0(inst)\
 	MPC_COMMON_REG_LIST_DCN1_0(inst),\
 	SRII(MPCC_TOP_GAIN, MPCC, inst),\
 	SRII(MPCC_BOT_GAIN_INSIDE, MPCC, inst),\
@@ -69,7 +70,7 @@
 	SRII(MPCC_OGAM_LUT_DATA, MPCC_OGAM, inst),\
 	SRII(MPCC_OGAM_MODE, MPCC_OGAM, inst)
 
-#define MPC_OUT_MUX_REG_LIST_DCN2_0(inst) \
+#घोषणा MPC_OUT_MUX_REG_LIST_DCN2_0(inst) \
 	MPC_OUT_MUX_COMMON_REG_LIST_DCN1_0(inst),\
 	SRII(CSC_MODE, MPC_OUT, inst),\
 	SRII(CSC_C11_C12_A, MPC_OUT, inst),\
@@ -80,60 +81,60 @@
 	SRII(DENORM_CLAMP_G_Y, MPC_OUT, inst),\
 	SRII(DENORM_CLAMP_B_CB, MPC_OUT, inst)
 
-#define MPC_DBG_REG_LIST_DCN2_0() \
+#घोषणा MPC_DBG_REG_LIST_DCN2_0() \
 	SR(MPC_OCSC_TEST_DEBUG_DATA),\
 	SR(MPC_OCSC_TEST_DEBUG_INDEX)
 
-#define MPC_REG_VARIABLE_LIST_DCN2_0 \
+#घोषणा MPC_REG_VARIABLE_LIST_DCN2_0 \
 	MPC_COMMON_REG_VARIABLE_LIST \
-	uint32_t MPCC_TOP_GAIN[MAX_MPCC]; \
-	uint32_t MPCC_BOT_GAIN_INSIDE[MAX_MPCC]; \
-	uint32_t MPCC_BOT_GAIN_OUTSIDE[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_START_CNTL_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_START_CNTL_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_START_CNTL_R[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_SLOPE_CNTL_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_SLOPE_CNTL_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_SLOPE_CNTL_R[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_END_CNTL1_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_END_CNTL2_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_END_CNTL1_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_END_CNTL2_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_END_CNTL1_R[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_END_CNTL2_R[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_REGION_0_1[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_REGION_32_33[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_START_CNTL_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_START_CNTL_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_START_CNTL_R[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_SLOPE_CNTL_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_SLOPE_CNTL_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_SLOPE_CNTL_R[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_END_CNTL1_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_END_CNTL2_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_END_CNTL1_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_END_CNTL2_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_END_CNTL1_R[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_END_CNTL2_R[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_REGION_0_1[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_REGION_32_33[MAX_MPCC];\
-	uint32_t MPCC_MEM_PWR_CTRL[MAX_MPCC];\
-	uint32_t MPCC_OGAM_LUT_INDEX[MAX_MPCC];\
-	uint32_t MPCC_OGAM_LUT_RAM_CONTROL[MAX_MPCC];\
-	uint32_t MPCC_OGAM_LUT_DATA[MAX_MPCC];\
-	uint32_t MPCC_OGAM_MODE[MAX_MPCC];\
-	uint32_t MPC_OCSC_TEST_DEBUG_DATA;\
-	uint32_t MPC_OCSC_TEST_DEBUG_INDEX;\
-	uint32_t CSC_MODE[MAX_OPP]; \
-	uint32_t CSC_C11_C12_A[MAX_OPP]; \
-	uint32_t CSC_C33_C34_A[MAX_OPP]; \
-	uint32_t CSC_C11_C12_B[MAX_OPP]; \
-	uint32_t CSC_C33_C34_B[MAX_OPP]; \
-	uint32_t DENORM_CONTROL[MAX_OPP]; \
-	uint32_t DENORM_CLAMP_G_Y[MAX_OPP]; \
-	uint32_t DENORM_CLAMP_B_CB[MAX_OPP];
+	uपूर्णांक32_t MPCC_TOP_GAIN[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_BOT_GAIN_INSIDE[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_BOT_GAIN_OUTSIDE[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_START_CNTL_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_START_CNTL_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_START_CNTL_R[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_SLOPE_CNTL_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_SLOPE_CNTL_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_SLOPE_CNTL_R[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_END_CNTL1_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_END_CNTL2_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_END_CNTL1_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_END_CNTL2_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_END_CNTL1_R[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_END_CNTL2_R[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_REGION_0_1[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_REGION_32_33[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_START_CNTL_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_START_CNTL_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_START_CNTL_R[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_SLOPE_CNTL_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_SLOPE_CNTL_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_SLOPE_CNTL_R[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_END_CNTL1_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_END_CNTL2_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_END_CNTL1_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_END_CNTL2_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_END_CNTL1_R[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_END_CNTL2_R[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_REGION_0_1[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_REGION_32_33[MAX_MPCC];\
+	uपूर्णांक32_t MPCC_MEM_PWR_CTRL[MAX_MPCC];\
+	uपूर्णांक32_t MPCC_OGAM_LUT_INDEX[MAX_MPCC];\
+	uपूर्णांक32_t MPCC_OGAM_LUT_RAM_CONTROL[MAX_MPCC];\
+	uपूर्णांक32_t MPCC_OGAM_LUT_DATA[MAX_MPCC];\
+	uपूर्णांक32_t MPCC_OGAM_MODE[MAX_MPCC];\
+	uपूर्णांक32_t MPC_OCSC_TEST_DEBUG_DATA;\
+	uपूर्णांक32_t MPC_OCSC_TEST_DEBUG_INDEX;\
+	uपूर्णांक32_t CSC_MODE[MAX_OPP]; \
+	uपूर्णांक32_t CSC_C11_C12_A[MAX_OPP]; \
+	uपूर्णांक32_t CSC_C33_C34_A[MAX_OPP]; \
+	uपूर्णांक32_t CSC_C11_C12_B[MAX_OPP]; \
+	uपूर्णांक32_t CSC_C33_C34_B[MAX_OPP]; \
+	uपूर्णांक32_t DENORM_CONTROL[MAX_OPP]; \
+	uपूर्णांक32_t DENORM_CLAMP_G_Y[MAX_OPP]; \
+	uपूर्णांक32_t DENORM_CLAMP_B_CB[MAX_OPP];
 
-#define MPC_COMMON_MASK_SH_LIST_DCN2_0(mask_sh) \
+#घोषणा MPC_COMMON_MASK_SH_LIST_DCN2_0(mask_sh) \
 	MPC_COMMON_MASK_SH_LIST_DCN1_0(mask_sh),\
 	SF(MPCC0_MPCC_CONTROL, MPCC_BG_BPC, mask_sh),\
 	SF(MPCC0_MPCC_CONTROL, MPCC_BOT_GAIN_MODE, mask_sh),\
@@ -183,20 +184,20 @@
 	SF(CUR_VUPDATE_LOCK_SET0, CUR_VUPDATE_LOCK_SET, mask_sh)
 
 /*
- *	DCN2 MPC_OCSC debug status register:
+ *	DCN2 MPC_OCSC debug status रेजिस्टर:
  *
  *		Status index including current OCSC Mode is 1
  *			OCSC Mode: [1..0]
  */
-#define MPC_OCSC_TEST_DEBUG_DATA_STATUS_IDX 1
+#घोषणा MPC_OCSC_TEST_DEBUG_DATA_STATUS_IDX 1
 
-#define MPC_DEBUG_REG_LIST_SH_DCN20 \
+#घोषणा MPC_DEBUG_REG_LIST_SH_DCN20 \
 	.MPC_OCSC_TEST_DEBUG_DATA_OCSC_MODE = 0
 
-#define MPC_DEBUG_REG_LIST_MASK_DCN20 \
+#घोषणा MPC_DEBUG_REG_LIST_MASK_DCN20 \
 	.MPC_OCSC_TEST_DEBUG_DATA_OCSC_MODE = 0x3
 
-#define MPC_REG_FIELD_LIST_DCN2_0(type) \
+#घोषणा MPC_REG_FIELD_LIST_DCN2_0(type) \
 	MPC_REG_FIELD_LIST(type)\
 	type MPCC_BG_BPC;\
 	type MPCC_BOT_GAIN_MODE;\
@@ -245,68 +246,68 @@
 	type MPCC_DISABLED;\
 	type MPCC_OGAM_MEM_PWR_DIS;
 
-struct dcn20_mpc_registers {
+काष्ठा dcn20_mpc_रेजिस्टरs अणु
 	MPC_REG_VARIABLE_LIST_DCN2_0
-};
+पूर्ण;
 
-struct dcn20_mpc_shift {
-	MPC_REG_FIELD_LIST_DCN2_0(uint8_t)
-};
+काष्ठा dcn20_mpc_shअगरt अणु
+	MPC_REG_FIELD_LIST_DCN2_0(uपूर्णांक8_t)
+पूर्ण;
 
-struct dcn20_mpc_mask {
-	MPC_REG_FIELD_LIST_DCN2_0(uint32_t)
-};
+काष्ठा dcn20_mpc_mask अणु
+	MPC_REG_FIELD_LIST_DCN2_0(uपूर्णांक32_t)
+पूर्ण;
 
-struct dcn20_mpc {
-	struct mpc base;
+काष्ठा dcn20_mpc अणु
+	काष्ठा mpc base;
 
-	int mpcc_in_use_mask;
-	int num_mpcc;
-	const struct dcn20_mpc_registers *mpc_regs;
-	const struct dcn20_mpc_shift *mpc_shift;
-	const struct dcn20_mpc_mask *mpc_mask;
-};
+	पूर्णांक mpcc_in_use_mask;
+	पूर्णांक num_mpcc;
+	स्थिर काष्ठा dcn20_mpc_रेजिस्टरs *mpc_regs;
+	स्थिर काष्ठा dcn20_mpc_shअगरt *mpc_shअगरt;
+	स्थिर काष्ठा dcn20_mpc_mask *mpc_mask;
+पूर्ण;
 
-void dcn20_mpc_construct(struct dcn20_mpc *mpcc20,
-	struct dc_context *ctx,
-	const struct dcn20_mpc_registers *mpc_regs,
-	const struct dcn20_mpc_shift *mpc_shift,
-	const struct dcn20_mpc_mask *mpc_mask,
-	int num_mpcc);
+व्योम dcn20_mpc_स्थिरruct(काष्ठा dcn20_mpc *mpcc20,
+	काष्ठा dc_context *ctx,
+	स्थिर काष्ठा dcn20_mpc_रेजिस्टरs *mpc_regs,
+	स्थिर काष्ठा dcn20_mpc_shअगरt *mpc_shअगरt,
+	स्थिर काष्ठा dcn20_mpc_mask *mpc_mask,
+	पूर्णांक num_mpcc);
 
-void mpc2_update_blending(
-	struct mpc *mpc,
-	struct mpcc_blnd_cfg *blnd_cfg,
-	int mpcc_id);
+व्योम mpc2_update_blending(
+	काष्ठा mpc *mpc,
+	काष्ठा mpcc_blnd_cfg *blnd_cfg,
+	पूर्णांक mpcc_id);
 
-void mpc2_set_denorm(
-	struct mpc *mpc,
-	int opp_id,
-	enum dc_color_depth output_depth);
+व्योम mpc2_set_denorm(
+	काष्ठा mpc *mpc,
+	पूर्णांक opp_id,
+	क्रमागत dc_color_depth output_depth);
 
-void mpc2_set_denorm_clamp(
-	struct mpc *mpc,
-	int opp_id,
-	struct mpc_denorm_clamp denorm_clamp);
+व्योम mpc2_set_denorm_clamp(
+	काष्ठा mpc *mpc,
+	पूर्णांक opp_id,
+	काष्ठा mpc_denorm_clamp denorm_clamp);
 
-void mpc2_set_output_csc(
-	struct mpc *mpc,
-	int opp_id,
-	const uint16_t *regval,
-	enum mpc_output_csc_mode ocsc_mode);
+व्योम mpc2_set_output_csc(
+	काष्ठा mpc *mpc,
+	पूर्णांक opp_id,
+	स्थिर uपूर्णांक16_t *regval,
+	क्रमागत mpc_output_csc_mode ocsc_mode);
 
-void mpc2_set_ocsc_default(
-	struct mpc *mpc,
-	int opp_id,
-	enum dc_color_space color_space,
-	enum mpc_output_csc_mode ocsc_mode);
+व्योम mpc2_set_ocsc_शेष(
+	काष्ठा mpc *mpc,
+	पूर्णांक opp_id,
+	क्रमागत dc_color_space color_space,
+	क्रमागत mpc_output_csc_mode ocsc_mode);
 
-void mpc2_set_output_gamma(
-	struct mpc *mpc,
-	int mpcc_id,
-	const struct pwl_params *params);
+व्योम mpc2_set_output_gamma(
+	काष्ठा mpc *mpc,
+	पूर्णांक mpcc_id,
+	स्थिर काष्ठा pwl_params *params);
 
-void mpc2_assert_idle_mpcc(struct mpc *mpc, int id);
-void mpc2_assert_mpcc_idle_before_connect(struct mpc *mpc, int mpcc_id);
-void mpc20_power_on_ogam_lut(struct mpc *mpc, int mpcc_id, bool power_on);
-#endif
+व्योम mpc2_निश्चित_idle_mpcc(काष्ठा mpc *mpc, पूर्णांक id);
+व्योम mpc2_निश्चित_mpcc_idle_beक्रमe_connect(काष्ठा mpc *mpc, पूर्णांक mpcc_id);
+व्योम mpc20_घातer_on_ogam_lut(काष्ठा mpc *mpc, पूर्णांक mpcc_id, bool घातer_on);
+#पूर्ण_अगर

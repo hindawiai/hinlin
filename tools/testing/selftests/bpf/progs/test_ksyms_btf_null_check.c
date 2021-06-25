@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
 
-#include "vmlinux.h"
+#समावेश "vmlinux.h"
 
-#include <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_helpers.h>
 
-extern const struct rq runqueues __ksym; /* struct type global var. */
-extern const int bpf_prog_active __ksym; /* int type global var. */
+बाह्य स्थिर काष्ठा rq runqueues __ksym; /* काष्ठा type global var. */
+बाह्य स्थिर पूर्णांक bpf_prog_active __ksym; /* पूर्णांक type global var. */
 
 SEC("raw_tp/sys_enter")
-int handler(const void *ctx)
-{
-	struct rq *rq;
-	int *active;
+पूर्णांक handler(स्थिर व्योम *ctx)
+अणु
+	काष्ठा rq *rq;
+	पूर्णांक *active;
 	__u32 cpu;
 
 	cpu = bpf_get_smp_processor_id();
-	rq = (struct rq *)bpf_per_cpu_ptr(&runqueues, cpu);
-	active = (int *)bpf_per_cpu_ptr(&bpf_prog_active, cpu);
-	if (active) {
+	rq = (काष्ठा rq *)bpf_per_cpu_ptr(&runqueues, cpu);
+	active = (पूर्णांक *)bpf_per_cpu_ptr(&bpf_prog_active, cpu);
+	अगर (active) अणु
 		/* READ_ONCE */
-		*(volatile int *)active;
-		/* !rq has not been tested, so verifier should reject. */
-		*(volatile int *)(&rq->cpu);
-	}
+		*(अस्थिर पूर्णांक *)active;
+		/* !rq has not been tested, so verअगरier should reject. */
+		*(अस्थिर पूर्णांक *)(&rq->cpu);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

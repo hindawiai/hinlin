@@ -1,43 +1,44 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2003, 06, 07 by Ralf Baechle (ralf@linux-mips.org)
  */
-#ifndef __ASM_CMPXCHG_H
-#define __ASM_CMPXCHG_H
+#अगर_अघोषित __ASM_CMPXCHG_H
+#घोषणा __ASM_CMPXCHG_H
 
-#include <linux/bug.h>
-#include <linux/irqflags.h>
-#include <asm/compiler.h>
-#include <asm/llsc.h>
-#include <asm/sync.h>
-#include <asm/war.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/irqflags.h>
+#समावेश <यंत्र/compiler.h>
+#समावेश <यंत्र/llsc.h>
+#समावेश <यंत्र/sync.h>
+#समावेश <यंत्र/war.h>
 
 /*
- * These functions doesn't exist, so if they are called you'll either:
+ * These functions करोesn't exist, so if they are called you'll either:
  *
- * - Get an error at compile-time due to __compiletime_error, if supported by
+ * - Get an error at compile-समय due to __compileसमय_error, अगर supported by
  *   your compiler.
  *
  * or:
  *
- * - Get an error at link-time due to the call to the missing function.
+ * - Get an error at link-समय due to the call to the missing function.
  */
-extern unsigned long __cmpxchg_called_with_bad_pointer(void)
-	__compiletime_error("Bad argument size for cmpxchg");
-extern unsigned long __cmpxchg64_unsupported(void)
-	__compiletime_error("cmpxchg64 not available; cpu_has_64bits may be false");
-extern unsigned long __xchg_called_with_bad_pointer(void)
-	__compiletime_error("Bad argument size for xchg");
+बाह्य अचिन्हित दीर्घ __cmpxchg_called_with_bad_poपूर्णांकer(व्योम)
+	__compileसमय_error("Bad argument size for cmpxchg");
+बाह्य अचिन्हित दीर्घ __cmpxchg64_unsupported(व्योम)
+	__compileसमय_error("cmpxchg64 not available; cpu_has_64bits may be false");
+बाह्य अचिन्हित दीर्घ __xchg_called_with_bad_poपूर्णांकer(व्योम)
+	__compileसमय_error("Bad argument size for xchg");
 
-#define __xchg_asm(ld, st, m, val)					\
-({									\
+#घोषणा __xchg_यंत्र(ld, st, m, val)					\
+(अणु									\
 	__typeof(*(m)) __ret;						\
 									\
-	if (kernel_uses_llsc) {						\
-		__asm__ __volatile__(					\
+	अगर (kernel_uses_llsc) अणु						\
+		__यंत्र__ __अस्थिर__(					\
 		"	.set	push				\n"	\
 		"	.set	noat				\n"	\
 		"	.set	push				\n"	\
@@ -53,69 +54,69 @@ extern unsigned long __xchg_called_with_bad_pointer(void)
 		: "=&r" (__ret), "=" GCC_OFF_SMALL_ASM() (*m)		\
 		: GCC_OFF_SMALL_ASM() (*m), "Jr" (val)			\
 		: __LLSC_CLOBBER);					\
-	} else {							\
-		unsigned long __flags;					\
+	पूर्ण अन्यथा अणु							\
+		अचिन्हित दीर्घ __flags;					\
 									\
 		raw_local_irq_save(__flags);				\
 		__ret = *m;						\
 		*m = val;						\
 		raw_local_irq_restore(__flags);				\
-	}								\
+	पूर्ण								\
 									\
 	__ret;								\
-})
+पूर्ण)
 
-extern unsigned long __xchg_small(volatile void *ptr, unsigned long val,
-				  unsigned int size);
+बाह्य अचिन्हित दीर्घ __xchg_small(अस्थिर व्योम *ptr, अचिन्हित दीर्घ val,
+				  अचिन्हित पूर्णांक size);
 
-static __always_inline
-unsigned long __xchg(volatile void *ptr, unsigned long x, int size)
-{
-	switch (size) {
-	case 1:
-	case 2:
-		return __xchg_small(ptr, x, size);
+अटल __always_अंतरभूत
+अचिन्हित दीर्घ __xchg(अस्थिर व्योम *ptr, अचिन्हित दीर्घ x, पूर्णांक size)
+अणु
+	चयन (size) अणु
+	हाल 1:
+	हाल 2:
+		वापस __xchg_small(ptr, x, size);
 
-	case 4:
-		return __xchg_asm("ll", "sc", (volatile u32 *)ptr, x);
+	हाल 4:
+		वापस __xchg_यंत्र("ll", "sc", (अस्थिर u32 *)ptr, x);
 
-	case 8:
-		if (!IS_ENABLED(CONFIG_64BIT))
-			return __xchg_called_with_bad_pointer();
+	हाल 8:
+		अगर (!IS_ENABLED(CONFIG_64BIT))
+			वापस __xchg_called_with_bad_poपूर्णांकer();
 
-		return __xchg_asm("lld", "scd", (volatile u64 *)ptr, x);
+		वापस __xchg_यंत्र("lld", "scd", (अस्थिर u64 *)ptr, x);
 
-	default:
-		return __xchg_called_with_bad_pointer();
-	}
-}
+	शेष:
+		वापस __xchg_called_with_bad_poपूर्णांकer();
+	पूर्ण
+पूर्ण
 
-#define xchg(ptr, x)							\
-({									\
+#घोषणा xchg(ptr, x)							\
+(अणु									\
 	__typeof__(*(ptr)) __res;					\
 									\
 	/*								\
-	 * In the Loongson3 workaround case __xchg_asm() already	\
-	 * contains a completion barrier prior to the LL, so we don't	\
+	 * In the Loongson3 workaround हाल __xchg_यंत्र() alपढ़ोy	\
+	 * contains a completion barrier prior to the LL, so we करोn't	\
 	 * need to emit an extra one here.				\
 	 */								\
-	if (__SYNC_loongson3_war == 0)					\
-		smp_mb__before_llsc();					\
+	अगर (__SYNC_loongson3_war == 0)					\
+		smp_mb__beक्रमe_llsc();					\
 									\
 	__res = (__typeof__(*(ptr)))					\
-		__xchg((ptr), (unsigned long)(x), sizeof(*(ptr)));	\
+		__xchg((ptr), (अचिन्हित दीर्घ)(x), माप(*(ptr)));	\
 									\
 	smp_llsc_mb();							\
 									\
 	__res;								\
-})
+पूर्ण)
 
-#define __cmpxchg_asm(ld, st, m, old, new)				\
-({									\
+#घोषणा __cmpxchg_यंत्र(ld, st, m, old, new)				\
+(अणु									\
 	__typeof(*(m)) __ret;						\
 									\
-	if (kernel_uses_llsc) {						\
-		__asm__ __volatile__(					\
+	अगर (kernel_uses_llsc) अणु						\
+		__यंत्र__ __अस्थिर__(					\
 		"	.set	push				\n"	\
 		"	.set	noat				\n"	\
 		"	.set	push				\n"	\
@@ -133,149 +134,149 @@ unsigned long __xchg(volatile void *ptr, unsigned long x, int size)
 		: "=&r" (__ret), "=" GCC_OFF_SMALL_ASM() (*m)		\
 		: GCC_OFF_SMALL_ASM() (*m), "Jr" (old), "Jr" (new)	\
 		: __LLSC_CLOBBER);					\
-	} else {							\
-		unsigned long __flags;					\
+	पूर्ण अन्यथा अणु							\
+		अचिन्हित दीर्घ __flags;					\
 									\
 		raw_local_irq_save(__flags);				\
 		__ret = *m;						\
-		if (__ret == old)					\
+		अगर (__ret == old)					\
 			*m = new;					\
 		raw_local_irq_restore(__flags);				\
-	}								\
+	पूर्ण								\
 									\
 	__ret;								\
-})
+पूर्ण)
 
-extern unsigned long __cmpxchg_small(volatile void *ptr, unsigned long old,
-				     unsigned long new, unsigned int size);
+बाह्य अचिन्हित दीर्घ __cmpxchg_small(अस्थिर व्योम *ptr, अचिन्हित दीर्घ old,
+				     अचिन्हित दीर्घ new, अचिन्हित पूर्णांक size);
 
-static __always_inline
-unsigned long __cmpxchg(volatile void *ptr, unsigned long old,
-			unsigned long new, unsigned int size)
-{
-	switch (size) {
-	case 1:
-	case 2:
-		return __cmpxchg_small(ptr, old, new, size);
+अटल __always_अंतरभूत
+अचिन्हित दीर्घ __cmpxchg(अस्थिर व्योम *ptr, अचिन्हित दीर्घ old,
+			अचिन्हित दीर्घ new, अचिन्हित पूर्णांक size)
+अणु
+	चयन (size) अणु
+	हाल 1:
+	हाल 2:
+		वापस __cmpxchg_small(ptr, old, new, size);
 
-	case 4:
-		return __cmpxchg_asm("ll", "sc", (volatile u32 *)ptr,
+	हाल 4:
+		वापस __cmpxchg_यंत्र("ll", "sc", (अस्थिर u32 *)ptr,
 				     (u32)old, new);
 
-	case 8:
-		/* lld/scd are only available for MIPS64 */
-		if (!IS_ENABLED(CONFIG_64BIT))
-			return __cmpxchg_called_with_bad_pointer();
+	हाल 8:
+		/* lld/scd are only available क्रम MIPS64 */
+		अगर (!IS_ENABLED(CONFIG_64BIT))
+			वापस __cmpxchg_called_with_bad_poपूर्णांकer();
 
-		return __cmpxchg_asm("lld", "scd", (volatile u64 *)ptr,
+		वापस __cmpxchg_यंत्र("lld", "scd", (अस्थिर u64 *)ptr,
 				     (u64)old, new);
 
-	default:
-		return __cmpxchg_called_with_bad_pointer();
-	}
-}
+	शेष:
+		वापस __cmpxchg_called_with_bad_poपूर्णांकer();
+	पूर्ण
+पूर्ण
 
-#define cmpxchg_local(ptr, old, new)					\
+#घोषणा cmpxchg_local(ptr, old, new)					\
 	((__typeof__(*(ptr)))						\
 		__cmpxchg((ptr),					\
-			  (unsigned long)(__typeof__(*(ptr)))(old),	\
-			  (unsigned long)(__typeof__(*(ptr)))(new),	\
-			  sizeof(*(ptr))))
+			  (अचिन्हित दीर्घ)(__typeof__(*(ptr)))(old),	\
+			  (अचिन्हित दीर्घ)(__typeof__(*(ptr)))(new),	\
+			  माप(*(ptr))))
 
-#define cmpxchg(ptr, old, new)						\
-({									\
+#घोषणा cmpxchg(ptr, old, new)						\
+(अणु									\
 	__typeof__(*(ptr)) __res;					\
 									\
 	/*								\
-	 * In the Loongson3 workaround case __cmpxchg_asm() already	\
-	 * contains a completion barrier prior to the LL, so we don't	\
+	 * In the Loongson3 workaround हाल __cmpxchg_यंत्र() alपढ़ोy	\
+	 * contains a completion barrier prior to the LL, so we करोn't	\
 	 * need to emit an extra one here.				\
 	 */								\
-	if (__SYNC_loongson3_war == 0)					\
-		smp_mb__before_llsc();					\
+	अगर (__SYNC_loongson3_war == 0)					\
+		smp_mb__beक्रमe_llsc();					\
 									\
 	__res = cmpxchg_local((ptr), (old), (new));			\
 									\
 	/*								\
-	 * In the Loongson3 workaround case __cmpxchg_asm() already	\
-	 * contains a completion barrier after the SC, so we don't	\
+	 * In the Loongson3 workaround हाल __cmpxchg_यंत्र() alपढ़ोy	\
+	 * contains a completion barrier after the SC, so we करोn't	\
 	 * need to emit an extra one here.				\
 	 */								\
-	if (__SYNC_loongson3_war == 0)					\
+	अगर (__SYNC_loongson3_war == 0)					\
 		smp_llsc_mb();						\
 									\
 	__res;								\
-})
+पूर्ण)
 
-#ifdef CONFIG_64BIT
-#define cmpxchg64_local(ptr, o, n)					\
-  ({									\
-	BUILD_BUG_ON(sizeof(*(ptr)) != 8);				\
+#अगर_घोषित CONFIG_64BIT
+#घोषणा cmpxchg64_local(ptr, o, n)					\
+  (अणु									\
+	BUILD_BUG_ON(माप(*(ptr)) != 8);				\
 	cmpxchg_local((ptr), (o), (n));					\
-  })
+  पूर्ण)
 
-#define cmpxchg64(ptr, o, n)						\
-  ({									\
-	BUILD_BUG_ON(sizeof(*(ptr)) != 8);				\
+#घोषणा cmpxchg64(ptr, o, n)						\
+  (अणु									\
+	BUILD_BUG_ON(माप(*(ptr)) != 8);				\
 	cmpxchg((ptr), (o), (n));					\
-  })
-#else
+  पूर्ण)
+#अन्यथा
 
-# include <asm-generic/cmpxchg-local.h>
+# include <यंत्र-generic/cmpxchg-local.h>
 # define cmpxchg64_local(ptr, o, n) __cmpxchg64_local_generic((ptr), (o), (n))
 
-# ifdef CONFIG_SMP
+# अगरdef CONFIG_SMP
 
-static inline unsigned long __cmpxchg64(volatile void *ptr,
-					unsigned long long old,
-					unsigned long long new)
-{
-	unsigned long long tmp, ret;
-	unsigned long flags;
+अटल अंतरभूत अचिन्हित दीर्घ __cmpxchg64(अस्थिर व्योम *ptr,
+					अचिन्हित दीर्घ दीर्घ old,
+					अचिन्हित दीर्घ दीर्घ new)
+अणु
+	अचिन्हित दीर्घ दीर्घ पंचांगp, ret;
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * The assembly below has to combine 32 bit values into a 64 bit
-	 * register, and split 64 bit values from one register into two. If we
-	 * were to take an interrupt in the middle of this we'd only save the
-	 * least significant 32 bits of each register & probably clobber the
-	 * most significant 32 bits of the 64 bit values we're using. In order
-	 * to avoid this we must disable interrupts.
+	 * The assembly below has to combine 32 bit values पूर्णांकo a 64 bit
+	 * रेजिस्टर, and split 64 bit values from one रेजिस्टर पूर्णांकo two. If we
+	 * were to take an पूर्णांकerrupt in the middle of this we'd only save the
+	 * least signअगरicant 32 bits of each रेजिस्टर & probably clobber the
+	 * most signअगरicant 32 bits of the 64 bit values we're using. In order
+	 * to aव्योम this we must disable पूर्णांकerrupts.
 	 */
 	local_irq_save(flags);
 
-	asm volatile(
+	यंत्र अस्थिर(
 	"	.set	push				\n"
 	"	.set	" MIPS_ISA_ARCH_LEVEL "		\n"
 	/* Load 64 bits from ptr */
 	"	" __SYNC(full, loongson3_war) "		\n"
 	"1:	lld	%L0, %3		# __cmpxchg64	\n"
 	/*
-	 * Split the 64 bit value we loaded into the 2 registers that hold the
+	 * Split the 64 bit value we loaded पूर्णांकo the 2 रेजिस्टरs that hold the
 	 * ret variable.
 	 */
 	"	dsra	%M0, %L0, 32			\n"
 	"	sll	%L0, %L0, 0			\n"
 	/*
-	 * Compare ret against old, breaking out of the loop if they don't
+	 * Compare ret against old, अवरोधing out of the loop अगर they करोn't
 	 * match.
 	 */
 	"	bne	%M0, %M4, 2f			\n"
 	"	bne	%L0, %L4, 2f			\n"
 	/*
-	 * Combine the 32 bit halves from the 2 registers that hold the new
-	 * variable into a single 64 bit register.
+	 * Combine the 32 bit halves from the 2 रेजिस्टरs that hold the new
+	 * variable पूर्णांकo a single 64 bit रेजिस्टर.
 	 */
-#  if MIPS_ISA_REV >= 2
+#  अगर MIPS_ISA_REV >= 2
 	"	move	%L1, %L5			\n"
 	"	dins	%L1, %M5, 32, 32		\n"
-#  else
+#  अन्यथा
 	"	dsll	%L1, %L5, 32			\n"
 	"	dsrl	%L1, %L1, 32			\n"
 	"	.set	noat				\n"
 	"	dsll	$at, %M5, 32			\n"
 	"	or	%L1, %L1, $at			\n"
 	"	.set	at				\n"
-#  endif
+#  endअगर
 	/* Attempt to store new at ptr */
 	"	scd	%L1, %2				\n"
 	/* If we failed, loop! */
@@ -283,42 +284,42 @@ static inline unsigned long __cmpxchg64(volatile void *ptr,
 	"	.set	pop				\n"
 	"2:	" __SYNC(full, loongson3_war) "		\n"
 	: "=&r"(ret),
-	  "=&r"(tmp),
-	  "=" GCC_OFF_SMALL_ASM() (*(unsigned long long *)ptr)
-	: GCC_OFF_SMALL_ASM() (*(unsigned long long *)ptr),
+	  "=&r"(पंचांगp),
+	  "=" GCC_OFF_SMALL_ASM() (*(अचिन्हित दीर्घ दीर्घ *)ptr)
+	: GCC_OFF_SMALL_ASM() (*(अचिन्हित दीर्घ दीर्घ *)ptr),
 	  "r" (old),
 	  "r" (new)
 	: "memory");
 
 	local_irq_restore(flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#  define cmpxchg64(ptr, o, n) ({					\
-	unsigned long long __old = (__typeof__(*(ptr)))(o);		\
-	unsigned long long __new = (__typeof__(*(ptr)))(n);		\
+#  define cmpxchg64(ptr, o, n) (अणु					\
+	अचिन्हित दीर्घ दीर्घ __old = (__typeof__(*(ptr)))(o);		\
+	अचिन्हित दीर्घ दीर्घ __new = (__typeof__(*(ptr)))(n);		\
 	__typeof__(*(ptr)) __res;					\
 									\
 	/*								\
-	 * We can only use cmpxchg64 if we know that the CPU supports	\
+	 * We can only use cmpxchg64 अगर we know that the CPU supports	\
 	 * 64-bits, ie. lld & scd. Our call to __cmpxchg64_unsupported	\
 	 * will cause a build error unless cpu_has_64bits is a		\
-	 * compile-time constant 1.					\
+	 * compile-समय स्थिरant 1.					\
 	 */								\
-	if (cpu_has_64bits && kernel_uses_llsc) {			\
-		smp_mb__before_llsc();					\
+	अगर (cpu_has_64bits && kernel_uses_llsc) अणु			\
+		smp_mb__beक्रमe_llsc();					\
 		__res = __cmpxchg64((ptr), __old, __new);		\
 		smp_llsc_mb();						\
-	} else {							\
+	पूर्ण अन्यथा अणु							\
 		__res = __cmpxchg64_unsupported();			\
-	}								\
+	पूर्ण								\
 									\
 	__res;								\
-})
+पूर्ण)
 
-# else /* !CONFIG_SMP */
+# अन्यथा /* !CONFIG_SMP */
 #  define cmpxchg64(ptr, o, n) cmpxchg64_local((ptr), (o), (n))
-# endif /* !CONFIG_SMP */
-#endif /* !CONFIG_64BIT */
+# endअगर /* !CONFIG_SMP */
+#पूर्ण_अगर /* !CONFIG_64BIT */
 
-#endif /* __ASM_CMPXCHG_H */
+#पूर्ण_अगर /* __ASM_CMPXCHG_H */

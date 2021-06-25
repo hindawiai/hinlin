@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2021 Facebook */
 
-#include "vmlinux.h"
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश "vmlinux.h"
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
-	__uint(max_entries, 1);
-	__type(key, int);
-	__type(value, long);
-} hash1 SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+	__uपूर्णांक(max_entries, 1);
+	__type(key, पूर्णांक);
+	__type(value, दीर्घ);
+पूर्ण hash1 SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
-	__uint(max_entries, 1);
-	__type(key, int);
-	__type(value, long);
-} hash2 SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+	__uपूर्णांक(max_entries, 1);
+	__type(key, पूर्णांक);
+	__type(value, दीर्घ);
+पूर्ण hash2 SEC(".maps");
 
-int pass1 = 0;
-int pass2 = 0;
+पूर्णांक pass1 = 0;
+पूर्णांक pass2 = 0;
 
 SEC("fentry/__htab_map_lookup_elem")
-int BPF_PROG(on_lookup, struct bpf_map *map)
-{
-	int key = 0;
+पूर्णांक BPF_PROG(on_lookup, काष्ठा bpf_map *map)
+अणु
+	पूर्णांक key = 0;
 
-	if (map == (void *)&hash1) {
+	अगर (map == (व्योम *)&hash1) अणु
 		pass1++;
-		return 0;
-	}
-	if (map == (void *)&hash2) {
+		वापस 0;
+	पूर्ण
+	अगर (map == (व्योम *)&hash2) अणु
 		pass2++;
-		/* htab_map_gen_lookup() will inline below call
-		 * into direct call to __htab_map_lookup_elem()
+		/* htab_map_gen_lookup() will अंतरभूत below call
+		 * पूर्णांकo direct call to __htab_map_lookup_elem()
 		 */
 		bpf_map_lookup_elem(&hash2, &key);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

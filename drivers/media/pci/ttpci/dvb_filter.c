@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include "dvb_filter.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश "dvb_filter.h"
 
-static u32 freq[4] = {480, 441, 320, 0};
+अटल u32 freq[4] = अणु480, 441, 320, 0पूर्ण;
 
-static unsigned int ac3_bitrates[32] =
-    {32,40,48,56,64,80,96,112,128,160,192,224,256,320,384,448,512,576,640,
-     0,0,0,0,0,0,0,0,0,0,0,0,0};
+अटल अचिन्हित पूर्णांक ac3_bitrates[32] =
+    अणु32,40,48,56,64,80,96,112,128,160,192,224,256,320,384,448,512,576,640,
+     0,0,0,0,0,0,0,0,0,0,0,0,0पूर्ण;
 
-static u32 ac3_frames[3][32] =
-    {{64,80,96,112,128,160,192,224,256,320,384,448,512,640,768,896,1024,
-      1152,1280,0,0,0,0,0,0,0,0,0,0,0,0,0},
-     {69,87,104,121,139,174,208,243,278,348,417,487,557,696,835,975,1114,
-      1253,1393,0,0,0,0,0,0,0,0,0,0,0,0,0},
-     {96,120,144,168,192,240,288,336,384,480,576,672,768,960,1152,1344,
-      1536,1728,1920,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+अटल u32 ac3_frames[3][32] =
+    अणुअणु64,80,96,112,128,160,192,224,256,320,384,448,512,640,768,896,1024,
+      1152,1280,0,0,0,0,0,0,0,0,0,0,0,0,0पूर्ण,
+     अणु69,87,104,121,139,174,208,243,278,348,417,487,557,696,835,975,1114,
+      1253,1393,0,0,0,0,0,0,0,0,0,0,0,0,0पूर्ण,
+     अणु96,120,144,168,192,240,288,336,384,480,576,672,768,960,1152,1344,
+      1536,1728,1920,0,0,0,0,0,0,0,0,0,0,0,0,0पूर्णपूर्ण;
 
-int dvb_filter_get_ac3info(u8 *mbuf, int count, struct dvb_audio_info *ai, int pr)
-{
+पूर्णांक dvb_filter_get_ac3info(u8 *mbuf, पूर्णांक count, काष्ठा dvb_audio_info *ai, पूर्णांक pr)
+अणु
 	u8 *headr;
-	int found = 0;
-	int c = 0;
+	पूर्णांक found = 0;
+	पूर्णांक c = 0;
 	u8 frame = 0;
-	int fr = 0;
+	पूर्णांक fr = 0;
 
-	while ( !found  && c < count){
+	जबतक ( !found  && c < count)अणु
 		u8 *b = mbuf+c;
 
-		if ( b[0] == 0x0b &&  b[1] == 0x77 )
+		अगर ( b[0] == 0x0b &&  b[1] == 0x77 )
 			found = 1;
-		else {
+		अन्यथा अणु
 			c++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!found) return -1;
-	if (pr)
-		printk(KERN_DEBUG "Audiostream: AC3");
+	अगर (!found) वापस -1;
+	अगर (pr)
+		prपूर्णांकk(KERN_DEBUG "Audiostream: AC3");
 
 	ai->off = c;
-	if (c+5 >= count) return -1;
+	अगर (c+5 >= count) वापस -1;
 
-	ai->layer = 0;  // 0 for AC3
+	ai->layer = 0;  // 0 क्रम AC3
 	headr = mbuf+c+2;
 
 	frame = (headr[2]&0x3f);
 	ai->bit_rate = ac3_bitrates[frame >> 1]*1000;
 
-	if (pr)
-		printk(KERN_CONT "  BRate: %d kb/s", (int) ai->bit_rate/1000);
+	अगर (pr)
+		prपूर्णांकk(KERN_CONT "  BRate: %d kb/s", (पूर्णांक) ai->bit_rate/1000);
 
 	ai->frequency = (headr[2] & 0xc0 ) >> 6;
 	fr = (headr[2] & 0xc0 ) >> 6;
 	ai->frequency = freq[fr]*100;
-	if (pr)
-		printk(KERN_CONT "  Freq: %d Hz\n", (int) ai->frequency);
+	अगर (pr)
+		prपूर्णांकk(KERN_CONT "  Freq: %d Hz\n", (पूर्णांक) ai->frequency);
 
 	ai->framesize = ac3_frames[fr][frame >> 1];
-	if ((frame & 1) &&  (fr == 1)) ai->framesize++;
+	अगर ((frame & 1) &&  (fr == 1)) ai->framesize++;
 	ai->framesize = ai->framesize << 1;
-	if (pr)
-		printk(KERN_DEBUG "  Framesize %d\n", (int) ai->framesize);
+	अगर (pr)
+		prपूर्णांकk(KERN_DEBUG "  Framesize %d\n", (पूर्णांक) ai->framesize);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dvb_filter_pes2ts_init(struct dvb_filter_pes2ts *p2ts, unsigned short pid,
-			    dvb_filter_pes2ts_cb_t *cb, void *priv)
-{
-	unsigned char *buf=p2ts->buf;
+व्योम dvb_filter_pes2ts_init(काष्ठा dvb_filter_pes2ts *p2ts, अचिन्हित लघु pid,
+			    dvb_filter_pes2ts_cb_t *cb, व्योम *priv)
+अणु
+	अचिन्हित अक्षर *buf=p2ts->buf;
 
 	buf[0]=0x47;
 	buf[1]=(pid>>8);
@@ -78,38 +79,38 @@ void dvb_filter_pes2ts_init(struct dvb_filter_pes2ts *p2ts, unsigned short pid,
 	p2ts->cc=0;
 	p2ts->cb=cb;
 	p2ts->priv=priv;
-}
+पूर्ण
 
-int dvb_filter_pes2ts(struct dvb_filter_pes2ts *p2ts, unsigned char *pes,
-		      int len, int payload_start)
-{
-	unsigned char *buf=p2ts->buf;
-	int ret=0, rest;
+पूर्णांक dvb_filter_pes2ts(काष्ठा dvb_filter_pes2ts *p2ts, अचिन्हित अक्षर *pes,
+		      पूर्णांक len, पूर्णांक payload_start)
+अणु
+	अचिन्हित अक्षर *buf=p2ts->buf;
+	पूर्णांक ret=0, rest;
 
 	//len=6+((pes[4]<<8)|pes[5]);
 
-	if (payload_start)
+	अगर (payload_start)
 		buf[1]|=0x40;
-	else
+	अन्यथा
 		buf[1]&=~0x40;
-	while (len>=184) {
+	जबतक (len>=184) अणु
 		buf[3]=0x10|((p2ts->cc++)&0x0f);
-		memcpy(buf+4, pes, 184);
-		if ((ret=p2ts->cb(p2ts->priv, buf)))
-			return ret;
+		स_नकल(buf+4, pes, 184);
+		अगर ((ret=p2ts->cb(p2ts->priv, buf)))
+			वापस ret;
 		len-=184; pes+=184;
 		buf[1]&=~0x40;
-	}
-	if (!len)
-		return 0;
+	पूर्ण
+	अगर (!len)
+		वापस 0;
 	buf[3]=0x30|((p2ts->cc++)&0x0f);
 	rest=183-len;
-	if (rest) {
+	अगर (rest) अणु
 		buf[5]=0x00;
-		if (rest-1)
-			memset(buf+6, 0xff, rest-1);
-	}
+		अगर (rest-1)
+			स_रखो(buf+6, 0xff, rest-1);
+	पूर्ण
 	buf[4]=rest;
-	memcpy(buf+5+rest, pes, len);
-	return p2ts->cb(p2ts->priv, buf);
-}
+	स_नकल(buf+5+rest, pes, len);
+	वापस p2ts->cb(p2ts->priv, buf);
+पूर्ण

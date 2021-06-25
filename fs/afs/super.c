@@ -1,12 +1,13 @@
+<शैली गुरु>
 /* AFS superblock handling
  *
  * Copyright (c) 2002, 2007, 2018 Red Hat, Inc. All rights reserved.
  *
- * This software may be freely redistributed under the terms of the
+ * This software may be मुक्तly redistributed under the terms of the
  * GNU General Public License.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * Authors: David Howells <dhowells@redhat.com>
@@ -14,87 +15,87 @@
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mount.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include <linux/pagemap.h>
-#include <linux/fs_parser.h>
-#include <linux/statfs.h>
-#include <linux/sched.h>
-#include <linux/nsproxy.h>
-#include <linux/magic.h>
-#include <net/net_namespace.h>
-#include "internal.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/fs_parser.h>
+#समावेश <linux/statfs.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/nsproxy.h>
+#समावेश <linux/magic.h>
+#समावेश <net/net_namespace.h>
+#समावेश "internal.h"
 
-static void afs_i_init_once(void *foo);
-static void afs_kill_super(struct super_block *sb);
-static struct inode *afs_alloc_inode(struct super_block *sb);
-static void afs_destroy_inode(struct inode *inode);
-static void afs_free_inode(struct inode *inode);
-static int afs_statfs(struct dentry *dentry, struct kstatfs *buf);
-static int afs_show_devname(struct seq_file *m, struct dentry *root);
-static int afs_show_options(struct seq_file *m, struct dentry *root);
-static int afs_init_fs_context(struct fs_context *fc);
-static const struct fs_parameter_spec afs_fs_parameters[];
+अटल व्योम afs_i_init_once(व्योम *foo);
+अटल व्योम afs_समाप्त_super(काष्ठा super_block *sb);
+अटल काष्ठा inode *afs_alloc_inode(काष्ठा super_block *sb);
+अटल व्योम afs_destroy_inode(काष्ठा inode *inode);
+अटल व्योम afs_मुक्त_inode(काष्ठा inode *inode);
+अटल पूर्णांक afs_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf);
+अटल पूर्णांक afs_show_devname(काष्ठा seq_file *m, काष्ठा dentry *root);
+अटल पूर्णांक afs_show_options(काष्ठा seq_file *m, काष्ठा dentry *root);
+अटल पूर्णांक afs_init_fs_context(काष्ठा fs_context *fc);
+अटल स्थिर काष्ठा fs_parameter_spec afs_fs_parameters[];
 
-struct file_system_type afs_fs_type = {
+काष्ठा file_प्रणाली_type afs_fs_type = अणु
 	.owner			= THIS_MODULE,
 	.name			= "afs",
 	.init_fs_context	= afs_init_fs_context,
 	.parameters		= afs_fs_parameters,
-	.kill_sb		= afs_kill_super,
+	.समाप्त_sb		= afs_समाप्त_super,
 	.fs_flags		= FS_RENAME_DOES_D_MOVE,
-};
+पूर्ण;
 MODULE_ALIAS_FS("afs");
 
-int afs_net_id;
+पूर्णांक afs_net_id;
 
-static const struct super_operations afs_super_ops = {
+अटल स्थिर काष्ठा super_operations afs_super_ops = अणु
 	.statfs		= afs_statfs,
 	.alloc_inode	= afs_alloc_inode,
 	.drop_inode	= afs_drop_inode,
 	.destroy_inode	= afs_destroy_inode,
-	.free_inode	= afs_free_inode,
+	.मुक्त_inode	= afs_मुक्त_inode,
 	.evict_inode	= afs_evict_inode,
 	.show_devname	= afs_show_devname,
 	.show_options	= afs_show_options,
-};
+पूर्ण;
 
-static struct kmem_cache *afs_inode_cachep;
-static atomic_t afs_count_active_inodes;
+अटल काष्ठा kmem_cache *afs_inode_cachep;
+अटल atomic_t afs_count_active_inodes;
 
-enum afs_param {
-	Opt_autocell,
+क्रमागत afs_param अणु
+	Opt_स्वतःcell,
 	Opt_dyn,
 	Opt_flock,
 	Opt_source,
-};
+पूर्ण;
 
-static const struct constant_table afs_param_flock[] = {
-	{"local",	afs_flock_mode_local },
-	{"openafs",	afs_flock_mode_openafs },
-	{"strict",	afs_flock_mode_strict },
-	{"write",	afs_flock_mode_write },
-	{}
-};
+अटल स्थिर काष्ठा स्थिरant_table afs_param_flock[] = अणु
+	अणु"local",	afs_flock_mode_local पूर्ण,
+	अणु"openafs",	afs_flock_mode_खोलोafs पूर्ण,
+	अणु"strict",	afs_flock_mode_strict पूर्ण,
+	अणु"write",	afs_flock_mode_ग_लिखो पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct fs_parameter_spec afs_fs_parameters[] = {
-	fsparam_flag  ("autocell",	Opt_autocell),
+अटल स्थिर काष्ठा fs_parameter_spec afs_fs_parameters[] = अणु
+	fsparam_flag  ("autocell",	Opt_स्वतःcell),
 	fsparam_flag  ("dyn",		Opt_dyn),
-	fsparam_enum  ("flock",		Opt_flock, afs_param_flock),
+	fsparam_क्रमागत  ("flock",		Opt_flock, afs_param_flock),
 	fsparam_string("source",	Opt_source),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
 /*
- * initialise the filesystem
+ * initialise the fileप्रणाली
  */
-int __init afs_fs_init(void)
-{
-	int ret;
+पूर्णांक __init afs_fs_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	_enter("");
 
@@ -103,110 +104,110 @@ int __init afs_fs_init(void)
 
 	ret = -ENOMEM;
 	afs_inode_cachep = kmem_cache_create("afs_inode_cache",
-					     sizeof(struct afs_vnode),
+					     माप(काष्ठा afs_vnode),
 					     0,
 					     SLAB_HWCACHE_ALIGN|SLAB_ACCOUNT,
 					     afs_i_init_once);
-	if (!afs_inode_cachep) {
-		printk(KERN_NOTICE "kAFS: Failed to allocate inode cache\n");
-		return ret;
-	}
+	अगर (!afs_inode_cachep) अणु
+		prपूर्णांकk(KERN_NOTICE "kAFS: Failed to allocate inode cache\n");
+		वापस ret;
+	पूर्ण
 
-	/* now export our filesystem to lesser mortals */
-	ret = register_filesystem(&afs_fs_type);
-	if (ret < 0) {
+	/* now export our fileप्रणाली to lesser mortals */
+	ret = रेजिस्टर_fileप्रणाली(&afs_fs_type);
+	अगर (ret < 0) अणु
 		kmem_cache_destroy(afs_inode_cachep);
 		_leave(" = %d", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	_leave(" = 0");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * clean up the filesystem
+ * clean up the fileप्रणाली
  */
-void afs_fs_exit(void)
-{
+व्योम afs_fs_निकास(व्योम)
+अणु
 	_enter("");
 
-	afs_mntpt_kill_timer();
-	unregister_filesystem(&afs_fs_type);
+	afs_mntpt_समाप्त_समयr();
+	unरेजिस्टर_fileप्रणाली(&afs_fs_type);
 
-	if (atomic_read(&afs_count_active_inodes) != 0) {
-		printk("kAFS: %d active inode objects still present\n",
-		       atomic_read(&afs_count_active_inodes));
+	अगर (atomic_पढ़ो(&afs_count_active_inodes) != 0) अणु
+		prपूर्णांकk("kAFS: %d active inode objects still present\n",
+		       atomic_पढ़ो(&afs_count_active_inodes));
 		BUG();
-	}
+	पूर्ण
 
 	/*
-	 * Make sure all delayed rcu free inodes are flushed before we
+	 * Make sure all delayed rcu मुक्त inodes are flushed beक्रमe we
 	 * destroy cache.
 	 */
 	rcu_barrier();
 	kmem_cache_destroy(afs_inode_cachep);
 	_leave("");
-}
+पूर्ण
 
 /*
  * Display the mount device name in /proc/mounts.
  */
-static int afs_show_devname(struct seq_file *m, struct dentry *root)
-{
-	struct afs_super_info *as = AFS_FS_S(root->d_sb);
-	struct afs_volume *volume = as->volume;
-	struct afs_cell *cell = as->cell;
-	const char *suf = "";
-	char pref = '%';
+अटल पूर्णांक afs_show_devname(काष्ठा seq_file *m, काष्ठा dentry *root)
+अणु
+	काष्ठा afs_super_info *as = AFS_FS_S(root->d_sb);
+	काष्ठा afs_volume *volume = as->volume;
+	काष्ठा afs_cell *cell = as->cell;
+	स्थिर अक्षर *suf = "";
+	अक्षर pref = '%';
 
-	if (as->dyn_root) {
-		seq_puts(m, "none");
-		return 0;
-	}
+	अगर (as->dyn_root) अणु
+		seq_माला_दो(m, "none");
+		वापस 0;
+	पूर्ण
 
-	switch (volume->type) {
-	case AFSVL_RWVOL:
-		break;
-	case AFSVL_ROVOL:
+	चयन (volume->type) अणु
+	हाल AFSVL_RWVOL:
+		अवरोध;
+	हाल AFSVL_ROVOL:
 		pref = '#';
-		if (volume->type_force)
+		अगर (volume->type_क्रमce)
 			suf = ".readonly";
-		break;
-	case AFSVL_BACKVOL:
+		अवरोध;
+	हाल AFSVL_BACKVOL:
 		pref = '#';
 		suf = ".backup";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	seq_printf(m, "%c%s:%s%s", pref, cell->name, volume->name, suf);
-	return 0;
-}
+	seq_म_लिखो(m, "%c%s:%s%s", pref, cell->name, volume->name, suf);
+	वापस 0;
+पूर्ण
 
 /*
  * Display the mount options in /proc/mounts.
  */
-static int afs_show_options(struct seq_file *m, struct dentry *root)
-{
-	struct afs_super_info *as = AFS_FS_S(root->d_sb);
-	const char *p = NULL;
+अटल पूर्णांक afs_show_options(काष्ठा seq_file *m, काष्ठा dentry *root)
+अणु
+	काष्ठा afs_super_info *as = AFS_FS_S(root->d_sb);
+	स्थिर अक्षर *p = शून्य;
 
-	if (as->dyn_root)
-		seq_puts(m, ",dyn");
-	if (test_bit(AFS_VNODE_AUTOCELL, &AFS_FS_I(d_inode(root))->flags))
-		seq_puts(m, ",autocell");
-	switch (as->flock_mode) {
-	case afs_flock_mode_unset:	break;
-	case afs_flock_mode_local:	p = "local";	break;
-	case afs_flock_mode_openafs:	p = "openafs";	break;
-	case afs_flock_mode_strict:	p = "strict";	break;
-	case afs_flock_mode_write:	p = "write";	break;
-	}
-	if (p)
-		seq_printf(m, ",flock=%s", p);
+	अगर (as->dyn_root)
+		seq_माला_दो(m, ",dyn");
+	अगर (test_bit(AFS_VNODE_AUTOCELL, &AFS_FS_I(d_inode(root))->flags))
+		seq_माला_दो(m, ",autocell");
+	चयन (as->flock_mode) अणु
+	हाल afs_flock_mode_unset:	अवरोध;
+	हाल afs_flock_mode_local:	p = "local";	अवरोध;
+	हाल afs_flock_mode_खोलोafs:	p = "openafs";	अवरोध;
+	हाल afs_flock_mode_strict:	p = "strict";	अवरोध;
+	हाल afs_flock_mode_ग_लिखो:	p = "write";	अवरोध;
+	पूर्ण
+	अगर (p)
+		seq_म_लिखो(m, ",flock=%s", p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Parse the source name to get cell name, volume name, volume type and R/W
@@ -221,443 +222,443 @@ static int afs_show_options(struct seq_file *m, struct dentry *root)
  *	"%[cell:]volume.backup"		Backup volume
  *	"#[cell:]volume.backup"		Backup volume
  */
-static int afs_parse_source(struct fs_context *fc, struct fs_parameter *param)
-{
-	struct afs_fs_context *ctx = fc->fs_private;
-	struct afs_cell *cell;
-	const char *cellname, *suffix, *name = param->string;
-	int cellnamesz;
+अटल पूर्णांक afs_parse_source(काष्ठा fs_context *fc, काष्ठा fs_parameter *param)
+अणु
+	काष्ठा afs_fs_context *ctx = fc->fs_निजी;
+	काष्ठा afs_cell *cell;
+	स्थिर अक्षर *cellname, *suffix, *name = param->string;
+	पूर्णांक cellnamesz;
 
 	_enter(",%s", name);
 
-	if (fc->source)
-		return invalf(fc, "kAFS: Multiple sources not supported");
+	अगर (fc->source)
+		वापस invalf(fc, "kAFS: Multiple sources not supported");
 
-	if (!name) {
-		printk(KERN_ERR "kAFS: no volume name specified\n");
-		return -EINVAL;
-	}
+	अगर (!name) अणु
+		prपूर्णांकk(KERN_ERR "kAFS: no volume name specified\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((name[0] != '%' && name[0] != '#') || !name[1]) {
-		/* To use dynroot, we don't want to have to provide a source */
-		if (strcmp(name, "none") == 0) {
+	अगर ((name[0] != '%' && name[0] != '#') || !name[1]) अणु
+		/* To use dynroot, we करोn't want to have to provide a source */
+		अगर (म_भेद(name, "none") == 0) अणु
 			ctx->no_cell = true;
-			return 0;
-		}
-		printk(KERN_ERR "kAFS: unparsable volume name\n");
-		return -EINVAL;
-	}
+			वापस 0;
+		पूर्ण
+		prपूर्णांकk(KERN_ERR "kAFS: unparsable volume name\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	/* determine the type of volume we're looking for */
-	if (name[0] == '%') {
+	/* determine the type of volume we're looking क्रम */
+	अगर (name[0] == '%') अणु
 		ctx->type = AFSVL_RWVOL;
-		ctx->force = true;
-	}
+		ctx->क्रमce = true;
+	पूर्ण
 	name++;
 
-	/* split the cell name out if there is one */
-	ctx->volname = strchr(name, ':');
-	if (ctx->volname) {
+	/* split the cell name out अगर there is one */
+	ctx->volname = म_अक्षर(name, ':');
+	अगर (ctx->volname) अणु
 		cellname = name;
 		cellnamesz = ctx->volname - name;
 		ctx->volname++;
-	} else {
+	पूर्ण अन्यथा अणु
 		ctx->volname = name;
-		cellname = NULL;
+		cellname = शून्य;
 		cellnamesz = 0;
-	}
+	पूर्ण
 
 	/* the volume type is further affected by a possible suffix */
-	suffix = strrchr(ctx->volname, '.');
-	if (suffix) {
-		if (strcmp(suffix, ".readonly") == 0) {
+	suffix = म_खोजप(ctx->volname, '.');
+	अगर (suffix) अणु
+		अगर (म_भेद(suffix, ".readonly") == 0) अणु
 			ctx->type = AFSVL_ROVOL;
-			ctx->force = true;
-		} else if (strcmp(suffix, ".backup") == 0) {
+			ctx->क्रमce = true;
+		पूर्ण अन्यथा अगर (म_भेद(suffix, ".backup") == 0) अणु
 			ctx->type = AFSVL_BACKVOL;
-			ctx->force = true;
-		} else if (suffix[1] == 0) {
-		} else {
-			suffix = NULL;
-		}
-	}
+			ctx->क्रमce = true;
+		पूर्ण अन्यथा अगर (suffix[1] == 0) अणु
+		पूर्ण अन्यथा अणु
+			suffix = शून्य;
+		पूर्ण
+	पूर्ण
 
 	ctx->volnamesz = suffix ?
-		suffix - ctx->volname : strlen(ctx->volname);
+		suffix - ctx->volname : म_माप(ctx->volname);
 
 	_debug("cell %*.*s [%p]",
 	       cellnamesz, cellnamesz, cellname ?: "", ctx->cell);
 
 	/* lookup the cell record */
-	if (cellname) {
+	अगर (cellname) अणु
 		cell = afs_lookup_cell(ctx->net, cellname, cellnamesz,
-				       NULL, false);
-		if (IS_ERR(cell)) {
+				       शून्य, false);
+		अगर (IS_ERR(cell)) अणु
 			pr_err("kAFS: unable to lookup cell '%*.*s'\n",
 			       cellnamesz, cellnamesz, cellname ?: "");
-			return PTR_ERR(cell);
-		}
+			वापस PTR_ERR(cell);
+		पूर्ण
 		afs_unuse_cell(ctx->net, ctx->cell, afs_cell_trace_unuse_parse);
 		afs_see_cell(cell, afs_cell_trace_see_source);
 		ctx->cell = cell;
-	}
+	पूर्ण
 
 	_debug("CELL:%s [%p] VOLUME:%*.*s SUFFIX:%s TYPE:%d%s",
 	       ctx->cell->name, ctx->cell,
 	       ctx->volnamesz, ctx->volnamesz, ctx->volname,
-	       suffix ?: "-", ctx->type, ctx->force ? " FORCE" : "");
+	       suffix ?: "-", ctx->type, ctx->क्रमce ? " FORCE" : "");
 
 	fc->source = param->string;
-	param->string = NULL;
-	return 0;
-}
+	param->string = शून्य;
+	वापस 0;
+पूर्ण
 
 /*
  * Parse a single mount parameter.
  */
-static int afs_parse_param(struct fs_context *fc, struct fs_parameter *param)
-{
-	struct fs_parse_result result;
-	struct afs_fs_context *ctx = fc->fs_private;
-	int opt;
+अटल पूर्णांक afs_parse_param(काष्ठा fs_context *fc, काष्ठा fs_parameter *param)
+अणु
+	काष्ठा fs_parse_result result;
+	काष्ठा afs_fs_context *ctx = fc->fs_निजी;
+	पूर्णांक opt;
 
 	opt = fs_parse(fc, afs_fs_parameters, param, &result);
-	if (opt < 0)
-		return opt;
+	अगर (opt < 0)
+		वापस opt;
 
-	switch (opt) {
-	case Opt_source:
-		return afs_parse_source(fc, param);
+	चयन (opt) अणु
+	हाल Opt_source:
+		वापस afs_parse_source(fc, param);
 
-	case Opt_autocell:
-		ctx->autocell = true;
-		break;
+	हाल Opt_स्वतःcell:
+		ctx->स्वतःcell = true;
+		अवरोध;
 
-	case Opt_dyn:
+	हाल Opt_dyn:
 		ctx->dyn_root = true;
-		break;
+		अवरोध;
 
-	case Opt_flock:
-		ctx->flock_mode = result.uint_32;
-		break;
+	हाल Opt_flock:
+		ctx->flock_mode = result.uपूर्णांक_32;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	_leave(" = 0");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Validate the options, get the cell key and look up the volume.
  */
-static int afs_validate_fc(struct fs_context *fc)
-{
-	struct afs_fs_context *ctx = fc->fs_private;
-	struct afs_volume *volume;
-	struct afs_cell *cell;
-	struct key *key;
-	int ret;
+अटल पूर्णांक afs_validate_fc(काष्ठा fs_context *fc)
+अणु
+	काष्ठा afs_fs_context *ctx = fc->fs_निजी;
+	काष्ठा afs_volume *volume;
+	काष्ठा afs_cell *cell;
+	काष्ठा key *key;
+	पूर्णांक ret;
 
-	if (!ctx->dyn_root) {
-		if (ctx->no_cell) {
+	अगर (!ctx->dyn_root) अणु
+		अगर (ctx->no_cell) अणु
 			pr_warn("kAFS: Can only specify source 'none' with -o dyn\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!ctx->cell) {
+		अगर (!ctx->cell) अणु
 			pr_warn("kAFS: No cell specified\n");
-			return -EDESTADDRREQ;
-		}
+			वापस -EDESTADDRREQ;
+		पूर्ण
 
 	reget_key:
-		/* We try to do the mount securely. */
+		/* We try to करो the mount securely. */
 		key = afs_request_key(ctx->cell);
-		if (IS_ERR(key))
-			return PTR_ERR(key);
+		अगर (IS_ERR(key))
+			वापस PTR_ERR(key);
 
 		ctx->key = key;
 
-		if (ctx->volume) {
+		अगर (ctx->volume) अणु
 			afs_put_volume(ctx->net, ctx->volume,
 				       afs_volume_trace_put_validate_fc);
-			ctx->volume = NULL;
-		}
+			ctx->volume = शून्य;
+		पूर्ण
 
-		if (test_bit(AFS_CELL_FL_CHECK_ALIAS, &ctx->cell->flags)) {
+		अगर (test_bit(AFS_CELL_FL_CHECK_ALIAS, &ctx->cell->flags)) अणु
 			ret = afs_cell_detect_alias(ctx->cell, key);
-			if (ret < 0)
-				return ret;
-			if (ret == 1) {
+			अगर (ret < 0)
+				वापस ret;
+			अगर (ret == 1) अणु
 				_debug("switch to alias");
 				key_put(ctx->key);
-				ctx->key = NULL;
+				ctx->key = शून्य;
 				cell = afs_use_cell(ctx->cell->alias_of,
 						    afs_cell_trace_use_fc_alias);
 				afs_unuse_cell(ctx->net, ctx->cell, afs_cell_trace_unuse_fc);
 				ctx->cell = cell;
-				goto reget_key;
-			}
-		}
+				जाओ reget_key;
+			पूर्ण
+		पूर्ण
 
 		volume = afs_create_volume(ctx);
-		if (IS_ERR(volume))
-			return PTR_ERR(volume);
+		अगर (IS_ERR(volume))
+			वापस PTR_ERR(volume);
 
 		ctx->volume = volume;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * check a superblock to see if it's the one we're looking for
+ * check a superblock to see अगर it's the one we're looking क्रम
  */
-static int afs_test_super(struct super_block *sb, struct fs_context *fc)
-{
-	struct afs_fs_context *ctx = fc->fs_private;
-	struct afs_super_info *as = AFS_FS_S(sb);
+अटल पूर्णांक afs_test_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	काष्ठा afs_fs_context *ctx = fc->fs_निजी;
+	काष्ठा afs_super_info *as = AFS_FS_S(sb);
 
-	return (as->net_ns == fc->net_ns &&
+	वापस (as->net_ns == fc->net_ns &&
 		as->volume &&
 		as->volume->vid == ctx->volume->vid &&
 		as->cell == ctx->cell &&
 		!as->dyn_root);
-}
+पूर्ण
 
-static int afs_dynroot_test_super(struct super_block *sb, struct fs_context *fc)
-{
-	struct afs_super_info *as = AFS_FS_S(sb);
+अटल पूर्णांक afs_dynroot_test_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	काष्ठा afs_super_info *as = AFS_FS_S(sb);
 
-	return (as->net_ns == fc->net_ns &&
+	वापस (as->net_ns == fc->net_ns &&
 		as->dyn_root);
-}
+पूर्ण
 
-static int afs_set_super(struct super_block *sb, struct fs_context *fc)
-{
-	return set_anon_super(sb, NULL);
-}
+अटल पूर्णांक afs_set_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	वापस set_anon_super(sb, शून्य);
+पूर्ण
 
 /*
  * fill in the superblock
  */
-static int afs_fill_super(struct super_block *sb, struct afs_fs_context *ctx)
-{
-	struct afs_super_info *as = AFS_FS_S(sb);
-	struct inode *inode = NULL;
-	int ret;
+अटल पूर्णांक afs_fill_super(काष्ठा super_block *sb, काष्ठा afs_fs_context *ctx)
+अणु
+	काष्ठा afs_super_info *as = AFS_FS_S(sb);
+	काष्ठा inode *inode = शून्य;
+	पूर्णांक ret;
 
 	_enter("");
 
 	/* fill in the superblock */
 	sb->s_blocksize		= PAGE_SIZE;
 	sb->s_blocksize_bits	= PAGE_SHIFT;
-	sb->s_maxbytes		= MAX_LFS_FILESIZE;
+	sb->s_maxbytes		= MAX_LFS_खाताSIZE;
 	sb->s_magic		= AFS_FS_MAGIC;
 	sb->s_op		= &afs_super_ops;
-	if (!as->dyn_root)
+	अगर (!as->dyn_root)
 		sb->s_xattr	= afs_xattr_handlers;
 	ret = super_setup_bdi(sb);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* allocate the root inode and dentry */
-	if (as->dyn_root) {
-		inode = afs_iget_pseudo_dir(sb, true);
-	} else {
-		sprintf(sb->s_id, "%llu", as->volume->vid);
+	अगर (as->dyn_root) अणु
+		inode = afs_iget_pseuकरो_dir(sb, true);
+	पूर्ण अन्यथा अणु
+		प्र_लिखो(sb->s_id, "%llu", as->volume->vid);
 		afs_activate_volume(as->volume);
 		inode = afs_root_iget(sb, ctx->key);
-	}
+	पूर्ण
 
-	if (IS_ERR(inode))
-		return PTR_ERR(inode);
+	अगर (IS_ERR(inode))
+		वापस PTR_ERR(inode);
 
-	if (ctx->autocell || as->dyn_root)
+	अगर (ctx->स्वतःcell || as->dyn_root)
 		set_bit(AFS_VNODE_AUTOCELL, &AFS_FS_I(inode)->flags);
 
 	ret = -ENOMEM;
 	sb->s_root = d_make_root(inode);
-	if (!sb->s_root)
-		goto error;
+	अगर (!sb->s_root)
+		जाओ error;
 
-	if (as->dyn_root) {
+	अगर (as->dyn_root) अणु
 		sb->s_d_op = &afs_dynroot_dentry_operations;
 		ret = afs_dynroot_populate(sb);
-		if (ret < 0)
-			goto error;
-	} else {
+		अगर (ret < 0)
+			जाओ error;
+	पूर्ण अन्यथा अणु
 		sb->s_d_op = &afs_fs_dentry_operations;
-		rcu_assign_pointer(as->volume->sb, sb);
-	}
+		rcu_assign_poपूर्णांकer(as->volume->sb, sb);
+	पूर्ण
 
 	_leave(" = 0");
-	return 0;
+	वापस 0;
 
 error:
 	_leave(" = %d", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct afs_super_info *afs_alloc_sbi(struct fs_context *fc)
-{
-	struct afs_fs_context *ctx = fc->fs_private;
-	struct afs_super_info *as;
+अटल काष्ठा afs_super_info *afs_alloc_sbi(काष्ठा fs_context *fc)
+अणु
+	काष्ठा afs_fs_context *ctx = fc->fs_निजी;
+	काष्ठा afs_super_info *as;
 
-	as = kzalloc(sizeof(struct afs_super_info), GFP_KERNEL);
-	if (as) {
+	as = kzalloc(माप(काष्ठा afs_super_info), GFP_KERNEL);
+	अगर (as) अणु
 		as->net_ns = get_net(fc->net_ns);
 		as->flock_mode = ctx->flock_mode;
-		if (ctx->dyn_root) {
+		अगर (ctx->dyn_root) अणु
 			as->dyn_root = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			as->cell = afs_use_cell(ctx->cell, afs_cell_trace_use_sbi);
 			as->volume = afs_get_volume(ctx->volume,
 						    afs_volume_trace_get_alloc_sbi);
-		}
-	}
-	return as;
-}
+		पूर्ण
+	पूर्ण
+	वापस as;
+पूर्ण
 
-static void afs_destroy_sbi(struct afs_super_info *as)
-{
-	if (as) {
-		struct afs_net *net = afs_net(as->net_ns);
+अटल व्योम afs_destroy_sbi(काष्ठा afs_super_info *as)
+अणु
+	अगर (as) अणु
+		काष्ठा afs_net *net = afs_net(as->net_ns);
 		afs_put_volume(net, as->volume, afs_volume_trace_put_destroy_sbi);
 		afs_unuse_cell(net, as->cell, afs_cell_trace_unuse_sbi);
 		put_net(as->net_ns);
-		kfree(as);
-	}
-}
+		kमुक्त(as);
+	पूर्ण
+पूर्ण
 
-static void afs_kill_super(struct super_block *sb)
-{
-	struct afs_super_info *as = AFS_FS_S(sb);
+अटल व्योम afs_समाप्त_super(काष्ठा super_block *sb)
+अणु
+	काष्ठा afs_super_info *as = AFS_FS_S(sb);
 
-	if (as->dyn_root)
+	अगर (as->dyn_root)
 		afs_dynroot_depopulate(sb);
 
-	/* Clear the callback interests (which will do ilookup5) before
+	/* Clear the callback पूर्णांकerests (which will करो ilookup5) beक्रमe
 	 * deactivating the superblock.
 	 */
-	if (as->volume)
-		rcu_assign_pointer(as->volume->sb, NULL);
-	kill_anon_super(sb);
-	if (as->volume)
+	अगर (as->volume)
+		rcu_assign_poपूर्णांकer(as->volume->sb, शून्य);
+	समाप्त_anon_super(sb);
+	अगर (as->volume)
 		afs_deactivate_volume(as->volume);
 	afs_destroy_sbi(as);
-}
+पूर्ण
 
 /*
  * Get an AFS superblock and root directory.
  */
-static int afs_get_tree(struct fs_context *fc)
-{
-	struct afs_fs_context *ctx = fc->fs_private;
-	struct super_block *sb;
-	struct afs_super_info *as;
-	int ret;
+अटल पूर्णांक afs_get_tree(काष्ठा fs_context *fc)
+अणु
+	काष्ठा afs_fs_context *ctx = fc->fs_निजी;
+	काष्ठा super_block *sb;
+	काष्ठा afs_super_info *as;
+	पूर्णांक ret;
 
 	ret = afs_validate_fc(fc);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
 	_enter("");
 
 	/* allocate a superblock info record */
 	ret = -ENOMEM;
 	as = afs_alloc_sbi(fc);
-	if (!as)
-		goto error;
+	अगर (!as)
+		जाओ error;
 	fc->s_fs_info = as;
 
 	/* allocate a deviceless superblock */
 	sb = sget_fc(fc,
 		     as->dyn_root ? afs_dynroot_test_super : afs_test_super,
 		     afs_set_super);
-	if (IS_ERR(sb)) {
+	अगर (IS_ERR(sb)) अणु
 		ret = PTR_ERR(sb);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (!sb->s_root) {
+	अगर (!sb->s_root) अणु
 		/* initial superblock/root creation */
 		_debug("create");
 		ret = afs_fill_super(sb, ctx);
-		if (ret < 0)
-			goto error_sb;
+		अगर (ret < 0)
+			जाओ error_sb;
 		sb->s_flags |= SB_ACTIVE;
-	} else {
+	पूर्ण अन्यथा अणु
 		_debug("reuse");
 		ASSERTCMP(sb->s_flags, &, SB_ACTIVE);
-	}
+	पूर्ण
 
 	fc->root = dget(sb->s_root);
 	trace_afs_get_tree(as->cell, as->volume);
 	_leave(" = 0 [%p]", sb);
-	return 0;
+	वापस 0;
 
 error_sb:
 	deactivate_locked_super(sb);
 error:
 	_leave(" = %d", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void afs_free_fc(struct fs_context *fc)
-{
-	struct afs_fs_context *ctx = fc->fs_private;
+अटल व्योम afs_मुक्त_fc(काष्ठा fs_context *fc)
+अणु
+	काष्ठा afs_fs_context *ctx = fc->fs_निजी;
 
 	afs_destroy_sbi(fc->s_fs_info);
-	afs_put_volume(ctx->net, ctx->volume, afs_volume_trace_put_free_fc);
+	afs_put_volume(ctx->net, ctx->volume, afs_volume_trace_put_मुक्त_fc);
 	afs_unuse_cell(ctx->net, ctx->cell, afs_cell_trace_unuse_fc);
 	key_put(ctx->key);
-	kfree(ctx);
-}
+	kमुक्त(ctx);
+पूर्ण
 
-static const struct fs_context_operations afs_context_ops = {
-	.free		= afs_free_fc,
+अटल स्थिर काष्ठा fs_context_operations afs_context_ops = अणु
+	.मुक्त		= afs_मुक्त_fc,
 	.parse_param	= afs_parse_param,
 	.get_tree	= afs_get_tree,
-};
+पूर्ण;
 
 /*
- * Set up the filesystem mount context.
+ * Set up the fileप्रणाली mount context.
  */
-static int afs_init_fs_context(struct fs_context *fc)
-{
-	struct afs_fs_context *ctx;
-	struct afs_cell *cell;
+अटल पूर्णांक afs_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	काष्ठा afs_fs_context *ctx;
+	काष्ठा afs_cell *cell;
 
-	ctx = kzalloc(sizeof(struct afs_fs_context), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = kzalloc(माप(काष्ठा afs_fs_context), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	ctx->type = AFSVL_ROVOL;
 	ctx->net = afs_net(fc->net_ns);
 
 	/* Default to the workstation cell. */
-	cell = afs_find_cell(ctx->net, NULL, 0, afs_cell_trace_use_fc);
-	if (IS_ERR(cell))
-		cell = NULL;
+	cell = afs_find_cell(ctx->net, शून्य, 0, afs_cell_trace_use_fc);
+	अगर (IS_ERR(cell))
+		cell = शून्य;
 	ctx->cell = cell;
 
-	fc->fs_private = ctx;
+	fc->fs_निजी = ctx;
 	fc->ops = &afs_context_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Initialise an inode cache slab element prior to any use.  Note that
  * afs_alloc_inode() *must* reset anything that could incorrectly leak from one
  * inode to another.
  */
-static void afs_i_init_once(void *_vnode)
-{
-	struct afs_vnode *vnode = _vnode;
+अटल व्योम afs_i_init_once(व्योम *_vnode)
+अणु
+	काष्ठा afs_vnode *vnode = _vnode;
 
-	memset(vnode, 0, sizeof(*vnode));
+	स_रखो(vnode, 0, माप(*vnode));
 	inode_init_once(&vnode->vfs_inode);
 	mutex_init(&vnode->io_lock);
 	init_rwsem(&vnode->validate_lock);
@@ -668,108 +669,108 @@ static void afs_i_init_once(void *_vnode)
 	INIT_LIST_HEAD(&vnode->granted_locks);
 	INIT_DELAYED_WORK(&vnode->lock_work, afs_lock_work);
 	seqlock_init(&vnode->cb_lock);
-}
+पूर्ण
 
 /*
- * allocate an AFS inode struct from our slab cache
+ * allocate an AFS inode काष्ठा from our slab cache
  */
-static struct inode *afs_alloc_inode(struct super_block *sb)
-{
-	struct afs_vnode *vnode;
+अटल काष्ठा inode *afs_alloc_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा afs_vnode *vnode;
 
 	vnode = kmem_cache_alloc(afs_inode_cachep, GFP_KERNEL);
-	if (!vnode)
-		return NULL;
+	अगर (!vnode)
+		वापस शून्य;
 
 	atomic_inc(&afs_count_active_inodes);
 
 	/* Reset anything that shouldn't leak from one inode to the next. */
-	memset(&vnode->fid, 0, sizeof(vnode->fid));
-	memset(&vnode->status, 0, sizeof(vnode->status));
+	स_रखो(&vnode->fid, 0, माप(vnode->fid));
+	स_रखो(&vnode->status, 0, माप(vnode->status));
 
-	vnode->volume		= NULL;
-	vnode->lock_key		= NULL;
-	vnode->permit_cache	= NULL;
-#ifdef CONFIG_AFS_FSCACHE
-	vnode->cache		= NULL;
-#endif
+	vnode->volume		= शून्य;
+	vnode->lock_key		= शून्य;
+	vnode->permit_cache	= शून्य;
+#अगर_घोषित CONFIG_AFS_FSCACHE
+	vnode->cache		= शून्य;
+#पूर्ण_अगर
 
 	vnode->flags		= 1 << AFS_VNODE_UNSET;
 	vnode->lock_state	= AFS_VNODE_LOCK_NONE;
 
-	init_rwsem(&vnode->rmdir_lock);
+	init_rwsem(&vnode->सूची_हटाओ_lock);
 
 	_leave(" = %p", &vnode->vfs_inode);
-	return &vnode->vfs_inode;
-}
+	वापस &vnode->vfs_inode;
+पूर्ण
 
-static void afs_free_inode(struct inode *inode)
-{
-	kmem_cache_free(afs_inode_cachep, AFS_FS_I(inode));
-}
+अटल व्योम afs_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	kmem_cache_मुक्त(afs_inode_cachep, AFS_FS_I(inode));
+पूर्ण
 
 /*
- * destroy an AFS inode struct
+ * destroy an AFS inode काष्ठा
  */
-static void afs_destroy_inode(struct inode *inode)
-{
-	struct afs_vnode *vnode = AFS_FS_I(inode);
+अटल व्योम afs_destroy_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(inode);
 
 	_enter("%p{%llx:%llu}", inode, vnode->fid.vid, vnode->fid.vnode);
 
 	_debug("DESTROY INODE %p", inode);
 
 	atomic_dec(&afs_count_active_inodes);
-}
+पूर्ण
 
-static void afs_get_volume_status_success(struct afs_operation *op)
-{
-	struct afs_volume_status *vs = &op->volstatus.vs;
-	struct kstatfs *buf = op->volstatus.buf;
+अटल व्योम afs_get_volume_status_success(काष्ठा afs_operation *op)
+अणु
+	काष्ठा afs_volume_status *vs = &op->volstatus.vs;
+	काष्ठा kstatfs *buf = op->volstatus.buf;
 
-	if (vs->max_quota == 0)
+	अगर (vs->max_quota == 0)
 		buf->f_blocks = vs->part_max_blocks;
-	else
+	अन्यथा
 		buf->f_blocks = vs->max_quota;
 
-	if (buf->f_blocks > vs->blocks_in_use)
-		buf->f_bavail = buf->f_bfree =
+	अगर (buf->f_blocks > vs->blocks_in_use)
+		buf->f_bavail = buf->f_bमुक्त =
 			buf->f_blocks - vs->blocks_in_use;
-}
+पूर्ण
 
-static const struct afs_operation_ops afs_get_volume_status_operation = {
+अटल स्थिर काष्ठा afs_operation_ops afs_get_volume_status_operation = अणु
 	.issue_afs_rpc	= afs_fs_get_volume_status,
 	.issue_yfs_rpc	= yfs_fs_get_volume_status,
 	.success	= afs_get_volume_status_success,
-};
+पूर्ण;
 
 /*
- * return information about an AFS volume
+ * वापस inक्रमmation about an AFS volume
  */
-static int afs_statfs(struct dentry *dentry, struct kstatfs *buf)
-{
-	struct afs_super_info *as = AFS_FS_S(dentry->d_sb);
-	struct afs_operation *op;
-	struct afs_vnode *vnode = AFS_FS_I(d_inode(dentry));
+अटल पूर्णांक afs_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf)
+अणु
+	काष्ठा afs_super_info *as = AFS_FS_S(dentry->d_sb);
+	काष्ठा afs_operation *op;
+	काष्ठा afs_vnode *vnode = AFS_FS_I(d_inode(dentry));
 
 	buf->f_type	= dentry->d_sb->s_magic;
 	buf->f_bsize	= AFS_BLOCK_SIZE;
 	buf->f_namelen	= AFSNAMEMAX - 1;
 
-	if (as->dyn_root) {
+	अगर (as->dyn_root) अणु
 		buf->f_blocks	= 1;
 		buf->f_bavail	= 0;
-		buf->f_bfree	= 0;
-		return 0;
-	}
+		buf->f_bमुक्त	= 0;
+		वापस 0;
+	पूर्ण
 
-	op = afs_alloc_operation(NULL, as->volume);
-	if (IS_ERR(op))
-		return PTR_ERR(op);
+	op = afs_alloc_operation(शून्य, as->volume);
+	अगर (IS_ERR(op))
+		वापस PTR_ERR(op);
 
 	afs_op_set_vnode(op, 0, vnode);
 	op->nr_files		= 1;
 	op->volstatus.buf	= buf;
 	op->ops			= &afs_get_volume_status_operation;
-	return afs_do_sync_operation(op);
-}
+	वापस afs_करो_sync_operation(op);
+पूर्ण

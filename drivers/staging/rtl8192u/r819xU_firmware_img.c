@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*Created on  2008/ 7/16,  5:31*/
-#include <linux/types.h>
-#include "r819xU_firmware_img.h"
+#समावेश <linux/types.h>
+#समावेश "r819xU_firmware_img.h"
 
-u32 Rtl8192UsbPHY_REGArray[] = {
-	0x0, };
+u32 Rtl8192UsbPHY_REGArray[] = अणु
+	0x0, पूर्ण;
 
-u32 Rtl8192UsbPHY_REG_1T2RArray[] = {
+u32 Rtl8192UsbPHY_REG_1T2RArray[] = अणु
 	0x800, 0x00000000,
 	0x804, 0x00000001,
 	0x808, 0x0000fc00,
@@ -155,9 +156,9 @@ u32 Rtl8192UsbPHY_REG_1T2RArray[] = {
 	0xe14, 0x12121416,
 	0xe18, 0x161a1a1a,
 	0xe1c, 0x12121416,
-};
+पूर्ण;
 
-u32 Rtl8192UsbRadioA_Array[] = {
+u32 Rtl8192UsbRadioA_Array[] = अणु
 	0x019, 0x00000003,
 	0x000, 0x000000bf,
 	0x001, 0x00000ee0,
@@ -281,9 +282,9 @@ u32 Rtl8192UsbRadioA_Array[] = {
 	0x000, 0x00000cbf,
 	0x004, 0x00000975,
 	0x007, 0x00000700,
-};
+पूर्ण;
 
-u32 Rtl8192UsbRadioB_Array[] = {
+u32 Rtl8192UsbRadioB_Array[] = अणु
 	0x019, 0x00000003,
 	0x000, 0x000000bf,
 	0x001, 0x000006e0,
@@ -323,24 +324,24 @@ u32 Rtl8192UsbRadioB_Array[] = {
 	0x000, 0x00000cbf,
 	0x004, 0x00000975,
 	0x007, 0x00000700,
-};
+पूर्ण;
 
-u32 Rtl8192UsbRadioC_Array[] = {
-	0x0, };
+u32 Rtl8192UsbRadioC_Array[] = अणु
+	0x0, पूर्ण;
 
-u32 Rtl8192UsbRadioD_Array[] = {
-	0x0, };
+u32 Rtl8192UsbRadioD_Array[] = अणु
+	0x0, पूर्ण;
 
-u32 Rtl8192UsbMACPHY_Array[] = {
+u32 Rtl8192UsbMACPHY_Array[] = अणु
 	0x03c, 0xffff0000, 0x00000f0f,
 	0x340, 0xffffffff, 0x161a1a1a,
 	0x344, 0xffffffff, 0x12121416,
 	0x348, 0x0000ffff, 0x00001818,
 	0x12c, 0xffffffff, 0x04000802,
 	0x318, 0x00000fff, 0x00000100,
-};
+पूर्ण;
 
-u32 Rtl8192UsbMACPHY_Array_PG[] = {
+u32 Rtl8192UsbMACPHY_Array_PG[] = अणु
 	0x03c, 0xffff0000, 0x00000f0f,
 	0xe00, 0xffffffff, 0x06090909,
 	0xe04, 0xffffffff, 0x00030306,
@@ -351,9 +352,9 @@ u32 Rtl8192UsbMACPHY_Array_PG[] = {
 	0xe1c, 0xffffffff, 0x06070809,
 	0x12c, 0xffffffff, 0x04000802,
 	0x318, 0x00000fff, 0x00000800,
-};
+पूर्ण;
 
-u32 Rtl8192UsbAGCTAB_Array[] = {
+u32 Rtl8192UsbAGCTAB_Array[] = अणु
 	0xc78, 0x7d000001,
 	0xc78, 0x7d010001,
 	0xc78, 0x7d020001,
@@ -546,4 +547,4 @@ u32 Rtl8192UsbAGCTAB_Array[] = {
 	0xc78, 0x683d001e,
 	0xc78, 0x693e001e,
 	0xc78, 0x6a3f001e,
-};
+पूर्ण;

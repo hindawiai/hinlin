@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2009 Matt Fleming <matt@console-pimps.org>
  *
- * This is an implementation of a DWARF unwinder. Its main purpose is
- * for generating stacktrace information. Based on the DWARF 3
- * specification from http://www.dwarfstd.org.
+ * This is an implementation of a DWARF unwinder. Its मुख्य purpose is
+ * क्रम generating stacktrace inक्रमmation. Based on the DWARF 3
+ * specअगरication from http://www.dwarfstd.org.
  *
  * TODO:
- *	- DWARF64 doesn't work.
+ *	- DWARF64 करोesn't work.
  *	- Registers with DWARF_VAL_OFFSET rules aren't handled properly.
  */
 
-/* #define DEBUG */
-#include <linux/kernel.h>
-#include <linux/io.h>
-#include <linux/list.h>
-#include <linux/mempool.h>
-#include <linux/mm.h>
-#include <linux/elf.h>
-#include <linux/ftrace.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <asm/dwarf.h>
-#include <asm/unwinder.h>
-#include <asm/sections.h>
-#include <asm/unaligned.h>
-#include <asm/stacktrace.h>
+/* #घोषणा DEBUG */
+#समावेश <linux/kernel.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/list.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/dwarf.h>
+#समावेश <यंत्र/unwinder.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <यंत्र/stacktrace.h>
 
-/* Reserve enough memory for two stack frames */
-#define DWARF_FRAME_MIN_REQ	2
-/* ... with 4 registers per frame. */
-#define DWARF_REG_MIN_REQ	(DWARF_FRAME_MIN_REQ * 4)
+/* Reserve enough memory क्रम two stack frames */
+#घोषणा DWARF_FRAME_MIN_REQ	2
+/* ... with 4 रेजिस्टरs per frame. */
+#घोषणा DWARF_REG_MIN_REQ	(DWARF_FRAME_MIN_REQ * 4)
 
-static struct kmem_cache *dwarf_frame_cachep;
-static mempool_t *dwarf_frame_pool;
+अटल काष्ठा kmem_cache *dwarf_frame_cachep;
+अटल mempool_t *dwarf_frame_pool;
 
-static struct kmem_cache *dwarf_reg_cachep;
-static mempool_t *dwarf_reg_pool;
+अटल काष्ठा kmem_cache *dwarf_reg_cachep;
+अटल mempool_t *dwarf_reg_pool;
 
-static struct rb_root cie_root;
-static DEFINE_SPINLOCK(dwarf_cie_lock);
+अटल काष्ठा rb_root cie_root;
+अटल DEFINE_SPINLOCK(dwarf_cie_lock);
 
-static struct rb_root fde_root;
-static DEFINE_SPINLOCK(dwarf_fde_lock);
+अटल काष्ठा rb_root fde_root;
+अटल DEFINE_SPINLOCK(dwarf_fde_lock);
 
-static struct dwarf_cie *cached_cie;
+अटल काष्ठा dwarf_cie *cached_cie;
 
-static unsigned int dwarf_unwinder_ready;
+अटल अचिन्हित पूर्णांक dwarf_unwinder_पढ़ोy;
 
 /**
- *	dwarf_frame_alloc_reg - allocate memory for a DWARF register
- *	@frame: the DWARF frame whose list of registers we insert on
- *	@reg_num: the register number
+ *	dwarf_frame_alloc_reg - allocate memory क्रम a DWARF रेजिस्टर
+ *	@frame: the DWARF frame whose list of रेजिस्टरs we insert on
+ *	@reg_num: the रेजिस्टर number
  *
- *	Allocate space for, and initialise, a dwarf reg from
+ *	Allocate space क्रम, and initialise, a dwarf reg from
  *	dwarf_reg_pool and insert it onto the (unsorted) linked-list of
- *	dwarf registers for @frame.
+ *	dwarf रेजिस्टरs क्रम @frame.
  *
  *	Return the initialised DWARF reg.
  */
-static struct dwarf_reg *dwarf_frame_alloc_reg(struct dwarf_frame *frame,
-					       unsigned int reg_num)
-{
-	struct dwarf_reg *reg;
+अटल काष्ठा dwarf_reg *dwarf_frame_alloc_reg(काष्ठा dwarf_frame *frame,
+					       अचिन्हित पूर्णांक reg_num)
+अणु
+	काष्ठा dwarf_reg *reg;
 
 	reg = mempool_alloc(dwarf_reg_pool, GFP_ATOMIC);
-	if (!reg) {
-		printk(KERN_WARNING "Unable to allocate a DWARF register\n");
+	अगर (!reg) अणु
+		prपूर्णांकk(KERN_WARNING "Unable to allocate a DWARF register\n");
 		/*
 		 * Let's just bomb hard here, we have no way to
 		 * gracefully recover.
 		 */
 		UNWINDER_BUG();
-	}
+	पूर्ण
 
 	reg->number = reg_num;
 	reg->addr = 0;
@@ -80,194 +81,194 @@ static struct dwarf_reg *dwarf_frame_alloc_reg(struct dwarf_frame *frame,
 
 	list_add(&reg->link, &frame->reg_list);
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
-static void dwarf_frame_free_regs(struct dwarf_frame *frame)
-{
-	struct dwarf_reg *reg, *n;
+अटल व्योम dwarf_frame_मुक्त_regs(काष्ठा dwarf_frame *frame)
+अणु
+	काष्ठा dwarf_reg *reg, *n;
 
-	list_for_each_entry_safe(reg, n, &frame->reg_list, link) {
+	list_क्रम_each_entry_safe(reg, n, &frame->reg_list, link) अणु
 		list_del(&reg->link);
-		mempool_free(reg, dwarf_reg_pool);
-	}
-}
+		mempool_मुक्त(reg, dwarf_reg_pool);
+	पूर्ण
+पूर्ण
 
 /**
- *	dwarf_frame_reg - return a DWARF register
- *	@frame: the DWARF frame to search in for @reg_num
- *	@reg_num: the register number to search for
+ *	dwarf_frame_reg - वापस a DWARF रेजिस्टर
+ *	@frame: the DWARF frame to search in क्रम @reg_num
+ *	@reg_num: the रेजिस्टर number to search क्रम
  *
- *	Lookup and return the dwarf reg @reg_num for this frame. Return
- *	NULL if @reg_num is an register invalid number.
+ *	Lookup and वापस the dwarf reg @reg_num क्रम this frame. Return
+ *	शून्य अगर @reg_num is an रेजिस्टर invalid number.
  */
-static struct dwarf_reg *dwarf_frame_reg(struct dwarf_frame *frame,
-					 unsigned int reg_num)
-{
-	struct dwarf_reg *reg;
+अटल काष्ठा dwarf_reg *dwarf_frame_reg(काष्ठा dwarf_frame *frame,
+					 अचिन्हित पूर्णांक reg_num)
+अणु
+	काष्ठा dwarf_reg *reg;
 
-	list_for_each_entry(reg, &frame->reg_list, link) {
-		if (reg->number == reg_num)
-			return reg;
-	}
+	list_क्रम_each_entry(reg, &frame->reg_list, link) अणु
+		अगर (reg->number == reg_num)
+			वापस reg;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- *	dwarf_read_addr - read dwarf data
+ *	dwarf_पढ़ो_addr - पढ़ो dwarf data
  *	@src: source address of data
  *	@dst: destination address to store the data to
  *
  *	Read 'n' bytes from @src, where 'n' is the size of an address on
- *	the native machine. We return the number of bytes read, which
- *	should always be 'n'. We also have to be careful when reading
+ *	the native machine. We वापस the number of bytes पढ़ो, which
+ *	should always be 'n'. We also have to be careful when पढ़ोing
  *	from @src and writing to @dst, because they can be arbitrarily
- *	aligned. Return 'n' - the number of bytes read.
+ *	aligned. Return 'n' - the number of bytes पढ़ो.
  */
-static inline int dwarf_read_addr(unsigned long *src, unsigned long *dst)
-{
+अटल अंतरभूत पूर्णांक dwarf_पढ़ो_addr(अचिन्हित दीर्घ *src, अचिन्हित दीर्घ *dst)
+अणु
 	u32 val = get_unaligned(src);
 	put_unaligned(val, dst);
-	return sizeof(unsigned long *);
-}
+	वापस माप(अचिन्हित दीर्घ *);
+पूर्ण
 
 /**
- *	dwarf_read_uleb128 - read unsigned LEB128 data
+ *	dwarf_पढ़ो_uleb128 - पढ़ो अचिन्हित LEB128 data
  *	@addr: the address where the ULEB128 data is stored
  *	@ret: address to store the result
  *
- *	Decode an unsigned LEB128 encoded datum. The algorithm is taken
- *	from Appendix C of the DWARF 3 spec. For information on the
+ *	Decode an अचिन्हित LEB128 encoded datum. The algorithm is taken
+ *	from Appendix C of the DWARF 3 spec. For inक्रमmation on the
  *	encodings refer to section "7.6 - Variable Length Data". Return
- *	the number of bytes read.
+ *	the number of bytes पढ़ो.
  */
-static inline unsigned long dwarf_read_uleb128(char *addr, unsigned int *ret)
-{
-	unsigned int result;
-	unsigned char byte;
-	int shift, count;
+अटल अंतरभूत अचिन्हित दीर्घ dwarf_पढ़ो_uleb128(अक्षर *addr, अचिन्हित पूर्णांक *ret)
+अणु
+	अचिन्हित पूर्णांक result;
+	अचिन्हित अक्षर byte;
+	पूर्णांक shअगरt, count;
 
 	result = 0;
-	shift = 0;
+	shअगरt = 0;
 	count = 0;
 
-	while (1) {
-		byte = __raw_readb(addr);
+	जबतक (1) अणु
+		byte = __raw_पढ़ोb(addr);
 		addr++;
 		count++;
 
-		result |= (byte & 0x7f) << shift;
-		shift += 7;
+		result |= (byte & 0x7f) << shअगरt;
+		shअगरt += 7;
 
-		if (!(byte & 0x80))
-			break;
-	}
+		अगर (!(byte & 0x80))
+			अवरोध;
+	पूर्ण
 
 	*ret = result;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
- *	dwarf_read_leb128 - read signed LEB128 data
+ *	dwarf_पढ़ो_leb128 - पढ़ो चिन्हित LEB128 data
  *	@addr: the address of the LEB128 encoded data
  *	@ret: address to store the result
  *
- *	Decode signed LEB128 data. The algorithm is taken from Appendix
- *	C of the DWARF 3 spec. Return the number of bytes read.
+ *	Decode चिन्हित LEB128 data. The algorithm is taken from Appendix
+ *	C of the DWARF 3 spec. Return the number of bytes पढ़ो.
  */
-static inline unsigned long dwarf_read_leb128(char *addr, int *ret)
-{
-	unsigned char byte;
-	int result, shift;
-	int num_bits;
-	int count;
+अटल अंतरभूत अचिन्हित दीर्घ dwarf_पढ़ो_leb128(अक्षर *addr, पूर्णांक *ret)
+अणु
+	अचिन्हित अक्षर byte;
+	पूर्णांक result, shअगरt;
+	पूर्णांक num_bits;
+	पूर्णांक count;
 
 	result = 0;
-	shift = 0;
+	shअगरt = 0;
 	count = 0;
 
-	while (1) {
-		byte = __raw_readb(addr);
+	जबतक (1) अणु
+		byte = __raw_पढ़ोb(addr);
 		addr++;
-		result |= (byte & 0x7f) << shift;
-		shift += 7;
+		result |= (byte & 0x7f) << shअगरt;
+		shअगरt += 7;
 		count++;
 
-		if (!(byte & 0x80))
-			break;
-	}
+		अगर (!(byte & 0x80))
+			अवरोध;
+	पूर्ण
 
-	/* The number of bits in a signed integer. */
-	num_bits = 8 * sizeof(result);
+	/* The number of bits in a चिन्हित पूर्णांकeger. */
+	num_bits = 8 * माप(result);
 
-	if ((shift < num_bits) && (byte & 0x40))
-		result |= (-1 << shift);
+	अगर ((shअगरt < num_bits) && (byte & 0x40))
+		result |= (-1 << shअगरt);
 
 	*ret = result;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
- *	dwarf_read_encoded_value - return the decoded value at @addr
+ *	dwarf_पढ़ो_encoded_value - वापस the decoded value at @addr
  *	@addr: the address of the encoded value
- *	@val: where to write the decoded value
+ *	@val: where to ग_लिखो the decoded value
  *	@encoding: the encoding with which we can decode @addr
  *
  *	GCC emits encoded address in the .eh_frame FDE entries. Decode
  *	the value at @addr using @encoding. The decoded value is written
- *	to @val and the number of bytes read is returned.
+ *	to @val and the number of bytes पढ़ो is वापसed.
  */
-static int dwarf_read_encoded_value(char *addr, unsigned long *val,
-				    char encoding)
-{
-	unsigned long decoded_addr = 0;
-	int count = 0;
+अटल पूर्णांक dwarf_पढ़ो_encoded_value(अक्षर *addr, अचिन्हित दीर्घ *val,
+				    अक्षर encoding)
+अणु
+	अचिन्हित दीर्घ decoded_addr = 0;
+	पूर्णांक count = 0;
 
-	switch (encoding & 0x70) {
-	case DW_EH_PE_absptr:
-		break;
-	case DW_EH_PE_pcrel:
-		decoded_addr = (unsigned long)addr;
-		break;
-	default:
+	चयन (encoding & 0x70) अणु
+	हाल DW_EH_PE_असलptr:
+		अवरोध;
+	हाल DW_EH_PE_pcrel:
+		decoded_addr = (अचिन्हित दीर्घ)addr;
+		अवरोध;
+	शेष:
 		pr_debug("encoding=0x%x\n", (encoding & 0x70));
 		UNWINDER_BUG();
-	}
+	पूर्ण
 
-	if ((encoding & 0x07) == 0x00)
+	अगर ((encoding & 0x07) == 0x00)
 		encoding |= DW_EH_PE_udata4;
 
-	switch (encoding & 0x0f) {
-	case DW_EH_PE_sdata4:
-	case DW_EH_PE_udata4:
+	चयन (encoding & 0x0f) अणु
+	हाल DW_EH_PE_sdata4:
+	हाल DW_EH_PE_udata4:
 		count += 4;
 		decoded_addr += get_unaligned((u32 *)addr);
-		__raw_writel(decoded_addr, val);
-		break;
-	default:
+		__raw_ग_लिखोl(decoded_addr, val);
+		अवरोध;
+	शेष:
 		pr_debug("encoding=0x%x\n", encoding);
 		UNWINDER_BUG();
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
- *	dwarf_entry_len - return the length of an FDE or CIE
+ *	dwarf_entry_len - वापस the length of an FDE or CIE
  *	@addr: the address of the entry
  *	@len: the length of the entry
  *
  *	Read the initial_length field of the entry and store the size of
- *	the entry in @len. We return the number of bytes read. Return a
+ *	the entry in @len. We वापस the number of bytes पढ़ो. Return a
  *	count of 0 on error.
  */
-static inline int dwarf_entry_len(char *addr, unsigned long *len)
-{
+अटल अंतरभूत पूर्णांक dwarf_entry_len(अक्षर *addr, अचिन्हित दीर्घ *len)
+अणु
 	u32 initial_len;
-	int count;
+	पूर्णांक count;
 
 	initial_len = get_unaligned((u32 *)addr);
 	count = 4;
@@ -275,36 +276,36 @@ static inline int dwarf_entry_len(char *addr, unsigned long *len)
 	/*
 	 * An initial length field value in the range DW_LEN_EXT_LO -
 	 * DW_LEN_EXT_HI indicates an extension, and should not be
-	 * interpreted as a length. The only extension that we currently
+	 * पूर्णांकerpreted as a length. The only extension that we currently
 	 * understand is the use of DWARF64 addresses.
 	 */
-	if (initial_len >= DW_EXT_LO && initial_len <= DW_EXT_HI) {
+	अगर (initial_len >= DW_EXT_LO && initial_len <= DW_EXT_HI) अणु
 		/*
 		 * The 64-bit length field immediately follows the
 		 * compulsory 32-bit length field.
 		 */
-		if (initial_len == DW_EXT_DWARF64) {
+		अगर (initial_len == DW_EXT_DWARF64) अणु
 			*len = get_unaligned((u64 *)addr + 4);
 			count = 12;
-		} else {
-			printk(KERN_WARNING "Unknown DWARF extension\n");
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk(KERN_WARNING "Unknown DWARF extension\n");
 			count = 0;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		*len = initial_len;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
  *	dwarf_lookup_cie - locate the cie
- *	@cie_ptr: pointer to help with lookup
+ *	@cie_ptr: poपूर्णांकer to help with lookup
  */
-static struct dwarf_cie *dwarf_lookup_cie(unsigned long cie_ptr)
-{
-	struct rb_node **rb_node = &cie_root.rb_node;
-	struct dwarf_cie *cie = NULL;
-	unsigned long flags;
+अटल काष्ठा dwarf_cie *dwarf_lookup_cie(अचिन्हित दीर्घ cie_ptr)
+अणु
+	काष्ठा rb_node **rb_node = &cie_root.rb_node;
+	काष्ठा dwarf_cie *cie = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dwarf_cie_lock, flags);
 
@@ -312,192 +313,192 @@ static struct dwarf_cie *dwarf_lookup_cie(unsigned long cie_ptr)
 	 * We've cached the last CIE we looked up because chances are
 	 * that the FDE wants this CIE.
 	 */
-	if (cached_cie && cached_cie->cie_pointer == cie_ptr) {
+	अगर (cached_cie && cached_cie->cie_poपूर्णांकer == cie_ptr) अणु
 		cie = cached_cie;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while (*rb_node) {
-		struct dwarf_cie *cie_tmp;
+	जबतक (*rb_node) अणु
+		काष्ठा dwarf_cie *cie_पंचांगp;
 
-		cie_tmp = rb_entry(*rb_node, struct dwarf_cie, node);
-		BUG_ON(!cie_tmp);
+		cie_पंचांगp = rb_entry(*rb_node, काष्ठा dwarf_cie, node);
+		BUG_ON(!cie_पंचांगp);
 
-		if (cie_ptr == cie_tmp->cie_pointer) {
-			cie = cie_tmp;
-			cached_cie = cie_tmp;
-			goto out;
-		} else {
-			if (cie_ptr < cie_tmp->cie_pointer)
+		अगर (cie_ptr == cie_पंचांगp->cie_poपूर्णांकer) अणु
+			cie = cie_पंचांगp;
+			cached_cie = cie_पंचांगp;
+			जाओ out;
+		पूर्ण अन्यथा अणु
+			अगर (cie_ptr < cie_पंचांगp->cie_poपूर्णांकer)
 				rb_node = &(*rb_node)->rb_left;
-			else
+			अन्यथा
 				rb_node = &(*rb_node)->rb_right;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(&dwarf_cie_lock, flags);
-	return cie;
-}
+	वापस cie;
+पूर्ण
 
 /**
  *	dwarf_lookup_fde - locate the FDE that covers pc
  *	@pc: the program counter
  */
-struct dwarf_fde *dwarf_lookup_fde(unsigned long pc)
-{
-	struct rb_node **rb_node = &fde_root.rb_node;
-	struct dwarf_fde *fde = NULL;
-	unsigned long flags;
+काष्ठा dwarf_fde *dwarf_lookup_fde(अचिन्हित दीर्घ pc)
+अणु
+	काष्ठा rb_node **rb_node = &fde_root.rb_node;
+	काष्ठा dwarf_fde *fde = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dwarf_fde_lock, flags);
 
-	while (*rb_node) {
-		struct dwarf_fde *fde_tmp;
-		unsigned long tmp_start, tmp_end;
+	जबतक (*rb_node) अणु
+		काष्ठा dwarf_fde *fde_पंचांगp;
+		अचिन्हित दीर्घ पंचांगp_start, पंचांगp_end;
 
-		fde_tmp = rb_entry(*rb_node, struct dwarf_fde, node);
-		BUG_ON(!fde_tmp);
+		fde_पंचांगp = rb_entry(*rb_node, काष्ठा dwarf_fde, node);
+		BUG_ON(!fde_पंचांगp);
 
-		tmp_start = fde_tmp->initial_location;
-		tmp_end = fde_tmp->initial_location + fde_tmp->address_range;
+		पंचांगp_start = fde_पंचांगp->initial_location;
+		पंचांगp_end = fde_पंचांगp->initial_location + fde_पंचांगp->address_range;
 
-		if (pc < tmp_start) {
+		अगर (pc < पंचांगp_start) अणु
 			rb_node = &(*rb_node)->rb_left;
-		} else {
-			if (pc < tmp_end) {
-				fde = fde_tmp;
-				goto out;
-			} else
+		पूर्ण अन्यथा अणु
+			अगर (pc < पंचांगp_end) अणु
+				fde = fde_पंचांगp;
+				जाओ out;
+			पूर्ण अन्यथा
 				rb_node = &(*rb_node)->rb_right;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(&dwarf_fde_lock, flags);
 
-	return fde;
-}
+	वापस fde;
+पूर्ण
 
 /**
- *	dwarf_cfa_execute_insns - execute instructions to calculate a CFA
- *	@insn_start: address of the first instruction
- *	@insn_end: address of the last instruction
- *	@cie: the CIE for this function
- *	@fde: the FDE for this function
- *	@frame: the instructions calculate the CFA for this frame
- *	@pc: the program counter of the address we're interested in
+ *	dwarf_cfa_execute_insns - execute inकाष्ठाions to calculate a CFA
+ *	@insn_start: address of the first inकाष्ठाion
+ *	@insn_end: address of the last inकाष्ठाion
+ *	@cie: the CIE क्रम this function
+ *	@fde: the FDE क्रम this function
+ *	@frame: the inकाष्ठाions calculate the CFA क्रम this frame
+ *	@pc: the program counter of the address we're पूर्णांकerested in
  *
- *	Execute the Call Frame instruction sequence starting at
- *	@insn_start and ending at @insn_end. The instructions describe
+ *	Execute the Call Frame inकाष्ठाion sequence starting at
+ *	@insn_start and ending at @insn_end. The inकाष्ठाions describe
  *	how to calculate the Canonical Frame Address of a stackframe.
  *	Store the results in @frame.
  */
-static int dwarf_cfa_execute_insns(unsigned char *insn_start,
-				   unsigned char *insn_end,
-				   struct dwarf_cie *cie,
-				   struct dwarf_fde *fde,
-				   struct dwarf_frame *frame,
-				   unsigned long pc)
-{
-	unsigned char insn;
-	unsigned char *current_insn;
-	unsigned int count, delta, reg, expr_len, offset;
-	struct dwarf_reg *regp;
+अटल पूर्णांक dwarf_cfa_execute_insns(अचिन्हित अक्षर *insn_start,
+				   अचिन्हित अक्षर *insn_end,
+				   काष्ठा dwarf_cie *cie,
+				   काष्ठा dwarf_fde *fde,
+				   काष्ठा dwarf_frame *frame,
+				   अचिन्हित दीर्घ pc)
+अणु
+	अचिन्हित अक्षर insn;
+	अचिन्हित अक्षर *current_insn;
+	अचिन्हित पूर्णांक count, delta, reg, expr_len, offset;
+	काष्ठा dwarf_reg *regp;
 
 	current_insn = insn_start;
 
-	while (current_insn < insn_end && frame->pc <= pc) {
-		insn = __raw_readb(current_insn++);
+	जबतक (current_insn < insn_end && frame->pc <= pc) अणु
+		insn = __raw_पढ़ोb(current_insn++);
 
 		/*
-		 * Firstly, handle the opcodes that embed their operands
-		 * in the instructions.
+		 * Firstly, handle the opcodes that embed their opeअक्रमs
+		 * in the inकाष्ठाions.
 		 */
-		switch (DW_CFA_opcode(insn)) {
-		case DW_CFA_advance_loc:
-			delta = DW_CFA_operand(insn);
+		चयन (DW_CFA_opcode(insn)) अणु
+		हाल DW_CFA_advance_loc:
+			delta = DW_CFA_opeअक्रम(insn);
 			delta *= cie->code_alignment_factor;
 			frame->pc += delta;
-			continue;
+			जारी;
 			/* NOTREACHED */
-		case DW_CFA_offset:
-			reg = DW_CFA_operand(insn);
-			count = dwarf_read_uleb128(current_insn, &offset);
+		हाल DW_CFA_offset:
+			reg = DW_CFA_opeअक्रम(insn);
+			count = dwarf_पढ़ो_uleb128(current_insn, &offset);
 			current_insn += count;
 			offset *= cie->data_alignment_factor;
 			regp = dwarf_frame_alloc_reg(frame, reg);
 			regp->addr = offset;
 			regp->flags |= DWARF_REG_OFFSET;
-			continue;
+			जारी;
 			/* NOTREACHED */
-		case DW_CFA_restore:
-			reg = DW_CFA_operand(insn);
-			continue;
+		हाल DW_CFA_restore:
+			reg = DW_CFA_opeअक्रम(insn);
+			जारी;
 			/* NOTREACHED */
-		}
+		पूर्ण
 
 		/*
-		 * Secondly, handle the opcodes that don't embed their
-		 * operands in the instruction.
+		 * Secondly, handle the opcodes that करोn't embed their
+		 * opeअक्रमs in the inकाष्ठाion.
 		 */
-		switch (insn) {
-		case DW_CFA_nop:
-			continue;
-		case DW_CFA_advance_loc1:
+		चयन (insn) अणु
+		हाल DW_CFA_nop:
+			जारी;
+		हाल DW_CFA_advance_loc1:
 			delta = *current_insn++;
 			frame->pc += delta * cie->code_alignment_factor;
-			break;
-		case DW_CFA_advance_loc2:
+			अवरोध;
+		हाल DW_CFA_advance_loc2:
 			delta = get_unaligned((u16 *)current_insn);
 			current_insn += 2;
 			frame->pc += delta * cie->code_alignment_factor;
-			break;
-		case DW_CFA_advance_loc4:
+			अवरोध;
+		हाल DW_CFA_advance_loc4:
 			delta = get_unaligned((u32 *)current_insn);
 			current_insn += 4;
 			frame->pc += delta * cie->code_alignment_factor;
-			break;
-		case DW_CFA_offset_extended:
-			count = dwarf_read_uleb128(current_insn, &reg);
+			अवरोध;
+		हाल DW_CFA_offset_extended:
+			count = dwarf_पढ़ो_uleb128(current_insn, &reg);
 			current_insn += count;
-			count = dwarf_read_uleb128(current_insn, &offset);
+			count = dwarf_पढ़ो_uleb128(current_insn, &offset);
 			current_insn += count;
 			offset *= cie->data_alignment_factor;
-			break;
-		case DW_CFA_restore_extended:
-			count = dwarf_read_uleb128(current_insn, &reg);
+			अवरोध;
+		हाल DW_CFA_restore_extended:
+			count = dwarf_पढ़ो_uleb128(current_insn, &reg);
 			current_insn += count;
-			break;
-		case DW_CFA_undefined:
-			count = dwarf_read_uleb128(current_insn, &reg);
+			अवरोध;
+		हाल DW_CFA_undefined:
+			count = dwarf_पढ़ो_uleb128(current_insn, &reg);
 			current_insn += count;
 			regp = dwarf_frame_alloc_reg(frame, reg);
 			regp->flags |= DWARF_UNDEFINED;
-			break;
-		case DW_CFA_def_cfa:
-			count = dwarf_read_uleb128(current_insn,
-						   &frame->cfa_register);
+			अवरोध;
+		हाल DW_CFA_def_cfa:
+			count = dwarf_पढ़ो_uleb128(current_insn,
+						   &frame->cfa_रेजिस्टर);
 			current_insn += count;
-			count = dwarf_read_uleb128(current_insn,
+			count = dwarf_पढ़ो_uleb128(current_insn,
 						   &frame->cfa_offset);
 			current_insn += count;
 
 			frame->flags |= DWARF_FRAME_CFA_REG_OFFSET;
-			break;
-		case DW_CFA_def_cfa_register:
-			count = dwarf_read_uleb128(current_insn,
-						   &frame->cfa_register);
+			अवरोध;
+		हाल DW_CFA_def_cfa_रेजिस्टर:
+			count = dwarf_पढ़ो_uleb128(current_insn,
+						   &frame->cfa_रेजिस्टर);
 			current_insn += count;
 			frame->flags |= DWARF_FRAME_CFA_REG_OFFSET;
-			break;
-		case DW_CFA_def_cfa_offset:
-			count = dwarf_read_uleb128(current_insn, &offset);
+			अवरोध;
+		हाल DW_CFA_def_cfa_offset:
+			count = dwarf_पढ़ो_uleb128(current_insn, &offset);
 			current_insn += count;
 			frame->cfa_offset = offset;
-			break;
-		case DW_CFA_def_cfa_expression:
-			count = dwarf_read_uleb128(current_insn, &expr_len);
+			अवरोध;
+		हाल DW_CFA_def_cfa_expression:
+			count = dwarf_पढ़ो_uleb128(current_insn, &expr_len);
 			current_insn += count;
 
 			frame->cfa_expr = current_insn;
@@ -505,513 +506,513 @@ static int dwarf_cfa_execute_insns(unsigned char *insn_start,
 			current_insn += expr_len;
 
 			frame->flags |= DWARF_FRAME_CFA_REG_EXP;
-			break;
-		case DW_CFA_offset_extended_sf:
-			count = dwarf_read_uleb128(current_insn, &reg);
+			अवरोध;
+		हाल DW_CFA_offset_extended_sf:
+			count = dwarf_पढ़ो_uleb128(current_insn, &reg);
 			current_insn += count;
-			count = dwarf_read_leb128(current_insn, &offset);
+			count = dwarf_पढ़ो_leb128(current_insn, &offset);
 			current_insn += count;
 			offset *= cie->data_alignment_factor;
 			regp = dwarf_frame_alloc_reg(frame, reg);
 			regp->flags |= DWARF_REG_OFFSET;
 			regp->addr = offset;
-			break;
-		case DW_CFA_val_offset:
-			count = dwarf_read_uleb128(current_insn, &reg);
+			अवरोध;
+		हाल DW_CFA_val_offset:
+			count = dwarf_पढ़ो_uleb128(current_insn, &reg);
 			current_insn += count;
-			count = dwarf_read_leb128(current_insn, &offset);
+			count = dwarf_पढ़ो_leb128(current_insn, &offset);
 			offset *= cie->data_alignment_factor;
 			regp = dwarf_frame_alloc_reg(frame, reg);
 			regp->flags |= DWARF_VAL_OFFSET;
 			regp->addr = offset;
-			break;
-		case DW_CFA_GNU_args_size:
-			count = dwarf_read_uleb128(current_insn, &offset);
+			अवरोध;
+		हाल DW_CFA_GNU_args_size:
+			count = dwarf_पढ़ो_uleb128(current_insn, &offset);
 			current_insn += count;
-			break;
-		case DW_CFA_GNU_negative_offset_extended:
-			count = dwarf_read_uleb128(current_insn, &reg);
+			अवरोध;
+		हाल DW_CFA_GNU_negative_offset_extended:
+			count = dwarf_पढ़ो_uleb128(current_insn, &reg);
 			current_insn += count;
-			count = dwarf_read_uleb128(current_insn, &offset);
+			count = dwarf_पढ़ो_uleb128(current_insn, &offset);
 			offset *= cie->data_alignment_factor;
 
 			regp = dwarf_frame_alloc_reg(frame, reg);
 			regp->flags |= DWARF_REG_OFFSET;
 			regp->addr = -offset;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_debug("unhandled DWARF instruction 0x%x\n", insn);
 			UNWINDER_BUG();
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	dwarf_free_frame - free the memory allocated for @frame
- *	@frame: the frame to free
+ *	dwarf_मुक्त_frame - मुक्त the memory allocated क्रम @frame
+ *	@frame: the frame to मुक्त
  */
-void dwarf_free_frame(struct dwarf_frame *frame)
-{
-	dwarf_frame_free_regs(frame);
-	mempool_free(frame, dwarf_frame_pool);
-}
+व्योम dwarf_मुक्त_frame(काष्ठा dwarf_frame *frame)
+अणु
+	dwarf_frame_मुक्त_regs(frame);
+	mempool_मुक्त(frame, dwarf_frame_pool);
+पूर्ण
 
-extern void ret_from_irq(void);
+बाह्य व्योम ret_from_irq(व्योम);
 
 /**
  *	dwarf_unwind_stack - unwind the stack
  *
  *	@pc: address of the function to unwind
- *	@prev: struct dwarf_frame of the previous stackframe on the callstack
+ *	@prev: काष्ठा dwarf_frame of the previous stackframe on the callstack
  *
- *	Return a struct dwarf_frame representing the most recent frame
+ *	Return a काष्ठा dwarf_frame representing the most recent frame
  *	on the callstack. Each of the lower (older) stack frames are
  *	linked via the "prev" member.
  */
-struct dwarf_frame *dwarf_unwind_stack(unsigned long pc,
-				       struct dwarf_frame *prev)
-{
-	struct dwarf_frame *frame;
-	struct dwarf_cie *cie;
-	struct dwarf_fde *fde;
-	struct dwarf_reg *reg;
-	unsigned long addr;
+काष्ठा dwarf_frame *dwarf_unwind_stack(अचिन्हित दीर्घ pc,
+				       काष्ठा dwarf_frame *prev)
+अणु
+	काष्ठा dwarf_frame *frame;
+	काष्ठा dwarf_cie *cie;
+	काष्ठा dwarf_fde *fde;
+	काष्ठा dwarf_reg *reg;
+	अचिन्हित दीर्घ addr;
 
 	/*
-	 * If we've been called in to before initialization has
+	 * If we've been called in to beक्रमe initialization has
 	 * completed, bail out immediately.
 	 */
-	if (!dwarf_unwinder_ready)
-		return NULL;
+	अगर (!dwarf_unwinder_पढ़ोy)
+		वापस शून्य;
 
 	/*
 	 * If we're starting at the top of the stack we need get the
-	 * contents of a physical register to get the CFA in order to
-	 * begin the virtual unwinding of the stack.
+	 * contents of a physical रेजिस्टर to get the CFA in order to
+	 * begin the भव unwinding of the stack.
 	 *
-	 * NOTE: the return address is guaranteed to be setup by the
-	 * time this function makes its first function call.
+	 * NOTE: the वापस address is guaranteed to be setup by the
+	 * समय this function makes its first function call.
 	 */
-	if (!pc || !prev)
+	अगर (!pc || !prev)
 		pc = _THIS_IP_;
 
-#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
 	/*
 	 * If our stack has been patched by the function graph tracer
-	 * then we might see the address of return_to_handler() where we
-	 * expected to find the real return address.
+	 * then we might see the address of वापस_to_handler() where we
+	 * expected to find the real वापस address.
 	 */
-	if (pc == (unsigned long)&return_to_handler) {
-		struct ftrace_ret_stack *ret_stack;
+	अगर (pc == (अचिन्हित दीर्घ)&वापस_to_handler) अणु
+		काष्ठा ftrace_ret_stack *ret_stack;
 
 		ret_stack = ftrace_graph_get_ret_stack(current, 0);
-		if (ret_stack)
+		अगर (ret_stack)
 			pc = ret_stack->ret;
 		/*
 		 * We currently have no way of tracking how many
-		 * return_to_handler()'s we've seen. If there is more
-		 * than one patched return address on our stack,
+		 * वापस_to_handler()'s we've seen. If there is more
+		 * than one patched वापस address on our stack,
 		 * complain loudly.
 		 */
 		WARN_ON(ftrace_graph_get_ret_stack(current, 1));
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	frame = mempool_alloc(dwarf_frame_pool, GFP_ATOMIC);
-	if (!frame) {
-		printk(KERN_ERR "Unable to allocate a dwarf frame\n");
+	अगर (!frame) अणु
+		prपूर्णांकk(KERN_ERR "Unable to allocate a dwarf frame\n");
 		UNWINDER_BUG();
-	}
+	पूर्ण
 
 	INIT_LIST_HEAD(&frame->reg_list);
 	frame->flags = 0;
 	frame->prev = prev;
-	frame->return_addr = 0;
+	frame->वापस_addr = 0;
 
 	fde = dwarf_lookup_fde(pc);
-	if (!fde) {
+	अगर (!fde) अणु
 		/*
-		 * This is our normal exit path. There are two reasons
-		 * why we might exit here,
+		 * This is our normal निकास path. There are two reasons
+		 * why we might निकास here,
 		 *
 		 *	a) pc has no asscociated DWARF frame info and so
-		 *	we don't know how to unwind this frame. This is
-		 *	usually the case when we're trying to unwind a
+		 *	we करोn't know how to unwind this frame. This is
+		 *	usually the हाल when we're trying to unwind a
 		 *	frame that was called from some assembly code
 		 *	that has no DWARF info, e.g. syscalls.
 		 *
-		 *	b) the DEBUG info for pc is bogus. There's
-		 *	really no way to distinguish this case from the
-		 *	case above, which sucks because we could print a
+		 *	b) the DEBUG info क्रम pc is bogus. There's
+		 *	really no way to distinguish this हाल from the
+		 *	हाल above, which sucks because we could prपूर्णांक a
 		 *	warning here.
 		 */
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	cie = dwarf_lookup_cie(fde->cie_pointer);
+	cie = dwarf_lookup_cie(fde->cie_poपूर्णांकer);
 
 	frame->pc = fde->initial_location;
 
-	/* CIE initial instructions */
-	dwarf_cfa_execute_insns(cie->initial_instructions,
-				cie->instructions_end, cie, fde,
+	/* CIE initial inकाष्ठाions */
+	dwarf_cfa_execute_insns(cie->initial_inकाष्ठाions,
+				cie->inकाष्ठाions_end, cie, fde,
 				frame, pc);
 
-	/* FDE instructions */
-	dwarf_cfa_execute_insns(fde->instructions, fde->end, cie,
+	/* FDE inकाष्ठाions */
+	dwarf_cfa_execute_insns(fde->inकाष्ठाions, fde->end, cie,
 				fde, frame, pc);
 
 	/* Calculate the CFA */
-	switch (frame->flags) {
-	case DWARF_FRAME_CFA_REG_OFFSET:
-		if (prev) {
-			reg = dwarf_frame_reg(prev, frame->cfa_register);
+	चयन (frame->flags) अणु
+	हाल DWARF_FRAME_CFA_REG_OFFSET:
+		अगर (prev) अणु
+			reg = dwarf_frame_reg(prev, frame->cfa_रेजिस्टर);
 			UNWINDER_BUG_ON(!reg);
 			UNWINDER_BUG_ON(reg->flags != DWARF_REG_OFFSET);
 
 			addr = prev->cfa + reg->addr;
-			frame->cfa = __raw_readl(addr);
+			frame->cfa = __raw_पढ़ोl(addr);
 
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Again, we're starting from the top of the
-			 * stack. We need to physically read
-			 * the contents of a register in order to get
-			 * the Canonical Frame Address for this
+			 * stack. We need to physically पढ़ो
+			 * the contents of a रेजिस्टर in order to get
+			 * the Canonical Frame Address क्रम this
 			 * function.
 			 */
-			frame->cfa = dwarf_read_arch_reg(frame->cfa_register);
-		}
+			frame->cfa = dwarf_पढ़ो_arch_reg(frame->cfa_रेजिस्टर);
+		पूर्ण
 
 		frame->cfa += frame->cfa_offset;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		UNWINDER_BUG();
-	}
+	पूर्ण
 
 	reg = dwarf_frame_reg(frame, DWARF_ARCH_RA_REG);
 
 	/*
-	 * If we haven't seen the return address register or the return
+	 * If we haven't seen the वापस address रेजिस्टर or the वापस
 	 * address column is undefined then we must assume that this is
 	 * the end of the callstack.
 	 */
-	if (!reg || reg->flags == DWARF_UNDEFINED)
-		goto bail;
+	अगर (!reg || reg->flags == DWARF_UNDEFINED)
+		जाओ bail;
 
 	UNWINDER_BUG_ON(reg->flags != DWARF_REG_OFFSET);
 
 	addr = frame->cfa + reg->addr;
-	frame->return_addr = __raw_readl(addr);
+	frame->वापस_addr = __raw_पढ़ोl(addr);
 
 	/*
-	 * Ah, the joys of unwinding through interrupts.
+	 * Ah, the joys of unwinding through पूर्णांकerrupts.
 	 *
 	 * Interrupts are tricky - the DWARF info needs to be _really_
-	 * accurate and unfortunately I'm seeing a lot of bogus DWARF
-	 * info. For example, I've seen interrupts occur in epilogues
-	 * just after the frame pointer (r14) had been restored. The
+	 * accurate and unक्रमtunately I'm seeing a lot of bogus DWARF
+	 * info. For example, I've seen पूर्णांकerrupts occur in epilogues
+	 * just after the frame poपूर्णांकer (r14) had been restored. The
 	 * problem was that the DWARF info claimed that the CFA could be
-	 * reached by using the value of the frame pointer before it was
+	 * reached by using the value of the frame poपूर्णांकer beक्रमe it was
 	 * restored.
 	 *
 	 * So until the compiler can be trusted to produce reliable
 	 * DWARF info when it really matters, let's stop unwinding once
-	 * we've calculated the function that was interrupted.
+	 * we've calculated the function that was पूर्णांकerrupted.
 	 */
-	if (prev && prev->pc == (unsigned long)ret_from_irq)
-		frame->return_addr = 0;
+	अगर (prev && prev->pc == (अचिन्हित दीर्घ)ret_from_irq)
+		frame->वापस_addr = 0;
 
-	return frame;
+	वापस frame;
 
 bail:
-	dwarf_free_frame(frame);
-	return NULL;
-}
+	dwarf_मुक्त_frame(frame);
+	वापस शून्य;
+पूर्ण
 
-static int dwarf_parse_cie(void *entry, void *p, unsigned long len,
-			   unsigned char *end, struct module *mod)
-{
-	struct rb_node **rb_node = &cie_root.rb_node;
-	struct rb_node *parent = *rb_node;
-	struct dwarf_cie *cie;
-	unsigned long flags;
-	int count;
+अटल पूर्णांक dwarf_parse_cie(व्योम *entry, व्योम *p, अचिन्हित दीर्घ len,
+			   अचिन्हित अक्षर *end, काष्ठा module *mod)
+अणु
+	काष्ठा rb_node **rb_node = &cie_root.rb_node;
+	काष्ठा rb_node *parent = *rb_node;
+	काष्ठा dwarf_cie *cie;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count;
 
-	cie = kzalloc(sizeof(*cie), GFP_KERNEL);
-	if (!cie)
-		return -ENOMEM;
+	cie = kzalloc(माप(*cie), GFP_KERNEL);
+	अगर (!cie)
+		वापस -ENOMEM;
 
 	cie->length = len;
 
 	/*
-	 * Record the offset into the .eh_frame section
-	 * for this CIE. It allows this CIE to be
+	 * Record the offset पूर्णांकo the .eh_frame section
+	 * क्रम this CIE. It allows this CIE to be
 	 * quickly and easily looked up from the
 	 * corresponding FDE.
 	 */
-	cie->cie_pointer = (unsigned long)entry;
+	cie->cie_poपूर्णांकer = (अचिन्हित दीर्घ)entry;
 
-	cie->version = *(char *)p++;
+	cie->version = *(अक्षर *)p++;
 	UNWINDER_BUG_ON(cie->version != 1);
 
 	cie->augmentation = p;
-	p += strlen(cie->augmentation) + 1;
+	p += म_माप(cie->augmentation) + 1;
 
-	count = dwarf_read_uleb128(p, &cie->code_alignment_factor);
+	count = dwarf_पढ़ो_uleb128(p, &cie->code_alignment_factor);
 	p += count;
 
-	count = dwarf_read_leb128(p, &cie->data_alignment_factor);
+	count = dwarf_पढ़ो_leb128(p, &cie->data_alignment_factor);
 	p += count;
 
 	/*
 	 * Which column in the rule table contains the
-	 * return address?
+	 * वापस address?
 	 */
-	if (cie->version == 1) {
-		cie->return_address_reg = __raw_readb(p);
+	अगर (cie->version == 1) अणु
+		cie->वापस_address_reg = __raw_पढ़ोb(p);
 		p++;
-	} else {
-		count = dwarf_read_uleb128(p, &cie->return_address_reg);
+	पूर्ण अन्यथा अणु
+		count = dwarf_पढ़ो_uleb128(p, &cie->वापस_address_reg);
 		p += count;
-	}
+	पूर्ण
 
-	if (cie->augmentation[0] == 'z') {
-		unsigned int length, count;
+	अगर (cie->augmentation[0] == 'z') अणु
+		अचिन्हित पूर्णांक length, count;
 		cie->flags |= DWARF_CIE_Z_AUGMENTATION;
 
-		count = dwarf_read_uleb128(p, &length);
+		count = dwarf_पढ़ो_uleb128(p, &length);
 		p += count;
 
-		UNWINDER_BUG_ON((unsigned char *)p > end);
+		UNWINDER_BUG_ON((अचिन्हित अक्षर *)p > end);
 
-		cie->initial_instructions = p + length;
+		cie->initial_inकाष्ठाions = p + length;
 		cie->augmentation++;
-	}
+	पूर्ण
 
-	while (*cie->augmentation) {
+	जबतक (*cie->augmentation) अणु
 		/*
 		 * "L" indicates a byte showing how the
-		 * LSDA pointer is encoded. Skip it.
+		 * LSDA poपूर्णांकer is encoded. Skip it.
 		 */
-		if (*cie->augmentation == 'L') {
+		अगर (*cie->augmentation == 'L') अणु
 			p++;
 			cie->augmentation++;
-		} else if (*cie->augmentation == 'R') {
+		पूर्ण अन्यथा अगर (*cie->augmentation == 'R') अणु
 			/*
 			 * "R" indicates a byte showing
 			 * how FDE addresses are
 			 * encoded.
 			 */
-			cie->encoding = *(char *)p++;
+			cie->encoding = *(अक्षर *)p++;
 			cie->augmentation++;
-		} else if (*cie->augmentation == 'P') {
+		पूर्ण अन्यथा अगर (*cie->augmentation == 'P') अणु
 			/*
 			 * "R" indicates a personality
 			 * routine in the CIE
 			 * augmentation.
 			 */
 			UNWINDER_BUG();
-		} else if (*cie->augmentation == 'S') {
+		पूर्ण अन्यथा अगर (*cie->augmentation == 'S') अणु
 			UNWINDER_BUG();
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Unknown augmentation. Assume
 			 * 'z' augmentation.
 			 */
-			p = cie->initial_instructions;
+			p = cie->initial_inकाष्ठाions;
 			UNWINDER_BUG_ON(!p);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	cie->initial_instructions = p;
-	cie->instructions_end = end;
+	cie->initial_inकाष्ठाions = p;
+	cie->inकाष्ठाions_end = end;
 
 	/* Add to list */
 	spin_lock_irqsave(&dwarf_cie_lock, flags);
 
-	while (*rb_node) {
-		struct dwarf_cie *cie_tmp;
+	जबतक (*rb_node) अणु
+		काष्ठा dwarf_cie *cie_पंचांगp;
 
-		cie_tmp = rb_entry(*rb_node, struct dwarf_cie, node);
+		cie_पंचांगp = rb_entry(*rb_node, काष्ठा dwarf_cie, node);
 
 		parent = *rb_node;
 
-		if (cie->cie_pointer < cie_tmp->cie_pointer)
+		अगर (cie->cie_poपूर्णांकer < cie_पंचांगp->cie_poपूर्णांकer)
 			rb_node = &parent->rb_left;
-		else if (cie->cie_pointer >= cie_tmp->cie_pointer)
+		अन्यथा अगर (cie->cie_poपूर्णांकer >= cie_पंचांगp->cie_poपूर्णांकer)
 			rb_node = &parent->rb_right;
-		else
+		अन्यथा
 			WARN_ON(1);
-	}
+	पूर्ण
 
 	rb_link_node(&cie->node, parent, rb_node);
 	rb_insert_color(&cie->node, &cie_root);
 
-#ifdef CONFIG_MODULES
-	if (mod != NULL)
+#अगर_घोषित CONFIG_MODULES
+	अगर (mod != शून्य)
 		list_add_tail(&cie->link, &mod->arch.cie_list);
-#endif
+#पूर्ण_अगर
 
 	spin_unlock_irqrestore(&dwarf_cie_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dwarf_parse_fde(void *entry, u32 entry_type,
-			   void *start, unsigned long len,
-			   unsigned char *end, struct module *mod)
-{
-	struct rb_node **rb_node = &fde_root.rb_node;
-	struct rb_node *parent = *rb_node;
-	struct dwarf_fde *fde;
-	struct dwarf_cie *cie;
-	unsigned long flags;
-	int count;
-	void *p = start;
+अटल पूर्णांक dwarf_parse_fde(व्योम *entry, u32 entry_type,
+			   व्योम *start, अचिन्हित दीर्घ len,
+			   अचिन्हित अक्षर *end, काष्ठा module *mod)
+अणु
+	काष्ठा rb_node **rb_node = &fde_root.rb_node;
+	काष्ठा rb_node *parent = *rb_node;
+	काष्ठा dwarf_fde *fde;
+	काष्ठा dwarf_cie *cie;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count;
+	व्योम *p = start;
 
-	fde = kzalloc(sizeof(*fde), GFP_KERNEL);
-	if (!fde)
-		return -ENOMEM;
+	fde = kzalloc(माप(*fde), GFP_KERNEL);
+	अगर (!fde)
+		वापस -ENOMEM;
 
 	fde->length = len;
 
 	/*
-	 * In a .eh_frame section the CIE pointer is the
+	 * In a .eh_frame section the CIE poपूर्णांकer is the
 	 * delta between the address within the FDE
 	 */
-	fde->cie_pointer = (unsigned long)(p - entry_type - 4);
+	fde->cie_poपूर्णांकer = (अचिन्हित दीर्घ)(p - entry_type - 4);
 
-	cie = dwarf_lookup_cie(fde->cie_pointer);
+	cie = dwarf_lookup_cie(fde->cie_poपूर्णांकer);
 	fde->cie = cie;
 
-	if (cie->encoding)
-		count = dwarf_read_encoded_value(p, &fde->initial_location,
+	अगर (cie->encoding)
+		count = dwarf_पढ़ो_encoded_value(p, &fde->initial_location,
 						 cie->encoding);
-	else
-		count = dwarf_read_addr(p, &fde->initial_location);
+	अन्यथा
+		count = dwarf_पढ़ो_addr(p, &fde->initial_location);
 
 	p += count;
 
-	if (cie->encoding)
-		count = dwarf_read_encoded_value(p, &fde->address_range,
+	अगर (cie->encoding)
+		count = dwarf_पढ़ो_encoded_value(p, &fde->address_range,
 						 cie->encoding & 0x0f);
-	else
-		count = dwarf_read_addr(p, &fde->address_range);
+	अन्यथा
+		count = dwarf_पढ़ो_addr(p, &fde->address_range);
 
 	p += count;
 
-	if (fde->cie->flags & DWARF_CIE_Z_AUGMENTATION) {
-		unsigned int length;
-		count = dwarf_read_uleb128(p, &length);
+	अगर (fde->cie->flags & DWARF_CIE_Z_AUGMENTATION) अणु
+		अचिन्हित पूर्णांक length;
+		count = dwarf_पढ़ो_uleb128(p, &length);
 		p += count + length;
-	}
+	पूर्ण
 
-	/* Call frame instructions. */
-	fde->instructions = p;
+	/* Call frame inकाष्ठाions. */
+	fde->inकाष्ठाions = p;
 	fde->end = end;
 
 	/* Add to list. */
 	spin_lock_irqsave(&dwarf_fde_lock, flags);
 
-	while (*rb_node) {
-		struct dwarf_fde *fde_tmp;
-		unsigned long tmp_start, tmp_end;
-		unsigned long start, end;
+	जबतक (*rb_node) अणु
+		काष्ठा dwarf_fde *fde_पंचांगp;
+		अचिन्हित दीर्घ पंचांगp_start, पंचांगp_end;
+		अचिन्हित दीर्घ start, end;
 
-		fde_tmp = rb_entry(*rb_node, struct dwarf_fde, node);
+		fde_पंचांगp = rb_entry(*rb_node, काष्ठा dwarf_fde, node);
 
 		start = fde->initial_location;
 		end = fde->initial_location + fde->address_range;
 
-		tmp_start = fde_tmp->initial_location;
-		tmp_end = fde_tmp->initial_location + fde_tmp->address_range;
+		पंचांगp_start = fde_पंचांगp->initial_location;
+		पंचांगp_end = fde_पंचांगp->initial_location + fde_पंचांगp->address_range;
 
 		parent = *rb_node;
 
-		if (start < tmp_start)
+		अगर (start < पंचांगp_start)
 			rb_node = &parent->rb_left;
-		else if (start >= tmp_end)
+		अन्यथा अगर (start >= पंचांगp_end)
 			rb_node = &parent->rb_right;
-		else
+		अन्यथा
 			WARN_ON(1);
-	}
+	पूर्ण
 
 	rb_link_node(&fde->node, parent, rb_node);
 	rb_insert_color(&fde->node, &fde_root);
 
-#ifdef CONFIG_MODULES
-	if (mod != NULL)
+#अगर_घोषित CONFIG_MODULES
+	अगर (mod != शून्य)
 		list_add_tail(&fde->link, &mod->arch.fde_list);
-#endif
+#पूर्ण_अगर
 
 	spin_unlock_irqrestore(&dwarf_fde_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dwarf_unwinder_dump(struct task_struct *task,
-				struct pt_regs *regs,
-				unsigned long *sp,
-				const struct stacktrace_ops *ops,
-				void *data)
-{
-	struct dwarf_frame *frame, *_frame;
-	unsigned long return_addr;
+अटल व्योम dwarf_unwinder_dump(काष्ठा task_काष्ठा *task,
+				काष्ठा pt_regs *regs,
+				अचिन्हित दीर्घ *sp,
+				स्थिर काष्ठा stacktrace_ops *ops,
+				व्योम *data)
+अणु
+	काष्ठा dwarf_frame *frame, *_frame;
+	अचिन्हित दीर्घ वापस_addr;
 
-	_frame = NULL;
-	return_addr = 0;
+	_frame = शून्य;
+	वापस_addr = 0;
 
-	while (1) {
-		frame = dwarf_unwind_stack(return_addr, _frame);
+	जबतक (1) अणु
+		frame = dwarf_unwind_stack(वापस_addr, _frame);
 
-		if (_frame)
-			dwarf_free_frame(_frame);
+		अगर (_frame)
+			dwarf_मुक्त_frame(_frame);
 
 		_frame = frame;
 
-		if (!frame || !frame->return_addr)
-			break;
+		अगर (!frame || !frame->वापस_addr)
+			अवरोध;
 
-		return_addr = frame->return_addr;
-		ops->address(data, return_addr, 1);
-	}
+		वापस_addr = frame->वापस_addr;
+		ops->address(data, वापस_addr, 1);
+	पूर्ण
 
-	if (frame)
-		dwarf_free_frame(frame);
-}
+	अगर (frame)
+		dwarf_मुक्त_frame(frame);
+पूर्ण
 
-static struct unwinder dwarf_unwinder = {
+अटल काष्ठा unwinder dwarf_unwinder = अणु
 	.name = "dwarf-unwinder",
 	.dump = dwarf_unwinder_dump,
 	.rating = 150,
-};
+पूर्ण;
 
-static void __init dwarf_unwinder_cleanup(void)
-{
-	struct dwarf_fde *fde, *next_fde;
-	struct dwarf_cie *cie, *next_cie;
+अटल व्योम __init dwarf_unwinder_cleanup(व्योम)
+अणु
+	काष्ठा dwarf_fde *fde, *next_fde;
+	काष्ठा dwarf_cie *cie, *next_cie;
 
 	/*
-	 * Deallocate all the memory allocated for the DWARF unwinder.
-	 * Traverse all the FDE/CIE lists and remove and free all the
-	 * memory associated with those data structures.
+	 * Deallocate all the memory allocated क्रम the DWARF unwinder.
+	 * Traverse all the FDE/CIE lists and हटाओ and मुक्त all the
+	 * memory associated with those data काष्ठाures.
 	 */
-	rbtree_postorder_for_each_entry_safe(fde, next_fde, &fde_root, node)
-		kfree(fde);
+	rbtree_postorder_क्रम_each_entry_safe(fde, next_fde, &fde_root, node)
+		kमुक्त(fde);
 
-	rbtree_postorder_for_each_entry_safe(cie, next_cie, &cie_root, node)
-		kfree(cie);
+	rbtree_postorder_क्रम_each_entry_safe(cie, next_cie, &cie_root, node)
+		kमुक्त(cie);
 
 	mempool_destroy(dwarf_reg_pool);
 	mempool_destroy(dwarf_frame_pool);
 	kmem_cache_destroy(dwarf_reg_cachep);
 	kmem_cache_destroy(dwarf_frame_cachep);
-}
+पूर्ण
 
 /**
  *	dwarf_parse_section - parse DWARF section
@@ -1019,188 +1020,188 @@ static void __init dwarf_unwinder_cleanup(void)
  *	@eh_frame_end: end address of the .eh_frame section
  *	@mod: the kernel module containing the .eh_frame section
  *
- *	Parse the information in a .eh_frame section.
+ *	Parse the inक्रमmation in a .eh_frame section.
  */
-static int dwarf_parse_section(char *eh_frame_start, char *eh_frame_end,
-			       struct module *mod)
-{
+अटल पूर्णांक dwarf_parse_section(अक्षर *eh_frame_start, अक्षर *eh_frame_end,
+			       काष्ठा module *mod)
+अणु
 	u32 entry_type;
-	void *p, *entry;
-	int count, err = 0;
-	unsigned long len = 0;
-	unsigned int c_entries, f_entries;
-	unsigned char *end;
+	व्योम *p, *entry;
+	पूर्णांक count, err = 0;
+	अचिन्हित दीर्घ len = 0;
+	अचिन्हित पूर्णांक c_entries, f_entries;
+	अचिन्हित अक्षर *end;
 
 	c_entries = 0;
 	f_entries = 0;
 	entry = eh_frame_start;
 
-	while ((char *)entry < eh_frame_end) {
+	जबतक ((अक्षर *)entry < eh_frame_end) अणु
 		p = entry;
 
 		count = dwarf_entry_len(p, &len);
-		if (count == 0) {
+		अगर (count == 0) अणु
 			/*
-			 * We read a bogus length field value. There is
-			 * nothing we can do here apart from disabling
+			 * We पढ़ो a bogus length field value. There is
+			 * nothing we can करो here apart from disabling
 			 * the DWARF unwinder. We can't even skip this
 			 * entry and move to the next one because 'len'
 			 * tells us where our next entry is.
 			 */
 			err = -EINVAL;
-			goto out;
-		} else
+			जाओ out;
+		पूर्ण अन्यथा
 			p += count;
 
-		/* initial length does not include itself */
+		/* initial length करोes not include itself */
 		end = p + len;
 
 		entry_type = get_unaligned((u32 *)p);
 		p += 4;
 
-		if (entry_type == DW_EH_FRAME_CIE) {
+		अगर (entry_type == DW_EH_FRAME_CIE) अणु
 			err = dwarf_parse_cie(entry, p, len, end, mod);
-			if (err < 0)
-				goto out;
-			else
+			अगर (err < 0)
+				जाओ out;
+			अन्यथा
 				c_entries++;
-		} else {
+		पूर्ण अन्यथा अणु
 			err = dwarf_parse_fde(entry, entry_type, p, len,
 					      end, mod);
-			if (err < 0)
-				goto out;
-			else
+			अगर (err < 0)
+				जाओ out;
+			अन्यथा
 				f_entries++;
-		}
+		पूर्ण
 
-		entry = (char *)entry + len + 4;
-	}
+		entry = (अक्षर *)entry + len + 4;
+	पूर्ण
 
-	printk(KERN_INFO "DWARF unwinder initialised: read %u CIEs, %u FDEs\n",
+	prपूर्णांकk(KERN_INFO "DWARF unwinder initialised: read %u CIEs, %u FDEs\n",
 	       c_entries, f_entries);
 
-	return 0;
+	वापस 0;
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_MODULES
-int module_dwarf_finalize(const Elf_Ehdr *hdr, const Elf_Shdr *sechdrs,
-			  struct module *me)
-{
-	unsigned int i, err;
-	unsigned long start, end;
-	char *secstrings = (void *)hdr + sechdrs[hdr->e_shstrndx].sh_offset;
+#अगर_घोषित CONFIG_MODULES
+पूर्णांक module_dwarf_finalize(स्थिर Elf_Ehdr *hdr, स्थिर Elf_Shdr *sechdrs,
+			  काष्ठा module *me)
+अणु
+	अचिन्हित पूर्णांक i, err;
+	अचिन्हित दीर्घ start, end;
+	अक्षर *secstrings = (व्योम *)hdr + sechdrs[hdr->e_shstrndx].sh_offset;
 
 	start = end = 0;
 
-	for (i = 1; i < hdr->e_shnum; i++) {
+	क्रम (i = 1; i < hdr->e_shnum; i++) अणु
 		/* Alloc bit cleared means "ignore it." */
-		if ((sechdrs[i].sh_flags & SHF_ALLOC)
-		    && !strcmp(secstrings+sechdrs[i].sh_name, ".eh_frame")) {
+		अगर ((sechdrs[i].sh_flags & SHF_ALLOC)
+		    && !म_भेद(secstrings+sechdrs[i].sh_name, ".eh_frame")) अणु
 			start = sechdrs[i].sh_addr;
 			end = start + sechdrs[i].sh_size;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Did we find the .eh_frame section? */
-	if (i != hdr->e_shnum) {
+	अगर (i != hdr->e_shnum) अणु
 		INIT_LIST_HEAD(&me->arch.cie_list);
 		INIT_LIST_HEAD(&me->arch.fde_list);
-		err = dwarf_parse_section((char *)start, (char *)end, me);
-		if (err) {
-			printk(KERN_WARNING "%s: failed to parse DWARF info\n",
+		err = dwarf_parse_section((अक्षर *)start, (अक्षर *)end, me);
+		अगर (err) अणु
+			prपूर्णांकk(KERN_WARNING "%s: failed to parse DWARF info\n",
 			       me->name);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	module_dwarf_cleanup - remove FDE/CIEs associated with @mod
+ *	module_dwarf_cleanup - हटाओ FDE/CIEs associated with @mod
  *	@mod: the module that is being unloaded
  *
  *	Remove any FDEs and CIEs from the global lists that came from
  *	@mod's .eh_frame section because @mod is being unloaded.
  */
-void module_dwarf_cleanup(struct module *mod)
-{
-	struct dwarf_fde *fde, *ftmp;
-	struct dwarf_cie *cie, *ctmp;
-	unsigned long flags;
+व्योम module_dwarf_cleanup(काष्ठा module *mod)
+अणु
+	काष्ठा dwarf_fde *fde, *fपंचांगp;
+	काष्ठा dwarf_cie *cie, *cपंचांगp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dwarf_cie_lock, flags);
 
-	list_for_each_entry_safe(cie, ctmp, &mod->arch.cie_list, link) {
+	list_क्रम_each_entry_safe(cie, cपंचांगp, &mod->arch.cie_list, link) अणु
 		list_del(&cie->link);
 		rb_erase(&cie->node, &cie_root);
-		kfree(cie);
-	}
+		kमुक्त(cie);
+	पूर्ण
 
 	spin_unlock_irqrestore(&dwarf_cie_lock, flags);
 
 	spin_lock_irqsave(&dwarf_fde_lock, flags);
 
-	list_for_each_entry_safe(fde, ftmp, &mod->arch.fde_list, link) {
+	list_क्रम_each_entry_safe(fde, fपंचांगp, &mod->arch.fde_list, link) अणु
 		list_del(&fde->link);
 		rb_erase(&fde->node, &fde_root);
-		kfree(fde);
-	}
+		kमुक्त(fde);
+	पूर्ण
 
 	spin_unlock_irqrestore(&dwarf_fde_lock, flags);
-}
-#endif /* CONFIG_MODULES */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MODULES */
 
 /**
  *	dwarf_unwinder_init - initialise the dwarf unwinder
  *
- *	Build the data structures describing the .dwarf_frame section to
+ *	Build the data काष्ठाures describing the .dwarf_frame section to
  *	make it easier to lookup CIE and FDE entries. Because the
  *	.eh_frame section is packed as tightly as possible it is not
- *	easy to lookup the FDE for a given PC, so we build a list of FDE
+ *	easy to lookup the FDE क्रम a given PC, so we build a list of FDE
  *	and CIE entries that make it easier.
  */
-static int __init dwarf_unwinder_init(void)
-{
-	int err = -ENOMEM;
+अटल पूर्णांक __init dwarf_unwinder_init(व्योम)
+अणु
+	पूर्णांक err = -ENOMEM;
 
 	dwarf_frame_cachep = kmem_cache_create("dwarf_frames",
-			sizeof(struct dwarf_frame), 0,
-			SLAB_PANIC | SLAB_HWCACHE_ALIGN, NULL);
+			माप(काष्ठा dwarf_frame), 0,
+			SLAB_PANIC | SLAB_HWCACHE_ALIGN, शून्य);
 
 	dwarf_reg_cachep = kmem_cache_create("dwarf_regs",
-			sizeof(struct dwarf_reg), 0,
-			SLAB_PANIC | SLAB_HWCACHE_ALIGN, NULL);
+			माप(काष्ठा dwarf_reg), 0,
+			SLAB_PANIC | SLAB_HWCACHE_ALIGN, शून्य);
 
 	dwarf_frame_pool = mempool_create_slab_pool(DWARF_FRAME_MIN_REQ,
 						    dwarf_frame_cachep);
-	if (!dwarf_frame_pool)
-		goto out;
+	अगर (!dwarf_frame_pool)
+		जाओ out;
 
 	dwarf_reg_pool = mempool_create_slab_pool(DWARF_REG_MIN_REQ,
 						  dwarf_reg_cachep);
-	if (!dwarf_reg_pool)
-		goto out;
+	अगर (!dwarf_reg_pool)
+		जाओ out;
 
-	err = dwarf_parse_section(__start_eh_frame, __stop_eh_frame, NULL);
-	if (err)
-		goto out;
+	err = dwarf_parse_section(__start_eh_frame, __stop_eh_frame, शून्य);
+	अगर (err)
+		जाओ out;
 
-	err = unwinder_register(&dwarf_unwinder);
-	if (err)
-		goto out;
+	err = unwinder_रेजिस्टर(&dwarf_unwinder);
+	अगर (err)
+		जाओ out;
 
-	dwarf_unwinder_ready = 1;
+	dwarf_unwinder_पढ़ोy = 1;
 
-	return 0;
+	वापस 0;
 
 out:
-	printk(KERN_ERR "Failed to initialise DWARF unwinder: %d\n", err);
+	prपूर्णांकk(KERN_ERR "Failed to initialise DWARF unwinder: %d\n", err);
 	dwarf_unwinder_cleanup();
-	return err;
-}
+	वापस err;
+पूर्ण
 early_initcall(dwarf_unwinder_init);

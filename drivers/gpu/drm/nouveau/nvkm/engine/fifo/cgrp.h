@@ -1,11 +1,12 @@
-#ifndef __NVKM_FIFO_CGRP_H__
-#define __NVKM_FIFO_CGRP_H__
-#include "priv.h"
+<शैली गुरु>
+#अगर_अघोषित __NVKM_FIFO_CGRP_H__
+#घोषणा __NVKM_FIFO_CGRP_H__
+#समावेश "priv.h"
 
-struct nvkm_fifo_cgrp {
-	int id;
-	struct list_head head;
-	struct list_head chan;
-	int chan_nr;
-};
-#endif
+काष्ठा nvkm_fअगरo_cgrp अणु
+	पूर्णांक id;
+	काष्ठा list_head head;
+	काष्ठा list_head chan;
+	पूर्णांक chan_nr;
+पूर्ण;
+#पूर्ण_अगर

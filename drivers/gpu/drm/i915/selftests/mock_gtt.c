@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,57 +23,57 @@
  *
  */
 
-#include "mock_gtt.h"
+#समावेश "mock_gtt.h"
 
-static void mock_insert_page(struct i915_address_space *vm,
+अटल व्योम mock_insert_page(काष्ठा i915_address_space *vm,
 			     dma_addr_t addr,
 			     u64 offset,
-			     enum i915_cache_level level,
+			     क्रमागत i915_cache_level level,
 			     u32 flags)
-{
-}
+अणु
+पूर्ण
 
-static void mock_insert_entries(struct i915_address_space *vm,
-				struct i915_vma *vma,
-				enum i915_cache_level level, u32 flags)
-{
-}
+अटल व्योम mock_insert_entries(काष्ठा i915_address_space *vm,
+				काष्ठा i915_vma *vma,
+				क्रमागत i915_cache_level level, u32 flags)
+अणु
+पूर्ण
 
-static void mock_bind_ppgtt(struct i915_address_space *vm,
-			    struct i915_vm_pt_stash *stash,
-			    struct i915_vma *vma,
-			    enum i915_cache_level cache_level,
+अटल व्योम mock_bind_ppgtt(काष्ठा i915_address_space *vm,
+			    काष्ठा i915_vm_pt_stash *stash,
+			    काष्ठा i915_vma *vma,
+			    क्रमागत i915_cache_level cache_level,
 			    u32 flags)
-{
+अणु
 	GEM_BUG_ON(flags & I915_VMA_GLOBAL_BIND);
 	set_bit(I915_VMA_LOCAL_BIND_BIT, __i915_vma_flags(vma));
-}
+पूर्ण
 
-static void mock_unbind_ppgtt(struct i915_address_space *vm,
-			      struct i915_vma *vma)
-{
-}
+अटल व्योम mock_unbind_ppgtt(काष्ठा i915_address_space *vm,
+			      काष्ठा i915_vma *vma)
+अणु
+पूर्ण
 
-static void mock_cleanup(struct i915_address_space *vm)
-{
-}
+अटल व्योम mock_cleanup(काष्ठा i915_address_space *vm)
+अणु
+पूर्ण
 
-static void mock_clear_range(struct i915_address_space *vm,
+अटल व्योम mock_clear_range(काष्ठा i915_address_space *vm,
 			     u64 start, u64 length)
-{
-}
+अणु
+पूर्ण
 
-struct i915_ppgtt *mock_ppgtt(struct drm_i915_private *i915, const char *name)
-{
-	struct i915_ppgtt *ppgtt;
+काष्ठा i915_ppgtt *mock_ppgtt(काष्ठा drm_i915_निजी *i915, स्थिर अक्षर *name)
+अणु
+	काष्ठा i915_ppgtt *ppgtt;
 
-	ppgtt = kzalloc(sizeof(*ppgtt), GFP_KERNEL);
-	if (!ppgtt)
-		return NULL;
+	ppgtt = kzalloc(माप(*ppgtt), GFP_KERNEL);
+	अगर (!ppgtt)
+		वापस शून्य;
 
 	ppgtt->vm.gt = &i915->gt;
 	ppgtt->vm.i915 = i915;
-	ppgtt->vm.total = round_down(U64_MAX, PAGE_SIZE);
+	ppgtt->vm.total = round_करोwn(U64_MAX, PAGE_SIZE);
 	ppgtt->vm.file = ERR_PTR(-ENODEV);
 	ppgtt->vm.dma = i915->drm.dev;
 
@@ -90,31 +91,31 @@ struct i915_ppgtt *mock_ppgtt(struct drm_i915_private *i915, const char *name)
 	ppgtt->vm.vma_ops.set_pages   = ppgtt_set_pages;
 	ppgtt->vm.vma_ops.clear_pages = clear_pages;
 
-	return ppgtt;
-}
+	वापस ppgtt;
+पूर्ण
 
-static void mock_bind_ggtt(struct i915_address_space *vm,
-			   struct i915_vm_pt_stash *stash,
-			   struct i915_vma *vma,
-			   enum i915_cache_level cache_level,
+अटल व्योम mock_bind_ggtt(काष्ठा i915_address_space *vm,
+			   काष्ठा i915_vm_pt_stash *stash,
+			   काष्ठा i915_vma *vma,
+			   क्रमागत i915_cache_level cache_level,
 			   u32 flags)
-{
-}
+अणु
+पूर्ण
 
-static void mock_unbind_ggtt(struct i915_address_space *vm,
-			     struct i915_vma *vma)
-{
-}
+अटल व्योम mock_unbind_ggtt(काष्ठा i915_address_space *vm,
+			     काष्ठा i915_vma *vma)
+अणु
+पूर्ण
 
-void mock_init_ggtt(struct drm_i915_private *i915, struct i915_ggtt *ggtt)
-{
-	memset(ggtt, 0, sizeof(*ggtt));
+व्योम mock_init_ggtt(काष्ठा drm_i915_निजी *i915, काष्ठा i915_ggtt *ggtt)
+अणु
+	स_रखो(ggtt, 0, माप(*ggtt));
 
 	ggtt->vm.gt = &i915->gt;
 	ggtt->vm.i915 = i915;
 	ggtt->vm.is_ggtt = true;
 
-	ggtt->gmadr = (struct resource) DEFINE_RES_MEM(0, 2048 * PAGE_SIZE);
+	ggtt->gmadr = (काष्ठा resource) DEFINE_RES_MEM(0, 2048 * PAGE_SIZE);
 	ggtt->mappable_end = resource_size(&ggtt->gmadr);
 	ggtt->vm.total = 4096 * PAGE_SIZE;
 
@@ -132,9 +133,9 @@ void mock_init_ggtt(struct drm_i915_private *i915, struct i915_ggtt *ggtt)
 
 	i915_address_space_init(&ggtt->vm, VM_CLASS_GGTT);
 	i915->gt.ggtt = ggtt;
-}
+पूर्ण
 
-void mock_fini_ggtt(struct i915_ggtt *ggtt)
-{
+व्योम mock_fini_ggtt(काष्ठा i915_ggtt *ggtt)
+अणु
 	i915_address_space_fini(&ggtt->vm);
-}
+पूर्ण

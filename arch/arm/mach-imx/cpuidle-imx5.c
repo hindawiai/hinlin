@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Freescale Semiconductor, Inc.
  */
 
-#include <linux/cpuidle.h>
-#include <linux/module.h>
-#include <asm/system_misc.h>
-#include "cpuidle.h"
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
+#समावेश "cpuidle.h"
 
-static int imx5_cpuidle_enter(struct cpuidle_device *dev,
-			      struct cpuidle_driver *drv, int index)
-{
+अटल पूर्णांक imx5_cpuidle_enter(काष्ठा cpuidle_device *dev,
+			      काष्ठा cpuidle_driver *drv, पूर्णांक index)
+अणु
 	arm_pm_idle();
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static struct cpuidle_driver imx5_cpuidle_driver = {
+अटल काष्ठा cpuidle_driver imx5_cpuidle_driver = अणु
 	.name             = "imx5_cpuidle",
 	.owner            = THIS_MODULE,
-	.states[0] = {
+	.states[0] = अणु
 		.enter            = imx5_cpuidle_enter,
-		.exit_latency     = 2,
+		.निकास_latency     = 2,
 		.target_residency = 1,
 		.name             = "IMX5 SRPG",
 		.desc             = "CPU state retained,powered off",
-	},
+	पूर्ण,
 	.state_count = 1,
-};
+पूर्ण;
 
-int __init imx5_cpuidle_init(void)
-{
-	return cpuidle_register(&imx5_cpuidle_driver, NULL);
-}
+पूर्णांक __init imx5_cpuidle_init(व्योम)
+अणु
+	वापस cpuidle_रेजिस्टर(&imx5_cpuidle_driver, शून्य);
+पूर्ण

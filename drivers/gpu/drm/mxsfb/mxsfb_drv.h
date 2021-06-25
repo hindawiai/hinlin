@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2016 Marek Vasut <marex@denx.de>
  *
  * i.MX23/i.MX28/i.MX6SX MXSFB LCD controller driver.
  */
 
-#ifndef __MXSFB_DRV_H__
-#define __MXSFB_DRV_H__
+#अगर_अघोषित __MXSFB_DRV_H__
+#घोषणा __MXSFB_DRV_H__
 
-#include <drm/drm_crtc.h>
-#include <drm/drm_device.h>
-#include <drm/drm_encoder.h>
-#include <drm/drm_plane.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_encoder.h>
+#समावेश <drm/drm_plane.h>
 
-struct clk;
+काष्ठा clk;
 
-struct mxsfb_devdata {
-	unsigned int	transfer_count;
-	unsigned int	cur_buf;
-	unsigned int	next_buf;
-	unsigned int	hs_wdth_mask;
-	unsigned int	hs_wdth_shift;
+काष्ठा mxsfb_devdata अणु
+	अचिन्हित पूर्णांक	transfer_count;
+	अचिन्हित पूर्णांक	cur_buf;
+	अचिन्हित पूर्णांक	next_buf;
+	अचिन्हित पूर्णांक	hs_wdth_mask;
+	अचिन्हित पूर्णांक	hs_wdth_shअगरt;
 	bool		has_overlay;
-};
+पूर्ण;
 
-struct mxsfb_drm_private {
-	const struct mxsfb_devdata	*devdata;
+काष्ठा mxsfb_drm_निजी अणु
+	स्थिर काष्ठा mxsfb_devdata	*devdata;
 
-	void __iomem			*base;	/* registers */
-	struct clk			*clk;
-	struct clk			*clk_axi;
-	struct clk			*clk_disp_axi;
+	व्योम __iomem			*base;	/* रेजिस्टरs */
+	काष्ठा clk			*clk;
+	काष्ठा clk			*clk_axi;
+	काष्ठा clk			*clk_disp_axi;
 
-	struct drm_device		*drm;
-	struct {
-		struct drm_plane	primary;
-		struct drm_plane	overlay;
-	} planes;
-	struct drm_crtc			crtc;
-	struct drm_encoder		encoder;
-	struct drm_connector		*connector;
-	struct drm_bridge		*bridge;
-};
+	काष्ठा drm_device		*drm;
+	काष्ठा अणु
+		काष्ठा drm_plane	primary;
+		काष्ठा drm_plane	overlay;
+	पूर्ण planes;
+	काष्ठा drm_crtc			crtc;
+	काष्ठा drm_encoder		encoder;
+	काष्ठा drm_connector		*connector;
+	काष्ठा drm_bridge		*bridge;
+पूर्ण;
 
-static inline struct mxsfb_drm_private *
-to_mxsfb_drm_private(struct drm_device *drm)
-{
-	return drm->dev_private;
-}
+अटल अंतरभूत काष्ठा mxsfb_drm_निजी *
+to_mxsfb_drm_निजी(काष्ठा drm_device *drm)
+अणु
+	वापस drm->dev_निजी;
+पूर्ण
 
-void mxsfb_enable_axi_clk(struct mxsfb_drm_private *mxsfb);
-void mxsfb_disable_axi_clk(struct mxsfb_drm_private *mxsfb);
+व्योम mxsfb_enable_axi_clk(काष्ठा mxsfb_drm_निजी *mxsfb);
+व्योम mxsfb_disable_axi_clk(काष्ठा mxsfb_drm_निजी *mxsfb);
 
-int mxsfb_kms_init(struct mxsfb_drm_private *mxsfb);
+पूर्णांक mxsfb_kms_init(काष्ठा mxsfb_drm_निजी *mxsfb);
 
-#endif /* __MXSFB_DRV_H__ */
+#पूर्ण_अगर /* __MXSFB_DRV_H__ */

@@ -1,147 +1,148 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * MAX1241 low-power, 12-bit serial ADC
+ * MAX1241 low-घातer, 12-bit serial ADC
  *
- * Datasheet: https://datasheets.maximintegrated.com/en/ds/MAX1240-MAX1241.pdf
+ * Datasheet: https://datasheets.maximपूर्णांकegrated.com/en/ds/MAX1240-MAX1241.pdf
  */
 
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/iio/iio.h>
-#include <linux/module.h>
-#include <linux/regulator/consumer.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/spi/spi.h>
 
-#define MAX1241_VAL_MASK GENMASK(11, 0)
-#define MAX1241_SHUTDOWN_DELAY_USEC 4
+#घोषणा MAX1241_VAL_MASK GENMASK(11, 0)
+#घोषणा MAX1241_SHUTDOWN_DELAY_USEC 4
 
-enum max1241_id {
+क्रमागत max1241_id अणु
 	max1241,
-};
+पूर्ण;
 
-struct max1241 {
-	struct spi_device *spi;
-	struct mutex lock;
-	struct regulator *vdd;
-	struct regulator *vref;
-	struct gpio_desc *shutdown;
+काष्ठा max1241 अणु
+	काष्ठा spi_device *spi;
+	काष्ठा mutex lock;
+	काष्ठा regulator *vdd;
+	काष्ठा regulator *vref;
+	काष्ठा gpio_desc *shutकरोwn;
 
 	__be16 data ____cacheline_aligned;
-};
+पूर्ण;
 
-static const struct iio_chan_spec max1241_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec max1241_channels[] = अणु
+	अणु
 		.type = IIO_VOLTAGE,
 		.indexed = 1,
 		.channel = 0,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				BIT(IIO_CHAN_INFO_SCALE),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int max1241_read(struct max1241 *adc)
-{
-	struct spi_transfer xfers[] = {
+अटल पूर्णांक max1241_पढ़ो(काष्ठा max1241 *adc)
+अणु
+	काष्ठा spi_transfer xfers[] = अणु
 		/*
-		 * Begin conversion by bringing /CS low for at least
+		 * Begin conversion by bringing /CS low क्रम at least
 		 * tconv us.
 		 */
-		{
+		अणु
 			.len = 0,
 			.delay.value = 8,
 			.delay.unit = SPI_DELAY_UNIT_USECS,
-		},
+		पूर्ण,
 		/*
-		 * Then read two bytes of data in our RX buffer.
+		 * Then पढ़ो two bytes of data in our RX buffer.
 		 */
-		{
+		अणु
 			.rx_buf = &adc->data,
 			.len = 2,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
-	return spi_sync_transfer(adc->spi, xfers, ARRAY_SIZE(xfers));
-}
+	वापस spi_sync_transfer(adc->spi, xfers, ARRAY_SIZE(xfers));
+पूर्ण
 
-static int max1241_read_raw(struct iio_dev *indio_dev,
-			struct iio_chan_spec const *chan,
-			int *val, int *val2, long mask)
-{
-	int ret, vref_uV;
-	struct max1241 *adc = iio_priv(indio_dev);
+अटल पूर्णांक max1241_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			काष्ठा iio_chan_spec स्थिर *chan,
+			पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	पूर्णांक ret, vref_uV;
+	काष्ठा max1241 *adc = iio_priv(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		mutex_lock(&adc->lock);
 
-		if (adc->shutdown) {
-			gpiod_set_value(adc->shutdown, 0);
+		अगर (adc->shutकरोwn) अणु
+			gpiod_set_value(adc->shutकरोwn, 0);
 			udelay(MAX1241_SHUTDOWN_DELAY_USEC);
-			ret = max1241_read(adc);
-			gpiod_set_value(adc->shutdown, 1);
-		} else
-			ret = max1241_read(adc);
+			ret = max1241_पढ़ो(adc);
+			gpiod_set_value(adc->shutकरोwn, 1);
+		पूर्ण अन्यथा
+			ret = max1241_पढ़ो(adc);
 
-		if (ret) {
+		अगर (ret) अणु
 			mutex_unlock(&adc->lock);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		*val = (be16_to_cpu(adc->data) >> 3) & MAX1241_VAL_MASK;
 
 		mutex_unlock(&adc->lock);
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SCALE:
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SCALE:
 		vref_uV = regulator_get_voltage(adc->vref);
 
-		if (vref_uV < 0)
-			return vref_uV;
+		अगर (vref_uV < 0)
+			वापस vref_uV;
 
 		*val = vref_uV / 1000;
 		*val2 = 12;
 
-		return IIO_VAL_FRACTIONAL_LOG2;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस IIO_VAL_FRACTIONAL_LOG2;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct iio_info max1241_info = {
-	.read_raw = max1241_read_raw,
-};
+अटल स्थिर काष्ठा iio_info max1241_info = अणु
+	.पढ़ो_raw = max1241_पढ़ो_raw,
+पूर्ण;
 
-static void max1241_disable_vdd_action(void *data)
-{
-	struct max1241 *adc = data;
-	struct device *dev = &adc->spi->dev;
-	int err;
+अटल व्योम max1241_disable_vdd_action(व्योम *data)
+अणु
+	काष्ठा max1241 *adc = data;
+	काष्ठा device *dev = &adc->spi->dev;
+	पूर्णांक err;
 
 	err = regulator_disable(adc->vdd);
-	if (err)
+	अगर (err)
 		dev_err(dev, "could not disable vdd regulator.\n");
-}
+पूर्ण
 
-static void max1241_disable_vref_action(void *data)
-{
-	struct max1241 *adc = data;
-	struct device *dev = &adc->spi->dev;
-	int err;
+अटल व्योम max1241_disable_vref_action(व्योम *data)
+अणु
+	काष्ठा max1241 *adc = data;
+	काष्ठा device *dev = &adc->spi->dev;
+	पूर्णांक err;
 
 	err = regulator_disable(adc->vref);
-	if (err)
+	अगर (err)
 		dev_err(dev, "could not disable vref regulator.\n");
-}
+पूर्ण
 
-static int max1241_probe(struct spi_device *spi)
-{
-	struct device *dev = &spi->dev;
-	struct iio_dev *indio_dev;
-	struct max1241 *adc;
-	int ret;
+अटल पूर्णांक max1241_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा device *dev = &spi->dev;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा max1241 *adc;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(dev, sizeof(*adc));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, माप(*adc));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	adc = iio_priv(indio_dev);
 	adc->spi = spi;
@@ -150,75 +151,75 @@ static int max1241_probe(struct spi_device *spi)
 	spi_set_drvdata(spi, indio_dev);
 
 	adc->vdd = devm_regulator_get(dev, "vdd");
-	if (IS_ERR(adc->vdd)) {
+	अगर (IS_ERR(adc->vdd)) अणु
 		dev_err(dev, "failed to get vdd regulator\n");
-		return PTR_ERR(adc->vdd);
-	}
+		वापस PTR_ERR(adc->vdd);
+	पूर्ण
 
 	ret = regulator_enable(adc->vdd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = devm_add_action_or_reset(dev, max1241_disable_vdd_action, adc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "could not set up vdd regulator cleanup action\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	adc->vref = devm_regulator_get(dev, "vref");
-	if (IS_ERR(adc->vref)) {
+	अगर (IS_ERR(adc->vref)) अणु
 		dev_err(dev, "failed to get vref regulator\n");
-		return PTR_ERR(adc->vref);
-	}
+		वापस PTR_ERR(adc->vref);
+	पूर्ण
 
 	ret = regulator_enable(adc->vref);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = devm_add_action_or_reset(dev, max1241_disable_vref_action, adc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "could not set up vref regulator cleanup action\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	adc->shutdown = devm_gpiod_get_optional(dev, "shutdown",
+	adc->shutकरोwn = devm_gpiod_get_optional(dev, "shutdown",
 						GPIOD_OUT_HIGH);
-	if (IS_ERR(adc->shutdown))
-		return PTR_ERR(adc->shutdown);
+	अगर (IS_ERR(adc->shutकरोwn))
+		वापस PTR_ERR(adc->shutकरोwn);
 
-	if (adc->shutdown)
+	अगर (adc->shutकरोwn)
 		dev_dbg(dev, "shutdown pin passed, low-power mode enabled");
-	else
+	अन्यथा
 		dev_dbg(dev, "no shutdown pin passed, low-power mode disabled");
 
 	indio_dev->name = spi_get_device_id(spi)->name;
 	indio_dev->info = &max1241_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = max1241_channels;
 	indio_dev->num_channels = ARRAY_SIZE(max1241_channels);
 
-	return devm_iio_device_register(dev, indio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
+पूर्ण
 
-static const struct spi_device_id max1241_id[] = {
-	{ "max1241", max1241 },
-	{}
-};
+अटल स्थिर काष्ठा spi_device_id max1241_id[] = अणु
+	अणु "max1241", max1241 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct of_device_id max1241_dt_ids[] = {
-	{ .compatible = "maxim,max1241" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id max1241_dt_ids[] = अणु
+	अणु .compatible = "maxim,max1241" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, max1241_dt_ids);
 
-static struct spi_driver max1241_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver max1241_spi_driver = अणु
+	.driver = अणु
 		.name = "max1241",
 		.of_match_table = max1241_dt_ids,
-	},
+	पूर्ण,
 	.probe = max1241_probe,
 	.id_table = max1241_id,
-};
+पूर्ण;
 module_spi_driver(max1241_spi_driver);
 
 MODULE_AUTHOR("Alexandru Lazar <alazar@startmail.com>");

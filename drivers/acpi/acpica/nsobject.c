@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
- * Module Name: nsobject - Utilities for objects attached to namespace
+ * Module Name: nsobject - Utilities क्रम objects attached to namespace
  *                         table entries
  *
  ******************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acnamesp.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acnamesp.h"
 
-#define _COMPONENT          ACPI_NAMESPACE
+#घोषणा _COMPONENT          ACPI_NAMESPACE
 ACPI_MODULE_NAME("nsobject")
 
 /*******************************************************************************
@@ -19,13 +20,13 @@ ACPI_MODULE_NAME("nsobject")
  *
  * PARAMETERS:  node                - Parent Node
  *              object              - Object to be attached
- *              type                - Type of object, or ACPI_TYPE_ANY if not
+ *              type                - Type of object, or ACPI_TYPE_ANY अगर not
  *                                    known
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Record the given object as the value associated with the
- *              name whose acpi_handle is passed. If Object is NULL
+ *              name whose acpi_handle is passed. If Object is शून्य
  *              and Type is ACPI_TYPE_ANY, set the name as having no value.
  *              Note: Future may require that the Node->Flags field be passed
  *              as a parameter.
@@ -34,11 +35,11 @@ ACPI_MODULE_NAME("nsobject")
  *
  ******************************************************************************/
 acpi_status
-acpi_ns_attach_object(struct acpi_namespace_node *node,
-		      union acpi_operand_object *object, acpi_object_type type)
-{
-	union acpi_operand_object *obj_desc;
-	union acpi_operand_object *last_obj_desc;
+acpi_ns_attach_object(काष्ठा acpi_namespace_node *node,
+		      जोड़ acpi_opeअक्रम_object *object, acpi_object_type type)
+अणु
+	जोड़ acpi_opeअक्रम_object *obj_desc;
+	जोड़ acpi_opeअक्रम_object *last_obj_desc;
 	acpi_object_type object_type = ACPI_TYPE_ANY;
 
 	ACPI_FUNCTION_TRACE(ns_attach_object);
@@ -46,88 +47,88 @@ acpi_ns_attach_object(struct acpi_namespace_node *node,
 	/*
 	 * Parameter validation
 	 */
-	if (!node) {
+	अगर (!node) अणु
 
 		/* Invalid handle */
 
 		ACPI_ERROR((AE_INFO, "Null NamedObj handle"));
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
-	if (!object && (ACPI_TYPE_ANY != type)) {
+	अगर (!object && (ACPI_TYPE_ANY != type)) अणु
 
 		/* Null object */
 
 		ACPI_ERROR((AE_INFO,
 			    "Null object, but type not ACPI_TYPE_ANY"));
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
-	if (ACPI_GET_DESCRIPTOR_TYPE(node) != ACPI_DESC_TYPE_NAMED) {
+	अगर (ACPI_GET_DESCRIPTOR_TYPE(node) != ACPI_DESC_TYPE_NAMED) अणु
 
 		/* Not a name handle */
 
 		ACPI_ERROR((AE_INFO, "Invalid handle %p [%s]",
 			    node, acpi_ut_get_descriptor_name(node)));
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
-	/* Check if this object is already attached */
+	/* Check अगर this object is alपढ़ोy attached */
 
-	if (node->object == object) {
+	अगर (node->object == object) अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "Obj %p already installed in NameObj %p\n",
 				  object, node));
 
-		return_ACPI_STATUS(AE_OK);
-	}
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/* If null object, we will just install it */
 
-	if (!object) {
-		obj_desc = NULL;
+	अगर (!object) अणु
+		obj_desc = शून्य;
 		object_type = ACPI_TYPE_ANY;
-	}
+	पूर्ण
 
 	/*
 	 * If the source object is a namespace Node with an attached object,
 	 * we will use that (attached) object
 	 */
-	else if ((ACPI_GET_DESCRIPTOR_TYPE(object) == ACPI_DESC_TYPE_NAMED) &&
-		 ((struct acpi_namespace_node *)object)->object) {
+	अन्यथा अगर ((ACPI_GET_DESCRIPTOR_TYPE(object) == ACPI_DESC_TYPE_NAMED) &&
+		 ((काष्ठा acpi_namespace_node *)object)->object) अणु
 		/*
 		 * Value passed is a name handle and that name has a
 		 * non-null value. Use that name's value and type.
 		 */
-		obj_desc = ((struct acpi_namespace_node *)object)->object;
-		object_type = ((struct acpi_namespace_node *)object)->type;
-	}
+		obj_desc = ((काष्ठा acpi_namespace_node *)object)->object;
+		object_type = ((काष्ठा acpi_namespace_node *)object)->type;
+	पूर्ण
 
 	/*
 	 * Otherwise, we will use the parameter object, but we must type
 	 * it first
 	 */
-	else {
-		obj_desc = (union acpi_operand_object *)object;
+	अन्यथा अणु
+		obj_desc = (जोड़ acpi_opeअक्रम_object *)object;
 
 		/* Use the given type */
 
 		object_type = type;
-	}
+	पूर्ण
 
 	ACPI_DEBUG_PRINT((ACPI_DB_EXEC, "Installing %p into Node %p [%4.4s]\n",
 			  obj_desc, node, acpi_ut_get_node_name(node)));
 
-	/* Detach an existing attached object if present */
+	/* Detach an existing attached object अगर present */
 
-	if (node->object) {
+	अगर (node->object) अणु
 		acpi_ns_detach_object(node);
-	}
+	पूर्ण
 
-	if (obj_desc) {
+	अगर (obj_desc) अणु
 		/*
 		 * Must increment the new value's reference count
-		 * (if it is an internal object)
+		 * (अगर it is an पूर्णांकernal object)
 		 */
 		acpi_ut_add_reference(obj_desc);
 
@@ -136,20 +137,20 @@ acpi_ns_attach_object(struct acpi_namespace_node *node,
 		 * to the end of the descriptor list
 		 */
 		last_obj_desc = obj_desc;
-		while (last_obj_desc->common.next_object) {
+		जबतक (last_obj_desc->common.next_object) अणु
 			last_obj_desc = last_obj_desc->common.next_object;
-		}
+		पूर्ण
 
 		/* Install the object at the front of the object list */
 
 		last_obj_desc->common.next_object = node->object;
-	}
+	पूर्ण
 
 	node->type = (u8) object_type;
 	node->object = obj_desc;
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -160,40 +161,40 @@ acpi_ns_attach_object(struct acpi_namespace_node *node,
  * RETURN:      None.
  *
  * DESCRIPTION: Detach/delete an object associated with a namespace node.
- *              if the object is an allocated object, it is freed.
+ *              अगर the object is an allocated object, it is मुक्तd.
  *              Otherwise, the field is simply cleared.
  *
  ******************************************************************************/
 
-void acpi_ns_detach_object(struct acpi_namespace_node *node)
-{
-	union acpi_operand_object *obj_desc;
+व्योम acpi_ns_detach_object(काष्ठा acpi_namespace_node *node)
+अणु
+	जोड़ acpi_opeअक्रम_object *obj_desc;
 
 	ACPI_FUNCTION_TRACE(ns_detach_object);
 
 	obj_desc = node->object;
 
-	if (!obj_desc || (obj_desc->common.type == ACPI_TYPE_LOCAL_DATA)) {
-		return_VOID;
-	}
+	अगर (!obj_desc || (obj_desc->common.type == ACPI_TYPE_LOCAL_DATA)) अणु
+		वापस_VOID;
+	पूर्ण
 
-	if (node->flags & ANOBJ_ALLOCATED_BUFFER) {
+	अगर (node->flags & ANOBJ_ALLOCATED_BUFFER) अणु
 
 		/* Free the dynamic aml buffer */
 
-		if (obj_desc->common.type == ACPI_TYPE_METHOD) {
+		अगर (obj_desc->common.type == ACPI_TYPE_METHOD) अणु
 			ACPI_FREE(obj_desc->method.aml_start);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (obj_desc->common.type == ACPI_TYPE_REGION) {
-		acpi_ut_remove_address_range(obj_desc->region.space_id, node);
-	}
+	अगर (obj_desc->common.type == ACPI_TYPE_REGION) अणु
+		acpi_ut_हटाओ_address_range(obj_desc->region.space_id, node);
+	पूर्ण
 
-	/* Clear the Node entry in all cases */
+	/* Clear the Node entry in all हालs */
 
-	node->object = NULL;
-	if (ACPI_GET_DESCRIPTOR_TYPE(obj_desc) == ACPI_DESC_TYPE_OPERAND) {
+	node->object = शून्य;
+	अगर (ACPI_GET_DESCRIPTOR_TYPE(obj_desc) == ACPI_DESC_TYPE_OPERAND) अणु
 
 		/* Unlink object from front of possible object list */
 
@@ -201,21 +202,21 @@ void acpi_ns_detach_object(struct acpi_namespace_node *node)
 
 		/* Handle possible 2-descriptor object */
 
-		if (node->object &&
-		    (node->object->common.type != ACPI_TYPE_LOCAL_DATA)) {
+		अगर (node->object &&
+		    (node->object->common.type != ACPI_TYPE_LOCAL_DATA)) अणु
 			node->object = node->object->common.next_object;
-		}
+		पूर्ण
 
 		/*
 		 * Detach the object from any data objects (which are still held by
 		 * the namespace node)
 		 */
-		if (obj_desc->common.next_object &&
+		अगर (obj_desc->common.next_object &&
 		    ((obj_desc->common.next_object)->common.type ==
-		     ACPI_TYPE_LOCAL_DATA)) {
-			obj_desc->common.next_object = NULL;
-		}
-	}
+		     ACPI_TYPE_LOCAL_DATA)) अणु
+			obj_desc->common.next_object = शून्य;
+		पूर्ण
+	पूर्ण
 
 	/* Reset the node type to untyped */
 
@@ -226,9 +227,9 @@ void acpi_ns_detach_object(struct acpi_namespace_node *node)
 
 	/* Remove one reference on the object (and all subobjects) */
 
-	acpi_ut_remove_reference(obj_desc);
-	return_VOID;
-}
+	acpi_ut_हटाओ_reference(obj_desc);
+	वापस_VOID;
+पूर्ण
 
 /*******************************************************************************
  *
@@ -243,27 +244,27 @@ void acpi_ns_detach_object(struct acpi_namespace_node *node)
  *
  ******************************************************************************/
 
-union acpi_operand_object *acpi_ns_get_attached_object(struct
+जोड़ acpi_opeअक्रम_object *acpi_ns_get_attached_object(काष्ठा
 						       acpi_namespace_node
 						       *node)
-{
+अणु
 	ACPI_FUNCTION_TRACE_PTR(ns_get_attached_object, node);
 
-	if (!node) {
+	अगर (!node) अणु
 		ACPI_WARNING((AE_INFO, "Null Node ptr"));
-		return_PTR(NULL);
-	}
+		वापस_PTR(शून्य);
+	पूर्ण
 
-	if (!node->object ||
+	अगर (!node->object ||
 	    ((ACPI_GET_DESCRIPTOR_TYPE(node->object) != ACPI_DESC_TYPE_OPERAND)
 	     && (ACPI_GET_DESCRIPTOR_TYPE(node->object) !=
 		 ACPI_DESC_TYPE_NAMED))
-	    || ((node->object)->common.type == ACPI_TYPE_LOCAL_DATA)) {
-		return_PTR(NULL);
-	}
+	    || ((node->object)->common.type == ACPI_TYPE_LOCAL_DATA)) अणु
+		वापस_PTR(शून्य);
+	पूर्ण
 
-	return_PTR(node->object);
-}
+	वापस_PTR(node->object);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -278,22 +279,22 @@ union acpi_operand_object *acpi_ns_get_attached_object(struct
  *
  ******************************************************************************/
 
-union acpi_operand_object *acpi_ns_get_secondary_object(union
-							acpi_operand_object
+जोड़ acpi_opeअक्रम_object *acpi_ns_get_secondary_object(जोड़
+							acpi_opeअक्रम_object
 							*obj_desc)
-{
+अणु
 	ACPI_FUNCTION_TRACE_PTR(ns_get_secondary_object, obj_desc);
 
-	if ((!obj_desc) ||
+	अगर ((!obj_desc) ||
 	    (obj_desc->common.type == ACPI_TYPE_LOCAL_DATA) ||
 	    (!obj_desc->common.next_object) ||
 	    ((obj_desc->common.next_object)->common.type ==
-	     ACPI_TYPE_LOCAL_DATA)) {
-		return_PTR(NULL);
-	}
+	     ACPI_TYPE_LOCAL_DATA)) अणु
+		वापस_PTR(शून्य);
+	पूर्ण
 
-	return_PTR(obj_desc->common.next_object);
-}
+	वापस_PTR(obj_desc->common.next_object);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -310,47 +311,47 @@ union acpi_operand_object *acpi_ns_get_secondary_object(union
  ******************************************************************************/
 
 acpi_status
-acpi_ns_attach_data(struct acpi_namespace_node *node,
-		    acpi_object_handler handler, void *data)
-{
-	union acpi_operand_object *prev_obj_desc;
-	union acpi_operand_object *obj_desc;
-	union acpi_operand_object *data_desc;
+acpi_ns_attach_data(काष्ठा acpi_namespace_node *node,
+		    acpi_object_handler handler, व्योम *data)
+अणु
+	जोड़ acpi_opeअक्रम_object *prev_obj_desc;
+	जोड़ acpi_opeअक्रम_object *obj_desc;
+	जोड़ acpi_opeअक्रम_object *data_desc;
 
 	/* We only allow one attachment per handler */
 
-	prev_obj_desc = NULL;
+	prev_obj_desc = शून्य;
 	obj_desc = node->object;
-	while (obj_desc) {
-		if ((obj_desc->common.type == ACPI_TYPE_LOCAL_DATA) &&
-		    (obj_desc->data.handler == handler)) {
-			return (AE_ALREADY_EXISTS);
-		}
+	जबतक (obj_desc) अणु
+		अगर ((obj_desc->common.type == ACPI_TYPE_LOCAL_DATA) &&
+		    (obj_desc->data.handler == handler)) अणु
+			वापस (AE_ALREADY_EXISTS);
+		पूर्ण
 
 		prev_obj_desc = obj_desc;
 		obj_desc = obj_desc->common.next_object;
-	}
+	पूर्ण
 
-	/* Create an internal object for the data */
+	/* Create an पूर्णांकernal object क्रम the data */
 
-	data_desc = acpi_ut_create_internal_object(ACPI_TYPE_LOCAL_DATA);
-	if (!data_desc) {
-		return (AE_NO_MEMORY);
-	}
+	data_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_LOCAL_DATA);
+	अगर (!data_desc) अणु
+		वापस (AE_NO_MEMORY);
+	पूर्ण
 
 	data_desc->data.handler = handler;
-	data_desc->data.pointer = data;
+	data_desc->data.poपूर्णांकer = data;
 
 	/* Install the data object */
 
-	if (prev_obj_desc) {
+	अगर (prev_obj_desc) अणु
 		prev_obj_desc->common.next_object = data_desc;
-	} else {
+	पूर्ण अन्यथा अणु
 		node->object = data_desc;
-	}
+	पूर्ण
 
-	return (AE_OK);
-}
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -362,39 +363,39 @@ acpi_ns_attach_data(struct acpi_namespace_node *node,
  * RETURN:      Status
  *
  * DESCRIPTION: Low-level detach data. Delete the data node, but the caller
- *              is responsible for the actual data.
+ *              is responsible क्रम the actual data.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ns_detach_data(struct acpi_namespace_node *node,
+acpi_ns_detach_data(काष्ठा acpi_namespace_node *node,
 		    acpi_object_handler handler)
-{
-	union acpi_operand_object *obj_desc;
-	union acpi_operand_object *prev_obj_desc;
+अणु
+	जोड़ acpi_opeअक्रम_object *obj_desc;
+	जोड़ acpi_opeअक्रम_object *prev_obj_desc;
 
-	prev_obj_desc = NULL;
+	prev_obj_desc = शून्य;
 	obj_desc = node->object;
-	while (obj_desc) {
-		if ((obj_desc->common.type == ACPI_TYPE_LOCAL_DATA) &&
-		    (obj_desc->data.handler == handler)) {
-			if (prev_obj_desc) {
+	जबतक (obj_desc) अणु
+		अगर ((obj_desc->common.type == ACPI_TYPE_LOCAL_DATA) &&
+		    (obj_desc->data.handler == handler)) अणु
+			अगर (prev_obj_desc) अणु
 				prev_obj_desc->common.next_object =
 				    obj_desc->common.next_object;
-			} else {
+			पूर्ण अन्यथा अणु
 				node->object = obj_desc->common.next_object;
-			}
+			पूर्ण
 
-			acpi_ut_remove_reference(obj_desc);
-			return (AE_OK);
-		}
+			acpi_ut_हटाओ_reference(obj_desc);
+			वापस (AE_OK);
+		पूर्ण
 
 		prev_obj_desc = obj_desc;
 		obj_desc = obj_desc->common.next_object;
-	}
+	पूर्ण
 
-	return (AE_NOT_FOUND);
-}
+	वापस (AE_NOT_FOUND);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -402,31 +403,31 @@ acpi_ns_detach_data(struct acpi_namespace_node *node,
  *
  * PARAMETERS:  node            - Namespace node
  *              handler         - Handler associated with the data
- *              data            - Where the data is returned
+ *              data            - Where the data is वापसed
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Low level interface to obtain data previously associated with
+ * DESCRIPTION: Low level पूर्णांकerface to obtain data previously associated with
  *              a namespace node.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ns_get_attached_data(struct acpi_namespace_node *node,
-			  acpi_object_handler handler, void **data)
-{
-	union acpi_operand_object *obj_desc;
+acpi_ns_get_attached_data(काष्ठा acpi_namespace_node *node,
+			  acpi_object_handler handler, व्योम **data)
+अणु
+	जोड़ acpi_opeअक्रम_object *obj_desc;
 
 	obj_desc = node->object;
-	while (obj_desc) {
-		if ((obj_desc->common.type == ACPI_TYPE_LOCAL_DATA) &&
-		    (obj_desc->data.handler == handler)) {
-			*data = obj_desc->data.pointer;
-			return (AE_OK);
-		}
+	जबतक (obj_desc) अणु
+		अगर ((obj_desc->common.type == ACPI_TYPE_LOCAL_DATA) &&
+		    (obj_desc->data.handler == handler)) अणु
+			*data = obj_desc->data.poपूर्णांकer;
+			वापस (AE_OK);
+		पूर्ण
 
 		obj_desc = obj_desc->common.next_object;
-	}
+	पूर्ण
 
-	return (AE_NOT_FOUND);
-}
+	वापस (AE_NOT_FOUND);
+पूर्ण

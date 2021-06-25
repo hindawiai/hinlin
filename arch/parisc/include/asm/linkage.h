@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_PARISC_LINKAGE_H
-#define __ASM_PARISC_LINKAGE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_PARISC_LINKAGE_H
+#घोषणा __ASM_PARISC_LINKAGE_H
 
-#include <asm/dwarf.h>
+#समावेश <यंत्र/dwarf.h>
 
-#ifndef __ALIGN
-#define __ALIGN         .align 4
-#define __ALIGN_STR     ".align 4"
-#endif
+#अगर_अघोषित __ALIGN
+#घोषणा __ALIGN         .align 4
+#घोषणा __ALIGN_STR     ".align 4"
+#पूर्ण_अगर
 
 /*
- * In parisc assembly a semicolon marks a comment while a
+ * In parisc assembly a semicolon marks a comment जबतक a
  * exclamation mark is used to separate independent lines.
  */
-#define ASM_NL	!
+#घोषणा ASM_NL	!
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
-#define ENTRY(name) \
+#घोषणा ENTRY(name) \
 	ALIGN	!\
 name:		ASM_NL\
 	.export name
 
-#define ENTRY_CFI(name, ...) \
+#घोषणा ENTRY_CFI(name, ...) \
 	ENTRY(name)	ASM_NL\
 	.proc		ASM_NL\
 	.callinfo __VA_ARGS__	ASM_NL\
 	.entry		ASM_NL\
 	CFI_STARTPROC
 
-#define ENDPROC_CFI(name) \
+#घोषणा ENDPROC_CFI(name) \
 	CFI_ENDPROC	ASM_NL\
-	.exit		ASM_NL\
+	.निकास		ASM_NL\
 	.procend	ASM_NL\
 	ENDPROC(name)
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif  /* __ASM_PARISC_LINKAGE_H */
+#पूर्ण_अगर  /* __ASM_PARISC_LINKAGE_H */

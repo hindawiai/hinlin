@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause) */
 /*
  * core.h - DesignWare HS OTG Controller common declarations
  *
  * Copyright (C) 2004-2013 Synopsys, Inc.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. Redistributions in binary form must reproduce the above copyright
+ *    without modअगरication.
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    करोcumentation and/or other materials provided with the distribution.
  * 3. The names of the above-listed copyright holders may not be used
- *    to endorse or promote products derived from this software without
- *    specific prior written permission.
+ *    to enकरोrse or promote products derived from this software without
+ *    specअगरic prior written permission.
  *
  * ALTERNATIVELY, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") as published by the Free Software
@@ -26,7 +27,7 @@
  * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL,
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -35,335 +36,335 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __DWC2_CORE_H__
-#define __DWC2_CORE_H__
+#अगर_अघोषित __DWC2_CORE_H__
+#घोषणा __DWC2_CORE_H__
 
-#include <linux/acpi.h>
-#include <linux/phy/phy.h>
-#include <linux/regulator/consumer.h>
-#include <linux/usb/gadget.h>
-#include <linux/usb/otg.h>
-#include <linux/usb/phy.h>
-#include "hw.h"
+#समावेश <linux/acpi.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/usb/otg.h>
+#समावेश <linux/usb/phy.h>
+#समावेश "hw.h"
 
 /*
- * Suggested defines for tracers:
- * - no_printk:    Disable tracing
- * - pr_info:      Print this info to the console
- * - trace_printk: Print this info to trace buffer (good for verbose logging)
+ * Suggested defines क्रम tracers:
+ * - no_prपूर्णांकk:    Disable tracing
+ * - pr_info:      Prपूर्णांक this info to the console
+ * - trace_prपूर्णांकk: Prपूर्णांक this info to trace buffer (good क्रम verbose logging)
  */
 
-#define DWC2_TRACE_SCHEDULER		no_printk
-#define DWC2_TRACE_SCHEDULER_VB		no_printk
+#घोषणा DWC2_TRACE_SCHEDULER		no_prपूर्णांकk
+#घोषणा DWC2_TRACE_SCHEDULER_VB		no_prपूर्णांकk
 
 /* Detailed scheduler tracing, but won't overwhelm console */
-#define dwc2_sch_dbg(hsotg, fmt, ...)					\
+#घोषणा dwc2_sch_dbg(hsotg, fmt, ...)					\
 	DWC2_TRACE_SCHEDULER(pr_fmt("%s: SCH: " fmt),			\
 			     dev_name(hsotg->dev), ##__VA_ARGS__)
 
 /* Verbose scheduler tracing */
-#define dwc2_sch_vdbg(hsotg, fmt, ...)					\
+#घोषणा dwc2_sch_vdbg(hsotg, fmt, ...)					\
 	DWC2_TRACE_SCHEDULER_VB(pr_fmt("%s: SCH: " fmt),		\
 				dev_name(hsotg->dev), ##__VA_ARGS__)
 
-/* Maximum number of Endpoints/HostChannels */
-#define MAX_EPS_CHANNELS	16
+/* Maximum number of Endpoपूर्णांकs/HostChannels */
+#घोषणा MAX_EPS_CHANNELS	16
 
 /* dwc2-hsotg declarations */
-static const char * const dwc2_hsotg_supply_names[] = {
+अटल स्थिर अक्षर * स्थिर dwc2_hsotg_supply_names[] = अणु
 	"vusb_d",               /* digital USB supply, 1.2V */
 	"vusb_a",               /* analog USB supply, 1.1V */
-};
+पूर्ण;
 
-#define DWC2_NUM_SUPPLIES ARRAY_SIZE(dwc2_hsotg_supply_names)
+#घोषणा DWC2_NUM_SUPPLIES ARRAY_SIZE(dwc2_hsotg_supply_names)
 
 /*
  * EP0_MPS_LIMIT
  *
- * Unfortunately there seems to be a limit of the amount of data that can
+ * Unक्रमtunately there seems to be a limit of the amount of data that can
  * be transferred by IN transactions on EP0. This is either 127 bytes or 3
  * packets (which practically means 1 packet and 63 bytes of data) when the
  * MPS is set to 64.
  *
- * This means if we are wanting to move >127 bytes of data, we need to
- * split the transactions up, but just doing one packet at a time does
+ * This means अगर we are wanting to move >127 bytes of data, we need to
+ * split the transactions up, but just करोing one packet at a समय करोes
  * not work (this may be an implicit DATA0 PID on first packet of the
- * transaction) and doing 2 packets is outside the controller's limits.
+ * transaction) and करोing 2 packets is outside the controller's limits.
  *
- * If we try to lower the MPS size for EP0, then no transfers work properly
- * for EP0, and the system will fail basic enumeration. As no cause for this
- * has currently been found, we cannot support any large IN transfers for
+ * If we try to lower the MPS size क्रम EP0, then no transfers work properly
+ * क्रम EP0, and the प्रणाली will fail basic क्रमागतeration. As no cause क्रम this
+ * has currently been found, we cannot support any large IN transfers क्रम
  * EP0.
  */
-#define EP0_MPS_LIMIT   64
+#घोषणा EP0_MPS_LIMIT   64
 
-struct dwc2_hsotg;
-struct dwc2_hsotg_req;
+काष्ठा dwc2_hsotg;
+काष्ठा dwc2_hsotg_req;
 
 /**
- * struct dwc2_hsotg_ep - driver endpoint definition.
- * @ep: The gadget layer representation of the endpoint.
- * @name: The driver generated name for the endpoint.
- * @queue: Queue of requests for this endpoint.
- * @parent: Reference back to the parent device structure.
- * @req: The current request that the endpoint is processing. This is
- *       used to indicate an request has been loaded onto the endpoint
+ * काष्ठा dwc2_hsotg_ep - driver endpoपूर्णांक definition.
+ * @ep: The gadget layer representation of the endpoपूर्णांक.
+ * @name: The driver generated name क्रम the endpoपूर्णांक.
+ * @queue: Queue of requests क्रम this endpoपूर्णांक.
+ * @parent: Reference back to the parent device काष्ठाure.
+ * @req: The current request that the endpoपूर्णांक is processing. This is
+ *       used to indicate an request has been loaded onto the endpoपूर्णांक
  *       and has yet to be completed (maybe due to data move, or simply
- *       awaiting an ack from the core all the data has been completed).
- * @debugfs: File entry for debugfs file for this endpoint.
- * @dir_in: Set to true if this endpoint is of the IN direction, which
+ *       aरुकोing an ack from the core all the data has been completed).
+ * @debugfs: File entry क्रम debugfs file क्रम this endpoपूर्णांक.
+ * @dir_in: Set to true अगर this endpoपूर्णांक is of the IN direction, which
  *          means that it is sending data to the Host.
  * @map_dir: Set to the value of dir_in when the DMA buffer is mapped.
- * @index: The index for the endpoint registers.
+ * @index: The index क्रम the endpoपूर्णांक रेजिस्टरs.
  * @mc: Multi Count - number of transactions per microframe
- * @interval: Interval for periodic endpoints, in frames or microframes.
+ * @पूर्णांकerval: Interval क्रम periodic endpoपूर्णांकs, in frames or microframes.
  * @name: The name array passed to the USB core.
- * @halted: Set if the endpoint has been halted.
- * @periodic: Set if this is a periodic ep, such as Interrupt
- * @isochronous: Set if this is a isochronous ep
- * @send_zlp: Set if we need to send a zero-length packet.
+ * @halted: Set अगर the endpoपूर्णांक has been halted.
+ * @periodic: Set अगर this is a periodic ep, such as Interrupt
+ * @isochronous: Set अगर this is a isochronous ep
+ * @send_zlp: Set अगर we need to send a zero-length packet.
  * @desc_list_dma: The DMA address of descriptor chain currently in use.
- * @desc_list: Pointer to descriptor DMA chain head currently in use.
+ * @desc_list: Poपूर्णांकer to descriptor DMA chain head currently in use.
  * @desc_count: Count of entries within the DMA descriptor chain of EP.
- * @next_desc: index of next free descriptor in the ISOC chain under SW control.
+ * @next_desc: index of next मुक्त descriptor in the ISOC chain under SW control.
  * @compl_desc: index of next descriptor to be completed by xFerComplete
- * @total_data: The total number of data bytes done.
- * @fifo_size: The size of the FIFO (for periodic IN endpoints)
- * @fifo_index: For Dedicated FIFO operation, only FIFO0 can be used for EP0.
- * @fifo_load: The amount of data loaded into the FIFO (periodic IN)
- * @last_load: The offset of data for the last start of request.
- * @size_loaded: The last loaded size for DxEPTSIZE for periodic IN
+ * @total_data: The total number of data bytes करोne.
+ * @fअगरo_size: The size of the FIFO (क्रम periodic IN endpoपूर्णांकs)
+ * @fअगरo_index: For Dedicated FIFO operation, only FIFO0 can be used क्रम EP0.
+ * @fअगरo_load: The amount of data loaded पूर्णांकo the FIFO (periodic IN)
+ * @last_load: The offset of data क्रम the last start of request.
+ * @size_loaded: The last loaded size क्रम DxEPTSIZE क्रम periodic IN
  * @target_frame: Targeted frame num to setup next ISOC transfer
  * @frame_overrun: Indicates SOF number overrun in DSTS
  *
- * This is the driver's state for each registered endpoint, allowing it
- * to keep track of transactions that need doing. Each endpoint has a
- * lock to protect the state, to try and avoid using an overall lock
- * for the host controller as much as possible.
+ * This is the driver's state क्रम each रेजिस्टरed endpoपूर्णांक, allowing it
+ * to keep track of transactions that need करोing. Each endpoपूर्णांक has a
+ * lock to protect the state, to try and aव्योम using an overall lock
+ * क्रम the host controller as much as possible.
  *
- * For periodic IN endpoints, we have fifo_size and fifo_load to try
- * and keep track of the amount of data in the periodic FIFO for each
- * of these as we don't have a status register that tells us how much
- * is in each of them. (note, this may actually be useless information
- * as in shared-fifo mode periodic in acts like a single-frame packet
- * buffer than a fifo)
+ * For periodic IN endpoपूर्णांकs, we have fअगरo_size and fअगरo_load to try
+ * and keep track of the amount of data in the periodic FIFO क्रम each
+ * of these as we करोn't have a status रेजिस्टर that tells us how much
+ * is in each of them. (note, this may actually be useless inक्रमmation
+ * as in shared-fअगरo mode periodic in acts like a single-frame packet
+ * buffer than a fअगरo)
  */
-struct dwc2_hsotg_ep {
-	struct usb_ep           ep;
-	struct list_head        queue;
-	struct dwc2_hsotg       *parent;
-	struct dwc2_hsotg_req    *req;
-	struct dentry           *debugfs;
+काष्ठा dwc2_hsotg_ep अणु
+	काष्ठा usb_ep           ep;
+	काष्ठा list_head        queue;
+	काष्ठा dwc2_hsotg       *parent;
+	काष्ठा dwc2_hsotg_req    *req;
+	काष्ठा dentry           *debugfs;
 
-	unsigned long           total_data;
-	unsigned int            size_loaded;
-	unsigned int            last_load;
-	unsigned int            fifo_load;
-	unsigned short          fifo_size;
-	unsigned short		fifo_index;
+	अचिन्हित दीर्घ           total_data;
+	अचिन्हित पूर्णांक            size_loaded;
+	अचिन्हित पूर्णांक            last_load;
+	अचिन्हित पूर्णांक            fअगरo_load;
+	अचिन्हित लघु          fअगरo_size;
+	अचिन्हित लघु		fअगरo_index;
 
-	unsigned char           dir_in;
-	unsigned char           map_dir;
-	unsigned char           index;
-	unsigned char           mc;
-	u16                     interval;
+	अचिन्हित अक्षर           dir_in;
+	अचिन्हित अक्षर           map_dir;
+	अचिन्हित अक्षर           index;
+	अचिन्हित अक्षर           mc;
+	u16                     पूर्णांकerval;
 
-	unsigned int            halted:1;
-	unsigned int            periodic:1;
-	unsigned int            isochronous:1;
-	unsigned int            send_zlp:1;
-	unsigned int            target_frame;
-#define TARGET_FRAME_INITIAL   0xFFFFFFFF
+	अचिन्हित पूर्णांक            halted:1;
+	अचिन्हित पूर्णांक            periodic:1;
+	अचिन्हित पूर्णांक            isochronous:1;
+	अचिन्हित पूर्णांक            send_zlp:1;
+	अचिन्हित पूर्णांक            target_frame;
+#घोषणा TARGET_FRAME_INITIAL   0xFFFFFFFF
 	bool			frame_overrun;
 
 	dma_addr_t		desc_list_dma;
-	struct dwc2_dma_desc	*desc_list;
+	काष्ठा dwc2_dma_desc	*desc_list;
 	u8			desc_count;
 
-	unsigned int		next_desc;
-	unsigned int		compl_desc;
+	अचिन्हित पूर्णांक		next_desc;
+	अचिन्हित पूर्णांक		compl_desc;
 
-	char                    name[10];
-};
+	अक्षर                    name[10];
+पूर्ण;
 
 /**
- * struct dwc2_hsotg_req - data transfer request
+ * काष्ठा dwc2_hsotg_req - data transfer request
  * @req: The USB gadget request
- * @queue: The list of requests for the endpoint this is queued for.
+ * @queue: The list of requests क्रम the endpoपूर्णांक this is queued क्रम.
  * @saved_req_buf: variable to save req.buf when bounce buffers are used.
  */
-struct dwc2_hsotg_req {
-	struct usb_request      req;
-	struct list_head        queue;
-	void *saved_req_buf;
-};
+काष्ठा dwc2_hsotg_req अणु
+	काष्ठा usb_request      req;
+	काष्ठा list_head        queue;
+	व्योम *saved_req_buf;
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_USB_DWC2_PERIPHERAL) || \
+#अगर IS_ENABLED(CONFIG_USB_DWC2_PERIPHERAL) || \
 	IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
-#define call_gadget(_hs, _entry) \
-do { \
-	if ((_hs)->gadget.speed != USB_SPEED_UNKNOWN && \
-		(_hs)->driver && (_hs)->driver->_entry) { \
+#घोषणा call_gadget(_hs, _entry) \
+करो अणु \
+	अगर ((_hs)->gadget.speed != USB_SPEED_UNKNOWN && \
+		(_hs)->driver && (_hs)->driver->_entry) अणु \
 		spin_unlock(&_hs->lock); \
 		(_hs)->driver->_entry(&(_hs)->gadget); \
 		spin_lock(&_hs->lock); \
-	} \
-} while (0)
-#else
-#define call_gadget(_hs, _entry)	do {} while (0)
-#endif
+	पूर्ण \
+पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा call_gadget(_hs, _entry)	करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
-struct dwc2_hsotg;
-struct dwc2_host_chan;
+काष्ठा dwc2_hsotg;
+काष्ठा dwc2_host_chan;
 
 /* Device States */
-enum dwc2_lx_state {
+क्रमागत dwc2_lx_state अणु
 	DWC2_L0,	/* On state */
 	DWC2_L1,	/* LPM sleep state */
 	DWC2_L2,	/* USB suspend state */
 	DWC2_L3,	/* Off state */
-};
+पूर्ण;
 
 /* Gadget ep0 states */
-enum dwc2_ep0_state {
+क्रमागत dwc2_ep0_state अणु
 	DWC2_EP0_SETUP,
 	DWC2_EP0_DATA_IN,
 	DWC2_EP0_DATA_OUT,
 	DWC2_EP0_STATUS_IN,
 	DWC2_EP0_STATUS_OUT,
-};
+पूर्ण;
 
 /**
- * struct dwc2_core_params - Parameters for configuring the core
+ * काष्ठा dwc2_core_params - Parameters क्रम configuring the core
  *
- * @otg_cap:            Specifies the OTG capabilities.
+ * @otg_cap:            Specअगरies the OTG capabilities.
  *                       0 - HNP and SRP capable
  *                       1 - SRP Only capable
  *                       2 - No HNP/SRP capable (always available)
  *                      Defaults to best available option (0, 1, then 2)
- * @host_dma:           Specifies whether to use slave or DMA mode for accessing
- *                      the data FIFOs. The driver will automatically detect the
- *                      value for this parameter if none is specified.
+ * @host_dma:           Specअगरies whether to use slave or DMA mode क्रम accessing
+ *                      the data FIFOs. The driver will स्वतःmatically detect the
+ *                      value क्रम this parameter अगर none is specअगरied.
  *                       0 - Slave (always available)
- *                       1 - DMA (default, if available)
- * @dma_desc_enable:    When DMA mode is enabled, specifies whether to use
- *                      address DMA mode or descriptor DMA mode for accessing
- *                      the data FIFOs. The driver will automatically detect the
- *                      value for this if none is specified.
+ *                       1 - DMA (शेष, अगर available)
+ * @dma_desc_enable:    When DMA mode is enabled, specअगरies whether to use
+ *                      address DMA mode or descriptor DMA mode क्रम accessing
+ *                      the data FIFOs. The driver will स्वतःmatically detect the
+ *                      value क्रम this अगर none is specअगरied.
  *                       0 - Address DMA
- *                       1 - Descriptor DMA (default, if available)
- * @dma_desc_fs_enable: When DMA mode is enabled, specifies whether to use
- *                      address DMA mode or descriptor DMA mode for accessing
+ *                       1 - Descriptor DMA (शेष, अगर available)
+ * @dma_desc_fs_enable: When DMA mode is enabled, specअगरies whether to use
+ *                      address DMA mode or descriptor DMA mode क्रम accessing
  *                      the data FIFOs in Full Speed mode only. The driver
- *                      will automatically detect the value for this if none is
- *                      specified.
+ *                      will स्वतःmatically detect the value क्रम this अगर none is
+ *                      specअगरied.
  *                       0 - Address DMA
- *                       1 - Descriptor DMA in FS (default, if available)
- * @speed:              Specifies the maximum speed of operation in host and
+ *                       1 - Descriptor DMA in FS (शेष, अगर available)
+ * @speed:              Specअगरies the maximum speed of operation in host and
  *                      device mode. The actual speed depends on the speed of
  *                      the attached device and the value of phy_type.
  *                       0 - High Speed
- *                           (default when phy_type is UTMI+ or ULPI)
+ *                           (शेष when phy_type is UTMI+ or ULPI)
  *                       1 - Full Speed
- *                           (default when phy_type is Full Speed)
- * @enable_dynamic_fifo: 0 - Use coreConsultant-specified FIFO size parameters
- *                       1 - Allow dynamic FIFO sizing (default, if available)
- * @en_multiple_tx_fifo: Specifies whether dedicated per-endpoint transmit FIFOs
- *                      are enabled for non-periodic IN endpoints in device
+ *                           (शेष when phy_type is Full Speed)
+ * @enable_dynamic_fअगरo: 0 - Use coreConsultant-specअगरied FIFO size parameters
+ *                       1 - Allow dynamic FIFO sizing (शेष, अगर available)
+ * @en_multiple_tx_fअगरo: Specअगरies whether dedicated per-endpoपूर्णांक transmit FIFOs
+ *                      are enabled क्रम non-periodic IN endpoपूर्णांकs in device
  *                      mode.
- * @host_rx_fifo_size:  Number of 4-byte words in the Rx FIFO in host mode when
+ * @host_rx_fअगरo_size:  Number of 4-byte words in the Rx FIFO in host mode when
  *                      dynamic FIFO sizing is enabled
  *                       16 to 32768
- *                      Actual maximum value is autodetected and also
- *                      the default.
- * @host_nperio_tx_fifo_size: Number of 4-byte words in the non-periodic Tx FIFO
+ *                      Actual maximum value is स्वतःdetected and also
+ *                      the शेष.
+ * @host_nperio_tx_fअगरo_size: Number of 4-byte words in the non-periodic Tx FIFO
  *                      in host mode when dynamic FIFO sizing is enabled
  *                       16 to 32768
- *                      Actual maximum value is autodetected and also
- *                      the default.
- * @host_perio_tx_fifo_size: Number of 4-byte words in the periodic Tx FIFO in
+ *                      Actual maximum value is स्वतःdetected and also
+ *                      the शेष.
+ * @host_perio_tx_fअगरo_size: Number of 4-byte words in the periodic Tx FIFO in
  *                      host mode when dynamic FIFO sizing is enabled
  *                       16 to 32768
- *                      Actual maximum value is autodetected and also
- *                      the default.
+ *                      Actual maximum value is स्वतःdetected and also
+ *                      the शेष.
  * @max_transfer_size:  The maximum transfer size supported, in bytes
  *                       2047 to 65,535
- *                      Actual maximum value is autodetected and also
- *                      the default.
+ *                      Actual maximum value is स्वतःdetected and also
+ *                      the शेष.
  * @max_packet_count:   The maximum number of packets in a transfer
  *                       15 to 511
- *                      Actual maximum value is autodetected and also
- *                      the default.
- * @host_channels:      The number of host channel registers to use
+ *                      Actual maximum value is स्वतःdetected and also
+ *                      the शेष.
+ * @host_channels:      The number of host channel रेजिस्टरs to use
  *                       1 to 16
- *                      Actual maximum value is autodetected and also
- *                      the default.
- * @phy_type:           Specifies the type of PHY interface to use. By default,
- *                      the driver will automatically detect the phy_type.
+ *                      Actual maximum value is स्वतःdetected and also
+ *                      the शेष.
+ * @phy_type:           Specअगरies the type of PHY पूर्णांकerface to use. By शेष,
+ *                      the driver will स्वतःmatically detect the phy_type.
  *                       0 - Full Speed Phy
  *                       1 - UTMI+ Phy
  *                       2 - ULPI Phy
  *                      Defaults to best available option (2, 1, then 0)
- * @phy_utmi_width:     Specifies the UTMI+ Data Width (in bits). This parameter
- *                      is applicable for a phy_type of UTMI+ or ULPI. (For a
+ * @phy_uपंचांगi_width:     Specअगरies the UTMI+ Data Width (in bits). This parameter
+ *                      is applicable क्रम a phy_type of UTMI+ or ULPI. (For a
  *                      ULPI phy_type, this parameter indicates the data width
  *                      between the MAC and the ULPI Wrapper.) Also, this
- *                      parameter is applicable only if the OTG_HSPHY_WIDTH cC
+ *                      parameter is applicable only अगर the OTG_HSPHY_WIDTH cC
  *                      parameter was set to "8 and 16 bits", meaning that the
  *                      core has been configured to work at either data path
  *                      width.
- *                       8 or 16 (default 16 if available)
- * @phy_ulpi_ddr:       Specifies whether the ULPI operates at double or single
- *                      data rate. This parameter is only applicable if phy_type
+ *                       8 or 16 (शेष 16 अगर available)
+ * @phy_ulpi_ddr:       Specअगरies whether the ULPI operates at द्विगुन or single
+ *                      data rate. This parameter is only applicable अगर phy_type
  *                      is ULPI.
- *                       0 - single data rate ULPI interface with 8 bit wide
- *                           data bus (default)
- *                       1 - double data rate ULPI interface with 4 bit wide
+ *                       0 - single data rate ULPI पूर्णांकerface with 8 bit wide
+ *                           data bus (शेष)
+ *                       1 - द्विगुन data rate ULPI पूर्णांकerface with 4 bit wide
  *                           data bus
- * @phy_ulpi_ext_vbus:  For a ULPI phy, specifies whether to use the internal or
- *                      external supply to drive the VBus
- *                       0 - Internal supply (default)
+ * @phy_ulpi_ext_vbus:  For a ULPI phy, specअगरies whether to use the पूर्णांकernal or
+ *                      बाह्यal supply to drive the VBus
+ *                       0 - Internal supply (शेष)
  *                       1 - External supply
- * @i2c_enable:         Specifies whether to use the I2Cinterface for a full
- *                      speed PHY. This parameter is only applicable if phy_type
+ * @i2c_enable:         Specअगरies whether to use the I2Cपूर्णांकerface क्रम a full
+ *                      speed PHY. This parameter is only applicable अगर phy_type
  *                      is FS.
- *                       0 - No (default)
+ *                       0 - No (शेष)
  *                       1 - Yes
  * @ipg_isoc_en:        Indicates the IPG supports is enabled or disabled.
- *                       0 - Disable (default)
+ *                       0 - Disable (शेष)
  *                       1 - Enable
  * @acg_enable:		For enabling Active Clock Gating in the controller
  *                       0 - No
  *                       1 - Yes
  * @ulpi_fs_ls:         Make ULPI phy operate in FS/LS mode only
- *                       0 - No (default)
+ *                       0 - No (शेष)
  *                       1 - Yes
- * @host_support_fs_ls_low_power: Specifies whether low power mode is supported
+ * @host_support_fs_ls_low_घातer: Specअगरies whether low घातer mode is supported
  *                      when attached to a Full Speed or Low Speed device in
  *                      host mode.
- *                       0 - Don't support low power mode (default)
- *                       1 - Support low power mode
- * @host_ls_low_power_phy_clk: Specifies the PHY clock rate in low power mode
+ *                       0 - Don't support low घातer mode (शेष)
+ *                       1 - Support low घातer mode
+ * @host_ls_low_घातer_phy_clk: Specअगरies the PHY घड़ी rate in low घातer mode
  *                      when connected to a Low Speed device in host
- *                      mode. This parameter is applicable only if
- *                      host_support_fs_ls_low_power is enabled.
+ *                      mode. This parameter is applicable only अगर
+ *                      host_support_fs_ls_low_घातer is enabled.
  *                       0 - 48 MHz
- *                           (default when phy_type is UTMI+ or ULPI)
+ *                           (शेष when phy_type is UTMI+ or ULPI)
  *                       1 - 6 MHz
- *                           (default when phy_type is Full Speed)
+ *                           (शेष when phy_type is Full Speed)
  * @oc_disable:		Flag to disable overcurrent condition.
  *			0 - Allow overcurrent condition to get detected
  *			1 - Disable overcurrent condtion to get detected
  * @ts_dline:           Enable Term Select Dline pulsing
- *                       0 - No (default)
+ *                       0 - No (शेष)
  *                       1 - Yes
- * @reload_ctl:         Allow dynamic reloading of HFIR register during runtime
- *                       0 - No (default for core < 2.92a)
- *                       1 - Yes (default for core >= 2.92a)
- * @ahbcfg:             This field allows the default value of the GAHBCFG
- *                      register to be overridden
+ * @reload_ctl:         Allow dynamic reloading of HFIR रेजिस्टर during runसमय
+ *                       0 - No (शेष क्रम core < 2.92a)
+ *                       1 - Yes (शेष क्रम core >= 2.92a)
+ * @ahbcfg:             This field allows the शेष value of the GAHBCFG
+ *                      रेजिस्टर to be overridden
  *                       -1         - GAHBCFG value will be set to 0x06
- *                                    (INCR, default)
+ *                                    (INCR, शेष)
  *                       all others - GAHBCFG value will be overridden with
  *                                    this value
  *                      Not all bits can be controlled like this, the
@@ -371,22 +372,22 @@ enum dwc2_ep0_state {
  *                      by the driver and are ignored in this
  *                      configuration value.
  * @uframe_sched:       True to enable the microframe scheduler
- * @external_id_pin_ctl: Specifies whether ID pin is handled externally.
- *                      Disable CONIDSTSCHNG controller interrupt in such
- *                      case.
- *                      0 - No (default)
+ * @बाह्यal_id_pin_ctl: Specअगरies whether ID pin is handled बाह्यally.
+ *                      Disable CONIDSTSCHNG controller पूर्णांकerrupt in such
+ *                      हाल.
+ *                      0 - No (शेष)
  *                      1 - Yes
- * @power_down:         Specifies whether the controller support power_down.
- *			If power_down is enabled, the controller will enter
- *			power_down in both peripheral and host mode when
+ * @घातer_करोwn:         Specअगरies whether the controller support घातer_करोwn.
+ *			If घातer_करोwn is enabled, the controller will enter
+ *			घातer_करोwn in both peripheral and host mode when
  *			needed.
- *			0 - No (default)
- *			1 - Partial power down
+ *			0 - No (शेष)
+ *			1 - Partial घातer करोwn
  *			2 - Hibernation
  * @lpm:		Enable LPM support.
  *			0 - No
  *			1 - Yes
- * @lpm_clock_gating:		Enable core PHY clock gating.
+ * @lpm_घड़ी_gating:		Enable core PHY घड़ी gating.
  *			0 - No
  *			1 - Yes
  * @besl:		Enable LPM Errata support.
@@ -403,92 +404,92 @@ enum dwc2_ep0_state {
  *                      52083 - 19.2MHz
  *			50000 - 20MHz
  *			41666 - 24MHz
- *			33333 - 30MHz (default)
+ *			33333 - 30MHz (शेष)
  *			25000 - 40MHz
  * @sof_cnt_wkup_alert: Indicates in term of number of SOF's after which
- *                      the controller should generate an interrupt if the
+ *                      the controller should generate an पूर्णांकerrupt अगर the
  *                      device had been in L1 state until that period.
  *                      This is used by SW to initiate Remote WakeUp in the
  *                      controller so as to sync to the uF number from the host.
- * @activate_stm_fs_transceiver: Activate internal transceiver using GGPIO
- *			register.
- *			0 - Deactivate the transceiver (default)
+ * @activate_sपंचांग_fs_transceiver: Activate पूर्णांकernal transceiver using GGPIO
+ *			रेजिस्टर.
+ *			0 - Deactivate the transceiver (शेष)
  *			1 - Activate the transceiver
- * @activate_stm_id_vb_detection: Activate external ID pin and Vbus level
- *			detection using GGPIO register.
- *			0 - Deactivate the external level detection (default)
- *			1 - Activate the external level detection
- * @g_dma:              Enables gadget dma usage (default: autodetect).
- * @g_dma_desc:         Enables gadget descriptor DMA (default: autodetect).
- * @g_rx_fifo_size:	The periodic rx fifo size for the device, in
- *			DWORDS from 16-32768 (default: 2048 if
- *			possible, otherwise autodetect).
- * @g_np_tx_fifo_size:	The non-periodic tx fifo size for the device in
- *			DWORDS from 16-32768 (default: 1024 if
- *			possible, otherwise autodetect).
- * @g_tx_fifo_size:	An array of TX fifo sizes in dedicated fifo
+ * @activate_sपंचांग_id_vb_detection: Activate बाह्यal ID pin and Vbus level
+ *			detection using GGPIO रेजिस्टर.
+ *			0 - Deactivate the बाह्यal level detection (शेष)
+ *			1 - Activate the बाह्यal level detection
+ * @g_dma:              Enables gadget dma usage (शेष: स्वतःdetect).
+ * @g_dma_desc:         Enables gadget descriptor DMA (शेष: स्वतःdetect).
+ * @g_rx_fअगरo_size:	The periodic rx fअगरo size क्रम the device, in
+ *			DWORDS from 16-32768 (शेष: 2048 अगर
+ *			possible, otherwise स्वतःdetect).
+ * @g_np_tx_fअगरo_size:	The non-periodic tx fअगरo size क्रम the device in
+ *			DWORDS from 16-32768 (शेष: 1024 अगर
+ *			possible, otherwise स्वतःdetect).
+ * @g_tx_fअगरo_size:	An array of TX fअगरo sizes in dedicated fअगरo
  *			mode. Each value corresponds to one EP
  *			starting from EP1 (max 15 values). Sizes are
  *			in DWORDS with possible values from
- *			16-32768 (default: 256, 256, 256, 256, 768,
+ *			16-32768 (शेष: 256, 256, 256, 256, 768,
  *			768, 768, 768, 0, 0, 0, 0, 0, 0, 0).
  * @change_speed_quirk: Change speed configuration to DWC2_SPEED_PARAM_FULL
- *                      while full&low speed device connect. And change speed
- *                      back to DWC2_SPEED_PARAM_HIGH while device is gone.
- *			0 - No (default)
+ *                      जबतक full&low speed device connect. And change speed
+ *                      back to DWC2_SPEED_PARAM_HIGH जबतक device is gone.
+ *			0 - No (शेष)
  *			1 - Yes
- * @service_interval:   Enable service interval based scheduling.
+ * @service_पूर्णांकerval:   Enable service पूर्णांकerval based scheduling.
  *                      0 - No
  *                      1 - Yes
  *
- * The following parameters may be specified when starting the module. These
+ * The following parameters may be specअगरied when starting the module. These
  * parameters define how the DWC_otg controller should be configured. A
- * value of -1 (or any other out of range value) for any parameter means
- * to read the value from hardware (if possible) or use the builtin
- * default described above.
+ * value of -1 (or any other out of range value) क्रम any parameter means
+ * to पढ़ो the value from hardware (अगर possible) or use the builtin
+ * शेष described above.
  */
-struct dwc2_core_params {
+काष्ठा dwc2_core_params अणु
 	u8 otg_cap;
-#define DWC2_CAP_PARAM_HNP_SRP_CAPABLE		0
-#define DWC2_CAP_PARAM_SRP_ONLY_CAPABLE		1
-#define DWC2_CAP_PARAM_NO_HNP_SRP_CAPABLE	2
+#घोषणा DWC2_CAP_PARAM_HNP_SRP_CAPABLE		0
+#घोषणा DWC2_CAP_PARAM_SRP_ONLY_CAPABLE		1
+#घोषणा DWC2_CAP_PARAM_NO_HNP_SRP_CAPABLE	2
 
 	u8 phy_type;
-#define DWC2_PHY_TYPE_PARAM_FS		0
-#define DWC2_PHY_TYPE_PARAM_UTMI	1
-#define DWC2_PHY_TYPE_PARAM_ULPI	2
+#घोषणा DWC2_PHY_TYPE_PARAM_FS		0
+#घोषणा DWC2_PHY_TYPE_PARAM_UTMI	1
+#घोषणा DWC2_PHY_TYPE_PARAM_ULPI	2
 
 	u8 speed;
-#define DWC2_SPEED_PARAM_HIGH	0
-#define DWC2_SPEED_PARAM_FULL	1
-#define DWC2_SPEED_PARAM_LOW	2
+#घोषणा DWC2_SPEED_PARAM_HIGH	0
+#घोषणा DWC2_SPEED_PARAM_FULL	1
+#घोषणा DWC2_SPEED_PARAM_LOW	2
 
-	u8 phy_utmi_width;
+	u8 phy_uपंचांगi_width;
 	bool phy_ulpi_ddr;
 	bool phy_ulpi_ext_vbus;
-	bool enable_dynamic_fifo;
-	bool en_multiple_tx_fifo;
+	bool enable_dynamic_fअगरo;
+	bool en_multiple_tx_fअगरo;
 	bool i2c_enable;
 	bool acg_enable;
 	bool ulpi_fs_ls;
 	bool ts_dline;
 	bool reload_ctl;
 	bool uframe_sched;
-	bool external_id_pin_ctl;
+	bool बाह्यal_id_pin_ctl;
 
-	int power_down;
-#define DWC2_POWER_DOWN_PARAM_NONE		0
-#define DWC2_POWER_DOWN_PARAM_PARTIAL		1
-#define DWC2_POWER_DOWN_PARAM_HIBERNATION	2
+	पूर्णांक घातer_करोwn;
+#घोषणा DWC2_POWER_DOWN_PARAM_NONE		0
+#घोषणा DWC2_POWER_DOWN_PARAM_PARTIAL		1
+#घोषणा DWC2_POWER_DOWN_PARAM_HIBERNATION	2
 
 	bool lpm;
-	bool lpm_clock_gating;
+	bool lpm_घड़ी_gating;
 	bool besl;
 	bool hird_threshold_en;
-	bool service_interval;
+	bool service_पूर्णांकerval;
 	u8 hird_threshold;
-	bool activate_stm_fs_transceiver;
-	bool activate_stm_id_vb_detection;
+	bool activate_sपंचांग_fs_transceiver;
+	bool activate_sपंचांग_id_vb_detection;
 	bool ipg_isoc_en;
 	u16 max_packet_count;
 	u32 max_transfer_size;
@@ -502,34 +503,34 @@ struct dwc2_core_params {
 	bool host_dma;
 	bool dma_desc_enable;
 	bool dma_desc_fs_enable;
-	bool host_support_fs_ls_low_power;
-	bool host_ls_low_power_phy_clk;
+	bool host_support_fs_ls_low_घातer;
+	bool host_ls_low_घातer_phy_clk;
 	bool oc_disable;
 
 	u8 host_channels;
-	u16 host_rx_fifo_size;
-	u16 host_nperio_tx_fifo_size;
-	u16 host_perio_tx_fifo_size;
+	u16 host_rx_fअगरo_size;
+	u16 host_nperio_tx_fअगरo_size;
+	u16 host_perio_tx_fअगरo_size;
 
 	/* Gadget parameters */
 	bool g_dma;
 	bool g_dma_desc;
-	u32 g_rx_fifo_size;
-	u32 g_np_tx_fifo_size;
-	u32 g_tx_fifo_size[MAX_EPS_CHANNELS];
+	u32 g_rx_fअगरo_size;
+	u32 g_np_tx_fअगरo_size;
+	u32 g_tx_fअगरo_size[MAX_EPS_CHANNELS];
 
 	bool change_speed_quirk;
-};
+पूर्ण;
 
 /**
- * struct dwc2_hw_params - Autodetected parameters.
+ * काष्ठा dwc2_hw_params - Autodetected parameters.
  *
- * These parameters are the various parameters read from hardware
- * registers during initialization. They typically contain the best
+ * These parameters are the various parameters पढ़ो from hardware
+ * रेजिस्टरs during initialization. They typically contain the best
  * supported or maximum value that can be configured in the
  * corresponding dwc2_core_params value.
  *
- * The values that are not in dwc2_core_params are documented below.
+ * The values that are not in dwc2_core_params are करोcumented below.
  *
  * @op_mode:             Mode of Operation
  *                       0 - HNP- and SRP-Capable OTG (Host & Device)
@@ -544,15 +545,15 @@ struct dwc2_core_params {
  *                       1 - External DMA
  *                       2 - Internal DMA
  * @ipg_isoc_en:        This feature indicates that the controller supports
- *                      the worst-case scenario of Rx followed by Rx
- *                      Interpacket Gap (IPG) (32 bitTimes) as per the utmi
- *                      specification for any token following ISOC OUT token.
+ *                      the worst-हाल scenario of Rx followed by Rx
+ *                      Interpacket Gap (IPG) (32 bitTimes) as per the uपंचांगi
+ *                      specअगरication क्रम any token following ISOC OUT token.
  *                       0 - Don't support
  *                       1 - Support
- * @power_optimized:    Are power optimizations enabled?
- * @num_dev_ep:         Number of device endpoints available
- * @num_dev_in_eps:     Number of device IN endpoints available
- * @num_dev_perio_in_ep: Number of device periodic IN endpoints
+ * @घातer_optimized:    Are घातer optimizations enabled?
+ * @num_dev_ep:         Number of device endpoपूर्णांकs available
+ * @num_dev_in_eps:     Number of device IN endpoपूर्णांकs available
+ * @num_dev_perio_in_ep: Number of device periodic IN endpoपूर्णांकs
  *                       available
  * @dev_token_q_depth:  Device Mode IN Token Sequence Learning Queue
  *                      Depth
@@ -563,67 +564,67 @@ struct dwc2_core_params {
  * @nperio_tx_q_depth:
  *                      Non-Periodic Request Queue Depth
  *                       2, 4 or 8
- * @hs_phy_type:         High-speed PHY interface type
- *                       0 - High-speed interface not supported
+ * @hs_phy_type:         High-speed PHY पूर्णांकerface type
+ *                       0 - High-speed पूर्णांकerface not supported
  *                       1 - UTMI+
  *                       2 - ULPI
  *                       3 - UTMI+ and ULPI
- * @fs_phy_type:         Full-speed PHY interface type
- *                       0 - Full speed interface not supported
- *                       1 - Dedicated full speed interface
+ * @fs_phy_type:         Full-speed PHY पूर्णांकerface type
+ *                       0 - Full speed पूर्णांकerface not supported
+ *                       1 - Dedicated full speed पूर्णांकerface
  *                       2 - FS pins shared with UTMI+ pins
  *                       3 - FS pins shared with ULPI pins
- * @total_fifo_size:    Total internal RAM for FIFOs (bytes)
+ * @total_fअगरo_size:    Total पूर्णांकernal RAM क्रम FIFOs (bytes)
  * @hibernation:	Is hibernation enabled?
- * @utmi_phy_data_width: UTMI+ PHY data width
+ * @uपंचांगi_phy_data_width: UTMI+ PHY data width
  *                       0 - 8 bits
  *                       1 - 16 bits
  *                       2 - 8 or 16 bits
- * @snpsid:             Value from SNPSID register
- * @dev_ep_dirs:        Direction of device endpoints (GHWCFG1)
- * @g_tx_fifo_size:	Power-on values of TxFIFO sizes
- * @dma_desc_enable:    When DMA mode is enabled, specifies whether to use
- *                      address DMA mode or descriptor DMA mode for accessing
- *                      the data FIFOs. The driver will automatically detect the
- *                      value for this if none is specified.
+ * @snpsid:             Value from SNPSID रेजिस्टर
+ * @dev_ep_dirs:        Direction of device endpoपूर्णांकs (GHWCFG1)
+ * @g_tx_fअगरo_size:	Power-on values of TxFIFO sizes
+ * @dma_desc_enable:    When DMA mode is enabled, specअगरies whether to use
+ *                      address DMA mode or descriptor DMA mode क्रम accessing
+ *                      the data FIFOs. The driver will स्वतःmatically detect the
+ *                      value क्रम this अगर none is specअगरied.
  *                       0 - Address DMA
- *                       1 - Descriptor DMA (default, if available)
- * @enable_dynamic_fifo: 0 - Use coreConsultant-specified FIFO size parameters
- *                       1 - Allow dynamic FIFO sizing (default, if available)
- * @en_multiple_tx_fifo: Specifies whether dedicated per-endpoint transmit FIFOs
- *                      are enabled for non-periodic IN endpoints in device
+ *                       1 - Descriptor DMA (शेष, अगर available)
+ * @enable_dynamic_fअगरo: 0 - Use coreConsultant-specअगरied FIFO size parameters
+ *                       1 - Allow dynamic FIFO sizing (शेष, अगर available)
+ * @en_multiple_tx_fअगरo: Specअगरies whether dedicated per-endpoपूर्णांक transmit FIFOs
+ *                      are enabled क्रम non-periodic IN endpoपूर्णांकs in device
  *                      mode.
- * @host_nperio_tx_fifo_size: Number of 4-byte words in the non-periodic Tx FIFO
+ * @host_nperio_tx_fअगरo_size: Number of 4-byte words in the non-periodic Tx FIFO
  *                      in host mode when dynamic FIFO sizing is enabled
  *                       16 to 32768
- *                      Actual maximum value is autodetected and also
- *                      the default.
- * @host_perio_tx_fifo_size: Number of 4-byte words in the periodic Tx FIFO in
+ *                      Actual maximum value is स्वतःdetected and also
+ *                      the शेष.
+ * @host_perio_tx_fअगरo_size: Number of 4-byte words in the periodic Tx FIFO in
  *                      host mode when dynamic FIFO sizing is enabled
  *                       16 to 32768
- *                      Actual maximum value is autodetected and also
- *                      the default.
+ *                      Actual maximum value is स्वतःdetected and also
+ *                      the शेष.
  * @max_transfer_size:  The maximum transfer size supported, in bytes
  *                       2047 to 65,535
- *                      Actual maximum value is autodetected and also
- *                      the default.
+ *                      Actual maximum value is स्वतःdetected and also
+ *                      the शेष.
  * @max_packet_count:   The maximum number of packets in a transfer
  *                       15 to 511
- *                      Actual maximum value is autodetected and also
- *                      the default.
- * @host_channels:      The number of host channel registers to use
+ *                      Actual maximum value is स्वतःdetected and also
+ *                      the शेष.
+ * @host_channels:      The number of host channel रेजिस्टरs to use
  *                       1 to 16
- *                      Actual maximum value is autodetected and also
- *                      the default.
- * @dev_nperio_tx_fifo_size: Number of 4-byte words in the non-periodic Tx FIFO
+ *                      Actual maximum value is स्वतःdetected and also
+ *                      the शेष.
+ * @dev_nperio_tx_fअगरo_size: Number of 4-byte words in the non-periodic Tx FIFO
  *			     in device mode when dynamic FIFO sizing is enabled
  *			     16 to 32768
- *			     Actual maximum value is autodetected and also
- *			     the default.
- * @i2c_enable:         Specifies whether to use the I2Cinterface for a full
- *                      speed PHY. This parameter is only applicable if phy_type
+ *			     Actual maximum value is स्वतःdetected and also
+ *			     the शेष.
+ * @i2c_enable:         Specअगरies whether to use the I2Cपूर्णांकerface क्रम a full
+ *                      speed PHY. This parameter is only applicable अगर phy_type
  *                      is FS.
- *                       0 - No (default)
+ *                       0 - No (शेष)
  *                       1 - Yes
  * @acg_enable:		For enabling Active Clock Gating in the controller
  *                       0 - Disable
@@ -631,74 +632,74 @@ struct dwc2_core_params {
  * @lpm_mode:		For enabling Link Power Management in the controller
  *                       0 - Disable
  *                       1 - Enable
- * @rx_fifo_size:	Number of 4-byte words in the  Rx FIFO when dynamic
+ * @rx_fअगरo_size:	Number of 4-byte words in the  Rx FIFO when dynamic
  *			FIFO sizing is enabled 16 to 32768
- *			Actual maximum value is autodetected and also
- *			the default.
- * @service_interval_mode: For enabling service interval based scheduling in the
+ *			Actual maximum value is स्वतःdetected and also
+ *			the शेष.
+ * @service_पूर्णांकerval_mode: For enabling service पूर्णांकerval based scheduling in the
  *                         controller.
  *                           0 - Disable
  *                           1 - Enable
  */
-struct dwc2_hw_params {
-	unsigned op_mode:3;
-	unsigned arch:2;
-	unsigned dma_desc_enable:1;
-	unsigned enable_dynamic_fifo:1;
-	unsigned en_multiple_tx_fifo:1;
-	unsigned rx_fifo_size:16;
-	unsigned host_nperio_tx_fifo_size:16;
-	unsigned dev_nperio_tx_fifo_size:16;
-	unsigned host_perio_tx_fifo_size:16;
-	unsigned nperio_tx_q_depth:3;
-	unsigned host_perio_tx_q_depth:3;
-	unsigned dev_token_q_depth:5;
-	unsigned max_transfer_size:26;
-	unsigned max_packet_count:11;
-	unsigned host_channels:5;
-	unsigned hs_phy_type:2;
-	unsigned fs_phy_type:2;
-	unsigned i2c_enable:1;
-	unsigned acg_enable:1;
-	unsigned num_dev_ep:4;
-	unsigned num_dev_in_eps : 4;
-	unsigned num_dev_perio_in_ep:4;
-	unsigned total_fifo_size:16;
-	unsigned power_optimized:1;
-	unsigned hibernation:1;
-	unsigned utmi_phy_data_width:2;
-	unsigned lpm_mode:1;
-	unsigned ipg_isoc_en:1;
-	unsigned service_interval_mode:1;
+काष्ठा dwc2_hw_params अणु
+	अचिन्हित op_mode:3;
+	अचिन्हित arch:2;
+	अचिन्हित dma_desc_enable:1;
+	अचिन्हित enable_dynamic_fअगरo:1;
+	अचिन्हित en_multiple_tx_fअगरo:1;
+	अचिन्हित rx_fअगरo_size:16;
+	अचिन्हित host_nperio_tx_fअगरo_size:16;
+	अचिन्हित dev_nperio_tx_fअगरo_size:16;
+	अचिन्हित host_perio_tx_fअगरo_size:16;
+	अचिन्हित nperio_tx_q_depth:3;
+	अचिन्हित host_perio_tx_q_depth:3;
+	अचिन्हित dev_token_q_depth:5;
+	अचिन्हित max_transfer_size:26;
+	अचिन्हित max_packet_count:11;
+	अचिन्हित host_channels:5;
+	अचिन्हित hs_phy_type:2;
+	अचिन्हित fs_phy_type:2;
+	अचिन्हित i2c_enable:1;
+	अचिन्हित acg_enable:1;
+	अचिन्हित num_dev_ep:4;
+	अचिन्हित num_dev_in_eps : 4;
+	अचिन्हित num_dev_perio_in_ep:4;
+	अचिन्हित total_fअगरo_size:16;
+	अचिन्हित घातer_optimized:1;
+	अचिन्हित hibernation:1;
+	अचिन्हित uपंचांगi_phy_data_width:2;
+	अचिन्हित lpm_mode:1;
+	अचिन्हित ipg_isoc_en:1;
+	अचिन्हित service_पूर्णांकerval_mode:1;
 	u32 snpsid;
 	u32 dev_ep_dirs;
-	u32 g_tx_fifo_size[MAX_EPS_CHANNELS];
-};
+	u32 g_tx_fअगरo_size[MAX_EPS_CHANNELS];
+पूर्ण;
 
 /* Size of control and EP0 buffers */
-#define DWC2_CTRL_BUFF_SIZE 8
+#घोषणा DWC2_CTRL_BUFF_SIZE 8
 
 /**
- * struct dwc2_gregs_backup - Holds global registers state before
- * entering partial power down
- * @gotgctl:		Backup of GOTGCTL register
- * @gintmsk:		Backup of GINTMSK register
- * @gahbcfg:		Backup of GAHBCFG register
- * @gusbcfg:		Backup of GUSBCFG register
- * @grxfsiz:		Backup of GRXFSIZ register
- * @gnptxfsiz:		Backup of GNPTXFSIZ register
- * @gi2cctl:		Backup of GI2CCTL register
- * @glpmcfg:		Backup of GLPMCFG register
- * @gdfifocfg:		Backup of GDFIFOCFG register
- * @pcgcctl:		Backup of PCGCCTL register
- * @pcgcctl1:		Backup of PCGCCTL1 register
- * @dtxfsiz:		Backup of DTXFSIZ registers for each endpoint
- * @gpwrdn:		Backup of GPWRDN register
- * @valid:		True if registers values backuped.
+ * काष्ठा dwc2_gregs_backup - Holds global रेजिस्टरs state beक्रमe
+ * entering partial घातer करोwn
+ * @gotgctl:		Backup of GOTGCTL रेजिस्टर
+ * @gपूर्णांकmsk:		Backup of GINTMSK रेजिस्टर
+ * @gahbcfg:		Backup of GAHBCFG रेजिस्टर
+ * @gusbcfg:		Backup of GUSBCFG रेजिस्टर
+ * @grxfsiz:		Backup of GRXFSIZ रेजिस्टर
+ * @gnptxfsiz:		Backup of GNPTXFSIZ रेजिस्टर
+ * @gi2cctl:		Backup of GI2CCTL रेजिस्टर
+ * @glpmcfg:		Backup of GLPMCFG रेजिस्टर
+ * @gdfअगरocfg:		Backup of GDFIFOCFG रेजिस्टर
+ * @pcgcctl:		Backup of PCGCCTL रेजिस्टर
+ * @pcgcctl1:		Backup of PCGCCTL1 रेजिस्टर
+ * @dtxfsiz:		Backup of DTXFSIZ रेजिस्टरs क्रम each endpoपूर्णांक
+ * @gpwrdn:		Backup of GPWRDN रेजिस्टर
+ * @valid:		True अगर रेजिस्टरs values backuped.
  */
-struct dwc2_gregs_backup {
+काष्ठा dwc2_gregs_backup अणु
 	u32 gotgctl;
-	u32 gintmsk;
+	u32 gपूर्णांकmsk;
 	u32 gahbcfg;
 	u32 gusbcfg;
 	u32 grxfsiz;
@@ -707,153 +708,153 @@ struct dwc2_gregs_backup {
 	u32 glpmcfg;
 	u32 pcgcctl;
 	u32 pcgcctl1;
-	u32 gdfifocfg;
+	u32 gdfअगरocfg;
 	u32 gpwrdn;
 	bool valid;
-};
+पूर्ण;
 
 /**
- * struct dwc2_dregs_backup - Holds device registers state before
- * entering partial power down
- * @dcfg:		Backup of DCFG register
- * @dctl:		Backup of DCTL register
- * @daintmsk:		Backup of DAINTMSK register
- * @diepmsk:		Backup of DIEPMSK register
- * @doepmsk:		Backup of DOEPMSK register
- * @diepctl:		Backup of DIEPCTL register
- * @dieptsiz:		Backup of DIEPTSIZ register
- * @diepdma:		Backup of DIEPDMA register
- * @doepctl:		Backup of DOEPCTL register
- * @doeptsiz:		Backup of DOEPTSIZ register
- * @doepdma:		Backup of DOEPDMA register
- * @dtxfsiz:		Backup of DTXFSIZ registers for each endpoint
- * @valid:      True if registers values backuped.
+ * काष्ठा dwc2_dregs_backup - Holds device रेजिस्टरs state beक्रमe
+ * entering partial घातer करोwn
+ * @dcfg:		Backup of DCFG रेजिस्टर
+ * @dctl:		Backup of DCTL रेजिस्टर
+ * @daपूर्णांकmsk:		Backup of DAINTMSK रेजिस्टर
+ * @diepmsk:		Backup of DIEPMSK रेजिस्टर
+ * @करोepmsk:		Backup of DOEPMSK रेजिस्टर
+ * @diepctl:		Backup of DIEPCTL रेजिस्टर
+ * @dieptsiz:		Backup of DIEPTSIZ रेजिस्टर
+ * @diepdma:		Backup of DIEPDMA रेजिस्टर
+ * @करोepctl:		Backup of DOEPCTL रेजिस्टर
+ * @करोeptsiz:		Backup of DOEPTSIZ रेजिस्टर
+ * @करोepdma:		Backup of DOEPDMA रेजिस्टर
+ * @dtxfsiz:		Backup of DTXFSIZ रेजिस्टरs क्रम each endpoपूर्णांक
+ * @valid:      True अगर रेजिस्टरs values backuped.
  */
-struct dwc2_dregs_backup {
+काष्ठा dwc2_dregs_backup अणु
 	u32 dcfg;
 	u32 dctl;
-	u32 daintmsk;
+	u32 daपूर्णांकmsk;
 	u32 diepmsk;
-	u32 doepmsk;
+	u32 करोepmsk;
 	u32 diepctl[MAX_EPS_CHANNELS];
 	u32 dieptsiz[MAX_EPS_CHANNELS];
 	u32 diepdma[MAX_EPS_CHANNELS];
-	u32 doepctl[MAX_EPS_CHANNELS];
-	u32 doeptsiz[MAX_EPS_CHANNELS];
-	u32 doepdma[MAX_EPS_CHANNELS];
+	u32 करोepctl[MAX_EPS_CHANNELS];
+	u32 करोeptsiz[MAX_EPS_CHANNELS];
+	u32 करोepdma[MAX_EPS_CHANNELS];
 	u32 dtxfsiz[MAX_EPS_CHANNELS];
 	bool valid;
-};
+पूर्ण;
 
 /**
- * struct dwc2_hregs_backup - Holds host registers state before
- * entering partial power down
- * @hcfg:		Backup of HCFG register
- * @haintmsk:		Backup of HAINTMSK register
- * @hcintmsk:		Backup of HCINTMSK register
- * @hprt0:		Backup of HPTR0 register
- * @hfir:		Backup of HFIR register
- * @hptxfsiz:		Backup of HPTXFSIZ register
- * @valid:      True if registers values backuped.
+ * काष्ठा dwc2_hregs_backup - Holds host रेजिस्टरs state beक्रमe
+ * entering partial घातer करोwn
+ * @hcfg:		Backup of HCFG रेजिस्टर
+ * @haपूर्णांकmsk:		Backup of HAINTMSK रेजिस्टर
+ * @hcपूर्णांकmsk:		Backup of HCINTMSK रेजिस्टर
+ * @hprt0:		Backup of HPTR0 रेजिस्टर
+ * @hfir:		Backup of HFIR रेजिस्टर
+ * @hptxfsiz:		Backup of HPTXFSIZ रेजिस्टर
+ * @valid:      True अगर रेजिस्टरs values backuped.
  */
-struct dwc2_hregs_backup {
+काष्ठा dwc2_hregs_backup अणु
 	u32 hcfg;
-	u32 haintmsk;
-	u32 hcintmsk[MAX_EPS_CHANNELS];
+	u32 haपूर्णांकmsk;
+	u32 hcपूर्णांकmsk[MAX_EPS_CHANNELS];
 	u32 hprt0;
 	u32 hfir;
 	u32 hptxfsiz;
 	bool valid;
-};
+पूर्ण;
 
 /*
  * Constants related to high speed periodic scheduling
  *
- * We have a periodic schedule that is DWC2_HS_SCHEDULE_UFRAMES long.  From a
- * reservation point of view it's assumed that the schedule goes right back to
+ * We have a periodic schedule that is DWC2_HS_SCHEDULE_UFRAMES दीर्घ.  From a
+ * reservation poपूर्णांक of view it's assumed that the schedule goes right back to
  * the beginning after the end of the schedule.
  *
- * What does that mean for scheduling things with a long interval?  It means
- * we'll reserve time for them in every possible microframe that they could
+ * What करोes that mean क्रम scheduling things with a दीर्घ पूर्णांकerval?  It means
+ * we'll reserve समय क्रम them in every possible microframe that they could
  * ever be scheduled in.  ...but we'll still only actually schedule them as
  * often as they were requested.
  *
- * We keep our schedule in a "bitmap" structure.  This simplifies having
- * to keep track of and merge intervals: we just let the bitmap code do most
- * of the heavy lifting.  In a way scheduling is much like memory allocation.
+ * We keep our schedule in a "bitmap" काष्ठाure.  This simplअगरies having
+ * to keep track of and merge पूर्णांकervals: we just let the biपंचांगap code करो most
+ * of the heavy lअगरting.  In a way scheduling is much like memory allocation.
  *
  * We schedule 100us per uframe or 80% of 125us (the maximum amount you're
- * supposed to schedule for periodic transfers).  That's according to spec.
+ * supposed to schedule क्रम periodic transfers).  That's according to spec.
  *
- * Note that though we only schedule 80% of each microframe, the bitmap that we
- * keep the schedule in is tightly packed (AKA it doesn't have 100us worth of
- * space for each uFrame).
+ * Note that though we only schedule 80% of each microframe, the biपंचांगap that we
+ * keep the schedule in is tightly packed (AKA it करोesn't have 100us worth of
+ * space क्रम each uFrame).
  *
  * Requirements:
- * - DWC2_HS_SCHEDULE_UFRAMES must even divide 0x4000 (HFNUM_MAX_FRNUM + 1)
- * - DWC2_HS_SCHEDULE_UFRAMES must be 8 times DWC2_LS_SCHEDULE_FRAMES (probably
- *   could be any multiple of 8 times DWC2_LS_SCHEDULE_FRAMES, but there might
+ * - DWC2_HS_SCHEDULE_UFRAMES must even भागide 0x4000 (HFNUM_MAX_FRNUM + 1)
+ * - DWC2_HS_SCHEDULE_UFRAMES must be 8 बार DWC2_LS_SCHEDULE_FRAMES (probably
+ *   could be any multiple of 8 बार DWC2_LS_SCHEDULE_FRAMES, but there might
  *   be bugs).  The 8 comes from the USB spec: number of microframes per frame.
  */
-#define DWC2_US_PER_UFRAME		125
-#define DWC2_HS_PERIODIC_US_PER_UFRAME	100
+#घोषणा DWC2_US_PER_UFRAME		125
+#घोषणा DWC2_HS_PERIODIC_US_PER_UFRAME	100
 
-#define DWC2_HS_SCHEDULE_UFRAMES	8
-#define DWC2_HS_SCHEDULE_US		(DWC2_HS_SCHEDULE_UFRAMES * \
+#घोषणा DWC2_HS_SCHEDULE_UFRAMES	8
+#घोषणा DWC2_HS_SCHEDULE_US		(DWC2_HS_SCHEDULE_UFRAMES * \
 					 DWC2_HS_PERIODIC_US_PER_UFRAME)
 
 /*
  * Constants related to low speed scheduling
  *
- * For high speed we schedule every 1us.  For low speed that's a bit overkill,
+ * For high speed we schedule every 1us.  For low speed that's a bit overसमाप्त,
  * so we make up a unit called a "slice" that's worth 25us.  There are 40
- * slices in a full frame and we can schedule 36 of those (90%) for periodic
+ * slices in a full frame and we can schedule 36 of those (90%) क्रम periodic
  * transfers.
  *
- * Our low speed schedule can be as short as 1 frame or could be longer.  When
- * we only schedule 1 frame it means that we'll need to reserve a time every
- * frame even for things that only transfer very rarely, so something that runs
- * every 2048 frames will get time reserved in every frame.  Our low speed
- * schedule can be longer and we'll be able to handle more overlap, but that
- * will come at increased memory cost and increased time to schedule.
+ * Our low speed schedule can be as लघु as 1 frame or could be दीर्घer.  When
+ * we only schedule 1 frame it means that we'll need to reserve a समय every
+ * frame even क्रम things that only transfer very rarely, so something that runs
+ * every 2048 frames will get समय reserved in every frame.  Our low speed
+ * schedule can be दीर्घer and we'll be able to handle more overlap, but that
+ * will come at increased memory cost and increased समय to schedule.
  *
- * Note: one other advantage of a short low speed schedule is that if we mess
+ * Note: one other advantage of a लघु low speed schedule is that अगर we mess
  * up and miss scheduling we can jump in and use any of the slots that we
  * happened to reserve.
  *
- * With 25 us per slice and 1 frame in the schedule, we only need 4 bytes for
+ * With 25 us per slice and 1 frame in the schedule, we only need 4 bytes क्रम
  * the schedule.  There will be one schedule per TT.
  *
  * Requirements:
- * - DWC2_US_PER_SLICE must evenly divide DWC2_LS_PERIODIC_US_PER_FRAME.
+ * - DWC2_US_PER_SLICE must evenly भागide DWC2_LS_PERIODIC_US_PER_FRAME.
  */
-#define DWC2_US_PER_SLICE	25
-#define DWC2_SLICES_PER_UFRAME	(DWC2_US_PER_UFRAME / DWC2_US_PER_SLICE)
+#घोषणा DWC2_US_PER_SLICE	25
+#घोषणा DWC2_SLICES_PER_UFRAME	(DWC2_US_PER_UFRAME / DWC2_US_PER_SLICE)
 
-#define DWC2_ROUND_US_TO_SLICE(us) \
+#घोषणा DWC2_ROUND_US_TO_SLICE(us) \
 				(DIV_ROUND_UP((us), DWC2_US_PER_SLICE) * \
 				 DWC2_US_PER_SLICE)
 
-#define DWC2_LS_PERIODIC_US_PER_FRAME \
+#घोषणा DWC2_LS_PERIODIC_US_PER_FRAME \
 				900
-#define DWC2_LS_PERIODIC_SLICES_PER_FRAME \
+#घोषणा DWC2_LS_PERIODIC_SLICES_PER_FRAME \
 				(DWC2_LS_PERIODIC_US_PER_FRAME / \
 				 DWC2_US_PER_SLICE)
 
-#define DWC2_LS_SCHEDULE_FRAMES	1
-#define DWC2_LS_SCHEDULE_SLICES	(DWC2_LS_SCHEDULE_FRAMES * \
+#घोषणा DWC2_LS_SCHEDULE_FRAMES	1
+#घोषणा DWC2_LS_SCHEDULE_SLICES	(DWC2_LS_SCHEDULE_FRAMES * \
 				 DWC2_LS_PERIODIC_SLICES_PER_FRAME)
 
 /**
- * struct dwc2_hsotg - Holds the state of the driver, including the non-periodic
+ * काष्ठा dwc2_hsotg - Holds the state of the driver, including the non-periodic
  * and periodic schedules
  *
- * These are common for both host and peripheral modes:
+ * These are common क्रम both host and peripheral modes:
  *
- * @dev:                The struct device pointer
- * @regs:		Pointer to controller regs
- * @hw_params:          Parameters that were autodetected from the
- *                      hardware registers
+ * @dev:                The काष्ठा device poपूर्णांकer
+ * @regs:		Poपूर्णांकer to controller regs
+ * @hw_params:          Parameters that were स्वतःdetected from the
+ *                      hardware रेजिस्टरs
  * @params:	Parameters that define how the core should be configured
  * @op_state:           The operational State, during transitions (a_host=>
  *                      a_peripheral and b_device=>b_host) this may not match
@@ -863,411 +864,411 @@ struct dwc2_hregs_backup {
  *                      - USB_DR_MODE_PERIPHERAL
  *                      - USB_DR_MODE_HOST
  *                      - USB_DR_MODE_OTG
- * @role_sw:		usb_role_switch handle
+ * @role_sw:		usb_role_चयन handle
  * @hcd_enabled:	Host mode sub-driver initialization indicator.
  * @gadget_enabled:	Peripheral mode sub-driver initialization indicator.
  * @ll_hw_enabled:	Status of low-level hardware resources.
- * @hibernated:		True if core is hibernated
- * @in_ppd:		True if core is partial power down mode.
- * @bus_suspended:	True if bus is suspended
- * @reset_phy_on_wake:	Quirk saying that we should assert PHY reset on a
+ * @hibernated:		True अगर core is hibernated
+ * @in_ppd:		True अगर core is partial घातer करोwn mode.
+ * @bus_suspended:	True अगर bus is suspended
+ * @reset_phy_on_wake:	Quirk saying that we should निश्चित PHY reset on a
  *			remote wakeup.
- * @phy_off_for_suspend: Status of whether we turned the PHY off at suspend.
- * @need_phy_for_wake:	Quirk saying that we should keep the PHY on at
- *			suspend if we need USB to wake us up.
- * @frame_number:       Frame number read from the core. For both device
+ * @phy_off_क्रम_suspend: Status of whether we turned the PHY off at suspend.
+ * @need_phy_क्रम_wake:	Quirk saying that we should keep the PHY on at
+ *			suspend अगर we need USB to wake us up.
+ * @frame_number:       Frame number पढ़ो from the core. For both device
  *			and host modes. The value ranges are from 0
  *			to HFNUM_MAX_FRNUM.
- * @phy:                The otg phy transceiver structure for phy control.
- * @uphy:               The otg phy transceiver structure for old USB phy
+ * @phy:                The otg phy transceiver काष्ठाure क्रम phy control.
+ * @uphy:               The otg phy transceiver काष्ठाure क्रम old USB phy
  *                      control.
- * @plat:               The platform specific configuration data. This can be
- *                      removed once all SoCs support usb transceiver.
- * @supplies:           Definition of USB power supplies
+ * @plat:               The platक्रमm specअगरic configuration data. This can be
+ *                      हटाओd once all SoCs support usb transceiver.
+ * @supplies:           Definition of USB घातer supplies
  * @vbus_supply:        Regulator supplying vbus.
- * @usb33d:		Optional 3.3v regulator used on some stm32 devices to
+ * @usb33d:		Optional 3.3v regulator used on some sपंचांग32 devices to
  *			supply ID and VBUS detection hardware.
- * @lock:		Spinlock that protects all the driver data structures
- * @priv:		Stores a pointer to the struct usb_hcd
- * @queuing_high_bandwidth: True if multiple packets of a high-bandwidth
+ * @lock:		Spinlock that protects all the driver data काष्ठाures
+ * @priv:		Stores a poपूर्णांकer to the काष्ठा usb_hcd
+ * @queuing_high_bandwidth: True अगर multiple packets of a high-bandwidth
  *                      transfer are in process of being queued
- * @srp_success:        Stores status of SRP request in the case of a FS PHY
- *                      with an I2C interface
- * @wq_otg:             Workqueue object used for handling of some interrupts
- * @wf_otg:             Work object for handling Connector ID Status Change
- *                      interrupt
- * @wkp_timer:          Timer object for handling Wakeup Detected interrupt
+ * @srp_success:        Stores status of SRP request in the हाल of a FS PHY
+ *                      with an I2C पूर्णांकerface
+ * @wq_otg:             Workqueue object used क्रम handling of some पूर्णांकerrupts
+ * @wf_otg:             Work object क्रम handling Connector ID Status Change
+ *                      पूर्णांकerrupt
+ * @wkp_समयr:          Timer object क्रम handling Wakeup Detected पूर्णांकerrupt
  * @lx_state:           Lx state of connected device
- * @gr_backup: Backup of global registers during suspend
- * @dr_backup: Backup of device registers during suspend
- * @hr_backup: Backup of host registers during suspend
- * @needs_byte_swap:		Specifies whether the opposite endianness.
+ * @gr_backup: Backup of global रेजिस्टरs during suspend
+ * @dr_backup: Backup of device रेजिस्टरs during suspend
+ * @hr_backup: Backup of host रेजिस्टरs during suspend
+ * @needs_byte_swap:		Specअगरies whether the opposite endianness.
  *
- * These are for host mode:
+ * These are क्रम host mode:
  *
- * @flags:              Flags for handling root port state changes
+ * @flags:              Flags क्रम handling root port state changes
  * @flags.d32:          Contain all root port flags
  * @flags.b:            Separate root port flags from each other
- * @flags.b.port_connect_status_change: True if root port connect status
+ * @flags.b.port_connect_status_change: True अगर root port connect status
  *                      changed
- * @flags.b.port_connect_status: True if device connected to root port
- * @flags.b.port_reset_change: True if root port reset status changed
- * @flags.b.port_enable_change: True if root port enable status changed
- * @flags.b.port_suspend_change: True if root port suspend status changed
- * @flags.b.port_over_current_change: True if root port over current state
+ * @flags.b.port_connect_status: True अगर device connected to root port
+ * @flags.b.port_reset_change: True अगर root port reset status changed
+ * @flags.b.port_enable_change: True अगर root port enable status changed
+ * @flags.b.port_suspend_change: True अगर root port suspend status changed
+ * @flags.b.port_over_current_change: True अगर root port over current state
  *                       changed.
- * @flags.b.port_l1_change: True if root port l1 status changed
- * @flags.b.reserved:   Reserved bits of root port register
+ * @flags.b.port_l1_change: True अगर root port l1 status changed
+ * @flags.b.reserved:   Reserved bits of root port रेजिस्टर
  * @non_periodic_sched_inactive: Inactive QHs in the non-periodic schedule.
  *                      Transfers associated with these QHs are not currently
- *                      assigned to a host channel.
+ *                      asचिन्हित to a host channel.
  * @non_periodic_sched_active: Active QHs in the non-periodic schedule.
  *                      Transfers associated with these QHs are currently
- *                      assigned to a host channel.
- * @non_periodic_qh_ptr: Pointer to next QH to process in the active
+ *                      asचिन्हित to a host channel.
+ * @non_periodic_qh_ptr: Poपूर्णांकer to next QH to process in the active
  *                      non-periodic schedule
- * @non_periodic_sched_waiting: Waiting QHs in the non-periodic schedule.
+ * @non_periodic_sched_रुकोing: Waiting QHs in the non-periodic schedule.
  *                      Transfers associated with these QHs are not currently
- *                      assigned to a host channel.
+ *                      asचिन्हित to a host channel.
  * @periodic_sched_inactive: Inactive QHs in the periodic schedule. This is a
- *                      list of QHs for periodic transfers that are _not_
- *                      scheduled for the next frame. Each QH in the list has an
- *                      interval counter that determines when it needs to be
- *                      scheduled for execution. This scheduling mechanism
- *                      allows only a simple calculation for periodic bandwidth
+ *                      list of QHs क्रम periodic transfers that are _not_
+ *                      scheduled क्रम the next frame. Each QH in the list has an
+ *                      पूर्णांकerval counter that determines when it needs to be
+ *                      scheduled क्रम execution. This scheduling mechanism
+ *                      allows only a simple calculation क्रम periodic bandwidth
  *                      used (i.e. must assume that all periodic transfers may
  *                      need to execute in the same frame). However, it greatly
- *                      simplifies scheduling and should be sufficient for the
+ *                      simplअगरies scheduling and should be sufficient क्रम the
  *                      vast majority of OTG hosts, which need to connect to a
- *                      small number of peripherals at one time. Items move from
- *                      this list to periodic_sched_ready when the QH interval
+ *                      small number of peripherals at one समय. Items move from
+ *                      this list to periodic_sched_पढ़ोy when the QH पूर्णांकerval
  *                      counter is 0 at SOF.
- * @periodic_sched_ready:  List of periodic QHs that are ready for execution in
- *                      the next frame, but have not yet been assigned to host
+ * @periodic_sched_पढ़ोy:  List of periodic QHs that are पढ़ोy क्रम execution in
+ *                      the next frame, but have not yet been asचिन्हित to host
  *                      channels. Items move from this list to
- *                      periodic_sched_assigned as host channels become
+ *                      periodic_sched_asचिन्हित as host channels become
  *                      available during the current frame.
- * @periodic_sched_assigned: List of periodic QHs to be executed in the next
- *                      frame that are assigned to host channels. Items move
+ * @periodic_sched_asचिन्हित: List of periodic QHs to be executed in the next
+ *                      frame that are asचिन्हित to host channels. Items move
  *                      from this list to periodic_sched_queued as the
- *                      transactions for the QH are queued to the DWC_otg
+ *                      transactions क्रम the QH are queued to the DWC_otg
  *                      controller.
- * @periodic_sched_queued: List of periodic QHs that have been queued for
+ * @periodic_sched_queued: List of periodic QHs that have been queued क्रम
  *                      execution. Items move from this list to either
- *                      periodic_sched_inactive or periodic_sched_ready when the
+ *                      periodic_sched_inactive or periodic_sched_पढ़ोy when the
  *                      channel associated with the transfer is released. If the
- *                      interval for the QH is 1, the item moves to
- *                      periodic_sched_ready because it must be rescheduled for
+ *                      पूर्णांकerval क्रम the QH is 1, the item moves to
+ *                      periodic_sched_पढ़ोy because it must be rescheduled क्रम
  *                      the next frame. Otherwise, the item moves to
  *                      periodic_sched_inactive.
- * @split_order:        List keeping track of channels doing splits, in order.
- * @periodic_usecs:     Total bandwidth claimed so far for periodic transfers.
+ * @split_order:        List keeping track of channels करोing splits, in order.
+ * @periodic_usecs:     Total bandwidth claimed so far क्रम periodic transfers.
  *                      This value is in microseconds per (micro)frame. The
  *                      assumption is that all periodic transfers may occur in
  *                      the same (micro)frame.
- * @hs_periodic_bitmap: Bitmap used by the microframe scheduler any time the
+ * @hs_periodic_biपंचांगap: Biपंचांगap used by the microframe scheduler any समय the
  *                      host is in high speed mode; low speed schedules are
- *                      stored elsewhere since we need one per TT.
- * @periodic_qh_count:  Count of periodic QHs, if using several eps. Used for
+ *                      stored अन्यथाwhere since we need one per TT.
+ * @periodic_qh_count:  Count of periodic QHs, अगर using several eps. Used क्रम
  *                      SOF enable/disable.
- * @free_hc_list:       Free host channels in the controller. This is a list of
- *                      struct dwc2_host_chan items.
- * @periodic_channels:  Number of host channels assigned to periodic transfers.
+ * @मुक्त_hc_list:       Free host channels in the controller. This is a list of
+ *                      काष्ठा dwc2_host_chan items.
+ * @periodic_channels:  Number of host channels asचिन्हित to periodic transfers.
  *                      Currently assuming that there is a dedicated host
- *                      channel for each periodic transaction and at least one
- *                      host channel is available for non-periodic transactions.
- * @non_periodic_channels: Number of host channels assigned to non-periodic
+ *                      channel क्रम each periodic transaction and at least one
+ *                      host channel is available क्रम non-periodic transactions.
+ * @non_periodic_channels: Number of host channels asचिन्हित to non-periodic
  *                      transfers
- * @available_host_channels: Number of host channels available for the
+ * @available_host_channels: Number of host channels available क्रम the
  *			     microframe scheduler to use
- * @hc_ptr_array:       Array of pointers to the host channel descriptors.
+ * @hc_ptr_array:       Array of poपूर्णांकers to the host channel descriptors.
  *                      Allows accessing a host channel descriptor given the
- *                      host channel number. This is useful in interrupt
+ *                      host channel number. This is useful in पूर्णांकerrupt
  *                      handlers.
- * @status_buf:         Buffer used for data received during the status phase of
+ * @status_buf:         Buffer used क्रम data received during the status phase of
  *                      a control transfer.
- * @status_buf_dma:     DMA address for status_buf
- * @start_work:         Delayed work for handling host A-cable connection
- * @reset_work:         Delayed work for handling a port reset
- * @phy_reset_work:     Work structure for doing a PHY reset
+ * @status_buf_dma:     DMA address क्रम status_buf
+ * @start_work:         Delayed work क्रम handling host A-cable connection
+ * @reset_work:         Delayed work क्रम handling a port reset
+ * @phy_reset_work:     Work काष्ठाure क्रम करोing a PHY reset
  * @otg_port:           OTG port number
  * @frame_list:         Frame list
  * @frame_list_dma:     Frame list DMA address
  * @frame_list_sz:      Frame list size
- * @desc_gen_cache:     Kmem cache for generic descriptors
- * @desc_hsisoc_cache:  Kmem cache for hs isochronous descriptors
- * @unaligned_cache:    Kmem cache for DMA mode to handle non-aligned buf
+ * @desc_gen_cache:     Kmem cache क्रम generic descriptors
+ * @desc_hsisoc_cache:  Kmem cache क्रम hs isochronous descriptors
+ * @unaligned_cache:    Kmem cache क्रम DMA mode to handle non-aligned buf
  *
- * These are for peripheral mode:
+ * These are क्रम peripheral mode:
  *
  * @driver:             USB gadget driver
- * @dedicated_fifos:    Set if the hardware has dedicated IN-EP fifos.
+ * @dedicated_fअगरos:    Set अगर the hardware has dedicated IN-EP fअगरos.
  * @num_of_eps:         Number of available EPs (excluding EP0)
- * @debug_root:         Root directrory for debugfs.
- * @ep0_reply:          Request used for ep0 reply.
- * @ep0_buff:           Buffer for EP0 reply data, if needed.
- * @ctrl_buff:          Buffer for EP0 control requests.
- * @ctrl_req:           Request for EP0 control packets.
+ * @debug_root:         Root directrory क्रम debugfs.
+ * @ep0_reply:          Request used क्रम ep0 reply.
+ * @ep0_buff:           Buffer क्रम EP0 reply data, अगर needed.
+ * @ctrl_buff:          Buffer क्रम EP0 control requests.
+ * @ctrl_req:           Request क्रम EP0 control packets.
  * @ep0_state:          EP0 control transfers state
- * @delayed_status:		true when gadget driver asks for delayed status
+ * @delayed_status:		true when gadget driver asks क्रम delayed status
  * @test_mode:          USB test mode requested by the host
- * @remote_wakeup_allowed: True if device is allowed to wake-up host by
- *                      remote-wakeup signalling
+ * @remote_wakeup_allowed: True अगर device is allowed to wake-up host by
+ *                      remote-wakeup संकेतling
  * @setup_desc_dma:	EP0 setup stage desc chain DMA address
- * @setup_desc:		EP0 setup stage desc chain pointer
+ * @setup_desc:		EP0 setup stage desc chain poपूर्णांकer
  * @ctrl_in_desc_dma:	EP0 IN data phase desc chain DMA address
- * @ctrl_in_desc:	EP0 IN data phase desc chain pointer
+ * @ctrl_in_desc:	EP0 IN data phase desc chain poपूर्णांकer
  * @ctrl_out_desc_dma:	EP0 OUT data phase desc chain DMA address
- * @ctrl_out_desc:	EP0 OUT data phase desc chain pointer
+ * @ctrl_out_desc:	EP0 OUT data phase desc chain poपूर्णांकer
  * @irq:		Interrupt request line number
- * @clk:		Pointer to otg clock
- * @reset:		Pointer to dwc2 reset controller
- * @reset_ecc:          Pointer to dwc2 optional reset controller in Stratix10.
- * @regset:		A pointer to a struct debugfs_regset32, which contains
- *			a pointer to an array of register definitions, the
- *			array size and the base address where the register bank
+ * @clk:		Poपूर्णांकer to otg घड़ी
+ * @reset:		Poपूर्णांकer to dwc2 reset controller
+ * @reset_ecc:          Poपूर्णांकer to dwc2 optional reset controller in Stratix10.
+ * @regset:		A poपूर्णांकer to a काष्ठा debugfs_regset32, which contains
+ *			a poपूर्णांकer to an array of रेजिस्टर definitions, the
+ *			array size and the base address where the रेजिस्टर bank
  *			is to be found.
  * @last_frame_num:	Number of last frame. Range from 0 to  32768
- * @frame_num_array:    Used only  if CONFIG_USB_DWC2_TRACK_MISSED_SOFS is
- *			defined, for missed SOFs tracking. Array holds that
+ * @frame_num_array:    Used only  अगर CONFIG_USB_DWC2_TRACK_MISSED_SOFS is
+ *			defined, क्रम missed SOFs tracking. Array holds that
  *			frame numbers, which not equal to last_frame_num +1
- * @last_frame_num_array:   Used only  if CONFIG_USB_DWC2_TRACK_MISSED_SOFS is
- *			    defined, for missed SOFs tracking.
+ * @last_frame_num_array:   Used only  अगर CONFIG_USB_DWC2_TRACK_MISSED_SOFS is
+ *			    defined, क्रम missed SOFs tracking.
  *			    If current_frame_number != last_frame_num+1
  *			    then last_frame_num added to this array
  * @frame_num_idx:	Actual size of frame_num_array and last_frame_num_array
- * @dumped_frame_num_array:	1 - if missed SOFs frame numbers dumbed
- *				0 - if missed SOFs frame numbers not dumbed
- * @fifo_mem:			Total internal RAM for FIFOs (bytes)
- * @fifo_map:		Each bit intend for concrete fifo. If that bit is set,
- *			then that fifo is used
+ * @dumped_frame_num_array:	1 - अगर missed SOFs frame numbers dumbed
+ *				0 - अगर missed SOFs frame numbers not dumbed
+ * @fअगरo_mem:			Total पूर्णांकernal RAM क्रम FIFOs (bytes)
+ * @fअगरo_map:		Each bit पूर्णांकend क्रम concrete fअगरo. If that bit is set,
+ *			then that fअगरo is used
  * @gadget:		Represents a usb gadget device
- * @connected:		Used in slave mode. True if device connected with host
- * @eps_in:		The IN endpoints being supplied to the gadget framework
- * @eps_out:		The OUT endpoints being supplied to the gadget framework
- * @new_connection:	Used in host mode. True if there are new connected
+ * @connected:		Used in slave mode. True अगर device connected with host
+ * @eps_in:		The IN endpoपूर्णांकs being supplied to the gadget framework
+ * @eps_out:		The OUT endpoपूर्णांकs being supplied to the gadget framework
+ * @new_connection:	Used in host mode. True अगर there are new connected
  *			device
  * @enabled:		Indicates the enabling state of controller
  *
  */
-struct dwc2_hsotg {
-	struct device *dev;
-	void __iomem *regs;
+काष्ठा dwc2_hsotg अणु
+	काष्ठा device *dev;
+	व्योम __iomem *regs;
 	/** Params detected from hardware */
-	struct dwc2_hw_params hw_params;
+	काष्ठा dwc2_hw_params hw_params;
 	/** Params to actually use */
-	struct dwc2_core_params params;
-	enum usb_otg_state op_state;
-	enum usb_dr_mode dr_mode;
-	struct usb_role_switch *role_sw;
-	unsigned int hcd_enabled:1;
-	unsigned int gadget_enabled:1;
-	unsigned int ll_hw_enabled:1;
-	unsigned int hibernated:1;
-	unsigned int in_ppd:1;
+	काष्ठा dwc2_core_params params;
+	क्रमागत usb_otg_state op_state;
+	क्रमागत usb_dr_mode dr_mode;
+	काष्ठा usb_role_चयन *role_sw;
+	अचिन्हित पूर्णांक hcd_enabled:1;
+	अचिन्हित पूर्णांक gadget_enabled:1;
+	अचिन्हित पूर्णांक ll_hw_enabled:1;
+	अचिन्हित पूर्णांक hibernated:1;
+	अचिन्हित पूर्णांक in_ppd:1;
 	bool bus_suspended;
-	unsigned int reset_phy_on_wake:1;
-	unsigned int need_phy_for_wake:1;
-	unsigned int phy_off_for_suspend:1;
+	अचिन्हित पूर्णांक reset_phy_on_wake:1;
+	अचिन्हित पूर्णांक need_phy_क्रम_wake:1;
+	अचिन्हित पूर्णांक phy_off_क्रम_suspend:1;
 	u16 frame_number;
 
-	struct phy *phy;
-	struct usb_phy *uphy;
-	struct dwc2_hsotg_plat *plat;
-	struct regulator_bulk_data supplies[DWC2_NUM_SUPPLIES];
-	struct regulator *vbus_supply;
-	struct regulator *usb33d;
+	काष्ठा phy *phy;
+	काष्ठा usb_phy *uphy;
+	काष्ठा dwc2_hsotg_plat *plat;
+	काष्ठा regulator_bulk_data supplies[DWC2_NUM_SUPPLIES];
+	काष्ठा regulator *vbus_supply;
+	काष्ठा regulator *usb33d;
 
 	spinlock_t lock;
-	void *priv;
-	int     irq;
-	struct clk *clk;
-	struct reset_control *reset;
-	struct reset_control *reset_ecc;
+	व्योम *priv;
+	पूर्णांक     irq;
+	काष्ठा clk *clk;
+	काष्ठा reset_control *reset;
+	काष्ठा reset_control *reset_ecc;
 
-	unsigned int queuing_high_bandwidth:1;
-	unsigned int srp_success:1;
+	अचिन्हित पूर्णांक queuing_high_bandwidth:1;
+	अचिन्हित पूर्णांक srp_success:1;
 
-	struct workqueue_struct *wq_otg;
-	struct work_struct wf_otg;
-	struct timer_list wkp_timer;
-	enum dwc2_lx_state lx_state;
-	struct dwc2_gregs_backup gr_backup;
-	struct dwc2_dregs_backup dr_backup;
-	struct dwc2_hregs_backup hr_backup;
+	काष्ठा workqueue_काष्ठा *wq_otg;
+	काष्ठा work_काष्ठा wf_otg;
+	काष्ठा समयr_list wkp_समयr;
+	क्रमागत dwc2_lx_state lx_state;
+	काष्ठा dwc2_gregs_backup gr_backup;
+	काष्ठा dwc2_dregs_backup dr_backup;
+	काष्ठा dwc2_hregs_backup hr_backup;
 
-	struct dentry *debug_root;
-	struct debugfs_regset32 *regset;
+	काष्ठा dentry *debug_root;
+	काष्ठा debugfs_regset32 *regset;
 	bool needs_byte_swap;
 
 	/* DWC OTG HW Release versions */
-#define DWC2_CORE_REV_2_71a	0x4f54271a
-#define DWC2_CORE_REV_2_72a     0x4f54272a
-#define DWC2_CORE_REV_2_80a	0x4f54280a
-#define DWC2_CORE_REV_2_90a	0x4f54290a
-#define DWC2_CORE_REV_2_91a	0x4f54291a
-#define DWC2_CORE_REV_2_92a	0x4f54292a
-#define DWC2_CORE_REV_2_94a	0x4f54294a
-#define DWC2_CORE_REV_3_00a	0x4f54300a
-#define DWC2_CORE_REV_3_10a	0x4f54310a
-#define DWC2_CORE_REV_4_00a	0x4f54400a
-#define DWC2_CORE_REV_4_20a	0x4f54420a
-#define DWC2_FS_IOT_REV_1_00a	0x5531100a
-#define DWC2_HS_IOT_REV_1_00a	0x5532100a
-#define DWC2_CORE_REV_MASK	0x0000ffff
+#घोषणा DWC2_CORE_REV_2_71a	0x4f54271a
+#घोषणा DWC2_CORE_REV_2_72a     0x4f54272a
+#घोषणा DWC2_CORE_REV_2_80a	0x4f54280a
+#घोषणा DWC2_CORE_REV_2_90a	0x4f54290a
+#घोषणा DWC2_CORE_REV_2_91a	0x4f54291a
+#घोषणा DWC2_CORE_REV_2_92a	0x4f54292a
+#घोषणा DWC2_CORE_REV_2_94a	0x4f54294a
+#घोषणा DWC2_CORE_REV_3_00a	0x4f54300a
+#घोषणा DWC2_CORE_REV_3_10a	0x4f54310a
+#घोषणा DWC2_CORE_REV_4_00a	0x4f54400a
+#घोषणा DWC2_CORE_REV_4_20a	0x4f54420a
+#घोषणा DWC2_FS_IOT_REV_1_00a	0x5531100a
+#घोषणा DWC2_HS_IOT_REV_1_00a	0x5532100a
+#घोषणा DWC2_CORE_REV_MASK	0x0000ffff
 
 	/* DWC OTG HW Core ID */
-#define DWC2_OTG_ID		0x4f540000
-#define DWC2_FS_IOT_ID		0x55310000
-#define DWC2_HS_IOT_ID		0x55320000
+#घोषणा DWC2_OTG_ID		0x4f540000
+#घोषणा DWC2_FS_IOT_ID		0x55310000
+#घोषणा DWC2_HS_IOT_ID		0x55320000
 
-#if IS_ENABLED(CONFIG_USB_DWC2_HOST) || IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
-	union dwc2_hcd_internal_flags {
+#अगर IS_ENABLED(CONFIG_USB_DWC2_HOST) || IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
+	जोड़ dwc2_hcd_पूर्णांकernal_flags अणु
 		u32 d32;
-		struct {
-			unsigned port_connect_status_change:1;
-			unsigned port_connect_status:1;
-			unsigned port_reset_change:1;
-			unsigned port_enable_change:1;
-			unsigned port_suspend_change:1;
-			unsigned port_over_current_change:1;
-			unsigned port_l1_change:1;
-			unsigned reserved:25;
-		} b;
-	} flags;
+		काष्ठा अणु
+			अचिन्हित port_connect_status_change:1;
+			अचिन्हित port_connect_status:1;
+			अचिन्हित port_reset_change:1;
+			अचिन्हित port_enable_change:1;
+			अचिन्हित port_suspend_change:1;
+			अचिन्हित port_over_current_change:1;
+			अचिन्हित port_l1_change:1;
+			अचिन्हित reserved:25;
+		पूर्ण b;
+	पूर्ण flags;
 
-	struct list_head non_periodic_sched_inactive;
-	struct list_head non_periodic_sched_waiting;
-	struct list_head non_periodic_sched_active;
-	struct list_head *non_periodic_qh_ptr;
-	struct list_head periodic_sched_inactive;
-	struct list_head periodic_sched_ready;
-	struct list_head periodic_sched_assigned;
-	struct list_head periodic_sched_queued;
-	struct list_head split_order;
+	काष्ठा list_head non_periodic_sched_inactive;
+	काष्ठा list_head non_periodic_sched_रुकोing;
+	काष्ठा list_head non_periodic_sched_active;
+	काष्ठा list_head *non_periodic_qh_ptr;
+	काष्ठा list_head periodic_sched_inactive;
+	काष्ठा list_head periodic_sched_पढ़ोy;
+	काष्ठा list_head periodic_sched_asचिन्हित;
+	काष्ठा list_head periodic_sched_queued;
+	काष्ठा list_head split_order;
 	u16 periodic_usecs;
-	unsigned long hs_periodic_bitmap[
+	अचिन्हित दीर्घ hs_periodic_biपंचांगap[
 		DIV_ROUND_UP(DWC2_HS_SCHEDULE_US, BITS_PER_LONG)];
 	u16 periodic_qh_count;
 	bool new_connection;
 
 	u16 last_frame_num;
 
-#ifdef CONFIG_USB_DWC2_TRACK_MISSED_SOFS
-#define FRAME_NUM_ARRAY_SIZE 1000
+#अगर_घोषित CONFIG_USB_DWC2_TRACK_MISSED_SOFS
+#घोषणा FRAME_NUM_ARRAY_SIZE 1000
 	u16 *frame_num_array;
 	u16 *last_frame_num_array;
-	int frame_num_idx;
-	int dumped_frame_num_array;
-#endif
+	पूर्णांक frame_num_idx;
+	पूर्णांक dumped_frame_num_array;
+#पूर्ण_अगर
 
-	struct list_head free_hc_list;
-	int periodic_channels;
-	int non_periodic_channels;
-	int available_host_channels;
-	struct dwc2_host_chan *hc_ptr_array[MAX_EPS_CHANNELS];
+	काष्ठा list_head मुक्त_hc_list;
+	पूर्णांक periodic_channels;
+	पूर्णांक non_periodic_channels;
+	पूर्णांक available_host_channels;
+	काष्ठा dwc2_host_chan *hc_ptr_array[MAX_EPS_CHANNELS];
 	u8 *status_buf;
 	dma_addr_t status_buf_dma;
-#define DWC2_HCD_STATUS_BUF_SIZE 64
+#घोषणा DWC2_HCD_STATUS_BUF_SIZE 64
 
-	struct delayed_work start_work;
-	struct delayed_work reset_work;
-	struct work_struct phy_reset_work;
+	काष्ठा delayed_work start_work;
+	काष्ठा delayed_work reset_work;
+	काष्ठा work_काष्ठा phy_reset_work;
 	u8 otg_port;
 	u32 *frame_list;
 	dma_addr_t frame_list_dma;
 	u32 frame_list_sz;
-	struct kmem_cache *desc_gen_cache;
-	struct kmem_cache *desc_hsisoc_cache;
-	struct kmem_cache *unaligned_cache;
-#define DWC2_KMEM_UNALIGNED_BUF_SIZE 1024
+	काष्ठा kmem_cache *desc_gen_cache;
+	काष्ठा kmem_cache *desc_hsisoc_cache;
+	काष्ठा kmem_cache *unaligned_cache;
+#घोषणा DWC2_KMEM_UNALIGNED_BUF_SIZE 1024
 
-#endif /* CONFIG_USB_DWC2_HOST || CONFIG_USB_DWC2_DUAL_ROLE */
+#पूर्ण_अगर /* CONFIG_USB_DWC2_HOST || CONFIG_USB_DWC2_DUAL_ROLE */
 
-#if IS_ENABLED(CONFIG_USB_DWC2_PERIPHERAL) || \
+#अगर IS_ENABLED(CONFIG_USB_DWC2_PERIPHERAL) || \
 	IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
-	/* Gadget structures */
-	struct usb_gadget_driver *driver;
-	int fifo_mem;
-	unsigned int dedicated_fifos:1;
-	unsigned char num_of_eps;
-	u32 fifo_map;
+	/* Gadget काष्ठाures */
+	काष्ठा usb_gadget_driver *driver;
+	पूर्णांक fअगरo_mem;
+	अचिन्हित पूर्णांक dedicated_fअगरos:1;
+	अचिन्हित अक्षर num_of_eps;
+	u32 fअगरo_map;
 
-	struct usb_request *ep0_reply;
-	struct usb_request *ctrl_req;
-	void *ep0_buff;
-	void *ctrl_buff;
-	enum dwc2_ep0_state ep0_state;
-	unsigned delayed_status : 1;
+	काष्ठा usb_request *ep0_reply;
+	काष्ठा usb_request *ctrl_req;
+	व्योम *ep0_buff;
+	व्योम *ctrl_buff;
+	क्रमागत dwc2_ep0_state ep0_state;
+	अचिन्हित delayed_status : 1;
 	u8 test_mode;
 
 	dma_addr_t setup_desc_dma[2];
-	struct dwc2_dma_desc *setup_desc[2];
+	काष्ठा dwc2_dma_desc *setup_desc[2];
 	dma_addr_t ctrl_in_desc_dma;
-	struct dwc2_dma_desc *ctrl_in_desc;
+	काष्ठा dwc2_dma_desc *ctrl_in_desc;
 	dma_addr_t ctrl_out_desc_dma;
-	struct dwc2_dma_desc *ctrl_out_desc;
+	काष्ठा dwc2_dma_desc *ctrl_out_desc;
 
-	struct usb_gadget gadget;
-	unsigned int enabled:1;
-	unsigned int connected:1;
-	unsigned int remote_wakeup_allowed:1;
-	struct dwc2_hsotg_ep *eps_in[MAX_EPS_CHANNELS];
-	struct dwc2_hsotg_ep *eps_out[MAX_EPS_CHANNELS];
-#endif /* CONFIG_USB_DWC2_PERIPHERAL || CONFIG_USB_DWC2_DUAL_ROLE */
-};
+	काष्ठा usb_gadget gadget;
+	अचिन्हित पूर्णांक enabled:1;
+	अचिन्हित पूर्णांक connected:1;
+	अचिन्हित पूर्णांक remote_wakeup_allowed:1;
+	काष्ठा dwc2_hsotg_ep *eps_in[MAX_EPS_CHANNELS];
+	काष्ठा dwc2_hsotg_ep *eps_out[MAX_EPS_CHANNELS];
+#पूर्ण_अगर /* CONFIG_USB_DWC2_PERIPHERAL || CONFIG_USB_DWC2_DUAL_ROLE */
+पूर्ण;
 
-/* Normal architectures just use readl/write */
-static inline u32 dwc2_readl(struct dwc2_hsotg *hsotg, u32 offset)
-{
+/* Normal architectures just use पढ़ोl/ग_लिखो */
+अटल अंतरभूत u32 dwc2_पढ़ोl(काष्ठा dwc2_hsotg *hsotg, u32 offset)
+अणु
 	u32 val;
 
-	val = readl(hsotg->regs + offset);
-	if (hsotg->needs_byte_swap)
-		return swab32(val);
-	else
-		return val;
-}
+	val = पढ़ोl(hsotg->regs + offset);
+	अगर (hsotg->needs_byte_swap)
+		वापस swab32(val);
+	अन्यथा
+		वापस val;
+पूर्ण
 
-static inline void dwc2_writel(struct dwc2_hsotg *hsotg, u32 value, u32 offset)
-{
-	if (hsotg->needs_byte_swap)
-		writel(swab32(value), hsotg->regs + offset);
-	else
-		writel(value, hsotg->regs + offset);
+अटल अंतरभूत व्योम dwc2_ग_लिखोl(काष्ठा dwc2_hsotg *hsotg, u32 value, u32 offset)
+अणु
+	अगर (hsotg->needs_byte_swap)
+		ग_लिखोl(swab32(value), hsotg->regs + offset);
+	अन्यथा
+		ग_लिखोl(value, hsotg->regs + offset);
 
-#ifdef DWC2_LOG_WRITES
+#अगर_घोषित DWC2_LOG_WRITES
 	pr_info("info:: wrote %08x to %p\n", value, hsotg->regs + offset);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void dwc2_readl_rep(struct dwc2_hsotg *hsotg, u32 offset,
-				  void *buffer, unsigned int count)
-{
-	if (count) {
+अटल अंतरभूत व्योम dwc2_पढ़ोl_rep(काष्ठा dwc2_hsotg *hsotg, u32 offset,
+				  व्योम *buffer, अचिन्हित पूर्णांक count)
+अणु
+	अगर (count) अणु
 		u32 *buf = buffer;
 
-		do {
-			u32 x = dwc2_readl(hsotg, offset);
+		करो अणु
+			u32 x = dwc2_पढ़ोl(hsotg, offset);
 			*buf++ = x;
-		} while (--count);
-	}
-}
+		पूर्ण जबतक (--count);
+	पूर्ण
+पूर्ण
 
-static inline void dwc2_writel_rep(struct dwc2_hsotg *hsotg, u32 offset,
-				   const void *buffer, unsigned int count)
-{
-	if (count) {
-		const u32 *buf = buffer;
+अटल अंतरभूत व्योम dwc2_ग_लिखोl_rep(काष्ठा dwc2_hsotg *hsotg, u32 offset,
+				   स्थिर व्योम *buffer, अचिन्हित पूर्णांक count)
+अणु
+	अगर (count) अणु
+		स्थिर u32 *buf = buffer;
 
-		do {
-			dwc2_writel(hsotg, *buf++, offset);
-		} while (--count);
-	}
-}
+		करो अणु
+			dwc2_ग_लिखोl(hsotg, *buf++, offset);
+		पूर्ण जबतक (--count);
+	पूर्ण
+पूर्ण
 
-/* Reasons for halting a host channel */
-enum dwc2_halt_status {
+/* Reasons क्रम halting a host channel */
+क्रमागत dwc2_halt_status अणु
 	DWC2_HC_XFER_NO_HALT_STATUS,
 	DWC2_HC_XFER_COMPLETE,
 	DWC2_HC_XFER_URB_COMPLETE,
@@ -1282,261 +1283,261 @@ enum dwc2_halt_status {
 	DWC2_HC_XFER_AHB_ERR,
 	DWC2_HC_XFER_PERIODIC_INCOMPLETE,
 	DWC2_HC_XFER_URB_DEQUEUE,
-};
+पूर्ण;
 
-/* Core version information */
-static inline bool dwc2_is_iot(struct dwc2_hsotg *hsotg)
-{
-	return (hsotg->hw_params.snpsid & 0xfff00000) == 0x55300000;
-}
+/* Core version inक्रमmation */
+अटल अंतरभूत bool dwc2_is_iot(काष्ठा dwc2_hsotg *hsotg)
+अणु
+	वापस (hsotg->hw_params.snpsid & 0xfff00000) == 0x55300000;
+पूर्ण
 
-static inline bool dwc2_is_fs_iot(struct dwc2_hsotg *hsotg)
-{
-	return (hsotg->hw_params.snpsid & 0xffff0000) == 0x55310000;
-}
+अटल अंतरभूत bool dwc2_is_fs_iot(काष्ठा dwc2_hsotg *hsotg)
+अणु
+	वापस (hsotg->hw_params.snpsid & 0xffff0000) == 0x55310000;
+पूर्ण
 
-static inline bool dwc2_is_hs_iot(struct dwc2_hsotg *hsotg)
-{
-	return (hsotg->hw_params.snpsid & 0xffff0000) == 0x55320000;
-}
+अटल अंतरभूत bool dwc2_is_hs_iot(काष्ठा dwc2_hsotg *hsotg)
+अणु
+	वापस (hsotg->hw_params.snpsid & 0xffff0000) == 0x55320000;
+पूर्ण
 
 /*
  * The following functions support initialization of the core driver component
  * and the DWC_otg controller
  */
-int dwc2_core_reset(struct dwc2_hsotg *hsotg, bool skip_wait);
-int dwc2_enter_partial_power_down(struct dwc2_hsotg *hsotg);
-int dwc2_exit_partial_power_down(struct dwc2_hsotg *hsotg, int rem_wakeup,
+पूर्णांक dwc2_core_reset(काष्ठा dwc2_hsotg *hsotg, bool skip_रुको);
+पूर्णांक dwc2_enter_partial_घातer_करोwn(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_निकास_partial_घातer_करोwn(काष्ठा dwc2_hsotg *hsotg, पूर्णांक rem_wakeup,
 				 bool restore);
-int dwc2_enter_hibernation(struct dwc2_hsotg *hsotg, int is_host);
-int dwc2_exit_hibernation(struct dwc2_hsotg *hsotg, int rem_wakeup,
-		int reset, int is_host);
-void dwc2_init_fs_ls_pclk_sel(struct dwc2_hsotg *hsotg);
-int dwc2_phy_init(struct dwc2_hsotg *hsotg, bool select_phy);
+पूर्णांक dwc2_enter_hibernation(काष्ठा dwc2_hsotg *hsotg, पूर्णांक is_host);
+पूर्णांक dwc2_निकास_hibernation(काष्ठा dwc2_hsotg *hsotg, पूर्णांक rem_wakeup,
+		पूर्णांक reset, पूर्णांक is_host);
+व्योम dwc2_init_fs_ls_pclk_sel(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_phy_init(काष्ठा dwc2_hsotg *hsotg, bool select_phy);
 
-void dwc2_force_mode(struct dwc2_hsotg *hsotg, bool host);
-void dwc2_force_dr_mode(struct dwc2_hsotg *hsotg);
+व्योम dwc2_क्रमce_mode(काष्ठा dwc2_hsotg *hsotg, bool host);
+व्योम dwc2_क्रमce_dr_mode(काष्ठा dwc2_hsotg *hsotg);
 
-bool dwc2_is_controller_alive(struct dwc2_hsotg *hsotg);
+bool dwc2_is_controller_alive(काष्ठा dwc2_hsotg *hsotg);
 
-int dwc2_check_core_version(struct dwc2_hsotg *hsotg);
+पूर्णांक dwc2_check_core_version(काष्ठा dwc2_hsotg *hsotg);
 
 /*
  * Common core Functions.
  * The following functions support managing the DWC_otg controller in either
  * device or host mode.
  */
-void dwc2_read_packet(struct dwc2_hsotg *hsotg, u8 *dest, u16 bytes);
-void dwc2_flush_tx_fifo(struct dwc2_hsotg *hsotg, const int num);
-void dwc2_flush_rx_fifo(struct dwc2_hsotg *hsotg);
+व्योम dwc2_पढ़ो_packet(काष्ठा dwc2_hsotg *hsotg, u8 *dest, u16 bytes);
+व्योम dwc2_flush_tx_fअगरo(काष्ठा dwc2_hsotg *hsotg, स्थिर पूर्णांक num);
+व्योम dwc2_flush_rx_fअगरo(काष्ठा dwc2_hsotg *hsotg);
 
-void dwc2_enable_global_interrupts(struct dwc2_hsotg *hcd);
-void dwc2_disable_global_interrupts(struct dwc2_hsotg *hcd);
+व्योम dwc2_enable_global_पूर्णांकerrupts(काष्ठा dwc2_hsotg *hcd);
+व्योम dwc2_disable_global_पूर्णांकerrupts(काष्ठा dwc2_hsotg *hcd);
 
-void dwc2_hib_restore_common(struct dwc2_hsotg *hsotg, int rem_wakeup,
-			     int is_host);
-int dwc2_backup_global_registers(struct dwc2_hsotg *hsotg);
-int dwc2_restore_global_registers(struct dwc2_hsotg *hsotg);
+व्योम dwc2_hib_restore_common(काष्ठा dwc2_hsotg *hsotg, पूर्णांक rem_wakeup,
+			     पूर्णांक is_host);
+पूर्णांक dwc2_backup_global_रेजिस्टरs(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_restore_global_रेजिस्टरs(काष्ठा dwc2_hsotg *hsotg);
 
-void dwc2_enable_acg(struct dwc2_hsotg *hsotg);
+व्योम dwc2_enable_acg(काष्ठा dwc2_hsotg *hsotg);
 
-/* This function should be called on every hardware interrupt. */
-irqreturn_t dwc2_handle_common_intr(int irq, void *dev);
+/* This function should be called on every hardware पूर्णांकerrupt. */
+irqवापस_t dwc2_handle_common_पूर्णांकr(पूर्णांक irq, व्योम *dev);
 
 /* The device ID match table */
-extern const struct of_device_id dwc2_of_match_table[];
-extern const struct acpi_device_id dwc2_acpi_match[];
+बाह्य स्थिर काष्ठा of_device_id dwc2_of_match_table[];
+बाह्य स्थिर काष्ठा acpi_device_id dwc2_acpi_match[];
 
-int dwc2_lowlevel_hw_enable(struct dwc2_hsotg *hsotg);
-int dwc2_lowlevel_hw_disable(struct dwc2_hsotg *hsotg);
+पूर्णांक dwc2_lowlevel_hw_enable(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_lowlevel_hw_disable(काष्ठा dwc2_hsotg *hsotg);
 
 /* Common polling functions */
-int dwc2_hsotg_wait_bit_set(struct dwc2_hsotg *hs_otg, u32 reg, u32 bit,
-			    u32 timeout);
-int dwc2_hsotg_wait_bit_clear(struct dwc2_hsotg *hs_otg, u32 reg, u32 bit,
-			      u32 timeout);
+पूर्णांक dwc2_hsotg_रुको_bit_set(काष्ठा dwc2_hsotg *hs_otg, u32 reg, u32 bit,
+			    u32 समयout);
+पूर्णांक dwc2_hsotg_रुको_bit_clear(काष्ठा dwc2_hsotg *hs_otg, u32 reg, u32 bit,
+			      u32 समयout);
 /* Parameters */
-int dwc2_get_hwparams(struct dwc2_hsotg *hsotg);
-int dwc2_init_params(struct dwc2_hsotg *hsotg);
+पूर्णांक dwc2_get_hwparams(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_init_params(काष्ठा dwc2_hsotg *hsotg);
 
 /*
  * The following functions check the controller's OTG operation mode
  * capability (GHWCFG2.OTG_MODE).
  *
- * These functions can be used before the internal hsotg->hw_params
- * are read in and cached so they always read directly from the
- * GHWCFG2 register.
+ * These functions can be used beक्रमe the पूर्णांकernal hsotg->hw_params
+ * are पढ़ो in and cached so they always पढ़ो directly from the
+ * GHWCFG2 रेजिस्टर.
  */
-unsigned int dwc2_op_mode(struct dwc2_hsotg *hsotg);
-bool dwc2_hw_is_otg(struct dwc2_hsotg *hsotg);
-bool dwc2_hw_is_host(struct dwc2_hsotg *hsotg);
-bool dwc2_hw_is_device(struct dwc2_hsotg *hsotg);
+अचिन्हित पूर्णांक dwc2_op_mode(काष्ठा dwc2_hsotg *hsotg);
+bool dwc2_hw_is_otg(काष्ठा dwc2_hsotg *hsotg);
+bool dwc2_hw_is_host(काष्ठा dwc2_hsotg *hsotg);
+bool dwc2_hw_is_device(काष्ठा dwc2_hsotg *hsotg);
 
 /*
  * Returns the mode of operation, host or device
  */
-static inline int dwc2_is_host_mode(struct dwc2_hsotg *hsotg)
-{
-	return (dwc2_readl(hsotg, GINTSTS) & GINTSTS_CURMODE_HOST) != 0;
-}
+अटल अंतरभूत पूर्णांक dwc2_is_host_mode(काष्ठा dwc2_hsotg *hsotg)
+अणु
+	वापस (dwc2_पढ़ोl(hsotg, GINTSTS) & GINTSTS_CURMODE_HOST) != 0;
+पूर्ण
 
-static inline int dwc2_is_device_mode(struct dwc2_hsotg *hsotg)
-{
-	return (dwc2_readl(hsotg, GINTSTS) & GINTSTS_CURMODE_HOST) == 0;
-}
+अटल अंतरभूत पूर्णांक dwc2_is_device_mode(काष्ठा dwc2_hsotg *hsotg)
+अणु
+	वापस (dwc2_पढ़ोl(hsotg, GINTSTS) & GINTSTS_CURMODE_HOST) == 0;
+पूर्ण
 
-int dwc2_drd_init(struct dwc2_hsotg *hsotg);
-void dwc2_drd_suspend(struct dwc2_hsotg *hsotg);
-void dwc2_drd_resume(struct dwc2_hsotg *hsotg);
-void dwc2_drd_exit(struct dwc2_hsotg *hsotg);
+पूर्णांक dwc2_drd_init(काष्ठा dwc2_hsotg *hsotg);
+व्योम dwc2_drd_suspend(काष्ठा dwc2_hsotg *hsotg);
+व्योम dwc2_drd_resume(काष्ठा dwc2_hsotg *hsotg);
+व्योम dwc2_drd_निकास(काष्ठा dwc2_hsotg *hsotg);
 
 /*
- * Dump core registers and SPRAM
+ * Dump core रेजिस्टरs and SPRAM
  */
-void dwc2_dump_dev_registers(struct dwc2_hsotg *hsotg);
-void dwc2_dump_host_registers(struct dwc2_hsotg *hsotg);
-void dwc2_dump_global_registers(struct dwc2_hsotg *hsotg);
+व्योम dwc2_dump_dev_रेजिस्टरs(काष्ठा dwc2_hsotg *hsotg);
+व्योम dwc2_dump_host_रेजिस्टरs(काष्ठा dwc2_hsotg *hsotg);
+व्योम dwc2_dump_global_रेजिस्टरs(काष्ठा dwc2_hsotg *hsotg);
 
 /* Gadget defines */
-#if IS_ENABLED(CONFIG_USB_DWC2_PERIPHERAL) || \
+#अगर IS_ENABLED(CONFIG_USB_DWC2_PERIPHERAL) || \
 	IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
-int dwc2_hsotg_remove(struct dwc2_hsotg *hsotg);
-int dwc2_hsotg_suspend(struct dwc2_hsotg *dwc2);
-int dwc2_hsotg_resume(struct dwc2_hsotg *dwc2);
-int dwc2_gadget_init(struct dwc2_hsotg *hsotg);
-void dwc2_hsotg_core_init_disconnected(struct dwc2_hsotg *dwc2,
+पूर्णांक dwc2_hsotg_हटाओ(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_hsotg_suspend(काष्ठा dwc2_hsotg *dwc2);
+पूर्णांक dwc2_hsotg_resume(काष्ठा dwc2_hsotg *dwc2);
+पूर्णांक dwc2_gadget_init(काष्ठा dwc2_hsotg *hsotg);
+व्योम dwc2_hsotg_core_init_disconnected(काष्ठा dwc2_hsotg *dwc2,
 				       bool reset);
-void dwc2_hsotg_core_disconnect(struct dwc2_hsotg *hsotg);
-void dwc2_hsotg_core_connect(struct dwc2_hsotg *hsotg);
-void dwc2_hsotg_disconnect(struct dwc2_hsotg *dwc2);
-int dwc2_hsotg_set_test_mode(struct dwc2_hsotg *hsotg, int testmode);
-#define dwc2_is_device_connected(hsotg) (hsotg->connected)
-int dwc2_backup_device_registers(struct dwc2_hsotg *hsotg);
-int dwc2_restore_device_registers(struct dwc2_hsotg *hsotg, int remote_wakeup);
-int dwc2_gadget_enter_hibernation(struct dwc2_hsotg *hsotg);
-int dwc2_gadget_exit_hibernation(struct dwc2_hsotg *hsotg,
-				 int rem_wakeup, int reset);
-int dwc2_gadget_enter_partial_power_down(struct dwc2_hsotg *hsotg);
-int dwc2_gadget_exit_partial_power_down(struct dwc2_hsotg *hsotg,
+व्योम dwc2_hsotg_core_disconnect(काष्ठा dwc2_hsotg *hsotg);
+व्योम dwc2_hsotg_core_connect(काष्ठा dwc2_hsotg *hsotg);
+व्योम dwc2_hsotg_disconnect(काष्ठा dwc2_hsotg *dwc2);
+पूर्णांक dwc2_hsotg_set_test_mode(काष्ठा dwc2_hsotg *hsotg, पूर्णांक tesपंचांगode);
+#घोषणा dwc2_is_device_connected(hsotg) (hsotg->connected)
+पूर्णांक dwc2_backup_device_रेजिस्टरs(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_restore_device_रेजिस्टरs(काष्ठा dwc2_hsotg *hsotg, पूर्णांक remote_wakeup);
+पूर्णांक dwc2_gadget_enter_hibernation(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_gadget_निकास_hibernation(काष्ठा dwc2_hsotg *hsotg,
+				 पूर्णांक rem_wakeup, पूर्णांक reset);
+पूर्णांक dwc2_gadget_enter_partial_घातer_करोwn(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_gadget_निकास_partial_घातer_करोwn(काष्ठा dwc2_hsotg *hsotg,
 					bool restore);
-void dwc2_gadget_enter_clock_gating(struct dwc2_hsotg *hsotg);
-void dwc2_gadget_exit_clock_gating(struct dwc2_hsotg *hsotg,
-				   int rem_wakeup);
-int dwc2_hsotg_tx_fifo_count(struct dwc2_hsotg *hsotg);
-int dwc2_hsotg_tx_fifo_total_depth(struct dwc2_hsotg *hsotg);
-int dwc2_hsotg_tx_fifo_average_depth(struct dwc2_hsotg *hsotg);
-void dwc2_gadget_init_lpm(struct dwc2_hsotg *hsotg);
-void dwc2_gadget_program_ref_clk(struct dwc2_hsotg *hsotg);
-static inline void dwc2_clear_fifo_map(struct dwc2_hsotg *hsotg)
-{ hsotg->fifo_map = 0; }
-#else
-static inline int dwc2_hsotg_remove(struct dwc2_hsotg *dwc2)
-{ return 0; }
-static inline int dwc2_hsotg_suspend(struct dwc2_hsotg *dwc2)
-{ return 0; }
-static inline int dwc2_hsotg_resume(struct dwc2_hsotg *dwc2)
-{ return 0; }
-static inline int dwc2_gadget_init(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline void dwc2_hsotg_core_init_disconnected(struct dwc2_hsotg *dwc2,
-						     bool reset) {}
-static inline void dwc2_hsotg_core_disconnect(struct dwc2_hsotg *hsotg) {}
-static inline void dwc2_hsotg_core_connect(struct dwc2_hsotg *hsotg) {}
-static inline void dwc2_hsotg_disconnect(struct dwc2_hsotg *dwc2) {}
-static inline int dwc2_hsotg_set_test_mode(struct dwc2_hsotg *hsotg,
-					   int testmode)
-{ return 0; }
-#define dwc2_is_device_connected(hsotg) (0)
-static inline int dwc2_backup_device_registers(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline int dwc2_restore_device_registers(struct dwc2_hsotg *hsotg,
-						int remote_wakeup)
-{ return 0; }
-static inline int dwc2_gadget_enter_hibernation(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline int dwc2_gadget_exit_hibernation(struct dwc2_hsotg *hsotg,
-					       int rem_wakeup, int reset)
-{ return 0; }
-static inline int dwc2_gadget_enter_partial_power_down(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline int dwc2_gadget_exit_partial_power_down(struct dwc2_hsotg *hsotg,
+व्योम dwc2_gadget_enter_घड़ी_gating(काष्ठा dwc2_hsotg *hsotg);
+व्योम dwc2_gadget_निकास_घड़ी_gating(काष्ठा dwc2_hsotg *hsotg,
+				   पूर्णांक rem_wakeup);
+पूर्णांक dwc2_hsotg_tx_fअगरo_count(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_hsotg_tx_fअगरo_total_depth(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_hsotg_tx_fअगरo_average_depth(काष्ठा dwc2_hsotg *hsotg);
+व्योम dwc2_gadget_init_lpm(काष्ठा dwc2_hsotg *hsotg);
+व्योम dwc2_gadget_program_ref_clk(काष्ठा dwc2_hsotg *hsotg);
+अटल अंतरभूत व्योम dwc2_clear_fअगरo_map(काष्ठा dwc2_hsotg *hsotg)
+अणु hsotg->fअगरo_map = 0; पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक dwc2_hsotg_हटाओ(काष्ठा dwc2_hsotg *dwc2)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_hsotg_suspend(काष्ठा dwc2_hsotg *dwc2)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_hsotg_resume(काष्ठा dwc2_hsotg *dwc2)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_gadget_init(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम dwc2_hsotg_core_init_disconnected(काष्ठा dwc2_hsotg *dwc2,
+						     bool reset) अणुपूर्ण
+अटल अंतरभूत व्योम dwc2_hsotg_core_disconnect(काष्ठा dwc2_hsotg *hsotg) अणुपूर्ण
+अटल अंतरभूत व्योम dwc2_hsotg_core_connect(काष्ठा dwc2_hsotg *hsotg) अणुपूर्ण
+अटल अंतरभूत व्योम dwc2_hsotg_disconnect(काष्ठा dwc2_hsotg *dwc2) अणुपूर्ण
+अटल अंतरभूत पूर्णांक dwc2_hsotg_set_test_mode(काष्ठा dwc2_hsotg *hsotg,
+					   पूर्णांक tesपंचांगode)
+अणु वापस 0; पूर्ण
+#घोषणा dwc2_is_device_connected(hsotg) (0)
+अटल अंतरभूत पूर्णांक dwc2_backup_device_रेजिस्टरs(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_restore_device_रेजिस्टरs(काष्ठा dwc2_hsotg *hsotg,
+						पूर्णांक remote_wakeup)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_gadget_enter_hibernation(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_gadget_निकास_hibernation(काष्ठा dwc2_hsotg *hsotg,
+					       पूर्णांक rem_wakeup, पूर्णांक reset)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_gadget_enter_partial_घातer_करोwn(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_gadget_निकास_partial_घातer_करोwn(काष्ठा dwc2_hsotg *hsotg,
 						      bool restore)
-{ return 0; }
-static inline void dwc2_gadget_enter_clock_gating(struct dwc2_hsotg *hsotg) {}
-static inline void dwc2_gadget_exit_clock_gating(struct dwc2_hsotg *hsotg,
-						 int rem_wakeup) {}
-static inline int dwc2_hsotg_tx_fifo_count(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline int dwc2_hsotg_tx_fifo_total_depth(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline int dwc2_hsotg_tx_fifo_average_depth(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline void dwc2_gadget_init_lpm(struct dwc2_hsotg *hsotg) {}
-static inline void dwc2_gadget_program_ref_clk(struct dwc2_hsotg *hsotg) {}
-static inline void dwc2_clear_fifo_map(struct dwc2_hsotg *hsotg) {}
-#endif
+अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम dwc2_gadget_enter_घड़ी_gating(काष्ठा dwc2_hsotg *hsotg) अणुपूर्ण
+अटल अंतरभूत व्योम dwc2_gadget_निकास_घड़ी_gating(काष्ठा dwc2_hsotg *hsotg,
+						 पूर्णांक rem_wakeup) अणुपूर्ण
+अटल अंतरभूत पूर्णांक dwc2_hsotg_tx_fअगरo_count(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_hsotg_tx_fअगरo_total_depth(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_hsotg_tx_fअगरo_average_depth(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम dwc2_gadget_init_lpm(काष्ठा dwc2_hsotg *hsotg) अणुपूर्ण
+अटल अंतरभूत व्योम dwc2_gadget_program_ref_clk(काष्ठा dwc2_hsotg *hsotg) अणुपूर्ण
+अटल अंतरभूत व्योम dwc2_clear_fअगरo_map(काष्ठा dwc2_hsotg *hsotg) अणुपूर्ण
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_USB_DWC2_HOST) || IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
-int dwc2_hcd_get_frame_number(struct dwc2_hsotg *hsotg);
-int dwc2_hcd_get_future_frame_number(struct dwc2_hsotg *hsotg, int us);
-void dwc2_hcd_connect(struct dwc2_hsotg *hsotg);
-void dwc2_hcd_disconnect(struct dwc2_hsotg *hsotg, bool force);
-void dwc2_hcd_start(struct dwc2_hsotg *hsotg);
-int dwc2_core_init(struct dwc2_hsotg *hsotg, bool initial_setup);
-int dwc2_port_suspend(struct dwc2_hsotg *hsotg, u16 windex);
-int dwc2_port_resume(struct dwc2_hsotg *hsotg);
-int dwc2_backup_host_registers(struct dwc2_hsotg *hsotg);
-int dwc2_restore_host_registers(struct dwc2_hsotg *hsotg);
-int dwc2_host_enter_hibernation(struct dwc2_hsotg *hsotg);
-int dwc2_host_exit_hibernation(struct dwc2_hsotg *hsotg,
-			       int rem_wakeup, int reset);
-int dwc2_host_enter_partial_power_down(struct dwc2_hsotg *hsotg);
-int dwc2_host_exit_partial_power_down(struct dwc2_hsotg *hsotg,
-				      int rem_wakeup, bool restore);
-void dwc2_host_enter_clock_gating(struct dwc2_hsotg *hsotg);
-void dwc2_host_exit_clock_gating(struct dwc2_hsotg *hsotg, int rem_wakeup);
-bool dwc2_host_can_poweroff_phy(struct dwc2_hsotg *dwc2);
-static inline void dwc2_host_schedule_phy_reset(struct dwc2_hsotg *hsotg)
-{ schedule_work(&hsotg->phy_reset_work); }
-#else
-static inline int dwc2_hcd_get_frame_number(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline int dwc2_hcd_get_future_frame_number(struct dwc2_hsotg *hsotg,
-						   int us)
-{ return 0; }
-static inline void dwc2_hcd_connect(struct dwc2_hsotg *hsotg) {}
-static inline void dwc2_hcd_disconnect(struct dwc2_hsotg *hsotg, bool force) {}
-static inline void dwc2_hcd_start(struct dwc2_hsotg *hsotg) {}
-static inline void dwc2_hcd_remove(struct dwc2_hsotg *hsotg) {}
-static inline int dwc2_core_init(struct dwc2_hsotg *hsotg, bool initial_setup)
-{ return 0; }
-static inline int dwc2_port_suspend(struct dwc2_hsotg *hsotg, u16 windex)
-{ return 0; }
-static inline int dwc2_port_resume(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline int dwc2_hcd_init(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline int dwc2_backup_host_registers(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline int dwc2_restore_host_registers(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline int dwc2_host_enter_hibernation(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline int dwc2_host_exit_hibernation(struct dwc2_hsotg *hsotg,
-					     int rem_wakeup, int reset)
-{ return 0; }
-static inline int dwc2_host_enter_partial_power_down(struct dwc2_hsotg *hsotg)
-{ return 0; }
-static inline int dwc2_host_exit_partial_power_down(struct dwc2_hsotg *hsotg,
-						    int rem_wakeup, bool restore)
-{ return 0; }
-static inline void dwc2_host_enter_clock_gating(struct dwc2_hsotg *hsotg) {}
-static inline void dwc2_host_exit_clock_gating(struct dwc2_hsotg *hsotg,
-					       int rem_wakeup) {}
-static inline bool dwc2_host_can_poweroff_phy(struct dwc2_hsotg *dwc2)
-{ return false; }
-static inline void dwc2_host_schedule_phy_reset(struct dwc2_hsotg *hsotg) {}
+#अगर IS_ENABLED(CONFIG_USB_DWC2_HOST) || IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
+पूर्णांक dwc2_hcd_get_frame_number(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_hcd_get_future_frame_number(काष्ठा dwc2_hsotg *hsotg, पूर्णांक us);
+व्योम dwc2_hcd_connect(काष्ठा dwc2_hsotg *hsotg);
+व्योम dwc2_hcd_disconnect(काष्ठा dwc2_hsotg *hsotg, bool क्रमce);
+व्योम dwc2_hcd_start(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_core_init(काष्ठा dwc2_hsotg *hsotg, bool initial_setup);
+पूर्णांक dwc2_port_suspend(काष्ठा dwc2_hsotg *hsotg, u16 windex);
+पूर्णांक dwc2_port_resume(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_backup_host_रेजिस्टरs(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_restore_host_रेजिस्टरs(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_host_enter_hibernation(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_host_निकास_hibernation(काष्ठा dwc2_hsotg *hsotg,
+			       पूर्णांक rem_wakeup, पूर्णांक reset);
+पूर्णांक dwc2_host_enter_partial_घातer_करोwn(काष्ठा dwc2_hsotg *hsotg);
+पूर्णांक dwc2_host_निकास_partial_घातer_करोwn(काष्ठा dwc2_hsotg *hsotg,
+				      पूर्णांक rem_wakeup, bool restore);
+व्योम dwc2_host_enter_घड़ी_gating(काष्ठा dwc2_hsotg *hsotg);
+व्योम dwc2_host_निकास_घड़ी_gating(काष्ठा dwc2_hsotg *hsotg, पूर्णांक rem_wakeup);
+bool dwc2_host_can_घातeroff_phy(काष्ठा dwc2_hsotg *dwc2);
+अटल अंतरभूत व्योम dwc2_host_schedule_phy_reset(काष्ठा dwc2_hsotg *hsotg)
+अणु schedule_work(&hsotg->phy_reset_work); पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक dwc2_hcd_get_frame_number(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_hcd_get_future_frame_number(काष्ठा dwc2_hsotg *hsotg,
+						   पूर्णांक us)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम dwc2_hcd_connect(काष्ठा dwc2_hsotg *hsotg) अणुपूर्ण
+अटल अंतरभूत व्योम dwc2_hcd_disconnect(काष्ठा dwc2_hsotg *hsotg, bool क्रमce) अणुपूर्ण
+अटल अंतरभूत व्योम dwc2_hcd_start(काष्ठा dwc2_hsotg *hsotg) अणुपूर्ण
+अटल अंतरभूत व्योम dwc2_hcd_हटाओ(काष्ठा dwc2_hsotg *hsotg) अणुपूर्ण
+अटल अंतरभूत पूर्णांक dwc2_core_init(काष्ठा dwc2_hsotg *hsotg, bool initial_setup)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_port_suspend(काष्ठा dwc2_hsotg *hsotg, u16 windex)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_port_resume(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_hcd_init(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_backup_host_रेजिस्टरs(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_restore_host_रेजिस्टरs(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_host_enter_hibernation(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_host_निकास_hibernation(काष्ठा dwc2_hsotg *hsotg,
+					     पूर्णांक rem_wakeup, पूर्णांक reset)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_host_enter_partial_घातer_करोwn(काष्ठा dwc2_hsotg *hsotg)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक dwc2_host_निकास_partial_घातer_करोwn(काष्ठा dwc2_hsotg *hsotg,
+						    पूर्णांक rem_wakeup, bool restore)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम dwc2_host_enter_घड़ी_gating(काष्ठा dwc2_hsotg *hsotg) अणुपूर्ण
+अटल अंतरभूत व्योम dwc2_host_निकास_घड़ी_gating(काष्ठा dwc2_hsotg *hsotg,
+					       पूर्णांक rem_wakeup) अणुपूर्ण
+अटल अंतरभूत bool dwc2_host_can_घातeroff_phy(काष्ठा dwc2_hsotg *dwc2)
+अणु वापस false; पूर्ण
+अटल अंतरभूत व्योम dwc2_host_schedule_phy_reset(काष्ठा dwc2_hsotg *hsotg) अणुपूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* __DWC2_CORE_H__ */
+#पूर्ण_अगर /* __DWC2_CORE_H__ */

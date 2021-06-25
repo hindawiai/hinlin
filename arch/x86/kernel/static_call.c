@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/static_call.h>
-#include <linux/memory.h>
-#include <linux/bug.h>
-#include <asm/text-patching.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/अटल_call.h>
+#समावेश <linux/memory.h>
+#समावेश <linux/bug.h>
+#समावेश <यंत्र/text-patching.h>
 
-enum insn_type {
+क्रमागत insn_type अणु
 	CALL = 0, /* site call */
 	NOP = 1,  /* site cond-call */
 	JMP = 2,  /* tramp / site tail-call */
 	RET = 3,  /* tramp / site cond-tail-call */
-};
+पूर्ण;
 
 /*
- * data16 data16 xorq %rax, %rax - a single 5 byte instruction that clears %rax
+ * data16 data16 xorq %rax, %rax - a single 5 byte inकाष्ठाion that clears %rax
  * The REX.W cancels the effect of any data16.
  */
-static const u8 xor5rax[] = { 0x66, 0x66, 0x48, 0x31, 0xc0 };
+अटल स्थिर u8 xor5rax[] = अणु 0x66, 0x66, 0x48, 0x31, 0xc0 पूर्ण;
 
-static void __ref __static_call_transform(void *insn, enum insn_type type, void *func)
-{
-	const void *emulate = NULL;
-	int size = CALL_INSN_SIZE;
-	const void *code;
+अटल व्योम __ref __अटल_call_transक्रमm(व्योम *insn, क्रमागत insn_type type, व्योम *func)
+अणु
+	स्थिर व्योम *emulate = शून्य;
+	पूर्णांक size = CALL_INSN_SIZE;
+	स्थिर व्योम *code;
 
-	switch (type) {
-	case CALL:
+	चयन (type) अणु
+	हाल CALL:
 		code = text_gen_insn(CALL_INSN_OPCODE, insn, func);
-		if (func == &__static_call_return0) {
+		अगर (func == &__अटल_call_वापस0) अणु
 			emulate = code;
 			code = &xor5rax;
-		}
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case NOP:
+	हाल NOP:
 		code = x86_nops[5];
-		break;
+		अवरोध;
 
-	case JMP:
+	हाल JMP:
 		code = text_gen_insn(JMP32_INSN_OPCODE, insn, func);
-		break;
+		अवरोध;
 
-	case RET:
+	हाल RET:
 		code = text_gen_insn(RET_INSN_OPCODE, insn, func);
 		size = RET_INSN_SIZE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (memcmp(insn, code, size) == 0)
-		return;
+	अगर (स_भेद(insn, code, size) == 0)
+		वापस;
 
-	if (unlikely(system_state == SYSTEM_BOOTING))
-		return text_poke_early(insn, code, size);
+	अगर (unlikely(प्रणाली_state == SYSTEM_BOOTING))
+		वापस text_poke_early(insn, code, size);
 
 	text_poke_bp(insn, code, size, emulate);
-}
+पूर्ण
 
-static void __static_call_validate(void *insn, bool tail)
-{
+अटल व्योम __अटल_call_validate(व्योम *insn, bool tail)
+अणु
 	u8 opcode = *(u8 *)insn;
 
-	if (tail) {
-		if (opcode == JMP32_INSN_OPCODE ||
+	अगर (tail) अणु
+		अगर (opcode == JMP32_INSN_OPCODE ||
 		    opcode == RET_INSN_OPCODE)
-			return;
-	} else {
-		if (opcode == CALL_INSN_OPCODE ||
-		    !memcmp(insn, x86_nops[5], 5) ||
-		    !memcmp(insn, xor5rax, 5))
-			return;
-	}
+			वापस;
+	पूर्ण अन्यथा अणु
+		अगर (opcode == CALL_INSN_OPCODE ||
+		    !स_भेद(insn, x86_nops[5], 5) ||
+		    !स_भेद(insn, xor5rax, 5))
+			वापस;
+	पूर्ण
 
 	/*
-	 * If we ever trigger this, our text is corrupt, we'll probably not live long.
+	 * If we ever trigger this, our text is corrupt, we'll probably not live दीर्घ.
 	 */
 	WARN_ONCE(1, "unexpected static_call insn opcode 0x%x at %pS\n", opcode, insn);
-}
+पूर्ण
 
-static inline enum insn_type __sc_insn(bool null, bool tail)
-{
+अटल अंतरभूत क्रमागत insn_type __sc_insn(bool null, bool tail)
+अणु
 	/*
 	 * Encode the following table without branches:
 	 *
@@ -89,23 +90,23 @@ static inline enum insn_type __sc_insn(bool null, bool tail)
 	 *	  1  |   0   |  JMP
 	 *	  1  |   1   |  RET
 	 */
-	return 2*tail + null;
-}
+	वापस 2*tail + null;
+पूर्ण
 
-void arch_static_call_transform(void *site, void *tramp, void *func, bool tail)
-{
+व्योम arch_अटल_call_transक्रमm(व्योम *site, व्योम *tramp, व्योम *func, bool tail)
+अणु
 	mutex_lock(&text_mutex);
 
-	if (tramp) {
-		__static_call_validate(tramp, true);
-		__static_call_transform(tramp, __sc_insn(!func, true), func);
-	}
+	अगर (tramp) अणु
+		__अटल_call_validate(tramp, true);
+		__अटल_call_transक्रमm(tramp, __sc_insn(!func, true), func);
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_HAVE_STATIC_CALL_INLINE) && site) {
-		__static_call_validate(site, tail);
-		__static_call_transform(site, __sc_insn(!func, tail), func);
-	}
+	अगर (IS_ENABLED(CONFIG_HAVE_STATIC_CALL_INLINE) && site) अणु
+		__अटल_call_validate(site, tail);
+		__अटल_call_transक्रमm(site, __sc_insn(!func, tail), func);
+	पूर्ण
 
 	mutex_unlock(&text_mutex);
-}
-EXPORT_SYMBOL_GPL(arch_static_call_transform);
+पूर्ण
+EXPORT_SYMBOL_GPL(arch_अटल_call_transक्रमm);

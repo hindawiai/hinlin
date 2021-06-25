@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Motorola CPCAP PMIC USB PHY driver
  * Copyright (C) 2017 Tony Lindgren <tony@atomide.com>
@@ -6,94 +7,94 @@
  * board-mapphone-usb.c and cpcap-usb-det.c:
  * Copyright (C) 2007 - 2011 Motorola, Inc.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/atomic.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/iio/consumer.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/iio/consumer.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-#include <linux/gpio/consumer.h>
-#include <linux/mfd/motorola-cpcap.h>
-#include <linux/phy/omap_usb.h>
-#include <linux/phy/phy.h>
-#include <linux/regulator/consumer.h>
-#include <linux/usb/musb.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/mfd/motorola-cpcap.h>
+#समावेश <linux/phy/omap_usb.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/usb/musb.h>
 
-/* CPCAP_REG_USBC1 register bits */
-#define CPCAP_BIT_IDPULSE		BIT(15)
-#define CPCAP_BIT_ID100KPU		BIT(14)
-#define CPCAP_BIT_IDPUCNTRL		BIT(13)
-#define CPCAP_BIT_IDPU			BIT(12)
-#define CPCAP_BIT_IDPD			BIT(11)
-#define CPCAP_BIT_VBUSCHRGTMR3		BIT(10)
-#define CPCAP_BIT_VBUSCHRGTMR2		BIT(9)
-#define CPCAP_BIT_VBUSCHRGTMR1		BIT(8)
-#define CPCAP_BIT_VBUSCHRGTMR0		BIT(7)
-#define CPCAP_BIT_VBUSPU		BIT(6)
-#define CPCAP_BIT_VBUSPD		BIT(5)
-#define CPCAP_BIT_DMPD			BIT(4)
-#define CPCAP_BIT_DPPD			BIT(3)
-#define CPCAP_BIT_DM1K5PU		BIT(2)
-#define CPCAP_BIT_DP1K5PU		BIT(1)
-#define CPCAP_BIT_DP150KPU		BIT(0)
+/* CPCAP_REG_USBC1 रेजिस्टर bits */
+#घोषणा CPCAP_BIT_IDPULSE		BIT(15)
+#घोषणा CPCAP_BIT_ID100KPU		BIT(14)
+#घोषणा CPCAP_BIT_IDPUCNTRL		BIT(13)
+#घोषणा CPCAP_BIT_IDPU			BIT(12)
+#घोषणा CPCAP_BIT_IDPD			BIT(11)
+#घोषणा CPCAP_BIT_VBUSCHRGTMR3		BIT(10)
+#घोषणा CPCAP_BIT_VBUSCHRGTMR2		BIT(9)
+#घोषणा CPCAP_BIT_VBUSCHRGTMR1		BIT(8)
+#घोषणा CPCAP_BIT_VBUSCHRGTMR0		BIT(7)
+#घोषणा CPCAP_BIT_VBUSPU		BIT(6)
+#घोषणा CPCAP_BIT_VBUSPD		BIT(5)
+#घोषणा CPCAP_BIT_DMPD			BIT(4)
+#घोषणा CPCAP_BIT_DPPD			BIT(3)
+#घोषणा CPCAP_BIT_DM1K5PU		BIT(2)
+#घोषणा CPCAP_BIT_DP1K5PU		BIT(1)
+#घोषणा CPCAP_BIT_DP150KPU		BIT(0)
 
-/* CPCAP_REG_USBC2 register bits */
-#define CPCAP_BIT_ZHSDRV1		BIT(15)
-#define CPCAP_BIT_ZHSDRV0		BIT(14)
-#define CPCAP_BIT_DPLLCLKREQ		BIT(13)
-#define CPCAP_BIT_SE0CONN		BIT(12)
-#define CPCAP_BIT_UARTTXTRI		BIT(11)
-#define CPCAP_BIT_UARTSWAP		BIT(10)
-#define CPCAP_BIT_UARTMUX1		BIT(9)
-#define CPCAP_BIT_UARTMUX0		BIT(8)
-#define CPCAP_BIT_ULPISTPLOW		BIT(7)
-#define CPCAP_BIT_TXENPOL		BIT(6)
-#define CPCAP_BIT_USBXCVREN		BIT(5)
-#define CPCAP_BIT_USBCNTRL		BIT(4)
-#define CPCAP_BIT_USBSUSPEND		BIT(3)
-#define CPCAP_BIT_EMUMODE2		BIT(2)
-#define CPCAP_BIT_EMUMODE1		BIT(1)
-#define CPCAP_BIT_EMUMODE0		BIT(0)
+/* CPCAP_REG_USBC2 रेजिस्टर bits */
+#घोषणा CPCAP_BIT_ZHSDRV1		BIT(15)
+#घोषणा CPCAP_BIT_ZHSDRV0		BIT(14)
+#घोषणा CPCAP_BIT_DPLLCLKREQ		BIT(13)
+#घोषणा CPCAP_BIT_SE0CONN		BIT(12)
+#घोषणा CPCAP_BIT_UARTTXTRI		BIT(11)
+#घोषणा CPCAP_BIT_UARTSWAP		BIT(10)
+#घोषणा CPCAP_BIT_UARTMUX1		BIT(9)
+#घोषणा CPCAP_BIT_UARTMUX0		BIT(8)
+#घोषणा CPCAP_BIT_ULPISTPLOW		BIT(7)
+#घोषणा CPCAP_BIT_TXENPOL		BIT(6)
+#घोषणा CPCAP_BIT_USBXCVREN		BIT(5)
+#घोषणा CPCAP_BIT_USBCNTRL		BIT(4)
+#घोषणा CPCAP_BIT_USBSUSPEND		BIT(3)
+#घोषणा CPCAP_BIT_EMUMODE2		BIT(2)
+#घोषणा CPCAP_BIT_EMUMODE1		BIT(1)
+#घोषणा CPCAP_BIT_EMUMODE0		BIT(0)
 
-/* CPCAP_REG_USBC3 register bits */
-#define CPCAP_BIT_SPARE_898_15		BIT(15)
-#define CPCAP_BIT_IHSTX03		BIT(14)
-#define CPCAP_BIT_IHSTX02		BIT(13)
-#define CPCAP_BIT_IHSTX01		BIT(12)
-#define CPCAP_BIT_IHSTX0		BIT(11)
-#define CPCAP_BIT_IDPU_SPI		BIT(10)
-#define CPCAP_BIT_UNUSED_898_9		BIT(9)
-#define CPCAP_BIT_VBUSSTBY_EN		BIT(8)
-#define CPCAP_BIT_VBUSEN_SPI		BIT(7)
-#define CPCAP_BIT_VBUSPU_SPI		BIT(6)
-#define CPCAP_BIT_VBUSPD_SPI		BIT(5)
-#define CPCAP_BIT_DMPD_SPI		BIT(4)
-#define CPCAP_BIT_DPPD_SPI		BIT(3)
-#define CPCAP_BIT_SUSPEND_SPI		BIT(2)
-#define CPCAP_BIT_PU_SPI		BIT(1)
-#define CPCAP_BIT_ULPI_SPI_SEL		BIT(0)
+/* CPCAP_REG_USBC3 रेजिस्टर bits */
+#घोषणा CPCAP_BIT_SPARE_898_15		BIT(15)
+#घोषणा CPCAP_BIT_IHSTX03		BIT(14)
+#घोषणा CPCAP_BIT_IHSTX02		BIT(13)
+#घोषणा CPCAP_BIT_IHSTX01		BIT(12)
+#घोषणा CPCAP_BIT_IHSTX0		BIT(11)
+#घोषणा CPCAP_BIT_IDPU_SPI		BIT(10)
+#घोषणा CPCAP_BIT_UNUSED_898_9		BIT(9)
+#घोषणा CPCAP_BIT_VBUSSTBY_EN		BIT(8)
+#घोषणा CPCAP_BIT_VBUSEN_SPI		BIT(7)
+#घोषणा CPCAP_BIT_VBUSPU_SPI		BIT(6)
+#घोषणा CPCAP_BIT_VBUSPD_SPI		BIT(5)
+#घोषणा CPCAP_BIT_DMPD_SPI		BIT(4)
+#घोषणा CPCAP_BIT_DPPD_SPI		BIT(3)
+#घोषणा CPCAP_BIT_SUSPEND_SPI		BIT(2)
+#घोषणा CPCAP_BIT_PU_SPI		BIT(1)
+#घोषणा CPCAP_BIT_ULPI_SPI_SEL		BIT(0)
 
-struct cpcap_usb_ints_state {
+काष्ठा cpcap_usb_पूर्णांकs_state अणु
 	bool id_ground;
-	bool id_float;
+	bool id_भग्न;
 	bool chrg_det;
 	bool rvrs_chrg;
 	bool vbusov;
@@ -110,134 +111,134 @@ struct cpcap_usb_ints_state {
 	bool battdetb;
 	bool dm;
 	bool dp;
-};
+पूर्ण;
 
-enum cpcap_gpio_mode {
+क्रमागत cpcap_gpio_mode अणु
 	CPCAP_DM_DP,
 	CPCAP_MDM_RX_TX,
 	CPCAP_UNKNOWN_DISABLED,	/* Seems to disable USB lines */
 	CPCAP_OTG_DM_DP,
-};
+पूर्ण;
 
-struct cpcap_phy_ddata {
-	struct regmap *reg;
-	struct device *dev;
-	struct usb_phy phy;
-	struct delayed_work detect_work;
-	struct pinctrl *pins;
-	struct pinctrl_state *pins_ulpi;
-	struct pinctrl_state *pins_utmi;
-	struct pinctrl_state *pins_uart;
-	struct gpio_desc *gpio[2];
-	struct iio_channel *vbus;
-	struct iio_channel *id;
-	struct regulator *vusb;
+काष्ठा cpcap_phy_ddata अणु
+	काष्ठा regmap *reg;
+	काष्ठा device *dev;
+	काष्ठा usb_phy phy;
+	काष्ठा delayed_work detect_work;
+	काष्ठा pinctrl *pins;
+	काष्ठा pinctrl_state *pins_ulpi;
+	काष्ठा pinctrl_state *pins_uपंचांगi;
+	काष्ठा pinctrl_state *pins_uart;
+	काष्ठा gpio_desc *gpio[2];
+	काष्ठा iio_channel *vbus;
+	काष्ठा iio_channel *id;
+	काष्ठा regulator *vusb;
 	atomic_t active;
-	unsigned int vbus_provider:1;
-	unsigned int docked:1;
-};
+	अचिन्हित पूर्णांक vbus_provider:1;
+	अचिन्हित पूर्णांक करोcked:1;
+पूर्ण;
 
-static bool cpcap_usb_vbus_valid(struct cpcap_phy_ddata *ddata)
-{
-	int error, value = 0;
+अटल bool cpcap_usb_vbus_valid(काष्ठा cpcap_phy_ddata *ddata)
+अणु
+	पूर्णांक error, value = 0;
 
-	error = iio_read_channel_processed(ddata->vbus, &value);
-	if (error >= 0)
-		return value > 3900;
+	error = iio_पढ़ो_channel_processed(ddata->vbus, &value);
+	अगर (error >= 0)
+		वापस value > 3900;
 
 	dev_err(ddata->dev, "error reading VBUS: %i\n", error);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int cpcap_usb_phy_set_host(struct usb_otg *otg, struct usb_bus *host)
-{
+अटल पूर्णांक cpcap_usb_phy_set_host(काष्ठा usb_otg *otg, काष्ठा usb_bus *host)
+अणु
 	otg->host = host;
-	if (!host)
+	अगर (!host)
 		otg->state = OTG_STATE_UNDEFINED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cpcap_usb_phy_set_peripheral(struct usb_otg *otg,
-					struct usb_gadget *gadget)
-{
+अटल पूर्णांक cpcap_usb_phy_set_peripheral(काष्ठा usb_otg *otg,
+					काष्ठा usb_gadget *gadget)
+अणु
 	otg->gadget = gadget;
-	if (!gadget)
+	अगर (!gadget)
 		otg->state = OTG_STATE_UNDEFINED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct phy_ops ops = {
+अटल स्थिर काष्ठा phy_ops ops = अणु
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int cpcap_phy_get_ints_state(struct cpcap_phy_ddata *ddata,
-				    struct cpcap_usb_ints_state *s)
-{
-	int val, error;
+अटल पूर्णांक cpcap_phy_get_पूर्णांकs_state(काष्ठा cpcap_phy_ddata *ddata,
+				    काष्ठा cpcap_usb_पूर्णांकs_state *s)
+अणु
+	पूर्णांक val, error;
 
-	error = regmap_read(ddata->reg, CPCAP_REG_INTS1, &val);
-	if (error)
-		return error;
+	error = regmap_पढ़ो(ddata->reg, CPCAP_REG_INTS1, &val);
+	अगर (error)
+		वापस error;
 
 	s->id_ground = val & BIT(15);
-	s->id_float = val & BIT(14);
+	s->id_भग्न = val & BIT(14);
 	s->vbusov = val & BIT(11);
 
-	error = regmap_read(ddata->reg, CPCAP_REG_INTS2, &val);
-	if (error)
-		return error;
+	error = regmap_पढ़ो(ddata->reg, CPCAP_REG_INTS2, &val);
+	अगर (error)
+		वापस error;
 
 	s->vbusvld = val & BIT(3);
 	s->sessvld = val & BIT(2);
 	s->sessend = val & BIT(1);
 	s->se1 = val & BIT(0);
 
-	error = regmap_read(ddata->reg, CPCAP_REG_INTS4, &val);
-	if (error)
-		return error;
+	error = regmap_पढ़ो(ddata->reg, CPCAP_REG_INTS4, &val);
+	अगर (error)
+		वापस error;
 
 	s->dm = val & BIT(1);
 	s->dp = val & BIT(0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cpcap_usb_set_uart_mode(struct cpcap_phy_ddata *ddata);
-static int cpcap_usb_set_usb_mode(struct cpcap_phy_ddata *ddata);
+अटल पूर्णांक cpcap_usb_set_uart_mode(काष्ठा cpcap_phy_ddata *ddata);
+अटल पूर्णांक cpcap_usb_set_usb_mode(काष्ठा cpcap_phy_ddata *ddata);
 
-static void cpcap_usb_try_musb_mailbox(struct cpcap_phy_ddata *ddata,
-				       enum musb_vbus_id_status status)
-{
-	int error;
+अटल व्योम cpcap_usb_try_musb_mailbox(काष्ठा cpcap_phy_ddata *ddata,
+				       क्रमागत musb_vbus_id_status status)
+अणु
+	पूर्णांक error;
 
 	error = musb_mailbox(status);
-	if (!error)
-		return;
+	अगर (!error)
+		वापस;
 
 	dev_dbg(ddata->dev, "%s: musb_mailbox failed: %i\n",
 		__func__, error);
-}
+पूर्ण
 
-static void cpcap_usb_detect(struct work_struct *work)
-{
-	struct cpcap_phy_ddata *ddata;
-	struct cpcap_usb_ints_state s;
+अटल व्योम cpcap_usb_detect(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cpcap_phy_ddata *ddata;
+	काष्ठा cpcap_usb_पूर्णांकs_state s;
 	bool vbus = false;
-	int error;
+	पूर्णांक error;
 
-	ddata = container_of(work, struct cpcap_phy_ddata, detect_work.work);
+	ddata = container_of(work, काष्ठा cpcap_phy_ddata, detect_work.work);
 
-	error = cpcap_phy_get_ints_state(ddata, &s);
-	if (error)
-		return;
+	error = cpcap_phy_get_पूर्णांकs_state(ddata, &s);
+	अगर (error)
+		वापस;
 
 	vbus = cpcap_usb_vbus_valid(ddata);
 
 	/* We need to kick the VBUS as USB A-host */
-	if (s.id_ground && ddata->vbus_provider) {
+	अगर (s.id_ground && ddata->vbus_provider) अणु
 		dev_dbg(ddata->dev, "still in USB A-host mode, kicking VBUS\n");
 
 		cpcap_usb_try_musb_mailbox(ddata, MUSB_ID_GROUND);
@@ -246,51 +247,51 @@ static void cpcap_usb_detect(struct work_struct *work)
 					   CPCAP_BIT_VBUSSTBY_EN |
 					   CPCAP_BIT_VBUSEN_SPI,
 					   CPCAP_BIT_VBUSEN_SPI);
-		if (error)
-			goto out_err;
+		अगर (error)
+			जाओ out_err;
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (vbus && s.id_ground && ddata->docked) {
+	अगर (vbus && s.id_ground && ddata->करोcked) अणु
 		dev_dbg(ddata->dev, "still docked as A-host, signal ID down\n");
 
 		cpcap_usb_try_musb_mailbox(ddata, MUSB_ID_GROUND);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* No VBUS needed with docks */
-	if (vbus && s.id_ground && !ddata->vbus_provider) {
+	/* No VBUS needed with करोcks */
+	अगर (vbus && s.id_ground && !ddata->vbus_provider) अणु
 		dev_dbg(ddata->dev, "connected to a dock\n");
 
-		ddata->docked = true;
+		ddata->करोcked = true;
 
 		error = cpcap_usb_set_usb_mode(ddata);
-		if (error)
-			goto out_err;
+		अगर (error)
+			जाओ out_err;
 
 		cpcap_usb_try_musb_mailbox(ddata, MUSB_ID_GROUND);
 
 		/*
 		 * Force check state again after musb has reoriented,
-		 * otherwise devices won't enumerate after loading PHY
+		 * otherwise devices won't क्रमागतerate after loading PHY
 		 * driver.
 		 */
 		schedule_delayed_work(&ddata->detect_work,
-				      msecs_to_jiffies(1000));
+				      msecs_to_jअगरfies(1000));
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (s.id_ground && !ddata->docked) {
+	अगर (s.id_ground && !ddata->करोcked) अणु
 		dev_dbg(ddata->dev, "id ground, USB host mode\n");
 
 		ddata->vbus_provider = true;
 
 		error = cpcap_usb_set_usb_mode(ddata);
-		if (error)
-			goto out_err;
+		अगर (error)
+			जाओ out_err;
 
 		cpcap_usb_try_musb_mailbox(ddata, MUSB_ID_GROUND);
 
@@ -298,86 +299,86 @@ static void cpcap_usb_detect(struct work_struct *work)
 					   CPCAP_BIT_VBUSSTBY_EN |
 					   CPCAP_BIT_VBUSEN_SPI,
 					   CPCAP_BIT_VBUSEN_SPI);
-		if (error)
-			goto out_err;
+		अगर (error)
+			जाओ out_err;
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	error = regmap_update_bits(ddata->reg, CPCAP_REG_USBC3,
 				   CPCAP_BIT_VBUSSTBY_EN |
 				   CPCAP_BIT_VBUSEN_SPI, 0);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
 	vbus = cpcap_usb_vbus_valid(ddata);
 
 	/* Otherwise assume we're connected to a USB host */
-	if (vbus) {
+	अगर (vbus) अणु
 		dev_dbg(ddata->dev, "connected to USB host\n");
 		error = cpcap_usb_set_usb_mode(ddata);
-		if (error)
-			goto out_err;
+		अगर (error)
+			जाओ out_err;
 		cpcap_usb_try_musb_mailbox(ddata, MUSB_VBUS_VALID);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ddata->vbus_provider = false;
-	ddata->docked = false;
+	ddata->करोcked = false;
 	cpcap_usb_try_musb_mailbox(ddata, MUSB_VBUS_OFF);
 
 	/* Default to debug UART mode */
 	error = cpcap_usb_set_uart_mode(ddata);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
 	dev_dbg(ddata->dev, "set UART mode\n");
 
-	return;
+	वापस;
 
 out_err:
 	dev_err(ddata->dev, "error setting cable state: %i\n", error);
-}
+पूर्ण
 
-static irqreturn_t cpcap_phy_irq_thread(int irq, void *data)
-{
-	struct cpcap_phy_ddata *ddata = data;
+अटल irqवापस_t cpcap_phy_irq_thपढ़ो(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा cpcap_phy_ddata *ddata = data;
 
-	if (!atomic_read(&ddata->active))
-		return IRQ_NONE;
+	अगर (!atomic_पढ़ो(&ddata->active))
+		वापस IRQ_NONE;
 
-	schedule_delayed_work(&ddata->detect_work, msecs_to_jiffies(1));
+	schedule_delayed_work(&ddata->detect_work, msecs_to_jअगरfies(1));
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int cpcap_usb_init_irq(struct platform_device *pdev,
-			      struct cpcap_phy_ddata *ddata,
-			      const char *name)
-{
-	int irq, error;
+अटल पूर्णांक cpcap_usb_init_irq(काष्ठा platक्रमm_device *pdev,
+			      काष्ठा cpcap_phy_ddata *ddata,
+			      स्थिर अक्षर *name)
+अणु
+	पूर्णांक irq, error;
 
-	irq = platform_get_irq_byname(pdev, name);
-	if (irq < 0)
-		return -ENODEV;
+	irq = platक्रमm_get_irq_byname(pdev, name);
+	अगर (irq < 0)
+		वापस -ENODEV;
 
-	error = devm_request_threaded_irq(ddata->dev, irq, NULL,
-					  cpcap_phy_irq_thread,
+	error = devm_request_thपढ़ोed_irq(ddata->dev, irq, शून्य,
+					  cpcap_phy_irq_thपढ़ो,
 					  IRQF_SHARED |
 					  IRQF_ONESHOT,
 					  name, ddata);
-	if (error) {
+	अगर (error) अणु
 		dev_err(ddata->dev, "could not get irq %s: %i\n",
 			name, error);
 
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char * const cpcap_phy_irqs[] = {
+अटल स्थिर अक्षर * स्थिर cpcap_phy_irqs[] = अणु
 	/* REG_INT_0 */
 	"id_ground", "id_float",
 
@@ -386,21 +387,21 @@ static const char * const cpcap_phy_irqs[] = {
 
 	/* REG_INT_3 */
 	"dm", "dp",
-};
+पूर्ण;
 
-static int cpcap_usb_init_interrupts(struct platform_device *pdev,
-				     struct cpcap_phy_ddata *ddata)
-{
-	int i, error;
+अटल पूर्णांक cpcap_usb_init_पूर्णांकerrupts(काष्ठा platक्रमm_device *pdev,
+				     काष्ठा cpcap_phy_ddata *ddata)
+अणु
+	पूर्णांक i, error;
 
-	for (i = 0; i < ARRAY_SIZE(cpcap_phy_irqs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(cpcap_phy_irqs); i++) अणु
 		error = cpcap_usb_init_irq(pdev, ddata, cpcap_phy_irqs[i]);
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Optional pins and modes. At least Motorola mapphone devices
@@ -408,86 +409,86 @@ static int cpcap_usb_init_interrupts(struct platform_device *pdev,
  * to UART, ULPI or UTMI mode.
  */
 
-static int cpcap_usb_gpio_set_mode(struct cpcap_phy_ddata *ddata,
-				   enum cpcap_gpio_mode mode)
-{
-	if (!ddata->gpio[0] || !ddata->gpio[1])
-		return 0;
+अटल पूर्णांक cpcap_usb_gpio_set_mode(काष्ठा cpcap_phy_ddata *ddata,
+				   क्रमागत cpcap_gpio_mode mode)
+अणु
+	अगर (!ddata->gpio[0] || !ddata->gpio[1])
+		वापस 0;
 
 	gpiod_set_value(ddata->gpio[0], mode & 1);
 	gpiod_set_value(ddata->gpio[1], mode >> 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cpcap_usb_set_uart_mode(struct cpcap_phy_ddata *ddata)
-{
-	int error;
+अटल पूर्णांक cpcap_usb_set_uart_mode(काष्ठा cpcap_phy_ddata *ddata)
+अणु
+	पूर्णांक error;
 
 	/* Disable lines to prevent glitches from waking up mdm6600 */
 	error = cpcap_usb_gpio_set_mode(ddata, CPCAP_UNKNOWN_DISABLED);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
-	if (ddata->pins_uart) {
+	अगर (ddata->pins_uart) अणु
 		error = pinctrl_select_state(ddata->pins, ddata->pins_uart);
-		if (error)
-			goto out_err;
-	}
+		अगर (error)
+			जाओ out_err;
+	पूर्ण
 
 	error = regmap_update_bits(ddata->reg, CPCAP_REG_USBC1,
 				   CPCAP_BIT_VBUSPD,
 				   CPCAP_BIT_VBUSPD);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
 	error = regmap_update_bits(ddata->reg, CPCAP_REG_USBC2,
 				   0xffff, CPCAP_BIT_UARTMUX0 |
 				   CPCAP_BIT_EMUMODE0);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
 	error = regmap_update_bits(ddata->reg, CPCAP_REG_USBC3, 0x7fff,
 				   CPCAP_BIT_IDPU_SPI);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
 	/* Enable UART mode */
 	error = cpcap_usb_gpio_set_mode(ddata, CPCAP_DM_DP);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
-	return 0;
+	वापस 0;
 
 out_err:
 	dev_err(ddata->dev, "%s failed with %i\n", __func__, error);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int cpcap_usb_set_usb_mode(struct cpcap_phy_ddata *ddata)
-{
-	int error;
+अटल पूर्णांक cpcap_usb_set_usb_mode(काष्ठा cpcap_phy_ddata *ddata)
+अणु
+	पूर्णांक error;
 
 	/* Disable lines to prevent glitches from waking up mdm6600 */
 	error = cpcap_usb_gpio_set_mode(ddata, CPCAP_UNKNOWN_DISABLED);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (ddata->pins_utmi) {
-		error = pinctrl_select_state(ddata->pins, ddata->pins_utmi);
-		if (error) {
+	अगर (ddata->pins_uपंचांगi) अणु
+		error = pinctrl_select_state(ddata->pins, ddata->pins_uपंचांगi);
+		अगर (error) अणु
 			dev_err(ddata->dev, "could not set usb mode: %i\n",
 				error);
 
-			return error;
-		}
-	}
+			वापस error;
+		पूर्ण
+	पूर्ण
 
 	error = regmap_update_bits(ddata->reg, CPCAP_REG_USBC1,
 				   CPCAP_BIT_VBUSPD, 0);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
 	error = regmap_update_bits(ddata->reg, CPCAP_REG_USBC3,
 				   CPCAP_BIT_PU_SPI |
@@ -495,150 +496,150 @@ static int cpcap_usb_set_usb_mode(struct cpcap_phy_ddata *ddata)
 				   CPCAP_BIT_DPPD_SPI |
 				   CPCAP_BIT_SUSPEND_SPI |
 				   CPCAP_BIT_ULPI_SPI_SEL, 0);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
 	error = regmap_update_bits(ddata->reg, CPCAP_REG_USBC2,
 				   CPCAP_BIT_USBXCVREN,
 				   CPCAP_BIT_USBXCVREN);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
 	/* Enable USB mode */
 	error = cpcap_usb_gpio_set_mode(ddata, CPCAP_OTG_DM_DP);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
-	return 0;
+	वापस 0;
 
 out_err:
 	dev_err(ddata->dev, "%s failed with %i\n", __func__, error);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int cpcap_usb_init_optional_pins(struct cpcap_phy_ddata *ddata)
-{
+अटल पूर्णांक cpcap_usb_init_optional_pins(काष्ठा cpcap_phy_ddata *ddata)
+अणु
 	ddata->pins = devm_pinctrl_get(ddata->dev);
-	if (IS_ERR(ddata->pins)) {
+	अगर (IS_ERR(ddata->pins)) अणु
 		dev_info(ddata->dev, "default pins not configured: %ld\n",
 			 PTR_ERR(ddata->pins));
-		ddata->pins = NULL;
+		ddata->pins = शून्य;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ddata->pins_ulpi = pinctrl_lookup_state(ddata->pins, "ulpi");
-	if (IS_ERR(ddata->pins_ulpi)) {
+	अगर (IS_ERR(ddata->pins_ulpi)) अणु
 		dev_info(ddata->dev, "ulpi pins not configured\n");
-		ddata->pins_ulpi = NULL;
-	}
+		ddata->pins_ulpi = शून्य;
+	पूर्ण
 
-	ddata->pins_utmi = pinctrl_lookup_state(ddata->pins, "utmi");
-	if (IS_ERR(ddata->pins_utmi)) {
+	ddata->pins_uपंचांगi = pinctrl_lookup_state(ddata->pins, "utmi");
+	अगर (IS_ERR(ddata->pins_uपंचांगi)) अणु
 		dev_info(ddata->dev, "utmi pins not configured\n");
-		ddata->pins_utmi = NULL;
-	}
+		ddata->pins_uपंचांगi = शून्य;
+	पूर्ण
 
 	ddata->pins_uart = pinctrl_lookup_state(ddata->pins, "uart");
-	if (IS_ERR(ddata->pins_uart)) {
+	अगर (IS_ERR(ddata->pins_uart)) अणु
 		dev_info(ddata->dev, "uart pins not configured\n");
-		ddata->pins_uart = NULL;
-	}
+		ddata->pins_uart = शून्य;
+	पूर्ण
 
-	if (ddata->pins_uart)
-		return pinctrl_select_state(ddata->pins, ddata->pins_uart);
+	अगर (ddata->pins_uart)
+		वापस pinctrl_select_state(ddata->pins, ddata->pins_uart);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cpcap_usb_init_optional_gpios(struct cpcap_phy_ddata *ddata)
-{
-	int i;
+अटल व्योम cpcap_usb_init_optional_gpios(काष्ठा cpcap_phy_ddata *ddata)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		ddata->gpio[i] = devm_gpiod_get_index(ddata->dev, "mode",
 						      i, GPIOD_OUT_HIGH);
-		if (IS_ERR(ddata->gpio[i])) {
+		अगर (IS_ERR(ddata->gpio[i])) अणु
 			dev_info(ddata->dev, "no mode change GPIO%i: %li\n",
 				 i, PTR_ERR(ddata->gpio[i]));
-			ddata->gpio[i] = NULL;
-		}
-	}
-}
+			ddata->gpio[i] = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int cpcap_usb_init_iio(struct cpcap_phy_ddata *ddata)
-{
-	enum iio_chan_type type;
-	int error;
+अटल पूर्णांक cpcap_usb_init_iio(काष्ठा cpcap_phy_ddata *ddata)
+अणु
+	क्रमागत iio_chan_type type;
+	पूर्णांक error;
 
 	ddata->vbus = devm_iio_channel_get(ddata->dev, "vbus");
-	if (IS_ERR(ddata->vbus)) {
+	अगर (IS_ERR(ddata->vbus)) अणु
 		error = PTR_ERR(ddata->vbus);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	if (!ddata->vbus->indio_dev) {
+	अगर (!ddata->vbus->indio_dev) अणु
 		error = -ENXIO;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	error = iio_get_channel_type(ddata->vbus, &type);
-	if (error < 0)
-		goto out_err;
+	अगर (error < 0)
+		जाओ out_err;
 
-	if (type != IIO_VOLTAGE) {
+	अगर (type != IIO_VOLTAGE) अणु
 		error = -EINVAL;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_err:
 	dev_err(ddata->dev, "could not initialize VBUS or ID IIO: %i\n",
 		error);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id cpcap_usb_phy_id_table[] = {
-	{
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id cpcap_usb_phy_id_table[] = अणु
+	अणु
 		.compatible = "motorola,cpcap-usb-phy",
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "motorola,mapphone-cpcap-usb-phy",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, cpcap_usb_phy_id_table);
-#endif
+#पूर्ण_अगर
 
-static int cpcap_usb_phy_probe(struct platform_device *pdev)
-{
-	struct cpcap_phy_ddata *ddata;
-	struct phy *generic_phy;
-	struct phy_provider *phy_provider;
-	struct usb_otg *otg;
-	const struct of_device_id *of_id;
-	int error;
+अटल पूर्णांक cpcap_usb_phy_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा cpcap_phy_ddata *ddata;
+	काष्ठा phy *generic_phy;
+	काष्ठा phy_provider *phy_provider;
+	काष्ठा usb_otg *otg;
+	स्थिर काष्ठा of_device_id *of_id;
+	पूर्णांक error;
 
 	of_id = of_match_device(of_match_ptr(cpcap_usb_phy_id_table),
 				&pdev->dev);
-	if (!of_id)
-		return -EINVAL;
+	अगर (!of_id)
+		वापस -EINVAL;
 
-	ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
-	if (!ddata)
-		return -ENOMEM;
+	ddata = devm_kzalloc(&pdev->dev, माप(*ddata), GFP_KERNEL);
+	अगर (!ddata)
+		वापस -ENOMEM;
 
-	ddata->reg = dev_get_regmap(pdev->dev.parent, NULL);
-	if (!ddata->reg)
-		return -ENODEV;
+	ddata->reg = dev_get_regmap(pdev->dev.parent, शून्य);
+	अगर (!ddata->reg)
+		वापस -ENODEV;
 
-	otg = devm_kzalloc(&pdev->dev, sizeof(*otg), GFP_KERNEL);
-	if (!otg)
-		return -ENOMEM;
+	otg = devm_kzalloc(&pdev->dev, माप(*otg), GFP_KERNEL);
+	अगर (!otg)
+		वापस -ENOMEM;
 
 	ddata->dev = &pdev->dev;
 	ddata->phy.dev = ddata->dev;
@@ -649,86 +650,86 @@ static int cpcap_usb_phy_probe(struct platform_device *pdev)
 	otg->set_peripheral = cpcap_usb_phy_set_peripheral;
 	otg->usb_phy = &ddata->phy;
 	INIT_DELAYED_WORK(&ddata->detect_work, cpcap_usb_detect);
-	platform_set_drvdata(pdev, ddata);
+	platक्रमm_set_drvdata(pdev, ddata);
 
 	ddata->vusb = devm_regulator_get(&pdev->dev, "vusb");
-	if (IS_ERR(ddata->vusb))
-		return PTR_ERR(ddata->vusb);
+	अगर (IS_ERR(ddata->vusb))
+		वापस PTR_ERR(ddata->vusb);
 
 	error = regulator_enable(ddata->vusb);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	generic_phy = devm_phy_create(ddata->dev, NULL, &ops);
-	if (IS_ERR(generic_phy)) {
+	generic_phy = devm_phy_create(ddata->dev, शून्य, &ops);
+	अगर (IS_ERR(generic_phy)) अणु
 		error = PTR_ERR(generic_phy);
-		goto out_reg_disable;
-	}
+		जाओ out_reg_disable;
+	पूर्ण
 
 	phy_set_drvdata(generic_phy, ddata);
 
-	phy_provider = devm_of_phy_provider_register(ddata->dev,
+	phy_provider = devm_of_phy_provider_रेजिस्टर(ddata->dev,
 						     of_phy_simple_xlate);
-	if (IS_ERR(phy_provider)) {
+	अगर (IS_ERR(phy_provider)) अणु
 		error = PTR_ERR(phy_provider);
-		goto out_reg_disable;
-	}
+		जाओ out_reg_disable;
+	पूर्ण
 
 	error = cpcap_usb_init_optional_pins(ddata);
-	if (error)
-		goto out_reg_disable;
+	अगर (error)
+		जाओ out_reg_disable;
 
 	cpcap_usb_init_optional_gpios(ddata);
 
 	error = cpcap_usb_init_iio(ddata);
-	if (error)
-		goto out_reg_disable;
+	अगर (error)
+		जाओ out_reg_disable;
 
-	error = cpcap_usb_init_interrupts(pdev, ddata);
-	if (error)
-		goto out_reg_disable;
+	error = cpcap_usb_init_पूर्णांकerrupts(pdev, ddata);
+	अगर (error)
+		जाओ out_reg_disable;
 
 	usb_add_phy_dev(&ddata->phy);
 	atomic_set(&ddata->active, 1);
-	schedule_delayed_work(&ddata->detect_work, msecs_to_jiffies(1));
+	schedule_delayed_work(&ddata->detect_work, msecs_to_jअगरfies(1));
 
-	return 0;
+	वापस 0;
 
 out_reg_disable:
 	regulator_disable(ddata->vusb);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int cpcap_usb_phy_remove(struct platform_device *pdev)
-{
-	struct cpcap_phy_ddata *ddata = platform_get_drvdata(pdev);
-	int error;
+अटल पूर्णांक cpcap_usb_phy_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा cpcap_phy_ddata *ddata = platक्रमm_get_drvdata(pdev);
+	पूर्णांक error;
 
 	atomic_set(&ddata->active, 0);
 	error = cpcap_usb_set_uart_mode(ddata);
-	if (error)
+	अगर (error)
 		dev_err(ddata->dev, "could not set UART mode\n");
 
 	cpcap_usb_try_musb_mailbox(ddata, MUSB_VBUS_OFF);
 
-	usb_remove_phy(&ddata->phy);
+	usb_हटाओ_phy(&ddata->phy);
 	cancel_delayed_work_sync(&ddata->detect_work);
 	regulator_disable(ddata->vusb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver cpcap_usb_phy_driver = {
+अटल काष्ठा platक्रमm_driver cpcap_usb_phy_driver = अणु
 	.probe		= cpcap_usb_phy_probe,
-	.remove		= cpcap_usb_phy_remove,
-	.driver		= {
+	.हटाओ		= cpcap_usb_phy_हटाओ,
+	.driver		= अणु
 		.name	= "cpcap-usb-phy",
 		.of_match_table = of_match_ptr(cpcap_usb_phy_id_table),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(cpcap_usb_phy_driver);
+module_platक्रमm_driver(cpcap_usb_phy_driver);
 
 MODULE_ALIAS("platform:cpcap_usb");
 MODULE_AUTHOR("Tony Lindgren <tony@atomide.com>");

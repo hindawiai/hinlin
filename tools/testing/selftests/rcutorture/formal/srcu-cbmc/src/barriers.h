@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef BARRIERS_H
-#define BARRIERS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित BARRIERS_H
+#घोषणा BARRIERS_H
 
-#define barrier() __asm__ __volatile__("" : : : "memory")
+#घोषणा barrier() __यंत्र__ __अस्थिर__("" : : : "memory")
 
-#ifdef RUN
-#define smp_mb() __sync_synchronize()
-#define smp_mb__after_unlock_lock() __sync_synchronize()
-#else
+#अगर_घोषित RUN
+#घोषणा smp_mb() __sync_synchronize()
+#घोषणा smp_mb__after_unlock_lock() __sync_synchronize()
+#अन्यथा
 /*
  * Copied from CBMC's implementation of __sync_synchronize(), which
- * seems to be disabled by default.
+ * seems to be disabled by शेष.
  */
-#define smp_mb() __CPROVER_fence("WWfence", "RRfence", "RWfence", "WRfence", \
+#घोषणा smp_mb() __CPROVER_fence("WWfence", "RRfence", "RWfence", "WRfence", \
 				 "WWcumul", "RRcumul", "RWcumul", "WRcumul")
-#define smp_mb__after_unlock_lock() __CPROVER_fence("WWfence", "RRfence", "RWfence", "WRfence", \
+#घोषणा smp_mb__after_unlock_lock() __CPROVER_fence("WWfence", "RRfence", "RWfence", "WRfence", \
 				    "WWcumul", "RRcumul", "RWcumul", "WRcumul")
-#endif
+#पूर्ण_अगर
 
 /*
- * Allow memory barriers to be disabled in either the read or write side
- * of SRCU individually.
+ * Allow memory barriers to be disabled in either the पढ़ो or ग_लिखो side
+ * of SRCU inभागidually.
  */
 
-#ifndef NO_SYNC_SMP_MB
-#define sync_smp_mb() smp_mb()
-#else
-#define sync_smp_mb() do {} while (0)
-#endif
+#अगर_अघोषित NO_SYNC_SMP_MB
+#घोषणा sync_smp_mb() smp_mb()
+#अन्यथा
+#घोषणा sync_smp_mb() करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#ifndef NO_READ_SIDE_SMP_MB
-#define rs_smp_mb() smp_mb()
-#else
-#define rs_smp_mb() do {} while (0)
-#endif
+#अगर_अघोषित NO_READ_SIDE_SMP_MB
+#घोषणा rs_smp_mb() smp_mb()
+#अन्यथा
+#घोषणा rs_smp_mb() करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#define READ_ONCE(x) (*(volatile typeof(x) *) &(x))
-#define WRITE_ONCE(x) ((*(volatile typeof(x) *) &(x)) = (val))
+#घोषणा READ_ONCE(x) (*(अस्थिर typeof(x) *) &(x))
+#घोषणा WRITE_ONCE(x) ((*(अस्थिर typeof(x) *) &(x)) = (val))
 
-#endif
+#पूर्ण_अगर

@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2018 Joe Lawrence <joe.lawrence@redhat.com>
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/workqueue.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/delay.h>
 
-/* load/run-time control from sysfs writer  */
-static bool block_transition;
+/* load/run-समय control from sysfs ग_लिखोr  */
+अटल bool block_transition;
 module_param(block_transition, bool, 0644);
 MODULE_PARM_DESC(block_transition, "block_transition (default=false)");
 
-static void busymod_work_func(struct work_struct *work);
-static DECLARE_WORK(work, busymod_work_func);
+अटल व्योम busymod_work_func(काष्ठा work_काष्ठा *work);
+अटल DECLARE_WORK(work, busymod_work_func);
 
-static void busymod_work_func(struct work_struct *work)
-{
+अटल व्योम busymod_work_func(काष्ठा work_काष्ठा *work)
+अणु
 	pr_info("%s enter\n", __func__);
 
-	while (READ_ONCE(block_transition)) {
+	जबतक (READ_ONCE(block_transition)) अणु
 		/*
-		 * Busy-wait until the sysfs writer has acknowledged a
+		 * Busy-रुको until the sysfs ग_लिखोr has acknowledged a
 		 * blocked transition and clears the flag.
 		 */
 		msleep(20);
-	}
+	पूर्ण
 
 	pr_info("%s exit\n", __func__);
-}
+पूर्ण
 
-static int test_klp_callbacks_busy_init(void)
-{
+अटल पूर्णांक test_klp_callbacks_busy_init(व्योम)
+अणु
 	pr_info("%s\n", __func__);
 	schedule_work(&work);
 
-	if (!block_transition) {
+	अगर (!block_transition) अणु
 		/*
-		 * Serialize output: print all messages from the work
-		 * function before returning from init().
+		 * Serialize output: prपूर्णांक all messages from the work
+		 * function beक्रमe वापसing from init().
 		 */
 		flush_work(&work);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void test_klp_callbacks_busy_exit(void)
-{
+अटल व्योम test_klp_callbacks_busy_निकास(व्योम)
+अणु
 	WRITE_ONCE(block_transition, false);
 	flush_work(&work);
 	pr_info("%s\n", __func__);
-}
+पूर्ण
 
 module_init(test_klp_callbacks_busy_init);
-module_exit(test_klp_callbacks_busy_exit);
+module_निकास(test_klp_callbacks_busy_निकास);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Joe Lawrence <joe.lawrence@redhat.com>");
 MODULE_DESCRIPTION("Livepatch test: busy target module");

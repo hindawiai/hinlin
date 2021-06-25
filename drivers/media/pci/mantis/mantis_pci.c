@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 	Mantis PCI bridge driver
 
@@ -6,42 +7,42 @@
 
 */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <asm/io.h>
-#include <asm/page.h>
-#include <linux/kmod.h>
-#include <linux/vmalloc.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/page.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/pci.h>
 
-#include <asm/irq.h>
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <media/dmxdev.h>
-#include <media/dvbdev.h>
-#include <media/dvb_demux.h>
-#include <media/dvb_frontend.h>
-#include <media/dvb_net.h>
+#समावेश <media/dmxdev.h>
+#समावेश <media/dvbdev.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dvb_net.h>
 
-#include "mantis_common.h"
-#include "mantis_reg.h"
-#include "mantis_pci.h"
+#समावेश "mantis_common.h"
+#समावेश "mantis_reg.h"
+#समावेश "mantis_pci.h"
 
-#define DRIVER_NAME		"Mantis Core"
+#घोषणा DRIVER_NAME		"Mantis Core"
 
-int mantis_pci_init(struct mantis_pci *mantis)
-{
+पूर्णांक mantis_pci_init(काष्ठा mantis_pci *mantis)
+अणु
 	u8 latency;
-	struct mantis_hwconfig *config	= mantis->hwconfig;
-	struct pci_dev *pdev		= mantis->pdev;
-	int err, ret = 0;
+	काष्ठा mantis_hwconfig *config	= mantis->hwconfig;
+	काष्ठा pci_dev *pdev		= mantis->pdev;
+	पूर्णांक err, ret = 0;
 
-	dprintk(MANTIS_ERROR, 0, "found a %s PCI %s device on (%02x:%02x.%x),\n",
+	dprपूर्णांकk(MANTIS_ERROR, 0, "found a %s PCI %s device on (%02x:%02x.%x),\n",
 		config->model_name,
 		config->dev_type,
 		mantis->pdev->bus->number,
@@ -49,49 +50,49 @@ int mantis_pci_init(struct mantis_pci *mantis)
 		PCI_FUNC(mantis->pdev->devfn));
 
 	err = pci_enable_device(pdev);
-	if (err != 0) {
+	अगर (err != 0) अणु
 		ret = -ENODEV;
-		dprintk(MANTIS_ERROR, 1, "ERROR: PCI enable failed <%i>", err);
-		goto fail0;
-	}
+		dprपूर्णांकk(MANTIS_ERROR, 1, "ERROR: PCI enable failed <%i>", err);
+		जाओ fail0;
+	पूर्ण
 
 	err = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
-	if (err != 0) {
-		dprintk(MANTIS_ERROR, 1, "ERROR: Unable to obtain 32 bit DMA <%i>", err);
+	अगर (err != 0) अणु
+		dprपूर्णांकk(MANTIS_ERROR, 1, "ERROR: Unable to obtain 32 bit DMA <%i>", err);
 		ret = -ENOMEM;
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
 	pci_set_master(pdev);
 
-	if (!request_mem_region(pci_resource_start(pdev, 0),
+	अगर (!request_mem_region(pci_resource_start(pdev, 0),
 				pci_resource_len(pdev, 0),
-				DRIVER_NAME)) {
+				DRIVER_NAME)) अणु
 
-		dprintk(MANTIS_ERROR, 1, "ERROR: BAR0 Request failed !");
+		dprपूर्णांकk(MANTIS_ERROR, 1, "ERROR: BAR0 Request failed !");
 		ret = -ENODEV;
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
 	mantis->mmio = ioremap(pci_resource_start(pdev, 0),
 			       pci_resource_len(pdev, 0));
 
-	if (!mantis->mmio) {
-		dprintk(MANTIS_ERROR, 1, "ERROR: BAR0 remap failed !");
+	अगर (!mantis->mmio) अणु
+		dprपूर्णांकk(MANTIS_ERROR, 1, "ERROR: BAR0 remap failed !");
 		ret = -ENODEV;
-		goto fail2;
-	}
+		जाओ fail2;
+	पूर्ण
 
-	pci_read_config_byte(pdev, PCI_LATENCY_TIMER, &latency);
+	pci_पढ़ो_config_byte(pdev, PCI_LATENCY_TIMER, &latency);
 	mantis->latency = latency;
 	mantis->revision = pdev->revision;
 
-	dprintk(MANTIS_ERROR, 0, "    Mantis Rev %d [%04x:%04x], ",
+	dprपूर्णांकk(MANTIS_ERROR, 0, "    Mantis Rev %d [%04x:%04x], ",
 		mantis->revision,
-		mantis->pdev->subsystem_vendor,
-		mantis->pdev->subsystem_device);
+		mantis->pdev->subप्रणाली_venकरोr,
+		mantis->pdev->subप्रणाली_device);
 
-	dprintk(MANTIS_ERROR, 0,
+	dprपूर्णांकk(MANTIS_ERROR, 0,
 		"irq: %d, latency: %d\n    memory: 0x%lx, mmio: 0x%p\n",
 		mantis->pdev->irq,
 		mantis->latency,
@@ -104,52 +105,52 @@ int mantis_pci_init(struct mantis_pci *mantis)
 			  DRIVER_NAME,
 			  mantis);
 
-	if (err != 0) {
+	अगर (err != 0) अणु
 
-		dprintk(MANTIS_ERROR, 1, "ERROR: IRQ registration failed ! <%d>", err);
+		dprपूर्णांकk(MANTIS_ERROR, 1, "ERROR: IRQ registration failed ! <%d>", err);
 		ret = -ENODEV;
-		goto fail3;
-	}
+		जाओ fail3;
+	पूर्ण
 
 	pci_set_drvdata(pdev, mantis);
-	return ret;
+	वापस ret;
 
 	/* Error conditions */
 fail3:
-	dprintk(MANTIS_ERROR, 1, "ERROR: <%d> I/O unmap", ret);
-	if (mantis->mmio)
+	dprपूर्णांकk(MANTIS_ERROR, 1, "ERROR: <%d> I/O unmap", ret);
+	अगर (mantis->mmio)
 		iounmap(mantis->mmio);
 
 fail2:
-	dprintk(MANTIS_ERROR, 1, "ERROR: <%d> releasing regions", ret);
+	dprपूर्णांकk(MANTIS_ERROR, 1, "ERROR: <%d> releasing regions", ret);
 	release_mem_region(pci_resource_start(pdev, 0),
 			   pci_resource_len(pdev, 0));
 
 fail1:
-	dprintk(MANTIS_ERROR, 1, "ERROR: <%d> disabling device", ret);
+	dprपूर्णांकk(MANTIS_ERROR, 1, "ERROR: <%d> disabling device", ret);
 	pci_disable_device(pdev);
 
 fail0:
-	dprintk(MANTIS_ERROR, 1, "ERROR: <%d> exiting", ret);
-	return ret;
-}
+	dprपूर्णांकk(MANTIS_ERROR, 1, "ERROR: <%d> exiting", ret);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mantis_pci_init);
 
-void mantis_pci_exit(struct mantis_pci *mantis)
-{
-	struct pci_dev *pdev = mantis->pdev;
+व्योम mantis_pci_निकास(काष्ठा mantis_pci *mantis)
+अणु
+	काष्ठा pci_dev *pdev = mantis->pdev;
 
-	dprintk(MANTIS_NOTICE, 1, " mem: 0x%p", mantis->mmio);
-	free_irq(pdev->irq, mantis);
-	if (mantis->mmio) {
+	dprपूर्णांकk(MANTIS_NOTICE, 1, " mem: 0x%p", mantis->mmio);
+	मुक्त_irq(pdev->irq, mantis);
+	अगर (mantis->mmio) अणु
 		iounmap(mantis->mmio);
 		release_mem_region(pci_resource_start(pdev, 0),
 				   pci_resource_len(pdev, 0));
-	}
+	पूर्ण
 
 	pci_disable_device(pdev);
-}
-EXPORT_SYMBOL_GPL(mantis_pci_exit);
+पूर्ण
+EXPORT_SYMBOL_GPL(mantis_pci_निकास);
 
 MODULE_DESCRIPTION("Mantis PCI DTV bridge driver");
 MODULE_AUTHOR("Manu Abraham");

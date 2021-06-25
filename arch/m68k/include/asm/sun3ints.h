@@ -1,37 +1,38 @@
+<शैली गुरु>
 /*
- * sun3ints.h -- Linux/Sun3 interrupt handling code definitions
+ * sun3पूर्णांकs.h -- Linux/Sun3 पूर्णांकerrupt handling code definitions
  *
  * Erik Verbruggen (erik@bigmama.xtdnet.nl)
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive for
+ * License.  See the file COPYING in the मुख्य directory of this archive क्रम
  * more details.
  */
 
-#ifndef SUN3INTS_H
-#define SUN3INTS_H
+#अगर_अघोषित SUN3INTS_H
+#घोषणा SUN3INTS_H
 
-#include <linux/types.h>
-#include <linux/interrupt.h>
-#include <asm/intersil.h>
-#include <asm/oplib.h>
-#include <asm/traps.h>
-#include <asm/irq.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <यंत्र/पूर्णांकersil.h>
+#समावेश <यंत्र/oplib.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/irq.h>
 
-#define SUN3_INT_VECS 192
+#घोषणा SUN3_INT_VECS 192
 
-void sun3_enable_irq(unsigned int irq);
-void sun3_disable_irq(unsigned int irq);
-extern void sun3_init_IRQ (void);
-extern void sun3_enable_interrupts (void);
-extern void sun3_disable_interrupts (void);
-extern volatile unsigned char* sun3_intreg;
+व्योम sun3_enable_irq(अचिन्हित पूर्णांक irq);
+व्योम sun3_disable_irq(अचिन्हित पूर्णांक irq);
+बाह्य व्योम sun3_init_IRQ (व्योम);
+बाह्य व्योम sun3_enable_पूर्णांकerrupts (व्योम);
+बाह्य व्योम sun3_disable_पूर्णांकerrupts (व्योम);
+बाह्य अस्थिर अचिन्हित अक्षर* sun3_पूर्णांकreg;
 
-/* master list of VME vectors -- don't fuck with this */
-#define SUN3_VEC_FLOPPY		(IRQ_USER+0)
-#define SUN3_VEC_VMESCSI0	(IRQ_USER+0)
-#define SUN3_VEC_VMESCSI1	(IRQ_USER+1)
-#define SUN3_VEC_CG		(IRQ_USER+104)
+/* master list of VME vectors -- करोn't fuck with this */
+#घोषणा SUN3_VEC_FLOPPY		(IRQ_USER+0)
+#घोषणा SUN3_VEC_VMESCSI0	(IRQ_USER+0)
+#घोषणा SUN3_VEC_VMESCSI1	(IRQ_USER+1)
+#घोषणा SUN3_VEC_CG		(IRQ_USER+104)
 
 
-#endif /* SUN3INTS_H */
+#पूर्ण_अगर /* SUN3INTS_H */

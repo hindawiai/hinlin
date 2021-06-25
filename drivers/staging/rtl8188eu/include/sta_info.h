@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __STA_INFO_H_
-#define __STA_INFO_H_
+#अगर_अघोषित __STA_INFO_H_
+#घोषणा __STA_INFO_H_
 
-#include <osdep_service.h>
-#include <drv_types.h>
-#include <wifi.h>
+#समावेश <osdep_service.h>
+#समावेश <drv_types.h>
+#समावेश <wअगरi.h>
 
-#define IBSS_START_MAC_ID	2
-#define NUM_STA 32
-#define NUM_ACL 16
+#घोषणा IBSS_START_MAC_ID	2
+#घोषणा NUM_STA 32
+#घोषणा NUM_ACL 16
 
-/* if mode ==0, then the sta is allowed once the addr is hit. */
-/* if mode ==1, then the sta is rejected once the addr is non-hit. */
-struct rtw_wlan_acl_node {
-	struct list_head list;
+/* अगर mode ==0, then the sta is allowed once the addr is hit. */
+/* अगर mode ==1, then the sta is rejected once the addr is non-hit. */
+काष्ठा rtw_wlan_acl_node अणु
+	काष्ठा list_head list;
 	u8       addr[ETH_ALEN];
 	u8       valid;
-};
+पूर्ण;
 
 /* mode=0, disable */
 /* mode=1, accept unless in deny list */
 /* mode=2, deny unless in accept list */
-struct wlan_acl_pool {
-	int mode;
-	int num;
-	struct rtw_wlan_acl_node aclnode[NUM_ACL];
-	struct __queue acl_node_q;
-};
+काष्ठा wlan_acl_pool अणु
+	पूर्णांक mode;
+	पूर्णांक num;
+	काष्ठा rtw_wlan_acl_node aclnode[NUM_ACL];
+	काष्ठा __queue acl_node_q;
+पूर्ण;
 
-struct rssi_sta {
+काष्ठा rssi_sta अणु
 	s32	UndecoratedSmoothedPWDB;
 	s32	UndecoratedSmoothedCCK;
 	s32	UndecoratedSmoothedOFDM;
 	u64	PacketMap;
 	u8	ValidBit;
-};
+पूर्ण;
 
-struct	stainfo_stats	{
+काष्ठा	stainfo_stats	अणु
 	u64 rx_mgnt_pkts;
 	u64 rx_beacon_pkts;
 	u64 rx_probereq_pkts;
@@ -64,36 +65,36 @@ struct	stainfo_stats	{
 	u64	tx_pkts;
 	u64	tx_bytes;
 	u64  tx_drops;
-};
+पूर्ण;
 
-struct sta_info {
+काष्ठा sta_info अणु
 	spinlock_t lock;
-	struct list_head list; /* free_sta_queue */
-	struct list_head hash_list; /* sta_hash */
+	काष्ठा list_head list; /* मुक्त_sta_queue */
+	काष्ठा list_head hash_list; /* sta_hash */
 
-	struct sta_xmit_priv sta_xmitpriv;
-	struct sta_recv_priv sta_recvpriv;
+	काष्ठा sta_xmit_priv sta_xmitpriv;
+	काष्ठा sta_recv_priv sta_recvpriv;
 
-	struct __queue sleep_q;
-	unsigned int sleepq_len;
+	काष्ठा __queue sleep_q;
+	अचिन्हित पूर्णांक sleepq_len;
 
-	uint state;
-	uint aid;
-	uint mac_id;
-	uint qos_option;
+	uपूर्णांक state;
+	uपूर्णांक aid;
+	uपूर्णांक mac_id;
+	uपूर्णांक qos_option;
 	u8	hwaddr[ETH_ALEN];
 
-	uint	ieee8021x_blocked;	/* 0: allowed, 1:blocked */
-	uint	dot118021XPrivacy; /* aes, tkip... */
-	union Keytype	dot11tkiptxmickey;
-	union Keytype	dot11tkiprxmickey;
-	union Keytype	dot118021x_UncstKey;
-	union pn48		dot11txpn;			/*  PN48 used for Unicast xmit. */
-	union pn48		dot11rxpn;			/*  PN48 used for Unicast recv. */
+	uपूर्णांक	ieee8021x_blocked;	/* 0: allowed, 1:blocked */
+	uपूर्णांक	करोt118021XPrivacy; /* aes, tkip... */
+	जोड़ Keytype	करोt11tkiptxmickey;
+	जोड़ Keytype	करोt11tkiprxmickey;
+	जोड़ Keytype	करोt118021x_UncstKey;
+	जोड़ pn48		करोt11txpn;			/*  PN48 used क्रम Unicast xmit. */
+	जोड़ pn48		करोt11rxpn;			/*  PN48 used क्रम Unicast recv. */
 	u8	bssrateset[16];
 	u32	bssratelen;
 	s32  rssi;
-	s32	signal_quality;
+	s32	संकेत_quality;
 
 	u8	cts2self;
 	u8	rtsen;
@@ -101,19 +102,19 @@ struct sta_info {
 	u8	raid;
 	u8	init_rate;
 	u8	wireless_mode;	/*  NETWORK_TYPE */
-	struct stainfo_stats sta_stats;
+	काष्ठा stainfo_stats sta_stats;
 
-	/* for A-MPDU TX, ADDBA timeout check */
-	struct timer_list addba_retry_timer;
+	/* क्रम A-MPDU TX, ADDBA समयout check */
+	काष्ठा समयr_list addba_retry_समयr;
 
-	/* for A-MPDU Rx reordering buffer control */
-	struct recv_reorder_ctrl recvreorder_ctrl[16];
+	/* क्रम A-MPDU Rx reordering buffer control */
+	काष्ठा recv_reorder_ctrl recvreorder_ctrl[16];
 
-	/* for A-MPDU Tx */
-	/* unsigned char		ampdu_txen_bitmap; */
+	/* क्रम A-MPDU Tx */
+	/* अचिन्हित अक्षर		ampdu_txen_biपंचांगap; */
 	u16	BA_starting_seqctrl[16];
 
-	struct ht_priv	htpriv;
+	काष्ठा ht_priv	htpriv;
 
 	/* Notes: */
 	/* STA_Mode: */
@@ -126,37 +127,37 @@ struct sta_info {
 	/* curr_network(mlme_priv/security_priv/qos/ht) : AP CAP/INFO */
 	/* sta_info: (AP & STA) CAP/INFO */
 
-	struct list_head asoc_list;
-#ifdef CONFIG_88EU_AP_MODE
-	struct list_head auth_list;
+	काष्ठा list_head asoc_list;
+#अगर_घोषित CONFIG_88EU_AP_MODE
+	काष्ठा list_head auth_list;
 
-	unsigned int expire_to;
-	unsigned int auth_seq;
-	unsigned int authalg;
-	unsigned char chg_txt[128];
+	अचिन्हित पूर्णांक expire_to;
+	अचिन्हित पूर्णांक auth_seq;
+	अचिन्हित पूर्णांक authalg;
+	अचिन्हित अक्षर chg_txt[128];
 
 	u16 capability;
-	int flags;
+	पूर्णांक flags;
 
-	int dot8021xalg;/* 0:disable, 1:psk, 2:802.1x */
-	int wpa_psk;/* 0:disable, bit(0): WPA, bit(1):WPA2 */
-	int wpa_group_cipher;
-	int wpa2_group_cipher;
-	int wpa_pairwise_cipher;
-	int wpa2_pairwise_cipher;
+	पूर्णांक करोt8021xalg;/* 0:disable, 1:psk, 2:802.1x */
+	पूर्णांक wpa_psk;/* 0:disable, bit(0): WPA, bit(1):WPA2 */
+	पूर्णांक wpa_group_cipher;
+	पूर्णांक wpa2_group_cipher;
+	पूर्णांक wpa_pairwise_cipher;
+	पूर्णांक wpa2_pairwise_cipher;
 
 	u8 bpairwise_key_installed;
 
 	u8 wpa_ie[32];
 
 	u8 nonerp_set;
-	u8 no_short_slot_time_set;
-	u8 no_short_preamble_set;
+	u8 no_लघु_slot_समय_set;
+	u8 no_लघु_preamble_set;
 	u8 no_ht_gf_set;
 	u8 no_ht_set;
 	u8 ht_20mhz_set;
 
-	unsigned int tx_ra_bitmap;
+	अचिन्हित पूर्णांक tx_ra_biपंचांगap;
 	u8 qos_info;
 
 	u8 max_sp_len;
@@ -166,24 +167,24 @@ struct sta_info {
 	u8 uapsd_vo;
 
 	u8 has_legacy_ac;
-	unsigned int sleepq_ac_len;
-#endif	/*  CONFIG_88EU_AP_MODE */
+	अचिन्हित पूर्णांक sleepq_ac_len;
+#पूर्ण_अगर	/*  CONFIG_88EU_AP_MODE */
 
 	u8 under_exist_checking;
 	u8 keep_alive_trycnt;
 
-	/* for DM */
-	struct rssi_sta rssi_stat;
+	/* क्रम DM */
+	काष्ठा rssi_sta rssi_stat;
 
 	/*  ================ODM Relative Info======================= */
-	/*  Please be careful, don't declare too much structure here.
+	/*  Please be careful, करोn't declare too much काष्ठाure here.
 	 *  It will cost memory * STA support num.
 	 */
-	/*  2011/10/20 MH Add for ODM STA info. */
+	/*  2011/10/20 MH Add क्रम ODM STA info. */
 	/*  Driver Write */
 	u8	bValid;		/*  record the sta status link or not? */
 	u8	IOTPeer;	/*  Enum value.	HT_IOT_PEER_E */
-	u8	rssi_level;	/* for Refresh RA mask */
+	u8	rssi_level;	/* क्रम Refresh RA mask */
 	/*  ODM Write */
 	/* 1 PHY_STATUS_INFO */
 	u8		RSSI_Path[4];		/*  */
@@ -196,62 +197,62 @@ struct sta_info {
 
 	/* To store the sequence number of received management frame */
 	u16 RxMgmtFrameSeqNum;
-};
+पूर्ण;
 
-#define sta_rx_pkts(sta) \
+#घोषणा sta_rx_pkts(sta) \
 	(sta->sta_stats.rx_mgnt_pkts \
 	+ sta->sta_stats.rx_ctrl_pkts \
 	+ sta->sta_stats.rx_data_pkts)
 
-#define sta_last_rx_pkts(sta) \
+#घोषणा sta_last_rx_pkts(sta) \
 	(sta->sta_stats.last_rx_mgnt_pkts \
 	+ sta->sta_stats.last_rx_ctrl_pkts \
 	+ sta->sta_stats.last_rx_data_pkts)
 
-#define sta_rx_data_pkts(sta) \
+#घोषणा sta_rx_data_pkts(sta) \
 	(sta->sta_stats.rx_data_pkts)
 
-#define sta_last_rx_data_pkts(sta) \
+#घोषणा sta_last_rx_data_pkts(sta) \
 	(sta->sta_stats.last_rx_data_pkts)
 
-#define sta_rx_mgnt_pkts(sta) \
+#घोषणा sta_rx_mgnt_pkts(sta) \
 	(sta->sta_stats.rx_mgnt_pkts)
 
-#define sta_last_rx_mgnt_pkts(sta) \
+#घोषणा sta_last_rx_mgnt_pkts(sta) \
 	(sta->sta_stats.last_rx_mgnt_pkts)
 
-#define sta_rx_beacon_pkts(sta) \
+#घोषणा sta_rx_beacon_pkts(sta) \
 	(sta->sta_stats.rx_beacon_pkts)
 
-#define sta_last_rx_beacon_pkts(sta) \
+#घोषणा sta_last_rx_beacon_pkts(sta) \
 	(sta->sta_stats.last_rx_beacon_pkts)
 
-#define sta_rx_probereq_pkts(sta) \
+#घोषणा sta_rx_probereq_pkts(sta) \
 	(sta->sta_stats.rx_probereq_pkts)
 
-#define sta_last_rx_probereq_pkts(sta) \
+#घोषणा sta_last_rx_probereq_pkts(sta) \
 	(sta->sta_stats.last_rx_probereq_pkts)
 
-#define sta_rx_probersp_pkts(sta) \
+#घोषणा sta_rx_probersp_pkts(sta) \
 	(sta->sta_stats.rx_probersp_pkts)
 
-#define sta_last_rx_probersp_pkts(sta) \
+#घोषणा sta_last_rx_probersp_pkts(sta) \
 	(sta->sta_stats.last_rx_probersp_pkts)
 
-#define sta_rx_probersp_bm_pkts(sta) \
+#घोषणा sta_rx_probersp_bm_pkts(sta) \
 	(sta->sta_stats.rx_probersp_bm_pkts)
 
-#define sta_last_rx_probersp_bm_pkts(sta) \
+#घोषणा sta_last_rx_probersp_bm_pkts(sta) \
 	(sta->sta_stats.last_rx_probersp_bm_pkts)
 
-#define sta_rx_probersp_uo_pkts(sta) \
+#घोषणा sta_rx_probersp_uo_pkts(sta) \
 	(sta->sta_stats.rx_probersp_uo_pkts)
 
-#define sta_last_rx_probersp_uo_pkts(sta) \
+#घोषणा sta_last_rx_probersp_uo_pkts(sta) \
 	(sta->sta_stats.last_rx_probersp_uo_pkts)
 
-#define sta_update_last_rx_pkts(sta) \
-do { \
+#घोषणा sta_update_last_rx_pkts(sta) \
+करो अणु \
 	sta->sta_stats.last_rx_mgnt_pkts = sta->sta_stats.rx_mgnt_pkts; \
 	sta->sta_stats.last_rx_beacon_pkts = sta->sta_stats.rx_beacon_pkts; \
 	sta->sta_stats.last_rx_probereq_pkts = sta->sta_stats.rx_probereq_pkts; \
@@ -260,73 +261,73 @@ do { \
 	sta->sta_stats.last_rx_probersp_uo_pkts = sta->sta_stats.rx_probersp_uo_pkts; \
 	sta->sta_stats.last_rx_ctrl_pkts = sta->sta_stats.rx_ctrl_pkts; \
 	sta->sta_stats.last_rx_data_pkts = sta->sta_stats.rx_data_pkts; \
-} while (0)
+पूर्ण जबतक (0)
 
-#define STA_RX_PKTS_ARG(sta) \
+#घोषणा STA_RX_PKTS_ARG(sta) \
 	sta->sta_stats.rx_mgnt_pkts \
 	, sta->sta_stats.rx_ctrl_pkts \
 	, sta->sta_stats.rx_data_pkts
 
-#define STA_LAST_RX_PKTS_ARG(sta) \
+#घोषणा STA_LAST_RX_PKTS_ARG(sta) \
 	sta->sta_stats.last_rx_mgnt_pkts \
 	, sta->sta_stats.last_rx_ctrl_pkts \
 	, sta->sta_stats.last_rx_data_pkts
 
-#define STA_RX_PKTS_DIFF_ARG(sta) \
+#घोषणा STA_RX_PKTS_DIFF_ARG(sta) \
 	sta->sta_stats.rx_mgnt_pkts - sta->sta_stats.last_rx_mgnt_pkts \
 	, sta->sta_stats.rx_ctrl_pkts - sta->sta_stats.last_rx_ctrl_pkts \
 	, sta->sta_stats.rx_data_pkts - sta->sta_stats.last_rx_data_pkts
 
-#define STA_PKTS_FMT "(m:%llu, c:%llu, d:%llu)"
+#घोषणा STA_PKTS_FMT "(m:%llu, c:%llu, d:%llu)"
 
-struct	sta_priv {
+काष्ठा	sta_priv अणु
 	u8 *pallocated_stainfo_buf;
 	u8 *pstainfo_buf;
-	struct __queue free_sta_queue;
+	काष्ठा __queue मुक्त_sta_queue;
 
 	spinlock_t sta_hash_lock;
-	struct list_head sta_hash[NUM_STA];
-	int asoc_sta_count;
-	struct __queue sleep_q;
-	struct __queue wakeup_q;
+	काष्ठा list_head sta_hash[NUM_STA];
+	पूर्णांक asoc_sta_count;
+	काष्ठा __queue sleep_q;
+	काष्ठा __queue wakeup_q;
 
-	struct adapter *padapter;
+	काष्ठा adapter *padapter;
 
 	spinlock_t asoc_list_lock;
-	struct list_head asoc_list;
+	काष्ठा list_head asoc_list;
 
-#ifdef CONFIG_88EU_AP_MODE
-	struct list_head auth_list;
+#अगर_घोषित CONFIG_88EU_AP_MODE
+	काष्ठा list_head auth_list;
 	spinlock_t auth_list_lock;
 	u8 asoc_list_cnt;
 	u8 auth_list_cnt;
 
-	unsigned int auth_to;  /* sec, time to expire in authenticating. */
-	unsigned int assoc_to; /* sec, time to expire before associating. */
-	unsigned int expire_to; /* sec , time to expire after associated. */
+	अचिन्हित पूर्णांक auth_to;  /* sec, समय to expire in authenticating. */
+	अचिन्हित पूर्णांक assoc_to; /* sec, समय to expire beक्रमe associating. */
+	अचिन्हित पूर्णांक expire_to; /* sec , समय to expire after associated. */
 
-	/* pointers to STA info; based on allocated AID or NULL if AID free
+	/* poपूर्णांकers to STA info; based on allocated AID or शून्य अगर AID मुक्त
 	 * AID is in the range 1-2007, so sta_aid[0] corresponders to AID 1
 	 * and so on
 	 */
-	struct sta_info *sta_aid[NUM_STA];
+	काष्ठा sta_info *sta_aid[NUM_STA];
 
-	u16 sta_dz_bitmap;/* only support 15 stations, station aid bitmap
-			   * for sleeping sta.
+	u16 sta_dz_biपंचांगap;/* only support 15 stations, station aid biपंचांगap
+			   * क्रम sleeping sta.
 			   */
-	u16 tim_bitmap;	/* only support 15 stations, aid=0~15 mapping
+	u16 tim_biपंचांगap;	/* only support 15 stations, aid=0~15 mapping
 			 * bit0~bit15
 			 */
 
 	u16 max_num_sta;
 
-	struct wlan_acl_pool acl_list;
-#endif
+	काष्ठा wlan_acl_pool acl_list;
+#पूर्ण_अगर
 
-};
+पूर्ण;
 
-static inline u32 wifi_mac_hash(u8 *mac)
-{
+अटल अंतरभूत u32 wअगरi_mac_hash(u8 *mac)
+अणु
 	u32 x;
 
 	x = mac[0];
@@ -338,22 +339,22 @@ static inline u32 wifi_mac_hash(u8 *mac)
 
 	x ^= x >> 8;
 	x  = x & (NUM_STA - 1);
-	return x;
-}
+	वापस x;
+पूर्ण
 
-u32 _rtw_init_sta_priv(struct sta_priv *pstapriv);
-u32 _rtw_free_sta_priv(struct sta_priv *pstapriv);
+u32 _rtw_init_sta_priv(काष्ठा sta_priv *pstapriv);
+u32 _rtw_मुक्त_sta_priv(काष्ठा sta_priv *pstapriv);
 
-#define stainfo_offset_valid(offset) (offset < NUM_STA && offset >= 0)
-int rtw_stainfo_offset(struct sta_priv *stapriv, struct sta_info *sta);
-struct sta_info *rtw_get_stainfo_by_offset(struct sta_priv *stapriv, int off);
+#घोषणा stainfo_offset_valid(offset) (offset < NUM_STA && offset >= 0)
+पूर्णांक rtw_stainfo_offset(काष्ठा sta_priv *stapriv, काष्ठा sta_info *sta);
+काष्ठा sta_info *rtw_get_stainfo_by_offset(काष्ठा sta_priv *stapriv, पूर्णांक off);
 
-struct sta_info *rtw_alloc_stainfo(struct sta_priv *stapriv, u8 *hwaddr);
-u32 rtw_free_stainfo(struct adapter *adapt, struct sta_info *psta);
-void rtw_free_all_stainfo(struct adapter *adapt);
-struct sta_info *rtw_get_stainfo(struct sta_priv *stapriv, u8 *hwaddr);
-u32 rtw_init_bcmc_stainfo(struct adapter *adapt);
-struct sta_info *rtw_get_bcmc_stainfo(struct adapter *padapter);
-bool rtw_access_ctrl(struct adapter *padapter, u8 *mac_addr);
+काष्ठा sta_info *rtw_alloc_stainfo(काष्ठा sta_priv *stapriv, u8 *hwaddr);
+u32 rtw_मुक्त_stainfo(काष्ठा adapter *adapt, काष्ठा sta_info *psta);
+व्योम rtw_मुक्त_all_stainfo(काष्ठा adapter *adapt);
+काष्ठा sta_info *rtw_get_stainfo(काष्ठा sta_priv *stapriv, u8 *hwaddr);
+u32 rtw_init_bcmc_stainfo(काष्ठा adapter *adapt);
+काष्ठा sta_info *rtw_get_bcmc_stainfo(काष्ठा adapter *padapter);
+bool rtw_access_ctrl(काष्ठा adapter *padapter, u8 *mac_addr);
 
-#endif /* _STA_INFO_H_ */
+#पूर्ण_अगर /* _STA_INFO_H_ */

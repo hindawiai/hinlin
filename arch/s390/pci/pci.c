@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright IBM Corp. 2012
  *
  * Author(s):
  *   Jan Glauber <jang@linux.vnet.ibm.com>
  *
- * The System z PCI code is a rewrite from a prototype by
- * the following people (Kudoz!):
+ * The System z PCI code is a reग_लिखो from a prototype by
+ * the following people (Kuकरोz!):
  *   Alexander Schmidt
  *   Christoph Raisch
  *   Hannes Hering
@@ -16,138 +17,138 @@
  *   Thomas Klein
  */
 
-#define KMSG_COMPONENT "zpci"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "zpci"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <linux/delay.h>
-#include <linux/seq_file.h>
-#include <linux/jump_label.h>
-#include <linux/pci.h>
-#include <linux/printk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/export.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/prपूर्णांकk.h>
 
-#include <asm/isc.h>
-#include <asm/airq.h>
-#include <asm/facility.h>
-#include <asm/pci_insn.h>
-#include <asm/pci_clp.h>
-#include <asm/pci_dma.h>
+#समावेश <यंत्र/isc.h>
+#समावेश <यंत्र/airq.h>
+#समावेश <यंत्र/facility.h>
+#समावेश <यंत्र/pci_insn.h>
+#समावेश <यंत्र/pci_clp.h>
+#समावेश <यंत्र/pci_dma.h>
 
-#include "pci_bus.h"
-#include "pci_iov.h"
+#समावेश "pci_bus.h"
+#समावेश "pci_iov.h"
 
 /* list of all detected zpci devices */
-static LIST_HEAD(zpci_list);
-static DEFINE_SPINLOCK(zpci_list_lock);
+अटल LIST_HEAD(zpci_list);
+अटल DEFINE_SPINLOCK(zpci_list_lock);
 
-static DECLARE_BITMAP(zpci_domain, ZPCI_DOMAIN_BITMAP_SIZE);
-static DEFINE_SPINLOCK(zpci_domain_lock);
+अटल DECLARE_BITMAP(zpci_करोमुख्य, ZPCI_DOMAIN_BITMAP_SIZE);
+अटल DEFINE_SPINLOCK(zpci_करोमुख्य_lock);
 
-#define ZPCI_IOMAP_ENTRIES						\
-	min(((unsigned long) ZPCI_NR_DEVICES * PCI_STD_NUM_BARS / 2),	\
+#घोषणा ZPCI_IOMAP_ENTRIES						\
+	min(((अचिन्हित दीर्घ) ZPCI_NR_DEVICES * PCI_STD_NUM_BARS / 2),	\
 	    ZPCI_IOMAP_MAX_ENTRIES)
 
-unsigned int s390_pci_no_rid;
+अचिन्हित पूर्णांक s390_pci_no_rid;
 
-static DEFINE_SPINLOCK(zpci_iomap_lock);
-static unsigned long *zpci_iomap_bitmap;
-struct zpci_iomap_entry *zpci_iomap_start;
+अटल DEFINE_SPINLOCK(zpci_iomap_lock);
+अटल अचिन्हित दीर्घ *zpci_iomap_biपंचांगap;
+काष्ठा zpci_iomap_entry *zpci_iomap_start;
 EXPORT_SYMBOL_GPL(zpci_iomap_start);
 
 DEFINE_STATIC_KEY_FALSE(have_mio);
 
-static struct kmem_cache *zdev_fmb_cache;
+अटल काष्ठा kmem_cache *zdev_fmb_cache;
 
-struct zpci_dev *get_zdev_by_fid(u32 fid)
-{
-	struct zpci_dev *tmp, *zdev = NULL;
+काष्ठा zpci_dev *get_zdev_by_fid(u32 fid)
+अणु
+	काष्ठा zpci_dev *पंचांगp, *zdev = शून्य;
 
 	spin_lock(&zpci_list_lock);
-	list_for_each_entry(tmp, &zpci_list, entry) {
-		if (tmp->fid == fid) {
-			zdev = tmp;
-			break;
-		}
-	}
+	list_क्रम_each_entry(पंचांगp, &zpci_list, entry) अणु
+		अगर (पंचांगp->fid == fid) अणु
+			zdev = पंचांगp;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&zpci_list_lock);
-	return zdev;
-}
+	वापस zdev;
+पूर्ण
 
-void zpci_remove_reserved_devices(void)
-{
-	struct zpci_dev *tmp, *zdev;
-	enum zpci_state state;
-	LIST_HEAD(remove);
+व्योम zpci_हटाओ_reserved_devices(व्योम)
+अणु
+	काष्ठा zpci_dev *पंचांगp, *zdev;
+	क्रमागत zpci_state state;
+	LIST_HEAD(हटाओ);
 
 	spin_lock(&zpci_list_lock);
-	list_for_each_entry_safe(zdev, tmp, &zpci_list, entry) {
-		if (zdev->state == ZPCI_FN_STATE_STANDBY &&
+	list_क्रम_each_entry_safe(zdev, पंचांगp, &zpci_list, entry) अणु
+		अगर (zdev->state == ZPCI_FN_STATE_STANDBY &&
 		    !clp_get_state(zdev->fid, &state) &&
 		    state == ZPCI_FN_STATE_RESERVED)
-			list_move_tail(&zdev->entry, &remove);
-	}
+			list_move_tail(&zdev->entry, &हटाओ);
+	पूर्ण
 	spin_unlock(&zpci_list_lock);
 
-	list_for_each_entry_safe(zdev, tmp, &remove, entry)
+	list_क्रम_each_entry_safe(zdev, पंचांगp, &हटाओ, entry)
 		zpci_zdev_put(zdev);
-}
+पूर्ण
 
-int pci_domain_nr(struct pci_bus *bus)
-{
-	return ((struct zpci_bus *) bus->sysdata)->domain_nr;
-}
-EXPORT_SYMBOL_GPL(pci_domain_nr);
+पूर्णांक pci_करोमुख्य_nr(काष्ठा pci_bus *bus)
+अणु
+	वापस ((काष्ठा zpci_bus *) bus->sysdata)->करोमुख्य_nr;
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_करोमुख्य_nr);
 
-int pci_proc_domain(struct pci_bus *bus)
-{
-	return pci_domain_nr(bus);
-}
-EXPORT_SYMBOL_GPL(pci_proc_domain);
+पूर्णांक pci_proc_करोमुख्य(काष्ठा pci_bus *bus)
+अणु
+	वापस pci_करोमुख्य_nr(bus);
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_proc_करोमुख्य);
 
-/* Modify PCI: Register I/O address translation parameters */
-int zpci_register_ioat(struct zpci_dev *zdev, u8 dmaas,
+/* Modअगरy PCI: Register I/O address translation parameters */
+पूर्णांक zpci_रेजिस्टर_ioat(काष्ठा zpci_dev *zdev, u8 dmaas,
 		       u64 base, u64 limit, u64 iota)
-{
+अणु
 	u64 req = ZPCI_CREATE_REQ(zdev->fh, dmaas, ZPCI_MOD_FC_REG_IOAT);
-	struct zpci_fib fib = {0};
+	काष्ठा zpci_fib fib = अणु0पूर्ण;
 	u8 status;
 
 	WARN_ON_ONCE(iota & 0x3fff);
 	fib.pba = base;
 	fib.pal = limit;
 	fib.iota = iota | ZPCI_IOTA_RTTO_FLAG;
-	return zpci_mod_fc(req, &fib, &status) ? -EIO : 0;
-}
+	वापस zpci_mod_fc(req, &fib, &status) ? -EIO : 0;
+पूर्ण
 
-/* Modify PCI: Unregister I/O address translation parameters */
-int zpci_unregister_ioat(struct zpci_dev *zdev, u8 dmaas)
-{
+/* Modअगरy PCI: Unरेजिस्टर I/O address translation parameters */
+पूर्णांक zpci_unरेजिस्टर_ioat(काष्ठा zpci_dev *zdev, u8 dmaas)
+अणु
 	u64 req = ZPCI_CREATE_REQ(zdev->fh, dmaas, ZPCI_MOD_FC_DEREG_IOAT);
-	struct zpci_fib fib = {0};
+	काष्ठा zpci_fib fib = अणु0पूर्ण;
 	u8 cc, status;
 
 	cc = zpci_mod_fc(req, &fib, &status);
-	if (cc == 3) /* Function already gone. */
+	अगर (cc == 3) /* Function alपढ़ोy gone. */
 		cc = 0;
-	return cc ? -EIO : 0;
-}
+	वापस cc ? -EIO : 0;
+पूर्ण
 
-/* Modify PCI: Set PCI function measurement parameters */
-int zpci_fmb_enable_device(struct zpci_dev *zdev)
-{
+/* Modअगरy PCI: Set PCI function measurement parameters */
+पूर्णांक zpci_fmb_enable_device(काष्ठा zpci_dev *zdev)
+अणु
 	u64 req = ZPCI_CREATE_REQ(zdev->fh, 0, ZPCI_MOD_FC_SET_MEASURE);
-	struct zpci_fib fib = {0};
+	काष्ठा zpci_fib fib = अणु0पूर्ण;
 	u8 cc, status;
 
-	if (zdev->fmb || sizeof(*zdev->fmb) < zdev->fmb_length)
-		return -EINVAL;
+	अगर (zdev->fmb || माप(*zdev->fmb) < zdev->fmb_length)
+		वापस -EINVAL;
 
 	zdev->fmb = kmem_cache_zalloc(zdev_fmb_cache, GFP_KERNEL);
-	if (!zdev->fmb)
-		return -ENOMEM;
+	अगर (!zdev->fmb)
+		वापस -ENOMEM;
 	WARN_ON((u64) zdev->fmb & 0xf);
 
 	/* reset software counters */
@@ -157,141 +158,141 @@ int zpci_fmb_enable_device(struct zpci_dev *zdev)
 
 	fib.fmb_addr = virt_to_phys(zdev->fmb);
 	cc = zpci_mod_fc(req, &fib, &status);
-	if (cc) {
-		kmem_cache_free(zdev_fmb_cache, zdev->fmb);
-		zdev->fmb = NULL;
-	}
-	return cc ? -EIO : 0;
-}
+	अगर (cc) अणु
+		kmem_cache_मुक्त(zdev_fmb_cache, zdev->fmb);
+		zdev->fmb = शून्य;
+	पूर्ण
+	वापस cc ? -EIO : 0;
+पूर्ण
 
-/* Modify PCI: Disable PCI function measurement */
-int zpci_fmb_disable_device(struct zpci_dev *zdev)
-{
+/* Modअगरy PCI: Disable PCI function measurement */
+पूर्णांक zpci_fmb_disable_device(काष्ठा zpci_dev *zdev)
+अणु
 	u64 req = ZPCI_CREATE_REQ(zdev->fh, 0, ZPCI_MOD_FC_SET_MEASURE);
-	struct zpci_fib fib = {0};
+	काष्ठा zpci_fib fib = अणु0पूर्ण;
 	u8 cc, status;
 
-	if (!zdev->fmb)
-		return -EINVAL;
+	अगर (!zdev->fmb)
+		वापस -EINVAL;
 
-	/* Function measurement is disabled if fmb address is zero */
+	/* Function measurement is disabled अगर fmb address is zero */
 	cc = zpci_mod_fc(req, &fib, &status);
-	if (cc == 3) /* Function already gone. */
+	अगर (cc == 3) /* Function alपढ़ोy gone. */
 		cc = 0;
 
-	if (!cc) {
-		kmem_cache_free(zdev_fmb_cache, zdev->fmb);
-		zdev->fmb = NULL;
-	}
-	return cc ? -EIO : 0;
-}
+	अगर (!cc) अणु
+		kmem_cache_मुक्त(zdev_fmb_cache, zdev->fmb);
+		zdev->fmb = शून्य;
+	पूर्ण
+	वापस cc ? -EIO : 0;
+पूर्ण
 
-static int zpci_cfg_load(struct zpci_dev *zdev, int offset, u32 *val, u8 len)
-{
+अटल पूर्णांक zpci_cfg_load(काष्ठा zpci_dev *zdev, पूर्णांक offset, u32 *val, u8 len)
+अणु
 	u64 req = ZPCI_CREATE_REQ(zdev->fh, ZPCI_PCIAS_CFGSPC, len);
 	u64 data;
-	int rc;
+	पूर्णांक rc;
 
 	rc = __zpci_load(&data, req, offset);
-	if (!rc) {
-		data = le64_to_cpu((__force __le64) data);
+	अगर (!rc) अणु
+		data = le64_to_cpu((__क्रमce __le64) data);
 		data >>= (8 - len) * 8;
 		*val = (u32) data;
-	} else
+	पूर्ण अन्यथा
 		*val = 0xffffffff;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int zpci_cfg_store(struct zpci_dev *zdev, int offset, u32 val, u8 len)
-{
+अटल पूर्णांक zpci_cfg_store(काष्ठा zpci_dev *zdev, पूर्णांक offset, u32 val, u8 len)
+अणु
 	u64 req = ZPCI_CREATE_REQ(zdev->fh, ZPCI_PCIAS_CFGSPC, len);
 	u64 data = val;
-	int rc;
+	पूर्णांक rc;
 
 	data <<= (8 - len) * 8;
-	data = (__force u64) cpu_to_le64(data);
+	data = (__क्रमce u64) cpu_to_le64(data);
 	rc = __zpci_store(data, req, offset);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-resource_size_t pcibios_align_resource(void *data, const struct resource *res,
-				       resource_size_t size,
-				       resource_size_t align)
-{
-	return 0;
-}
+resource_माप_प्रकार pcibios_align_resource(व्योम *data, स्थिर काष्ठा resource *res,
+				       resource_माप_प्रकार size,
+				       resource_माप_प्रकार align)
+अणु
+	वापस 0;
+पूर्ण
 
-/* combine single writes by using store-block insn */
-void __iowrite64_copy(void __iomem *to, const void *from, size_t count)
-{
-       zpci_memcpy_toio(to, from, count);
-}
+/* combine single ग_लिखोs by using store-block insn */
+व्योम __ioग_लिखो64_copy(व्योम __iomem *to, स्थिर व्योम *from, माप_प्रकार count)
+अणु
+       zpci_स_नकल_toio(to, from, count);
+पूर्ण
 
-static void __iomem *__ioremap(phys_addr_t addr, size_t size, pgprot_t prot)
-{
-	unsigned long offset, vaddr;
-	struct vm_struct *area;
+अटल व्योम __iomem *__ioremap(phys_addr_t addr, माप_प्रकार size, pgprot_t prot)
+अणु
+	अचिन्हित दीर्घ offset, vaddr;
+	काष्ठा vm_काष्ठा *area;
 	phys_addr_t last_addr;
 
 	last_addr = addr + size - 1;
-	if (!size || last_addr < addr)
-		return NULL;
+	अगर (!size || last_addr < addr)
+		वापस शून्य;
 
-	if (!static_branch_unlikely(&have_mio))
-		return (void __iomem *) addr;
+	अगर (!अटल_branch_unlikely(&have_mio))
+		वापस (व्योम __iomem *) addr;
 
 	offset = addr & ~PAGE_MASK;
 	addr &= PAGE_MASK;
 	size = PAGE_ALIGN(size + offset);
 	area = get_vm_area(size, VM_IOREMAP);
-	if (!area)
-		return NULL;
+	अगर (!area)
+		वापस शून्य;
 
-	vaddr = (unsigned long) area->addr;
-	if (ioremap_page_range(vaddr, vaddr + size, addr, prot)) {
-		free_vm_area(area);
-		return NULL;
-	}
-	return (void __iomem *) ((unsigned long) area->addr + offset);
-}
+	vaddr = (अचिन्हित दीर्घ) area->addr;
+	अगर (ioremap_page_range(vaddr, vaddr + size, addr, prot)) अणु
+		मुक्त_vm_area(area);
+		वापस शून्य;
+	पूर्ण
+	वापस (व्योम __iomem *) ((अचिन्हित दीर्घ) area->addr + offset);
+पूर्ण
 
-void __iomem *ioremap_prot(phys_addr_t addr, size_t size, unsigned long prot)
-{
-	return __ioremap(addr, size, __pgprot(prot));
-}
+व्योम __iomem *ioremap_prot(phys_addr_t addr, माप_प्रकार size, अचिन्हित दीर्घ prot)
+अणु
+	वापस __ioremap(addr, size, __pgprot(prot));
+पूर्ण
 EXPORT_SYMBOL(ioremap_prot);
 
-void __iomem *ioremap(phys_addr_t addr, size_t size)
-{
-	return __ioremap(addr, size, PAGE_KERNEL);
-}
+व्योम __iomem *ioremap(phys_addr_t addr, माप_प्रकार size)
+अणु
+	वापस __ioremap(addr, size, PAGE_KERNEL);
+पूर्ण
 EXPORT_SYMBOL(ioremap);
 
-void __iomem *ioremap_wc(phys_addr_t addr, size_t size)
-{
-	return __ioremap(addr, size, pgprot_writecombine(PAGE_KERNEL));
-}
+व्योम __iomem *ioremap_wc(phys_addr_t addr, माप_प्रकार size)
+अणु
+	वापस __ioremap(addr, size, pgprot_ग_लिखोcombine(PAGE_KERNEL));
+पूर्ण
 EXPORT_SYMBOL(ioremap_wc);
 
-void __iomem *ioremap_wt(phys_addr_t addr, size_t size)
-{
-	return __ioremap(addr, size, pgprot_writethrough(PAGE_KERNEL));
-}
+व्योम __iomem *ioremap_wt(phys_addr_t addr, माप_प्रकार size)
+अणु
+	वापस __ioremap(addr, size, pgprot_ग_लिखोthrough(PAGE_KERNEL));
+पूर्ण
 EXPORT_SYMBOL(ioremap_wt);
 
-void iounmap(volatile void __iomem *addr)
-{
-	if (static_branch_likely(&have_mio))
-		vunmap((__force void *) ((unsigned long) addr & PAGE_MASK));
-}
+व्योम iounmap(अस्थिर व्योम __iomem *addr)
+अणु
+	अगर (अटल_branch_likely(&have_mio))
+		vunmap((__क्रमce व्योम *) ((अचिन्हित दीर्घ) addr & PAGE_MASK));
+पूर्ण
 EXPORT_SYMBOL(iounmap);
 
-/* Create a virtual mapping cookie for a PCI BAR */
-static void __iomem *pci_iomap_range_fh(struct pci_dev *pdev, int bar,
-					unsigned long offset, unsigned long max)
-{
-	struct zpci_dev *zdev =	to_zpci(pdev);
-	int idx;
+/* Create a भव mapping cookie क्रम a PCI BAR */
+अटल व्योम __iomem *pci_iomap_range_fh(काष्ठा pci_dev *pdev, पूर्णांक bar,
+					अचिन्हित दीर्घ offset, अचिन्हित दीर्घ max)
+अणु
+	काष्ठा zpci_dev *zdev =	to_zpci(pdev);
+	पूर्णांक idx;
 
 	idx = zdev->bars[bar].map_idx;
 	spin_lock(&zpci_iomap_lock);
@@ -301,385 +302,385 @@ static void __iomem *pci_iomap_range_fh(struct pci_dev *pdev, int bar,
 	zpci_iomap_start[idx].bar = bar;
 	spin_unlock(&zpci_iomap_lock);
 
-	return (void __iomem *) ZPCI_ADDR(idx) + offset;
-}
+	वापस (व्योम __iomem *) ZPCI_ADDR(idx) + offset;
+पूर्ण
 
-static void __iomem *pci_iomap_range_mio(struct pci_dev *pdev, int bar,
-					 unsigned long offset,
-					 unsigned long max)
-{
-	unsigned long barsize = pci_resource_len(pdev, bar);
-	struct zpci_dev *zdev = to_zpci(pdev);
-	void __iomem *iova;
+अटल व्योम __iomem *pci_iomap_range_mio(काष्ठा pci_dev *pdev, पूर्णांक bar,
+					 अचिन्हित दीर्घ offset,
+					 अचिन्हित दीर्घ max)
+अणु
+	अचिन्हित दीर्घ barsize = pci_resource_len(pdev, bar);
+	काष्ठा zpci_dev *zdev = to_zpci(pdev);
+	व्योम __iomem *iova;
 
-	iova = ioremap((unsigned long) zdev->bars[bar].mio_wt, barsize);
-	return iova ? iova + offset : iova;
-}
+	iova = ioremap((अचिन्हित दीर्घ) zdev->bars[bar].mio_wt, barsize);
+	वापस iova ? iova + offset : iova;
+पूर्ण
 
-void __iomem *pci_iomap_range(struct pci_dev *pdev, int bar,
-			      unsigned long offset, unsigned long max)
-{
-	if (bar >= PCI_STD_NUM_BARS || !pci_resource_len(pdev, bar))
-		return NULL;
+व्योम __iomem *pci_iomap_range(काष्ठा pci_dev *pdev, पूर्णांक bar,
+			      अचिन्हित दीर्घ offset, अचिन्हित दीर्घ max)
+अणु
+	अगर (bar >= PCI_STD_NUM_BARS || !pci_resource_len(pdev, bar))
+		वापस शून्य;
 
-	if (static_branch_likely(&have_mio))
-		return pci_iomap_range_mio(pdev, bar, offset, max);
-	else
-		return pci_iomap_range_fh(pdev, bar, offset, max);
-}
+	अगर (अटल_branch_likely(&have_mio))
+		वापस pci_iomap_range_mio(pdev, bar, offset, max);
+	अन्यथा
+		वापस pci_iomap_range_fh(pdev, bar, offset, max);
+पूर्ण
 EXPORT_SYMBOL(pci_iomap_range);
 
-void __iomem *pci_iomap(struct pci_dev *dev, int bar, unsigned long maxlen)
-{
-	return pci_iomap_range(dev, bar, 0, maxlen);
-}
+व्योम __iomem *pci_iomap(काष्ठा pci_dev *dev, पूर्णांक bar, अचिन्हित दीर्घ maxlen)
+अणु
+	वापस pci_iomap_range(dev, bar, 0, maxlen);
+पूर्ण
 EXPORT_SYMBOL(pci_iomap);
 
-static void __iomem *pci_iomap_wc_range_mio(struct pci_dev *pdev, int bar,
-					    unsigned long offset, unsigned long max)
-{
-	unsigned long barsize = pci_resource_len(pdev, bar);
-	struct zpci_dev *zdev = to_zpci(pdev);
-	void __iomem *iova;
+अटल व्योम __iomem *pci_iomap_wc_range_mio(काष्ठा pci_dev *pdev, पूर्णांक bar,
+					    अचिन्हित दीर्घ offset, अचिन्हित दीर्घ max)
+अणु
+	अचिन्हित दीर्घ barsize = pci_resource_len(pdev, bar);
+	काष्ठा zpci_dev *zdev = to_zpci(pdev);
+	व्योम __iomem *iova;
 
-	iova = ioremap((unsigned long) zdev->bars[bar].mio_wb, barsize);
-	return iova ? iova + offset : iova;
-}
+	iova = ioremap((अचिन्हित दीर्घ) zdev->bars[bar].mio_wb, barsize);
+	वापस iova ? iova + offset : iova;
+पूर्ण
 
-void __iomem *pci_iomap_wc_range(struct pci_dev *pdev, int bar,
-				 unsigned long offset, unsigned long max)
-{
-	if (bar >= PCI_STD_NUM_BARS || !pci_resource_len(pdev, bar))
-		return NULL;
+व्योम __iomem *pci_iomap_wc_range(काष्ठा pci_dev *pdev, पूर्णांक bar,
+				 अचिन्हित दीर्घ offset, अचिन्हित दीर्घ max)
+अणु
+	अगर (bar >= PCI_STD_NUM_BARS || !pci_resource_len(pdev, bar))
+		वापस शून्य;
 
-	if (static_branch_likely(&have_mio))
-		return pci_iomap_wc_range_mio(pdev, bar, offset, max);
-	else
-		return pci_iomap_range_fh(pdev, bar, offset, max);
-}
+	अगर (अटल_branch_likely(&have_mio))
+		वापस pci_iomap_wc_range_mio(pdev, bar, offset, max);
+	अन्यथा
+		वापस pci_iomap_range_fh(pdev, bar, offset, max);
+पूर्ण
 EXPORT_SYMBOL(pci_iomap_wc_range);
 
-void __iomem *pci_iomap_wc(struct pci_dev *dev, int bar, unsigned long maxlen)
-{
-	return pci_iomap_wc_range(dev, bar, 0, maxlen);
-}
+व्योम __iomem *pci_iomap_wc(काष्ठा pci_dev *dev, पूर्णांक bar, अचिन्हित दीर्घ maxlen)
+अणु
+	वापस pci_iomap_wc_range(dev, bar, 0, maxlen);
+पूर्ण
 EXPORT_SYMBOL(pci_iomap_wc);
 
-static void pci_iounmap_fh(struct pci_dev *pdev, void __iomem *addr)
-{
-	unsigned int idx = ZPCI_IDX(addr);
+अटल व्योम pci_iounmap_fh(काष्ठा pci_dev *pdev, व्योम __iomem *addr)
+अणु
+	अचिन्हित पूर्णांक idx = ZPCI_IDX(addr);
 
 	spin_lock(&zpci_iomap_lock);
 	/* Detect underrun */
 	WARN_ON(!zpci_iomap_start[idx].count);
-	if (!--zpci_iomap_start[idx].count) {
+	अगर (!--zpci_iomap_start[idx].count) अणु
 		zpci_iomap_start[idx].fh = 0;
 		zpci_iomap_start[idx].bar = 0;
-	}
+	पूर्ण
 	spin_unlock(&zpci_iomap_lock);
-}
+पूर्ण
 
-static void pci_iounmap_mio(struct pci_dev *pdev, void __iomem *addr)
-{
+अटल व्योम pci_iounmap_mio(काष्ठा pci_dev *pdev, व्योम __iomem *addr)
+अणु
 	iounmap(addr);
-}
+पूर्ण
 
-void pci_iounmap(struct pci_dev *pdev, void __iomem *addr)
-{
-	if (static_branch_likely(&have_mio))
+व्योम pci_iounmap(काष्ठा pci_dev *pdev, व्योम __iomem *addr)
+अणु
+	अगर (अटल_branch_likely(&have_mio))
 		pci_iounmap_mio(pdev, addr);
-	else
+	अन्यथा
 		pci_iounmap_fh(pdev, addr);
-}
+पूर्ण
 EXPORT_SYMBOL(pci_iounmap);
 
-static int pci_read(struct pci_bus *bus, unsigned int devfn, int where,
-		    int size, u32 *val)
-{
-	struct zpci_dev *zdev = get_zdev_by_bus(bus, devfn);
+अटल पूर्णांक pci_पढ़ो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where,
+		    पूर्णांक size, u32 *val)
+अणु
+	काष्ठा zpci_dev *zdev = get_zdev_by_bus(bus, devfn);
 
-	return (zdev) ? zpci_cfg_load(zdev, where, val, size) : -ENODEV;
-}
+	वापस (zdev) ? zpci_cfg_load(zdev, where, val, size) : -ENODEV;
+पूर्ण
 
-static int pci_write(struct pci_bus *bus, unsigned int devfn, int where,
-		     int size, u32 val)
-{
-	struct zpci_dev *zdev = get_zdev_by_bus(bus, devfn);
+अटल पूर्णांक pci_ग_लिखो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where,
+		     पूर्णांक size, u32 val)
+अणु
+	काष्ठा zpci_dev *zdev = get_zdev_by_bus(bus, devfn);
 
-	return (zdev) ? zpci_cfg_store(zdev, where, val, size) : -ENODEV;
-}
+	वापस (zdev) ? zpci_cfg_store(zdev, where, val, size) : -ENODEV;
+पूर्ण
 
-static struct pci_ops pci_root_ops = {
-	.read = pci_read,
-	.write = pci_write,
-};
+अटल काष्ठा pci_ops pci_root_ops = अणु
+	.पढ़ो = pci_पढ़ो,
+	.ग_लिखो = pci_ग_लिखो,
+पूर्ण;
 
-static void zpci_map_resources(struct pci_dev *pdev)
-{
-	struct zpci_dev *zdev = to_zpci(pdev);
-	resource_size_t len;
-	int i;
+अटल व्योम zpci_map_resources(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा zpci_dev *zdev = to_zpci(pdev);
+	resource_माप_प्रकार len;
+	पूर्णांक i;
 
-	for (i = 0; i < PCI_STD_NUM_BARS; i++) {
+	क्रम (i = 0; i < PCI_STD_NUM_BARS; i++) अणु
 		len = pci_resource_len(pdev, i);
-		if (!len)
-			continue;
+		अगर (!len)
+			जारी;
 
-		if (zpci_use_mio(zdev))
+		अगर (zpci_use_mio(zdev))
 			pdev->resource[i].start =
-				(resource_size_t __force) zdev->bars[i].mio_wt;
-		else
-			pdev->resource[i].start = (resource_size_t __force)
+				(resource_माप_प्रकार __क्रमce) zdev->bars[i].mio_wt;
+		अन्यथा
+			pdev->resource[i].start = (resource_माप_प्रकार __क्रमce)
 				pci_iomap_range_fh(pdev, i, 0, 0);
 		pdev->resource[i].end = pdev->resource[i].start + len - 1;
-	}
+	पूर्ण
 
 	zpci_iov_map_resources(pdev);
-}
+पूर्ण
 
-static void zpci_unmap_resources(struct pci_dev *pdev)
-{
-	struct zpci_dev *zdev = to_zpci(pdev);
-	resource_size_t len;
-	int i;
+अटल व्योम zpci_unmap_resources(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा zpci_dev *zdev = to_zpci(pdev);
+	resource_माप_प्रकार len;
+	पूर्णांक i;
 
-	if (zpci_use_mio(zdev))
-		return;
+	अगर (zpci_use_mio(zdev))
+		वापस;
 
-	for (i = 0; i < PCI_STD_NUM_BARS; i++) {
+	क्रम (i = 0; i < PCI_STD_NUM_BARS; i++) अणु
 		len = pci_resource_len(pdev, i);
-		if (!len)
-			continue;
-		pci_iounmap_fh(pdev, (void __iomem __force *)
+		अगर (!len)
+			जारी;
+		pci_iounmap_fh(pdev, (व्योम __iomem __क्रमce *)
 			       pdev->resource[i].start);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int zpci_alloc_iomap(struct zpci_dev *zdev)
-{
-	unsigned long entry;
+अटल पूर्णांक zpci_alloc_iomap(काष्ठा zpci_dev *zdev)
+अणु
+	अचिन्हित दीर्घ entry;
 
 	spin_lock(&zpci_iomap_lock);
-	entry = find_first_zero_bit(zpci_iomap_bitmap, ZPCI_IOMAP_ENTRIES);
-	if (entry == ZPCI_IOMAP_ENTRIES) {
+	entry = find_first_zero_bit(zpci_iomap_biपंचांगap, ZPCI_IOMAP_ENTRIES);
+	अगर (entry == ZPCI_IOMAP_ENTRIES) अणु
 		spin_unlock(&zpci_iomap_lock);
-		return -ENOSPC;
-	}
-	set_bit(entry, zpci_iomap_bitmap);
+		वापस -ENOSPC;
+	पूर्ण
+	set_bit(entry, zpci_iomap_biपंचांगap);
 	spin_unlock(&zpci_iomap_lock);
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
-static void zpci_free_iomap(struct zpci_dev *zdev, int entry)
-{
+अटल व्योम zpci_मुक्त_iomap(काष्ठा zpci_dev *zdev, पूर्णांक entry)
+अणु
 	spin_lock(&zpci_iomap_lock);
-	memset(&zpci_iomap_start[entry], 0, sizeof(struct zpci_iomap_entry));
-	clear_bit(entry, zpci_iomap_bitmap);
+	स_रखो(&zpci_iomap_start[entry], 0, माप(काष्ठा zpci_iomap_entry));
+	clear_bit(entry, zpci_iomap_biपंचांगap);
 	spin_unlock(&zpci_iomap_lock);
-}
+पूर्ण
 
-static struct resource *__alloc_res(struct zpci_dev *zdev, unsigned long start,
-				    unsigned long size, unsigned long flags)
-{
-	struct resource *r;
+अटल काष्ठा resource *__alloc_res(काष्ठा zpci_dev *zdev, अचिन्हित दीर्घ start,
+				    अचिन्हित दीर्घ size, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा resource *r;
 
-	r = kzalloc(sizeof(*r), GFP_KERNEL);
-	if (!r)
-		return NULL;
+	r = kzalloc(माप(*r), GFP_KERNEL);
+	अगर (!r)
+		वापस शून्य;
 
 	r->start = start;
 	r->end = r->start + size - 1;
 	r->flags = flags;
 	r->name = zdev->res_name;
 
-	if (request_resource(&iomem_resource, r)) {
-		kfree(r);
-		return NULL;
-	}
-	return r;
-}
+	अगर (request_resource(&iomem_resource, r)) अणु
+		kमुक्त(r);
+		वापस शून्य;
+	पूर्ण
+	वापस r;
+पूर्ण
 
-int zpci_setup_bus_resources(struct zpci_dev *zdev,
-			     struct list_head *resources)
-{
-	unsigned long addr, size, flags;
-	struct resource *res;
-	int i, entry;
+पूर्णांक zpci_setup_bus_resources(काष्ठा zpci_dev *zdev,
+			     काष्ठा list_head *resources)
+अणु
+	अचिन्हित दीर्घ addr, size, flags;
+	काष्ठा resource *res;
+	पूर्णांक i, entry;
 
-	snprintf(zdev->res_name, sizeof(zdev->res_name),
+	snम_लिखो(zdev->res_name, माप(zdev->res_name),
 		 "PCI Bus %04x:%02x", zdev->uid, ZPCI_BUS_NR);
 
-	for (i = 0; i < PCI_STD_NUM_BARS; i++) {
-		if (!zdev->bars[i].size)
-			continue;
+	क्रम (i = 0; i < PCI_STD_NUM_BARS; i++) अणु
+		अगर (!zdev->bars[i].size)
+			जारी;
 		entry = zpci_alloc_iomap(zdev);
-		if (entry < 0)
-			return entry;
+		अगर (entry < 0)
+			वापस entry;
 		zdev->bars[i].map_idx = entry;
 
 		/* only MMIO is supported */
 		flags = IORESOURCE_MEM;
-		if (zdev->bars[i].val & 8)
+		अगर (zdev->bars[i].val & 8)
 			flags |= IORESOURCE_PREFETCH;
-		if (zdev->bars[i].val & 4)
+		अगर (zdev->bars[i].val & 4)
 			flags |= IORESOURCE_MEM_64;
 
-		if (zpci_use_mio(zdev))
-			addr = (unsigned long) zdev->bars[i].mio_wt;
-		else
+		अगर (zpci_use_mio(zdev))
+			addr = (अचिन्हित दीर्घ) zdev->bars[i].mio_wt;
+		अन्यथा
 			addr = ZPCI_ADDR(entry);
 		size = 1UL << zdev->bars[i].size;
 
 		res = __alloc_res(zdev, addr, size, flags);
-		if (!res) {
-			zpci_free_iomap(zdev, entry);
-			return -ENOMEM;
-		}
+		अगर (!res) अणु
+			zpci_मुक्त_iomap(zdev, entry);
+			वापस -ENOMEM;
+		पूर्ण
 		zdev->bars[i].res = res;
 		pci_add_resource(resources, res);
-	}
+	पूर्ण
 	zdev->has_resources = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void zpci_cleanup_bus_resources(struct zpci_dev *zdev)
-{
-	int i;
+अटल व्योम zpci_cleanup_bus_resources(काष्ठा zpci_dev *zdev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < PCI_STD_NUM_BARS; i++) {
-		if (!zdev->bars[i].size || !zdev->bars[i].res)
-			continue;
+	क्रम (i = 0; i < PCI_STD_NUM_BARS; i++) अणु
+		अगर (!zdev->bars[i].size || !zdev->bars[i].res)
+			जारी;
 
-		zpci_free_iomap(zdev, zdev->bars[i].map_idx);
+		zpci_मुक्त_iomap(zdev, zdev->bars[i].map_idx);
 		release_resource(zdev->bars[i].res);
-		kfree(zdev->bars[i].res);
-	}
+		kमुक्त(zdev->bars[i].res);
+	पूर्ण
 	zdev->has_resources = 0;
-}
+पूर्ण
 
-int pcibios_add_device(struct pci_dev *pdev)
-{
-	struct resource *res;
-	int i;
+पूर्णांक pcibios_add_device(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा resource *res;
+	पूर्णांक i;
 
-	if (pdev->is_physfn)
+	अगर (pdev->is_physfn)
 		pdev->no_vf_scan = 1;
 
 	pdev->dev.groups = zpci_attr_groups;
 	pdev->dev.dma_ops = &s390_pci_dma_ops;
 	zpci_map_resources(pdev);
 
-	for (i = 0; i < PCI_STD_NUM_BARS; i++) {
+	क्रम (i = 0; i < PCI_STD_NUM_BARS; i++) अणु
 		res = &pdev->resource[i];
-		if (res->parent || !res->flags)
-			continue;
+		अगर (res->parent || !res->flags)
+			जारी;
 		pci_claim_resource(pdev, i);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void pcibios_release_device(struct pci_dev *pdev)
-{
+व्योम pcibios_release_device(काष्ठा pci_dev *pdev)
+अणु
 	zpci_unmap_resources(pdev);
-}
+पूर्ण
 
-int pcibios_enable_device(struct pci_dev *pdev, int mask)
-{
-	struct zpci_dev *zdev = to_zpci(pdev);
+पूर्णांक pcibios_enable_device(काष्ठा pci_dev *pdev, पूर्णांक mask)
+अणु
+	काष्ठा zpci_dev *zdev = to_zpci(pdev);
 
 	zpci_debug_init_device(zdev, dev_name(&pdev->dev));
 	zpci_fmb_enable_device(zdev);
 
-	return pci_enable_resources(pdev, mask);
-}
+	वापस pci_enable_resources(pdev, mask);
+पूर्ण
 
-void pcibios_disable_device(struct pci_dev *pdev)
-{
-	struct zpci_dev *zdev = to_zpci(pdev);
+व्योम pcibios_disable_device(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा zpci_dev *zdev = to_zpci(pdev);
 
 	zpci_fmb_disable_device(zdev);
-	zpci_debug_exit_device(zdev);
-}
+	zpci_debug_निकास_device(zdev);
+पूर्ण
 
-static int __zpci_register_domain(int domain)
-{
-	spin_lock(&zpci_domain_lock);
-	if (test_bit(domain, zpci_domain)) {
-		spin_unlock(&zpci_domain_lock);
-		pr_err("Domain %04x is already assigned\n", domain);
-		return -EEXIST;
-	}
-	set_bit(domain, zpci_domain);
-	spin_unlock(&zpci_domain_lock);
-	return domain;
-}
+अटल पूर्णांक __zpci_रेजिस्टर_करोमुख्य(पूर्णांक करोमुख्य)
+अणु
+	spin_lock(&zpci_करोमुख्य_lock);
+	अगर (test_bit(करोमुख्य, zpci_करोमुख्य)) अणु
+		spin_unlock(&zpci_करोमुख्य_lock);
+		pr_err("Domain %04x is already assigned\n", करोमुख्य);
+		वापस -EEXIST;
+	पूर्ण
+	set_bit(करोमुख्य, zpci_करोमुख्य);
+	spin_unlock(&zpci_करोमुख्य_lock);
+	वापस करोमुख्य;
+पूर्ण
 
-static int __zpci_alloc_domain(void)
-{
-	int domain;
+अटल पूर्णांक __zpci_alloc_करोमुख्य(व्योम)
+अणु
+	पूर्णांक करोमुख्य;
 
-	spin_lock(&zpci_domain_lock);
+	spin_lock(&zpci_करोमुख्य_lock);
 	/*
-	 * We can always auto allocate domains below ZPCI_NR_DEVICES.
-	 * There is either a free domain or we have reached the maximum in
-	 * which case we would have bailed earlier.
+	 * We can always स्वतः allocate करोमुख्यs below ZPCI_NR_DEVICES.
+	 * There is either a मुक्त करोमुख्य or we have reached the maximum in
+	 * which हाल we would have bailed earlier.
 	 */
-	domain = find_first_zero_bit(zpci_domain, ZPCI_NR_DEVICES);
-	set_bit(domain, zpci_domain);
-	spin_unlock(&zpci_domain_lock);
-	return domain;
-}
+	करोमुख्य = find_first_zero_bit(zpci_करोमुख्य, ZPCI_NR_DEVICES);
+	set_bit(करोमुख्य, zpci_करोमुख्य);
+	spin_unlock(&zpci_करोमुख्य_lock);
+	वापस करोमुख्य;
+पूर्ण
 
-int zpci_alloc_domain(int domain)
-{
-	if (zpci_unique_uid) {
-		if (domain)
-			return __zpci_register_domain(domain);
+पूर्णांक zpci_alloc_करोमुख्य(पूर्णांक करोमुख्य)
+अणु
+	अगर (zpci_unique_uid) अणु
+		अगर (करोमुख्य)
+			वापस __zpci_रेजिस्टर_करोमुख्य(करोमुख्य);
 		pr_warn("UID checking was active but no UID is provided: switching to automatic domain allocation\n");
 		update_uid_checking(false);
-	}
-	return __zpci_alloc_domain();
-}
+	पूर्ण
+	वापस __zpci_alloc_करोमुख्य();
+पूर्ण
 
-void zpci_free_domain(int domain)
-{
-	spin_lock(&zpci_domain_lock);
-	clear_bit(domain, zpci_domain);
-	spin_unlock(&zpci_domain_lock);
-}
+व्योम zpci_मुक्त_करोमुख्य(पूर्णांक करोमुख्य)
+अणु
+	spin_lock(&zpci_करोमुख्य_lock);
+	clear_bit(करोमुख्य, zpci_करोमुख्य);
+	spin_unlock(&zpci_करोमुख्य_lock);
+पूर्ण
 
 
-int zpci_enable_device(struct zpci_dev *zdev)
-{
-	int rc;
+पूर्णांक zpci_enable_device(काष्ठा zpci_dev *zdev)
+अणु
+	पूर्णांक rc;
 
 	rc = clp_enable_fh(zdev, ZPCI_NR_DMA_SPACES);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	rc = zpci_dma_init_device(zdev);
-	if (rc)
-		goto out_dma;
+	अगर (rc)
+		जाओ out_dma;
 
-	return 0;
+	वापस 0;
 
 out_dma:
 	clp_disable_fh(zdev);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int zpci_disable_device(struct zpci_dev *zdev)
-{
-	zpci_dma_exit_device(zdev);
+पूर्णांक zpci_disable_device(काष्ठा zpci_dev *zdev)
+अणु
+	zpci_dma_निकास_device(zdev);
 	/*
-	 * The zPCI function may already be disabled by the platform, this is
+	 * The zPCI function may alपढ़ोy be disabled by the platक्रमm, this is
 	 * detected in clp_disable_fh() which becomes a no-op.
 	 */
-	return clp_disable_fh(zdev);
-}
+	वापस clp_disable_fh(zdev);
+पूर्ण
 
 /**
  * zpci_create_device() - Create a new zpci_dev and add it to the zbus
@@ -690,282 +691,282 @@ int zpci_disable_device(struct zpci_dev *zdev)
  * Creates a new zpci device and adds it to its, possibly newly created, zbus
  * as well as zpci_list.
  *
- * Returns: the zdev on success or an error pointer otherwise
+ * Returns: the zdev on success or an error poपूर्णांकer otherwise
  */
-struct zpci_dev *zpci_create_device(u32 fid, u32 fh, enum zpci_state state)
-{
-	struct zpci_dev *zdev;
-	int rc;
+काष्ठा zpci_dev *zpci_create_device(u32 fid, u32 fh, क्रमागत zpci_state state)
+अणु
+	काष्ठा zpci_dev *zdev;
+	पूर्णांक rc;
 
 	zpci_dbg(3, "add fid:%x, fh:%x, c:%d\n", fid, fh, state);
-	zdev = kzalloc(sizeof(*zdev), GFP_KERNEL);
-	if (!zdev)
-		return ERR_PTR(-ENOMEM);
+	zdev = kzalloc(माप(*zdev), GFP_KERNEL);
+	अगर (!zdev)
+		वापस ERR_PTR(-ENOMEM);
 
-	/* FID and Function Handle are the static/dynamic identifiers */
+	/* FID and Function Handle are the अटल/dynamic identअगरiers */
 	zdev->fid = fid;
 	zdev->fh = fh;
 
 	/* Query function properties and update zdev */
 	rc = clp_query_pci_fn(zdev);
-	if (rc)
-		goto error;
+	अगर (rc)
+		जाओ error;
 	zdev->state =  state;
 
 	kref_init(&zdev->kref);
 	mutex_init(&zdev->lock);
 
 	rc = zpci_init_iommu(zdev);
-	if (rc)
-		goto error;
+	अगर (rc)
+		जाओ error;
 
-	rc = zpci_bus_device_register(zdev, &pci_root_ops);
-	if (rc)
-		goto error_destroy_iommu;
+	rc = zpci_bus_device_रेजिस्टर(zdev, &pci_root_ops);
+	अगर (rc)
+		जाओ error_destroy_iommu;
 
 	spin_lock(&zpci_list_lock);
 	list_add_tail(&zdev->entry, &zpci_list);
 	spin_unlock(&zpci_list_lock);
 
-	return zdev;
+	वापस zdev;
 
 error_destroy_iommu:
 	zpci_destroy_iommu(zdev);
 error:
 	zpci_dbg(0, "add fid:%x, rc:%d\n", fid, rc);
-	kfree(zdev);
-	return ERR_PTR(rc);
-}
+	kमुक्त(zdev);
+	वापस ERR_PTR(rc);
+पूर्ण
 
 /**
  * zpci_scan_configured_device() - Scan a freshly configured zpci_dev
  * @zdev: The zpci_dev to be configured
- * @fh: The general function handle supplied by the platform
+ * @fh: The general function handle supplied by the platक्रमm
  *
  * Given a device in the configuration state Configured, enables, scans and
- * adds it to the common code PCI subsystem if possible. If the PCI device is
+ * adds it to the common code PCI subप्रणाली अगर possible. If the PCI device is
  * parked because we can not yet create a PCI bus because we have not seen
  * function 0, it is ignored but will be scanned once function 0 appears.
  * If any failure occurs, the zpci_dev is left disabled.
  *
  * Return: 0 on success, or an error code otherwise
  */
-int zpci_scan_configured_device(struct zpci_dev *zdev, u32 fh)
-{
-	int rc;
+पूर्णांक zpci_scan_configured_device(काष्ठा zpci_dev *zdev, u32 fh)
+अणु
+	पूर्णांक rc;
 
 	zdev->fh = fh;
 	/* the PCI function will be scanned once function 0 appears */
-	if (!zdev->zbus->bus)
-		return 0;
+	अगर (!zdev->zbus->bus)
+		वापस 0;
 
 	/* For function 0 on a multi-function bus scan whole bus as we might
-	 * have to pick up existing functions waiting for it to allow creating
+	 * have to pick up existing functions रुकोing क्रम it to allow creating
 	 * the PCI bus
 	 */
-	if (zdev->devfn == 0 && zdev->zbus->multifunction)
+	अगर (zdev->devfn == 0 && zdev->zbus->multअगरunction)
 		rc = zpci_bus_scan_bus(zdev->zbus);
-	else
+	अन्यथा
 		rc = zpci_bus_scan_device(zdev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * zpci_deconfigure_device() - Deconfigure a zpci_dev
  * @zdev: The zpci_dev to configure
  *
  * Deconfigure a zPCI function that is currently configured and possibly known
- * to the common code PCI subsystem.
+ * to the common code PCI subप्रणाली.
  * If any failure occurs the device is left as is.
  *
  * Return: 0 on success, or an error code otherwise
  */
-int zpci_deconfigure_device(struct zpci_dev *zdev)
-{
-	int rc;
+पूर्णांक zpci_deconfigure_device(काष्ठा zpci_dev *zdev)
+अणु
+	पूर्णांक rc;
 
-	if (zdev->zbus->bus)
-		zpci_bus_remove_device(zdev, false);
+	अगर (zdev->zbus->bus)
+		zpci_bus_हटाओ_device(zdev, false);
 
-	if (zdev_enabled(zdev)) {
+	अगर (zdev_enabled(zdev)) अणु
 		rc = zpci_disable_device(zdev);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	rc = sclp_pci_deconfigure(zdev->fid);
 	zpci_dbg(3, "deconf fid:%x, rc:%d\n", zdev->fid, rc);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	zdev->state = ZPCI_FN_STATE_STANDBY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void zpci_release_device(struct kref *kref)
-{
-	struct zpci_dev *zdev = container_of(kref, struct zpci_dev, kref);
-	int ret;
+व्योम zpci_release_device(काष्ठा kref *kref)
+अणु
+	काष्ठा zpci_dev *zdev = container_of(kref, काष्ठा zpci_dev, kref);
+	पूर्णांक ret;
 
-	if (zdev->zbus->bus)
-		zpci_bus_remove_device(zdev, false);
+	अगर (zdev->zbus->bus)
+		zpci_bus_हटाओ_device(zdev, false);
 
-	if (zdev_enabled(zdev))
+	अगर (zdev_enabled(zdev))
 		zpci_disable_device(zdev);
 
-	switch (zdev->state) {
-	case ZPCI_FN_STATE_CONFIGURED:
+	चयन (zdev->state) अणु
+	हाल ZPCI_FN_STATE_CONFIGURED:
 		ret = sclp_pci_deconfigure(zdev->fid);
 		zpci_dbg(3, "deconf fid:%x, rc:%d\n", zdev->fid, ret);
 		fallthrough;
-	case ZPCI_FN_STATE_STANDBY:
-		if (zdev->has_hp_slot)
-			zpci_exit_slot(zdev);
+	हाल ZPCI_FN_STATE_STANDBY:
+		अगर (zdev->has_hp_slot)
+			zpci_निकास_slot(zdev);
 		zpci_cleanup_bus_resources(zdev);
-		zpci_bus_device_unregister(zdev);
+		zpci_bus_device_unरेजिस्टर(zdev);
 		zpci_destroy_iommu(zdev);
 		fallthrough;
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	spin_lock(&zpci_list_lock);
 	list_del(&zdev->entry);
 	spin_unlock(&zpci_list_lock);
 	zpci_dbg(3, "rem fid:%x\n", zdev->fid);
-	kfree(zdev);
-}
+	kमुक्त(zdev);
+पूर्ण
 
-int zpci_report_error(struct pci_dev *pdev,
-		      struct zpci_report_error_header *report)
-{
-	struct zpci_dev *zdev = to_zpci(pdev);
+पूर्णांक zpci_report_error(काष्ठा pci_dev *pdev,
+		      काष्ठा zpci_report_error_header *report)
+अणु
+	काष्ठा zpci_dev *zdev = to_zpci(pdev);
 
-	return sclp_pci_report(report, zdev->fh, zdev->fid);
-}
+	वापस sclp_pci_report(report, zdev->fh, zdev->fid);
+पूर्ण
 EXPORT_SYMBOL(zpci_report_error);
 
-static int zpci_mem_init(void)
-{
-	BUILD_BUG_ON(!is_power_of_2(__alignof__(struct zpci_fmb)) ||
-		     __alignof__(struct zpci_fmb) < sizeof(struct zpci_fmb));
+अटल पूर्णांक zpci_mem_init(व्योम)
+अणु
+	BUILD_BUG_ON(!is_घातer_of_2(__alignof__(काष्ठा zpci_fmb)) ||
+		     __alignof__(काष्ठा zpci_fmb) < माप(काष्ठा zpci_fmb));
 
-	zdev_fmb_cache = kmem_cache_create("PCI_FMB_cache", sizeof(struct zpci_fmb),
-					   __alignof__(struct zpci_fmb), 0, NULL);
-	if (!zdev_fmb_cache)
-		goto error_fmb;
+	zdev_fmb_cache = kmem_cache_create("PCI_FMB_cache", माप(काष्ठा zpci_fmb),
+					   __alignof__(काष्ठा zpci_fmb), 0, शून्य);
+	अगर (!zdev_fmb_cache)
+		जाओ error_fmb;
 
-	zpci_iomap_start = kcalloc(ZPCI_IOMAP_ENTRIES,
-				   sizeof(*zpci_iomap_start), GFP_KERNEL);
-	if (!zpci_iomap_start)
-		goto error_iomap;
+	zpci_iomap_start = kसुस्मृति(ZPCI_IOMAP_ENTRIES,
+				   माप(*zpci_iomap_start), GFP_KERNEL);
+	अगर (!zpci_iomap_start)
+		जाओ error_iomap;
 
-	zpci_iomap_bitmap = kcalloc(BITS_TO_LONGS(ZPCI_IOMAP_ENTRIES),
-				    sizeof(*zpci_iomap_bitmap), GFP_KERNEL);
-	if (!zpci_iomap_bitmap)
-		goto error_iomap_bitmap;
+	zpci_iomap_biपंचांगap = kसुस्मृति(BITS_TO_LONGS(ZPCI_IOMAP_ENTRIES),
+				    माप(*zpci_iomap_biपंचांगap), GFP_KERNEL);
+	अगर (!zpci_iomap_biपंचांगap)
+		जाओ error_iomap_biपंचांगap;
 
-	if (static_branch_likely(&have_mio))
-		clp_setup_writeback_mio();
+	अगर (अटल_branch_likely(&have_mio))
+		clp_setup_ग_लिखोback_mio();
 
-	return 0;
-error_iomap_bitmap:
-	kfree(zpci_iomap_start);
+	वापस 0;
+error_iomap_biपंचांगap:
+	kमुक्त(zpci_iomap_start);
 error_iomap:
 	kmem_cache_destroy(zdev_fmb_cache);
 error_fmb:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void zpci_mem_exit(void)
-{
-	kfree(zpci_iomap_bitmap);
-	kfree(zpci_iomap_start);
+अटल व्योम zpci_mem_निकास(व्योम)
+अणु
+	kमुक्त(zpci_iomap_biपंचांगap);
+	kमुक्त(zpci_iomap_start);
 	kmem_cache_destroy(zdev_fmb_cache);
-}
+पूर्ण
 
-static unsigned int s390_pci_probe __initdata = 1;
-static unsigned int s390_pci_no_mio __initdata;
-unsigned int s390_pci_force_floating __initdata;
-static unsigned int s390_pci_initialized;
+अटल अचिन्हित पूर्णांक s390_pci_probe __initdata = 1;
+अटल अचिन्हित पूर्णांक s390_pci_no_mio __initdata;
+अचिन्हित पूर्णांक s390_pci_क्रमce_भग्नing __initdata;
+अटल अचिन्हित पूर्णांक s390_pci_initialized;
 
-char * __init pcibios_setup(char *str)
-{
-	if (!strcmp(str, "off")) {
+अक्षर * __init pcibios_setup(अक्षर *str)
+अणु
+	अगर (!म_भेद(str, "off")) अणु
 		s390_pci_probe = 0;
-		return NULL;
-	}
-	if (!strcmp(str, "nomio")) {
+		वापस शून्य;
+	पूर्ण
+	अगर (!म_भेद(str, "nomio")) अणु
 		s390_pci_no_mio = 1;
-		return NULL;
-	}
-	if (!strcmp(str, "force_floating")) {
-		s390_pci_force_floating = 1;
-		return NULL;
-	}
-	if (!strcmp(str, "norid")) {
+		वापस शून्य;
+	पूर्ण
+	अगर (!म_भेद(str, "force_floating")) अणु
+		s390_pci_क्रमce_भग्नing = 1;
+		वापस शून्य;
+	पूर्ण
+	अगर (!म_भेद(str, "norid")) अणु
 		s390_pci_no_rid = 1;
-		return NULL;
-	}
-	return str;
-}
+		वापस शून्य;
+	पूर्ण
+	वापस str;
+पूर्ण
 
-bool zpci_is_enabled(void)
-{
-	return s390_pci_initialized;
-}
+bool zpci_is_enabled(व्योम)
+अणु
+	वापस s390_pci_initialized;
+पूर्ण
 
-static int __init pci_base_init(void)
-{
-	int rc;
+अटल पूर्णांक __init pci_base_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	if (!s390_pci_probe)
-		return 0;
+	अगर (!s390_pci_probe)
+		वापस 0;
 
-	if (!test_facility(69) || !test_facility(71)) {
+	अगर (!test_facility(69) || !test_facility(71)) अणु
 		pr_info("PCI is not supported because CPU facilities 69 or 71 are not available\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (test_facility(153) && !s390_pci_no_mio) {
-		static_branch_enable(&have_mio);
+	अगर (test_facility(153) && !s390_pci_no_mio) अणु
+		अटल_branch_enable(&have_mio);
 		ctl_set_bit(2, 5);
-	}
+	पूर्ण
 
 	rc = zpci_debug_init();
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	rc = zpci_mem_init();
-	if (rc)
-		goto out_mem;
+	अगर (rc)
+		जाओ out_mem;
 
 	rc = zpci_irq_init();
-	if (rc)
-		goto out_irq;
+	अगर (rc)
+		जाओ out_irq;
 
 	rc = zpci_dma_init();
-	if (rc)
-		goto out_dma;
+	अगर (rc)
+		जाओ out_dma;
 
 	rc = clp_scan_pci_devices();
-	if (rc)
-		goto out_find;
+	अगर (rc)
+		जाओ out_find;
 	zpci_bus_scan_busses();
 
 	s390_pci_initialized = 1;
-	return 0;
+	वापस 0;
 
 out_find:
-	zpci_dma_exit();
+	zpci_dma_निकास();
 out_dma:
-	zpci_irq_exit();
+	zpci_irq_निकास();
 out_irq:
-	zpci_mem_exit();
+	zpci_mem_निकास();
 out_mem:
-	zpci_debug_exit();
+	zpci_debug_निकास();
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 subsys_initcall_sync(pci_base_init);

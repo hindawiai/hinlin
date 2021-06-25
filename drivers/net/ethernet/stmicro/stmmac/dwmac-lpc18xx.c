@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * DWMAC glue for NXP LPC18xx/LPC43xx Ethernet
+ * DWMAC glue क्रम NXP LPC18xx/LPC43xx Ethernet
  *
  * Copyright (C) 2015 Joachim Eastwood <manabian@gmail.com>
  *
@@ -8,89 +9,89 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_net.h>
-#include <linux/phy.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/stmmac.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/sपंचांगmac.h>
 
-#include "stmmac_platform.h"
+#समावेश "stmmac_platform.h"
 
-/* Register defines for CREG syscon */
-#define LPC18XX_CREG_CREG6			0x12c
+/* Register defines क्रम CREG syscon */
+#घोषणा LPC18XX_CREG_CREG6			0x12c
 # define LPC18XX_CREG_CREG6_ETHMODE_MASK	0x7
 # define LPC18XX_CREG_CREG6_ETHMODE_MII		0x0
 # define LPC18XX_CREG_CREG6_ETHMODE_RMII	0x4
 
-static int lpc18xx_dwmac_probe(struct platform_device *pdev)
-{
-	struct plat_stmmacenet_data *plat_dat;
-	struct stmmac_resources stmmac_res;
-	struct regmap *reg;
+अटल पूर्णांक lpc18xx_dwmac_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा plat_sपंचांगmacenet_data *plat_dat;
+	काष्ठा sपंचांगmac_resources sपंचांगmac_res;
+	काष्ठा regmap *reg;
 	u8 ethmode;
-	int ret;
+	पूर्णांक ret;
 
-	ret = stmmac_get_platform_resources(pdev, &stmmac_res);
-	if (ret)
-		return ret;
+	ret = sपंचांगmac_get_platक्रमm_resources(pdev, &sपंचांगmac_res);
+	अगर (ret)
+		वापस ret;
 
-	plat_dat = stmmac_probe_config_dt(pdev, stmmac_res.mac);
-	if (IS_ERR(plat_dat))
-		return PTR_ERR(plat_dat);
+	plat_dat = sपंचांगmac_probe_config_dt(pdev, sपंचांगmac_res.mac);
+	अगर (IS_ERR(plat_dat))
+		वापस PTR_ERR(plat_dat);
 
 	plat_dat->has_gmac = true;
 
 	reg = syscon_regmap_lookup_by_compatible("nxp,lpc1850-creg");
-	if (IS_ERR(reg)) {
+	अगर (IS_ERR(reg)) अणु
 		dev_err(&pdev->dev, "syscon lookup failed\n");
 		ret = PTR_ERR(reg);
-		goto err_remove_config_dt;
-	}
+		जाओ err_हटाओ_config_dt;
+	पूर्ण
 
-	if (plat_dat->interface == PHY_INTERFACE_MODE_MII) {
+	अगर (plat_dat->पूर्णांकerface == PHY_INTERFACE_MODE_MII) अणु
 		ethmode = LPC18XX_CREG_CREG6_ETHMODE_MII;
-	} else if (plat_dat->interface == PHY_INTERFACE_MODE_RMII) {
+	पूर्ण अन्यथा अगर (plat_dat->पूर्णांकerface == PHY_INTERFACE_MODE_RMII) अणु
 		ethmode = LPC18XX_CREG_CREG6_ETHMODE_RMII;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&pdev->dev, "Only MII and RMII mode supported\n");
 		ret = -EINVAL;
-		goto err_remove_config_dt;
-	}
+		जाओ err_हटाओ_config_dt;
+	पूर्ण
 
 	regmap_update_bits(reg, LPC18XX_CREG_CREG6,
 			   LPC18XX_CREG_CREG6_ETHMODE_MASK, ethmode);
 
-	ret = stmmac_dvr_probe(&pdev->dev, plat_dat, &stmmac_res);
-	if (ret)
-		goto err_remove_config_dt;
+	ret = sपंचांगmac_dvr_probe(&pdev->dev, plat_dat, &sपंचांगmac_res);
+	अगर (ret)
+		जाओ err_हटाओ_config_dt;
 
-	return 0;
+	वापस 0;
 
-err_remove_config_dt:
-	stmmac_remove_config_dt(pdev, plat_dat);
+err_हटाओ_config_dt:
+	sपंचांगmac_हटाओ_config_dt(pdev, plat_dat);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id lpc18xx_dwmac_match[] = {
-	{ .compatible = "nxp,lpc1850-dwmac" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id lpc18xx_dwmac_match[] = अणु
+	अणु .compatible = "nxp,lpc1850-dwmac" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, lpc18xx_dwmac_match);
 
-static struct platform_driver lpc18xx_dwmac_driver = {
+अटल काष्ठा platक्रमm_driver lpc18xx_dwmac_driver = अणु
 	.probe  = lpc18xx_dwmac_probe,
-	.remove = stmmac_pltfr_remove,
-	.driver = {
+	.हटाओ = sपंचांगmac_pltfr_हटाओ,
+	.driver = अणु
 		.name           = "lpc18xx-dwmac",
-		.pm		= &stmmac_pltfr_pm_ops,
+		.pm		= &sपंचांगmac_pltfr_pm_ops,
 		.of_match_table = lpc18xx_dwmac_match,
-	},
-};
-module_platform_driver(lpc18xx_dwmac_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(lpc18xx_dwmac_driver);
 
 MODULE_AUTHOR("Joachim Eastwood <manabian@gmail.com>");
 MODULE_DESCRIPTION("DWMAC glue for LPC18xx/43xx Ethernet");

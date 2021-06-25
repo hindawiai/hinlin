@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause */
 /*
  * Remote processor messaging
  *
@@ -7,311 +8,311 @@
  * All rights reserved.
  */
 
-#ifndef _LINUX_RPMSG_H
-#define _LINUX_RPMSG_H
+#अगर_अघोषित _LINUX_RPMSG_H
+#घोषणा _LINUX_RPMSG_H
 
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/mod_devicetable.h>
-#include <linux/kref.h>
-#include <linux/mutex.h>
-#include <linux/poll.h>
-#include <linux/rpmsg/byteorder.h>
-#include <uapi/linux/rpmsg.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/rpmsg/byteorder.h>
+#समावेश <uapi/linux/rpmsg.h>
 
-struct rpmsg_device;
-struct rpmsg_endpoint;
-struct rpmsg_device_ops;
-struct rpmsg_endpoint_ops;
+काष्ठा rpmsg_device;
+काष्ठा rpmsg_endpoपूर्णांक;
+काष्ठा rpmsg_device_ops;
+काष्ठा rpmsg_endpoपूर्णांक_ops;
 
 /**
- * struct rpmsg_channel_info - channel info representation
+ * काष्ठा rpmsg_channel_info - channel info representation
  * @name: name of service
  * @src: local address
  * @dst: destination address
  */
-struct rpmsg_channel_info {
-	char name[RPMSG_NAME_SIZE];
+काष्ठा rpmsg_channel_info अणु
+	अक्षर name[RPMSG_NAME_SIZE];
 	u32 src;
 	u32 dst;
-};
+पूर्ण;
 
 /**
- * rpmsg_device - device that belong to the rpmsg bus
- * @dev: the device struct
+ * rpmsg_device - device that beदीर्घ to the rpmsg bus
+ * @dev: the device काष्ठा
  * @id: device id (used to match between rpmsg drivers and devices)
- * @driver_override: driver name to force a match
+ * @driver_override: driver name to क्रमce a match
  * @src: local address
  * @dst: destination address
- * @ept: the rpmsg endpoint of this channel
- * @announce: if set, rpmsg will announce the creation/removal of this channel
- * @little_endian: True if transport is using little endian byte representation
+ * @ept: the rpmsg endpoपूर्णांक of this channel
+ * @announce: अगर set, rpmsg will announce the creation/removal of this channel
+ * @little_endian: True अगर transport is using little endian byte representation
  */
-struct rpmsg_device {
-	struct device dev;
-	struct rpmsg_device_id id;
-	char *driver_override;
+काष्ठा rpmsg_device अणु
+	काष्ठा device dev;
+	काष्ठा rpmsg_device_id id;
+	अक्षर *driver_override;
 	u32 src;
 	u32 dst;
-	struct rpmsg_endpoint *ept;
+	काष्ठा rpmsg_endpoपूर्णांक *ept;
 	bool announce;
 	bool little_endian;
 
-	const struct rpmsg_device_ops *ops;
-};
+	स्थिर काष्ठा rpmsg_device_ops *ops;
+पूर्ण;
 
-typedef int (*rpmsg_rx_cb_t)(struct rpmsg_device *, void *, int, void *, u32);
+प्रकार पूर्णांक (*rpmsg_rx_cb_t)(काष्ठा rpmsg_device *, व्योम *, पूर्णांक, व्योम *, u32);
 
 /**
- * struct rpmsg_endpoint - binds a local rpmsg address to its user
+ * काष्ठा rpmsg_endpoपूर्णांक - binds a local rpmsg address to its user
  * @rpdev: rpmsg channel device
  * @refcount: when this drops to zero, the ept is deallocated
  * @cb: rx callback handler
- * @cb_lock: must be taken before accessing/changing @cb
+ * @cb_lock: must be taken beक्रमe accessing/changing @cb
  * @addr: local rpmsg address
- * @priv: private data for the driver's use
+ * @priv: निजी data क्रम the driver's use
  *
- * In essence, an rpmsg endpoint represents a listener on the rpmsg bus, as
+ * In essence, an rpmsg endpoपूर्णांक represents a listener on the rpmsg bus, as
  * it binds an rpmsg address with an rx callback handler.
  *
- * Simple rpmsg drivers shouldn't use this struct directly, because
+ * Simple rpmsg drivers shouldn't use this काष्ठा directly, because
  * things just work: every rpmsg driver provides an rx callback upon
- * registering to the bus, and that callback is then bound to its rpmsg
+ * रेजिस्टरing to the bus, and that callback is then bound to its rpmsg
  * address when the driver is probed. When relevant inbound messages arrive
  * (i.e. messages which their dst address equals to the src address of
  * the rpmsg channel), the driver's handler is invoked to process it.
  *
- * More complicated drivers though, that do need to allocate additional rpmsg
- * addresses, and bind them to different rx callbacks, must explicitly
- * create additional endpoints by themselves (see rpmsg_create_ept()).
+ * More complicated drivers though, that करो need to allocate additional rpmsg
+ * addresses, and bind them to dअगरferent rx callbacks, must explicitly
+ * create additional endpoपूर्णांकs by themselves (see rpmsg_create_ept()).
  */
-struct rpmsg_endpoint {
-	struct rpmsg_device *rpdev;
-	struct kref refcount;
+काष्ठा rpmsg_endpoपूर्णांक अणु
+	काष्ठा rpmsg_device *rpdev;
+	काष्ठा kref refcount;
 	rpmsg_rx_cb_t cb;
-	struct mutex cb_lock;
+	काष्ठा mutex cb_lock;
 	u32 addr;
-	void *priv;
+	व्योम *priv;
 
-	const struct rpmsg_endpoint_ops *ops;
-};
+	स्थिर काष्ठा rpmsg_endpoपूर्णांक_ops *ops;
+पूर्ण;
 
 /**
- * struct rpmsg_driver - rpmsg driver struct
+ * काष्ठा rpmsg_driver - rpmsg driver काष्ठा
  * @drv: underlying device driver
  * @id_table: rpmsg ids serviced by this driver
  * @probe: invoked when a matching rpmsg channel (i.e. device) is found
- * @remove: invoked when the rpmsg channel is removed
+ * @हटाओ: invoked when the rpmsg channel is हटाओd
  * @callback: invoked when an inbound message is received on the channel
  */
-struct rpmsg_driver {
-	struct device_driver drv;
-	const struct rpmsg_device_id *id_table;
-	int (*probe)(struct rpmsg_device *dev);
-	void (*remove)(struct rpmsg_device *dev);
-	int (*callback)(struct rpmsg_device *, void *, int, void *, u32);
-};
+काष्ठा rpmsg_driver अणु
+	काष्ठा device_driver drv;
+	स्थिर काष्ठा rpmsg_device_id *id_table;
+	पूर्णांक (*probe)(काष्ठा rpmsg_device *dev);
+	व्योम (*हटाओ)(काष्ठा rpmsg_device *dev);
+	पूर्णांक (*callback)(काष्ठा rpmsg_device *, व्योम *, पूर्णांक, व्योम *, u32);
+पूर्ण;
 
-static inline u16 rpmsg16_to_cpu(struct rpmsg_device *rpdev, __rpmsg16 val)
-{
-	if (!rpdev)
-		return __rpmsg16_to_cpu(rpmsg_is_little_endian(), val);
-	else
-		return __rpmsg16_to_cpu(rpdev->little_endian, val);
-}
+अटल अंतरभूत u16 rpmsg16_to_cpu(काष्ठा rpmsg_device *rpdev, __rpmsg16 val)
+अणु
+	अगर (!rpdev)
+		वापस __rpmsg16_to_cpu(rpmsg_is_little_endian(), val);
+	अन्यथा
+		वापस __rpmsg16_to_cpu(rpdev->little_endian, val);
+पूर्ण
 
-static inline __rpmsg16 cpu_to_rpmsg16(struct rpmsg_device *rpdev, u16 val)
-{
-	if (!rpdev)
-		return __cpu_to_rpmsg16(rpmsg_is_little_endian(), val);
-	else
-		return __cpu_to_rpmsg16(rpdev->little_endian, val);
-}
+अटल अंतरभूत __rpmsg16 cpu_to_rpmsg16(काष्ठा rpmsg_device *rpdev, u16 val)
+अणु
+	अगर (!rpdev)
+		वापस __cpu_to_rpmsg16(rpmsg_is_little_endian(), val);
+	अन्यथा
+		वापस __cpu_to_rpmsg16(rpdev->little_endian, val);
+पूर्ण
 
-static inline u32 rpmsg32_to_cpu(struct rpmsg_device *rpdev, __rpmsg32 val)
-{
-	if (!rpdev)
-		return __rpmsg32_to_cpu(rpmsg_is_little_endian(), val);
-	else
-		return __rpmsg32_to_cpu(rpdev->little_endian, val);
-}
+अटल अंतरभूत u32 rpmsg32_to_cpu(काष्ठा rpmsg_device *rpdev, __rpmsg32 val)
+अणु
+	अगर (!rpdev)
+		वापस __rpmsg32_to_cpu(rpmsg_is_little_endian(), val);
+	अन्यथा
+		वापस __rpmsg32_to_cpu(rpdev->little_endian, val);
+पूर्ण
 
-static inline __rpmsg32 cpu_to_rpmsg32(struct rpmsg_device *rpdev, u32 val)
-{
-	if (!rpdev)
-		return __cpu_to_rpmsg32(rpmsg_is_little_endian(), val);
-	else
-		return __cpu_to_rpmsg32(rpdev->little_endian, val);
-}
+अटल अंतरभूत __rpmsg32 cpu_to_rpmsg32(काष्ठा rpmsg_device *rpdev, u32 val)
+अणु
+	अगर (!rpdev)
+		वापस __cpu_to_rpmsg32(rpmsg_is_little_endian(), val);
+	अन्यथा
+		वापस __cpu_to_rpmsg32(rpdev->little_endian, val);
+पूर्ण
 
-static inline u64 rpmsg64_to_cpu(struct rpmsg_device *rpdev, __rpmsg64 val)
-{
-	if (!rpdev)
-		return __rpmsg64_to_cpu(rpmsg_is_little_endian(), val);
-	else
-		return __rpmsg64_to_cpu(rpdev->little_endian, val);
-}
+अटल अंतरभूत u64 rpmsg64_to_cpu(काष्ठा rpmsg_device *rpdev, __rpmsg64 val)
+अणु
+	अगर (!rpdev)
+		वापस __rpmsg64_to_cpu(rpmsg_is_little_endian(), val);
+	अन्यथा
+		वापस __rpmsg64_to_cpu(rpdev->little_endian, val);
+पूर्ण
 
-static inline __rpmsg64 cpu_to_rpmsg64(struct rpmsg_device *rpdev, u64 val)
-{
-	if (!rpdev)
-		return __cpu_to_rpmsg64(rpmsg_is_little_endian(), val);
-	else
-		return __cpu_to_rpmsg64(rpdev->little_endian, val);
-}
+अटल अंतरभूत __rpmsg64 cpu_to_rpmsg64(काष्ठा rpmsg_device *rpdev, u64 val)
+अणु
+	अगर (!rpdev)
+		वापस __cpu_to_rpmsg64(rpmsg_is_little_endian(), val);
+	अन्यथा
+		वापस __cpu_to_rpmsg64(rpdev->little_endian, val);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_RPMSG)
+#अगर IS_ENABLED(CONFIG_RPMSG)
 
-int rpmsg_register_device(struct rpmsg_device *rpdev);
-int rpmsg_unregister_device(struct device *parent,
-			    struct rpmsg_channel_info *chinfo);
-int __register_rpmsg_driver(struct rpmsg_driver *drv, struct module *owner);
-void unregister_rpmsg_driver(struct rpmsg_driver *drv);
-void rpmsg_destroy_ept(struct rpmsg_endpoint *);
-struct rpmsg_endpoint *rpmsg_create_ept(struct rpmsg_device *,
-					rpmsg_rx_cb_t cb, void *priv,
-					struct rpmsg_channel_info chinfo);
+पूर्णांक rpmsg_रेजिस्टर_device(काष्ठा rpmsg_device *rpdev);
+पूर्णांक rpmsg_unरेजिस्टर_device(काष्ठा device *parent,
+			    काष्ठा rpmsg_channel_info *chinfo);
+पूर्णांक __रेजिस्टर_rpmsg_driver(काष्ठा rpmsg_driver *drv, काष्ठा module *owner);
+व्योम unरेजिस्टर_rpmsg_driver(काष्ठा rpmsg_driver *drv);
+व्योम rpmsg_destroy_ept(काष्ठा rpmsg_endpoपूर्णांक *);
+काष्ठा rpmsg_endpoपूर्णांक *rpmsg_create_ept(काष्ठा rpmsg_device *,
+					rpmsg_rx_cb_t cb, व्योम *priv,
+					काष्ठा rpmsg_channel_info chinfo);
 
-int rpmsg_send(struct rpmsg_endpoint *ept, void *data, int len);
-int rpmsg_sendto(struct rpmsg_endpoint *ept, void *data, int len, u32 dst);
-int rpmsg_send_offchannel(struct rpmsg_endpoint *ept, u32 src, u32 dst,
-			  void *data, int len);
+पूर्णांक rpmsg_send(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len);
+पूर्णांक rpmsg_sendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len, u32 dst);
+पूर्णांक rpmsg_send_offchannel(काष्ठा rpmsg_endpoपूर्णांक *ept, u32 src, u32 dst,
+			  व्योम *data, पूर्णांक len);
 
-int rpmsg_trysend(struct rpmsg_endpoint *ept, void *data, int len);
-int rpmsg_trysendto(struct rpmsg_endpoint *ept, void *data, int len, u32 dst);
-int rpmsg_trysend_offchannel(struct rpmsg_endpoint *ept, u32 src, u32 dst,
-			     void *data, int len);
+पूर्णांक rpmsg_trysend(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len);
+पूर्णांक rpmsg_trysendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len, u32 dst);
+पूर्णांक rpmsg_trysend_offchannel(काष्ठा rpmsg_endpoपूर्णांक *ept, u32 src, u32 dst,
+			     व्योम *data, पूर्णांक len);
 
-__poll_t rpmsg_poll(struct rpmsg_endpoint *ept, struct file *filp,
-			poll_table *wait);
+__poll_t rpmsg_poll(काष्ठा rpmsg_endpoपूर्णांक *ept, काष्ठा file *filp,
+			poll_table *रुको);
 
-#else
+#अन्यथा
 
-static inline int rpmsg_register_device(struct rpmsg_device *rpdev)
-{
-	return -ENXIO;
-}
+अटल अंतरभूत पूर्णांक rpmsg_रेजिस्टर_device(काष्ठा rpmsg_device *rpdev)
+अणु
+	वापस -ENXIO;
+पूर्ण
 
-static inline int rpmsg_unregister_device(struct device *parent,
-					  struct rpmsg_channel_info *chinfo)
-{
+अटल अंतरभूत पूर्णांक rpmsg_unरेजिस्टर_device(काष्ठा device *parent,
+					  काष्ठा rpmsg_channel_info *chinfo)
+अणु
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static inline int __register_rpmsg_driver(struct rpmsg_driver *drv,
-					  struct module *owner)
-{
+अटल अंतरभूत पूर्णांक __रेजिस्टर_rpmsg_driver(काष्ठा rpmsg_driver *drv,
+					  काष्ठा module *owner)
+अणु
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static inline void unregister_rpmsg_driver(struct rpmsg_driver *drv)
-{
+अटल अंतरभूत व्योम unरेजिस्टर_rpmsg_driver(काष्ठा rpmsg_driver *drv)
+अणु
 	/* This shouldn't be possible */
 	WARN_ON(1);
-}
+पूर्ण
 
-static inline void rpmsg_destroy_ept(struct rpmsg_endpoint *ept)
-{
+अटल अंतरभूत व्योम rpmsg_destroy_ept(काष्ठा rpmsg_endpoपूर्णांक *ept)
+अणु
 	/* This shouldn't be possible */
 	WARN_ON(1);
-}
+पूर्ण
 
-static inline struct rpmsg_endpoint *rpmsg_create_ept(struct rpmsg_device *rpdev,
+अटल अंतरभूत काष्ठा rpmsg_endpoपूर्णांक *rpmsg_create_ept(काष्ठा rpmsg_device *rpdev,
 						      rpmsg_rx_cb_t cb,
-						      void *priv,
-						      struct rpmsg_channel_info chinfo)
-{
+						      व्योम *priv,
+						      काष्ठा rpmsg_channel_info chinfo)
+अणु
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return ERR_PTR(-ENXIO);
-}
+	वापस ERR_PTR(-ENXIO);
+पूर्ण
 
-static inline int rpmsg_send(struct rpmsg_endpoint *ept, void *data, int len)
-{
+अटल अंतरभूत पूर्णांक rpmsg_send(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len)
+अणु
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static inline int rpmsg_sendto(struct rpmsg_endpoint *ept, void *data, int len,
+अटल अंतरभूत पूर्णांक rpmsg_sendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len,
 			       u32 dst)
-{
+अणु
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
+	वापस -ENXIO;
 
-}
+पूर्ण
 
-static inline int rpmsg_send_offchannel(struct rpmsg_endpoint *ept, u32 src,
-					u32 dst, void *data, int len)
-{
+अटल अंतरभूत पूर्णांक rpmsg_send_offchannel(काष्ठा rpmsg_endpoपूर्णांक *ept, u32 src,
+					u32 dst, व्योम *data, पूर्णांक len)
+अणु
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static inline int rpmsg_trysend(struct rpmsg_endpoint *ept, void *data, int len)
-{
+अटल अंतरभूत पूर्णांक rpmsg_trysend(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len)
+अणु
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static inline int rpmsg_trysendto(struct rpmsg_endpoint *ept, void *data,
-				  int len, u32 dst)
-{
+अटल अंतरभूत पूर्णांक rpmsg_trysendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data,
+				  पूर्णांक len, u32 dst)
+अणु
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static inline int rpmsg_trysend_offchannel(struct rpmsg_endpoint *ept, u32 src,
-					   u32 dst, void *data, int len)
-{
+अटल अंतरभूत पूर्णांक rpmsg_trysend_offchannel(काष्ठा rpmsg_endpoपूर्णांक *ept, u32 src,
+					   u32 dst, व्योम *data, पूर्णांक len)
+अणु
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static inline __poll_t rpmsg_poll(struct rpmsg_endpoint *ept,
-				      struct file *filp, poll_table *wait)
-{
+अटल अंतरभूत __poll_t rpmsg_poll(काष्ठा rpmsg_endpoपूर्णांक *ept,
+				      काष्ठा file *filp, poll_table *रुको)
+अणु
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif /* IS_ENABLED(CONFIG_RPMSG) */
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_RPMSG) */
 
-/* use a macro to avoid include chaining to get THIS_MODULE */
-#define register_rpmsg_driver(drv) \
-	__register_rpmsg_driver(drv, THIS_MODULE)
+/* use a macro to aव्योम include chaining to get THIS_MODULE */
+#घोषणा रेजिस्टर_rpmsg_driver(drv) \
+	__रेजिस्टर_rpmsg_driver(drv, THIS_MODULE)
 
 /**
- * module_rpmsg_driver() - Helper macro for registering an rpmsg driver
- * @__rpmsg_driver: rpmsg_driver struct
+ * module_rpmsg_driver() - Helper macro क्रम रेजिस्टरing an rpmsg driver
+ * @__rpmsg_driver: rpmsg_driver काष्ठा
  *
- * Helper macro for rpmsg drivers which do not do anything special in module
- * init/exit. This eliminates a lot of boilerplate.  Each module may only
- * use this macro once, and calling it replaces module_init() and module_exit()
+ * Helper macro क्रम rpmsg drivers which करो not करो anything special in module
+ * init/निकास. This eliminates a lot of boilerplate.  Each module may only
+ * use this macro once, and calling it replaces module_init() and module_निकास()
  */
-#define module_rpmsg_driver(__rpmsg_driver) \
-	module_driver(__rpmsg_driver, register_rpmsg_driver, \
-			unregister_rpmsg_driver)
+#घोषणा module_rpmsg_driver(__rpmsg_driver) \
+	module_driver(__rpmsg_driver, रेजिस्टर_rpmsg_driver, \
+			unरेजिस्टर_rpmsg_driver)
 
-#endif /* _LINUX_RPMSG_H */
+#पूर्ण_अगर /* _LINUX_RPMSG_H */

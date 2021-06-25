@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __6LOWPAN_I_H
-#define __6LOWPAN_I_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __6LOWPAN_I_H
+#घोषणा __6LOWPAN_I_H
 
-#include <linux/netdevice.h>
+#समावेश <linux/netdevice.h>
 
-#include <net/6lowpan.h>
+#समावेश <net/6lowpan.h>
 
 /* caller need to be sure it's dev->type is ARPHRD_6LOWPAN */
-static inline bool lowpan_is_ll(const struct net_device *dev,
-				enum lowpan_lltypes lltype)
-{
-	return lowpan_dev(dev)->lltype == lltype;
-}
+अटल अंतरभूत bool lowpan_is_ll(स्थिर काष्ठा net_device *dev,
+				क्रमागत lowpan_lltypes lltype)
+अणु
+	वापस lowpan_dev(dev)->lltype == lltype;
+पूर्ण
 
-extern const struct ndisc_ops lowpan_ndisc_ops;
+बाह्य स्थिर काष्ठा ndisc_ops lowpan_ndisc_ops;
 
-int addrconf_ifid_802154_6lowpan(u8 *eui, struct net_device *dev);
+पूर्णांक addrconf_अगरid_802154_6lowpan(u8 *eui, काष्ठा net_device *dev);
 
-#ifdef CONFIG_6LOWPAN_DEBUGFS
-void lowpan_dev_debugfs_init(struct net_device *dev);
-void lowpan_dev_debugfs_exit(struct net_device *dev);
+#अगर_घोषित CONFIG_6LOWPAN_DEBUGFS
+व्योम lowpan_dev_debugfs_init(काष्ठा net_device *dev);
+व्योम lowpan_dev_debugfs_निकास(काष्ठा net_device *dev);
 
-void __init lowpan_debugfs_init(void);
-void lowpan_debugfs_exit(void);
-#else
-static inline void lowpan_dev_debugfs_init(struct net_device *dev) { }
-static inline void lowpan_dev_debugfs_exit(struct net_device *dev) { }
+व्योम __init lowpan_debugfs_init(व्योम);
+व्योम lowpan_debugfs_निकास(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम lowpan_dev_debugfs_init(काष्ठा net_device *dev) अणु पूर्ण
+अटल अंतरभूत व्योम lowpan_dev_debugfs_निकास(काष्ठा net_device *dev) अणु पूर्ण
 
-static inline void __init lowpan_debugfs_init(void) { }
-static inline void lowpan_debugfs_exit(void) { }
-#endif /* CONFIG_6LOWPAN_DEBUGFS */
+अटल अंतरभूत व्योम __init lowpan_debugfs_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम lowpan_debugfs_निकास(व्योम) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_6LOWPAN_DEBUGFS */
 
-#endif /* __6LOWPAN_I_H */
+#पूर्ण_अगर /* __6LOWPAN_I_H */

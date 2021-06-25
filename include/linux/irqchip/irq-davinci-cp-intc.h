@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2019 Texas Instruments
  */
 
-#ifndef _LINUX_IRQ_DAVINCI_CP_INTC_
-#define _LINUX_IRQ_DAVINCI_CP_INTC_
+#अगर_अघोषित _LINUX_IRQ_DAVINCI_CP_INTC_
+#घोषणा _LINUX_IRQ_DAVINCI_CP_INTC_
 
-#include <linux/ioport.h>
+#समावेश <linux/ioport.h>
 
 /**
- * struct davinci_cp_intc_config - configuration data for davinci-cp-intc
+ * काष्ठा davinci_cp_पूर्णांकc_config - configuration data क्रम davinci-cp-पूर्णांकc
  *                                 driver.
  *
- * @reg: register range to map
- * @num_irqs: number of HW interrupts supported by the controller
+ * @reg: रेजिस्टर range to map
+ * @num_irqs: number of HW पूर्णांकerrupts supported by the controller
  */
-struct davinci_cp_intc_config {
-	struct resource reg;
-	unsigned int num_irqs;
-};
+काष्ठा davinci_cp_पूर्णांकc_config अणु
+	काष्ठा resource reg;
+	अचिन्हित पूर्णांक num_irqs;
+पूर्ण;
 
-int davinci_cp_intc_init(const struct davinci_cp_intc_config *config);
+पूर्णांक davinci_cp_पूर्णांकc_init(स्थिर काष्ठा davinci_cp_पूर्णांकc_config *config);
 
-#endif /* _LINUX_IRQ_DAVINCI_CP_INTC_ */
+#पूर्ण_अगर /* _LINUX_IRQ_DAVINCI_CP_INTC_ */

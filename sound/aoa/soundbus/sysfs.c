@@ -1,54 +1,55 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/stat.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/स्थिति.स>
 /* FIX UP */
-#include "soundbus.h"
+#समावेश "soundbus.h"
 
-static ssize_t modalias_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	struct soundbus_dev *sdev = to_soundbus_device(dev);
-	struct platform_device *of = &sdev->ofdev;
-	int length;
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा soundbus_dev *sdev = to_soundbus_device(dev);
+	काष्ठा platक्रमm_device *of = &sdev->ofdev;
+	पूर्णांक length;
 
-	if (*sdev->modalias) {
-		strscpy(buf, sdev->modalias, sizeof(sdev->modalias) + 1);
-		strcat(buf, "\n");
-		length = strlen(buf);
-	} else {
-		length = sprintf(buf, "of:N%pOFn%c%s\n",
+	अगर (*sdev->modalias) अणु
+		strscpy(buf, sdev->modalias, माप(sdev->modalias) + 1);
+		म_जोड़ो(buf, "\n");
+		length = म_माप(buf);
+	पूर्ण अन्यथा अणु
+		length = प्र_लिखो(buf, "of:N%pOFn%c%s\n",
 				 of->dev.of_node, 'T',
                                  of_node_get_device_type(of->dev.of_node));
-	}
+	पूर्ण
 
-	return length;
-}
-static DEVICE_ATTR_RO(modalias);
+	वापस length;
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static ssize_t name_show(struct device *dev,
-			 struct device_attribute *attr, char *buf)
-{
-	struct soundbus_dev *sdev = to_soundbus_device(dev);
-	struct platform_device *of = &sdev->ofdev;
+अटल sमाप_प्रकार name_show(काष्ठा device *dev,
+			 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा soundbus_dev *sdev = to_soundbus_device(dev);
+	काष्ठा platक्रमm_device *of = &sdev->ofdev;
 
-	return sprintf(buf, "%pOFn\n", of->dev.of_node);
-}
-static DEVICE_ATTR_RO(name);
+	वापस प्र_लिखो(buf, "%pOFn\n", of->dev.of_node);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static ssize_t type_show(struct device *dev,
-			 struct device_attribute *attr, char *buf)
-{
-	struct soundbus_dev *sdev = to_soundbus_device(dev);
-	struct platform_device *of = &sdev->ofdev;
+अटल sमाप_प्रकार type_show(काष्ठा device *dev,
+			 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा soundbus_dev *sdev = to_soundbus_device(dev);
+	काष्ठा platक्रमm_device *of = &sdev->ofdev;
 
-	return sprintf(buf, "%s\n", of_node_get_device_type(of->dev.of_node));
-}
-static DEVICE_ATTR_RO(type);
+	वापस प्र_लिखो(buf, "%s\n", of_node_get_device_type(of->dev.of_node));
+पूर्ण
+अटल DEVICE_ATTR_RO(type);
 
-struct attribute *soundbus_dev_attrs[] = {
+काष्ठा attribute *soundbus_dev_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_type.attr,
 	&dev_attr_modalias.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;

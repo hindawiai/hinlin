@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * altera.h
  *
@@ -9,27 +10,27 @@
  * Copyright (C) 2010 Igor M. Liplianin <liplianin@netup.ru>
  */
 
-#ifndef _ALTERA_H_
-#define _ALTERA_H_
+#अगर_अघोषित _ALTERA_H_
+#घोषणा _ALTERA_H_
 
-struct altera_config {
-	void *dev;
+काष्ठा altera_config अणु
+	व्योम *dev;
 	u8 *action;
-	int (*jtag_io) (void *dev, int tms, int tdi, int tdo);
-};
+	पूर्णांक (*jtag_io) (व्योम *dev, पूर्णांक पंचांगs, पूर्णांक tdi, पूर्णांक tकरो);
+पूर्ण;
 
-#if defined(CONFIG_ALTERA_STAPL) || \
+#अगर defined(CONFIG_ALTERA_STAPL) || \
 		(defined(CONFIG_ALTERA_STAPL_MODULE) && defined(MODULE))
 
-extern int altera_init(struct altera_config *config, const struct firmware *fw);
-#else
+बाह्य पूर्णांक altera_init(काष्ठा altera_config *config, स्थिर काष्ठा firmware *fw);
+#अन्यथा
 
-static inline int altera_init(struct altera_config *config,
-						const struct firmware *fw)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return 0;
-}
-#endif /* CONFIG_ALTERA_STAPL */
+अटल अंतरभूत पूर्णांक altera_init(काष्ठा altera_config *config,
+						स्थिर काष्ठा firmware *fw)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ALTERA_STAPL */
 
-#endif /* _ALTERA_H_ */
+#पूर्ण_अगर /* _ALTERA_H_ */

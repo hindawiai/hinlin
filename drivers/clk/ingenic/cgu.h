@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Ingenic SoC CGU driver
  *
@@ -6,146 +7,146 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
-#ifndef __DRIVERS_CLK_INGENIC_CGU_H__
-#define __DRIVERS_CLK_INGENIC_CGU_H__
+#अगर_अघोषित __DRIVERS_CLK_INGENIC_CGU_H__
+#घोषणा __DRIVERS_CLK_INGENIC_CGU_H__
 
-#include <linux/bitops.h>
-#include <linux/clk-provider.h>
-#include <linux/of.h>
-#include <linux/spinlock.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/of.h>
+#समावेश <linux/spinlock.h>
 
 /**
- * struct ingenic_cgu_pll_info - information about a PLL
- * @reg: the offset of the PLL's control register within the CGU
+ * काष्ठा ingenic_cgu_pll_info - inक्रमmation about a PLL
+ * @reg: the offset of the PLL's control रेजिस्टर within the CGU
  * @rate_multiplier: the multiplier needed by pll rate calculation
- * @m_shift: the number of bits to shift the multiplier value by (ie. the
+ * @m_shअगरt: the number of bits to shअगरt the multiplier value by (ie. the
  *           index of the lowest bit of the multiplier value in the PLL's
- *           control register)
+ *           control रेजिस्टर)
  * @m_bits: the size of the multiplier field in bits
  * @m_offset: the multiplier value which encodes to 0 in the PLL's control
- *            register
- * @n_shift: the number of bits to shift the divider value by (ie. the
- *           index of the lowest bit of the divider value in the PLL's
- *           control register)
- * @n_bits: the size of the divider field in bits
- * @n_offset: the divider value which encodes to 0 in the PLL's control
- *            register
- * @od_shift: the number of bits to shift the post-VCO divider value by (ie.
- *            the index of the lowest bit of the post-VCO divider value in
- *            the PLL's control register)
- * @od_bits: the size of the post-VCO divider field in bits
- * @od_max: the maximum post-VCO divider value
- * @od_encoding: a pointer to an array mapping post-VCO divider values to
- *               their encoded values in the PLL control register, or -1 for
+ *            रेजिस्टर
+ * @n_shअगरt: the number of bits to shअगरt the भागider value by (ie. the
+ *           index of the lowest bit of the भागider value in the PLL's
+ *           control रेजिस्टर)
+ * @n_bits: the size of the भागider field in bits
+ * @n_offset: the भागider value which encodes to 0 in the PLL's control
+ *            रेजिस्टर
+ * @od_shअगरt: the number of bits to shअगरt the post-VCO भागider value by (ie.
+ *            the index of the lowest bit of the post-VCO भागider value in
+ *            the PLL's control रेजिस्टर)
+ * @od_bits: the size of the post-VCO भागider field in bits
+ * @od_max: the maximum post-VCO भागider value
+ * @od_encoding: a poपूर्णांकer to an array mapping post-VCO भागider values to
+ *               their encoded values in the PLL control रेजिस्टर, or -1 क्रम
  *               unsupported values
- * @bypass_reg: the offset of the bypass control register within the CGU
- * @bypass_bit: the index of the bypass bit in the PLL control register
- * @enable_bit: the index of the enable bit in the PLL control register
- * @stable_bit: the index of the stable bit in the PLL control register
- * @no_bypass_bit: if set, the PLL has no bypass functionality
+ * @bypass_reg: the offset of the bypass control रेजिस्टर within the CGU
+ * @bypass_bit: the index of the bypass bit in the PLL control रेजिस्टर
+ * @enable_bit: the index of the enable bit in the PLL control रेजिस्टर
+ * @stable_bit: the index of the stable bit in the PLL control रेजिस्टर
+ * @no_bypass_bit: अगर set, the PLL has no bypass functionality
  */
-struct ingenic_cgu_pll_info {
-	unsigned reg;
-	unsigned rate_multiplier;
-	const s8 *od_encoding;
-	u8 m_shift, m_bits, m_offset;
-	u8 n_shift, n_bits, n_offset;
-	u8 od_shift, od_bits, od_max;
-	unsigned bypass_reg;
+काष्ठा ingenic_cgu_pll_info अणु
+	अचिन्हित reg;
+	अचिन्हित rate_multiplier;
+	स्थिर s8 *od_encoding;
+	u8 m_shअगरt, m_bits, m_offset;
+	u8 n_shअगरt, n_bits, n_offset;
+	u8 od_shअगरt, od_bits, od_max;
+	अचिन्हित bypass_reg;
 	u8 bypass_bit;
 	u8 enable_bit;
 	u8 stable_bit;
 	bool no_bypass_bit;
-};
+पूर्ण;
 
 /**
- * struct ingenic_cgu_mux_info - information about a clock mux
- * @reg: offset of the mux control register within the CGU
- * @shift: number of bits to shift the mux value by (ie. the index of
- *         the lowest bit of the mux value within its control register)
+ * काष्ठा ingenic_cgu_mux_info - inक्रमmation about a घड़ी mux
+ * @reg: offset of the mux control रेजिस्टर within the CGU
+ * @shअगरt: number of bits to shअगरt the mux value by (ie. the index of
+ *         the lowest bit of the mux value within its control रेजिस्टर)
  * @bits: the size of the mux value in bits
  */
-struct ingenic_cgu_mux_info {
-	unsigned reg;
-	u8 shift;
+काष्ठा ingenic_cgu_mux_info अणु
+	अचिन्हित reg;
+	u8 shअगरt;
 	u8 bits;
-};
+पूर्ण;
 
 /**
- * struct ingenic_cgu_div_info - information about a divider
- * @reg: offset of the divider control register within the CGU
- * @shift: number of bits to left shift the divide value by (ie. the index of
- *         the lowest bit of the divide value within its control register)
- * @div: number to divide the divider value by (i.e. if the
- *	 effective divider value is the value written to the register
- *	 multiplied by some constant)
- * @bits: the size of the divide value in bits
- * @ce_bit: the index of the change enable bit within reg, or -1 if there
+ * काष्ठा ingenic_cgu_भाग_info - inक्रमmation about a भागider
+ * @reg: offset of the भागider control रेजिस्टर within the CGU
+ * @shअगरt: number of bits to left shअगरt the भागide value by (ie. the index of
+ *         the lowest bit of the भागide value within its control रेजिस्टर)
+ * @भाग: number to भागide the भागider value by (i.e. अगर the
+ *	 effective भागider value is the value written to the रेजिस्टर
+ *	 multiplied by some स्थिरant)
+ * @bits: the size of the भागide value in bits
+ * @ce_bit: the index of the change enable bit within reg, or -1 अगर there
  *          isn't one
- * @busy_bit: the index of the busy bit within reg, or -1 if there isn't one
- * @stop_bit: the index of the stop bit within reg, or -1 if there isn't one
- * @div_table: optional table to map the value read from the register to the
- *             actual divider value
+ * @busy_bit: the index of the busy bit within reg, or -1 अगर there isn't one
+ * @stop_bit: the index of the stop bit within reg, or -1 अगर there isn't one
+ * @भाग_प्रकारable: optional table to map the value पढ़ो from the रेजिस्टर to the
+ *             actual भागider value
  */
-struct ingenic_cgu_div_info {
-	unsigned reg;
-	u8 shift;
-	u8 div;
+काष्ठा ingenic_cgu_भाग_info अणु
+	अचिन्हित reg;
+	u8 shअगरt;
+	u8 भाग;
 	u8 bits;
 	s8 ce_bit;
 	s8 busy_bit;
 	s8 stop_bit;
-	const u8 *div_table;
-};
+	स्थिर u8 *भाग_प्रकारable;
+पूर्ण;
 
 /**
- * struct ingenic_cgu_fixdiv_info - information about a fixed divider
- * @div: the divider applied to the parent clock
+ * काष्ठा ingenic_cgu_fixभाग_info - inक्रमmation about a fixed भागider
+ * @भाग: the भागider applied to the parent घड़ी
  */
-struct ingenic_cgu_fixdiv_info {
-	unsigned div;
-};
+काष्ठा ingenic_cgu_fixभाग_info अणु
+	अचिन्हित भाग;
+पूर्ण;
 
 /**
- * struct ingenic_cgu_gate_info - information about a clock gate
- * @reg: offset of the gate control register within the CGU
- * @bit: offset of the bit in the register that controls the gate
- * @clear_to_gate: if set, the clock is gated when the bit is cleared
- * @delay_us: delay in microseconds after which the clock is considered stable
+ * काष्ठा ingenic_cgu_gate_info - inक्रमmation about a घड़ी gate
+ * @reg: offset of the gate control रेजिस्टर within the CGU
+ * @bit: offset of the bit in the रेजिस्टर that controls the gate
+ * @clear_to_gate: अगर set, the घड़ी is gated when the bit is cleared
+ * @delay_us: delay in microseconds after which the घड़ी is considered stable
  */
-struct ingenic_cgu_gate_info {
-	unsigned reg;
+काष्ठा ingenic_cgu_gate_info अणु
+	अचिन्हित reg;
 	u8 bit;
 	bool clear_to_gate;
 	u16 delay_us;
-};
+पूर्ण;
 
 /**
- * struct ingenic_cgu_custom_info - information about a custom (SoC) clock
- * @clk_ops: custom clock operation callbacks
+ * काष्ठा ingenic_cgu_custom_info - inक्रमmation about a custom (SoC) घड़ी
+ * @clk_ops: custom घड़ी operation callbacks
  */
-struct ingenic_cgu_custom_info {
-	const struct clk_ops *clk_ops;
-};
+काष्ठा ingenic_cgu_custom_info अणु
+	स्थिर काष्ठा clk_ops *clk_ops;
+पूर्ण;
 
 /**
- * struct ingenic_cgu_clk_info - information about a clock
- * @name: name of the clock
- * @type: a bitmask formed from CGU_CLK_* values
- * @parents: an array of the indices of potential parents of this clock
- *           within the clock_info array of the CGU, or -1 in entries
+ * काष्ठा ingenic_cgu_clk_info - inक्रमmation about a घड़ी
+ * @name: name of the घड़ी
+ * @type: a biपंचांगask क्रमmed from CGU_CLK_* values
+ * @parents: an array of the indices of potential parents of this घड़ी
+ *           within the घड़ी_info array of the CGU, or -1 in entries
  *           which correspond to no valid parent
- * @pll: information valid if type includes CGU_CLK_PLL
- * @gate: information valid if type includes CGU_CLK_GATE
- * @mux: information valid if type includes CGU_CLK_MUX
- * @div: information valid if type includes CGU_CLK_DIV
- * @fixdiv: information valid if type includes CGU_CLK_FIXDIV
- * @custom: information valid if type includes CGU_CLK_CUSTOM
+ * @pll: inक्रमmation valid अगर type includes CGU_CLK_PLL
+ * @gate: inक्रमmation valid अगर type includes CGU_CLK_GATE
+ * @mux: inक्रमmation valid अगर type includes CGU_CLK_MUX
+ * @भाग: inक्रमmation valid अगर type includes CGU_CLK_DIV
+ * @fixभाग: inक्रमmation valid अगर type includes CGU_CLK_FIXDIV
+ * @custom: inक्रमmation valid अगर type includes CGU_CLK_CUSTOM
  */
-struct ingenic_cgu_clk_info {
-	const char *name;
+काष्ठा ingenic_cgu_clk_info अणु
+	स्थिर अक्षर *name;
 
-	enum {
+	क्रमागत अणु
 		CGU_CLK_NONE		= 0,
 		CGU_CLK_EXT		= BIT(0),
 		CGU_CLK_PLL		= BIT(1),
@@ -155,78 +156,78 @@ struct ingenic_cgu_clk_info {
 		CGU_CLK_DIV		= BIT(5),
 		CGU_CLK_FIXDIV		= BIT(6),
 		CGU_CLK_CUSTOM		= BIT(7),
-	} type;
+	पूर्ण type;
 
-	int parents[4];
+	पूर्णांक parents[4];
 
-	union {
-		struct ingenic_cgu_pll_info pll;
+	जोड़ अणु
+		काष्ठा ingenic_cgu_pll_info pll;
 
-		struct {
-			struct ingenic_cgu_gate_info gate;
-			struct ingenic_cgu_mux_info mux;
-			struct ingenic_cgu_div_info div;
-			struct ingenic_cgu_fixdiv_info fixdiv;
-		};
+		काष्ठा अणु
+			काष्ठा ingenic_cgu_gate_info gate;
+			काष्ठा ingenic_cgu_mux_info mux;
+			काष्ठा ingenic_cgu_भाग_info भाग;
+			काष्ठा ingenic_cgu_fixभाग_info fixभाग;
+		पूर्ण;
 
-		struct ingenic_cgu_custom_info custom;
-	};
-};
+		काष्ठा ingenic_cgu_custom_info custom;
+	पूर्ण;
+पूर्ण;
 
 /**
- * struct ingenic_cgu - data about the CGU
+ * काष्ठा ingenic_cgu - data about the CGU
  * @np: the device tree node that caused the CGU to be probed
- * @base: the ioremap'ed base address of the CGU registers
- * @clock_info: an array containing information about implemented clocks
- * @clocks: used to provide clocks to DT, allows lookup of struct clk*
- * @lock: lock to be held whilst manipulating CGU registers
+ * @base: the ioremap'ed base address of the CGU रेजिस्टरs
+ * @घड़ी_info: an array containing inक्रमmation about implemented घड़ीs
+ * @घड़ीs: used to provide घड़ीs to DT, allows lookup of काष्ठा clk*
+ * @lock: lock to be held whilst manipulating CGU रेजिस्टरs
  */
-struct ingenic_cgu {
-	struct device_node *np;
-	void __iomem *base;
+काष्ठा ingenic_cgu अणु
+	काष्ठा device_node *np;
+	व्योम __iomem *base;
 
-	const struct ingenic_cgu_clk_info *clock_info;
-	struct clk_onecell_data clocks;
+	स्थिर काष्ठा ingenic_cgu_clk_info *घड़ी_info;
+	काष्ठा clk_onecell_data घड़ीs;
 
 	spinlock_t lock;
-};
+पूर्ण;
 
 /**
- * struct ingenic_clk - private data for a clock
+ * काष्ठा ingenic_clk - निजी data क्रम a घड़ी
  * @hw: see Documentation/driver-api/clk.rst
- * @cgu: a pointer to the CGU data
- * @idx: the index of this clock in cgu->clock_info
+ * @cgu: a poपूर्णांकer to the CGU data
+ * @idx: the index of this घड़ी in cgu->घड़ी_info
  */
-struct ingenic_clk {
-	struct clk_hw hw;
-	struct ingenic_cgu *cgu;
-	unsigned idx;
-};
+काष्ठा ingenic_clk अणु
+	काष्ठा clk_hw hw;
+	काष्ठा ingenic_cgu *cgu;
+	अचिन्हित idx;
+पूर्ण;
 
-#define to_ingenic_clk(_hw) container_of(_hw, struct ingenic_clk, hw)
+#घोषणा to_ingenic_clk(_hw) container_of(_hw, काष्ठा ingenic_clk, hw)
 
 /**
  * ingenic_cgu_new() - create a new CGU instance
- * @clock_info: an array of clock information structures describing the clocks
+ * @घड़ी_info: an array of घड़ी inक्रमmation काष्ठाures describing the घड़ीs
  *              which are implemented by the CGU
- * @num_clocks: the number of entries in clock_info
+ * @num_घड़ीs: the number of entries in घड़ी_info
  * @np: the device tree node which causes this CGU to be probed
  *
- * Return: a pointer to the CGU instance if initialisation is successful,
- *         otherwise NULL.
+ * Return: a poपूर्णांकer to the CGU instance अगर initialisation is successful,
+ *         otherwise शून्य.
  */
-struct ingenic_cgu *
-ingenic_cgu_new(const struct ingenic_cgu_clk_info *clock_info,
-		unsigned num_clocks, struct device_node *np);
+काष्ठा ingenic_cgu *
+ingenic_cgu_new(स्थिर काष्ठा ingenic_cgu_clk_info *घड़ी_info,
+		अचिन्हित num_घड़ीs, काष्ठा device_node *np);
 
 /**
- * ingenic_cgu_register_clocks() - Registers the clocks
- * @cgu: pointer to cgu data
+ * ingenic_cgu_रेजिस्टर_घड़ीs() - Registers the घड़ीs
+ * @cgu: poपूर्णांकer to cgu data
  *
- * Register the clocks described by the CGU with the common clock framework.
+ * Register the घड़ीs described by the CGU with the common घड़ी framework.
  *
- * Return: 0 on success or -errno if unsuccesful.
+ * Return: 0 on success or -त्रुटि_सं अगर unsuccesful.
  */
-int ingenic_cgu_register_clocks(struct ingenic_cgu *cgu);
+पूर्णांक ingenic_cgu_रेजिस्टर_घड़ीs(काष्ठा ingenic_cgu *cgu);
 
-#endif /* __DRIVERS_CLK_INGENIC_CGU_H__ */
+#पूर्ण_अगर /* __DRIVERS_CLK_INGENIC_CGU_H__ */

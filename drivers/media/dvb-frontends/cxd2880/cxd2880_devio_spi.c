@@ -1,129 +1,130 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * cxd2880_devio_spi.c
  * Sony CXD2880 DVB-T2/T tuner + demodulator driver
- * I/O interface via SPI
+ * I/O पूर्णांकerface via SPI
  *
  * Copyright (C) 2016, 2017, 2018 Sony Semiconductor Solutions Corporation
  */
 
-#include "cxd2880_devio_spi.h"
+#समावेश "cxd2880_devio_spi.h"
 
-#define BURST_WRITE_MAX 128
+#घोषणा BURST_WRITE_MAX 128
 
-static int cxd2880_io_spi_read_reg(struct cxd2880_io *io,
-				   enum cxd2880_io_tgt tgt,
+अटल पूर्णांक cxd2880_io_spi_पढ़ो_reg(काष्ठा cxd2880_io *io,
+				   क्रमागत cxd2880_io_tgt tgt,
 				   u8 sub_address, u8 *data,
 				   u32 size)
-{
-	int ret = 0;
-	struct cxd2880_spi *spi = NULL;
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा cxd2880_spi *spi = शून्य;
 	u8 send_data[6];
-	u8 *read_data_top = data;
+	u8 *पढ़ो_data_top = data;
 
-	if (!io || !io->if_object || !data)
-		return -EINVAL;
+	अगर (!io || !io->अगर_object || !data)
+		वापस -EINVAL;
 
-	if (sub_address + size > 0x100)
-		return -EINVAL;
+	अगर (sub_address + size > 0x100)
+		वापस -EINVAL;
 
-	spi = io->if_object;
+	spi = io->अगर_object;
 
-	if (tgt == CXD2880_IO_TGT_SYS)
+	अगर (tgt == CXD2880_IO_TGT_SYS)
 		send_data[0] = 0x0b;
-	else
+	अन्यथा
 		send_data[0] = 0x0a;
 
 	send_data[3] = 0;
 	send_data[4] = 0;
 	send_data[5] = 0;
 
-	while (size > 0) {
+	जबतक (size > 0) अणु
 		send_data[1] = sub_address;
-		if (size > 255)
+		अगर (size > 255)
 			send_data[2] = 255;
-		else
+		अन्यथा
 			send_data[2] = size;
 
 		ret =
-		    spi->write_read(spi, send_data, sizeof(send_data),
-				    read_data_top, send_data[2]);
-		if (ret)
-			return ret;
+		    spi->ग_लिखो_पढ़ो(spi, send_data, माप(send_data),
+				    पढ़ो_data_top, send_data[2]);
+		अगर (ret)
+			वापस ret;
 
 		sub_address += send_data[2];
-		read_data_top += send_data[2];
+		पढ़ो_data_top += send_data[2];
 		size -= send_data[2];
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cxd2880_io_spi_write_reg(struct cxd2880_io *io,
-				    enum cxd2880_io_tgt tgt,
+अटल पूर्णांक cxd2880_io_spi_ग_लिखो_reg(काष्ठा cxd2880_io *io,
+				    क्रमागत cxd2880_io_tgt tgt,
 				    u8 sub_address,
-				    const u8 *data, u32 size)
-{
-	int ret = 0;
-	struct cxd2880_spi *spi = NULL;
+				    स्थिर u8 *data, u32 size)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा cxd2880_spi *spi = शून्य;
 	u8 send_data[BURST_WRITE_MAX + 4];
-	const u8 *write_data_top = data;
+	स्थिर u8 *ग_लिखो_data_top = data;
 
-	if (!io || !io->if_object || !data)
-		return -EINVAL;
+	अगर (!io || !io->अगर_object || !data)
+		वापस -EINVAL;
 
-	if (size > BURST_WRITE_MAX)
-		return -EINVAL;
+	अगर (size > BURST_WRITE_MAX)
+		वापस -EINVAL;
 
-	if (sub_address + size > 0x100)
-		return -EINVAL;
+	अगर (sub_address + size > 0x100)
+		वापस -EINVAL;
 
-	spi = io->if_object;
+	spi = io->अगर_object;
 
-	if (tgt == CXD2880_IO_TGT_SYS)
+	अगर (tgt == CXD2880_IO_TGT_SYS)
 		send_data[0] = 0x0f;
-	else
+	अन्यथा
 		send_data[0] = 0x0e;
 
-	while (size > 0) {
+	जबतक (size > 0) अणु
 		send_data[1] = sub_address;
-		if (size > 255)
+		अगर (size > 255)
 			send_data[2] = 255;
-		else
+		अन्यथा
 			send_data[2] = size;
 
-		memcpy(&send_data[3], write_data_top, send_data[2]);
+		स_नकल(&send_data[3], ग_लिखो_data_top, send_data[2]);
 
-		if (tgt == CXD2880_IO_TGT_SYS) {
+		अगर (tgt == CXD2880_IO_TGT_SYS) अणु
 			send_data[3 + send_data[2]] = 0x00;
-			ret = spi->write(spi, send_data, send_data[2] + 4);
-		} else {
-			ret = spi->write(spi, send_data, send_data[2] + 3);
-		}
-		if (ret)
-			return ret;
+			ret = spi->ग_लिखो(spi, send_data, send_data[2] + 4);
+		पूर्ण अन्यथा अणु
+			ret = spi->ग_लिखो(spi, send_data, send_data[2] + 3);
+		पूर्ण
+		अगर (ret)
+			वापस ret;
 
 		sub_address += send_data[2];
-		write_data_top += send_data[2];
+		ग_लिखो_data_top += send_data[2];
 		size -= send_data[2];
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2880_io_spi_create(struct cxd2880_io *io,
-			  struct cxd2880_spi *spi, u8 slave_select)
-{
-	if (!io || !spi)
-		return -EINVAL;
+पूर्णांक cxd2880_io_spi_create(काष्ठा cxd2880_io *io,
+			  काष्ठा cxd2880_spi *spi, u8 slave_select)
+अणु
+	अगर (!io || !spi)
+		वापस -EINVAL;
 
-	io->read_regs = cxd2880_io_spi_read_reg;
-	io->write_regs = cxd2880_io_spi_write_reg;
-	io->write_reg = cxd2880_io_common_write_one_reg;
-	io->if_object = spi;
+	io->पढ़ो_regs = cxd2880_io_spi_पढ़ो_reg;
+	io->ग_लिखो_regs = cxd2880_io_spi_ग_लिखो_reg;
+	io->ग_लिखो_reg = cxd2880_io_common_ग_लिखो_one_reg;
+	io->अगर_object = spi;
 	io->i2c_address_sys = 0;
 	io->i2c_address_demod = 0;
 	io->slave_select = slave_select;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

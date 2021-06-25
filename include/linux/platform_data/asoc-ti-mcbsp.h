@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Defines for Multi-Channel Buffered Serial Port
+ * Defines क्रम Multi-Channel Buffered Serial Port
  *
  * Copyright (C) 2002 RidgeRun, Inc.
  * Author: Steve Johnson
  */
-#ifndef __ASOC_TI_MCBSP_H
-#define __ASOC_TI_MCBSP_H
+#अगर_अघोषित __ASOC_TI_MCBSP_H
+#घोषणा __ASOC_TI_MCBSP_H
 
-#include <linux/spinlock.h>
-#include <linux/clk.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/clk.h>
 
-/* Platform specific configuration */
-struct omap_mcbsp_ops {
-	void (*request)(unsigned int);
-	void (*free)(unsigned int);
-};
+/* Platक्रमm specअगरic configuration */
+काष्ठा omap_mcbsp_ops अणु
+	व्योम (*request)(अचिन्हित पूर्णांक);
+	व्योम (*मुक्त)(अचिन्हित पूर्णांक);
+पूर्ण;
 
-struct omap_mcbsp_platform_data {
-	struct omap_mcbsp_ops *ops;
+काष्ठा omap_mcbsp_platक्रमm_data अणु
+	काष्ठा omap_mcbsp_ops *ops;
 	u16 buffer_size;
 	u8 reg_size;
 	u8 reg_step;
 
-	/* McBSP platform and instance specific features */
+	/* McBSP platक्रमm and instance specअगरic features */
 	bool has_wakeup; /* Wakeup capability */
-	bool has_ccr; /* Transceiver has configuration control registers */
-	int (*force_ick_on)(struct clk *clk, bool force_on);
-};
+	bool has_ccr; /* Transceiver has configuration control रेजिस्टरs */
+	पूर्णांक (*क्रमce_ick_on)(काष्ठा clk *clk, bool क्रमce_on);
+पूर्ण;
 
-void omap3_mcbsp_init_pdata_callback(struct omap_mcbsp_platform_data *pdata);
+व्योम omap3_mcbsp_init_pdata_callback(काष्ठा omap_mcbsp_platक्रमm_data *pdata);
 
-#endif
+#पूर्ण_अगर

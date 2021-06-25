@@ -1,16 +1,17 @@
+<शैली गुरु>
 /*
- * Basic EISA bus support for the SGI Indigo-2.
+ * Basic EISA bus support क्रम the SGI Indigo-2.
  *
- * (C) 2002 Pascal Dameme <netinet@freesurf.fr>
- *	and Marc Zyngier <mzyngier@freesurf.fr>
+ * (C) 2002 Pascal Dameme <netinet@मुक्तsurf.fr>
+ *	and Marc Zyngier <mzyngier@मुक्तsurf.fr>
  *
  * This code is released under both the GPL version 2 and BSD
  * licenses.  Either license may be used.
  *
- * This code offers a very basic support for this EISA bus present in
- * the SGI Indigo-2. It currently only supports PIO (forget about DMA
- * for the time being). This is enough for a low-end ethernet card,
- * but forget about your favorite SCSI card...
+ * This code offers a very basic support क्रम this EISA bus present in
+ * the SGI Indigo-2. It currently only supports PIO (क्रमget about DMA
+ * क्रम the समय being). This is enough क्रम a low-end ethernet card,
+ * but क्रमget about your favorite SCSI card...
  *
  * TODO :
  * - Fix bugs...
@@ -19,103 +20,103 @@
  * - Fix more bugs.
  */
 
-#include <linux/eisa.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/kernel_stat.h>
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/mipsregs.h>
-#include <asm/addrspace.h>
-#include <asm/processor.h>
-#include <asm/sgi/ioc.h>
-#include <asm/sgi/mc.h>
-#include <asm/sgi/ip22.h>
-#include <asm/i8259.h>
+#समावेश <linux/eisa.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/sgi/ioc.h>
+#समावेश <यंत्र/sgi/mc.h>
+#समावेश <यंत्र/sgi/ip22.h>
+#समावेश <यंत्र/i8259.h>
 
 /* I2 has four EISA slots. */
-#define IP22_EISA_MAX_SLOTS	  4
-#define EISA_MAX_IRQ		 16
+#घोषणा IP22_EISA_MAX_SLOTS	  4
+#घोषणा EISA_MAX_IRQ		 16
 
-#define EIU_MODE_REG	 0x0001ffc0
-#define EIU_STAT_REG	 0x0001ffc4
-#define EIU_PREMPT_REG	 0x0001ffc8
-#define EIU_QUIET_REG	 0x0001ffcc
-#define EIU_INTRPT_ACK	 0x00010004
+#घोषणा EIU_MODE_REG	 0x0001ffc0
+#घोषणा EIU_STAT_REG	 0x0001ffc4
+#घोषणा EIU_PREMPT_REG	 0x0001ffc8
+#घोषणा EIU_QUIET_REG	 0x0001ffcc
+#घोषणा EIU_INTRPT_ACK	 0x00010004
 
-static char __init *decode_eisa_sig(unsigned long addr)
-{
-	static char sig_str[EISA_SIG_LEN] __initdata;
+अटल अक्षर __init *decode_eisa_sig(अचिन्हित दीर्घ addr)
+अणु
+	अटल अक्षर sig_str[EISA_SIG_LEN] __initdata;
 	u8 sig[4];
 	u16 rev;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		sig[i] = inb(addr + i);
 
-		if (!i && (sig[0] & 0x80))
-			return NULL;
-	}
+		अगर (!i && (sig[0] & 0x80))
+			वापस शून्य;
+	पूर्ण
 
 	sig_str[0] = ((sig[0] >> 2) & 0x1f) + ('A' - 1);
 	sig_str[1] = (((sig[0] & 3) << 3) | (sig[1] >> 5)) + ('A' - 1);
 	sig_str[2] = (sig[1] & 0x1f) + ('A' - 1);
 	rev = (sig[2] << 8) | sig[3];
-	sprintf(sig_str + 3, "%04X", rev);
+	प्र_लिखो(sig_str + 3, "%04X", rev);
 
-	return sig_str;
-}
+	वापस sig_str;
+पूर्ण
 
-static irqreturn_t ip22_eisa_intr(int irq, void *dev_id)
-{
+अटल irqवापस_t ip22_eisa_पूर्णांकr(पूर्णांक irq, व्योम *dev_id)
+अणु
 	u8 eisa_irq = inb(EIU_INTRPT_ACK);
 
 	inb(EISA_DMA1_STATUS);
 	inb(EISA_DMA2_STATUS);
 
-	if (eisa_irq < EISA_MAX_IRQ) {
-		do_IRQ(eisa_irq);
-		return IRQ_HANDLED;
-	}
+	अगर (eisa_irq < EISA_MAX_IRQ) अणु
+		करो_IRQ(eisa_irq);
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	/* Oops, Bad Stuff Happened... */
-	printk(KERN_ERR "eisa_irq %d out of bound\n", eisa_irq);
+	prपूर्णांकk(KERN_ERR "eisa_irq %d out of bound\n", eisa_irq);
 
 	outb(0x20, EISA_INT2_CTRL);
 	outb(0x20, EISA_INT1_CTRL);
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-int __init ip22_eisa_init(void)
-{
-	int i, c;
-	char *str;
+पूर्णांक __init ip22_eisa_init(व्योम)
+अणु
+	पूर्णांक i, c;
+	अक्षर *str;
 
-	if (!(sgimc->systemid & SGIMC_SYSID_EPRESENT)) {
-		printk(KERN_INFO "EISA: bus not present.\n");
-		return 1;
-	}
+	अगर (!(sgimc->प्रणालीid & SGIMC_SYSID_EPRESENT)) अणु
+		prपूर्णांकk(KERN_INFO "EISA: bus not present.\n");
+		वापस 1;
+	पूर्ण
 
-	printk(KERN_INFO "EISA: Probing bus...\n");
-	for (c = 0, i = 1; i <= IP22_EISA_MAX_SLOTS; i++) {
-		if ((str = decode_eisa_sig(0x1000 * i + EISA_VENDOR_ID_OFFSET))) {
-			printk(KERN_INFO "EISA: slot %d : %s detected.\n",
+	prपूर्णांकk(KERN_INFO "EISA: Probing bus...\n");
+	क्रम (c = 0, i = 1; i <= IP22_EISA_MAX_SLOTS; i++) अणु
+		अगर ((str = decode_eisa_sig(0x1000 * i + EISA_VENDOR_ID_OFFSET))) अणु
+			prपूर्णांकk(KERN_INFO "EISA: slot %d : %s detected.\n",
 			       i, str);
 			c++;
-		}
-	}
-	printk(KERN_INFO "EISA: Detected %d card%s.\n", c, c < 2 ? "" : "s");
-#ifdef CONFIG_ISA
-	printk(KERN_INFO "ISA support compiled in.\n");
-#endif
+		पूर्ण
+	पूर्ण
+	prपूर्णांकk(KERN_INFO "EISA: Detected %d card%s.\n", c, c < 2 ? "" : "s");
+#अगर_घोषित CONFIG_ISA
+	prपूर्णांकk(KERN_INFO "ISA support compiled in.\n");
+#पूर्ण_अगर
 
-	/* Warning : BlackMagicAhead(tm).
+	/* Warning : BlackMagicAhead(पंचांग).
 	   Please wave your favorite dead chicken over the busses */
 
 	/* First say hello to the EIU */
@@ -125,15 +126,15 @@ int __init ip22_eisa_init(void)
 
 	/* Now be nice to the EISA chipset */
 	outb(1, EISA_EXT_NMI_RESET_CTRL);
-	udelay(50);	/* Wait long enough for the dust to settle */
+	udelay(50);	/* Wait दीर्घ enough क्रम the dust to settle */
 	outb(0, EISA_EXT_NMI_RESET_CTRL);
 	outb(0, EISA_DMA2_WRITE_SINGLE);
 
 	init_i8259_irqs();
 
-	if (request_irq(SGI_EISA_IRQ, ip22_eisa_intr, 0, "EISA", NULL))
+	अगर (request_irq(SGI_EISA_IRQ, ip22_eisa_पूर्णांकr, 0, "EISA", शून्य))
 		pr_err("Failed to request irq %d (EISA)\n", SGI_EISA_IRQ);
 
 	EISA_bus = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण

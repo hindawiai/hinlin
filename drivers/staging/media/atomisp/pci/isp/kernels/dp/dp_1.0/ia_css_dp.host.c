@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#include "ia_css_types.h"
-#include "sh_css_defs.h"
-#include "ia_css_debug.h"
-#include "sh_css_frac.h"
+#समावेश "ia_css_types.h"
+#समावेश "sh_css_defs.h"
+#समावेश "ia_css_debug.h"
+#समावेश "sh_css_frac.h"
 
-#include "ia_css_dp.host.h"
+#समावेश "ia_css_dp.host.h"
 
-/* We use a different set of DPC configuration parameters when
- * DPC is used before OBC and NORM. Currently these parameters
- * are used in usecases which selects both BDS and DPC.
+/* We use a dअगरferent set of DPC configuration parameters when
+ * DPC is used beक्रमe OBC and NORM. Currently these parameters
+ * are used in useहालs which selects both BDS and DPC.
  **/
-const struct ia_css_dp_config default_dp_10bpp_config = {
+स्थिर काष्ठा ia_css_dp_config शेष_dp_10bpp_config = अणु
 	1024,
 	2048,
 	32768,
 	32768,
 	32768,
 	32768
-};
+पूर्ण;
 
-const struct ia_css_dp_config default_dp_config = {
+स्थिर काष्ठा ia_css_dp_config शेष_dp_config = अणु
 	8192,
 	2048,
 	32768,
 	32768,
 	32768,
 	32768
-};
+पूर्ण;
 
-void
+व्योम
 ia_css_dp_encode(
-    struct sh_css_isp_dp_params *to,
-    const struct ia_css_dp_config *from,
-    unsigned int size)
-{
-	int gain = from->gain;
-	int gr   = from->gr;
-	int r    = from->r;
-	int b    = from->b;
-	int gb   = from->gb;
+    काष्ठा sh_css_isp_dp_params *to,
+    स्थिर काष्ठा ia_css_dp_config *from,
+    अचिन्हित पूर्णांक size)
+अणु
+	पूर्णांक gain = from->gain;
+	पूर्णांक gr   = from->gr;
+	पूर्णांक r    = from->r;
+	पूर्णांक b    = from->b;
+	पूर्णांक gb   = from->gb;
 
-	(void)size;
+	(व्योम)size;
 	to->threshold_single =
 	    SH_CSS_BAYER_MAXVAL;
 	to->threshold_2adjacent =
@@ -78,14 +79,14 @@ ia_css_dp_encode(
 	    uDIGIT_FITTING(gain * b / gb, 8, SH_CSS_DP_GAIN_SHIFT);
 	to->coef_gb_rr =
 	    uDIGIT_FITTING(gain * r / gb, 8, SH_CSS_DP_GAIN_SHIFT);
-}
+पूर्ण
 
-void
+व्योम
 ia_css_dp_dump(
-    const struct sh_css_isp_dp_params *dp,
-    unsigned int level)
-{
-	if (!dp) return;
+    स्थिर काष्ठा sh_css_isp_dp_params *dp,
+    अचिन्हित पूर्णांक level)
+अणु
+	अगर (!dp) वापस;
 	ia_css_debug_dtrace(level, "Defect Pixel Correction:\n");
 	ia_css_debug_dtrace(level, "\t%-32s = %d\n",
 			    "dp_threshold_single_w_2adj_on",
@@ -111,22 +112,22 @@ ia_css_dp_dump(
 			    "dpc_coef_gb_bb", dp->coef_gb_bb);
 	ia_css_debug_dtrace(level, "\t%-32s = %d\n",
 			    "dpc_coef_gb_rr", dp->coef_gb_rr);
-}
+पूर्ण
 
-void
+व्योम
 ia_css_dp_debug_dtrace(
-    const struct ia_css_dp_config *config,
-    unsigned int level)
-{
+    स्थिर काष्ठा ia_css_dp_config *config,
+    अचिन्हित पूर्णांक level)
+अणु
 	ia_css_debug_dtrace(level,
 			    "config.threshold=%d, config.gain=%d\n",
 			    config->threshold, config->gain);
-}
+पूर्ण
 
-void
+व्योम
 ia_css_init_dp_state(
-    void/*struct sh_css_isp_dp_vmem_state*/ * state,
-    size_t size)
-{
-	memset(state, 0, size);
-}
+    व्योम/*काष्ठा sh_css_isp_dp_vmem_state*/ * state,
+    माप_प्रकार size)
+अणु
+	स_रखो(state, 0, size);
+पूर्ण

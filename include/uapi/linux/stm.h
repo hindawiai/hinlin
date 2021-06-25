@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * System Trace Module (STM) userspace interfaces
+ * System Trace Module (STM) userspace पूर्णांकerfaces
  * Copyright (c) 2014, Intel Corporation.
  *
- * STM class implements generic infrastructure for  System Trace Module devices
- * as defined in MIPI STPv2 specification.
+ * STM class implements generic infraकाष्ठाure क्रम  System Trace Module devices
+ * as defined in MIPI STPv2 specअगरication.
  */
 
-#ifndef _UAPI_LINUX_STM_H
-#define _UAPI_LINUX_STM_H
+#अगर_अघोषित _UAPI_LINUX_STM_H
+#घोषणा _UAPI_LINUX_STM_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /* Maximum allowed master and channel values */
-#define STP_MASTER_MAX	0xffff
-#define STP_CHANNEL_MAX	0xffff
+#घोषणा STP_MASTER_MAX	0xffff
+#घोषणा STP_CHANNEL_MAX	0xffff
 
 /**
- * struct stp_policy_id - identification for the STP policy
- * @size:	size of the structure including real id[] length
- * @master:	assigned master
- * @channel:	first assigned channel
+ * काष्ठा stp_policy_id - identअगरication क्रम the STP policy
+ * @size:	size of the काष्ठाure including real id[] length
+ * @master:	asचिन्हित master
+ * @channel:	first asचिन्हित channel
  * @width:	number of requested channels
- * @id:		identification string
+ * @id:		identअगरication string
  *
- * User must calculate the total size of the structure and put it into
- * @size field, fill out the @id and desired @width. In return, kernel
+ * User must calculate the total size of the काष्ठाure and put it पूर्णांकo
+ * @size field, fill out the @id and desired @width. In वापस, kernel
  * fills out @master, @channel and @width.
  */
-struct stp_policy_id {
+काष्ठा stp_policy_id अणु
 	__u32		size;
 	__u16		master;
 	__u16		channel;
@@ -36,11 +37,11 @@ struct stp_policy_id {
 	/* padding */
 	__u16		__reserved_0;
 	__u32		__reserved_1;
-	char		id[0];
-};
+	अक्षर		id[0];
+पूर्ण;
 
-#define STP_POLICY_ID_SET	_IOWR('%', 0, struct stp_policy_id)
-#define STP_POLICY_ID_GET	_IOR('%', 1, struct stp_policy_id)
-#define STP_SET_OPTIONS		_IOW('%', 2, __u64)
+#घोषणा STP_POLICY_ID_SET	_IOWR('%', 0, काष्ठा stp_policy_id)
+#घोषणा STP_POLICY_ID_GET	_IOR('%', 1, काष्ठा stp_policy_id)
+#घोषणा STP_SET_OPTIONS		_IOW('%', 2, __u64)
 
-#endif /* _UAPI_LINUX_STM_H */
+#पूर्ण_अगर /* _UAPI_LINUX_STM_H */

@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ARCH_X86_KVM_X86_H
-#define ARCH_X86_KVM_X86_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ARCH_X86_KVM_X86_H
+#घोषणा ARCH_X86_KVM_X86_H
 
-#include <linux/kvm_host.h>
-#include <asm/mce.h>
-#include <asm/pvclock.h>
-#include "kvm_cache_regs.h"
-#include "kvm_emulate.h"
+#समावेश <linux/kvm_host.h>
+#समावेश <यंत्र/mce.h>
+#समावेश <यंत्र/pvघड़ी.h>
+#समावेश "kvm_cache_regs.h"
+#समावेश "kvm_emulate.h"
 
-static __always_inline void kvm_guest_enter_irqoff(void)
-{
+अटल __always_अंतरभूत व्योम kvm_guest_enter_irqoff(व्योम)
+अणु
 	/*
-	 * VMENTER enables interrupts (host state), but the kernel state is
-	 * interrupts disabled when this is invoked. Also tell RCU about
-	 * it. This is the same logic as for exit_to_user_mode().
+	 * VMENTER enables पूर्णांकerrupts (host state), but the kernel state is
+	 * पूर्णांकerrupts disabled when this is invoked. Also tell RCU about
+	 * it. This is the same logic as क्रम निकास_to_user_mode().
 	 *
 	 * This ensures that e.g. latency analysis on the host observes
-	 * guest mode as interrupt enabled.
+	 * guest mode as पूर्णांकerrupt enabled.
 	 *
-	 * guest_enter_irqoff() informs context tracking about the
-	 * transition to guest mode and if enabled adjusts RCU state
+	 * guest_enter_irqoff() inक्रमms context tracking about the
+	 * transition to guest mode and अगर enabled adjusts RCU state
 	 * accordingly.
 	 */
 	instrumentation_begin();
@@ -29,471 +30,471 @@ static __always_inline void kvm_guest_enter_irqoff(void)
 
 	guest_enter_irqoff();
 	lockdep_hardirqs_on(CALLER_ADDR0);
-}
+पूर्ण
 
-static __always_inline void kvm_guest_exit_irqoff(void)
-{
+अटल __always_अंतरभूत व्योम kvm_guest_निकास_irqoff(व्योम)
+अणु
 	/*
-	 * VMEXIT disables interrupts (host state), but tracing and lockdep
-	 * have them in state 'on' as recorded before entering guest mode.
+	 * VMEXIT disables पूर्णांकerrupts (host state), but tracing and lockdep
+	 * have them in state 'on' as recorded beक्रमe entering guest mode.
 	 * Same as enter_from_user_mode().
 	 *
-	 * context_tracking_guest_exit() restores host context and reinstates
-	 * RCU if enabled and required.
+	 * context_tracking_guest_निकास() restores host context and reinstates
+	 * RCU अगर enabled and required.
 	 *
-	 * This needs to be done immediately after VM-Exit, before any code
-	 * that might contain tracepoints or call out to the greater world,
-	 * e.g. before x86_spec_ctrl_restore_host().
+	 * This needs to be करोne immediately after VM-Exit, beक्रमe any code
+	 * that might contain tracepoपूर्णांकs or call out to the greater world,
+	 * e.g. beक्रमe x86_spec_ctrl_restore_host().
 	 */
 	lockdep_hardirqs_off(CALLER_ADDR0);
-	context_tracking_guest_exit();
+	context_tracking_guest_निकास();
 
 	instrumentation_begin();
 	trace_hardirqs_off_finish();
 	instrumentation_end();
-}
+पूर्ण
 
-#define KVM_NESTED_VMENTER_CONSISTENCY_CHECK(consistency_check)		\
-({									\
+#घोषणा KVM_NESTED_VMENTER_CONSISTENCY_CHECK(consistency_check)		\
+(अणु									\
 	bool failed = (consistency_check);				\
-	if (failed)							\
+	अगर (failed)							\
 		trace_kvm_nested_vmenter_failed(#consistency_check, 0);	\
 	failed;								\
-})
+पूर्ण)
 
-#define KVM_DEFAULT_PLE_GAP		128
-#define KVM_VMX_DEFAULT_PLE_WINDOW	4096
-#define KVM_DEFAULT_PLE_WINDOW_GROW	2
-#define KVM_DEFAULT_PLE_WINDOW_SHRINK	0
-#define KVM_VMX_DEFAULT_PLE_WINDOW_MAX	UINT_MAX
-#define KVM_SVM_DEFAULT_PLE_WINDOW_MAX	USHRT_MAX
-#define KVM_SVM_DEFAULT_PLE_WINDOW	3000
+#घोषणा KVM_DEFAULT_PLE_GAP		128
+#घोषणा KVM_VMX_DEFAULT_PLE_WINDOW	4096
+#घोषणा KVM_DEFAULT_PLE_WINDOW_GROW	2
+#घोषणा KVM_DEFAULT_PLE_WINDOW_SHRINK	0
+#घोषणा KVM_VMX_DEFAULT_PLE_WINDOW_MAX	अच_पूर्णांक_उच्च
+#घोषणा KVM_SVM_DEFAULT_PLE_WINDOW_MAX	अच_लघु_उच्च
+#घोषणा KVM_SVM_DEFAULT_PLE_WINDOW	3000
 
-static inline unsigned int __grow_ple_window(unsigned int val,
-		unsigned int base, unsigned int modifier, unsigned int max)
-{
+अटल अंतरभूत अचिन्हित पूर्णांक __grow_ple_winकरोw(अचिन्हित पूर्णांक val,
+		अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक modअगरier, अचिन्हित पूर्णांक max)
+अणु
 	u64 ret = val;
 
-	if (modifier < 1)
-		return base;
+	अगर (modअगरier < 1)
+		वापस base;
 
-	if (modifier < base)
-		ret *= modifier;
-	else
-		ret += modifier;
+	अगर (modअगरier < base)
+		ret *= modअगरier;
+	अन्यथा
+		ret += modअगरier;
 
-	return min(ret, (u64)max);
-}
+	वापस min(ret, (u64)max);
+पूर्ण
 
-static inline unsigned int __shrink_ple_window(unsigned int val,
-		unsigned int base, unsigned int modifier, unsigned int min)
-{
-	if (modifier < 1)
-		return base;
+अटल अंतरभूत अचिन्हित पूर्णांक __shrink_ple_winकरोw(अचिन्हित पूर्णांक val,
+		अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक modअगरier, अचिन्हित पूर्णांक min)
+अणु
+	अगर (modअगरier < 1)
+		वापस base;
 
-	if (modifier < base)
-		val /= modifier;
-	else
-		val -= modifier;
+	अगर (modअगरier < base)
+		val /= modअगरier;
+	अन्यथा
+		val -= modअगरier;
 
-	return max(val, min);
-}
+	वापस max(val, min);
+पूर्ण
 
-#define MSR_IA32_CR_PAT_DEFAULT  0x0007040600070406ULL
+#घोषणा MSR_IA32_CR_PAT_DEFAULT  0x0007040600070406ULL
 
-int kvm_check_nested_events(struct kvm_vcpu *vcpu);
+पूर्णांक kvm_check_nested_events(काष्ठा kvm_vcpu *vcpu);
 
-static inline void kvm_clear_exception_queue(struct kvm_vcpu *vcpu)
-{
+अटल अंतरभूत व्योम kvm_clear_exception_queue(काष्ठा kvm_vcpu *vcpu)
+अणु
 	vcpu->arch.exception.pending = false;
 	vcpu->arch.exception.injected = false;
-}
+पूर्ण
 
-static inline void kvm_queue_interrupt(struct kvm_vcpu *vcpu, u8 vector,
+अटल अंतरभूत व्योम kvm_queue_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu, u8 vector,
 	bool soft)
-{
-	vcpu->arch.interrupt.injected = true;
-	vcpu->arch.interrupt.soft = soft;
-	vcpu->arch.interrupt.nr = vector;
-}
+अणु
+	vcpu->arch.पूर्णांकerrupt.injected = true;
+	vcpu->arch.पूर्णांकerrupt.soft = soft;
+	vcpu->arch.पूर्णांकerrupt.nr = vector;
+पूर्ण
 
-static inline void kvm_clear_interrupt_queue(struct kvm_vcpu *vcpu)
-{
-	vcpu->arch.interrupt.injected = false;
-}
+अटल अंतरभूत व्योम kvm_clear_पूर्णांकerrupt_queue(काष्ठा kvm_vcpu *vcpu)
+अणु
+	vcpu->arch.पूर्णांकerrupt.injected = false;
+पूर्ण
 
-static inline bool kvm_event_needs_reinjection(struct kvm_vcpu *vcpu)
-{
-	return vcpu->arch.exception.injected || vcpu->arch.interrupt.injected ||
+अटल अंतरभूत bool kvm_event_needs_reinjection(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu->arch.exception.injected || vcpu->arch.पूर्णांकerrupt.injected ||
 		vcpu->arch.nmi_injected;
-}
+पूर्ण
 
-static inline bool kvm_exception_is_soft(unsigned int nr)
-{
-	return (nr == BP_VECTOR) || (nr == OF_VECTOR);
-}
+अटल अंतरभूत bool kvm_exception_is_soft(अचिन्हित पूर्णांक nr)
+अणु
+	वापस (nr == BP_VECTOR) || (nr == OF_VECTOR);
+पूर्ण
 
-static inline bool is_protmode(struct kvm_vcpu *vcpu)
-{
-	return kvm_read_cr0_bits(vcpu, X86_CR0_PE);
-}
+अटल अंतरभूत bool is_proपंचांगode(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस kvm_पढ़ो_cr0_bits(vcpu, X86_CR0_PE);
+पूर्ण
 
-static inline int is_long_mode(struct kvm_vcpu *vcpu)
-{
-#ifdef CONFIG_X86_64
-	return vcpu->arch.efer & EFER_LMA;
-#else
-	return 0;
-#endif
-}
+अटल अंतरभूत पूर्णांक is_दीर्घ_mode(काष्ठा kvm_vcpu *vcpu)
+अणु
+#अगर_घोषित CONFIG_X86_64
+	वापस vcpu->arch.efer & EFER_LMA;
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-static inline bool is_64_bit_mode(struct kvm_vcpu *vcpu)
-{
-	int cs_db, cs_l;
+अटल अंतरभूत bool is_64_bit_mode(काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक cs_db, cs_l;
 
-	if (!is_long_mode(vcpu))
-		return false;
-	static_call(kvm_x86_get_cs_db_l_bits)(vcpu, &cs_db, &cs_l);
-	return cs_l;
-}
+	अगर (!is_दीर्घ_mode(vcpu))
+		वापस false;
+	अटल_call(kvm_x86_get_cs_db_l_bits)(vcpu, &cs_db, &cs_l);
+	वापस cs_l;
+पूर्ण
 
-static inline bool is_la57_mode(struct kvm_vcpu *vcpu)
-{
-#ifdef CONFIG_X86_64
-	return (vcpu->arch.efer & EFER_LMA) &&
-		 kvm_read_cr4_bits(vcpu, X86_CR4_LA57);
-#else
-	return 0;
-#endif
-}
+अटल अंतरभूत bool is_la57_mode(काष्ठा kvm_vcpu *vcpu)
+अणु
+#अगर_घोषित CONFIG_X86_64
+	वापस (vcpu->arch.efer & EFER_LMA) &&
+		 kvm_पढ़ो_cr4_bits(vcpu, X86_CR4_LA57);
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-static inline bool x86_exception_has_error_code(unsigned int vector)
-{
-	static u32 exception_has_error_code = BIT(DF_VECTOR) | BIT(TS_VECTOR) |
+अटल अंतरभूत bool x86_exception_has_error_code(अचिन्हित पूर्णांक vector)
+अणु
+	अटल u32 exception_has_error_code = BIT(DF_VECTOR) | BIT(TS_VECTOR) |
 			BIT(NP_VECTOR) | BIT(SS_VECTOR) | BIT(GP_VECTOR) |
 			BIT(PF_VECTOR) | BIT(AC_VECTOR);
 
-	return (1U << vector) & exception_has_error_code;
-}
+	वापस (1U << vector) & exception_has_error_code;
+पूर्ण
 
-static inline bool mmu_is_nested(struct kvm_vcpu *vcpu)
-{
-	return vcpu->arch.walk_mmu == &vcpu->arch.nested_mmu;
-}
+अटल अंतरभूत bool mmu_is_nested(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu->arch.walk_mmu == &vcpu->arch.nested_mmu;
+पूर्ण
 
-static inline void kvm_vcpu_flush_tlb_current(struct kvm_vcpu *vcpu)
-{
+अटल अंतरभूत व्योम kvm_vcpu_flush_tlb_current(काष्ठा kvm_vcpu *vcpu)
+अणु
 	++vcpu->stat.tlb_flush;
-	static_call(kvm_x86_tlb_flush_current)(vcpu);
-}
+	अटल_call(kvm_x86_tlb_flush_current)(vcpu);
+पूर्ण
 
-static inline int is_pae(struct kvm_vcpu *vcpu)
-{
-	return kvm_read_cr4_bits(vcpu, X86_CR4_PAE);
-}
+अटल अंतरभूत पूर्णांक is_pae(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस kvm_पढ़ो_cr4_bits(vcpu, X86_CR4_PAE);
+पूर्ण
 
-static inline int is_pse(struct kvm_vcpu *vcpu)
-{
-	return kvm_read_cr4_bits(vcpu, X86_CR4_PSE);
-}
+अटल अंतरभूत पूर्णांक is_pse(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस kvm_पढ़ो_cr4_bits(vcpu, X86_CR4_PSE);
+पूर्ण
 
-static inline int is_paging(struct kvm_vcpu *vcpu)
-{
-	return likely(kvm_read_cr0_bits(vcpu, X86_CR0_PG));
-}
+अटल अंतरभूत पूर्णांक is_paging(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस likely(kvm_पढ़ो_cr0_bits(vcpu, X86_CR0_PG));
+पूर्ण
 
-static inline bool is_pae_paging(struct kvm_vcpu *vcpu)
-{
-	return !is_long_mode(vcpu) && is_pae(vcpu) && is_paging(vcpu);
-}
+अटल अंतरभूत bool is_pae_paging(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस !is_दीर्घ_mode(vcpu) && is_pae(vcpu) && is_paging(vcpu);
+पूर्ण
 
-static inline u8 vcpu_virt_addr_bits(struct kvm_vcpu *vcpu)
-{
-	return kvm_read_cr4_bits(vcpu, X86_CR4_LA57) ? 57 : 48;
-}
+अटल अंतरभूत u8 vcpu_virt_addr_bits(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस kvm_पढ़ो_cr4_bits(vcpu, X86_CR4_LA57) ? 57 : 48;
+पूर्ण
 
-static inline u64 get_canonical(u64 la, u8 vaddr_bits)
-{
-	return ((int64_t)la << (64 - vaddr_bits)) >> (64 - vaddr_bits);
-}
+अटल अंतरभूत u64 get_canonical(u64 la, u8 vaddr_bits)
+अणु
+	वापस ((पूर्णांक64_t)la << (64 - vaddr_bits)) >> (64 - vaddr_bits);
+पूर्ण
 
-static inline bool is_noncanonical_address(u64 la, struct kvm_vcpu *vcpu)
-{
-	return get_canonical(la, vcpu_virt_addr_bits(vcpu)) != la;
-}
+अटल अंतरभूत bool is_noncanonical_address(u64 la, काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस get_canonical(la, vcpu_virt_addr_bits(vcpu)) != la;
+पूर्ण
 
-static inline void vcpu_cache_mmio_info(struct kvm_vcpu *vcpu,
-					gva_t gva, gfn_t gfn, unsigned access)
-{
+अटल अंतरभूत व्योम vcpu_cache_mmio_info(काष्ठा kvm_vcpu *vcpu,
+					gva_t gva, gfn_t gfn, अचिन्हित access)
+अणु
 	u64 gen = kvm_memslots(vcpu->kvm)->generation;
 
-	if (unlikely(gen & KVM_MEMSLOT_GEN_UPDATE_IN_PROGRESS))
-		return;
+	अगर (unlikely(gen & KVM_MEMSLOT_GEN_UPDATE_IN_PROGRESS))
+		वापस;
 
 	/*
-	 * If this is a shadow nested page table, the "GVA" is
+	 * If this is a shaकरोw nested page table, the "GVA" is
 	 * actually a nGPA.
 	 */
 	vcpu->arch.mmio_gva = mmu_is_nested(vcpu) ? 0 : gva & PAGE_MASK;
 	vcpu->arch.mmio_access = access;
 	vcpu->arch.mmio_gfn = gfn;
 	vcpu->arch.mmio_gen = gen;
-}
+पूर्ण
 
-static inline bool vcpu_match_mmio_gen(struct kvm_vcpu *vcpu)
-{
-	return vcpu->arch.mmio_gen == kvm_memslots(vcpu->kvm)->generation;
-}
+अटल अंतरभूत bool vcpu_match_mmio_gen(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu->arch.mmio_gen == kvm_memslots(vcpu->kvm)->generation;
+पूर्ण
 
 /*
- * Clear the mmio cache info for the given gva. If gva is MMIO_GVA_ANY, we
+ * Clear the mmio cache info क्रम the given gva. If gva is MMIO_GVA_ANY, we
  * clear all mmio cache info.
  */
-#define MMIO_GVA_ANY (~(gva_t)0)
+#घोषणा MMIO_GVA_ANY (~(gva_t)0)
 
-static inline void vcpu_clear_mmio_info(struct kvm_vcpu *vcpu, gva_t gva)
-{
-	if (gva != MMIO_GVA_ANY && vcpu->arch.mmio_gva != (gva & PAGE_MASK))
-		return;
+अटल अंतरभूत व्योम vcpu_clear_mmio_info(काष्ठा kvm_vcpu *vcpu, gva_t gva)
+अणु
+	अगर (gva != MMIO_GVA_ANY && vcpu->arch.mmio_gva != (gva & PAGE_MASK))
+		वापस;
 
 	vcpu->arch.mmio_gva = 0;
-}
+पूर्ण
 
-static inline bool vcpu_match_mmio_gva(struct kvm_vcpu *vcpu, unsigned long gva)
-{
-	if (vcpu_match_mmio_gen(vcpu) && vcpu->arch.mmio_gva &&
+अटल अंतरभूत bool vcpu_match_mmio_gva(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ gva)
+अणु
+	अगर (vcpu_match_mmio_gen(vcpu) && vcpu->arch.mmio_gva &&
 	      vcpu->arch.mmio_gva == (gva & PAGE_MASK))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool vcpu_match_mmio_gpa(struct kvm_vcpu *vcpu, gpa_t gpa)
-{
-	if (vcpu_match_mmio_gen(vcpu) && vcpu->arch.mmio_gfn &&
+अटल अंतरभूत bool vcpu_match_mmio_gpa(काष्ठा kvm_vcpu *vcpu, gpa_t gpa)
+अणु
+	अगर (vcpu_match_mmio_gen(vcpu) && vcpu->arch.mmio_gfn &&
 	      vcpu->arch.mmio_gfn == gpa >> PAGE_SHIFT)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline unsigned long kvm_register_read(struct kvm_vcpu *vcpu, int reg)
-{
-	unsigned long val = kvm_register_read_raw(vcpu, reg);
+अटल अंतरभूत अचिन्हित दीर्घ kvm_रेजिस्टर_पढ़ो(काष्ठा kvm_vcpu *vcpu, पूर्णांक reg)
+अणु
+	अचिन्हित दीर्घ val = kvm_रेजिस्टर_पढ़ो_raw(vcpu, reg);
 
-	return is_64_bit_mode(vcpu) ? val : (u32)val;
-}
+	वापस is_64_bit_mode(vcpu) ? val : (u32)val;
+पूर्ण
 
-static inline void kvm_register_write(struct kvm_vcpu *vcpu,
-				       int reg, unsigned long val)
-{
-	if (!is_64_bit_mode(vcpu))
+अटल अंतरभूत व्योम kvm_रेजिस्टर_ग_लिखो(काष्ठा kvm_vcpu *vcpu,
+				       पूर्णांक reg, अचिन्हित दीर्घ val)
+अणु
+	अगर (!is_64_bit_mode(vcpu))
 		val = (u32)val;
-	return kvm_register_write_raw(vcpu, reg, val);
-}
+	वापस kvm_रेजिस्टर_ग_लिखो_raw(vcpu, reg, val);
+पूर्ण
 
-static inline bool kvm_check_has_quirk(struct kvm *kvm, u64 quirk)
-{
-	return !(kvm->arch.disabled_quirks & quirk);
-}
+अटल अंतरभूत bool kvm_check_has_quirk(काष्ठा kvm *kvm, u64 quirk)
+अणु
+	वापस !(kvm->arch.disabled_quirks & quirk);
+पूर्ण
 
-static inline bool kvm_vcpu_latch_init(struct kvm_vcpu *vcpu)
-{
-	return is_smm(vcpu) || static_call(kvm_x86_apic_init_signal_blocked)(vcpu);
-}
+अटल अंतरभूत bool kvm_vcpu_latch_init(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस is_smm(vcpu) || अटल_call(kvm_x86_apic_init_संकेत_blocked)(vcpu);
+पूर्ण
 
-void kvm_write_wall_clock(struct kvm *kvm, gpa_t wall_clock, int sec_hi_ofs);
-void kvm_inject_realmode_interrupt(struct kvm_vcpu *vcpu, int irq, int inc_eip);
+व्योम kvm_ग_लिखो_wall_घड़ी(काष्ठा kvm *kvm, gpa_t wall_घड़ी, पूर्णांक sec_hi_ofs);
+व्योम kvm_inject_realmode_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu, पूर्णांक irq, पूर्णांक inc_eip);
 
-u64 get_kvmclock_ns(struct kvm *kvm);
+u64 get_kvmघड़ी_ns(काष्ठा kvm *kvm);
 
-int kvm_read_guest_virt(struct kvm_vcpu *vcpu,
-	gva_t addr, void *val, unsigned int bytes,
-	struct x86_exception *exception);
+पूर्णांक kvm_पढ़ो_guest_virt(काष्ठा kvm_vcpu *vcpu,
+	gva_t addr, व्योम *val, अचिन्हित पूर्णांक bytes,
+	काष्ठा x86_exception *exception);
 
-int kvm_write_guest_virt_system(struct kvm_vcpu *vcpu,
-	gva_t addr, void *val, unsigned int bytes,
-	struct x86_exception *exception);
+पूर्णांक kvm_ग_लिखो_guest_virt_प्रणाली(काष्ठा kvm_vcpu *vcpu,
+	gva_t addr, व्योम *val, अचिन्हित पूर्णांक bytes,
+	काष्ठा x86_exception *exception);
 
-int handle_ud(struct kvm_vcpu *vcpu);
+पूर्णांक handle_ud(काष्ठा kvm_vcpu *vcpu);
 
-void kvm_deliver_exception_payload(struct kvm_vcpu *vcpu);
+व्योम kvm_deliver_exception_payload(काष्ठा kvm_vcpu *vcpu);
 
-void kvm_vcpu_mtrr_init(struct kvm_vcpu *vcpu);
-u8 kvm_mtrr_get_guest_memory_type(struct kvm_vcpu *vcpu, gfn_t gfn);
-bool kvm_mtrr_valid(struct kvm_vcpu *vcpu, u32 msr, u64 data);
-int kvm_mtrr_set_msr(struct kvm_vcpu *vcpu, u32 msr, u64 data);
-int kvm_mtrr_get_msr(struct kvm_vcpu *vcpu, u32 msr, u64 *pdata);
-bool kvm_mtrr_check_gfn_range_consistency(struct kvm_vcpu *vcpu, gfn_t gfn,
-					  int page_num);
-bool kvm_vector_hashing_enabled(void);
-void kvm_fixup_and_inject_pf_error(struct kvm_vcpu *vcpu, gva_t gva, u16 error_code);
-int x86_decode_emulated_instruction(struct kvm_vcpu *vcpu, int emulation_type,
-				    void *insn, int insn_len);
-int x86_emulate_instruction(struct kvm_vcpu *vcpu, gpa_t cr2_or_gpa,
-			    int emulation_type, void *insn, int insn_len);
-fastpath_t handle_fastpath_set_msr_irqoff(struct kvm_vcpu *vcpu);
+व्योम kvm_vcpu_mtrr_init(काष्ठा kvm_vcpu *vcpu);
+u8 kvm_mtrr_get_guest_memory_type(काष्ठा kvm_vcpu *vcpu, gfn_t gfn);
+bool kvm_mtrr_valid(काष्ठा kvm_vcpu *vcpu, u32 msr, u64 data);
+पूर्णांक kvm_mtrr_set_msr(काष्ठा kvm_vcpu *vcpu, u32 msr, u64 data);
+पूर्णांक kvm_mtrr_get_msr(काष्ठा kvm_vcpu *vcpu, u32 msr, u64 *pdata);
+bool kvm_mtrr_check_gfn_range_consistency(काष्ठा kvm_vcpu *vcpu, gfn_t gfn,
+					  पूर्णांक page_num);
+bool kvm_vector_hashing_enabled(व्योम);
+व्योम kvm_fixup_and_inject_pf_error(काष्ठा kvm_vcpu *vcpu, gva_t gva, u16 error_code);
+पूर्णांक x86_decode_emulated_inकाष्ठाion(काष्ठा kvm_vcpu *vcpu, पूर्णांक emulation_type,
+				    व्योम *insn, पूर्णांक insn_len);
+पूर्णांक x86_emulate_inकाष्ठाion(काष्ठा kvm_vcpu *vcpu, gpa_t cr2_or_gpa,
+			    पूर्णांक emulation_type, व्योम *insn, पूर्णांक insn_len);
+fastpath_t handle_fastpath_set_msr_irqoff(काष्ठा kvm_vcpu *vcpu);
 
-extern u64 host_xcr0;
-extern u64 supported_xcr0;
-extern u64 host_xss;
-extern u64 supported_xss;
+बाह्य u64 host_xcr0;
+बाह्य u64 supported_xcr0;
+बाह्य u64 host_xss;
+बाह्य u64 supported_xss;
 
-static inline bool kvm_mpx_supported(void)
-{
-	return (supported_xcr0 & (XFEATURE_MASK_BNDREGS | XFEATURE_MASK_BNDCSR))
+अटल अंतरभूत bool kvm_mpx_supported(व्योम)
+अणु
+	वापस (supported_xcr0 & (XFEATURE_MASK_BNDREGS | XFEATURE_MASK_BNDCSR))
 		== (XFEATURE_MASK_BNDREGS | XFEATURE_MASK_BNDCSR);
-}
+पूर्ण
 
-extern unsigned int min_timer_period_us;
+बाह्य अचिन्हित पूर्णांक min_समयr_period_us;
 
-extern bool enable_vmware_backdoor;
+बाह्य bool enable_vmware_backकरोor;
 
-extern int pi_inject_timer;
+बाह्य पूर्णांक pi_inject_समयr;
 
-extern struct static_key kvm_no_apic_vcpu;
+बाह्य काष्ठा अटल_key kvm_no_apic_vcpu;
 
-extern bool report_ignored_msrs;
+बाह्य bool report_ignored_msrs;
 
-static inline u64 nsec_to_cycles(struct kvm_vcpu *vcpu, u64 nsec)
-{
-	return pvclock_scale_delta(nsec, vcpu->arch.virtual_tsc_mult,
-				   vcpu->arch.virtual_tsc_shift);
-}
+अटल अंतरभूत u64 nsec_to_cycles(काष्ठा kvm_vcpu *vcpu, u64 nsec)
+अणु
+	वापस pvघड़ी_scale_delta(nsec, vcpu->arch.भव_tsc_mult,
+				   vcpu->arch.भव_tsc_shअगरt);
+पूर्ण
 
-/* Same "calling convention" as do_div:
- * - divide (n << 32) by base
+/* Same "calling convention" as करो_भाग:
+ * - भागide (n << 32) by base
  * - put result in n
- * - return remainder
+ * - वापस reमुख्यder
  */
-#define do_shl32_div32(n, base)					\
-	({							\
+#घोषणा करो_shl32_भाग32(n, base)					\
+	(अणु							\
 	    u32 __quot, __rem;					\
-	    asm("divl %2" : "=a" (__quot), "=d" (__rem)		\
+	    यंत्र("divl %2" : "=a" (__quot), "=d" (__rem)		\
 			: "rm" (base), "0" (0), "1" ((u32) n));	\
 	    n = __quot;						\
 	    __rem;						\
-	 })
+	 पूर्ण)
 
-static inline bool kvm_mwait_in_guest(struct kvm *kvm)
-{
-	return kvm->arch.mwait_in_guest;
-}
+अटल अंतरभूत bool kvm_mरुको_in_guest(काष्ठा kvm *kvm)
+अणु
+	वापस kvm->arch.mरुको_in_guest;
+पूर्ण
 
-static inline bool kvm_hlt_in_guest(struct kvm *kvm)
-{
-	return kvm->arch.hlt_in_guest;
-}
+अटल अंतरभूत bool kvm_hlt_in_guest(काष्ठा kvm *kvm)
+अणु
+	वापस kvm->arch.hlt_in_guest;
+पूर्ण
 
-static inline bool kvm_pause_in_guest(struct kvm *kvm)
-{
-	return kvm->arch.pause_in_guest;
-}
+अटल अंतरभूत bool kvm_छोड़ो_in_guest(काष्ठा kvm *kvm)
+अणु
+	वापस kvm->arch.छोड़ो_in_guest;
+पूर्ण
 
-static inline bool kvm_cstate_in_guest(struct kvm *kvm)
-{
-	return kvm->arch.cstate_in_guest;
-}
+अटल अंतरभूत bool kvm_cstate_in_guest(काष्ठा kvm *kvm)
+अणु
+	वापस kvm->arch.cstate_in_guest;
+पूर्ण
 
-DECLARE_PER_CPU(struct kvm_vcpu *, current_vcpu);
+DECLARE_PER_CPU(काष्ठा kvm_vcpu *, current_vcpu);
 
-static inline void kvm_before_interrupt(struct kvm_vcpu *vcpu)
-{
-	__this_cpu_write(current_vcpu, vcpu);
-}
+अटल अंतरभूत व्योम kvm_beक्रमe_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu)
+अणु
+	__this_cpu_ग_लिखो(current_vcpu, vcpu);
+पूर्ण
 
-static inline void kvm_after_interrupt(struct kvm_vcpu *vcpu)
-{
-	__this_cpu_write(current_vcpu, NULL);
-}
+अटल अंतरभूत व्योम kvm_after_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu)
+अणु
+	__this_cpu_ग_लिखो(current_vcpu, शून्य);
+पूर्ण
 
 
-static inline bool kvm_pat_valid(u64 data)
-{
-	if (data & 0xF8F8F8F8F8F8F8F8ull)
-		return false;
+अटल अंतरभूत bool kvm_pat_valid(u64 data)
+अणु
+	अगर (data & 0xF8F8F8F8F8F8F8F8ull)
+		वापस false;
 	/* 0, 1, 4, 5, 6, 7 are valid values.  */
-	return (data | ((data & 0x0202020202020202ull) << 1)) == data;
-}
+	वापस (data | ((data & 0x0202020202020202ull) << 1)) == data;
+पूर्ण
 
-static inline bool kvm_dr7_valid(u64 data)
-{
+अटल अंतरभूत bool kvm_dr7_valid(u64 data)
+अणु
 	/* Bits [63:32] are reserved */
-	return !(data >> 32);
-}
-static inline bool kvm_dr6_valid(u64 data)
-{
+	वापस !(data >> 32);
+पूर्ण
+अटल अंतरभूत bool kvm_dr6_valid(u64 data)
+अणु
 	/* Bits [63:32] are reserved */
-	return !(data >> 32);
-}
+	वापस !(data >> 32);
+पूर्ण
 
 /*
- * Trigger machine check on the host. We assume all the MSRs are already set up
+ * Trigger machine check on the host. We assume all the MSRs are alपढ़ोy set up
  * by the CPU and that we still run on the same CPU as the MCE occurred on.
  * We pass a fake environment to the machine check handler because we want
  * the guest to be always treated like user space, no matter what context
- * it used internally.
+ * it used पूर्णांकernally.
  */
-static inline void kvm_machine_check(void)
-{
-#if defined(CONFIG_X86_MCE)
-	struct pt_regs regs = {
+अटल अंतरभूत व्योम kvm_machine_check(व्योम)
+अणु
+#अगर defined(CONFIG_X86_MCE)
+	काष्ठा pt_regs regs = अणु
 		.cs = 3, /* Fake ring 3 no matter what the guest ran on */
 		.flags = X86_EFLAGS_IF,
-	};
+	पूर्ण;
 
-	do_machine_check(&regs);
-#endif
-}
+	करो_machine_check(&regs);
+#पूर्ण_अगर
+पूर्ण
 
-void kvm_load_guest_xsave_state(struct kvm_vcpu *vcpu);
-void kvm_load_host_xsave_state(struct kvm_vcpu *vcpu);
-int kvm_spec_ctrl_test_value(u64 value);
-bool kvm_is_valid_cr4(struct kvm_vcpu *vcpu, unsigned long cr4);
-int kvm_handle_memory_failure(struct kvm_vcpu *vcpu, int r,
-			      struct x86_exception *e);
-int kvm_handle_invpcid(struct kvm_vcpu *vcpu, unsigned long type, gva_t gva);
-bool kvm_msr_allowed(struct kvm_vcpu *vcpu, u32 index, u32 type);
+व्योम kvm_load_guest_xsave_state(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_load_host_xsave_state(काष्ठा kvm_vcpu *vcpu);
+पूर्णांक kvm_spec_ctrl_test_value(u64 value);
+bool kvm_is_valid_cr4(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ cr4);
+पूर्णांक kvm_handle_memory_failure(काष्ठा kvm_vcpu *vcpu, पूर्णांक r,
+			      काष्ठा x86_exception *e);
+पूर्णांक kvm_handle_invpcid(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ type, gva_t gva);
+bool kvm_msr_allowed(काष्ठा kvm_vcpu *vcpu, u32 index, u32 type);
 
 /*
  * Internal error codes that are used to indicate that MSR emulation encountered
  * an error that should result in #GP in the guest, unless userspace
  * handles it.
  */
-#define  KVM_MSR_RET_INVALID	2	/* in-kernel MSR emulation #GP condition */
-#define  KVM_MSR_RET_FILTERED	3	/* #GP due to userspace MSR filter */
+#घोषणा  KVM_MSR_RET_INVALID	2	/* in-kernel MSR emulation #GP condition */
+#घोषणा  KVM_MSR_RET_FILTERED	3	/* #GP due to userspace MSR filter */
 
-#define __cr4_reserved_bits(__cpu_has, __c)             \
-({                                                      \
+#घोषणा __cr4_reserved_bits(__cpu_has, __c)             \
+(अणु                                                      \
 	u64 __reserved_bits = CR4_RESERVED_BITS;        \
                                                         \
-	if (!__cpu_has(__c, X86_FEATURE_XSAVE))         \
+	अगर (!__cpu_has(__c, X86_FEATURE_XSAVE))         \
 		__reserved_bits |= X86_CR4_OSXSAVE;     \
-	if (!__cpu_has(__c, X86_FEATURE_SMEP))          \
+	अगर (!__cpu_has(__c, X86_FEATURE_SMEP))          \
 		__reserved_bits |= X86_CR4_SMEP;        \
-	if (!__cpu_has(__c, X86_FEATURE_SMAP))          \
+	अगर (!__cpu_has(__c, X86_FEATURE_SMAP))          \
 		__reserved_bits |= X86_CR4_SMAP;        \
-	if (!__cpu_has(__c, X86_FEATURE_FSGSBASE))      \
+	अगर (!__cpu_has(__c, X86_FEATURE_FSGSBASE))      \
 		__reserved_bits |= X86_CR4_FSGSBASE;    \
-	if (!__cpu_has(__c, X86_FEATURE_PKU))           \
+	अगर (!__cpu_has(__c, X86_FEATURE_PKU))           \
 		__reserved_bits |= X86_CR4_PKE;         \
-	if (!__cpu_has(__c, X86_FEATURE_LA57))          \
+	अगर (!__cpu_has(__c, X86_FEATURE_LA57))          \
 		__reserved_bits |= X86_CR4_LA57;        \
-	if (!__cpu_has(__c, X86_FEATURE_UMIP))          \
+	अगर (!__cpu_has(__c, X86_FEATURE_UMIP))          \
 		__reserved_bits |= X86_CR4_UMIP;        \
-	if (!__cpu_has(__c, X86_FEATURE_VMX))           \
+	अगर (!__cpu_has(__c, X86_FEATURE_VMX))           \
 		__reserved_bits |= X86_CR4_VMXE;        \
-	if (!__cpu_has(__c, X86_FEATURE_PCID))          \
+	अगर (!__cpu_has(__c, X86_FEATURE_PCID))          \
 		__reserved_bits |= X86_CR4_PCIDE;       \
 	__reserved_bits;                                \
-})
+पूर्ण)
 
-int kvm_sev_es_mmio_write(struct kvm_vcpu *vcpu, gpa_t src, unsigned int bytes,
-			  void *dst);
-int kvm_sev_es_mmio_read(struct kvm_vcpu *vcpu, gpa_t src, unsigned int bytes,
-			 void *dst);
-int kvm_sev_es_string_io(struct kvm_vcpu *vcpu, unsigned int size,
-			 unsigned int port, void *data,  unsigned int count,
-			 int in);
+पूर्णांक kvm_sev_es_mmio_ग_लिखो(काष्ठा kvm_vcpu *vcpu, gpa_t src, अचिन्हित पूर्णांक bytes,
+			  व्योम *dst);
+पूर्णांक kvm_sev_es_mmio_पढ़ो(काष्ठा kvm_vcpu *vcpu, gpa_t src, अचिन्हित पूर्णांक bytes,
+			 व्योम *dst);
+पूर्णांक kvm_sev_es_string_io(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक size,
+			 अचिन्हित पूर्णांक port, व्योम *data,  अचिन्हित पूर्णांक count,
+			 पूर्णांक in);
 
-#endif
+#पूर्ण_अगर

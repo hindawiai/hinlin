@@ -1,211 +1,212 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * drivers/char/hw_random/timeriomem-rng.c
+ * drivers/अक्षर/hw_अक्रमom/समयriomem-rng.c
  *
  * Copyright (C) 2009 Alexander Clouter <alex@digriz.org.uk>
  *
- * Derived from drivers/char/hw_random/omap-rng.c
+ * Derived from drivers/अक्षर/hw_अक्रमom/omap-rng.c
  *   Copyright 2005 (c) MontaVista Software, Inc.
- *   Author: Deepak Saxena <dsaxena@plexity.net>
+ *   Author: Deepak Saxena <dsaxena@plनिकासy.net>
  *
  * Overview:
- *   This driver is useful for platforms that have an IO range that provides
- *   periodic random data from a single IO memory address.  All the platform
- *   has to do is provide the address and 'wait time' that new data becomes
+ *   This driver is useful क्रम platक्रमms that have an IO range that provides
+ *   periodic अक्रमom data from a single IO memory address.  All the platक्रमm
+ *   has to करो is provide the address and 'wait time' that new data becomes
  *   available.
  *
- * TODO: add support for reading sizes other than 32bits and masking
+ * TODO: add support क्रम पढ़ोing sizes other than 32bits and masking
  */
 
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/hrtimer.h>
-#include <linux/hw_random.h>
-#include <linux/io.h>
-#include <linux/ktime.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/time.h>
-#include <linux/timeriomem-rng.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/hw_अक्रमom.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/समयriomem-rng.h>
 
-struct timeriomem_rng_private {
-	void __iomem		*io_base;
-	ktime_t			period;
-	unsigned int		present:1;
+काष्ठा समयriomem_rng_निजी अणु
+	व्योम __iomem		*io_base;
+	kसमय_प्रकार			period;
+	अचिन्हित पूर्णांक		present:1;
 
-	struct hrtimer		timer;
-	struct completion	completion;
+	काष्ठा hrसमयr		समयr;
+	काष्ठा completion	completion;
 
-	struct hwrng		rng_ops;
-};
+	काष्ठा hwrng		rng_ops;
+पूर्ण;
 
-static int timeriomem_rng_read(struct hwrng *hwrng, void *data,
-				size_t max, bool wait)
-{
-	struct timeriomem_rng_private *priv =
-		container_of(hwrng, struct timeriomem_rng_private, rng_ops);
-	int retval = 0;
-	int period_us = ktime_to_us(priv->period);
+अटल पूर्णांक समयriomem_rng_पढ़ो(काष्ठा hwrng *hwrng, व्योम *data,
+				माप_प्रकार max, bool रुको)
+अणु
+	काष्ठा समयriomem_rng_निजी *priv =
+		container_of(hwrng, काष्ठा समयriomem_rng_निजी, rng_ops);
+	पूर्णांक retval = 0;
+	पूर्णांक period_us = kसमय_प्रकारo_us(priv->period);
 
 	/*
-	 * There may not have been enough time for new data to be generated
-	 * since the last request.  If the caller doesn't want to wait, let them
-	 * bail out.  Otherwise, wait for the completion.  If the new data has
-	 * already been generated, the completion should already be available.
+	 * There may not have been enough समय क्रम new data to be generated
+	 * since the last request.  If the caller करोesn't want to रुको, let them
+	 * bail out.  Otherwise, रुको क्रम the completion.  If the new data has
+	 * alपढ़ोy been generated, the completion should alपढ़ोy be available.
 	 */
-	if (!wait && !priv->present)
-		return 0;
+	अगर (!रुको && !priv->present)
+		वापस 0;
 
-	wait_for_completion(&priv->completion);
+	रुको_क्रम_completion(&priv->completion);
 
-	do {
+	करो अणु
 		/*
-		 * After the first read, all additional reads will need to wait
-		 * for the RNG to generate new data.  Since the period can have
+		 * After the first पढ़ो, all additional पढ़ोs will need to रुको
+		 * क्रम the RNG to generate new data.  Since the period can have
 		 * a wide range of values (1us to 1s have been observed), allow
-		 * for 1% tolerance in the sleep time rather than a fixed value.
+		 * क्रम 1% tolerance in the sleep समय rather than a fixed value.
 		 */
-		if (retval > 0)
+		अगर (retval > 0)
 			usleep_range(period_us,
 					period_us + max(1, period_us / 100));
 
-		*(u32 *)data = readl(priv->io_base);
-		retval += sizeof(u32);
-		data += sizeof(u32);
-		max -= sizeof(u32);
-	} while (wait && max > sizeof(u32));
+		*(u32 *)data = पढ़ोl(priv->io_base);
+		retval += माप(u32);
+		data += माप(u32);
+		max -= माप(u32);
+	पूर्ण जबतक (रुको && max > माप(u32));
 
 	/*
-	 * Block any new callers until the RNG has had time to generate new
+	 * Block any new callers until the RNG has had समय to generate new
 	 * data.
 	 */
 	priv->present = 0;
 	reinit_completion(&priv->completion);
-	hrtimer_forward_now(&priv->timer, priv->period);
-	hrtimer_restart(&priv->timer);
+	hrसमयr_क्रमward_now(&priv->समयr, priv->period);
+	hrसमयr_restart(&priv->समयr);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static enum hrtimer_restart timeriomem_rng_trigger(struct hrtimer *timer)
-{
-	struct timeriomem_rng_private *priv
-		= container_of(timer, struct timeriomem_rng_private, timer);
+अटल क्रमागत hrसमयr_restart समयriomem_rng_trigger(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा समयriomem_rng_निजी *priv
+		= container_of(समयr, काष्ठा समयriomem_rng_निजी, समयr);
 
 	priv->present = 1;
 	complete(&priv->completion);
 
-	return HRTIMER_NORESTART;
-}
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
-static int timeriomem_rng_probe(struct platform_device *pdev)
-{
-	struct timeriomem_rng_data *pdata = pdev->dev.platform_data;
-	struct timeriomem_rng_private *priv;
-	struct resource *res;
-	int err = 0;
-	int period;
+अटल पूर्णांक समयriomem_rng_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा समयriomem_rng_data *pdata = pdev->dev.platक्रमm_data;
+	काष्ठा समयriomem_rng_निजी *priv;
+	काष्ठा resource *res;
+	पूर्णांक err = 0;
+	पूर्णांक period;
 
-	if (!pdev->dev.of_node && !pdata) {
+	अगर (!pdev->dev.of_node && !pdata) अणु
 		dev_err(&pdev->dev, "timeriomem_rng_data is missing\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENXIO;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENXIO;
 
-	if (res->start % 4 != 0 || resource_size(res) < 4) {
+	अगर (res->start % 4 != 0 || resource_size(res) < 4) अणु
 		dev_err(&pdev->dev,
 			"address must be at least four bytes wide and 32-bit aligned\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Allocate memory for the device structure (and zero it) */
+	/* Allocate memory क्रम the device काष्ठाure (and zero it) */
 	priv = devm_kzalloc(&pdev->dev,
-			sizeof(struct timeriomem_rng_private), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+			माप(काष्ठा समयriomem_rng_निजी), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
-	if (pdev->dev.of_node) {
-		int i;
+	अगर (pdev->dev.of_node) अणु
+		पूर्णांक i;
 
-		if (!of_property_read_u32(pdev->dev.of_node,
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node,
 						"period", &i))
 			period = i;
-		else {
+		अन्यथा अणु
 			dev_err(&pdev->dev, "missing period\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!of_property_read_u32(pdev->dev.of_node,
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node,
 						"quality", &i))
 			priv->rng_ops.quality = i;
-		else
+		अन्यथा
 			priv->rng_ops.quality = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		period = pdata->period;
 		priv->rng_ops.quality = pdata->quality;
-	}
+	पूर्ण
 
-	priv->period = ns_to_ktime(period * NSEC_PER_USEC);
+	priv->period = ns_to_kसमय(period * NSEC_PER_USEC);
 	init_completion(&priv->completion);
-	hrtimer_init(&priv->timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
-	priv->timer.function = timeriomem_rng_trigger;
+	hrसमयr_init(&priv->समयr, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
+	priv->समयr.function = समयriomem_rng_trigger;
 
 	priv->rng_ops.name = dev_name(&pdev->dev);
-	priv->rng_ops.read = timeriomem_rng_read;
+	priv->rng_ops.पढ़ो = समयriomem_rng_पढ़ो;
 
 	priv->io_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(priv->io_base)) {
-		return PTR_ERR(priv->io_base);
-	}
+	अगर (IS_ERR(priv->io_base)) अणु
+		वापस PTR_ERR(priv->io_base);
+	पूर्ण
 
-	/* Assume random data is already available. */
+	/* Assume अक्रमom data is alपढ़ोy available. */
 	priv->present = 1;
 	complete(&priv->completion);
 
-	err = devm_hwrng_register(&pdev->dev, &priv->rng_ops);
-	if (err) {
+	err = devm_hwrng_रेजिस्टर(&pdev->dev, &priv->rng_ops);
+	अगर (err) अणु
 		dev_err(&pdev->dev, "problem registering\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	dev_info(&pdev->dev, "32bits from 0x%p @ %dus\n",
 			priv->io_base, period);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int timeriomem_rng_remove(struct platform_device *pdev)
-{
-	struct timeriomem_rng_private *priv = platform_get_drvdata(pdev);
+अटल पूर्णांक समयriomem_rng_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा समयriomem_rng_निजी *priv = platक्रमm_get_drvdata(pdev);
 
-	hrtimer_cancel(&priv->timer);
+	hrसमयr_cancel(&priv->समयr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id timeriomem_rng_match[] = {
-	{ .compatible = "timeriomem_rng" },
-	{},
-};
-MODULE_DEVICE_TABLE(of, timeriomem_rng_match);
+अटल स्थिर काष्ठा of_device_id समयriomem_rng_match[] = अणु
+	अणु .compatible = "timeriomem_rng" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, समयriomem_rng_match);
 
-static struct platform_driver timeriomem_rng_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver समयriomem_rng_driver = अणु
+	.driver = अणु
 		.name		= "timeriomem_rng",
-		.of_match_table	= timeriomem_rng_match,
-	},
-	.probe		= timeriomem_rng_probe,
-	.remove		= timeriomem_rng_remove,
-};
+		.of_match_table	= समयriomem_rng_match,
+	पूर्ण,
+	.probe		= समयriomem_rng_probe,
+	.हटाओ		= समयriomem_rng_हटाओ,
+पूर्ण;
 
-module_platform_driver(timeriomem_rng_driver);
+module_platक्रमm_driver(समयriomem_rng_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Alexander Clouter <alex@digriz.org.uk>");

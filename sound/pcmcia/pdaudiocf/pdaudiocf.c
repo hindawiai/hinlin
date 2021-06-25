@@ -1,123 +1,124 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for Sound Core PDAudioCF soundcard
+ * Driver क्रम Sound Core PDAudioCF soundcard
  *
  * Copyright (c) 2003 by Jaroslav Kysela <perex@perex.cz>
  */
 
-#include <sound/core.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <pcmcia/ciscode.h>
-#include <pcmcia/cisreg.h>
-#include "pdaudiocf.h"
-#include <sound/initval.h>
-#include <linux/init.h>
+#समावेश <sound/core.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <pcmcia/ciscode.h>
+#समावेश <pcmcia/cisreg.h>
+#समावेश "pdaudiocf.h"
+#समावेश <sound/initval.h>
+#समावेश <linux/init.h>
 
 /*
  */
 
-#define CARD_NAME	"PDAudio-CF"
+#घोषणा CARD_NAME	"PDAudio-CF"
 
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("Sound Core " CARD_NAME);
 MODULE_LICENSE("GPL");
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable switches */
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable चयनes */
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for " CARD_NAME " soundcard.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for " CARD_NAME " soundcard.");
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "Enable " CARD_NAME " soundcard.");
 
 /*
  */
 
-static struct snd_card *card_list[SNDRV_CARDS];
+अटल काष्ठा snd_card *card_list[SNDRV_CARDS];
 
 /*
  * prototypes
  */
-static int pdacf_config(struct pcmcia_device *link);
-static void snd_pdacf_detach(struct pcmcia_device *p_dev);
+अटल पूर्णांक pdacf_config(काष्ठा pcmcia_device *link);
+अटल व्योम snd_pdacf_detach(काष्ठा pcmcia_device *p_dev);
 
-static void pdacf_release(struct pcmcia_device *link)
-{
-	free_irq(link->irq, link->priv);
+अटल व्योम pdacf_release(काष्ठा pcmcia_device *link)
+अणु
+	मुक्त_irq(link->irq, link->priv);
 	pcmcia_disable_device(link);
-}
+पूर्ण
 
 /*
- * destructor
+ * deकाष्ठाor
  */
-static int snd_pdacf_free(struct snd_pdacf *pdacf)
-{
-	struct pcmcia_device *link = pdacf->p_dev;
+अटल पूर्णांक snd_pdacf_मुक्त(काष्ठा snd_pdacf *pdacf)
+अणु
+	काष्ठा pcmcia_device *link = pdacf->p_dev;
 
 	pdacf_release(link);
 
-	card_list[pdacf->index] = NULL;
-	pdacf->card = NULL;
+	card_list[pdacf->index] = शून्य;
+	pdacf->card = शून्य;
 
-	kfree(pdacf);
-	return 0;
-}
+	kमुक्त(pdacf);
+	वापस 0;
+पूर्ण
 
-static int snd_pdacf_dev_free(struct snd_device *device)
-{
-	struct snd_pdacf *chip = device->device_data;
-	return snd_pdacf_free(chip);
-}
+अटल पूर्णांक snd_pdacf_dev_मुक्त(काष्ठा snd_device *device)
+अणु
+	काष्ठा snd_pdacf *chip = device->device_data;
+	वापस snd_pdacf_मुक्त(chip);
+पूर्ण
 
 /*
- * snd_pdacf_attach - attach callback for cs
+ * snd_pdacf_attach - attach callback क्रम cs
  */
-static int snd_pdacf_probe(struct pcmcia_device *link)
-{
-	int i, err;
-	struct snd_pdacf *pdacf;
-	struct snd_card *card;
-	static const struct snd_device_ops ops = {
-		.dev_free =	snd_pdacf_dev_free,
-	};
+अटल पूर्णांक snd_pdacf_probe(काष्ठा pcmcia_device *link)
+अणु
+	पूर्णांक i, err;
+	काष्ठा snd_pdacf *pdacf;
+	काष्ठा snd_card *card;
+	अटल स्थिर काष्ठा snd_device_ops ops = अणु
+		.dev_मुक्त =	snd_pdacf_dev_मुक्त,
+	पूर्ण;
 
-	snd_printdd(KERN_DEBUG "pdacf_attach called\n");
+	snd_prपूर्णांकdd(KERN_DEBUG "pdacf_attach called\n");
 	/* find an empty slot from the card list */
-	for (i = 0; i < SNDRV_CARDS; i++) {
-		if (! card_list[i])
-			break;
-	}
-	if (i >= SNDRV_CARDS) {
-		snd_printk(KERN_ERR "pdacf: too many cards found\n");
-		return -EINVAL;
-	}
-	if (! enable[i])
-		return -ENODEV; /* disabled explicitly */
+	क्रम (i = 0; i < SNDRV_CARDS; i++) अणु
+		अगर (! card_list[i])
+			अवरोध;
+	पूर्ण
+	अगर (i >= SNDRV_CARDS) अणु
+		snd_prपूर्णांकk(KERN_ERR "pdacf: too many cards found\n");
+		वापस -EINVAL;
+	पूर्ण
+	अगर (! enable[i])
+		वापस -ENODEV; /* disabled explicitly */
 
 	/* ok, create a card instance */
 	err = snd_card_new(&link->dev, index[i], id[i], THIS_MODULE,
 			   0, &card);
-	if (err < 0) {
-		snd_printk(KERN_ERR "pdacf: cannot create a card instance\n");
-		return err;
-	}
+	अगर (err < 0) अणु
+		snd_prपूर्णांकk(KERN_ERR "pdacf: cannot create a card instance\n");
+		वापस err;
+	पूर्ण
 
 	pdacf = snd_pdacf_create(card);
-	if (!pdacf) {
-		snd_card_free(card);
-		return -ENOMEM;
-	}
+	अगर (!pdacf) अणु
+		snd_card_मुक्त(card);
+		वापस -ENOMEM;
+	पूर्ण
 
 	err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, pdacf, &ops);
-	if (err < 0) {
-		kfree(pdacf);
-		snd_card_free(card);
-		return err;
-	}
+	अगर (err < 0) अणु
+		kमुक्त(pdacf);
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
 
 	pdacf->index = i;
 	card_list[i] = card;
@@ -132,160 +133,160 @@ static int snd_pdacf_probe(struct pcmcia_device *link)
 	link->config_index = 1;
 	link->config_regs = PRESENT_OPTION;
 
-	return pdacf_config(link);
-}
+	वापस pdacf_config(link);
+पूर्ण
 
 
 /**
  * snd_pdacf_assign_resources - initialize the hardware and card instance.
  * @pdacf: context
- * @port: i/o port for the card
- * @irq: irq number for the card
+ * @port: i/o port क्रम the card
+ * @irq: irq number क्रम the card
  *
- * this function assigns the specified port and irq, boot the card,
+ * this function assigns the specअगरied port and irq, boot the card,
  * create pcm and control instances, and initialize the rest hardware.
  *
- * returns 0 if successful, or a negative error code.
+ * वापसs 0 अगर successful, or a negative error code.
  */
-static int snd_pdacf_assign_resources(struct snd_pdacf *pdacf, int port, int irq)
-{
-	int err;
-	struct snd_card *card = pdacf->card;
+अटल पूर्णांक snd_pdacf_assign_resources(काष्ठा snd_pdacf *pdacf, पूर्णांक port, पूर्णांक irq)
+अणु
+	पूर्णांक err;
+	काष्ठा snd_card *card = pdacf->card;
 
-	snd_printdd(KERN_DEBUG "pdacf assign resources: port = 0x%x, irq = %d\n", port, irq);
+	snd_prपूर्णांकdd(KERN_DEBUG "pdacf assign resources: port = 0x%x, irq = %d\n", port, irq);
 	pdacf->port = port;
 	pdacf->irq = irq;
 	pdacf->chip_status |= PDAUDIOCF_STAT_IS_CONFIGURED;
 
 	err = snd_pdacf_ak4117_create(pdacf);
-	if (err < 0)
-		return err;	
+	अगर (err < 0)
+		वापस err;	
 
-	strcpy(card->driver, "PDAudio-CF");
-	sprintf(card->shortname, "Core Sound %s", card->driver);
-	sprintf(card->longname, "%s at 0x%x, irq %i",
-		card->shortname, port, irq);
+	म_नकल(card->driver, "PDAudio-CF");
+	प्र_लिखो(card->लघुname, "Core Sound %s", card->driver);
+	प्र_लिखो(card->दीर्घname, "%s at 0x%x, irq %i",
+		card->लघुname, port, irq);
 
 	err = snd_pdacf_pcm_new(pdacf);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if ((err = snd_card_register(card)) < 0)
-		return err;
+	अगर ((err = snd_card_रेजिस्टर(card)) < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- * snd_pdacf_detach - detach callback for cs
+ * snd_pdacf_detach - detach callback क्रम cs
  */
-static void snd_pdacf_detach(struct pcmcia_device *link)
-{
-	struct snd_pdacf *chip = link->priv;
+अटल व्योम snd_pdacf_detach(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा snd_pdacf *chip = link->priv;
 
-	snd_printdd(KERN_DEBUG "pdacf_detach called\n");
+	snd_prपूर्णांकdd(KERN_DEBUG "pdacf_detach called\n");
 
-	if (chip->chip_status & PDAUDIOCF_STAT_IS_CONFIGURED)
-		snd_pdacf_powerdown(chip);
+	अगर (chip->chip_status & PDAUDIOCF_STAT_IS_CONFIGURED)
+		snd_pdacf_घातerकरोwn(chip);
 	chip->chip_status |= PDAUDIOCF_STAT_IS_STALE; /* to be sure */
 	snd_card_disconnect(chip->card);
-	snd_card_free_when_closed(chip->card);
-}
+	snd_card_मुक्त_when_बंदd(chip->card);
+पूर्ण
 
 /*
  * configuration callback
  */
 
-static int pdacf_config(struct pcmcia_device *link)
-{
-	struct snd_pdacf *pdacf = link->priv;
-	int ret;
+अटल पूर्णांक pdacf_config(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा snd_pdacf *pdacf = link->priv;
+	पूर्णांक ret;
 
-	snd_printdd(KERN_DEBUG "pdacf_config called\n");
+	snd_prपूर्णांकdd(KERN_DEBUG "pdacf_config called\n");
 	link->config_index = 0x5;
 	link->config_flags |= CONF_ENABLE_IRQ | CONF_ENABLE_PULSE_IRQ;
 
 	ret = pcmcia_request_io(link);
-	if (ret)
-		goto failed_preirq;
+	अगर (ret)
+		जाओ failed_preirq;
 
-	ret = request_threaded_irq(link->irq, pdacf_interrupt,
-				   pdacf_threaded_irq,
+	ret = request_thपढ़ोed_irq(link->irq, pdacf_पूर्णांकerrupt,
+				   pdacf_thपढ़ोed_irq,
 				   IRQF_SHARED, link->devname, link->priv);
-	if (ret)
-		goto failed_preirq;
+	अगर (ret)
+		जाओ failed_preirq;
 
 	ret = pcmcia_enable_device(link);
-	if (ret)
-		goto failed;
+	अगर (ret)
+		जाओ failed;
 
-	if (snd_pdacf_assign_resources(pdacf, link->resource[0]->start,
+	अगर (snd_pdacf_assign_resources(pdacf, link->resource[0]->start,
 					link->irq) < 0)
-		goto failed;
+		जाओ failed;
 
 	pdacf->card->sync_irq = link->irq;
-	return 0;
+	वापस 0;
 
  failed:
-	free_irq(link->irq, link->priv);
+	मुक्त_irq(link->irq, link->priv);
 failed_preirq:
 	pcmcia_disable_device(link);
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int pdacf_suspend(struct pcmcia_device *link)
-{
-	struct snd_pdacf *chip = link->priv;
+अटल पूर्णांक pdacf_suspend(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा snd_pdacf *chip = link->priv;
 
-	snd_printdd(KERN_DEBUG "SUSPEND\n");
-	if (chip) {
-		snd_printdd(KERN_DEBUG "snd_pdacf_suspend calling\n");
+	snd_prपूर्णांकdd(KERN_DEBUG "SUSPEND\n");
+	अगर (chip) अणु
+		snd_prपूर्णांकdd(KERN_DEBUG "snd_pdacf_suspend calling\n");
 		snd_pdacf_suspend(chip);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pdacf_resume(struct pcmcia_device *link)
-{
-	struct snd_pdacf *chip = link->priv;
+अटल पूर्णांक pdacf_resume(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा snd_pdacf *chip = link->priv;
 
-	snd_printdd(KERN_DEBUG "RESUME\n");
-	if (pcmcia_dev_present(link)) {
-		if (chip) {
-			snd_printdd(KERN_DEBUG "calling snd_pdacf_resume\n");
+	snd_prपूर्णांकdd(KERN_DEBUG "RESUME\n");
+	अगर (pcmcia_dev_present(link)) अणु
+		अगर (chip) अणु
+			snd_prपूर्णांकdd(KERN_DEBUG "calling snd_pdacf_resume\n");
 			snd_pdacf_resume(chip);
-		}
-	}
-	snd_printdd(KERN_DEBUG "resume done!\n");
+		पूर्ण
+	पूर्ण
+	snd_prपूर्णांकdd(KERN_DEBUG "resume done!\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
- * Module entry points
+ * Module entry poपूर्णांकs
  */
-static const struct pcmcia_device_id snd_pdacf_ids[] = {
+अटल स्थिर काष्ठा pcmcia_device_id snd_pdacf_ids[] = अणु
 	/* this is too general PCMCIA_DEVICE_MANF_CARD(0x015d, 0x4c45), */
 	PCMCIA_DEVICE_PROD_ID12("Core Sound","PDAudio-CF",0x396d19d2,0x71717b49),
-	PCMCIA_DEVICE_NULL
-};
+	PCMCIA_DEVICE_शून्य
+पूर्ण;
 MODULE_DEVICE_TABLE(pcmcia, snd_pdacf_ids);
 
-static struct pcmcia_driver pdacf_cs_driver = {
+अटल काष्ठा pcmcia_driver pdacf_cs_driver = अणु
 	.owner		= THIS_MODULE,
 	.name		= "snd-pdaudiocf",
 	.probe		= snd_pdacf_probe,
-	.remove		= snd_pdacf_detach,
+	.हटाओ		= snd_pdacf_detach,
 	.id_table	= snd_pdacf_ids,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend	= pdacf_suspend,
 	.resume		= pdacf_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 module_pcmcia_driver(pdacf_cs_driver);

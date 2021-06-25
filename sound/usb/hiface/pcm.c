@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Linux driver for M2Tech hiFace compatible devices
+ * Linux driver क्रम M2Tech hiFace compatible devices
  *
  * Copyright 2012-2013 (C) M2TECH S.r.l and Amarula Solutions B.V.
  *
  * Authors:  Michael Trimarchi <michael@amarulasolutions.com>
  *           Antonio Ospite <ao2@amarulasolutions.com>
  *
- * The driver is based on the work done in TerraTec DMX 6Fire USB
+ * The driver is based on the work करोne in TerraTec DMX 6Fire USB
  */
 
-#include <linux/slab.h>
-#include <sound/pcm.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/pcm.h>
 
-#include "pcm.h"
-#include "chip.h"
+#समावेश "pcm.h"
+#समावेश "chip.h"
 
-#define OUT_EP          0x2
-#define PCM_N_URBS      8
-#define PCM_PACKET_SIZE 4096
-#define PCM_BUFFER_SIZE (2 * PCM_N_URBS * PCM_PACKET_SIZE)
+#घोषणा OUT_EP          0x2
+#घोषणा PCM_N_URBS      8
+#घोषणा PCM_PACKET_SIZE 4096
+#घोषणा PCM_BUFFER_SIZE (2 * PCM_N_URBS * PCM_PACKET_SIZE)
 
-struct pcm_urb {
-	struct hiface_chip *chip;
+काष्ठा pcm_urb अणु
+	काष्ठा hअगरace_chip *chip;
 
-	struct urb instance;
-	struct usb_anchor submitted;
+	काष्ठा urb instance;
+	काष्ठा usb_anchor submitted;
 	u8 *buffer;
-};
+पूर्ण;
 
-struct pcm_substream {
+काष्ठा pcm_substream अणु
 	spinlock_t lock;
-	struct snd_pcm_substream *instance;
+	काष्ठा snd_pcm_substream *instance;
 
 	bool active;
 	snd_pcm_uframes_t dma_off;    /* current position in alsa dma_area */
 	snd_pcm_uframes_t period_off; /* current position in current period */
-};
+पूर्ण;
 
-enum { /* pcm streaming states */
+क्रमागत अणु /* pcm streaming states */
 	STREAM_DISABLED, /* no pcm streaming */
-	STREAM_STARTING, /* pcm streaming requested, waiting to become ready */
+	STREAM_STARTING, /* pcm streaming requested, रुकोing to become पढ़ोy */
 	STREAM_RUNNING,  /* pcm streaming running */
 	STREAM_STOPPING
-};
+पूर्ण;
 
-struct pcm_runtime {
-	struct hiface_chip *chip;
-	struct snd_pcm *instance;
+काष्ठा pcm_runसमय अणु
+	काष्ठा hअगरace_chip *chip;
+	काष्ठा snd_pcm *instance;
 
-	struct pcm_substream playback;
-	bool panic; /* if set driver won't do anymore pcm on device */
+	काष्ठा pcm_substream playback;
+	bool panic; /* अगर set driver won't करो anymore pcm on device */
 
-	struct pcm_urb out_urbs[PCM_N_URBS];
+	काष्ठा pcm_urb out_urbs[PCM_N_URBS];
 
-	struct mutex stream_mutex;
+	काष्ठा mutex stream_mutex;
 	u8 stream_state; /* one of STREAM_XXX */
 	u8 extra_freq;
-	wait_queue_head_t stream_wait_queue;
-	bool stream_wait_cond;
-};
+	रुको_queue_head_t stream_रुको_queue;
+	bool stream_रुको_cond;
+पूर्ण;
 
-static const unsigned int rates[] = { 44100, 48000, 88200, 96000, 176400, 192000,
-				      352800, 384000 };
-static const struct snd_pcm_hw_constraint_list constraints_extra_rates = {
+अटल स्थिर अचिन्हित पूर्णांक rates[] = अणु 44100, 48000, 88200, 96000, 176400, 192000,
+				      352800, 384000 पूर्ण;
+अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list स्थिरraपूर्णांकs_extra_rates = अणु
 	.count = ARRAY_SIZE(rates),
 	.list = rates,
 	.mask = 0,
-};
+पूर्ण;
 
-static const struct snd_pcm_hardware pcm_hw = {
+अटल स्थिर काष्ठा snd_pcm_hardware pcm_hw = अणु
 	.info = SNDRV_PCM_INFO_MMAP |
 		SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_BLOCK_TRANSFER |
@@ -77,7 +78,7 @@ static const struct snd_pcm_hardware pcm_hw = {
 		SNDRV_PCM_INFO_MMAP_VALID |
 		SNDRV_PCM_INFO_BATCH,
 
-	.formats = SNDRV_PCM_FMTBIT_S32_LE,
+	.क्रमmats = SNDRV_PCM_FMTBIT_S32_LE,
 
 	.rates = SNDRV_PCM_RATE_44100 |
 		SNDRV_PCM_RATE_48000 |
@@ -87,7 +88,7 @@ static const struct snd_pcm_hardware pcm_hw = {
 		SNDRV_PCM_RATE_192000,
 
 	.rate_min = 44100,
-	.rate_max = 192000, /* changes in hiface_pcm_open to support extra rates */
+	.rate_max = 192000, /* changes in hअगरace_pcm_खोलो to support extra rates */
 	.channels_min = 2,
 	.channels_max = 2,
 	.buffer_bytes_max = PCM_BUFFER_SIZE,
@@ -95,518 +96,518 @@ static const struct snd_pcm_hardware pcm_hw = {
 	.period_bytes_max = PCM_BUFFER_SIZE,
 	.periods_min = 2,
 	.periods_max = 1024
-};
+पूर्ण;
 
 /* message values used to change the sample rate */
-#define HIFACE_SET_RATE_REQUEST 0xb0
+#घोषणा HIFACE_SET_RATE_REQUEST 0xb0
 
-#define HIFACE_RATE_44100  0x43
-#define HIFACE_RATE_48000  0x4b
-#define HIFACE_RATE_88200  0x42
-#define HIFACE_RATE_96000  0x4a
-#define HIFACE_RATE_176400 0x40
-#define HIFACE_RATE_192000 0x48
-#define HIFACE_RATE_352800 0x58
-#define HIFACE_RATE_384000 0x68
+#घोषणा HIFACE_RATE_44100  0x43
+#घोषणा HIFACE_RATE_48000  0x4b
+#घोषणा HIFACE_RATE_88200  0x42
+#घोषणा HIFACE_RATE_96000  0x4a
+#घोषणा HIFACE_RATE_176400 0x40
+#घोषणा HIFACE_RATE_192000 0x48
+#घोषणा HIFACE_RATE_352800 0x58
+#घोषणा HIFACE_RATE_384000 0x68
 
-static int hiface_pcm_set_rate(struct pcm_runtime *rt, unsigned int rate)
-{
-	struct usb_device *device = rt->chip->dev;
+अटल पूर्णांक hअगरace_pcm_set_rate(काष्ठा pcm_runसमय *rt, अचिन्हित पूर्णांक rate)
+अणु
+	काष्ठा usb_device *device = rt->chip->dev;
 	u16 rate_value;
-	int ret;
+	पूर्णांक ret;
 
-	/* We are already sure that the rate is supported here thanks to
-	 * ALSA constraints
+	/* We are alपढ़ोy sure that the rate is supported here thanks to
+	 * ALSA स्थिरraपूर्णांकs
 	 */
-	switch (rate) {
-	case 44100:
+	चयन (rate) अणु
+	हाल 44100:
 		rate_value = HIFACE_RATE_44100;
-		break;
-	case 48000:
+		अवरोध;
+	हाल 48000:
 		rate_value = HIFACE_RATE_48000;
-		break;
-	case 88200:
+		अवरोध;
+	हाल 88200:
 		rate_value = HIFACE_RATE_88200;
-		break;
-	case 96000:
+		अवरोध;
+	हाल 96000:
 		rate_value = HIFACE_RATE_96000;
-		break;
-	case 176400:
+		अवरोध;
+	हाल 176400:
 		rate_value = HIFACE_RATE_176400;
-		break;
-	case 192000:
+		अवरोध;
+	हाल 192000:
 		rate_value = HIFACE_RATE_192000;
-		break;
-	case 352800:
+		अवरोध;
+	हाल 352800:
 		rate_value = HIFACE_RATE_352800;
-		break;
-	case 384000:
+		अवरोध;
+	हाल 384000:
 		rate_value = HIFACE_RATE_384000;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&device->dev, "Unsupported rate %d\n", rate);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * USBIO: Vendor 0xb0(wValue=0x0043, wIndex=0x0000)
+	 * USBIO: Venकरोr 0xb0(wValue=0x0043, wIndex=0x0000)
 	 * 43 b0 43 00 00 00 00 00
-	 * USBIO: Vendor 0xb0(wValue=0x004b, wIndex=0x0000)
+	 * USBIO: Venकरोr 0xb0(wValue=0x004b, wIndex=0x0000)
 	 * 43 b0 4b 00 00 00 00 00
-	 * This control message doesn't have any ack from the
+	 * This control message करोesn't have any ack from the
 	 * other side
 	 */
 	ret = usb_control_msg_send(device, 0,
 				   HIFACE_SET_RATE_REQUEST,
-				   USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
-				   rate_value, 0, NULL, 0, 100, GFP_KERNEL);
-	if (ret)
+				   USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
+				   rate_value, 0, शून्य, 0, 100, GFP_KERNEL);
+	अगर (ret)
 		dev_err(&device->dev, "Error setting samplerate %d.\n", rate);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct pcm_substream *hiface_pcm_get_substream(struct snd_pcm_substream
+अटल काष्ठा pcm_substream *hअगरace_pcm_get_substream(काष्ठा snd_pcm_substream
 						      *alsa_sub)
-{
-	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
-	struct device *device = &rt->chip->dev->dev;
+अणु
+	काष्ठा pcm_runसमय *rt = snd_pcm_substream_chip(alsa_sub);
+	काष्ठा device *device = &rt->chip->dev->dev;
 
-	if (alsa_sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		return &rt->playback;
+	अगर (alsa_sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		वापस &rt->playback;
 
 	dev_err(device, "Error getting pcm substream slot.\n");
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* call with stream_mutex locked */
-static void hiface_pcm_stream_stop(struct pcm_runtime *rt)
-{
-	int i, time;
+अटल व्योम hअगरace_pcm_stream_stop(काष्ठा pcm_runसमय *rt)
+अणु
+	पूर्णांक i, समय;
 
-	if (rt->stream_state != STREAM_DISABLED) {
+	अगर (rt->stream_state != STREAM_DISABLED) अणु
 		rt->stream_state = STREAM_STOPPING;
 
-		for (i = 0; i < PCM_N_URBS; i++) {
-			time = usb_wait_anchor_empty_timeout(
+		क्रम (i = 0; i < PCM_N_URBS; i++) अणु
+			समय = usb_रुको_anchor_empty_समयout(
 					&rt->out_urbs[i].submitted, 100);
-			if (!time)
-				usb_kill_anchored_urbs(
+			अगर (!समय)
+				usb_समाप्त_anchored_urbs(
 					&rt->out_urbs[i].submitted);
-			usb_kill_urb(&rt->out_urbs[i].instance);
-		}
+			usb_समाप्त_urb(&rt->out_urbs[i].instance);
+		पूर्ण
 
 		rt->stream_state = STREAM_DISABLED;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* call with stream_mutex locked */
-static int hiface_pcm_stream_start(struct pcm_runtime *rt)
-{
-	int ret = 0;
-	int i;
+अटल पूर्णांक hअगरace_pcm_stream_start(काष्ठा pcm_runसमय *rt)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	if (rt->stream_state == STREAM_DISABLED) {
+	अगर (rt->stream_state == STREAM_DISABLED) अणु
 
 		/* reset panic state when starting a new stream */
 		rt->panic = false;
 
 		/* submit our out urbs zero init */
 		rt->stream_state = STREAM_STARTING;
-		for (i = 0; i < PCM_N_URBS; i++) {
-			memset(rt->out_urbs[i].buffer, 0, PCM_PACKET_SIZE);
+		क्रम (i = 0; i < PCM_N_URBS; i++) अणु
+			स_रखो(rt->out_urbs[i].buffer, 0, PCM_PACKET_SIZE);
 			usb_anchor_urb(&rt->out_urbs[i].instance,
 				       &rt->out_urbs[i].submitted);
 			ret = usb_submit_urb(&rt->out_urbs[i].instance,
 					     GFP_ATOMIC);
-			if (ret) {
-				hiface_pcm_stream_stop(rt);
-				return ret;
-			}
-		}
+			अगर (ret) अणु
+				hअगरace_pcm_stream_stop(rt);
+				वापस ret;
+			पूर्ण
+		पूर्ण
 
-		/* wait for first out urb to return (sent in in urb handler) */
-		wait_event_timeout(rt->stream_wait_queue, rt->stream_wait_cond,
+		/* रुको क्रम first out urb to वापस (sent in in urb handler) */
+		रुको_event_समयout(rt->stream_रुको_queue, rt->stream_रुको_cond,
 				   HZ);
-		if (rt->stream_wait_cond) {
-			struct device *device = &rt->chip->dev->dev;
+		अगर (rt->stream_रुको_cond) अणु
+			काष्ठा device *device = &rt->chip->dev->dev;
 			dev_dbg(device, "%s: Stream is running wakeup event\n",
 				 __func__);
 			rt->stream_state = STREAM_RUNNING;
-		} else {
-			hiface_pcm_stream_stop(rt);
-			return -EIO;
-		}
-	}
-	return ret;
-}
+		पूर्ण अन्यथा अणु
+			hअगरace_pcm_stream_stop(rt);
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* The hardware wants word-swapped 32-bit values */
-static void memcpy_swahw32(u8 *dest, u8 *src, unsigned int n)
-{
-	unsigned int i;
+अटल व्योम स_नकल_swahw32(u8 *dest, u8 *src, अचिन्हित पूर्णांक n)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < n / 4; i++)
+	क्रम (i = 0; i < n / 4; i++)
 		((u32 *)dest)[i] = swahw32(((u32 *)src)[i]);
-}
+पूर्ण
 
 /* call with substream locked */
-/* returns true if a period elapsed */
-static bool hiface_pcm_playback(struct pcm_substream *sub, struct pcm_urb *urb)
-{
-	struct snd_pcm_runtime *alsa_rt = sub->instance->runtime;
-	struct device *device = &urb->chip->dev->dev;
+/* वापसs true अगर a period elapsed */
+अटल bool hअगरace_pcm_playback(काष्ठा pcm_substream *sub, काष्ठा pcm_urb *urb)
+अणु
+	काष्ठा snd_pcm_runसमय *alsa_rt = sub->instance->runसमय;
+	काष्ठा device *device = &urb->chip->dev->dev;
 	u8 *source;
-	unsigned int pcm_buffer_size;
+	अचिन्हित पूर्णांक pcm_buffer_size;
 
-	WARN_ON(alsa_rt->format != SNDRV_PCM_FORMAT_S32_LE);
+	WARN_ON(alsa_rt->क्रमmat != SNDRV_PCM_FORMAT_S32_LE);
 
 	pcm_buffer_size = snd_pcm_lib_buffer_bytes(sub->instance);
 
-	if (sub->dma_off + PCM_PACKET_SIZE <= pcm_buffer_size) {
+	अगर (sub->dma_off + PCM_PACKET_SIZE <= pcm_buffer_size) अणु
 		dev_dbg(device, "%s: (1) buffer_size %#x dma_offset %#x\n", __func__,
-			 (unsigned int) pcm_buffer_size,
-			 (unsigned int) sub->dma_off);
+			 (अचिन्हित पूर्णांक) pcm_buffer_size,
+			 (अचिन्हित पूर्णांक) sub->dma_off);
 
 		source = alsa_rt->dma_area + sub->dma_off;
-		memcpy_swahw32(urb->buffer, source, PCM_PACKET_SIZE);
-	} else {
+		स_नकल_swahw32(urb->buffer, source, PCM_PACKET_SIZE);
+	पूर्ण अन्यथा अणु
 		/* wrap around at end of ring buffer */
-		unsigned int len;
+		अचिन्हित पूर्णांक len;
 
 		dev_dbg(device, "%s: (2) buffer_size %#x dma_offset %#x\n", __func__,
-			 (unsigned int) pcm_buffer_size,
-			 (unsigned int) sub->dma_off);
+			 (अचिन्हित पूर्णांक) pcm_buffer_size,
+			 (अचिन्हित पूर्णांक) sub->dma_off);
 
 		len = pcm_buffer_size - sub->dma_off;
 
 		source = alsa_rt->dma_area + sub->dma_off;
-		memcpy_swahw32(urb->buffer, source, len);
+		स_नकल_swahw32(urb->buffer, source, len);
 
 		source = alsa_rt->dma_area;
-		memcpy_swahw32(urb->buffer + len, source,
+		स_नकल_swahw32(urb->buffer + len, source,
 			       PCM_PACKET_SIZE - len);
-	}
+	पूर्ण
 	sub->dma_off += PCM_PACKET_SIZE;
-	if (sub->dma_off >= pcm_buffer_size)
+	अगर (sub->dma_off >= pcm_buffer_size)
 		sub->dma_off -= pcm_buffer_size;
 
 	sub->period_off += PCM_PACKET_SIZE;
-	if (sub->period_off >= alsa_rt->period_size) {
+	अगर (sub->period_off >= alsa_rt->period_size) अणु
 		sub->period_off %= alsa_rt->period_size;
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
-{
-	struct pcm_urb *out_urb = usb_urb->context;
-	struct pcm_runtime *rt = out_urb->chip->pcm;
-	struct pcm_substream *sub;
-	bool do_period_elapsed = false;
-	unsigned long flags;
-	int ret;
+अटल व्योम hअगरace_pcm_out_urb_handler(काष्ठा urb *usb_urb)
+अणु
+	काष्ठा pcm_urb *out_urb = usb_urb->context;
+	काष्ठा pcm_runसमय *rt = out_urb->chip->pcm;
+	काष्ठा pcm_substream *sub;
+	bool करो_period_elapsed = false;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	if (rt->panic || rt->stream_state == STREAM_STOPPING)
-		return;
+	अगर (rt->panic || rt->stream_state == STREAM_STOPPING)
+		वापस;
 
-	if (unlikely(usb_urb->status == -ENOENT ||	/* unlinked */
-		     usb_urb->status == -ENODEV ||	/* device removed */
+	अगर (unlikely(usb_urb->status == -ENOENT ||	/* unlinked */
+		     usb_urb->status == -ENODEV ||	/* device हटाओd */
 		     usb_urb->status == -ECONNRESET ||	/* unlinked */
-		     usb_urb->status == -ESHUTDOWN)) {	/* device disabled */
-		goto out_fail;
-	}
+		     usb_urb->status == -ESHUTDOWN)) अणु	/* device disabled */
+		जाओ out_fail;
+	पूर्ण
 
-	if (rt->stream_state == STREAM_STARTING) {
-		rt->stream_wait_cond = true;
-		wake_up(&rt->stream_wait_queue);
-	}
+	अगर (rt->stream_state == STREAM_STARTING) अणु
+		rt->stream_रुको_cond = true;
+		wake_up(&rt->stream_रुको_queue);
+	पूर्ण
 
-	/* now send our playback data (if a free out urb was found) */
+	/* now send our playback data (अगर a मुक्त out urb was found) */
 	sub = &rt->playback;
 	spin_lock_irqsave(&sub->lock, flags);
-	if (sub->active)
-		do_period_elapsed = hiface_pcm_playback(sub, out_urb);
-	else
-		memset(out_urb->buffer, 0, PCM_PACKET_SIZE);
+	अगर (sub->active)
+		करो_period_elapsed = hअगरace_pcm_playback(sub, out_urb);
+	अन्यथा
+		स_रखो(out_urb->buffer, 0, PCM_PACKET_SIZE);
 
 	spin_unlock_irqrestore(&sub->lock, flags);
 
-	if (do_period_elapsed)
+	अगर (करो_period_elapsed)
 		snd_pcm_period_elapsed(sub->instance);
 
 	ret = usb_submit_urb(&out_urb->instance, GFP_ATOMIC);
-	if (ret < 0)
-		goto out_fail;
+	अगर (ret < 0)
+		जाओ out_fail;
 
-	return;
+	वापस;
 
 out_fail:
 	rt->panic = true;
-}
+पूर्ण
 
-static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
-{
-	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
-	struct pcm_substream *sub = NULL;
-	struct snd_pcm_runtime *alsa_rt = alsa_sub->runtime;
-	int ret;
+अटल पूर्णांक hअगरace_pcm_खोलो(काष्ठा snd_pcm_substream *alsa_sub)
+अणु
+	काष्ठा pcm_runसमय *rt = snd_pcm_substream_chip(alsa_sub);
+	काष्ठा pcm_substream *sub = शून्य;
+	काष्ठा snd_pcm_runसमय *alsa_rt = alsa_sub->runसमय;
+	पूर्णांक ret;
 
-	if (rt->panic)
-		return -EPIPE;
+	अगर (rt->panic)
+		वापस -EPIPE;
 
 	mutex_lock(&rt->stream_mutex);
 	alsa_rt->hw = pcm_hw;
 
-	if (alsa_sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	अगर (alsa_sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		sub = &rt->playback;
 
-	if (!sub) {
-		struct device *device = &rt->chip->dev->dev;
+	अगर (!sub) अणु
+		काष्ठा device *device = &rt->chip->dev->dev;
 		mutex_unlock(&rt->stream_mutex);
 		dev_err(device, "Invalid stream type\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (rt->extra_freq) {
+	अगर (rt->extra_freq) अणु
 		alsa_rt->hw.rates |= SNDRV_PCM_RATE_KNOT;
 		alsa_rt->hw.rate_max = 384000;
 
-		/* explicit constraints needed as we added SNDRV_PCM_RATE_KNOT */
-		ret = snd_pcm_hw_constraint_list(alsa_sub->runtime, 0,
+		/* explicit स्थिरraपूर्णांकs needed as we added SNDRV_PCM_RATE_KNOT */
+		ret = snd_pcm_hw_स्थिरraपूर्णांक_list(alsa_sub->runसमय, 0,
 						 SNDRV_PCM_HW_PARAM_RATE,
-						 &constraints_extra_rates);
-		if (ret < 0) {
+						 &स्थिरraपूर्णांकs_extra_rates);
+		अगर (ret < 0) अणु
 			mutex_unlock(&rt->stream_mutex);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	sub->instance = alsa_sub;
 	sub->active = false;
 	mutex_unlock(&rt->stream_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hiface_pcm_close(struct snd_pcm_substream *alsa_sub)
-{
-	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
-	struct pcm_substream *sub = hiface_pcm_get_substream(alsa_sub);
-	unsigned long flags;
+अटल पूर्णांक hअगरace_pcm_बंद(काष्ठा snd_pcm_substream *alsa_sub)
+अणु
+	काष्ठा pcm_runसमय *rt = snd_pcm_substream_chip(alsa_sub);
+	काष्ठा pcm_substream *sub = hअगरace_pcm_get_substream(alsa_sub);
+	अचिन्हित दीर्घ flags;
 
-	if (rt->panic)
-		return 0;
+	अगर (rt->panic)
+		वापस 0;
 
 	mutex_lock(&rt->stream_mutex);
-	if (sub) {
-		hiface_pcm_stream_stop(rt);
+	अगर (sub) अणु
+		hअगरace_pcm_stream_stop(rt);
 
 		/* deactivate substream */
 		spin_lock_irqsave(&sub->lock, flags);
-		sub->instance = NULL;
+		sub->instance = शून्य;
 		sub->active = false;
 		spin_unlock_irqrestore(&sub->lock, flags);
 
-	}
+	पूर्ण
 	mutex_unlock(&rt->stream_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hiface_pcm_prepare(struct snd_pcm_substream *alsa_sub)
-{
-	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
-	struct pcm_substream *sub = hiface_pcm_get_substream(alsa_sub);
-	struct snd_pcm_runtime *alsa_rt = alsa_sub->runtime;
-	int ret;
+अटल पूर्णांक hअगरace_pcm_prepare(काष्ठा snd_pcm_substream *alsa_sub)
+अणु
+	काष्ठा pcm_runसमय *rt = snd_pcm_substream_chip(alsa_sub);
+	काष्ठा pcm_substream *sub = hअगरace_pcm_get_substream(alsa_sub);
+	काष्ठा snd_pcm_runसमय *alsa_rt = alsa_sub->runसमय;
+	पूर्णांक ret;
 
-	if (rt->panic)
-		return -EPIPE;
-	if (!sub)
-		return -ENODEV;
+	अगर (rt->panic)
+		वापस -EPIPE;
+	अगर (!sub)
+		वापस -ENODEV;
 
 	mutex_lock(&rt->stream_mutex);
 
-	hiface_pcm_stream_stop(rt);
+	hअगरace_pcm_stream_stop(rt);
 
 	sub->dma_off = 0;
 	sub->period_off = 0;
 
-	if (rt->stream_state == STREAM_DISABLED) {
+	अगर (rt->stream_state == STREAM_DISABLED) अणु
 
-		ret = hiface_pcm_set_rate(rt, alsa_rt->rate);
-		if (ret) {
+		ret = hअगरace_pcm_set_rate(rt, alsa_rt->rate);
+		अगर (ret) अणु
 			mutex_unlock(&rt->stream_mutex);
-			return ret;
-		}
-		ret = hiface_pcm_stream_start(rt);
-		if (ret) {
+			वापस ret;
+		पूर्ण
+		ret = hअगरace_pcm_stream_start(rt);
+		अगर (ret) अणु
 			mutex_unlock(&rt->stream_mutex);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&rt->stream_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hiface_pcm_trigger(struct snd_pcm_substream *alsa_sub, int cmd)
-{
-	struct pcm_substream *sub = hiface_pcm_get_substream(alsa_sub);
-	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
+अटल पूर्णांक hअगरace_pcm_trigger(काष्ठा snd_pcm_substream *alsa_sub, पूर्णांक cmd)
+अणु
+	काष्ठा pcm_substream *sub = hअगरace_pcm_get_substream(alsa_sub);
+	काष्ठा pcm_runसमय *rt = snd_pcm_substream_chip(alsa_sub);
 
-	if (rt->panic)
-		return -EPIPE;
-	if (!sub)
-		return -ENODEV;
+	अगर (rt->panic)
+		वापस -EPIPE;
+	अगर (!sub)
+		वापस -ENODEV;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		spin_lock_irq(&sub->lock);
 		sub->active = true;
 		spin_unlock_irq(&sub->lock);
-		return 0;
+		वापस 0;
 
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		spin_lock_irq(&sub->lock);
 		sub->active = false;
 		spin_unlock_irq(&sub->lock);
-		return 0;
+		वापस 0;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static snd_pcm_uframes_t hiface_pcm_pointer(struct snd_pcm_substream *alsa_sub)
-{
-	struct pcm_substream *sub = hiface_pcm_get_substream(alsa_sub);
-	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
-	unsigned long flags;
+अटल snd_pcm_uframes_t hअगरace_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *alsa_sub)
+अणु
+	काष्ठा pcm_substream *sub = hअगरace_pcm_get_substream(alsa_sub);
+	काष्ठा pcm_runसमय *rt = snd_pcm_substream_chip(alsa_sub);
+	अचिन्हित दीर्घ flags;
 	snd_pcm_uframes_t dma_offset;
 
-	if (rt->panic || !sub)
-		return SNDRV_PCM_POS_XRUN;
+	अगर (rt->panic || !sub)
+		वापस SNDRV_PCM_POS_XRUN;
 
 	spin_lock_irqsave(&sub->lock, flags);
 	dma_offset = sub->dma_off;
 	spin_unlock_irqrestore(&sub->lock, flags);
-	return bytes_to_frames(alsa_sub->runtime, dma_offset);
-}
+	वापस bytes_to_frames(alsa_sub->runसमय, dma_offset);
+पूर्ण
 
-static const struct snd_pcm_ops pcm_ops = {
-	.open = hiface_pcm_open,
-	.close = hiface_pcm_close,
-	.prepare = hiface_pcm_prepare,
-	.trigger = hiface_pcm_trigger,
-	.pointer = hiface_pcm_pointer,
-};
+अटल स्थिर काष्ठा snd_pcm_ops pcm_ops = अणु
+	.खोलो = hअगरace_pcm_खोलो,
+	.बंद = hअगरace_pcm_बंद,
+	.prepare = hअगरace_pcm_prepare,
+	.trigger = hअगरace_pcm_trigger,
+	.poपूर्णांकer = hअगरace_pcm_poपूर्णांकer,
+पूर्ण;
 
-static int hiface_pcm_init_urb(struct pcm_urb *urb,
-			       struct hiface_chip *chip,
-			       unsigned int ep,
-			       void (*handler)(struct urb *))
-{
+अटल पूर्णांक hअगरace_pcm_init_urb(काष्ठा pcm_urb *urb,
+			       काष्ठा hअगरace_chip *chip,
+			       अचिन्हित पूर्णांक ep,
+			       व्योम (*handler)(काष्ठा urb *))
+अणु
 	urb->chip = chip;
 	usb_init_urb(&urb->instance);
 
 	urb->buffer = kzalloc(PCM_PACKET_SIZE, GFP_KERNEL);
-	if (!urb->buffer)
-		return -ENOMEM;
+	अगर (!urb->buffer)
+		वापस -ENOMEM;
 
 	usb_fill_bulk_urb(&urb->instance, chip->dev,
-			  usb_sndbulkpipe(chip->dev, ep), (void *)urb->buffer,
+			  usb_sndbulkpipe(chip->dev, ep), (व्योम *)urb->buffer,
 			  PCM_PACKET_SIZE, handler, urb);
-	if (usb_urb_ep_type_check(&urb->instance))
-		return -EINVAL;
+	अगर (usb_urb_ep_type_check(&urb->instance))
+		वापस -EINVAL;
 	init_usb_anchor(&urb->submitted);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void hiface_pcm_abort(struct hiface_chip *chip)
-{
-	struct pcm_runtime *rt = chip->pcm;
+व्योम hअगरace_pcm_पात(काष्ठा hअगरace_chip *chip)
+अणु
+	काष्ठा pcm_runसमय *rt = chip->pcm;
 
-	if (rt) {
+	अगर (rt) अणु
 		rt->panic = true;
 
 		mutex_lock(&rt->stream_mutex);
-		hiface_pcm_stream_stop(rt);
+		hअगरace_pcm_stream_stop(rt);
 		mutex_unlock(&rt->stream_mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void hiface_pcm_destroy(struct hiface_chip *chip)
-{
-	struct pcm_runtime *rt = chip->pcm;
-	int i;
+अटल व्योम hअगरace_pcm_destroy(काष्ठा hअगरace_chip *chip)
+अणु
+	काष्ठा pcm_runसमय *rt = chip->pcm;
+	पूर्णांक i;
 
-	for (i = 0; i < PCM_N_URBS; i++)
-		kfree(rt->out_urbs[i].buffer);
+	क्रम (i = 0; i < PCM_N_URBS; i++)
+		kमुक्त(rt->out_urbs[i].buffer);
 
-	kfree(chip->pcm);
-	chip->pcm = NULL;
-}
+	kमुक्त(chip->pcm);
+	chip->pcm = शून्य;
+पूर्ण
 
-static void hiface_pcm_free(struct snd_pcm *pcm)
-{
-	struct pcm_runtime *rt = pcm->private_data;
+अटल व्योम hअगरace_pcm_मुक्त(काष्ठा snd_pcm *pcm)
+अणु
+	काष्ठा pcm_runसमय *rt = pcm->निजी_data;
 
-	if (rt)
-		hiface_pcm_destroy(rt->chip);
-}
+	अगर (rt)
+		hअगरace_pcm_destroy(rt->chip);
+पूर्ण
 
-int hiface_pcm_init(struct hiface_chip *chip, u8 extra_freq)
-{
-	int i;
-	int ret;
-	struct snd_pcm *pcm;
-	struct pcm_runtime *rt;
+पूर्णांक hअगरace_pcm_init(काष्ठा hअगरace_chip *chip, u8 extra_freq)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
+	काष्ठा snd_pcm *pcm;
+	काष्ठा pcm_runसमय *rt;
 
-	rt = kzalloc(sizeof(*rt), GFP_KERNEL);
-	if (!rt)
-		return -ENOMEM;
+	rt = kzalloc(माप(*rt), GFP_KERNEL);
+	अगर (!rt)
+		वापस -ENOMEM;
 
 	rt->chip = chip;
 	rt->stream_state = STREAM_DISABLED;
-	if (extra_freq)
+	अगर (extra_freq)
 		rt->extra_freq = 1;
 
-	init_waitqueue_head(&rt->stream_wait_queue);
+	init_रुकोqueue_head(&rt->stream_रुको_queue);
 	mutex_init(&rt->stream_mutex);
 	spin_lock_init(&rt->playback.lock);
 
-	for (i = 0; i < PCM_N_URBS; i++) {
-		ret = hiface_pcm_init_urb(&rt->out_urbs[i], chip, OUT_EP,
-				    hiface_pcm_out_urb_handler);
-		if (ret < 0)
-			goto error;
-	}
+	क्रम (i = 0; i < PCM_N_URBS; i++) अणु
+		ret = hअगरace_pcm_init_urb(&rt->out_urbs[i], chip, OUT_EP,
+				    hअगरace_pcm_out_urb_handler);
+		अगर (ret < 0)
+			जाओ error;
+	पूर्ण
 
 	ret = snd_pcm_new(chip->card, "USB-SPDIF Audio", 0, 1, 0, &pcm);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&chip->dev->dev, "Cannot create pcm instance\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	pcm->private_data = rt;
-	pcm->private_free = hiface_pcm_free;
+	pcm->निजी_data = rt;
+	pcm->निजी_मुक्त = hअगरace_pcm_मुक्त;
 
-	strscpy(pcm->name, "USB-SPDIF Audio", sizeof(pcm->name));
+	strscpy(pcm->name, "USB-SPDIF Audio", माप(pcm->name));
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &pcm_ops);
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC,
-				       NULL, 0, 0);
+				       शून्य, 0, 0);
 
 	rt->instance = pcm;
 
 	chip->pcm = rt;
-	return 0;
+	वापस 0;
 
 error:
-	for (i = 0; i < PCM_N_URBS; i++)
-		kfree(rt->out_urbs[i].buffer);
-	kfree(rt);
-	return ret;
-}
+	क्रम (i = 0; i < PCM_N_URBS; i++)
+		kमुक्त(rt->out_urbs[i].buffer);
+	kमुक्त(rt);
+	वापस ret;
+पूर्ण

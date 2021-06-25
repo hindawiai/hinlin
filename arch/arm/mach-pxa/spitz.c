@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Support for Sharp SL-Cxx00 Series of PDAs
+ * Support क्रम Sharp SL-Cxx00 Series of PDAs
  * Models: SL-C3000 (Spitz), SL-C1000 (Akita) and SL-C3100 (Borzoi)
  *
- * Copyright (c) 2005 Richard Purdie
+ * Copyright (c) 2005 Riअक्षरd Purdie
  *
  * Based on Sharp's 2.4 kernel patches/lubbock.c
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>	/* symbol_get ; symbol_put */
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/gpio_keys.h>
-#include <linux/gpio.h>
-#include <linux/gpio/machine.h>
-#include <linux/leds.h>
-#include <linux/i2c.h>
-#include <linux/platform_data/i2c-pxa.h>
-#include <linux/platform_data/pca953x.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/ads7846.h>
-#include <linux/spi/corgi_lcd.h>
-#include <linux/spi/pxa2xx_spi.h>
-#include <linux/mtd/sharpsl.h>
-#include <linux/mtd/physmap.h>
-#include <linux/input/matrix_keypad.h>
-#include <linux/regulator/machine.h>
-#include <linux/io.h>
-#include <linux/reboot.h>
-#include <linux/memblock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>	/* symbol_get ; symbol_put */
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio_keys.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/platक्रमm_data/i2c-pxa.h>
+#समावेश <linux/platक्रमm_data/pca953x.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/ads7846.h>
+#समावेश <linux/spi/corgi_lcd.h>
+#समावेश <linux/spi/pxa2xx_spi.h>
+#समावेश <linux/mtd/sharpsl.h>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <linux/input/matrix_keypad.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/reboot.h>
+#समावेश <linux/memblock.h>
 
-#include <asm/setup.h>
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/sharpsl_param.h>
-#include <asm/hardware/scoop.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/sharpsl_param.h>
+#समावेश <यंत्र/hardware/scoop.h>
 
-#include "pxa27x.h"
-#include "pxa27x-udc.h"
-#include <mach/reset.h>
-#include <linux/platform_data/irda-pxaficp.h>
-#include <linux/platform_data/mmc-pxamci.h>
-#include <linux/platform_data/usb-ohci-pxa27x.h>
-#include <linux/platform_data/video-pxafb.h>
-#include <mach/spitz.h>
-#include "sharpsl_pm.h"
-#include <mach/smemc.h>
+#समावेश "pxa27x.h"
+#समावेश "pxa27x-udc.h"
+#समावेश <mach/reset.h>
+#समावेश <linux/platक्रमm_data/irda-pxaficp.h>
+#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
+#समावेश <linux/platक्रमm_data/usb-ohci-pxa27x.h>
+#समावेश <linux/platक्रमm_data/video-pxafb.h>
+#समावेश <mach/spitz.h>
+#समावेश "sharpsl_pm.h"
+#समावेश <mach/smemc.h>
 
-#include "generic.h"
-#include "devices.h"
+#समावेश "generic.h"
+#समावेश "devices.h"
 
 /******************************************************************************
  * Pin configuration
  ******************************************************************************/
-static unsigned long spitz_pin_config[] __initdata = {
+अटल अचिन्हित दीर्घ spitz_pin_config[] __initdata = अणु
 	/* Chip Selects */
 	GPIO78_nCS_2,	/* SCOOP #2 */
-	GPIO79_nCS_3,	/* NAND */
+	GPIO79_nCS_3,	/* न_अंकD */
 	GPIO80_nCS_4,	/* SCOOP #1 */
 
 	/* LCD - 16bpp Active TFT */
@@ -127,177 +128,177 @@ static unsigned long spitz_pin_config[] __initdata = {
 
 	GPIO0_GPIO | WAKEUP_ON_EDGE_RISE,	/* SPITZ_GPIO_KEY_INT */
 	GPIO1_GPIO | WAKEUP_ON_EDGE_FALL,	/* SPITZ_GPIO_RESET */
-};
+पूर्ण;
 
 
 /******************************************************************************
  * Scoop GPIO expander
  ******************************************************************************/
-#if defined(CONFIG_SHARP_SCOOP) || defined(CONFIG_SHARP_SCOOP_MODULE)
+#अगर defined(CONFIG_SHARP_SCOOP) || defined(CONFIG_SHARP_SCOOP_MODULE)
 /* SCOOP Device #1 */
-static struct resource spitz_scoop_1_resources[] = {
-	[0] = {
+अटल काष्ठा resource spitz_scoop_1_resources[] = अणु
+	[0] = अणु
 		.start		= 0x10800000,
 		.end		= 0x10800fff,
 		.flags		= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct scoop_config spitz_scoop_1_setup = {
-	.io_dir		= SPITZ_SCP_IO_DIR,
+अटल काष्ठा scoop_config spitz_scoop_1_setup = अणु
+	.io_dir		= SPITZ_SCP_IO_सूची,
 	.io_out		= SPITZ_SCP_IO_OUT,
 	.suspend_clr	= SPITZ_SCP_SUS_CLR,
 	.suspend_set	= SPITZ_SCP_SUS_SET,
 	.gpio_base	= SPITZ_SCP_GPIO_BASE,
-};
+पूर्ण;
 
-struct platform_device spitz_scoop_1_device = {
+काष्ठा platक्रमm_device spitz_scoop_1_device = अणु
 	.name		= "sharp-scoop",
 	.id		= 0,
-	.dev		= {
-		.platform_data	= &spitz_scoop_1_setup,
-	},
+	.dev		= अणु
+		.platक्रमm_data	= &spitz_scoop_1_setup,
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(spitz_scoop_1_resources),
 	.resource	= spitz_scoop_1_resources,
-};
+पूर्ण;
 
 /* SCOOP Device #2 */
-static struct resource spitz_scoop_2_resources[] = {
-	[0] = {
+अटल काष्ठा resource spitz_scoop_2_resources[] = अणु
+	[0] = अणु
 		.start		= 0x08800040,
 		.end		= 0x08800fff,
 		.flags		= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct scoop_config spitz_scoop_2_setup = {
-	.io_dir		= SPITZ_SCP2_IO_DIR,
+अटल काष्ठा scoop_config spitz_scoop_2_setup = अणु
+	.io_dir		= SPITZ_SCP2_IO_सूची,
 	.io_out		= SPITZ_SCP2_IO_OUT,
 	.suspend_clr	= SPITZ_SCP2_SUS_CLR,
 	.suspend_set	= SPITZ_SCP2_SUS_SET,
 	.gpio_base	= SPITZ_SCP2_GPIO_BASE,
-};
+पूर्ण;
 
-struct platform_device spitz_scoop_2_device = {
+काष्ठा platक्रमm_device spitz_scoop_2_device = अणु
 	.name		= "sharp-scoop",
 	.id		= 1,
-	.dev		= {
-		.platform_data	= &spitz_scoop_2_setup,
-	},
+	.dev		= अणु
+		.platक्रमm_data	= &spitz_scoop_2_setup,
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(spitz_scoop_2_resources),
 	.resource	= spitz_scoop_2_resources,
-};
+पूर्ण;
 
-static void __init spitz_scoop_init(void)
-{
-	platform_device_register(&spitz_scoop_1_device);
+अटल व्योम __init spitz_scoop_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&spitz_scoop_1_device);
 
-	/* Akita doesn't have the second SCOOP chip */
-	if (!machine_is_akita())
-		platform_device_register(&spitz_scoop_2_device);
-}
+	/* Akita करोesn't have the second SCOOP chip */
+	अगर (!machine_is_akita())
+		platक्रमm_device_रेजिस्टर(&spitz_scoop_2_device);
+पूर्ण
 
 /* Power control is shared with between one of the CF slots and SD */
-static void __maybe_unused spitz_card_pwr_ctrl(uint8_t enable, uint8_t new_cpr)
-{
-	unsigned short cpr;
-	unsigned long flags;
+अटल व्योम __maybe_unused spitz_card_pwr_ctrl(uपूर्णांक8_t enable, uपूर्णांक8_t new_cpr)
+अणु
+	अचिन्हित लघु cpr;
+	अचिन्हित दीर्घ flags;
 
-	if (new_cpr & 0x7) {
+	अगर (new_cpr & 0x7) अणु
 		gpio_set_value(SPITZ_GPIO_CF_POWER, 1);
 		mdelay(5);
-	}
+	पूर्ण
 
 	local_irq_save(flags);
 
-	cpr = read_scoop_reg(&spitz_scoop_1_device.dev, SCOOP_CPR);
+	cpr = पढ़ो_scoop_reg(&spitz_scoop_1_device.dev, SCOOP_CPR);
 
-	if (enable & new_cpr)
+	अगर (enable & new_cpr)
 		cpr |= new_cpr;
-	else
+	अन्यथा
 		cpr &= ~enable;
 
-	write_scoop_reg(&spitz_scoop_1_device.dev, SCOOP_CPR, cpr);
+	ग_लिखो_scoop_reg(&spitz_scoop_1_device.dev, SCOOP_CPR, cpr);
 
 	local_irq_restore(flags);
 
-	if (!(cpr & 0x7)) {
+	अगर (!(cpr & 0x7)) अणु
 		mdelay(1);
 		gpio_set_value(SPITZ_GPIO_CF_POWER, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#else
-static inline void spitz_scoop_init(void) {}
-static inline void spitz_card_pwr_ctrl(uint8_t enable, uint8_t new_cpr) {}
-#endif
+#अन्यथा
+अटल अंतरभूत व्योम spitz_scoop_init(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम spitz_card_pwr_ctrl(uपूर्णांक8_t enable, uपूर्णांक8_t new_cpr) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * PCMCIA
  ******************************************************************************/
-#if defined(CONFIG_PCMCIA_PXA2XX) || defined(CONFIG_PCMCIA_PXA2XX_MODULE)
-static void spitz_pcmcia_pwr(struct device *scoop, uint16_t cpr, int nr)
-{
-	/* Only need to override behaviour for slot 0 */
-	if (nr == 0)
+#अगर defined(CONFIG_PCMCIA_PXA2XX) || defined(CONFIG_PCMCIA_PXA2XX_MODULE)
+अटल व्योम spitz_pcmcia_pwr(काष्ठा device *scoop, uपूर्णांक16_t cpr, पूर्णांक nr)
+अणु
+	/* Only need to override behaviour क्रम slot 0 */
+	अगर (nr == 0)
 		spitz_card_pwr_ctrl(
 			cpr & (SCOOP_CPR_CF_3V | SCOOP_CPR_CF_XV), cpr);
-	else
-		write_scoop_reg(scoop, SCOOP_CPR, cpr);
-}
+	अन्यथा
+		ग_लिखो_scoop_reg(scoop, SCOOP_CPR, cpr);
+पूर्ण
 
-static struct scoop_pcmcia_dev spitz_pcmcia_scoop[] = {
-	{
+अटल काष्ठा scoop_pcmcia_dev spitz_pcmcia_scoop[] = अणु
+	अणु
 		.dev		= &spitz_scoop_1_device.dev,
 		.irq		= SPITZ_IRQ_GPIO_CF_IRQ,
 		.cd_irq		= SPITZ_IRQ_GPIO_CF_CD,
 		.cd_irq_str	= "PCMCIA0 CD",
-	}, {
+	पूर्ण, अणु
 		.dev		= &spitz_scoop_2_device.dev,
 		.irq		= SPITZ_IRQ_GPIO_CF2_IRQ,
 		.cd_irq		= -1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct scoop_pcmcia_config spitz_pcmcia_config = {
+अटल काष्ठा scoop_pcmcia_config spitz_pcmcia_config = अणु
 	.devs		= &spitz_pcmcia_scoop[0],
 	.num_devs	= 2,
-	.power_ctrl	= spitz_pcmcia_pwr,
-};
+	.घातer_ctrl	= spitz_pcmcia_pwr,
+पूर्ण;
 
-static void __init spitz_pcmcia_init(void)
-{
+अटल व्योम __init spitz_pcmcia_init(व्योम)
+अणु
 	/* Akita has only one PCMCIA slot used */
-	if (machine_is_akita())
+	अगर (machine_is_akita())
 		spitz_pcmcia_config.num_devs = 1;
 
-	platform_scoop_config = &spitz_pcmcia_config;
-}
-#else
-static inline void spitz_pcmcia_init(void) {}
-#endif
+	platक्रमm_scoop_config = &spitz_pcmcia_config;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम spitz_pcmcia_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * GPIO keyboard
  ******************************************************************************/
-#if defined(CONFIG_KEYBOARD_MATRIX) || defined(CONFIG_KEYBOARD_MATRIX_MODULE)
+#अगर defined(CONFIG_KEYBOARD_MATRIX) || defined(CONFIG_KEYBOARD_MATRIX_MODULE)
 
-#define SPITZ_KEY_CALENDAR	KEY_F1
-#define SPITZ_KEY_ADDRESS	KEY_F2
-#define SPITZ_KEY_FN		KEY_F3
-#define SPITZ_KEY_CANCEL	KEY_F4
-#define SPITZ_KEY_EXOK		KEY_F5
-#define SPITZ_KEY_EXCANCEL	KEY_F6
-#define SPITZ_KEY_EXJOGDOWN	KEY_F7
-#define SPITZ_KEY_EXJOGUP	KEY_F8
-#define SPITZ_KEY_JAP1		KEY_LEFTALT
-#define SPITZ_KEY_JAP2		KEY_RIGHTCTRL
-#define SPITZ_KEY_SYNC		KEY_F9
-#define SPITZ_KEY_MAIL		KEY_F10
-#define SPITZ_KEY_OK		KEY_F11
-#define SPITZ_KEY_MENU		KEY_F12
+#घोषणा SPITZ_KEY_CALENDAR	KEY_F1
+#घोषणा SPITZ_KEY_ADDRESS	KEY_F2
+#घोषणा SPITZ_KEY_FN		KEY_F3
+#घोषणा SPITZ_KEY_CANCEL	KEY_F4
+#घोषणा SPITZ_KEY_EXOK		KEY_F5
+#घोषणा SPITZ_KEY_EXCANCEL	KEY_F6
+#घोषणा SPITZ_KEY_EXJOGDOWN	KEY_F7
+#घोषणा SPITZ_KEY_EXJOGUP	KEY_F8
+#घोषणा SPITZ_KEY_JAP1		KEY_LEFTALT
+#घोषणा SPITZ_KEY_JAP2		KEY_RIGHTCTRL
+#घोषणा SPITZ_KEY_SYNC		KEY_F9
+#घोषणा SPITZ_KEY_MAIL		KEY_F10
+#घोषणा SPITZ_KEY_OK		KEY_F11
+#घोषणा SPITZ_KEY_MENU		KEY_F12
 
-static const uint32_t spitz_keymap[] = {
+अटल स्थिर uपूर्णांक32_t spitz_keymap[] = अणु
 	KEY(0, 0, KEY_LEFTCTRL),
 	KEY(0, 1, KEY_1),
 	KEY(0, 2, KEY_3),
@@ -362,19 +363,19 @@ static const uint32_t spitz_keymap[] = {
 	KEY(6, 6, KEY_LEFT),
 	KEY(6, 7, KEY_DOWN),
 	KEY(6, 8, KEY_RIGHT),
-};
+पूर्ण;
 
-static const struct matrix_keymap_data spitz_keymap_data = {
+अटल स्थिर काष्ठा matrix_keymap_data spitz_keymap_data = अणु
 	.keymap		= spitz_keymap,
 	.keymap_size	= ARRAY_SIZE(spitz_keymap),
-};
+पूर्ण;
 
-static const uint32_t spitz_row_gpios[] =
-		{ 12, 17, 91, 34, 36, 38, 39 };
-static const uint32_t spitz_col_gpios[] =
-		{ 88, 23, 24, 25, 26, 27, 52, 103, 107, 108, 114 };
+अटल स्थिर uपूर्णांक32_t spitz_row_gpios[] =
+		अणु 12, 17, 91, 34, 36, 38, 39 पूर्ण;
+अटल स्थिर uपूर्णांक32_t spitz_col_gpios[] =
+		अणु 88, 23, 24, 25, 26, 27, 52, 103, 107, 108, 114 पूर्ण;
 
-static struct matrix_keypad_platform_data spitz_mkp_pdata = {
+अटल काष्ठा matrix_keypad_platक्रमm_data spitz_mkp_pdata = अणु
 	.keymap_data		= &spitz_keymap_data,
 	.row_gpios		= spitz_row_gpios,
 	.col_gpios		= spitz_col_gpios,
@@ -383,342 +384,342 @@ static struct matrix_keypad_platform_data spitz_mkp_pdata = {
 	.col_scan_delay_us	= 10,
 	.debounce_ms		= 10,
 	.wakeup			= 1,
-};
+पूर्ण;
 
-static struct platform_device spitz_mkp_device = {
+अटल काष्ठा platक्रमm_device spitz_mkp_device = अणु
 	.name		= "matrix-keypad",
 	.id		= -1,
-	.dev		= {
-		.platform_data	= &spitz_mkp_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &spitz_mkp_pdata,
+	पूर्ण,
+पूर्ण;
 
-static void __init spitz_mkp_init(void)
-{
-	platform_device_register(&spitz_mkp_device);
-}
-#else
-static inline void spitz_mkp_init(void) {}
-#endif
+अटल व्योम __init spitz_mkp_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&spitz_mkp_device);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम spitz_mkp_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * GPIO keys
  ******************************************************************************/
-#if defined(CONFIG_KEYBOARD_GPIO) || defined(CONFIG_KEYBOARD_GPIO_MODULE)
-static struct gpio_keys_button spitz_gpio_keys[] = {
-	{
+#अगर defined(CONFIG_KEYBOARD_GPIO) || defined(CONFIG_KEYBOARD_GPIO_MODULE)
+अटल काष्ठा gpio_keys_button spitz_gpio_keys[] = अणु
+	अणु
 		.type	= EV_PWR,
 		.code	= KEY_SUSPEND,
 		.gpio	= SPITZ_GPIO_ON_KEY,
 		.desc	= "On Off",
 		.wakeup	= 1,
-	},
+	पूर्ण,
 	/* Two buttons detecting the lid state */
-	{
+	अणु
 		.type	= EV_SW,
 		.code	= 0,
 		.gpio	= SPITZ_GPIO_SWA,
 		.desc	= "Display Down",
-	},
-	{
+	पूर्ण,
+	अणु
 		.type	= EV_SW,
 		.code	= 1,
 		.gpio	= SPITZ_GPIO_SWB,
 		.desc	= "Lid Closed",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_keys_platform_data spitz_gpio_keys_platform_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data spitz_gpio_keys_platक्रमm_data = अणु
 	.buttons	= spitz_gpio_keys,
 	.nbuttons	= ARRAY_SIZE(spitz_gpio_keys),
-};
+पूर्ण;
 
-static struct platform_device spitz_gpio_keys_device = {
+अटल काष्ठा platक्रमm_device spitz_gpio_keys_device = अणु
 	.name	= "gpio-keys",
 	.id	= -1,
-	.dev	= {
-		.platform_data	= &spitz_gpio_keys_platform_data,
-	},
-};
+	.dev	= अणु
+		.platक्रमm_data	= &spitz_gpio_keys_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static void __init spitz_keys_init(void)
-{
-	platform_device_register(&spitz_gpio_keys_device);
-}
-#else
-static inline void spitz_keys_init(void) {}
-#endif
+अटल व्योम __init spitz_keys_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&spitz_gpio_keys_device);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम spitz_keys_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * LEDs
  ******************************************************************************/
-#if defined(CONFIG_LEDS_GPIO) || defined(CONFIG_LEDS_GPIO_MODULE)
-static struct gpio_led spitz_gpio_leds[] = {
-	{
+#अगर defined(CONFIG_LEDS_GPIO) || defined(CONFIG_LEDS_GPIO_MODULE)
+अटल काष्ठा gpio_led spitz_gpio_leds[] = अणु
+	अणु
 		.name			= "spitz:amber:charge",
-		.default_trigger	= "sharpsl-charge",
+		.शेष_trigger	= "sharpsl-charge",
 		.gpio			= SPITZ_GPIO_LED_ORANGE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name			= "spitz:green:hddactivity",
-		.default_trigger	= "disk-activity",
+		.शेष_trigger	= "disk-activity",
 		.gpio			= SPITZ_GPIO_LED_GREEN,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_led_platform_data spitz_gpio_leds_info = {
+अटल काष्ठा gpio_led_platक्रमm_data spitz_gpio_leds_info = अणु
 	.leds		= spitz_gpio_leds,
 	.num_leds	= ARRAY_SIZE(spitz_gpio_leds),
-};
+पूर्ण;
 
-static struct platform_device spitz_led_device = {
+अटल काष्ठा platक्रमm_device spitz_led_device = अणु
 	.name		= "leds-gpio",
 	.id		= -1,
-	.dev		= {
-		.platform_data	= &spitz_gpio_leds_info,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &spitz_gpio_leds_info,
+	पूर्ण,
+पूर्ण;
 
-static void __init spitz_leds_init(void)
-{
-	platform_device_register(&spitz_led_device);
-}
-#else
-static inline void spitz_leds_init(void) {}
-#endif
+अटल व्योम __init spitz_leds_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&spitz_led_device);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम spitz_leds_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * SSP Devices
  ******************************************************************************/
-#if defined(CONFIG_SPI_PXA2XX) || defined(CONFIG_SPI_PXA2XX_MODULE)
-static void spitz_ads7846_wait_for_hsync(void)
-{
-	while (gpio_get_value(SPITZ_GPIO_HSYNC))
+#अगर defined(CONFIG_SPI_PXA2XX) || defined(CONFIG_SPI_PXA2XX_MODULE)
+अटल व्योम spitz_ads7846_रुको_क्रम_hsync(व्योम)
+अणु
+	जबतक (gpio_get_value(SPITZ_GPIO_HSYNC))
 		cpu_relax();
 
-	while (!gpio_get_value(SPITZ_GPIO_HSYNC))
+	जबतक (!gpio_get_value(SPITZ_GPIO_HSYNC))
 		cpu_relax();
-}
+पूर्ण
 
-static struct ads7846_platform_data spitz_ads7846_info = {
+अटल काष्ठा ads7846_platक्रमm_data spitz_ads7846_info = अणु
 	.model			= 7846,
 	.vref_delay_usecs	= 100,
 	.x_plate_ohms		= 419,
 	.y_plate_ohms		= 486,
 	.pressure_max		= 1024,
-	.gpio_pendown		= SPITZ_GPIO_TP_INT,
-	.wait_for_sync		= spitz_ads7846_wait_for_hsync,
-};
+	.gpio_penकरोwn		= SPITZ_GPIO_TP_INT,
+	.रुको_क्रम_sync		= spitz_ads7846_रुको_क्रम_hsync,
+पूर्ण;
 
-static struct pxa2xx_spi_chip spitz_ads7846_chip = {
+अटल काष्ठा pxa2xx_spi_chip spitz_ads7846_chip = अणु
 	.gpio_cs		= SPITZ_GPIO_ADS7846_CS,
-};
+पूर्ण;
 
-static void spitz_bl_kick_battery(void)
-{
-	void (*kick_batt)(void);
+अटल व्योम spitz_bl_kick_battery(व्योम)
+अणु
+	व्योम (*kick_batt)(व्योम);
 
 	kick_batt = symbol_get(sharpsl_battery_kick);
-	if (kick_batt) {
+	अगर (kick_batt) अणु
 		kick_batt();
 		symbol_put(sharpsl_battery_kick);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct gpiod_lookup_table spitz_lcdcon_gpio_table = {
+अटल काष्ठा gpiod_lookup_table spitz_lcdcon_gpio_table = अणु
 	.dev_id = "spi2.1",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", SPITZ_GPIO_BACKLIGHT_CONT,
 			    "BL_CONT", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", SPITZ_GPIO_BACKLIGHT_ON,
 			    "BL_ON", GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct gpiod_lookup_table akita_lcdcon_gpio_table = {
+अटल काष्ठा gpiod_lookup_table akita_lcdcon_gpio_table = अणु
 	.dev_id = "spi2.1",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", AKITA_GPIO_BACKLIGHT_CONT,
 			    "BL_CONT", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", AKITA_GPIO_BACKLIGHT_ON,
 			    "BL_ON", GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct corgi_lcd_platform_data spitz_lcdcon_info = {
+अटल काष्ठा corgi_lcd_platक्रमm_data spitz_lcdcon_info = अणु
 	.init_mode		= CORGI_LCD_MODE_VGA,
-	.max_intensity		= 0x2f,
-	.default_intensity	= 0x1f,
+	.max_पूर्णांकensity		= 0x2f,
+	.शेष_पूर्णांकensity	= 0x1f,
 	.limit_mask		= 0x0b,
 	.kick_battery		= spitz_bl_kick_battery,
-};
+पूर्ण;
 
-static struct pxa2xx_spi_chip spitz_lcdcon_chip = {
+अटल काष्ठा pxa2xx_spi_chip spitz_lcdcon_chip = अणु
 	.gpio_cs	= SPITZ_GPIO_LCDCON_CS,
-};
+पूर्ण;
 
-static struct pxa2xx_spi_chip spitz_max1111_chip = {
+अटल काष्ठा pxa2xx_spi_chip spitz_max1111_chip = अणु
 	.gpio_cs	= SPITZ_GPIO_MAX1111_CS,
-};
+पूर्ण;
 
-static struct spi_board_info spitz_spi_devices[] = {
-	{
+अटल काष्ठा spi_board_info spitz_spi_devices[] = अणु
+	अणु
 		.modalias		= "ads7846",
 		.max_speed_hz		= 1200000,
 		.bus_num		= 2,
 		.chip_select		= 0,
-		.platform_data		= &spitz_ads7846_info,
+		.platक्रमm_data		= &spitz_ads7846_info,
 		.controller_data	= &spitz_ads7846_chip,
 		.irq			= PXA_GPIO_TO_IRQ(SPITZ_GPIO_TP_INT),
-	}, {
+	पूर्ण, अणु
 		.modalias		= "corgi-lcd",
 		.max_speed_hz		= 50000,
 		.bus_num		= 2,
 		.chip_select		= 1,
-		.platform_data		= &spitz_lcdcon_info,
+		.platक्रमm_data		= &spitz_lcdcon_info,
 		.controller_data	= &spitz_lcdcon_chip,
-	}, {
+	पूर्ण, अणु
 		.modalias		= "max1111",
 		.max_speed_hz		= 450000,
 		.bus_num		= 2,
 		.chip_select		= 2,
 		.controller_data	= &spitz_max1111_chip,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct pxa2xx_spi_controller spitz_spi_info = {
+अटल काष्ठा pxa2xx_spi_controller spitz_spi_info = अणु
 	.num_chipselect	= 3,
-};
+पूर्ण;
 
-static void __init spitz_spi_init(void)
-{
-	if (machine_is_akita())
+अटल व्योम __init spitz_spi_init(व्योम)
+अणु
+	अगर (machine_is_akita())
 		gpiod_add_lookup_table(&akita_lcdcon_gpio_table);
-	else
+	अन्यथा
 		gpiod_add_lookup_table(&spitz_lcdcon_gpio_table);
 
 	pxa2xx_set_spi_info(2, &spitz_spi_info);
-	spi_register_board_info(ARRAY_AND_SIZE(spitz_spi_devices));
-}
-#else
-static inline void spitz_spi_init(void) {}
-#endif
+	spi_रेजिस्टर_board_info(ARRAY_AND_SIZE(spitz_spi_devices));
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम spitz_spi_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * SD/MMC card controller
  ******************************************************************************/
-#if defined(CONFIG_MMC_PXA) || defined(CONFIG_MMC_PXA_MODULE)
+#अगर defined(CONFIG_MMC_PXA) || defined(CONFIG_MMC_PXA_MODULE)
 /*
- * NOTE: The card detect interrupt isn't debounced so we delay it by 250ms to
+ * NOTE: The card detect पूर्णांकerrupt isn't debounced so we delay it by 250ms to
  * give the card a chance to fully insert/eject.
  */
-static int spitz_mci_setpower(struct device *dev, unsigned int vdd)
-{
-	struct pxamci_platform_data* p_d = dev->platform_data;
+अटल पूर्णांक spitz_mci_setघातer(काष्ठा device *dev, अचिन्हित पूर्णांक vdd)
+अणु
+	काष्ठा pxamci_platक्रमm_data* p_d = dev->platक्रमm_data;
 
-	if ((1 << vdd) & p_d->ocr_mask)
+	अगर ((1 << vdd) & p_d->ocr_mask)
 		spitz_card_pwr_ctrl(SCOOP_CPR_SD_3V, SCOOP_CPR_SD_3V);
-	else
+	अन्यथा
 		spitz_card_pwr_ctrl(SCOOP_CPR_SD_3V, 0x0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct pxamci_platform_data spitz_mci_platform_data = {
+अटल काष्ठा pxamci_platक्रमm_data spitz_mci_platक्रमm_data = अणु
 	.detect_delay_ms	= 250,
 	.ocr_mask		= MMC_VDD_32_33|MMC_VDD_33_34,
-	.setpower		= spitz_mci_setpower,
-};
+	.setघातer		= spitz_mci_setघातer,
+पूर्ण;
 
-static struct gpiod_lookup_table spitz_mci_gpio_table = {
+अटल काष्ठा gpiod_lookup_table spitz_mci_gpio_table = अणु
 	.dev_id = "pxa2xx-mci.0",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", SPITZ_GPIO_nSD_DETECT,
 			    "cd", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", SPITZ_GPIO_nSD_WP,
 			    "wp", GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static void __init spitz_mmc_init(void)
-{
+अटल व्योम __init spitz_mmc_init(व्योम)
+अणु
 	gpiod_add_lookup_table(&spitz_mci_gpio_table);
-	pxa_set_mci_info(&spitz_mci_platform_data);
-}
-#else
-static inline void spitz_mmc_init(void) {}
-#endif
+	pxa_set_mci_info(&spitz_mci_platक्रमm_data);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम spitz_mmc_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * USB Host
  ******************************************************************************/
-#if defined(CONFIG_USB_OHCI_HCD) || defined(CONFIG_USB_OHCI_HCD_MODULE)
-static int spitz_ohci_init(struct device *dev)
-{
-	int err;
+#अगर defined(CONFIG_USB_OHCI_HCD) || defined(CONFIG_USB_OHCI_HCD_MODULE)
+अटल पूर्णांक spitz_ohci_init(काष्ठा device *dev)
+अणु
+	पूर्णांक err;
 
 	err = gpio_request(SPITZ_GPIO_USB_HOST, "USB_HOST");
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Only Port 2 is connected, setup USB Port 2 Output Control Register */
 	UP2OCR = UP2OCR_HXS | UP2OCR_HXOE | UP2OCR_DPPDE | UP2OCR_DMPDE;
 
-	return gpio_direction_output(SPITZ_GPIO_USB_HOST, 1);
-}
+	वापस gpio_direction_output(SPITZ_GPIO_USB_HOST, 1);
+पूर्ण
 
-static void spitz_ohci_exit(struct device *dev)
-{
-	gpio_free(SPITZ_GPIO_USB_HOST);
-}
+अटल व्योम spitz_ohci_निकास(काष्ठा device *dev)
+अणु
+	gpio_मुक्त(SPITZ_GPIO_USB_HOST);
+पूर्ण
 
-static struct pxaohci_platform_data spitz_ohci_platform_data = {
+अटल काष्ठा pxaohci_platक्रमm_data spitz_ohci_platक्रमm_data = अणु
 	.port_mode	= PMM_NPS_MODE,
 	.init		= spitz_ohci_init,
-	.exit		= spitz_ohci_exit,
+	.निकास		= spitz_ohci_निकास,
 	.flags		= ENABLE_PORT_ALL | NO_OC_PROTECTION,
-	.power_budget	= 150,
-};
+	.घातer_budget	= 150,
+पूर्ण;
 
-static void __init spitz_uhc_init(void)
-{
-	pxa_set_ohci_info(&spitz_ohci_platform_data);
-}
-#else
-static inline void spitz_uhc_init(void) {}
-#endif
+अटल व्योम __init spitz_uhc_init(व्योम)
+अणु
+	pxa_set_ohci_info(&spitz_ohci_platक्रमm_data);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम spitz_uhc_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * IrDA
  ******************************************************************************/
-#if defined(CONFIG_PXA_FICP) || defined(CONFIG_PXA_FICP_MODULE)
-static struct pxaficp_platform_data spitz_ficp_platform_data = {
+#अगर defined(CONFIG_PXA_FICP) || defined(CONFIG_PXA_FICP_MODULE)
+अटल काष्ठा pxaficp_platक्रमm_data spitz_ficp_platक्रमm_data = अणु
 	.transceiver_cap	= IR_SIRMODE | IR_OFF,
-};
+पूर्ण;
 
-static void __init spitz_irda_init(void)
-{
-	if (machine_is_akita())
-		spitz_ficp_platform_data.gpio_pwdown = AKITA_GPIO_IR_ON;
-	else
-		spitz_ficp_platform_data.gpio_pwdown = SPITZ_GPIO_IR_ON;
+अटल व्योम __init spitz_irda_init(व्योम)
+अणु
+	अगर (machine_is_akita())
+		spitz_ficp_platक्रमm_data.gpio_pwकरोwn = AKITA_GPIO_IR_ON;
+	अन्यथा
+		spitz_ficp_platक्रमm_data.gpio_pwकरोwn = SPITZ_GPIO_IR_ON;
 
-	pxa_set_ficp_info(&spitz_ficp_platform_data);
-}
-#else
-static inline void spitz_irda_init(void) {}
-#endif
+	pxa_set_ficp_info(&spitz_ficp_platक्रमm_data);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम spitz_irda_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * Framebuffer
  ******************************************************************************/
-#if defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
-static struct pxafb_mode_info spitz_pxafb_modes[] = {
-	{
-		.pixclock       = 19231,
+#अगर defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
+अटल काष्ठा pxafb_mode_info spitz_pxafb_modes[] = अणु
+	अणु
+		.pixघड़ी       = 19231,
 		.xres           = 480,
 		.yres           = 640,
 		.bpp            = 16,
@@ -729,8 +730,8 @@ static struct pxafb_mode_info spitz_pxafb_modes[] = {
 		.upper_margin   = 1,
 		.lower_margin   = 0,
 		.sync           = 0,
-	}, {
-		.pixclock       = 134617,
+	पूर्ण, अणु
+		.pixघड़ी       = 134617,
 		.xres           = 240,
 		.yres           = 320,
 		.bpp            = 16,
@@ -741,261 +742,261 @@ static struct pxafb_mode_info spitz_pxafb_modes[] = {
 		.upper_margin   = 1,
 		.lower_margin   = 0,
 		.sync           = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct pxafb_mach_info spitz_pxafb_info = {
+अटल काष्ठा pxafb_mach_info spitz_pxafb_info = अणु
 	.modes          = spitz_pxafb_modes,
 	.num_modes      = ARRAY_SIZE(spitz_pxafb_modes),
 	.fixed_modes    = 1,
 	.lcd_conn	= LCD_COLOR_TFT_16BPP | LCD_ALTERNATE_MAPPING,
-};
+पूर्ण;
 
-static void __init spitz_lcd_init(void)
-{
-	pxa_set_fb_info(NULL, &spitz_pxafb_info);
-}
-#else
-static inline void spitz_lcd_init(void) {}
-#endif
+अटल व्योम __init spitz_lcd_init(व्योम)
+अणु
+	pxa_set_fb_info(शून्य, &spitz_pxafb_info);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम spitz_lcd_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
- * NAND Flash
+ * न_अंकD Flash
  ******************************************************************************/
-#if defined(CONFIG_MTD_NAND_SHARPSL) || defined(CONFIG_MTD_NAND_SHARPSL_MODULE)
-static uint8_t scan_ff_pattern[] = { 0xff, 0xff };
+#अगर defined(CONFIG_MTD_न_अंकD_SHARPSL) || defined(CONFIG_MTD_न_अंकD_SHARPSL_MODULE)
+अटल uपूर्णांक8_t scan_ff_pattern[] = अणु 0xff, 0xff पूर्ण;
 
-static struct nand_bbt_descr spitz_nand_bbt = {
+अटल काष्ठा nand_bbt_descr spitz_nand_bbt = अणु
 	.options	= 0,
 	.offs		= 4,
 	.len		= 2,
 	.pattern	= scan_ff_pattern
-};
+पूर्ण;
 
-static int akita_ooblayout_ecc(struct mtd_info *mtd, int section,
-			       struct mtd_oob_region *oobregion)
-{
-	if (section > 12)
-		return -ERANGE;
+अटल पूर्णांक akita_ooblayout_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
+			       काष्ठा mtd_oob_region *oobregion)
+अणु
+	अगर (section > 12)
+		वापस -दुस्फल;
 
-	switch (section % 3) {
-	case 0:
+	चयन (section % 3) अणु
+	हाल 0:
 		oobregion->offset = 5;
 		oobregion->length = 1;
-		break;
+		अवरोध;
 
-	case 1:
+	हाल 1:
 		oobregion->offset = 1;
 		oobregion->length = 3;
-		break;
+		अवरोध;
 
-	case 2:
+	हाल 2:
 		oobregion->offset = 6;
 		oobregion->length = 2;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	oobregion->offset += (section / 3) * 0x10;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int akita_ooblayout_free(struct mtd_info *mtd, int section,
-				struct mtd_oob_region *oobregion)
-{
-	if (section)
-		return -ERANGE;
+अटल पूर्णांक akita_ooblayout_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
+				काष्ठा mtd_oob_region *oobregion)
+अणु
+	अगर (section)
+		वापस -दुस्फल;
 
 	oobregion->offset = 8;
 	oobregion->length = 9;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mtd_ooblayout_ops akita_ooblayout_ops = {
+अटल स्थिर काष्ठा mtd_ooblayout_ops akita_ooblayout_ops = अणु
 	.ecc = akita_ooblayout_ecc,
-	.free = akita_ooblayout_free,
-};
+	.मुक्त = akita_ooblayout_मुक्त,
+पूर्ण;
 
-static const char * const probes[] = {
+अटल स्थिर अक्षर * स्थिर probes[] = अणु
 	"cmdlinepart",
 	"ofpart",
 	"sharpslpart",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct sharpsl_nand_platform_data spitz_nand_pdata = {
+अटल काष्ठा sharpsl_nand_platक्रमm_data spitz_nand_pdata = अणु
 	.badblock_pattern	= &spitz_nand_bbt,
 	.part_parsers		= probes,
-};
+पूर्ण;
 
-static struct resource spitz_nand_resources[] = {
-	{
+अटल काष्ठा resource spitz_nand_resources[] = अणु
+	अणु
 		.start	= PXA_CS3_PHYS,
 		.end	= PXA_CS3_PHYS + SZ_4K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device spitz_nand_device = {
+अटल काष्ठा platक्रमm_device spitz_nand_device = अणु
 	.name		= "sharpsl-nand",
 	.id		= -1,
 	.resource	= spitz_nand_resources,
 	.num_resources	= ARRAY_SIZE(spitz_nand_resources),
-	.dev		= {
-		.platform_data	= &spitz_nand_pdata,
-	}
-};
+	.dev		= अणु
+		.platक्रमm_data	= &spitz_nand_pdata,
+	पूर्ण
+पूर्ण;
 
-static void __init spitz_nand_init(void)
-{
-	if (machine_is_akita() || machine_is_borzoi()) {
+अटल व्योम __init spitz_nand_init(व्योम)
+अणु
+	अगर (machine_is_akita() || machine_is_borzoi()) अणु
 		spitz_nand_bbt.len = 1;
 		spitz_nand_pdata.ecc_layout = &akita_ooblayout_ops;
-	}
+	पूर्ण
 
-	platform_device_register(&spitz_nand_device);
-}
-#else
-static inline void spitz_nand_init(void) {}
-#endif
+	platक्रमm_device_रेजिस्टर(&spitz_nand_device);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम spitz_nand_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * NOR Flash
  ******************************************************************************/
-#if defined(CONFIG_MTD_PHYSMAP) || defined(CONFIG_MTD_PHYSMAP_MODULE)
-static struct mtd_partition spitz_rom_parts[] = {
-	{
+#अगर defined(CONFIG_MTD_PHYSMAP) || defined(CONFIG_MTD_PHYSMAP_MODULE)
+अटल काष्ठा mtd_partition spitz_rom_parts[] = अणु
+	अणु
 		.name	="Boot PROM Filesystem",
 		.offset	= 0x00140000,
 		.size	= MTDPART_SIZ_FULL,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct physmap_flash_data spitz_rom_data = {
+अटल काष्ठा physmap_flash_data spitz_rom_data = अणु
 	.width		= 2,
 	.nr_parts	= ARRAY_SIZE(spitz_rom_parts),
 	.parts		= spitz_rom_parts,
-};
+पूर्ण;
 
-static struct resource spitz_rom_resources[] = {
-	{
+अटल काष्ठा resource spitz_rom_resources[] = अणु
+	अणु
 		.start	= PXA_CS0_PHYS,
 		.end	= PXA_CS0_PHYS + SZ_8M - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device spitz_rom_device = {
+अटल काष्ठा platक्रमm_device spitz_rom_device = अणु
 	.name		= "physmap-flash",
 	.id		= -1,
 	.resource	= spitz_rom_resources,
 	.num_resources	= ARRAY_SIZE(spitz_rom_resources),
-	.dev		= {
-		.platform_data	= &spitz_rom_data,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &spitz_rom_data,
+	पूर्ण,
+पूर्ण;
 
-static void __init spitz_nor_init(void)
-{
-	platform_device_register(&spitz_rom_device);
-}
-#else
-static inline void spitz_nor_init(void) {}
-#endif
+अटल व्योम __init spitz_nor_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&spitz_rom_device);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम spitz_nor_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * I2C devices
  ******************************************************************************/
-#if defined(CONFIG_I2C_PXA) || defined(CONFIG_I2C_PXA_MODULE)
-static struct pca953x_platform_data akita_pca953x_pdata = {
+#अगर defined(CONFIG_I2C_PXA) || defined(CONFIG_I2C_PXA_MODULE)
+अटल काष्ठा pca953x_platक्रमm_data akita_pca953x_pdata = अणु
 	.gpio_base		= AKITA_IOEXP_GPIO_BASE,
-};
+पूर्ण;
 
-static struct i2c_board_info spitz_i2c_devs[] = {
-	{
+अटल काष्ठा i2c_board_info spitz_i2c_devs[] = अणु
+	अणु
 		.type		= "wm8750",
 		.addr		= 0x1b,
-	}, {
+	पूर्ण, अणु
 		.type		= "max7310",
 		.addr		= 0x18,
-		.platform_data	= &akita_pca953x_pdata,
-	},
-};
+		.platक्रमm_data	= &akita_pca953x_pdata,
+	पूर्ण,
+पूर्ण;
 
-static struct regulator_consumer_supply isl6271a_consumers[] = {
-	REGULATOR_SUPPLY("vcc_core", NULL),
-};
+अटल काष्ठा regulator_consumer_supply isl6271a_consumers[] = अणु
+	REGULATOR_SUPPLY("vcc_core", शून्य),
+पूर्ण;
 
-static struct regulator_init_data isl6271a_info[] = {
-	{
-		.constraints = {
+अटल काष्ठा regulator_init_data isl6271a_info[] = अणु
+	अणु
+		.स्थिरraपूर्णांकs = अणु
 			.name		= "vcc_core range",
 			.min_uV		= 850000,
 			.max_uV		= 1600000,
 			.always_on	= 1,
 			.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE,
-		},
+		पूर्ण,
 	.consumer_supplies	= isl6271a_consumers,
 	.num_consumer_supplies	= ARRAY_SIZE(isl6271a_consumers),
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct i2c_board_info spitz_pi2c_devs[] = {
-	{
+अटल काष्ठा i2c_board_info spitz_pi2c_devs[] = अणु
+	अणु
 		.type		= "isl6271a",
 		.addr		= 0x0c,
-		.platform_data	= &isl6271a_info,
-	},
-};
+		.platक्रमm_data	= &isl6271a_info,
+	पूर्ण,
+पूर्ण;
 
-static void __init spitz_i2c_init(void)
-{
-	int size = ARRAY_SIZE(spitz_i2c_devs);
+अटल व्योम __init spitz_i2c_init(व्योम)
+अणु
+	पूर्णांक size = ARRAY_SIZE(spitz_i2c_devs);
 
 	/* Only Akita has the max7310 chip */
-	if (!machine_is_akita())
+	अगर (!machine_is_akita())
 		size--;
 
-	pxa_set_i2c_info(NULL);
-	pxa27x_set_i2c_power_info(NULL);
-	i2c_register_board_info(0, spitz_i2c_devs, size);
-	i2c_register_board_info(1, ARRAY_AND_SIZE(spitz_pi2c_devs));
-}
-#else
-static inline void spitz_i2c_init(void) {}
-#endif
+	pxa_set_i2c_info(शून्य);
+	pxa27x_set_i2c_घातer_info(शून्य);
+	i2c_रेजिस्टर_board_info(0, spitz_i2c_devs, size);
+	i2c_रेजिस्टर_board_info(1, ARRAY_AND_SIZE(spitz_pi2c_devs));
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम spitz_i2c_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * Audio devices
  ******************************************************************************/
-static inline void spitz_audio_init(void)
-{
-	platform_device_register_simple("spitz-audio", -1, NULL, 0);
-}
+अटल अंतरभूत व्योम spitz_audio_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर_simple("spitz-audio", -1, शून्य, 0);
+पूर्ण
 
 /******************************************************************************
  * Machine init
  ******************************************************************************/
-static void spitz_poweroff(void)
-{
-	pxa_restart(REBOOT_GPIO, NULL);
-}
+अटल व्योम spitz_घातeroff(व्योम)
+अणु
+	pxa_restart(REBOOT_GPIO, शून्य);
+पूर्ण
 
-static void spitz_restart(enum reboot_mode mode, const char *cmd)
-{
-	uint32_t msc0 = __raw_readl(MSC0);
-	/* Bootloader magic for a reboot */
-	if ((msc0 & 0xffff0000) == 0x7ff00000)
-		__raw_writel((msc0 & 0xffff) | 0x7ee00000, MSC0);
+अटल व्योम spitz_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
+अणु
+	uपूर्णांक32_t msc0 = __raw_पढ़ोl(MSC0);
+	/* Bootloader magic क्रम a reboot */
+	अगर ((msc0 & 0xffff0000) == 0x7ff00000)
+		__raw_ग_लिखोl((msc0 & 0xffff) | 0x7ee00000, MSC0);
 
-	spitz_poweroff();
-}
+	spitz_घातeroff();
+पूर्ण
 
-static void __init spitz_init(void)
-{
+अटल व्योम __init spitz_init(व्योम)
+अणु
 	init_gpio_reset(SPITZ_GPIO_ON_RESET, 1, 0);
-	pm_power_off = spitz_poweroff;
+	pm_घातer_off = spitz_घातeroff;
 
 	PMCR = 0x00;
 
@@ -1004,9 +1005,9 @@ static void __init spitz_init(void)
 
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(spitz_pin_config));
 
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 
 	spitz_spi_init();
 	spitz_scoop_init();
@@ -1023,16 +1024,16 @@ static void __init spitz_init(void)
 	spitz_i2c_init();
 	spitz_audio_init();
 
-	regulator_has_full_constraints();
-}
+	regulator_has_full_स्थिरraपूर्णांकs();
+पूर्ण
 
-static void __init spitz_fixup(struct tag *tags, char **cmdline)
-{
+अटल व्योम __init spitz_fixup(काष्ठा tag *tags, अक्षर **cmdline)
+अणु
 	sharpsl_save_param();
 	memblock_add(0xa0000000, SZ_64M);
-}
+पूर्ण
 
-#ifdef CONFIG_MACH_SPITZ
+#अगर_घोषित CONFIG_MACH_SPITZ
 MACHINE_START(SPITZ, "SHARP Spitz")
 	.fixup		= spitz_fixup,
 	.map_io		= pxa27x_map_io,
@@ -1040,12 +1041,12 @@ MACHINE_START(SPITZ, "SHARP Spitz")
 	.init_irq	= pxa27x_init_irq,
 	.handle_irq	= pxa27x_handle_irq,
 	.init_machine	= spitz_init,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.restart	= spitz_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_BORZOI
+#अगर_घोषित CONFIG_MACH_BORZOI
 MACHINE_START(BORZOI, "SHARP Borzoi")
 	.fixup		= spitz_fixup,
 	.map_io		= pxa27x_map_io,
@@ -1053,12 +1054,12 @@ MACHINE_START(BORZOI, "SHARP Borzoi")
 	.init_irq	= pxa27x_init_irq,
 	.handle_irq	= pxa27x_handle_irq,
 	.init_machine	= spitz_init,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.restart	= spitz_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_AKITA
+#अगर_घोषित CONFIG_MACH_AKITA
 MACHINE_START(AKITA, "SHARP Akita")
 	.fixup		= spitz_fixup,
 	.map_io		= pxa27x_map_io,
@@ -1066,7 +1067,7 @@ MACHINE_START(AKITA, "SHARP Akita")
 	.init_irq	= pxa27x_init_irq,
 	.handle_irq	= pxa27x_handle_irq,
 	.init_machine	= spitz_init,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.restart	= spitz_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर

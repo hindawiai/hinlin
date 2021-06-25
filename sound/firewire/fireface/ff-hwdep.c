@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * ff-hwdep.c - a part of driver for RME Fireface series
+ * ff-hwdep.c - a part of driver क्रम RME Fireface series
  *
  * Copyright (c) 2015-2017 Takashi Sakamoto
  */
@@ -8,181 +9,181 @@
 /*
  * This codes give three functionality.
  *
- * 1.get firewire node information
- * 2.get notification about starting/stopping stream
+ * 1.get firewire node inक्रमmation
+ * 2.get notअगरication about starting/stopping stream
  * 3.lock/unlock stream
  */
 
-#include "ff.h"
+#समावेश "ff.h"
 
-static long hwdep_read(struct snd_hwdep *hwdep, char __user *buf,  long count,
+अटल दीर्घ hwdep_पढ़ो(काष्ठा snd_hwdep *hwdep, अक्षर __user *buf,  दीर्घ count,
 		       loff_t *offset)
-{
-	struct snd_ff *ff = hwdep->private_data;
-	DEFINE_WAIT(wait);
-	union snd_firewire_event event;
+अणु
+	काष्ठा snd_ff *ff = hwdep->निजी_data;
+	DEFINE_WAIT(रुको);
+	जोड़ snd_firewire_event event;
 
 	spin_lock_irq(&ff->lock);
 
-	while (!ff->dev_lock_changed) {
-		prepare_to_wait(&ff->hwdep_wait, &wait, TASK_INTERRUPTIBLE);
+	जबतक (!ff->dev_lock_changed) अणु
+		prepare_to_रुको(&ff->hwdep_रुको, &रुको, TASK_INTERRUPTIBLE);
 		spin_unlock_irq(&ff->lock);
 		schedule();
-		finish_wait(&ff->hwdep_wait, &wait);
-		if (signal_pending(current))
-			return -ERESTARTSYS;
+		finish_रुको(&ff->hwdep_रुको, &रुको);
+		अगर (संकेत_pending(current))
+			वापस -ERESTARTSYS;
 		spin_lock_irq(&ff->lock);
-	}
+	पूर्ण
 
-	memset(&event, 0, sizeof(event));
+	स_रखो(&event, 0, माप(event));
 	event.lock_status.type = SNDRV_FIREWIRE_EVENT_LOCK_STATUS;
 	event.lock_status.status = (ff->dev_lock_count > 0);
 	ff->dev_lock_changed = false;
 
-	count = min_t(long, count, sizeof(event.lock_status));
+	count = min_t(दीर्घ, count, माप(event.lock_status));
 
 	spin_unlock_irq(&ff->lock);
 
-	if (copy_to_user(buf, &event, count))
-		return -EFAULT;
+	अगर (copy_to_user(buf, &event, count))
+		वापस -EFAULT;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static __poll_t hwdep_poll(struct snd_hwdep *hwdep, struct file *file,
-			       poll_table *wait)
-{
-	struct snd_ff *ff = hwdep->private_data;
+अटल __poll_t hwdep_poll(काष्ठा snd_hwdep *hwdep, काष्ठा file *file,
+			       poll_table *रुको)
+अणु
+	काष्ठा snd_ff *ff = hwdep->निजी_data;
 	__poll_t events;
 
-	poll_wait(file, &ff->hwdep_wait, wait);
+	poll_रुको(file, &ff->hwdep_रुको, रुको);
 
 	spin_lock_irq(&ff->lock);
-	if (ff->dev_lock_changed)
+	अगर (ff->dev_lock_changed)
 		events = EPOLLIN | EPOLLRDNORM;
-	else
+	अन्यथा
 		events = 0;
 	spin_unlock_irq(&ff->lock);
 
-	return events;
-}
+	वापस events;
+पूर्ण
 
-static int hwdep_get_info(struct snd_ff *ff, void __user *arg)
-{
-	struct fw_device *dev = fw_parent_device(ff->unit);
-	struct snd_firewire_get_info info;
+अटल पूर्णांक hwdep_get_info(काष्ठा snd_ff *ff, व्योम __user *arg)
+अणु
+	काष्ठा fw_device *dev = fw_parent_device(ff->unit);
+	काष्ठा snd_firewire_get_info info;
 
-	memset(&info, 0, sizeof(info));
+	स_रखो(&info, 0, माप(info));
 	info.type = SNDRV_FIREWIRE_TYPE_FIREFACE;
 	info.card = dev->card->index;
 	*(__be32 *)&info.guid[0] = cpu_to_be32(dev->config_rom[3]);
 	*(__be32 *)&info.guid[4] = cpu_to_be32(dev->config_rom[4]);
 	strscpy(info.device_name, dev_name(&dev->device),
-		sizeof(info.device_name));
+		माप(info.device_name));
 
-	if (copy_to_user(arg, &info, sizeof(info)))
-		return -EFAULT;
+	अगर (copy_to_user(arg, &info, माप(info)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hwdep_lock(struct snd_ff *ff)
-{
-	int err;
+अटल पूर्णांक hwdep_lock(काष्ठा snd_ff *ff)
+अणु
+	पूर्णांक err;
 
 	spin_lock_irq(&ff->lock);
 
-	if (ff->dev_lock_count == 0) {
+	अगर (ff->dev_lock_count == 0) अणु
 		ff->dev_lock_count = -1;
 		err = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = -EBUSY;
-	}
+	पूर्ण
 
 	spin_unlock_irq(&ff->lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hwdep_unlock(struct snd_ff *ff)
-{
-	int err;
+अटल पूर्णांक hwdep_unlock(काष्ठा snd_ff *ff)
+अणु
+	पूर्णांक err;
 
 	spin_lock_irq(&ff->lock);
 
-	if (ff->dev_lock_count == -1) {
+	अगर (ff->dev_lock_count == -1) अणु
 		ff->dev_lock_count = 0;
 		err = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = -EBADFD;
-	}
+	पूर्ण
 
 	spin_unlock_irq(&ff->lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hwdep_release(struct snd_hwdep *hwdep, struct file *file)
-{
-	struct snd_ff *ff = hwdep->private_data;
+अटल पूर्णांक hwdep_release(काष्ठा snd_hwdep *hwdep, काष्ठा file *file)
+अणु
+	काष्ठा snd_ff *ff = hwdep->निजी_data;
 
 	spin_lock_irq(&ff->lock);
-	if (ff->dev_lock_count == -1)
+	अगर (ff->dev_lock_count == -1)
 		ff->dev_lock_count = 0;
 	spin_unlock_irq(&ff->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hwdep_ioctl(struct snd_hwdep *hwdep, struct file *file,
-		       unsigned int cmd, unsigned long arg)
-{
-	struct snd_ff *ff = hwdep->private_data;
+अटल पूर्णांक hwdep_ioctl(काष्ठा snd_hwdep *hwdep, काष्ठा file *file,
+		       अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा snd_ff *ff = hwdep->निजी_data;
 
-	switch (cmd) {
-	case SNDRV_FIREWIRE_IOCTL_GET_INFO:
-		return hwdep_get_info(ff, (void __user *)arg);
-	case SNDRV_FIREWIRE_IOCTL_LOCK:
-		return hwdep_lock(ff);
-	case SNDRV_FIREWIRE_IOCTL_UNLOCK:
-		return hwdep_unlock(ff);
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
+	चयन (cmd) अणु
+	हाल SNDRV_FIREWIRE_IOCTL_GET_INFO:
+		वापस hwdep_get_info(ff, (व्योम __user *)arg);
+	हाल SNDRV_FIREWIRE_IOCTL_LOCK:
+		वापस hwdep_lock(ff);
+	हाल SNDRV_FIREWIRE_IOCTL_UNLOCK:
+		वापस hwdep_unlock(ff);
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static int hwdep_compat_ioctl(struct snd_hwdep *hwdep, struct file *file,
-			      unsigned int cmd, unsigned long arg)
-{
-	return hwdep_ioctl(hwdep, file, cmd,
-			   (unsigned long)compat_ptr(arg));
-}
-#else
-#define hwdep_compat_ioctl NULL
-#endif
+#अगर_घोषित CONFIG_COMPAT
+अटल पूर्णांक hwdep_compat_ioctl(काष्ठा snd_hwdep *hwdep, काष्ठा file *file,
+			      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस hwdep_ioctl(hwdep, file, cmd,
+			   (अचिन्हित दीर्घ)compat_ptr(arg));
+पूर्ण
+#अन्यथा
+#घोषणा hwdep_compat_ioctl शून्य
+#पूर्ण_अगर
 
-int snd_ff_create_hwdep_devices(struct snd_ff *ff)
-{
-	static const struct snd_hwdep_ops hwdep_ops = {
-		.read		= hwdep_read,
+पूर्णांक snd_ff_create_hwdep_devices(काष्ठा snd_ff *ff)
+अणु
+	अटल स्थिर काष्ठा snd_hwdep_ops hwdep_ops = अणु
+		.पढ़ो		= hwdep_पढ़ो,
 		.release	= hwdep_release,
 		.poll		= hwdep_poll,
 		.ioctl		= hwdep_ioctl,
 		.ioctl_compat	= hwdep_compat_ioctl,
-	};
-	struct snd_hwdep *hwdep;
-	int err;
+	पूर्ण;
+	काष्ठा snd_hwdep *hwdep;
+	पूर्णांक err;
 
 	err = snd_hwdep_new(ff->card, ff->card->driver, 0, &hwdep);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	strcpy(hwdep->name, ff->card->driver);
-	hwdep->iface = SNDRV_HWDEP_IFACE_FW_FIREFACE;
+	म_नकल(hwdep->name, ff->card->driver);
+	hwdep->अगरace = SNDRV_HWDEP_IFACE_FW_FIREFACE;
 	hwdep->ops = hwdep_ops;
-	hwdep->private_data = ff;
+	hwdep->निजी_data = ff;
 	hwdep->exclusive = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

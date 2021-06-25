@@ -1,176 +1,177 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <Python.h>
-#include <structmember.h>
-#include <inttypes.h>
-#include <poll.h>
-#include <linux/err.h>
-#include <perf/cpumap.h>
-#include <traceevent/event-parse.h>
-#include <perf/mmap.h>
-#include "evlist.h"
-#include "callchain.h"
-#include "evsel.h"
-#include "event.h"
-#include "print_binary.h"
-#include "thread_map.h"
-#include "trace-event.h"
-#include "mmap.h"
-#include "stat.h"
-#include "metricgroup.h"
-#include "util/env.h"
-#include <internal/lib.h>
-#include "util.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <Python.h>
+#समावेश <काष्ठाmember.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <poll.h>
+#समावेश <linux/err.h>
+#समावेश <perf/cpumap.h>
+#समावेश <traceevent/event-parse.h>
+#समावेश <perf/mmap.h>
+#समावेश "evlist.h"
+#समावेश "callchain.h"
+#समावेश "evsel.h"
+#समावेश "event.h"
+#समावेश "print_binary.h"
+#समावेश "thread_map.h"
+#समावेश "trace-event.h"
+#समावेश "mmap.h"
+#समावेश "stat.h"
+#समावेश "metricgroup.h"
+#समावेश "util/env.h"
+#समावेश <पूर्णांकernal/lib.h>
+#समावेश "util.h"
 
-#if PY_MAJOR_VERSION < 3
-#define _PyUnicode_FromString(arg) \
+#अगर PY_MAJOR_VERSION < 3
+#घोषणा _PyUnicode_FromString(arg) \
   PyString_FromString(arg)
-#define _PyUnicode_AsString(arg) \
+#घोषणा _PyUnicode_AsString(arg) \
   PyString_AsString(arg)
-#define _PyUnicode_FromFormat(...) \
+#घोषणा _PyUnicode_FromFormat(...) \
   PyString_FromFormat(__VA_ARGS__)
-#define _PyLong_FromLong(arg) \
+#घोषणा _PyLong_FromLong(arg) \
   PyInt_FromLong(arg)
 
-#else
+#अन्यथा
 
-#define _PyUnicode_FromString(arg) \
+#घोषणा _PyUnicode_FromString(arg) \
   PyUnicode_FromString(arg)
-#define _PyUnicode_FromFormat(...) \
+#घोषणा _PyUnicode_FromFormat(...) \
   PyUnicode_FromFormat(__VA_ARGS__)
-#define _PyLong_FromLong(arg) \
+#घोषणा _PyLong_FromLong(arg) \
   PyLong_FromLong(arg)
-#endif
+#पूर्ण_अगर
 
-#ifndef Py_TYPE
-#define Py_TYPE(ob) (((PyObject*)(ob))->ob_type)
-#endif
+#अगर_अघोषित Py_TYPE
+#घोषणा Py_TYPE(ob) (((PyObject*)(ob))->ob_type)
+#पूर्ण_अगर
 
 /*
- * Provide these two so that we don't have to link against callchain.c and
+ * Provide these two so that we करोn't have to link against callchain.c and
  * start dragging hist.c, etc.
  */
-struct callchain_param callchain_param;
+काष्ठा callchain_param callchain_param;
 
-int parse_callchain_record(const char *arg __maybe_unused,
-			   struct callchain_param *param __maybe_unused)
-{
-	return 0;
-}
+पूर्णांक parse_callchain_record(स्थिर अक्षर *arg __maybe_unused,
+			   काष्ठा callchain_param *param __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
  * Add this one here not to drag util/env.c
  */
-struct perf_env perf_env;
+काष्ठा perf_env perf_env;
 
 /*
- * Add this one here not to drag util/stat-shadow.c
+ * Add this one here not to drag util/stat-shaकरोw.c
  */
-void perf_stat__collect_metric_expr(struct evlist *evsel_list)
-{
-}
+व्योम perf_stat__collect_metric_expr(काष्ठा evlist *evsel_list)
+अणु
+पूर्ण
 
 /*
  * Add this one here not to drag util/metricgroup.c
  */
-int metricgroup__copy_metric_events(struct evlist *evlist, struct cgroup *cgrp,
-				    struct rblist *new_metric_events,
-				    struct rblist *old_metric_events)
-{
-	return 0;
-}
+पूर्णांक metricgroup__copy_metric_events(काष्ठा evlist *evlist, काष्ठा cgroup *cgrp,
+				    काष्ठा rblist *new_metric_events,
+				    काष्ठा rblist *old_metric_events)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
- * XXX: All these evsel destructors need some better mechanism, like a linked
- * list of destructors registered when the relevant code indeed is used instead
+ * XXX: All these evsel deकाष्ठाors need some better mechanism, like a linked
+ * list of deकाष्ठाors रेजिस्टरed when the relevant code indeed is used instead
  * of having more and more calls in perf_evsel__delete(). -- acme
  *
  * For now, add some more:
  *
  * Not to drag the BPF bandwagon...
  */
-void bpf_counter__destroy(struct evsel *evsel);
-int bpf_counter__install_pe(struct evsel *evsel, int cpu, int fd);
-int bpf_counter__disable(struct evsel *evsel);
+व्योम bpf_counter__destroy(काष्ठा evsel *evsel);
+पूर्णांक bpf_counter__install_pe(काष्ठा evsel *evsel, पूर्णांक cpu, पूर्णांक fd);
+पूर्णांक bpf_counter__disable(काष्ठा evsel *evsel);
 
-void bpf_counter__destroy(struct evsel *evsel __maybe_unused)
-{
-}
+व्योम bpf_counter__destroy(काष्ठा evsel *evsel __maybe_unused)
+अणु
+पूर्ण
 
-int bpf_counter__install_pe(struct evsel *evsel __maybe_unused, int cpu __maybe_unused, int fd __maybe_unused)
-{
-	return 0;
-}
+पूर्णांक bpf_counter__install_pe(काष्ठा evsel *evsel __maybe_unused, पूर्णांक cpu __maybe_unused, पूर्णांक fd __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-int bpf_counter__disable(struct evsel *evsel __maybe_unused)
-{
-	return 0;
-}
+पूर्णांक bpf_counter__disable(काष्ठा evsel *evsel __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
- * Support debug printing even though util/debug.c is not linked.  That means
+ * Support debug prपूर्णांकing even though util/debug.c is not linked.  That means
  * implementing 'verbose' and 'eprintf'.
  */
-int verbose;
-int debug_peo_args;
+पूर्णांक verbose;
+पूर्णांक debug_peo_args;
 
-int eprintf(int level, int var, const char *fmt, ...);
+पूर्णांक eम_लिखो(पूर्णांक level, पूर्णांक var, स्थिर अक्षर *fmt, ...);
 
-int eprintf(int level, int var, const char *fmt, ...)
-{
-	va_list args;
-	int ret = 0;
+पूर्णांक eम_लिखो(पूर्णांक level, पूर्णांक var, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक ret = 0;
 
-	if (var >= level) {
-		va_start(args, fmt);
-		ret = vfprintf(stderr, fmt, args);
-		va_end(args);
-	}
+	अगर (var >= level) अणु
+		बहु_शुरू(args, fmt);
+		ret = भख_लिखो(मानक_त्रुटि, fmt, args);
+		बहु_पूर्ण(args);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Define PyVarObject_HEAD_INIT for python 2.5 */
-#ifndef PyVarObject_HEAD_INIT
+/* Define PyVarObject_HEAD_INIT क्रम python 2.5 */
+#अगर_अघोषित PyVarObject_HEAD_INIT
 # define PyVarObject_HEAD_INIT(type, size) PyObject_HEAD_INIT(type) size,
-#endif
+#पूर्ण_अगर
 
-#if PY_MAJOR_VERSION < 3
-PyMODINIT_FUNC initperf(void);
-#else
-PyMODINIT_FUNC PyInit_perf(void);
-#endif
+#अगर PY_MAJOR_VERSION < 3
+PyMODINIT_FUNC initperf(व्योम);
+#अन्यथा
+PyMODINIT_FUNC PyInit_perf(व्योम);
+#पूर्ण_अगर
 
-#define member_def(type, member, ptype, help) \
-	{ #member, ptype, \
-	  offsetof(struct pyrf_event, event) + offsetof(struct type, member), \
-	  0, help }
+#घोषणा member_def(type, member, ptype, help) \
+	अणु #member, ptype, \
+	  दुरत्व(काष्ठा pyrf_event, event) + दुरत्व(काष्ठा type, member), \
+	  0, help पूर्ण
 
-#define sample_member_def(name, member, ptype, help) \
-	{ #name, ptype, \
-	  offsetof(struct pyrf_event, sample) + offsetof(struct perf_sample, member), \
-	  0, help }
+#घोषणा sample_member_def(name, member, ptype, help) \
+	अणु #name, ptype, \
+	  दुरत्व(काष्ठा pyrf_event, sample) + दुरत्व(काष्ठा perf_sample, member), \
+	  0, help पूर्ण
 
-struct pyrf_event {
+काष्ठा pyrf_event अणु
 	PyObject_HEAD
-	struct evsel *evsel;
-	struct perf_sample sample;
-	union perf_event   event;
-};
+	काष्ठा evsel *evsel;
+	काष्ठा perf_sample sample;
+	जोड़ perf_event   event;
+पूर्ण;
 
-#define sample_members \
+#घोषणा sample_members \
 	sample_member_def(sample_ip, ip, T_ULONGLONG, "event type"),			 \
 	sample_member_def(sample_pid, pid, T_INT, "event pid"),			 \
 	sample_member_def(sample_tid, tid, T_INT, "event tid"),			 \
-	sample_member_def(sample_time, time, T_ULONGLONG, "event timestamp"),		 \
+	sample_member_def(sample_समय, समय, T_ULONGLONG, "event timestamp"),		 \
 	sample_member_def(sample_addr, addr, T_ULONGLONG, "event addr"),		 \
 	sample_member_def(sample_id, id, T_ULONGLONG, "event id"),			 \
 	sample_member_def(sample_stream_id, stream_id, T_ULONGLONG, "event stream id"), \
 	sample_member_def(sample_period, period, T_ULONGLONG, "event period"),		 \
 	sample_member_def(sample_cpu, cpu, T_UINT, "event cpu"),
 
-static char pyrf_mmap_event__doc[] = PyDoc_STR("perf mmap event object.");
+अटल अक्षर pyrf_mmap_event__करोc[] = PyDoc_STR("perf mmap event object.");
 
-static PyMemberDef pyrf_mmap_event__members[] = {
+अटल PyMemberDef pyrf_mmap_event__members[] = अणु
 	sample_members
 	member_def(perf_event_header, type, T_UINT, "event type"),
 	member_def(perf_event_header, misc, T_UINT, "event misc"),
@@ -180,387 +181,387 @@ static PyMemberDef pyrf_mmap_event__members[] = {
 	member_def(perf_record_mmap, len, T_ULONGLONG, "map length"),
 	member_def(perf_record_mmap, pgoff, T_ULONGLONG, "page offset"),
 	member_def(perf_record_mmap, filename, T_STRING_INPLACE, "backing store"),
-	{ .name = NULL, },
-};
+	अणु .name = शून्य, पूर्ण,
+पूर्ण;
 
-static PyObject *pyrf_mmap_event__repr(struct pyrf_event *pevent)
-{
+अटल PyObject *pyrf_mmap_event__repr(काष्ठा pyrf_event *pevent)
+अणु
 	PyObject *ret;
-	char *s;
+	अक्षर *s;
 
-	if (asprintf(&s, "{ type: mmap, pid: %u, tid: %u, start: %#" PRI_lx64 ", "
+	अगर (aप्र_लिखो(&s, "{ type: mmap, pid: %u, tid: %u, start: %#" PRI_lx64 ", "
 			 "length: %#" PRI_lx64 ", offset: %#" PRI_lx64 ", "
 			 "filename: %s }",
 		     pevent->event.mmap.pid, pevent->event.mmap.tid,
 		     pevent->event.mmap.start, pevent->event.mmap.len,
-		     pevent->event.mmap.pgoff, pevent->event.mmap.filename) < 0) {
+		     pevent->event.mmap.pgoff, pevent->event.mmap.filename) < 0) अणु
 		ret = PyErr_NoMemory();
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = _PyUnicode_FromString(s);
-		free(s);
-	}
-	return ret;
-}
+		मुक्त(s);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static PyTypeObject pyrf_mmap_event__type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
+अटल PyTypeObject pyrf_mmap_event__type = अणु
+	PyVarObject_HEAD_INIT(शून्य, 0)
 	.tp_name	= "perf.mmap_event",
-	.tp_basicsize	= sizeof(struct pyrf_event),
+	.tp_basicsize	= माप(काष्ठा pyrf_event),
 	.tp_flags	= Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,
-	.tp_doc		= pyrf_mmap_event__doc,
+	.tp_करोc		= pyrf_mmap_event__करोc,
 	.tp_members	= pyrf_mmap_event__members,
 	.tp_repr	= (reprfunc)pyrf_mmap_event__repr,
-};
+पूर्ण;
 
-static char pyrf_task_event__doc[] = PyDoc_STR("perf task (fork/exit) event object.");
+अटल अक्षर pyrf_task_event__करोc[] = PyDoc_STR("perf task (fork/exit) event object.");
 
-static PyMemberDef pyrf_task_event__members[] = {
+अटल PyMemberDef pyrf_task_event__members[] = अणु
 	sample_members
 	member_def(perf_event_header, type, T_UINT, "event type"),
-	member_def(perf_record_fork, pid, T_UINT, "event pid"),
-	member_def(perf_record_fork, ppid, T_UINT, "event ppid"),
-	member_def(perf_record_fork, tid, T_UINT, "event tid"),
-	member_def(perf_record_fork, ptid, T_UINT, "event ptid"),
-	member_def(perf_record_fork, time, T_ULONGLONG, "timestamp"),
-	{ .name = NULL, },
-};
+	member_def(perf_record_विभाजन, pid, T_UINT, "event pid"),
+	member_def(perf_record_विभाजन, ppid, T_UINT, "event ppid"),
+	member_def(perf_record_विभाजन, tid, T_UINT, "event tid"),
+	member_def(perf_record_विभाजन, ptid, T_UINT, "event ptid"),
+	member_def(perf_record_विभाजन, समय, T_ULONGLONG, "timestamp"),
+	अणु .name = शून्य, पूर्ण,
+पूर्ण;
 
-static PyObject *pyrf_task_event__repr(struct pyrf_event *pevent)
-{
-	return _PyUnicode_FromFormat("{ type: %s, pid: %u, ppid: %u, tid: %u, "
+अटल PyObject *pyrf_task_event__repr(काष्ठा pyrf_event *pevent)
+अणु
+	वापस _PyUnicode_FromFormat("{ type: %s, pid: %u, ppid: %u, tid: %u, "
 				   "ptid: %u, time: %" PRI_lu64 "}",
 				   pevent->event.header.type == PERF_RECORD_FORK ? "fork" : "exit",
-				   pevent->event.fork.pid,
-				   pevent->event.fork.ppid,
-				   pevent->event.fork.tid,
-				   pevent->event.fork.ptid,
-				   pevent->event.fork.time);
-}
+				   pevent->event.विभाजन.pid,
+				   pevent->event.विभाजन.ppid,
+				   pevent->event.विभाजन.tid,
+				   pevent->event.विभाजन.ptid,
+				   pevent->event.विभाजन.समय);
+पूर्ण
 
-static PyTypeObject pyrf_task_event__type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
+अटल PyTypeObject pyrf_task_event__type = अणु
+	PyVarObject_HEAD_INIT(शून्य, 0)
 	.tp_name	= "perf.task_event",
-	.tp_basicsize	= sizeof(struct pyrf_event),
+	.tp_basicsize	= माप(काष्ठा pyrf_event),
 	.tp_flags	= Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,
-	.tp_doc		= pyrf_task_event__doc,
+	.tp_करोc		= pyrf_task_event__करोc,
 	.tp_members	= pyrf_task_event__members,
 	.tp_repr	= (reprfunc)pyrf_task_event__repr,
-};
+पूर्ण;
 
-static char pyrf_comm_event__doc[] = PyDoc_STR("perf comm event object.");
+अटल अक्षर pyrf_comm_event__करोc[] = PyDoc_STR("perf comm event object.");
 
-static PyMemberDef pyrf_comm_event__members[] = {
+अटल PyMemberDef pyrf_comm_event__members[] = अणु
 	sample_members
 	member_def(perf_event_header, type, T_UINT, "event type"),
 	member_def(perf_record_comm, pid, T_UINT, "event pid"),
 	member_def(perf_record_comm, tid, T_UINT, "event tid"),
 	member_def(perf_record_comm, comm, T_STRING_INPLACE, "process name"),
-	{ .name = NULL, },
-};
+	अणु .name = शून्य, पूर्ण,
+पूर्ण;
 
-static PyObject *pyrf_comm_event__repr(struct pyrf_event *pevent)
-{
-	return _PyUnicode_FromFormat("{ type: comm, pid: %u, tid: %u, comm: %s }",
+अटल PyObject *pyrf_comm_event__repr(काष्ठा pyrf_event *pevent)
+अणु
+	वापस _PyUnicode_FromFormat("{ type: comm, pid: %u, tid: %u, comm: %s }",
 				   pevent->event.comm.pid,
 				   pevent->event.comm.tid,
 				   pevent->event.comm.comm);
-}
+पूर्ण
 
-static PyTypeObject pyrf_comm_event__type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
+अटल PyTypeObject pyrf_comm_event__type = अणु
+	PyVarObject_HEAD_INIT(शून्य, 0)
 	.tp_name	= "perf.comm_event",
-	.tp_basicsize	= sizeof(struct pyrf_event),
+	.tp_basicsize	= माप(काष्ठा pyrf_event),
 	.tp_flags	= Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,
-	.tp_doc		= pyrf_comm_event__doc,
+	.tp_करोc		= pyrf_comm_event__करोc,
 	.tp_members	= pyrf_comm_event__members,
 	.tp_repr	= (reprfunc)pyrf_comm_event__repr,
-};
+पूर्ण;
 
-static char pyrf_throttle_event__doc[] = PyDoc_STR("perf throttle event object.");
+अटल अक्षर pyrf_throttle_event__करोc[] = PyDoc_STR("perf throttle event object.");
 
-static PyMemberDef pyrf_throttle_event__members[] = {
+अटल PyMemberDef pyrf_throttle_event__members[] = अणु
 	sample_members
 	member_def(perf_event_header, type, T_UINT, "event type"),
-	member_def(perf_record_throttle, time, T_ULONGLONG, "timestamp"),
+	member_def(perf_record_throttle, समय, T_ULONGLONG, "timestamp"),
 	member_def(perf_record_throttle, id, T_ULONGLONG, "event id"),
 	member_def(perf_record_throttle, stream_id, T_ULONGLONG, "event stream id"),
-	{ .name = NULL, },
-};
+	अणु .name = शून्य, पूर्ण,
+पूर्ण;
 
-static PyObject *pyrf_throttle_event__repr(struct pyrf_event *pevent)
-{
-	struct perf_record_throttle *te = (struct perf_record_throttle *)(&pevent->event.header + 1);
+अटल PyObject *pyrf_throttle_event__repr(काष्ठा pyrf_event *pevent)
+अणु
+	काष्ठा perf_record_throttle *te = (काष्ठा perf_record_throttle *)(&pevent->event.header + 1);
 
-	return _PyUnicode_FromFormat("{ type: %sthrottle, time: %" PRI_lu64 ", id: %" PRI_lu64
+	वापस _PyUnicode_FromFormat("{ type: %sthrottle, time: %" PRI_lu64 ", id: %" PRI_lu64
 				   ", stream_id: %" PRI_lu64 " }",
 				   pevent->event.header.type == PERF_RECORD_THROTTLE ? "" : "un",
-				   te->time, te->id, te->stream_id);
-}
+				   te->समय, te->id, te->stream_id);
+पूर्ण
 
-static PyTypeObject pyrf_throttle_event__type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
+अटल PyTypeObject pyrf_throttle_event__type = अणु
+	PyVarObject_HEAD_INIT(शून्य, 0)
 	.tp_name	= "perf.throttle_event",
-	.tp_basicsize	= sizeof(struct pyrf_event),
+	.tp_basicsize	= माप(काष्ठा pyrf_event),
 	.tp_flags	= Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,
-	.tp_doc		= pyrf_throttle_event__doc,
+	.tp_करोc		= pyrf_throttle_event__करोc,
 	.tp_members	= pyrf_throttle_event__members,
 	.tp_repr	= (reprfunc)pyrf_throttle_event__repr,
-};
+पूर्ण;
 
-static char pyrf_lost_event__doc[] = PyDoc_STR("perf lost event object.");
+अटल अक्षर pyrf_lost_event__करोc[] = PyDoc_STR("perf lost event object.");
 
-static PyMemberDef pyrf_lost_event__members[] = {
+अटल PyMemberDef pyrf_lost_event__members[] = अणु
 	sample_members
 	member_def(perf_record_lost, id, T_ULONGLONG, "event id"),
 	member_def(perf_record_lost, lost, T_ULONGLONG, "number of lost events"),
-	{ .name = NULL, },
-};
+	अणु .name = शून्य, पूर्ण,
+पूर्ण;
 
-static PyObject *pyrf_lost_event__repr(struct pyrf_event *pevent)
-{
+अटल PyObject *pyrf_lost_event__repr(काष्ठा pyrf_event *pevent)
+अणु
 	PyObject *ret;
-	char *s;
+	अक्षर *s;
 
-	if (asprintf(&s, "{ type: lost, id: %#" PRI_lx64 ", "
+	अगर (aप्र_लिखो(&s, "{ type: lost, id: %#" PRI_lx64 ", "
 			 "lost: %#" PRI_lx64 " }",
-		     pevent->event.lost.id, pevent->event.lost.lost) < 0) {
+		     pevent->event.lost.id, pevent->event.lost.lost) < 0) अणु
 		ret = PyErr_NoMemory();
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = _PyUnicode_FromString(s);
-		free(s);
-	}
-	return ret;
-}
+		मुक्त(s);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static PyTypeObject pyrf_lost_event__type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
+अटल PyTypeObject pyrf_lost_event__type = अणु
+	PyVarObject_HEAD_INIT(शून्य, 0)
 	.tp_name	= "perf.lost_event",
-	.tp_basicsize	= sizeof(struct pyrf_event),
+	.tp_basicsize	= माप(काष्ठा pyrf_event),
 	.tp_flags	= Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,
-	.tp_doc		= pyrf_lost_event__doc,
+	.tp_करोc		= pyrf_lost_event__करोc,
 	.tp_members	= pyrf_lost_event__members,
 	.tp_repr	= (reprfunc)pyrf_lost_event__repr,
-};
+पूर्ण;
 
-static char pyrf_read_event__doc[] = PyDoc_STR("perf read event object.");
+अटल अक्षर pyrf_पढ़ो_event__करोc[] = PyDoc_STR("perf read event object.");
 
-static PyMemberDef pyrf_read_event__members[] = {
+अटल PyMemberDef pyrf_पढ़ो_event__members[] = अणु
 	sample_members
-	member_def(perf_record_read, pid, T_UINT, "event pid"),
-	member_def(perf_record_read, tid, T_UINT, "event tid"),
-	{ .name = NULL, },
-};
+	member_def(perf_record_पढ़ो, pid, T_UINT, "event pid"),
+	member_def(perf_record_पढ़ो, tid, T_UINT, "event tid"),
+	अणु .name = शून्य, पूर्ण,
+पूर्ण;
 
-static PyObject *pyrf_read_event__repr(struct pyrf_event *pevent)
-{
-	return _PyUnicode_FromFormat("{ type: read, pid: %u, tid: %u }",
-				   pevent->event.read.pid,
-				   pevent->event.read.tid);
+अटल PyObject *pyrf_पढ़ो_event__repr(काष्ठा pyrf_event *pevent)
+अणु
+	वापस _PyUnicode_FromFormat("{ type: read, pid: %u, tid: %u }",
+				   pevent->event.पढ़ो.pid,
+				   pevent->event.पढ़ो.tid);
 	/*
- 	 * FIXME: return the array of read values,
+ 	 * FIXME: वापस the array of पढ़ो values,
  	 * making this method useful ;-)
  	 */
-}
+पूर्ण
 
-static PyTypeObject pyrf_read_event__type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
+अटल PyTypeObject pyrf_पढ़ो_event__type = अणु
+	PyVarObject_HEAD_INIT(शून्य, 0)
 	.tp_name	= "perf.read_event",
-	.tp_basicsize	= sizeof(struct pyrf_event),
+	.tp_basicsize	= माप(काष्ठा pyrf_event),
 	.tp_flags	= Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,
-	.tp_doc		= pyrf_read_event__doc,
-	.tp_members	= pyrf_read_event__members,
-	.tp_repr	= (reprfunc)pyrf_read_event__repr,
-};
+	.tp_करोc		= pyrf_पढ़ो_event__करोc,
+	.tp_members	= pyrf_पढ़ो_event__members,
+	.tp_repr	= (reprfunc)pyrf_पढ़ो_event__repr,
+पूर्ण;
 
-static char pyrf_sample_event__doc[] = PyDoc_STR("perf sample event object.");
+अटल अक्षर pyrf_sample_event__करोc[] = PyDoc_STR("perf sample event object.");
 
-static PyMemberDef pyrf_sample_event__members[] = {
+अटल PyMemberDef pyrf_sample_event__members[] = अणु
 	sample_members
 	member_def(perf_event_header, type, T_UINT, "event type"),
-	{ .name = NULL, },
-};
+	अणु .name = शून्य, पूर्ण,
+पूर्ण;
 
-static PyObject *pyrf_sample_event__repr(struct pyrf_event *pevent)
-{
+अटल PyObject *pyrf_sample_event__repr(काष्ठा pyrf_event *pevent)
+अणु
 	PyObject *ret;
-	char *s;
+	अक्षर *s;
 
-	if (asprintf(&s, "{ type: sample }") < 0) {
+	अगर (aप्र_लिखो(&s, "{ type: sample }") < 0) अणु
 		ret = PyErr_NoMemory();
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = _PyUnicode_FromString(s);
-		free(s);
-	}
-	return ret;
-}
+		मुक्त(s);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static bool is_tracepoint(struct pyrf_event *pevent)
-{
-	return pevent->evsel->core.attr.type == PERF_TYPE_TRACEPOINT;
-}
+अटल bool is_tracepoपूर्णांक(काष्ठा pyrf_event *pevent)
+अणु
+	वापस pevent->evsel->core.attr.type == PERF_TYPE_TRACEPOINT;
+पूर्ण
 
-static PyObject*
-tracepoint_field(struct pyrf_event *pe, struct tep_format_field *field)
-{
-	struct tep_handle *pevent = field->event->tep;
-	void *data = pe->sample.raw_data;
-	PyObject *ret = NULL;
-	unsigned long long val;
-	unsigned int offset, len;
+अटल PyObject*
+tracepoपूर्णांक_field(काष्ठा pyrf_event *pe, काष्ठा tep_क्रमmat_field *field)
+अणु
+	काष्ठा tep_handle *pevent = field->event->tep;
+	व्योम *data = pe->sample.raw_data;
+	PyObject *ret = शून्य;
+	अचिन्हित दीर्घ दीर्घ val;
+	अचिन्हित पूर्णांक offset, len;
 
-	if (field->flags & TEP_FIELD_IS_ARRAY) {
+	अगर (field->flags & TEP_FIELD_IS_ARRAY) अणु
 		offset = field->offset;
 		len    = field->size;
-		if (field->flags & TEP_FIELD_IS_DYNAMIC) {
-			val     = tep_read_number(pevent, data + offset, len);
+		अगर (field->flags & TEP_FIELD_IS_DYNAMIC) अणु
+			val     = tep_पढ़ो_number(pevent, data + offset, len);
 			offset  = val;
 			len     = offset >> 16;
 			offset &= 0xffff;
-		}
-		if (field->flags & TEP_FIELD_IS_STRING &&
-		    is_printable_array(data + offset, len)) {
-			ret = _PyUnicode_FromString((char *)data + offset);
-		} else {
-			ret = PyByteArray_FromStringAndSize((const char *) data + offset, len);
+		पूर्ण
+		अगर (field->flags & TEP_FIELD_IS_STRING &&
+		    is_prपूर्णांकable_array(data + offset, len)) अणु
+			ret = _PyUnicode_FromString((अक्षर *)data + offset);
+		पूर्ण अन्यथा अणु
+			ret = PyByteArray_FromStringAndSize((स्थिर अक्षर *) data + offset, len);
 			field->flags &= ~TEP_FIELD_IS_STRING;
-		}
-	} else {
-		val = tep_read_number(pevent, data + field->offset,
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		val = tep_पढ़ो_number(pevent, data + field->offset,
 				      field->size);
-		if (field->flags & TEP_FIELD_IS_POINTER)
-			ret = PyLong_FromUnsignedLong((unsigned long) val);
-		else if (field->flags & TEP_FIELD_IS_SIGNED)
-			ret = PyLong_FromLong((long) val);
-		else
-			ret = PyLong_FromUnsignedLong((unsigned long) val);
-	}
+		अगर (field->flags & TEP_FIELD_IS_POINTER)
+			ret = PyLong_FromUnचिन्हितLong((अचिन्हित दीर्घ) val);
+		अन्यथा अगर (field->flags & TEP_FIELD_IS_SIGNED)
+			ret = PyLong_FromLong((दीर्घ) val);
+		अन्यथा
+			ret = PyLong_FromUnचिन्हितLong((अचिन्हित दीर्घ) val);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static PyObject*
-get_tracepoint_field(struct pyrf_event *pevent, PyObject *attr_name)
-{
-	const char *str = _PyUnicode_AsString(PyObject_Str(attr_name));
-	struct evsel *evsel = pevent->evsel;
-	struct tep_format_field *field;
+अटल PyObject*
+get_tracepoपूर्णांक_field(काष्ठा pyrf_event *pevent, PyObject *attr_name)
+अणु
+	स्थिर अक्षर *str = _PyUnicode_AsString(PyObject_Str(attr_name));
+	काष्ठा evsel *evsel = pevent->evsel;
+	काष्ठा tep_क्रमmat_field *field;
 
-	if (!evsel->tp_format) {
-		struct tep_event *tp_format;
+	अगर (!evsel->tp_क्रमmat) अणु
+		काष्ठा tep_event *tp_क्रमmat;
 
-		tp_format = trace_event__tp_format_id(evsel->core.attr.config);
-		if (!tp_format)
-			return NULL;
+		tp_क्रमmat = trace_event__tp_क्रमmat_id(evsel->core.attr.config);
+		अगर (!tp_क्रमmat)
+			वापस शून्य;
 
-		evsel->tp_format = tp_format;
-	}
+		evsel->tp_क्रमmat = tp_क्रमmat;
+	पूर्ण
 
-	field = tep_find_any_field(evsel->tp_format, str);
-	if (!field)
-		return NULL;
+	field = tep_find_any_field(evsel->tp_क्रमmat, str);
+	अगर (!field)
+		वापस शून्य;
 
-	return tracepoint_field(pevent, field);
-}
+	वापस tracepoपूर्णांक_field(pevent, field);
+पूर्ण
 
-static PyObject*
-pyrf_sample_event__getattro(struct pyrf_event *pevent, PyObject *attr_name)
-{
-	PyObject *obj = NULL;
+अटल PyObject*
+pyrf_sample_event__getattro(काष्ठा pyrf_event *pevent, PyObject *attr_name)
+अणु
+	PyObject *obj = शून्य;
 
-	if (is_tracepoint(pevent))
-		obj = get_tracepoint_field(pevent, attr_name);
+	अगर (is_tracepoपूर्णांक(pevent))
+		obj = get_tracepoपूर्णांक_field(pevent, attr_name);
 
-	return obj ?: PyObject_GenericGetAttr((PyObject *) pevent, attr_name);
-}
+	वापस obj ?: PyObject_GenericGetAttr((PyObject *) pevent, attr_name);
+पूर्ण
 
-static PyTypeObject pyrf_sample_event__type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
+अटल PyTypeObject pyrf_sample_event__type = अणु
+	PyVarObject_HEAD_INIT(शून्य, 0)
 	.tp_name	= "perf.sample_event",
-	.tp_basicsize	= sizeof(struct pyrf_event),
+	.tp_basicsize	= माप(काष्ठा pyrf_event),
 	.tp_flags	= Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,
-	.tp_doc		= pyrf_sample_event__doc,
+	.tp_करोc		= pyrf_sample_event__करोc,
 	.tp_members	= pyrf_sample_event__members,
 	.tp_repr	= (reprfunc)pyrf_sample_event__repr,
 	.tp_getattro	= (getattrofunc) pyrf_sample_event__getattro,
-};
+पूर्ण;
 
-static char pyrf_context_switch_event__doc[] = PyDoc_STR("perf context_switch event object.");
+अटल अक्षर pyrf_context_चयन_event__करोc[] = PyDoc_STR("perf context_switch event object.");
 
-static PyMemberDef pyrf_context_switch_event__members[] = {
+अटल PyMemberDef pyrf_context_चयन_event__members[] = अणु
 	sample_members
 	member_def(perf_event_header, type, T_UINT, "event type"),
-	member_def(perf_record_switch, next_prev_pid, T_UINT, "next/prev pid"),
-	member_def(perf_record_switch, next_prev_tid, T_UINT, "next/prev tid"),
-	{ .name = NULL, },
-};
+	member_def(perf_record_चयन, next_prev_pid, T_UINT, "next/prev pid"),
+	member_def(perf_record_चयन, next_prev_tid, T_UINT, "next/prev tid"),
+	अणु .name = शून्य, पूर्ण,
+पूर्ण;
 
-static PyObject *pyrf_context_switch_event__repr(struct pyrf_event *pevent)
-{
+अटल PyObject *pyrf_context_चयन_event__repr(काष्ठा pyrf_event *pevent)
+अणु
 	PyObject *ret;
-	char *s;
+	अक्षर *s;
 
-	if (asprintf(&s, "{ type: context_switch, next_prev_pid: %u, next_prev_tid: %u, switch_out: %u }",
-		     pevent->event.context_switch.next_prev_pid,
-		     pevent->event.context_switch.next_prev_tid,
-		     !!(pevent->event.header.misc & PERF_RECORD_MISC_SWITCH_OUT)) < 0) {
+	अगर (aप्र_लिखो(&s, "{ type: context_switch, next_prev_pid: %u, next_prev_tid: %u, switch_out: %u }",
+		     pevent->event.context_चयन.next_prev_pid,
+		     pevent->event.context_चयन.next_prev_tid,
+		     !!(pevent->event.header.misc & PERF_RECORD_MISC_SWITCH_OUT)) < 0) अणु
 		ret = PyErr_NoMemory();
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = _PyUnicode_FromString(s);
-		free(s);
-	}
-	return ret;
-}
+		मुक्त(s);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static PyTypeObject pyrf_context_switch_event__type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
+अटल PyTypeObject pyrf_context_चयन_event__type = अणु
+	PyVarObject_HEAD_INIT(शून्य, 0)
 	.tp_name	= "perf.context_switch_event",
-	.tp_basicsize	= sizeof(struct pyrf_event),
+	.tp_basicsize	= माप(काष्ठा pyrf_event),
 	.tp_flags	= Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,
-	.tp_doc		= pyrf_context_switch_event__doc,
-	.tp_members	= pyrf_context_switch_event__members,
-	.tp_repr	= (reprfunc)pyrf_context_switch_event__repr,
-};
+	.tp_करोc		= pyrf_context_चयन_event__करोc,
+	.tp_members	= pyrf_context_चयन_event__members,
+	.tp_repr	= (reprfunc)pyrf_context_चयन_event__repr,
+पूर्ण;
 
-static int pyrf_event__setup_types(void)
-{
-	int err;
+अटल पूर्णांक pyrf_event__setup_types(व्योम)
+अणु
+	पूर्णांक err;
 	pyrf_mmap_event__type.tp_new =
 	pyrf_task_event__type.tp_new =
 	pyrf_comm_event__type.tp_new =
 	pyrf_lost_event__type.tp_new =
-	pyrf_read_event__type.tp_new =
+	pyrf_पढ़ो_event__type.tp_new =
 	pyrf_sample_event__type.tp_new =
-	pyrf_context_switch_event__type.tp_new =
+	pyrf_context_चयन_event__type.tp_new =
 	pyrf_throttle_event__type.tp_new = PyType_GenericNew;
 	err = PyType_Ready(&pyrf_mmap_event__type);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 	err = PyType_Ready(&pyrf_lost_event__type);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 	err = PyType_Ready(&pyrf_task_event__type);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 	err = PyType_Ready(&pyrf_comm_event__type);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 	err = PyType_Ready(&pyrf_throttle_event__type);
-	if (err < 0)
-		goto out;
-	err = PyType_Ready(&pyrf_read_event__type);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
+	err = PyType_Ready(&pyrf_पढ़ो_event__type);
+	अगर (err < 0)
+		जाओ out;
 	err = PyType_Ready(&pyrf_sample_event__type);
-	if (err < 0)
-		goto out;
-	err = PyType_Ready(&pyrf_context_switch_event__type);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
+	err = PyType_Ready(&pyrf_context_चयन_event__type);
+	अगर (err < 0)
+		जाओ out;
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static PyTypeObject *pyrf_event__type[] = {
+अटल PyTypeObject *pyrf_event__type[] = अणु
 	[PERF_RECORD_MMAP]	 = &pyrf_mmap_event__type,
 	[PERF_RECORD_LOST]	 = &pyrf_lost_event__type,
 	[PERF_RECORD_COMM]	 = &pyrf_comm_event__type,
@@ -568,183 +569,183 @@ static PyTypeObject *pyrf_event__type[] = {
 	[PERF_RECORD_THROTTLE]	 = &pyrf_throttle_event__type,
 	[PERF_RECORD_UNTHROTTLE] = &pyrf_throttle_event__type,
 	[PERF_RECORD_FORK]	 = &pyrf_task_event__type,
-	[PERF_RECORD_READ]	 = &pyrf_read_event__type,
+	[PERF_RECORD_READ]	 = &pyrf_पढ़ो_event__type,
 	[PERF_RECORD_SAMPLE]	 = &pyrf_sample_event__type,
-	[PERF_RECORD_SWITCH]	 = &pyrf_context_switch_event__type,
-	[PERF_RECORD_SWITCH_CPU_WIDE]  = &pyrf_context_switch_event__type,
-};
+	[PERF_RECORD_SWITCH]	 = &pyrf_context_चयन_event__type,
+	[PERF_RECORD_SWITCH_CPU_WIDE]  = &pyrf_context_चयन_event__type,
+पूर्ण;
 
-static PyObject *pyrf_event__new(union perf_event *event)
-{
-	struct pyrf_event *pevent;
+अटल PyObject *pyrf_event__new(जोड़ perf_event *event)
+अणु
+	काष्ठा pyrf_event *pevent;
 	PyTypeObject *ptype;
 
-	if ((event->header.type < PERF_RECORD_MMAP ||
+	अगर ((event->header.type < PERF_RECORD_MMAP ||
 	     event->header.type > PERF_RECORD_SAMPLE) &&
 	    !(event->header.type == PERF_RECORD_SWITCH ||
 	      event->header.type == PERF_RECORD_SWITCH_CPU_WIDE))
-		return NULL;
+		वापस शून्य;
 
 	ptype = pyrf_event__type[event->header.type];
-	pevent = PyObject_New(struct pyrf_event, ptype);
-	if (pevent != NULL)
-		memcpy(&pevent->event, event, event->header.size);
-	return (PyObject *)pevent;
-}
+	pevent = PyObject_New(काष्ठा pyrf_event, ptype);
+	अगर (pevent != शून्य)
+		स_नकल(&pevent->event, event, event->header.size);
+	वापस (PyObject *)pevent;
+पूर्ण
 
-struct pyrf_cpu_map {
+काष्ठा pyrf_cpu_map अणु
 	PyObject_HEAD
 
-	struct perf_cpu_map *cpus;
-};
+	काष्ठा perf_cpu_map *cpus;
+पूर्ण;
 
-static int pyrf_cpu_map__init(struct pyrf_cpu_map *pcpus,
+अटल पूर्णांक pyrf_cpu_map__init(काष्ठा pyrf_cpu_map *pcpus,
 			      PyObject *args, PyObject *kwargs)
-{
-	static char *kwlist[] = { "cpustr", NULL };
-	char *cpustr = NULL;
+अणु
+	अटल अक्षर *kwlist[] = अणु "cpustr", शून्य पूर्ण;
+	अक्षर *cpustr = शून्य;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|s",
+	अगर (!PyArg_ParseTupleAndKeywords(args, kwargs, "|s",
 					 kwlist, &cpustr))
-		return -1;
+		वापस -1;
 
 	pcpus->cpus = perf_cpu_map__new(cpustr);
-	if (pcpus->cpus == NULL)
-		return -1;
-	return 0;
-}
+	अगर (pcpus->cpus == शून्य)
+		वापस -1;
+	वापस 0;
+पूर्ण
 
-static void pyrf_cpu_map__delete(struct pyrf_cpu_map *pcpus)
-{
+अटल व्योम pyrf_cpu_map__delete(काष्ठा pyrf_cpu_map *pcpus)
+अणु
 	perf_cpu_map__put(pcpus->cpus);
-	Py_TYPE(pcpus)->tp_free((PyObject*)pcpus);
-}
+	Py_TYPE(pcpus)->tp_मुक्त((PyObject*)pcpus);
+पूर्ण
 
-static Py_ssize_t pyrf_cpu_map__length(PyObject *obj)
-{
-	struct pyrf_cpu_map *pcpus = (void *)obj;
+अटल Py_sमाप_प्रकार pyrf_cpu_map__length(PyObject *obj)
+अणु
+	काष्ठा pyrf_cpu_map *pcpus = (व्योम *)obj;
 
-	return pcpus->cpus->nr;
-}
+	वापस pcpus->cpus->nr;
+पूर्ण
 
-static PyObject *pyrf_cpu_map__item(PyObject *obj, Py_ssize_t i)
-{
-	struct pyrf_cpu_map *pcpus = (void *)obj;
+अटल PyObject *pyrf_cpu_map__item(PyObject *obj, Py_sमाप_प्रकार i)
+अणु
+	काष्ठा pyrf_cpu_map *pcpus = (व्योम *)obj;
 
-	if (i >= pcpus->cpus->nr)
-		return NULL;
+	अगर (i >= pcpus->cpus->nr)
+		वापस शून्य;
 
-	return Py_BuildValue("i", pcpus->cpus->map[i]);
-}
+	वापस Py_BuildValue("i", pcpus->cpus->map[i]);
+पूर्ण
 
-static PySequenceMethods pyrf_cpu_map__sequence_methods = {
+अटल PySequenceMethods pyrf_cpu_map__sequence_methods = अणु
 	.sq_length = pyrf_cpu_map__length,
 	.sq_item   = pyrf_cpu_map__item,
-};
+पूर्ण;
 
-static char pyrf_cpu_map__doc[] = PyDoc_STR("cpu map object.");
+अटल अक्षर pyrf_cpu_map__करोc[] = PyDoc_STR("cpu map object.");
 
-static PyTypeObject pyrf_cpu_map__type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
+अटल PyTypeObject pyrf_cpu_map__type = अणु
+	PyVarObject_HEAD_INIT(शून्य, 0)
 	.tp_name	= "perf.cpu_map",
-	.tp_basicsize	= sizeof(struct pyrf_cpu_map),
-	.tp_dealloc	= (destructor)pyrf_cpu_map__delete,
+	.tp_basicsize	= माप(काष्ठा pyrf_cpu_map),
+	.tp_dealloc	= (deकाष्ठाor)pyrf_cpu_map__delete,
 	.tp_flags	= Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,
-	.tp_doc		= pyrf_cpu_map__doc,
+	.tp_करोc		= pyrf_cpu_map__करोc,
 	.tp_as_sequence	= &pyrf_cpu_map__sequence_methods,
 	.tp_init	= (initproc)pyrf_cpu_map__init,
-};
+पूर्ण;
 
-static int pyrf_cpu_map__setup_types(void)
-{
+अटल पूर्णांक pyrf_cpu_map__setup_types(व्योम)
+अणु
 	pyrf_cpu_map__type.tp_new = PyType_GenericNew;
-	return PyType_Ready(&pyrf_cpu_map__type);
-}
+	वापस PyType_Ready(&pyrf_cpu_map__type);
+पूर्ण
 
-struct pyrf_thread_map {
+काष्ठा pyrf_thपढ़ो_map अणु
 	PyObject_HEAD
 
-	struct perf_thread_map *threads;
-};
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
+पूर्ण;
 
-static int pyrf_thread_map__init(struct pyrf_thread_map *pthreads,
+अटल पूर्णांक pyrf_thपढ़ो_map__init(काष्ठा pyrf_thपढ़ो_map *pthपढ़ोs,
 				 PyObject *args, PyObject *kwargs)
-{
-	static char *kwlist[] = { "pid", "tid", "uid", NULL };
-	int pid = -1, tid = -1, uid = UINT_MAX;
+अणु
+	अटल अक्षर *kwlist[] = अणु "pid", "tid", "uid", शून्य पूर्ण;
+	पूर्णांक pid = -1, tid = -1, uid = अच_पूर्णांक_उच्च;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|iii",
+	अगर (!PyArg_ParseTupleAndKeywords(args, kwargs, "|iii",
 					 kwlist, &pid, &tid, &uid))
-		return -1;
+		वापस -1;
 
-	pthreads->threads = thread_map__new(pid, tid, uid);
-	if (pthreads->threads == NULL)
-		return -1;
-	return 0;
-}
+	pthपढ़ोs->thपढ़ोs = thपढ़ो_map__new(pid, tid, uid);
+	अगर (pthपढ़ोs->thपढ़ोs == शून्य)
+		वापस -1;
+	वापस 0;
+पूर्ण
 
-static void pyrf_thread_map__delete(struct pyrf_thread_map *pthreads)
-{
-	perf_thread_map__put(pthreads->threads);
-	Py_TYPE(pthreads)->tp_free((PyObject*)pthreads);
-}
+अटल व्योम pyrf_thपढ़ो_map__delete(काष्ठा pyrf_thपढ़ो_map *pthपढ़ोs)
+अणु
+	perf_thपढ़ो_map__put(pthपढ़ोs->thपढ़ोs);
+	Py_TYPE(pthपढ़ोs)->tp_मुक्त((PyObject*)pthपढ़ोs);
+पूर्ण
 
-static Py_ssize_t pyrf_thread_map__length(PyObject *obj)
-{
-	struct pyrf_thread_map *pthreads = (void *)obj;
+अटल Py_sमाप_प्रकार pyrf_thपढ़ो_map__length(PyObject *obj)
+अणु
+	काष्ठा pyrf_thपढ़ो_map *pthपढ़ोs = (व्योम *)obj;
 
-	return pthreads->threads->nr;
-}
+	वापस pthपढ़ोs->thपढ़ोs->nr;
+पूर्ण
 
-static PyObject *pyrf_thread_map__item(PyObject *obj, Py_ssize_t i)
-{
-	struct pyrf_thread_map *pthreads = (void *)obj;
+अटल PyObject *pyrf_thपढ़ो_map__item(PyObject *obj, Py_sमाप_प्रकार i)
+अणु
+	काष्ठा pyrf_thपढ़ो_map *pthपढ़ोs = (व्योम *)obj;
 
-	if (i >= pthreads->threads->nr)
-		return NULL;
+	अगर (i >= pthपढ़ोs->thपढ़ोs->nr)
+		वापस शून्य;
 
-	return Py_BuildValue("i", pthreads->threads->map[i]);
-}
+	वापस Py_BuildValue("i", pthपढ़ोs->thपढ़ोs->map[i]);
+पूर्ण
 
-static PySequenceMethods pyrf_thread_map__sequence_methods = {
-	.sq_length = pyrf_thread_map__length,
-	.sq_item   = pyrf_thread_map__item,
-};
+अटल PySequenceMethods pyrf_thपढ़ो_map__sequence_methods = अणु
+	.sq_length = pyrf_thपढ़ो_map__length,
+	.sq_item   = pyrf_thपढ़ो_map__item,
+पूर्ण;
 
-static char pyrf_thread_map__doc[] = PyDoc_STR("thread map object.");
+अटल अक्षर pyrf_thपढ़ो_map__करोc[] = PyDoc_STR("thread map object.");
 
-static PyTypeObject pyrf_thread_map__type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
+अटल PyTypeObject pyrf_thपढ़ो_map__type = अणु
+	PyVarObject_HEAD_INIT(शून्य, 0)
 	.tp_name	= "perf.thread_map",
-	.tp_basicsize	= sizeof(struct pyrf_thread_map),
-	.tp_dealloc	= (destructor)pyrf_thread_map__delete,
+	.tp_basicsize	= माप(काष्ठा pyrf_thपढ़ो_map),
+	.tp_dealloc	= (deकाष्ठाor)pyrf_thपढ़ो_map__delete,
 	.tp_flags	= Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,
-	.tp_doc		= pyrf_thread_map__doc,
-	.tp_as_sequence	= &pyrf_thread_map__sequence_methods,
-	.tp_init	= (initproc)pyrf_thread_map__init,
-};
+	.tp_करोc		= pyrf_thपढ़ो_map__करोc,
+	.tp_as_sequence	= &pyrf_thपढ़ो_map__sequence_methods,
+	.tp_init	= (initproc)pyrf_thपढ़ो_map__init,
+पूर्ण;
 
-static int pyrf_thread_map__setup_types(void)
-{
-	pyrf_thread_map__type.tp_new = PyType_GenericNew;
-	return PyType_Ready(&pyrf_thread_map__type);
-}
+अटल पूर्णांक pyrf_thपढ़ो_map__setup_types(व्योम)
+अणु
+	pyrf_thपढ़ो_map__type.tp_new = PyType_GenericNew;
+	वापस PyType_Ready(&pyrf_thपढ़ो_map__type);
+पूर्ण
 
-struct pyrf_evsel {
+काष्ठा pyrf_evsel अणु
 	PyObject_HEAD
 
-	struct evsel evsel;
-};
+	काष्ठा evsel evsel;
+पूर्ण;
 
-static int pyrf_evsel__init(struct pyrf_evsel *pevsel,
+अटल पूर्णांक pyrf_evsel__init(काष्ठा pyrf_evsel *pevsel,
 			    PyObject *args, PyObject *kwargs)
-{
-	struct perf_event_attr attr = {
+अणु
+	काष्ठा perf_event_attr attr = अणु
 		.type = PERF_TYPE_HARDWARE,
 		.config = PERF_COUNT_HW_CPU_CYCLES,
 		.sample_type = PERF_SAMPLE_PERIOD | PERF_SAMPLE_TID,
-	};
-	static char *kwlist[] = {
+	पूर्ण;
+	अटल अक्षर *kwlist[] = अणु
 		"type",
 		"config",
 		"sample_freq",
@@ -774,8 +775,8 @@ static int pyrf_evsel__init(struct pyrf_evsel *pevsel,
 		"bp_type",
 		"bp_addr",
 		"bp_len",
-		 NULL
-	};
+		 शून्य
+	पूर्ण;
 	u64 sample_period = 0;
 	u32 disabled = 0,
 	    inherit = 0,
@@ -786,7 +787,7 @@ static int pyrf_evsel__init(struct pyrf_evsel *pevsel,
 	    exclude_hv = 0,
 	    exclude_idle = 0,
 	    mmap = 0,
-	    context_switch = 0,
+	    context_चयन = 0,
 	    comm = 0,
 	    freq = 1,
 	    inherit_stat = 0,
@@ -796,28 +797,28 @@ static int pyrf_evsel__init(struct pyrf_evsel *pevsel,
 	    precise_ip = 0,
 	    mmap_data = 0,
 	    sample_id_all = 1;
-	int idx = 0;
+	पूर्णांक idx = 0;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+	अगर (!PyArg_ParseTupleAndKeywords(args, kwargs,
 					 "|iKiKKiiiiiiiiiiiiiiiiiiiiiiKK", kwlist,
 					 &attr.type, &attr.config, &attr.sample_freq,
 					 &sample_period, &attr.sample_type,
-					 &attr.read_format, &disabled, &inherit,
+					 &attr.पढ़ो_क्रमmat, &disabled, &inherit,
 					 &pinned, &exclusive, &exclude_user,
 					 &exclude_kernel, &exclude_hv, &exclude_idle,
-					 &mmap, &context_switch, &comm, &freq, &inherit_stat,
+					 &mmap, &context_चयन, &comm, &freq, &inherit_stat,
 					 &enable_on_exec, &task, &watermark,
 					 &precise_ip, &mmap_data, &sample_id_all,
 					 &attr.wakeup_events, &attr.bp_type,
 					 &attr.bp_addr, &attr.bp_len, &idx))
-		return -1;
+		वापस -1;
 
-	/* union... */
-	if (sample_period != 0) {
-		if (attr.sample_freq != 0)
-			return -1; /* FIXME: throw right exception */
+	/* जोड़... */
+	अगर (sample_period != 0) अणु
+		अगर (attr.sample_freq != 0)
+			वापस -1; /* FIXME: throw right exception */
 		attr.sample_period = sample_period;
-	}
+	पूर्ण
 
 	/* Bitfields */
 	attr.disabled	    = disabled;
@@ -829,7 +830,7 @@ static int pyrf_evsel__init(struct pyrf_evsel *pevsel,
 	attr.exclude_hv	    = exclude_hv;
 	attr.exclude_idle   = exclude_idle;
 	attr.mmap	    = mmap;
-	attr.context_switch = context_switch;
+	attr.context_चयन = context_चयन;
 	attr.comm	    = comm;
 	attr.freq	    = freq;
 	attr.inherit_stat   = inherit_stat;
@@ -839,254 +840,254 @@ static int pyrf_evsel__init(struct pyrf_evsel *pevsel,
 	attr.precise_ip	    = precise_ip;
 	attr.mmap_data	    = mmap_data;
 	attr.sample_id_all  = sample_id_all;
-	attr.size	    = sizeof(attr);
+	attr.size	    = माप(attr);
 
 	evsel__init(&pevsel->evsel, &attr, idx);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pyrf_evsel__delete(struct pyrf_evsel *pevsel)
-{
-	evsel__exit(&pevsel->evsel);
-	Py_TYPE(pevsel)->tp_free((PyObject*)pevsel);
-}
+अटल व्योम pyrf_evsel__delete(काष्ठा pyrf_evsel *pevsel)
+अणु
+	evsel__निकास(&pevsel->evsel);
+	Py_TYPE(pevsel)->tp_मुक्त((PyObject*)pevsel);
+पूर्ण
 
-static PyObject *pyrf_evsel__open(struct pyrf_evsel *pevsel,
+अटल PyObject *pyrf_evsel__खोलो(काष्ठा pyrf_evsel *pevsel,
 				  PyObject *args, PyObject *kwargs)
-{
-	struct evsel *evsel = &pevsel->evsel;
-	struct perf_cpu_map *cpus = NULL;
-	struct perf_thread_map *threads = NULL;
-	PyObject *pcpus = NULL, *pthreads = NULL;
-	int group = 0, inherit = 0;
-	static char *kwlist[] = { "cpus", "threads", "group", "inherit", NULL };
+अणु
+	काष्ठा evsel *evsel = &pevsel->evsel;
+	काष्ठा perf_cpu_map *cpus = शून्य;
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs = शून्य;
+	PyObject *pcpus = शून्य, *pthपढ़ोs = शून्य;
+	पूर्णांक group = 0, inherit = 0;
+	अटल अक्षर *kwlist[] = अणु "cpus", "threads", "group", "inherit", शून्य पूर्ण;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOii", kwlist,
-					 &pcpus, &pthreads, &group, &inherit))
-		return NULL;
+	अगर (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOii", kwlist,
+					 &pcpus, &pthपढ़ोs, &group, &inherit))
+		वापस शून्य;
 
-	if (pthreads != NULL)
-		threads = ((struct pyrf_thread_map *)pthreads)->threads;
+	अगर (pthपढ़ोs != शून्य)
+		thपढ़ोs = ((काष्ठा pyrf_thपढ़ो_map *)pthपढ़ोs)->thपढ़ोs;
 
-	if (pcpus != NULL)
-		cpus = ((struct pyrf_cpu_map *)pcpus)->cpus;
+	अगर (pcpus != शून्य)
+		cpus = ((काष्ठा pyrf_cpu_map *)pcpus)->cpus;
 
 	evsel->core.attr.inherit = inherit;
 	/*
-	 * This will group just the fds for this single evsel, to group
-	 * multiple events, use evlist.open().
+	 * This will group just the fds क्रम this single evsel, to group
+	 * multiple events, use evlist.खोलो().
 	 */
-	if (evsel__open(evsel, cpus, threads) < 0) {
+	अगर (evsel__खोलो(evsel, cpus, thपढ़ोs) < 0) अणु
 		PyErr_SetFromErrno(PyExc_OSError);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	Py_INCREF(Py_None);
-	return Py_None;
-}
+	वापस Py_None;
+पूर्ण
 
-static PyMethodDef pyrf_evsel__methods[] = {
-	{
+अटल PyMethodDef pyrf_evsel__methods[] = अणु
+	अणु
 		.ml_name  = "open",
-		.ml_meth  = (PyCFunction)pyrf_evsel__open,
+		.ml_meth  = (PyCFunction)pyrf_evsel__खोलो,
 		.ml_flags = METH_VARARGS | METH_KEYWORDS,
-		.ml_doc	  = PyDoc_STR("open the event selector file descriptor table.")
-	},
-	{ .ml_name = NULL, }
-};
+		.ml_करोc	  = PyDoc_STR("open the event selector file descriptor table.")
+	पूर्ण,
+	अणु .ml_name = शून्य, पूर्ण
+पूर्ण;
 
-static char pyrf_evsel__doc[] = PyDoc_STR("perf event selector list object.");
+अटल अक्षर pyrf_evsel__करोc[] = PyDoc_STR("perf event selector list object.");
 
-static PyTypeObject pyrf_evsel__type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
+अटल PyTypeObject pyrf_evsel__type = अणु
+	PyVarObject_HEAD_INIT(शून्य, 0)
 	.tp_name	= "perf.evsel",
-	.tp_basicsize	= sizeof(struct pyrf_evsel),
-	.tp_dealloc	= (destructor)pyrf_evsel__delete,
+	.tp_basicsize	= माप(काष्ठा pyrf_evsel),
+	.tp_dealloc	= (deकाष्ठाor)pyrf_evsel__delete,
 	.tp_flags	= Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,
-	.tp_doc		= pyrf_evsel__doc,
+	.tp_करोc		= pyrf_evsel__करोc,
 	.tp_methods	= pyrf_evsel__methods,
 	.tp_init	= (initproc)pyrf_evsel__init,
-};
+पूर्ण;
 
-static int pyrf_evsel__setup_types(void)
-{
+अटल पूर्णांक pyrf_evsel__setup_types(व्योम)
+अणु
 	pyrf_evsel__type.tp_new = PyType_GenericNew;
-	return PyType_Ready(&pyrf_evsel__type);
-}
+	वापस PyType_Ready(&pyrf_evsel__type);
+पूर्ण
 
-struct pyrf_evlist {
+काष्ठा pyrf_evlist अणु
 	PyObject_HEAD
 
-	struct evlist evlist;
-};
+	काष्ठा evlist evlist;
+पूर्ण;
 
-static int pyrf_evlist__init(struct pyrf_evlist *pevlist,
+अटल पूर्णांक pyrf_evlist__init(काष्ठा pyrf_evlist *pevlist,
 			     PyObject *args, PyObject *kwargs __maybe_unused)
-{
-	PyObject *pcpus = NULL, *pthreads = NULL;
-	struct perf_cpu_map *cpus;
-	struct perf_thread_map *threads;
+अणु
+	PyObject *pcpus = शून्य, *pthपढ़ोs = शून्य;
+	काष्ठा perf_cpu_map *cpus;
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
 
-	if (!PyArg_ParseTuple(args, "OO", &pcpus, &pthreads))
-		return -1;
+	अगर (!PyArg_ParseTuple(args, "OO", &pcpus, &pthपढ़ोs))
+		वापस -1;
 
-	threads = ((struct pyrf_thread_map *)pthreads)->threads;
-	cpus = ((struct pyrf_cpu_map *)pcpus)->cpus;
-	evlist__init(&pevlist->evlist, cpus, threads);
-	return 0;
-}
+	thपढ़ोs = ((काष्ठा pyrf_thपढ़ो_map *)pthपढ़ोs)->thपढ़ोs;
+	cpus = ((काष्ठा pyrf_cpu_map *)pcpus)->cpus;
+	evlist__init(&pevlist->evlist, cpus, thपढ़ोs);
+	वापस 0;
+पूर्ण
 
-static void pyrf_evlist__delete(struct pyrf_evlist *pevlist)
-{
-	evlist__exit(&pevlist->evlist);
-	Py_TYPE(pevlist)->tp_free((PyObject*)pevlist);
-}
+अटल व्योम pyrf_evlist__delete(काष्ठा pyrf_evlist *pevlist)
+अणु
+	evlist__निकास(&pevlist->evlist);
+	Py_TYPE(pevlist)->tp_मुक्त((PyObject*)pevlist);
+पूर्ण
 
-static PyObject *pyrf_evlist__mmap(struct pyrf_evlist *pevlist,
+अटल PyObject *pyrf_evlist__mmap(काष्ठा pyrf_evlist *pevlist,
 				   PyObject *args, PyObject *kwargs)
-{
-	struct evlist *evlist = &pevlist->evlist;
-	static char *kwlist[] = { "pages", "overwrite", NULL };
-	int pages = 128, overwrite = false;
+अणु
+	काष्ठा evlist *evlist = &pevlist->evlist;
+	अटल अक्षर *kwlist[] = अणु "pages", "overwrite", शून्य पूर्ण;
+	पूर्णांक pages = 128, overग_लिखो = false;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|ii", kwlist,
-					 &pages, &overwrite))
-		return NULL;
+	अगर (!PyArg_ParseTupleAndKeywords(args, kwargs, "|ii", kwlist,
+					 &pages, &overग_लिखो))
+		वापस शून्य;
 
-	if (evlist__mmap(evlist, pages) < 0) {
+	अगर (evlist__mmap(evlist, pages) < 0) अणु
 		PyErr_SetFromErrno(PyExc_OSError);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	Py_INCREF(Py_None);
-	return Py_None;
-}
+	वापस Py_None;
+पूर्ण
 
-static PyObject *pyrf_evlist__poll(struct pyrf_evlist *pevlist,
+अटल PyObject *pyrf_evlist__poll(काष्ठा pyrf_evlist *pevlist,
 				   PyObject *args, PyObject *kwargs)
-{
-	struct evlist *evlist = &pevlist->evlist;
-	static char *kwlist[] = { "timeout", NULL };
-	int timeout = -1, n;
+अणु
+	काष्ठा evlist *evlist = &pevlist->evlist;
+	अटल अक्षर *kwlist[] = अणु "timeout", शून्य पूर्ण;
+	पूर्णांक समयout = -1, n;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|i", kwlist, &timeout))
-		return NULL;
+	अगर (!PyArg_ParseTupleAndKeywords(args, kwargs, "|i", kwlist, &समयout))
+		वापस शून्य;
 
-	n = evlist__poll(evlist, timeout);
-	if (n < 0) {
+	n = evlist__poll(evlist, समयout);
+	अगर (n < 0) अणु
 		PyErr_SetFromErrno(PyExc_OSError);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return Py_BuildValue("i", n);
-}
+	वापस Py_BuildValue("i", n);
+पूर्ण
 
-static PyObject *pyrf_evlist__get_pollfd(struct pyrf_evlist *pevlist,
+अटल PyObject *pyrf_evlist__get_pollfd(काष्ठा pyrf_evlist *pevlist,
 					 PyObject *args __maybe_unused,
 					 PyObject *kwargs __maybe_unused)
-{
-	struct evlist *evlist = &pevlist->evlist;
+अणु
+	काष्ठा evlist *evlist = &pevlist->evlist;
         PyObject *list = PyList_New(0);
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < evlist->core.pollfd.nr; ++i) {
+	क्रम (i = 0; i < evlist->core.pollfd.nr; ++i) अणु
 		PyObject *file;
-#if PY_MAJOR_VERSION < 3
-		FILE *fp = fdopen(evlist->core.pollfd.entries[i].fd, "r");
+#अगर PY_MAJOR_VERSION < 3
+		खाता *fp = fकरोpen(evlist->core.pollfd.entries[i].fd, "r");
 
-		if (fp == NULL)
-			goto free_list;
+		अगर (fp == शून्य)
+			जाओ मुक्त_list;
 
-		file = PyFile_FromFile(fp, "perf", "r", NULL);
-#else
+		file = PyFile_FromFile(fp, "perf", "r", शून्य);
+#अन्यथा
 		file = PyFile_FromFd(evlist->core.pollfd.entries[i].fd, "perf", "r", -1,
-				     NULL, NULL, NULL, 0);
-#endif
-		if (file == NULL)
-			goto free_list;
+				     शून्य, शून्य, शून्य, 0);
+#पूर्ण_अगर
+		अगर (file == शून्य)
+			जाओ मुक्त_list;
 
-		if (PyList_Append(list, file) != 0) {
+		अगर (PyList_Append(list, file) != 0) अणु
 			Py_DECREF(file);
-			goto free_list;
-		}
+			जाओ मुक्त_list;
+		पूर्ण
 
 		Py_DECREF(file);
-	}
+	पूर्ण
 
-	return list;
-free_list:
-	return PyErr_NoMemory();
-}
+	वापस list;
+मुक्त_list:
+	वापस PyErr_NoMemory();
+पूर्ण
 
 
-static PyObject *pyrf_evlist__add(struct pyrf_evlist *pevlist,
+अटल PyObject *pyrf_evlist__add(काष्ठा pyrf_evlist *pevlist,
 				  PyObject *args,
 				  PyObject *kwargs __maybe_unused)
-{
-	struct evlist *evlist = &pevlist->evlist;
+अणु
+	काष्ठा evlist *evlist = &pevlist->evlist;
 	PyObject *pevsel;
-	struct evsel *evsel;
+	काष्ठा evsel *evsel;
 
-	if (!PyArg_ParseTuple(args, "O", &pevsel))
-		return NULL;
+	अगर (!PyArg_ParseTuple(args, "O", &pevsel))
+		वापस शून्य;
 
 	Py_INCREF(pevsel);
-	evsel = &((struct pyrf_evsel *)pevsel)->evsel;
+	evsel = &((काष्ठा pyrf_evsel *)pevsel)->evsel;
 	evsel->idx = evlist->core.nr_entries;
 	evlist__add(evlist, evsel);
 
-	return Py_BuildValue("i", evlist->core.nr_entries);
-}
+	वापस Py_BuildValue("i", evlist->core.nr_entries);
+पूर्ण
 
-static struct mmap *get_md(struct evlist *evlist, int cpu)
-{
-	int i;
+अटल काष्ठा mmap *get_md(काष्ठा evlist *evlist, पूर्णांक cpu)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < evlist->core.nr_mmaps; i++) {
-		struct mmap *md = &evlist->mmap[i];
+	क्रम (i = 0; i < evlist->core.nr_mmaps; i++) अणु
+		काष्ठा mmap *md = &evlist->mmap[i];
 
-		if (md->core.cpu == cpu)
-			return md;
-	}
+		अगर (md->core.cpu == cpu)
+			वापस md;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static PyObject *pyrf_evlist__read_on_cpu(struct pyrf_evlist *pevlist,
+अटल PyObject *pyrf_evlist__पढ़ो_on_cpu(काष्ठा pyrf_evlist *pevlist,
 					  PyObject *args, PyObject *kwargs)
-{
-	struct evlist *evlist = &pevlist->evlist;
-	union perf_event *event;
-	int sample_id_all = 1, cpu;
-	static char *kwlist[] = { "cpu", "sample_id_all", NULL };
-	struct mmap *md;
-	int err;
+अणु
+	काष्ठा evlist *evlist = &pevlist->evlist;
+	जोड़ perf_event *event;
+	पूर्णांक sample_id_all = 1, cpu;
+	अटल अक्षर *kwlist[] = अणु "cpu", "sample_id_all", शून्य पूर्ण;
+	काष्ठा mmap *md;
+	पूर्णांक err;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i|i", kwlist,
+	अगर (!PyArg_ParseTupleAndKeywords(args, kwargs, "i|i", kwlist,
 					 &cpu, &sample_id_all))
-		return NULL;
+		वापस शून्य;
 
 	md = get_md(evlist, cpu);
-	if (!md)
-		return NULL;
+	अगर (!md)
+		वापस शून्य;
 
-	if (perf_mmap__read_init(&md->core) < 0)
-		goto end;
+	अगर (perf_mmap__पढ़ो_init(&md->core) < 0)
+		जाओ end;
 
-	event = perf_mmap__read_event(&md->core);
-	if (event != NULL) {
+	event = perf_mmap__पढ़ो_event(&md->core);
+	अगर (event != शून्य) अणु
 		PyObject *pyevent = pyrf_event__new(event);
-		struct pyrf_event *pevent = (struct pyrf_event *)pyevent;
-		struct evsel *evsel;
+		काष्ठा pyrf_event *pevent = (काष्ठा pyrf_event *)pyevent;
+		काष्ठा evsel *evsel;
 
-		if (pyevent == NULL)
-			return PyErr_NoMemory();
+		अगर (pyevent == शून्य)
+			वापस PyErr_NoMemory();
 
 		evsel = evlist__event2evsel(evlist, event);
-		if (!evsel) {
+		अगर (!evsel) अणु
 			Py_INCREF(Py_None);
-			return Py_None;
-		}
+			वापस Py_None;
+		पूर्ण
 
 		pevent->evsel = evsel;
 
@@ -1095,132 +1096,132 @@ static PyObject *pyrf_evlist__read_on_cpu(struct pyrf_evlist *pevlist,
 		/* Consume the even only after we parsed it out. */
 		perf_mmap__consume(&md->core);
 
-		if (err)
-			return PyErr_Format(PyExc_OSError,
+		अगर (err)
+			वापस PyErr_Format(PyExc_OSError,
 					    "perf: can't parse sample, err=%d", err);
-		return pyevent;
-	}
+		वापस pyevent;
+	पूर्ण
 end:
 	Py_INCREF(Py_None);
-	return Py_None;
-}
+	वापस Py_None;
+पूर्ण
 
-static PyObject *pyrf_evlist__open(struct pyrf_evlist *pevlist,
+अटल PyObject *pyrf_evlist__खोलो(काष्ठा pyrf_evlist *pevlist,
 				   PyObject *args, PyObject *kwargs)
-{
-	struct evlist *evlist = &pevlist->evlist;
-	int group = 0;
-	static char *kwlist[] = { "group", NULL };
+अणु
+	काष्ठा evlist *evlist = &pevlist->evlist;
+	पूर्णांक group = 0;
+	अटल अक्षर *kwlist[] = अणु "group", शून्य पूर्ण;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOii", kwlist, &group))
-		return NULL;
+	अगर (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOii", kwlist, &group))
+		वापस शून्य;
 
-	if (group)
+	अगर (group)
 		evlist__set_leader(evlist);
 
-	if (evlist__open(evlist) < 0) {
+	अगर (evlist__खोलो(evlist) < 0) अणु
 		PyErr_SetFromErrno(PyExc_OSError);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	Py_INCREF(Py_None);
-	return Py_None;
-}
+	वापस Py_None;
+पूर्ण
 
-static PyMethodDef pyrf_evlist__methods[] = {
-	{
+अटल PyMethodDef pyrf_evlist__methods[] = अणु
+	अणु
 		.ml_name  = "mmap",
 		.ml_meth  = (PyCFunction)pyrf_evlist__mmap,
 		.ml_flags = METH_VARARGS | METH_KEYWORDS,
-		.ml_doc	  = PyDoc_STR("mmap the file descriptor table.")
-	},
-	{
+		.ml_करोc	  = PyDoc_STR("mmap the file descriptor table.")
+	पूर्ण,
+	अणु
 		.ml_name  = "open",
-		.ml_meth  = (PyCFunction)pyrf_evlist__open,
+		.ml_meth  = (PyCFunction)pyrf_evlist__खोलो,
 		.ml_flags = METH_VARARGS | METH_KEYWORDS,
-		.ml_doc	  = PyDoc_STR("open the file descriptors.")
-	},
-	{
+		.ml_करोc	  = PyDoc_STR("open the file descriptors.")
+	पूर्ण,
+	अणु
 		.ml_name  = "poll",
 		.ml_meth  = (PyCFunction)pyrf_evlist__poll,
 		.ml_flags = METH_VARARGS | METH_KEYWORDS,
-		.ml_doc	  = PyDoc_STR("poll the file descriptor table.")
-	},
-	{
+		.ml_करोc	  = PyDoc_STR("poll the file descriptor table.")
+	पूर्ण,
+	अणु
 		.ml_name  = "get_pollfd",
 		.ml_meth  = (PyCFunction)pyrf_evlist__get_pollfd,
 		.ml_flags = METH_VARARGS | METH_KEYWORDS,
-		.ml_doc	  = PyDoc_STR("get the poll file descriptor table.")
-	},
-	{
+		.ml_करोc	  = PyDoc_STR("get the poll file descriptor table.")
+	पूर्ण,
+	अणु
 		.ml_name  = "add",
 		.ml_meth  = (PyCFunction)pyrf_evlist__add,
 		.ml_flags = METH_VARARGS | METH_KEYWORDS,
-		.ml_doc	  = PyDoc_STR("adds an event selector to the list.")
-	},
-	{
+		.ml_करोc	  = PyDoc_STR("adds an event selector to the list.")
+	पूर्ण,
+	अणु
 		.ml_name  = "read_on_cpu",
-		.ml_meth  = (PyCFunction)pyrf_evlist__read_on_cpu,
+		.ml_meth  = (PyCFunction)pyrf_evlist__पढ़ो_on_cpu,
 		.ml_flags = METH_VARARGS | METH_KEYWORDS,
-		.ml_doc	  = PyDoc_STR("reads an event.")
-	},
-	{ .ml_name = NULL, }
-};
+		.ml_करोc	  = PyDoc_STR("reads an event.")
+	पूर्ण,
+	अणु .ml_name = शून्य, पूर्ण
+पूर्ण;
 
-static Py_ssize_t pyrf_evlist__length(PyObject *obj)
-{
-	struct pyrf_evlist *pevlist = (void *)obj;
+अटल Py_sमाप_प्रकार pyrf_evlist__length(PyObject *obj)
+अणु
+	काष्ठा pyrf_evlist *pevlist = (व्योम *)obj;
 
-	return pevlist->evlist.core.nr_entries;
-}
+	वापस pevlist->evlist.core.nr_entries;
+पूर्ण
 
-static PyObject *pyrf_evlist__item(PyObject *obj, Py_ssize_t i)
-{
-	struct pyrf_evlist *pevlist = (void *)obj;
-	struct evsel *pos;
+अटल PyObject *pyrf_evlist__item(PyObject *obj, Py_sमाप_प्रकार i)
+अणु
+	काष्ठा pyrf_evlist *pevlist = (व्योम *)obj;
+	काष्ठा evsel *pos;
 
-	if (i >= pevlist->evlist.core.nr_entries)
-		return NULL;
+	अगर (i >= pevlist->evlist.core.nr_entries)
+		वापस शून्य;
 
-	evlist__for_each_entry(&pevlist->evlist, pos) {
-		if (i-- == 0)
-			break;
-	}
+	evlist__क्रम_each_entry(&pevlist->evlist, pos) अणु
+		अगर (i-- == 0)
+			अवरोध;
+	पूर्ण
 
-	return Py_BuildValue("O", container_of(pos, struct pyrf_evsel, evsel));
-}
+	वापस Py_BuildValue("O", container_of(pos, काष्ठा pyrf_evsel, evsel));
+पूर्ण
 
-static PySequenceMethods pyrf_evlist__sequence_methods = {
+अटल PySequenceMethods pyrf_evlist__sequence_methods = अणु
 	.sq_length = pyrf_evlist__length,
 	.sq_item   = pyrf_evlist__item,
-};
+पूर्ण;
 
-static char pyrf_evlist__doc[] = PyDoc_STR("perf event selector list object.");
+अटल अक्षर pyrf_evlist__करोc[] = PyDoc_STR("perf event selector list object.");
 
-static PyTypeObject pyrf_evlist__type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
+अटल PyTypeObject pyrf_evlist__type = अणु
+	PyVarObject_HEAD_INIT(शून्य, 0)
 	.tp_name	= "perf.evlist",
-	.tp_basicsize	= sizeof(struct pyrf_evlist),
-	.tp_dealloc	= (destructor)pyrf_evlist__delete,
+	.tp_basicsize	= माप(काष्ठा pyrf_evlist),
+	.tp_dealloc	= (deकाष्ठाor)pyrf_evlist__delete,
 	.tp_flags	= Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,
 	.tp_as_sequence	= &pyrf_evlist__sequence_methods,
-	.tp_doc		= pyrf_evlist__doc,
+	.tp_करोc		= pyrf_evlist__करोc,
 	.tp_methods	= pyrf_evlist__methods,
 	.tp_init	= (initproc)pyrf_evlist__init,
-};
+पूर्ण;
 
-static int pyrf_evlist__setup_types(void)
-{
+अटल पूर्णांक pyrf_evlist__setup_types(व्योम)
+अणु
 	pyrf_evlist__type.tp_new = PyType_GenericNew;
-	return PyType_Ready(&pyrf_evlist__type);
-}
+	वापस PyType_Ready(&pyrf_evlist__type);
+पूर्ण
 
-#define PERF_CONST(name) { #name, PERF_##name }
+#घोषणा PERF_CONST(name) अणु #name, PERF_##name पूर्ण
 
-static struct {
-	const char *name;
-	int	    value;
-} perf__constants[] = {
+अटल काष्ठा अणु
+	स्थिर अक्षर *name;
+	पूर्णांक	    value;
+पूर्ण perf__स्थिरants[] = अणु
 	PERF_CONST(TYPE_HARDWARE),
 	PERF_CONST(TYPE_SOFTWARE),
 	PERF_CONST(TYPE_TRACEPOINT),
@@ -1295,75 +1296,75 @@ static struct {
 	PERF_CONST(RECORD_SWITCH_CPU_WIDE),
 
 	PERF_CONST(RECORD_MISC_SWITCH_OUT),
-	{ .name = NULL, },
-};
+	अणु .name = शून्य, पूर्ण,
+पूर्ण;
 
-static PyObject *pyrf__tracepoint(struct pyrf_evsel *pevsel,
+अटल PyObject *pyrf__tracepoपूर्णांक(काष्ठा pyrf_evsel *pevsel,
 				  PyObject *args, PyObject *kwargs)
-{
-	struct tep_event *tp_format;
-	static char *kwlist[] = { "sys", "name", NULL };
-	char *sys  = NULL;
-	char *name = NULL;
+अणु
+	काष्ठा tep_event *tp_क्रमmat;
+	अटल अक्षर *kwlist[] = अणु "sys", "name", शून्य पूर्ण;
+	अक्षर *sys  = शून्य;
+	अक्षर *name = शून्य;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|ss", kwlist,
+	अगर (!PyArg_ParseTupleAndKeywords(args, kwargs, "|ss", kwlist,
 					 &sys, &name))
-		return NULL;
+		वापस शून्य;
 
-	tp_format = trace_event__tp_format(sys, name);
-	if (IS_ERR(tp_format))
-		return _PyLong_FromLong(-1);
+	tp_क्रमmat = trace_event__tp_क्रमmat(sys, name);
+	अगर (IS_ERR(tp_क्रमmat))
+		वापस _PyLong_FromLong(-1);
 
-	return _PyLong_FromLong(tp_format->id);
-}
+	वापस _PyLong_FromLong(tp_क्रमmat->id);
+पूर्ण
 
-static PyMethodDef perf__methods[] = {
-	{
+अटल PyMethodDef perf__methods[] = अणु
+	अणु
 		.ml_name  = "tracepoint",
-		.ml_meth  = (PyCFunction) pyrf__tracepoint,
+		.ml_meth  = (PyCFunction) pyrf__tracepoपूर्णांक,
 		.ml_flags = METH_VARARGS | METH_KEYWORDS,
-		.ml_doc	  = PyDoc_STR("Get tracepoint config.")
-	},
-	{ .ml_name = NULL, }
-};
+		.ml_करोc	  = PyDoc_STR("Get tracepoint config.")
+	पूर्ण,
+	अणु .ml_name = शून्य, पूर्ण
+पूर्ण;
 
-#if PY_MAJOR_VERSION < 3
-PyMODINIT_FUNC initperf(void)
-#else
-PyMODINIT_FUNC PyInit_perf(void)
-#endif
-{
+#अगर PY_MAJOR_VERSION < 3
+PyMODINIT_FUNC initperf(व्योम)
+#अन्यथा
+PyMODINIT_FUNC PyInit_perf(व्योम)
+#पूर्ण_अगर
+अणु
 	PyObject *obj;
-	int i;
+	पूर्णांक i;
 	PyObject *dict;
-#if PY_MAJOR_VERSION < 3
+#अगर PY_MAJOR_VERSION < 3
 	PyObject *module = Py_InitModule("perf", perf__methods);
-#else
-	static struct PyModuleDef moduledef = {
+#अन्यथा
+	अटल काष्ठा PyModuleDef moduledef = अणु
 		PyModuleDef_HEAD_INIT,
 		"perf",			/* m_name */
-		"",			/* m_doc */
+		"",			/* m_करोc */
 		-1,			/* m_size */
 		perf__methods,		/* m_methods */
-		NULL,			/* m_reload */
-		NULL,			/* m_traverse */
-		NULL,			/* m_clear */
-		NULL,			/* m_free */
-	};
+		शून्य,			/* m_reload */
+		शून्य,			/* m_traverse */
+		शून्य,			/* m_clear */
+		शून्य,			/* m_मुक्त */
+	पूर्ण;
 	PyObject *module = PyModule_Create(&moduledef);
-#endif
+#पूर्ण_अगर
 
-	if (module == NULL ||
+	अगर (module == शून्य ||
 	    pyrf_event__setup_types() < 0 ||
 	    pyrf_evlist__setup_types() < 0 ||
 	    pyrf_evsel__setup_types() < 0 ||
-	    pyrf_thread_map__setup_types() < 0 ||
+	    pyrf_thपढ़ो_map__setup_types() < 0 ||
 	    pyrf_cpu_map__setup_types() < 0)
-#if PY_MAJOR_VERSION < 3
-		return;
-#else
-		return module;
-#endif
+#अगर PY_MAJOR_VERSION < 3
+		वापस;
+#अन्यथा
+		वापस module;
+#पूर्ण_अगर
 
 	/* The page_size is placed in util object. */
 	page_size = sysconf(_SC_PAGE_SIZE);
@@ -1392,46 +1393,46 @@ PyMODINIT_FUNC PyInit_perf(void)
 	Py_INCREF(&pyrf_task_event__type);
 	PyModule_AddObject(module, "task_event", (PyObject *)&pyrf_task_event__type);
 
-	Py_INCREF(&pyrf_read_event__type);
-	PyModule_AddObject(module, "read_event", (PyObject *)&pyrf_read_event__type);
+	Py_INCREF(&pyrf_पढ़ो_event__type);
+	PyModule_AddObject(module, "read_event", (PyObject *)&pyrf_पढ़ो_event__type);
 
 	Py_INCREF(&pyrf_sample_event__type);
 	PyModule_AddObject(module, "sample_event", (PyObject *)&pyrf_sample_event__type);
 
-	Py_INCREF(&pyrf_context_switch_event__type);
-	PyModule_AddObject(module, "switch_event", (PyObject *)&pyrf_context_switch_event__type);
+	Py_INCREF(&pyrf_context_चयन_event__type);
+	PyModule_AddObject(module, "switch_event", (PyObject *)&pyrf_context_चयन_event__type);
 
-	Py_INCREF(&pyrf_thread_map__type);
-	PyModule_AddObject(module, "thread_map", (PyObject*)&pyrf_thread_map__type);
+	Py_INCREF(&pyrf_thपढ़ो_map__type);
+	PyModule_AddObject(module, "thread_map", (PyObject*)&pyrf_thपढ़ो_map__type);
 
 	Py_INCREF(&pyrf_cpu_map__type);
 	PyModule_AddObject(module, "cpu_map", (PyObject*)&pyrf_cpu_map__type);
 
 	dict = PyModule_GetDict(module);
-	if (dict == NULL)
-		goto error;
+	अगर (dict == शून्य)
+		जाओ error;
 
-	for (i = 0; perf__constants[i].name != NULL; i++) {
-		obj = _PyLong_FromLong(perf__constants[i].value);
-		if (obj == NULL)
-			goto error;
-		PyDict_SetItemString(dict, perf__constants[i].name, obj);
+	क्रम (i = 0; perf__स्थिरants[i].name != शून्य; i++) अणु
+		obj = _PyLong_FromLong(perf__स्थिरants[i].value);
+		अगर (obj == शून्य)
+			जाओ error;
+		PyDict_SetItemString(dict, perf__स्थिरants[i].name, obj);
 		Py_DECREF(obj);
-	}
+	पूर्ण
 
 error:
-	if (PyErr_Occurred())
+	अगर (PyErr_Occurred())
 		PyErr_SetString(PyExc_ImportError, "perf: Init failed!");
-#if PY_MAJOR_VERSION >= 3
-	return module;
-#endif
-}
+#अगर PY_MAJOR_VERSION >= 3
+	वापस module;
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * Dummy, to avoid dragging all the test_attr infrastructure in the python
+ * Dummy, to aव्योम dragging all the test_attr infraकाष्ठाure in the python
  * binding.
  */
-void test_attr__open(struct perf_event_attr *attr, pid_t pid, int cpu,
-                     int fd, int group_fd, unsigned long flags)
-{
-}
+व्योम test_attr__खोलो(काष्ठा perf_event_attr *attr, pid_t pid, पूर्णांक cpu,
+                     पूर्णांक fd, पूर्णांक group_fd, अचिन्हित दीर्घ flags)
+अणु
+पूर्ण

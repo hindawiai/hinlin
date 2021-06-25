@@ -1,229 +1,230 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* procfs files for key database enumeration
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* procfs files क्रम key database क्रमागतeration
  *
  * Copyright (C) 2004 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/fs.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <asm/errno.h>
-#include "internal.h"
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश "internal.h"
 
-static void *proc_keys_start(struct seq_file *p, loff_t *_pos);
-static void *proc_keys_next(struct seq_file *p, void *v, loff_t *_pos);
-static void proc_keys_stop(struct seq_file *p, void *v);
-static int proc_keys_show(struct seq_file *m, void *v);
+अटल व्योम *proc_keys_start(काष्ठा seq_file *p, loff_t *_pos);
+अटल व्योम *proc_keys_next(काष्ठा seq_file *p, व्योम *v, loff_t *_pos);
+अटल व्योम proc_keys_stop(काष्ठा seq_file *p, व्योम *v);
+अटल पूर्णांक proc_keys_show(काष्ठा seq_file *m, व्योम *v);
 
-static const struct seq_operations proc_keys_ops = {
+अटल स्थिर काष्ठा seq_operations proc_keys_ops = अणु
 	.start	= proc_keys_start,
 	.next	= proc_keys_next,
 	.stop	= proc_keys_stop,
 	.show	= proc_keys_show,
-};
+पूर्ण;
 
-static void *proc_key_users_start(struct seq_file *p, loff_t *_pos);
-static void *proc_key_users_next(struct seq_file *p, void *v, loff_t *_pos);
-static void proc_key_users_stop(struct seq_file *p, void *v);
-static int proc_key_users_show(struct seq_file *m, void *v);
+अटल व्योम *proc_key_users_start(काष्ठा seq_file *p, loff_t *_pos);
+अटल व्योम *proc_key_users_next(काष्ठा seq_file *p, व्योम *v, loff_t *_pos);
+अटल व्योम proc_key_users_stop(काष्ठा seq_file *p, व्योम *v);
+अटल पूर्णांक proc_key_users_show(काष्ठा seq_file *m, व्योम *v);
 
-static const struct seq_operations proc_key_users_ops = {
+अटल स्थिर काष्ठा seq_operations proc_key_users_ops = अणु
 	.start	= proc_key_users_start,
 	.next	= proc_key_users_next,
 	.stop	= proc_key_users_stop,
 	.show	= proc_key_users_show,
-};
+पूर्ण;
 
 /*
  * Declare the /proc files.
  */
-static int __init key_proc_init(void)
-{
-	struct proc_dir_entry *p;
+अटल पूर्णांक __init key_proc_init(व्योम)
+अणु
+	काष्ठा proc_dir_entry *p;
 
-	p = proc_create_seq("keys", 0, NULL, &proc_keys_ops);
-	if (!p)
+	p = proc_create_seq("keys", 0, शून्य, &proc_keys_ops);
+	अगर (!p)
 		panic("Cannot create /proc/keys\n");
 
-	p = proc_create_seq("key-users", 0, NULL, &proc_key_users_ops);
-	if (!p)
+	p = proc_create_seq("key-users", 0, शून्य, &proc_key_users_ops);
+	अगर (!p)
 		panic("Cannot create /proc/key-users\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 __initcall(key_proc_init);
 
 /*
- * Implement "/proc/keys" to provide a list of the keys on the system that
+ * Implement "/proc/keys" to provide a list of the keys on the प्रणाली that
  * grant View permission to the caller.
  */
-static struct rb_node *key_serial_next(struct seq_file *p, struct rb_node *n)
-{
-	struct user_namespace *user_ns = seq_user_ns(p);
+अटल काष्ठा rb_node *key_serial_next(काष्ठा seq_file *p, काष्ठा rb_node *n)
+अणु
+	काष्ठा user_namespace *user_ns = seq_user_ns(p);
 
 	n = rb_next(n);
-	while (n) {
-		struct key *key = rb_entry(n, struct key, serial_node);
-		if (kuid_has_mapping(user_ns, key->user->uid))
-			break;
+	जबतक (n) अणु
+		काष्ठा key *key = rb_entry(n, काष्ठा key, serial_node);
+		अगर (kuid_has_mapping(user_ns, key->user->uid))
+			अवरोध;
 		n = rb_next(n);
-	}
-	return n;
-}
+	पूर्ण
+	वापस n;
+पूर्ण
 
-static struct key *find_ge_key(struct seq_file *p, key_serial_t id)
-{
-	struct user_namespace *user_ns = seq_user_ns(p);
-	struct rb_node *n = key_serial_tree.rb_node;
-	struct key *minkey = NULL;
+अटल काष्ठा key *find_ge_key(काष्ठा seq_file *p, key_serial_t id)
+अणु
+	काष्ठा user_namespace *user_ns = seq_user_ns(p);
+	काष्ठा rb_node *n = key_serial_tree.rb_node;
+	काष्ठा key *minkey = शून्य;
 
-	while (n) {
-		struct key *key = rb_entry(n, struct key, serial_node);
-		if (id < key->serial) {
-			if (!minkey || minkey->serial > key->serial)
+	जबतक (n) अणु
+		काष्ठा key *key = rb_entry(n, काष्ठा key, serial_node);
+		अगर (id < key->serial) अणु
+			अगर (!minkey || minkey->serial > key->serial)
 				minkey = key;
 			n = n->rb_left;
-		} else if (id > key->serial) {
+		पूर्ण अन्यथा अगर (id > key->serial) अणु
 			n = n->rb_right;
-		} else {
+		पूर्ण अन्यथा अणु
 			minkey = key;
-			break;
-		}
-		key = NULL;
-	}
+			अवरोध;
+		पूर्ण
+		key = शून्य;
+	पूर्ण
 
-	if (!minkey)
-		return NULL;
+	अगर (!minkey)
+		वापस शून्य;
 
-	for (;;) {
-		if (kuid_has_mapping(user_ns, minkey->user->uid))
-			return minkey;
+	क्रम (;;) अणु
+		अगर (kuid_has_mapping(user_ns, minkey->user->uid))
+			वापस minkey;
 		n = rb_next(&minkey->serial_node);
-		if (!n)
-			return NULL;
-		minkey = rb_entry(n, struct key, serial_node);
-	}
-}
+		अगर (!n)
+			वापस शून्य;
+		minkey = rb_entry(n, काष्ठा key, serial_node);
+	पूर्ण
+पूर्ण
 
-static void *proc_keys_start(struct seq_file *p, loff_t *_pos)
+अटल व्योम *proc_keys_start(काष्ठा seq_file *p, loff_t *_pos)
 	__acquires(key_serial_lock)
-{
+अणु
 	key_serial_t pos = *_pos;
-	struct key *key;
+	काष्ठा key *key;
 
 	spin_lock(&key_serial_lock);
 
-	if (*_pos > INT_MAX)
-		return NULL;
+	अगर (*_pos > पूर्णांक_उच्च)
+		वापस शून्य;
 	key = find_ge_key(p, pos);
-	if (!key)
-		return NULL;
+	अगर (!key)
+		वापस शून्य;
 	*_pos = key->serial;
-	return &key->serial_node;
-}
+	वापस &key->serial_node;
+पूर्ण
 
-static inline key_serial_t key_node_serial(struct rb_node *n)
-{
-	struct key *key = rb_entry(n, struct key, serial_node);
-	return key->serial;
-}
+अटल अंतरभूत key_serial_t key_node_serial(काष्ठा rb_node *n)
+अणु
+	काष्ठा key *key = rb_entry(n, काष्ठा key, serial_node);
+	वापस key->serial;
+पूर्ण
 
-static void *proc_keys_next(struct seq_file *p, void *v, loff_t *_pos)
-{
-	struct rb_node *n;
+अटल व्योम *proc_keys_next(काष्ठा seq_file *p, व्योम *v, loff_t *_pos)
+अणु
+	काष्ठा rb_node *n;
 
 	n = key_serial_next(p, v);
-	if (n)
+	अगर (n)
 		*_pos = key_node_serial(n);
-	else
+	अन्यथा
 		(*_pos)++;
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static void proc_keys_stop(struct seq_file *p, void *v)
+अटल व्योम proc_keys_stop(काष्ठा seq_file *p, व्योम *v)
 	__releases(key_serial_lock)
-{
+अणु
 	spin_unlock(&key_serial_lock);
-}
+पूर्ण
 
-static int proc_keys_show(struct seq_file *m, void *v)
-{
-	struct rb_node *_p = v;
-	struct key *key = rb_entry(_p, struct key, serial_node);
-	unsigned long flags;
+अटल पूर्णांक proc_keys_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा rb_node *_p = v;
+	काष्ठा key *key = rb_entry(_p, काष्ठा key, serial_node);
+	अचिन्हित दीर्घ flags;
 	key_ref_t key_ref, skey_ref;
-	time64_t now, expiry;
-	char xbuf[16];
-	short state;
+	समय64_t now, expiry;
+	अक्षर xbuf[16];
+	लघु state;
 	u64 timo;
-	int rc;
+	पूर्णांक rc;
 
-	struct keyring_search_context ctx = {
+	काष्ठा keyring_search_context ctx = अणु
 		.index_key		= key->index_key,
 		.cred			= m->file->f_cred,
 		.match_data.cmp		= lookup_user_key_possessed,
 		.match_data.raw_data	= key,
-		.match_data.lookup_type	= KEYRING_SEARCH_LOOKUP_DIRECT,
+		.match_data.lookup_type	= KEYRING_SEARCH_LOOKUP_सूचीECT,
 		.flags			= (KEYRING_SEARCH_NO_STATE_CHECK |
 					   KEYRING_SEARCH_RECURSE),
-	};
+	पूर्ण;
 
 	key_ref = make_key_ref(key, 0);
 
-	/* determine if the key is possessed by this process (a test we can
-	 * skip if the key does not indicate the possessor can view it
+	/* determine अगर the key is possessed by this process (a test we can
+	 * skip अगर the key करोes not indicate the possessor can view it
 	 */
-	if (key->perm & KEY_POS_VIEW) {
-		rcu_read_lock();
+	अगर (key->perm & KEY_POS_VIEW) अणु
+		rcu_पढ़ो_lock();
 		skey_ref = search_cred_keyrings_rcu(&ctx);
-		rcu_read_unlock();
-		if (!IS_ERR(skey_ref)) {
+		rcu_पढ़ो_unlock();
+		अगर (!IS_ERR(skey_ref)) अणु
 			key_ref_put(skey_ref);
 			key_ref = make_key_ref(key, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* check whether the current task is allowed to view the key */
 	rc = key_task_permission(key_ref, ctx.cred, KEY_NEED_VIEW);
-	if (rc < 0)
-		return 0;
+	अगर (rc < 0)
+		वापस 0;
 
-	now = ktime_get_real_seconds();
+	now = kसमय_get_real_seconds();
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	/* come up with a suitable timeout value */
+	/* come up with a suitable समयout value */
 	expiry = READ_ONCE(key->expiry);
-	if (expiry == 0) {
-		memcpy(xbuf, "perm", 5);
-	} else if (now >= expiry) {
-		memcpy(xbuf, "expd", 5);
-	} else {
+	अगर (expiry == 0) अणु
+		स_नकल(xbuf, "perm", 5);
+	पूर्ण अन्यथा अगर (now >= expiry) अणु
+		स_नकल(xbuf, "expd", 5);
+	पूर्ण अन्यथा अणु
 		timo = expiry - now;
 
-		if (timo < 60)
-			sprintf(xbuf, "%llus", timo);
-		else if (timo < 60*60)
-			sprintf(xbuf, "%llum", div_u64(timo, 60));
-		else if (timo < 60*60*24)
-			sprintf(xbuf, "%lluh", div_u64(timo, 60 * 60));
-		else if (timo < 60*60*24*7)
-			sprintf(xbuf, "%llud", div_u64(timo, 60 * 60 * 24));
-		else
-			sprintf(xbuf, "%lluw", div_u64(timo, 60 * 60 * 24 * 7));
-	}
+		अगर (timo < 60)
+			प्र_लिखो(xbuf, "%llus", timo);
+		अन्यथा अगर (timo < 60*60)
+			प्र_लिखो(xbuf, "%llum", भाग_u64(timo, 60));
+		अन्यथा अगर (timo < 60*60*24)
+			प्र_लिखो(xbuf, "%lluh", भाग_u64(timo, 60 * 60));
+		अन्यथा अगर (timo < 60*60*24*7)
+			प्र_लिखो(xbuf, "%llud", भाग_u64(timo, 60 * 60 * 24));
+		अन्यथा
+			प्र_लिखो(xbuf, "%lluw", भाग_u64(timo, 60 * 60 * 24 * 7));
+	पूर्ण
 
-	state = key_read_state(key);
+	state = key_पढ़ो_state(key);
 
-#define showflag(FLAGS, LETTER, FLAG) \
+#घोषणा showflag(FLAGS, LETTER, FLAG) \
 	((FLAGS & (1 << FLAG)) ? LETTER : '-')
 
 	flags = READ_ONCE(key->flags);
-	seq_printf(m, "%08x %c%c%c%c%c%c%c %5d %4s %08x %5d %5d %-9.9s ",
+	seq_म_लिखो(m, "%08x %c%c%c%c%c%c%c %5d %4s %08x %5d %5d %-9.9s ",
 		   key->serial,
 		   state != KEY_IS_UNINSTANTIATED ? 'I' : '-',
 		   showflag(flags, 'R', KEY_FLAG_REVOKED),
@@ -232,92 +233,92 @@ static int proc_keys_show(struct seq_file *m, void *v)
 		   showflag(flags, 'U', KEY_FLAG_USER_CONSTRUCT),
 		   state < 0 ? 'N' : '-',
 		   showflag(flags, 'i', KEY_FLAG_INVALIDATED),
-		   refcount_read(&key->usage),
+		   refcount_पढ़ो(&key->usage),
 		   xbuf,
 		   key->perm,
 		   from_kuid_munged(seq_user_ns(m), key->uid),
 		   from_kgid_munged(seq_user_ns(m), key->gid),
 		   key->type->name);
 
-#undef showflag
+#अघोषित showflag
 
-	if (key->type->describe)
+	अगर (key->type->describe)
 		key->type->describe(key, m);
-	seq_putc(m, '\n');
+	seq_अ_दो(m, '\n');
 
-	rcu_read_unlock();
-	return 0;
-}
+	rcu_पढ़ो_unlock();
+	वापस 0;
+पूर्ण
 
-static struct rb_node *__key_user_next(struct user_namespace *user_ns, struct rb_node *n)
-{
-	while (n) {
-		struct key_user *user = rb_entry(n, struct key_user, node);
-		if (kuid_has_mapping(user_ns, user->uid))
-			break;
+अटल काष्ठा rb_node *__key_user_next(काष्ठा user_namespace *user_ns, काष्ठा rb_node *n)
+अणु
+	जबतक (n) अणु
+		काष्ठा key_user *user = rb_entry(n, काष्ठा key_user, node);
+		अगर (kuid_has_mapping(user_ns, user->uid))
+			अवरोध;
 		n = rb_next(n);
-	}
-	return n;
-}
+	पूर्ण
+	वापस n;
+पूर्ण
 
-static struct rb_node *key_user_next(struct user_namespace *user_ns, struct rb_node *n)
-{
-	return __key_user_next(user_ns, rb_next(n));
-}
+अटल काष्ठा rb_node *key_user_next(काष्ठा user_namespace *user_ns, काष्ठा rb_node *n)
+अणु
+	वापस __key_user_next(user_ns, rb_next(n));
+पूर्ण
 
-static struct rb_node *key_user_first(struct user_namespace *user_ns, struct rb_root *r)
-{
-	struct rb_node *n = rb_first(r);
-	return __key_user_next(user_ns, n);
-}
+अटल काष्ठा rb_node *key_user_first(काष्ठा user_namespace *user_ns, काष्ठा rb_root *r)
+अणु
+	काष्ठा rb_node *n = rb_first(r);
+	वापस __key_user_next(user_ns, n);
+पूर्ण
 
-static void *proc_key_users_start(struct seq_file *p, loff_t *_pos)
+अटल व्योम *proc_key_users_start(काष्ठा seq_file *p, loff_t *_pos)
 	__acquires(key_user_lock)
-{
-	struct rb_node *_p;
+अणु
+	काष्ठा rb_node *_p;
 	loff_t pos = *_pos;
 
 	spin_lock(&key_user_lock);
 
 	_p = key_user_first(seq_user_ns(p), &key_user_tree);
-	while (pos > 0 && _p) {
+	जबतक (pos > 0 && _p) अणु
 		pos--;
 		_p = key_user_next(seq_user_ns(p), _p);
-	}
+	पूर्ण
 
-	return _p;
-}
+	वापस _p;
+पूर्ण
 
-static void *proc_key_users_next(struct seq_file *p, void *v, loff_t *_pos)
-{
+अटल व्योम *proc_key_users_next(काष्ठा seq_file *p, व्योम *v, loff_t *_pos)
+अणु
 	(*_pos)++;
-	return key_user_next(seq_user_ns(p), (struct rb_node *)v);
-}
+	वापस key_user_next(seq_user_ns(p), (काष्ठा rb_node *)v);
+पूर्ण
 
-static void proc_key_users_stop(struct seq_file *p, void *v)
+अटल व्योम proc_key_users_stop(काष्ठा seq_file *p, व्योम *v)
 	__releases(key_user_lock)
-{
+अणु
 	spin_unlock(&key_user_lock);
-}
+पूर्ण
 
-static int proc_key_users_show(struct seq_file *m, void *v)
-{
-	struct rb_node *_p = v;
-	struct key_user *user = rb_entry(_p, struct key_user, node);
-	unsigned maxkeys = uid_eq(user->uid, GLOBAL_ROOT_UID) ?
+अटल पूर्णांक proc_key_users_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा rb_node *_p = v;
+	काष्ठा key_user *user = rb_entry(_p, काष्ठा key_user, node);
+	अचिन्हित maxkeys = uid_eq(user->uid, GLOBAL_ROOT_UID) ?
 		key_quota_root_maxkeys : key_quota_maxkeys;
-	unsigned maxbytes = uid_eq(user->uid, GLOBAL_ROOT_UID) ?
+	अचिन्हित maxbytes = uid_eq(user->uid, GLOBAL_ROOT_UID) ?
 		key_quota_root_maxbytes : key_quota_maxbytes;
 
-	seq_printf(m, "%5u: %5d %d/%d %d/%d %d/%d\n",
+	seq_म_लिखो(m, "%5u: %5d %d/%d %d/%d %d/%d\n",
 		   from_kuid_munged(seq_user_ns(m), user->uid),
-		   refcount_read(&user->usage),
-		   atomic_read(&user->nkeys),
-		   atomic_read(&user->nikeys),
+		   refcount_पढ़ो(&user->usage),
+		   atomic_पढ़ो(&user->nkeys),
+		   atomic_पढ़ो(&user->nikeys),
 		   user->qnkeys,
 		   maxkeys,
 		   user->qnbytes,
 		   maxbytes);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

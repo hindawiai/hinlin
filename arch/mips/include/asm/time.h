@@ -1,73 +1,74 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2001, 2002, MontaVista Software Inc.
  * Author: Jun Sun, jsun@mvista.com or jsun@junsun.net
  * Copyright (c) 2003  Maciej W. Rozycki
  *
- * include/asm-mips/time.h
- *     header file for the new style time.c file and time services.
+ * include/यंत्र-mips/समय.स
+ *     header file क्रम the new style समय.c file and समय services.
  */
-#ifndef _ASM_TIME_H
-#define _ASM_TIME_H
+#अगर_अघोषित _ASM_TIME_H
+#घोषणा _ASM_TIME_H
 
-#include <linux/rtc.h>
-#include <linux/spinlock.h>
-#include <linux/clockchips.h>
-#include <linux/clocksource.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/घड़ीsource.h>
 
-extern spinlock_t rtc_lock;
+बाह्य spinlock_t rtc_lock;
 
 /*
- * board specific routines required by time_init().
+ * board specअगरic routines required by समय_init().
  */
-extern void plat_time_init(void);
+बाह्य व्योम plat_समय_init(व्योम);
 
 /*
- * mips_hpt_frequency - must be set if you intend to use an R4k-compatible
- * counter as a timer interrupt source.
+ * mips_hpt_frequency - must be set अगर you पूर्णांकend to use an R4k-compatible
+ * counter as a समयr पूर्णांकerrupt source.
  */
-extern unsigned int mips_hpt_frequency;
+बाह्य अचिन्हित पूर्णांक mips_hpt_frequency;
 
 /*
- * The performance counter IRQ on MIPS is a close relative to the timer IRQ
+ * The perक्रमmance counter IRQ on MIPS is a बंद relative to the समयr IRQ
  * so it lives here.
  */
-extern int (*perf_irq)(void);
-extern int __weak get_c0_perfcount_int(void);
+बाह्य पूर्णांक (*perf_irq)(व्योम);
+बाह्य पूर्णांक __weak get_c0_perfcount_पूर्णांक(व्योम);
 
 /*
- * Initialize the calling CPU's compare interrupt as clockevent device
+ * Initialize the calling CPU's compare पूर्णांकerrupt as घड़ीevent device
  */
-extern unsigned int get_c0_compare_int(void);
-extern int r4k_clockevent_init(void);
+बाह्य अचिन्हित पूर्णांक get_c0_compare_पूर्णांक(व्योम);
+बाह्य पूर्णांक r4k_घड़ीevent_init(व्योम);
 
-static inline int mips_clockevent_init(void)
-{
-#ifdef CONFIG_CEVT_R4K
-	return r4k_clockevent_init();
-#else
-	return -ENXIO;
-#endif
-}
+अटल अंतरभूत पूर्णांक mips_घड़ीevent_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_CEVT_R4K
+	वापस r4k_घड़ीevent_init();
+#अन्यथा
+	वापस -ENXIO;
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * Initialize the count register as a clocksource
+ * Initialize the count रेजिस्टर as a घड़ीsource
  */
-extern int init_r4k_clocksource(void);
+बाह्य पूर्णांक init_r4k_घड़ीsource(व्योम);
 
-static inline int init_mips_clocksource(void)
-{
-#ifdef CONFIG_CSRC_R4K
-	return init_r4k_clocksource();
-#else
-	return 0;
-#endif
-}
+अटल अंतरभूत पूर्णांक init_mips_घड़ीsource(व्योम)
+अणु
+#अगर_घोषित CONFIG_CSRC_R4K
+	वापस init_r4k_घड़ीsource();
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-static inline void clockevent_set_clock(struct clock_event_device *cd,
-					unsigned int clock)
-{
-	clockevents_calc_mult_shift(cd, clock, 4);
-}
+अटल अंतरभूत व्योम घड़ीevent_set_घड़ी(काष्ठा घड़ी_event_device *cd,
+					अचिन्हित पूर्णांक घड़ी)
+अणु
+	घड़ीevents_calc_mult_shअगरt(cd, घड़ी, 4);
+पूर्ण
 
-#endif /* _ASM_TIME_H */
+#पूर्ण_अगर /* _ASM_TIME_H */

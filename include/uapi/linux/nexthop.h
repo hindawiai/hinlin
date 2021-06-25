@@ -1,59 +1,60 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_LINUX_NEXTHOP_H
-#define _UAPI_LINUX_NEXTHOP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_LINUX_NEXTHOP_H
+#घोषणा _UAPI_LINUX_NEXTHOP_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct nhmsg {
-	unsigned char	nh_family;
-	unsigned char	nh_scope;     /* return only */
-	unsigned char	nh_protocol;  /* Routing protocol that installed nh */
-	unsigned char	resvd;
-	unsigned int	nh_flags;     /* RTNH_F flags */
-};
+काष्ठा nhmsg अणु
+	अचिन्हित अक्षर	nh_family;
+	अचिन्हित अक्षर	nh_scope;     /* वापस only */
+	अचिन्हित अक्षर	nh_protocol;  /* Routing protocol that installed nh */
+	अचिन्हित अक्षर	resvd;
+	अचिन्हित पूर्णांक	nh_flags;     /* RTNH_F flags */
+पूर्ण;
 
 /* entry in a nexthop group */
-struct nexthop_grp {
+काष्ठा nexthop_grp अणु
 	__u32	id;	  /* nexthop id - must exist */
 	__u8	weight;   /* weight of this nexthop */
 	__u8	resvd1;
 	__u16	resvd2;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	NEXTHOP_GRP_TYPE_MPATH,  /* hash-threshold nexthop group
-				  * default type if not specified
+				  * शेष type अगर not specअगरied
 				  */
 	NEXTHOP_GRP_TYPE_RES,    /* resilient nexthop group */
 	__NEXTHOP_GRP_TYPE_MAX,
-};
+पूर्ण;
 
-#define NEXTHOP_GRP_TYPE_MAX (__NEXTHOP_GRP_TYPE_MAX - 1)
+#घोषणा NEXTHOP_GRP_TYPE_MAX (__NEXTHOP_GRP_TYPE_MAX - 1)
 
-enum {
+क्रमागत अणु
 	NHA_UNSPEC,
-	NHA_ID,		/* u32; id for nexthop. id == 0 means auto-assign */
+	NHA_ID,		/* u32; id क्रम nexthop. id == 0 means स्वतः-assign */
 
 	NHA_GROUP,	/* array of nexthop_grp */
 	NHA_GROUP_TYPE,	/* u16 one of NEXTHOP_GRP_TYPE */
-	/* if NHA_GROUP attribute is added, no other attributes can be set */
+	/* अगर NHA_GROUP attribute is added, no other attributes can be set */
 
 	NHA_BLACKHOLE,	/* flag; nexthop used to blackhole packets */
-	/* if NHA_BLACKHOLE is added, OIF, GATEWAY, ENCAP can not be set */
+	/* अगर NHA_BLACKHOLE is added, OIF, GATEWAY, ENCAP can not be set */
 
 	NHA_OIF,	/* u32; nexthop device */
 	NHA_GATEWAY,	/* be32 (IPv4) or in6_addr (IPv6) gw address */
 	NHA_ENCAP_TYPE, /* u16; lwt encap type */
 	NHA_ENCAP,	/* lwt encap data */
 
-	/* NHA_OIF can be appended to dump request to return only
+	/* NHA_OIF can be appended to dump request to वापस only
 	 * nexthops using given device
 	 */
-	NHA_GROUPS,	/* flag; only return nexthop groups in dump */
-	NHA_MASTER,	/* u32;  only return nexthops with given master dev */
+	NHA_GROUPS,	/* flag; only वापस nexthop groups in dump */
+	NHA_MASTER,	/* u32;  only वापस nexthops with given master dev */
 
-	NHA_FDB,	/* flag; nexthop belongs to a bridge fdb */
-	/* if NHA_FDB is added, OIF, BLACKHOLE, ENCAP cannot be set */
+	NHA_FDB,	/* flag; nexthop beदीर्घs to a bridge fdb */
+	/* अगर NHA_FDB is added, OIF, BLACKHOLE, ENCAP cannot be set */
 
 	/* nested; resilient nexthop group attributes */
 	NHA_RES_GROUP,
@@ -61,44 +62,44 @@ enum {
 	NHA_RES_BUCKET,
 
 	__NHA_MAX,
-};
+पूर्ण;
 
-#define NHA_MAX	(__NHA_MAX - 1)
+#घोषणा NHA_MAX	(__NHA_MAX - 1)
 
-enum {
+क्रमागत अणु
 	NHA_RES_GROUP_UNSPEC,
-	/* Pad attribute for 64-bit alignment. */
+	/* Pad attribute क्रम 64-bit alignment. */
 	NHA_RES_GROUP_PAD = NHA_RES_GROUP_UNSPEC,
 
 	/* u16; number of nexthop buckets in a resilient nexthop group */
 	NHA_RES_GROUP_BUCKETS,
-	/* clock_t as u32; nexthop bucket idle timer (per-group) */
+	/* घड़ी_प्रकार as u32; nexthop bucket idle समयr (per-group) */
 	NHA_RES_GROUP_IDLE_TIMER,
-	/* clock_t as u32; nexthop unbalanced timer */
+	/* घड़ी_प्रकार as u32; nexthop unbalanced समयr */
 	NHA_RES_GROUP_UNBALANCED_TIMER,
-	/* clock_t as u64; nexthop unbalanced time */
+	/* घड़ी_प्रकार as u64; nexthop unbalanced समय */
 	NHA_RES_GROUP_UNBALANCED_TIME,
 
 	__NHA_RES_GROUP_MAX,
-};
+पूर्ण;
 
-#define NHA_RES_GROUP_MAX	(__NHA_RES_GROUP_MAX - 1)
+#घोषणा NHA_RES_GROUP_MAX	(__NHA_RES_GROUP_MAX - 1)
 
-enum {
+क्रमागत अणु
 	NHA_RES_BUCKET_UNSPEC,
-	/* Pad attribute for 64-bit alignment. */
+	/* Pad attribute क्रम 64-bit alignment. */
 	NHA_RES_BUCKET_PAD = NHA_RES_BUCKET_UNSPEC,
 
 	/* u16; nexthop bucket index */
 	NHA_RES_BUCKET_INDEX,
-	/* clock_t as u64; nexthop bucket idle time */
+	/* घड़ी_प्रकार as u64; nexthop bucket idle समय */
 	NHA_RES_BUCKET_IDLE_TIME,
-	/* u32; nexthop id assigned to the nexthop bucket */
+	/* u32; nexthop id asचिन्हित to the nexthop bucket */
 	NHA_RES_BUCKET_NH_ID,
 
 	__NHA_RES_BUCKET_MAX,
-};
+पूर्ण;
 
-#define NHA_RES_BUCKET_MAX	(__NHA_RES_BUCKET_MAX - 1)
+#घोषणा NHA_RES_BUCKET_MAX	(__NHA_RES_BUCKET_MAX - 1)
 
-#endif
+#पूर्ण_अगर

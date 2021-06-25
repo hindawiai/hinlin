@@ -1,542 +1,543 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * wm8350-irq.c  --  IRQ support for Wolfson WM8350
+ * wm8350-irq.c  --  IRQ support क्रम Wolfson WM8350
  *
  * Copyright 2007, 2008, 2009 Wolfson Microelectronics PLC.
  *
  * Author: Liam Girdwood, Mark Brown
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/bug.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
 
-#include <linux/mfd/wm8350/core.h>
-#include <linux/mfd/wm8350/audio.h>
-#include <linux/mfd/wm8350/comparator.h>
-#include <linux/mfd/wm8350/gpio.h>
-#include <linux/mfd/wm8350/pmic.h>
-#include <linux/mfd/wm8350/rtc.h>
-#include <linux/mfd/wm8350/supply.h>
-#include <linux/mfd/wm8350/wdt.h>
+#समावेश <linux/mfd/wm8350/core.h>
+#समावेश <linux/mfd/wm8350/audपन.स>
+#समावेश <linux/mfd/wm8350/comparator.h>
+#समावेश <linux/mfd/wm8350/gpपन.स>
+#समावेश <linux/mfd/wm8350/pmic.h>
+#समावेश <linux/mfd/wm8350/rtc.h>
+#समावेश <linux/mfd/wm8350/supply.h>
+#समावेश <linux/mfd/wm8350/wdt.h>
 
-#define WM8350_INT_OFFSET_1                     0
-#define WM8350_INT_OFFSET_2                     1
-#define WM8350_POWER_UP_INT_OFFSET              2
-#define WM8350_UNDER_VOLTAGE_INT_OFFSET         3
-#define WM8350_OVER_CURRENT_INT_OFFSET          4
-#define WM8350_GPIO_INT_OFFSET                  5
-#define WM8350_COMPARATOR_INT_OFFSET            6
+#घोषणा WM8350_INT_OFFSET_1                     0
+#घोषणा WM8350_INT_OFFSET_2                     1
+#घोषणा WM8350_POWER_UP_INT_OFFSET              2
+#घोषणा WM8350_UNDER_VOLTAGE_INT_OFFSET         3
+#घोषणा WM8350_OVER_CURRENT_INT_OFFSET          4
+#घोषणा WM8350_GPIO_INT_OFFSET                  5
+#घोषणा WM8350_COMPARATOR_INT_OFFSET            6
 
-struct wm8350_irq_data {
-	int primary;
-	int reg;
-	int mask;
-	int primary_only;
-};
+काष्ठा wm8350_irq_data अणु
+	पूर्णांक primary;
+	पूर्णांक reg;
+	पूर्णांक mask;
+	पूर्णांक primary_only;
+पूर्ण;
 
-static struct wm8350_irq_data wm8350_irqs[] = {
-	[WM8350_IRQ_OC_LS] = {
+अटल काष्ठा wm8350_irq_data wm8350_irqs[] = अणु
+	[WM8350_IRQ_OC_LS] = अणु
 		.primary = WM8350_OC_INT,
 		.reg = WM8350_OVER_CURRENT_INT_OFFSET,
 		.mask = WM8350_OC_LS_EINT,
 		.primary_only = 1,
-	},
-	[WM8350_IRQ_UV_DC1] = {
+	पूर्ण,
+	[WM8350_IRQ_UV_DC1] = अणु
 		.primary = WM8350_UV_INT,
 		.reg = WM8350_UNDER_VOLTAGE_INT_OFFSET,
 		.mask = WM8350_UV_DC1_EINT,
-	},
-	[WM8350_IRQ_UV_DC2] = {
+	पूर्ण,
+	[WM8350_IRQ_UV_DC2] = अणु
 		.primary = WM8350_UV_INT,
 		.reg = WM8350_UNDER_VOLTAGE_INT_OFFSET,
 		.mask = WM8350_UV_DC2_EINT,
-	},
-	[WM8350_IRQ_UV_DC3] = {
+	पूर्ण,
+	[WM8350_IRQ_UV_DC3] = अणु
 		.primary = WM8350_UV_INT,
 		.reg = WM8350_UNDER_VOLTAGE_INT_OFFSET,
 		.mask = WM8350_UV_DC3_EINT,
-	},
-	[WM8350_IRQ_UV_DC4] = {
+	पूर्ण,
+	[WM8350_IRQ_UV_DC4] = अणु
 		.primary = WM8350_UV_INT,
 		.reg = WM8350_UNDER_VOLTAGE_INT_OFFSET,
 		.mask = WM8350_UV_DC4_EINT,
-	},
-	[WM8350_IRQ_UV_DC5] = {
+	पूर्ण,
+	[WM8350_IRQ_UV_DC5] = अणु
 		.primary = WM8350_UV_INT,
 		.reg = WM8350_UNDER_VOLTAGE_INT_OFFSET,
 		.mask = WM8350_UV_DC5_EINT,
-	},
-	[WM8350_IRQ_UV_DC6] = {
+	पूर्ण,
+	[WM8350_IRQ_UV_DC6] = अणु
 		.primary = WM8350_UV_INT,
 		.reg = WM8350_UNDER_VOLTAGE_INT_OFFSET,
 		.mask = WM8350_UV_DC6_EINT,
-	},
-	[WM8350_IRQ_UV_LDO1] = {
+	पूर्ण,
+	[WM8350_IRQ_UV_LDO1] = अणु
 		.primary = WM8350_UV_INT,
 		.reg = WM8350_UNDER_VOLTAGE_INT_OFFSET,
 		.mask = WM8350_UV_LDO1_EINT,
-	},
-	[WM8350_IRQ_UV_LDO2] = {
+	पूर्ण,
+	[WM8350_IRQ_UV_LDO2] = अणु
 		.primary = WM8350_UV_INT,
 		.reg = WM8350_UNDER_VOLTAGE_INT_OFFSET,
 		.mask = WM8350_UV_LDO2_EINT,
-	},
-	[WM8350_IRQ_UV_LDO3] = {
+	पूर्ण,
+	[WM8350_IRQ_UV_LDO3] = अणु
 		.primary = WM8350_UV_INT,
 		.reg = WM8350_UNDER_VOLTAGE_INT_OFFSET,
 		.mask = WM8350_UV_LDO3_EINT,
-	},
-	[WM8350_IRQ_UV_LDO4] = {
+	पूर्ण,
+	[WM8350_IRQ_UV_LDO4] = अणु
 		.primary = WM8350_UV_INT,
 		.reg = WM8350_UNDER_VOLTAGE_INT_OFFSET,
 		.mask = WM8350_UV_LDO4_EINT,
-	},
-	[WM8350_IRQ_CHG_BAT_HOT] = {
+	पूर्ण,
+	[WM8350_IRQ_CHG_BAT_HOT] = अणु
 		.primary = WM8350_CHG_INT,
 		.reg = WM8350_INT_OFFSET_1,
 		.mask = WM8350_CHG_BAT_HOT_EINT,
-	},
-	[WM8350_IRQ_CHG_BAT_COLD] = {
+	पूर्ण,
+	[WM8350_IRQ_CHG_BAT_COLD] = अणु
 		.primary = WM8350_CHG_INT,
 		.reg = WM8350_INT_OFFSET_1,
 		.mask = WM8350_CHG_BAT_COLD_EINT,
-	},
-	[WM8350_IRQ_CHG_BAT_FAIL] = {
+	पूर्ण,
+	[WM8350_IRQ_CHG_BAT_FAIL] = अणु
 		.primary = WM8350_CHG_INT,
 		.reg = WM8350_INT_OFFSET_1,
 		.mask = WM8350_CHG_BAT_FAIL_EINT,
-	},
-	[WM8350_IRQ_CHG_TO] = {
+	पूर्ण,
+	[WM8350_IRQ_CHG_TO] = अणु
 		.primary = WM8350_CHG_INT,
 		.reg = WM8350_INT_OFFSET_1,
 		.mask = WM8350_CHG_TO_EINT,
-	},
-	[WM8350_IRQ_CHG_END] = {
+	पूर्ण,
+	[WM8350_IRQ_CHG_END] = अणु
 		.primary = WM8350_CHG_INT,
 		.reg = WM8350_INT_OFFSET_1,
 		.mask = WM8350_CHG_END_EINT,
-	},
-	[WM8350_IRQ_CHG_START] = {
+	पूर्ण,
+	[WM8350_IRQ_CHG_START] = अणु
 		.primary = WM8350_CHG_INT,
 		.reg = WM8350_INT_OFFSET_1,
 		.mask = WM8350_CHG_START_EINT,
-	},
-	[WM8350_IRQ_CHG_FAST_RDY] = {
+	पूर्ण,
+	[WM8350_IRQ_CHG_FAST_RDY] = अणु
 		.primary = WM8350_CHG_INT,
 		.reg = WM8350_INT_OFFSET_1,
 		.mask = WM8350_CHG_FAST_RDY_EINT,
-	},
-	[WM8350_IRQ_CHG_VBATT_LT_3P9] = {
+	पूर्ण,
+	[WM8350_IRQ_CHG_VBATT_LT_3P9] = अणु
 		.primary = WM8350_CHG_INT,
 		.reg = WM8350_INT_OFFSET_1,
 		.mask = WM8350_CHG_VBATT_LT_3P9_EINT,
-	},
-	[WM8350_IRQ_CHG_VBATT_LT_3P1] = {
+	पूर्ण,
+	[WM8350_IRQ_CHG_VBATT_LT_3P1] = अणु
 		.primary = WM8350_CHG_INT,
 		.reg = WM8350_INT_OFFSET_1,
 		.mask = WM8350_CHG_VBATT_LT_3P1_EINT,
-	},
-	[WM8350_IRQ_CHG_VBATT_LT_2P85] = {
+	पूर्ण,
+	[WM8350_IRQ_CHG_VBATT_LT_2P85] = अणु
 		.primary = WM8350_CHG_INT,
 		.reg = WM8350_INT_OFFSET_1,
 		.mask = WM8350_CHG_VBATT_LT_2P85_EINT,
-	},
-	[WM8350_IRQ_RTC_ALM] = {
+	पूर्ण,
+	[WM8350_IRQ_RTC_ALM] = अणु
 		.primary = WM8350_RTC_INT,
 		.reg = WM8350_INT_OFFSET_1,
 		.mask = WM8350_RTC_ALM_EINT,
-	},
-	[WM8350_IRQ_RTC_SEC] = {
+	पूर्ण,
+	[WM8350_IRQ_RTC_SEC] = अणु
 		.primary = WM8350_RTC_INT,
 		.reg = WM8350_INT_OFFSET_1,
 		.mask = WM8350_RTC_SEC_EINT,
-	},
-	[WM8350_IRQ_RTC_PER] = {
+	पूर्ण,
+	[WM8350_IRQ_RTC_PER] = अणु
 		.primary = WM8350_RTC_INT,
 		.reg = WM8350_INT_OFFSET_1,
 		.mask = WM8350_RTC_PER_EINT,
-	},
-	[WM8350_IRQ_CS1] = {
+	पूर्ण,
+	[WM8350_IRQ_CS1] = अणु
 		.primary = WM8350_CS_INT,
 		.reg = WM8350_INT_OFFSET_2,
 		.mask = WM8350_CS1_EINT,
-	},
-	[WM8350_IRQ_CS2] = {
+	पूर्ण,
+	[WM8350_IRQ_CS2] = अणु
 		.primary = WM8350_CS_INT,
 		.reg = WM8350_INT_OFFSET_2,
 		.mask = WM8350_CS2_EINT,
-	},
-	[WM8350_IRQ_SYS_HYST_COMP_FAIL] = {
+	पूर्ण,
+	[WM8350_IRQ_SYS_HYST_COMP_FAIL] = अणु
 		.primary = WM8350_SYS_INT,
 		.reg = WM8350_INT_OFFSET_2,
 		.mask = WM8350_SYS_HYST_COMP_FAIL_EINT,
-	},
-	[WM8350_IRQ_SYS_CHIP_GT115] = {
+	पूर्ण,
+	[WM8350_IRQ_SYS_CHIP_GT115] = अणु
 		.primary = WM8350_SYS_INT,
 		.reg = WM8350_INT_OFFSET_2,
 		.mask = WM8350_SYS_CHIP_GT115_EINT,
-	},
-	[WM8350_IRQ_SYS_CHIP_GT140] = {
+	पूर्ण,
+	[WM8350_IRQ_SYS_CHIP_GT140] = अणु
 		.primary = WM8350_SYS_INT,
 		.reg = WM8350_INT_OFFSET_2,
 		.mask = WM8350_SYS_CHIP_GT140_EINT,
-	},
-	[WM8350_IRQ_SYS_WDOG_TO] = {
+	पूर्ण,
+	[WM8350_IRQ_SYS_WDOG_TO] = अणु
 		.primary = WM8350_SYS_INT,
 		.reg = WM8350_INT_OFFSET_2,
 		.mask = WM8350_SYS_WDOG_TO_EINT,
-	},
-	[WM8350_IRQ_AUXADC_DATARDY] = {
+	पूर्ण,
+	[WM8350_IRQ_AUXADC_DATARDY] = अणु
 		.primary = WM8350_AUXADC_INT,
 		.reg = WM8350_INT_OFFSET_2,
 		.mask = WM8350_AUXADC_DATARDY_EINT,
-	},
-	[WM8350_IRQ_AUXADC_DCOMP4] = {
+	पूर्ण,
+	[WM8350_IRQ_AUXADC_DCOMP4] = अणु
 		.primary = WM8350_AUXADC_INT,
 		.reg = WM8350_INT_OFFSET_2,
 		.mask = WM8350_AUXADC_DCOMP4_EINT,
-	},
-	[WM8350_IRQ_AUXADC_DCOMP3] = {
+	पूर्ण,
+	[WM8350_IRQ_AUXADC_DCOMP3] = अणु
 		.primary = WM8350_AUXADC_INT,
 		.reg = WM8350_INT_OFFSET_2,
 		.mask = WM8350_AUXADC_DCOMP3_EINT,
-	},
-	[WM8350_IRQ_AUXADC_DCOMP2] = {
+	पूर्ण,
+	[WM8350_IRQ_AUXADC_DCOMP2] = अणु
 		.primary = WM8350_AUXADC_INT,
 		.reg = WM8350_INT_OFFSET_2,
 		.mask = WM8350_AUXADC_DCOMP2_EINT,
-	},
-	[WM8350_IRQ_AUXADC_DCOMP1] = {
+	पूर्ण,
+	[WM8350_IRQ_AUXADC_DCOMP1] = अणु
 		.primary = WM8350_AUXADC_INT,
 		.reg = WM8350_INT_OFFSET_2,
 		.mask = WM8350_AUXADC_DCOMP1_EINT,
-	},
-	[WM8350_IRQ_USB_LIMIT] = {
+	पूर्ण,
+	[WM8350_IRQ_USB_LIMIT] = अणु
 		.primary = WM8350_USB_INT,
 		.reg = WM8350_INT_OFFSET_2,
 		.mask = WM8350_USB_LIMIT_EINT,
 		.primary_only = 1,
-	},
-	[WM8350_IRQ_WKUP_OFF_STATE] = {
+	पूर्ण,
+	[WM8350_IRQ_WKUP_OFF_STATE] = अणु
 		.primary = WM8350_WKUP_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_WKUP_OFF_STATE_EINT,
-	},
-	[WM8350_IRQ_WKUP_HIB_STATE] = {
+	पूर्ण,
+	[WM8350_IRQ_WKUP_HIB_STATE] = अणु
 		.primary = WM8350_WKUP_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_WKUP_HIB_STATE_EINT,
-	},
-	[WM8350_IRQ_WKUP_CONV_FAULT] = {
+	पूर्ण,
+	[WM8350_IRQ_WKUP_CONV_FAULT] = अणु
 		.primary = WM8350_WKUP_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_WKUP_CONV_FAULT_EINT,
-	},
-	[WM8350_IRQ_WKUP_WDOG_RST] = {
+	पूर्ण,
+	[WM8350_IRQ_WKUP_WDOG_RST] = अणु
 		.primary = WM8350_WKUP_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_WKUP_WDOG_RST_EINT,
-	},
-	[WM8350_IRQ_WKUP_GP_PWR_ON] = {
+	पूर्ण,
+	[WM8350_IRQ_WKUP_GP_PWR_ON] = अणु
 		.primary = WM8350_WKUP_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_WKUP_GP_PWR_ON_EINT,
-	},
-	[WM8350_IRQ_WKUP_ONKEY] = {
+	पूर्ण,
+	[WM8350_IRQ_WKUP_ONKEY] = अणु
 		.primary = WM8350_WKUP_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_WKUP_ONKEY_EINT,
-	},
-	[WM8350_IRQ_WKUP_GP_WAKEUP] = {
+	पूर्ण,
+	[WM8350_IRQ_WKUP_GP_WAKEUP] = अणु
 		.primary = WM8350_WKUP_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_WKUP_GP_WAKEUP_EINT,
-	},
-	[WM8350_IRQ_CODEC_JCK_DET_L] = {
+	पूर्ण,
+	[WM8350_IRQ_CODEC_JCK_DET_L] = अणु
 		.primary = WM8350_CODEC_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_CODEC_JCK_DET_L_EINT,
-	},
-	[WM8350_IRQ_CODEC_JCK_DET_R] = {
+	पूर्ण,
+	[WM8350_IRQ_CODEC_JCK_DET_R] = अणु
 		.primary = WM8350_CODEC_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_CODEC_JCK_DET_R_EINT,
-	},
-	[WM8350_IRQ_CODEC_MICSCD] = {
+	पूर्ण,
+	[WM8350_IRQ_CODEC_MICSCD] = अणु
 		.primary = WM8350_CODEC_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_CODEC_MICSCD_EINT,
-	},
-	[WM8350_IRQ_CODEC_MICD] = {
+	पूर्ण,
+	[WM8350_IRQ_CODEC_MICD] = अणु
 		.primary = WM8350_CODEC_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_CODEC_MICD_EINT,
-	},
-	[WM8350_IRQ_EXT_USB_FB] = {
+	पूर्ण,
+	[WM8350_IRQ_EXT_USB_FB] = अणु
 		.primary = WM8350_EXT_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_EXT_USB_FB_EINT,
-	},
-	[WM8350_IRQ_EXT_WALL_FB] = {
+	पूर्ण,
+	[WM8350_IRQ_EXT_WALL_FB] = अणु
 		.primary = WM8350_EXT_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_EXT_WALL_FB_EINT,
-	},
-	[WM8350_IRQ_EXT_BAT_FB] = {
+	पूर्ण,
+	[WM8350_IRQ_EXT_BAT_FB] = अणु
 		.primary = WM8350_EXT_INT,
 		.reg = WM8350_COMPARATOR_INT_OFFSET,
 		.mask = WM8350_EXT_BAT_FB_EINT,
-	},
-	[WM8350_IRQ_GPIO(0)] = {
+	पूर्ण,
+	[WM8350_IRQ_GPIO(0)] = अणु
 		.primary = WM8350_GP_INT,
 		.reg = WM8350_GPIO_INT_OFFSET,
 		.mask = WM8350_GP0_EINT,
-	},
-	[WM8350_IRQ_GPIO(1)] = {
+	पूर्ण,
+	[WM8350_IRQ_GPIO(1)] = अणु
 		.primary = WM8350_GP_INT,
 		.reg = WM8350_GPIO_INT_OFFSET,
 		.mask = WM8350_GP1_EINT,
-	},
-	[WM8350_IRQ_GPIO(2)] = {
+	पूर्ण,
+	[WM8350_IRQ_GPIO(2)] = अणु
 		.primary = WM8350_GP_INT,
 		.reg = WM8350_GPIO_INT_OFFSET,
 		.mask = WM8350_GP2_EINT,
-	},
-	[WM8350_IRQ_GPIO(3)] = {
+	पूर्ण,
+	[WM8350_IRQ_GPIO(3)] = अणु
 		.primary = WM8350_GP_INT,
 		.reg = WM8350_GPIO_INT_OFFSET,
 		.mask = WM8350_GP3_EINT,
-	},
-	[WM8350_IRQ_GPIO(4)] = {
+	पूर्ण,
+	[WM8350_IRQ_GPIO(4)] = अणु
 		.primary = WM8350_GP_INT,
 		.reg = WM8350_GPIO_INT_OFFSET,
 		.mask = WM8350_GP4_EINT,
-	},
-	[WM8350_IRQ_GPIO(5)] = {
+	पूर्ण,
+	[WM8350_IRQ_GPIO(5)] = अणु
 		.primary = WM8350_GP_INT,
 		.reg = WM8350_GPIO_INT_OFFSET,
 		.mask = WM8350_GP5_EINT,
-	},
-	[WM8350_IRQ_GPIO(6)] = {
+	पूर्ण,
+	[WM8350_IRQ_GPIO(6)] = अणु
 		.primary = WM8350_GP_INT,
 		.reg = WM8350_GPIO_INT_OFFSET,
 		.mask = WM8350_GP6_EINT,
-	},
-	[WM8350_IRQ_GPIO(7)] = {
+	पूर्ण,
+	[WM8350_IRQ_GPIO(7)] = अणु
 		.primary = WM8350_GP_INT,
 		.reg = WM8350_GPIO_INT_OFFSET,
 		.mask = WM8350_GP7_EINT,
-	},
-	[WM8350_IRQ_GPIO(8)] = {
+	पूर्ण,
+	[WM8350_IRQ_GPIO(8)] = अणु
 		.primary = WM8350_GP_INT,
 		.reg = WM8350_GPIO_INT_OFFSET,
 		.mask = WM8350_GP8_EINT,
-	},
-	[WM8350_IRQ_GPIO(9)] = {
+	पूर्ण,
+	[WM8350_IRQ_GPIO(9)] = अणु
 		.primary = WM8350_GP_INT,
 		.reg = WM8350_GPIO_INT_OFFSET,
 		.mask = WM8350_GP9_EINT,
-	},
-	[WM8350_IRQ_GPIO(10)] = {
+	पूर्ण,
+	[WM8350_IRQ_GPIO(10)] = अणु
 		.primary = WM8350_GP_INT,
 		.reg = WM8350_GPIO_INT_OFFSET,
 		.mask = WM8350_GP10_EINT,
-	},
-	[WM8350_IRQ_GPIO(11)] = {
+	पूर्ण,
+	[WM8350_IRQ_GPIO(11)] = अणु
 		.primary = WM8350_GP_INT,
 		.reg = WM8350_GPIO_INT_OFFSET,
 		.mask = WM8350_GP11_EINT,
-	},
-	[WM8350_IRQ_GPIO(12)] = {
+	पूर्ण,
+	[WM8350_IRQ_GPIO(12)] = अणु
 		.primary = WM8350_GP_INT,
 		.reg = WM8350_GPIO_INT_OFFSET,
 		.mask = WM8350_GP12_EINT,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static inline struct wm8350_irq_data *irq_to_wm8350_irq(struct wm8350 *wm8350,
-							int irq)
-{
-	return &wm8350_irqs[irq - wm8350->irq_base];
-}
+अटल अंतरभूत काष्ठा wm8350_irq_data *irq_to_wm8350_irq(काष्ठा wm8350 *wm8350,
+							पूर्णांक irq)
+अणु
+	वापस &wm8350_irqs[irq - wm8350->irq_base];
+पूर्ण
 
 /*
- * This is a threaded IRQ handler so can access I2C/SPI.  Since all
- * interrupts are clear on read the IRQ line will be reasserted and
- * the physical IRQ will be handled again if another interrupt is
- * asserted while we run - in the normal course of events this is a
- * rare occurrence so we save I2C/SPI reads.  We're also assuming that
- * it's rare to get lots of interrupts firing simultaneously so try to
+ * This is a thपढ़ोed IRQ handler so can access I2C/SPI.  Since all
+ * पूर्णांकerrupts are clear on पढ़ो the IRQ line will be reनिश्चितed and
+ * the physical IRQ will be handled again अगर another पूर्णांकerrupt is
+ * निश्चितed जबतक we run - in the normal course of events this is a
+ * rare occurrence so we save I2C/SPI पढ़ोs.  We're also assuming that
+ * it's rare to get lots of पूर्णांकerrupts firing simultaneously so try to
  * minimise I/O.
  */
-static irqreturn_t wm8350_irq(int irq, void *irq_data)
-{
-	struct wm8350 *wm8350 = irq_data;
+अटल irqवापस_t wm8350_irq(पूर्णांक irq, व्योम *irq_data)
+अणु
+	काष्ठा wm8350 *wm8350 = irq_data;
 	u16 level_one;
 	u16 sub_reg[WM8350_NUM_IRQ_REGS];
-	int read_done[WM8350_NUM_IRQ_REGS];
-	struct wm8350_irq_data *data;
-	int i;
+	पूर्णांक पढ़ो_करोne[WM8350_NUM_IRQ_REGS];
+	काष्ठा wm8350_irq_data *data;
+	पूर्णांक i;
 
-	level_one = wm8350_reg_read(wm8350, WM8350_SYSTEM_INTERRUPTS)
-		& ~wm8350_reg_read(wm8350, WM8350_SYSTEM_INTERRUPTS_MASK);
+	level_one = wm8350_reg_पढ़ो(wm8350, WM8350_SYSTEM_INTERRUPTS)
+		& ~wm8350_reg_पढ़ो(wm8350, WM8350_SYSTEM_INTERRUPTS_MASK);
 
-	if (!level_one)
-		return IRQ_NONE;
+	अगर (!level_one)
+		वापस IRQ_NONE;
 
-	memset(&read_done, 0, sizeof(read_done));
+	स_रखो(&पढ़ो_करोne, 0, माप(पढ़ो_करोne));
 
-	for (i = 0; i < ARRAY_SIZE(wm8350_irqs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(wm8350_irqs); i++) अणु
 		data = &wm8350_irqs[i];
 
-		if (!(level_one & data->primary))
-			continue;
+		अगर (!(level_one & data->primary))
+			जारी;
 
-		if (!read_done[data->reg]) {
+		अगर (!पढ़ो_करोne[data->reg]) अणु
 			sub_reg[data->reg] =
-				wm8350_reg_read(wm8350, WM8350_INT_STATUS_1 +
+				wm8350_reg_पढ़ो(wm8350, WM8350_INT_STATUS_1 +
 						data->reg);
 			sub_reg[data->reg] &= ~wm8350->irq_masks[data->reg];
-			read_done[data->reg] = 1;
-		}
+			पढ़ो_करोne[data->reg] = 1;
+		पूर्ण
 
-		if (sub_reg[data->reg] & data->mask)
+		अगर (sub_reg[data->reg] & data->mask)
 			handle_nested_irq(wm8350->irq_base + i);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void wm8350_irq_lock(struct irq_data *data)
-{
-	struct wm8350 *wm8350 = irq_data_get_irq_chip_data(data);
+अटल व्योम wm8350_irq_lock(काष्ठा irq_data *data)
+अणु
+	काष्ठा wm8350 *wm8350 = irq_data_get_irq_chip_data(data);
 
 	mutex_lock(&wm8350->irq_lock);
-}
+पूर्ण
 
-static void wm8350_irq_sync_unlock(struct irq_data *data)
-{
-	struct wm8350 *wm8350 = irq_data_get_irq_chip_data(data);
-	int i;
+अटल व्योम wm8350_irq_sync_unlock(काष्ठा irq_data *data)
+अणु
+	काष्ठा wm8350 *wm8350 = irq_data_get_irq_chip_data(data);
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(wm8350->irq_masks); i++) {
-		/* If there's been a change in the mask write it back
+	क्रम (i = 0; i < ARRAY_SIZE(wm8350->irq_masks); i++) अणु
+		/* If there's been a change in the mask ग_लिखो it back
 		 * to the hardware. */
 		WARN_ON(regmap_update_bits(wm8350->regmap,
 					   WM8350_INT_STATUS_1_MASK + i,
 					   0xffff, wm8350->irq_masks[i]));
-	}
+	पूर्ण
 
 	mutex_unlock(&wm8350->irq_lock);
-}
+पूर्ण
 
-static void wm8350_irq_enable(struct irq_data *data)
-{
-	struct wm8350 *wm8350 = irq_data_get_irq_chip_data(data);
-	struct wm8350_irq_data *irq_data = irq_to_wm8350_irq(wm8350,
+अटल व्योम wm8350_irq_enable(काष्ठा irq_data *data)
+अणु
+	काष्ठा wm8350 *wm8350 = irq_data_get_irq_chip_data(data);
+	काष्ठा wm8350_irq_data *irq_data = irq_to_wm8350_irq(wm8350,
 							     data->irq);
 
 	wm8350->irq_masks[irq_data->reg] &= ~irq_data->mask;
-}
+पूर्ण
 
-static void wm8350_irq_disable(struct irq_data *data)
-{
-	struct wm8350 *wm8350 = irq_data_get_irq_chip_data(data);
-	struct wm8350_irq_data *irq_data = irq_to_wm8350_irq(wm8350,
+अटल व्योम wm8350_irq_disable(काष्ठा irq_data *data)
+अणु
+	काष्ठा wm8350 *wm8350 = irq_data_get_irq_chip_data(data);
+	काष्ठा wm8350_irq_data *irq_data = irq_to_wm8350_irq(wm8350,
 							     data->irq);
 
 	wm8350->irq_masks[irq_data->reg] |= irq_data->mask;
-}
+पूर्ण
 
-static struct irq_chip wm8350_irq_chip = {
+अटल काष्ठा irq_chip wm8350_irq_chip = अणु
 	.name			= "wm8350",
 	.irq_bus_lock		= wm8350_irq_lock,
 	.irq_bus_sync_unlock	= wm8350_irq_sync_unlock,
 	.irq_disable		= wm8350_irq_disable,
 	.irq_enable		= wm8350_irq_enable,
-};
+पूर्ण;
 
-int wm8350_irq_init(struct wm8350 *wm8350, int irq,
-		    struct wm8350_platform_data *pdata)
-{
-	int ret, cur_irq, i;
-	int flags = IRQF_ONESHOT;
-	int irq_base = -1;
+पूर्णांक wm8350_irq_init(काष्ठा wm8350 *wm8350, पूर्णांक irq,
+		    काष्ठा wm8350_platक्रमm_data *pdata)
+अणु
+	पूर्णांक ret, cur_irq, i;
+	पूर्णांक flags = IRQF_ONESHOT;
+	पूर्णांक irq_base = -1;
 
-	if (!irq) {
+	अगर (!irq) अणु
 		dev_warn(wm8350->dev, "No interrupt support, no core IRQ\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Mask top level interrupts */
-	wm8350_reg_write(wm8350, WM8350_SYSTEM_INTERRUPTS_MASK, 0xFFFF);
+	/* Mask top level पूर्णांकerrupts */
+	wm8350_reg_ग_लिखो(wm8350, WM8350_SYSTEM_INTERRUPTS_MASK, 0xFFFF);
 
-	/* Mask all individual interrupts by default and cache the
-	 * masks.  We read the masks back since there are unwritable
-	 * bits in the mask registers. */
-	for (i = 0; i < ARRAY_SIZE(wm8350->irq_masks); i++) {
-		wm8350_reg_write(wm8350, WM8350_INT_STATUS_1_MASK + i,
+	/* Mask all inभागidual पूर्णांकerrupts by शेष and cache the
+	 * masks.  We पढ़ो the masks back since there are unwritable
+	 * bits in the mask रेजिस्टरs. */
+	क्रम (i = 0; i < ARRAY_SIZE(wm8350->irq_masks); i++) अणु
+		wm8350_reg_ग_लिखो(wm8350, WM8350_INT_STATUS_1_MASK + i,
 				 0xFFFF);
 		wm8350->irq_masks[i] =
-			wm8350_reg_read(wm8350,
+			wm8350_reg_पढ़ो(wm8350,
 					WM8350_INT_STATUS_1_MASK + i);
-	}
+	पूर्ण
 
 	mutex_init(&wm8350->irq_lock);
 	wm8350->chip_irq = irq;
 
-	if (pdata && pdata->irq_base > 0)
+	अगर (pdata && pdata->irq_base > 0)
 		irq_base = pdata->irq_base;
 
 	wm8350->irq_base =
 		irq_alloc_descs(irq_base, 0, ARRAY_SIZE(wm8350_irqs), 0);
-	if (wm8350->irq_base < 0) {
+	अगर (wm8350->irq_base < 0) अणु
 		dev_warn(wm8350->dev, "Allocating irqs failed with %d\n",
 			wm8350->irq_base);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (pdata && pdata->irq_high) {
+	अगर (pdata && pdata->irq_high) अणु
 		flags |= IRQF_TRIGGER_HIGH;
 
 		wm8350_set_bits(wm8350, WM8350_SYSTEM_CONTROL_1,
 				WM8350_IRQ_POL);
-	} else {
+	पूर्ण अन्यथा अणु
 		flags |= IRQF_TRIGGER_LOW;
 
 		wm8350_clear_bits(wm8350, WM8350_SYSTEM_CONTROL_1,
 				  WM8350_IRQ_POL);
-	}
+	पूर्ण
 
 	/* Register with genirq */
-	for (cur_irq = wm8350->irq_base;
+	क्रम (cur_irq = wm8350->irq_base;
 	     cur_irq < ARRAY_SIZE(wm8350_irqs) + wm8350->irq_base;
-	     cur_irq++) {
+	     cur_irq++) अणु
 		irq_set_chip_data(cur_irq, wm8350);
 		irq_set_chip_and_handler(cur_irq, &wm8350_irq_chip,
 					 handle_edge_irq);
-		irq_set_nested_thread(cur_irq, 1);
+		irq_set_nested_thपढ़ो(cur_irq, 1);
 
 		irq_clear_status_flags(cur_irq, IRQ_NOREQUEST | IRQ_NOPROBE);
-	}
+	पूर्ण
 
-	ret = request_threaded_irq(irq, NULL, wm8350_irq, flags,
+	ret = request_thपढ़ोed_irq(irq, शून्य, wm8350_irq, flags,
 				   "wm8350", wm8350);
-	if (ret != 0)
+	अगर (ret != 0)
 		dev_err(wm8350->dev, "Failed to request IRQ: %d\n", ret);
 
-	/* Allow interrupts to fire */
-	wm8350_reg_write(wm8350, WM8350_SYSTEM_INTERRUPTS_MASK, 0);
+	/* Allow पूर्णांकerrupts to fire */
+	wm8350_reg_ग_लिखो(wm8350, WM8350_SYSTEM_INTERRUPTS_MASK, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int wm8350_irq_exit(struct wm8350 *wm8350)
-{
-	free_irq(wm8350->chip_irq, wm8350);
-	return 0;
-}
+पूर्णांक wm8350_irq_निकास(काष्ठा wm8350 *wm8350)
+अणु
+	मुक्त_irq(wm8350->chip_irq, wm8350);
+	वापस 0;
+पूर्ण

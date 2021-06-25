@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  Copyright IBM Corp. 2004
  *
  *  Author: Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#ifndef _S390_CPUTIME_H
-#define _S390_CPUTIME_H
+#अगर_अघोषित _S390_CPUTIME_H
+#घोषणा _S390_CPUTIME_H
 
-#include <linux/types.h>
-#include <asm/timex.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/समयx.h>
 
-#define CPUTIME_PER_USEC 4096ULL
-#define CPUTIME_PER_SEC (CPUTIME_PER_USEC * USEC_PER_SEC)
+#घोषणा CPUTIME_PER_USEC 4096ULL
+#घोषणा CPUTIME_PER_SEC (CPUTIME_PER_USEC * USEC_PER_SEC)
 
-/* We want to use full resolution of the CPU timer: 2**-12 micro-seconds. */
+/* We want to use full resolution of the CPU समयr: 2**-12 micro-seconds. */
 
-#define cmpxchg_cputime(ptr, old, new) cmpxchg64(ptr, old, new)
-
-/*
- * Convert cputime to microseconds.
- */
-static inline u64 cputime_to_usecs(const u64 cputime)
-{
-	return cputime >> 12;
-}
+#घोषणा cmpxchg_cpuसमय(ptr, old, new) cmpxchg64(ptr, old, new)
 
 /*
- * Convert cputime to nanoseconds.
+ * Convert cpuसमय to microseconds.
  */
-#define cputime_to_nsecs(cputime) tod_to_ns(cputime)
+अटल अंतरभूत u64 cpuसमय_प्रकारo_usecs(स्थिर u64 cpuसमय)
+अणु
+	वापस cpuसमय >> 12;
+पूर्ण
 
-u64 arch_cpu_idle_time(int cpu);
+/*
+ * Convert cpuसमय to nanoseconds.
+ */
+#घोषणा cpuसमय_प्रकारo_nsecs(cpuसमय) tod_to_ns(cpuसमय)
 
-#define arch_idle_time(cpu) arch_cpu_idle_time(cpu)
+u64 arch_cpu_idle_समय(पूर्णांक cpu);
 
-void account_idle_time_irq(void);
+#घोषणा arch_idle_समय(cpu) arch_cpu_idle_समय(cpu)
 
-#endif /* _S390_CPUTIME_H */
+व्योम account_idle_समय_irq(व्योम);
+
+#पूर्ण_अगर /* _S390_CPUTIME_H */

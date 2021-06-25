@@ -1,222 +1,223 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
-#ifndef KPC_DMA_DRIVER_H
-#define KPC_DMA_DRIVER_H
-#include <linux/platform_device.h>
-#include <linux/cdev.h>
-#include <linux/kfifo.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/sched.h>
-#include <linux/miscdevice.h>
-#include <linux/rwsem.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmapool.h>
-#include <linux/pci.h>
-#include <linux/interrupt.h>
-#include <linux/workqueue.h>
-#include <linux/bitops.h>
-#include "../kpc.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
+#अगर_अघोषित KPC_DMA_DRIVER_H
+#घोषणा KPC_DMA_DRIVER_H
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/kfअगरo.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/bitops.h>
+#समावेश "../kpc.h"
 
-struct kp2000_device;
-struct kpc_dma_device {
-	struct list_head            list;
-	struct platform_device     *pldev;
+काष्ठा kp2000_device;
+काष्ठा kpc_dma_device अणु
+	काष्ठा list_head            list;
+	काष्ठा platक्रमm_device     *pldev;
 	u32 __iomem                *eng_regs;
-	struct device              *kpc_dma_dev;
-	struct kobject              kobj;
-	char                        name[16];
+	काष्ठा device              *kpc_dma_dev;
+	काष्ठा kobject              kobj;
+	अक्षर                        name[16];
 
-	int                         dir; // DMA_FROM_DEVICE || DMA_TO_DEVICE
-	struct mutex                sem;
-	unsigned int                irq;
-	struct work_struct          irq_work;
+	पूर्णांक                         dir; // DMA_FROM_DEVICE || DMA_TO_DEVICE
+	काष्ठा mutex                sem;
+	अचिन्हित पूर्णांक                irq;
+	काष्ठा work_काष्ठा          irq_work;
 
-	atomic_t                    open_count;
+	atomic_t                    खोलो_count;
 
-	size_t                      accumulated_bytes;
+	माप_प्रकार                      accumulated_bytes;
 	u32                         accumulated_flags;
 
 	// Descriptor "Pool" housekeeping
 	u32                         desc_pool_cnt;
-	struct dma_pool            *desc_pool;
-	struct kpc_dma_descriptor  *desc_pool_first;
-	struct kpc_dma_descriptor  *desc_pool_last;
+	काष्ठा dma_pool            *desc_pool;
+	काष्ठा kpc_dma_descriptor  *desc_pool_first;
+	काष्ठा kpc_dma_descriptor  *desc_pool_last;
 
-	struct kpc_dma_descriptor  *desc_next;
-	struct kpc_dma_descriptor  *desc_completed;
-};
+	काष्ठा kpc_dma_descriptor  *desc_next;
+	काष्ठा kpc_dma_descriptor  *desc_completed;
+पूर्ण;
 
-struct dev_private_data {
-	struct kpc_dma_device      *ldev;
+काष्ठा dev_निजी_data अणु
+	काष्ठा kpc_dma_device      *ldev;
 	u64                         card_addr;
 	u64                         user_ctl;
 	u64                         user_ctl_last;
 	u64                         user_sts;
-};
+पूर्ण;
 
-struct kpc_dma_device *kpc_dma_lookup_device(int minor);
+काष्ठा kpc_dma_device *kpc_dma_lookup_device(पूर्णांक minor);
 
-extern const struct file_operations  kpc_dma_fops;
+बाह्य स्थिर काष्ठा file_operations  kpc_dma_fops;
 
-#define ENG_CAP_PRESENT                 0x00000001
-#define ENG_CAP_DIRECTION               0x00000002
-#define ENG_CAP_TYPE_MASK               0x000000F0
-#define ENG_CAP_NUMBER_MASK             0x0000FF00
-#define ENG_CAP_CARD_ADDR_SIZE_MASK     0x007F0000
-#define ENG_CAP_DESC_MAX_BYTE_CNT_MASK  0x3F000000
-#define ENG_CAP_PERF_SCALE_MASK         0xC0000000
+#घोषणा ENG_CAP_PRESENT                 0x00000001
+#घोषणा ENG_CAP_सूचीECTION               0x00000002
+#घोषणा ENG_CAP_TYPE_MASK               0x000000F0
+#घोषणा ENG_CAP_NUMBER_MASK             0x0000FF00
+#घोषणा ENG_CAP_CARD_ADDR_SIZE_MASK     0x007F0000
+#घोषणा ENG_CAP_DESC_MAX_BYTE_CNT_MASK  0x3F000000
+#घोषणा ENG_CAP_PERF_SCALE_MASK         0xC0000000
 
-#define ENG_CTL_IRQ_ENABLE              BIT(0)
-#define ENG_CTL_IRQ_ACTIVE              BIT(1)
-#define ENG_CTL_DESC_COMPLETE           BIT(2)
-#define ENG_CTL_DESC_ALIGN_ERR          BIT(3)
-#define ENG_CTL_DESC_FETCH_ERR          BIT(4)
-#define ENG_CTL_SW_ABORT_ERR            BIT(5)
-#define ENG_CTL_DESC_CHAIN_END          BIT(7)
-#define ENG_CTL_DMA_ENABLE              BIT(8)
-#define ENG_CTL_DMA_RUNNING             BIT(10)
-#define ENG_CTL_DMA_WAITING             BIT(11)
-#define ENG_CTL_DMA_WAITING_PERSIST     BIT(12)
-#define ENG_CTL_DMA_RESET_REQUEST       BIT(14)
-#define ENG_CTL_DMA_RESET               BIT(15)
-#define ENG_CTL_DESC_FETCH_ERR_CLASS_MASK   0x700000
+#घोषणा ENG_CTL_IRQ_ENABLE              BIT(0)
+#घोषणा ENG_CTL_IRQ_ACTIVE              BIT(1)
+#घोषणा ENG_CTL_DESC_COMPLETE           BIT(2)
+#घोषणा ENG_CTL_DESC_ALIGN_ERR          BIT(3)
+#घोषणा ENG_CTL_DESC_FETCH_ERR          BIT(4)
+#घोषणा ENG_CTL_SW_ABORT_ERR            BIT(5)
+#घोषणा ENG_CTL_DESC_CHAIN_END          BIT(7)
+#घोषणा ENG_CTL_DMA_ENABLE              BIT(8)
+#घोषणा ENG_CTL_DMA_RUNNING             BIT(10)
+#घोषणा ENG_CTL_DMA_WAITING             BIT(11)
+#घोषणा ENG_CTL_DMA_WAITING_PERSIST     BIT(12)
+#घोषणा ENG_CTL_DMA_RESET_REQUEST       BIT(14)
+#घोषणा ENG_CTL_DMA_RESET               BIT(15)
+#घोषणा ENG_CTL_DESC_FETCH_ERR_CLASS_MASK   0x700000
 
-struct aio_cb_data {
-	struct dev_private_data    *priv;
-	struct kpc_dma_device      *ldev;
-	struct completion  *cpl;
-	unsigned char       flags;
-	size_t              len;
+काष्ठा aio_cb_data अणु
+	काष्ठा dev_निजी_data    *priv;
+	काष्ठा kpc_dma_device      *ldev;
+	काष्ठा completion  *cpl;
+	अचिन्हित अक्षर       flags;
+	माप_प्रकार              len;
 
-	unsigned int        page_count;
-	struct page       **user_pages;
-	struct sg_table     sgt;
-	int                 mapped_entry_count;
-};
+	अचिन्हित पूर्णांक        page_count;
+	काष्ठा page       **user_pages;
+	काष्ठा sg_table     sgt;
+	पूर्णांक                 mapped_entry_count;
+पूर्ण;
 
-#define ACD_FLAG_DONE               0
-#define ACD_FLAG_ABORT              1
-#define ACD_FLAG_ENG_ACCUM_ERROR    4
-#define ACD_FLAG_ENG_ACCUM_SHORT    5
+#घोषणा ACD_FLAG_DONE               0
+#घोषणा ACD_FLAG_ABORT              1
+#घोषणा ACD_FLAG_ENG_ACCUM_ERROR    4
+#घोषणा ACD_FLAG_ENG_ACCUM_SHORT    5
 
-struct kpc_dma_descriptor {
-	struct {
-		volatile u32  DescByteCount              :20;
-		volatile u32  DescStatusErrorFlags       :4;
-		volatile u32  DescStatusFlags            :8;
-	};
-		volatile u32  DescUserControlLS;
-		volatile u32  DescUserControlMS;
-		volatile u32  DescCardAddrLS;
-	struct {
-		volatile u32  DescBufferByteCount        :20;
-		volatile u32  DescCardAddrMS             :4;
-		volatile u32  DescControlFlags           :8;
-	};
-		volatile u32  DescSystemAddrLS;
-		volatile u32  DescSystemAddrMS;
-		volatile u32  DescNextDescPtr;
+काष्ठा kpc_dma_descriptor अणु
+	काष्ठा अणु
+		अस्थिर u32  DescByteCount              :20;
+		अस्थिर u32  DescStatusErrorFlags       :4;
+		अस्थिर u32  DescStatusFlags            :8;
+	पूर्ण;
+		अस्थिर u32  DescUserControlLS;
+		अस्थिर u32  DescUserControlMS;
+		अस्थिर u32  DescCardAddrLS;
+	काष्ठा अणु
+		अस्थिर u32  DescBufferByteCount        :20;
+		अस्थिर u32  DescCardAddrMS             :4;
+		अस्थिर u32  DescControlFlags           :8;
+	पूर्ण;
+		अस्थिर u32  DescSystemAddrLS;
+		अस्थिर u32  DescSystemAddrMS;
+		अस्थिर u32  DescNextDescPtr;
 
 		dma_addr_t    MyDMAAddr;
-		struct kpc_dma_descriptor   *Next;
+		काष्ठा kpc_dma_descriptor   *Next;
 
-		struct aio_cb_data  *acd;
-} __attribute__((packed));
+		काष्ठा aio_cb_data  *acd;
+पूर्ण __attribute__((packed));
 // DescControlFlags:
-#define DMA_DESC_CTL_SOP            BIT(7)
-#define DMA_DESC_CTL_EOP            BIT(6)
-#define DMA_DESC_CTL_AFIFO          BIT(2)
-#define DMA_DESC_CTL_IRQONERR       BIT(1)
-#define DMA_DESC_CTL_IRQONDONE      BIT(0)
+#घोषणा DMA_DESC_CTL_SOP            BIT(7)
+#घोषणा DMA_DESC_CTL_EOP            BIT(6)
+#घोषणा DMA_DESC_CTL_AFIFO          BIT(2)
+#घोषणा DMA_DESC_CTL_IRQONERR       BIT(1)
+#घोषणा DMA_DESC_CTL_IRQONDONE      BIT(0)
 // DescStatusFlags:
-#define DMA_DESC_STS_SOP            BIT(7)
-#define DMA_DESC_STS_EOP            BIT(6)
-#define DMA_DESC_STS_ERROR          BIT(4)
-#define DMA_DESC_STS_USMSZ          BIT(3)
-#define DMA_DESC_STS_USLSZ          BIT(2)
-#define DMA_DESC_STS_SHORT          BIT(1)
-#define DMA_DESC_STS_COMPLETE       BIT(0)
+#घोषणा DMA_DESC_STS_SOP            BIT(7)
+#घोषणा DMA_DESC_STS_EOP            BIT(6)
+#घोषणा DMA_DESC_STS_ERROR          BIT(4)
+#घोषणा DMA_DESC_STS_USMSZ          BIT(3)
+#घोषणा DMA_DESC_STS_USLSZ          BIT(2)
+#घोषणा DMA_DESC_STS_SHORT          BIT(1)
+#घोषणा DMA_DESC_STS_COMPLETE       BIT(0)
 // DescStatusErrorFlags:
-#define DMA_DESC_ESTS_ECRC          BIT(2)
-#define DMA_DESC_ESTS_POISON        BIT(1)
-#define DMA_DESC_ESTS_UNSUCCESSFUL  BIT(0)
+#घोषणा DMA_DESC_ESTS_ECRC          BIT(2)
+#घोषणा DMA_DESC_ESTS_POISON        BIT(1)
+#घोषणा DMA_DESC_ESTS_UNSUCCESSFUL  BIT(0)
 
-#define DMA_DESC_ALIGNMENT          0x20
+#घोषणा DMA_DESC_ALIGNMENT          0x20
 
-static inline
-u32  GetEngineCapabilities(struct kpc_dma_device *eng)
-{
-	return readl(eng->eng_regs + 0);
-}
+अटल अंतरभूत
+u32  GetEngineCapabilities(काष्ठा kpc_dma_device *eng)
+अणु
+	वापस पढ़ोl(eng->eng_regs + 0);
+पूर्ण
 
-static inline
-void  WriteEngineControl(struct kpc_dma_device *eng, u32 value)
-{
-	writel(value, eng->eng_regs + 1);
-}
+अटल अंतरभूत
+व्योम  WriteEngineControl(काष्ठा kpc_dma_device *eng, u32 value)
+अणु
+	ग_लिखोl(value, eng->eng_regs + 1);
+पूर्ण
 
-static inline
-u32  GetEngineControl(struct kpc_dma_device *eng)
-{
-	return readl(eng->eng_regs + 1);
-}
+अटल अंतरभूत
+u32  GetEngineControl(काष्ठा kpc_dma_device *eng)
+अणु
+	वापस पढ़ोl(eng->eng_regs + 1);
+पूर्ण
 
-static inline
-void  SetClearEngineControl(struct kpc_dma_device *eng, u32 set_bits, u32 clear_bits)
-{
+अटल अंतरभूत
+व्योम  SetClearEngineControl(काष्ठा kpc_dma_device *eng, u32 set_bits, u32 clear_bits)
+अणु
 	u32 val = GetEngineControl(eng);
 
 	val |= set_bits;
 	val &= ~clear_bits;
 	WriteEngineControl(eng, val);
-}
+पूर्ण
 
-static inline
-void  SetEngineNextPtr(struct kpc_dma_device *eng, struct kpc_dma_descriptor *desc)
-{
-	writel(desc->MyDMAAddr, eng->eng_regs + 2);
-}
+अटल अंतरभूत
+व्योम  SetEngineNextPtr(काष्ठा kpc_dma_device *eng, काष्ठा kpc_dma_descriptor *desc)
+अणु
+	ग_लिखोl(desc->MyDMAAddr, eng->eng_regs + 2);
+पूर्ण
 
-static inline
-void  SetEngineSWPtr(struct kpc_dma_device *eng, struct kpc_dma_descriptor *desc)
-{
-	writel(desc->MyDMAAddr, eng->eng_regs + 3);
-}
+अटल अंतरभूत
+व्योम  SetEngineSWPtr(काष्ठा kpc_dma_device *eng, काष्ठा kpc_dma_descriptor *desc)
+अणु
+	ग_लिखोl(desc->MyDMAAddr, eng->eng_regs + 3);
+पूर्ण
 
-static inline
-void  ClearEngineCompletePtr(struct kpc_dma_device *eng)
-{
-	writel(0, eng->eng_regs + 4);
-}
+अटल अंतरभूत
+व्योम  ClearEngineCompletePtr(काष्ठा kpc_dma_device *eng)
+अणु
+	ग_लिखोl(0, eng->eng_regs + 4);
+पूर्ण
 
-static inline
-u32  GetEngineCompletePtr(struct kpc_dma_device *eng)
-{
-	return readl(eng->eng_regs + 4);
-}
+अटल अंतरभूत
+u32  GetEngineCompletePtr(काष्ठा kpc_dma_device *eng)
+अणु
+	वापस पढ़ोl(eng->eng_regs + 4);
+पूर्ण
 
-static inline
-void  lock_engine(struct kpc_dma_device *eng)
-{
+अटल अंतरभूत
+व्योम  lock_engine(काष्ठा kpc_dma_device *eng)
+अणु
 	BUG_ON(!eng);
 	mutex_lock(&eng->sem);
-}
+पूर्ण
 
-static inline
-void  unlock_engine(struct kpc_dma_device *eng)
-{
+अटल अंतरभूत
+व्योम  unlock_engine(काष्ठा kpc_dma_device *eng)
+अणु
 	BUG_ON(!eng);
 	mutex_unlock(&eng->sem);
-}
+पूर्ण
 
 /// Shared Functions
-void  start_dma_engine(struct kpc_dma_device *eng);
-int   setup_dma_engine(struct kpc_dma_device *eng, u32 desc_cnt);
-void  stop_dma_engine(struct kpc_dma_device *eng);
-void  destroy_dma_engine(struct kpc_dma_device *eng);
-void  clear_desc(struct kpc_dma_descriptor *desc);
-int   count_descriptors_available(struct kpc_dma_device *eng);
-void  transfer_complete_cb(struct aio_cb_data *acd, size_t xfr_count, u32 flags);
+व्योम  start_dma_engine(काष्ठा kpc_dma_device *eng);
+पूर्णांक   setup_dma_engine(काष्ठा kpc_dma_device *eng, u32 desc_cnt);
+व्योम  stop_dma_engine(काष्ठा kpc_dma_device *eng);
+व्योम  destroy_dma_engine(काष्ठा kpc_dma_device *eng);
+व्योम  clear_desc(काष्ठा kpc_dma_descriptor *desc);
+पूर्णांक   count_descriptors_available(काष्ठा kpc_dma_device *eng);
+व्योम  transfer_complete_cb(काष्ठा aio_cb_data *acd, माप_प्रकार xfr_count, u32 flags);
 
-#endif /* KPC_DMA_DRIVER_H */
+#पूर्ण_अगर /* KPC_DMA_DRIVER_H */
 

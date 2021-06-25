@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2001
  */
-#ifndef	_H_JFS_INODE
-#define _H_JFS_INODE
+#अगर_अघोषित	_H_JFS_INODE
+#घोषणा _H_JFS_INODE
 
-struct fid;
+काष्ठा fid;
 
-extern struct inode *ialloc(struct inode *, umode_t);
-extern int jfs_fsync(struct file *, loff_t, loff_t, int);
-extern int jfs_fileattr_get(struct dentry *dentry, struct fileattr *fa);
-extern int jfs_fileattr_set(struct user_namespace *mnt_userns,
-			    struct dentry *dentry, struct fileattr *fa);
-extern long jfs_ioctl(struct file *, unsigned int, unsigned long);
-extern struct inode *jfs_iget(struct super_block *, unsigned long);
-extern int jfs_commit_inode(struct inode *, int);
-extern int jfs_write_inode(struct inode *, struct writeback_control *);
-extern void jfs_evict_inode(struct inode *);
-extern void jfs_dirty_inode(struct inode *, int);
-extern void jfs_truncate(struct inode *);
-extern void jfs_truncate_nolock(struct inode *, loff_t);
-extern void jfs_free_zero_link(struct inode *);
-extern struct dentry *jfs_get_parent(struct dentry *dentry);
-extern struct dentry *jfs_fh_to_dentry(struct super_block *sb, struct fid *fid,
-	int fh_len, int fh_type);
-extern struct dentry *jfs_fh_to_parent(struct super_block *sb, struct fid *fid,
-	int fh_len, int fh_type);
-extern void jfs_set_inode_flags(struct inode *);
-extern int jfs_get_block(struct inode *, sector_t, struct buffer_head *, int);
-extern int jfs_setattr(struct user_namespace *, struct dentry *, struct iattr *);
+बाह्य काष्ठा inode *ialloc(काष्ठा inode *, umode_t);
+बाह्य पूर्णांक jfs_fsync(काष्ठा file *, loff_t, loff_t, पूर्णांक);
+बाह्य पूर्णांक jfs_fileattr_get(काष्ठा dentry *dentry, काष्ठा fileattr *fa);
+बाह्य पूर्णांक jfs_fileattr_set(काष्ठा user_namespace *mnt_userns,
+			    काष्ठा dentry *dentry, काष्ठा fileattr *fa);
+बाह्य दीर्घ jfs_ioctl(काष्ठा file *, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
+बाह्य काष्ठा inode *jfs_iget(काष्ठा super_block *, अचिन्हित दीर्घ);
+बाह्य पूर्णांक jfs_commit_inode(काष्ठा inode *, पूर्णांक);
+बाह्य पूर्णांक jfs_ग_लिखो_inode(काष्ठा inode *, काष्ठा ग_लिखोback_control *);
+बाह्य व्योम jfs_evict_inode(काष्ठा inode *);
+बाह्य व्योम jfs_dirty_inode(काष्ठा inode *, पूर्णांक);
+बाह्य व्योम jfs_truncate(काष्ठा inode *);
+बाह्य व्योम jfs_truncate_nolock(काष्ठा inode *, loff_t);
+बाह्य व्योम jfs_मुक्त_zero_link(काष्ठा inode *);
+बाह्य काष्ठा dentry *jfs_get_parent(काष्ठा dentry *dentry);
+बाह्य काष्ठा dentry *jfs_fh_to_dentry(काष्ठा super_block *sb, काष्ठा fid *fid,
+	पूर्णांक fh_len, पूर्णांक fh_type);
+बाह्य काष्ठा dentry *jfs_fh_to_parent(काष्ठा super_block *sb, काष्ठा fid *fid,
+	पूर्णांक fh_len, पूर्णांक fh_type);
+बाह्य व्योम jfs_set_inode_flags(काष्ठा inode *);
+बाह्य पूर्णांक jfs_get_block(काष्ठा inode *, sector_t, काष्ठा buffer_head *, पूर्णांक);
+बाह्य पूर्णांक jfs_setattr(काष्ठा user_namespace *, काष्ठा dentry *, काष्ठा iattr *);
 
-extern const struct address_space_operations jfs_aops;
-extern const struct inode_operations jfs_dir_inode_operations;
-extern const struct file_operations jfs_dir_operations;
-extern const struct inode_operations jfs_file_inode_operations;
-extern const struct file_operations jfs_file_operations;
-extern const struct inode_operations jfs_symlink_inode_operations;
-extern const struct inode_operations jfs_fast_symlink_inode_operations;
-extern const struct dentry_operations jfs_ci_dentry_operations;
-#endif				/* _H_JFS_INODE */
+बाह्य स्थिर काष्ठा address_space_operations jfs_aops;
+बाह्य स्थिर काष्ठा inode_operations jfs_dir_inode_operations;
+बाह्य स्थिर काष्ठा file_operations jfs_dir_operations;
+बाह्य स्थिर काष्ठा inode_operations jfs_file_inode_operations;
+बाह्य स्थिर काष्ठा file_operations jfs_file_operations;
+बाह्य स्थिर काष्ठा inode_operations jfs_symlink_inode_operations;
+बाह्य स्थिर काष्ठा inode_operations jfs_fast_symlink_inode_operations;
+बाह्य स्थिर काष्ठा dentry_operations jfs_ci_dentry_operations;
+#पूर्ण_अगर				/* _H_JFS_INODE */

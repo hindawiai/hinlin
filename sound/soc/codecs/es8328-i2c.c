@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * es8328-i2c.c  --  ES8328 ALSA SoC I2C Audio driver
  *
@@ -7,43 +8,43 @@
  * Author: Sean Cross <xobs@kosagi.com>
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
 
-#include <sound/soc.h>
+#समावेश <sound/soc.h>
 
-#include "es8328.h"
+#समावेश "es8328.h"
 
-static const struct i2c_device_id es8328_id[] = {
-	{ "es8328", 0 },
-	{ "es8388", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id es8328_id[] = अणु
+	अणु "es8328", 0 पूर्ण,
+	अणु "es8388", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, es8328_id);
 
-static const struct of_device_id es8328_of_match[] = {
-	{ .compatible = "everest,es8328", },
-	{ .compatible = "everest,es8388", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id es8328_of_match[] = अणु
+	अणु .compatible = "everest,es8328", पूर्ण,
+	अणु .compatible = "everest,es8388", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, es8328_of_match);
 
-static int es8328_i2c_probe(struct i2c_client *i2c,
-			    const struct i2c_device_id *id)
-{
-	return es8328_probe(&i2c->dev,
+अटल पूर्णांक es8328_i2c_probe(काष्ठा i2c_client *i2c,
+			    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	वापस es8328_probe(&i2c->dev,
 			devm_regmap_init_i2c(i2c, &es8328_regmap_config));
-}
+पूर्ण
 
-static struct i2c_driver es8328_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver es8328_i2c_driver = अणु
+	.driver = अणु
 		.name		= "es8328",
 		.of_match_table = es8328_of_match,
-	},
+	पूर्ण,
 	.probe    = es8328_i2c_probe,
 	.id_table = es8328_id,
-};
+पूर्ण;
 
 module_i2c_driver(es8328_i2c_driver);
 

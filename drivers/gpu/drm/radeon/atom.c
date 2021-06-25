@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,122 +23,122 @@
  * Author: Stanislaw Skowronek
  */
 
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <drm/drm_device.h>
-#include <drm/drm_util.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_util.h>
 
-#define ATOM_DEBUG
+#घोषणा ATOM_DEBUG
 
-#include "atom.h"
-#include "atom-names.h"
-#include "atom-bits.h"
-#include "radeon.h"
+#समावेश "atom.h"
+#समावेश "atom-names.h"
+#समावेश "atom-bits.h"
+#समावेश "radeon.h"
 
-#define ATOM_COND_ABOVE		0
-#define ATOM_COND_ABOVEOREQUAL	1
-#define ATOM_COND_ALWAYS	2
-#define ATOM_COND_BELOW		3
-#define ATOM_COND_BELOWOREQUAL	4
-#define ATOM_COND_EQUAL		5
-#define ATOM_COND_NOTEQUAL	6
+#घोषणा ATOM_COND_ABOVE		0
+#घोषणा ATOM_COND_ABOVEOREQUAL	1
+#घोषणा ATOM_COND_ALWAYS	2
+#घोषणा ATOM_COND_BELOW		3
+#घोषणा ATOM_COND_BELOWOREQUAL	4
+#घोषणा ATOM_COND_EQUAL		5
+#घोषणा ATOM_COND_NOTEQUAL	6
 
-#define ATOM_PORT_ATI	0
-#define ATOM_PORT_PCI	1
-#define ATOM_PORT_SYSIO	2
+#घोषणा ATOM_PORT_ATI	0
+#घोषणा ATOM_PORT_PCI	1
+#घोषणा ATOM_PORT_SYSIO	2
 
-#define ATOM_UNIT_MICROSEC	0
-#define ATOM_UNIT_MILLISEC	1
+#घोषणा ATOM_UNIT_MICROSEC	0
+#घोषणा ATOM_UNIT_MILLISEC	1
 
-#define PLL_INDEX	2
-#define PLL_DATA	3
+#घोषणा PLL_INDEX	2
+#घोषणा PLL_DATA	3
 
-typedef struct {
-	struct atom_context *ctx;
-	uint32_t *ps, *ws;
-	int ps_shift;
-	uint16_t start;
-	unsigned last_jump;
-	unsigned long last_jump_jiffies;
-	bool abort;
-} atom_exec_context;
+प्रकार काष्ठा अणु
+	काष्ठा atom_context *ctx;
+	uपूर्णांक32_t *ps, *ws;
+	पूर्णांक ps_shअगरt;
+	uपूर्णांक16_t start;
+	अचिन्हित last_jump;
+	अचिन्हित दीर्घ last_jump_jअगरfies;
+	bool पात;
+पूर्ण atom_exec_context;
 
-int atom_debug = 0;
-static int atom_execute_table_locked(struct atom_context *ctx, int index, uint32_t * params);
-int atom_execute_table(struct atom_context *ctx, int index, uint32_t * params);
+पूर्णांक atom_debug = 0;
+अटल पूर्णांक atom_execute_table_locked(काष्ठा atom_context *ctx, पूर्णांक index, uपूर्णांक32_t * params);
+पूर्णांक atom_execute_table(काष्ठा atom_context *ctx, पूर्णांक index, uपूर्णांक32_t * params);
 
-static uint32_t atom_arg_mask[8] = {
+अटल uपूर्णांक32_t atom_arg_mask[8] = अणु
 	0xFFFFFFFF, 0x0000FFFF, 0x00FFFF00, 0xFFFF0000,
 	0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000
-};
-static int atom_arg_shift[8] = { 0, 0, 8, 16, 0, 8, 16, 24 };
+पूर्ण;
+अटल पूर्णांक atom_arg_shअगरt[8] = अणु 0, 0, 8, 16, 0, 8, 16, 24 पूर्ण;
 
-static int atom_dst_to_src[8][4] = {
+अटल पूर्णांक atom_dst_to_src[8][4] = अणु
 	/* translate destination alignment field to the source alignment encoding */
-	{0, 0, 0, 0},
-	{1, 2, 3, 0},
-	{1, 2, 3, 0},
-	{1, 2, 3, 0},
-	{4, 5, 6, 7},
-	{4, 5, 6, 7},
-	{4, 5, 6, 7},
-	{4, 5, 6, 7},
-};
-static int atom_def_dst[8] = { 0, 0, 1, 2, 0, 1, 2, 3 };
+	अणु0, 0, 0, 0पूर्ण,
+	अणु1, 2, 3, 0पूर्ण,
+	अणु1, 2, 3, 0पूर्ण,
+	अणु1, 2, 3, 0पूर्ण,
+	अणु4, 5, 6, 7पूर्ण,
+	अणु4, 5, 6, 7पूर्ण,
+	अणु4, 5, 6, 7पूर्ण,
+	अणु4, 5, 6, 7पूर्ण,
+पूर्ण;
+अटल पूर्णांक atom_def_dst[8] = अणु 0, 0, 1, 2, 0, 1, 2, 3 पूर्ण;
 
-static int debug_depth = 0;
-#ifdef ATOM_DEBUG
-static void debug_print_spaces(int n)
-{
-	while (n--)
-		printk("   ");
-}
+अटल पूर्णांक debug_depth = 0;
+#अगर_घोषित ATOM_DEBUG
+अटल व्योम debug_prपूर्णांक_spaces(पूर्णांक n)
+अणु
+	जबतक (n--)
+		prपूर्णांकk("   ");
+पूर्ण
 
-#define DEBUG(...) do if (atom_debug) { printk(KERN_DEBUG __VA_ARGS__); } while (0)
-#define SDEBUG(...) do if (atom_debug) { printk(KERN_DEBUG); debug_print_spaces(debug_depth); printk(__VA_ARGS__); } while (0)
-#else
-#define DEBUG(...) do { } while (0)
-#define SDEBUG(...) do { } while (0)
-#endif
+#घोषणा DEBUG(...) करो अगर (atom_debug) अणु prपूर्णांकk(KERN_DEBUG __VA_ARGS__); पूर्ण जबतक (0)
+#घोषणा SDEBUG(...) करो अगर (atom_debug) अणु prपूर्णांकk(KERN_DEBUG); debug_prपूर्णांक_spaces(debug_depth); prपूर्णांकk(__VA_ARGS__); पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा DEBUG(...) करो अणु पूर्ण जबतक (0)
+#घोषणा SDEBUG(...) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-static uint32_t atom_iio_execute(struct atom_context *ctx, int base,
-				 uint32_t index, uint32_t data)
-{
-	struct radeon_device *rdev = ctx->card->dev->dev_private;
-	uint32_t temp = 0xCDCDCDCD;
+अटल uपूर्णांक32_t atom_iio_execute(काष्ठा atom_context *ctx, पूर्णांक base,
+				 uपूर्णांक32_t index, uपूर्णांक32_t data)
+अणु
+	काष्ठा radeon_device *rdev = ctx->card->dev->dev_निजी;
+	uपूर्णांक32_t temp = 0xCDCDCDCD;
 
-	while (1)
-		switch (CU8(base)) {
-		case ATOM_IIO_NOP:
+	जबतक (1)
+		चयन (CU8(base)) अणु
+		हाल ATOM_IIO_NOP:
 			base++;
-			break;
-		case ATOM_IIO_READ:
-			temp = ctx->card->ioreg_read(ctx->card, CU16(base + 1));
+			अवरोध;
+		हाल ATOM_IIO_READ:
+			temp = ctx->card->ioreg_पढ़ो(ctx->card, CU16(base + 1));
 			base += 3;
-			break;
-		case ATOM_IIO_WRITE:
-			if (rdev->family == CHIP_RV515)
-				(void)ctx->card->ioreg_read(ctx->card, CU16(base + 1));
-			ctx->card->ioreg_write(ctx->card, CU16(base + 1), temp);
+			अवरोध;
+		हाल ATOM_IIO_WRITE:
+			अगर (rdev->family == CHIP_RV515)
+				(व्योम)ctx->card->ioreg_पढ़ो(ctx->card, CU16(base + 1));
+			ctx->card->ioreg_ग_लिखो(ctx->card, CU16(base + 1), temp);
 			base += 3;
-			break;
-		case ATOM_IIO_CLEAR:
+			अवरोध;
+		हाल ATOM_IIO_CLEAR:
 			temp &=
 			    ~((0xFFFFFFFF >> (32 - CU8(base + 1))) <<
 			      CU8(base + 2));
 			base += 3;
-			break;
-		case ATOM_IIO_SET:
+			अवरोध;
+		हाल ATOM_IIO_SET:
 			temp |=
 			    (0xFFFFFFFF >> (32 - CU8(base + 1))) << CU8(base +
 									2);
 			base += 3;
-			break;
-		case ATOM_IIO_MOVE_INDEX:
+			अवरोध;
+		हाल ATOM_IIO_MOVE_INDEX:
 			temp &=
 			    ~((0xFFFFFFFF >> (32 - CU8(base + 1))) <<
 			      CU8(base + 3));
@@ -146,8 +147,8 @@ static uint32_t atom_iio_execute(struct atom_context *ctx, int base,
 			     (0xFFFFFFFF >> (32 - CU8(base + 1)))) << CU8(base +
 									  3);
 			base += 4;
-			break;
-		case ATOM_IIO_MOVE_DATA:
+			अवरोध;
+		हाल ATOM_IIO_MOVE_DATA:
 			temp &=
 			    ~((0xFFFFFFFF >> (32 - CU8(base + 1))) <<
 			      CU8(base + 3));
@@ -156,8 +157,8 @@ static uint32_t atom_iio_execute(struct atom_context *ctx, int base,
 			     (0xFFFFFFFF >> (32 - CU8(base + 1)))) << CU8(base +
 									  3);
 			base += 4;
-			break;
-		case ATOM_IIO_MOVE_ATTR:
+			अवरोध;
+		हाल ATOM_IIO_MOVE_ATTR:
 			temp &=
 			    ~((0xFFFFFFFF >> (32 - CU8(base + 1))) <<
 			      CU8(base + 3));
@@ -170,424 +171,424 @@ static uint32_t atom_iio_execute(struct atom_context *ctx, int base,
 									   1))))
 			    << CU8(base + 3);
 			base += 4;
-			break;
-		case ATOM_IIO_END:
-			return temp;
-		default:
+			अवरोध;
+		हाल ATOM_IIO_END:
+			वापस temp;
+		शेष:
 			pr_info("Unknown IIO opcode\n");
-			return 0;
-		}
-}
+			वापस 0;
+		पूर्ण
+पूर्ण
 
-static uint32_t atom_get_src_int(atom_exec_context *ctx, uint8_t attr,
-				 int *ptr, uint32_t *saved, int print)
-{
-	uint32_t idx, val = 0xCDCDCDCD, align, arg;
-	struct atom_context *gctx = ctx->ctx;
+अटल uपूर्णांक32_t atom_get_src_पूर्णांक(atom_exec_context *ctx, uपूर्णांक8_t attr,
+				 पूर्णांक *ptr, uपूर्णांक32_t *saved, पूर्णांक prपूर्णांक)
+अणु
+	uपूर्णांक32_t idx, val = 0xCDCDCDCD, align, arg;
+	काष्ठा atom_context *gctx = ctx->ctx;
 	arg = attr & 7;
 	align = (attr >> 3) & 7;
-	switch (arg) {
-	case ATOM_ARG_REG:
+	चयन (arg) अणु
+	हाल ATOM_ARG_REG:
 		idx = U16(*ptr);
 		(*ptr) += 2;
-		if (print)
+		अगर (prपूर्णांक)
 			DEBUG("REG[0x%04X]", idx);
 		idx += gctx->reg_block;
-		switch (gctx->io_mode) {
-		case ATOM_IO_MM:
-			val = gctx->card->reg_read(gctx->card, idx);
-			break;
-		case ATOM_IO_PCI:
+		चयन (gctx->io_mode) अणु
+		हाल ATOM_IO_MM:
+			val = gctx->card->reg_पढ़ो(gctx->card, idx);
+			अवरोध;
+		हाल ATOM_IO_PCI:
 			pr_info("PCI registers are not implemented\n");
-			return 0;
-		case ATOM_IO_SYSIO:
+			वापस 0;
+		हाल ATOM_IO_SYSIO:
 			pr_info("SYSIO registers are not implemented\n");
-			return 0;
-		default:
-			if (!(gctx->io_mode & 0x80)) {
+			वापस 0;
+		शेष:
+			अगर (!(gctx->io_mode & 0x80)) अणु
 				pr_info("Bad IO mode\n");
-				return 0;
-			}
-			if (!gctx->iio[gctx->io_mode & 0x7F]) {
+				वापस 0;
+			पूर्ण
+			अगर (!gctx->iio[gctx->io_mode & 0x7F]) अणु
 				pr_info("Undefined indirect IO read method %d\n",
 					gctx->io_mode & 0x7F);
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 			val =
 			    atom_iio_execute(gctx,
 					     gctx->iio[gctx->io_mode & 0x7F],
 					     idx, 0);
-		}
-		break;
-	case ATOM_ARG_PS:
+		पूर्ण
+		अवरोध;
+	हाल ATOM_ARG_PS:
 		idx = U8(*ptr);
 		(*ptr)++;
-		/* get_unaligned_le32 avoids unaligned accesses from atombios
+		/* get_unaligned_le32 aव्योमs unaligned accesses from atombios
 		 * tables, noticed on a DEC Alpha. */
 		val = get_unaligned_le32((u32 *)&ctx->ps[idx]);
-		if (print)
+		अगर (prपूर्णांक)
 			DEBUG("PS[0x%02X,0x%04X]", idx, val);
-		break;
-	case ATOM_ARG_WS:
+		अवरोध;
+	हाल ATOM_ARG_WS:
 		idx = U8(*ptr);
 		(*ptr)++;
-		if (print)
+		अगर (prपूर्णांक)
 			DEBUG("WS[0x%02X]", idx);
-		switch (idx) {
-		case ATOM_WS_QUOTIENT:
-			val = gctx->divmul[0];
-			break;
-		case ATOM_WS_REMAINDER:
-			val = gctx->divmul[1];
-			break;
-		case ATOM_WS_DATAPTR:
+		चयन (idx) अणु
+		हाल ATOM_WS_QUOTIENT:
+			val = gctx->भागmul[0];
+			अवरोध;
+		हाल ATOM_WS_REMAINDER:
+			val = gctx->भागmul[1];
+			अवरोध;
+		हाल ATOM_WS_DATAPTR:
 			val = gctx->data_block;
-			break;
-		case ATOM_WS_SHIFT:
-			val = gctx->shift;
-			break;
-		case ATOM_WS_OR_MASK:
-			val = 1 << gctx->shift;
-			break;
-		case ATOM_WS_AND_MASK:
-			val = ~(1 << gctx->shift);
-			break;
-		case ATOM_WS_FB_WINDOW:
+			अवरोध;
+		हाल ATOM_WS_SHIFT:
+			val = gctx->shअगरt;
+			अवरोध;
+		हाल ATOM_WS_OR_MASK:
+			val = 1 << gctx->shअगरt;
+			अवरोध;
+		हाल ATOM_WS_AND_MASK:
+			val = ~(1 << gctx->shअगरt);
+			अवरोध;
+		हाल ATOM_WS_FB_WINDOW:
 			val = gctx->fb_base;
-			break;
-		case ATOM_WS_ATTRIBUTES:
+			अवरोध;
+		हाल ATOM_WS_ATTRIBUTES:
 			val = gctx->io_attr;
-			break;
-		case ATOM_WS_REGPTR:
+			अवरोध;
+		हाल ATOM_WS_REGPTR:
 			val = gctx->reg_block;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			val = ctx->ws[idx];
-		}
-		break;
-	case ATOM_ARG_ID:
+		पूर्ण
+		अवरोध;
+	हाल ATOM_ARG_ID:
 		idx = U16(*ptr);
 		(*ptr) += 2;
-		if (print) {
-			if (gctx->data_block)
+		अगर (prपूर्णांक) अणु
+			अगर (gctx->data_block)
 				DEBUG("ID[0x%04X+%04X]", idx, gctx->data_block);
-			else
+			अन्यथा
 				DEBUG("ID[0x%04X]", idx);
-		}
+		पूर्ण
 		val = U32(idx + gctx->data_block);
-		break;
-	case ATOM_ARG_FB:
+		अवरोध;
+	हाल ATOM_ARG_FB:
 		idx = U8(*ptr);
 		(*ptr)++;
-		if ((gctx->fb_base + (idx * 4)) > gctx->scratch_size_bytes) {
+		अगर ((gctx->fb_base + (idx * 4)) > gctx->scratch_size_bytes) अणु
 			DRM_ERROR("ATOM: fb read beyond scratch region: %d vs. %d\n",
 				  gctx->fb_base + (idx * 4), gctx->scratch_size_bytes);
 			val = 0;
-		} else
+		पूर्ण अन्यथा
 			val = gctx->scratch[(gctx->fb_base / 4) + idx];
-		if (print)
+		अगर (prपूर्णांक)
 			DEBUG("FB[0x%02X]", idx);
-		break;
-	case ATOM_ARG_IMM:
-		switch (align) {
-		case ATOM_SRC_DWORD:
+		अवरोध;
+	हाल ATOM_ARG_IMM:
+		चयन (align) अणु
+		हाल ATOM_SRC_DWORD:
 			val = U32(*ptr);
 			(*ptr) += 4;
-			if (print)
+			अगर (prपूर्णांक)
 				DEBUG("IMM 0x%08X\n", val);
-			return val;
-		case ATOM_SRC_WORD0:
-		case ATOM_SRC_WORD8:
-		case ATOM_SRC_WORD16:
+			वापस val;
+		हाल ATOM_SRC_WORD0:
+		हाल ATOM_SRC_WORD8:
+		हाल ATOM_SRC_WORD16:
 			val = U16(*ptr);
 			(*ptr) += 2;
-			if (print)
+			अगर (prपूर्णांक)
 				DEBUG("IMM 0x%04X\n", val);
-			return val;
-		case ATOM_SRC_BYTE0:
-		case ATOM_SRC_BYTE8:
-		case ATOM_SRC_BYTE16:
-		case ATOM_SRC_BYTE24:
+			वापस val;
+		हाल ATOM_SRC_BYTE0:
+		हाल ATOM_SRC_BYTE8:
+		हाल ATOM_SRC_BYTE16:
+		हाल ATOM_SRC_BYTE24:
 			val = U8(*ptr);
 			(*ptr)++;
-			if (print)
+			अगर (prपूर्णांक)
 				DEBUG("IMM 0x%02X\n", val);
-			return val;
-		}
-		return 0;
-	case ATOM_ARG_PLL:
+			वापस val;
+		पूर्ण
+		वापस 0;
+	हाल ATOM_ARG_PLL:
 		idx = U8(*ptr);
 		(*ptr)++;
-		if (print)
+		अगर (prपूर्णांक)
 			DEBUG("PLL[0x%02X]", idx);
-		val = gctx->card->pll_read(gctx->card, idx);
-		break;
-	case ATOM_ARG_MC:
+		val = gctx->card->pll_पढ़ो(gctx->card, idx);
+		अवरोध;
+	हाल ATOM_ARG_MC:
 		idx = U8(*ptr);
 		(*ptr)++;
-		if (print)
+		अगर (prपूर्णांक)
 			DEBUG("MC[0x%02X]", idx);
-		val = gctx->card->mc_read(gctx->card, idx);
-		break;
-	}
-	if (saved)
+		val = gctx->card->mc_पढ़ो(gctx->card, idx);
+		अवरोध;
+	पूर्ण
+	अगर (saved)
 		*saved = val;
 	val &= atom_arg_mask[align];
-	val >>= atom_arg_shift[align];
-	if (print)
-		switch (align) {
-		case ATOM_SRC_DWORD:
+	val >>= atom_arg_shअगरt[align];
+	अगर (prपूर्णांक)
+		चयन (align) अणु
+		हाल ATOM_SRC_DWORD:
 			DEBUG(".[31:0] -> 0x%08X\n", val);
-			break;
-		case ATOM_SRC_WORD0:
+			अवरोध;
+		हाल ATOM_SRC_WORD0:
 			DEBUG(".[15:0] -> 0x%04X\n", val);
-			break;
-		case ATOM_SRC_WORD8:
+			अवरोध;
+		हाल ATOM_SRC_WORD8:
 			DEBUG(".[23:8] -> 0x%04X\n", val);
-			break;
-		case ATOM_SRC_WORD16:
+			अवरोध;
+		हाल ATOM_SRC_WORD16:
 			DEBUG(".[31:16] -> 0x%04X\n", val);
-			break;
-		case ATOM_SRC_BYTE0:
+			अवरोध;
+		हाल ATOM_SRC_BYTE0:
 			DEBUG(".[7:0] -> 0x%02X\n", val);
-			break;
-		case ATOM_SRC_BYTE8:
+			अवरोध;
+		हाल ATOM_SRC_BYTE8:
 			DEBUG(".[15:8] -> 0x%02X\n", val);
-			break;
-		case ATOM_SRC_BYTE16:
+			अवरोध;
+		हाल ATOM_SRC_BYTE16:
 			DEBUG(".[23:16] -> 0x%02X\n", val);
-			break;
-		case ATOM_SRC_BYTE24:
+			अवरोध;
+		हाल ATOM_SRC_BYTE24:
 			DEBUG(".[31:24] -> 0x%02X\n", val);
-			break;
-		}
-	return val;
-}
+			अवरोध;
+		पूर्ण
+	वापस val;
+पूर्ण
 
-static void atom_skip_src_int(atom_exec_context *ctx, uint8_t attr, int *ptr)
-{
-	uint32_t align = (attr >> 3) & 7, arg = attr & 7;
-	switch (arg) {
-	case ATOM_ARG_REG:
-	case ATOM_ARG_ID:
+अटल व्योम atom_skip_src_पूर्णांक(atom_exec_context *ctx, uपूर्णांक8_t attr, पूर्णांक *ptr)
+अणु
+	uपूर्णांक32_t align = (attr >> 3) & 7, arg = attr & 7;
+	चयन (arg) अणु
+	हाल ATOM_ARG_REG:
+	हाल ATOM_ARG_ID:
 		(*ptr) += 2;
-		break;
-	case ATOM_ARG_PLL:
-	case ATOM_ARG_MC:
-	case ATOM_ARG_PS:
-	case ATOM_ARG_WS:
-	case ATOM_ARG_FB:
+		अवरोध;
+	हाल ATOM_ARG_PLL:
+	हाल ATOM_ARG_MC:
+	हाल ATOM_ARG_PS:
+	हाल ATOM_ARG_WS:
+	हाल ATOM_ARG_FB:
 		(*ptr)++;
-		break;
-	case ATOM_ARG_IMM:
-		switch (align) {
-		case ATOM_SRC_DWORD:
+		अवरोध;
+	हाल ATOM_ARG_IMM:
+		चयन (align) अणु
+		हाल ATOM_SRC_DWORD:
 			(*ptr) += 4;
-			return;
-		case ATOM_SRC_WORD0:
-		case ATOM_SRC_WORD8:
-		case ATOM_SRC_WORD16:
+			वापस;
+		हाल ATOM_SRC_WORD0:
+		हाल ATOM_SRC_WORD8:
+		हाल ATOM_SRC_WORD16:
 			(*ptr) += 2;
-			return;
-		case ATOM_SRC_BYTE0:
-		case ATOM_SRC_BYTE8:
-		case ATOM_SRC_BYTE16:
-		case ATOM_SRC_BYTE24:
+			वापस;
+		हाल ATOM_SRC_BYTE0:
+		हाल ATOM_SRC_BYTE8:
+		हाल ATOM_SRC_BYTE16:
+		हाल ATOM_SRC_BYTE24:
 			(*ptr)++;
-			return;
-		}
-		return;
-	}
-}
+			वापस;
+		पूर्ण
+		वापस;
+	पूर्ण
+पूर्ण
 
-static uint32_t atom_get_src(atom_exec_context *ctx, uint8_t attr, int *ptr)
-{
-	return atom_get_src_int(ctx, attr, ptr, NULL, 1);
-}
+अटल uपूर्णांक32_t atom_get_src(atom_exec_context *ctx, uपूर्णांक8_t attr, पूर्णांक *ptr)
+अणु
+	वापस atom_get_src_पूर्णांक(ctx, attr, ptr, शून्य, 1);
+पूर्ण
 
-static uint32_t atom_get_src_direct(atom_exec_context *ctx, uint8_t align, int *ptr)
-{
-	uint32_t val = 0xCDCDCDCD;
+अटल uपूर्णांक32_t atom_get_src_direct(atom_exec_context *ctx, uपूर्णांक8_t align, पूर्णांक *ptr)
+अणु
+	uपूर्णांक32_t val = 0xCDCDCDCD;
 
-	switch (align) {
-	case ATOM_SRC_DWORD:
+	चयन (align) अणु
+	हाल ATOM_SRC_DWORD:
 		val = U32(*ptr);
 		(*ptr) += 4;
-		break;
-	case ATOM_SRC_WORD0:
-	case ATOM_SRC_WORD8:
-	case ATOM_SRC_WORD16:
+		अवरोध;
+	हाल ATOM_SRC_WORD0:
+	हाल ATOM_SRC_WORD8:
+	हाल ATOM_SRC_WORD16:
 		val = U16(*ptr);
 		(*ptr) += 2;
-		break;
-	case ATOM_SRC_BYTE0:
-	case ATOM_SRC_BYTE8:
-	case ATOM_SRC_BYTE16:
-	case ATOM_SRC_BYTE24:
+		अवरोध;
+	हाल ATOM_SRC_BYTE0:
+	हाल ATOM_SRC_BYTE8:
+	हाल ATOM_SRC_BYTE16:
+	हाल ATOM_SRC_BYTE24:
 		val = U8(*ptr);
 		(*ptr)++;
-		break;
-	}
-	return val;
-}
+		अवरोध;
+	पूर्ण
+	वापस val;
+पूर्ण
 
-static uint32_t atom_get_dst(atom_exec_context *ctx, int arg, uint8_t attr,
-			     int *ptr, uint32_t *saved, int print)
-{
-	return atom_get_src_int(ctx,
+अटल uपूर्णांक32_t atom_get_dst(atom_exec_context *ctx, पूर्णांक arg, uपूर्णांक8_t attr,
+			     पूर्णांक *ptr, uपूर्णांक32_t *saved, पूर्णांक prपूर्णांक)
+अणु
+	वापस atom_get_src_पूर्णांक(ctx,
 				arg | atom_dst_to_src[(attr >> 3) &
 						      7][(attr >> 6) & 3] << 3,
-				ptr, saved, print);
-}
+				ptr, saved, prपूर्णांक);
+पूर्ण
 
-static void atom_skip_dst(atom_exec_context *ctx, int arg, uint8_t attr, int *ptr)
-{
-	atom_skip_src_int(ctx,
+अटल व्योम atom_skip_dst(atom_exec_context *ctx, पूर्णांक arg, uपूर्णांक8_t attr, पूर्णांक *ptr)
+अणु
+	atom_skip_src_पूर्णांक(ctx,
 			  arg | atom_dst_to_src[(attr >> 3) & 7][(attr >> 6) &
 								 3] << 3, ptr);
-}
+पूर्ण
 
-static void atom_put_dst(atom_exec_context *ctx, int arg, uint8_t attr,
-			 int *ptr, uint32_t val, uint32_t saved)
-{
-	uint32_t align =
+अटल व्योम atom_put_dst(atom_exec_context *ctx, पूर्णांक arg, uपूर्णांक8_t attr,
+			 पूर्णांक *ptr, uपूर्णांक32_t val, uपूर्णांक32_t saved)
+अणु
+	uपूर्णांक32_t align =
 	    atom_dst_to_src[(attr >> 3) & 7][(attr >> 6) & 3], old_val =
 	    val, idx;
-	struct atom_context *gctx = ctx->ctx;
-	old_val &= atom_arg_mask[align] >> atom_arg_shift[align];
-	val <<= atom_arg_shift[align];
+	काष्ठा atom_context *gctx = ctx->ctx;
+	old_val &= atom_arg_mask[align] >> atom_arg_shअगरt[align];
+	val <<= atom_arg_shअगरt[align];
 	val &= atom_arg_mask[align];
 	saved &= ~atom_arg_mask[align];
 	val |= saved;
-	switch (arg) {
-	case ATOM_ARG_REG:
+	चयन (arg) अणु
+	हाल ATOM_ARG_REG:
 		idx = U16(*ptr);
 		(*ptr) += 2;
 		DEBUG("REG[0x%04X]", idx);
 		idx += gctx->reg_block;
-		switch (gctx->io_mode) {
-		case ATOM_IO_MM:
-			if (idx == 0)
-				gctx->card->reg_write(gctx->card, idx,
+		चयन (gctx->io_mode) अणु
+		हाल ATOM_IO_MM:
+			अगर (idx == 0)
+				gctx->card->reg_ग_लिखो(gctx->card, idx,
 						      val << 2);
-			else
-				gctx->card->reg_write(gctx->card, idx, val);
-			break;
-		case ATOM_IO_PCI:
+			अन्यथा
+				gctx->card->reg_ग_लिखो(gctx->card, idx, val);
+			अवरोध;
+		हाल ATOM_IO_PCI:
 			pr_info("PCI registers are not implemented\n");
-			return;
-		case ATOM_IO_SYSIO:
+			वापस;
+		हाल ATOM_IO_SYSIO:
 			pr_info("SYSIO registers are not implemented\n");
-			return;
-		default:
-			if (!(gctx->io_mode & 0x80)) {
+			वापस;
+		शेष:
+			अगर (!(gctx->io_mode & 0x80)) अणु
 				pr_info("Bad IO mode\n");
-				return;
-			}
-			if (!gctx->iio[gctx->io_mode & 0xFF]) {
+				वापस;
+			पूर्ण
+			अगर (!gctx->iio[gctx->io_mode & 0xFF]) अणु
 				pr_info("Undefined indirect IO write method %d\n",
 					gctx->io_mode & 0x7F);
-				return;
-			}
+				वापस;
+			पूर्ण
 			atom_iio_execute(gctx, gctx->iio[gctx->io_mode & 0xFF],
 					 idx, val);
-		}
-		break;
-	case ATOM_ARG_PS:
+		पूर्ण
+		अवरोध;
+	हाल ATOM_ARG_PS:
 		idx = U8(*ptr);
 		(*ptr)++;
 		DEBUG("PS[0x%02X]", idx);
 		ctx->ps[idx] = cpu_to_le32(val);
-		break;
-	case ATOM_ARG_WS:
+		अवरोध;
+	हाल ATOM_ARG_WS:
 		idx = U8(*ptr);
 		(*ptr)++;
 		DEBUG("WS[0x%02X]", idx);
-		switch (idx) {
-		case ATOM_WS_QUOTIENT:
-			gctx->divmul[0] = val;
-			break;
-		case ATOM_WS_REMAINDER:
-			gctx->divmul[1] = val;
-			break;
-		case ATOM_WS_DATAPTR:
+		चयन (idx) अणु
+		हाल ATOM_WS_QUOTIENT:
+			gctx->भागmul[0] = val;
+			अवरोध;
+		हाल ATOM_WS_REMAINDER:
+			gctx->भागmul[1] = val;
+			अवरोध;
+		हाल ATOM_WS_DATAPTR:
 			gctx->data_block = val;
-			break;
-		case ATOM_WS_SHIFT:
-			gctx->shift = val;
-			break;
-		case ATOM_WS_OR_MASK:
-		case ATOM_WS_AND_MASK:
-			break;
-		case ATOM_WS_FB_WINDOW:
+			अवरोध;
+		हाल ATOM_WS_SHIFT:
+			gctx->shअगरt = val;
+			अवरोध;
+		हाल ATOM_WS_OR_MASK:
+		हाल ATOM_WS_AND_MASK:
+			अवरोध;
+		हाल ATOM_WS_FB_WINDOW:
 			gctx->fb_base = val;
-			break;
-		case ATOM_WS_ATTRIBUTES:
+			अवरोध;
+		हाल ATOM_WS_ATTRIBUTES:
 			gctx->io_attr = val;
-			break;
-		case ATOM_WS_REGPTR:
+			अवरोध;
+		हाल ATOM_WS_REGPTR:
 			gctx->reg_block = val;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ctx->ws[idx] = val;
-		}
-		break;
-	case ATOM_ARG_FB:
+		पूर्ण
+		अवरोध;
+	हाल ATOM_ARG_FB:
 		idx = U8(*ptr);
 		(*ptr)++;
-		if ((gctx->fb_base + (idx * 4)) > gctx->scratch_size_bytes) {
+		अगर ((gctx->fb_base + (idx * 4)) > gctx->scratch_size_bytes) अणु
 			DRM_ERROR("ATOM: fb write beyond scratch region: %d vs. %d\n",
 				  gctx->fb_base + (idx * 4), gctx->scratch_size_bytes);
-		} else
+		पूर्ण अन्यथा
 			gctx->scratch[(gctx->fb_base / 4) + idx] = val;
 		DEBUG("FB[0x%02X]", idx);
-		break;
-	case ATOM_ARG_PLL:
+		अवरोध;
+	हाल ATOM_ARG_PLL:
 		idx = U8(*ptr);
 		(*ptr)++;
 		DEBUG("PLL[0x%02X]", idx);
-		gctx->card->pll_write(gctx->card, idx, val);
-		break;
-	case ATOM_ARG_MC:
+		gctx->card->pll_ग_लिखो(gctx->card, idx, val);
+		अवरोध;
+	हाल ATOM_ARG_MC:
 		idx = U8(*ptr);
 		(*ptr)++;
 		DEBUG("MC[0x%02X]", idx);
-		gctx->card->mc_write(gctx->card, idx, val);
-		return;
-	}
-	switch (align) {
-	case ATOM_SRC_DWORD:
+		gctx->card->mc_ग_लिखो(gctx->card, idx, val);
+		वापस;
+	पूर्ण
+	चयन (align) अणु
+	हाल ATOM_SRC_DWORD:
 		DEBUG(".[31:0] <- 0x%08X\n", old_val);
-		break;
-	case ATOM_SRC_WORD0:
+		अवरोध;
+	हाल ATOM_SRC_WORD0:
 		DEBUG(".[15:0] <- 0x%04X\n", old_val);
-		break;
-	case ATOM_SRC_WORD8:
+		अवरोध;
+	हाल ATOM_SRC_WORD8:
 		DEBUG(".[23:8] <- 0x%04X\n", old_val);
-		break;
-	case ATOM_SRC_WORD16:
+		अवरोध;
+	हाल ATOM_SRC_WORD16:
 		DEBUG(".[31:16] <- 0x%04X\n", old_val);
-		break;
-	case ATOM_SRC_BYTE0:
+		अवरोध;
+	हाल ATOM_SRC_BYTE0:
 		DEBUG(".[7:0] <- 0x%02X\n", old_val);
-		break;
-	case ATOM_SRC_BYTE8:
+		अवरोध;
+	हाल ATOM_SRC_BYTE8:
 		DEBUG(".[15:8] <- 0x%02X\n", old_val);
-		break;
-	case ATOM_SRC_BYTE16:
+		अवरोध;
+	हाल ATOM_SRC_BYTE16:
 		DEBUG(".[23:16] <- 0x%02X\n", old_val);
-		break;
-	case ATOM_SRC_BYTE24:
+		अवरोध;
+	हाल ATOM_SRC_BYTE24:
 		DEBUG(".[31:24] <- 0x%02X\n", old_val);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void atom_op_add(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
-	uint32_t dst, src, saved;
-	int dptr = *ptr;
+अटल व्योम atom_op_add(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
+	uपूर्णांक32_t dst, src, saved;
+	पूर्णांक dptr = *ptr;
 	SDEBUG("   dst: ");
 	dst = atom_get_dst(ctx, arg, attr, ptr, &saved, 1);
 	SDEBUG("   src: ");
@@ -595,13 +596,13 @@ static void atom_op_add(atom_exec_context *ctx, int *ptr, int arg)
 	dst += src;
 	SDEBUG("   dst: ");
 	atom_put_dst(ctx, arg, attr, &dptr, dst, saved);
-}
+पूर्ण
 
-static void atom_op_and(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
-	uint32_t dst, src, saved;
-	int dptr = *ptr;
+अटल व्योम atom_op_and(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
+	uपूर्णांक32_t dst, src, saved;
+	पूर्णांक dptr = *ptr;
 	SDEBUG("   dst: ");
 	dst = atom_get_dst(ctx, arg, attr, ptr, &saved, 1);
 	SDEBUG("   src: ");
@@ -609,147 +610,147 @@ static void atom_op_and(atom_exec_context *ctx, int *ptr, int arg)
 	dst &= src;
 	SDEBUG("   dst: ");
 	atom_put_dst(ctx, arg, attr, &dptr, dst, saved);
-}
+पूर्ण
 
-static void atom_op_beep(atom_exec_context *ctx, int *ptr, int arg)
-{
-	printk("ATOM BIOS beeped!\n");
-}
+अटल व्योम atom_op_beep(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	prपूर्णांकk("ATOM BIOS beeped!\n");
+पूर्ण
 
-static void atom_op_calltable(atom_exec_context *ctx, int *ptr, int arg)
-{
-	int idx = U8((*ptr)++);
-	int r = 0;
+अटल व्योम atom_op_calltable(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	पूर्णांक idx = U8((*ptr)++);
+	पूर्णांक r = 0;
 
-	if (idx < ATOM_TABLE_NAMES_CNT)
+	अगर (idx < ATOM_TABLE_NAMES_CNT)
 		SDEBUG("   table: %d (%s)\n", idx, atom_table_names[idx]);
-	else
+	अन्यथा
 		SDEBUG("   table: %d\n", idx);
-	if (U16(ctx->ctx->cmd_table + 4 + 2 * idx))
-		r = atom_execute_table_locked(ctx->ctx, idx, ctx->ps + ctx->ps_shift);
-	if (r) {
-		ctx->abort = true;
-	}
-}
+	अगर (U16(ctx->ctx->cmd_table + 4 + 2 * idx))
+		r = atom_execute_table_locked(ctx->ctx, idx, ctx->ps + ctx->ps_shअगरt);
+	अगर (r) अणु
+		ctx->पात = true;
+	पूर्ण
+पूर्ण
 
-static void atom_op_clear(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
-	uint32_t saved;
-	int dptr = *ptr;
+अटल व्योम atom_op_clear(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
+	uपूर्णांक32_t saved;
+	पूर्णांक dptr = *ptr;
 	attr &= 0x38;
 	attr |= atom_def_dst[attr >> 3] << 6;
 	atom_get_dst(ctx, arg, attr, ptr, &saved, 0);
 	SDEBUG("   dst: ");
 	atom_put_dst(ctx, arg, attr, &dptr, 0, saved);
-}
+पूर्ण
 
-static void atom_op_compare(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
-	uint32_t dst, src;
+अटल व्योम atom_op_compare(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
+	uपूर्णांक32_t dst, src;
 	SDEBUG("   src1: ");
-	dst = atom_get_dst(ctx, arg, attr, ptr, NULL, 1);
+	dst = atom_get_dst(ctx, arg, attr, ptr, शून्य, 1);
 	SDEBUG("   src2: ");
 	src = atom_get_src(ctx, attr, ptr);
 	ctx->ctx->cs_equal = (dst == src);
 	ctx->ctx->cs_above = (dst > src);
 	SDEBUG("   result: %s %s\n", ctx->ctx->cs_equal ? "EQ" : "NE",
 	       ctx->ctx->cs_above ? "GT" : "LE");
-}
+पूर्ण
 
-static void atom_op_delay(atom_exec_context *ctx, int *ptr, int arg)
-{
-	unsigned count = U8((*ptr)++);
+अटल व्योम atom_op_delay(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	अचिन्हित count = U8((*ptr)++);
 	SDEBUG("   count: %d\n", count);
-	if (arg == ATOM_UNIT_MICROSEC)
+	अगर (arg == ATOM_UNIT_MICROSEC)
 		udelay(count);
-	else if (!drm_can_sleep())
+	अन्यथा अगर (!drm_can_sleep())
 		mdelay(count);
-	else
+	अन्यथा
 		msleep(count);
-}
+पूर्ण
 
-static void atom_op_div(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
-	uint32_t dst, src;
+अटल व्योम atom_op_भाग(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
+	uपूर्णांक32_t dst, src;
 	SDEBUG("   src1: ");
-	dst = atom_get_dst(ctx, arg, attr, ptr, NULL, 1);
+	dst = atom_get_dst(ctx, arg, attr, ptr, शून्य, 1);
 	SDEBUG("   src2: ");
 	src = atom_get_src(ctx, attr, ptr);
-	if (src != 0) {
-		ctx->ctx->divmul[0] = dst / src;
-		ctx->ctx->divmul[1] = dst % src;
-	} else {
-		ctx->ctx->divmul[0] = 0;
-		ctx->ctx->divmul[1] = 0;
-	}
-}
+	अगर (src != 0) अणु
+		ctx->ctx->भागmul[0] = dst / src;
+		ctx->ctx->भागmul[1] = dst % src;
+	पूर्ण अन्यथा अणु
+		ctx->ctx->भागmul[0] = 0;
+		ctx->ctx->भागmul[1] = 0;
+	पूर्ण
+पूर्ण
 
-static void atom_op_eot(atom_exec_context *ctx, int *ptr, int arg)
-{
+अटल व्योम atom_op_eot(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
 	/* functionally, a nop */
-}
+पूर्ण
 
-static void atom_op_jump(atom_exec_context *ctx, int *ptr, int arg)
-{
-	int execute = 0, target = U16(*ptr);
-	unsigned long cjiffies;
+अटल व्योम atom_op_jump(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	पूर्णांक execute = 0, target = U16(*ptr);
+	अचिन्हित दीर्घ cjअगरfies;
 
 	(*ptr) += 2;
-	switch (arg) {
-	case ATOM_COND_ABOVE:
+	चयन (arg) अणु
+	हाल ATOM_COND_ABOVE:
 		execute = ctx->ctx->cs_above;
-		break;
-	case ATOM_COND_ABOVEOREQUAL:
+		अवरोध;
+	हाल ATOM_COND_ABOVEOREQUAL:
 		execute = ctx->ctx->cs_above || ctx->ctx->cs_equal;
-		break;
-	case ATOM_COND_ALWAYS:
+		अवरोध;
+	हाल ATOM_COND_ALWAYS:
 		execute = 1;
-		break;
-	case ATOM_COND_BELOW:
+		अवरोध;
+	हाल ATOM_COND_BELOW:
 		execute = !(ctx->ctx->cs_above || ctx->ctx->cs_equal);
-		break;
-	case ATOM_COND_BELOWOREQUAL:
+		अवरोध;
+	हाल ATOM_COND_BELOWOREQUAL:
 		execute = !ctx->ctx->cs_above;
-		break;
-	case ATOM_COND_EQUAL:
+		अवरोध;
+	हाल ATOM_COND_EQUAL:
 		execute = ctx->ctx->cs_equal;
-		break;
-	case ATOM_COND_NOTEQUAL:
+		अवरोध;
+	हाल ATOM_COND_NOTEQUAL:
 		execute = !ctx->ctx->cs_equal;
-		break;
-	}
-	if (arg != ATOM_COND_ALWAYS)
+		अवरोध;
+	पूर्ण
+	अगर (arg != ATOM_COND_ALWAYS)
 		SDEBUG("   taken: %s\n", execute ? "yes" : "no");
 	SDEBUG("   target: 0x%04X\n", target);
-	if (execute) {
-		if (ctx->last_jump == (ctx->start + target)) {
-			cjiffies = jiffies;
-			if (time_after(cjiffies, ctx->last_jump_jiffies)) {
-				cjiffies -= ctx->last_jump_jiffies;
-				if ((jiffies_to_msecs(cjiffies) > 5000)) {
+	अगर (execute) अणु
+		अगर (ctx->last_jump == (ctx->start + target)) अणु
+			cjअगरfies = jअगरfies;
+			अगर (समय_after(cjअगरfies, ctx->last_jump_jअगरfies)) अणु
+				cjअगरfies -= ctx->last_jump_jअगरfies;
+				अगर ((jअगरfies_to_msecs(cjअगरfies) > 5000)) अणु
 					DRM_ERROR("atombios stuck in loop for more than 5secs aborting\n");
-					ctx->abort = true;
-				}
-			} else {
-				/* jiffies wrap around we will just wait a little longer */
-				ctx->last_jump_jiffies = jiffies;
-			}
-		} else {
+					ctx->पात = true;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				/* jअगरfies wrap around we will just रुको a little दीर्घer */
+				ctx->last_jump_jअगरfies = jअगरfies;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			ctx->last_jump = ctx->start + target;
-			ctx->last_jump_jiffies = jiffies;
-		}
+			ctx->last_jump_jअगरfies = jअगरfies;
+		पूर्ण
 		*ptr = ctx->start + target;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void atom_op_mask(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
-	uint32_t dst, mask, src, saved;
-	int dptr = *ptr;
+अटल व्योम atom_op_mask(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
+	uपूर्णांक32_t dst, mask, src, saved;
+	पूर्णांक dptr = *ptr;
 	SDEBUG("   dst: ");
 	dst = atom_get_dst(ctx, arg, attr, ptr, &saved, 1);
 	mask = atom_get_src_direct(ctx, ((attr >> 3) & 7), ptr);
@@ -760,46 +761,46 @@ static void atom_op_mask(atom_exec_context *ctx, int *ptr, int arg)
 	dst |= src;
 	SDEBUG("   dst: ");
 	atom_put_dst(ctx, arg, attr, &dptr, dst, saved);
-}
+पूर्ण
 
-static void atom_op_move(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
-	uint32_t src, saved;
-	int dptr = *ptr;
-	if (((attr >> 3) & 7) != ATOM_SRC_DWORD)
+अटल व्योम atom_op_move(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
+	uपूर्णांक32_t src, saved;
+	पूर्णांक dptr = *ptr;
+	अगर (((attr >> 3) & 7) != ATOM_SRC_DWORD)
 		atom_get_dst(ctx, arg, attr, ptr, &saved, 0);
-	else {
+	अन्यथा अणु
 		atom_skip_dst(ctx, arg, attr, ptr);
 		saved = 0xCDCDCDCD;
-	}
+	पूर्ण
 	SDEBUG("   src: ");
 	src = atom_get_src(ctx, attr, ptr);
 	SDEBUG("   dst: ");
 	atom_put_dst(ctx, arg, attr, &dptr, src, saved);
-}
+पूर्ण
 
-static void atom_op_mul(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
-	uint32_t dst, src;
+अटल व्योम atom_op_mul(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
+	uपूर्णांक32_t dst, src;
 	SDEBUG("   src1: ");
-	dst = atom_get_dst(ctx, arg, attr, ptr, NULL, 1);
+	dst = atom_get_dst(ctx, arg, attr, ptr, शून्य, 1);
 	SDEBUG("   src2: ");
 	src = atom_get_src(ctx, attr, ptr);
-	ctx->ctx->divmul[0] = dst * src;
-}
+	ctx->ctx->भागmul[0] = dst * src;
+पूर्ण
 
-static void atom_op_nop(atom_exec_context *ctx, int *ptr, int arg)
-{
+अटल व्योम atom_op_nop(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
 	/* nothing */
-}
+पूर्ण
 
-static void atom_op_or(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
-	uint32_t dst, src, saved;
-	int dptr = *ptr;
+अटल व्योम atom_op_or(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
+	uपूर्णांक32_t dst, src, saved;
+	पूर्णांक dptr = *ptr;
 	SDEBUG("   dst: ");
 	dst = atom_get_dst(ctx, arg, attr, ptr, &saved, 1);
 	SDEBUG("   src: ");
@@ -807,159 +808,159 @@ static void atom_op_or(atom_exec_context *ctx, int *ptr, int arg)
 	dst |= src;
 	SDEBUG("   dst: ");
 	atom_put_dst(ctx, arg, attr, &dptr, dst, saved);
-}
+पूर्ण
 
-static void atom_op_postcard(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t val = U8((*ptr)++);
+अटल व्योम atom_op_postcard(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t val = U8((*ptr)++);
 	SDEBUG("POST card output: 0x%02X\n", val);
-}
+पूर्ण
 
-static void atom_op_repeat(atom_exec_context *ctx, int *ptr, int arg)
-{
+अटल व्योम atom_op_repeat(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
 	pr_info("unimplemented!\n");
-}
+पूर्ण
 
-static void atom_op_restorereg(atom_exec_context *ctx, int *ptr, int arg)
-{
+अटल व्योम atom_op_restorereg(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
 	pr_info("unimplemented!\n");
-}
+पूर्ण
 
-static void atom_op_savereg(atom_exec_context *ctx, int *ptr, int arg)
-{
+अटल व्योम atom_op_savereg(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
 	pr_info("unimplemented!\n");
-}
+पूर्ण
 
-static void atom_op_setdatablock(atom_exec_context *ctx, int *ptr, int arg)
-{
-	int idx = U8(*ptr);
+अटल व्योम atom_op_setdatablock(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	पूर्णांक idx = U8(*ptr);
 	(*ptr)++;
 	SDEBUG("   block: %d\n", idx);
-	if (!idx)
+	अगर (!idx)
 		ctx->ctx->data_block = 0;
-	else if (idx == 255)
+	अन्यथा अगर (idx == 255)
 		ctx->ctx->data_block = ctx->start;
-	else
+	अन्यथा
 		ctx->ctx->data_block = U16(ctx->ctx->data_table + 4 + 2 * idx);
 	SDEBUG("   base: 0x%04X\n", ctx->ctx->data_block);
-}
+पूर्ण
 
-static void atom_op_setfbbase(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
+अटल व्योम atom_op_setfbbase(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
 	SDEBUG("   fb_base: ");
 	ctx->ctx->fb_base = atom_get_src(ctx, attr, ptr);
-}
+पूर्ण
 
-static void atom_op_setport(atom_exec_context *ctx, int *ptr, int arg)
-{
-	int port;
-	switch (arg) {
-	case ATOM_PORT_ATI:
+अटल व्योम atom_op_setport(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	पूर्णांक port;
+	चयन (arg) अणु
+	हाल ATOM_PORT_ATI:
 		port = U16(*ptr);
-		if (port < ATOM_IO_NAMES_CNT)
+		अगर (port < ATOM_IO_NAMES_CNT)
 			SDEBUG("   port: %d (%s)\n", port, atom_io_names[port]);
-		else
+		अन्यथा
 			SDEBUG("   port: %d\n", port);
-		if (!port)
+		अगर (!port)
 			ctx->ctx->io_mode = ATOM_IO_MM;
-		else
+		अन्यथा
 			ctx->ctx->io_mode = ATOM_IO_IIO | port;
 		(*ptr) += 2;
-		break;
-	case ATOM_PORT_PCI:
+		अवरोध;
+	हाल ATOM_PORT_PCI:
 		ctx->ctx->io_mode = ATOM_IO_PCI;
 		(*ptr)++;
-		break;
-	case ATOM_PORT_SYSIO:
+		अवरोध;
+	हाल ATOM_PORT_SYSIO:
 		ctx->ctx->io_mode = ATOM_IO_SYSIO;
 		(*ptr)++;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void atom_op_setregblock(atom_exec_context *ctx, int *ptr, int arg)
-{
+अटल व्योम atom_op_setregblock(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
 	ctx->ctx->reg_block = U16(*ptr);
 	(*ptr) += 2;
 	SDEBUG("   base: 0x%04X\n", ctx->ctx->reg_block);
-}
+पूर्ण
 
-static void atom_op_shift_left(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++), shift;
-	uint32_t saved, dst;
-	int dptr = *ptr;
+अटल व्योम atom_op_shअगरt_left(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++), shअगरt;
+	uपूर्णांक32_t saved, dst;
+	पूर्णांक dptr = *ptr;
 	attr &= 0x38;
 	attr |= atom_def_dst[attr >> 3] << 6;
 	SDEBUG("   dst: ");
 	dst = atom_get_dst(ctx, arg, attr, ptr, &saved, 1);
-	shift = atom_get_src_direct(ctx, ATOM_SRC_BYTE0, ptr);
-	SDEBUG("   shift: %d\n", shift);
-	dst <<= shift;
+	shअगरt = atom_get_src_direct(ctx, ATOM_SRC_BYTE0, ptr);
+	SDEBUG("   shift: %d\n", shअगरt);
+	dst <<= shअगरt;
 	SDEBUG("   dst: ");
 	atom_put_dst(ctx, arg, attr, &dptr, dst, saved);
-}
+पूर्ण
 
-static void atom_op_shift_right(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++), shift;
-	uint32_t saved, dst;
-	int dptr = *ptr;
+अटल व्योम atom_op_shअगरt_right(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++), shअगरt;
+	uपूर्णांक32_t saved, dst;
+	पूर्णांक dptr = *ptr;
 	attr &= 0x38;
 	attr |= atom_def_dst[attr >> 3] << 6;
 	SDEBUG("   dst: ");
 	dst = atom_get_dst(ctx, arg, attr, ptr, &saved, 1);
-	shift = atom_get_src_direct(ctx, ATOM_SRC_BYTE0, ptr);
-	SDEBUG("   shift: %d\n", shift);
-	dst >>= shift;
+	shअगरt = atom_get_src_direct(ctx, ATOM_SRC_BYTE0, ptr);
+	SDEBUG("   shift: %d\n", shअगरt);
+	dst >>= shअगरt;
 	SDEBUG("   dst: ");
 	atom_put_dst(ctx, arg, attr, &dptr, dst, saved);
-}
+पूर्ण
 
-static void atom_op_shl(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++), shift;
-	uint32_t saved, dst;
-	int dptr = *ptr;
-	uint32_t dst_align = atom_dst_to_src[(attr >> 3) & 7][(attr >> 6) & 3];
+अटल व्योम atom_op_shl(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++), shअगरt;
+	uपूर्णांक32_t saved, dst;
+	पूर्णांक dptr = *ptr;
+	uपूर्णांक32_t dst_align = atom_dst_to_src[(attr >> 3) & 7][(attr >> 6) & 3];
 	SDEBUG("   dst: ");
 	dst = atom_get_dst(ctx, arg, attr, ptr, &saved, 1);
 	/* op needs to full dst value */
 	dst = saved;
-	shift = atom_get_src(ctx, attr, ptr);
-	SDEBUG("   shift: %d\n", shift);
-	dst <<= shift;
+	shअगरt = atom_get_src(ctx, attr, ptr);
+	SDEBUG("   shift: %d\n", shअगरt);
+	dst <<= shअगरt;
 	dst &= atom_arg_mask[dst_align];
-	dst >>= atom_arg_shift[dst_align];
+	dst >>= atom_arg_shअगरt[dst_align];
 	SDEBUG("   dst: ");
 	atom_put_dst(ctx, arg, attr, &dptr, dst, saved);
-}
+पूर्ण
 
-static void atom_op_shr(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++), shift;
-	uint32_t saved, dst;
-	int dptr = *ptr;
-	uint32_t dst_align = atom_dst_to_src[(attr >> 3) & 7][(attr >> 6) & 3];
+अटल व्योम atom_op_shr(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++), shअगरt;
+	uपूर्णांक32_t saved, dst;
+	पूर्णांक dptr = *ptr;
+	uपूर्णांक32_t dst_align = atom_dst_to_src[(attr >> 3) & 7][(attr >> 6) & 3];
 	SDEBUG("   dst: ");
 	dst = atom_get_dst(ctx, arg, attr, ptr, &saved, 1);
 	/* op needs to full dst value */
 	dst = saved;
-	shift = atom_get_src(ctx, attr, ptr);
-	SDEBUG("   shift: %d\n", shift);
-	dst >>= shift;
+	shअगरt = atom_get_src(ctx, attr, ptr);
+	SDEBUG("   shift: %d\n", shअगरt);
+	dst >>= shअगरt;
 	dst &= atom_arg_mask[dst_align];
-	dst >>= atom_arg_shift[dst_align];
+	dst >>= atom_arg_shअगरt[dst_align];
 	SDEBUG("   dst: ");
 	atom_put_dst(ctx, arg, attr, &dptr, dst, saved);
-}
+पूर्ण
 
-static void atom_op_sub(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
-	uint32_t dst, src, saved;
-	int dptr = *ptr;
+अटल व्योम atom_op_sub(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
+	uपूर्णांक32_t dst, src, saved;
+	पूर्णांक dptr = *ptr;
 	SDEBUG("   dst: ");
 	dst = atom_get_dst(ctx, arg, attr, ptr, &saved, 1);
 	SDEBUG("   src: ");
@@ -967,52 +968,52 @@ static void atom_op_sub(atom_exec_context *ctx, int *ptr, int arg)
 	dst -= src;
 	SDEBUG("   dst: ");
 	atom_put_dst(ctx, arg, attr, &dptr, dst, saved);
-}
+पूर्ण
 
-static void atom_op_switch(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
-	uint32_t src, val, target;
+अटल व्योम atom_op_चयन(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
+	uपूर्णांक32_t src, val, target;
 	SDEBUG("   switch: ");
 	src = atom_get_src(ctx, attr, ptr);
-	while (U16(*ptr) != ATOM_CASE_END)
-		if (U8(*ptr) == ATOM_CASE_MAGIC) {
+	जबतक (U16(*ptr) != ATOM_CASE_END)
+		अगर (U8(*ptr) == ATOM_CASE_MAGIC) अणु
 			(*ptr)++;
 			SDEBUG("   case: ");
 			val =
 			    atom_get_src(ctx, (attr & 0x38) | ATOM_ARG_IMM,
 					 ptr);
 			target = U16(*ptr);
-			if (val == src) {
+			अगर (val == src) अणु
 				SDEBUG("   target: %04X\n", target);
 				*ptr = ctx->start + target;
-				return;
-			}
+				वापस;
+			पूर्ण
 			(*ptr) += 2;
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_info("Bad case\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 	(*ptr) += 2;
-}
+पूर्ण
 
-static void atom_op_test(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
-	uint32_t dst, src;
+अटल व्योम atom_op_test(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
+	uपूर्णांक32_t dst, src;
 	SDEBUG("   src1: ");
-	dst = atom_get_dst(ctx, arg, attr, ptr, NULL, 1);
+	dst = atom_get_dst(ctx, arg, attr, ptr, शून्य, 1);
 	SDEBUG("   src2: ");
 	src = atom_get_src(ctx, attr, ptr);
 	ctx->ctx->cs_equal = ((dst & src) == 0);
 	SDEBUG("   result: %s\n", ctx->ctx->cs_equal ? "EQ" : "NE");
-}
+पूर्ण
 
-static void atom_op_xor(atom_exec_context *ctx, int *ptr, int arg)
-{
-	uint8_t attr = U8((*ptr)++);
-	uint32_t dst, src, saved;
-	int dptr = *ptr;
+अटल व्योम atom_op_xor(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
+	uपूर्णांक8_t attr = U8((*ptr)++);
+	uपूर्णांक32_t dst, src, saved;
+	पूर्णांक dptr = *ptr;
 	SDEBUG("   dst: ");
 	dst = atom_get_dst(ctx, arg, attr, ptr, &saved, 1);
 	SDEBUG("   src: ");
@@ -1020,151 +1021,151 @@ static void atom_op_xor(atom_exec_context *ctx, int *ptr, int arg)
 	dst ^= src;
 	SDEBUG("   dst: ");
 	atom_put_dst(ctx, arg, attr, &dptr, dst, saved);
-}
+पूर्ण
 
-static void atom_op_debug(atom_exec_context *ctx, int *ptr, int arg)
-{
+अटल व्योम atom_op_debug(atom_exec_context *ctx, पूर्णांक *ptr, पूर्णांक arg)
+अणु
 	pr_info("unimplemented!\n");
-}
+पूर्ण
 
-static struct {
-	void (*func) (atom_exec_context *, int *, int);
-	int arg;
-} opcode_table[ATOM_OP_CNT] = {
-	{
-	NULL, 0}, {
-	atom_op_move, ATOM_ARG_REG}, {
-	atom_op_move, ATOM_ARG_PS}, {
-	atom_op_move, ATOM_ARG_WS}, {
-	atom_op_move, ATOM_ARG_FB}, {
-	atom_op_move, ATOM_ARG_PLL}, {
-	atom_op_move, ATOM_ARG_MC}, {
-	atom_op_and, ATOM_ARG_REG}, {
-	atom_op_and, ATOM_ARG_PS}, {
-	atom_op_and, ATOM_ARG_WS}, {
-	atom_op_and, ATOM_ARG_FB}, {
-	atom_op_and, ATOM_ARG_PLL}, {
-	atom_op_and, ATOM_ARG_MC}, {
-	atom_op_or, ATOM_ARG_REG}, {
-	atom_op_or, ATOM_ARG_PS}, {
-	atom_op_or, ATOM_ARG_WS}, {
-	atom_op_or, ATOM_ARG_FB}, {
-	atom_op_or, ATOM_ARG_PLL}, {
-	atom_op_or, ATOM_ARG_MC}, {
-	atom_op_shift_left, ATOM_ARG_REG}, {
-	atom_op_shift_left, ATOM_ARG_PS}, {
-	atom_op_shift_left, ATOM_ARG_WS}, {
-	atom_op_shift_left, ATOM_ARG_FB}, {
-	atom_op_shift_left, ATOM_ARG_PLL}, {
-	atom_op_shift_left, ATOM_ARG_MC}, {
-	atom_op_shift_right, ATOM_ARG_REG}, {
-	atom_op_shift_right, ATOM_ARG_PS}, {
-	atom_op_shift_right, ATOM_ARG_WS}, {
-	atom_op_shift_right, ATOM_ARG_FB}, {
-	atom_op_shift_right, ATOM_ARG_PLL}, {
-	atom_op_shift_right, ATOM_ARG_MC}, {
-	atom_op_mul, ATOM_ARG_REG}, {
-	atom_op_mul, ATOM_ARG_PS}, {
-	atom_op_mul, ATOM_ARG_WS}, {
-	atom_op_mul, ATOM_ARG_FB}, {
-	atom_op_mul, ATOM_ARG_PLL}, {
-	atom_op_mul, ATOM_ARG_MC}, {
-	atom_op_div, ATOM_ARG_REG}, {
-	atom_op_div, ATOM_ARG_PS}, {
-	atom_op_div, ATOM_ARG_WS}, {
-	atom_op_div, ATOM_ARG_FB}, {
-	atom_op_div, ATOM_ARG_PLL}, {
-	atom_op_div, ATOM_ARG_MC}, {
-	atom_op_add, ATOM_ARG_REG}, {
-	atom_op_add, ATOM_ARG_PS}, {
-	atom_op_add, ATOM_ARG_WS}, {
-	atom_op_add, ATOM_ARG_FB}, {
-	atom_op_add, ATOM_ARG_PLL}, {
-	atom_op_add, ATOM_ARG_MC}, {
-	atom_op_sub, ATOM_ARG_REG}, {
-	atom_op_sub, ATOM_ARG_PS}, {
-	atom_op_sub, ATOM_ARG_WS}, {
-	atom_op_sub, ATOM_ARG_FB}, {
-	atom_op_sub, ATOM_ARG_PLL}, {
-	atom_op_sub, ATOM_ARG_MC}, {
-	atom_op_setport, ATOM_PORT_ATI}, {
-	atom_op_setport, ATOM_PORT_PCI}, {
-	atom_op_setport, ATOM_PORT_SYSIO}, {
-	atom_op_setregblock, 0}, {
-	atom_op_setfbbase, 0}, {
-	atom_op_compare, ATOM_ARG_REG}, {
-	atom_op_compare, ATOM_ARG_PS}, {
-	atom_op_compare, ATOM_ARG_WS}, {
-	atom_op_compare, ATOM_ARG_FB}, {
-	atom_op_compare, ATOM_ARG_PLL}, {
-	atom_op_compare, ATOM_ARG_MC}, {
-	atom_op_switch, 0}, {
-	atom_op_jump, ATOM_COND_ALWAYS}, {
-	atom_op_jump, ATOM_COND_EQUAL}, {
-	atom_op_jump, ATOM_COND_BELOW}, {
-	atom_op_jump, ATOM_COND_ABOVE}, {
-	atom_op_jump, ATOM_COND_BELOWOREQUAL}, {
-	atom_op_jump, ATOM_COND_ABOVEOREQUAL}, {
-	atom_op_jump, ATOM_COND_NOTEQUAL}, {
-	atom_op_test, ATOM_ARG_REG}, {
-	atom_op_test, ATOM_ARG_PS}, {
-	atom_op_test, ATOM_ARG_WS}, {
-	atom_op_test, ATOM_ARG_FB}, {
-	atom_op_test, ATOM_ARG_PLL}, {
-	atom_op_test, ATOM_ARG_MC}, {
-	atom_op_delay, ATOM_UNIT_MILLISEC}, {
-	atom_op_delay, ATOM_UNIT_MICROSEC}, {
-	atom_op_calltable, 0}, {
-	atom_op_repeat, 0}, {
-	atom_op_clear, ATOM_ARG_REG}, {
-	atom_op_clear, ATOM_ARG_PS}, {
-	atom_op_clear, ATOM_ARG_WS}, {
-	atom_op_clear, ATOM_ARG_FB}, {
-	atom_op_clear, ATOM_ARG_PLL}, {
-	atom_op_clear, ATOM_ARG_MC}, {
-	atom_op_nop, 0}, {
-	atom_op_eot, 0}, {
-	atom_op_mask, ATOM_ARG_REG}, {
-	atom_op_mask, ATOM_ARG_PS}, {
-	atom_op_mask, ATOM_ARG_WS}, {
-	atom_op_mask, ATOM_ARG_FB}, {
-	atom_op_mask, ATOM_ARG_PLL}, {
-	atom_op_mask, ATOM_ARG_MC}, {
-	atom_op_postcard, 0}, {
-	atom_op_beep, 0}, {
-	atom_op_savereg, 0}, {
-	atom_op_restorereg, 0}, {
-	atom_op_setdatablock, 0}, {
-	atom_op_xor, ATOM_ARG_REG}, {
-	atom_op_xor, ATOM_ARG_PS}, {
-	atom_op_xor, ATOM_ARG_WS}, {
-	atom_op_xor, ATOM_ARG_FB}, {
-	atom_op_xor, ATOM_ARG_PLL}, {
-	atom_op_xor, ATOM_ARG_MC}, {
-	atom_op_shl, ATOM_ARG_REG}, {
-	atom_op_shl, ATOM_ARG_PS}, {
-	atom_op_shl, ATOM_ARG_WS}, {
-	atom_op_shl, ATOM_ARG_FB}, {
-	atom_op_shl, ATOM_ARG_PLL}, {
-	atom_op_shl, ATOM_ARG_MC}, {
-	atom_op_shr, ATOM_ARG_REG}, {
-	atom_op_shr, ATOM_ARG_PS}, {
-	atom_op_shr, ATOM_ARG_WS}, {
-	atom_op_shr, ATOM_ARG_FB}, {
-	atom_op_shr, ATOM_ARG_PLL}, {
-	atom_op_shr, ATOM_ARG_MC}, {
-atom_op_debug, 0},};
+अटल काष्ठा अणु
+	व्योम (*func) (atom_exec_context *, पूर्णांक *, पूर्णांक);
+	पूर्णांक arg;
+पूर्ण opcode_table[ATOM_OP_CNT] = अणु
+	अणु
+	शून्य, 0पूर्ण, अणु
+	atom_op_move, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_move, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_move, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_move, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_move, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_move, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_and, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_and, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_and, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_and, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_and, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_and, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_or, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_or, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_or, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_or, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_or, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_or, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_shअगरt_left, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_shअगरt_left, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_shअगरt_left, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_shअगरt_left, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_shअगरt_left, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_shअगरt_left, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_shअगरt_right, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_shअगरt_right, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_shअगरt_right, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_shअगरt_right, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_shअगरt_right, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_shअगरt_right, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_mul, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_mul, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_mul, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_mul, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_mul, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_mul, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_भाग, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_भाग, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_भाग, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_भाग, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_भाग, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_भाग, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_add, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_add, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_add, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_add, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_add, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_add, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_sub, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_sub, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_sub, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_sub, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_sub, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_sub, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_setport, ATOM_PORT_ATIपूर्ण, अणु
+	atom_op_setport, ATOM_PORT_PCIपूर्ण, अणु
+	atom_op_setport, ATOM_PORT_SYSIOपूर्ण, अणु
+	atom_op_setregblock, 0पूर्ण, अणु
+	atom_op_setfbbase, 0पूर्ण, अणु
+	atom_op_compare, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_compare, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_compare, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_compare, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_compare, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_compare, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_चयन, 0पूर्ण, अणु
+	atom_op_jump, ATOM_COND_ALWAYSपूर्ण, अणु
+	atom_op_jump, ATOM_COND_EQUALपूर्ण, अणु
+	atom_op_jump, ATOM_COND_BELOWपूर्ण, अणु
+	atom_op_jump, ATOM_COND_ABOVEपूर्ण, अणु
+	atom_op_jump, ATOM_COND_BELOWOREQUALपूर्ण, अणु
+	atom_op_jump, ATOM_COND_ABOVEOREQUALपूर्ण, अणु
+	atom_op_jump, ATOM_COND_NOTEQUALपूर्ण, अणु
+	atom_op_test, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_test, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_test, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_test, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_test, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_test, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_delay, ATOM_UNIT_MILLISECपूर्ण, अणु
+	atom_op_delay, ATOM_UNIT_MICROSECपूर्ण, अणु
+	atom_op_calltable, 0पूर्ण, अणु
+	atom_op_repeat, 0पूर्ण, अणु
+	atom_op_clear, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_clear, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_clear, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_clear, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_clear, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_clear, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_nop, 0पूर्ण, अणु
+	atom_op_eot, 0पूर्ण, अणु
+	atom_op_mask, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_mask, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_mask, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_mask, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_mask, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_mask, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_postcard, 0पूर्ण, अणु
+	atom_op_beep, 0पूर्ण, अणु
+	atom_op_savereg, 0पूर्ण, अणु
+	atom_op_restorereg, 0पूर्ण, अणु
+	atom_op_setdatablock, 0पूर्ण, अणु
+	atom_op_xor, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_xor, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_xor, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_xor, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_xor, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_xor, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_shl, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_shl, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_shl, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_shl, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_shl, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_shl, ATOM_ARG_MCपूर्ण, अणु
+	atom_op_shr, ATOM_ARG_REGपूर्ण, अणु
+	atom_op_shr, ATOM_ARG_PSपूर्ण, अणु
+	atom_op_shr, ATOM_ARG_WSपूर्ण, अणु
+	atom_op_shr, ATOM_ARG_FBपूर्ण, अणु
+	atom_op_shr, ATOM_ARG_PLLपूर्ण, अणु
+	atom_op_shr, ATOM_ARG_MCपूर्ण, अणु
+atom_op_debug, 0पूर्ण,पूर्ण;
 
-static int atom_execute_table_locked(struct atom_context *ctx, int index, uint32_t * params)
-{
-	int base = CU16(ctx->cmd_table + 4 + 2 * index);
-	int len, ws, ps, ptr;
-	unsigned char op;
+अटल पूर्णांक atom_execute_table_locked(काष्ठा atom_context *ctx, पूर्णांक index, uपूर्णांक32_t * params)
+अणु
+	पूर्णांक base = CU16(ctx->cmd_table + 4 + 2 * index);
+	पूर्णांक len, ws, ps, ptr;
+	अचिन्हित अक्षर op;
 	atom_exec_context ectx;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (!base)
-		return -EINVAL;
+	अगर (!base)
+		वापस -EINVAL;
 
 	len = CU16(base + ATOM_CT_SIZE_PTR);
 	ws = CU8(base + ATOM_CT_WS_PTR);
@@ -1174,250 +1175,250 @@ static int atom_execute_table_locked(struct atom_context *ctx, int index, uint32
 	SDEBUG(">> execute %04X (len %d, WS %d, PS %d)\n", base, len, ws, ps);
 
 	ectx.ctx = ctx;
-	ectx.ps_shift = ps / 4;
+	ectx.ps_shअगरt = ps / 4;
 	ectx.start = base;
 	ectx.ps = params;
-	ectx.abort = false;
+	ectx.पात = false;
 	ectx.last_jump = 0;
-	if (ws)
-		ectx.ws = kcalloc(4, ws, GFP_KERNEL);
-	else
-		ectx.ws = NULL;
+	अगर (ws)
+		ectx.ws = kसुस्मृति(4, ws, GFP_KERNEL);
+	अन्यथा
+		ectx.ws = शून्य;
 
 	debug_depth++;
-	while (1) {
+	जबतक (1) अणु
 		op = CU8(ptr++);
-		if (op < ATOM_OP_NAMES_CNT)
+		अगर (op < ATOM_OP_NAMES_CNT)
 			SDEBUG("%s @ 0x%04X\n", atom_op_names[op], ptr - 1);
-		else
+		अन्यथा
 			SDEBUG("[%d] @ 0x%04X\n", op, ptr - 1);
-		if (ectx.abort) {
+		अगर (ectx.पात) अणु
 			DRM_ERROR("atombios stuck executing %04X (len %d, WS %d, PS %d) @ 0x%04X\n",
 				base, len, ws, ps, ptr - 1);
 			ret = -EINVAL;
-			goto free;
-		}
+			जाओ मुक्त;
+		पूर्ण
 
-		if (op < ATOM_OP_CNT && op > 0)
+		अगर (op < ATOM_OP_CNT && op > 0)
 			opcode_table[op].func(&ectx, &ptr,
 					      opcode_table[op].arg);
-		else
-			break;
+		अन्यथा
+			अवरोध;
 
-		if (op == ATOM_OP_EOT)
-			break;
-	}
+		अगर (op == ATOM_OP_EOT)
+			अवरोध;
+	पूर्ण
 	debug_depth--;
 	SDEBUG("<<\n");
 
-free:
-	kfree(ectx.ws);
-	return ret;
-}
+मुक्त:
+	kमुक्त(ectx.ws);
+	वापस ret;
+पूर्ण
 
-int atom_execute_table_scratch_unlocked(struct atom_context *ctx, int index, uint32_t * params)
-{
-	int r;
+पूर्णांक atom_execute_table_scratch_unlocked(काष्ठा atom_context *ctx, पूर्णांक index, uपूर्णांक32_t * params)
+अणु
+	पूर्णांक r;
 
 	mutex_lock(&ctx->mutex);
 	/* reset data block */
 	ctx->data_block = 0;
 	/* reset reg block */
 	ctx->reg_block = 0;
-	/* reset fb window */
+	/* reset fb winकरोw */
 	ctx->fb_base = 0;
 	/* reset io mode */
 	ctx->io_mode = ATOM_IO_MM;
-	/* reset divmul */
-	ctx->divmul[0] = 0;
-	ctx->divmul[1] = 0;
+	/* reset भागmul */
+	ctx->भागmul[0] = 0;
+	ctx->भागmul[1] = 0;
 	r = atom_execute_table_locked(ctx, index, params);
 	mutex_unlock(&ctx->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int atom_execute_table(struct atom_context *ctx, int index, uint32_t * params)
-{
-	int r;
+पूर्णांक atom_execute_table(काष्ठा atom_context *ctx, पूर्णांक index, uपूर्णांक32_t * params)
+अणु
+	पूर्णांक r;
 	mutex_lock(&ctx->scratch_mutex);
 	r = atom_execute_table_scratch_unlocked(ctx, index, params);
 	mutex_unlock(&ctx->scratch_mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int atom_iio_len[] = { 1, 2, 3, 3, 3, 3, 4, 4, 4, 3 };
+अटल पूर्णांक atom_iio_len[] = अणु 1, 2, 3, 3, 3, 3, 4, 4, 4, 3 पूर्ण;
 
-static void atom_index_iio(struct atom_context *ctx, int base)
-{
+अटल व्योम atom_index_iio(काष्ठा atom_context *ctx, पूर्णांक base)
+अणु
 	ctx->iio = kzalloc(2 * 256, GFP_KERNEL);
-	if (!ctx->iio)
-		return;
-	while (CU8(base) == ATOM_IIO_START) {
+	अगर (!ctx->iio)
+		वापस;
+	जबतक (CU8(base) == ATOM_IIO_START) अणु
 		ctx->iio[CU8(base + 1)] = base + 2;
 		base += 2;
-		while (CU8(base) != ATOM_IIO_END)
+		जबतक (CU8(base) != ATOM_IIO_END)
 			base += atom_iio_len[CU8(base)];
 		base += 3;
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct atom_context *atom_parse(struct card_info *card, void *bios)
-{
-	int base;
-	struct atom_context *ctx =
-	    kzalloc(sizeof(struct atom_context), GFP_KERNEL);
-	char *str;
-	char name[512];
-	int i;
+काष्ठा atom_context *atom_parse(काष्ठा card_info *card, व्योम *bios)
+अणु
+	पूर्णांक base;
+	काष्ठा atom_context *ctx =
+	    kzalloc(माप(काष्ठा atom_context), GFP_KERNEL);
+	अक्षर *str;
+	अक्षर name[512];
+	पूर्णांक i;
 
-	if (!ctx)
-		return NULL;
+	अगर (!ctx)
+		वापस शून्य;
 
 	ctx->card = card;
 	ctx->bios = bios;
 
-	if (CU16(0) != ATOM_BIOS_MAGIC) {
+	अगर (CU16(0) != ATOM_BIOS_MAGIC) अणु
 		pr_info("Invalid BIOS magic\n");
-		kfree(ctx);
-		return NULL;
-	}
-	if (strncmp
+		kमुक्त(ctx);
+		वापस शून्य;
+	पूर्ण
+	अगर (म_भेदन
 	    (CSTR(ATOM_ATI_MAGIC_PTR), ATOM_ATI_MAGIC,
-	     strlen(ATOM_ATI_MAGIC))) {
+	     म_माप(ATOM_ATI_MAGIC))) अणु
 		pr_info("Invalid ATI magic\n");
-		kfree(ctx);
-		return NULL;
-	}
+		kमुक्त(ctx);
+		वापस शून्य;
+	पूर्ण
 
 	base = CU16(ATOM_ROM_TABLE_PTR);
-	if (strncmp
+	अगर (म_भेदन
 	    (CSTR(base + ATOM_ROM_MAGIC_PTR), ATOM_ROM_MAGIC,
-	     strlen(ATOM_ROM_MAGIC))) {
+	     म_माप(ATOM_ROM_MAGIC))) अणु
 		pr_info("Invalid ATOM magic\n");
-		kfree(ctx);
-		return NULL;
-	}
+		kमुक्त(ctx);
+		वापस शून्य;
+	पूर्ण
 
 	ctx->cmd_table = CU16(base + ATOM_ROM_CMD_PTR);
 	ctx->data_table = CU16(base + ATOM_ROM_DATA_PTR);
 	atom_index_iio(ctx, CU16(ctx->data_table + ATOM_DATA_IIO_PTR) + 4);
-	if (!ctx->iio) {
+	अगर (!ctx->iio) अणु
 		atom_destroy(ctx);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	str = CSTR(CU16(base + ATOM_ROM_MSG_PTR));
-	while (*str && ((*str == '\n') || (*str == '\r')))
+	जबतक (*str && ((*str == '\n') || (*str == '\r')))
 		str++;
 	/* name string isn't always 0 terminated */
-	for (i = 0; i < 511; i++) {
+	क्रम (i = 0; i < 511; i++) अणु
 		name[i] = str[i];
-		if (name[i] < '.' || name[i] > 'z') {
+		अगर (name[i] < '.' || name[i] > 'z') अणु
 			name[i] = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	pr_info("ATOM BIOS: %s\n", name);
 
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
-int atom_asic_init(struct atom_context *ctx)
-{
-	struct radeon_device *rdev = ctx->card->dev->dev_private;
-	int hwi = CU16(ctx->data_table + ATOM_DATA_FWI_PTR);
-	uint32_t ps[16];
-	int ret;
+पूर्णांक atom_asic_init(काष्ठा atom_context *ctx)
+अणु
+	काष्ठा radeon_device *rdev = ctx->card->dev->dev_निजी;
+	पूर्णांक hwi = CU16(ctx->data_table + ATOM_DATA_FWI_PTR);
+	uपूर्णांक32_t ps[16];
+	पूर्णांक ret;
 
-	memset(ps, 0, 64);
+	स_रखो(ps, 0, 64);
 
 	ps[0] = cpu_to_le32(CU32(hwi + ATOM_FWI_DEFSCLK_PTR));
 	ps[1] = cpu_to_le32(CU32(hwi + ATOM_FWI_DEFMCLK_PTR));
-	if (!ps[0] || !ps[1])
-		return 1;
+	अगर (!ps[0] || !ps[1])
+		वापस 1;
 
-	if (!CU16(ctx->cmd_table + 4 + 2 * ATOM_CMD_INIT))
-		return 1;
+	अगर (!CU16(ctx->cmd_table + 4 + 2 * ATOM_CMD_INIT))
+		वापस 1;
 	ret = atom_execute_table(ctx, ATOM_CMD_INIT, ps);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memset(ps, 0, 64);
+	स_रखो(ps, 0, 64);
 
-	if (rdev->family < CHIP_R600) {
-		if (CU16(ctx->cmd_table + 4 + 2 * ATOM_CMD_SPDFANCNTL))
+	अगर (rdev->family < CHIP_R600) अणु
+		अगर (CU16(ctx->cmd_table + 4 + 2 * ATOM_CMD_SPDFANCNTL))
 			atom_execute_table(ctx, ATOM_CMD_SPDFANCNTL, ps);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-void atom_destroy(struct atom_context *ctx)
-{
-	kfree(ctx->iio);
-	kfree(ctx);
-}
+व्योम atom_destroy(काष्ठा atom_context *ctx)
+अणु
+	kमुक्त(ctx->iio);
+	kमुक्त(ctx);
+पूर्ण
 
-bool atom_parse_data_header(struct atom_context *ctx, int index,
-			    uint16_t * size, uint8_t * frev, uint8_t * crev,
-			    uint16_t * data_start)
-{
-	int offset = index * 2 + 4;
-	int idx = CU16(ctx->data_table + offset);
+bool atom_parse_data_header(काष्ठा atom_context *ctx, पूर्णांक index,
+			    uपूर्णांक16_t * size, uपूर्णांक8_t * frev, uपूर्णांक8_t * crev,
+			    uपूर्णांक16_t * data_start)
+अणु
+	पूर्णांक offset = index * 2 + 4;
+	पूर्णांक idx = CU16(ctx->data_table + offset);
 	u16 *mdt = (u16 *)(ctx->bios + ctx->data_table + 4);
 
-	if (!mdt[index])
-		return false;
+	अगर (!mdt[index])
+		वापस false;
 
-	if (size)
+	अगर (size)
 		*size = CU16(idx);
-	if (frev)
+	अगर (frev)
 		*frev = CU8(idx + 2);
-	if (crev)
+	अगर (crev)
 		*crev = CU8(idx + 3);
 	*data_start = idx;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool atom_parse_cmd_header(struct atom_context *ctx, int index, uint8_t * frev,
-			   uint8_t * crev)
-{
-	int offset = index * 2 + 4;
-	int idx = CU16(ctx->cmd_table + offset);
+bool atom_parse_cmd_header(काष्ठा atom_context *ctx, पूर्णांक index, uपूर्णांक8_t * frev,
+			   uपूर्णांक8_t * crev)
+अणु
+	पूर्णांक offset = index * 2 + 4;
+	पूर्णांक idx = CU16(ctx->cmd_table + offset);
 	u16 *mct = (u16 *)(ctx->bios + ctx->cmd_table + 4);
 
-	if (!mct[index])
-		return false;
+	अगर (!mct[index])
+		वापस false;
 
-	if (frev)
+	अगर (frev)
 		*frev = CU8(idx + 2);
-	if (crev)
+	अगर (crev)
 		*crev = CU8(idx + 3);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-int atom_allocate_fb_scratch(struct atom_context *ctx)
-{
-	int index = GetIndexIntoMasterTable(DATA, VRAM_UsageByFirmware);
-	uint16_t data_offset;
-	int usage_bytes = 0;
-	struct _ATOM_VRAM_USAGE_BY_FIRMWARE *firmware_usage;
+पूर्णांक atom_allocate_fb_scratch(काष्ठा atom_context *ctx)
+अणु
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, VRAM_UsageByFirmware);
+	uपूर्णांक16_t data_offset;
+	पूर्णांक usage_bytes = 0;
+	काष्ठा _ATOM_VRAM_USAGE_BY_FIRMWARE *firmware_usage;
 
-	if (atom_parse_data_header(ctx, index, NULL, NULL, NULL, &data_offset)) {
-		firmware_usage = (struct _ATOM_VRAM_USAGE_BY_FIRMWARE *)(ctx->bios + data_offset);
+	अगर (atom_parse_data_header(ctx, index, शून्य, शून्य, शून्य, &data_offset)) अणु
+		firmware_usage = (काष्ठा _ATOM_VRAM_USAGE_BY_FIRMWARE *)(ctx->bios + data_offset);
 
 		DRM_DEBUG("atom firmware requested %08x %dkb\n",
 			  le32_to_cpu(firmware_usage->asFirmwareVramReserveInfo[0].ulStartAddrUsedByFirmware),
 			  le16_to_cpu(firmware_usage->asFirmwareVramReserveInfo[0].usFirmwareUseInKb));
 
 		usage_bytes = le16_to_cpu(firmware_usage->asFirmwareVramReserveInfo[0].usFirmwareUseInKb) * 1024;
-	}
+	पूर्ण
 	ctx->scratch_size_bytes = 0;
-	if (usage_bytes == 0)
+	अगर (usage_bytes == 0)
 		usage_bytes = 20 * 1024;
 	/* allocate some scratch memory */
 	ctx->scratch = kzalloc(usage_bytes, GFP_KERNEL);
-	if (!ctx->scratch)
-		return -ENOMEM;
+	अगर (!ctx->scratch)
+		वापस -ENOMEM;
 	ctx->scratch_size_bytes = usage_bytes;
-	return 0;
-}
+	वापस 0;
+पूर्ण

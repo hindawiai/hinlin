@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0
-/* net/atm/raw.c - Raw AAL0 and AAL5 transports */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* net/aपंचांग/raw.c - Raw AAL0 and AAL5 transports */
 
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
-#include <linux/module.h>
-#include <linux/atmdev.h>
-#include <linux/capability.h>
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/aपंचांगdev.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
 
-#include "common.h"
-#include "protocols.h"
+#समावेश "common.h"
+#समावेश "protocols.h"
 
 /*
- * SKB == NULL indicates that the link is being closed
+ * SKB == शून्य indicates that the link is being बंदd
  */
 
-static void atm_push_raw(struct atm_vcc *vcc, struct sk_buff *skb)
-{
-	if (skb) {
-		struct sock *sk = sk_atm(vcc);
+अटल व्योम aपंचांग_push_raw(काष्ठा aपंचांग_vcc *vcc, काष्ठा sk_buff *skb)
+अणु
+	अगर (skb) अणु
+		काष्ठा sock *sk = sk_aपंचांग(vcc);
 
 		skb_queue_tail(&sk->sk_receive_queue, skb);
-		sk->sk_data_ready(sk);
-	}
-}
+		sk->sk_data_पढ़ोy(sk);
+	पूर्ण
+पूर्ण
 
-static void atm_pop_raw(struct atm_vcc *vcc, struct sk_buff *skb)
-{
-	struct sock *sk = sk_atm(vcc);
+अटल व्योम aपंचांग_pop_raw(काष्ठा aपंचांग_vcc *vcc, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sock *sk = sk_aपंचांग(vcc);
 
 	pr_debug("(%d) %d -= %d\n",
 		 vcc->vci, sk_wmem_alloc_get(sk), ATM_SKB(skb)->acct_truesize);
 	WARN_ON(refcount_sub_and_test(ATM_SKB(skb)->acct_truesize, &sk->sk_wmem_alloc));
-	dev_kfree_skb_any(skb);
-	sk->sk_write_space(sk);
-}
+	dev_kमुक्त_skb_any(skb);
+	sk->sk_ग_लिखो_space(sk);
+पूर्ण
 
-static int atm_send_aal0(struct atm_vcc *vcc, struct sk_buff *skb)
-{
+अटल पूर्णांक aपंचांग_send_aal0(काष्ठा aपंचांग_vcc *vcc, काष्ठा sk_buff *skb)
+अणु
 	/*
-	 * Note that if vpi/vci are _ANY or _UNSPEC the below will
+	 * Note that अगर vpi/vci are _ANY or _UNSPEC the below will
 	 * still work
 	 */
-	if (!capable(CAP_NET_ADMIN) &&
+	अगर (!capable(CAP_NET_ADMIN) &&
 	    (((u32 *)skb->data)[0] & (ATM_HDR_VPI_MASK | ATM_HDR_VCI_MASK)) !=
 	    ((vcc->vpi << ATM_HDR_VPI_SHIFT) |
-	     (vcc->vci << ATM_HDR_VCI_SHIFT))) {
-		kfree_skb(skb);
-		return -EADDRNOTAVAIL;
-	}
-	if (vcc->dev->ops->send_bh)
-		return vcc->dev->ops->send_bh(vcc, skb);
-	return vcc->dev->ops->send(vcc, skb);
-}
+	     (vcc->vci << ATM_HDR_VCI_SHIFT))) अणु
+		kमुक्त_skb(skb);
+		वापस -EADDRNOTAVAIL;
+	पूर्ण
+	अगर (vcc->dev->ops->send_bh)
+		वापस vcc->dev->ops->send_bh(vcc, skb);
+	वापस vcc->dev->ops->send(vcc, skb);
+पूर्ण
 
-int atm_init_aal0(struct atm_vcc *vcc)
-{
-	vcc->push = atm_push_raw;
-	vcc->pop = atm_pop_raw;
-	vcc->push_oam = NULL;
-	vcc->send = atm_send_aal0;
-	return 0;
-}
+पूर्णांक aपंचांग_init_aal0(काष्ठा aपंचांग_vcc *vcc)
+अणु
+	vcc->push = aपंचांग_push_raw;
+	vcc->pop = aपंचांग_pop_raw;
+	vcc->push_oam = शून्य;
+	vcc->send = aपंचांग_send_aal0;
+	वापस 0;
+पूर्ण
 
-int atm_init_aal34(struct atm_vcc *vcc)
-{
-	vcc->push = atm_push_raw;
-	vcc->pop = atm_pop_raw;
-	vcc->push_oam = NULL;
-	if (vcc->dev->ops->send_bh)
+पूर्णांक aपंचांग_init_aal34(काष्ठा aपंचांग_vcc *vcc)
+अणु
+	vcc->push = aपंचांग_push_raw;
+	vcc->pop = aपंचांग_pop_raw;
+	vcc->push_oam = शून्य;
+	अगर (vcc->dev->ops->send_bh)
 		vcc->send = vcc->dev->ops->send_bh;
-	else
+	अन्यथा
 		vcc->send = vcc->dev->ops->send;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int atm_init_aal5(struct atm_vcc *vcc)
-{
-	vcc->push = atm_push_raw;
-	vcc->pop = atm_pop_raw;
-	vcc->push_oam = NULL;
-	if (vcc->dev->ops->send_bh)
+पूर्णांक aपंचांग_init_aal5(काष्ठा aपंचांग_vcc *vcc)
+अणु
+	vcc->push = aपंचांग_push_raw;
+	vcc->pop = aपंचांग_pop_raw;
+	vcc->push_oam = शून्य;
+	अगर (vcc->dev->ops->send_bh)
 		vcc->send = vcc->dev->ops->send_bh;
-	else
+	अन्यथा
 		vcc->send = vcc->dev->ops->send;
-	return 0;
-}
-EXPORT_SYMBOL(atm_init_aal5);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(aपंचांग_init_aal5);

@@ -1,179 +1,180 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * arch/arm/plat-iop/time.c
+ * arch/arm/plat-iop/समय.c
  *
- * Timer code for IOP32x and IOP33x based systems
+ * Timer code क्रम IOP32x and IOP33x based प्रणालीs
  *
  * Author: Deepak Saxena <dsaxena@mvista.com>
  *
  * Copyright 2002-2003 MontaVista Software Inc.
  */
 
-#include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <linux/time.h>
-#include <linux/init.h>
-#include <linux/timex.h>
-#include <linux/io.h>
-#include <linux/clocksource.h>
-#include <linux/clockchips.h>
-#include <linux/export.h>
-#include <linux/sched_clock.h>
-#include <asm/irq.h>
-#include <linux/uaccess.h>
-#include <asm/mach/irq.h>
-#include <asm/mach/time.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/init.h>
+#समावेश <linux/समयx.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/mach/irq.h>
+#समावेश <यंत्र/mach/समय.स>
 
-#include "hardware.h"
-#include "irqs.h"
-
-/*
- * Minimum clocksource/clockevent timer range in seconds
- */
-#define IOP_MIN_RANGE 4
+#समावेश "hardware.h"
+#समावेश "irqs.h"
 
 /*
- * IOP clocksource (free-running timer 1).
+ * Minimum घड़ीsource/घड़ीevent समयr range in seconds
  */
-static u64 notrace iop_clocksource_read(struct clocksource *unused)
-{
-	return 0xffffffffu - read_tcr1();
-}
+#घोषणा IOP_MIN_RANGE 4
 
-static struct clocksource iop_clocksource = {
+/*
+ * IOP घड़ीsource (मुक्त-running समयr 1).
+ */
+अटल u64 notrace iop_घड़ीsource_पढ़ो(काष्ठा घड़ीsource *unused)
+अणु
+	वापस 0xffffffffu - पढ़ो_tcr1();
+पूर्ण
+
+अटल काष्ठा घड़ीsource iop_घड़ीsource = अणु
 	.name 		= "iop_timer1",
 	.rating		= 300,
-	.read		= iop_clocksource_read,
+	.पढ़ो		= iop_घड़ीsource_पढ़ो,
 	.mask		= CLOCKSOURCE_MASK(32),
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
-};
+पूर्ण;
 
 /*
- * IOP sched_clock() implementation via its clocksource.
+ * IOP sched_घड़ी() implementation via its घड़ीsource.
  */
-static u64 notrace iop_read_sched_clock(void)
-{
-	return 0xffffffffu - read_tcr1();
-}
+अटल u64 notrace iop_पढ़ो_sched_घड़ी(व्योम)
+अणु
+	वापस 0xffffffffu - पढ़ो_tcr1();
+पूर्ण
 
 /*
- * IOP clockevents (interrupting timer 0).
+ * IOP घड़ीevents (पूर्णांकerrupting समयr 0).
  */
-static int iop_set_next_event(unsigned long delta,
-			      struct clock_event_device *unused)
-{
-	u32 tmr = IOP_TMR_PRIVILEGED | IOP_TMR_RATIO_1_1;
+अटल पूर्णांक iop_set_next_event(अचिन्हित दीर्घ delta,
+			      काष्ठा घड़ी_event_device *unused)
+अणु
+	u32 पंचांगr = IOP_TMR_PRIVILEGED | IOP_TMR_RATIO_1_1;
 
 	BUG_ON(delta == 0);
-	write_tmr0(tmr & ~(IOP_TMR_EN | IOP_TMR_RELOAD));
-	write_tcr0(delta);
-	write_tmr0((tmr & ~IOP_TMR_RELOAD) | IOP_TMR_EN);
+	ग_लिखो_पंचांगr0(पंचांगr & ~(IOP_TMR_EN | IOP_TMR_RELOAD));
+	ग_लिखो_tcr0(delta);
+	ग_लिखो_पंचांगr0((पंचांगr & ~IOP_TMR_RELOAD) | IOP_TMR_EN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long ticks_per_jiffy;
+अटल अचिन्हित दीर्घ ticks_per_jअगरfy;
 
-static int iop_set_periodic(struct clock_event_device *evt)
-{
-	u32 tmr = read_tmr0();
+अटल पूर्णांक iop_set_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
+	u32 पंचांगr = पढ़ो_पंचांगr0();
 
-	write_tmr0(tmr & ~IOP_TMR_EN);
-	write_tcr0(ticks_per_jiffy - 1);
-	write_trr0(ticks_per_jiffy - 1);
-	tmr |= (IOP_TMR_RELOAD | IOP_TMR_EN);
+	ग_लिखो_पंचांगr0(पंचांगr & ~IOP_TMR_EN);
+	ग_लिखो_tcr0(ticks_per_jअगरfy - 1);
+	ग_लिखो_trr0(ticks_per_jअगरfy - 1);
+	पंचांगr |= (IOP_TMR_RELOAD | IOP_TMR_EN);
 
-	write_tmr0(tmr);
-	return 0;
-}
+	ग_लिखो_पंचांगr0(पंचांगr);
+	वापस 0;
+पूर्ण
 
-static int iop_set_oneshot(struct clock_event_device *evt)
-{
-	u32 tmr = read_tmr0();
+अटल पूर्णांक iop_set_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	u32 पंचांगr = पढ़ो_पंचांगr0();
 
-	/* ->set_next_event sets period and enables timer */
-	tmr &= ~(IOP_TMR_RELOAD | IOP_TMR_EN);
-	write_tmr0(tmr);
-	return 0;
-}
+	/* ->set_next_event sets period and enables समयr */
+	पंचांगr &= ~(IOP_TMR_RELOAD | IOP_TMR_EN);
+	ग_लिखो_पंचांगr0(पंचांगr);
+	वापस 0;
+पूर्ण
 
-static int iop_shutdown(struct clock_event_device *evt)
-{
-	u32 tmr = read_tmr0();
+अटल पूर्णांक iop_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	u32 पंचांगr = पढ़ो_पंचांगr0();
 
-	tmr &= ~IOP_TMR_EN;
-	write_tmr0(tmr);
-	return 0;
-}
+	पंचांगr &= ~IOP_TMR_EN;
+	ग_लिखो_पंचांगr0(पंचांगr);
+	वापस 0;
+पूर्ण
 
-static int iop_resume(struct clock_event_device *evt)
-{
-	u32 tmr = read_tmr0();
+अटल पूर्णांक iop_resume(काष्ठा घड़ी_event_device *evt)
+अणु
+	u32 पंचांगr = पढ़ो_पंचांगr0();
 
-	tmr |= IOP_TMR_EN;
-	write_tmr0(tmr);
-	return 0;
-}
+	पंचांगr |= IOP_TMR_EN;
+	ग_लिखो_पंचांगr0(पंचांगr);
+	वापस 0;
+पूर्ण
 
-static struct clock_event_device iop_clockevent = {
+अटल काष्ठा घड़ी_event_device iop_घड़ीevent = अणु
 	.name			= "iop_timer0",
 	.features		= CLOCK_EVT_FEAT_PERIODIC |
 				  CLOCK_EVT_FEAT_ONESHOT,
 	.rating			= 300,
 	.set_next_event		= iop_set_next_event,
-	.set_state_shutdown	= iop_shutdown,
+	.set_state_shutकरोwn	= iop_shutकरोwn,
 	.set_state_periodic	= iop_set_periodic,
 	.tick_resume		= iop_resume,
 	.set_state_oneshot	= iop_set_oneshot,
-};
+पूर्ण;
 
-static irqreturn_t
-iop_timer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *evt = dev_id;
+अटल irqवापस_t
+iop_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *evt = dev_id;
 
-	write_tisr(1);
+	ग_लिखो_tisr(1);
 	evt->event_handler(evt);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static unsigned long iop_tick_rate;
-unsigned long get_iop_tick_rate(void)
-{
-	return iop_tick_rate;
-}
+अटल अचिन्हित दीर्घ iop_tick_rate;
+अचिन्हित दीर्घ get_iop_tick_rate(व्योम)
+अणु
+	वापस iop_tick_rate;
+पूर्ण
 EXPORT_SYMBOL(get_iop_tick_rate);
 
-void __init iop_init_time(unsigned long tick_rate)
-{
-	u32 timer_ctl;
-	int irq = IRQ_IOP32X_TIMER0;
+व्योम __init iop_init_समय(अचिन्हित दीर्घ tick_rate)
+अणु
+	u32 समयr_ctl;
+	पूर्णांक irq = IRQ_IOP32X_TIMER0;
 
-	sched_clock_register(iop_read_sched_clock, 32, tick_rate);
+	sched_घड़ी_रेजिस्टर(iop_पढ़ो_sched_घड़ी, 32, tick_rate);
 
-	ticks_per_jiffy = DIV_ROUND_CLOSEST(tick_rate, HZ);
+	ticks_per_jअगरfy = DIV_ROUND_CLOSEST(tick_rate, HZ);
 	iop_tick_rate = tick_rate;
 
-	timer_ctl = IOP_TMR_EN | IOP_TMR_PRIVILEGED |
+	समयr_ctl = IOP_TMR_EN | IOP_TMR_PRIVILEGED |
 			IOP_TMR_RELOAD | IOP_TMR_RATIO_1_1;
 
 	/*
-	 * Set up interrupting clockevent timer 0.
+	 * Set up पूर्णांकerrupting घड़ीevent समयr 0.
 	 */
-	write_tmr0(timer_ctl & ~IOP_TMR_EN);
-	write_tisr(1);
-	if (request_irq(irq, iop_timer_interrupt, IRQF_TIMER | IRQF_IRQPOLL,
-			"IOP Timer Tick", &iop_clockevent))
+	ग_लिखो_पंचांगr0(समयr_ctl & ~IOP_TMR_EN);
+	ग_लिखो_tisr(1);
+	अगर (request_irq(irq, iop_समयr_पूर्णांकerrupt, IRQF_TIMER | IRQF_IRQPOLL,
+			"IOP Timer Tick", &iop_घड़ीevent))
 		pr_err("Failed to request irq() %d (IOP Timer Tick)\n", irq);
-	iop_clockevent.cpumask = cpumask_of(0);
-	clockevents_config_and_register(&iop_clockevent, tick_rate,
+	iop_घड़ीevent.cpumask = cpumask_of(0);
+	घड़ीevents_config_and_रेजिस्टर(&iop_घड़ीevent, tick_rate,
 					0xf, 0xfffffffe);
 
 	/*
-	 * Set up free-running clocksource timer 1.
+	 * Set up मुक्त-running घड़ीsource समयr 1.
 	 */
-	write_trr1(0xffffffff);
-	write_tcr1(0xffffffff);
-	write_tmr1(timer_ctl);
-	clocksource_register_hz(&iop_clocksource, tick_rate);
-}
+	ग_लिखो_trr1(0xffffffff);
+	ग_लिखो_tcr1(0xffffffff);
+	ग_लिखो_पंचांगr1(समयr_ctl);
+	घड़ीsource_रेजिस्टर_hz(&iop_घड़ीsource, tick_rate);
+पूर्ण

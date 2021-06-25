@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Synopsys HSDK SDP Generic PLL clock driver
+ * Synopsys HSDK SDP Generic PLL घड़ी driver
  *
  * Copyright (C) 2017 Synopsys
  *
@@ -8,433 +9,433 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#define CGU_PLL_CTRL	0x000 /* ARC PLL control register */
-#define CGU_PLL_STATUS	0x004 /* ARC PLL status register */
-#define CGU_PLL_FMEAS	0x008 /* ARC PLL frequency measurement register */
-#define CGU_PLL_MON	0x00C /* ARC PLL monitor register */
+#घोषणा CGU_PLL_CTRL	0x000 /* ARC PLL control रेजिस्टर */
+#घोषणा CGU_PLL_STATUS	0x004 /* ARC PLL status रेजिस्टर */
+#घोषणा CGU_PLL_FMEAS	0x008 /* ARC PLL frequency measurement रेजिस्टर */
+#घोषणा CGU_PLL_MON	0x00C /* ARC PLL monitor रेजिस्टर */
 
-#define CGU_PLL_CTRL_ODIV_SHIFT		2
-#define CGU_PLL_CTRL_IDIV_SHIFT		4
-#define CGU_PLL_CTRL_FBDIV_SHIFT	9
-#define CGU_PLL_CTRL_BAND_SHIFT		20
+#घोषणा CGU_PLL_CTRL_ODIV_SHIFT		2
+#घोषणा CGU_PLL_CTRL_IDIV_SHIFT		4
+#घोषणा CGU_PLL_CTRL_FBDIV_SHIFT	9
+#घोषणा CGU_PLL_CTRL_BAND_SHIFT		20
 
-#define CGU_PLL_CTRL_ODIV_MASK		GENMASK(3, CGU_PLL_CTRL_ODIV_SHIFT)
-#define CGU_PLL_CTRL_IDIV_MASK		GENMASK(8, CGU_PLL_CTRL_IDIV_SHIFT)
-#define CGU_PLL_CTRL_FBDIV_MASK		GENMASK(15, CGU_PLL_CTRL_FBDIV_SHIFT)
+#घोषणा CGU_PLL_CTRL_ODIV_MASK		GENMASK(3, CGU_PLL_CTRL_ODIV_SHIFT)
+#घोषणा CGU_PLL_CTRL_IDIV_MASK		GENMASK(8, CGU_PLL_CTRL_IDIV_SHIFT)
+#घोषणा CGU_PLL_CTRL_FBDIV_MASK		GENMASK(15, CGU_PLL_CTRL_FBDIV_SHIFT)
 
-#define CGU_PLL_CTRL_PD			BIT(0)
-#define CGU_PLL_CTRL_BYPASS		BIT(1)
+#घोषणा CGU_PLL_CTRL_PD			BIT(0)
+#घोषणा CGU_PLL_CTRL_BYPASS		BIT(1)
 
-#define CGU_PLL_STATUS_LOCK		BIT(0)
-#define CGU_PLL_STATUS_ERR		BIT(1)
+#घोषणा CGU_PLL_STATUS_LOCK		BIT(0)
+#घोषणा CGU_PLL_STATUS_ERR		BIT(1)
 
-#define HSDK_PLL_MAX_LOCK_TIME		100 /* 100 us */
+#घोषणा HSDK_PLL_MAX_LOCK_TIME		100 /* 100 us */
 
-#define CGU_PLL_SOURCE_MAX		1
+#घोषणा CGU_PLL_SOURCE_MAX		1
 
-#define CORE_IF_CLK_THRESHOLD_HZ	500000000
-#define CREG_CORE_IF_CLK_DIV_1		0x0
-#define CREG_CORE_IF_CLK_DIV_2		0x1
+#घोषणा CORE_IF_CLK_THRESHOLD_HZ	500000000
+#घोषणा CREG_CORE_IF_CLK_DIV_1		0x0
+#घोषणा CREG_CORE_IF_CLK_DIV_2		0x1
 
-struct hsdk_pll_cfg {
+काष्ठा hsdk_pll_cfg अणु
 	u32 rate;
-	u32 idiv;
-	u32 fbdiv;
-	u32 odiv;
+	u32 iभाग;
+	u32 fbभाग;
+	u32 oभाग;
 	u32 band;
 	u32 bypass;
-};
+पूर्ण;
 
-static const struct hsdk_pll_cfg asdt_pll_cfg[] = {
-	{ 100000000,  0, 11, 3, 0, 0 },
-	{ 133000000,  0, 15, 3, 0, 0 },
-	{ 200000000,  1, 47, 3, 0, 0 },
-	{ 233000000,  1, 27, 2, 0, 0 },
-	{ 300000000,  1, 35, 2, 0, 0 },
-	{ 333000000,  1, 39, 2, 0, 0 },
-	{ 400000000,  1, 47, 2, 0, 0 },
-	{ 500000000,  0, 14, 1, 0, 0 },
-	{ 600000000,  0, 17, 1, 0, 0 },
-	{ 700000000,  0, 20, 1, 0, 0 },
-	{ 800000000,  0, 23, 1, 0, 0 },
-	{ 900000000,  1, 26, 0, 0, 0 },
-	{ 1000000000, 1, 29, 0, 0, 0 },
-	{ 1100000000, 1, 32, 0, 0, 0 },
-	{ 1200000000, 1, 35, 0, 0, 0 },
-	{ 1300000000, 1, 38, 0, 0, 0 },
-	{ 1400000000, 1, 41, 0, 0, 0 },
-	{ 1500000000, 1, 44, 0, 0, 0 },
-	{ 1600000000, 1, 47, 0, 0, 0 },
-	{}
-};
+अटल स्थिर काष्ठा hsdk_pll_cfg asdt_pll_cfg[] = अणु
+	अणु 100000000,  0, 11, 3, 0, 0 पूर्ण,
+	अणु 133000000,  0, 15, 3, 0, 0 पूर्ण,
+	अणु 200000000,  1, 47, 3, 0, 0 पूर्ण,
+	अणु 233000000,  1, 27, 2, 0, 0 पूर्ण,
+	अणु 300000000,  1, 35, 2, 0, 0 पूर्ण,
+	अणु 333000000,  1, 39, 2, 0, 0 पूर्ण,
+	अणु 400000000,  1, 47, 2, 0, 0 पूर्ण,
+	अणु 500000000,  0, 14, 1, 0, 0 पूर्ण,
+	अणु 600000000,  0, 17, 1, 0, 0 पूर्ण,
+	अणु 700000000,  0, 20, 1, 0, 0 पूर्ण,
+	अणु 800000000,  0, 23, 1, 0, 0 पूर्ण,
+	अणु 900000000,  1, 26, 0, 0, 0 पूर्ण,
+	अणु 1000000000, 1, 29, 0, 0, 0 पूर्ण,
+	अणु 1100000000, 1, 32, 0, 0, 0 पूर्ण,
+	अणु 1200000000, 1, 35, 0, 0, 0 पूर्ण,
+	अणु 1300000000, 1, 38, 0, 0, 0 पूर्ण,
+	अणु 1400000000, 1, 41, 0, 0, 0 पूर्ण,
+	अणु 1500000000, 1, 44, 0, 0, 0 पूर्ण,
+	अणु 1600000000, 1, 47, 0, 0, 0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hsdk_pll_cfg hdmi_pll_cfg[] = {
-	{ 27000000,   0, 0,  0, 0, 1 },
-	{ 148500000,  0, 21, 3, 0, 0 },
-	{ 297000000,  0, 21, 2, 0, 0 },
-	{ 540000000,  0, 19, 1, 0, 0 },
-	{ 594000000,  0, 21, 1, 0, 0 },
-	{}
-};
+अटल स्थिर काष्ठा hsdk_pll_cfg hdmi_pll_cfg[] = अणु
+	अणु 27000000,   0, 0,  0, 0, 1 पूर्ण,
+	अणु 148500000,  0, 21, 3, 0, 0 पूर्ण,
+	अणु 297000000,  0, 21, 2, 0, 0 पूर्ण,
+	अणु 540000000,  0, 19, 1, 0, 0 पूर्ण,
+	अणु 594000000,  0, 21, 1, 0, 0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-struct hsdk_pll_clk {
-	struct clk_hw hw;
-	void __iomem *regs;
-	void __iomem *spec_regs;
-	const struct hsdk_pll_devdata *pll_devdata;
-	struct device *dev;
-};
+काष्ठा hsdk_pll_clk अणु
+	काष्ठा clk_hw hw;
+	व्योम __iomem *regs;
+	व्योम __iomem *spec_regs;
+	स्थिर काष्ठा hsdk_pll_devdata *pll_devdata;
+	काष्ठा device *dev;
+पूर्ण;
 
-struct hsdk_pll_devdata {
-	const struct hsdk_pll_cfg *pll_cfg;
-	int (*update_rate)(struct hsdk_pll_clk *clk, unsigned long rate,
-			   const struct hsdk_pll_cfg *cfg);
-};
+काष्ठा hsdk_pll_devdata अणु
+	स्थिर काष्ठा hsdk_pll_cfg *pll_cfg;
+	पूर्णांक (*update_rate)(काष्ठा hsdk_pll_clk *clk, अचिन्हित दीर्घ rate,
+			   स्थिर काष्ठा hsdk_pll_cfg *cfg);
+पूर्ण;
 
-static int hsdk_pll_core_update_rate(struct hsdk_pll_clk *, unsigned long,
-				     const struct hsdk_pll_cfg *);
-static int hsdk_pll_comm_update_rate(struct hsdk_pll_clk *, unsigned long,
-				     const struct hsdk_pll_cfg *);
+अटल पूर्णांक hsdk_pll_core_update_rate(काष्ठा hsdk_pll_clk *, अचिन्हित दीर्घ,
+				     स्थिर काष्ठा hsdk_pll_cfg *);
+अटल पूर्णांक hsdk_pll_comm_update_rate(काष्ठा hsdk_pll_clk *, अचिन्हित दीर्घ,
+				     स्थिर काष्ठा hsdk_pll_cfg *);
 
-static const struct hsdk_pll_devdata core_pll_devdata = {
+अटल स्थिर काष्ठा hsdk_pll_devdata core_pll_devdata = अणु
 	.pll_cfg = asdt_pll_cfg,
 	.update_rate = hsdk_pll_core_update_rate,
-};
+पूर्ण;
 
-static const struct hsdk_pll_devdata sdt_pll_devdata = {
+अटल स्थिर काष्ठा hsdk_pll_devdata sdt_pll_devdata = अणु
 	.pll_cfg = asdt_pll_cfg,
 	.update_rate = hsdk_pll_comm_update_rate,
-};
+पूर्ण;
 
-static const struct hsdk_pll_devdata hdmi_pll_devdata = {
+अटल स्थिर काष्ठा hsdk_pll_devdata hdmi_pll_devdata = अणु
 	.pll_cfg = hdmi_pll_cfg,
 	.update_rate = hsdk_pll_comm_update_rate,
-};
+पूर्ण;
 
-static inline void hsdk_pll_write(struct hsdk_pll_clk *clk, u32 reg, u32 val)
-{
-	iowrite32(val, clk->regs + reg);
-}
+अटल अंतरभूत व्योम hsdk_pll_ग_लिखो(काष्ठा hsdk_pll_clk *clk, u32 reg, u32 val)
+अणु
+	ioग_लिखो32(val, clk->regs + reg);
+पूर्ण
 
-static inline u32 hsdk_pll_read(struct hsdk_pll_clk *clk, u32 reg)
-{
-	return ioread32(clk->regs + reg);
-}
+अटल अंतरभूत u32 hsdk_pll_पढ़ो(काष्ठा hsdk_pll_clk *clk, u32 reg)
+अणु
+	वापस ioपढ़ो32(clk->regs + reg);
+पूर्ण
 
-static inline void hsdk_pll_set_cfg(struct hsdk_pll_clk *clk,
-				    const struct hsdk_pll_cfg *cfg)
-{
+अटल अंतरभूत व्योम hsdk_pll_set_cfg(काष्ठा hsdk_pll_clk *clk,
+				    स्थिर काष्ठा hsdk_pll_cfg *cfg)
+अणु
 	u32 val = 0;
 
-	if (cfg->bypass) {
-		val = hsdk_pll_read(clk, CGU_PLL_CTRL);
+	अगर (cfg->bypass) अणु
+		val = hsdk_pll_पढ़ो(clk, CGU_PLL_CTRL);
 		val |= CGU_PLL_CTRL_BYPASS;
-	} else {
-		/* Powerdown and Bypass bits should be cleared */
-		val |= cfg->idiv << CGU_PLL_CTRL_IDIV_SHIFT;
-		val |= cfg->fbdiv << CGU_PLL_CTRL_FBDIV_SHIFT;
-		val |= cfg->odiv << CGU_PLL_CTRL_ODIV_SHIFT;
+	पूर्ण अन्यथा अणु
+		/* Powerकरोwn and Bypass bits should be cleared */
+		val |= cfg->iभाग << CGU_PLL_CTRL_IDIV_SHIFT;
+		val |= cfg->fbभाग << CGU_PLL_CTRL_FBDIV_SHIFT;
+		val |= cfg->oभाग << CGU_PLL_CTRL_ODIV_SHIFT;
 		val |= cfg->band << CGU_PLL_CTRL_BAND_SHIFT;
-	}
+	पूर्ण
 
 	dev_dbg(clk->dev, "write configuration: %#x\n", val);
 
-	hsdk_pll_write(clk, CGU_PLL_CTRL, val);
-}
+	hsdk_pll_ग_लिखो(clk, CGU_PLL_CTRL, val);
+पूर्ण
 
-static inline bool hsdk_pll_is_locked(struct hsdk_pll_clk *clk)
-{
-	return !!(hsdk_pll_read(clk, CGU_PLL_STATUS) & CGU_PLL_STATUS_LOCK);
-}
+अटल अंतरभूत bool hsdk_pll_is_locked(काष्ठा hsdk_pll_clk *clk)
+अणु
+	वापस !!(hsdk_pll_पढ़ो(clk, CGU_PLL_STATUS) & CGU_PLL_STATUS_LOCK);
+पूर्ण
 
-static inline bool hsdk_pll_is_err(struct hsdk_pll_clk *clk)
-{
-	return !!(hsdk_pll_read(clk, CGU_PLL_STATUS) & CGU_PLL_STATUS_ERR);
-}
+अटल अंतरभूत bool hsdk_pll_is_err(काष्ठा hsdk_pll_clk *clk)
+अणु
+	वापस !!(hsdk_pll_पढ़ो(clk, CGU_PLL_STATUS) & CGU_PLL_STATUS_ERR);
+पूर्ण
 
-static inline struct hsdk_pll_clk *to_hsdk_pll_clk(struct clk_hw *hw)
-{
-	return container_of(hw, struct hsdk_pll_clk, hw);
-}
+अटल अंतरभूत काष्ठा hsdk_pll_clk *to_hsdk_pll_clk(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(hw, काष्ठा hsdk_pll_clk, hw);
+पूर्ण
 
-static unsigned long hsdk_pll_recalc_rate(struct clk_hw *hw,
-					  unsigned long parent_rate)
-{
+अटल अचिन्हित दीर्घ hsdk_pll_recalc_rate(काष्ठा clk_hw *hw,
+					  अचिन्हित दीर्घ parent_rate)
+अणु
 	u32 val;
 	u64 rate;
-	u32 idiv, fbdiv, odiv;
-	struct hsdk_pll_clk *clk = to_hsdk_pll_clk(hw);
+	u32 iभाग, fbभाग, oभाग;
+	काष्ठा hsdk_pll_clk *clk = to_hsdk_pll_clk(hw);
 
-	val = hsdk_pll_read(clk, CGU_PLL_CTRL);
+	val = hsdk_pll_पढ़ो(clk, CGU_PLL_CTRL);
 
 	dev_dbg(clk->dev, "current configuration: %#x\n", val);
 
-	/* Check if PLL is bypassed */
-	if (val & CGU_PLL_CTRL_BYPASS)
-		return parent_rate;
+	/* Check अगर PLL is bypassed */
+	अगर (val & CGU_PLL_CTRL_BYPASS)
+		वापस parent_rate;
 
-	/* Check if PLL is disabled */
-	if (val & CGU_PLL_CTRL_PD)
-		return 0;
+	/* Check अगर PLL is disabled */
+	अगर (val & CGU_PLL_CTRL_PD)
+		वापस 0;
 
-	/* input divider = reg.idiv + 1 */
-	idiv = 1 + ((val & CGU_PLL_CTRL_IDIV_MASK) >> CGU_PLL_CTRL_IDIV_SHIFT);
-	/* fb divider = 2*(reg.fbdiv + 1) */
-	fbdiv = 2 * (1 + ((val & CGU_PLL_CTRL_FBDIV_MASK) >> CGU_PLL_CTRL_FBDIV_SHIFT));
-	/* output divider = 2^(reg.odiv) */
-	odiv = 1 << ((val & CGU_PLL_CTRL_ODIV_MASK) >> CGU_PLL_CTRL_ODIV_SHIFT);
+	/* input भागider = reg.iभाग + 1 */
+	iभाग = 1 + ((val & CGU_PLL_CTRL_IDIV_MASK) >> CGU_PLL_CTRL_IDIV_SHIFT);
+	/* fb भागider = 2*(reg.fbभाग + 1) */
+	fbभाग = 2 * (1 + ((val & CGU_PLL_CTRL_FBDIV_MASK) >> CGU_PLL_CTRL_FBDIV_SHIFT));
+	/* output भागider = 2^(reg.oभाग) */
+	oभाग = 1 << ((val & CGU_PLL_CTRL_ODIV_MASK) >> CGU_PLL_CTRL_ODIV_SHIFT);
 
-	rate = (u64)parent_rate * fbdiv;
-	do_div(rate, idiv * odiv);
+	rate = (u64)parent_rate * fbभाग;
+	करो_भाग(rate, iभाग * oभाग);
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static long hsdk_pll_round_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long *prate)
-{
-	int i;
-	unsigned long best_rate;
-	struct hsdk_pll_clk *clk = to_hsdk_pll_clk(hw);
-	const struct hsdk_pll_cfg *pll_cfg = clk->pll_devdata->pll_cfg;
+अटल दीर्घ hsdk_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ *prate)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ best_rate;
+	काष्ठा hsdk_pll_clk *clk = to_hsdk_pll_clk(hw);
+	स्थिर काष्ठा hsdk_pll_cfg *pll_cfg = clk->pll_devdata->pll_cfg;
 
-	if (pll_cfg[0].rate == 0)
-		return -EINVAL;
+	अगर (pll_cfg[0].rate == 0)
+		वापस -EINVAL;
 
 	best_rate = pll_cfg[0].rate;
 
-	for (i = 1; pll_cfg[i].rate != 0; i++) {
-		if (abs(rate - pll_cfg[i].rate) < abs(rate - best_rate))
+	क्रम (i = 1; pll_cfg[i].rate != 0; i++) अणु
+		अगर (असल(rate - pll_cfg[i].rate) < असल(rate - best_rate))
 			best_rate = pll_cfg[i].rate;
-	}
+	पूर्ण
 
 	dev_dbg(clk->dev, "chosen best rate: %lu\n", best_rate);
 
-	return best_rate;
-}
+	वापस best_rate;
+पूर्ण
 
-static int hsdk_pll_comm_update_rate(struct hsdk_pll_clk *clk,
-				     unsigned long rate,
-				     const struct hsdk_pll_cfg *cfg)
-{
+अटल पूर्णांक hsdk_pll_comm_update_rate(काष्ठा hsdk_pll_clk *clk,
+				     अचिन्हित दीर्घ rate,
+				     स्थिर काष्ठा hsdk_pll_cfg *cfg)
+अणु
 	hsdk_pll_set_cfg(clk, cfg);
 
 	/*
 	 * Wait until CGU relocks and check error status.
-	 * If after timeout CGU is unlocked yet return error.
+	 * If after समयout CGU is unlocked yet वापस error.
 	 */
 	udelay(HSDK_PLL_MAX_LOCK_TIME);
-	if (!hsdk_pll_is_locked(clk))
-		return -ETIMEDOUT;
+	अगर (!hsdk_pll_is_locked(clk))
+		वापस -ETIMEDOUT;
 
-	if (hsdk_pll_is_err(clk))
-		return -EINVAL;
+	अगर (hsdk_pll_is_err(clk))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hsdk_pll_core_update_rate(struct hsdk_pll_clk *clk,
-				     unsigned long rate,
-				     const struct hsdk_pll_cfg *cfg)
-{
+अटल पूर्णांक hsdk_pll_core_update_rate(काष्ठा hsdk_pll_clk *clk,
+				     अचिन्हित दीर्घ rate,
+				     स्थिर काष्ठा hsdk_pll_cfg *cfg)
+अणु
 	/*
-	 * When core clock exceeds 500MHz, the divider for the interface
-	 * clock must be programmed to div-by-2.
+	 * When core घड़ी exceeds 500MHz, the भागider क्रम the पूर्णांकerface
+	 * घड़ी must be programmed to भाग-by-2.
 	 */
-	if (rate > CORE_IF_CLK_THRESHOLD_HZ)
-		iowrite32(CREG_CORE_IF_CLK_DIV_2, clk->spec_regs);
+	अगर (rate > CORE_IF_CLK_THRESHOLD_HZ)
+		ioग_लिखो32(CREG_CORE_IF_CLK_DIV_2, clk->spec_regs);
 
 	hsdk_pll_set_cfg(clk, cfg);
 
 	/*
 	 * Wait until CGU relocks and check error status.
-	 * If after timeout CGU is unlocked yet return error.
+	 * If after समयout CGU is unlocked yet वापस error.
 	 */
 	udelay(HSDK_PLL_MAX_LOCK_TIME);
-	if (!hsdk_pll_is_locked(clk))
-		return -ETIMEDOUT;
+	अगर (!hsdk_pll_is_locked(clk))
+		वापस -ETIMEDOUT;
 
-	if (hsdk_pll_is_err(clk))
-		return -EINVAL;
+	अगर (hsdk_pll_is_err(clk))
+		वापस -EINVAL;
 
 	/*
-	 * Program divider to div-by-1 if we succesfuly set core clock below
+	 * Program भागider to भाग-by-1 अगर we succesfuly set core घड़ी below
 	 * 500MHz threshold.
 	 */
-	if (rate <= CORE_IF_CLK_THRESHOLD_HZ)
-		iowrite32(CREG_CORE_IF_CLK_DIV_1, clk->spec_regs);
+	अगर (rate <= CORE_IF_CLK_THRESHOLD_HZ)
+		ioग_लिखो32(CREG_CORE_IF_CLK_DIV_1, clk->spec_regs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hsdk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
-			     unsigned long parent_rate)
-{
-	int i;
-	struct hsdk_pll_clk *clk = to_hsdk_pll_clk(hw);
-	const struct hsdk_pll_cfg *pll_cfg = clk->pll_devdata->pll_cfg;
+अटल पूर्णांक hsdk_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			     अचिन्हित दीर्घ parent_rate)
+अणु
+	पूर्णांक i;
+	काष्ठा hsdk_pll_clk *clk = to_hsdk_pll_clk(hw);
+	स्थिर काष्ठा hsdk_pll_cfg *pll_cfg = clk->pll_devdata->pll_cfg;
 
-	for (i = 0; pll_cfg[i].rate != 0; i++) {
-		if (pll_cfg[i].rate == rate) {
-			return clk->pll_devdata->update_rate(clk, rate,
+	क्रम (i = 0; pll_cfg[i].rate != 0; i++) अणु
+		अगर (pll_cfg[i].rate == rate) अणु
+			वापस clk->pll_devdata->update_rate(clk, rate,
 							     &pll_cfg[i]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	dev_err(clk->dev, "invalid rate=%ld, parent_rate=%ld\n", rate,
 			parent_rate);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct clk_ops hsdk_pll_ops = {
+अटल स्थिर काष्ठा clk_ops hsdk_pll_ops = अणु
 	.recalc_rate = hsdk_pll_recalc_rate,
 	.round_rate = hsdk_pll_round_rate,
 	.set_rate = hsdk_pll_set_rate,
-};
+पूर्ण;
 
-static int hsdk_pll_clk_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct resource *mem;
-	const char *parent_name;
-	unsigned int num_parents;
-	struct hsdk_pll_clk *pll_clk;
-	struct clk_init_data init = { };
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक hsdk_pll_clk_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा resource *mem;
+	स्थिर अक्षर *parent_name;
+	अचिन्हित पूर्णांक num_parents;
+	काष्ठा hsdk_pll_clk *pll_clk;
+	काष्ठा clk_init_data init = अणु पूर्ण;
+	काष्ठा device *dev = &pdev->dev;
 
-	pll_clk = devm_kzalloc(dev, sizeof(*pll_clk), GFP_KERNEL);
-	if (!pll_clk)
-		return -ENOMEM;
+	pll_clk = devm_kzalloc(dev, माप(*pll_clk), GFP_KERNEL);
+	अगर (!pll_clk)
+		वापस -ENOMEM;
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	pll_clk->regs = devm_ioremap_resource(dev, mem);
-	if (IS_ERR(pll_clk->regs))
-		return PTR_ERR(pll_clk->regs);
+	अगर (IS_ERR(pll_clk->regs))
+		वापस PTR_ERR(pll_clk->regs);
 
 	init.name = dev->of_node->name;
 	init.ops = &hsdk_pll_ops;
 	parent_name = of_clk_get_parent_name(dev->of_node, 0);
 	init.parent_names = &parent_name;
 	num_parents = of_clk_get_parent_count(dev->of_node);
-	if (num_parents == 0 || num_parents > CGU_PLL_SOURCE_MAX) {
+	अगर (num_parents == 0 || num_parents > CGU_PLL_SOURCE_MAX) अणु
 		dev_err(dev, "wrong clock parents number: %u\n", num_parents);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	init.num_parents = num_parents;
 
 	pll_clk->hw.init = &init;
 	pll_clk->dev = dev;
 	pll_clk->pll_devdata = of_device_get_match_data(dev);
 
-	if (!pll_clk->pll_devdata) {
+	अगर (!pll_clk->pll_devdata) अणु
 		dev_err(dev, "No OF match data provided\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = devm_clk_hw_register(dev, &pll_clk->hw);
-	if (ret) {
+	ret = devm_clk_hw_रेजिस्टर(dev, &pll_clk->hw);
+	अगर (ret) अणु
 		dev_err(dev, "failed to register %s clock\n", init.name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return of_clk_add_hw_provider(dev->of_node, of_clk_hw_simple_get,
+	वापस of_clk_add_hw_provider(dev->of_node, of_clk_hw_simple_get,
 			&pll_clk->hw);
-}
+पूर्ण
 
-static int hsdk_pll_clk_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक hsdk_pll_clk_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	of_clk_del_provider(pdev->dev.of_node);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init of_hsdk_pll_clk_setup(struct device_node *node)
-{
-	int ret;
-	const char *parent_name;
-	unsigned int num_parents;
-	struct hsdk_pll_clk *pll_clk;
-	struct clk_init_data init = { };
+अटल व्योम __init of_hsdk_pll_clk_setup(काष्ठा device_node *node)
+अणु
+	पूर्णांक ret;
+	स्थिर अक्षर *parent_name;
+	अचिन्हित पूर्णांक num_parents;
+	काष्ठा hsdk_pll_clk *pll_clk;
+	काष्ठा clk_init_data init = अणु पूर्ण;
 
-	pll_clk = kzalloc(sizeof(*pll_clk), GFP_KERNEL);
-	if (!pll_clk)
-		return;
+	pll_clk = kzalloc(माप(*pll_clk), GFP_KERNEL);
+	अगर (!pll_clk)
+		वापस;
 
 	pll_clk->regs = of_iomap(node, 0);
-	if (!pll_clk->regs) {
+	अगर (!pll_clk->regs) अणु
 		pr_err("failed to map pll registers\n");
-		goto err_free_pll_clk;
-	}
+		जाओ err_मुक्त_pll_clk;
+	पूर्ण
 
 	pll_clk->spec_regs = of_iomap(node, 1);
-	if (!pll_clk->spec_regs) {
+	अगर (!pll_clk->spec_regs) अणु
 		pr_err("failed to map pll registers\n");
-		goto err_unmap_comm_regs;
-	}
+		जाओ err_unmap_comm_regs;
+	पूर्ण
 
 	init.name = node->name;
 	init.ops = &hsdk_pll_ops;
 	parent_name = of_clk_get_parent_name(node, 0);
 	init.parent_names = &parent_name;
 	num_parents = of_clk_get_parent_count(node);
-	if (num_parents > CGU_PLL_SOURCE_MAX) {
+	अगर (num_parents > CGU_PLL_SOURCE_MAX) अणु
 		pr_err("too much clock parents: %u\n", num_parents);
-		goto err_unmap_spec_regs;
-	}
+		जाओ err_unmap_spec_regs;
+	पूर्ण
 	init.num_parents = num_parents;
 
 	pll_clk->hw.init = &init;
 	pll_clk->pll_devdata = &core_pll_devdata;
 
-	ret = clk_hw_register(NULL, &pll_clk->hw);
-	if (ret) {
+	ret = clk_hw_रेजिस्टर(शून्य, &pll_clk->hw);
+	अगर (ret) अणु
 		pr_err("failed to register %pOFn clock\n", node);
-		goto err_unmap_spec_regs;
-	}
+		जाओ err_unmap_spec_regs;
+	पूर्ण
 
 	ret = of_clk_add_hw_provider(node, of_clk_hw_simple_get, &pll_clk->hw);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("failed to add hw provider for %pOFn clock\n", node);
-		goto err_unmap_spec_regs;
-	}
+		जाओ err_unmap_spec_regs;
+	पूर्ण
 
-	return;
+	वापस;
 
 err_unmap_spec_regs:
 	iounmap(pll_clk->spec_regs);
 err_unmap_comm_regs:
 	iounmap(pll_clk->regs);
-err_free_pll_clk:
-	kfree(pll_clk);
-}
+err_मुक्त_pll_clk:
+	kमुक्त(pll_clk);
+पूर्ण
 
-/* Core PLL needed early for ARC cpus timers */
-CLK_OF_DECLARE(hsdk_pll_clock, "snps,hsdk-core-pll-clock",
+/* Core PLL needed early क्रम ARC cpus समयrs */
+CLK_OF_DECLARE(hsdk_pll_घड़ी, "snps,hsdk-core-pll-clock",
 of_hsdk_pll_clk_setup);
 
-static const struct of_device_id hsdk_pll_clk_id[] = {
-	{ .compatible = "snps,hsdk-gp-pll-clock", .data = &sdt_pll_devdata},
-	{ .compatible = "snps,hsdk-hdmi-pll-clock", .data = &hdmi_pll_devdata},
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id hsdk_pll_clk_id[] = अणु
+	अणु .compatible = "snps,hsdk-gp-pll-clock", .data = &sdt_pll_devdataपूर्ण,
+	अणु .compatible = "snps,hsdk-hdmi-pll-clock", .data = &hdmi_pll_devdataपूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_driver hsdk_pll_clk_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver hsdk_pll_clk_driver = अणु
+	.driver = अणु
 		.name = "hsdk-gp-pll-clock",
 		.of_match_table = hsdk_pll_clk_id,
-	},
+	पूर्ण,
 	.probe = hsdk_pll_clk_probe,
-	.remove = hsdk_pll_clk_remove,
-};
-builtin_platform_driver(hsdk_pll_clk_driver);
+	.हटाओ = hsdk_pll_clk_हटाओ,
+पूर्ण;
+builtin_platक्रमm_driver(hsdk_pll_clk_driver);

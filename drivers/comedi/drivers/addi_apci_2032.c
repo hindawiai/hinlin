@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * addi_apci_2032.c
- * Copyright (C) 2004,2005  ADDI-DATA GmbH for the source code of this module.
+ * Copyright (C) 2004,2005  ADDI-DATA GmbH क्रम the source code of this module.
  * Project manager: Eric Stolz
  *
  *	ADDI-DATA GmbH
@@ -13,74 +14,74 @@
  *	info@addi-data.com
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
 
-#include "../comedi_pci.h"
-#include "addi_watchdog.h"
+#समावेश "../comedi_pci.h"
+#समावेश "addi_watchdog.h"
 
 /*
  * PCI bar 1 I/O Register map
  */
-#define APCI2032_DO_REG			0x00
-#define APCI2032_INT_CTRL_REG		0x04
-#define APCI2032_INT_CTRL_VCC_ENA	BIT(0)
-#define APCI2032_INT_CTRL_CC_ENA	BIT(1)
-#define APCI2032_INT_STATUS_REG		0x08
-#define APCI2032_INT_STATUS_VCC		BIT(0)
-#define APCI2032_INT_STATUS_CC		BIT(1)
-#define APCI2032_STATUS_REG		0x0c
-#define APCI2032_STATUS_IRQ		BIT(0)
-#define APCI2032_WDOG_REG		0x10
+#घोषणा APCI2032_DO_REG			0x00
+#घोषणा APCI2032_INT_CTRL_REG		0x04
+#घोषणा APCI2032_INT_CTRL_VCC_ENA	BIT(0)
+#घोषणा APCI2032_INT_CTRL_CC_ENA	BIT(1)
+#घोषणा APCI2032_INT_STATUS_REG		0x08
+#घोषणा APCI2032_INT_STATUS_VCC		BIT(0)
+#घोषणा APCI2032_INT_STATUS_CC		BIT(1)
+#घोषणा APCI2032_STATUS_REG		0x0c
+#घोषणा APCI2032_STATUS_IRQ		BIT(0)
+#घोषणा APCI2032_WDOG_REG		0x10
 
-struct apci2032_int_private {
+काष्ठा apci2032_पूर्णांक_निजी अणु
 	spinlock_t spinlock;		/* protects the following members */
 	bool active;			/* an async command is running */
-	unsigned char enabled_isns;	/* mask of enabled interrupt channels */
-};
+	अचिन्हित अक्षर enabled_isns;	/* mask of enabled पूर्णांकerrupt channels */
+पूर्ण;
 
-static int apci2032_do_insn_bits(struct comedi_device *dev,
-				 struct comedi_subdevice *s,
-				 struct comedi_insn *insn,
-				 unsigned int *data)
-{
+अटल पूर्णांक apci2032_करो_insn_bits(काष्ठा comedi_device *dev,
+				 काष्ठा comedi_subdevice *s,
+				 काष्ठा comedi_insn *insn,
+				 अचिन्हित पूर्णांक *data)
+अणु
 	s->state = inl(dev->iobase + APCI2032_DO_REG);
 
-	if (comedi_dio_update_state(s, data))
+	अगर (comedi_dio_update_state(s, data))
 		outl(s->state, dev->iobase + APCI2032_DO_REG);
 
 	data[1] = s->state;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int apci2032_int_insn_bits(struct comedi_device *dev,
-				  struct comedi_subdevice *s,
-				  struct comedi_insn *insn,
-				  unsigned int *data)
-{
+अटल पूर्णांक apci2032_पूर्णांक_insn_bits(काष्ठा comedi_device *dev,
+				  काष्ठा comedi_subdevice *s,
+				  काष्ठा comedi_insn *insn,
+				  अचिन्हित पूर्णांक *data)
+अणु
 	data[1] = inl(dev->iobase + APCI2032_INT_STATUS_REG) & 3;
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static void apci2032_int_stop(struct comedi_device *dev,
-			      struct comedi_subdevice *s)
-{
-	struct apci2032_int_private *subpriv = s->private;
+अटल व्योम apci2032_पूर्णांक_stop(काष्ठा comedi_device *dev,
+			      काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा apci2032_पूर्णांक_निजी *subpriv = s->निजी;
 
 	subpriv->active = false;
 	subpriv->enabled_isns = 0;
 	outl(0x0, dev->iobase + APCI2032_INT_CTRL_REG);
-}
+पूर्ण
 
-static int apci2032_int_cmdtest(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				struct comedi_cmd *cmd)
-{
-	int err = 0;
+अटल पूर्णांक apci2032_पूर्णांक_cmdtest(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				काष्ठा comedi_cmd *cmd)
+अणु
+	पूर्णांक err = 0;
 
-	/* Step 1 : check if triggers are trivially valid */
+	/* Step 1 : check अगर triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src, TRIG_EXT);
@@ -88,50 +89,50 @@ static int apci2032_int_cmdtest(struct comedi_device *dev,
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_COUNT | TRIG_NONE);
 
-	if (err)
-		return 1;
+	अगर (err)
+		वापस 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 	err |= comedi_check_trigger_is_unique(cmd->stop_src);
 
 	/* Step 2b : and mutually compatible */
 
-	if (err)
-		return 2;
+	अगर (err)
+		वापस 2;
 
-	/* Step 3: check if arguments are trivially valid */
+	/* Step 3: check अगर arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 	err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, 0);
 	err |= comedi_check_trigger_arg_is(&cmd->convert_arg, 0);
 	err |= comedi_check_trigger_arg_is(&cmd->scan_end_arg,
 					   cmd->chanlist_len);
-	if (cmd->stop_src == TRIG_COUNT)
+	अगर (cmd->stop_src == TRIG_COUNT)
 		err |= comedi_check_trigger_arg_min(&cmd->stop_arg, 1);
-	else	/* TRIG_NONE */
+	अन्यथा	/* TRIG_NONE */
 		err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	if (err)
-		return 3;
+	अगर (err)
+		वापस 3;
 
 	/* Step 4: fix up any arguments */
 
-	/* Step 5: check channel list if it exists */
+	/* Step 5: check channel list अगर it exists */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int apci2032_int_cmd(struct comedi_device *dev,
-			    struct comedi_subdevice *s)
-{
-	struct comedi_cmd *cmd = &s->async->cmd;
-	struct apci2032_int_private *subpriv = s->private;
-	unsigned char enabled_isns;
-	unsigned int n;
-	unsigned long flags;
+अटल पूर्णांक apci2032_पूर्णांक_cmd(काष्ठा comedi_device *dev,
+			    काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा comedi_cmd *cmd = &s->async->cmd;
+	काष्ठा apci2032_पूर्णांक_निजी *subpriv = s->निजी;
+	अचिन्हित अक्षर enabled_isns;
+	अचिन्हित पूर्णांक n;
+	अचिन्हित दीर्घ flags;
 
 	enabled_isns = 0;
-	for (n = 0; n < cmd->chanlist_len; n++)
+	क्रम (n = 0; n < cmd->chanlist_len; n++)
 		enabled_isns |= 1 << CR_CHAN(cmd->chanlist[n]);
 
 	spin_lock_irqsave(&subpriv->spinlock, flags);
@@ -142,110 +143,110 @@ static int apci2032_int_cmd(struct comedi_device *dev,
 
 	spin_unlock_irqrestore(&subpriv->spinlock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int apci2032_int_cancel(struct comedi_device *dev,
-			       struct comedi_subdevice *s)
-{
-	struct apci2032_int_private *subpriv = s->private;
-	unsigned long flags;
+अटल पूर्णांक apci2032_पूर्णांक_cancel(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा apci2032_पूर्णांक_निजी *subpriv = s->निजी;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&subpriv->spinlock, flags);
-	if (subpriv->active)
-		apci2032_int_stop(dev, s);
+	अगर (subpriv->active)
+		apci2032_पूर्णांक_stop(dev, s);
 	spin_unlock_irqrestore(&subpriv->spinlock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t apci2032_interrupt(int irq, void *d)
-{
-	struct comedi_device *dev = d;
-	struct comedi_subdevice *s = dev->read_subdev;
-	struct comedi_cmd *cmd = &s->async->cmd;
-	struct apci2032_int_private *subpriv;
-	unsigned int val;
+अटल irqवापस_t apci2032_पूर्णांकerrupt(पूर्णांक irq, व्योम *d)
+अणु
+	काष्ठा comedi_device *dev = d;
+	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
+	काष्ठा comedi_cmd *cmd = &s->async->cmd;
+	काष्ठा apci2032_पूर्णांक_निजी *subpriv;
+	अचिन्हित पूर्णांक val;
 
-	if (!dev->attached)
-		return IRQ_NONE;
+	अगर (!dev->attached)
+		वापस IRQ_NONE;
 
-	/* Check if VCC OR CC interrupt has occurred */
+	/* Check अगर VCC OR CC पूर्णांकerrupt has occurred */
 	val = inl(dev->iobase + APCI2032_STATUS_REG) & APCI2032_STATUS_IRQ;
-	if (!val)
-		return IRQ_NONE;
+	अगर (!val)
+		वापस IRQ_NONE;
 
-	subpriv = s->private;
+	subpriv = s->निजी;
 	spin_lock(&subpriv->spinlock);
 
 	val = inl(dev->iobase + APCI2032_INT_STATUS_REG) & 3;
-	/* Disable triggered interrupt sources. */
+	/* Disable triggered पूर्णांकerrupt sources. */
 	outl(~val & 3, dev->iobase + APCI2032_INT_CTRL_REG);
 	/*
-	 * Note: We don't reenable the triggered interrupt sources because they
-	 * are level-sensitive, hardware error status interrupt sources and
-	 * they'd keep triggering interrupts repeatedly.
+	 * Note: We करोn't reenable the triggered पूर्णांकerrupt sources because they
+	 * are level-sensitive, hardware error status पूर्णांकerrupt sources and
+	 * they'd keep triggering पूर्णांकerrupts repeatedly.
 	 */
 
-	if (subpriv->active && (val & subpriv->enabled_isns) != 0) {
-		unsigned short bits = 0;
-		int i;
+	अगर (subpriv->active && (val & subpriv->enabled_isns) != 0) अणु
+		अचिन्हित लघु bits = 0;
+		पूर्णांक i;
 
 		/* Bits in scan data correspond to indices in channel list. */
-		for (i = 0; i < cmd->chanlist_len; i++) {
-			unsigned int chan = CR_CHAN(cmd->chanlist[i]);
+		क्रम (i = 0; i < cmd->chanlist_len; i++) अणु
+			अचिन्हित पूर्णांक chan = CR_CHAN(cmd->chanlist[i]);
 
-			if (val & (1 << chan))
+			अगर (val & (1 << chan))
 				bits |= (1 << i);
-		}
+		पूर्ण
 
-		comedi_buf_write_samples(s, &bits, 1);
+		comedi_buf_ग_लिखो_samples(s, &bits, 1);
 
-		if (cmd->stop_src == TRIG_COUNT &&
-		    s->async->scans_done >= cmd->stop_arg)
+		अगर (cmd->stop_src == TRIG_COUNT &&
+		    s->async->scans_करोne >= cmd->stop_arg)
 			s->async->events |= COMEDI_CB_EOA;
-	}
+	पूर्ण
 
 	spin_unlock(&subpriv->spinlock);
 
 	comedi_handle_events(dev, s);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int apci2032_reset(struct comedi_device *dev)
-{
+अटल पूर्णांक apci2032_reset(काष्ठा comedi_device *dev)
+अणु
 	outl(0x0, dev->iobase + APCI2032_DO_REG);
 	outl(0x0, dev->iobase + APCI2032_INT_CTRL_REG);
 
-	addi_watchdog_reset(dev->iobase + APCI2032_WDOG_REG);
+	addi_watchकरोg_reset(dev->iobase + APCI2032_WDOG_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int apci2032_auto_attach(struct comedi_device *dev,
-				unsigned long context_unused)
-{
-	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
-	struct comedi_subdevice *s;
-	int ret;
+अटल पूर्णांक apci2032_स्वतः_attach(काष्ठा comedi_device *dev,
+				अचिन्हित दीर्घ context_unused)
+अणु
+	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक ret;
 
 	ret = comedi_pci_enable(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	dev->iobase = pci_resource_start(pcidev, 1);
 	apci2032_reset(dev);
 
-	if (pcidev->irq > 0) {
-		ret = request_irq(pcidev->irq, apci2032_interrupt,
+	अगर (pcidev->irq > 0) अणु
+		ret = request_irq(pcidev->irq, apci2032_पूर्णांकerrupt,
 				  IRQF_SHARED, dev->board_name, dev);
-		if (ret == 0)
+		अगर (ret == 0)
 			dev->irq = pcidev->irq;
-	}
+	पूर्ण
 
 	ret = comedi_alloc_subdevices(dev, 3);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Initialize the digital output subdevice */
 	s = &dev->subdevices[0];
@@ -254,75 +255,75 @@ static int apci2032_auto_attach(struct comedi_device *dev,
 	s->n_chan	= 32;
 	s->maxdata	= 1;
 	s->range_table	= &range_digital;
-	s->insn_bits	= apci2032_do_insn_bits;
+	s->insn_bits	= apci2032_करो_insn_bits;
 
-	/* Initialize the watchdog subdevice */
+	/* Initialize the watchकरोg subdevice */
 	s = &dev->subdevices[1];
-	ret = addi_watchdog_init(s, dev->iobase + APCI2032_WDOG_REG);
-	if (ret)
-		return ret;
+	ret = addi_watchकरोg_init(s, dev->iobase + APCI2032_WDOG_REG);
+	अगर (ret)
+		वापस ret;
 
-	/* Initialize the interrupt subdevice */
+	/* Initialize the पूर्णांकerrupt subdevice */
 	s = &dev->subdevices[2];
 	s->type		= COMEDI_SUBD_DI;
 	s->subdev_flags	= SDF_READABLE;
 	s->n_chan	= 2;
 	s->maxdata	= 1;
 	s->range_table	= &range_digital;
-	s->insn_bits	= apci2032_int_insn_bits;
-	if (dev->irq) {
-		struct apci2032_int_private *subpriv;
+	s->insn_bits	= apci2032_पूर्णांक_insn_bits;
+	अगर (dev->irq) अणु
+		काष्ठा apci2032_पूर्णांक_निजी *subpriv;
 
-		dev->read_subdev = s;
-		subpriv = kzalloc(sizeof(*subpriv), GFP_KERNEL);
-		if (!subpriv)
-			return -ENOMEM;
+		dev->पढ़ो_subdev = s;
+		subpriv = kzalloc(माप(*subpriv), GFP_KERNEL);
+		अगर (!subpriv)
+			वापस -ENOMEM;
 		spin_lock_init(&subpriv->spinlock);
-		s->private	= subpriv;
+		s->निजी	= subpriv;
 		s->subdev_flags	= SDF_READABLE | SDF_CMD_READ | SDF_PACKED;
 		s->len_chanlist = 2;
-		s->do_cmdtest	= apci2032_int_cmdtest;
-		s->do_cmd	= apci2032_int_cmd;
-		s->cancel	= apci2032_int_cancel;
-	}
+		s->करो_cmdtest	= apci2032_पूर्णांक_cmdtest;
+		s->करो_cmd	= apci2032_पूर्णांक_cmd;
+		s->cancel	= apci2032_पूर्णांक_cancel;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void apci2032_detach(struct comedi_device *dev)
-{
-	if (dev->iobase)
+अटल व्योम apci2032_detach(काष्ठा comedi_device *dev)
+अणु
+	अगर (dev->iobase)
 		apci2032_reset(dev);
 	comedi_pci_detach(dev);
-	if (dev->read_subdev)
-		kfree(dev->read_subdev->private);
-}
+	अगर (dev->पढ़ो_subdev)
+		kमुक्त(dev->पढ़ो_subdev->निजी);
+पूर्ण
 
-static struct comedi_driver apci2032_driver = {
+अटल काष्ठा comedi_driver apci2032_driver = अणु
 	.driver_name	= "addi_apci_2032",
 	.module		= THIS_MODULE,
-	.auto_attach	= apci2032_auto_attach,
+	.स्वतः_attach	= apci2032_स्वतः_attach,
 	.detach		= apci2032_detach,
-};
+पूर्ण;
 
-static int apci2032_pci_probe(struct pci_dev *dev,
-			      const struct pci_device_id *id)
-{
-	return comedi_pci_auto_config(dev, &apci2032_driver, id->driver_data);
-}
+अटल पूर्णांक apci2032_pci_probe(काष्ठा pci_dev *dev,
+			      स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस comedi_pci_स्वतः_config(dev, &apci2032_driver, id->driver_data);
+पूर्ण
 
-static const struct pci_device_id apci2032_pci_table[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_ADDIDATA, 0x1004) },
-	{ 0 }
-};
+अटल स्थिर काष्ठा pci_device_id apci2032_pci_table[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ADDIDATA, 0x1004) पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, apci2032_pci_table);
 
-static struct pci_driver apci2032_pci_driver = {
+अटल काष्ठा pci_driver apci2032_pci_driver = अणु
 	.name		= "addi_apci_2032",
 	.id_table	= apci2032_pci_table,
 	.probe		= apci2032_pci_probe,
-	.remove		= comedi_pci_auto_unconfig,
-};
+	.हटाओ		= comedi_pci_स्वतः_unconfig,
+पूर्ण;
 module_comedi_pci_driver(apci2032_driver, apci2032_pci_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

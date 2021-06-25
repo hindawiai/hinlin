@@ -1,93 +1,94 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_LOCAL_LOCK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_LOCAL_LOCK_H
 # error "Do not include directly, include linux/local_lock.h"
-#endif
+#पूर्ण_अगर
 
-#include <linux/percpu-defs.h>
-#include <linux/lockdep.h>
+#समावेश <linux/percpu-defs.h>
+#समावेश <linux/lockdep.h>
 
-typedef struct {
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-	struct lockdep_map	dep_map;
-	struct task_struct	*owner;
-#endif
-} local_lock_t;
+प्रकार काष्ठा अणु
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+	काष्ठा lockdep_map	dep_map;
+	काष्ठा task_काष्ठा	*owner;
+#पूर्ण_अगर
+पूर्ण local_lock_t;
 
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
 # define LL_DEP_MAP_INIT(lockname)			\
-	.dep_map = {					\
+	.dep_map = अणु					\
 		.name = #lockname,			\
-		.wait_type_inner = LD_WAIT_CONFIG,	\
+		.रुको_type_inner = LD_WAIT_CONFIG,	\
 		.lock_type = LD_LOCK_PERCPU,			\
-	}
-#else
+	पूर्ण
+#अन्यथा
 # define LL_DEP_MAP_INIT(lockname)
-#endif
+#पूर्ण_अगर
 
-#define INIT_LOCAL_LOCK(lockname)	{ LL_DEP_MAP_INIT(lockname) }
+#घोषणा INIT_LOCAL_LOCK(lockname)	अणु LL_DEP_MAP_INIT(lockname) पूर्ण
 
-#define __local_lock_init(lock)					\
-do {								\
-	static struct lock_class_key __key;			\
+#घोषणा __local_lock_init(lock)					\
+करो अणु								\
+	अटल काष्ठा lock_class_key __key;			\
 								\
-	debug_check_no_locks_freed((void *)lock, sizeof(*lock));\
+	debug_check_no_locks_मुक्तd((व्योम *)lock, माप(*lock));\
 	lockdep_init_map_type(&(lock)->dep_map, #lock, &__key, 0, \
 			      LD_WAIT_CONFIG, LD_WAIT_INV,	\
 			      LD_LOCK_PERCPU);			\
-} while (0)
+पूर्ण जबतक (0)
 
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-static inline void local_lock_acquire(local_lock_t *l)
-{
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+अटल अंतरभूत व्योम local_lock_acquire(local_lock_t *l)
+अणु
 	lock_map_acquire(&l->dep_map);
 	DEBUG_LOCKS_WARN_ON(l->owner);
 	l->owner = current;
-}
+पूर्ण
 
-static inline void local_lock_release(local_lock_t *l)
-{
+अटल अंतरभूत व्योम local_lock_release(local_lock_t *l)
+अणु
 	DEBUG_LOCKS_WARN_ON(l->owner != current);
-	l->owner = NULL;
+	l->owner = शून्य;
 	lock_map_release(&l->dep_map);
-}
+पूर्ण
 
-#else /* CONFIG_DEBUG_LOCK_ALLOC */
-static inline void local_lock_acquire(local_lock_t *l) { }
-static inline void local_lock_release(local_lock_t *l) { }
-#endif /* !CONFIG_DEBUG_LOCK_ALLOC */
+#अन्यथा /* CONFIG_DEBUG_LOCK_ALLOC */
+अटल अंतरभूत व्योम local_lock_acquire(local_lock_t *l) अणु पूर्ण
+अटल अंतरभूत व्योम local_lock_release(local_lock_t *l) अणु पूर्ण
+#पूर्ण_अगर /* !CONFIG_DEBUG_LOCK_ALLOC */
 
-#define __local_lock(lock)					\
-	do {							\
+#घोषणा __local_lock(lock)					\
+	करो अणु							\
 		preempt_disable();				\
 		local_lock_acquire(this_cpu_ptr(lock));		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define __local_lock_irq(lock)					\
-	do {							\
+#घोषणा __local_lock_irq(lock)					\
+	करो अणु							\
 		local_irq_disable();				\
 		local_lock_acquire(this_cpu_ptr(lock));		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define __local_lock_irqsave(lock, flags)			\
-	do {							\
+#घोषणा __local_lock_irqsave(lock, flags)			\
+	करो अणु							\
 		local_irq_save(flags);				\
 		local_lock_acquire(this_cpu_ptr(lock));		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define __local_unlock(lock)					\
-	do {							\
+#घोषणा __local_unlock(lock)					\
+	करो अणु							\
 		local_lock_release(this_cpu_ptr(lock));		\
 		preempt_enable();				\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define __local_unlock_irq(lock)				\
-	do {							\
+#घोषणा __local_unlock_irq(lock)				\
+	करो अणु							\
 		local_lock_release(this_cpu_ptr(lock));		\
 		local_irq_enable();				\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define __local_unlock_irqrestore(lock, flags)			\
-	do {							\
+#घोषणा __local_unlock_irqrestore(lock, flags)			\
+	करो अणु							\
 		local_lock_release(this_cpu_ptr(lock));		\
 		local_irq_restore(flags);			\
-	} while (0)
+	पूर्ण जबतक (0)

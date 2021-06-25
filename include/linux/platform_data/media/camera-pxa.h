@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
     camera.h - PXA camera driver header file
 
@@ -7,28 +8,28 @@
 
 */
 
-#ifndef __ASM_ARCH_CAMERA_H_
-#define __ASM_ARCH_CAMERA_H_
+#अगर_अघोषित __ASM_ARCH_CAMERA_H_
+#घोषणा __ASM_ARCH_CAMERA_H_
 
-#define PXA_CAMERA_MASTER	1
-#define PXA_CAMERA_DATAWIDTH_4	2
-#define PXA_CAMERA_DATAWIDTH_5	4
-#define PXA_CAMERA_DATAWIDTH_8	8
-#define PXA_CAMERA_DATAWIDTH_9	0x10
-#define PXA_CAMERA_DATAWIDTH_10	0x20
-#define PXA_CAMERA_PCLK_EN	0x40
-#define PXA_CAMERA_MCLK_EN	0x80
-#define PXA_CAMERA_PCP		0x100
-#define PXA_CAMERA_HSP		0x200
-#define PXA_CAMERA_VSP		0x400
+#घोषणा PXA_CAMERA_MASTER	1
+#घोषणा PXA_CAMERA_DATAWIDTH_4	2
+#घोषणा PXA_CAMERA_DATAWIDTH_5	4
+#घोषणा PXA_CAMERA_DATAWIDTH_8	8
+#घोषणा PXA_CAMERA_DATAWIDTH_9	0x10
+#घोषणा PXA_CAMERA_DATAWIDTH_10	0x20
+#घोषणा PXA_CAMERA_PCLK_EN	0x40
+#घोषणा PXA_CAMERA_MCLK_EN	0x80
+#घोषणा PXA_CAMERA_PCP		0x100
+#घोषणा PXA_CAMERA_HSP		0x200
+#घोषणा PXA_CAMERA_VSP		0x400
 
-struct pxacamera_platform_data {
-	unsigned long flags;
-	unsigned long mclk_10khz;
-	int sensor_i2c_adapter_id;
-	int sensor_i2c_address;
-};
+काष्ठा pxacamera_platक्रमm_data अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ mclk_10khz;
+	पूर्णांक sensor_i2c_adapter_id;
+	पूर्णांक sensor_i2c_address;
+पूर्ण;
 
-extern void pxa_set_camera_info(struct pxacamera_platform_data *);
+बाह्य व्योम pxa_set_camera_info(काष्ठा pxacamera_platक्रमm_data *);
 
-#endif /* __ASM_ARCH_CAMERA_H_ */
+#पूर्ण_अगर /* __ASM_ARCH_CAMERA_H_ */

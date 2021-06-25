@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *  Raspberry Pi 3 expander GPIO driver
  *
@@ -8,178 +9,178 @@
  *  Copyright (C) 2017 Raspberry Pi Trading Ltd.
  */
 
-#include <linux/err.h>
-#include <linux/gpio/driver.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <soc/bcm2835/raspberrypi-firmware.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <soc/bcm2835/raspberrypi-firmware.h>
 
-#define MODULE_NAME "raspberrypi-exp-gpio"
-#define NUM_GPIO 8
+#घोषणा MODULE_NAME "raspberrypi-exp-gpio"
+#घोषणा NUM_GPIO 8
 
-#define RPI_EXP_GPIO_BASE	128
+#घोषणा RPI_EXP_GPIO_BASE	128
 
-#define RPI_EXP_GPIO_DIR_IN	0
-#define RPI_EXP_GPIO_DIR_OUT	1
+#घोषणा RPI_EXP_GPIO_सूची_IN	0
+#घोषणा RPI_EXP_GPIO_सूची_OUT	1
 
-struct rpi_exp_gpio {
-	struct gpio_chip gc;
-	struct rpi_firmware *fw;
-};
+काष्ठा rpi_exp_gpio अणु
+	काष्ठा gpio_chip gc;
+	काष्ठा rpi_firmware *fw;
+पूर्ण;
 
-/* VC4 firmware mailbox interface data structures */
+/* VC4 firmware mailbox पूर्णांकerface data काष्ठाures */
 
-struct gpio_set_config {
+काष्ठा gpio_set_config अणु
 	u32 gpio;
 	u32 direction;
 	u32 polarity;
 	u32 term_en;
 	u32 term_pull_up;
 	u32 state;
-};
+पूर्ण;
 
-struct gpio_get_config {
+काष्ठा gpio_get_config अणु
 	u32 gpio;
 	u32 direction;
 	u32 polarity;
 	u32 term_en;
 	u32 term_pull_up;
-};
+पूर्ण;
 
-struct gpio_get_set_state {
+काष्ठा gpio_get_set_state अणु
 	u32 gpio;
 	u32 state;
-};
+पूर्ण;
 
-static int rpi_exp_gpio_get_polarity(struct gpio_chip *gc, unsigned int off)
-{
-	struct rpi_exp_gpio *gpio;
-	struct gpio_get_config get;
-	int ret;
+अटल पूर्णांक rpi_exp_gpio_get_polarity(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक off)
+अणु
+	काष्ठा rpi_exp_gpio *gpio;
+	काष्ठा gpio_get_config get;
+	पूर्णांक ret;
 
 	gpio = gpiochip_get_data(gc);
 
 	get.gpio = off + RPI_EXP_GPIO_BASE;	/* GPIO to update */
 
 	ret = rpi_firmware_property(gpio->fw, RPI_FIRMWARE_GET_GPIO_CONFIG,
-				    &get, sizeof(get));
-	if (ret || get.gpio != 0) {
+				    &get, माप(get));
+	अगर (ret || get.gpio != 0) अणु
 		dev_err(gc->parent, "Failed to get GPIO %u config (%d %x)\n",
 			off, ret, get.gpio);
-		return ret ? ret : -EIO;
-	}
-	return get.polarity;
-}
+		वापस ret ? ret : -EIO;
+	पूर्ण
+	वापस get.polarity;
+पूर्ण
 
-static int rpi_exp_gpio_dir_in(struct gpio_chip *gc, unsigned int off)
-{
-	struct rpi_exp_gpio *gpio;
-	struct gpio_set_config set_in;
-	int ret;
+अटल पूर्णांक rpi_exp_gpio_dir_in(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक off)
+अणु
+	काष्ठा rpi_exp_gpio *gpio;
+	काष्ठा gpio_set_config set_in;
+	पूर्णांक ret;
 
 	gpio = gpiochip_get_data(gc);
 
 	set_in.gpio = off + RPI_EXP_GPIO_BASE;	/* GPIO to update */
-	set_in.direction = RPI_EXP_GPIO_DIR_IN;
+	set_in.direction = RPI_EXP_GPIO_सूची_IN;
 	set_in.term_en = 0;		/* termination disabled */
 	set_in.term_pull_up = 0;	/* n/a as termination disabled */
 	set_in.state = 0;		/* n/a as configured as an input */
 
 	ret = rpi_exp_gpio_get_polarity(gc, off);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	set_in.polarity = ret;		/* Retain existing setting */
 
 	ret = rpi_firmware_property(gpio->fw, RPI_FIRMWARE_SET_GPIO_CONFIG,
-				    &set_in, sizeof(set_in));
-	if (ret || set_in.gpio != 0) {
+				    &set_in, माप(set_in));
+	अगर (ret || set_in.gpio != 0) अणु
 		dev_err(gc->parent, "Failed to set GPIO %u to input (%d %x)\n",
 			off, ret, set_in.gpio);
-		return ret ? ret : -EIO;
-	}
-	return 0;
-}
+		वापस ret ? ret : -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int rpi_exp_gpio_dir_out(struct gpio_chip *gc, unsigned int off, int val)
-{
-	struct rpi_exp_gpio *gpio;
-	struct gpio_set_config set_out;
-	int ret;
+अटल पूर्णांक rpi_exp_gpio_dir_out(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक off, पूर्णांक val)
+अणु
+	काष्ठा rpi_exp_gpio *gpio;
+	काष्ठा gpio_set_config set_out;
+	पूर्णांक ret;
 
 	gpio = gpiochip_get_data(gc);
 
 	set_out.gpio = off + RPI_EXP_GPIO_BASE;	/* GPIO to update */
-	set_out.direction = RPI_EXP_GPIO_DIR_OUT;
+	set_out.direction = RPI_EXP_GPIO_सूची_OUT;
 	set_out.term_en = 0;		/* n/a as an output */
 	set_out.term_pull_up = 0;	/* n/a as termination disabled */
 	set_out.state = val;		/* Output state */
 
 	ret = rpi_exp_gpio_get_polarity(gc, off);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	set_out.polarity = ret;		/* Retain existing setting */
 
 	ret = rpi_firmware_property(gpio->fw, RPI_FIRMWARE_SET_GPIO_CONFIG,
-				    &set_out, sizeof(set_out));
-	if (ret || set_out.gpio != 0) {
+				    &set_out, माप(set_out));
+	अगर (ret || set_out.gpio != 0) अणु
 		dev_err(gc->parent, "Failed to set GPIO %u to output (%d %x)\n",
 			off, ret, set_out.gpio);
-		return ret ? ret : -EIO;
-	}
-	return 0;
-}
+		वापस ret ? ret : -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int rpi_exp_gpio_get_direction(struct gpio_chip *gc, unsigned int off)
-{
-	struct rpi_exp_gpio *gpio;
-	struct gpio_get_config get;
-	int ret;
+अटल पूर्णांक rpi_exp_gpio_get_direction(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक off)
+अणु
+	काष्ठा rpi_exp_gpio *gpio;
+	काष्ठा gpio_get_config get;
+	पूर्णांक ret;
 
 	gpio = gpiochip_get_data(gc);
 
 	get.gpio = off + RPI_EXP_GPIO_BASE;	/* GPIO to update */
 
 	ret = rpi_firmware_property(gpio->fw, RPI_FIRMWARE_GET_GPIO_CONFIG,
-				    &get, sizeof(get));
-	if (ret || get.gpio != 0) {
+				    &get, माप(get));
+	अगर (ret || get.gpio != 0) अणु
 		dev_err(gc->parent,
 			"Failed to get GPIO %u config (%d %x)\n", off, ret,
 			get.gpio);
-		return ret ? ret : -EIO;
-	}
-	if (get.direction)
-		return GPIO_LINE_DIRECTION_OUT;
+		वापस ret ? ret : -EIO;
+	पूर्ण
+	अगर (get.direction)
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int rpi_exp_gpio_get(struct gpio_chip *gc, unsigned int off)
-{
-	struct rpi_exp_gpio *gpio;
-	struct gpio_get_set_state get;
-	int ret;
+अटल पूर्णांक rpi_exp_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक off)
+अणु
+	काष्ठा rpi_exp_gpio *gpio;
+	काष्ठा gpio_get_set_state get;
+	पूर्णांक ret;
 
 	gpio = gpiochip_get_data(gc);
 
 	get.gpio = off + RPI_EXP_GPIO_BASE;	/* GPIO to update */
-	get.state = 0;		/* storage for returned value */
+	get.state = 0;		/* storage क्रम वापसed value */
 
 	ret = rpi_firmware_property(gpio->fw, RPI_FIRMWARE_GET_GPIO_STATE,
-					 &get, sizeof(get));
-	if (ret || get.gpio != 0) {
+					 &get, माप(get));
+	अगर (ret || get.gpio != 0) अणु
 		dev_err(gc->parent,
 			"Failed to get GPIO %u state (%d %x)\n", off, ret,
 			get.gpio);
-		return ret ? ret : -EIO;
-	}
-	return !!get.state;
-}
+		वापस ret ? ret : -EIO;
+	पूर्ण
+	वापस !!get.state;
+पूर्ण
 
-static void rpi_exp_gpio_set(struct gpio_chip *gc, unsigned int off, int val)
-{
-	struct rpi_exp_gpio *gpio;
-	struct gpio_get_set_state set;
-	int ret;
+अटल व्योम rpi_exp_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक off, पूर्णांक val)
+अणु
+	काष्ठा rpi_exp_gpio *gpio;
+	काष्ठा gpio_get_set_state set;
+	पूर्णांक ret;
 
 	gpio = gpiochip_get_data(gc);
 
@@ -187,35 +188,35 @@ static void rpi_exp_gpio_set(struct gpio_chip *gc, unsigned int off, int val)
 	set.state = val;	/* Output state */
 
 	ret = rpi_firmware_property(gpio->fw, RPI_FIRMWARE_SET_GPIO_STATE,
-					 &set, sizeof(set));
-	if (ret || set.gpio != 0)
+					 &set, माप(set));
+	अगर (ret || set.gpio != 0)
 		dev_err(gc->parent,
 			"Failed to set GPIO %u state (%d %x)\n", off, ret,
 			set.gpio);
-}
+पूर्ण
 
-static int rpi_exp_gpio_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct device_node *fw_node;
-	struct rpi_firmware *fw;
-	struct rpi_exp_gpio *rpi_gpio;
+अटल पूर्णांक rpi_exp_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा device_node *fw_node;
+	काष्ठा rpi_firmware *fw;
+	काष्ठा rpi_exp_gpio *rpi_gpio;
 
 	fw_node = of_get_parent(np);
-	if (!fw_node) {
+	अगर (!fw_node) अणु
 		dev_err(dev, "Missing firmware node\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	fw = devm_rpi_firmware_get(&pdev->dev, fw_node);
 	of_node_put(fw_node);
-	if (!fw)
-		return -EPROBE_DEFER;
+	अगर (!fw)
+		वापस -EPROBE_DEFER;
 
-	rpi_gpio = devm_kzalloc(dev, sizeof(*rpi_gpio), GFP_KERNEL);
-	if (!rpi_gpio)
-		return -ENOMEM;
+	rpi_gpio = devm_kzalloc(dev, माप(*rpi_gpio), GFP_KERNEL);
+	अगर (!rpi_gpio)
+		वापस -ENOMEM;
 
 	rpi_gpio->fw = fw;
 	rpi_gpio->gc.parent = dev;
@@ -232,23 +233,23 @@ static int rpi_exp_gpio_probe(struct platform_device *pdev)
 	rpi_gpio->gc.set = rpi_exp_gpio_set;
 	rpi_gpio->gc.can_sleep = true;
 
-	return devm_gpiochip_add_data(dev, &rpi_gpio->gc, rpi_gpio);
-}
+	वापस devm_gpiochip_add_data(dev, &rpi_gpio->gc, rpi_gpio);
+पूर्ण
 
-static const struct of_device_id rpi_exp_gpio_ids[] = {
-	{ .compatible = "raspberrypi,firmware-gpio" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id rpi_exp_gpio_ids[] = अणु
+	अणु .compatible = "raspberrypi,firmware-gpio" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rpi_exp_gpio_ids);
 
-static struct platform_driver rpi_exp_gpio_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver rpi_exp_gpio_driver = अणु
+	.driver	= अणु
 		.name		= MODULE_NAME,
 		.of_match_table	= of_match_ptr(rpi_exp_gpio_ids),
-	},
+	पूर्ण,
 	.probe	= rpi_exp_gpio_probe,
-};
-module_platform_driver(rpi_exp_gpio_driver);
+पूर्ण;
+module_platक्रमm_driver(rpi_exp_gpio_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Dave Stevenson <dave.stevenson@raspberrypi.org>");

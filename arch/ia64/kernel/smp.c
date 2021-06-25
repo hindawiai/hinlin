@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * SMP Support
  *
@@ -7,71 +8,71 @@
  *
  * Lots of stuff stolen from arch/alpha/kernel/smp.c
  *
- * 01/05/16 Rohit Seth <rohit.seth@intel.com>  IA64-SMP functions. Reorganized
+ * 01/05/16 Rohit Seth <rohit.seth@पूर्णांकel.com>  IA64-SMP functions. Reorganized
  * the existing code (on the lines of x86 port).
- * 00/09/11 David Mosberger <davidm@hpl.hp.com> Do loops_per_jiffy
+ * 00/09/11 David Mosberger <davidm@hpl.hp.com> Do loops_per_jअगरfy
  * calibration on each CPU.
- * 00/08/23 Asit Mallick <asit.k.mallick@intel.com> fixed logical processor id
- * 00/03/31 Rohit Seth <rohit.seth@intel.com>	Fixes for Bootstrap Processor
- * & cpu_online_map now gets done here (instead of setup.c)
+ * 00/08/23 Asit Mallick <asit.k.mallick@पूर्णांकel.com> fixed logical processor id
+ * 00/03/31 Rohit Seth <rohit.seth@पूर्णांकel.com>	Fixes क्रम Bootstrap Processor
+ * & cpu_online_map now माला_लो करोne here (instead of setup.c)
  * 99/10/05 davidm	Update to bring it in sync with new command-line processing
  *  scheme.
- * 10/13/00 Goutham Rao <goutham.rao@intel.com> Updated smp_call_function and
- *		smp_call_function_single to resend IPI on timeouts
+ * 10/13/00 Goutham Rao <goutham.rao@पूर्णांकel.com> Updated smp_call_function and
+ *		smp_call_function_single to resend IPI on समयouts
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/smp.h>
-#include <linux/kernel_stat.h>
-#include <linux/mm.h>
-#include <linux/cache.h>
-#include <linux/delay.h>
-#include <linux/efi.h>
-#include <linux/bitops.h>
-#include <linux/kexec.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/kexec.h>
 
-#include <linux/atomic.h>
-#include <asm/current.h>
-#include <asm/delay.h>
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/page.h>
-#include <asm/processor.h>
-#include <asm/ptrace.h>
-#include <asm/sal.h>
-#include <asm/tlbflush.h>
-#include <asm/unistd.h>
-#include <asm/mca.h>
-#include <asm/xtp.h>
+#समावेश <linux/atomic.h>
+#समावेश <यंत्र/current.h>
+#समावेश <यंत्र/delay.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/sal.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <यंत्र/mca.h>
+#समावेश <यंत्र/xtp.h>
 
 /*
  * Note: alignment of 4 entries/cacheline was empirically determined
- * to be a good tradeoff between hot cachelines & spreading the array
+ * to be a good tradeoff between hot cachelines & spपढ़ोing the array
  * across too many cacheline.
  */
-static struct local_tlb_flush_counts {
-	unsigned int count;
-} __attribute__((__aligned__(32))) local_tlb_flush_counts[NR_CPUS];
+अटल काष्ठा local_tlb_flush_counts अणु
+	अचिन्हित पूर्णांक count;
+पूर्ण __attribute__((__aligned__(32))) local_tlb_flush_counts[NR_CPUS];
 
-static DEFINE_PER_CPU_SHARED_ALIGNED(unsigned short [NR_CPUS],
-				     shadow_flush_counts);
+अटल DEFINE_PER_CPU_SHARED_ALIGNED(अचिन्हित लघु [NR_CPUS],
+				     shaकरोw_flush_counts);
 
-#define IPI_CALL_FUNC		0
-#define IPI_CPU_STOP		1
-#define IPI_CALL_FUNC_SINGLE	2
-#define IPI_KDUMP_CPU_STOP	3
+#घोषणा IPI_CALL_FUNC		0
+#घोषणा IPI_CPU_STOP		1
+#घोषणा IPI_CALL_FUNC_SINGLE	2
+#घोषणा IPI_KDUMP_CPU_STOP	3
 
 /* This needs to be cacheline aligned because it is written to by *other* CPUs.  */
-static DEFINE_PER_CPU_SHARED_ALIGNED(unsigned long, ipi_operation);
+अटल DEFINE_PER_CPU_SHARED_ALIGNED(अचिन्हित दीर्घ, ipi_operation);
 
-extern void cpu_halt (void);
+बाह्य व्योम cpu_halt (व्योम);
 
-static void
-stop_this_cpu(void)
-{
+अटल व्योम
+stop_this_cpu(व्योम)
+अणु
 	/*
 	 * Remove this CPU:
 	 */
@@ -79,263 +80,263 @@ stop_this_cpu(void)
 	max_xtp();
 	local_irq_disable();
 	cpu_halt();
-}
+पूर्ण
 
-void
-cpu_die(void)
-{
+व्योम
+cpu_die(व्योम)
+अणु
 	max_xtp();
 	local_irq_disable();
 	cpu_halt();
 	/* Should never be here */
 	BUG();
-	for (;;);
-}
+	क्रम (;;);
+पूर्ण
 
-irqreturn_t
-handle_IPI (int irq, void *dev_id)
-{
-	int this_cpu = get_cpu();
-	unsigned long *pending_ipis = &__ia64_per_cpu_var(ipi_operation);
-	unsigned long ops;
+irqवापस_t
+handle_IPI (पूर्णांक irq, व्योम *dev_id)
+अणु
+	पूर्णांक this_cpu = get_cpu();
+	अचिन्हित दीर्घ *pending_ipis = &__ia64_per_cpu_var(ipi_operation);
+	अचिन्हित दीर्घ ops;
 
-	mb();	/* Order interrupt and bit testing. */
-	while ((ops = xchg(pending_ipis, 0)) != 0) {
+	mb();	/* Order पूर्णांकerrupt and bit testing. */
+	जबतक ((ops = xchg(pending_ipis, 0)) != 0) अणु
 		mb();	/* Order bit clearing and data access. */
-		do {
-			unsigned long which;
+		करो अणु
+			अचिन्हित दीर्घ which;
 
 			which = ffz(~ops);
 			ops &= ~(1 << which);
 
-			switch (which) {
-			case IPI_CPU_STOP:
+			चयन (which) अणु
+			हाल IPI_CPU_STOP:
 				stop_this_cpu();
-				break;
-			case IPI_CALL_FUNC:
-				generic_smp_call_function_interrupt();
-				break;
-			case IPI_CALL_FUNC_SINGLE:
-				generic_smp_call_function_single_interrupt();
-				break;
-#ifdef CONFIG_KEXEC
-			case IPI_KDUMP_CPU_STOP:
-				unw_init_running(kdump_cpu_freeze, NULL);
-				break;
-#endif
-			default:
-				printk(KERN_CRIT "Unknown IPI on CPU %d: %lu\n",
+				अवरोध;
+			हाल IPI_CALL_FUNC:
+				generic_smp_call_function_पूर्णांकerrupt();
+				अवरोध;
+			हाल IPI_CALL_FUNC_SINGLE:
+				generic_smp_call_function_single_पूर्णांकerrupt();
+				अवरोध;
+#अगर_घोषित CONFIG_KEXEC
+			हाल IPI_KDUMP_CPU_STOP:
+				unw_init_running(kdump_cpu_मुक्तze, शून्य);
+				अवरोध;
+#पूर्ण_अगर
+			शेष:
+				prपूर्णांकk(KERN_CRIT "Unknown IPI on CPU %d: %lu\n",
 						this_cpu, which);
-				break;
-			}
-		} while (ops);
+				अवरोध;
+			पूर्ण
+		पूर्ण जबतक (ops);
 		mb();	/* Order data access and bit testing. */
-	}
+	पूर्ण
 	put_cpu();
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
 
 /*
  * Called with preemption disabled.
  */
-static inline void
-send_IPI_single (int dest_cpu, int op)
-{
+अटल अंतरभूत व्योम
+send_IPI_single (पूर्णांक dest_cpu, पूर्णांक op)
+अणु
 	set_bit(op, &per_cpu(ipi_operation, dest_cpu));
 	ia64_send_ipi(dest_cpu, IA64_IPI_VECTOR, IA64_IPI_DM_INT, 0);
-}
+पूर्ण
 
 /*
  * Called with preemption disabled.
  */
-static inline void
-send_IPI_allbutself (int op)
-{
-	unsigned int i;
+अटल अंतरभूत व्योम
+send_IPI_allbutself (पूर्णांक op)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for_each_online_cpu(i) {
-		if (i != smp_processor_id())
+	क्रम_each_online_cpu(i) अणु
+		अगर (i != smp_processor_id())
 			send_IPI_single(i, op);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Called with preemption disabled.
  */
-static inline void
-send_IPI_mask(const struct cpumask *mask, int op)
-{
-	unsigned int cpu;
+अटल अंतरभूत व्योम
+send_IPI_mask(स्थिर काष्ठा cpumask *mask, पूर्णांक op)
+अणु
+	अचिन्हित पूर्णांक cpu;
 
-	for_each_cpu(cpu, mask) {
+	क्रम_each_cpu(cpu, mask) अणु
 			send_IPI_single(cpu, op);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Called with preemption disabled.
  */
-static inline void
-send_IPI_all (int op)
-{
-	int i;
+अटल अंतरभूत व्योम
+send_IPI_all (पूर्णांक op)
+अणु
+	पूर्णांक i;
 
-	for_each_online_cpu(i) {
+	क्रम_each_online_cpu(i) अणु
 		send_IPI_single(i, op);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Called with preemption disabled.
  */
-static inline void
-send_IPI_self (int op)
-{
+अटल अंतरभूत व्योम
+send_IPI_self (पूर्णांक op)
+अणु
 	send_IPI_single(smp_processor_id(), op);
-}
+पूर्ण
 
-#ifdef CONFIG_KEXEC
-void
-kdump_smp_send_stop(void)
-{
+#अगर_घोषित CONFIG_KEXEC
+व्योम
+kdump_smp_send_stop(व्योम)
+अणु
  	send_IPI_allbutself(IPI_KDUMP_CPU_STOP);
-}
+पूर्ण
 
-void
-kdump_smp_send_init(void)
-{
-	unsigned int cpu, self_cpu;
+व्योम
+kdump_smp_send_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक cpu, self_cpu;
 	self_cpu = smp_processor_id();
-	for_each_online_cpu(cpu) {
-		if (cpu != self_cpu) {
-			if(kdump_status[cpu] == 0)
+	क्रम_each_online_cpu(cpu) अणु
+		अगर (cpu != self_cpu) अणु
+			अगर(kdump_status[cpu] == 0)
 				ia64_send_ipi(cpu, 0, IA64_IPI_DM_INIT, 0);
-		}
-	}
-}
-#endif
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 /*
  * Called with preemption disabled.
  */
-void
-smp_send_reschedule (int cpu)
-{
+व्योम
+smp_send_reschedule (पूर्णांक cpu)
+अणु
 	ia64_send_ipi(cpu, IA64_IPI_RESCHEDULE, IA64_IPI_DM_INT, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(smp_send_reschedule);
 
 /*
  * Called with preemption disabled.
  */
-static void
-smp_send_local_flush_tlb (int cpu)
-{
+अटल व्योम
+smp_send_local_flush_tlb (पूर्णांक cpu)
+अणु
 	ia64_send_ipi(cpu, IA64_IPI_LOCAL_TLB_FLUSH, IA64_IPI_DM_INT, 0);
-}
+पूर्ण
 
-void
-smp_local_flush_tlb(void)
-{
+व्योम
+smp_local_flush_tlb(व्योम)
+अणु
 	/*
 	 * Use atomic ops. Otherwise, the load/increment/store sequence from
 	 * a "++" operation can have the line stolen between the load & store.
-	 * The overhead of the atomic op in negligible in this case & offers
-	 * significant benefit for the brief periods where lots of cpus
+	 * The overhead of the atomic op in negligible in this हाल & offers
+	 * signअगरicant benefit क्रम the brief periods where lots of cpus
 	 * are simultaneously flushing TLBs.
 	 */
 	ia64_fetchadd(1, &local_tlb_flush_counts[smp_processor_id()].count, acq);
 	local_flush_tlb_all();
-}
+पूर्ण
 
-#define FLUSH_DELAY	5 /* Usec backoff to eliminate excessive cacheline bouncing */
+#घोषणा FLUSH_DELAY	5 /* Usec backoff to eliminate excessive cacheline bouncing */
 
-void
+व्योम
 smp_flush_tlb_cpumask(cpumask_t xcpumask)
-{
-	unsigned short *counts = __ia64_per_cpu_var(shadow_flush_counts);
+अणु
+	अचिन्हित लघु *counts = __ia64_per_cpu_var(shaकरोw_flush_counts);
 	cpumask_t cpumask = xcpumask;
-	int mycpu, cpu, flush_mycpu = 0;
+	पूर्णांक mycpu, cpu, flush_mycpu = 0;
 
 	preempt_disable();
 	mycpu = smp_processor_id();
 
-	for_each_cpu(cpu, &cpumask)
+	क्रम_each_cpu(cpu, &cpumask)
 		counts[cpu] = local_tlb_flush_counts[cpu].count & 0xffff;
 
 	mb();
-	for_each_cpu(cpu, &cpumask) {
-		if (cpu == mycpu)
+	क्रम_each_cpu(cpu, &cpumask) अणु
+		अगर (cpu == mycpu)
 			flush_mycpu = 1;
-		else
+		अन्यथा
 			smp_send_local_flush_tlb(cpu);
-	}
+	पूर्ण
 
-	if (flush_mycpu)
+	अगर (flush_mycpu)
 		smp_local_flush_tlb();
 
-	for_each_cpu(cpu, &cpumask)
-		while(counts[cpu] == (local_tlb_flush_counts[cpu].count & 0xffff))
+	क्रम_each_cpu(cpu, &cpumask)
+		जबतक(counts[cpu] == (local_tlb_flush_counts[cpu].count & 0xffff))
 			udelay(FLUSH_DELAY);
 
 	preempt_enable();
-}
+पूर्ण
 
-void
-smp_flush_tlb_all (void)
-{
-	on_each_cpu((void (*)(void *))local_flush_tlb_all, NULL, 1);
-}
+व्योम
+smp_flush_tlb_all (व्योम)
+अणु
+	on_each_cpu((व्योम (*)(व्योम *))local_flush_tlb_all, शून्य, 1);
+पूर्ण
 
-void
-smp_flush_tlb_mm (struct mm_struct *mm)
-{
+व्योम
+smp_flush_tlb_mm (काष्ठा mm_काष्ठा *mm)
+अणु
 	cpumask_var_t cpus;
 	preempt_disable();
-	/* this happens for the common case of a single-threaded fork():  */
-	if (likely(mm == current->active_mm && atomic_read(&mm->mm_users) == 1))
-	{
+	/* this happens क्रम the common हाल of a single-thपढ़ोed विभाजन():  */
+	अगर (likely(mm == current->active_mm && atomic_पढ़ो(&mm->mm_users) == 1))
+	अणु
 		local_finish_flush_tlb_mm(mm);
 		preempt_enable();
-		return;
-	}
-	if (!alloc_cpumask_var(&cpus, GFP_ATOMIC)) {
-		smp_call_function((void (*)(void *))local_finish_flush_tlb_mm,
+		वापस;
+	पूर्ण
+	अगर (!alloc_cpumask_var(&cpus, GFP_ATOMIC)) अणु
+		smp_call_function((व्योम (*)(व्योम *))local_finish_flush_tlb_mm,
 			mm, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		cpumask_copy(cpus, mm_cpumask(mm));
 		smp_call_function_many(cpus,
-			(void (*)(void *))local_finish_flush_tlb_mm, mm, 1);
-		free_cpumask_var(cpus);
-	}
+			(व्योम (*)(व्योम *))local_finish_flush_tlb_mm, mm, 1);
+		मुक्त_cpumask_var(cpus);
+	पूर्ण
 	local_irq_disable();
 	local_finish_flush_tlb_mm(mm);
 	local_irq_enable();
 	preempt_enable();
-}
+पूर्ण
 
-void arch_send_call_function_single_ipi(int cpu)
-{
+व्योम arch_send_call_function_single_ipi(पूर्णांक cpu)
+अणु
 	send_IPI_single(cpu, IPI_CALL_FUNC_SINGLE);
-}
+पूर्ण
 
-void arch_send_call_function_ipi_mask(const struct cpumask *mask)
-{
+व्योम arch_send_call_function_ipi_mask(स्थिर काष्ठा cpumask *mask)
+अणु
 	send_IPI_mask(mask, IPI_CALL_FUNC);
-}
+पूर्ण
 
 /*
- * this function calls the 'stop' function on all other CPUs in the system.
+ * this function calls the 'stop' function on all other CPUs in the प्रणाली.
  */
-void
-smp_send_stop (void)
-{
+व्योम
+smp_send_stop (व्योम)
+अणु
 	send_IPI_allbutself(IPI_CPU_STOP);
-}
+पूर्ण
 
-int
-setup_profiling_timer (unsigned int multiplier)
-{
-	return -EINVAL;
-}
+पूर्णांक
+setup_profiling_समयr (अचिन्हित पूर्णांक multiplier)
+अणु
+	वापस -EINVAL;
+पूर्ण

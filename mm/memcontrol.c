@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* memcontrol.c - Memory Controller
  *
  * Copyright IBM Corporation, 2007
  * Author Balbir Singh <balbir@linux.vnet.ibm.com>
  *
  * Copyright 2007 OpenVZ SWsoft Inc
- * Author: Pavel Emelianov <xemul@openvz.org>
+ * Author: Pavel Emelianov <xemul@खोलोvz.org>
  *
  * Memory thresholds
  * Copyright (C) 2009 Nokia Corporation
@@ -16,317 +17,317 @@
  * Authors: Glauber Costa and Suleiman Souhlal
  *
  * Native page reclaim
- * Charge lifetime sanitation
+ * Charge lअगरeसमय sanitation
  * Lockless page tracking & accounting
- * Unified hierarchy configuration model
+ * Unअगरied hierarchy configuration model
  * Copyright (C) 2015 Red Hat, Inc., Johannes Weiner
  *
  * Per memcg lru locking
  * Copyright (C) 2020 Alibaba, Inc, Alex Shi
  */
 
-#include <linux/page_counter.h>
-#include <linux/memcontrol.h>
-#include <linux/cgroup.h>
-#include <linux/pagewalk.h>
-#include <linux/sched/mm.h>
-#include <linux/shmem_fs.h>
-#include <linux/hugetlb.h>
-#include <linux/pagemap.h>
-#include <linux/vm_event_item.h>
-#include <linux/smp.h>
-#include <linux/page-flags.h>
-#include <linux/backing-dev.h>
-#include <linux/bit_spinlock.h>
-#include <linux/rcupdate.h>
-#include <linux/limits.h>
-#include <linux/export.h>
-#include <linux/mutex.h>
-#include <linux/rbtree.h>
-#include <linux/slab.h>
-#include <linux/swap.h>
-#include <linux/swapops.h>
-#include <linux/spinlock.h>
-#include <linux/eventfd.h>
-#include <linux/poll.h>
-#include <linux/sort.h>
-#include <linux/fs.h>
-#include <linux/seq_file.h>
-#include <linux/vmpressure.h>
-#include <linux/mm_inline.h>
-#include <linux/swap_cgroup.h>
-#include <linux/cpu.h>
-#include <linux/oom.h>
-#include <linux/lockdep.h>
-#include <linux/file.h>
-#include <linux/tracehook.h>
-#include <linux/psi.h>
-#include <linux/seq_buf.h>
-#include "internal.h"
-#include <net/sock.h>
-#include <net/ip.h>
-#include "slab.h"
+#समावेश <linux/page_counter.h>
+#समावेश <linux/memcontrol.h>
+#समावेश <linux/cgroup.h>
+#समावेश <linux/pagewalk.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/shmem_fs.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/vm_event_item.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/page-flags.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/bit_spinlock.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/export.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/swapops.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/eventfd.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/vmpressure.h>
+#समावेश <linux/mm_अंतरभूत.h>
+#समावेश <linux/swap_cgroup.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/oom.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/file.h>
+#समावेश <linux/tracehook.h>
+#समावेश <linux/psi.h>
+#समावेश <linux/seq_buf.h>
+#समावेश "internal.h"
+#समावेश <net/sock.h>
+#समावेश <net/ip.h>
+#समावेश "slab.h"
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include <trace/events/vmscan.h>
+#समावेश <trace/events/vmscan.h>
 
-struct cgroup_subsys memory_cgrp_subsys __read_mostly;
+काष्ठा cgroup_subsys memory_cgrp_subsys __पढ़ो_mostly;
 EXPORT_SYMBOL(memory_cgrp_subsys);
 
-struct mem_cgroup *root_mem_cgroup __read_mostly;
+काष्ठा mem_cgroup *root_mem_cgroup __पढ़ो_mostly;
 
-/* Active memory cgroup to use from an interrupt context */
-DEFINE_PER_CPU(struct mem_cgroup *, int_active_memcg);
+/* Active memory cgroup to use from an पूर्णांकerrupt context */
+DEFINE_PER_CPU(काष्ठा mem_cgroup *, पूर्णांक_active_memcg);
 
 /* Socket memory accounting disabled? */
-static bool cgroup_memory_nosocket;
+अटल bool cgroup_memory_nosocket;
 
 /* Kernel memory accounting disabled? */
-static bool cgroup_memory_nokmem;
+अटल bool cgroup_memory_nokmem;
 
 /* Whether the swap controller is active */
-#ifdef CONFIG_MEMCG_SWAP
-bool cgroup_memory_noswap __read_mostly;
-#else
-#define cgroup_memory_noswap		1
-#endif
+#अगर_घोषित CONFIG_MEMCG_SWAP
+bool cgroup_memory_noswap __पढ़ो_mostly;
+#अन्यथा
+#घोषणा cgroup_memory_noswap		1
+#पूर्ण_अगर
 
-#ifdef CONFIG_CGROUP_WRITEBACK
-static DECLARE_WAIT_QUEUE_HEAD(memcg_cgwb_frn_waitq);
-#endif
+#अगर_घोषित CONFIG_CGROUP_WRITEBACK
+अटल DECLARE_WAIT_QUEUE_HEAD(memcg_cgwb_frn_रुकोq);
+#पूर्ण_अगर
 
 /* Whether legacy memory+swap accounting is active */
-static bool do_memsw_account(void)
-{
-	return !cgroup_subsys_on_dfl(memory_cgrp_subsys) && !cgroup_memory_noswap;
-}
+अटल bool करो_memsw_account(व्योम)
+अणु
+	वापस !cgroup_subsys_on_dfl(memory_cgrp_subsys) && !cgroup_memory_noswap;
+पूर्ण
 
-#define THRESHOLDS_EVENTS_TARGET 128
-#define SOFTLIMIT_EVENTS_TARGET 1024
+#घोषणा THRESHOLDS_EVENTS_TARGET 128
+#घोषणा SOFTLIMIT_EVENTS_TARGET 1024
 
 /*
- * Cgroups above their limits are maintained in a RB-Tree, independent of
+ * Cgroups above their limits are मुख्यtained in a RB-Tree, independent of
  * their hierarchy representation
  */
 
-struct mem_cgroup_tree_per_node {
-	struct rb_root rb_root;
-	struct rb_node *rb_rightmost;
+काष्ठा mem_cgroup_tree_per_node अणु
+	काष्ठा rb_root rb_root;
+	काष्ठा rb_node *rb_righपंचांगost;
 	spinlock_t lock;
-};
+पूर्ण;
 
-struct mem_cgroup_tree {
-	struct mem_cgroup_tree_per_node *rb_tree_per_node[MAX_NUMNODES];
-};
+काष्ठा mem_cgroup_tree अणु
+	काष्ठा mem_cgroup_tree_per_node *rb_tree_per_node[MAX_NUMNODES];
+पूर्ण;
 
-static struct mem_cgroup_tree soft_limit_tree __read_mostly;
+अटल काष्ठा mem_cgroup_tree soft_limit_tree __पढ़ो_mostly;
 
-/* for OOM */
-struct mem_cgroup_eventfd_list {
-	struct list_head list;
-	struct eventfd_ctx *eventfd;
-};
+/* क्रम OOM */
+काष्ठा mem_cgroup_eventfd_list अणु
+	काष्ठा list_head list;
+	काष्ठा eventfd_ctx *eventfd;
+पूर्ण;
 
 /*
  * cgroup_event represents events which userspace want to receive.
  */
-struct mem_cgroup_event {
+काष्ठा mem_cgroup_event अणु
 	/*
-	 * memcg which the event belongs to.
+	 * memcg which the event beदीर्घs to.
 	 */
-	struct mem_cgroup *memcg;
+	काष्ठा mem_cgroup *memcg;
 	/*
-	 * eventfd to signal userspace about the event.
+	 * eventfd to संकेत userspace about the event.
 	 */
-	struct eventfd_ctx *eventfd;
+	काष्ठा eventfd_ctx *eventfd;
 	/*
 	 * Each of these stored in a list by the cgroup.
 	 */
-	struct list_head list;
+	काष्ठा list_head list;
 	/*
-	 * register_event() callback will be used to add new userspace
-	 * waiter for changes related to this event.  Use eventfd_signal()
-	 * on eventfd to send notification to userspace.
+	 * रेजिस्टर_event() callback will be used to add new userspace
+	 * रुकोer क्रम changes related to this event.  Use eventfd_संकेत()
+	 * on eventfd to send notअगरication to userspace.
 	 */
-	int (*register_event)(struct mem_cgroup *memcg,
-			      struct eventfd_ctx *eventfd, const char *args);
+	पूर्णांक (*रेजिस्टर_event)(काष्ठा mem_cgroup *memcg,
+			      काष्ठा eventfd_ctx *eventfd, स्थिर अक्षर *args);
 	/*
-	 * unregister_event() callback will be called when userspace closes
+	 * unरेजिस्टर_event() callback will be called when userspace बंदs
 	 * the eventfd or on cgroup removing.  This callback must be set,
-	 * if you want provide notification functionality.
+	 * अगर you want provide notअगरication functionality.
 	 */
-	void (*unregister_event)(struct mem_cgroup *memcg,
-				 struct eventfd_ctx *eventfd);
+	व्योम (*unरेजिस्टर_event)(काष्ठा mem_cgroup *memcg,
+				 काष्ठा eventfd_ctx *eventfd);
 	/*
-	 * All fields below needed to unregister event when
-	 * userspace closes eventfd.
+	 * All fields below needed to unरेजिस्टर event when
+	 * userspace बंदs eventfd.
 	 */
 	poll_table pt;
-	wait_queue_head_t *wqh;
-	wait_queue_entry_t wait;
-	struct work_struct remove;
-};
+	रुको_queue_head_t *wqh;
+	रुको_queue_entry_t रुको;
+	काष्ठा work_काष्ठा हटाओ;
+पूर्ण;
 
-static void mem_cgroup_threshold(struct mem_cgroup *memcg);
-static void mem_cgroup_oom_notify(struct mem_cgroup *memcg);
+अटल व्योम mem_cgroup_threshold(काष्ठा mem_cgroup *memcg);
+अटल व्योम mem_cgroup_oom_notअगरy(काष्ठा mem_cgroup *memcg);
 
-/* Stuffs for move charges at task migration. */
+/* Stuffs क्रम move अक्षरges at task migration. */
 /*
- * Types of charges to be moved.
+ * Types of अक्षरges to be moved.
  */
-#define MOVE_ANON	0x1U
-#define MOVE_FILE	0x2U
-#define MOVE_MASK	(MOVE_ANON | MOVE_FILE)
+#घोषणा MOVE_ANON	0x1U
+#घोषणा MOVE_खाता	0x2U
+#घोषणा MOVE_MASK	(MOVE_ANON | MOVE_खाता)
 
-/* "mc" and its members are protected by cgroup_mutex */
-static struct move_charge_struct {
-	spinlock_t	  lock; /* for from, to */
-	struct mm_struct  *mm;
-	struct mem_cgroup *from;
-	struct mem_cgroup *to;
-	unsigned long flags;
-	unsigned long precharge;
-	unsigned long moved_charge;
-	unsigned long moved_swap;
-	struct task_struct *moving_task;	/* a task moving charges */
-	wait_queue_head_t waitq;		/* a waitq for other context */
-} mc = {
+/* "mc" and its members are रक्षित by cgroup_mutex */
+अटल काष्ठा move_अक्षरge_काष्ठा अणु
+	spinlock_t	  lock; /* क्रम from, to */
+	काष्ठा mm_काष्ठा  *mm;
+	काष्ठा mem_cgroup *from;
+	काष्ठा mem_cgroup *to;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ preअक्षरge;
+	अचिन्हित दीर्घ moved_अक्षरge;
+	अचिन्हित दीर्घ moved_swap;
+	काष्ठा task_काष्ठा *moving_task;	/* a task moving अक्षरges */
+	रुको_queue_head_t रुकोq;		/* a रुकोq क्रम other context */
+पूर्ण mc = अणु
 	.lock = __SPIN_LOCK_UNLOCKED(mc.lock),
-	.waitq = __WAIT_QUEUE_HEAD_INITIALIZER(mc.waitq),
-};
+	.रुकोq = __WAIT_QUEUE_HEAD_INITIALIZER(mc.रुकोq),
+पूर्ण;
 
 /*
- * Maximum loops in mem_cgroup_hierarchical_reclaim(), used for soft
- * limit reclaim to prevent infinite loops, if they ever occur.
+ * Maximum loops in mem_cgroup_hierarchical_reclaim(), used क्रम soft
+ * limit reclaim to prevent infinite loops, अगर they ever occur.
  */
-#define	MEM_CGROUP_MAX_RECLAIM_LOOPS		100
-#define	MEM_CGROUP_MAX_SOFT_LIMIT_RECLAIM_LOOPS	2
+#घोषणा	MEM_CGROUP_MAX_RECLAIM_LOOPS		100
+#घोषणा	MEM_CGROUP_MAX_SOFT_LIMIT_RECLAIM_LOOPS	2
 
-/* for encoding cft->private value on file */
-enum res_type {
+/* क्रम encoding cft->निजी value on file */
+क्रमागत res_type अणु
 	_MEM,
 	_MEMSWAP,
 	_OOM_TYPE,
 	_KMEM,
 	_TCP,
-};
+पूर्ण;
 
-#define MEMFILE_PRIVATE(x, val)	((x) << 16 | (val))
-#define MEMFILE_TYPE(val)	((val) >> 16 & 0xffff)
-#define MEMFILE_ATTR(val)	((val) & 0xffff)
-/* Used for OOM notifier */
-#define OOM_CONTROL		(0)
+#घोषणा MEMखाता_PRIVATE(x, val)	((x) << 16 | (val))
+#घोषणा MEMखाता_TYPE(val)	((val) >> 16 & 0xffff)
+#घोषणा MEMखाता_ATTR(val)	((val) & 0xffff)
+/* Used क्रम OOM notअगरier */
+#घोषणा OOM_CONTROL		(0)
 
 /*
- * Iteration constructs for visiting all cgroups (under a tree).  If
- * loops are exited prematurely (break), mem_cgroup_iter_break() must
- * be used for reference counting.
+ * Iteration स्थिरructs क्रम visiting all cgroups (under a tree).  If
+ * loops are निकासed prematurely (अवरोध), mem_cgroup_iter_अवरोध() must
+ * be used क्रम reference counting.
  */
-#define for_each_mem_cgroup_tree(iter, root)		\
-	for (iter = mem_cgroup_iter(root, NULL, NULL);	\
-	     iter != NULL;				\
-	     iter = mem_cgroup_iter(root, iter, NULL))
+#घोषणा क्रम_each_mem_cgroup_tree(iter, root)		\
+	क्रम (iter = mem_cgroup_iter(root, शून्य, शून्य);	\
+	     iter != शून्य;				\
+	     iter = mem_cgroup_iter(root, iter, शून्य))
 
-#define for_each_mem_cgroup(iter)			\
-	for (iter = mem_cgroup_iter(NULL, NULL, NULL);	\
-	     iter != NULL;				\
-	     iter = mem_cgroup_iter(NULL, iter, NULL))
+#घोषणा क्रम_each_mem_cgroup(iter)			\
+	क्रम (iter = mem_cgroup_iter(शून्य, शून्य, शून्य);	\
+	     iter != शून्य;				\
+	     iter = mem_cgroup_iter(शून्य, iter, शून्य))
 
-static inline bool should_force_charge(void)
-{
-	return tsk_is_oom_victim(current) || fatal_signal_pending(current) ||
+अटल अंतरभूत bool should_क्रमce_अक्षरge(व्योम)
+अणु
+	वापस tsk_is_oom_victim(current) || fatal_संकेत_pending(current) ||
 		(current->flags & PF_EXITING);
-}
+पूर्ण
 
-/* Some nice accessors for the vmpressure. */
-struct vmpressure *memcg_to_vmpressure(struct mem_cgroup *memcg)
-{
-	if (!memcg)
+/* Some nice accessors क्रम the vmpressure. */
+काष्ठा vmpressure *memcg_to_vmpressure(काष्ठा mem_cgroup *memcg)
+अणु
+	अगर (!memcg)
 		memcg = root_mem_cgroup;
-	return &memcg->vmpressure;
-}
+	वापस &memcg->vmpressure;
+पूर्ण
 
-struct cgroup_subsys_state *vmpressure_to_css(struct vmpressure *vmpr)
-{
-	return &container_of(vmpr, struct mem_cgroup, vmpressure)->css;
-}
+काष्ठा cgroup_subsys_state *vmpressure_to_css(काष्ठा vmpressure *vmpr)
+अणु
+	वापस &container_of(vmpr, काष्ठा mem_cgroup, vmpressure)->css;
+पूर्ण
 
-#ifdef CONFIG_MEMCG_KMEM
-extern spinlock_t css_set_lock;
+#अगर_घोषित CONFIG_MEMCG_KMEM
+बाह्य spinlock_t css_set_lock;
 
-static void obj_cgroup_uncharge_pages(struct obj_cgroup *objcg,
-				      unsigned int nr_pages);
+अटल व्योम obj_cgroup_unअक्षरge_pages(काष्ठा obj_cgroup *objcg,
+				      अचिन्हित पूर्णांक nr_pages);
 
-static void obj_cgroup_release(struct percpu_ref *ref)
-{
-	struct obj_cgroup *objcg = container_of(ref, struct obj_cgroup, refcnt);
-	struct mem_cgroup *memcg;
-	unsigned int nr_bytes;
-	unsigned int nr_pages;
-	unsigned long flags;
+अटल व्योम obj_cgroup_release(काष्ठा percpu_ref *ref)
+अणु
+	काष्ठा obj_cgroup *objcg = container_of(ref, काष्ठा obj_cgroup, refcnt);
+	काष्ठा mem_cgroup *memcg;
+	अचिन्हित पूर्णांक nr_bytes;
+	अचिन्हित पूर्णांक nr_pages;
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * At this point all allocated objects are freed, and
-	 * objcg->nr_charged_bytes can't have an arbitrary byte value.
+	 * At this poपूर्णांक all allocated objects are मुक्तd, and
+	 * objcg->nr_अक्षरged_bytes can't have an arbitrary byte value.
 	 * However, it can be PAGE_SIZE or (x * PAGE_SIZE).
 	 *
 	 * The following sequence can lead to it:
 	 * 1) CPU0: objcg == stock->cached_objcg
-	 * 2) CPU1: we do a small allocation (e.g. 92 bytes),
-	 *          PAGE_SIZE bytes are charged
+	 * 2) CPU1: we करो a small allocation (e.g. 92 bytes),
+	 *          PAGE_SIZE bytes are अक्षरged
 	 * 3) CPU1: a process from another memcg is allocating something,
-	 *          the stock if flushed,
-	 *          objcg->nr_charged_bytes = PAGE_SIZE - 92
-	 * 5) CPU0: we do release this object,
+	 *          the stock अगर flushed,
+	 *          objcg->nr_अक्षरged_bytes = PAGE_SIZE - 92
+	 * 5) CPU0: we करो release this object,
 	 *          92 bytes are added to stock->nr_bytes
 	 * 6) CPU0: stock is flushed,
-	 *          92 bytes are added to objcg->nr_charged_bytes
+	 *          92 bytes are added to objcg->nr_अक्षरged_bytes
 	 *
-	 * In the result, nr_charged_bytes == PAGE_SIZE.
-	 * This page will be uncharged in obj_cgroup_release().
+	 * In the result, nr_अक्षरged_bytes == PAGE_SIZE.
+	 * This page will be unअक्षरged in obj_cgroup_release().
 	 */
-	nr_bytes = atomic_read(&objcg->nr_charged_bytes);
+	nr_bytes = atomic_पढ़ो(&objcg->nr_अक्षरged_bytes);
 	WARN_ON_ONCE(nr_bytes & (PAGE_SIZE - 1));
 	nr_pages = nr_bytes >> PAGE_SHIFT;
 
 	spin_lock_irqsave(&css_set_lock, flags);
 	memcg = obj_cgroup_memcg(objcg);
-	if (nr_pages)
-		obj_cgroup_uncharge_pages(objcg, nr_pages);
+	अगर (nr_pages)
+		obj_cgroup_unअक्षरge_pages(objcg, nr_pages);
 	list_del(&objcg->list);
 	mem_cgroup_put(memcg);
 	spin_unlock_irqrestore(&css_set_lock, flags);
 
-	percpu_ref_exit(ref);
-	kfree_rcu(objcg, rcu);
-}
+	percpu_ref_निकास(ref);
+	kमुक्त_rcu(objcg, rcu);
+पूर्ण
 
-static struct obj_cgroup *obj_cgroup_alloc(void)
-{
-	struct obj_cgroup *objcg;
-	int ret;
+अटल काष्ठा obj_cgroup *obj_cgroup_alloc(व्योम)
+अणु
+	काष्ठा obj_cgroup *objcg;
+	पूर्णांक ret;
 
-	objcg = kzalloc(sizeof(struct obj_cgroup), GFP_KERNEL);
-	if (!objcg)
-		return NULL;
+	objcg = kzalloc(माप(काष्ठा obj_cgroup), GFP_KERNEL);
+	अगर (!objcg)
+		वापस शून्य;
 
 	ret = percpu_ref_init(&objcg->refcnt, obj_cgroup_release, 0,
 			      GFP_KERNEL);
-	if (ret) {
-		kfree(objcg);
-		return NULL;
-	}
+	अगर (ret) अणु
+		kमुक्त(objcg);
+		वापस शून्य;
+	पूर्ण
 	INIT_LIST_HEAD(&objcg->list);
-	return objcg;
-}
+	वापस objcg;
+पूर्ण
 
-static void memcg_reparent_objcgs(struct mem_cgroup *memcg,
-				  struct mem_cgroup *parent)
-{
-	struct obj_cgroup *objcg, *iter;
+अटल व्योम memcg_reparent_objcgs(काष्ठा mem_cgroup *memcg,
+				  काष्ठा mem_cgroup *parent)
+अणु
+	काष्ठा obj_cgroup *objcg, *iter;
 
-	objcg = rcu_replace_pointer(memcg->objcg, NULL, true);
+	objcg = rcu_replace_poपूर्णांकer(memcg->objcg, शून्य, true);
 
 	spin_lock_irq(&css_set_lock);
 
@@ -335,362 +336,362 @@ static void memcg_reparent_objcgs(struct mem_cgroup *memcg,
 	css_get(&parent->css);
 	list_add(&objcg->list, &parent->objcg_list);
 
-	/* Move already reparented objcgs to the parent's list */
-	list_for_each_entry(iter, &memcg->objcg_list, list) {
+	/* Move alपढ़ोy reparented objcgs to the parent's list */
+	list_क्रम_each_entry(iter, &memcg->objcg_list, list) अणु
 		css_get(&parent->css);
 		xchg(&iter->memcg, parent);
 		css_put(&memcg->css);
-	}
+	पूर्ण
 	list_splice(&memcg->objcg_list, &parent->objcg_list);
 
 	spin_unlock_irq(&css_set_lock);
 
-	percpu_ref_kill(&objcg->refcnt);
-}
+	percpu_ref_समाप्त(&objcg->refcnt);
+पूर्ण
 
 /*
  * This will be used as a shrinker list's index.
- * The main reason for not using cgroup id for this:
+ * The मुख्य reason क्रम not using cgroup id क्रम this:
  *  this works better in sparse environments, where we have a lot of memcgs,
- *  but only a few kmem-limited. Or also, if we have, for instance, 200
+ *  but only a few kmem-limited. Or also, अगर we have, क्रम instance, 200
  *  memcgs, and none but the 200th is kmem-limited, we'd have to have a
- *  200 entry array for that.
+ *  200 entry array क्रम that.
  *
  * The current size of the caches array is stored in memcg_nr_cache_ids. It
- * will double each time we have to increase it.
+ * will द्विगुन each समय we have to increase it.
  */
-static DEFINE_IDA(memcg_cache_ida);
-int memcg_nr_cache_ids;
+अटल DEFINE_IDA(memcg_cache_ida);
+पूर्णांक memcg_nr_cache_ids;
 
 /* Protects memcg_nr_cache_ids */
-static DECLARE_RWSEM(memcg_cache_ids_sem);
+अटल DECLARE_RWSEM(memcg_cache_ids_sem);
 
-void memcg_get_cache_ids(void)
-{
-	down_read(&memcg_cache_ids_sem);
-}
+व्योम memcg_get_cache_ids(व्योम)
+अणु
+	करोwn_पढ़ो(&memcg_cache_ids_sem);
+पूर्ण
 
-void memcg_put_cache_ids(void)
-{
-	up_read(&memcg_cache_ids_sem);
-}
+व्योम memcg_put_cache_ids(व्योम)
+अणु
+	up_पढ़ो(&memcg_cache_ids_sem);
+पूर्ण
 
 /*
- * MIN_SIZE is different than 1, because we would like to avoid going through
- * the alloc/free process all the time. In a small machine, 4 kmem-limited
+ * MIN_SIZE is dअगरferent than 1, because we would like to aव्योम going through
+ * the alloc/मुक्त process all the समय. In a small machine, 4 kmem-limited
  * cgroups is a reasonable guess. In the future, it could be a parameter or
  * tunable, but that is strictly not necessary.
  *
  * MAX_SIZE should be as large as the number of cgrp_ids. Ideally, we could get
- * this constant directly from cgroup, but it is understandable that this is
- * better kept as an internal representation in cgroup.c. In any case, the
- * cgrp_id space is not getting any smaller, and we don't have to necessarily
- * increase ours as well if it increases.
+ * this स्थिरant directly from cgroup, but it is understandable that this is
+ * better kept as an पूर्णांकernal representation in cgroup.c. In any हाल, the
+ * cgrp_id space is not getting any smaller, and we करोn't have to necessarily
+ * increase ours as well अगर it increases.
  */
-#define MEMCG_CACHES_MIN_SIZE 4
-#define MEMCG_CACHES_MAX_SIZE MEM_CGROUP_ID_MAX
+#घोषणा MEMCG_CACHES_MIN_SIZE 4
+#घोषणा MEMCG_CACHES_MAX_SIZE MEM_CGROUP_ID_MAX
 
 /*
  * A lot of the calls to the cache allocation functions are expected to be
- * inlined by the compiler. Since the calls to memcg_slab_pre_alloc_hook() are
- * conditional to this static branch, we'll have to allow modules that does
+ * अंतरभूतd by the compiler. Since the calls to memcg_slab_pre_alloc_hook() are
+ * conditional to this अटल branch, we'll have to allow modules that करोes
  * kmem_cache_alloc and the such to see this symbol as well
  */
 DEFINE_STATIC_KEY_FALSE(memcg_kmem_enabled_key);
 EXPORT_SYMBOL(memcg_kmem_enabled_key);
-#endif
+#पूर्ण_अगर
 
 /**
  * mem_cgroup_css_from_page - css of the memcg associated with a page
- * @page: page of interest
+ * @page: page of पूर्णांकerest
  *
- * If memcg is bound to the default hierarchy, css of the memcg associated
- * with @page is returned.  The returned css remains associated with @page
+ * If memcg is bound to the शेष hierarchy, css of the memcg associated
+ * with @page is वापसed.  The वापसed css reमुख्यs associated with @page
  * until it is released.
  *
  * If memcg is bound to a traditional hierarchy, the css of root_mem_cgroup
- * is returned.
+ * is वापसed.
  */
-struct cgroup_subsys_state *mem_cgroup_css_from_page(struct page *page)
-{
-	struct mem_cgroup *memcg;
+काष्ठा cgroup_subsys_state *mem_cgroup_css_from_page(काष्ठा page *page)
+अणु
+	काष्ठा mem_cgroup *memcg;
 
 	memcg = page_memcg(page);
 
-	if (!memcg || !cgroup_subsys_on_dfl(memory_cgrp_subsys))
+	अगर (!memcg || !cgroup_subsys_on_dfl(memory_cgrp_subsys))
 		memcg = root_mem_cgroup;
 
-	return &memcg->css;
-}
+	वापस &memcg->css;
+पूर्ण
 
 /**
- * page_cgroup_ino - return inode number of the memcg a page is charged to
+ * page_cgroup_ino - वापस inode number of the memcg a page is अक्षरged to
  * @page: the page
  *
- * Look up the closest online ancestor of the memory cgroup @page is charged to
- * and return its inode number or 0 if @page is not charged to any cgroup. It
+ * Look up the बंदst online ancestor of the memory cgroup @page is अक्षरged to
+ * and वापस its inode number or 0 अगर @page is not अक्षरged to any cgroup. It
  * is safe to call this function without holding a reference to @page.
  *
  * Note, this function is inherently racy, because there is nothing to prevent
- * the cgroup inode from getting torn down and potentially reallocated a moment
- * after page_cgroup_ino() returns, so it only should be used by callers that
- * do not care (such as procfs interfaces).
+ * the cgroup inode from getting torn करोwn and potentially पुनः_स्मृतिated a moment
+ * after page_cgroup_ino() वापसs, so it only should be used by callers that
+ * करो not care (such as procfs पूर्णांकerfaces).
  */
-ino_t page_cgroup_ino(struct page *page)
-{
-	struct mem_cgroup *memcg;
-	unsigned long ino = 0;
+ino_t page_cgroup_ino(काष्ठा page *page)
+अणु
+	काष्ठा mem_cgroup *memcg;
+	अचिन्हित दीर्घ ino = 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	memcg = page_memcg_check(page);
 
-	while (memcg && !(memcg->css.flags & CSS_ONLINE))
+	जबतक (memcg && !(memcg->css.flags & CSS_ONLINE))
 		memcg = parent_mem_cgroup(memcg);
-	if (memcg)
+	अगर (memcg)
 		ino = cgroup_ino(memcg->css.cgroup);
-	rcu_read_unlock();
-	return ino;
-}
+	rcu_पढ़ो_unlock();
+	वापस ino;
+पूर्ण
 
-static struct mem_cgroup_per_node *
-mem_cgroup_page_nodeinfo(struct mem_cgroup *memcg, struct page *page)
-{
-	int nid = page_to_nid(page);
+अटल काष्ठा mem_cgroup_per_node *
+mem_cgroup_page_nodeinfo(काष्ठा mem_cgroup *memcg, काष्ठा page *page)
+अणु
+	पूर्णांक nid = page_to_nid(page);
 
-	return memcg->nodeinfo[nid];
-}
+	वापस memcg->nodeinfo[nid];
+पूर्ण
 
-static struct mem_cgroup_tree_per_node *
-soft_limit_tree_node(int nid)
-{
-	return soft_limit_tree.rb_tree_per_node[nid];
-}
+अटल काष्ठा mem_cgroup_tree_per_node *
+soft_limit_tree_node(पूर्णांक nid)
+अणु
+	वापस soft_limit_tree.rb_tree_per_node[nid];
+पूर्ण
 
-static struct mem_cgroup_tree_per_node *
-soft_limit_tree_from_page(struct page *page)
-{
-	int nid = page_to_nid(page);
+अटल काष्ठा mem_cgroup_tree_per_node *
+soft_limit_tree_from_page(काष्ठा page *page)
+अणु
+	पूर्णांक nid = page_to_nid(page);
 
-	return soft_limit_tree.rb_tree_per_node[nid];
-}
+	वापस soft_limit_tree.rb_tree_per_node[nid];
+पूर्ण
 
-static void __mem_cgroup_insert_exceeded(struct mem_cgroup_per_node *mz,
-					 struct mem_cgroup_tree_per_node *mctz,
-					 unsigned long new_usage_in_excess)
-{
-	struct rb_node **p = &mctz->rb_root.rb_node;
-	struct rb_node *parent = NULL;
-	struct mem_cgroup_per_node *mz_node;
-	bool rightmost = true;
+अटल व्योम __mem_cgroup_insert_exceeded(काष्ठा mem_cgroup_per_node *mz,
+					 काष्ठा mem_cgroup_tree_per_node *mctz,
+					 अचिन्हित दीर्घ new_usage_in_excess)
+अणु
+	काष्ठा rb_node **p = &mctz->rb_root.rb_node;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा mem_cgroup_per_node *mz_node;
+	bool righपंचांगost = true;
 
-	if (mz->on_tree)
-		return;
+	अगर (mz->on_tree)
+		वापस;
 
 	mz->usage_in_excess = new_usage_in_excess;
-	if (!mz->usage_in_excess)
-		return;
-	while (*p) {
+	अगर (!mz->usage_in_excess)
+		वापस;
+	जबतक (*p) अणु
 		parent = *p;
-		mz_node = rb_entry(parent, struct mem_cgroup_per_node,
+		mz_node = rb_entry(parent, काष्ठा mem_cgroup_per_node,
 					tree_node);
-		if (mz->usage_in_excess < mz_node->usage_in_excess) {
+		अगर (mz->usage_in_excess < mz_node->usage_in_excess) अणु
 			p = &(*p)->rb_left;
-			rightmost = false;
-		} else {
+			righपंचांगost = false;
+		पूर्ण अन्यथा अणु
 			p = &(*p)->rb_right;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (rightmost)
-		mctz->rb_rightmost = &mz->tree_node;
+	अगर (righपंचांगost)
+		mctz->rb_righपंचांगost = &mz->tree_node;
 
 	rb_link_node(&mz->tree_node, parent, p);
 	rb_insert_color(&mz->tree_node, &mctz->rb_root);
 	mz->on_tree = true;
-}
+पूर्ण
 
-static void __mem_cgroup_remove_exceeded(struct mem_cgroup_per_node *mz,
-					 struct mem_cgroup_tree_per_node *mctz)
-{
-	if (!mz->on_tree)
-		return;
+अटल व्योम __mem_cgroup_हटाओ_exceeded(काष्ठा mem_cgroup_per_node *mz,
+					 काष्ठा mem_cgroup_tree_per_node *mctz)
+अणु
+	अगर (!mz->on_tree)
+		वापस;
 
-	if (&mz->tree_node == mctz->rb_rightmost)
-		mctz->rb_rightmost = rb_prev(&mz->tree_node);
+	अगर (&mz->tree_node == mctz->rb_righपंचांगost)
+		mctz->rb_righपंचांगost = rb_prev(&mz->tree_node);
 
 	rb_erase(&mz->tree_node, &mctz->rb_root);
 	mz->on_tree = false;
-}
+पूर्ण
 
-static void mem_cgroup_remove_exceeded(struct mem_cgroup_per_node *mz,
-				       struct mem_cgroup_tree_per_node *mctz)
-{
-	unsigned long flags;
+अटल व्योम mem_cgroup_हटाओ_exceeded(काष्ठा mem_cgroup_per_node *mz,
+				       काष्ठा mem_cgroup_tree_per_node *mctz)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mctz->lock, flags);
-	__mem_cgroup_remove_exceeded(mz, mctz);
+	__mem_cgroup_हटाओ_exceeded(mz, mctz);
 	spin_unlock_irqrestore(&mctz->lock, flags);
-}
+पूर्ण
 
-static unsigned long soft_limit_excess(struct mem_cgroup *memcg)
-{
-	unsigned long nr_pages = page_counter_read(&memcg->memory);
-	unsigned long soft_limit = READ_ONCE(memcg->soft_limit);
-	unsigned long excess = 0;
+अटल अचिन्हित दीर्घ soft_limit_excess(काष्ठा mem_cgroup *memcg)
+अणु
+	अचिन्हित दीर्घ nr_pages = page_counter_पढ़ो(&memcg->memory);
+	अचिन्हित दीर्घ soft_limit = READ_ONCE(memcg->soft_limit);
+	अचिन्हित दीर्घ excess = 0;
 
-	if (nr_pages > soft_limit)
+	अगर (nr_pages > soft_limit)
 		excess = nr_pages - soft_limit;
 
-	return excess;
-}
+	वापस excess;
+पूर्ण
 
-static void mem_cgroup_update_tree(struct mem_cgroup *memcg, struct page *page)
-{
-	unsigned long excess;
-	struct mem_cgroup_per_node *mz;
-	struct mem_cgroup_tree_per_node *mctz;
+अटल व्योम mem_cgroup_update_tree(काष्ठा mem_cgroup *memcg, काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ excess;
+	काष्ठा mem_cgroup_per_node *mz;
+	काष्ठा mem_cgroup_tree_per_node *mctz;
 
 	mctz = soft_limit_tree_from_page(page);
-	if (!mctz)
-		return;
+	अगर (!mctz)
+		वापस;
 	/*
 	 * Necessary to update all ancestors when hierarchy is used.
 	 * because their event counter is not touched.
 	 */
-	for (; memcg; memcg = parent_mem_cgroup(memcg)) {
+	क्रम (; memcg; memcg = parent_mem_cgroup(memcg)) अणु
 		mz = mem_cgroup_page_nodeinfo(memcg, page);
 		excess = soft_limit_excess(memcg);
 		/*
-		 * We have to update the tree if mz is on RB-tree or
+		 * We have to update the tree अगर mz is on RB-tree or
 		 * mem is over its softlimit.
 		 */
-		if (excess || mz->on_tree) {
-			unsigned long flags;
+		अगर (excess || mz->on_tree) अणु
+			अचिन्हित दीर्घ flags;
 
 			spin_lock_irqsave(&mctz->lock, flags);
-			/* if on-tree, remove it */
-			if (mz->on_tree)
-				__mem_cgroup_remove_exceeded(mz, mctz);
+			/* अगर on-tree, हटाओ it */
+			अगर (mz->on_tree)
+				__mem_cgroup_हटाओ_exceeded(mz, mctz);
 			/*
 			 * Insert again. mz->usage_in_excess will be updated.
 			 * If excess is 0, no tree ops.
 			 */
 			__mem_cgroup_insert_exceeded(mz, mctz, excess);
 			spin_unlock_irqrestore(&mctz->lock, flags);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void mem_cgroup_remove_from_trees(struct mem_cgroup *memcg)
-{
-	struct mem_cgroup_tree_per_node *mctz;
-	struct mem_cgroup_per_node *mz;
-	int nid;
+अटल व्योम mem_cgroup_हटाओ_from_trees(काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा mem_cgroup_tree_per_node *mctz;
+	काष्ठा mem_cgroup_per_node *mz;
+	पूर्णांक nid;
 
-	for_each_node(nid) {
+	क्रम_each_node(nid) अणु
 		mz = memcg->nodeinfo[nid];
 		mctz = soft_limit_tree_node(nid);
-		if (mctz)
-			mem_cgroup_remove_exceeded(mz, mctz);
-	}
-}
+		अगर (mctz)
+			mem_cgroup_हटाओ_exceeded(mz, mctz);
+	पूर्ण
+पूर्ण
 
-static struct mem_cgroup_per_node *
-__mem_cgroup_largest_soft_limit_node(struct mem_cgroup_tree_per_node *mctz)
-{
-	struct mem_cgroup_per_node *mz;
+अटल काष्ठा mem_cgroup_per_node *
+__mem_cgroup_largest_soft_limit_node(काष्ठा mem_cgroup_tree_per_node *mctz)
+अणु
+	काष्ठा mem_cgroup_per_node *mz;
 
 retry:
-	mz = NULL;
-	if (!mctz->rb_rightmost)
-		goto done;		/* Nothing to reclaim from */
+	mz = शून्य;
+	अगर (!mctz->rb_righपंचांगost)
+		जाओ करोne;		/* Nothing to reclaim from */
 
-	mz = rb_entry(mctz->rb_rightmost,
-		      struct mem_cgroup_per_node, tree_node);
+	mz = rb_entry(mctz->rb_righपंचांगost,
+		      काष्ठा mem_cgroup_per_node, tree_node);
 	/*
-	 * Remove the node now but someone else can add it back,
+	 * Remove the node now but someone अन्यथा can add it back,
 	 * we will to add it back at the end of reclaim to its correct
 	 * position in the tree.
 	 */
-	__mem_cgroup_remove_exceeded(mz, mctz);
-	if (!soft_limit_excess(mz->memcg) ||
+	__mem_cgroup_हटाओ_exceeded(mz, mctz);
+	अगर (!soft_limit_excess(mz->memcg) ||
 	    !css_tryget(&mz->memcg->css))
-		goto retry;
-done:
-	return mz;
-}
+		जाओ retry;
+करोne:
+	वापस mz;
+पूर्ण
 
-static struct mem_cgroup_per_node *
-mem_cgroup_largest_soft_limit_node(struct mem_cgroup_tree_per_node *mctz)
-{
-	struct mem_cgroup_per_node *mz;
+अटल काष्ठा mem_cgroup_per_node *
+mem_cgroup_largest_soft_limit_node(काष्ठा mem_cgroup_tree_per_node *mctz)
+अणु
+	काष्ठा mem_cgroup_per_node *mz;
 
 	spin_lock_irq(&mctz->lock);
 	mz = __mem_cgroup_largest_soft_limit_node(mctz);
 	spin_unlock_irq(&mctz->lock);
-	return mz;
-}
+	वापस mz;
+पूर्ण
 
 /**
  * __mod_memcg_state - update cgroup memory statistics
  * @memcg: the memory cgroup
- * @idx: the stat item - can be enum memcg_stat_item or enum node_stat_item
+ * @idx: the stat item - can be क्रमागत memcg_stat_item or क्रमागत node_stat_item
  * @val: delta to add to the counter, can be negative
  */
-void __mod_memcg_state(struct mem_cgroup *memcg, int idx, int val)
-{
-	if (mem_cgroup_disabled())
-		return;
+व्योम __mod_memcg_state(काष्ठा mem_cgroup *memcg, पूर्णांक idx, पूर्णांक val)
+अणु
+	अगर (mem_cgroup_disabled())
+		वापस;
 
 	__this_cpu_add(memcg->vmstats_percpu->state[idx], val);
 	cgroup_rstat_updated(memcg->css.cgroup, smp_processor_id());
-}
+पूर्ण
 
-/* idx can be of type enum memcg_stat_item or node_stat_item. */
-static unsigned long memcg_page_state(struct mem_cgroup *memcg, int idx)
-{
-	long x = READ_ONCE(memcg->vmstats.state[idx]);
-#ifdef CONFIG_SMP
-	if (x < 0)
+/* idx can be of type क्रमागत memcg_stat_item or node_stat_item. */
+अटल अचिन्हित दीर्घ memcg_page_state(काष्ठा mem_cgroup *memcg, पूर्णांक idx)
+अणु
+	दीर्घ x = READ_ONCE(memcg->vmstats.state[idx]);
+#अगर_घोषित CONFIG_SMP
+	अगर (x < 0)
 		x = 0;
-#endif
-	return x;
-}
+#पूर्ण_अगर
+	वापस x;
+पूर्ण
 
-/* idx can be of type enum memcg_stat_item or node_stat_item. */
-static unsigned long memcg_page_state_local(struct mem_cgroup *memcg, int idx)
-{
-	long x = 0;
-	int cpu;
+/* idx can be of type क्रमागत memcg_stat_item or node_stat_item. */
+अटल अचिन्हित दीर्घ memcg_page_state_local(काष्ठा mem_cgroup *memcg, पूर्णांक idx)
+अणु
+	दीर्घ x = 0;
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		x += per_cpu(memcg->vmstats_percpu->state[idx], cpu);
-#ifdef CONFIG_SMP
-	if (x < 0)
+#अगर_घोषित CONFIG_SMP
+	अगर (x < 0)
 		x = 0;
-#endif
-	return x;
-}
+#पूर्ण_अगर
+	वापस x;
+पूर्ण
 
-static struct mem_cgroup_per_node *
-parent_nodeinfo(struct mem_cgroup_per_node *pn, int nid)
-{
-	struct mem_cgroup *parent;
+अटल काष्ठा mem_cgroup_per_node *
+parent_nodeinfo(काष्ठा mem_cgroup_per_node *pn, पूर्णांक nid)
+अणु
+	काष्ठा mem_cgroup *parent;
 
 	parent = parent_mem_cgroup(pn->memcg);
-	if (!parent)
-		return NULL;
-	return parent->nodeinfo[nid];
-}
+	अगर (!parent)
+		वापस शून्य;
+	वापस parent->nodeinfo[nid];
+पूर्ण
 
-void __mod_memcg_lruvec_state(struct lruvec *lruvec, enum node_stat_item idx,
-			      int val)
-{
-	struct mem_cgroup_per_node *pn;
-	struct mem_cgroup *memcg;
-	long x, threshold = MEMCG_CHARGE_BATCH;
+व्योम __mod_memcg_lruvec_state(काष्ठा lruvec *lruvec, क्रमागत node_stat_item idx,
+			      पूर्णांक val)
+अणु
+	काष्ठा mem_cgroup_per_node *pn;
+	काष्ठा mem_cgroup *memcg;
+	दीर्घ x, threshold = MEMCG_CHARGE_BATCH;
 
-	pn = container_of(lruvec, struct mem_cgroup_per_node, lruvec);
+	pn = container_of(lruvec, काष्ठा mem_cgroup_per_node, lruvec);
 	memcg = pn->memcg;
 
 	/* Update memcg */
@@ -699,20 +700,20 @@ void __mod_memcg_lruvec_state(struct lruvec *lruvec, enum node_stat_item idx,
 	/* Update lruvec */
 	__this_cpu_add(pn->lruvec_stat_local->count[idx], val);
 
-	if (vmstat_item_in_bytes(idx))
+	अगर (vmstat_item_in_bytes(idx))
 		threshold <<= PAGE_SHIFT;
 
-	x = val + __this_cpu_read(pn->lruvec_stat_cpu->count[idx]);
-	if (unlikely(abs(x) > threshold)) {
+	x = val + __this_cpu_पढ़ो(pn->lruvec_stat_cpu->count[idx]);
+	अगर (unlikely(असल(x) > threshold)) अणु
 		pg_data_t *pgdat = lruvec_pgdat(lruvec);
-		struct mem_cgroup_per_node *pi;
+		काष्ठा mem_cgroup_per_node *pi;
 
-		for (pi = pn; pi; pi = parent_nodeinfo(pi, pgdat->node_id))
-			atomic_long_add(x, &pi->lruvec_stat[idx]);
+		क्रम (pi = pn; pi; pi = parent_nodeinfo(pi, pgdat->node_id))
+			atomic_दीर्घ_add(x, &pi->lruvec_stat[idx]);
 		x = 0;
-	}
-	__this_cpu_write(pn->lruvec_stat_cpu->count[idx], x);
-}
+	पूर्ण
+	__this_cpu_ग_लिखो(pn->lruvec_stat_cpu->count[idx], x);
+पूर्ण
 
 /**
  * __mod_lruvec_state - update lruvec memory statistics
@@ -720,67 +721,67 @@ void __mod_memcg_lruvec_state(struct lruvec *lruvec, enum node_stat_item idx,
  * @idx: the stat item
  * @val: delta to add to the counter, can be negative
  *
- * The lruvec is the intersection of the NUMA node and a cgroup. This
+ * The lruvec is the पूर्णांकersection of the NUMA node and a cgroup. This
  * function updates the all three counters that are affected by a
  * change of state at this level: per-node, per-cgroup, per-lruvec.
  */
-void __mod_lruvec_state(struct lruvec *lruvec, enum node_stat_item idx,
-			int val)
-{
+व्योम __mod_lruvec_state(काष्ठा lruvec *lruvec, क्रमागत node_stat_item idx,
+			पूर्णांक val)
+अणु
 	/* Update node */
 	__mod_node_page_state(lruvec_pgdat(lruvec), idx, val);
 
 	/* Update memcg and lruvec */
-	if (!mem_cgroup_disabled())
+	अगर (!mem_cgroup_disabled())
 		__mod_memcg_lruvec_state(lruvec, idx, val);
-}
+पूर्ण
 
-void __mod_lruvec_page_state(struct page *page, enum node_stat_item idx,
-			     int val)
-{
-	struct page *head = compound_head(page); /* rmap on tail pages */
-	struct mem_cgroup *memcg;
+व्योम __mod_lruvec_page_state(काष्ठा page *page, क्रमागत node_stat_item idx,
+			     पूर्णांक val)
+अणु
+	काष्ठा page *head = compound_head(page); /* rmap on tail pages */
+	काष्ठा mem_cgroup *memcg;
 	pg_data_t *pgdat = page_pgdat(page);
-	struct lruvec *lruvec;
+	काष्ठा lruvec *lruvec;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	memcg = page_memcg(head);
 	/* Untracked pages have no memcg, no lruvec. Update only the node */
-	if (!memcg) {
-		rcu_read_unlock();
+	अगर (!memcg) अणु
+		rcu_पढ़ो_unlock();
 		__mod_node_page_state(pgdat, idx, val);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	lruvec = mem_cgroup_lruvec(memcg, pgdat);
 	__mod_lruvec_state(lruvec, idx, val);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 EXPORT_SYMBOL(__mod_lruvec_page_state);
 
-void __mod_lruvec_kmem_state(void *p, enum node_stat_item idx, int val)
-{
+व्योम __mod_lruvec_kmem_state(व्योम *p, क्रमागत node_stat_item idx, पूर्णांक val)
+अणु
 	pg_data_t *pgdat = page_pgdat(virt_to_page(p));
-	struct mem_cgroup *memcg;
-	struct lruvec *lruvec;
+	काष्ठा mem_cgroup *memcg;
+	काष्ठा lruvec *lruvec;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	memcg = mem_cgroup_from_obj(p);
 
 	/*
 	 * Untracked pages have no memcg, no lruvec. Update only the
 	 * node. If we reparent the slab objects to the root memcg,
-	 * when we free the slab object, we need to update the per-memcg
-	 * vmstats to keep it correct for the root memcg.
+	 * when we मुक्त the slab object, we need to update the per-memcg
+	 * vmstats to keep it correct क्रम the root memcg.
 	 */
-	if (!memcg) {
+	अगर (!memcg) अणु
 		__mod_node_page_state(pgdat, idx, val);
-	} else {
+	पूर्ण अन्यथा अणु
 		lruvec = mem_cgroup_lruvec(memcg, pgdat);
 		__mod_lruvec_state(lruvec, idx, val);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
  * __count_memcg_events - account VM events in a cgroup
@@ -788,385 +789,385 @@ void __mod_lruvec_kmem_state(void *p, enum node_stat_item idx, int val)
  * @idx: the event item
  * @count: the number of events that occurred
  */
-void __count_memcg_events(struct mem_cgroup *memcg, enum vm_event_item idx,
-			  unsigned long count)
-{
-	if (mem_cgroup_disabled())
-		return;
+व्योम __count_memcg_events(काष्ठा mem_cgroup *memcg, क्रमागत vm_event_item idx,
+			  अचिन्हित दीर्घ count)
+अणु
+	अगर (mem_cgroup_disabled())
+		वापस;
 
 	__this_cpu_add(memcg->vmstats_percpu->events[idx], count);
 	cgroup_rstat_updated(memcg->css.cgroup, smp_processor_id());
-}
+पूर्ण
 
-static unsigned long memcg_events(struct mem_cgroup *memcg, int event)
-{
-	return READ_ONCE(memcg->vmstats.events[event]);
-}
+अटल अचिन्हित दीर्घ memcg_events(काष्ठा mem_cgroup *memcg, पूर्णांक event)
+अणु
+	वापस READ_ONCE(memcg->vmstats.events[event]);
+पूर्ण
 
-static unsigned long memcg_events_local(struct mem_cgroup *memcg, int event)
-{
-	long x = 0;
-	int cpu;
+अटल अचिन्हित दीर्घ memcg_events_local(काष्ठा mem_cgroup *memcg, पूर्णांक event)
+अणु
+	दीर्घ x = 0;
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		x += per_cpu(memcg->vmstats_percpu->events[event], cpu);
-	return x;
-}
+	वापस x;
+पूर्ण
 
-static void mem_cgroup_charge_statistics(struct mem_cgroup *memcg,
-					 struct page *page,
-					 int nr_pages)
-{
+अटल व्योम mem_cgroup_अक्षरge_statistics(काष्ठा mem_cgroup *memcg,
+					 काष्ठा page *page,
+					 पूर्णांक nr_pages)
+अणु
 	/* pagein of a big page is an event. So, ignore page size */
-	if (nr_pages > 0)
+	अगर (nr_pages > 0)
 		__count_memcg_events(memcg, PGPGIN, 1);
-	else {
+	अन्यथा अणु
 		__count_memcg_events(memcg, PGPGOUT, 1);
-		nr_pages = -nr_pages; /* for event */
-	}
+		nr_pages = -nr_pages; /* क्रम event */
+	पूर्ण
 
 	__this_cpu_add(memcg->vmstats_percpu->nr_page_events, nr_pages);
-}
+पूर्ण
 
-static bool mem_cgroup_event_ratelimit(struct mem_cgroup *memcg,
-				       enum mem_cgroup_events_target target)
-{
-	unsigned long val, next;
+अटल bool mem_cgroup_event_ratelimit(काष्ठा mem_cgroup *memcg,
+				       क्रमागत mem_cgroup_events_target target)
+अणु
+	अचिन्हित दीर्घ val, next;
 
-	val = __this_cpu_read(memcg->vmstats_percpu->nr_page_events);
-	next = __this_cpu_read(memcg->vmstats_percpu->targets[target]);
-	/* from time_after() in jiffies.h */
-	if ((long)(next - val) < 0) {
-		switch (target) {
-		case MEM_CGROUP_TARGET_THRESH:
+	val = __this_cpu_पढ़ो(memcg->vmstats_percpu->nr_page_events);
+	next = __this_cpu_पढ़ो(memcg->vmstats_percpu->tarमाला_लो[target]);
+	/* from समय_after() in jअगरfies.h */
+	अगर ((दीर्घ)(next - val) < 0) अणु
+		चयन (target) अणु
+		हाल MEM_CGROUP_TARGET_THRESH:
 			next = val + THRESHOLDS_EVENTS_TARGET;
-			break;
-		case MEM_CGROUP_TARGET_SOFTLIMIT:
+			अवरोध;
+		हाल MEM_CGROUP_TARGET_SOFTLIMIT:
 			next = val + SOFTLIMIT_EVENTS_TARGET;
-			break;
-		default:
-			break;
-		}
-		__this_cpu_write(memcg->vmstats_percpu->targets[target], next);
-		return true;
-	}
-	return false;
-}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		__this_cpu_ग_लिखो(memcg->vmstats_percpu->tarमाला_लो[target], next);
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /*
  * Check events in order.
  *
  */
-static void memcg_check_events(struct mem_cgroup *memcg, struct page *page)
-{
+अटल व्योम memcg_check_events(काष्ठा mem_cgroup *memcg, काष्ठा page *page)
+अणु
 	/* threshold event is triggered in finer grain than soft limit */
-	if (unlikely(mem_cgroup_event_ratelimit(memcg,
-						MEM_CGROUP_TARGET_THRESH))) {
-		bool do_softlimit;
+	अगर (unlikely(mem_cgroup_event_ratelimit(memcg,
+						MEM_CGROUP_TARGET_THRESH))) अणु
+		bool करो_softlimit;
 
-		do_softlimit = mem_cgroup_event_ratelimit(memcg,
+		करो_softlimit = mem_cgroup_event_ratelimit(memcg,
 						MEM_CGROUP_TARGET_SOFTLIMIT);
 		mem_cgroup_threshold(memcg);
-		if (unlikely(do_softlimit))
+		अगर (unlikely(करो_softlimit))
 			mem_cgroup_update_tree(memcg, page);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct mem_cgroup *mem_cgroup_from_task(struct task_struct *p)
-{
+काष्ठा mem_cgroup *mem_cgroup_from_task(काष्ठा task_काष्ठा *p)
+अणु
 	/*
-	 * mm_update_next_owner() may clear mm->owner to NULL
-	 * if it races with swapoff, page migration, etc.
-	 * So this can be called with p == NULL.
+	 * mm_update_next_owner() may clear mm->owner to शून्य
+	 * अगर it races with swapoff, page migration, etc.
+	 * So this can be called with p == शून्य.
 	 */
-	if (unlikely(!p))
-		return NULL;
+	अगर (unlikely(!p))
+		वापस शून्य;
 
-	return mem_cgroup_from_css(task_css(p, memory_cgrp_id));
-}
+	वापस mem_cgroup_from_css(task_css(p, memory_cgrp_id));
+पूर्ण
 EXPORT_SYMBOL(mem_cgroup_from_task);
 
 /**
- * get_mem_cgroup_from_mm: Obtain a reference on given mm_struct's memcg.
- * @mm: mm from which memcg should be extracted. It can be NULL.
+ * get_mem_cgroup_from_mm: Obtain a reference on given mm_काष्ठा's memcg.
+ * @mm: mm from which memcg should be extracted. It can be शून्य.
  *
- * Obtain a reference on mm->memcg and returns it if successful. Otherwise
- * root_mem_cgroup is returned. However if mem_cgroup is disabled, NULL is
- * returned.
+ * Obtain a reference on mm->memcg and वापसs it अगर successful. Otherwise
+ * root_mem_cgroup is वापसed. However अगर mem_cgroup is disabled, शून्य is
+ * वापसed.
  */
-struct mem_cgroup *get_mem_cgroup_from_mm(struct mm_struct *mm)
-{
-	struct mem_cgroup *memcg;
+काष्ठा mem_cgroup *get_mem_cgroup_from_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा mem_cgroup *memcg;
 
-	if (mem_cgroup_disabled())
-		return NULL;
+	अगर (mem_cgroup_disabled())
+		वापस शून्य;
 
-	rcu_read_lock();
-	do {
+	rcu_पढ़ो_lock();
+	करो अणु
 		/*
 		 * Page cache insertions can happen without an
 		 * actual mm context, e.g. during disk probing
-		 * on boot, loopback IO, acct() writes etc.
+		 * on boot, loopback IO, acct() ग_लिखोs etc.
 		 */
-		if (unlikely(!mm))
+		अगर (unlikely(!mm))
 			memcg = root_mem_cgroup;
-		else {
+		अन्यथा अणु
 			memcg = mem_cgroup_from_task(rcu_dereference(mm->owner));
-			if (unlikely(!memcg))
+			अगर (unlikely(!memcg))
 				memcg = root_mem_cgroup;
-		}
-	} while (!css_tryget(&memcg->css));
-	rcu_read_unlock();
-	return memcg;
-}
+		पूर्ण
+	पूर्ण जबतक (!css_tryget(&memcg->css));
+	rcu_पढ़ो_unlock();
+	वापस memcg;
+पूर्ण
 EXPORT_SYMBOL(get_mem_cgroup_from_mm);
 
-static __always_inline struct mem_cgroup *active_memcg(void)
-{
-	if (in_interrupt())
-		return this_cpu_read(int_active_memcg);
-	else
-		return current->active_memcg;
-}
+अटल __always_अंतरभूत काष्ठा mem_cgroup *active_memcg(व्योम)
+अणु
+	अगर (in_पूर्णांकerrupt())
+		वापस this_cpu_पढ़ो(पूर्णांक_active_memcg);
+	अन्यथा
+		वापस current->active_memcg;
+पूर्ण
 
-static __always_inline bool memcg_kmem_bypass(void)
-{
-	/* Allow remote memcg charging from any context. */
-	if (unlikely(active_memcg()))
-		return false;
+अटल __always_अंतरभूत bool memcg_kmem_bypass(व्योम)
+अणु
+	/* Allow remote memcg अक्षरging from any context. */
+	अगर (unlikely(active_memcg()))
+		वापस false;
 
-	/* Memcg to charge can't be determined. */
-	if (in_interrupt() || !current->mm || (current->flags & PF_KTHREAD))
-		return true;
+	/* Memcg to अक्षरge can't be determined. */
+	अगर (in_पूर्णांकerrupt() || !current->mm || (current->flags & PF_KTHREAD))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * mem_cgroup_iter - iterate over memory cgroup hierarchy
  * @root: hierarchy root
- * @prev: previously returned memcg, NULL on first invocation
- * @reclaim: cookie for shared reclaim walks, NULL for full walks
+ * @prev: previously वापसed memcg, शून्य on first invocation
+ * @reclaim: cookie क्रम shared reclaim walks, शून्य क्रम full walks
  *
  * Returns references to children of the hierarchy below @root, or
- * @root itself, or %NULL after a full round-trip.
+ * @root itself, or %शून्य after a full round-trip.
  *
- * Caller must pass the return value in @prev on subsequent
- * invocations for reference counting, or use mem_cgroup_iter_break()
- * to cancel a hierarchy walk before the round-trip is complete.
+ * Caller must pass the वापस value in @prev on subsequent
+ * invocations क्रम reference counting, or use mem_cgroup_iter_अवरोध()
+ * to cancel a hierarchy walk beक्रमe the round-trip is complete.
  *
- * Reclaimers can specify a node in @reclaim to divide up the memcgs
+ * Reclaimers can specअगरy a node in @reclaim to भागide up the memcgs
  * in the hierarchy among all concurrent reclaimers operating on the
  * same node.
  */
-struct mem_cgroup *mem_cgroup_iter(struct mem_cgroup *root,
-				   struct mem_cgroup *prev,
-				   struct mem_cgroup_reclaim_cookie *reclaim)
-{
-	struct mem_cgroup_reclaim_iter *iter;
-	struct cgroup_subsys_state *css = NULL;
-	struct mem_cgroup *memcg = NULL;
-	struct mem_cgroup *pos = NULL;
+काष्ठा mem_cgroup *mem_cgroup_iter(काष्ठा mem_cgroup *root,
+				   काष्ठा mem_cgroup *prev,
+				   काष्ठा mem_cgroup_reclaim_cookie *reclaim)
+अणु
+	काष्ठा mem_cgroup_reclaim_iter *iter;
+	काष्ठा cgroup_subsys_state *css = शून्य;
+	काष्ठा mem_cgroup *memcg = शून्य;
+	काष्ठा mem_cgroup *pos = शून्य;
 
-	if (mem_cgroup_disabled())
-		return NULL;
+	अगर (mem_cgroup_disabled())
+		वापस शून्य;
 
-	if (!root)
+	अगर (!root)
 		root = root_mem_cgroup;
 
-	if (prev && !reclaim)
+	अगर (prev && !reclaim)
 		pos = prev;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	if (reclaim) {
-		struct mem_cgroup_per_node *mz;
+	अगर (reclaim) अणु
+		काष्ठा mem_cgroup_per_node *mz;
 
 		mz = root->nodeinfo[reclaim->pgdat->node_id];
 		iter = &mz->iter;
 
-		if (prev && reclaim->generation != iter->generation)
-			goto out_unlock;
+		अगर (prev && reclaim->generation != iter->generation)
+			जाओ out_unlock;
 
-		while (1) {
+		जबतक (1) अणु
 			pos = READ_ONCE(iter->position);
-			if (!pos || css_tryget(&pos->css))
-				break;
+			अगर (!pos || css_tryget(&pos->css))
+				अवरोध;
 			/*
 			 * css reference reached zero, so iter->position will
 			 * be cleared by ->css_released. However, we should not
 			 * rely on this happening soon, because ->css_released
-			 * is called from a work queue, and by busy-waiting we
+			 * is called from a work queue, and by busy-रुकोing we
 			 * might block it. So we clear iter->position right
 			 * away.
 			 */
-			(void)cmpxchg(&iter->position, pos, NULL);
-		}
-	}
+			(व्योम)cmpxchg(&iter->position, pos, शून्य);
+		पूर्ण
+	पूर्ण
 
-	if (pos)
+	अगर (pos)
 		css = &pos->css;
 
-	for (;;) {
+	क्रम (;;) अणु
 		css = css_next_descendant_pre(css, &root->css);
-		if (!css) {
+		अगर (!css) अणु
 			/*
 			 * Reclaimers share the hierarchy walk, and a
 			 * new one might jump in right at the end of
 			 * the hierarchy - make sure they see at least
 			 * one group and restart from the beginning.
 			 */
-			if (!prev)
-				continue;
-			break;
-		}
+			अगर (!prev)
+				जारी;
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * Verify the css and acquire a reference.  The root
+		 * Verअगरy the css and acquire a reference.  The root
 		 * is provided by the caller, so we know it's alive
-		 * and kicking, and don't take an extra reference.
+		 * and kicking, and करोn't take an extra reference.
 		 */
 		memcg = mem_cgroup_from_css(css);
 
-		if (css == &root->css)
-			break;
+		अगर (css == &root->css)
+			अवरोध;
 
-		if (css_tryget(css))
-			break;
+		अगर (css_tryget(css))
+			अवरोध;
 
-		memcg = NULL;
-	}
+		memcg = शून्य;
+	पूर्ण
 
-	if (reclaim) {
+	अगर (reclaim) अणु
 		/*
-		 * The position could have already been updated by a competing
-		 * thread, so check that the value hasn't changed since we read
-		 * it to avoid reclaiming from the same cgroup twice.
+		 * The position could have alपढ़ोy been updated by a competing
+		 * thपढ़ो, so check that the value hasn't changed since we पढ़ो
+		 * it to aव्योम reclaiming from the same cgroup twice.
 		 */
-		(void)cmpxchg(&iter->position, pos, memcg);
+		(व्योम)cmpxchg(&iter->position, pos, memcg);
 
-		if (pos)
+		अगर (pos)
 			css_put(&pos->css);
 
-		if (!memcg)
+		अगर (!memcg)
 			iter->generation++;
-		else if (!prev)
+		अन्यथा अगर (!prev)
 			reclaim->generation = iter->generation;
-	}
+	पूर्ण
 
 out_unlock:
-	rcu_read_unlock();
-	if (prev && prev != root)
+	rcu_पढ़ो_unlock();
+	अगर (prev && prev != root)
 		css_put(&prev->css);
 
-	return memcg;
-}
+	वापस memcg;
+पूर्ण
 
 /**
- * mem_cgroup_iter_break - abort a hierarchy walk prematurely
+ * mem_cgroup_iter_अवरोध - पात a hierarchy walk prematurely
  * @root: hierarchy root
- * @prev: last visited hierarchy member as returned by mem_cgroup_iter()
+ * @prev: last visited hierarchy member as वापसed by mem_cgroup_iter()
  */
-void mem_cgroup_iter_break(struct mem_cgroup *root,
-			   struct mem_cgroup *prev)
-{
-	if (!root)
+व्योम mem_cgroup_iter_अवरोध(काष्ठा mem_cgroup *root,
+			   काष्ठा mem_cgroup *prev)
+अणु
+	अगर (!root)
 		root = root_mem_cgroup;
-	if (prev && prev != root)
+	अगर (prev && prev != root)
 		css_put(&prev->css);
-}
+पूर्ण
 
-static void __invalidate_reclaim_iterators(struct mem_cgroup *from,
-					struct mem_cgroup *dead_memcg)
-{
-	struct mem_cgroup_reclaim_iter *iter;
-	struct mem_cgroup_per_node *mz;
-	int nid;
+अटल व्योम __invalidate_reclaim_iterators(काष्ठा mem_cgroup *from,
+					काष्ठा mem_cgroup *dead_memcg)
+अणु
+	काष्ठा mem_cgroup_reclaim_iter *iter;
+	काष्ठा mem_cgroup_per_node *mz;
+	पूर्णांक nid;
 
-	for_each_node(nid) {
+	क्रम_each_node(nid) अणु
 		mz = from->nodeinfo[nid];
 		iter = &mz->iter;
-		cmpxchg(&iter->position, dead_memcg, NULL);
-	}
-}
+		cmpxchg(&iter->position, dead_memcg, शून्य);
+	पूर्ण
+पूर्ण
 
-static void invalidate_reclaim_iterators(struct mem_cgroup *dead_memcg)
-{
-	struct mem_cgroup *memcg = dead_memcg;
-	struct mem_cgroup *last;
+अटल व्योम invalidate_reclaim_iterators(काष्ठा mem_cgroup *dead_memcg)
+अणु
+	काष्ठा mem_cgroup *memcg = dead_memcg;
+	काष्ठा mem_cgroup *last;
 
-	do {
+	करो अणु
 		__invalidate_reclaim_iterators(memcg, dead_memcg);
 		last = memcg;
-	} while ((memcg = parent_mem_cgroup(memcg)));
+	पूर्ण जबतक ((memcg = parent_mem_cgroup(memcg)));
 
 	/*
 	 * When cgruop1 non-hierarchy mode is used,
-	 * parent_mem_cgroup() does not walk all the way up to the
+	 * parent_mem_cgroup() करोes not walk all the way up to the
 	 * cgroup root (root_mem_cgroup). So we have to handle
 	 * dead_memcg from cgroup root separately.
 	 */
-	if (last != root_mem_cgroup)
+	अगर (last != root_mem_cgroup)
 		__invalidate_reclaim_iterators(root_mem_cgroup,
 						dead_memcg);
-}
+पूर्ण
 
 /**
  * mem_cgroup_scan_tasks - iterate over tasks of a memory cgroup hierarchy
  * @memcg: hierarchy root
- * @fn: function to call for each task
+ * @fn: function to call क्रम each task
  * @arg: argument passed to @fn
  *
  * This function iterates over tasks attached to @memcg or to any of its
- * descendants and calls @fn for each task. If @fn returns a non-zero
- * value, the function breaks the iteration loop and returns the value.
- * Otherwise, it will iterate over all tasks and return 0.
+ * descendants and calls @fn क्रम each task. If @fn वापसs a non-zero
+ * value, the function अवरोधs the iteration loop and वापसs the value.
+ * Otherwise, it will iterate over all tasks and वापस 0.
  *
- * This function must not be called for the root memory cgroup.
+ * This function must not be called क्रम the root memory cgroup.
  */
-int mem_cgroup_scan_tasks(struct mem_cgroup *memcg,
-			  int (*fn)(struct task_struct *, void *), void *arg)
-{
-	struct mem_cgroup *iter;
-	int ret = 0;
+पूर्णांक mem_cgroup_scan_tasks(काष्ठा mem_cgroup *memcg,
+			  पूर्णांक (*fn)(काष्ठा task_काष्ठा *, व्योम *), व्योम *arg)
+अणु
+	काष्ठा mem_cgroup *iter;
+	पूर्णांक ret = 0;
 
 	BUG_ON(memcg == root_mem_cgroup);
 
-	for_each_mem_cgroup_tree(iter, memcg) {
-		struct css_task_iter it;
-		struct task_struct *task;
+	क्रम_each_mem_cgroup_tree(iter, memcg) अणु
+		काष्ठा css_task_iter it;
+		काष्ठा task_काष्ठा *task;
 
 		css_task_iter_start(&iter->css, CSS_TASK_ITER_PROCS, &it);
-		while (!ret && (task = css_task_iter_next(&it)))
+		जबतक (!ret && (task = css_task_iter_next(&it)))
 			ret = fn(task, arg);
 		css_task_iter_end(&it);
-		if (ret) {
-			mem_cgroup_iter_break(memcg, iter);
-			break;
-		}
-	}
-	return ret;
-}
+		अगर (ret) अणु
+			mem_cgroup_iter_अवरोध(memcg, iter);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_VM
-void lruvec_memcg_debug(struct lruvec *lruvec, struct page *page)
-{
-	struct mem_cgroup *memcg;
+#अगर_घोषित CONFIG_DEBUG_VM
+व्योम lruvec_memcg_debug(काष्ठा lruvec *lruvec, काष्ठा page *page)
+अणु
+	काष्ठा mem_cgroup *memcg;
 
-	if (mem_cgroup_disabled())
-		return;
+	अगर (mem_cgroup_disabled())
+		वापस;
 
 	memcg = page_memcg(page);
 
-	if (!memcg)
+	अगर (!memcg)
 		VM_BUG_ON_PAGE(lruvec_memcg(lruvec) != root_mem_cgroup, page);
-	else
+	अन्यथा
 		VM_BUG_ON_PAGE(lruvec_memcg(lruvec) != memcg, page);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * lock_page_lruvec - lock and return lruvec for a given page.
+ * lock_page_lruvec - lock and वापस lruvec क्रम a given page.
  * @page: the page
  *
  * These functions are safe to use under any of the following conditions:
@@ -1175,125 +1176,125 @@ void lruvec_memcg_debug(struct lruvec *lruvec, struct page *page)
  * - lock_page_memcg()
  * - page->_refcount is zero
  */
-struct lruvec *lock_page_lruvec(struct page *page)
-{
-	struct lruvec *lruvec;
-	struct pglist_data *pgdat = page_pgdat(page);
+काष्ठा lruvec *lock_page_lruvec(काष्ठा page *page)
+अणु
+	काष्ठा lruvec *lruvec;
+	काष्ठा pglist_data *pgdat = page_pgdat(page);
 
 	lruvec = mem_cgroup_page_lruvec(page, pgdat);
 	spin_lock(&lruvec->lru_lock);
 
 	lruvec_memcg_debug(lruvec, page);
 
-	return lruvec;
-}
+	वापस lruvec;
+पूर्ण
 
-struct lruvec *lock_page_lruvec_irq(struct page *page)
-{
-	struct lruvec *lruvec;
-	struct pglist_data *pgdat = page_pgdat(page);
+काष्ठा lruvec *lock_page_lruvec_irq(काष्ठा page *page)
+अणु
+	काष्ठा lruvec *lruvec;
+	काष्ठा pglist_data *pgdat = page_pgdat(page);
 
 	lruvec = mem_cgroup_page_lruvec(page, pgdat);
 	spin_lock_irq(&lruvec->lru_lock);
 
 	lruvec_memcg_debug(lruvec, page);
 
-	return lruvec;
-}
+	वापस lruvec;
+पूर्ण
 
-struct lruvec *lock_page_lruvec_irqsave(struct page *page, unsigned long *flags)
-{
-	struct lruvec *lruvec;
-	struct pglist_data *pgdat = page_pgdat(page);
+काष्ठा lruvec *lock_page_lruvec_irqsave(काष्ठा page *page, अचिन्हित दीर्घ *flags)
+अणु
+	काष्ठा lruvec *lruvec;
+	काष्ठा pglist_data *pgdat = page_pgdat(page);
 
 	lruvec = mem_cgroup_page_lruvec(page, pgdat);
 	spin_lock_irqsave(&lruvec->lru_lock, *flags);
 
 	lruvec_memcg_debug(lruvec, page);
 
-	return lruvec;
-}
+	वापस lruvec;
+पूर्ण
 
 /**
- * mem_cgroup_update_lru_size - account for adding or removing an lru page
+ * mem_cgroup_update_lru_size - account क्रम adding or removing an lru page
  * @lruvec: mem_cgroup per zone lru vector
  * @lru: index of lru list the page is sitting on
  * @zid: zone id of the accounted pages
  * @nr_pages: positive when adding or negative when removing
  *
- * This function must be called under lru_lock, just before a page is added
- * to or just after a page is removed from an lru list (that ordering being
+ * This function must be called under lru_lock, just beक्रमe a page is added
+ * to or just after a page is हटाओd from an lru list (that ordering being
  * so as to allow it to check that lru_size 0 is consistent with list_empty).
  */
-void mem_cgroup_update_lru_size(struct lruvec *lruvec, enum lru_list lru,
-				int zid, int nr_pages)
-{
-	struct mem_cgroup_per_node *mz;
-	unsigned long *lru_size;
-	long size;
+व्योम mem_cgroup_update_lru_size(काष्ठा lruvec *lruvec, क्रमागत lru_list lru,
+				पूर्णांक zid, पूर्णांक nr_pages)
+अणु
+	काष्ठा mem_cgroup_per_node *mz;
+	अचिन्हित दीर्घ *lru_size;
+	दीर्घ size;
 
-	if (mem_cgroup_disabled())
-		return;
+	अगर (mem_cgroup_disabled())
+		वापस;
 
-	mz = container_of(lruvec, struct mem_cgroup_per_node, lruvec);
+	mz = container_of(lruvec, काष्ठा mem_cgroup_per_node, lruvec);
 	lru_size = &mz->lru_zone_size[zid][lru];
 
-	if (nr_pages < 0)
+	अगर (nr_pages < 0)
 		*lru_size += nr_pages;
 
 	size = *lru_size;
-	if (WARN_ONCE(size < 0,
+	अगर (WARN_ONCE(size < 0,
 		"%s(%p, %d, %d): lru_size %ld\n",
-		__func__, lruvec, lru, nr_pages, size)) {
+		__func__, lruvec, lru, nr_pages, size)) अणु
 		VM_BUG_ON(1);
 		*lru_size = 0;
-	}
+	पूर्ण
 
-	if (nr_pages > 0)
+	अगर (nr_pages > 0)
 		*lru_size += nr_pages;
-}
+पूर्ण
 
 /**
- * mem_cgroup_margin - calculate chargeable space of a memory cgroup
+ * mem_cgroup_margin - calculate अक्षरgeable space of a memory cgroup
  * @memcg: the memory cgroup
  *
- * Returns the maximum amount of memory @mem can be charged with, in
+ * Returns the maximum amount of memory @mem can be अक्षरged with, in
  * pages.
  */
-static unsigned long mem_cgroup_margin(struct mem_cgroup *memcg)
-{
-	unsigned long margin = 0;
-	unsigned long count;
-	unsigned long limit;
+अटल अचिन्हित दीर्घ mem_cgroup_margin(काष्ठा mem_cgroup *memcg)
+अणु
+	अचिन्हित दीर्घ margin = 0;
+	अचिन्हित दीर्घ count;
+	अचिन्हित दीर्घ limit;
 
-	count = page_counter_read(&memcg->memory);
+	count = page_counter_पढ़ो(&memcg->memory);
 	limit = READ_ONCE(memcg->memory.max);
-	if (count < limit)
+	अगर (count < limit)
 		margin = limit - count;
 
-	if (do_memsw_account()) {
-		count = page_counter_read(&memcg->memsw);
+	अगर (करो_memsw_account()) अणु
+		count = page_counter_पढ़ो(&memcg->memsw);
 		limit = READ_ONCE(memcg->memsw.max);
-		if (count < limit)
+		अगर (count < limit)
 			margin = min(margin, limit - count);
-		else
+		अन्यथा
 			margin = 0;
-	}
+	पूर्ण
 
-	return margin;
-}
+	वापस margin;
+पूर्ण
 
 /*
- * A routine for checking "mem" is under move_account() or not.
+ * A routine क्रम checking "mem" is under move_account() or not.
  *
  * Checking a cgroup is mc.from or mc.to or under hierarchy of
- * moving cgroups. This is for waiting at high-memory pressure
+ * moving cgroups. This is क्रम रुकोing at high-memory pressure
  * caused by "move".
  */
-static bool mem_cgroup_under_move(struct mem_cgroup *memcg)
-{
-	struct mem_cgroup *from;
-	struct mem_cgroup *to;
+अटल bool mem_cgroup_under_move(काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा mem_cgroup *from;
+	काष्ठा mem_cgroup *to;
 	bool ret = false;
 	/*
 	 * Unlike task_move routines, we access mc.to, mc.from not under
@@ -1302,661 +1303,661 @@ static bool mem_cgroup_under_move(struct mem_cgroup *memcg)
 	spin_lock(&mc.lock);
 	from = mc.from;
 	to = mc.to;
-	if (!from)
-		goto unlock;
+	अगर (!from)
+		जाओ unlock;
 
 	ret = mem_cgroup_is_descendant(from, memcg) ||
 		mem_cgroup_is_descendant(to, memcg);
 unlock:
 	spin_unlock(&mc.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool mem_cgroup_wait_acct_move(struct mem_cgroup *memcg)
-{
-	if (mc.moving_task && current != mc.moving_task) {
-		if (mem_cgroup_under_move(memcg)) {
-			DEFINE_WAIT(wait);
-			prepare_to_wait(&mc.waitq, &wait, TASK_INTERRUPTIBLE);
-			/* moving charge context might have finished. */
-			if (mc.moving_task)
+अटल bool mem_cgroup_रुको_acct_move(काष्ठा mem_cgroup *memcg)
+अणु
+	अगर (mc.moving_task && current != mc.moving_task) अणु
+		अगर (mem_cgroup_under_move(memcg)) अणु
+			DEFINE_WAIT(रुको);
+			prepare_to_रुको(&mc.रुकोq, &रुको, TASK_INTERRUPTIBLE);
+			/* moving अक्षरge context might have finished. */
+			अगर (mc.moving_task)
 				schedule();
-			finish_wait(&mc.waitq, &wait);
-			return true;
-		}
-	}
-	return false;
-}
+			finish_रुको(&mc.रुकोq, &रुको);
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-struct memory_stat {
-	const char *name;
-	unsigned int idx;
-};
+काष्ठा memory_stat अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक idx;
+पूर्ण;
 
-static const struct memory_stat memory_stats[] = {
-	{ "anon",			NR_ANON_MAPPED			},
-	{ "file",			NR_FILE_PAGES			},
-	{ "kernel_stack",		NR_KERNEL_STACK_KB		},
-	{ "pagetables",			NR_PAGETABLE			},
-	{ "percpu",			MEMCG_PERCPU_B			},
-	{ "sock",			MEMCG_SOCK			},
-	{ "shmem",			NR_SHMEM			},
-	{ "file_mapped",		NR_FILE_MAPPED			},
-	{ "file_dirty",			NR_FILE_DIRTY			},
-	{ "file_writeback",		NR_WRITEBACK			},
-#ifdef CONFIG_SWAP
-	{ "swapcached",			NR_SWAPCACHE			},
-#endif
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-	{ "anon_thp",			NR_ANON_THPS			},
-	{ "file_thp",			NR_FILE_THPS			},
-	{ "shmem_thp",			NR_SHMEM_THPS			},
-#endif
-	{ "inactive_anon",		NR_INACTIVE_ANON		},
-	{ "active_anon",		NR_ACTIVE_ANON			},
-	{ "inactive_file",		NR_INACTIVE_FILE		},
-	{ "active_file",		NR_ACTIVE_FILE			},
-	{ "unevictable",		NR_UNEVICTABLE			},
-	{ "slab_reclaimable",		NR_SLAB_RECLAIMABLE_B		},
-	{ "slab_unreclaimable",		NR_SLAB_UNRECLAIMABLE_B		},
+अटल स्थिर काष्ठा memory_stat memory_stats[] = अणु
+	अणु "anon",			NR_ANON_MAPPED			पूर्ण,
+	अणु "file",			NR_खाता_PAGES			पूर्ण,
+	अणु "kernel_stack",		NR_KERNEL_STACK_KB		पूर्ण,
+	अणु "pagetables",			NR_PAGETABLE			पूर्ण,
+	अणु "percpu",			MEMCG_PERCPU_B			पूर्ण,
+	अणु "sock",			MEMCG_SOCK			पूर्ण,
+	अणु "shmem",			NR_SHMEM			पूर्ण,
+	अणु "file_mapped",		NR_खाता_MAPPED			पूर्ण,
+	अणु "file_dirty",			NR_खाता_सूचीTY			पूर्ण,
+	अणु "file_writeback",		NR_WRITEBACK			पूर्ण,
+#अगर_घोषित CONFIG_SWAP
+	अणु "swapcached",			NR_SWAPCACHE			पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+	अणु "anon_thp",			NR_ANON_THPS			पूर्ण,
+	अणु "file_thp",			NR_खाता_THPS			पूर्ण,
+	अणु "shmem_thp",			NR_SHMEM_THPS			पूर्ण,
+#पूर्ण_अगर
+	अणु "inactive_anon",		NR_INACTIVE_ANON		पूर्ण,
+	अणु "active_anon",		NR_ACTIVE_ANON			पूर्ण,
+	अणु "inactive_file",		NR_INACTIVE_खाता		पूर्ण,
+	अणु "active_file",		NR_ACTIVE_खाता			पूर्ण,
+	अणु "unevictable",		NR_UNEVICTABLE			पूर्ण,
+	अणु "slab_reclaimable",		NR_SLAB_RECLAIMABLE_B		पूर्ण,
+	अणु "slab_unreclaimable",		NR_SLAB_UNRECLAIMABLE_B		पूर्ण,
 
 	/* The memory events */
-	{ "workingset_refault_anon",	WORKINGSET_REFAULT_ANON		},
-	{ "workingset_refault_file",	WORKINGSET_REFAULT_FILE		},
-	{ "workingset_activate_anon",	WORKINGSET_ACTIVATE_ANON	},
-	{ "workingset_activate_file",	WORKINGSET_ACTIVATE_FILE	},
-	{ "workingset_restore_anon",	WORKINGSET_RESTORE_ANON		},
-	{ "workingset_restore_file",	WORKINGSET_RESTORE_FILE		},
-	{ "workingset_nodereclaim",	WORKINGSET_NODERECLAIM		},
-};
+	अणु "workingset_refault_anon",	WORKINGSET_REFAULT_ANON		पूर्ण,
+	अणु "workingset_refault_file",	WORKINGSET_REFAULT_खाता		पूर्ण,
+	अणु "workingset_activate_anon",	WORKINGSET_ACTIVATE_ANON	पूर्ण,
+	अणु "workingset_activate_file",	WORKINGSET_ACTIVATE_खाता	पूर्ण,
+	अणु "workingset_restore_anon",	WORKINGSET_RESTORE_ANON		पूर्ण,
+	अणु "workingset_restore_file",	WORKINGSET_RESTORE_खाता		पूर्ण,
+	अणु "workingset_nodereclaim",	WORKINGSET_NODERECLAIM		पूर्ण,
+पूर्ण;
 
-/* Translate stat items to the correct unit for memory.stat output */
-static int memcg_page_state_unit(int item)
-{
-	switch (item) {
-	case MEMCG_PERCPU_B:
-	case NR_SLAB_RECLAIMABLE_B:
-	case NR_SLAB_UNRECLAIMABLE_B:
-	case WORKINGSET_REFAULT_ANON:
-	case WORKINGSET_REFAULT_FILE:
-	case WORKINGSET_ACTIVATE_ANON:
-	case WORKINGSET_ACTIVATE_FILE:
-	case WORKINGSET_RESTORE_ANON:
-	case WORKINGSET_RESTORE_FILE:
-	case WORKINGSET_NODERECLAIM:
-		return 1;
-	case NR_KERNEL_STACK_KB:
-		return SZ_1K;
-	default:
-		return PAGE_SIZE;
-	}
-}
+/* Translate stat items to the correct unit क्रम memory.stat output */
+अटल पूर्णांक memcg_page_state_unit(पूर्णांक item)
+अणु
+	चयन (item) अणु
+	हाल MEMCG_PERCPU_B:
+	हाल NR_SLAB_RECLAIMABLE_B:
+	हाल NR_SLAB_UNRECLAIMABLE_B:
+	हाल WORKINGSET_REFAULT_ANON:
+	हाल WORKINGSET_REFAULT_खाता:
+	हाल WORKINGSET_ACTIVATE_ANON:
+	हाल WORKINGSET_ACTIVATE_खाता:
+	हाल WORKINGSET_RESTORE_ANON:
+	हाल WORKINGSET_RESTORE_खाता:
+	हाल WORKINGSET_NODERECLAIM:
+		वापस 1;
+	हाल NR_KERNEL_STACK_KB:
+		वापस SZ_1K;
+	शेष:
+		वापस PAGE_SIZE;
+	पूर्ण
+पूर्ण
 
-static inline unsigned long memcg_page_state_output(struct mem_cgroup *memcg,
-						    int item)
-{
-	return memcg_page_state(memcg, item) * memcg_page_state_unit(item);
-}
+अटल अंतरभूत अचिन्हित दीर्घ memcg_page_state_output(काष्ठा mem_cgroup *memcg,
+						    पूर्णांक item)
+अणु
+	वापस memcg_page_state(memcg, item) * memcg_page_state_unit(item);
+पूर्ण
 
-static char *memory_stat_format(struct mem_cgroup *memcg)
-{
-	struct seq_buf s;
-	int i;
+अटल अक्षर *memory_stat_क्रमmat(काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा seq_buf s;
+	पूर्णांक i;
 
-	seq_buf_init(&s, kmalloc(PAGE_SIZE, GFP_KERNEL), PAGE_SIZE);
-	if (!s.buffer)
-		return NULL;
+	seq_buf_init(&s, kदो_स्मृति(PAGE_SIZE, GFP_KERNEL), PAGE_SIZE);
+	अगर (!s.buffer)
+		वापस शून्य;
 
 	/*
-	 * Provide statistics on the state of the memory subsystem as
+	 * Provide statistics on the state of the memory subप्रणाली as
 	 * well as cumulative event counters that show past behavior.
 	 *
 	 * This list is ordered following a combination of these gradients:
-	 * 1) generic big picture -> specifics and details
+	 * 1) generic big picture -> specअगरics and details
 	 * 2) reflecting userspace activity -> reflecting kernel heuristics
 	 *
 	 * Current memory state:
 	 */
 	cgroup_rstat_flush(memcg->css.cgroup);
 
-	for (i = 0; i < ARRAY_SIZE(memory_stats); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(memory_stats); i++) अणु
 		u64 size;
 
 		size = memcg_page_state_output(memcg, memory_stats[i].idx);
-		seq_buf_printf(&s, "%s %llu\n", memory_stats[i].name, size);
+		seq_buf_म_लिखो(&s, "%s %llu\n", memory_stats[i].name, size);
 
-		if (unlikely(memory_stats[i].idx == NR_SLAB_UNRECLAIMABLE_B)) {
+		अगर (unlikely(memory_stats[i].idx == NR_SLAB_UNRECLAIMABLE_B)) अणु
 			size += memcg_page_state_output(memcg,
 							NR_SLAB_RECLAIMABLE_B);
-			seq_buf_printf(&s, "slab %llu\n", size);
-		}
-	}
+			seq_buf_म_लिखो(&s, "slab %llu\n", size);
+		पूर्ण
+	पूर्ण
 
 	/* Accumulated memory events */
 
-	seq_buf_printf(&s, "%s %lu\n", vm_event_name(PGFAULT),
+	seq_buf_म_लिखो(&s, "%s %lu\n", vm_event_name(PGFAULT),
 		       memcg_events(memcg, PGFAULT));
-	seq_buf_printf(&s, "%s %lu\n", vm_event_name(PGMAJFAULT),
+	seq_buf_म_लिखो(&s, "%s %lu\n", vm_event_name(PGMAJFAULT),
 		       memcg_events(memcg, PGMAJFAULT));
-	seq_buf_printf(&s, "%s %lu\n",  vm_event_name(PGREFILL),
+	seq_buf_म_लिखो(&s, "%s %lu\n",  vm_event_name(PGREFILL),
 		       memcg_events(memcg, PGREFILL));
-	seq_buf_printf(&s, "pgscan %lu\n",
+	seq_buf_म_लिखो(&s, "pgscan %lu\n",
 		       memcg_events(memcg, PGSCAN_KSWAPD) +
-		       memcg_events(memcg, PGSCAN_DIRECT));
-	seq_buf_printf(&s, "pgsteal %lu\n",
+		       memcg_events(memcg, PGSCAN_सूचीECT));
+	seq_buf_म_लिखो(&s, "pgsteal %lu\n",
 		       memcg_events(memcg, PGSTEAL_KSWAPD) +
-		       memcg_events(memcg, PGSTEAL_DIRECT));
-	seq_buf_printf(&s, "%s %lu\n", vm_event_name(PGACTIVATE),
+		       memcg_events(memcg, PGSTEAL_सूचीECT));
+	seq_buf_म_लिखो(&s, "%s %lu\n", vm_event_name(PGACTIVATE),
 		       memcg_events(memcg, PGACTIVATE));
-	seq_buf_printf(&s, "%s %lu\n", vm_event_name(PGDEACTIVATE),
+	seq_buf_म_लिखो(&s, "%s %lu\n", vm_event_name(PGDEACTIVATE),
 		       memcg_events(memcg, PGDEACTIVATE));
-	seq_buf_printf(&s, "%s %lu\n", vm_event_name(PGLAZYFREE),
+	seq_buf_म_लिखो(&s, "%s %lu\n", vm_event_name(PGLAZYFREE),
 		       memcg_events(memcg, PGLAZYFREE));
-	seq_buf_printf(&s, "%s %lu\n", vm_event_name(PGLAZYFREED),
+	seq_buf_म_लिखो(&s, "%s %lu\n", vm_event_name(PGLAZYFREED),
 		       memcg_events(memcg, PGLAZYFREED));
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-	seq_buf_printf(&s, "%s %lu\n", vm_event_name(THP_FAULT_ALLOC),
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+	seq_buf_म_लिखो(&s, "%s %lu\n", vm_event_name(THP_FAULT_ALLOC),
 		       memcg_events(memcg, THP_FAULT_ALLOC));
-	seq_buf_printf(&s, "%s %lu\n", vm_event_name(THP_COLLAPSE_ALLOC),
+	seq_buf_म_लिखो(&s, "%s %lu\n", vm_event_name(THP_COLLAPSE_ALLOC),
 		       memcg_events(memcg, THP_COLLAPSE_ALLOC));
-#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
 
-	/* The above should easily fit into one page */
+	/* The above should easily fit पूर्णांकo one page */
 	WARN_ON_ONCE(seq_buf_has_overflowed(&s));
 
-	return s.buffer;
-}
+	वापस s.buffer;
+पूर्ण
 
-#define K(x) ((x) << (PAGE_SHIFT-10))
+#घोषणा K(x) ((x) << (PAGE_SHIFT-10))
 /**
- * mem_cgroup_print_oom_context: Print OOM information relevant to
+ * mem_cgroup_prपूर्णांक_oom_context: Prपूर्णांक OOM inक्रमmation relevant to
  * memory controller.
  * @memcg: The memory cgroup that went over limit
- * @p: Task that is going to be killed
+ * @p: Task that is going to be समाप्तed
  *
- * NOTE: @memcg and @p's mem_cgroup can be different when hierarchy is
+ * NOTE: @memcg and @p's mem_cgroup can be dअगरferent when hierarchy is
  * enabled
  */
-void mem_cgroup_print_oom_context(struct mem_cgroup *memcg, struct task_struct *p)
-{
-	rcu_read_lock();
+व्योम mem_cgroup_prपूर्णांक_oom_context(काष्ठा mem_cgroup *memcg, काष्ठा task_काष्ठा *p)
+अणु
+	rcu_पढ़ो_lock();
 
-	if (memcg) {
+	अगर (memcg) अणु
 		pr_cont(",oom_memcg=");
 		pr_cont_cgroup_path(memcg->css.cgroup);
-	} else
+	पूर्ण अन्यथा
 		pr_cont(",global_oom");
-	if (p) {
+	अगर (p) अणु
 		pr_cont(",task_memcg=");
 		pr_cont_cgroup_path(task_cgroup(p, memory_cgrp_id));
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
- * mem_cgroup_print_oom_meminfo: Print OOM memory information relevant to
+ * mem_cgroup_prपूर्णांक_oom_meminfo: Prपूर्णांक OOM memory inक्रमmation relevant to
  * memory controller.
  * @memcg: The memory cgroup that went over limit
  */
-void mem_cgroup_print_oom_meminfo(struct mem_cgroup *memcg)
-{
-	char *buf;
+व्योम mem_cgroup_prपूर्णांक_oom_meminfo(काष्ठा mem_cgroup *memcg)
+अणु
+	अक्षर *buf;
 
 	pr_info("memory: usage %llukB, limit %llukB, failcnt %lu\n",
-		K((u64)page_counter_read(&memcg->memory)),
+		K((u64)page_counter_पढ़ो(&memcg->memory)),
 		K((u64)READ_ONCE(memcg->memory.max)), memcg->memory.failcnt);
-	if (cgroup_subsys_on_dfl(memory_cgrp_subsys))
+	अगर (cgroup_subsys_on_dfl(memory_cgrp_subsys))
 		pr_info("swap: usage %llukB, limit %llukB, failcnt %lu\n",
-			K((u64)page_counter_read(&memcg->swap)),
+			K((u64)page_counter_पढ़ो(&memcg->swap)),
 			K((u64)READ_ONCE(memcg->swap.max)), memcg->swap.failcnt);
-	else {
+	अन्यथा अणु
 		pr_info("memory+swap: usage %llukB, limit %llukB, failcnt %lu\n",
-			K((u64)page_counter_read(&memcg->memsw)),
+			K((u64)page_counter_पढ़ो(&memcg->memsw)),
 			K((u64)memcg->memsw.max), memcg->memsw.failcnt);
 		pr_info("kmem: usage %llukB, limit %llukB, failcnt %lu\n",
-			K((u64)page_counter_read(&memcg->kmem)),
+			K((u64)page_counter_पढ़ो(&memcg->kmem)),
 			K((u64)memcg->kmem.max), memcg->kmem.failcnt);
-	}
+	पूर्ण
 
 	pr_info("Memory cgroup stats for ");
 	pr_cont_cgroup_path(memcg->css.cgroup);
 	pr_cont(":");
-	buf = memory_stat_format(memcg);
-	if (!buf)
-		return;
+	buf = memory_stat_क्रमmat(memcg);
+	अगर (!buf)
+		वापस;
 	pr_info("%s", buf);
-	kfree(buf);
-}
+	kमुक्त(buf);
+पूर्ण
 
 /*
- * Return the memory (and swap, if configured) limit for a memcg.
+ * Return the memory (and swap, अगर configured) limit क्रम a memcg.
  */
-unsigned long mem_cgroup_get_max(struct mem_cgroup *memcg)
-{
-	unsigned long max = READ_ONCE(memcg->memory.max);
+अचिन्हित दीर्घ mem_cgroup_get_max(काष्ठा mem_cgroup *memcg)
+अणु
+	अचिन्हित दीर्घ max = READ_ONCE(memcg->memory.max);
 
-	if (cgroup_subsys_on_dfl(memory_cgrp_subsys)) {
-		if (mem_cgroup_swappiness(memcg))
+	अगर (cgroup_subsys_on_dfl(memory_cgrp_subsys)) अणु
+		अगर (mem_cgroup_swappiness(memcg))
 			max += min(READ_ONCE(memcg->swap.max),
-				   (unsigned long)total_swap_pages);
-	} else { /* v1 */
-		if (mem_cgroup_swappiness(memcg)) {
+				   (अचिन्हित दीर्घ)total_swap_pages);
+	पूर्ण अन्यथा अणु /* v1 */
+		अगर (mem_cgroup_swappiness(memcg)) अणु
 			/* Calculate swap excess capacity from memsw limit */
-			unsigned long swap = READ_ONCE(memcg->memsw.max) - max;
+			अचिन्हित दीर्घ swap = READ_ONCE(memcg->memsw.max) - max;
 
-			max += min(swap, (unsigned long)total_swap_pages);
-		}
-	}
-	return max;
-}
+			max += min(swap, (अचिन्हित दीर्घ)total_swap_pages);
+		पूर्ण
+	पूर्ण
+	वापस max;
+पूर्ण
 
-unsigned long mem_cgroup_size(struct mem_cgroup *memcg)
-{
-	return page_counter_read(&memcg->memory);
-}
+अचिन्हित दीर्घ mem_cgroup_size(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस page_counter_पढ़ो(&memcg->memory);
+पूर्ण
 
-static bool mem_cgroup_out_of_memory(struct mem_cgroup *memcg, gfp_t gfp_mask,
-				     int order)
-{
-	struct oom_control oc = {
-		.zonelist = NULL,
-		.nodemask = NULL,
+अटल bool mem_cgroup_out_of_memory(काष्ठा mem_cgroup *memcg, gfp_t gfp_mask,
+				     पूर्णांक order)
+अणु
+	काष्ठा oom_control oc = अणु
+		.zonelist = शून्य,
+		.nodemask = शून्य,
 		.memcg = memcg,
 		.gfp_mask = gfp_mask,
 		.order = order,
-	};
+	पूर्ण;
 	bool ret = true;
 
-	if (mutex_lock_killable(&oom_lock))
-		return true;
+	अगर (mutex_lock_समाप्तable(&oom_lock))
+		वापस true;
 
-	if (mem_cgroup_margin(memcg) >= (1 << order))
-		goto unlock;
+	अगर (mem_cgroup_margin(memcg) >= (1 << order))
+		जाओ unlock;
 
 	/*
-	 * A few threads which were not waiting at mutex_lock_killable() can
-	 * fail to bail out. Therefore, check again after holding oom_lock.
+	 * A few thपढ़ोs which were not रुकोing at mutex_lock_समाप्तable() can
+	 * fail to bail out. Thereक्रमe, check again after holding oom_lock.
 	 */
-	ret = should_force_charge() || out_of_memory(&oc);
+	ret = should_क्रमce_अक्षरge() || out_of_memory(&oc);
 
 unlock:
 	mutex_unlock(&oom_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mem_cgroup_soft_reclaim(struct mem_cgroup *root_memcg,
+अटल पूर्णांक mem_cgroup_soft_reclaim(काष्ठा mem_cgroup *root_memcg,
 				   pg_data_t *pgdat,
 				   gfp_t gfp_mask,
-				   unsigned long *total_scanned)
-{
-	struct mem_cgroup *victim = NULL;
-	int total = 0;
-	int loop = 0;
-	unsigned long excess;
-	unsigned long nr_scanned;
-	struct mem_cgroup_reclaim_cookie reclaim = {
+				   अचिन्हित दीर्घ *total_scanned)
+अणु
+	काष्ठा mem_cgroup *victim = शून्य;
+	पूर्णांक total = 0;
+	पूर्णांक loop = 0;
+	अचिन्हित दीर्घ excess;
+	अचिन्हित दीर्घ nr_scanned;
+	काष्ठा mem_cgroup_reclaim_cookie reclaim = अणु
 		.pgdat = pgdat,
-	};
+	पूर्ण;
 
 	excess = soft_limit_excess(root_memcg);
 
-	while (1) {
+	जबतक (1) अणु
 		victim = mem_cgroup_iter(root_memcg, victim, &reclaim);
-		if (!victim) {
+		अगर (!victim) अणु
 			loop++;
-			if (loop >= 2) {
+			अगर (loop >= 2) अणु
 				/*
 				 * If we have not been able to reclaim
 				 * anything, it might because there are
 				 * no reclaimable pages under this hierarchy
 				 */
-				if (!total)
-					break;
+				अगर (!total)
+					अवरोध;
 				/*
-				 * We want to do more targeted reclaim.
+				 * We want to करो more targeted reclaim.
 				 * excess >> 2 is not to excessive so as to
 				 * reclaim too much, nor too less that we keep
 				 * coming back to reclaim from this cgroup
 				 */
-				if (total >= (excess >> 2) ||
+				अगर (total >= (excess >> 2) ||
 					(loop > MEM_CGROUP_MAX_RECLAIM_LOOPS))
-					break;
-			}
-			continue;
-		}
+					अवरोध;
+			पूर्ण
+			जारी;
+		पूर्ण
 		total += mem_cgroup_shrink_node(victim, gfp_mask, false,
 					pgdat, &nr_scanned);
 		*total_scanned += nr_scanned;
-		if (!soft_limit_excess(root_memcg))
-			break;
-	}
-	mem_cgroup_iter_break(root_memcg, victim);
-	return total;
-}
+		अगर (!soft_limit_excess(root_memcg))
+			अवरोध;
+	पूर्ण
+	mem_cgroup_iter_अवरोध(root_memcg, victim);
+	वापस total;
+पूर्ण
 
-#ifdef CONFIG_LOCKDEP
-static struct lockdep_map memcg_oom_lock_dep_map = {
+#अगर_घोषित CONFIG_LOCKDEP
+अटल काष्ठा lockdep_map memcg_oom_lock_dep_map = अणु
 	.name = "memcg_oom_lock",
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static DEFINE_SPINLOCK(memcg_oom_lock);
+अटल DEFINE_SPINLOCK(memcg_oom_lock);
 
 /*
- * Check OOM-Killer is already running under our hierarchy.
- * If someone is running, return false.
+ * Check OOM-Killer is alपढ़ोy running under our hierarchy.
+ * If someone is running, वापस false.
  */
-static bool mem_cgroup_oom_trylock(struct mem_cgroup *memcg)
-{
-	struct mem_cgroup *iter, *failed = NULL;
+अटल bool mem_cgroup_oom_trylock(काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा mem_cgroup *iter, *failed = शून्य;
 
 	spin_lock(&memcg_oom_lock);
 
-	for_each_mem_cgroup_tree(iter, memcg) {
-		if (iter->oom_lock) {
+	क्रम_each_mem_cgroup_tree(iter, memcg) अणु
+		अगर (iter->oom_lock) अणु
 			/*
-			 * this subtree of our hierarchy is already locked
+			 * this subtree of our hierarchy is alपढ़ोy locked
 			 * so we cannot give a lock.
 			 */
 			failed = iter;
-			mem_cgroup_iter_break(memcg, iter);
-			break;
-		} else
+			mem_cgroup_iter_अवरोध(memcg, iter);
+			अवरोध;
+		पूर्ण अन्यथा
 			iter->oom_lock = true;
-	}
+	पूर्ण
 
-	if (failed) {
+	अगर (failed) अणु
 		/*
 		 * OK, we failed to lock the whole subtree so we have
 		 * to clean up what we set up to the failing subtree
 		 */
-		for_each_mem_cgroup_tree(iter, memcg) {
-			if (iter == failed) {
-				mem_cgroup_iter_break(memcg, iter);
-				break;
-			}
+		क्रम_each_mem_cgroup_tree(iter, memcg) अणु
+			अगर (iter == failed) अणु
+				mem_cgroup_iter_अवरोध(memcg, iter);
+				अवरोध;
+			पूर्ण
 			iter->oom_lock = false;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		mutex_acquire(&memcg_oom_lock_dep_map, 0, 1, _RET_IP_);
 
 	spin_unlock(&memcg_oom_lock);
 
-	return !failed;
-}
+	वापस !failed;
+पूर्ण
 
-static void mem_cgroup_oom_unlock(struct mem_cgroup *memcg)
-{
-	struct mem_cgroup *iter;
+अटल व्योम mem_cgroup_oom_unlock(काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा mem_cgroup *iter;
 
 	spin_lock(&memcg_oom_lock);
 	mutex_release(&memcg_oom_lock_dep_map, _RET_IP_);
-	for_each_mem_cgroup_tree(iter, memcg)
+	क्रम_each_mem_cgroup_tree(iter, memcg)
 		iter->oom_lock = false;
 	spin_unlock(&memcg_oom_lock);
-}
+पूर्ण
 
-static void mem_cgroup_mark_under_oom(struct mem_cgroup *memcg)
-{
-	struct mem_cgroup *iter;
+अटल व्योम mem_cgroup_mark_under_oom(काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा mem_cgroup *iter;
 
 	spin_lock(&memcg_oom_lock);
-	for_each_mem_cgroup_tree(iter, memcg)
+	क्रम_each_mem_cgroup_tree(iter, memcg)
 		iter->under_oom++;
 	spin_unlock(&memcg_oom_lock);
-}
+पूर्ण
 
-static void mem_cgroup_unmark_under_oom(struct mem_cgroup *memcg)
-{
-	struct mem_cgroup *iter;
+अटल व्योम mem_cgroup_unmark_under_oom(काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा mem_cgroup *iter;
 
 	/*
 	 * Be careful about under_oom underflows because a child memcg
 	 * could have been added after mem_cgroup_mark_under_oom.
 	 */
 	spin_lock(&memcg_oom_lock);
-	for_each_mem_cgroup_tree(iter, memcg)
-		if (iter->under_oom > 0)
+	क्रम_each_mem_cgroup_tree(iter, memcg)
+		अगर (iter->under_oom > 0)
 			iter->under_oom--;
 	spin_unlock(&memcg_oom_lock);
-}
+पूर्ण
 
-static DECLARE_WAIT_QUEUE_HEAD(memcg_oom_waitq);
+अटल DECLARE_WAIT_QUEUE_HEAD(memcg_oom_रुकोq);
 
-struct oom_wait_info {
-	struct mem_cgroup *memcg;
-	wait_queue_entry_t	wait;
-};
+काष्ठा oom_रुको_info अणु
+	काष्ठा mem_cgroup *memcg;
+	रुको_queue_entry_t	रुको;
+पूर्ण;
 
-static int memcg_oom_wake_function(wait_queue_entry_t *wait,
-	unsigned mode, int sync, void *arg)
-{
-	struct mem_cgroup *wake_memcg = (struct mem_cgroup *)arg;
-	struct mem_cgroup *oom_wait_memcg;
-	struct oom_wait_info *oom_wait_info;
+अटल पूर्णांक memcg_oom_wake_function(रुको_queue_entry_t *रुको,
+	अचिन्हित mode, पूर्णांक sync, व्योम *arg)
+अणु
+	काष्ठा mem_cgroup *wake_memcg = (काष्ठा mem_cgroup *)arg;
+	काष्ठा mem_cgroup *oom_रुको_memcg;
+	काष्ठा oom_रुको_info *oom_रुको_info;
 
-	oom_wait_info = container_of(wait, struct oom_wait_info, wait);
-	oom_wait_memcg = oom_wait_info->memcg;
+	oom_रुको_info = container_of(रुको, काष्ठा oom_रुको_info, रुको);
+	oom_रुको_memcg = oom_रुको_info->memcg;
 
-	if (!mem_cgroup_is_descendant(wake_memcg, oom_wait_memcg) &&
-	    !mem_cgroup_is_descendant(oom_wait_memcg, wake_memcg))
-		return 0;
-	return autoremove_wake_function(wait, mode, sync, arg);
-}
+	अगर (!mem_cgroup_is_descendant(wake_memcg, oom_रुको_memcg) &&
+	    !mem_cgroup_is_descendant(oom_रुको_memcg, wake_memcg))
+		वापस 0;
+	वापस स्वतःहटाओ_wake_function(रुको, mode, sync, arg);
+पूर्ण
 
-static void memcg_oom_recover(struct mem_cgroup *memcg)
-{
+अटल व्योम memcg_oom_recover(काष्ठा mem_cgroup *memcg)
+अणु
 	/*
 	 * For the following lockless ->under_oom test, the only required
-	 * guarantee is that it must see the state asserted by an OOM when
+	 * guarantee is that it must see the state निश्चितed by an OOM when
 	 * this function is called as a result of userland actions
-	 * triggered by the notification of the OOM.  This is trivially
-	 * achieved by invoking mem_cgroup_mark_under_oom() before
-	 * triggering notification.
+	 * triggered by the notअगरication of the OOM.  This is trivially
+	 * achieved by invoking mem_cgroup_mark_under_oom() beक्रमe
+	 * triggering notअगरication.
 	 */
-	if (memcg && memcg->under_oom)
-		__wake_up(&memcg_oom_waitq, TASK_NORMAL, 0, memcg);
-}
+	अगर (memcg && memcg->under_oom)
+		__wake_up(&memcg_oom_रुकोq, TASK_NORMAL, 0, memcg);
+पूर्ण
 
-enum oom_status {
+क्रमागत oom_status अणु
 	OOM_SUCCESS,
 	OOM_FAILED,
 	OOM_ASYNC,
 	OOM_SKIPPED
-};
+पूर्ण;
 
-static enum oom_status mem_cgroup_oom(struct mem_cgroup *memcg, gfp_t mask, int order)
-{
-	enum oom_status ret;
+अटल क्रमागत oom_status mem_cgroup_oom(काष्ठा mem_cgroup *memcg, gfp_t mask, पूर्णांक order)
+अणु
+	क्रमागत oom_status ret;
 	bool locked;
 
-	if (order > PAGE_ALLOC_COSTLY_ORDER)
-		return OOM_SKIPPED;
+	अगर (order > PAGE_ALLOC_COSTLY_ORDER)
+		वापस OOM_SKIPPED;
 
 	memcg_memory_event(memcg, MEMCG_OOM);
 
 	/*
-	 * We are in the middle of the charge context here, so we
-	 * don't want to block when potentially sitting on a callstack
-	 * that holds all kinds of filesystem and mm locks.
+	 * We are in the middle of the अक्षरge context here, so we
+	 * करोn't want to block when potentially sitting on a callstack
+	 * that holds all kinds of fileप्रणाली and mm locks.
 	 *
-	 * cgroup1 allows disabling the OOM killer and waiting for outside
-	 * handling until the charge can succeed; remember the context and put
+	 * cgroup1 allows disabling the OOM समाप्तer and रुकोing क्रम outside
+	 * handling until the अक्षरge can succeed; remember the context and put
 	 * the task to sleep at the end of the page fault when all locks are
 	 * released.
 	 *
-	 * On the other hand, in-kernel OOM killer allows for an async victim
+	 * On the other hand, in-kernel OOM समाप्तer allows क्रम an async victim
 	 * memory reclaim (oom_reaper) and that means that we are not solely
-	 * relying on the oom victim to make a forward progress and we can
-	 * invoke the oom killer here.
+	 * relying on the oom victim to make a क्रमward progress and we can
+	 * invoke the oom समाप्तer here.
 	 *
 	 * Please note that mem_cgroup_out_of_memory might fail to find a
-	 * victim and then we have to bail out from the charge path.
+	 * victim and then we have to bail out from the अक्षरge path.
 	 */
-	if (memcg->oom_kill_disable) {
-		if (!current->in_user_fault)
-			return OOM_SKIPPED;
+	अगर (memcg->oom_समाप्त_disable) अणु
+		अगर (!current->in_user_fault)
+			वापस OOM_SKIPPED;
 		css_get(&memcg->css);
 		current->memcg_in_oom = memcg;
 		current->memcg_oom_gfp_mask = mask;
 		current->memcg_oom_order = order;
 
-		return OOM_ASYNC;
-	}
+		वापस OOM_ASYNC;
+	पूर्ण
 
 	mem_cgroup_mark_under_oom(memcg);
 
 	locked = mem_cgroup_oom_trylock(memcg);
 
-	if (locked)
-		mem_cgroup_oom_notify(memcg);
+	अगर (locked)
+		mem_cgroup_oom_notअगरy(memcg);
 
 	mem_cgroup_unmark_under_oom(memcg);
-	if (mem_cgroup_out_of_memory(memcg, mask, order))
+	अगर (mem_cgroup_out_of_memory(memcg, mask, order))
 		ret = OOM_SUCCESS;
-	else
+	अन्यथा
 		ret = OOM_FAILED;
 
-	if (locked)
+	अगर (locked)
 		mem_cgroup_oom_unlock(memcg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * mem_cgroup_oom_synchronize - complete memcg OOM handling
- * @handle: actually kill/wait or just clean up the OOM state
+ * @handle: actually समाप्त/रुको or just clean up the OOM state
  *
- * This has to be called at the end of a page fault if the memcg OOM
+ * This has to be called at the end of a page fault अगर the memcg OOM
  * handler was enabled.
  *
  * Memcg supports userspace OOM handling where failed allocations must
- * sleep on a waitqueue until the userspace task resolves the
- * situation.  Sleeping directly in the charge context with all kinds
+ * sleep on a रुकोqueue until the userspace task resolves the
+ * situation.  Sleeping directly in the अक्षरge context with all kinds
  * of locks held is not a good idea, instead we remember an OOM state
  * in the task and mem_cgroup_oom_synchronize() has to be called at
  * the end of the page fault to complete the OOM handling.
  *
- * Returns %true if an ongoing memcg OOM situation was detected and
+ * Returns %true अगर an ongoing memcg OOM situation was detected and
  * completed, %false otherwise.
  */
 bool mem_cgroup_oom_synchronize(bool handle)
-{
-	struct mem_cgroup *memcg = current->memcg_in_oom;
-	struct oom_wait_info owait;
+अणु
+	काष्ठा mem_cgroup *memcg = current->memcg_in_oom;
+	काष्ठा oom_रुको_info oरुको;
 	bool locked;
 
-	/* OOM is global, do not handle */
-	if (!memcg)
-		return false;
+	/* OOM is global, करो not handle */
+	अगर (!memcg)
+		वापस false;
 
-	if (!handle)
-		goto cleanup;
+	अगर (!handle)
+		जाओ cleanup;
 
-	owait.memcg = memcg;
-	owait.wait.flags = 0;
-	owait.wait.func = memcg_oom_wake_function;
-	owait.wait.private = current;
-	INIT_LIST_HEAD(&owait.wait.entry);
+	oरुको.memcg = memcg;
+	oरुको.रुको.flags = 0;
+	oरुको.रुको.func = memcg_oom_wake_function;
+	oरुको.रुको.निजी = current;
+	INIT_LIST_HEAD(&oरुको.रुको.entry);
 
-	prepare_to_wait(&memcg_oom_waitq, &owait.wait, TASK_KILLABLE);
+	prepare_to_रुको(&memcg_oom_रुकोq, &oरुको.रुको, TASK_KILLABLE);
 	mem_cgroup_mark_under_oom(memcg);
 
 	locked = mem_cgroup_oom_trylock(memcg);
 
-	if (locked)
-		mem_cgroup_oom_notify(memcg);
+	अगर (locked)
+		mem_cgroup_oom_notअगरy(memcg);
 
-	if (locked && !memcg->oom_kill_disable) {
+	अगर (locked && !memcg->oom_समाप्त_disable) अणु
 		mem_cgroup_unmark_under_oom(memcg);
-		finish_wait(&memcg_oom_waitq, &owait.wait);
+		finish_रुको(&memcg_oom_रुकोq, &oरुको.रुको);
 		mem_cgroup_out_of_memory(memcg, current->memcg_oom_gfp_mask,
 					 current->memcg_oom_order);
-	} else {
+	पूर्ण अन्यथा अणु
 		schedule();
 		mem_cgroup_unmark_under_oom(memcg);
-		finish_wait(&memcg_oom_waitq, &owait.wait);
-	}
+		finish_रुको(&memcg_oom_रुकोq, &oरुको.रुको);
+	पूर्ण
 
-	if (locked) {
+	अगर (locked) अणु
 		mem_cgroup_oom_unlock(memcg);
 		/*
 		 * There is no guarantee that an OOM-lock contender
-		 * sees the wakeups triggered by the OOM kill
-		 * uncharges.  Wake any sleepers explicitly.
+		 * sees the wakeups triggered by the OOM समाप्त
+		 * unअक्षरges.  Wake any sleepers explicitly.
 		 */
 		memcg_oom_recover(memcg);
-	}
+	पूर्ण
 cleanup:
-	current->memcg_in_oom = NULL;
+	current->memcg_in_oom = शून्य;
 	css_put(&memcg->css);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * mem_cgroup_get_oom_group - get a memory cgroup to clean up after OOM
- * @victim: task to be killed by the OOM killer
- * @oom_domain: memcg in case of memcg OOM, NULL in case of system-wide OOM
+ * @victim: task to be समाप्तed by the OOM समाप्तer
+ * @oom_करोमुख्य: memcg in हाल of memcg OOM, शून्य in हाल of प्रणाली-wide OOM
  *
- * Returns a pointer to a memory cgroup, which has to be cleaned up
- * by killing all belonging OOM-killable tasks.
+ * Returns a poपूर्णांकer to a memory cgroup, which has to be cleaned up
+ * by समाप्तing all beदीर्घing OOM-समाप्तable tasks.
  *
- * Caller has to call mem_cgroup_put() on the returned non-NULL memcg.
+ * Caller has to call mem_cgroup_put() on the वापसed non-शून्य memcg.
  */
-struct mem_cgroup *mem_cgroup_get_oom_group(struct task_struct *victim,
-					    struct mem_cgroup *oom_domain)
-{
-	struct mem_cgroup *oom_group = NULL;
-	struct mem_cgroup *memcg;
+काष्ठा mem_cgroup *mem_cgroup_get_oom_group(काष्ठा task_काष्ठा *victim,
+					    काष्ठा mem_cgroup *oom_करोमुख्य)
+अणु
+	काष्ठा mem_cgroup *oom_group = शून्य;
+	काष्ठा mem_cgroup *memcg;
 
-	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
-		return NULL;
+	अगर (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
+		वापस शून्य;
 
-	if (!oom_domain)
-		oom_domain = root_mem_cgroup;
+	अगर (!oom_करोमुख्य)
+		oom_करोमुख्य = root_mem_cgroup;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	memcg = mem_cgroup_from_task(victim);
-	if (memcg == root_mem_cgroup)
-		goto out;
+	अगर (memcg == root_mem_cgroup)
+		जाओ out;
 
 	/*
-	 * If the victim task has been asynchronously moved to a different
-	 * memory cgroup, we might end up killing tasks outside oom_domain.
-	 * In this case it's better to ignore memory.group.oom.
+	 * If the victim task has been asynchronously moved to a dअगरferent
+	 * memory cgroup, we might end up समाप्तing tasks outside oom_करोमुख्य.
+	 * In this हाल it's better to ignore memory.group.oom.
 	 */
-	if (unlikely(!mem_cgroup_is_descendant(memcg, oom_domain)))
-		goto out;
+	अगर (unlikely(!mem_cgroup_is_descendant(memcg, oom_करोमुख्य)))
+		जाओ out;
 
 	/*
 	 * Traverse the memory cgroup hierarchy from the victim task's
 	 * cgroup up to the OOMing cgroup (or root) to find the
 	 * highest-level memory cgroup with oom.group set.
 	 */
-	for (; memcg; memcg = parent_mem_cgroup(memcg)) {
-		if (memcg->oom_group)
+	क्रम (; memcg; memcg = parent_mem_cgroup(memcg)) अणु
+		अगर (memcg->oom_group)
 			oom_group = memcg;
 
-		if (memcg == oom_domain)
-			break;
-	}
+		अगर (memcg == oom_करोमुख्य)
+			अवरोध;
+	पूर्ण
 
-	if (oom_group)
+	अगर (oom_group)
 		css_get(&oom_group->css);
 out:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return oom_group;
-}
+	वापस oom_group;
+पूर्ण
 
-void mem_cgroup_print_oom_group(struct mem_cgroup *memcg)
-{
+व्योम mem_cgroup_prपूर्णांक_oom_group(काष्ठा mem_cgroup *memcg)
+अणु
 	pr_info("Tasks in ");
 	pr_cont_cgroup_path(memcg->css.cgroup);
 	pr_cont(" are going to be killed due to memory.oom.group set\n");
-}
+पूर्ण
 
 /**
  * lock_page_memcg - lock a page and memcg binding
@@ -1965,171 +1966,171 @@ void mem_cgroup_print_oom_group(struct mem_cgroup *memcg)
  * This function protects unlocked LRU pages from being moved to
  * another cgroup.
  *
- * It ensures lifetime of the locked memcg. Caller is responsible
- * for the lifetime of the page.
+ * It ensures lअगरeसमय of the locked memcg. Caller is responsible
+ * क्रम the lअगरeसमय of the page.
  */
-void lock_page_memcg(struct page *page)
-{
-	struct page *head = compound_head(page); /* rmap on tail pages */
-	struct mem_cgroup *memcg;
-	unsigned long flags;
+व्योम lock_page_memcg(काष्ठा page *page)
+अणु
+	काष्ठा page *head = compound_head(page); /* rmap on tail pages */
+	काष्ठा mem_cgroup *memcg;
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * The RCU lock is held throughout the transaction.  The fast
 	 * path can get away without acquiring the memcg->move_lock
 	 * because page moving starts with an RCU grace period.
          */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	if (mem_cgroup_disabled())
-		return;
+	अगर (mem_cgroup_disabled())
+		वापस;
 again:
 	memcg = page_memcg(head);
-	if (unlikely(!memcg))
-		return;
+	अगर (unlikely(!memcg))
+		वापस;
 
-#ifdef CONFIG_PROVE_LOCKING
+#अगर_घोषित CONFIG_PROVE_LOCKING
 	local_irq_save(flags);
 	might_lock(&memcg->move_lock);
 	local_irq_restore(flags);
-#endif
+#पूर्ण_अगर
 
-	if (atomic_read(&memcg->moving_account) <= 0)
-		return;
+	अगर (atomic_पढ़ो(&memcg->moving_account) <= 0)
+		वापस;
 
 	spin_lock_irqsave(&memcg->move_lock, flags);
-	if (memcg != page_memcg(head)) {
+	अगर (memcg != page_memcg(head)) अणु
 		spin_unlock_irqrestore(&memcg->move_lock, flags);
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
 	/*
-	 * When charge migration first begins, we can have multiple
+	 * When अक्षरge migration first begins, we can have multiple
 	 * critical sections holding the fast-path RCU lock and one
 	 * holding the slowpath move_lock. Track the task who has the
-	 * move_lock for unlock_page_memcg().
+	 * move_lock क्रम unlock_page_memcg().
 	 */
 	memcg->move_lock_task = current;
 	memcg->move_lock_flags = flags;
-}
+पूर्ण
 EXPORT_SYMBOL(lock_page_memcg);
 
-static void __unlock_page_memcg(struct mem_cgroup *memcg)
-{
-	if (memcg && memcg->move_lock_task == current) {
-		unsigned long flags = memcg->move_lock_flags;
+अटल व्योम __unlock_page_memcg(काष्ठा mem_cgroup *memcg)
+अणु
+	अगर (memcg && memcg->move_lock_task == current) अणु
+		अचिन्हित दीर्घ flags = memcg->move_lock_flags;
 
-		memcg->move_lock_task = NULL;
+		memcg->move_lock_task = शून्य;
 		memcg->move_lock_flags = 0;
 
 		spin_unlock_irqrestore(&memcg->move_lock, flags);
-	}
+	पूर्ण
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
  * unlock_page_memcg - unlock a page and memcg binding
  * @page: the page
  */
-void unlock_page_memcg(struct page *page)
-{
-	struct page *head = compound_head(page);
+व्योम unlock_page_memcg(काष्ठा page *page)
+अणु
+	काष्ठा page *head = compound_head(page);
 
 	__unlock_page_memcg(page_memcg(head));
-}
+पूर्ण
 EXPORT_SYMBOL(unlock_page_memcg);
 
-struct memcg_stock_pcp {
-	struct mem_cgroup *cached; /* this never be root cgroup */
-	unsigned int nr_pages;
+काष्ठा memcg_stock_pcp अणु
+	काष्ठा mem_cgroup *cached; /* this never be root cgroup */
+	अचिन्हित पूर्णांक nr_pages;
 
-#ifdef CONFIG_MEMCG_KMEM
-	struct obj_cgroup *cached_objcg;
-	unsigned int nr_bytes;
-#endif
+#अगर_घोषित CONFIG_MEMCG_KMEM
+	काष्ठा obj_cgroup *cached_objcg;
+	अचिन्हित पूर्णांक nr_bytes;
+#पूर्ण_अगर
 
-	struct work_struct work;
-	unsigned long flags;
-#define FLUSHING_CACHED_CHARGE	0
-};
-static DEFINE_PER_CPU(struct memcg_stock_pcp, memcg_stock);
-static DEFINE_MUTEX(percpu_charge_mutex);
+	काष्ठा work_काष्ठा work;
+	अचिन्हित दीर्घ flags;
+#घोषणा FLUSHING_CACHED_CHARGE	0
+पूर्ण;
+अटल DEFINE_PER_CPU(काष्ठा memcg_stock_pcp, memcg_stock);
+अटल DEFINE_MUTEX(percpu_अक्षरge_mutex);
 
-#ifdef CONFIG_MEMCG_KMEM
-static void drain_obj_stock(struct memcg_stock_pcp *stock);
-static bool obj_stock_flush_required(struct memcg_stock_pcp *stock,
-				     struct mem_cgroup *root_memcg);
+#अगर_घोषित CONFIG_MEMCG_KMEM
+अटल व्योम drain_obj_stock(काष्ठा memcg_stock_pcp *stock);
+अटल bool obj_stock_flush_required(काष्ठा memcg_stock_pcp *stock,
+				     काष्ठा mem_cgroup *root_memcg);
 
-#else
-static inline void drain_obj_stock(struct memcg_stock_pcp *stock)
-{
-}
-static bool obj_stock_flush_required(struct memcg_stock_pcp *stock,
-				     struct mem_cgroup *root_memcg)
-{
-	return false;
-}
-#endif
+#अन्यथा
+अटल अंतरभूत व्योम drain_obj_stock(काष्ठा memcg_stock_pcp *stock)
+अणु
+पूर्ण
+अटल bool obj_stock_flush_required(काष्ठा memcg_stock_pcp *stock,
+				     काष्ठा mem_cgroup *root_memcg)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * consume_stock: Try to consume stocked charge on this cpu.
+ * consume_stock: Try to consume stocked अक्षरge on this cpu.
  * @memcg: memcg to consume from.
- * @nr_pages: how many pages to charge.
+ * @nr_pages: how many pages to अक्षरge.
  *
- * The charges will only happen if @memcg matches the current cpu's memcg
+ * The अक्षरges will only happen अगर @memcg matches the current cpu's memcg
  * stock, and at least @nr_pages are available in that stock.  Failure to
  * service an allocation will refill the stock.
  *
- * returns true if successful, false otherwise.
+ * वापसs true अगर successful, false otherwise.
  */
-static bool consume_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
-{
-	struct memcg_stock_pcp *stock;
-	unsigned long flags;
+अटल bool consume_stock(काष्ठा mem_cgroup *memcg, अचिन्हित पूर्णांक nr_pages)
+अणु
+	काष्ठा memcg_stock_pcp *stock;
+	अचिन्हित दीर्घ flags;
 	bool ret = false;
 
-	if (nr_pages > MEMCG_CHARGE_BATCH)
-		return ret;
+	अगर (nr_pages > MEMCG_CHARGE_BATCH)
+		वापस ret;
 
 	local_irq_save(flags);
 
 	stock = this_cpu_ptr(&memcg_stock);
-	if (memcg == stock->cached && stock->nr_pages >= nr_pages) {
+	अगर (memcg == stock->cached && stock->nr_pages >= nr_pages) अणु
 		stock->nr_pages -= nr_pages;
 		ret = true;
-	}
+	पूर्ण
 
 	local_irq_restore(flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Returns stocks cached in percpu and reset cached information.
+ * Returns stocks cached in percpu and reset cached inक्रमmation.
  */
-static void drain_stock(struct memcg_stock_pcp *stock)
-{
-	struct mem_cgroup *old = stock->cached;
+अटल व्योम drain_stock(काष्ठा memcg_stock_pcp *stock)
+अणु
+	काष्ठा mem_cgroup *old = stock->cached;
 
-	if (!old)
-		return;
+	अगर (!old)
+		वापस;
 
-	if (stock->nr_pages) {
-		page_counter_uncharge(&old->memory, stock->nr_pages);
-		if (do_memsw_account())
-			page_counter_uncharge(&old->memsw, stock->nr_pages);
+	अगर (stock->nr_pages) अणु
+		page_counter_unअक्षरge(&old->memory, stock->nr_pages);
+		अगर (करो_memsw_account())
+			page_counter_unअक्षरge(&old->memsw, stock->nr_pages);
 		stock->nr_pages = 0;
-	}
+	पूर्ण
 
 	css_put(&old->css);
-	stock->cached = NULL;
-}
+	stock->cached = शून्य;
+पूर्ण
 
-static void drain_local_stock(struct work_struct *dummy)
-{
-	struct memcg_stock_pcp *stock;
-	unsigned long flags;
+अटल व्योम drain_local_stock(काष्ठा work_काष्ठा *dummy)
+अणु
+	काष्ठा memcg_stock_pcp *stock;
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * The only protection from memory hotplug vs. drain_stock races is
@@ -2143,173 +2144,173 @@ static void drain_local_stock(struct work_struct *dummy)
 	clear_bit(FLUSHING_CACHED_CHARGE, &stock->flags);
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /*
- * Cache charges(val) to local per_cpu area.
+ * Cache अक्षरges(val) to local per_cpu area.
  * This will be consumed by consume_stock() function, later.
  */
-static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
-{
-	struct memcg_stock_pcp *stock;
-	unsigned long flags;
+अटल व्योम refill_stock(काष्ठा mem_cgroup *memcg, अचिन्हित पूर्णांक nr_pages)
+अणु
+	काष्ठा memcg_stock_pcp *stock;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 
 	stock = this_cpu_ptr(&memcg_stock);
-	if (stock->cached != memcg) { /* reset if necessary */
+	अगर (stock->cached != memcg) अणु /* reset अगर necessary */
 		drain_stock(stock);
 		css_get(&memcg->css);
 		stock->cached = memcg;
-	}
+	पूर्ण
 	stock->nr_pages += nr_pages;
 
-	if (stock->nr_pages > MEMCG_CHARGE_BATCH)
+	अगर (stock->nr_pages > MEMCG_CHARGE_BATCH)
 		drain_stock(stock);
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /*
- * Drains all per-CPU charge caches for given root_memcg resp. subtree
+ * Drains all per-CPU अक्षरge caches क्रम given root_memcg resp. subtree
  * of the hierarchy under it.
  */
-static void drain_all_stock(struct mem_cgroup *root_memcg)
-{
-	int cpu, curcpu;
+अटल व्योम drain_all_stock(काष्ठा mem_cgroup *root_memcg)
+अणु
+	पूर्णांक cpu, curcpu;
 
-	/* If someone's already draining, avoid adding running more workers. */
-	if (!mutex_trylock(&percpu_charge_mutex))
-		return;
+	/* If someone's alपढ़ोy draining, aव्योम adding running more workers. */
+	अगर (!mutex_trylock(&percpu_अक्षरge_mutex))
+		वापस;
 	/*
-	 * Notify other cpus that system-wide "drain" is running
-	 * We do not care about races with the cpu hotplug because cpu down
+	 * Notअगरy other cpus that प्रणाली-wide "drain" is running
+	 * We करो not care about races with the cpu hotplug because cpu करोwn
 	 * as well as workers from this path always operate on the local
-	 * per-cpu data. CPU up doesn't touch memcg_stock at all.
+	 * per-cpu data. CPU up करोesn't touch memcg_stock at all.
 	 */
 	curcpu = get_cpu();
-	for_each_online_cpu(cpu) {
-		struct memcg_stock_pcp *stock = &per_cpu(memcg_stock, cpu);
-		struct mem_cgroup *memcg;
+	क्रम_each_online_cpu(cpu) अणु
+		काष्ठा memcg_stock_pcp *stock = &per_cpu(memcg_stock, cpu);
+		काष्ठा mem_cgroup *memcg;
 		bool flush = false;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		memcg = stock->cached;
-		if (memcg && stock->nr_pages &&
+		अगर (memcg && stock->nr_pages &&
 		    mem_cgroup_is_descendant(memcg, root_memcg))
 			flush = true;
-		if (obj_stock_flush_required(stock, root_memcg))
+		अगर (obj_stock_flush_required(stock, root_memcg))
 			flush = true;
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
-		if (flush &&
-		    !test_and_set_bit(FLUSHING_CACHED_CHARGE, &stock->flags)) {
-			if (cpu == curcpu)
+		अगर (flush &&
+		    !test_and_set_bit(FLUSHING_CACHED_CHARGE, &stock->flags)) अणु
+			अगर (cpu == curcpu)
 				drain_local_stock(&stock->work);
-			else
+			अन्यथा
 				schedule_work_on(cpu, &stock->work);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	put_cpu();
-	mutex_unlock(&percpu_charge_mutex);
-}
+	mutex_unlock(&percpu_अक्षरge_mutex);
+पूर्ण
 
-static void memcg_flush_lruvec_page_state(struct mem_cgroup *memcg, int cpu)
-{
-	int nid;
+अटल व्योम memcg_flush_lruvec_page_state(काष्ठा mem_cgroup *memcg, पूर्णांक cpu)
+अणु
+	पूर्णांक nid;
 
-	for_each_node(nid) {
-		struct mem_cgroup_per_node *pn = memcg->nodeinfo[nid];
-		unsigned long stat[NR_VM_NODE_STAT_ITEMS];
-		struct batched_lruvec_stat *lstatc;
-		int i;
+	क्रम_each_node(nid) अणु
+		काष्ठा mem_cgroup_per_node *pn = memcg->nodeinfo[nid];
+		अचिन्हित दीर्घ stat[NR_VM_NODE_STAT_ITEMS];
+		काष्ठा batched_lruvec_stat *lstatc;
+		पूर्णांक i;
 
 		lstatc = per_cpu_ptr(pn->lruvec_stat_cpu, cpu);
-		for (i = 0; i < NR_VM_NODE_STAT_ITEMS; i++) {
+		क्रम (i = 0; i < NR_VM_NODE_STAT_ITEMS; i++) अणु
 			stat[i] = lstatc->count[i];
 			lstatc->count[i] = 0;
-		}
+		पूर्ण
 
-		do {
-			for (i = 0; i < NR_VM_NODE_STAT_ITEMS; i++)
-				atomic_long_add(stat[i], &pn->lruvec_stat[i]);
-		} while ((pn = parent_nodeinfo(pn, nid)));
-	}
-}
+		करो अणु
+			क्रम (i = 0; i < NR_VM_NODE_STAT_ITEMS; i++)
+				atomic_दीर्घ_add(stat[i], &pn->lruvec_stat[i]);
+		पूर्ण जबतक ((pn = parent_nodeinfo(pn, nid)));
+	पूर्ण
+पूर्ण
 
-static int memcg_hotplug_cpu_dead(unsigned int cpu)
-{
-	struct memcg_stock_pcp *stock;
-	struct mem_cgroup *memcg;
+अटल पूर्णांक memcg_hotplug_cpu_dead(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा memcg_stock_pcp *stock;
+	काष्ठा mem_cgroup *memcg;
 
 	stock = &per_cpu(memcg_stock, cpu);
 	drain_stock(stock);
 
-	for_each_mem_cgroup(memcg)
+	क्रम_each_mem_cgroup(memcg)
 		memcg_flush_lruvec_page_state(memcg, cpu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long reclaim_high(struct mem_cgroup *memcg,
-				  unsigned int nr_pages,
+अटल अचिन्हित दीर्घ reclaim_high(काष्ठा mem_cgroup *memcg,
+				  अचिन्हित पूर्णांक nr_pages,
 				  gfp_t gfp_mask)
-{
-	unsigned long nr_reclaimed = 0;
+अणु
+	अचिन्हित दीर्घ nr_reclaimed = 0;
 
-	do {
-		unsigned long pflags;
+	करो अणु
+		अचिन्हित दीर्घ pflags;
 
-		if (page_counter_read(&memcg->memory) <=
+		अगर (page_counter_पढ़ो(&memcg->memory) <=
 		    READ_ONCE(memcg->memory.high))
-			continue;
+			जारी;
 
 		memcg_memory_event(memcg, MEMCG_HIGH);
 
 		psi_memstall_enter(&pflags);
-		nr_reclaimed += try_to_free_mem_cgroup_pages(memcg, nr_pages,
+		nr_reclaimed += try_to_मुक्त_mem_cgroup_pages(memcg, nr_pages,
 							     gfp_mask, true);
 		psi_memstall_leave(&pflags);
-	} while ((memcg = parent_mem_cgroup(memcg)) &&
+	पूर्ण जबतक ((memcg = parent_mem_cgroup(memcg)) &&
 		 !mem_cgroup_is_root(memcg));
 
-	return nr_reclaimed;
-}
+	वापस nr_reclaimed;
+पूर्ण
 
-static void high_work_func(struct work_struct *work)
-{
-	struct mem_cgroup *memcg;
+अटल व्योम high_work_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mem_cgroup *memcg;
 
-	memcg = container_of(work, struct mem_cgroup, high_work);
+	memcg = container_of(work, काष्ठा mem_cgroup, high_work);
 	reclaim_high(memcg, MEMCG_CHARGE_BATCH, GFP_KERNEL);
-}
+पूर्ण
 
 /*
- * Clamp the maximum sleep time per allocation batch to 2 seconds. This is
- * enough to still cause a significant slowdown in most cases, while still
+ * Clamp the maximum sleep समय per allocation batch to 2 seconds. This is
+ * enough to still cause a signअगरicant slowकरोwn in most हालs, जबतक still
  * allowing diagnostics and tracing to proceed without becoming stuck.
  */
-#define MEMCG_MAX_HIGH_DELAY_JIFFIES (2UL*HZ)
+#घोषणा MEMCG_MAX_HIGH_DELAY_JIFFIES (2UL*HZ)
 
 /*
  * When calculating the delay, we use these either side of the exponentiation to
- * maintain precision and scale to a reasonable number of jiffies (see the table
+ * मुख्यtain precision and scale to a reasonable number of jअगरfies (see the table
  * below.
  *
- * - MEMCG_DELAY_PRECISION_SHIFT: Extra precision bits while translating the
+ * - MEMCG_DELAY_PRECISION_SHIFT: Extra precision bits जबतक translating the
  *   overage ratio to a delay.
- * - MEMCG_DELAY_SCALING_SHIFT: The number of bits to scale down the
- *   proposed penalty in order to reduce to a reasonable number of jiffies, and
+ * - MEMCG_DELAY_SCALING_SHIFT: The number of bits to scale करोwn the
+ *   proposed penalty in order to reduce to a reasonable number of jअगरfies, and
  *   to produce a reasonable delay curve.
  *
  * MEMCG_DELAY_SCALING_SHIFT just happens to be a number that produces a
  * reasonable delay curve compared to precision-adjusted overage, not
  * penalising heavily at first, but still making sure that growth beyond the
- * limit penalises misbehaviour cgroups by slowing them down exponentially. For
+ * limit penalises misbehaviour cgroups by slowing them करोwn exponentially. For
  * example, with a high of 100 megabytes:
  *
  *  +-------+------------------------+
- *  | usage | time to allocate in ms |
+ *  | usage | समय to allocate in ms |
  *  +-------+------------------------+
  *  | 100M  |                      0 |
  *  | 101M  |                      6 |
@@ -2334,81 +2335,81 @@ static void high_work_func(struct work_struct *work)
  *  | 120M  |                   2000 |
  *  +-------+------------------------+
  */
- #define MEMCG_DELAY_PRECISION_SHIFT 20
- #define MEMCG_DELAY_SCALING_SHIFT 14
+ #घोषणा MEMCG_DELAY_PRECISION_SHIFT 20
+ #घोषणा MEMCG_DELAY_SCALING_SHIFT 14
 
-static u64 calculate_overage(unsigned long usage, unsigned long high)
-{
+अटल u64 calculate_overage(अचिन्हित दीर्घ usage, अचिन्हित दीर्घ high)
+अणु
 	u64 overage;
 
-	if (usage <= high)
-		return 0;
+	अगर (usage <= high)
+		वापस 0;
 
 	/*
-	 * Prevent division by 0 in overage calculation by acting as if
+	 * Prevent भागision by 0 in overage calculation by acting as अगर
 	 * it was a threshold of 1 page
 	 */
 	high = max(high, 1UL);
 
 	overage = usage - high;
 	overage <<= MEMCG_DELAY_PRECISION_SHIFT;
-	return div64_u64(overage, high);
-}
+	वापस भाग64_u64(overage, high);
+पूर्ण
 
-static u64 mem_find_max_overage(struct mem_cgroup *memcg)
-{
+अटल u64 mem_find_max_overage(काष्ठा mem_cgroup *memcg)
+अणु
 	u64 overage, max_overage = 0;
 
-	do {
-		overage = calculate_overage(page_counter_read(&memcg->memory),
+	करो अणु
+		overage = calculate_overage(page_counter_पढ़ो(&memcg->memory),
 					    READ_ONCE(memcg->memory.high));
 		max_overage = max(overage, max_overage);
-	} while ((memcg = parent_mem_cgroup(memcg)) &&
+	पूर्ण जबतक ((memcg = parent_mem_cgroup(memcg)) &&
 		 !mem_cgroup_is_root(memcg));
 
-	return max_overage;
-}
+	वापस max_overage;
+पूर्ण
 
-static u64 swap_find_max_overage(struct mem_cgroup *memcg)
-{
+अटल u64 swap_find_max_overage(काष्ठा mem_cgroup *memcg)
+अणु
 	u64 overage, max_overage = 0;
 
-	do {
-		overage = calculate_overage(page_counter_read(&memcg->swap),
+	करो अणु
+		overage = calculate_overage(page_counter_पढ़ो(&memcg->swap),
 					    READ_ONCE(memcg->swap.high));
-		if (overage)
+		अगर (overage)
 			memcg_memory_event(memcg, MEMCG_SWAP_HIGH);
 		max_overage = max(overage, max_overage);
-	} while ((memcg = parent_mem_cgroup(memcg)) &&
+	पूर्ण जबतक ((memcg = parent_mem_cgroup(memcg)) &&
 		 !mem_cgroup_is_root(memcg));
 
-	return max_overage;
-}
+	वापस max_overage;
+पूर्ण
 
 /*
- * Get the number of jiffies that we should penalise a mischievous cgroup which
+ * Get the number of jअगरfies that we should penalise a mischievous cgroup which
  * is exceeding its memory.high by checking both it and its ancestors.
  */
-static unsigned long calculate_high_delay(struct mem_cgroup *memcg,
-					  unsigned int nr_pages,
+अटल अचिन्हित दीर्घ calculate_high_delay(काष्ठा mem_cgroup *memcg,
+					  अचिन्हित पूर्णांक nr_pages,
 					  u64 max_overage)
-{
-	unsigned long penalty_jiffies;
+अणु
+	अचिन्हित दीर्घ penalty_jअगरfies;
 
-	if (!max_overage)
-		return 0;
+	अगर (!max_overage)
+		वापस 0;
 
 	/*
 	 * We use overage compared to memory.high to calculate the number of
-	 * jiffies to sleep (penalty_jiffies). Ideally this value should be
+	 * jअगरfies to sleep (penalty_jअगरfies). Ideally this value should be
 	 * fairly lenient on small overages, and increasingly harsh when the
-	 * memcg in question makes it clear that it has no intention of stopping
+	 * memcg in question makes it clear that it has no पूर्णांकention of stopping
 	 * its crazy behaviour, so we exponentially increase the delay based on
 	 * overage amount.
 	 */
-	penalty_jiffies = max_overage * max_overage * HZ;
-	penalty_jiffies >>= MEMCG_DELAY_PRECISION_SHIFT;
-	penalty_jiffies >>= MEMCG_DELAY_SCALING_SHIFT;
+	penalty_jअगरfies = max_overage * max_overage * HZ;
+	penalty_jअगरfies >>= MEMCG_DELAY_PRECISION_SHIFT;
+	penalty_jअगरfies >>= MEMCG_DELAY_SCALING_SHIFT;
 
 	/*
 	 * Factor in the task's own contribution to the overage, such that four
@@ -2416,40 +2417,40 @@ static unsigned long calculate_high_delay(struct mem_cgroup *memcg,
 	 * 4N-sized allocation.
 	 *
 	 * MEMCG_CHARGE_BATCH pages is nominal, so work out how much smaller or
-	 * larger the current charge patch is than that.
+	 * larger the current अक्षरge patch is than that.
 	 */
-	return penalty_jiffies * nr_pages / MEMCG_CHARGE_BATCH;
-}
+	वापस penalty_jअगरfies * nr_pages / MEMCG_CHARGE_BATCH;
+पूर्ण
 
 /*
- * Scheduled by try_charge() to be executed from the userland return path
+ * Scheduled by try_अक्षरge() to be executed from the userland वापस path
  * and reclaims memory over the high limit.
  */
-void mem_cgroup_handle_over_high(void)
-{
-	unsigned long penalty_jiffies;
-	unsigned long pflags;
-	unsigned long nr_reclaimed;
-	unsigned int nr_pages = current->memcg_nr_pages_over_high;
-	int nr_retries = MAX_RECLAIM_RETRIES;
-	struct mem_cgroup *memcg;
+व्योम mem_cgroup_handle_over_high(व्योम)
+अणु
+	अचिन्हित दीर्घ penalty_jअगरfies;
+	अचिन्हित दीर्घ pflags;
+	अचिन्हित दीर्घ nr_reclaimed;
+	अचिन्हित पूर्णांक nr_pages = current->memcg_nr_pages_over_high;
+	पूर्णांक nr_retries = MAX_RECLAIM_RETRIES;
+	काष्ठा mem_cgroup *memcg;
 	bool in_retry = false;
 
-	if (likely(!nr_pages))
-		return;
+	अगर (likely(!nr_pages))
+		वापस;
 
 	memcg = get_mem_cgroup_from_mm(current->mm);
 	current->memcg_nr_pages_over_high = 0;
 
 retry_reclaim:
 	/*
-	 * The allocating task should reclaim at least the batch size, but for
-	 * subsequent retries we only want to do what's necessary to prevent oom
+	 * The allocating task should reclaim at least the batch size, but क्रम
+	 * subsequent retries we only want to करो what's necessary to prevent oom
 	 * or breaching resource isolation.
 	 *
 	 * This is distinct from memory.max or page allocator behaviour because
 	 * memory.high is currently batched, whereas memory.max and the page
-	 * allocator run every time an allocation is made.
+	 * allocator run every समय an allocation is made.
 	 */
 	nr_reclaimed = reclaim_high(memcg,
 				    in_retry ? SWAP_CLUSTER_MAX : nr_pages,
@@ -2457,261 +2458,261 @@ retry_reclaim:
 
 	/*
 	 * memory.high is breached and reclaim is unable to keep up. Throttle
-	 * allocators proactively to slow down excessive growth.
+	 * allocators proactively to slow करोwn excessive growth.
 	 */
-	penalty_jiffies = calculate_high_delay(memcg, nr_pages,
+	penalty_jअगरfies = calculate_high_delay(memcg, nr_pages,
 					       mem_find_max_overage(memcg));
 
-	penalty_jiffies += calculate_high_delay(memcg, nr_pages,
+	penalty_jअगरfies += calculate_high_delay(memcg, nr_pages,
 						swap_find_max_overage(memcg));
 
 	/*
-	 * Clamp the max delay per usermode return so as to still keep the
-	 * application moving forwards and also permit diagnostics, albeit
+	 * Clamp the max delay per usermode वापस so as to still keep the
+	 * application moving क्रमwards and also permit diagnostics, albeit
 	 * extremely slowly.
 	 */
-	penalty_jiffies = min(penalty_jiffies, MEMCG_MAX_HIGH_DELAY_JIFFIES);
+	penalty_jअगरfies = min(penalty_jअगरfies, MEMCG_MAX_HIGH_DELAY_JIFFIES);
 
 	/*
-	 * Don't sleep if the amount of jiffies this memcg owes us is so low
-	 * that it's not even worth doing, in an attempt to be nice to those who
+	 * Don't sleep अगर the amount of jअगरfies this memcg owes us is so low
+	 * that it's not even worth करोing, in an attempt to be nice to those who
 	 * go only a small amount over their memory.high value and maybe haven't
 	 * been aggressively reclaimed enough yet.
 	 */
-	if (penalty_jiffies <= HZ / 100)
-		goto out;
+	अगर (penalty_jअगरfies <= HZ / 100)
+		जाओ out;
 
 	/*
-	 * If reclaim is making forward progress but we're still over
-	 * memory.high, we want to encourage that rather than doing allocator
+	 * If reclaim is making क्रमward progress but we're still over
+	 * memory.high, we want to encourage that rather than करोing allocator
 	 * throttling.
 	 */
-	if (nr_reclaimed || nr_retries--) {
+	अगर (nr_reclaimed || nr_retries--) अणु
 		in_retry = true;
-		goto retry_reclaim;
-	}
+		जाओ retry_reclaim;
+	पूर्ण
 
 	/*
-	 * If we exit early, we're guaranteed to die (since
-	 * schedule_timeout_killable sets TASK_KILLABLE). This means we don't
-	 * need to account for any ill-begotten jiffies to pay them off later.
+	 * If we निकास early, we're guaranteed to die (since
+	 * schedule_समयout_समाप्तable sets TASK_KILLABLE). This means we करोn't
+	 * need to account क्रम any ill-begotten jअगरfies to pay them off later.
 	 */
 	psi_memstall_enter(&pflags);
-	schedule_timeout_killable(penalty_jiffies);
+	schedule_समयout_समाप्तable(penalty_jअगरfies);
 	psi_memstall_leave(&pflags);
 
 out:
 	css_put(&memcg->css);
-}
+पूर्ण
 
-static int try_charge(struct mem_cgroup *memcg, gfp_t gfp_mask,
-		      unsigned int nr_pages)
-{
-	unsigned int batch = max(MEMCG_CHARGE_BATCH, nr_pages);
-	int nr_retries = MAX_RECLAIM_RETRIES;
-	struct mem_cgroup *mem_over_limit;
-	struct page_counter *counter;
-	enum oom_status oom_status;
-	unsigned long nr_reclaimed;
+अटल पूर्णांक try_अक्षरge(काष्ठा mem_cgroup *memcg, gfp_t gfp_mask,
+		      अचिन्हित पूर्णांक nr_pages)
+अणु
+	अचिन्हित पूर्णांक batch = max(MEMCG_CHARGE_BATCH, nr_pages);
+	पूर्णांक nr_retries = MAX_RECLAIM_RETRIES;
+	काष्ठा mem_cgroup *mem_over_limit;
+	काष्ठा page_counter *counter;
+	क्रमागत oom_status oom_status;
+	अचिन्हित दीर्घ nr_reclaimed;
 	bool may_swap = true;
 	bool drained = false;
-	unsigned long pflags;
+	अचिन्हित दीर्घ pflags;
 
-	if (mem_cgroup_is_root(memcg))
-		return 0;
+	अगर (mem_cgroup_is_root(memcg))
+		वापस 0;
 retry:
-	if (consume_stock(memcg, nr_pages))
-		return 0;
+	अगर (consume_stock(memcg, nr_pages))
+		वापस 0;
 
-	if (!do_memsw_account() ||
-	    page_counter_try_charge(&memcg->memsw, batch, &counter)) {
-		if (page_counter_try_charge(&memcg->memory, batch, &counter))
-			goto done_restock;
-		if (do_memsw_account())
-			page_counter_uncharge(&memcg->memsw, batch);
+	अगर (!करो_memsw_account() ||
+	    page_counter_try_अक्षरge(&memcg->memsw, batch, &counter)) अणु
+		अगर (page_counter_try_अक्षरge(&memcg->memory, batch, &counter))
+			जाओ करोne_restock;
+		अगर (करो_memsw_account())
+			page_counter_unअक्षरge(&memcg->memsw, batch);
 		mem_over_limit = mem_cgroup_from_counter(counter, memory);
-	} else {
+	पूर्ण अन्यथा अणु
 		mem_over_limit = mem_cgroup_from_counter(counter, memsw);
 		may_swap = false;
-	}
+	पूर्ण
 
-	if (batch > nr_pages) {
+	अगर (batch > nr_pages) अणु
 		batch = nr_pages;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
 	/*
-	 * Memcg doesn't have a dedicated reserve for atomic
+	 * Memcg करोesn't have a dedicated reserve क्रम atomic
 	 * allocations. But like the global atomic pool, we need to
 	 * put the burden of reclaim on regular allocation requests
 	 * and let these go through as privileged allocations.
 	 */
-	if (gfp_mask & __GFP_ATOMIC)
-		goto force;
+	अगर (gfp_mask & __GFP_ATOMIC)
+		जाओ क्रमce;
 
 	/*
 	 * Unlike in global OOM situations, memcg is not in a physical
-	 * memory shortage.  Allow dying and OOM-killed tasks to
-	 * bypass the last charges so that they can exit quickly and
-	 * free their memory.
+	 * memory लघुage.  Allow dying and OOM-समाप्तed tasks to
+	 * bypass the last अक्षरges so that they can निकास quickly and
+	 * मुक्त their memory.
 	 */
-	if (unlikely(should_force_charge()))
-		goto force;
+	अगर (unlikely(should_क्रमce_अक्षरge()))
+		जाओ क्रमce;
 
 	/*
 	 * Prevent unbounded recursion when reclaim operations need to
 	 * allocate memory. This might exceed the limits temporarily,
 	 * but we prefer facilitating memory reclaim and getting back
-	 * under the limit over triggering OOM kills in these cases.
+	 * under the limit over triggering OOM समाप्तs in these हालs.
 	 */
-	if (unlikely(current->flags & PF_MEMALLOC))
-		goto force;
+	अगर (unlikely(current->flags & PF_MEMALLOC))
+		जाओ क्रमce;
 
-	if (unlikely(task_in_memcg_oom(current)))
-		goto nomem;
+	अगर (unlikely(task_in_memcg_oom(current)))
+		जाओ nomem;
 
-	if (!gfpflags_allow_blocking(gfp_mask))
-		goto nomem;
+	अगर (!gfpflags_allow_blocking(gfp_mask))
+		जाओ nomem;
 
 	memcg_memory_event(mem_over_limit, MEMCG_MAX);
 
 	psi_memstall_enter(&pflags);
-	nr_reclaimed = try_to_free_mem_cgroup_pages(mem_over_limit, nr_pages,
+	nr_reclaimed = try_to_मुक्त_mem_cgroup_pages(mem_over_limit, nr_pages,
 						    gfp_mask, may_swap);
 	psi_memstall_leave(&pflags);
 
-	if (mem_cgroup_margin(mem_over_limit) >= nr_pages)
-		goto retry;
+	अगर (mem_cgroup_margin(mem_over_limit) >= nr_pages)
+		जाओ retry;
 
-	if (!drained) {
+	अगर (!drained) अणु
 		drain_all_stock(mem_over_limit);
 		drained = true;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	if (gfp_mask & __GFP_NORETRY)
-		goto nomem;
+	अगर (gfp_mask & __GFP_NORETRY)
+		जाओ nomem;
 	/*
-	 * Even though the limit is exceeded at this point, reclaim
-	 * may have been able to free some pages.  Retry the charge
-	 * before killing the task.
+	 * Even though the limit is exceeded at this poपूर्णांक, reclaim
+	 * may have been able to मुक्त some pages.  Retry the अक्षरge
+	 * beक्रमe समाप्तing the task.
 	 *
-	 * Only for regular pages, though: huge pages are rather
-	 * unlikely to succeed so close to the limit, and we fall back
-	 * to regular pages anyway in case of failure.
+	 * Only क्रम regular pages, though: huge pages are rather
+	 * unlikely to succeed so बंद to the limit, and we fall back
+	 * to regular pages anyway in हाल of failure.
 	 */
-	if (nr_reclaimed && nr_pages <= (1 << PAGE_ALLOC_COSTLY_ORDER))
-		goto retry;
+	अगर (nr_reclaimed && nr_pages <= (1 << PAGE_ALLOC_COSTLY_ORDER))
+		जाओ retry;
 	/*
-	 * At task move, charge accounts can be doubly counted. So, it's
-	 * better to wait until the end of task_move if something is going on.
+	 * At task move, अक्षरge accounts can be करोubly counted. So, it's
+	 * better to रुको until the end of task_move अगर something is going on.
 	 */
-	if (mem_cgroup_wait_acct_move(mem_over_limit))
-		goto retry;
+	अगर (mem_cgroup_रुको_acct_move(mem_over_limit))
+		जाओ retry;
 
-	if (nr_retries--)
-		goto retry;
+	अगर (nr_retries--)
+		जाओ retry;
 
-	if (gfp_mask & __GFP_RETRY_MAYFAIL)
-		goto nomem;
+	अगर (gfp_mask & __GFP_RETRY_MAYFAIL)
+		जाओ nomem;
 
-	if (fatal_signal_pending(current))
-		goto force;
+	अगर (fatal_संकेत_pending(current))
+		जाओ क्रमce;
 
 	/*
-	 * keep retrying as long as the memcg oom killer is able to make
-	 * a forward progress or bypass the charge if the oom killer
+	 * keep retrying as दीर्घ as the memcg oom समाप्तer is able to make
+	 * a क्रमward progress or bypass the अक्षरge अगर the oom समाप्तer
 	 * couldn't make any progress.
 	 */
 	oom_status = mem_cgroup_oom(mem_over_limit, gfp_mask,
 		       get_order(nr_pages * PAGE_SIZE));
-	switch (oom_status) {
-	case OOM_SUCCESS:
+	चयन (oom_status) अणु
+	हाल OOM_SUCCESS:
 		nr_retries = MAX_RECLAIM_RETRIES;
-		goto retry;
-	case OOM_FAILED:
-		goto force;
-	default:
-		goto nomem;
-	}
+		जाओ retry;
+	हाल OOM_FAILED:
+		जाओ क्रमce;
+	शेष:
+		जाओ nomem;
+	पूर्ण
 nomem:
-	if (!(gfp_mask & __GFP_NOFAIL))
-		return -ENOMEM;
-force:
+	अगर (!(gfp_mask & __GFP_NOFAIL))
+		वापस -ENOMEM;
+क्रमce:
 	/*
 	 * The allocation either can't fail or will lead to more memory
-	 * being freed very soon.  Allow memory usage go over the limit
-	 * temporarily by force charging it.
+	 * being मुक्तd very soon.  Allow memory usage go over the limit
+	 * temporarily by क्रमce अक्षरging it.
 	 */
-	page_counter_charge(&memcg->memory, nr_pages);
-	if (do_memsw_account())
-		page_counter_charge(&memcg->memsw, nr_pages);
+	page_counter_अक्षरge(&memcg->memory, nr_pages);
+	अगर (करो_memsw_account())
+		page_counter_अक्षरge(&memcg->memsw, nr_pages);
 
-	return 0;
+	वापस 0;
 
-done_restock:
-	if (batch > nr_pages)
+करोne_restock:
+	अगर (batch > nr_pages)
 		refill_stock(memcg, batch - nr_pages);
 
 	/*
 	 * If the hierarchy is above the normal consumption range, schedule
-	 * reclaim on returning to userland.  We can perform reclaim here
-	 * if __GFP_RECLAIM but let's always punt for simplicity and so that
+	 * reclaim on वापसing to userland.  We can perक्रमm reclaim here
+	 * अगर __GFP_RECLAIM but let's always punt क्रम simplicity and so that
 	 * GFP_KERNEL can consistently be used during reclaim.  @memcg is
 	 * not recorded as it most likely matches current's and won't
-	 * change in the meantime.  As high limit is checked again before
+	 * change in the meanसमय.  As high limit is checked again beक्रमe
 	 * reclaim, the cost of mismatch is negligible.
 	 */
-	do {
+	करो अणु
 		bool mem_high, swap_high;
 
-		mem_high = page_counter_read(&memcg->memory) >
+		mem_high = page_counter_पढ़ो(&memcg->memory) >
 			READ_ONCE(memcg->memory.high);
-		swap_high = page_counter_read(&memcg->swap) >
+		swap_high = page_counter_पढ़ो(&memcg->swap) >
 			READ_ONCE(memcg->swap.high);
 
-		/* Don't bother a random interrupted task */
-		if (in_interrupt()) {
-			if (mem_high) {
+		/* Don't bother a अक्रमom पूर्णांकerrupted task */
+		अगर (in_पूर्णांकerrupt()) अणु
+			अगर (mem_high) अणु
 				schedule_work(&memcg->high_work);
-				break;
-			}
-			continue;
-		}
+				अवरोध;
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		if (mem_high || swap_high) {
+		अगर (mem_high || swap_high) अणु
 			/*
-			 * The allocating tasks in this cgroup will need to do
+			 * The allocating tasks in this cgroup will need to करो
 			 * reclaim or be throttled to prevent further growth
-			 * of the memory or swap footprints.
+			 * of the memory or swap footprपूर्णांकs.
 			 *
-			 * Target some best-effort fairness between the tasks,
+			 * Target some best-efक्रमt fairness between the tasks,
 			 * and distribute reclaim work and delay penalties
 			 * based on how much each task is actually allocating.
 			 */
 			current->memcg_nr_pages_over_high += batch;
-			set_notify_resume(current);
-			break;
-		}
-	} while ((memcg = parent_mem_cgroup(memcg)));
+			set_notअगरy_resume(current);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक ((memcg = parent_mem_cgroup(memcg)));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if defined(CONFIG_MEMCG_KMEM) || defined(CONFIG_MMU)
-static void cancel_charge(struct mem_cgroup *memcg, unsigned int nr_pages)
-{
-	if (mem_cgroup_is_root(memcg))
-		return;
+#अगर defined(CONFIG_MEMCG_KMEM) || defined(CONFIG_MMU)
+अटल व्योम cancel_अक्षरge(काष्ठा mem_cgroup *memcg, अचिन्हित पूर्णांक nr_pages)
+अणु
+	अगर (mem_cgroup_is_root(memcg))
+		वापस;
 
-	page_counter_uncharge(&memcg->memory, nr_pages);
-	if (do_memsw_account())
-		page_counter_uncharge(&memcg->memsw, nr_pages);
-}
-#endif
+	page_counter_unअक्षरge(&memcg->memory, nr_pages);
+	अगर (करो_memsw_account())
+		page_counter_unअक्षरge(&memcg->memsw, nr_pages);
+पूर्ण
+#पूर्ण_अगर
 
-static void commit_charge(struct page *page, struct mem_cgroup *memcg)
-{
+अटल व्योम commit_अक्षरge(काष्ठा page *page, काष्ठा mem_cgroup *memcg)
+अणु
 	VM_BUG_ON_PAGE(page_memcg(page), page);
 	/*
 	 * Any of the following ensures page's memcg stability:
@@ -2721,312 +2722,312 @@ static void commit_charge(struct page *page, struct mem_cgroup *memcg)
 	 * - lock_page_memcg()
 	 * - exclusive reference
 	 */
-	page->memcg_data = (unsigned long)memcg;
-}
+	page->memcg_data = (अचिन्हित दीर्घ)memcg;
+पूर्ण
 
-static struct mem_cgroup *get_mem_cgroup_from_objcg(struct obj_cgroup *objcg)
-{
-	struct mem_cgroup *memcg;
+अटल काष्ठा mem_cgroup *get_mem_cgroup_from_objcg(काष्ठा obj_cgroup *objcg)
+अणु
+	काष्ठा mem_cgroup *memcg;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 retry:
 	memcg = obj_cgroup_memcg(objcg);
-	if (unlikely(!css_tryget(&memcg->css)))
-		goto retry;
-	rcu_read_unlock();
+	अगर (unlikely(!css_tryget(&memcg->css)))
+		जाओ retry;
+	rcu_पढ़ो_unlock();
 
-	return memcg;
-}
+	वापस memcg;
+पूर्ण
 
-#ifdef CONFIG_MEMCG_KMEM
-int memcg_alloc_page_obj_cgroups(struct page *page, struct kmem_cache *s,
+#अगर_घोषित CONFIG_MEMCG_KMEM
+पूर्णांक memcg_alloc_page_obj_cgroups(काष्ठा page *page, काष्ठा kmem_cache *s,
 				 gfp_t gfp, bool new_page)
-{
-	unsigned int objects = objs_per_slab_page(s, page);
-	unsigned long memcg_data;
-	void *vec;
+अणु
+	अचिन्हित पूर्णांक objects = objs_per_slab_page(s, page);
+	अचिन्हित दीर्घ memcg_data;
+	व्योम *vec;
 
-	vec = kcalloc_node(objects, sizeof(struct obj_cgroup *), gfp,
+	vec = kसुस्मृति_node(objects, माप(काष्ठा obj_cgroup *), gfp,
 			   page_to_nid(page));
-	if (!vec)
-		return -ENOMEM;
+	अगर (!vec)
+		वापस -ENOMEM;
 
-	memcg_data = (unsigned long) vec | MEMCG_DATA_OBJCGS;
-	if (new_page) {
+	memcg_data = (अचिन्हित दीर्घ) vec | MEMCG_DATA_OBJCGS;
+	अगर (new_page) अणु
 		/*
-		 * If the slab page is brand new and nobody can yet access
+		 * If the slab page is bअक्रम new and nobody can yet access
 		 * it's memcg_data, no synchronization is required and
-		 * memcg_data can be simply assigned.
+		 * memcg_data can be simply asचिन्हित.
 		 */
 		page->memcg_data = memcg_data;
-	} else if (cmpxchg(&page->memcg_data, 0, memcg_data)) {
+	पूर्ण अन्यथा अगर (cmpxchg(&page->memcg_data, 0, memcg_data)) अणु
 		/*
-		 * If the slab page is already in use, somebody can allocate
-		 * and assign obj_cgroups in parallel. In this case the existing
+		 * If the slab page is alपढ़ोy in use, somebody can allocate
+		 * and assign obj_cgroups in parallel. In this हाल the existing
 		 * objcg vector should be reused.
 		 */
-		kfree(vec);
-		return 0;
-	}
+		kमुक्त(vec);
+		वापस 0;
+	पूर्ण
 
 	kmemleak_not_leak(vec);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Returns a pointer to the memory cgroup to which the kernel object is charged.
+ * Returns a poपूर्णांकer to the memory cgroup to which the kernel object is अक्षरged.
  *
  * A passed kernel object can be a slab object or a generic kernel page, so
- * different mechanisms for getting the memory cgroup pointer should be used.
- * In certain cases (e.g. kernel stacks or large kmallocs with SLUB) the caller
- * can not know for sure how the kernel object is implemented.
- * mem_cgroup_from_obj() can be safely used in such cases.
+ * dअगरferent mechanisms क्रम getting the memory cgroup poपूर्णांकer should be used.
+ * In certain हालs (e.g. kernel stacks or large kदो_स्मृतिs with SLUB) the caller
+ * can not know क्रम sure how the kernel object is implemented.
+ * mem_cgroup_from_obj() can be safely used in such हालs.
  *
- * The caller must ensure the memcg lifetime, e.g. by taking rcu_read_lock(),
+ * The caller must ensure the memcg lअगरeसमय, e.g. by taking rcu_पढ़ो_lock(),
  * cgroup_mutex, etc.
  */
-struct mem_cgroup *mem_cgroup_from_obj(void *p)
-{
-	struct page *page;
+काष्ठा mem_cgroup *mem_cgroup_from_obj(व्योम *p)
+अणु
+	काष्ठा page *page;
 
-	if (mem_cgroup_disabled())
-		return NULL;
+	अगर (mem_cgroup_disabled())
+		वापस शून्य;
 
 	page = virt_to_head_page(p);
 
 	/*
-	 * Slab objects are accounted individually, not per-page.
-	 * Memcg membership data for each individual object is saved in
+	 * Slab objects are accounted inभागidually, not per-page.
+	 * Memcg membership data क्रम each inभागidual object is saved in
 	 * the page->obj_cgroups.
 	 */
-	if (page_objcgs_check(page)) {
-		struct obj_cgroup *objcg;
-		unsigned int off;
+	अगर (page_objcgs_check(page)) अणु
+		काष्ठा obj_cgroup *objcg;
+		अचिन्हित पूर्णांक off;
 
 		off = obj_to_index(page->slab_cache, page, p);
 		objcg = page_objcgs(page)[off];
-		if (objcg)
-			return obj_cgroup_memcg(objcg);
+		अगर (objcg)
+			वापस obj_cgroup_memcg(objcg);
 
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/*
 	 * page_memcg_check() is used here, because page_has_obj_cgroups()
 	 * check above could fail because the object cgroups vector wasn't set
 	 * at that moment, but it can be set concurrently.
 	 * page_memcg_check(page) will guarantee that a proper memory
-	 * cgroup pointer or NULL will be returned.
+	 * cgroup poपूर्णांकer or शून्य will be वापसed.
 	 */
-	return page_memcg_check(page);
-}
+	वापस page_memcg_check(page);
+पूर्ण
 
-__always_inline struct obj_cgroup *get_obj_cgroup_from_current(void)
-{
-	struct obj_cgroup *objcg = NULL;
-	struct mem_cgroup *memcg;
+__always_अंतरभूत काष्ठा obj_cgroup *get_obj_cgroup_from_current(व्योम)
+अणु
+	काष्ठा obj_cgroup *objcg = शून्य;
+	काष्ठा mem_cgroup *memcg;
 
-	if (memcg_kmem_bypass())
-		return NULL;
+	अगर (memcg_kmem_bypass())
+		वापस शून्य;
 
-	rcu_read_lock();
-	if (unlikely(active_memcg()))
+	rcu_पढ़ो_lock();
+	अगर (unlikely(active_memcg()))
 		memcg = active_memcg();
-	else
+	अन्यथा
 		memcg = mem_cgroup_from_task(current);
 
-	for (; memcg != root_mem_cgroup; memcg = parent_mem_cgroup(memcg)) {
+	क्रम (; memcg != root_mem_cgroup; memcg = parent_mem_cgroup(memcg)) अणु
 		objcg = rcu_dereference(memcg->objcg);
-		if (objcg && obj_cgroup_tryget(objcg))
-			break;
-		objcg = NULL;
-	}
-	rcu_read_unlock();
+		अगर (objcg && obj_cgroup_tryget(objcg))
+			अवरोध;
+		objcg = शून्य;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return objcg;
-}
+	वापस objcg;
+पूर्ण
 
-static int memcg_alloc_cache_id(void)
-{
-	int id, size;
-	int err;
+अटल पूर्णांक memcg_alloc_cache_id(व्योम)
+अणु
+	पूर्णांक id, size;
+	पूर्णांक err;
 
 	id = ida_simple_get(&memcg_cache_ida,
 			    0, MEMCG_CACHES_MAX_SIZE, GFP_KERNEL);
-	if (id < 0)
-		return id;
+	अगर (id < 0)
+		वापस id;
 
-	if (id < memcg_nr_cache_ids)
-		return id;
+	अगर (id < memcg_nr_cache_ids)
+		वापस id;
 
 	/*
-	 * There's no space for the new id in memcg_caches arrays,
+	 * There's no space क्रम the new id in memcg_caches arrays,
 	 * so we have to grow them.
 	 */
-	down_write(&memcg_cache_ids_sem);
+	करोwn_ग_लिखो(&memcg_cache_ids_sem);
 
 	size = 2 * (id + 1);
-	if (size < MEMCG_CACHES_MIN_SIZE)
+	अगर (size < MEMCG_CACHES_MIN_SIZE)
 		size = MEMCG_CACHES_MIN_SIZE;
-	else if (size > MEMCG_CACHES_MAX_SIZE)
+	अन्यथा अगर (size > MEMCG_CACHES_MAX_SIZE)
 		size = MEMCG_CACHES_MAX_SIZE;
 
 	err = memcg_update_all_list_lrus(size);
-	if (!err)
+	अगर (!err)
 		memcg_nr_cache_ids = size;
 
-	up_write(&memcg_cache_ids_sem);
+	up_ग_लिखो(&memcg_cache_ids_sem);
 
-	if (err) {
-		ida_simple_remove(&memcg_cache_ida, id);
-		return err;
-	}
-	return id;
-}
+	अगर (err) अणु
+		ida_simple_हटाओ(&memcg_cache_ida, id);
+		वापस err;
+	पूर्ण
+	वापस id;
+पूर्ण
 
-static void memcg_free_cache_id(int id)
-{
-	ida_simple_remove(&memcg_cache_ida, id);
-}
+अटल व्योम memcg_मुक्त_cache_id(पूर्णांक id)
+अणु
+	ida_simple_हटाओ(&memcg_cache_ida, id);
+पूर्ण
 
 /*
- * obj_cgroup_uncharge_pages: uncharge a number of kernel pages from a objcg
- * @objcg: object cgroup to uncharge
- * @nr_pages: number of pages to uncharge
+ * obj_cgroup_unअक्षरge_pages: unअक्षरge a number of kernel pages from a objcg
+ * @objcg: object cgroup to unअक्षरge
+ * @nr_pages: number of pages to unअक्षरge
  */
-static void obj_cgroup_uncharge_pages(struct obj_cgroup *objcg,
-				      unsigned int nr_pages)
-{
-	struct mem_cgroup *memcg;
+अटल व्योम obj_cgroup_unअक्षरge_pages(काष्ठा obj_cgroup *objcg,
+				      अचिन्हित पूर्णांक nr_pages)
+अणु
+	काष्ठा mem_cgroup *memcg;
 
 	memcg = get_mem_cgroup_from_objcg(objcg);
 
-	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
-		page_counter_uncharge(&memcg->kmem, nr_pages);
+	अगर (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
+		page_counter_unअक्षरge(&memcg->kmem, nr_pages);
 	refill_stock(memcg, nr_pages);
 
 	css_put(&memcg->css);
-}
+पूर्ण
 
 /*
- * obj_cgroup_charge_pages: charge a number of kernel pages to a objcg
- * @objcg: object cgroup to charge
+ * obj_cgroup_अक्षरge_pages: अक्षरge a number of kernel pages to a objcg
+ * @objcg: object cgroup to अक्षरge
  * @gfp: reclaim mode
- * @nr_pages: number of pages to charge
+ * @nr_pages: number of pages to अक्षरge
  *
  * Returns 0 on success, an error code on failure.
  */
-static int obj_cgroup_charge_pages(struct obj_cgroup *objcg, gfp_t gfp,
-				   unsigned int nr_pages)
-{
-	struct page_counter *counter;
-	struct mem_cgroup *memcg;
-	int ret;
+अटल पूर्णांक obj_cgroup_अक्षरge_pages(काष्ठा obj_cgroup *objcg, gfp_t gfp,
+				   अचिन्हित पूर्णांक nr_pages)
+अणु
+	काष्ठा page_counter *counter;
+	काष्ठा mem_cgroup *memcg;
+	पूर्णांक ret;
 
 	memcg = get_mem_cgroup_from_objcg(objcg);
 
-	ret = try_charge(memcg, gfp, nr_pages);
-	if (ret)
-		goto out;
+	ret = try_अक्षरge(memcg, gfp, nr_pages);
+	अगर (ret)
+		जाओ out;
 
-	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys) &&
-	    !page_counter_try_charge(&memcg->kmem, nr_pages, &counter)) {
+	अगर (!cgroup_subsys_on_dfl(memory_cgrp_subsys) &&
+	    !page_counter_try_अक्षरge(&memcg->kmem, nr_pages, &counter)) अणु
 
 		/*
-		 * Enforce __GFP_NOFAIL allocation because callers are not
-		 * prepared to see failures and likely do not have any failure
+		 * Enक्रमce __GFP_NOFAIL allocation because callers are not
+		 * prepared to see failures and likely करो not have any failure
 		 * handling code.
 		 */
-		if (gfp & __GFP_NOFAIL) {
-			page_counter_charge(&memcg->kmem, nr_pages);
-			goto out;
-		}
-		cancel_charge(memcg, nr_pages);
+		अगर (gfp & __GFP_NOFAIL) अणु
+			page_counter_अक्षरge(&memcg->kmem, nr_pages);
+			जाओ out;
+		पूर्ण
+		cancel_अक्षरge(memcg, nr_pages);
 		ret = -ENOMEM;
-	}
+	पूर्ण
 out:
 	css_put(&memcg->css);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * __memcg_kmem_charge_page: charge a kmem page to the current memory cgroup
- * @page: page to charge
+ * __memcg_kmem_अक्षरge_page: अक्षरge a kmem page to the current memory cgroup
+ * @page: page to अक्षरge
  * @gfp: reclaim mode
  * @order: allocation order
  *
  * Returns 0 on success, an error code on failure.
  */
-int __memcg_kmem_charge_page(struct page *page, gfp_t gfp, int order)
-{
-	struct obj_cgroup *objcg;
-	int ret = 0;
+पूर्णांक __memcg_kmem_अक्षरge_page(काष्ठा page *page, gfp_t gfp, पूर्णांक order)
+अणु
+	काष्ठा obj_cgroup *objcg;
+	पूर्णांक ret = 0;
 
 	objcg = get_obj_cgroup_from_current();
-	if (objcg) {
-		ret = obj_cgroup_charge_pages(objcg, gfp, 1 << order);
-		if (!ret) {
-			page->memcg_data = (unsigned long)objcg |
+	अगर (objcg) अणु
+		ret = obj_cgroup_अक्षरge_pages(objcg, gfp, 1 << order);
+		अगर (!ret) अणु
+			page->memcg_data = (अचिन्हित दीर्घ)objcg |
 				MEMCG_DATA_KMEM;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		obj_cgroup_put(objcg);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
- * __memcg_kmem_uncharge_page: uncharge a kmem page
- * @page: page to uncharge
+ * __memcg_kmem_unअक्षरge_page: unअक्षरge a kmem page
+ * @page: page to unअक्षरge
  * @order: allocation order
  */
-void __memcg_kmem_uncharge_page(struct page *page, int order)
-{
-	struct obj_cgroup *objcg;
-	unsigned int nr_pages = 1 << order;
+व्योम __memcg_kmem_unअक्षरge_page(काष्ठा page *page, पूर्णांक order)
+अणु
+	काष्ठा obj_cgroup *objcg;
+	अचिन्हित पूर्णांक nr_pages = 1 << order;
 
-	if (!PageMemcgKmem(page))
-		return;
+	अगर (!PageMemcgKmem(page))
+		वापस;
 
 	objcg = __page_objcg(page);
-	obj_cgroup_uncharge_pages(objcg, nr_pages);
+	obj_cgroup_unअक्षरge_pages(objcg, nr_pages);
 	page->memcg_data = 0;
 	obj_cgroup_put(objcg);
-}
+पूर्ण
 
-static bool consume_obj_stock(struct obj_cgroup *objcg, unsigned int nr_bytes)
-{
-	struct memcg_stock_pcp *stock;
-	unsigned long flags;
+अटल bool consume_obj_stock(काष्ठा obj_cgroup *objcg, अचिन्हित पूर्णांक nr_bytes)
+अणु
+	काष्ठा memcg_stock_pcp *stock;
+	अचिन्हित दीर्घ flags;
 	bool ret = false;
 
 	local_irq_save(flags);
 
 	stock = this_cpu_ptr(&memcg_stock);
-	if (objcg == stock->cached_objcg && stock->nr_bytes >= nr_bytes) {
+	अगर (objcg == stock->cached_objcg && stock->nr_bytes >= nr_bytes) अणु
 		stock->nr_bytes -= nr_bytes;
 		ret = true;
-	}
+	पूर्ण
 
 	local_irq_restore(flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void drain_obj_stock(struct memcg_stock_pcp *stock)
-{
-	struct obj_cgroup *old = stock->cached_objcg;
+अटल व्योम drain_obj_stock(काष्ठा memcg_stock_pcp *stock)
+अणु
+	काष्ठा obj_cgroup *old = stock->cached_objcg;
 
-	if (!old)
-		return;
+	अगर (!old)
+		वापस;
 
-	if (stock->nr_bytes) {
-		unsigned int nr_pages = stock->nr_bytes >> PAGE_SHIFT;
-		unsigned int nr_bytes = stock->nr_bytes & (PAGE_SIZE - 1);
+	अगर (stock->nr_bytes) अणु
+		अचिन्हित पूर्णांक nr_pages = stock->nr_bytes >> PAGE_SHIFT;
+		अचिन्हित पूर्णांक nr_bytes = stock->nr_bytes & (PAGE_SIZE - 1);
 
-		if (nr_pages)
-			obj_cgroup_uncharge_pages(old, nr_pages);
+		अगर (nr_pages)
+			obj_cgroup_unअक्षरge_pages(old, nr_pages);
 
 		/*
 		 * The leftover is flushed to the centralized per-memcg value.
@@ -3035,242 +3036,242 @@ static void drain_obj_stock(struct memcg_stock_pcp *stock)
 		 * refill_obj_stock().
 		 *
 		 * How often it's flushed is a trade-off between the memory
-		 * limit enforcement accuracy and potential CPU contention,
+		 * limit enक्रमcement accuracy and potential CPU contention,
 		 * so it might be changed in the future.
 		 */
-		atomic_add(nr_bytes, &old->nr_charged_bytes);
+		atomic_add(nr_bytes, &old->nr_अक्षरged_bytes);
 		stock->nr_bytes = 0;
-	}
+	पूर्ण
 
 	obj_cgroup_put(old);
-	stock->cached_objcg = NULL;
-}
+	stock->cached_objcg = शून्य;
+पूर्ण
 
-static bool obj_stock_flush_required(struct memcg_stock_pcp *stock,
-				     struct mem_cgroup *root_memcg)
-{
-	struct mem_cgroup *memcg;
+अटल bool obj_stock_flush_required(काष्ठा memcg_stock_pcp *stock,
+				     काष्ठा mem_cgroup *root_memcg)
+अणु
+	काष्ठा mem_cgroup *memcg;
 
-	if (stock->cached_objcg) {
+	अगर (stock->cached_objcg) अणु
 		memcg = obj_cgroup_memcg(stock->cached_objcg);
-		if (memcg && mem_cgroup_is_descendant(memcg, root_memcg))
-			return true;
-	}
+		अगर (memcg && mem_cgroup_is_descendant(memcg, root_memcg))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void refill_obj_stock(struct obj_cgroup *objcg, unsigned int nr_bytes)
-{
-	struct memcg_stock_pcp *stock;
-	unsigned long flags;
+अटल व्योम refill_obj_stock(काष्ठा obj_cgroup *objcg, अचिन्हित पूर्णांक nr_bytes)
+अणु
+	काष्ठा memcg_stock_pcp *stock;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 
 	stock = this_cpu_ptr(&memcg_stock);
-	if (stock->cached_objcg != objcg) { /* reset if necessary */
+	अगर (stock->cached_objcg != objcg) अणु /* reset अगर necessary */
 		drain_obj_stock(stock);
 		obj_cgroup_get(objcg);
 		stock->cached_objcg = objcg;
-		stock->nr_bytes = atomic_xchg(&objcg->nr_charged_bytes, 0);
-	}
+		stock->nr_bytes = atomic_xchg(&objcg->nr_अक्षरged_bytes, 0);
+	पूर्ण
 	stock->nr_bytes += nr_bytes;
 
-	if (stock->nr_bytes > PAGE_SIZE)
+	अगर (stock->nr_bytes > PAGE_SIZE)
 		drain_obj_stock(stock);
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
-int obj_cgroup_charge(struct obj_cgroup *objcg, gfp_t gfp, size_t size)
-{
-	unsigned int nr_pages, nr_bytes;
-	int ret;
+पूर्णांक obj_cgroup_अक्षरge(काष्ठा obj_cgroup *objcg, gfp_t gfp, माप_प्रकार size)
+अणु
+	अचिन्हित पूर्णांक nr_pages, nr_bytes;
+	पूर्णांक ret;
 
-	if (consume_obj_stock(objcg, size))
-		return 0;
+	अगर (consume_obj_stock(objcg, size))
+		वापस 0;
 
 	/*
-	 * In theory, memcg->nr_charged_bytes can have enough
-	 * pre-charged bytes to satisfy the allocation. However,
-	 * flushing memcg->nr_charged_bytes requires two atomic
-	 * operations, and memcg->nr_charged_bytes can't be big,
+	 * In theory, memcg->nr_अक्षरged_bytes can have enough
+	 * pre-अक्षरged bytes to satisfy the allocation. However,
+	 * flushing memcg->nr_अक्षरged_bytes requires two atomic
+	 * operations, and memcg->nr_अक्षरged_bytes can't be big,
 	 * so it's better to ignore it and try grab some new pages.
-	 * memcg->nr_charged_bytes will be flushed in
+	 * memcg->nr_अक्षरged_bytes will be flushed in
 	 * refill_obj_stock(), called from this function or
 	 * independently later.
 	 */
 	nr_pages = size >> PAGE_SHIFT;
 	nr_bytes = size & (PAGE_SIZE - 1);
 
-	if (nr_bytes)
+	अगर (nr_bytes)
 		nr_pages += 1;
 
-	ret = obj_cgroup_charge_pages(objcg, gfp, nr_pages);
-	if (!ret && nr_bytes)
+	ret = obj_cgroup_अक्षरge_pages(objcg, gfp, nr_pages);
+	अगर (!ret && nr_bytes)
 		refill_obj_stock(objcg, PAGE_SIZE - nr_bytes);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void obj_cgroup_uncharge(struct obj_cgroup *objcg, size_t size)
-{
+व्योम obj_cgroup_unअक्षरge(काष्ठा obj_cgroup *objcg, माप_प्रकार size)
+अणु
 	refill_obj_stock(objcg, size);
-}
+पूर्ण
 
-#endif /* CONFIG_MEMCG_KMEM */
+#पूर्ण_अगर /* CONFIG_MEMCG_KMEM */
 
 /*
  * Because page_memcg(head) is not set on tails, set it now.
  */
-void split_page_memcg(struct page *head, unsigned int nr)
-{
-	struct mem_cgroup *memcg = page_memcg(head);
-	int i;
+व्योम split_page_memcg(काष्ठा page *head, अचिन्हित पूर्णांक nr)
+अणु
+	काष्ठा mem_cgroup *memcg = page_memcg(head);
+	पूर्णांक i;
 
-	if (mem_cgroup_disabled() || !memcg)
-		return;
+	अगर (mem_cgroup_disabled() || !memcg)
+		वापस;
 
-	for (i = 1; i < nr; i++)
+	क्रम (i = 1; i < nr; i++)
 		head[i].memcg_data = head->memcg_data;
 
-	if (PageMemcgKmem(head))
+	अगर (PageMemcgKmem(head))
 		obj_cgroup_get_many(__page_objcg(head), nr - 1);
-	else
+	अन्यथा
 		css_get_many(&memcg->css, nr - 1);
-}
+पूर्ण
 
-#ifdef CONFIG_MEMCG_SWAP
+#अगर_घोषित CONFIG_MEMCG_SWAP
 /**
- * mem_cgroup_move_swap_account - move swap charge and swap_cgroup's record.
+ * mem_cgroup_move_swap_account - move swap अक्षरge and swap_cgroup's record.
  * @entry: swap entry to be moved
  * @from:  mem_cgroup which the entry is moved from
  * @to:  mem_cgroup which the entry is moved to
  *
- * It succeeds only when the swap_cgroup's record for this entry is the same
+ * It succeeds only when the swap_cgroup's record क्रम this entry is the same
  * as the mem_cgroup's id of @from.
  *
  * Returns 0 on success, -EINVAL on failure.
  *
- * The caller must have charged to @to, IOW, called page_counter_charge() about
+ * The caller must have अक्षरged to @to, IOW, called page_counter_अक्षरge() about
  * both res and memsw, and called css_get().
  */
-static int mem_cgroup_move_swap_account(swp_entry_t entry,
-				struct mem_cgroup *from, struct mem_cgroup *to)
-{
-	unsigned short old_id, new_id;
+अटल पूर्णांक mem_cgroup_move_swap_account(swp_entry_t entry,
+				काष्ठा mem_cgroup *from, काष्ठा mem_cgroup *to)
+अणु
+	अचिन्हित लघु old_id, new_id;
 
 	old_id = mem_cgroup_id(from);
 	new_id = mem_cgroup_id(to);
 
-	if (swap_cgroup_cmpxchg(entry, old_id, new_id) == old_id) {
+	अगर (swap_cgroup_cmpxchg(entry, old_id, new_id) == old_id) अणु
 		mod_memcg_state(from, MEMCG_SWAP, -1);
 		mod_memcg_state(to, MEMCG_SWAP, 1);
-		return 0;
-	}
-	return -EINVAL;
-}
-#else
-static inline int mem_cgroup_move_swap_account(swp_entry_t entry,
-				struct mem_cgroup *from, struct mem_cgroup *to)
-{
-	return -EINVAL;
-}
-#endif
+		वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक mem_cgroup_move_swap_account(swp_entry_t entry,
+				काष्ठा mem_cgroup *from, काष्ठा mem_cgroup *to)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
-static DEFINE_MUTEX(memcg_max_mutex);
+अटल DEFINE_MUTEX(memcg_max_mutex);
 
-static int mem_cgroup_resize_max(struct mem_cgroup *memcg,
-				 unsigned long max, bool memsw)
-{
+अटल पूर्णांक mem_cgroup_resize_max(काष्ठा mem_cgroup *memcg,
+				 अचिन्हित दीर्घ max, bool memsw)
+अणु
 	bool enlarge = false;
 	bool drained = false;
-	int ret;
+	पूर्णांक ret;
 	bool limits_invariant;
-	struct page_counter *counter = memsw ? &memcg->memsw : &memcg->memory;
+	काष्ठा page_counter *counter = memsw ? &memcg->memsw : &memcg->memory;
 
-	do {
-		if (signal_pending(current)) {
+	करो अणु
+		अगर (संकेत_pending(current)) अणु
 			ret = -EINTR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		mutex_lock(&memcg_max_mutex);
 		/*
-		 * Make sure that the new limit (memsw or memory limit) doesn't
-		 * break our basic invariant rule memory.max <= memsw.max.
+		 * Make sure that the new limit (memsw or memory limit) करोesn't
+		 * अवरोध our basic invariant rule memory.max <= memsw.max.
 		 */
 		limits_invariant = memsw ? max >= READ_ONCE(memcg->memory.max) :
 					   max <= memcg->memsw.max;
-		if (!limits_invariant) {
+		अगर (!limits_invariant) अणु
 			mutex_unlock(&memcg_max_mutex);
 			ret = -EINVAL;
-			break;
-		}
-		if (max > counter->max)
+			अवरोध;
+		पूर्ण
+		अगर (max > counter->max)
 			enlarge = true;
 		ret = page_counter_set_max(counter, max);
 		mutex_unlock(&memcg_max_mutex);
 
-		if (!ret)
-			break;
+		अगर (!ret)
+			अवरोध;
 
-		if (!drained) {
+		अगर (!drained) अणु
 			drain_all_stock(memcg);
 			drained = true;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!try_to_free_mem_cgroup_pages(memcg, 1,
-					GFP_KERNEL, !memsw)) {
+		अगर (!try_to_मुक्त_mem_cgroup_pages(memcg, 1,
+					GFP_KERNEL, !memsw)) अणु
 			ret = -EBUSY;
-			break;
-		}
-	} while (true);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (true);
 
-	if (!ret && enlarge)
+	अगर (!ret && enlarge)
 		memcg_oom_recover(memcg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-unsigned long mem_cgroup_soft_limit_reclaim(pg_data_t *pgdat, int order,
+अचिन्हित दीर्घ mem_cgroup_soft_limit_reclaim(pg_data_t *pgdat, पूर्णांक order,
 					    gfp_t gfp_mask,
-					    unsigned long *total_scanned)
-{
-	unsigned long nr_reclaimed = 0;
-	struct mem_cgroup_per_node *mz, *next_mz = NULL;
-	unsigned long reclaimed;
-	int loop = 0;
-	struct mem_cgroup_tree_per_node *mctz;
-	unsigned long excess;
-	unsigned long nr_scanned;
+					    अचिन्हित दीर्घ *total_scanned)
+अणु
+	अचिन्हित दीर्घ nr_reclaimed = 0;
+	काष्ठा mem_cgroup_per_node *mz, *next_mz = शून्य;
+	अचिन्हित दीर्घ reclaimed;
+	पूर्णांक loop = 0;
+	काष्ठा mem_cgroup_tree_per_node *mctz;
+	अचिन्हित दीर्घ excess;
+	अचिन्हित दीर्घ nr_scanned;
 
-	if (order > 0)
-		return 0;
+	अगर (order > 0)
+		वापस 0;
 
 	mctz = soft_limit_tree_node(pgdat->node_id);
 
 	/*
-	 * Do not even bother to check the largest node if the root
+	 * Do not even bother to check the largest node अगर the root
 	 * is empty. Do it lockless to prevent lock bouncing. Races
-	 * are acceptable as soft limit is best effort anyway.
+	 * are acceptable as soft limit is best efक्रमt anyway.
 	 */
-	if (!mctz || RB_EMPTY_ROOT(&mctz->rb_root))
-		return 0;
+	अगर (!mctz || RB_EMPTY_ROOT(&mctz->rb_root))
+		वापस 0;
 
 	/*
-	 * This loop can run a while, specially if mem_cgroup's continuously
-	 * keep exceeding their soft limit and putting the system under
+	 * This loop can run a जबतक, specially अगर mem_cgroup's continuously
+	 * keep exceeding their soft limit and putting the प्रणाली under
 	 * pressure
 	 */
-	do {
-		if (next_mz)
+	करो अणु
+		अगर (next_mz)
 			mz = next_mz;
-		else
+		अन्यथा
 			mz = mem_cgroup_largest_soft_limit_node(mctz);
-		if (!mz)
-			break;
+		अगर (!mz)
+			अवरोध;
 
 		nr_scanned = 0;
 		reclaimed = mem_cgroup_soft_reclaim(mz->memcg, pgdat,
@@ -3278,23 +3279,23 @@ unsigned long mem_cgroup_soft_limit_reclaim(pg_data_t *pgdat, int order,
 		nr_reclaimed += reclaimed;
 		*total_scanned += nr_scanned;
 		spin_lock_irq(&mctz->lock);
-		__mem_cgroup_remove_exceeded(mz, mctz);
+		__mem_cgroup_हटाओ_exceeded(mz, mctz);
 
 		/*
 		 * If we failed to reclaim anything from this memory cgroup
-		 * it is time to move on to the next cgroup
+		 * it is समय to move on to the next cgroup
 		 */
-		next_mz = NULL;
-		if (!reclaimed)
+		next_mz = शून्य;
+		अगर (!reclaimed)
 			next_mz = __mem_cgroup_largest_soft_limit_node(mctz);
 
 		excess = soft_limit_excess(mz->memcg);
 		/*
 		 * One school of thought says that we should not add
-		 * back the node to the tree if reclaim returns 0.
-		 * But our reclaim could return 0, simply because due
+		 * back the node to the tree अगर reclaim वापसs 0.
+		 * But our reclaim could वापस 0, simply because due
 		 * to priority we are exposing a smaller subset of
-		 * memory to reclaim from. Consider this as a longer
+		 * memory to reclaim from. Consider this as a दीर्घer
 		 * term TODO.
 		 */
 		/* If excess == 0, no tree ops */
@@ -3307,195 +3308,195 @@ unsigned long mem_cgroup_soft_limit_reclaim(pg_data_t *pgdat, int order,
 		 * mem cgroups to try or we seem to be looping without
 		 * reclaiming anything.
 		 */
-		if (!nr_reclaimed &&
-			(next_mz == NULL ||
+		अगर (!nr_reclaimed &&
+			(next_mz == शून्य ||
 			loop > MEM_CGROUP_MAX_SOFT_LIMIT_RECLAIM_LOOPS))
-			break;
-	} while (!nr_reclaimed);
-	if (next_mz)
+			अवरोध;
+	पूर्ण जबतक (!nr_reclaimed);
+	अगर (next_mz)
 		css_put(&next_mz->memcg->css);
-	return nr_reclaimed;
-}
+	वापस nr_reclaimed;
+पूर्ण
 
 /*
  * Reclaims as many pages from the given memcg as possible.
  *
- * Caller is responsible for holding css reference for memcg.
+ * Caller is responsible क्रम holding css reference क्रम memcg.
  */
-static int mem_cgroup_force_empty(struct mem_cgroup *memcg)
-{
-	int nr_retries = MAX_RECLAIM_RETRIES;
+अटल पूर्णांक mem_cgroup_क्रमce_empty(काष्ठा mem_cgroup *memcg)
+अणु
+	पूर्णांक nr_retries = MAX_RECLAIM_RETRIES;
 
-	/* we call try-to-free pages for make this cgroup empty */
+	/* we call try-to-मुक्त pages क्रम make this cgroup empty */
 	lru_add_drain_all();
 
 	drain_all_stock(memcg);
 
-	/* try to free all pages in this cgroup */
-	while (nr_retries && page_counter_read(&memcg->memory)) {
-		int progress;
+	/* try to मुक्त all pages in this cgroup */
+	जबतक (nr_retries && page_counter_पढ़ो(&memcg->memory)) अणु
+		पूर्णांक progress;
 
-		if (signal_pending(current))
-			return -EINTR;
+		अगर (संकेत_pending(current))
+			वापस -EINTR;
 
-		progress = try_to_free_mem_cgroup_pages(memcg, 1,
+		progress = try_to_मुक्त_mem_cgroup_pages(memcg, 1,
 							GFP_KERNEL, true);
-		if (!progress) {
+		अगर (!progress) अणु
 			nr_retries--;
-			/* maybe some writeback is necessary */
-			congestion_wait(BLK_RW_ASYNC, HZ/10);
-		}
+			/* maybe some ग_लिखोback is necessary */
+			congestion_रुको(BLK_RW_ASYNC, HZ/10);
+		पूर्ण
 
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t mem_cgroup_force_empty_write(struct kernfs_open_file *of,
-					    char *buf, size_t nbytes,
+अटल sमाप_प्रकार mem_cgroup_क्रमce_empty_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+					    अक्षर *buf, माप_प्रकार nbytes,
 					    loff_t off)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
 
-	if (mem_cgroup_is_root(memcg))
-		return -EINVAL;
-	return mem_cgroup_force_empty(memcg) ?: nbytes;
-}
+	अगर (mem_cgroup_is_root(memcg))
+		वापस -EINVAL;
+	वापस mem_cgroup_क्रमce_empty(memcg) ?: nbytes;
+पूर्ण
 
-static u64 mem_cgroup_hierarchy_read(struct cgroup_subsys_state *css,
-				     struct cftype *cft)
-{
-	return 1;
-}
+अटल u64 mem_cgroup_hierarchy_पढ़ो(काष्ठा cgroup_subsys_state *css,
+				     काष्ठा cftype *cft)
+अणु
+	वापस 1;
+पूर्ण
 
-static int mem_cgroup_hierarchy_write(struct cgroup_subsys_state *css,
-				      struct cftype *cft, u64 val)
-{
-	if (val == 1)
-		return 0;
+अटल पूर्णांक mem_cgroup_hierarchy_ग_लिखो(काष्ठा cgroup_subsys_state *css,
+				      काष्ठा cftype *cft, u64 val)
+अणु
+	अगर (val == 1)
+		वापस 0;
 
 	pr_warn_once("Non-hierarchical mode is deprecated. "
 		     "Please report your usecase to linux-mm@kvack.org if you "
 		     "depend on this functionality.\n");
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static unsigned long mem_cgroup_usage(struct mem_cgroup *memcg, bool swap)
-{
-	unsigned long val;
+अटल अचिन्हित दीर्घ mem_cgroup_usage(काष्ठा mem_cgroup *memcg, bool swap)
+अणु
+	अचिन्हित दीर्घ val;
 
-	if (mem_cgroup_is_root(memcg)) {
+	अगर (mem_cgroup_is_root(memcg)) अणु
 		cgroup_rstat_flush(memcg->css.cgroup);
-		val = memcg_page_state(memcg, NR_FILE_PAGES) +
+		val = memcg_page_state(memcg, NR_खाता_PAGES) +
 			memcg_page_state(memcg, NR_ANON_MAPPED);
-		if (swap)
+		अगर (swap)
 			val += memcg_page_state(memcg, MEMCG_SWAP);
-	} else {
-		if (!swap)
-			val = page_counter_read(&memcg->memory);
-		else
-			val = page_counter_read(&memcg->memsw);
-	}
-	return val;
-}
+	पूर्ण अन्यथा अणु
+		अगर (!swap)
+			val = page_counter_पढ़ो(&memcg->memory);
+		अन्यथा
+			val = page_counter_पढ़ो(&memcg->memsw);
+	पूर्ण
+	वापस val;
+पूर्ण
 
-enum {
+क्रमागत अणु
 	RES_USAGE,
 	RES_LIMIT,
 	RES_MAX_USAGE,
 	RES_FAILCNT,
 	RES_SOFT_LIMIT,
-};
+पूर्ण;
 
-static u64 mem_cgroup_read_u64(struct cgroup_subsys_state *css,
-			       struct cftype *cft)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
-	struct page_counter *counter;
+अटल u64 mem_cgroup_पढ़ो_u64(काष्ठा cgroup_subsys_state *css,
+			       काष्ठा cftype *cft)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
+	काष्ठा page_counter *counter;
 
-	switch (MEMFILE_TYPE(cft->private)) {
-	case _MEM:
+	चयन (MEMखाता_TYPE(cft->निजी)) अणु
+	हाल _MEM:
 		counter = &memcg->memory;
-		break;
-	case _MEMSWAP:
+		अवरोध;
+	हाल _MEMSWAP:
 		counter = &memcg->memsw;
-		break;
-	case _KMEM:
+		अवरोध;
+	हाल _KMEM:
 		counter = &memcg->kmem;
-		break;
-	case _TCP:
+		अवरोध;
+	हाल _TCP:
 		counter = &memcg->tcpmem;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	switch (MEMFILE_ATTR(cft->private)) {
-	case RES_USAGE:
-		if (counter == &memcg->memory)
-			return (u64)mem_cgroup_usage(memcg, false) * PAGE_SIZE;
-		if (counter == &memcg->memsw)
-			return (u64)mem_cgroup_usage(memcg, true) * PAGE_SIZE;
-		return (u64)page_counter_read(counter) * PAGE_SIZE;
-	case RES_LIMIT:
-		return (u64)counter->max * PAGE_SIZE;
-	case RES_MAX_USAGE:
-		return (u64)counter->watermark * PAGE_SIZE;
-	case RES_FAILCNT:
-		return counter->failcnt;
-	case RES_SOFT_LIMIT:
-		return (u64)memcg->soft_limit * PAGE_SIZE;
-	default:
+	चयन (MEMखाता_ATTR(cft->निजी)) अणु
+	हाल RES_USAGE:
+		अगर (counter == &memcg->memory)
+			वापस (u64)mem_cgroup_usage(memcg, false) * PAGE_SIZE;
+		अगर (counter == &memcg->memsw)
+			वापस (u64)mem_cgroup_usage(memcg, true) * PAGE_SIZE;
+		वापस (u64)page_counter_पढ़ो(counter) * PAGE_SIZE;
+	हाल RES_LIMIT:
+		वापस (u64)counter->max * PAGE_SIZE;
+	हाल RES_MAX_USAGE:
+		वापस (u64)counter->watermark * PAGE_SIZE;
+	हाल RES_FAILCNT:
+		वापस counter->failcnt;
+	हाल RES_SOFT_LIMIT:
+		वापस (u64)memcg->soft_limit * PAGE_SIZE;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_MEMCG_KMEM
-static int memcg_online_kmem(struct mem_cgroup *memcg)
-{
-	struct obj_cgroup *objcg;
-	int memcg_id;
+#अगर_घोषित CONFIG_MEMCG_KMEM
+अटल पूर्णांक memcg_online_kmem(काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा obj_cgroup *objcg;
+	पूर्णांक memcg_id;
 
-	if (cgroup_memory_nokmem)
-		return 0;
+	अगर (cgroup_memory_nokmem)
+		वापस 0;
 
 	BUG_ON(memcg->kmemcg_id >= 0);
 	BUG_ON(memcg->kmem_state);
 
 	memcg_id = memcg_alloc_cache_id();
-	if (memcg_id < 0)
-		return memcg_id;
+	अगर (memcg_id < 0)
+		वापस memcg_id;
 
 	objcg = obj_cgroup_alloc();
-	if (!objcg) {
-		memcg_free_cache_id(memcg_id);
-		return -ENOMEM;
-	}
+	अगर (!objcg) अणु
+		memcg_मुक्त_cache_id(memcg_id);
+		वापस -ENOMEM;
+	पूर्ण
 	objcg->memcg = memcg;
-	rcu_assign_pointer(memcg->objcg, objcg);
+	rcu_assign_poपूर्णांकer(memcg->objcg, objcg);
 
-	static_branch_enable(&memcg_kmem_enabled_key);
+	अटल_branch_enable(&memcg_kmem_enabled_key);
 
 	memcg->kmemcg_id = memcg_id;
 	memcg->kmem_state = KMEM_ONLINE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void memcg_offline_kmem(struct mem_cgroup *memcg)
-{
-	struct cgroup_subsys_state *css;
-	struct mem_cgroup *parent, *child;
-	int kmemcg_id;
+अटल व्योम memcg_offline_kmem(काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा cgroup_subsys_state *css;
+	काष्ठा mem_cgroup *parent, *child;
+	पूर्णांक kmemcg_id;
 
-	if (memcg->kmem_state != KMEM_ONLINE)
-		return;
+	अगर (memcg->kmem_state != KMEM_ONLINE)
+		वापस;
 
 	memcg->kmem_state = KMEM_ALLOCATED;
 
 	parent = parent_mem_cgroup(memcg);
-	if (!parent)
+	अगर (!parent)
 		parent = root_mem_cgroup;
 
 	memcg_reparent_objcgs(memcg, parent);
@@ -3507,187 +3508,187 @@ static void memcg_offline_kmem(struct mem_cgroup *memcg)
 	 * Change kmemcg_id of this cgroup and all its descendants to the
 	 * parent's id, and then move all entries from this cgroup's list_lrus
 	 * to ones of the parent. After we have finished, all list_lrus
-	 * corresponding to this cgroup are guaranteed to remain empty. The
+	 * corresponding to this cgroup are guaranteed to reमुख्य empty. The
 	 * ordering is imposed by list_lru_node->lock taken by
 	 * memcg_drain_all_list_lrus().
 	 */
-	rcu_read_lock(); /* can be called from css_free w/o cgroup_mutex */
-	css_for_each_descendant_pre(css, &memcg->css) {
+	rcu_पढ़ो_lock(); /* can be called from css_मुक्त w/o cgroup_mutex */
+	css_क्रम_each_descendant_pre(css, &memcg->css) अणु
 		child = mem_cgroup_from_css(css);
 		BUG_ON(child->kmemcg_id != kmemcg_id);
 		child->kmemcg_id = parent->kmemcg_id;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	memcg_drain_all_list_lrus(kmemcg_id, parent);
 
-	memcg_free_cache_id(kmemcg_id);
-}
+	memcg_मुक्त_cache_id(kmemcg_id);
+पूर्ण
 
-static void memcg_free_kmem(struct mem_cgroup *memcg)
-{
+अटल व्योम memcg_मुक्त_kmem(काष्ठा mem_cgroup *memcg)
+अणु
 	/* css_alloc() failed, offlining didn't happen */
-	if (unlikely(memcg->kmem_state == KMEM_ONLINE))
+	अगर (unlikely(memcg->kmem_state == KMEM_ONLINE))
 		memcg_offline_kmem(memcg);
-}
-#else
-static int memcg_online_kmem(struct mem_cgroup *memcg)
-{
-	return 0;
-}
-static void memcg_offline_kmem(struct mem_cgroup *memcg)
-{
-}
-static void memcg_free_kmem(struct mem_cgroup *memcg)
-{
-}
-#endif /* CONFIG_MEMCG_KMEM */
+पूर्ण
+#अन्यथा
+अटल पूर्णांक memcg_online_kmem(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस 0;
+पूर्ण
+अटल व्योम memcg_offline_kmem(काष्ठा mem_cgroup *memcg)
+अणु
+पूर्ण
+अटल व्योम memcg_मुक्त_kmem(काष्ठा mem_cgroup *memcg)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MEMCG_KMEM */
 
-static int memcg_update_kmem_max(struct mem_cgroup *memcg,
-				 unsigned long max)
-{
-	int ret;
+अटल पूर्णांक memcg_update_kmem_max(काष्ठा mem_cgroup *memcg,
+				 अचिन्हित दीर्घ max)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&memcg_max_mutex);
 	ret = page_counter_set_max(&memcg->kmem, max);
 	mutex_unlock(&memcg_max_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int memcg_update_tcp_max(struct mem_cgroup *memcg, unsigned long max)
-{
-	int ret;
+अटल पूर्णांक memcg_update_tcp_max(काष्ठा mem_cgroup *memcg, अचिन्हित दीर्घ max)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&memcg_max_mutex);
 
 	ret = page_counter_set_max(&memcg->tcpmem, max);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (!memcg->tcpmem_active) {
+	अगर (!memcg->tcpmem_active) अणु
 		/*
-		 * The active flag needs to be written after the static_key
+		 * The active flag needs to be written after the अटल_key
 		 * update. This is what guarantees that the socket activation
 		 * function is the last one to run. See mem_cgroup_sk_alloc()
-		 * for details, and note that we don't mark any socket as
-		 * belonging to this memcg until that flag is up.
+		 * क्रम details, and note that we करोn't mark any socket as
+		 * beदीर्घing to this memcg until that flag is up.
 		 *
-		 * We need to do this, because static_keys will span multiple
+		 * We need to करो this, because अटल_keys will span multiple
 		 * sites, but we can't control their order. If we mark a socket
 		 * as accounted, but the accounting functions are not patched in
 		 * yet, we'll lose accounting.
 		 *
-		 * We never race with the readers in mem_cgroup_sk_alloc(),
+		 * We never race with the पढ़ोers in mem_cgroup_sk_alloc(),
 		 * because when this value change, the code to process it is not
 		 * patched in yet.
 		 */
-		static_branch_inc(&memcg_sockets_enabled_key);
+		अटल_branch_inc(&memcg_sockets_enabled_key);
 		memcg->tcpmem_active = true;
-	}
+	पूर्ण
 out:
 	mutex_unlock(&memcg_max_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * The user of this function is...
  * RES_LIMIT.
  */
-static ssize_t mem_cgroup_write(struct kernfs_open_file *of,
-				char *buf, size_t nbytes, loff_t off)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
-	unsigned long nr_pages;
-	int ret;
+अटल sमाप_प्रकार mem_cgroup_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+				अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
+	अचिन्हित दीर्घ nr_pages;
+	पूर्णांक ret;
 
-	buf = strstrip(buf);
+	buf = म_मालाip(buf);
 	ret = page_counter_memparse(buf, "-1", &nr_pages);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (MEMFILE_ATTR(of_cft(of)->private)) {
-	case RES_LIMIT:
-		if (mem_cgroup_is_root(memcg)) { /* Can't set limit on root */
+	चयन (MEMखाता_ATTR(of_cft(of)->निजी)) अणु
+	हाल RES_LIMIT:
+		अगर (mem_cgroup_is_root(memcg)) अणु /* Can't set limit on root */
 			ret = -EINVAL;
-			break;
-		}
-		switch (MEMFILE_TYPE(of_cft(of)->private)) {
-		case _MEM:
+			अवरोध;
+		पूर्ण
+		चयन (MEMखाता_TYPE(of_cft(of)->निजी)) अणु
+		हाल _MEM:
 			ret = mem_cgroup_resize_max(memcg, nr_pages, false);
-			break;
-		case _MEMSWAP:
+			अवरोध;
+		हाल _MEMSWAP:
 			ret = mem_cgroup_resize_max(memcg, nr_pages, true);
-			break;
-		case _KMEM:
+			अवरोध;
+		हाल _KMEM:
 			pr_warn_once("kmem.limit_in_bytes is deprecated and will be removed. "
 				     "Please report your usecase to linux-mm@kvack.org if you "
 				     "depend on this functionality.\n");
 			ret = memcg_update_kmem_max(memcg, nr_pages);
-			break;
-		case _TCP:
+			अवरोध;
+		हाल _TCP:
 			ret = memcg_update_tcp_max(memcg, nr_pages);
-			break;
-		}
-		break;
-	case RES_SOFT_LIMIT:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल RES_SOFT_LIMIT:
 		memcg->soft_limit = nr_pages;
 		ret = 0;
-		break;
-	}
-	return ret ?: nbytes;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret ?: nbytes;
+पूर्ण
 
-static ssize_t mem_cgroup_reset(struct kernfs_open_file *of, char *buf,
-				size_t nbytes, loff_t off)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
-	struct page_counter *counter;
+अटल sमाप_प्रकार mem_cgroup_reset(काष्ठा kernfs_खोलो_file *of, अक्षर *buf,
+				माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
+	काष्ठा page_counter *counter;
 
-	switch (MEMFILE_TYPE(of_cft(of)->private)) {
-	case _MEM:
+	चयन (MEMखाता_TYPE(of_cft(of)->निजी)) अणु
+	हाल _MEM:
 		counter = &memcg->memory;
-		break;
-	case _MEMSWAP:
+		अवरोध;
+	हाल _MEMSWAP:
 		counter = &memcg->memsw;
-		break;
-	case _KMEM:
+		अवरोध;
+	हाल _KMEM:
 		counter = &memcg->kmem;
-		break;
-	case _TCP:
+		अवरोध;
+	हाल _TCP:
 		counter = &memcg->tcpmem;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	switch (MEMFILE_ATTR(of_cft(of)->private)) {
-	case RES_MAX_USAGE:
+	चयन (MEMखाता_ATTR(of_cft(of)->निजी)) अणु
+	हाल RES_MAX_USAGE:
 		page_counter_reset_watermark(counter);
-		break;
-	case RES_FAILCNT:
+		अवरोध;
+	हाल RES_FAILCNT:
 		counter->failcnt = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static u64 mem_cgroup_move_charge_read(struct cgroup_subsys_state *css,
-					struct cftype *cft)
-{
-	return mem_cgroup_from_css(css)->move_charge_at_immigrate;
-}
+अटल u64 mem_cgroup_move_अक्षरge_पढ़ो(काष्ठा cgroup_subsys_state *css,
+					काष्ठा cftype *cft)
+अणु
+	वापस mem_cgroup_from_css(css)->move_अक्षरge_at_immigrate;
+पूर्ण
 
-#ifdef CONFIG_MMU
-static int mem_cgroup_move_charge_write(struct cgroup_subsys_state *css,
-					struct cftype *cft, u64 val)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+#अगर_घोषित CONFIG_MMU
+अटल पूर्णांक mem_cgroup_move_अक्षरge_ग_लिखो(काष्ठा cgroup_subsys_state *css,
+					काष्ठा cftype *cft, u64 val)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
 
-	if (val & ~MOVE_MASK)
-		return -EINVAL;
+	अगर (val & ~MOVE_MASK)
+		वापस -EINVAL;
 
 	/*
 	 * No kind of locking is needed in here, because ->can_attach() will
@@ -3695,266 +3696,266 @@ static int mem_cgroup_move_charge_write(struct cgroup_subsys_state *css,
 	 * on with stale data. This means that changes to this value will only
 	 * affect task migrations starting after the change.
 	 */
-	memcg->move_charge_at_immigrate = val;
-	return 0;
-}
-#else
-static int mem_cgroup_move_charge_write(struct cgroup_subsys_state *css,
-					struct cftype *cft, u64 val)
-{
-	return -ENOSYS;
-}
-#endif
+	memcg->move_अक्षरge_at_immigrate = val;
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक mem_cgroup_move_अक्षरge_ग_लिखो(काष्ठा cgroup_subsys_state *css,
+					काष्ठा cftype *cft, u64 val)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 
-#define LRU_ALL_FILE (BIT(LRU_INACTIVE_FILE) | BIT(LRU_ACTIVE_FILE))
-#define LRU_ALL_ANON (BIT(LRU_INACTIVE_ANON) | BIT(LRU_ACTIVE_ANON))
-#define LRU_ALL	     ((1 << NR_LRU_LISTS) - 1)
+#घोषणा LRU_ALL_खाता (BIT(LRU_INACTIVE_खाता) | BIT(LRU_ACTIVE_खाता))
+#घोषणा LRU_ALL_ANON (BIT(LRU_INACTIVE_ANON) | BIT(LRU_ACTIVE_ANON))
+#घोषणा LRU_ALL	     ((1 << NR_LRU_LISTS) - 1)
 
-static unsigned long mem_cgroup_node_nr_lru_pages(struct mem_cgroup *memcg,
-				int nid, unsigned int lru_mask, bool tree)
-{
-	struct lruvec *lruvec = mem_cgroup_lruvec(memcg, NODE_DATA(nid));
-	unsigned long nr = 0;
-	enum lru_list lru;
+अटल अचिन्हित दीर्घ mem_cgroup_node_nr_lru_pages(काष्ठा mem_cgroup *memcg,
+				पूर्णांक nid, अचिन्हित पूर्णांक lru_mask, bool tree)
+अणु
+	काष्ठा lruvec *lruvec = mem_cgroup_lruvec(memcg, NODE_DATA(nid));
+	अचिन्हित दीर्घ nr = 0;
+	क्रमागत lru_list lru;
 
-	VM_BUG_ON((unsigned)nid >= nr_node_ids);
+	VM_BUG_ON((अचिन्हित)nid >= nr_node_ids);
 
-	for_each_lru(lru) {
-		if (!(BIT(lru) & lru_mask))
-			continue;
-		if (tree)
+	क्रम_each_lru(lru) अणु
+		अगर (!(BIT(lru) & lru_mask))
+			जारी;
+		अगर (tree)
 			nr += lruvec_page_state(lruvec, NR_LRU_BASE + lru);
-		else
+		अन्यथा
 			nr += lruvec_page_state_local(lruvec, NR_LRU_BASE + lru);
-	}
-	return nr;
-}
+	पूर्ण
+	वापस nr;
+पूर्ण
 
-static unsigned long mem_cgroup_nr_lru_pages(struct mem_cgroup *memcg,
-					     unsigned int lru_mask,
+अटल अचिन्हित दीर्घ mem_cgroup_nr_lru_pages(काष्ठा mem_cgroup *memcg,
+					     अचिन्हित पूर्णांक lru_mask,
 					     bool tree)
-{
-	unsigned long nr = 0;
-	enum lru_list lru;
+अणु
+	अचिन्हित दीर्घ nr = 0;
+	क्रमागत lru_list lru;
 
-	for_each_lru(lru) {
-		if (!(BIT(lru) & lru_mask))
-			continue;
-		if (tree)
+	क्रम_each_lru(lru) अणु
+		अगर (!(BIT(lru) & lru_mask))
+			जारी;
+		अगर (tree)
 			nr += memcg_page_state(memcg, NR_LRU_BASE + lru);
-		else
+		अन्यथा
 			nr += memcg_page_state_local(memcg, NR_LRU_BASE + lru);
-	}
-	return nr;
-}
+	पूर्ण
+	वापस nr;
+पूर्ण
 
-static int memcg_numa_stat_show(struct seq_file *m, void *v)
-{
-	struct numa_stat {
-		const char *name;
-		unsigned int lru_mask;
-	};
+अटल पूर्णांक memcg_numa_stat_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा numa_stat अणु
+		स्थिर अक्षर *name;
+		अचिन्हित पूर्णांक lru_mask;
+	पूर्ण;
 
-	static const struct numa_stat stats[] = {
-		{ "total", LRU_ALL },
-		{ "file", LRU_ALL_FILE },
-		{ "anon", LRU_ALL_ANON },
-		{ "unevictable", BIT(LRU_UNEVICTABLE) },
-	};
-	const struct numa_stat *stat;
-	int nid;
-	struct mem_cgroup *memcg = mem_cgroup_from_seq(m);
+	अटल स्थिर काष्ठा numa_stat stats[] = अणु
+		अणु "total", LRU_ALL पूर्ण,
+		अणु "file", LRU_ALL_खाता पूर्ण,
+		अणु "anon", LRU_ALL_ANON पूर्ण,
+		अणु "unevictable", BIT(LRU_UNEVICTABLE) पूर्ण,
+	पूर्ण;
+	स्थिर काष्ठा numa_stat *stat;
+	पूर्णांक nid;
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_seq(m);
 
 	cgroup_rstat_flush(memcg->css.cgroup);
 
-	for (stat = stats; stat < stats + ARRAY_SIZE(stats); stat++) {
-		seq_printf(m, "%s=%lu", stat->name,
+	क्रम (stat = stats; stat < stats + ARRAY_SIZE(stats); stat++) अणु
+		seq_म_लिखो(m, "%s=%lu", stat->name,
 			   mem_cgroup_nr_lru_pages(memcg, stat->lru_mask,
 						   false));
-		for_each_node_state(nid, N_MEMORY)
-			seq_printf(m, " N%d=%lu", nid,
+		क्रम_each_node_state(nid, N_MEMORY)
+			seq_म_लिखो(m, " N%d=%lu", nid,
 				   mem_cgroup_node_nr_lru_pages(memcg, nid,
 							stat->lru_mask, false));
-		seq_putc(m, '\n');
-	}
+		seq_अ_दो(m, '\n');
+	पूर्ण
 
-	for (stat = stats; stat < stats + ARRAY_SIZE(stats); stat++) {
+	क्रम (stat = stats; stat < stats + ARRAY_SIZE(stats); stat++) अणु
 
-		seq_printf(m, "hierarchical_%s=%lu", stat->name,
+		seq_म_लिखो(m, "hierarchical_%s=%lu", stat->name,
 			   mem_cgroup_nr_lru_pages(memcg, stat->lru_mask,
 						   true));
-		for_each_node_state(nid, N_MEMORY)
-			seq_printf(m, " N%d=%lu", nid,
+		क्रम_each_node_state(nid, N_MEMORY)
+			seq_म_लिखो(m, " N%d=%lu", nid,
 				   mem_cgroup_node_nr_lru_pages(memcg, nid,
 							stat->lru_mask, true));
-		seq_putc(m, '\n');
-	}
+		seq_अ_दो(m, '\n');
+	पूर्ण
 
-	return 0;
-}
-#endif /* CONFIG_NUMA */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NUMA */
 
-static const unsigned int memcg1_stats[] = {
-	NR_FILE_PAGES,
+अटल स्थिर अचिन्हित पूर्णांक memcg1_stats[] = अणु
+	NR_खाता_PAGES,
 	NR_ANON_MAPPED,
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
 	NR_ANON_THPS,
-#endif
+#पूर्ण_अगर
 	NR_SHMEM,
-	NR_FILE_MAPPED,
-	NR_FILE_DIRTY,
+	NR_खाता_MAPPED,
+	NR_खाता_सूचीTY,
 	NR_WRITEBACK,
 	MEMCG_SWAP,
-};
+पूर्ण;
 
-static const char *const memcg1_stat_names[] = {
+अटल स्थिर अक्षर *स्थिर memcg1_stat_names[] = अणु
 	"cache",
 	"rss",
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
 	"rss_huge",
-#endif
+#पूर्ण_अगर
 	"shmem",
 	"mapped_file",
 	"dirty",
 	"writeback",
 	"swap",
-};
+पूर्ण;
 
 /* Universal VM events cgroup1 shows, original sort order */
-static const unsigned int memcg1_events[] = {
+अटल स्थिर अचिन्हित पूर्णांक memcg1_events[] = अणु
 	PGPGIN,
 	PGPGOUT,
 	PGFAULT,
 	PGMAJFAULT,
-};
+पूर्ण;
 
-static int memcg_stat_show(struct seq_file *m, void *v)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_seq(m);
-	unsigned long memory, memsw;
-	struct mem_cgroup *mi;
-	unsigned int i;
+अटल पूर्णांक memcg_stat_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_seq(m);
+	अचिन्हित दीर्घ memory, memsw;
+	काष्ठा mem_cgroup *mi;
+	अचिन्हित पूर्णांक i;
 
 	BUILD_BUG_ON(ARRAY_SIZE(memcg1_stat_names) != ARRAY_SIZE(memcg1_stats));
 
 	cgroup_rstat_flush(memcg->css.cgroup);
 
-	for (i = 0; i < ARRAY_SIZE(memcg1_stats); i++) {
-		unsigned long nr;
+	क्रम (i = 0; i < ARRAY_SIZE(memcg1_stats); i++) अणु
+		अचिन्हित दीर्घ nr;
 
-		if (memcg1_stats[i] == MEMCG_SWAP && !do_memsw_account())
-			continue;
+		अगर (memcg1_stats[i] == MEMCG_SWAP && !करो_memsw_account())
+			जारी;
 		nr = memcg_page_state_local(memcg, memcg1_stats[i]);
-		seq_printf(m, "%s %lu\n", memcg1_stat_names[i], nr * PAGE_SIZE);
-	}
+		seq_म_लिखो(m, "%s %lu\n", memcg1_stat_names[i], nr * PAGE_SIZE);
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(memcg1_events); i++)
-		seq_printf(m, "%s %lu\n", vm_event_name(memcg1_events[i]),
+	क्रम (i = 0; i < ARRAY_SIZE(memcg1_events); i++)
+		seq_म_लिखो(m, "%s %lu\n", vm_event_name(memcg1_events[i]),
 			   memcg_events_local(memcg, memcg1_events[i]));
 
-	for (i = 0; i < NR_LRU_LISTS; i++)
-		seq_printf(m, "%s %lu\n", lru_list_name(i),
+	क्रम (i = 0; i < NR_LRU_LISTS; i++)
+		seq_म_लिखो(m, "%s %lu\n", lru_list_name(i),
 			   memcg_page_state_local(memcg, NR_LRU_BASE + i) *
 			   PAGE_SIZE);
 
-	/* Hierarchical information */
+	/* Hierarchical inक्रमmation */
 	memory = memsw = PAGE_COUNTER_MAX;
-	for (mi = memcg; mi; mi = parent_mem_cgroup(mi)) {
+	क्रम (mi = memcg; mi; mi = parent_mem_cgroup(mi)) अणु
 		memory = min(memory, READ_ONCE(mi->memory.max));
 		memsw = min(memsw, READ_ONCE(mi->memsw.max));
-	}
-	seq_printf(m, "hierarchical_memory_limit %llu\n",
+	पूर्ण
+	seq_म_लिखो(m, "hierarchical_memory_limit %llu\n",
 		   (u64)memory * PAGE_SIZE);
-	if (do_memsw_account())
-		seq_printf(m, "hierarchical_memsw_limit %llu\n",
+	अगर (करो_memsw_account())
+		seq_म_लिखो(m, "hierarchical_memsw_limit %llu\n",
 			   (u64)memsw * PAGE_SIZE);
 
-	for (i = 0; i < ARRAY_SIZE(memcg1_stats); i++) {
-		unsigned long nr;
+	क्रम (i = 0; i < ARRAY_SIZE(memcg1_stats); i++) अणु
+		अचिन्हित दीर्घ nr;
 
-		if (memcg1_stats[i] == MEMCG_SWAP && !do_memsw_account())
-			continue;
+		अगर (memcg1_stats[i] == MEMCG_SWAP && !करो_memsw_account())
+			जारी;
 		nr = memcg_page_state(memcg, memcg1_stats[i]);
-		seq_printf(m, "total_%s %llu\n", memcg1_stat_names[i],
+		seq_म_लिखो(m, "total_%s %llu\n", memcg1_stat_names[i],
 						(u64)nr * PAGE_SIZE);
-	}
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(memcg1_events); i++)
-		seq_printf(m, "total_%s %llu\n",
+	क्रम (i = 0; i < ARRAY_SIZE(memcg1_events); i++)
+		seq_म_लिखो(m, "total_%s %llu\n",
 			   vm_event_name(memcg1_events[i]),
 			   (u64)memcg_events(memcg, memcg1_events[i]));
 
-	for (i = 0; i < NR_LRU_LISTS; i++)
-		seq_printf(m, "total_%s %llu\n", lru_list_name(i),
+	क्रम (i = 0; i < NR_LRU_LISTS; i++)
+		seq_म_लिखो(m, "total_%s %llu\n", lru_list_name(i),
 			   (u64)memcg_page_state(memcg, NR_LRU_BASE + i) *
 			   PAGE_SIZE);
 
-#ifdef CONFIG_DEBUG_VM
-	{
+#अगर_घोषित CONFIG_DEBUG_VM
+	अणु
 		pg_data_t *pgdat;
-		struct mem_cgroup_per_node *mz;
-		unsigned long anon_cost = 0;
-		unsigned long file_cost = 0;
+		काष्ठा mem_cgroup_per_node *mz;
+		अचिन्हित दीर्घ anon_cost = 0;
+		अचिन्हित दीर्घ file_cost = 0;
 
-		for_each_online_pgdat(pgdat) {
+		क्रम_each_online_pgdat(pgdat) अणु
 			mz = memcg->nodeinfo[pgdat->node_id];
 
 			anon_cost += mz->lruvec.anon_cost;
 			file_cost += mz->lruvec.file_cost;
-		}
-		seq_printf(m, "anon_cost %lu\n", anon_cost);
-		seq_printf(m, "file_cost %lu\n", file_cost);
-	}
-#endif
+		पूर्ण
+		seq_म_लिखो(m, "anon_cost %lu\n", anon_cost);
+		seq_म_लिखो(m, "file_cost %lu\n", file_cost);
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u64 mem_cgroup_swappiness_read(struct cgroup_subsys_state *css,
-				      struct cftype *cft)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+अटल u64 mem_cgroup_swappiness_पढ़ो(काष्ठा cgroup_subsys_state *css,
+				      काष्ठा cftype *cft)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
 
-	return mem_cgroup_swappiness(memcg);
-}
+	वापस mem_cgroup_swappiness(memcg);
+पूर्ण
 
-static int mem_cgroup_swappiness_write(struct cgroup_subsys_state *css,
-				       struct cftype *cft, u64 val)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+अटल पूर्णांक mem_cgroup_swappiness_ग_लिखो(काष्ठा cgroup_subsys_state *css,
+				       काष्ठा cftype *cft, u64 val)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
 
-	if (val > 100)
-		return -EINVAL;
+	अगर (val > 100)
+		वापस -EINVAL;
 
-	if (!mem_cgroup_is_root(memcg))
+	अगर (!mem_cgroup_is_root(memcg))
 		memcg->swappiness = val;
-	else
+	अन्यथा
 		vm_swappiness = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __mem_cgroup_threshold(struct mem_cgroup *memcg, bool swap)
-{
-	struct mem_cgroup_threshold_ary *t;
-	unsigned long usage;
-	int i;
+अटल व्योम __mem_cgroup_threshold(काष्ठा mem_cgroup *memcg, bool swap)
+अणु
+	काष्ठा mem_cgroup_threshold_ary *t;
+	अचिन्हित दीर्घ usage;
+	पूर्णांक i;
 
-	rcu_read_lock();
-	if (!swap)
+	rcu_पढ़ो_lock();
+	अगर (!swap)
 		t = rcu_dereference(memcg->thresholds.primary);
-	else
+	अन्यथा
 		t = rcu_dereference(memcg->memsw_thresholds.primary);
 
-	if (!t)
-		goto unlock;
+	अगर (!t)
+		जाओ unlock;
 
 	usage = mem_cgroup_usage(memcg, swap);
 
 	/*
-	 * current_threshold points to threshold just below or equal to usage.
+	 * current_threshold poपूर्णांकs to threshold just below or equal to usage.
 	 * If it's not true, a threshold was crossed after last
 	 * call of __mem_cgroup_threshold().
 	 */
@@ -3962,147 +3963,147 @@ static void __mem_cgroup_threshold(struct mem_cgroup *memcg, bool swap)
 
 	/*
 	 * Iterate backward over array of thresholds starting from
-	 * current_threshold and check if a threshold is crossed.
-	 * If none of thresholds below usage is crossed, we read
+	 * current_threshold and check अगर a threshold is crossed.
+	 * If none of thresholds below usage is crossed, we पढ़ो
 	 * only one element of the array here.
 	 */
-	for (; i >= 0 && unlikely(t->entries[i].threshold > usage); i--)
-		eventfd_signal(t->entries[i].eventfd, 1);
+	क्रम (; i >= 0 && unlikely(t->entries[i].threshold > usage); i--)
+		eventfd_संकेत(t->entries[i].eventfd, 1);
 
 	/* i = current_threshold + 1 */
 	i++;
 
 	/*
-	 * Iterate forward over array of thresholds starting from
-	 * current_threshold+1 and check if a threshold is crossed.
-	 * If none of thresholds above usage is crossed, we read
+	 * Iterate क्रमward over array of thresholds starting from
+	 * current_threshold+1 and check अगर a threshold is crossed.
+	 * If none of thresholds above usage is crossed, we पढ़ो
 	 * only one element of the array here.
 	 */
-	for (; i < t->size && unlikely(t->entries[i].threshold <= usage); i++)
-		eventfd_signal(t->entries[i].eventfd, 1);
+	क्रम (; i < t->size && unlikely(t->entries[i].threshold <= usage); i++)
+		eventfd_संकेत(t->entries[i].eventfd, 1);
 
 	/* Update current_threshold */
 	t->current_threshold = i - 1;
 unlock:
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void mem_cgroup_threshold(struct mem_cgroup *memcg)
-{
-	while (memcg) {
+अटल व्योम mem_cgroup_threshold(काष्ठा mem_cgroup *memcg)
+अणु
+	जबतक (memcg) अणु
 		__mem_cgroup_threshold(memcg, false);
-		if (do_memsw_account())
+		अगर (करो_memsw_account())
 			__mem_cgroup_threshold(memcg, true);
 
 		memcg = parent_mem_cgroup(memcg);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int compare_thresholds(const void *a, const void *b)
-{
-	const struct mem_cgroup_threshold *_a = a;
-	const struct mem_cgroup_threshold *_b = b;
+अटल पूर्णांक compare_thresholds(स्थिर व्योम *a, स्थिर व्योम *b)
+अणु
+	स्थिर काष्ठा mem_cgroup_threshold *_a = a;
+	स्थिर काष्ठा mem_cgroup_threshold *_b = b;
 
-	if (_a->threshold > _b->threshold)
-		return 1;
+	अगर (_a->threshold > _b->threshold)
+		वापस 1;
 
-	if (_a->threshold < _b->threshold)
-		return -1;
+	अगर (_a->threshold < _b->threshold)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mem_cgroup_oom_notify_cb(struct mem_cgroup *memcg)
-{
-	struct mem_cgroup_eventfd_list *ev;
+अटल पूर्णांक mem_cgroup_oom_notअगरy_cb(काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा mem_cgroup_eventfd_list *ev;
 
 	spin_lock(&memcg_oom_lock);
 
-	list_for_each_entry(ev, &memcg->oom_notify, list)
-		eventfd_signal(ev->eventfd, 1);
+	list_क्रम_each_entry(ev, &memcg->oom_notअगरy, list)
+		eventfd_संकेत(ev->eventfd, 1);
 
 	spin_unlock(&memcg_oom_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mem_cgroup_oom_notify(struct mem_cgroup *memcg)
-{
-	struct mem_cgroup *iter;
+अटल व्योम mem_cgroup_oom_notअगरy(काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा mem_cgroup *iter;
 
-	for_each_mem_cgroup_tree(iter, memcg)
-		mem_cgroup_oom_notify_cb(iter);
-}
+	क्रम_each_mem_cgroup_tree(iter, memcg)
+		mem_cgroup_oom_notअगरy_cb(iter);
+पूर्ण
 
-static int __mem_cgroup_usage_register_event(struct mem_cgroup *memcg,
-	struct eventfd_ctx *eventfd, const char *args, enum res_type type)
-{
-	struct mem_cgroup_thresholds *thresholds;
-	struct mem_cgroup_threshold_ary *new;
-	unsigned long threshold;
-	unsigned long usage;
-	int i, size, ret;
+अटल पूर्णांक __mem_cgroup_usage_रेजिस्टर_event(काष्ठा mem_cgroup *memcg,
+	काष्ठा eventfd_ctx *eventfd, स्थिर अक्षर *args, क्रमागत res_type type)
+अणु
+	काष्ठा mem_cgroup_thresholds *thresholds;
+	काष्ठा mem_cgroup_threshold_ary *new;
+	अचिन्हित दीर्घ threshold;
+	अचिन्हित दीर्घ usage;
+	पूर्णांक i, size, ret;
 
 	ret = page_counter_memparse(args, "-1", &threshold);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&memcg->thresholds_lock);
 
-	if (type == _MEM) {
+	अगर (type == _MEM) अणु
 		thresholds = &memcg->thresholds;
 		usage = mem_cgroup_usage(memcg, false);
-	} else if (type == _MEMSWAP) {
+	पूर्ण अन्यथा अगर (type == _MEMSWAP) अणु
 		thresholds = &memcg->memsw_thresholds;
 		usage = mem_cgroup_usage(memcg, true);
-	} else
+	पूर्ण अन्यथा
 		BUG();
 
-	/* Check if a threshold crossed before adding a new one */
-	if (thresholds->primary)
+	/* Check अगर a threshold crossed beक्रमe adding a new one */
+	अगर (thresholds->primary)
 		__mem_cgroup_threshold(memcg, type == _MEMSWAP);
 
 	size = thresholds->primary ? thresholds->primary->size + 1 : 1;
 
-	/* Allocate memory for new array of thresholds */
-	new = kmalloc(struct_size(new, entries, size), GFP_KERNEL);
-	if (!new) {
+	/* Allocate memory क्रम new array of thresholds */
+	new = kदो_स्मृति(काष्ठा_size(new, entries, size), GFP_KERNEL);
+	अगर (!new) अणु
 		ret = -ENOMEM;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 	new->size = size;
 
-	/* Copy thresholds (if any) to new array */
-	if (thresholds->primary)
-		memcpy(new->entries, thresholds->primary->entries,
+	/* Copy thresholds (अगर any) to new array */
+	अगर (thresholds->primary)
+		स_नकल(new->entries, thresholds->primary->entries,
 		       flex_array_size(new, entries, size - 1));
 
 	/* Add new threshold */
 	new->entries[size - 1].eventfd = eventfd;
 	new->entries[size - 1].threshold = threshold;
 
-	/* Sort thresholds. Registering of new threshold isn't time-critical */
-	sort(new->entries, size, sizeof(*new->entries),
-			compare_thresholds, NULL);
+	/* Sort thresholds. Registering of new threshold isn't समय-critical */
+	sort(new->entries, size, माप(*new->entries),
+			compare_thresholds, शून्य);
 
 	/* Find current threshold */
 	new->current_threshold = -1;
-	for (i = 0; i < size; i++) {
-		if (new->entries[i].threshold <= usage) {
+	क्रम (i = 0; i < size; i++) अणु
+		अगर (new->entries[i].threshold <= usage) अणु
 			/*
 			 * new->current_threshold will not be used until
-			 * rcu_assign_pointer(), so it's safe to increment
+			 * rcu_assign_poपूर्णांकer(), so it's safe to increment
 			 * it here.
 			 */
 			++new->current_threshold;
-		} else
-			break;
-	}
+		पूर्ण अन्यथा
+			अवरोध;
+	पूर्ण
 
 	/* Free old spare buffer and save old primary buffer as spare */
-	kfree(thresholds->spare);
+	kमुक्त(thresholds->spare);
 	thresholds->spare = thresholds->primary;
 
-	rcu_assign_pointer(thresholds->primary, new);
+	rcu_assign_poपूर्णांकer(thresholds->primary, new);
 
 	/* To be sure that nobody uses thresholds */
 	synchronize_rcu();
@@ -4110,594 +4111,594 @@ static int __mem_cgroup_usage_register_event(struct mem_cgroup *memcg,
 unlock:
 	mutex_unlock(&memcg->thresholds_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mem_cgroup_usage_register_event(struct mem_cgroup *memcg,
-	struct eventfd_ctx *eventfd, const char *args)
-{
-	return __mem_cgroup_usage_register_event(memcg, eventfd, args, _MEM);
-}
+अटल पूर्णांक mem_cgroup_usage_रेजिस्टर_event(काष्ठा mem_cgroup *memcg,
+	काष्ठा eventfd_ctx *eventfd, स्थिर अक्षर *args)
+अणु
+	वापस __mem_cgroup_usage_रेजिस्टर_event(memcg, eventfd, args, _MEM);
+पूर्ण
 
-static int memsw_cgroup_usage_register_event(struct mem_cgroup *memcg,
-	struct eventfd_ctx *eventfd, const char *args)
-{
-	return __mem_cgroup_usage_register_event(memcg, eventfd, args, _MEMSWAP);
-}
+अटल पूर्णांक memsw_cgroup_usage_रेजिस्टर_event(काष्ठा mem_cgroup *memcg,
+	काष्ठा eventfd_ctx *eventfd, स्थिर अक्षर *args)
+अणु
+	वापस __mem_cgroup_usage_रेजिस्टर_event(memcg, eventfd, args, _MEMSWAP);
+पूर्ण
 
-static void __mem_cgroup_usage_unregister_event(struct mem_cgroup *memcg,
-	struct eventfd_ctx *eventfd, enum res_type type)
-{
-	struct mem_cgroup_thresholds *thresholds;
-	struct mem_cgroup_threshold_ary *new;
-	unsigned long usage;
-	int i, j, size, entries;
+अटल व्योम __mem_cgroup_usage_unरेजिस्टर_event(काष्ठा mem_cgroup *memcg,
+	काष्ठा eventfd_ctx *eventfd, क्रमागत res_type type)
+अणु
+	काष्ठा mem_cgroup_thresholds *thresholds;
+	काष्ठा mem_cgroup_threshold_ary *new;
+	अचिन्हित दीर्घ usage;
+	पूर्णांक i, j, size, entries;
 
 	mutex_lock(&memcg->thresholds_lock);
 
-	if (type == _MEM) {
+	अगर (type == _MEM) अणु
 		thresholds = &memcg->thresholds;
 		usage = mem_cgroup_usage(memcg, false);
-	} else if (type == _MEMSWAP) {
+	पूर्ण अन्यथा अगर (type == _MEMSWAP) अणु
 		thresholds = &memcg->memsw_thresholds;
 		usage = mem_cgroup_usage(memcg, true);
-	} else
+	पूर्ण अन्यथा
 		BUG();
 
-	if (!thresholds->primary)
-		goto unlock;
+	अगर (!thresholds->primary)
+		जाओ unlock;
 
-	/* Check if a threshold crossed before removing */
+	/* Check अगर a threshold crossed beक्रमe removing */
 	__mem_cgroup_threshold(memcg, type == _MEMSWAP);
 
 	/* Calculate new number of threshold */
 	size = entries = 0;
-	for (i = 0; i < thresholds->primary->size; i++) {
-		if (thresholds->primary->entries[i].eventfd != eventfd)
+	क्रम (i = 0; i < thresholds->primary->size; i++) अणु
+		अगर (thresholds->primary->entries[i].eventfd != eventfd)
 			size++;
-		else
+		अन्यथा
 			entries++;
-	}
+	पूर्ण
 
 	new = thresholds->spare;
 
-	/* If no items related to eventfd have been cleared, nothing to do */
-	if (!entries)
-		goto unlock;
+	/* If no items related to eventfd have been cleared, nothing to करो */
+	अगर (!entries)
+		जाओ unlock;
 
-	/* Set thresholds array to NULL if we don't have thresholds */
-	if (!size) {
-		kfree(new);
-		new = NULL;
-		goto swap_buffers;
-	}
+	/* Set thresholds array to शून्य अगर we करोn't have thresholds */
+	अगर (!size) अणु
+		kमुक्त(new);
+		new = शून्य;
+		जाओ swap_buffers;
+	पूर्ण
 
 	new->size = size;
 
 	/* Copy thresholds and find current threshold */
 	new->current_threshold = -1;
-	for (i = 0, j = 0; i < thresholds->primary->size; i++) {
-		if (thresholds->primary->entries[i].eventfd == eventfd)
-			continue;
+	क्रम (i = 0, j = 0; i < thresholds->primary->size; i++) अणु
+		अगर (thresholds->primary->entries[i].eventfd == eventfd)
+			जारी;
 
 		new->entries[j] = thresholds->primary->entries[i];
-		if (new->entries[j].threshold <= usage) {
+		अगर (new->entries[j].threshold <= usage) अणु
 			/*
 			 * new->current_threshold will not be used
-			 * until rcu_assign_pointer(), so it's safe to increment
+			 * until rcu_assign_poपूर्णांकer(), so it's safe to increment
 			 * it here.
 			 */
 			++new->current_threshold;
-		}
+		पूर्ण
 		j++;
-	}
+	पूर्ण
 
 swap_buffers:
 	/* Swap primary and spare array */
 	thresholds->spare = thresholds->primary;
 
-	rcu_assign_pointer(thresholds->primary, new);
+	rcu_assign_poपूर्णांकer(thresholds->primary, new);
 
 	/* To be sure that nobody uses thresholds */
 	synchronize_rcu();
 
-	/* If all events are unregistered, free the spare array */
-	if (!new) {
-		kfree(thresholds->spare);
-		thresholds->spare = NULL;
-	}
+	/* If all events are unरेजिस्टरed, मुक्त the spare array */
+	अगर (!new) अणु
+		kमुक्त(thresholds->spare);
+		thresholds->spare = शून्य;
+	पूर्ण
 unlock:
 	mutex_unlock(&memcg->thresholds_lock);
-}
+पूर्ण
 
-static void mem_cgroup_usage_unregister_event(struct mem_cgroup *memcg,
-	struct eventfd_ctx *eventfd)
-{
-	return __mem_cgroup_usage_unregister_event(memcg, eventfd, _MEM);
-}
+अटल व्योम mem_cgroup_usage_unरेजिस्टर_event(काष्ठा mem_cgroup *memcg,
+	काष्ठा eventfd_ctx *eventfd)
+अणु
+	वापस __mem_cgroup_usage_unरेजिस्टर_event(memcg, eventfd, _MEM);
+पूर्ण
 
-static void memsw_cgroup_usage_unregister_event(struct mem_cgroup *memcg,
-	struct eventfd_ctx *eventfd)
-{
-	return __mem_cgroup_usage_unregister_event(memcg, eventfd, _MEMSWAP);
-}
+अटल व्योम memsw_cgroup_usage_unरेजिस्टर_event(काष्ठा mem_cgroup *memcg,
+	काष्ठा eventfd_ctx *eventfd)
+अणु
+	वापस __mem_cgroup_usage_unरेजिस्टर_event(memcg, eventfd, _MEMSWAP);
+पूर्ण
 
-static int mem_cgroup_oom_register_event(struct mem_cgroup *memcg,
-	struct eventfd_ctx *eventfd, const char *args)
-{
-	struct mem_cgroup_eventfd_list *event;
+अटल पूर्णांक mem_cgroup_oom_रेजिस्टर_event(काष्ठा mem_cgroup *memcg,
+	काष्ठा eventfd_ctx *eventfd, स्थिर अक्षर *args)
+अणु
+	काष्ठा mem_cgroup_eventfd_list *event;
 
-	event = kmalloc(sizeof(*event),	GFP_KERNEL);
-	if (!event)
-		return -ENOMEM;
+	event = kदो_स्मृति(माप(*event),	GFP_KERNEL);
+	अगर (!event)
+		वापस -ENOMEM;
 
 	spin_lock(&memcg_oom_lock);
 
 	event->eventfd = eventfd;
-	list_add(&event->list, &memcg->oom_notify);
+	list_add(&event->list, &memcg->oom_notअगरy);
 
-	/* already in OOM ? */
-	if (memcg->under_oom)
-		eventfd_signal(eventfd, 1);
+	/* alपढ़ोy in OOM ? */
+	अगर (memcg->under_oom)
+		eventfd_संकेत(eventfd, 1);
 	spin_unlock(&memcg_oom_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mem_cgroup_oom_unregister_event(struct mem_cgroup *memcg,
-	struct eventfd_ctx *eventfd)
-{
-	struct mem_cgroup_eventfd_list *ev, *tmp;
+अटल व्योम mem_cgroup_oom_unरेजिस्टर_event(काष्ठा mem_cgroup *memcg,
+	काष्ठा eventfd_ctx *eventfd)
+अणु
+	काष्ठा mem_cgroup_eventfd_list *ev, *पंचांगp;
 
 	spin_lock(&memcg_oom_lock);
 
-	list_for_each_entry_safe(ev, tmp, &memcg->oom_notify, list) {
-		if (ev->eventfd == eventfd) {
+	list_क्रम_each_entry_safe(ev, पंचांगp, &memcg->oom_notअगरy, list) अणु
+		अगर (ev->eventfd == eventfd) अणु
 			list_del(&ev->list);
-			kfree(ev);
-		}
-	}
+			kमुक्त(ev);
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&memcg_oom_lock);
-}
+पूर्ण
 
-static int mem_cgroup_oom_control_read(struct seq_file *sf, void *v)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_seq(sf);
+अटल पूर्णांक mem_cgroup_oom_control_पढ़ो(काष्ठा seq_file *sf, व्योम *v)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_seq(sf);
 
-	seq_printf(sf, "oom_kill_disable %d\n", memcg->oom_kill_disable);
-	seq_printf(sf, "under_oom %d\n", (bool)memcg->under_oom);
-	seq_printf(sf, "oom_kill %lu\n",
-		   atomic_long_read(&memcg->memory_events[MEMCG_OOM_KILL]));
-	return 0;
-}
+	seq_म_लिखो(sf, "oom_kill_disable %d\n", memcg->oom_समाप्त_disable);
+	seq_म_लिखो(sf, "under_oom %d\n", (bool)memcg->under_oom);
+	seq_म_लिखो(sf, "oom_kill %lu\n",
+		   atomic_दीर्घ_पढ़ो(&memcg->memory_events[MEMCG_OOM_KILL]));
+	वापस 0;
+पूर्ण
 
-static int mem_cgroup_oom_control_write(struct cgroup_subsys_state *css,
-	struct cftype *cft, u64 val)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+अटल पूर्णांक mem_cgroup_oom_control_ग_लिखो(काष्ठा cgroup_subsys_state *css,
+	काष्ठा cftype *cft, u64 val)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
 
 	/* cannot set to root cgroup and only 0 and 1 are allowed */
-	if (mem_cgroup_is_root(memcg) || !((val == 0) || (val == 1)))
-		return -EINVAL;
+	अगर (mem_cgroup_is_root(memcg) || !((val == 0) || (val == 1)))
+		वापस -EINVAL;
 
-	memcg->oom_kill_disable = val;
-	if (!val)
+	memcg->oom_समाप्त_disable = val;
+	अगर (!val)
 		memcg_oom_recover(memcg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_CGROUP_WRITEBACK
+#अगर_घोषित CONFIG_CGROUP_WRITEBACK
 
-#include <trace/events/writeback.h>
+#समावेश <trace/events/ग_लिखोback.h>
 
-static int memcg_wb_domain_init(struct mem_cgroup *memcg, gfp_t gfp)
-{
-	return wb_domain_init(&memcg->cgwb_domain, gfp);
-}
+अटल पूर्णांक memcg_wb_करोमुख्य_init(काष्ठा mem_cgroup *memcg, gfp_t gfp)
+अणु
+	वापस wb_करोमुख्य_init(&memcg->cgwb_करोमुख्य, gfp);
+पूर्ण
 
-static void memcg_wb_domain_exit(struct mem_cgroup *memcg)
-{
-	wb_domain_exit(&memcg->cgwb_domain);
-}
+अटल व्योम memcg_wb_करोमुख्य_निकास(काष्ठा mem_cgroup *memcg)
+अणु
+	wb_करोमुख्य_निकास(&memcg->cgwb_करोमुख्य);
+पूर्ण
 
-static void memcg_wb_domain_size_changed(struct mem_cgroup *memcg)
-{
-	wb_domain_size_changed(&memcg->cgwb_domain);
-}
+अटल व्योम memcg_wb_करोमुख्य_size_changed(काष्ठा mem_cgroup *memcg)
+अणु
+	wb_करोमुख्य_size_changed(&memcg->cgwb_करोमुख्य);
+पूर्ण
 
-struct wb_domain *mem_cgroup_wb_domain(struct bdi_writeback *wb)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
+काष्ठा wb_करोमुख्य *mem_cgroup_wb_करोमुख्य(काष्ठा bdi_ग_लिखोback *wb)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
 
-	if (!memcg->css.parent)
-		return NULL;
+	अगर (!memcg->css.parent)
+		वापस शून्य;
 
-	return &memcg->cgwb_domain;
-}
+	वापस &memcg->cgwb_करोमुख्य;
+पूर्ण
 
 /**
- * mem_cgroup_wb_stats - retrieve writeback related stats from its memcg
- * @wb: bdi_writeback in question
- * @pfilepages: out parameter for number of file pages
- * @pheadroom: out parameter for number of allocatable pages according to memcg
- * @pdirty: out parameter for number of dirty pages
- * @pwriteback: out parameter for number of pages under writeback
+ * mem_cgroup_wb_stats - retrieve ग_लिखोback related stats from its memcg
+ * @wb: bdi_ग_लिखोback in question
+ * @pfilepages: out parameter क्रम number of file pages
+ * @pheadroom: out parameter क्रम number of allocatable pages according to memcg
+ * @pdirty: out parameter क्रम number of dirty pages
+ * @pग_लिखोback: out parameter क्रम number of pages under ग_लिखोback
  *
- * Determine the numbers of file, headroom, dirty, and writeback pages in
- * @wb's memcg.  File, dirty and writeback are self-explanatory.  Headroom
+ * Determine the numbers of file, headroom, dirty, and ग_लिखोback pages in
+ * @wb's memcg.  File, dirty and ग_लिखोback are self-explanatory.  Headroom
  * is a bit more involved.
  *
  * A memcg's headroom is "min(max, high) - used".  In the hierarchy, the
  * headroom is calculated as the lowest headroom of itself and the
- * ancestors.  Note that this doesn't consider the actual amount of
- * available memory in the system.  The caller should further cap
+ * ancestors.  Note that this करोesn't consider the actual amount of
+ * available memory in the प्रणाली.  The caller should further cap
  * *@pheadroom accordingly.
  */
-void mem_cgroup_wb_stats(struct bdi_writeback *wb, unsigned long *pfilepages,
-			 unsigned long *pheadroom, unsigned long *pdirty,
-			 unsigned long *pwriteback)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
-	struct mem_cgroup *parent;
+व्योम mem_cgroup_wb_stats(काष्ठा bdi_ग_लिखोback *wb, अचिन्हित दीर्घ *pfilepages,
+			 अचिन्हित दीर्घ *pheadroom, अचिन्हित दीर्घ *pdirty,
+			 अचिन्हित दीर्घ *pग_लिखोback)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
+	काष्ठा mem_cgroup *parent;
 
 	cgroup_rstat_flush_irqsafe(memcg->css.cgroup);
 
-	*pdirty = memcg_page_state(memcg, NR_FILE_DIRTY);
-	*pwriteback = memcg_page_state(memcg, NR_WRITEBACK);
-	*pfilepages = memcg_page_state(memcg, NR_INACTIVE_FILE) +
-			memcg_page_state(memcg, NR_ACTIVE_FILE);
+	*pdirty = memcg_page_state(memcg, NR_खाता_सूचीTY);
+	*pग_लिखोback = memcg_page_state(memcg, NR_WRITEBACK);
+	*pfilepages = memcg_page_state(memcg, NR_INACTIVE_खाता) +
+			memcg_page_state(memcg, NR_ACTIVE_खाता);
 
 	*pheadroom = PAGE_COUNTER_MAX;
-	while ((parent = parent_mem_cgroup(memcg))) {
-		unsigned long ceiling = min(READ_ONCE(memcg->memory.max),
+	जबतक ((parent = parent_mem_cgroup(memcg))) अणु
+		अचिन्हित दीर्घ उच्चमानing = min(READ_ONCE(memcg->memory.max),
 					    READ_ONCE(memcg->memory.high));
-		unsigned long used = page_counter_read(&memcg->memory);
+		अचिन्हित दीर्घ used = page_counter_पढ़ो(&memcg->memory);
 
-		*pheadroom = min(*pheadroom, ceiling - min(ceiling, used));
+		*pheadroom = min(*pheadroom, उच्चमानing - min(उच्चमानing, used));
 		memcg = parent;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Foreign dirty flushing
  *
- * There's an inherent mismatch between memcg and writeback.  The former
- * tracks ownership per-page while the latter per-inode.  This was a
+ * There's an inherent mismatch between memcg and ग_लिखोback.  The क्रमmer
+ * tracks ownership per-page जबतक the latter per-inode.  This was a
  * deliberate design decision because honoring per-page ownership in the
- * writeback path is complicated, may lead to higher CPU and IO overheads
- * and deemed unnecessary given that write-sharing an inode across
- * different cgroups isn't a common use-case.
+ * ग_लिखोback path is complicated, may lead to higher CPU and IO overheads
+ * and deemed unnecessary given that ग_लिखो-sharing an inode across
+ * dअगरferent cgroups isn't a common use-हाल.
  *
- * Combined with inode majority-writer ownership switching, this works well
- * enough in most cases but there are some pathological cases.  For
+ * Combined with inode majority-ग_लिखोr ownership चयनing, this works well
+ * enough in most हालs but there are some pathological हालs.  For
  * example, let's say there are two cgroups A and B which keep writing to
- * different but confined parts of the same inode.  B owns the inode and
+ * dअगरferent but confined parts of the same inode.  B owns the inode and
  * A's memory is limited far below B's.  A's dirty ratio can rise enough to
- * trigger balance_dirty_pages() sleeps but B's can be low enough to avoid
- * triggering background writeback.  A will be slowed down without a way to
- * make writeback of the dirty pages happen.
+ * trigger balance_dirty_pages() sleeps but B's can be low enough to aव्योम
+ * triggering background ग_लिखोback.  A will be slowed करोwn without a way to
+ * make ग_लिखोback of the dirty pages happen.
  *
  * Conditions like the above can lead to a cgroup getting repeatedly and
  * severely throttled after making some progress after each
- * dirty_expire_interval while the underlying IO device is almost
+ * dirty_expire_पूर्णांकerval जबतक the underlying IO device is almost
  * completely idle.
  *
  * Solving this problem completely requires matching the ownership tracking
- * granularities between memcg and writeback in either direction.  However,
- * the more egregious behaviors can be avoided by simply remembering the
- * most recent foreign dirtying events and initiating remote flushes on
- * them when local writeback isn't enough to keep the memory clean enough.
+ * granularities between memcg and ग_लिखोback in either direction.  However,
+ * the more egregious behaviors can be aव्योमed by simply remembering the
+ * most recent क्रमeign dirtying events and initiating remote flushes on
+ * them when local ग_लिखोback isn't enough to keep the memory clean enough.
  *
- * The following two functions implement such mechanism.  When a foreign
- * page - a page whose memcg and writeback ownerships don't match - is
- * dirtied, mem_cgroup_track_foreign_dirty() records the inode owning
- * bdi_writeback on the page owning memcg.  When balance_dirty_pages()
+ * The following two functions implement such mechanism.  When a क्रमeign
+ * page - a page whose memcg and ग_लिखोback ownerships करोn't match - is
+ * dirtied, mem_cgroup_track_क्रमeign_dirty() records the inode owning
+ * bdi_ग_लिखोback on the page owning memcg.  When balance_dirty_pages()
  * decides that the memcg needs to sleep due to high dirty ratio, it calls
- * mem_cgroup_flush_foreign() which queues writeback on the recorded
- * foreign bdi_writebacks which haven't expired.  Both the numbers of
- * recorded bdi_writebacks and concurrent in-flight foreign writebacks are
+ * mem_cgroup_flush_क्रमeign() which queues ग_लिखोback on the recorded
+ * क्रमeign bdi_ग_लिखोbacks which haven't expired.  Both the numbers of
+ * recorded bdi_ग_लिखोbacks and concurrent in-flight क्रमeign ग_लिखोbacks are
  * limited to MEMCG_CGWB_FRN_CNT.
  *
- * The mechanism only remembers IDs and doesn't hold any object references.
- * As being wrong occasionally doesn't matter, updates and accesses to the
+ * The mechanism only remembers IDs and करोesn't hold any object references.
+ * As being wrong occasionally करोesn't matter, updates and accesses to the
  * records are lockless and racy.
  */
-void mem_cgroup_track_foreign_dirty_slowpath(struct page *page,
-					     struct bdi_writeback *wb)
-{
-	struct mem_cgroup *memcg = page_memcg(page);
-	struct memcg_cgwb_frn *frn;
-	u64 now = get_jiffies_64();
+व्योम mem_cgroup_track_क्रमeign_dirty_slowpath(काष्ठा page *page,
+					     काष्ठा bdi_ग_लिखोback *wb)
+अणु
+	काष्ठा mem_cgroup *memcg = page_memcg(page);
+	काष्ठा memcg_cgwb_frn *frn;
+	u64 now = get_jअगरfies_64();
 	u64 oldest_at = now;
-	int oldest = -1;
-	int i;
+	पूर्णांक oldest = -1;
+	पूर्णांक i;
 
-	trace_track_foreign_dirty(page, wb);
+	trace_track_क्रमeign_dirty(page, wb);
 
 	/*
-	 * Pick the slot to use.  If there is already a slot for @wb, keep
+	 * Pick the slot to use.  If there is alपढ़ोy a slot क्रम @wb, keep
 	 * using it.  If not replace the oldest one which isn't being
 	 * written out.
 	 */
-	for (i = 0; i < MEMCG_CGWB_FRN_CNT; i++) {
+	क्रम (i = 0; i < MEMCG_CGWB_FRN_CNT; i++) अणु
 		frn = &memcg->cgwb_frn[i];
-		if (frn->bdi_id == wb->bdi->id &&
+		अगर (frn->bdi_id == wb->bdi->id &&
 		    frn->memcg_id == wb->memcg_css->id)
-			break;
-		if (time_before64(frn->at, oldest_at) &&
-		    atomic_read(&frn->done.cnt) == 1) {
+			अवरोध;
+		अगर (समय_beक्रमe64(frn->at, oldest_at) &&
+		    atomic_पढ़ो(&frn->करोne.cnt) == 1) अणु
 			oldest = i;
 			oldest_at = frn->at;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (i < MEMCG_CGWB_FRN_CNT) {
+	अगर (i < MEMCG_CGWB_FRN_CNT) अणु
 		/*
-		 * Re-using an existing one.  Update timestamp lazily to
-		 * avoid making the cacheline hot.  We want them to be
-		 * reasonably up-to-date and significantly shorter than
-		 * dirty_expire_interval as that's what expires the record.
-		 * Use the shorter of 1s and dirty_expire_interval / 8.
+		 * Re-using an existing one.  Update बारtamp lazily to
+		 * aव्योम making the cacheline hot.  We want them to be
+		 * reasonably up-to-date and signअगरicantly लघुer than
+		 * dirty_expire_पूर्णांकerval as that's what expires the record.
+		 * Use the लघुer of 1s and dirty_expire_पूर्णांकerval / 8.
 		 */
-		unsigned long update_intv =
-			min_t(unsigned long, HZ,
-			      msecs_to_jiffies(dirty_expire_interval * 10) / 8);
+		अचिन्हित दीर्घ update_पूर्णांकv =
+			min_t(अचिन्हित दीर्घ, HZ,
+			      msecs_to_jअगरfies(dirty_expire_पूर्णांकerval * 10) / 8);
 
-		if (time_before64(frn->at, now - update_intv))
+		अगर (समय_beक्रमe64(frn->at, now - update_पूर्णांकv))
 			frn->at = now;
-	} else if (oldest >= 0) {
-		/* replace the oldest free one */
+	पूर्ण अन्यथा अगर (oldest >= 0) अणु
+		/* replace the oldest मुक्त one */
 		frn = &memcg->cgwb_frn[oldest];
 		frn->bdi_id = wb->bdi->id;
 		frn->memcg_id = wb->memcg_css->id;
 		frn->at = now;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* issue foreign writeback flushes for recorded foreign dirtying events */
-void mem_cgroup_flush_foreign(struct bdi_writeback *wb)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
-	unsigned long intv = msecs_to_jiffies(dirty_expire_interval * 10);
-	u64 now = jiffies_64;
-	int i;
+/* issue क्रमeign ग_लिखोback flushes क्रम recorded क्रमeign dirtying events */
+व्योम mem_cgroup_flush_क्रमeign(काष्ठा bdi_ग_लिखोback *wb)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
+	अचिन्हित दीर्घ पूर्णांकv = msecs_to_jअगरfies(dirty_expire_पूर्णांकerval * 10);
+	u64 now = jअगरfies_64;
+	पूर्णांक i;
 
-	for (i = 0; i < MEMCG_CGWB_FRN_CNT; i++) {
-		struct memcg_cgwb_frn *frn = &memcg->cgwb_frn[i];
+	क्रम (i = 0; i < MEMCG_CGWB_FRN_CNT; i++) अणु
+		काष्ठा memcg_cgwb_frn *frn = &memcg->cgwb_frn[i];
 
 		/*
-		 * If the record is older than dirty_expire_interval,
-		 * writeback on it has already started.  No need to kick it
-		 * off again.  Also, don't start a new one if there's
-		 * already one in flight.
+		 * If the record is older than dirty_expire_पूर्णांकerval,
+		 * ग_लिखोback on it has alपढ़ोy started.  No need to kick it
+		 * off again.  Also, करोn't start a new one if there's
+		 * alपढ़ोy one in flight.
 		 */
-		if (time_after64(frn->at, now - intv) &&
-		    atomic_read(&frn->done.cnt) == 1) {
+		अगर (समय_after64(frn->at, now - पूर्णांकv) &&
+		    atomic_पढ़ो(&frn->करोne.cnt) == 1) अणु
 			frn->at = 0;
-			trace_flush_foreign(wb, frn->bdi_id, frn->memcg_id);
-			cgroup_writeback_by_id(frn->bdi_id, frn->memcg_id, 0,
+			trace_flush_क्रमeign(wb, frn->bdi_id, frn->memcg_id);
+			cgroup_ग_लिखोback_by_id(frn->bdi_id, frn->memcg_id, 0,
 					       WB_REASON_FOREIGN_FLUSH,
-					       &frn->done);
-		}
-	}
-}
+					       &frn->करोne);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#else	/* CONFIG_CGROUP_WRITEBACK */
+#अन्यथा	/* CONFIG_CGROUP_WRITEBACK */
 
-static int memcg_wb_domain_init(struct mem_cgroup *memcg, gfp_t gfp)
-{
-	return 0;
-}
+अटल पूर्णांक memcg_wb_करोमुख्य_init(काष्ठा mem_cgroup *memcg, gfp_t gfp)
+अणु
+	वापस 0;
+पूर्ण
 
-static void memcg_wb_domain_exit(struct mem_cgroup *memcg)
-{
-}
+अटल व्योम memcg_wb_करोमुख्य_निकास(काष्ठा mem_cgroup *memcg)
+अणु
+पूर्ण
 
-static void memcg_wb_domain_size_changed(struct mem_cgroup *memcg)
-{
-}
+अटल व्योम memcg_wb_करोमुख्य_size_changed(काष्ठा mem_cgroup *memcg)
+अणु
+पूर्ण
 
-#endif	/* CONFIG_CGROUP_WRITEBACK */
+#पूर्ण_अगर	/* CONFIG_CGROUP_WRITEBACK */
 
 /*
- * DO NOT USE IN NEW FILES.
+ * DO NOT USE IN NEW खाताS.
  *
  * "cgroup.event_control" implementation.
  *
  * This is way over-engineered.  It tries to support fully configurable
- * events for each user.  Such level of flexibility is completely
- * unnecessary especially in the light of the planned unified hierarchy.
+ * events क्रम each user.  Such level of flexibility is completely
+ * unnecessary especially in the light of the planned unअगरied hierarchy.
  *
- * Please deprecate this and replace with something simpler if at all
+ * Please deprecate this and replace with something simpler अगर at all
  * possible.
  */
 
 /*
- * Unregister event and free resources.
+ * Unरेजिस्टर event and मुक्त resources.
  *
  * Gets called from workqueue.
  */
-static void memcg_event_remove(struct work_struct *work)
-{
-	struct mem_cgroup_event *event =
-		container_of(work, struct mem_cgroup_event, remove);
-	struct mem_cgroup *memcg = event->memcg;
+अटल व्योम memcg_event_हटाओ(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mem_cgroup_event *event =
+		container_of(work, काष्ठा mem_cgroup_event, हटाओ);
+	काष्ठा mem_cgroup *memcg = event->memcg;
 
-	remove_wait_queue(event->wqh, &event->wait);
+	हटाओ_रुको_queue(event->wqh, &event->रुको);
 
-	event->unregister_event(memcg, event->eventfd);
+	event->unरेजिस्टर_event(memcg, event->eventfd);
 
-	/* Notify userspace the event is going away. */
-	eventfd_signal(event->eventfd, 1);
+	/* Notअगरy userspace the event is going away. */
+	eventfd_संकेत(event->eventfd, 1);
 
 	eventfd_ctx_put(event->eventfd);
-	kfree(event);
+	kमुक्त(event);
 	css_put(&memcg->css);
-}
+पूर्ण
 
 /*
- * Gets called on EPOLLHUP on eventfd when user closes it.
+ * Gets called on EPOLLHUP on eventfd when user बंदs it.
  *
- * Called with wqh->lock held and interrupts disabled.
+ * Called with wqh->lock held and पूर्णांकerrupts disabled.
  */
-static int memcg_event_wake(wait_queue_entry_t *wait, unsigned mode,
-			    int sync, void *key)
-{
-	struct mem_cgroup_event *event =
-		container_of(wait, struct mem_cgroup_event, wait);
-	struct mem_cgroup *memcg = event->memcg;
+अटल पूर्णांक memcg_event_wake(रुको_queue_entry_t *रुको, अचिन्हित mode,
+			    पूर्णांक sync, व्योम *key)
+अणु
+	काष्ठा mem_cgroup_event *event =
+		container_of(रुको, काष्ठा mem_cgroup_event, रुको);
+	काष्ठा mem_cgroup *memcg = event->memcg;
 	__poll_t flags = key_to_poll(key);
 
-	if (flags & EPOLLHUP) {
+	अगर (flags & EPOLLHUP) अणु
 		/*
 		 * If the event has been detached at cgroup removal, we
-		 * can simply return knowing the other side will cleanup
-		 * for us.
+		 * can simply वापस knowing the other side will cleanup
+		 * क्रम us.
 		 *
-		 * We can't race against event freeing since the other
-		 * side will require wqh->lock via remove_wait_queue(),
+		 * We can't race against event मुक्तing since the other
+		 * side will require wqh->lock via हटाओ_रुको_queue(),
 		 * which we hold.
 		 */
 		spin_lock(&memcg->event_list_lock);
-		if (!list_empty(&event->list)) {
+		अगर (!list_empty(&event->list)) अणु
 			list_del_init(&event->list);
 			/*
-			 * We are in atomic context, but cgroup_event_remove()
+			 * We are in atomic context, but cgroup_event_हटाओ()
 			 * may sleep, so we have to call it in workqueue.
 			 */
-			schedule_work(&event->remove);
-		}
+			schedule_work(&event->हटाओ);
+		पूर्ण
 		spin_unlock(&memcg->event_list_lock);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void memcg_event_ptable_queue_proc(struct file *file,
-		wait_queue_head_t *wqh, poll_table *pt)
-{
-	struct mem_cgroup_event *event =
-		container_of(pt, struct mem_cgroup_event, pt);
+अटल व्योम memcg_event_ptable_queue_proc(काष्ठा file *file,
+		रुको_queue_head_t *wqh, poll_table *pt)
+अणु
+	काष्ठा mem_cgroup_event *event =
+		container_of(pt, काष्ठा mem_cgroup_event, pt);
 
 	event->wqh = wqh;
-	add_wait_queue(wqh, &event->wait);
-}
+	add_रुको_queue(wqh, &event->रुको);
+पूर्ण
 
 /*
- * DO NOT USE IN NEW FILES.
+ * DO NOT USE IN NEW खाताS.
  *
- * Parse input and register new cgroup event handler.
+ * Parse input and रेजिस्टर new cgroup event handler.
  *
- * Input must be in format '<event_fd> <control_fd> <args>'.
+ * Input must be in क्रमmat '<event_fd> <control_fd> <args>'.
  * Interpretation of args is defined by control file implementation.
  */
-static ssize_t memcg_write_event_control(struct kernfs_open_file *of,
-					 char *buf, size_t nbytes, loff_t off)
-{
-	struct cgroup_subsys_state *css = of_css(of);
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
-	struct mem_cgroup_event *event;
-	struct cgroup_subsys_state *cfile_css;
-	unsigned int efd, cfd;
-	struct fd efile;
-	struct fd cfile;
-	const char *name;
-	char *endp;
-	int ret;
+अटल sमाप_प्रकार memcg_ग_लिखो_event_control(काष्ठा kernfs_खोलो_file *of,
+					 अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा cgroup_subsys_state *css = of_css(of);
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
+	काष्ठा mem_cgroup_event *event;
+	काष्ठा cgroup_subsys_state *cfile_css;
+	अचिन्हित पूर्णांक efd, cfd;
+	काष्ठा fd efile;
+	काष्ठा fd cfile;
+	स्थिर अक्षर *name;
+	अक्षर *endp;
+	पूर्णांक ret;
 
-	buf = strstrip(buf);
+	buf = म_मालाip(buf);
 
-	efd = simple_strtoul(buf, &endp, 10);
-	if (*endp != ' ')
-		return -EINVAL;
+	efd = simple_म_से_अदीर्घ(buf, &endp, 10);
+	अगर (*endp != ' ')
+		वापस -EINVAL;
 	buf = endp + 1;
 
-	cfd = simple_strtoul(buf, &endp, 10);
-	if ((*endp != ' ') && (*endp != '\0'))
-		return -EINVAL;
+	cfd = simple_म_से_अदीर्घ(buf, &endp, 10);
+	अगर ((*endp != ' ') && (*endp != '\0'))
+		वापस -EINVAL;
 	buf = endp + 1;
 
-	event = kzalloc(sizeof(*event), GFP_KERNEL);
-	if (!event)
-		return -ENOMEM;
+	event = kzalloc(माप(*event), GFP_KERNEL);
+	अगर (!event)
+		वापस -ENOMEM;
 
 	event->memcg = memcg;
 	INIT_LIST_HEAD(&event->list);
 	init_poll_funcptr(&event->pt, memcg_event_ptable_queue_proc);
-	init_waitqueue_func_entry(&event->wait, memcg_event_wake);
-	INIT_WORK(&event->remove, memcg_event_remove);
+	init_रुकोqueue_func_entry(&event->रुको, memcg_event_wake);
+	INIT_WORK(&event->हटाओ, memcg_event_हटाओ);
 
 	efile = fdget(efd);
-	if (!efile.file) {
+	अगर (!efile.file) अणु
 		ret = -EBADF;
-		goto out_kfree;
-	}
+		जाओ out_kमुक्त;
+	पूर्ण
 
 	event->eventfd = eventfd_ctx_fileget(efile.file);
-	if (IS_ERR(event->eventfd)) {
+	अगर (IS_ERR(event->eventfd)) अणु
 		ret = PTR_ERR(event->eventfd);
-		goto out_put_efile;
-	}
+		जाओ out_put_efile;
+	पूर्ण
 
 	cfile = fdget(cfd);
-	if (!cfile.file) {
+	अगर (!cfile.file) अणु
 		ret = -EBADF;
-		goto out_put_eventfd;
-	}
+		जाओ out_put_eventfd;
+	पूर्ण
 
-	/* the process need read permission on control file */
-	/* AV: shouldn't we check that it's been opened for read instead? */
+	/* the process need पढ़ो permission on control file */
+	/* AV: shouldn't we check that it's been खोलोed क्रम पढ़ो instead? */
 	ret = file_permission(cfile.file, MAY_READ);
-	if (ret < 0)
-		goto out_put_cfile;
+	अगर (ret < 0)
+		जाओ out_put_cfile;
 
 	/*
 	 * Determine the event callbacks and set them in @event.  This used
-	 * to be done via struct cftype but cgroup core no longer knows
+	 * to be करोne via काष्ठा cftype but cgroup core no दीर्घer knows
 	 * about these events.  The following is crude but the whole thing
-	 * is for compatibility anyway.
+	 * is क्रम compatibility anyway.
 	 *
-	 * DO NOT ADD NEW FILES.
+	 * DO NOT ADD NEW खाताS.
 	 */
 	name = cfile.file->f_path.dentry->d_name.name;
 
-	if (!strcmp(name, "memory.usage_in_bytes")) {
-		event->register_event = mem_cgroup_usage_register_event;
-		event->unregister_event = mem_cgroup_usage_unregister_event;
-	} else if (!strcmp(name, "memory.oom_control")) {
-		event->register_event = mem_cgroup_oom_register_event;
-		event->unregister_event = mem_cgroup_oom_unregister_event;
-	} else if (!strcmp(name, "memory.pressure_level")) {
-		event->register_event = vmpressure_register_event;
-		event->unregister_event = vmpressure_unregister_event;
-	} else if (!strcmp(name, "memory.memsw.usage_in_bytes")) {
-		event->register_event = memsw_cgroup_usage_register_event;
-		event->unregister_event = memsw_cgroup_usage_unregister_event;
-	} else {
+	अगर (!म_भेद(name, "memory.usage_in_bytes")) अणु
+		event->रेजिस्टर_event = mem_cgroup_usage_रेजिस्टर_event;
+		event->unरेजिस्टर_event = mem_cgroup_usage_unरेजिस्टर_event;
+	पूर्ण अन्यथा अगर (!म_भेद(name, "memory.oom_control")) अणु
+		event->रेजिस्टर_event = mem_cgroup_oom_रेजिस्टर_event;
+		event->unरेजिस्टर_event = mem_cgroup_oom_unरेजिस्टर_event;
+	पूर्ण अन्यथा अगर (!म_भेद(name, "memory.pressure_level")) अणु
+		event->रेजिस्टर_event = vmpressure_रेजिस्टर_event;
+		event->unरेजिस्टर_event = vmpressure_unरेजिस्टर_event;
+	पूर्ण अन्यथा अगर (!म_भेद(name, "memory.memsw.usage_in_bytes")) अणु
+		event->रेजिस्टर_event = memsw_cgroup_usage_रेजिस्टर_event;
+		event->unरेजिस्टर_event = memsw_cgroup_usage_unरेजिस्टर_event;
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-		goto out_put_cfile;
-	}
+		जाओ out_put_cfile;
+	पूर्ण
 
 	/*
-	 * Verify @cfile should belong to @css.  Also, remaining events are
-	 * automatically removed on cgroup destruction but the removal is
+	 * Verअगरy @cfile should beदीर्घ to @css.  Also, reमुख्यing events are
+	 * स्वतःmatically हटाओd on cgroup deकाष्ठाion but the removal is
 	 * asynchronous, so take an extra ref on @css.
 	 */
 	cfile_css = css_tryget_online_from_dir(cfile.file->f_path.dentry->d_parent,
 					       &memory_cgrp_subsys);
 	ret = -EINVAL;
-	if (IS_ERR(cfile_css))
-		goto out_put_cfile;
-	if (cfile_css != css) {
+	अगर (IS_ERR(cfile_css))
+		जाओ out_put_cfile;
+	अगर (cfile_css != css) अणु
 		css_put(cfile_css);
-		goto out_put_cfile;
-	}
+		जाओ out_put_cfile;
+	पूर्ण
 
-	ret = event->register_event(memcg, event->eventfd, buf);
-	if (ret)
-		goto out_put_css;
+	ret = event->रेजिस्टर_event(memcg, event->eventfd, buf);
+	अगर (ret)
+		जाओ out_put_css;
 
 	vfs_poll(efile.file, &event->pt);
 
@@ -4708,7 +4709,7 @@ static ssize_t memcg_write_event_control(struct kernfs_open_file *of,
 	fdput(cfile);
 	fdput(efile);
 
-	return nbytes;
+	वापस nbytes;
 
 out_put_css:
 	css_put(css);
@@ -4718,240 +4719,240 @@ out_put_eventfd:
 	eventfd_ctx_put(event->eventfd);
 out_put_efile:
 	fdput(efile);
-out_kfree:
-	kfree(event);
+out_kमुक्त:
+	kमुक्त(event);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct cftype mem_cgroup_legacy_files[] = {
-	{
+अटल काष्ठा cftype mem_cgroup_legacy_files[] = अणु
+	अणु
 		.name = "usage_in_bytes",
-		.private = MEMFILE_PRIVATE(_MEM, RES_USAGE),
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_MEM, RES_USAGE),
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "max_usage_in_bytes",
-		.private = MEMFILE_PRIVATE(_MEM, RES_MAX_USAGE),
-		.write = mem_cgroup_reset,
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_MEM, RES_MAX_USAGE),
+		.ग_लिखो = mem_cgroup_reset,
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "limit_in_bytes",
-		.private = MEMFILE_PRIVATE(_MEM, RES_LIMIT),
-		.write = mem_cgroup_write,
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_MEM, RES_LIMIT),
+		.ग_लिखो = mem_cgroup_ग_लिखो,
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "soft_limit_in_bytes",
-		.private = MEMFILE_PRIVATE(_MEM, RES_SOFT_LIMIT),
-		.write = mem_cgroup_write,
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_MEM, RES_SOFT_LIMIT),
+		.ग_लिखो = mem_cgroup_ग_लिखो,
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "failcnt",
-		.private = MEMFILE_PRIVATE(_MEM, RES_FAILCNT),
-		.write = mem_cgroup_reset,
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_MEM, RES_FAILCNT),
+		.ग_लिखो = mem_cgroup_reset,
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "stat",
 		.seq_show = memcg_stat_show,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "force_empty",
-		.write = mem_cgroup_force_empty_write,
-	},
-	{
+		.ग_लिखो = mem_cgroup_क्रमce_empty_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "use_hierarchy",
-		.write_u64 = mem_cgroup_hierarchy_write,
-		.read_u64 = mem_cgroup_hierarchy_read,
-	},
-	{
-		.name = "cgroup.event_control",		/* XXX: for compat */
-		.write = memcg_write_event_control,
+		.ग_लिखो_u64 = mem_cgroup_hierarchy_ग_लिखो,
+		.पढ़ो_u64 = mem_cgroup_hierarchy_पढ़ो,
+	पूर्ण,
+	अणु
+		.name = "cgroup.event_control",		/* XXX: क्रम compat */
+		.ग_लिखो = memcg_ग_लिखो_event_control,
 		.flags = CFTYPE_NO_PREFIX | CFTYPE_WORLD_WRITABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "swappiness",
-		.read_u64 = mem_cgroup_swappiness_read,
-		.write_u64 = mem_cgroup_swappiness_write,
-	},
-	{
+		.पढ़ो_u64 = mem_cgroup_swappiness_पढ़ो,
+		.ग_लिखो_u64 = mem_cgroup_swappiness_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "move_charge_at_immigrate",
-		.read_u64 = mem_cgroup_move_charge_read,
-		.write_u64 = mem_cgroup_move_charge_write,
-	},
-	{
+		.पढ़ो_u64 = mem_cgroup_move_अक्षरge_पढ़ो,
+		.ग_लिखो_u64 = mem_cgroup_move_अक्षरge_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "oom_control",
-		.seq_show = mem_cgroup_oom_control_read,
-		.write_u64 = mem_cgroup_oom_control_write,
-		.private = MEMFILE_PRIVATE(_OOM_TYPE, OOM_CONTROL),
-	},
-	{
+		.seq_show = mem_cgroup_oom_control_पढ़ो,
+		.ग_लिखो_u64 = mem_cgroup_oom_control_ग_लिखो,
+		.निजी = MEMखाता_PRIVATE(_OOM_TYPE, OOM_CONTROL),
+	पूर्ण,
+	अणु
 		.name = "pressure_level",
-	},
-#ifdef CONFIG_NUMA
-	{
+	पूर्ण,
+#अगर_घोषित CONFIG_NUMA
+	अणु
 		.name = "numa_stat",
 		.seq_show = memcg_numa_stat_show,
-	},
-#endif
-	{
+	पूर्ण,
+#पूर्ण_अगर
+	अणु
 		.name = "kmem.limit_in_bytes",
-		.private = MEMFILE_PRIVATE(_KMEM, RES_LIMIT),
-		.write = mem_cgroup_write,
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_KMEM, RES_LIMIT),
+		.ग_लिखो = mem_cgroup_ग_लिखो,
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "kmem.usage_in_bytes",
-		.private = MEMFILE_PRIVATE(_KMEM, RES_USAGE),
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_KMEM, RES_USAGE),
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "kmem.failcnt",
-		.private = MEMFILE_PRIVATE(_KMEM, RES_FAILCNT),
-		.write = mem_cgroup_reset,
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_KMEM, RES_FAILCNT),
+		.ग_लिखो = mem_cgroup_reset,
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "kmem.max_usage_in_bytes",
-		.private = MEMFILE_PRIVATE(_KMEM, RES_MAX_USAGE),
-		.write = mem_cgroup_reset,
-		.read_u64 = mem_cgroup_read_u64,
-	},
-#if defined(CONFIG_MEMCG_KMEM) && \
+		.निजी = MEMखाता_PRIVATE(_KMEM, RES_MAX_USAGE),
+		.ग_लिखो = mem_cgroup_reset,
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+#अगर defined(CONFIG_MEMCG_KMEM) && \
 	(defined(CONFIG_SLAB) || defined(CONFIG_SLUB_DEBUG))
-	{
+	अणु
 		.name = "kmem.slabinfo",
 		.seq_show = memcg_slab_show,
-	},
-#endif
-	{
+	पूर्ण,
+#पूर्ण_अगर
+	अणु
 		.name = "kmem.tcp.limit_in_bytes",
-		.private = MEMFILE_PRIVATE(_TCP, RES_LIMIT),
-		.write = mem_cgroup_write,
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_TCP, RES_LIMIT),
+		.ग_लिखो = mem_cgroup_ग_लिखो,
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "kmem.tcp.usage_in_bytes",
-		.private = MEMFILE_PRIVATE(_TCP, RES_USAGE),
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_TCP, RES_USAGE),
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "kmem.tcp.failcnt",
-		.private = MEMFILE_PRIVATE(_TCP, RES_FAILCNT),
-		.write = mem_cgroup_reset,
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_TCP, RES_FAILCNT),
+		.ग_लिखो = mem_cgroup_reset,
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "kmem.tcp.max_usage_in_bytes",
-		.private = MEMFILE_PRIVATE(_TCP, RES_MAX_USAGE),
-		.write = mem_cgroup_reset,
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{ },	/* terminate */
-};
+		.निजी = MEMखाता_PRIVATE(_TCP, RES_MAX_USAGE),
+		.ग_लिखो = mem_cgroup_reset,
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु पूर्ण,	/* terminate */
+पूर्ण;
 
 /*
  * Private memory cgroup IDR
  *
- * Swap-out records and page cache shadow entries need to store memcg
- * references in constrained space, so we maintain an ID space that is
+ * Swap-out records and page cache shaकरोw entries need to store memcg
+ * references in स्थिरrained space, so we मुख्यtain an ID space that is
  * limited to 16 bit (MEM_CGROUP_ID_MAX), limiting the total number of
  * memory-controlled cgroups to 64k.
  *
  * However, there usually are many references to the offline CSS after
  * the cgroup has been destroyed, such as page cache or reclaimable
- * slab objects, that don't need to hang on to the ID. We want to keep
+ * slab objects, that करोn't need to hang on to the ID. We want to keep
  * those dead CSS from occupying IDs, or we might quickly exhaust the
  * relatively small ID space and prevent the creation of new cgroups
  * even when there are much fewer than 64k cgroups - possibly none.
  *
- * Maintain a private 16-bit ID space for memcg, and allow the ID to
- * be freed and recycled when it's no longer needed, which is usually
+ * Maपूर्णांकain a निजी 16-bit ID space क्रम memcg, and allow the ID to
+ * be मुक्तd and recycled when it's no दीर्घer needed, which is usually
  * when the CSS is offlined.
  *
- * The only exception to that are records of swapped out tmpfs/shmem
+ * The only exception to that are records of swapped out पंचांगpfs/shmem
  * pages that need to be attributed to live ancestors on swapin. But
  * those references are manageable from userspace.
  */
 
-static DEFINE_IDR(mem_cgroup_idr);
+अटल DEFINE_IDR(mem_cgroup_idr);
 
-static void mem_cgroup_id_remove(struct mem_cgroup *memcg)
-{
-	if (memcg->id.id > 0) {
-		idr_remove(&mem_cgroup_idr, memcg->id.id);
+अटल व्योम mem_cgroup_id_हटाओ(काष्ठा mem_cgroup *memcg)
+अणु
+	अगर (memcg->id.id > 0) अणु
+		idr_हटाओ(&mem_cgroup_idr, memcg->id.id);
 		memcg->id.id = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __maybe_unused mem_cgroup_id_get_many(struct mem_cgroup *memcg,
-						  unsigned int n)
-{
+अटल व्योम __maybe_unused mem_cgroup_id_get_many(काष्ठा mem_cgroup *memcg,
+						  अचिन्हित पूर्णांक n)
+अणु
 	refcount_add(n, &memcg->id.ref);
-}
+पूर्ण
 
-static void mem_cgroup_id_put_many(struct mem_cgroup *memcg, unsigned int n)
-{
-	if (refcount_sub_and_test(n, &memcg->id.ref)) {
-		mem_cgroup_id_remove(memcg);
+अटल व्योम mem_cgroup_id_put_many(काष्ठा mem_cgroup *memcg, अचिन्हित पूर्णांक n)
+अणु
+	अगर (refcount_sub_and_test(n, &memcg->id.ref)) अणु
+		mem_cgroup_id_हटाओ(memcg);
 
 		/* Memcg ID pins CSS */
 		css_put(&memcg->css);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void mem_cgroup_id_put(struct mem_cgroup *memcg)
-{
+अटल अंतरभूत व्योम mem_cgroup_id_put(काष्ठा mem_cgroup *memcg)
+अणु
 	mem_cgroup_id_put_many(memcg, 1);
-}
+पूर्ण
 
 /**
  * mem_cgroup_from_id - look up a memcg from a memcg id
  * @id: the memcg id to look up
  *
- * Caller must hold rcu_read_lock().
+ * Caller must hold rcu_पढ़ो_lock().
  */
-struct mem_cgroup *mem_cgroup_from_id(unsigned short id)
-{
-	WARN_ON_ONCE(!rcu_read_lock_held());
-	return idr_find(&mem_cgroup_idr, id);
-}
+काष्ठा mem_cgroup *mem_cgroup_from_id(अचिन्हित लघु id)
+अणु
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
+	वापस idr_find(&mem_cgroup_idr, id);
+पूर्ण
 
-static int alloc_mem_cgroup_per_node_info(struct mem_cgroup *memcg, int node)
-{
-	struct mem_cgroup_per_node *pn;
-	int tmp = node;
+अटल पूर्णांक alloc_mem_cgroup_per_node_info(काष्ठा mem_cgroup *memcg, पूर्णांक node)
+अणु
+	काष्ठा mem_cgroup_per_node *pn;
+	पूर्णांक पंचांगp = node;
 	/*
 	 * This routine is called against possible nodes.
-	 * But it's BUG to call kmalloc() against offline node.
+	 * But it's BUG to call kदो_स्मृति() against offline node.
 	 *
-	 * TODO: this routine can waste much memory for nodes which will
+	 * TODO: this routine can waste much memory क्रम nodes which will
 	 *       never be onlined. It's better to use memory hotplug callback
 	 *       function.
 	 */
-	if (!node_state(node, N_NORMAL_MEMORY))
-		tmp = -1;
-	pn = kzalloc_node(sizeof(*pn), GFP_KERNEL, tmp);
-	if (!pn)
-		return 1;
+	अगर (!node_state(node, N_NORMAL_MEMORY))
+		पंचांगp = -1;
+	pn = kzalloc_node(माप(*pn), GFP_KERNEL, पंचांगp);
+	अगर (!pn)
+		वापस 1;
 
-	pn->lruvec_stat_local = alloc_percpu_gfp(struct lruvec_stat,
+	pn->lruvec_stat_local = alloc_percpu_gfp(काष्ठा lruvec_stat,
 						 GFP_KERNEL_ACCOUNT);
-	if (!pn->lruvec_stat_local) {
-		kfree(pn);
-		return 1;
-	}
+	अगर (!pn->lruvec_stat_local) अणु
+		kमुक्त(pn);
+		वापस 1;
+	पूर्ण
 
-	pn->lruvec_stat_cpu = alloc_percpu_gfp(struct batched_lruvec_stat,
+	pn->lruvec_stat_cpu = alloc_percpu_gfp(काष्ठा batched_lruvec_stat,
 					       GFP_KERNEL_ACCOUNT);
-	if (!pn->lruvec_stat_cpu) {
-		free_percpu(pn->lruvec_stat_local);
-		kfree(pn);
-		return 1;
-	}
+	अगर (!pn->lruvec_stat_cpu) अणु
+		मुक्त_percpu(pn->lruvec_stat_local);
+		kमुक्त(pn);
+		वापस 1;
+	पूर्ण
 
 	lruvec_init(&pn->lruvec);
 	pn->usage_in_excess = 0;
@@ -4959,195 +4960,195 @@ static int alloc_mem_cgroup_per_node_info(struct mem_cgroup *memcg, int node)
 	pn->memcg = memcg;
 
 	memcg->nodeinfo[node] = pn;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void free_mem_cgroup_per_node_info(struct mem_cgroup *memcg, int node)
-{
-	struct mem_cgroup_per_node *pn = memcg->nodeinfo[node];
+अटल व्योम मुक्त_mem_cgroup_per_node_info(काष्ठा mem_cgroup *memcg, पूर्णांक node)
+अणु
+	काष्ठा mem_cgroup_per_node *pn = memcg->nodeinfo[node];
 
-	if (!pn)
-		return;
+	अगर (!pn)
+		वापस;
 
-	free_percpu(pn->lruvec_stat_cpu);
-	free_percpu(pn->lruvec_stat_local);
-	kfree(pn);
-}
+	मुक्त_percpu(pn->lruvec_stat_cpu);
+	मुक्त_percpu(pn->lruvec_stat_local);
+	kमुक्त(pn);
+पूर्ण
 
-static void __mem_cgroup_free(struct mem_cgroup *memcg)
-{
-	int node;
+अटल व्योम __mem_cgroup_मुक्त(काष्ठा mem_cgroup *memcg)
+अणु
+	पूर्णांक node;
 
-	for_each_node(node)
-		free_mem_cgroup_per_node_info(memcg, node);
-	free_percpu(memcg->vmstats_percpu);
-	kfree(memcg);
-}
+	क्रम_each_node(node)
+		मुक्त_mem_cgroup_per_node_info(memcg, node);
+	मुक्त_percpu(memcg->vmstats_percpu);
+	kमुक्त(memcg);
+पूर्ण
 
-static void mem_cgroup_free(struct mem_cgroup *memcg)
-{
-	int cpu;
+अटल व्योम mem_cgroup_मुक्त(काष्ठा mem_cgroup *memcg)
+अणु
+	पूर्णांक cpu;
 
-	memcg_wb_domain_exit(memcg);
+	memcg_wb_करोमुख्य_निकास(memcg);
 	/*
 	 * Flush percpu lruvec stats to guarantee the value
 	 * correctness on parent's and all ancestor levels.
 	 */
-	for_each_online_cpu(cpu)
+	क्रम_each_online_cpu(cpu)
 		memcg_flush_lruvec_page_state(memcg, cpu);
-	__mem_cgroup_free(memcg);
-}
+	__mem_cgroup_मुक्त(memcg);
+पूर्ण
 
-static struct mem_cgroup *mem_cgroup_alloc(void)
-{
-	struct mem_cgroup *memcg;
-	unsigned int size;
-	int node;
-	int __maybe_unused i;
-	long error = -ENOMEM;
+अटल काष्ठा mem_cgroup *mem_cgroup_alloc(व्योम)
+अणु
+	काष्ठा mem_cgroup *memcg;
+	अचिन्हित पूर्णांक size;
+	पूर्णांक node;
+	पूर्णांक __maybe_unused i;
+	दीर्घ error = -ENOMEM;
 
-	size = sizeof(struct mem_cgroup);
-	size += nr_node_ids * sizeof(struct mem_cgroup_per_node *);
+	size = माप(काष्ठा mem_cgroup);
+	size += nr_node_ids * माप(काष्ठा mem_cgroup_per_node *);
 
 	memcg = kzalloc(size, GFP_KERNEL);
-	if (!memcg)
-		return ERR_PTR(error);
+	अगर (!memcg)
+		वापस ERR_PTR(error);
 
-	memcg->id.id = idr_alloc(&mem_cgroup_idr, NULL,
+	memcg->id.id = idr_alloc(&mem_cgroup_idr, शून्य,
 				 1, MEM_CGROUP_ID_MAX,
 				 GFP_KERNEL);
-	if (memcg->id.id < 0) {
+	अगर (memcg->id.id < 0) अणु
 		error = memcg->id.id;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	memcg->vmstats_percpu = alloc_percpu_gfp(struct memcg_vmstats_percpu,
+	memcg->vmstats_percpu = alloc_percpu_gfp(काष्ठा memcg_vmstats_percpu,
 						 GFP_KERNEL_ACCOUNT);
-	if (!memcg->vmstats_percpu)
-		goto fail;
+	अगर (!memcg->vmstats_percpu)
+		जाओ fail;
 
-	for_each_node(node)
-		if (alloc_mem_cgroup_per_node_info(memcg, node))
-			goto fail;
+	क्रम_each_node(node)
+		अगर (alloc_mem_cgroup_per_node_info(memcg, node))
+			जाओ fail;
 
-	if (memcg_wb_domain_init(memcg, GFP_KERNEL))
-		goto fail;
+	अगर (memcg_wb_करोमुख्य_init(memcg, GFP_KERNEL))
+		जाओ fail;
 
 	INIT_WORK(&memcg->high_work, high_work_func);
-	INIT_LIST_HEAD(&memcg->oom_notify);
+	INIT_LIST_HEAD(&memcg->oom_notअगरy);
 	mutex_init(&memcg->thresholds_lock);
 	spin_lock_init(&memcg->move_lock);
 	vmpressure_init(&memcg->vmpressure);
 	INIT_LIST_HEAD(&memcg->event_list);
 	spin_lock_init(&memcg->event_list_lock);
-	memcg->socket_pressure = jiffies;
-#ifdef CONFIG_MEMCG_KMEM
+	memcg->socket_pressure = jअगरfies;
+#अगर_घोषित CONFIG_MEMCG_KMEM
 	memcg->kmemcg_id = -1;
 	INIT_LIST_HEAD(&memcg->objcg_list);
-#endif
-#ifdef CONFIG_CGROUP_WRITEBACK
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_CGROUP_WRITEBACK
 	INIT_LIST_HEAD(&memcg->cgwb_list);
-	for (i = 0; i < MEMCG_CGWB_FRN_CNT; i++)
-		memcg->cgwb_frn[i].done =
-			__WB_COMPLETION_INIT(&memcg_cgwb_frn_waitq);
-#endif
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+	क्रम (i = 0; i < MEMCG_CGWB_FRN_CNT; i++)
+		memcg->cgwb_frn[i].करोne =
+			__WB_COMPLETION_INIT(&memcg_cgwb_frn_रुकोq);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
 	spin_lock_init(&memcg->deferred_split_queue.split_queue_lock);
 	INIT_LIST_HEAD(&memcg->deferred_split_queue.split_queue);
 	memcg->deferred_split_queue.split_queue_len = 0;
-#endif
+#पूर्ण_अगर
 	idr_replace(&mem_cgroup_idr, memcg, memcg->id.id);
-	return memcg;
+	वापस memcg;
 fail:
-	mem_cgroup_id_remove(memcg);
-	__mem_cgroup_free(memcg);
-	return ERR_PTR(error);
-}
+	mem_cgroup_id_हटाओ(memcg);
+	__mem_cgroup_मुक्त(memcg);
+	वापस ERR_PTR(error);
+पूर्ण
 
-static struct cgroup_subsys_state * __ref
-mem_cgroup_css_alloc(struct cgroup_subsys_state *parent_css)
-{
-	struct mem_cgroup *parent = mem_cgroup_from_css(parent_css);
-	struct mem_cgroup *memcg, *old_memcg;
-	long error = -ENOMEM;
+अटल काष्ठा cgroup_subsys_state * __ref
+mem_cgroup_css_alloc(काष्ठा cgroup_subsys_state *parent_css)
+अणु
+	काष्ठा mem_cgroup *parent = mem_cgroup_from_css(parent_css);
+	काष्ठा mem_cgroup *memcg, *old_memcg;
+	दीर्घ error = -ENOMEM;
 
 	old_memcg = set_active_memcg(parent);
 	memcg = mem_cgroup_alloc();
 	set_active_memcg(old_memcg);
-	if (IS_ERR(memcg))
-		return ERR_CAST(memcg);
+	अगर (IS_ERR(memcg))
+		वापस ERR_CAST(memcg);
 
 	page_counter_set_high(&memcg->memory, PAGE_COUNTER_MAX);
 	memcg->soft_limit = PAGE_COUNTER_MAX;
 	page_counter_set_high(&memcg->swap, PAGE_COUNTER_MAX);
-	if (parent) {
+	अगर (parent) अणु
 		memcg->swappiness = mem_cgroup_swappiness(parent);
-		memcg->oom_kill_disable = parent->oom_kill_disable;
+		memcg->oom_समाप्त_disable = parent->oom_समाप्त_disable;
 
 		page_counter_init(&memcg->memory, &parent->memory);
 		page_counter_init(&memcg->swap, &parent->swap);
 		page_counter_init(&memcg->kmem, &parent->kmem);
 		page_counter_init(&memcg->tcpmem, &parent->tcpmem);
-	} else {
-		page_counter_init(&memcg->memory, NULL);
-		page_counter_init(&memcg->swap, NULL);
-		page_counter_init(&memcg->kmem, NULL);
-		page_counter_init(&memcg->tcpmem, NULL);
+	पूर्ण अन्यथा अणु
+		page_counter_init(&memcg->memory, शून्य);
+		page_counter_init(&memcg->swap, शून्य);
+		page_counter_init(&memcg->kmem, शून्य);
+		page_counter_init(&memcg->tcpmem, शून्य);
 
 		root_mem_cgroup = memcg;
-		return &memcg->css;
-	}
+		वापस &memcg->css;
+	पूर्ण
 
-	/* The following stuff does not apply to the root */
+	/* The following stuff करोes not apply to the root */
 	error = memcg_online_kmem(memcg);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 
-	if (cgroup_subsys_on_dfl(memory_cgrp_subsys) && !cgroup_memory_nosocket)
-		static_branch_inc(&memcg_sockets_enabled_key);
+	अगर (cgroup_subsys_on_dfl(memory_cgrp_subsys) && !cgroup_memory_nosocket)
+		अटल_branch_inc(&memcg_sockets_enabled_key);
 
-	return &memcg->css;
+	वापस &memcg->css;
 fail:
-	mem_cgroup_id_remove(memcg);
-	mem_cgroup_free(memcg);
-	return ERR_PTR(error);
-}
+	mem_cgroup_id_हटाओ(memcg);
+	mem_cgroup_मुक्त(memcg);
+	वापस ERR_PTR(error);
+पूर्ण
 
-static int mem_cgroup_css_online(struct cgroup_subsys_state *css)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+अटल पूर्णांक mem_cgroup_css_online(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
 
 	/*
-	 * A memcg must be visible for expand_shrinker_info()
-	 * by the time the maps are allocated. So, we allocate maps
-	 * here, when for_each_mem_cgroup() can't skip it.
+	 * A memcg must be visible क्रम expand_shrinker_info()
+	 * by the समय the maps are allocated. So, we allocate maps
+	 * here, when क्रम_each_mem_cgroup() can't skip it.
 	 */
-	if (alloc_shrinker_info(memcg)) {
-		mem_cgroup_id_remove(memcg);
-		return -ENOMEM;
-	}
+	अगर (alloc_shrinker_info(memcg)) अणु
+		mem_cgroup_id_हटाओ(memcg);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Online state pins memcg ID, memcg ID pins CSS */
 	refcount_set(&memcg->id.ref, 1);
 	css_get(css);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mem_cgroup_css_offline(struct cgroup_subsys_state *css)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
-	struct mem_cgroup_event *event, *tmp;
+अटल व्योम mem_cgroup_css_offline(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
+	काष्ठा mem_cgroup_event *event, *पंचांगp;
 
 	/*
-	 * Unregister events and notify userspace.
-	 * Notify userspace about cgroup removing only after rmdir of cgroup
-	 * directory to avoid race between userspace and kernelspace.
+	 * Unरेजिस्टर events and notअगरy userspace.
+	 * Notअगरy userspace about cgroup removing only after सूची_हटाओ of cgroup
+	 * directory to aव्योम race between userspace and kernelspace.
 	 */
 	spin_lock(&memcg->event_list_lock);
-	list_for_each_entry_safe(event, tmp, &memcg->event_list, list) {
+	list_क्रम_each_entry_safe(event, पंचांगp, &memcg->event_list, list) अणु
 		list_del_init(&event->list);
-		schedule_work(&event->remove);
-	}
+		schedule_work(&event->हटाओ);
+	पूर्ण
 	spin_unlock(&memcg->event_list_lock);
 
 	page_counter_set_min(&memcg->memory, 0);
@@ -5160,44 +5161,44 @@ static void mem_cgroup_css_offline(struct cgroup_subsys_state *css)
 	drain_all_stock(memcg);
 
 	mem_cgroup_id_put(memcg);
-}
+पूर्ण
 
-static void mem_cgroup_css_released(struct cgroup_subsys_state *css)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+अटल व्योम mem_cgroup_css_released(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
 
 	invalidate_reclaim_iterators(memcg);
-}
+पूर्ण
 
-static void mem_cgroup_css_free(struct cgroup_subsys_state *css)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
-	int __maybe_unused i;
+अटल व्योम mem_cgroup_css_मुक्त(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
+	पूर्णांक __maybe_unused i;
 
-#ifdef CONFIG_CGROUP_WRITEBACK
-	for (i = 0; i < MEMCG_CGWB_FRN_CNT; i++)
-		wb_wait_for_completion(&memcg->cgwb_frn[i].done);
-#endif
-	if (cgroup_subsys_on_dfl(memory_cgrp_subsys) && !cgroup_memory_nosocket)
-		static_branch_dec(&memcg_sockets_enabled_key);
+#अगर_घोषित CONFIG_CGROUP_WRITEBACK
+	क्रम (i = 0; i < MEMCG_CGWB_FRN_CNT; i++)
+		wb_रुको_क्रम_completion(&memcg->cgwb_frn[i].करोne);
+#पूर्ण_अगर
+	अगर (cgroup_subsys_on_dfl(memory_cgrp_subsys) && !cgroup_memory_nosocket)
+		अटल_branch_dec(&memcg_sockets_enabled_key);
 
-	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys) && memcg->tcpmem_active)
-		static_branch_dec(&memcg_sockets_enabled_key);
+	अगर (!cgroup_subsys_on_dfl(memory_cgrp_subsys) && memcg->tcpmem_active)
+		अटल_branch_dec(&memcg_sockets_enabled_key);
 
 	vmpressure_cleanup(&memcg->vmpressure);
 	cancel_work_sync(&memcg->high_work);
-	mem_cgroup_remove_from_trees(memcg);
-	free_shrinker_info(memcg);
-	memcg_free_kmem(memcg);
-	mem_cgroup_free(memcg);
-}
+	mem_cgroup_हटाओ_from_trees(memcg);
+	मुक्त_shrinker_info(memcg);
+	memcg_मुक्त_kmem(memcg);
+	mem_cgroup_मुक्त(memcg);
+पूर्ण
 
 /**
  * mem_cgroup_css_reset - reset the states of a mem_cgroup
  * @css: the target css
  *
  * Reset the states of the mem_cgroup associated with @css.  This is
- * invoked when the userland requests disabling on the default hierarchy
+ * invoked when the userland requests disabling on the शेष hierarchy
  * but the memcg is pinned through dependency.  The memcg should stop
  * applying policies and should revert to the vanilla state as it may be
  * made visible again.
@@ -5205,9 +5206,9 @@ static void mem_cgroup_css_free(struct cgroup_subsys_state *css)
  * The current implementation only resets the essential configurations.
  * This needs to be expanded to cover all the visible parts.
  */
-static void mem_cgroup_css_reset(struct cgroup_subsys_state *css)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+अटल व्योम mem_cgroup_css_reset(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
 
 	page_counter_set_max(&memcg->memory, PAGE_COUNTER_MAX);
 	page_counter_set_max(&memcg->swap, PAGE_COUNTER_MAX);
@@ -5218,149 +5219,149 @@ static void mem_cgroup_css_reset(struct cgroup_subsys_state *css)
 	page_counter_set_high(&memcg->memory, PAGE_COUNTER_MAX);
 	memcg->soft_limit = PAGE_COUNTER_MAX;
 	page_counter_set_high(&memcg->swap, PAGE_COUNTER_MAX);
-	memcg_wb_domain_size_changed(memcg);
-}
+	memcg_wb_करोमुख्य_size_changed(memcg);
+पूर्ण
 
-static void mem_cgroup_css_rstat_flush(struct cgroup_subsys_state *css, int cpu)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
-	struct mem_cgroup *parent = parent_mem_cgroup(memcg);
-	struct memcg_vmstats_percpu *statc;
-	long delta, v;
-	int i;
+अटल व्योम mem_cgroup_css_rstat_flush(काष्ठा cgroup_subsys_state *css, पूर्णांक cpu)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
+	काष्ठा mem_cgroup *parent = parent_mem_cgroup(memcg);
+	काष्ठा memcg_vmstats_percpu *statc;
+	दीर्घ delta, v;
+	पूर्णांक i;
 
 	statc = per_cpu_ptr(memcg->vmstats_percpu, cpu);
 
-	for (i = 0; i < MEMCG_NR_STAT; i++) {
+	क्रम (i = 0; i < MEMCG_NR_STAT; i++) अणु
 		/*
 		 * Collect the aggregated propagation counts of groups
 		 * below us. We're in a per-cpu loop here and this is
 		 * a global counter, so the first cycle will get them.
 		 */
 		delta = memcg->vmstats.state_pending[i];
-		if (delta)
+		अगर (delta)
 			memcg->vmstats.state_pending[i] = 0;
 
 		/* Add CPU changes on this level since the last flush */
 		v = READ_ONCE(statc->state[i]);
-		if (v != statc->state_prev[i]) {
+		अगर (v != statc->state_prev[i]) अणु
 			delta += v - statc->state_prev[i];
 			statc->state_prev[i] = v;
-		}
+		पूर्ण
 
-		if (!delta)
-			continue;
+		अगर (!delta)
+			जारी;
 
 		/* Aggregate counts on this level and propagate upwards */
 		memcg->vmstats.state[i] += delta;
-		if (parent)
+		अगर (parent)
 			parent->vmstats.state_pending[i] += delta;
-	}
+	पूर्ण
 
-	for (i = 0; i < NR_VM_EVENT_ITEMS; i++) {
+	क्रम (i = 0; i < NR_VM_EVENT_ITEMS; i++) अणु
 		delta = memcg->vmstats.events_pending[i];
-		if (delta)
+		अगर (delta)
 			memcg->vmstats.events_pending[i] = 0;
 
 		v = READ_ONCE(statc->events[i]);
-		if (v != statc->events_prev[i]) {
+		अगर (v != statc->events_prev[i]) अणु
 			delta += v - statc->events_prev[i];
 			statc->events_prev[i] = v;
-		}
+		पूर्ण
 
-		if (!delta)
-			continue;
+		अगर (!delta)
+			जारी;
 
 		memcg->vmstats.events[i] += delta;
-		if (parent)
+		अगर (parent)
 			parent->vmstats.events_pending[i] += delta;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_MMU
-/* Handlers for move charge at task migration. */
-static int mem_cgroup_do_precharge(unsigned long count)
-{
-	int ret;
+#अगर_घोषित CONFIG_MMU
+/* Handlers क्रम move अक्षरge at task migration. */
+अटल पूर्णांक mem_cgroup_करो_preअक्षरge(अचिन्हित दीर्घ count)
+अणु
+	पूर्णांक ret;
 
-	/* Try a single bulk charge without reclaim first, kswapd may wake */
-	ret = try_charge(mc.to, GFP_KERNEL & ~__GFP_DIRECT_RECLAIM, count);
-	if (!ret) {
-		mc.precharge += count;
-		return ret;
-	}
+	/* Try a single bulk अक्षरge without reclaim first, kswapd may wake */
+	ret = try_अक्षरge(mc.to, GFP_KERNEL & ~__GFP_सूचीECT_RECLAIM, count);
+	अगर (!ret) अणु
+		mc.preअक्षरge += count;
+		वापस ret;
+	पूर्ण
 
-	/* Try charges one by one with reclaim, but do not retry */
-	while (count--) {
-		ret = try_charge(mc.to, GFP_KERNEL | __GFP_NORETRY, 1);
-		if (ret)
-			return ret;
-		mc.precharge++;
+	/* Try अक्षरges one by one with reclaim, but करो not retry */
+	जबतक (count--) अणु
+		ret = try_अक्षरge(mc.to, GFP_KERNEL | __GFP_NORETRY, 1);
+		अगर (ret)
+			वापस ret;
+		mc.preअक्षरge++;
 		cond_resched();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-union mc_target {
-	struct page	*page;
+जोड़ mc_target अणु
+	काष्ठा page	*page;
 	swp_entry_t	ent;
-};
+पूर्ण;
 
-enum mc_target_type {
+क्रमागत mc_target_type अणु
 	MC_TARGET_NONE = 0,
 	MC_TARGET_PAGE,
 	MC_TARGET_SWAP,
 	MC_TARGET_DEVICE,
-};
+पूर्ण;
 
-static struct page *mc_handle_present_pte(struct vm_area_struct *vma,
-						unsigned long addr, pte_t ptent)
-{
-	struct page *page = vm_normal_page(vma, addr, ptent);
+अटल काष्ठा page *mc_handle_present_pte(काष्ठा vm_area_काष्ठा *vma,
+						अचिन्हित दीर्घ addr, pte_t ptent)
+अणु
+	काष्ठा page *page = vm_normal_page(vma, addr, ptent);
 
-	if (!page || !page_mapped(page))
-		return NULL;
-	if (PageAnon(page)) {
-		if (!(mc.flags & MOVE_ANON))
-			return NULL;
-	} else {
-		if (!(mc.flags & MOVE_FILE))
-			return NULL;
-	}
-	if (!get_page_unless_zero(page))
-		return NULL;
+	अगर (!page || !page_mapped(page))
+		वापस शून्य;
+	अगर (PageAnon(page)) अणु
+		अगर (!(mc.flags & MOVE_ANON))
+			वापस शून्य;
+	पूर्ण अन्यथा अणु
+		अगर (!(mc.flags & MOVE_खाता))
+			वापस शून्य;
+	पूर्ण
+	अगर (!get_page_unless_zero(page))
+		वापस शून्य;
 
-	return page;
-}
+	वापस page;
+पूर्ण
 
-#if defined(CONFIG_SWAP) || defined(CONFIG_DEVICE_PRIVATE)
-static struct page *mc_handle_swap_pte(struct vm_area_struct *vma,
+#अगर defined(CONFIG_SWAP) || defined(CONFIG_DEVICE_PRIVATE)
+अटल काष्ठा page *mc_handle_swap_pte(काष्ठा vm_area_काष्ठा *vma,
 			pte_t ptent, swp_entry_t *entry)
-{
-	struct page *page = NULL;
+अणु
+	काष्ठा page *page = शून्य;
 	swp_entry_t ent = pte_to_swp_entry(ptent);
 
-	if (!(mc.flags & MOVE_ANON))
-		return NULL;
+	अगर (!(mc.flags & MOVE_ANON))
+		वापस शून्य;
 
 	/*
-	 * Handle MEMORY_DEVICE_PRIVATE which are ZONE_DEVICE page belonging to
+	 * Handle MEMORY_DEVICE_PRIVATE which are ZONE_DEVICE page beदीर्घing to
 	 * a device and because they are not accessible by CPU they are store
 	 * as special swap entry in the CPU page table.
 	 */
-	if (is_device_private_entry(ent)) {
-		page = device_private_entry_to_page(ent);
+	अगर (is_device_निजी_entry(ent)) अणु
+		page = device_निजी_entry_to_page(ent);
 		/*
 		 * MEMORY_DEVICE_PRIVATE means ZONE_DEVICE page and which have
-		 * a refcount of 1 when free (unlike normal page)
+		 * a refcount of 1 when मुक्त (unlike normal page)
 		 */
-		if (!page_ref_add_unless(page, 1, 1))
-			return NULL;
-		return page;
-	}
+		अगर (!page_ref_add_unless(page, 1, 1))
+			वापस शून्य;
+		वापस page;
+	पूर्ण
 
-	if (non_swap_entry(ent))
-		return NULL;
+	अगर (non_swap_entry(ent))
+		वापस शून्य;
 
 	/*
 	 * Because lookup_swap_cache() updates some statistics counter,
@@ -5369,51 +5370,51 @@ static struct page *mc_handle_swap_pte(struct vm_area_struct *vma,
 	page = find_get_page(swap_address_space(ent), swp_offset(ent));
 	entry->val = ent.val;
 
-	return page;
-}
-#else
-static struct page *mc_handle_swap_pte(struct vm_area_struct *vma,
+	वापस page;
+पूर्ण
+#अन्यथा
+अटल काष्ठा page *mc_handle_swap_pte(काष्ठा vm_area_काष्ठा *vma,
 			pte_t ptent, swp_entry_t *entry)
-{
-	return NULL;
-}
-#endif
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-static struct page *mc_handle_file_pte(struct vm_area_struct *vma,
-			unsigned long addr, pte_t ptent, swp_entry_t *entry)
-{
-	if (!vma->vm_file) /* anonymous vma */
-		return NULL;
-	if (!(mc.flags & MOVE_FILE))
-		return NULL;
+अटल काष्ठा page *mc_handle_file_pte(काष्ठा vm_area_काष्ठा *vma,
+			अचिन्हित दीर्घ addr, pte_t ptent, swp_entry_t *entry)
+अणु
+	अगर (!vma->vm_file) /* anonymous vma */
+		वापस शून्य;
+	अगर (!(mc.flags & MOVE_खाता))
+		वापस शून्य;
 
-	/* page is moved even if it's not RSS of this task(page-faulted). */
-	/* shmem/tmpfs may report page out on swap: account for that too. */
-	return find_get_incore_page(vma->vm_file->f_mapping,
+	/* page is moved even अगर it's not RSS of this task(page-faulted). */
+	/* shmem/पंचांगpfs may report page out on swap: account क्रम that too. */
+	वापस find_get_incore_page(vma->vm_file->f_mapping,
 			linear_page_index(vma, addr));
-}
+पूर्ण
 
 /**
  * mem_cgroup_move_account - move account of the page
  * @page: the page
- * @compound: charge the page as compound or small page
+ * @compound: अक्षरge the page as compound or small page
  * @from: mem_cgroup which the page is moved from.
  * @to:	mem_cgroup which the page is moved to. @from != @to.
  *
  * The caller must make sure the page is not on LRU (isolate_page() is useful.)
  *
- * This function doesn't do "charge" to new cgroup and doesn't do "uncharge"
+ * This function करोesn't do "charge" to new cgroup and doesn't करो "uncharge"
  * from old cgroup.
  */
-static int mem_cgroup_move_account(struct page *page,
+अटल पूर्णांक mem_cgroup_move_account(काष्ठा page *page,
 				   bool compound,
-				   struct mem_cgroup *from,
-				   struct mem_cgroup *to)
-{
-	struct lruvec *from_vec, *to_vec;
-	struct pglist_data *pgdat;
-	unsigned int nr_pages = compound ? thp_nr_pages(page) : 1;
-	int ret;
+				   काष्ठा mem_cgroup *from,
+				   काष्ठा mem_cgroup *to)
+अणु
+	काष्ठा lruvec *from_vec, *to_vec;
+	काष्ठा pglist_data *pgdat;
+	अचिन्हित पूर्णांक nr_pages = compound ? thp_nr_pages(page) : 1;
+	पूर्णांक ret;
 
 	VM_BUG_ON(from == to);
 	VM_BUG_ON_PAGE(PageLRU(page), page);
@@ -5421,15 +5422,15 @@ static int mem_cgroup_move_account(struct page *page,
 
 	/*
 	 * Prevent mem_cgroup_migrate() from looking at
-	 * page's memory cgroup of its source page while we change it.
+	 * page's memory cgroup of its source page जबतक we change it.
 	 */
 	ret = -EBUSY;
-	if (!trylock_page(page))
-		goto out;
+	अगर (!trylock_page(page))
+		जाओ out;
 
 	ret = -EINVAL;
-	if (page_memcg(page) != from)
-		goto out_unlock;
+	अगर (page_memcg(page) != from)
+		जाओ out_unlock;
 
 	pgdat = page_pgdat(page);
 	from_vec = mem_cgroup_lruvec(from, pgdat);
@@ -5437,103 +5438,103 @@ static int mem_cgroup_move_account(struct page *page,
 
 	lock_page_memcg(page);
 
-	if (PageAnon(page)) {
-		if (page_mapped(page)) {
+	अगर (PageAnon(page)) अणु
+		अगर (page_mapped(page)) अणु
 			__mod_lruvec_state(from_vec, NR_ANON_MAPPED, -nr_pages);
 			__mod_lruvec_state(to_vec, NR_ANON_MAPPED, nr_pages);
-			if (PageTransHuge(page)) {
+			अगर (PageTransHuge(page)) अणु
 				__mod_lruvec_state(from_vec, NR_ANON_THPS,
 						   -nr_pages);
 				__mod_lruvec_state(to_vec, NR_ANON_THPS,
 						   nr_pages);
-			}
-		}
-	} else {
-		__mod_lruvec_state(from_vec, NR_FILE_PAGES, -nr_pages);
-		__mod_lruvec_state(to_vec, NR_FILE_PAGES, nr_pages);
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		__mod_lruvec_state(from_vec, NR_खाता_PAGES, -nr_pages);
+		__mod_lruvec_state(to_vec, NR_खाता_PAGES, nr_pages);
 
-		if (PageSwapBacked(page)) {
+		अगर (PageSwapBacked(page)) अणु
 			__mod_lruvec_state(from_vec, NR_SHMEM, -nr_pages);
 			__mod_lruvec_state(to_vec, NR_SHMEM, nr_pages);
-		}
+		पूर्ण
 
-		if (page_mapped(page)) {
-			__mod_lruvec_state(from_vec, NR_FILE_MAPPED, -nr_pages);
-			__mod_lruvec_state(to_vec, NR_FILE_MAPPED, nr_pages);
-		}
+		अगर (page_mapped(page)) अणु
+			__mod_lruvec_state(from_vec, NR_खाता_MAPPED, -nr_pages);
+			__mod_lruvec_state(to_vec, NR_खाता_MAPPED, nr_pages);
+		पूर्ण
 
-		if (PageDirty(page)) {
-			struct address_space *mapping = page_mapping(page);
+		अगर (PageDirty(page)) अणु
+			काष्ठा address_space *mapping = page_mapping(page);
 
-			if (mapping_can_writeback(mapping)) {
-				__mod_lruvec_state(from_vec, NR_FILE_DIRTY,
+			अगर (mapping_can_ग_लिखोback(mapping)) अणु
+				__mod_lruvec_state(from_vec, NR_खाता_सूचीTY,
 						   -nr_pages);
-				__mod_lruvec_state(to_vec, NR_FILE_DIRTY,
+				__mod_lruvec_state(to_vec, NR_खाता_सूचीTY,
 						   nr_pages);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (PageWriteback(page)) {
+	अगर (PageWriteback(page)) अणु
 		__mod_lruvec_state(from_vec, NR_WRITEBACK, -nr_pages);
 		__mod_lruvec_state(to_vec, NR_WRITEBACK, nr_pages);
-	}
+	पूर्ण
 
 	/*
-	 * All state has been migrated, let's switch to the new memcg.
+	 * All state has been migrated, let's चयन to the new memcg.
 	 *
 	 * It is safe to change page's memcg here because the page
-	 * is referenced, charged, isolated, and locked: we can't race
-	 * with (un)charging, migration, LRU putback, or anything else
+	 * is referenced, अक्षरged, isolated, and locked: we can't race
+	 * with (un)अक्षरging, migration, LRU putback, or anything अन्यथा
 	 * that would rely on a stable page's memory cgroup.
 	 *
 	 * Note that lock_page_memcg is a memcg lock, not a page lock,
-	 * to save space. As soon as we switch page's memory cgroup to a
+	 * to save space. As soon as we चयन page's memory cgroup to a
 	 * new memcg that isn't locked, the above state can change
-	 * concurrently again. Make sure we're truly done with it.
+	 * concurrently again. Make sure we're truly करोne with it.
 	 */
 	smp_mb();
 
 	css_get(&to->css);
 	css_put(&from->css);
 
-	page->memcg_data = (unsigned long)to;
+	page->memcg_data = (अचिन्हित दीर्घ)to;
 
 	__unlock_page_memcg(from);
 
 	ret = 0;
 
 	local_irq_disable();
-	mem_cgroup_charge_statistics(to, page, nr_pages);
+	mem_cgroup_अक्षरge_statistics(to, page, nr_pages);
 	memcg_check_events(to, page);
-	mem_cgroup_charge_statistics(from, page, -nr_pages);
+	mem_cgroup_अक्षरge_statistics(from, page, -nr_pages);
 	memcg_check_events(from, page);
 	local_irq_enable();
 out_unlock:
 	unlock_page(page);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * get_mctgt_type - get target type of moving charge
- * @vma: the vma the pte to be checked belongs
+ * get_mctgt_type - get target type of moving अक्षरge
+ * @vma: the vma the pte to be checked beदीर्घs
  * @addr: the address corresponding to the pte to be checked
  * @ptent: the pte to be checked
- * @target: the pointer the target page or swap ent will be stored(can be NULL)
+ * @target: the poपूर्णांकer the target page or swap ent will be stored(can be शून्य)
  *
  * Returns
- *   0(MC_TARGET_NONE): if the pte is not a target for move charge.
- *   1(MC_TARGET_PAGE): if the page corresponding to this pte is a target for
- *     move charge. if @target is not NULL, the page is stored in target->page
+ *   0(MC_TARGET_NONE): अगर the pte is not a target क्रम move अक्षरge.
+ *   1(MC_TARGET_PAGE): अगर the page corresponding to this pte is a target क्रम
+ *     move अक्षरge. अगर @target is not शून्य, the page is stored in target->page
  *     with extra refcnt got(Callers should handle it).
- *   2(MC_TARGET_SWAP): if the swap entry corresponding to this pte is a
- *     target for charge migration. if @target is not NULL, the entry is stored
+ *   2(MC_TARGET_SWAP): अगर the swap entry corresponding to this pte is a
+ *     target क्रम अक्षरge migration. अगर @target is not शून्य, the entry is stored
  *     in target->ent.
  *   3(MC_TARGET_DEVICE): like MC_TARGET_PAGE  but page is MEMORY_DEVICE_PRIVATE
  *     (so ZONE_DEVICE page and thus not on the lru).
- *     For now we such page is charge like a regular page would be as for all
- *     intent and purposes it is just special memory taking the place of a
+ *     For now we such page is अक्षरge like a regular page would be as क्रम all
+ *     पूर्णांकent and purposes it is just special memory taking the place of a
  *     regular page.
  *
  *     See Documentations/vm/hmm.txt and include/linux/hmm.h
@@ -5541,260 +5542,260 @@ out:
  * Called with pte lock held.
  */
 
-static enum mc_target_type get_mctgt_type(struct vm_area_struct *vma,
-		unsigned long addr, pte_t ptent, union mc_target *target)
-{
-	struct page *page = NULL;
-	enum mc_target_type ret = MC_TARGET_NONE;
-	swp_entry_t ent = { .val = 0 };
+अटल क्रमागत mc_target_type get_mctgt_type(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ addr, pte_t ptent, जोड़ mc_target *target)
+अणु
+	काष्ठा page *page = शून्य;
+	क्रमागत mc_target_type ret = MC_TARGET_NONE;
+	swp_entry_t ent = अणु .val = 0 पूर्ण;
 
-	if (pte_present(ptent))
+	अगर (pte_present(ptent))
 		page = mc_handle_present_pte(vma, addr, ptent);
-	else if (is_swap_pte(ptent))
+	अन्यथा अगर (is_swap_pte(ptent))
 		page = mc_handle_swap_pte(vma, ptent, &ent);
-	else if (pte_none(ptent))
+	अन्यथा अगर (pte_none(ptent))
 		page = mc_handle_file_pte(vma, addr, ptent, &ent);
 
-	if (!page && !ent.val)
-		return ret;
-	if (page) {
+	अगर (!page && !ent.val)
+		वापस ret;
+	अगर (page) अणु
 		/*
 		 * Do only loose check w/o serialization.
 		 * mem_cgroup_move_account() checks the page is valid or
 		 * not under LRU exclusion.
 		 */
-		if (page_memcg(page) == mc.from) {
+		अगर (page_memcg(page) == mc.from) अणु
 			ret = MC_TARGET_PAGE;
-			if (is_device_private_page(page))
+			अगर (is_device_निजी_page(page))
 				ret = MC_TARGET_DEVICE;
-			if (target)
+			अगर (target)
 				target->page = page;
-		}
-		if (!ret || !target)
+		पूर्ण
+		अगर (!ret || !target)
 			put_page(page);
-	}
+	पूर्ण
 	/*
-	 * There is a swap entry and a page doesn't exist or isn't charged.
+	 * There is a swap entry and a page करोesn't exist or isn't अक्षरged.
 	 * But we cannot move a tail-page in a THP.
 	 */
-	if (ent.val && !ret && (!page || !PageTransCompound(page)) &&
-	    mem_cgroup_id(mc.from) == lookup_swap_cgroup_id(ent)) {
+	अगर (ent.val && !ret && (!page || !PageTransCompound(page)) &&
+	    mem_cgroup_id(mc.from) == lookup_swap_cgroup_id(ent)) अणु
 		ret = MC_TARGET_SWAP;
-		if (target)
+		अगर (target)
 			target->ent = ent;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
 /*
- * We don't consider PMD mapped swapping or file mapped pages because THP does
- * not support them for now.
+ * We करोn't consider PMD mapped swapping or file mapped pages because THP करोes
+ * not support them क्रम now.
  * Caller should make sure that pmd_trans_huge(pmd) is true.
  */
-static enum mc_target_type get_mctgt_type_thp(struct vm_area_struct *vma,
-		unsigned long addr, pmd_t pmd, union mc_target *target)
-{
-	struct page *page = NULL;
-	enum mc_target_type ret = MC_TARGET_NONE;
+अटल क्रमागत mc_target_type get_mctgt_type_thp(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ addr, pmd_t pmd, जोड़ mc_target *target)
+अणु
+	काष्ठा page *page = शून्य;
+	क्रमागत mc_target_type ret = MC_TARGET_NONE;
 
-	if (unlikely(is_swap_pmd(pmd))) {
+	अगर (unlikely(is_swap_pmd(pmd))) अणु
 		VM_BUG_ON(thp_migration_supported() &&
 				  !is_pmd_migration_entry(pmd));
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	page = pmd_page(pmd);
 	VM_BUG_ON_PAGE(!page || !PageHead(page), page);
-	if (!(mc.flags & MOVE_ANON))
-		return ret;
-	if (page_memcg(page) == mc.from) {
+	अगर (!(mc.flags & MOVE_ANON))
+		वापस ret;
+	अगर (page_memcg(page) == mc.from) अणु
 		ret = MC_TARGET_PAGE;
-		if (target) {
+		अगर (target) अणु
 			get_page(page);
 			target->page = page;
-		}
-	}
-	return ret;
-}
-#else
-static inline enum mc_target_type get_mctgt_type_thp(struct vm_area_struct *vma,
-		unsigned long addr, pmd_t pmd, union mc_target *target)
-{
-	return MC_TARGET_NONE;
-}
-#endif
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत क्रमागत mc_target_type get_mctgt_type_thp(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ addr, pmd_t pmd, जोड़ mc_target *target)
+अणु
+	वापस MC_TARGET_NONE;
+पूर्ण
+#पूर्ण_अगर
 
-static int mem_cgroup_count_precharge_pte_range(pmd_t *pmd,
-					unsigned long addr, unsigned long end,
-					struct mm_walk *walk)
-{
-	struct vm_area_struct *vma = walk->vma;
+अटल पूर्णांक mem_cgroup_count_preअक्षरge_pte_range(pmd_t *pmd,
+					अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+					काष्ठा mm_walk *walk)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = walk->vma;
 	pte_t *pte;
 	spinlock_t *ptl;
 
 	ptl = pmd_trans_huge_lock(pmd, vma);
-	if (ptl) {
+	अगर (ptl) अणु
 		/*
-		 * Note their can not be MC_TARGET_DEVICE for now as we do not
+		 * Note their can not be MC_TARGET_DEVICE क्रम now as we करो not
 		 * support transparent huge page with MEMORY_DEVICE_PRIVATE but
 		 * this might change.
 		 */
-		if (get_mctgt_type_thp(vma, addr, *pmd, NULL) == MC_TARGET_PAGE)
-			mc.precharge += HPAGE_PMD_NR;
+		अगर (get_mctgt_type_thp(vma, addr, *pmd, शून्य) == MC_TARGET_PAGE)
+			mc.preअक्षरge += HPAGE_PMD_NR;
 		spin_unlock(ptl);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (pmd_trans_unstable(pmd))
-		return 0;
+	अगर (pmd_trans_unstable(pmd))
+		वापस 0;
 	pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
-	for (; addr != end; pte++, addr += PAGE_SIZE)
-		if (get_mctgt_type(vma, addr, *pte, NULL))
-			mc.precharge++;	/* increment precharge temporarily */
+	क्रम (; addr != end; pte++, addr += PAGE_SIZE)
+		अगर (get_mctgt_type(vma, addr, *pte, शून्य))
+			mc.preअक्षरge++;	/* increment preअक्षरge temporarily */
 	pte_unmap_unlock(pte - 1, ptl);
 	cond_resched();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mm_walk_ops precharge_walk_ops = {
-	.pmd_entry	= mem_cgroup_count_precharge_pte_range,
-};
+अटल स्थिर काष्ठा mm_walk_ops preअक्षरge_walk_ops = अणु
+	.pmd_entry	= mem_cgroup_count_preअक्षरge_pte_range,
+पूर्ण;
 
-static unsigned long mem_cgroup_count_precharge(struct mm_struct *mm)
-{
-	unsigned long precharge;
+अटल अचिन्हित दीर्घ mem_cgroup_count_preअक्षरge(काष्ठा mm_काष्ठा *mm)
+अणु
+	अचिन्हित दीर्घ preअक्षरge;
 
-	mmap_read_lock(mm);
-	walk_page_range(mm, 0, mm->highest_vm_end, &precharge_walk_ops, NULL);
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_lock(mm);
+	walk_page_range(mm, 0, mm->highest_vm_end, &preअक्षरge_walk_ops, शून्य);
+	mmap_पढ़ो_unlock(mm);
 
-	precharge = mc.precharge;
-	mc.precharge = 0;
+	preअक्षरge = mc.preअक्षरge;
+	mc.preअक्षरge = 0;
 
-	return precharge;
-}
+	वापस preअक्षरge;
+पूर्ण
 
-static int mem_cgroup_precharge_mc(struct mm_struct *mm)
-{
-	unsigned long precharge = mem_cgroup_count_precharge(mm);
+अटल पूर्णांक mem_cgroup_preअक्षरge_mc(काष्ठा mm_काष्ठा *mm)
+अणु
+	अचिन्हित दीर्घ preअक्षरge = mem_cgroup_count_preअक्षरge(mm);
 
 	VM_BUG_ON(mc.moving_task);
 	mc.moving_task = current;
-	return mem_cgroup_do_precharge(precharge);
-}
+	वापस mem_cgroup_करो_preअक्षरge(preअक्षरge);
+पूर्ण
 
-/* cancels all extra charges on mc.from and mc.to, and wakes up all waiters. */
-static void __mem_cgroup_clear_mc(void)
-{
-	struct mem_cgroup *from = mc.from;
-	struct mem_cgroup *to = mc.to;
+/* cancels all extra अक्षरges on mc.from and mc.to, and wakes up all रुकोers. */
+अटल व्योम __mem_cgroup_clear_mc(व्योम)
+अणु
+	काष्ठा mem_cgroup *from = mc.from;
+	काष्ठा mem_cgroup *to = mc.to;
 
-	/* we must uncharge all the leftover precharges from mc.to */
-	if (mc.precharge) {
-		cancel_charge(mc.to, mc.precharge);
-		mc.precharge = 0;
-	}
+	/* we must unअक्षरge all the leftover preअक्षरges from mc.to */
+	अगर (mc.preअक्षरge) अणु
+		cancel_अक्षरge(mc.to, mc.preअक्षरge);
+		mc.preअक्षरge = 0;
+	पूर्ण
 	/*
-	 * we didn't uncharge from mc.from at mem_cgroup_move_account(), so
-	 * we must uncharge here.
+	 * we didn't unअक्षरge from mc.from at mem_cgroup_move_account(), so
+	 * we must unअक्षरge here.
 	 */
-	if (mc.moved_charge) {
-		cancel_charge(mc.from, mc.moved_charge);
-		mc.moved_charge = 0;
-	}
-	/* we must fixup refcnts and charges */
-	if (mc.moved_swap) {
-		/* uncharge swap account from the old cgroup */
-		if (!mem_cgroup_is_root(mc.from))
-			page_counter_uncharge(&mc.from->memsw, mc.moved_swap);
+	अगर (mc.moved_अक्षरge) अणु
+		cancel_अक्षरge(mc.from, mc.moved_अक्षरge);
+		mc.moved_अक्षरge = 0;
+	पूर्ण
+	/* we must fixup refcnts and अक्षरges */
+	अगर (mc.moved_swap) अणु
+		/* unअक्षरge swap account from the old cgroup */
+		अगर (!mem_cgroup_is_root(mc.from))
+			page_counter_unअक्षरge(&mc.from->memsw, mc.moved_swap);
 
 		mem_cgroup_id_put_many(mc.from, mc.moved_swap);
 
 		/*
-		 * we charged both to->memory and to->memsw, so we
-		 * should uncharge to->memory.
+		 * we अक्षरged both to->memory and to->memsw, so we
+		 * should unअक्षरge to->memory.
 		 */
-		if (!mem_cgroup_is_root(mc.to))
-			page_counter_uncharge(&mc.to->memory, mc.moved_swap);
+		अगर (!mem_cgroup_is_root(mc.to))
+			page_counter_unअक्षरge(&mc.to->memory, mc.moved_swap);
 
 		mc.moved_swap = 0;
-	}
+	पूर्ण
 	memcg_oom_recover(from);
 	memcg_oom_recover(to);
-	wake_up_all(&mc.waitq);
-}
+	wake_up_all(&mc.रुकोq);
+पूर्ण
 
-static void mem_cgroup_clear_mc(void)
-{
-	struct mm_struct *mm = mc.mm;
+अटल व्योम mem_cgroup_clear_mc(व्योम)
+अणु
+	काष्ठा mm_काष्ठा *mm = mc.mm;
 
 	/*
-	 * we must clear moving_task before waking up waiters at the end of
+	 * we must clear moving_task beक्रमe waking up रुकोers at the end of
 	 * task migration.
 	 */
-	mc.moving_task = NULL;
+	mc.moving_task = शून्य;
 	__mem_cgroup_clear_mc();
 	spin_lock(&mc.lock);
-	mc.from = NULL;
-	mc.to = NULL;
-	mc.mm = NULL;
+	mc.from = शून्य;
+	mc.to = शून्य;
+	mc.mm = शून्य;
 	spin_unlock(&mc.lock);
 
 	mmput(mm);
-}
+पूर्ण
 
-static int mem_cgroup_can_attach(struct cgroup_taskset *tset)
-{
-	struct cgroup_subsys_state *css;
-	struct mem_cgroup *memcg = NULL; /* unneeded init to make gcc happy */
-	struct mem_cgroup *from;
-	struct task_struct *leader, *p;
-	struct mm_struct *mm;
-	unsigned long move_flags;
-	int ret = 0;
+अटल पूर्णांक mem_cgroup_can_attach(काष्ठा cgroup_taskset *tset)
+अणु
+	काष्ठा cgroup_subsys_state *css;
+	काष्ठा mem_cgroup *memcg = शून्य; /* unneeded init to make gcc happy */
+	काष्ठा mem_cgroup *from;
+	काष्ठा task_काष्ठा *leader, *p;
+	काष्ठा mm_काष्ठा *mm;
+	अचिन्हित दीर्घ move_flags;
+	पूर्णांक ret = 0;
 
-	/* charge immigration isn't supported on the default hierarchy */
-	if (cgroup_subsys_on_dfl(memory_cgrp_subsys))
-		return 0;
+	/* अक्षरge immigration isn't supported on the शेष hierarchy */
+	अगर (cgroup_subsys_on_dfl(memory_cgrp_subsys))
+		वापस 0;
 
 	/*
-	 * Multi-process migrations only happen on the default hierarchy
-	 * where charge immigration is not used.  Perform charge
-	 * immigration if @tset contains a leader and whine if there are
+	 * Multi-process migrations only happen on the शेष hierarchy
+	 * where अक्षरge immigration is not used.  Perक्रमm अक्षरge
+	 * immigration अगर @tset contains a leader and whine अगर there are
 	 * multiple.
 	 */
-	p = NULL;
-	cgroup_taskset_for_each_leader(leader, css, tset) {
+	p = शून्य;
+	cgroup_taskset_क्रम_each_leader(leader, css, tset) अणु
 		WARN_ON_ONCE(p);
 		p = leader;
 		memcg = mem_cgroup_from_css(css);
-	}
-	if (!p)
-		return 0;
+	पूर्ण
+	अगर (!p)
+		वापस 0;
 
 	/*
 	 * We are now committed to this value whatever it is. Changes in this
 	 * tunable will only affect upcoming migrations, not the current one.
 	 * So we need to save it, and keep it going.
 	 */
-	move_flags = READ_ONCE(memcg->move_charge_at_immigrate);
-	if (!move_flags)
-		return 0;
+	move_flags = READ_ONCE(memcg->move_अक्षरge_at_immigrate);
+	अगर (!move_flags)
+		वापस 0;
 
 	from = mem_cgroup_from_task(p);
 
 	VM_BUG_ON(from == memcg);
 
 	mm = get_task_mm(p);
-	if (!mm)
-		return 0;
-	/* We move charges only when we move a owner of the mm */
-	if (mm->owner == p) {
+	अगर (!mm)
+		वापस 0;
+	/* We move अक्षरges only when we move a owner of the mm */
+	अगर (mm->owner == p) अणु
 		VM_BUG_ON(mc.from);
 		VM_BUG_ON(mc.to);
-		VM_BUG_ON(mc.precharge);
-		VM_BUG_ON(mc.moved_charge);
+		VM_BUG_ON(mc.preअक्षरge);
+		VM_BUG_ON(mc.moved_अक्षरge);
 		VM_BUG_ON(mc.moved_swap);
 
 		spin_lock(&mc.lock);
@@ -5805,530 +5806,530 @@ static int mem_cgroup_can_attach(struct cgroup_taskset *tset)
 		spin_unlock(&mc.lock);
 		/* We set mc.moving_task later */
 
-		ret = mem_cgroup_precharge_mc(mm);
-		if (ret)
+		ret = mem_cgroup_preअक्षरge_mc(mm);
+		अगर (ret)
 			mem_cgroup_clear_mc();
-	} else {
+	पूर्ण अन्यथा अणु
 		mmput(mm);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void mem_cgroup_cancel_attach(struct cgroup_taskset *tset)
-{
-	if (mc.to)
+अटल व्योम mem_cgroup_cancel_attach(काष्ठा cgroup_taskset *tset)
+अणु
+	अगर (mc.to)
 		mem_cgroup_clear_mc();
-}
+पूर्ण
 
-static int mem_cgroup_move_charge_pte_range(pmd_t *pmd,
-				unsigned long addr, unsigned long end,
-				struct mm_walk *walk)
-{
-	int ret = 0;
-	struct vm_area_struct *vma = walk->vma;
+अटल पूर्णांक mem_cgroup_move_अक्षरge_pte_range(pmd_t *pmd,
+				अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+				काष्ठा mm_walk *walk)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा vm_area_काष्ठा *vma = walk->vma;
 	pte_t *pte;
 	spinlock_t *ptl;
-	enum mc_target_type target_type;
-	union mc_target target;
-	struct page *page;
+	क्रमागत mc_target_type target_type;
+	जोड़ mc_target target;
+	काष्ठा page *page;
 
 	ptl = pmd_trans_huge_lock(pmd, vma);
-	if (ptl) {
-		if (mc.precharge < HPAGE_PMD_NR) {
+	अगर (ptl) अणु
+		अगर (mc.preअक्षरge < HPAGE_PMD_NR) अणु
 			spin_unlock(ptl);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		target_type = get_mctgt_type_thp(vma, addr, *pmd, &target);
-		if (target_type == MC_TARGET_PAGE) {
+		अगर (target_type == MC_TARGET_PAGE) अणु
 			page = target.page;
-			if (!isolate_lru_page(page)) {
-				if (!mem_cgroup_move_account(page, true,
-							     mc.from, mc.to)) {
-					mc.precharge -= HPAGE_PMD_NR;
-					mc.moved_charge += HPAGE_PMD_NR;
-				}
+			अगर (!isolate_lru_page(page)) अणु
+				अगर (!mem_cgroup_move_account(page, true,
+							     mc.from, mc.to)) अणु
+					mc.preअक्षरge -= HPAGE_PMD_NR;
+					mc.moved_अक्षरge += HPAGE_PMD_NR;
+				पूर्ण
 				putback_lru_page(page);
-			}
+			पूर्ण
 			put_page(page);
-		} else if (target_type == MC_TARGET_DEVICE) {
+		पूर्ण अन्यथा अगर (target_type == MC_TARGET_DEVICE) अणु
 			page = target.page;
-			if (!mem_cgroup_move_account(page, true,
-						     mc.from, mc.to)) {
-				mc.precharge -= HPAGE_PMD_NR;
-				mc.moved_charge += HPAGE_PMD_NR;
-			}
+			अगर (!mem_cgroup_move_account(page, true,
+						     mc.from, mc.to)) अणु
+				mc.preअक्षरge -= HPAGE_PMD_NR;
+				mc.moved_अक्षरge += HPAGE_PMD_NR;
+			पूर्ण
 			put_page(page);
-		}
+		पूर्ण
 		spin_unlock(ptl);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (pmd_trans_unstable(pmd))
-		return 0;
+	अगर (pmd_trans_unstable(pmd))
+		वापस 0;
 retry:
 	pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
-	for (; addr != end; addr += PAGE_SIZE) {
+	क्रम (; addr != end; addr += PAGE_SIZE) अणु
 		pte_t ptent = *(pte++);
 		bool device = false;
 		swp_entry_t ent;
 
-		if (!mc.precharge)
-			break;
+		अगर (!mc.preअक्षरge)
+			अवरोध;
 
-		switch (get_mctgt_type(vma, addr, ptent, &target)) {
-		case MC_TARGET_DEVICE:
+		चयन (get_mctgt_type(vma, addr, ptent, &target)) अणु
+		हाल MC_TARGET_DEVICE:
 			device = true;
 			fallthrough;
-		case MC_TARGET_PAGE:
+		हाल MC_TARGET_PAGE:
 			page = target.page;
 			/*
 			 * We can have a part of the split pmd here. Moving it
-			 * can be done but it would be too convoluted so simply
+			 * can be करोne but it would be too convoluted so simply
 			 * ignore such a partial THP and keep it in original
 			 * memcg. There should be somebody mapping the head.
 			 */
-			if (PageTransCompound(page))
-				goto put;
-			if (!device && isolate_lru_page(page))
-				goto put;
-			if (!mem_cgroup_move_account(page, false,
-						mc.from, mc.to)) {
-				mc.precharge--;
-				/* we uncharge from mc.from later. */
-				mc.moved_charge++;
-			}
-			if (!device)
+			अगर (PageTransCompound(page))
+				जाओ put;
+			अगर (!device && isolate_lru_page(page))
+				जाओ put;
+			अगर (!mem_cgroup_move_account(page, false,
+						mc.from, mc.to)) अणु
+				mc.preअक्षरge--;
+				/* we unअक्षरge from mc.from later. */
+				mc.moved_अक्षरge++;
+			पूर्ण
+			अगर (!device)
 				putback_lru_page(page);
-put:			/* get_mctgt_type() gets the page */
+put:			/* get_mctgt_type() माला_लो the page */
 			put_page(page);
-			break;
-		case MC_TARGET_SWAP:
+			अवरोध;
+		हाल MC_TARGET_SWAP:
 			ent = target.ent;
-			if (!mem_cgroup_move_swap_account(ent, mc.from, mc.to)) {
-				mc.precharge--;
+			अगर (!mem_cgroup_move_swap_account(ent, mc.from, mc.to)) अणु
+				mc.preअक्षरge--;
 				mem_cgroup_id_get_many(mc.to, 1);
-				/* we fixup other refcnts and charges later. */
+				/* we fixup other refcnts and अक्षरges later. */
 				mc.moved_swap++;
-			}
-			break;
-		default:
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	pte_unmap_unlock(pte - 1, ptl);
 	cond_resched();
 
-	if (addr != end) {
+	अगर (addr != end) अणु
 		/*
-		 * We have consumed all precharges we got in can_attach().
-		 * We try charge one by one, but don't do any additional
-		 * charges to mc.to if we have failed in charge once in attach()
+		 * We have consumed all preअक्षरges we got in can_attach().
+		 * We try अक्षरge one by one, but करोn't करो any additional
+		 * अक्षरges to mc.to अगर we have failed in अक्षरge once in attach()
 		 * phase.
 		 */
-		ret = mem_cgroup_do_precharge(1);
-		if (!ret)
-			goto retry;
-	}
+		ret = mem_cgroup_करो_preअक्षरge(1);
+		अगर (!ret)
+			जाओ retry;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct mm_walk_ops charge_walk_ops = {
-	.pmd_entry	= mem_cgroup_move_charge_pte_range,
-};
+अटल स्थिर काष्ठा mm_walk_ops अक्षरge_walk_ops = अणु
+	.pmd_entry	= mem_cgroup_move_अक्षरge_pte_range,
+पूर्ण;
 
-static void mem_cgroup_move_charge(void)
-{
+अटल व्योम mem_cgroup_move_अक्षरge(व्योम)
+अणु
 	lru_add_drain_all();
 	/*
 	 * Signal lock_page_memcg() to take the memcg's move_lock
-	 * while we're moving its pages to another memcg. Then wait
-	 * for already started RCU-only updates to finish.
+	 * जबतक we're moving its pages to another memcg. Then रुको
+	 * क्रम alपढ़ोy started RCU-only updates to finish.
 	 */
 	atomic_inc(&mc.from->moving_account);
 	synchronize_rcu();
 retry:
-	if (unlikely(!mmap_read_trylock(mc.mm))) {
+	अगर (unlikely(!mmap_पढ़ो_trylock(mc.mm))) अणु
 		/*
-		 * Someone who are holding the mmap_lock might be waiting in
-		 * waitq. So we cancel all extra charges, wake up all waiters,
-		 * and retry. Because we cancel precharges, we might not be able
-		 * to move enough charges, but moving charge is a best-effort
+		 * Someone who are holding the mmap_lock might be रुकोing in
+		 * रुकोq. So we cancel all extra अक्षरges, wake up all रुकोers,
+		 * and retry. Because we cancel preअक्षरges, we might not be able
+		 * to move enough अक्षरges, but moving अक्षरge is a best-efक्रमt
 		 * feature anyway, so it wouldn't be a big problem.
 		 */
 		__mem_cgroup_clear_mc();
 		cond_resched();
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 	/*
-	 * When we have consumed all precharges and failed in doing
-	 * additional charge, the page walk just aborts.
+	 * When we have consumed all preअक्षरges and failed in करोing
+	 * additional अक्षरge, the page walk just पातs.
 	 */
-	walk_page_range(mc.mm, 0, mc.mm->highest_vm_end, &charge_walk_ops,
-			NULL);
+	walk_page_range(mc.mm, 0, mc.mm->highest_vm_end, &अक्षरge_walk_ops,
+			शून्य);
 
-	mmap_read_unlock(mc.mm);
+	mmap_पढ़ो_unlock(mc.mm);
 	atomic_dec(&mc.from->moving_account);
-}
+पूर्ण
 
-static void mem_cgroup_move_task(void)
-{
-	if (mc.to) {
-		mem_cgroup_move_charge();
+अटल व्योम mem_cgroup_move_task(व्योम)
+अणु
+	अगर (mc.to) अणु
+		mem_cgroup_move_अक्षरge();
 		mem_cgroup_clear_mc();
-	}
-}
-#else	/* !CONFIG_MMU */
-static int mem_cgroup_can_attach(struct cgroup_taskset *tset)
-{
-	return 0;
-}
-static void mem_cgroup_cancel_attach(struct cgroup_taskset *tset)
-{
-}
-static void mem_cgroup_move_task(void)
-{
-}
-#endif
+	पूर्ण
+पूर्ण
+#अन्यथा	/* !CONFIG_MMU */
+अटल पूर्णांक mem_cgroup_can_attach(काष्ठा cgroup_taskset *tset)
+अणु
+	वापस 0;
+पूर्ण
+अटल व्योम mem_cgroup_cancel_attach(काष्ठा cgroup_taskset *tset)
+अणु
+पूर्ण
+अटल व्योम mem_cgroup_move_task(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static int seq_puts_memcg_tunable(struct seq_file *m, unsigned long value)
-{
-	if (value == PAGE_COUNTER_MAX)
-		seq_puts(m, "max\n");
-	else
-		seq_printf(m, "%llu\n", (u64)value * PAGE_SIZE);
+अटल पूर्णांक seq_माला_दो_memcg_tunable(काष्ठा seq_file *m, अचिन्हित दीर्घ value)
+अणु
+	अगर (value == PAGE_COUNTER_MAX)
+		seq_माला_दो(m, "max\n");
+	अन्यथा
+		seq_म_लिखो(m, "%llu\n", (u64)value * PAGE_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u64 memory_current_read(struct cgroup_subsys_state *css,
-			       struct cftype *cft)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+अटल u64 memory_current_पढ़ो(काष्ठा cgroup_subsys_state *css,
+			       काष्ठा cftype *cft)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
 
-	return (u64)page_counter_read(&memcg->memory) * PAGE_SIZE;
-}
+	वापस (u64)page_counter_पढ़ो(&memcg->memory) * PAGE_SIZE;
+पूर्ण
 
-static int memory_min_show(struct seq_file *m, void *v)
-{
-	return seq_puts_memcg_tunable(m,
+अटल पूर्णांक memory_min_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	वापस seq_माला_दो_memcg_tunable(m,
 		READ_ONCE(mem_cgroup_from_seq(m)->memory.min));
-}
+पूर्ण
 
-static ssize_t memory_min_write(struct kernfs_open_file *of,
-				char *buf, size_t nbytes, loff_t off)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
-	unsigned long min;
-	int err;
+अटल sमाप_प्रकार memory_min_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+				अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
+	अचिन्हित दीर्घ min;
+	पूर्णांक err;
 
-	buf = strstrip(buf);
+	buf = म_मालाip(buf);
 	err = page_counter_memparse(buf, "max", &min);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	page_counter_set_min(&memcg->memory, min);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int memory_low_show(struct seq_file *m, void *v)
-{
-	return seq_puts_memcg_tunable(m,
+अटल पूर्णांक memory_low_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	वापस seq_माला_दो_memcg_tunable(m,
 		READ_ONCE(mem_cgroup_from_seq(m)->memory.low));
-}
+पूर्ण
 
-static ssize_t memory_low_write(struct kernfs_open_file *of,
-				char *buf, size_t nbytes, loff_t off)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
-	unsigned long low;
-	int err;
+अटल sमाप_प्रकार memory_low_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+				अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
+	अचिन्हित दीर्घ low;
+	पूर्णांक err;
 
-	buf = strstrip(buf);
+	buf = म_मालाip(buf);
 	err = page_counter_memparse(buf, "max", &low);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	page_counter_set_low(&memcg->memory, low);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int memory_high_show(struct seq_file *m, void *v)
-{
-	return seq_puts_memcg_tunable(m,
+अटल पूर्णांक memory_high_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	वापस seq_माला_दो_memcg_tunable(m,
 		READ_ONCE(mem_cgroup_from_seq(m)->memory.high));
-}
+पूर्ण
 
-static ssize_t memory_high_write(struct kernfs_open_file *of,
-				 char *buf, size_t nbytes, loff_t off)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
-	unsigned int nr_retries = MAX_RECLAIM_RETRIES;
+अटल sमाप_प्रकार memory_high_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+				 अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
+	अचिन्हित पूर्णांक nr_retries = MAX_RECLAIM_RETRIES;
 	bool drained = false;
-	unsigned long high;
-	int err;
+	अचिन्हित दीर्घ high;
+	पूर्णांक err;
 
-	buf = strstrip(buf);
+	buf = म_मालाip(buf);
 	err = page_counter_memparse(buf, "max", &high);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	page_counter_set_high(&memcg->memory, high);
 
-	for (;;) {
-		unsigned long nr_pages = page_counter_read(&memcg->memory);
-		unsigned long reclaimed;
+	क्रम (;;) अणु
+		अचिन्हित दीर्घ nr_pages = page_counter_पढ़ो(&memcg->memory);
+		अचिन्हित दीर्घ reclaimed;
 
-		if (nr_pages <= high)
-			break;
+		अगर (nr_pages <= high)
+			अवरोध;
 
-		if (signal_pending(current))
-			break;
+		अगर (संकेत_pending(current))
+			अवरोध;
 
-		if (!drained) {
+		अगर (!drained) अणु
 			drain_all_stock(memcg);
 			drained = true;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		reclaimed = try_to_free_mem_cgroup_pages(memcg, nr_pages - high,
+		reclaimed = try_to_मुक्त_mem_cgroup_pages(memcg, nr_pages - high,
 							 GFP_KERNEL, true);
 
-		if (!reclaimed && !nr_retries--)
-			break;
-	}
+		अगर (!reclaimed && !nr_retries--)
+			अवरोध;
+	पूर्ण
 
-	memcg_wb_domain_size_changed(memcg);
-	return nbytes;
-}
+	memcg_wb_करोमुख्य_size_changed(memcg);
+	वापस nbytes;
+पूर्ण
 
-static int memory_max_show(struct seq_file *m, void *v)
-{
-	return seq_puts_memcg_tunable(m,
+अटल पूर्णांक memory_max_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	वापस seq_माला_दो_memcg_tunable(m,
 		READ_ONCE(mem_cgroup_from_seq(m)->memory.max));
-}
+पूर्ण
 
-static ssize_t memory_max_write(struct kernfs_open_file *of,
-				char *buf, size_t nbytes, loff_t off)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
-	unsigned int nr_reclaims = MAX_RECLAIM_RETRIES;
+अटल sमाप_प्रकार memory_max_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+				अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
+	अचिन्हित पूर्णांक nr_reclaims = MAX_RECLAIM_RETRIES;
 	bool drained = false;
-	unsigned long max;
-	int err;
+	अचिन्हित दीर्घ max;
+	पूर्णांक err;
 
-	buf = strstrip(buf);
+	buf = म_मालाip(buf);
 	err = page_counter_memparse(buf, "max", &max);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	xchg(&memcg->memory.max, max);
 
-	for (;;) {
-		unsigned long nr_pages = page_counter_read(&memcg->memory);
+	क्रम (;;) अणु
+		अचिन्हित दीर्घ nr_pages = page_counter_पढ़ो(&memcg->memory);
 
-		if (nr_pages <= max)
-			break;
+		अगर (nr_pages <= max)
+			अवरोध;
 
-		if (signal_pending(current))
-			break;
+		अगर (संकेत_pending(current))
+			अवरोध;
 
-		if (!drained) {
+		अगर (!drained) अणु
 			drain_all_stock(memcg);
 			drained = true;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (nr_reclaims) {
-			if (!try_to_free_mem_cgroup_pages(memcg, nr_pages - max,
+		अगर (nr_reclaims) अणु
+			अगर (!try_to_मुक्त_mem_cgroup_pages(memcg, nr_pages - max,
 							  GFP_KERNEL, true))
 				nr_reclaims--;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		memcg_memory_event(memcg, MEMCG_OOM);
-		if (!mem_cgroup_out_of_memory(memcg, GFP_KERNEL, 0))
-			break;
-	}
+		अगर (!mem_cgroup_out_of_memory(memcg, GFP_KERNEL, 0))
+			अवरोध;
+	पूर्ण
 
-	memcg_wb_domain_size_changed(memcg);
-	return nbytes;
-}
+	memcg_wb_करोमुख्य_size_changed(memcg);
+	वापस nbytes;
+पूर्ण
 
-static void __memory_events_show(struct seq_file *m, atomic_long_t *events)
-{
-	seq_printf(m, "low %lu\n", atomic_long_read(&events[MEMCG_LOW]));
-	seq_printf(m, "high %lu\n", atomic_long_read(&events[MEMCG_HIGH]));
-	seq_printf(m, "max %lu\n", atomic_long_read(&events[MEMCG_MAX]));
-	seq_printf(m, "oom %lu\n", atomic_long_read(&events[MEMCG_OOM]));
-	seq_printf(m, "oom_kill %lu\n",
-		   atomic_long_read(&events[MEMCG_OOM_KILL]));
-}
+अटल व्योम __memory_events_show(काष्ठा seq_file *m, atomic_दीर्घ_t *events)
+अणु
+	seq_म_लिखो(m, "low %lu\n", atomic_दीर्घ_पढ़ो(&events[MEMCG_LOW]));
+	seq_म_लिखो(m, "high %lu\n", atomic_दीर्घ_पढ़ो(&events[MEMCG_HIGH]));
+	seq_म_लिखो(m, "max %lu\n", atomic_दीर्घ_पढ़ो(&events[MEMCG_MAX]));
+	seq_म_लिखो(m, "oom %lu\n", atomic_दीर्घ_पढ़ो(&events[MEMCG_OOM]));
+	seq_म_लिखो(m, "oom_kill %lu\n",
+		   atomic_दीर्घ_पढ़ो(&events[MEMCG_OOM_KILL]));
+पूर्ण
 
-static int memory_events_show(struct seq_file *m, void *v)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_seq(m);
+अटल पूर्णांक memory_events_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_seq(m);
 
 	__memory_events_show(m, memcg->memory_events);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int memory_events_local_show(struct seq_file *m, void *v)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_seq(m);
+अटल पूर्णांक memory_events_local_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_seq(m);
 
 	__memory_events_show(m, memcg->memory_events_local);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int memory_stat_show(struct seq_file *m, void *v)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_seq(m);
-	char *buf;
+अटल पूर्णांक memory_stat_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_seq(m);
+	अक्षर *buf;
 
-	buf = memory_stat_format(memcg);
-	if (!buf)
-		return -ENOMEM;
-	seq_puts(m, buf);
-	kfree(buf);
-	return 0;
-}
+	buf = memory_stat_क्रमmat(memcg);
+	अगर (!buf)
+		वापस -ENOMEM;
+	seq_माला_दो(m, buf);
+	kमुक्त(buf);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_NUMA
-static inline unsigned long lruvec_page_state_output(struct lruvec *lruvec,
-						     int item)
-{
-	return lruvec_page_state(lruvec, item) * memcg_page_state_unit(item);
-}
+#अगर_घोषित CONFIG_NUMA
+अटल अंतरभूत अचिन्हित दीर्घ lruvec_page_state_output(काष्ठा lruvec *lruvec,
+						     पूर्णांक item)
+अणु
+	वापस lruvec_page_state(lruvec, item) * memcg_page_state_unit(item);
+पूर्ण
 
-static int memory_numa_stat_show(struct seq_file *m, void *v)
-{
-	int i;
-	struct mem_cgroup *memcg = mem_cgroup_from_seq(m);
+अटल पूर्णांक memory_numa_stat_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	पूर्णांक i;
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_seq(m);
 
-	for (i = 0; i < ARRAY_SIZE(memory_stats); i++) {
-		int nid;
+	क्रम (i = 0; i < ARRAY_SIZE(memory_stats); i++) अणु
+		पूर्णांक nid;
 
-		if (memory_stats[i].idx >= NR_VM_NODE_STAT_ITEMS)
-			continue;
+		अगर (memory_stats[i].idx >= NR_VM_NODE_STAT_ITEMS)
+			जारी;
 
-		seq_printf(m, "%s", memory_stats[i].name);
-		for_each_node_state(nid, N_MEMORY) {
+		seq_म_लिखो(m, "%s", memory_stats[i].name);
+		क्रम_each_node_state(nid, N_MEMORY) अणु
 			u64 size;
-			struct lruvec *lruvec;
+			काष्ठा lruvec *lruvec;
 
 			lruvec = mem_cgroup_lruvec(memcg, NODE_DATA(nid));
 			size = lruvec_page_state_output(lruvec,
 							memory_stats[i].idx);
-			seq_printf(m, " N%d=%llu", nid, size);
-		}
-		seq_putc(m, '\n');
-	}
+			seq_म_लिखो(m, " N%d=%llu", nid, size);
+		पूर्ण
+		seq_अ_दो(m, '\n');
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int memory_oom_group_show(struct seq_file *m, void *v)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_seq(m);
+अटल पूर्णांक memory_oom_group_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_seq(m);
 
-	seq_printf(m, "%d\n", memcg->oom_group);
+	seq_म_लिखो(m, "%d\n", memcg->oom_group);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t memory_oom_group_write(struct kernfs_open_file *of,
-				      char *buf, size_t nbytes, loff_t off)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
-	int ret, oom_group;
+अटल sमाप_प्रकार memory_oom_group_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+				      अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
+	पूर्णांक ret, oom_group;
 
-	buf = strstrip(buf);
-	if (!buf)
-		return -EINVAL;
+	buf = म_मालाip(buf);
+	अगर (!buf)
+		वापस -EINVAL;
 
-	ret = kstrtoint(buf, 0, &oom_group);
-	if (ret)
-		return ret;
+	ret = kstrtoपूर्णांक(buf, 0, &oom_group);
+	अगर (ret)
+		वापस ret;
 
-	if (oom_group != 0 && oom_group != 1)
-		return -EINVAL;
+	अगर (oom_group != 0 && oom_group != 1)
+		वापस -EINVAL;
 
 	memcg->oom_group = oom_group;
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static struct cftype memory_files[] = {
-	{
+अटल काष्ठा cftype memory_files[] = अणु
+	अणु
 		.name = "current",
 		.flags = CFTYPE_NOT_ON_ROOT,
-		.read_u64 = memory_current_read,
-	},
-	{
+		.पढ़ो_u64 = memory_current_पढ़ो,
+	पूर्ण,
+	अणु
 		.name = "min",
 		.flags = CFTYPE_NOT_ON_ROOT,
 		.seq_show = memory_min_show,
-		.write = memory_min_write,
-	},
-	{
+		.ग_लिखो = memory_min_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "low",
 		.flags = CFTYPE_NOT_ON_ROOT,
 		.seq_show = memory_low_show,
-		.write = memory_low_write,
-	},
-	{
+		.ग_लिखो = memory_low_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "high",
 		.flags = CFTYPE_NOT_ON_ROOT,
 		.seq_show = memory_high_show,
-		.write = memory_high_write,
-	},
-	{
+		.ग_लिखो = memory_high_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "max",
 		.flags = CFTYPE_NOT_ON_ROOT,
 		.seq_show = memory_max_show,
-		.write = memory_max_write,
-	},
-	{
+		.ग_लिखो = memory_max_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "events",
 		.flags = CFTYPE_NOT_ON_ROOT,
-		.file_offset = offsetof(struct mem_cgroup, events_file),
+		.file_offset = दुरत्व(काष्ठा mem_cgroup, events_file),
 		.seq_show = memory_events_show,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "events.local",
 		.flags = CFTYPE_NOT_ON_ROOT,
-		.file_offset = offsetof(struct mem_cgroup, events_local_file),
+		.file_offset = दुरत्व(काष्ठा mem_cgroup, events_local_file),
 		.seq_show = memory_events_local_show,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "stat",
 		.seq_show = memory_stat_show,
-	},
-#ifdef CONFIG_NUMA
-	{
+	पूर्ण,
+#अगर_घोषित CONFIG_NUMA
+	अणु
 		.name = "numa_stat",
 		.seq_show = memory_numa_stat_show,
-	},
-#endif
-	{
+	पूर्ण,
+#पूर्ण_अगर
+	अणु
 		.name = "oom.group",
 		.flags = CFTYPE_NOT_ON_ROOT | CFTYPE_NS_DELEGATABLE,
 		.seq_show = memory_oom_group_show,
-		.write = memory_oom_group_write,
-	},
-	{ }	/* terminate */
-};
+		.ग_लिखो = memory_oom_group_ग_लिखो,
+	पूर्ण,
+	अणु पूर्ण	/* terminate */
+पूर्ण;
 
-struct cgroup_subsys memory_cgrp_subsys = {
+काष्ठा cgroup_subsys memory_cgrp_subsys = अणु
 	.css_alloc = mem_cgroup_css_alloc,
 	.css_online = mem_cgroup_css_online,
 	.css_offline = mem_cgroup_css_offline,
 	.css_released = mem_cgroup_css_released,
-	.css_free = mem_cgroup_css_free,
+	.css_मुक्त = mem_cgroup_css_मुक्त,
 	.css_reset = mem_cgroup_css_reset,
 	.css_rstat_flush = mem_cgroup_css_rstat_flush,
 	.can_attach = mem_cgroup_can_attach,
@@ -6337,10 +6338,10 @@ struct cgroup_subsys memory_cgrp_subsys = {
 	.dfl_cftypes = memory_files,
 	.legacy_cftypes = mem_cgroup_legacy_files,
 	.early_init = 0,
-};
+पूर्ण;
 
 /*
- * This function calculates an individual cgroup's effective
+ * This function calculates an inभागidual cgroup's effective
  * protection which is derived from its own memory.min/low, its
  * parent's and siblings' settings, as well as the actual memory
  * distribution in the tree.
@@ -6356,13 +6357,13 @@ struct cgroup_subsys memory_cgrp_subsys = {
  *
  * 3. To make complex and dynamic subtrees easier to configure, the
  *    user is allowed to overcommit the declared protection at a given
- *    level. If that is the case, the parent's effective protection is
+ *    level. If that is the हाल, the parent's effective protection is
  *    distributed to the children in proportion to how much protection
  *    they have declared and how much of it they are utilizing.
  *
  *    This makes distribution proportional, but also work-conserving:
- *    if one cgroup claims much more protection than it uses memory,
- *    the unused remainder is available to its siblings.
+ *    अगर one cgroup claims much more protection than it uses memory,
+ *    the unused reमुख्यder is available to its siblings.
  *
  * 4. Conversely, when the declared protection is undercommitted at a
  *    given level, the distribution of the larger parental protection
@@ -6370,11 +6371,11 @@ struct cgroup_subsys memory_cgrp_subsys = {
  *    is capped to its own memory.min/low setting.
  *
  * 5. However, to allow protecting recursive subtrees from each other
- *    without having to declare each individual cgroup's fixed share
+ *    without having to declare each inभागidual cgroup's fixed share
  *    of the ancestor's claim to protection, any unutilized -
  *    "floating" - protection from up the tree is distributed in
  *    proportion to each cgroup's *usage*. This makes the protection
- *    neutral wrt sibling cgroups and lets them compete freely over
+ *    neutral wrt sibling cgroups and lets them compete मुक्तly over
  *    the shared parental protection budget, but it protects the
  *    subtree as a whole from neighboring subtrees.
  *
@@ -6382,279 +6383,279 @@ struct cgroup_subsys memory_cgrp_subsys = {
  * against immediate siblings whereas 5. is about protecting against
  * neighboring subtrees.
  */
-static unsigned long effective_protection(unsigned long usage,
-					  unsigned long parent_usage,
-					  unsigned long setting,
-					  unsigned long parent_effective,
-					  unsigned long siblings_protected)
-{
-	unsigned long protected;
-	unsigned long ep;
+अटल अचिन्हित दीर्घ effective_protection(अचिन्हित दीर्घ usage,
+					  अचिन्हित दीर्घ parent_usage,
+					  अचिन्हित दीर्घ setting,
+					  अचिन्हित दीर्घ parent_effective,
+					  अचिन्हित दीर्घ siblings_रक्षित)
+अणु
+	अचिन्हित दीर्घ रक्षित;
+	अचिन्हित दीर्घ ep;
 
-	protected = min(usage, setting);
+	रक्षित = min(usage, setting);
 	/*
 	 * If all cgroups at this level combined claim and use more
-	 * protection then what the parent affords them, distribute
+	 * protection then what the parent afक्रमds them, distribute
 	 * shares in proportion to utilization.
 	 *
-	 * We are using actual utilization rather than the statically
+	 * We are using actual utilization rather than the अटलally
 	 * claimed protection in order to be work-conserving: claimed
 	 * but unused protection is available to siblings that would
 	 * otherwise get a smaller chunk than what they claimed.
 	 */
-	if (siblings_protected > parent_effective)
-		return protected * parent_effective / siblings_protected;
+	अगर (siblings_रक्षित > parent_effective)
+		वापस रक्षित * parent_effective / siblings_रक्षित;
 
 	/*
 	 * Ok, utilized protection of all children is within what the
-	 * parent affords them, so we know whatever this child claims
-	 * and utilizes is effectively protected.
+	 * parent afक्रमds them, so we know whatever this child claims
+	 * and utilizes is effectively रक्षित.
 	 *
-	 * If there is unprotected usage beyond this value, reclaim
+	 * If there is unरक्षित usage beyond this value, reclaim
 	 * will apply pressure in proportion to that amount.
 	 *
 	 * If there is unutilized protection, the cgroup will be fully
-	 * shielded from reclaim, but we do return a smaller value for
+	 * shielded from reclaim, but we करो वापस a smaller value क्रम
 	 * protection than what the group could enjoy in theory. This
 	 * is okay. With the overcommit distribution above, effective
 	 * protection is always dependent on how memory is actually
 	 * consumed among the siblings anyway.
 	 */
-	ep = protected;
+	ep = रक्षित;
 
 	/*
 	 * If the children aren't claiming (all of) the protection
-	 * afforded to them by the parent, distribute the remainder in
-	 * proportion to the (unprotected) memory of each cgroup. That
+	 * afक्रमded to them by the parent, distribute the reमुख्यder in
+	 * proportion to the (unरक्षित) memory of each cgroup. That
 	 * way, cgroups that aren't explicitly prioritized wrt each
-	 * other compete freely over the allowance, but they are
-	 * collectively protected from neighboring trees.
+	 * other compete मुक्तly over the allowance, but they are
+	 * collectively रक्षित from neighboring trees.
 	 *
-	 * We're using unprotected memory for the weight so that if
-	 * some cgroups DO claim explicit protection, we don't protect
+	 * We're using unरक्षित memory क्रम the weight so that अगर
+	 * some cgroups DO claim explicit protection, we करोn't protect
 	 * the same bytes twice.
 	 *
 	 * Check both usage and parent_usage against the respective
-	 * protected values. One should imply the other, but they
-	 * aren't read atomically - make sure the division is sane.
+	 * रक्षित values. One should imply the other, but they
+	 * aren't पढ़ो atomically - make sure the भागision is sane.
 	 */
-	if (!(cgrp_dfl_root.flags & CGRP_ROOT_MEMORY_RECURSIVE_PROT))
-		return ep;
-	if (parent_effective > siblings_protected &&
-	    parent_usage > siblings_protected &&
-	    usage > protected) {
-		unsigned long unclaimed;
+	अगर (!(cgrp_dfl_root.flags & CGRP_ROOT_MEMORY_RECURSIVE_PROT))
+		वापस ep;
+	अगर (parent_effective > siblings_रक्षित &&
+	    parent_usage > siblings_रक्षित &&
+	    usage > रक्षित) अणु
+		अचिन्हित दीर्घ unclaimed;
 
-		unclaimed = parent_effective - siblings_protected;
-		unclaimed *= usage - protected;
-		unclaimed /= parent_usage - siblings_protected;
+		unclaimed = parent_effective - siblings_रक्षित;
+		unclaimed *= usage - रक्षित;
+		unclaimed /= parent_usage - siblings_रक्षित;
 
 		ep += unclaimed;
-	}
+	पूर्ण
 
-	return ep;
-}
+	वापस ep;
+पूर्ण
 
 /**
- * mem_cgroup_protected - check if memory consumption is in the normal range
+ * mem_cgroup_रक्षित - check अगर memory consumption is in the normal range
  * @root: the top ancestor of the sub-tree being checked
  * @memcg: the memory cgroup to check
  *
  * WARNING: This function is not stateless! It can only be used as part
- *          of a top-down tree iteration, not for isolated queries.
+ *          of a top-करोwn tree iteration, not क्रम isolated queries.
  */
-void mem_cgroup_calculate_protection(struct mem_cgroup *root,
-				     struct mem_cgroup *memcg)
-{
-	unsigned long usage, parent_usage;
-	struct mem_cgroup *parent;
+व्योम mem_cgroup_calculate_protection(काष्ठा mem_cgroup *root,
+				     काष्ठा mem_cgroup *memcg)
+अणु
+	अचिन्हित दीर्घ usage, parent_usage;
+	काष्ठा mem_cgroup *parent;
 
-	if (mem_cgroup_disabled())
-		return;
+	अगर (mem_cgroup_disabled())
+		वापस;
 
-	if (!root)
+	अगर (!root)
 		root = root_mem_cgroup;
 
 	/*
-	 * Effective values of the reclaim targets are ignored so they
-	 * can be stale. Have a look at mem_cgroup_protection for more
+	 * Effective values of the reclaim tarमाला_लो are ignored so they
+	 * can be stale. Have a look at mem_cgroup_protection क्रम more
 	 * details.
-	 * TODO: calculation should be more robust so that we do not need
+	 * TODO: calculation should be more robust so that we करो not need
 	 * that special casing.
 	 */
-	if (memcg == root)
-		return;
+	अगर (memcg == root)
+		वापस;
 
-	usage = page_counter_read(&memcg->memory);
-	if (!usage)
-		return;
+	usage = page_counter_पढ़ो(&memcg->memory);
+	अगर (!usage)
+		वापस;
 
 	parent = parent_mem_cgroup(memcg);
 	/* No parent means a non-hierarchical mode on v1 memcg */
-	if (!parent)
-		return;
+	अगर (!parent)
+		वापस;
 
-	if (parent == root) {
+	अगर (parent == root) अणु
 		memcg->memory.emin = READ_ONCE(memcg->memory.min);
 		memcg->memory.elow = READ_ONCE(memcg->memory.low);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	parent_usage = page_counter_read(&parent->memory);
+	parent_usage = page_counter_पढ़ो(&parent->memory);
 
 	WRITE_ONCE(memcg->memory.emin, effective_protection(usage, parent_usage,
 			READ_ONCE(memcg->memory.min),
 			READ_ONCE(parent->memory.emin),
-			atomic_long_read(&parent->memory.children_min_usage)));
+			atomic_दीर्घ_पढ़ो(&parent->memory.children_min_usage)));
 
 	WRITE_ONCE(memcg->memory.elow, effective_protection(usage, parent_usage,
 			READ_ONCE(memcg->memory.low),
 			READ_ONCE(parent->memory.elow),
-			atomic_long_read(&parent->memory.children_low_usage)));
-}
+			atomic_दीर्घ_पढ़ो(&parent->memory.children_low_usage)));
+पूर्ण
 
-static int __mem_cgroup_charge(struct page *page, struct mem_cgroup *memcg,
+अटल पूर्णांक __mem_cgroup_अक्षरge(काष्ठा page *page, काष्ठा mem_cgroup *memcg,
 			       gfp_t gfp)
-{
-	unsigned int nr_pages = thp_nr_pages(page);
-	int ret;
+अणु
+	अचिन्हित पूर्णांक nr_pages = thp_nr_pages(page);
+	पूर्णांक ret;
 
-	ret = try_charge(memcg, gfp, nr_pages);
-	if (ret)
-		goto out;
+	ret = try_अक्षरge(memcg, gfp, nr_pages);
+	अगर (ret)
+		जाओ out;
 
 	css_get(&memcg->css);
-	commit_charge(page, memcg);
+	commit_अक्षरge(page, memcg);
 
 	local_irq_disable();
-	mem_cgroup_charge_statistics(memcg, page, nr_pages);
+	mem_cgroup_अक्षरge_statistics(memcg, page, nr_pages);
 	memcg_check_events(memcg, page);
 	local_irq_enable();
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * mem_cgroup_charge - charge a newly allocated page to a cgroup
- * @page: page to charge
+ * mem_cgroup_अक्षरge - अक्षरge a newly allocated page to a cgroup
+ * @page: page to अक्षरge
  * @mm: mm context of the victim
  * @gfp_mask: reclaim mode
  *
- * Try to charge @page to the memcg that @mm belongs to, reclaiming
- * pages according to @gfp_mask if necessary.
+ * Try to अक्षरge @page to the memcg that @mm beदीर्घs to, reclaiming
+ * pages according to @gfp_mask अगर necessary.
  *
- * Do not use this for pages allocated for swapin.
+ * Do not use this क्रम pages allocated क्रम swapin.
  *
- * Returns 0 on success. Otherwise, an error code is returned.
+ * Returns 0 on success. Otherwise, an error code is वापसed.
  */
-int mem_cgroup_charge(struct page *page, struct mm_struct *mm, gfp_t gfp_mask)
-{
-	struct mem_cgroup *memcg;
-	int ret;
+पूर्णांक mem_cgroup_अक्षरge(काष्ठा page *page, काष्ठा mm_काष्ठा *mm, gfp_t gfp_mask)
+अणु
+	काष्ठा mem_cgroup *memcg;
+	पूर्णांक ret;
 
-	if (mem_cgroup_disabled())
-		return 0;
+	अगर (mem_cgroup_disabled())
+		वापस 0;
 
 	memcg = get_mem_cgroup_from_mm(mm);
-	ret = __mem_cgroup_charge(page, memcg, gfp_mask);
+	ret = __mem_cgroup_अक्षरge(page, memcg, gfp_mask);
 	css_put(&memcg->css);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * mem_cgroup_swapin_charge_page - charge a newly allocated page for swapin
- * @page: page to charge
+ * mem_cgroup_swapin_अक्षरge_page - अक्षरge a newly allocated page क्रम swapin
+ * @page: page to अक्षरge
  * @mm: mm context of the victim
  * @gfp: reclaim mode
- * @entry: swap entry for which the page is allocated
+ * @entry: swap entry क्रम which the page is allocated
  *
- * This function charges a page allocated for swapin. Please call this before
+ * This function अक्षरges a page allocated क्रम swapin. Please call this beक्रमe
  * adding the page to the swapcache.
  *
- * Returns 0 on success. Otherwise, an error code is returned.
+ * Returns 0 on success. Otherwise, an error code is वापसed.
  */
-int mem_cgroup_swapin_charge_page(struct page *page, struct mm_struct *mm,
+पूर्णांक mem_cgroup_swapin_अक्षरge_page(काष्ठा page *page, काष्ठा mm_काष्ठा *mm,
 				  gfp_t gfp, swp_entry_t entry)
-{
-	struct mem_cgroup *memcg;
-	unsigned short id;
-	int ret;
+अणु
+	काष्ठा mem_cgroup *memcg;
+	अचिन्हित लघु id;
+	पूर्णांक ret;
 
-	if (mem_cgroup_disabled())
-		return 0;
+	अगर (mem_cgroup_disabled())
+		वापस 0;
 
 	id = lookup_swap_cgroup_id(entry);
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	memcg = mem_cgroup_from_id(id);
-	if (!memcg || !css_tryget_online(&memcg->css))
+	अगर (!memcg || !css_tryget_online(&memcg->css))
 		memcg = get_mem_cgroup_from_mm(mm);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	ret = __mem_cgroup_charge(page, memcg, gfp);
+	ret = __mem_cgroup_अक्षरge(page, memcg, gfp);
 
 	css_put(&memcg->css);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * mem_cgroup_swapin_uncharge_swap - uncharge swap slot
- * @entry: swap entry for which the page is charged
+ * mem_cgroup_swapin_unअक्षरge_swap - unअक्षरge swap slot
+ * @entry: swap entry क्रम which the page is अक्षरged
  *
- * Call this function after successfully adding the charged page to swapcache.
+ * Call this function after successfully adding the अक्षरged page to swapcache.
  *
- * Note: This function assumes the page for which swap slot is being uncharged
+ * Note: This function assumes the page क्रम which swap slot is being unअक्षरged
  * is order 0 page.
  */
-void mem_cgroup_swapin_uncharge_swap(swp_entry_t entry)
-{
+व्योम mem_cgroup_swapin_unअक्षरge_swap(swp_entry_t entry)
+अणु
 	/*
-	 * Cgroup1's unified memory+swap counter has been charged with the
-	 * new swapcache page, finish the transfer by uncharging the swap
-	 * slot. The swap slot would also get uncharged when it dies, but
+	 * Cgroup1's unअगरied memory+swap counter has been अक्षरged with the
+	 * new swapcache page, finish the transfer by unअक्षरging the swap
+	 * slot. The swap slot would also get unअक्षरged when it dies, but
 	 * it can stick around indefinitely and we'd count the page twice
-	 * the entire time.
+	 * the entire समय.
 	 *
-	 * Cgroup2 has separate resource counters for memory and swap,
-	 * so this is a non-issue here. Memory and swap charge lifetimes
-	 * correspond 1:1 to page and swap slot lifetimes: we charge the
-	 * page to memory here, and uncharge swap when the slot is freed.
+	 * Cgroup2 has separate resource counters क्रम memory and swap,
+	 * so this is a non-issue here. Memory and swap अक्षरge lअगरeबार
+	 * correspond 1:1 to page and swap slot lअगरeबार: we अक्षरge the
+	 * page to memory here, and unअक्षरge swap when the slot is मुक्तd.
 	 */
-	if (!mem_cgroup_disabled() && do_memsw_account()) {
+	अगर (!mem_cgroup_disabled() && करो_memsw_account()) अणु
 		/*
-		 * The swap entry might not get freed for a long time,
-		 * let's not wait for it.  The page already received a
-		 * memory+swap charge, drop the swap entry duplicate.
+		 * The swap entry might not get मुक्तd क्रम a दीर्घ समय,
+		 * let's not रुको क्रम it.  The page alपढ़ोy received a
+		 * memory+swap अक्षरge, drop the swap entry duplicate.
 		 */
-		mem_cgroup_uncharge_swap(entry, 1);
-	}
-}
+		mem_cgroup_unअक्षरge_swap(entry, 1);
+	पूर्ण
+पूर्ण
 
-struct uncharge_gather {
-	struct mem_cgroup *memcg;
-	unsigned long nr_memory;
-	unsigned long pgpgout;
-	unsigned long nr_kmem;
-	struct page *dummy_page;
-};
+काष्ठा unअक्षरge_gather अणु
+	काष्ठा mem_cgroup *memcg;
+	अचिन्हित दीर्घ nr_memory;
+	अचिन्हित दीर्घ pgpgout;
+	अचिन्हित दीर्घ nr_kmem;
+	काष्ठा page *dummy_page;
+पूर्ण;
 
-static inline void uncharge_gather_clear(struct uncharge_gather *ug)
-{
-	memset(ug, 0, sizeof(*ug));
-}
+अटल अंतरभूत व्योम unअक्षरge_gather_clear(काष्ठा unअक्षरge_gather *ug)
+अणु
+	स_रखो(ug, 0, माप(*ug));
+पूर्ण
 
-static void uncharge_batch(const struct uncharge_gather *ug)
-{
-	unsigned long flags;
+अटल व्योम unअक्षरge_batch(स्थिर काष्ठा unअक्षरge_gather *ug)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (ug->nr_memory) {
-		page_counter_uncharge(&ug->memcg->memory, ug->nr_memory);
-		if (do_memsw_account())
-			page_counter_uncharge(&ug->memcg->memsw, ug->nr_memory);
-		if (!cgroup_subsys_on_dfl(memory_cgrp_subsys) && ug->nr_kmem)
-			page_counter_uncharge(&ug->memcg->kmem, ug->nr_kmem);
+	अगर (ug->nr_memory) अणु
+		page_counter_unअक्षरge(&ug->memcg->memory, ug->nr_memory);
+		अगर (करो_memsw_account())
+			page_counter_unअक्षरge(&ug->memcg->memsw, ug->nr_memory);
+		अगर (!cgroup_subsys_on_dfl(memory_cgrp_subsys) && ug->nr_kmem)
+			page_counter_unअक्षरge(&ug->memcg->kmem, ug->nr_kmem);
 		memcg_oom_recover(ug->memcg);
-	}
+	पूर्ण
 
 	local_irq_save(flags);
 	__count_memcg_events(ug->memcg, PGPGOUT, ug->pgpgout);
@@ -6662,128 +6663,128 @@ static void uncharge_batch(const struct uncharge_gather *ug)
 	memcg_check_events(ug->memcg, ug->dummy_page);
 	local_irq_restore(flags);
 
-	/* drop reference from uncharge_page */
+	/* drop reference from unअक्षरge_page */
 	css_put(&ug->memcg->css);
-}
+पूर्ण
 
-static void uncharge_page(struct page *page, struct uncharge_gather *ug)
-{
-	unsigned long nr_pages;
-	struct mem_cgroup *memcg;
-	struct obj_cgroup *objcg;
+अटल व्योम unअक्षरge_page(काष्ठा page *page, काष्ठा unअक्षरge_gather *ug)
+अणु
+	अचिन्हित दीर्घ nr_pages;
+	काष्ठा mem_cgroup *memcg;
+	काष्ठा obj_cgroup *objcg;
 
 	VM_BUG_ON_PAGE(PageLRU(page), page);
 
 	/*
 	 * Nobody should be changing or seriously looking at
-	 * page memcg or objcg at this point, we have fully
+	 * page memcg or objcg at this poपूर्णांक, we have fully
 	 * exclusive access to the page.
 	 */
-	if (PageMemcgKmem(page)) {
+	अगर (PageMemcgKmem(page)) अणु
 		objcg = __page_objcg(page);
 		/*
 		 * This get matches the put at the end of the function and
-		 * kmem pages do not hold memcg references anymore.
+		 * kmem pages करो not hold memcg references anymore.
 		 */
 		memcg = get_mem_cgroup_from_objcg(objcg);
-	} else {
+	पूर्ण अन्यथा अणु
 		memcg = __page_memcg(page);
-	}
+	पूर्ण
 
-	if (!memcg)
-		return;
+	अगर (!memcg)
+		वापस;
 
-	if (ug->memcg != memcg) {
-		if (ug->memcg) {
-			uncharge_batch(ug);
-			uncharge_gather_clear(ug);
-		}
+	अगर (ug->memcg != memcg) अणु
+		अगर (ug->memcg) अणु
+			unअक्षरge_batch(ug);
+			unअक्षरge_gather_clear(ug);
+		पूर्ण
 		ug->memcg = memcg;
 		ug->dummy_page = page;
 
-		/* pairs with css_put in uncharge_batch */
+		/* pairs with css_put in unअक्षरge_batch */
 		css_get(&memcg->css);
-	}
+	पूर्ण
 
 	nr_pages = compound_nr(page);
 
-	if (PageMemcgKmem(page)) {
+	अगर (PageMemcgKmem(page)) अणु
 		ug->nr_memory += nr_pages;
 		ug->nr_kmem += nr_pages;
 
 		page->memcg_data = 0;
 		obj_cgroup_put(objcg);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* LRU pages aren't accounted at the root level */
-		if (!mem_cgroup_is_root(memcg))
+		अगर (!mem_cgroup_is_root(memcg))
 			ug->nr_memory += nr_pages;
 		ug->pgpgout++;
 
 		page->memcg_data = 0;
-	}
+	पूर्ण
 
 	css_put(&memcg->css);
-}
+पूर्ण
 
 /**
- * mem_cgroup_uncharge - uncharge a page
- * @page: page to uncharge
+ * mem_cgroup_unअक्षरge - unअक्षरge a page
+ * @page: page to unअक्षरge
  *
- * Uncharge a page previously charged with mem_cgroup_charge().
+ * Unअक्षरge a page previously अक्षरged with mem_cgroup_अक्षरge().
  */
-void mem_cgroup_uncharge(struct page *page)
-{
-	struct uncharge_gather ug;
+व्योम mem_cgroup_unअक्षरge(काष्ठा page *page)
+अणु
+	काष्ठा unअक्षरge_gather ug;
 
-	if (mem_cgroup_disabled())
-		return;
+	अगर (mem_cgroup_disabled())
+		वापस;
 
-	/* Don't touch page->lru of any random page, pre-check: */
-	if (!page_memcg(page))
-		return;
+	/* Don't touch page->lru of any अक्रमom page, pre-check: */
+	अगर (!page_memcg(page))
+		वापस;
 
-	uncharge_gather_clear(&ug);
-	uncharge_page(page, &ug);
-	uncharge_batch(&ug);
-}
+	unअक्षरge_gather_clear(&ug);
+	unअक्षरge_page(page, &ug);
+	unअक्षरge_batch(&ug);
+पूर्ण
 
 /**
- * mem_cgroup_uncharge_list - uncharge a list of page
- * @page_list: list of pages to uncharge
+ * mem_cgroup_unअक्षरge_list - unअक्षरge a list of page
+ * @page_list: list of pages to unअक्षरge
  *
- * Uncharge a list of pages previously charged with
- * mem_cgroup_charge().
+ * Unअक्षरge a list of pages previously अक्षरged with
+ * mem_cgroup_अक्षरge().
  */
-void mem_cgroup_uncharge_list(struct list_head *page_list)
-{
-	struct uncharge_gather ug;
-	struct page *page;
+व्योम mem_cgroup_unअक्षरge_list(काष्ठा list_head *page_list)
+अणु
+	काष्ठा unअक्षरge_gather ug;
+	काष्ठा page *page;
 
-	if (mem_cgroup_disabled())
-		return;
+	अगर (mem_cgroup_disabled())
+		वापस;
 
-	uncharge_gather_clear(&ug);
-	list_for_each_entry(page, page_list, lru)
-		uncharge_page(page, &ug);
-	if (ug.memcg)
-		uncharge_batch(&ug);
-}
+	unअक्षरge_gather_clear(&ug);
+	list_क्रम_each_entry(page, page_list, lru)
+		unअक्षरge_page(page, &ug);
+	अगर (ug.memcg)
+		unअक्षरge_batch(&ug);
+पूर्ण
 
 /**
- * mem_cgroup_migrate - charge a page's replacement
+ * mem_cgroup_migrate - अक्षरge a page's replacement
  * @oldpage: currently circulating page
  * @newpage: replacement page
  *
- * Charge @newpage as a replacement page for @oldpage. @oldpage will
- * be uncharged upon free.
+ * Charge @newpage as a replacement page क्रम @oldpage. @oldpage will
+ * be unअक्षरged upon मुक्त.
  *
  * Both pages must be locked, @newpage->mapping must be set up.
  */
-void mem_cgroup_migrate(struct page *oldpage, struct page *newpage)
-{
-	struct mem_cgroup *memcg;
-	unsigned int nr_pages;
-	unsigned long flags;
+व्योम mem_cgroup_migrate(काष्ठा page *oldpage, काष्ठा page *newpage)
+अणु
+	काष्ठा mem_cgroup *memcg;
+	अचिन्हित पूर्णांक nr_pages;
+	अचिन्हित दीर्घ flags;
 
 	VM_BUG_ON_PAGE(!PageLocked(oldpage), oldpage);
 	VM_BUG_ON_PAGE(!PageLocked(newpage), newpage);
@@ -6791,235 +6792,235 @@ void mem_cgroup_migrate(struct page *oldpage, struct page *newpage)
 	VM_BUG_ON_PAGE(PageTransHuge(oldpage) != PageTransHuge(newpage),
 		       newpage);
 
-	if (mem_cgroup_disabled())
-		return;
+	अगर (mem_cgroup_disabled())
+		वापस;
 
-	/* Page cache replacement: new page already charged? */
-	if (page_memcg(newpage))
-		return;
+	/* Page cache replacement: new page alपढ़ोy अक्षरged? */
+	अगर (page_memcg(newpage))
+		वापस;
 
 	memcg = page_memcg(oldpage);
 	VM_WARN_ON_ONCE_PAGE(!memcg, oldpage);
-	if (!memcg)
-		return;
+	अगर (!memcg)
+		वापस;
 
-	/* Force-charge the new page. The old one will be freed soon */
+	/* Force-अक्षरge the new page. The old one will be मुक्तd soon */
 	nr_pages = thp_nr_pages(newpage);
 
-	page_counter_charge(&memcg->memory, nr_pages);
-	if (do_memsw_account())
-		page_counter_charge(&memcg->memsw, nr_pages);
+	page_counter_अक्षरge(&memcg->memory, nr_pages);
+	अगर (करो_memsw_account())
+		page_counter_अक्षरge(&memcg->memsw, nr_pages);
 
 	css_get(&memcg->css);
-	commit_charge(newpage, memcg);
+	commit_अक्षरge(newpage, memcg);
 
 	local_irq_save(flags);
-	mem_cgroup_charge_statistics(memcg, newpage, nr_pages);
+	mem_cgroup_अक्षरge_statistics(memcg, newpage, nr_pages);
 	memcg_check_events(memcg, newpage);
 	local_irq_restore(flags);
-}
+पूर्ण
 
 DEFINE_STATIC_KEY_FALSE(memcg_sockets_enabled_key);
 EXPORT_SYMBOL(memcg_sockets_enabled_key);
 
-void mem_cgroup_sk_alloc(struct sock *sk)
-{
-	struct mem_cgroup *memcg;
+व्योम mem_cgroup_sk_alloc(काष्ठा sock *sk)
+अणु
+	काष्ठा mem_cgroup *memcg;
 
-	if (!mem_cgroup_sockets_enabled)
-		return;
+	अगर (!mem_cgroup_sockets_enabled)
+		वापस;
 
-	/* Do not associate the sock with unrelated interrupted task's memcg. */
-	if (in_interrupt())
-		return;
+	/* Do not associate the sock with unrelated पूर्णांकerrupted task's memcg. */
+	अगर (in_पूर्णांकerrupt())
+		वापस;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	memcg = mem_cgroup_from_task(current);
-	if (memcg == root_mem_cgroup)
-		goto out;
-	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys) && !memcg->tcpmem_active)
-		goto out;
-	if (css_tryget(&memcg->css))
+	अगर (memcg == root_mem_cgroup)
+		जाओ out;
+	अगर (!cgroup_subsys_on_dfl(memory_cgrp_subsys) && !memcg->tcpmem_active)
+		जाओ out;
+	अगर (css_tryget(&memcg->css))
 		sk->sk_memcg = memcg;
 out:
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-void mem_cgroup_sk_free(struct sock *sk)
-{
-	if (sk->sk_memcg)
+व्योम mem_cgroup_sk_मुक्त(काष्ठा sock *sk)
+अणु
+	अगर (sk->sk_memcg)
 		css_put(&sk->sk_memcg->css);
-}
+पूर्ण
 
 /**
- * mem_cgroup_charge_skmem - charge socket memory
- * @memcg: memcg to charge
- * @nr_pages: number of pages to charge
+ * mem_cgroup_अक्षरge_skmem - अक्षरge socket memory
+ * @memcg: memcg to अक्षरge
+ * @nr_pages: number of pages to अक्षरge
  *
- * Charges @nr_pages to @memcg. Returns %true if the charge fit within
- * @memcg's configured limit, %false if the charge had to be forced.
+ * Charges @nr_pages to @memcg. Returns %true अगर the अक्षरge fit within
+ * @memcg's configured limit, %false अगर the अक्षरge had to be क्रमced.
  */
-bool mem_cgroup_charge_skmem(struct mem_cgroup *memcg, unsigned int nr_pages)
-{
+bool mem_cgroup_अक्षरge_skmem(काष्ठा mem_cgroup *memcg, अचिन्हित पूर्णांक nr_pages)
+अणु
 	gfp_t gfp_mask = GFP_KERNEL;
 
-	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys)) {
-		struct page_counter *fail;
+	अगर (!cgroup_subsys_on_dfl(memory_cgrp_subsys)) अणु
+		काष्ठा page_counter *fail;
 
-		if (page_counter_try_charge(&memcg->tcpmem, nr_pages, &fail)) {
+		अगर (page_counter_try_अक्षरge(&memcg->tcpmem, nr_pages, &fail)) अणु
 			memcg->tcpmem_pressure = 0;
-			return true;
-		}
-		page_counter_charge(&memcg->tcpmem, nr_pages);
+			वापस true;
+		पूर्ण
+		page_counter_अक्षरge(&memcg->tcpmem, nr_pages);
 		memcg->tcpmem_pressure = 1;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* Don't block in the packet receive path */
-	if (in_softirq())
+	अगर (in_softirq())
 		gfp_mask = GFP_NOWAIT;
 
 	mod_memcg_state(memcg, MEMCG_SOCK, nr_pages);
 
-	if (try_charge(memcg, gfp_mask, nr_pages) == 0)
-		return true;
+	अगर (try_अक्षरge(memcg, gfp_mask, nr_pages) == 0)
+		वापस true;
 
-	try_charge(memcg, gfp_mask|__GFP_NOFAIL, nr_pages);
-	return false;
-}
+	try_अक्षरge(memcg, gfp_mask|__GFP_NOFAIL, nr_pages);
+	वापस false;
+पूर्ण
 
 /**
- * mem_cgroup_uncharge_skmem - uncharge socket memory
- * @memcg: memcg to uncharge
- * @nr_pages: number of pages to uncharge
+ * mem_cgroup_unअक्षरge_skmem - unअक्षरge socket memory
+ * @memcg: memcg to unअक्षरge
+ * @nr_pages: number of pages to unअक्षरge
  */
-void mem_cgroup_uncharge_skmem(struct mem_cgroup *memcg, unsigned int nr_pages)
-{
-	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys)) {
-		page_counter_uncharge(&memcg->tcpmem, nr_pages);
-		return;
-	}
+व्योम mem_cgroup_unअक्षरge_skmem(काष्ठा mem_cgroup *memcg, अचिन्हित पूर्णांक nr_pages)
+अणु
+	अगर (!cgroup_subsys_on_dfl(memory_cgrp_subsys)) अणु
+		page_counter_unअक्षरge(&memcg->tcpmem, nr_pages);
+		वापस;
+	पूर्ण
 
 	mod_memcg_state(memcg, MEMCG_SOCK, -nr_pages);
 
 	refill_stock(memcg, nr_pages);
-}
+पूर्ण
 
-static int __init cgroup_memory(char *s)
-{
-	char *token;
+अटल पूर्णांक __init cgroup_memory(अक्षर *s)
+अणु
+	अक्षर *token;
 
-	while ((token = strsep(&s, ",")) != NULL) {
-		if (!*token)
-			continue;
-		if (!strcmp(token, "nosocket"))
+	जबतक ((token = strsep(&s, ",")) != शून्य) अणु
+		अगर (!*token)
+			जारी;
+		अगर (!म_भेद(token, "nosocket"))
 			cgroup_memory_nosocket = true;
-		if (!strcmp(token, "nokmem"))
+		अगर (!म_भेद(token, "nokmem"))
 			cgroup_memory_nokmem = true;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 __setup("cgroup.memory=", cgroup_memory);
 
 /*
- * subsys_initcall() for memory controller.
+ * subsys_initcall() क्रम memory controller.
  *
  * Some parts like memcg_hotplug_cpu_dead() have to be initialized from this
  * context because of lock dependencies (cgroup_lock -> cpu hotplug) but
- * basically everything that doesn't depend on a specific mem_cgroup structure
+ * basically everything that करोesn't depend on a specअगरic mem_cgroup काष्ठाure
  * should be initialized from here.
  */
-static int __init mem_cgroup_init(void)
-{
-	int cpu, node;
+अटल पूर्णांक __init mem_cgroup_init(व्योम)
+अणु
+	पूर्णांक cpu, node;
 
 	/*
-	 * Currently s32 type (can refer to struct batched_lruvec_stat) is
-	 * used for per-memcg-per-cpu caching of per-node statistics. In order
+	 * Currently s32 type (can refer to काष्ठा batched_lruvec_stat) is
+	 * used क्रम per-memcg-per-cpu caching of per-node statistics. In order
 	 * to work fine, we should make sure that the overfill threshold can't
 	 * exceed S32_MAX / PAGE_SIZE.
 	 */
 	BUILD_BUG_ON(MEMCG_CHARGE_BATCH > S32_MAX / PAGE_SIZE);
 
-	cpuhp_setup_state_nocalls(CPUHP_MM_MEMCQ_DEAD, "mm/memctrl:dead", NULL,
+	cpuhp_setup_state_nocalls(CPUHP_MM_MEMCQ_DEAD, "mm/memctrl:dead", शून्य,
 				  memcg_hotplug_cpu_dead);
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		INIT_WORK(&per_cpu_ptr(&memcg_stock, cpu)->work,
 			  drain_local_stock);
 
-	for_each_node(node) {
-		struct mem_cgroup_tree_per_node *rtpn;
+	क्रम_each_node(node) अणु
+		काष्ठा mem_cgroup_tree_per_node *rtpn;
 
-		rtpn = kzalloc_node(sizeof(*rtpn), GFP_KERNEL,
+		rtpn = kzalloc_node(माप(*rtpn), GFP_KERNEL,
 				    node_online(node) ? node : NUMA_NO_NODE);
 
 		rtpn->rb_root = RB_ROOT;
-		rtpn->rb_rightmost = NULL;
+		rtpn->rb_righपंचांगost = शून्य;
 		spin_lock_init(&rtpn->lock);
 		soft_limit_tree.rb_tree_per_node[node] = rtpn;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(mem_cgroup_init);
 
-#ifdef CONFIG_MEMCG_SWAP
-static struct mem_cgroup *mem_cgroup_id_get_online(struct mem_cgroup *memcg)
-{
-	while (!refcount_inc_not_zero(&memcg->id.ref)) {
+#अगर_घोषित CONFIG_MEMCG_SWAP
+अटल काष्ठा mem_cgroup *mem_cgroup_id_get_online(काष्ठा mem_cgroup *memcg)
+अणु
+	जबतक (!refcount_inc_not_zero(&memcg->id.ref)) अणु
 		/*
 		 * The root cgroup cannot be destroyed, so it's refcount must
 		 * always be >= 1.
 		 */
-		if (WARN_ON_ONCE(memcg == root_mem_cgroup)) {
+		अगर (WARN_ON_ONCE(memcg == root_mem_cgroup)) अणु
 			VM_BUG_ON(1);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		memcg = parent_mem_cgroup(memcg);
-		if (!memcg)
+		अगर (!memcg)
 			memcg = root_mem_cgroup;
-	}
-	return memcg;
-}
+	पूर्ण
+	वापस memcg;
+पूर्ण
 
 /**
- * mem_cgroup_swapout - transfer a memsw charge to swap
- * @page: page whose memsw charge to transfer
- * @entry: swap entry to move the charge to
+ * mem_cgroup_swapout - transfer a memsw अक्षरge to swap
+ * @page: page whose memsw अक्षरge to transfer
+ * @entry: swap entry to move the अक्षरge to
  *
- * Transfer the memsw charge of @page to @entry.
+ * Transfer the memsw अक्षरge of @page to @entry.
  */
-void mem_cgroup_swapout(struct page *page, swp_entry_t entry)
-{
-	struct mem_cgroup *memcg, *swap_memcg;
-	unsigned int nr_entries;
-	unsigned short oldid;
+व्योम mem_cgroup_swapout(काष्ठा page *page, swp_entry_t entry)
+अणु
+	काष्ठा mem_cgroup *memcg, *swap_memcg;
+	अचिन्हित पूर्णांक nr_entries;
+	अचिन्हित लघु oldid;
 
 	VM_BUG_ON_PAGE(PageLRU(page), page);
 	VM_BUG_ON_PAGE(page_count(page), page);
 
-	if (mem_cgroup_disabled())
-		return;
+	अगर (mem_cgroup_disabled())
+		वापस;
 
-	if (cgroup_subsys_on_dfl(memory_cgrp_subsys))
-		return;
+	अगर (cgroup_subsys_on_dfl(memory_cgrp_subsys))
+		वापस;
 
 	memcg = page_memcg(page);
 
 	VM_WARN_ON_ONCE_PAGE(!memcg, page);
-	if (!memcg)
-		return;
+	अगर (!memcg)
+		वापस;
 
 	/*
-	 * In case the memcg owning these pages has been offlined and doesn't
-	 * have an ID allocated to it anymore, charge the closest online
-	 * ancestor for the swap instead and transfer the memory+swap charge.
+	 * In हाल the memcg owning these pages has been offlined and करोesn't
+	 * have an ID allocated to it anymore, अक्षरge the बंदst online
+	 * ancestor क्रम the swap instead and transfer the memory+swap अक्षरge.
 	 */
 	swap_memcg = mem_cgroup_id_get_online(memcg);
 	nr_entries = thp_nr_pages(page);
-	/* Get references for the tail pages, too */
-	if (nr_entries > 1)
+	/* Get references क्रम the tail pages, too */
+	अगर (nr_entries > 1)
 		mem_cgroup_id_get_many(swap_memcg, nr_entries - 1);
 	oldid = swap_cgroup_record(entry, mem_cgroup_id(swap_memcg),
 				   nr_entries);
@@ -7028,299 +7029,299 @@ void mem_cgroup_swapout(struct page *page, swp_entry_t entry)
 
 	page->memcg_data = 0;
 
-	if (!mem_cgroup_is_root(memcg))
-		page_counter_uncharge(&memcg->memory, nr_entries);
+	अगर (!mem_cgroup_is_root(memcg))
+		page_counter_unअक्षरge(&memcg->memory, nr_entries);
 
-	if (!cgroup_memory_noswap && memcg != swap_memcg) {
-		if (!mem_cgroup_is_root(swap_memcg))
-			page_counter_charge(&swap_memcg->memsw, nr_entries);
-		page_counter_uncharge(&memcg->memsw, nr_entries);
-	}
+	अगर (!cgroup_memory_noswap && memcg != swap_memcg) अणु
+		अगर (!mem_cgroup_is_root(swap_memcg))
+			page_counter_अक्षरge(&swap_memcg->memsw, nr_entries);
+		page_counter_unअक्षरge(&memcg->memsw, nr_entries);
+	पूर्ण
 
 	/*
 	 * Interrupts should be disabled here because the caller holds the
-	 * i_pages lock which is taken with interrupts-off. It is
-	 * important here to have the interrupts disabled because it is the
-	 * only synchronisation we have for updating the per-CPU variables.
+	 * i_pages lock which is taken with पूर्णांकerrupts-off. It is
+	 * important here to have the पूर्णांकerrupts disabled because it is the
+	 * only synchronisation we have क्रम updating the per-CPU variables.
 	 */
 	VM_BUG_ON(!irqs_disabled());
-	mem_cgroup_charge_statistics(memcg, page, -nr_entries);
+	mem_cgroup_अक्षरge_statistics(memcg, page, -nr_entries);
 	memcg_check_events(memcg, page);
 
 	css_put(&memcg->css);
-}
+पूर्ण
 
 /**
- * mem_cgroup_try_charge_swap - try charging swap space for a page
+ * mem_cgroup_try_अक्षरge_swap - try अक्षरging swap space क्रम a page
  * @page: page being added to swap
- * @entry: swap entry to charge
+ * @entry: swap entry to अक्षरge
  *
- * Try to charge @page's memcg for the swap space at @entry.
+ * Try to अक्षरge @page's memcg क्रम the swap space at @entry.
  *
  * Returns 0 on success, -ENOMEM on failure.
  */
-int mem_cgroup_try_charge_swap(struct page *page, swp_entry_t entry)
-{
-	unsigned int nr_pages = thp_nr_pages(page);
-	struct page_counter *counter;
-	struct mem_cgroup *memcg;
-	unsigned short oldid;
+पूर्णांक mem_cgroup_try_अक्षरge_swap(काष्ठा page *page, swp_entry_t entry)
+अणु
+	अचिन्हित पूर्णांक nr_pages = thp_nr_pages(page);
+	काष्ठा page_counter *counter;
+	काष्ठा mem_cgroup *memcg;
+	अचिन्हित लघु oldid;
 
-	if (mem_cgroup_disabled())
-		return 0;
+	अगर (mem_cgroup_disabled())
+		वापस 0;
 
-	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
-		return 0;
+	अगर (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
+		वापस 0;
 
 	memcg = page_memcg(page);
 
 	VM_WARN_ON_ONCE_PAGE(!memcg, page);
-	if (!memcg)
-		return 0;
+	अगर (!memcg)
+		वापस 0;
 
-	if (!entry.val) {
+	अगर (!entry.val) अणु
 		memcg_memory_event(memcg, MEMCG_SWAP_FAIL);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	memcg = mem_cgroup_id_get_online(memcg);
 
-	if (!cgroup_memory_noswap && !mem_cgroup_is_root(memcg) &&
-	    !page_counter_try_charge(&memcg->swap, nr_pages, &counter)) {
+	अगर (!cgroup_memory_noswap && !mem_cgroup_is_root(memcg) &&
+	    !page_counter_try_अक्षरge(&memcg->swap, nr_pages, &counter)) अणु
 		memcg_memory_event(memcg, MEMCG_SWAP_MAX);
 		memcg_memory_event(memcg, MEMCG_SWAP_FAIL);
 		mem_cgroup_id_put(memcg);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* Get references for the tail pages, too */
-	if (nr_pages > 1)
+	/* Get references क्रम the tail pages, too */
+	अगर (nr_pages > 1)
 		mem_cgroup_id_get_many(memcg, nr_pages - 1);
 	oldid = swap_cgroup_record(entry, mem_cgroup_id(memcg), nr_pages);
 	VM_BUG_ON_PAGE(oldid, page);
 	mod_memcg_state(memcg, MEMCG_SWAP, nr_pages);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mem_cgroup_uncharge_swap - uncharge swap space
- * @entry: swap entry to uncharge
- * @nr_pages: the amount of swap space to uncharge
+ * mem_cgroup_unअक्षरge_swap - unअक्षरge swap space
+ * @entry: swap entry to unअक्षरge
+ * @nr_pages: the amount of swap space to unअक्षरge
  */
-void mem_cgroup_uncharge_swap(swp_entry_t entry, unsigned int nr_pages)
-{
-	struct mem_cgroup *memcg;
-	unsigned short id;
+व्योम mem_cgroup_unअक्षरge_swap(swp_entry_t entry, अचिन्हित पूर्णांक nr_pages)
+अणु
+	काष्ठा mem_cgroup *memcg;
+	अचिन्हित लघु id;
 
 	id = swap_cgroup_record(entry, 0, nr_pages);
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	memcg = mem_cgroup_from_id(id);
-	if (memcg) {
-		if (!cgroup_memory_noswap && !mem_cgroup_is_root(memcg)) {
-			if (cgroup_subsys_on_dfl(memory_cgrp_subsys))
-				page_counter_uncharge(&memcg->swap, nr_pages);
-			else
-				page_counter_uncharge(&memcg->memsw, nr_pages);
-		}
+	अगर (memcg) अणु
+		अगर (!cgroup_memory_noswap && !mem_cgroup_is_root(memcg)) अणु
+			अगर (cgroup_subsys_on_dfl(memory_cgrp_subsys))
+				page_counter_unअक्षरge(&memcg->swap, nr_pages);
+			अन्यथा
+				page_counter_unअक्षरge(&memcg->memsw, nr_pages);
+		पूर्ण
 		mod_memcg_state(memcg, MEMCG_SWAP, -nr_pages);
 		mem_cgroup_id_put_many(memcg, nr_pages);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-long mem_cgroup_get_nr_swap_pages(struct mem_cgroup *memcg)
-{
-	long nr_swap_pages = get_nr_swap_pages();
+दीर्घ mem_cgroup_get_nr_swap_pages(काष्ठा mem_cgroup *memcg)
+अणु
+	दीर्घ nr_swap_pages = get_nr_swap_pages();
 
-	if (cgroup_memory_noswap || !cgroup_subsys_on_dfl(memory_cgrp_subsys))
-		return nr_swap_pages;
-	for (; memcg != root_mem_cgroup; memcg = parent_mem_cgroup(memcg))
-		nr_swap_pages = min_t(long, nr_swap_pages,
+	अगर (cgroup_memory_noswap || !cgroup_subsys_on_dfl(memory_cgrp_subsys))
+		वापस nr_swap_pages;
+	क्रम (; memcg != root_mem_cgroup; memcg = parent_mem_cgroup(memcg))
+		nr_swap_pages = min_t(दीर्घ, nr_swap_pages,
 				      READ_ONCE(memcg->swap.max) -
-				      page_counter_read(&memcg->swap));
-	return nr_swap_pages;
-}
+				      page_counter_पढ़ो(&memcg->swap));
+	वापस nr_swap_pages;
+पूर्ण
 
-bool mem_cgroup_swap_full(struct page *page)
-{
-	struct mem_cgroup *memcg;
+bool mem_cgroup_swap_full(काष्ठा page *page)
+अणु
+	काष्ठा mem_cgroup *memcg;
 
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
 
-	if (vm_swap_full())
-		return true;
-	if (cgroup_memory_noswap || !cgroup_subsys_on_dfl(memory_cgrp_subsys))
-		return false;
+	अगर (vm_swap_full())
+		वापस true;
+	अगर (cgroup_memory_noswap || !cgroup_subsys_on_dfl(memory_cgrp_subsys))
+		वापस false;
 
 	memcg = page_memcg(page);
-	if (!memcg)
-		return false;
+	अगर (!memcg)
+		वापस false;
 
-	for (; memcg != root_mem_cgroup; memcg = parent_mem_cgroup(memcg)) {
-		unsigned long usage = page_counter_read(&memcg->swap);
+	क्रम (; memcg != root_mem_cgroup; memcg = parent_mem_cgroup(memcg)) अणु
+		अचिन्हित दीर्घ usage = page_counter_पढ़ो(&memcg->swap);
 
-		if (usage * 2 >= READ_ONCE(memcg->swap.high) ||
+		अगर (usage * 2 >= READ_ONCE(memcg->swap.high) ||
 		    usage * 2 >= READ_ONCE(memcg->swap.max))
-			return true;
-	}
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int __init setup_swap_account(char *s)
-{
-	if (!strcmp(s, "1"))
+अटल पूर्णांक __init setup_swap_account(अक्षर *s)
+अणु
+	अगर (!म_भेद(s, "1"))
 		cgroup_memory_noswap = false;
-	else if (!strcmp(s, "0"))
+	अन्यथा अगर (!म_भेद(s, "0"))
 		cgroup_memory_noswap = true;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("swapaccount=", setup_swap_account);
 
-static u64 swap_current_read(struct cgroup_subsys_state *css,
-			     struct cftype *cft)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+अटल u64 swap_current_पढ़ो(काष्ठा cgroup_subsys_state *css,
+			     काष्ठा cftype *cft)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
 
-	return (u64)page_counter_read(&memcg->swap) * PAGE_SIZE;
-}
+	वापस (u64)page_counter_पढ़ो(&memcg->swap) * PAGE_SIZE;
+पूर्ण
 
-static int swap_high_show(struct seq_file *m, void *v)
-{
-	return seq_puts_memcg_tunable(m,
+अटल पूर्णांक swap_high_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	वापस seq_माला_दो_memcg_tunable(m,
 		READ_ONCE(mem_cgroup_from_seq(m)->swap.high));
-}
+पूर्ण
 
-static ssize_t swap_high_write(struct kernfs_open_file *of,
-			       char *buf, size_t nbytes, loff_t off)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
-	unsigned long high;
-	int err;
+अटल sमाप_प्रकार swap_high_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+			       अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
+	अचिन्हित दीर्घ high;
+	पूर्णांक err;
 
-	buf = strstrip(buf);
+	buf = म_मालाip(buf);
 	err = page_counter_memparse(buf, "max", &high);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	page_counter_set_high(&memcg->swap, high);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int swap_max_show(struct seq_file *m, void *v)
-{
-	return seq_puts_memcg_tunable(m,
+अटल पूर्णांक swap_max_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	वापस seq_माला_दो_memcg_tunable(m,
 		READ_ONCE(mem_cgroup_from_seq(m)->swap.max));
-}
+पूर्ण
 
-static ssize_t swap_max_write(struct kernfs_open_file *of,
-			      char *buf, size_t nbytes, loff_t off)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
-	unsigned long max;
-	int err;
+अटल sमाप_प्रकार swap_max_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
+			      अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
+	अचिन्हित दीर्घ max;
+	पूर्णांक err;
 
-	buf = strstrip(buf);
+	buf = म_मालाip(buf);
 	err = page_counter_memparse(buf, "max", &max);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	xchg(&memcg->swap.max, max);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int swap_events_show(struct seq_file *m, void *v)
-{
-	struct mem_cgroup *memcg = mem_cgroup_from_seq(m);
+अटल पूर्णांक swap_events_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_seq(m);
 
-	seq_printf(m, "high %lu\n",
-		   atomic_long_read(&memcg->memory_events[MEMCG_SWAP_HIGH]));
-	seq_printf(m, "max %lu\n",
-		   atomic_long_read(&memcg->memory_events[MEMCG_SWAP_MAX]));
-	seq_printf(m, "fail %lu\n",
-		   atomic_long_read(&memcg->memory_events[MEMCG_SWAP_FAIL]));
+	seq_म_लिखो(m, "high %lu\n",
+		   atomic_दीर्घ_पढ़ो(&memcg->memory_events[MEMCG_SWAP_HIGH]));
+	seq_म_लिखो(m, "max %lu\n",
+		   atomic_दीर्घ_पढ़ो(&memcg->memory_events[MEMCG_SWAP_MAX]));
+	seq_म_लिखो(m, "fail %lu\n",
+		   atomic_दीर्घ_पढ़ो(&memcg->memory_events[MEMCG_SWAP_FAIL]));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct cftype swap_files[] = {
-	{
+अटल काष्ठा cftype swap_files[] = अणु
+	अणु
 		.name = "swap.current",
 		.flags = CFTYPE_NOT_ON_ROOT,
-		.read_u64 = swap_current_read,
-	},
-	{
+		.पढ़ो_u64 = swap_current_पढ़ो,
+	पूर्ण,
+	अणु
 		.name = "swap.high",
 		.flags = CFTYPE_NOT_ON_ROOT,
 		.seq_show = swap_high_show,
-		.write = swap_high_write,
-	},
-	{
+		.ग_लिखो = swap_high_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "swap.max",
 		.flags = CFTYPE_NOT_ON_ROOT,
 		.seq_show = swap_max_show,
-		.write = swap_max_write,
-	},
-	{
+		.ग_लिखो = swap_max_ग_लिखो,
+	पूर्ण,
+	अणु
 		.name = "swap.events",
 		.flags = CFTYPE_NOT_ON_ROOT,
-		.file_offset = offsetof(struct mem_cgroup, swap_events_file),
+		.file_offset = दुरत्व(काष्ठा mem_cgroup, swap_events_file),
 		.seq_show = swap_events_show,
-	},
-	{ }	/* terminate */
-};
+	पूर्ण,
+	अणु पूर्ण	/* terminate */
+पूर्ण;
 
-static struct cftype memsw_files[] = {
-	{
+अटल काष्ठा cftype memsw_files[] = अणु
+	अणु
 		.name = "memsw.usage_in_bytes",
-		.private = MEMFILE_PRIVATE(_MEMSWAP, RES_USAGE),
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_MEMSWAP, RES_USAGE),
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "memsw.max_usage_in_bytes",
-		.private = MEMFILE_PRIVATE(_MEMSWAP, RES_MAX_USAGE),
-		.write = mem_cgroup_reset,
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_MEMSWAP, RES_MAX_USAGE),
+		.ग_लिखो = mem_cgroup_reset,
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "memsw.limit_in_bytes",
-		.private = MEMFILE_PRIVATE(_MEMSWAP, RES_LIMIT),
-		.write = mem_cgroup_write,
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{
+		.निजी = MEMखाता_PRIVATE(_MEMSWAP, RES_LIMIT),
+		.ग_लिखो = mem_cgroup_ग_लिखो,
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु
 		.name = "memsw.failcnt",
-		.private = MEMFILE_PRIVATE(_MEMSWAP, RES_FAILCNT),
-		.write = mem_cgroup_reset,
-		.read_u64 = mem_cgroup_read_u64,
-	},
-	{ },	/* terminate */
-};
+		.निजी = MEMखाता_PRIVATE(_MEMSWAP, RES_FAILCNT),
+		.ग_लिखो = mem_cgroup_reset,
+		.पढ़ो_u64 = mem_cgroup_पढ़ो_u64,
+	पूर्ण,
+	अणु पूर्ण,	/* terminate */
+पूर्ण;
 
 /*
  * If mem_cgroup_swap_init() is implemented as a subsys_initcall()
  * instead of a core_initcall(), this could mean cgroup_memory_noswap still
- * remains set to false even when memcg is disabled via "cgroup_disable=memory"
+ * reमुख्यs set to false even when memcg is disabled via "cgroup_disable=memory"
  * boot parameter. This may result in premature OOPS inside
- * mem_cgroup_get_nr_swap_pages() function in corner cases.
+ * mem_cgroup_get_nr_swap_pages() function in corner हालs.
  */
-static int __init mem_cgroup_swap_init(void)
-{
+अटल पूर्णांक __init mem_cgroup_swap_init(व्योम)
+अणु
 	/* No memory control -> no swap control */
-	if (mem_cgroup_disabled())
+	अगर (mem_cgroup_disabled())
 		cgroup_memory_noswap = true;
 
-	if (cgroup_memory_noswap)
-		return 0;
+	अगर (cgroup_memory_noswap)
+		वापस 0;
 
 	WARN_ON(cgroup_add_dfl_cftypes(&memory_cgrp_subsys, swap_files));
 	WARN_ON(cgroup_add_legacy_cftypes(&memory_cgrp_subsys, memsw_files));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 core_initcall(mem_cgroup_swap_init);
 
-#endif /* CONFIG_MEMCG_SWAP */
+#पूर्ण_अगर /* CONFIG_MEMCG_SWAP */

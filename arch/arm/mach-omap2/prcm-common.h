@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-#ifndef __ARCH_ASM_MACH_OMAP2_PRCM_COMMON_H
-#define __ARCH_ASM_MACH_OMAP2_PRCM_COMMON_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
+#अगर_अघोषित __ARCH_ASM_MACH_OMAP2_PRCM_COMMON_H
+#घोषणा __ARCH_ASM_MACH_OMAP2_PRCM_COMMON_H
 
 /*
  * OMAP2/3 PRCM base and module definitions
@@ -19,545 +20,545 @@
  * Technically, in terms of the TRM, OCP_MOD is 34xx only; PLL_MOD is
  * CCR_MOD on 3430; and GFX_MOD only exists < 3430ES2.
  */
-#define OCP_MOD						0x000
-#define MPU_MOD						0x100
-#define CORE_MOD					0x200
-#define GFX_MOD						0x300
-#define WKUP_MOD					0x400
-#define PLL_MOD						0x500
+#घोषणा OCP_MOD						0x000
+#घोषणा MPU_MOD						0x100
+#घोषणा CORE_MOD					0x200
+#घोषणा GFX_MOD						0x300
+#घोषणा WKUP_MOD					0x400
+#घोषणा PLL_MOD						0x500
 
 
-/* Chip-specific module offsets */
-#define OMAP24XX_GR_MOD					OCP_MOD
-#define OMAP24XX_DSP_MOD				0x800
+/* Chip-specअगरic module offsets */
+#घोषणा OMAP24XX_GR_MOD					OCP_MOD
+#घोषणा OMAP24XX_DSP_MOD				0x800
 
-#define OMAP2430_MDM_MOD				0xc00
+#घोषणा OMAP2430_MDM_MOD				0xc00
 
 /* IVA2 module is < base on 3430 */
-#define OMAP3430_IVA2_MOD				-0x800
-#define OMAP3430ES2_SGX_MOD				GFX_MOD
-#define OMAP3430_CCR_MOD				PLL_MOD
-#define OMAP3430_DSS_MOD				0x600
-#define OMAP3430_CAM_MOD				0x700
-#define OMAP3430_PER_MOD				0x800
-#define OMAP3430_EMU_MOD				0x900
-#define OMAP3430_GR_MOD					0xa00
-#define OMAP3430_NEON_MOD				0xb00
-#define OMAP3430ES2_USBHOST_MOD				0xc00
+#घोषणा OMAP3430_IVA2_MOD				-0x800
+#घोषणा OMAP3430ES2_SGX_MOD				GFX_MOD
+#घोषणा OMAP3430_CCR_MOD				PLL_MOD
+#घोषणा OMAP3430_DSS_MOD				0x600
+#घोषणा OMAP3430_CAM_MOD				0x700
+#घोषणा OMAP3430_PER_MOD				0x800
+#घोषणा OMAP3430_EMU_MOD				0x900
+#घोषणा OMAP3430_GR_MOD					0xa00
+#घोषणा OMAP3430_NEON_MOD				0xb00
+#घोषणा OMAP3430ES2_USBHOST_MOD				0xc00
 
 /*
  * TI81XX PRM module offsets
  */
-#define TI814X_PRM_DSP_MOD				0x0a00
-#define TI814X_PRM_HDVICP_MOD				0x0c00
-#define TI814X_PRM_ISP_MOD				0x0d00
-#define TI814X_PRM_HDVPSS_MOD				0x0e00
-#define TI814X_PRM_GFX_MOD				0x0f00
+#घोषणा TI814X_PRM_DSP_MOD				0x0a00
+#घोषणा TI814X_PRM_HDVICP_MOD				0x0c00
+#घोषणा TI814X_PRM_ISP_MOD				0x0d00
+#घोषणा TI814X_PRM_HDVPSS_MOD				0x0e00
+#घोषणा TI814X_PRM_GFX_MOD				0x0f00
 
-#define TI81XX_PRM_DEVICE_MOD			0x0000
-#define TI816X_PRM_ACTIVE_MOD			0x0a00
-#define TI81XX_PRM_DEFAULT_MOD			0x0b00
-#define TI816X_PRM_IVAHD0_MOD			0x0c00
-#define TI816X_PRM_IVAHD1_MOD			0x0d00
-#define TI816X_PRM_IVAHD2_MOD			0x0e00
-#define TI816X_PRM_SGX_MOD				0x0f00
-#define TI81XX_PRM_ALWON_MOD			0x1800
+#घोषणा TI81XX_PRM_DEVICE_MOD			0x0000
+#घोषणा TI816X_PRM_ACTIVE_MOD			0x0a00
+#घोषणा TI81XX_PRM_DEFAULT_MOD			0x0b00
+#घोषणा TI816X_PRM_IVAHD0_MOD			0x0c00
+#घोषणा TI816X_PRM_IVAHD1_MOD			0x0d00
+#घोषणा TI816X_PRM_IVAHD2_MOD			0x0e00
+#घोषणा TI816X_PRM_SGX_MOD				0x0f00
+#घोषणा TI81XX_PRM_ALWON_MOD			0x1800
 
-/* 24XX register bits shared between CM & PRM registers */
+/* 24XX रेजिस्टर bits shared between CM & PRM रेजिस्टरs */
 
 /* CM_FCLKEN1_CORE, CM_ICLKEN1_CORE, PM_WKEN1_CORE shared bits */
-#define OMAP2420_EN_MMC_SHIFT				26
-#define OMAP2420_EN_MMC_MASK				(1 << 26)
-#define OMAP24XX_EN_UART2_SHIFT				22
-#define OMAP24XX_EN_UART2_MASK				(1 << 22)
-#define OMAP24XX_EN_UART1_SHIFT				21
-#define OMAP24XX_EN_UART1_MASK				(1 << 21)
-#define OMAP24XX_EN_MCSPI2_SHIFT			18
-#define OMAP24XX_EN_MCSPI2_MASK				(1 << 18)
-#define OMAP24XX_EN_MCSPI1_SHIFT			17
-#define OMAP24XX_EN_MCSPI1_MASK				(1 << 17)
-#define OMAP24XX_EN_MCBSP2_SHIFT			16
-#define OMAP24XX_EN_MCBSP2_MASK				(1 << 16)
-#define OMAP24XX_EN_MCBSP1_SHIFT			15
-#define OMAP24XX_EN_MCBSP1_MASK				(1 << 15)
-#define OMAP24XX_EN_GPT12_SHIFT				14
-#define OMAP24XX_EN_GPT12_MASK				(1 << 14)
-#define OMAP24XX_EN_GPT11_SHIFT				13
-#define OMAP24XX_EN_GPT11_MASK				(1 << 13)
-#define OMAP24XX_EN_GPT10_SHIFT				12
-#define OMAP24XX_EN_GPT10_MASK				(1 << 12)
-#define OMAP24XX_EN_GPT9_SHIFT				11
-#define OMAP24XX_EN_GPT9_MASK				(1 << 11)
-#define OMAP24XX_EN_GPT8_SHIFT				10
-#define OMAP24XX_EN_GPT8_MASK				(1 << 10)
-#define OMAP24XX_EN_GPT7_SHIFT				9
-#define OMAP24XX_EN_GPT7_MASK				(1 << 9)
-#define OMAP24XX_EN_GPT6_SHIFT				8
-#define OMAP24XX_EN_GPT6_MASK				(1 << 8)
-#define OMAP24XX_EN_GPT5_SHIFT				7
-#define OMAP24XX_EN_GPT5_MASK				(1 << 7)
-#define OMAP24XX_EN_GPT4_SHIFT				6
-#define OMAP24XX_EN_GPT4_MASK				(1 << 6)
-#define OMAP24XX_EN_GPT3_SHIFT				5
-#define OMAP24XX_EN_GPT3_MASK				(1 << 5)
-#define OMAP24XX_EN_GPT2_SHIFT				4
-#define OMAP24XX_EN_GPT2_MASK				(1 << 4)
-#define OMAP2420_EN_VLYNQ_SHIFT				3
-#define OMAP2420_EN_VLYNQ_MASK				(1 << 3)
+#घोषणा OMAP2420_EN_MMC_SHIFT				26
+#घोषणा OMAP2420_EN_MMC_MASK				(1 << 26)
+#घोषणा OMAP24XX_EN_UART2_SHIFT				22
+#घोषणा OMAP24XX_EN_UART2_MASK				(1 << 22)
+#घोषणा OMAP24XX_EN_UART1_SHIFT				21
+#घोषणा OMAP24XX_EN_UART1_MASK				(1 << 21)
+#घोषणा OMAP24XX_EN_MCSPI2_SHIFT			18
+#घोषणा OMAP24XX_EN_MCSPI2_MASK				(1 << 18)
+#घोषणा OMAP24XX_EN_MCSPI1_SHIFT			17
+#घोषणा OMAP24XX_EN_MCSPI1_MASK				(1 << 17)
+#घोषणा OMAP24XX_EN_MCBSP2_SHIFT			16
+#घोषणा OMAP24XX_EN_MCBSP2_MASK				(1 << 16)
+#घोषणा OMAP24XX_EN_MCBSP1_SHIFT			15
+#घोषणा OMAP24XX_EN_MCBSP1_MASK				(1 << 15)
+#घोषणा OMAP24XX_EN_GPT12_SHIFT				14
+#घोषणा OMAP24XX_EN_GPT12_MASK				(1 << 14)
+#घोषणा OMAP24XX_EN_GPT11_SHIFT				13
+#घोषणा OMAP24XX_EN_GPT11_MASK				(1 << 13)
+#घोषणा OMAP24XX_EN_GPT10_SHIFT				12
+#घोषणा OMAP24XX_EN_GPT10_MASK				(1 << 12)
+#घोषणा OMAP24XX_EN_GPT9_SHIFT				11
+#घोषणा OMAP24XX_EN_GPT9_MASK				(1 << 11)
+#घोषणा OMAP24XX_EN_GPT8_SHIFT				10
+#घोषणा OMAP24XX_EN_GPT8_MASK				(1 << 10)
+#घोषणा OMAP24XX_EN_GPT7_SHIFT				9
+#घोषणा OMAP24XX_EN_GPT7_MASK				(1 << 9)
+#घोषणा OMAP24XX_EN_GPT6_SHIFT				8
+#घोषणा OMAP24XX_EN_GPT6_MASK				(1 << 8)
+#घोषणा OMAP24XX_EN_GPT5_SHIFT				7
+#घोषणा OMAP24XX_EN_GPT5_MASK				(1 << 7)
+#घोषणा OMAP24XX_EN_GPT4_SHIFT				6
+#घोषणा OMAP24XX_EN_GPT4_MASK				(1 << 6)
+#घोषणा OMAP24XX_EN_GPT3_SHIFT				5
+#घोषणा OMAP24XX_EN_GPT3_MASK				(1 << 5)
+#घोषणा OMAP24XX_EN_GPT2_SHIFT				4
+#घोषणा OMAP24XX_EN_GPT2_MASK				(1 << 4)
+#घोषणा OMAP2420_EN_VLYNQ_SHIFT				3
+#घोषणा OMAP2420_EN_VLYNQ_MASK				(1 << 3)
 
 /* CM_FCLKEN2_CORE, CM_ICLKEN2_CORE, PM_WKEN2_CORE shared bits */
-#define OMAP2430_EN_GPIO5_SHIFT				10
-#define OMAP2430_EN_GPIO5_MASK				(1 << 10)
-#define OMAP2430_EN_MCSPI3_SHIFT			9
-#define OMAP2430_EN_MCSPI3_MASK				(1 << 9)
-#define OMAP2430_EN_MMCHS2_SHIFT			8
-#define OMAP2430_EN_MMCHS2_MASK				(1 << 8)
-#define OMAP2430_EN_MMCHS1_SHIFT			7
-#define OMAP2430_EN_MMCHS1_MASK				(1 << 7)
-#define OMAP24XX_EN_UART3_SHIFT				2
-#define OMAP24XX_EN_UART3_MASK				(1 << 2)
-#define OMAP24XX_EN_USB_SHIFT				0
-#define OMAP24XX_EN_USB_MASK				(1 << 0)
+#घोषणा OMAP2430_EN_GPIO5_SHIFT				10
+#घोषणा OMAP2430_EN_GPIO5_MASK				(1 << 10)
+#घोषणा OMAP2430_EN_MCSPI3_SHIFT			9
+#घोषणा OMAP2430_EN_MCSPI3_MASK				(1 << 9)
+#घोषणा OMAP2430_EN_MMCHS2_SHIFT			8
+#घोषणा OMAP2430_EN_MMCHS2_MASK				(1 << 8)
+#घोषणा OMAP2430_EN_MMCHS1_SHIFT			7
+#घोषणा OMAP2430_EN_MMCHS1_MASK				(1 << 7)
+#घोषणा OMAP24XX_EN_UART3_SHIFT				2
+#घोषणा OMAP24XX_EN_UART3_MASK				(1 << 2)
+#घोषणा OMAP24XX_EN_USB_SHIFT				0
+#घोषणा OMAP24XX_EN_USB_MASK				(1 << 0)
 
 /* CM_ICLKEN2_CORE, PM_WKEN2_CORE shared bits */
-#define OMAP2430_EN_MDM_INTC_SHIFT			11
-#define OMAP2430_EN_MDM_INTC_MASK			(1 << 11)
-#define OMAP2430_EN_USBHS_SHIFT				6
-#define OMAP2430_EN_USBHS_MASK				(1 << 6)
-#define OMAP24XX_EN_GPMC_SHIFT				1
-#define OMAP24XX_EN_GPMC_MASK				(1 << 1)
+#घोषणा OMAP2430_EN_MDM_INTC_SHIFT			11
+#घोषणा OMAP2430_EN_MDM_INTC_MASK			(1 << 11)
+#घोषणा OMAP2430_EN_USBHS_SHIFT				6
+#घोषणा OMAP2430_EN_USBHS_MASK				(1 << 6)
+#घोषणा OMAP24XX_EN_GPMC_SHIFT				1
+#घोषणा OMAP24XX_EN_GPMC_MASK				(1 << 1)
 
 /* CM_IDLEST1_CORE, PM_WKST1_CORE shared bits */
-#define OMAP2420_ST_MMC_SHIFT				26
-#define OMAP2420_ST_MMC_MASK				(1 << 26)
-#define OMAP24XX_ST_UART2_SHIFT				22
-#define OMAP24XX_ST_UART2_MASK				(1 << 22)
-#define OMAP24XX_ST_UART1_SHIFT				21
-#define OMAP24XX_ST_UART1_MASK				(1 << 21)
-#define OMAP24XX_ST_MCSPI2_SHIFT			18
-#define OMAP24XX_ST_MCSPI2_MASK				(1 << 18)
-#define OMAP24XX_ST_MCSPI1_SHIFT			17
-#define OMAP24XX_ST_MCSPI1_MASK				(1 << 17)
-#define OMAP24XX_ST_MCBSP2_SHIFT			16
-#define OMAP24XX_ST_MCBSP2_MASK				(1 << 16)
-#define OMAP24XX_ST_MCBSP1_SHIFT			15
-#define OMAP24XX_ST_MCBSP1_MASK				(1 << 15)
-#define OMAP24XX_ST_GPT12_SHIFT				14
-#define OMAP24XX_ST_GPT12_MASK				(1 << 14)
-#define OMAP24XX_ST_GPT11_SHIFT				13
-#define OMAP24XX_ST_GPT11_MASK				(1 << 13)
-#define OMAP24XX_ST_GPT10_SHIFT				12
-#define OMAP24XX_ST_GPT10_MASK				(1 << 12)
-#define OMAP24XX_ST_GPT9_SHIFT				11
-#define OMAP24XX_ST_GPT9_MASK				(1 << 11)
-#define OMAP24XX_ST_GPT8_SHIFT				10
-#define OMAP24XX_ST_GPT8_MASK				(1 << 10)
-#define OMAP24XX_ST_GPT7_SHIFT				9
-#define OMAP24XX_ST_GPT7_MASK				(1 << 9)
-#define OMAP24XX_ST_GPT6_SHIFT				8
-#define OMAP24XX_ST_GPT6_MASK				(1 << 8)
-#define OMAP24XX_ST_GPT5_SHIFT				7
-#define OMAP24XX_ST_GPT5_MASK				(1 << 7)
-#define OMAP24XX_ST_GPT4_SHIFT				6
-#define OMAP24XX_ST_GPT4_MASK				(1 << 6)
-#define OMAP24XX_ST_GPT3_SHIFT				5
-#define OMAP24XX_ST_GPT3_MASK				(1 << 5)
-#define OMAP24XX_ST_GPT2_SHIFT				4
-#define OMAP24XX_ST_GPT2_MASK				(1 << 4)
-#define OMAP2420_ST_VLYNQ_SHIFT				3
-#define OMAP2420_ST_VLYNQ_MASK				(1 << 3)
+#घोषणा OMAP2420_ST_MMC_SHIFT				26
+#घोषणा OMAP2420_ST_MMC_MASK				(1 << 26)
+#घोषणा OMAP24XX_ST_UART2_SHIFT				22
+#घोषणा OMAP24XX_ST_UART2_MASK				(1 << 22)
+#घोषणा OMAP24XX_ST_UART1_SHIFT				21
+#घोषणा OMAP24XX_ST_UART1_MASK				(1 << 21)
+#घोषणा OMAP24XX_ST_MCSPI2_SHIFT			18
+#घोषणा OMAP24XX_ST_MCSPI2_MASK				(1 << 18)
+#घोषणा OMAP24XX_ST_MCSPI1_SHIFT			17
+#घोषणा OMAP24XX_ST_MCSPI1_MASK				(1 << 17)
+#घोषणा OMAP24XX_ST_MCBSP2_SHIFT			16
+#घोषणा OMAP24XX_ST_MCBSP2_MASK				(1 << 16)
+#घोषणा OMAP24XX_ST_MCBSP1_SHIFT			15
+#घोषणा OMAP24XX_ST_MCBSP1_MASK				(1 << 15)
+#घोषणा OMAP24XX_ST_GPT12_SHIFT				14
+#घोषणा OMAP24XX_ST_GPT12_MASK				(1 << 14)
+#घोषणा OMAP24XX_ST_GPT11_SHIFT				13
+#घोषणा OMAP24XX_ST_GPT11_MASK				(1 << 13)
+#घोषणा OMAP24XX_ST_GPT10_SHIFT				12
+#घोषणा OMAP24XX_ST_GPT10_MASK				(1 << 12)
+#घोषणा OMAP24XX_ST_GPT9_SHIFT				11
+#घोषणा OMAP24XX_ST_GPT9_MASK				(1 << 11)
+#घोषणा OMAP24XX_ST_GPT8_SHIFT				10
+#घोषणा OMAP24XX_ST_GPT8_MASK				(1 << 10)
+#घोषणा OMAP24XX_ST_GPT7_SHIFT				9
+#घोषणा OMAP24XX_ST_GPT7_MASK				(1 << 9)
+#घोषणा OMAP24XX_ST_GPT6_SHIFT				8
+#घोषणा OMAP24XX_ST_GPT6_MASK				(1 << 8)
+#घोषणा OMAP24XX_ST_GPT5_SHIFT				7
+#घोषणा OMAP24XX_ST_GPT5_MASK				(1 << 7)
+#घोषणा OMAP24XX_ST_GPT4_SHIFT				6
+#घोषणा OMAP24XX_ST_GPT4_MASK				(1 << 6)
+#घोषणा OMAP24XX_ST_GPT3_SHIFT				5
+#घोषणा OMAP24XX_ST_GPT3_MASK				(1 << 5)
+#घोषणा OMAP24XX_ST_GPT2_SHIFT				4
+#घोषणा OMAP24XX_ST_GPT2_MASK				(1 << 4)
+#घोषणा OMAP2420_ST_VLYNQ_SHIFT				3
+#घोषणा OMAP2420_ST_VLYNQ_MASK				(1 << 3)
 
 /* CM_IDLEST2_CORE, PM_WKST2_CORE shared bits */
-#define OMAP2430_ST_MDM_INTC_SHIFT			11
-#define OMAP2430_ST_MDM_INTC_MASK			(1 << 11)
-#define OMAP2430_ST_GPIO5_SHIFT				10
-#define OMAP2430_ST_GPIO5_MASK				(1 << 10)
-#define OMAP2430_ST_MCSPI3_SHIFT			9
-#define OMAP2430_ST_MCSPI3_MASK				(1 << 9)
-#define OMAP2430_ST_MMCHS2_SHIFT			8
-#define OMAP2430_ST_MMCHS2_MASK				(1 << 8)
-#define OMAP2430_ST_MMCHS1_SHIFT			7
-#define OMAP2430_ST_MMCHS1_MASK				(1 << 7)
-#define OMAP2430_ST_USBHS_SHIFT				6
-#define OMAP2430_ST_USBHS_MASK				(1 << 6)
-#define OMAP24XX_ST_UART3_SHIFT				2
-#define OMAP24XX_ST_UART3_MASK				(1 << 2)
-#define OMAP24XX_ST_USB_SHIFT				0
-#define OMAP24XX_ST_USB_MASK				(1 << 0)
+#घोषणा OMAP2430_ST_MDM_INTC_SHIFT			11
+#घोषणा OMAP2430_ST_MDM_INTC_MASK			(1 << 11)
+#घोषणा OMAP2430_ST_GPIO5_SHIFT				10
+#घोषणा OMAP2430_ST_GPIO5_MASK				(1 << 10)
+#घोषणा OMAP2430_ST_MCSPI3_SHIFT			9
+#घोषणा OMAP2430_ST_MCSPI3_MASK				(1 << 9)
+#घोषणा OMAP2430_ST_MMCHS2_SHIFT			8
+#घोषणा OMAP2430_ST_MMCHS2_MASK				(1 << 8)
+#घोषणा OMAP2430_ST_MMCHS1_SHIFT			7
+#घोषणा OMAP2430_ST_MMCHS1_MASK				(1 << 7)
+#घोषणा OMAP2430_ST_USBHS_SHIFT				6
+#घोषणा OMAP2430_ST_USBHS_MASK				(1 << 6)
+#घोषणा OMAP24XX_ST_UART3_SHIFT				2
+#घोषणा OMAP24XX_ST_UART3_MASK				(1 << 2)
+#घोषणा OMAP24XX_ST_USB_SHIFT				0
+#घोषणा OMAP24XX_ST_USB_MASK				(1 << 0)
 
 /* CM_FCLKEN_WKUP, CM_ICLKEN_WKUP, PM_WKEN_WKUP shared bits */
-#define OMAP24XX_EN_GPIOS_SHIFT				2
-#define OMAP24XX_EN_GPIOS_MASK				(1 << 2)
-#define OMAP24XX_EN_GPT1_SHIFT				0
-#define OMAP24XX_EN_GPT1_MASK				(1 << 0)
+#घोषणा OMAP24XX_EN_GPIOS_SHIFT				2
+#घोषणा OMAP24XX_EN_GPIOS_MASK				(1 << 2)
+#घोषणा OMAP24XX_EN_GPT1_SHIFT				0
+#घोषणा OMAP24XX_EN_GPT1_MASK				(1 << 0)
 
 /* PM_WKST_WKUP, CM_IDLEST_WKUP shared bits */
-#define OMAP24XX_ST_GPIOS_SHIFT				2
-#define OMAP24XX_ST_GPIOS_MASK				(1 << 2)
-#define OMAP24XX_ST_32KSYNC_SHIFT			1
-#define OMAP24XX_ST_32KSYNC_MASK			(1 << 1)
-#define OMAP24XX_ST_GPT1_SHIFT				0
-#define OMAP24XX_ST_GPT1_MASK				(1 << 0)
+#घोषणा OMAP24XX_ST_GPIOS_SHIFT				2
+#घोषणा OMAP24XX_ST_GPIOS_MASK				(1 << 2)
+#घोषणा OMAP24XX_ST_32KSYNC_SHIFT			1
+#घोषणा OMAP24XX_ST_32KSYNC_MASK			(1 << 1)
+#घोषणा OMAP24XX_ST_GPT1_SHIFT				0
+#घोषणा OMAP24XX_ST_GPT1_MASK				(1 << 0)
 
 /* CM_IDLEST_MDM and PM_WKST_MDM shared bits */
-#define OMAP2430_ST_MDM_SHIFT				0
-#define OMAP2430_ST_MDM_MASK				(1 << 0)
+#घोषणा OMAP2430_ST_MDM_SHIFT				0
+#घोषणा OMAP2430_ST_MDM_MASK				(1 << 0)
 
 
-/* 3430 register bits shared between CM & PRM registers */
+/* 3430 रेजिस्टर bits shared between CM & PRM रेजिस्टरs */
 
 /* CM_REVISION, PRM_REVISION shared bits */
-#define OMAP3430_REV_SHIFT				0
-#define OMAP3430_REV_MASK				(0xff << 0)
+#घोषणा OMAP3430_REV_SHIFT				0
+#घोषणा OMAP3430_REV_MASK				(0xff << 0)
 
 /* CM_SYSCONFIG, PRM_SYSCONFIG shared bits */
-#define OMAP3430_AUTOIDLE_MASK				(1 << 0)
+#घोषणा OMAP3430_AUTOIDLE_MASK				(1 << 0)
 
 /* CM_FCLKEN1_CORE, CM_ICLKEN1_CORE, PM_WKEN1_CORE shared bits */
-#define OMAP3430_EN_MMC3_MASK				(1 << 30)
-#define OMAP3430_EN_MMC3_SHIFT				30
-#define OMAP3430_EN_MMC2_MASK				(1 << 25)
-#define OMAP3430_EN_MMC2_SHIFT				25
-#define OMAP3430_EN_MMC1_MASK				(1 << 24)
-#define OMAP3430_EN_MMC1_SHIFT				24
-#define AM35XX_EN_UART4_MASK				(1 << 23)
-#define AM35XX_EN_UART4_SHIFT				23
-#define OMAP3430_EN_MCSPI4_MASK				(1 << 21)
-#define OMAP3430_EN_MCSPI4_SHIFT			21
-#define OMAP3430_EN_MCSPI3_MASK				(1 << 20)
-#define OMAP3430_EN_MCSPI3_SHIFT			20
-#define OMAP3430_EN_MCSPI2_MASK				(1 << 19)
-#define OMAP3430_EN_MCSPI2_SHIFT			19
-#define OMAP3430_EN_MCSPI1_MASK				(1 << 18)
-#define OMAP3430_EN_MCSPI1_SHIFT			18
-#define OMAP3430_EN_I2C3_MASK				(1 << 17)
-#define OMAP3430_EN_I2C3_SHIFT				17
-#define OMAP3430_EN_I2C2_MASK				(1 << 16)
-#define OMAP3430_EN_I2C2_SHIFT				16
-#define OMAP3430_EN_I2C1_MASK				(1 << 15)
-#define OMAP3430_EN_I2C1_SHIFT				15
-#define OMAP3430_EN_UART2_MASK				(1 << 14)
-#define OMAP3430_EN_UART2_SHIFT				14
-#define OMAP3430_EN_UART1_MASK				(1 << 13)
-#define OMAP3430_EN_UART1_SHIFT				13
-#define OMAP3430_EN_GPT11_MASK				(1 << 12)
-#define OMAP3430_EN_GPT11_SHIFT				12
-#define OMAP3430_EN_GPT10_MASK				(1 << 11)
-#define OMAP3430_EN_GPT10_SHIFT				11
-#define OMAP3430_EN_MCBSP5_MASK				(1 << 10)
-#define OMAP3430_EN_MCBSP5_SHIFT			10
-#define OMAP3430_EN_MCBSP1_MASK				(1 << 9)
-#define OMAP3430_EN_MCBSP1_SHIFT			9
-#define OMAP3430_EN_FSHOSTUSB_MASK			(1 << 5)
-#define OMAP3430_EN_FSHOSTUSB_SHIFT			5
-#define OMAP3430_EN_D2D_MASK				(1 << 3)
-#define OMAP3430_EN_D2D_SHIFT				3
+#घोषणा OMAP3430_EN_MMC3_MASK				(1 << 30)
+#घोषणा OMAP3430_EN_MMC3_SHIFT				30
+#घोषणा OMAP3430_EN_MMC2_MASK				(1 << 25)
+#घोषणा OMAP3430_EN_MMC2_SHIFT				25
+#घोषणा OMAP3430_EN_MMC1_MASK				(1 << 24)
+#घोषणा OMAP3430_EN_MMC1_SHIFT				24
+#घोषणा AM35XX_EN_UART4_MASK				(1 << 23)
+#घोषणा AM35XX_EN_UART4_SHIFT				23
+#घोषणा OMAP3430_EN_MCSPI4_MASK				(1 << 21)
+#घोषणा OMAP3430_EN_MCSPI4_SHIFT			21
+#घोषणा OMAP3430_EN_MCSPI3_MASK				(1 << 20)
+#घोषणा OMAP3430_EN_MCSPI3_SHIFT			20
+#घोषणा OMAP3430_EN_MCSPI2_MASK				(1 << 19)
+#घोषणा OMAP3430_EN_MCSPI2_SHIFT			19
+#घोषणा OMAP3430_EN_MCSPI1_MASK				(1 << 18)
+#घोषणा OMAP3430_EN_MCSPI1_SHIFT			18
+#घोषणा OMAP3430_EN_I2C3_MASK				(1 << 17)
+#घोषणा OMAP3430_EN_I2C3_SHIFT				17
+#घोषणा OMAP3430_EN_I2C2_MASK				(1 << 16)
+#घोषणा OMAP3430_EN_I2C2_SHIFT				16
+#घोषणा OMAP3430_EN_I2C1_MASK				(1 << 15)
+#घोषणा OMAP3430_EN_I2C1_SHIFT				15
+#घोषणा OMAP3430_EN_UART2_MASK				(1 << 14)
+#घोषणा OMAP3430_EN_UART2_SHIFT				14
+#घोषणा OMAP3430_EN_UART1_MASK				(1 << 13)
+#घोषणा OMAP3430_EN_UART1_SHIFT				13
+#घोषणा OMAP3430_EN_GPT11_MASK				(1 << 12)
+#घोषणा OMAP3430_EN_GPT11_SHIFT				12
+#घोषणा OMAP3430_EN_GPT10_MASK				(1 << 11)
+#घोषणा OMAP3430_EN_GPT10_SHIFT				11
+#घोषणा OMAP3430_EN_MCBSP5_MASK				(1 << 10)
+#घोषणा OMAP3430_EN_MCBSP5_SHIFT			10
+#घोषणा OMAP3430_EN_MCBSP1_MASK				(1 << 9)
+#घोषणा OMAP3430_EN_MCBSP1_SHIFT			9
+#घोषणा OMAP3430_EN_FSHOSTUSB_MASK			(1 << 5)
+#घोषणा OMAP3430_EN_FSHOSTUSB_SHIFT			5
+#घोषणा OMAP3430_EN_D2D_MASK				(1 << 3)
+#घोषणा OMAP3430_EN_D2D_SHIFT				3
 
 /* CM_ICLKEN1_CORE, PM_WKEN1_CORE shared bits */
-#define OMAP3430_EN_HSOTGUSB_MASK			(1 << 4)
-#define OMAP3430_EN_HSOTGUSB_SHIFT			4
+#घोषणा OMAP3430_EN_HSOTGUSB_MASK			(1 << 4)
+#घोषणा OMAP3430_EN_HSOTGUSB_SHIFT			4
 
 /* PM_WKST1_CORE, CM_IDLEST1_CORE shared bits */
-#define OMAP3430_ST_MMC3_SHIFT				30
-#define OMAP3430_ST_MMC3_MASK				(1 << 30)
-#define OMAP3430_ST_MMC2_SHIFT				25
-#define OMAP3430_ST_MMC2_MASK				(1 << 25)
-#define OMAP3430_ST_MMC1_SHIFT				24
-#define OMAP3430_ST_MMC1_MASK				(1 << 24)
-#define OMAP3430_ST_MCSPI4_SHIFT			21
-#define OMAP3430_ST_MCSPI4_MASK				(1 << 21)
-#define OMAP3430_ST_MCSPI3_SHIFT			20
-#define OMAP3430_ST_MCSPI3_MASK				(1 << 20)
-#define OMAP3430_ST_MCSPI2_SHIFT			19
-#define OMAP3430_ST_MCSPI2_MASK				(1 << 19)
-#define OMAP3430_ST_MCSPI1_SHIFT			18
-#define OMAP3430_ST_MCSPI1_MASK				(1 << 18)
-#define OMAP3430_ST_I2C3_SHIFT				17
-#define OMAP3430_ST_I2C3_MASK				(1 << 17)
-#define OMAP3430_ST_I2C2_SHIFT				16
-#define OMAP3430_ST_I2C2_MASK				(1 << 16)
-#define OMAP3430_ST_I2C1_SHIFT				15
-#define OMAP3430_ST_I2C1_MASK				(1 << 15)
-#define OMAP3430_ST_UART2_SHIFT				14
-#define OMAP3430_ST_UART2_MASK				(1 << 14)
-#define OMAP3430_ST_UART1_SHIFT				13
-#define OMAP3430_ST_UART1_MASK				(1 << 13)
-#define OMAP3430_ST_GPT11_SHIFT				12
-#define OMAP3430_ST_GPT11_MASK				(1 << 12)
-#define OMAP3430_ST_GPT10_SHIFT				11
-#define OMAP3430_ST_GPT10_MASK				(1 << 11)
-#define OMAP3430_ST_MCBSP5_SHIFT			10
-#define OMAP3430_ST_MCBSP5_MASK				(1 << 10)
-#define OMAP3430_ST_MCBSP1_SHIFT			9
-#define OMAP3430_ST_MCBSP1_MASK				(1 << 9)
-#define OMAP3430ES1_ST_FSHOSTUSB_SHIFT			5
-#define OMAP3430ES1_ST_FSHOSTUSB_MASK			(1 << 5)
-#define OMAP3430ES1_ST_HSOTGUSB_SHIFT			4
-#define OMAP3430ES1_ST_HSOTGUSB_MASK			(1 << 4)
-#define OMAP3430ES2_ST_HSOTGUSB_IDLE_SHIFT		5
-#define OMAP3430ES2_ST_HSOTGUSB_IDLE_MASK		(1 << 5)
-#define OMAP3430ES2_ST_HSOTGUSB_STDBY_SHIFT		4
-#define OMAP3430ES2_ST_HSOTGUSB_STDBY_MASK		(1 << 4)
-#define OMAP3430_ST_D2D_SHIFT				3
-#define OMAP3430_ST_D2D_MASK				(1 << 3)
+#घोषणा OMAP3430_ST_MMC3_SHIFT				30
+#घोषणा OMAP3430_ST_MMC3_MASK				(1 << 30)
+#घोषणा OMAP3430_ST_MMC2_SHIFT				25
+#घोषणा OMAP3430_ST_MMC2_MASK				(1 << 25)
+#घोषणा OMAP3430_ST_MMC1_SHIFT				24
+#घोषणा OMAP3430_ST_MMC1_MASK				(1 << 24)
+#घोषणा OMAP3430_ST_MCSPI4_SHIFT			21
+#घोषणा OMAP3430_ST_MCSPI4_MASK				(1 << 21)
+#घोषणा OMAP3430_ST_MCSPI3_SHIFT			20
+#घोषणा OMAP3430_ST_MCSPI3_MASK				(1 << 20)
+#घोषणा OMAP3430_ST_MCSPI2_SHIFT			19
+#घोषणा OMAP3430_ST_MCSPI2_MASK				(1 << 19)
+#घोषणा OMAP3430_ST_MCSPI1_SHIFT			18
+#घोषणा OMAP3430_ST_MCSPI1_MASK				(1 << 18)
+#घोषणा OMAP3430_ST_I2C3_SHIFT				17
+#घोषणा OMAP3430_ST_I2C3_MASK				(1 << 17)
+#घोषणा OMAP3430_ST_I2C2_SHIFT				16
+#घोषणा OMAP3430_ST_I2C2_MASK				(1 << 16)
+#घोषणा OMAP3430_ST_I2C1_SHIFT				15
+#घोषणा OMAP3430_ST_I2C1_MASK				(1 << 15)
+#घोषणा OMAP3430_ST_UART2_SHIFT				14
+#घोषणा OMAP3430_ST_UART2_MASK				(1 << 14)
+#घोषणा OMAP3430_ST_UART1_SHIFT				13
+#घोषणा OMAP3430_ST_UART1_MASK				(1 << 13)
+#घोषणा OMAP3430_ST_GPT11_SHIFT				12
+#घोषणा OMAP3430_ST_GPT11_MASK				(1 << 12)
+#घोषणा OMAP3430_ST_GPT10_SHIFT				11
+#घोषणा OMAP3430_ST_GPT10_MASK				(1 << 11)
+#घोषणा OMAP3430_ST_MCBSP5_SHIFT			10
+#घोषणा OMAP3430_ST_MCBSP5_MASK				(1 << 10)
+#घोषणा OMAP3430_ST_MCBSP1_SHIFT			9
+#घोषणा OMAP3430_ST_MCBSP1_MASK				(1 << 9)
+#घोषणा OMAP3430ES1_ST_FSHOSTUSB_SHIFT			5
+#घोषणा OMAP3430ES1_ST_FSHOSTUSB_MASK			(1 << 5)
+#घोषणा OMAP3430ES1_ST_HSOTGUSB_SHIFT			4
+#घोषणा OMAP3430ES1_ST_HSOTGUSB_MASK			(1 << 4)
+#घोषणा OMAP3430ES2_ST_HSOTGUSB_IDLE_SHIFT		5
+#घोषणा OMAP3430ES2_ST_HSOTGUSB_IDLE_MASK		(1 << 5)
+#घोषणा OMAP3430ES2_ST_HSOTGUSB_STDBY_SHIFT		4
+#घोषणा OMAP3430ES2_ST_HSOTGUSB_STDBY_MASK		(1 << 4)
+#घोषणा OMAP3430_ST_D2D_SHIFT				3
+#घोषणा OMAP3430_ST_D2D_MASK				(1 << 3)
 
 /* CM_FCLKEN_WKUP, CM_ICLKEN_WKUP, PM_WKEN_WKUP shared bits */
-#define OMAP3430_EN_GPIO1_MASK				(1 << 3)
-#define OMAP3430_EN_GPIO1_SHIFT				3
-#define OMAP3430_EN_GPT12_MASK				(1 << 1)
-#define OMAP3430_EN_GPT12_SHIFT				1
-#define OMAP3430_EN_GPT1_MASK				(1 << 0)
-#define OMAP3430_EN_GPT1_SHIFT				0
+#घोषणा OMAP3430_EN_GPIO1_MASK				(1 << 3)
+#घोषणा OMAP3430_EN_GPIO1_SHIFT				3
+#घोषणा OMAP3430_EN_GPT12_MASK				(1 << 1)
+#घोषणा OMAP3430_EN_GPT12_SHIFT				1
+#घोषणा OMAP3430_EN_GPT1_MASK				(1 << 0)
+#घोषणा OMAP3430_EN_GPT1_SHIFT				0
 
 /* CM_FCLKEN_WKUP, PM_WKEN_WKUP shared bits */
-#define OMAP3430_EN_SR2_MASK				(1 << 7)
-#define OMAP3430_EN_SR2_SHIFT				7
-#define OMAP3430_EN_SR1_MASK				(1 << 6)
-#define OMAP3430_EN_SR1_SHIFT				6
+#घोषणा OMAP3430_EN_SR2_MASK				(1 << 7)
+#घोषणा OMAP3430_EN_SR2_SHIFT				7
+#घोषणा OMAP3430_EN_SR1_MASK				(1 << 6)
+#घोषणा OMAP3430_EN_SR1_SHIFT				6
 
 /* CM_ICLKEN_WKUP, PM_WKEN_WKUP shared bits */
-#define OMAP3430_EN_GPT12_MASK				(1 << 1)
-#define OMAP3430_EN_GPT12_SHIFT				1
+#घोषणा OMAP3430_EN_GPT12_MASK				(1 << 1)
+#घोषणा OMAP3430_EN_GPT12_SHIFT				1
 
 /* CM_IDLEST_WKUP, PM_WKST_WKUP shared bits */
-#define OMAP3430_ST_SR2_SHIFT				7
-#define OMAP3430_ST_SR2_MASK				(1 << 7)
-#define OMAP3430_ST_SR1_SHIFT				6
-#define OMAP3430_ST_SR1_MASK				(1 << 6)
-#define OMAP3430_ST_GPIO1_SHIFT				3
-#define OMAP3430_ST_GPIO1_MASK				(1 << 3)
-#define OMAP3430_ST_32KSYNC_SHIFT			2
-#define OMAP3430_ST_32KSYNC_MASK			(1 << 2)
-#define OMAP3430_ST_GPT12_SHIFT				1
-#define OMAP3430_ST_GPT12_MASK				(1 << 1)
-#define OMAP3430_ST_GPT1_SHIFT				0
-#define OMAP3430_ST_GPT1_MASK				(1 << 0)
+#घोषणा OMAP3430_ST_SR2_SHIFT				7
+#घोषणा OMAP3430_ST_SR2_MASK				(1 << 7)
+#घोषणा OMAP3430_ST_SR1_SHIFT				6
+#घोषणा OMAP3430_ST_SR1_MASK				(1 << 6)
+#घोषणा OMAP3430_ST_GPIO1_SHIFT				3
+#घोषणा OMAP3430_ST_GPIO1_MASK				(1 << 3)
+#घोषणा OMAP3430_ST_32KSYNC_SHIFT			2
+#घोषणा OMAP3430_ST_32KSYNC_MASK			(1 << 2)
+#घोषणा OMAP3430_ST_GPT12_SHIFT				1
+#घोषणा OMAP3430_ST_GPT12_MASK				(1 << 1)
+#घोषणा OMAP3430_ST_GPT1_SHIFT				0
+#घोषणा OMAP3430_ST_GPT1_MASK				(1 << 0)
 
 /*
  * CM_SLEEPDEP_GFX, CM_SLEEPDEP_DSS, CM_SLEEPDEP_CAM,
  * CM_SLEEPDEP_PER, PM_WKDEP_IVA2, PM_WKDEP_GFX,
  * PM_WKDEP_DSS, PM_WKDEP_CAM, PM_WKDEP_PER, PM_WKDEP_NEON shared bits
  */
-#define OMAP3430_EN_MPU_MASK				(1 << 1)
-#define OMAP3430_EN_MPU_SHIFT				1
+#घोषणा OMAP3430_EN_MPU_MASK				(1 << 1)
+#घोषणा OMAP3430_EN_MPU_SHIFT				1
 
 /* CM_FCLKEN_PER, CM_ICLKEN_PER, PM_WKEN_PER shared bits */
 
-#define OMAP3630_EN_UART4_MASK				(1 << 18)
-#define OMAP3630_EN_UART4_SHIFT				18
-#define OMAP3430_EN_GPIO6_MASK				(1 << 17)
-#define OMAP3430_EN_GPIO6_SHIFT				17
-#define OMAP3430_EN_GPIO5_MASK				(1 << 16)
-#define OMAP3430_EN_GPIO5_SHIFT				16
-#define OMAP3430_EN_GPIO4_MASK				(1 << 15)
-#define OMAP3430_EN_GPIO4_SHIFT				15
-#define OMAP3430_EN_GPIO3_MASK				(1 << 14)
-#define OMAP3430_EN_GPIO3_SHIFT				14
-#define OMAP3430_EN_GPIO2_MASK				(1 << 13)
-#define OMAP3430_EN_GPIO2_SHIFT				13
-#define OMAP3430_EN_UART3_MASK				(1 << 11)
-#define OMAP3430_EN_UART3_SHIFT				11
-#define OMAP3430_EN_GPT9_MASK				(1 << 10)
-#define OMAP3430_EN_GPT9_SHIFT				10
-#define OMAP3430_EN_GPT8_MASK				(1 << 9)
-#define OMAP3430_EN_GPT8_SHIFT				9
-#define OMAP3430_EN_GPT7_MASK				(1 << 8)
-#define OMAP3430_EN_GPT7_SHIFT				8
-#define OMAP3430_EN_GPT6_MASK				(1 << 7)
-#define OMAP3430_EN_GPT6_SHIFT				7
-#define OMAP3430_EN_GPT5_MASK				(1 << 6)
-#define OMAP3430_EN_GPT5_SHIFT				6
-#define OMAP3430_EN_GPT4_MASK				(1 << 5)
-#define OMAP3430_EN_GPT4_SHIFT				5
-#define OMAP3430_EN_GPT3_MASK				(1 << 4)
-#define OMAP3430_EN_GPT3_SHIFT				4
-#define OMAP3430_EN_GPT2_MASK				(1 << 3)
-#define OMAP3430_EN_GPT2_SHIFT				3
+#घोषणा OMAP3630_EN_UART4_MASK				(1 << 18)
+#घोषणा OMAP3630_EN_UART4_SHIFT				18
+#घोषणा OMAP3430_EN_GPIO6_MASK				(1 << 17)
+#घोषणा OMAP3430_EN_GPIO6_SHIFT				17
+#घोषणा OMAP3430_EN_GPIO5_MASK				(1 << 16)
+#घोषणा OMAP3430_EN_GPIO5_SHIFT				16
+#घोषणा OMAP3430_EN_GPIO4_MASK				(1 << 15)
+#घोषणा OMAP3430_EN_GPIO4_SHIFT				15
+#घोषणा OMAP3430_EN_GPIO3_MASK				(1 << 14)
+#घोषणा OMAP3430_EN_GPIO3_SHIFT				14
+#घोषणा OMAP3430_EN_GPIO2_MASK				(1 << 13)
+#घोषणा OMAP3430_EN_GPIO2_SHIFT				13
+#घोषणा OMAP3430_EN_UART3_MASK				(1 << 11)
+#घोषणा OMAP3430_EN_UART3_SHIFT				11
+#घोषणा OMAP3430_EN_GPT9_MASK				(1 << 10)
+#घोषणा OMAP3430_EN_GPT9_SHIFT				10
+#घोषणा OMAP3430_EN_GPT8_MASK				(1 << 9)
+#घोषणा OMAP3430_EN_GPT8_SHIFT				9
+#घोषणा OMAP3430_EN_GPT7_MASK				(1 << 8)
+#घोषणा OMAP3430_EN_GPT7_SHIFT				8
+#घोषणा OMAP3430_EN_GPT6_MASK				(1 << 7)
+#घोषणा OMAP3430_EN_GPT6_SHIFT				7
+#घोषणा OMAP3430_EN_GPT5_MASK				(1 << 6)
+#घोषणा OMAP3430_EN_GPT5_SHIFT				6
+#घोषणा OMAP3430_EN_GPT4_MASK				(1 << 5)
+#घोषणा OMAP3430_EN_GPT4_SHIFT				5
+#घोषणा OMAP3430_EN_GPT3_MASK				(1 << 4)
+#घोषणा OMAP3430_EN_GPT3_SHIFT				4
+#घोषणा OMAP3430_EN_GPT2_MASK				(1 << 3)
+#घोषणा OMAP3430_EN_GPT2_SHIFT				3
 
 /* CM_FCLKEN_PER, CM_ICLKEN_PER, PM_WKEN_PER, PM_WKST_PER shared bits */
-/* XXX Possible TI documentation bug: should the PM_WKST_PER EN_* bits
+/* XXX Possible TI करोcumentation bug: should the PM_WKST_PER EN_* bits
  * be ST_* bits instead? */
-#define OMAP3430_EN_MCBSP4_MASK				(1 << 2)
-#define OMAP3430_EN_MCBSP4_SHIFT			2
-#define OMAP3430_EN_MCBSP3_MASK				(1 << 1)
-#define OMAP3430_EN_MCBSP3_SHIFT			1
-#define OMAP3430_EN_MCBSP2_MASK				(1 << 0)
-#define OMAP3430_EN_MCBSP2_SHIFT			0
+#घोषणा OMAP3430_EN_MCBSP4_MASK				(1 << 2)
+#घोषणा OMAP3430_EN_MCBSP4_SHIFT			2
+#घोषणा OMAP3430_EN_MCBSP3_MASK				(1 << 1)
+#घोषणा OMAP3430_EN_MCBSP3_SHIFT			1
+#घोषणा OMAP3430_EN_MCBSP2_MASK				(1 << 0)
+#घोषणा OMAP3430_EN_MCBSP2_SHIFT			0
 
 /* CM_IDLEST_PER, PM_WKST_PER shared bits */
-#define OMAP3630_ST_UART4_SHIFT				18
-#define OMAP3630_ST_UART4_MASK				(1 << 18)
-#define OMAP3430_ST_GPIO6_SHIFT				17
-#define OMAP3430_ST_GPIO6_MASK				(1 << 17)
-#define OMAP3430_ST_GPIO5_SHIFT				16
-#define OMAP3430_ST_GPIO5_MASK				(1 << 16)
-#define OMAP3430_ST_GPIO4_SHIFT				15
-#define OMAP3430_ST_GPIO4_MASK				(1 << 15)
-#define OMAP3430_ST_GPIO3_SHIFT				14
-#define OMAP3430_ST_GPIO3_MASK				(1 << 14)
-#define OMAP3430_ST_GPIO2_SHIFT				13
-#define OMAP3430_ST_GPIO2_MASK				(1 << 13)
-#define OMAP3430_ST_UART3_SHIFT				11
-#define OMAP3430_ST_UART3_MASK				(1 << 11)
-#define OMAP3430_ST_GPT9_SHIFT				10
-#define OMAP3430_ST_GPT9_MASK				(1 << 10)
-#define OMAP3430_ST_GPT8_SHIFT				9
-#define OMAP3430_ST_GPT8_MASK				(1 << 9)
-#define OMAP3430_ST_GPT7_SHIFT				8
-#define OMAP3430_ST_GPT7_MASK				(1 << 8)
-#define OMAP3430_ST_GPT6_SHIFT				7
-#define OMAP3430_ST_GPT6_MASK				(1 << 7)
-#define OMAP3430_ST_GPT5_SHIFT				6
-#define OMAP3430_ST_GPT5_MASK				(1 << 6)
-#define OMAP3430_ST_GPT4_SHIFT				5
-#define OMAP3430_ST_GPT4_MASK				(1 << 5)
-#define OMAP3430_ST_GPT3_SHIFT				4
-#define OMAP3430_ST_GPT3_MASK				(1 << 4)
-#define OMAP3430_ST_GPT2_SHIFT				3
-#define OMAP3430_ST_GPT2_MASK				(1 << 3)
+#घोषणा OMAP3630_ST_UART4_SHIFT				18
+#घोषणा OMAP3630_ST_UART4_MASK				(1 << 18)
+#घोषणा OMAP3430_ST_GPIO6_SHIFT				17
+#घोषणा OMAP3430_ST_GPIO6_MASK				(1 << 17)
+#घोषणा OMAP3430_ST_GPIO5_SHIFT				16
+#घोषणा OMAP3430_ST_GPIO5_MASK				(1 << 16)
+#घोषणा OMAP3430_ST_GPIO4_SHIFT				15
+#घोषणा OMAP3430_ST_GPIO4_MASK				(1 << 15)
+#घोषणा OMAP3430_ST_GPIO3_SHIFT				14
+#घोषणा OMAP3430_ST_GPIO3_MASK				(1 << 14)
+#घोषणा OMAP3430_ST_GPIO2_SHIFT				13
+#घोषणा OMAP3430_ST_GPIO2_MASK				(1 << 13)
+#घोषणा OMAP3430_ST_UART3_SHIFT				11
+#घोषणा OMAP3430_ST_UART3_MASK				(1 << 11)
+#घोषणा OMAP3430_ST_GPT9_SHIFT				10
+#घोषणा OMAP3430_ST_GPT9_MASK				(1 << 10)
+#घोषणा OMAP3430_ST_GPT8_SHIFT				9
+#घोषणा OMAP3430_ST_GPT8_MASK				(1 << 9)
+#घोषणा OMAP3430_ST_GPT7_SHIFT				8
+#घोषणा OMAP3430_ST_GPT7_MASK				(1 << 8)
+#घोषणा OMAP3430_ST_GPT6_SHIFT				7
+#घोषणा OMAP3430_ST_GPT6_MASK				(1 << 7)
+#घोषणा OMAP3430_ST_GPT5_SHIFT				6
+#घोषणा OMAP3430_ST_GPT5_MASK				(1 << 6)
+#घोषणा OMAP3430_ST_GPT4_SHIFT				5
+#घोषणा OMAP3430_ST_GPT4_MASK				(1 << 5)
+#घोषणा OMAP3430_ST_GPT3_SHIFT				4
+#घोषणा OMAP3430_ST_GPT3_MASK				(1 << 4)
+#घोषणा OMAP3430_ST_GPT2_SHIFT				3
+#घोषणा OMAP3430_ST_GPT2_MASK				(1 << 3)
 
 /* CM_SLEEPDEP_PER, PM_WKDEP_IVA2, PM_WKDEP_MPU, PM_WKDEP_PER shared bits */
-#define OMAP3430_EN_CORE_SHIFT				0
-#define OMAP3430_EN_CORE_MASK				(1 << 0)
+#घोषणा OMAP3430_EN_CORE_SHIFT				0
+#घोषणा OMAP3430_EN_CORE_MASK				(1 << 0)
 
 
 
 /*
- * Maximum time(us) it takes to output the signal WUCLKOUT of the last
- * pad of the I/O ring after asserting WUCLKIN high.  Tero measured
- * the actual time at 7 to 8 microseconds on OMAP3 and 2 to 4
- * microseconds on OMAP4, so this timeout may be too high.
+ * Maximum समय(us) it takes to output the संकेत WUCLKOUT of the last
+ * pad of the I/O ring after निश्चितing WUCLKIN high.  Tero measured
+ * the actual समय at 7 to 8 microseconds on OMAP3 and 2 to 4
+ * microseconds on OMAP4, so this समयout may be too high.
  */
-#define MAX_IOPAD_LATCH_TIME			100
-# ifndef __ASSEMBLER__
+#घोषणा MAX_IOPAD_LATCH_TIME			100
+# अगरndef __ASSEMBLER__
 
-#include <linux/delay.h>
+#समावेश <linux/delay.h>
 
 /**
- * omap_test_timeout - busy-loop, testing a condition
+ * omap_test_समयout - busy-loop, testing a condition
  * @cond: condition to test until it evaluates to true
- * @timeout: maximum number of microseconds in the timeout
- * @index: loop index (integer)
+ * @समयout: maximum number of microseconds in the समयout
+ * @index: loop index (पूर्णांकeger)
  *
- * Loop waiting for @cond to become true or until at least @timeout
- * microseconds have passed.  To use, define some integer @index in the
- * calling code.  After running, if @index == @timeout, then the loop has
- * timed out.
+ * Loop रुकोing क्रम @cond to become true or until at least @समयout
+ * microseconds have passed.  To use, define some पूर्णांकeger @index in the
+ * calling code.  After running, अगर @index == @समयout, then the loop has
+ * समयd out.
  */
-#define omap_test_timeout(cond, timeout, index)			\
-({								\
-	for (index = 0; index < timeout; index++) {		\
-		if (cond)					\
-			break;					\
+#घोषणा omap_test_समयout(cond, समयout, index)			\
+(अणु								\
+	क्रम (index = 0; index < समयout; index++) अणु		\
+		अगर (cond)					\
+			अवरोध;					\
 		udelay(1);					\
-	}							\
-})
+	पूर्ण							\
+पूर्ण)
 
 /**
- * struct omap_prcm_irq - describes a PRCM interrupt bit
- * @name: a short name describing the interrupt type, e.g. "wkup" or "io"
- * @offset: the bit shift of the interrupt inside the IRQ{ENABLE,STATUS} regs
- * @priority: should this interrupt be handled before @priority=false IRQs?
+ * काष्ठा omap_prcm_irq - describes a PRCM पूर्णांकerrupt bit
+ * @name: a लघु name describing the पूर्णांकerrupt type, e.g. "wkup" or "io"
+ * @offset: the bit shअगरt of the पूर्णांकerrupt inside the IRQअणुENABLE,STATUSपूर्ण regs
+ * @priority: should this पूर्णांकerrupt be handled beक्रमe @priority=false IRQs?
  *
- * Describes interrupt bits inside the PRM_IRQ{ENABLE,STATUS}_MPU* registers.
- * On systems with multiple PRM MPU IRQ registers, the bitfields read from
- * the registers are concatenated, so @offset could be > 31 on these systems -
- * see omap_prm_irq_handler() for more details.  I/O ring interrupts should
+ * Describes पूर्णांकerrupt bits inside the PRM_IRQअणुENABLE,STATUSपूर्ण_MPU* रेजिस्टरs.
+ * On प्रणालीs with multiple PRM MPU IRQ रेजिस्टरs, the bitfields पढ़ो from
+ * the रेजिस्टरs are concatenated, so @offset could be > 31 on these प्रणालीs -
+ * see omap_prm_irq_handler() क्रम more details.  I/O ring पूर्णांकerrupts should
  * have @priority set to true.
  */
-struct omap_prcm_irq {
-	const char *name;
-	unsigned int offset;
+काष्ठा omap_prcm_irq अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक offset;
 	bool priority;
-};
+पूर्ण;
 
 /**
- * struct omap_prcm_irq_setup - PRCM interrupt controller details
- * @ack: PRM register offset for the first PRM_IRQSTATUS_MPU register
- * @mask: PRM register offset for the first PRM_IRQENABLE_MPU register
- * @pm_ctrl: PRM register offset for the PRM_IO_PMCTRL register
- * @nr_regs: number of PRM_IRQ{STATUS,ENABLE}_MPU* registers
+ * काष्ठा omap_prcm_irq_setup - PRCM पूर्णांकerrupt controller details
+ * @ack: PRM रेजिस्टर offset क्रम the first PRM_IRQSTATUS_MPU रेजिस्टर
+ * @mask: PRM रेजिस्टर offset क्रम the first PRM_IRQENABLE_MPU रेजिस्टर
+ * @pm_ctrl: PRM रेजिस्टर offset क्रम the PRM_IO_PMCTRL रेजिस्टर
+ * @nr_regs: number of PRM_IRQअणुSTATUS,ENABLEपूर्ण_MPU* रेजिस्टरs
  * @nr_irqs: number of entries in the @irqs array
- * @irqs: ptr to an array of PRCM interrupt bits (see @nr_irqs)
- * @irq: MPU IRQ asserted when a PRCM interrupt arrives
- * @read_pending_irqs: fn ptr to determine if any PRCM IRQs are pending
- * @ocp_barrier: fn ptr to force buffered PRM writes to complete
+ * @irqs: ptr to an array of PRCM पूर्णांकerrupt bits (see @nr_irqs)
+ * @irq: MPU IRQ निश्चितed when a PRCM पूर्णांकerrupt arrives
+ * @पढ़ो_pending_irqs: fn ptr to determine अगर any PRCM IRQs are pending
+ * @ocp_barrier: fn ptr to क्रमce buffered PRM ग_लिखोs to complete
  * @save_and_clear_irqen: fn ptr to save and clear IRQENABLE regs
  * @restore_irqen: fn ptr to save and clear IRQENABLE regs
  * @reconfigure_io_chain: fn ptr to reconfigure IO chain
  * @saved_mask: IRQENABLE regs are saved here during suspend
- * @priority_mask: 1 bit per IRQ, set to 1 if omap_prcm_irq.priority = true
- * @base_irq: base dynamic IRQ number, returned from irq_alloc_descs() in init
+ * @priority_mask: 1 bit per IRQ, set to 1 अगर omap_prcm_irq.priority = true
+ * @base_irq: base dynamic IRQ number, वापसed from irq_alloc_descs() in init
  * @suspended: set to true after Linux suspend code has called our ->prepare()
  * @suspend_save_flag: set to true after IRQ masks have been saved and disabled
  *
  * @saved_mask, @priority_mask, @base_irq, @suspended, and
  * @suspend_save_flag are populated dynamically, and are not to be
- * specified in static initializers.
+ * specअगरied in अटल initializers.
  */
-struct omap_prcm_irq_setup {
+काष्ठा omap_prcm_irq_setup अणु
 	u16 ack;
 	u16 mask;
 	u16 pm_ctrl;
 	u8 nr_regs;
 	u8 nr_irqs;
-	const struct omap_prcm_irq *irqs;
-	int irq;
-	void (*read_pending_irqs)(unsigned long *events);
-	void (*ocp_barrier)(void);
-	void (*save_and_clear_irqen)(u32 *saved_mask);
-	void (*restore_irqen)(u32 *saved_mask);
-	void (*reconfigure_io_chain)(void);
+	स्थिर काष्ठा omap_prcm_irq *irqs;
+	पूर्णांक irq;
+	व्योम (*पढ़ो_pending_irqs)(अचिन्हित दीर्घ *events);
+	व्योम (*ocp_barrier)(व्योम);
+	व्योम (*save_and_clear_irqen)(u32 *saved_mask);
+	व्योम (*restore_irqen)(u32 *saved_mask);
+	व्योम (*reconfigure_io_chain)(व्योम);
 	u32 *saved_mask;
 	u32 *priority_mask;
-	int base_irq;
+	पूर्णांक base_irq;
 	bool suspended;
 	bool suspend_save_flag;
-};
+पूर्ण;
 
-/* OMAP_PRCM_IRQ: convenience macro for creating struct omap_prcm_irq records */
-#define OMAP_PRCM_IRQ(_name, _offset, _priority) {	\
+/* OMAP_PRCM_IRQ: convenience macro क्रम creating काष्ठा omap_prcm_irq records */
+#घोषणा OMAP_PRCM_IRQ(_name, _offset, _priority) अणु	\
 	.name = _name,					\
 	.offset = _offset,				\
 	.priority = _priority				\
-	}
+	पूर्ण
 
-struct omap_domain_base {
+काष्ठा omap_करोमुख्य_base अणु
 	u32 pa;
-	void __iomem *va;
+	व्योम __iomem *va;
 	s16 offset;
-};
+पूर्ण;
 
 /**
- * struct omap_prcm_init_data - PRCM driver init data
- * @index: clock memory mapping index to be used
- * @mem: IO mem pointer for this module
- * @phys: IO mem physical base address for this module
+ * काष्ठा omap_prcm_init_data - PRCM driver init data
+ * @index: घड़ी memory mapping index to be used
+ * @mem: IO mem poपूर्णांकer क्रम this module
+ * @phys: IO mem physical base address क्रम this module
  * @offset: module base address offset from the IO base
  * @flags: PRCM module init flags
  * @device_inst_offset: device instance offset within the module address space
- * @init: low level PRCM init function for this module
- * @np: device node for this PRCM module
+ * @init: low level PRCM init function क्रम this module
+ * @np: device node क्रम this PRCM module
  */
-struct omap_prcm_init_data {
-	int index;
-	void __iomem *mem;
+काष्ठा omap_prcm_init_data अणु
+	पूर्णांक index;
+	व्योम __iomem *mem;
 	u32 phys;
 	s16 offset;
 	u16 flags;
 	s32 device_inst_offset;
-	int (*init)(const struct omap_prcm_init_data *data);
-	struct device_node *np;
-};
+	पूर्णांक (*init)(स्थिर काष्ठा omap_prcm_init_data *data);
+	काष्ठा device_node *np;
+पूर्ण;
 
-extern void omap_prcm_irq_cleanup(void);
-extern int omap_prcm_register_chain_handler(
-	struct omap_prcm_irq_setup *irq_setup);
-extern int omap_prcm_event_to_irq(const char *event);
-extern void omap_prcm_irq_prepare(void);
-extern void omap_prcm_irq_complete(void);
+बाह्य व्योम omap_prcm_irq_cleanup(व्योम);
+बाह्य पूर्णांक omap_prcm_रेजिस्टर_chain_handler(
+	काष्ठा omap_prcm_irq_setup *irq_setup);
+बाह्य पूर्णांक omap_prcm_event_to_irq(स्थिर अक्षर *event);
+बाह्य व्योम omap_prcm_irq_prepare(व्योम);
+बाह्य व्योम omap_prcm_irq_complete(व्योम);
 
-# endif
+# endअगर
 
-#endif
+#पूर्ण_अगर
 

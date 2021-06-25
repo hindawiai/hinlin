@@ -1,156 +1,157 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Driver for Gravis UltraSound Extreme soundcards
+ *  Driver क्रम Gravis UltraSound Extreme soundcards
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/isa.h>
-#include <linux/delay.h>
-#include <linux/time.h>
-#include <linux/module.h>
-#include <asm/dma.h>
-#include <sound/core.h>
-#include <sound/gus.h>
-#include <sound/es1688.h>
-#include <sound/mpu401.h>
-#include <sound/opl3.h>
-#define SNDRV_LEGACY_AUTO_PROBE
-#define SNDRV_LEGACY_FIND_FREE_IRQ
-#define SNDRV_LEGACY_FIND_FREE_DMA
-#include <sound/initval.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/isa.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <sound/core.h>
+#समावेश <sound/gus.h>
+#समावेश <sound/es1688.h>
+#समावेश <sound/mpu401.h>
+#समावेश <sound/opl3.h>
+#घोषणा SNDRV_LEGACY_AUTO_PROBE
+#घोषणा SNDRV_LEGACY_FIND_FREE_IRQ
+#घोषणा SNDRV_LEGACY_FIND_FREE_DMA
+#समावेश <sound/initval.h>
 
-#define CRD_NAME "Gravis UltraSound Extreme"
-#define DEV_NAME "gusextreme"
+#घोषणा CRD_NAME "Gravis UltraSound Extreme"
+#घोषणा DEV_NAME "gusextreme"
 
 MODULE_DESCRIPTION(CRD_NAME);
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_LICENSE("GPL");
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE;	/* Enable this card */
-static long port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;	/* 0x220,0x240,0x260 */
-static long gf1_port[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS) - 1] = -1}; /* 0x210,0x220,0x230,0x240,0x250,0x260,0x270 */
-static long mpu_port[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS) - 1] = -1}; /* 0x300,0x310,0x320 */
-static int irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 5,7,9,10 */
-static int mpu_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 5,7,9,10 */
-static int gf1_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 2,3,5,9,11,12,15 */
-static int dma8[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;	/* 0,1,3 */
-static int dma1[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;
-static int joystick_dac[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS - 1)] = 29};
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE;	/* Enable this card */
+अटल दीर्घ port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;	/* 0x220,0x240,0x260 */
+अटल दीर्घ gf1_port[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS) - 1] = -1पूर्ण; /* 0x210,0x220,0x230,0x240,0x250,0x260,0x270 */
+अटल दीर्घ mpu_port[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS) - 1] = -1पूर्ण; /* 0x300,0x310,0x320 */
+अटल पूर्णांक irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 5,7,9,10 */
+अटल पूर्णांक mpu_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 5,7,9,10 */
+अटल पूर्णांक gf1_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 2,3,5,9,11,12,15 */
+अटल पूर्णांक dma8[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;	/* 0,1,3 */
+अटल पूर्णांक dma1[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;
+अटल पूर्णांक joystick_dac[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS - 1)] = 29पूर्ण;
 				/* 0 to 31, (0.59V-4.52V or 0.389V-2.98V) */
-static int channels[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS - 1)] = 24};
-static int pcm_channels[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS - 1)] = 2};
+अटल पूर्णांक channels[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS - 1)] = 24पूर्ण;
+अटल पूर्णांक pcm_channels[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS - 1)] = 2पूर्ण;
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for " CRD_NAME " soundcard.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for " CRD_NAME " soundcard.");
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "Enable " CRD_NAME " soundcard.");
-module_param_hw_array(port, long, ioport, NULL, 0444);
+module_param_hw_array(port, दीर्घ, ioport, शून्य, 0444);
 MODULE_PARM_DESC(port, "Port # for " CRD_NAME " driver.");
-module_param_hw_array(gf1_port, long, ioport, NULL, 0444);
+module_param_hw_array(gf1_port, दीर्घ, ioport, शून्य, 0444);
 MODULE_PARM_DESC(gf1_port, "GF1 port # for " CRD_NAME " driver (optional).");
-module_param_hw_array(mpu_port, long, ioport, NULL, 0444);
+module_param_hw_array(mpu_port, दीर्घ, ioport, शून्य, 0444);
 MODULE_PARM_DESC(mpu_port, "MPU-401 port # for " CRD_NAME " driver.");
-module_param_hw_array(irq, int, irq, NULL, 0444);
+module_param_hw_array(irq, पूर्णांक, irq, शून्य, 0444);
 MODULE_PARM_DESC(irq, "IRQ # for " CRD_NAME " driver.");
-module_param_hw_array(mpu_irq, int, irq, NULL, 0444);
+module_param_hw_array(mpu_irq, पूर्णांक, irq, शून्य, 0444);
 MODULE_PARM_DESC(mpu_irq, "MPU-401 IRQ # for " CRD_NAME " driver.");
-module_param_hw_array(gf1_irq, int, irq, NULL, 0444);
+module_param_hw_array(gf1_irq, पूर्णांक, irq, शून्य, 0444);
 MODULE_PARM_DESC(gf1_irq, "GF1 IRQ # for " CRD_NAME " driver.");
-module_param_hw_array(dma8, int, dma, NULL, 0444);
+module_param_hw_array(dma8, पूर्णांक, dma, शून्य, 0444);
 MODULE_PARM_DESC(dma8, "8-bit DMA # for " CRD_NAME " driver.");
-module_param_hw_array(dma1, int, dma, NULL, 0444);
+module_param_hw_array(dma1, पूर्णांक, dma, शून्य, 0444);
 MODULE_PARM_DESC(dma1, "GF1 DMA # for " CRD_NAME " driver.");
-module_param_array(joystick_dac, int, NULL, 0444);
+module_param_array(joystick_dac, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(joystick_dac, "Joystick DAC level 0.59V-4.52V or 0.389V-2.98V for " CRD_NAME " driver.");
-module_param_array(channels, int, NULL, 0444);
+module_param_array(channels, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(channels, "GF1 channels for " CRD_NAME " driver.");
-module_param_array(pcm_channels, int, NULL, 0444);
+module_param_array(pcm_channels, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(pcm_channels, "Reserved PCM channels for " CRD_NAME " driver.");
 
-static int snd_gusextreme_match(struct device *dev, unsigned int n)
-{
-	return enable[n];
-}
+अटल पूर्णांक snd_gusextreme_match(काष्ठा device *dev, अचिन्हित पूर्णांक n)
+अणु
+	वापस enable[n];
+पूर्ण
 
-static int snd_gusextreme_es1688_create(struct snd_card *card,
-					struct snd_es1688 *chip,
-					struct device *dev, unsigned int n)
-{
-	static const long possible_ports[] = {0x220, 0x240, 0x260};
-	static const int possible_irqs[] = {5, 9, 10, 7, -1};
-	static const int possible_dmas[] = {1, 3, 0, -1};
+अटल पूर्णांक snd_gusextreme_es1688_create(काष्ठा snd_card *card,
+					काष्ठा snd_es1688 *chip,
+					काष्ठा device *dev, अचिन्हित पूर्णांक n)
+अणु
+	अटल स्थिर दीर्घ possible_ports[] = अणु0x220, 0x240, 0x260पूर्ण;
+	अटल स्थिर पूर्णांक possible_irqs[] = अणु5, 9, 10, 7, -1पूर्ण;
+	अटल स्थिर पूर्णांक possible_dmas[] = अणु1, 3, 0, -1पूर्ण;
 
-	int i, error;
+	पूर्णांक i, error;
 
-	if (irq[n] == SNDRV_AUTO_IRQ) {
-		irq[n] = snd_legacy_find_free_irq(possible_irqs);
-		if (irq[n] < 0) {
+	अगर (irq[n] == SNDRV_AUTO_IRQ) अणु
+		irq[n] = snd_legacy_find_मुक्त_irq(possible_irqs);
+		अगर (irq[n] < 0) अणु
 			dev_err(dev, "unable to find a free IRQ for ES1688\n");
-			return -EBUSY;
-		}
-	}
-	if (dma8[n] == SNDRV_AUTO_DMA) {
-		dma8[n] = snd_legacy_find_free_dma(possible_dmas);
-		if (dma8[n] < 0) {
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
+	अगर (dma8[n] == SNDRV_AUTO_DMA) अणु
+		dma8[n] = snd_legacy_find_मुक्त_dma(possible_dmas);
+		अगर (dma8[n] < 0) अणु
 			dev_err(dev, "unable to find a free DMA for ES1688\n");
-			return -EBUSY;
-		}
-	}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 
-	if (port[n] != SNDRV_AUTO_PORT)
-		return snd_es1688_create(card, chip, port[n], mpu_port[n],
+	अगर (port[n] != SNDRV_AUTO_PORT)
+		वापस snd_es1688_create(card, chip, port[n], mpu_port[n],
 				irq[n], mpu_irq[n], dma8[n], ES1688_HW_1688);
 
 	i = 0;
-	do {
+	करो अणु
 		port[n] = possible_ports[i];
 		error = snd_es1688_create(card, chip, port[n], mpu_port[n],
 				irq[n], mpu_irq[n], dma8[n], ES1688_HW_1688);
-	} while (error < 0 && ++i < ARRAY_SIZE(possible_ports));
+	पूर्ण जबतक (error < 0 && ++i < ARRAY_SIZE(possible_ports));
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int snd_gusextreme_gus_card_create(struct snd_card *card,
-					  struct device *dev, unsigned int n,
-					  struct snd_gus_card **rgus)
-{
-	static const int possible_irqs[] = {11, 12, 15, 9, 5, 7, 3, -1};
-	static const int possible_dmas[] = {5, 6, 7, 3, 1, -1};
+अटल पूर्णांक snd_gusextreme_gus_card_create(काष्ठा snd_card *card,
+					  काष्ठा device *dev, अचिन्हित पूर्णांक n,
+					  काष्ठा snd_gus_card **rgus)
+अणु
+	अटल स्थिर पूर्णांक possible_irqs[] = अणु11, 12, 15, 9, 5, 7, 3, -1पूर्ण;
+	अटल स्थिर पूर्णांक possible_dmas[] = अणु5, 6, 7, 3, 1, -1पूर्ण;
 
-	if (gf1_irq[n] == SNDRV_AUTO_IRQ) {
-		gf1_irq[n] = snd_legacy_find_free_irq(possible_irqs);
-		if (gf1_irq[n] < 0) {
+	अगर (gf1_irq[n] == SNDRV_AUTO_IRQ) अणु
+		gf1_irq[n] = snd_legacy_find_मुक्त_irq(possible_irqs);
+		अगर (gf1_irq[n] < 0) अणु
 			dev_err(dev, "unable to find a free IRQ for GF1\n");
-			return -EBUSY;
-		}
-	}
-	if (dma1[n] == SNDRV_AUTO_DMA) {
-		dma1[n] = snd_legacy_find_free_dma(possible_dmas);
-		if (dma1[n] < 0) {
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
+	अगर (dma1[n] == SNDRV_AUTO_DMA) अणु
+		dma1[n] = snd_legacy_find_मुक्त_dma(possible_dmas);
+		अगर (dma1[n] < 0) अणु
 			dev_err(dev, "unable to find a free DMA for GF1\n");
-			return -EBUSY;
-		}
-	}
-	return snd_gus_create(card, gf1_port[n], gf1_irq[n], dma1[n], -1,
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
+	वापस snd_gus_create(card, gf1_port[n], gf1_irq[n], dma1[n], -1,
 			0, channels[n], pcm_channels[n], 0, rgus);
-}
+पूर्ण
 
-static int snd_gusextreme_detect(struct snd_gus_card *gus,
-				 struct snd_es1688 *es1688)
-{
-	unsigned long flags;
-	unsigned char d;
+अटल पूर्णांक snd_gusextreme_detect(काष्ठा snd_gus_card *gus,
+				 काष्ठा snd_es1688 *es1688)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर d;
 
 	/*
-	 * This is main stuff - enable access to GF1 chip...
-	 * I'm not sure, if this will work for card which have
+	 * This is मुख्य stuff - enable access to GF1 chip...
+	 * I'm not sure, अगर this will work क्रम card which have
 	 * ES1688 chip in another place than 0x220.
          *
          * I used reverse-engineering in DOSEMU. [--jk]
@@ -163,7 +164,7 @@ static int snd_gusextreme_detect(struct snd_gus_card *gus,
 	 */
 
 	spin_lock_irqsave(&es1688->mixer_lock, flags);
-	snd_es1688_mixer_write(es1688, 0x40, 0x0b);	/* don't change!!! */
+	snd_es1688_mixer_ग_लिखो(es1688, 0x40, 0x0b);	/* करोn't change!!! */
 	spin_unlock_irqrestore(&es1688->mixer_lock, flags);
 
 	spin_lock_irqsave(&es1688->reg_lock, flags);
@@ -176,169 +177,169 @@ static int snd_gusextreme_detect(struct snd_gus_card *gus,
 
 	udelay(100);
 
-	snd_gf1_i_write8(gus, SNDRV_GF1_GB_RESET, 0);	/* reset GF1 */
-	if (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 0) {
-		snd_printdd("[0x%lx] check 1 failed - 0x%x\n", gus->gf1.port, d);
-		return -EIO;
-	}
+	snd_gf1_i_ग_लिखो8(gus, SNDRV_GF1_GB_RESET, 0);	/* reset GF1 */
+	अगर (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 0) अणु
+		snd_prपूर्णांकdd("[0x%lx] check 1 failed - 0x%x\n", gus->gf1.port, d);
+		वापस -EIO;
+	पूर्ण
 	udelay(160);
-	snd_gf1_i_write8(gus, SNDRV_GF1_GB_RESET, 1);	/* release reset */
+	snd_gf1_i_ग_लिखो8(gus, SNDRV_GF1_GB_RESET, 1);	/* release reset */
 	udelay(160);
-	if (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 1) {
-		snd_printdd("[0x%lx] check 2 failed - 0x%x\n", gus->gf1.port, d);
-		return -EIO;
-	}
+	अगर (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 1) अणु
+		snd_prपूर्णांकdd("[0x%lx] check 2 failed - 0x%x\n", gus->gf1.port, d);
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_gusextreme_mixer(struct snd_card *card)
-{
-	struct snd_ctl_elem_id id1, id2;
-	int error;
+अटल पूर्णांक snd_gusextreme_mixer(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_ctl_elem_id id1, id2;
+	पूर्णांक error;
 
-	memset(&id1, 0, sizeof(id1));
-	memset(&id2, 0, sizeof(id2));
-	id1.iface = id2.iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	स_रखो(&id1, 0, माप(id1));
+	स_रखो(&id2, 0, माप(id2));
+	id1.अगरace = id2.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER;
 
 	/* reassign AUX to SYNTHESIZER */
-	strcpy(id1.name, "Aux Playback Volume");
-	strcpy(id2.name, "Synth Playback Volume");
-	error = snd_ctl_rename_id(card, &id1, &id2);
-	if (error < 0)
-		return error;
+	म_नकल(id1.name, "Aux Playback Volume");
+	म_नकल(id2.name, "Synth Playback Volume");
+	error = snd_ctl_नाम_id(card, &id1, &id2);
+	अगर (error < 0)
+		वापस error;
 
 	/* reassign Master Playback Switch to Synth Playback Switch */
-	strcpy(id1.name, "Master Playback Switch");
-	strcpy(id2.name, "Synth Playback Switch");
-	error = snd_ctl_rename_id(card, &id1, &id2);
-	if (error < 0)
-		return error;
+	म_नकल(id1.name, "Master Playback Switch");
+	म_नकल(id2.name, "Synth Playback Switch");
+	error = snd_ctl_नाम_id(card, &id1, &id2);
+	अगर (error < 0)
+		वापस error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_gusextreme_probe(struct device *dev, unsigned int n)
-{
-	struct snd_card *card;
-	struct snd_gus_card *gus;
-	struct snd_es1688 *es1688;
-	struct snd_opl3 *opl3;
-	int error;
+अटल पूर्णांक snd_gusextreme_probe(काष्ठा device *dev, अचिन्हित पूर्णांक n)
+अणु
+	काष्ठा snd_card *card;
+	काष्ठा snd_gus_card *gus;
+	काष्ठा snd_es1688 *es1688;
+	काष्ठा snd_opl3 *opl3;
+	पूर्णांक error;
 
 	error = snd_card_new(dev, index[n], id[n], THIS_MODULE,
-			     sizeof(struct snd_es1688), &card);
-	if (error < 0)
-		return error;
+			     माप(काष्ठा snd_es1688), &card);
+	अगर (error < 0)
+		वापस error;
 
-	es1688 = card->private_data;
+	es1688 = card->निजी_data;
 
-	if (mpu_port[n] == SNDRV_AUTO_PORT)
+	अगर (mpu_port[n] == SNDRV_AUTO_PORT)
 		mpu_port[n] = 0;
 
-	if (mpu_irq[n] > 15)
+	अगर (mpu_irq[n] > 15)
 		mpu_irq[n] = -1;
 
 	error = snd_gusextreme_es1688_create(card, es1688, dev, n);
-	if (error < 0)
-		goto out;
+	अगर (error < 0)
+		जाओ out;
 
-	if (gf1_port[n] < 0)
+	अगर (gf1_port[n] < 0)
 		gf1_port[n] = es1688->port + 0x20;
 
 	error = snd_gusextreme_gus_card_create(card, dev, n, &gus);
-	if (error < 0)
-		goto out;
+	अगर (error < 0)
+		जाओ out;
 
 	error = snd_gusextreme_detect(gus, es1688);
-	if (error < 0)
-		goto out;
+	अगर (error < 0)
+		जाओ out;
 
 	gus->joystick_dac = joystick_dac[n];
 
 	error = snd_gus_initialize(gus);
-	if (error < 0)
-		goto out;
+	अगर (error < 0)
+		जाओ out;
 
 	error = -ENODEV;
-	if (!gus->ess_flag) {
+	अगर (!gus->ess_flag) अणु
 		dev_err(dev, "GUS Extreme soundcard was not "
 			"detected at 0x%lx\n", gus->gf1.port);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	gus->codec_flag = 1;
 
 	error = snd_es1688_pcm(card, es1688, 0);
-	if (error < 0)
-		goto out;
+	अगर (error < 0)
+		जाओ out;
 
 	error = snd_es1688_mixer(card, es1688);
-	if (error < 0)
-		goto out;
+	अगर (error < 0)
+		जाओ out;
 
 	snd_component_add(card, "ES1688");
 
-	if (pcm_channels[n] > 0) {
+	अगर (pcm_channels[n] > 0) अणु
 		error = snd_gf1_pcm_new(gus, 1, 1);
-		if (error < 0)
-			goto out;
-	}
+		अगर (error < 0)
+			जाओ out;
+	पूर्ण
 
 	error = snd_gf1_new_mixer(gus);
-	if (error < 0)
-		goto out;
+	अगर (error < 0)
+		जाओ out;
 
 	error = snd_gusextreme_mixer(card);
-	if (error < 0)
-		goto out;
+	अगर (error < 0)
+		जाओ out;
 
-	if (snd_opl3_create(card, es1688->port, es1688->port + 2,
+	अगर (snd_opl3_create(card, es1688->port, es1688->port + 2,
 			OPL3_HW_OPL3, 0, &opl3) < 0)
 		dev_warn(dev, "opl3 not detected at 0x%lx\n", es1688->port);
-	else {
-		error = snd_opl3_hwdep_new(opl3, 0, 2, NULL);
-		if (error < 0)
-			goto out;
-	}
+	अन्यथा अणु
+		error = snd_opl3_hwdep_new(opl3, 0, 2, शून्य);
+		अगर (error < 0)
+			जाओ out;
+	पूर्ण
 
-	if (es1688->mpu_port >= 0x300) {
+	अगर (es1688->mpu_port >= 0x300) अणु
 		error = snd_mpu401_uart_new(card, 0, MPU401_HW_ES1688,
-				es1688->mpu_port, 0, mpu_irq[n], NULL);
-		if (error < 0)
-			goto out;
-	}
+				es1688->mpu_port, 0, mpu_irq[n], शून्य);
+		अगर (error < 0)
+			जाओ out;
+	पूर्ण
 
-	sprintf(card->longname, "Gravis UltraSound Extreme at 0x%lx, "
+	प्र_लिखो(card->दीर्घname, "Gravis UltraSound Extreme at 0x%lx, "
 		"irq %i&%i, dma %i&%i", es1688->port,
 		gus->gf1.irq, es1688->irq, gus->gf1.dma1, es1688->dma8);
 
-	error = snd_card_register(card);
-	if (error < 0)
-		goto out;
+	error = snd_card_रेजिस्टर(card);
+	अगर (error < 0)
+		जाओ out;
 
 	dev_set_drvdata(dev, card);
-	return 0;
+	वापस 0;
 
-out:	snd_card_free(card);
-	return error;
-}
+out:	snd_card_मुक्त(card);
+	वापस error;
+पूर्ण
 
-static void snd_gusextreme_remove(struct device *dev, unsigned int n)
-{
-	snd_card_free(dev_get_drvdata(dev));
-}
+अटल व्योम snd_gusextreme_हटाओ(काष्ठा device *dev, अचिन्हित पूर्णांक n)
+अणु
+	snd_card_मुक्त(dev_get_drvdata(dev));
+पूर्ण
 
-static struct isa_driver snd_gusextreme_driver = {
+अटल काष्ठा isa_driver snd_gusextreme_driver = अणु
 	.match		= snd_gusextreme_match,
 	.probe		= snd_gusextreme_probe,
-	.remove		= snd_gusextreme_remove,
-#if 0	/* FIXME */
+	.हटाओ		= snd_gusextreme_हटाओ,
+#अगर 0	/* FIXME */
 	.suspend	= snd_gusextreme_suspend,
 	.resume		= snd_gusextreme_resume,
-#endif
-	.driver		= {
+#पूर्ण_अगर
+	.driver		= अणु
 		.name	= DEV_NAME
-	}
-};
+	पूर्ण
+पूर्ण;
 
 module_isa_driver(snd_gusextreme_driver, SNDRV_CARDS);

@@ -1,478 +1,479 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- *  Driver for NEC VR4100 series Serial Interface Unit.
+ *  Driver क्रम NEC VR4100 series Serial Interface Unit.
  *
  *  Copyright (C) 2004-2008  Yoichi Yuasa <yuasa@linux-mips.org>
  *
  *  Based on drivers/serial/8250.c, by Russell King.
  */
 
-#include <linux/console.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/serial.h>
-#include <linux/serial_core.h>
-#include <linux/serial_reg.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
+#समावेश <linux/console.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/serial_reg.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
 
-#include <asm/io.h>
-#include <asm/vr41xx/siu.h>
-#include <asm/vr41xx/vr41xx.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/vr41xx/siu.h>
+#समावेश <यंत्र/vr41xx/vr41xx.h>
 
-#define SIU_BAUD_BASE	1152000
-#define SIU_MAJOR	204
-#define SIU_MINOR_BASE	82
+#घोषणा SIU_BAUD_BASE	1152000
+#घोषणा SIU_MAJOR	204
+#घोषणा SIU_MINOR_BASE	82
 
-#define RX_MAX_COUNT	256
-#define TX_MAX_COUNT	15
+#घोषणा RX_MAX_COUNT	256
+#घोषणा TX_MAX_COUNT	15
 
-#define SIUIRSEL	0x08
- #define TMICMODE	0x20
- #define TMICTX		0x10
- #define IRMSEL		0x0c
- #define IRMSEL_HP	0x08
- #define IRMSEL_TEMIC	0x04
- #define IRMSEL_SHARP	0x00
- #define IRUSESEL	0x02
- #define SIRSEL		0x01
+#घोषणा SIUIRSEL	0x08
+ #घोषणा TMICMODE	0x20
+ #घोषणा TMICTX		0x10
+ #घोषणा IRMSEL		0x0c
+ #घोषणा IRMSEL_HP	0x08
+ #घोषणा IRMSEL_TEMIC	0x04
+ #घोषणा IRMSEL_SHARP	0x00
+ #घोषणा IRUSESEL	0x02
+ #घोषणा SIRSEL		0x01
 
-static struct uart_port siu_uart_ports[SIU_PORTS_MAX] = {
-	[0 ... SIU_PORTS_MAX-1] = {
+अटल काष्ठा uart_port siu_uart_ports[SIU_PORTS_MAX] = अणु
+	[0 ... SIU_PORTS_MAX-1] = अणु
 		.lock	= __SPIN_LOCK_UNLOCKED(siu_uart_ports->lock),
 		.irq	= 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_SERIAL_VR41XX_CONSOLE
-static uint8_t lsr_break_flag[SIU_PORTS_MAX];
-#endif
+#अगर_घोषित CONFIG_SERIAL_VR41XX_CONSOLE
+अटल uपूर्णांक8_t lsr_अवरोध_flag[SIU_PORTS_MAX];
+#पूर्ण_अगर
 
-#define siu_read(port, offset)		readb((port)->membase + (offset))
-#define siu_write(port, offset, value)	writeb((value), (port)->membase + (offset))
+#घोषणा siu_पढ़ो(port, offset)		पढ़ोb((port)->membase + (offset))
+#घोषणा siu_ग_लिखो(port, offset, value)	ग_लिखोb((value), (port)->membase + (offset))
 
-void vr41xx_select_siu_interface(siu_interface_t interface)
-{
-	struct uart_port *port;
-	unsigned long flags;
-	uint8_t irsel;
+व्योम vr41xx_select_siu_पूर्णांकerface(siu_पूर्णांकerface_t पूर्णांकerface)
+अणु
+	काष्ठा uart_port *port;
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक8_t irsel;
 
 	port = &siu_uart_ports[0];
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	irsel = siu_read(port, SIUIRSEL);
-	if (interface == SIU_INTERFACE_IRDA)
+	irsel = siu_पढ़ो(port, SIUIRSEL);
+	अगर (पूर्णांकerface == SIU_INTERFACE_IRDA)
 		irsel |= SIRSEL;
-	else
+	अन्यथा
 		irsel &= ~SIRSEL;
-	siu_write(port, SIUIRSEL, irsel);
+	siu_ग_लिखो(port, SIUIRSEL, irsel);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
-EXPORT_SYMBOL_GPL(vr41xx_select_siu_interface);
+पूर्ण
+EXPORT_SYMBOL_GPL(vr41xx_select_siu_पूर्णांकerface);
 
-void vr41xx_use_irda(irda_use_t use)
-{
-	struct uart_port *port;
-	unsigned long flags;
-	uint8_t irsel;
+व्योम vr41xx_use_irda(irda_use_t use)
+अणु
+	काष्ठा uart_port *port;
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक8_t irsel;
 
 	port = &siu_uart_ports[0];
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	irsel = siu_read(port, SIUIRSEL);
-	if (use == FIR_USE_IRDA)
+	irsel = siu_पढ़ो(port, SIUIRSEL);
+	अगर (use == FIR_USE_IRDA)
 		irsel |= IRUSESEL;
-	else
+	अन्यथा
 		irsel &= ~IRUSESEL;
-	siu_write(port, SIUIRSEL, irsel);
+	siu_ग_लिखो(port, SIUIRSEL, irsel);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vr41xx_use_irda);
 
-void vr41xx_select_irda_module(irda_module_t module, irda_speed_t speed)
-{
-	struct uart_port *port;
-	unsigned long flags;
-	uint8_t irsel;
+व्योम vr41xx_select_irda_module(irda_module_t module, irda_speed_t speed)
+अणु
+	काष्ठा uart_port *port;
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक8_t irsel;
 
 	port = &siu_uart_ports[0];
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	irsel = siu_read(port, SIUIRSEL);
+	irsel = siu_पढ़ो(port, SIUIRSEL);
 	irsel &= ~(IRMSEL | TMICTX | TMICMODE);
-	switch (module) {
-	case SHARP_IRDA:
+	चयन (module) अणु
+	हाल SHARP_IRDA:
 		irsel |= IRMSEL_SHARP;
-		break;
-	case TEMIC_IRDA:
+		अवरोध;
+	हाल TEMIC_IRDA:
 		irsel |= IRMSEL_TEMIC | TMICMODE;
-		if (speed == IRDA_TX_4MBPS)
+		अगर (speed == IRDA_TX_4MBPS)
 			irsel |= TMICTX;
-		break;
-	case HP_IRDA:
+		अवरोध;
+	हाल HP_IRDA:
 		irsel |= IRMSEL_HP;
-		break;
-	default:
-		break;
-	}
-	siu_write(port, SIUIRSEL, irsel);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	siu_ग_लिखो(port, SIUIRSEL, irsel);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vr41xx_select_irda_module);
 
-static inline void siu_clear_fifo(struct uart_port *port)
-{
-	siu_write(port, UART_FCR, UART_FCR_ENABLE_FIFO);
-	siu_write(port, UART_FCR, UART_FCR_ENABLE_FIFO | UART_FCR_CLEAR_RCVR |
+अटल अंतरभूत व्योम siu_clear_fअगरo(काष्ठा uart_port *port)
+अणु
+	siu_ग_लिखो(port, UART_FCR, UART_FCR_ENABLE_FIFO);
+	siu_ग_लिखो(port, UART_FCR, UART_FCR_ENABLE_FIFO | UART_FCR_CLEAR_RCVR |
 	                          UART_FCR_CLEAR_XMIT);
-	siu_write(port, UART_FCR, 0);
-}
+	siu_ग_लिखो(port, UART_FCR, 0);
+पूर्ण
 
-static inline unsigned long siu_port_size(struct uart_port *port)
-{
-	switch (port->type) {
-	case PORT_VR41XX_SIU:
-		return 11UL;
-	case PORT_VR41XX_DSIU:
-		return 8UL;
-	}
+अटल अंतरभूत अचिन्हित दीर्घ siu_port_size(काष्ठा uart_port *port)
+अणु
+	चयन (port->type) अणु
+	हाल PORT_VR41XX_SIU:
+		वापस 11UL;
+	हाल PORT_VR41XX_DSIU:
+		वापस 8UL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline unsigned int siu_check_type(struct uart_port *port)
-{
-	if (port->line == 0)
-		return PORT_VR41XX_SIU;
-	if (port->line == 1 && port->irq)
-		return PORT_VR41XX_DSIU;
+अटल अंतरभूत अचिन्हित पूर्णांक siu_check_type(काष्ठा uart_port *port)
+अणु
+	अगर (port->line == 0)
+		वापस PORT_VR41XX_SIU;
+	अगर (port->line == 1 && port->irq)
+		वापस PORT_VR41XX_DSIU;
 
-	return PORT_UNKNOWN;
-}
+	वापस PORT_UNKNOWN;
+पूर्ण
 
-static inline const char *siu_type_name(struct uart_port *port)
-{
-	switch (port->type) {
-	case PORT_VR41XX_SIU:
-		return "SIU";
-	case PORT_VR41XX_DSIU:
-		return "DSIU";
-	}
+अटल अंतरभूत स्थिर अक्षर *siu_type_name(काष्ठा uart_port *port)
+अणु
+	चयन (port->type) अणु
+	हाल PORT_VR41XX_SIU:
+		वापस "SIU";
+	हाल PORT_VR41XX_DSIU:
+		वापस "DSIU";
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static unsigned int siu_tx_empty(struct uart_port *port)
-{
-	uint8_t lsr;
+अटल अचिन्हित पूर्णांक siu_tx_empty(काष्ठा uart_port *port)
+अणु
+	uपूर्णांक8_t lsr;
 
-	lsr = siu_read(port, UART_LSR);
-	if (lsr & UART_LSR_TEMT)
-		return TIOCSER_TEMT;
+	lsr = siu_पढ़ो(port, UART_LSR);
+	अगर (lsr & UART_LSR_TEMT)
+		वापस TIOCSER_TEMT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void siu_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-	uint8_t mcr = 0;
+अटल व्योम siu_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
+	uपूर्णांक8_t mcr = 0;
 
-	if (mctrl & TIOCM_DTR)
+	अगर (mctrl & TIOCM_DTR)
 		mcr |= UART_MCR_DTR;
-	if (mctrl & TIOCM_RTS)
+	अगर (mctrl & TIOCM_RTS)
 		mcr |= UART_MCR_RTS;
-	if (mctrl & TIOCM_OUT1)
+	अगर (mctrl & TIOCM_OUT1)
 		mcr |= UART_MCR_OUT1;
-	if (mctrl & TIOCM_OUT2)
+	अगर (mctrl & TIOCM_OUT2)
 		mcr |= UART_MCR_OUT2;
-	if (mctrl & TIOCM_LOOP)
+	अगर (mctrl & TIOCM_LOOP)
 		mcr |= UART_MCR_LOOP;
 
-	siu_write(port, UART_MCR, mcr);
-}
+	siu_ग_लिखो(port, UART_MCR, mcr);
+पूर्ण
 
-static unsigned int siu_get_mctrl(struct uart_port *port)
-{
-	uint8_t msr;
-	unsigned int mctrl = 0;
+अटल अचिन्हित पूर्णांक siu_get_mctrl(काष्ठा uart_port *port)
+अणु
+	uपूर्णांक8_t msr;
+	अचिन्हित पूर्णांक mctrl = 0;
 
-	msr = siu_read(port, UART_MSR);
-	if (msr & UART_MSR_DCD)
+	msr = siu_पढ़ो(port, UART_MSR);
+	अगर (msr & UART_MSR_DCD)
 		mctrl |= TIOCM_CAR;
-	if (msr & UART_MSR_RI)
+	अगर (msr & UART_MSR_RI)
 		mctrl |= TIOCM_RNG;
-	if (msr & UART_MSR_DSR)
+	अगर (msr & UART_MSR_DSR)
 		mctrl |= TIOCM_DSR;
-	if (msr & UART_MSR_CTS)
+	अगर (msr & UART_MSR_CTS)
 		mctrl |= TIOCM_CTS;
 
-	return mctrl;
-}
+	वापस mctrl;
+पूर्ण
 
-static void siu_stop_tx(struct uart_port *port)
-{
-	unsigned long flags;
-	uint8_t ier;
+अटल व्योम siu_stop_tx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक8_t ier;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	ier = siu_read(port, UART_IER);
+	ier = siu_पढ़ो(port, UART_IER);
 	ier &= ~UART_IER_THRI;
-	siu_write(port, UART_IER, ier);
+	siu_ग_लिखो(port, UART_IER, ier);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void siu_start_tx(struct uart_port *port)
-{
-	unsigned long flags;
-	uint8_t ier;
+अटल व्योम siu_start_tx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक8_t ier;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	ier = siu_read(port, UART_IER);
+	ier = siu_पढ़ो(port, UART_IER);
 	ier |= UART_IER_THRI;
-	siu_write(port, UART_IER, ier);
+	siu_ग_लिखो(port, UART_IER, ier);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void siu_stop_rx(struct uart_port *port)
-{
-	unsigned long flags;
-	uint8_t ier;
+अटल व्योम siu_stop_rx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक8_t ier;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	ier = siu_read(port, UART_IER);
+	ier = siu_पढ़ो(port, UART_IER);
 	ier &= ~UART_IER_RLSI;
-	siu_write(port, UART_IER, ier);
+	siu_ग_लिखो(port, UART_IER, ier);
 
-	port->read_status_mask &= ~UART_LSR_DR;
+	port->पढ़ो_status_mask &= ~UART_LSR_DR;
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void siu_enable_ms(struct uart_port *port)
-{
-	unsigned long flags;
-	uint8_t ier;
+अटल व्योम siu_enable_ms(काष्ठा uart_port *port)
+अणु
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक8_t ier;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	ier = siu_read(port, UART_IER);
+	ier = siu_पढ़ो(port, UART_IER);
 	ier |= UART_IER_MSI;
-	siu_write(port, UART_IER, ier);
+	siu_ग_लिखो(port, UART_IER, ier);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void siu_break_ctl(struct uart_port *port, int ctl)
-{
-	unsigned long flags;
-	uint8_t lcr;
+अटल व्योम siu_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक ctl)
+अणु
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक8_t lcr;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	lcr = siu_read(port, UART_LCR);
-	if (ctl == -1)
+	lcr = siu_पढ़ो(port, UART_LCR);
+	अगर (ctl == -1)
 		lcr |= UART_LCR_SBC;
-	else
+	अन्यथा
 		lcr &= ~UART_LCR_SBC;
-	siu_write(port, UART_LCR, lcr);
+	siu_ग_लिखो(port, UART_LCR, lcr);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static inline void receive_chars(struct uart_port *port, uint8_t *status)
-{
-	uint8_t lsr, ch;
-	char flag;
-	int max_count = RX_MAX_COUNT;
+अटल अंतरभूत व्योम receive_अक्षरs(काष्ठा uart_port *port, uपूर्णांक8_t *status)
+अणु
+	uपूर्णांक8_t lsr, ch;
+	अक्षर flag;
+	पूर्णांक max_count = RX_MAX_COUNT;
 
 	lsr = *status;
 
-	do {
-		ch = siu_read(port, UART_RX);
+	करो अणु
+		ch = siu_पढ़ो(port, UART_RX);
 		port->icount.rx++;
 		flag = TTY_NORMAL;
 
-#ifdef CONFIG_SERIAL_VR41XX_CONSOLE
-		lsr |= lsr_break_flag[port->line];
-		lsr_break_flag[port->line] = 0;
-#endif
-		if (unlikely(lsr & (UART_LSR_BI | UART_LSR_FE |
-		                    UART_LSR_PE | UART_LSR_OE))) {
-			if (lsr & UART_LSR_BI) {
+#अगर_घोषित CONFIG_SERIAL_VR41XX_CONSOLE
+		lsr |= lsr_अवरोध_flag[port->line];
+		lsr_अवरोध_flag[port->line] = 0;
+#पूर्ण_अगर
+		अगर (unlikely(lsr & (UART_LSR_BI | UART_LSR_FE |
+		                    UART_LSR_PE | UART_LSR_OE))) अणु
+			अगर (lsr & UART_LSR_BI) अणु
 				lsr &= ~(UART_LSR_FE | UART_LSR_PE);
 				port->icount.brk++;
 
-				if (uart_handle_break(port))
-					goto ignore_char;
-			}
+				अगर (uart_handle_अवरोध(port))
+					जाओ ignore_अक्षर;
+			पूर्ण
 
-			if (lsr & UART_LSR_FE)
+			अगर (lsr & UART_LSR_FE)
 				port->icount.frame++;
-			if (lsr & UART_LSR_PE)
+			अगर (lsr & UART_LSR_PE)
 				port->icount.parity++;
-			if (lsr & UART_LSR_OE)
+			अगर (lsr & UART_LSR_OE)
 				port->icount.overrun++;
 
-			lsr &= port->read_status_mask;
-			if (lsr & UART_LSR_BI)
+			lsr &= port->पढ़ो_status_mask;
+			अगर (lsr & UART_LSR_BI)
 				flag = TTY_BREAK;
-			if (lsr & UART_LSR_FE)
+			अगर (lsr & UART_LSR_FE)
 				flag = TTY_FRAME;
-			if (lsr & UART_LSR_PE)
+			अगर (lsr & UART_LSR_PE)
 				flag = TTY_PARITY;
-		}
+		पूर्ण
 
-		if (uart_handle_sysrq_char(port, ch))
-			goto ignore_char;
+		अगर (uart_handle_sysrq_अक्षर(port, ch))
+			जाओ ignore_अक्षर;
 
-		uart_insert_char(port, lsr, UART_LSR_OE, ch, flag);
+		uart_insert_अक्षर(port, lsr, UART_LSR_OE, ch, flag);
 
-	ignore_char:
-		lsr = siu_read(port, UART_LSR);
-	} while ((lsr & UART_LSR_DR) && (max_count-- > 0));
+	ignore_अक्षर:
+		lsr = siu_पढ़ो(port, UART_LSR);
+	पूर्ण जबतक ((lsr & UART_LSR_DR) && (max_count-- > 0));
 
 	tty_flip_buffer_push(&port->state->port);
 
 	*status = lsr;
-}
+पूर्ण
 
-static inline void check_modem_status(struct uart_port *port)
-{
-	uint8_t msr;
+अटल अंतरभूत व्योम check_modem_status(काष्ठा uart_port *port)
+अणु
+	uपूर्णांक8_t msr;
 
-	msr = siu_read(port, UART_MSR);
-	if ((msr & UART_MSR_ANY_DELTA) == 0)
-		return;
-	if (msr & UART_MSR_DDCD)
+	msr = siu_पढ़ो(port, UART_MSR);
+	अगर ((msr & UART_MSR_ANY_DELTA) == 0)
+		वापस;
+	अगर (msr & UART_MSR_DDCD)
 		uart_handle_dcd_change(port, msr & UART_MSR_DCD);
-	if (msr & UART_MSR_TERI)
+	अगर (msr & UART_MSR_TERI)
 		port->icount.rng++;
-	if (msr & UART_MSR_DDSR)
+	अगर (msr & UART_MSR_DDSR)
 		port->icount.dsr++;
-	if (msr & UART_MSR_DCTS)
+	अगर (msr & UART_MSR_DCTS)
 		uart_handle_cts_change(port, msr & UART_MSR_CTS);
 
-	wake_up_interruptible(&port->state->port.delta_msr_wait);
-}
+	wake_up_पूर्णांकerruptible(&port->state->port.delta_msr_रुको);
+पूर्ण
 
-static inline void transmit_chars(struct uart_port *port)
-{
-	struct circ_buf *xmit;
-	int max_count = TX_MAX_COUNT;
+अटल अंतरभूत व्योम transmit_अक्षरs(काष्ठा uart_port *port)
+अणु
+	काष्ठा circ_buf *xmit;
+	पूर्णांक max_count = TX_MAX_COUNT;
 
 	xmit = &port->state->xmit;
 
-	if (port->x_char) {
-		siu_write(port, UART_TX, port->x_char);
+	अगर (port->x_अक्षर) अणु
+		siu_ग_लिखो(port, UART_TX, port->x_अक्षर);
 		port->icount.tx++;
-		port->x_char = 0;
-		return;
-	}
+		port->x_अक्षर = 0;
+		वापस;
+	पूर्ण
 
-	if (uart_circ_empty(xmit) || uart_tx_stopped(port)) {
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(port)) अणु
 		siu_stop_tx(port);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	do {
-		siu_write(port, UART_TX, xmit->buf[xmit->tail]);
+	करो अणु
+		siu_ग_लिखो(port, UART_TX, xmit->buf[xmit->tail]);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
-		if (uart_circ_empty(xmit))
-			break;
-	} while (max_count-- > 0);
+		अगर (uart_circ_empty(xmit))
+			अवरोध;
+	पूर्ण जबतक (max_count-- > 0);
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
 
-	if (uart_circ_empty(xmit))
+	अगर (uart_circ_empty(xmit))
 		siu_stop_tx(port);
-}
+पूर्ण
 
-static irqreturn_t siu_interrupt(int irq, void *dev_id)
-{
-	struct uart_port *port;
-	uint8_t iir, lsr;
+अटल irqवापस_t siu_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा uart_port *port;
+	uपूर्णांक8_t iir, lsr;
 
-	port = (struct uart_port *)dev_id;
+	port = (काष्ठा uart_port *)dev_id;
 
-	iir = siu_read(port, UART_IIR);
-	if (iir & UART_IIR_NO_INT)
-		return IRQ_NONE;
+	iir = siu_पढ़ो(port, UART_IIR);
+	अगर (iir & UART_IIR_NO_INT)
+		वापस IRQ_NONE;
 
-	lsr = siu_read(port, UART_LSR);
-	if (lsr & UART_LSR_DR)
-		receive_chars(port, &lsr);
+	lsr = siu_पढ़ो(port, UART_LSR);
+	अगर (lsr & UART_LSR_DR)
+		receive_अक्षरs(port, &lsr);
 
 	check_modem_status(port);
 
-	if (lsr & UART_LSR_THRE)
-		transmit_chars(port);
+	अगर (lsr & UART_LSR_THRE)
+		transmit_अक्षरs(port);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int siu_startup(struct uart_port *port)
-{
-	int retval;
+अटल पूर्णांक siu_startup(काष्ठा uart_port *port)
+अणु
+	पूर्णांक retval;
 
-	if (port->membase == NULL)
-		return -ENODEV;
+	अगर (port->membase == शून्य)
+		वापस -ENODEV;
 
-	siu_clear_fifo(port);
+	siu_clear_fअगरo(port);
 
-	(void)siu_read(port, UART_LSR);
-	(void)siu_read(port, UART_RX);
-	(void)siu_read(port, UART_IIR);
-	(void)siu_read(port, UART_MSR);
+	(व्योम)siu_पढ़ो(port, UART_LSR);
+	(व्योम)siu_पढ़ो(port, UART_RX);
+	(व्योम)siu_पढ़ो(port, UART_IIR);
+	(व्योम)siu_पढ़ो(port, UART_MSR);
 
-	if (siu_read(port, UART_LSR) == 0xff)
-		return -ENODEV;
+	अगर (siu_पढ़ो(port, UART_LSR) == 0xff)
+		वापस -ENODEV;
 
-	retval = request_irq(port->irq, siu_interrupt, 0, siu_type_name(port), port);
-	if (retval)
-		return retval;
+	retval = request_irq(port->irq, siu_पूर्णांकerrupt, 0, siu_type_name(port), port);
+	अगर (retval)
+		वापस retval;
 
-	if (port->type == PORT_VR41XX_DSIU)
-		vr41xx_enable_dsiuint(DSIUINT_ALL);
+	अगर (port->type == PORT_VR41XX_DSIU)
+		vr41xx_enable_dsiuपूर्णांक(DSIUINT_ALL);
 
-	siu_write(port, UART_LCR, UART_LCR_WLEN8);
+	siu_ग_लिखो(port, UART_LCR, UART_LCR_WLEN8);
 
 	spin_lock_irq(&port->lock);
 	siu_set_mctrl(port, port->mctrl);
 	spin_unlock_irq(&port->lock);
 
-	siu_write(port, UART_IER, UART_IER_RLSI | UART_IER_RDI);
+	siu_ग_लिखो(port, UART_IER, UART_IER_RLSI | UART_IER_RDI);
 
-	(void)siu_read(port, UART_LSR);
-	(void)siu_read(port, UART_RX);
-	(void)siu_read(port, UART_IIR);
-	(void)siu_read(port, UART_MSR);
+	(व्योम)siu_पढ़ो(port, UART_LSR);
+	(व्योम)siu_पढ़ो(port, UART_RX);
+	(व्योम)siu_पढ़ो(port, UART_IIR);
+	(व्योम)siu_पढ़ो(port, UART_MSR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void siu_shutdown(struct uart_port *port)
-{
-	unsigned long flags;
-	uint8_t lcr;
+अटल व्योम siu_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक8_t lcr;
 
-	siu_write(port, UART_IER, 0);
+	siu_ग_लिखो(port, UART_IER, 0);
 
 	spin_lock_irqsave(&port->lock, flags);
 
@@ -481,190 +482,190 @@ static void siu_shutdown(struct uart_port *port)
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	lcr = siu_read(port, UART_LCR);
+	lcr = siu_पढ़ो(port, UART_LCR);
 	lcr &= ~UART_LCR_SBC;
-	siu_write(port, UART_LCR, lcr);
+	siu_ग_लिखो(port, UART_LCR, lcr);
 
-	siu_clear_fifo(port);
+	siu_clear_fअगरo(port);
 
-	(void)siu_read(port, UART_RX);
+	(व्योम)siu_पढ़ो(port, UART_RX);
 
-	if (port->type == PORT_VR41XX_DSIU)
-		vr41xx_disable_dsiuint(DSIUINT_ALL);
+	अगर (port->type == PORT_VR41XX_DSIU)
+		vr41xx_disable_dsiuपूर्णांक(DSIUINT_ALL);
 
-	free_irq(port->irq, port);
-}
+	मुक्त_irq(port->irq, port);
+पूर्ण
 
-static void siu_set_termios(struct uart_port *port, struct ktermios *new,
-                            struct ktermios *old)
-{
-	tcflag_t c_cflag, c_iflag;
-	uint8_t lcr, fcr, ier;
-	unsigned int baud, quot;
-	unsigned long flags;
+अटल व्योम siu_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *new,
+                            काष्ठा ktermios *old)
+अणु
+	tcflag_t c_cflag, c_अगरlag;
+	uपूर्णांक8_t lcr, fcr, ier;
+	अचिन्हित पूर्णांक baud, quot;
+	अचिन्हित दीर्घ flags;
 
 	c_cflag = new->c_cflag;
-	switch (c_cflag & CSIZE) {
-	case CS5:
+	चयन (c_cflag & CSIZE) अणु
+	हाल CS5:
 		lcr = UART_LCR_WLEN5;
-		break;
-	case CS6:
+		अवरोध;
+	हाल CS6:
 		lcr = UART_LCR_WLEN6;
-		break;
-	case CS7:
+		अवरोध;
+	हाल CS7:
 		lcr = UART_LCR_WLEN7;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		lcr = UART_LCR_WLEN8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (c_cflag & CSTOPB)
+	अगर (c_cflag & CSTOPB)
 		lcr |= UART_LCR_STOP;
-	if (c_cflag & PARENB)
+	अगर (c_cflag & PARENB)
 		lcr |= UART_LCR_PARITY;
-	if ((c_cflag & PARODD) != PARODD)
+	अगर ((c_cflag & PARODD) != PARODD)
 		lcr |= UART_LCR_EPAR;
-	if (c_cflag & CMSPAR)
+	अगर (c_cflag & CMSPAR)
 		lcr |= UART_LCR_SPAR;
 
 	baud = uart_get_baud_rate(port, new, old, 0, port->uartclk/16);
-	quot = uart_get_divisor(port, baud);
+	quot = uart_get_भागisor(port, baud);
 
 	fcr = UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	uart_update_timeout(port, c_cflag, baud);
+	uart_update_समयout(port, c_cflag, baud);
 
-	c_iflag = new->c_iflag;
+	c_अगरlag = new->c_अगरlag;
 
-	port->read_status_mask = UART_LSR_THRE | UART_LSR_OE | UART_LSR_DR;
-	if (c_iflag & INPCK)
-		port->read_status_mask |= UART_LSR_FE | UART_LSR_PE;
-	if (c_iflag & (IGNBRK | BRKINT | PARMRK))
-		port->read_status_mask |= UART_LSR_BI;
+	port->पढ़ो_status_mask = UART_LSR_THRE | UART_LSR_OE | UART_LSR_DR;
+	अगर (c_अगरlag & INPCK)
+		port->पढ़ो_status_mask |= UART_LSR_FE | UART_LSR_PE;
+	अगर (c_अगरlag & (IGNBRK | BRKINT | PARMRK))
+		port->पढ़ो_status_mask |= UART_LSR_BI;
 
 	port->ignore_status_mask = 0;
-	if (c_iflag & IGNPAR)
+	अगर (c_अगरlag & IGNPAR)
 		port->ignore_status_mask |= UART_LSR_FE | UART_LSR_PE;
-	if (c_iflag & IGNBRK) {
+	अगर (c_अगरlag & IGNBRK) अणु
 		port->ignore_status_mask |= UART_LSR_BI;
-		if (c_iflag & IGNPAR)
+		अगर (c_अगरlag & IGNPAR)
 			port->ignore_status_mask |= UART_LSR_OE;
-	}
+	पूर्ण
 
-	if ((c_cflag & CREAD) == 0)
+	अगर ((c_cflag & CREAD) == 0)
 		port->ignore_status_mask |= UART_LSR_DR;
 
-	ier = siu_read(port, UART_IER);
+	ier = siu_पढ़ो(port, UART_IER);
 	ier &= ~UART_IER_MSI;
-	if (UART_ENABLE_MS(port, c_cflag))
+	अगर (UART_ENABLE_MS(port, c_cflag))
 		ier |= UART_IER_MSI;
-	siu_write(port, UART_IER, ier);
+	siu_ग_लिखो(port, UART_IER, ier);
 
-	siu_write(port, UART_LCR, lcr | UART_LCR_DLAB);
+	siu_ग_लिखो(port, UART_LCR, lcr | UART_LCR_DLAB);
 
-	siu_write(port, UART_DLL, (uint8_t)quot);
-	siu_write(port, UART_DLM, (uint8_t)(quot >> 8));
+	siu_ग_लिखो(port, UART_DLL, (uपूर्णांक8_t)quot);
+	siu_ग_लिखो(port, UART_DLM, (uपूर्णांक8_t)(quot >> 8));
 
-	siu_write(port, UART_LCR, lcr);
+	siu_ग_लिखो(port, UART_LCR, lcr);
 
-	siu_write(port, UART_FCR, fcr);
+	siu_ग_लिखो(port, UART_FCR, fcr);
 
 	siu_set_mctrl(port, port->mctrl);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void siu_pm(struct uart_port *port, unsigned int state, unsigned int oldstate)
-{
-	switch (state) {
-	case 0:
-		switch (port->type) {
-		case PORT_VR41XX_SIU:
-			vr41xx_supply_clock(SIU_CLOCK);
-			break;
-		case PORT_VR41XX_DSIU:
-			vr41xx_supply_clock(DSIU_CLOCK);
-			break;
-		}
-		break;
-	case 3:
-		switch (port->type) {
-		case PORT_VR41XX_SIU:
-			vr41xx_mask_clock(SIU_CLOCK);
-			break;
-		case PORT_VR41XX_DSIU:
-			vr41xx_mask_clock(DSIU_CLOCK);
-			break;
-		}
-		break;
-	}
-}
+अटल व्योम siu_pm(काष्ठा uart_port *port, अचिन्हित पूर्णांक state, अचिन्हित पूर्णांक oldstate)
+अणु
+	चयन (state) अणु
+	हाल 0:
+		चयन (port->type) अणु
+		हाल PORT_VR41XX_SIU:
+			vr41xx_supply_घड़ी(SIU_CLOCK);
+			अवरोध;
+		हाल PORT_VR41XX_DSIU:
+			vr41xx_supply_घड़ी(DSIU_CLOCK);
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 3:
+		चयन (port->type) अणु
+		हाल PORT_VR41XX_SIU:
+			vr41xx_mask_घड़ी(SIU_CLOCK);
+			अवरोध;
+		हाल PORT_VR41XX_DSIU:
+			vr41xx_mask_घड़ी(DSIU_CLOCK);
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static const char *siu_type(struct uart_port *port)
-{
-	return siu_type_name(port);
-}
+अटल स्थिर अक्षर *siu_type(काष्ठा uart_port *port)
+अणु
+	वापस siu_type_name(port);
+पूर्ण
 
-static void siu_release_port(struct uart_port *port)
-{
-	unsigned long size;
+अटल व्योम siu_release_port(काष्ठा uart_port *port)
+अणु
+	अचिन्हित दीर्घ size;
 
-	if (port->flags	& UPF_IOREMAP) {
+	अगर (port->flags	& UPF_IOREMAP) अणु
 		iounmap(port->membase);
-		port->membase = NULL;
-	}
+		port->membase = शून्य;
+	पूर्ण
 
 	size = siu_port_size(port);
 	release_mem_region(port->mapbase, size);
-}
+पूर्ण
 
-static int siu_request_port(struct uart_port *port)
-{
-	unsigned long size;
-	struct resource *res;
+अटल पूर्णांक siu_request_port(काष्ठा uart_port *port)
+अणु
+	अचिन्हित दीर्घ size;
+	काष्ठा resource *res;
 
 	size = siu_port_size(port);
 	res = request_mem_region(port->mapbase, size, siu_type_name(port));
-	if (res == NULL)
-		return -EBUSY;
+	अगर (res == शून्य)
+		वापस -EBUSY;
 
-	if (port->flags & UPF_IOREMAP) {
+	अगर (port->flags & UPF_IOREMAP) अणु
 		port->membase = ioremap(port->mapbase, size);
-		if (port->membase == NULL) {
+		अगर (port->membase == शून्य) अणु
 			release_resource(res);
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void siu_config_port(struct uart_port *port, int flags)
-{
-	if (flags & UART_CONFIG_TYPE) {
+अटल व्योम siu_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+	अगर (flags & UART_CONFIG_TYPE) अणु
 		port->type = siu_check_type(port);
-		(void)siu_request_port(port);
-	}
-}
+		(व्योम)siu_request_port(port);
+	पूर्ण
+पूर्ण
 
-static int siu_verify_port(struct uart_port *port, struct serial_struct *serial)
-{
-	if (port->type != PORT_VR41XX_SIU && port->type != PORT_VR41XX_DSIU)
-		return -EINVAL;
-	if (port->irq != serial->irq)
-		return -EINVAL;
-	if (port->iotype != serial->io_type)
-		return -EINVAL;
-	if (port->mapbase != (unsigned long)serial->iomem_base)
-		return -EINVAL;
+अटल पूर्णांक siu_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *serial)
+अणु
+	अगर (port->type != PORT_VR41XX_SIU && port->type != PORT_VR41XX_DSIU)
+		वापस -EINVAL;
+	अगर (port->irq != serial->irq)
+		वापस -EINVAL;
+	अगर (port->iotype != serial->io_type)
+		वापस -EINVAL;
+	अगर (port->mapbase != (अचिन्हित दीर्घ)serial->iomem_base)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct uart_ops siu_uart_ops = {
+अटल स्थिर काष्ठा uart_ops siu_uart_ops = अणु
 	.tx_empty	= siu_tx_empty,
 	.set_mctrl	= siu_set_mctrl,
 	.get_mctrl	= siu_get_mctrl,
@@ -672,276 +673,276 @@ static const struct uart_ops siu_uart_ops = {
 	.start_tx	= siu_start_tx,
 	.stop_rx	= siu_stop_rx,
 	.enable_ms	= siu_enable_ms,
-	.break_ctl	= siu_break_ctl,
+	.अवरोध_ctl	= siu_अवरोध_ctl,
 	.startup	= siu_startup,
-	.shutdown	= siu_shutdown,
+	.shutकरोwn	= siu_shutकरोwn,
 	.set_termios	= siu_set_termios,
 	.pm		= siu_pm,
 	.type		= siu_type,
 	.release_port	= siu_release_port,
 	.request_port	= siu_request_port,
 	.config_port	= siu_config_port,
-	.verify_port	= siu_verify_port,
-};
+	.verअगरy_port	= siu_verअगरy_port,
+पूर्ण;
 
-static int siu_init_ports(struct platform_device *pdev)
-{
-	struct uart_port *port;
-	struct resource *res;
-	int *type = dev_get_platdata(&pdev->dev);
-	int i;
+अटल पूर्णांक siu_init_ports(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uart_port *port;
+	काष्ठा resource *res;
+	पूर्णांक *type = dev_get_platdata(&pdev->dev);
+	पूर्णांक i;
 
-	if (!type)
-		return 0;
+	अगर (!type)
+		वापस 0;
 
 	port = siu_uart_ports;
-	for (i = 0; i < SIU_PORTS_MAX; i++) {
+	क्रम (i = 0; i < SIU_PORTS_MAX; i++) अणु
 		port->type = type[i];
-		if (port->type == PORT_UNKNOWN)
-			continue;
-		port->irq = platform_get_irq(pdev, i);
+		अगर (port->type == PORT_UNKNOWN)
+			जारी;
+		port->irq = platक्रमm_get_irq(pdev, i);
 		port->uartclk = SIU_BAUD_BASE * 16;
-		port->fifosize = 16;
-		port->regshift = 0;
+		port->fअगरosize = 16;
+		port->regshअगरt = 0;
 		port->iotype = UPIO_MEM;
 		port->flags = UPF_IOREMAP | UPF_BOOT_AUTOCONF;
 		port->line = i;
-		res = platform_get_resource(pdev, IORESOURCE_MEM, i);
+		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, i);
 		port->mapbase = res->start;
 		port++;
-	}
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-#ifdef CONFIG_SERIAL_VR41XX_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_VR41XX_CONSOLE
 
-#define BOTH_EMPTY	(UART_LSR_TEMT | UART_LSR_THRE)
+#घोषणा BOTH_EMPTY	(UART_LSR_TEMT | UART_LSR_THRE)
 
-static void wait_for_xmitr(struct uart_port *port)
-{
-	int timeout = 10000;
-	uint8_t lsr, msr;
+अटल व्योम रुको_क्रम_xmitr(काष्ठा uart_port *port)
+अणु
+	पूर्णांक समयout = 10000;
+	uपूर्णांक8_t lsr, msr;
 
-	do {
-		lsr = siu_read(port, UART_LSR);
-		if (lsr & UART_LSR_BI)
-			lsr_break_flag[port->line] = UART_LSR_BI;
+	करो अणु
+		lsr = siu_पढ़ो(port, UART_LSR);
+		अगर (lsr & UART_LSR_BI)
+			lsr_अवरोध_flag[port->line] = UART_LSR_BI;
 
-		if ((lsr & BOTH_EMPTY) == BOTH_EMPTY)
-			break;
-	} while (timeout-- > 0);
+		अगर ((lsr & BOTH_EMPTY) == BOTH_EMPTY)
+			अवरोध;
+	पूर्ण जबतक (समयout-- > 0);
 
-	if (port->flags & UPF_CONS_FLOW) {
-		timeout = 1000000;
+	अगर (port->flags & UPF_CONS_FLOW) अणु
+		समयout = 1000000;
 
-		do {
-			msr = siu_read(port, UART_MSR);
-			if ((msr & UART_MSR_CTS) != 0)
-				break;
-		} while (timeout-- > 0);
-	}
-}
+		करो अणु
+			msr = siu_पढ़ो(port, UART_MSR);
+			अगर ((msr & UART_MSR_CTS) != 0)
+				अवरोध;
+		पूर्ण जबतक (समयout-- > 0);
+	पूर्ण
+पूर्ण
 
-static void siu_console_putchar(struct uart_port *port, int ch)
-{
-	wait_for_xmitr(port);
-	siu_write(port, UART_TX, ch);
-}
+अटल व्योम siu_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	रुको_क्रम_xmitr(port);
+	siu_ग_लिखो(port, UART_TX, ch);
+पूर्ण
 
-static void siu_console_write(struct console *con, const char *s, unsigned count)
-{
-	struct uart_port *port;
-	uint8_t ier;
+अटल व्योम siu_console_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित count)
+अणु
+	काष्ठा uart_port *port;
+	uपूर्णांक8_t ier;
 
 	port = &siu_uart_ports[con->index];
 
-	ier = siu_read(port, UART_IER);
-	siu_write(port, UART_IER, 0);
+	ier = siu_पढ़ो(port, UART_IER);
+	siu_ग_लिखो(port, UART_IER, 0);
 
-	uart_console_write(port, s, count, siu_console_putchar);
+	uart_console_ग_लिखो(port, s, count, siu_console_अक्षर_दो);
 
-	wait_for_xmitr(port);
-	siu_write(port, UART_IER, ier);
-}
+	रुको_क्रम_xmitr(port);
+	siu_ग_लिखो(port, UART_IER, ier);
+पूर्ण
 
-static int __init siu_console_setup(struct console *con, char *options)
-{
-	struct uart_port *port;
-	int baud = 9600;
-	int parity = 'n';
-	int bits = 8;
-	int flow = 'n';
+अटल पूर्णांक __init siu_console_setup(काष्ठा console *con, अक्षर *options)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक baud = 9600;
+	पूर्णांक parity = 'n';
+	पूर्णांक bits = 8;
+	पूर्णांक flow = 'n';
 
-	if (con->index >= SIU_PORTS_MAX)
+	अगर (con->index >= SIU_PORTS_MAX)
 		con->index = 0;
 
 	port = &siu_uart_ports[con->index];
-	if (port->membase == NULL) {
-		if (port->mapbase == 0)
-			return -ENODEV;
+	अगर (port->membase == शून्य) अणु
+		अगर (port->mapbase == 0)
+			वापस -ENODEV;
 		port->membase = ioremap(port->mapbase, siu_port_size(port));
-	}
+	पूर्ण
 
-	if (port->type == PORT_VR41XX_SIU)
-		vr41xx_select_siu_interface(SIU_INTERFACE_RS232C);
+	अगर (port->type == PORT_VR41XX_SIU)
+		vr41xx_select_siu_पूर्णांकerface(SIU_INTERFACE_RS232C);
 
-	if (options != NULL)
+	अगर (options != शून्य)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	return uart_set_options(port, con, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, con, baud, parity, bits, flow);
+पूर्ण
 
-static struct uart_driver siu_uart_driver;
+अटल काष्ठा uart_driver siu_uart_driver;
 
-static struct console siu_console = {
+अटल काष्ठा console siu_console = अणु
 	.name	= "ttyVR",
-	.write	= siu_console_write,
+	.ग_लिखो	= siu_console_ग_लिखो,
 	.device	= uart_console_device,
 	.setup	= siu_console_setup,
 	.flags	= CON_PRINTBUFFER,
 	.index	= -1,
 	.data	= &siu_uart_driver,
-};
+पूर्ण;
 
-static int siu_console_init(void)
-{
-	struct uart_port *port;
-	int i;
+अटल पूर्णांक siu_console_init(व्योम)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक i;
 
-	for (i = 0; i < SIU_PORTS_MAX; i++) {
+	क्रम (i = 0; i < SIU_PORTS_MAX; i++) अणु
 		port = &siu_uart_ports[i];
 		port->ops = &siu_uart_ops;
-	}
+	पूर्ण
 
-	register_console(&siu_console);
+	रेजिस्टर_console(&siu_console);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 console_initcall(siu_console_init);
 
-void __init vr41xx_siu_early_setup(struct uart_port *port)
-{
-	if (port->type == PORT_UNKNOWN)
-		return;
+व्योम __init vr41xx_siu_early_setup(काष्ठा uart_port *port)
+अणु
+	अगर (port->type == PORT_UNKNOWN)
+		वापस;
 
 	siu_uart_ports[port->line].line = port->line;
 	siu_uart_ports[port->line].type = port->type;
 	siu_uart_ports[port->line].uartclk = SIU_BAUD_BASE * 16;
 	siu_uart_ports[port->line].mapbase = port->mapbase;
 	siu_uart_ports[port->line].ops = &siu_uart_ops;
-}
+पूर्ण
 
-#define SERIAL_VR41XX_CONSOLE	&siu_console
-#else
-#define SERIAL_VR41XX_CONSOLE	NULL
-#endif
+#घोषणा SERIAL_VR41XX_CONSOLE	&siu_console
+#अन्यथा
+#घोषणा SERIAL_VR41XX_CONSOLE	शून्य
+#पूर्ण_अगर
 
-static struct uart_driver siu_uart_driver = {
+अटल काष्ठा uart_driver siu_uart_driver = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= "SIU",
 	.dev_name	= "ttyVR",
 	.major		= SIU_MAJOR,
 	.minor		= SIU_MINOR_BASE,
 	.cons		= SERIAL_VR41XX_CONSOLE,
-};
+पूर्ण;
 
-static int siu_probe(struct platform_device *dev)
-{
-	struct uart_port *port;
-	int num, i, retval;
+अटल पूर्णांक siu_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक num, i, retval;
 
 	num = siu_init_ports(dev);
-	if (num <= 0)
-		return -ENODEV;
+	अगर (num <= 0)
+		वापस -ENODEV;
 
 	siu_uart_driver.nr = num;
-	retval = uart_register_driver(&siu_uart_driver);
-	if (retval)
-		return retval;
+	retval = uart_रेजिस्टर_driver(&siu_uart_driver);
+	अगर (retval)
+		वापस retval;
 
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		port = &siu_uart_ports[i];
 		port->ops = &siu_uart_ops;
 		port->dev = &dev->dev;
 		port->has_sysrq = IS_ENABLED(CONFIG_SERIAL_VR41XX_CONSOLE);
 
 		retval = uart_add_one_port(&siu_uart_driver, port);
-		if (retval < 0) {
-			port->dev = NULL;
-			break;
-		}
-	}
+		अगर (retval < 0) अणु
+			port->dev = शून्य;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i == 0 && retval < 0) {
-		uart_unregister_driver(&siu_uart_driver);
-		return retval;
-	}
+	अगर (i == 0 && retval < 0) अणु
+		uart_unरेजिस्टर_driver(&siu_uart_driver);
+		वापस retval;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int siu_remove(struct platform_device *dev)
-{
-	struct uart_port *port;
-	int i;
+अटल पूर्णांक siu_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक i;
 
-	for (i = 0; i < siu_uart_driver.nr; i++) {
+	क्रम (i = 0; i < siu_uart_driver.nr; i++) अणु
 		port = &siu_uart_ports[i];
-		if (port->dev == &dev->dev) {
-			uart_remove_one_port(&siu_uart_driver, port);
-			port->dev = NULL;
-		}
-	}
+		अगर (port->dev == &dev->dev) अणु
+			uart_हटाओ_one_port(&siu_uart_driver, port);
+			port->dev = शून्य;
+		पूर्ण
+	पूर्ण
 
-	uart_unregister_driver(&siu_uart_driver);
+	uart_unरेजिस्टर_driver(&siu_uart_driver);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int siu_suspend(struct platform_device *dev, pm_message_t state)
-{
-	struct uart_port *port;
-	int i;
+अटल पूर्णांक siu_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक i;
 
-	for (i = 0; i < siu_uart_driver.nr; i++) {
+	क्रम (i = 0; i < siu_uart_driver.nr; i++) अणु
 		port = &siu_uart_ports[i];
-		if ((port->type == PORT_VR41XX_SIU ||
+		अगर ((port->type == PORT_VR41XX_SIU ||
 		     port->type == PORT_VR41XX_DSIU) && port->dev == &dev->dev)
 			uart_suspend_port(&siu_uart_driver, port);
 
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int siu_resume(struct platform_device *dev)
-{
-	struct uart_port *port;
-	int i;
+अटल पूर्णांक siu_resume(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक i;
 
-	for (i = 0; i < siu_uart_driver.nr; i++) {
+	क्रम (i = 0; i < siu_uart_driver.nr; i++) अणु
 		port = &siu_uart_ports[i];
-		if ((port->type == PORT_VR41XX_SIU ||
+		अगर ((port->type == PORT_VR41XX_SIU ||
 		     port->type == PORT_VR41XX_DSIU) && port->dev == &dev->dev)
 			uart_resume_port(&siu_uart_driver, port);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver siu_device_driver = {
+अटल काष्ठा platक्रमm_driver siu_device_driver = अणु
 	.probe		= siu_probe,
-	.remove		= siu_remove,
+	.हटाओ		= siu_हटाओ,
 	.suspend	= siu_suspend,
 	.resume		= siu_resume,
-	.driver		= {
+	.driver		= अणु
 		.name	= "SIU",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(siu_device_driver);
+module_platक्रमm_driver(siu_device_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:SIU");

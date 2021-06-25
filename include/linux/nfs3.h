@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * NFSv3 protocol definitions
  */
-#ifndef _LINUX_NFS3_H
-#define _LINUX_NFS3_H
+#अगर_अघोषित _LINUX_NFS3_H
+#घोषणा _LINUX_NFS3_H
 
-#include <uapi/linux/nfs3.h>
+#समावेश <uapi/linux/nfs3.h>
 
 
 /* Number of 32bit words in post_op_attr */
-#define NFS3_POST_OP_ATTR_WORDS		22
+#घोषणा NFS3_POST_OP_ATTR_WORDS		22
 
-#endif /* _LINUX_NFS3_H */
+#पूर्ण_अगर /* _LINUX_NFS3_H */

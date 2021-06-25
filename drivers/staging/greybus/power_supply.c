@@ -1,823 +1,824 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Power Supply driver for a Greybus module.
+ * Power Supply driver क्रम a Greybus module.
  *
  * Copyright 2014-2015 Google Inc.
  * Copyright 2014-2015 Linaro Ltd.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/power_supply.h>
-#include <linux/slab.h>
-#include <linux/greybus.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/greybus.h>
 
-#define PROP_MAX 32
+#घोषणा PROP_MAX 32
 
-struct gb_power_supply_prop {
-	enum power_supply_property	prop;
+काष्ठा gb_घातer_supply_prop अणु
+	क्रमागत घातer_supply_property	prop;
 	u8				gb_prop;
-	int				val;
-	int				previous_val;
-	bool				is_writeable;
-};
+	पूर्णांक				val;
+	पूर्णांक				previous_val;
+	bool				is_ग_लिखोable;
+पूर्ण;
 
-struct gb_power_supply {
+काष्ठा gb_घातer_supply अणु
 	u8				id;
-	bool				registered;
-	struct power_supply		*psy;
-	struct power_supply_desc	desc;
-	char				name[64];
-	struct gb_power_supplies	*supplies;
-	struct delayed_work		work;
-	char				*manufacturer;
-	char				*model_name;
-	char				*serial_number;
+	bool				रेजिस्टरed;
+	काष्ठा घातer_supply		*psy;
+	काष्ठा घातer_supply_desc	desc;
+	अक्षर				name[64];
+	काष्ठा gb_घातer_supplies	*supplies;
+	काष्ठा delayed_work		work;
+	अक्षर				*manufacturer;
+	अक्षर				*model_name;
+	अक्षर				*serial_number;
 	u8				type;
 	u8				properties_count;
 	u8				properties_count_str;
-	unsigned long			last_update;
+	अचिन्हित दीर्घ			last_update;
 	u8				cache_invalid;
-	unsigned int			update_interval;
+	अचिन्हित पूर्णांक			update_पूर्णांकerval;
 	bool				changed;
-	struct gb_power_supply_prop	*props;
-	enum power_supply_property	*props_raw;
+	काष्ठा gb_घातer_supply_prop	*props;
+	क्रमागत घातer_supply_property	*props_raw;
 	bool				pm_acquired;
-	struct mutex			supply_lock;
-};
+	काष्ठा mutex			supply_lock;
+पूर्ण;
 
-struct gb_power_supplies {
-	struct gb_connection	*connection;
+काष्ठा gb_घातer_supplies अणु
+	काष्ठा gb_connection	*connection;
 	u8			supplies_count;
-	struct gb_power_supply	*supply;
-	struct mutex		supplies_lock;
-};
+	काष्ठा gb_घातer_supply	*supply;
+	काष्ठा mutex		supplies_lock;
+पूर्ण;
 
-#define to_gb_power_supply(x) power_supply_get_drvdata(x)
+#घोषणा to_gb_घातer_supply(x) घातer_supply_get_drvdata(x)
 
 /*
- * General power supply properties that could be absent from various reasons,
- * like kernel versions or vendor specific versions
+ * General घातer supply properties that could be असलent from various reasons,
+ * like kernel versions or venकरोr specअगरic versions
  */
-#ifndef POWER_SUPPLY_PROP_VOLTAGE_BOOT
-	#define POWER_SUPPLY_PROP_VOLTAGE_BOOT	-1
-#endif
-#ifndef POWER_SUPPLY_PROP_CURRENT_BOOT
-	#define POWER_SUPPLY_PROP_CURRENT_BOOT	-1
-#endif
-#ifndef POWER_SUPPLY_PROP_CALIBRATE
-	#define POWER_SUPPLY_PROP_CALIBRATE	-1
-#endif
+#अगर_अघोषित POWER_SUPPLY_PROP_VOLTAGE_BOOT
+	#घोषणा POWER_SUPPLY_PROP_VOLTAGE_BOOT	-1
+#पूर्ण_अगर
+#अगर_अघोषित POWER_SUPPLY_PROP_CURRENT_BOOT
+	#घोषणा POWER_SUPPLY_PROP_CURRENT_BOOT	-1
+#पूर्ण_अगर
+#अगर_अघोषित POWER_SUPPLY_PROP_CALIBRATE
+	#घोषणा POWER_SUPPLY_PROP_CALIBRATE	-1
+#पूर्ण_अगर
 
-/* cache time in milliseconds, if cache_time is set to 0 cache is disable */
-static unsigned int cache_time = 1000;
+/* cache समय in milliseconds, अगर cache_समय is set to 0 cache is disable */
+अटल अचिन्हित पूर्णांक cache_समय = 1000;
 /*
- * update interval initial and maximum value, between the two will
+ * update पूर्णांकerval initial and maximum value, between the two will
  * back-off exponential
  */
-static unsigned int update_interval_init = 1 * HZ;
-static unsigned int update_interval_max = 30 * HZ;
+अटल अचिन्हित पूर्णांक update_पूर्णांकerval_init = 1 * HZ;
+अटल अचिन्हित पूर्णांक update_पूर्णांकerval_max = 30 * HZ;
 
-struct gb_power_supply_changes {
-	enum power_supply_property	prop;
+काष्ठा gb_घातer_supply_changes अणु
+	क्रमागत घातer_supply_property	prop;
 	u32				tolerance_change;
-	void (*prop_changed)(struct gb_power_supply *gbpsy,
-			     struct gb_power_supply_prop *prop);
-};
+	व्योम (*prop_changed)(काष्ठा gb_घातer_supply *gbpsy,
+			     काष्ठा gb_घातer_supply_prop *prop);
+पूर्ण;
 
-static void gb_power_supply_state_change(struct gb_power_supply *gbpsy,
-					 struct gb_power_supply_prop *prop);
+अटल व्योम gb_घातer_supply_state_change(काष्ठा gb_घातer_supply *gbpsy,
+					 काष्ठा gb_घातer_supply_prop *prop);
 
-static const struct gb_power_supply_changes psy_props_changes[] = {
-	{	.prop			= GB_POWER_SUPPLY_PROP_STATUS,
+अटल स्थिर काष्ठा gb_घातer_supply_changes psy_props_changes[] = अणु
+	अणु	.prop			= GB_POWER_SUPPLY_PROP_STATUS,
 		.tolerance_change	= 0,
-		.prop_changed		= gb_power_supply_state_change,
-	},
-	{	.prop			= GB_POWER_SUPPLY_PROP_TEMP,
+		.prop_changed		= gb_घातer_supply_state_change,
+	पूर्ण,
+	अणु	.prop			= GB_POWER_SUPPLY_PROP_TEMP,
 		.tolerance_change	= 500,
-		.prop_changed		= NULL,
-	},
-	{	.prop			= GB_POWER_SUPPLY_PROP_ONLINE,
+		.prop_changed		= शून्य,
+	पूर्ण,
+	अणु	.prop			= GB_POWER_SUPPLY_PROP_ONLINE,
 		.tolerance_change	= 0,
-		.prop_changed		= NULL,
-	},
-};
+		.prop_changed		= शून्य,
+	पूर्ण,
+पूर्ण;
 
-static int get_psp_from_gb_prop(int gb_prop, enum power_supply_property *psp)
-{
-	int prop;
+अटल पूर्णांक get_psp_from_gb_prop(पूर्णांक gb_prop, क्रमागत घातer_supply_property *psp)
+अणु
+	पूर्णांक prop;
 
-	switch (gb_prop) {
-	case GB_POWER_SUPPLY_PROP_STATUS:
+	चयन (gb_prop) अणु
+	हाल GB_POWER_SUPPLY_PROP_STATUS:
 		prop = POWER_SUPPLY_PROP_STATUS;
-		break;
-	case GB_POWER_SUPPLY_PROP_CHARGE_TYPE:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CHARGE_TYPE:
 		prop = POWER_SUPPLY_PROP_CHARGE_TYPE;
-		break;
-	case GB_POWER_SUPPLY_PROP_HEALTH:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_HEALTH:
 		prop = POWER_SUPPLY_PROP_HEALTH;
-		break;
-	case GB_POWER_SUPPLY_PROP_PRESENT:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_PRESENT:
 		prop = POWER_SUPPLY_PROP_PRESENT;
-		break;
-	case GB_POWER_SUPPLY_PROP_ONLINE:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_ONLINE:
 		prop = POWER_SUPPLY_PROP_ONLINE;
-		break;
-	case GB_POWER_SUPPLY_PROP_AUTHENTIC:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_AUTHENTIC:
 		prop = POWER_SUPPLY_PROP_AUTHENTIC;
-		break;
-	case GB_POWER_SUPPLY_PROP_TECHNOLOGY:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TECHNOLOGY:
 		prop = POWER_SUPPLY_PROP_TECHNOLOGY;
-		break;
-	case GB_POWER_SUPPLY_PROP_CYCLE_COUNT:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CYCLE_COUNT:
 		prop = POWER_SUPPLY_PROP_CYCLE_COUNT;
-		break;
-	case GB_POWER_SUPPLY_PROP_VOLTAGE_MAX:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_VOLTAGE_MAX:
 		prop = POWER_SUPPLY_PROP_VOLTAGE_MAX;
-		break;
-	case GB_POWER_SUPPLY_PROP_VOLTAGE_MIN:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_VOLTAGE_MIN:
 		prop = POWER_SUPPLY_PROP_VOLTAGE_MIN;
-		break;
-	case GB_POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
 		prop = POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN;
-		break;
-	case GB_POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
 		prop = POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN;
-		break;
-	case GB_POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_VOLTAGE_NOW:
 		prop = POWER_SUPPLY_PROP_VOLTAGE_NOW;
-		break;
-	case GB_POWER_SUPPLY_PROP_VOLTAGE_AVG:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_VOLTAGE_AVG:
 		prop = POWER_SUPPLY_PROP_VOLTAGE_AVG;
-		break;
-	case GB_POWER_SUPPLY_PROP_VOLTAGE_OCV:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_VOLTAGE_OCV:
 		prop = POWER_SUPPLY_PROP_VOLTAGE_OCV;
-		break;
-	case GB_POWER_SUPPLY_PROP_VOLTAGE_BOOT:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_VOLTAGE_BOOT:
 		prop = POWER_SUPPLY_PROP_VOLTAGE_BOOT;
-		break;
-	case GB_POWER_SUPPLY_PROP_CURRENT_MAX:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CURRENT_MAX:
 		prop = POWER_SUPPLY_PROP_CURRENT_MAX;
-		break;
-	case GB_POWER_SUPPLY_PROP_CURRENT_NOW:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CURRENT_NOW:
 		prop = POWER_SUPPLY_PROP_CURRENT_NOW;
-		break;
-	case GB_POWER_SUPPLY_PROP_CURRENT_AVG:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CURRENT_AVG:
 		prop = POWER_SUPPLY_PROP_CURRENT_AVG;
-		break;
-	case GB_POWER_SUPPLY_PROP_CURRENT_BOOT:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CURRENT_BOOT:
 		prop = POWER_SUPPLY_PROP_CURRENT_BOOT;
-		break;
-	case GB_POWER_SUPPLY_PROP_POWER_NOW:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_POWER_NOW:
 		prop = POWER_SUPPLY_PROP_POWER_NOW;
-		break;
-	case GB_POWER_SUPPLY_PROP_POWER_AVG:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_POWER_AVG:
 		prop = POWER_SUPPLY_PROP_POWER_AVG;
-		break;
-	case GB_POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
 		prop = POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN;
-		break;
-	case GB_POWER_SUPPLY_PROP_CHARGE_EMPTY_DESIGN:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CHARGE_EMPTY_DESIGN:
 		prop = POWER_SUPPLY_PROP_CHARGE_EMPTY_DESIGN;
-		break;
-	case GB_POWER_SUPPLY_PROP_CHARGE_FULL:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CHARGE_FULL:
 		prop = POWER_SUPPLY_PROP_CHARGE_FULL;
-		break;
-	case GB_POWER_SUPPLY_PROP_CHARGE_EMPTY:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CHARGE_EMPTY:
 		prop = POWER_SUPPLY_PROP_CHARGE_EMPTY;
-		break;
-	case GB_POWER_SUPPLY_PROP_CHARGE_NOW:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CHARGE_NOW:
 		prop = POWER_SUPPLY_PROP_CHARGE_NOW;
-		break;
-	case GB_POWER_SUPPLY_PROP_CHARGE_AVG:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CHARGE_AVG:
 		prop = POWER_SUPPLY_PROP_CHARGE_AVG;
-		break;
-	case GB_POWER_SUPPLY_PROP_CHARGE_COUNTER:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CHARGE_COUNTER:
 		prop = POWER_SUPPLY_PROP_CHARGE_COUNTER;
-		break;
-	case GB_POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
 		prop = POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT;
-		break;
-	case GB_POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
 		prop = POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX;
-		break;
-	case GB_POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
 		prop = POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE;
-		break;
-	case GB_POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
 		prop = POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX;
-		break;
-	case GB_POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT:
 		prop = POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT;
-		break;
-	case GB_POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT_MAX:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT_MAX:
 		prop = POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT_MAX;
-		break;
-	case GB_POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
 		prop = POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT;
-		break;
-	case GB_POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN:
 		prop = POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN;
-		break;
-	case GB_POWER_SUPPLY_PROP_ENERGY_EMPTY_DESIGN:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_ENERGY_EMPTY_DESIGN:
 		prop = POWER_SUPPLY_PROP_ENERGY_EMPTY_DESIGN;
-		break;
-	case GB_POWER_SUPPLY_PROP_ENERGY_FULL:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_ENERGY_FULL:
 		prop = POWER_SUPPLY_PROP_ENERGY_FULL;
-		break;
-	case GB_POWER_SUPPLY_PROP_ENERGY_EMPTY:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_ENERGY_EMPTY:
 		prop = POWER_SUPPLY_PROP_ENERGY_EMPTY;
-		break;
-	case GB_POWER_SUPPLY_PROP_ENERGY_NOW:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_ENERGY_NOW:
 		prop = POWER_SUPPLY_PROP_ENERGY_NOW;
-		break;
-	case GB_POWER_SUPPLY_PROP_ENERGY_AVG:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_ENERGY_AVG:
 		prop = POWER_SUPPLY_PROP_ENERGY_AVG;
-		break;
-	case GB_POWER_SUPPLY_PROP_CAPACITY:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CAPACITY:
 		prop = POWER_SUPPLY_PROP_CAPACITY;
-		break;
-	case GB_POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN:
 		prop = POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN;
-		break;
-	case GB_POWER_SUPPLY_PROP_CAPACITY_ALERT_MAX:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CAPACITY_ALERT_MAX:
 		prop = POWER_SUPPLY_PROP_CAPACITY_ALERT_MAX;
-		break;
-	case GB_POWER_SUPPLY_PROP_CAPACITY_LEVEL:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CAPACITY_LEVEL:
 		prop = POWER_SUPPLY_PROP_CAPACITY_LEVEL;
-		break;
-	case GB_POWER_SUPPLY_PROP_TEMP:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TEMP:
 		prop = POWER_SUPPLY_PROP_TEMP;
-		break;
-	case GB_POWER_SUPPLY_PROP_TEMP_MAX:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TEMP_MAX:
 		prop = POWER_SUPPLY_PROP_TEMP_MAX;
-		break;
-	case GB_POWER_SUPPLY_PROP_TEMP_MIN:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TEMP_MIN:
 		prop = POWER_SUPPLY_PROP_TEMP_MIN;
-		break;
-	case GB_POWER_SUPPLY_PROP_TEMP_ALERT_MIN:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TEMP_ALERT_MIN:
 		prop = POWER_SUPPLY_PROP_TEMP_ALERT_MIN;
-		break;
-	case GB_POWER_SUPPLY_PROP_TEMP_ALERT_MAX:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TEMP_ALERT_MAX:
 		prop = POWER_SUPPLY_PROP_TEMP_ALERT_MAX;
-		break;
-	case GB_POWER_SUPPLY_PROP_TEMP_AMBIENT:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TEMP_AMBIENT:
 		prop = POWER_SUPPLY_PROP_TEMP_AMBIENT;
-		break;
-	case GB_POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MIN:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MIN:
 		prop = POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MIN;
-		break;
-	case GB_POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MAX:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MAX:
 		prop = POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MAX;
-		break;
-	case GB_POWER_SUPPLY_PROP_TIME_TO_EMPTY_NOW:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TIME_TO_EMPTY_NOW:
 		prop = POWER_SUPPLY_PROP_TIME_TO_EMPTY_NOW;
-		break;
-	case GB_POWER_SUPPLY_PROP_TIME_TO_EMPTY_AVG:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TIME_TO_EMPTY_AVG:
 		prop = POWER_SUPPLY_PROP_TIME_TO_EMPTY_AVG;
-		break;
-	case GB_POWER_SUPPLY_PROP_TIME_TO_FULL_NOW:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TIME_TO_FULL_NOW:
 		prop = POWER_SUPPLY_PROP_TIME_TO_FULL_NOW;
-		break;
-	case GB_POWER_SUPPLY_PROP_TIME_TO_FULL_AVG:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TIME_TO_FULL_AVG:
 		prop = POWER_SUPPLY_PROP_TIME_TO_FULL_AVG;
-		break;
-	case GB_POWER_SUPPLY_PROP_TYPE:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_TYPE:
 		prop = POWER_SUPPLY_PROP_TYPE;
-		break;
-	case GB_POWER_SUPPLY_PROP_SCOPE:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_SCOPE:
 		prop = POWER_SUPPLY_PROP_SCOPE;
-		break;
-	case GB_POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT:
 		prop = POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT;
-		break;
-	case GB_POWER_SUPPLY_PROP_CALIBRATE:
+		अवरोध;
+	हाल GB_POWER_SUPPLY_PROP_CALIBRATE:
 		prop = POWER_SUPPLY_PROP_CALIBRATE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		prop = -1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (prop < 0)
-		return prop;
+	अगर (prop < 0)
+		वापस prop;
 
-	*psp = (enum power_supply_property)prop;
+	*psp = (क्रमागत घातer_supply_property)prop;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct gb_connection *get_conn_from_psy(struct gb_power_supply *gbpsy)
-{
-	return gbpsy->supplies->connection;
-}
+अटल काष्ठा gb_connection *get_conn_from_psy(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	वापस gbpsy->supplies->connection;
+पूर्ण
 
-static struct gb_power_supply_prop *get_psy_prop(struct gb_power_supply *gbpsy,
-						 enum power_supply_property psp)
-{
-	int i;
+अटल काष्ठा gb_घातer_supply_prop *get_psy_prop(काष्ठा gb_घातer_supply *gbpsy,
+						 क्रमागत घातer_supply_property psp)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < gbpsy->properties_count; i++)
-		if (gbpsy->props[i].prop == psp)
-			return &gbpsy->props[i];
-	return NULL;
-}
+	क्रम (i = 0; i < gbpsy->properties_count; i++)
+		अगर (gbpsy->props[i].prop == psp)
+			वापस &gbpsy->props[i];
+	वापस शून्य;
+पूर्ण
 
-static int is_psy_prop_writeable(struct gb_power_supply *gbpsy,
-				     enum power_supply_property psp)
-{
-	struct gb_power_supply_prop *prop;
+अटल पूर्णांक is_psy_prop_ग_लिखोable(काष्ठा gb_घातer_supply *gbpsy,
+				     क्रमागत घातer_supply_property psp)
+अणु
+	काष्ठा gb_घातer_supply_prop *prop;
 
 	prop = get_psy_prop(gbpsy, psp);
-	if (!prop)
-		return -ENOENT;
-	return prop->is_writeable ? 1 : 0;
-}
+	अगर (!prop)
+		वापस -ENOENT;
+	वापस prop->is_ग_लिखोable ? 1 : 0;
+पूर्ण
 
-static int is_prop_valint(enum power_supply_property psp)
-{
-	return ((psp < POWER_SUPPLY_PROP_MODEL_NAME) ? 1 : 0);
-}
+अटल पूर्णांक is_prop_valपूर्णांक(क्रमागत घातer_supply_property psp)
+अणु
+	वापस ((psp < POWER_SUPPLY_PROP_MODEL_NAME) ? 1 : 0);
+पूर्ण
 
-static void next_interval(struct gb_power_supply *gbpsy)
-{
-	if (gbpsy->update_interval == update_interval_max)
-		return;
+अटल व्योम next_पूर्णांकerval(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	अगर (gbpsy->update_पूर्णांकerval == update_पूर्णांकerval_max)
+		वापस;
 
-	/* do some exponential back-off in the update interval */
-	gbpsy->update_interval *= 2;
-	if (gbpsy->update_interval > update_interval_max)
-		gbpsy->update_interval = update_interval_max;
-}
+	/* करो some exponential back-off in the update पूर्णांकerval */
+	gbpsy->update_पूर्णांकerval *= 2;
+	अगर (gbpsy->update_पूर्णांकerval > update_पूर्णांकerval_max)
+		gbpsy->update_पूर्णांकerval = update_पूर्णांकerval_max;
+पूर्ण
 
-static void __gb_power_supply_changed(struct gb_power_supply *gbpsy)
-{
-	power_supply_changed(gbpsy->psy);
-}
+अटल व्योम __gb_घातer_supply_changed(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	घातer_supply_changed(gbpsy->psy);
+पूर्ण
 
-static void gb_power_supply_state_change(struct gb_power_supply *gbpsy,
-					 struct gb_power_supply_prop *prop)
-{
-	struct gb_connection *connection = get_conn_from_psy(gbpsy);
-	int ret;
+अटल व्योम gb_घातer_supply_state_change(काष्ठा gb_घातer_supply *gbpsy,
+					 काष्ठा gb_घातer_supply_prop *prop)
+अणु
+	काष्ठा gb_connection *connection = get_conn_from_psy(gbpsy);
+	पूर्णांक ret;
 
 	/*
 	 * Check gbpsy->pm_acquired to make sure only one pair of 'get_sync'
-	 * and 'put_autosuspend' runtime pm call for state property change.
+	 * and 'put_autosuspend' runसमय pm call क्रम state property change.
 	 */
 	mutex_lock(&gbpsy->supply_lock);
 
-	if ((prop->val == GB_POWER_SUPPLY_STATUS_CHARGING) &&
-	    !gbpsy->pm_acquired) {
-		ret = gb_pm_runtime_get_sync(connection->bundle);
-		if (ret)
+	अगर ((prop->val == GB_POWER_SUPPLY_STATUS_CHARGING) &&
+	    !gbpsy->pm_acquired) अणु
+		ret = gb_pm_runसमय_get_sync(connection->bundle);
+		अगर (ret)
 			dev_err(&connection->bundle->dev,
 				"Fail to set wake lock for charging state\n");
-		else
+		अन्यथा
 			gbpsy->pm_acquired = true;
-	} else {
-		if (gbpsy->pm_acquired) {
-			ret = gb_pm_runtime_put_autosuspend(connection->bundle);
-			if (ret)
+	पूर्ण अन्यथा अणु
+		अगर (gbpsy->pm_acquired) अणु
+			ret = gb_pm_runसमय_put_स्वतःsuspend(connection->bundle);
+			अगर (ret)
 				dev_err(&connection->bundle->dev,
 					"Fail to set wake unlock for none charging\n");
-			else
+			अन्यथा
 				gbpsy->pm_acquired = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&gbpsy->supply_lock);
-}
+पूर्ण
 
-static void check_changed(struct gb_power_supply *gbpsy,
-			  struct gb_power_supply_prop *prop)
-{
-	const struct gb_power_supply_changes *psyc;
-	int val = prop->val;
-	int prev_val = prop->previous_val;
+अटल व्योम check_changed(काष्ठा gb_घातer_supply *gbpsy,
+			  काष्ठा gb_घातer_supply_prop *prop)
+अणु
+	स्थिर काष्ठा gb_घातer_supply_changes *psyc;
+	पूर्णांक val = prop->val;
+	पूर्णांक prev_val = prop->previous_val;
 	bool changed = false;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(psy_props_changes); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(psy_props_changes); i++) अणु
 		psyc = &psy_props_changes[i];
-		if (prop->prop == psyc->prop) {
-			if (!psyc->tolerance_change)
+		अगर (prop->prop == psyc->prop) अणु
+			अगर (!psyc->tolerance_change)
 				changed = true;
-			else if (val < prev_val &&
+			अन्यथा अगर (val < prev_val &&
 				 prev_val - val > psyc->tolerance_change)
 				changed = true;
-			else if (val > prev_val &&
+			अन्यथा अगर (val > prev_val &&
 				 val - prev_val > psyc->tolerance_change)
 				changed = true;
 
-			if (changed && psyc->prop_changed)
+			अगर (changed && psyc->prop_changed)
 				psyc->prop_changed(gbpsy, prop);
 
-			if (changed)
+			अगर (changed)
 				gbpsy->changed = true;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int total_props(struct gb_power_supply *gbpsy)
-{
-	/* this return the intval plus the strval properties */
-	return (gbpsy->properties_count + gbpsy->properties_count_str);
-}
+अटल पूर्णांक total_props(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	/* this वापस the पूर्णांकval plus the strval properties */
+	वापस (gbpsy->properties_count + gbpsy->properties_count_str);
+पूर्ण
 
-static void prop_append(struct gb_power_supply *gbpsy,
-			enum power_supply_property prop)
-{
-	enum power_supply_property *new_props_raw;
+अटल व्योम prop_append(काष्ठा gb_घातer_supply *gbpsy,
+			क्रमागत घातer_supply_property prop)
+अणु
+	क्रमागत घातer_supply_property *new_props_raw;
 
 	gbpsy->properties_count_str++;
-	new_props_raw = krealloc(gbpsy->props_raw, total_props(gbpsy) *
-				 sizeof(enum power_supply_property),
+	new_props_raw = kपुनः_स्मृति(gbpsy->props_raw, total_props(gbpsy) *
+				 माप(क्रमागत घातer_supply_property),
 				 GFP_KERNEL);
-	if (!new_props_raw)
-		return;
+	अगर (!new_props_raw)
+		वापस;
 	gbpsy->props_raw = new_props_raw;
 	gbpsy->props_raw[total_props(gbpsy) - 1] = prop;
-}
+पूर्ण
 
-static int __gb_power_supply_set_name(char *init_name, char *name, size_t len)
-{
-	unsigned int i = 0;
-	int ret = 0;
-	struct power_supply *psy;
+अटल पूर्णांक __gb_घातer_supply_set_name(अक्षर *init_name, अक्षर *name, माप_प्रकार len)
+अणु
+	अचिन्हित पूर्णांक i = 0;
+	पूर्णांक ret = 0;
+	काष्ठा घातer_supply *psy;
 
-	if (!strlen(init_name))
+	अगर (!म_माप(init_name))
 		init_name = "gb_power_supply";
 	strscpy(name, init_name, len);
 
-	while ((ret < len) && (psy = power_supply_get_by_name(name))) {
-		power_supply_put(psy);
+	जबतक ((ret < len) && (psy = घातer_supply_get_by_name(name))) अणु
+		घातer_supply_put(psy);
 
-		ret = snprintf(name, len, "%s_%u", init_name, ++i);
-	}
-	if (ret >= len)
-		return -ENOMEM;
-	return i;
-}
+		ret = snम_लिखो(name, len, "%s_%u", init_name, ++i);
+	पूर्ण
+	अगर (ret >= len)
+		वापस -ENOMEM;
+	वापस i;
+पूर्ण
 
-static void _gb_power_supply_append_props(struct gb_power_supply *gbpsy)
-{
-	if (strlen(gbpsy->manufacturer))
+अटल व्योम _gb_घातer_supply_append_props(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	अगर (म_माप(gbpsy->manufacturer))
 		prop_append(gbpsy, POWER_SUPPLY_PROP_MANUFACTURER);
-	if (strlen(gbpsy->model_name))
+	अगर (म_माप(gbpsy->model_name))
 		prop_append(gbpsy, POWER_SUPPLY_PROP_MODEL_NAME);
-	if (strlen(gbpsy->serial_number))
+	अगर (म_माप(gbpsy->serial_number))
 		prop_append(gbpsy, POWER_SUPPLY_PROP_SERIAL_NUMBER);
-}
+पूर्ण
 
-static int gb_power_supply_description_get(struct gb_power_supply *gbpsy)
-{
-	struct gb_connection *connection = get_conn_from_psy(gbpsy);
-	struct gb_power_supply_get_description_request req;
-	struct gb_power_supply_get_description_response resp;
-	int ret;
+अटल पूर्णांक gb_घातer_supply_description_get(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	काष्ठा gb_connection *connection = get_conn_from_psy(gbpsy);
+	काष्ठा gb_घातer_supply_get_description_request req;
+	काष्ठा gb_घातer_supply_get_description_response resp;
+	पूर्णांक ret;
 
 	req.psy_id = gbpsy->id;
 
 	ret = gb_operation_sync(connection,
 				GB_POWER_SUPPLY_TYPE_GET_DESCRIPTION,
-				&req, sizeof(req), &resp, sizeof(resp));
-	if (ret < 0)
-		return ret;
+				&req, माप(req), &resp, माप(resp));
+	अगर (ret < 0)
+		वापस ret;
 
 	gbpsy->manufacturer = kstrndup(resp.manufacturer, PROP_MAX, GFP_KERNEL);
-	if (!gbpsy->manufacturer)
-		return -ENOMEM;
+	अगर (!gbpsy->manufacturer)
+		वापस -ENOMEM;
 	gbpsy->model_name = kstrndup(resp.model, PROP_MAX, GFP_KERNEL);
-	if (!gbpsy->model_name)
-		return -ENOMEM;
+	अगर (!gbpsy->model_name)
+		वापस -ENOMEM;
 	gbpsy->serial_number = kstrndup(resp.serial_number, PROP_MAX,
 				       GFP_KERNEL);
-	if (!gbpsy->serial_number)
-		return -ENOMEM;
+	अगर (!gbpsy->serial_number)
+		वापस -ENOMEM;
 
 	gbpsy->type = le16_to_cpu(resp.type);
 	gbpsy->properties_count = resp.properties_count;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_power_supply_prop_descriptors_get(struct gb_power_supply *gbpsy)
-{
-	struct gb_connection *connection = get_conn_from_psy(gbpsy);
-	struct gb_power_supply_get_property_descriptors_request *req;
-	struct gb_power_supply_get_property_descriptors_response *resp;
-	struct gb_operation *op;
+अटल पूर्णांक gb_घातer_supply_prop_descriptors_get(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	काष्ठा gb_connection *connection = get_conn_from_psy(gbpsy);
+	काष्ठा gb_घातer_supply_get_property_descriptors_request *req;
+	काष्ठा gb_घातer_supply_get_property_descriptors_response *resp;
+	काष्ठा gb_operation *op;
 	u8 props_count = gbpsy->properties_count;
-	enum power_supply_property psp;
-	int ret;
-	int i, r = 0;
+	क्रमागत घातer_supply_property psp;
+	पूर्णांक ret;
+	पूर्णांक i, r = 0;
 
-	if (props_count == 0)
-		return 0;
+	अगर (props_count == 0)
+		वापस 0;
 
 	op = gb_operation_create(connection,
 				 GB_POWER_SUPPLY_TYPE_GET_PROP_DESCRIPTORS,
-				 sizeof(*req),
-				 struct_size(resp, props, props_count),
+				 माप(*req),
+				 काष्ठा_size(resp, props, props_count),
 				 GFP_KERNEL);
-	if (!op)
-		return -ENOMEM;
+	अगर (!op)
+		वापस -ENOMEM;
 
 	req = op->request->payload;
 	req->psy_id = gbpsy->id;
 
 	ret = gb_operation_request_send_sync(op);
-	if (ret < 0)
-		goto out_put_operation;
+	अगर (ret < 0)
+		जाओ out_put_operation;
 
 	resp = op->response->payload;
 
 	/* validate received properties */
-	for (i = 0; i < props_count; i++) {
+	क्रम (i = 0; i < props_count; i++) अणु
 		ret = get_psp_from_gb_prop(resp->props[i].property, &psp);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_warn(&connection->bundle->dev,
 				 "greybus property %u it is not supported by this kernel, dropped\n",
 				 resp->props[i].property);
 			gbpsy->properties_count--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	gbpsy->props = kcalloc(gbpsy->properties_count, sizeof(*gbpsy->props),
+	gbpsy->props = kसुस्मृति(gbpsy->properties_count, माप(*gbpsy->props),
 			      GFP_KERNEL);
-	if (!gbpsy->props) {
+	अगर (!gbpsy->props) अणु
 		ret = -ENOMEM;
-		goto out_put_operation;
-	}
+		जाओ out_put_operation;
+	पूर्ण
 
-	gbpsy->props_raw = kcalloc(gbpsy->properties_count,
-				   sizeof(*gbpsy->props_raw), GFP_KERNEL);
-	if (!gbpsy->props_raw) {
+	gbpsy->props_raw = kसुस्मृति(gbpsy->properties_count,
+				   माप(*gbpsy->props_raw), GFP_KERNEL);
+	अगर (!gbpsy->props_raw) अणु
 		ret = -ENOMEM;
-		goto out_put_operation;
-	}
+		जाओ out_put_operation;
+	पूर्ण
 
-	/* Store available properties, skip the ones we do not support */
-	for (i = 0; i < props_count; i++) {
+	/* Store available properties, skip the ones we करो not support */
+	क्रम (i = 0; i < props_count; i++) अणु
 		ret = get_psp_from_gb_prop(resp->props[i].property, &psp);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			r++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		gbpsy->props[i - r].prop = psp;
 		gbpsy->props[i - r].gb_prop = resp->props[i].property;
 		gbpsy->props_raw[i - r] = psp;
-		if (resp->props[i].is_writeable)
-			gbpsy->props[i - r].is_writeable = true;
-	}
+		अगर (resp->props[i].is_ग_लिखोable)
+			gbpsy->props[i - r].is_ग_लिखोable = true;
+	पूर्ण
 
 	/*
-	 * now append the properties that we already got information in the
-	 * get_description operation. (char * ones)
+	 * now append the properties that we alपढ़ोy got inक्रमmation in the
+	 * get_description operation. (अक्षर * ones)
 	 */
-	_gb_power_supply_append_props(gbpsy);
+	_gb_घातer_supply_append_props(gbpsy);
 
 	ret = 0;
 out_put_operation:
 	gb_operation_put(op);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __gb_power_supply_property_update(struct gb_power_supply *gbpsy,
-					     enum power_supply_property psp)
-{
-	struct gb_connection *connection = get_conn_from_psy(gbpsy);
-	struct gb_power_supply_prop *prop;
-	struct gb_power_supply_get_property_request req;
-	struct gb_power_supply_get_property_response resp;
-	int val;
-	int ret;
+अटल पूर्णांक __gb_घातer_supply_property_update(काष्ठा gb_घातer_supply *gbpsy,
+					     क्रमागत घातer_supply_property psp)
+अणु
+	काष्ठा gb_connection *connection = get_conn_from_psy(gbpsy);
+	काष्ठा gb_घातer_supply_prop *prop;
+	काष्ठा gb_घातer_supply_get_property_request req;
+	काष्ठा gb_घातer_supply_get_property_response resp;
+	पूर्णांक val;
+	पूर्णांक ret;
 
 	prop = get_psy_prop(gbpsy, psp);
-	if (!prop)
-		return -EINVAL;
+	अगर (!prop)
+		वापस -EINVAL;
 	req.psy_id = gbpsy->id;
 	req.property = prop->gb_prop;
 
 	ret = gb_operation_sync(connection, GB_POWER_SUPPLY_TYPE_GET_PROPERTY,
-				&req, sizeof(req), &resp, sizeof(resp));
-	if (ret < 0)
-		return ret;
+				&req, माप(req), &resp, माप(resp));
+	अगर (ret < 0)
+		वापस ret;
 
 	val = le32_to_cpu(resp.prop_val);
-	if (val == prop->val)
-		return 0;
+	अगर (val == prop->val)
+		वापस 0;
 
 	prop->previous_val = prop->val;
 	prop->val = val;
 
 	check_changed(gbpsy, prop);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __gb_power_supply_property_get(struct gb_power_supply *gbpsy,
-					  enum power_supply_property psp,
-					  union power_supply_propval *val)
-{
-	struct gb_power_supply_prop *prop;
+अटल पूर्णांक __gb_घातer_supply_property_get(काष्ठा gb_घातer_supply *gbpsy,
+					  क्रमागत घातer_supply_property psp,
+					  जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा gb_घातer_supply_prop *prop;
 
 	prop = get_psy_prop(gbpsy, psp);
-	if (!prop)
-		return -EINVAL;
+	अगर (!prop)
+		वापस -EINVAL;
 
-	val->intval = prop->val;
-	return 0;
-}
+	val->पूर्णांकval = prop->val;
+	वापस 0;
+पूर्ण
 
-static int __gb_power_supply_property_strval_get(struct gb_power_supply *gbpsy,
-						enum power_supply_property psp,
-						union power_supply_propval *val)
-{
-	switch (psp) {
-	case POWER_SUPPLY_PROP_MODEL_NAME:
+अटल पूर्णांक __gb_घातer_supply_property_strval_get(काष्ठा gb_घातer_supply *gbpsy,
+						क्रमागत घातer_supply_property psp,
+						जोड़ घातer_supply_propval *val)
+अणु
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = gbpsy->model_name;
-		break;
-	case POWER_SUPPLY_PROP_MANUFACTURER:
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_MANUFACTURER:
 		val->strval = gbpsy->manufacturer;
-		break;
-	case POWER_SUPPLY_PROP_SERIAL_NUMBER:
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_SERIAL_NUMBER:
 		val->strval = gbpsy->serial_number;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _gb_power_supply_property_get(struct gb_power_supply *gbpsy,
-					 enum power_supply_property psp,
-					 union power_supply_propval *val)
-{
-	struct gb_connection *connection = get_conn_from_psy(gbpsy);
-	int ret;
+अटल पूर्णांक _gb_घातer_supply_property_get(काष्ठा gb_घातer_supply *gbpsy,
+					 क्रमागत घातer_supply_property psp,
+					 जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा gb_connection *connection = get_conn_from_psy(gbpsy);
+	पूर्णांक ret;
 
 	/*
-	 * Properties of type const char *, were already fetched on
+	 * Properties of type स्थिर अक्षर *, were alपढ़ोy fetched on
 	 * get_description operation and should be cached in gb
 	 */
-	if (is_prop_valint(psp))
-		ret = __gb_power_supply_property_get(gbpsy, psp, val);
-	else
-		ret = __gb_power_supply_property_strval_get(gbpsy, psp, val);
+	अगर (is_prop_valपूर्णांक(psp))
+		ret = __gb_घातer_supply_property_get(gbpsy, psp, val);
+	अन्यथा
+		ret = __gb_घातer_supply_property_strval_get(gbpsy, psp, val);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&connection->bundle->dev, "get property %u\n", psp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int is_cache_valid(struct gb_power_supply *gbpsy)
-{
-	/* check if cache is good enough or it has expired */
-	if (gbpsy->cache_invalid) {
+अटल पूर्णांक is_cache_valid(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	/* check अगर cache is good enough or it has expired */
+	अगर (gbpsy->cache_invalid) अणु
 		gbpsy->cache_invalid = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (gbpsy->last_update &&
-	    time_is_after_jiffies(gbpsy->last_update +
-				  msecs_to_jiffies(cache_time)))
-		return 1;
+	अगर (gbpsy->last_update &&
+	    समय_is_after_jअगरfies(gbpsy->last_update +
+				  msecs_to_jअगरfies(cache_समय)))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_power_supply_status_get(struct gb_power_supply *gbpsy)
-{
-	struct gb_connection *connection = get_conn_from_psy(gbpsy);
-	int ret = 0;
-	int i;
+अटल पूर्णांक gb_घातer_supply_status_get(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	काष्ठा gb_connection *connection = get_conn_from_psy(gbpsy);
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	if (is_cache_valid(gbpsy))
-		return 0;
+	अगर (is_cache_valid(gbpsy))
+		वापस 0;
 
-	ret = gb_pm_runtime_get_sync(connection->bundle);
-	if (ret)
-		return ret;
+	ret = gb_pm_runसमय_get_sync(connection->bundle);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < gbpsy->properties_count; i++) {
-		ret = __gb_power_supply_property_update(gbpsy,
+	क्रम (i = 0; i < gbpsy->properties_count; i++) अणु
+		ret = __gb_घातer_supply_property_update(gbpsy,
 							gbpsy->props[i].prop);
-		if (ret < 0)
-			break;
-	}
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
 
-	if (ret == 0)
-		gbpsy->last_update = jiffies;
+	अगर (ret == 0)
+		gbpsy->last_update = jअगरfies;
 
-	gb_pm_runtime_put_autosuspend(connection->bundle);
-	return ret;
-}
+	gb_pm_runसमय_put_स्वतःsuspend(connection->bundle);
+	वापस ret;
+पूर्ण
 
-static void gb_power_supply_status_update(struct gb_power_supply *gbpsy)
-{
-	/* check if there a change that need to be reported */
-	gb_power_supply_status_get(gbpsy);
+अटल व्योम gb_घातer_supply_status_update(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	/* check अगर there a change that need to be reported */
+	gb_घातer_supply_status_get(gbpsy);
 
-	if (!gbpsy->changed)
-		return;
+	अगर (!gbpsy->changed)
+		वापस;
 
-	gbpsy->update_interval = update_interval_init;
-	__gb_power_supply_changed(gbpsy);
+	gbpsy->update_पूर्णांकerval = update_पूर्णांकerval_init;
+	__gb_घातer_supply_changed(gbpsy);
 	gbpsy->changed = false;
-}
+पूर्ण
 
-static void gb_power_supply_work(struct work_struct *work)
-{
-	struct gb_power_supply *gbpsy = container_of(work,
-						     struct gb_power_supply,
+अटल व्योम gb_घातer_supply_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा gb_घातer_supply *gbpsy = container_of(work,
+						     काष्ठा gb_घातer_supply,
 						     work.work);
 
 	/*
-	 * if the poll interval is not set, disable polling, this is helpful
-	 * specially at unregister time.
+	 * अगर the poll पूर्णांकerval is not set, disable polling, this is helpful
+	 * specially at unरेजिस्टर समय.
 	 */
-	if (!gbpsy->update_interval)
-		return;
+	अगर (!gbpsy->update_पूर्णांकerval)
+		वापस;
 
-	gb_power_supply_status_update(gbpsy);
-	next_interval(gbpsy);
-	schedule_delayed_work(&gbpsy->work, gbpsy->update_interval);
-}
+	gb_घातer_supply_status_update(gbpsy);
+	next_पूर्णांकerval(gbpsy);
+	schedule_delayed_work(&gbpsy->work, gbpsy->update_पूर्णांकerval);
+पूर्ण
 
-static int get_property(struct power_supply *b,
-			enum power_supply_property psp,
-			union power_supply_propval *val)
-{
-	struct gb_power_supply *gbpsy = to_gb_power_supply(b);
+अटल पूर्णांक get_property(काष्ठा घातer_supply *b,
+			क्रमागत घातer_supply_property psp,
+			जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा gb_घातer_supply *gbpsy = to_gb_घातer_supply(b);
 
-	gb_power_supply_status_get(gbpsy);
+	gb_घातer_supply_status_get(gbpsy);
 
-	return _gb_power_supply_property_get(gbpsy, psp, val);
-}
+	वापस _gb_घातer_supply_property_get(gbpsy, psp, val);
+पूर्ण
 
-static int gb_power_supply_property_set(struct gb_power_supply *gbpsy,
-					enum power_supply_property psp,
-					int val)
-{
-	struct gb_connection *connection = get_conn_from_psy(gbpsy);
-	struct gb_power_supply_prop *prop;
-	struct gb_power_supply_set_property_request req;
-	int ret;
+अटल पूर्णांक gb_घातer_supply_property_set(काष्ठा gb_घातer_supply *gbpsy,
+					क्रमागत घातer_supply_property psp,
+					पूर्णांक val)
+अणु
+	काष्ठा gb_connection *connection = get_conn_from_psy(gbpsy);
+	काष्ठा gb_घातer_supply_prop *prop;
+	काष्ठा gb_घातer_supply_set_property_request req;
+	पूर्णांक ret;
 
-	ret = gb_pm_runtime_get_sync(connection->bundle);
-	if (ret)
-		return ret;
+	ret = gb_pm_runसमय_get_sync(connection->bundle);
+	अगर (ret)
+		वापस ret;
 
 	prop = get_psy_prop(gbpsy, psp);
-	if (!prop) {
+	अगर (!prop) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	req.psy_id = gbpsy->id;
 	req.property = prop->gb_prop;
 	req.prop_val = cpu_to_le32((s32)val);
 
 	ret = gb_operation_sync(connection, GB_POWER_SUPPLY_TYPE_SET_PROPERTY,
-				&req, sizeof(req), NULL, 0);
-	if (ret < 0)
-		goto out;
+				&req, माप(req), शून्य, 0);
+	अगर (ret < 0)
+		जाओ out;
 
 	/* cache immediately the new value */
 	prop->val = val;
 
 out:
-	gb_pm_runtime_put_autosuspend(connection->bundle);
-	return ret;
-}
+	gb_pm_runसमय_put_स्वतःsuspend(connection->bundle);
+	वापस ret;
+पूर्ण
 
-static int set_property(struct power_supply *b,
-			enum power_supply_property psp,
-			const union power_supply_propval *val)
-{
-	struct gb_power_supply *gbpsy = to_gb_power_supply(b);
+अटल पूर्णांक set_property(काष्ठा घातer_supply *b,
+			क्रमागत घातer_supply_property psp,
+			स्थिर जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा gb_घातer_supply *gbpsy = to_gb_घातer_supply(b);
 
-	return gb_power_supply_property_set(gbpsy, psp, val->intval);
-}
+	वापस gb_घातer_supply_property_set(gbpsy, psp, val->पूर्णांकval);
+पूर्ण
 
-static int property_is_writeable(struct power_supply *b,
-				 enum power_supply_property psp)
-{
-	struct gb_power_supply *gbpsy = to_gb_power_supply(b);
+अटल पूर्णांक property_is_ग_लिखोable(काष्ठा घातer_supply *b,
+				 क्रमागत घातer_supply_property psp)
+अणु
+	काष्ठा gb_घातer_supply *gbpsy = to_gb_घातer_supply(b);
 
-	return is_psy_prop_writeable(gbpsy, psp);
-}
+	वापस is_psy_prop_ग_लिखोable(gbpsy, psp);
+पूर्ण
 
-static int gb_power_supply_register(struct gb_power_supply *gbpsy)
-{
-	struct gb_connection *connection = get_conn_from_psy(gbpsy);
-	struct power_supply_config cfg = {};
+अटल पूर्णांक gb_घातer_supply_रेजिस्टर(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	काष्ठा gb_connection *connection = get_conn_from_psy(gbpsy);
+	काष्ठा घातer_supply_config cfg = अणुपूर्ण;
 
 	cfg.drv_data = gbpsy;
 
@@ -827,253 +828,253 @@ static int gb_power_supply_register(struct gb_power_supply *gbpsy)
 	gbpsy->desc.num_properties	= total_props(gbpsy);
 	gbpsy->desc.get_property	= get_property;
 	gbpsy->desc.set_property	= set_property;
-	gbpsy->desc.property_is_writeable = property_is_writeable;
+	gbpsy->desc.property_is_ग_लिखोable = property_is_ग_लिखोable;
 
-	gbpsy->psy = power_supply_register(&connection->bundle->dev,
+	gbpsy->psy = घातer_supply_रेजिस्टर(&connection->bundle->dev,
 					   &gbpsy->desc, &cfg);
-	return PTR_ERR_OR_ZERO(gbpsy->psy);
-}
+	वापस PTR_ERR_OR_ZERO(gbpsy->psy);
+पूर्ण
 
-static void _gb_power_supply_free(struct gb_power_supply *gbpsy)
-{
-	kfree(gbpsy->serial_number);
-	kfree(gbpsy->model_name);
-	kfree(gbpsy->manufacturer);
-	kfree(gbpsy->props_raw);
-	kfree(gbpsy->props);
-}
+अटल व्योम _gb_घातer_supply_मुक्त(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	kमुक्त(gbpsy->serial_number);
+	kमुक्त(gbpsy->model_name);
+	kमुक्त(gbpsy->manufacturer);
+	kमुक्त(gbpsy->props_raw);
+	kमुक्त(gbpsy->props);
+पूर्ण
 
-static void _gb_power_supply_release(struct gb_power_supply *gbpsy)
-{
-	gbpsy->update_interval = 0;
+अटल व्योम _gb_घातer_supply_release(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	gbpsy->update_पूर्णांकerval = 0;
 
 	cancel_delayed_work_sync(&gbpsy->work);
 
-	if (gbpsy->registered)
-		power_supply_unregister(gbpsy->psy);
+	अगर (gbpsy->रेजिस्टरed)
+		घातer_supply_unरेजिस्टर(gbpsy->psy);
 
-	_gb_power_supply_free(gbpsy);
-}
+	_gb_घातer_supply_मुक्त(gbpsy);
+पूर्ण
 
-static void _gb_power_supplies_release(struct gb_power_supplies *supplies)
-{
-	int i;
+अटल व्योम _gb_घातer_supplies_release(काष्ठा gb_घातer_supplies *supplies)
+अणु
+	पूर्णांक i;
 
-	if (!supplies->supply)
-		return;
+	अगर (!supplies->supply)
+		वापस;
 
 	mutex_lock(&supplies->supplies_lock);
-	for (i = 0; i < supplies->supplies_count; i++)
-		_gb_power_supply_release(&supplies->supply[i]);
-	kfree(supplies->supply);
+	क्रम (i = 0; i < supplies->supplies_count; i++)
+		_gb_घातer_supply_release(&supplies->supply[i]);
+	kमुक्त(supplies->supply);
 	mutex_unlock(&supplies->supplies_lock);
-	kfree(supplies);
-}
+	kमुक्त(supplies);
+पूर्ण
 
-static int gb_power_supplies_get_count(struct gb_power_supplies *supplies)
-{
-	struct gb_power_supply_get_supplies_response resp;
-	int ret;
+अटल पूर्णांक gb_घातer_supplies_get_count(काष्ठा gb_घातer_supplies *supplies)
+अणु
+	काष्ठा gb_घातer_supply_get_supplies_response resp;
+	पूर्णांक ret;
 
 	ret = gb_operation_sync(supplies->connection,
 				GB_POWER_SUPPLY_TYPE_GET_SUPPLIES,
-				NULL, 0, &resp, sizeof(resp));
-	if (ret < 0)
-		return ret;
+				शून्य, 0, &resp, माप(resp));
+	अगर (ret < 0)
+		वापस ret;
 
-	if  (!resp.supplies_count)
-		return -EINVAL;
+	अगर  (!resp.supplies_count)
+		वापस -EINVAL;
 
 	supplies->supplies_count = resp.supplies_count;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_power_supply_config(struct gb_power_supplies *supplies, int id)
-{
-	struct gb_power_supply *gbpsy = &supplies->supply[id];
-	int ret;
+अटल पूर्णांक gb_घातer_supply_config(काष्ठा gb_घातer_supplies *supplies, पूर्णांक id)
+अणु
+	काष्ठा gb_घातer_supply *gbpsy = &supplies->supply[id];
+	पूर्णांक ret;
 
 	gbpsy->supplies = supplies;
 	gbpsy->id = id;
 
-	ret = gb_power_supply_description_get(gbpsy);
-	if (ret < 0)
-		return ret;
+	ret = gb_घातer_supply_description_get(gbpsy);
+	अगर (ret < 0)
+		वापस ret;
 
-	return gb_power_supply_prop_descriptors_get(gbpsy);
-}
+	वापस gb_घातer_supply_prop_descriptors_get(gbpsy);
+पूर्ण
 
-static int gb_power_supply_enable(struct gb_power_supply *gbpsy)
-{
-	int ret;
+अटल पूर्णांक gb_घातer_supply_enable(काष्ठा gb_घातer_supply *gbpsy)
+अणु
+	पूर्णांक ret;
 
-	/* guarantee that we have an unique name, before register */
-	ret =  __gb_power_supply_set_name(gbpsy->model_name, gbpsy->name,
-					  sizeof(gbpsy->name));
-	if (ret < 0)
-		return ret;
+	/* guarantee that we have an unique name, beक्रमe रेजिस्टर */
+	ret =  __gb_घातer_supply_set_name(gbpsy->model_name, gbpsy->name,
+					  माप(gbpsy->name));
+	अगर (ret < 0)
+		वापस ret;
 
 	mutex_init(&gbpsy->supply_lock);
 
-	ret = gb_power_supply_register(gbpsy);
-	if (ret < 0)
-		return ret;
+	ret = gb_घातer_supply_रेजिस्टर(gbpsy);
+	अगर (ret < 0)
+		वापस ret;
 
-	gbpsy->update_interval = update_interval_init;
-	INIT_DELAYED_WORK(&gbpsy->work, gb_power_supply_work);
+	gbpsy->update_पूर्णांकerval = update_पूर्णांकerval_init;
+	INIT_DELAYED_WORK(&gbpsy->work, gb_घातer_supply_work);
 	schedule_delayed_work(&gbpsy->work, 0);
 
-	/* everything went fine, mark it for release code to know */
-	gbpsy->registered = true;
+	/* everything went fine, mark it क्रम release code to know */
+	gbpsy->रेजिस्टरed = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_power_supplies_setup(struct gb_power_supplies *supplies)
-{
-	struct gb_connection *connection = supplies->connection;
-	int ret;
-	int i;
+अटल पूर्णांक gb_घातer_supplies_setup(काष्ठा gb_घातer_supplies *supplies)
+अणु
+	काष्ठा gb_connection *connection = supplies->connection;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	mutex_lock(&supplies->supplies_lock);
 
-	ret = gb_power_supplies_get_count(supplies);
-	if (ret < 0)
-		goto out;
+	ret = gb_घातer_supplies_get_count(supplies);
+	अगर (ret < 0)
+		जाओ out;
 
-	supplies->supply = kcalloc(supplies->supplies_count,
-				     sizeof(struct gb_power_supply),
+	supplies->supply = kसुस्मृति(supplies->supplies_count,
+				     माप(काष्ठा gb_घातer_supply),
 				     GFP_KERNEL);
 
-	if (!supplies->supply) {
+	अगर (!supplies->supply) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < supplies->supplies_count; i++) {
-		ret = gb_power_supply_config(supplies, i);
-		if (ret < 0) {
+	क्रम (i = 0; i < supplies->supplies_count; i++) अणु
+		ret = gb_घातer_supply_config(supplies, i);
+		अगर (ret < 0) अणु
 			dev_err(&connection->bundle->dev,
 				"Fail to configure supplies devices\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 out:
 	mutex_unlock(&supplies->supplies_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_power_supplies_register(struct gb_power_supplies *supplies)
-{
-	struct gb_connection *connection = supplies->connection;
-	int ret = 0;
-	int i;
+अटल पूर्णांक gb_घातer_supplies_रेजिस्टर(काष्ठा gb_घातer_supplies *supplies)
+अणु
+	काष्ठा gb_connection *connection = supplies->connection;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
 	mutex_lock(&supplies->supplies_lock);
 
-	for (i = 0; i < supplies->supplies_count; i++) {
-		ret = gb_power_supply_enable(&supplies->supply[i]);
-		if (ret < 0) {
+	क्रम (i = 0; i < supplies->supplies_count; i++) अणु
+		ret = gb_घातer_supply_enable(&supplies->supply[i]);
+		अगर (ret < 0) अणु
 			dev_err(&connection->bundle->dev,
 				"Fail to enable supplies devices\n");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&supplies->supplies_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_supplies_request_handler(struct gb_operation *op)
-{
-	struct gb_connection *connection = op->connection;
-	struct gb_power_supplies *supplies = gb_connection_get_data(connection);
-	struct gb_power_supply *gbpsy;
-	struct gb_message *request;
-	struct gb_power_supply_event_request *payload;
+अटल पूर्णांक gb_supplies_request_handler(काष्ठा gb_operation *op)
+अणु
+	काष्ठा gb_connection *connection = op->connection;
+	काष्ठा gb_घातer_supplies *supplies = gb_connection_get_data(connection);
+	काष्ठा gb_घातer_supply *gbpsy;
+	काष्ठा gb_message *request;
+	काष्ठा gb_घातer_supply_event_request *payload;
 	u8 psy_id;
 	u8 event;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (op->type != GB_POWER_SUPPLY_TYPE_EVENT) {
+	अगर (op->type != GB_POWER_SUPPLY_TYPE_EVENT) अणु
 		dev_err(&connection->bundle->dev,
 			"Unsupported unsolicited event: %u\n", op->type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	request = op->request;
 
-	if (request->payload_size < sizeof(*payload)) {
+	अगर (request->payload_size < माप(*payload)) अणु
 		dev_err(&connection->bundle->dev,
 			"Wrong event size received (%zu < %zu)\n",
-			request->payload_size, sizeof(*payload));
-		return -EINVAL;
-	}
+			request->payload_size, माप(*payload));
+		वापस -EINVAL;
+	पूर्ण
 
 	payload = request->payload;
 	psy_id = payload->psy_id;
 	mutex_lock(&supplies->supplies_lock);
-	if (psy_id >= supplies->supplies_count ||
-	    !supplies->supply[psy_id].registered) {
+	अगर (psy_id >= supplies->supplies_count ||
+	    !supplies->supply[psy_id].रेजिस्टरed) अणु
 		dev_err(&connection->bundle->dev,
 			"Event received for unconfigured power_supply id: %d\n",
 			psy_id);
 		ret = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	event = payload->event;
 	/*
-	 * we will only handle events after setup is done and before release is
-	 * running. For that just check update_interval.
+	 * we will only handle events after setup is करोne and beक्रमe release is
+	 * running. For that just check update_पूर्णांकerval.
 	 */
 	gbpsy = &supplies->supply[psy_id];
-	if (!gbpsy->update_interval) {
+	अगर (!gbpsy->update_पूर्णांकerval) अणु
 		ret = -ESHUTDOWN;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (event & GB_POWER_SUPPLY_UPDATE) {
+	अगर (event & GB_POWER_SUPPLY_UPDATE) अणु
 		/*
-		 * we need to make sure we invalidate cache, if not no new
-		 * values for the properties will be fetch and the all propose
+		 * we need to make sure we invalidate cache, अगर not no new
+		 * values क्रम the properties will be fetch and the all propose
 		 * of this event is missed
 		 */
 		gbpsy->cache_invalid = 1;
-		gb_power_supply_status_update(gbpsy);
-	}
+		gb_घातer_supply_status_update(gbpsy);
+	पूर्ण
 
 out_unlock:
 	mutex_unlock(&supplies->supplies_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_power_supply_probe(struct gb_bundle *bundle,
-				 const struct greybus_bundle_id *id)
-{
-	struct greybus_descriptor_cport *cport_desc;
-	struct gb_connection *connection;
-	struct gb_power_supplies *supplies;
-	int ret;
+अटल पूर्णांक gb_घातer_supply_probe(काष्ठा gb_bundle *bundle,
+				 स्थिर काष्ठा greybus_bundle_id *id)
+अणु
+	काष्ठा greybus_descriptor_cport *cport_desc;
+	काष्ठा gb_connection *connection;
+	काष्ठा gb_घातer_supplies *supplies;
+	पूर्णांक ret;
 
-	if (bundle->num_cports != 1)
-		return -ENODEV;
+	अगर (bundle->num_cports != 1)
+		वापस -ENODEV;
 
 	cport_desc = &bundle->cport_desc[0];
-	if (cport_desc->protocol_id != GREYBUS_PROTOCOL_POWER_SUPPLY)
-		return -ENODEV;
+	अगर (cport_desc->protocol_id != GREYBUS_PROTOCOL_POWER_SUPPLY)
+		वापस -ENODEV;
 
-	supplies = kzalloc(sizeof(*supplies), GFP_KERNEL);
-	if (!supplies)
-		return -ENOMEM;
+	supplies = kzalloc(माप(*supplies), GFP_KERNEL);
+	अगर (!supplies)
+		वापस -ENOMEM;
 
 	connection = gb_connection_create(bundle, le16_to_cpu(cport_desc->id),
 					  gb_supplies_request_handler);
-	if (IS_ERR(connection)) {
+	अगर (IS_ERR(connection)) अणु
 		ret = PTR_ERR(connection);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	supplies->connection = connection;
 	gb_connection_set_data(connection, supplies);
@@ -1082,58 +1083,58 @@ static int gb_power_supply_probe(struct gb_bundle *bundle,
 
 	greybus_set_drvdata(bundle, supplies);
 
-	/* We aren't ready to receive an incoming request yet */
+	/* We aren't पढ़ोy to receive an incoming request yet */
 	ret = gb_connection_enable_tx(connection);
-	if (ret)
-		goto error_connection_destroy;
+	अगर (ret)
+		जाओ error_connection_destroy;
 
-	ret = gb_power_supplies_setup(supplies);
-	if (ret < 0)
-		goto error_connection_disable;
+	ret = gb_घातer_supplies_setup(supplies);
+	अगर (ret < 0)
+		जाओ error_connection_disable;
 
-	/* We are ready to receive an incoming request now, enable RX as well */
+	/* We are पढ़ोy to receive an incoming request now, enable RX as well */
 	ret = gb_connection_enable(connection);
-	if (ret)
-		goto error_connection_disable;
+	अगर (ret)
+		जाओ error_connection_disable;
 
-	ret = gb_power_supplies_register(supplies);
-	if (ret < 0)
-		goto error_connection_disable;
+	ret = gb_घातer_supplies_रेजिस्टर(supplies);
+	अगर (ret < 0)
+		जाओ error_connection_disable;
 
-	gb_pm_runtime_put_autosuspend(bundle);
-	return 0;
+	gb_pm_runसमय_put_स्वतःsuspend(bundle);
+	वापस 0;
 
 error_connection_disable:
 	gb_connection_disable(connection);
 error_connection_destroy:
 	gb_connection_destroy(connection);
 out:
-	_gb_power_supplies_release(supplies);
-	return ret;
-}
+	_gb_घातer_supplies_release(supplies);
+	वापस ret;
+पूर्ण
 
-static void gb_power_supply_disconnect(struct gb_bundle *bundle)
-{
-	struct gb_power_supplies *supplies = greybus_get_drvdata(bundle);
+अटल व्योम gb_घातer_supply_disconnect(काष्ठा gb_bundle *bundle)
+अणु
+	काष्ठा gb_घातer_supplies *supplies = greybus_get_drvdata(bundle);
 
 	gb_connection_disable(supplies->connection);
 	gb_connection_destroy(supplies->connection);
 
-	_gb_power_supplies_release(supplies);
-}
+	_gb_घातer_supplies_release(supplies);
+पूर्ण
 
-static const struct greybus_bundle_id gb_power_supply_id_table[] = {
-	{ GREYBUS_DEVICE_CLASS(GREYBUS_CLASS_POWER_SUPPLY) },
-	{ }
-};
-MODULE_DEVICE_TABLE(greybus, gb_power_supply_id_table);
+अटल स्थिर काष्ठा greybus_bundle_id gb_घातer_supply_id_table[] = अणु
+	अणु GREYBUS_DEVICE_CLASS(GREYBUS_CLASS_POWER_SUPPLY) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(greybus, gb_घातer_supply_id_table);
 
-static struct greybus_driver gb_power_supply_driver = {
+अटल काष्ठा greybus_driver gb_घातer_supply_driver = अणु
 	.name		= "power_supply",
-	.probe		= gb_power_supply_probe,
-	.disconnect	= gb_power_supply_disconnect,
-	.id_table	= gb_power_supply_id_table,
-};
-module_greybus_driver(gb_power_supply_driver);
+	.probe		= gb_घातer_supply_probe,
+	.disconnect	= gb_घातer_supply_disconnect,
+	.id_table	= gb_घातer_supply_id_table,
+पूर्ण;
+module_greybus_driver(gb_घातer_supply_driver);
 
 MODULE_LICENSE("GPL v2");

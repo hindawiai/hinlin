@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0
-/* Use watch_queue API to watch for notifications.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* Use watch_queue API to watch क्रम notअगरications.
  *
  * Copyright (C) 2020 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define _GNU_SOURCE
-#include <stdbool.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <limits.h>
-#include <linux/watch_queue.h>
-#include <linux/unistd.h>
-#include <linux/keyctl.h>
+#घोषणा _GNU_SOURCE
+#समावेश <stdbool.h>
+#समावेश <मानकतर्क.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <संकेत.स>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <sys/ioctl.h>
+#समावेश <सीमा.स>
+#समावेश <linux/watch_queue.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/keyctl.h>
 
-#ifndef KEYCTL_WATCH_KEY
-#define KEYCTL_WATCH_KEY -1
-#endif
-#ifndef __NR_keyctl
-#define __NR_keyctl -1
-#endif
+#अगर_अघोषित KEYCTL_WATCH_KEY
+#घोषणा KEYCTL_WATCH_KEY -1
+#पूर्ण_अगर
+#अगर_अघोषित __NR_keyctl
+#घोषणा __NR_keyctl -1
+#पूर्ण_अगर
 
-#define BUF_SIZE 256
+#घोषणा BUF_SIZE 256
 
-static long keyctl_watch_key(int key, int watch_fd, int watch_id)
-{
-	return syscall(__NR_keyctl, KEYCTL_WATCH_KEY, key, watch_fd, watch_id);
-}
+अटल दीर्घ keyctl_watch_key(पूर्णांक key, पूर्णांक watch_fd, पूर्णांक watch_id)
+अणु
+	वापस syscall(__NR_keyctl, KEYCTL_WATCH_KEY, key, watch_fd, watch_id);
+पूर्ण
 
-static const char *key_subtypes[256] = {
+अटल स्थिर अक्षर *key_subtypes[256] = अणु
 	[NOTIFY_KEY_INSTANTIATED]	= "instantiated",
 	[NOTIFY_KEY_UPDATED]		= "updated",
 	[NOTIFY_KEY_LINKED]		= "linked",
@@ -43,144 +44,144 @@ static const char *key_subtypes[256] = {
 	[NOTIFY_KEY_REVOKED]		= "revoked",
 	[NOTIFY_KEY_INVALIDATED]	= "invalidated",
 	[NOTIFY_KEY_SETATTR]		= "setattr",
-};
+पूर्ण;
 
-static void saw_key_change(struct watch_notification *n, size_t len)
-{
-	struct key_notification *k = (struct key_notification *)n;
+अटल व्योम saw_key_change(काष्ठा watch_notअगरication *n, माप_प्रकार len)
+अणु
+	काष्ठा key_notअगरication *k = (काष्ठा key_notअगरication *)n;
 
-	if (len != sizeof(struct key_notification)) {
-		fprintf(stderr, "Incorrect key message length\n");
-		return;
-	}
+	अगर (len != माप(काष्ठा key_notअगरication)) अणु
+		ख_लिखो(मानक_त्रुटि, "Incorrect key message length\n");
+		वापस;
+	पूर्ण
 
-	printf("KEY %08x change=%u[%s] aux=%u\n",
+	म_लिखो("KEY %08x change=%u[%s] aux=%u\n",
 	       k->key_id, n->subtype, key_subtypes[n->subtype], k->aux);
-}
+पूर्ण
 
 /*
  * Consume and display events.
  */
-static void consumer(int fd)
-{
-	unsigned char buffer[433], *p, *end;
-	union {
-		struct watch_notification n;
-		unsigned char buf1[128];
-	} n;
-	ssize_t buf_len;
+अटल व्योम consumer(पूर्णांक fd)
+अणु
+	अचिन्हित अक्षर buffer[433], *p, *end;
+	जोड़ अणु
+		काष्ठा watch_notअगरication n;
+		अचिन्हित अक्षर buf1[128];
+	पूर्ण n;
+	sमाप_प्रकार buf_len;
 
-	for (;;) {
-		buf_len = read(fd, buffer, sizeof(buffer));
-		if (buf_len == -1) {
-			perror("read");
-			exit(1);
-		}
+	क्रम (;;) अणु
+		buf_len = पढ़ो(fd, buffer, माप(buffer));
+		अगर (buf_len == -1) अणु
+			लिखो_त्रुटि("read");
+			निकास(1);
+		पूर्ण
 
-		if (buf_len == 0) {
-			printf("-- END --\n");
-			return;
-		}
+		अगर (buf_len == 0) अणु
+			म_लिखो("-- END --\n");
+			वापस;
+		पूर्ण
 
-		if (buf_len > sizeof(buffer)) {
-			fprintf(stderr, "Read buffer overrun: %zd\n", buf_len);
-			return;
-		}
+		अगर (buf_len > माप(buffer)) अणु
+			ख_लिखो(मानक_त्रुटि, "Read buffer overrun: %zd\n", buf_len);
+			वापस;
+		पूर्ण
 
-		printf("read() = %zd\n", buf_len);
+		म_लिखो("read() = %zd\n", buf_len);
 
 		p = buffer;
 		end = buffer + buf_len;
-		while (p < end) {
-			size_t largest, len;
+		जबतक (p < end) अणु
+			माप_प्रकार largest, len;
 
 			largest = end - p;
-			if (largest > 128)
+			अगर (largest > 128)
 				largest = 128;
-			if (largest < sizeof(struct watch_notification)) {
-				fprintf(stderr, "Short message header: %zu\n", largest);
-				return;
-			}
-			memcpy(&n, p, largest);
+			अगर (largest < माप(काष्ठा watch_notअगरication)) अणु
+				ख_लिखो(मानक_त्रुटि, "Short message header: %zu\n", largest);
+				वापस;
+			पूर्ण
+			स_नकल(&n, p, largest);
 
-			printf("NOTIFY[%03zx]: ty=%06x sy=%02x i=%08x\n",
+			म_लिखो("NOTIFY[%03zx]: ty=%06x sy=%02x i=%08x\n",
 			       p - buffer, n.n.type, n.n.subtype, n.n.info);
 
 			len = n.n.info & WATCH_INFO_LENGTH;
-			if (len < sizeof(n.n) || len > largest) {
-				fprintf(stderr, "Bad message length: %zu/%zu\n", len, largest);
-				exit(1);
-			}
+			अगर (len < माप(n.n) || len > largest) अणु
+				ख_लिखो(मानक_त्रुटि, "Bad message length: %zu/%zu\n", len, largest);
+				निकास(1);
+			पूर्ण
 
-			switch (n.n.type) {
-			case WATCH_TYPE_META:
-				switch (n.n.subtype) {
-				case WATCH_META_REMOVAL_NOTIFICATION:
-					printf("REMOVAL of watchpoint %08x\n",
+			चयन (n.n.type) अणु
+			हाल WATCH_TYPE_META:
+				चयन (n.n.subtype) अणु
+				हाल WATCH_META_REMOVAL_NOTIFICATION:
+					म_लिखो("REMOVAL of watchpoint %08x\n",
 					       (n.n.info & WATCH_INFO_ID) >>
 					       WATCH_INFO_ID__SHIFT);
-					break;
-				case WATCH_META_LOSS_NOTIFICATION:
-					printf("-- LOSS --\n");
-					break;
-				default:
-					printf("other meta record\n");
-					break;
-				}
-				break;
-			case WATCH_TYPE_KEY_NOTIFY:
+					अवरोध;
+				हाल WATCH_META_LOSS_NOTIFICATION:
+					म_लिखो("-- LOSS --\n");
+					अवरोध;
+				शेष:
+					म_लिखो("other meta record\n");
+					अवरोध;
+				पूर्ण
+				अवरोध;
+			हाल WATCH_TYPE_KEY_NOTIFY:
 				saw_key_change(&n.n, len);
-				break;
-			default:
-				printf("other type\n");
-				break;
-			}
+				अवरोध;
+			शेष:
+				म_लिखो("other type\n");
+				अवरोध;
+			पूर्ण
 
 			p += len;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static struct watch_notification_filter filter = {
+अटल काष्ठा watch_notअगरication_filter filter = अणु
 	.nr_filters	= 1,
-	.filters = {
-		[0]	= {
+	.filters = अणु
+		[0]	= अणु
 			.type			= WATCH_TYPE_KEY_NOTIFY,
-			.subtype_filter[0]	= UINT_MAX,
-		},
-	},
-};
+			.subtype_filter[0]	= अच_पूर्णांक_उच्च,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-int main(int argc, char **argv)
-{
-	int pipefd[2], fd;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक pipefd[2], fd;
 
-	if (pipe2(pipefd, O_NOTIFICATION_PIPE) == -1) {
-		perror("pipe2");
-		exit(1);
-	}
+	अगर (pipe2(pipefd, O_NOTIFICATION_PIPE) == -1) अणु
+		लिखो_त्रुटि("pipe2");
+		निकास(1);
+	पूर्ण
 	fd = pipefd[0];
 
-	if (ioctl(fd, IOC_WATCH_QUEUE_SET_SIZE, BUF_SIZE) == -1) {
-		perror("watch_queue(size)");
-		exit(1);
-	}
+	अगर (ioctl(fd, IOC_WATCH_QUEUE_SET_SIZE, BUF_SIZE) == -1) अणु
+		लिखो_त्रुटि("watch_queue(size)");
+		निकास(1);
+	पूर्ण
 
-	if (ioctl(fd, IOC_WATCH_QUEUE_SET_FILTER, &filter) == -1) {
-		perror("watch_queue(filter)");
-		exit(1);
-	}
+	अगर (ioctl(fd, IOC_WATCH_QUEUE_SET_FILTER, &filter) == -1) अणु
+		लिखो_त्रुटि("watch_queue(filter)");
+		निकास(1);
+	पूर्ण
 
-	if (keyctl_watch_key(KEY_SPEC_SESSION_KEYRING, fd, 0x01) == -1) {
-		perror("keyctl");
-		exit(1);
-	}
+	अगर (keyctl_watch_key(KEY_SPEC_SESSION_KEYRING, fd, 0x01) == -1) अणु
+		लिखो_त्रुटि("keyctl");
+		निकास(1);
+	पूर्ण
 
-	if (keyctl_watch_key(KEY_SPEC_USER_KEYRING, fd, 0x02) == -1) {
-		perror("keyctl");
-		exit(1);
-	}
+	अगर (keyctl_watch_key(KEY_SPEC_USER_KEYRING, fd, 0x02) == -1) अणु
+		लिखो_त्रुटि("keyctl");
+		निकास(1);
+	पूर्ण
 
 	consumer(fd);
-	exit(0);
-}
+	निकास(0);
+पूर्ण

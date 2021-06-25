@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ADS7846 based touchscreen and sensor driver
  *
@@ -8,102 +9,102 @@
  *
  * Using code from:
  *  - corgi_ts.c
- *	Copyright (C) 2004-2005 Richard Purdie
+ *	Copyright (C) 2004-2005 Riअक्षरd Purdie
  *  - omap_ts.[hc], ads7846.h, ts_osk.c
  *	Copyright (C) 2002 MontaVista Software
  *	Copyright (C) 2004 Texas Instruments
  *	Copyright (C) 2005 Dirk Behme
  */
-#include <linux/types.h>
-#include <linux/hwmon.h>
-#include <linux/err.h>
-#include <linux/sched.h>
-#include <linux/delay.h>
-#include <linux/input.h>
-#include <linux/input/touchscreen.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <linux/pm.h>
-#include <linux/of.h>
-#include <linux/of_gpio.h>
-#include <linux/of_device.h>
-#include <linux/gpio.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/ads7846.h>
-#include <linux/regulator/consumer.h>
-#include <linux/module.h>
-#include <asm/unaligned.h>
+#समावेश <linux/types.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/err.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/touchscreen.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/of_device.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/ads7846.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/unaligned.h>
 
 /*
  * This code has been heavily tested on a Nokia 770, and lightly
  * tested on other ads7846 devices (OSK/Mistral, Lubbock, Spitz).
  * TSC2046 is just newer ads7846 silicon.
- * Support for ads7843 tested on Atmel at91sam926x-EK.
- * Support for ads7845 has only been stubbed in.
- * Support for Analog Devices AD7873 and AD7843 tested.
+ * Support क्रम ads7843 tested on Aपंचांगel at91sam926x-EK.
+ * Support क्रम ads7845 has only been stubbed in.
+ * Support क्रम Analog Devices AD7873 and AD7843 tested.
  *
- * IRQ handling needs a workaround because of a shortcoming in handling
- * edge triggered IRQs on some platforms like the OMAP1/2. These
- * platforms don't handle the ARM lazy IRQ disabling properly, thus we
- * have to maintain our own SW IRQ disabled status. This should be
- * removed as soon as the affected platform's IRQ handling is fixed.
+ * IRQ handling needs a workaround because of a लघुcoming in handling
+ * edge triggered IRQs on some platक्रमms like the OMAP1/2. These
+ * platक्रमms करोn't handle the ARM lazy IRQ disabling properly, thus we
+ * have to मुख्यtain our own SW IRQ disabled status. This should be
+ * हटाओd as soon as the affected platक्रमm's IRQ handling is fixed.
  *
  * App note sbaa036 talks in more detail about accurate sampling...
  * that ought to help in situations like LCDs inducing noise (which
- * can also be helped by using synch signals) and more generally.
+ * can also be helped by using synch संकेतs) and more generally.
  * This driver tries to utilize the measures described in the app
- * note. The strength of filtering can be set in the board-* specific
+ * note. The strength of filtering can be set in the board-* specअगरic
  * files.
  */
 
-#define TS_POLL_DELAY	1	/* ms delay before the first sample */
-#define TS_POLL_PERIOD	5	/* ms delay between samples */
+#घोषणा TS_POLL_DELAY	1	/* ms delay beक्रमe the first sample */
+#घोषणा TS_POLL_PERIOD	5	/* ms delay between samples */
 
-/* this driver doesn't aim at the peak continuous sample rate */
-#define	SAMPLE_BITS	(8 /*cmd*/ + 16 /*sample*/ + 2 /* before, after */)
+/* this driver करोesn't aim at the peak continuous sample rate */
+#घोषणा	SAMPLE_BITS	(8 /*cmd*/ + 16 /*sample*/ + 2 /* beक्रमe, after */)
 
-struct ads7846_buf {
+काष्ठा ads7846_buf अणु
 	u8 cmd;
 	__be16 data;
-} __packed;
+पूर्ण __packed;
 
-struct ads7846_buf_layout {
-	unsigned int offset;
-	unsigned int count;
-	unsigned int skip;
-};
+काष्ठा ads7846_buf_layout अणु
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक count;
+	अचिन्हित पूर्णांक skip;
+पूर्ण;
 
 /*
- * We allocate this separately to avoid cache line sharing issues when
- * driver is used with DMA-based SPI controllers (like atmel_spi) on
- * systems where main memory is not DMA-coherent (most non-x86 boards).
+ * We allocate this separately to aव्योम cache line sharing issues when
+ * driver is used with DMA-based SPI controllers (like aपंचांगel_spi) on
+ * प्रणालीs where मुख्य memory is not DMA-coherent (most non-x86 boards).
  */
-struct ads7846_packet {
-	unsigned int count;
-	unsigned int count_skip;
-	unsigned int cmds;
-	unsigned int last_cmd_idx;
-	struct ads7846_buf_layout l[5];
-	struct ads7846_buf *rx;
-	struct ads7846_buf *tx;
+काष्ठा ads7846_packet अणु
+	अचिन्हित पूर्णांक count;
+	अचिन्हित पूर्णांक count_skip;
+	अचिन्हित पूर्णांक cmds;
+	अचिन्हित पूर्णांक last_cmd_idx;
+	काष्ठा ads7846_buf_layout l[5];
+	काष्ठा ads7846_buf *rx;
+	काष्ठा ads7846_buf *tx;
 
-	struct ads7846_buf pwrdown_cmd;
+	काष्ठा ads7846_buf pwrकरोwn_cmd;
 
 	bool ignore;
 	u16 x, y, z1, z2;
-};
+पूर्ण;
 
-struct ads7846 {
-	struct input_dev	*input;
-	char			phys[32];
-	char			name[32];
+काष्ठा ads7846 अणु
+	काष्ठा input_dev	*input;
+	अक्षर			phys[32];
+	अक्षर			name[32];
 
-	struct spi_device	*spi;
-	struct regulator	*reg;
+	काष्ठा spi_device	*spi;
+	काष्ठा regulator	*reg;
 
-#if IS_ENABLED(CONFIG_HWMON)
-	struct device		*hwmon;
-#endif
+#अगर IS_ENABLED(CONFIG_HWMON)
+	काष्ठा device		*hwmon;
+#पूर्ण_अगर
 
 	u16			model;
 	u16			vref_mv;
@@ -112,20 +113,20 @@ struct ads7846 {
 	u16			pressure_max;
 
 	bool			swap_xy;
-	bool			use_internal;
+	bool			use_पूर्णांकernal;
 
-	struct ads7846_packet	*packet;
+	काष्ठा ads7846_packet	*packet;
 
-	struct spi_transfer	xfer[18];
-	struct spi_message	msg[5];
-	int			msg_count;
-	wait_queue_head_t	wait;
+	काष्ठा spi_transfer	xfer[18];
+	काष्ठा spi_message	msg[5];
+	पूर्णांक			msg_count;
+	रुको_queue_head_t	रुको;
 
-	bool			pendown;
+	bool			penकरोwn;
 
-	int			read_cnt;
-	int			read_rep;
-	int			last_read;
+	पूर्णांक			पढ़ो_cnt;
+	पूर्णांक			पढ़ो_rep;
+	पूर्णांक			last_पढ़ो;
 
 	u16			debounce_max;
 	u16			debounce_tol;
@@ -133,238 +134,238 @@ struct ads7846 {
 
 	u16			penirq_recheck_delay_usecs;
 
-	struct touchscreen_properties core_prop;
+	काष्ठा touchscreen_properties core_prop;
 
-	struct mutex		lock;
+	काष्ठा mutex		lock;
 	bool			stopped;	/* P: lock */
 	bool			disabled;	/* P: lock */
 	bool			suspended;	/* P: lock */
 
-	int			(*filter)(void *data, int data_idx, int *val);
-	void			*filter_data;
-	void			(*filter_cleanup)(void *data);
-	int			(*get_pendown_state)(void);
-	int			gpio_pendown;
+	पूर्णांक			(*filter)(व्योम *data, पूर्णांक data_idx, पूर्णांक *val);
+	व्योम			*filter_data;
+	व्योम			(*filter_cleanup)(व्योम *data);
+	पूर्णांक			(*get_penकरोwn_state)(व्योम);
+	पूर्णांक			gpio_penकरोwn;
 
-	void			(*wait_for_sync)(void);
-};
+	व्योम			(*रुको_क्रम_sync)(व्योम);
+पूर्ण;
 
-/* leave chip selected when we're done, for quicker re-select? */
-#if	0
-#define	CS_CHANGE(xfer)	((xfer).cs_change = 1)
-#else
-#define	CS_CHANGE(xfer)	((xfer).cs_change = 0)
-#endif
+/* leave chip selected when we're करोne, क्रम quicker re-select? */
+#अगर	0
+#घोषणा	CS_CHANGE(xfer)	((xfer).cs_change = 1)
+#अन्यथा
+#घोषणा	CS_CHANGE(xfer)	((xfer).cs_change = 0)
+#पूर्ण_अगर
 
 /*--------------------------------------------------------------------------*/
 
 /* The ADS7846 has touchscreen and other sensors.
  * Earlier ads784x chips are somewhat compatible.
  */
-#define	ADS_START		(1 << 7)
-#define	ADS_A2A1A0_d_y		(1 << 4)	/* differential */
-#define	ADS_A2A1A0_d_z1		(3 << 4)	/* differential */
-#define	ADS_A2A1A0_d_z2		(4 << 4)	/* differential */
-#define	ADS_A2A1A0_d_x		(5 << 4)	/* differential */
-#define	ADS_A2A1A0_temp0	(0 << 4)	/* non-differential */
-#define	ADS_A2A1A0_vbatt	(2 << 4)	/* non-differential */
-#define	ADS_A2A1A0_vaux		(6 << 4)	/* non-differential */
-#define	ADS_A2A1A0_temp1	(7 << 4)	/* non-differential */
-#define	ADS_8_BIT		(1 << 3)
-#define	ADS_12_BIT		(0 << 3)
-#define	ADS_SER			(1 << 2)	/* non-differential */
-#define	ADS_DFR			(0 << 2)	/* differential */
-#define	ADS_PD10_PDOWN		(0 << 0)	/* low power mode + penirq */
-#define	ADS_PD10_ADC_ON		(1 << 0)	/* ADC on */
-#define	ADS_PD10_REF_ON		(2 << 0)	/* vREF on + penirq */
-#define	ADS_PD10_ALL_ON		(3 << 0)	/* ADC + vREF on */
+#घोषणा	ADS_START		(1 << 7)
+#घोषणा	ADS_A2A1A0_d_y		(1 << 4)	/* dअगरferential */
+#घोषणा	ADS_A2A1A0_d_z1		(3 << 4)	/* dअगरferential */
+#घोषणा	ADS_A2A1A0_d_z2		(4 << 4)	/* dअगरferential */
+#घोषणा	ADS_A2A1A0_d_x		(5 << 4)	/* dअगरferential */
+#घोषणा	ADS_A2A1A0_temp0	(0 << 4)	/* non-dअगरferential */
+#घोषणा	ADS_A2A1A0_vbatt	(2 << 4)	/* non-dअगरferential */
+#घोषणा	ADS_A2A1A0_vaux		(6 << 4)	/* non-dअगरferential */
+#घोषणा	ADS_A2A1A0_temp1	(7 << 4)	/* non-dअगरferential */
+#घोषणा	ADS_8_BIT		(1 << 3)
+#घोषणा	ADS_12_BIT		(0 << 3)
+#घोषणा	ADS_SER			(1 << 2)	/* non-dअगरferential */
+#घोषणा	ADS_DFR			(0 << 2)	/* dअगरferential */
+#घोषणा	ADS_PD10_PDOWN		(0 << 0)	/* low घातer mode + penirq */
+#घोषणा	ADS_PD10_ADC_ON		(1 << 0)	/* ADC on */
+#घोषणा	ADS_PD10_REF_ON		(2 << 0)	/* vREF on + penirq */
+#घोषणा	ADS_PD10_ALL_ON		(3 << 0)	/* ADC + vREF on */
 
-#define	MAX_12BIT	((1<<12)-1)
+#घोषणा	MAX_12BIT	((1<<12)-1)
 
-/* leave ADC powered up (disables penirq) between differential samples */
-#define	READ_12BIT_DFR(x, adc, vref) (ADS_START | ADS_A2A1A0_d_ ## x \
+/* leave ADC घातered up (disables penirq) between dअगरferential samples */
+#घोषणा	READ_12BIT_DFR(x, adc, vref) (ADS_START | ADS_A2A1A0_d_ ## x \
 	| ADS_12_BIT | ADS_DFR | \
 	(adc ? ADS_PD10_ADC_ON : 0) | (vref ? ADS_PD10_REF_ON : 0))
 
-#define	READ_Y(vref)	(READ_12BIT_DFR(y,  1, vref))
-#define	READ_Z1(vref)	(READ_12BIT_DFR(z1, 1, vref))
-#define	READ_Z2(vref)	(READ_12BIT_DFR(z2, 1, vref))
-#define	READ_X(vref)	(READ_12BIT_DFR(x,  1, vref))
-#define	PWRDOWN		(READ_12BIT_DFR(y,  0, 0))	/* LAST */
+#घोषणा	READ_Y(vref)	(READ_12BIT_DFR(y,  1, vref))
+#घोषणा	READ_Z1(vref)	(READ_12BIT_DFR(z1, 1, vref))
+#घोषणा	READ_Z2(vref)	(READ_12BIT_DFR(z2, 1, vref))
+#घोषणा	READ_X(vref)	(READ_12BIT_DFR(x,  1, vref))
+#घोषणा	PWRDOWN		(READ_12BIT_DFR(y,  0, 0))	/* LAST */
 
-/* single-ended samples need to first power up reference voltage;
- * we leave both ADC and VREF powered
+/* single-ended samples need to first घातer up reference voltage;
+ * we leave both ADC and VREF घातered
  */
-#define	READ_12BIT_SER(x) (ADS_START | ADS_A2A1A0_ ## x \
+#घोषणा	READ_12BIT_SER(x) (ADS_START | ADS_A2A1A0_ ## x \
 	| ADS_12_BIT | ADS_SER)
 
-#define	REF_ON	(READ_12BIT_DFR(x, 1, 1))
-#define	REF_OFF	(READ_12BIT_DFR(y, 0, 0))
+#घोषणा	REF_ON	(READ_12BIT_DFR(x, 1, 1))
+#घोषणा	REF_OFF	(READ_12BIT_DFR(y, 0, 0))
 
-/* Order commands in the most optimal way to reduce Vref switching and
- * settling time:
+/* Order commands in the most optimal way to reduce Vref चयनing and
+ * settling समय:
  * Measure:  X; Vref: X+, X-; IN: Y+
  * Measure:  Y; Vref: Y+, Y-; IN: X+
  * Measure: Z1; Vref: Y+, X-; IN: X+
  * Measure: Z2; Vref: Y+, X-; IN: Y-
  */
-enum ads7846_cmds {
+क्रमागत ads7846_cmds अणु
 	ADS7846_X,
 	ADS7846_Y,
 	ADS7846_Z1,
 	ADS7846_Z2,
 	ADS7846_PWDOWN,
-};
+पूर्ण;
 
-static int get_pendown_state(struct ads7846 *ts)
-{
-	if (ts->get_pendown_state)
-		return ts->get_pendown_state();
+अटल पूर्णांक get_penकरोwn_state(काष्ठा ads7846 *ts)
+अणु
+	अगर (ts->get_penकरोwn_state)
+		वापस ts->get_penकरोwn_state();
 
-	return !gpio_get_value(ts->gpio_pendown);
-}
+	वापस !gpio_get_value(ts->gpio_penकरोwn);
+पूर्ण
 
-static void ads7846_report_pen_up(struct ads7846 *ts)
-{
-	struct input_dev *input = ts->input;
+अटल व्योम ads7846_report_pen_up(काष्ठा ads7846 *ts)
+अणु
+	काष्ठा input_dev *input = ts->input;
 
 	input_report_key(input, BTN_TOUCH, 0);
-	input_report_abs(input, ABS_PRESSURE, 0);
+	input_report_असल(input, ABS_PRESSURE, 0);
 	input_sync(input);
 
-	ts->pendown = false;
+	ts->penकरोwn = false;
 	dev_vdbg(&ts->spi->dev, "UP\n");
-}
+पूर्ण
 
 /* Must be called with ts->lock held */
-static void ads7846_stop(struct ads7846 *ts)
-{
-	if (!ts->disabled && !ts->suspended) {
-		/* Signal IRQ thread to stop polling and disable the handler. */
+अटल व्योम ads7846_stop(काष्ठा ads7846 *ts)
+अणु
+	अगर (!ts->disabled && !ts->suspended) अणु
+		/* Signal IRQ thपढ़ो to stop polling and disable the handler. */
 		ts->stopped = true;
 		mb();
-		wake_up(&ts->wait);
+		wake_up(&ts->रुको);
 		disable_irq(ts->spi->irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Must be called with ts->lock held */
-static void ads7846_restart(struct ads7846 *ts)
-{
-	if (!ts->disabled && !ts->suspended) {
-		/* Check if pen was released since last stop */
-		if (ts->pendown && !get_pendown_state(ts))
+अटल व्योम ads7846_restart(काष्ठा ads7846 *ts)
+अणु
+	अगर (!ts->disabled && !ts->suspended) अणु
+		/* Check अगर pen was released since last stop */
+		अगर (ts->penकरोwn && !get_penकरोwn_state(ts))
 			ads7846_report_pen_up(ts);
 
-		/* Tell IRQ thread that it may poll the device. */
+		/* Tell IRQ thपढ़ो that it may poll the device. */
 		ts->stopped = false;
 		mb();
 		enable_irq(ts->spi->irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Must be called with ts->lock held */
-static void __ads7846_disable(struct ads7846 *ts)
-{
+अटल व्योम __ads7846_disable(काष्ठा ads7846 *ts)
+अणु
 	ads7846_stop(ts);
 	regulator_disable(ts->reg);
 
 	/*
-	 * We know the chip's in low power mode since we always
+	 * We know the chip's in low घातer mode since we always
 	 * leave it that way after every request
 	 */
-}
+पूर्ण
 
 /* Must be called with ts->lock held */
-static void __ads7846_enable(struct ads7846 *ts)
-{
-	int error;
+अटल व्योम __ads7846_enable(काष्ठा ads7846 *ts)
+अणु
+	पूर्णांक error;
 
 	error = regulator_enable(ts->reg);
-	if (error != 0)
+	अगर (error != 0)
 		dev_err(&ts->spi->dev, "Failed to enable supply: %d\n", error);
 
 	ads7846_restart(ts);
-}
+पूर्ण
 
-static void ads7846_disable(struct ads7846 *ts)
-{
+अटल व्योम ads7846_disable(काष्ठा ads7846 *ts)
+अणु
 	mutex_lock(&ts->lock);
 
-	if (!ts->disabled) {
+	अगर (!ts->disabled) अणु
 
-		if  (!ts->suspended)
+		अगर  (!ts->suspended)
 			__ads7846_disable(ts);
 
 		ts->disabled = true;
-	}
+	पूर्ण
 
 	mutex_unlock(&ts->lock);
-}
+पूर्ण
 
-static void ads7846_enable(struct ads7846 *ts)
-{
+अटल व्योम ads7846_enable(काष्ठा ads7846 *ts)
+अणु
 	mutex_lock(&ts->lock);
 
-	if (ts->disabled) {
+	अगर (ts->disabled) अणु
 
 		ts->disabled = false;
 
-		if (!ts->suspended)
+		अगर (!ts->suspended)
 			__ads7846_enable(ts);
-	}
+	पूर्ण
 
 	mutex_unlock(&ts->lock);
-}
+पूर्ण
 
 /*--------------------------------------------------------------------------*/
 
 /*
  * Non-touchscreen sensors only use single-ended conversions.
- * The range is GND..vREF. The ads7843 and ads7835 must use external vREF;
- * ads7846 lets that pin be unconnected, to use internal vREF.
+ * The range is GND..vREF. The ads7843 and ads7835 must use बाह्यal vREF;
+ * ads7846 lets that pin be unconnected, to use पूर्णांकernal vREF.
  */
 
-struct ser_req {
+काष्ठा ser_req अणु
 	u8			ref_on;
 	u8			command;
 	u8			ref_off;
 	u16			scratch;
-	struct spi_message	msg;
-	struct spi_transfer	xfer[6];
+	काष्ठा spi_message	msg;
+	काष्ठा spi_transfer	xfer[6];
 	/*
-	 * DMA (thus cache coherency maintenance) requires the
+	 * DMA (thus cache coherency मुख्यtenance) requires the
 	 * transfer buffers to live in their own cache lines.
 	 */
 	__be16 sample ____cacheline_aligned;
-};
+पूर्ण;
 
-struct ads7845_ser_req {
+काष्ठा ads7845_ser_req अणु
 	u8			command[3];
-	struct spi_message	msg;
-	struct spi_transfer	xfer[2];
+	काष्ठा spi_message	msg;
+	काष्ठा spi_transfer	xfer[2];
 	/*
-	 * DMA (thus cache coherency maintenance) requires the
+	 * DMA (thus cache coherency मुख्यtenance) requires the
 	 * transfer buffers to live in their own cache lines.
 	 */
 	u8 sample[3] ____cacheline_aligned;
-};
+पूर्ण;
 
-static int ads7846_read12_ser(struct device *dev, unsigned command)
-{
-	struct spi_device *spi = to_spi_device(dev);
-	struct ads7846 *ts = dev_get_drvdata(dev);
-	struct ser_req *req;
-	int status;
+अटल पूर्णांक ads7846_पढ़ो12_ser(काष्ठा device *dev, अचिन्हित command)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	काष्ठा ads7846 *ts = dev_get_drvdata(dev);
+	काष्ठा ser_req *req;
+	पूर्णांक status;
 
-	req = kzalloc(sizeof *req, GFP_KERNEL);
-	if (!req)
-		return -ENOMEM;
+	req = kzalloc(माप *req, GFP_KERNEL);
+	अगर (!req)
+		वापस -ENOMEM;
 
 	spi_message_init(&req->msg);
 
-	/* maybe turn on internal vREF, and let it settle */
-	if (ts->use_internal) {
+	/* maybe turn on पूर्णांकernal vREF, and let it settle */
+	अगर (ts->use_पूर्णांकernal) अणु
 		req->ref_on = REF_ON;
 		req->xfer[0].tx_buf = &req->ref_on;
 		req->xfer[0].len = 1;
@@ -373,16 +374,16 @@ static int ads7846_read12_ser(struct device *dev, unsigned command)
 		req->xfer[1].rx_buf = &req->scratch;
 		req->xfer[1].len = 2;
 
-		/* for 1uF, settle for 800 usec; no cap, 100 usec.  */
+		/* क्रम 1uF, settle क्रम 800 usec; no cap, 100 usec.  */
 		req->xfer[1].delay.value = ts->vref_delay_usecs;
 		req->xfer[1].delay.unit = SPI_DELAY_UNIT_USECS;
 		spi_message_add_tail(&req->xfer[1], &req->msg);
 
 		/* Enable reference voltage */
 		command |= ADS_PD10_REF_ON;
-	}
+	पूर्ण
 
-	/* Enable ADC in every case */
+	/* Enable ADC in every हाल */
 	command |= ADS_PD10_ADC_ON;
 
 	/* take sample */
@@ -397,7 +398,7 @@ static int ads7846_read12_ser(struct device *dev, unsigned command)
 
 	/* REVISIT:  take a few more samples, and compare ... */
 
-	/* converter in low power mode & enable PENIRQ */
+	/* converter in low घातer mode & enable PENIRQ */
 	req->ref_off = PWRDOWN;
 	req->xfer[4].tx_buf = &req->ref_off;
 	req->xfer[4].len = 1;
@@ -414,27 +415,27 @@ static int ads7846_read12_ser(struct device *dev, unsigned command)
 	ads7846_restart(ts);
 	mutex_unlock(&ts->lock);
 
-	if (status == 0) {
+	अगर (status == 0) अणु
 		/* on-wire is a must-ignore bit, a BE12 value, then padding */
 		status = be16_to_cpu(req->sample);
 		status = status >> 3;
 		status &= 0x0fff;
-	}
+	पूर्ण
 
-	kfree(req);
-	return status;
-}
+	kमुक्त(req);
+	वापस status;
+पूर्ण
 
-static int ads7845_read12_ser(struct device *dev, unsigned command)
-{
-	struct spi_device *spi = to_spi_device(dev);
-	struct ads7846 *ts = dev_get_drvdata(dev);
-	struct ads7845_ser_req *req;
-	int status;
+अटल पूर्णांक ads7845_पढ़ो12_ser(काष्ठा device *dev, अचिन्हित command)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	काष्ठा ads7846 *ts = dev_get_drvdata(dev);
+	काष्ठा ads7845_ser_req *req;
+	पूर्णांक status;
 
-	req = kzalloc(sizeof *req, GFP_KERNEL);
-	if (!req)
-		return -ENOMEM;
+	req = kzalloc(माप *req, GFP_KERNEL);
+	अगर (!req)
+		वापस -ENOMEM;
 
 	spi_message_init(&req->msg);
 
@@ -450,416 +451,416 @@ static int ads7845_read12_ser(struct device *dev, unsigned command)
 	ads7846_restart(ts);
 	mutex_unlock(&ts->lock);
 
-	if (status == 0) {
+	अगर (status == 0) अणु
 		/* BE12 value, then padding */
 		status = get_unaligned_be16(&req->sample[1]);
 		status = status >> 3;
 		status &= 0x0fff;
-	}
+	पूर्ण
 
-	kfree(req);
-	return status;
-}
+	kमुक्त(req);
+	वापस status;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_HWMON)
+#अगर IS_ENABLED(CONFIG_HWMON)
 
-#define SHOW(name, var, adjust) static ssize_t \
-name ## _show(struct device *dev, struct device_attribute *attr, char *buf) \
-{ \
-	struct ads7846 *ts = dev_get_drvdata(dev); \
-	ssize_t v = ads7846_read12_ser(&ts->spi->dev, \
+#घोषणा SHOW(name, var, adjust) अटल sमाप_प्रकार \
+name ## _show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf) \
+अणु \
+	काष्ठा ads7846 *ts = dev_get_drvdata(dev); \
+	sमाप_प्रकार v = ads7846_पढ़ो12_ser(&ts->spi->dev, \
 			READ_12BIT_SER(var)); \
-	if (v < 0) \
-		return v; \
-	return sprintf(buf, "%u\n", adjust(ts, v)); \
-} \
-static DEVICE_ATTR(name, S_IRUGO, name ## _show, NULL);
+	अगर (v < 0) \
+		वापस v; \
+	वापस प्र_लिखो(buf, "%u\n", adjust(ts, v)); \
+पूर्ण \
+अटल DEVICE_ATTR(name, S_IRUGO, name ## _show, शून्य);
 
 
 /* Sysfs conventions report temperatures in millidegrees Celsius.
- * ADS7846 could use the low-accuracy two-sample scheme, but can't do the high
+ * ADS7846 could use the low-accuracy two-sample scheme, but can't करो the high
  * accuracy scheme without calibration data.  For now we won't try either;
  * userspace sees raw sensor values, and must scale/calibrate appropriately.
  */
-static inline unsigned null_adjust(struct ads7846 *ts, ssize_t v)
-{
-	return v;
-}
+अटल अंतरभूत अचिन्हित null_adjust(काष्ठा ads7846 *ts, sमाप_प्रकार v)
+अणु
+	वापस v;
+पूर्ण
 
 SHOW(temp0, temp0, null_adjust)		/* temp1_input */
 SHOW(temp1, temp1, null_adjust)		/* temp2_input */
 
 
 /* sysfs conventions report voltages in millivolts.  We can convert voltages
- * if we know vREF.  userspace may need to scale vAUX to match the board's
- * external resistors; we assume that vBATT only uses the internal ones.
+ * अगर we know vREF.  userspace may need to scale vAUX to match the board's
+ * बाह्यal resistors; we assume that vBATT only uses the पूर्णांकernal ones.
  */
-static inline unsigned vaux_adjust(struct ads7846 *ts, ssize_t v)
-{
-	unsigned retval = v;
+अटल अंतरभूत अचिन्हित vaux_adjust(काष्ठा ads7846 *ts, sमाप_प्रकार v)
+अणु
+	अचिन्हित retval = v;
 
-	/* external resistors may scale vAUX into 0..vREF */
+	/* बाह्यal resistors may scale vAUX पूर्णांकo 0..vREF */
 	retval *= ts->vref_mv;
 	retval = retval >> 12;
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static inline unsigned vbatt_adjust(struct ads7846 *ts, ssize_t v)
-{
-	unsigned retval = vaux_adjust(ts, v);
+अटल अंतरभूत अचिन्हित vbatt_adjust(काष्ठा ads7846 *ts, sमाप_प्रकार v)
+अणु
+	अचिन्हित retval = vaux_adjust(ts, v);
 
-	/* ads7846 has a resistor ladder to scale this signal down */
-	if (ts->model == 7846)
+	/* ads7846 has a resistor ladder to scale this संकेत करोwn */
+	अगर (ts->model == 7846)
 		retval *= 4;
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SHOW(in0_input, vaux, vaux_adjust)
 SHOW(in1_input, vbatt, vbatt_adjust)
 
-static umode_t ads7846_is_visible(struct kobject *kobj, struct attribute *attr,
-				  int index)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct ads7846 *ts = dev_get_drvdata(dev);
+अटल umode_t ads7846_is_visible(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+				  पूर्णांक index)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा ads7846 *ts = dev_get_drvdata(dev);
 
-	if (ts->model == 7843 && index < 2)	/* in0, in1 */
-		return 0;
-	if (ts->model == 7845 && index != 2)	/* in0 */
-		return 0;
+	अगर (ts->model == 7843 && index < 2)	/* in0, in1 */
+		वापस 0;
+	अगर (ts->model == 7845 && index != 2)	/* in0 */
+		वापस 0;
 
-	return attr->mode;
-}
+	वापस attr->mode;
+पूर्ण
 
-static struct attribute *ads7846_attributes[] = {
+अटल काष्ठा attribute *ads7846_attributes[] = अणु
 	&dev_attr_temp0.attr,		/* 0 */
 	&dev_attr_temp1.attr,		/* 1 */
 	&dev_attr_in0_input.attr,	/* 2 */
 	&dev_attr_in1_input.attr,	/* 3 */
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group ads7846_attr_group = {
+अटल स्थिर काष्ठा attribute_group ads7846_attr_group = अणु
 	.attrs = ads7846_attributes,
 	.is_visible = ads7846_is_visible,
-};
+पूर्ण;
 __ATTRIBUTE_GROUPS(ads7846_attr);
 
-static int ads784x_hwmon_register(struct spi_device *spi, struct ads7846 *ts)
-{
+अटल पूर्णांक ads784x_hwmon_रेजिस्टर(काष्ठा spi_device *spi, काष्ठा ads7846 *ts)
+अणु
 	/* hwmon sensors need a reference voltage */
-	switch (ts->model) {
-	case 7846:
-		if (!ts->vref_mv) {
+	चयन (ts->model) अणु
+	हाल 7846:
+		अगर (!ts->vref_mv) अणु
 			dev_dbg(&spi->dev, "assuming 2.5V internal vREF\n");
 			ts->vref_mv = 2500;
-			ts->use_internal = true;
-		}
-		break;
-	case 7845:
-	case 7843:
-		if (!ts->vref_mv) {
+			ts->use_पूर्णांकernal = true;
+		पूर्ण
+		अवरोध;
+	हाल 7845:
+	हाल 7843:
+		अगर (!ts->vref_mv) अणु
 			dev_warn(&spi->dev,
 				"external vREF for ADS%d not specified\n",
 				ts->model);
-			return 0;
-		}
-		break;
-	}
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	ts->hwmon = hwmon_device_register_with_groups(&spi->dev, spi->modalias,
+	ts->hwmon = hwmon_device_रेजिस्टर_with_groups(&spi->dev, spi->modalias,
 						      ts, ads7846_attr_groups);
 
-	return PTR_ERR_OR_ZERO(ts->hwmon);
-}
+	वापस PTR_ERR_OR_ZERO(ts->hwmon);
+पूर्ण
 
-static void ads784x_hwmon_unregister(struct spi_device *spi,
-				     struct ads7846 *ts)
-{
-	if (ts->hwmon)
-		hwmon_device_unregister(ts->hwmon);
-}
+अटल व्योम ads784x_hwmon_unरेजिस्टर(काष्ठा spi_device *spi,
+				     काष्ठा ads7846 *ts)
+अणु
+	अगर (ts->hwmon)
+		hwmon_device_unरेजिस्टर(ts->hwmon);
+पूर्ण
 
-#else
-static inline int ads784x_hwmon_register(struct spi_device *spi,
-					 struct ads7846 *ts)
-{
-	return 0;
-}
+#अन्यथा
+अटल अंतरभूत पूर्णांक ads784x_hwmon_रेजिस्टर(काष्ठा spi_device *spi,
+					 काष्ठा ads7846 *ts)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void ads784x_hwmon_unregister(struct spi_device *spi,
-					    struct ads7846 *ts)
-{
-}
-#endif
+अटल अंतरभूत व्योम ads784x_hwmon_unरेजिस्टर(काष्ठा spi_device *spi,
+					    काष्ठा ads7846 *ts)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static ssize_t ads7846_pen_down_show(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	struct ads7846 *ts = dev_get_drvdata(dev);
+अटल sमाप_प्रकार ads7846_pen_करोwn_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ads7846 *ts = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", ts->pendown);
-}
+	वापस प्र_लिखो(buf, "%u\n", ts->penकरोwn);
+पूर्ण
 
-static DEVICE_ATTR(pen_down, S_IRUGO, ads7846_pen_down_show, NULL);
+अटल DEVICE_ATTR(pen_करोwn, S_IRUGO, ads7846_pen_करोwn_show, शून्य);
 
-static ssize_t ads7846_disable_show(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	struct ads7846 *ts = dev_get_drvdata(dev);
+अटल sमाप_प्रकार ads7846_disable_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ads7846 *ts = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", ts->disabled);
-}
+	वापस प्र_लिखो(buf, "%u\n", ts->disabled);
+पूर्ण
 
-static ssize_t ads7846_disable_store(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	struct ads7846 *ts = dev_get_drvdata(dev);
-	unsigned int i;
-	int err;
+अटल sमाप_प्रकार ads7846_disable_store(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ads7846 *ts = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	err = kstrtouint(buf, 10, &i);
-	if (err)
-		return err;
+	err = kstrtouपूर्णांक(buf, 10, &i);
+	अगर (err)
+		वापस err;
 
-	if (i)
+	अगर (i)
 		ads7846_disable(ts);
-	else
+	अन्यथा
 		ads7846_enable(ts);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(disable, 0664, ads7846_disable_show, ads7846_disable_store);
+अटल DEVICE_ATTR(disable, 0664, ads7846_disable_show, ads7846_disable_store);
 
-static struct attribute *ads784x_attributes[] = {
-	&dev_attr_pen_down.attr,
+अटल काष्ठा attribute *ads784x_attributes[] = अणु
+	&dev_attr_pen_करोwn.attr,
 	&dev_attr_disable.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group ads784x_attr_group = {
+अटल स्थिर काष्ठा attribute_group ads784x_attr_group = अणु
 	.attrs = ads784x_attributes,
-};
+पूर्ण;
 
 /*--------------------------------------------------------------------------*/
 
-static void null_wait_for_sync(void)
-{
-}
+अटल व्योम null_रुको_क्रम_sync(व्योम)
+अणु
+पूर्ण
 
-static int ads7846_debounce_filter(void *ads, int data_idx, int *val)
-{
-	struct ads7846 *ts = ads;
+अटल पूर्णांक ads7846_debounce_filter(व्योम *ads, पूर्णांक data_idx, पूर्णांक *val)
+अणु
+	काष्ठा ads7846 *ts = ads;
 
-	if (!ts->read_cnt || (abs(ts->last_read - *val) > ts->debounce_tol)) {
-		/* Start over collecting consistent readings. */
-		ts->read_rep = 0;
+	अगर (!ts->पढ़ो_cnt || (असल(ts->last_पढ़ो - *val) > ts->debounce_tol)) अणु
+		/* Start over collecting consistent पढ़ोings. */
+		ts->पढ़ो_rep = 0;
 		/*
-		 * Repeat it, if this was the first read or the read
+		 * Repeat it, अगर this was the first पढ़ो or the पढ़ो
 		 * wasn't consistent enough.
 		 */
-		if (ts->read_cnt < ts->debounce_max) {
-			ts->last_read = *val;
-			ts->read_cnt++;
-			return ADS7846_FILTER_REPEAT;
-		} else {
+		अगर (ts->पढ़ो_cnt < ts->debounce_max) अणु
+			ts->last_पढ़ो = *val;
+			ts->पढ़ो_cnt++;
+			वापस ADS7846_FILTER_REPEAT;
+		पूर्ण अन्यथा अणु
 			/*
 			 * Maximum number of debouncing reached and still
-			 * not enough number of consistent readings. Abort
+			 * not enough number of consistent पढ़ोings. Abort
 			 * the whole sample, repeat it in the next sampling
 			 * period.
 			 */
-			ts->read_cnt = 0;
-			return ADS7846_FILTER_IGNORE;
-		}
-	} else {
-		if (++ts->read_rep > ts->debounce_rep) {
+			ts->पढ़ो_cnt = 0;
+			वापस ADS7846_FILTER_IGNORE;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (++ts->पढ़ो_rep > ts->debounce_rep) अणु
 			/*
-			 * Got a good reading for this coordinate,
-			 * go for the next one.
+			 * Got a good पढ़ोing क्रम this coordinate,
+			 * go क्रम the next one.
 			 */
-			ts->read_cnt = 0;
-			ts->read_rep = 0;
-			return ADS7846_FILTER_OK;
-		} else {
+			ts->पढ़ो_cnt = 0;
+			ts->पढ़ो_rep = 0;
+			वापस ADS7846_FILTER_OK;
+		पूर्ण अन्यथा अणु
 			/* Read more values that are consistent. */
-			ts->read_cnt++;
-			return ADS7846_FILTER_REPEAT;
-		}
-	}
-}
+			ts->पढ़ो_cnt++;
+			वापस ADS7846_FILTER_REPEAT;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int ads7846_no_filter(void *ads, int data_idx, int *val)
-{
-	return ADS7846_FILTER_OK;
-}
+अटल पूर्णांक ads7846_no_filter(व्योम *ads, पूर्णांक data_idx, पूर्णांक *val)
+अणु
+	वापस ADS7846_FILTER_OK;
+पूर्ण
 
-static int ads7846_get_value(struct ads7846_buf *buf)
-{
-	int value;
+अटल पूर्णांक ads7846_get_value(काष्ठा ads7846_buf *buf)
+अणु
+	पूर्णांक value;
 
 	value = be16_to_cpup(&buf->data);
 
-	/* enforce ADC output is 12 bits width */
-	return (value >> 3) & 0xfff;
-}
+	/* enक्रमce ADC output is 12 bits width */
+	वापस (value >> 3) & 0xfff;
+पूर्ण
 
-static void ads7846_set_cmd_val(struct ads7846 *ts, enum ads7846_cmds cmd_idx,
+अटल व्योम ads7846_set_cmd_val(काष्ठा ads7846 *ts, क्रमागत ads7846_cmds cmd_idx,
 				u16 val)
-{
-	struct ads7846_packet *packet = ts->packet;
+अणु
+	काष्ठा ads7846_packet *packet = ts->packet;
 
-	switch (cmd_idx) {
-	case ADS7846_Y:
+	चयन (cmd_idx) अणु
+	हाल ADS7846_Y:
 		packet->y = val;
-		break;
-	case ADS7846_X:
+		अवरोध;
+	हाल ADS7846_X:
 		packet->x = val;
-		break;
-	case ADS7846_Z1:
+		अवरोध;
+	हाल ADS7846_Z1:
 		packet->z1 = val;
-		break;
-	case ADS7846_Z2:
+		अवरोध;
+	हाल ADS7846_Z2:
 		packet->z2 = val;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u8 ads7846_get_cmd(enum ads7846_cmds cmd_idx, int vref)
-{
-	switch (cmd_idx) {
-	case ADS7846_Y:
-		return READ_Y(vref);
-	case ADS7846_X:
-		return READ_X(vref);
+अटल u8 ads7846_get_cmd(क्रमागत ads7846_cmds cmd_idx, पूर्णांक vref)
+अणु
+	चयन (cmd_idx) अणु
+	हाल ADS7846_Y:
+		वापस READ_Y(vref);
+	हाल ADS7846_X:
+		वापस READ_X(vref);
 
-	/* 7846 specific commands  */
-	case ADS7846_Z1:
-		return READ_Z1(vref);
-	case ADS7846_Z2:
-		return READ_Z2(vref);
-	case ADS7846_PWDOWN:
-		return PWRDOWN;
-	default:
+	/* 7846 specअगरic commands  */
+	हाल ADS7846_Z1:
+		वापस READ_Z1(vref);
+	हाल ADS7846_Z2:
+		वापस READ_Z2(vref);
+	हाल ADS7846_PWDOWN:
+		वापस PWRDOWN;
+	शेष:
 		WARN_ON_ONCE(1);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool ads7846_cmd_need_settle(enum ads7846_cmds cmd_idx)
-{
-	switch (cmd_idx) {
-	case ADS7846_X:
-	case ADS7846_Y:
-	case ADS7846_Z1:
-	case ADS7846_Z2:
-		return true;
-	case ADS7846_PWDOWN:
-		return false;
-	default:
+अटल bool ads7846_cmd_need_settle(क्रमागत ads7846_cmds cmd_idx)
+अणु
+	चयन (cmd_idx) अणु
+	हाल ADS7846_X:
+	हाल ADS7846_Y:
+	हाल ADS7846_Z1:
+	हाल ADS7846_Z2:
+		वापस true;
+	हाल ADS7846_PWDOWN:
+		वापस false;
+	शेष:
 		WARN_ON_ONCE(1);
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int ads7846_filter(struct ads7846 *ts)
-{
-	struct ads7846_packet *packet = ts->packet;
-	int action;
-	int val;
-	unsigned int cmd_idx, b;
+अटल पूर्णांक ads7846_filter(काष्ठा ads7846 *ts)
+अणु
+	काष्ठा ads7846_packet *packet = ts->packet;
+	पूर्णांक action;
+	पूर्णांक val;
+	अचिन्हित पूर्णांक cmd_idx, b;
 
 	packet->ignore = false;
-	for (cmd_idx = packet->last_cmd_idx; cmd_idx < packet->cmds - 1; cmd_idx++) {
-		struct ads7846_buf_layout *l = &packet->l[cmd_idx];
+	क्रम (cmd_idx = packet->last_cmd_idx; cmd_idx < packet->cmds - 1; cmd_idx++) अणु
+		काष्ठा ads7846_buf_layout *l = &packet->l[cmd_idx];
 
 		packet->last_cmd_idx = cmd_idx;
 
-		for (b = l->skip; b < l->count; b++) {
+		क्रम (b = l->skip; b < l->count; b++) अणु
 			val = ads7846_get_value(&packet->rx[l->offset + b]);
 
 			action = ts->filter(ts->filter_data, cmd_idx, &val);
-			if (action == ADS7846_FILTER_REPEAT) {
-				if (b == l->count - 1)
-					return -EAGAIN;
-			} else if (action == ADS7846_FILTER_OK) {
+			अगर (action == ADS7846_FILTER_REPEAT) अणु
+				अगर (b == l->count - 1)
+					वापस -EAGAIN;
+			पूर्ण अन्यथा अगर (action == ADS7846_FILTER_OK) अणु
 				ads7846_set_cmd_val(ts, cmd_idx, val);
-				break;
-			} else {
+				अवरोध;
+			पूर्ण अन्यथा अणु
 				packet->ignore = true;
-				return 0;
-			}
-		}
-	}
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ads7846_read_state(struct ads7846 *ts)
-{
-	struct ads7846_packet *packet = ts->packet;
-	struct spi_message *m;
-	int msg_idx = 0;
-	int error;
+अटल व्योम ads7846_पढ़ो_state(काष्ठा ads7846 *ts)
+अणु
+	काष्ठा ads7846_packet *packet = ts->packet;
+	काष्ठा spi_message *m;
+	पूर्णांक msg_idx = 0;
+	पूर्णांक error;
 
 	packet->last_cmd_idx = 0;
 
-	while (true) {
-		ts->wait_for_sync();
+	जबतक (true) अणु
+		ts->रुको_क्रम_sync();
 
 		m = &ts->msg[msg_idx];
 		error = spi_sync(ts->spi, m);
-		if (error) {
+		अगर (error) अणु
 			dev_err(&ts->spi->dev, "spi_sync --> %d\n", error);
 			packet->ignore = true;
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		error = ads7846_filter(ts);
-		if (error)
-			continue;
+		अगर (error)
+			जारी;
 
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void ads7846_report_state(struct ads7846 *ts)
-{
-	struct ads7846_packet *packet = ts->packet;
-	unsigned int Rt;
+अटल व्योम ads7846_report_state(काष्ठा ads7846 *ts)
+अणु
+	काष्ठा ads7846_packet *packet = ts->packet;
+	अचिन्हित पूर्णांक Rt;
 	u16 x, y, z1, z2;
 
 	x = packet->x;
 	y = packet->y;
-	if (ts->model == 7845) {
+	अगर (ts->model == 7845) अणु
 		z1 = 0;
 		z2 = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		z1 = packet->z1;
 		z2 = packet->z2;
-	}
+	पूर्ण
 
 	/* range filtering */
-	if (x == MAX_12BIT)
+	अगर (x == MAX_12BIT)
 		x = 0;
 
-	if (ts->model == 7843) {
+	अगर (ts->model == 7843) अणु
 		Rt = ts->pressure_max / 2;
-	} else if (ts->model == 7845) {
-		if (get_pendown_state(ts))
+	पूर्ण अन्यथा अगर (ts->model == 7845) अणु
+		अगर (get_penकरोwn_state(ts))
 			Rt = ts->pressure_max / 2;
-		else
+		अन्यथा
 			Rt = 0;
 		dev_vdbg(&ts->spi->dev, "x/y: %d/%d, PD %d\n", x, y, Rt);
-	} else if (likely(x && z1)) {
+	पूर्ण अन्यथा अगर (likely(x && z1)) अणु
 		/* compute touch pressure resistance using equation #2 */
 		Rt = z2;
 		Rt -= z1;
@@ -868,390 +869,390 @@ static void ads7846_report_state(struct ads7846 *ts)
 		Rt *= x;
 		Rt /= z1;
 		Rt = DIV_ROUND_CLOSEST(Rt, 256);
-	} else {
+	पूर्ण अन्यथा अणु
 		Rt = 0;
-	}
+	पूर्ण
 
 	/*
 	 * Sample found inconsistent by debouncing or pressure is beyond
 	 * the maximum. Don't report it to user space, repeat at least
 	 * once more the measurement
 	 */
-	if (packet->ignore || Rt > ts->pressure_max) {
+	अगर (packet->ignore || Rt > ts->pressure_max) अणु
 		dev_vdbg(&ts->spi->dev, "ignored %d pressure %d\n",
 			 packet->ignore, Rt);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Maybe check the pendown state before reporting. This discards
-	 * false readings when the pen is lifted.
+	 * Maybe check the penकरोwn state beक्रमe reporting. This discards
+	 * false पढ़ोings when the pen is lअगरted.
 	 */
-	if (ts->penirq_recheck_delay_usecs) {
+	अगर (ts->penirq_recheck_delay_usecs) अणु
 		udelay(ts->penirq_recheck_delay_usecs);
-		if (!get_pendown_state(ts))
+		अगर (!get_penकरोwn_state(ts))
 			Rt = 0;
-	}
+	पूर्ण
 
 	/*
-	 * NOTE: We can't rely on the pressure to determine the pen down
+	 * NOTE: We can't rely on the pressure to determine the pen करोwn
 	 * state, even this controller has a pressure sensor. The pressure
-	 * value can fluctuate for quite a while after lifting the pen and
-	 * in some cases may not even settle at the expected value.
+	 * value can fluctuate क्रम quite a जबतक after lअगरting the pen and
+	 * in some हालs may not even settle at the expected value.
 	 *
-	 * The only safe way to check for the pen up condition is in the
-	 * timer by reading the pen signal state (it's a GPIO _and_ IRQ).
+	 * The only safe way to check क्रम the pen up condition is in the
+	 * समयr by पढ़ोing the pen संकेत state (it's a GPIO _and_ IRQ).
 	 */
-	if (Rt) {
-		struct input_dev *input = ts->input;
+	अगर (Rt) अणु
+		काष्ठा input_dev *input = ts->input;
 
-		if (!ts->pendown) {
+		अगर (!ts->penकरोwn) अणु
 			input_report_key(input, BTN_TOUCH, 1);
-			ts->pendown = true;
+			ts->penकरोwn = true;
 			dev_vdbg(&ts->spi->dev, "DOWN\n");
-		}
+		पूर्ण
 
 		touchscreen_report_pos(input, &ts->core_prop, x, y, false);
-		input_report_abs(input, ABS_PRESSURE, ts->pressure_max - Rt);
+		input_report_असल(input, ABS_PRESSURE, ts->pressure_max - Rt);
 
 		input_sync(input);
 		dev_vdbg(&ts->spi->dev, "%4d/%4d/%4d\n", x, y, Rt);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t ads7846_hard_irq(int irq, void *handle)
-{
-	struct ads7846 *ts = handle;
+अटल irqवापस_t ads7846_hard_irq(पूर्णांक irq, व्योम *handle)
+अणु
+	काष्ठा ads7846 *ts = handle;
 
-	return get_pendown_state(ts) ? IRQ_WAKE_THREAD : IRQ_HANDLED;
-}
+	वापस get_penकरोwn_state(ts) ? IRQ_WAKE_THREAD : IRQ_HANDLED;
+पूर्ण
 
 
-static irqreturn_t ads7846_irq(int irq, void *handle)
-{
-	struct ads7846 *ts = handle;
+अटल irqवापस_t ads7846_irq(पूर्णांक irq, व्योम *handle)
+अणु
+	काष्ठा ads7846 *ts = handle;
 
-	/* Start with a small delay before checking pendown state */
+	/* Start with a small delay beक्रमe checking penकरोwn state */
 	msleep(TS_POLL_DELAY);
 
-	while (!ts->stopped && get_pendown_state(ts)) {
+	जबतक (!ts->stopped && get_penकरोwn_state(ts)) अणु
 
-		/* pen is down, continue with the measurement */
-		ads7846_read_state(ts);
+		/* pen is करोwn, जारी with the measurement */
+		ads7846_पढ़ो_state(ts);
 
-		if (!ts->stopped)
+		अगर (!ts->stopped)
 			ads7846_report_state(ts);
 
-		wait_event_timeout(ts->wait, ts->stopped,
-				   msecs_to_jiffies(TS_POLL_PERIOD));
-	}
+		रुको_event_समयout(ts->रुको, ts->stopped,
+				   msecs_to_jअगरfies(TS_POLL_PERIOD));
+	पूर्ण
 
-	if (ts->pendown && !ts->stopped)
+	अगर (ts->penकरोwn && !ts->stopped)
 		ads7846_report_pen_up(ts);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __maybe_unused ads7846_suspend(struct device *dev)
-{
-	struct ads7846 *ts = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused ads7846_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा ads7846 *ts = dev_get_drvdata(dev);
 
 	mutex_lock(&ts->lock);
 
-	if (!ts->suspended) {
+	अगर (!ts->suspended) अणु
 
-		if (!ts->disabled)
+		अगर (!ts->disabled)
 			__ads7846_disable(ts);
 
-		if (device_may_wakeup(&ts->spi->dev))
+		अगर (device_may_wakeup(&ts->spi->dev))
 			enable_irq_wake(ts->spi->irq);
 
 		ts->suspended = true;
-	}
+	पूर्ण
 
 	mutex_unlock(&ts->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused ads7846_resume(struct device *dev)
-{
-	struct ads7846 *ts = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused ads7846_resume(काष्ठा device *dev)
+अणु
+	काष्ठा ads7846 *ts = dev_get_drvdata(dev);
 
 	mutex_lock(&ts->lock);
 
-	if (ts->suspended) {
+	अगर (ts->suspended) अणु
 
 		ts->suspended = false;
 
-		if (device_may_wakeup(&ts->spi->dev))
+		अगर (device_may_wakeup(&ts->spi->dev))
 			disable_irq_wake(ts->spi->irq);
 
-		if (!ts->disabled)
+		अगर (!ts->disabled)
 			__ads7846_enable(ts);
-	}
+	पूर्ण
 
 	mutex_unlock(&ts->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(ads7846_pm, ads7846_suspend, ads7846_resume);
+अटल SIMPLE_DEV_PM_OPS(ads7846_pm, ads7846_suspend, ads7846_resume);
 
-static int ads7846_setup_pendown(struct spi_device *spi,
-				 struct ads7846 *ts,
-				 const struct ads7846_platform_data *pdata)
-{
-	int err;
+अटल पूर्णांक ads7846_setup_penकरोwn(काष्ठा spi_device *spi,
+				 काष्ठा ads7846 *ts,
+				 स्थिर काष्ठा ads7846_platक्रमm_data *pdata)
+अणु
+	पूर्णांक err;
 
 	/*
-	 * REVISIT when the irq can be triggered active-low, or if for some
+	 * REVISIT when the irq can be triggered active-low, or अगर क्रम some
 	 * reason the touchscreen isn't hooked up, we don't need to access
-	 * the pendown state.
+	 * the penकरोwn state.
 	 */
 
-	if (pdata->get_pendown_state) {
-		ts->get_pendown_state = pdata->get_pendown_state;
-	} else if (gpio_is_valid(pdata->gpio_pendown)) {
+	अगर (pdata->get_penकरोwn_state) अणु
+		ts->get_penकरोwn_state = pdata->get_penकरोwn_state;
+	पूर्ण अन्यथा अगर (gpio_is_valid(pdata->gpio_penकरोwn)) अणु
 
-		err = gpio_request_one(pdata->gpio_pendown, GPIOF_IN,
+		err = gpio_request_one(pdata->gpio_penकरोwn, GPIOF_IN,
 				       "ads7846_pendown");
-		if (err) {
+		अगर (err) अणु
 			dev_err(&spi->dev,
 				"failed to request/setup pendown GPIO%d: %d\n",
-				pdata->gpio_pendown, err);
-			return err;
-		}
+				pdata->gpio_penकरोwn, err);
+			वापस err;
+		पूर्ण
 
-		ts->gpio_pendown = pdata->gpio_pendown;
+		ts->gpio_penकरोwn = pdata->gpio_penकरोwn;
 
-		if (pdata->gpio_pendown_debounce)
-			gpio_set_debounce(pdata->gpio_pendown,
-					  pdata->gpio_pendown_debounce);
-	} else {
+		अगर (pdata->gpio_penकरोwn_debounce)
+			gpio_set_debounce(pdata->gpio_penकरोwn,
+					  pdata->gpio_penकरोwn_debounce);
+	पूर्ण अन्यथा अणु
 		dev_err(&spi->dev, "no get_pendown_state nor gpio_pendown?\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Set up the transfers to read touchscreen state; this assumes we
- * use formula #2 for pressure, not #3.
+ * Set up the transfers to पढ़ो touchscreen state; this assumes we
+ * use क्रमmula #2 क्रम pressure, not #3.
  */
-static int ads7846_setup_spi_msg(struct ads7846 *ts,
-				  const struct ads7846_platform_data *pdata)
-{
-	struct spi_message *m = &ts->msg[0];
-	struct spi_transfer *x = ts->xfer;
-	struct ads7846_packet *packet = ts->packet;
-	int vref = pdata->keep_vref_on;
-	unsigned int count, offset = 0;
-	unsigned int cmd_idx, b;
-	unsigned long time;
-	size_t size = 0;
+अटल पूर्णांक ads7846_setup_spi_msg(काष्ठा ads7846 *ts,
+				  स्थिर काष्ठा ads7846_platक्रमm_data *pdata)
+अणु
+	काष्ठा spi_message *m = &ts->msg[0];
+	काष्ठा spi_transfer *x = ts->xfer;
+	काष्ठा ads7846_packet *packet = ts->packet;
+	पूर्णांक vref = pdata->keep_vref_on;
+	अचिन्हित पूर्णांक count, offset = 0;
+	अचिन्हित पूर्णांक cmd_idx, b;
+	अचिन्हित दीर्घ समय;
+	माप_प्रकार size = 0;
 
-	/* time per bit */
-	time = NSEC_PER_SEC / ts->spi->max_speed_hz;
+	/* समय per bit */
+	समय = NSEC_PER_SEC / ts->spi->max_speed_hz;
 
-	count = pdata->settle_delay_usecs * NSEC_PER_USEC / time;
+	count = pdata->settle_delay_usecs * NSEC_PER_USEC / समय;
 	packet->count_skip = DIV_ROUND_UP(count, 24);
 
-	if (ts->debounce_max && ts->debounce_rep)
+	अगर (ts->debounce_max && ts->debounce_rep)
 		/* ads7846_debounce_filter() is making ts->debounce_rep + 2
-		 * reads. So we need to get all samples for normal case. */
+		 * पढ़ोs. So we need to get all samples क्रम normal हाल. */
 		packet->count = ts->debounce_rep + 2;
-	else
+	अन्यथा
 		packet->count = 1;
 
-	if (ts->model == 7846)
-		packet->cmds = 5; /* x, y, z1, z2, pwdown */
-	else
-		packet->cmds = 3; /* x, y, pwdown */
+	अगर (ts->model == 7846)
+		packet->cmds = 5; /* x, y, z1, z2, pwकरोwn */
+	अन्यथा
+		packet->cmds = 3; /* x, y, pwकरोwn */
 
-	for (cmd_idx = 0; cmd_idx < packet->cmds; cmd_idx++) {
-		struct ads7846_buf_layout *l = &packet->l[cmd_idx];
-		unsigned int max_count;
+	क्रम (cmd_idx = 0; cmd_idx < packet->cmds; cmd_idx++) अणु
+		काष्ठा ads7846_buf_layout *l = &packet->l[cmd_idx];
+		अचिन्हित पूर्णांक max_count;
 
-		if (ads7846_cmd_need_settle(cmd_idx))
+		अगर (ads7846_cmd_need_settle(cmd_idx))
 			max_count = packet->count + packet->count_skip;
-		else
+		अन्यथा
 			max_count = packet->count;
 
 		l->offset = offset;
 		offset += max_count;
 		l->count = max_count;
 		l->skip = packet->count_skip;
-		size += sizeof(*packet->tx) * max_count;
-	}
+		size += माप(*packet->tx) * max_count;
+	पूर्ण
 
 	packet->tx = devm_kzalloc(&ts->spi->dev, size, GFP_KERNEL);
-	if (!packet->tx)
-		return -ENOMEM;
+	अगर (!packet->tx)
+		वापस -ENOMEM;
 
 	packet->rx = devm_kzalloc(&ts->spi->dev, size, GFP_KERNEL);
-	if (!packet->rx)
-		return -ENOMEM;
+	अगर (!packet->rx)
+		वापस -ENOMEM;
 
-	if (ts->model == 7873) {
+	अगर (ts->model == 7873) अणु
 		/*
 		 * The AD7873 is almost identical to the ADS7846
-		 * keep VREF off during differential/ratiometric
+		 * keep VREF off during dअगरferential/ratiometric
 		 * conversion modes.
 		 */
 		ts->model = 7846;
 		vref = 0;
-	}
+	पूर्ण
 
 	ts->msg_count = 1;
 	spi_message_init(m);
 	m->context = ts;
 
-	for (cmd_idx = 0; cmd_idx < packet->cmds; cmd_idx++) {
-		struct ads7846_buf_layout *l = &packet->l[cmd_idx];
+	क्रम (cmd_idx = 0; cmd_idx < packet->cmds; cmd_idx++) अणु
+		काष्ठा ads7846_buf_layout *l = &packet->l[cmd_idx];
 		u8 cmd = ads7846_get_cmd(cmd_idx, vref);
 
-		for (b = 0; b < l->count; b++)
+		क्रम (b = 0; b < l->count; b++)
 			packet->tx[l->offset + b].cmd = cmd;
-	}
+	पूर्ण
 
 	x->tx_buf = packet->tx;
 	x->rx_buf = packet->rx;
 	x->len = size;
 	spi_message_add_tail(x, m);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id ads7846_dt_ids[] = {
-	{ .compatible = "ti,tsc2046",	.data = (void *) 7846 },
-	{ .compatible = "ti,ads7843",	.data = (void *) 7843 },
-	{ .compatible = "ti,ads7845",	.data = (void *) 7845 },
-	{ .compatible = "ti,ads7846",	.data = (void *) 7846 },
-	{ .compatible = "ti,ads7873",	.data = (void *) 7873 },
-	{ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id ads7846_dt_ids[] = अणु
+	अणु .compatible = "ti,tsc2046",	.data = (व्योम *) 7846 पूर्ण,
+	अणु .compatible = "ti,ads7843",	.data = (व्योम *) 7843 पूर्ण,
+	अणु .compatible = "ti,ads7845",	.data = (व्योम *) 7845 पूर्ण,
+	अणु .compatible = "ti,ads7846",	.data = (व्योम *) 7846 पूर्ण,
+	अणु .compatible = "ti,ads7873",	.data = (व्योम *) 7873 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ads7846_dt_ids);
 
-static const struct ads7846_platform_data *ads7846_probe_dt(struct device *dev)
-{
-	struct ads7846_platform_data *pdata;
-	struct device_node *node = dev->of_node;
-	const struct of_device_id *match;
+अटल स्थिर काष्ठा ads7846_platक्रमm_data *ads7846_probe_dt(काष्ठा device *dev)
+अणु
+	काष्ठा ads7846_platक्रमm_data *pdata;
+	काष्ठा device_node *node = dev->of_node;
+	स्थिर काष्ठा of_device_id *match;
 	u32 value;
 
-	if (!node) {
+	अगर (!node) अणु
 		dev_err(dev, "Device does not have associated DT data\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	match = of_match_device(ads7846_dt_ids, dev);
-	if (!match) {
+	अगर (!match) अणु
 		dev_err(dev, "Unknown device model\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return ERR_PTR(-ENOMEM);
+	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस ERR_PTR(-ENOMEM);
 
-	pdata->model = (unsigned long)match->data;
+	pdata->model = (अचिन्हित दीर्घ)match->data;
 
-	of_property_read_u16(node, "ti,vref-delay-usecs",
+	of_property_पढ़ो_u16(node, "ti,vref-delay-usecs",
 			     &pdata->vref_delay_usecs);
-	of_property_read_u16(node, "ti,vref-mv", &pdata->vref_mv);
-	pdata->keep_vref_on = of_property_read_bool(node, "ti,keep-vref-on");
+	of_property_पढ़ो_u16(node, "ti,vref-mv", &pdata->vref_mv);
+	pdata->keep_vref_on = of_property_पढ़ो_bool(node, "ti,keep-vref-on");
 
-	pdata->swap_xy = of_property_read_bool(node, "ti,swap-xy");
+	pdata->swap_xy = of_property_पढ़ो_bool(node, "ti,swap-xy");
 
-	of_property_read_u16(node, "ti,settle-delay-usec",
+	of_property_पढ़ो_u16(node, "ti,settle-delay-usec",
 			     &pdata->settle_delay_usecs);
-	of_property_read_u16(node, "ti,penirq-recheck-delay-usecs",
+	of_property_पढ़ो_u16(node, "ti,penirq-recheck-delay-usecs",
 			     &pdata->penirq_recheck_delay_usecs);
 
-	of_property_read_u16(node, "ti,x-plate-ohms", &pdata->x_plate_ohms);
-	of_property_read_u16(node, "ti,y-plate-ohms", &pdata->y_plate_ohms);
+	of_property_पढ़ो_u16(node, "ti,x-plate-ohms", &pdata->x_plate_ohms);
+	of_property_पढ़ो_u16(node, "ti,y-plate-ohms", &pdata->y_plate_ohms);
 
-	of_property_read_u16(node, "ti,x-min", &pdata->x_min);
-	of_property_read_u16(node, "ti,y-min", &pdata->y_min);
-	of_property_read_u16(node, "ti,x-max", &pdata->x_max);
-	of_property_read_u16(node, "ti,y-max", &pdata->y_max);
+	of_property_पढ़ो_u16(node, "ti,x-min", &pdata->x_min);
+	of_property_पढ़ो_u16(node, "ti,y-min", &pdata->y_min);
+	of_property_पढ़ो_u16(node, "ti,x-max", &pdata->x_max);
+	of_property_पढ़ो_u16(node, "ti,y-max", &pdata->y_max);
 
 	/*
-	 * touchscreen-max-pressure gets parsed during
+	 * touchscreen-max-pressure माला_लो parsed during
 	 * touchscreen_parse_properties()
 	 */
-	of_property_read_u16(node, "ti,pressure-min", &pdata->pressure_min);
-	if (!of_property_read_u32(node, "touchscreen-min-pressure", &value))
+	of_property_पढ़ो_u16(node, "ti,pressure-min", &pdata->pressure_min);
+	अगर (!of_property_पढ़ो_u32(node, "touchscreen-min-pressure", &value))
 		pdata->pressure_min = (u16) value;
-	of_property_read_u16(node, "ti,pressure-max", &pdata->pressure_max);
+	of_property_पढ़ो_u16(node, "ti,pressure-max", &pdata->pressure_max);
 
-	of_property_read_u16(node, "ti,debounce-max", &pdata->debounce_max);
-	if (!of_property_read_u32(node, "touchscreen-average-samples", &value))
+	of_property_पढ़ो_u16(node, "ti,debounce-max", &pdata->debounce_max);
+	अगर (!of_property_पढ़ो_u32(node, "touchscreen-average-samples", &value))
 		pdata->debounce_max = (u16) value;
-	of_property_read_u16(node, "ti,debounce-tol", &pdata->debounce_tol);
-	of_property_read_u16(node, "ti,debounce-rep", &pdata->debounce_rep);
+	of_property_पढ़ो_u16(node, "ti,debounce-tol", &pdata->debounce_tol);
+	of_property_पढ़ो_u16(node, "ti,debounce-rep", &pdata->debounce_rep);
 
-	of_property_read_u32(node, "ti,pendown-gpio-debounce",
-			     &pdata->gpio_pendown_debounce);
+	of_property_पढ़ो_u32(node, "ti,pendown-gpio-debounce",
+			     &pdata->gpio_penकरोwn_debounce);
 
-	pdata->wakeup = of_property_read_bool(node, "wakeup-source") ||
-			of_property_read_bool(node, "linux,wakeup");
+	pdata->wakeup = of_property_पढ़ो_bool(node, "wakeup-source") ||
+			of_property_पढ़ो_bool(node, "linux,wakeup");
 
-	pdata->gpio_pendown = of_get_named_gpio(dev->of_node, "pendown-gpio", 0);
+	pdata->gpio_penकरोwn = of_get_named_gpio(dev->of_node, "pendown-gpio", 0);
 
-	return pdata;
-}
-#else
-static const struct ads7846_platform_data *ads7846_probe_dt(struct device *dev)
-{
+	वापस pdata;
+पूर्ण
+#अन्यथा
+अटल स्थिर काष्ठा ads7846_platक्रमm_data *ads7846_probe_dt(काष्ठा device *dev)
+अणु
 	dev_err(dev, "no platform data defined\n");
-	return ERR_PTR(-EINVAL);
-}
-#endif
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
+#पूर्ण_अगर
 
-static int ads7846_probe(struct spi_device *spi)
-{
-	const struct ads7846_platform_data *pdata;
-	struct ads7846 *ts;
-	struct ads7846_packet *packet;
-	struct input_dev *input_dev;
-	unsigned long irq_flags;
-	int err;
+अटल पूर्णांक ads7846_probe(काष्ठा spi_device *spi)
+अणु
+	स्थिर काष्ठा ads7846_platक्रमm_data *pdata;
+	काष्ठा ads7846 *ts;
+	काष्ठा ads7846_packet *packet;
+	काष्ठा input_dev *input_dev;
+	अचिन्हित दीर्घ irq_flags;
+	पूर्णांक err;
 
-	if (!spi->irq) {
+	अगर (!spi->irq) अणु
 		dev_dbg(&spi->dev, "no IRQ?\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* don't exceed max specified sample rate */
-	if (spi->max_speed_hz > (125000 * SAMPLE_BITS)) {
+	/* करोn't exceed max specअगरied sample rate */
+	अगर (spi->max_speed_hz > (125000 * SAMPLE_BITS)) अणु
 		dev_err(&spi->dev, "f(sample) %d KHz?\n",
 				(spi->max_speed_hz/SAMPLE_BITS)/1000);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * We'd set TX word size 8 bits and RX word size to 13 bits ... except
-	 * that even if the hardware can do that, the SPI controller driver
+	 * that even अगर the hardware can करो that, the SPI controller driver
 	 * may not.  So we stick to very-portable 8 bit words, both RX and TX.
 	 */
 	spi->bits_per_word = 8;
 	spi->mode &= ~SPI_MODE_X_MASK;
 	spi->mode |= SPI_MODE_0;
 	err = spi_setup(spi);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	ts = kzalloc(sizeof(struct ads7846), GFP_KERNEL);
-	packet = kzalloc(sizeof(struct ads7846_packet), GFP_KERNEL);
+	ts = kzalloc(माप(काष्ठा ads7846), GFP_KERNEL);
+	packet = kzalloc(माप(काष्ठा ads7846_packet), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	if (!ts || !packet || !input_dev) {
+	अगर (!ts || !packet || !input_dev) अणु
 		err = -ENOMEM;
-		goto err_free_mem;
-	}
+		जाओ err_मुक्त_mem;
+	पूर्ण
 
 	spi_set_drvdata(spi, ts);
 
@@ -1260,54 +1261,54 @@ static int ads7846_probe(struct spi_device *spi)
 	ts->input = input_dev;
 
 	mutex_init(&ts->lock);
-	init_waitqueue_head(&ts->wait);
+	init_रुकोqueue_head(&ts->रुको);
 
 	pdata = dev_get_platdata(&spi->dev);
-	if (!pdata) {
+	अगर (!pdata) अणु
 		pdata = ads7846_probe_dt(&spi->dev);
-		if (IS_ERR(pdata)) {
+		अगर (IS_ERR(pdata)) अणु
 			err = PTR_ERR(pdata);
-			goto err_free_mem;
-		}
-	}
+			जाओ err_मुक्त_mem;
+		पूर्ण
+	पूर्ण
 
 	ts->model = pdata->model ? : 7846;
 	ts->vref_delay_usecs = pdata->vref_delay_usecs ? : 100;
 	ts->x_plate_ohms = pdata->x_plate_ohms ? : 400;
 	ts->vref_mv = pdata->vref_mv;
 
-	if (pdata->filter != NULL) {
-		if (pdata->filter_init != NULL) {
+	अगर (pdata->filter != शून्य) अणु
+		अगर (pdata->filter_init != शून्य) अणु
 			err = pdata->filter_init(pdata, &ts->filter_data);
-			if (err < 0)
-				goto err_free_mem;
-		}
+			अगर (err < 0)
+				जाओ err_मुक्त_mem;
+		पूर्ण
 		ts->filter = pdata->filter;
 		ts->filter_cleanup = pdata->filter_cleanup;
-	} else if (pdata->debounce_max) {
+	पूर्ण अन्यथा अगर (pdata->debounce_max) अणु
 		ts->debounce_max = pdata->debounce_max;
-		if (ts->debounce_max < 2)
+		अगर (ts->debounce_max < 2)
 			ts->debounce_max = 2;
 		ts->debounce_tol = pdata->debounce_tol;
 		ts->debounce_rep = pdata->debounce_rep;
 		ts->filter = ads7846_debounce_filter;
 		ts->filter_data = ts;
-	} else {
+	पूर्ण अन्यथा अणु
 		ts->filter = ads7846_no_filter;
-	}
+	पूर्ण
 
-	err = ads7846_setup_pendown(spi, ts, pdata);
-	if (err)
-		goto err_cleanup_filter;
+	err = ads7846_setup_penकरोwn(spi, ts, pdata);
+	अगर (err)
+		जाओ err_cleanup_filter;
 
-	if (pdata->penirq_recheck_delay_usecs)
+	अगर (pdata->penirq_recheck_delay_usecs)
 		ts->penirq_recheck_delay_usecs =
 				pdata->penirq_recheck_delay_usecs;
 
-	ts->wait_for_sync = pdata->wait_for_sync ? : null_wait_for_sync;
+	ts->रुको_क्रम_sync = pdata->रुको_क्रम_sync ? : null_रुको_क्रम_sync;
 
-	snprintf(ts->phys, sizeof(ts->phys), "%s/input0", dev_name(&spi->dev));
-	snprintf(ts->name, sizeof(ts->name), "ADS%d Touchscreen", ts->model);
+	snम_लिखो(ts->phys, माप(ts->phys), "%s/input0", dev_name(&spi->dev));
+	snम_लिखो(ts->name, माप(ts->name), "ADS%d Touchscreen", ts->model);
 
 	input_dev->name = ts->name;
 	input_dev->phys = ts->phys;
@@ -1315,168 +1316,168 @@ static int ads7846_probe(struct spi_device *spi)
 
 	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 	input_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
-	input_set_abs_params(input_dev, ABS_X,
+	input_set_असल_params(input_dev, ABS_X,
 			pdata->x_min ? : 0,
 			pdata->x_max ? : MAX_12BIT,
 			0, 0);
-	input_set_abs_params(input_dev, ABS_Y,
+	input_set_असल_params(input_dev, ABS_Y,
 			pdata->y_min ? : 0,
 			pdata->y_max ? : MAX_12BIT,
 			0, 0);
-	input_set_abs_params(input_dev, ABS_PRESSURE,
+	input_set_असल_params(input_dev, ABS_PRESSURE,
 			pdata->pressure_min, pdata->pressure_max, 0, 0);
 
 	/*
-	 * Parse common framework properties. Must be done here to ensure the
-	 * correct behaviour in case of using the legacy vendor bindings. The
-	 * general binding value overrides the vendor specific one.
+	 * Parse common framework properties. Must be करोne here to ensure the
+	 * correct behaviour in हाल of using the legacy venकरोr bindings. The
+	 * general binding value overrides the venकरोr specअगरic one.
 	 */
 	touchscreen_parse_properties(ts->input, false, &ts->core_prop);
-	ts->pressure_max = input_abs_get_max(input_dev, ABS_PRESSURE) ? : ~0;
+	ts->pressure_max = input_असल_get_max(input_dev, ABS_PRESSURE) ? : ~0;
 
 	/*
-	 * Check if legacy ti,swap-xy binding is used instead of
+	 * Check अगर legacy ti,swap-xy binding is used instead of
 	 * touchscreen-swapped-x-y
 	 */
-	if (!ts->core_prop.swap_x_y && pdata->swap_xy) {
-		swap(input_dev->absinfo[ABS_X], input_dev->absinfo[ABS_Y]);
+	अगर (!ts->core_prop.swap_x_y && pdata->swap_xy) अणु
+		swap(input_dev->असलinfo[ABS_X], input_dev->असलinfo[ABS_Y]);
 		ts->core_prop.swap_x_y = true;
-	}
+	पूर्ण
 
 	ads7846_setup_spi_msg(ts, pdata);
 
 	ts->reg = regulator_get(&spi->dev, "vcc");
-	if (IS_ERR(ts->reg)) {
+	अगर (IS_ERR(ts->reg)) अणु
 		err = PTR_ERR(ts->reg);
 		dev_err(&spi->dev, "unable to get regulator: %d\n", err);
-		goto err_free_gpio;
-	}
+		जाओ err_मुक्त_gpio;
+	पूर्ण
 
 	err = regulator_enable(ts->reg);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&spi->dev, "unable to enable regulator: %d\n", err);
-		goto err_put_regulator;
-	}
+		जाओ err_put_regulator;
+	पूर्ण
 
 	irq_flags = pdata->irq_flags ? : IRQF_TRIGGER_FALLING;
 	irq_flags |= IRQF_ONESHOT;
 
-	err = request_threaded_irq(spi->irq, ads7846_hard_irq, ads7846_irq,
+	err = request_thपढ़ोed_irq(spi->irq, ads7846_hard_irq, ads7846_irq,
 				   irq_flags, spi->dev.driver->name, ts);
-	if (err && !pdata->irq_flags) {
+	अगर (err && !pdata->irq_flags) अणु
 		dev_info(&spi->dev,
 			"trying pin change workaround on irq %d\n", spi->irq);
 		irq_flags |= IRQF_TRIGGER_RISING;
-		err = request_threaded_irq(spi->irq,
+		err = request_thपढ़ोed_irq(spi->irq,
 				  ads7846_hard_irq, ads7846_irq,
 				  irq_flags, spi->dev.driver->name, ts);
-	}
+	पूर्ण
 
-	if (err) {
+	अगर (err) अणु
 		dev_dbg(&spi->dev, "irq %d busy?\n", spi->irq);
-		goto err_disable_regulator;
-	}
+		जाओ err_disable_regulator;
+	पूर्ण
 
-	err = ads784x_hwmon_register(spi, ts);
-	if (err)
-		goto err_free_irq;
+	err = ads784x_hwmon_रेजिस्टर(spi, ts);
+	अगर (err)
+		जाओ err_मुक्त_irq;
 
 	dev_info(&spi->dev, "touchscreen, irq %d\n", spi->irq);
 
 	/*
-	 * Take a first sample, leaving nPENIRQ active and vREF off; avoid
-	 * the touchscreen, in case it's not connected.
+	 * Take a first sample, leaving nPENIRQ active and vREF off; aव्योम
+	 * the touchscreen, in हाल it's not connected.
 	 */
-	if (ts->model == 7845)
-		ads7845_read12_ser(&spi->dev, PWRDOWN);
-	else
-		(void) ads7846_read12_ser(&spi->dev, READ_12BIT_SER(vaux));
+	अगर (ts->model == 7845)
+		ads7845_पढ़ो12_ser(&spi->dev, PWRDOWN);
+	अन्यथा
+		(व्योम) ads7846_पढ़ो12_ser(&spi->dev, READ_12BIT_SER(vaux));
 
 	err = sysfs_create_group(&spi->dev.kobj, &ads784x_attr_group);
-	if (err)
-		goto err_remove_hwmon;
+	अगर (err)
+		जाओ err_हटाओ_hwmon;
 
-	err = input_register_device(input_dev);
-	if (err)
-		goto err_remove_attr_group;
+	err = input_रेजिस्टर_device(input_dev);
+	अगर (err)
+		जाओ err_हटाओ_attr_group;
 
 	device_init_wakeup(&spi->dev, pdata->wakeup);
 
 	/*
-	 * If device does not carry platform data we must have allocated it
+	 * If device करोes not carry platक्रमm data we must have allocated it
 	 * when parsing DT data.
 	 */
-	if (!dev_get_platdata(&spi->dev))
-		devm_kfree(&spi->dev, (void *)pdata);
+	अगर (!dev_get_platdata(&spi->dev))
+		devm_kमुक्त(&spi->dev, (व्योम *)pdata);
 
-	return 0;
+	वापस 0;
 
- err_remove_attr_group:
-	sysfs_remove_group(&spi->dev.kobj, &ads784x_attr_group);
- err_remove_hwmon:
-	ads784x_hwmon_unregister(spi, ts);
- err_free_irq:
-	free_irq(spi->irq, ts);
+ err_हटाओ_attr_group:
+	sysfs_हटाओ_group(&spi->dev.kobj, &ads784x_attr_group);
+ err_हटाओ_hwmon:
+	ads784x_hwmon_unरेजिस्टर(spi, ts);
+ err_मुक्त_irq:
+	मुक्त_irq(spi->irq, ts);
  err_disable_regulator:
 	regulator_disable(ts->reg);
  err_put_regulator:
 	regulator_put(ts->reg);
- err_free_gpio:
-	if (!ts->get_pendown_state)
-		gpio_free(ts->gpio_pendown);
+ err_मुक्त_gpio:
+	अगर (!ts->get_penकरोwn_state)
+		gpio_मुक्त(ts->gpio_penकरोwn);
  err_cleanup_filter:
-	if (ts->filter_cleanup)
+	अगर (ts->filter_cleanup)
 		ts->filter_cleanup(ts->filter_data);
- err_free_mem:
-	input_free_device(input_dev);
-	kfree(packet);
-	kfree(ts);
-	return err;
-}
+ err_मुक्त_mem:
+	input_मुक्त_device(input_dev);
+	kमुक्त(packet);
+	kमुक्त(ts);
+	वापस err;
+पूर्ण
 
-static int ads7846_remove(struct spi_device *spi)
-{
-	struct ads7846 *ts = spi_get_drvdata(spi);
+अटल पूर्णांक ads7846_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा ads7846 *ts = spi_get_drvdata(spi);
 
-	sysfs_remove_group(&spi->dev.kobj, &ads784x_attr_group);
+	sysfs_हटाओ_group(&spi->dev.kobj, &ads784x_attr_group);
 
 	ads7846_disable(ts);
-	free_irq(ts->spi->irq, ts);
+	मुक्त_irq(ts->spi->irq, ts);
 
-	input_unregister_device(ts->input);
+	input_unरेजिस्टर_device(ts->input);
 
-	ads784x_hwmon_unregister(spi, ts);
+	ads784x_hwmon_unरेजिस्टर(spi, ts);
 
 	regulator_put(ts->reg);
 
-	if (!ts->get_pendown_state) {
+	अगर (!ts->get_penकरोwn_state) अणु
 		/*
-		 * If we are not using specialized pendown method we must
+		 * If we are not using specialized penकरोwn method we must
 		 * have been relying on gpio we set up ourselves.
 		 */
-		gpio_free(ts->gpio_pendown);
-	}
+		gpio_मुक्त(ts->gpio_penकरोwn);
+	पूर्ण
 
-	if (ts->filter_cleanup)
+	अगर (ts->filter_cleanup)
 		ts->filter_cleanup(ts->filter_data);
 
-	kfree(ts->packet);
-	kfree(ts);
+	kमुक्त(ts->packet);
+	kमुक्त(ts);
 
 	dev_dbg(&spi->dev, "unregistered touchscreen\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct spi_driver ads7846_driver = {
-	.driver = {
+अटल काष्ठा spi_driver ads7846_driver = अणु
+	.driver = अणु
 		.name	= "ads7846",
 		.pm	= &ads7846_pm,
 		.of_match_table = of_match_ptr(ads7846_dt_ids),
-	},
+	पूर्ण,
 	.probe		= ads7846_probe,
-	.remove		= ads7846_remove,
-};
+	.हटाओ		= ads7846_हटाओ,
+पूर्ण;
 
 module_spi_driver(ads7846_driver);
 

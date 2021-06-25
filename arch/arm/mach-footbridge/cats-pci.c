@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/arch/arm/mach-footbridge/cats-pci.c
  *
- * PCI bios-type initialisation for PCI machines
+ * PCI bios-type initialisation क्रम PCI machines
  *
  * Bits taken from various places.
  */
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
 
-#include <asm/irq.h>
-#include <asm/mach/pci.h>
-#include <asm/mach-types.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/mach/pci.h>
+#समावेश <यंत्र/mach-types.h>
 
-/* cats host-specific stuff */
-static int irqmap_cats[] = { IRQ_PCI, IRQ_IN0, IRQ_IN1, IRQ_IN3 };
+/* cats host-specअगरic stuff */
+अटल पूर्णांक irqmap_cats[] = अणु IRQ_PCI, IRQ_IN0, IRQ_IN1, IRQ_IN3 पूर्ण;
 
-static u8 cats_no_swizzle(struct pci_dev *dev, u8 *pin)
-{
-	return 0;
-}
+अटल u8 cats_no_swizzle(काष्ठा pci_dev *dev, u8 *pin)
+अणु
+	वापस 0;
+पूर्ण
 
-static int cats_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
-	if (dev->irq >= 255)
-		return -1;	/* not a valid interrupt. */
+अटल पूर्णांक cats_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
+	अगर (dev->irq >= 255)
+		वापस -1;	/* not a valid पूर्णांकerrupt. */
 
-	if (dev->irq >= 128)
-		return dev->irq & 0x1f;
+	अगर (dev->irq >= 128)
+		वापस dev->irq & 0x1f;
 
-	if (dev->irq >= 1 && dev->irq <= 4)
-		return irqmap_cats[dev->irq - 1];
+	अगर (dev->irq >= 1 && dev->irq <= 4)
+		वापस irqmap_cats[dev->irq - 1];
 
-	if (dev->irq != 0)
-		printk("PCI: device %02x:%02x has unknown irq line %x\n",
+	अगर (dev->irq != 0)
+		prपूर्णांकk("PCI: device %02x:%02x has unknown irq line %x\n",
 		       dev->bus->number, dev->devfn, dev->irq);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /*
- * why not the standard PCI swizzle?  does this prevent 4-port tulip
+ * why not the standard PCI swizzle?  करोes this prevent 4-port tulip
  * cards being used (ie, pci-pci bridge based cards)?
  */
-static struct hw_pci cats_pci __initdata = {
+अटल काष्ठा hw_pci cats_pci __initdata = अणु
 	.swizzle		= cats_no_swizzle,
 	.map_irq		= cats_map_irq,
 	.nr_controllers		= 1,
@@ -52,13 +53,13 @@ static struct hw_pci cats_pci __initdata = {
 	.setup			= dc21285_setup,
 	.preinit		= dc21285_preinit,
 	.postinit		= dc21285_postinit,
-};
+पूर्ण;
 
-static int __init cats_pci_init(void)
-{
-	if (machine_is_cats())
+अटल पूर्णांक __init cats_pci_init(व्योम)
+अणु
+	अगर (machine_is_cats())
 		pci_common_init(&cats_pci);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 subsys_initcall(cats_pci_init);

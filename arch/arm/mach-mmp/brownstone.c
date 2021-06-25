@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-mmp/brownstone.c
  *
- *  Support for the Marvell Brownstone Development Platform.
+ *  Support क्रम the Marvell Brownstone Development Platक्रमm.
  *
  *  Copyright (C) 2009-2010 Marvell International Ltd.
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/gpio-pxa.h>
-#include <linux/gpio/machine.h>
-#include <linux/regulator/machine.h>
-#include <linux/regulator/max8649.h>
-#include <linux/regulator/fixed.h>
-#include <linux/mfd/max8925.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/gpio-pxa.h>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/regulator/max8649.h>
+#समावेश <linux/regulator/fixed.h>
+#समावेश <linux/mfd/max8925.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include "addr-map.h"
-#include "mfp-mmp2.h"
-#include "mmp2.h"
-#include "irqs.h"
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश "addr-map.h"
+#समावेश "mfp-mmp2.h"
+#समावेश "mmp2.h"
+#समावेश "irqs.h"
 
-#include "common.h"
+#समावेश "common.h"
 
-#define BROWNSTONE_NR_IRQS	(MMP_NR_IRQS + 40)
+#घोषणा BROWNSTONE_NR_IRQS	(MMP_NR_IRQS + 40)
 
-#define GPIO_5V_ENABLE		(89)
+#घोषणा GPIO_5V_ENABLE		(89)
 
-static unsigned long brownstone_pin_config[] __initdata = {
+अटल अचिन्हित दीर्घ brownstone_pin_config[] __initdata = अणु
 	/* UART1 */
 	GPIO29_UART1_RXD,
 	GPIO30_UART1_TXD,
@@ -101,121 +102,121 @@ static unsigned long brownstone_pin_config[] __initdata = {
 
 	/* 5V regulator */
 	GPIO89_GPIO,
-};
+पूर्ण;
 
-static struct pxa_gpio_platform_data mmp2_gpio_pdata = {
+अटल काष्ठा pxa_gpio_platक्रमm_data mmp2_gpio_pdata = अणु
 	.irq_base	= MMP_GPIO_TO_IRQ(0),
-};
+पूर्ण;
 
-static struct regulator_consumer_supply max8649_supply[] = {
-	REGULATOR_SUPPLY("vcc_core", NULL),
-};
+अटल काष्ठा regulator_consumer_supply max8649_supply[] = अणु
+	REGULATOR_SUPPLY("vcc_core", शून्य),
+पूर्ण;
 
-static struct regulator_init_data max8649_init_data = {
-	.constraints	= {
+अटल काष्ठा regulator_init_data max8649_init_data = अणु
+	.स्थिरraपूर्णांकs	= अणु
 		.name		= "vcc_core range",
 		.min_uV		= 1150000,
 		.max_uV		= 1280000,
 		.always_on	= 1,
 		.boot_on	= 1,
 		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE,
-	},
+	पूर्ण,
 	.num_consumer_supplies	= 1,
 	.consumer_supplies	= &max8649_supply[0],
-};
+पूर्ण;
 
-static struct max8649_platform_data brownstone_max8649_info = {
+अटल काष्ठा max8649_platक्रमm_data brownstone_max8649_info = अणु
 	.mode		= 2,	/* VID1 = 1, VID0 = 0 */
 	.extclk		= 0,
 	.ramp_timing	= MAX8649_RAMP_32MV,
 	.regulator	= &max8649_init_data,
-};
+पूर्ण;
 
-static struct regulator_consumer_supply brownstone_v_5vp_supplies[] = {
-	REGULATOR_SUPPLY("v_5vp", NULL),
-};
+अटल काष्ठा regulator_consumer_supply brownstone_v_5vp_supplies[] = अणु
+	REGULATOR_SUPPLY("v_5vp", शून्य),
+पूर्ण;
 
-static struct regulator_init_data brownstone_v_5vp_data = {
-	.constraints	= {
+अटल काष्ठा regulator_init_data brownstone_v_5vp_data = अणु
+	.स्थिरraपूर्णांकs	= अणु
 		.valid_ops_mask		= REGULATOR_CHANGE_STATUS,
-	},
+	पूर्ण,
 	.num_consumer_supplies	= ARRAY_SIZE(brownstone_v_5vp_supplies),
 	.consumer_supplies	= brownstone_v_5vp_supplies,
-};
+पूर्ण;
 
-static struct fixed_voltage_config brownstone_v_5vp = {
+अटल काष्ठा fixed_voltage_config brownstone_v_5vp = अणु
 	.supply_name		= "v_5vp",
 	.microvolts		= 5000000,
 	.enabled_at_boot	= 1,
 	.init_data		= &brownstone_v_5vp_data,
-};
+पूर्ण;
 
-static struct platform_device brownstone_v_5vp_device = {
+अटल काष्ठा platक्रमm_device brownstone_v_5vp_device = अणु
 	.name		= "reg-fixed-voltage",
 	.id		= 1,
-	.dev = {
-		.platform_data = &brownstone_v_5vp,
-	},
-};
+	.dev = अणु
+		.platक्रमm_data = &brownstone_v_5vp,
+	पूर्ण,
+पूर्ण;
 
-static struct gpiod_lookup_table brownstone_v_5vp_gpiod_table = {
+अटल काष्ठा gpiod_lookup_table brownstone_v_5vp_gpiod_table = अणु
 	.dev_id = "reg-fixed-voltage.1", /* .id set to 1 above */
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", GPIO_5V_ENABLE,
-			    NULL, GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+			    शून्य, GPIO_ACTIVE_HIGH),
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct max8925_platform_data brownstone_max8925_info = {
+अटल काष्ठा max8925_platक्रमm_data brownstone_max8925_info = अणु
 	.irq_base		= MMP_NR_IRQS,
-};
+पूर्ण;
 
-static struct i2c_board_info brownstone_twsi1_info[] = {
-	[0] = {
+अटल काष्ठा i2c_board_info brownstone_twsi1_info[] = अणु
+	[0] = अणु
 		.type		= "max8649",
 		.addr		= 0x60,
-		.platform_data	= &brownstone_max8649_info,
-	},
-	[1] = {
+		.platक्रमm_data	= &brownstone_max8649_info,
+	पूर्ण,
+	[1] = अणु
 		.type		= "max8925",
 		.addr		= 0x3c,
 		.irq		= IRQ_MMP2_PMIC,
-		.platform_data	= &brownstone_max8925_info,
-	},
-};
+		.platक्रमm_data	= &brownstone_max8925_info,
+	पूर्ण,
+पूर्ण;
 
-static struct sdhci_pxa_platdata mmp2_sdh_platdata_mmc0 = {
+अटल काष्ठा sdhci_pxa_platdata mmp2_sdh_platdata_mmc0 = अणु
 	.clk_delay_cycles = 0x1f,
-};
+पूर्ण;
 
-static struct sdhci_pxa_platdata mmp2_sdh_platdata_mmc2 = {
+अटल काष्ठा sdhci_pxa_platdata mmp2_sdh_platdata_mmc2 = अणु
 	.clk_delay_cycles = 0x1f,
 	.flags = PXA_FLAG_CARD_PERMANENT
 		| PXA_FLAG_SD_8_BIT_CAPABLE_SLOT,
-};
+पूर्ण;
 
-static struct sram_platdata mmp2_asram_platdata = {
+अटल काष्ठा sram_platdata mmp2_asram_platdata = अणु
 	.pool_name	= "asram",
 	.granularity	= SRAM_GRANULARITY,
-};
+पूर्ण;
 
-static struct sram_platdata mmp2_isram_platdata = {
+अटल काष्ठा sram_platdata mmp2_isram_platdata = अणु
 	.pool_name	= "isram",
 	.granularity	= SRAM_GRANULARITY,
-};
+पूर्ण;
 
-static void __init brownstone_init(void)
-{
+अटल व्योम __init brownstone_init(व्योम)
+अणु
 	mfp_config(ARRAY_AND_SIZE(brownstone_pin_config));
 
 	/* on-chip devices */
 	mmp2_add_uart(1);
 	mmp2_add_uart(3);
-	platform_device_add_data(&mmp2_device_gpio, &mmp2_gpio_pdata,
-				 sizeof(struct pxa_gpio_platform_data));
-	platform_device_register(&mmp2_device_gpio);
-	mmp2_add_twsi(1, NULL, ARRAY_AND_SIZE(brownstone_twsi1_info));
+	platक्रमm_device_add_data(&mmp2_device_gpio, &mmp2_gpio_pdata,
+				 माप(काष्ठा pxa_gpio_platक्रमm_data));
+	platक्रमm_device_रेजिस्टर(&mmp2_device_gpio);
+	mmp2_add_twsi(1, शून्य, ARRAY_AND_SIZE(brownstone_twsi1_info));
 	mmp2_add_sdhost(0, &mmp2_sdh_platdata_mmc0); /* SD/MMC */
 	mmp2_add_sdhost(2, &mmp2_sdh_platdata_mmc2); /* eMMC */
 	mmp2_add_asram(&mmp2_asram_platdata);
@@ -223,15 +224,15 @@ static void __init brownstone_init(void)
 
 	/* enable 5v regulator */
 	gpiod_add_lookup_table(&brownstone_v_5vp_gpiod_table);
-	platform_device_register(&brownstone_v_5vp_device);
-}
+	platक्रमm_device_रेजिस्टर(&brownstone_v_5vp_device);
+पूर्ण
 
 MACHINE_START(BROWNSTONE, "Brownstone Development Platform")
-	/* Maintainer: Haojian Zhuang <haojian.zhuang@marvell.com> */
+	/* Maपूर्णांकainer: Haojian Zhuang <haojian.zhuang@marvell.com> */
 	.map_io		= mmp_map_io,
 	.nr_irqs	= BROWNSTONE_NR_IRQS,
 	.init_irq	= mmp2_init_irq,
-	.init_time	= mmp2_timer_init,
+	.init_समय	= mmp2_समयr_init,
 	.init_machine	= brownstone_init,
 	.restart	= mmp_restart,
 MACHINE_END

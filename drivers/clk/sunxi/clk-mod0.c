@@ -1,376 +1,377 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Copyright 2013 Emilio López
+ * Copyright 2013 Emilio Lथकpez
  *
- * Emilio López <emilio@elopez.com.ar>
+ * Emilio Lथकpez <emilio@elopez.com.ar>
  */
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/io.h>
-#include <linux/of_address.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_address.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "clk-factors.h"
+#समावेश "clk-factors.h"
 
 /*
- * sun4i_a10_get_mod0_factors() - calculates m, n factors for MOD0-style clocks
+ * sun4i_a10_get_mod0_factors() - calculates m, n factors क्रम MOD0-style घड़ीs
  * MOD0 rate is calculated as follows
  * rate = (parent_rate >> p) / (m + 1);
  */
 
-static void sun4i_a10_get_mod0_factors(struct factors_request *req)
-{
-	u8 div, calcm, calcp;
+अटल व्योम sun4i_a10_get_mod0_factors(काष्ठा factors_request *req)
+अणु
+	u8 भाग, calcm, calcp;
 
-	/* These clocks can only divide, so we will never be able to achieve
+	/* These घड़ीs can only भागide, so we will never be able to achieve
 	 * frequencies higher than the parent frequency */
-	if (req->rate > req->parent_rate)
+	अगर (req->rate > req->parent_rate)
 		req->rate = req->parent_rate;
 
-	div = DIV_ROUND_UP(req->parent_rate, req->rate);
+	भाग = DIV_ROUND_UP(req->parent_rate, req->rate);
 
-	if (div < 16)
+	अगर (भाग < 16)
 		calcp = 0;
-	else if (div / 2 < 16)
+	अन्यथा अगर (भाग / 2 < 16)
 		calcp = 1;
-	else if (div / 4 < 16)
+	अन्यथा अगर (भाग / 4 < 16)
 		calcp = 2;
-	else
+	अन्यथा
 		calcp = 3;
 
-	calcm = DIV_ROUND_UP(div, 1 << calcp);
+	calcm = DIV_ROUND_UP(भाग, 1 << calcp);
 
 	req->rate = (req->parent_rate >> calcp) / calcm;
 	req->m = calcm - 1;
 	req->p = calcp;
-}
+पूर्ण
 
 /* user manual says "n" but it's really "p" */
-static const struct clk_factors_config sun4i_a10_mod0_config = {
-	.mshift = 0,
+अटल स्थिर काष्ठा clk_factors_config sun4i_a10_mod0_config = अणु
+	.mshअगरt = 0,
 	.mwidth = 4,
-	.pshift = 16,
+	.pshअगरt = 16,
 	.pwidth = 2,
-};
+पूर्ण;
 
-static const struct factors_data sun4i_a10_mod0_data = {
+अटल स्थिर काष्ठा factors_data sun4i_a10_mod0_data = अणु
 	.enable = 31,
 	.mux = 24,
 	.muxmask = BIT(1) | BIT(0),
 	.table = &sun4i_a10_mod0_config,
 	.getter = sun4i_a10_get_mod0_factors,
-};
+पूर्ण;
 
-static DEFINE_SPINLOCK(sun4i_a10_mod0_lock);
+अटल DEFINE_SPINLOCK(sun4i_a10_mod0_lock);
 
-static void __init sun4i_a10_mod0_setup(struct device_node *node)
-{
-	void __iomem *reg;
+अटल व्योम __init sun4i_a10_mod0_setup(काष्ठा device_node *node)
+अणु
+	व्योम __iomem *reg;
 
 	reg = of_iomap(node, 0);
-	if (!reg) {
+	अगर (!reg) अणु
 		/*
 		 * This happens with mod0 clk nodes instantiated through
-		 * mfd, as those do not have their resources assigned at
-		 * CLK_OF_DECLARE time yet, so do not print an error.
+		 * mfd, as those करो not have their resources asचिन्हित at
+		 * CLK_OF_DECLARE समय yet, so करो not prपूर्णांक an error.
 		 */
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	sunxi_factors_register(node, &sun4i_a10_mod0_data,
+	sunxi_factors_रेजिस्टर(node, &sun4i_a10_mod0_data,
 			       &sun4i_a10_mod0_lock, reg);
-}
+पूर्ण
 CLK_OF_DECLARE_DRIVER(sun4i_a10_mod0, "allwinner,sun4i-a10-mod0-clk",
 		      sun4i_a10_mod0_setup);
 
-static int sun4i_a10_mod0_clk_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct resource *r;
-	void __iomem *reg;
+अटल पूर्णांक sun4i_a10_mod0_clk_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा resource *r;
+	व्योम __iomem *reg;
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	reg = devm_ioremap_resource(&pdev->dev, r);
-	if (IS_ERR(reg))
-		return PTR_ERR(reg);
+	अगर (IS_ERR(reg))
+		वापस PTR_ERR(reg);
 
-	sunxi_factors_register(np, &sun4i_a10_mod0_data,
+	sunxi_factors_रेजिस्टर(np, &sun4i_a10_mod0_data,
 			       &sun4i_a10_mod0_lock, reg);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id sun4i_a10_mod0_clk_dt_ids[] = {
-	{ .compatible = "allwinner,sun4i-a10-mod0-clk" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id sun4i_a10_mod0_clk_dt_ids[] = अणु
+	अणु .compatible = "allwinner,sun4i-a10-mod0-clk" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static struct platform_driver sun4i_a10_mod0_clk_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sun4i_a10_mod0_clk_driver = अणु
+	.driver = अणु
 		.name = "sun4i-a10-mod0-clk",
 		.of_match_table = sun4i_a10_mod0_clk_dt_ids,
-	},
+	पूर्ण,
 	.probe = sun4i_a10_mod0_clk_probe,
-};
-builtin_platform_driver(sun4i_a10_mod0_clk_driver);
+पूर्ण;
+builtin_platक्रमm_driver(sun4i_a10_mod0_clk_driver);
 
-static const struct factors_data sun9i_a80_mod0_data __initconst = {
+अटल स्थिर काष्ठा factors_data sun9i_a80_mod0_data __initस्थिर = अणु
 	.enable = 31,
 	.mux = 24,
 	.muxmask = BIT(3) | BIT(2) | BIT(1) | BIT(0),
 	.table = &sun4i_a10_mod0_config,
 	.getter = sun4i_a10_get_mod0_factors,
-};
+पूर्ण;
 
-static void __init sun9i_a80_mod0_setup(struct device_node *node)
-{
-	void __iomem *reg;
+अटल व्योम __init sun9i_a80_mod0_setup(काष्ठा device_node *node)
+अणु
+	व्योम __iomem *reg;
 
 	reg = of_io_request_and_map(node, 0, of_node_full_name(node));
-	if (IS_ERR(reg)) {
+	अगर (IS_ERR(reg)) अणु
 		pr_err("Could not get registers for mod0-clk: %pOFn\n",
 		       node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	sunxi_factors_register(node, &sun9i_a80_mod0_data,
+	sunxi_factors_रेजिस्टर(node, &sun9i_a80_mod0_data,
 			       &sun4i_a10_mod0_lock, reg);
-}
+पूर्ण
 CLK_OF_DECLARE(sun9i_a80_mod0, "allwinner,sun9i-a80-mod0-clk", sun9i_a80_mod0_setup);
 
-static DEFINE_SPINLOCK(sun5i_a13_mbus_lock);
+अटल DEFINE_SPINLOCK(sun5i_a13_mbus_lock);
 
-static void __init sun5i_a13_mbus_setup(struct device_node *node)
-{
-	void __iomem *reg;
+अटल व्योम __init sun5i_a13_mbus_setup(काष्ठा device_node *node)
+अणु
+	व्योम __iomem *reg;
 
 	reg = of_iomap(node, 0);
-	if (!reg) {
+	अगर (!reg) अणु
 		pr_err("Could not get registers for a13-mbus-clk\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* The MBUS clocks needs to be always enabled */
-	sunxi_factors_register_critical(node, &sun4i_a10_mod0_data,
+	/* The MBUS घड़ीs needs to be always enabled */
+	sunxi_factors_रेजिस्टर_critical(node, &sun4i_a10_mod0_data,
 					&sun5i_a13_mbus_lock, reg);
-}
+पूर्ण
 CLK_OF_DECLARE(sun5i_a13_mbus, "allwinner,sun5i-a13-mbus-clk", sun5i_a13_mbus_setup);
 
-struct mmc_phase {
-	struct clk_hw		hw;
+काष्ठा mmc_phase अणु
+	काष्ठा clk_hw		hw;
 	u8			offset;
-	void __iomem		*reg;
+	व्योम __iomem		*reg;
 	spinlock_t		*lock;
-};
+पूर्ण;
 
-#define to_mmc_phase(_hw) container_of(_hw, struct mmc_phase, hw)
+#घोषणा to_mmc_phase(_hw) container_of(_hw, काष्ठा mmc_phase, hw)
 
-static int mmc_get_phase(struct clk_hw *hw)
-{
-	struct clk *mmc, *mmc_parent, *clk = hw->clk;
-	struct mmc_phase *phase = to_mmc_phase(hw);
-	unsigned int mmc_rate, mmc_parent_rate;
-	u16 step, mmc_div;
+अटल पूर्णांक mmc_get_phase(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk *mmc, *mmc_parent, *clk = hw->clk;
+	काष्ठा mmc_phase *phase = to_mmc_phase(hw);
+	अचिन्हित पूर्णांक mmc_rate, mmc_parent_rate;
+	u16 step, mmc_भाग;
 	u32 value;
 	u8 delay;
 
-	value = readl(phase->reg);
+	value = पढ़ोl(phase->reg);
 	delay = (value >> phase->offset) & 0x3;
 
-	if (!delay)
-		return 180;
+	अगर (!delay)
+		वापस 180;
 
-	/* Get the main MMC clock */
+	/* Get the मुख्य MMC घड़ी */
 	mmc = clk_get_parent(clk);
-	if (!mmc)
-		return -EINVAL;
+	अगर (!mmc)
+		वापस -EINVAL;
 
 	/* And its rate */
 	mmc_rate = clk_get_rate(mmc);
-	if (!mmc_rate)
-		return -EINVAL;
+	अगर (!mmc_rate)
+		वापस -EINVAL;
 
 	/* Now, get the MMC parent (most likely some PLL) */
 	mmc_parent = clk_get_parent(mmc);
-	if (!mmc_parent)
-		return -EINVAL;
+	अगर (!mmc_parent)
+		वापस -EINVAL;
 
 	/* And its rate */
 	mmc_parent_rate = clk_get_rate(mmc_parent);
-	if (!mmc_parent_rate)
-		return -EINVAL;
+	अगर (!mmc_parent_rate)
+		वापस -EINVAL;
 
-	/* Get MMC clock divider */
-	mmc_div = mmc_parent_rate / mmc_rate;
+	/* Get MMC घड़ी भागider */
+	mmc_भाग = mmc_parent_rate / mmc_rate;
 
-	step = DIV_ROUND_CLOSEST(360, mmc_div);
-	return delay * step;
-}
+	step = DIV_ROUND_CLOSEST(360, mmc_भाग);
+	वापस delay * step;
+पूर्ण
 
-static int mmc_set_phase(struct clk_hw *hw, int degrees)
-{
-	struct clk *mmc, *mmc_parent, *clk = hw->clk;
-	struct mmc_phase *phase = to_mmc_phase(hw);
-	unsigned int mmc_rate, mmc_parent_rate;
-	unsigned long flags;
+अटल पूर्णांक mmc_set_phase(काष्ठा clk_hw *hw, पूर्णांक degrees)
+अणु
+	काष्ठा clk *mmc, *mmc_parent, *clk = hw->clk;
+	काष्ठा mmc_phase *phase = to_mmc_phase(hw);
+	अचिन्हित पूर्णांक mmc_rate, mmc_parent_rate;
+	अचिन्हित दीर्घ flags;
 	u32 value;
 	u8 delay;
 
-	/* Get the main MMC clock */
+	/* Get the मुख्य MMC घड़ी */
 	mmc = clk_get_parent(clk);
-	if (!mmc)
-		return -EINVAL;
+	अगर (!mmc)
+		वापस -EINVAL;
 
 	/* And its rate */
 	mmc_rate = clk_get_rate(mmc);
-	if (!mmc_rate)
-		return -EINVAL;
+	अगर (!mmc_rate)
+		वापस -EINVAL;
 
 	/* Now, get the MMC parent (most likely some PLL) */
 	mmc_parent = clk_get_parent(mmc);
-	if (!mmc_parent)
-		return -EINVAL;
+	अगर (!mmc_parent)
+		वापस -EINVAL;
 
 	/* And its rate */
 	mmc_parent_rate = clk_get_rate(mmc_parent);
-	if (!mmc_parent_rate)
-		return -EINVAL;
+	अगर (!mmc_parent_rate)
+		वापस -EINVAL;
 
-	if (degrees != 180) {
-		u16 step, mmc_div;
+	अगर (degrees != 180) अणु
+		u16 step, mmc_भाग;
 
-		/* Get MMC clock divider */
-		mmc_div = mmc_parent_rate / mmc_rate;
+		/* Get MMC घड़ी भागider */
+		mmc_भाग = mmc_parent_rate / mmc_rate;
 
 		/*
-		 * We can only outphase the clocks by multiple of the
+		 * We can only outphase the घड़ीs by multiple of the
 		 * PLL's period.
 		 *
-		 * Since the MMC clock in only a divider, and the
-		 * formula to get the outphasing in degrees is deg =
+		 * Since the MMC घड़ी in only a भागider, and the
+		 * क्रमmula to get the outphasing in degrees is deg =
 		 * 360 * delta / period
 		 *
-		 * If we simplify this formula, we can see that the
+		 * If we simplअगरy this क्रमmula, we can see that the
 		 * only thing that we're concerned about is the number
-		 * of period we want to outphase our clock from, and
-		 * the divider set by the MMC clock.
+		 * of period we want to outphase our घड़ी from, and
+		 * the भागider set by the MMC घड़ी.
 		 */
-		step = DIV_ROUND_CLOSEST(360, mmc_div);
+		step = DIV_ROUND_CLOSEST(360, mmc_भाग);
 		delay = DIV_ROUND_CLOSEST(degrees, step);
-	} else {
+	पूर्ण अन्यथा अणु
 		delay = 0;
-	}
+	पूर्ण
 
 	spin_lock_irqsave(phase->lock, flags);
-	value = readl(phase->reg);
+	value = पढ़ोl(phase->reg);
 	value &= ~GENMASK(phase->offset + 3, phase->offset);
 	value |= delay << phase->offset;
-	writel(value, phase->reg);
+	ग_लिखोl(value, phase->reg);
 	spin_unlock_irqrestore(phase->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops mmc_clk_ops = {
+अटल स्थिर काष्ठा clk_ops mmc_clk_ops = अणु
 	.get_phase	= mmc_get_phase,
 	.set_phase	= mmc_set_phase,
-};
+पूर्ण;
 
 /*
- * sunxi_mmc_setup - Common setup function for mmc module clocks
+ * sunxi_mmc_setup - Common setup function क्रम mmc module घड़ीs
  *
- * The only difference between module clocks on different platforms is the
- * width of the mux register bits and the valid values, which are passed in
- * through struct factors_data. The phase clocks parts are identical.
+ * The only dअगरference between module घड़ीs on dअगरferent platक्रमms is the
+ * width of the mux रेजिस्टर bits and the valid values, which are passed in
+ * through काष्ठा factors_data. The phase घड़ीs parts are identical.
  */
-static void __init sunxi_mmc_setup(struct device_node *node,
-				   const struct factors_data *data,
+अटल व्योम __init sunxi_mmc_setup(काष्ठा device_node *node,
+				   स्थिर काष्ठा factors_data *data,
 				   spinlock_t *lock)
-{
-	struct clk_onecell_data *clk_data;
-	const char *parent;
-	void __iomem *reg;
-	int i;
+अणु
+	काष्ठा clk_onecell_data *clk_data;
+	स्थिर अक्षर *parent;
+	व्योम __iomem *reg;
+	पूर्णांक i;
 
 	reg = of_io_request_and_map(node, 0, of_node_full_name(node));
-	if (IS_ERR(reg)) {
+	अगर (IS_ERR(reg)) अणु
 		pr_err("Couldn't map the %pOFn clock registers\n", node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	clk_data = kmalloc(sizeof(*clk_data), GFP_KERNEL);
-	if (!clk_data)
-		return;
+	clk_data = kदो_स्मृति(माप(*clk_data), GFP_KERNEL);
+	अगर (!clk_data)
+		वापस;
 
-	clk_data->clks = kcalloc(3, sizeof(*clk_data->clks), GFP_KERNEL);
-	if (!clk_data->clks)
-		goto err_free_data;
+	clk_data->clks = kसुस्मृति(3, माप(*clk_data->clks), GFP_KERNEL);
+	अगर (!clk_data->clks)
+		जाओ err_मुक्त_data;
 
 	clk_data->clk_num = 3;
-	clk_data->clks[0] = sunxi_factors_register(node, data, lock, reg);
-	if (!clk_data->clks[0])
-		goto err_free_clks;
+	clk_data->clks[0] = sunxi_factors_रेजिस्टर(node, data, lock, reg);
+	अगर (!clk_data->clks[0])
+		जाओ err_मुक्त_clks;
 
 	parent = __clk_get_name(clk_data->clks[0]);
 
-	for (i = 1; i < 3; i++) {
-		struct clk_init_data init = {
+	क्रम (i = 1; i < 3; i++) अणु
+		काष्ठा clk_init_data init = अणु
 			.num_parents	= 1,
 			.parent_names	= &parent,
 			.ops		= &mmc_clk_ops,
-		};
-		struct mmc_phase *phase;
+		पूर्ण;
+		काष्ठा mmc_phase *phase;
 
-		phase = kmalloc(sizeof(*phase), GFP_KERNEL);
-		if (!phase)
-			continue;
+		phase = kदो_स्मृति(माप(*phase), GFP_KERNEL);
+		अगर (!phase)
+			जारी;
 
 		phase->hw.init = &init;
 		phase->reg = reg;
 		phase->lock = lock;
 
-		if (i == 1)
+		अगर (i == 1)
 			phase->offset = 8;
-		else
+		अन्यथा
 			phase->offset = 20;
 
-		if (of_property_read_string_index(node, "clock-output-names",
+		अगर (of_property_पढ़ो_string_index(node, "clock-output-names",
 						  i, &init.name))
 			init.name = node->name;
 
-		clk_data->clks[i] = clk_register(NULL, &phase->hw);
-		if (IS_ERR(clk_data->clks[i])) {
-			kfree(phase);
-			continue;
-		}
-	}
+		clk_data->clks[i] = clk_रेजिस्टर(शून्य, &phase->hw);
+		अगर (IS_ERR(clk_data->clks[i])) अणु
+			kमुक्त(phase);
+			जारी;
+		पूर्ण
+	पूर्ण
 
 	of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
 
-	return;
+	वापस;
 
-err_free_clks:
-	kfree(clk_data->clks);
-err_free_data:
-	kfree(clk_data);
-}
+err_मुक्त_clks:
+	kमुक्त(clk_data->clks);
+err_मुक्त_data:
+	kमुक्त(clk_data);
+पूर्ण
 
-static DEFINE_SPINLOCK(sun4i_a10_mmc_lock);
+अटल DEFINE_SPINLOCK(sun4i_a10_mmc_lock);
 
-static void __init sun4i_a10_mmc_setup(struct device_node *node)
-{
+अटल व्योम __init sun4i_a10_mmc_setup(काष्ठा device_node *node)
+अणु
 	sunxi_mmc_setup(node, &sun4i_a10_mod0_data, &sun4i_a10_mmc_lock);
-}
+पूर्ण
 CLK_OF_DECLARE(sun4i_a10_mmc, "allwinner,sun4i-a10-mmc-clk", sun4i_a10_mmc_setup);
 
-static DEFINE_SPINLOCK(sun9i_a80_mmc_lock);
+अटल DEFINE_SPINLOCK(sun9i_a80_mmc_lock);
 
-static void __init sun9i_a80_mmc_setup(struct device_node *node)
-{
+अटल व्योम __init sun9i_a80_mmc_setup(काष्ठा device_node *node)
+अणु
 	sunxi_mmc_setup(node, &sun9i_a80_mod0_data, &sun9i_a80_mmc_lock);
-}
+पूर्ण
 CLK_OF_DECLARE(sun9i_a80_mmc, "allwinner,sun9i-a80-mmc-clk", sun9i_a80_mmc_setup);

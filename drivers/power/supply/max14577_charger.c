@@ -1,155 +1,156 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// max14577_charger.c - Battery charger driver for the Maxim 14577/77836
+// max14577_अक्षरger.c - Battery अक्षरger driver क्रम the Maxim 14577/77836
 //
 // Copyright (C) 2013,2014 Samsung Electronics
 // Krzysztof Kozlowski <krzk@kernel.org>
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/power_supply.h>
-#include <linux/mfd/max14577-private.h>
-#include <linux/mfd/max14577.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/mfd/max14577-निजी.h>
+#समावेश <linux/mfd/max14577.h>
 
-struct max14577_charger {
-	struct device		*dev;
-	struct max14577		*max14577;
-	struct power_supply	*charger;
+काष्ठा max14577_अक्षरger अणु
+	काष्ठा device		*dev;
+	काष्ठा max14577		*max14577;
+	काष्ठा घातer_supply	*अक्षरger;
 
-	struct max14577_charger_platform_data	*pdata;
-};
+	काष्ठा max14577_अक्षरger_platक्रमm_data	*pdata;
+पूर्ण;
 
 /*
- * Helper function for mapping values of STATUS2/CHGTYP register on max14577
- * and max77836 chipsets to enum maxim_muic_charger_type.
+ * Helper function क्रम mapping values of STATUS2/CHGTYP रेजिस्टर on max14577
+ * and max77836 chipsets to क्रमागत maxim_muic_अक्षरger_type.
  */
-static enum max14577_muic_charger_type maxim_get_charger_type(
-		enum maxim_device_type dev_type, u8 val) {
-	switch (val) {
-	case MAX14577_CHARGER_TYPE_NONE:
-	case MAX14577_CHARGER_TYPE_USB:
-	case MAX14577_CHARGER_TYPE_DOWNSTREAM_PORT:
-	case MAX14577_CHARGER_TYPE_DEDICATED_CHG:
-	case MAX14577_CHARGER_TYPE_SPECIAL_500MA:
-	case MAX14577_CHARGER_TYPE_SPECIAL_1A:
-		return val;
-	case MAX14577_CHARGER_TYPE_DEAD_BATTERY:
-	case MAX14577_CHARGER_TYPE_RESERVED:
-		if (dev_type == MAXIM_DEVICE_TYPE_MAX77836)
+अटल क्रमागत max14577_muic_अक्षरger_type maxim_get_अक्षरger_type(
+		क्रमागत maxim_device_type dev_type, u8 val) अणु
+	चयन (val) अणु
+	हाल MAX14577_CHARGER_TYPE_NONE:
+	हाल MAX14577_CHARGER_TYPE_USB:
+	हाल MAX14577_CHARGER_TYPE_DOWNSTREAM_PORT:
+	हाल MAX14577_CHARGER_TYPE_DEDICATED_CHG:
+	हाल MAX14577_CHARGER_TYPE_SPECIAL_500MA:
+	हाल MAX14577_CHARGER_TYPE_SPECIAL_1A:
+		वापस val;
+	हाल MAX14577_CHARGER_TYPE_DEAD_BATTERY:
+	हाल MAX14577_CHARGER_TYPE_RESERVED:
+		अगर (dev_type == MAXIM_DEVICE_TYPE_MAX77836)
 			val |= 0x8;
-		return val;
-	default:
+		वापस val;
+	शेष:
 		WARN_ONCE(1, "max14577: Unsupported chgtyp register value 0x%02x", val);
-		return val;
-	}
-}
+		वापस val;
+	पूर्ण
+पूर्ण
 
-static int max14577_get_charger_state(struct max14577_charger *chg, int *val)
-{
-	struct regmap *rmap = chg->max14577->regmap;
-	int ret;
+अटल पूर्णांक max14577_get_अक्षरger_state(काष्ठा max14577_अक्षरger *chg, पूर्णांक *val)
+अणु
+	काष्ठा regmap *rmap = chg->max14577->regmap;
+	पूर्णांक ret;
 	u8 reg_data;
 
 	/*
-	 * Charging occurs only if:
+	 * Charging occurs only अगर:
 	 *  - CHGCTRL2/MBCHOSTEN == 1
 	 *  - STATUS2/CGMBC == 1
 	 *
 	 * TODO:
-	 *  - handle FULL after Top-off timer (EOC register may be off
-	 *    and the charger won't be charging although MBCHOSTEN is on)
-	 *  - handle properly dead-battery charging (respect timer)
-	 *  - handle timers (fast-charge and prequal) /MBCCHGERR/
+	 *  - handle FULL after Top-off समयr (EOC रेजिस्टर may be off
+	 *    and the अक्षरger won't be अक्षरging although MBCHOSTEN is on)
+	 *  - handle properly dead-battery अक्षरging (respect समयr)
+	 *  - handle समयrs (fast-अक्षरge and prequal) /MBCCHGERR/
 	 */
-	ret = max14577_read_reg(rmap, MAX14577_CHG_REG_CHG_CTRL2, &reg_data);
-	if (ret < 0)
-		goto out;
+	ret = max14577_पढ़ो_reg(rmap, MAX14577_CHG_REG_CHG_CTRL2, &reg_data);
+	अगर (ret < 0)
+		जाओ out;
 
-	if ((reg_data & CHGCTRL2_MBCHOSTEN_MASK) == 0) {
+	अगर ((reg_data & CHGCTRL2_MBCHOSTEN_MASK) == 0) अणु
 		*val = POWER_SUPPLY_STATUS_DISCHARGING;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = max14577_read_reg(rmap, MAX14577_CHG_REG_STATUS3, &reg_data);
-	if (ret < 0)
-		goto out;
+	ret = max14577_पढ़ो_reg(rmap, MAX14577_CHG_REG_STATUS3, &reg_data);
+	अगर (ret < 0)
+		जाओ out;
 
-	if (reg_data & STATUS3_CGMBC_MASK) {
+	अगर (reg_data & STATUS3_CGMBC_MASK) अणु
 		/* Charger or USB-cable is connected */
-		if (reg_data & STATUS3_EOC_MASK)
+		अगर (reg_data & STATUS3_EOC_MASK)
 			*val = POWER_SUPPLY_STATUS_FULL;
-		else
+		अन्यथा
 			*val = POWER_SUPPLY_STATUS_CHARGING;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	*val = POWER_SUPPLY_STATUS_DISCHARGING;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Supported charge types:
+ * Supported अक्षरge types:
  *  - POWER_SUPPLY_CHARGE_TYPE_NONE
  *  - POWER_SUPPLY_CHARGE_TYPE_FAST
  */
-static int max14577_get_charge_type(struct max14577_charger *chg, int *val)
-{
-	int ret, charging;
+अटल पूर्णांक max14577_get_अक्षरge_type(काष्ठा max14577_अक्षरger *chg, पूर्णांक *val)
+अणु
+	पूर्णांक ret, अक्षरging;
 
 	/*
 	 * TODO: CHARGE_TYPE_TRICKLE (VCHGR_RC or EOC)?
 	 * As spec says:
-	 * [after reaching EOC interrupt]
-	 * "When the battery is fully charged, the 30-minute (typ)
-	 *  top-off timer starts. The device continues to trickle
-	 *  charge the battery until the top-off timer runs out."
+	 * [after reaching EOC पूर्णांकerrupt]
+	 * "When the battery is fully अक्षरged, the 30-minute (typ)
+	 *  top-off समयr starts. The device जारीs to trickle
+	 *  अक्षरge the battery until the top-off समयr runs out."
 	 */
-	ret = max14577_get_charger_state(chg, &charging);
-	if (ret < 0)
-		return ret;
+	ret = max14577_get_अक्षरger_state(chg, &अक्षरging);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (charging == POWER_SUPPLY_STATUS_CHARGING)
+	अगर (अक्षरging == POWER_SUPPLY_STATUS_CHARGING)
 		*val = POWER_SUPPLY_CHARGE_TYPE_FAST;
-	else
+	अन्यथा
 		*val = POWER_SUPPLY_CHARGE_TYPE_NONE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max14577_get_online(struct max14577_charger *chg, int *val)
-{
-	struct regmap *rmap = chg->max14577->regmap;
+अटल पूर्णांक max14577_get_online(काष्ठा max14577_अक्षरger *chg, पूर्णांक *val)
+अणु
+	काष्ठा regmap *rmap = chg->max14577->regmap;
 	u8 reg_data;
-	int ret;
-	enum max14577_muic_charger_type chg_type;
+	पूर्णांक ret;
+	क्रमागत max14577_muic_अक्षरger_type chg_type;
 
-	ret = max14577_read_reg(rmap, MAX14577_MUIC_REG_STATUS2, &reg_data);
-	if (ret < 0)
-		return ret;
+	ret = max14577_पढ़ो_reg(rmap, MAX14577_MUIC_REG_STATUS2, &reg_data);
+	अगर (ret < 0)
+		वापस ret;
 
 	reg_data = ((reg_data & STATUS2_CHGTYP_MASK) >> STATUS2_CHGTYP_SHIFT);
-	chg_type = maxim_get_charger_type(chg->max14577->dev_type, reg_data);
-	switch (chg_type) {
-	case MAX14577_CHARGER_TYPE_USB:
-	case MAX14577_CHARGER_TYPE_DEDICATED_CHG:
-	case MAX14577_CHARGER_TYPE_SPECIAL_500MA:
-	case MAX14577_CHARGER_TYPE_SPECIAL_1A:
-	case MAX14577_CHARGER_TYPE_DEAD_BATTERY:
-	case MAX77836_CHARGER_TYPE_SPECIAL_BIAS:
+	chg_type = maxim_get_अक्षरger_type(chg->max14577->dev_type, reg_data);
+	चयन (chg_type) अणु
+	हाल MAX14577_CHARGER_TYPE_USB:
+	हाल MAX14577_CHARGER_TYPE_DEDICATED_CHG:
+	हाल MAX14577_CHARGER_TYPE_SPECIAL_500MA:
+	हाल MAX14577_CHARGER_TYPE_SPECIAL_1A:
+	हाल MAX14577_CHARGER_TYPE_DEAD_BATTERY:
+	हाल MAX77836_CHARGER_TYPE_SPECIAL_BIAS:
 		*val = 1;
-		break;
-	case MAX14577_CHARGER_TYPE_NONE:
-	case MAX14577_CHARGER_TYPE_DOWNSTREAM_PORT:
-	case MAX14577_CHARGER_TYPE_RESERVED:
-	case MAX77836_CHARGER_TYPE_RESERVED:
-	default:
+		अवरोध;
+	हाल MAX14577_CHARGER_TYPE_NONE:
+	हाल MAX14577_CHARGER_TYPE_DOWNSTREAM_PORT:
+	हाल MAX14577_CHARGER_TYPE_RESERVED:
+	हाल MAX77836_CHARGER_TYPE_RESERVED:
+	शेष:
 		*val = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Supported health statuses:
@@ -157,181 +158,181 @@ static int max14577_get_online(struct max14577_charger *chg, int *val)
  *  - POWER_SUPPLY_HEALTH_OVERVOLTAGE
  *  - POWER_SUPPLY_HEALTH_GOOD
  */
-static int max14577_get_battery_health(struct max14577_charger *chg, int *val)
-{
-	struct regmap *rmap = chg->max14577->regmap;
-	int ret;
+अटल पूर्णांक max14577_get_battery_health(काष्ठा max14577_अक्षरger *chg, पूर्णांक *val)
+अणु
+	काष्ठा regmap *rmap = chg->max14577->regmap;
+	पूर्णांक ret;
 	u8 reg_data;
-	enum max14577_muic_charger_type chg_type;
+	क्रमागत max14577_muic_अक्षरger_type chg_type;
 
-	ret = max14577_read_reg(rmap, MAX14577_MUIC_REG_STATUS2, &reg_data);
-	if (ret < 0)
-		goto out;
+	ret = max14577_पढ़ो_reg(rmap, MAX14577_MUIC_REG_STATUS2, &reg_data);
+	अगर (ret < 0)
+		जाओ out;
 
 	reg_data = ((reg_data & STATUS2_CHGTYP_MASK) >> STATUS2_CHGTYP_SHIFT);
-	chg_type = maxim_get_charger_type(chg->max14577->dev_type, reg_data);
-	if (chg_type == MAX14577_CHARGER_TYPE_DEAD_BATTERY) {
+	chg_type = maxim_get_अक्षरger_type(chg->max14577->dev_type, reg_data);
+	अगर (chg_type == MAX14577_CHARGER_TYPE_DEAD_BATTERY) अणु
 		*val = POWER_SUPPLY_HEALTH_DEAD;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = max14577_read_reg(rmap, MAX14577_CHG_REG_STATUS3, &reg_data);
-	if (ret < 0)
-		goto out;
+	ret = max14577_पढ़ो_reg(rmap, MAX14577_CHG_REG_STATUS3, &reg_data);
+	अगर (ret < 0)
+		जाओ out;
 
-	if (reg_data & STATUS3_OVP_MASK) {
+	अगर (reg_data & STATUS3_OVP_MASK) अणु
 		*val = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Not dead, not overvoltage */
 	*val = POWER_SUPPLY_HEALTH_GOOD;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Always returns 1.
- * The max14577 chip doesn't report any status of battery presence.
+ * Always वापसs 1.
+ * The max14577 chip करोesn't report any status of battery presence.
  * Lets assume that it will always be used with some battery.
  */
-static int max14577_get_present(struct max14577_charger *chg, int *val)
-{
+अटल पूर्णांक max14577_get_present(काष्ठा max14577_अक्षरger *chg, पूर्णांक *val)
+अणु
 	*val = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max14577_set_fast_charge_timer(struct max14577_charger *chg,
-		unsigned long hours)
-{
+अटल पूर्णांक max14577_set_fast_अक्षरge_समयr(काष्ठा max14577_अक्षरger *chg,
+		अचिन्हित दीर्घ hours)
+अणु
 	u8 reg_data;
 
-	switch (hours) {
-	case 5 ... 7:
+	चयन (hours) अणु
+	हाल 5 ... 7:
 		reg_data = hours - 3;
-		break;
-	case 0:
+		अवरोध;
+	हाल 0:
 		/* Disable */
 		reg_data = 0x7;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(chg->dev, "Wrong value for Fast-Charge Timer: %lu\n",
 				hours);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	reg_data <<= CHGCTRL1_TCHW_SHIFT;
 
-	return max14577_update_reg(chg->max14577->regmap,
+	वापस max14577_update_reg(chg->max14577->regmap,
 			MAX14577_REG_CHGCTRL1, CHGCTRL1_TCHW_MASK, reg_data);
-}
+पूर्ण
 
-static int max14577_init_constant_voltage(struct max14577_charger *chg,
-		unsigned int uvolt)
-{
+अटल पूर्णांक max14577_init_स्थिरant_voltage(काष्ठा max14577_अक्षरger *chg,
+		अचिन्हित पूर्णांक uvolt)
+अणु
 	u8 reg_data;
 
-	if (uvolt < MAXIM_CHARGER_CONSTANT_VOLTAGE_MIN ||
+	अगर (uvolt < MAXIM_CHARGER_CONSTANT_VOLTAGE_MIN ||
 			uvolt > MAXIM_CHARGER_CONSTANT_VOLTAGE_MAX)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (uvolt == 4200000)
+	अगर (uvolt == 4200000)
 		reg_data = 0x0;
-	else if (uvolt == MAXIM_CHARGER_CONSTANT_VOLTAGE_MAX)
+	अन्यथा अगर (uvolt == MAXIM_CHARGER_CONSTANT_VOLTAGE_MAX)
 		reg_data = 0x1f;
-	else if (uvolt <= 4280000) {
-		unsigned int val = uvolt;
+	अन्यथा अगर (uvolt <= 4280000) अणु
+		अचिन्हित पूर्णांक val = uvolt;
 
 		val -= MAXIM_CHARGER_CONSTANT_VOLTAGE_MIN;
 		val /= MAXIM_CHARGER_CONSTANT_VOLTAGE_STEP;
-		if (uvolt <= 4180000)
+		अगर (uvolt <= 4180000)
 			reg_data = 0x1 + val;
-		else
-			reg_data = val; /* Fix for gap between 4.18V and 4.22V */
-	} else
-		return -EINVAL;
+		अन्यथा
+			reg_data = val; /* Fix क्रम gap between 4.18V and 4.22V */
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
 	reg_data <<= CHGCTRL3_MBCCVWRC_SHIFT;
 
-	return max14577_write_reg(chg->max14577->regmap,
+	वापस max14577_ग_लिखो_reg(chg->max14577->regmap,
 			MAX14577_CHG_REG_CHG_CTRL3, reg_data);
-}
+पूर्ण
 
-static int max14577_init_eoc(struct max14577_charger *chg,
-		unsigned int uamp)
-{
-	unsigned int current_bits;
+अटल पूर्णांक max14577_init_eoc(काष्ठा max14577_अक्षरger *chg,
+		अचिन्हित पूर्णांक uamp)
+अणु
+	अचिन्हित पूर्णांक current_bits;
 	u8 reg_data;
 
-	switch (chg->max14577->dev_type) {
-	case MAXIM_DEVICE_TYPE_MAX77836:
-		if (uamp < 5000)
-			return -EINVAL; /* Requested current is too low */
+	चयन (chg->max14577->dev_type) अणु
+	हाल MAXIM_DEVICE_TYPE_MAX77836:
+		अगर (uamp < 5000)
+			वापस -EINVAL; /* Requested current is too low */
 
-		if (uamp >= 7500 && uamp < 10000)
+		अगर (uamp >= 7500 && uamp < 10000)
 			current_bits = 0x0;
-		else if (uamp <= 50000) {
+		अन्यथा अगर (uamp <= 50000) अणु
 			/* <5000, 7499> and <10000, 50000> */
 			current_bits = uamp / 5000;
-		} else {
+		पूर्ण अन्यथा अणु
 			uamp = min(uamp, 100000U) - 50000U;
 			current_bits = 0xa + uamp / 10000;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case MAXIM_DEVICE_TYPE_MAX14577:
-	default:
-		if (uamp < MAX14577_CHARGER_EOC_CURRENT_LIMIT_MIN)
-			return -EINVAL; /* Requested current is too low */
+	हाल MAXIM_DEVICE_TYPE_MAX14577:
+	शेष:
+		अगर (uamp < MAX14577_CHARGER_EOC_CURRENT_LIMIT_MIN)
+			वापस -EINVAL; /* Requested current is too low */
 
 		uamp = min(uamp, MAX14577_CHARGER_EOC_CURRENT_LIMIT_MAX);
 		uamp -= MAX14577_CHARGER_EOC_CURRENT_LIMIT_MIN;
 		current_bits = uamp / MAX14577_CHARGER_EOC_CURRENT_LIMIT_STEP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	reg_data = current_bits << CHGCTRL5_EOCS_SHIFT;
 
-	return max14577_update_reg(chg->max14577->regmap,
+	वापस max14577_update_reg(chg->max14577->regmap,
 			MAX14577_CHG_REG_CHG_CTRL5, CHGCTRL5_EOCS_MASK,
 			reg_data);
-}
+पूर्ण
 
-static int max14577_init_fast_charge(struct max14577_charger *chg,
-		unsigned int uamp)
-{
+अटल पूर्णांक max14577_init_fast_अक्षरge(काष्ठा max14577_अक्षरger *chg,
+		अचिन्हित पूर्णांक uamp)
+अणु
 	u8 reg_data;
-	int ret;
-	const struct maxim_charger_current *limits =
-		&maxim_charger_currents[chg->max14577->dev_type];
+	पूर्णांक ret;
+	स्थिर काष्ठा maxim_अक्षरger_current *limits =
+		&maxim_अक्षरger_currents[chg->max14577->dev_type];
 
-	ret = maxim_charger_calc_reg_current(limits, uamp, uamp, &reg_data);
-	if (ret) {
+	ret = maxim_अक्षरger_calc_reg_current(limits, uamp, uamp, &reg_data);
+	अगर (ret) अणु
 		dev_err(chg->dev, "Wrong value for fast charge: %u\n", uamp);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return max14577_update_reg(chg->max14577->regmap,
+	वापस max14577_update_reg(chg->max14577->regmap,
 			MAX14577_CHG_REG_CHG_CTRL4,
 			CHGCTRL4_MBCICHWRCL_MASK | CHGCTRL4_MBCICHWRCH_MASK,
 			reg_data);
-}
+पूर्ण
 
 /*
- * Sets charger registers to proper and safe default values.
- * Some of these values are equal to defaults in MAX14577E
- * data sheet but there are minor differences.
+ * Sets अक्षरger रेजिस्टरs to proper and safe शेष values.
+ * Some of these values are equal to शेषs in MAX14577E
+ * data sheet but there are minor dअगरferences.
  */
-static int max14577_charger_reg_init(struct max14577_charger *chg)
-{
-	struct regmap *rmap = chg->max14577->regmap;
+अटल पूर्णांक max14577_अक्षरger_reg_init(काष्ठा max14577_अक्षरger *chg)
+अणु
+	काष्ठा regmap *rmap = chg->max14577->regmap;
 	u8 reg_data;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * Charger-Type Manual Detection, default off (set CHGTYPMAN to 0)
-	 * Charger-Detection Enable, default on (set CHGDETEN to 1)
+	 * Charger-Type Manual Detection, शेष off (set CHGTYPMAN to 0)
+	 * Charger-Detection Enable, शेष on (set CHGDETEN to 1)
 	 * Combined mask of CHGDETEN and CHGTYPMAN will zero the CHGTYPMAN bit
 	 */
 	reg_data = 0x1 << CDETCTRL1_CHGDETEN_SHIFT;
@@ -340,57 +341,57 @@ static int max14577_charger_reg_init(struct max14577_charger *chg)
 			reg_data);
 
 	/*
-	 * Wall-Adapter Rapid Charge, default on
-	 * Battery-Charger, default on
+	 * Wall-Adapter Rapid Charge, शेष on
+	 * Battery-Charger, शेष on
 	 */
 	reg_data = 0x1 << CHGCTRL2_VCHGR_RC_SHIFT;
 	reg_data |= 0x1 << CHGCTRL2_MBCHOSTEN_SHIFT;
-	max14577_write_reg(rmap, MAX14577_REG_CHGCTRL2, reg_data);
+	max14577_ग_लिखो_reg(rmap, MAX14577_REG_CHGCTRL2, reg_data);
 
-	/* Auto Charging Stop, default off */
+	/* Auto Charging Stop, शेष off */
 	reg_data = 0x0 << CHGCTRL6_AUTOSTOP_SHIFT;
-	max14577_write_reg(rmap, MAX14577_REG_CHGCTRL6, reg_data);
+	max14577_ग_लिखो_reg(rmap, MAX14577_REG_CHGCTRL6, reg_data);
 
-	ret = max14577_init_constant_voltage(chg, chg->pdata->constant_uvolt);
-	if (ret)
-		return ret;
+	ret = max14577_init_स्थिरant_voltage(chg, chg->pdata->स्थिरant_uvolt);
+	अगर (ret)
+		वापस ret;
 
 	ret = max14577_init_eoc(chg, chg->pdata->eoc_uamp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = max14577_init_fast_charge(chg, chg->pdata->fast_charge_uamp);
-	if (ret)
-		return ret;
+	ret = max14577_init_fast_अक्षरge(chg, chg->pdata->fast_अक्षरge_uamp);
+	अगर (ret)
+		वापस ret;
 
-	ret = max14577_set_fast_charge_timer(chg,
+	ret = max14577_set_fast_अक्षरge_समयr(chg,
 			MAXIM_CHARGER_FAST_CHARGE_TIMER_DEFAULT);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Initialize Overvoltage-Protection Threshold */
-	switch (chg->pdata->ovp_uvolt) {
-	case 7500000:
+	चयन (chg->pdata->ovp_uvolt) अणु
+	हाल 7500000:
 		reg_data = 0x0;
-		break;
-	case 6000000:
-	case 6500000:
-	case 7000000:
+		अवरोध;
+	हाल 6000000:
+	हाल 6500000:
+	हाल 7000000:
 		reg_data = 0x1 + (chg->pdata->ovp_uvolt - 6000000) / 500000;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(chg->dev, "Wrong value for OVP: %u\n",
 				chg->pdata->ovp_uvolt);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	reg_data <<= CHGCTRL7_OTPCGHCVS_SHIFT;
-	max14577_write_reg(rmap, MAX14577_REG_CHGCTRL7, reg_data);
+	max14577_ग_लिखो_reg(rmap, MAX14577_REG_CHGCTRL7, reg_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Support property from charger */
-static enum power_supply_property max14577_charger_props[] = {
+/* Support property from अक्षरger */
+अटल क्रमागत घातer_supply_property max14577_अक्षरger_props[] = अणु
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_CHARGE_TYPE,
 	POWER_SUPPLY_PROP_HEALTH,
@@ -398,250 +399,250 @@ static enum power_supply_property max14577_charger_props[] = {
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER,
-};
+पूर्ण;
 
-static const char * const model_names[] = {
+अटल स्थिर अक्षर * स्थिर model_names[] = अणु
 	[MAXIM_DEVICE_TYPE_UNKNOWN]	= "MAX14577-like",
 	[MAXIM_DEVICE_TYPE_MAX14577]	= "MAX14577",
 	[MAXIM_DEVICE_TYPE_MAX77836]	= "MAX77836",
-};
-static const char *manufacturer = "Maxim Integrated";
+पूर्ण;
+अटल स्थिर अक्षर *manufacturer = "Maxim Integrated";
 
-static int max14577_charger_get_property(struct power_supply *psy,
-			    enum power_supply_property psp,
-			    union power_supply_propval *val)
-{
-	struct max14577_charger *chg = power_supply_get_drvdata(psy);
-	int ret = 0;
+अटल पूर्णांक max14577_अक्षरger_get_property(काष्ठा घातer_supply *psy,
+			    क्रमागत घातer_supply_property psp,
+			    जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा max14577_अक्षरger *chg = घातer_supply_get_drvdata(psy);
+	पूर्णांक ret = 0;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		ret = max14577_get_charger_state(chg, &val->intval);
-		break;
-	case POWER_SUPPLY_PROP_CHARGE_TYPE:
-		ret = max14577_get_charge_type(chg, &val->intval);
-		break;
-	case POWER_SUPPLY_PROP_HEALTH:
-		ret = max14577_get_battery_health(chg, &val->intval);
-		break;
-	case POWER_SUPPLY_PROP_PRESENT:
-		ret = max14577_get_present(chg, &val->intval);
-		break;
-	case POWER_SUPPLY_PROP_ONLINE:
-		ret = max14577_get_online(chg, &val->intval);
-		break;
-	case POWER_SUPPLY_PROP_MODEL_NAME:
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		ret = max14577_get_अक्षरger_state(chg, &val->पूर्णांकval);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CHARGE_TYPE:
+		ret = max14577_get_अक्षरge_type(chg, &val->पूर्णांकval);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_HEALTH:
+		ret = max14577_get_battery_health(chg, &val->पूर्णांकval);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_PRESENT:
+		ret = max14577_get_present(chg, &val->पूर्णांकval);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		ret = max14577_get_online(chg, &val->पूर्णांकval);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_MODEL_NAME:
 		BUILD_BUG_ON(ARRAY_SIZE(model_names) != MAXIM_DEVICE_TYPE_NUM);
 		val->strval = model_names[chg->max14577->dev_type];
-		break;
-	case POWER_SUPPLY_PROP_MANUFACTURER:
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_MANUFACTURER:
 		val->strval = manufacturer;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct power_supply_desc max14577_charger_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc max14577_अक्षरger_desc = अणु
 	.name = "max14577-charger",
 	.type = POWER_SUPPLY_TYPE_BATTERY,
-	.properties = max14577_charger_props,
-	.num_properties = ARRAY_SIZE(max14577_charger_props),
-	.get_property = max14577_charger_get_property,
-};
+	.properties = max14577_अक्षरger_props,
+	.num_properties = ARRAY_SIZE(max14577_अक्षरger_props),
+	.get_property = max14577_अक्षरger_get_property,
+पूर्ण;
 
-#ifdef CONFIG_OF
-static struct max14577_charger_platform_data *max14577_charger_dt_init(
-		struct platform_device *pdev)
-{
-	struct max14577_charger_platform_data *pdata;
-	struct device_node *np = pdev->dev.of_node;
-	int ret;
+#अगर_घोषित CONFIG_OF
+अटल काष्ठा max14577_अक्षरger_platक्रमm_data *max14577_अक्षरger_dt_init(
+		काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा max14577_अक्षरger_platक्रमm_data *pdata;
+	काष्ठा device_node *np = pdev->dev.of_node;
+	पूर्णांक ret;
 
-	if (!np) {
+	अगर (!np) अणु
 		dev_err(&pdev->dev, "No charger OF node\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return ERR_PTR(-ENOMEM);
+	pdata = devm_kzalloc(&pdev->dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस ERR_PTR(-ENOMEM);
 
-	ret = of_property_read_u32(np, "maxim,constant-uvolt",
-			&pdata->constant_uvolt);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(np, "maxim,constant-uvolt",
+			&pdata->स्थिरant_uvolt);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Cannot parse maxim,constant-uvolt field from DT\n");
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	ret = of_property_read_u32(np, "maxim,fast-charge-uamp",
-			&pdata->fast_charge_uamp);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(np, "maxim,fast-charge-uamp",
+			&pdata->fast_अक्षरge_uamp);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Cannot parse maxim,fast-charge-uamp field from DT\n");
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	ret = of_property_read_u32(np, "maxim,eoc-uamp", &pdata->eoc_uamp);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(np, "maxim,eoc-uamp", &pdata->eoc_uamp);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Cannot parse maxim,eoc-uamp field from DT\n");
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	ret = of_property_read_u32(np, "maxim,ovp-uvolt", &pdata->ovp_uvolt);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(np, "maxim,ovp-uvolt", &pdata->ovp_uvolt);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Cannot parse maxim,ovp-uvolt field from DT\n");
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return pdata;
-}
-#else /* CONFIG_OF */
-static struct max14577_charger_platform_data *max14577_charger_dt_init(
-		struct platform_device *pdev)
-{
-	return NULL;
-}
-#endif /* CONFIG_OF */
+	वापस pdata;
+पूर्ण
+#अन्यथा /* CONFIG_OF */
+अटल काष्ठा max14577_अक्षरger_platक्रमm_data *max14577_अक्षरger_dt_init(
+		काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OF */
 
-static ssize_t show_fast_charge_timer(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct max14577_charger *chg = dev_get_drvdata(dev);
+अटल sमाप_प्रकार show_fast_अक्षरge_समयr(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा max14577_अक्षरger *chg = dev_get_drvdata(dev);
 	u8 reg_data;
-	int ret;
-	unsigned int val;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक val;
 
-	ret = max14577_read_reg(chg->max14577->regmap, MAX14577_REG_CHGCTRL1,
+	ret = max14577_पढ़ो_reg(chg->max14577->regmap, MAX14577_REG_CHGCTRL1,
 			&reg_data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	reg_data &= CHGCTRL1_TCHW_MASK;
 	reg_data >>= CHGCTRL1_TCHW_SHIFT;
-	switch (reg_data) {
-	case 0x2 ... 0x4:
+	चयन (reg_data) अणु
+	हाल 0x2 ... 0x4:
 		val = reg_data + 3;
-		break;
-	case 0x7:
+		अवरोध;
+	हाल 0x7:
 		val = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		val = 5;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return scnprintf(buf, PAGE_SIZE, "%u\n", val);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", val);
+पूर्ण
 
-static ssize_t store_fast_charge_timer(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct max14577_charger *chg = dev_get_drvdata(dev);
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार store_fast_अक्षरge_समयr(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा max14577_अक्षरger *chg = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (ret)
+		वापस ret;
 
-	ret = max14577_set_fast_charge_timer(chg, val);
-	if (ret)
-		return ret;
+	ret = max14577_set_fast_अक्षरge_समयr(chg, val);
+	अगर (ret)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(fast_charge_timer, S_IRUGO | S_IWUSR,
-		show_fast_charge_timer, store_fast_charge_timer);
+अटल DEVICE_ATTR(fast_अक्षरge_समयr, S_IRUGO | S_IWUSR,
+		show_fast_अक्षरge_समयr, store_fast_अक्षरge_समयr);
 
-static int max14577_charger_probe(struct platform_device *pdev)
-{
-	struct max14577_charger *chg;
-	struct power_supply_config psy_cfg = {};
-	struct max14577 *max14577 = dev_get_drvdata(pdev->dev.parent);
-	int ret;
+अटल पूर्णांक max14577_अक्षरger_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा max14577_अक्षरger *chg;
+	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
+	काष्ठा max14577 *max14577 = dev_get_drvdata(pdev->dev.parent);
+	पूर्णांक ret;
 
-	chg = devm_kzalloc(&pdev->dev, sizeof(*chg), GFP_KERNEL);
-	if (!chg)
-		return -ENOMEM;
+	chg = devm_kzalloc(&pdev->dev, माप(*chg), GFP_KERNEL);
+	अगर (!chg)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, chg);
+	platक्रमm_set_drvdata(pdev, chg);
 	chg->dev = &pdev->dev;
 	chg->max14577 = max14577;
 
-	chg->pdata = max14577_charger_dt_init(pdev);
-	if (IS_ERR_OR_NULL(chg->pdata))
-		return PTR_ERR(chg->pdata);
+	chg->pdata = max14577_अक्षरger_dt_init(pdev);
+	अगर (IS_ERR_OR_शून्य(chg->pdata))
+		वापस PTR_ERR(chg->pdata);
 
-	ret = max14577_charger_reg_init(chg);
-	if (ret)
-		return ret;
+	ret = max14577_अक्षरger_reg_init(chg);
+	अगर (ret)
+		वापस ret;
 
-	ret = device_create_file(&pdev->dev, &dev_attr_fast_charge_timer);
-	if (ret) {
+	ret = device_create_file(&pdev->dev, &dev_attr_fast_अक्षरge_समयr);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed: create sysfs entry\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	psy_cfg.drv_data = chg;
-	chg->charger = power_supply_register(&pdev->dev, &max14577_charger_desc,
+	chg->अक्षरger = घातer_supply_रेजिस्टर(&pdev->dev, &max14577_अक्षरger_desc,
 						&psy_cfg);
-	if (IS_ERR(chg->charger)) {
+	अगर (IS_ERR(chg->अक्षरger)) अणु
 		dev_err(&pdev->dev, "failed: power supply register\n");
-		ret = PTR_ERR(chg->charger);
-		goto err;
-	}
+		ret = PTR_ERR(chg->अक्षरger);
+		जाओ err;
+	पूर्ण
 
-	/* Check for valid values for charger */
+	/* Check क्रम valid values क्रम अक्षरger */
 	BUILD_BUG_ON(MAX14577_CHARGER_EOC_CURRENT_LIMIT_MIN +
 			MAX14577_CHARGER_EOC_CURRENT_LIMIT_STEP * 0xf !=
 			MAX14577_CHARGER_EOC_CURRENT_LIMIT_MAX);
-	return 0;
+	वापस 0;
 
 err:
-	device_remove_file(&pdev->dev, &dev_attr_fast_charge_timer);
+	device_हटाओ_file(&pdev->dev, &dev_attr_fast_अक्षरge_समयr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int max14577_charger_remove(struct platform_device *pdev)
-{
-	struct max14577_charger *chg = platform_get_drvdata(pdev);
+अटल पूर्णांक max14577_अक्षरger_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा max14577_अक्षरger *chg = platक्रमm_get_drvdata(pdev);
 
-	device_remove_file(&pdev->dev, &dev_attr_fast_charge_timer);
-	power_supply_unregister(chg->charger);
+	device_हटाओ_file(&pdev->dev, &dev_attr_fast_अक्षरge_समयr);
+	घातer_supply_unरेजिस्टर(chg->अक्षरger);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id max14577_charger_id[] = {
-	{ "max14577-charger", MAXIM_DEVICE_TYPE_MAX14577, },
-	{ "max77836-charger", MAXIM_DEVICE_TYPE_MAX77836, },
-	{ }
-};
-MODULE_DEVICE_TABLE(platform, max14577_charger_id);
+अटल स्थिर काष्ठा platक्रमm_device_id max14577_अक्षरger_id[] = अणु
+	अणु "max14577-charger", MAXIM_DEVICE_TYPE_MAX14577, पूर्ण,
+	अणु "max77836-charger", MAXIM_DEVICE_TYPE_MAX77836, पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, max14577_अक्षरger_id);
 
-static const struct of_device_id of_max14577_charger_dt_match[] = {
-	{ .compatible = "maxim,max14577-charger",
-	  .data = (void *)MAXIM_DEVICE_TYPE_MAX14577, },
-	{ .compatible = "maxim,max77836-charger",
-	  .data = (void *)MAXIM_DEVICE_TYPE_MAX77836, },
-	{ },
-};
-MODULE_DEVICE_TABLE(of, of_max14577_charger_dt_match);
+अटल स्थिर काष्ठा of_device_id of_max14577_अक्षरger_dt_match[] = अणु
+	अणु .compatible = "maxim,max14577-charger",
+	  .data = (व्योम *)MAXIM_DEVICE_TYPE_MAX14577, पूर्ण,
+	अणु .compatible = "maxim,max77836-charger",
+	  .data = (व्योम *)MAXIM_DEVICE_TYPE_MAX77836, पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, of_max14577_अक्षरger_dt_match);
 
-static struct platform_driver max14577_charger_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver max14577_अक्षरger_driver = अणु
+	.driver = अणु
 		.name	= "max14577-charger",
-		.of_match_table = of_max14577_charger_dt_match,
-	},
-	.probe		= max14577_charger_probe,
-	.remove		= max14577_charger_remove,
-	.id_table	= max14577_charger_id,
-};
-module_platform_driver(max14577_charger_driver);
+		.of_match_table = of_max14577_अक्षरger_dt_match,
+	पूर्ण,
+	.probe		= max14577_अक्षरger_probe,
+	.हटाओ		= max14577_अक्षरger_हटाओ,
+	.id_table	= max14577_अक्षरger_id,
+पूर्ण;
+module_platक्रमm_driver(max14577_अक्षरger_driver);
 
 MODULE_AUTHOR("Krzysztof Kozlowski <krzk@kernel.org>");
 MODULE_DESCRIPTION("Maxim 14577/77836 charger driver");

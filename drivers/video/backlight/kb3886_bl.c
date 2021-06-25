@@ -1,187 +1,188 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Backlight Driver for the KB3886 Backlight
+ *  Backlight Driver क्रम the KB3886 Backlight
  *
  *  Copyright (c) 2007-2008 Claudio Nieder
  *
- *  Based on corgi_bl.c by Richard Purdie and kb3886 driver by Robert Woerle
+ *  Based on corgi_bl.c by Riअक्षरd Purdie and kb3886 driver by Robert Woerle
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/mutex.h>
-#include <linux/fb.h>
-#include <linux/backlight.h>
-#include <linux/delay.h>
-#include <linux/dmi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dmi.h>
 
-#define KB3886_PARENT 0x64
-#define KB3886_IO 0x60
-#define KB3886_ADC_DAC_PWM 0xC4
-#define KB3886_PWM0_WRITE 0x81
-#define KB3886_PWM0_READ 0x41
+#घोषणा KB3886_PARENT 0x64
+#घोषणा KB3886_IO 0x60
+#घोषणा KB3886_ADC_DAC_PWM 0xC4
+#घोषणा KB3886_PWM0_WRITE 0x81
+#घोषणा KB3886_PWM0_READ 0x41
 
-static DEFINE_MUTEX(bl_mutex);
+अटल DEFINE_MUTEX(bl_mutex);
 
-static void kb3886_bl_set_intensity(int intensity)
-{
+अटल व्योम kb3886_bl_set_पूर्णांकensity(पूर्णांक पूर्णांकensity)
+अणु
 	mutex_lock(&bl_mutex);
-	intensity = intensity&0xff;
+	पूर्णांकensity = पूर्णांकensity&0xff;
 	outb(KB3886_ADC_DAC_PWM, KB3886_PARENT);
 	usleep_range(10000, 11000);
 	outb(KB3886_PWM0_WRITE, KB3886_IO);
 	usleep_range(10000, 11000);
-	outb(intensity, KB3886_IO);
+	outb(पूर्णांकensity, KB3886_IO);
 	mutex_unlock(&bl_mutex);
-}
+पूर्ण
 
-struct kb3886bl_machinfo {
-	int max_intensity;
-	int default_intensity;
-	int limit_mask;
-	void (*set_bl_intensity)(int intensity);
-};
+काष्ठा kb3886bl_machinfo अणु
+	पूर्णांक max_पूर्णांकensity;
+	पूर्णांक शेष_पूर्णांकensity;
+	पूर्णांक limit_mask;
+	व्योम (*set_bl_पूर्णांकensity)(पूर्णांक पूर्णांकensity);
+पूर्ण;
 
-static struct kb3886bl_machinfo kb3886_bl_machinfo = {
-	.max_intensity = 0xff,
-	.default_intensity = 0xa0,
+अटल काष्ठा kb3886bl_machinfo kb3886_bl_machinfo = अणु
+	.max_पूर्णांकensity = 0xff,
+	.शेष_पूर्णांकensity = 0xa0,
 	.limit_mask = 0x7f,
-	.set_bl_intensity = kb3886_bl_set_intensity,
-};
+	.set_bl_पूर्णांकensity = kb3886_bl_set_पूर्णांकensity,
+पूर्ण;
 
-static struct platform_device kb3886bl_device = {
+अटल काष्ठा platक्रमm_device kb3886bl_device = अणु
 	.name		= "kb3886-bl",
-	.dev		= {
-		.platform_data	= &kb3886_bl_machinfo,
-	},
+	.dev		= अणु
+		.platक्रमm_data	= &kb3886_bl_machinfo,
+	पूर्ण,
 	.id		= -1,
-};
+पूर्ण;
 
-static struct platform_device *devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *devices[] __initdata = अणु
 	&kb3886bl_device,
-};
+पूर्ण;
 
 /*
  * Back to driver
  */
 
-static int kb3886bl_intensity;
-static struct backlight_device *kb3886_backlight_device;
-static struct kb3886bl_machinfo *bl_machinfo;
+अटल पूर्णांक kb3886bl_पूर्णांकensity;
+अटल काष्ठा backlight_device *kb3886_backlight_device;
+अटल काष्ठा kb3886bl_machinfo *bl_machinfo;
 
-static unsigned long kb3886bl_flags;
-#define KB3886BL_SUSPENDED     0x01
+अटल अचिन्हित दीर्घ kb3886bl_flags;
+#घोषणा KB3886BL_SUSPENDED     0x01
 
-static const struct dmi_system_id kb3886bl_device_table[] __initconst = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id kb3886bl_device_table[] __initस्थिर = अणु
+	अणु
 		.ident = "Sahara Touch-iT",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "SDV"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "iTouch T201"),
-		},
-	},
-	{ }
-};
+		पूर्ण,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static int kb3886bl_send_intensity(struct backlight_device *bd)
-{
-	int intensity = backlight_get_brightness(bd);
+अटल पूर्णांक kb3886bl_send_पूर्णांकensity(काष्ठा backlight_device *bd)
+अणु
+	पूर्णांक पूर्णांकensity = backlight_get_brightness(bd);
 
-	if (kb3886bl_flags & KB3886BL_SUSPENDED)
-		intensity = 0;
+	अगर (kb3886bl_flags & KB3886BL_SUSPENDED)
+		पूर्णांकensity = 0;
 
-	bl_machinfo->set_bl_intensity(intensity);
+	bl_machinfo->set_bl_पूर्णांकensity(पूर्णांकensity);
 
-	kb3886bl_intensity = intensity;
-	return 0;
-}
+	kb3886bl_पूर्णांकensity = पूर्णांकensity;
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int kb3886bl_suspend(struct device *dev)
-{
-	struct backlight_device *bd = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक kb3886bl_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा backlight_device *bd = dev_get_drvdata(dev);
 
 	kb3886bl_flags |= KB3886BL_SUSPENDED;
 	backlight_update_status(bd);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kb3886bl_resume(struct device *dev)
-{
-	struct backlight_device *bd = dev_get_drvdata(dev);
+अटल पूर्णांक kb3886bl_resume(काष्ठा device *dev)
+अणु
+	काष्ठा backlight_device *bd = dev_get_drvdata(dev);
 
 	kb3886bl_flags &= ~KB3886BL_SUSPENDED;
 	backlight_update_status(bd);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(kb3886bl_pm_ops, kb3886bl_suspend, kb3886bl_resume);
+अटल SIMPLE_DEV_PM_OPS(kb3886bl_pm_ops, kb3886bl_suspend, kb3886bl_resume);
 
-static int kb3886bl_get_intensity(struct backlight_device *bd)
-{
-	return kb3886bl_intensity;
-}
+अटल पूर्णांक kb3886bl_get_पूर्णांकensity(काष्ठा backlight_device *bd)
+अणु
+	वापस kb3886bl_पूर्णांकensity;
+पूर्ण
 
-static const struct backlight_ops kb3886bl_ops = {
-	.get_brightness = kb3886bl_get_intensity,
-	.update_status  = kb3886bl_send_intensity,
-};
+अटल स्थिर काष्ठा backlight_ops kb3886bl_ops = अणु
+	.get_brightness = kb3886bl_get_पूर्णांकensity,
+	.update_status  = kb3886bl_send_पूर्णांकensity,
+पूर्ण;
 
-static int kb3886bl_probe(struct platform_device *pdev)
-{
-	struct backlight_properties props;
-	struct kb3886bl_machinfo *machinfo = dev_get_platdata(&pdev->dev);
+अटल पूर्णांक kb3886bl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा backlight_properties props;
+	काष्ठा kb3886bl_machinfo *machinfo = dev_get_platdata(&pdev->dev);
 
 	bl_machinfo = machinfo;
-	if (!machinfo->limit_mask)
+	अगर (!machinfo->limit_mask)
 		machinfo->limit_mask = -1;
 
-	memset(&props, 0, sizeof(struct backlight_properties));
+	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
 	props.type = BACKLIGHT_RAW;
-	props.max_brightness = machinfo->max_intensity;
-	kb3886_backlight_device = devm_backlight_device_register(&pdev->dev,
+	props.max_brightness = machinfo->max_पूर्णांकensity;
+	kb3886_backlight_device = devm_backlight_device_रेजिस्टर(&pdev->dev,
 							"kb3886-bl", &pdev->dev,
-							NULL, &kb3886bl_ops,
+							शून्य, &kb3886bl_ops,
 							&props);
-	if (IS_ERR(kb3886_backlight_device))
-		return PTR_ERR(kb3886_backlight_device);
+	अगर (IS_ERR(kb3886_backlight_device))
+		वापस PTR_ERR(kb3886_backlight_device);
 
-	platform_set_drvdata(pdev, kb3886_backlight_device);
+	platक्रमm_set_drvdata(pdev, kb3886_backlight_device);
 
-	kb3886_backlight_device->props.power = FB_BLANK_UNBLANK;
-	kb3886_backlight_device->props.brightness = machinfo->default_intensity;
+	kb3886_backlight_device->props.घातer = FB_BLANK_UNBLANK;
+	kb3886_backlight_device->props.brightness = machinfo->शेष_पूर्णांकensity;
 	backlight_update_status(kb3886_backlight_device);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver kb3886bl_driver = {
+अटल काष्ठा platक्रमm_driver kb3886bl_driver = अणु
 	.probe		= kb3886bl_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "kb3886-bl",
 		.pm	= &kb3886bl_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init kb3886_init(void)
-{
-	if (!dmi_check_system(kb3886bl_device_table))
-		return -ENODEV;
+अटल पूर्णांक __init kb3886_init(व्योम)
+अणु
+	अगर (!dmi_check_प्रणाली(kb3886bl_device_table))
+		वापस -ENODEV;
 
-	platform_add_devices(devices, ARRAY_SIZE(devices));
-	return platform_driver_register(&kb3886bl_driver);
-}
+	platक्रमm_add_devices(devices, ARRAY_SIZE(devices));
+	वापस platक्रमm_driver_रेजिस्टर(&kb3886bl_driver);
+पूर्ण
 
-static void __exit kb3886_exit(void)
-{
-	platform_driver_unregister(&kb3886bl_driver);
-}
+अटल व्योम __निकास kb3886_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&kb3886bl_driver);
+पूर्ण
 
 module_init(kb3886_init);
-module_exit(kb3886_exit);
+module_निकास(kb3886_निकास);
 
 MODULE_AUTHOR("Claudio Nieder <private@claudio.ch>");
 MODULE_DESCRIPTION("Tabletkiosk Sahara Touch-iT Backlight Driver");

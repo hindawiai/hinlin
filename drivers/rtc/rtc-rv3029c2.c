@@ -1,725 +1,726 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Micro Crystal RV-3029 / RV-3049 rtc class driver
  *
- * Author: Gregory Hermant <gregory.hermant@calao-systems.com>
+ * Author: Gregory Hermant <gregory.hermant@calao-प्रणालीs.com>
  *         Michael Buesch <m@bues.ch>
  *
  * based on previously existing rtc class drivers
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/spi/spi.h>
-#include <linux/bcd.h>
-#include <linux/rtc.h>
-#include <linux/delay.h>
-#include <linux/of.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/regmap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/of.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/regmap.h>
 
 /* Register map */
 /* control section */
-#define RV3029_ONOFF_CTRL		0x00
-#define RV3029_ONOFF_CTRL_WE		BIT(0)
-#define RV3029_ONOFF_CTRL_TE		BIT(1)
-#define RV3029_ONOFF_CTRL_TAR		BIT(2)
-#define RV3029_ONOFF_CTRL_EERE		BIT(3)
-#define RV3029_ONOFF_CTRL_SRON		BIT(4)
-#define RV3029_ONOFF_CTRL_TD0		BIT(5)
-#define RV3029_ONOFF_CTRL_TD1		BIT(6)
-#define RV3029_ONOFF_CTRL_CLKINT	BIT(7)
-#define RV3029_IRQ_CTRL			0x01
-#define RV3029_IRQ_CTRL_AIE		BIT(0)
-#define RV3029_IRQ_CTRL_TIE		BIT(1)
-#define RV3029_IRQ_CTRL_V1IE		BIT(2)
-#define RV3029_IRQ_CTRL_V2IE		BIT(3)
-#define RV3029_IRQ_CTRL_SRIE		BIT(4)
-#define RV3029_IRQ_FLAGS		0x02
-#define RV3029_IRQ_FLAGS_AF		BIT(0)
-#define RV3029_IRQ_FLAGS_TF		BIT(1)
-#define RV3029_IRQ_FLAGS_V1IF		BIT(2)
-#define RV3029_IRQ_FLAGS_V2IF		BIT(3)
-#define RV3029_IRQ_FLAGS_SRF		BIT(4)
-#define RV3029_STATUS			0x03
-#define RV3029_STATUS_VLOW1		BIT(2)
-#define RV3029_STATUS_VLOW2		BIT(3)
-#define RV3029_STATUS_SR		BIT(4)
-#define RV3029_STATUS_PON		BIT(5)
-#define RV3029_STATUS_EEBUSY		BIT(7)
-#define RV3029_RST_CTRL			0x04
-#define RV3029_RST_CTRL_SYSR		BIT(4)
-#define RV3029_CONTROL_SECTION_LEN	0x05
+#घोषणा RV3029_ONOFF_CTRL		0x00
+#घोषणा RV3029_ONOFF_CTRL_WE		BIT(0)
+#घोषणा RV3029_ONOFF_CTRL_TE		BIT(1)
+#घोषणा RV3029_ONOFF_CTRL_TAR		BIT(2)
+#घोषणा RV3029_ONOFF_CTRL_EERE		BIT(3)
+#घोषणा RV3029_ONOFF_CTRL_SRON		BIT(4)
+#घोषणा RV3029_ONOFF_CTRL_TD0		BIT(5)
+#घोषणा RV3029_ONOFF_CTRL_TD1		BIT(6)
+#घोषणा RV3029_ONOFF_CTRL_CLKINT	BIT(7)
+#घोषणा RV3029_IRQ_CTRL			0x01
+#घोषणा RV3029_IRQ_CTRL_AIE		BIT(0)
+#घोषणा RV3029_IRQ_CTRL_TIE		BIT(1)
+#घोषणा RV3029_IRQ_CTRL_V1IE		BIT(2)
+#घोषणा RV3029_IRQ_CTRL_V2IE		BIT(3)
+#घोषणा RV3029_IRQ_CTRL_SRIE		BIT(4)
+#घोषणा RV3029_IRQ_FLAGS		0x02
+#घोषणा RV3029_IRQ_FLAGS_AF		BIT(0)
+#घोषणा RV3029_IRQ_FLAGS_TF		BIT(1)
+#घोषणा RV3029_IRQ_FLAGS_V1IF		BIT(2)
+#घोषणा RV3029_IRQ_FLAGS_V2IF		BIT(3)
+#घोषणा RV3029_IRQ_FLAGS_SRF		BIT(4)
+#घोषणा RV3029_STATUS			0x03
+#घोषणा RV3029_STATUS_VLOW1		BIT(2)
+#घोषणा RV3029_STATUS_VLOW2		BIT(3)
+#घोषणा RV3029_STATUS_SR		BIT(4)
+#घोषणा RV3029_STATUS_PON		BIT(5)
+#घोषणा RV3029_STATUS_EEBUSY		BIT(7)
+#घोषणा RV3029_RST_CTRL			0x04
+#घोषणा RV3029_RST_CTRL_SYSR		BIT(4)
+#घोषणा RV3029_CONTROL_SECTION_LEN	0x05
 
 /* watch section */
-#define RV3029_W_SEC			0x08
-#define RV3029_W_MINUTES		0x09
-#define RV3029_W_HOURS			0x0A
-#define RV3029_REG_HR_12_24		BIT(6) /* 24h/12h mode */
-#define RV3029_REG_HR_PM		BIT(5) /* PM/AM bit in 12h mode */
-#define RV3029_W_DATE			0x0B
-#define RV3029_W_DAYS			0x0C
-#define RV3029_W_MONTHS			0x0D
-#define RV3029_W_YEARS			0x0E
-#define RV3029_WATCH_SECTION_LEN	0x07
+#घोषणा RV3029_W_SEC			0x08
+#घोषणा RV3029_W_MINUTES		0x09
+#घोषणा RV3029_W_HOURS			0x0A
+#घोषणा RV3029_REG_HR_12_24		BIT(6) /* 24h/12h mode */
+#घोषणा RV3029_REG_HR_PM		BIT(5) /* PM/AM bit in 12h mode */
+#घोषणा RV3029_W_DATE			0x0B
+#घोषणा RV3029_W_DAYS			0x0C
+#घोषणा RV3029_W_MONTHS			0x0D
+#घोषणा RV3029_W_YEARS			0x0E
+#घोषणा RV3029_WATCH_SECTION_LEN	0x07
 
 /* alarm section */
-#define RV3029_A_SC			0x10
-#define RV3029_A_MN			0x11
-#define RV3029_A_HR			0x12
-#define RV3029_A_DT			0x13
-#define RV3029_A_DW			0x14
-#define RV3029_A_MO			0x15
-#define RV3029_A_YR			0x16
-#define RV3029_A_AE_X			BIT(7)
-#define RV3029_ALARM_SECTION_LEN	0x07
+#घोषणा RV3029_A_SC			0x10
+#घोषणा RV3029_A_MN			0x11
+#घोषणा RV3029_A_HR			0x12
+#घोषणा RV3029_A_DT			0x13
+#घोषणा RV3029_A_DW			0x14
+#घोषणा RV3029_A_MO			0x15
+#घोषणा RV3029_A_YR			0x16
+#घोषणा RV3029_A_AE_X			BIT(7)
+#घोषणा RV3029_ALARM_SECTION_LEN	0x07
 
-/* timer section */
-#define RV3029_TIMER_LOW		0x18
-#define RV3029_TIMER_HIGH		0x19
+/* समयr section */
+#घोषणा RV3029_TIMER_LOW		0x18
+#घोषणा RV3029_TIMER_HIGH		0x19
 
 /* temperature section */
-#define RV3029_TEMP_PAGE		0x20
+#घोषणा RV3029_TEMP_PAGE		0x20
 
 /* eeprom data section */
-#define RV3029_E2P_EEDATA1		0x28
-#define RV3029_E2P_EEDATA2		0x29
-#define RV3029_E2PDATA_SECTION_LEN	0x02
+#घोषणा RV3029_E2P_EEDATA1		0x28
+#घोषणा RV3029_E2P_EEDATA2		0x29
+#घोषणा RV3029_E2PDATA_SECTION_LEN	0x02
 
 /* eeprom control section */
-#define RV3029_CONTROL_E2P_EECTRL	0x30
-#define RV3029_EECTRL_THP		BIT(0) /* temp scan interval */
-#define RV3029_EECTRL_THE		BIT(1) /* thermometer enable */
-#define RV3029_EECTRL_FD0		BIT(2) /* CLKOUT */
-#define RV3029_EECTRL_FD1		BIT(3) /* CLKOUT */
-#define RV3029_TRICKLE_1K		BIT(4) /* 1.5K resistance */
-#define RV3029_TRICKLE_5K		BIT(5) /* 5K   resistance */
-#define RV3029_TRICKLE_20K		BIT(6) /* 20K  resistance */
-#define RV3029_TRICKLE_80K		BIT(7) /* 80K  resistance */
-#define RV3029_TRICKLE_MASK		(RV3029_TRICKLE_1K |\
+#घोषणा RV3029_CONTROL_E2P_EECTRL	0x30
+#घोषणा RV3029_EECTRL_THP		BIT(0) /* temp scan पूर्णांकerval */
+#घोषणा RV3029_EECTRL_THE		BIT(1) /* thermometer enable */
+#घोषणा RV3029_EECTRL_FD0		BIT(2) /* CLKOUT */
+#घोषणा RV3029_EECTRL_FD1		BIT(3) /* CLKOUT */
+#घोषणा RV3029_TRICKLE_1K		BIT(4) /* 1.5K resistance */
+#घोषणा RV3029_TRICKLE_5K		BIT(5) /* 5K   resistance */
+#घोषणा RV3029_TRICKLE_20K		BIT(6) /* 20K  resistance */
+#घोषणा RV3029_TRICKLE_80K		BIT(7) /* 80K  resistance */
+#घोषणा RV3029_TRICKLE_MASK		(RV3029_TRICKLE_1K |\
 					 RV3029_TRICKLE_5K |\
 					 RV3029_TRICKLE_20K |\
 					 RV3029_TRICKLE_80K)
-#define RV3029_TRICKLE_SHIFT		4
-#define RV3029_CONTROL_E2P_XOFFS	0x31 /* XTAL offset */
-#define RV3029_CONTROL_E2P_XOFFS_SIGN	BIT(7) /* Sign: 1->pos, 0->neg */
-#define RV3029_CONTROL_E2P_QCOEF	0x32 /* XTAL temp drift coef */
-#define RV3029_CONTROL_E2P_TURNOVER	0x33 /* XTAL turnover temp (in *C) */
-#define RV3029_CONTROL_E2P_TOV_MASK	0x3F /* XTAL turnover temp mask */
+#घोषणा RV3029_TRICKLE_SHIFT		4
+#घोषणा RV3029_CONTROL_E2P_XOFFS	0x31 /* XTAL offset */
+#घोषणा RV3029_CONTROL_E2P_XOFFS_SIGN	BIT(7) /* Sign: 1->pos, 0->neg */
+#घोषणा RV3029_CONTROL_E2P_QCOEF	0x32 /* XTAL temp drअगरt coef */
+#घोषणा RV3029_CONTROL_E2P_TURNOVER	0x33 /* XTAL turnover temp (in *C) */
+#घोषणा RV3029_CONTROL_E2P_TOV_MASK	0x3F /* XTAL turnover temp mask */
 
 /* user ram section */
-#define RV3029_RAM_PAGE			0x38
-#define RV3029_RAM_SECTION_LEN		8
+#घोषणा RV3029_RAM_PAGE			0x38
+#घोषणा RV3029_RAM_SECTION_LEN		8
 
-struct rv3029_data {
-	struct device		*dev;
-	struct rtc_device	*rtc;
-	struct regmap		*regmap;
-	int irq;
-};
+काष्ठा rv3029_data अणु
+	काष्ठा device		*dev;
+	काष्ठा rtc_device	*rtc;
+	काष्ठा regmap		*regmap;
+	पूर्णांक irq;
+पूर्ण;
 
-static int rv3029_eeprom_busywait(struct rv3029_data *rv3029)
-{
-	unsigned int sr;
-	int i, ret;
+अटल पूर्णांक rv3029_eeprom_busyरुको(काष्ठा rv3029_data *rv3029)
+अणु
+	अचिन्हित पूर्णांक sr;
+	पूर्णांक i, ret;
 
-	for (i = 100; i > 0; i--) {
-		ret = regmap_read(rv3029->regmap, RV3029_STATUS, &sr);
-		if (ret < 0)
-			break;
-		if (!(sr & RV3029_STATUS_EEBUSY))
-			break;
+	क्रम (i = 100; i > 0; i--) अणु
+		ret = regmap_पढ़ो(rv3029->regmap, RV3029_STATUS, &sr);
+		अगर (ret < 0)
+			अवरोध;
+		अगर (!(sr & RV3029_STATUS_EEBUSY))
+			अवरोध;
 		usleep_range(1000, 10000);
-	}
-	if (i <= 0) {
+	पूर्ण
+	अगर (i <= 0) अणु
 		dev_err(rv3029->dev, "EEPROM busy wait timeout.\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rv3029_eeprom_exit(struct rv3029_data *rv3029)
-{
+अटल पूर्णांक rv3029_eeprom_निकास(काष्ठा rv3029_data *rv3029)
+अणु
 	/* Re-enable eeprom refresh */
-	return regmap_update_bits(rv3029->regmap, RV3029_ONOFF_CTRL,
+	वापस regmap_update_bits(rv3029->regmap, RV3029_ONOFF_CTRL,
 				  RV3029_ONOFF_CTRL_EERE,
 				  RV3029_ONOFF_CTRL_EERE);
-}
+पूर्ण
 
-static int rv3029_eeprom_enter(struct rv3029_data *rv3029)
-{
-	unsigned int sr;
-	int ret;
+अटल पूर्णांक rv3029_eeprom_enter(काष्ठा rv3029_data *rv3029)
+अणु
+	अचिन्हित पूर्णांक sr;
+	पूर्णांक ret;
 
 	/* Check whether we are in the allowed voltage range. */
-	ret = regmap_read(rv3029->regmap, RV3029_STATUS, &sr);
-	if (ret < 0)
-		return ret;
-	if (sr & RV3029_STATUS_VLOW2)
-		return -ENODEV;
-	if (sr & RV3029_STATUS_VLOW1) {
-		/* We clear the bits and retry once just in case
+	ret = regmap_पढ़ो(rv3029->regmap, RV3029_STATUS, &sr);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (sr & RV3029_STATUS_VLOW2)
+		वापस -ENODEV;
+	अगर (sr & RV3029_STATUS_VLOW1) अणु
+		/* We clear the bits and retry once just in हाल
 		 * we had a brown out in early startup.
 		 */
 		ret = regmap_update_bits(rv3029->regmap, RV3029_STATUS,
 					 RV3029_STATUS_VLOW1, 0);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		usleep_range(1000, 10000);
-		ret = regmap_read(rv3029->regmap, RV3029_STATUS, &sr);
-		if (ret < 0)
-			return ret;
-		if (sr & RV3029_STATUS_VLOW1) {
+		ret = regmap_पढ़ो(rv3029->regmap, RV3029_STATUS, &sr);
+		अगर (ret < 0)
+			वापस ret;
+		अगर (sr & RV3029_STATUS_VLOW1) अणु
 			dev_err(rv3029->dev,
 				"Supply voltage is too low to safely access the EEPROM.\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
 	/* Disable eeprom refresh. */
 	ret = regmap_update_bits(rv3029->regmap, RV3029_ONOFF_CTRL,
 				 RV3029_ONOFF_CTRL_EERE, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Wait for any previous eeprom accesses to finish. */
-	ret = rv3029_eeprom_busywait(rv3029);
-	if (ret < 0)
-		rv3029_eeprom_exit(rv3029);
+	/* Wait क्रम any previous eeprom accesses to finish. */
+	ret = rv3029_eeprom_busyरुको(rv3029);
+	अगर (ret < 0)
+		rv3029_eeprom_निकास(rv3029);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rv3029_eeprom_read(struct rv3029_data *rv3029, u8 reg,
-			      u8 buf[], size_t len)
-{
-	int ret, err;
-
-	err = rv3029_eeprom_enter(rv3029);
-	if (err < 0)
-		return err;
-
-	ret = regmap_bulk_read(rv3029->regmap, reg, buf, len);
-
-	err = rv3029_eeprom_exit(rv3029);
-	if (err < 0)
-		return err;
-
-	return ret;
-}
-
-static int rv3029_eeprom_write(struct rv3029_data *rv3029, u8 reg,
-			       u8 const buf[], size_t len)
-{
-	unsigned int tmp;
-	int ret, err;
-	size_t i;
+अटल पूर्णांक rv3029_eeprom_पढ़ो(काष्ठा rv3029_data *rv3029, u8 reg,
+			      u8 buf[], माप_प्रकार len)
+अणु
+	पूर्णांक ret, err;
 
 	err = rv3029_eeprom_enter(rv3029);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	for (i = 0; i < len; i++, reg++) {
-		ret = regmap_read(rv3029->regmap, reg, &tmp);
-		if (ret < 0)
-			break;
-		if (tmp != buf[i]) {
-			tmp = buf[i];
-			ret = regmap_write(rv3029->regmap, reg, tmp);
-			if (ret < 0)
-				break;
-		}
-		ret = rv3029_eeprom_busywait(rv3029);
-		if (ret < 0)
-			break;
-	}
+	ret = regmap_bulk_पढ़ो(rv3029->regmap, reg, buf, len);
 
-	err = rv3029_eeprom_exit(rv3029);
-	if (err < 0)
-		return err;
+	err = rv3029_eeprom_निकास(rv3029);
+	अगर (err < 0)
+		वापस err;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rv3029_eeprom_update_bits(struct rv3029_data *rv3029,
+अटल पूर्णांक rv3029_eeprom_ग_लिखो(काष्ठा rv3029_data *rv3029, u8 reg,
+			       u8 स्थिर buf[], माप_प्रकार len)
+अणु
+	अचिन्हित पूर्णांक पंचांगp;
+	पूर्णांक ret, err;
+	माप_प्रकार i;
+
+	err = rv3029_eeprom_enter(rv3029);
+	अगर (err < 0)
+		वापस err;
+
+	क्रम (i = 0; i < len; i++, reg++) अणु
+		ret = regmap_पढ़ो(rv3029->regmap, reg, &पंचांगp);
+		अगर (ret < 0)
+			अवरोध;
+		अगर (पंचांगp != buf[i]) अणु
+			पंचांगp = buf[i];
+			ret = regmap_ग_लिखो(rv3029->regmap, reg, पंचांगp);
+			अगर (ret < 0)
+				अवरोध;
+		पूर्ण
+		ret = rv3029_eeprom_busyरुको(rv3029);
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
+
+	err = rv3029_eeprom_निकास(rv3029);
+	अगर (err < 0)
+		वापस err;
+
+	वापस ret;
+पूर्ण
+
+अटल पूर्णांक rv3029_eeprom_update_bits(काष्ठा rv3029_data *rv3029,
 				     u8 reg, u8 mask, u8 set)
-{
+अणु
 	u8 buf;
-	int ret;
+	पूर्णांक ret;
 
-	ret = rv3029_eeprom_read(rv3029, reg, &buf, 1);
-	if (ret < 0)
-		return ret;
+	ret = rv3029_eeprom_पढ़ो(rv3029, reg, &buf, 1);
+	अगर (ret < 0)
+		वापस ret;
 	buf &= ~mask;
 	buf |= set & mask;
-	ret = rv3029_eeprom_write(rv3029, reg, &buf, 1);
-	if (ret < 0)
-		return ret;
+	ret = rv3029_eeprom_ग_लिखो(rv3029, reg, &buf, 1);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t rv3029_handle_irq(int irq, void *dev_id)
-{
-	struct device *dev = dev_id;
-	struct rv3029_data *rv3029 = dev_get_drvdata(dev);
-	unsigned int flags, controls;
-	unsigned long events = 0;
-	int ret;
+अटल irqवापस_t rv3029_handle_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा device *dev = dev_id;
+	काष्ठा rv3029_data *rv3029 = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक flags, controls;
+	अचिन्हित दीर्घ events = 0;
+	पूर्णांक ret;
 
 	rtc_lock(rv3029->rtc);
 
-	ret = regmap_read(rv3029->regmap, RV3029_IRQ_CTRL, &controls);
-	if (ret) {
+	ret = regmap_पढ़ो(rv3029->regmap, RV3029_IRQ_CTRL, &controls);
+	अगर (ret) अणु
 		dev_warn(dev, "Read IRQ Control Register error %d\n", ret);
 		rtc_unlock(rv3029->rtc);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	ret = regmap_read(rv3029->regmap, RV3029_IRQ_FLAGS, &flags);
-	if (ret) {
+	ret = regmap_पढ़ो(rv3029->regmap, RV3029_IRQ_FLAGS, &flags);
+	अगर (ret) अणु
 		dev_warn(dev, "Read IRQ Flags Register error %d\n", ret);
 		rtc_unlock(rv3029->rtc);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	if (flags & RV3029_IRQ_FLAGS_AF) {
+	अगर (flags & RV3029_IRQ_FLAGS_AF) अणु
 		flags &= ~RV3029_IRQ_FLAGS_AF;
 		controls &= ~RV3029_IRQ_CTRL_AIE;
 		events |= RTC_AF;
-	}
+	पूर्ण
 
-	if (events) {
+	अगर (events) अणु
 		rtc_update_irq(rv3029->rtc, 1, events);
-		regmap_write(rv3029->regmap, RV3029_IRQ_FLAGS, flags);
-		regmap_write(rv3029->regmap, RV3029_IRQ_CTRL, controls);
-	}
+		regmap_ग_लिखो(rv3029->regmap, RV3029_IRQ_FLAGS, flags);
+		regmap_ग_लिखो(rv3029->regmap, RV3029_IRQ_CTRL, controls);
+	पूर्ण
 	rtc_unlock(rv3029->rtc);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int rv3029_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct rv3029_data *rv3029 = dev_get_drvdata(dev);
-	unsigned int sr;
-	int ret;
-	u8 regs[RV3029_WATCH_SECTION_LEN] = { 0, };
+अटल पूर्णांक rv3029_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा rv3029_data *rv3029 = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक sr;
+	पूर्णांक ret;
+	u8 regs[RV3029_WATCH_SECTION_LEN] = अणु 0, पूर्ण;
 
-	ret = regmap_read(rv3029->regmap, RV3029_STATUS, &sr);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(rv3029->regmap, RV3029_STATUS, &sr);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (sr & (RV3029_STATUS_VLOW2 | RV3029_STATUS_PON))
-		return -EINVAL;
+	अगर (sr & (RV3029_STATUS_VLOW2 | RV3029_STATUS_PON))
+		वापस -EINVAL;
 
-	ret = regmap_bulk_read(rv3029->regmap, RV3029_W_SEC, regs,
+	ret = regmap_bulk_पढ़ो(rv3029->regmap, RV3029_W_SEC, regs,
 			       RV3029_WATCH_SECTION_LEN);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	tm->tm_sec = bcd2bin(regs[RV3029_W_SEC - RV3029_W_SEC]);
-	tm->tm_min = bcd2bin(regs[RV3029_W_MINUTES - RV3029_W_SEC]);
+	पंचांग->पंचांग_sec = bcd2bin(regs[RV3029_W_SEC - RV3029_W_SEC]);
+	पंचांग->पंचांग_min = bcd2bin(regs[RV3029_W_MINUTES - RV3029_W_SEC]);
 
-	/* HR field has a more complex interpretation */
-	{
-		const u8 _hr = regs[RV3029_W_HOURS - RV3029_W_SEC];
+	/* HR field has a more complex पूर्णांकerpretation */
+	अणु
+		स्थिर u8 _hr = regs[RV3029_W_HOURS - RV3029_W_SEC];
 
-		if (_hr & RV3029_REG_HR_12_24) {
-			/* 12h format */
-			tm->tm_hour = bcd2bin(_hr & 0x1f);
-			if (_hr & RV3029_REG_HR_PM)	/* PM flag set */
-				tm->tm_hour += 12;
-		} else /* 24h format */
-			tm->tm_hour = bcd2bin(_hr & 0x3f);
-	}
+		अगर (_hr & RV3029_REG_HR_12_24) अणु
+			/* 12h क्रमmat */
+			पंचांग->पंचांग_hour = bcd2bin(_hr & 0x1f);
+			अगर (_hr & RV3029_REG_HR_PM)	/* PM flag set */
+				पंचांग->पंचांग_hour += 12;
+		पूर्ण अन्यथा /* 24h क्रमmat */
+			पंचांग->पंचांग_hour = bcd2bin(_hr & 0x3f);
+	पूर्ण
 
-	tm->tm_mday = bcd2bin(regs[RV3029_W_DATE - RV3029_W_SEC]);
-	tm->tm_mon = bcd2bin(regs[RV3029_W_MONTHS - RV3029_W_SEC]) - 1;
-	tm->tm_year = bcd2bin(regs[RV3029_W_YEARS - RV3029_W_SEC]) + 100;
-	tm->tm_wday = bcd2bin(regs[RV3029_W_DAYS - RV3029_W_SEC]) - 1;
+	पंचांग->पंचांग_mday = bcd2bin(regs[RV3029_W_DATE - RV3029_W_SEC]);
+	पंचांग->पंचांग_mon = bcd2bin(regs[RV3029_W_MONTHS - RV3029_W_SEC]) - 1;
+	पंचांग->पंचांग_year = bcd2bin(regs[RV3029_W_YEARS - RV3029_W_SEC]) + 100;
+	पंचांग->पंचांग_wday = bcd2bin(regs[RV3029_W_DAYS - RV3029_W_SEC]) - 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rv3029_read_alarm(struct device *dev, struct rtc_wkalrm *alarm)
-{
-	struct rv3029_data *rv3029 = dev_get_drvdata(dev);
-	struct rtc_time *const tm = &alarm->time;
-	unsigned int controls, flags;
-	int ret;
+अटल पूर्णांक rv3029_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा rv3029_data *rv3029 = dev_get_drvdata(dev);
+	काष्ठा rtc_समय *स्थिर पंचांग = &alarm->समय;
+	अचिन्हित पूर्णांक controls, flags;
+	पूर्णांक ret;
 	u8 regs[8];
 
-	ret = regmap_bulk_read(rv3029->regmap, RV3029_A_SC, regs,
+	ret = regmap_bulk_पढ़ो(rv3029->regmap, RV3029_A_SC, regs,
 			       RV3029_ALARM_SECTION_LEN);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = regmap_read(rv3029->regmap, RV3029_IRQ_CTRL, &controls);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(rv3029->regmap, RV3029_IRQ_CTRL, &controls);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(rv3029->regmap, RV3029_IRQ_FLAGS, &flags);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(rv3029->regmap, RV3029_IRQ_FLAGS, &flags);
+	अगर (ret < 0)
+		वापस ret;
 
-	tm->tm_sec = bcd2bin(regs[RV3029_A_SC - RV3029_A_SC] & 0x7f);
-	tm->tm_min = bcd2bin(regs[RV3029_A_MN - RV3029_A_SC] & 0x7f);
-	tm->tm_hour = bcd2bin(regs[RV3029_A_HR - RV3029_A_SC] & 0x3f);
-	tm->tm_mday = bcd2bin(regs[RV3029_A_DT - RV3029_A_SC] & 0x3f);
-	tm->tm_mon = bcd2bin(regs[RV3029_A_MO - RV3029_A_SC] & 0x1f) - 1;
-	tm->tm_year = bcd2bin(regs[RV3029_A_YR - RV3029_A_SC] & 0x7f) + 100;
-	tm->tm_wday = bcd2bin(regs[RV3029_A_DW - RV3029_A_SC] & 0x07) - 1;
+	पंचांग->पंचांग_sec = bcd2bin(regs[RV3029_A_SC - RV3029_A_SC] & 0x7f);
+	पंचांग->पंचांग_min = bcd2bin(regs[RV3029_A_MN - RV3029_A_SC] & 0x7f);
+	पंचांग->पंचांग_hour = bcd2bin(regs[RV3029_A_HR - RV3029_A_SC] & 0x3f);
+	पंचांग->पंचांग_mday = bcd2bin(regs[RV3029_A_DT - RV3029_A_SC] & 0x3f);
+	पंचांग->पंचांग_mon = bcd2bin(regs[RV3029_A_MO - RV3029_A_SC] & 0x1f) - 1;
+	पंचांग->पंचांग_year = bcd2bin(regs[RV3029_A_YR - RV3029_A_SC] & 0x7f) + 100;
+	पंचांग->पंचांग_wday = bcd2bin(regs[RV3029_A_DW - RV3029_A_SC] & 0x07) - 1;
 
 	alarm->enabled = !!(controls & RV3029_IRQ_CTRL_AIE);
 	alarm->pending = (flags & RV3029_IRQ_FLAGS_AF) && alarm->enabled;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rv3029_alarm_irq_enable(struct device *dev, unsigned int enable)
-{
-	struct rv3029_data *rv3029 = dev_get_drvdata(dev);
+अटल पूर्णांक rv3029_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enable)
+अणु
+	काष्ठा rv3029_data *rv3029 = dev_get_drvdata(dev);
 
-	return regmap_update_bits(rv3029->regmap, RV3029_IRQ_CTRL,
+	वापस regmap_update_bits(rv3029->regmap, RV3029_IRQ_CTRL,
 				  RV3029_IRQ_CTRL_AIE,
 				  enable ? RV3029_IRQ_CTRL_AIE : 0);
-}
+पूर्ण
 
-static int rv3029_set_alarm(struct device *dev, struct rtc_wkalrm *alarm)
-{
-	struct rv3029_data *rv3029 = dev_get_drvdata(dev);
-	struct rtc_time *const tm = &alarm->time;
-	int ret;
+अटल पूर्णांक rv3029_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा rv3029_data *rv3029 = dev_get_drvdata(dev);
+	काष्ठा rtc_समय *स्थिर पंचांग = &alarm->समय;
+	पूर्णांक ret;
 	u8 regs[8];
 
 	/* Activate all the alarms with AE_x bit */
-	regs[RV3029_A_SC - RV3029_A_SC] = bin2bcd(tm->tm_sec) | RV3029_A_AE_X;
-	regs[RV3029_A_MN - RV3029_A_SC] = bin2bcd(tm->tm_min) | RV3029_A_AE_X;
-	regs[RV3029_A_HR - RV3029_A_SC] = (bin2bcd(tm->tm_hour) & 0x3f)
+	regs[RV3029_A_SC - RV3029_A_SC] = bin2bcd(पंचांग->पंचांग_sec) | RV3029_A_AE_X;
+	regs[RV3029_A_MN - RV3029_A_SC] = bin2bcd(पंचांग->पंचांग_min) | RV3029_A_AE_X;
+	regs[RV3029_A_HR - RV3029_A_SC] = (bin2bcd(पंचांग->पंचांग_hour) & 0x3f)
 		| RV3029_A_AE_X;
-	regs[RV3029_A_DT - RV3029_A_SC] = (bin2bcd(tm->tm_mday) & 0x3f)
+	regs[RV3029_A_DT - RV3029_A_SC] = (bin2bcd(पंचांग->पंचांग_mday) & 0x3f)
 		| RV3029_A_AE_X;
-	regs[RV3029_A_MO - RV3029_A_SC] = (bin2bcd(tm->tm_mon + 1) & 0x1f)
+	regs[RV3029_A_MO - RV3029_A_SC] = (bin2bcd(पंचांग->पंचांग_mon + 1) & 0x1f)
 		| RV3029_A_AE_X;
-	regs[RV3029_A_DW - RV3029_A_SC] = (bin2bcd(tm->tm_wday + 1) & 0x7)
+	regs[RV3029_A_DW - RV3029_A_SC] = (bin2bcd(पंचांग->पंचांग_wday + 1) & 0x7)
 		| RV3029_A_AE_X;
-	regs[RV3029_A_YR - RV3029_A_SC] = (bin2bcd(tm->tm_year - 100))
+	regs[RV3029_A_YR - RV3029_A_SC] = (bin2bcd(पंचांग->पंचांग_year - 100))
 		| RV3029_A_AE_X;
 
 	/* Write the alarm */
-	ret = regmap_bulk_write(rv3029->regmap, RV3029_A_SC, regs,
+	ret = regmap_bulk_ग_लिखो(rv3029->regmap, RV3029_A_SC, regs,
 				RV3029_ALARM_SECTION_LEN);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return rv3029_alarm_irq_enable(dev, alarm->enabled);
-}
+	वापस rv3029_alarm_irq_enable(dev, alarm->enabled);
+पूर्ण
 
-static int rv3029_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct rv3029_data *rv3029 = dev_get_drvdata(dev);
+अटल पूर्णांक rv3029_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा rv3029_data *rv3029 = dev_get_drvdata(dev);
 	u8 regs[8];
-	int ret;
+	पूर्णांक ret;
 
-	regs[RV3029_W_SEC - RV3029_W_SEC] = bin2bcd(tm->tm_sec);
-	regs[RV3029_W_MINUTES - RV3029_W_SEC] = bin2bcd(tm->tm_min);
-	regs[RV3029_W_HOURS - RV3029_W_SEC] = bin2bcd(tm->tm_hour);
-	regs[RV3029_W_DATE - RV3029_W_SEC] = bin2bcd(tm->tm_mday);
-	regs[RV3029_W_MONTHS - RV3029_W_SEC] = bin2bcd(tm->tm_mon + 1);
-	regs[RV3029_W_DAYS - RV3029_W_SEC] = bin2bcd(tm->tm_wday + 1) & 0x7;
-	regs[RV3029_W_YEARS - RV3029_W_SEC] = bin2bcd(tm->tm_year - 100);
+	regs[RV3029_W_SEC - RV3029_W_SEC] = bin2bcd(पंचांग->पंचांग_sec);
+	regs[RV3029_W_MINUTES - RV3029_W_SEC] = bin2bcd(पंचांग->पंचांग_min);
+	regs[RV3029_W_HOURS - RV3029_W_SEC] = bin2bcd(पंचांग->पंचांग_hour);
+	regs[RV3029_W_DATE - RV3029_W_SEC] = bin2bcd(पंचांग->पंचांग_mday);
+	regs[RV3029_W_MONTHS - RV3029_W_SEC] = bin2bcd(पंचांग->पंचांग_mon + 1);
+	regs[RV3029_W_DAYS - RV3029_W_SEC] = bin2bcd(पंचांग->पंचांग_wday + 1) & 0x7;
+	regs[RV3029_W_YEARS - RV3029_W_SEC] = bin2bcd(पंचांग->पंचांग_year - 100);
 
-	ret = regmap_bulk_write(rv3029->regmap, RV3029_W_SEC, regs,
+	ret = regmap_bulk_ग_लिखो(rv3029->regmap, RV3029_W_SEC, regs,
 				RV3029_WATCH_SECTION_LEN);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* clear PON and VLOW2 bits */
-	return regmap_update_bits(rv3029->regmap, RV3029_STATUS,
+	वापस regmap_update_bits(rv3029->regmap, RV3029_STATUS,
 				  RV3029_STATUS_PON | RV3029_STATUS_VLOW2, 0);
-}
+पूर्ण
 
-static int rv3029_ioctl(struct device *dev, unsigned int cmd, unsigned long arg)
-{
-	struct rv3029_data *rv3029 = dev_get_drvdata(dev);
-	unsigned long vl = 0;
-	int sr, ret = 0;
+अटल पूर्णांक rv3029_ioctl(काष्ठा device *dev, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा rv3029_data *rv3029 = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ vl = 0;
+	पूर्णांक sr, ret = 0;
 
-	switch (cmd) {
-	case RTC_VL_READ:
-		ret = regmap_read(rv3029->regmap, RV3029_STATUS, &sr);
-		if (ret < 0)
-			return ret;
+	चयन (cmd) अणु
+	हाल RTC_VL_READ:
+		ret = regmap_पढ़ो(rv3029->regmap, RV3029_STATUS, &sr);
+		अगर (ret < 0)
+			वापस ret;
 
-		if (sr & RV3029_STATUS_VLOW1)
+		अगर (sr & RV3029_STATUS_VLOW1)
 			vl = RTC_VL_ACCURACY_LOW;
 
-		if (sr & (RV3029_STATUS_VLOW2 | RV3029_STATUS_PON))
+		अगर (sr & (RV3029_STATUS_VLOW2 | RV3029_STATUS_PON))
 			vl |= RTC_VL_DATA_INVALID;
 
-		return put_user(vl, (unsigned int __user *)arg);
+		वापस put_user(vl, (अचिन्हित पूर्णांक __user *)arg);
 
-	case RTC_VL_CLR:
-		return regmap_update_bits(rv3029->regmap, RV3029_STATUS,
+	हाल RTC_VL_CLR:
+		वापस regmap_update_bits(rv3029->regmap, RV3029_STATUS,
 					  RV3029_STATUS_VLOW1, 0);
 
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
 
-static int rv3029_nvram_write(void *priv, unsigned int offset, void *val,
-			      size_t bytes)
-{
-	return regmap_bulk_write(priv, RV3029_RAM_PAGE + offset, val, bytes);
-}
+अटल पूर्णांक rv3029_nvram_ग_लिखो(व्योम *priv, अचिन्हित पूर्णांक offset, व्योम *val,
+			      माप_प्रकार bytes)
+अणु
+	वापस regmap_bulk_ग_लिखो(priv, RV3029_RAM_PAGE + offset, val, bytes);
+पूर्ण
 
-static int rv3029_nvram_read(void *priv, unsigned int offset, void *val,
-			     size_t bytes)
-{
-	return regmap_bulk_read(priv, RV3029_RAM_PAGE + offset, val, bytes);
-}
+अटल पूर्णांक rv3029_nvram_पढ़ो(व्योम *priv, अचिन्हित पूर्णांक offset, व्योम *val,
+			     माप_प्रकार bytes)
+अणु
+	वापस regmap_bulk_पढ़ो(priv, RV3029_RAM_PAGE + offset, val, bytes);
+पूर्ण
 
-static const struct rv3029_trickle_tab_elem {
+अटल स्थिर काष्ठा rv3029_trickle_tab_elem अणु
 	u32 r;		/* resistance in ohms */
 	u8 conf;	/* trickle config bits */
-} rv3029_trickle_tab[] = {
-	{
+पूर्ण rv3029_trickle_tab[] = अणु
+	अणु
 		.r	= 1076,
 		.conf	= RV3029_TRICKLE_1K | RV3029_TRICKLE_5K |
 			  RV3029_TRICKLE_20K | RV3029_TRICKLE_80K,
-	}, {
+	पूर्ण, अणु
 		.r	= 1091,
 		.conf	= RV3029_TRICKLE_1K | RV3029_TRICKLE_5K |
 			  RV3029_TRICKLE_20K,
-	}, {
+	पूर्ण, अणु
 		.r	= 1137,
 		.conf	= RV3029_TRICKLE_1K | RV3029_TRICKLE_5K |
 			  RV3029_TRICKLE_80K,
-	}, {
+	पूर्ण, अणु
 		.r	= 1154,
 		.conf	= RV3029_TRICKLE_1K | RV3029_TRICKLE_5K,
-	}, {
+	पूर्ण, अणु
 		.r	= 1371,
 		.conf	= RV3029_TRICKLE_1K | RV3029_TRICKLE_20K |
 			  RV3029_TRICKLE_80K,
-	}, {
+	पूर्ण, अणु
 		.r	= 1395,
 		.conf	= RV3029_TRICKLE_1K | RV3029_TRICKLE_20K,
-	}, {
+	पूर्ण, अणु
 		.r	= 1472,
 		.conf	= RV3029_TRICKLE_1K | RV3029_TRICKLE_80K,
-	}, {
+	पूर्ण, अणु
 		.r	= 1500,
 		.conf	= RV3029_TRICKLE_1K,
-	}, {
+	पूर्ण, अणु
 		.r	= 3810,
 		.conf	= RV3029_TRICKLE_5K | RV3029_TRICKLE_20K |
 			  RV3029_TRICKLE_80K,
-	}, {
+	पूर्ण, अणु
 		.r	= 4000,
 		.conf	= RV3029_TRICKLE_5K | RV3029_TRICKLE_20K,
-	}, {
+	पूर्ण, अणु
 		.r	= 4706,
 		.conf	= RV3029_TRICKLE_5K | RV3029_TRICKLE_80K,
-	}, {
+	पूर्ण, अणु
 		.r	= 5000,
 		.conf	= RV3029_TRICKLE_5K,
-	}, {
+	पूर्ण, अणु
 		.r	= 16000,
 		.conf	= RV3029_TRICKLE_20K | RV3029_TRICKLE_80K,
-	}, {
+	पूर्ण, अणु
 		.r	= 20000,
 		.conf	= RV3029_TRICKLE_20K,
-	}, {
+	पूर्ण, अणु
 		.r	= 80000,
 		.conf	= RV3029_TRICKLE_80K,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void rv3029_trickle_config(struct device *dev)
-{
-	struct rv3029_data *rv3029 = dev_get_drvdata(dev);
-	struct device_node *of_node = dev->of_node;
-	const struct rv3029_trickle_tab_elem *elem;
-	int i, err;
+अटल व्योम rv3029_trickle_config(काष्ठा device *dev)
+अणु
+	काष्ठा rv3029_data *rv3029 = dev_get_drvdata(dev);
+	काष्ठा device_node *of_node = dev->of_node;
+	स्थिर काष्ठा rv3029_trickle_tab_elem *elem;
+	पूर्णांक i, err;
 	u32 ohms;
 	u8 trickle_set_bits;
 
-	if (!of_node)
-		return;
+	अगर (!of_node)
+		वापस;
 
-	/* Configure the trickle charger. */
-	err = of_property_read_u32(of_node, "trickle-resistor-ohms", &ohms);
-	if (err) {
-		/* Disable trickle charger. */
+	/* Configure the trickle अक्षरger. */
+	err = of_property_पढ़ो_u32(of_node, "trickle-resistor-ohms", &ohms);
+	अगर (err) अणु
+		/* Disable trickle अक्षरger. */
 		trickle_set_bits = 0;
-	} else {
-		/* Enable trickle charger. */
-		for (i = 0; i < ARRAY_SIZE(rv3029_trickle_tab); i++) {
+	पूर्ण अन्यथा अणु
+		/* Enable trickle अक्षरger. */
+		क्रम (i = 0; i < ARRAY_SIZE(rv3029_trickle_tab); i++) अणु
 			elem = &rv3029_trickle_tab[i];
-			if (elem->r >= ohms)
-				break;
-		}
+			अगर (elem->r >= ohms)
+				अवरोध;
+		पूर्ण
 		trickle_set_bits = elem->conf;
 		dev_info(dev,
 			 "Trickle charger enabled at %d ohms resistance.\n",
 			 elem->r);
-	}
+	पूर्ण
 	err = rv3029_eeprom_update_bits(rv3029, RV3029_CONTROL_E2P_EECTRL,
 					RV3029_TRICKLE_MASK,
 					trickle_set_bits);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(dev, "Failed to update trickle charger config\n");
-}
+पूर्ण
 
-#ifdef CONFIG_RTC_DRV_RV3029_HWMON
+#अगर_घोषित CONFIG_RTC_DRV_RV3029_HWMON
 
-static int rv3029_read_temp(struct rv3029_data *rv3029, int *temp_mC)
-{
-	unsigned int temp;
-	int ret;
+अटल पूर्णांक rv3029_पढ़ो_temp(काष्ठा rv3029_data *rv3029, पूर्णांक *temp_mC)
+अणु
+	अचिन्हित पूर्णांक temp;
+	पूर्णांक ret;
 
-	ret = regmap_read(rv3029->regmap, RV3029_TEMP_PAGE, &temp);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(rv3029->regmap, RV3029_TEMP_PAGE, &temp);
+	अगर (ret < 0)
+		वापस ret;
 
-	*temp_mC = ((int)temp - 60) * 1000;
+	*temp_mC = ((पूर्णांक)temp - 60) * 1000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t rv3029_hwmon_show_temp(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	struct rv3029_data *rv3029 = dev_get_drvdata(dev);
-	int ret, temp_mC;
+अटल sमाप_प्रकार rv3029_hwmon_show_temp(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा rv3029_data *rv3029 = dev_get_drvdata(dev);
+	पूर्णांक ret, temp_mC;
 
-	ret = rv3029_read_temp(rv3029, &temp_mC);
-	if (ret < 0)
-		return ret;
+	ret = rv3029_पढ़ो_temp(rv3029, &temp_mC);
+	अगर (ret < 0)
+		वापस ret;
 
-	return sprintf(buf, "%d\n", temp_mC);
-}
+	वापस प्र_लिखो(buf, "%d\n", temp_mC);
+पूर्ण
 
-static ssize_t rv3029_hwmon_set_update_interval(struct device *dev,
-						struct device_attribute *attr,
-						const char *buf,
-						size_t count)
-{
-	struct rv3029_data *rv3029 = dev_get_drvdata(dev);
-	unsigned int th_set_bits = 0;
-	unsigned long interval_ms;
-	int ret;
+अटल sमाप_प्रकार rv3029_hwmon_set_update_पूर्णांकerval(काष्ठा device *dev,
+						काष्ठा device_attribute *attr,
+						स्थिर अक्षर *buf,
+						माप_प्रकार count)
+अणु
+	काष्ठा rv3029_data *rv3029 = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक th_set_bits = 0;
+	अचिन्हित दीर्घ पूर्णांकerval_ms;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &interval_ms);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &पूर्णांकerval_ms);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (interval_ms != 0) {
+	अगर (पूर्णांकerval_ms != 0) अणु
 		th_set_bits |= RV3029_EECTRL_THE;
-		if (interval_ms >= 16000)
+		अगर (पूर्णांकerval_ms >= 16000)
 			th_set_bits |= RV3029_EECTRL_THP;
-	}
+	पूर्ण
 	ret = rv3029_eeprom_update_bits(rv3029, RV3029_CONTROL_E2P_EECTRL,
 					RV3029_EECTRL_THE | RV3029_EECTRL_THP,
 					th_set_bits);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t rv3029_hwmon_show_update_interval(struct device *dev,
-						 struct device_attribute *attr,
-						 char *buf)
-{
-	struct rv3029_data *rv3029 = dev_get_drvdata(dev);
-	int ret, interval_ms;
+अटल sमाप_प्रकार rv3029_hwmon_show_update_पूर्णांकerval(काष्ठा device *dev,
+						 काष्ठा device_attribute *attr,
+						 अक्षर *buf)
+अणु
+	काष्ठा rv3029_data *rv3029 = dev_get_drvdata(dev);
+	पूर्णांक ret, पूर्णांकerval_ms;
 	u8 eectrl;
 
-	ret = rv3029_eeprom_read(rv3029, RV3029_CONTROL_E2P_EECTRL,
+	ret = rv3029_eeprom_पढ़ो(rv3029, RV3029_CONTROL_E2P_EECTRL,
 				 &eectrl, 1);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (eectrl & RV3029_EECTRL_THE) {
-		if (eectrl & RV3029_EECTRL_THP)
-			interval_ms = 16000;
-		else
-			interval_ms = 1000;
-	} else {
-		interval_ms = 0;
-	}
+	अगर (eectrl & RV3029_EECTRL_THE) अणु
+		अगर (eectrl & RV3029_EECTRL_THP)
+			पूर्णांकerval_ms = 16000;
+		अन्यथा
+			पूर्णांकerval_ms = 1000;
+	पूर्ण अन्यथा अणु
+		पूर्णांकerval_ms = 0;
+	पूर्ण
 
-	return sprintf(buf, "%d\n", interval_ms);
-}
+	वापस प्र_लिखो(buf, "%d\n", पूर्णांकerval_ms);
+पूर्ण
 
-static SENSOR_DEVICE_ATTR(temp1_input, S_IRUGO, rv3029_hwmon_show_temp,
-			  NULL, 0);
-static SENSOR_DEVICE_ATTR(update_interval, S_IWUSR | S_IRUGO,
-			  rv3029_hwmon_show_update_interval,
-			  rv3029_hwmon_set_update_interval, 0);
+अटल SENSOR_DEVICE_ATTR(temp1_input, S_IRUGO, rv3029_hwmon_show_temp,
+			  शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(update_पूर्णांकerval, S_IWUSR | S_IRUGO,
+			  rv3029_hwmon_show_update_पूर्णांकerval,
+			  rv3029_hwmon_set_update_पूर्णांकerval, 0);
 
-static struct attribute *rv3029_hwmon_attrs[] = {
+अटल काष्ठा attribute *rv3029_hwmon_attrs[] = अणु
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
-	&sensor_dev_attr_update_interval.dev_attr.attr,
-	NULL,
-};
+	&sensor_dev_attr_update_पूर्णांकerval.dev_attr.attr,
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(rv3029_hwmon);
 
-static void rv3029_hwmon_register(struct device *dev, const char *name)
-{
-	struct rv3029_data *rv3029 = dev_get_drvdata(dev);
-	struct device *hwmon_dev;
+अटल व्योम rv3029_hwmon_रेजिस्टर(काष्ठा device *dev, स्थिर अक्षर *name)
+अणु
+	काष्ठा rv3029_data *rv3029 = dev_get_drvdata(dev);
+	काष्ठा device *hwmon_dev;
 
-	hwmon_dev = devm_hwmon_device_register_with_groups(dev, name, rv3029,
+	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(dev, name, rv3029,
 							   rv3029_hwmon_groups);
-	if (IS_ERR(hwmon_dev)) {
+	अगर (IS_ERR(hwmon_dev)) अणु
 		dev_warn(dev, "unable to register hwmon device %ld\n",
 			 PTR_ERR(hwmon_dev));
-	}
-}
+	पूर्ण
+पूर्ण
 
-#else /* CONFIG_RTC_DRV_RV3029_HWMON */
+#अन्यथा /* CONFIG_RTC_DRV_RV3029_HWMON */
 
-static void rv3029_hwmon_register(struct device *dev, const char *name)
-{
-}
+अटल व्योम rv3029_hwmon_रेजिस्टर(काष्ठा device *dev, स्थिर अक्षर *name)
+अणु
+पूर्ण
 
-#endif /* CONFIG_RTC_DRV_RV3029_HWMON */
+#पूर्ण_अगर /* CONFIG_RTC_DRV_RV3029_HWMON */
 
-static const struct rtc_class_ops rv3029_rtc_ops = {
-	.read_time	= rv3029_read_time,
-	.set_time	= rv3029_set_time,
+अटल स्थिर काष्ठा rtc_class_ops rv3029_rtc_ops = अणु
+	.पढ़ो_समय	= rv3029_पढ़ो_समय,
+	.set_समय	= rv3029_set_समय,
 	.ioctl		= rv3029_ioctl,
-	.read_alarm	= rv3029_read_alarm,
+	.पढ़ो_alarm	= rv3029_पढ़ो_alarm,
 	.set_alarm	= rv3029_set_alarm,
 	.alarm_irq_enable = rv3029_alarm_irq_enable,
-};
+पूर्ण;
 
-static int rv3029_probe(struct device *dev, struct regmap *regmap, int irq,
-			const char *name)
-{
-	struct rv3029_data *rv3029;
-	struct nvmem_config nvmem_cfg = {
+अटल पूर्णांक rv3029_probe(काष्ठा device *dev, काष्ठा regmap *regmap, पूर्णांक irq,
+			स्थिर अक्षर *name)
+अणु
+	काष्ठा rv3029_data *rv3029;
+	काष्ठा nvmem_config nvmem_cfg = अणु
 		.name = "rv3029_nvram",
 		.word_size = 1,
 		.stride = 1,
 		.size = RV3029_RAM_SECTION_LEN,
 		.type = NVMEM_TYPE_BATTERY_BACKED,
-		.reg_read = rv3029_nvram_read,
-		.reg_write = rv3029_nvram_write,
-	};
-	int rc = 0;
+		.reg_पढ़ो = rv3029_nvram_पढ़ो,
+		.reg_ग_लिखो = rv3029_nvram_ग_लिखो,
+	पूर्ण;
+	पूर्णांक rc = 0;
 
-	rv3029 = devm_kzalloc(dev, sizeof(*rv3029), GFP_KERNEL);
-	if (!rv3029)
-		return -ENOMEM;
+	rv3029 = devm_kzalloc(dev, माप(*rv3029), GFP_KERNEL);
+	अगर (!rv3029)
+		वापस -ENOMEM;
 
 	rv3029->regmap = regmap;
 	rv3029->irq = irq;
@@ -727,190 +728,190 @@ static int rv3029_probe(struct device *dev, struct regmap *regmap, int irq,
 	dev_set_drvdata(dev, rv3029);
 
 	rv3029_trickle_config(dev);
-	rv3029_hwmon_register(dev, name);
+	rv3029_hwmon_रेजिस्टर(dev, name);
 
 	rv3029->rtc = devm_rtc_allocate_device(dev);
-	if (IS_ERR(rv3029->rtc))
-		return PTR_ERR(rv3029->rtc);
+	अगर (IS_ERR(rv3029->rtc))
+		वापस PTR_ERR(rv3029->rtc);
 
-	if (rv3029->irq > 0) {
-		rc = devm_request_threaded_irq(dev, rv3029->irq,
-					       NULL, rv3029_handle_irq,
+	अगर (rv3029->irq > 0) अणु
+		rc = devm_request_thपढ़ोed_irq(dev, rv3029->irq,
+					       शून्य, rv3029_handle_irq,
 					       IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 					       "rv3029", dev);
-		if (rc) {
+		अगर (rc) अणु
 			dev_warn(dev, "unable to request IRQ, alarms disabled\n");
 			rv3029->irq = 0;
-		}
-	}
-	if (!rv3029->irq)
+		पूर्ण
+	पूर्ण
+	अगर (!rv3029->irq)
 		clear_bit(RTC_FEATURE_ALARM, rv3029->rtc->features);
 
 	rv3029->rtc->ops = &rv3029_rtc_ops;
 	rv3029->rtc->range_min = RTC_TIMESTAMP_BEGIN_2000;
 	rv3029->rtc->range_max = RTC_TIMESTAMP_END_2079;
 
-	rc = devm_rtc_register_device(rv3029->rtc);
-	if (rc)
-		return rc;
+	rc = devm_rtc_रेजिस्टर_device(rv3029->rtc);
+	अगर (rc)
+		वापस rc;
 
 	nvmem_cfg.priv = rv3029->regmap;
-	devm_rtc_nvmem_register(rv3029->rtc, &nvmem_cfg);
+	devm_rtc_nvmem_रेजिस्टर(rv3029->rtc, &nvmem_cfg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct regmap_range rv3029_holes_range[] = {
+अटल स्थिर काष्ठा regmap_range rv3029_holes_range[] = अणु
 	regmap_reg_range(0x05, 0x07),
 	regmap_reg_range(0x0f, 0x0f),
 	regmap_reg_range(0x17, 0x17),
 	regmap_reg_range(0x1a, 0x1f),
 	regmap_reg_range(0x21, 0x27),
 	regmap_reg_range(0x34, 0x37),
-};
+पूर्ण;
 
-static const struct regmap_access_table rv3029_regs = {
+अटल स्थिर काष्ठा regmap_access_table rv3029_regs = अणु
 	.no_ranges =	rv3029_holes_range,
 	.n_no_ranges =	ARRAY_SIZE(rv3029_holes_range),
-};
+पूर्ण;
 
-static const struct regmap_config config = {
+अटल स्थिर काष्ठा regmap_config config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 	.rd_table = &rv3029_regs,
 	.wr_table = &rv3029_regs,
-	.max_register = 0x3f,
-};
+	.max_रेजिस्टर = 0x3f,
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_I2C)
+#अगर IS_ENABLED(CONFIG_I2C)
 
-static int rv3029_i2c_probe(struct i2c_client *client,
-			    const struct i2c_device_id *id)
-{
-	struct regmap *regmap;
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_I2C_BLOCK |
-				     I2C_FUNC_SMBUS_BYTE)) {
+अटल पूर्णांक rv3029_i2c_probe(काष्ठा i2c_client *client,
+			    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा regmap *regmap;
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_I2C_BLOCK |
+				     I2C_FUNC_SMBUS_BYTE)) अणु
 		dev_err(&client->dev, "Adapter does not support SMBUS_I2C_BLOCK or SMBUS_I2C_BYTE\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	regmap = devm_regmap_init_i2c(client, &config);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
-	return rv3029_probe(&client->dev, regmap, client->irq, client->name);
-}
+	वापस rv3029_probe(&client->dev, regmap, client->irq, client->name);
+पूर्ण
 
-static const struct i2c_device_id rv3029_id[] = {
-	{ "rv3029", 0 },
-	{ "rv3029c2", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id rv3029_id[] = अणु
+	अणु "rv3029", 0 पूर्ण,
+	अणु "rv3029c2", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, rv3029_id);
 
-static const __maybe_unused struct of_device_id rv3029_of_match[] = {
-	{ .compatible = "microcrystal,rv3029" },
-	{ }
-};
+अटल स्थिर __maybe_unused काष्ठा of_device_id rv3029_of_match[] = अणु
+	अणु .compatible = "microcrystal,rv3029" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rv3029_of_match);
 
-static struct i2c_driver rv3029_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver rv3029_driver = अणु
+	.driver = अणु
 		.name = "rv3029",
 		.of_match_table = of_match_ptr(rv3029_of_match),
-	},
+	पूर्ण,
 	.probe		= rv3029_i2c_probe,
 	.id_table	= rv3029_id,
-};
+पूर्ण;
 
-static int __init rv3029_register_driver(void)
-{
-	return i2c_add_driver(&rv3029_driver);
-}
+अटल पूर्णांक __init rv3029_रेजिस्टर_driver(व्योम)
+अणु
+	वापस i2c_add_driver(&rv3029_driver);
+पूर्ण
 
-static void rv3029_unregister_driver(void)
-{
+अटल व्योम rv3029_unरेजिस्टर_driver(व्योम)
+अणु
 	i2c_del_driver(&rv3029_driver);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-static int __init rv3029_register_driver(void)
-{
-	return 0;
-}
+अटल पूर्णांक __init rv3029_रेजिस्टर_driver(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static void rv3029_unregister_driver(void)
-{
-}
+अटल व्योम rv3029_unरेजिस्टर_driver(व्योम)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_SPI_MASTER)
+#अगर IS_ENABLED(CONFIG_SPI_MASTER)
 
-static int rv3049_probe(struct spi_device *spi)
-{
-	struct regmap *regmap;
+अटल पूर्णांक rv3049_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा regmap *regmap;
 
 	regmap = devm_regmap_init_spi(spi, &config);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
-	return rv3029_probe(&spi->dev, regmap, spi->irq, "rv3049");
-}
+	वापस rv3029_probe(&spi->dev, regmap, spi->irq, "rv3049");
+पूर्ण
 
-static struct spi_driver rv3049_driver = {
-	.driver = {
+अटल काष्ठा spi_driver rv3049_driver = अणु
+	.driver = अणु
 		.name    = "rv3049",
-	},
+	पूर्ण,
 	.probe   = rv3049_probe,
-};
+पूर्ण;
 
-static int __init rv3049_register_driver(void)
-{
-	return spi_register_driver(&rv3049_driver);
-}
+अटल पूर्णांक __init rv3049_रेजिस्टर_driver(व्योम)
+अणु
+	वापस spi_रेजिस्टर_driver(&rv3049_driver);
+पूर्ण
 
-static void __exit rv3049_unregister_driver(void)
-{
-	spi_unregister_driver(&rv3049_driver);
-}
+अटल व्योम __निकास rv3049_unरेजिस्टर_driver(व्योम)
+अणु
+	spi_unरेजिस्टर_driver(&rv3049_driver);
+पूर्ण
 
-#else
+#अन्यथा
 
-static int __init rv3049_register_driver(void)
-{
-	return 0;
-}
+अटल पूर्णांक __init rv3049_रेजिस्टर_driver(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static void __exit rv3049_unregister_driver(void)
-{
-}
+अटल व्योम __निकास rv3049_unरेजिस्टर_driver(व्योम)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static int __init rv30x9_init(void)
-{
-	int ret;
+अटल पूर्णांक __init rv30x9_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = rv3029_register_driver();
-	if (ret)
-		return ret;
+	ret = rv3029_रेजिस्टर_driver();
+	अगर (ret)
+		वापस ret;
 
-	ret = rv3049_register_driver();
-	if (ret)
-		rv3029_unregister_driver();
+	ret = rv3049_रेजिस्टर_driver();
+	अगर (ret)
+		rv3029_unरेजिस्टर_driver();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 module_init(rv30x9_init)
 
-static void __exit rv30x9_exit(void)
-{
-	rv3049_unregister_driver();
-	rv3029_unregister_driver();
-}
-module_exit(rv30x9_exit)
+अटल व्योम __निकास rv30x9_निकास(व्योम)
+अणु
+	rv3049_unरेजिस्टर_driver();
+	rv3029_unरेजिस्टर_driver();
+पूर्ण
+module_निकास(rv30x9_निकास)
 
 MODULE_AUTHOR("Gregory Hermant <gregory.hermant@calao-systems.com>");
 MODULE_AUTHOR("Michael Buesch <m@bues.ch>");

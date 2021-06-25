@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright 2018 NXP
- *	Dong Aisheng <aisheng.dong@nxp.com>
+ *	Dong Aisheng <aisheng.करोng@nxp.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "clk-scu.h"
+#समावेश "clk-scu.h"
 
-#include <dt-bindings/clock/imx8-clock.h>
-#include <dt-bindings/firmware/imx/rsrc.h>
+#समावेश <dt-bindings/घड़ी/imx8-घड़ी.h>
+#समावेश <dt-bindings/firmware/imx/rsrc.h>
 
-static const char *dc0_sels[] = {
+अटल स्थिर अक्षर *dc0_sels[] = अणु
 	"clk_dummy",
 	"clk_dummy",
 	"dc0_pll0_clk",
 	"dc0_pll1_clk",
 	"dc0_bypass0_clk",
-};
+पूर्ण;
 
-static int imx8qxp_clk_probe(struct platform_device *pdev)
-{
-	struct device_node *ccm_node = pdev->dev.of_node;
-	struct clk_hw_onecell_data *clk_data;
-	struct clk_hw **clks;
+अटल पूर्णांक imx8qxp_clk_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *ccm_node = pdev->dev.of_node;
+	काष्ठा clk_hw_onecell_data *clk_data;
+	काष्ठा clk_hw **clks;
 	u32 clk_cells;
-	int ret, i;
+	पूर्णांक ret, i;
 
 	ret = imx_clk_scu_init(ccm_node);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	clk_data = devm_kzalloc(&pdev->dev, struct_size(clk_data, hws,
+	clk_data = devm_kzalloc(&pdev->dev, काष्ठा_size(clk_data, hws,
 				IMX_SCU_CLK_END), GFP_KERNEL);
-	if (!clk_data)
-		return -ENOMEM;
+	अगर (!clk_data)
+		वापस -ENOMEM;
 
-	if (of_property_read_u32(ccm_node, "#clock-cells", &clk_cells))
-		return -EINVAL;
+	अगर (of_property_पढ़ो_u32(ccm_node, "#clock-cells", &clk_cells))
+		वापस -EINVAL;
 
 	clk_data->num = IMX_SCU_CLK_END;
 	clks = clk_data->hws;
 
-	/* Fixed clocks */
-	clks[IMX_CLK_DUMMY]		= clk_hw_register_fixed_rate(NULL, "dummy", NULL, 0, 0);
-	clks[IMX_ADMA_IPG_CLK_ROOT] 	= clk_hw_register_fixed_rate(NULL, "dma_ipg_clk_root", NULL, 0, 120000000);
-	clks[IMX_CONN_AXI_CLK_ROOT]	= clk_hw_register_fixed_rate(NULL, "conn_axi_clk_root", NULL, 0, 333333333);
-	clks[IMX_CONN_AHB_CLK_ROOT]	= clk_hw_register_fixed_rate(NULL, "conn_ahb_clk_root", NULL, 0, 166666666);
-	clks[IMX_CONN_IPG_CLK_ROOT]	= clk_hw_register_fixed_rate(NULL, "conn_ipg_clk_root", NULL, 0, 83333333);
-	clks[IMX_DC_AXI_EXT_CLK]	= clk_hw_register_fixed_rate(NULL, "dc_axi_ext_clk_root", NULL, 0, 800000000);
-	clks[IMX_DC_AXI_INT_CLK]	= clk_hw_register_fixed_rate(NULL, "dc_axi_int_clk_root", NULL, 0, 400000000);
-	clks[IMX_DC_CFG_CLK]		= clk_hw_register_fixed_rate(NULL, "dc_cfg_clk_root", NULL, 0, 100000000);
-	clks[IMX_MIPI_IPG_CLK]		= clk_hw_register_fixed_rate(NULL, "mipi_ipg_clk_root", NULL, 0, 120000000);
-	clks[IMX_IMG_AXI_CLK]		= clk_hw_register_fixed_rate(NULL, "img_axi_clk_root", NULL, 0, 400000000);
-	clks[IMX_IMG_IPG_CLK]		= clk_hw_register_fixed_rate(NULL, "img_ipg_clk_root", NULL, 0, 200000000);
-	clks[IMX_IMG_PXL_CLK]		= clk_hw_register_fixed_rate(NULL, "img_pxl_clk_root", NULL, 0, 600000000);
-	clks[IMX_HSIO_AXI_CLK]		= clk_hw_register_fixed_rate(NULL, "hsio_axi_clk_root", NULL, 0, 400000000);
-	clks[IMX_HSIO_PER_CLK]		= clk_hw_register_fixed_rate(NULL, "hsio_per_clk_root", NULL, 0, 133333333);
-	clks[IMX_LSIO_MEM_CLK]		= clk_hw_register_fixed_rate(NULL, "lsio_mem_clk_root", NULL, 0, 200000000);
-	clks[IMX_LSIO_BUS_CLK]		= clk_hw_register_fixed_rate(NULL, "lsio_bus_clk_root", NULL, 0, 100000000);
+	/* Fixed घड़ीs */
+	clks[IMX_CLK_DUMMY]		= clk_hw_रेजिस्टर_fixed_rate(शून्य, "dummy", शून्य, 0, 0);
+	clks[IMX_ADMA_IPG_CLK_ROOT] 	= clk_hw_रेजिस्टर_fixed_rate(शून्य, "dma_ipg_clk_root", शून्य, 0, 120000000);
+	clks[IMX_CONN_AXI_CLK_ROOT]	= clk_hw_रेजिस्टर_fixed_rate(शून्य, "conn_axi_clk_root", शून्य, 0, 333333333);
+	clks[IMX_CONN_AHB_CLK_ROOT]	= clk_hw_रेजिस्टर_fixed_rate(शून्य, "conn_ahb_clk_root", शून्य, 0, 166666666);
+	clks[IMX_CONN_IPG_CLK_ROOT]	= clk_hw_रेजिस्टर_fixed_rate(शून्य, "conn_ipg_clk_root", शून्य, 0, 83333333);
+	clks[IMX_DC_AXI_EXT_CLK]	= clk_hw_रेजिस्टर_fixed_rate(शून्य, "dc_axi_ext_clk_root", शून्य, 0, 800000000);
+	clks[IMX_DC_AXI_INT_CLK]	= clk_hw_रेजिस्टर_fixed_rate(शून्य, "dc_axi_int_clk_root", शून्य, 0, 400000000);
+	clks[IMX_DC_CFG_CLK]		= clk_hw_रेजिस्टर_fixed_rate(शून्य, "dc_cfg_clk_root", शून्य, 0, 100000000);
+	clks[IMX_MIPI_IPG_CLK]		= clk_hw_रेजिस्टर_fixed_rate(शून्य, "mipi_ipg_clk_root", शून्य, 0, 120000000);
+	clks[IMX_IMG_AXI_CLK]		= clk_hw_रेजिस्टर_fixed_rate(शून्य, "img_axi_clk_root", शून्य, 0, 400000000);
+	clks[IMX_IMG_IPG_CLK]		= clk_hw_रेजिस्टर_fixed_rate(शून्य, "img_ipg_clk_root", शून्य, 0, 200000000);
+	clks[IMX_IMG_PXL_CLK]		= clk_hw_रेजिस्टर_fixed_rate(शून्य, "img_pxl_clk_root", शून्य, 0, 600000000);
+	clks[IMX_HSIO_AXI_CLK]		= clk_hw_रेजिस्टर_fixed_rate(शून्य, "hsio_axi_clk_root", शून्य, 0, 400000000);
+	clks[IMX_HSIO_PER_CLK]		= clk_hw_रेजिस्टर_fixed_rate(शून्य, "hsio_per_clk_root", शून्य, 0, 133333333);
+	clks[IMX_LSIO_MEM_CLK]		= clk_hw_रेजिस्टर_fixed_rate(शून्य, "lsio_mem_clk_root", शून्य, 0, 200000000);
+	clks[IMX_LSIO_BUS_CLK]		= clk_hw_रेजिस्टर_fixed_rate(शून्य, "lsio_bus_clk_root", शून्य, 0, 100000000);
 
 	/* ARM core */
 	clks[IMX_A35_CLK]		= imx_clk_scu("a35_clk", IMX_SC_R_A35, IMX_SC_PM_CLK_CPU, clk_cells);
@@ -116,8 +117,8 @@ static int imx8qxp_clk_probe(struct platform_device *pdev)
 	clks[IMX_CONN_ENET1_ROOT_CLK]	= imx_clk_scu("enet1_clk", IMX_SC_R_ENET_1, IMX_SC_PM_CLK_PER, clk_cells);
 	clks[IMX_CONN_ENET1_BYPASS_CLK]	= imx_clk_scu("enet1_bypass_clk", IMX_SC_R_ENET_1, IMX_SC_PM_CLK_BYPASS, clk_cells);
 	clks[IMX_CONN_ENET1_RGMII_CLK]	= imx_clk_scu("enet1_rgmii_clk", IMX_SC_R_ENET_1, IMX_SC_PM_CLK_MISC0, clk_cells);
-	clks[IMX_CONN_GPMI_BCH_IO_CLK]	= imx_clk_scu("gpmi_io_clk", IMX_SC_R_NAND, IMX_SC_PM_CLK_MST_BUS, clk_cells);
-	clks[IMX_CONN_GPMI_BCH_CLK]	= imx_clk_scu("gpmi_bch_clk", IMX_SC_R_NAND, IMX_SC_PM_CLK_PER, clk_cells);
+	clks[IMX_CONN_GPMI_BCH_IO_CLK]	= imx_clk_scu("gpmi_io_clk", IMX_SC_R_न_अंकD, IMX_SC_PM_CLK_MST_BUS, clk_cells);
+	clks[IMX_CONN_GPMI_BCH_CLK]	= imx_clk_scu("gpmi_bch_clk", IMX_SC_R_न_अंकD, IMX_SC_PM_CLK_PER, clk_cells);
 	clks[IMX_CONN_USB2_ACLK]	= imx_clk_scu("usb3_aclk_div", IMX_SC_R_USB_2, IMX_SC_PM_CLK_PER, clk_cells);
 	clks[IMX_CONN_USB2_BUS_CLK]	= imx_clk_scu("usb3_bus_div", IMX_SC_R_USB_2, IMX_SC_PM_CLK_MST_BUS, clk_cells);
 	clks[IMX_CONN_USB2_LPM_CLK]	= imx_clk_scu("usb3_lpm_div", IMX_SC_R_USB_2, IMX_SC_PM_CLK_MISC, clk_cells);
@@ -154,42 +155,42 @@ static int imx8qxp_clk_probe(struct platform_device *pdev)
 	clks[IMX_GPU0_CORE_CLK]		= imx_clk_scu("gpu_core0_clk",	 IMX_SC_R_GPU_0_PID0, IMX_SC_PM_CLK_PER, clk_cells);
 	clks[IMX_GPU0_SHADER_CLK]	= imx_clk_scu("gpu_shader0_clk", IMX_SC_R_GPU_0_PID0, IMX_SC_PM_CLK_MISC, clk_cells);
 
-	for (i = 0; i < clk_data->num; i++) {
-		if (IS_ERR(clks[i]))
+	क्रम (i = 0; i < clk_data->num; i++) अणु
+		अगर (IS_ERR(clks[i]))
 			pr_warn("i.MX clk %u: register failed with %ld\n",
 				i, PTR_ERR(clks[i]));
-	}
+	पूर्ण
 
-	if (clk_cells == 2) {
+	अगर (clk_cells == 2) अणु
 		ret = of_clk_add_hw_provider(ccm_node, imx_scu_of_clk_src_get, imx_scu_clks);
-		if (ret)
-			imx_clk_scu_unregister();
-	} else {
+		अगर (ret)
+			imx_clk_scu_unरेजिस्टर();
+	पूर्ण अन्यथा अणु
 		/*
-		 * legacy binding code path doesn't unregister here because
-		 * it will be removed later.
+		 * legacy binding code path करोesn't unरेजिस्टर here because
+		 * it will be हटाओd later.
 		 */
 		ret = of_clk_add_hw_provider(ccm_node, of_clk_hw_onecell_get, clk_data);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id imx8qxp_match[] = {
-	{ .compatible = "fsl,scu-clk", },
-	{ .compatible = "fsl,imx8qxp-clk", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx8qxp_match[] = अणु
+	अणु .compatible = "fsl,scu-clk", पूर्ण,
+	अणु .compatible = "fsl,imx8qxp-clk", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static struct platform_driver imx8qxp_clk_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx8qxp_clk_driver = अणु
+	.driver = अणु
 		.name = "imx8qxp-clk",
 		.of_match_table = imx8qxp_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = imx8qxp_clk_probe,
-};
-builtin_platform_driver(imx8qxp_clk_driver);
+पूर्ण;
+builtin_platक्रमm_driver(imx8qxp_clk_driver);
 
 MODULE_AUTHOR("Aisheng Dong <aisheng.dong@nxp.com>");
 MODULE_DESCRIPTION("NXP i.MX8QXP clock driver");

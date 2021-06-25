@@ -1,242 +1,243 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * OF helpers for IOMMU
+ * OF helpers क्रम IOMMU
  *
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/export.h>
-#include <linux/iommu.h>
-#include <linux/limits.h>
-#include <linux/module.h>
-#include <linux/msi.h>
-#include <linux/of.h>
-#include <linux/of_iommu.h>
-#include <linux/of_pci.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/fsl/mc.h>
+#समावेश <linux/export.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/module.h>
+#समावेश <linux/msi.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_iommu.h>
+#समावेश <linux/of_pci.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fsl/mc.h>
 
-#define NO_IOMMU	1
+#घोषणा NO_IOMMU	1
 
 /**
- * of_get_dma_window - Parse *dma-window property and returns 0 if found.
+ * of_get_dma_winकरोw - Parse *dma-winकरोw property and वापसs 0 अगर found.
  *
  * @dn: device node
- * @prefix: prefix for property name if any
+ * @prefix: prefix क्रम property name अगर any
  * @index: index to start to parse
- * @busno: Returns busno if supported. Otherwise pass NULL
+ * @busno: Returns busno अगर supported. Otherwise pass शून्य
  * @addr: Returns address that DMA starts
  * @size: Returns the range that DMA can handle
  *
- * This supports different formats flexibly. "prefix" can be
- * configured if any. "busno" and "index" are optionally
- * specified. Set 0(or NULL) if not used.
+ * This supports dअगरferent क्रमmats flexibly. "prefix" can be
+ * configured अगर any. "busno" and "index" are optionally
+ * specअगरied. Set 0(or शून्य) अगर not used.
  */
-int of_get_dma_window(struct device_node *dn, const char *prefix, int index,
-		      unsigned long *busno, dma_addr_t *addr, size_t *size)
-{
-	const __be32 *dma_window, *end;
-	int bytes, cur_index = 0;
-	char propname[NAME_MAX], addrname[NAME_MAX], sizename[NAME_MAX];
+पूर्णांक of_get_dma_winकरोw(काष्ठा device_node *dn, स्थिर अक्षर *prefix, पूर्णांक index,
+		      अचिन्हित दीर्घ *busno, dma_addr_t *addr, माप_प्रकार *size)
+अणु
+	स्थिर __be32 *dma_winकरोw, *end;
+	पूर्णांक bytes, cur_index = 0;
+	अक्षर propname[NAME_MAX], addrname[NAME_MAX], sizename[NAME_MAX];
 
-	if (!dn || !addr || !size)
-		return -EINVAL;
+	अगर (!dn || !addr || !size)
+		वापस -EINVAL;
 
-	if (!prefix)
+	अगर (!prefix)
 		prefix = "";
 
-	snprintf(propname, sizeof(propname), "%sdma-window", prefix);
-	snprintf(addrname, sizeof(addrname), "%s#dma-address-cells", prefix);
-	snprintf(sizename, sizeof(sizename), "%s#dma-size-cells", prefix);
+	snम_लिखो(propname, माप(propname), "%sdma-window", prefix);
+	snम_लिखो(addrname, माप(addrname), "%s#dma-address-cells", prefix);
+	snम_लिखो(sizename, माप(sizename), "%s#dma-size-cells", prefix);
 
-	dma_window = of_get_property(dn, propname, &bytes);
-	if (!dma_window)
-		return -ENODEV;
-	end = dma_window + bytes / sizeof(*dma_window);
+	dma_winकरोw = of_get_property(dn, propname, &bytes);
+	अगर (!dma_winकरोw)
+		वापस -ENODEV;
+	end = dma_winकरोw + bytes / माप(*dma_winकरोw);
 
-	while (dma_window < end) {
+	जबतक (dma_winकरोw < end) अणु
 		u32 cells;
-		const void *prop;
+		स्थिर व्योम *prop;
 
-		/* busno is one cell if supported */
-		if (busno)
-			*busno = be32_to_cpup(dma_window++);
+		/* busno is one cell अगर supported */
+		अगर (busno)
+			*busno = be32_to_cpup(dma_winकरोw++);
 
-		prop = of_get_property(dn, addrname, NULL);
-		if (!prop)
-			prop = of_get_property(dn, "#address-cells", NULL);
+		prop = of_get_property(dn, addrname, शून्य);
+		अगर (!prop)
+			prop = of_get_property(dn, "#address-cells", शून्य);
 
 		cells = prop ? be32_to_cpup(prop) : of_n_addr_cells(dn);
-		if (!cells)
-			return -EINVAL;
-		*addr = of_read_number(dma_window, cells);
-		dma_window += cells;
+		अगर (!cells)
+			वापस -EINVAL;
+		*addr = of_पढ़ो_number(dma_winकरोw, cells);
+		dma_winकरोw += cells;
 
-		prop = of_get_property(dn, sizename, NULL);
+		prop = of_get_property(dn, sizename, शून्य);
 		cells = prop ? be32_to_cpup(prop) : of_n_size_cells(dn);
-		if (!cells)
-			return -EINVAL;
-		*size = of_read_number(dma_window, cells);
-		dma_window += cells;
+		अगर (!cells)
+			वापस -EINVAL;
+		*size = of_पढ़ो_number(dma_winकरोw, cells);
+		dma_winकरोw += cells;
 
-		if (cur_index++ == index)
-			break;
-	}
-	return 0;
-}
-EXPORT_SYMBOL_GPL(of_get_dma_window);
+		अगर (cur_index++ == index)
+			अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(of_get_dma_winकरोw);
 
-static int of_iommu_xlate(struct device *dev,
-			  struct of_phandle_args *iommu_spec)
-{
-	const struct iommu_ops *ops;
-	struct fwnode_handle *fwnode = &iommu_spec->np->fwnode;
-	int ret;
+अटल पूर्णांक of_iommu_xlate(काष्ठा device *dev,
+			  काष्ठा of_phandle_args *iommu_spec)
+अणु
+	स्थिर काष्ठा iommu_ops *ops;
+	काष्ठा fwnode_handle *fwnode = &iommu_spec->np->fwnode;
+	पूर्णांक ret;
 
 	ops = iommu_ops_from_fwnode(fwnode);
-	if ((ops && !ops->of_xlate) ||
+	अगर ((ops && !ops->of_xlate) ||
 	    !of_device_is_available(iommu_spec->np))
-		return NO_IOMMU;
+		वापस NO_IOMMU;
 
 	ret = iommu_fwspec_init(dev, &iommu_spec->np->fwnode, ops);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	/*
-	 * The otherwise-empty fwspec handily serves to indicate the specific
-	 * IOMMU device we're waiting for, which will be useful if we ever get
+	 * The otherwise-empty fwspec handily serves to indicate the specअगरic
+	 * IOMMU device we're रुकोing क्रम, which will be useful अगर we ever get
 	 * a proper probe-ordering dependency mechanism in future.
 	 */
-	if (!ops)
-		return driver_deferred_probe_check_state(dev);
+	अगर (!ops)
+		वापस driver_deferred_probe_check_state(dev);
 
-	if (!try_module_get(ops->owner))
-		return -ENODEV;
+	अगर (!try_module_get(ops->owner))
+		वापस -ENODEV;
 
 	ret = ops->of_xlate(dev, iommu_spec);
 	module_put(ops->owner);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int of_iommu_configure_dev_id(struct device_node *master_np,
-				     struct device *dev,
-				     const u32 *id)
-{
-	struct of_phandle_args iommu_spec = { .args_count = 1 };
-	int err;
+अटल पूर्णांक of_iommu_configure_dev_id(काष्ठा device_node *master_np,
+				     काष्ठा device *dev,
+				     स्थिर u32 *id)
+अणु
+	काष्ठा of_phandle_args iommu_spec = अणु .args_count = 1 पूर्ण;
+	पूर्णांक err;
 
 	err = of_map_id(master_np, *id, "iommu-map",
 			 "iommu-map-mask", &iommu_spec.np,
 			 iommu_spec.args);
-	if (err)
-		return err == -ENODEV ? NO_IOMMU : err;
+	अगर (err)
+		वापस err == -ENODEV ? NO_IOMMU : err;
 
 	err = of_iommu_xlate(dev, &iommu_spec);
 	of_node_put(iommu_spec.np);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int of_iommu_configure_dev(struct device_node *master_np,
-				  struct device *dev)
-{
-	struct of_phandle_args iommu_spec;
-	int err = NO_IOMMU, idx = 0;
+अटल पूर्णांक of_iommu_configure_dev(काष्ठा device_node *master_np,
+				  काष्ठा device *dev)
+अणु
+	काष्ठा of_phandle_args iommu_spec;
+	पूर्णांक err = NO_IOMMU, idx = 0;
 
-	while (!of_parse_phandle_with_args(master_np, "iommus",
+	जबतक (!of_parse_phandle_with_args(master_np, "iommus",
 					   "#iommu-cells",
-					   idx, &iommu_spec)) {
+					   idx, &iommu_spec)) अणु
 		err = of_iommu_xlate(dev, &iommu_spec);
 		of_node_put(iommu_spec.np);
 		idx++;
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct of_pci_iommu_alias_info {
-	struct device *dev;
-	struct device_node *np;
-};
+काष्ठा of_pci_iommu_alias_info अणु
+	काष्ठा device *dev;
+	काष्ठा device_node *np;
+पूर्ण;
 
-static int of_pci_iommu_init(struct pci_dev *pdev, u16 alias, void *data)
-{
-	struct of_pci_iommu_alias_info *info = data;
+अटल पूर्णांक of_pci_iommu_init(काष्ठा pci_dev *pdev, u16 alias, व्योम *data)
+अणु
+	काष्ठा of_pci_iommu_alias_info *info = data;
 	u32 input_id = alias;
 
-	return of_iommu_configure_dev_id(info->np, info->dev, &input_id);
-}
+	वापस of_iommu_configure_dev_id(info->np, info->dev, &input_id);
+पूर्ण
 
-static int of_iommu_configure_device(struct device_node *master_np,
-				     struct device *dev, const u32 *id)
-{
-	return (id) ? of_iommu_configure_dev_id(master_np, dev, id) :
+अटल पूर्णांक of_iommu_configure_device(काष्ठा device_node *master_np,
+				     काष्ठा device *dev, स्थिर u32 *id)
+अणु
+	वापस (id) ? of_iommu_configure_dev_id(master_np, dev, id) :
 		      of_iommu_configure_dev(master_np, dev);
-}
+पूर्ण
 
-const struct iommu_ops *of_iommu_configure(struct device *dev,
-					   struct device_node *master_np,
-					   const u32 *id)
-{
-	const struct iommu_ops *ops = NULL;
-	struct iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
-	int err = NO_IOMMU;
+स्थिर काष्ठा iommu_ops *of_iommu_configure(काष्ठा device *dev,
+					   काष्ठा device_node *master_np,
+					   स्थिर u32 *id)
+अणु
+	स्थिर काष्ठा iommu_ops *ops = शून्य;
+	काष्ठा iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
+	पूर्णांक err = NO_IOMMU;
 
-	if (!master_np)
-		return NULL;
+	अगर (!master_np)
+		वापस शून्य;
 
-	if (fwspec) {
-		if (fwspec->ops)
-			return fwspec->ops;
+	अगर (fwspec) अणु
+		अगर (fwspec->ops)
+			वापस fwspec->ops;
 
-		/* In the deferred case, start again from scratch */
-		iommu_fwspec_free(dev);
-	}
+		/* In the deferred हाल, start again from scratch */
+		iommu_fwspec_मुक्त(dev);
+	पूर्ण
 
 	/*
-	 * We don't currently walk up the tree looking for a parent IOMMU.
+	 * We करोn't currently walk up the tree looking क्रम a parent IOMMU.
 	 * See the `Notes:' section of
 	 * Documentation/devicetree/bindings/iommu/iommu.txt
 	 */
-	if (dev_is_pci(dev)) {
-		struct of_pci_iommu_alias_info info = {
+	अगर (dev_is_pci(dev)) अणु
+		काष्ठा of_pci_iommu_alias_info info = अणु
 			.dev = dev,
 			.np = master_np,
-		};
+		पूर्ण;
 
 		pci_request_acs();
-		err = pci_for_each_dma_alias(to_pci_dev(dev),
+		err = pci_क्रम_each_dma_alias(to_pci_dev(dev),
 					     of_pci_iommu_init, &info);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = of_iommu_configure_device(master_np, dev, id);
-	}
+	पूर्ण
 
 	/*
 	 * Two success conditions can be represented by non-negative err here:
-	 * >0 : there is no IOMMU, or one was unavailable for non-fatal reasons
+	 * >0 : there is no IOMMU, or one was unavailable क्रम non-fatal reasons
 	 *  0 : we found an IOMMU, and dev->fwspec is initialised appropriately
 	 * <0 : any actual error
 	 */
-	if (!err) {
-		/* The fwspec pointer changed, read it again */
+	अगर (!err) अणु
+		/* The fwspec poपूर्णांकer changed, पढ़ो it again */
 		fwspec = dev_iommu_fwspec_get(dev);
 		ops    = fwspec->ops;
-	}
+	पूर्ण
 	/*
 	 * If we have reason to believe the IOMMU driver missed the initial
-	 * probe for dev, replay it to get things in order.
+	 * probe क्रम dev, replay it to get things in order.
 	 */
-	if (!err && dev->bus && !device_iommu_mapped(dev))
+	अगर (!err && dev->bus && !device_iommu_mapped(dev))
 		err = iommu_probe_device(dev);
 
 	/* Ignore all other errors apart from EPROBE_DEFER */
-	if (err == -EPROBE_DEFER) {
+	अगर (err == -EPROBE_DEFER) अणु
 		ops = ERR_PTR(err);
-	} else if (err < 0) {
+	पूर्ण अन्यथा अगर (err < 0) अणु
 		dev_dbg(dev, "Adding to IOMMU failed: %d\n", err);
-		ops = NULL;
-	}
+		ops = शून्य;
+	पूर्ण
 
-	return ops;
-}
+	वापस ops;
+पूर्ण

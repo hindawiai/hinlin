@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2014 MediaTek Inc.
  * Author: Jie Qiu <jie.qiu@mediatek.com>
  */
-#ifndef _MTK_CEC_H
-#define _MTK_CEC_H
+#अगर_अघोषित _MTK_CEC_H
+#घोषणा _MTK_CEC_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct device;
+काष्ठा device;
 
-void mtk_cec_set_hpd_event(struct device *dev,
-			   void (*hotplug_event)(bool hpd, struct device *dev),
-			   struct device *hdmi_dev);
-bool mtk_cec_hpd_high(struct device *dev);
+व्योम mtk_cec_set_hpd_event(काष्ठा device *dev,
+			   व्योम (*hotplug_event)(bool hpd, काष्ठा device *dev),
+			   काष्ठा device *hdmi_dev);
+bool mtk_cec_hpd_high(काष्ठा device *dev);
 
-#endif /* _MTK_CEC_H */
+#पूर्ण_अगर /* _MTK_CEC_H */

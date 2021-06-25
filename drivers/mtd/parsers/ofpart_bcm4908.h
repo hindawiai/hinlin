@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __BCM4908_PARTITIONS_H
-#define __BCM4908_PARTITIONS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __BCM4908_PARTITIONS_H
+#घोषणा __BCM4908_PARTITIONS_H
 
-#ifdef CONFIG_MTD_OF_PARTS_BCM4908
-int bcm4908_partitions_post_parse(struct mtd_info *mtd, struct mtd_partition *parts, int nr_parts);
-#else
-static inline int bcm4908_partitions_post_parse(struct mtd_info *mtd, struct mtd_partition *parts,
-						int nr_parts)
-{
-	return -EOPNOTSUPP;
-}
-#endif
+#अगर_घोषित CONFIG_MTD_OF_PARTS_BCM4908
+पूर्णांक bcm4908_partitions_post_parse(काष्ठा mtd_info *mtd, काष्ठा mtd_partition *parts, पूर्णांक nr_parts);
+#अन्यथा
+अटल अंतरभूत पूर्णांक bcm4908_partitions_post_parse(काष्ठा mtd_info *mtd, काष्ठा mtd_partition *parts,
+						पूर्णांक nr_parts)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

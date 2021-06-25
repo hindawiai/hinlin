@@ -1,82 +1,83 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2017 Facebook
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <assert.h>
-#include <sys/time.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <निश्चित.स>
+#समावेश <sys/समय.स>
 
-#include <linux/bpf.h>
-#include <bpf/bpf.h>
-#include <bpf/libbpf.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf.h>
+#समावेश <bpf/libbpf.h>
 
-#include "cgroup_helpers.h"
-#include "bpf_rlimit.h"
+#समावेश "cgroup_helpers.h"
+#समावेश "bpf_rlimit.h"
 
-#define DEV_CGROUP_PROG "./dev_cgroup.o"
+#घोषणा DEV_CGROUP_PROG "./dev_cgroup.o"
 
-#define TEST_CGROUP "/test-bpf-based-device-cgroup/"
+#घोषणा TEST_CGROUP "/test-bpf-based-device-cgroup/"
 
-int main(int argc, char **argv)
-{
-	struct bpf_object *obj;
-	int error = EXIT_FAILURE;
-	int prog_fd, cgroup_fd;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा bpf_object *obj;
+	पूर्णांक error = निकास_त्रुटि;
+	पूर्णांक prog_fd, cgroup_fd;
 	__u32 prog_cnt;
 
-	if (bpf_prog_load(DEV_CGROUP_PROG, BPF_PROG_TYPE_CGROUP_DEVICE,
-			  &obj, &prog_fd)) {
-		printf("Failed to load DEV_CGROUP program\n");
-		goto out;
-	}
+	अगर (bpf_prog_load(DEV_CGROUP_PROG, BPF_PROG_TYPE_CGROUP_DEVICE,
+			  &obj, &prog_fd)) अणु
+		म_लिखो("Failed to load DEV_CGROUP program\n");
+		जाओ out;
+	पूर्ण
 
 	cgroup_fd = cgroup_setup_and_join(TEST_CGROUP);
-	if (cgroup_fd < 0) {
-		printf("Failed to create test cgroup\n");
-		goto out;
-	}
+	अगर (cgroup_fd < 0) अणु
+		म_लिखो("Failed to create test cgroup\n");
+		जाओ out;
+	पूर्ण
 
 	/* Attach bpf program */
-	if (bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE, 0)) {
-		printf("Failed to attach DEV_CGROUP program");
-		goto err;
-	}
+	अगर (bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE, 0)) अणु
+		म_लिखो("Failed to attach DEV_CGROUP program");
+		जाओ err;
+	पूर्ण
 
-	if (bpf_prog_query(cgroup_fd, BPF_CGROUP_DEVICE, 0, NULL, NULL,
-			   &prog_cnt)) {
-		printf("Failed to query attached programs");
-		goto err;
-	}
+	अगर (bpf_prog_query(cgroup_fd, BPF_CGROUP_DEVICE, 0, शून्य, शून्य,
+			   &prog_cnt)) अणु
+		म_लिखो("Failed to query attached programs");
+		जाओ err;
+	पूर्ण
 
-	/* All operations with /dev/zero and and /dev/urandom are allowed,
-	 * everything else is forbidden.
+	/* All operations with /dev/zero and and /dev/uअक्रमom are allowed,
+	 * everything अन्यथा is क्रमbidden.
 	 */
-	assert(system("rm -f /tmp/test_dev_cgroup_null") == 0);
-	assert(system("mknod /tmp/test_dev_cgroup_null c 1 3"));
-	assert(system("rm -f /tmp/test_dev_cgroup_null") == 0);
+	निश्चित(प्रणाली("rm -f /tmp/test_dev_cgroup_null") == 0);
+	निश्चित(प्रणाली("mknod /tmp/test_dev_cgroup_null c 1 3"));
+	निश्चित(प्रणाली("rm -f /tmp/test_dev_cgroup_null") == 0);
 
 	/* /dev/zero is whitelisted */
-	assert(system("rm -f /tmp/test_dev_cgroup_zero") == 0);
-	assert(system("mknod /tmp/test_dev_cgroup_zero c 1 5") == 0);
-	assert(system("rm -f /tmp/test_dev_cgroup_zero") == 0);
+	निश्चित(प्रणाली("rm -f /tmp/test_dev_cgroup_zero") == 0);
+	निश्चित(प्रणाली("mknod /tmp/test_dev_cgroup_zero c 1 5") == 0);
+	निश्चित(प्रणाली("rm -f /tmp/test_dev_cgroup_zero") == 0);
 
-	assert(system("dd if=/dev/urandom of=/dev/zero count=64") == 0);
+	निश्चित(प्रणाली("dd if=/dev/urandom of=/dev/zero count=64") == 0);
 
-	/* src is allowed, target is forbidden */
-	assert(system("dd if=/dev/urandom of=/dev/full count=64"));
+	/* src is allowed, target is क्रमbidden */
+	निश्चित(प्रणाली("dd if=/dev/urandom of=/dev/full count=64"));
 
-	/* src is forbidden, target is allowed */
-	assert(system("dd if=/dev/random of=/dev/zero count=64"));
+	/* src is क्रमbidden, target is allowed */
+	निश्चित(प्रणाली("dd if=/dev/random of=/dev/zero count=64"));
 
 	error = 0;
-	printf("test_dev_cgroup:PASS\n");
+	म_लिखो("test_dev_cgroup:PASS\n");
 
 err:
 	cleanup_cgroup_environment();
 
 out:
-	return error;
-}
+	वापस error;
+पूर्ण

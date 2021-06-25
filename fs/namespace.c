@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/fs/namespace.c
  *
@@ -8,216 +9,216 @@
  * Heavily rewritten.
  */
 
-#include <linux/syscalls.h>
-#include <linux/export.h>
-#include <linux/capability.h>
-#include <linux/mnt_namespace.h>
-#include <linux/user_namespace.h>
-#include <linux/namei.h>
-#include <linux/security.h>
-#include <linux/cred.h>
-#include <linux/idr.h>
-#include <linux/init.h>		/* init_rootfs */
-#include <linux/fs_struct.h>	/* get_fs_root et.al. */
-#include <linux/fsnotify.h>	/* fsnotify_vfsmount_delete */
-#include <linux/file.h>
-#include <linux/uaccess.h>
-#include <linux/proc_ns.h>
-#include <linux/magic.h>
-#include <linux/memblock.h>
-#include <linux/proc_fs.h>
-#include <linux/task_work.h>
-#include <linux/sched/task.h>
-#include <uapi/linux/mount.h>
-#include <linux/fs_context.h>
-#include <linux/shmem_fs.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/export.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/mnt_namespace.h>
+#समावेश <linux/user_namespace.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/security.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/init.h>		/* init_rootfs */
+#समावेश <linux/fs_काष्ठा.h>	/* get_fs_root et.al. */
+#समावेश <linux/fsnotअगरy.h>	/* fsnotअगरy_vfsmount_delete */
+#समावेश <linux/file.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/proc_ns.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/task_work.h>
+#समावेश <linux/sched/task.h>
+#समावेश <uapi/linux/mount.h>
+#समावेश <linux/fs_context.h>
+#समावेश <linux/shmem_fs.h>
 
-#include "pnode.h"
-#include "internal.h"
+#समावेश "pnode.h"
+#समावेश "internal.h"
 
 /* Maximum number of mounts in a mount namespace */
-unsigned int sysctl_mount_max __read_mostly = 100000;
+अचिन्हित पूर्णांक sysctl_mount_max __पढ़ो_mostly = 100000;
 
-static unsigned int m_hash_mask __read_mostly;
-static unsigned int m_hash_shift __read_mostly;
-static unsigned int mp_hash_mask __read_mostly;
-static unsigned int mp_hash_shift __read_mostly;
+अटल अचिन्हित पूर्णांक m_hash_mask __पढ़ो_mostly;
+अटल अचिन्हित पूर्णांक m_hash_shअगरt __पढ़ो_mostly;
+अटल अचिन्हित पूर्णांक mp_hash_mask __पढ़ो_mostly;
+अटल अचिन्हित पूर्णांक mp_hash_shअगरt __पढ़ो_mostly;
 
-static __initdata unsigned long mhash_entries;
-static int __init set_mhash_entries(char *str)
-{
-	if (!str)
-		return 0;
-	mhash_entries = simple_strtoul(str, &str, 0);
-	return 1;
-}
+अटल __initdata अचिन्हित दीर्घ mhash_entries;
+अटल पूर्णांक __init set_mhash_entries(अक्षर *str)
+अणु
+	अगर (!str)
+		वापस 0;
+	mhash_entries = simple_म_से_अदीर्घ(str, &str, 0);
+	वापस 1;
+पूर्ण
 __setup("mhash_entries=", set_mhash_entries);
 
-static __initdata unsigned long mphash_entries;
-static int __init set_mphash_entries(char *str)
-{
-	if (!str)
-		return 0;
-	mphash_entries = simple_strtoul(str, &str, 0);
-	return 1;
-}
+अटल __initdata अचिन्हित दीर्घ mphash_entries;
+अटल पूर्णांक __init set_mphash_entries(अक्षर *str)
+अणु
+	अगर (!str)
+		वापस 0;
+	mphash_entries = simple_म_से_अदीर्घ(str, &str, 0);
+	वापस 1;
+पूर्ण
 __setup("mphash_entries=", set_mphash_entries);
 
-static u64 event;
-static DEFINE_IDA(mnt_id_ida);
-static DEFINE_IDA(mnt_group_ida);
+अटल u64 event;
+अटल DEFINE_IDA(mnt_id_ida);
+अटल DEFINE_IDA(mnt_group_ida);
 
-static struct hlist_head *mount_hashtable __read_mostly;
-static struct hlist_head *mountpoint_hashtable __read_mostly;
-static struct kmem_cache *mnt_cache __read_mostly;
-static DECLARE_RWSEM(namespace_sem);
-static HLIST_HEAD(unmounted);	/* protected by namespace_sem */
-static LIST_HEAD(ex_mountpoints); /* protected by namespace_sem */
+अटल काष्ठा hlist_head *mount_hashtable __पढ़ो_mostly;
+अटल काष्ठा hlist_head *mountpoपूर्णांक_hashtable __पढ़ो_mostly;
+अटल काष्ठा kmem_cache *mnt_cache __पढ़ो_mostly;
+अटल DECLARE_RWSEM(namespace_sem);
+अटल HLIST_HEAD(unmounted);	/* रक्षित by namespace_sem */
+अटल LIST_HEAD(ex_mountpoपूर्णांकs); /* रक्षित by namespace_sem */
 
-struct mount_kattr {
-	unsigned int attr_set;
-	unsigned int attr_clr;
-	unsigned int propagation;
-	unsigned int lookup_flags;
+काष्ठा mount_kattr अणु
+	अचिन्हित पूर्णांक attr_set;
+	अचिन्हित पूर्णांक attr_clr;
+	अचिन्हित पूर्णांक propagation;
+	अचिन्हित पूर्णांक lookup_flags;
 	bool recurse;
-	struct user_namespace *mnt_userns;
-};
+	काष्ठा user_namespace *mnt_userns;
+पूर्ण;
 
 /* /sys/fs */
-struct kobject *fs_kobj;
+काष्ठा kobject *fs_kobj;
 EXPORT_SYMBOL_GPL(fs_kobj);
 
 /*
- * vfsmount lock may be taken for read to prevent changes to the
- * vfsmount hash, ie. during mountpoint lookups or walking back
+ * vfsmount lock may be taken क्रम पढ़ो to prevent changes to the
+ * vfsmount hash, ie. during mountpoपूर्णांक lookups or walking back
  * up the tree.
  *
- * It should be taken for write in all cases where the vfsmount
- * tree or hash is modified or when a vfsmount structure is modified.
+ * It should be taken क्रम ग_लिखो in all हालs where the vfsmount
+ * tree or hash is modअगरied or when a vfsmount काष्ठाure is modअगरied.
  */
 __cacheline_aligned_in_smp DEFINE_SEQLOCK(mount_lock);
 
-static inline void lock_mount_hash(void)
-{
-	write_seqlock(&mount_lock);
-}
+अटल अंतरभूत व्योम lock_mount_hash(व्योम)
+अणु
+	ग_लिखो_seqlock(&mount_lock);
+पूर्ण
 
-static inline void unlock_mount_hash(void)
-{
-	write_sequnlock(&mount_lock);
-}
+अटल अंतरभूत व्योम unlock_mount_hash(व्योम)
+अणु
+	ग_लिखो_sequnlock(&mount_lock);
+पूर्ण
 
-static inline struct hlist_head *m_hash(struct vfsmount *mnt, struct dentry *dentry)
-{
-	unsigned long tmp = ((unsigned long)mnt / L1_CACHE_BYTES);
-	tmp += ((unsigned long)dentry / L1_CACHE_BYTES);
-	tmp = tmp + (tmp >> m_hash_shift);
-	return &mount_hashtable[tmp & m_hash_mask];
-}
+अटल अंतरभूत काष्ठा hlist_head *m_hash(काष्ठा vfsmount *mnt, काष्ठा dentry *dentry)
+अणु
+	अचिन्हित दीर्घ पंचांगp = ((अचिन्हित दीर्घ)mnt / L1_CACHE_BYTES);
+	पंचांगp += ((अचिन्हित दीर्घ)dentry / L1_CACHE_BYTES);
+	पंचांगp = पंचांगp + (पंचांगp >> m_hash_shअगरt);
+	वापस &mount_hashtable[पंचांगp & m_hash_mask];
+पूर्ण
 
-static inline struct hlist_head *mp_hash(struct dentry *dentry)
-{
-	unsigned long tmp = ((unsigned long)dentry / L1_CACHE_BYTES);
-	tmp = tmp + (tmp >> mp_hash_shift);
-	return &mountpoint_hashtable[tmp & mp_hash_mask];
-}
+अटल अंतरभूत काष्ठा hlist_head *mp_hash(काष्ठा dentry *dentry)
+अणु
+	अचिन्हित दीर्घ पंचांगp = ((अचिन्हित दीर्घ)dentry / L1_CACHE_BYTES);
+	पंचांगp = पंचांगp + (पंचांगp >> mp_hash_shअगरt);
+	वापस &mountpoपूर्णांक_hashtable[पंचांगp & mp_hash_mask];
+पूर्ण
 
-static int mnt_alloc_id(struct mount *mnt)
-{
-	int res = ida_alloc(&mnt_id_ida, GFP_KERNEL);
+अटल पूर्णांक mnt_alloc_id(काष्ठा mount *mnt)
+अणु
+	पूर्णांक res = ida_alloc(&mnt_id_ida, GFP_KERNEL);
 
-	if (res < 0)
-		return res;
+	अगर (res < 0)
+		वापस res;
 	mnt->mnt_id = res;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mnt_free_id(struct mount *mnt)
-{
-	ida_free(&mnt_id_ida, mnt->mnt_id);
-}
+अटल व्योम mnt_मुक्त_id(काष्ठा mount *mnt)
+अणु
+	ida_मुक्त(&mnt_id_ida, mnt->mnt_id);
+पूर्ण
 
 /*
  * Allocate a new peer group ID
  */
-static int mnt_alloc_group_id(struct mount *mnt)
-{
-	int res = ida_alloc_min(&mnt_group_ida, 1, GFP_KERNEL);
+अटल पूर्णांक mnt_alloc_group_id(काष्ठा mount *mnt)
+अणु
+	पूर्णांक res = ida_alloc_min(&mnt_group_ida, 1, GFP_KERNEL);
 
-	if (res < 0)
-		return res;
+	अगर (res < 0)
+		वापस res;
 	mnt->mnt_group_id = res;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Release a peer group ID
  */
-void mnt_release_group_id(struct mount *mnt)
-{
-	ida_free(&mnt_group_ida, mnt->mnt_group_id);
+व्योम mnt_release_group_id(काष्ठा mount *mnt)
+अणु
+	ida_मुक्त(&mnt_group_ida, mnt->mnt_group_id);
 	mnt->mnt_group_id = 0;
-}
+पूर्ण
 
 /*
- * vfsmount lock must be held for read
+ * vfsmount lock must be held क्रम पढ़ो
  */
-static inline void mnt_add_count(struct mount *mnt, int n)
-{
-#ifdef CONFIG_SMP
+अटल अंतरभूत व्योम mnt_add_count(काष्ठा mount *mnt, पूर्णांक n)
+अणु
+#अगर_घोषित CONFIG_SMP
 	this_cpu_add(mnt->mnt_pcp->mnt_count, n);
-#else
+#अन्यथा
 	preempt_disable();
 	mnt->mnt_count += n;
 	preempt_enable();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * vfsmount lock must be held for write
+ * vfsmount lock must be held क्रम ग_लिखो
  */
-int mnt_get_count(struct mount *mnt)
-{
-#ifdef CONFIG_SMP
-	int count = 0;
-	int cpu;
+पूर्णांक mnt_get_count(काष्ठा mount *mnt)
+अणु
+#अगर_घोषित CONFIG_SMP
+	पूर्णांक count = 0;
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		count += per_cpu_ptr(mnt->mnt_pcp, cpu)->mnt_count;
-	}
+	पूर्ण
 
-	return count;
-#else
-	return mnt->mnt_count;
-#endif
-}
+	वापस count;
+#अन्यथा
+	वापस mnt->mnt_count;
+#पूर्ण_अगर
+पूर्ण
 
-static struct mount *alloc_vfsmnt(const char *name)
-{
-	struct mount *mnt = kmem_cache_zalloc(mnt_cache, GFP_KERNEL);
-	if (mnt) {
-		int err;
+अटल काष्ठा mount *alloc_vfsmnt(स्थिर अक्षर *name)
+अणु
+	काष्ठा mount *mnt = kmem_cache_zalloc(mnt_cache, GFP_KERNEL);
+	अगर (mnt) अणु
+		पूर्णांक err;
 
 		err = mnt_alloc_id(mnt);
-		if (err)
-			goto out_free_cache;
+		अगर (err)
+			जाओ out_मुक्त_cache;
 
-		if (name) {
-			mnt->mnt_devname = kstrdup_const(name, GFP_KERNEL);
-			if (!mnt->mnt_devname)
-				goto out_free_id;
-		}
+		अगर (name) अणु
+			mnt->mnt_devname = kstrdup_स्थिर(name, GFP_KERNEL);
+			अगर (!mnt->mnt_devname)
+				जाओ out_मुक्त_id;
+		पूर्ण
 
-#ifdef CONFIG_SMP
-		mnt->mnt_pcp = alloc_percpu(struct mnt_pcp);
-		if (!mnt->mnt_pcp)
-			goto out_free_devname;
+#अगर_घोषित CONFIG_SMP
+		mnt->mnt_pcp = alloc_percpu(काष्ठा mnt_pcp);
+		अगर (!mnt->mnt_pcp)
+			जाओ out_मुक्त_devname;
 
 		this_cpu_add(mnt->mnt_pcp->mnt_count, 1);
-#else
+#अन्यथा
 		mnt->mnt_count = 1;
-		mnt->mnt_writers = 0;
-#endif
+		mnt->mnt_ग_लिखोrs = 0;
+#पूर्ण_अगर
 
 		INIT_HLIST_NODE(&mnt->mnt_hash);
 		INIT_LIST_HEAD(&mnt->mnt_child);
@@ -231,405 +232,405 @@ static struct mount *alloc_vfsmnt(const char *name)
 		INIT_LIST_HEAD(&mnt->mnt_umounting);
 		INIT_HLIST_HEAD(&mnt->mnt_stuck_children);
 		mnt->mnt.mnt_userns = &init_user_ns;
-	}
-	return mnt;
+	पूर्ण
+	वापस mnt;
 
-#ifdef CONFIG_SMP
-out_free_devname:
-	kfree_const(mnt->mnt_devname);
-#endif
-out_free_id:
-	mnt_free_id(mnt);
-out_free_cache:
-	kmem_cache_free(mnt_cache, mnt);
-	return NULL;
-}
+#अगर_घोषित CONFIG_SMP
+out_मुक्त_devname:
+	kमुक्त_स्थिर(mnt->mnt_devname);
+#पूर्ण_अगर
+out_मुक्त_id:
+	mnt_मुक्त_id(mnt);
+out_मुक्त_cache:
+	kmem_cache_मुक्त(mnt_cache, mnt);
+	वापस शून्य;
+पूर्ण
 
 /*
- * Most r/o checks on a fs are for operations that take
- * discrete amounts of time, like a write() or unlink().
+ * Most r/o checks on a fs are क्रम operations that take
+ * discrete amounts of समय, like a ग_लिखो() or unlink().
  * We must keep track of when those operations start
- * (for permission checks) and when they end, so that
- * we can determine when writes are able to occur to
- * a filesystem.
+ * (क्रम permission checks) and when they end, so that
+ * we can determine when ग_लिखोs are able to occur to
+ * a fileप्रणाली.
  */
 /*
- * __mnt_is_readonly: check whether a mount is read-only
- * @mnt: the mount to check for its write status
+ * __mnt_is_पढ़ोonly: check whether a mount is पढ़ो-only
+ * @mnt: the mount to check क्रम its ग_लिखो status
  *
  * This shouldn't be used directly ouside of the VFS.
- * It does not guarantee that the filesystem will stay
+ * It करोes not guarantee that the fileप्रणाली will stay
  * r/w, just that it is right *now*.  This can not and
  * should not be used in place of IS_RDONLY(inode).
- * mnt_want/drop_write() will _keep_ the filesystem
+ * mnt_want/drop_ग_लिखो() will _keep_ the fileप्रणाली
  * r/w.
  */
-bool __mnt_is_readonly(struct vfsmount *mnt)
-{
-	return (mnt->mnt_flags & MNT_READONLY) || sb_rdonly(mnt->mnt_sb);
-}
-EXPORT_SYMBOL_GPL(__mnt_is_readonly);
+bool __mnt_is_पढ़ोonly(काष्ठा vfsmount *mnt)
+अणु
+	वापस (mnt->mnt_flags & MNT_READONLY) || sb_rकरोnly(mnt->mnt_sb);
+पूर्ण
+EXPORT_SYMBOL_GPL(__mnt_is_पढ़ोonly);
 
-static inline void mnt_inc_writers(struct mount *mnt)
-{
-#ifdef CONFIG_SMP
-	this_cpu_inc(mnt->mnt_pcp->mnt_writers);
-#else
-	mnt->mnt_writers++;
-#endif
-}
+अटल अंतरभूत व्योम mnt_inc_ग_लिखोrs(काष्ठा mount *mnt)
+अणु
+#अगर_घोषित CONFIG_SMP
+	this_cpu_inc(mnt->mnt_pcp->mnt_ग_लिखोrs);
+#अन्यथा
+	mnt->mnt_ग_लिखोrs++;
+#पूर्ण_अगर
+पूर्ण
 
-static inline void mnt_dec_writers(struct mount *mnt)
-{
-#ifdef CONFIG_SMP
-	this_cpu_dec(mnt->mnt_pcp->mnt_writers);
-#else
-	mnt->mnt_writers--;
-#endif
-}
+अटल अंतरभूत व्योम mnt_dec_ग_लिखोrs(काष्ठा mount *mnt)
+अणु
+#अगर_घोषित CONFIG_SMP
+	this_cpu_dec(mnt->mnt_pcp->mnt_ग_लिखोrs);
+#अन्यथा
+	mnt->mnt_ग_लिखोrs--;
+#पूर्ण_अगर
+पूर्ण
 
-static unsigned int mnt_get_writers(struct mount *mnt)
-{
-#ifdef CONFIG_SMP
-	unsigned int count = 0;
-	int cpu;
+अटल अचिन्हित पूर्णांक mnt_get_ग_लिखोrs(काष्ठा mount *mnt)
+अणु
+#अगर_घोषित CONFIG_SMP
+	अचिन्हित पूर्णांक count = 0;
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
-		count += per_cpu_ptr(mnt->mnt_pcp, cpu)->mnt_writers;
-	}
+	क्रम_each_possible_cpu(cpu) अणु
+		count += per_cpu_ptr(mnt->mnt_pcp, cpu)->mnt_ग_लिखोrs;
+	पूर्ण
 
-	return count;
-#else
-	return mnt->mnt_writers;
-#endif
-}
+	वापस count;
+#अन्यथा
+	वापस mnt->mnt_ग_लिखोrs;
+#पूर्ण_अगर
+पूर्ण
 
-static int mnt_is_readonly(struct vfsmount *mnt)
-{
-	if (mnt->mnt_sb->s_readonly_remount)
-		return 1;
-	/* Order wrt setting s_flags/s_readonly_remount in do_remount() */
+अटल पूर्णांक mnt_is_पढ़ोonly(काष्ठा vfsmount *mnt)
+अणु
+	अगर (mnt->mnt_sb->s_पढ़ोonly_remount)
+		वापस 1;
+	/* Order wrt setting s_flags/s_पढ़ोonly_remount in करो_remount() */
 	smp_rmb();
-	return __mnt_is_readonly(mnt);
-}
+	वापस __mnt_is_पढ़ोonly(mnt);
+पूर्ण
 
 /*
- * Most r/o & frozen checks on a fs are for operations that take discrete
- * amounts of time, like a write() or unlink().  We must keep track of when
- * those operations start (for permission checks) and when they end, so that we
- * can determine when writes are able to occur to a filesystem.
+ * Most r/o & frozen checks on a fs are क्रम operations that take discrete
+ * amounts of समय, like a ग_लिखो() or unlink().  We must keep track of when
+ * those operations start (क्रम permission checks) and when they end, so that we
+ * can determine when ग_लिखोs are able to occur to a fileप्रणाली.
  */
 /**
- * __mnt_want_write - get write access to a mount without freeze protection
- * @m: the mount on which to take a write
+ * __mnt_want_ग_लिखो - get ग_लिखो access to a mount without मुक्तze protection
+ * @m: the mount on which to take a ग_लिखो
  *
- * This tells the low-level filesystem that a write is about to be performed to
- * it, and makes sure that writes are allowed (mnt it read-write) before
- * returning success. This operation does not protect against filesystem being
- * frozen. When the write operation is finished, __mnt_drop_write() must be
+ * This tells the low-level fileप्रणाली that a ग_लिखो is about to be perक्रमmed to
+ * it, and makes sure that ग_लिखोs are allowed (mnt it पढ़ो-ग_लिखो) beक्रमe
+ * वापसing success. This operation करोes not protect against fileप्रणाली being
+ * frozen. When the ग_लिखो operation is finished, __mnt_drop_ग_लिखो() must be
  * called. This is effectively a refcount.
  */
-int __mnt_want_write(struct vfsmount *m)
-{
-	struct mount *mnt = real_mount(m);
-	int ret = 0;
+पूर्णांक __mnt_want_ग_लिखो(काष्ठा vfsmount *m)
+अणु
+	काष्ठा mount *mnt = real_mount(m);
+	पूर्णांक ret = 0;
 
 	preempt_disable();
-	mnt_inc_writers(mnt);
+	mnt_inc_ग_लिखोrs(mnt);
 	/*
-	 * The store to mnt_inc_writers must be visible before we pass
+	 * The store to mnt_inc_ग_लिखोrs must be visible beक्रमe we pass
 	 * MNT_WRITE_HOLD loop below, so that the slowpath can see our
 	 * incremented count after it has set MNT_WRITE_HOLD.
 	 */
 	smp_mb();
-	while (READ_ONCE(mnt->mnt.mnt_flags) & MNT_WRITE_HOLD)
+	जबतक (READ_ONCE(mnt->mnt.mnt_flags) & MNT_WRITE_HOLD)
 		cpu_relax();
 	/*
-	 * After the slowpath clears MNT_WRITE_HOLD, mnt_is_readonly will
+	 * After the slowpath clears MNT_WRITE_HOLD, mnt_is_पढ़ोonly will
 	 * be set to match its requirements. So we must not load that until
 	 * MNT_WRITE_HOLD is cleared.
 	 */
 	smp_rmb();
-	if (mnt_is_readonly(m)) {
-		mnt_dec_writers(mnt);
+	अगर (mnt_is_पढ़ोonly(m)) अणु
+		mnt_dec_ग_लिखोrs(mnt);
 		ret = -EROFS;
-	}
+	पूर्ण
 	preempt_enable();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * mnt_want_write - get write access to a mount
- * @m: the mount on which to take a write
+ * mnt_want_ग_लिखो - get ग_लिखो access to a mount
+ * @m: the mount on which to take a ग_लिखो
  *
- * This tells the low-level filesystem that a write is about to be performed to
- * it, and makes sure that writes are allowed (mount is read-write, filesystem
- * is not frozen) before returning success.  When the write operation is
- * finished, mnt_drop_write() must be called.  This is effectively a refcount.
+ * This tells the low-level fileप्रणाली that a ग_लिखो is about to be perक्रमmed to
+ * it, and makes sure that ग_लिखोs are allowed (mount is पढ़ो-ग_लिखो, fileप्रणाली
+ * is not frozen) beक्रमe वापसing success.  When the ग_लिखो operation is
+ * finished, mnt_drop_ग_लिखो() must be called.  This is effectively a refcount.
  */
-int mnt_want_write(struct vfsmount *m)
-{
-	int ret;
+पूर्णांक mnt_want_ग_लिखो(काष्ठा vfsmount *m)
+अणु
+	पूर्णांक ret;
 
-	sb_start_write(m->mnt_sb);
-	ret = __mnt_want_write(m);
-	if (ret)
-		sb_end_write(m->mnt_sb);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(mnt_want_write);
+	sb_start_ग_लिखो(m->mnt_sb);
+	ret = __mnt_want_ग_लिखो(m);
+	अगर (ret)
+		sb_end_ग_लिखो(m->mnt_sb);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(mnt_want_ग_लिखो);
 
 /**
- * __mnt_want_write_file - get write access to a file's mount
- * @file: the file who's mount on which to take a write
+ * __mnt_want_ग_लिखो_file - get ग_लिखो access to a file's mount
+ * @file: the file who's mount on which to take a ग_लिखो
  *
- * This is like __mnt_want_write, but if the file is already open for writing it
- * skips incrementing mnt_writers (since the open file already has a reference)
- * and instead only does the check for emergency r/o remounts.  This must be
- * paired with __mnt_drop_write_file.
+ * This is like __mnt_want_ग_लिखो, but अगर the file is alपढ़ोy खोलो क्रम writing it
+ * skips incrementing mnt_ग_लिखोrs (since the खोलो file alपढ़ोy has a reference)
+ * and instead only करोes the check क्रम emergency r/o remounts.  This must be
+ * paired with __mnt_drop_ग_लिखो_file.
  */
-int __mnt_want_write_file(struct file *file)
-{
-	if (file->f_mode & FMODE_WRITER) {
+पूर्णांक __mnt_want_ग_लिखो_file(काष्ठा file *file)
+अणु
+	अगर (file->f_mode & FMODE_WRITER) अणु
 		/*
-		 * Superblock may have become readonly while there are still
+		 * Superblock may have become पढ़ोonly जबतक there are still
 		 * writable fd's, e.g. due to a fs error with errors=remount-ro
 		 */
-		if (__mnt_is_readonly(file->f_path.mnt))
-			return -EROFS;
-		return 0;
-	}
-	return __mnt_want_write(file->f_path.mnt);
-}
+		अगर (__mnt_is_पढ़ोonly(file->f_path.mnt))
+			वापस -EROFS;
+		वापस 0;
+	पूर्ण
+	वापस __mnt_want_ग_लिखो(file->f_path.mnt);
+पूर्ण
 
 /**
- * mnt_want_write_file - get write access to a file's mount
- * @file: the file who's mount on which to take a write
+ * mnt_want_ग_लिखो_file - get ग_लिखो access to a file's mount
+ * @file: the file who's mount on which to take a ग_लिखो
  *
- * This is like mnt_want_write, but if the file is already open for writing it
- * skips incrementing mnt_writers (since the open file already has a reference)
- * and instead only does the freeze protection and the check for emergency r/o
- * remounts.  This must be paired with mnt_drop_write_file.
+ * This is like mnt_want_ग_लिखो, but अगर the file is alपढ़ोy खोलो क्रम writing it
+ * skips incrementing mnt_ग_लिखोrs (since the खोलो file alपढ़ोy has a reference)
+ * and instead only करोes the मुक्तze protection and the check क्रम emergency r/o
+ * remounts.  This must be paired with mnt_drop_ग_लिखो_file.
  */
-int mnt_want_write_file(struct file *file)
-{
-	int ret;
+पूर्णांक mnt_want_ग_लिखो_file(काष्ठा file *file)
+अणु
+	पूर्णांक ret;
 
-	sb_start_write(file_inode(file)->i_sb);
-	ret = __mnt_want_write_file(file);
-	if (ret)
-		sb_end_write(file_inode(file)->i_sb);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(mnt_want_write_file);
+	sb_start_ग_लिखो(file_inode(file)->i_sb);
+	ret = __mnt_want_ग_लिखो_file(file);
+	अगर (ret)
+		sb_end_ग_लिखो(file_inode(file)->i_sb);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(mnt_want_ग_लिखो_file);
 
 /**
- * __mnt_drop_write - give up write access to a mount
- * @mnt: the mount on which to give up write access
+ * __mnt_drop_ग_लिखो - give up ग_लिखो access to a mount
+ * @mnt: the mount on which to give up ग_लिखो access
  *
- * Tells the low-level filesystem that we are done
- * performing writes to it.  Must be matched with
- * __mnt_want_write() call above.
+ * Tells the low-level fileप्रणाली that we are करोne
+ * perक्रमming ग_लिखोs to it.  Must be matched with
+ * __mnt_want_ग_लिखो() call above.
  */
-void __mnt_drop_write(struct vfsmount *mnt)
-{
+व्योम __mnt_drop_ग_लिखो(काष्ठा vfsmount *mnt)
+अणु
 	preempt_disable();
-	mnt_dec_writers(real_mount(mnt));
+	mnt_dec_ग_लिखोrs(real_mount(mnt));
 	preempt_enable();
-}
+पूर्ण
 
 /**
- * mnt_drop_write - give up write access to a mount
- * @mnt: the mount on which to give up write access
+ * mnt_drop_ग_लिखो - give up ग_लिखो access to a mount
+ * @mnt: the mount on which to give up ग_लिखो access
  *
- * Tells the low-level filesystem that we are done performing writes to it and
- * also allows filesystem to be frozen again.  Must be matched with
- * mnt_want_write() call above.
+ * Tells the low-level fileप्रणाली that we are करोne perक्रमming ग_लिखोs to it and
+ * also allows fileप्रणाली to be frozen again.  Must be matched with
+ * mnt_want_ग_लिखो() call above.
  */
-void mnt_drop_write(struct vfsmount *mnt)
-{
-	__mnt_drop_write(mnt);
-	sb_end_write(mnt->mnt_sb);
-}
-EXPORT_SYMBOL_GPL(mnt_drop_write);
+व्योम mnt_drop_ग_लिखो(काष्ठा vfsmount *mnt)
+अणु
+	__mnt_drop_ग_लिखो(mnt);
+	sb_end_ग_लिखो(mnt->mnt_sb);
+पूर्ण
+EXPORT_SYMBOL_GPL(mnt_drop_ग_लिखो);
 
-void __mnt_drop_write_file(struct file *file)
-{
-	if (!(file->f_mode & FMODE_WRITER))
-		__mnt_drop_write(file->f_path.mnt);
-}
+व्योम __mnt_drop_ग_लिखो_file(काष्ठा file *file)
+अणु
+	अगर (!(file->f_mode & FMODE_WRITER))
+		__mnt_drop_ग_लिखो(file->f_path.mnt);
+पूर्ण
 
-void mnt_drop_write_file(struct file *file)
-{
-	__mnt_drop_write_file(file);
-	sb_end_write(file_inode(file)->i_sb);
-}
-EXPORT_SYMBOL(mnt_drop_write_file);
+व्योम mnt_drop_ग_लिखो_file(काष्ठा file *file)
+अणु
+	__mnt_drop_ग_लिखो_file(file);
+	sb_end_ग_लिखो(file_inode(file)->i_sb);
+पूर्ण
+EXPORT_SYMBOL(mnt_drop_ग_लिखो_file);
 
-static inline int mnt_hold_writers(struct mount *mnt)
-{
+अटल अंतरभूत पूर्णांक mnt_hold_ग_लिखोrs(काष्ठा mount *mnt)
+अणु
 	mnt->mnt.mnt_flags |= MNT_WRITE_HOLD;
 	/*
-	 * After storing MNT_WRITE_HOLD, we'll read the counters. This store
-	 * should be visible before we do.
+	 * After storing MNT_WRITE_HOLD, we'll पढ़ो the counters. This store
+	 * should be visible beक्रमe we करो.
 	 */
 	smp_mb();
 
 	/*
-	 * With writers on hold, if this value is zero, then there are
-	 * definitely no active writers (although held writers may subsequently
-	 * increment the count, they'll have to wait, and decrement it after
+	 * With ग_लिखोrs on hold, अगर this value is zero, then there are
+	 * definitely no active ग_लिखोrs (although held ग_लिखोrs may subsequently
+	 * increment the count, they'll have to रुको, and decrement it after
 	 * seeing MNT_READONLY).
 	 *
 	 * It is OK to have counter incremented on one CPU and decremented on
 	 * another: the sum will add up correctly. The danger would be when we
-	 * sum up each counter, if we read a counter before it is incremented,
-	 * but then read another CPU's count which it has been subsequently
+	 * sum up each counter, अगर we पढ़ो a counter beक्रमe it is incremented,
+	 * but then पढ़ो another CPU's count which it has been subsequently
 	 * decremented from -- we would see more decrements than we should.
 	 * MNT_WRITE_HOLD protects against this scenario, because
-	 * mnt_want_write first increments count, then smp_mb, then spins on
-	 * MNT_WRITE_HOLD, so it can't be decremented by another CPU while
+	 * mnt_want_ग_लिखो first increments count, then smp_mb, then spins on
+	 * MNT_WRITE_HOLD, so it can't be decremented by another CPU जबतक
 	 * we're counting up here.
 	 */
-	if (mnt_get_writers(mnt) > 0)
-		return -EBUSY;
+	अगर (mnt_get_ग_लिखोrs(mnt) > 0)
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void mnt_unhold_writers(struct mount *mnt)
-{
+अटल अंतरभूत व्योम mnt_unhold_ग_लिखोrs(काष्ठा mount *mnt)
+अणु
 	/*
-	 * MNT_READONLY must become visible before ~MNT_WRITE_HOLD, so writers
+	 * MNT_READONLY must become visible beक्रमe ~MNT_WRITE_HOLD, so ग_लिखोrs
 	 * that become unheld will see MNT_READONLY.
 	 */
 	smp_wmb();
 	mnt->mnt.mnt_flags &= ~MNT_WRITE_HOLD;
-}
+पूर्ण
 
-static int mnt_make_readonly(struct mount *mnt)
-{
-	int ret;
+अटल पूर्णांक mnt_make_पढ़ोonly(काष्ठा mount *mnt)
+अणु
+	पूर्णांक ret;
 
-	ret = mnt_hold_writers(mnt);
-	if (!ret)
+	ret = mnt_hold_ग_लिखोrs(mnt);
+	अगर (!ret)
 		mnt->mnt.mnt_flags |= MNT_READONLY;
-	mnt_unhold_writers(mnt);
-	return ret;
-}
+	mnt_unhold_ग_लिखोrs(mnt);
+	वापस ret;
+पूर्ण
 
-int sb_prepare_remount_readonly(struct super_block *sb)
-{
-	struct mount *mnt;
-	int err = 0;
+पूर्णांक sb_prepare_remount_पढ़ोonly(काष्ठा super_block *sb)
+अणु
+	काष्ठा mount *mnt;
+	पूर्णांक err = 0;
 
 	/* Racy optimization.  Recheck the counter under MNT_WRITE_HOLD */
-	if (atomic_long_read(&sb->s_remove_count))
-		return -EBUSY;
+	अगर (atomic_दीर्घ_पढ़ो(&sb->s_हटाओ_count))
+		वापस -EBUSY;
 
 	lock_mount_hash();
-	list_for_each_entry(mnt, &sb->s_mounts, mnt_instance) {
-		if (!(mnt->mnt.mnt_flags & MNT_READONLY)) {
+	list_क्रम_each_entry(mnt, &sb->s_mounts, mnt_instance) अणु
+		अगर (!(mnt->mnt.mnt_flags & MNT_READONLY)) अणु
 			mnt->mnt.mnt_flags |= MNT_WRITE_HOLD;
 			smp_mb();
-			if (mnt_get_writers(mnt) > 0) {
+			अगर (mnt_get_ग_लिखोrs(mnt) > 0) अणु
 				err = -EBUSY;
-				break;
-			}
-		}
-	}
-	if (!err && atomic_long_read(&sb->s_remove_count))
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (!err && atomic_दीर्घ_पढ़ो(&sb->s_हटाओ_count))
 		err = -EBUSY;
 
-	if (!err) {
-		sb->s_readonly_remount = 1;
+	अगर (!err) अणु
+		sb->s_पढ़ोonly_remount = 1;
 		smp_wmb();
-	}
-	list_for_each_entry(mnt, &sb->s_mounts, mnt_instance) {
-		if (mnt->mnt.mnt_flags & MNT_WRITE_HOLD)
+	पूर्ण
+	list_क्रम_each_entry(mnt, &sb->s_mounts, mnt_instance) अणु
+		अगर (mnt->mnt.mnt_flags & MNT_WRITE_HOLD)
 			mnt->mnt.mnt_flags &= ~MNT_WRITE_HOLD;
-	}
+	पूर्ण
 	unlock_mount_hash();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void free_vfsmnt(struct mount *mnt)
-{
-	struct user_namespace *mnt_userns;
+अटल व्योम मुक्त_vfsmnt(काष्ठा mount *mnt)
+अणु
+	काष्ठा user_namespace *mnt_userns;
 
 	mnt_userns = mnt_user_ns(&mnt->mnt);
-	if (mnt_userns != &init_user_ns)
+	अगर (mnt_userns != &init_user_ns)
 		put_user_ns(mnt_userns);
-	kfree_const(mnt->mnt_devname);
-#ifdef CONFIG_SMP
-	free_percpu(mnt->mnt_pcp);
-#endif
-	kmem_cache_free(mnt_cache, mnt);
-}
+	kमुक्त_स्थिर(mnt->mnt_devname);
+#अगर_घोषित CONFIG_SMP
+	मुक्त_percpu(mnt->mnt_pcp);
+#पूर्ण_अगर
+	kmem_cache_मुक्त(mnt_cache, mnt);
+पूर्ण
 
-static void delayed_free_vfsmnt(struct rcu_head *head)
-{
-	free_vfsmnt(container_of(head, struct mount, mnt_rcu));
-}
+अटल व्योम delayed_मुक्त_vfsmnt(काष्ठा rcu_head *head)
+अणु
+	मुक्त_vfsmnt(container_of(head, काष्ठा mount, mnt_rcu));
+पूर्ण
 
-/* call under rcu_read_lock */
-int __legitimize_mnt(struct vfsmount *bastard, unsigned seq)
-{
-	struct mount *mnt;
-	if (read_seqretry(&mount_lock, seq))
-		return 1;
-	if (bastard == NULL)
-		return 0;
+/* call under rcu_पढ़ो_lock */
+पूर्णांक __legitimize_mnt(काष्ठा vfsmount *bastard, अचिन्हित seq)
+अणु
+	काष्ठा mount *mnt;
+	अगर (पढ़ो_seqretry(&mount_lock, seq))
+		वापस 1;
+	अगर (bastard == शून्य)
+		वापस 0;
 	mnt = real_mount(bastard);
 	mnt_add_count(mnt, 1);
 	smp_mb();			// see mntput_no_expire()
-	if (likely(!read_seqretry(&mount_lock, seq)))
-		return 0;
-	if (bastard->mnt_flags & MNT_SYNC_UMOUNT) {
+	अगर (likely(!पढ़ो_seqretry(&mount_lock, seq)))
+		वापस 0;
+	अगर (bastard->mnt_flags & MNT_SYNC_UMOUNT) अणु
 		mnt_add_count(mnt, -1);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	lock_mount_hash();
-	if (unlikely(bastard->mnt_flags & MNT_DOOMED)) {
+	अगर (unlikely(bastard->mnt_flags & MNT_DOOMED)) अणु
 		mnt_add_count(mnt, -1);
 		unlock_mount_hash();
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	unlock_mount_hash();
 	/* caller will mntput() */
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-/* call under rcu_read_lock */
-bool legitimize_mnt(struct vfsmount *bastard, unsigned seq)
-{
-	int res = __legitimize_mnt(bastard, seq);
-	if (likely(!res))
-		return true;
-	if (unlikely(res < 0)) {
-		rcu_read_unlock();
+/* call under rcu_पढ़ो_lock */
+bool legitimize_mnt(काष्ठा vfsmount *bastard, अचिन्हित seq)
+अणु
+	पूर्णांक res = __legitimize_mnt(bastard, seq);
+	अगर (likely(!res))
+		वापस true;
+	अगर (unlikely(res < 0)) अणु
+		rcu_पढ़ो_unlock();
 		mntput(bastard);
-		rcu_read_lock();
-	}
-	return false;
-}
+		rcu_पढ़ो_lock();
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /*
  * find the first mount at @dentry on vfsmount @mnt.
- * call under rcu_read_lock()
+ * call under rcu_पढ़ो_lock()
  */
-struct mount *__lookup_mnt(struct vfsmount *mnt, struct dentry *dentry)
-{
-	struct hlist_head *head = m_hash(mnt, dentry);
-	struct mount *p;
+काष्ठा mount *__lookup_mnt(काष्ठा vfsmount *mnt, काष्ठा dentry *dentry)
+अणु
+	काष्ठा hlist_head *head = m_hash(mnt, dentry);
+	काष्ठा mount *p;
 
-	hlist_for_each_entry_rcu(p, head, mnt_hash)
-		if (&p->mnt_parent->mnt == mnt && p->mnt_mountpoint == dentry)
-			return p;
-	return NULL;
-}
+	hlist_क्रम_each_entry_rcu(p, head, mnt_hash)
+		अगर (&p->mnt_parent->mnt == mnt && p->mnt_mountpoपूर्णांक == dentry)
+			वापस p;
+	वापस शून्य;
+पूर्ण
 
 /*
  * lookup_mnt - Return the first child mount mounted at path
@@ -642,254 +643,254 @@ struct mount *__lookup_mnt(struct vfsmount *mnt, struct dentry *dentry)
  * mount /dev/sda3 /mnt
  *
  * Then lookup_mnt() on the base /mnt dentry in the root mount will
- * return successively the root dentry and vfsmount of /dev/sda1, then
- * /dev/sda2, then /dev/sda3, then NULL.
+ * वापस successively the root dentry and vfsmount of /dev/sda1, then
+ * /dev/sda2, then /dev/sda3, then शून्य.
  *
  * lookup_mnt takes a reference to the found vfsmount.
  */
-struct vfsmount *lookup_mnt(const struct path *path)
-{
-	struct mount *child_mnt;
-	struct vfsmount *m;
-	unsigned seq;
+काष्ठा vfsmount *lookup_mnt(स्थिर काष्ठा path *path)
+अणु
+	काष्ठा mount *child_mnt;
+	काष्ठा vfsmount *m;
+	अचिन्हित seq;
 
-	rcu_read_lock();
-	do {
-		seq = read_seqbegin(&mount_lock);
+	rcu_पढ़ो_lock();
+	करो अणु
+		seq = पढ़ो_seqbegin(&mount_lock);
 		child_mnt = __lookup_mnt(path->mnt, path->dentry);
-		m = child_mnt ? &child_mnt->mnt : NULL;
-	} while (!legitimize_mnt(m, seq));
-	rcu_read_unlock();
-	return m;
-}
+		m = child_mnt ? &child_mnt->mnt : शून्य;
+	पूर्ण जबतक (!legitimize_mnt(m, seq));
+	rcu_पढ़ो_unlock();
+	वापस m;
+पूर्ण
 
-static inline void lock_ns_list(struct mnt_namespace *ns)
-{
+अटल अंतरभूत व्योम lock_ns_list(काष्ठा mnt_namespace *ns)
+अणु
 	spin_lock(&ns->ns_lock);
-}
+पूर्ण
 
-static inline void unlock_ns_list(struct mnt_namespace *ns)
-{
+अटल अंतरभूत व्योम unlock_ns_list(काष्ठा mnt_namespace *ns)
+अणु
 	spin_unlock(&ns->ns_lock);
-}
+पूर्ण
 
-static inline bool mnt_is_cursor(struct mount *mnt)
-{
-	return mnt->mnt.mnt_flags & MNT_CURSOR;
-}
+अटल अंतरभूत bool mnt_is_cursor(काष्ठा mount *mnt)
+अणु
+	वापस mnt->mnt.mnt_flags & MNT_CURSOR;
+पूर्ण
 
 /*
- * __is_local_mountpoint - Test to see if dentry is a mountpoint in the
+ * __is_local_mountpoपूर्णांक - Test to see अगर dentry is a mountpoपूर्णांक in the
  *                         current mount namespace.
  *
- * The common case is dentries are not mountpoints at all and that
- * test is handled inline.  For the slow case when we are actually
- * dealing with a mountpoint of some kind, walk through all of the
- * mounts in the current mount namespace and test to see if the dentry
- * is a mountpoint.
+ * The common हाल is dentries are not mountpoपूर्णांकs at all and that
+ * test is handled अंतरभूत.  For the slow हाल when we are actually
+ * dealing with a mountpoपूर्णांक of some kind, walk through all of the
+ * mounts in the current mount namespace and test to see अगर the dentry
+ * is a mountpoपूर्णांक.
  *
  * The mount_hashtable is not usable in the context because we
- * need to identify all mounts that may be in the current mount
- * namespace not just a mount that happens to have some specified
+ * need to identअगरy all mounts that may be in the current mount
+ * namespace not just a mount that happens to have some specअगरied
  * parent mount.
  */
-bool __is_local_mountpoint(struct dentry *dentry)
-{
-	struct mnt_namespace *ns = current->nsproxy->mnt_ns;
-	struct mount *mnt;
+bool __is_local_mountpoपूर्णांक(काष्ठा dentry *dentry)
+अणु
+	काष्ठा mnt_namespace *ns = current->nsproxy->mnt_ns;
+	काष्ठा mount *mnt;
 	bool is_covered = false;
 
-	down_read(&namespace_sem);
+	करोwn_पढ़ो(&namespace_sem);
 	lock_ns_list(ns);
-	list_for_each_entry(mnt, &ns->list, mnt_list) {
-		if (mnt_is_cursor(mnt))
-			continue;
-		is_covered = (mnt->mnt_mountpoint == dentry);
-		if (is_covered)
-			break;
-	}
+	list_क्रम_each_entry(mnt, &ns->list, mnt_list) अणु
+		अगर (mnt_is_cursor(mnt))
+			जारी;
+		is_covered = (mnt->mnt_mountpoपूर्णांक == dentry);
+		अगर (is_covered)
+			अवरोध;
+	पूर्ण
 	unlock_ns_list(ns);
-	up_read(&namespace_sem);
+	up_पढ़ो(&namespace_sem);
 
-	return is_covered;
-}
+	वापस is_covered;
+पूर्ण
 
-static struct mountpoint *lookup_mountpoint(struct dentry *dentry)
-{
-	struct hlist_head *chain = mp_hash(dentry);
-	struct mountpoint *mp;
+अटल काष्ठा mountpoपूर्णांक *lookup_mountpoपूर्णांक(काष्ठा dentry *dentry)
+अणु
+	काष्ठा hlist_head *chain = mp_hash(dentry);
+	काष्ठा mountpoपूर्णांक *mp;
 
-	hlist_for_each_entry(mp, chain, m_hash) {
-		if (mp->m_dentry == dentry) {
+	hlist_क्रम_each_entry(mp, chain, m_hash) अणु
+		अगर (mp->m_dentry == dentry) अणु
 			mp->m_count++;
-			return mp;
-		}
-	}
-	return NULL;
-}
+			वापस mp;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct mountpoint *get_mountpoint(struct dentry *dentry)
-{
-	struct mountpoint *mp, *new = NULL;
-	int ret;
+अटल काष्ठा mountpoपूर्णांक *get_mountpoपूर्णांक(काष्ठा dentry *dentry)
+अणु
+	काष्ठा mountpoपूर्णांक *mp, *new = शून्य;
+	पूर्णांक ret;
 
-	if (d_mountpoint(dentry)) {
+	अगर (d_mountpoपूर्णांक(dentry)) अणु
 		/* might be worth a WARN_ON() */
-		if (d_unlinked(dentry))
-			return ERR_PTR(-ENOENT);
-mountpoint:
-		read_seqlock_excl(&mount_lock);
-		mp = lookup_mountpoint(dentry);
-		read_sequnlock_excl(&mount_lock);
-		if (mp)
-			goto done;
-	}
+		अगर (d_unlinked(dentry))
+			वापस ERR_PTR(-ENOENT);
+mountpoपूर्णांक:
+		पढ़ो_seqlock_excl(&mount_lock);
+		mp = lookup_mountpoपूर्णांक(dentry);
+		पढ़ो_sequnlock_excl(&mount_lock);
+		अगर (mp)
+			जाओ करोne;
+	पूर्ण
 
-	if (!new)
-		new = kmalloc(sizeof(struct mountpoint), GFP_KERNEL);
-	if (!new)
-		return ERR_PTR(-ENOMEM);
+	अगर (!new)
+		new = kदो_स्मृति(माप(काष्ठा mountpoपूर्णांक), GFP_KERNEL);
+	अगर (!new)
+		वापस ERR_PTR(-ENOMEM);
 
 
 	/* Exactly one processes may set d_mounted */
 	ret = d_set_mounted(dentry);
 
-	/* Someone else set d_mounted? */
-	if (ret == -EBUSY)
-		goto mountpoint;
+	/* Someone अन्यथा set d_mounted? */
+	अगर (ret == -EBUSY)
+		जाओ mountpoपूर्णांक;
 
-	/* The dentry is not available as a mountpoint? */
+	/* The dentry is not available as a mountpoपूर्णांक? */
 	mp = ERR_PTR(ret);
-	if (ret)
-		goto done;
+	अगर (ret)
+		जाओ करोne;
 
-	/* Add the new mountpoint to the hash table */
-	read_seqlock_excl(&mount_lock);
+	/* Add the new mountpoपूर्णांक to the hash table */
+	पढ़ो_seqlock_excl(&mount_lock);
 	new->m_dentry = dget(dentry);
 	new->m_count = 1;
 	hlist_add_head(&new->m_hash, mp_hash(dentry));
 	INIT_HLIST_HEAD(&new->m_list);
-	read_sequnlock_excl(&mount_lock);
+	पढ़ो_sequnlock_excl(&mount_lock);
 
 	mp = new;
-	new = NULL;
-done:
-	kfree(new);
-	return mp;
-}
+	new = शून्य;
+करोne:
+	kमुक्त(new);
+	वापस mp;
+पूर्ण
 
 /*
  * vfsmount lock must be held.  Additionally, the caller is responsible
- * for serializing calls for given disposal list.
+ * क्रम serializing calls क्रम given disposal list.
  */
-static void __put_mountpoint(struct mountpoint *mp, struct list_head *list)
-{
-	if (!--mp->m_count) {
-		struct dentry *dentry = mp->m_dentry;
+अटल व्योम __put_mountpoपूर्णांक(काष्ठा mountpoपूर्णांक *mp, काष्ठा list_head *list)
+अणु
+	अगर (!--mp->m_count) अणु
+		काष्ठा dentry *dentry = mp->m_dentry;
 		BUG_ON(!hlist_empty(&mp->m_list));
 		spin_lock(&dentry->d_lock);
 		dentry->d_flags &= ~DCACHE_MOUNTED;
 		spin_unlock(&dentry->d_lock);
 		dput_to_list(dentry, list);
 		hlist_del(&mp->m_hash);
-		kfree(mp);
-	}
-}
+		kमुक्त(mp);
+	पूर्ण
+पूर्ण
 
 /* called with namespace_lock and vfsmount lock */
-static void put_mountpoint(struct mountpoint *mp)
-{
-	__put_mountpoint(mp, &ex_mountpoints);
-}
+अटल व्योम put_mountpoपूर्णांक(काष्ठा mountpoपूर्णांक *mp)
+अणु
+	__put_mountpoपूर्णांक(mp, &ex_mountpoपूर्णांकs);
+पूर्ण
 
-static inline int check_mnt(struct mount *mnt)
-{
-	return mnt->mnt_ns == current->nsproxy->mnt_ns;
-}
+अटल अंतरभूत पूर्णांक check_mnt(काष्ठा mount *mnt)
+अणु
+	वापस mnt->mnt_ns == current->nsproxy->mnt_ns;
+पूर्ण
 
 /*
- * vfsmount lock must be held for write
+ * vfsmount lock must be held क्रम ग_लिखो
  */
-static void touch_mnt_namespace(struct mnt_namespace *ns)
-{
-	if (ns) {
+अटल व्योम touch_mnt_namespace(काष्ठा mnt_namespace *ns)
+अणु
+	अगर (ns) अणु
 		ns->event = ++event;
-		wake_up_interruptible(&ns->poll);
-	}
-}
+		wake_up_पूर्णांकerruptible(&ns->poll);
+	पूर्ण
+पूर्ण
 
 /*
- * vfsmount lock must be held for write
+ * vfsmount lock must be held क्रम ग_लिखो
  */
-static void __touch_mnt_namespace(struct mnt_namespace *ns)
-{
-	if (ns && ns->event != event) {
+अटल व्योम __touch_mnt_namespace(काष्ठा mnt_namespace *ns)
+अणु
+	अगर (ns && ns->event != event) अणु
 		ns->event = event;
-		wake_up_interruptible(&ns->poll);
-	}
-}
+		wake_up_पूर्णांकerruptible(&ns->poll);
+	पूर्ण
+पूर्ण
 
 /*
- * vfsmount lock must be held for write
+ * vfsmount lock must be held क्रम ग_लिखो
  */
-static struct mountpoint *unhash_mnt(struct mount *mnt)
-{
-	struct mountpoint *mp;
+अटल काष्ठा mountpoपूर्णांक *unhash_mnt(काष्ठा mount *mnt)
+अणु
+	काष्ठा mountpoपूर्णांक *mp;
 	mnt->mnt_parent = mnt;
-	mnt->mnt_mountpoint = mnt->mnt.mnt_root;
+	mnt->mnt_mountpoपूर्णांक = mnt->mnt.mnt_root;
 	list_del_init(&mnt->mnt_child);
 	hlist_del_init_rcu(&mnt->mnt_hash);
 	hlist_del_init(&mnt->mnt_mp_list);
 	mp = mnt->mnt_mp;
-	mnt->mnt_mp = NULL;
-	return mp;
-}
+	mnt->mnt_mp = शून्य;
+	वापस mp;
+पूर्ण
 
 /*
- * vfsmount lock must be held for write
+ * vfsmount lock must be held क्रम ग_लिखो
  */
-static void umount_mnt(struct mount *mnt)
-{
-	put_mountpoint(unhash_mnt(mnt));
-}
+अटल व्योम umount_mnt(काष्ठा mount *mnt)
+अणु
+	put_mountpoपूर्णांक(unhash_mnt(mnt));
+पूर्ण
 
 /*
- * vfsmount lock must be held for write
+ * vfsmount lock must be held क्रम ग_लिखो
  */
-void mnt_set_mountpoint(struct mount *mnt,
-			struct mountpoint *mp,
-			struct mount *child_mnt)
-{
+व्योम mnt_set_mountpoपूर्णांक(काष्ठा mount *mnt,
+			काष्ठा mountpoपूर्णांक *mp,
+			काष्ठा mount *child_mnt)
+अणु
 	mp->m_count++;
 	mnt_add_count(mnt, 1);	/* essentially, that's mntget */
-	child_mnt->mnt_mountpoint = mp->m_dentry;
+	child_mnt->mnt_mountpoपूर्णांक = mp->m_dentry;
 	child_mnt->mnt_parent = mnt;
 	child_mnt->mnt_mp = mp;
 	hlist_add_head(&child_mnt->mnt_mp_list, &mp->m_list);
-}
+पूर्ण
 
-static void __attach_mnt(struct mount *mnt, struct mount *parent)
-{
+अटल व्योम __attach_mnt(काष्ठा mount *mnt, काष्ठा mount *parent)
+अणु
 	hlist_add_head_rcu(&mnt->mnt_hash,
-			   m_hash(&parent->mnt, mnt->mnt_mountpoint));
+			   m_hash(&parent->mnt, mnt->mnt_mountpoपूर्णांक));
 	list_add_tail(&mnt->mnt_child, &parent->mnt_mounts);
-}
+पूर्ण
 
 /*
- * vfsmount lock must be held for write
+ * vfsmount lock must be held क्रम ग_लिखो
  */
-static void attach_mnt(struct mount *mnt,
-			struct mount *parent,
-			struct mountpoint *mp)
-{
-	mnt_set_mountpoint(parent, mp, mnt);
+अटल व्योम attach_mnt(काष्ठा mount *mnt,
+			काष्ठा mount *parent,
+			काष्ठा mountpoपूर्णांक *mp)
+अणु
+	mnt_set_mountpoपूर्णांक(parent, mp, mnt);
 	__attach_mnt(mnt, parent);
-}
+पूर्ण
 
-void mnt_change_mountpoint(struct mount *parent, struct mountpoint *mp, struct mount *mnt)
-{
-	struct mountpoint *old_mp = mnt->mnt_mp;
-	struct mount *old_parent = mnt->mnt_parent;
+व्योम mnt_change_mountpoपूर्णांक(काष्ठा mount *parent, काष्ठा mountpoपूर्णांक *mp, काष्ठा mount *mnt)
+अणु
+	काष्ठा mountpoपूर्णांक *old_mp = mnt->mnt_mp;
+	काष्ठा mount *old_parent = mnt->mnt_parent;
 
 	list_del_init(&mnt->mnt_child);
 	hlist_del_init(&mnt->mnt_mp_list);
@@ -897,24 +898,24 @@ void mnt_change_mountpoint(struct mount *parent, struct mountpoint *mp, struct m
 
 	attach_mnt(mnt, parent, mp);
 
-	put_mountpoint(old_mp);
+	put_mountpoपूर्णांक(old_mp);
 	mnt_add_count(old_parent, -1);
-}
+पूर्ण
 
 /*
- * vfsmount lock must be held for write
+ * vfsmount lock must be held क्रम ग_लिखो
  */
-static void commit_tree(struct mount *mnt)
-{
-	struct mount *parent = mnt->mnt_parent;
-	struct mount *m;
+अटल व्योम commit_tree(काष्ठा mount *mnt)
+अणु
+	काष्ठा mount *parent = mnt->mnt_parent;
+	काष्ठा mount *m;
 	LIST_HEAD(head);
-	struct mnt_namespace *n = parent->mnt_ns;
+	काष्ठा mnt_namespace *n = parent->mnt_ns;
 
 	BUG_ON(parent == mnt);
 
 	list_add_tail(&head, &mnt->mnt_list);
-	list_for_each_entry(m, &head, mnt_list)
+	list_क्रम_each_entry(m, &head, mnt_list)
 		m->mnt_ns = n;
 
 	list_splice(&head, n->list.prev);
@@ -924,1160 +925,1160 @@ static void commit_tree(struct mount *mnt)
 
 	__attach_mnt(mnt, parent);
 	touch_mnt_namespace(n);
-}
+पूर्ण
 
-static struct mount *next_mnt(struct mount *p, struct mount *root)
-{
-	struct list_head *next = p->mnt_mounts.next;
-	if (next == &p->mnt_mounts) {
-		while (1) {
-			if (p == root)
-				return NULL;
+अटल काष्ठा mount *next_mnt(काष्ठा mount *p, काष्ठा mount *root)
+अणु
+	काष्ठा list_head *next = p->mnt_mounts.next;
+	अगर (next == &p->mnt_mounts) अणु
+		जबतक (1) अणु
+			अगर (p == root)
+				वापस शून्य;
 			next = p->mnt_child.next;
-			if (next != &p->mnt_parent->mnt_mounts)
-				break;
+			अगर (next != &p->mnt_parent->mnt_mounts)
+				अवरोध;
 			p = p->mnt_parent;
-		}
-	}
-	return list_entry(next, struct mount, mnt_child);
-}
+		पूर्ण
+	पूर्ण
+	वापस list_entry(next, काष्ठा mount, mnt_child);
+पूर्ण
 
-static struct mount *skip_mnt_tree(struct mount *p)
-{
-	struct list_head *prev = p->mnt_mounts.prev;
-	while (prev != &p->mnt_mounts) {
-		p = list_entry(prev, struct mount, mnt_child);
+अटल काष्ठा mount *skip_mnt_tree(काष्ठा mount *p)
+अणु
+	काष्ठा list_head *prev = p->mnt_mounts.prev;
+	जबतक (prev != &p->mnt_mounts) अणु
+		p = list_entry(prev, काष्ठा mount, mnt_child);
 		prev = p->mnt_mounts.prev;
-	}
-	return p;
-}
+	पूर्ण
+	वापस p;
+पूर्ण
 
 /**
- * vfs_create_mount - Create a mount for a configured superblock
+ * vfs_create_mount - Create a mount क्रम a configured superblock
  * @fc: The configuration context with the superblock attached
  *
- * Create a mount to an already configured superblock.  If necessary, the
- * caller should invoke vfs_get_tree() before calling this.
+ * Create a mount to an alपढ़ोy configured superblock.  If necessary, the
+ * caller should invoke vfs_get_tree() beक्रमe calling this.
  *
- * Note that this does not attach the mount to anything.
+ * Note that this करोes not attach the mount to anything.
  */
-struct vfsmount *vfs_create_mount(struct fs_context *fc)
-{
-	struct mount *mnt;
+काष्ठा vfsmount *vfs_create_mount(काष्ठा fs_context *fc)
+अणु
+	काष्ठा mount *mnt;
 
-	if (!fc->root)
-		return ERR_PTR(-EINVAL);
+	अगर (!fc->root)
+		वापस ERR_PTR(-EINVAL);
 
 	mnt = alloc_vfsmnt(fc->source ?: "none");
-	if (!mnt)
-		return ERR_PTR(-ENOMEM);
+	अगर (!mnt)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (fc->sb_flags & SB_KERNMOUNT)
+	अगर (fc->sb_flags & SB_KERNMOUNT)
 		mnt->mnt.mnt_flags = MNT_INTERNAL;
 
 	atomic_inc(&fc->root->d_sb->s_active);
 	mnt->mnt.mnt_sb		= fc->root->d_sb;
 	mnt->mnt.mnt_root	= dget(fc->root);
-	mnt->mnt_mountpoint	= mnt->mnt.mnt_root;
+	mnt->mnt_mountpoपूर्णांक	= mnt->mnt.mnt_root;
 	mnt->mnt_parent		= mnt;
 
 	lock_mount_hash();
 	list_add_tail(&mnt->mnt_instance, &mnt->mnt.mnt_sb->s_mounts);
 	unlock_mount_hash();
-	return &mnt->mnt;
-}
+	वापस &mnt->mnt;
+पूर्ण
 EXPORT_SYMBOL(vfs_create_mount);
 
-struct vfsmount *fc_mount(struct fs_context *fc)
-{
-	int err = vfs_get_tree(fc);
-	if (!err) {
-		up_write(&fc->root->d_sb->s_umount);
-		return vfs_create_mount(fc);
-	}
-	return ERR_PTR(err);
-}
+काष्ठा vfsmount *fc_mount(काष्ठा fs_context *fc)
+अणु
+	पूर्णांक err = vfs_get_tree(fc);
+	अगर (!err) अणु
+		up_ग_लिखो(&fc->root->d_sb->s_umount);
+		वापस vfs_create_mount(fc);
+	पूर्ण
+	वापस ERR_PTR(err);
+पूर्ण
 EXPORT_SYMBOL(fc_mount);
 
-struct vfsmount *vfs_kern_mount(struct file_system_type *type,
-				int flags, const char *name,
-				void *data)
-{
-	struct fs_context *fc;
-	struct vfsmount *mnt;
-	int ret = 0;
+काष्ठा vfsmount *vfs_kern_mount(काष्ठा file_प्रणाली_type *type,
+				पूर्णांक flags, स्थिर अक्षर *name,
+				व्योम *data)
+अणु
+	काष्ठा fs_context *fc;
+	काष्ठा vfsmount *mnt;
+	पूर्णांक ret = 0;
 
-	if (!type)
-		return ERR_PTR(-EINVAL);
+	अगर (!type)
+		वापस ERR_PTR(-EINVAL);
 
-	fc = fs_context_for_mount(type, flags);
-	if (IS_ERR(fc))
-		return ERR_CAST(fc);
+	fc = fs_context_क्रम_mount(type, flags);
+	अगर (IS_ERR(fc))
+		वापस ERR_CAST(fc);
 
-	if (name)
+	अगर (name)
 		ret = vfs_parse_fs_string(fc, "source",
-					  name, strlen(name));
-	if (!ret)
+					  name, म_माप(name));
+	अगर (!ret)
 		ret = parse_monolithic_mount_data(fc, data);
-	if (!ret)
+	अगर (!ret)
 		mnt = fc_mount(fc);
-	else
+	अन्यथा
 		mnt = ERR_PTR(ret);
 
 	put_fs_context(fc);
-	return mnt;
-}
+	वापस mnt;
+पूर्ण
 EXPORT_SYMBOL_GPL(vfs_kern_mount);
 
-struct vfsmount *
-vfs_submount(const struct dentry *mountpoint, struct file_system_type *type,
-	     const char *name, void *data)
-{
+काष्ठा vfsmount *
+vfs_submount(स्थिर काष्ठा dentry *mountpoपूर्णांक, काष्ठा file_प्रणाली_type *type,
+	     स्थिर अक्षर *name, व्योम *data)
+अणु
 	/* Until it is worked out how to pass the user namespace
-	 * through from the parent mount to the submount don't support
+	 * through from the parent mount to the submount करोn't support
 	 * unprivileged mounts with submounts.
 	 */
-	if (mountpoint->d_sb->s_user_ns != &init_user_ns)
-		return ERR_PTR(-EPERM);
+	अगर (mountpoपूर्णांक->d_sb->s_user_ns != &init_user_ns)
+		वापस ERR_PTR(-EPERM);
 
-	return vfs_kern_mount(type, SB_SUBMOUNT, name, data);
-}
+	वापस vfs_kern_mount(type, SB_SUBMOUNT, name, data);
+पूर्ण
 EXPORT_SYMBOL_GPL(vfs_submount);
 
-static struct mount *clone_mnt(struct mount *old, struct dentry *root,
-					int flag)
-{
-	struct super_block *sb = old->mnt.mnt_sb;
-	struct mount *mnt;
-	int err;
+अटल काष्ठा mount *clone_mnt(काष्ठा mount *old, काष्ठा dentry *root,
+					पूर्णांक flag)
+अणु
+	काष्ठा super_block *sb = old->mnt.mnt_sb;
+	काष्ठा mount *mnt;
+	पूर्णांक err;
 
 	mnt = alloc_vfsmnt(old->mnt_devname);
-	if (!mnt)
-		return ERR_PTR(-ENOMEM);
+	अगर (!mnt)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (flag & (CL_SLAVE | CL_PRIVATE | CL_SHARED_TO_SLAVE))
+	अगर (flag & (CL_SLAVE | CL_PRIVATE | CL_SHARED_TO_SLAVE))
 		mnt->mnt_group_id = 0; /* not a peer of original */
-	else
+	अन्यथा
 		mnt->mnt_group_id = old->mnt_group_id;
 
-	if ((flag & CL_MAKE_SHARED) && !mnt->mnt_group_id) {
+	अगर ((flag & CL_MAKE_SHARED) && !mnt->mnt_group_id) अणु
 		err = mnt_alloc_group_id(mnt);
-		if (err)
-			goto out_free;
-	}
+		अगर (err)
+			जाओ out_मुक्त;
+	पूर्ण
 
 	mnt->mnt.mnt_flags = old->mnt.mnt_flags;
 	mnt->mnt.mnt_flags &= ~(MNT_WRITE_HOLD|MNT_MARKED|MNT_INTERNAL);
 
 	atomic_inc(&sb->s_active);
 	mnt->mnt.mnt_userns = mnt_user_ns(&old->mnt);
-	if (mnt->mnt.mnt_userns != &init_user_ns)
+	अगर (mnt->mnt.mnt_userns != &init_user_ns)
 		mnt->mnt.mnt_userns = get_user_ns(mnt->mnt.mnt_userns);
 	mnt->mnt.mnt_sb = sb;
 	mnt->mnt.mnt_root = dget(root);
-	mnt->mnt_mountpoint = mnt->mnt.mnt_root;
+	mnt->mnt_mountpoपूर्णांक = mnt->mnt.mnt_root;
 	mnt->mnt_parent = mnt;
 	lock_mount_hash();
 	list_add_tail(&mnt->mnt_instance, &sb->s_mounts);
 	unlock_mount_hash();
 
-	if ((flag & CL_SLAVE) ||
-	    ((flag & CL_SHARED_TO_SLAVE) && IS_MNT_SHARED(old))) {
+	अगर ((flag & CL_SLAVE) ||
+	    ((flag & CL_SHARED_TO_SLAVE) && IS_MNT_SHARED(old))) अणु
 		list_add(&mnt->mnt_slave, &old->mnt_slave_list);
 		mnt->mnt_master = old;
 		CLEAR_MNT_SHARED(mnt);
-	} else if (!(flag & CL_PRIVATE)) {
-		if ((flag & CL_MAKE_SHARED) || IS_MNT_SHARED(old))
+	पूर्ण अन्यथा अगर (!(flag & CL_PRIVATE)) अणु
+		अगर ((flag & CL_MAKE_SHARED) || IS_MNT_SHARED(old))
 			list_add(&mnt->mnt_share, &old->mnt_share);
-		if (IS_MNT_SLAVE(old))
+		अगर (IS_MNT_SLAVE(old))
 			list_add(&mnt->mnt_slave, &old->mnt_slave);
 		mnt->mnt_master = old->mnt_master;
-	} else {
+	पूर्ण अन्यथा अणु
 		CLEAR_MNT_SHARED(mnt);
-	}
-	if (flag & CL_MAKE_SHARED)
+	पूर्ण
+	अगर (flag & CL_MAKE_SHARED)
 		set_mnt_shared(mnt);
 
 	/* stick the duplicate mount on the same expiry list
-	 * as the original if that was on one */
-	if (flag & CL_EXPIRE) {
-		if (!list_empty(&old->mnt_expire))
+	 * as the original अगर that was on one */
+	अगर (flag & CL_EXPIRE) अणु
+		अगर (!list_empty(&old->mnt_expire))
 			list_add(&mnt->mnt_expire, &old->mnt_expire);
-	}
+	पूर्ण
 
-	return mnt;
+	वापस mnt;
 
- out_free:
-	mnt_free_id(mnt);
-	free_vfsmnt(mnt);
-	return ERR_PTR(err);
-}
+ out_मुक्त:
+	mnt_मुक्त_id(mnt);
+	मुक्त_vfsmnt(mnt);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void cleanup_mnt(struct mount *mnt)
-{
-	struct hlist_node *p;
-	struct mount *m;
+अटल व्योम cleanup_mnt(काष्ठा mount *mnt)
+अणु
+	काष्ठा hlist_node *p;
+	काष्ठा mount *m;
 	/*
 	 * The warning here probably indicates that somebody messed
-	 * up a mnt_want/drop_write() pair.  If this happens, the
-	 * filesystem was probably unable to make r/w->r/o transitions.
+	 * up a mnt_want/drop_ग_लिखो() pair.  If this happens, the
+	 * fileप्रणाली was probably unable to make r/w->r/o transitions.
 	 * The locking used to deal with mnt_count decrement provides barriers,
-	 * so mnt_get_writers() below is safe.
+	 * so mnt_get_ग_लिखोrs() below is safe.
 	 */
-	WARN_ON(mnt_get_writers(mnt));
-	if (unlikely(mnt->mnt_pins.first))
-		mnt_pin_kill(mnt);
-	hlist_for_each_entry_safe(m, p, &mnt->mnt_stuck_children, mnt_umount) {
+	WARN_ON(mnt_get_ग_लिखोrs(mnt));
+	अगर (unlikely(mnt->mnt_pins.first))
+		mnt_pin_समाप्त(mnt);
+	hlist_क्रम_each_entry_safe(m, p, &mnt->mnt_stuck_children, mnt_umount) अणु
 		hlist_del(&m->mnt_umount);
 		mntput(&m->mnt);
-	}
-	fsnotify_vfsmount_delete(&mnt->mnt);
+	पूर्ण
+	fsnotअगरy_vfsmount_delete(&mnt->mnt);
 	dput(mnt->mnt.mnt_root);
 	deactivate_super(mnt->mnt.mnt_sb);
-	mnt_free_id(mnt);
-	call_rcu(&mnt->mnt_rcu, delayed_free_vfsmnt);
-}
+	mnt_मुक्त_id(mnt);
+	call_rcu(&mnt->mnt_rcu, delayed_मुक्त_vfsmnt);
+पूर्ण
 
-static void __cleanup_mnt(struct rcu_head *head)
-{
-	cleanup_mnt(container_of(head, struct mount, mnt_rcu));
-}
+अटल व्योम __cleanup_mnt(काष्ठा rcu_head *head)
+अणु
+	cleanup_mnt(container_of(head, काष्ठा mount, mnt_rcu));
+पूर्ण
 
-static LLIST_HEAD(delayed_mntput_list);
-static void delayed_mntput(struct work_struct *unused)
-{
-	struct llist_node *node = llist_del_all(&delayed_mntput_list);
-	struct mount *m, *t;
+अटल LLIST_HEAD(delayed_mntput_list);
+अटल व्योम delayed_mntput(काष्ठा work_काष्ठा *unused)
+अणु
+	काष्ठा llist_node *node = llist_del_all(&delayed_mntput_list);
+	काष्ठा mount *m, *t;
 
-	llist_for_each_entry_safe(m, t, node, mnt_llist)
+	llist_क्रम_each_entry_safe(m, t, node, mnt_llist)
 		cleanup_mnt(m);
-}
-static DECLARE_DELAYED_WORK(delayed_mntput_work, delayed_mntput);
+पूर्ण
+अटल DECLARE_DELAYED_WORK(delayed_mntput_work, delayed_mntput);
 
-static void mntput_no_expire(struct mount *mnt)
-{
+अटल व्योम mntput_no_expire(काष्ठा mount *mnt)
+अणु
 	LIST_HEAD(list);
-	int count;
+	पूर्णांक count;
 
-	rcu_read_lock();
-	if (likely(READ_ONCE(mnt->mnt_ns))) {
+	rcu_पढ़ो_lock();
+	अगर (likely(READ_ONCE(mnt->mnt_ns))) अणु
 		/*
-		 * Since we don't do lock_mount_hash() here,
-		 * ->mnt_ns can change under us.  However, if it's
-		 * non-NULL, then there's a reference that won't
-		 * be dropped until after an RCU delay done after
-		 * turning ->mnt_ns NULL.  So if we observe it
-		 * non-NULL under rcu_read_lock(), the reference
+		 * Since we करोn't करो lock_mount_hash() here,
+		 * ->mnt_ns can change under us.  However, अगर it's
+		 * non-शून्य, then there's a reference that won't
+		 * be dropped until after an RCU delay करोne after
+		 * turning ->mnt_ns शून्य.  So अगर we observe it
+		 * non-शून्य under rcu_पढ़ो_lock(), the reference
 		 * we are dropping is not the final one.
 		 */
 		mnt_add_count(mnt, -1);
-		rcu_read_unlock();
-		return;
-	}
+		rcu_पढ़ो_unlock();
+		वापस;
+	पूर्ण
 	lock_mount_hash();
 	/*
-	 * make sure that if __legitimize_mnt() has not seen us grab
+	 * make sure that अगर __legitimize_mnt() has not seen us grab
 	 * mount_lock, we'll see their refcount increment here.
 	 */
 	smp_mb();
 	mnt_add_count(mnt, -1);
 	count = mnt_get_count(mnt);
-	if (count != 0) {
+	अगर (count != 0) अणु
 		WARN_ON(count < 0);
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 		unlock_mount_hash();
-		return;
-	}
-	if (unlikely(mnt->mnt.mnt_flags & MNT_DOOMED)) {
-		rcu_read_unlock();
+		वापस;
+	पूर्ण
+	अगर (unlikely(mnt->mnt.mnt_flags & MNT_DOOMED)) अणु
+		rcu_पढ़ो_unlock();
 		unlock_mount_hash();
-		return;
-	}
+		वापस;
+	पूर्ण
 	mnt->mnt.mnt_flags |= MNT_DOOMED;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	list_del(&mnt->mnt_instance);
 
-	if (unlikely(!list_empty(&mnt->mnt_mounts))) {
-		struct mount *p, *tmp;
-		list_for_each_entry_safe(p, tmp, &mnt->mnt_mounts,  mnt_child) {
-			__put_mountpoint(unhash_mnt(p), &list);
+	अगर (unlikely(!list_empty(&mnt->mnt_mounts))) अणु
+		काष्ठा mount *p, *पंचांगp;
+		list_क्रम_each_entry_safe(p, पंचांगp, &mnt->mnt_mounts,  mnt_child) अणु
+			__put_mountpoपूर्णांक(unhash_mnt(p), &list);
 			hlist_add_head(&p->mnt_umount, &mnt->mnt_stuck_children);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	unlock_mount_hash();
 	shrink_dentry_list(&list);
 
-	if (likely(!(mnt->mnt.mnt_flags & MNT_INTERNAL))) {
-		struct task_struct *task = current;
-		if (likely(!(task->flags & PF_KTHREAD))) {
+	अगर (likely(!(mnt->mnt.mnt_flags & MNT_INTERNAL))) अणु
+		काष्ठा task_काष्ठा *task = current;
+		अगर (likely(!(task->flags & PF_KTHREAD))) अणु
 			init_task_work(&mnt->mnt_rcu, __cleanup_mnt);
-			if (!task_work_add(task, &mnt->mnt_rcu, TWA_RESUME))
-				return;
-		}
-		if (llist_add(&mnt->mnt_llist, &delayed_mntput_list))
+			अगर (!task_work_add(task, &mnt->mnt_rcu, TWA_RESUME))
+				वापस;
+		पूर्ण
+		अगर (llist_add(&mnt->mnt_llist, &delayed_mntput_list))
 			schedule_delayed_work(&delayed_mntput_work, 1);
-		return;
-	}
+		वापस;
+	पूर्ण
 	cleanup_mnt(mnt);
-}
+पूर्ण
 
-void mntput(struct vfsmount *mnt)
-{
-	if (mnt) {
-		struct mount *m = real_mount(mnt);
-		/* avoid cacheline pingpong, hope gcc doesn't get "smart" */
-		if (unlikely(m->mnt_expiry_mark))
+व्योम mntput(काष्ठा vfsmount *mnt)
+अणु
+	अगर (mnt) अणु
+		काष्ठा mount *m = real_mount(mnt);
+		/* aव्योम cacheline pingpong, hope gcc करोesn't get "smart" */
+		अगर (unlikely(m->mnt_expiry_mark))
 			m->mnt_expiry_mark = 0;
 		mntput_no_expire(m);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(mntput);
 
-struct vfsmount *mntget(struct vfsmount *mnt)
-{
-	if (mnt)
+काष्ठा vfsmount *mntget(काष्ठा vfsmount *mnt)
+अणु
+	अगर (mnt)
 		mnt_add_count(real_mount(mnt), 1);
-	return mnt;
-}
+	वापस mnt;
+पूर्ण
 EXPORT_SYMBOL(mntget);
 
 /**
- * path_is_mountpoint() - Check if path is a mount in the current namespace.
+ * path_is_mountpoपूर्णांक() - Check अगर path is a mount in the current namespace.
  * @path: path to check
  *
- *  d_mountpoint() can only be used reliably to establish if a dentry is
- *  not mounted in any namespace and that common case is handled inline.
- *  d_mountpoint() isn't aware of the possibility there may be multiple
- *  mounts using a given dentry in a different namespace. This function
- *  checks if the passed in path is a mountpoint rather than the dentry
+ *  d_mountpoपूर्णांक() can only be used reliably to establish अगर a dentry is
+ *  not mounted in any namespace and that common हाल is handled अंतरभूत.
+ *  d_mountpoपूर्णांक() isn't aware of the possibility there may be multiple
+ *  mounts using a given dentry in a dअगरferent namespace. This function
+ *  checks अगर the passed in path is a mountpoपूर्णांक rather than the dentry
  *  alone.
  */
-bool path_is_mountpoint(const struct path *path)
-{
-	unsigned seq;
+bool path_is_mountpoपूर्णांक(स्थिर काष्ठा path *path)
+अणु
+	अचिन्हित seq;
 	bool res;
 
-	if (!d_mountpoint(path->dentry))
-		return false;
+	अगर (!d_mountpoपूर्णांक(path->dentry))
+		वापस false;
 
-	rcu_read_lock();
-	do {
-		seq = read_seqbegin(&mount_lock);
-		res = __path_is_mountpoint(path);
-	} while (read_seqretry(&mount_lock, seq));
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	करो अणु
+		seq = पढ़ो_seqbegin(&mount_lock);
+		res = __path_is_mountpoपूर्णांक(path);
+	पूर्ण जबतक (पढ़ो_seqretry(&mount_lock, seq));
+	rcu_पढ़ो_unlock();
 
-	return res;
-}
-EXPORT_SYMBOL(path_is_mountpoint);
+	वापस res;
+पूर्ण
+EXPORT_SYMBOL(path_is_mountpoपूर्णांक);
 
-struct vfsmount *mnt_clone_internal(const struct path *path)
-{
-	struct mount *p;
+काष्ठा vfsmount *mnt_clone_पूर्णांकernal(स्थिर काष्ठा path *path)
+अणु
+	काष्ठा mount *p;
 	p = clone_mnt(real_mount(path->mnt), path->dentry, CL_PRIVATE);
-	if (IS_ERR(p))
-		return ERR_CAST(p);
+	अगर (IS_ERR(p))
+		वापस ERR_CAST(p);
 	p->mnt.mnt_flags |= MNT_INTERNAL;
-	return &p->mnt;
-}
+	वापस &p->mnt;
+पूर्ण
 
-#ifdef CONFIG_PROC_FS
-static struct mount *mnt_list_next(struct mnt_namespace *ns,
-				   struct list_head *p)
-{
-	struct mount *mnt, *ret = NULL;
+#अगर_घोषित CONFIG_PROC_FS
+अटल काष्ठा mount *mnt_list_next(काष्ठा mnt_namespace *ns,
+				   काष्ठा list_head *p)
+अणु
+	काष्ठा mount *mnt, *ret = शून्य;
 
 	lock_ns_list(ns);
-	list_for_each_continue(p, &ns->list) {
+	list_क्रम_each_जारी(p, &ns->list) अणु
 		mnt = list_entry(p, typeof(*mnt), mnt_list);
-		if (!mnt_is_cursor(mnt)) {
+		अगर (!mnt_is_cursor(mnt)) अणु
 			ret = mnt;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	unlock_ns_list(ns);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* iterator; we want it to have access to namespace_sem, thus here... */
-static void *m_start(struct seq_file *m, loff_t *pos)
-{
-	struct proc_mounts *p = m->private;
-	struct list_head *prev;
+अटल व्योम *m_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	काष्ठा proc_mounts *p = m->निजी;
+	काष्ठा list_head *prev;
 
-	down_read(&namespace_sem);
-	if (!*pos) {
+	करोwn_पढ़ो(&namespace_sem);
+	अगर (!*pos) अणु
 		prev = &p->ns->list;
-	} else {
+	पूर्ण अन्यथा अणु
 		prev = &p->cursor.mnt_list;
 
 		/* Read after we'd reached the end? */
-		if (list_empty(prev))
-			return NULL;
-	}
+		अगर (list_empty(prev))
+			वापस शून्य;
+	पूर्ण
 
-	return mnt_list_next(p->ns, prev);
-}
+	वापस mnt_list_next(p->ns, prev);
+पूर्ण
 
-static void *m_next(struct seq_file *m, void *v, loff_t *pos)
-{
-	struct proc_mounts *p = m->private;
-	struct mount *mnt = v;
+अटल व्योम *m_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा proc_mounts *p = m->निजी;
+	काष्ठा mount *mnt = v;
 
 	++*pos;
-	return mnt_list_next(p->ns, &mnt->mnt_list);
-}
+	वापस mnt_list_next(p->ns, &mnt->mnt_list);
+पूर्ण
 
-static void m_stop(struct seq_file *m, void *v)
-{
-	struct proc_mounts *p = m->private;
-	struct mount *mnt = v;
+अटल व्योम m_stop(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा proc_mounts *p = m->निजी;
+	काष्ठा mount *mnt = v;
 
 	lock_ns_list(p->ns);
-	if (mnt)
+	अगर (mnt)
 		list_move_tail(&p->cursor.mnt_list, &mnt->mnt_list);
-	else
+	अन्यथा
 		list_del_init(&p->cursor.mnt_list);
 	unlock_ns_list(p->ns);
-	up_read(&namespace_sem);
-}
+	up_पढ़ो(&namespace_sem);
+पूर्ण
 
-static int m_show(struct seq_file *m, void *v)
-{
-	struct proc_mounts *p = m->private;
-	struct mount *r = v;
-	return p->show(m, &r->mnt);
-}
+अटल पूर्णांक m_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा proc_mounts *p = m->निजी;
+	काष्ठा mount *r = v;
+	वापस p->show(m, &r->mnt);
+पूर्ण
 
-const struct seq_operations mounts_op = {
+स्थिर काष्ठा seq_operations mounts_op = अणु
 	.start	= m_start,
 	.next	= m_next,
 	.stop	= m_stop,
 	.show	= m_show,
-};
+पूर्ण;
 
-void mnt_cursor_del(struct mnt_namespace *ns, struct mount *cursor)
-{
-	down_read(&namespace_sem);
+व्योम mnt_cursor_del(काष्ठा mnt_namespace *ns, काष्ठा mount *cursor)
+अणु
+	करोwn_पढ़ो(&namespace_sem);
 	lock_ns_list(ns);
 	list_del(&cursor->mnt_list);
 	unlock_ns_list(ns);
-	up_read(&namespace_sem);
-}
-#endif  /* CONFIG_PROC_FS */
+	up_पढ़ो(&namespace_sem);
+पूर्ण
+#पूर्ण_अगर  /* CONFIG_PROC_FS */
 
 /**
- * may_umount_tree - check if a mount tree is busy
+ * may_umount_tree - check अगर a mount tree is busy
  * @m: root of mount tree
  *
- * This is called to check if a tree of mounts has any
- * open files, pwds, chroots or sub mounts that are
+ * This is called to check अगर a tree of mounts has any
+ * खोलो files, pwds, chroots or sub mounts that are
  * busy.
  */
-int may_umount_tree(struct vfsmount *m)
-{
-	struct mount *mnt = real_mount(m);
-	int actual_refs = 0;
-	int minimum_refs = 0;
-	struct mount *p;
+पूर्णांक may_umount_tree(काष्ठा vfsmount *m)
+अणु
+	काष्ठा mount *mnt = real_mount(m);
+	पूर्णांक actual_refs = 0;
+	पूर्णांक minimum_refs = 0;
+	काष्ठा mount *p;
 	BUG_ON(!m);
 
-	/* write lock needed for mnt_get_count */
+	/* ग_लिखो lock needed क्रम mnt_get_count */
 	lock_mount_hash();
-	for (p = mnt; p; p = next_mnt(p, mnt)) {
+	क्रम (p = mnt; p; p = next_mnt(p, mnt)) अणु
 		actual_refs += mnt_get_count(p);
 		minimum_refs += 2;
-	}
+	पूर्ण
 	unlock_mount_hash();
 
-	if (actual_refs > minimum_refs)
-		return 0;
+	अगर (actual_refs > minimum_refs)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 EXPORT_SYMBOL(may_umount_tree);
 
 /**
- * may_umount - check if a mount point is busy
+ * may_umount - check अगर a mount poपूर्णांक is busy
  * @mnt: root of mount
  *
- * This is called to check if a mount point has any
- * open files, pwds, chroots or sub mounts. If the
- * mount has sub mounts this will return busy
+ * This is called to check अगर a mount poपूर्णांक has any
+ * खोलो files, pwds, chroots or sub mounts. If the
+ * mount has sub mounts this will वापस busy
  * regardless of whether the sub mounts are busy.
  *
- * Doesn't take quota and stuff into account. IOW, in some cases it will
- * give false negatives. The main reason why it's here is that we need
- * a non-destructive way to look for easily umountable filesystems.
+ * Doesn't take quota and stuff पूर्णांकo account. IOW, in some हालs it will
+ * give false negatives. The मुख्य reason why it's here is that we need
+ * a non-deकाष्ठाive way to look क्रम easily umountable fileप्रणालीs.
  */
-int may_umount(struct vfsmount *mnt)
-{
-	int ret = 1;
-	down_read(&namespace_sem);
+पूर्णांक may_umount(काष्ठा vfsmount *mnt)
+अणु
+	पूर्णांक ret = 1;
+	करोwn_पढ़ो(&namespace_sem);
 	lock_mount_hash();
-	if (propagate_mount_busy(real_mount(mnt), 2))
+	अगर (propagate_mount_busy(real_mount(mnt), 2))
 		ret = 0;
 	unlock_mount_hash();
-	up_read(&namespace_sem);
-	return ret;
-}
+	up_पढ़ो(&namespace_sem);
+	वापस ret;
+पूर्ण
 
 EXPORT_SYMBOL(may_umount);
 
-static void namespace_unlock(void)
-{
-	struct hlist_head head;
-	struct hlist_node *p;
-	struct mount *m;
+अटल व्योम namespace_unlock(व्योम)
+अणु
+	काष्ठा hlist_head head;
+	काष्ठा hlist_node *p;
+	काष्ठा mount *m;
 	LIST_HEAD(list);
 
 	hlist_move_list(&unmounted, &head);
-	list_splice_init(&ex_mountpoints, &list);
+	list_splice_init(&ex_mountpoपूर्णांकs, &list);
 
-	up_write(&namespace_sem);
+	up_ग_लिखो(&namespace_sem);
 
 	shrink_dentry_list(&list);
 
-	if (likely(hlist_empty(&head)))
-		return;
+	अगर (likely(hlist_empty(&head)))
+		वापस;
 
 	synchronize_rcu_expedited();
 
-	hlist_for_each_entry_safe(m, p, &head, mnt_umount) {
+	hlist_क्रम_each_entry_safe(m, p, &head, mnt_umount) अणु
 		hlist_del(&m->mnt_umount);
 		mntput(&m->mnt);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void namespace_lock(void)
-{
-	down_write(&namespace_sem);
-}
+अटल अंतरभूत व्योम namespace_lock(व्योम)
+अणु
+	करोwn_ग_लिखो(&namespace_sem);
+पूर्ण
 
-enum umount_tree_flags {
+क्रमागत umount_tree_flags अणु
 	UMOUNT_SYNC = 1,
 	UMOUNT_PROPAGATE = 2,
 	UMOUNT_CONNECTED = 4,
-};
+पूर्ण;
 
-static bool disconnect_mount(struct mount *mnt, enum umount_tree_flags how)
-{
-	/* Leaving mounts connected is only valid for lazy umounts */
-	if (how & UMOUNT_SYNC)
-		return true;
+अटल bool disconnect_mount(काष्ठा mount *mnt, क्रमागत umount_tree_flags how)
+अणु
+	/* Leaving mounts connected is only valid क्रम lazy umounts */
+	अगर (how & UMOUNT_SYNC)
+		वापस true;
 
 	/* A mount without a parent has nothing to be connected to */
-	if (!mnt_has_parent(mnt))
-		return true;
+	अगर (!mnt_has_parent(mnt))
+		वापस true;
 
 	/* Because the reference counting rules change when mounts are
 	 * unmounted and connected, umounted mounts may not be
 	 * connected to mounted mounts.
 	 */
-	if (!(mnt->mnt_parent->mnt.mnt_flags & MNT_UMOUNT))
-		return true;
+	अगर (!(mnt->mnt_parent->mnt.mnt_flags & MNT_UMOUNT))
+		वापस true;
 
-	/* Has it been requested that the mount remain connected? */
-	if (how & UMOUNT_CONNECTED)
-		return false;
+	/* Has it been requested that the mount reमुख्य connected? */
+	अगर (how & UMOUNT_CONNECTED)
+		वापस false;
 
-	/* Is the mount locked such that it needs to remain connected? */
-	if (IS_MNT_LOCKED(mnt))
-		return false;
+	/* Is the mount locked such that it needs to reमुख्य connected? */
+	अगर (IS_MNT_LOCKED(mnt))
+		वापस false;
 
-	/* By default disconnect the mount */
-	return true;
-}
+	/* By शेष disconnect the mount */
+	वापस true;
+पूर्ण
 
 /*
  * mount_lock must be held
- * namespace_sem must be held for write
+ * namespace_sem must be held क्रम ग_लिखो
  */
-static void umount_tree(struct mount *mnt, enum umount_tree_flags how)
-{
-	LIST_HEAD(tmp_list);
-	struct mount *p;
+अटल व्योम umount_tree(काष्ठा mount *mnt, क्रमागत umount_tree_flags how)
+अणु
+	LIST_HEAD(पंचांगp_list);
+	काष्ठा mount *p;
 
-	if (how & UMOUNT_PROPAGATE)
+	अगर (how & UMOUNT_PROPAGATE)
 		propagate_mount_unlock(mnt);
 
 	/* Gather the mounts to umount */
-	for (p = mnt; p; p = next_mnt(p, mnt)) {
+	क्रम (p = mnt; p; p = next_mnt(p, mnt)) अणु
 		p->mnt.mnt_flags |= MNT_UMOUNT;
-		list_move(&p->mnt_list, &tmp_list);
-	}
+		list_move(&p->mnt_list, &पंचांगp_list);
+	पूर्ण
 
 	/* Hide the mounts from mnt_mounts */
-	list_for_each_entry(p, &tmp_list, mnt_list) {
+	list_क्रम_each_entry(p, &पंचांगp_list, mnt_list) अणु
 		list_del_init(&p->mnt_child);
-	}
+	पूर्ण
 
-	/* Add propogated mounts to the tmp_list */
-	if (how & UMOUNT_PROPAGATE)
-		propagate_umount(&tmp_list);
+	/* Add propogated mounts to the पंचांगp_list */
+	अगर (how & UMOUNT_PROPAGATE)
+		propagate_umount(&पंचांगp_list);
 
-	while (!list_empty(&tmp_list)) {
-		struct mnt_namespace *ns;
+	जबतक (!list_empty(&पंचांगp_list)) अणु
+		काष्ठा mnt_namespace *ns;
 		bool disconnect;
-		p = list_first_entry(&tmp_list, struct mount, mnt_list);
+		p = list_first_entry(&पंचांगp_list, काष्ठा mount, mnt_list);
 		list_del_init(&p->mnt_expire);
 		list_del_init(&p->mnt_list);
 		ns = p->mnt_ns;
-		if (ns) {
+		अगर (ns) अणु
 			ns->mounts--;
 			__touch_mnt_namespace(ns);
-		}
-		p->mnt_ns = NULL;
-		if (how & UMOUNT_SYNC)
+		पूर्ण
+		p->mnt_ns = शून्य;
+		अगर (how & UMOUNT_SYNC)
 			p->mnt.mnt_flags |= MNT_SYNC_UMOUNT;
 
 		disconnect = disconnect_mount(p, how);
-		if (mnt_has_parent(p)) {
+		अगर (mnt_has_parent(p)) अणु
 			mnt_add_count(p->mnt_parent, -1);
-			if (!disconnect) {
-				/* Don't forget about p */
+			अगर (!disconnect) अणु
+				/* Don't क्रमget about p */
 				list_add_tail(&p->mnt_child, &p->mnt_parent->mnt_mounts);
-			} else {
+			पूर्ण अन्यथा अणु
 				umount_mnt(p);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		change_mnt_propagation(p, MS_PRIVATE);
-		if (disconnect)
+		अगर (disconnect)
 			hlist_add_head(&p->mnt_umount, &unmounted);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void shrink_submounts(struct mount *mnt);
+अटल व्योम shrink_submounts(काष्ठा mount *mnt);
 
-static int do_umount_root(struct super_block *sb)
-{
-	int ret = 0;
+अटल पूर्णांक करो_umount_root(काष्ठा super_block *sb)
+अणु
+	पूर्णांक ret = 0;
 
-	down_write(&sb->s_umount);
-	if (!sb_rdonly(sb)) {
-		struct fs_context *fc;
+	करोwn_ग_लिखो(&sb->s_umount);
+	अगर (!sb_rकरोnly(sb)) अणु
+		काष्ठा fs_context *fc;
 
-		fc = fs_context_for_reconfigure(sb->s_root, SB_RDONLY,
+		fc = fs_context_क्रम_reconfigure(sb->s_root, SB_RDONLY,
 						SB_RDONLY);
-		if (IS_ERR(fc)) {
+		अगर (IS_ERR(fc)) अणु
 			ret = PTR_ERR(fc);
-		} else {
-			ret = parse_monolithic_mount_data(fc, NULL);
-			if (!ret)
+		पूर्ण अन्यथा अणु
+			ret = parse_monolithic_mount_data(fc, शून्य);
+			अगर (!ret)
 				ret = reconfigure_super(fc);
 			put_fs_context(fc);
-		}
-	}
-	up_write(&sb->s_umount);
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	up_ग_लिखो(&sb->s_umount);
+	वापस ret;
+पूर्ण
 
-static int do_umount(struct mount *mnt, int flags)
-{
-	struct super_block *sb = mnt->mnt.mnt_sb;
-	int retval;
+अटल पूर्णांक करो_umount(काष्ठा mount *mnt, पूर्णांक flags)
+अणु
+	काष्ठा super_block *sb = mnt->mnt.mnt_sb;
+	पूर्णांक retval;
 
 	retval = security_sb_umount(&mnt->mnt, flags);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	/*
-	 * Allow userspace to request a mountpoint be expired rather than
-	 * unmounting unconditionally. Unmount only happens if:
-	 *  (1) the mark is already set (the mark is cleared by mntput())
+	 * Allow userspace to request a mountpoपूर्णांक be expired rather than
+	 * unmounting unconditionally. Unmount only happens अगर:
+	 *  (1) the mark is alपढ़ोy set (the mark is cleared by mntput())
 	 *  (2) the usage count == 1 [parent vfsmount] + 1 [sys_umount]
 	 */
-	if (flags & MNT_EXPIRE) {
-		if (&mnt->mnt == current->fs->root.mnt ||
+	अगर (flags & MNT_EXPIRE) अणु
+		अगर (&mnt->mnt == current->fs->root.mnt ||
 		    flags & (MNT_FORCE | MNT_DETACH))
-			return -EINVAL;
+			वापस -EINVAL;
 
 		/*
-		 * probably don't strictly need the lock here if we examined
-		 * all race cases, but it's a slowpath.
+		 * probably करोn't strictly need the lock here अगर we examined
+		 * all race हालs, but it's a slowpath.
 		 */
 		lock_mount_hash();
-		if (mnt_get_count(mnt) != 2) {
+		अगर (mnt_get_count(mnt) != 2) अणु
 			unlock_mount_hash();
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 		unlock_mount_hash();
 
-		if (!xchg(&mnt->mnt_expiry_mark, 1))
-			return -EAGAIN;
-	}
+		अगर (!xchg(&mnt->mnt_expiry_mark, 1))
+			वापस -EAGAIN;
+	पूर्ण
 
 	/*
-	 * If we may have to abort operations to get out of this
+	 * If we may have to पात operations to get out of this
 	 * mount, and they will themselves hold resources we must
-	 * allow the fs to do things. In the Unix tradition of
+	 * allow the fs to करो things. In the Unix tradition of
 	 * 'Gee thats tricky lets do it in userspace' the umount_begin
 	 * might fail to complete on the first run through as other tasks
-	 * must return, and the like. Thats for the mount program to worry
-	 * about for the moment.
+	 * must वापस, and the like. Thats क्रम the mount program to worry
+	 * about क्रम the moment.
 	 */
 
-	if (flags & MNT_FORCE && sb->s_op->umount_begin) {
+	अगर (flags & MNT_FORCE && sb->s_op->umount_begin) अणु
 		sb->s_op->umount_begin(sb);
-	}
+	पूर्ण
 
 	/*
-	 * No sense to grab the lock for this test, but test itself looks
-	 * somewhat bogus. Suggestions for better replacement?
-	 * Ho-hum... In principle, we might treat that as umount + switch
+	 * No sense to grab the lock क्रम this test, but test itself looks
+	 * somewhat bogus. Suggestions क्रम better replacement?
+	 * Ho-hum... In principle, we might treat that as umount + चयन
 	 * to rootfs. GC would eventually take care of the old vfsmount.
-	 * Actually it makes sense, especially if rootfs would contain a
-	 * /reboot - static binary that would close all descriptors and
+	 * Actually it makes sense, especially अगर rootfs would contain a
+	 * /reboot - अटल binary that would बंद all descriptors and
 	 * call reboot(9). Then init(8) could umount root and exec /reboot.
 	 */
-	if (&mnt->mnt == current->fs->root.mnt && !(flags & MNT_DETACH)) {
+	अगर (&mnt->mnt == current->fs->root.mnt && !(flags & MNT_DETACH)) अणु
 		/*
-		 * Special case for "unmounting" root ...
-		 * we just try to remount it readonly.
+		 * Special हाल क्रम "unmounting" root ...
+		 * we just try to remount it पढ़ोonly.
 		 */
-		if (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN))
-			return -EPERM;
-		return do_umount_root(sb);
-	}
+		अगर (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN))
+			वापस -EPERM;
+		वापस करो_umount_root(sb);
+	पूर्ण
 
 	namespace_lock();
 	lock_mount_hash();
 
 	/* Recheck MNT_LOCKED with the locks held */
 	retval = -EINVAL;
-	if (mnt->mnt.mnt_flags & MNT_LOCKED)
-		goto out;
+	अगर (mnt->mnt.mnt_flags & MNT_LOCKED)
+		जाओ out;
 
 	event++;
-	if (flags & MNT_DETACH) {
-		if (!list_empty(&mnt->mnt_list))
+	अगर (flags & MNT_DETACH) अणु
+		अगर (!list_empty(&mnt->mnt_list))
 			umount_tree(mnt, UMOUNT_PROPAGATE);
 		retval = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		shrink_submounts(mnt);
 		retval = -EBUSY;
-		if (!propagate_mount_busy(mnt, 2)) {
-			if (!list_empty(&mnt->mnt_list))
+		अगर (!propagate_mount_busy(mnt, 2)) अणु
+			अगर (!list_empty(&mnt->mnt_list))
 				umount_tree(mnt, UMOUNT_PROPAGATE|UMOUNT_SYNC);
 			retval = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
 	unlock_mount_hash();
 	namespace_unlock();
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /*
- * __detach_mounts - lazily unmount all mounts on the specified dentry
+ * __detach_mounts - lazily unmount all mounts on the specअगरied dentry
  *
- * During unlink, rmdir, and d_drop it is possible to loose the path
- * to an existing mountpoint, and wind up leaking the mount.
+ * During unlink, सूची_हटाओ, and d_drop it is possible to loose the path
+ * to an existing mountpoपूर्णांक, and wind up leaking the mount.
  * detach_mounts allows lazily unmounting those mounts instead of
  * leaking them.
  *
  * The caller may hold dentry->d_inode->i_mutex.
  */
-void __detach_mounts(struct dentry *dentry)
-{
-	struct mountpoint *mp;
-	struct mount *mnt;
+व्योम __detach_mounts(काष्ठा dentry *dentry)
+अणु
+	काष्ठा mountpoपूर्णांक *mp;
+	काष्ठा mount *mnt;
 
 	namespace_lock();
 	lock_mount_hash();
-	mp = lookup_mountpoint(dentry);
-	if (!mp)
-		goto out_unlock;
+	mp = lookup_mountpoपूर्णांक(dentry);
+	अगर (!mp)
+		जाओ out_unlock;
 
 	event++;
-	while (!hlist_empty(&mp->m_list)) {
-		mnt = hlist_entry(mp->m_list.first, struct mount, mnt_mp_list);
-		if (mnt->mnt.mnt_flags & MNT_UMOUNT) {
+	जबतक (!hlist_empty(&mp->m_list)) अणु
+		mnt = hlist_entry(mp->m_list.first, काष्ठा mount, mnt_mp_list);
+		अगर (mnt->mnt.mnt_flags & MNT_UMOUNT) अणु
 			umount_mnt(mnt);
 			hlist_add_head(&mnt->mnt_umount, &unmounted);
-		}
-		else umount_tree(mnt, UMOUNT_CONNECTED);
-	}
-	put_mountpoint(mp);
+		पूर्ण
+		अन्यथा umount_tree(mnt, UMOUNT_CONNECTED);
+	पूर्ण
+	put_mountpoपूर्णांक(mp);
 out_unlock:
 	unlock_mount_hash();
 	namespace_unlock();
-}
+पूर्ण
 
 /*
- * Is the caller allowed to modify his namespace?
+ * Is the caller allowed to modअगरy his namespace?
  */
-static inline bool may_mount(void)
-{
-	return ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN);
-}
+अटल अंतरभूत bool may_mount(व्योम)
+अणु
+	वापस ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN);
+पूर्ण
 
-#ifdef	CONFIG_MANDATORY_FILE_LOCKING
-static inline bool may_mandlock(void)
-{
-	return capable(CAP_SYS_ADMIN);
-}
-#else
-static inline bool may_mandlock(void)
-{
+#अगर_घोषित	CONFIG_MANDATORY_खाता_LOCKING
+अटल अंतरभूत bool may_mandlock(व्योम)
+अणु
+	वापस capable(CAP_SYS_ADMIN);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool may_mandlock(व्योम)
+अणु
 	pr_warn("VFS: \"mand\" mount option not supported");
-	return false;
-}
-#endif
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-static int can_umount(const struct path *path, int flags)
-{
-	struct mount *mnt = real_mount(path->mnt);
+अटल पूर्णांक can_umount(स्थिर काष्ठा path *path, पूर्णांक flags)
+अणु
+	काष्ठा mount *mnt = real_mount(path->mnt);
 
-	if (!may_mount())
-		return -EPERM;
-	if (path->dentry != path->mnt->mnt_root)
-		return -EINVAL;
-	if (!check_mnt(mnt))
-		return -EINVAL;
-	if (mnt->mnt.mnt_flags & MNT_LOCKED) /* Check optimistically */
-		return -EINVAL;
-	if (flags & MNT_FORCE && !capable(CAP_SYS_ADMIN))
-		return -EPERM;
-	return 0;
-}
+	अगर (!may_mount())
+		वापस -EPERM;
+	अगर (path->dentry != path->mnt->mnt_root)
+		वापस -EINVAL;
+	अगर (!check_mnt(mnt))
+		वापस -EINVAL;
+	अगर (mnt->mnt.mnt_flags & MNT_LOCKED) /* Check optimistically */
+		वापस -EINVAL;
+	अगर (flags & MNT_FORCE && !capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
+	वापस 0;
+पूर्ण
 
-// caller is responsible for flags being sane
-int path_umount(struct path *path, int flags)
-{
-	struct mount *mnt = real_mount(path->mnt);
-	int ret;
+// caller is responsible क्रम flags being sane
+पूर्णांक path_umount(काष्ठा path *path, पूर्णांक flags)
+अणु
+	काष्ठा mount *mnt = real_mount(path->mnt);
+	पूर्णांक ret;
 
 	ret = can_umount(path, flags);
-	if (!ret)
-		ret = do_umount(mnt, flags);
+	अगर (!ret)
+		ret = करो_umount(mnt, flags);
 
 	/* we mustn't call path_put() as that would clear mnt_expiry_mark */
 	dput(path->dentry);
 	mntput_no_expire(mnt);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ksys_umount(char __user *name, int flags)
-{
-	int lookup_flags = LOOKUP_MOUNTPOINT;
-	struct path path;
-	int ret;
+अटल पूर्णांक ksys_umount(अक्षर __user *name, पूर्णांक flags)
+अणु
+	पूर्णांक lookup_flags = LOOKUP_MOUNTPOINT;
+	काष्ठा path path;
+	पूर्णांक ret;
 
-	// basic validity checks done first
-	if (flags & ~(MNT_FORCE | MNT_DETACH | MNT_EXPIRE | UMOUNT_NOFOLLOW))
-		return -EINVAL;
+	// basic validity checks करोne first
+	अगर (flags & ~(MNT_FORCE | MNT_DETACH | MNT_EXPIRE | UMOUNT_NOFOLLOW))
+		वापस -EINVAL;
 
-	if (!(flags & UMOUNT_NOFOLLOW))
+	अगर (!(flags & UMOUNT_NOFOLLOW))
 		lookup_flags |= LOOKUP_FOLLOW;
 	ret = user_path_at(AT_FDCWD, name, lookup_flags, &path);
-	if (ret)
-		return ret;
-	return path_umount(&path, flags);
-}
+	अगर (ret)
+		वापस ret;
+	वापस path_umount(&path, flags);
+पूर्ण
 
-SYSCALL_DEFINE2(umount, char __user *, name, int, flags)
-{
-	return ksys_umount(name, flags);
-}
+SYSCALL_DEFINE2(umount, अक्षर __user *, name, पूर्णांक, flags)
+अणु
+	वापस ksys_umount(name, flags);
+पूर्ण
 
-#ifdef __ARCH_WANT_SYS_OLDUMOUNT
+#अगर_घोषित __ARCH_WANT_SYS_OLDUMOUNT
 
 /*
  *	The 2.0 compatible umount. No flags.
  */
-SYSCALL_DEFINE1(oldumount, char __user *, name)
-{
-	return ksys_umount(name, 0);
-}
+SYSCALL_DEFINE1(oldumount, अक्षर __user *, name)
+अणु
+	वापस ksys_umount(name, 0);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static bool is_mnt_ns_file(struct dentry *dentry)
-{
-	/* Is this a proxy for a mount namespace? */
-	return dentry->d_op == &ns_dentry_operations &&
+अटल bool is_mnt_ns_file(काष्ठा dentry *dentry)
+अणु
+	/* Is this a proxy क्रम a mount namespace? */
+	वापस dentry->d_op == &ns_dentry_operations &&
 	       dentry->d_fsdata == &mntns_operations;
-}
+पूर्ण
 
-static struct mnt_namespace *to_mnt_ns(struct ns_common *ns)
-{
-	return container_of(ns, struct mnt_namespace, ns);
-}
+अटल काष्ठा mnt_namespace *to_mnt_ns(काष्ठा ns_common *ns)
+अणु
+	वापस container_of(ns, काष्ठा mnt_namespace, ns);
+पूर्ण
 
-struct ns_common *from_mnt_ns(struct mnt_namespace *mnt)
-{
-	return &mnt->ns;
-}
+काष्ठा ns_common *from_mnt_ns(काष्ठा mnt_namespace *mnt)
+अणु
+	वापस &mnt->ns;
+पूर्ण
 
-static bool mnt_ns_loop(struct dentry *dentry)
-{
+अटल bool mnt_ns_loop(काष्ठा dentry *dentry)
+अणु
 	/* Could bind mounting the mount namespace inode cause a
 	 * mount namespace loop?
 	 */
-	struct mnt_namespace *mnt_ns;
-	if (!is_mnt_ns_file(dentry))
-		return false;
+	काष्ठा mnt_namespace *mnt_ns;
+	अगर (!is_mnt_ns_file(dentry))
+		वापस false;
 
 	mnt_ns = to_mnt_ns(get_proc_ns(dentry->d_inode));
-	return current->nsproxy->mnt_ns->seq >= mnt_ns->seq;
-}
+	वापस current->nsproxy->mnt_ns->seq >= mnt_ns->seq;
+पूर्ण
 
-struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
-					int flag)
-{
-	struct mount *res, *p, *q, *r, *parent;
+काष्ठा mount *copy_tree(काष्ठा mount *mnt, काष्ठा dentry *dentry,
+					पूर्णांक flag)
+अणु
+	काष्ठा mount *res, *p, *q, *r, *parent;
 
-	if (!(flag & CL_COPY_UNBINDABLE) && IS_MNT_UNBINDABLE(mnt))
-		return ERR_PTR(-EINVAL);
+	अगर (!(flag & CL_COPY_UNBINDABLE) && IS_MNT_UNBINDABLE(mnt))
+		वापस ERR_PTR(-EINVAL);
 
-	if (!(flag & CL_COPY_MNT_NS_FILE) && is_mnt_ns_file(dentry))
-		return ERR_PTR(-EINVAL);
+	अगर (!(flag & CL_COPY_MNT_NS_खाता) && is_mnt_ns_file(dentry))
+		वापस ERR_PTR(-EINVAL);
 
 	res = q = clone_mnt(mnt, dentry, flag);
-	if (IS_ERR(q))
-		return q;
+	अगर (IS_ERR(q))
+		वापस q;
 
-	q->mnt_mountpoint = mnt->mnt_mountpoint;
+	q->mnt_mountpoपूर्णांक = mnt->mnt_mountpoपूर्णांक;
 
 	p = mnt;
-	list_for_each_entry(r, &mnt->mnt_mounts, mnt_child) {
-		struct mount *s;
-		if (!is_subdir(r->mnt_mountpoint, dentry))
-			continue;
+	list_क्रम_each_entry(r, &mnt->mnt_mounts, mnt_child) अणु
+		काष्ठा mount *s;
+		अगर (!is_subdir(r->mnt_mountpoपूर्णांक, dentry))
+			जारी;
 
-		for (s = r; s; s = next_mnt(s, r)) {
-			if (!(flag & CL_COPY_UNBINDABLE) &&
-			    IS_MNT_UNBINDABLE(s)) {
-				if (s->mnt.mnt_flags & MNT_LOCKED) {
+		क्रम (s = r; s; s = next_mnt(s, r)) अणु
+			अगर (!(flag & CL_COPY_UNBINDABLE) &&
+			    IS_MNT_UNBINDABLE(s)) अणु
+				अगर (s->mnt.mnt_flags & MNT_LOCKED) अणु
 					/* Both unbindable and locked. */
 					q = ERR_PTR(-EPERM);
-					goto out;
-				} else {
+					जाओ out;
+				पूर्ण अन्यथा अणु
 					s = skip_mnt_tree(s);
-					continue;
-				}
-			}
-			if (!(flag & CL_COPY_MNT_NS_FILE) &&
-			    is_mnt_ns_file(s->mnt.mnt_root)) {
+					जारी;
+				पूर्ण
+			पूर्ण
+			अगर (!(flag & CL_COPY_MNT_NS_खाता) &&
+			    is_mnt_ns_file(s->mnt.mnt_root)) अणु
 				s = skip_mnt_tree(s);
-				continue;
-			}
-			while (p != s->mnt_parent) {
+				जारी;
+			पूर्ण
+			जबतक (p != s->mnt_parent) अणु
 				p = p->mnt_parent;
 				q = q->mnt_parent;
-			}
+			पूर्ण
 			p = s;
 			parent = q;
 			q = clone_mnt(p, p->mnt.mnt_root, flag);
-			if (IS_ERR(q))
-				goto out;
+			अगर (IS_ERR(q))
+				जाओ out;
 			lock_mount_hash();
 			list_add_tail(&q->mnt_list, &res->mnt_list);
 			attach_mnt(q, parent, p->mnt_mp);
 			unlock_mount_hash();
-		}
-	}
-	return res;
+		पूर्ण
+	पूर्ण
+	वापस res;
 out:
-	if (res) {
+	अगर (res) अणु
 		lock_mount_hash();
 		umount_tree(res, UMOUNT_SYNC);
 		unlock_mount_hash();
-	}
-	return q;
-}
+	पूर्ण
+	वापस q;
+पूर्ण
 
-/* Caller should check returned pointer for errors */
+/* Caller should check वापसed poपूर्णांकer क्रम errors */
 
-struct vfsmount *collect_mounts(const struct path *path)
-{
-	struct mount *tree;
+काष्ठा vfsmount *collect_mounts(स्थिर काष्ठा path *path)
+अणु
+	काष्ठा mount *tree;
 	namespace_lock();
-	if (!check_mnt(real_mount(path->mnt)))
+	अगर (!check_mnt(real_mount(path->mnt)))
 		tree = ERR_PTR(-EINVAL);
-	else
+	अन्यथा
 		tree = copy_tree(real_mount(path->mnt), path->dentry,
 				 CL_COPY_ALL | CL_PRIVATE);
 	namespace_unlock();
-	if (IS_ERR(tree))
-		return ERR_CAST(tree);
-	return &tree->mnt;
-}
+	अगर (IS_ERR(tree))
+		वापस ERR_CAST(tree);
+	वापस &tree->mnt;
+पूर्ण
 
-static void free_mnt_ns(struct mnt_namespace *);
-static struct mnt_namespace *alloc_mnt_ns(struct user_namespace *, bool);
+अटल व्योम मुक्त_mnt_ns(काष्ठा mnt_namespace *);
+अटल काष्ठा mnt_namespace *alloc_mnt_ns(काष्ठा user_namespace *, bool);
 
-void dissolve_on_fput(struct vfsmount *mnt)
-{
-	struct mnt_namespace *ns;
+व्योम dissolve_on_fput(काष्ठा vfsmount *mnt)
+अणु
+	काष्ठा mnt_namespace *ns;
 	namespace_lock();
 	lock_mount_hash();
 	ns = real_mount(mnt)->mnt_ns;
-	if (ns) {
-		if (is_anon_ns(ns))
+	अगर (ns) अणु
+		अगर (is_anon_ns(ns))
 			umount_tree(real_mount(mnt), UMOUNT_CONNECTED);
-		else
-			ns = NULL;
-	}
+		अन्यथा
+			ns = शून्य;
+	पूर्ण
 	unlock_mount_hash();
 	namespace_unlock();
-	if (ns)
-		free_mnt_ns(ns);
-}
+	अगर (ns)
+		मुक्त_mnt_ns(ns);
+पूर्ण
 
-void drop_collected_mounts(struct vfsmount *mnt)
-{
+व्योम drop_collected_mounts(काष्ठा vfsmount *mnt)
+अणु
 	namespace_lock();
 	lock_mount_hash();
 	umount_tree(real_mount(mnt), 0);
 	unlock_mount_hash();
 	namespace_unlock();
-}
+पूर्ण
 
 /**
- * clone_private_mount - create a private clone of a path
+ * clone_निजी_mount - create a निजी clone of a path
  * @path: path to clone
  *
  * This creates a new vfsmount, which will be the clone of @path.  The new mount
- * will not be attached anywhere in the namespace and will be private (i.e.
- * changes to the originating mount won't be propagated into this).
+ * will not be attached anywhere in the namespace and will be निजी (i.e.
+ * changes to the originating mount won't be propagated पूर्णांकo this).
  *
  * Release with mntput().
  */
-struct vfsmount *clone_private_mount(const struct path *path)
-{
-	struct mount *old_mnt = real_mount(path->mnt);
-	struct mount *new_mnt;
+काष्ठा vfsmount *clone_निजी_mount(स्थिर काष्ठा path *path)
+अणु
+	काष्ठा mount *old_mnt = real_mount(path->mnt);
+	काष्ठा mount *new_mnt;
 
-	if (IS_MNT_UNBINDABLE(old_mnt))
-		return ERR_PTR(-EINVAL);
+	अगर (IS_MNT_UNBINDABLE(old_mnt))
+		वापस ERR_PTR(-EINVAL);
 
 	new_mnt = clone_mnt(old_mnt, path->dentry, CL_PRIVATE);
-	if (IS_ERR(new_mnt))
-		return ERR_CAST(new_mnt);
+	अगर (IS_ERR(new_mnt))
+		वापस ERR_CAST(new_mnt);
 
-	/* Longterm mount to be removed by kern_unmount*() */
+	/* Longterm mount to be हटाओd by kern_unmount*() */
 	new_mnt->mnt_ns = MNT_NS_INTERNAL;
 
-	return &new_mnt->mnt;
-}
-EXPORT_SYMBOL_GPL(clone_private_mount);
+	वापस &new_mnt->mnt;
+पूर्ण
+EXPORT_SYMBOL_GPL(clone_निजी_mount);
 
-int iterate_mounts(int (*f)(struct vfsmount *, void *), void *arg,
-		   struct vfsmount *root)
-{
-	struct mount *mnt;
-	int res = f(root, arg);
-	if (res)
-		return res;
-	list_for_each_entry(mnt, &real_mount(root)->mnt_list, mnt_list) {
+पूर्णांक iterate_mounts(पूर्णांक (*f)(काष्ठा vfsmount *, व्योम *), व्योम *arg,
+		   काष्ठा vfsmount *root)
+अणु
+	काष्ठा mount *mnt;
+	पूर्णांक res = f(root, arg);
+	अगर (res)
+		वापस res;
+	list_क्रम_each_entry(mnt, &real_mount(root)->mnt_list, mnt_list) अणु
 		res = f(&mnt->mnt, arg);
-		if (res)
-			return res;
-	}
-	return 0;
-}
+		अगर (res)
+			वापस res;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void lock_mnt_tree(struct mount *mnt)
-{
-	struct mount *p;
+अटल व्योम lock_mnt_tree(काष्ठा mount *mnt)
+अणु
+	काष्ठा mount *p;
 
-	for (p = mnt; p; p = next_mnt(p, mnt)) {
-		int flags = p->mnt.mnt_flags;
+	क्रम (p = mnt; p; p = next_mnt(p, mnt)) अणु
+		पूर्णांक flags = p->mnt.mnt_flags;
 		/* Don't allow unprivileged users to change mount flags */
 		flags |= MNT_LOCK_ATIME;
 
-		if (flags & MNT_READONLY)
+		अगर (flags & MNT_READONLY)
 			flags |= MNT_LOCK_READONLY;
 
-		if (flags & MNT_NODEV)
+		अगर (flags & MNT_NODEV)
 			flags |= MNT_LOCK_NODEV;
 
-		if (flags & MNT_NOSUID)
+		अगर (flags & MNT_NOSUID)
 			flags |= MNT_LOCK_NOSUID;
 
-		if (flags & MNT_NOEXEC)
+		अगर (flags & MNT_NOEXEC)
 			flags |= MNT_LOCK_NOEXEC;
 		/* Don't allow unprivileged users to reveal what is under a mount */
-		if (list_empty(&p->mnt_expire))
+		अगर (list_empty(&p->mnt_expire))
 			flags |= MNT_LOCKED;
 		p->mnt.mnt_flags = flags;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cleanup_group_ids(struct mount *mnt, struct mount *end)
-{
-	struct mount *p;
+अटल व्योम cleanup_group_ids(काष्ठा mount *mnt, काष्ठा mount *end)
+अणु
+	काष्ठा mount *p;
 
-	for (p = mnt; p != end; p = next_mnt(p, mnt)) {
-		if (p->mnt_group_id && !IS_MNT_SHARED(p))
+	क्रम (p = mnt; p != end; p = next_mnt(p, mnt)) अणु
+		अगर (p->mnt_group_id && !IS_MNT_SHARED(p))
 			mnt_release_group_id(p);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int invent_group_ids(struct mount *mnt, bool recurse)
-{
-	struct mount *p;
+अटल पूर्णांक invent_group_ids(काष्ठा mount *mnt, bool recurse)
+अणु
+	काष्ठा mount *p;
 
-	for (p = mnt; p; p = recurse ? next_mnt(p, mnt) : NULL) {
-		if (!p->mnt_group_id && !IS_MNT_SHARED(p)) {
-			int err = mnt_alloc_group_id(p);
-			if (err) {
+	क्रम (p = mnt; p; p = recurse ? next_mnt(p, mnt) : शून्य) अणु
+		अगर (!p->mnt_group_id && !IS_MNT_SHARED(p)) अणु
+			पूर्णांक err = mnt_alloc_group_id(p);
+			अगर (err) अणु
 				cleanup_group_ids(mnt, p);
-				return err;
-			}
-		}
-	}
+				वापस err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int count_mounts(struct mnt_namespace *ns, struct mount *mnt)
-{
-	unsigned int max = READ_ONCE(sysctl_mount_max);
-	unsigned int mounts = 0, old, pending, sum;
-	struct mount *p;
+पूर्णांक count_mounts(काष्ठा mnt_namespace *ns, काष्ठा mount *mnt)
+अणु
+	अचिन्हित पूर्णांक max = READ_ONCE(sysctl_mount_max);
+	अचिन्हित पूर्णांक mounts = 0, old, pending, sum;
+	काष्ठा mount *p;
 
-	for (p = mnt; p; p = next_mnt(p, mnt))
+	क्रम (p = mnt; p; p = next_mnt(p, mnt))
 		mounts++;
 
 	old = ns->mounts;
 	pending = ns->pending_mounts;
 	sum = old + pending;
-	if ((old > sum) ||
+	अगर ((old > sum) ||
 	    (pending > sum) ||
 	    (max < sum) ||
 	    (mounts > (max - sum)))
-		return -ENOSPC;
+		वापस -ENOSPC;
 
 	ns->pending_mounts = pending + mounts;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *  @source_mnt : mount tree to be attached
  *  @nd         : place the mount tree @source_mnt is attached
- *  @parent_nd  : if non-null, detach the source_mnt from its parent and
- *  		   store the parent mount and mountpoint dentry.
- *  		   (done when source_mnt is moved)
+ *  @parent_nd  : अगर non-null, detach the source_mnt from its parent and
+ *  		   store the parent mount and mountpoपूर्णांक dentry.
+ *  		   (करोne when source_mnt is moved)
  *
  *  NOTE: in the table below explains the semantics when a source mount
  *  of a given type is attached to a destination mount of a given type.
  * ---------------------------------------------------------------------------
  * |         BIND MOUNT OPERATION                                            |
  * |**************************************************************************
- * | source-->| shared        |       private  |       slave    | unbindable |
+ * | source-->| shared        |       निजी  |       slave    | unbindable |
  * | dest     |               |                |                |            |
  * |   |      |               |                |                |            |
  * |   v      |               |                |                |            |
  * |**************************************************************************
  * |  shared  | shared (++)   |     shared (+) |     shared(+++)|  invalid   |
  * |          |               |                |                |            |
- * |non-shared| shared (+)    |      private   |      slave (*) |  invalid   |
+ * |non-shared| shared (+)    |      निजी   |      slave (*) |  invalid   |
  * ***************************************************************************
  * A bind operation clones the source mount and mounts the clone on the
  * destination mount.
@@ -2098,332 +2099,332 @@ int count_mounts(struct mnt_namespace *ns, struct mount *mnt)
  * ---------------------------------------------------------------------------
  * |         		MOVE MOUNT OPERATION                                 |
  * |**************************************************************************
- * | source-->| shared        |       private  |       slave    | unbindable |
+ * | source-->| shared        |       निजी  |       slave    | unbindable |
  * | dest     |               |                |                |            |
  * |   |      |               |                |                |            |
  * |   v      |               |                |                |            |
  * |**************************************************************************
  * |  shared  | shared (+)    |     shared (+) |    shared(+++) |  invalid   |
  * |          |               |                |                |            |
- * |non-shared| shared (+*)   |      private   |    slave (*)   | unbindable |
+ * |non-shared| shared (+*)   |      निजी   |    slave (*)   | unbindable |
  * ***************************************************************************
  *
  * (+)  the mount is moved to the destination. And is then propagated to
  * 	all the mounts in the propagation tree of the destination mount.
  * (+*)  the mount is moved to the destination.
  * (+++)  the mount is moved to the destination and is then propagated to
- * 	all the mounts belonging to the destination mount's propagation tree.
+ * 	all the mounts beदीर्घing to the destination mount's propagation tree.
  * 	the mount is marked as 'shared and slave'.
- * (*)	the mount continues to be a slave at the new location.
+ * (*)	the mount जारीs to be a slave at the new location.
  *
- * if the source mount is a tree, the operations explained above is
+ * अगर the source mount is a tree, the operations explained above is
  * applied to each mount in the tree.
  * Must be called without spinlocks held, since this function can sleep
  * in allocations.
  */
-static int attach_recursive_mnt(struct mount *source_mnt,
-			struct mount *dest_mnt,
-			struct mountpoint *dest_mp,
+अटल पूर्णांक attach_recursive_mnt(काष्ठा mount *source_mnt,
+			काष्ठा mount *dest_mnt,
+			काष्ठा mountpoपूर्णांक *dest_mp,
 			bool moving)
-{
-	struct user_namespace *user_ns = current->nsproxy->mnt_ns->user_ns;
+अणु
+	काष्ठा user_namespace *user_ns = current->nsproxy->mnt_ns->user_ns;
 	HLIST_HEAD(tree_list);
-	struct mnt_namespace *ns = dest_mnt->mnt_ns;
-	struct mountpoint *smp;
-	struct mount *child, *p;
-	struct hlist_node *n;
-	int err;
+	काष्ठा mnt_namespace *ns = dest_mnt->mnt_ns;
+	काष्ठा mountpoपूर्णांक *smp;
+	काष्ठा mount *child, *p;
+	काष्ठा hlist_node *n;
+	पूर्णांक err;
 
-	/* Preallocate a mountpoint in case the new mounts need
+	/* Pपुनः_स्मृतिate a mountpoपूर्णांक in हाल the new mounts need
 	 * to be tucked under other mounts.
 	 */
-	smp = get_mountpoint(source_mnt->mnt.mnt_root);
-	if (IS_ERR(smp))
-		return PTR_ERR(smp);
+	smp = get_mountpoपूर्णांक(source_mnt->mnt.mnt_root);
+	अगर (IS_ERR(smp))
+		वापस PTR_ERR(smp);
 
 	/* Is there space to add these mounts to the mount namespace? */
-	if (!moving) {
+	अगर (!moving) अणु
 		err = count_mounts(ns, source_mnt);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
-	if (IS_MNT_SHARED(dest_mnt)) {
+	अगर (IS_MNT_SHARED(dest_mnt)) अणु
 		err = invent_group_ids(source_mnt, true);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		err = propagate_mnt(dest_mnt, dest_mp, source_mnt, &tree_list);
 		lock_mount_hash();
-		if (err)
-			goto out_cleanup_ids;
-		for (p = source_mnt; p; p = next_mnt(p, source_mnt))
+		अगर (err)
+			जाओ out_cleanup_ids;
+		क्रम (p = source_mnt; p; p = next_mnt(p, source_mnt))
 			set_mnt_shared(p);
-	} else {
+	पूर्ण अन्यथा अणु
 		lock_mount_hash();
-	}
-	if (moving) {
+	पूर्ण
+	अगर (moving) अणु
 		unhash_mnt(source_mnt);
 		attach_mnt(source_mnt, dest_mnt, dest_mp);
 		touch_mnt_namespace(source_mnt->mnt_ns);
-	} else {
-		if (source_mnt->mnt_ns) {
+	पूर्ण अन्यथा अणु
+		अगर (source_mnt->mnt_ns) अणु
 			/* move from anon - the caller will destroy */
 			list_del_init(&source_mnt->mnt_ns->list);
-		}
-		mnt_set_mountpoint(dest_mnt, dest_mp, source_mnt);
+		पूर्ण
+		mnt_set_mountpoपूर्णांक(dest_mnt, dest_mp, source_mnt);
 		commit_tree(source_mnt);
-	}
+	पूर्ण
 
-	hlist_for_each_entry_safe(child, n, &tree_list, mnt_hash) {
-		struct mount *q;
+	hlist_क्रम_each_entry_safe(child, n, &tree_list, mnt_hash) अणु
+		काष्ठा mount *q;
 		hlist_del_init(&child->mnt_hash);
 		q = __lookup_mnt(&child->mnt_parent->mnt,
-				 child->mnt_mountpoint);
-		if (q)
-			mnt_change_mountpoint(child, smp, q);
+				 child->mnt_mountpoपूर्णांक);
+		अगर (q)
+			mnt_change_mountpoपूर्णांक(child, smp, q);
 		/* Notice when we are propagating across user namespaces */
-		if (child->mnt_parent->mnt_ns->user_ns != user_ns)
+		अगर (child->mnt_parent->mnt_ns->user_ns != user_ns)
 			lock_mnt_tree(child);
 		child->mnt.mnt_flags &= ~MNT_LOCKED;
 		commit_tree(child);
-	}
-	put_mountpoint(smp);
+	पूर्ण
+	put_mountpoपूर्णांक(smp);
 	unlock_mount_hash();
 
-	return 0;
+	वापस 0;
 
  out_cleanup_ids:
-	while (!hlist_empty(&tree_list)) {
-		child = hlist_entry(tree_list.first, struct mount, mnt_hash);
+	जबतक (!hlist_empty(&tree_list)) अणु
+		child = hlist_entry(tree_list.first, काष्ठा mount, mnt_hash);
 		child->mnt_parent->mnt_ns->pending_mounts = 0;
 		umount_tree(child, UMOUNT_SYNC);
-	}
+	पूर्ण
 	unlock_mount_hash();
-	cleanup_group_ids(source_mnt, NULL);
+	cleanup_group_ids(source_mnt, शून्य);
  out:
 	ns->pending_mounts = 0;
 
-	read_seqlock_excl(&mount_lock);
-	put_mountpoint(smp);
-	read_sequnlock_excl(&mount_lock);
+	पढ़ो_seqlock_excl(&mount_lock);
+	put_mountpoपूर्णांक(smp);
+	पढ़ो_sequnlock_excl(&mount_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct mountpoint *lock_mount(struct path *path)
-{
-	struct vfsmount *mnt;
-	struct dentry *dentry = path->dentry;
+अटल काष्ठा mountpoपूर्णांक *lock_mount(काष्ठा path *path)
+अणु
+	काष्ठा vfsmount *mnt;
+	काष्ठा dentry *dentry = path->dentry;
 retry:
 	inode_lock(dentry->d_inode);
-	if (unlikely(cant_mount(dentry))) {
+	अगर (unlikely(cant_mount(dentry))) अणु
 		inode_unlock(dentry->d_inode);
-		return ERR_PTR(-ENOENT);
-	}
+		वापस ERR_PTR(-ENOENT);
+	पूर्ण
 	namespace_lock();
 	mnt = lookup_mnt(path);
-	if (likely(!mnt)) {
-		struct mountpoint *mp = get_mountpoint(dentry);
-		if (IS_ERR(mp)) {
+	अगर (likely(!mnt)) अणु
+		काष्ठा mountpoपूर्णांक *mp = get_mountpoपूर्णांक(dentry);
+		अगर (IS_ERR(mp)) अणु
 			namespace_unlock();
 			inode_unlock(dentry->d_inode);
-			return mp;
-		}
-		return mp;
-	}
+			वापस mp;
+		पूर्ण
+		वापस mp;
+	पूर्ण
 	namespace_unlock();
 	inode_unlock(path->dentry->d_inode);
 	path_put(path);
 	path->mnt = mnt;
 	dentry = path->dentry = dget(mnt->mnt_root);
-	goto retry;
-}
+	जाओ retry;
+पूर्ण
 
-static void unlock_mount(struct mountpoint *where)
-{
-	struct dentry *dentry = where->m_dentry;
+अटल व्योम unlock_mount(काष्ठा mountpoपूर्णांक *where)
+अणु
+	काष्ठा dentry *dentry = where->m_dentry;
 
-	read_seqlock_excl(&mount_lock);
-	put_mountpoint(where);
-	read_sequnlock_excl(&mount_lock);
+	पढ़ो_seqlock_excl(&mount_lock);
+	put_mountpoपूर्णांक(where);
+	पढ़ो_sequnlock_excl(&mount_lock);
 
 	namespace_unlock();
 	inode_unlock(dentry->d_inode);
-}
+पूर्ण
 
-static int graft_tree(struct mount *mnt, struct mount *p, struct mountpoint *mp)
-{
-	if (mnt->mnt.mnt_sb->s_flags & SB_NOUSER)
-		return -EINVAL;
+अटल पूर्णांक graft_tree(काष्ठा mount *mnt, काष्ठा mount *p, काष्ठा mountpoपूर्णांक *mp)
+अणु
+	अगर (mnt->mnt.mnt_sb->s_flags & SB_NOUSER)
+		वापस -EINVAL;
 
-	if (d_is_dir(mp->m_dentry) !=
+	अगर (d_is_dir(mp->m_dentry) !=
 	      d_is_dir(mnt->mnt.mnt_root))
-		return -ENOTDIR;
+		वापस -ENOTसूची;
 
-	return attach_recursive_mnt(mnt, p, mp, false);
-}
+	वापस attach_recursive_mnt(mnt, p, mp, false);
+पूर्ण
 
 /*
  * Sanity check the flags to change_mnt_propagation.
  */
 
-static int flags_to_propagation_type(int ms_flags)
-{
-	int type = ms_flags & ~(MS_REC | MS_SILENT);
+अटल पूर्णांक flags_to_propagation_type(पूर्णांक ms_flags)
+अणु
+	पूर्णांक type = ms_flags & ~(MS_REC | MS_SILENT);
 
-	/* Fail if any non-propagation flags are set */
-	if (type & ~(MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
-		return 0;
+	/* Fail अगर any non-propagation flags are set */
+	अगर (type & ~(MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
+		वापस 0;
 	/* Only one propagation flag should be set */
-	if (!is_power_of_2(type))
-		return 0;
-	return type;
-}
+	अगर (!is_घातer_of_2(type))
+		वापस 0;
+	वापस type;
+पूर्ण
 
 /*
- * recursively change the type of the mountpoint.
+ * recursively change the type of the mountpoपूर्णांक.
  */
-static int do_change_type(struct path *path, int ms_flags)
-{
-	struct mount *m;
-	struct mount *mnt = real_mount(path->mnt);
-	int recurse = ms_flags & MS_REC;
-	int type;
-	int err = 0;
+अटल पूर्णांक करो_change_type(काष्ठा path *path, पूर्णांक ms_flags)
+अणु
+	काष्ठा mount *m;
+	काष्ठा mount *mnt = real_mount(path->mnt);
+	पूर्णांक recurse = ms_flags & MS_REC;
+	पूर्णांक type;
+	पूर्णांक err = 0;
 
-	if (path->dentry != path->mnt->mnt_root)
-		return -EINVAL;
+	अगर (path->dentry != path->mnt->mnt_root)
+		वापस -EINVAL;
 
 	type = flags_to_propagation_type(ms_flags);
-	if (!type)
-		return -EINVAL;
+	अगर (!type)
+		वापस -EINVAL;
 
 	namespace_lock();
-	if (type == MS_SHARED) {
+	अगर (type == MS_SHARED) अणु
 		err = invent_group_ids(mnt, recurse);
-		if (err)
-			goto out_unlock;
-	}
+		अगर (err)
+			जाओ out_unlock;
+	पूर्ण
 
 	lock_mount_hash();
-	for (m = mnt; m; m = (recurse ? next_mnt(m, mnt) : NULL))
+	क्रम (m = mnt; m; m = (recurse ? next_mnt(m, mnt) : शून्य))
 		change_mnt_propagation(m, type);
 	unlock_mount_hash();
 
  out_unlock:
 	namespace_unlock();
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool has_locked_children(struct mount *mnt, struct dentry *dentry)
-{
-	struct mount *child;
-	list_for_each_entry(child, &mnt->mnt_mounts, mnt_child) {
-		if (!is_subdir(child->mnt_mountpoint, dentry))
-			continue;
+अटल bool has_locked_children(काष्ठा mount *mnt, काष्ठा dentry *dentry)
+अणु
+	काष्ठा mount *child;
+	list_क्रम_each_entry(child, &mnt->mnt_mounts, mnt_child) अणु
+		अगर (!is_subdir(child->mnt_mountpoपूर्णांक, dentry))
+			जारी;
 
-		if (child->mnt.mnt_flags & MNT_LOCKED)
-			return true;
-	}
-	return false;
-}
+		अगर (child->mnt.mnt_flags & MNT_LOCKED)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static struct mount *__do_loopback(struct path *old_path, int recurse)
-{
-	struct mount *mnt = ERR_PTR(-EINVAL), *old = real_mount(old_path->mnt);
+अटल काष्ठा mount *__करो_loopback(काष्ठा path *old_path, पूर्णांक recurse)
+अणु
+	काष्ठा mount *mnt = ERR_PTR(-EINVAL), *old = real_mount(old_path->mnt);
 
-	if (IS_MNT_UNBINDABLE(old))
-		return mnt;
+	अगर (IS_MNT_UNBINDABLE(old))
+		वापस mnt;
 
-	if (!check_mnt(old) && old_path->dentry->d_op != &ns_dentry_operations)
-		return mnt;
+	अगर (!check_mnt(old) && old_path->dentry->d_op != &ns_dentry_operations)
+		वापस mnt;
 
-	if (!recurse && has_locked_children(old, old_path->dentry))
-		return mnt;
+	अगर (!recurse && has_locked_children(old, old_path->dentry))
+		वापस mnt;
 
-	if (recurse)
-		mnt = copy_tree(old, old_path->dentry, CL_COPY_MNT_NS_FILE);
-	else
+	अगर (recurse)
+		mnt = copy_tree(old, old_path->dentry, CL_COPY_MNT_NS_खाता);
+	अन्यथा
 		mnt = clone_mnt(old, old_path->dentry, 0);
 
-	if (!IS_ERR(mnt))
+	अगर (!IS_ERR(mnt))
 		mnt->mnt.mnt_flags &= ~MNT_LOCKED;
 
-	return mnt;
-}
+	वापस mnt;
+पूर्ण
 
 /*
- * do loopback mount.
+ * करो loopback mount.
  */
-static int do_loopback(struct path *path, const char *old_name,
-				int recurse)
-{
-	struct path old_path;
-	struct mount *mnt = NULL, *parent;
-	struct mountpoint *mp;
-	int err;
-	if (!old_name || !*old_name)
-		return -EINVAL;
+अटल पूर्णांक करो_loopback(काष्ठा path *path, स्थिर अक्षर *old_name,
+				पूर्णांक recurse)
+अणु
+	काष्ठा path old_path;
+	काष्ठा mount *mnt = शून्य, *parent;
+	काष्ठा mountpoपूर्णांक *mp;
+	पूर्णांक err;
+	अगर (!old_name || !*old_name)
+		वापस -EINVAL;
 	err = kern_path(old_name, LOOKUP_FOLLOW|LOOKUP_AUTOMOUNT, &old_path);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = -EINVAL;
-	if (mnt_ns_loop(old_path.dentry))
-		goto out;
+	अगर (mnt_ns_loop(old_path.dentry))
+		जाओ out;
 
 	mp = lock_mount(path);
-	if (IS_ERR(mp)) {
+	अगर (IS_ERR(mp)) अणु
 		err = PTR_ERR(mp);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	parent = real_mount(path->mnt);
-	if (!check_mnt(parent))
-		goto out2;
+	अगर (!check_mnt(parent))
+		जाओ out2;
 
-	mnt = __do_loopback(&old_path, recurse);
-	if (IS_ERR(mnt)) {
+	mnt = __करो_loopback(&old_path, recurse);
+	अगर (IS_ERR(mnt)) अणु
 		err = PTR_ERR(mnt);
-		goto out2;
-	}
+		जाओ out2;
+	पूर्ण
 
 	err = graft_tree(mnt, parent, mp);
-	if (err) {
+	अगर (err) अणु
 		lock_mount_hash();
 		umount_tree(mnt, UMOUNT_SYNC);
 		unlock_mount_hash();
-	}
+	पूर्ण
 out2:
 	unlock_mount(mp);
 out:
 	path_put(&old_path);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct file *open_detached_copy(struct path *path, bool recursive)
-{
-	struct user_namespace *user_ns = current->nsproxy->mnt_ns->user_ns;
-	struct mnt_namespace *ns = alloc_mnt_ns(user_ns, true);
-	struct mount *mnt, *p;
-	struct file *file;
+अटल काष्ठा file *खोलो_detached_copy(काष्ठा path *path, bool recursive)
+अणु
+	काष्ठा user_namespace *user_ns = current->nsproxy->mnt_ns->user_ns;
+	काष्ठा mnt_namespace *ns = alloc_mnt_ns(user_ns, true);
+	काष्ठा mount *mnt, *p;
+	काष्ठा file *file;
 
-	if (IS_ERR(ns))
-		return ERR_CAST(ns);
+	अगर (IS_ERR(ns))
+		वापस ERR_CAST(ns);
 
 	namespace_lock();
-	mnt = __do_loopback(path, recursive);
-	if (IS_ERR(mnt)) {
+	mnt = __करो_loopback(path, recursive);
+	अगर (IS_ERR(mnt)) अणु
 		namespace_unlock();
-		free_mnt_ns(ns);
-		return ERR_CAST(mnt);
-	}
+		मुक्त_mnt_ns(ns);
+		वापस ERR_CAST(mnt);
+	पूर्ण
 
 	lock_mount_hash();
-	for (p = mnt; p; p = next_mnt(p, mnt)) {
+	क्रम (p = mnt; p; p = next_mnt(p, mnt)) अणु
 		p->mnt_ns = ns;
 		ns->mounts++;
-	}
+	पूर्ण
 	ns->root = mnt;
 	list_add_tail(&ns->list, &mnt->mnt_list);
 	mntget(&mnt->mnt);
@@ -2432,271 +2433,271 @@ static struct file *open_detached_copy(struct path *path, bool recursive)
 
 	mntput(path->mnt);
 	path->mnt = &mnt->mnt;
-	file = dentry_open(path, O_PATH, current_cred());
-	if (IS_ERR(file))
+	file = dentry_खोलो(path, O_PATH, current_cred());
+	अगर (IS_ERR(file))
 		dissolve_on_fput(path->mnt);
-	else
+	अन्यथा
 		file->f_mode |= FMODE_NEED_UNMOUNT;
-	return file;
-}
+	वापस file;
+पूर्ण
 
-SYSCALL_DEFINE3(open_tree, int, dfd, const char __user *, filename, unsigned, flags)
-{
-	struct file *file;
-	struct path path;
-	int lookup_flags = LOOKUP_AUTOMOUNT | LOOKUP_FOLLOW;
+SYSCALL_DEFINE3(खोलो_tree, पूर्णांक, dfd, स्थिर अक्षर __user *, filename, अचिन्हित, flags)
+अणु
+	काष्ठा file *file;
+	काष्ठा path path;
+	पूर्णांक lookup_flags = LOOKUP_AUTOMOUNT | LOOKUP_FOLLOW;
 	bool detached = flags & OPEN_TREE_CLONE;
-	int error;
-	int fd;
+	पूर्णांक error;
+	पूर्णांक fd;
 
 	BUILD_BUG_ON(OPEN_TREE_CLOEXEC != O_CLOEXEC);
 
-	if (flags & ~(AT_EMPTY_PATH | AT_NO_AUTOMOUNT | AT_RECURSIVE |
+	अगर (flags & ~(AT_EMPTY_PATH | AT_NO_AUTOMOUNT | AT_RECURSIVE |
 		      AT_SYMLINK_NOFOLLOW | OPEN_TREE_CLONE |
 		      OPEN_TREE_CLOEXEC))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if ((flags & (AT_RECURSIVE | OPEN_TREE_CLONE)) == AT_RECURSIVE)
-		return -EINVAL;
+	अगर ((flags & (AT_RECURSIVE | OPEN_TREE_CLONE)) == AT_RECURSIVE)
+		वापस -EINVAL;
 
-	if (flags & AT_NO_AUTOMOUNT)
+	अगर (flags & AT_NO_AUTOMOUNT)
 		lookup_flags &= ~LOOKUP_AUTOMOUNT;
-	if (flags & AT_SYMLINK_NOFOLLOW)
+	अगर (flags & AT_SYMLINK_NOFOLLOW)
 		lookup_flags &= ~LOOKUP_FOLLOW;
-	if (flags & AT_EMPTY_PATH)
+	अगर (flags & AT_EMPTY_PATH)
 		lookup_flags |= LOOKUP_EMPTY;
 
-	if (detached && !may_mount())
-		return -EPERM;
+	अगर (detached && !may_mount())
+		वापस -EPERM;
 
 	fd = get_unused_fd_flags(flags & O_CLOEXEC);
-	if (fd < 0)
-		return fd;
+	अगर (fd < 0)
+		वापस fd;
 
 	error = user_path_at(dfd, filename, lookup_flags, &path);
-	if (unlikely(error)) {
+	अगर (unlikely(error)) अणु
 		file = ERR_PTR(error);
-	} else {
-		if (detached)
-			file = open_detached_copy(&path, flags & AT_RECURSIVE);
-		else
-			file = dentry_open(&path, O_PATH, current_cred());
+	पूर्ण अन्यथा अणु
+		अगर (detached)
+			file = खोलो_detached_copy(&path, flags & AT_RECURSIVE);
+		अन्यथा
+			file = dentry_खोलो(&path, O_PATH, current_cred());
 		path_put(&path);
-	}
-	if (IS_ERR(file)) {
+	पूर्ण
+	अगर (IS_ERR(file)) अणु
 		put_unused_fd(fd);
-		return PTR_ERR(file);
-	}
+		वापस PTR_ERR(file);
+	पूर्ण
 	fd_install(fd, file);
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
 /*
  * Don't allow locked mount flags to be cleared.
  *
- * No locks need to be held here while testing the various MNT_LOCK
+ * No locks need to be held here जबतक testing the various MNT_LOCK
  * flags because those flags can never be cleared once they are set.
  */
-static bool can_change_locked_flags(struct mount *mnt, unsigned int mnt_flags)
-{
-	unsigned int fl = mnt->mnt.mnt_flags;
+अटल bool can_change_locked_flags(काष्ठा mount *mnt, अचिन्हित पूर्णांक mnt_flags)
+अणु
+	अचिन्हित पूर्णांक fl = mnt->mnt.mnt_flags;
 
-	if ((fl & MNT_LOCK_READONLY) &&
+	अगर ((fl & MNT_LOCK_READONLY) &&
 	    !(mnt_flags & MNT_READONLY))
-		return false;
+		वापस false;
 
-	if ((fl & MNT_LOCK_NODEV) &&
+	अगर ((fl & MNT_LOCK_NODEV) &&
 	    !(mnt_flags & MNT_NODEV))
-		return false;
+		वापस false;
 
-	if ((fl & MNT_LOCK_NOSUID) &&
+	अगर ((fl & MNT_LOCK_NOSUID) &&
 	    !(mnt_flags & MNT_NOSUID))
-		return false;
+		वापस false;
 
-	if ((fl & MNT_LOCK_NOEXEC) &&
+	अगर ((fl & MNT_LOCK_NOEXEC) &&
 	    !(mnt_flags & MNT_NOEXEC))
-		return false;
+		वापस false;
 
-	if ((fl & MNT_LOCK_ATIME) &&
+	अगर ((fl & MNT_LOCK_ATIME) &&
 	    ((fl & MNT_ATIME_MASK) != (mnt_flags & MNT_ATIME_MASK)))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int change_mount_ro_state(struct mount *mnt, unsigned int mnt_flags)
-{
-	bool readonly_request = (mnt_flags & MNT_READONLY);
+अटल पूर्णांक change_mount_ro_state(काष्ठा mount *mnt, अचिन्हित पूर्णांक mnt_flags)
+अणु
+	bool पढ़ोonly_request = (mnt_flags & MNT_READONLY);
 
-	if (readonly_request == __mnt_is_readonly(&mnt->mnt))
-		return 0;
+	अगर (पढ़ोonly_request == __mnt_is_पढ़ोonly(&mnt->mnt))
+		वापस 0;
 
-	if (readonly_request)
-		return mnt_make_readonly(mnt);
+	अगर (पढ़ोonly_request)
+		वापस mnt_make_पढ़ोonly(mnt);
 
 	mnt->mnt.mnt_flags &= ~MNT_READONLY;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_mount_attributes(struct mount *mnt, unsigned int mnt_flags)
-{
+अटल व्योम set_mount_attributes(काष्ठा mount *mnt, अचिन्हित पूर्णांक mnt_flags)
+अणु
 	mnt_flags |= mnt->mnt.mnt_flags & ~MNT_USER_SETTABLE_MASK;
 	mnt->mnt.mnt_flags = mnt_flags;
 	touch_mnt_namespace(mnt->mnt_ns);
-}
+पूर्ण
 
-static void mnt_warn_timestamp_expiry(struct path *mountpoint, struct vfsmount *mnt)
-{
-	struct super_block *sb = mnt->mnt_sb;
+अटल व्योम mnt_warn_बारtamp_expiry(काष्ठा path *mountpoपूर्णांक, काष्ठा vfsmount *mnt)
+अणु
+	काष्ठा super_block *sb = mnt->mnt_sb;
 
-	if (!__mnt_is_readonly(mnt) &&
-	   (ktime_get_real_seconds() + TIME_UPTIME_SEC_MAX > sb->s_time_max)) {
-		char *buf = (char *)__get_free_page(GFP_KERNEL);
-		char *mntpath = buf ? d_path(mountpoint, buf, PAGE_SIZE) : ERR_PTR(-ENOMEM);
-		struct tm tm;
+	अगर (!__mnt_is_पढ़ोonly(mnt) &&
+	   (kसमय_get_real_seconds() + TIME_UPTIME_SEC_MAX > sb->s_समय_max)) अणु
+		अक्षर *buf = (अक्षर *)__get_मुक्त_page(GFP_KERNEL);
+		अक्षर *mntpath = buf ? d_path(mountpoपूर्णांक, buf, PAGE_SIZE) : ERR_PTR(-ENOMEM);
+		काष्ठा पंचांग पंचांग;
 
-		time64_to_tm(sb->s_time_max, 0, &tm);
+		समय64_to_पंचांग(sb->s_समय_max, 0, &पंचांग);
 
 		pr_warn("%s filesystem being %s at %s supports timestamps until %04ld (0x%llx)\n",
 			sb->s_type->name,
 			is_mounted(mnt) ? "remounted" : "mounted",
 			mntpath,
-			tm.tm_year+1900, (unsigned long long)sb->s_time_max);
+			पंचांग.पंचांग_year+1900, (अचिन्हित दीर्घ दीर्घ)sb->s_समय_max);
 
-		free_page((unsigned long)buf);
-	}
-}
+		मुक्त_page((अचिन्हित दीर्घ)buf);
+	पूर्ण
+पूर्ण
 
 /*
- * Handle reconfiguration of the mountpoint only without alteration of the
- * superblock it refers to.  This is triggered by specifying MS_REMOUNT|MS_BIND
+ * Handle reconfiguration of the mountpoपूर्णांक only without alteration of the
+ * superblock it refers to.  This is triggered by specअगरying MS_REMOUNT|MS_BIND
  * to mount(2).
  */
-static int do_reconfigure_mnt(struct path *path, unsigned int mnt_flags)
-{
-	struct super_block *sb = path->mnt->mnt_sb;
-	struct mount *mnt = real_mount(path->mnt);
-	int ret;
+अटल पूर्णांक करो_reconfigure_mnt(काष्ठा path *path, अचिन्हित पूर्णांक mnt_flags)
+अणु
+	काष्ठा super_block *sb = path->mnt->mnt_sb;
+	काष्ठा mount *mnt = real_mount(path->mnt);
+	पूर्णांक ret;
 
-	if (!check_mnt(mnt))
-		return -EINVAL;
+	अगर (!check_mnt(mnt))
+		वापस -EINVAL;
 
-	if (path->dentry != mnt->mnt.mnt_root)
-		return -EINVAL;
+	अगर (path->dentry != mnt->mnt.mnt_root)
+		वापस -EINVAL;
 
-	if (!can_change_locked_flags(mnt, mnt_flags))
-		return -EPERM;
+	अगर (!can_change_locked_flags(mnt, mnt_flags))
+		वापस -EPERM;
 
 	/*
-	 * We're only checking whether the superblock is read-only not
-	 * changing it, so only take down_read(&sb->s_umount).
+	 * We're only checking whether the superblock is पढ़ो-only not
+	 * changing it, so only take करोwn_पढ़ो(&sb->s_umount).
 	 */
-	down_read(&sb->s_umount);
+	करोwn_पढ़ो(&sb->s_umount);
 	lock_mount_hash();
 	ret = change_mount_ro_state(mnt, mnt_flags);
-	if (ret == 0)
+	अगर (ret == 0)
 		set_mount_attributes(mnt, mnt_flags);
 	unlock_mount_hash();
-	up_read(&sb->s_umount);
+	up_पढ़ो(&sb->s_umount);
 
-	mnt_warn_timestamp_expiry(path, &mnt->mnt);
+	mnt_warn_बारtamp_expiry(path, &mnt->mnt);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * change filesystem flags. dir should be a physical root of filesystem.
- * If you've mounted a non-root directory somewhere and want to do remount
+ * change fileप्रणाली flags. dir should be a physical root of fileप्रणाली.
+ * If you've mounted a non-root directory somewhere and want to करो remount
  * on it - tough luck.
  */
-static int do_remount(struct path *path, int ms_flags, int sb_flags,
-		      int mnt_flags, void *data)
-{
-	int err;
-	struct super_block *sb = path->mnt->mnt_sb;
-	struct mount *mnt = real_mount(path->mnt);
-	struct fs_context *fc;
+अटल पूर्णांक करो_remount(काष्ठा path *path, पूर्णांक ms_flags, पूर्णांक sb_flags,
+		      पूर्णांक mnt_flags, व्योम *data)
+अणु
+	पूर्णांक err;
+	काष्ठा super_block *sb = path->mnt->mnt_sb;
+	काष्ठा mount *mnt = real_mount(path->mnt);
+	काष्ठा fs_context *fc;
 
-	if (!check_mnt(mnt))
-		return -EINVAL;
+	अगर (!check_mnt(mnt))
+		वापस -EINVAL;
 
-	if (path->dentry != path->mnt->mnt_root)
-		return -EINVAL;
+	अगर (path->dentry != path->mnt->mnt_root)
+		वापस -EINVAL;
 
-	if (!can_change_locked_flags(mnt, mnt_flags))
-		return -EPERM;
+	अगर (!can_change_locked_flags(mnt, mnt_flags))
+		वापस -EPERM;
 
-	fc = fs_context_for_reconfigure(path->dentry, sb_flags, MS_RMT_MASK);
-	if (IS_ERR(fc))
-		return PTR_ERR(fc);
+	fc = fs_context_क्रम_reconfigure(path->dentry, sb_flags, MS_RMT_MASK);
+	अगर (IS_ERR(fc))
+		वापस PTR_ERR(fc);
 
 	fc->oldapi = true;
 	err = parse_monolithic_mount_data(fc, data);
-	if (!err) {
-		down_write(&sb->s_umount);
+	अगर (!err) अणु
+		करोwn_ग_लिखो(&sb->s_umount);
 		err = -EPERM;
-		if (ns_capable(sb->s_user_ns, CAP_SYS_ADMIN)) {
+		अगर (ns_capable(sb->s_user_ns, CAP_SYS_ADMIN)) अणु
 			err = reconfigure_super(fc);
-			if (!err) {
+			अगर (!err) अणु
 				lock_mount_hash();
 				set_mount_attributes(mnt, mnt_flags);
 				unlock_mount_hash();
-			}
-		}
-		up_write(&sb->s_umount);
-	}
+			पूर्ण
+		पूर्ण
+		up_ग_लिखो(&sb->s_umount);
+	पूर्ण
 
-	mnt_warn_timestamp_expiry(path, &mnt->mnt);
+	mnt_warn_बारtamp_expiry(path, &mnt->mnt);
 
 	put_fs_context(fc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline int tree_contains_unbindable(struct mount *mnt)
-{
-	struct mount *p;
-	for (p = mnt; p; p = next_mnt(p, mnt)) {
-		if (IS_MNT_UNBINDABLE(p))
-			return 1;
-	}
-	return 0;
-}
+अटल अंतरभूत पूर्णांक tree_contains_unbindable(काष्ठा mount *mnt)
+अणु
+	काष्ठा mount *p;
+	क्रम (p = mnt; p; p = next_mnt(p, mnt)) अणु
+		अगर (IS_MNT_UNBINDABLE(p))
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Check that there aren't references to earlier/same mount namespaces in the
- * specified subtree.  Such references can act as pins for mount namespaces
+ * specअगरied subtree.  Such references can act as pins क्रम mount namespaces
  * that aren't checked by the mount-cycle checking code, thereby allowing
  * cycles to be made.
  */
-static bool check_for_nsfs_mounts(struct mount *subtree)
-{
-	struct mount *p;
+अटल bool check_क्रम_nsfs_mounts(काष्ठा mount *subtree)
+अणु
+	काष्ठा mount *p;
 	bool ret = false;
 
 	lock_mount_hash();
-	for (p = subtree; p; p = next_mnt(p, subtree))
-		if (mnt_ns_loop(p->mnt.mnt_root))
-			goto out;
+	क्रम (p = subtree; p; p = next_mnt(p, subtree))
+		अगर (mnt_ns_loop(p->mnt.mnt_root))
+			जाओ out;
 
 	ret = true;
 out:
 	unlock_mount_hash();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int do_move_mount(struct path *old_path, struct path *new_path)
-{
-	struct mnt_namespace *ns;
-	struct mount *p;
-	struct mount *old;
-	struct mount *parent;
-	struct mountpoint *mp, *old_mp;
-	int err;
+अटल पूर्णांक करो_move_mount(काष्ठा path *old_path, काष्ठा path *new_path)
+अणु
+	काष्ठा mnt_namespace *ns;
+	काष्ठा mount *p;
+	काष्ठा mount *old;
+	काष्ठा mount *parent;
+	काष्ठा mountpoपूर्णांक *mp, *old_mp;
+	पूर्णांक err;
 	bool attached;
 
 	mp = lock_mount(new_path);
-	if (IS_ERR(mp))
-		return PTR_ERR(mp);
+	अगर (IS_ERR(mp))
+		वापस PTR_ERR(mp);
 
 	old = real_mount(old_path->mnt);
 	p = real_mount(new_path->mnt);
@@ -2706,307 +2707,307 @@ static int do_move_mount(struct path *old_path, struct path *new_path)
 	ns = old->mnt_ns;
 
 	err = -EINVAL;
-	/* The mountpoint must be in our namespace. */
-	if (!check_mnt(p))
-		goto out;
+	/* The mountpoपूर्णांक must be in our namespace. */
+	अगर (!check_mnt(p))
+		जाओ out;
 
 	/* The thing moved must be mounted... */
-	if (!is_mounted(&old->mnt))
-		goto out;
+	अगर (!is_mounted(&old->mnt))
+		जाओ out;
 
 	/* ... and either ours or the root of anon namespace */
-	if (!(attached ? check_mnt(old) : is_anon_ns(ns)))
-		goto out;
+	अगर (!(attached ? check_mnt(old) : is_anon_ns(ns)))
+		जाओ out;
 
-	if (old->mnt.mnt_flags & MNT_LOCKED)
-		goto out;
+	अगर (old->mnt.mnt_flags & MNT_LOCKED)
+		जाओ out;
 
-	if (old_path->dentry != old_path->mnt->mnt_root)
-		goto out;
+	अगर (old_path->dentry != old_path->mnt->mnt_root)
+		जाओ out;
 
-	if (d_is_dir(new_path->dentry) !=
+	अगर (d_is_dir(new_path->dentry) !=
 	    d_is_dir(old_path->dentry))
-		goto out;
+		जाओ out;
 	/*
 	 * Don't move a mount residing in a shared parent.
 	 */
-	if (attached && IS_MNT_SHARED(parent))
-		goto out;
+	अगर (attached && IS_MNT_SHARED(parent))
+		जाओ out;
 	/*
 	 * Don't move a mount tree containing unbindable mounts to a destination
 	 * mount which is shared.
 	 */
-	if (IS_MNT_SHARED(p) && tree_contains_unbindable(old))
-		goto out;
+	अगर (IS_MNT_SHARED(p) && tree_contains_unbindable(old))
+		जाओ out;
 	err = -ELOOP;
-	if (!check_for_nsfs_mounts(old))
-		goto out;
-	for (; mnt_has_parent(p); p = p->mnt_parent)
-		if (p == old)
-			goto out;
+	अगर (!check_क्रम_nsfs_mounts(old))
+		जाओ out;
+	क्रम (; mnt_has_parent(p); p = p->mnt_parent)
+		अगर (p == old)
+			जाओ out;
 
 	err = attach_recursive_mnt(old, real_mount(new_path->mnt), mp,
 				   attached);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	/* if the mount is moved, it should no longer be expire
-	 * automatically */
+	/* अगर the mount is moved, it should no दीर्घer be expire
+	 * स्वतःmatically */
 	list_del_init(&old->mnt_expire);
-	if (attached)
-		put_mountpoint(old_mp);
+	अगर (attached)
+		put_mountpoपूर्णांक(old_mp);
 out:
 	unlock_mount(mp);
-	if (!err) {
-		if (attached)
+	अगर (!err) अणु
+		अगर (attached)
 			mntput_no_expire(parent);
-		else
-			free_mnt_ns(ns);
-	}
-	return err;
-}
+		अन्यथा
+			मुक्त_mnt_ns(ns);
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int do_move_mount_old(struct path *path, const char *old_name)
-{
-	struct path old_path;
-	int err;
+अटल पूर्णांक करो_move_mount_old(काष्ठा path *path, स्थिर अक्षर *old_name)
+अणु
+	काष्ठा path old_path;
+	पूर्णांक err;
 
-	if (!old_name || !*old_name)
-		return -EINVAL;
+	अगर (!old_name || !*old_name)
+		वापस -EINVAL;
 
 	err = kern_path(old_name, LOOKUP_FOLLOW, &old_path);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = do_move_mount(&old_path, path);
+	err = करो_move_mount(&old_path, path);
 	path_put(&old_path);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * add a mount into a namespace's mount tree
+ * add a mount पूर्णांकo a namespace's mount tree
  */
-static int do_add_mount(struct mount *newmnt, struct mountpoint *mp,
-			struct path *path, int mnt_flags)
-{
-	struct mount *parent = real_mount(path->mnt);
+अटल पूर्णांक करो_add_mount(काष्ठा mount *newmnt, काष्ठा mountpoपूर्णांक *mp,
+			काष्ठा path *path, पूर्णांक mnt_flags)
+अणु
+	काष्ठा mount *parent = real_mount(path->mnt);
 
 	mnt_flags &= ~MNT_INTERNAL_FLAGS;
 
-	if (unlikely(!check_mnt(parent))) {
-		/* that's acceptable only for automounts done in private ns */
-		if (!(mnt_flags & MNT_SHRINKABLE))
-			return -EINVAL;
-		/* ... and for those we'd better have mountpoint still alive */
-		if (!parent->mnt_ns)
-			return -EINVAL;
-	}
+	अगर (unlikely(!check_mnt(parent))) अणु
+		/* that's acceptable only क्रम स्वतःmounts करोne in निजी ns */
+		अगर (!(mnt_flags & MNT_SHRINKABLE))
+			वापस -EINVAL;
+		/* ... and क्रम those we'd better have mountpoपूर्णांक still alive */
+		अगर (!parent->mnt_ns)
+			वापस -EINVAL;
+	पूर्ण
 
-	/* Refuse the same filesystem on the same mount point */
-	if (path->mnt->mnt_sb == newmnt->mnt.mnt_sb &&
+	/* Refuse the same fileप्रणाली on the same mount poपूर्णांक */
+	अगर (path->mnt->mnt_sb == newmnt->mnt.mnt_sb &&
 	    path->mnt->mnt_root == path->dentry)
-		return -EBUSY;
+		वापस -EBUSY;
 
-	if (d_is_symlink(newmnt->mnt.mnt_root))
-		return -EINVAL;
+	अगर (d_is_symlink(newmnt->mnt.mnt_root))
+		वापस -EINVAL;
 
 	newmnt->mnt.mnt_flags = mnt_flags;
-	return graft_tree(newmnt, parent, mp);
-}
+	वापस graft_tree(newmnt, parent, mp);
+पूर्ण
 
-static bool mount_too_revealing(const struct super_block *sb, int *new_mnt_flags);
+अटल bool mount_too_revealing(स्थिर काष्ठा super_block *sb, पूर्णांक *new_mnt_flags);
 
 /*
  * Create a new mount using a superblock configuration and request it
  * be added to the namespace tree.
  */
-static int do_new_mount_fc(struct fs_context *fc, struct path *mountpoint,
-			   unsigned int mnt_flags)
-{
-	struct vfsmount *mnt;
-	struct mountpoint *mp;
-	struct super_block *sb = fc->root->d_sb;
-	int error;
+अटल पूर्णांक करो_new_mount_fc(काष्ठा fs_context *fc, काष्ठा path *mountpoपूर्णांक,
+			   अचिन्हित पूर्णांक mnt_flags)
+अणु
+	काष्ठा vfsmount *mnt;
+	काष्ठा mountpoपूर्णांक *mp;
+	काष्ठा super_block *sb = fc->root->d_sb;
+	पूर्णांक error;
 
 	error = security_sb_kern_mount(sb);
-	if (!error && mount_too_revealing(sb, &mnt_flags))
+	अगर (!error && mount_too_revealing(sb, &mnt_flags))
 		error = -EPERM;
 
-	if (unlikely(error)) {
+	अगर (unlikely(error)) अणु
 		fc_drop_locked(fc);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	up_write(&sb->s_umount);
+	up_ग_लिखो(&sb->s_umount);
 
 	mnt = vfs_create_mount(fc);
-	if (IS_ERR(mnt))
-		return PTR_ERR(mnt);
+	अगर (IS_ERR(mnt))
+		वापस PTR_ERR(mnt);
 
-	mnt_warn_timestamp_expiry(mountpoint, mnt);
+	mnt_warn_बारtamp_expiry(mountpoपूर्णांक, mnt);
 
-	mp = lock_mount(mountpoint);
-	if (IS_ERR(mp)) {
+	mp = lock_mount(mountpoपूर्णांक);
+	अगर (IS_ERR(mp)) अणु
 		mntput(mnt);
-		return PTR_ERR(mp);
-	}
-	error = do_add_mount(real_mount(mnt), mp, mountpoint, mnt_flags);
+		वापस PTR_ERR(mp);
+	पूर्ण
+	error = करो_add_mount(real_mount(mnt), mp, mountpoपूर्णांक, mnt_flags);
 	unlock_mount(mp);
-	if (error < 0)
+	अगर (error < 0)
 		mntput(mnt);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
- * create a new mount for userspace and request it to be added into the
+ * create a new mount क्रम userspace and request it to be added पूर्णांकo the
  * namespace's tree
  */
-static int do_new_mount(struct path *path, const char *fstype, int sb_flags,
-			int mnt_flags, const char *name, void *data)
-{
-	struct file_system_type *type;
-	struct fs_context *fc;
-	const char *subtype = NULL;
-	int err = 0;
+अटल पूर्णांक करो_new_mount(काष्ठा path *path, स्थिर अक्षर *fstype, पूर्णांक sb_flags,
+			पूर्णांक mnt_flags, स्थिर अक्षर *name, व्योम *data)
+अणु
+	काष्ठा file_प्रणाली_type *type;
+	काष्ठा fs_context *fc;
+	स्थिर अक्षर *subtype = शून्य;
+	पूर्णांक err = 0;
 
-	if (!fstype)
-		return -EINVAL;
+	अगर (!fstype)
+		वापस -EINVAL;
 
 	type = get_fs_type(fstype);
-	if (!type)
-		return -ENODEV;
+	अगर (!type)
+		वापस -ENODEV;
 
-	if (type->fs_flags & FS_HAS_SUBTYPE) {
-		subtype = strchr(fstype, '.');
-		if (subtype) {
+	अगर (type->fs_flags & FS_HAS_SUBTYPE) अणु
+		subtype = म_अक्षर(fstype, '.');
+		अगर (subtype) अणु
 			subtype++;
-			if (!*subtype) {
-				put_filesystem(type);
-				return -EINVAL;
-			}
-		}
-	}
+			अगर (!*subtype) अणु
+				put_fileप्रणाली(type);
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	fc = fs_context_for_mount(type, sb_flags);
-	put_filesystem(type);
-	if (IS_ERR(fc))
-		return PTR_ERR(fc);
+	fc = fs_context_क्रम_mount(type, sb_flags);
+	put_fileप्रणाली(type);
+	अगर (IS_ERR(fc))
+		वापस PTR_ERR(fc);
 
-	if (subtype)
+	अगर (subtype)
 		err = vfs_parse_fs_string(fc, "subtype",
-					  subtype, strlen(subtype));
-	if (!err && name)
-		err = vfs_parse_fs_string(fc, "source", name, strlen(name));
-	if (!err)
+					  subtype, म_माप(subtype));
+	अगर (!err && name)
+		err = vfs_parse_fs_string(fc, "source", name, म_माप(name));
+	अगर (!err)
 		err = parse_monolithic_mount_data(fc, data);
-	if (!err && !mount_capable(fc))
+	अगर (!err && !mount_capable(fc))
 		err = -EPERM;
-	if (!err)
+	अगर (!err)
 		err = vfs_get_tree(fc);
-	if (!err)
-		err = do_new_mount_fc(fc, path, mnt_flags);
+	अगर (!err)
+		err = करो_new_mount_fc(fc, path, mnt_flags);
 
 	put_fs_context(fc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int finish_automount(struct vfsmount *m, struct path *path)
-{
-	struct dentry *dentry = path->dentry;
-	struct mountpoint *mp;
-	struct mount *mnt;
-	int err;
+पूर्णांक finish_स्वतःmount(काष्ठा vfsmount *m, काष्ठा path *path)
+अणु
+	काष्ठा dentry *dentry = path->dentry;
+	काष्ठा mountpoपूर्णांक *mp;
+	काष्ठा mount *mnt;
+	पूर्णांक err;
 
-	if (!m)
-		return 0;
-	if (IS_ERR(m))
-		return PTR_ERR(m);
+	अगर (!m)
+		वापस 0;
+	अगर (IS_ERR(m))
+		वापस PTR_ERR(m);
 
 	mnt = real_mount(m);
 	/* The new mount record should have at least 2 refs to prevent it being
-	 * expired before we get a chance to add it
+	 * expired beक्रमe we get a chance to add it
 	 */
 	BUG_ON(mnt_get_count(mnt) < 2);
 
-	if (m->mnt_sb == path->mnt->mnt_sb &&
-	    m->mnt_root == dentry) {
+	अगर (m->mnt_sb == path->mnt->mnt_sb &&
+	    m->mnt_root == dentry) अणु
 		err = -ELOOP;
-		goto discard;
-	}
+		जाओ discard;
+	पूर्ण
 
 	/*
-	 * we don't want to use lock_mount() - in this case finding something
-	 * that overmounts our mountpoint to be means "quitely drop what we've
+	 * we करोn't want to use lock_mount() - in this हाल finding something
+	 * that overmounts our mountpoपूर्णांक to be means "quitely drop what we've
 	 * got", not "try to mount it on top".
 	 */
 	inode_lock(dentry->d_inode);
 	namespace_lock();
-	if (unlikely(cant_mount(dentry))) {
+	अगर (unlikely(cant_mount(dentry))) अणु
 		err = -ENOENT;
-		goto discard_locked;
-	}
-	rcu_read_lock();
-	if (unlikely(__lookup_mnt(path->mnt, dentry))) {
-		rcu_read_unlock();
+		जाओ discard_locked;
+	पूर्ण
+	rcu_पढ़ो_lock();
+	अगर (unlikely(__lookup_mnt(path->mnt, dentry))) अणु
+		rcu_पढ़ो_unlock();
 		err = 0;
-		goto discard_locked;
-	}
-	rcu_read_unlock();
-	mp = get_mountpoint(dentry);
-	if (IS_ERR(mp)) {
+		जाओ discard_locked;
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	mp = get_mountpoपूर्णांक(dentry);
+	अगर (IS_ERR(mp)) अणु
 		err = PTR_ERR(mp);
-		goto discard_locked;
-	}
+		जाओ discard_locked;
+	पूर्ण
 
-	err = do_add_mount(mnt, mp, path, path->mnt->mnt_flags | MNT_SHRINKABLE);
+	err = करो_add_mount(mnt, mp, path, path->mnt->mnt_flags | MNT_SHRINKABLE);
 	unlock_mount(mp);
-	if (unlikely(err))
-		goto discard;
+	अगर (unlikely(err))
+		जाओ discard;
 	mntput(m);
-	return 0;
+	वापस 0;
 
 discard_locked:
 	namespace_unlock();
 	inode_unlock(dentry->d_inode);
 discard:
-	/* remove m from any expiration list it may be on */
-	if (!list_empty(&mnt->mnt_expire)) {
+	/* हटाओ m from any expiration list it may be on */
+	अगर (!list_empty(&mnt->mnt_expire)) अणु
 		namespace_lock();
 		list_del_init(&mnt->mnt_expire);
 		namespace_unlock();
-	}
+	पूर्ण
 	mntput(m);
 	mntput(m);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * mnt_set_expiry - Put a mount on an expiration list
  * @mnt: The mount to list.
  * @expiry_list: The list to add the mount to.
  */
-void mnt_set_expiry(struct vfsmount *mnt, struct list_head *expiry_list)
-{
+व्योम mnt_set_expiry(काष्ठा vfsmount *mnt, काष्ठा list_head *expiry_list)
+अणु
 	namespace_lock();
 
 	list_add_tail(&real_mount(mnt)->mnt_expire, expiry_list);
 
 	namespace_unlock();
-}
+पूर्ण
 EXPORT_SYMBOL(mnt_set_expiry);
 
 /*
- * process a list of expirable mountpoints with the intent of discarding any
- * mountpoints that aren't in use and haven't been touched since last we came
+ * process a list of expirable mountpoपूर्णांकs with the पूर्णांकent of discarding any
+ * mountpoपूर्णांकs that aren't in use and haven't been touched since last we came
  * here
  */
-void mark_mounts_for_expiry(struct list_head *mounts)
-{
-	struct mount *mnt, *next;
+व्योम mark_mounts_क्रम_expiry(काष्ठा list_head *mounts)
+अणु
+	काष्ठा mount *mnt, *next;
 	LIST_HEAD(graveyard);
 
-	if (list_empty(mounts))
-		return;
+	अगर (list_empty(mounts))
+		वापस;
 
 	namespace_lock();
 	lock_mount_hash();
@@ -3014,398 +3015,398 @@ void mark_mounts_for_expiry(struct list_head *mounts)
 	/* extract from the expiration list every vfsmount that matches the
 	 * following criteria:
 	 * - only referenced by its parent vfsmount
-	 * - still marked for expiry (marked on the last call here; marks are
+	 * - still marked क्रम expiry (marked on the last call here; marks are
 	 *   cleared by mntput())
 	 */
-	list_for_each_entry_safe(mnt, next, mounts, mnt_expire) {
-		if (!xchg(&mnt->mnt_expiry_mark, 1) ||
+	list_क्रम_each_entry_safe(mnt, next, mounts, mnt_expire) अणु
+		अगर (!xchg(&mnt->mnt_expiry_mark, 1) ||
 			propagate_mount_busy(mnt, 1))
-			continue;
+			जारी;
 		list_move(&mnt->mnt_expire, &graveyard);
-	}
-	while (!list_empty(&graveyard)) {
-		mnt = list_first_entry(&graveyard, struct mount, mnt_expire);
+	पूर्ण
+	जबतक (!list_empty(&graveyard)) अणु
+		mnt = list_first_entry(&graveyard, काष्ठा mount, mnt_expire);
 		touch_mnt_namespace(mnt->mnt_ns);
 		umount_tree(mnt, UMOUNT_PROPAGATE|UMOUNT_SYNC);
-	}
+	पूर्ण
 	unlock_mount_hash();
 	namespace_unlock();
-}
+पूर्ण
 
-EXPORT_SYMBOL_GPL(mark_mounts_for_expiry);
+EXPORT_SYMBOL_GPL(mark_mounts_क्रम_expiry);
 
 /*
  * Ripoff of 'select_parent()'
  *
- * search the list of submounts for a given mountpoint, and move any
+ * search the list of submounts क्रम a given mountpoपूर्णांक, and move any
  * shrinkable submounts to the 'graveyard' list.
  */
-static int select_submounts(struct mount *parent, struct list_head *graveyard)
-{
-	struct mount *this_parent = parent;
-	struct list_head *next;
-	int found = 0;
+अटल पूर्णांक select_submounts(काष्ठा mount *parent, काष्ठा list_head *graveyard)
+अणु
+	काष्ठा mount *this_parent = parent;
+	काष्ठा list_head *next;
+	पूर्णांक found = 0;
 
 repeat:
 	next = this_parent->mnt_mounts.next;
 resume:
-	while (next != &this_parent->mnt_mounts) {
-		struct list_head *tmp = next;
-		struct mount *mnt = list_entry(tmp, struct mount, mnt_child);
+	जबतक (next != &this_parent->mnt_mounts) अणु
+		काष्ठा list_head *पंचांगp = next;
+		काष्ठा mount *mnt = list_entry(पंचांगp, काष्ठा mount, mnt_child);
 
-		next = tmp->next;
-		if (!(mnt->mnt.mnt_flags & MNT_SHRINKABLE))
-			continue;
+		next = पंचांगp->next;
+		अगर (!(mnt->mnt.mnt_flags & MNT_SHRINKABLE))
+			जारी;
 		/*
-		 * Descend a level if the d_mounts list is non-empty.
+		 * Descend a level अगर the d_mounts list is non-empty.
 		 */
-		if (!list_empty(&mnt->mnt_mounts)) {
+		अगर (!list_empty(&mnt->mnt_mounts)) अणु
 			this_parent = mnt;
-			goto repeat;
-		}
+			जाओ repeat;
+		पूर्ण
 
-		if (!propagate_mount_busy(mnt, 1)) {
+		अगर (!propagate_mount_busy(mnt, 1)) अणु
 			list_move_tail(&mnt->mnt_expire, graveyard);
 			found++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
-	 * All done at this level ... ascend and resume the search
+	 * All करोne at this level ... ascend and resume the search
 	 */
-	if (this_parent != parent) {
+	अगर (this_parent != parent) अणु
 		next = this_parent->mnt_child.next;
 		this_parent = this_parent->mnt_parent;
-		goto resume;
-	}
-	return found;
-}
+		जाओ resume;
+	पूर्ण
+	वापस found;
+पूर्ण
 
 /*
- * process a list of expirable mountpoints with the intent of discarding any
- * submounts of a specific parent mountpoint
+ * process a list of expirable mountpoपूर्णांकs with the पूर्णांकent of discarding any
+ * submounts of a specअगरic parent mountpoपूर्णांक
  *
- * mount_lock must be held for write
+ * mount_lock must be held क्रम ग_लिखो
  */
-static void shrink_submounts(struct mount *mnt)
-{
+अटल व्योम shrink_submounts(काष्ठा mount *mnt)
+अणु
 	LIST_HEAD(graveyard);
-	struct mount *m;
+	काष्ठा mount *m;
 
 	/* extract submounts of 'mountpoint' from the expiration list */
-	while (select_submounts(mnt, &graveyard)) {
-		while (!list_empty(&graveyard)) {
-			m = list_first_entry(&graveyard, struct mount,
+	जबतक (select_submounts(mnt, &graveyard)) अणु
+		जबतक (!list_empty(&graveyard)) अणु
+			m = list_first_entry(&graveyard, काष्ठा mount,
 						mnt_expire);
 			touch_mnt_namespace(m->mnt_ns);
 			umount_tree(m, UMOUNT_PROPAGATE|UMOUNT_SYNC);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void *copy_mount_options(const void __user * data)
-{
-	char *copy;
-	unsigned left, offset;
+अटल व्योम *copy_mount_options(स्थिर व्योम __user * data)
+अणु
+	अक्षर *copy;
+	अचिन्हित left, offset;
 
-	if (!data)
-		return NULL;
+	अगर (!data)
+		वापस शून्य;
 
-	copy = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!copy)
-		return ERR_PTR(-ENOMEM);
+	copy = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!copy)
+		वापस ERR_PTR(-ENOMEM);
 
 	left = copy_from_user(copy, data, PAGE_SIZE);
 
 	/*
 	 * Not all architectures have an exact copy_from_user(). Resort to
-	 * byte at a time.
+	 * byte at a समय.
 	 */
 	offset = PAGE_SIZE - left;
-	while (left) {
-		char c;
-		if (get_user(c, (const char __user *)data + offset))
-			break;
+	जबतक (left) अणु
+		अक्षर c;
+		अगर (get_user(c, (स्थिर अक्षर __user *)data + offset))
+			अवरोध;
 		copy[offset] = c;
 		left--;
 		offset++;
-	}
+	पूर्ण
 
-	if (left == PAGE_SIZE) {
-		kfree(copy);
-		return ERR_PTR(-EFAULT);
-	}
+	अगर (left == PAGE_SIZE) अणु
+		kमुक्त(copy);
+		वापस ERR_PTR(-EFAULT);
+	पूर्ण
 
-	return copy;
-}
+	वापस copy;
+पूर्ण
 
-static char *copy_mount_string(const void __user *data)
-{
-	return data ? strndup_user(data, PATH_MAX) : NULL;
-}
+अटल अक्षर *copy_mount_string(स्थिर व्योम __user *data)
+अणु
+	वापस data ? strndup_user(data, PATH_MAX) : शून्य;
+पूर्ण
 
 /*
  * Flags is a 32-bit value that allows up to 31 non-fs dependent flags to
- * be given to the mount() call (ie: read-only, no-dev, no-suid etc).
+ * be given to the mount() call (ie: पढ़ो-only, no-dev, no-suid etc).
  *
- * data is a (void *) that can point to any structure up to
+ * data is a (व्योम *) that can poपूर्णांक to any काष्ठाure up to
  * PAGE_SIZE-1 bytes, which can contain arbitrary fs-dependent
- * information (or be NULL).
+ * inक्रमmation (or be शून्य).
  *
  * Pre-0.97 versions of mount() didn't have a flags word.
- * When the flags word was introduced its top half was required
- * to have the magic value 0xC0ED, and this remained so until 2.4.0-test9.
- * Therefore, if this magic number is present, it carries no information
+ * When the flags word was पूर्णांकroduced its top half was required
+ * to have the magic value 0xC0ED, and this reमुख्यed so until 2.4.0-test9.
+ * Thereक्रमe, अगर this magic number is present, it carries no inक्रमmation
  * and must be discarded.
  */
-int path_mount(const char *dev_name, struct path *path,
-		const char *type_page, unsigned long flags, void *data_page)
-{
-	unsigned int mnt_flags = 0, sb_flags;
-	int ret;
+पूर्णांक path_mount(स्थिर अक्षर *dev_name, काष्ठा path *path,
+		स्थिर अक्षर *type_page, अचिन्हित दीर्घ flags, व्योम *data_page)
+अणु
+	अचिन्हित पूर्णांक mnt_flags = 0, sb_flags;
+	पूर्णांक ret;
 
 	/* Discard magic */
-	if ((flags & MS_MGC_MSK) == MS_MGC_VAL)
+	अगर ((flags & MS_MGC_MSK) == MS_MGC_VAL)
 		flags &= ~MS_MGC_MSK;
 
 	/* Basic sanity checks */
-	if (data_page)
-		((char *)data_page)[PAGE_SIZE - 1] = 0;
+	अगर (data_page)
+		((अक्षर *)data_page)[PAGE_SIZE - 1] = 0;
 
-	if (flags & MS_NOUSER)
-		return -EINVAL;
+	अगर (flags & MS_NOUSER)
+		वापस -EINVAL;
 
 	ret = security_sb_mount(dev_name, path, type_page, flags, data_page);
-	if (ret)
-		return ret;
-	if (!may_mount())
-		return -EPERM;
-	if ((flags & SB_MANDLOCK) && !may_mandlock())
-		return -EPERM;
+	अगर (ret)
+		वापस ret;
+	अगर (!may_mount())
+		वापस -EPERM;
+	अगर ((flags & SB_MANDLOCK) && !may_mandlock())
+		वापस -EPERM;
 
-	/* Default to relatime unless overriden */
-	if (!(flags & MS_NOATIME))
+	/* Default to relaसमय unless overriden */
+	अगर (!(flags & MS_NOATIME))
 		mnt_flags |= MNT_RELATIME;
 
-	/* Separate the per-mountpoint flags */
-	if (flags & MS_NOSUID)
+	/* Separate the per-mountpoपूर्णांक flags */
+	अगर (flags & MS_NOSUID)
 		mnt_flags |= MNT_NOSUID;
-	if (flags & MS_NODEV)
+	अगर (flags & MS_NODEV)
 		mnt_flags |= MNT_NODEV;
-	if (flags & MS_NOEXEC)
+	अगर (flags & MS_NOEXEC)
 		mnt_flags |= MNT_NOEXEC;
-	if (flags & MS_NOATIME)
+	अगर (flags & MS_NOATIME)
 		mnt_flags |= MNT_NOATIME;
-	if (flags & MS_NODIRATIME)
-		mnt_flags |= MNT_NODIRATIME;
-	if (flags & MS_STRICTATIME)
+	अगर (flags & MS_NOसूचीATIME)
+		mnt_flags |= MNT_NOसूचीATIME;
+	अगर (flags & MS_STRICTATIME)
 		mnt_flags &= ~(MNT_RELATIME | MNT_NOATIME);
-	if (flags & MS_RDONLY)
+	अगर (flags & MS_RDONLY)
 		mnt_flags |= MNT_READONLY;
-	if (flags & MS_NOSYMFOLLOW)
+	अगर (flags & MS_NOSYMFOLLOW)
 		mnt_flags |= MNT_NOSYMFOLLOW;
 
-	/* The default atime for remount is preservation */
-	if ((flags & MS_REMOUNT) &&
-	    ((flags & (MS_NOATIME | MS_NODIRATIME | MS_RELATIME |
-		       MS_STRICTATIME)) == 0)) {
+	/* The शेष aसमय क्रम remount is preservation */
+	अगर ((flags & MS_REMOUNT) &&
+	    ((flags & (MS_NOATIME | MS_NOसूचीATIME | MS_RELATIME |
+		       MS_STRICTATIME)) == 0)) अणु
 		mnt_flags &= ~MNT_ATIME_MASK;
 		mnt_flags |= path->mnt->mnt_flags & MNT_ATIME_MASK;
-	}
+	पूर्ण
 
 	sb_flags = flags & (SB_RDONLY |
 			    SB_SYNCHRONOUS |
 			    SB_MANDLOCK |
-			    SB_DIRSYNC |
+			    SB_सूचीSYNC |
 			    SB_SILENT |
 			    SB_POSIXACL |
 			    SB_LAZYTIME |
 			    SB_I_VERSION);
 
-	if ((flags & (MS_REMOUNT | MS_BIND)) == (MS_REMOUNT | MS_BIND))
-		return do_reconfigure_mnt(path, mnt_flags);
-	if (flags & MS_REMOUNT)
-		return do_remount(path, flags, sb_flags, mnt_flags, data_page);
-	if (flags & MS_BIND)
-		return do_loopback(path, dev_name, flags & MS_REC);
-	if (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
-		return do_change_type(path, flags);
-	if (flags & MS_MOVE)
-		return do_move_mount_old(path, dev_name);
+	अगर ((flags & (MS_REMOUNT | MS_BIND)) == (MS_REMOUNT | MS_BIND))
+		वापस करो_reconfigure_mnt(path, mnt_flags);
+	अगर (flags & MS_REMOUNT)
+		वापस करो_remount(path, flags, sb_flags, mnt_flags, data_page);
+	अगर (flags & MS_BIND)
+		वापस करो_loopback(path, dev_name, flags & MS_REC);
+	अगर (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
+		वापस करो_change_type(path, flags);
+	अगर (flags & MS_MOVE)
+		वापस करो_move_mount_old(path, dev_name);
 
-	return do_new_mount(path, type_page, sb_flags, mnt_flags, dev_name,
+	वापस करो_new_mount(path, type_page, sb_flags, mnt_flags, dev_name,
 			    data_page);
-}
+पूर्ण
 
-long do_mount(const char *dev_name, const char __user *dir_name,
-		const char *type_page, unsigned long flags, void *data_page)
-{
-	struct path path;
-	int ret;
+दीर्घ करो_mount(स्थिर अक्षर *dev_name, स्थिर अक्षर __user *dir_name,
+		स्थिर अक्षर *type_page, अचिन्हित दीर्घ flags, व्योम *data_page)
+अणु
+	काष्ठा path path;
+	पूर्णांक ret;
 
 	ret = user_path_at(AT_FDCWD, dir_name, LOOKUP_FOLLOW, &path);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = path_mount(dev_name, &path, type_page, flags, data_page);
 	path_put(&path);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct ucounts *inc_mnt_namespaces(struct user_namespace *ns)
-{
-	return inc_ucount(ns, current_euid(), UCOUNT_MNT_NAMESPACES);
-}
+अटल काष्ठा ucounts *inc_mnt_namespaces(काष्ठा user_namespace *ns)
+अणु
+	वापस inc_ucount(ns, current_euid(), UCOUNT_MNT_NAMESPACES);
+पूर्ण
 
-static void dec_mnt_namespaces(struct ucounts *ucounts)
-{
+अटल व्योम dec_mnt_namespaces(काष्ठा ucounts *ucounts)
+अणु
 	dec_ucount(ucounts, UCOUNT_MNT_NAMESPACES);
-}
+पूर्ण
 
-static void free_mnt_ns(struct mnt_namespace *ns)
-{
-	if (!is_anon_ns(ns))
-		ns_free_inum(&ns->ns);
+अटल व्योम मुक्त_mnt_ns(काष्ठा mnt_namespace *ns)
+अणु
+	अगर (!is_anon_ns(ns))
+		ns_मुक्त_inum(&ns->ns);
 	dec_mnt_namespaces(ns->ucounts);
 	put_user_ns(ns->user_ns);
-	kfree(ns);
-}
+	kमुक्त(ns);
+पूर्ण
 
 /*
  * Assign a sequence number so we can detect when we attempt to bind
- * mount a reference to an older mount namespace into the current
+ * mount a reference to an older mount namespace पूर्णांकo the current
  * mount namespace, preventing reference counting loops.  A 64bit
  * number incrementing at 10Ghz will take 12,427 years to wrap which
  * is effectively never, so we can ignore the possibility.
  */
-static atomic64_t mnt_ns_seq = ATOMIC64_INIT(1);
+अटल atomic64_t mnt_ns_seq = ATOMIC64_INIT(1);
 
-static struct mnt_namespace *alloc_mnt_ns(struct user_namespace *user_ns, bool anon)
-{
-	struct mnt_namespace *new_ns;
-	struct ucounts *ucounts;
-	int ret;
+अटल काष्ठा mnt_namespace *alloc_mnt_ns(काष्ठा user_namespace *user_ns, bool anon)
+अणु
+	काष्ठा mnt_namespace *new_ns;
+	काष्ठा ucounts *ucounts;
+	पूर्णांक ret;
 
 	ucounts = inc_mnt_namespaces(user_ns);
-	if (!ucounts)
-		return ERR_PTR(-ENOSPC);
+	अगर (!ucounts)
+		वापस ERR_PTR(-ENOSPC);
 
-	new_ns = kzalloc(sizeof(struct mnt_namespace), GFP_KERNEL);
-	if (!new_ns) {
+	new_ns = kzalloc(माप(काष्ठा mnt_namespace), GFP_KERNEL);
+	अगर (!new_ns) अणु
 		dec_mnt_namespaces(ucounts);
-		return ERR_PTR(-ENOMEM);
-	}
-	if (!anon) {
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
+	अगर (!anon) अणु
 		ret = ns_alloc_inum(&new_ns->ns);
-		if (ret) {
-			kfree(new_ns);
+		अगर (ret) अणु
+			kमुक्त(new_ns);
 			dec_mnt_namespaces(ucounts);
-			return ERR_PTR(ret);
-		}
-	}
+			वापस ERR_PTR(ret);
+		पूर्ण
+	पूर्ण
 	new_ns->ns.ops = &mntns_operations;
-	if (!anon)
-		new_ns->seq = atomic64_add_return(1, &mnt_ns_seq);
+	अगर (!anon)
+		new_ns->seq = atomic64_add_वापस(1, &mnt_ns_seq);
 	refcount_set(&new_ns->ns.count, 1);
 	INIT_LIST_HEAD(&new_ns->list);
-	init_waitqueue_head(&new_ns->poll);
+	init_रुकोqueue_head(&new_ns->poll);
 	spin_lock_init(&new_ns->ns_lock);
 	new_ns->user_ns = get_user_ns(user_ns);
 	new_ns->ucounts = ucounts;
-	return new_ns;
-}
+	वापस new_ns;
+पूर्ण
 
 __latent_entropy
-struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
-		struct user_namespace *user_ns, struct fs_struct *new_fs)
-{
-	struct mnt_namespace *new_ns;
-	struct vfsmount *rootmnt = NULL, *pwdmnt = NULL;
-	struct mount *p, *q;
-	struct mount *old;
-	struct mount *new;
-	int copy_flags;
+काष्ठा mnt_namespace *copy_mnt_ns(अचिन्हित दीर्घ flags, काष्ठा mnt_namespace *ns,
+		काष्ठा user_namespace *user_ns, काष्ठा fs_काष्ठा *new_fs)
+अणु
+	काष्ठा mnt_namespace *new_ns;
+	काष्ठा vfsmount *rooपंचांगnt = शून्य, *pwdmnt = शून्य;
+	काष्ठा mount *p, *q;
+	काष्ठा mount *old;
+	काष्ठा mount *new;
+	पूर्णांक copy_flags;
 
 	BUG_ON(!ns);
 
-	if (likely(!(flags & CLONE_NEWNS))) {
+	अगर (likely(!(flags & CLONE_NEWNS))) अणु
 		get_mnt_ns(ns);
-		return ns;
-	}
+		वापस ns;
+	पूर्ण
 
 	old = ns->root;
 
 	new_ns = alloc_mnt_ns(user_ns, false);
-	if (IS_ERR(new_ns))
-		return new_ns;
+	अगर (IS_ERR(new_ns))
+		वापस new_ns;
 
 	namespace_lock();
 	/* First pass: copy the tree topology */
 	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
-	if (user_ns != ns->user_ns)
+	अगर (user_ns != ns->user_ns)
 		copy_flags |= CL_SHARED_TO_SLAVE;
 	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
-	if (IS_ERR(new)) {
+	अगर (IS_ERR(new)) अणु
 		namespace_unlock();
-		free_mnt_ns(new_ns);
-		return ERR_CAST(new);
-	}
-	if (user_ns != ns->user_ns) {
+		मुक्त_mnt_ns(new_ns);
+		वापस ERR_CAST(new);
+	पूर्ण
+	अगर (user_ns != ns->user_ns) अणु
 		lock_mount_hash();
 		lock_mnt_tree(new);
 		unlock_mount_hash();
-	}
+	पूर्ण
 	new_ns->root = new;
 	list_add_tail(&new_ns->list, &new->mnt_list);
 
 	/*
-	 * Second pass: switch the tsk->fs->* elements and mark new vfsmounts
-	 * as belonging to new namespace.  We have already acquired a private
-	 * fs_struct, so tsk->fs->lock is not needed.
+	 * Second pass: चयन the tsk->fs->* elements and mark new vfsmounts
+	 * as beदीर्घing to new namespace.  We have alपढ़ोy acquired a निजी
+	 * fs_काष्ठा, so tsk->fs->lock is not needed.
 	 */
 	p = old;
 	q = new;
-	while (p) {
+	जबतक (p) अणु
 		q->mnt_ns = new_ns;
 		new_ns->mounts++;
-		if (new_fs) {
-			if (&p->mnt == new_fs->root.mnt) {
+		अगर (new_fs) अणु
+			अगर (&p->mnt == new_fs->root.mnt) अणु
 				new_fs->root.mnt = mntget(&q->mnt);
-				rootmnt = &p->mnt;
-			}
-			if (&p->mnt == new_fs->pwd.mnt) {
+				rooपंचांगnt = &p->mnt;
+			पूर्ण
+			अगर (&p->mnt == new_fs->pwd.mnt) अणु
 				new_fs->pwd.mnt = mntget(&q->mnt);
 				pwdmnt = &p->mnt;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		p = next_mnt(p, old);
 		q = next_mnt(q, new);
-		if (!q)
-			break;
-		while (p->mnt.mnt_root != q->mnt.mnt_root)
+		अगर (!q)
+			अवरोध;
+		जबतक (p->mnt.mnt_root != q->mnt.mnt_root)
 			p = next_mnt(p, old);
-	}
+	पूर्ण
 	namespace_unlock();
 
-	if (rootmnt)
-		mntput(rootmnt);
-	if (pwdmnt)
+	अगर (rooपंचांगnt)
+		mntput(rooपंचांगnt);
+	अगर (pwdmnt)
 		mntput(pwdmnt);
 
-	return new_ns;
-}
+	वापस new_ns;
+पूर्ण
 
-struct dentry *mount_subtree(struct vfsmount *m, const char *name)
-{
-	struct mount *mnt = real_mount(m);
-	struct mnt_namespace *ns;
-	struct super_block *s;
-	struct path path;
-	int err;
+काष्ठा dentry *mount_subtree(काष्ठा vfsmount *m, स्थिर अक्षर *name)
+अणु
+	काष्ठा mount *mnt = real_mount(m);
+	काष्ठा mnt_namespace *ns;
+	काष्ठा super_block *s;
+	काष्ठा path path;
+	पूर्णांक err;
 
 	ns = alloc_mnt_ns(&init_user_ns, true);
-	if (IS_ERR(ns)) {
+	अगर (IS_ERR(ns)) अणु
 		mntput(m);
-		return ERR_CAST(ns);
-	}
+		वापस ERR_CAST(ns);
+	पूर्ण
 	mnt->mnt_ns = ns;
 	ns->root = mnt;
 	ns->mounts++;
@@ -3416,174 +3417,174 @@ struct dentry *mount_subtree(struct vfsmount *m, const char *name)
 
 	put_mnt_ns(ns);
 
-	if (err)
-		return ERR_PTR(err);
+	अगर (err)
+		वापस ERR_PTR(err);
 
-	/* trade a vfsmount reference for active sb one */
+	/* trade a vfsmount reference क्रम active sb one */
 	s = path.mnt->mnt_sb;
 	atomic_inc(&s->s_active);
 	mntput(path.mnt);
 	/* lock the sucker */
-	down_write(&s->s_umount);
-	/* ... and return the root of (sub)tree on it */
-	return path.dentry;
-}
+	करोwn_ग_लिखो(&s->s_umount);
+	/* ... and वापस the root of (sub)tree on it */
+	वापस path.dentry;
+पूर्ण
 EXPORT_SYMBOL(mount_subtree);
 
-SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
-		char __user *, type, unsigned long, flags, void __user *, data)
-{
-	int ret;
-	char *kernel_type;
-	char *kernel_dev;
-	void *options;
+SYSCALL_DEFINE5(mount, अक्षर __user *, dev_name, अक्षर __user *, dir_name,
+		अक्षर __user *, type, अचिन्हित दीर्घ, flags, व्योम __user *, data)
+अणु
+	पूर्णांक ret;
+	अक्षर *kernel_type;
+	अक्षर *kernel_dev;
+	व्योम *options;
 
 	kernel_type = copy_mount_string(type);
 	ret = PTR_ERR(kernel_type);
-	if (IS_ERR(kernel_type))
-		goto out_type;
+	अगर (IS_ERR(kernel_type))
+		जाओ out_type;
 
 	kernel_dev = copy_mount_string(dev_name);
 	ret = PTR_ERR(kernel_dev);
-	if (IS_ERR(kernel_dev))
-		goto out_dev;
+	अगर (IS_ERR(kernel_dev))
+		जाओ out_dev;
 
 	options = copy_mount_options(data);
 	ret = PTR_ERR(options);
-	if (IS_ERR(options))
-		goto out_data;
+	अगर (IS_ERR(options))
+		जाओ out_data;
 
-	ret = do_mount(kernel_dev, dir_name, kernel_type, flags, options);
+	ret = करो_mount(kernel_dev, dir_name, kernel_type, flags, options);
 
-	kfree(options);
+	kमुक्त(options);
 out_data:
-	kfree(kernel_dev);
+	kमुक्त(kernel_dev);
 out_dev:
-	kfree(kernel_type);
+	kमुक्त(kernel_type);
 out_type:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define FSMOUNT_VALID_FLAGS \
+#घोषणा FSMOUNT_VALID_FLAGS \
 	(MOUNT_ATTR_RDONLY | MOUNT_ATTR_NOSUID | MOUNT_ATTR_NODEV | \
-	 MOUNT_ATTR_NOEXEC | MOUNT_ATTR__ATIME | MOUNT_ATTR_NODIRATIME)
+	 MOUNT_ATTR_NOEXEC | MOUNT_ATTR__ATIME | MOUNT_ATTR_NOसूचीATIME)
 
-#define MOUNT_SETATTR_VALID_FLAGS (FSMOUNT_VALID_FLAGS | MOUNT_ATTR_IDMAP)
+#घोषणा MOUNT_SETATTR_VALID_FLAGS (FSMOUNT_VALID_FLAGS | MOUNT_ATTR_IDMAP)
 
-#define MOUNT_SETATTR_PROPAGATION_FLAGS \
+#घोषणा MOUNT_SETATTR_PROPAGATION_FLAGS \
 	(MS_UNBINDABLE | MS_PRIVATE | MS_SLAVE | MS_SHARED)
 
-static unsigned int attr_flags_to_mnt_flags(u64 attr_flags)
-{
-	unsigned int mnt_flags = 0;
+अटल अचिन्हित पूर्णांक attr_flags_to_mnt_flags(u64 attr_flags)
+अणु
+	अचिन्हित पूर्णांक mnt_flags = 0;
 
-	if (attr_flags & MOUNT_ATTR_RDONLY)
+	अगर (attr_flags & MOUNT_ATTR_RDONLY)
 		mnt_flags |= MNT_READONLY;
-	if (attr_flags & MOUNT_ATTR_NOSUID)
+	अगर (attr_flags & MOUNT_ATTR_NOSUID)
 		mnt_flags |= MNT_NOSUID;
-	if (attr_flags & MOUNT_ATTR_NODEV)
+	अगर (attr_flags & MOUNT_ATTR_NODEV)
 		mnt_flags |= MNT_NODEV;
-	if (attr_flags & MOUNT_ATTR_NOEXEC)
+	अगर (attr_flags & MOUNT_ATTR_NOEXEC)
 		mnt_flags |= MNT_NOEXEC;
-	if (attr_flags & MOUNT_ATTR_NODIRATIME)
-		mnt_flags |= MNT_NODIRATIME;
+	अगर (attr_flags & MOUNT_ATTR_NOसूचीATIME)
+		mnt_flags |= MNT_NOसूचीATIME;
 
-	return mnt_flags;
-}
+	वापस mnt_flags;
+पूर्ण
 
 /*
- * Create a kernel mount representation for a new, prepared superblock
- * (specified by fs_fd) and attach to an open_tree-like file descriptor.
+ * Create a kernel mount representation क्रम a new, prepared superblock
+ * (specअगरied by fs_fd) and attach to an खोलो_tree-like file descriptor.
  */
-SYSCALL_DEFINE3(fsmount, int, fs_fd, unsigned int, flags,
-		unsigned int, attr_flags)
-{
-	struct mnt_namespace *ns;
-	struct fs_context *fc;
-	struct file *file;
-	struct path newmount;
-	struct mount *mnt;
-	struct fd f;
-	unsigned int mnt_flags = 0;
-	long ret;
+SYSCALL_DEFINE3(fsmount, पूर्णांक, fs_fd, अचिन्हित पूर्णांक, flags,
+		अचिन्हित पूर्णांक, attr_flags)
+अणु
+	काष्ठा mnt_namespace *ns;
+	काष्ठा fs_context *fc;
+	काष्ठा file *file;
+	काष्ठा path newmount;
+	काष्ठा mount *mnt;
+	काष्ठा fd f;
+	अचिन्हित पूर्णांक mnt_flags = 0;
+	दीर्घ ret;
 
-	if (!may_mount())
-		return -EPERM;
+	अगर (!may_mount())
+		वापस -EPERM;
 
-	if ((flags & ~(FSMOUNT_CLOEXEC)) != 0)
-		return -EINVAL;
+	अगर ((flags & ~(FSMOUNT_CLOEXEC)) != 0)
+		वापस -EINVAL;
 
-	if (attr_flags & ~FSMOUNT_VALID_FLAGS)
-		return -EINVAL;
+	अगर (attr_flags & ~FSMOUNT_VALID_FLAGS)
+		वापस -EINVAL;
 
 	mnt_flags = attr_flags_to_mnt_flags(attr_flags);
 
-	switch (attr_flags & MOUNT_ATTR__ATIME) {
-	case MOUNT_ATTR_STRICTATIME:
-		break;
-	case MOUNT_ATTR_NOATIME:
+	चयन (attr_flags & MOUNT_ATTR__ATIME) अणु
+	हाल MOUNT_ATTR_STRICTATIME:
+		अवरोध;
+	हाल MOUNT_ATTR_NOATIME:
 		mnt_flags |= MNT_NOATIME;
-		break;
-	case MOUNT_ATTR_RELATIME:
+		अवरोध;
+	हाल MOUNT_ATTR_RELATIME:
 		mnt_flags |= MNT_RELATIME;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	f = fdget(fs_fd);
-	if (!f.file)
-		return -EBADF;
+	अगर (!f.file)
+		वापस -EBADF;
 
 	ret = -EINVAL;
-	if (f.file->f_op != &fscontext_fops)
-		goto err_fsfd;
+	अगर (f.file->f_op != &fscontext_fops)
+		जाओ err_fsfd;
 
-	fc = f.file->private_data;
+	fc = f.file->निजी_data;
 
-	ret = mutex_lock_interruptible(&fc->uapi_mutex);
-	if (ret < 0)
-		goto err_fsfd;
+	ret = mutex_lock_पूर्णांकerruptible(&fc->uapi_mutex);
+	अगर (ret < 0)
+		जाओ err_fsfd;
 
 	/* There must be a valid superblock or we can't mount it */
 	ret = -EINVAL;
-	if (!fc->root)
-		goto err_unlock;
+	अगर (!fc->root)
+		जाओ err_unlock;
 
 	ret = -EPERM;
-	if (mount_too_revealing(fc->root->d_sb, &mnt_flags)) {
+	अगर (mount_too_revealing(fc->root->d_sb, &mnt_flags)) अणु
 		pr_warn("VFS: Mount too revealing\n");
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
 	ret = -EBUSY;
-	if (fc->phase != FS_CONTEXT_AWAITING_MOUNT)
-		goto err_unlock;
+	अगर (fc->phase != FS_CONTEXT_AWAITING_MOUNT)
+		जाओ err_unlock;
 
 	ret = -EPERM;
-	if ((fc->sb_flags & SB_MANDLOCK) && !may_mandlock())
-		goto err_unlock;
+	अगर ((fc->sb_flags & SB_MANDLOCK) && !may_mandlock())
+		जाओ err_unlock;
 
 	newmount.mnt = vfs_create_mount(fc);
-	if (IS_ERR(newmount.mnt)) {
+	अगर (IS_ERR(newmount.mnt)) अणु
 		ret = PTR_ERR(newmount.mnt);
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 	newmount.dentry = dget(fc->root);
 	newmount.mnt->mnt_flags = mnt_flags;
 
-	/* We've done the mount bit - now move the file context into more or
-	 * less the same state as if we'd done an fspick().  We don't want to
-	 * do any memory allocation or anything like that at this point as we
-	 * don't want to have to handle any errors incurred.
+	/* We've करोne the mount bit - now move the file context पूर्णांकo more or
+	 * less the same state as अगर we'd done an fspick().  We don't want to
+	 * करो any memory allocation or anything like that at this poपूर्णांक as we
+	 * करोn't want to have to handle any errors incurred.
 	 */
 	vfs_clean_context(fc);
 
 	ns = alloc_mnt_ns(current->nsproxy->mnt_ns->user_ns, true);
-	if (IS_ERR(ns)) {
+	अगर (IS_ERR(ns)) अणु
 		ret = PTR_ERR(ns);
-		goto err_path;
-	}
+		जाओ err_path;
+	पूर्ण
 	mnt = real_mount(newmount.mnt);
 	mnt->mnt_ns = ns;
 	ns->root = mnt;
@@ -3594,18 +3595,18 @@ SYSCALL_DEFINE3(fsmount, int, fs_fd, unsigned int, flags,
 	/* Attach to an apparent O_PATH fd with a note that we need to unmount
 	 * it, not just simply put it.
 	 */
-	file = dentry_open(&newmount, O_PATH, fc->cred);
-	if (IS_ERR(file)) {
+	file = dentry_खोलो(&newmount, O_PATH, fc->cred);
+	अगर (IS_ERR(file)) अणु
 		dissolve_on_fput(newmount.mnt);
 		ret = PTR_ERR(file);
-		goto err_path;
-	}
+		जाओ err_path;
+	पूर्ण
 	file->f_mode |= FMODE_NEED_UNMOUNT;
 
 	ret = get_unused_fd_flags((flags & FSMOUNT_CLOEXEC) ? O_CLOEXEC : 0);
-	if (ret >= 0)
+	अगर (ret >= 0)
 		fd_install(ret, file);
-	else
+	अन्यथा
 		fput(file);
 
 err_path:
@@ -3614,147 +3615,147 @@ err_unlock:
 	mutex_unlock(&fc->uapi_mutex);
 err_fsfd:
 	fdput(f);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Move a mount from one place to another.  In combination with
- * fsopen()/fsmount() this is used to install a new mount and in combination
- * with open_tree(OPEN_TREE_CLONE [| AT_RECURSIVE]) it can be used to copy
+ * fsखोलो()/fsmount() this is used to install a new mount and in combination
+ * with खोलो_tree(OPEN_TREE_CLONE [| AT_RECURSIVE]) it can be used to copy
  * a mount subtree.
  *
  * Note the flags value is a combination of MOVE_MOUNT_* flags.
  */
 SYSCALL_DEFINE5(move_mount,
-		int, from_dfd, const char __user *, from_pathname,
-		int, to_dfd, const char __user *, to_pathname,
-		unsigned int, flags)
-{
-	struct path from_path, to_path;
-	unsigned int lflags;
-	int ret = 0;
+		पूर्णांक, from_dfd, स्थिर अक्षर __user *, from_pathname,
+		पूर्णांक, to_dfd, स्थिर अक्षर __user *, to_pathname,
+		अचिन्हित पूर्णांक, flags)
+अणु
+	काष्ठा path from_path, to_path;
+	अचिन्हित पूर्णांक lflags;
+	पूर्णांक ret = 0;
 
-	if (!may_mount())
-		return -EPERM;
+	अगर (!may_mount())
+		वापस -EPERM;
 
-	if (flags & ~MOVE_MOUNT__MASK)
-		return -EINVAL;
+	अगर (flags & ~MOVE_MOUNT__MASK)
+		वापस -EINVAL;
 
 	/* If someone gives a pathname, they aren't permitted to move
 	 * from an fd that requires unmount as we can't get at the flag
 	 * to clear it afterwards.
 	 */
 	lflags = 0;
-	if (flags & MOVE_MOUNT_F_SYMLINKS)	lflags |= LOOKUP_FOLLOW;
-	if (flags & MOVE_MOUNT_F_AUTOMOUNTS)	lflags |= LOOKUP_AUTOMOUNT;
-	if (flags & MOVE_MOUNT_F_EMPTY_PATH)	lflags |= LOOKUP_EMPTY;
+	अगर (flags & MOVE_MOUNT_F_SYMLINKS)	lflags |= LOOKUP_FOLLOW;
+	अगर (flags & MOVE_MOUNT_F_AUTOMOUNTS)	lflags |= LOOKUP_AUTOMOUNT;
+	अगर (flags & MOVE_MOUNT_F_EMPTY_PATH)	lflags |= LOOKUP_EMPTY;
 
 	ret = user_path_at(from_dfd, from_pathname, lflags, &from_path);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	lflags = 0;
-	if (flags & MOVE_MOUNT_T_SYMLINKS)	lflags |= LOOKUP_FOLLOW;
-	if (flags & MOVE_MOUNT_T_AUTOMOUNTS)	lflags |= LOOKUP_AUTOMOUNT;
-	if (flags & MOVE_MOUNT_T_EMPTY_PATH)	lflags |= LOOKUP_EMPTY;
+	अगर (flags & MOVE_MOUNT_T_SYMLINKS)	lflags |= LOOKUP_FOLLOW;
+	अगर (flags & MOVE_MOUNT_T_AUTOMOUNTS)	lflags |= LOOKUP_AUTOMOUNT;
+	अगर (flags & MOVE_MOUNT_T_EMPTY_PATH)	lflags |= LOOKUP_EMPTY;
 
 	ret = user_path_at(to_dfd, to_pathname, lflags, &to_path);
-	if (ret < 0)
-		goto out_from;
+	अगर (ret < 0)
+		जाओ out_from;
 
 	ret = security_move_mount(&from_path, &to_path);
-	if (ret < 0)
-		goto out_to;
+	अगर (ret < 0)
+		जाओ out_to;
 
-	ret = do_move_mount(&from_path, &to_path);
+	ret = करो_move_mount(&from_path, &to_path);
 
 out_to:
 	path_put(&to_path);
 out_from:
 	path_put(&from_path);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Return true if path is reachable from root
+ * Return true अगर path is reachable from root
  *
  * namespace_sem or mount_lock is held
  */
-bool is_path_reachable(struct mount *mnt, struct dentry *dentry,
-			 const struct path *root)
-{
-	while (&mnt->mnt != root->mnt && mnt_has_parent(mnt)) {
-		dentry = mnt->mnt_mountpoint;
+bool is_path_reachable(काष्ठा mount *mnt, काष्ठा dentry *dentry,
+			 स्थिर काष्ठा path *root)
+अणु
+	जबतक (&mnt->mnt != root->mnt && mnt_has_parent(mnt)) अणु
+		dentry = mnt->mnt_mountpoपूर्णांक;
 		mnt = mnt->mnt_parent;
-	}
-	return &mnt->mnt == root->mnt && is_subdir(dentry, root->dentry);
-}
+	पूर्ण
+	वापस &mnt->mnt == root->mnt && is_subdir(dentry, root->dentry);
+पूर्ण
 
-bool path_is_under(const struct path *path1, const struct path *path2)
-{
+bool path_is_under(स्थिर काष्ठा path *path1, स्थिर काष्ठा path *path2)
+अणु
 	bool res;
-	read_seqlock_excl(&mount_lock);
+	पढ़ो_seqlock_excl(&mount_lock);
 	res = is_path_reachable(real_mount(path1->mnt), path1->dentry, path2);
-	read_sequnlock_excl(&mount_lock);
-	return res;
-}
+	पढ़ो_sequnlock_excl(&mount_lock);
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(path_is_under);
 
 /*
  * pivot_root Semantics:
- * Moves the root file system of the current process to the directory put_old,
- * makes new_root as the new root file system of the current process, and sets
+ * Moves the root file प्रणाली of the current process to the directory put_old,
+ * makes new_root as the new root file प्रणाली of the current process, and sets
  * root/cwd of all processes which had them on the current root to new_root.
  *
  * Restrictions:
  * The new_root and put_old must be directories, and  must not be on the
- * same file  system as the current process root. The put_old  must  be
+ * same file  प्रणाली as the current process root. The put_old  must  be
  * underneath new_root,  i.e. adding a non-zero number of /.. to the string
- * pointed to by put_old must yield the same directory as new_root. No other
- * file system may be mounted on put_old. After all, new_root is a mountpoint.
+ * poपूर्णांकed to by put_old must yield the same directory as new_root. No other
+ * file प्रणाली may be mounted on put_old. After all, new_root is a mountpoपूर्णांक.
  *
- * Also, the current root cannot be on the 'rootfs' (initial ramfs) filesystem.
- * See Documentation/filesystems/ramfs-rootfs-initramfs.rst for alternatives
+ * Also, the current root cannot be on the 'rootfs' (initial ramfs) fileप्रणाली.
+ * See Documentation/fileप्रणालीs/ramfs-rootfs-initramfs.rst क्रम alternatives
  * in this situation.
  *
  * Notes:
- *  - we don't move root/cwd if they are not at the root (reason: if something
- *    cared enough to change them, it's probably wrong to force them elsewhere)
- *  - it's okay to pick a root that isn't the root of a file system, e.g.
- *    /nfs/my_root where /nfs is the mount point. It must be a mountpoint,
+ *  - we करोn't move root/cwd अगर they are not at the root (reason: अगर something
+ *    cared enough to change them, it's probably wrong to क्रमce them अन्यथाwhere)
+ *  - it's okay to pick a root that isn't the root of a file प्रणाली, e.g.
+ *    /nfs/my_root where /nfs is the mount poपूर्णांक. It must be a mountpoपूर्णांक,
  *    though, so you may need to say mount --bind /nfs/my_root /nfs/my_root
  *    first.
  */
-SYSCALL_DEFINE2(pivot_root, const char __user *, new_root,
-		const char __user *, put_old)
-{
-	struct path new, old, root;
-	struct mount *new_mnt, *root_mnt, *old_mnt, *root_parent, *ex_parent;
-	struct mountpoint *old_mp, *root_mp;
-	int error;
+SYSCALL_DEFINE2(pivot_root, स्थिर अक्षर __user *, new_root,
+		स्थिर अक्षर __user *, put_old)
+अणु
+	काष्ठा path new, old, root;
+	काष्ठा mount *new_mnt, *root_mnt, *old_mnt, *root_parent, *ex_parent;
+	काष्ठा mountpoपूर्णांक *old_mp, *root_mp;
+	पूर्णांक error;
 
-	if (!may_mount())
-		return -EPERM;
+	अगर (!may_mount())
+		वापस -EPERM;
 
 	error = user_path_at(AT_FDCWD, new_root,
-			     LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &new);
-	if (error)
-		goto out0;
+			     LOOKUP_FOLLOW | LOOKUP_सूचीECTORY, &new);
+	अगर (error)
+		जाओ out0;
 
 	error = user_path_at(AT_FDCWD, put_old,
-			     LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &old);
-	if (error)
-		goto out1;
+			     LOOKUP_FOLLOW | LOOKUP_सूचीECTORY, &old);
+	अगर (error)
+		जाओ out1;
 
 	error = security_sb_pivotroot(&old, &new);
-	if (error)
-		goto out2;
+	अगर (error)
+		जाओ out2;
 
 	get_fs_root(current->fs, &root);
 	old_mp = lock_mount(&old);
 	error = PTR_ERR(old_mp);
-	if (IS_ERR(old_mp))
-		goto out3;
+	अगर (IS_ERR(old_mp))
+		जाओ out3;
 
 	error = -EINVAL;
 	new_mnt = real_mount(new.mnt);
@@ -3762,57 +3763,57 @@ SYSCALL_DEFINE2(pivot_root, const char __user *, new_root,
 	old_mnt = real_mount(old.mnt);
 	ex_parent = new_mnt->mnt_parent;
 	root_parent = root_mnt->mnt_parent;
-	if (IS_MNT_SHARED(old_mnt) ||
+	अगर (IS_MNT_SHARED(old_mnt) ||
 		IS_MNT_SHARED(ex_parent) ||
 		IS_MNT_SHARED(root_parent))
-		goto out4;
-	if (!check_mnt(root_mnt) || !check_mnt(new_mnt))
-		goto out4;
-	if (new_mnt->mnt.mnt_flags & MNT_LOCKED)
-		goto out4;
+		जाओ out4;
+	अगर (!check_mnt(root_mnt) || !check_mnt(new_mnt))
+		जाओ out4;
+	अगर (new_mnt->mnt.mnt_flags & MNT_LOCKED)
+		जाओ out4;
 	error = -ENOENT;
-	if (d_unlinked(new.dentry))
-		goto out4;
+	अगर (d_unlinked(new.dentry))
+		जाओ out4;
 	error = -EBUSY;
-	if (new_mnt == root_mnt || old_mnt == root_mnt)
-		goto out4; /* loop, on the same file system  */
+	अगर (new_mnt == root_mnt || old_mnt == root_mnt)
+		जाओ out4; /* loop, on the same file प्रणाली  */
 	error = -EINVAL;
-	if (root.mnt->mnt_root != root.dentry)
-		goto out4; /* not a mountpoint */
-	if (!mnt_has_parent(root_mnt))
-		goto out4; /* not attached */
-	if (new.mnt->mnt_root != new.dentry)
-		goto out4; /* not a mountpoint */
-	if (!mnt_has_parent(new_mnt))
-		goto out4; /* not attached */
+	अगर (root.mnt->mnt_root != root.dentry)
+		जाओ out4; /* not a mountpoपूर्णांक */
+	अगर (!mnt_has_parent(root_mnt))
+		जाओ out4; /* not attached */
+	अगर (new.mnt->mnt_root != new.dentry)
+		जाओ out4; /* not a mountpoपूर्णांक */
+	अगर (!mnt_has_parent(new_mnt))
+		जाओ out4; /* not attached */
 	/* make sure we can reach put_old from new_root */
-	if (!is_path_reachable(old_mnt, old.dentry, &new))
-		goto out4;
+	अगर (!is_path_reachable(old_mnt, old.dentry, &new))
+		जाओ out4;
 	/* make certain new is below the root */
-	if (!is_path_reachable(new_mnt, new.dentry, &root))
-		goto out4;
+	अगर (!is_path_reachable(new_mnt, new.dentry, &root))
+		जाओ out4;
 	lock_mount_hash();
 	umount_mnt(new_mnt);
-	root_mp = unhash_mnt(root_mnt);  /* we'll need its mountpoint */
-	if (root_mnt->mnt.mnt_flags & MNT_LOCKED) {
+	root_mp = unhash_mnt(root_mnt);  /* we'll need its mountpoपूर्णांक */
+	अगर (root_mnt->mnt.mnt_flags & MNT_LOCKED) अणु
 		new_mnt->mnt.mnt_flags |= MNT_LOCKED;
 		root_mnt->mnt.mnt_flags &= ~MNT_LOCKED;
-	}
+	पूर्ण
 	/* mount old root on put_old */
 	attach_mnt(root_mnt, old_mnt, old_mp);
 	/* mount new_root on / */
 	attach_mnt(new_mnt, root_parent, root_mp);
 	mnt_add_count(root_parent, -1);
 	touch_mnt_namespace(current->nsproxy->mnt_ns);
-	/* A moved mount should not expire automatically */
+	/* A moved mount should not expire स्वतःmatically */
 	list_del_init(&new_mnt->mnt_expire);
-	put_mountpoint(root_mp);
+	put_mountpoपूर्णांक(root_mp);
 	unlock_mount_hash();
 	chroot_fs_refs(&root, &new);
 	error = 0;
 out4:
 	unlock_mount(old_mp);
-	if (!error)
+	अगर (!error)
 		mntput_no_expire(ex_parent);
 out3:
 	path_put(&root);
@@ -3821,170 +3822,170 @@ out2:
 out1:
 	path_put(&new);
 out0:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static unsigned int recalc_flags(struct mount_kattr *kattr, struct mount *mnt)
-{
-	unsigned int flags = mnt->mnt.mnt_flags;
+अटल अचिन्हित पूर्णांक recalc_flags(काष्ठा mount_kattr *kattr, काष्ठा mount *mnt)
+अणु
+	अचिन्हित पूर्णांक flags = mnt->mnt.mnt_flags;
 
 	/*  flags to clear */
 	flags &= ~kattr->attr_clr;
-	/* flags to raise */
+	/* flags to उठाओ */
 	flags |= kattr->attr_set;
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static int can_idmap_mount(const struct mount_kattr *kattr, struct mount *mnt)
-{
-	struct vfsmount *m = &mnt->mnt;
+अटल पूर्णांक can_idmap_mount(स्थिर काष्ठा mount_kattr *kattr, काष्ठा mount *mnt)
+अणु
+	काष्ठा vfsmount *m = &mnt->mnt;
 
-	if (!kattr->mnt_userns)
-		return 0;
+	अगर (!kattr->mnt_userns)
+		वापस 0;
 
 	/*
-	 * Once a mount has been idmapped we don't allow it to change its
+	 * Once a mount has been idmapped we करोn't allow it to change its
 	 * mapping. It makes things simpler and callers can just create
-	 * another bind-mount they can idmap if they want to.
+	 * another bind-mount they can idmap अगर they want to.
 	 */
-	if (mnt_user_ns(m) != &init_user_ns)
-		return -EPERM;
+	अगर (mnt_user_ns(m) != &init_user_ns)
+		वापस -EPERM;
 
-	/* The underlying filesystem doesn't support idmapped mounts yet. */
-	if (!(m->mnt_sb->s_type->fs_flags & FS_ALLOW_IDMAP))
-		return -EINVAL;
+	/* The underlying fileप्रणाली करोesn't support idmapped mounts yet. */
+	अगर (!(m->mnt_sb->s_type->fs_flags & FS_ALLOW_IDMAP))
+		वापस -EINVAL;
 
-	/* Don't yet support filesystem mountable in user namespaces. */
-	if (m->mnt_sb->s_user_ns != &init_user_ns)
-		return -EINVAL;
+	/* Don't yet support fileप्रणाली mountable in user namespaces. */
+	अगर (m->mnt_sb->s_user_ns != &init_user_ns)
+		वापस -EINVAL;
 
 	/* We're not controlling the superblock. */
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	/* Mount has already been visible in the filesystem hierarchy. */
-	if (!is_anon_ns(mnt->mnt_ns))
-		return -EINVAL;
+	/* Mount has alपढ़ोy been visible in the fileप्रणाली hierarchy. */
+	अगर (!is_anon_ns(mnt->mnt_ns))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct mount *mount_setattr_prepare(struct mount_kattr *kattr,
-					   struct mount *mnt, int *err)
-{
-	struct mount *m = mnt, *last = NULL;
+अटल काष्ठा mount *mount_setattr_prepare(काष्ठा mount_kattr *kattr,
+					   काष्ठा mount *mnt, पूर्णांक *err)
+अणु
+	काष्ठा mount *m = mnt, *last = शून्य;
 
-	if (!is_mounted(&m->mnt)) {
+	अगर (!is_mounted(&m->mnt)) अणु
 		*err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!(mnt_has_parent(m) ? check_mnt(m) : is_anon_ns(m->mnt_ns))) {
+	अगर (!(mnt_has_parent(m) ? check_mnt(m) : is_anon_ns(m->mnt_ns))) अणु
 		*err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	do {
-		unsigned int flags;
+	करो अणु
+		अचिन्हित पूर्णांक flags;
 
 		flags = recalc_flags(kattr, m);
-		if (!can_change_locked_flags(m, flags)) {
+		अगर (!can_change_locked_flags(m, flags)) अणु
 			*err = -EPERM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		*err = can_idmap_mount(kattr, m);
-		if (*err)
-			goto out;
+		अगर (*err)
+			जाओ out;
 
 		last = m;
 
-		if ((kattr->attr_set & MNT_READONLY) &&
-		    !(m->mnt.mnt_flags & MNT_READONLY)) {
-			*err = mnt_hold_writers(m);
-			if (*err)
-				goto out;
-		}
-	} while (kattr->recurse && (m = next_mnt(m, mnt)));
+		अगर ((kattr->attr_set & MNT_READONLY) &&
+		    !(m->mnt.mnt_flags & MNT_READONLY)) अणु
+			*err = mnt_hold_ग_लिखोrs(m);
+			अगर (*err)
+				जाओ out;
+		पूर्ण
+	पूर्ण जबतक (kattr->recurse && (m = next_mnt(m, mnt)));
 
 out:
-	return last;
-}
+	वापस last;
+पूर्ण
 
-static void do_idmap_mount(const struct mount_kattr *kattr, struct mount *mnt)
-{
-	struct user_namespace *mnt_userns;
+अटल व्योम करो_idmap_mount(स्थिर काष्ठा mount_kattr *kattr, काष्ठा mount *mnt)
+अणु
+	काष्ठा user_namespace *mnt_userns;
 
-	if (!kattr->mnt_userns)
-		return;
+	अगर (!kattr->mnt_userns)
+		वापस;
 
 	mnt_userns = get_user_ns(kattr->mnt_userns);
 	/* Pairs with smp_load_acquire() in mnt_user_ns(). */
 	smp_store_release(&mnt->mnt.mnt_userns, mnt_userns);
-}
+पूर्ण
 
-static void mount_setattr_commit(struct mount_kattr *kattr,
-				 struct mount *mnt, struct mount *last,
-				 int err)
-{
-	struct mount *m = mnt;
+अटल व्योम mount_setattr_commit(काष्ठा mount_kattr *kattr,
+				 काष्ठा mount *mnt, काष्ठा mount *last,
+				 पूर्णांक err)
+अणु
+	काष्ठा mount *m = mnt;
 
-	do {
-		if (!err) {
-			unsigned int flags;
+	करो अणु
+		अगर (!err) अणु
+			अचिन्हित पूर्णांक flags;
 
-			do_idmap_mount(kattr, m);
+			करो_idmap_mount(kattr, m);
 			flags = recalc_flags(kattr, m);
 			WRITE_ONCE(m->mnt.mnt_flags, flags);
-		}
+		पूर्ण
 
 		/*
 		 * We either set MNT_READONLY above so make it visible
-		 * before ~MNT_WRITE_HOLD or we failed to recursively
+		 * beक्रमe ~MNT_WRITE_HOLD or we failed to recursively
 		 * apply mount options.
 		 */
-		if ((kattr->attr_set & MNT_READONLY) &&
+		अगर ((kattr->attr_set & MNT_READONLY) &&
 		    (m->mnt.mnt_flags & MNT_WRITE_HOLD))
-			mnt_unhold_writers(m);
+			mnt_unhold_ग_लिखोrs(m);
 
-		if (!err && kattr->propagation)
+		अगर (!err && kattr->propagation)
 			change_mnt_propagation(m, kattr->propagation);
 
 		/*
 		 * On failure, only cleanup until we found the first mount
 		 * we failed to handle.
 		 */
-		if (err && m == last)
-			break;
-	} while (kattr->recurse && (m = next_mnt(m, mnt)));
+		अगर (err && m == last)
+			अवरोध;
+	पूर्ण जबतक (kattr->recurse && (m = next_mnt(m, mnt)));
 
-	if (!err)
+	अगर (!err)
 		touch_mnt_namespace(mnt->mnt_ns);
-}
+पूर्ण
 
-static int do_mount_setattr(struct path *path, struct mount_kattr *kattr)
-{
-	struct mount *mnt = real_mount(path->mnt), *last = NULL;
-	int err = 0;
+अटल पूर्णांक करो_mount_setattr(काष्ठा path *path, काष्ठा mount_kattr *kattr)
+अणु
+	काष्ठा mount *mnt = real_mount(path->mnt), *last = शून्य;
+	पूर्णांक err = 0;
 
-	if (path->dentry != mnt->mnt.mnt_root)
-		return -EINVAL;
+	अगर (path->dentry != mnt->mnt.mnt_root)
+		वापस -EINVAL;
 
-	if (kattr->propagation) {
+	अगर (kattr->propagation) अणु
 		/*
-		 * Only take namespace_lock() if we're actually changing
+		 * Only take namespace_lock() अगर we're actually changing
 		 * propagation.
 		 */
 		namespace_lock();
-		if (kattr->propagation == MS_SHARED) {
+		अगर (kattr->propagation == MS_SHARED) अणु
 			err = invent_group_ids(mnt, kattr->recurse);
-			if (err) {
+			अगर (err) अणु
 				namespace_unlock();
-				return err;
-			}
-		}
-	}
+				वापस err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	lock_mount_hash();
 
@@ -3993,210 +3994,210 @@ static int do_mount_setattr(struct path *path, struct mount_kattr *kattr)
 	 * properties without failure.
 	 */
 	last = mount_setattr_prepare(kattr, mnt, &err);
-	if (last) /* Commit all changes or revert to the old state. */
+	अगर (last) /* Commit all changes or revert to the old state. */
 		mount_setattr_commit(kattr, mnt, last, err);
 
 	unlock_mount_hash();
 
-	if (kattr->propagation) {
+	अगर (kattr->propagation) अणु
 		namespace_unlock();
-		if (err)
-			cleanup_group_ids(mnt, NULL);
-	}
+		अगर (err)
+			cleanup_group_ids(mnt, शून्य);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int build_mount_idmapped(const struct mount_attr *attr, size_t usize,
-				struct mount_kattr *kattr, unsigned int flags)
-{
-	int err = 0;
-	struct ns_common *ns;
-	struct user_namespace *mnt_userns;
-	struct file *file;
+अटल पूर्णांक build_mount_idmapped(स्थिर काष्ठा mount_attr *attr, माप_प्रकार usize,
+				काष्ठा mount_kattr *kattr, अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा ns_common *ns;
+	काष्ठा user_namespace *mnt_userns;
+	काष्ठा file *file;
 
-	if (!((attr->attr_set | attr->attr_clr) & MOUNT_ATTR_IDMAP))
-		return 0;
+	अगर (!((attr->attr_set | attr->attr_clr) & MOUNT_ATTR_IDMAP))
+		वापस 0;
 
 	/*
-	 * We currently do not support clearing an idmapped mount. If this ever
-	 * is a use-case we can revisit this but for now let's keep it simple
+	 * We currently करो not support clearing an idmapped mount. If this ever
+	 * is a use-हाल we can revisit this but क्रम now let's keep it simple
 	 * and not allow it.
 	 */
-	if (attr->attr_clr & MOUNT_ATTR_IDMAP)
-		return -EINVAL;
+	अगर (attr->attr_clr & MOUNT_ATTR_IDMAP)
+		वापस -EINVAL;
 
-	if (attr->userns_fd > INT_MAX)
-		return -EINVAL;
+	अगर (attr->userns_fd > पूर्णांक_उच्च)
+		वापस -EINVAL;
 
 	file = fget(attr->userns_fd);
-	if (!file)
-		return -EBADF;
+	अगर (!file)
+		वापस -EBADF;
 
-	if (!proc_ns_file(file)) {
+	अगर (!proc_ns_file(file)) अणु
 		err = -EINVAL;
-		goto out_fput;
-	}
+		जाओ out_fput;
+	पूर्ण
 
 	ns = get_proc_ns(file_inode(file));
-	if (ns->ops->type != CLONE_NEWUSER) {
+	अगर (ns->ops->type != CLONE_NEWUSER) अणु
 		err = -EINVAL;
-		goto out_fput;
-	}
+		जाओ out_fput;
+	पूर्ण
 
 	/*
 	 * The init_user_ns is used to indicate that a vfsmount is not idmapped.
-	 * This is simpler than just having to treat NULL as unmapped. Users
+	 * This is simpler than just having to treat शून्य as unmapped. Users
 	 * wanting to idmap a mount to init_user_ns can just use a namespace
 	 * with an identity mapping.
 	 */
-	mnt_userns = container_of(ns, struct user_namespace, ns);
-	if (mnt_userns == &init_user_ns) {
+	mnt_userns = container_of(ns, काष्ठा user_namespace, ns);
+	अगर (mnt_userns == &init_user_ns) अणु
 		err = -EPERM;
-		goto out_fput;
-	}
+		जाओ out_fput;
+	पूर्ण
 	kattr->mnt_userns = get_user_ns(mnt_userns);
 
 out_fput:
 	fput(file);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int build_mount_kattr(const struct mount_attr *attr, size_t usize,
-			     struct mount_kattr *kattr, unsigned int flags)
-{
-	unsigned int lookup_flags = LOOKUP_AUTOMOUNT | LOOKUP_FOLLOW;
+अटल पूर्णांक build_mount_kattr(स्थिर काष्ठा mount_attr *attr, माप_प्रकार usize,
+			     काष्ठा mount_kattr *kattr, अचिन्हित पूर्णांक flags)
+अणु
+	अचिन्हित पूर्णांक lookup_flags = LOOKUP_AUTOMOUNT | LOOKUP_FOLLOW;
 
-	if (flags & AT_NO_AUTOMOUNT)
+	अगर (flags & AT_NO_AUTOMOUNT)
 		lookup_flags &= ~LOOKUP_AUTOMOUNT;
-	if (flags & AT_SYMLINK_NOFOLLOW)
+	अगर (flags & AT_SYMLINK_NOFOLLOW)
 		lookup_flags &= ~LOOKUP_FOLLOW;
-	if (flags & AT_EMPTY_PATH)
+	अगर (flags & AT_EMPTY_PATH)
 		lookup_flags |= LOOKUP_EMPTY;
 
-	*kattr = (struct mount_kattr) {
+	*kattr = (काष्ठा mount_kattr) अणु
 		.lookup_flags	= lookup_flags,
 		.recurse	= !!(flags & AT_RECURSIVE),
-	};
+	पूर्ण;
 
-	if (attr->propagation & ~MOUNT_SETATTR_PROPAGATION_FLAGS)
-		return -EINVAL;
-	if (hweight32(attr->propagation & MOUNT_SETATTR_PROPAGATION_FLAGS) > 1)
-		return -EINVAL;
+	अगर (attr->propagation & ~MOUNT_SETATTR_PROPAGATION_FLAGS)
+		वापस -EINVAL;
+	अगर (hweight32(attr->propagation & MOUNT_SETATTR_PROPAGATION_FLAGS) > 1)
+		वापस -EINVAL;
 	kattr->propagation = attr->propagation;
 
-	if ((attr->attr_set | attr->attr_clr) & ~MOUNT_SETATTR_VALID_FLAGS)
-		return -EINVAL;
+	अगर ((attr->attr_set | attr->attr_clr) & ~MOUNT_SETATTR_VALID_FLAGS)
+		वापस -EINVAL;
 
 	kattr->attr_set = attr_flags_to_mnt_flags(attr->attr_set);
 	kattr->attr_clr = attr_flags_to_mnt_flags(attr->attr_clr);
 
 	/*
-	 * Since the MOUNT_ATTR_<atime> values are an enum, not a bitmap,
-	 * users wanting to transition to a different atime setting cannot
-	 * simply specify the atime setting in @attr_set, but must also
-	 * specify MOUNT_ATTR__ATIME in the @attr_clr field.
+	 * Since the MOUNT_ATTR_<aसमय> values are an क्रमागत, not a biपंचांगap,
+	 * users wanting to transition to a dअगरferent aसमय setting cannot
+	 * simply specअगरy the aसमय setting in @attr_set, but must also
+	 * specअगरy MOUNT_ATTR__ATIME in the @attr_clr field.
 	 * So ensure that MOUNT_ATTR__ATIME can't be partially set in
-	 * @attr_clr and that @attr_set can't have any atime bits set if
+	 * @attr_clr and that @attr_set can't have any aसमय bits set अगर
 	 * MOUNT_ATTR__ATIME isn't set in @attr_clr.
 	 */
-	if (attr->attr_clr & MOUNT_ATTR__ATIME) {
-		if ((attr->attr_clr & MOUNT_ATTR__ATIME) != MOUNT_ATTR__ATIME)
-			return -EINVAL;
+	अगर (attr->attr_clr & MOUNT_ATTR__ATIME) अणु
+		अगर ((attr->attr_clr & MOUNT_ATTR__ATIME) != MOUNT_ATTR__ATIME)
+			वापस -EINVAL;
 
 		/*
-		 * Clear all previous time settings as they are mutually
+		 * Clear all previous समय settings as they are mutually
 		 * exclusive.
 		 */
 		kattr->attr_clr |= MNT_RELATIME | MNT_NOATIME;
-		switch (attr->attr_set & MOUNT_ATTR__ATIME) {
-		case MOUNT_ATTR_RELATIME:
+		चयन (attr->attr_set & MOUNT_ATTR__ATIME) अणु
+		हाल MOUNT_ATTR_RELATIME:
 			kattr->attr_set |= MNT_RELATIME;
-			break;
-		case MOUNT_ATTR_NOATIME:
+			अवरोध;
+		हाल MOUNT_ATTR_NOATIME:
 			kattr->attr_set |= MNT_NOATIME;
-			break;
-		case MOUNT_ATTR_STRICTATIME:
-			break;
-		default:
-			return -EINVAL;
-		}
-	} else {
-		if (attr->attr_set & MOUNT_ATTR__ATIME)
-			return -EINVAL;
-	}
+			अवरोध;
+		हाल MOUNT_ATTR_STRICTATIME:
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (attr->attr_set & MOUNT_ATTR__ATIME)
+			वापस -EINVAL;
+	पूर्ण
 
-	return build_mount_idmapped(attr, usize, kattr, flags);
-}
+	वापस build_mount_idmapped(attr, usize, kattr, flags);
+पूर्ण
 
-static void finish_mount_kattr(struct mount_kattr *kattr)
-{
+अटल व्योम finish_mount_kattr(काष्ठा mount_kattr *kattr)
+अणु
 	put_user_ns(kattr->mnt_userns);
-	kattr->mnt_userns = NULL;
-}
+	kattr->mnt_userns = शून्य;
+पूर्ण
 
-SYSCALL_DEFINE5(mount_setattr, int, dfd, const char __user *, path,
-		unsigned int, flags, struct mount_attr __user *, uattr,
-		size_t, usize)
-{
-	int err;
-	struct path target;
-	struct mount_attr attr;
-	struct mount_kattr kattr;
+SYSCALL_DEFINE5(mount_setattr, पूर्णांक, dfd, स्थिर अक्षर __user *, path,
+		अचिन्हित पूर्णांक, flags, काष्ठा mount_attr __user *, uattr,
+		माप_प्रकार, usize)
+अणु
+	पूर्णांक err;
+	काष्ठा path target;
+	काष्ठा mount_attr attr;
+	काष्ठा mount_kattr kattr;
 
-	BUILD_BUG_ON(sizeof(struct mount_attr) != MOUNT_ATTR_SIZE_VER0);
+	BUILD_BUG_ON(माप(काष्ठा mount_attr) != MOUNT_ATTR_SIZE_VER0);
 
-	if (flags & ~(AT_EMPTY_PATH |
+	अगर (flags & ~(AT_EMPTY_PATH |
 		      AT_RECURSIVE |
 		      AT_SYMLINK_NOFOLLOW |
 		      AT_NO_AUTOMOUNT))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (unlikely(usize > PAGE_SIZE))
-		return -E2BIG;
-	if (unlikely(usize < MOUNT_ATTR_SIZE_VER0))
-		return -EINVAL;
+	अगर (unlikely(usize > PAGE_SIZE))
+		वापस -E2BIG;
+	अगर (unlikely(usize < MOUNT_ATTR_SIZE_VER0))
+		वापस -EINVAL;
 
-	if (!may_mount())
-		return -EPERM;
+	अगर (!may_mount())
+		वापस -EPERM;
 
-	err = copy_struct_from_user(&attr, sizeof(attr), uattr, usize);
-	if (err)
-		return err;
+	err = copy_काष्ठा_from_user(&attr, माप(attr), uattr, usize);
+	अगर (err)
+		वापस err;
 
-	/* Don't bother walking through the mounts if this is a nop. */
-	if (attr.attr_set == 0 &&
+	/* Don't bother walking through the mounts अगर this is a nop. */
+	अगर (attr.attr_set == 0 &&
 	    attr.attr_clr == 0 &&
 	    attr.propagation == 0)
-		return 0;
+		वापस 0;
 
 	err = build_mount_kattr(&attr, usize, &kattr, flags);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = user_path_at(dfd, path, kattr.lookup_flags, &target);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = do_mount_setattr(&target, &kattr);
+	err = करो_mount_setattr(&target, &kattr);
 	finish_mount_kattr(&kattr);
 	path_put(&target);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __init init_mount_tree(void)
-{
-	struct vfsmount *mnt;
-	struct mount *m;
-	struct mnt_namespace *ns;
-	struct path root;
+अटल व्योम __init init_mount_tree(व्योम)
+अणु
+	काष्ठा vfsmount *mnt;
+	काष्ठा mount *m;
+	काष्ठा mnt_namespace *ns;
+	काष्ठा path root;
 
-	mnt = vfs_kern_mount(&rootfs_fs_type, 0, "rootfs", NULL);
-	if (IS_ERR(mnt))
+	mnt = vfs_kern_mount(&rootfs_fs_type, 0, "rootfs", शून्य);
+	अगर (IS_ERR(mnt))
 		panic("Can't create rootfs");
 
 	ns = alloc_mnt_ns(&init_user_ns, false);
-	if (IS_ERR(ns))
+	अगर (IS_ERR(ns))
 		panic("Can't allocate initial namespace");
 	m = real_mount(mnt);
 	m->mnt_ns = ns;
@@ -4212,107 +4213,107 @@ static void __init init_mount_tree(void)
 
 	set_fs_pwd(current->fs, &root);
 	set_fs_root(current->fs, &root);
-}
+पूर्ण
 
-void __init mnt_init(void)
-{
-	int err;
+व्योम __init mnt_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	mnt_cache = kmem_cache_create("mnt_cache", sizeof(struct mount),
-			0, SLAB_HWCACHE_ALIGN | SLAB_PANIC, NULL);
+	mnt_cache = kmem_cache_create("mnt_cache", माप(काष्ठा mount),
+			0, SLAB_HWCACHE_ALIGN | SLAB_PANIC, शून्य);
 
-	mount_hashtable = alloc_large_system_hash("Mount-cache",
-				sizeof(struct hlist_head),
+	mount_hashtable = alloc_large_प्रणाली_hash("Mount-cache",
+				माप(काष्ठा hlist_head),
 				mhash_entries, 19,
 				HASH_ZERO,
-				&m_hash_shift, &m_hash_mask, 0, 0);
-	mountpoint_hashtable = alloc_large_system_hash("Mountpoint-cache",
-				sizeof(struct hlist_head),
+				&m_hash_shअगरt, &m_hash_mask, 0, 0);
+	mountpoपूर्णांक_hashtable = alloc_large_प्रणाली_hash("Mountpoint-cache",
+				माप(काष्ठा hlist_head),
 				mphash_entries, 19,
 				HASH_ZERO,
-				&mp_hash_shift, &mp_hash_mask, 0, 0);
+				&mp_hash_shअगरt, &mp_hash_mask, 0, 0);
 
-	if (!mount_hashtable || !mountpoint_hashtable)
+	अगर (!mount_hashtable || !mountpoपूर्णांक_hashtable)
 		panic("Failed to allocate mount hash table\n");
 
 	kernfs_init();
 
 	err = sysfs_init();
-	if (err)
-		printk(KERN_WARNING "%s: sysfs_init error: %d\n",
+	अगर (err)
+		prपूर्णांकk(KERN_WARNING "%s: sysfs_init error: %d\n",
 			__func__, err);
-	fs_kobj = kobject_create_and_add("fs", NULL);
-	if (!fs_kobj)
-		printk(KERN_WARNING "%s: kobj create error\n", __func__);
+	fs_kobj = kobject_create_and_add("fs", शून्य);
+	अगर (!fs_kobj)
+		prपूर्णांकk(KERN_WARNING "%s: kobj create error\n", __func__);
 	shmem_init();
 	init_rootfs();
 	init_mount_tree();
-}
+पूर्ण
 
-void put_mnt_ns(struct mnt_namespace *ns)
-{
-	if (!refcount_dec_and_test(&ns->ns.count))
-		return;
+व्योम put_mnt_ns(काष्ठा mnt_namespace *ns)
+अणु
+	अगर (!refcount_dec_and_test(&ns->ns.count))
+		वापस;
 	drop_collected_mounts(&ns->root->mnt);
-	free_mnt_ns(ns);
-}
+	मुक्त_mnt_ns(ns);
+पूर्ण
 
-struct vfsmount *kern_mount(struct file_system_type *type)
-{
-	struct vfsmount *mnt;
-	mnt = vfs_kern_mount(type, SB_KERNMOUNT, type->name, NULL);
-	if (!IS_ERR(mnt)) {
+काष्ठा vfsmount *kern_mount(काष्ठा file_प्रणाली_type *type)
+अणु
+	काष्ठा vfsmount *mnt;
+	mnt = vfs_kern_mount(type, SB_KERNMOUNT, type->name, शून्य);
+	अगर (!IS_ERR(mnt)) अणु
 		/*
-		 * it is a longterm mount, don't release mnt until
-		 * we unmount before file sys is unregistered
+		 * it is a दीर्घterm mount, करोn't release mnt until
+		 * we unmount beक्रमe file sys is unरेजिस्टरed
 		*/
 		real_mount(mnt)->mnt_ns = MNT_NS_INTERNAL;
-	}
-	return mnt;
-}
+	पूर्ण
+	वापस mnt;
+पूर्ण
 EXPORT_SYMBOL_GPL(kern_mount);
 
-void kern_unmount(struct vfsmount *mnt)
-{
-	/* release long term mount so mount point can be released */
-	if (!IS_ERR_OR_NULL(mnt)) {
-		real_mount(mnt)->mnt_ns = NULL;
+व्योम kern_unmount(काष्ठा vfsmount *mnt)
+अणु
+	/* release दीर्घ term mount so mount poपूर्णांक can be released */
+	अगर (!IS_ERR_OR_शून्य(mnt)) अणु
+		real_mount(mnt)->mnt_ns = शून्य;
 		synchronize_rcu();	/* yecchhh... */
 		mntput(mnt);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(kern_unmount);
 
-void kern_unmount_array(struct vfsmount *mnt[], unsigned int num)
-{
-	unsigned int i;
+व्योम kern_unmount_array(काष्ठा vfsmount *mnt[], अचिन्हित पूर्णांक num)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < num; i++)
-		if (mnt[i])
-			real_mount(mnt[i])->mnt_ns = NULL;
+	क्रम (i = 0; i < num; i++)
+		अगर (mnt[i])
+			real_mount(mnt[i])->mnt_ns = शून्य;
 	synchronize_rcu_expedited();
-	for (i = 0; i < num; i++)
+	क्रम (i = 0; i < num; i++)
 		mntput(mnt[i]);
-}
+पूर्ण
 EXPORT_SYMBOL(kern_unmount_array);
 
-bool our_mnt(struct vfsmount *mnt)
-{
-	return check_mnt(real_mount(mnt));
-}
+bool our_mnt(काष्ठा vfsmount *mnt)
+अणु
+	वापस check_mnt(real_mount(mnt));
+पूर्ण
 
-bool current_chrooted(void)
-{
+bool current_chrooted(व्योम)
+अणु
 	/* Does the current process have a non-standard root */
-	struct path ns_root;
-	struct path fs_root;
+	काष्ठा path ns_root;
+	काष्ठा path fs_root;
 	bool chrooted;
 
 	/* Find the namespace root */
 	ns_root.mnt = &current->nsproxy->mnt_ns->root->mnt;
 	ns_root.dentry = ns_root.mnt->mnt_root;
 	path_get(&ns_root);
-	while (d_mountpoint(ns_root.dentry) && follow_down_one(&ns_root))
+	जबतक (d_mountpoपूर्णांक(ns_root.dentry) && follow_करोwn_one(&ns_root))
 		;
 
 	get_fs_root(current->fs, &fs_root);
@@ -4322,154 +4323,154 @@ bool current_chrooted(void)
 	path_put(&fs_root);
 	path_put(&ns_root);
 
-	return chrooted;
-}
+	वापस chrooted;
+पूर्ण
 
-static bool mnt_already_visible(struct mnt_namespace *ns,
-				const struct super_block *sb,
-				int *new_mnt_flags)
-{
-	int new_flags = *new_mnt_flags;
-	struct mount *mnt;
+अटल bool mnt_alपढ़ोy_visible(काष्ठा mnt_namespace *ns,
+				स्थिर काष्ठा super_block *sb,
+				पूर्णांक *new_mnt_flags)
+अणु
+	पूर्णांक new_flags = *new_mnt_flags;
+	काष्ठा mount *mnt;
 	bool visible = false;
 
-	down_read(&namespace_sem);
+	करोwn_पढ़ो(&namespace_sem);
 	lock_ns_list(ns);
-	list_for_each_entry(mnt, &ns->list, mnt_list) {
-		struct mount *child;
-		int mnt_flags;
+	list_क्रम_each_entry(mnt, &ns->list, mnt_list) अणु
+		काष्ठा mount *child;
+		पूर्णांक mnt_flags;
 
-		if (mnt_is_cursor(mnt))
-			continue;
+		अगर (mnt_is_cursor(mnt))
+			जारी;
 
-		if (mnt->mnt.mnt_sb->s_type != sb->s_type)
-			continue;
+		अगर (mnt->mnt.mnt_sb->s_type != sb->s_type)
+			जारी;
 
-		/* This mount is not fully visible if it's root directory
-		 * is not the root directory of the filesystem.
+		/* This mount is not fully visible अगर it's root directory
+		 * is not the root directory of the fileप्रणाली.
 		 */
-		if (mnt->mnt.mnt_root != mnt->mnt.mnt_sb->s_root)
-			continue;
+		अगर (mnt->mnt.mnt_root != mnt->mnt.mnt_sb->s_root)
+			जारी;
 
 		/* A local view of the mount flags */
 		mnt_flags = mnt->mnt.mnt_flags;
 
-		/* Don't miss readonly hidden in the superblock flags */
-		if (sb_rdonly(mnt->mnt.mnt_sb))
+		/* Don't miss पढ़ोonly hidden in the superblock flags */
+		अगर (sb_rकरोnly(mnt->mnt.mnt_sb))
 			mnt_flags |= MNT_LOCK_READONLY;
 
-		/* Verify the mount flags are equal to or more permissive
+		/* Verअगरy the mount flags are equal to or more permissive
 		 * than the proposed new mount.
 		 */
-		if ((mnt_flags & MNT_LOCK_READONLY) &&
+		अगर ((mnt_flags & MNT_LOCK_READONLY) &&
 		    !(new_flags & MNT_READONLY))
-			continue;
-		if ((mnt_flags & MNT_LOCK_ATIME) &&
+			जारी;
+		अगर ((mnt_flags & MNT_LOCK_ATIME) &&
 		    ((mnt_flags & MNT_ATIME_MASK) != (new_flags & MNT_ATIME_MASK)))
-			continue;
+			जारी;
 
-		/* This mount is not fully visible if there are any
-		 * locked child mounts that cover anything except for
+		/* This mount is not fully visible अगर there are any
+		 * locked child mounts that cover anything except क्रम
 		 * empty directories.
 		 */
-		list_for_each_entry(child, &mnt->mnt_mounts, mnt_child) {
-			struct inode *inode = child->mnt_mountpoint->d_inode;
+		list_क्रम_each_entry(child, &mnt->mnt_mounts, mnt_child) अणु
+			काष्ठा inode *inode = child->mnt_mountpoपूर्णांक->d_inode;
 			/* Only worry about locked mounts */
-			if (!(child->mnt.mnt_flags & MNT_LOCKED))
-				continue;
+			अगर (!(child->mnt.mnt_flags & MNT_LOCKED))
+				जारी;
 			/* Is the directory permanetly empty? */
-			if (!is_empty_dir_inode(inode))
-				goto next;
-		}
+			अगर (!is_empty_dir_inode(inode))
+				जाओ next;
+		पूर्ण
 		/* Preserve the locked attributes */
 		*new_mnt_flags |= mnt_flags & (MNT_LOCK_READONLY | \
 					       MNT_LOCK_ATIME);
 		visible = true;
-		goto found;
+		जाओ found;
 	next:	;
-	}
+	पूर्ण
 found:
 	unlock_ns_list(ns);
-	up_read(&namespace_sem);
-	return visible;
-}
+	up_पढ़ो(&namespace_sem);
+	वापस visible;
+पूर्ण
 
-static bool mount_too_revealing(const struct super_block *sb, int *new_mnt_flags)
-{
-	const unsigned long required_iflags = SB_I_NOEXEC | SB_I_NODEV;
-	struct mnt_namespace *ns = current->nsproxy->mnt_ns;
-	unsigned long s_iflags;
+अटल bool mount_too_revealing(स्थिर काष्ठा super_block *sb, पूर्णांक *new_mnt_flags)
+अणु
+	स्थिर अचिन्हित दीर्घ required_अगरlags = SB_I_NOEXEC | SB_I_NODEV;
+	काष्ठा mnt_namespace *ns = current->nsproxy->mnt_ns;
+	अचिन्हित दीर्घ s_अगरlags;
 
-	if (ns->user_ns == &init_user_ns)
-		return false;
+	अगर (ns->user_ns == &init_user_ns)
+		वापस false;
 
-	/* Can this filesystem be too revealing? */
-	s_iflags = sb->s_iflags;
-	if (!(s_iflags & SB_I_USERNS_VISIBLE))
-		return false;
+	/* Can this fileप्रणाली be too revealing? */
+	s_अगरlags = sb->s_अगरlags;
+	अगर (!(s_अगरlags & SB_I_USERNS_VISIBLE))
+		वापस false;
 
-	if ((s_iflags & required_iflags) != required_iflags) {
+	अगर ((s_अगरlags & required_अगरlags) != required_अगरlags) अणु
 		WARN_ONCE(1, "Expected s_iflags to contain 0x%lx\n",
-			  required_iflags);
-		return true;
-	}
+			  required_अगरlags);
+		वापस true;
+	पूर्ण
 
-	return !mnt_already_visible(ns, sb, new_mnt_flags);
-}
+	वापस !mnt_alपढ़ोy_visible(ns, sb, new_mnt_flags);
+पूर्ण
 
-bool mnt_may_suid(struct vfsmount *mnt)
-{
+bool mnt_may_suid(काष्ठा vfsmount *mnt)
+अणु
 	/*
-	 * Foreign mounts (accessed via fchdir or through /proc
-	 * symlinks) are always treated as if they are nosuid.  This
+	 * Foreign mounts (accessed via fस_बदलो or through /proc
+	 * symlinks) are always treated as अगर they are nosuid.  This
 	 * prevents namespaces from trusting potentially unsafe
 	 * suid/sgid bits, file caps, or security labels that originate
 	 * in other namespaces.
 	 */
-	return !(mnt->mnt_flags & MNT_NOSUID) && check_mnt(real_mount(mnt)) &&
+	वापस !(mnt->mnt_flags & MNT_NOSUID) && check_mnt(real_mount(mnt)) &&
 	       current_in_userns(mnt->mnt_sb->s_user_ns);
-}
+पूर्ण
 
-static struct ns_common *mntns_get(struct task_struct *task)
-{
-	struct ns_common *ns = NULL;
-	struct nsproxy *nsproxy;
+अटल काष्ठा ns_common *mntns_get(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा ns_common *ns = शून्य;
+	काष्ठा nsproxy *nsproxy;
 
 	task_lock(task);
 	nsproxy = task->nsproxy;
-	if (nsproxy) {
+	अगर (nsproxy) अणु
 		ns = &nsproxy->mnt_ns->ns;
 		get_mnt_ns(to_mnt_ns(ns));
-	}
+	पूर्ण
 	task_unlock(task);
 
-	return ns;
-}
+	वापस ns;
+पूर्ण
 
-static void mntns_put(struct ns_common *ns)
-{
+अटल व्योम mntns_put(काष्ठा ns_common *ns)
+अणु
 	put_mnt_ns(to_mnt_ns(ns));
-}
+पूर्ण
 
-static int mntns_install(struct nsset *nsset, struct ns_common *ns)
-{
-	struct nsproxy *nsproxy = nsset->nsproxy;
-	struct fs_struct *fs = nsset->fs;
-	struct mnt_namespace *mnt_ns = to_mnt_ns(ns), *old_mnt_ns;
-	struct user_namespace *user_ns = nsset->cred->user_ns;
-	struct path root;
-	int err;
+अटल पूर्णांक mntns_install(काष्ठा nsset *nsset, काष्ठा ns_common *ns)
+अणु
+	काष्ठा nsproxy *nsproxy = nsset->nsproxy;
+	काष्ठा fs_काष्ठा *fs = nsset->fs;
+	काष्ठा mnt_namespace *mnt_ns = to_mnt_ns(ns), *old_mnt_ns;
+	काष्ठा user_namespace *user_ns = nsset->cred->user_ns;
+	काष्ठा path root;
+	पूर्णांक err;
 
-	if (!ns_capable(mnt_ns->user_ns, CAP_SYS_ADMIN) ||
+	अगर (!ns_capable(mnt_ns->user_ns, CAP_SYS_ADMIN) ||
 	    !ns_capable(user_ns, CAP_SYS_CHROOT) ||
 	    !ns_capable(user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		वापस -EPERM;
 
-	if (is_anon_ns(mnt_ns))
-		return -EINVAL;
+	अगर (is_anon_ns(mnt_ns))
+		वापस -EINVAL;
 
-	if (fs->users != 1)
-		return -EINVAL;
+	अगर (fs->users != 1)
+		वापस -EINVAL;
 
 	get_mnt_ns(mnt_ns);
 	old_mnt_ns = nsproxy->mnt_ns;
@@ -4478,12 +4479,12 @@ static int mntns_install(struct nsset *nsset, struct ns_common *ns)
 	/* Find the root */
 	err = vfs_path_lookup(mnt_ns->root->mnt.mnt_root, &mnt_ns->root->mnt,
 				"/", LOOKUP_DOWN, &root);
-	if (err) {
+	अगर (err) अणु
 		/* revert to old namespace */
 		nsproxy->mnt_ns = old_mnt_ns;
 		put_mnt_ns(mnt_ns);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	put_mnt_ns(old_mnt_ns);
 
@@ -4492,19 +4493,19 @@ static int mntns_install(struct nsset *nsset, struct ns_common *ns)
 	set_fs_root(fs, &root);
 
 	path_put(&root);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct user_namespace *mntns_owner(struct ns_common *ns)
-{
-	return to_mnt_ns(ns)->user_ns;
-}
+अटल काष्ठा user_namespace *mntns_owner(काष्ठा ns_common *ns)
+अणु
+	वापस to_mnt_ns(ns)->user_ns;
+पूर्ण
 
-const struct proc_ns_operations mntns_operations = {
+स्थिर काष्ठा proc_ns_operations mntns_operations = अणु
 	.name		= "mnt",
 	.type		= CLONE_NEWNS,
 	.get		= mntns_get,
 	.put		= mntns_put,
 	.install	= mntns_install,
 	.owner		= mntns_owner,
-};
+पूर्ण;

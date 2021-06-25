@@ -1,144 +1,145 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2015 Broadcom Corporation
  */
 
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/clk.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/of_address.h>
-#include <linux/of_pci.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/phy/phy.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_pci.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/phy/phy.h>
 
-#include "../pci.h"
-#include "pcie-iproc.h"
+#समावेश "../pci.h"
+#समावेश "pcie-iproc.h"
 
-static const struct of_device_id iproc_pcie_of_match_table[] = {
-	{
+अटल स्थिर काष्ठा of_device_id iproc_pcie_of_match_table[] = अणु
+	अणु
 		.compatible = "brcm,iproc-pcie",
-		.data = (int *)IPROC_PCIE_PAXB,
-	}, {
+		.data = (पूर्णांक *)IPROC_PCIE_PAXB,
+	पूर्ण, अणु
 		.compatible = "brcm,iproc-pcie-paxb-v2",
-		.data = (int *)IPROC_PCIE_PAXB_V2,
-	}, {
+		.data = (पूर्णांक *)IPROC_PCIE_PAXB_V2,
+	पूर्ण, अणु
 		.compatible = "brcm,iproc-pcie-paxc",
-		.data = (int *)IPROC_PCIE_PAXC,
-	}, {
+		.data = (पूर्णांक *)IPROC_PCIE_PAXC,
+	पूर्ण, अणु
 		.compatible = "brcm,iproc-pcie-paxc-v2",
-		.data = (int *)IPROC_PCIE_PAXC_V2,
-	},
-	{ /* sentinel */ }
-};
+		.data = (पूर्णांक *)IPROC_PCIE_PAXC_V2,
+	पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, iproc_pcie_of_match_table);
 
-static int iproc_pcie_pltfm_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct iproc_pcie *pcie;
-	struct device_node *np = dev->of_node;
-	struct resource reg;
-	struct pci_host_bridge *bridge;
-	int ret;
+अटल पूर्णांक iproc_pcie_pltfm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा iproc_pcie *pcie;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा resource reg;
+	काष्ठा pci_host_bridge *bridge;
+	पूर्णांक ret;
 
-	bridge = devm_pci_alloc_host_bridge(dev, sizeof(*pcie));
-	if (!bridge)
-		return -ENOMEM;
+	bridge = devm_pci_alloc_host_bridge(dev, माप(*pcie));
+	अगर (!bridge)
+		वापस -ENOMEM;
 
 	pcie = pci_host_bridge_priv(bridge);
 
 	pcie->dev = dev;
-	pcie->type = (enum iproc_pcie_type) of_device_get_match_data(dev);
+	pcie->type = (क्रमागत iproc_pcie_type) of_device_get_match_data(dev);
 
 	ret = of_address_to_resource(np, 0, &reg);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "unable to obtain controller resources\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pcie->base = devm_pci_remap_cfgspace(dev, reg.start,
 					     resource_size(&reg));
-	if (!pcie->base) {
+	अगर (!pcie->base) अणु
 		dev_err(dev, "unable to map controller registers\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	pcie->base_addr = reg.start;
 
-	if (of_property_read_bool(np, "brcm,pcie-ob")) {
+	अगर (of_property_पढ़ो_bool(np, "brcm,pcie-ob")) अणु
 		u32 val;
 
-		ret = of_property_read_u32(np, "brcm,pcie-ob-axi-offset",
+		ret = of_property_पढ़ो_u32(np, "brcm,pcie-ob-axi-offset",
 					   &val);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev,
 				"missing brcm,pcie-ob-axi-offset property\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		pcie->ob.axi_offset = val;
 		pcie->need_ob_cfg = true;
-	}
+	पूर्ण
 
 	/*
-	 * DT nodes are not used by all platforms that use the iProc PCIe
-	 * core driver. For platforms that require explicit inbound mapping
+	 * DT nodes are not used by all platक्रमms that use the iProc PCIe
+	 * core driver. For platक्रमms that require explicit inbound mapping
 	 * configuration, "dma-ranges" would have been present in DT
 	 */
-	pcie->need_ib_cfg = of_property_read_bool(np, "dma-ranges");
+	pcie->need_ib_cfg = of_property_पढ़ो_bool(np, "dma-ranges");
 
 	/* PHY use is optional */
 	pcie->phy = devm_phy_optional_get(dev, "pcie-phy");
-	if (IS_ERR(pcie->phy))
-		return PTR_ERR(pcie->phy);
+	अगर (IS_ERR(pcie->phy))
+		वापस PTR_ERR(pcie->phy);
 
-	/* PAXC doesn't support legacy IRQs, skip mapping */
-	switch (pcie->type) {
-	case IPROC_PCIE_PAXC:
-	case IPROC_PCIE_PAXC_V2:
-		pcie->map_irq = NULL;
-		break;
-	default:
-		break;
-	}
+	/* PAXC करोesn't support legacy IRQs, skip mapping */
+	चयन (pcie->type) अणु
+	हाल IPROC_PCIE_PAXC:
+	हाल IPROC_PCIE_PAXC_V2:
+		pcie->map_irq = शून्य;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	ret = iproc_pcie_setup(pcie, &bridge->windows);
-	if (ret) {
+	ret = iproc_pcie_setup(pcie, &bridge->winकरोws);
+	अगर (ret) अणु
 		dev_err(dev, "PCIe controller setup failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, pcie);
-	return 0;
-}
+	platक्रमm_set_drvdata(pdev, pcie);
+	वापस 0;
+पूर्ण
 
-static int iproc_pcie_pltfm_remove(struct platform_device *pdev)
-{
-	struct iproc_pcie *pcie = platform_get_drvdata(pdev);
+अटल पूर्णांक iproc_pcie_pltfm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iproc_pcie *pcie = platक्रमm_get_drvdata(pdev);
 
-	return iproc_pcie_remove(pcie);
-}
+	वापस iproc_pcie_हटाओ(pcie);
+पूर्ण
 
-static void iproc_pcie_pltfm_shutdown(struct platform_device *pdev)
-{
-	struct iproc_pcie *pcie = platform_get_drvdata(pdev);
+अटल व्योम iproc_pcie_pltfm_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iproc_pcie *pcie = platक्रमm_get_drvdata(pdev);
 
-	iproc_pcie_shutdown(pcie);
-}
+	iproc_pcie_shutकरोwn(pcie);
+पूर्ण
 
-static struct platform_driver iproc_pcie_pltfm_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver iproc_pcie_pltfm_driver = अणु
+	.driver = अणु
 		.name = "iproc-pcie",
 		.of_match_table = of_match_ptr(iproc_pcie_of_match_table),
-	},
+	पूर्ण,
 	.probe = iproc_pcie_pltfm_probe,
-	.remove = iproc_pcie_pltfm_remove,
-	.shutdown = iproc_pcie_pltfm_shutdown,
-};
-module_platform_driver(iproc_pcie_pltfm_driver);
+	.हटाओ = iproc_pcie_pltfm_हटाओ,
+	.shutकरोwn = iproc_pcie_pltfm_shutकरोwn,
+पूर्ण;
+module_platक्रमm_driver(iproc_pcie_pltfm_driver);
 
 MODULE_AUTHOR("Ray Jui <rjui@broadcom.com>");
 MODULE_DESCRIPTION("Broadcom iPROC PCIe platform driver");

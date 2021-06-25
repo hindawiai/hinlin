@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 /*
  *  Andestech ATCPIT100 Timer Device Driver Implementation
@@ -6,261 +7,261 @@
  *
  */
 
-#include <linux/irq.h>
-#include <linux/clocksource.h>
-#include <linux/clockchips.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/cpufreq.h>
-#include <linux/sched.h>
-#include <linux/sched_clock.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include "timer-of.h"
-#ifdef CONFIG_NDS32
-#include <asm/vdso_timer_info.h>
-#endif
+#समावेश <linux/irq.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश "timer-of.h"
+#अगर_घोषित CONFIG_NDS32
+#समावेश <यंत्र/vdso_समयr_info.h>
+#पूर्ण_अगर
 
 /*
- * Definition of register offsets
+ * Definition of रेजिस्टर offsets
  */
 
 /* ID and Revision Register */
-#define ID_REV		0x0
+#घोषणा ID_REV		0x0
 
 /* Configuration Register */
-#define CFG		0x10
+#घोषणा CFG		0x10
 
 /* Interrupt Enable Register */
-#define INT_EN		0x14
-#define CH_INT_EN(c, i)	((1<<i)<<(4*c))
-#define CH0INT0EN	0x01
+#घोषणा INT_EN		0x14
+#घोषणा CH_INT_EN(c, i)	((1<<i)<<(4*c))
+#घोषणा CH0INT0EN	0x01
 
 /* Interrupt Status Register */
-#define INT_STA		0x18
-#define CH0INT0		0x01
+#घोषणा INT_STA		0x18
+#घोषणा CH0INT0		0x01
 
 /* Channel Enable Register */
-#define CH_EN		0x1C
-#define CH0TMR0EN	0x1
-#define CH1TMR0EN	0x10
+#घोषणा CH_EN		0x1C
+#घोषणा CH0TMR0EN	0x1
+#घोषणा CH1TMR0EN	0x10
 
 /* Channel 0 , 1 Control Register */
-#define CH0_CTL		(0x20)
-#define CH1_CTL		(0x20 + 0x10)
+#घोषणा CH0_CTL		(0x20)
+#घोषणा CH1_CTL		(0x20 + 0x10)
 
-/* Channel clock source , bit 3 , 0:External clock , 1:APB clock */
-#define APB_CLK		BIT(3)
+/* Channel घड़ी source , bit 3 , 0:External घड़ी , 1:APB घड़ी */
+#घोषणा APB_CLK		BIT(3)
 
 /* Channel mode , bit 0~2 */
-#define TMR_32		0x1
-#define TMR_16		0x2
-#define TMR_8		0x3
+#घोषणा TMR_32		0x1
+#घोषणा TMR_16		0x2
+#घोषणा TMR_8		0x3
 
 /* Channel 0 , 1 Reload Register */
-#define CH0_REL		(0x24)
-#define CH1_REL		(0x24 + 0x10)
+#घोषणा CH0_REL		(0x24)
+#घोषणा CH1_REL		(0x24 + 0x10)
 
 /* Channel 0 , 1 Counter Register */
-#define CH0_CNT		(0x28)
-#define CH1_CNT		(0x28 + 0x10)
+#घोषणा CH0_CNT		(0x28)
+#घोषणा CH1_CNT		(0x28 + 0x10)
 
-#define TIMER_SYNC_TICKS	3
+#घोषणा TIMER_SYNC_TICKS	3
 
-static void atcpit100_ch1_tmr0_en(void __iomem *base)
-{
-	writel(~0, base + CH1_REL);
-	writel(APB_CLK|TMR_32, base + CH1_CTL);
-}
+अटल व्योम atcpit100_ch1_पंचांगr0_en(व्योम __iomem *base)
+अणु
+	ग_लिखोl(~0, base + CH1_REL);
+	ग_लिखोl(APB_CLK|TMR_32, base + CH1_CTL);
+पूर्ण
 
-static void atcpit100_ch0_tmr0_en(void __iomem *base)
-{
-	writel(APB_CLK|TMR_32, base + CH0_CTL);
-}
+अटल व्योम atcpit100_ch0_पंचांगr0_en(व्योम __iomem *base)
+अणु
+	ग_लिखोl(APB_CLK|TMR_32, base + CH0_CTL);
+पूर्ण
 
-static void atcpit100_clkevt_time_setup(void __iomem *base, unsigned long delay)
-{
-	writel(delay, base + CH0_CNT);
-	writel(delay, base + CH0_REL);
-}
+अटल व्योम atcpit100_clkevt_समय_setup(व्योम __iomem *base, अचिन्हित दीर्घ delay)
+अणु
+	ग_लिखोl(delay, base + CH0_CNT);
+	ग_लिखोl(delay, base + CH0_REL);
+पूर्ण
 
-static void atcpit100_timer_clear_interrupt(void __iomem *base)
-{
+अटल व्योम atcpit100_समयr_clear_पूर्णांकerrupt(व्योम __iomem *base)
+अणु
 	u32 val;
 
-	val = readl(base + INT_STA);
-	writel(val | CH0INT0, base + INT_STA);
-}
+	val = पढ़ोl(base + INT_STA);
+	ग_लिखोl(val | CH0INT0, base + INT_STA);
+पूर्ण
 
-static void atcpit100_clocksource_start(void __iomem *base)
-{
+अटल व्योम atcpit100_घड़ीsource_start(व्योम __iomem *base)
+अणु
 	u32 val;
 
-	val = readl(base + CH_EN);
-	writel(val | CH1TMR0EN, base + CH_EN);
-}
+	val = पढ़ोl(base + CH_EN);
+	ग_लिखोl(val | CH1TMR0EN, base + CH_EN);
+पूर्ण
 
-static void atcpit100_clkevt_time_start(void __iomem *base)
-{
+अटल व्योम atcpit100_clkevt_समय_start(व्योम __iomem *base)
+अणु
 	u32 val;
 
-	val = readl(base + CH_EN);
-	writel(val | CH0TMR0EN, base + CH_EN);
-}
+	val = पढ़ोl(base + CH_EN);
+	ग_लिखोl(val | CH0TMR0EN, base + CH_EN);
+पूर्ण
 
-static void atcpit100_clkevt_time_stop(void __iomem *base)
-{
+अटल व्योम atcpit100_clkevt_समय_stop(व्योम __iomem *base)
+अणु
 	u32 val;
 
-	atcpit100_timer_clear_interrupt(base);
-	val = readl(base + CH_EN);
-	writel(val & ~CH0TMR0EN, base + CH_EN);
-}
+	atcpit100_समयr_clear_पूर्णांकerrupt(base);
+	val = पढ़ोl(base + CH_EN);
+	ग_लिखोl(val & ~CH0TMR0EN, base + CH_EN);
+पूर्ण
 
-static int atcpit100_clkevt_next_event(unsigned long evt,
-	struct clock_event_device *clkevt)
-{
+अटल पूर्णांक atcpit100_clkevt_next_event(अचिन्हित दीर्घ evt,
+	काष्ठा घड़ी_event_device *clkevt)
+अणु
 	u32 val;
-	struct timer_of *to = to_timer_of(clkevt);
+	काष्ठा समयr_of *to = to_समयr_of(clkevt);
 
-	val = readl(timer_of_base(to) + CH_EN);
-	writel(val & ~CH0TMR0EN, timer_of_base(to) + CH_EN);
-	writel(evt, timer_of_base(to) + CH0_REL);
-	writel(val | CH0TMR0EN, timer_of_base(to) + CH_EN);
+	val = पढ़ोl(समयr_of_base(to) + CH_EN);
+	ग_लिखोl(val & ~CH0TMR0EN, समयr_of_base(to) + CH_EN);
+	ग_लिखोl(evt, समयr_of_base(to) + CH0_REL);
+	ग_लिखोl(val | CH0TMR0EN, समयr_of_base(to) + CH_EN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atcpit100_clkevt_set_periodic(struct clock_event_device *evt)
-{
-	struct timer_of *to = to_timer_of(evt);
+अटल पूर्णांक atcpit100_clkevt_set_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(evt);
 
-	atcpit100_clkevt_time_setup(timer_of_base(to), timer_of_period(to));
-	atcpit100_clkevt_time_start(timer_of_base(to));
+	atcpit100_clkevt_समय_setup(समयr_of_base(to), समयr_of_period(to));
+	atcpit100_clkevt_समय_start(समयr_of_base(to));
 
-	return 0;
-}
-static int atcpit100_clkevt_shutdown(struct clock_event_device *evt)
-{
-	struct timer_of *to = to_timer_of(evt);
+	वापस 0;
+पूर्ण
+अटल पूर्णांक atcpit100_clkevt_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(evt);
 
-	atcpit100_clkevt_time_stop(timer_of_base(to));
+	atcpit100_clkevt_समय_stop(समयr_of_base(to));
 
-	return 0;
-}
-static int atcpit100_clkevt_set_oneshot(struct clock_event_device *evt)
-{
-	struct timer_of *to = to_timer_of(evt);
+	वापस 0;
+पूर्ण
+अटल पूर्णांक atcpit100_clkevt_set_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(evt);
 	u32 val;
 
-	writel(~0x0, timer_of_base(to) + CH0_REL);
-	val = readl(timer_of_base(to) + CH_EN);
-	writel(val | CH0TMR0EN, timer_of_base(to) + CH_EN);
+	ग_लिखोl(~0x0, समयr_of_base(to) + CH0_REL);
+	val = पढ़ोl(समयr_of_base(to) + CH_EN);
+	ग_लिखोl(val | CH0TMR0EN, समयr_of_base(to) + CH_EN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t atcpit100_timer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *evt = (struct clock_event_device *)dev_id;
-	struct timer_of *to = to_timer_of(evt);
+अटल irqवापस_t atcpit100_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *evt = (काष्ठा घड़ी_event_device *)dev_id;
+	काष्ठा समयr_of *to = to_समयr_of(evt);
 
-	atcpit100_timer_clear_interrupt(timer_of_base(to));
+	atcpit100_समयr_clear_पूर्णांकerrupt(समयr_of_base(to));
 
 	evt->event_handler(evt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct timer_of to = {
+अटल काष्ठा समयr_of to = अणु
 	.flags = TIMER_OF_IRQ | TIMER_OF_CLOCK | TIMER_OF_BASE,
 
-	.clkevt = {
+	.clkevt = अणु
 		.name = "atcpit100_tick",
 		.rating = 300,
 		.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT,
-		.set_state_shutdown = atcpit100_clkevt_shutdown,
+		.set_state_shutकरोwn = atcpit100_clkevt_shutकरोwn,
 		.set_state_periodic = atcpit100_clkevt_set_periodic,
 		.set_state_oneshot = atcpit100_clkevt_set_oneshot,
-		.tick_resume = atcpit100_clkevt_shutdown,
+		.tick_resume = atcpit100_clkevt_shutकरोwn,
 		.set_next_event = atcpit100_clkevt_next_event,
 		.cpumask = cpu_possible_mask,
-	},
+	पूर्ण,
 
-	.of_irq = {
-		.handler = atcpit100_timer_interrupt,
+	.of_irq = अणु
+		.handler = atcpit100_समयr_पूर्णांकerrupt,
 		.flags = IRQF_TIMER | IRQF_IRQPOLL,
-	},
+	पूर्ण,
 
 	/*
-	 * FIXME: we currently only support clocking using PCLK
+	 * FIXME: we currently only support घड़ीing using PCLK
 	 * and using EXTCLK is not supported in the driver.
 	 */
-	.of_clk = {
+	.of_clk = अणु
 		.name = "PCLK",
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static u64 notrace atcpit100_timer_sched_read(void)
-{
-	return ~readl(timer_of_base(&to) + CH1_CNT);
-}
+अटल u64 notrace atcpit100_समयr_sched_पढ़ो(व्योम)
+अणु
+	वापस ~पढ़ोl(समयr_of_base(&to) + CH1_CNT);
+पूर्ण
 
-#ifdef CONFIG_NDS32
-static void fill_vdso_need_info(struct device_node *node)
-{
-	struct resource timer_res;
-	of_address_to_resource(node, 0, &timer_res);
-	timer_info.mapping_base = (unsigned long)timer_res.start;
-	timer_info.cycle_count_down = true;
-	timer_info.cycle_count_reg_offset = CH1_CNT;
-}
-#endif
+#अगर_घोषित CONFIG_NDS32
+अटल व्योम fill_vdso_need_info(काष्ठा device_node *node)
+अणु
+	काष्ठा resource समयr_res;
+	of_address_to_resource(node, 0, &समयr_res);
+	समयr_info.mapping_base = (अचिन्हित दीर्घ)समयr_res.start;
+	समयr_info.cycle_count_करोwn = true;
+	समयr_info.cycle_count_reg_offset = CH1_CNT;
+पूर्ण
+#पूर्ण_अगर
 
-static int __init atcpit100_timer_init(struct device_node *node)
-{
-	int ret;
+अटल पूर्णांक __init atcpit100_समयr_init(काष्ठा device_node *node)
+अणु
+	पूर्णांक ret;
 	u32 val;
-	void __iomem *base;
+	व्योम __iomem *base;
 
-	ret = timer_of_init(node, &to);
-	if (ret)
-		return ret;
+	ret = समयr_of_init(node, &to);
+	अगर (ret)
+		वापस ret;
 
-	base = timer_of_base(&to);
+	base = समयr_of_base(&to);
 
-	sched_clock_register(atcpit100_timer_sched_read, 32,
-		timer_of_rate(&to));
+	sched_घड़ी_रेजिस्टर(atcpit100_समयr_sched_पढ़ो, 32,
+		समयr_of_rate(&to));
 
-	ret = clocksource_mmio_init(base + CH1_CNT,
-		node->name, timer_of_rate(&to), 300, 32,
-		clocksource_mmio_readl_down);
+	ret = घड़ीsource_mmio_init(base + CH1_CNT,
+		node->name, समयr_of_rate(&to), 300, 32,
+		घड़ीsource_mmio_पढ़ोl_करोwn);
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Failed to register clocksource\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* clear channel 0 timer0 interrupt */
-	atcpit100_timer_clear_interrupt(base);
+	/* clear channel 0 समयr0 पूर्णांकerrupt */
+	atcpit100_समयr_clear_पूर्णांकerrupt(base);
 
-	clockevents_config_and_register(&to.clkevt, timer_of_rate(&to),
+	घड़ीevents_config_and_रेजिस्टर(&to.clkevt, समयr_of_rate(&to),
 					TIMER_SYNC_TICKS, 0xffffffff);
-	atcpit100_ch0_tmr0_en(base);
-	atcpit100_ch1_tmr0_en(base);
-	atcpit100_clocksource_start(base);
-	atcpit100_clkevt_time_start(base);
+	atcpit100_ch0_पंचांगr0_en(base);
+	atcpit100_ch1_पंचांगr0_en(base);
+	atcpit100_घड़ीsource_start(base);
+	atcpit100_clkevt_समय_start(base);
 
-	/* Enable channel 0 timer0 interrupt */
-	val = readl(base + INT_EN);
-	writel(val | CH0INT0EN, base + INT_EN);
+	/* Enable channel 0 समयr0 पूर्णांकerrupt */
+	val = पढ़ोl(base + INT_EN);
+	ग_लिखोl(val | CH0INT0EN, base + INT_EN);
 
-#ifdef CONFIG_NDS32
+#अगर_घोषित CONFIG_NDS32
 	fill_vdso_need_info(node);
-#endif
+#पूर्ण_अगर
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-TIMER_OF_DECLARE(atcpit100, "andestech,atcpit100", atcpit100_timer_init);
+TIMER_OF_DECLARE(atcpit100, "andestech,atcpit100", atcpit100_समयr_init);

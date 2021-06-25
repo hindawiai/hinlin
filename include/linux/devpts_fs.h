@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* -*- linux-c -*- --------------------------------------------------------- *
  *
  * linux/include/linux/devpts_fs.h
@@ -7,39 +8,39 @@
  *
  * ------------------------------------------------------------------------- */
 
-#ifndef _LINUX_DEVPTS_FS_H
-#define _LINUX_DEVPTS_FS_H
+#अगर_अघोषित _LINUX_DEVPTS_FS_H
+#घोषणा _LINUX_DEVPTS_FS_H
 
-#include <linux/errno.h>
+#समावेश <linux/त्रुटिसं.स>
 
-#ifdef CONFIG_UNIX98_PTYS
+#अगर_घोषित CONFIG_UNIX98_PTYS
 
-struct pts_fs_info;
+काष्ठा pts_fs_info;
 
-struct vfsmount *devpts_mntget(struct file *, struct pts_fs_info *);
-struct pts_fs_info *devpts_acquire(struct file *);
-void devpts_release(struct pts_fs_info *);
+काष्ठा vfsmount *devpts_mntget(काष्ठा file *, काष्ठा pts_fs_info *);
+काष्ठा pts_fs_info *devpts_acquire(काष्ठा file *);
+व्योम devpts_release(काष्ठा pts_fs_info *);
 
-int devpts_new_index(struct pts_fs_info *);
-void devpts_kill_index(struct pts_fs_info *, int);
+पूर्णांक devpts_new_index(काष्ठा pts_fs_info *);
+व्योम devpts_समाप्त_index(काष्ठा pts_fs_info *, पूर्णांक);
 
 /* mknod in devpts */
-struct dentry *devpts_pty_new(struct pts_fs_info *, int, void *);
-/* get private structure */
-void *devpts_get_priv(struct dentry *);
+काष्ठा dentry *devpts_pty_new(काष्ठा pts_fs_info *, पूर्णांक, व्योम *);
+/* get निजी काष्ठाure */
+व्योम *devpts_get_priv(काष्ठा dentry *);
 /* unlink */
-void devpts_pty_kill(struct dentry *);
+व्योम devpts_pty_समाप्त(काष्ठा dentry *);
 
 /* in pty.c */
-int ptm_open_peer(struct file *master, struct tty_struct *tty, int flags);
+पूर्णांक pपंचांग_खोलो_peer(काष्ठा file *master, काष्ठा tty_काष्ठा *tty, पूर्णांक flags);
 
-#else
-static inline int
-ptm_open_peer(struct file *master, struct tty_struct *tty, int flags)
-{
-	return -EIO;
-}
-#endif
+#अन्यथा
+अटल अंतरभूत पूर्णांक
+pपंचांग_खोलो_peer(काष्ठा file *master, काष्ठा tty_काष्ठा *tty, पूर्णांक flags)
+अणु
+	वापस -EIO;
+पूर्ण
+#पूर्ण_अगर
 
 
-#endif /* _LINUX_DEVPTS_FS_H */
+#पूर्ण_अगर /* _LINUX_DEVPTS_FS_H */

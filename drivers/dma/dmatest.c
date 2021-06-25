@@ -1,1110 +1,1111 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * DMA Engine test module
  *
- * Copyright (C) 2007 Atmel Corporation
+ * Copyright (C) 2007 Aपंचांगel Corporation
  * Copyright (C) 2013 Intel Corporation
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/err.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/freezer.h>
-#include <linux/init.h>
-#include <linux/kthread.h>
-#include <linux/sched/task.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/random.h>
-#include <linux/slab.h>
-#include <linux/wait.h>
+#समावेश <linux/err.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/रुको.h>
 
-static unsigned int test_buf_size = 16384;
-module_param(test_buf_size, uint, S_IRUGO | S_IWUSR);
+अटल अचिन्हित पूर्णांक test_buf_size = 16384;
+module_param(test_buf_size, uपूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(test_buf_size, "Size of the memcpy test buffer");
 
-static char test_device[32];
-module_param_string(device, test_device, sizeof(test_device),
+अटल अक्षर test_device[32];
+module_param_string(device, test_device, माप(test_device),
 		S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(device, "Bus ID of the DMA Engine to test (default: any)");
 
-static unsigned int threads_per_chan = 1;
-module_param(threads_per_chan, uint, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(threads_per_chan,
+अटल अचिन्हित पूर्णांक thपढ़ोs_per_chan = 1;
+module_param(thपढ़ोs_per_chan, uपूर्णांक, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(thपढ़ोs_per_chan,
 		"Number of threads to start per channel (default: 1)");
 
-static unsigned int max_channels;
-module_param(max_channels, uint, S_IRUGO | S_IWUSR);
+अटल अचिन्हित पूर्णांक max_channels;
+module_param(max_channels, uपूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(max_channels,
 		"Maximum number of channels to use (default: all)");
 
-static unsigned int iterations;
-module_param(iterations, uint, S_IRUGO | S_IWUSR);
+अटल अचिन्हित पूर्णांक iterations;
+module_param(iterations, uपूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(iterations,
 		"Iterations before stopping test (default: infinite)");
 
-static unsigned int dmatest;
-module_param(dmatest, uint, S_IRUGO | S_IWUSR);
+अटल अचिन्हित पूर्णांक dmatest;
+module_param(dmatest, uपूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(dmatest,
 		"dmatest 0-memcpy 1-memset (default: 0)");
 
-static unsigned int xor_sources = 3;
-module_param(xor_sources, uint, S_IRUGO | S_IWUSR);
+अटल अचिन्हित पूर्णांक xor_sources = 3;
+module_param(xor_sources, uपूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(xor_sources,
 		"Number of xor source buffers (default: 3)");
 
-static unsigned int pq_sources = 3;
-module_param(pq_sources, uint, S_IRUGO | S_IWUSR);
+अटल अचिन्हित पूर्णांक pq_sources = 3;
+module_param(pq_sources, uपूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(pq_sources,
 		"Number of p+q source buffers (default: 3)");
 
-static int timeout = 3000;
-module_param(timeout, int, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(timeout, "Transfer Timeout in msec (default: 3000), "
+अटल पूर्णांक समयout = 3000;
+module_param(समयout, पूर्णांक, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(समयout, "Transfer Timeout in msec (default: 3000), "
 		 "Pass -1 for infinite timeout");
 
-static bool noverify;
-module_param(noverify, bool, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(noverify, "Disable data verification (default: verify)");
+अटल bool noverअगरy;
+module_param(noverअगरy, bool, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(noverअगरy, "Disable data verification (default: verify)");
 
-static bool norandom;
-module_param(norandom, bool, 0644);
-MODULE_PARM_DESC(norandom, "Disable random offset setup (default: random)");
+अटल bool noअक्रमom;
+module_param(noअक्रमom, bool, 0644);
+MODULE_PARM_DESC(noअक्रमom, "Disable random offset setup (default: random)");
 
-static bool verbose;
+अटल bool verbose;
 module_param(verbose, bool, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(verbose, "Enable \"success\" result messages (default: off)");
 
-static int alignment = -1;
-module_param(alignment, int, 0644);
-MODULE_PARM_DESC(alignment, "Custom data address alignment taken as 2^(alignment) (default: not used (-1))");
+अटल पूर्णांक alignment = -1;
+module_param(alignment, पूर्णांक, 0644);
+MODULE_PARM_DESC(alignment, "Custom data address alignment taken as 2^(alignment) (शेष: not used (-1))");
 
-static unsigned int transfer_size;
-module_param(transfer_size, uint, 0644);
+अटल अचिन्हित पूर्णांक transfer_size;
+module_param(transfer_size, uपूर्णांक, 0644);
 MODULE_PARM_DESC(transfer_size, "Optional custom transfer size in bytes (default: not used (0))");
 
-static bool polled;
+अटल bool polled;
 module_param(polled, bool, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(polled, "Use polling for completion instead of interrupts");
 
 /**
- * struct dmatest_params - test parameters.
- * @buf_size:		size of the memcpy test buffer
+ * काष्ठा dmatest_params - test parameters.
+ * @buf_size:		size of the स_नकल test buffer
  * @channel:		bus ID of the channel to test
  * @device:		bus ID of the DMA Engine to test
- * @threads_per_chan:	number of threads to start per channel
+ * @thपढ़ोs_per_chan:	number of thपढ़ोs to start per channel
  * @max_channels:	maximum number of channels to use
- * @iterations:		iterations before stopping test
+ * @iterations:		iterations beक्रमe stopping test
  * @xor_sources:	number of xor source buffers
  * @pq_sources:		number of p+q source buffers
- * @timeout:		transfer timeout in msec, -1 for infinite timeout
- * @noverify:		disable data verification
- * @norandom:		disable random offset setup
+ * @समयout:		transfer समयout in msec, -1 क्रम infinite समयout
+ * @noverअगरy:		disable data verअगरication
+ * @noअक्रमom:		disable अक्रमom offset setup
  * @alignment:		custom data address alignment taken as 2^alignment
  * @transfer_size:	custom transfer size in bytes
- * @polled:		use polling for completion instead of interrupts
+ * @polled:		use polling क्रम completion instead of पूर्णांकerrupts
  */
-struct dmatest_params {
-	unsigned int	buf_size;
-	char		channel[20];
-	char		device[32];
-	unsigned int	threads_per_chan;
-	unsigned int	max_channels;
-	unsigned int	iterations;
-	unsigned int	xor_sources;
-	unsigned int	pq_sources;
-	int		timeout;
-	bool		noverify;
-	bool		norandom;
-	int		alignment;
-	unsigned int	transfer_size;
+काष्ठा dmatest_params अणु
+	अचिन्हित पूर्णांक	buf_size;
+	अक्षर		channel[20];
+	अक्षर		device[32];
+	अचिन्हित पूर्णांक	thपढ़ोs_per_chan;
+	अचिन्हित पूर्णांक	max_channels;
+	अचिन्हित पूर्णांक	iterations;
+	अचिन्हित पूर्णांक	xor_sources;
+	अचिन्हित पूर्णांक	pq_sources;
+	पूर्णांक		समयout;
+	bool		noverअगरy;
+	bool		noअक्रमom;
+	पूर्णांक		alignment;
+	अचिन्हित पूर्णांक	transfer_size;
 	bool		polled;
-};
+पूर्ण;
 
 /**
- * struct dmatest_info - test information.
+ * काष्ठा dmatest_info - test inक्रमmation.
  * @params:		test parameters
  * @channels:		channels under test
  * @nr_channels:	number of channels under test
- * @lock:		access protection to the fields of this structure
+ * @lock:		access protection to the fields of this काष्ठाure
  * @did_init:		module has been initialized completely
  * @last_error:		test has faced configuration issues
  */
-static struct dmatest_info {
+अटल काष्ठा dmatest_info अणु
 	/* Test parameters */
-	struct dmatest_params	params;
+	काष्ठा dmatest_params	params;
 
 	/* Internal state */
-	struct list_head	channels;
-	unsigned int		nr_channels;
-	int			last_error;
-	struct mutex		lock;
+	काष्ठा list_head	channels;
+	अचिन्हित पूर्णांक		nr_channels;
+	पूर्णांक			last_error;
+	काष्ठा mutex		lock;
 	bool			did_init;
-} test_info = {
+पूर्ण test_info = अणु
 	.channels = LIST_HEAD_INIT(test_info.channels),
 	.lock = __MUTEX_INITIALIZER(test_info.lock),
-};
+पूर्ण;
 
-static int dmatest_run_set(const char *val, const struct kernel_param *kp);
-static int dmatest_run_get(char *val, const struct kernel_param *kp);
-static const struct kernel_param_ops run_ops = {
+अटल पूर्णांक dmatest_run_set(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+अटल पूर्णांक dmatest_run_get(अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+अटल स्थिर काष्ठा kernel_param_ops run_ops = अणु
 	.set = dmatest_run_set,
 	.get = dmatest_run_get,
-};
-static bool dmatest_run;
+पूर्ण;
+अटल bool dmatest_run;
 module_param_cb(run, &run_ops, &dmatest_run, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(run, "Run the test (default: false)");
 
-static int dmatest_chan_set(const char *val, const struct kernel_param *kp);
-static int dmatest_chan_get(char *val, const struct kernel_param *kp);
-static const struct kernel_param_ops multi_chan_ops = {
+अटल पूर्णांक dmatest_chan_set(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+अटल पूर्णांक dmatest_chan_get(अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+अटल स्थिर काष्ठा kernel_param_ops multi_chan_ops = अणु
 	.set = dmatest_chan_set,
 	.get = dmatest_chan_get,
-};
+पूर्ण;
 
-static char test_channel[20];
-static struct kparam_string newchan_kps = {
+अटल अक्षर test_channel[20];
+अटल काष्ठा kparam_string newchan_kps = अणु
 	.string = test_channel,
 	.maxlen = 20,
-};
+पूर्ण;
 module_param_cb(channel, &multi_chan_ops, &newchan_kps, 0644);
 MODULE_PARM_DESC(channel, "Bus ID of the channel to test (default: any)");
 
-static int dmatest_test_list_get(char *val, const struct kernel_param *kp);
-static const struct kernel_param_ops test_list_ops = {
+अटल पूर्णांक dmatest_test_list_get(अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+अटल स्थिर काष्ठा kernel_param_ops test_list_ops = अणु
 	.get = dmatest_test_list_get,
-};
-module_param_cb(test_list, &test_list_ops, NULL, 0444);
+पूर्ण;
+module_param_cb(test_list, &test_list_ops, शून्य, 0444);
 MODULE_PARM_DESC(test_list, "Print current test list");
 
-/* Maximum amount of mismatched bytes in buffer to print */
-#define MAX_ERROR_COUNT		32
+/* Maximum amount of mismatched bytes in buffer to prपूर्णांक */
+#घोषणा MAX_ERROR_COUNT		32
 
 /*
  * Initialization patterns. All bytes in the source buffer has bit 7
  * set, all bytes in the destination buffer has bit 7 cleared.
  *
- * Bit 6 is set for all bytes which are to be copied by the DMA
- * engine. Bit 5 is set for all bytes which are to be overwritten by
+ * Bit 6 is set क्रम all bytes which are to be copied by the DMA
+ * engine. Bit 5 is set क्रम all bytes which are to be overwritten by
  * the DMA engine.
  *
- * The remaining bits are the inverse of a counter which increments by
- * one for each byte address.
+ * The reमुख्यing bits are the inverse of a counter which increments by
+ * one क्रम each byte address.
  */
-#define PATTERN_SRC		0x80
-#define PATTERN_DST		0x00
-#define PATTERN_COPY		0x40
-#define PATTERN_OVERWRITE	0x20
-#define PATTERN_COUNT_MASK	0x1f
-#define PATTERN_MEMSET_IDX	0x01
+#घोषणा PATTERN_SRC		0x80
+#घोषणा PATTERN_DST		0x00
+#घोषणा PATTERN_COPY		0x40
+#घोषणा PATTERN_OVERWRITE	0x20
+#घोषणा PATTERN_COUNT_MASK	0x1f
+#घोषणा PATTERN_MEMSET_IDX	0x01
 
-/* Fixed point arithmetic ops */
-#define FIXPT_SHIFT		8
-#define FIXPNT_MASK		0xFF
-#define FIXPT_TO_INT(a)	((a) >> FIXPT_SHIFT)
-#define INT_TO_FIXPT(a)	((a) << FIXPT_SHIFT)
-#define FIXPT_GET_FRAC(a)	((((a) & FIXPNT_MASK) * 100) >> FIXPT_SHIFT)
+/* Fixed poपूर्णांक arithmetic ops */
+#घोषणा FIXPT_SHIFT		8
+#घोषणा FIXPNT_MASK		0xFF
+#घोषणा FIXPT_TO_INT(a)	((a) >> FIXPT_SHIFT)
+#घोषणा INT_TO_FIXPT(a)	((a) << FIXPT_SHIFT)
+#घोषणा FIXPT_GET_FRAC(a)	((((a) & FIXPNT_MASK) * 100) >> FIXPT_SHIFT)
 
-/* poor man's completion - we want to use wait_event_freezable() on it */
-struct dmatest_done {
-	bool			done;
-	wait_queue_head_t	*wait;
-};
+/* poor man's completion - we want to use रुको_event_मुक्तzable() on it */
+काष्ठा dmatest_करोne अणु
+	bool			करोne;
+	रुको_queue_head_t	*रुको;
+पूर्ण;
 
-struct dmatest_data {
+काष्ठा dmatest_data अणु
 	u8		**raw;
 	u8		**aligned;
-	unsigned int	cnt;
-	unsigned int	off;
-};
+	अचिन्हित पूर्णांक	cnt;
+	अचिन्हित पूर्णांक	off;
+पूर्ण;
 
-struct dmatest_thread {
-	struct list_head	node;
-	struct dmatest_info	*info;
-	struct task_struct	*task;
-	struct dma_chan		*chan;
-	struct dmatest_data	src;
-	struct dmatest_data	dst;
-	enum dma_transaction_type type;
-	wait_queue_head_t done_wait;
-	struct dmatest_done test_done;
-	bool			done;
+काष्ठा dmatest_thपढ़ो अणु
+	काष्ठा list_head	node;
+	काष्ठा dmatest_info	*info;
+	काष्ठा task_काष्ठा	*task;
+	काष्ठा dma_chan		*chan;
+	काष्ठा dmatest_data	src;
+	काष्ठा dmatest_data	dst;
+	क्रमागत dma_transaction_type type;
+	रुको_queue_head_t करोne_रुको;
+	काष्ठा dmatest_करोne test_करोne;
+	bool			करोne;
 	bool			pending;
-};
+पूर्ण;
 
-struct dmatest_chan {
-	struct list_head	node;
-	struct dma_chan		*chan;
-	struct list_head	threads;
-};
+काष्ठा dmatest_chan अणु
+	काष्ठा list_head	node;
+	काष्ठा dma_chan		*chan;
+	काष्ठा list_head	thपढ़ोs;
+पूर्ण;
 
-static DECLARE_WAIT_QUEUE_HEAD(thread_wait);
-static bool wait;
+अटल DECLARE_WAIT_QUEUE_HEAD(thपढ़ो_रुको);
+अटल bool रुको;
 
-static bool is_threaded_test_run(struct dmatest_info *info)
-{
-	struct dmatest_chan *dtc;
+अटल bool is_thपढ़ोed_test_run(काष्ठा dmatest_info *info)
+अणु
+	काष्ठा dmatest_chan *dtc;
 
-	list_for_each_entry(dtc, &info->channels, node) {
-		struct dmatest_thread *thread;
+	list_क्रम_each_entry(dtc, &info->channels, node) अणु
+		काष्ठा dmatest_thपढ़ो *thपढ़ो;
 
-		list_for_each_entry(thread, &dtc->threads, node) {
-			if (!thread->done && !thread->pending)
-				return true;
-		}
-	}
+		list_क्रम_each_entry(thपढ़ो, &dtc->thपढ़ोs, node) अणु
+			अगर (!thपढ़ो->करोne && !thपढ़ो->pending)
+				वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool is_threaded_test_pending(struct dmatest_info *info)
-{
-	struct dmatest_chan *dtc;
+अटल bool is_thपढ़ोed_test_pending(काष्ठा dmatest_info *info)
+अणु
+	काष्ठा dmatest_chan *dtc;
 
-	list_for_each_entry(dtc, &info->channels, node) {
-		struct dmatest_thread *thread;
+	list_क्रम_each_entry(dtc, &info->channels, node) अणु
+		काष्ठा dmatest_thपढ़ो *thपढ़ो;
 
-		list_for_each_entry(thread, &dtc->threads, node) {
-			if (thread->pending)
-				return true;
-		}
-	}
+		list_क्रम_each_entry(thपढ़ो, &dtc->thपढ़ोs, node) अणु
+			अगर (thपढ़ो->pending)
+				वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int dmatest_wait_get(char *val, const struct kernel_param *kp)
-{
-	struct dmatest_info *info = &test_info;
-	struct dmatest_params *params = &info->params;
+अटल पूर्णांक dmatest_रुको_get(अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	काष्ठा dmatest_info *info = &test_info;
+	काष्ठा dmatest_params *params = &info->params;
 
-	if (params->iterations)
-		wait_event(thread_wait, !is_threaded_test_run(info));
-	wait = true;
-	return param_get_bool(val, kp);
-}
+	अगर (params->iterations)
+		रुको_event(thपढ़ो_रुको, !is_thपढ़ोed_test_run(info));
+	रुको = true;
+	वापस param_get_bool(val, kp);
+पूर्ण
 
-static const struct kernel_param_ops wait_ops = {
-	.get = dmatest_wait_get,
+अटल स्थिर काष्ठा kernel_param_ops रुको_ops = अणु
+	.get = dmatest_रुको_get,
 	.set = param_set_bool,
-};
-module_param_cb(wait, &wait_ops, &wait, S_IRUGO);
-MODULE_PARM_DESC(wait, "Wait for tests to complete (default: false)");
+पूर्ण;
+module_param_cb(रुको, &रुको_ops, &रुको, S_IRUGO);
+MODULE_PARM_DESC(रुको, "Wait for tests to complete (default: false)");
 
-static bool dmatest_match_channel(struct dmatest_params *params,
-		struct dma_chan *chan)
-{
-	if (params->channel[0] == '\0')
-		return true;
-	return strcmp(dma_chan_name(chan), params->channel) == 0;
-}
+अटल bool dmatest_match_channel(काष्ठा dmatest_params *params,
+		काष्ठा dma_chan *chan)
+अणु
+	अगर (params->channel[0] == '\0')
+		वापस true;
+	वापस म_भेद(dma_chan_name(chan), params->channel) == 0;
+पूर्ण
 
-static bool dmatest_match_device(struct dmatest_params *params,
-		struct dma_device *device)
-{
-	if (params->device[0] == '\0')
-		return true;
-	return strcmp(dev_name(device->dev), params->device) == 0;
-}
+अटल bool dmatest_match_device(काष्ठा dmatest_params *params,
+		काष्ठा dma_device *device)
+अणु
+	अगर (params->device[0] == '\0')
+		वापस true;
+	वापस म_भेद(dev_name(device->dev), params->device) == 0;
+पूर्ण
 
-static unsigned long dmatest_random(void)
-{
-	unsigned long buf;
+अटल अचिन्हित दीर्घ dmatest_अक्रमom(व्योम)
+अणु
+	अचिन्हित दीर्घ buf;
 
-	prandom_bytes(&buf, sizeof(buf));
-	return buf;
-}
+	pअक्रमom_bytes(&buf, माप(buf));
+	वापस buf;
+पूर्ण
 
-static inline u8 gen_inv_idx(u8 index, bool is_memset)
-{
-	u8 val = is_memset ? PATTERN_MEMSET_IDX : index;
+अटल अंतरभूत u8 gen_inv_idx(u8 index, bool is_स_रखो)
+अणु
+	u8 val = is_स_रखो ? PATTERN_MEMSET_IDX : index;
 
-	return ~val & PATTERN_COUNT_MASK;
-}
+	वापस ~val & PATTERN_COUNT_MASK;
+पूर्ण
 
-static inline u8 gen_src_value(u8 index, bool is_memset)
-{
-	return PATTERN_SRC | gen_inv_idx(index, is_memset);
-}
+अटल अंतरभूत u8 gen_src_value(u8 index, bool is_स_रखो)
+अणु
+	वापस PATTERN_SRC | gen_inv_idx(index, is_स_रखो);
+पूर्ण
 
-static inline u8 gen_dst_value(u8 index, bool is_memset)
-{
-	return PATTERN_DST | gen_inv_idx(index, is_memset);
-}
+अटल अंतरभूत u8 gen_dst_value(u8 index, bool is_स_रखो)
+अणु
+	वापस PATTERN_DST | gen_inv_idx(index, is_स_रखो);
+पूर्ण
 
-static void dmatest_init_srcs(u8 **bufs, unsigned int start, unsigned int len,
-		unsigned int buf_size, bool is_memset)
-{
-	unsigned int i;
+अटल व्योम dmatest_init_srcs(u8 **bufs, अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक len,
+		अचिन्हित पूर्णांक buf_size, bool is_स_रखो)
+अणु
+	अचिन्हित पूर्णांक i;
 	u8 *buf;
 
-	for (; (buf = *bufs); bufs++) {
-		for (i = 0; i < start; i++)
-			buf[i] = gen_src_value(i, is_memset);
-		for ( ; i < start + len; i++)
-			buf[i] = gen_src_value(i, is_memset) | PATTERN_COPY;
-		for ( ; i < buf_size; i++)
-			buf[i] = gen_src_value(i, is_memset);
+	क्रम (; (buf = *bufs); bufs++) अणु
+		क्रम (i = 0; i < start; i++)
+			buf[i] = gen_src_value(i, is_स_रखो);
+		क्रम ( ; i < start + len; i++)
+			buf[i] = gen_src_value(i, is_स_रखो) | PATTERN_COPY;
+		क्रम ( ; i < buf_size; i++)
+			buf[i] = gen_src_value(i, is_स_रखो);
 		buf++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dmatest_init_dsts(u8 **bufs, unsigned int start, unsigned int len,
-		unsigned int buf_size, bool is_memset)
-{
-	unsigned int i;
+अटल व्योम dmatest_init_dsts(u8 **bufs, अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक len,
+		अचिन्हित पूर्णांक buf_size, bool is_स_रखो)
+अणु
+	अचिन्हित पूर्णांक i;
 	u8 *buf;
 
-	for (; (buf = *bufs); bufs++) {
-		for (i = 0; i < start; i++)
-			buf[i] = gen_dst_value(i, is_memset);
-		for ( ; i < start + len; i++)
-			buf[i] = gen_dst_value(i, is_memset) |
+	क्रम (; (buf = *bufs); bufs++) अणु
+		क्रम (i = 0; i < start; i++)
+			buf[i] = gen_dst_value(i, is_स_रखो);
+		क्रम ( ; i < start + len; i++)
+			buf[i] = gen_dst_value(i, is_स_रखो) |
 						PATTERN_OVERWRITE;
-		for ( ; i < buf_size; i++)
-			buf[i] = gen_dst_value(i, is_memset);
-	}
-}
+		क्रम ( ; i < buf_size; i++)
+			buf[i] = gen_dst_value(i, is_स_रखो);
+	पूर्ण
+पूर्ण
 
-static void dmatest_mismatch(u8 actual, u8 pattern, unsigned int index,
-		unsigned int counter, bool is_srcbuf, bool is_memset)
-{
-	u8		diff = actual ^ pattern;
-	u8		expected = pattern | gen_inv_idx(counter, is_memset);
-	const char	*thread_name = current->comm;
+अटल व्योम dmatest_mismatch(u8 actual, u8 pattern, अचिन्हित पूर्णांक index,
+		अचिन्हित पूर्णांक counter, bool is_srcbuf, bool is_स_रखो)
+अणु
+	u8		dअगरf = actual ^ pattern;
+	u8		expected = pattern | gen_inv_idx(counter, is_स_रखो);
+	स्थिर अक्षर	*thपढ़ो_name = current->comm;
 
-	if (is_srcbuf)
+	अगर (is_srcbuf)
 		pr_warn("%s: srcbuf[0x%x] overwritten! Expected %02x, got %02x\n",
-			thread_name, index, expected, actual);
-	else if ((pattern & PATTERN_COPY)
-			&& (diff & (PATTERN_COPY | PATTERN_OVERWRITE)))
+			thपढ़ो_name, index, expected, actual);
+	अन्यथा अगर ((pattern & PATTERN_COPY)
+			&& (dअगरf & (PATTERN_COPY | PATTERN_OVERWRITE)))
 		pr_warn("%s: dstbuf[0x%x] not copied! Expected %02x, got %02x\n",
-			thread_name, index, expected, actual);
-	else if (diff & PATTERN_SRC)
+			thपढ़ो_name, index, expected, actual);
+	अन्यथा अगर (dअगरf & PATTERN_SRC)
 		pr_warn("%s: dstbuf[0x%x] was copied! Expected %02x, got %02x\n",
-			thread_name, index, expected, actual);
-	else
+			thपढ़ो_name, index, expected, actual);
+	अन्यथा
 		pr_warn("%s: dstbuf[0x%x] mismatch! Expected %02x, got %02x\n",
-			thread_name, index, expected, actual);
-}
+			thपढ़ो_name, index, expected, actual);
+पूर्ण
 
-static unsigned int dmatest_verify(u8 **bufs, unsigned int start,
-		unsigned int end, unsigned int counter, u8 pattern,
-		bool is_srcbuf, bool is_memset)
-{
-	unsigned int i;
-	unsigned int error_count = 0;
+अटल अचिन्हित पूर्णांक dmatest_verअगरy(u8 **bufs, अचिन्हित पूर्णांक start,
+		अचिन्हित पूर्णांक end, अचिन्हित पूर्णांक counter, u8 pattern,
+		bool is_srcbuf, bool is_स_रखो)
+अणु
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक error_count = 0;
 	u8 actual;
 	u8 expected;
 	u8 *buf;
-	unsigned int counter_orig = counter;
+	अचिन्हित पूर्णांक counter_orig = counter;
 
-	for (; (buf = *bufs); bufs++) {
+	क्रम (; (buf = *bufs); bufs++) अणु
 		counter = counter_orig;
-		for (i = start; i < end; i++) {
+		क्रम (i = start; i < end; i++) अणु
 			actual = buf[i];
-			expected = pattern | gen_inv_idx(counter, is_memset);
-			if (actual != expected) {
-				if (error_count < MAX_ERROR_COUNT)
+			expected = pattern | gen_inv_idx(counter, is_स_रखो);
+			अगर (actual != expected) अणु
+				अगर (error_count < MAX_ERROR_COUNT)
 					dmatest_mismatch(actual, pattern, i,
 							 counter, is_srcbuf,
-							 is_memset);
+							 is_स_रखो);
 				error_count++;
-			}
+			पूर्ण
 			counter++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (error_count > MAX_ERROR_COUNT)
+	अगर (error_count > MAX_ERROR_COUNT)
 		pr_warn("%s: %u errors suppressed\n",
 			current->comm, error_count - MAX_ERROR_COUNT);
 
-	return error_count;
-}
+	वापस error_count;
+पूर्ण
 
 
-static void dmatest_callback(void *arg)
-{
-	struct dmatest_done *done = arg;
-	struct dmatest_thread *thread =
-		container_of(done, struct dmatest_thread, test_done);
-	if (!thread->done) {
-		done->done = true;
-		wake_up_all(done->wait);
-	} else {
+अटल व्योम dmatest_callback(व्योम *arg)
+अणु
+	काष्ठा dmatest_करोne *करोne = arg;
+	काष्ठा dmatest_thपढ़ो *thपढ़ो =
+		container_of(करोne, काष्ठा dmatest_thपढ़ो, test_करोne);
+	अगर (!thपढ़ो->करोne) अणु
+		करोne->करोne = true;
+		wake_up_all(करोne->रुको);
+	पूर्ण अन्यथा अणु
 		/*
-		 * If thread->done, it means that this callback occurred
-		 * after the parent thread has cleaned up. This can
-		 * happen in the case that driver doesn't implement
+		 * If thपढ़ो->करोne, it means that this callback occurred
+		 * after the parent thपढ़ो has cleaned up. This can
+		 * happen in the हाल that driver करोesn't implement
 		 * the terminate_all() functionality and a dma operation
-		 * did not occur within the timeout period
+		 * did not occur within the समयout period
 		 */
 		WARN(1, "dmatest: Kernel memory may be corrupted!!\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int min_odd(unsigned int x, unsigned int y)
-{
-	unsigned int val = min(x, y);
+अटल अचिन्हित पूर्णांक min_odd(अचिन्हित पूर्णांक x, अचिन्हित पूर्णांक y)
+अणु
+	अचिन्हित पूर्णांक val = min(x, y);
 
-	return val % 2 ? val : val - 1;
-}
+	वापस val % 2 ? val : val - 1;
+पूर्ण
 
-static void result(const char *err, unsigned int n, unsigned int src_off,
-		   unsigned int dst_off, unsigned int len, unsigned long data)
-{
-	if (IS_ERR_VALUE(data)) {
+अटल व्योम result(स्थिर अक्षर *err, अचिन्हित पूर्णांक n, अचिन्हित पूर्णांक src_off,
+		   अचिन्हित पूर्णांक dst_off, अचिन्हित पूर्णांक len, अचिन्हित दीर्घ data)
+अणु
+	अगर (IS_ERR_VALUE(data)) अणु
 		pr_info("%s: result #%u: '%s' with src_off=0x%x dst_off=0x%x len=0x%x (%ld)\n",
 			current->comm, n, err, src_off, dst_off, len, data);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_info("%s: result #%u: '%s' with src_off=0x%x dst_off=0x%x len=0x%x (%lu)\n",
 			current->comm, n, err, src_off, dst_off, len, data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dbg_result(const char *err, unsigned int n, unsigned int src_off,
-		       unsigned int dst_off, unsigned int len,
-		       unsigned long data)
-{
+अटल व्योम dbg_result(स्थिर अक्षर *err, अचिन्हित पूर्णांक n, अचिन्हित पूर्णांक src_off,
+		       अचिन्हित पूर्णांक dst_off, अचिन्हित पूर्णांक len,
+		       अचिन्हित दीर्घ data)
+अणु
 	pr_debug("%s: result #%u: '%s' with src_off=0x%x dst_off=0x%x len=0x%x (%lu)\n",
 		 current->comm, n, err, src_off, dst_off, len, data);
-}
+पूर्ण
 
-#define verbose_result(err, n, src_off, dst_off, len, data) ({	\
-	if (verbose)						\
+#घोषणा verbose_result(err, n, src_off, dst_off, len, data) (अणु	\
+	अगर (verbose)						\
 		result(err, n, src_off, dst_off, len, data);	\
-	else							\
+	अन्यथा							\
 		dbg_result(err, n, src_off, dst_off, len, data);\
-})
+पूर्ण)
 
-static unsigned long long dmatest_persec(s64 runtime, unsigned int val)
-{
-	unsigned long long per_sec = 1000000;
+अटल अचिन्हित दीर्घ दीर्घ dmatest_persec(s64 runसमय, अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित दीर्घ दीर्घ per_sec = 1000000;
 
-	if (runtime <= 0)
-		return 0;
+	अगर (runसमय <= 0)
+		वापस 0;
 
-	/* drop precision until runtime is 32-bits */
-	while (runtime > UINT_MAX) {
-		runtime >>= 1;
+	/* drop precision until runसमय is 32-bits */
+	जबतक (runसमय > अच_पूर्णांक_उच्च) अणु
+		runसमय >>= 1;
 		per_sec <<= 1;
-	}
+	पूर्ण
 
 	per_sec *= val;
 	per_sec = INT_TO_FIXPT(per_sec);
-	do_div(per_sec, runtime);
+	करो_भाग(per_sec, runसमय);
 
-	return per_sec;
-}
+	वापस per_sec;
+पूर्ण
 
-static unsigned long long dmatest_KBs(s64 runtime, unsigned long long len)
-{
-	return FIXPT_TO_INT(dmatest_persec(runtime, len >> 10));
-}
+अटल अचिन्हित दीर्घ दीर्घ dmatest_KBs(s64 runसमय, अचिन्हित दीर्घ दीर्घ len)
+अणु
+	वापस FIXPT_TO_INT(dmatest_persec(runसमय, len >> 10));
+पूर्ण
 
-static void __dmatest_free_test_data(struct dmatest_data *d, unsigned int cnt)
-{
-	unsigned int i;
+अटल व्योम __dmatest_मुक्त_test_data(काष्ठा dmatest_data *d, अचिन्हित पूर्णांक cnt)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < cnt; i++)
-		kfree(d->raw[i]);
+	क्रम (i = 0; i < cnt; i++)
+		kमुक्त(d->raw[i]);
 
-	kfree(d->aligned);
-	kfree(d->raw);
-}
+	kमुक्त(d->aligned);
+	kमुक्त(d->raw);
+पूर्ण
 
-static void dmatest_free_test_data(struct dmatest_data *d)
-{
-	__dmatest_free_test_data(d, d->cnt);
-}
+अटल व्योम dmatest_मुक्त_test_data(काष्ठा dmatest_data *d)
+अणु
+	__dmatest_मुक्त_test_data(d, d->cnt);
+पूर्ण
 
-static int dmatest_alloc_test_data(struct dmatest_data *d,
-		unsigned int buf_size, u8 align)
-{
-	unsigned int i = 0;
+अटल पूर्णांक dmatest_alloc_test_data(काष्ठा dmatest_data *d,
+		अचिन्हित पूर्णांक buf_size, u8 align)
+अणु
+	अचिन्हित पूर्णांक i = 0;
 
-	d->raw = kcalloc(d->cnt + 1, sizeof(u8 *), GFP_KERNEL);
-	if (!d->raw)
-		return -ENOMEM;
+	d->raw = kसुस्मृति(d->cnt + 1, माप(u8 *), GFP_KERNEL);
+	अगर (!d->raw)
+		वापस -ENOMEM;
 
-	d->aligned = kcalloc(d->cnt + 1, sizeof(u8 *), GFP_KERNEL);
-	if (!d->aligned)
-		goto err;
+	d->aligned = kसुस्मृति(d->cnt + 1, माप(u8 *), GFP_KERNEL);
+	अगर (!d->aligned)
+		जाओ err;
 
-	for (i = 0; i < d->cnt; i++) {
-		d->raw[i] = kmalloc(buf_size + align, GFP_KERNEL);
-		if (!d->raw[i])
-			goto err;
+	क्रम (i = 0; i < d->cnt; i++) अणु
+		d->raw[i] = kदो_स्मृति(buf_size + align, GFP_KERNEL);
+		अगर (!d->raw[i])
+			जाओ err;
 
 		/* align to alignment restriction */
-		if (align)
+		अगर (align)
 			d->aligned[i] = PTR_ALIGN(d->raw[i], align);
-		else
+		अन्यथा
 			d->aligned[i] = d->raw[i];
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
-	__dmatest_free_test_data(d, i);
-	return -ENOMEM;
-}
+	__dmatest_मुक्त_test_data(d, i);
+	वापस -ENOMEM;
+पूर्ण
 
 /*
  * This function repeatedly tests DMA transfers of various lengths and
- * offsets for a given operation type until it is told to exit by
- * kthread_stop(). There may be multiple threads running this function
- * in parallel for a single channel, and there may be multiple channels
+ * offsets क्रम a given operation type until it is told to निकास by
+ * kthपढ़ो_stop(). There may be multiple thपढ़ोs running this function
+ * in parallel क्रम a single channel, and there may be multiple channels
  * being tested in parallel.
  *
- * Before each test, the source and destination buffer is initialized
- * with a known pattern. This pattern is different depending on
+ * Beक्रमe each test, the source and destination buffer is initialized
+ * with a known pattern. This pattern is dअगरferent depending on
  * whether it's in an area which is supposed to be copied or
- * overwritten, and different in the source and destination buffers.
- * So if the DMA engine doesn't copy exactly what we tell it to copy,
+ * overwritten, and dअगरferent in the source and destination buffers.
+ * So अगर the DMA engine करोesn't copy exactly what we tell it to copy,
  * we'll notice.
  */
-static int dmatest_func(void *data)
-{
-	struct dmatest_thread	*thread = data;
-	struct dmatest_done	*done = &thread->test_done;
-	struct dmatest_info	*info;
-	struct dmatest_params	*params;
-	struct dma_chan		*chan;
-	struct dma_device	*dev;
-	struct device		*dma_dev;
-	unsigned int		error_count;
-	unsigned int		failed_tests = 0;
-	unsigned int		total_tests = 0;
+अटल पूर्णांक dmatest_func(व्योम *data)
+अणु
+	काष्ठा dmatest_thपढ़ो	*thपढ़ो = data;
+	काष्ठा dmatest_करोne	*करोne = &thपढ़ो->test_करोne;
+	काष्ठा dmatest_info	*info;
+	काष्ठा dmatest_params	*params;
+	काष्ठा dma_chan		*chan;
+	काष्ठा dma_device	*dev;
+	काष्ठा device		*dma_dev;
+	अचिन्हित पूर्णांक		error_count;
+	अचिन्हित पूर्णांक		failed_tests = 0;
+	अचिन्हित पूर्णांक		total_tests = 0;
 	dma_cookie_t		cookie;
-	enum dma_status		status;
-	enum dma_ctrl_flags 	flags;
-	u8			*pq_coefs = NULL;
-	int			ret;
-	unsigned int 		buf_size;
-	struct dmatest_data	*src;
-	struct dmatest_data	*dst;
-	int			i;
-	ktime_t			ktime, start, diff;
-	ktime_t			filltime = 0;
-	ktime_t			comparetime = 0;
-	s64			runtime = 0;
-	unsigned long long	total_len = 0;
-	unsigned long long	iops = 0;
+	क्रमागत dma_status		status;
+	क्रमागत dma_ctrl_flags 	flags;
+	u8			*pq_coefs = शून्य;
+	पूर्णांक			ret;
+	अचिन्हित पूर्णांक 		buf_size;
+	काष्ठा dmatest_data	*src;
+	काष्ठा dmatest_data	*dst;
+	पूर्णांक			i;
+	kसमय_प्रकार			kसमय, start, dअगरf;
+	kसमय_प्रकार			fillसमय = 0;
+	kसमय_प्रकार			compareसमय = 0;
+	s64			runसमय = 0;
+	अचिन्हित दीर्घ दीर्घ	total_len = 0;
+	अचिन्हित दीर्घ दीर्घ	iops = 0;
 	u8			align = 0;
-	bool			is_memset = false;
+	bool			is_स_रखो = false;
 	dma_addr_t		*srcs;
 	dma_addr_t		*dma_pq;
 
-	set_freezable();
+	set_मुक्तzable();
 
 	ret = -ENOMEM;
 
 	smp_rmb();
-	thread->pending = false;
-	info = thread->info;
+	thपढ़ो->pending = false;
+	info = thपढ़ो->info;
 	params = &info->params;
-	chan = thread->chan;
+	chan = thपढ़ो->chan;
 	dev = chan->device;
 	dma_dev = dmaengine_get_dma_device(chan);
 
-	src = &thread->src;
-	dst = &thread->dst;
-	if (thread->type == DMA_MEMCPY) {
+	src = &thपढ़ो->src;
+	dst = &thपढ़ो->dst;
+	अगर (thपढ़ो->type == DMA_MEMCPY) अणु
 		align = params->alignment < 0 ? dev->copy_align :
 						params->alignment;
 		src->cnt = dst->cnt = 1;
-	} else if (thread->type == DMA_MEMSET) {
+	पूर्ण अन्यथा अगर (thपढ़ो->type == DMA_MEMSET) अणु
 		align = params->alignment < 0 ? dev->fill_align :
 						params->alignment;
 		src->cnt = dst->cnt = 1;
-		is_memset = true;
-	} else if (thread->type == DMA_XOR) {
-		/* force odd to ensure dst = src */
+		is_स_रखो = true;
+	पूर्ण अन्यथा अगर (thपढ़ो->type == DMA_XOR) अणु
+		/* क्रमce odd to ensure dst = src */
 		src->cnt = min_odd(params->xor_sources | 1, dev->max_xor);
 		dst->cnt = 1;
 		align = params->alignment < 0 ? dev->xor_align :
 						params->alignment;
-	} else if (thread->type == DMA_PQ) {
-		/* force odd to ensure dst = src */
+	पूर्ण अन्यथा अगर (thपढ़ो->type == DMA_PQ) अणु
+		/* क्रमce odd to ensure dst = src */
 		src->cnt = min_odd(params->pq_sources | 1, dma_maxpq(dev, 0));
 		dst->cnt = 2;
 		align = params->alignment < 0 ? dev->pq_align :
 						params->alignment;
 
-		pq_coefs = kmalloc(params->pq_sources + 1, GFP_KERNEL);
-		if (!pq_coefs)
-			goto err_thread_type;
+		pq_coefs = kदो_स्मृति(params->pq_sources + 1, GFP_KERNEL);
+		अगर (!pq_coefs)
+			जाओ err_thपढ़ो_type;
 
-		for (i = 0; i < src->cnt; i++)
+		क्रम (i = 0; i < src->cnt; i++)
 			pq_coefs[i] = 1;
-	} else
-		goto err_thread_type;
+	पूर्ण अन्यथा
+		जाओ err_thपढ़ो_type;
 
-	/* Check if buffer count fits into map count variable (u8) */
-	if ((src->cnt + dst->cnt) >= 255) {
+	/* Check अगर buffer count fits पूर्णांकo map count variable (u8) */
+	अगर ((src->cnt + dst->cnt) >= 255) अणु
 		pr_err("too many buffers (%d of 255 supported)\n",
 		       src->cnt + dst->cnt);
-		goto err_free_coefs;
-	}
+		जाओ err_मुक्त_coefs;
+	पूर्ण
 
 	buf_size = params->buf_size;
-	if (1 << align > buf_size) {
+	अगर (1 << align > buf_size) अणु
 		pr_err("%u-byte buffer too small for %d-byte alignment\n",
 		       buf_size, 1 << align);
-		goto err_free_coefs;
-	}
+		जाओ err_मुक्त_coefs;
+	पूर्ण
 
-	if (dmatest_alloc_test_data(src, buf_size, align) < 0)
-		goto err_free_coefs;
+	अगर (dmatest_alloc_test_data(src, buf_size, align) < 0)
+		जाओ err_मुक्त_coefs;
 
-	if (dmatest_alloc_test_data(dst, buf_size, align) < 0)
-		goto err_src;
+	अगर (dmatest_alloc_test_data(dst, buf_size, align) < 0)
+		जाओ err_src;
 
 	set_user_nice(current, 10);
 
-	srcs = kcalloc(src->cnt, sizeof(dma_addr_t), GFP_KERNEL);
-	if (!srcs)
-		goto err_dst;
+	srcs = kसुस्मृति(src->cnt, माप(dma_addr_t), GFP_KERNEL);
+	अगर (!srcs)
+		जाओ err_dst;
 
-	dma_pq = kcalloc(dst->cnt, sizeof(dma_addr_t), GFP_KERNEL);
-	if (!dma_pq)
-		goto err_srcs_array;
+	dma_pq = kसुस्मृति(dst->cnt, माप(dma_addr_t), GFP_KERNEL);
+	अगर (!dma_pq)
+		जाओ err_srcs_array;
 
 	/*
-	 * src and dst buffers are freed by ourselves below
+	 * src and dst buffers are मुक्तd by ourselves below
 	 */
-	if (params->polled)
+	अगर (params->polled)
 		flags = DMA_CTRL_ACK;
-	else
+	अन्यथा
 		flags = DMA_CTRL_ACK | DMA_PREP_INTERRUPT;
 
-	ktime = ktime_get();
-	while (!(kthread_should_stop() ||
-	       (params->iterations && total_tests >= params->iterations))) {
-		struct dma_async_tx_descriptor *tx = NULL;
-		struct dmaengine_unmap_data *um;
+	kसमय = kसमय_get();
+	जबतक (!(kthपढ़ो_should_stop() ||
+	       (params->iterations && total_tests >= params->iterations))) अणु
+		काष्ठा dma_async_tx_descriptor *tx = शून्य;
+		काष्ठा dmaengine_unmap_data *um;
 		dma_addr_t *dsts;
-		unsigned int len;
+		अचिन्हित पूर्णांक len;
 
 		total_tests++;
 
-		if (params->transfer_size) {
-			if (params->transfer_size >= buf_size) {
+		अगर (params->transfer_size) अणु
+			अगर (params->transfer_size >= buf_size) अणु
 				pr_err("%u-byte transfer size must be lower than %u-buffer size\n",
 				       params->transfer_size, buf_size);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			len = params->transfer_size;
-		} else if (params->norandom) {
+		पूर्ण अन्यथा अगर (params->noअक्रमom) अणु
 			len = buf_size;
-		} else {
-			len = dmatest_random() % buf_size + 1;
-		}
+		पूर्ण अन्यथा अणु
+			len = dmatest_अक्रमom() % buf_size + 1;
+		पूर्ण
 
 		/* Do not alter transfer size explicitly defined by user */
-		if (!params->transfer_size) {
+		अगर (!params->transfer_size) अणु
 			len = (len >> align) << align;
-			if (!len)
+			अगर (!len)
 				len = 1 << align;
-		}
+		पूर्ण
 		total_len += len;
 
-		if (params->norandom) {
+		अगर (params->noअक्रमom) अणु
 			src->off = 0;
 			dst->off = 0;
-		} else {
-			src->off = dmatest_random() % (buf_size - len + 1);
-			dst->off = dmatest_random() % (buf_size - len + 1);
+		पूर्ण अन्यथा अणु
+			src->off = dmatest_अक्रमom() % (buf_size - len + 1);
+			dst->off = dmatest_अक्रमom() % (buf_size - len + 1);
 
 			src->off = (src->off >> align) << align;
 			dst->off = (dst->off >> align) << align;
-		}
+		पूर्ण
 
-		if (!params->noverify) {
-			start = ktime_get();
+		अगर (!params->noverअगरy) अणु
+			start = kसमय_get();
 			dmatest_init_srcs(src->aligned, src->off, len,
-					  buf_size, is_memset);
+					  buf_size, is_स_रखो);
 			dmatest_init_dsts(dst->aligned, dst->off, len,
-					  buf_size, is_memset);
+					  buf_size, is_स_रखो);
 
-			diff = ktime_sub(ktime_get(), start);
-			filltime = ktime_add(filltime, diff);
-		}
+			dअगरf = kसमय_sub(kसमय_get(), start);
+			fillसमय = kसमय_add(fillसमय, dअगरf);
+		पूर्ण
 
 		um = dmaengine_get_unmap_data(dma_dev, src->cnt + dst->cnt,
 					      GFP_KERNEL);
-		if (!um) {
+		अगर (!um) अणु
 			failed_tests++;
 			result("unmap data NULL", total_tests,
 			       src->off, dst->off, len, ret);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		um->len = buf_size;
-		for (i = 0; i < src->cnt; i++) {
-			void *buf = src->aligned[i];
-			struct page *pg = virt_to_page(buf);
-			unsigned long pg_off = offset_in_page(buf);
+		क्रम (i = 0; i < src->cnt; i++) अणु
+			व्योम *buf = src->aligned[i];
+			काष्ठा page *pg = virt_to_page(buf);
+			अचिन्हित दीर्घ pg_off = offset_in_page(buf);
 
 			um->addr[i] = dma_map_page(dma_dev, pg, pg_off,
 						   um->len, DMA_TO_DEVICE);
 			srcs[i] = um->addr[i] + src->off;
 			ret = dma_mapping_error(dma_dev, um->addr[i]);
-			if (ret) {
+			अगर (ret) अणु
 				result("src mapping error", total_tests,
 				       src->off, dst->off, len, ret);
-				goto error_unmap_continue;
-			}
+				जाओ error_unmap_जारी;
+			पूर्ण
 			um->to_cnt++;
-		}
-		/* map with DMA_BIDIRECTIONAL to force writeback/invalidate */
+		पूर्ण
+		/* map with DMA_BIसूचीECTIONAL to क्रमce ग_लिखोback/invalidate */
 		dsts = &um->addr[src->cnt];
-		for (i = 0; i < dst->cnt; i++) {
-			void *buf = dst->aligned[i];
-			struct page *pg = virt_to_page(buf);
-			unsigned long pg_off = offset_in_page(buf);
+		क्रम (i = 0; i < dst->cnt; i++) अणु
+			व्योम *buf = dst->aligned[i];
+			काष्ठा page *pg = virt_to_page(buf);
+			अचिन्हित दीर्घ pg_off = offset_in_page(buf);
 
 			dsts[i] = dma_map_page(dma_dev, pg, pg_off, um->len,
-					       DMA_BIDIRECTIONAL);
+					       DMA_BIसूचीECTIONAL);
 			ret = dma_mapping_error(dma_dev, dsts[i]);
-			if (ret) {
+			अगर (ret) अणु
 				result("dst mapping error", total_tests,
 				       src->off, dst->off, len, ret);
-				goto error_unmap_continue;
-			}
+				जाओ error_unmap_जारी;
+			पूर्ण
 			um->bidi_cnt++;
-		}
+		पूर्ण
 
-		if (thread->type == DMA_MEMCPY)
-			tx = dev->device_prep_dma_memcpy(chan,
+		अगर (thपढ़ो->type == DMA_MEMCPY)
+			tx = dev->device_prep_dma_स_नकल(chan,
 							 dsts[0] + dst->off,
 							 srcs[0], len, flags);
-		else if (thread->type == DMA_MEMSET)
-			tx = dev->device_prep_dma_memset(chan,
+		अन्यथा अगर (thपढ़ो->type == DMA_MEMSET)
+			tx = dev->device_prep_dma_स_रखो(chan,
 						dsts[0] + dst->off,
 						*(src->aligned[0] + src->off),
 						len, flags);
-		else if (thread->type == DMA_XOR)
+		अन्यथा अगर (thपढ़ो->type == DMA_XOR)
 			tx = dev->device_prep_dma_xor(chan,
 						      dsts[0] + dst->off,
 						      srcs, src->cnt,
 						      len, flags);
-		else if (thread->type == DMA_PQ) {
-			for (i = 0; i < dst->cnt; i++)
+		अन्यथा अगर (thपढ़ो->type == DMA_PQ) अणु
+			क्रम (i = 0; i < dst->cnt; i++)
 				dma_pq[i] = dsts[i] + dst->off;
 			tx = dev->device_prep_dma_pq(chan, dma_pq, srcs,
 						     src->cnt, pq_coefs,
 						     len, flags);
-		}
+		पूर्ण
 
-		if (!tx) {
+		अगर (!tx) अणु
 			result("prep error", total_tests, src->off,
 			       dst->off, len, ret);
 			msleep(100);
-			goto error_unmap_continue;
-		}
+			जाओ error_unmap_जारी;
+		पूर्ण
 
-		done->done = false;
-		if (!params->polled) {
+		करोne->करोne = false;
+		अगर (!params->polled) अणु
 			tx->callback = dmatest_callback;
-			tx->callback_param = done;
-		}
+			tx->callback_param = करोne;
+		पूर्ण
 		cookie = tx->tx_submit(tx);
 
-		if (dma_submit_error(cookie)) {
+		अगर (dma_submit_error(cookie)) अणु
 			result("submit error", total_tests, src->off,
 			       dst->off, len, ret);
 			msleep(100);
-			goto error_unmap_continue;
-		}
+			जाओ error_unmap_जारी;
+		पूर्ण
 
-		if (params->polled) {
-			status = dma_sync_wait(chan, cookie);
+		अगर (params->polled) अणु
+			status = dma_sync_रुको(chan, cookie);
 			dmaengine_terminate_sync(chan);
-			if (status == DMA_COMPLETE)
-				done->done = true;
-		} else {
+			अगर (status == DMA_COMPLETE)
+				करोne->करोne = true;
+		पूर्ण अन्यथा अणु
 			dma_async_issue_pending(chan);
 
-			wait_event_freezable_timeout(thread->done_wait,
-					done->done,
-					msecs_to_jiffies(params->timeout));
+			रुको_event_मुक्तzable_समयout(thपढ़ो->करोne_रुको,
+					करोne->करोne,
+					msecs_to_jअगरfies(params->समयout));
 
-			status = dma_async_is_tx_complete(chan, cookie, NULL,
-							  NULL);
-		}
+			status = dma_async_is_tx_complete(chan, cookie, शून्य,
+							  शून्य);
+		पूर्ण
 
-		if (!done->done) {
+		अगर (!करोne->करोne) अणु
 			result("test timed out", total_tests, src->off, dst->off,
 			       len, 0);
-			goto error_unmap_continue;
-		} else if (status != DMA_COMPLETE &&
+			जाओ error_unmap_जारी;
+		पूर्ण अन्यथा अगर (status != DMA_COMPLETE &&
 			   !(dma_has_cap(DMA_COMPLETION_NO_ORDER,
 					 dev->cap_mask) &&
-			     status == DMA_OUT_OF_ORDER)) {
+			     status == DMA_OUT_OF_ORDER)) अणु
 			result(status == DMA_ERROR ?
 			       "completion error status" :
 			       "completion busy status", total_tests, src->off,
 			       dst->off, len, ret);
-			goto error_unmap_continue;
-		}
+			जाओ error_unmap_जारी;
+		पूर्ण
 
 		dmaengine_unmap_put(um);
 
-		if (params->noverify) {
+		अगर (params->noverअगरy) अणु
 			verbose_result("test passed", total_tests, src->off,
 				       dst->off, len, 0);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		start = ktime_get();
+		start = kसमय_get();
 		pr_debug("%s: verifying source buffer...\n", current->comm);
-		error_count = dmatest_verify(src->aligned, 0, src->off,
-				0, PATTERN_SRC, true, is_memset);
-		error_count += dmatest_verify(src->aligned, src->off,
+		error_count = dmatest_verअगरy(src->aligned, 0, src->off,
+				0, PATTERN_SRC, true, is_स_रखो);
+		error_count += dmatest_verअगरy(src->aligned, src->off,
 				src->off + len, src->off,
-				PATTERN_SRC | PATTERN_COPY, true, is_memset);
-		error_count += dmatest_verify(src->aligned, src->off + len,
+				PATTERN_SRC | PATTERN_COPY, true, is_स_रखो);
+		error_count += dmatest_verअगरy(src->aligned, src->off + len,
 				buf_size, src->off + len,
-				PATTERN_SRC, true, is_memset);
+				PATTERN_SRC, true, is_स_रखो);
 
 		pr_debug("%s: verifying dest buffer...\n", current->comm);
-		error_count += dmatest_verify(dst->aligned, 0, dst->off,
-				0, PATTERN_DST, false, is_memset);
+		error_count += dmatest_verअगरy(dst->aligned, 0, dst->off,
+				0, PATTERN_DST, false, is_स_रखो);
 
-		error_count += dmatest_verify(dst->aligned, dst->off,
+		error_count += dmatest_verअगरy(dst->aligned, dst->off,
 				dst->off + len, src->off,
-				PATTERN_SRC | PATTERN_COPY, false, is_memset);
+				PATTERN_SRC | PATTERN_COPY, false, is_स_रखो);
 
-		error_count += dmatest_verify(dst->aligned, dst->off + len,
+		error_count += dmatest_verअगरy(dst->aligned, dst->off + len,
 				buf_size, dst->off + len,
-				PATTERN_DST, false, is_memset);
+				PATTERN_DST, false, is_स_रखो);
 
-		diff = ktime_sub(ktime_get(), start);
-		comparetime = ktime_add(comparetime, diff);
+		dअगरf = kसमय_sub(kसमय_get(), start);
+		compareसमय = kसमय_add(compareसमय, dअगरf);
 
-		if (error_count) {
+		अगर (error_count) अणु
 			result("data error", total_tests, src->off, dst->off,
 			       len, error_count);
 			failed_tests++;
-		} else {
+		पूर्ण अन्यथा अणु
 			verbose_result("test passed", total_tests, src->off,
 				       dst->off, len, 0);
-		}
+		पूर्ण
 
-		continue;
+		जारी;
 
-error_unmap_continue:
+error_unmap_जारी:
 		dmaengine_unmap_put(um);
 		failed_tests++;
-	}
-	ktime = ktime_sub(ktime_get(), ktime);
-	ktime = ktime_sub(ktime, comparetime);
-	ktime = ktime_sub(ktime, filltime);
-	runtime = ktime_to_us(ktime);
+	पूर्ण
+	kसमय = kसमय_sub(kसमय_get(), kसमय);
+	kसमय = kसमय_sub(kसमय, compareसमय);
+	kसमय = kसमय_sub(kसमय, fillसमय);
+	runसमय = kसमय_प्रकारo_us(kसमय);
 
 	ret = 0;
-	kfree(dma_pq);
+	kमुक्त(dma_pq);
 err_srcs_array:
-	kfree(srcs);
+	kमुक्त(srcs);
 err_dst:
-	dmatest_free_test_data(dst);
+	dmatest_मुक्त_test_data(dst);
 err_src:
-	dmatest_free_test_data(src);
-err_free_coefs:
-	kfree(pq_coefs);
-err_thread_type:
-	iops = dmatest_persec(runtime, total_tests);
+	dmatest_मुक्त_test_data(src);
+err_मुक्त_coefs:
+	kमुक्त(pq_coefs);
+err_thपढ़ो_type:
+	iops = dmatest_persec(runसमय, total_tests);
 	pr_info("%s: summary %u tests, %u failures %llu.%02llu iops %llu KB/s (%d)\n",
 		current->comm, total_tests, failed_tests,
 		FIXPT_TO_INT(iops), FIXPT_GET_FRAC(iops),
-		dmatest_KBs(runtime, total_len), ret);
+		dmatest_KBs(runसमय, total_len), ret);
 
-	/* terminate all transfers on specified channels */
-	if (ret || failed_tests)
+	/* terminate all transfers on specअगरied channels */
+	अगर (ret || failed_tests)
 		dmaengine_terminate_sync(chan);
 
-	thread->done = true;
-	wake_up(&thread_wait);
+	thपढ़ो->करोne = true;
+	wake_up(&thपढ़ो_रुको);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void dmatest_cleanup_channel(struct dmatest_chan *dtc)
-{
-	struct dmatest_thread	*thread;
-	struct dmatest_thread	*_thread;
-	int			ret;
+अटल व्योम dmatest_cleanup_channel(काष्ठा dmatest_chan *dtc)
+अणु
+	काष्ठा dmatest_thपढ़ो	*thपढ़ो;
+	काष्ठा dmatest_thपढ़ो	*_thपढ़ो;
+	पूर्णांक			ret;
 
-	list_for_each_entry_safe(thread, _thread, &dtc->threads, node) {
-		ret = kthread_stop(thread->task);
+	list_क्रम_each_entry_safe(thपढ़ो, _thपढ़ो, &dtc->thपढ़ोs, node) अणु
+		ret = kthपढ़ो_stop(thपढ़ो->task);
 		pr_debug("thread %s exited with status %d\n",
-			 thread->task->comm, ret);
-		list_del(&thread->node);
-		put_task_struct(thread->task);
-		kfree(thread);
-	}
+			 thपढ़ो->task->comm, ret);
+		list_del(&thपढ़ो->node);
+		put_task_काष्ठा(thपढ़ो->task);
+		kमुक्त(thपढ़ो);
+	पूर्ण
 
-	/* terminate all transfers on specified channels */
+	/* terminate all transfers on specअगरied channels */
 	dmaengine_terminate_sync(dtc->chan);
 
-	kfree(dtc);
-}
+	kमुक्त(dtc);
+पूर्ण
 
-static int dmatest_add_threads(struct dmatest_info *info,
-		struct dmatest_chan *dtc, enum dma_transaction_type type)
-{
-	struct dmatest_params *params = &info->params;
-	struct dmatest_thread *thread;
-	struct dma_chan *chan = dtc->chan;
-	char *op;
-	unsigned int i;
+अटल पूर्णांक dmatest_add_thपढ़ोs(काष्ठा dmatest_info *info,
+		काष्ठा dmatest_chan *dtc, क्रमागत dma_transaction_type type)
+अणु
+	काष्ठा dmatest_params *params = &info->params;
+	काष्ठा dmatest_thपढ़ो *thपढ़ो;
+	काष्ठा dma_chan *chan = dtc->chan;
+	अक्षर *op;
+	अचिन्हित पूर्णांक i;
 
-	if (type == DMA_MEMCPY)
+	अगर (type == DMA_MEMCPY)
 		op = "copy";
-	else if (type == DMA_MEMSET)
+	अन्यथा अगर (type == DMA_MEMSET)
 		op = "set";
-	else if (type == DMA_XOR)
+	अन्यथा अगर (type == DMA_XOR)
 		op = "xor";
-	else if (type == DMA_PQ)
+	अन्यथा अगर (type == DMA_PQ)
 		op = "pq";
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	for (i = 0; i < params->threads_per_chan; i++) {
-		thread = kzalloc(sizeof(struct dmatest_thread), GFP_KERNEL);
-		if (!thread) {
+	क्रम (i = 0; i < params->thपढ़ोs_per_chan; i++) अणु
+		thपढ़ो = kzalloc(माप(काष्ठा dmatest_thपढ़ो), GFP_KERNEL);
+		अगर (!thपढ़ो) अणु
 			pr_warn("No memory for %s-%s%u\n",
 				dma_chan_name(chan), op, i);
-			break;
-		}
-		thread->info = info;
-		thread->chan = dtc->chan;
-		thread->type = type;
-		thread->test_done.wait = &thread->done_wait;
-		init_waitqueue_head(&thread->done_wait);
+			अवरोध;
+		पूर्ण
+		thपढ़ो->info = info;
+		thपढ़ो->chan = dtc->chan;
+		thपढ़ो->type = type;
+		thपढ़ो->test_करोne.रुको = &thपढ़ो->करोne_रुको;
+		init_रुकोqueue_head(&thपढ़ो->करोne_रुको);
 		smp_wmb();
-		thread->task = kthread_create(dmatest_func, thread, "%s-%s%u",
+		thपढ़ो->task = kthपढ़ो_create(dmatest_func, thपढ़ो, "%s-%s%u",
 				dma_chan_name(chan), op, i);
-		if (IS_ERR(thread->task)) {
+		अगर (IS_ERR(thपढ़ो->task)) अणु
 			pr_warn("Failed to create thread %s-%s%u\n",
 				dma_chan_name(chan), op, i);
-			kfree(thread);
-			break;
-		}
+			kमुक्त(thपढ़ो);
+			अवरोध;
+		पूर्ण
 
-		/* srcbuf and dstbuf are allocated by the thread itself */
-		get_task_struct(thread->task);
-		list_add_tail(&thread->node, &dtc->threads);
-		thread->pending = true;
-	}
+		/* srcbuf and dstbuf are allocated by the thपढ़ो itself */
+		get_task_काष्ठा(thपढ़ो->task);
+		list_add_tail(&thपढ़ो->node, &dtc->thपढ़ोs);
+		thपढ़ो->pending = true;
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int dmatest_add_channel(struct dmatest_info *info,
-		struct dma_chan *chan)
-{
-	struct dmatest_chan	*dtc;
-	struct dma_device	*dma_dev = chan->device;
-	unsigned int		thread_count = 0;
-	int cnt;
+अटल पूर्णांक dmatest_add_channel(काष्ठा dmatest_info *info,
+		काष्ठा dma_chan *chan)
+अणु
+	काष्ठा dmatest_chan	*dtc;
+	काष्ठा dma_device	*dma_dev = chan->device;
+	अचिन्हित पूर्णांक		thपढ़ो_count = 0;
+	पूर्णांक cnt;
 
-	dtc = kmalloc(sizeof(struct dmatest_chan), GFP_KERNEL);
-	if (!dtc) {
+	dtc = kदो_स्मृति(माप(काष्ठा dmatest_chan), GFP_KERNEL);
+	अगर (!dtc) अणु
 		pr_warn("No memory for %s\n", dma_chan_name(chan));
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	dtc->chan = chan;
-	INIT_LIST_HEAD(&dtc->threads);
+	INIT_LIST_HEAD(&dtc->thपढ़ोs);
 
-	if (dma_has_cap(DMA_COMPLETION_NO_ORDER, dma_dev->cap_mask) &&
-	    info->params.polled) {
+	अगर (dma_has_cap(DMA_COMPLETION_NO_ORDER, dma_dev->cap_mask) &&
+	    info->params.polled) अणु
 		info->params.polled = false;
 		pr_warn("DMA_COMPLETION_NO_ORDER, polled disabled\n");
-	}
+	पूर्ण
 
-	if (dma_has_cap(DMA_MEMCPY, dma_dev->cap_mask)) {
-		if (dmatest == 0) {
-			cnt = dmatest_add_threads(info, dtc, DMA_MEMCPY);
-			thread_count += cnt > 0 ? cnt : 0;
-		}
-	}
+	अगर (dma_has_cap(DMA_MEMCPY, dma_dev->cap_mask)) अणु
+		अगर (dmatest == 0) अणु
+			cnt = dmatest_add_thपढ़ोs(info, dtc, DMA_MEMCPY);
+			thपढ़ो_count += cnt > 0 ? cnt : 0;
+		पूर्ण
+	पूर्ण
 
-	if (dma_has_cap(DMA_MEMSET, dma_dev->cap_mask)) {
-		if (dmatest == 1) {
-			cnt = dmatest_add_threads(info, dtc, DMA_MEMSET);
-			thread_count += cnt > 0 ? cnt : 0;
-		}
-	}
+	अगर (dma_has_cap(DMA_MEMSET, dma_dev->cap_mask)) अणु
+		अगर (dmatest == 1) अणु
+			cnt = dmatest_add_thपढ़ोs(info, dtc, DMA_MEMSET);
+			thपढ़ो_count += cnt > 0 ? cnt : 0;
+		पूर्ण
+	पूर्ण
 
-	if (dma_has_cap(DMA_XOR, dma_dev->cap_mask)) {
-		cnt = dmatest_add_threads(info, dtc, DMA_XOR);
-		thread_count += cnt > 0 ? cnt : 0;
-	}
-	if (dma_has_cap(DMA_PQ, dma_dev->cap_mask)) {
-		cnt = dmatest_add_threads(info, dtc, DMA_PQ);
-		thread_count += cnt > 0 ? cnt : 0;
-	}
+	अगर (dma_has_cap(DMA_XOR, dma_dev->cap_mask)) अणु
+		cnt = dmatest_add_thपढ़ोs(info, dtc, DMA_XOR);
+		thपढ़ो_count += cnt > 0 ? cnt : 0;
+	पूर्ण
+	अगर (dma_has_cap(DMA_PQ, dma_dev->cap_mask)) अणु
+		cnt = dmatest_add_thपढ़ोs(info, dtc, DMA_PQ);
+		thपढ़ो_count += cnt > 0 ? cnt : 0;
+	पूर्ण
 
 	pr_info("Added %u threads using %s\n",
-		thread_count, dma_chan_name(chan));
+		thपढ़ो_count, dma_chan_name(chan));
 
 	list_add_tail(&dtc->node, &info->channels);
 	info->nr_channels++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool filter(struct dma_chan *chan, void *param)
-{
-	return dmatest_match_channel(param, chan) && dmatest_match_device(param, chan->device);
-}
+अटल bool filter(काष्ठा dma_chan *chan, व्योम *param)
+अणु
+	वापस dmatest_match_channel(param, chan) && dmatest_match_device(param, chan->device);
+पूर्ण
 
-static void request_channels(struct dmatest_info *info,
-			     enum dma_transaction_type type)
-{
+अटल व्योम request_channels(काष्ठा dmatest_info *info,
+			     क्रमागत dma_transaction_type type)
+अणु
 	dma_cap_mask_t mask;
 
 	dma_cap_zero(mask);
 	dma_cap_set(type, mask);
-	for (;;) {
-		struct dmatest_params *params = &info->params;
-		struct dma_chan *chan;
+	क्रम (;;) अणु
+		काष्ठा dmatest_params *params = &info->params;
+		काष्ठा dma_chan *chan;
 
 		chan = dma_request_channel(mask, filter, params);
-		if (chan) {
-			if (dmatest_add_channel(info, chan)) {
+		अगर (chan) अणु
+			अगर (dmatest_add_channel(info, chan)) अणु
 				dma_release_channel(chan);
-				break; /* add_channel failed, punt */
-			}
-		} else
-			break; /* no more channels available */
-		if (params->max_channels &&
+				अवरोध; /* add_channel failed, punt */
+			पूर्ण
+		पूर्ण अन्यथा
+			अवरोध; /* no more channels available */
+		अगर (params->max_channels &&
 		    info->nr_channels >= params->max_channels)
-			break; /* we have all we need */
-	}
-}
+			अवरोध; /* we have all we need */
+	पूर्ण
+पूर्ण
 
-static void add_threaded_test(struct dmatest_info *info)
-{
-	struct dmatest_params *params = &info->params;
+अटल व्योम add_thपढ़ोed_test(काष्ठा dmatest_info *info)
+अणु
+	काष्ठा dmatest_params *params = &info->params;
 
 	/* Copy test parameters */
 	params->buf_size = test_buf_size;
-	strlcpy(params->channel, strim(test_channel), sizeof(params->channel));
-	strlcpy(params->device, strim(test_device), sizeof(params->device));
-	params->threads_per_chan = threads_per_chan;
+	strlcpy(params->channel, strim(test_channel), माप(params->channel));
+	strlcpy(params->device, strim(test_device), माप(params->device));
+	params->thपढ़ोs_per_chan = thपढ़ोs_per_chan;
 	params->max_channels = max_channels;
 	params->iterations = iterations;
 	params->xor_sources = xor_sources;
 	params->pq_sources = pq_sources;
-	params->timeout = timeout;
-	params->noverify = noverify;
-	params->norandom = norandom;
+	params->समयout = समयout;
+	params->noverअगरy = noverअगरy;
+	params->noअक्रमom = noअक्रमom;
 	params->alignment = alignment;
 	params->transfer_size = transfer_size;
 	params->polled = polled;
@@ -1113,249 +1114,249 @@ static void add_threaded_test(struct dmatest_info *info)
 	request_channels(info, DMA_MEMSET);
 	request_channels(info, DMA_XOR);
 	request_channels(info, DMA_PQ);
-}
+पूर्ण
 
-static void run_pending_tests(struct dmatest_info *info)
-{
-	struct dmatest_chan *dtc;
-	unsigned int thread_count = 0;
+अटल व्योम run_pending_tests(काष्ठा dmatest_info *info)
+अणु
+	काष्ठा dmatest_chan *dtc;
+	अचिन्हित पूर्णांक thपढ़ो_count = 0;
 
-	list_for_each_entry(dtc, &info->channels, node) {
-		struct dmatest_thread *thread;
+	list_क्रम_each_entry(dtc, &info->channels, node) अणु
+		काष्ठा dmatest_thपढ़ो *thपढ़ो;
 
-		thread_count = 0;
-		list_for_each_entry(thread, &dtc->threads, node) {
-			wake_up_process(thread->task);
-			thread_count++;
-		}
+		thपढ़ो_count = 0;
+		list_क्रम_each_entry(thपढ़ो, &dtc->thपढ़ोs, node) अणु
+			wake_up_process(thपढ़ो->task);
+			thपढ़ो_count++;
+		पूर्ण
 		pr_info("Started %u threads using %s\n",
-			thread_count, dma_chan_name(dtc->chan));
-	}
-}
+			thपढ़ो_count, dma_chan_name(dtc->chan));
+	पूर्ण
+पूर्ण
 
-static void stop_threaded_test(struct dmatest_info *info)
-{
-	struct dmatest_chan *dtc, *_dtc;
-	struct dma_chan *chan;
+अटल व्योम stop_thपढ़ोed_test(काष्ठा dmatest_info *info)
+अणु
+	काष्ठा dmatest_chan *dtc, *_dtc;
+	काष्ठा dma_chan *chan;
 
-	list_for_each_entry_safe(dtc, _dtc, &info->channels, node) {
+	list_क्रम_each_entry_safe(dtc, _dtc, &info->channels, node) अणु
 		list_del(&dtc->node);
 		chan = dtc->chan;
 		dmatest_cleanup_channel(dtc);
 		pr_debug("dropped channel %s\n", dma_chan_name(chan));
 		dma_release_channel(chan);
-	}
+	पूर्ण
 
 	info->nr_channels = 0;
-}
+पूर्ण
 
-static void start_threaded_tests(struct dmatest_info *info)
-{
+अटल व्योम start_thपढ़ोed_tests(काष्ठा dmatest_info *info)
+अणु
 	/* we might be called early to set run=, defer running until all
 	 * parameters have been evaluated
 	 */
-	if (!info->did_init)
-		return;
+	अगर (!info->did_init)
+		वापस;
 
 	run_pending_tests(info);
-}
+पूर्ण
 
-static int dmatest_run_get(char *val, const struct kernel_param *kp)
-{
-	struct dmatest_info *info = &test_info;
+अटल पूर्णांक dmatest_run_get(अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	काष्ठा dmatest_info *info = &test_info;
 
 	mutex_lock(&info->lock);
-	if (is_threaded_test_run(info)) {
+	अगर (is_thपढ़ोed_test_run(info)) अणु
 		dmatest_run = true;
-	} else {
-		if (!is_threaded_test_pending(info))
-			stop_threaded_test(info);
+	पूर्ण अन्यथा अणु
+		अगर (!is_thपढ़ोed_test_pending(info))
+			stop_thपढ़ोed_test(info);
 		dmatest_run = false;
-	}
+	पूर्ण
 	mutex_unlock(&info->lock);
 
-	return param_get_bool(val, kp);
-}
+	वापस param_get_bool(val, kp);
+पूर्ण
 
-static int dmatest_run_set(const char *val, const struct kernel_param *kp)
-{
-	struct dmatest_info *info = &test_info;
-	int ret;
+अटल पूर्णांक dmatest_run_set(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	काष्ठा dmatest_info *info = &test_info;
+	पूर्णांक ret;
 
 	mutex_lock(&info->lock);
 	ret = param_set_bool(val, kp);
-	if (ret) {
+	अगर (ret) अणु
 		mutex_unlock(&info->lock);
-		return ret;
-	} else if (dmatest_run) {
-		if (!is_threaded_test_pending(info)) {
+		वापस ret;
+	पूर्ण अन्यथा अगर (dmatest_run) अणु
+		अगर (!is_thपढ़ोed_test_pending(info)) अणु
 			/*
 			 * We have nothing to run. This can be due to:
 			 */
 			ret = info->last_error;
-			if (ret) {
+			अगर (ret) अणु
 				/* 1) Misconfiguration */
 				pr_err("Channel misconfigured, can't continue\n");
 				mutex_unlock(&info->lock);
-				return ret;
-			} else {
-				/* 2) We rely on defaults */
+				वापस ret;
+			पूर्ण अन्यथा अणु
+				/* 2) We rely on शेषs */
 				pr_info("No channels configured, continue with any\n");
-				if (!is_threaded_test_run(info))
-					stop_threaded_test(info);
-				add_threaded_test(info);
-			}
-		}
-		start_threaded_tests(info);
-	} else {
-		stop_threaded_test(info);
-	}
+				अगर (!is_thपढ़ोed_test_run(info))
+					stop_thपढ़ोed_test(info);
+				add_thपढ़ोed_test(info);
+			पूर्ण
+		पूर्ण
+		start_thपढ़ोed_tests(info);
+	पूर्ण अन्यथा अणु
+		stop_thपढ़ोed_test(info);
+	पूर्ण
 
 	mutex_unlock(&info->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dmatest_chan_set(const char *val, const struct kernel_param *kp)
-{
-	struct dmatest_info *info = &test_info;
-	struct dmatest_chan *dtc;
-	char chan_reset_val[20];
-	int ret;
+अटल पूर्णांक dmatest_chan_set(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	काष्ठा dmatest_info *info = &test_info;
+	काष्ठा dmatest_chan *dtc;
+	अक्षर chan_reset_val[20];
+	पूर्णांक ret;
 
 	mutex_lock(&info->lock);
 	ret = param_set_copystring(val, kp);
-	if (ret) {
+	अगर (ret) अणु
 		mutex_unlock(&info->lock);
-		return ret;
-	}
-	/*Clear any previously run threads */
-	if (!is_threaded_test_run(info) && !is_threaded_test_pending(info))
-		stop_threaded_test(info);
-	/* Reject channels that are already registered */
-	if (is_threaded_test_pending(info)) {
-		list_for_each_entry(dtc, &info->channels, node) {
-			if (strcmp(dma_chan_name(dtc->chan),
-				   strim(test_channel)) == 0) {
+		वापस ret;
+	पूर्ण
+	/*Clear any previously run thपढ़ोs */
+	अगर (!is_thपढ़ोed_test_run(info) && !is_thपढ़ोed_test_pending(info))
+		stop_thपढ़ोed_test(info);
+	/* Reject channels that are alपढ़ोy रेजिस्टरed */
+	अगर (is_thपढ़ोed_test_pending(info)) अणु
+		list_क्रम_each_entry(dtc, &info->channels, node) अणु
+			अगर (म_भेद(dma_chan_name(dtc->chan),
+				   strim(test_channel)) == 0) अणु
 				dtc = list_last_entry(&info->channels,
-						      struct dmatest_chan,
+						      काष्ठा dmatest_chan,
 						      node);
 				strlcpy(chan_reset_val,
 					dma_chan_name(dtc->chan),
-					sizeof(chan_reset_val));
+					माप(chan_reset_val));
 				ret = -EBUSY;
-				goto add_chan_err;
-			}
-		}
-	}
+				जाओ add_chan_err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	add_threaded_test(info);
+	add_thपढ़ोed_test(info);
 
-	/* Check if channel was added successfully */
-	if (!list_empty(&info->channels)) {
+	/* Check अगर channel was added successfully */
+	अगर (!list_empty(&info->channels)) अणु
 		/*
-		 * if new channel was not successfully added, revert the
+		 * अगर new channel was not successfully added, revert the
 		 * "test_channel" string to the name of the last successfully
-		 * added channel. exception for when users issues empty string
+		 * added channel. exception क्रम when users issues empty string
 		 * to channel parameter.
 		 */
-		dtc = list_last_entry(&info->channels, struct dmatest_chan, node);
-		if ((strcmp(dma_chan_name(dtc->chan), strim(test_channel)) != 0)
-		    && (strcmp("", strim(test_channel)) != 0)) {
+		dtc = list_last_entry(&info->channels, काष्ठा dmatest_chan, node);
+		अगर ((म_भेद(dma_chan_name(dtc->chan), strim(test_channel)) != 0)
+		    && (म_भेद("", strim(test_channel)) != 0)) अणु
 			ret = -EINVAL;
 			strlcpy(chan_reset_val, dma_chan_name(dtc->chan),
-				sizeof(chan_reset_val));
-			goto add_chan_err;
-		}
+				माप(chan_reset_val));
+			जाओ add_chan_err;
+		पूर्ण
 
-	} else {
-		/* Clear test_channel if no channels were added successfully */
-		strlcpy(chan_reset_val, "", sizeof(chan_reset_val));
+	पूर्ण अन्यथा अणु
+		/* Clear test_channel अगर no channels were added successfully */
+		strlcpy(chan_reset_val, "", माप(chan_reset_val));
 		ret = -EBUSY;
-		goto add_chan_err;
-	}
+		जाओ add_chan_err;
+	पूर्ण
 
 	info->last_error = ret;
 	mutex_unlock(&info->lock);
 
-	return ret;
+	वापस ret;
 
 add_chan_err:
 	param_set_copystring(chan_reset_val, kp);
 	info->last_error = ret;
 	mutex_unlock(&info->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dmatest_chan_get(char *val, const struct kernel_param *kp)
-{
-	struct dmatest_info *info = &test_info;
+अटल पूर्णांक dmatest_chan_get(अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	काष्ठा dmatest_info *info = &test_info;
 
 	mutex_lock(&info->lock);
-	if (!is_threaded_test_run(info) && !is_threaded_test_pending(info)) {
-		stop_threaded_test(info);
-		strlcpy(test_channel, "", sizeof(test_channel));
-	}
+	अगर (!is_thपढ़ोed_test_run(info) && !is_thपढ़ोed_test_pending(info)) अणु
+		stop_thपढ़ोed_test(info);
+		strlcpy(test_channel, "", माप(test_channel));
+	पूर्ण
 	mutex_unlock(&info->lock);
 
-	return param_get_string(val, kp);
-}
+	वापस param_get_string(val, kp);
+पूर्ण
 
-static int dmatest_test_list_get(char *val, const struct kernel_param *kp)
-{
-	struct dmatest_info *info = &test_info;
-	struct dmatest_chan *dtc;
-	unsigned int thread_count = 0;
+अटल पूर्णांक dmatest_test_list_get(अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	काष्ठा dmatest_info *info = &test_info;
+	काष्ठा dmatest_chan *dtc;
+	अचिन्हित पूर्णांक thपढ़ो_count = 0;
 
-	list_for_each_entry(dtc, &info->channels, node) {
-		struct dmatest_thread *thread;
+	list_क्रम_each_entry(dtc, &info->channels, node) अणु
+		काष्ठा dmatest_thपढ़ो *thपढ़ो;
 
-		thread_count = 0;
-		list_for_each_entry(thread, &dtc->threads, node) {
-			thread_count++;
-		}
+		thपढ़ो_count = 0;
+		list_क्रम_each_entry(thपढ़ो, &dtc->thपढ़ोs, node) अणु
+			thपढ़ो_count++;
+		पूर्ण
 		pr_info("%u threads using %s\n",
-			thread_count, dma_chan_name(dtc->chan));
-	}
+			thपढ़ो_count, dma_chan_name(dtc->chan));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init dmatest_init(void)
-{
-	struct dmatest_info *info = &test_info;
-	struct dmatest_params *params = &info->params;
+अटल पूर्णांक __init dmatest_init(व्योम)
+अणु
+	काष्ठा dmatest_info *info = &test_info;
+	काष्ठा dmatest_params *params = &info->params;
 
-	if (dmatest_run) {
+	अगर (dmatest_run) अणु
 		mutex_lock(&info->lock);
-		add_threaded_test(info);
+		add_thपढ़ोed_test(info);
 		run_pending_tests(info);
 		mutex_unlock(&info->lock);
-	}
+	पूर्ण
 
-	if (params->iterations && wait)
-		wait_event(thread_wait, !is_threaded_test_run(info));
+	अगर (params->iterations && रुको)
+		रुको_event(thपढ़ो_रुको, !is_thपढ़ोed_test_run(info));
 
-	/* module parameters are stable, inittime tests are started,
+	/* module parameters are stable, initसमय tests are started,
 	 * let userspace take over 'run' control
 	 */
 	info->did_init = true;
 
-	return 0;
-}
-/* when compiled-in wait for drivers to load first */
+	वापस 0;
+पूर्ण
+/* when compiled-in रुको क्रम drivers to load first */
 late_initcall(dmatest_init);
 
-static void __exit dmatest_exit(void)
-{
-	struct dmatest_info *info = &test_info;
+अटल व्योम __निकास dmatest_निकास(व्योम)
+अणु
+	काष्ठा dmatest_info *info = &test_info;
 
 	mutex_lock(&info->lock);
-	stop_threaded_test(info);
+	stop_thपढ़ोed_test(info);
 	mutex_unlock(&info->lock);
-}
-module_exit(dmatest_exit);
+पूर्ण
+module_निकास(dmatest_निकास);
 
 MODULE_AUTHOR("Haavard Skinnemoen (Atmel)");
 MODULE_LICENSE("GPL v2");

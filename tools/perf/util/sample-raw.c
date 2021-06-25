@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#include <string.h>
-#include "evlist.h"
-#include "env.h"
-#include "sample-raw.h"
+#समावेश <माला.स>
+#समावेश "evlist.h"
+#समावेश "env.h"
+#समावेश "sample-raw.h"
 
 /*
- * Check platform the perf data file was created on and perform platform
- * specific interpretation.
+ * Check platक्रमm the perf data file was created on and perक्रमm platक्रमm
+ * specअगरic पूर्णांकerpretation.
  */
-void evlist__init_trace_event_sample_raw(struct evlist *evlist)
-{
-	const char *arch_pf = perf_env__arch(evlist->env);
+व्योम evlist__init_trace_event_sample_raw(काष्ठा evlist *evlist)
+अणु
+	स्थिर अक्षर *arch_pf = perf_env__arch(evlist->env);
 
-	if (arch_pf && !strcmp("s390", arch_pf))
+	अगर (arch_pf && !म_भेद("s390", arch_pf))
 		evlist->trace_event_sample_raw = evlist__s390_sample_raw;
-}
+पूर्ण

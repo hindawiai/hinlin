@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  Machine specific APM BIOS functions for generic.
+ *  Machine specअगरic APM BIOS functions क्रम generic.
  *  Split out from apm.c by Osamu Tomita <tomita@cinet.co.jp>
  */
 
-#ifndef _ASM_X86_MACH_DEFAULT_APM_H
-#define _ASM_X86_MACH_DEFAULT_APM_H
+#अगर_अघोषित _ASM_X86_MACH_DEFAULT_APM_H
+#घोषणा _ASM_X86_MACH_DEFAULT_APM_H
 
-#ifdef APM_ZERO_SEGS
+#अगर_घोषित APM_ZERO_SEGS
 #	define APM_DO_ZERO_SEGS \
 		"pushl %%ds\n\t" \
 		"pushl %%es\n\t" \
@@ -19,20 +20,20 @@
 #	define APM_DO_POP_SEGS \
 		"popl %%es\n\t" \
 		"popl %%ds\n\t"
-#else
+#अन्यथा
 #	define APM_DO_ZERO_SEGS
 #	define APM_DO_POP_SEGS
-#endif
+#पूर्ण_अगर
 
-static inline void apm_bios_call_asm(u32 func, u32 ebx_in, u32 ecx_in,
+अटल अंतरभूत व्योम apm_bios_call_यंत्र(u32 func, u32 ebx_in, u32 ecx_in,
 					u32 *eax, u32 *ebx, u32 *ecx,
 					u32 *edx, u32 *esi)
-{
+अणु
 	/*
-	 * N.B. We do NOT need a cld after the BIOS call
+	 * N.B. We करो NOT need a cld after the BIOS call
 	 * because we always save and restore the flags.
 	 */
-	__asm__ __volatile__(APM_DO_ZERO_SEGS
+	__यंत्र__ __अस्थिर__(APM_DO_ZERO_SEGS
 		"pushl %%edi\n\t"
 		"pushl %%ebp\n\t"
 		"lcall *%%cs:apm_bios_entry\n\t"
@@ -44,19 +45,19 @@ static inline void apm_bios_call_asm(u32 func, u32 ebx_in, u32 ecx_in,
 		  "=S" (*esi)
 		: "a" (func), "b" (ebx_in), "c" (ecx_in)
 		: "memory", "cc");
-}
+पूर्ण
 
-static inline bool apm_bios_call_simple_asm(u32 func, u32 ebx_in,
+अटल अंतरभूत bool apm_bios_call_simple_यंत्र(u32 func, u32 ebx_in,
 					    u32 ecx_in, u32 *eax)
-{
-	int	cx, dx, si;
+अणु
+	पूर्णांक	cx, dx, si;
 	bool	error;
 
 	/*
-	 * N.B. We do NOT need a cld after the BIOS call
+	 * N.B. We करो NOT need a cld after the BIOS call
 	 * because we always save and restore the flags.
 	 */
-	__asm__ __volatile__(APM_DO_ZERO_SEGS
+	__यंत्र__ __अस्थिर__(APM_DO_ZERO_SEGS
 		"pushl %%edi\n\t"
 		"pushl %%ebp\n\t"
 		"lcall *%%cs:apm_bios_entry\n\t"
@@ -68,7 +69,7 @@ static inline bool apm_bios_call_simple_asm(u32 func, u32 ebx_in,
 		  "=S" (si)
 		: "a" (func), "b" (ebx_in), "c" (ecx_in)
 		: "memory", "cc");
-	return error;
-}
+	वापस error;
+पूर्ण
 
-#endif /* _ASM_X86_MACH_DEFAULT_APM_H */
+#पूर्ण_अगर /* _ASM_X86_MACH_DEFAULT_APM_H */

@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * PowerNV setup code.
  *
  * Copyright 2011 IBM Corp.
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/cpu.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/tty.h>
-#include <linux/reboot.h>
-#include <linux/init.h>
-#include <linux/console.h>
-#include <linux/delay.h>
-#include <linux/irq.h>
-#include <linux/seq_file.h>
-#include <linux/of.h>
-#include <linux/of_fdt.h>
-#include <linux/interrupt.h>
-#include <linux/bug.h>
-#include <linux/pci.h>
-#include <linux/cpufreq.h>
-#include <linux/memblock.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/init.h>
+#समावेश <linux/console.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/memblock.h>
 
-#include <asm/machdep.h>
-#include <asm/firmware.h>
-#include <asm/xics.h>
-#include <asm/xive.h>
-#include <asm/opal.h>
-#include <asm/kexec.h>
-#include <asm/smp.h>
-#include <asm/tm.h>
-#include <asm/setup.h>
-#include <asm/security_features.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/xics.h>
+#समावेश <यंत्र/xive.h>
+#समावेश <यंत्र/opal.h>
+#समावेश <यंत्र/kexec.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/पंचांग.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/security_features.h>
 
-#include "powernv.h"
+#समावेश "powernv.h"
 
 
-static bool fw_feature_is(const char *state, const char *name,
-			  struct device_node *fw_features)
-{
-	struct device_node *np;
+अटल bool fw_feature_is(स्थिर अक्षर *state, स्थिर अक्षर *name,
+			  काष्ठा device_node *fw_features)
+अणु
+	काष्ठा device_node *np;
 	bool rc = false;
 
 	np = of_get_child_by_name(fw_features, name);
-	if (np) {
-		rc = of_property_read_bool(np, state);
+	अगर (np) अणु
+		rc = of_property_पढ़ो_bool(np, state);
 		of_node_put(np);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void init_fw_feat_flags(struct device_node *np)
-{
-	if (fw_feature_is("enabled", "inst-spec-barrier-ori31,31,0", np))
+अटल व्योम init_fw_feat_flags(काष्ठा device_node *np)
+अणु
+	अगर (fw_feature_is("enabled", "inst-spec-barrier-ori31,31,0", np))
 		security_ftr_set(SEC_FTR_SPEC_BAR_ORI31);
 
-	if (fw_feature_is("enabled", "fw-bcctrl-serialized", np))
+	अगर (fw_feature_is("enabled", "fw-bcctrl-serialized", np))
 		security_ftr_set(SEC_FTR_BCCTRL_SERIALISED);
 
-	if (fw_feature_is("enabled", "inst-l1d-flush-ori30,30,0", np))
+	अगर (fw_feature_is("enabled", "inst-l1d-flush-ori30,30,0", np))
 		security_ftr_set(SEC_FTR_L1D_FLUSH_ORI30);
 
-	if (fw_feature_is("enabled", "inst-l1d-flush-trig2", np))
+	अगर (fw_feature_is("enabled", "inst-l1d-flush-trig2", np))
 		security_ftr_set(SEC_FTR_L1D_FLUSH_TRIG2);
 
-	if (fw_feature_is("enabled", "fw-l1d-thread-split", np))
+	अगर (fw_feature_is("enabled", "fw-l1d-thread-split", np))
 		security_ftr_set(SEC_FTR_L1D_THREAD_PRIV);
 
-	if (fw_feature_is("enabled", "fw-count-cache-disabled", np))
+	अगर (fw_feature_is("enabled", "fw-count-cache-disabled", np))
 		security_ftr_set(SEC_FTR_COUNT_CACHE_DISABLED);
 
-	if (fw_feature_is("enabled", "fw-count-cache-flush-bcctr2,0,0", np))
+	अगर (fw_feature_is("enabled", "fw-count-cache-flush-bcctr2,0,0", np))
 		security_ftr_set(SEC_FTR_BCCTR_FLUSH_ASSIST);
 
-	if (fw_feature_is("enabled", "needs-count-cache-flush-on-context-switch", np))
+	अगर (fw_feature_is("enabled", "needs-count-cache-flush-on-context-switch", np))
 		security_ftr_set(SEC_FTR_FLUSH_COUNT_CACHE);
 
 	/*
-	 * The features below are enabled by default, so we instead look to see
-	 * if firmware has *disabled* them, and clear them if so.
+	 * The features below are enabled by शेष, so we instead look to see
+	 * अगर firmware has *disabled* them, and clear them अगर so.
 	 */
-	if (fw_feature_is("disabled", "speculation-policy-favor-security", np))
+	अगर (fw_feature_is("disabled", "speculation-policy-favor-security", np))
 		security_ftr_clear(SEC_FTR_FAVOUR_SECURITY);
 
-	if (fw_feature_is("disabled", "needs-l1d-flush-msr-pr-0-to-1", np))
+	अगर (fw_feature_is("disabled", "needs-l1d-flush-msr-pr-0-to-1", np))
 		security_ftr_clear(SEC_FTR_L1D_FLUSH_PR);
 
-	if (fw_feature_is("disabled", "needs-l1d-flush-msr-hv-1-to-0", np))
+	अगर (fw_feature_is("disabled", "needs-l1d-flush-msr-hv-1-to-0", np))
 		security_ftr_clear(SEC_FTR_L1D_FLUSH_HV);
 
-	if (fw_feature_is("disabled", "needs-spec-barrier-for-bound-checks", np))
+	अगर (fw_feature_is("disabled", "needs-spec-barrier-for-bound-checks", np))
 		security_ftr_clear(SEC_FTR_BNDS_CHK_SPEC_BAR);
-}
+पूर्ण
 
-static void pnv_setup_security_mitigations(void)
-{
-	struct device_node *np, *fw_features;
-	enum l1d_flush_type type;
+अटल व्योम pnv_setup_security_mitigations(व्योम)
+अणु
+	काष्ठा device_node *np, *fw_features;
+	क्रमागत l1d_flush_type type;
 	bool enable;
 
-	/* Default to fallback in case fw-features are not available */
+	/* Default to fallback in हाल fw-features are not available */
 	type = L1D_FLUSH_FALLBACK;
 
-	np = of_find_node_by_name(NULL, "ibm,opal");
+	np = of_find_node_by_name(शून्य, "ibm,opal");
 	fw_features = of_get_child_by_name(np, "fw-features");
 	of_node_put(np);
 
-	if (fw_features) {
+	अगर (fw_features) अणु
 		init_fw_feat_flags(fw_features);
 		of_node_put(fw_features);
 
-		if (security_ftr_enabled(SEC_FTR_L1D_FLUSH_TRIG2))
+		अगर (security_ftr_enabled(SEC_FTR_L1D_FLUSH_TRIG2))
 			type = L1D_FLUSH_MTTRIG;
 
-		if (security_ftr_enabled(SEC_FTR_L1D_FLUSH_ORI30))
+		अगर (security_ftr_enabled(SEC_FTR_L1D_FLUSH_ORI30))
 			type = L1D_FLUSH_ORI;
-	}
+	पूर्ण
 
 	/*
-	 * If we are non-Power9 bare metal, we don't need to flush on kernel
-	 * entry or after user access: they fix a P9 specific vulnerability.
+	 * If we are non-Power9 bare metal, we करोn't need to flush on kernel
+	 * entry or after user access: they fix a P9 specअगरic vulnerability.
 	 */
-	if (!pvr_version_is(PVR_POWER9)) {
+	अगर (!pvr_version_is(PVR_POWER9)) अणु
 		security_ftr_clear(SEC_FTR_L1D_FLUSH_ENTRY);
 		security_ftr_clear(SEC_FTR_L1D_FLUSH_UACCESS);
-	}
+	पूर्ण
 
 	enable = security_ftr_enabled(SEC_FTR_FAVOUR_SECURITY) && \
 		 (security_ftr_enabled(SEC_FTR_L1D_FLUSH_PR)   || \
@@ -147,20 +148,20 @@ static void pnv_setup_security_mitigations(void)
 	setup_uaccess_flush(enable);
 
 	setup_stf_barrier();
-}
+पूर्ण
 
-static void __init pnv_check_guarded_cores(void)
-{
-	struct device_node *dn;
-	int bad_count = 0;
+अटल व्योम __init pnv_check_guarded_cores(व्योम)
+अणु
+	काष्ठा device_node *dn;
+	पूर्णांक bad_count = 0;
 
-	for_each_node_by_type(dn, "cpu") {
-		if (of_property_match_string(dn, "status", "bad") >= 0)
+	क्रम_each_node_by_type(dn, "cpu") अणु
+		अगर (of_property_match_string(dn, "status", "bad") >= 0)
 			bad_count++;
-	}
+	पूर्ण
 
-	if (bad_count) {
-		printk("  _     _______________\n");
+	अगर (bad_count) अणु
+		prपूर्णांकk("  _     _______________\n");
 		pr_cont(" | |   /               \\\n");
 		pr_cont(" | |   |    WARNING!   |\n");
 		pr_cont(" | |   |               |\n");
@@ -168,12 +169,12 @@ static void __init pnv_check_guarded_cores(void)
 		pr_cont(" |_|   |  you have %*d |\n", 3, bad_count);
 		pr_cont("  _    | guarded cores |\n");
 		pr_cont(" (_)   \\_______________/\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init pnv_setup_arch(void)
-{
-	set_arch_panic_timeout(10, ARCH_PANIC_TIMEOUT);
+अटल व्योम __init pnv_setup_arch(व्योम)
+अणु
+	set_arch_panic_समयout(10, ARCH_PANIC_TIMEOUT);
 
 	pnv_setup_security_mitigations();
 
@@ -181,321 +182,321 @@ static void __init pnv_setup_arch(void)
 	pnv_smp_init();
 
 	/* Setup RTC and NVRAM callbacks */
-	if (firmware_has_feature(FW_FEATURE_OPAL))
+	अगर (firmware_has_feature(FW_FEATURE_OPAL))
 		opal_nvram_init();
 
 	/* Enable NAP mode */
-	powersave_nap = 1;
+	घातersave_nap = 1;
 
 	pnv_check_guarded_cores();
 
 	/* XXX PMCS */
-}
+पूर्ण
 
-static void __init pnv_init(void)
-{
+अटल व्योम __init pnv_init(व्योम)
+अणु
 	/*
 	 * Initialize the LPC bus now so that legacy serial
 	 * ports can be found on it
 	 */
 	opal_lpc_init();
 
-#ifdef CONFIG_HVC_OPAL
-	if (firmware_has_feature(FW_FEATURE_OPAL))
+#अगर_घोषित CONFIG_HVC_OPAL
+	अगर (firmware_has_feature(FW_FEATURE_OPAL))
 		hvc_opal_init_early();
-	else
-#endif
-		add_preferred_console("hvc", 0, NULL);
+	अन्यथा
+#पूर्ण_अगर
+		add_preferred_console("hvc", 0, शून्य);
 
-	if (!radix_enabled()) {
-		size_t size = sizeof(struct slb_entry) * mmu_slb_size;
-		int i;
+	अगर (!radix_enabled()) अणु
+		माप_प्रकार size = माप(काष्ठा slb_entry) * mmu_slb_size;
+		पूर्णांक i;
 
 		/* Allocate per cpu area to save old slb contents during MCE */
-		for_each_possible_cpu(i) {
+		क्रम_each_possible_cpu(i) अणु
 			paca_ptrs[i]->mce_faulty_slbs =
 					memblock_alloc_node(size,
-						__alignof__(struct slb_entry),
+						__alignof__(काष्ठा slb_entry),
 						cpu_to_node(i));
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void __init pnv_init_IRQ(void)
-{
-	/* Try using a XIVE if available, otherwise use a XICS */
-	if (!xive_native_init())
+अटल व्योम __init pnv_init_IRQ(व्योम)
+अणु
+	/* Try using a XIVE अगर available, otherwise use a XICS */
+	अगर (!xive_native_init())
 		xics_init();
 
 	WARN_ON(!ppc_md.get_irq);
-}
+पूर्ण
 
-static void pnv_show_cpuinfo(struct seq_file *m)
-{
-	struct device_node *root;
-	const char *model = "";
+अटल व्योम pnv_show_cpuinfo(काष्ठा seq_file *m)
+अणु
+	काष्ठा device_node *root;
+	स्थिर अक्षर *model = "";
 
 	root = of_find_node_by_path("/");
-	if (root)
-		model = of_get_property(root, "model", NULL);
-	seq_printf(m, "machine\t\t: PowerNV %s\n", model);
-	if (firmware_has_feature(FW_FEATURE_OPAL))
-		seq_printf(m, "firmware\t: OPAL\n");
-	else
-		seq_printf(m, "firmware\t: BML\n");
+	अगर (root)
+		model = of_get_property(root, "model", शून्य);
+	seq_म_लिखो(m, "machine\t\t: PowerNV %s\n", model);
+	अगर (firmware_has_feature(FW_FEATURE_OPAL))
+		seq_म_लिखो(m, "firmware\t: OPAL\n");
+	अन्यथा
+		seq_म_लिखो(m, "firmware\t: BML\n");
 	of_node_put(root);
-	if (radix_enabled())
-		seq_printf(m, "MMU\t\t: Radix\n");
-	else
-		seq_printf(m, "MMU\t\t: Hash\n");
-}
+	अगर (radix_enabled())
+		seq_म_लिखो(m, "MMU\t\t: Radix\n");
+	अन्यथा
+		seq_म_लिखो(m, "MMU\t\t: Hash\n");
+पूर्ण
 
-static void pnv_prepare_going_down(void)
-{
+अटल व्योम pnv_prepare_going_करोwn(व्योम)
+अणु
 	/*
-	 * Disable all notifiers from OPAL, we can't
-	 * service interrupts anymore anyway
+	 * Disable all notअगरiers from OPAL, we can't
+	 * service पूर्णांकerrupts anymore anyway
 	 */
-	opal_event_shutdown();
+	opal_event_shutकरोwn();
 
-	/* Print flash update message if one is scheduled. */
-	opal_flash_update_print_message();
+	/* Prपूर्णांक flash update message अगर one is scheduled. */
+	opal_flash_update_prपूर्णांक_message();
 
 	smp_send_stop();
 
 	hard_irq_disable();
-}
+पूर्ण
 
-static void  __noreturn pnv_restart(char *cmd)
-{
-	long rc;
+अटल व्योम  __noवापस pnv_restart(अक्षर *cmd)
+अणु
+	दीर्घ rc;
 
-	pnv_prepare_going_down();
+	pnv_prepare_going_करोwn();
 
-	do {
-		if (!cmd || !strlen(cmd))
+	करो अणु
+		अगर (!cmd || !म_माप(cmd))
 			rc = opal_cec_reboot();
-		else if (strcmp(cmd, "full") == 0)
-			rc = opal_cec_reboot2(OPAL_REBOOT_FULL_IPL, NULL);
-		else if (strcmp(cmd, "mpipl") == 0)
-			rc = opal_cec_reboot2(OPAL_REBOOT_MPIPL, NULL);
-		else if (strcmp(cmd, "error") == 0)
-			rc = opal_cec_reboot2(OPAL_REBOOT_PLATFORM_ERROR, NULL);
-		else if (strcmp(cmd, "fast") == 0)
-			rc = opal_cec_reboot2(OPAL_REBOOT_FAST, NULL);
-		else
+		अन्यथा अगर (म_भेद(cmd, "full") == 0)
+			rc = opal_cec_reboot2(OPAL_REBOOT_FULL_IPL, शून्य);
+		अन्यथा अगर (म_भेद(cmd, "mpipl") == 0)
+			rc = opal_cec_reboot2(OPAL_REBOOT_MPIPL, शून्य);
+		अन्यथा अगर (म_भेद(cmd, "error") == 0)
+			rc = opal_cec_reboot2(OPAL_REBOOT_PLATFORM_ERROR, शून्य);
+		अन्यथा अगर (म_भेद(cmd, "fast") == 0)
+			rc = opal_cec_reboot2(OPAL_REBOOT_FAST, शून्य);
+		अन्यथा
 			rc = OPAL_UNSUPPORTED;
 
-		if (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) {
-			/* Opal is busy wait for some time and retry */
-			opal_poll_events(NULL);
+		अगर (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) अणु
+			/* Opal is busy रुको क्रम some समय and retry */
+			opal_poll_events(शून्य);
 			mdelay(10);
 
-		} else	if (cmd && rc) {
-			/* Unknown error while issuing reboot */
-			if (rc == OPAL_UNSUPPORTED)
+		पूर्ण अन्यथा	अगर (cmd && rc) अणु
+			/* Unknown error जबतक issuing reboot */
+			अगर (rc == OPAL_UNSUPPORTED)
 				pr_err("Unsupported '%s' reboot.\n", cmd);
-			else
+			अन्यथा
 				pr_err("Unable to issue '%s' reboot. Err=%ld\n",
 				       cmd, rc);
 			pr_info("Forcing a cec-reboot\n");
-			cmd = NULL;
+			cmd = शून्य;
 			rc = OPAL_BUSY;
 
-		} else if (rc != OPAL_SUCCESS) {
-			/* Unknown error while issuing cec-reboot */
+		पूर्ण अन्यथा अगर (rc != OPAL_SUCCESS) अणु
+			/* Unknown error जबतक issuing cec-reboot */
 			pr_err("Unable to reboot. Err=%ld\n", rc);
-		}
+		पूर्ण
 
-	} while (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT);
+	पूर्ण जबतक (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT);
 
-	for (;;)
-		opal_poll_events(NULL);
-}
+	क्रम (;;)
+		opal_poll_events(शून्य);
+पूर्ण
 
-static void __noreturn pnv_power_off(void)
-{
-	long rc = OPAL_BUSY;
+अटल व्योम __noवापस pnv_घातer_off(व्योम)
+अणु
+	दीर्घ rc = OPAL_BUSY;
 
-	pnv_prepare_going_down();
+	pnv_prepare_going_करोwn();
 
-	while (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) {
-		rc = opal_cec_power_down(0);
-		if (rc == OPAL_BUSY_EVENT)
-			opal_poll_events(NULL);
-		else
+	जबतक (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) अणु
+		rc = opal_cec_घातer_करोwn(0);
+		अगर (rc == OPAL_BUSY_EVENT)
+			opal_poll_events(शून्य);
+		अन्यथा
 			mdelay(10);
-	}
-	for (;;)
-		opal_poll_events(NULL);
-}
+	पूर्ण
+	क्रम (;;)
+		opal_poll_events(शून्य);
+पूर्ण
 
-static void __noreturn pnv_halt(void)
-{
-	pnv_power_off();
-}
+अटल व्योम __noवापस pnv_halt(व्योम)
+अणु
+	pnv_घातer_off();
+पूर्ण
 
-static void pnv_progress(char *s, unsigned short hex)
-{
-}
+अटल व्योम pnv_progress(अक्षर *s, अचिन्हित लघु hex)
+अणु
+पूर्ण
 
-static void pnv_shutdown(void)
-{
+अटल व्योम pnv_shutकरोwn(व्योम)
+अणु
 	/* Let the PCI code clear up IODA tables */
-	pnv_pci_shutdown();
+	pnv_pci_shutकरोwn();
 
 	/*
-	 * Stop OPAL activity: Unregister all OPAL interrupts so they
-	 * don't fire up while we kexec and make sure all potentially
+	 * Stop OPAL activity: Unरेजिस्टर all OPAL पूर्णांकerrupts so they
+	 * करोn't fire up जबतक we kexec and make sure all potentially
 	 * DMA'ing ops are complete (such as dump retrieval).
 	 */
-	opal_shutdown();
-}
+	opal_shutकरोwn();
+पूर्ण
 
-#ifdef CONFIG_KEXEC_CORE
-static void pnv_kexec_wait_secondaries_down(void)
-{
-	int my_cpu, i, notified = -1;
+#अगर_घोषित CONFIG_KEXEC_CORE
+अटल व्योम pnv_kexec_रुको_secondaries_करोwn(व्योम)
+अणु
+	पूर्णांक my_cpu, i, notअगरied = -1;
 
 	my_cpu = get_cpu();
 
-	for_each_online_cpu(i) {
-		uint8_t status;
-		int64_t rc, timeout = 1000;
+	क्रम_each_online_cpu(i) अणु
+		uपूर्णांक8_t status;
+		पूर्णांक64_t rc, समयout = 1000;
 
-		if (i == my_cpu)
-			continue;
+		अगर (i == my_cpu)
+			जारी;
 
-		for (;;) {
+		क्रम (;;) अणु
 			rc = opal_query_cpu_status(get_hard_smp_processor_id(i),
 						   &status);
-			if (rc != OPAL_SUCCESS || status != OPAL_THREAD_STARTED)
-				break;
+			अगर (rc != OPAL_SUCCESS || status != OPAL_THREAD_STARTED)
+				अवरोध;
 			barrier();
-			if (i != notified) {
-				printk(KERN_INFO "kexec: waiting for cpu %d "
+			अगर (i != notअगरied) अणु
+				prपूर्णांकk(KERN_INFO "kexec: waiting for cpu %d "
 				       "(physical %d) to enter OPAL\n",
 				       i, paca_ptrs[i]->hw_cpu_id);
-				notified = i;
-			}
+				notअगरied = i;
+			पूर्ण
 
 			/*
 			 * On crash secondaries might be unreachable or hung,
-			 * so timeout if we've waited too long
+			 * so समयout अगर we've रुकोed too दीर्घ
 			 * */
 			mdelay(1);
-			if (timeout-- == 0) {
-				printk(KERN_ERR "kexec: timed out waiting for "
+			अगर (समयout-- == 0) अणु
+				prपूर्णांकk(KERN_ERR "kexec: timed out waiting for "
 				       "cpu %d (physical %d) to enter OPAL\n",
 				       i, paca_ptrs[i]->hw_cpu_id);
-				break;
-			}
-		}
-	}
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void pnv_kexec_cpu_down(int crash_shutdown, int secondary)
-{
+अटल व्योम pnv_kexec_cpu_करोwn(पूर्णांक crash_shutकरोwn, पूर्णांक secondary)
+अणु
 	u64 reinit_flags;
 
-	if (xive_enabled())
-		xive_teardown_cpu();
-	else
-		xics_kexec_teardown_cpu(secondary);
+	अगर (xive_enabled())
+		xive_tearकरोwn_cpu();
+	अन्यथा
+		xics_kexec_tearकरोwn_cpu(secondary);
 
-	/* On OPAL, we return all CPUs to firmware */
-	if (!firmware_has_feature(FW_FEATURE_OPAL))
-		return;
+	/* On OPAL, we वापस all CPUs to firmware */
+	अगर (!firmware_has_feature(FW_FEATURE_OPAL))
+		वापस;
 
-	if (secondary) {
+	अगर (secondary) अणु
 		/* Return secondary CPUs to firmware on OPAL v3 */
 		mb();
 		get_paca()->kexec_state = KEXEC_STATE_REAL_MODE;
 		mb();
 
 		/* Return the CPU to OPAL */
-		opal_return_cpu();
-	} else {
-		/* Primary waits for the secondaries to have reached OPAL */
-		pnv_kexec_wait_secondaries_down();
+		opal_वापस_cpu();
+	पूर्ण अन्यथा अणु
+		/* Primary रुकोs क्रम the secondaries to have reached OPAL */
+		pnv_kexec_रुको_secondaries_करोwn();
 
 		/* Switch XIVE back to emulation mode */
-		if (xive_enabled())
-			xive_shutdown();
+		अगर (xive_enabled())
+			xive_shutकरोwn();
 
 		/*
-		 * We might be running as little-endian - now that interrupts
-		 * are disabled, reset the HILE bit to big-endian so we don't
-		 * take interrupts in the wrong endian later
+		 * We might be running as little-endian - now that पूर्णांकerrupts
+		 * are disabled, reset the HILE bit to big-endian so we करोn't
+		 * take पूर्णांकerrupts in the wrong endian later
 		 *
 		 * We reinit to enable both radix and hash on P9 to ensure
 		 * the mode used by the next kernel is always supported.
 		 */
 		reinit_flags = OPAL_REINIT_CPUS_HILE_BE;
-		if (cpu_has_feature(CPU_FTR_ARCH_300))
+		अगर (cpu_has_feature(CPU_FTR_ARCH_300))
 			reinit_flags |= OPAL_REINIT_CPUS_MMU_RADIX |
 				OPAL_REINIT_CPUS_MMU_HASH;
 		opal_reinit_cpus(reinit_flags);
-	}
-}
-#endif /* CONFIG_KEXEC_CORE */
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_KEXEC_CORE */
 
-#ifdef CONFIG_MEMORY_HOTPLUG_SPARSE
-static unsigned long pnv_memory_block_size(void)
-{
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG_SPARSE
+अटल अचिन्हित दीर्घ pnv_memory_block_size(व्योम)
+अणु
 	/*
 	 * We map the kernel linear region with 1GB large pages on radix. For
 	 * memory hot unplug to work our memory block size must be at least
 	 * this size.
 	 */
-	if (radix_enabled())
-		return radix_mem_block_size;
-	else
-		return 256UL * 1024 * 1024;
-}
-#endif
+	अगर (radix_enabled())
+		वापस radix_mem_block_size;
+	अन्यथा
+		वापस 256UL * 1024 * 1024;
+पूर्ण
+#पूर्ण_अगर
 
-static void __init pnv_setup_machdep_opal(void)
-{
-	ppc_md.get_boot_time = opal_get_boot_time;
+अटल व्योम __init pnv_setup_machdep_opal(व्योम)
+अणु
+	ppc_md.get_boot_समय = opal_get_boot_समय;
 	ppc_md.restart = pnv_restart;
-	pm_power_off = pnv_power_off;
+	pm_घातer_off = pnv_घातer_off;
 	ppc_md.halt = pnv_halt;
-	/* ppc_md.system_reset_exception gets filled in by pnv_smp_init() */
+	/* ppc_md.प्रणाली_reset_exception माला_लो filled in by pnv_smp_init() */
 	ppc_md.machine_check_exception = opal_machine_check;
 	ppc_md.mce_check_early_recovery = opal_mce_check_early_recovery;
-	if (opal_check_token(OPAL_HANDLE_HMI2))
+	अगर (opal_check_token(OPAL_HANDLE_HMI2))
 		ppc_md.hmi_exception_early = opal_hmi_exception_early2;
-	else
+	अन्यथा
 		ppc_md.hmi_exception_early = opal_hmi_exception_early;
 	ppc_md.handle_hmi_exception = opal_handle_hmi_exception;
-}
+पूर्ण
 
-static int __init pnv_probe(void)
-{
-	if (!of_machine_is_compatible("ibm,powernv"))
-		return 0;
+अटल पूर्णांक __init pnv_probe(व्योम)
+अणु
+	अगर (!of_machine_is_compatible("ibm,powernv"))
+		वापस 0;
 
-	if (firmware_has_feature(FW_FEATURE_OPAL))
+	अगर (firmware_has_feature(FW_FEATURE_OPAL))
 		pnv_setup_machdep_opal();
 
 	pr_debug("PowerNV detected !\n");
 
 	pnv_init();
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
-void __init pnv_tm_init(void)
-{
-	if (!firmware_has_feature(FW_FEATURE_OPAL) ||
+#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
+व्योम __init pnv_पंचांग_init(व्योम)
+अणु
+	अगर (!firmware_has_feature(FW_FEATURE_OPAL) ||
 	    !pvr_version_is(PVR_POWER9) ||
 	    early_cpu_has_feature(CPU_FTR_TM))
-		return;
+		वापस;
 
-	if (opal_reinit_cpus(OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED) != OPAL_SUCCESS)
-		return;
+	अगर (opal_reinit_cpus(OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED) != OPAL_SUCCESS)
+		वापस;
 
 	pr_info("Enabling TM (Transactional Memory) with Suspend Disabled\n");
 	cur_cpu_spec->cpu_features |= CPU_FTR_TM;
@@ -504,40 +505,40 @@ void __init pnv_tm_init(void)
 	/* Turn on no suspend mode, and HTM no SC */
 	cur_cpu_spec->cpu_user_features2 |= PPC_FEATURE2_HTM_NO_SUSPEND | \
 					    PPC_FEATURE2_HTM_NOSC;
-	tm_suspend_disabled = true;
-}
-#endif /* CONFIG_PPC_TRANSACTIONAL_MEM */
+	पंचांग_suspend_disabled = true;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_TRANSACTIONAL_MEM */
 
 /*
- * Returns the cpu frequency for 'cpu' in Hz. This is used by
+ * Returns the cpu frequency क्रम 'cpu' in Hz. This is used by
  * /proc/cpuinfo
  */
-static unsigned long pnv_get_proc_freq(unsigned int cpu)
-{
-	unsigned long ret_freq;
+अटल अचिन्हित दीर्घ pnv_get_proc_freq(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ ret_freq;
 
 	ret_freq = cpufreq_get(cpu) * 1000ul;
 
 	/*
-	 * If the backend cpufreq driver does not exist,
-         * then fallback to old way of reporting the clockrate.
+	 * If the backend cpufreq driver करोes not exist,
+         * then fallback to old way of reporting the घड़ीrate.
 	 */
-	if (!ret_freq)
+	अगर (!ret_freq)
 		ret_freq = ppc_proc_freq;
-	return ret_freq;
-}
+	वापस ret_freq;
+पूर्ण
 
-static long pnv_machine_check_early(struct pt_regs *regs)
-{
-	long handled = 0;
+अटल दीर्घ pnv_machine_check_early(काष्ठा pt_regs *regs)
+अणु
+	दीर्घ handled = 0;
 
-	if (cur_cpu_spec && cur_cpu_spec->machine_check_early)
+	अगर (cur_cpu_spec && cur_cpu_spec->machine_check_early)
 		handled = cur_cpu_spec->machine_check_early(regs);
 
-	return handled;
-}
+	वापस handled;
+पूर्ण
 
-define_machine(powernv) {
+define_machine(घातernv) अणु
 	.name			= "PowerNV",
 	.probe			= pnv_probe,
 	.setup_arch		= pnv_setup_arch,
@@ -546,14 +547,14 @@ define_machine(powernv) {
 	.get_proc_freq          = pnv_get_proc_freq,
 	.discover_phbs		= pnv_pci_init,
 	.progress		= pnv_progress,
-	.machine_shutdown	= pnv_shutdown,
-	.power_save             = NULL,
+	.machine_shutकरोwn	= pnv_shutकरोwn,
+	.घातer_save             = शून्य,
 	.calibrate_decr		= generic_calibrate_decr,
 	.machine_check_early	= pnv_machine_check_early,
-#ifdef CONFIG_KEXEC_CORE
-	.kexec_cpu_down		= pnv_kexec_cpu_down,
-#endif
-#ifdef CONFIG_MEMORY_HOTPLUG_SPARSE
+#अगर_घोषित CONFIG_KEXEC_CORE
+	.kexec_cpu_करोwn		= pnv_kexec_cpu_करोwn,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG_SPARSE
 	.memory_block_size	= pnv_memory_block_size,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;

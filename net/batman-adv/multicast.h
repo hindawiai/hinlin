@@ -1,121 +1,122 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
- * Linus Lüssing
+ * Linus Lथञssing
  */
 
-#ifndef _NET_BATMAN_ADV_MULTICAST_H_
-#define _NET_BATMAN_ADV_MULTICAST_H_
+#अगर_अघोषित _NET_BATMAN_ADV_MULTICAST_H_
+#घोषणा _NET_BATMAN_ADV_MULTICAST_H_
 
-#include "main.h"
+#समावेश "main.h"
 
-#include <linux/netlink.h>
-#include <linux/skbuff.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/skbuff.h>
 
 /**
- * enum batadv_forw_mode - the way a packet should be forwarded as
+ * क्रमागत batadv_क्रमw_mode - the way a packet should be क्रमwarded as
  */
-enum batadv_forw_mode {
+क्रमागत batadv_क्रमw_mode अणु
 	/**
-	 * @BATADV_FORW_ALL: forward the packet to all nodes (currently via
+	 * @BATADV_FORW_ALL: क्रमward the packet to all nodes (currently via
 	 *  classic flooding)
 	 */
 	BATADV_FORW_ALL,
 
 	/**
-	 * @BATADV_FORW_SOME: forward the packet to some nodes (currently via
+	 * @BATADV_FORW_SOME: क्रमward the packet to some nodes (currently via
 	 *  a multicast-to-unicast conversion and the BATMAN unicast routing
 	 *  protocol)
 	 */
 	BATADV_FORW_SOME,
 
 	/**
-	 * @BATADV_FORW_SINGLE: forward the packet to a single node (currently
+	 * @BATADV_FORW_SINGLE: क्रमward the packet to a single node (currently
 	 *  via the BATMAN unicast routing protocol)
 	 */
 	BATADV_FORW_SINGLE,
 
-	/** @BATADV_FORW_NONE: don't forward, drop it */
+	/** @BATADV_FORW_NONE: करोn't क्रमward, drop it */
 	BATADV_FORW_NONE,
-};
+पूर्ण;
 
-#ifdef CONFIG_BATMAN_ADV_MCAST
+#अगर_घोषित CONFIG_BATMAN_ADV_MCAST
 
-enum batadv_forw_mode
-batadv_mcast_forw_mode(struct batadv_priv *bat_priv, struct sk_buff *skb,
-		       struct batadv_orig_node **mcast_single_orig);
+क्रमागत batadv_क्रमw_mode
+batadv_mcast_क्रमw_mode(काष्ठा batadv_priv *bat_priv, काष्ठा sk_buff *skb,
+		       काष्ठा batadv_orig_node **mcast_single_orig);
 
-int batadv_mcast_forw_send_orig(struct batadv_priv *bat_priv,
-				struct sk_buff *skb,
-				unsigned short vid,
-				struct batadv_orig_node *orig_node);
+पूर्णांक batadv_mcast_क्रमw_send_orig(काष्ठा batadv_priv *bat_priv,
+				काष्ठा sk_buff *skb,
+				अचिन्हित लघु vid,
+				काष्ठा batadv_orig_node *orig_node);
 
-int batadv_mcast_forw_send(struct batadv_priv *bat_priv, struct sk_buff *skb,
-			   unsigned short vid);
+पूर्णांक batadv_mcast_क्रमw_send(काष्ठा batadv_priv *bat_priv, काष्ठा sk_buff *skb,
+			   अचिन्हित लघु vid);
 
-void batadv_mcast_init(struct batadv_priv *bat_priv);
+व्योम batadv_mcast_init(काष्ठा batadv_priv *bat_priv);
 
-int batadv_mcast_mesh_info_put(struct sk_buff *msg,
-			       struct batadv_priv *bat_priv);
+पूर्णांक batadv_mcast_mesh_info_put(काष्ठा sk_buff *msg,
+			       काष्ठा batadv_priv *bat_priv);
 
-int batadv_mcast_flags_dump(struct sk_buff *msg, struct netlink_callback *cb);
+पूर्णांक batadv_mcast_flags_dump(काष्ठा sk_buff *msg, काष्ठा netlink_callback *cb);
 
-void batadv_mcast_free(struct batadv_priv *bat_priv);
+व्योम batadv_mcast_मुक्त(काष्ठा batadv_priv *bat_priv);
 
-void batadv_mcast_purge_orig(struct batadv_orig_node *orig_node);
+व्योम batadv_mcast_purge_orig(काष्ठा batadv_orig_node *orig_node);
 
-#else
+#अन्यथा
 
-static inline enum batadv_forw_mode
-batadv_mcast_forw_mode(struct batadv_priv *bat_priv, struct sk_buff *skb,
-		       struct batadv_orig_node **mcast_single_orig)
-{
-	return BATADV_FORW_ALL;
-}
+अटल अंतरभूत क्रमागत batadv_क्रमw_mode
+batadv_mcast_क्रमw_mode(काष्ठा batadv_priv *bat_priv, काष्ठा sk_buff *skb,
+		       काष्ठा batadv_orig_node **mcast_single_orig)
+अणु
+	वापस BATADV_FORW_ALL;
+पूर्ण
 
-static inline int
-batadv_mcast_forw_send_orig(struct batadv_priv *bat_priv,
-			    struct sk_buff *skb,
-			    unsigned short vid,
-			    struct batadv_orig_node *orig_node)
-{
-	kfree_skb(skb);
-	return NET_XMIT_DROP;
-}
+अटल अंतरभूत पूर्णांक
+batadv_mcast_क्रमw_send_orig(काष्ठा batadv_priv *bat_priv,
+			    काष्ठा sk_buff *skb,
+			    अचिन्हित लघु vid,
+			    काष्ठा batadv_orig_node *orig_node)
+अणु
+	kमुक्त_skb(skb);
+	वापस NET_XMIT_DROP;
+पूर्ण
 
-static inline int
-batadv_mcast_forw_send(struct batadv_priv *bat_priv, struct sk_buff *skb,
-		       unsigned short vid)
-{
-	kfree_skb(skb);
-	return NET_XMIT_DROP;
-}
+अटल अंतरभूत पूर्णांक
+batadv_mcast_क्रमw_send(काष्ठा batadv_priv *bat_priv, काष्ठा sk_buff *skb,
+		       अचिन्हित लघु vid)
+अणु
+	kमुक्त_skb(skb);
+	वापस NET_XMIT_DROP;
+पूर्ण
 
-static inline int batadv_mcast_init(struct batadv_priv *bat_priv)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक batadv_mcast_init(काष्ठा batadv_priv *bat_priv)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int
-batadv_mcast_mesh_info_put(struct sk_buff *msg, struct batadv_priv *bat_priv)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक
+batadv_mcast_mesh_info_put(काष्ठा sk_buff *msg, काष्ठा batadv_priv *bat_priv)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int batadv_mcast_flags_dump(struct sk_buff *msg,
-					  struct netlink_callback *cb)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक batadv_mcast_flags_dump(काष्ठा sk_buff *msg,
+					  काष्ठा netlink_callback *cb)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline void batadv_mcast_free(struct batadv_priv *bat_priv)
-{
-}
+अटल अंतरभूत व्योम batadv_mcast_मुक्त(काष्ठा batadv_priv *bat_priv)
+अणु
+पूर्ण
 
-static inline void batadv_mcast_purge_orig(struct batadv_orig_node *orig_node)
-{
-}
+अटल अंतरभूत व्योम batadv_mcast_purge_orig(काष्ठा batadv_orig_node *orig_node)
+अणु
+पूर्ण
 
-#endif /* CONFIG_BATMAN_ADV_MCAST */
+#पूर्ण_अगर /* CONFIG_BATMAN_ADV_MCAST */
 
-#endif /* _NET_BATMAN_ADV_MULTICAST_H_ */
+#पूर्ण_अगर /* _NET_BATMAN_ADV_MULTICAST_H_ */

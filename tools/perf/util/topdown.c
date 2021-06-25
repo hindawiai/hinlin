@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdio.h>
-#include "pmu.h"
-#include "topdown.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकपन.स>
+#समावेश "pmu.h"
+#समावेश "topdown.h"
 
-int topdown_filter_events(const char **attr, char **str, bool use_group)
-{
-	int off = 0;
-	int i;
-	int len = 0;
-	char *s;
+पूर्णांक topकरोwn_filter_events(स्थिर अक्षर **attr, अक्षर **str, bool use_group)
+अणु
+	पूर्णांक off = 0;
+	पूर्णांक i;
+	पूर्णांक len = 0;
+	अक्षर *s;
 
-	for (i = 0; attr[i]; i++) {
-		if (pmu_have_event("cpu", attr[i])) {
-			len += strlen(attr[i]) + 1;
+	क्रम (i = 0; attr[i]; i++) अणु
+		अगर (pmu_have_event("cpu", attr[i])) अणु
+			len += म_माप(attr[i]) + 1;
 			attr[i - off] = attr[i];
-		} else
+		पूर्ण अन्यथा
 			off++;
-	}
-	attr[i - off] = NULL;
+	पूर्ण
+	attr[i - off] = शून्य;
 
-	*str = malloc(len + 1 + 2);
-	if (!*str)
-		return -1;
+	*str = दो_स्मृति(len + 1 + 2);
+	अगर (!*str)
+		वापस -1;
 	s = *str;
-	if (i - off == 0) {
+	अगर (i - off == 0) अणु
 		*s = 0;
-		return 0;
-	}
-	if (use_group)
+		वापस 0;
+	पूर्ण
+	अगर (use_group)
 		*s++ = '{';
-	for (i = 0; attr[i]; i++) {
-		strcpy(s, attr[i]);
-		s += strlen(s);
+	क्रम (i = 0; attr[i]; i++) अणु
+		म_नकल(s, attr[i]);
+		s += म_माप(s);
 		*s++ = ',';
-	}
-	if (use_group) {
+	पूर्ण
+	अगर (use_group) अणु
 		s[-1] = '}';
 		*s = 0;
-	} else
+	पूर्ण अन्यथा
 		s[-1] = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__weak bool arch_topdown_check_group(bool *warn)
-{
+__weak bool arch_topकरोwn_check_group(bool *warn)
+अणु
 	*warn = false;
-	return false;
-}
+	वापस false;
+पूर्ण
 
-__weak void arch_topdown_group_warn(void)
-{
-}
+__weak व्योम arch_topकरोwn_group_warn(व्योम)
+अणु
+पूर्ण
 
-__weak bool arch_topdown_sample_read(struct evsel *leader __maybe_unused)
-{
-	return false;
-}
+__weak bool arch_topकरोwn_sample_पढ़ो(काष्ठा evsel *leader __maybe_unused)
+अणु
+	वापस false;
+पूर्ण

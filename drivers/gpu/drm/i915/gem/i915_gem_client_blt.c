@@ -1,333 +1,334 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#include "i915_drv.h"
-#include "gt/intel_context.h"
-#include "gt/intel_engine_pm.h"
-#include "i915_gem_client_blt.h"
-#include "i915_gem_object_blt.h"
+#समावेश "i915_drv.h"
+#समावेश "gt/intel_context.h"
+#समावेश "gt/intel_engine_pm.h"
+#समावेश "i915_gem_client_blt.h"
+#समावेश "i915_gem_object_blt.h"
 
-struct i915_sleeve {
-	struct i915_vma *vma;
-	struct drm_i915_gem_object *obj;
-	struct sg_table *pages;
-	struct i915_page_sizes page_sizes;
-};
+काष्ठा i915_sleeve अणु
+	काष्ठा i915_vma *vma;
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा sg_table *pages;
+	काष्ठा i915_page_sizes page_sizes;
+पूर्ण;
 
-static int vma_set_pages(struct i915_vma *vma)
-{
-	struct i915_sleeve *sleeve = vma->private;
+अटल पूर्णांक vma_set_pages(काष्ठा i915_vma *vma)
+अणु
+	काष्ठा i915_sleeve *sleeve = vma->निजी;
 
 	vma->pages = sleeve->pages;
 	vma->page_sizes = sleeve->page_sizes;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vma_clear_pages(struct i915_vma *vma)
-{
+अटल व्योम vma_clear_pages(काष्ठा i915_vma *vma)
+अणु
 	GEM_BUG_ON(!vma->pages);
-	vma->pages = NULL;
-}
+	vma->pages = शून्य;
+पूर्ण
 
-static void vma_bind(struct i915_address_space *vm,
-		     struct i915_vm_pt_stash *stash,
-		     struct i915_vma *vma,
-		     enum i915_cache_level cache_level,
+अटल व्योम vma_bind(काष्ठा i915_address_space *vm,
+		     काष्ठा i915_vm_pt_stash *stash,
+		     काष्ठा i915_vma *vma,
+		     क्रमागत i915_cache_level cache_level,
 		     u32 flags)
-{
+अणु
 	vm->vma_ops.bind_vma(vm, stash, vma, cache_level, flags);
-}
+पूर्ण
 
-static void vma_unbind(struct i915_address_space *vm, struct i915_vma *vma)
-{
+अटल व्योम vma_unbind(काष्ठा i915_address_space *vm, काष्ठा i915_vma *vma)
+अणु
 	vm->vma_ops.unbind_vma(vm, vma);
-}
+पूर्ण
 
-static const struct i915_vma_ops proxy_vma_ops = {
+अटल स्थिर काष्ठा i915_vma_ops proxy_vma_ops = अणु
 	.set_pages = vma_set_pages,
 	.clear_pages = vma_clear_pages,
 	.bind_vma = vma_bind,
 	.unbind_vma = vma_unbind,
-};
+पूर्ण;
 
-static struct i915_sleeve *create_sleeve(struct i915_address_space *vm,
-					 struct drm_i915_gem_object *obj,
-					 struct sg_table *pages,
-					 struct i915_page_sizes *page_sizes)
-{
-	struct i915_sleeve *sleeve;
-	struct i915_vma *vma;
-	int err;
+अटल काष्ठा i915_sleeve *create_sleeve(काष्ठा i915_address_space *vm,
+					 काष्ठा drm_i915_gem_object *obj,
+					 काष्ठा sg_table *pages,
+					 काष्ठा i915_page_sizes *page_sizes)
+अणु
+	काष्ठा i915_sleeve *sleeve;
+	काष्ठा i915_vma *vma;
+	पूर्णांक err;
 
-	sleeve = kzalloc(sizeof(*sleeve), GFP_KERNEL);
-	if (!sleeve)
-		return ERR_PTR(-ENOMEM);
+	sleeve = kzalloc(माप(*sleeve), GFP_KERNEL);
+	अगर (!sleeve)
+		वापस ERR_PTR(-ENOMEM);
 
-	vma = i915_vma_instance(obj, vm, NULL);
-	if (IS_ERR(vma)) {
+	vma = i915_vma_instance(obj, vm, शून्य);
+	अगर (IS_ERR(vma)) अणु
 		err = PTR_ERR(vma);
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	vma->private = sleeve;
+	vma->निजी = sleeve;
 	vma->ops = &proxy_vma_ops;
 
 	sleeve->vma = vma;
 	sleeve->pages = pages;
 	sleeve->page_sizes = *page_sizes;
 
-	return sleeve;
+	वापस sleeve;
 
-err_free:
-	kfree(sleeve);
-	return ERR_PTR(err);
-}
+err_मुक्त:
+	kमुक्त(sleeve);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void destroy_sleeve(struct i915_sleeve *sleeve)
-{
-	kfree(sleeve);
-}
+अटल व्योम destroy_sleeve(काष्ठा i915_sleeve *sleeve)
+अणु
+	kमुक्त(sleeve);
+पूर्ण
 
-struct clear_pages_work {
-	struct dma_fence dma;
-	struct dma_fence_cb cb;
-	struct i915_sw_fence wait;
-	struct work_struct work;
-	struct irq_work irq_work;
-	struct i915_sleeve *sleeve;
-	struct intel_context *ce;
+काष्ठा clear_pages_work अणु
+	काष्ठा dma_fence dma;
+	काष्ठा dma_fence_cb cb;
+	काष्ठा i915_sw_fence रुको;
+	काष्ठा work_काष्ठा work;
+	काष्ठा irq_work irq_work;
+	काष्ठा i915_sleeve *sleeve;
+	काष्ठा पूर्णांकel_context *ce;
 	u32 value;
-};
+पूर्ण;
 
-static const char *clear_pages_work_driver_name(struct dma_fence *fence)
-{
-	return DRIVER_NAME;
-}
+अटल स्थिर अक्षर *clear_pages_work_driver_name(काष्ठा dma_fence *fence)
+अणु
+	वापस DRIVER_NAME;
+पूर्ण
 
-static const char *clear_pages_work_timeline_name(struct dma_fence *fence)
-{
-	return "clear";
-}
+अटल स्थिर अक्षर *clear_pages_work_समयline_name(काष्ठा dma_fence *fence)
+अणु
+	वापस "clear";
+पूर्ण
 
-static void clear_pages_work_release(struct dma_fence *fence)
-{
-	struct clear_pages_work *w = container_of(fence, typeof(*w), dma);
+अटल व्योम clear_pages_work_release(काष्ठा dma_fence *fence)
+अणु
+	काष्ठा clear_pages_work *w = container_of(fence, typeof(*w), dma);
 
 	destroy_sleeve(w->sleeve);
 
-	i915_sw_fence_fini(&w->wait);
+	i915_sw_fence_fini(&w->रुको);
 
-	BUILD_BUG_ON(offsetof(typeof(*w), dma));
-	dma_fence_free(&w->dma);
-}
+	BUILD_BUG_ON(दुरत्व(typeof(*w), dma));
+	dma_fence_मुक्त(&w->dma);
+पूर्ण
 
-static const struct dma_fence_ops clear_pages_work_ops = {
+अटल स्थिर काष्ठा dma_fence_ops clear_pages_work_ops = अणु
 	.get_driver_name = clear_pages_work_driver_name,
-	.get_timeline_name = clear_pages_work_timeline_name,
+	.get_समयline_name = clear_pages_work_समयline_name,
 	.release = clear_pages_work_release,
-};
+पूर्ण;
 
-static void clear_pages_signal_irq_worker(struct irq_work *work)
-{
-	struct clear_pages_work *w = container_of(work, typeof(*w), irq_work);
+अटल व्योम clear_pages_संकेत_irq_worker(काष्ठा irq_work *work)
+अणु
+	काष्ठा clear_pages_work *w = container_of(work, typeof(*w), irq_work);
 
-	dma_fence_signal(&w->dma);
+	dma_fence_संकेत(&w->dma);
 	dma_fence_put(&w->dma);
-}
+पूर्ण
 
-static void clear_pages_dma_fence_cb(struct dma_fence *fence,
-				     struct dma_fence_cb *cb)
-{
-	struct clear_pages_work *w = container_of(cb, typeof(*w), cb);
+अटल व्योम clear_pages_dma_fence_cb(काष्ठा dma_fence *fence,
+				     काष्ठा dma_fence_cb *cb)
+अणु
+	काष्ठा clear_pages_work *w = container_of(cb, typeof(*w), cb);
 
-	if (fence->error)
+	अगर (fence->error)
 		dma_fence_set_error(&w->dma, fence->error);
 
 	/*
-	 * Push the signalling of the fence into yet another worker to avoid
-	 * the nightmare locking around the fence spinlock.
+	 * Push the संकेतling of the fence पूर्णांकo yet another worker to aव्योम
+	 * the nighपंचांगare locking around the fence spinlock.
 	 */
 	irq_work_queue(&w->irq_work);
-}
+पूर्ण
 
-static void clear_pages_worker(struct work_struct *work)
-{
-	struct clear_pages_work *w = container_of(work, typeof(*w), work);
-	struct drm_i915_gem_object *obj = w->sleeve->vma->obj;
-	struct i915_vma *vma = w->sleeve->vma;
-	struct i915_gem_ww_ctx ww;
-	struct i915_request *rq;
-	struct i915_vma *batch;
-	int err = w->dma.error;
+अटल व्योम clear_pages_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा clear_pages_work *w = container_of(work, typeof(*w), work);
+	काष्ठा drm_i915_gem_object *obj = w->sleeve->vma->obj;
+	काष्ठा i915_vma *vma = w->sleeve->vma;
+	काष्ठा i915_gem_ww_ctx ww;
+	काष्ठा i915_request *rq;
+	काष्ठा i915_vma *batch;
+	पूर्णांक err = w->dma.error;
 
-	if (unlikely(err))
-		goto out_signal;
+	अगर (unlikely(err))
+		जाओ out_संकेत;
 
-	if (obj->cache_dirty) {
-		if (i915_gem_object_has_struct_page(obj))
+	अगर (obj->cache_dirty) अणु
+		अगर (i915_gem_object_has_काष्ठा_page(obj))
 			drm_clflush_sg(w->sleeve->pages);
 		obj->cache_dirty = false;
-	}
-	obj->read_domains = I915_GEM_GPU_DOMAINS;
-	obj->write_domain = 0;
+	पूर्ण
+	obj->पढ़ो_करोमुख्यs = I915_GEM_GPU_DOMAINS;
+	obj->ग_लिखो_करोमुख्य = 0;
 
 	i915_gem_ww_ctx_init(&ww, false);
-	intel_engine_pm_get(w->ce->engine);
+	पूर्णांकel_engine_pm_get(w->ce->engine);
 retry:
-	err = intel_context_pin_ww(w->ce, &ww);
-	if (err)
-		goto out_signal;
+	err = पूर्णांकel_context_pin_ww(w->ce, &ww);
+	अगर (err)
+		जाओ out_संकेत;
 
-	batch = intel_emit_vma_fill_blt(w->ce, vma, &ww, w->value);
-	if (IS_ERR(batch)) {
+	batch = पूर्णांकel_emit_vma_fill_blt(w->ce, vma, &ww, w->value);
+	अगर (IS_ERR(batch)) अणु
 		err = PTR_ERR(batch);
-		goto out_ctx;
-	}
+		जाओ out_ctx;
+	पूर्ण
 
 	rq = i915_request_create(w->ce);
-	if (IS_ERR(rq)) {
+	अगर (IS_ERR(rq)) अणु
 		err = PTR_ERR(rq);
-		goto out_batch;
-	}
+		जाओ out_batch;
+	पूर्ण
 
-	/* There's no way the fence has signalled */
-	if (dma_fence_add_callback(&rq->fence, &w->cb,
+	/* There's no way the fence has संकेतled */
+	अगर (dma_fence_add_callback(&rq->fence, &w->cb,
 				   clear_pages_dma_fence_cb))
 		GEM_BUG_ON(1);
 
-	err = intel_emit_vma_mark_active(batch, rq);
-	if (unlikely(err))
-		goto out_request;
+	err = पूर्णांकel_emit_vma_mark_active(batch, rq);
+	अगर (unlikely(err))
+		जाओ out_request;
 
 	/*
-	 * w->dma is already exported via (vma|obj)->resv we need only
+	 * w->dma is alपढ़ोy exported via (vma|obj)->resv we need only
 	 * keep track of the GPU activity within this vma/request, and
-	 * propagate the signal from the request to w->dma.
+	 * propagate the संकेत from the request to w->dma.
 	 */
 	err = __i915_vma_move_to_active(vma, rq);
-	if (err)
-		goto out_request;
+	अगर (err)
+		जाओ out_request;
 
-	if (rq->engine->emit_init_breadcrumb) {
-		err = rq->engine->emit_init_breadcrumb(rq);
-		if (unlikely(err))
-			goto out_request;
-	}
+	अगर (rq->engine->emit_init_bपढ़ोcrumb) अणु
+		err = rq->engine->emit_init_bपढ़ोcrumb(rq);
+		अगर (unlikely(err))
+			जाओ out_request;
+	पूर्ण
 
 	err = rq->engine->emit_bb_start(rq,
 					batch->node.start, batch->node.size,
 					0);
 out_request:
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		i915_request_set_error_once(rq, err);
 		err = 0;
-	}
+	पूर्ण
 
 	i915_request_add(rq);
 out_batch:
-	intel_emit_vma_release(w->ce, batch);
+	पूर्णांकel_emit_vma_release(w->ce, batch);
 out_ctx:
-	intel_context_unpin(w->ce);
-out_signal:
-	if (err == -EDEADLK) {
+	पूर्णांकel_context_unpin(w->ce);
+out_संकेत:
+	अगर (err == -EDEADLK) अणु
 		err = i915_gem_ww_ctx_backoff(&ww);
-		if (!err)
-			goto retry;
-	}
+		अगर (!err)
+			जाओ retry;
+	पूर्ण
 	i915_gem_ww_ctx_fini(&ww);
 
 	i915_vma_unpin(w->sleeve->vma);
-	intel_engine_pm_put(w->ce->engine);
+	पूर्णांकel_engine_pm_put(w->ce->engine);
 
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		dma_fence_set_error(&w->dma, err);
-		dma_fence_signal(&w->dma);
+		dma_fence_संकेत(&w->dma);
 		dma_fence_put(&w->dma);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pin_wait_clear_pages_work(struct clear_pages_work *w,
-				     struct intel_context *ce)
-{
-	struct i915_vma *vma = w->sleeve->vma;
-	struct i915_gem_ww_ctx ww;
-	int err;
+अटल पूर्णांक pin_रुको_clear_pages_work(काष्ठा clear_pages_work *w,
+				     काष्ठा पूर्णांकel_context *ce)
+अणु
+	काष्ठा i915_vma *vma = w->sleeve->vma;
+	काष्ठा i915_gem_ww_ctx ww;
+	पूर्णांक err;
 
 	i915_gem_ww_ctx_init(&ww, false);
 retry:
 	err = i915_gem_object_lock(vma->obj, &ww);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = i915_vma_pin_ww(vma, &ww, 0, 0, PIN_USER);
-	if (unlikely(err))
-		goto out;
+	अगर (unlikely(err))
+		जाओ out;
 
-	err = i915_sw_fence_await_reservation(&w->wait,
-					      vma->obj->base.resv, NULL,
+	err = i915_sw_fence_aरुको_reservation(&w->रुको,
+					      vma->obj->base.resv, शून्य,
 					      true, 0, I915_FENCE_GFP);
-	if (err)
-		goto err_unpin_vma;
+	अगर (err)
+		जाओ err_unpin_vma;
 
 	dma_resv_add_excl_fence(vma->obj->base.resv, &w->dma);
 
 err_unpin_vma:
-	if (err)
+	अगर (err)
 		i915_vma_unpin(vma);
 out:
-	if (err == -EDEADLK) {
+	अगर (err == -EDEADLK) अणु
 		err = i915_gem_ww_ctx_backoff(&ww);
-		if (!err)
-			goto retry;
-	}
+		अगर (!err)
+			जाओ retry;
+	पूर्ण
 	i915_gem_ww_ctx_fini(&ww);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __i915_sw_fence_call
-clear_pages_work_notify(struct i915_sw_fence *fence,
-			enum i915_sw_fence_notify state)
-{
-	struct clear_pages_work *w = container_of(fence, typeof(*w), wait);
+अटल पूर्णांक __i915_sw_fence_call
+clear_pages_work_notअगरy(काष्ठा i915_sw_fence *fence,
+			क्रमागत i915_sw_fence_notअगरy state)
+अणु
+	काष्ठा clear_pages_work *w = container_of(fence, typeof(*w), रुको);
 
-	switch (state) {
-	case FENCE_COMPLETE:
+	चयन (state) अणु
+	हाल FENCE_COMPLETE:
 		schedule_work(&w->work);
-		break;
+		अवरोध;
 
-	case FENCE_FREE:
+	हाल FENCE_FREE:
 		dma_fence_put(&w->dma);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static DEFINE_SPINLOCK(fence_lock);
+अटल DEFINE_SPINLOCK(fence_lock);
 
 /* XXX: better name please */
-int i915_gem_schedule_fill_pages_blt(struct drm_i915_gem_object *obj,
-				     struct intel_context *ce,
-				     struct sg_table *pages,
-				     struct i915_page_sizes *page_sizes,
+पूर्णांक i915_gem_schedule_fill_pages_blt(काष्ठा drm_i915_gem_object *obj,
+				     काष्ठा पूर्णांकel_context *ce,
+				     काष्ठा sg_table *pages,
+				     काष्ठा i915_page_sizes *page_sizes,
 				     u32 value)
-{
-	struct clear_pages_work *work;
-	struct i915_sleeve *sleeve;
-	int err;
+अणु
+	काष्ठा clear_pages_work *work;
+	काष्ठा i915_sleeve *sleeve;
+	पूर्णांक err;
 
 	sleeve = create_sleeve(ce->vm, obj, pages, page_sizes);
-	if (IS_ERR(sleeve))
-		return PTR_ERR(sleeve);
+	अगर (IS_ERR(sleeve))
+		वापस PTR_ERR(sleeve);
 
-	work = kmalloc(sizeof(*work), GFP_KERNEL);
-	if (!work) {
+	work = kदो_स्मृति(माप(*work), GFP_KERNEL);
+	अगर (!work) अणु
 		destroy_sleeve(sleeve);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	work->value = value;
 	work->sleeve = sleeve;
@@ -335,21 +336,21 @@ int i915_gem_schedule_fill_pages_blt(struct drm_i915_gem_object *obj,
 
 	INIT_WORK(&work->work, clear_pages_worker);
 
-	init_irq_work(&work->irq_work, clear_pages_signal_irq_worker);
+	init_irq_work(&work->irq_work, clear_pages_संकेत_irq_worker);
 
 	dma_fence_init(&work->dma, &clear_pages_work_ops, &fence_lock, 0, 0);
-	i915_sw_fence_init(&work->wait, clear_pages_work_notify);
+	i915_sw_fence_init(&work->रुको, clear_pages_work_notअगरy);
 
-	err = pin_wait_clear_pages_work(work, ce);
-	if (err < 0)
+	err = pin_रुको_clear_pages_work(work, ce);
+	अगर (err < 0)
 		dma_fence_set_error(&work->dma, err);
 
 	dma_fence_get(&work->dma);
-	i915_sw_fence_commit(&work->wait);
+	i915_sw_fence_commit(&work->रुको);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#include "selftests/i915_gem_client_blt.c"
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#समावेश "selftests/i915_gem_client_blt.c"
+#पूर्ण_अगर

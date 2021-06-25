@@ -1,192 +1,193 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PARISC_PAGE_H
-#define _PARISC_PAGE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PARISC_PAGE_H
+#घोषणा _PARISC_PAGE_H
 
-#include <linux/const.h>
+#समावेश <linux/स्थिर.h>
 
-#if defined(CONFIG_PARISC_PAGE_SIZE_4KB)
+#अगर defined(CONFIG_PARISC_PAGE_SIZE_4KB)
 # define PAGE_SHIFT	12
-#elif defined(CONFIG_PARISC_PAGE_SIZE_16KB)
+#या_अगर defined(CONFIG_PARISC_PAGE_SIZE_16KB)
 # define PAGE_SHIFT	14
-#elif defined(CONFIG_PARISC_PAGE_SIZE_64KB)
+#या_अगर defined(CONFIG_PARISC_PAGE_SIZE_64KB)
 # define PAGE_SHIFT	16
-#else
+#अन्यथा
 # error "unknown default kernel page size"
-#endif
-#define PAGE_SIZE	(_AC(1,UL) << PAGE_SHIFT)
-#define PAGE_MASK	(~(PAGE_SIZE-1))
+#पूर्ण_अगर
+#घोषणा PAGE_SIZE	(_AC(1,UL) << PAGE_SHIFT)
+#घोषणा PAGE_MASK	(~(PAGE_SIZE-1))
 
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <asm/types.h>
-#include <asm/cache.h>
+#समावेश <यंत्र/types.h>
+#समावेश <यंत्र/cache.h>
 
-#define clear_page(page)	clear_page_asm((void *)(page))
-#define copy_page(to, from)	copy_page_asm((void *)(to), (void *)(from))
+#घोषणा clear_page(page)	clear_page_यंत्र((व्योम *)(page))
+#घोषणा copy_page(to, from)	copy_page_यंत्र((व्योम *)(to), (व्योम *)(from))
 
-struct page;
+काष्ठा page;
 
-void clear_page_asm(void *page);
-void copy_page_asm(void *to, void *from);
-#define clear_user_page(vto, vaddr, page) clear_page_asm(vto)
-void copy_user_page(void *vto, void *vfrom, unsigned long vaddr,
-			struct page *pg);
+व्योम clear_page_यंत्र(व्योम *page);
+व्योम copy_page_यंत्र(व्योम *to, व्योम *from);
+#घोषणा clear_user_page(vto, vaddr, page) clear_page_यंत्र(vto)
+व्योम copy_user_page(व्योम *vto, व्योम *vfrom, अचिन्हित दीर्घ vaddr,
+			काष्ठा page *pg);
 
 /*
  * These are used to make use of C type-checking..
  */
-#define STRICT_MM_TYPECHECKS
-#ifdef STRICT_MM_TYPECHECKS
-typedef struct { unsigned long pte; } pte_t; /* either 32 or 64bit */
+#घोषणा STRICT_MM_TYPECHECKS
+#अगर_घोषित STRICT_MM_TYPECHECKS
+प्रकार काष्ठा अणु अचिन्हित दीर्घ pte; पूर्ण pte_t; /* either 32 or 64bit */
 
 /* NOTE: even on 64 bits, these entries are __u32 because we allocate
  * the pmd and pgd in ZONE_DMA (i.e. under 4GB) */
-typedef struct { __u32 pgd; } pgd_t;
-typedef struct { unsigned long pgprot; } pgprot_t;
+प्रकार काष्ठा अणु __u32 pgd; पूर्ण pgd_t;
+प्रकार काष्ठा अणु अचिन्हित दीर्घ pgprot; पूर्ण pgprot_t;
 
-#if CONFIG_PGTABLE_LEVELS == 3
-typedef struct { __u32 pmd; } pmd_t;
-#define __pmd(x)	((pmd_t) { (x) } )
-/* pXd_val() do not work as lvalues, so make sure we don't use them as such. */
-#define pmd_val(x)	((x).pmd + 0)
-#endif
+#अगर CONFIG_PGTABLE_LEVELS == 3
+प्रकार काष्ठा अणु __u32 pmd; पूर्ण pmd_t;
+#घोषणा __pmd(x)	((pmd_t) अणु (x) पूर्ण )
+/* pXd_val() करो not work as lvalues, so make sure we करोn't use them as such. */
+#घोषणा pmd_val(x)	((x).pmd + 0)
+#पूर्ण_अगर
 
-#define pte_val(x)	((x).pte)
-#define pgd_val(x)	((x).pgd + 0)
-#define pgprot_val(x)	((x).pgprot)
+#घोषणा pte_val(x)	((x).pte)
+#घोषणा pgd_val(x)	((x).pgd + 0)
+#घोषणा pgprot_val(x)	((x).pgprot)
 
-#define __pte(x)	((pte_t) { (x) } )
-#define __pgd(x)	((pgd_t) { (x) } )
-#define __pgprot(x)	((pgprot_t) { (x) } )
+#घोषणा __pte(x)	((pte_t) अणु (x) पूर्ण )
+#घोषणा __pgd(x)	((pgd_t) अणु (x) पूर्ण )
+#घोषणा __pgprot(x)	((pgprot_t) अणु (x) पूर्ण )
 
-#else
+#अन्यथा
 /*
- * .. while these make it easier on the compiler
+ * .. जबतक these make it easier on the compiler
  */
-typedef unsigned long pte_t;
+प्रकार अचिन्हित दीर्घ pte_t;
 
-#if CONFIG_PGTABLE_LEVELS == 3
-typedef         __u32 pmd_t;
-#define pmd_val(x)      (x)
-#define __pmd(x)	(x)
-#endif
+#अगर CONFIG_PGTABLE_LEVELS == 3
+प्रकार         __u32 pmd_t;
+#घोषणा pmd_val(x)      (x)
+#घोषणा __pmd(x)	(x)
+#पूर्ण_अगर
 
-typedef         __u32 pgd_t;
-typedef unsigned long pgprot_t;
+प्रकार         __u32 pgd_t;
+प्रकार अचिन्हित दीर्घ pgprot_t;
 
-#define pte_val(x)      (x)
-#define pgd_val(x)      (x)
-#define pgprot_val(x)   (x)
+#घोषणा pte_val(x)      (x)
+#घोषणा pgd_val(x)      (x)
+#घोषणा pgprot_val(x)   (x)
 
-#define __pte(x)        (x)
-#define __pgd(x)        (x)
-#define __pgprot(x)     (x)
+#घोषणा __pte(x)        (x)
+#घोषणा __pgd(x)        (x)
+#घोषणा __pgprot(x)     (x)
 
-#endif /* STRICT_MM_TYPECHECKS */
+#पूर्ण_अगर /* STRICT_MM_TYPECHECKS */
 
-#define set_pmd(pmdptr, pmdval) (*(pmdptr) = (pmdval))
-#if CONFIG_PGTABLE_LEVELS == 3
-#define set_pud(pudptr, pudval) (*(pudptr) = (pudval))
-#endif
+#घोषणा set_pmd(pmdptr, pmdval) (*(pmdptr) = (pmdval))
+#अगर CONFIG_PGTABLE_LEVELS == 3
+#घोषणा set_pud(pudptr, pudval) (*(pudptr) = (pudval))
+#पूर्ण_अगर
 
-typedef struct page *pgtable_t;
+प्रकार काष्ठा page *pgtable_t;
 
-typedef struct __physmem_range {
-	unsigned long start_pfn;
-	unsigned long pages;       /* PAGE_SIZE pages */
-} physmem_range_t;
+प्रकार काष्ठा __physmem_range अणु
+	अचिन्हित दीर्घ start_pfn;
+	अचिन्हित दीर्घ pages;       /* PAGE_SIZE pages */
+पूर्ण physmem_range_t;
 
-extern physmem_range_t pmem_ranges[];
-extern int npmem_ranges;
+बाह्य physmem_range_t pmem_ranges[];
+बाह्य पूर्णांक npmem_ranges;
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-/* WARNING: The definitions below must match exactly to sizeof(pte_t)
+/* WARNING: The definitions below must match exactly to माप(pte_t)
  * etc
  */
-#ifdef CONFIG_64BIT
-#define BITS_PER_PTE_ENTRY	3
-#define BITS_PER_PMD_ENTRY	2
-#define BITS_PER_PGD_ENTRY	2
-#else
-#define BITS_PER_PTE_ENTRY	2
-#define BITS_PER_PMD_ENTRY	2
-#define BITS_PER_PGD_ENTRY	2
-#endif
-#define PGD_ENTRY_SIZE	(1UL << BITS_PER_PGD_ENTRY)
-#define PMD_ENTRY_SIZE	(1UL << BITS_PER_PMD_ENTRY)
-#define PTE_ENTRY_SIZE	(1UL << BITS_PER_PTE_ENTRY)
+#अगर_घोषित CONFIG_64BIT
+#घोषणा BITS_PER_PTE_ENTRY	3
+#घोषणा BITS_PER_PMD_ENTRY	2
+#घोषणा BITS_PER_PGD_ENTRY	2
+#अन्यथा
+#घोषणा BITS_PER_PTE_ENTRY	2
+#घोषणा BITS_PER_PMD_ENTRY	2
+#घोषणा BITS_PER_PGD_ENTRY	2
+#पूर्ण_अगर
+#घोषणा PGD_ENTRY_SIZE	(1UL << BITS_PER_PGD_ENTRY)
+#घोषणा PMD_ENTRY_SIZE	(1UL << BITS_PER_PMD_ENTRY)
+#घोषणा PTE_ENTRY_SIZE	(1UL << BITS_PER_PTE_ENTRY)
 
-#define LINUX_GATEWAY_SPACE     0
+#घोषणा LINUX_GATEWAY_SPACE     0
 
-/* This governs the relationship between virtual and physical addresses.
+/* This governs the relationship between भव and physical addresses.
  * If you alter it, make sure to take care of our various fixed mapping
  * segments in fixmap.h */
-#ifdef CONFIG_64BIT
-#define __PAGE_OFFSET_DEFAULT	(0x40000000)	/* 1GB */
-#else
-#define __PAGE_OFFSET_DEFAULT	(0x10000000)	/* 256MB */
-#endif
+#अगर_घोषित CONFIG_64BIT
+#घोषणा __PAGE_OFFSET_DEFAULT	(0x40000000)	/* 1GB */
+#अन्यथा
+#घोषणा __PAGE_OFFSET_DEFAULT	(0x10000000)	/* 256MB */
+#पूर्ण_अगर
 
-#if defined(BOOTLOADER)
-#define __PAGE_OFFSET	(0)	/* bootloader uses physical addresses */
-#else
-#define __PAGE_OFFSET	__PAGE_OFFSET_DEFAULT
-#endif /* BOOTLOADER */
+#अगर defined(BOOTLOADER)
+#घोषणा __PAGE_OFFSET	(0)	/* bootloader uses physical addresses */
+#अन्यथा
+#घोषणा __PAGE_OFFSET	__PAGE_OFFSET_DEFAULT
+#पूर्ण_अगर /* BOOTLOADER */
 
-#define PAGE_OFFSET		((unsigned long)__PAGE_OFFSET)
+#घोषणा PAGE_OFFSET		((अचिन्हित दीर्घ)__PAGE_OFFSET)
 
-/* The size of the gateway page (we leave lots of room for expansion) */
-#define GATEWAY_PAGE_SIZE	0x4000
+/* The size of the gateway page (we leave lots of room क्रम expansion) */
+#घोषणा GATEWAY_PAGE_SIZE	0x4000
 
 /* The start of the actual kernel binary---used in vmlinux.lds.S
- * Leave some space after __PAGE_OFFSET for detecting kernel null
+ * Leave some space after __PAGE_OFFSET क्रम detecting kernel null
  * ptr derefs */
-#define KERNEL_BINARY_TEXT_START	(__PAGE_OFFSET + 0x100000)
+#घोषणा KERNEL_BINARY_TEXT_START	(__PAGE_OFFSET + 0x100000)
 
-/* These macros don't work for 64-bit C code -- don't allow in C at all */
-#ifdef __ASSEMBLY__
+/* These macros करोn't work for 64-bit C code -- don't allow in C at all */
+#अगर_घोषित __ASSEMBLY__
 #   define PA(x)	((x)-__PAGE_OFFSET)
 #   define VA(x)	((x)+__PAGE_OFFSET)
-#endif
-#define __pa(x)			((unsigned long)(x)-PAGE_OFFSET)
-#define __va(x)			((void *)((unsigned long)(x)+PAGE_OFFSET))
+#पूर्ण_अगर
+#घोषणा __pa(x)			((अचिन्हित दीर्घ)(x)-PAGE_OFFSET)
+#घोषणा __va(x)			((व्योम *)((अचिन्हित दीर्घ)(x)+PAGE_OFFSET))
 
-#ifndef CONFIG_SPARSEMEM
-#define pfn_valid(pfn)		((pfn) < max_mapnr)
-#endif
+#अगर_अघोषित CONFIG_SPARSEMEM
+#घोषणा pfn_valid(pfn)		((pfn) < max_mapnr)
+#पूर्ण_अगर
 
-#ifdef CONFIG_HUGETLB_PAGE
-#define HPAGE_SHIFT		PMD_SHIFT /* fixed for transparent huge pages */
-#define HPAGE_SIZE      	((1UL) << HPAGE_SHIFT)
-#define HPAGE_MASK		(~(HPAGE_SIZE - 1))
-#define HUGETLB_PAGE_ORDER	(HPAGE_SHIFT - PAGE_SHIFT)
+#अगर_घोषित CONFIG_HUGETLB_PAGE
+#घोषणा HPAGE_SHIFT		PMD_SHIFT /* fixed क्रम transparent huge pages */
+#घोषणा HPAGE_SIZE      	((1UL) << HPAGE_SHIFT)
+#घोषणा HPAGE_MASK		(~(HPAGE_SIZE - 1))
+#घोषणा HUGETLB_PAGE_ORDER	(HPAGE_SHIFT - PAGE_SHIFT)
 
-#if defined(CONFIG_64BIT) && defined(CONFIG_PARISC_PAGE_SIZE_4KB)
+#अगर defined(CONFIG_64BIT) && defined(CONFIG_PARISC_PAGE_SIZE_4KB)
 # define REAL_HPAGE_SHIFT	20 /* 20 = 1MB */
 # define _HUGE_PAGE_SIZE_ENCODING_DEFAULT _PAGE_SIZE_ENCODING_1M
-#elif !defined(CONFIG_64BIT) && defined(CONFIG_PARISC_PAGE_SIZE_4KB)
+#या_अगर !defined(CONFIG_64BIT) && defined(CONFIG_PARISC_PAGE_SIZE_4KB)
 # define REAL_HPAGE_SHIFT	22 /* 22 = 4MB */
 # define _HUGE_PAGE_SIZE_ENCODING_DEFAULT _PAGE_SIZE_ENCODING_4M
-#else
+#अन्यथा
 # define REAL_HPAGE_SHIFT	24 /* 24 = 16MB */
 # define _HUGE_PAGE_SIZE_ENCODING_DEFAULT _PAGE_SIZE_ENCODING_16M
-#endif
-#endif /* CONFIG_HUGETLB_PAGE */
+#पूर्ण_अगर
+#पूर्ण_अगर /* CONFIG_HUGETLB_PAGE */
 
-#define virt_addr_valid(kaddr)	pfn_valid(__pa(kaddr) >> PAGE_SHIFT)
+#घोषणा virt_addr_valid(kaddr)	pfn_valid(__pa(kaddr) >> PAGE_SHIFT)
 
-#define page_to_phys(page)	(page_to_pfn(page) << PAGE_SHIFT)
-#define virt_to_page(kaddr)     pfn_to_page(__pa(kaddr) >> PAGE_SHIFT)
+#घोषणा page_to_phys(page)	(page_to_pfn(page) << PAGE_SHIFT)
+#घोषणा virt_to_page(kaddr)     pfn_to_page(__pa(kaddr) >> PAGE_SHIFT)
 
-#include <asm-generic/memory_model.h>
-#include <asm-generic/getorder.h>
-#include <asm/pdc.h>
+#समावेश <यंत्र-generic/memory_model.h>
+#समावेश <यंत्र-generic/getorder.h>
+#समावेश <यंत्र/pdc.h>
 
-#define PAGE0   ((struct zeropage *)__PAGE_OFFSET)
+#घोषणा PAGE0   ((काष्ठा zeropage *)__PAGE_OFFSET)
 
 /* DEFINITION OF THE ZERO-PAGE (PAG0) */
 /* based on work by Jason Eckhardt (jason@equator.com) */
 
-#endif /* _PARISC_PAGE_H */
+#पूर्ण_अगर /* _PARISC_PAGE_H */

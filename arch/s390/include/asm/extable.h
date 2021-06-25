@@ -1,76 +1,77 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __S390_EXTABLE_H
-#define __S390_EXTABLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __S390_EXTABLE_H
+#घोषणा __S390_EXTABLE_H
 
-#include <asm/ptrace.h>
-#include <linux/compiler.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <linux/compiler.h>
 
 /*
  * The exception table consists of three addresses:
  *
- * - Address of an instruction that is allowed to fault.
- * - Address at which the program should continue.
+ * - Address of an inकाष्ठाion that is allowed to fault.
+ * - Address at which the program should जारी.
  * - Optional address of handler that takes pt_regs * argument and runs in
- *   interrupt context.
+ *   पूर्णांकerrupt context.
  *
- * No registers are modified, so it is entirely up to the continuation code
- * to figure out what to do.
+ * No रेजिस्टरs are modअगरied, so it is entirely up to the continuation code
+ * to figure out what to करो.
  *
  * All the routines below use bits of fixup code that are out of line
- * with the main instruction path.  This means when everything is well,
- * we don't even have to jump over them.  Further, they do not intrude
+ * with the मुख्य inकाष्ठाion path.  This means when everything is well,
+ * we करोn't even have to jump over them.  Further, they करो not पूर्णांकrude
  * on our cache or tlb entries.
  */
 
-struct exception_table_entry
-{
-	int insn, fixup;
-	long handler;
-};
+काष्ठा exception_table_entry
+अणु
+	पूर्णांक insn, fixup;
+	दीर्घ handler;
+पूर्ण;
 
-extern struct exception_table_entry *__start_dma_ex_table;
-extern struct exception_table_entry *__stop_dma_ex_table;
+बाह्य काष्ठा exception_table_entry *__start_dma_ex_table;
+बाह्य काष्ठा exception_table_entry *__stop_dma_ex_table;
 
-const struct exception_table_entry *s390_search_extables(unsigned long addr);
+स्थिर काष्ठा exception_table_entry *s390_search_extables(अचिन्हित दीर्घ addr);
 
-static inline unsigned long extable_fixup(const struct exception_table_entry *x)
-{
-	return (unsigned long)&x->fixup + x->fixup;
-}
+अटल अंतरभूत अचिन्हित दीर्घ extable_fixup(स्थिर काष्ठा exception_table_entry *x)
+अणु
+	वापस (अचिन्हित दीर्घ)&x->fixup + x->fixup;
+पूर्ण
 
-typedef bool (*ex_handler_t)(const struct exception_table_entry *,
-			     struct pt_regs *);
+प्रकार bool (*ex_handler_t)(स्थिर काष्ठा exception_table_entry *,
+			     काष्ठा pt_regs *);
 
-static inline ex_handler_t
-ex_fixup_handler(const struct exception_table_entry *x)
-{
-	if (likely(!x->handler))
-		return NULL;
-	return (ex_handler_t)((unsigned long)&x->handler + x->handler);
-}
+अटल अंतरभूत ex_handler_t
+ex_fixup_handler(स्थिर काष्ठा exception_table_entry *x)
+अणु
+	अगर (likely(!x->handler))
+		वापस शून्य;
+	वापस (ex_handler_t)((अचिन्हित दीर्घ)&x->handler + x->handler);
+पूर्ण
 
-static inline bool ex_handle(const struct exception_table_entry *x,
-			     struct pt_regs *regs)
-{
+अटल अंतरभूत bool ex_handle(स्थिर काष्ठा exception_table_entry *x,
+			     काष्ठा pt_regs *regs)
+अणु
 	ex_handler_t handler = ex_fixup_handler(x);
 
-	if (unlikely(handler))
-		return handler(x, regs);
+	अगर (unlikely(handler))
+		वापस handler(x, regs);
 	regs->psw.addr = extable_fixup(x);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#define ARCH_HAS_RELATIVE_EXTABLE
+#घोषणा ARCH_HAS_RELATIVE_EXTABLE
 
-static inline void swap_ex_entry_fixup(struct exception_table_entry *a,
-				       struct exception_table_entry *b,
-				       struct exception_table_entry tmp,
-				       int delta)
-{
+अटल अंतरभूत व्योम swap_ex_entry_fixup(काष्ठा exception_table_entry *a,
+				       काष्ठा exception_table_entry *b,
+				       काष्ठा exception_table_entry पंचांगp,
+				       पूर्णांक delta)
+अणु
 	a->fixup = b->fixup + delta;
-	b->fixup = tmp.fixup - delta;
+	b->fixup = पंचांगp.fixup - delta;
 	a->handler = b->handler + delta;
-	b->handler = tmp.handler - delta;
-}
+	b->handler = पंचांगp.handler - delta;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

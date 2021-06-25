@@ -1,528 +1,529 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#ifndef __MSM_DRV_H__
-#define __MSM_DRV_H__
+#अगर_अघोषित __MSM_DRV_H__
+#घोषणा __MSM_DRV_H__
 
-#include <linux/kernel.h>
-#include <linux/clk.h>
-#include <linux/cpufreq.h>
-#include <linux/module.h>
-#include <linux/component.h>
-#include <linux/platform_device.h>
-#include <linux/pm.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/iommu.h>
-#include <linux/types.h>
-#include <linux/of_graph.h>
-#include <linux/of_device.h>
-#include <linux/sizes.h>
-#include <linux/kthread.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/component.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/types.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/kthपढ़ो.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_plane_helper.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/msm_drm.h>
-#include <drm/drm_gem.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_plane_helper.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/msm_drm.h>
+#समावेश <drm/drm_gem.h>
 
-struct msm_kms;
-struct msm_gpu;
-struct msm_mmu;
-struct msm_mdss;
-struct msm_rd_state;
-struct msm_perf_state;
-struct msm_gem_submit;
-struct msm_fence_context;
-struct msm_gem_address_space;
-struct msm_gem_vma;
+काष्ठा msm_kms;
+काष्ठा msm_gpu;
+काष्ठा msm_mmu;
+काष्ठा msm_mdss;
+काष्ठा msm_rd_state;
+काष्ठा msm_perf_state;
+काष्ठा msm_gem_submit;
+काष्ठा msm_fence_context;
+काष्ठा msm_gem_address_space;
+काष्ठा msm_gem_vma;
 
-#define MAX_CRTCS      8
-#define MAX_PLANES     20
-#define MAX_ENCODERS   8
-#define MAX_BRIDGES    8
-#define MAX_CONNECTORS 8
+#घोषणा MAX_CRTCS      8
+#घोषणा MAX_PLANES     20
+#घोषणा MAX_ENCODERS   8
+#घोषणा MAX_BRIDGES    8
+#घोषणा MAX_CONNECTORS 8
 
-#define FRAC_16_16(mult, div)    (((mult) << 16) / (div))
+#घोषणा FRAC_16_16(mult, भाग)    (((mult) << 16) / (भाग))
 
-struct msm_file_private {
+काष्ठा msm_file_निजी अणु
 	rwlock_t queuelock;
-	struct list_head submitqueues;
-	int queueid;
-	struct msm_gem_address_space *aspace;
-	struct kref ref;
-};
+	काष्ठा list_head submitqueues;
+	पूर्णांक queueid;
+	काष्ठा msm_gem_address_space *aspace;
+	काष्ठा kref ref;
+पूर्ण;
 
-enum msm_mdp_plane_property {
+क्रमागत msm_mdp_plane_property अणु
 	PLANE_PROP_ZPOS,
 	PLANE_PROP_ALPHA,
 	PLANE_PROP_PREMULTIPLIED,
 	PLANE_PROP_MAX_NUM
-};
+पूर्ण;
 
-#define MSM_GPU_MAX_RINGS 4
-#define MAX_H_TILES_PER_DISPLAY 2
+#घोषणा MSM_GPU_MAX_RINGS 4
+#घोषणा MAX_H_TILES_PER_DISPLAY 2
 
 /**
- * enum msm_display_caps - features/capabilities supported by displays
+ * क्रमागत msm_display_caps - features/capabilities supported by displays
  * @MSM_DISPLAY_CAP_VID_MODE:           Video or "active" mode supported
  * @MSM_DISPLAY_CAP_CMD_MODE:           Command mode supported
  * @MSM_DISPLAY_CAP_HOT_PLUG:           Hot plug detection supported
  * @MSM_DISPLAY_CAP_EDID:               EDID supported
  */
-enum msm_display_caps {
+क्रमागत msm_display_caps अणु
 	MSM_DISPLAY_CAP_VID_MODE	= BIT(0),
 	MSM_DISPLAY_CAP_CMD_MODE	= BIT(1),
 	MSM_DISPLAY_CAP_HOT_PLUG	= BIT(2),
 	MSM_DISPLAY_CAP_EDID		= BIT(3),
-};
+पूर्ण;
 
 /**
- * enum msm_event_wait - type of HW events to wait for
- * @MSM_ENC_COMMIT_DONE - wait for the driver to flush the registers to HW
- * @MSM_ENC_TX_COMPLETE - wait for the HW to transfer the frame to panel
- * @MSM_ENC_VBLANK - wait for the HW VBLANK event (for driver-internal waiters)
+ * क्रमागत msm_event_रुको - type of HW events to रुको क्रम
+ * @MSM_ENC_COMMIT_DONE - रुको क्रम the driver to flush the रेजिस्टरs to HW
+ * @MSM_ENC_TX_COMPLETE - रुको क्रम the HW to transfer the frame to panel
+ * @MSM_ENC_VBLANK - रुको क्रम the HW VBLANK event (क्रम driver-पूर्णांकernal रुकोers)
  */
-enum msm_event_wait {
+क्रमागत msm_event_रुको अणु
 	MSM_ENC_COMMIT_DONE = 0,
 	MSM_ENC_TX_COMPLETE,
 	MSM_ENC_VBLANK,
-};
+पूर्ण;
 
 /**
- * struct msm_display_topology - defines a display topology pipeline
+ * काष्ठा msm_display_topology - defines a display topology pipeline
  * @num_lm:       number of layer mixers used
  * @num_enc:      number of compression encoder blocks used
- * @num_intf:     number of interfaces the panel is mounted on
+ * @num_पूर्णांकf:     number of पूर्णांकerfaces the panel is mounted on
  */
-struct msm_display_topology {
+काष्ठा msm_display_topology अणु
 	u32 num_lm;
 	u32 num_enc;
-	u32 num_intf;
+	u32 num_पूर्णांकf;
 	u32 num_dspp;
-};
+पूर्ण;
 
 /**
- * struct msm_display_info - defines display properties
- * @intf_type:          DRM_MODE_ENCODER_ type
- * @capabilities:       Bitmask of display flags
- * @num_of_h_tiles:     Number of horizontal tiles in case of split interface
+ * काष्ठा msm_display_info - defines display properties
+ * @पूर्णांकf_type:          DRM_MODE_ENCODER_ type
+ * @capabilities:       Biपंचांगask of display flags
+ * @num_of_h_tiles:     Number of horizontal tiles in हाल of split पूर्णांकerface
  * @h_tile_instance:    Controller instance used per tile. Number of elements is
  *                      based on num_of_h_tiles
- * @is_te_using_watchdog_timer:  Boolean to indicate watchdog TE is
+ * @is_te_using_watchकरोg_समयr:  Boolean to indicate watchकरोg TE is
  *				 used instead of panel TE in cmd mode panels
  */
-struct msm_display_info {
-	int intf_type;
-	uint32_t capabilities;
-	uint32_t num_of_h_tiles;
-	uint32_t h_tile_instance[MAX_H_TILES_PER_DISPLAY];
-	bool is_te_using_watchdog_timer;
-};
+काष्ठा msm_display_info अणु
+	पूर्णांक पूर्णांकf_type;
+	uपूर्णांक32_t capabilities;
+	uपूर्णांक32_t num_of_h_tiles;
+	uपूर्णांक32_t h_tile_instance[MAX_H_TILES_PER_DISPLAY];
+	bool is_te_using_watchकरोg_समयr;
+पूर्ण;
 
-/* Commit/Event thread specific structure */
-struct msm_drm_thread {
-	struct drm_device *dev;
-	unsigned int crtc_id;
-	struct kthread_worker *worker;
-};
+/* Commit/Event thपढ़ो specअगरic काष्ठाure */
+काष्ठा msm_drm_thपढ़ो अणु
+	काष्ठा drm_device *dev;
+	अचिन्हित पूर्णांक crtc_id;
+	काष्ठा kthपढ़ो_worker *worker;
+पूर्ण;
 
-struct msm_drm_private {
+काष्ठा msm_drm_निजी अणु
 
-	struct drm_device *dev;
+	काष्ठा drm_device *dev;
 
-	struct msm_kms *kms;
+	काष्ठा msm_kms *kms;
 
-	/* subordinate devices, if present: */
-	struct platform_device *gpu_pdev;
+	/* subordinate devices, अगर present: */
+	काष्ठा platक्रमm_device *gpu_pdev;
 
-	/* top level MDSS wrapper device (for MDP5/DPU only) */
-	struct msm_mdss *mdss;
+	/* top level MDSS wrapper device (क्रम MDP5/DPU only) */
+	काष्ठा msm_mdss *mdss;
 
 	/* possibly this should be in the kms component, but it is
 	 * shared by both mdp4 and mdp5..
 	 */
-	struct hdmi *hdmi;
+	काष्ठा hdmi *hdmi;
 
-	/* eDP is for mdp5 only, but kms has not been created
+	/* eDP is क्रम mdp5 only, but kms has not been created
 	 * when edp_bind() and edp_init() are called. Here is the only
 	 * place to keep the edp instance.
 	 */
-	struct msm_edp *edp;
+	काष्ठा msm_edp *edp;
 
 	/* DSI is shared by mdp4 and mdp5 */
-	struct msm_dsi *dsi[2];
+	काष्ठा msm_dsi *dsi[2];
 
-	struct msm_dp *dp;
+	काष्ठा msm_dp *dp;
 
 	/* when we have more than one 'msm_gpu' these need to be an array: */
-	struct msm_gpu *gpu;
-	struct msm_file_private *lastctx;
-	/* gpu is only set on open(), but we need this info earlier */
+	काष्ठा msm_gpu *gpu;
+	काष्ठा msm_file_निजी *lastctx;
+	/* gpu is only set on खोलो(), but we need this info earlier */
 	bool is_a2xx;
 
-	struct drm_fb_helper *fbdev;
+	काष्ठा drm_fb_helper *fbdev;
 
-	struct msm_rd_state *rd;       /* debugfs to dump all submits */
-	struct msm_rd_state *hangrd;   /* debugfs to dump hanging submits */
-	struct msm_perf_state *perf;
+	काष्ठा msm_rd_state *rd;       /* debugfs to dump all submits */
+	काष्ठा msm_rd_state *hangrd;   /* debugfs to dump hanging submits */
+	काष्ठा msm_perf_state *perf;
 
 	/**
-	 * List of all GEM objects (mainly for debugfs, protected by obj_lock
-	 * (acquire before per GEM object lock)
+	 * List of all GEM objects (मुख्यly क्रम debugfs, रक्षित by obj_lock
+	 * (acquire beक्रमe per GEM object lock)
 	 */
-	struct list_head objects;
-	struct mutex obj_lock;
+	काष्ठा list_head objects;
+	काष्ठा mutex obj_lock;
 
 	/**
 	 * LRUs of inactive GEM objects.  Every bo is either in one of the
 	 * inactive lists (depending on whether or not it is shrinkable) or
-	 * gpu->active_list (for the gpu it is active on[1]), or transiently
+	 * gpu->active_list (क्रम the gpu it is active on[1]), or transiently
 	 * on a temporary list as the shrinker is running.
 	 *
 	 * Note that inactive_willneed also contains pinned and vmap'd bos,
 	 * but the number of pinned-but-not-active objects is small (scanout
 	 * buffers, ringbuffer, etc).
 	 *
-	 * These lists are protected by mm_lock (which should be acquired
-	 * before per GEM object lock).  One should *not* hold mm_lock in
+	 * These lists are रक्षित by mm_lock (which should be acquired
+	 * beक्रमe per GEM object lock).  One should *not* hold mm_lock in
 	 * get_pages()/vmap()/etc paths, as they can trigger the shrinker.
 	 *
-	 * [1] if someone ever added support for the old 2d cores, there could be
+	 * [1] अगर someone ever added support क्रम the old 2d cores, there could be
 	 *     more than one gpu object
 	 */
-	struct list_head inactive_willneed;  /* inactive + potentially unpin/evictable */
-	struct list_head inactive_dontneed;  /* inactive + shrinkable */
-	struct list_head inactive_unpinned;  /* inactive + purged or unpinned */
-	long shrinkable_count;               /* write access under mm_lock */
-	long evictable_count;                /* write access under mm_lock */
-	struct mutex mm_lock;
+	काष्ठा list_head inactive_willneed;  /* inactive + potentially unpin/evictable */
+	काष्ठा list_head inactive_करोntneed;  /* inactive + shrinkable */
+	काष्ठा list_head inactive_unpinned;  /* inactive + purged or unpinned */
+	दीर्घ shrinkable_count;               /* ग_लिखो access under mm_lock */
+	दीर्घ evictable_count;                /* ग_लिखो access under mm_lock */
+	काष्ठा mutex mm_lock;
 
-	struct workqueue_struct *wq;
+	काष्ठा workqueue_काष्ठा *wq;
 
-	unsigned int num_planes;
-	struct drm_plane *planes[MAX_PLANES];
+	अचिन्हित पूर्णांक num_planes;
+	काष्ठा drm_plane *planes[MAX_PLANES];
 
-	unsigned int num_crtcs;
-	struct drm_crtc *crtcs[MAX_CRTCS];
+	अचिन्हित पूर्णांक num_crtcs;
+	काष्ठा drm_crtc *crtcs[MAX_CRTCS];
 
-	struct msm_drm_thread event_thread[MAX_CRTCS];
+	काष्ठा msm_drm_thपढ़ो event_thपढ़ो[MAX_CRTCS];
 
-	unsigned int num_encoders;
-	struct drm_encoder *encoders[MAX_ENCODERS];
+	अचिन्हित पूर्णांक num_encoders;
+	काष्ठा drm_encoder *encoders[MAX_ENCODERS];
 
-	unsigned int num_bridges;
-	struct drm_bridge *bridges[MAX_BRIDGES];
+	अचिन्हित पूर्णांक num_bridges;
+	काष्ठा drm_bridge *bridges[MAX_BRIDGES];
 
-	unsigned int num_connectors;
-	struct drm_connector *connectors[MAX_CONNECTORS];
+	अचिन्हित पूर्णांक num_connectors;
+	काष्ठा drm_connector *connectors[MAX_CONNECTORS];
 
 	/* Properties */
-	struct drm_property *plane_property[PLANE_PROP_MAX_NUM];
+	काष्ठा drm_property *plane_property[PLANE_PROP_MAX_NUM];
 
 	/* VRAM carveout, used when no IOMMU: */
-	struct {
-		unsigned long size;
+	काष्ठा अणु
+		अचिन्हित दीर्घ size;
 		dma_addr_t paddr;
 		/* NOTE: mm managed at the page level, size is in # of pages
 		 * and position mm_node->start is in # of pages:
 		 */
-		struct drm_mm mm;
+		काष्ठा drm_mm mm;
 		spinlock_t lock; /* Protects drm_mm node allocation/removal */
-	} vram;
+	पूर्ण vram;
 
-	struct notifier_block vmap_notifier;
-	struct shrinker shrinker;
+	काष्ठा notअगरier_block vmap_notअगरier;
+	काष्ठा shrinker shrinker;
 
-	struct drm_atomic_state *pm_state;
-};
+	काष्ठा drm_atomic_state *pm_state;
+पूर्ण;
 
-struct msm_format {
-	uint32_t pixel_format;
-};
+काष्ठा msm_क्रमmat अणु
+	uपूर्णांक32_t pixel_क्रमmat;
+पूर्ण;
 
-struct msm_pending_timer;
+काष्ठा msm_pending_समयr;
 
-int msm_atomic_prepare_fb(struct drm_plane *plane,
-			  struct drm_plane_state *new_state);
-int msm_atomic_init_pending_timer(struct msm_pending_timer *timer,
-		struct msm_kms *kms, int crtc_idx);
-void msm_atomic_destroy_pending_timer(struct msm_pending_timer *timer);
-void msm_atomic_commit_tail(struct drm_atomic_state *state);
-struct drm_atomic_state *msm_atomic_state_alloc(struct drm_device *dev);
-void msm_atomic_state_clear(struct drm_atomic_state *state);
-void msm_atomic_state_free(struct drm_atomic_state *state);
+पूर्णांक msm_atomic_prepare_fb(काष्ठा drm_plane *plane,
+			  काष्ठा drm_plane_state *new_state);
+पूर्णांक msm_atomic_init_pending_समयr(काष्ठा msm_pending_समयr *समयr,
+		काष्ठा msm_kms *kms, पूर्णांक crtc_idx);
+व्योम msm_atomic_destroy_pending_समयr(काष्ठा msm_pending_समयr *समयr);
+व्योम msm_atomic_commit_tail(काष्ठा drm_atomic_state *state);
+काष्ठा drm_atomic_state *msm_atomic_state_alloc(काष्ठा drm_device *dev);
+व्योम msm_atomic_state_clear(काष्ठा drm_atomic_state *state);
+व्योम msm_atomic_state_मुक्त(काष्ठा drm_atomic_state *state);
 
-int msm_crtc_enable_vblank(struct drm_crtc *crtc);
-void msm_crtc_disable_vblank(struct drm_crtc *crtc);
+पूर्णांक msm_crtc_enable_vblank(काष्ठा drm_crtc *crtc);
+व्योम msm_crtc_disable_vblank(काष्ठा drm_crtc *crtc);
 
-int msm_gem_init_vma(struct msm_gem_address_space *aspace,
-		struct msm_gem_vma *vma, int npages,
+पूर्णांक msm_gem_init_vma(काष्ठा msm_gem_address_space *aspace,
+		काष्ठा msm_gem_vma *vma, पूर्णांक npages,
 		u64 range_start, u64 range_end);
-void msm_gem_purge_vma(struct msm_gem_address_space *aspace,
-		struct msm_gem_vma *vma);
-void msm_gem_unmap_vma(struct msm_gem_address_space *aspace,
-		struct msm_gem_vma *vma);
-int msm_gem_map_vma(struct msm_gem_address_space *aspace,
-		struct msm_gem_vma *vma, int prot,
-		struct sg_table *sgt, int npages);
-void msm_gem_close_vma(struct msm_gem_address_space *aspace,
-		struct msm_gem_vma *vma);
+व्योम msm_gem_purge_vma(काष्ठा msm_gem_address_space *aspace,
+		काष्ठा msm_gem_vma *vma);
+व्योम msm_gem_unmap_vma(काष्ठा msm_gem_address_space *aspace,
+		काष्ठा msm_gem_vma *vma);
+पूर्णांक msm_gem_map_vma(काष्ठा msm_gem_address_space *aspace,
+		काष्ठा msm_gem_vma *vma, पूर्णांक prot,
+		काष्ठा sg_table *sgt, पूर्णांक npages);
+व्योम msm_gem_बंद_vma(काष्ठा msm_gem_address_space *aspace,
+		काष्ठा msm_gem_vma *vma);
 
 
-struct msm_gem_address_space *
-msm_gem_address_space_get(struct msm_gem_address_space *aspace);
+काष्ठा msm_gem_address_space *
+msm_gem_address_space_get(काष्ठा msm_gem_address_space *aspace);
 
-void msm_gem_address_space_put(struct msm_gem_address_space *aspace);
+व्योम msm_gem_address_space_put(काष्ठा msm_gem_address_space *aspace);
 
-struct msm_gem_address_space *
-msm_gem_address_space_create(struct msm_mmu *mmu, const char *name,
-		u64 va_start, u64 size);
+काष्ठा msm_gem_address_space *
+msm_gem_address_space_create(काष्ठा msm_mmu *mmu, स्थिर अक्षर *name,
+		u64 बहु_शुरू, u64 size);
 
-int msm_register_mmu(struct drm_device *dev, struct msm_mmu *mmu);
-void msm_unregister_mmu(struct drm_device *dev, struct msm_mmu *mmu);
+पूर्णांक msm_रेजिस्टर_mmu(काष्ठा drm_device *dev, काष्ठा msm_mmu *mmu);
+व्योम msm_unरेजिस्टर_mmu(काष्ठा drm_device *dev, काष्ठा msm_mmu *mmu);
 
-bool msm_use_mmu(struct drm_device *dev);
+bool msm_use_mmu(काष्ठा drm_device *dev);
 
-int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
-		struct drm_file *file);
+पूर्णांक msm_ioctl_gem_submit(काष्ठा drm_device *dev, व्योम *data,
+		काष्ठा drm_file *file);
 
-void msm_gem_shrinker_init(struct drm_device *dev);
-void msm_gem_shrinker_cleanup(struct drm_device *dev);
+व्योम msm_gem_shrinker_init(काष्ठा drm_device *dev);
+व्योम msm_gem_shrinker_cleanup(काष्ठा drm_device *dev);
 
-struct sg_table *msm_gem_prime_get_sg_table(struct drm_gem_object *obj);
-int msm_gem_prime_vmap(struct drm_gem_object *obj, struct dma_buf_map *map);
-void msm_gem_prime_vunmap(struct drm_gem_object *obj, struct dma_buf_map *map);
-int msm_gem_prime_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma);
-struct drm_gem_object *msm_gem_prime_import_sg_table(struct drm_device *dev,
-		struct dma_buf_attachment *attach, struct sg_table *sg);
-int msm_gem_prime_pin(struct drm_gem_object *obj);
-void msm_gem_prime_unpin(struct drm_gem_object *obj);
+काष्ठा sg_table *msm_gem_prime_get_sg_table(काष्ठा drm_gem_object *obj);
+पूर्णांक msm_gem_prime_vmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map);
+व्योम msm_gem_prime_vunmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map);
+पूर्णांक msm_gem_prime_mmap(काष्ठा drm_gem_object *obj, काष्ठा vm_area_काष्ठा *vma);
+काष्ठा drm_gem_object *msm_gem_prime_import_sg_table(काष्ठा drm_device *dev,
+		काष्ठा dma_buf_attachment *attach, काष्ठा sg_table *sg);
+पूर्णांक msm_gem_prime_pin(काष्ठा drm_gem_object *obj);
+व्योम msm_gem_prime_unpin(काष्ठा drm_gem_object *obj);
 
-int msm_framebuffer_prepare(struct drm_framebuffer *fb,
-		struct msm_gem_address_space *aspace);
-void msm_framebuffer_cleanup(struct drm_framebuffer *fb,
-		struct msm_gem_address_space *aspace);
-uint32_t msm_framebuffer_iova(struct drm_framebuffer *fb,
-		struct msm_gem_address_space *aspace, int plane);
-struct drm_gem_object *msm_framebuffer_bo(struct drm_framebuffer *fb, int plane);
-const struct msm_format *msm_framebuffer_format(struct drm_framebuffer *fb);
-struct drm_framebuffer *msm_framebuffer_create(struct drm_device *dev,
-		struct drm_file *file, const struct drm_mode_fb_cmd2 *mode_cmd);
-struct drm_framebuffer * msm_alloc_stolen_fb(struct drm_device *dev,
-		int w, int h, int p, uint32_t format);
+पूर्णांक msm_framebuffer_prepare(काष्ठा drm_framebuffer *fb,
+		काष्ठा msm_gem_address_space *aspace);
+व्योम msm_framebuffer_cleanup(काष्ठा drm_framebuffer *fb,
+		काष्ठा msm_gem_address_space *aspace);
+uपूर्णांक32_t msm_framebuffer_iova(काष्ठा drm_framebuffer *fb,
+		काष्ठा msm_gem_address_space *aspace, पूर्णांक plane);
+काष्ठा drm_gem_object *msm_framebuffer_bo(काष्ठा drm_framebuffer *fb, पूर्णांक plane);
+स्थिर काष्ठा msm_क्रमmat *msm_framebuffer_क्रमmat(काष्ठा drm_framebuffer *fb);
+काष्ठा drm_framebuffer *msm_framebuffer_create(काष्ठा drm_device *dev,
+		काष्ठा drm_file *file, स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd);
+काष्ठा drm_framebuffer * msm_alloc_stolen_fb(काष्ठा drm_device *dev,
+		पूर्णांक w, पूर्णांक h, पूर्णांक p, uपूर्णांक32_t क्रमmat);
 
-struct drm_fb_helper *msm_fbdev_init(struct drm_device *dev);
-void msm_fbdev_free(struct drm_device *dev);
+काष्ठा drm_fb_helper *msm_fbdev_init(काष्ठा drm_device *dev);
+व्योम msm_fbdev_मुक्त(काष्ठा drm_device *dev);
 
-struct hdmi;
-int msm_hdmi_modeset_init(struct hdmi *hdmi, struct drm_device *dev,
-		struct drm_encoder *encoder);
-void __init msm_hdmi_register(void);
-void __exit msm_hdmi_unregister(void);
+काष्ठा hdmi;
+पूर्णांक msm_hdmi_modeset_init(काष्ठा hdmi *hdmi, काष्ठा drm_device *dev,
+		काष्ठा drm_encoder *encoder);
+व्योम __init msm_hdmi_रेजिस्टर(व्योम);
+व्योम __निकास msm_hdmi_unरेजिस्टर(व्योम);
 
-struct msm_edp;
-void __init msm_edp_register(void);
-void __exit msm_edp_unregister(void);
-int msm_edp_modeset_init(struct msm_edp *edp, struct drm_device *dev,
-		struct drm_encoder *encoder);
+काष्ठा msm_edp;
+व्योम __init msm_edp_रेजिस्टर(व्योम);
+व्योम __निकास msm_edp_unरेजिस्टर(व्योम);
+पूर्णांक msm_edp_modeset_init(काष्ठा msm_edp *edp, काष्ठा drm_device *dev,
+		काष्ठा drm_encoder *encoder);
 
-struct msm_dsi;
-#ifdef CONFIG_DRM_MSM_DSI
-void __init msm_dsi_register(void);
-void __exit msm_dsi_unregister(void);
-int msm_dsi_modeset_init(struct msm_dsi *msm_dsi, struct drm_device *dev,
-			 struct drm_encoder *encoder);
-#else
-static inline void __init msm_dsi_register(void)
-{
-}
-static inline void __exit msm_dsi_unregister(void)
-{
-}
-static inline int msm_dsi_modeset_init(struct msm_dsi *msm_dsi,
-				       struct drm_device *dev,
-				       struct drm_encoder *encoder)
-{
-	return -EINVAL;
-}
-#endif
+काष्ठा msm_dsi;
+#अगर_घोषित CONFIG_DRM_MSM_DSI
+व्योम __init msm_dsi_रेजिस्टर(व्योम);
+व्योम __निकास msm_dsi_unरेजिस्टर(व्योम);
+पूर्णांक msm_dsi_modeset_init(काष्ठा msm_dsi *msm_dsi, काष्ठा drm_device *dev,
+			 काष्ठा drm_encoder *encoder);
+#अन्यथा
+अटल अंतरभूत व्योम __init msm_dsi_रेजिस्टर(व्योम)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम __निकास msm_dsi_unरेजिस्टर(व्योम)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक msm_dsi_modeset_init(काष्ठा msm_dsi *msm_dsi,
+				       काष्ठा drm_device *dev,
+				       काष्ठा drm_encoder *encoder)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_DRM_MSM_DP
-int __init msm_dp_register(void);
-void __exit msm_dp_unregister(void);
-int msm_dp_modeset_init(struct msm_dp *dp_display, struct drm_device *dev,
-			 struct drm_encoder *encoder);
-int msm_dp_display_enable(struct msm_dp *dp, struct drm_encoder *encoder);
-int msm_dp_display_disable(struct msm_dp *dp, struct drm_encoder *encoder);
-int msm_dp_display_pre_disable(struct msm_dp *dp, struct drm_encoder *encoder);
-void msm_dp_display_mode_set(struct msm_dp *dp, struct drm_encoder *encoder,
-				struct drm_display_mode *mode,
-				struct drm_display_mode *adjusted_mode);
-void msm_dp_irq_postinstall(struct msm_dp *dp_display);
+#अगर_घोषित CONFIG_DRM_MSM_DP
+पूर्णांक __init msm_dp_रेजिस्टर(व्योम);
+व्योम __निकास msm_dp_unरेजिस्टर(व्योम);
+पूर्णांक msm_dp_modeset_init(काष्ठा msm_dp *dp_display, काष्ठा drm_device *dev,
+			 काष्ठा drm_encoder *encoder);
+पूर्णांक msm_dp_display_enable(काष्ठा msm_dp *dp, काष्ठा drm_encoder *encoder);
+पूर्णांक msm_dp_display_disable(काष्ठा msm_dp *dp, काष्ठा drm_encoder *encoder);
+पूर्णांक msm_dp_display_pre_disable(काष्ठा msm_dp *dp, काष्ठा drm_encoder *encoder);
+व्योम msm_dp_display_mode_set(काष्ठा msm_dp *dp, काष्ठा drm_encoder *encoder,
+				काष्ठा drm_display_mode *mode,
+				काष्ठा drm_display_mode *adjusted_mode);
+व्योम msm_dp_irq_postinstall(काष्ठा msm_dp *dp_display);
 
-void msm_dp_debugfs_init(struct msm_dp *dp_display, struct drm_minor *minor);
+व्योम msm_dp_debugfs_init(काष्ठा msm_dp *dp_display, काष्ठा drm_minor *minor);
 
-#else
-static inline int __init msm_dp_register(void)
-{
-	return -EINVAL;
-}
-static inline void __exit msm_dp_unregister(void)
-{
-}
-static inline int msm_dp_modeset_init(struct msm_dp *dp_display,
-				       struct drm_device *dev,
-				       struct drm_encoder *encoder)
-{
-	return -EINVAL;
-}
-static inline int msm_dp_display_enable(struct msm_dp *dp,
-					struct drm_encoder *encoder)
-{
-	return -EINVAL;
-}
-static inline int msm_dp_display_disable(struct msm_dp *dp,
-					struct drm_encoder *encoder)
-{
-	return -EINVAL;
-}
-static inline int msm_dp_display_pre_disable(struct msm_dp *dp,
-					struct drm_encoder *encoder)
-{
-	return -EINVAL;
-}
-static inline void msm_dp_display_mode_set(struct msm_dp *dp,
-				struct drm_encoder *encoder,
-				struct drm_display_mode *mode,
-				struct drm_display_mode *adjusted_mode)
-{
-}
+#अन्यथा
+अटल अंतरभूत पूर्णांक __init msm_dp_रेजिस्टर(व्योम)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत व्योम __निकास msm_dp_unरेजिस्टर(व्योम)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक msm_dp_modeset_init(काष्ठा msm_dp *dp_display,
+				       काष्ठा drm_device *dev,
+				       काष्ठा drm_encoder *encoder)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक msm_dp_display_enable(काष्ठा msm_dp *dp,
+					काष्ठा drm_encoder *encoder)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक msm_dp_display_disable(काष्ठा msm_dp *dp,
+					काष्ठा drm_encoder *encoder)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक msm_dp_display_pre_disable(काष्ठा msm_dp *dp,
+					काष्ठा drm_encoder *encoder)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत व्योम msm_dp_display_mode_set(काष्ठा msm_dp *dp,
+				काष्ठा drm_encoder *encoder,
+				काष्ठा drm_display_mode *mode,
+				काष्ठा drm_display_mode *adjusted_mode)
+अणु
+पूर्ण
 
-static inline void msm_dp_irq_postinstall(struct msm_dp *dp_display)
-{
-}
+अटल अंतरभूत व्योम msm_dp_irq_postinstall(काष्ठा msm_dp *dp_display)
+अणु
+पूर्ण
 
-static inline void msm_dp_debugfs_init(struct msm_dp *dp_display,
-		struct drm_minor *minor)
-{
-}
+अटल अंतरभूत व्योम msm_dp_debugfs_init(काष्ठा msm_dp *dp_display,
+		काष्ठा drm_minor *minor)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-void __init msm_mdp_register(void);
-void __exit msm_mdp_unregister(void);
-void __init msm_dpu_register(void);
-void __exit msm_dpu_unregister(void);
+व्योम __init msm_mdp_रेजिस्टर(व्योम);
+व्योम __निकास msm_mdp_unरेजिस्टर(व्योम);
+व्योम __init msm_dpu_रेजिस्टर(व्योम);
+व्योम __निकास msm_dpu_unरेजिस्टर(व्योम);
 
-#ifdef CONFIG_DEBUG_FS
-void msm_framebuffer_describe(struct drm_framebuffer *fb, struct seq_file *m);
-int msm_debugfs_late_init(struct drm_device *dev);
-int msm_rd_debugfs_init(struct drm_minor *minor);
-void msm_rd_debugfs_cleanup(struct msm_drm_private *priv);
-__printf(3, 4)
-void msm_rd_dump_submit(struct msm_rd_state *rd, struct msm_gem_submit *submit,
-		const char *fmt, ...);
-int msm_perf_debugfs_init(struct drm_minor *minor);
-void msm_perf_debugfs_cleanup(struct msm_drm_private *priv);
-#else
-static inline int msm_debugfs_late_init(struct drm_device *dev) { return 0; }
-__printf(3, 4)
-static inline void msm_rd_dump_submit(struct msm_rd_state *rd,
-			struct msm_gem_submit *submit,
-			const char *fmt, ...) {}
-static inline void msm_rd_debugfs_cleanup(struct msm_drm_private *priv) {}
-static inline void msm_perf_debugfs_cleanup(struct msm_drm_private *priv) {}
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम msm_framebuffer_describe(काष्ठा drm_framebuffer *fb, काष्ठा seq_file *m);
+पूर्णांक msm_debugfs_late_init(काष्ठा drm_device *dev);
+पूर्णांक msm_rd_debugfs_init(काष्ठा drm_minor *minor);
+व्योम msm_rd_debugfs_cleanup(काष्ठा msm_drm_निजी *priv);
+__म_लिखो(3, 4)
+व्योम msm_rd_dump_submit(काष्ठा msm_rd_state *rd, काष्ठा msm_gem_submit *submit,
+		स्थिर अक्षर *fmt, ...);
+पूर्णांक msm_perf_debugfs_init(काष्ठा drm_minor *minor);
+व्योम msm_perf_debugfs_cleanup(काष्ठा msm_drm_निजी *priv);
+#अन्यथा
+अटल अंतरभूत पूर्णांक msm_debugfs_late_init(काष्ठा drm_device *dev) अणु वापस 0; पूर्ण
+__म_लिखो(3, 4)
+अटल अंतरभूत व्योम msm_rd_dump_submit(काष्ठा msm_rd_state *rd,
+			काष्ठा msm_gem_submit *submit,
+			स्थिर अक्षर *fmt, ...) अणुपूर्ण
+अटल अंतरभूत व्योम msm_rd_debugfs_cleanup(काष्ठा msm_drm_निजी *priv) अणुपूर्ण
+अटल अंतरभूत व्योम msm_perf_debugfs_cleanup(काष्ठा msm_drm_निजी *priv) अणुपूर्ण
+#पूर्ण_अगर
 
-struct clk *msm_clk_get(struct platform_device *pdev, const char *name);
+काष्ठा clk *msm_clk_get(काष्ठा platक्रमm_device *pdev, स्थिर अक्षर *name);
 
-struct clk *msm_clk_bulk_get_clock(struct clk_bulk_data *bulk, int count,
-	const char *name);
-void __iomem *msm_ioremap(struct platform_device *pdev, const char *name,
-		const char *dbgname);
-void __iomem *msm_ioremap_quiet(struct platform_device *pdev, const char *name,
-		const char *dbgname);
-void msm_writel(u32 data, void __iomem *addr);
-u32 msm_readl(const void __iomem *addr);
-void msm_rmw(void __iomem *addr, u32 mask, u32 or);
+काष्ठा clk *msm_clk_bulk_get_घड़ी(काष्ठा clk_bulk_data *bulk, पूर्णांक count,
+	स्थिर अक्षर *name);
+व्योम __iomem *msm_ioremap(काष्ठा platक्रमm_device *pdev, स्थिर अक्षर *name,
+		स्थिर अक्षर *dbgname);
+व्योम __iomem *msm_ioremap_quiet(काष्ठा platक्रमm_device *pdev, स्थिर अक्षर *name,
+		स्थिर अक्षर *dbgname);
+व्योम msm_ग_लिखोl(u32 data, व्योम __iomem *addr);
+u32 msm_पढ़ोl(स्थिर व्योम __iomem *addr);
+व्योम msm_rmw(व्योम __iomem *addr, u32 mask, u32 or);
 
-struct msm_gpu_submitqueue;
-int msm_submitqueue_init(struct drm_device *drm, struct msm_file_private *ctx);
-struct msm_gpu_submitqueue *msm_submitqueue_get(struct msm_file_private *ctx,
+काष्ठा msm_gpu_submitqueue;
+पूर्णांक msm_submitqueue_init(काष्ठा drm_device *drm, काष्ठा msm_file_निजी *ctx);
+काष्ठा msm_gpu_submitqueue *msm_submitqueue_get(काष्ठा msm_file_निजी *ctx,
 		u32 id);
-int msm_submitqueue_create(struct drm_device *drm,
-		struct msm_file_private *ctx,
+पूर्णांक msm_submitqueue_create(काष्ठा drm_device *drm,
+		काष्ठा msm_file_निजी *ctx,
 		u32 prio, u32 flags, u32 *id);
-int msm_submitqueue_query(struct drm_device *drm, struct msm_file_private *ctx,
-		struct drm_msm_submitqueue_query *args);
-int msm_submitqueue_remove(struct msm_file_private *ctx, u32 id);
-void msm_submitqueue_close(struct msm_file_private *ctx);
+पूर्णांक msm_submitqueue_query(काष्ठा drm_device *drm, काष्ठा msm_file_निजी *ctx,
+		काष्ठा drm_msm_submitqueue_query *args);
+पूर्णांक msm_submitqueue_हटाओ(काष्ठा msm_file_निजी *ctx, u32 id);
+व्योम msm_submitqueue_बंद(काष्ठा msm_file_निजी *ctx);
 
-void msm_submitqueue_destroy(struct kref *kref);
+व्योम msm_submitqueue_destroy(काष्ठा kref *kref);
 
-static inline void __msm_file_private_destroy(struct kref *kref)
-{
-	struct msm_file_private *ctx = container_of(kref,
-		struct msm_file_private, ref);
+अटल अंतरभूत व्योम __msm_file_निजी_destroy(काष्ठा kref *kref)
+अणु
+	काष्ठा msm_file_निजी *ctx = container_of(kref,
+		काष्ठा msm_file_निजी, ref);
 
 	msm_gem_address_space_put(ctx->aspace);
-	kfree(ctx);
-}
+	kमुक्त(ctx);
+पूर्ण
 
-static inline void msm_file_private_put(struct msm_file_private *ctx)
-{
-	kref_put(&ctx->ref, __msm_file_private_destroy);
-}
+अटल अंतरभूत व्योम msm_file_निजी_put(काष्ठा msm_file_निजी *ctx)
+अणु
+	kref_put(&ctx->ref, __msm_file_निजी_destroy);
+पूर्ण
 
-static inline struct msm_file_private *msm_file_private_get(
-	struct msm_file_private *ctx)
-{
+अटल अंतरभूत काष्ठा msm_file_निजी *msm_file_निजी_get(
+	काष्ठा msm_file_निजी *ctx)
+अणु
 	kref_get(&ctx->ref);
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
-#define DBG(fmt, ...) DRM_DEBUG_DRIVER(fmt"\n", ##__VA_ARGS__)
-#define VERB(fmt, ...) if (0) DRM_DEBUG_DRIVER(fmt"\n", ##__VA_ARGS__)
+#घोषणा DBG(fmt, ...) DRM_DEBUG_DRIVER(fmt"\n", ##__VA_ARGS__)
+#घोषणा VERB(fmt, ...) अगर (0) DRM_DEBUG_DRIVER(fmt"\n", ##__VA_ARGS__)
 
-static inline int align_pitch(int width, int bpp)
-{
-	int bytespp = (bpp + 7) / 8;
+अटल अंतरभूत पूर्णांक align_pitch(पूर्णांक width, पूर्णांक bpp)
+अणु
+	पूर्णांक bytespp = (bpp + 7) / 8;
 	/* adreno needs pitch aligned to 32 pixels: */
-	return bytespp * ALIGN(width, 32);
-}
+	वापस bytespp * ALIGN(width, 32);
+पूर्ण
 
-/* for the generated headers: */
-#define INVALID_IDX(idx) ({BUG(); 0;})
-#define fui(x)                ({BUG(); 0;})
-#define util_float_to_half(x) ({BUG(); 0;})
+/* क्रम the generated headers: */
+#घोषणा INVALID_IDX(idx) (अणुBUG(); 0;पूर्ण)
+#घोषणा fui(x)                (अणुBUG(); 0;पूर्ण)
+#घोषणा util_भग्न_to_half(x) (अणुBUG(); 0;पूर्ण)
 
 
-#define FIELD(val, name) (((val) & name ## __MASK) >> name ## __SHIFT)
+#घोषणा FIELD(val, name) (((val) & name ## __MASK) >> name ## __SHIFT)
 
-/* for conditionally setting boolean flag(s): */
-#define COND(bool, val) ((bool) ? (val) : 0)
+/* क्रम conditionally setting boolean flag(s): */
+#घोषणा COND(bool, val) ((bool) ? (val) : 0)
 
-static inline unsigned long timeout_to_jiffies(const ktime_t *timeout)
-{
-	ktime_t now = ktime_get();
-	unsigned long remaining_jiffies;
+अटल अंतरभूत अचिन्हित दीर्घ समयout_to_jअगरfies(स्थिर kसमय_प्रकार *समयout)
+अणु
+	kसमय_प्रकार now = kसमय_get();
+	अचिन्हित दीर्घ reमुख्यing_jअगरfies;
 
-	if (ktime_compare(*timeout, now) < 0) {
-		remaining_jiffies = 0;
-	} else {
-		ktime_t rem = ktime_sub(*timeout, now);
-		remaining_jiffies = ktime_divns(rem, NSEC_PER_SEC / HZ);
-	}
+	अगर (kसमय_compare(*समयout, now) < 0) अणु
+		reमुख्यing_jअगरfies = 0;
+	पूर्ण अन्यथा अणु
+		kसमय_प्रकार rem = kसमय_sub(*समयout, now);
+		reमुख्यing_jअगरfies = kसमय_भागns(rem, NSEC_PER_SEC / HZ);
+	पूर्ण
 
-	return remaining_jiffies;
-}
+	वापस reमुख्यing_jअगरfies;
+पूर्ण
 
-#endif /* __MSM_DRV_H__ */
+#पूर्ण_अगर /* __MSM_DRV_H__ */

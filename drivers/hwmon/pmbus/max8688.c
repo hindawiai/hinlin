@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Hardware monitoring driver for Maxim MAX8688
+ * Hardware monitoring driver क्रम Maxim MAX8688
  *
  * Copyright (c) 2011 Ericsson AB.
  */
 
-#include <linux/bitops.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include "pmbus.h"
+#समावेश <linux/bitops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश "pmbus.h"
 
-#define MAX8688_MFR_VOUT_PEAK		0xd4
-#define MAX8688_MFR_IOUT_PEAK		0xd5
-#define MAX8688_MFR_TEMPERATURE_PEAK	0xd6
-#define MAX8688_MFG_STATUS		0xd8
+#घोषणा MAX8688_MFR_VOUT_PEAK		0xd4
+#घोषणा MAX8688_MFR_IOUT_PEAK		0xd5
+#घोषणा MAX8688_MFR_TEMPERATURE_PEAK	0xd6
+#घोषणा MAX8688_MFG_STATUS		0xd8
 
-#define MAX8688_STATUS_OC_FAULT		BIT(4)
-#define MAX8688_STATUS_OV_FAULT		BIT(5)
-#define MAX8688_STATUS_OV_WARNING	BIT(8)
-#define MAX8688_STATUS_UV_FAULT		BIT(9)
-#define MAX8688_STATUS_UV_WARNING	BIT(10)
-#define MAX8688_STATUS_UC_FAULT		BIT(11)
-#define MAX8688_STATUS_OC_WARNING	BIT(12)
-#define MAX8688_STATUS_OT_FAULT		BIT(13)
-#define MAX8688_STATUS_OT_WARNING	BIT(14)
+#घोषणा MAX8688_STATUS_OC_FAULT		BIT(4)
+#घोषणा MAX8688_STATUS_OV_FAULT		BIT(5)
+#घोषणा MAX8688_STATUS_OV_WARNING	BIT(8)
+#घोषणा MAX8688_STATUS_UV_FAULT		BIT(9)
+#घोषणा MAX8688_STATUS_UV_WARNING	BIT(10)
+#घोषणा MAX8688_STATUS_UC_FAULT		BIT(11)
+#घोषणा MAX8688_STATUS_OC_WARNING	BIT(12)
+#घोषणा MAX8688_STATUS_OT_FAULT		BIT(13)
+#घोषणा MAX8688_STATUS_OT_WARNING	BIT(14)
 
-static int max8688_read_word_data(struct i2c_client *client, int page,
-				  int phase, int reg)
-{
-	int ret;
+अटल पूर्णांक max8688_पढ़ो_word_data(काष्ठा i2c_client *client, पूर्णांक page,
+				  पूर्णांक phase, पूर्णांक reg)
+अणु
+	पूर्णांक ret;
 
-	if (page > 0)
-		return -ENXIO;
+	अगर (page > 0)
+		वापस -ENXIO;
 
-	switch (reg) {
-	case PMBUS_VIRT_READ_VOUT_MAX:
-		ret = pmbus_read_word_data(client, 0, 0xff,
+	चयन (reg) अणु
+	हाल PMBUS_VIRT_READ_VOUT_MAX:
+		ret = pmbus_पढ़ो_word_data(client, 0, 0xff,
 					   MAX8688_MFR_VOUT_PEAK);
-		break;
-	case PMBUS_VIRT_READ_IOUT_MAX:
-		ret = pmbus_read_word_data(client, 0, 0xff,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_IOUT_MAX:
+		ret = pmbus_पढ़ो_word_data(client, 0, 0xff,
 					   MAX8688_MFR_IOUT_PEAK);
-		break;
-	case PMBUS_VIRT_READ_TEMP_MAX:
-		ret = pmbus_read_word_data(client, 0, 0xff,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_TEMP_MAX:
+		ret = pmbus_पढ़ो_word_data(client, 0, 0xff,
 					   MAX8688_MFR_TEMPERATURE_PEAK);
-		break;
-	case PMBUS_VIRT_RESET_VOUT_HISTORY:
-	case PMBUS_VIRT_RESET_IOUT_HISTORY:
-	case PMBUS_VIRT_RESET_TEMP_HISTORY:
+		अवरोध;
+	हाल PMBUS_VIRT_RESET_VOUT_HISTORY:
+	हाल PMBUS_VIRT_RESET_IOUT_HISTORY:
+	हाल PMBUS_VIRT_RESET_TEMP_HISTORY:
 		ret = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENODATA;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int max8688_write_word_data(struct i2c_client *client, int page, int reg,
+अटल पूर्णांक max8688_ग_लिखो_word_data(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक reg,
 				   u16 word)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	switch (reg) {
-	case PMBUS_VIRT_RESET_VOUT_HISTORY:
-		ret = pmbus_write_word_data(client, 0, MAX8688_MFR_VOUT_PEAK,
+	चयन (reg) अणु
+	हाल PMBUS_VIRT_RESET_VOUT_HISTORY:
+		ret = pmbus_ग_लिखो_word_data(client, 0, MAX8688_MFR_VOUT_PEAK,
 					    0);
-		break;
-	case PMBUS_VIRT_RESET_IOUT_HISTORY:
-		ret = pmbus_write_word_data(client, 0, MAX8688_MFR_IOUT_PEAK,
+		अवरोध;
+	हाल PMBUS_VIRT_RESET_IOUT_HISTORY:
+		ret = pmbus_ग_लिखो_word_data(client, 0, MAX8688_MFR_IOUT_PEAK,
 					    0);
-		break;
-	case PMBUS_VIRT_RESET_TEMP_HISTORY:
-		ret = pmbus_write_word_data(client, 0,
+		अवरोध;
+	हाल PMBUS_VIRT_RESET_TEMP_HISTORY:
+		ret = pmbus_ग_लिखो_word_data(client, 0,
 					    MAX8688_MFR_TEMPERATURE_PEAK,
 					    0xffff);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENODATA;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int max8688_read_byte_data(struct i2c_client *client, int page, int reg)
-{
-	int ret = 0;
-	int mfg_status;
+अटल पूर्णांक max8688_पढ़ो_byte_data(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक reg)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक mfg_status;
 
-	if (page > 0)
-		return -ENXIO;
+	अगर (page > 0)
+		वापस -ENXIO;
 
-	switch (reg) {
-	case PMBUS_STATUS_VOUT:
-		mfg_status = pmbus_read_word_data(client, 0, 0xff,
+	चयन (reg) अणु
+	हाल PMBUS_STATUS_VOUT:
+		mfg_status = pmbus_पढ़ो_word_data(client, 0, 0xff,
 						  MAX8688_MFG_STATUS);
-		if (mfg_status < 0)
-			return mfg_status;
-		if (mfg_status & MAX8688_STATUS_UV_WARNING)
+		अगर (mfg_status < 0)
+			वापस mfg_status;
+		अगर (mfg_status & MAX8688_STATUS_UV_WARNING)
 			ret |= PB_VOLTAGE_UV_WARNING;
-		if (mfg_status & MAX8688_STATUS_UV_FAULT)
+		अगर (mfg_status & MAX8688_STATUS_UV_FAULT)
 			ret |= PB_VOLTAGE_UV_FAULT;
-		if (mfg_status & MAX8688_STATUS_OV_WARNING)
+		अगर (mfg_status & MAX8688_STATUS_OV_WARNING)
 			ret |= PB_VOLTAGE_OV_WARNING;
-		if (mfg_status & MAX8688_STATUS_OV_FAULT)
+		अगर (mfg_status & MAX8688_STATUS_OV_FAULT)
 			ret |= PB_VOLTAGE_OV_FAULT;
-		break;
-	case PMBUS_STATUS_IOUT:
-		mfg_status = pmbus_read_word_data(client, 0, 0xff,
+		अवरोध;
+	हाल PMBUS_STATUS_IOUT:
+		mfg_status = pmbus_पढ़ो_word_data(client, 0, 0xff,
 						  MAX8688_MFG_STATUS);
-		if (mfg_status < 0)
-			return mfg_status;
-		if (mfg_status & MAX8688_STATUS_UC_FAULT)
+		अगर (mfg_status < 0)
+			वापस mfg_status;
+		अगर (mfg_status & MAX8688_STATUS_UC_FAULT)
 			ret |= PB_IOUT_UC_FAULT;
-		if (mfg_status & MAX8688_STATUS_OC_WARNING)
+		अगर (mfg_status & MAX8688_STATUS_OC_WARNING)
 			ret |= PB_IOUT_OC_WARNING;
-		if (mfg_status & MAX8688_STATUS_OC_FAULT)
+		अगर (mfg_status & MAX8688_STATUS_OC_FAULT)
 			ret |= PB_IOUT_OC_FAULT;
-		break;
-	case PMBUS_STATUS_TEMPERATURE:
-		mfg_status = pmbus_read_word_data(client, 0, 0xff,
+		अवरोध;
+	हाल PMBUS_STATUS_TEMPERATURE:
+		mfg_status = pmbus_पढ़ो_word_data(client, 0, 0xff,
 						  MAX8688_MFG_STATUS);
-		if (mfg_status < 0)
-			return mfg_status;
-		if (mfg_status & MAX8688_STATUS_OT_WARNING)
+		अगर (mfg_status < 0)
+			वापस mfg_status;
+		अगर (mfg_status & MAX8688_STATUS_OT_WARNING)
 			ret |= PB_TEMP_OT_WARNING;
-		if (mfg_status & MAX8688_STATUS_OT_FAULT)
+		अगर (mfg_status & MAX8688_STATUS_OT_FAULT)
 			ret |= PB_TEMP_OT_FAULT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENODATA;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static struct pmbus_driver_info max8688_info = {
+अटल काष्ठा pmbus_driver_info max8688_info = अणु
 	.pages = 1,
-	.format[PSC_VOLTAGE_IN] = direct,
-	.format[PSC_VOLTAGE_OUT] = direct,
-	.format[PSC_TEMPERATURE] = direct,
-	.format[PSC_CURRENT_OUT] = direct,
+	.क्रमmat[PSC_VOLTAGE_IN] = direct,
+	.क्रमmat[PSC_VOLTAGE_OUT] = direct,
+	.क्रमmat[PSC_TEMPERATURE] = direct,
+	.क्रमmat[PSC_CURRENT_OUT] = direct,
 	.m[PSC_VOLTAGE_IN] = 19995,
 	.b[PSC_VOLTAGE_IN] = 0,
 	.R[PSC_VOLTAGE_IN] = -1,
@@ -160,31 +161,31 @@ static struct pmbus_driver_info max8688_info = {
 	.func[0] = PMBUS_HAVE_VOUT | PMBUS_HAVE_IOUT | PMBUS_HAVE_TEMP
 		| PMBUS_HAVE_STATUS_VOUT | PMBUS_HAVE_STATUS_IOUT
 		| PMBUS_HAVE_STATUS_TEMP,
-	.read_byte_data = max8688_read_byte_data,
-	.read_word_data = max8688_read_word_data,
-	.write_word_data = max8688_write_word_data,
-};
+	.पढ़ो_byte_data = max8688_पढ़ो_byte_data,
+	.पढ़ो_word_data = max8688_पढ़ो_word_data,
+	.ग_लिखो_word_data = max8688_ग_लिखो_word_data,
+पूर्ण;
 
-static int max8688_probe(struct i2c_client *client)
-{
-	return pmbus_do_probe(client, &max8688_info);
-}
+अटल पूर्णांक max8688_probe(काष्ठा i2c_client *client)
+अणु
+	वापस pmbus_करो_probe(client, &max8688_info);
+पूर्ण
 
-static const struct i2c_device_id max8688_id[] = {
-	{"max8688", 0},
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id max8688_id[] = अणु
+	अणु"max8688", 0पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, max8688_id);
 
 /* This is the driver that will be inserted */
-static struct i2c_driver max8688_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver max8688_driver = अणु
+	.driver = अणु
 		   .name = "max8688",
-		   },
+		   पूर्ण,
 	.probe_new = max8688_probe,
 	.id_table = max8688_id,
-};
+पूर्ण;
 
 module_i2c_driver(max8688_driver);
 

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2009 Nokia Corporation
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
@@ -7,91 +8,91 @@
  * by Imre Deak.
  */
 
-#ifndef __OMAP2_DSS_H
-#define __OMAP2_DSS_H
+#अगर_अघोषित __OMAP2_DSS_H
+#घोषणा __OMAP2_DSS_H
 
-#include <linux/interrupt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "omapdss.h"
+#समावेश "omapdss.h"
 
-struct dispc_device;
-struct dss_debugfs_entry;
-struct platform_device;
-struct seq_file;
+काष्ठा dispc_device;
+काष्ठा dss_debugfs_entry;
+काष्ठा platक्रमm_device;
+काष्ठा seq_file;
 
-#define MAX_DSS_LCD_MANAGERS	3
-#define MAX_NUM_DSI		2
+#घोषणा MAX_DSS_LCD_MANAGERS	3
+#घोषणा MAX_NUM_DSI		2
 
-#ifdef pr_fmt
-#undef pr_fmt
-#endif
+#अगर_घोषित pr_fmt
+#अघोषित pr_fmt
+#पूर्ण_अगर
 
-#ifdef DSS_SUBSYS_NAME
-#define pr_fmt(fmt) DSS_SUBSYS_NAME ": " fmt
-#else
-#define pr_fmt(fmt) fmt
-#endif
+#अगर_घोषित DSS_SUBSYS_NAME
+#घोषणा pr_fmt(fmt) DSS_SUBSYS_NAME ": " fmt
+#अन्यथा
+#घोषणा pr_fmt(fmt) fmt
+#पूर्ण_अगर
 
-#define DSSDBG(format, ...) \
-	pr_debug(format, ## __VA_ARGS__)
+#घोषणा DSSDBG(क्रमmat, ...) \
+	pr_debug(क्रमmat, ## __VA_ARGS__)
 
-#ifdef DSS_SUBSYS_NAME
-#define DSSERR(format, ...) \
-	pr_err("omapdss " DSS_SUBSYS_NAME " error: " format, ##__VA_ARGS__)
-#else
-#define DSSERR(format, ...) \
-	pr_err("omapdss error: " format, ##__VA_ARGS__)
-#endif
+#अगर_घोषित DSS_SUBSYS_NAME
+#घोषणा DSSERR(क्रमmat, ...) \
+	pr_err("omapdss " DSS_SUBSYS_NAME " error: " क्रमmat, ##__VA_ARGS__)
+#अन्यथा
+#घोषणा DSSERR(क्रमmat, ...) \
+	pr_err("omapdss error: " क्रमmat, ##__VA_ARGS__)
+#पूर्ण_अगर
 
-#ifdef DSS_SUBSYS_NAME
-#define DSSINFO(format, ...) \
-	pr_info("omapdss " DSS_SUBSYS_NAME ": " format, ##__VA_ARGS__)
-#else
-#define DSSINFO(format, ...) \
-	pr_info("omapdss: " format, ## __VA_ARGS__)
-#endif
+#अगर_घोषित DSS_SUBSYS_NAME
+#घोषणा DSSINFO(क्रमmat, ...) \
+	pr_info("omapdss " DSS_SUBSYS_NAME ": " क्रमmat, ##__VA_ARGS__)
+#अन्यथा
+#घोषणा DSSINFO(क्रमmat, ...) \
+	pr_info("omapdss: " क्रमmat, ## __VA_ARGS__)
+#पूर्ण_अगर
 
-#ifdef DSS_SUBSYS_NAME
-#define DSSWARN(format, ...) \
-	pr_warn("omapdss " DSS_SUBSYS_NAME ": " format, ##__VA_ARGS__)
-#else
-#define DSSWARN(format, ...) \
-	pr_warn("omapdss: " format, ##__VA_ARGS__)
-#endif
+#अगर_घोषित DSS_SUBSYS_NAME
+#घोषणा DSSWARN(क्रमmat, ...) \
+	pr_warn("omapdss " DSS_SUBSYS_NAME ": " क्रमmat, ##__VA_ARGS__)
+#अन्यथा
+#घोषणा DSSWARN(क्रमmat, ...) \
+	pr_warn("omapdss: " क्रमmat, ##__VA_ARGS__)
+#पूर्ण_अगर
 
 /* OMAP TRM gives bitfields as start:end, where start is the higher bit
    number. For example 7:0 */
-#define FLD_MASK(start, end)	(((1 << ((start) - (end) + 1)) - 1) << (end))
-#define FLD_VAL(val, start, end) (((val) << (end)) & FLD_MASK(start, end))
-#define FLD_GET(val, start, end) (((val) & FLD_MASK(start, end)) >> (end))
-#define FLD_MOD(orig, val, start, end) \
+#घोषणा FLD_MASK(start, end)	(((1 << ((start) - (end) + 1)) - 1) << (end))
+#घोषणा FLD_VAL(val, start, end) (((val) << (end)) & FLD_MASK(start, end))
+#घोषणा FLD_GET(val, start, end) (((val) & FLD_MASK(start, end)) >> (end))
+#घोषणा FLD_MOD(orig, val, start, end) \
 	(((orig) & ~FLD_MASK(start, end)) | FLD_VAL(val, start, end))
 
-enum dss_model {
+क्रमागत dss_model अणु
 	DSS_MODEL_OMAP2,
 	DSS_MODEL_OMAP3,
 	DSS_MODEL_OMAP4,
 	DSS_MODEL_OMAP5,
 	DSS_MODEL_DRA7,
-};
+पूर्ण;
 
-enum dss_io_pad_mode {
+क्रमागत dss_io_pad_mode अणु
 	DSS_IO_PAD_MODE_RESET,
 	DSS_IO_PAD_MODE_RFBI,
 	DSS_IO_PAD_MODE_BYPASS,
-};
+पूर्ण;
 
-enum dss_hdmi_venc_clk_source_select {
+क्रमागत dss_hdmi_venc_clk_source_select अणु
 	DSS_VENC_TV_CLK = 0,
 	DSS_HDMI_M_PCLK = 1,
-};
+पूर्ण;
 
-enum dss_dsi_content_type {
+क्रमागत dss_dsi_content_type अणु
 	DSS_DSI_CONTENT_DCS,
 	DSS_DSI_CONTENT_GENERIC,
-};
+पूर्ण;
 
-enum dss_clk_source {
+क्रमागत dss_clk_source अणु
 	DSS_CLK_SRC_FCK = 0,
 
 	DSS_CLK_SRC_PLL1_1,
@@ -103,60 +104,60 @@ enum dss_clk_source {
 	DSS_CLK_SRC_PLL2_3,
 
 	DSS_CLK_SRC_HDMI_PLL,
-};
+पूर्ण;
 
-enum dss_pll_id {
+क्रमागत dss_pll_id अणु
 	DSS_PLL_DSI1,
 	DSS_PLL_DSI2,
 	DSS_PLL_HDMI,
 	DSS_PLL_VIDEO1,
 	DSS_PLL_VIDEO2,
-};
+पूर्ण;
 
-struct dss_pll;
+काष्ठा dss_pll;
 
-#define DSS_PLL_MAX_HSDIVS 4
+#घोषणा DSS_PLL_MAX_HSDIVS 4
 
-enum dss_pll_type {
+क्रमागत dss_pll_type अणु
 	DSS_PLL_TYPE_A,
 	DSS_PLL_TYPE_B,
-};
+पूर्ण;
 
 /*
- * Type-A PLLs: clkout[]/mX[] refer to hsdiv outputs m4, m5, m6, m7.
+ * Type-A PLLs: clkout[]/mX[] refer to hsभाग outमाला_दो m4, m5, m6, m7.
  * Type-B PLLs: clkout[0] refers to m2.
  */
-struct dss_pll_clock_info {
-	/* rates that we get with dividers below */
-	unsigned long fint;
-	unsigned long clkdco;
-	unsigned long clkout[DSS_PLL_MAX_HSDIVS];
+काष्ठा dss_pll_घड़ी_info अणु
+	/* rates that we get with भागiders below */
+	अचिन्हित दीर्घ fपूर्णांक;
+	अचिन्हित दीर्घ clkdco;
+	अचिन्हित दीर्घ clkout[DSS_PLL_MAX_HSDIVS];
 
-	/* dividers */
+	/* भागiders */
 	u16 n;
 	u16 m;
 	u32 mf;
 	u16 mX[DSS_PLL_MAX_HSDIVS];
 	u16 sd;
-};
+पूर्ण;
 
-struct dss_pll_ops {
-	int (*enable)(struct dss_pll *pll);
-	void (*disable)(struct dss_pll *pll);
-	int (*set_config)(struct dss_pll *pll,
-		const struct dss_pll_clock_info *cinfo);
-};
+काष्ठा dss_pll_ops अणु
+	पूर्णांक (*enable)(काष्ठा dss_pll *pll);
+	व्योम (*disable)(काष्ठा dss_pll *pll);
+	पूर्णांक (*set_config)(काष्ठा dss_pll *pll,
+		स्थिर काष्ठा dss_pll_घड़ी_info *cinfo);
+पूर्ण;
 
-struct dss_pll_hw {
-	enum dss_pll_type type;
+काष्ठा dss_pll_hw अणु
+	क्रमागत dss_pll_type type;
 
-	unsigned int n_max;
-	unsigned int m_min;
-	unsigned int m_max;
-	unsigned int mX_max;
+	अचिन्हित पूर्णांक n_max;
+	अचिन्हित पूर्णांक m_min;
+	अचिन्हित पूर्णांक m_max;
+	अचिन्हित पूर्णांक mX_max;
 
-	unsigned long fint_min, fint_max;
-	unsigned long clkdco_min, clkdco_low, clkdco_max;
+	अचिन्हित दीर्घ fपूर्णांक_min, fपूर्णांक_max;
+	अचिन्हित दीर्घ clkdco_min, clkdco_low, clkdco_max;
 
 	u8 n_msb, n_lsb;
 	u8 m_msb, m_lsb;
@@ -167,390 +168,390 @@ struct dss_pll_hw {
 	bool has_selfreqdco;
 	bool has_refsel;
 
-	/* DRA7 errata i886: use high N & M to avoid jitter */
+	/* DRA7 errata i886: use high N & M to aव्योम jitter */
 	bool errata_i886;
 
 	/* DRA7 errata i932: retry pll lock on failure */
 	bool errata_i932;
-};
+पूर्ण;
 
-struct dss_pll {
-	const char *name;
-	enum dss_pll_id id;
-	struct dss_device *dss;
+काष्ठा dss_pll अणु
+	स्थिर अक्षर *name;
+	क्रमागत dss_pll_id id;
+	काष्ठा dss_device *dss;
 
-	struct clk *clkin;
-	struct regulator *regulator;
+	काष्ठा clk *clkin;
+	काष्ठा regulator *regulator;
 
-	void __iomem *base;
+	व्योम __iomem *base;
 
-	const struct dss_pll_hw *hw;
+	स्थिर काष्ठा dss_pll_hw *hw;
 
-	const struct dss_pll_ops *ops;
+	स्थिर काष्ठा dss_pll_ops *ops;
 
-	struct dss_pll_clock_info cinfo;
-};
+	काष्ठा dss_pll_घड़ी_info cinfo;
+पूर्ण;
 
-/* Defines a generic omap register field */
-struct dss_reg_field {
+/* Defines a generic omap रेजिस्टर field */
+काष्ठा dss_reg_field अणु
 	u8 start, end;
-};
+पूर्ण;
 
-struct dispc_clock_info {
-	/* rates that we get with dividers below */
-	unsigned long lck;
-	unsigned long pck;
+काष्ठा dispc_घड़ी_info अणु
+	/* rates that we get with भागiders below */
+	अचिन्हित दीर्घ lck;
+	अचिन्हित दीर्घ pck;
 
-	/* dividers */
-	u16 lck_div;
-	u16 pck_div;
-};
+	/* भागiders */
+	u16 lck_भाग;
+	u16 pck_भाग;
+पूर्ण;
 
-struct dss_lcd_mgr_config {
-	enum dss_io_pad_mode io_pad_mode;
+काष्ठा dss_lcd_mgr_config अणु
+	क्रमागत dss_io_pad_mode io_pad_mode;
 
 	bool stallmode;
-	bool fifohandcheck;
+	bool fअगरohandcheck;
 
-	struct dispc_clock_info clock_info;
+	काष्ठा dispc_घड़ी_info घड़ी_info;
 
-	int video_port_width;
+	पूर्णांक video_port_width;
 
-	int lcden_sig_polarity;
-};
+	पूर्णांक lcden_sig_polarity;
+पूर्ण;
 
-#define DSS_SZ_REGS			SZ_512
+#घोषणा DSS_SZ_REGS			SZ_512
 
-struct dss_device {
-	struct platform_device *pdev;
-	void __iomem    *base;
-	struct regmap	*syscon_pll_ctrl;
+काष्ठा dss_device अणु
+	काष्ठा platक्रमm_device *pdev;
+	व्योम __iomem    *base;
+	काष्ठा regmap	*syscon_pll_ctrl;
 	u32		syscon_pll_ctrl_offset;
 
-	struct platform_device *drm_pdev;
+	काष्ठा platक्रमm_device *drm_pdev;
 
-	struct clk	*parent_clk;
-	struct clk	*dss_clk;
-	unsigned long	dss_clk_rate;
+	काष्ठा clk	*parent_clk;
+	काष्ठा clk	*dss_clk;
+	अचिन्हित दीर्घ	dss_clk_rate;
 
-	unsigned long	cache_req_pck;
-	unsigned long	cache_prate;
-	struct dispc_clock_info cache_dispc_cinfo;
+	अचिन्हित दीर्घ	cache_req_pck;
+	अचिन्हित दीर्घ	cache_prate;
+	काष्ठा dispc_घड़ी_info cache_dispc_cinfo;
 
-	enum dss_clk_source dsi_clk_source[MAX_NUM_DSI];
-	enum dss_clk_source dispc_clk_source;
-	enum dss_clk_source lcd_clk_source[MAX_DSS_LCD_MANAGERS];
+	क्रमागत dss_clk_source dsi_clk_source[MAX_NUM_DSI];
+	क्रमागत dss_clk_source dispc_clk_source;
+	क्रमागत dss_clk_source lcd_clk_source[MAX_DSS_LCD_MANAGERS];
 
 	bool		ctx_valid;
-	u32		ctx[DSS_SZ_REGS / sizeof(u32)];
+	u32		ctx[DSS_SZ_REGS / माप(u32)];
 
-	const struct dss_features *feat;
+	स्थिर काष्ठा dss_features *feat;
 
-	struct {
-		struct dentry *root;
-		struct dss_debugfs_entry *clk;
-		struct dss_debugfs_entry *dss;
-	} debugfs;
+	काष्ठा अणु
+		काष्ठा dentry *root;
+		काष्ठा dss_debugfs_entry *clk;
+		काष्ठा dss_debugfs_entry *dss;
+	पूर्ण debugfs;
 
-	struct dss_pll *plls[4];
-	struct dss_pll	*video1_pll;
-	struct dss_pll	*video2_pll;
+	काष्ठा dss_pll *plls[4];
+	काष्ठा dss_pll	*video1_pll;
+	काष्ठा dss_pll	*video2_pll;
 
-	struct dispc_device *dispc;
-	struct omap_drm_private *mgr_ops_priv;
-};
+	काष्ठा dispc_device *dispc;
+	काष्ठा omap_drm_निजी *mgr_ops_priv;
+पूर्ण;
 
 /* core */
-static inline int dss_set_min_bus_tput(struct device *dev, unsigned long tput)
-{
-	/* To be implemented when the OMAP platform will provide this feature */
-	return 0;
-}
+अटल अंतरभूत पूर्णांक dss_set_min_bus_tput(काष्ठा device *dev, अचिन्हित दीर्घ tput)
+अणु
+	/* To be implemented when the OMAP platक्रमm will provide this feature */
+	वापस 0;
+पूर्ण
 
-static inline bool dss_mgr_is_lcd(enum omap_channel id)
-{
-	if (id == OMAP_DSS_CHANNEL_LCD || id == OMAP_DSS_CHANNEL_LCD2 ||
+अटल अंतरभूत bool dss_mgr_is_lcd(क्रमागत omap_channel id)
+अणु
+	अगर (id == OMAP_DSS_CHANNEL_LCD || id == OMAP_DSS_CHANNEL_LCD2 ||
 			id == OMAP_DSS_CHANNEL_LCD3)
-		return true;
-	else
-		return false;
-}
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
 /* DSS */
-#if defined(CONFIG_OMAP2_DSS_DEBUGFS)
-struct dss_debugfs_entry *
-dss_debugfs_create_file(struct dss_device *dss, const char *name,
-			int (*show_fn)(struct seq_file *s, void *data),
-			void *data);
-void dss_debugfs_remove_file(struct dss_debugfs_entry *entry);
-#else
-static inline struct dss_debugfs_entry *
-dss_debugfs_create_file(struct dss_device *dss, const char *name,
-			int (*show_fn)(struct seq_file *s, void *data),
-			void *data)
-{
-	return NULL;
-}
+#अगर defined(CONFIG_OMAP2_DSS_DEBUGFS)
+काष्ठा dss_debugfs_entry *
+dss_debugfs_create_file(काष्ठा dss_device *dss, स्थिर अक्षर *name,
+			पूर्णांक (*show_fn)(काष्ठा seq_file *s, व्योम *data),
+			व्योम *data);
+व्योम dss_debugfs_हटाओ_file(काष्ठा dss_debugfs_entry *entry);
+#अन्यथा
+अटल अंतरभूत काष्ठा dss_debugfs_entry *
+dss_debugfs_create_file(काष्ठा dss_device *dss, स्थिर अक्षर *name,
+			पूर्णांक (*show_fn)(काष्ठा seq_file *s, व्योम *data),
+			व्योम *data)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void dss_debugfs_remove_file(struct dss_debugfs_entry *entry)
-{
-}
-#endif /* CONFIG_OMAP2_DSS_DEBUGFS */
+अटल अंतरभूत व्योम dss_debugfs_हटाओ_file(काष्ठा dss_debugfs_entry *entry)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OMAP2_DSS_DEBUGFS */
 
-struct dss_device *dss_get_device(struct device *dev);
+काष्ठा dss_device *dss_get_device(काष्ठा device *dev);
 
-int dss_runtime_get(struct dss_device *dss);
-void dss_runtime_put(struct dss_device *dss);
+पूर्णांक dss_runसमय_get(काष्ठा dss_device *dss);
+व्योम dss_runसमय_put(काष्ठा dss_device *dss);
 
-unsigned long dss_get_dispc_clk_rate(struct dss_device *dss);
-unsigned long dss_get_max_fck_rate(struct dss_device *dss);
-int dss_dpi_select_source(struct dss_device *dss, int port,
-			  enum omap_channel channel);
-void dss_select_hdmi_venc_clk_source(struct dss_device *dss,
-				     enum dss_hdmi_venc_clk_source_select src);
-const char *dss_get_clk_source_name(enum dss_clk_source clk_src);
+अचिन्हित दीर्घ dss_get_dispc_clk_rate(काष्ठा dss_device *dss);
+अचिन्हित दीर्घ dss_get_max_fck_rate(काष्ठा dss_device *dss);
+पूर्णांक dss_dpi_select_source(काष्ठा dss_device *dss, पूर्णांक port,
+			  क्रमागत omap_channel channel);
+व्योम dss_select_hdmi_venc_clk_source(काष्ठा dss_device *dss,
+				     क्रमागत dss_hdmi_venc_clk_source_select src);
+स्थिर अक्षर *dss_get_clk_source_name(क्रमागत dss_clk_source clk_src);
 
 /* DSS VIDEO PLL */
-struct dss_pll *dss_video_pll_init(struct dss_device *dss,
-				   struct platform_device *pdev, int id,
-				   struct regulator *regulator);
-void dss_video_pll_uninit(struct dss_pll *pll);
+काष्ठा dss_pll *dss_video_pll_init(काष्ठा dss_device *dss,
+				   काष्ठा platक्रमm_device *pdev, पूर्णांक id,
+				   काष्ठा regulator *regulator);
+व्योम dss_video_pll_uninit(काष्ठा dss_pll *pll);
 
-void dss_ctrl_pll_enable(struct dss_pll *pll, bool enable);
+व्योम dss_ctrl_pll_enable(काष्ठा dss_pll *pll, bool enable);
 
-void dss_sdi_init(struct dss_device *dss, int datapairs);
-int dss_sdi_enable(struct dss_device *dss);
-void dss_sdi_disable(struct dss_device *dss);
+व्योम dss_sdi_init(काष्ठा dss_device *dss, पूर्णांक datapairs);
+पूर्णांक dss_sdi_enable(काष्ठा dss_device *dss);
+व्योम dss_sdi_disable(काष्ठा dss_device *dss);
 
-void dss_select_dsi_clk_source(struct dss_device *dss, int dsi_module,
-			       enum dss_clk_source clk_src);
-void dss_select_lcd_clk_source(struct dss_device *dss,
-			       enum omap_channel channel,
-			       enum dss_clk_source clk_src);
-enum dss_clk_source dss_get_dispc_clk_source(struct dss_device *dss);
-enum dss_clk_source dss_get_dsi_clk_source(struct dss_device *dss,
-					   int dsi_module);
-enum dss_clk_source dss_get_lcd_clk_source(struct dss_device *dss,
-					   enum omap_channel channel);
+व्योम dss_select_dsi_clk_source(काष्ठा dss_device *dss, पूर्णांक dsi_module,
+			       क्रमागत dss_clk_source clk_src);
+व्योम dss_select_lcd_clk_source(काष्ठा dss_device *dss,
+			       क्रमागत omap_channel channel,
+			       क्रमागत dss_clk_source clk_src);
+क्रमागत dss_clk_source dss_get_dispc_clk_source(काष्ठा dss_device *dss);
+क्रमागत dss_clk_source dss_get_dsi_clk_source(काष्ठा dss_device *dss,
+					   पूर्णांक dsi_module);
+क्रमागत dss_clk_source dss_get_lcd_clk_source(काष्ठा dss_device *dss,
+					   क्रमागत omap_channel channel);
 
-void dss_set_venc_output(struct dss_device *dss, enum omap_dss_venc_type type);
-void dss_set_dac_pwrdn_bgz(struct dss_device *dss, bool enable);
+व्योम dss_set_venc_output(काष्ठा dss_device *dss, क्रमागत omap_dss_venc_type type);
+व्योम dss_set_dac_pwrdn_bgz(काष्ठा dss_device *dss, bool enable);
 
-int dss_set_fck_rate(struct dss_device *dss, unsigned long rate);
+पूर्णांक dss_set_fck_rate(काष्ठा dss_device *dss, अचिन्हित दीर्घ rate);
 
-typedef bool (*dss_div_calc_func)(unsigned long fck, void *data);
-bool dss_div_calc(struct dss_device *dss, unsigned long pck,
-		  unsigned long fck_min, dss_div_calc_func func, void *data);
+प्रकार bool (*dss_भाग_calc_func)(अचिन्हित दीर्घ fck, व्योम *data);
+bool dss_भाग_calc(काष्ठा dss_device *dss, अचिन्हित दीर्घ pck,
+		  अचिन्हित दीर्घ fck_min, dss_भाग_calc_func func, व्योम *data);
 
 /* SDI */
-#ifdef CONFIG_OMAP2_DSS_SDI
-int sdi_init_port(struct dss_device *dss, struct platform_device *pdev,
-		  struct device_node *port);
-void sdi_uninit_port(struct device_node *port);
-#else
-static inline int sdi_init_port(struct dss_device *dss,
-				struct platform_device *pdev,
-				struct device_node *port)
-{
-	return 0;
-}
-static inline void sdi_uninit_port(struct device_node *port)
-{
-}
-#endif
+#अगर_घोषित CONFIG_OMAP2_DSS_SDI
+पूर्णांक sdi_init_port(काष्ठा dss_device *dss, काष्ठा platक्रमm_device *pdev,
+		  काष्ठा device_node *port);
+व्योम sdi_uninit_port(काष्ठा device_node *port);
+#अन्यथा
+अटल अंतरभूत पूर्णांक sdi_init_port(काष्ठा dss_device *dss,
+				काष्ठा platक्रमm_device *pdev,
+				काष्ठा device_node *port)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम sdi_uninit_port(काष्ठा device_node *port)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
 /* DSI */
 
-#ifdef CONFIG_OMAP2_DSS_DSI
+#अगर_घोषित CONFIG_OMAP2_DSS_DSI
 
-void dsi_irq_handler(void);
+व्योम dsi_irq_handler(व्योम);
 
-#endif
+#पूर्ण_अगर
 
 /* DPI */
-#ifdef CONFIG_OMAP2_DSS_DPI
-int dpi_init_port(struct dss_device *dss, struct platform_device *pdev,
-		  struct device_node *port, enum dss_model dss_model);
-void dpi_uninit_port(struct device_node *port);
-#else
-static inline int dpi_init_port(struct dss_device *dss,
-				struct platform_device *pdev,
-				struct device_node *port,
-				enum dss_model dss_model)
-{
-	return 0;
-}
-static inline void dpi_uninit_port(struct device_node *port)
-{
-}
-#endif
+#अगर_घोषित CONFIG_OMAP2_DSS_DPI
+पूर्णांक dpi_init_port(काष्ठा dss_device *dss, काष्ठा platक्रमm_device *pdev,
+		  काष्ठा device_node *port, क्रमागत dss_model dss_model);
+व्योम dpi_uninit_port(काष्ठा device_node *port);
+#अन्यथा
+अटल अंतरभूत पूर्णांक dpi_init_port(काष्ठा dss_device *dss,
+				काष्ठा platक्रमm_device *pdev,
+				काष्ठा device_node *port,
+				क्रमागत dss_model dss_model)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम dpi_uninit_port(काष्ठा device_node *port)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
 /* DISPC */
-void dispc_dump_clocks(struct dispc_device *dispc, struct seq_file *s);
+व्योम dispc_dump_घड़ीs(काष्ठा dispc_device *dispc, काष्ठा seq_file *s);
 
-int dispc_runtime_get(struct dispc_device *dispc);
-void dispc_runtime_put(struct dispc_device *dispc);
+पूर्णांक dispc_runसमय_get(काष्ठा dispc_device *dispc);
+व्योम dispc_runसमय_put(काष्ठा dispc_device *dispc);
 
-int dispc_get_num_ovls(struct dispc_device *dispc);
-int dispc_get_num_mgrs(struct dispc_device *dispc);
+पूर्णांक dispc_get_num_ovls(काष्ठा dispc_device *dispc);
+पूर्णांक dispc_get_num_mgrs(काष्ठा dispc_device *dispc);
 
-const u32 *dispc_ovl_get_color_modes(struct dispc_device *dispc,
-					    enum omap_plane_id plane);
+स्थिर u32 *dispc_ovl_get_color_modes(काष्ठा dispc_device *dispc,
+					    क्रमागत omap_plane_id plane);
 
-u32 dispc_read_irqstatus(struct dispc_device *dispc);
-void dispc_clear_irqstatus(struct dispc_device *dispc, u32 mask);
-void dispc_write_irqenable(struct dispc_device *dispc, u32 mask);
+u32 dispc_पढ़ो_irqstatus(काष्ठा dispc_device *dispc);
+व्योम dispc_clear_irqstatus(काष्ठा dispc_device *dispc, u32 mask);
+व्योम dispc_ग_लिखो_irqenable(काष्ठा dispc_device *dispc, u32 mask);
 
-int dispc_request_irq(struct dispc_device *dispc, irq_handler_t handler,
-			     void *dev_id);
-void dispc_free_irq(struct dispc_device *dispc, void *dev_id);
+पूर्णांक dispc_request_irq(काष्ठा dispc_device *dispc, irq_handler_t handler,
+			     व्योम *dev_id);
+व्योम dispc_मुक्त_irq(काष्ठा dispc_device *dispc, व्योम *dev_id);
 
-u32 dispc_mgr_get_vsync_irq(struct dispc_device *dispc,
-				   enum omap_channel channel);
-u32 dispc_mgr_get_framedone_irq(struct dispc_device *dispc,
-				       enum omap_channel channel);
-u32 dispc_mgr_get_sync_lost_irq(struct dispc_device *dispc,
-				       enum omap_channel channel);
-u32 dispc_wb_get_framedone_irq(struct dispc_device *dispc);
+u32 dispc_mgr_get_vsync_irq(काष्ठा dispc_device *dispc,
+				   क्रमागत omap_channel channel);
+u32 dispc_mgr_get_frameकरोne_irq(काष्ठा dispc_device *dispc,
+				       क्रमागत omap_channel channel);
+u32 dispc_mgr_get_sync_lost_irq(काष्ठा dispc_device *dispc,
+				       क्रमागत omap_channel channel);
+u32 dispc_wb_get_frameकरोne_irq(काष्ठा dispc_device *dispc);
 
-u32 dispc_get_memory_bandwidth_limit(struct dispc_device *dispc);
+u32 dispc_get_memory_bandwidth_limit(काष्ठा dispc_device *dispc);
 
-void dispc_mgr_enable(struct dispc_device *dispc,
-			     enum omap_channel channel, bool enable);
+व्योम dispc_mgr_enable(काष्ठा dispc_device *dispc,
+			     क्रमागत omap_channel channel, bool enable);
 
-bool dispc_mgr_go_busy(struct dispc_device *dispc,
-			      enum omap_channel channel);
+bool dispc_mgr_go_busy(काष्ठा dispc_device *dispc,
+			      क्रमागत omap_channel channel);
 
-void dispc_mgr_go(struct dispc_device *dispc, enum omap_channel channel);
+व्योम dispc_mgr_go(काष्ठा dispc_device *dispc, क्रमागत omap_channel channel);
 
-void dispc_mgr_set_lcd_config(struct dispc_device *dispc,
-				     enum omap_channel channel,
-				     const struct dss_lcd_mgr_config *config);
-void dispc_mgr_set_timings(struct dispc_device *dispc,
-				  enum omap_channel channel,
-				  const struct videomode *vm);
-void dispc_mgr_setup(struct dispc_device *dispc,
-			    enum omap_channel channel,
-			    const struct omap_overlay_manager_info *info);
+व्योम dispc_mgr_set_lcd_config(काष्ठा dispc_device *dispc,
+				     क्रमागत omap_channel channel,
+				     स्थिर काष्ठा dss_lcd_mgr_config *config);
+व्योम dispc_mgr_set_timings(काष्ठा dispc_device *dispc,
+				  क्रमागत omap_channel channel,
+				  स्थिर काष्ठा videomode *vm);
+व्योम dispc_mgr_setup(काष्ठा dispc_device *dispc,
+			    क्रमागत omap_channel channel,
+			    स्थिर काष्ठा omap_overlay_manager_info *info);
 
-int dispc_mgr_check_timings(struct dispc_device *dispc,
-				   enum omap_channel channel,
-				   const struct videomode *vm);
+पूर्णांक dispc_mgr_check_timings(काष्ठा dispc_device *dispc,
+				   क्रमागत omap_channel channel,
+				   स्थिर काष्ठा videomode *vm);
 
-u32 dispc_mgr_gamma_size(struct dispc_device *dispc,
-				enum omap_channel channel);
-void dispc_mgr_set_gamma(struct dispc_device *dispc,
-				enum omap_channel channel,
-				const struct drm_color_lut *lut,
-				unsigned int length);
+u32 dispc_mgr_gamma_size(काष्ठा dispc_device *dispc,
+				क्रमागत omap_channel channel);
+व्योम dispc_mgr_set_gamma(काष्ठा dispc_device *dispc,
+				क्रमागत omap_channel channel,
+				स्थिर काष्ठा drm_color_lut *lut,
+				अचिन्हित पूर्णांक length);
 
-int dispc_ovl_setup(struct dispc_device *dispc,
-			   enum omap_plane_id plane,
-			   const struct omap_overlay_info *oi,
-			   const struct videomode *vm, bool mem_to_mem,
-			   enum omap_channel channel);
+पूर्णांक dispc_ovl_setup(काष्ठा dispc_device *dispc,
+			   क्रमागत omap_plane_id plane,
+			   स्थिर काष्ठा omap_overlay_info *oi,
+			   स्थिर काष्ठा videomode *vm, bool mem_to_mem,
+			   क्रमागत omap_channel channel);
 
-int dispc_ovl_enable(struct dispc_device *dispc,
-			    enum omap_plane_id plane, bool enable);
+पूर्णांक dispc_ovl_enable(काष्ठा dispc_device *dispc,
+			    क्रमागत omap_plane_id plane, bool enable);
 
-bool dispc_has_writeback(struct dispc_device *dispc);
-int dispc_wb_setup(struct dispc_device *dispc,
-		   const struct omap_dss_writeback_info *wi,
-		   bool mem_to_mem, const struct videomode *vm,
-		   enum dss_writeback_channel channel_in);
-bool dispc_wb_go_busy(struct dispc_device *dispc);
-void dispc_wb_go(struct dispc_device *dispc);
+bool dispc_has_ग_लिखोback(काष्ठा dispc_device *dispc);
+पूर्णांक dispc_wb_setup(काष्ठा dispc_device *dispc,
+		   स्थिर काष्ठा omap_dss_ग_लिखोback_info *wi,
+		   bool mem_to_mem, स्थिर काष्ठा videomode *vm,
+		   क्रमागत dss_ग_लिखोback_channel channel_in);
+bool dispc_wb_go_busy(काष्ठा dispc_device *dispc);
+व्योम dispc_wb_go(काष्ठा dispc_device *dispc);
 
-void dispc_enable_sidle(struct dispc_device *dispc);
-void dispc_disable_sidle(struct dispc_device *dispc);
+व्योम dispc_enable_sidle(काष्ठा dispc_device *dispc);
+व्योम dispc_disable_sidle(काष्ठा dispc_device *dispc);
 
-void dispc_lcd_enable_signal(struct dispc_device *dispc, bool enable);
-void dispc_pck_free_enable(struct dispc_device *dispc, bool enable);
-void dispc_enable_fifomerge(struct dispc_device *dispc, bool enable);
+व्योम dispc_lcd_enable_संकेत(काष्ठा dispc_device *dispc, bool enable);
+व्योम dispc_pck_मुक्त_enable(काष्ठा dispc_device *dispc, bool enable);
+व्योम dispc_enable_fअगरomerge(काष्ठा dispc_device *dispc, bool enable);
 
-typedef bool (*dispc_div_calc_func)(int lckd, int pckd, unsigned long lck,
-		unsigned long pck, void *data);
-bool dispc_div_calc(struct dispc_device *dispc, unsigned long dispc_freq,
-		    unsigned long pck_min, unsigned long pck_max,
-		    dispc_div_calc_func func, void *data);
+प्रकार bool (*dispc_भाग_calc_func)(पूर्णांक lckd, पूर्णांक pckd, अचिन्हित दीर्घ lck,
+		अचिन्हित दीर्घ pck, व्योम *data);
+bool dispc_भाग_calc(काष्ठा dispc_device *dispc, अचिन्हित दीर्घ dispc_freq,
+		    अचिन्हित दीर्घ pck_min, अचिन्हित दीर्घ pck_max,
+		    dispc_भाग_calc_func func, व्योम *data);
 
-int dispc_calc_clock_rates(struct dispc_device *dispc,
-			   unsigned long dispc_fclk_rate,
-			   struct dispc_clock_info *cinfo);
+पूर्णांक dispc_calc_घड़ी_rates(काष्ठा dispc_device *dispc,
+			   अचिन्हित दीर्घ dispc_fclk_rate,
+			   काष्ठा dispc_घड़ी_info *cinfo);
 
 
-void dispc_ovl_set_fifo_threshold(struct dispc_device *dispc,
-				  enum omap_plane_id plane, u32 low, u32 high);
-void dispc_ovl_compute_fifo_thresholds(struct dispc_device *dispc,
-				       enum omap_plane_id plane,
-				       u32 *fifo_low, u32 *fifo_high,
-				       bool use_fifomerge, bool manual_update);
+व्योम dispc_ovl_set_fअगरo_threshold(काष्ठा dispc_device *dispc,
+				  क्रमागत omap_plane_id plane, u32 low, u32 high);
+व्योम dispc_ovl_compute_fअगरo_thresholds(काष्ठा dispc_device *dispc,
+				       क्रमागत omap_plane_id plane,
+				       u32 *fअगरo_low, u32 *fअगरo_high,
+				       bool use_fअगरomerge, bool manual_update);
 
-void dispc_mgr_set_clock_div(struct dispc_device *dispc,
-			     enum omap_channel channel,
-			     const struct dispc_clock_info *cinfo);
-int dispc_mgr_get_clock_div(struct dispc_device *dispc,
-			    enum omap_channel channel,
-			    struct dispc_clock_info *cinfo);
-void dispc_set_tv_pclk(struct dispc_device *dispc, unsigned long pclk);
+व्योम dispc_mgr_set_घड़ी_भाग(काष्ठा dispc_device *dispc,
+			     क्रमागत omap_channel channel,
+			     स्थिर काष्ठा dispc_घड़ी_info *cinfo);
+पूर्णांक dispc_mgr_get_घड़ी_भाग(काष्ठा dispc_device *dispc,
+			    क्रमागत omap_channel channel,
+			    काष्ठा dispc_घड़ी_info *cinfo);
+व्योम dispc_set_tv_pclk(काष्ठा dispc_device *dispc, अचिन्हित दीर्घ pclk);
 
-#ifdef CONFIG_OMAP2_DSS_COLLECT_IRQ_STATS
-static inline void dss_collect_irq_stats(u32 irqstatus, unsigned int *irq_arr)
-{
-	int b;
-	for (b = 0; b < 32; ++b) {
-		if (irqstatus & (1 << b))
+#अगर_घोषित CONFIG_OMAP2_DSS_COLLECT_IRQ_STATS
+अटल अंतरभूत व्योम dss_collect_irq_stats(u32 irqstatus, अचिन्हित पूर्णांक *irq_arr)
+अणु
+	पूर्णांक b;
+	क्रम (b = 0; b < 32; ++b) अणु
+		अगर (irqstatus & (1 << b))
 			irq_arr[b]++;
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
 /* PLL */
-typedef bool (*dss_pll_calc_func)(int n, int m, unsigned long fint,
-		unsigned long clkdco, void *data);
-typedef bool (*dss_hsdiv_calc_func)(int m_dispc, unsigned long dispc,
-		void *data);
+प्रकार bool (*dss_pll_calc_func)(पूर्णांक n, पूर्णांक m, अचिन्हित दीर्घ fपूर्णांक,
+		अचिन्हित दीर्घ clkdco, व्योम *data);
+प्रकार bool (*dss_hsभाग_calc_func)(पूर्णांक m_dispc, अचिन्हित दीर्घ dispc,
+		व्योम *data);
 
-int dss_pll_register(struct dss_device *dss, struct dss_pll *pll);
-void dss_pll_unregister(struct dss_pll *pll);
-struct dss_pll *dss_pll_find(struct dss_device *dss, const char *name);
-struct dss_pll *dss_pll_find_by_src(struct dss_device *dss,
-				    enum dss_clk_source src);
-unsigned int dss_pll_get_clkout_idx_for_src(enum dss_clk_source src);
-int dss_pll_enable(struct dss_pll *pll);
-void dss_pll_disable(struct dss_pll *pll);
-int dss_pll_set_config(struct dss_pll *pll,
-		const struct dss_pll_clock_info *cinfo);
+पूर्णांक dss_pll_रेजिस्टर(काष्ठा dss_device *dss, काष्ठा dss_pll *pll);
+व्योम dss_pll_unरेजिस्टर(काष्ठा dss_pll *pll);
+काष्ठा dss_pll *dss_pll_find(काष्ठा dss_device *dss, स्थिर अक्षर *name);
+काष्ठा dss_pll *dss_pll_find_by_src(काष्ठा dss_device *dss,
+				    क्रमागत dss_clk_source src);
+अचिन्हित पूर्णांक dss_pll_get_clkout_idx_क्रम_src(क्रमागत dss_clk_source src);
+पूर्णांक dss_pll_enable(काष्ठा dss_pll *pll);
+व्योम dss_pll_disable(काष्ठा dss_pll *pll);
+पूर्णांक dss_pll_set_config(काष्ठा dss_pll *pll,
+		स्थिर काष्ठा dss_pll_घड़ी_info *cinfo);
 
-bool dss_pll_hsdiv_calc_a(const struct dss_pll *pll, unsigned long clkdco,
-		unsigned long out_min, unsigned long out_max,
-		dss_hsdiv_calc_func func, void *data);
-bool dss_pll_calc_a(const struct dss_pll *pll, unsigned long clkin,
-		unsigned long pll_min, unsigned long pll_max,
-		dss_pll_calc_func func, void *data);
+bool dss_pll_hsभाग_calc_a(स्थिर काष्ठा dss_pll *pll, अचिन्हित दीर्घ clkdco,
+		अचिन्हित दीर्घ out_min, अचिन्हित दीर्घ out_max,
+		dss_hsभाग_calc_func func, व्योम *data);
+bool dss_pll_calc_a(स्थिर काष्ठा dss_pll *pll, अचिन्हित दीर्घ clkin,
+		अचिन्हित दीर्घ pll_min, अचिन्हित दीर्घ pll_max,
+		dss_pll_calc_func func, व्योम *data);
 
-bool dss_pll_calc_b(const struct dss_pll *pll, unsigned long clkin,
-	unsigned long target_clkout, struct dss_pll_clock_info *cinfo);
+bool dss_pll_calc_b(स्थिर काष्ठा dss_pll *pll, अचिन्हित दीर्घ clkin,
+	अचिन्हित दीर्घ target_clkout, काष्ठा dss_pll_घड़ी_info *cinfo);
 
-int dss_pll_write_config_type_a(struct dss_pll *pll,
-		const struct dss_pll_clock_info *cinfo);
-int dss_pll_write_config_type_b(struct dss_pll *pll,
-		const struct dss_pll_clock_info *cinfo);
-int dss_pll_wait_reset_done(struct dss_pll *pll);
+पूर्णांक dss_pll_ग_लिखो_config_type_a(काष्ठा dss_pll *pll,
+		स्थिर काष्ठा dss_pll_घड़ी_info *cinfo);
+पूर्णांक dss_pll_ग_लिखो_config_type_b(काष्ठा dss_pll *pll,
+		स्थिर काष्ठा dss_pll_घड़ी_info *cinfo);
+पूर्णांक dss_pll_रुको_reset_करोne(काष्ठा dss_pll *pll);
 
-extern struct platform_driver omap_dsshw_driver;
-extern struct platform_driver omap_dispchw_driver;
-#ifdef CONFIG_OMAP2_DSS_DSI
-extern struct platform_driver omap_dsihw_driver;
-#endif
-#ifdef CONFIG_OMAP2_DSS_VENC
-extern struct platform_driver omap_venchw_driver;
-#endif
-#ifdef CONFIG_OMAP4_DSS_HDMI
-extern struct platform_driver omapdss_hdmi4hw_driver;
-#endif
-#ifdef CONFIG_OMAP5_DSS_HDMI
-extern struct platform_driver omapdss_hdmi5hw_driver;
-#endif
+बाह्य काष्ठा platक्रमm_driver omap_dsshw_driver;
+बाह्य काष्ठा platक्रमm_driver omap_dispchw_driver;
+#अगर_घोषित CONFIG_OMAP2_DSS_DSI
+बाह्य काष्ठा platक्रमm_driver omap_dsihw_driver;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_OMAP2_DSS_VENC
+बाह्य काष्ठा platक्रमm_driver omap_venchw_driver;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_OMAP4_DSS_HDMI
+बाह्य काष्ठा platक्रमm_driver omapdss_hdmi4hw_driver;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_OMAP5_DSS_HDMI
+बाह्य काष्ठा platक्रमm_driver omapdss_hdmi5hw_driver;
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

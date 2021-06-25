@@ -1,382 +1,383 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  (C) 2010,2011       Thomas Renninger <trenn@suse.de>, Novell Inc.
  */
 
-#if defined(__i386__) || defined(__x86_64__)
+#अगर defined(__i386__) || defined(__x86_64__)
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
+#समावेश <मानकपन.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <सीमा.स>
 
-#include <cpufreq.h>
+#समावेश <cpufreq.h>
 
-#include "helpers/helpers.h"
-#include "idle_monitor/cpupower-monitor.h"
+#समावेश "helpers/helpers.h"
+#समावेश "idle_monitor/cpupower-monitor.h"
 
-#define MSR_APERF	0xE8
-#define MSR_MPERF	0xE7
+#घोषणा MSR_APERF	0xE8
+#घोषणा MSR_MPERF	0xE7
 
-#define RDPRU ".byte 0x0f, 0x01, 0xfd"
-#define RDPRU_ECX_MPERF	0
-#define RDPRU_ECX_APERF	1
+#घोषणा RDPRU ".byte 0x0f, 0x01, 0xfd"
+#घोषणा RDPRU_ECX_MPERF	0
+#घोषणा RDPRU_ECX_APERF	1
 
-#define MSR_TSC	0x10
+#घोषणा MSR_TSC	0x10
 
-#define MSR_AMD_HWCR 0xc0010015
+#घोषणा MSR_AMD_HWCR 0xc0010015
 
-enum mperf_id { C0 = 0, Cx, AVG_FREQ, MPERF_CSTATE_COUNT };
+क्रमागत mperf_id अणु C0 = 0, Cx, AVG_FREQ, MPERF_CSTATE_COUNT पूर्ण;
 
-static int mperf_get_count_percent(unsigned int self_id, double *percent,
-				   unsigned int cpu);
-static int mperf_get_count_freq(unsigned int id, unsigned long long *count,
-				unsigned int cpu);
-static struct timespec time_start, time_end;
+अटल पूर्णांक mperf_get_count_percent(अचिन्हित पूर्णांक self_id, द्विगुन *percent,
+				   अचिन्हित पूर्णांक cpu);
+अटल पूर्णांक mperf_get_count_freq(अचिन्हित पूर्णांक id, अचिन्हित दीर्घ दीर्घ *count,
+				अचिन्हित पूर्णांक cpu);
+अटल काष्ठा बारpec समय_start, समय_end;
 
-static cstate_t mperf_cstates[MPERF_CSTATE_COUNT] = {
-	{
+अटल cstate_t mperf_cstates[MPERF_CSTATE_COUNT] = अणु
+	अणु
 		.name			= "C0",
 		.desc			= N_("Processor Core not idle"),
 		.id			= C0,
 		.range			= RANGE_THREAD,
 		.get_count_percent	= mperf_get_count_percent,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name			= "Cx",
 		.desc			= N_("Processor Core in an idle state"),
 		.id			= Cx,
 		.range			= RANGE_THREAD,
 		.get_count_percent	= mperf_get_count_percent,
-	},
+	पूर्ण,
 
-	{
+	अणु
 		.name			= "Freq",
 		.desc			= N_("Average Frequency (including boost) in MHz"),
 		.id			= AVG_FREQ,
 		.range			= RANGE_THREAD,
 		.get_count		= mperf_get_count_freq,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-enum MAX_FREQ_MODE { MAX_FREQ_SYSFS, MAX_FREQ_TSC_REF };
-static int max_freq_mode;
+क्रमागत MAX_FREQ_MODE अणु MAX_FREQ_SYSFS, MAX_FREQ_TSC_REF पूर्ण;
+अटल पूर्णांक max_freq_mode;
 /*
  * The max frequency mperf is ticking at (in C0), either retrieved via:
- *   1) calculated after measurements if we know TSC ticks at mperf/P0 frequency
- *   2) cpufreq /sys/devices/.../cpu0/cpufreq/cpuinfo_max_freq at init time
- * 1. Is preferred as it also works without cpufreq subsystem (e.g. on Xen)
+ *   1) calculated after measurements अगर we know TSC ticks at mperf/P0 frequency
+ *   2) cpufreq /sys/devices/.../cpu0/cpufreq/cpuinfo_max_freq at init समय
+ * 1. Is preferred as it also works without cpufreq subप्रणाली (e.g. on Xen)
  */
-static unsigned long max_frequency;
+अटल अचिन्हित दीर्घ max_frequency;
 
-static unsigned long long tsc_at_measure_start;
-static unsigned long long tsc_at_measure_end;
-static unsigned long long *mperf_previous_count;
-static unsigned long long *aperf_previous_count;
-static unsigned long long *mperf_current_count;
-static unsigned long long *aperf_current_count;
+अटल अचिन्हित दीर्घ दीर्घ tsc_at_measure_start;
+अटल अचिन्हित दीर्घ दीर्घ tsc_at_measure_end;
+अटल अचिन्हित दीर्घ दीर्घ *mperf_previous_count;
+अटल अचिन्हित दीर्घ दीर्घ *aperf_previous_count;
+अटल अचिन्हित दीर्घ दीर्घ *mperf_current_count;
+अटल अचिन्हित दीर्घ दीर्घ *aperf_current_count;
 
-/* valid flag for all CPUs. If a MSR read failed it will be zero */
-static int *is_valid;
+/* valid flag क्रम all CPUs. If a MSR पढ़ो failed it will be zero */
+अटल पूर्णांक *is_valid;
 
-static int mperf_get_tsc(unsigned long long *tsc)
-{
-	int ret;
+अटल पूर्णांक mperf_get_tsc(अचिन्हित दीर्घ दीर्घ *tsc)
+अणु
+	पूर्णांक ret;
 
-	ret = read_msr(base_cpu, MSR_TSC, tsc);
-	if (ret)
-		dprint("Reading TSC MSR failed, returning %llu\n", *tsc);
-	return ret;
-}
+	ret = पढ़ो_msr(base_cpu, MSR_TSC, tsc);
+	अगर (ret)
+		dprपूर्णांक("Reading TSC MSR failed, returning %llu\n", *tsc);
+	वापस ret;
+पूर्ण
 
-static int get_aperf_mperf(int cpu, unsigned long long *aval,
-				    unsigned long long *mval)
-{
-	unsigned long low_a, high_a;
-	unsigned long low_m, high_m;
-	int ret;
+अटल पूर्णांक get_aperf_mperf(पूर्णांक cpu, अचिन्हित दीर्घ दीर्घ *aval,
+				    अचिन्हित दीर्घ दीर्घ *mval)
+अणु
+	अचिन्हित दीर्घ low_a, high_a;
+	अचिन्हित दीर्घ low_m, high_m;
+	पूर्णांक ret;
 
 	/*
-	 * Running on the cpu from which we read the registers will
+	 * Running on the cpu from which we पढ़ो the रेजिस्टरs will
 	 * prevent APERF/MPERF from going out of sync because of IPI
-	 * latency introduced by read_msr()s.
+	 * latency पूर्णांकroduced by पढ़ो_msr()s.
 	 */
-	if (mperf_monitor.flags.per_cpu_schedule) {
-		if (bind_cpu(cpu))
-			return 1;
-	}
+	अगर (mperf_monitor.flags.per_cpu_schedule) अणु
+		अगर (bind_cpu(cpu))
+			वापस 1;
+	पूर्ण
 
-	if (cpupower_cpu_info.caps & CPUPOWER_CAP_AMD_RDPRU) {
-		asm volatile(RDPRU
+	अगर (cpuघातer_cpu_info.caps & CPUPOWER_CAP_AMD_RDPRU) अणु
+		यंत्र अस्थिर(RDPRU
 			     : "=a" (low_a), "=d" (high_a)
 			     : "c" (RDPRU_ECX_APERF));
-		asm volatile(RDPRU
+		यंत्र अस्थिर(RDPRU
 			     : "=a" (low_m), "=d" (high_m)
 			     : "c" (RDPRU_ECX_MPERF));
 
 		*aval = ((low_a) | (high_a) << 32);
 		*mval = ((low_m) | (high_m) << 32);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ret  = read_msr(cpu, MSR_APERF, aval);
-	ret |= read_msr(cpu, MSR_MPERF, mval);
+	ret  = पढ़ो_msr(cpu, MSR_APERF, aval);
+	ret |= पढ़ो_msr(cpu, MSR_MPERF, mval);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mperf_init_stats(unsigned int cpu)
-{
-	unsigned long long aval, mval;
-	int ret;
+अटल पूर्णांक mperf_init_stats(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ दीर्घ aval, mval;
+	पूर्णांक ret;
 
 	ret = get_aperf_mperf(cpu, &aval, &mval);
 	aperf_previous_count[cpu] = aval;
 	mperf_previous_count[cpu] = mval;
 	is_valid[cpu] = !ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mperf_measure_stats(unsigned int cpu)
-{
-	unsigned long long aval, mval;
-	int ret;
+अटल पूर्णांक mperf_measure_stats(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ दीर्घ aval, mval;
+	पूर्णांक ret;
 
 	ret = get_aperf_mperf(cpu, &aval, &mval);
 	aperf_current_count[cpu] = aval;
 	mperf_current_count[cpu] = mval;
 	is_valid[cpu] = !ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mperf_get_count_percent(unsigned int id, double *percent,
-				   unsigned int cpu)
-{
-	unsigned long long aperf_diff, mperf_diff, tsc_diff;
-	unsigned long long timediff;
+अटल पूर्णांक mperf_get_count_percent(अचिन्हित पूर्णांक id, द्विगुन *percent,
+				   अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ दीर्घ aperf_dअगरf, mperf_dअगरf, tsc_dअगरf;
+	अचिन्हित दीर्घ दीर्घ समयdअगरf;
 
-	if (!is_valid[cpu])
-		return -1;
+	अगर (!is_valid[cpu])
+		वापस -1;
 
-	if (id != C0 && id != Cx)
-		return -1;
+	अगर (id != C0 && id != Cx)
+		वापस -1;
 
-	mperf_diff = mperf_current_count[cpu] - mperf_previous_count[cpu];
-	aperf_diff = aperf_current_count[cpu] - aperf_previous_count[cpu];
+	mperf_dअगरf = mperf_current_count[cpu] - mperf_previous_count[cpu];
+	aperf_dअगरf = aperf_current_count[cpu] - aperf_previous_count[cpu];
 
-	if (max_freq_mode == MAX_FREQ_TSC_REF) {
-		tsc_diff = tsc_at_measure_end - tsc_at_measure_start;
-		*percent = 100.0 * mperf_diff / tsc_diff;
-		dprint("%s: TSC Ref - mperf_diff: %llu, tsc_diff: %llu\n",
-		       mperf_cstates[id].name, mperf_diff, tsc_diff);
-	} else if (max_freq_mode == MAX_FREQ_SYSFS) {
-		timediff = max_frequency * timespec_diff_us(time_start, time_end);
-		*percent = 100.0 * mperf_diff / timediff;
-		dprint("%s: MAXFREQ - mperf_diff: %llu, time_diff: %llu\n",
-		       mperf_cstates[id].name, mperf_diff, timediff);
-	} else
-		return -1;
+	अगर (max_freq_mode == MAX_FREQ_TSC_REF) अणु
+		tsc_dअगरf = tsc_at_measure_end - tsc_at_measure_start;
+		*percent = 100.0 * mperf_dअगरf / tsc_dअगरf;
+		dprपूर्णांक("%s: TSC Ref - mperf_diff: %llu, tsc_diff: %llu\n",
+		       mperf_cstates[id].name, mperf_dअगरf, tsc_dअगरf);
+	पूर्ण अन्यथा अगर (max_freq_mode == MAX_FREQ_SYSFS) अणु
+		समयdअगरf = max_frequency * बारpec_dअगरf_us(समय_start, समय_end);
+		*percent = 100.0 * mperf_dअगरf / समयdअगरf;
+		dprपूर्णांक("%s: MAXFREQ - mperf_diff: %llu, time_diff: %llu\n",
+		       mperf_cstates[id].name, mperf_dअगरf, समयdअगरf);
+	पूर्ण अन्यथा
+		वापस -1;
 
-	if (id == Cx)
+	अगर (id == Cx)
 		*percent = 100.0 - *percent;
 
-	dprint("%s: previous: %llu - current: %llu - (%u)\n",
-		mperf_cstates[id].name, mperf_diff, aperf_diff, cpu);
-	dprint("%s: %f\n", mperf_cstates[id].name, *percent);
-	return 0;
-}
+	dprपूर्णांक("%s: previous: %llu - current: %llu - (%u)\n",
+		mperf_cstates[id].name, mperf_dअगरf, aperf_dअगरf, cpu);
+	dprपूर्णांक("%s: %f\n", mperf_cstates[id].name, *percent);
+	वापस 0;
+पूर्ण
 
-static int mperf_get_count_freq(unsigned int id, unsigned long long *count,
-				unsigned int cpu)
-{
-	unsigned long long aperf_diff, mperf_diff, time_diff, tsc_diff;
+अटल पूर्णांक mperf_get_count_freq(अचिन्हित पूर्णांक id, अचिन्हित दीर्घ दीर्घ *count,
+				अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ दीर्घ aperf_dअगरf, mperf_dअगरf, समय_dअगरf, tsc_dअगरf;
 
-	if (id != AVG_FREQ)
-		return 1;
+	अगर (id != AVG_FREQ)
+		वापस 1;
 
-	if (!is_valid[cpu])
-		return -1;
+	अगर (!is_valid[cpu])
+		वापस -1;
 
-	mperf_diff = mperf_current_count[cpu] - mperf_previous_count[cpu];
-	aperf_diff = aperf_current_count[cpu] - aperf_previous_count[cpu];
+	mperf_dअगरf = mperf_current_count[cpu] - mperf_previous_count[cpu];
+	aperf_dअगरf = aperf_current_count[cpu] - aperf_previous_count[cpu];
 
-	if (max_freq_mode == MAX_FREQ_TSC_REF) {
+	अगर (max_freq_mode == MAX_FREQ_TSC_REF) अणु
 		/* Calculate max_freq from TSC count */
-		tsc_diff = tsc_at_measure_end - tsc_at_measure_start;
-		time_diff = timespec_diff_us(time_start, time_end);
-		max_frequency = tsc_diff / time_diff;
-	}
+		tsc_dअगरf = tsc_at_measure_end - tsc_at_measure_start;
+		समय_dअगरf = बारpec_dअगरf_us(समय_start, समय_end);
+		max_frequency = tsc_dअगरf / समय_dअगरf;
+	पूर्ण
 
-	*count = max_frequency * ((double)aperf_diff / mperf_diff);
-	dprint("%s: Average freq based on %s maximum frequency:\n",
+	*count = max_frequency * ((द्विगुन)aperf_dअगरf / mperf_dअगरf);
+	dprपूर्णांक("%s: Average freq based on %s maximum frequency:\n",
 	       mperf_cstates[id].name,
 	       (max_freq_mode == MAX_FREQ_TSC_REF) ? "TSC calculated" : "sysfs read");
-	dprint("max_frequency: %lu\n", max_frequency);
-	dprint("aperf_diff: %llu\n", aperf_diff);
-	dprint("mperf_diff: %llu\n", mperf_diff);
-	dprint("avg freq:   %llu\n", *count);
-	return 0;
-}
+	dprपूर्णांक("max_frequency: %lu\n", max_frequency);
+	dprपूर्णांक("aperf_diff: %llu\n", aperf_dअगरf);
+	dprपूर्णांक("mperf_diff: %llu\n", mperf_dअगरf);
+	dprपूर्णांक("avg freq:   %llu\n", *count);
+	वापस 0;
+पूर्ण
 
-static int mperf_start(void)
-{
-	int cpu;
-	unsigned long long dbg;
+अटल पूर्णांक mperf_start(व्योम)
+अणु
+	पूर्णांक cpu;
+	अचिन्हित दीर्घ दीर्घ dbg;
 
-	clock_gettime(CLOCK_REALTIME, &time_start);
+	घड़ी_समय_लो(CLOCK_REALTIME, &समय_start);
 	mperf_get_tsc(&tsc_at_measure_start);
 
-	for (cpu = 0; cpu < cpu_count; cpu++)
+	क्रम (cpu = 0; cpu < cpu_count; cpu++)
 		mperf_init_stats(cpu);
 
 	mperf_get_tsc(&dbg);
-	dprint("TSC diff: %llu\n", dbg - tsc_at_measure_start);
-	return 0;
-}
+	dprपूर्णांक("TSC diff: %llu\n", dbg - tsc_at_measure_start);
+	वापस 0;
+पूर्ण
 
-static int mperf_stop(void)
-{
-	unsigned long long dbg;
-	int cpu;
+अटल पूर्णांक mperf_stop(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ dbg;
+	पूर्णांक cpu;
 
-	for (cpu = 0; cpu < cpu_count; cpu++)
+	क्रम (cpu = 0; cpu < cpu_count; cpu++)
 		mperf_measure_stats(cpu);
 
 	mperf_get_tsc(&tsc_at_measure_end);
-	clock_gettime(CLOCK_REALTIME, &time_end);
+	घड़ी_समय_लो(CLOCK_REALTIME, &समय_end);
 
 	mperf_get_tsc(&dbg);
-	dprint("TSC diff: %llu\n", dbg - tsc_at_measure_end);
+	dprपूर्णांक("TSC diff: %llu\n", dbg - tsc_at_measure_end);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Mperf register is defined to tick at P0 (maximum) frequency
+ * Mperf रेजिस्टर is defined to tick at P0 (maximum) frequency
  *
- * Instead of reading out P0 which can be tricky to read out from HW,
- * we use TSC counter if it reliably ticks at P0/mperf frequency.
+ * Instead of पढ़ोing out P0 which can be tricky to पढ़ो out from HW,
+ * we use TSC counter अगर it reliably ticks at P0/mperf frequency.
  *
  * Still try to fall back to:
- * /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq
+ * /sys/devices/प्रणाली/cpu/cpu0/cpufreq/cpuinfo_max_freq
  * on older Intel HW without invariant TSC feature.
- * Or on AMD machines where TSC does not tick at P0 (do not exist yet, but
- * it's still double checked (MSR_AMD_HWCR)).
+ * Or on AMD machines where TSC करोes not tick at P0 (करो not exist yet, but
+ * it's still द्विगुन checked (MSR_AMD_HWCR)).
  *
  * On these machines the user would still get useful mperf
  * stats when acpi-cpufreq driver is loaded.
  */
-static int init_maxfreq_mode(void)
-{
-	int ret;
-	unsigned long long hwcr;
-	unsigned long min;
+अटल पूर्णांक init_maxfreq_mode(व्योम)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ दीर्घ hwcr;
+	अचिन्हित दीर्घ min;
 
-	if (!(cpupower_cpu_info.caps & CPUPOWER_CAP_INV_TSC))
-		goto use_sysfs;
+	अगर (!(cpuघातer_cpu_info.caps & CPUPOWER_CAP_INV_TSC))
+		जाओ use_sysfs;
 
-	if (cpupower_cpu_info.vendor == X86_VENDOR_AMD ||
-	    cpupower_cpu_info.vendor == X86_VENDOR_HYGON) {
+	अगर (cpuघातer_cpu_info.venकरोr == X86_VENDOR_AMD ||
+	    cpuघातer_cpu_info.venकरोr == X86_VENDOR_HYGON) अणु
 		/* MSR_AMD_HWCR tells us whether TSC runs at P0/mperf
 		 * freq.
 		 * A test whether hwcr is accessable/available would be:
-		 * (cpupower_cpu_info.family > 0x10 ||
-		 *   cpupower_cpu_info.family == 0x10 &&
-		 *   cpupower_cpu_info.model >= 0x2))
-		 * This should be the case for all aperf/mperf
-		 * capable AMD machines and is therefore safe to test here.
+		 * (cpuघातer_cpu_info.family > 0x10 ||
+		 *   cpuघातer_cpu_info.family == 0x10 &&
+		 *   cpuघातer_cpu_info.model >= 0x2))
+		 * This should be the हाल क्रम all aperf/mperf
+		 * capable AMD machines and is thereक्रमe safe to test here.
 		 * Compare with Linus kernel git commit: acf01734b1747b1ec4
 		 */
-		ret = read_msr(0, MSR_AMD_HWCR, &hwcr);
+		ret = पढ़ो_msr(0, MSR_AMD_HWCR, &hwcr);
 		/*
-		 * If the MSR read failed, assume a Xen system that did
+		 * If the MSR पढ़ो failed, assume a Xen प्रणाली that did
 		 * not explicitly provide access to it and assume TSC works
 		*/
-		if (ret != 0) {
-			dprint("TSC read 0x%x failed - assume TSC working\n",
+		अगर (ret != 0) अणु
+			dprपूर्णांक("TSC read 0x%x failed - assume TSC working\n",
 			       MSR_AMD_HWCR);
-			return 0;
-		} else if (1 & (hwcr >> 24)) {
+			वापस 0;
+		पूर्ण अन्यथा अगर (1 & (hwcr >> 24)) अणु
 			max_freq_mode = MAX_FREQ_TSC_REF;
-			return 0;
-		} else { /* Use sysfs max frequency if available */ }
-	} else if (cpupower_cpu_info.vendor == X86_VENDOR_INTEL) {
+			वापस 0;
+		पूर्ण अन्यथा अणु /* Use sysfs max frequency अगर available */ पूर्ण
+	पूर्ण अन्यथा अगर (cpuघातer_cpu_info.venकरोr == X86_VENDOR_INTEL) अणु
 		/*
 		 * On Intel we assume mperf (in C0) is ticking at same
 		 * rate than TSC
 		 */
 		max_freq_mode = MAX_FREQ_TSC_REF;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 use_sysfs:
-	if (cpufreq_get_hardware_limits(0, &min, &max_frequency)) {
-		dprint("Cannot retrieve max freq from cpufreq kernel "
+	अगर (cpufreq_get_hardware_limits(0, &min, &max_frequency)) अणु
+		dprपूर्णांक("Cannot retrieve max freq from cpufreq kernel "
 		       "subsystem\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	max_freq_mode = MAX_FREQ_SYSFS;
-	max_frequency /= 1000; /* Default automatically to MHz value */
-	return 0;
-}
+	max_frequency /= 1000; /* Default स्वतःmatically to MHz value */
+	वापस 0;
+पूर्ण
 
 /*
  * This monitor provides:
  *
  * 1) Average frequency a CPU resided in
- *    This always works if the CPU has aperf/mperf capabilities
+ *    This always works अगर the CPU has aperf/mperf capabilities
  *
- * 2) C0 and Cx (any sleep state) time a CPU resided in
- *    Works if mperf timer stops ticking in sleep states which
- *    seem to be the case on all current HW.
- * Both is directly retrieved from HW registers and is independent
+ * 2) C0 and Cx (any sleep state) समय a CPU resided in
+ *    Works अगर mperf समयr stops ticking in sleep states which
+ *    seem to be the हाल on all current HW.
+ * Both is directly retrieved from HW रेजिस्टरs and is independent
  * from kernel statistics.
  */
-struct cpuidle_monitor mperf_monitor;
-struct cpuidle_monitor *mperf_register(void)
-{
-	if (!(cpupower_cpu_info.caps & CPUPOWER_CAP_APERF))
-		return NULL;
+काष्ठा cpuidle_monitor mperf_monitor;
+काष्ठा cpuidle_monitor *mperf_रेजिस्टर(व्योम)
+अणु
+	अगर (!(cpuघातer_cpu_info.caps & CPUPOWER_CAP_APERF))
+		वापस शून्य;
 
-	if (init_maxfreq_mode())
-		return NULL;
+	अगर (init_maxfreq_mode())
+		वापस शून्य;
 
-	if (cpupower_cpu_info.vendor == X86_VENDOR_AMD)
+	अगर (cpuघातer_cpu_info.venकरोr == X86_VENDOR_AMD)
 		mperf_monitor.flags.per_cpu_schedule = 1;
 
 	/* Free this at program termination */
-	is_valid = calloc(cpu_count, sizeof(int));
-	mperf_previous_count = calloc(cpu_count, sizeof(unsigned long long));
-	aperf_previous_count = calloc(cpu_count, sizeof(unsigned long long));
-	mperf_current_count = calloc(cpu_count, sizeof(unsigned long long));
-	aperf_current_count = calloc(cpu_count, sizeof(unsigned long long));
+	is_valid = सुस्मृति(cpu_count, माप(पूर्णांक));
+	mperf_previous_count = सुस्मृति(cpu_count, माप(अचिन्हित दीर्घ दीर्घ));
+	aperf_previous_count = सुस्मृति(cpu_count, माप(अचिन्हित दीर्घ दीर्घ));
+	mperf_current_count = सुस्मृति(cpu_count, माप(अचिन्हित दीर्घ दीर्घ));
+	aperf_current_count = सुस्मृति(cpu_count, माप(अचिन्हित दीर्घ दीर्घ));
 
-	mperf_monitor.name_len = strlen(mperf_monitor.name);
-	return &mperf_monitor;
-}
+	mperf_monitor.name_len = म_माप(mperf_monitor.name);
+	वापस &mperf_monitor;
+पूर्ण
 
-void mperf_unregister(void)
-{
-	free(mperf_previous_count);
-	free(aperf_previous_count);
-	free(mperf_current_count);
-	free(aperf_current_count);
-	free(is_valid);
-}
+व्योम mperf_unरेजिस्टर(व्योम)
+अणु
+	मुक्त(mperf_previous_count);
+	मुक्त(aperf_previous_count);
+	मुक्त(mperf_current_count);
+	मुक्त(aperf_current_count);
+	मुक्त(is_valid);
+पूर्ण
 
-struct cpuidle_monitor mperf_monitor = {
+काष्ठा cpuidle_monitor mperf_monitor = अणु
 	.name			= "Mperf",
 	.hw_states_num		= MPERF_CSTATE_COUNT,
 	.hw_states		= mperf_cstates,
 	.start			= mperf_start,
 	.stop			= mperf_stop,
-	.do_register		= mperf_register,
-	.unregister		= mperf_unregister,
+	.करो_रेजिस्टर		= mperf_रेजिस्टर,
+	.unरेजिस्टर		= mperf_unरेजिस्टर,
 	.flags.needs_root	= 1,
 	.overflow_s		= 922000000 /* 922337203 seconds TSC overflow
 					       at 20GHz */
-};
-#endif /* #if defined(__i386__) || defined(__x86_64__) */
+पूर्ण;
+#पूर्ण_अगर /* #अगर defined(__i386__) || defined(__x86_64__) */

@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2017 NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/host1x.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_graph.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/reset.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/host1x.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/reset.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_fourcc.h>
-#include <drm/drm_probe_helper.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश <drm/drm_probe_helper.h>
 
-#include "drm.h"
-#include "dc.h"
-#include "plane.h"
+#समावेश "drm.h"
+#समावेश "dc.h"
+#समावेश "plane.h"
 
-static const u32 tegra_shared_plane_formats[] = {
+अटल स्थिर u32 tegra_shared_plane_क्रमmats[] = अणु
 	DRM_FORMAT_ARGB1555,
 	DRM_FORMAT_RGB565,
 	DRM_FORMAT_RGBA5551,
@@ -40,14 +41,14 @@ static const u32 tegra_shared_plane_formats[] = {
 	DRM_FORMAT_BGR565,
 	DRM_FORMAT_XRGB8888,
 	DRM_FORMAT_XBGR8888,
-	/* planar formats */
+	/* planar क्रमmats */
 	DRM_FORMAT_UYVY,
 	DRM_FORMAT_YUYV,
 	DRM_FORMAT_YUV420,
 	DRM_FORMAT_YUV422,
-};
+पूर्ण;
 
-static const u64 tegra_shared_plane_modifiers[] = {
+अटल स्थिर u64 tegra_shared_plane_modअगरiers[] = अणु
 	DRM_FORMAT_MOD_LINEAR,
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(0),
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(1),
@@ -57,7 +58,7 @@ static const u64 tegra_shared_plane_modifiers[] = {
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(5),
 	/*
 	 * The GPU sector layout is only supported on Tegra194, but these will
-	 * be filtered out later on by ->format_mod_supported() on SoCs where
+	 * be filtered out later on by ->क्रमmat_mod_supported() on SoCs where
 	 * it isn't supported.
 	 */
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(0) | DRM_FORMAT_MOD_NVIDIA_SECTOR_LAYOUT,
@@ -68,539 +69,539 @@ static const u64 tegra_shared_plane_modifiers[] = {
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(5) | DRM_FORMAT_MOD_NVIDIA_SECTOR_LAYOUT,
 	/* sentinel */
 	DRM_FORMAT_MOD_INVALID
-};
+पूर्ण;
 
-static inline unsigned int tegra_plane_offset(struct tegra_plane *plane,
-					      unsigned int offset)
-{
-	if (offset >= 0x500 && offset <= 0x581) {
+अटल अंतरभूत अचिन्हित पूर्णांक tegra_plane_offset(काष्ठा tegra_plane *plane,
+					      अचिन्हित पूर्णांक offset)
+अणु
+	अगर (offset >= 0x500 && offset <= 0x581) अणु
 		offset = 0x000 + (offset - 0x500);
-		return plane->offset + offset;
-	}
+		वापस plane->offset + offset;
+	पूर्ण
 
-	if (offset >= 0x700 && offset <= 0x73c) {
+	अगर (offset >= 0x700 && offset <= 0x73c) अणु
 		offset = 0x180 + (offset - 0x700);
-		return plane->offset + offset;
-	}
+		वापस plane->offset + offset;
+	पूर्ण
 
-	if (offset >= 0x800 && offset <= 0x83e) {
+	अगर (offset >= 0x800 && offset <= 0x83e) अणु
 		offset = 0x1c0 + (offset - 0x800);
-		return plane->offset + offset;
-	}
+		वापस plane->offset + offset;
+	पूर्ण
 
 	dev_WARN(plane->dc->dev, "invalid offset: %x\n", offset);
 
-	return plane->offset + offset;
-}
+	वापस plane->offset + offset;
+पूर्ण
 
-static inline u32 tegra_plane_readl(struct tegra_plane *plane,
-				    unsigned int offset)
-{
-	return tegra_dc_readl(plane->dc, tegra_plane_offset(plane, offset));
-}
+अटल अंतरभूत u32 tegra_plane_पढ़ोl(काष्ठा tegra_plane *plane,
+				    अचिन्हित पूर्णांक offset)
+अणु
+	वापस tegra_dc_पढ़ोl(plane->dc, tegra_plane_offset(plane, offset));
+पूर्ण
 
-static inline void tegra_plane_writel(struct tegra_plane *plane, u32 value,
-				      unsigned int offset)
-{
-	tegra_dc_writel(plane->dc, value, tegra_plane_offset(plane, offset));
-}
+अटल अंतरभूत व्योम tegra_plane_ग_लिखोl(काष्ठा tegra_plane *plane, u32 value,
+				      अचिन्हित पूर्णांक offset)
+अणु
+	tegra_dc_ग_लिखोl(plane->dc, value, tegra_plane_offset(plane, offset));
+पूर्ण
 
-static int tegra_windowgroup_enable(struct tegra_windowgroup *wgrp)
-{
-	int err = 0;
+अटल पूर्णांक tegra_winकरोwgroup_enable(काष्ठा tegra_winकरोwgroup *wgrp)
+अणु
+	पूर्णांक err = 0;
 
 	mutex_lock(&wgrp->lock);
 
-	if (wgrp->usecount == 0) {
+	अगर (wgrp->usecount == 0) अणु
 		err = host1x_client_resume(wgrp->parent);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(wgrp->parent->dev, "failed to resume: %d\n", err);
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 
-		reset_control_deassert(wgrp->rst);
-	}
+		reset_control_deनिश्चित(wgrp->rst);
+	पूर्ण
 
 	wgrp->usecount++;
 
 unlock:
 	mutex_unlock(&wgrp->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void tegra_windowgroup_disable(struct tegra_windowgroup *wgrp)
-{
-	int err;
+अटल व्योम tegra_winकरोwgroup_disable(काष्ठा tegra_winकरोwgroup *wgrp)
+अणु
+	पूर्णांक err;
 
 	mutex_lock(&wgrp->lock);
 
-	if (wgrp->usecount == 1) {
-		err = reset_control_assert(wgrp->rst);
-		if (err < 0) {
+	अगर (wgrp->usecount == 1) अणु
+		err = reset_control_निश्चित(wgrp->rst);
+		अगर (err < 0) अणु
 			pr_err("failed to assert reset for window group %u\n",
 			       wgrp->index);
-		}
+		पूर्ण
 
 		host1x_client_suspend(wgrp->parent);
-	}
+	पूर्ण
 
 	wgrp->usecount--;
 	mutex_unlock(&wgrp->lock);
-}
+पूर्ण
 
-int tegra_display_hub_prepare(struct tegra_display_hub *hub)
-{
-	unsigned int i;
+पूर्णांक tegra_display_hub_prepare(काष्ठा tegra_display_hub *hub)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/*
-	 * XXX Enabling/disabling windowgroups needs to happen when the owner
-	 * display controller is disabled. There's currently no good point at
-	 * which this could be executed, so unconditionally enable all window
-	 * groups for now.
+	 * XXX Enabling/disabling winकरोwgroups needs to happen when the owner
+	 * display controller is disabled. There's currently no good poपूर्णांक at
+	 * which this could be executed, so unconditionally enable all winकरोw
+	 * groups क्रम now.
 	 */
-	for (i = 0; i < hub->soc->num_wgrps; i++) {
-		struct tegra_windowgroup *wgrp = &hub->wgrps[i];
+	क्रम (i = 0; i < hub->soc->num_wgrps; i++) अणु
+		काष्ठा tegra_winकरोwgroup *wgrp = &hub->wgrps[i];
 
-		/* Skip orphaned window group whose parent DC is disabled */
-		if (wgrp->parent)
-			tegra_windowgroup_enable(wgrp);
-	}
+		/* Skip orphaned winकरोw group whose parent DC is disabled */
+		अगर (wgrp->parent)
+			tegra_winकरोwgroup_enable(wgrp);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void tegra_display_hub_cleanup(struct tegra_display_hub *hub)
-{
-	unsigned int i;
+व्योम tegra_display_hub_cleanup(काष्ठा tegra_display_hub *hub)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/*
-	 * XXX Remove this once window groups can be more fine-grainedly
+	 * XXX Remove this once winकरोw groups can be more fine-grainedly
 	 * enabled and disabled.
 	 */
-	for (i = 0; i < hub->soc->num_wgrps; i++) {
-		struct tegra_windowgroup *wgrp = &hub->wgrps[i];
+	क्रम (i = 0; i < hub->soc->num_wgrps; i++) अणु
+		काष्ठा tegra_winकरोwgroup *wgrp = &hub->wgrps[i];
 
-		/* Skip orphaned window group whose parent DC is disabled */
-		if (wgrp->parent)
-			tegra_windowgroup_disable(wgrp);
-	}
-}
+		/* Skip orphaned winकरोw group whose parent DC is disabled */
+		अगर (wgrp->parent)
+			tegra_winकरोwgroup_disable(wgrp);
+	पूर्ण
+पूर्ण
 
-static void tegra_shared_plane_update(struct tegra_plane *plane)
-{
-	struct tegra_dc *dc = plane->dc;
-	unsigned long timeout;
+अटल व्योम tegra_shared_plane_update(काष्ठा tegra_plane *plane)
+अणु
+	काष्ठा tegra_dc *dc = plane->dc;
+	अचिन्हित दीर्घ समयout;
 	u32 mask, value;
 
 	mask = COMMON_UPDATE | WIN_A_UPDATE << plane->base.index;
-	tegra_dc_writel(dc, mask, DC_CMD_STATE_CONTROL);
+	tegra_dc_ग_लिखोl(dc, mask, DC_CMD_STATE_CONTROL);
 
-	timeout = jiffies + msecs_to_jiffies(1000);
+	समयout = jअगरfies + msecs_to_jअगरfies(1000);
 
-	while (time_before(jiffies, timeout)) {
-		value = tegra_dc_readl(dc, DC_CMD_STATE_CONTROL);
-		if ((value & mask) == 0)
-			break;
+	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
+		value = tegra_dc_पढ़ोl(dc, DC_CMD_STATE_CONTROL);
+		अगर ((value & mask) == 0)
+			अवरोध;
 
 		usleep_range(100, 400);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void tegra_shared_plane_activate(struct tegra_plane *plane)
-{
-	struct tegra_dc *dc = plane->dc;
-	unsigned long timeout;
+अटल व्योम tegra_shared_plane_activate(काष्ठा tegra_plane *plane)
+अणु
+	काष्ठा tegra_dc *dc = plane->dc;
+	अचिन्हित दीर्घ समयout;
 	u32 mask, value;
 
 	mask = COMMON_ACTREQ | WIN_A_ACT_REQ << plane->base.index;
-	tegra_dc_writel(dc, mask, DC_CMD_STATE_CONTROL);
+	tegra_dc_ग_लिखोl(dc, mask, DC_CMD_STATE_CONTROL);
 
-	timeout = jiffies + msecs_to_jiffies(1000);
+	समयout = jअगरfies + msecs_to_jअगरfies(1000);
 
-	while (time_before(jiffies, timeout)) {
-		value = tegra_dc_readl(dc, DC_CMD_STATE_CONTROL);
-		if ((value & mask) == 0)
-			break;
+	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
+		value = tegra_dc_पढ़ोl(dc, DC_CMD_STATE_CONTROL);
+		अगर ((value & mask) == 0)
+			अवरोध;
 
 		usleep_range(100, 400);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int
-tegra_shared_plane_get_owner(struct tegra_plane *plane, struct tegra_dc *dc)
-{
-	unsigned int offset =
+अटल अचिन्हित पूर्णांक
+tegra_shared_plane_get_owner(काष्ठा tegra_plane *plane, काष्ठा tegra_dc *dc)
+अणु
+	अचिन्हित पूर्णांक offset =
 		tegra_plane_offset(plane, DC_WIN_CORE_WINDOWGROUP_SET_CONTROL);
 
-	return tegra_dc_readl(dc, offset) & OWNER_MASK;
-}
+	वापस tegra_dc_पढ़ोl(dc, offset) & OWNER_MASK;
+पूर्ण
 
-static bool tegra_dc_owns_shared_plane(struct tegra_dc *dc,
-				       struct tegra_plane *plane)
-{
-	struct device *dev = dc->dev;
+अटल bool tegra_dc_owns_shared_plane(काष्ठा tegra_dc *dc,
+				       काष्ठा tegra_plane *plane)
+अणु
+	काष्ठा device *dev = dc->dev;
 
-	if (tegra_shared_plane_get_owner(plane, dc) == dc->pipe) {
-		if (plane->dc == dc)
-			return true;
+	अगर (tegra_shared_plane_get_owner(plane, dc) == dc->pipe) अणु
+		अगर (plane->dc == dc)
+			वापस true;
 
 		dev_WARN(dev, "head %u owns window %u but is not attached\n",
 			 dc->pipe, plane->index);
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int tegra_shared_plane_set_owner(struct tegra_plane *plane,
-					struct tegra_dc *new)
-{
-	unsigned int offset =
+अटल पूर्णांक tegra_shared_plane_set_owner(काष्ठा tegra_plane *plane,
+					काष्ठा tegra_dc *new)
+अणु
+	अचिन्हित पूर्णांक offset =
 		tegra_plane_offset(plane, DC_WIN_CORE_WINDOWGROUP_SET_CONTROL);
-	struct tegra_dc *old = plane->dc, *dc = new ? new : old;
-	struct device *dev = new ? new->dev : old->dev;
-	unsigned int owner, index = plane->index;
+	काष्ठा tegra_dc *old = plane->dc, *dc = new ? new : old;
+	काष्ठा device *dev = new ? new->dev : old->dev;
+	अचिन्हित पूर्णांक owner, index = plane->index;
 	u32 value;
 
-	value = tegra_dc_readl(dc, offset);
+	value = tegra_dc_पढ़ोl(dc, offset);
 	owner = value & OWNER_MASK;
 
-	if (new && (owner != OWNER_MASK && owner != new->pipe)) {
+	अगर (new && (owner != OWNER_MASK && owner != new->pipe)) अणु
 		dev_WARN(dev, "window %u owned by head %u\n", index, owner);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	/*
 	 * This seems to happen whenever the head has been disabled with one
-	 * or more windows being active. This is harmless because we'll just
-	 * reassign the window to the new head anyway.
+	 * or more winकरोws being active. This is harmless because we'll just
+	 * reassign the winकरोw to the new head anyway.
 	 */
-	if (old && owner == OWNER_MASK)
+	अगर (old && owner == OWNER_MASK)
 		dev_dbg(dev, "window %u not owned by head %u but %u\n", index,
 			old->pipe, owner);
 
 	value &= ~OWNER_MASK;
 
-	if (new)
+	अगर (new)
 		value |= OWNER(new->pipe);
-	else
+	अन्यथा
 		value |= OWNER_MASK;
 
-	tegra_dc_writel(dc, value, offset);
+	tegra_dc_ग_लिखोl(dc, value, offset);
 
 	plane->dc = new;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tegra_dc_assign_shared_plane(struct tegra_dc *dc,
-					 struct tegra_plane *plane)
-{
+अटल व्योम tegra_dc_assign_shared_plane(काष्ठा tegra_dc *dc,
+					 काष्ठा tegra_plane *plane)
+अणु
 	u32 value;
-	int err;
+	पूर्णांक err;
 
-	if (!tegra_dc_owns_shared_plane(dc, plane)) {
+	अगर (!tegra_dc_owns_shared_plane(dc, plane)) अणु
 		err = tegra_shared_plane_set_owner(plane, dc);
-		if (err < 0)
-			return;
-	}
+		अगर (err < 0)
+			वापस;
+	पूर्ण
 
-	value = tegra_plane_readl(plane, DC_WIN_CORE_IHUB_LINEBUF_CONFIG);
+	value = tegra_plane_पढ़ोl(plane, DC_WIN_CORE_IHUB_LINEBUF_CONFIG);
 	value |= MODE_FOUR_LINES;
-	tegra_plane_writel(plane, value, DC_WIN_CORE_IHUB_LINEBUF_CONFIG);
+	tegra_plane_ग_लिखोl(plane, value, DC_WIN_CORE_IHUB_LINEBUF_CONFIG);
 
-	value = tegra_plane_readl(plane, DC_WIN_CORE_IHUB_WGRP_FETCH_METER);
+	value = tegra_plane_पढ़ोl(plane, DC_WIN_CORE_IHUB_WGRP_FETCH_METER);
 	value = SLOTS(1);
-	tegra_plane_writel(plane, value, DC_WIN_CORE_IHUB_WGRP_FETCH_METER);
+	tegra_plane_ग_लिखोl(plane, value, DC_WIN_CORE_IHUB_WGRP_FETCH_METER);
 
 	/* disable watermark */
-	value = tegra_plane_readl(plane, DC_WIN_CORE_IHUB_WGRP_LATENCY_CTLA);
+	value = tegra_plane_पढ़ोl(plane, DC_WIN_CORE_IHUB_WGRP_LATENCY_CTLA);
 	value &= ~LATENCY_CTL_MODE_ENABLE;
-	tegra_plane_writel(plane, value, DC_WIN_CORE_IHUB_WGRP_LATENCY_CTLA);
+	tegra_plane_ग_लिखोl(plane, value, DC_WIN_CORE_IHUB_WGRP_LATENCY_CTLA);
 
-	value = tegra_plane_readl(plane, DC_WIN_CORE_IHUB_WGRP_LATENCY_CTLB);
+	value = tegra_plane_पढ़ोl(plane, DC_WIN_CORE_IHUB_WGRP_LATENCY_CTLB);
 	value |= WATERMARK_MASK;
-	tegra_plane_writel(plane, value, DC_WIN_CORE_IHUB_WGRP_LATENCY_CTLB);
+	tegra_plane_ग_लिखोl(plane, value, DC_WIN_CORE_IHUB_WGRP_LATENCY_CTLB);
 
 	/* pipe meter */
-	value = tegra_plane_readl(plane, DC_WIN_CORE_PRECOMP_WGRP_PIPE_METER);
+	value = tegra_plane_पढ़ोl(plane, DC_WIN_CORE_PRECOMP_WGRP_PIPE_METER);
 	value = PIPE_METER_INT(0) | PIPE_METER_FRAC(0);
-	tegra_plane_writel(plane, value, DC_WIN_CORE_PRECOMP_WGRP_PIPE_METER);
+	tegra_plane_ग_लिखोl(plane, value, DC_WIN_CORE_PRECOMP_WGRP_PIPE_METER);
 
 	/* mempool entries */
-	value = tegra_plane_readl(plane, DC_WIN_CORE_IHUB_WGRP_POOL_CONFIG);
+	value = tegra_plane_पढ़ोl(plane, DC_WIN_CORE_IHUB_WGRP_POOL_CONFIG);
 	value = MEMPOOL_ENTRIES(0x331);
-	tegra_plane_writel(plane, value, DC_WIN_CORE_IHUB_WGRP_POOL_CONFIG);
+	tegra_plane_ग_लिखोl(plane, value, DC_WIN_CORE_IHUB_WGRP_POOL_CONFIG);
 
-	value = tegra_plane_readl(plane, DC_WIN_CORE_IHUB_THREAD_GROUP);
+	value = tegra_plane_पढ़ोl(plane, DC_WIN_CORE_IHUB_THREAD_GROUP);
 	value &= ~THREAD_NUM_MASK;
 	value |= THREAD_NUM(plane->base.index);
 	value |= THREAD_GROUP_ENABLE;
-	tegra_plane_writel(plane, value, DC_WIN_CORE_IHUB_THREAD_GROUP);
+	tegra_plane_ग_लिखोl(plane, value, DC_WIN_CORE_IHUB_THREAD_GROUP);
 
 	tegra_shared_plane_update(plane);
 	tegra_shared_plane_activate(plane);
-}
+पूर्ण
 
-static void tegra_dc_remove_shared_plane(struct tegra_dc *dc,
-					 struct tegra_plane *plane)
-{
-	tegra_shared_plane_set_owner(plane, NULL);
-}
+अटल व्योम tegra_dc_हटाओ_shared_plane(काष्ठा tegra_dc *dc,
+					 काष्ठा tegra_plane *plane)
+अणु
+	tegra_shared_plane_set_owner(plane, शून्य);
+पूर्ण
 
-static int tegra_shared_plane_atomic_check(struct drm_plane *plane,
-					   struct drm_atomic_state *state)
-{
-	struct drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
+अटल पूर्णांक tegra_shared_plane_atomic_check(काष्ठा drm_plane *plane,
+					   काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
 										 plane);
-	struct tegra_plane_state *plane_state = to_tegra_plane_state(new_plane_state);
-	struct tegra_shared_plane *tegra = to_tegra_shared_plane(plane);
-	struct tegra_bo_tiling *tiling = &plane_state->tiling;
-	struct tegra_dc *dc = to_tegra_dc(new_plane_state->crtc);
-	int err;
+	काष्ठा tegra_plane_state *plane_state = to_tegra_plane_state(new_plane_state);
+	काष्ठा tegra_shared_plane *tegra = to_tegra_shared_plane(plane);
+	काष्ठा tegra_bo_tiling *tiling = &plane_state->tiling;
+	काष्ठा tegra_dc *dc = to_tegra_dc(new_plane_state->crtc);
+	पूर्णांक err;
 
-	/* no need for further checks if the plane is being disabled */
-	if (!new_plane_state->crtc || !new_plane_state->fb)
-		return 0;
+	/* no need क्रम further checks अगर the plane is being disabled */
+	अगर (!new_plane_state->crtc || !new_plane_state->fb)
+		वापस 0;
 
-	err = tegra_plane_format(new_plane_state->fb->format->format,
-				 &plane_state->format,
+	err = tegra_plane_क्रमmat(new_plane_state->fb->क्रमmat->क्रमmat,
+				 &plane_state->क्रमmat,
 				 &plane_state->swap);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = tegra_fb_get_tiling(new_plane_state->fb, tiling);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (tiling->mode == TEGRA_BO_TILING_MODE_BLOCK &&
-	    !dc->soc->supports_block_linear) {
+	अगर (tiling->mode == TEGRA_BO_TILING_MODE_BLOCK &&
+	    !dc->soc->supports_block_linear) अणु
 		DRM_ERROR("hardware doesn't support block linear mode\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (tiling->sector_layout == TEGRA_BO_SECTOR_LAYOUT_GPU &&
-	    !dc->soc->supports_sector_layout) {
+	अगर (tiling->sector_layout == TEGRA_BO_SECTOR_LAYOUT_GPU &&
+	    !dc->soc->supports_sector_layout) अणु
 		DRM_ERROR("hardware doesn't support GPU sector layout\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Tegra doesn't support different strides for U and V planes so we
-	 * error out if the user tries to display a framebuffer with such a
+	 * Tegra करोesn't support dअगरferent strides क्रम U and V planes so we
+	 * error out अगर the user tries to display a framebuffer with such a
 	 * configuration.
 	 */
-	if (new_plane_state->fb->format->num_planes > 2) {
-		if (new_plane_state->fb->pitches[2] != new_plane_state->fb->pitches[1]) {
+	अगर (new_plane_state->fb->क्रमmat->num_planes > 2) अणु
+		अगर (new_plane_state->fb->pitches[2] != new_plane_state->fb->pitches[1]) अणु
 			DRM_ERROR("unsupported UV-plane configuration\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/* XXX scaling is not yet supported, add a check here */
 
 	err = tegra_plane_state_add(&tegra->base, new_plane_state);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tegra_shared_plane_atomic_disable(struct drm_plane *plane,
-					      struct drm_atomic_state *state)
-{
-	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+अटल व्योम tegra_shared_plane_atomic_disable(काष्ठा drm_plane *plane,
+					      काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	struct tegra_plane *p = to_tegra_plane(plane);
-	struct tegra_dc *dc;
+	काष्ठा tegra_plane *p = to_tegra_plane(plane);
+	काष्ठा tegra_dc *dc;
 	u32 value;
-	int err;
+	पूर्णांक err;
 
 	/* rien ne va plus */
-	if (!old_state || !old_state->crtc)
-		return;
+	अगर (!old_state || !old_state->crtc)
+		वापस;
 
 	dc = to_tegra_dc(old_state->crtc);
 
 	err = host1x_client_resume(&dc->client);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dc->dev, "failed to resume: %d\n", err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * XXX Legacy helpers seem to sometimes call ->atomic_disable() even
-	 * on planes that are already disabled. Make sure we fallback to the
-	 * head for this particular state instead of crashing.
+	 * XXX Legacy helpers seem to someबार call ->atomic_disable() even
+	 * on planes that are alपढ़ोy disabled. Make sure we fallback to the
+	 * head क्रम this particular state instead of crashing.
 	 */
-	if (WARN_ON(p->dc == NULL))
+	अगर (WARN_ON(p->dc == शून्य))
 		p->dc = dc;
 
-	value = tegra_plane_readl(p, DC_WIN_WIN_OPTIONS);
+	value = tegra_plane_पढ़ोl(p, DC_WIN_WIN_OPTIONS);
 	value &= ~WIN_ENABLE;
-	tegra_plane_writel(p, value, DC_WIN_WIN_OPTIONS);
+	tegra_plane_ग_लिखोl(p, value, DC_WIN_WIN_OPTIONS);
 
-	tegra_dc_remove_shared_plane(dc, p);
+	tegra_dc_हटाओ_shared_plane(dc, p);
 
 	host1x_client_suspend(&dc->client);
-}
+पूर्ण
 
-static void tegra_shared_plane_atomic_update(struct drm_plane *plane,
-					     struct drm_atomic_state *state)
-{
-	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+अटल व्योम tegra_shared_plane_atomic_update(काष्ठा drm_plane *plane,
+					     काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	struct tegra_plane_state *tegra_plane_state = to_tegra_plane_state(new_state);
-	struct tegra_dc *dc = to_tegra_dc(new_state->crtc);
-	unsigned int zpos = new_state->normalized_zpos;
-	struct drm_framebuffer *fb = new_state->fb;
-	struct tegra_plane *p = to_tegra_plane(plane);
+	काष्ठा tegra_plane_state *tegra_plane_state = to_tegra_plane_state(new_state);
+	काष्ठा tegra_dc *dc = to_tegra_dc(new_state->crtc);
+	अचिन्हित पूर्णांक zpos = new_state->normalized_zpos;
+	काष्ठा drm_framebuffer *fb = new_state->fb;
+	काष्ठा tegra_plane *p = to_tegra_plane(plane);
 	dma_addr_t base;
 	u32 value;
-	int err;
+	पूर्णांक err;
 
 	/* rien ne va plus */
-	if (!new_state->crtc || !new_state->fb)
-		return;
+	अगर (!new_state->crtc || !new_state->fb)
+		वापस;
 
-	if (!new_state->visible) {
+	अगर (!new_state->visible) अणु
 		tegra_shared_plane_atomic_disable(plane, state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	err = host1x_client_resume(&dc->client);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dc->dev, "failed to resume: %d\n", err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	tegra_dc_assign_shared_plane(dc, p);
 
-	tegra_plane_writel(p, VCOUNTER, DC_WIN_CORE_ACT_CONTROL);
+	tegra_plane_ग_लिखोl(p, VCOUNTER, DC_WIN_CORE_ACT_CONTROL);
 
 	/* blending */
 	value = BLEND_FACTOR_DST_ALPHA_ZERO | BLEND_FACTOR_SRC_ALPHA_K2 |
 		BLEND_FACTOR_DST_COLOR_NEG_K1_TIMES_SRC |
 		BLEND_FACTOR_SRC_COLOR_K1_TIMES_SRC;
-	tegra_plane_writel(p, value, DC_WIN_BLEND_MATCH_SELECT);
+	tegra_plane_ग_लिखोl(p, value, DC_WIN_BLEND_MATCH_SELECT);
 
 	value = BLEND_FACTOR_DST_ALPHA_ZERO | BLEND_FACTOR_SRC_ALPHA_K2 |
 		BLEND_FACTOR_DST_COLOR_NEG_K1_TIMES_SRC |
 		BLEND_FACTOR_SRC_COLOR_K1_TIMES_SRC;
-	tegra_plane_writel(p, value, DC_WIN_BLEND_NOMATCH_SELECT);
+	tegra_plane_ग_लिखोl(p, value, DC_WIN_BLEND_NOMATCH_SELECT);
 
 	value = K2(255) | K1(255) | WINDOW_LAYER_DEPTH(255 - zpos);
-	tegra_plane_writel(p, value, DC_WIN_BLEND_LAYER_CONTROL);
+	tegra_plane_ग_लिखोl(p, value, DC_WIN_BLEND_LAYER_CONTROL);
 
 	/* bypass scaling */
 	value = HORIZONTAL_TAPS_5 | VERTICAL_TAPS_5;
-	tegra_plane_writel(p, value, DC_WIN_WINDOWGROUP_SET_CONTROL_INPUT_SCALER);
+	tegra_plane_ग_लिखोl(p, value, DC_WIN_WINDOWGROUP_SET_CONTROL_INPUT_SCALER);
 
 	value = INPUT_SCALER_VBYPASS | INPUT_SCALER_HBYPASS;
-	tegra_plane_writel(p, value, DC_WIN_WINDOWGROUP_SET_INPUT_SCALER_USAGE);
+	tegra_plane_ग_लिखोl(p, value, DC_WIN_WINDOWGROUP_SET_INPUT_SCALER_USAGE);
 
 	/* disable compression */
-	tegra_plane_writel(p, 0, DC_WINBUF_CDE_CONTROL);
+	tegra_plane_ग_लिखोl(p, 0, DC_WINBUF_CDE_CONTROL);
 
 	base = tegra_plane_state->iova[0] + fb->offsets[0];
 
-#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
 	/*
-	 * Physical address bit 39 in Tegra194 is used as a switch for special
+	 * Physical address bit 39 in Tegra194 is used as a चयन क्रम special
 	 * logic that swizzles the memory using either the legacy Tegra or the
 	 * dGPU sector layout.
 	 */
-	if (tegra_plane_state->tiling.sector_layout == TEGRA_BO_SECTOR_LAYOUT_GPU)
+	अगर (tegra_plane_state->tiling.sector_layout == TEGRA_BO_SECTOR_LAYOUT_GPU)
 		base |= BIT_ULL(39);
-#endif
+#पूर्ण_अगर
 
-	tegra_plane_writel(p, tegra_plane_state->format, DC_WIN_COLOR_DEPTH);
-	tegra_plane_writel(p, 0, DC_WIN_PRECOMP_WGRP_PARAMS);
+	tegra_plane_ग_लिखोl(p, tegra_plane_state->क्रमmat, DC_WIN_COLOR_DEPTH);
+	tegra_plane_ग_लिखोl(p, 0, DC_WIN_PRECOMP_WGRP_PARAMS);
 
 	value = V_POSITION(new_state->crtc_y) |
 		H_POSITION(new_state->crtc_x);
-	tegra_plane_writel(p, value, DC_WIN_POSITION);
+	tegra_plane_ग_लिखोl(p, value, DC_WIN_POSITION);
 
 	value = V_SIZE(new_state->crtc_h) | H_SIZE(new_state->crtc_w);
-	tegra_plane_writel(p, value, DC_WIN_SIZE);
+	tegra_plane_ग_लिखोl(p, value, DC_WIN_SIZE);
 
 	value = WIN_ENABLE | COLOR_EXPAND;
-	tegra_plane_writel(p, value, DC_WIN_WIN_OPTIONS);
+	tegra_plane_ग_लिखोl(p, value, DC_WIN_WIN_OPTIONS);
 
 	value = V_SIZE(new_state->crtc_h) | H_SIZE(new_state->crtc_w);
-	tegra_plane_writel(p, value, DC_WIN_CROPPED_SIZE);
+	tegra_plane_ग_लिखोl(p, value, DC_WIN_CROPPED_SIZE);
 
-	tegra_plane_writel(p, upper_32_bits(base), DC_WINBUF_START_ADDR_HI);
-	tegra_plane_writel(p, lower_32_bits(base), DC_WINBUF_START_ADDR);
+	tegra_plane_ग_लिखोl(p, upper_32_bits(base), DC_WINBUF_START_ADDR_HI);
+	tegra_plane_ग_लिखोl(p, lower_32_bits(base), DC_WINBUF_START_ADDR);
 
 	value = PITCH(fb->pitches[0]);
-	tegra_plane_writel(p, value, DC_WIN_PLANAR_STORAGE);
+	tegra_plane_ग_लिखोl(p, value, DC_WIN_PLANAR_STORAGE);
 
 	value = CLAMP_BEFORE_BLEND | DEGAMMA_SRGB | INPUT_RANGE_FULL;
-	tegra_plane_writel(p, value, DC_WIN_SET_PARAMS);
+	tegra_plane_ग_लिखोl(p, value, DC_WIN_SET_PARAMS);
 
 	value = OFFSET_X(new_state->src_y >> 16) |
 		OFFSET_Y(new_state->src_x >> 16);
-	tegra_plane_writel(p, value, DC_WINBUF_CROPPED_POINT);
+	tegra_plane_ग_लिखोl(p, value, DC_WINBUF_CROPPED_POINT);
 
-	if (dc->soc->supports_block_linear) {
-		unsigned long height = tegra_plane_state->tiling.value;
+	अगर (dc->soc->supports_block_linear) अणु
+		अचिन्हित दीर्घ height = tegra_plane_state->tiling.value;
 
 		/* XXX */
-		switch (tegra_plane_state->tiling.mode) {
-		case TEGRA_BO_TILING_MODE_PITCH:
+		चयन (tegra_plane_state->tiling.mode) अणु
+		हाल TEGRA_BO_TILING_MODE_PITCH:
 			value = DC_WINBUF_SURFACE_KIND_BLOCK_HEIGHT(0) |
 				DC_WINBUF_SURFACE_KIND_PITCH;
-			break;
+			अवरोध;
 
 		/* XXX not supported on Tegra186 and later */
-		case TEGRA_BO_TILING_MODE_TILED:
+		हाल TEGRA_BO_TILING_MODE_TILED:
 			value = DC_WINBUF_SURFACE_KIND_TILED;
-			break;
+			अवरोध;
 
-		case TEGRA_BO_TILING_MODE_BLOCK:
+		हाल TEGRA_BO_TILING_MODE_BLOCK:
 			value = DC_WINBUF_SURFACE_KIND_BLOCK_HEIGHT(height) |
 				DC_WINBUF_SURFACE_KIND_BLOCK;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		tegra_plane_writel(p, value, DC_WINBUF_SURFACE_KIND);
-	}
+		tegra_plane_ग_लिखोl(p, value, DC_WINBUF_SURFACE_KIND);
+	पूर्ण
 
 	/* disable gamut CSC */
-	value = tegra_plane_readl(p, DC_WIN_WINDOW_SET_CONTROL);
+	value = tegra_plane_पढ़ोl(p, DC_WIN_WINDOW_SET_CONTROL);
 	value &= ~CONTROL_CSC_ENABLE;
-	tegra_plane_writel(p, value, DC_WIN_WINDOW_SET_CONTROL);
+	tegra_plane_ग_लिखोl(p, value, DC_WIN_WINDOW_SET_CONTROL);
 
 	host1x_client_suspend(&dc->client);
-}
+पूर्ण
 
-static const struct drm_plane_helper_funcs tegra_shared_plane_helper_funcs = {
+अटल स्थिर काष्ठा drm_plane_helper_funcs tegra_shared_plane_helper_funcs = अणु
 	.prepare_fb = tegra_plane_prepare_fb,
 	.cleanup_fb = tegra_plane_cleanup_fb,
 	.atomic_check = tegra_shared_plane_atomic_check,
 	.atomic_update = tegra_shared_plane_atomic_update,
 	.atomic_disable = tegra_shared_plane_atomic_disable,
-};
+पूर्ण;
 
-struct drm_plane *tegra_shared_plane_create(struct drm_device *drm,
-					    struct tegra_dc *dc,
-					    unsigned int wgrp,
-					    unsigned int index)
-{
-	enum drm_plane_type type = DRM_PLANE_TYPE_OVERLAY;
-	struct tegra_drm *tegra = drm->dev_private;
-	struct tegra_display_hub *hub = tegra->hub;
-	struct tegra_shared_plane *plane;
-	unsigned int possible_crtcs;
-	unsigned int num_formats;
-	const u64 *modifiers;
-	struct drm_plane *p;
-	const u32 *formats;
-	int err;
+काष्ठा drm_plane *tegra_shared_plane_create(काष्ठा drm_device *drm,
+					    काष्ठा tegra_dc *dc,
+					    अचिन्हित पूर्णांक wgrp,
+					    अचिन्हित पूर्णांक index)
+अणु
+	क्रमागत drm_plane_type type = DRM_PLANE_TYPE_OVERLAY;
+	काष्ठा tegra_drm *tegra = drm->dev_निजी;
+	काष्ठा tegra_display_hub *hub = tegra->hub;
+	काष्ठा tegra_shared_plane *plane;
+	अचिन्हित पूर्णांक possible_crtcs;
+	अचिन्हित पूर्णांक num_क्रमmats;
+	स्थिर u64 *modअगरiers;
+	काष्ठा drm_plane *p;
+	स्थिर u32 *क्रमmats;
+	पूर्णांक err;
 
-	plane = kzalloc(sizeof(*plane), GFP_KERNEL);
-	if (!plane)
-		return ERR_PTR(-ENOMEM);
+	plane = kzalloc(माप(*plane), GFP_KERNEL);
+	अगर (!plane)
+		वापस ERR_PTR(-ENOMEM);
 
 	plane->base.offset = 0x0a00 + 0x0300 * index;
 	plane->base.index = index;
@@ -610,253 +611,253 @@ struct drm_plane *tegra_shared_plane_create(struct drm_device *drm,
 
 	p = &plane->base.base;
 
-	/* planes can be assigned to arbitrary CRTCs */
+	/* planes can be asचिन्हित to arbitrary CRTCs */
 	possible_crtcs = BIT(tegra->num_crtcs) - 1;
 
-	num_formats = ARRAY_SIZE(tegra_shared_plane_formats);
-	formats = tegra_shared_plane_formats;
-	modifiers = tegra_shared_plane_modifiers;
+	num_क्रमmats = ARRAY_SIZE(tegra_shared_plane_क्रमmats);
+	क्रमmats = tegra_shared_plane_क्रमmats;
+	modअगरiers = tegra_shared_plane_modअगरiers;
 
 	err = drm_universal_plane_init(drm, p, possible_crtcs,
-				       &tegra_plane_funcs, formats,
-				       num_formats, modifiers, type, NULL);
-	if (err < 0) {
-		kfree(plane);
-		return ERR_PTR(err);
-	}
+				       &tegra_plane_funcs, क्रमmats,
+				       num_क्रमmats, modअगरiers, type, शून्य);
+	अगर (err < 0) अणु
+		kमुक्त(plane);
+		वापस ERR_PTR(err);
+	पूर्ण
 
 	drm_plane_helper_add(p, &tegra_shared_plane_helper_funcs);
 	drm_plane_create_zpos_property(p, 0, 0, 255);
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static struct drm_private_state *
-tegra_display_hub_duplicate_state(struct drm_private_obj *obj)
-{
-	struct tegra_display_hub_state *state;
+अटल काष्ठा drm_निजी_state *
+tegra_display_hub_duplicate_state(काष्ठा drm_निजी_obj *obj)
+अणु
+	काष्ठा tegra_display_hub_state *state;
 
-	state = kmemdup(obj->state, sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return NULL;
+	state = kmemdup(obj->state, माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस शून्य;
 
-	__drm_atomic_helper_private_obj_duplicate_state(obj, &state->base);
+	__drm_atomic_helper_निजी_obj_duplicate_state(obj, &state->base);
 
-	return &state->base;
-}
+	वापस &state->base;
+पूर्ण
 
-static void tegra_display_hub_destroy_state(struct drm_private_obj *obj,
-					    struct drm_private_state *state)
-{
-	struct tegra_display_hub_state *hub_state =
+अटल व्योम tegra_display_hub_destroy_state(काष्ठा drm_निजी_obj *obj,
+					    काष्ठा drm_निजी_state *state)
+अणु
+	काष्ठा tegra_display_hub_state *hub_state =
 		to_tegra_display_hub_state(state);
 
-	kfree(hub_state);
-}
+	kमुक्त(hub_state);
+पूर्ण
 
-static const struct drm_private_state_funcs tegra_display_hub_state_funcs = {
+अटल स्थिर काष्ठा drm_निजी_state_funcs tegra_display_hub_state_funcs = अणु
 	.atomic_duplicate_state = tegra_display_hub_duplicate_state,
 	.atomic_destroy_state = tegra_display_hub_destroy_state,
-};
+पूर्ण;
 
-static struct tegra_display_hub_state *
-tegra_display_hub_get_state(struct tegra_display_hub *hub,
-			    struct drm_atomic_state *state)
-{
-	struct drm_private_state *priv;
+अटल काष्ठा tegra_display_hub_state *
+tegra_display_hub_get_state(काष्ठा tegra_display_hub *hub,
+			    काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_निजी_state *priv;
 
-	priv = drm_atomic_get_private_obj_state(state, &hub->base);
-	if (IS_ERR(priv))
-		return ERR_CAST(priv);
+	priv = drm_atomic_get_निजी_obj_state(state, &hub->base);
+	अगर (IS_ERR(priv))
+		वापस ERR_CAST(priv);
 
-	return to_tegra_display_hub_state(priv);
-}
+	वापस to_tegra_display_hub_state(priv);
+पूर्ण
 
-int tegra_display_hub_atomic_check(struct drm_device *drm,
-				   struct drm_atomic_state *state)
-{
-	struct tegra_drm *tegra = drm->dev_private;
-	struct tegra_display_hub_state *hub_state;
-	struct drm_crtc_state *old, *new;
-	struct drm_crtc *crtc;
-	unsigned int i;
+पूर्णांक tegra_display_hub_atomic_check(काष्ठा drm_device *drm,
+				   काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा tegra_drm *tegra = drm->dev_निजी;
+	काष्ठा tegra_display_hub_state *hub_state;
+	काष्ठा drm_crtc_state *old, *new;
+	काष्ठा drm_crtc *crtc;
+	अचिन्हित पूर्णांक i;
 
-	if (!tegra->hub)
-		return 0;
+	अगर (!tegra->hub)
+		वापस 0;
 
 	hub_state = tegra_display_hub_get_state(tegra->hub, state);
-	if (IS_ERR(hub_state))
-		return PTR_ERR(hub_state);
+	अगर (IS_ERR(hub_state))
+		वापस PTR_ERR(hub_state);
 
 	/*
-	 * The display hub display clock needs to be fed by the display clock
+	 * The display hub display घड़ी needs to be fed by the display घड़ी
 	 * with the highest frequency to ensure proper functioning of all the
 	 * displays.
 	 *
 	 * Note that this isn't used before Tegra186, but it doesn't hurt and
 	 * conditionalizing it would make the code less clean.
 	 */
-	for_each_oldnew_crtc_in_state(state, crtc, old, new, i) {
-		struct tegra_dc_state *dc = to_dc_state(new);
+	क्रम_each_oldnew_crtc_in_state(state, crtc, old, new, i) अणु
+		काष्ठा tegra_dc_state *dc = to_dc_state(new);
 
-		if (new->active) {
-			if (!hub_state->clk || dc->pclk > hub_state->rate) {
+		अगर (new->active) अणु
+			अगर (!hub_state->clk || dc->pclk > hub_state->rate) अणु
 				hub_state->dc = to_tegra_dc(dc->base.crtc);
 				hub_state->clk = hub_state->dc->clk;
 				hub_state->rate = dc->pclk;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tegra_display_hub_update(struct tegra_dc *dc)
-{
+अटल व्योम tegra_display_hub_update(काष्ठा tegra_dc *dc)
+अणु
 	u32 value;
-	int err;
+	पूर्णांक err;
 
 	err = host1x_client_resume(&dc->client);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dc->dev, "failed to resume: %d\n", err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	value = tegra_dc_readl(dc, DC_CMD_IHUB_COMMON_MISC_CTL);
+	value = tegra_dc_पढ़ोl(dc, DC_CMD_IHUB_COMMON_MISC_CTL);
 	value &= ~LATENCY_EVENT;
-	tegra_dc_writel(dc, value, DC_CMD_IHUB_COMMON_MISC_CTL);
+	tegra_dc_ग_लिखोl(dc, value, DC_CMD_IHUB_COMMON_MISC_CTL);
 
-	value = tegra_dc_readl(dc, DC_DISP_IHUB_COMMON_DISPLAY_FETCH_METER);
+	value = tegra_dc_पढ़ोl(dc, DC_DISP_IHUB_COMMON_DISPLAY_FETCH_METER);
 	value = CURS_SLOTS(1) | WGRP_SLOTS(1);
-	tegra_dc_writel(dc, value, DC_DISP_IHUB_COMMON_DISPLAY_FETCH_METER);
+	tegra_dc_ग_लिखोl(dc, value, DC_DISP_IHUB_COMMON_DISPLAY_FETCH_METER);
 
-	tegra_dc_writel(dc, COMMON_UPDATE, DC_CMD_STATE_CONTROL);
-	tegra_dc_readl(dc, DC_CMD_STATE_CONTROL);
-	tegra_dc_writel(dc, COMMON_ACTREQ, DC_CMD_STATE_CONTROL);
-	tegra_dc_readl(dc, DC_CMD_STATE_CONTROL);
+	tegra_dc_ग_लिखोl(dc, COMMON_UPDATE, DC_CMD_STATE_CONTROL);
+	tegra_dc_पढ़ोl(dc, DC_CMD_STATE_CONTROL);
+	tegra_dc_ग_लिखोl(dc, COMMON_ACTREQ, DC_CMD_STATE_CONTROL);
+	tegra_dc_पढ़ोl(dc, DC_CMD_STATE_CONTROL);
 
 	host1x_client_suspend(&dc->client);
-}
+पूर्ण
 
-void tegra_display_hub_atomic_commit(struct drm_device *drm,
-				     struct drm_atomic_state *state)
-{
-	struct tegra_drm *tegra = drm->dev_private;
-	struct tegra_display_hub *hub = tegra->hub;
-	struct tegra_display_hub_state *hub_state;
-	struct device *dev = hub->client.dev;
-	int err;
+व्योम tegra_display_hub_atomic_commit(काष्ठा drm_device *drm,
+				     काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा tegra_drm *tegra = drm->dev_निजी;
+	काष्ठा tegra_display_hub *hub = tegra->hub;
+	काष्ठा tegra_display_hub_state *hub_state;
+	काष्ठा device *dev = hub->client.dev;
+	पूर्णांक err;
 
 	hub_state = to_tegra_display_hub_state(hub->base.state);
 
-	if (hub_state->clk) {
+	अगर (hub_state->clk) अणु
 		err = clk_set_rate(hub_state->clk, hub_state->rate);
-		if (err < 0)
+		अगर (err < 0)
 			dev_err(dev, "failed to set rate of %pC to %lu Hz\n",
 				hub_state->clk, hub_state->rate);
 
 		err = clk_set_parent(hub->clk_disp, hub_state->clk);
-		if (err < 0)
+		अगर (err < 0)
 			dev_err(dev, "failed to set parent of %pC to %pC: %d\n",
 				hub->clk_disp, hub_state->clk, err);
-	}
+	पूर्ण
 
-	if (hub_state->dc)
+	अगर (hub_state->dc)
 		tegra_display_hub_update(hub_state->dc);
-}
+पूर्ण
 
-static int tegra_display_hub_init(struct host1x_client *client)
-{
-	struct tegra_display_hub *hub = to_tegra_display_hub(client);
-	struct drm_device *drm = dev_get_drvdata(client->host);
-	struct tegra_drm *tegra = drm->dev_private;
-	struct tegra_display_hub_state *state;
+अटल पूर्णांक tegra_display_hub_init(काष्ठा host1x_client *client)
+अणु
+	काष्ठा tegra_display_hub *hub = to_tegra_display_hub(client);
+	काष्ठा drm_device *drm = dev_get_drvdata(client->host);
+	काष्ठा tegra_drm *tegra = drm->dev_निजी;
+	काष्ठा tegra_display_hub_state *state;
 
-	state = kzalloc(sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return -ENOMEM;
+	state = kzalloc(माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस -ENOMEM;
 
-	drm_atomic_private_obj_init(drm, &hub->base, &state->base,
+	drm_atomic_निजी_obj_init(drm, &hub->base, &state->base,
 				    &tegra_display_hub_state_funcs);
 
 	tegra->hub = hub;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_display_hub_exit(struct host1x_client *client)
-{
-	struct drm_device *drm = dev_get_drvdata(client->host);
-	struct tegra_drm *tegra = drm->dev_private;
+अटल पूर्णांक tegra_display_hub_निकास(काष्ठा host1x_client *client)
+अणु
+	काष्ठा drm_device *drm = dev_get_drvdata(client->host);
+	काष्ठा tegra_drm *tegra = drm->dev_निजी;
 
-	drm_atomic_private_obj_fini(&tegra->hub->base);
-	tegra->hub = NULL;
+	drm_atomic_निजी_obj_fini(&tegra->hub->base);
+	tegra->hub = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_display_hub_runtime_suspend(struct host1x_client *client)
-{
-	struct tegra_display_hub *hub = to_tegra_display_hub(client);
-	struct device *dev = client->dev;
-	unsigned int i = hub->num_heads;
-	int err;
+अटल पूर्णांक tegra_display_hub_runसमय_suspend(काष्ठा host1x_client *client)
+अणु
+	काष्ठा tegra_display_hub *hub = to_tegra_display_hub(client);
+	काष्ठा device *dev = client->dev;
+	अचिन्हित पूर्णांक i = hub->num_heads;
+	पूर्णांक err;
 
-	err = reset_control_assert(hub->rst);
-	if (err < 0)
-		return err;
+	err = reset_control_निश्चित(hub->rst);
+	अगर (err < 0)
+		वापस err;
 
-	while (i--)
+	जबतक (i--)
 		clk_disable_unprepare(hub->clk_heads[i]);
 
 	clk_disable_unprepare(hub->clk_hub);
 	clk_disable_unprepare(hub->clk_dsc);
 	clk_disable_unprepare(hub->clk_disp);
 
-	pm_runtime_put_sync(dev);
+	pm_runसमय_put_sync(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_display_hub_runtime_resume(struct host1x_client *client)
-{
-	struct tegra_display_hub *hub = to_tegra_display_hub(client);
-	struct device *dev = client->dev;
-	unsigned int i;
-	int err;
+अटल पूर्णांक tegra_display_hub_runसमय_resume(काष्ठा host1x_client *client)
+अणु
+	काष्ठा tegra_display_hub *hub = to_tegra_display_hub(client);
+	काष्ठा device *dev = client->dev;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	err = pm_runtime_resume_and_get(dev);
-	if (err < 0) {
+	err = pm_runसमय_resume_and_get(dev);
+	अगर (err < 0) अणु
 		dev_err(dev, "failed to get runtime PM: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = clk_prepare_enable(hub->clk_disp);
-	if (err < 0)
-		goto put_rpm;
+	अगर (err < 0)
+		जाओ put_rpm;
 
 	err = clk_prepare_enable(hub->clk_dsc);
-	if (err < 0)
-		goto disable_disp;
+	अगर (err < 0)
+		जाओ disable_disp;
 
 	err = clk_prepare_enable(hub->clk_hub);
-	if (err < 0)
-		goto disable_dsc;
+	अगर (err < 0)
+		जाओ disable_dsc;
 
-	for (i = 0; i < hub->num_heads; i++) {
+	क्रम (i = 0; i < hub->num_heads; i++) अणु
 		err = clk_prepare_enable(hub->clk_heads[i]);
-		if (err < 0)
-			goto disable_heads;
-	}
+		अगर (err < 0)
+			जाओ disable_heads;
+	पूर्ण
 
-	err = reset_control_deassert(hub->rst);
-	if (err < 0)
-		goto disable_heads;
+	err = reset_control_deनिश्चित(hub->rst);
+	अगर (err < 0)
+		जाओ disable_heads;
 
-	return 0;
+	वापस 0;
 
 disable_heads:
-	while (i--)
+	जबतक (i--)
 		clk_disable_unprepare(hub->clk_heads[i]);
 
 	clk_disable_unprepare(hub->clk_hub);
@@ -865,195 +866,195 @@ disable_dsc:
 disable_disp:
 	clk_disable_unprepare(hub->clk_disp);
 put_rpm:
-	pm_runtime_put_sync(dev);
-	return err;
-}
+	pm_runसमय_put_sync(dev);
+	वापस err;
+पूर्ण
 
-static const struct host1x_client_ops tegra_display_hub_ops = {
+अटल स्थिर काष्ठा host1x_client_ops tegra_display_hub_ops = अणु
 	.init = tegra_display_hub_init,
-	.exit = tegra_display_hub_exit,
-	.suspend = tegra_display_hub_runtime_suspend,
-	.resume = tegra_display_hub_runtime_resume,
-};
+	.निकास = tegra_display_hub_निकास,
+	.suspend = tegra_display_hub_runसमय_suspend,
+	.resume = tegra_display_hub_runसमय_resume,
+पूर्ण;
 
-static int tegra_display_hub_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक tegra_display_hub_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	u64 dma_mask = dma_get_mask(pdev->dev.parent);
-	struct device_node *child = NULL;
-	struct tegra_display_hub *hub;
-	struct clk *clk;
-	unsigned int i;
-	int err;
+	काष्ठा device_node *child = शून्य;
+	काष्ठा tegra_display_hub *hub;
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
 	err = dma_coerce_mask_and_coherent(&pdev->dev, dma_mask);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "failed to set DMA mask: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	hub = devm_kzalloc(&pdev->dev, sizeof(*hub), GFP_KERNEL);
-	if (!hub)
-		return -ENOMEM;
+	hub = devm_kzalloc(&pdev->dev, माप(*hub), GFP_KERNEL);
+	अगर (!hub)
+		वापस -ENOMEM;
 
 	hub->soc = of_device_get_match_data(&pdev->dev);
 
 	hub->clk_disp = devm_clk_get(&pdev->dev, "disp");
-	if (IS_ERR(hub->clk_disp)) {
+	अगर (IS_ERR(hub->clk_disp)) अणु
 		err = PTR_ERR(hub->clk_disp);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (hub->soc->supports_dsc) {
+	अगर (hub->soc->supports_dsc) अणु
 		hub->clk_dsc = devm_clk_get(&pdev->dev, "dsc");
-		if (IS_ERR(hub->clk_dsc)) {
+		अगर (IS_ERR(hub->clk_dsc)) अणु
 			err = PTR_ERR(hub->clk_dsc);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	hub->clk_hub = devm_clk_get(&pdev->dev, "hub");
-	if (IS_ERR(hub->clk_hub)) {
+	अगर (IS_ERR(hub->clk_hub)) अणु
 		err = PTR_ERR(hub->clk_hub);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	hub->rst = devm_reset_control_get(&pdev->dev, "misc");
-	if (IS_ERR(hub->rst)) {
+	अगर (IS_ERR(hub->rst)) अणु
 		err = PTR_ERR(hub->rst);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	hub->wgrps = devm_kcalloc(&pdev->dev, hub->soc->num_wgrps,
-				  sizeof(*hub->wgrps), GFP_KERNEL);
-	if (!hub->wgrps)
-		return -ENOMEM;
+	hub->wgrps = devm_kसुस्मृति(&pdev->dev, hub->soc->num_wgrps,
+				  माप(*hub->wgrps), GFP_KERNEL);
+	अगर (!hub->wgrps)
+		वापस -ENOMEM;
 
-	for (i = 0; i < hub->soc->num_wgrps; i++) {
-		struct tegra_windowgroup *wgrp = &hub->wgrps[i];
-		char id[8];
+	क्रम (i = 0; i < hub->soc->num_wgrps; i++) अणु
+		काष्ठा tegra_winकरोwgroup *wgrp = &hub->wgrps[i];
+		अक्षर id[8];
 
-		snprintf(id, sizeof(id), "wgrp%u", i);
+		snम_लिखो(id, माप(id), "wgrp%u", i);
 		mutex_init(&wgrp->lock);
 		wgrp->usecount = 0;
 		wgrp->index = i;
 
 		wgrp->rst = devm_reset_control_get(&pdev->dev, id);
-		if (IS_ERR(wgrp->rst))
-			return PTR_ERR(wgrp->rst);
+		अगर (IS_ERR(wgrp->rst))
+			वापस PTR_ERR(wgrp->rst);
 
-		err = reset_control_assert(wgrp->rst);
-		if (err < 0)
-			return err;
-	}
+		err = reset_control_निश्चित(wgrp->rst);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	hub->num_heads = of_get_child_count(pdev->dev.of_node);
 
-	hub->clk_heads = devm_kcalloc(&pdev->dev, hub->num_heads, sizeof(clk),
+	hub->clk_heads = devm_kसुस्मृति(&pdev->dev, hub->num_heads, माप(clk),
 				      GFP_KERNEL);
-	if (!hub->clk_heads)
-		return -ENOMEM;
+	अगर (!hub->clk_heads)
+		वापस -ENOMEM;
 
-	for (i = 0; i < hub->num_heads; i++) {
+	क्रम (i = 0; i < hub->num_heads; i++) अणु
 		child = of_get_next_child(pdev->dev.of_node, child);
-		if (!child) {
+		अगर (!child) अणु
 			dev_err(&pdev->dev, "failed to find node for head %u\n",
 				i);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		clk = devm_get_clk_from_child(&pdev->dev, child, "dc");
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			dev_err(&pdev->dev, "failed to get clock for head %u\n",
 				i);
 			of_node_put(child);
-			return PTR_ERR(clk);
-		}
+			वापस PTR_ERR(clk);
+		पूर्ण
 
 		hub->clk_heads[i] = clk;
-	}
+	पूर्ण
 
 	of_node_put(child);
 
-	/* XXX: enable clock across reset? */
-	err = reset_control_assert(hub->rst);
-	if (err < 0)
-		return err;
+	/* XXX: enable घड़ी across reset? */
+	err = reset_control_निश्चित(hub->rst);
+	अगर (err < 0)
+		वापस err;
 
-	platform_set_drvdata(pdev, hub);
-	pm_runtime_enable(&pdev->dev);
+	platक्रमm_set_drvdata(pdev, hub);
+	pm_runसमय_enable(&pdev->dev);
 
 	INIT_LIST_HEAD(&hub->client.list);
 	hub->client.ops = &tegra_display_hub_ops;
 	hub->client.dev = &pdev->dev;
 
-	err = host1x_client_register(&hub->client);
-	if (err < 0)
+	err = host1x_client_रेजिस्टर(&hub->client);
+	अगर (err < 0)
 		dev_err(&pdev->dev, "failed to register host1x client: %d\n",
 			err);
 
-	err = devm_of_platform_populate(&pdev->dev);
-	if (err < 0)
-		goto unregister;
+	err = devm_of_platक्रमm_populate(&pdev->dev);
+	अगर (err < 0)
+		जाओ unरेजिस्टर;
 
-	return err;
+	वापस err;
 
-unregister:
-	host1x_client_unregister(&hub->client);
-	pm_runtime_disable(&pdev->dev);
-	return err;
-}
+unरेजिस्टर:
+	host1x_client_unरेजिस्टर(&hub->client);
+	pm_runसमय_disable(&pdev->dev);
+	वापस err;
+पूर्ण
 
-static int tegra_display_hub_remove(struct platform_device *pdev)
-{
-	struct tegra_display_hub *hub = platform_get_drvdata(pdev);
-	unsigned int i;
-	int err;
+अटल पूर्णांक tegra_display_hub_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tegra_display_hub *hub = platक्रमm_get_drvdata(pdev);
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	err = host1x_client_unregister(&hub->client);
-	if (err < 0) {
+	err = host1x_client_unरेजिस्टर(&hub->client);
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "failed to unregister host1x client: %d\n",
 			err);
-	}
+	पूर्ण
 
-	for (i = 0; i < hub->soc->num_wgrps; i++) {
-		struct tegra_windowgroup *wgrp = &hub->wgrps[i];
+	क्रम (i = 0; i < hub->soc->num_wgrps; i++) अणु
+		काष्ठा tegra_winकरोwgroup *wgrp = &hub->wgrps[i];
 
 		mutex_destroy(&wgrp->lock);
-	}
+	पूर्ण
 
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct tegra_display_hub_soc tegra186_display_hub = {
+अटल स्थिर काष्ठा tegra_display_hub_soc tegra186_display_hub = अणु
 	.num_wgrps = 6,
 	.supports_dsc = true,
-};
+पूर्ण;
 
-static const struct tegra_display_hub_soc tegra194_display_hub = {
+अटल स्थिर काष्ठा tegra_display_hub_soc tegra194_display_hub = अणु
 	.num_wgrps = 6,
 	.supports_dsc = false,
-};
+पूर्ण;
 
-static const struct of_device_id tegra_display_hub_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id tegra_display_hub_of_match[] = अणु
+	अणु
 		.compatible = "nvidia,tegra194-display",
 		.data = &tegra194_display_hub
-	}, {
+	पूर्ण, अणु
 		.compatible = "nvidia,tegra186-display",
 		.data = &tegra186_display_hub
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
+	पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tegra_display_hub_of_match);
 
-struct platform_driver tegra_display_hub_driver = {
-	.driver = {
+काष्ठा platक्रमm_driver tegra_display_hub_driver = अणु
+	.driver = अणु
 		.name = "tegra-display-hub",
 		.of_match_table = tegra_display_hub_of_match,
-	},
+	पूर्ण,
 	.probe = tegra_display_hub_probe,
-	.remove = tegra_display_hub_remove,
-};
+	.हटाओ = tegra_display_hub_हटाओ,
+पूर्ण;

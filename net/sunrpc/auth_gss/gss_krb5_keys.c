@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * COPYRIGHT (c) 2008
  * The Regents of the University of Michigan
@@ -5,11 +6,11 @@
  *
  * Permission is granted to use, copy, create derivative works
  * and redistribute this software and such derivative works
- * for any purpose, so long as the name of The University of
- * Michigan is not used in any advertising or publicity
+ * क्रम any purpose, so दीर्घ as the name of The University of
+ * Michigan is not used in any advertising or खुलाity
  * pertaining to the use of distribution of this software
- * without specific, written prior authorization.  If the
- * above copyright notice or any other identification of the
+ * without specअगरic, written prior authorization.  If the
+ * above copyright notice or any other identअगरication of the
  * University of Michigan is included in any copy of any
  * portion of this software, then the disclaimer below must
  * also be included.
@@ -21,7 +22,7 @@
  * WITHOUT LIMITATION THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
  * REGENTS OF THE UNIVERSITY OF MICHIGAN SHALL NOT BE LIABLE
- * FOR ANY DAMAGES, INCLUDING SPECIAL, INDIRECT, INCIDENTAL, OR
+ * FOR ANY DAMAGES, INCLUDING SPECIAL, INसूचीECT, INCIDENTAL, OR
  * CONSEQUENTIAL DAMAGES, WITH RESPECT TO ANY CLAIM ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OF THE SOFTWARE, EVEN
  * IF IT HAS BEEN OR IS HEREAFTER ADVISED OF THE POSSIBILITY OF
@@ -34,19 +35,19 @@
  * All rights reserved.
  *
  * Export of this software from the United States of America may require
- * a specific license from the United States Government.  It is the
+ * a specअगरic license from the United States Government.  It is the
  * responsibility of any person or organization contemplating export to
- * obtain such a license before exporting.
+ * obtain such a license beक्रमe exporting.
  *
- * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
- * distribute this software and its documentation for any purpose and
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modअगरy, and
+ * distribute this software and its करोcumentation क्रम any purpose and
  * without fee is hereby granted, provided that the above copyright
  * notice appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting documentation, and that
- * the name of FundsXpress. not be used in advertising or publicity pertaining
- * to distribution of the software without specific, written prior
+ * this permission notice appear in supporting करोcumentation, and that
+ * the name of FundsXpress. not be used in advertising or खुलाity pertaining
+ * to distribution of the software without specअगरic, written prior
  * permission.  FundsXpress makes no representations about the suitability of
- * this software for any purpose.  It is provided "as is" without express
+ * this software क्रम any purpose.  It is provided "as is" without express
  * or implied warranty.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
@@ -54,29 +55,29 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <crypto/skcipher.h>
-#include <linux/err.h>
-#include <linux/types.h>
-#include <linux/sunrpc/gss_krb5.h>
-#include <linux/sunrpc/xdr.h>
-#include <linux/lcm.h>
+#समावेश <crypto/skcipher.h>
+#समावेश <linux/err.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sunrpc/gss_krb5.h>
+#समावेश <linux/sunrpc/xdr.h>
+#समावेश <linux/lcm.h>
 
-#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
 # define RPCDBG_FACILITY        RPCDBG_AUTH
-#endif
+#पूर्ण_अगर
 
 /*
  * This is the n-fold function as described in rfc3961, sec 5.1
- * Taken from MIT Kerberos and modified.
+ * Taken from MIT Kerberos and modअगरied.
  */
 
-static void krb5_nfold(u32 inbits, const u8 *in,
+अटल व्योम krb5_nfold(u32 inbits, स्थिर u8 *in,
 		       u32 outbits, u8 *out)
-{
-	unsigned long ulcm;
-	int byte, i, msbit;
+अणु
+	अचिन्हित दीर्घ ulcm;
+	पूर्णांक byte, i, msbit;
 
-	/* the code below is more readable if I make these bytes
+	/* the code below is more पढ़ोable अगर I make these bytes
 	   instead of bits */
 
 	inbits >>= 3;
@@ -85,24 +86,24 @@ static void krb5_nfold(u32 inbits, const u8 *in,
 	/* first compute lcm(n,k) */
 	ulcm = lcm(inbits, outbits);
 
-	/* now do the real work */
+	/* now करो the real work */
 
-	memset(out, 0, outbits);
+	स_रखो(out, 0, outbits);
 	byte = 0;
 
-	/* this will end up cycling through k lcm(k,n)/k times, which
+	/* this will end up cycling through k lcm(k,n)/k बार, which
 	   is correct */
-	for (i = ulcm-1; i >= 0; i--) {
-		/* compute the msbit in k which gets added into this byte */
+	क्रम (i = ulcm-1; i >= 0; i--) अणु
+		/* compute the msbit in k which माला_लो added पूर्णांकo this byte */
 		msbit = (
 			/* first, start with the msbit in the first,
 			 * unrotated byte */
 			 ((inbits << 3) - 1)
-			 /* then, for each byte, shift to the right
-			  * for each repetition */
+			 /* then, क्रम each byte, shअगरt to the right
+			  * क्रम each repetition */
 			 + (((inbits << 3) + 13) * (i/inbits))
 			 /* last, pick out the correct byte within
-			  * that shifted repetition */
+			  * that shअगरted repetition */
 			 + ((inbits - (i % inbits)) << 3)
 			 ) % (inbits << 3);
 
@@ -111,172 +112,172 @@ static void krb5_nfold(u32 inbits, const u8 *in,
 				  (in[((inbits) - (msbit >> 3)) % inbits]))
 				 >> ((msbit & 7) + 1)) & 0xff;
 
-		/* do the addition */
+		/* करो the addition */
 		byte += out[i % outbits];
 		out[i % outbits] = byte & 0xff;
 
-		/* keep around the carry bit, if any */
+		/* keep around the carry bit, अगर any */
 		byte >>= 8;
 
-	}
+	पूर्ण
 
-	/* if there's a carry bit left over, add it back in */
-	if (byte) {
-		for (i = outbits - 1; i >= 0; i--) {
-			/* do the addition */
+	/* अगर there's a carry bit left over, add it back in */
+	अगर (byte) अणु
+		क्रम (i = outbits - 1; i >= 0; i--) अणु
+			/* करो the addition */
 			byte += out[i];
 			out[i] = byte & 0xff;
 
-			/* keep around the carry bit, if any */
+			/* keep around the carry bit, अगर any */
 			byte >>= 8;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * This is the DK (derive_key) function as described in rfc3961, sec 5.1
- * Taken from MIT Kerberos and modified.
+ * Taken from MIT Kerberos and modअगरied.
  */
 
-u32 krb5_derive_key(const struct gss_krb5_enctype *gk5e,
-		    const struct xdr_netobj *inkey,
-		    struct xdr_netobj *outkey,
-		    const struct xdr_netobj *in_constant,
+u32 krb5_derive_key(स्थिर काष्ठा gss_krb5_enctype *gk5e,
+		    स्थिर काष्ठा xdr_netobj *inkey,
+		    काष्ठा xdr_netobj *outkey,
+		    स्थिर काष्ठा xdr_netobj *in_स्थिरant,
 		    gfp_t gfp_mask)
-{
-	size_t blocksize, keybytes, keylength, n;
-	unsigned char *inblockdata, *outblockdata, *rawkey;
-	struct xdr_netobj inblock, outblock;
-	struct crypto_sync_skcipher *cipher;
+अणु
+	माप_प्रकार blocksize, keybytes, keylength, n;
+	अचिन्हित अक्षर *inblockdata, *outblockdata, *rawkey;
+	काष्ठा xdr_netobj inblock, outblock;
+	काष्ठा crypto_sync_skcipher *cipher;
 	u32 ret = EINVAL;
 
 	blocksize = gk5e->blocksize;
 	keybytes = gk5e->keybytes;
 	keylength = gk5e->keylength;
 
-	if ((inkey->len != keylength) || (outkey->len != keylength))
-		goto err_return;
+	अगर ((inkey->len != keylength) || (outkey->len != keylength))
+		जाओ err_वापस;
 
 	cipher = crypto_alloc_sync_skcipher(gk5e->encrypt_name, 0, 0);
-	if (IS_ERR(cipher))
-		goto err_return;
-	if (crypto_sync_skcipher_setkey(cipher, inkey->data, inkey->len))
-		goto err_return;
+	अगर (IS_ERR(cipher))
+		जाओ err_वापस;
+	अगर (crypto_sync_skcipher_setkey(cipher, inkey->data, inkey->len))
+		जाओ err_वापस;
 
 	/* allocate and set up buffers */
 
 	ret = ENOMEM;
-	inblockdata = kmalloc(blocksize, gfp_mask);
-	if (inblockdata == NULL)
-		goto err_free_cipher;
+	inblockdata = kदो_स्मृति(blocksize, gfp_mask);
+	अगर (inblockdata == शून्य)
+		जाओ err_मुक्त_cipher;
 
-	outblockdata = kmalloc(blocksize, gfp_mask);
-	if (outblockdata == NULL)
-		goto err_free_in;
+	outblockdata = kदो_स्मृति(blocksize, gfp_mask);
+	अगर (outblockdata == शून्य)
+		जाओ err_मुक्त_in;
 
-	rawkey = kmalloc(keybytes, gfp_mask);
-	if (rawkey == NULL)
-		goto err_free_out;
+	rawkey = kदो_स्मृति(keybytes, gfp_mask);
+	अगर (rawkey == शून्य)
+		जाओ err_मुक्त_out;
 
-	inblock.data = (char *) inblockdata;
+	inblock.data = (अक्षर *) inblockdata;
 	inblock.len = blocksize;
 
-	outblock.data = (char *) outblockdata;
+	outblock.data = (अक्षर *) outblockdata;
 	outblock.len = blocksize;
 
 	/* initialize the input block */
 
-	if (in_constant->len == inblock.len) {
-		memcpy(inblock.data, in_constant->data, inblock.len);
-	} else {
-		krb5_nfold(in_constant->len * 8, in_constant->data,
+	अगर (in_स्थिरant->len == inblock.len) अणु
+		स_नकल(inblock.data, in_स्थिरant->data, inblock.len);
+	पूर्ण अन्यथा अणु
+		krb5_nfold(in_स्थिरant->len * 8, in_स्थिरant->data,
 			   inblock.len * 8, inblock.data);
-	}
+	पूर्ण
 
 	/* loop encrypting the blocks until enough key bytes are generated */
 
 	n = 0;
-	while (n < keybytes) {
-		(*(gk5e->encrypt))(cipher, NULL, inblock.data,
+	जबतक (n < keybytes) अणु
+		(*(gk5e->encrypt))(cipher, शून्य, inblock.data,
 				   outblock.data, inblock.len);
 
-		if ((keybytes - n) <= outblock.len) {
-			memcpy(rawkey + n, outblock.data, (keybytes - n));
-			break;
-		}
+		अगर ((keybytes - n) <= outblock.len) अणु
+			स_नकल(rawkey + n, outblock.data, (keybytes - n));
+			अवरोध;
+		पूर्ण
 
-		memcpy(rawkey + n, outblock.data, outblock.len);
-		memcpy(inblock.data, outblock.data, outblock.len);
+		स_नकल(rawkey + n, outblock.data, outblock.len);
+		स_नकल(inblock.data, outblock.data, outblock.len);
 		n += outblock.len;
-	}
+	पूर्ण
 
 	/* postprocess the key */
 
-	inblock.data = (char *) rawkey;
+	inblock.data = (अक्षर *) rawkey;
 	inblock.len = keybytes;
 
-	BUG_ON(gk5e->mk_key == NULL);
+	BUG_ON(gk5e->mk_key == शून्य);
 	ret = (*(gk5e->mk_key))(gk5e, &inblock, outkey);
-	if (ret) {
-		dprintk("%s: got %d from mk_key function for '%s'\n",
+	अगर (ret) अणु
+		dprपूर्णांकk("%s: got %d from mk_key function for '%s'\n",
 			__func__, ret, gk5e->encrypt_name);
-		goto err_free_raw;
-	}
+		जाओ err_मुक्त_raw;
+	पूर्ण
 
-	/* clean memory, free resources and exit */
+	/* clean memory, मुक्त resources and निकास */
 
 	ret = 0;
 
-err_free_raw:
-	kfree_sensitive(rawkey);
-err_free_out:
-	kfree_sensitive(outblockdata);
-err_free_in:
-	kfree_sensitive(inblockdata);
-err_free_cipher:
-	crypto_free_sync_skcipher(cipher);
-err_return:
-	return ret;
-}
+err_मुक्त_raw:
+	kमुक्त_sensitive(rawkey);
+err_मुक्त_out:
+	kमुक्त_sensitive(outblockdata);
+err_मुक्त_in:
+	kमुक्त_sensitive(inblockdata);
+err_मुक्त_cipher:
+	crypto_मुक्त_sync_skcipher(cipher);
+err_वापस:
+	वापस ret;
+पूर्ण
 
-#define smask(step) ((1<<step)-1)
-#define pstep(x, step) (((x)&smask(step))^(((x)>>step)&smask(step)))
-#define parity_char(x) pstep(pstep(pstep((x), 4), 2), 1)
+#घोषणा smask(step) ((1<<step)-1)
+#घोषणा pstep(x, step) (((x)&smask(step))^(((x)>>step)&smask(step)))
+#घोषणा parity_अक्षर(x) pstep(pstep(pstep((x), 4), 2), 1)
 
-static void mit_des_fixup_key_parity(u8 key[8])
-{
-	int i;
-	for (i = 0; i < 8; i++) {
+अटल व्योम mit_des_fixup_key_parity(u8 key[8])
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < 8; i++) अणु
 		key[i] &= 0xfe;
-		key[i] |= 1^parity_char(key[i]);
-	}
-}
+		key[i] |= 1^parity_अक्षर(key[i]);
+	पूर्ण
+पूर्ण
 
 /*
  * This is the des3 key derivation postprocess function
  */
-u32 gss_krb5_des3_make_key(const struct gss_krb5_enctype *gk5e,
-			   struct xdr_netobj *randombits,
-			   struct xdr_netobj *key)
-{
-	int i;
+u32 gss_krb5_des3_make_key(स्थिर काष्ठा gss_krb5_enctype *gk5e,
+			   काष्ठा xdr_netobj *अक्रमombits,
+			   काष्ठा xdr_netobj *key)
+अणु
+	पूर्णांक i;
 	u32 ret = EINVAL;
 
-	if (key->len != 24) {
-		dprintk("%s: key->len is %d\n", __func__, key->len);
-		goto err_out;
-	}
-	if (randombits->len != 21) {
-		dprintk("%s: randombits->len is %d\n",
-			__func__, randombits->len);
-		goto err_out;
-	}
+	अगर (key->len != 24) अणु
+		dprपूर्णांकk("%s: key->len is %d\n", __func__, key->len);
+		जाओ err_out;
+	पूर्ण
+	अगर (अक्रमombits->len != 21) अणु
+		dprपूर्णांकk("%s: randombits->len is %d\n",
+			__func__, अक्रमombits->len);
+		जाओ err_out;
+	पूर्ण
 
-	/* take the seven bytes, move them around into the top 7 bits of the
-	   8 key bytes, then compute the parity bits.  Do this three times. */
+	/* take the seven bytes, move them around पूर्णांकo the top 7 bits of the
+	   8 key bytes, then compute the parity bits.  Do this three बार. */
 
-	for (i = 0; i < 3; i++) {
-		memcpy(key->data + i*8, randombits->data + i*7, 7);
+	क्रम (i = 0; i < 3; i++) अणु
+		स_नकल(key->data + i*8, अक्रमombits->data + i*7, 7);
 		key->data[i*8+7] = (((key->data[i*8]&1)<<1) |
 				    ((key->data[i*8+1]&1)<<2) |
 				    ((key->data[i*8+2]&1)<<3) |
@@ -286,37 +287,37 @@ u32 gss_krb5_des3_make_key(const struct gss_krb5_enctype *gk5e,
 				    ((key->data[i*8+6]&1)<<7));
 
 		mit_des_fixup_key_parity(key->data + i*8);
-	}
+	पूर्ण
 	ret = 0;
 err_out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This is the aes key derivation postprocess function
  */
-u32 gss_krb5_aes_make_key(const struct gss_krb5_enctype *gk5e,
-			  struct xdr_netobj *randombits,
-			  struct xdr_netobj *key)
-{
+u32 gss_krb5_aes_make_key(स्थिर काष्ठा gss_krb5_enctype *gk5e,
+			  काष्ठा xdr_netobj *अक्रमombits,
+			  काष्ठा xdr_netobj *key)
+अणु
 	u32 ret = EINVAL;
 
-	if (key->len != 16 && key->len != 32) {
-		dprintk("%s: key->len is %d\n", __func__, key->len);
-		goto err_out;
-	}
-	if (randombits->len != 16 && randombits->len != 32) {
-		dprintk("%s: randombits->len is %d\n",
-			__func__, randombits->len);
-		goto err_out;
-	}
-	if (randombits->len != key->len) {
-		dprintk("%s: randombits->len is %d, key->len is %d\n",
-			__func__, randombits->len, key->len);
-		goto err_out;
-	}
-	memcpy(key->data, randombits->data, key->len);
+	अगर (key->len != 16 && key->len != 32) अणु
+		dprपूर्णांकk("%s: key->len is %d\n", __func__, key->len);
+		जाओ err_out;
+	पूर्ण
+	अगर (अक्रमombits->len != 16 && अक्रमombits->len != 32) अणु
+		dprपूर्णांकk("%s: randombits->len is %d\n",
+			__func__, अक्रमombits->len);
+		जाओ err_out;
+	पूर्ण
+	अगर (अक्रमombits->len != key->len) अणु
+		dprपूर्णांकk("%s: randombits->len is %d, key->len is %d\n",
+			__func__, अक्रमombits->len, key->len);
+		जाओ err_out;
+	पूर्ण
+	स_नकल(key->data, अक्रमombits->data, key->len);
 	ret = 0;
 err_out:
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NET_IPCOMP_H
-#define _NET_IPCOMP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NET_IPCOMP_H
+#घोषणा _NET_IPCOMP_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define IPCOMP_SCRATCH_SIZE     65400
+#घोषणा IPCOMP_SCRATCH_SIZE     65400
 
-struct crypto_comp;
+काष्ठा crypto_comp;
 
-struct ipcomp_data {
+काष्ठा ipcomp_data अणु
 	u16 threshold;
-	struct crypto_comp * __percpu *tfms;
-};
+	काष्ठा crypto_comp * __percpu *tfms;
+पूर्ण;
 
-struct ip_comp_hdr;
-struct sk_buff;
-struct xfrm_state;
+काष्ठा ip_comp_hdr;
+काष्ठा sk_buff;
+काष्ठा xfrm_state;
 
-int ipcomp_input(struct xfrm_state *x, struct sk_buff *skb);
-int ipcomp_output(struct xfrm_state *x, struct sk_buff *skb);
-void ipcomp_destroy(struct xfrm_state *x);
-int ipcomp_init_state(struct xfrm_state *x);
+पूर्णांक ipcomp_input(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb);
+पूर्णांक ipcomp_output(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb);
+व्योम ipcomp_destroy(काष्ठा xfrm_state *x);
+पूर्णांक ipcomp_init_state(काष्ठा xfrm_state *x);
 
-static inline struct ip_comp_hdr *ip_comp_hdr(const struct sk_buff *skb)
-{
-	return (struct ip_comp_hdr *)skb_transport_header(skb);
-}
+अटल अंतरभूत काष्ठा ip_comp_hdr *ip_comp_hdr(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस (काष्ठा ip_comp_hdr *)skb_transport_header(skb);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

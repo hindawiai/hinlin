@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * TI/National Semiconductor LP3943 GPIO driver
  *
@@ -7,16 +8,16 @@
  * Author: Milo Kim <milo.kim@ti.com>
  */
 
-#include <linux/bitops.h>
-#include <linux/err.h>
-#include <linux/gpio/driver.h>
-#include <linux/i2c.h>
-#include <linux/mfd/lp3943.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mfd/lp3943.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-enum lp3943_gpios {
+क्रमागत lp3943_gpios अणु
 	LP3943_GPIO1,
 	LP3943_GPIO2,
 	LP3943_GPIO3,
@@ -34,148 +35,148 @@ enum lp3943_gpios {
 	LP3943_GPIO15,
 	LP3943_GPIO16,
 	LP3943_MAX_GPIO,
-};
+पूर्ण;
 
-struct lp3943_gpio {
-	struct gpio_chip chip;
-	struct lp3943 *lp3943;
+काष्ठा lp3943_gpio अणु
+	काष्ठा gpio_chip chip;
+	काष्ठा lp3943 *lp3943;
 	u16 input_mask;		/* 1 = GPIO is input direction, 0 = output */
-};
+पूर्ण;
 
-static int lp3943_gpio_request(struct gpio_chip *chip, unsigned offset)
-{
-	struct lp3943_gpio *lp3943_gpio = gpiochip_get_data(chip);
-	struct lp3943 *lp3943 = lp3943_gpio->lp3943;
+अटल पूर्णांक lp3943_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा lp3943_gpio *lp3943_gpio = gpiochip_get_data(chip);
+	काष्ठा lp3943 *lp3943 = lp3943_gpio->lp3943;
 
-	/* Return an error if the pin is already assigned */
-	if (test_and_set_bit(offset, &lp3943->pin_used))
-		return -EBUSY;
+	/* Return an error अगर the pin is alपढ़ोy asचिन्हित */
+	अगर (test_and_set_bit(offset, &lp3943->pin_used))
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lp3943_gpio_free(struct gpio_chip *chip, unsigned offset)
-{
-	struct lp3943_gpio *lp3943_gpio = gpiochip_get_data(chip);
-	struct lp3943 *lp3943 = lp3943_gpio->lp3943;
+अटल व्योम lp3943_gpio_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा lp3943_gpio *lp3943_gpio = gpiochip_get_data(chip);
+	काष्ठा lp3943 *lp3943 = lp3943_gpio->lp3943;
 
 	clear_bit(offset, &lp3943->pin_used);
-}
+पूर्ण
 
-static int lp3943_gpio_set_mode(struct lp3943_gpio *lp3943_gpio, u8 offset,
+अटल पूर्णांक lp3943_gpio_set_mode(काष्ठा lp3943_gpio *lp3943_gpio, u8 offset,
 				u8 val)
-{
-	struct lp3943 *lp3943 = lp3943_gpio->lp3943;
-	const struct lp3943_reg_cfg *mux = lp3943->mux_cfg;
+अणु
+	काष्ठा lp3943 *lp3943 = lp3943_gpio->lp3943;
+	स्थिर काष्ठा lp3943_reg_cfg *mux = lp3943->mux_cfg;
 
-	return lp3943_update_bits(lp3943, mux[offset].reg, mux[offset].mask,
-				  val << mux[offset].shift);
-}
+	वापस lp3943_update_bits(lp3943, mux[offset].reg, mux[offset].mask,
+				  val << mux[offset].shअगरt);
+पूर्ण
 
-static int lp3943_gpio_direction_input(struct gpio_chip *chip, unsigned offset)
-{
-	struct lp3943_gpio *lp3943_gpio = gpiochip_get_data(chip);
+अटल पूर्णांक lp3943_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा lp3943_gpio *lp3943_gpio = gpiochip_get_data(chip);
 
 	lp3943_gpio->input_mask |= BIT(offset);
 
-	return lp3943_gpio_set_mode(lp3943_gpio, offset, LP3943_GPIO_IN);
-}
+	वापस lp3943_gpio_set_mode(lp3943_gpio, offset, LP3943_GPIO_IN);
+पूर्ण
 
-static int lp3943_get_gpio_in_status(struct lp3943_gpio *lp3943_gpio,
-				     struct gpio_chip *chip, unsigned offset)
-{
-	u8 addr, read;
-	int err;
+अटल पूर्णांक lp3943_get_gpio_in_status(काष्ठा lp3943_gpio *lp3943_gpio,
+				     काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	u8 addr, पढ़ो;
+	पूर्णांक err;
 
-	switch (offset) {
-	case LP3943_GPIO1 ... LP3943_GPIO8:
+	चयन (offset) अणु
+	हाल LP3943_GPIO1 ... LP3943_GPIO8:
 		addr = LP3943_REG_GPIO_A;
-		break;
-	case LP3943_GPIO9 ... LP3943_GPIO16:
+		अवरोध;
+	हाल LP3943_GPIO9 ... LP3943_GPIO16:
 		addr = LP3943_REG_GPIO_B;
 		offset = offset - 8;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	err = lp3943_read_byte(lp3943_gpio->lp3943, addr, &read);
-	if (err)
-		return err;
+	err = lp3943_पढ़ो_byte(lp3943_gpio->lp3943, addr, &पढ़ो);
+	अगर (err)
+		वापस err;
 
-	return !!(read & BIT(offset));
-}
+	वापस !!(पढ़ो & BIT(offset));
+पूर्ण
 
-static int lp3943_get_gpio_out_status(struct lp3943_gpio *lp3943_gpio,
-				      struct gpio_chip *chip, unsigned offset)
-{
-	struct lp3943 *lp3943 = lp3943_gpio->lp3943;
-	const struct lp3943_reg_cfg *mux = lp3943->mux_cfg;
-	u8 read;
-	int err;
+अटल पूर्णांक lp3943_get_gpio_out_status(काष्ठा lp3943_gpio *lp3943_gpio,
+				      काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा lp3943 *lp3943 = lp3943_gpio->lp3943;
+	स्थिर काष्ठा lp3943_reg_cfg *mux = lp3943->mux_cfg;
+	u8 पढ़ो;
+	पूर्णांक err;
 
-	err = lp3943_read_byte(lp3943, mux[offset].reg, &read);
-	if (err)
-		return err;
+	err = lp3943_पढ़ो_byte(lp3943, mux[offset].reg, &पढ़ो);
+	अगर (err)
+		वापस err;
 
-	read = (read & mux[offset].mask) >> mux[offset].shift;
+	पढ़ो = (पढ़ो & mux[offset].mask) >> mux[offset].shअगरt;
 
-	if (read == LP3943_GPIO_OUT_HIGH)
-		return 1;
-	else if (read == LP3943_GPIO_OUT_LOW)
-		return 0;
-	else
-		return -EINVAL;
-}
+	अगर (पढ़ो == LP3943_GPIO_OUT_HIGH)
+		वापस 1;
+	अन्यथा अगर (पढ़ो == LP3943_GPIO_OUT_LOW)
+		वापस 0;
+	अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static int lp3943_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct lp3943_gpio *lp3943_gpio = gpiochip_get_data(chip);
+अटल पूर्णांक lp3943_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा lp3943_gpio *lp3943_gpio = gpiochip_get_data(chip);
 
 	/*
 	 * Limitation:
-	 *   LP3943 doesn't have the GPIO direction register. It provides
-	 *   only input and output status registers.
+	 *   LP3943 करोesn't have the GPIO direction रेजिस्टर. It provides
+	 *   only input and output status रेजिस्टरs.
 	 *   So, direction info is required to handle the 'get' operation.
 	 *   This variable is updated whenever the direction is changed and
 	 *   it is used here.
 	 */
 
-	if (lp3943_gpio->input_mask & BIT(offset))
-		return lp3943_get_gpio_in_status(lp3943_gpio, chip, offset);
-	else
-		return lp3943_get_gpio_out_status(lp3943_gpio, chip, offset);
-}
+	अगर (lp3943_gpio->input_mask & BIT(offset))
+		वापस lp3943_get_gpio_in_status(lp3943_gpio, chip, offset);
+	अन्यथा
+		वापस lp3943_get_gpio_out_status(lp3943_gpio, chip, offset);
+पूर्ण
 
-static void lp3943_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
-{
-	struct lp3943_gpio *lp3943_gpio = gpiochip_get_data(chip);
+अटल व्योम lp3943_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा lp3943_gpio *lp3943_gpio = gpiochip_get_data(chip);
 	u8 data;
 
-	if (value)
+	अगर (value)
 		data = LP3943_GPIO_OUT_HIGH;
-	else
+	अन्यथा
 		data = LP3943_GPIO_OUT_LOW;
 
 	lp3943_gpio_set_mode(lp3943_gpio, offset, data);
-}
+पूर्ण
 
-static int lp3943_gpio_direction_output(struct gpio_chip *chip, unsigned offset,
-					int value)
-{
-	struct lp3943_gpio *lp3943_gpio = gpiochip_get_data(chip);
+अटल पूर्णांक lp3943_gpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित offset,
+					पूर्णांक value)
+अणु
+	काष्ठा lp3943_gpio *lp3943_gpio = gpiochip_get_data(chip);
 
 	lp3943_gpio_set(chip, offset, value);
 	lp3943_gpio->input_mask &= ~BIT(offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct gpio_chip lp3943_gpio_chip = {
+अटल स्थिर काष्ठा gpio_chip lp3943_gpio_chip = अणु
 	.label			= "lp3943",
 	.owner			= THIS_MODULE,
 	.request		= lp3943_gpio_request,
-	.free			= lp3943_gpio_free,
+	.मुक्त			= lp3943_gpio_मुक्त,
 	.direction_input	= lp3943_gpio_direction_input,
 	.get			= lp3943_gpio_get,
 	.direction_output	= lp3943_gpio_direction_output,
@@ -183,42 +184,42 @@ static const struct gpio_chip lp3943_gpio_chip = {
 	.base			= -1,
 	.ngpio			= LP3943_MAX_GPIO,
 	.can_sleep		= 1,
-};
+पूर्ण;
 
-static int lp3943_gpio_probe(struct platform_device *pdev)
-{
-	struct lp3943 *lp3943 = dev_get_drvdata(pdev->dev.parent);
-	struct lp3943_gpio *lp3943_gpio;
+अटल पूर्णांक lp3943_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lp3943 *lp3943 = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा lp3943_gpio *lp3943_gpio;
 
-	lp3943_gpio = devm_kzalloc(&pdev->dev, sizeof(*lp3943_gpio),
+	lp3943_gpio = devm_kzalloc(&pdev->dev, माप(*lp3943_gpio),
 				GFP_KERNEL);
-	if (!lp3943_gpio)
-		return -ENOMEM;
+	अगर (!lp3943_gpio)
+		वापस -ENOMEM;
 
 	lp3943_gpio->lp3943 = lp3943;
 	lp3943_gpio->chip = lp3943_gpio_chip;
 	lp3943_gpio->chip.parent = &pdev->dev;
 
-	platform_set_drvdata(pdev, lp3943_gpio);
+	platक्रमm_set_drvdata(pdev, lp3943_gpio);
 
-	return devm_gpiochip_add_data(&pdev->dev, &lp3943_gpio->chip,
+	वापस devm_gpiochip_add_data(&pdev->dev, &lp3943_gpio->chip,
 				      lp3943_gpio);
-}
+पूर्ण
 
-static const struct of_device_id lp3943_gpio_of_match[] = {
-	{ .compatible = "ti,lp3943-gpio", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id lp3943_gpio_of_match[] = अणु
+	अणु .compatible = "ti,lp3943-gpio", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, lp3943_gpio_of_match);
 
-static struct platform_driver lp3943_gpio_driver = {
+अटल काष्ठा platक्रमm_driver lp3943_gpio_driver = अणु
 	.probe = lp3943_gpio_probe,
-	.driver = {
+	.driver = अणु
 		.name = "lp3943-gpio",
 		.of_match_table = lp3943_gpio_of_match,
-	},
-};
-module_platform_driver(lp3943_gpio_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(lp3943_gpio_driver);
 
 MODULE_DESCRIPTION("LP3943 GPIO driver");
 MODULE_ALIAS("platform:lp3943-gpio");

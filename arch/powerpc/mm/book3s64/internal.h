@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef ARCH_POWERPC_MM_BOOK3S64_INTERNAL_H
-#define ARCH_POWERPC_MM_BOOK3S64_INTERNAL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित ARCH_POWERPC_MM_BOOK3S64_INTERNAL_H
+#घोषणा ARCH_POWERPC_MM_BOOK3S64_INTERNAL_H
 
-#include <linux/jump_label.h>
+#समावेश <linux/jump_label.h>
 
-extern bool stress_slb_enabled;
+बाह्य bool stress_slb_enabled;
 
 DECLARE_STATIC_KEY_FALSE(stress_slb_key);
 
-static inline bool stress_slb(void)
-{
-	return static_branch_unlikely(&stress_slb_key);
-}
+अटल अंतरभूत bool stress_slb(व्योम)
+अणु
+	वापस अटल_branch_unlikely(&stress_slb_key);
+पूर्ण
 
-void slb_setup_new_exec(void);
+व्योम slb_setup_new_exec(व्योम);
 
-void exit_lazy_flush_tlb(struct mm_struct *mm, bool always_flush);
+व्योम निकास_lazy_flush_tlb(काष्ठा mm_काष्ठा *mm, bool always_flush);
 
-#endif /* ARCH_POWERPC_MM_BOOK3S64_INTERNAL_H */
+#पूर्ण_अगर /* ARCH_POWERPC_MM_BOOK3S64_INTERNAL_H */

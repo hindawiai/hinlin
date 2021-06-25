@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * finite state machine implementation
  *
@@ -9,168 +10,168 @@
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include "fsm.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश "fsm.h"
 
-#define FSM_TIMER_DEBUG 0
+#घोषणा FSM_TIMER_DEBUG 0
 
-int
-mISDN_FsmNew(struct Fsm *fsm,
-	     struct FsmNode *fnlist, int fncount)
-{
-	int i;
+पूर्णांक
+mISDN_FsmNew(काष्ठा Fsm *fsm,
+	     काष्ठा FsmNode *fnlist, पूर्णांक fncount)
+अणु
+	पूर्णांक i;
 
 	fsm->jumpmatrix =
-		kzalloc(array3_size(sizeof(FSMFNPTR), fsm->state_count,
+		kzalloc(array3_size(माप(FSMFNPTR), fsm->state_count,
 				    fsm->event_count),
 			GFP_KERNEL);
-	if (fsm->jumpmatrix == NULL)
-		return -ENOMEM;
+	अगर (fsm->jumpmatrix == शून्य)
+		वापस -ENOMEM;
 
-	for (i = 0; i < fncount; i++)
-		if ((fnlist[i].state >= fsm->state_count) ||
-		    (fnlist[i].event >= fsm->event_count)) {
-			printk(KERN_ERR
+	क्रम (i = 0; i < fncount; i++)
+		अगर ((fnlist[i].state >= fsm->state_count) ||
+		    (fnlist[i].event >= fsm->event_count)) अणु
+			prपूर्णांकk(KERN_ERR
 			       "mISDN_FsmNew Error: %d st(%ld/%ld) ev(%ld/%ld)\n",
-			       i, (long)fnlist[i].state, (long)fsm->state_count,
-			       (long)fnlist[i].event, (long)fsm->event_count);
-		} else
+			       i, (दीर्घ)fnlist[i].state, (दीर्घ)fsm->state_count,
+			       (दीर्घ)fnlist[i].event, (दीर्घ)fsm->event_count);
+		पूर्ण अन्यथा
 			fsm->jumpmatrix[fsm->state_count * fnlist[i].event +
 					fnlist[i].state] = (FSMFNPTR) fnlist[i].routine;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mISDN_FsmNew);
 
-void
-mISDN_FsmFree(struct Fsm *fsm)
-{
-	kfree((void *) fsm->jumpmatrix);
-}
+व्योम
+mISDN_FsmFree(काष्ठा Fsm *fsm)
+अणु
+	kमुक्त((व्योम *) fsm->jumpmatrix);
+पूर्ण
 EXPORT_SYMBOL(mISDN_FsmFree);
 
-int
-mISDN_FsmEvent(struct FsmInst *fi, int event, void *arg)
-{
+पूर्णांक
+mISDN_FsmEvent(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
+अणु
 	FSMFNPTR r;
 
-	if ((fi->state >= fi->fsm->state_count) ||
-	    (event >= fi->fsm->event_count)) {
-		printk(KERN_ERR
+	अगर ((fi->state >= fi->fsm->state_count) ||
+	    (event >= fi->fsm->event_count)) अणु
+		prपूर्णांकk(KERN_ERR
 		       "mISDN_FsmEvent Error st(%ld/%ld) ev(%d/%ld)\n",
-		       (long)fi->state, (long)fi->fsm->state_count, event,
-		       (long)fi->fsm->event_count);
-		return 1;
-	}
+		       (दीर्घ)fi->state, (दीर्घ)fi->fsm->state_count, event,
+		       (दीर्घ)fi->fsm->event_count);
+		वापस 1;
+	पूर्ण
 	r = fi->fsm->jumpmatrix[fi->fsm->state_count * event + fi->state];
-	if (r) {
-		if (fi->debug)
-			fi->printdebug(fi, "State %s Event %s",
+	अगर (r) अणु
+		अगर (fi->debug)
+			fi->prपूर्णांकdebug(fi, "State %s Event %s",
 				       fi->fsm->strState[fi->state],
 				       fi->fsm->strEvent[event]);
 		r(fi, event, arg);
-		return 0;
-	} else {
-		if (fi->debug)
-			fi->printdebug(fi, "State %s Event %s no action",
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		अगर (fi->debug)
+			fi->prपूर्णांकdebug(fi, "State %s Event %s no action",
 				       fi->fsm->strState[fi->state],
 				       fi->fsm->strEvent[event]);
-		return 1;
-	}
-}
+		वापस 1;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(mISDN_FsmEvent);
 
-void
-mISDN_FsmChangeState(struct FsmInst *fi, int newstate)
-{
+व्योम
+mISDN_FsmChangeState(काष्ठा FsmInst *fi, पूर्णांक newstate)
+अणु
 	fi->state = newstate;
-	if (fi->debug)
-		fi->printdebug(fi, "ChangeState %s",
+	अगर (fi->debug)
+		fi->prपूर्णांकdebug(fi, "ChangeState %s",
 			       fi->fsm->strState[newstate]);
-}
+पूर्ण
 EXPORT_SYMBOL(mISDN_FsmChangeState);
 
-static void
-FsmExpireTimer(struct timer_list *t)
-{
-	struct FsmTimer *ft = from_timer(ft, t, tl);
-#if FSM_TIMER_DEBUG
-	if (ft->fi->debug)
-		ft->fi->printdebug(ft->fi, "FsmExpireTimer %lx", (long) ft);
-#endif
+अटल व्योम
+FsmExpireTimer(काष्ठा समयr_list *t)
+अणु
+	काष्ठा FsmTimer *ft = from_समयr(ft, t, tl);
+#अगर FSM_TIMER_DEBUG
+	अगर (ft->fi->debug)
+		ft->fi->prपूर्णांकdebug(ft->fi, "FsmExpireTimer %lx", (दीर्घ) ft);
+#पूर्ण_अगर
 	mISDN_FsmEvent(ft->fi, ft->event, ft->arg);
-}
+पूर्ण
 
-void
-mISDN_FsmInitTimer(struct FsmInst *fi, struct FsmTimer *ft)
-{
+व्योम
+mISDN_FsmInitTimer(काष्ठा FsmInst *fi, काष्ठा FsmTimer *ft)
+अणु
 	ft->fi = fi;
-#if FSM_TIMER_DEBUG
-	if (ft->fi->debug)
-		ft->fi->printdebug(ft->fi, "mISDN_FsmInitTimer %lx", (long) ft);
-#endif
-	timer_setup(&ft->tl, FsmExpireTimer, 0);
-}
+#अगर FSM_TIMER_DEBUG
+	अगर (ft->fi->debug)
+		ft->fi->prपूर्णांकdebug(ft->fi, "mISDN_FsmInitTimer %lx", (दीर्घ) ft);
+#पूर्ण_अगर
+	समयr_setup(&ft->tl, FsmExpireTimer, 0);
+पूर्ण
 EXPORT_SYMBOL(mISDN_FsmInitTimer);
 
-void
-mISDN_FsmDelTimer(struct FsmTimer *ft, int where)
-{
-#if FSM_TIMER_DEBUG
-	if (ft->fi->debug)
-		ft->fi->printdebug(ft->fi, "mISDN_FsmDelTimer %lx %d",
-				   (long) ft, where);
-#endif
-	del_timer(&ft->tl);
-}
+व्योम
+mISDN_FsmDelTimer(काष्ठा FsmTimer *ft, पूर्णांक where)
+अणु
+#अगर FSM_TIMER_DEBUG
+	अगर (ft->fi->debug)
+		ft->fi->prपूर्णांकdebug(ft->fi, "mISDN_FsmDelTimer %lx %d",
+				   (दीर्घ) ft, where);
+#पूर्ण_अगर
+	del_समयr(&ft->tl);
+पूर्ण
 EXPORT_SYMBOL(mISDN_FsmDelTimer);
 
-int
-mISDN_FsmAddTimer(struct FsmTimer *ft,
-		  int millisec, int event, void *arg, int where)
-{
+पूर्णांक
+mISDN_FsmAddTimer(काष्ठा FsmTimer *ft,
+		  पूर्णांक millisec, पूर्णांक event, व्योम *arg, पूर्णांक where)
+अणु
 
-#if FSM_TIMER_DEBUG
-	if (ft->fi->debug)
-		ft->fi->printdebug(ft->fi, "mISDN_FsmAddTimer %lx %d %d",
-				   (long) ft, millisec, where);
-#endif
+#अगर FSM_TIMER_DEBUG
+	अगर (ft->fi->debug)
+		ft->fi->prपूर्णांकdebug(ft->fi, "mISDN_FsmAddTimer %lx %d %d",
+				   (दीर्घ) ft, millisec, where);
+#पूर्ण_अगर
 
-	if (timer_pending(&ft->tl)) {
-		if (ft->fi->debug) {
-			printk(KERN_WARNING
+	अगर (समयr_pending(&ft->tl)) अणु
+		अगर (ft->fi->debug) अणु
+			prपूर्णांकk(KERN_WARNING
 			       "mISDN_FsmAddTimer: timer already active!\n");
-			ft->fi->printdebug(ft->fi,
+			ft->fi->prपूर्णांकdebug(ft->fi,
 					   "mISDN_FsmAddTimer already active!");
-		}
-		return -1;
-	}
+		पूर्ण
+		वापस -1;
+	पूर्ण
 	ft->event = event;
 	ft->arg = arg;
-	ft->tl.expires = jiffies + (millisec * HZ) / 1000;
-	add_timer(&ft->tl);
-	return 0;
-}
+	ft->tl.expires = jअगरfies + (millisec * HZ) / 1000;
+	add_समयr(&ft->tl);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mISDN_FsmAddTimer);
 
-void
-mISDN_FsmRestartTimer(struct FsmTimer *ft,
-		      int millisec, int event, void *arg, int where)
-{
+व्योम
+mISDN_FsmRestartTimer(काष्ठा FsmTimer *ft,
+		      पूर्णांक millisec, पूर्णांक event, व्योम *arg, पूर्णांक where)
+अणु
 
-#if FSM_TIMER_DEBUG
-	if (ft->fi->debug)
-		ft->fi->printdebug(ft->fi, "mISDN_FsmRestartTimer %lx %d %d",
-				   (long) ft, millisec, where);
-#endif
+#अगर FSM_TIMER_DEBUG
+	अगर (ft->fi->debug)
+		ft->fi->prपूर्णांकdebug(ft->fi, "mISDN_FsmRestartTimer %lx %d %d",
+				   (दीर्घ) ft, millisec, where);
+#पूर्ण_अगर
 
-	if (timer_pending(&ft->tl))
-		del_timer(&ft->tl);
+	अगर (समयr_pending(&ft->tl))
+		del_समयr(&ft->tl);
 	ft->event = event;
 	ft->arg = arg;
-	ft->tl.expires = jiffies + (millisec * HZ) / 1000;
-	add_timer(&ft->tl);
-}
+	ft->tl.expires = jअगरfies + (millisec * HZ) / 1000;
+	add_समयr(&ft->tl);
+पूर्ण
 EXPORT_SYMBOL(mISDN_FsmRestartTimer);

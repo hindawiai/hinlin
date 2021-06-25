@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * Kernel Debug Core
  *
- * Maintainer: Jason Wessel <jason.wessel@windriver.com>
+ * Maपूर्णांकainer: Jason Wessel <jason.wessel@windriver.com>
  *
  * Copyright (C) 2000-2001 VERITAS Software Corporation.
  * Copyright (C) 2002-2004 Timesys Corporation
@@ -16,9 +17,9 @@
  * Contributors at various stages not listed above:
  *  Jason Wessel ( jason.wessel@windriver.com )
  *  George Anzinger <george@mvista.com>
- *  Anurekh Saxena (anurekh.saxena@timesys.com)
+ *  Anurekh Saxena (anurekh.saxena@बारys.com)
  *  Lake Stevens Instrument Division (Glenn Engel)
- *  Jim Kingdon, Cygnus Support.
+ *  Jim Kingकरोn, Cygnus Support.
  *
  * Original KGDB stub: David Grothe <dave@gcom.com>,
  * Tigran Aivazian <tigran@sco.com>
@@ -28,123 +29,123 @@
  * kind, whether express or implied.
  */
 
-#define pr_fmt(fmt) "KGDB: " fmt
+#घोषणा pr_fmt(fmt) "KGDB: " fmt
 
-#include <linux/pid_namespace.h>
-#include <linux/clocksource.h>
-#include <linux/serial_core.h>
-#include <linux/interrupt.h>
-#include <linux/spinlock.h>
-#include <linux/console.h>
-#include <linux/threads.h>
-#include <linux/uaccess.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/ptrace.h>
-#include <linux/string.h>
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/sysrq.h>
-#include <linux/reboot.h>
-#include <linux/init.h>
-#include <linux/kgdb.h>
-#include <linux/kdb.h>
-#include <linux/nmi.h>
-#include <linux/pid.h>
-#include <linux/smp.h>
-#include <linux/mm.h>
-#include <linux/vmacache.h>
-#include <linux/rcupdate.h>
-#include <linux/irq.h>
+#समावेश <linux/pid_namespace.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/console.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kgdb.h>
+#समावेश <linux/kdb.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/pid.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/vmacache.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/irq.h>
 
-#include <asm/cacheflush.h>
-#include <asm/byteorder.h>
-#include <linux/atomic.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/atomic.h>
 
-#include "debug_core.h"
+#समावेश "debug_core.h"
 
-static int kgdb_break_asap;
+अटल पूर्णांक kgdb_अवरोध_asap;
 
-struct debuggerinfo_struct kgdb_info[NR_CPUS];
+काष्ठा debuggerinfo_काष्ठा kgdb_info[NR_CPUS];
 
 /* kgdb_connected - Is a host GDB connected to us? */
-int				kgdb_connected;
+पूर्णांक				kgdb_connected;
 EXPORT_SYMBOL_GPL(kgdb_connected);
 
 /* All the KGDB handlers are installed */
-int			kgdb_io_module_registered;
+पूर्णांक			kgdb_io_module_रेजिस्टरed;
 
-/* Guard for recursive entry */
-static int			exception_level;
+/* Guard क्रम recursive entry */
+अटल पूर्णांक			exception_level;
 
-struct kgdb_io		*dbg_io_ops;
-static DEFINE_SPINLOCK(kgdb_registration_lock);
+काष्ठा kgdb_io		*dbg_io_ops;
+अटल DEFINE_SPINLOCK(kgdb_registration_lock);
 
-/* Action for the reboot notifier, a global allow kdb to change it */
-static int kgdbreboot;
+/* Action क्रम the reboot notअगरier, a global allow kdb to change it */
+अटल पूर्णांक kgdbreboot;
 /* kgdb console driver is loaded */
-static int kgdb_con_registered;
-/* determine if kgdb console output should be used */
-static int kgdb_use_con;
-/* Flag for alternate operations for early debugging */
+अटल पूर्णांक kgdb_con_रेजिस्टरed;
+/* determine अगर kgdb console output should be used */
+अटल पूर्णांक kgdb_use_con;
+/* Flag क्रम alternate operations क्रम early debugging */
 bool dbg_is_early = true;
 /* Next cpu to become the master debug core */
-int dbg_switch_cpu;
+पूर्णांक dbg_चयन_cpu;
 
 /* Use kdb or gdbserver mode */
-int dbg_kdb_mode = 1;
+पूर्णांक dbg_kdb_mode = 1;
 
-module_param(kgdb_use_con, int, 0644);
-module_param(kgdbreboot, int, 0644);
+module_param(kgdb_use_con, पूर्णांक, 0644);
+module_param(kgdbreboot, पूर्णांक, 0644);
 
 /*
- * Holds information about breakpoints in a kernel. These breakpoints are
- * added and removed by gdb.
+ * Holds inक्रमmation about अवरोधpoपूर्णांकs in a kernel. These अवरोधpoपूर्णांकs are
+ * added and हटाओd by gdb.
  */
-static struct kgdb_bkpt		kgdb_break[KGDB_MAX_BREAKPOINTS] = {
-	[0 ... KGDB_MAX_BREAKPOINTS-1] = { .state = BP_UNDEFINED }
-};
+अटल काष्ठा kgdb_bkpt		kgdb_अवरोध[KGDB_MAX_BREAKPOINTS] = अणु
+	[0 ... KGDB_MAX_BREAKPOINTS-1] = अणु .state = BP_UNDEFINED पूर्ण
+पूर्ण;
 
 /*
- * The CPU# of the active CPU, or -1 if none:
+ * The CPU# of the active CPU, or -1 अगर none:
  */
 atomic_t			kgdb_active = ATOMIC_INIT(-1);
 EXPORT_SYMBOL_GPL(kgdb_active);
-static DEFINE_RAW_SPINLOCK(dbg_master_lock);
-static DEFINE_RAW_SPINLOCK(dbg_slave_lock);
+अटल DEFINE_RAW_SPINLOCK(dbg_master_lock);
+अटल DEFINE_RAW_SPINLOCK(dbg_slave_lock);
 
 /*
- * We use NR_CPUs not PERCPU, in case kgdb is used to debug early
+ * We use NR_CPUs not PERCPU, in हाल kgdb is used to debug early
  * bootup code (which might not have percpu set up yet):
  */
-static atomic_t			masters_in_kgdb;
-static atomic_t			slaves_in_kgdb;
-atomic_t			kgdb_setting_breakpoint;
+अटल atomic_t			masters_in_kgdb;
+अटल atomic_t			slaves_in_kgdb;
+atomic_t			kgdb_setting_अवरोधpoपूर्णांक;
 
-struct task_struct		*kgdb_usethread;
-struct task_struct		*kgdb_contthread;
+काष्ठा task_काष्ठा		*kgdb_usethपढ़ो;
+काष्ठा task_काष्ठा		*kgdb_contthपढ़ो;
 
-int				kgdb_single_step;
-static pid_t			kgdb_sstep_pid;
+पूर्णांक				kgdb_single_step;
+अटल pid_t			kgdb_sstep_pid;
 
-/* to keep track of the CPU which is doing the single stepping*/
-atomic_t			kgdb_cpu_doing_single_step = ATOMIC_INIT(-1);
+/* to keep track of the CPU which is करोing the single stepping*/
+atomic_t			kgdb_cpu_करोing_single_step = ATOMIC_INIT(-1);
 
 /*
  * If you are debugging a problem where roundup (the collection of
  * all other CPUs) is a problem [this should be extremely rare],
- * then use the nokgdbroundup option to avoid roundup. In that case
- * the other CPUs might interfere with your debugging context, so
+ * then use the nokgdbroundup option to aव्योम roundup. In that हाल
+ * the other CPUs might पूर्णांकerfere with your debugging context, so
  * use this with care:
  */
-static int kgdb_do_roundup = 1;
+अटल पूर्णांक kgdb_करो_roundup = 1;
 
-static int __init opt_nokgdbroundup(char *str)
-{
-	kgdb_do_roundup = 0;
+अटल पूर्णांक __init opt_nokgdbroundup(अक्षर *str)
+अणु
+	kgdb_करो_roundup = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 early_param("nokgdbroundup", opt_nokgdbroundup);
 
@@ -153,105 +154,105 @@ early_param("nokgdbroundup", opt_nokgdbroundup);
  */
 
 /*
- * Weak aliases for breakpoint management,
+ * Weak aliases क्रम अवरोधpoपूर्णांक management,
  * can be overridden by architectures when needed:
  */
-int __weak kgdb_arch_set_breakpoint(struct kgdb_bkpt *bpt)
-{
-	int err;
+पूर्णांक __weak kgdb_arch_set_अवरोधpoपूर्णांक(काष्ठा kgdb_bkpt *bpt)
+अणु
+	पूर्णांक err;
 
-	err = copy_from_kernel_nofault(bpt->saved_instr, (char *)bpt->bpt_addr,
+	err = copy_from_kernel_nofault(bpt->saved_instr, (अक्षर *)bpt->bpt_addr,
 				BREAK_INSTR_SIZE);
-	if (err)
-		return err;
-	err = copy_to_kernel_nofault((char *)bpt->bpt_addr,
+	अगर (err)
+		वापस err;
+	err = copy_to_kernel_nofault((अक्षर *)bpt->bpt_addr,
 				 arch_kgdb_ops.gdb_bpt_instr, BREAK_INSTR_SIZE);
-	return err;
-}
-NOKPROBE_SYMBOL(kgdb_arch_set_breakpoint);
+	वापस err;
+पूर्ण
+NOKPROBE_SYMBOL(kgdb_arch_set_अवरोधpoपूर्णांक);
 
-int __weak kgdb_arch_remove_breakpoint(struct kgdb_bkpt *bpt)
-{
-	return copy_to_kernel_nofault((char *)bpt->bpt_addr,
-				  (char *)bpt->saved_instr, BREAK_INSTR_SIZE);
-}
-NOKPROBE_SYMBOL(kgdb_arch_remove_breakpoint);
+पूर्णांक __weak kgdb_arch_हटाओ_अवरोधpoपूर्णांक(काष्ठा kgdb_bkpt *bpt)
+अणु
+	वापस copy_to_kernel_nofault((अक्षर *)bpt->bpt_addr,
+				  (अक्षर *)bpt->saved_instr, BREAK_INSTR_SIZE);
+पूर्ण
+NOKPROBE_SYMBOL(kgdb_arch_हटाओ_अवरोधpoपूर्णांक);
 
-int __weak kgdb_validate_break_address(unsigned long addr)
-{
-	struct kgdb_bkpt tmp;
-	int err;
+पूर्णांक __weak kgdb_validate_अवरोध_address(अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा kgdb_bkpt पंचांगp;
+	पूर्णांक err;
 
-	if (kgdb_within_blocklist(addr))
-		return -EINVAL;
+	अगर (kgdb_within_blocklist(addr))
+		वापस -EINVAL;
 
-	/* Validate setting the breakpoint and then removing it.  If the
-	 * remove fails, the kernel needs to emit a bad message because we
+	/* Validate setting the अवरोधpoपूर्णांक and then removing it.  If the
+	 * हटाओ fails, the kernel needs to emit a bad message because we
 	 * are deep trouble not being able to put things back the way we
 	 * found them.
 	 */
-	tmp.bpt_addr = addr;
-	err = kgdb_arch_set_breakpoint(&tmp);
-	if (err)
-		return err;
-	err = kgdb_arch_remove_breakpoint(&tmp);
-	if (err)
+	पंचांगp.bpt_addr = addr;
+	err = kgdb_arch_set_अवरोधpoपूर्णांक(&पंचांगp);
+	अगर (err)
+		वापस err;
+	err = kgdb_arch_हटाओ_अवरोधpoपूर्णांक(&पंचांगp);
+	अगर (err)
 		pr_err("Critical breakpoint error, kernel memory destroyed at: %lx\n",
 		       addr);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-unsigned long __weak kgdb_arch_pc(int exception, struct pt_regs *regs)
-{
-	return instruction_pointer(regs);
-}
+अचिन्हित दीर्घ __weak kgdb_arch_pc(पूर्णांक exception, काष्ठा pt_regs *regs)
+अणु
+	वापस inकाष्ठाion_poपूर्णांकer(regs);
+पूर्ण
 NOKPROBE_SYMBOL(kgdb_arch_pc);
 
-int __weak kgdb_arch_init(void)
-{
-	return 0;
-}
+पूर्णांक __weak kgdb_arch_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-int __weak kgdb_skipexception(int exception, struct pt_regs *regs)
-{
-	return 0;
-}
+पूर्णांक __weak kgdb_skipexception(पूर्णांक exception, काष्ठा pt_regs *regs)
+अणु
+	वापस 0;
+पूर्ण
 NOKPROBE_SYMBOL(kgdb_skipexception);
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
 /*
- * Default (weak) implementation for kgdb_roundup_cpus
+ * Default (weak) implementation क्रम kgdb_roundup_cpus
  */
 
-void __weak kgdb_call_nmi_hook(void *ignored)
-{
+व्योम __weak kgdb_call_nmi_hook(व्योम *ignored)
+अणु
 	/*
-	 * NOTE: get_irq_regs() is supposed to get the registers from
-	 * before the IPI interrupt happened and so is supposed to
+	 * NOTE: get_irq_regs() is supposed to get the रेजिस्टरs from
+	 * beक्रमe the IPI पूर्णांकerrupt happened and so is supposed to
 	 * show where the processor was.  In some situations it's
 	 * possible we might be called without an IPI, so it might be
-	 * safer to figure out how to make kgdb_breakpoint() work
+	 * safer to figure out how to make kgdb_अवरोधpoपूर्णांक() work
 	 * properly here.
 	 */
 	kgdb_nmicallback(raw_smp_processor_id(), get_irq_regs());
-}
+पूर्ण
 NOKPROBE_SYMBOL(kgdb_call_nmi_hook);
 
-static DEFINE_PER_CPU(call_single_data_t, kgdb_roundup_csd) =
-	CSD_INIT(kgdb_call_nmi_hook, NULL);
+अटल DEFINE_PER_CPU(call_single_data_t, kgdb_roundup_csd) =
+	CSD_INIT(kgdb_call_nmi_hook, शून्य);
 
-void __weak kgdb_roundup_cpus(void)
-{
+व्योम __weak kgdb_roundup_cpus(व्योम)
+अणु
 	call_single_data_t *csd;
-	int this_cpu = raw_smp_processor_id();
-	int cpu;
-	int ret;
+	पूर्णांक this_cpu = raw_smp_processor_id();
+	पूर्णांक cpu;
+	पूर्णांक ret;
 
-	for_each_online_cpu(cpu) {
+	क्रम_each_online_cpu(cpu) अणु
 		/* No need to roundup ourselves */
-		if (cpu == this_cpu)
-			continue;
+		अगर (cpu == this_cpu)
+			जारी;
 
 		csd = &per_cpu(kgdb_roundup_csd, cpu);
 
@@ -263,349 +264,349 @@ void __weak kgdb_roundup_cpus(void)
 		 * previous call must have at least started and that
 		 * means smp_call_function_single_async() won't block.
 		 */
-		if (kgdb_info[cpu].rounding_up)
-			continue;
+		अगर (kgdb_info[cpu].rounding_up)
+			जारी;
 		kgdb_info[cpu].rounding_up = true;
 
 		ret = smp_call_function_single_async(cpu, csd);
-		if (ret)
+		अगर (ret)
 			kgdb_info[cpu].rounding_up = false;
-	}
-}
+	पूर्ण
+पूर्ण
 NOKPROBE_SYMBOL(kgdb_roundup_cpus);
 
-#endif
+#पूर्ण_अगर
 
 /*
  * Some architectures need cache flushes when we set/clear a
- * breakpoint:
+ * अवरोधpoपूर्णांक:
  */
-static void kgdb_flush_swbreak_addr(unsigned long addr)
-{
-	if (!CACHE_FLUSH_IS_SAFE)
-		return;
+अटल व्योम kgdb_flush_swअवरोध_addr(अचिन्हित दीर्घ addr)
+अणु
+	अगर (!CACHE_FLUSH_IS_SAFE)
+		वापस;
 
-	if (current->mm) {
-		int i;
+	अगर (current->mm) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < VMACACHE_SIZE; i++) {
-			if (!current->vmacache.vmas[i])
-				continue;
+		क्रम (i = 0; i < VMACACHE_SIZE; i++) अणु
+			अगर (!current->vmacache.vmas[i])
+				जारी;
 			flush_cache_range(current->vmacache.vmas[i],
 					  addr, addr + BREAK_INSTR_SIZE);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Force flush instruction cache if it was outside the mm */
+	/* Force flush inकाष्ठाion cache अगर it was outside the mm */
 	flush_icache_range(addr, addr + BREAK_INSTR_SIZE);
-}
-NOKPROBE_SYMBOL(kgdb_flush_swbreak_addr);
+पूर्ण
+NOKPROBE_SYMBOL(kgdb_flush_swअवरोध_addr);
 
 /*
- * SW breakpoint management:
+ * SW अवरोधpoपूर्णांक management:
  */
-int dbg_activate_sw_breakpoints(void)
-{
-	int error;
-	int ret = 0;
-	int i;
+पूर्णांक dbg_activate_sw_अवरोधpoपूर्णांकs(व्योम)
+अणु
+	पूर्णांक error;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) {
-		if (kgdb_break[i].state != BP_SET)
-			continue;
+	क्रम (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) अणु
+		अगर (kgdb_अवरोध[i].state != BP_SET)
+			जारी;
 
-		error = kgdb_arch_set_breakpoint(&kgdb_break[i]);
-		if (error) {
+		error = kgdb_arch_set_अवरोधpoपूर्णांक(&kgdb_अवरोध[i]);
+		अगर (error) अणु
 			ret = error;
 			pr_info("BP install failed: %lx\n",
-				kgdb_break[i].bpt_addr);
-			continue;
-		}
+				kgdb_अवरोध[i].bpt_addr);
+			जारी;
+		पूर्ण
 
-		kgdb_flush_swbreak_addr(kgdb_break[i].bpt_addr);
-		kgdb_break[i].state = BP_ACTIVE;
-	}
-	return ret;
-}
-NOKPROBE_SYMBOL(dbg_activate_sw_breakpoints);
+		kgdb_flush_swअवरोध_addr(kgdb_अवरोध[i].bpt_addr);
+		kgdb_अवरोध[i].state = BP_ACTIVE;
+	पूर्ण
+	वापस ret;
+पूर्ण
+NOKPROBE_SYMBOL(dbg_activate_sw_अवरोधpoपूर्णांकs);
 
-int dbg_set_sw_break(unsigned long addr)
-{
-	int err = kgdb_validate_break_address(addr);
-	int breakno = -1;
-	int i;
+पूर्णांक dbg_set_sw_अवरोध(अचिन्हित दीर्घ addr)
+अणु
+	पूर्णांक err = kgdb_validate_अवरोध_address(addr);
+	पूर्णांक अवरोधno = -1;
+	पूर्णांक i;
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) {
-		if ((kgdb_break[i].state == BP_SET) &&
-					(kgdb_break[i].bpt_addr == addr))
-			return -EEXIST;
-	}
-	for (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) {
-		if (kgdb_break[i].state == BP_REMOVED &&
-					kgdb_break[i].bpt_addr == addr) {
-			breakno = i;
-			break;
-		}
-	}
+	क्रम (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) अणु
+		अगर ((kgdb_अवरोध[i].state == BP_SET) &&
+					(kgdb_अवरोध[i].bpt_addr == addr))
+			वापस -EEXIST;
+	पूर्ण
+	क्रम (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) अणु
+		अगर (kgdb_अवरोध[i].state == BP_REMOVED &&
+					kgdb_अवरोध[i].bpt_addr == addr) अणु
+			अवरोधno = i;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (breakno == -1) {
-		for (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) {
-			if (kgdb_break[i].state == BP_UNDEFINED) {
-				breakno = i;
-				break;
-			}
-		}
-	}
+	अगर (अवरोधno == -1) अणु
+		क्रम (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) अणु
+			अगर (kgdb_अवरोध[i].state == BP_UNDEFINED) अणु
+				अवरोधno = i;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (breakno == -1)
-		return -E2BIG;
+	अगर (अवरोधno == -1)
+		वापस -E2BIG;
 
-	kgdb_break[breakno].state = BP_SET;
-	kgdb_break[breakno].type = BP_BREAKPOINT;
-	kgdb_break[breakno].bpt_addr = addr;
+	kgdb_अवरोध[अवरोधno].state = BP_SET;
+	kgdb_अवरोध[अवरोधno].type = BP_BREAKPOINT;
+	kgdb_अवरोध[अवरोधno].bpt_addr = addr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dbg_deactivate_sw_breakpoints(void)
-{
-	int error;
-	int ret = 0;
-	int i;
+पूर्णांक dbg_deactivate_sw_अवरोधpoपूर्णांकs(व्योम)
+अणु
+	पूर्णांक error;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) {
-		if (kgdb_break[i].state != BP_ACTIVE)
-			continue;
-		error = kgdb_arch_remove_breakpoint(&kgdb_break[i]);
-		if (error) {
+	क्रम (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) अणु
+		अगर (kgdb_अवरोध[i].state != BP_ACTIVE)
+			जारी;
+		error = kgdb_arch_हटाओ_अवरोधpoपूर्णांक(&kgdb_अवरोध[i]);
+		अगर (error) अणु
 			pr_info("BP remove failed: %lx\n",
-				kgdb_break[i].bpt_addr);
+				kgdb_अवरोध[i].bpt_addr);
 			ret = error;
-		}
+		पूर्ण
 
-		kgdb_flush_swbreak_addr(kgdb_break[i].bpt_addr);
-		kgdb_break[i].state = BP_SET;
-	}
-	return ret;
-}
-NOKPROBE_SYMBOL(dbg_deactivate_sw_breakpoints);
+		kgdb_flush_swअवरोध_addr(kgdb_अवरोध[i].bpt_addr);
+		kgdb_अवरोध[i].state = BP_SET;
+	पूर्ण
+	वापस ret;
+पूर्ण
+NOKPROBE_SYMBOL(dbg_deactivate_sw_अवरोधpoपूर्णांकs);
 
-int dbg_remove_sw_break(unsigned long addr)
-{
-	int i;
+पूर्णांक dbg_हटाओ_sw_अवरोध(अचिन्हित दीर्घ addr)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) {
-		if ((kgdb_break[i].state == BP_SET) &&
-				(kgdb_break[i].bpt_addr == addr)) {
-			kgdb_break[i].state = BP_REMOVED;
-			return 0;
-		}
-	}
-	return -ENOENT;
-}
+	क्रम (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) अणु
+		अगर ((kgdb_अवरोध[i].state == BP_SET) &&
+				(kgdb_अवरोध[i].bpt_addr == addr)) अणु
+			kgdb_अवरोध[i].state = BP_REMOVED;
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 
-int kgdb_isremovedbreak(unsigned long addr)
-{
-	int i;
+पूर्णांक kgdb_isहटाओdअवरोध(अचिन्हित दीर्घ addr)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) {
-		if ((kgdb_break[i].state == BP_REMOVED) &&
-					(kgdb_break[i].bpt_addr == addr))
-			return 1;
-	}
-	return 0;
-}
+	क्रम (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) अणु
+		अगर ((kgdb_अवरोध[i].state == BP_REMOVED) &&
+					(kgdb_अवरोध[i].bpt_addr == addr))
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int kgdb_has_hit_break(unsigned long addr)
-{
-	int i;
+पूर्णांक kgdb_has_hit_अवरोध(अचिन्हित दीर्घ addr)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) {
-		if (kgdb_break[i].state == BP_ACTIVE &&
-		    kgdb_break[i].bpt_addr == addr)
-			return 1;
-	}
-	return 0;
-}
+	क्रम (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) अणु
+		अगर (kgdb_अवरोध[i].state == BP_ACTIVE &&
+		    kgdb_अवरोध[i].bpt_addr == addr)
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int dbg_remove_all_break(void)
-{
-	int error;
-	int i;
+पूर्णांक dbg_हटाओ_all_अवरोध(व्योम)
+अणु
+	पूर्णांक error;
+	पूर्णांक i;
 
-	/* Clear memory breakpoints. */
-	for (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) {
-		if (kgdb_break[i].state != BP_ACTIVE)
-			goto setundefined;
-		error = kgdb_arch_remove_breakpoint(&kgdb_break[i]);
-		if (error)
+	/* Clear memory अवरोधpoपूर्णांकs. */
+	क्रम (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) अणु
+		अगर (kgdb_अवरोध[i].state != BP_ACTIVE)
+			जाओ setundefined;
+		error = kgdb_arch_हटाओ_अवरोधpoपूर्णांक(&kgdb_अवरोध[i]);
+		अगर (error)
 			pr_err("breakpoint remove failed: %lx\n",
-			       kgdb_break[i].bpt_addr);
+			       kgdb_अवरोध[i].bpt_addr);
 setundefined:
-		kgdb_break[i].state = BP_UNDEFINED;
-	}
+		kgdb_अवरोध[i].state = BP_UNDEFINED;
+	पूर्ण
 
-	/* Clear hardware breakpoints. */
-	if (arch_kgdb_ops.remove_all_hw_break)
-		arch_kgdb_ops.remove_all_hw_break();
+	/* Clear hardware अवरोधpoपूर्णांकs. */
+	अगर (arch_kgdb_ops.हटाओ_all_hw_अवरोध)
+		arch_kgdb_ops.हटाओ_all_hw_अवरोध();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void kgdb_free_init_mem(void)
-{
-	int i;
+व्योम kgdb_मुक्त_init_mem(व्योम)
+अणु
+	पूर्णांक i;
 
-	/* Clear init memory breakpoints. */
-	for (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) {
-		if (init_section_contains((void *)kgdb_break[i].bpt_addr, 0))
-			kgdb_break[i].state = BP_UNDEFINED;
-	}
-}
+	/* Clear init memory अवरोधpoपूर्णांकs. */
+	क्रम (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) अणु
+		अगर (init_section_contains((व्योम *)kgdb_अवरोध[i].bpt_addr, 0))
+			kgdb_अवरोध[i].state = BP_UNDEFINED;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_KGDB_KDB
-void kdb_dump_stack_on_cpu(int cpu)
-{
-	if (cpu == raw_smp_processor_id() || !IS_ENABLED(CONFIG_SMP)) {
+#अगर_घोषित CONFIG_KGDB_KDB
+व्योम kdb_dump_stack_on_cpu(पूर्णांक cpu)
+अणु
+	अगर (cpu == raw_smp_processor_id() || !IS_ENABLED(CONFIG_SMP)) अणु
 		dump_stack();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!(kgdb_info[cpu].exception_state & DCPU_IS_SLAVE)) {
-		kdb_printf("ERROR: Task on cpu %d didn't stop in the debugger\n",
+	अगर (!(kgdb_info[cpu].exception_state & DCPU_IS_SLAVE)) अणु
+		kdb_म_लिखो("ERROR: Task on cpu %d didn't stop in the debugger\n",
 			   cpu);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * In general, architectures don't support dumping the stack of a
-	 * "running" process that's not the current one.  From the point of
+	 * In general, architectures करोn't support dumping the stack of a
+	 * "running" process that's not the current one.  From the poपूर्णांक of
 	 * view of the Linux, kernel processes that are looping in the kgdb
 	 * slave loop are still "running".  There's also no API (that actually
-	 * works across all architectures) that can do a stack crawl based
-	 * on registers passed as a parameter.
+	 * works across all architectures) that can करो a stack crawl based
+	 * on रेजिस्टरs passed as a parameter.
 	 *
-	 * Solve this conundrum by asking slave CPUs to do the backtrace
+	 * Solve this conundrum by asking slave CPUs to करो the backtrace
 	 * themselves.
 	 */
 	kgdb_info[cpu].exception_state |= DCPU_WANT_BT;
-	while (kgdb_info[cpu].exception_state & DCPU_WANT_BT)
+	जबतक (kgdb_info[cpu].exception_state & DCPU_WANT_BT)
 		cpu_relax();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Return true if there is a valid kgdb I/O module.  Also if no
- * debugger is attached a message can be printed to the console about
- * waiting for the debugger to attach.
+ * Return true अगर there is a valid kgdb I/O module.  Also अगर no
+ * debugger is attached a message can be prपूर्णांकed to the console about
+ * रुकोing क्रम the debugger to attach.
  *
- * The print_wait argument is only to be true when called from inside
- * the core kgdb_handle_exception, because it will wait for the
+ * The prपूर्णांक_रुको argument is only to be true when called from inside
+ * the core kgdb_handle_exception, because it will रुको क्रम the
  * debugger to attach.
  */
-static int kgdb_io_ready(int print_wait)
-{
-	if (!dbg_io_ops)
-		return 0;
-	if (kgdb_connected)
-		return 1;
-	if (atomic_read(&kgdb_setting_breakpoint))
-		return 1;
-	if (print_wait) {
-#ifdef CONFIG_KGDB_KDB
-		if (!dbg_kdb_mode)
+अटल पूर्णांक kgdb_io_पढ़ोy(पूर्णांक prपूर्णांक_रुको)
+अणु
+	अगर (!dbg_io_ops)
+		वापस 0;
+	अगर (kgdb_connected)
+		वापस 1;
+	अगर (atomic_पढ़ो(&kgdb_setting_अवरोधpoपूर्णांक))
+		वापस 1;
+	अगर (prपूर्णांक_रुको) अणु
+#अगर_घोषित CONFIG_KGDB_KDB
+		अगर (!dbg_kdb_mode)
 			pr_crit("waiting... or $3#33 for KDB\n");
-#else
+#अन्यथा
 		pr_crit("Waiting for remote debugger\n");
-#endif
-	}
-	return 1;
-}
-NOKPROBE_SYMBOL(kgdb_io_ready);
+#पूर्ण_अगर
+	पूर्ण
+	वापस 1;
+पूर्ण
+NOKPROBE_SYMBOL(kgdb_io_पढ़ोy);
 
-static int kgdb_reenter_check(struct kgdb_state *ks)
-{
-	unsigned long addr;
+अटल पूर्णांक kgdb_reenter_check(काष्ठा kgdb_state *ks)
+अणु
+	अचिन्हित दीर्घ addr;
 
-	if (atomic_read(&kgdb_active) != raw_smp_processor_id())
-		return 0;
+	अगर (atomic_पढ़ो(&kgdb_active) != raw_smp_processor_id())
+		वापस 0;
 
 	/* Panic on recursive debugger calls: */
 	exception_level++;
 	addr = kgdb_arch_pc(ks->ex_vector, ks->linux_regs);
-	dbg_deactivate_sw_breakpoints();
+	dbg_deactivate_sw_अवरोधpoपूर्णांकs();
 
 	/*
-	 * If the break point removed ok at the place exception
-	 * occurred, try to recover and print a warning to the end
-	 * user because the user planted a breakpoint in a place that
+	 * If the अवरोध poपूर्णांक हटाओd ok at the place exception
+	 * occurred, try to recover and prपूर्णांक a warning to the end
+	 * user because the user planted a अवरोधpoपूर्णांक in a place that
 	 * KGDB needs in order to function.
 	 */
-	if (dbg_remove_sw_break(addr) == 0) {
+	अगर (dbg_हटाओ_sw_अवरोध(addr) == 0) अणु
 		exception_level = 0;
 		kgdb_skipexception(ks->ex_vector, ks->linux_regs);
-		dbg_activate_sw_breakpoints();
+		dbg_activate_sw_अवरोधpoपूर्णांकs();
 		pr_crit("re-enter error: breakpoint removed %lx\n", addr);
 		WARN_ON_ONCE(1);
 
-		return 1;
-	}
-	dbg_remove_all_break();
+		वापस 1;
+	पूर्ण
+	dbg_हटाओ_all_अवरोध();
 	kgdb_skipexception(ks->ex_vector, ks->linux_regs);
 
-	if (exception_level > 1) {
+	अगर (exception_level > 1) अणु
 		dump_stack();
-		kgdb_io_module_registered = false;
+		kgdb_io_module_रेजिस्टरed = false;
 		panic("Recursive entry to debugger");
-	}
+	पूर्ण
 
 	pr_crit("re-enter exception: ALL breakpoints killed\n");
-#ifdef CONFIG_KGDB_KDB
+#अगर_घोषित CONFIG_KGDB_KDB
 	/* Allow kdb to debug itself one level */
-	return 0;
-#endif
+	वापस 0;
+#पूर्ण_अगर
 	dump_stack();
 	panic("Recursive entry to debugger");
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 NOKPROBE_SYMBOL(kgdb_reenter_check);
 
-static void dbg_touch_watchdogs(void)
-{
-	touch_softlockup_watchdog_sync();
-	clocksource_touch_watchdog();
+अटल व्योम dbg_touch_watchकरोgs(व्योम)
+अणु
+	touch_softlockup_watchकरोg_sync();
+	घड़ीsource_touch_watchकरोg();
 	rcu_cpu_stall_reset();
-}
-NOKPROBE_SYMBOL(dbg_touch_watchdogs);
+पूर्ण
+NOKPROBE_SYMBOL(dbg_touch_watchकरोgs);
 
-static int kgdb_cpu_enter(struct kgdb_state *ks, struct pt_regs *regs,
-		int exception_state)
-{
-	unsigned long flags;
-	int sstep_tries = 100;
-	int error;
-	int cpu;
-	int trace_on = 0;
-	int online_cpus = num_online_cpus();
-	u64 time_left;
+अटल पूर्णांक kgdb_cpu_enter(काष्ठा kgdb_state *ks, काष्ठा pt_regs *regs,
+		पूर्णांक exception_state)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक sstep_tries = 100;
+	पूर्णांक error;
+	पूर्णांक cpu;
+	पूर्णांक trace_on = 0;
+	पूर्णांक online_cpus = num_online_cpus();
+	u64 समय_left;
 
 	kgdb_info[ks->cpu].enter_kgdb++;
 	kgdb_info[ks->cpu].exception_state |= exception_state;
 
-	if (exception_state == DCPU_WANT_MASTER)
+	अगर (exception_state == DCPU_WANT_MASTER)
 		atomic_inc(&masters_in_kgdb);
-	else
+	अन्यथा
 		atomic_inc(&slaves_in_kgdb);
 
-	if (arch_kgdb_ops.disable_hw_break)
-		arch_kgdb_ops.disable_hw_break(regs);
+	अगर (arch_kgdb_ops.disable_hw_अवरोध)
+		arch_kgdb_ops.disable_hw_अवरोध(regs);
 
 acquirelock:
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	/*
 	 * Interrupts will be restored by the 'trap return' code, except when
 	 * single stepping.
@@ -616,611 +617,611 @@ acquirelock:
 	kgdb_info[cpu].debuggerinfo = regs;
 	kgdb_info[cpu].task = current;
 	kgdb_info[cpu].ret_state = 0;
-	kgdb_info[cpu].irq_depth = hardirq_count() >> HARDIRQ_SHIFT;
+	kgdb_info[cpu].irq_depth = hardirq_count() >> HARसूचीQ_SHIFT;
 
 	/* Make sure the above info reaches the primary CPU */
 	smp_mb();
 
-	if (exception_level == 1) {
-		if (raw_spin_trylock(&dbg_master_lock))
+	अगर (exception_level == 1) अणु
+		अगर (raw_spin_trylock(&dbg_master_lock))
 			atomic_xchg(&kgdb_active, cpu);
-		goto cpu_master_loop;
-	}
+		जाओ cpu_master_loop;
+	पूर्ण
 
 	/*
-	 * CPU will loop if it is a slave or request to become a kgdb
+	 * CPU will loop अगर it is a slave or request to become a kgdb
 	 * master cpu and acquire the kgdb_active lock:
 	 */
-	while (1) {
+	जबतक (1) अणु
 cpu_loop:
-		if (kgdb_info[cpu].exception_state & DCPU_NEXT_MASTER) {
+		अगर (kgdb_info[cpu].exception_state & DCPU_NEXT_MASTER) अणु
 			kgdb_info[cpu].exception_state &= ~DCPU_NEXT_MASTER;
-			goto cpu_master_loop;
-		} else if (kgdb_info[cpu].exception_state & DCPU_WANT_MASTER) {
-			if (raw_spin_trylock(&dbg_master_lock)) {
+			जाओ cpu_master_loop;
+		पूर्ण अन्यथा अगर (kgdb_info[cpu].exception_state & DCPU_WANT_MASTER) अणु
+			अगर (raw_spin_trylock(&dbg_master_lock)) अणु
 				atomic_xchg(&kgdb_active, cpu);
-				break;
-			}
-		} else if (kgdb_info[cpu].exception_state & DCPU_WANT_BT) {
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अगर (kgdb_info[cpu].exception_state & DCPU_WANT_BT) अणु
 			dump_stack();
 			kgdb_info[cpu].exception_state &= ~DCPU_WANT_BT;
-		} else if (kgdb_info[cpu].exception_state & DCPU_IS_SLAVE) {
-			if (!raw_spin_is_locked(&dbg_slave_lock))
-				goto return_normal;
-		} else {
-return_normal:
+		पूर्ण अन्यथा अगर (kgdb_info[cpu].exception_state & DCPU_IS_SLAVE) अणु
+			अगर (!raw_spin_is_locked(&dbg_slave_lock))
+				जाओ वापस_normal;
+		पूर्ण अन्यथा अणु
+वापस_normal:
 			/* Return to normal operation by executing any
-			 * hw breakpoint fixup.
+			 * hw अवरोधpoपूर्णांक fixup.
 			 */
-			if (arch_kgdb_ops.correct_hw_break)
-				arch_kgdb_ops.correct_hw_break();
-			if (trace_on)
+			अगर (arch_kgdb_ops.correct_hw_अवरोध)
+				arch_kgdb_ops.correct_hw_अवरोध();
+			अगर (trace_on)
 				tracing_on();
-			kgdb_info[cpu].debuggerinfo = NULL;
-			kgdb_info[cpu].task = NULL;
+			kgdb_info[cpu].debuggerinfo = शून्य;
+			kgdb_info[cpu].task = शून्य;
 			kgdb_info[cpu].exception_state &=
 				~(DCPU_WANT_MASTER | DCPU_IS_SLAVE);
 			kgdb_info[cpu].enter_kgdb--;
-			smp_mb__before_atomic();
+			smp_mb__beक्रमe_atomic();
 			atomic_dec(&slaves_in_kgdb);
-			dbg_touch_watchdogs();
+			dbg_touch_watchकरोgs();
 			local_irq_restore(flags);
-			rcu_read_unlock();
-			return 0;
-		}
+			rcu_पढ़ो_unlock();
+			वापस 0;
+		पूर्ण
 		cpu_relax();
-	}
+	पूर्ण
 
 	/*
 	 * For single stepping, try to only enter on the processor
 	 * that was single stepping.  To guard against a deadlock, the
-	 * kernel will only try for the value of sstep_tries before
+	 * kernel will only try क्रम the value of sstep_tries beक्रमe
 	 * giving up and continuing on.
 	 */
-	if (atomic_read(&kgdb_cpu_doing_single_step) != -1 &&
+	अगर (atomic_पढ़ो(&kgdb_cpu_करोing_single_step) != -1 &&
 	    (kgdb_info[cpu].task &&
-	     kgdb_info[cpu].task->pid != kgdb_sstep_pid) && --sstep_tries) {
+	     kgdb_info[cpu].task->pid != kgdb_sstep_pid) && --sstep_tries) अणु
 		atomic_set(&kgdb_active, -1);
 		raw_spin_unlock(&dbg_master_lock);
-		dbg_touch_watchdogs();
+		dbg_touch_watchकरोgs();
 		local_irq_restore(flags);
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
-		goto acquirelock;
-	}
+		जाओ acquirelock;
+	पूर्ण
 
-	if (!kgdb_io_ready(1)) {
+	अगर (!kgdb_io_पढ़ोy(1)) अणु
 		kgdb_info[cpu].ret_state = 1;
-		goto kgdb_restore; /* No I/O connection, resume the system */
-	}
+		जाओ kgdb_restore; /* No I/O connection, resume the प्रणाली */
+	पूर्ण
 
 	/*
-	 * Don't enter if we have hit a removed breakpoint.
+	 * Don't enter अगर we have hit a हटाओd अवरोधpoपूर्णांक.
 	 */
-	if (kgdb_skipexception(ks->ex_vector, ks->linux_regs))
-		goto kgdb_restore;
+	अगर (kgdb_skipexception(ks->ex_vector, ks->linux_regs))
+		जाओ kgdb_restore;
 
 	atomic_inc(&ignore_console_lock_warning);
 
 	/* Call the I/O driver's pre_exception routine */
-	if (dbg_io_ops->pre_exception)
+	अगर (dbg_io_ops->pre_exception)
 		dbg_io_ops->pre_exception();
 
 	/*
 	 * Get the passive CPU lock which will hold all the non-primary
-	 * CPU in a spin state while the debugger is active
+	 * CPU in a spin state जबतक the debugger is active
 	 */
-	if (!kgdb_single_step)
+	अगर (!kgdb_single_step)
 		raw_spin_lock(&dbg_slave_lock);
 
-#ifdef CONFIG_SMP
-	/* If send_ready set, slaves are already waiting */
-	if (ks->send_ready)
-		atomic_set(ks->send_ready, 1);
+#अगर_घोषित CONFIG_SMP
+	/* If send_पढ़ोy set, slaves are alपढ़ोy रुकोing */
+	अगर (ks->send_पढ़ोy)
+		atomic_set(ks->send_पढ़ोy, 1);
 
-	/* Signal the other CPUs to enter kgdb_wait() */
-	else if ((!kgdb_single_step) && kgdb_do_roundup)
+	/* Signal the other CPUs to enter kgdb_रुको() */
+	अन्यथा अगर ((!kgdb_single_step) && kgdb_करो_roundup)
 		kgdb_roundup_cpus();
-#endif
+#पूर्ण_अगर
 
 	/*
-	 * Wait for the other CPUs to be notified and be waiting for us:
+	 * Wait क्रम the other CPUs to be notअगरied and be रुकोing क्रम us:
 	 */
-	time_left = MSEC_PER_SEC;
-	while (kgdb_do_roundup && --time_left &&
-	       (atomic_read(&masters_in_kgdb) + atomic_read(&slaves_in_kgdb)) !=
+	समय_left = MSEC_PER_SEC;
+	जबतक (kgdb_करो_roundup && --समय_left &&
+	       (atomic_पढ़ो(&masters_in_kgdb) + atomic_पढ़ो(&slaves_in_kgdb)) !=
 		   online_cpus)
 		udelay(1000);
-	if (!time_left)
+	अगर (!समय_left)
 		pr_crit("Timed out waiting for secondary CPUs.\n");
 
 	/*
-	 * At this point the primary processor is completely
+	 * At this poपूर्णांक the primary processor is completely
 	 * in the debugger and all secondary CPUs are quiescent
 	 */
-	dbg_deactivate_sw_breakpoints();
+	dbg_deactivate_sw_अवरोधpoपूर्णांकs();
 	kgdb_single_step = 0;
-	kgdb_contthread = current;
+	kgdb_contthपढ़ो = current;
 	exception_level = 0;
 	trace_on = tracing_is_on();
-	if (trace_on)
+	अगर (trace_on)
 		tracing_off();
 
-	while (1) {
+	जबतक (1) अणु
 cpu_master_loop:
-		if (dbg_kdb_mode) {
+		अगर (dbg_kdb_mode) अणु
 			kgdb_connected = 1;
 			error = kdb_stub(ks);
-			if (error == -1)
-				continue;
+			अगर (error == -1)
+				जारी;
 			kgdb_connected = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			error = gdb_serial_stub(ks);
-		}
+		पूर्ण
 
-		if (error == DBG_PASS_EVENT) {
+		अगर (error == DBG_PASS_EVENT) अणु
 			dbg_kdb_mode = !dbg_kdb_mode;
-		} else if (error == DBG_SWITCH_CPU_EVENT) {
-			kgdb_info[dbg_switch_cpu].exception_state |=
+		पूर्ण अन्यथा अगर (error == DBG_SWITCH_CPU_EVENT) अणु
+			kgdb_info[dbg_चयन_cpu].exception_state |=
 				DCPU_NEXT_MASTER;
-			goto cpu_loop;
-		} else {
+			जाओ cpu_loop;
+		पूर्ण अन्यथा अणु
 			kgdb_info[cpu].ret_state = error;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	dbg_activate_sw_breakpoints();
+	dbg_activate_sw_अवरोधpoपूर्णांकs();
 
 	/* Call the I/O driver's post_exception routine */
-	if (dbg_io_ops->post_exception)
+	अगर (dbg_io_ops->post_exception)
 		dbg_io_ops->post_exception();
 
 	atomic_dec(&ignore_console_lock_warning);
 
-	if (!kgdb_single_step) {
+	अगर (!kgdb_single_step) अणु
 		raw_spin_unlock(&dbg_slave_lock);
 		/* Wait till all the CPUs have quit from the debugger. */
-		while (kgdb_do_roundup && atomic_read(&slaves_in_kgdb))
+		जबतक (kgdb_करो_roundup && atomic_पढ़ो(&slaves_in_kgdb))
 			cpu_relax();
-	}
+	पूर्ण
 
 kgdb_restore:
-	if (atomic_read(&kgdb_cpu_doing_single_step) != -1) {
-		int sstep_cpu = atomic_read(&kgdb_cpu_doing_single_step);
-		if (kgdb_info[sstep_cpu].task)
+	अगर (atomic_पढ़ो(&kgdb_cpu_करोing_single_step) != -1) अणु
+		पूर्णांक sstep_cpu = atomic_पढ़ो(&kgdb_cpu_करोing_single_step);
+		अगर (kgdb_info[sstep_cpu].task)
 			kgdb_sstep_pid = kgdb_info[sstep_cpu].task->pid;
-		else
+		अन्यथा
 			kgdb_sstep_pid = 0;
-	}
-	if (arch_kgdb_ops.correct_hw_break)
-		arch_kgdb_ops.correct_hw_break();
-	if (trace_on)
+	पूर्ण
+	अगर (arch_kgdb_ops.correct_hw_अवरोध)
+		arch_kgdb_ops.correct_hw_अवरोध();
+	अगर (trace_on)
 		tracing_on();
 
-	kgdb_info[cpu].debuggerinfo = NULL;
-	kgdb_info[cpu].task = NULL;
+	kgdb_info[cpu].debuggerinfo = शून्य;
+	kgdb_info[cpu].task = शून्य;
 	kgdb_info[cpu].exception_state &=
 		~(DCPU_WANT_MASTER | DCPU_IS_SLAVE);
 	kgdb_info[cpu].enter_kgdb--;
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 	atomic_dec(&masters_in_kgdb);
 	/* Free kgdb_active */
 	atomic_set(&kgdb_active, -1);
 	raw_spin_unlock(&dbg_master_lock);
-	dbg_touch_watchdogs();
+	dbg_touch_watchकरोgs();
 	local_irq_restore(flags);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return kgdb_info[cpu].ret_state;
-}
+	वापस kgdb_info[cpu].ret_state;
+पूर्ण
 NOKPROBE_SYMBOL(kgdb_cpu_enter);
 
 /*
- * kgdb_handle_exception() - main entry point from a kernel exception
+ * kgdb_handle_exception() - मुख्य entry poपूर्णांक from a kernel exception
  *
  * Locking hierarchy:
- *	interface locks, if any (begin_session)
+ *	पूर्णांकerface locks, अगर any (begin_session)
  *	kgdb lock (kgdb_active)
  */
-int
-kgdb_handle_exception(int evector, int signo, int ecode, struct pt_regs *regs)
-{
-	struct kgdb_state kgdb_var;
-	struct kgdb_state *ks = &kgdb_var;
-	int ret = 0;
+पूर्णांक
+kgdb_handle_exception(पूर्णांक evector, पूर्णांक signo, पूर्णांक ecode, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा kgdb_state kgdb_var;
+	काष्ठा kgdb_state *ks = &kgdb_var;
+	पूर्णांक ret = 0;
 
-	if (arch_kgdb_ops.enable_nmi)
+	अगर (arch_kgdb_ops.enable_nmi)
 		arch_kgdb_ops.enable_nmi(0);
 	/*
-	 * Avoid entering the debugger if we were triggered due to an oops
-	 * but panic_timeout indicates the system should automatically
-	 * reboot on panic. We don't want to get stuck waiting for input
-	 * on such systems, especially if its "just" an oops.
+	 * Aव्योम entering the debugger अगर we were triggered due to an oops
+	 * but panic_समयout indicates the प्रणाली should स्वतःmatically
+	 * reboot on panic. We करोn't want to get stuck रुकोing क्रम input
+	 * on such प्रणालीs, especially अगर its "just" an oops.
 	 */
-	if (signo != SIGTRAP && panic_timeout)
-		return 1;
+	अगर (signo != SIGTRAP && panic_समयout)
+		वापस 1;
 
-	memset(ks, 0, sizeof(struct kgdb_state));
+	स_रखो(ks, 0, माप(काष्ठा kgdb_state));
 	ks->cpu			= raw_smp_processor_id();
 	ks->ex_vector		= evector;
 	ks->signo		= signo;
 	ks->err_code		= ecode;
 	ks->linux_regs		= regs;
 
-	if (kgdb_reenter_check(ks))
-		goto out; /* Ouch, double exception ! */
-	if (kgdb_info[ks->cpu].enter_kgdb != 0)
-		goto out;
+	अगर (kgdb_reenter_check(ks))
+		जाओ out; /* Ouch, द्विगुन exception ! */
+	अगर (kgdb_info[ks->cpu].enter_kgdb != 0)
+		जाओ out;
 
 	ret = kgdb_cpu_enter(ks, regs, DCPU_WANT_MASTER);
 out:
-	if (arch_kgdb_ops.enable_nmi)
+	अगर (arch_kgdb_ops.enable_nmi)
 		arch_kgdb_ops.enable_nmi(1);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 NOKPROBE_SYMBOL(kgdb_handle_exception);
 
 /*
- * GDB places a breakpoint at this function to know dynamically loaded objects.
+ * GDB places a अवरोधpoपूर्णांक at this function to know dynamically loaded objects.
  */
-static int module_event(struct notifier_block *self, unsigned long val,
-	void *data)
-{
-	return 0;
-}
+अटल पूर्णांक module_event(काष्ठा notअगरier_block *self, अचिन्हित दीर्घ val,
+	व्योम *data)
+अणु
+	वापस 0;
+पूर्ण
 
-static struct notifier_block dbg_module_load_nb = {
-	.notifier_call	= module_event,
-};
+अटल काष्ठा notअगरier_block dbg_module_load_nb = अणु
+	.notअगरier_call	= module_event,
+पूर्ण;
 
-int kgdb_nmicallback(int cpu, void *regs)
-{
-#ifdef CONFIG_SMP
-	struct kgdb_state kgdb_var;
-	struct kgdb_state *ks = &kgdb_var;
+पूर्णांक kgdb_nmicallback(पूर्णांक cpu, व्योम *regs)
+अणु
+#अगर_घोषित CONFIG_SMP
+	काष्ठा kgdb_state kgdb_var;
+	काष्ठा kgdb_state *ks = &kgdb_var;
 
 	kgdb_info[cpu].rounding_up = false;
 
-	memset(ks, 0, sizeof(struct kgdb_state));
+	स_रखो(ks, 0, माप(काष्ठा kgdb_state));
 	ks->cpu			= cpu;
 	ks->linux_regs		= regs;
 
-	if (kgdb_info[ks->cpu].enter_kgdb == 0 &&
-			raw_spin_is_locked(&dbg_master_lock)) {
+	अगर (kgdb_info[ks->cpu].enter_kgdb == 0 &&
+			raw_spin_is_locked(&dbg_master_lock)) अणु
 		kgdb_cpu_enter(ks, regs, DCPU_IS_SLAVE);
-		return 0;
-	}
-#endif
-	return 1;
-}
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 1;
+पूर्ण
 NOKPROBE_SYMBOL(kgdb_nmicallback);
 
-int kgdb_nmicallin(int cpu, int trapnr, void *regs, int err_code,
-							atomic_t *send_ready)
-{
-#ifdef CONFIG_SMP
-	if (!kgdb_io_ready(0) || !send_ready)
-		return 1;
+पूर्णांक kgdb_nmicallin(पूर्णांक cpu, पूर्णांक trapnr, व्योम *regs, पूर्णांक err_code,
+							atomic_t *send_पढ़ोy)
+अणु
+#अगर_घोषित CONFIG_SMP
+	अगर (!kgdb_io_पढ़ोy(0) || !send_पढ़ोy)
+		वापस 1;
 
-	if (kgdb_info[cpu].enter_kgdb == 0) {
-		struct kgdb_state kgdb_var;
-		struct kgdb_state *ks = &kgdb_var;
+	अगर (kgdb_info[cpu].enter_kgdb == 0) अणु
+		काष्ठा kgdb_state kgdb_var;
+		काष्ठा kgdb_state *ks = &kgdb_var;
 
-		memset(ks, 0, sizeof(struct kgdb_state));
+		स_रखो(ks, 0, माप(काष्ठा kgdb_state));
 		ks->cpu			= cpu;
 		ks->ex_vector		= trapnr;
 		ks->signo		= SIGTRAP;
 		ks->err_code		= err_code;
 		ks->linux_regs		= regs;
-		ks->send_ready		= send_ready;
+		ks->send_पढ़ोy		= send_पढ़ोy;
 		kgdb_cpu_enter(ks, regs, DCPU_WANT_MASTER);
-		return 0;
-	}
-#endif
-	return 1;
-}
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 1;
+पूर्ण
 NOKPROBE_SYMBOL(kgdb_nmicallin);
 
-static void kgdb_console_write(struct console *co, const char *s,
-   unsigned count)
-{
-	unsigned long flags;
+अटल व्योम kgdb_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+   अचिन्हित count)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/* If we're debugging, or KGDB has not connected, don't try
-	 * and print. */
-	if (!kgdb_connected || atomic_read(&kgdb_active) != -1 || dbg_kdb_mode)
-		return;
+	 * and prपूर्णांक. */
+	अगर (!kgdb_connected || atomic_पढ़ो(&kgdb_active) != -1 || dbg_kdb_mode)
+		वापस;
 
 	local_irq_save(flags);
-	gdbstub_msg_write(s, count);
+	gdbstub_msg_ग_लिखो(s, count);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static struct console kgdbcons = {
+अटल काष्ठा console kgdbcons = अणु
 	.name		= "kgdb",
-	.write		= kgdb_console_write,
+	.ग_लिखो		= kgdb_console_ग_लिखो,
 	.flags		= CON_PRINTBUFFER | CON_ENABLED,
 	.index		= -1,
-};
+पूर्ण;
 
-static int __init opt_kgdb_con(char *str)
-{
+अटल पूर्णांक __init opt_kgdb_con(अक्षर *str)
+अणु
 	kgdb_use_con = 1;
 
-	if (kgdb_io_module_registered && !kgdb_con_registered) {
-		register_console(&kgdbcons);
-		kgdb_con_registered = 1;
-	}
+	अगर (kgdb_io_module_रेजिस्टरed && !kgdb_con_रेजिस्टरed) अणु
+		रेजिस्टर_console(&kgdbcons);
+		kgdb_con_रेजिस्टरed = 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 early_param("kgdbcon", opt_kgdb_con);
 
-#ifdef CONFIG_MAGIC_SYSRQ
-static void sysrq_handle_dbg(int key)
-{
-	if (!dbg_io_ops) {
+#अगर_घोषित CONFIG_MAGIC_SYSRQ
+अटल व्योम sysrq_handle_dbg(पूर्णांक key)
+अणु
+	अगर (!dbg_io_ops) अणु
 		pr_crit("ERROR: No KGDB I/O module available\n");
-		return;
-	}
-	if (!kgdb_connected) {
-#ifdef CONFIG_KGDB_KDB
-		if (!dbg_kdb_mode)
+		वापस;
+	पूर्ण
+	अगर (!kgdb_connected) अणु
+#अगर_घोषित CONFIG_KGDB_KDB
+		अगर (!dbg_kdb_mode)
 			pr_crit("KGDB or $3#33 for KDB\n");
-#else
+#अन्यथा
 		pr_crit("Entering KGDB\n");
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	kgdb_breakpoint();
-}
+	kgdb_अवरोधpoपूर्णांक();
+पूर्ण
 
-static const struct sysrq_key_op sysrq_dbg_op = {
+अटल स्थिर काष्ठा sysrq_key_op sysrq_dbg_op = अणु
 	.handler	= sysrq_handle_dbg,
 	.help_msg	= "debug(g)",
 	.action_msg	= "DEBUG",
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-void kgdb_panic(const char *msg)
-{
-	if (!kgdb_io_module_registered)
-		return;
+व्योम kgdb_panic(स्थिर अक्षर *msg)
+अणु
+	अगर (!kgdb_io_module_रेजिस्टरed)
+		वापस;
 
 	/*
-	 * We don't want to get stuck waiting for input from user if
-	 * "panic_timeout" indicates the system should automatically
+	 * We करोn't want to get stuck रुकोing क्रम input from user अगर
+	 * "panic_timeout" indicates the प्रणाली should स्वतःmatically
 	 * reboot on panic.
 	 */
-	if (panic_timeout)
-		return;
+	अगर (panic_समयout)
+		वापस;
 
-	if (dbg_kdb_mode)
-		kdb_printf("PANIC: %s\n", msg);
+	अगर (dbg_kdb_mode)
+		kdb_म_लिखो("PANIC: %s\n", msg);
 
-	kgdb_breakpoint();
-}
+	kgdb_अवरोधpoपूर्णांक();
+पूर्ण
 
-static void kgdb_initial_breakpoint(void)
-{
-	kgdb_break_asap = 0;
+अटल व्योम kgdb_initial_अवरोधpoपूर्णांक(व्योम)
+अणु
+	kgdb_अवरोध_asap = 0;
 
 	pr_crit("Waiting for connection from remote gdb...\n");
-	kgdb_breakpoint();
-}
+	kgdb_अवरोधpoपूर्णांक();
+पूर्ण
 
-void __weak kgdb_arch_late(void)
-{
-}
+व्योम __weak kgdb_arch_late(व्योम)
+अणु
+पूर्ण
 
-void __init dbg_late_init(void)
-{
+व्योम __init dbg_late_init(व्योम)
+अणु
 	dbg_is_early = false;
-	if (kgdb_io_module_registered)
+	अगर (kgdb_io_module_रेजिस्टरed)
 		kgdb_arch_late();
 	kdb_init(KDB_INIT_FULL);
 
-	if (kgdb_io_module_registered && kgdb_break_asap)
-		kgdb_initial_breakpoint();
-}
+	अगर (kgdb_io_module_रेजिस्टरed && kgdb_अवरोध_asap)
+		kgdb_initial_अवरोधpoपूर्णांक();
+पूर्ण
 
-static int
-dbg_notify_reboot(struct notifier_block *this, unsigned long code, void *x)
-{
+अटल पूर्णांक
+dbg_notअगरy_reboot(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ code, व्योम *x)
+अणु
 	/*
-	 * Take the following action on reboot notify depending on value:
+	 * Take the following action on reboot notअगरy depending on value:
 	 *    1 == Enter debugger
-	 *    0 == [the default] detatch debug client
+	 *    0 == [the शेष] detatch debug client
 	 *   -1 == Do nothing... and use this until the board resets
 	 */
-	switch (kgdbreboot) {
-	case 1:
-		kgdb_breakpoint();
-	case -1:
-		goto done;
-	}
-	if (!dbg_kdb_mode)
-		gdbstub_exit(code);
-done:
-	return NOTIFY_DONE;
-}
+	चयन (kgdbreboot) अणु
+	हाल 1:
+		kgdb_अवरोधpoपूर्णांक();
+	हाल -1:
+		जाओ करोne;
+	पूर्ण
+	अगर (!dbg_kdb_mode)
+		gdbstub_निकास(code);
+करोne:
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block dbg_reboot_notifier = {
-	.notifier_call		= dbg_notify_reboot,
-	.next			= NULL,
-	.priority		= INT_MAX,
-};
+अटल काष्ठा notअगरier_block dbg_reboot_notअगरier = अणु
+	.notअगरier_call		= dbg_notअगरy_reboot,
+	.next			= शून्य,
+	.priority		= पूर्णांक_उच्च,
+पूर्ण;
 
-static void kgdb_register_callbacks(void)
-{
-	if (!kgdb_io_module_registered) {
-		kgdb_io_module_registered = 1;
+अटल व्योम kgdb_रेजिस्टर_callbacks(व्योम)
+अणु
+	अगर (!kgdb_io_module_रेजिस्टरed) अणु
+		kgdb_io_module_रेजिस्टरed = 1;
 		kgdb_arch_init();
-		if (!dbg_is_early)
+		अगर (!dbg_is_early)
 			kgdb_arch_late();
-		register_module_notifier(&dbg_module_load_nb);
-		register_reboot_notifier(&dbg_reboot_notifier);
-#ifdef CONFIG_MAGIC_SYSRQ
-		register_sysrq_key('g', &sysrq_dbg_op);
-#endif
-		if (kgdb_use_con && !kgdb_con_registered) {
-			register_console(&kgdbcons);
-			kgdb_con_registered = 1;
-		}
-	}
-}
+		रेजिस्टर_module_notअगरier(&dbg_module_load_nb);
+		रेजिस्टर_reboot_notअगरier(&dbg_reboot_notअगरier);
+#अगर_घोषित CONFIG_MAGIC_SYSRQ
+		रेजिस्टर_sysrq_key('g', &sysrq_dbg_op);
+#पूर्ण_अगर
+		अगर (kgdb_use_con && !kgdb_con_रेजिस्टरed) अणु
+			रेजिस्टर_console(&kgdbcons);
+			kgdb_con_रेजिस्टरed = 1;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void kgdb_unregister_callbacks(void)
-{
+अटल व्योम kgdb_unरेजिस्टर_callbacks(व्योम)
+अणु
 	/*
-	 * When this routine is called KGDB should unregister from
+	 * When this routine is called KGDB should unरेजिस्टर from
 	 * handlers and clean up, making sure it is not handling any
-	 * break exceptions at the time.
+	 * अवरोध exceptions at the समय.
 	 */
-	if (kgdb_io_module_registered) {
-		kgdb_io_module_registered = 0;
-		unregister_reboot_notifier(&dbg_reboot_notifier);
-		unregister_module_notifier(&dbg_module_load_nb);
-		kgdb_arch_exit();
-#ifdef CONFIG_MAGIC_SYSRQ
-		unregister_sysrq_key('g', &sysrq_dbg_op);
-#endif
-		if (kgdb_con_registered) {
-			unregister_console(&kgdbcons);
-			kgdb_con_registered = 0;
-		}
-	}
-}
+	अगर (kgdb_io_module_रेजिस्टरed) अणु
+		kgdb_io_module_रेजिस्टरed = 0;
+		unरेजिस्टर_reboot_notअगरier(&dbg_reboot_notअगरier);
+		unरेजिस्टर_module_notअगरier(&dbg_module_load_nb);
+		kgdb_arch_निकास();
+#अगर_घोषित CONFIG_MAGIC_SYSRQ
+		unरेजिस्टर_sysrq_key('g', &sysrq_dbg_op);
+#पूर्ण_अगर
+		अगर (kgdb_con_रेजिस्टरed) अणु
+			unरेजिस्टर_console(&kgdbcons);
+			kgdb_con_रेजिस्टरed = 0;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- *	kgdb_register_io_module - register KGDB IO module
+ *	kgdb_रेजिस्टर_io_module - रेजिस्टर KGDB IO module
  *	@new_dbg_io_ops: the io ops vector
  *
  *	Register it with the KGDB core.
  */
-int kgdb_register_io_module(struct kgdb_io *new_dbg_io_ops)
-{
-	struct kgdb_io *old_dbg_io_ops;
-	int err;
+पूर्णांक kgdb_रेजिस्टर_io_module(काष्ठा kgdb_io *new_dbg_io_ops)
+अणु
+	काष्ठा kgdb_io *old_dbg_io_ops;
+	पूर्णांक err;
 
 	spin_lock(&kgdb_registration_lock);
 
 	old_dbg_io_ops = dbg_io_ops;
-	if (old_dbg_io_ops) {
-		if (!old_dbg_io_ops->deinit) {
+	अगर (old_dbg_io_ops) अणु
+		अगर (!old_dbg_io_ops->deinit) अणु
 			spin_unlock(&kgdb_registration_lock);
 
 			pr_err("KGDB I/O driver %s can't replace %s.\n",
 				new_dbg_io_ops->name, old_dbg_io_ops->name);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 		pr_info("Replacing I/O driver %s with %s\n",
 			old_dbg_io_ops->name, new_dbg_io_ops->name);
-	}
+	पूर्ण
 
-	if (new_dbg_io_ops->init) {
+	अगर (new_dbg_io_ops->init) अणु
 		err = new_dbg_io_ops->init();
-		if (err) {
+		अगर (err) अणु
 			spin_unlock(&kgdb_registration_lock);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	dbg_io_ops = new_dbg_io_ops;
 
 	spin_unlock(&kgdb_registration_lock);
 
-	if (old_dbg_io_ops) {
+	अगर (old_dbg_io_ops) अणु
 		old_dbg_io_ops->deinit();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	pr_info("Registered I/O driver %s\n", new_dbg_io_ops->name);
 
 	/* Arm KGDB now. */
-	kgdb_register_callbacks();
+	kgdb_रेजिस्टर_callbacks();
 
-	if (kgdb_break_asap &&
+	अगर (kgdb_अवरोध_asap &&
 	    (!dbg_is_early || IS_ENABLED(CONFIG_ARCH_HAS_EARLY_DEBUG)))
-		kgdb_initial_breakpoint();
+		kgdb_initial_अवरोधpoपूर्णांक();
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(kgdb_register_io_module);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(kgdb_रेजिस्टर_io_module);
 
 /**
- *	kgdb_unregister_io_module - unregister KGDB IO module
+ *	kgdb_unरेजिस्टर_io_module - unरेजिस्टर KGDB IO module
  *	@old_dbg_io_ops: the io ops vector
  *
- *	Unregister it with the KGDB core.
+ *	Unरेजिस्टर it with the KGDB core.
  */
-void kgdb_unregister_io_module(struct kgdb_io *old_dbg_io_ops)
-{
+व्योम kgdb_unरेजिस्टर_io_module(काष्ठा kgdb_io *old_dbg_io_ops)
+अणु
 	BUG_ON(kgdb_connected);
 
 	/*
-	 * KGDB is no longer able to communicate out, so
-	 * unregister our callbacks and reset state.
+	 * KGDB is no दीर्घer able to communicate out, so
+	 * unरेजिस्टर our callbacks and reset state.
 	 */
-	kgdb_unregister_callbacks();
+	kgdb_unरेजिस्टर_callbacks();
 
 	spin_lock(&kgdb_registration_lock);
 
 	WARN_ON_ONCE(dbg_io_ops != old_dbg_io_ops);
-	dbg_io_ops = NULL;
+	dbg_io_ops = शून्य;
 
 	spin_unlock(&kgdb_registration_lock);
 
-	if (old_dbg_io_ops->deinit)
+	अगर (old_dbg_io_ops->deinit)
 		old_dbg_io_ops->deinit();
 
 	pr_info("Unregistered I/O driver %s, debugger disabled\n",
 		old_dbg_io_ops->name);
-}
-EXPORT_SYMBOL_GPL(kgdb_unregister_io_module);
+पूर्ण
+EXPORT_SYMBOL_GPL(kgdb_unरेजिस्टर_io_module);
 
-int dbg_io_get_char(void)
-{
-	int ret = dbg_io_ops->read_char();
-	if (ret == NO_POLL_CHAR)
-		return -1;
-	if (!dbg_kdb_mode)
-		return ret;
-	if (ret == 127)
-		return 8;
-	return ret;
-}
+पूर्णांक dbg_io_get_अक्षर(व्योम)
+अणु
+	पूर्णांक ret = dbg_io_ops->पढ़ो_अक्षर();
+	अगर (ret == NO_POLL_CHAR)
+		वापस -1;
+	अगर (!dbg_kdb_mode)
+		वापस ret;
+	अगर (ret == 127)
+		वापस 8;
+	वापस ret;
+पूर्ण
 
 /**
- * kgdb_breakpoint - generate breakpoint exception
+ * kgdb_अवरोधpoपूर्णांक - generate अवरोधpoपूर्णांक exception
  *
- * This function will generate a breakpoint exception.  It is used at the
+ * This function will generate a अवरोधpoपूर्णांक exception.  It is used at the
  * beginning of a program to sync up with a debugger and can be used
- * otherwise as a quick means to stop program execution and "break" into
+ * otherwise as a quick means to stop program execution and "break" पूर्णांकo
  * the debugger.
  */
-noinline void kgdb_breakpoint(void)
-{
-	atomic_inc(&kgdb_setting_breakpoint);
-	wmb(); /* Sync point before breakpoint */
-	arch_kgdb_breakpoint();
-	wmb(); /* Sync point after breakpoint */
-	atomic_dec(&kgdb_setting_breakpoint);
-}
-EXPORT_SYMBOL_GPL(kgdb_breakpoint);
+noअंतरभूत व्योम kgdb_अवरोधpoपूर्णांक(व्योम)
+अणु
+	atomic_inc(&kgdb_setting_अवरोधpoपूर्णांक);
+	wmb(); /* Sync poपूर्णांक beक्रमe अवरोधpoपूर्णांक */
+	arch_kgdb_अवरोधpoपूर्णांक();
+	wmb(); /* Sync poपूर्णांक after अवरोधpoपूर्णांक */
+	atomic_dec(&kgdb_setting_अवरोधpoपूर्णांक);
+पूर्ण
+EXPORT_SYMBOL_GPL(kgdb_अवरोधpoपूर्णांक);
 
-static int __init opt_kgdb_wait(char *str)
-{
-	kgdb_break_asap = 1;
+अटल पूर्णांक __init opt_kgdb_रुको(अक्षर *str)
+अणु
+	kgdb_अवरोध_asap = 1;
 
 	kdb_init(KDB_INIT_EARLY);
-	if (kgdb_io_module_registered &&
+	अगर (kgdb_io_module_रेजिस्टरed &&
 	    IS_ENABLED(CONFIG_ARCH_HAS_EARLY_DEBUG))
-		kgdb_initial_breakpoint();
+		kgdb_initial_अवरोधpoपूर्णांक();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-early_param("kgdbwait", opt_kgdb_wait);
+early_param("kgdbwait", opt_kgdb_रुको);

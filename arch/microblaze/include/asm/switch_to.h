@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2006 Atmark Techno, Inc.
+ * Copyright (C) 2006 Aपंचांगark Techno, Inc.
  */
 
-#ifndef _ASM_MICROBLAZE_SWITCH_TO_H
-#define _ASM_MICROBLAZE_SWITCH_TO_H
+#अगर_अघोषित _ASM_MICROBLAZE_SWITCH_TO_H
+#घोषणा _ASM_MICROBLAZE_SWITCH_TO_H
 
-struct task_struct;
-struct thread_info;
+काष्ठा task_काष्ठा;
+काष्ठा thपढ़ो_info;
 
-extern struct task_struct *_switch_to(struct thread_info *prev,
-					struct thread_info *next);
+बाह्य काष्ठा task_काष्ठा *_चयन_to(काष्ठा thपढ़ो_info *prev,
+					काष्ठा thपढ़ो_info *next);
 
-#define switch_to(prev, next, last)					\
-	do {								\
-		(last) = _switch_to(task_thread_info(prev),		\
-					task_thread_info(next));	\
-	} while (0)
+#घोषणा चयन_to(prev, next, last)					\
+	करो अणु								\
+		(last) = _चयन_to(task_thपढ़ो_info(prev),		\
+					task_thपढ़ो_info(next));	\
+	पूर्ण जबतक (0)
 
-#endif /* _ASM_MICROBLAZE_SWITCH_TO_H */
+#पूर्ण_अगर /* _ASM_MICROBLAZE_SWITCH_TO_H */

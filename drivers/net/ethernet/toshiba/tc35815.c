@@ -1,88 +1,89 @@
+<शैली गुरु>
 /*
- * tc35815.c: A TOSHIBA TC35815CF PCI 10/100Mbps ethernet driver for linux.
+ * tc35815.c: A TOSHIBA TC35815CF PCI 10/100Mbps ethernet driver क्रम linux.
  *
  * Based on skelton.c by Donald Becker.
  *
- * This driver is a replacement of older and less maintained version.
+ * This driver is a replacement of older and less मुख्यtained version.
  * This is a header of the older version:
  *	-----<snip>-----
  *	Copyright 2001 MontaVista Software Inc.
  *	Author: MontaVista Software, Inc.
  *		ahennessy@mvista.com
  *	Copyright (C) 2000-2001 Toshiba Corporation
- *	static const char *version =
+ *	अटल स्थिर अक्षर *version =
  *		"tc35815.c:v0.00 26/07/2000 by Toshiba Corporation\n";
  *	-----<snip>-----
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * (C) Copyright TOSHIBA CORPORATION 2004-2005
  * All Rights Reserved.
  */
 
-#define DRV_VERSION	"1.39"
-static const char version[] = "tc35815.c:v" DRV_VERSION "\n";
-#define MODNAME			"tc35815"
+#घोषणा DRV_VERSION	"1.39"
+अटल स्थिर अक्षर version[] = "tc35815.c:v" DRV_VERSION "\n";
+#घोषणा MODNAME			"tc35815"
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/in.h>
-#include <linux/if_vlan.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/spinlock.h>
-#include <linux/errno.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/delay.h>
-#include <linux/pci.h>
-#include <linux/phy.h>
-#include <linux/workqueue.h>
-#include <linux/platform_device.h>
-#include <linux/prefetch.h>
-#include <asm/io.h>
-#include <asm/byteorder.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/in.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/prefetch.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/byteorder.h>
 
-enum tc35815_chiptype {
+क्रमागत tc35815_chiptype अणु
 	TC35815CF = 0,
 	TC35815_NWU,
 	TC35815_TX4939,
-};
+पूर्ण;
 
 /* indexed by tc35815_chiptype, above */
-static const struct {
-	const char *name;
-} chip_info[] = {
-	{ "TOSHIBA TC35815CF 10/100BaseTX" },
-	{ "TOSHIBA TC35815 with Wake on LAN" },
-	{ "TOSHIBA TC35815/TX4939" },
-};
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर *name;
+पूर्ण chip_info[] = अणु
+	अणु "TOSHIBA TC35815CF 10/100BaseTX" पूर्ण,
+	अणु "TOSHIBA TC35815 with Wake on LAN" पूर्ण,
+	अणु "TOSHIBA TC35815/TX4939" पूर्ण,
+पूर्ण;
 
-static const struct pci_device_id tc35815_pci_tbl[] = {
-	{PCI_DEVICE(PCI_VENDOR_ID_TOSHIBA_2, PCI_DEVICE_ID_TOSHIBA_TC35815CF), .driver_data = TC35815CF },
-	{PCI_DEVICE(PCI_VENDOR_ID_TOSHIBA_2, PCI_DEVICE_ID_TOSHIBA_TC35815_NWU), .driver_data = TC35815_NWU },
-	{PCI_DEVICE(PCI_VENDOR_ID_TOSHIBA_2, PCI_DEVICE_ID_TOSHIBA_TC35815_TX4939), .driver_data = TC35815_TX4939 },
-	{0,}
-};
+अटल स्थिर काष्ठा pci_device_id tc35815_pci_tbl[] = अणु
+	अणुPCI_DEVICE(PCI_VENDOR_ID_TOSHIBA_2, PCI_DEVICE_ID_TOSHIBA_TC35815CF), .driver_data = TC35815CF पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_TOSHIBA_2, PCI_DEVICE_ID_TOSHIBA_TC35815_NWU), .driver_data = TC35815_NWU पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_TOSHIBA_2, PCI_DEVICE_ID_TOSHIBA_TC35815_TX4939), .driver_data = TC35815_TX4939 पूर्ण,
+	अणु0,पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, tc35815_pci_tbl);
 
 /* see MODULE_PARM_DESC */
-static struct tc35815_options {
-	int speed;
-	int duplex;
-} options;
+अटल काष्ठा tc35815_options अणु
+	पूर्णांक speed;
+	पूर्णांक duplex;
+पूर्ण options;
 
 /*
  * Registers
  */
-struct tc35815_regs {
+काष्ठा tc35815_regs अणु
 	__u32 DMA_Ctl;		/* 0x00 */
 	__u32 TxFrmPtr;
 	__u32 TxThrsh;
@@ -114,166 +115,166 @@ struct tc35815_regs {
 	__u32 Algn_Cnt;
 	__u32 CRC_Cnt;
 	__u32 Miss_Cnt;
-};
+पूर्ण;
 
 /*
  * Bit assignments
  */
 /* DMA_Ctl bit assign ------------------------------------------------------- */
-#define DMA_RxAlign	       0x00c00000 /* 1:Reception Alignment	     */
-#define DMA_RxAlign_1	       0x00400000
-#define DMA_RxAlign_2	       0x00800000
-#define DMA_RxAlign_3	       0x00c00000
-#define DMA_M66EnStat	       0x00080000 /* 1:66MHz Enable State	     */
-#define DMA_IntMask	       0x00040000 /* 1:Interrupt mask		     */
-#define DMA_SWIntReq	       0x00020000 /* 1:Software Interrupt request    */
-#define DMA_TxWakeUp	       0x00010000 /* 1:Transmit Wake Up		     */
-#define DMA_RxBigE	       0x00008000 /* 1:Receive Big Endian	     */
-#define DMA_TxBigE	       0x00004000 /* 1:Transmit Big Endian	     */
-#define DMA_TestMode	       0x00002000 /* 1:Test Mode		     */
-#define DMA_PowrMgmnt	       0x00001000 /* 1:Power Management		     */
-#define DMA_DmBurst_Mask       0x000001fc /* DMA Burst size		     */
+#घोषणा DMA_RxAlign	       0x00c00000 /* 1:Reception Alignment	     */
+#घोषणा DMA_RxAlign_1	       0x00400000
+#घोषणा DMA_RxAlign_2	       0x00800000
+#घोषणा DMA_RxAlign_3	       0x00c00000
+#घोषणा DMA_M66EnStat	       0x00080000 /* 1:66MHz Enable State	     */
+#घोषणा DMA_IntMask	       0x00040000 /* 1:Interrupt mask		     */
+#घोषणा DMA_SWIntReq	       0x00020000 /* 1:Software Interrupt request    */
+#घोषणा DMA_TxWakeUp	       0x00010000 /* 1:Transmit Wake Up		     */
+#घोषणा DMA_RxBigE	       0x00008000 /* 1:Receive Big Endian	     */
+#घोषणा DMA_TxBigE	       0x00004000 /* 1:Transmit Big Endian	     */
+#घोषणा DMA_TestMode	       0x00002000 /* 1:Test Mode		     */
+#घोषणा DMA_PowrMgmnt	       0x00001000 /* 1:Power Management		     */
+#घोषणा DMA_DmBurst_Mask       0x000001fc /* DMA Burst size		     */
 
 /* RxFragSize bit assign ---------------------------------------------------- */
-#define RxFrag_EnPack	       0x00008000 /* 1:Enable Packing		     */
-#define RxFrag_MinFragMask     0x00000ffc /* Minimum Fragment		     */
+#घोषणा RxFrag_EnPack	       0x00008000 /* 1:Enable Packing		     */
+#घोषणा RxFrag_MinFragMask     0x00000ffc /* Minimum Fragment		     */
 
 /* MAC_Ctl bit assign ------------------------------------------------------- */
-#define MAC_Link10	       0x00008000 /* 1:Link Status 10Mbits	     */
-#define MAC_EnMissRoll	       0x00002000 /* 1:Enable Missed Roll	     */
-#define MAC_MissRoll	       0x00000400 /* 1:Missed Roll		     */
-#define MAC_Loop10	       0x00000080 /* 1:Loop 10 Mbps		     */
-#define MAC_Conn_Auto	       0x00000000 /*00:Connection mode (Automatic)   */
-#define MAC_Conn_10M	       0x00000020 /*01:		       (10Mbps endec)*/
-#define MAC_Conn_Mll	       0x00000040 /*10:		       (Mll clock)   */
-#define MAC_MacLoop	       0x00000010 /* 1:MAC Loopback		     */
-#define MAC_FullDup	       0x00000008 /* 1:Full Duplex 0:Half Duplex     */
-#define MAC_Reset	       0x00000004 /* 1:Software Reset		     */
-#define MAC_HaltImm	       0x00000002 /* 1:Halt Immediate		     */
-#define MAC_HaltReq	       0x00000001 /* 1:Halt request		     */
+#घोषणा MAC_Link10	       0x00008000 /* 1:Link Status 10Mbits	     */
+#घोषणा MAC_EnMissRoll	       0x00002000 /* 1:Enable Missed Roll	     */
+#घोषणा MAC_MissRoll	       0x00000400 /* 1:Missed Roll		     */
+#घोषणा MAC_Loop10	       0x00000080 /* 1:Loop 10 Mbps		     */
+#घोषणा MAC_Conn_Auto	       0x00000000 /*00:Connection mode (Automatic)   */
+#घोषणा MAC_Conn_10M	       0x00000020 /*01:		       (10Mbps endec)*/
+#घोषणा MAC_Conn_Mll	       0x00000040 /*10:		       (Mll घड़ी)   */
+#घोषणा MAC_MacLoop	       0x00000010 /* 1:MAC Loopback		     */
+#घोषणा MAC_FullDup	       0x00000008 /* 1:Full Duplex 0:Half Duplex     */
+#घोषणा MAC_Reset	       0x00000004 /* 1:Software Reset		     */
+#घोषणा MAC_HaltImm	       0x00000002 /* 1:Halt Immediate		     */
+#घोषणा MAC_HaltReq	       0x00000001 /* 1:Halt request		     */
 
 /* PROM_Ctl bit assign ------------------------------------------------------ */
-#define PROM_Busy	       0x00008000 /* 1:Busy (Start Operation)	     */
-#define PROM_Read	       0x00004000 /*10:Read operation		     */
-#define PROM_Write	       0x00002000 /*01:Write operation		     */
-#define PROM_Erase	       0x00006000 /*11:Erase operation		     */
+#घोषणा PROM_Busy	       0x00008000 /* 1:Busy (Start Operation)	     */
+#घोषणा PROM_Read	       0x00004000 /*10:Read operation		     */
+#घोषणा PROM_Write	       0x00002000 /*01:Write operation		     */
+#घोषणा PROM_Erase	       0x00006000 /*11:Erase operation		     */
 					  /*00:Enable or Disable Writting,   */
-					  /*	  as specified in PROM_Addr. */
-#define PROM_Addr_Ena	       0x00000030 /*11xxxx:PROM Write enable	     */
+					  /*	  as specअगरied in PROM_Addr. */
+#घोषणा PROM_Addr_Ena	       0x00000030 /*11xxxx:PROM Write enable	     */
 					  /*00xxxx:	      disable	     */
 
 /* CAM_Ctl bit assign ------------------------------------------------------- */
-#define CAM_CompEn	       0x00000010 /* 1:CAM Compare Enable	     */
-#define CAM_NegCAM	       0x00000008 /* 1:Reject packets CAM recognizes,*/
+#घोषणा CAM_CompEn	       0x00000010 /* 1:CAM Compare Enable	     */
+#घोषणा CAM_NegCAM	       0x00000008 /* 1:Reject packets CAM recognizes,*/
 					  /*			accept other */
-#define CAM_BroadAcc	       0x00000004 /* 1:Broadcast assept		     */
-#define CAM_GroupAcc	       0x00000002 /* 1:Multicast assept		     */
-#define CAM_StationAcc	       0x00000001 /* 1:unicast accept		     */
+#घोषणा CAM_BroadAcc	       0x00000004 /* 1:Broadcast assept		     */
+#घोषणा CAM_GroupAcc	       0x00000002 /* 1:Multicast assept		     */
+#घोषणा CAM_StationAcc	       0x00000001 /* 1:unicast accept		     */
 
 /* CAM_Ena bit assign ------------------------------------------------------- */
-#define CAM_ENTRY_MAX		       21   /* CAM Data entry max count	     */
-#define CAM_Ena_Mask ((1<<CAM_ENTRY_MAX)-1) /* CAM Enable bits (Max 21bits)  */
-#define CAM_Ena_Bit(index)	(1 << (index))
-#define CAM_ENTRY_DESTINATION	0
-#define CAM_ENTRY_SOURCE	1
-#define CAM_ENTRY_MACCTL	20
+#घोषणा CAM_ENTRY_MAX		       21   /* CAM Data entry max count	     */
+#घोषणा CAM_Ena_Mask ((1<<CAM_ENTRY_MAX)-1) /* CAM Enable bits (Max 21bits)  */
+#घोषणा CAM_Ena_Bit(index)	(1 << (index))
+#घोषणा CAM_ENTRY_DESTINATION	0
+#घोषणा CAM_ENTRY_SOURCE	1
+#घोषणा CAM_ENTRY_MACCTL	20
 
 /* Tx_Ctl bit assign -------------------------------------------------------- */
-#define Tx_En		       0x00000001 /* 1:Transmit enable		     */
-#define Tx_TxHalt	       0x00000002 /* 1:Transmit Halt Request	     */
-#define Tx_NoPad	       0x00000004 /* 1:Suppress Padding		     */
-#define Tx_NoCRC	       0x00000008 /* 1:Suppress Padding		     */
-#define Tx_FBack	       0x00000010 /* 1:Fast Back-off		     */
-#define Tx_EnUnder	       0x00000100 /* 1:Enable Underrun		     */
-#define Tx_EnExDefer	       0x00000200 /* 1:Enable Excessive Deferral     */
-#define Tx_EnLCarr	       0x00000400 /* 1:Enable Lost Carrier	     */
-#define Tx_EnExColl	       0x00000800 /* 1:Enable Excessive Collision    */
-#define Tx_EnLateColl	       0x00001000 /* 1:Enable Late Collision	     */
-#define Tx_EnTxPar	       0x00002000 /* 1:Enable Transmit Parity	     */
-#define Tx_EnComp	       0x00004000 /* 1:Enable Completion	     */
+#घोषणा Tx_En		       0x00000001 /* 1:Transmit enable		     */
+#घोषणा Tx_TxHalt	       0x00000002 /* 1:Transmit Halt Request	     */
+#घोषणा Tx_NoPad	       0x00000004 /* 1:Suppress Padding		     */
+#घोषणा Tx_NoCRC	       0x00000008 /* 1:Suppress Padding		     */
+#घोषणा Tx_FBack	       0x00000010 /* 1:Fast Back-off		     */
+#घोषणा Tx_EnUnder	       0x00000100 /* 1:Enable Underrun		     */
+#घोषणा Tx_EnExDefer	       0x00000200 /* 1:Enable Excessive Deferral     */
+#घोषणा Tx_EnLCarr	       0x00000400 /* 1:Enable Lost Carrier	     */
+#घोषणा Tx_EnExColl	       0x00000800 /* 1:Enable Excessive Collision    */
+#घोषणा Tx_EnLateColl	       0x00001000 /* 1:Enable Late Collision	     */
+#घोषणा Tx_EnTxPar	       0x00002000 /* 1:Enable Transmit Parity	     */
+#घोषणा Tx_EnComp	       0x00004000 /* 1:Enable Completion	     */
 
 /* Tx_Stat bit assign ------------------------------------------------------- */
-#define Tx_TxColl_MASK	       0x0000000F /* Tx Collision Count		     */
-#define Tx_ExColl	       0x00000010 /* Excessive Collision	     */
-#define Tx_TXDefer	       0x00000020 /* Transmit Defered		     */
-#define Tx_Paused	       0x00000040 /* Transmit Paused		     */
-#define Tx_IntTx	       0x00000080 /* Interrupt on Tx		     */
-#define Tx_Under	       0x00000100 /* Underrun			     */
-#define Tx_Defer	       0x00000200 /* Deferral			     */
-#define Tx_NCarr	       0x00000400 /* No Carrier			     */
-#define Tx_10Stat	       0x00000800 /* 10Mbps Status		     */
-#define Tx_LateColl	       0x00001000 /* Late Collision		     */
-#define Tx_TxPar	       0x00002000 /* Tx Parity Error		     */
-#define Tx_Comp		       0x00004000 /* Completion			     */
-#define Tx_Halted	       0x00008000 /* Tx Halted			     */
-#define Tx_SQErr	       0x00010000 /* Signal Quality Error(SQE)	     */
+#घोषणा Tx_TxColl_MASK	       0x0000000F /* Tx Collision Count		     */
+#घोषणा Tx_ExColl	       0x00000010 /* Excessive Collision	     */
+#घोषणा Tx_TXDefer	       0x00000020 /* Transmit Defered		     */
+#घोषणा Tx_Paused	       0x00000040 /* Transmit Paused		     */
+#घोषणा Tx_IntTx	       0x00000080 /* Interrupt on Tx		     */
+#घोषणा Tx_Under	       0x00000100 /* Underrun			     */
+#घोषणा Tx_Defer	       0x00000200 /* Deferral			     */
+#घोषणा Tx_NCarr	       0x00000400 /* No Carrier			     */
+#घोषणा Tx_10Stat	       0x00000800 /* 10Mbps Status		     */
+#घोषणा Tx_LateColl	       0x00001000 /* Late Collision		     */
+#घोषणा Tx_TxPar	       0x00002000 /* Tx Parity Error		     */
+#घोषणा Tx_Comp		       0x00004000 /* Completion			     */
+#घोषणा Tx_Halted	       0x00008000 /* Tx Halted			     */
+#घोषणा Tx_SQErr	       0x00010000 /* Signal Quality Error(SQE)	     */
 
 /* Rx_Ctl bit assign -------------------------------------------------------- */
-#define Rx_EnGood	       0x00004000 /* 1:Enable Good		     */
-#define Rx_EnRxPar	       0x00002000 /* 1:Enable Receive Parity	     */
-#define Rx_EnLongErr	       0x00000800 /* 1:Enable Long Error	     */
-#define Rx_EnOver	       0x00000400 /* 1:Enable OverFlow		     */
-#define Rx_EnCRCErr	       0x00000200 /* 1:Enable CRC Error		     */
-#define Rx_EnAlign	       0x00000100 /* 1:Enable Alignment		     */
-#define Rx_IgnoreCRC	       0x00000040 /* 1:Ignore CRC Value		     */
-#define Rx_StripCRC	       0x00000010 /* 1:Strip CRC Value		     */
-#define Rx_ShortEn	       0x00000008 /* 1:Short Enable		     */
-#define Rx_LongEn	       0x00000004 /* 1:Long Enable		     */
-#define Rx_RxHalt	       0x00000002 /* 1:Receive Halt Request	     */
-#define Rx_RxEn		       0x00000001 /* 1:Receive Intrrupt Enable	     */
+#घोषणा Rx_EnGood	       0x00004000 /* 1:Enable Good		     */
+#घोषणा Rx_EnRxPar	       0x00002000 /* 1:Enable Receive Parity	     */
+#घोषणा Rx_EnLongErr	       0x00000800 /* 1:Enable Long Error	     */
+#घोषणा Rx_EnOver	       0x00000400 /* 1:Enable OverFlow		     */
+#घोषणा Rx_EnCRCErr	       0x00000200 /* 1:Enable CRC Error		     */
+#घोषणा Rx_EnAlign	       0x00000100 /* 1:Enable Alignment		     */
+#घोषणा Rx_IgnoreCRC	       0x00000040 /* 1:Ignore CRC Value		     */
+#घोषणा Rx_StripCRC	       0x00000010 /* 1:Strip CRC Value		     */
+#घोषणा Rx_ShortEn	       0x00000008 /* 1:Short Enable		     */
+#घोषणा Rx_LongEn	       0x00000004 /* 1:Long Enable		     */
+#घोषणा Rx_RxHalt	       0x00000002 /* 1:Receive Halt Request	     */
+#घोषणा Rx_RxEn		       0x00000001 /* 1:Receive Intrrupt Enable	     */
 
 /* Rx_Stat bit assign ------------------------------------------------------- */
-#define Rx_Halted	       0x00008000 /* Rx Halted			     */
-#define Rx_Good		       0x00004000 /* Rx Good			     */
-#define Rx_RxPar	       0x00002000 /* Rx Parity Error		     */
-#define Rx_TypePkt	       0x00001000 /* Rx Type Packet		     */
-#define Rx_LongErr	       0x00000800 /* Rx Long Error		     */
-#define Rx_Over		       0x00000400 /* Rx Overflow		     */
-#define Rx_CRCErr	       0x00000200 /* Rx CRC Error		     */
-#define Rx_Align	       0x00000100 /* Rx Alignment Error		     */
-#define Rx_10Stat	       0x00000080 /* Rx 10Mbps Status		     */
-#define Rx_IntRx	       0x00000040 /* Rx Interrupt		     */
-#define Rx_CtlRecd	       0x00000020 /* Rx Control Receive		     */
-#define Rx_InLenErr	       0x00000010 /* Rx In Range Frame Length Error  */
+#घोषणा Rx_Halted	       0x00008000 /* Rx Halted			     */
+#घोषणा Rx_Good		       0x00004000 /* Rx Good			     */
+#घोषणा Rx_RxPar	       0x00002000 /* Rx Parity Error		     */
+#घोषणा Rx_TypePkt	       0x00001000 /* Rx Type Packet		     */
+#घोषणा Rx_LongErr	       0x00000800 /* Rx Long Error		     */
+#घोषणा Rx_Over		       0x00000400 /* Rx Overflow		     */
+#घोषणा Rx_CRCErr	       0x00000200 /* Rx CRC Error		     */
+#घोषणा Rx_Align	       0x00000100 /* Rx Alignment Error		     */
+#घोषणा Rx_10Stat	       0x00000080 /* Rx 10Mbps Status		     */
+#घोषणा Rx_IntRx	       0x00000040 /* Rx Interrupt		     */
+#घोषणा Rx_CtlRecd	       0x00000020 /* Rx Control Receive		     */
+#घोषणा Rx_InLenErr	       0x00000010 /* Rx In Range Frame Length Error  */
 
-#define Rx_Stat_Mask	       0x0000FFF0 /* Rx All Status Mask		     */
+#घोषणा Rx_Stat_Mask	       0x0000FFF0 /* Rx All Status Mask		     */
 
 /* Int_En bit assign -------------------------------------------------------- */
-#define Int_NRAbtEn	       0x00000800 /* 1:Non-recoverable Abort Enable  */
-#define Int_TxCtlCmpEn	       0x00000400 /* 1:Transmit Ctl Complete Enable  */
-#define Int_DmParErrEn	       0x00000200 /* 1:DMA Parity Error Enable	     */
-#define Int_DParDEn	       0x00000100 /* 1:Data Parity Error Enable	     */
-#define Int_EarNotEn	       0x00000080 /* 1:Early Notify Enable	     */
-#define Int_DParErrEn	       0x00000040 /* 1:Detected Parity Error Enable  */
-#define Int_SSysErrEn	       0x00000020 /* 1:Signalled System Error Enable */
-#define Int_RMasAbtEn	       0x00000010 /* 1:Received Master Abort Enable  */
-#define Int_RTargAbtEn	       0x00000008 /* 1:Received Target Abort Enable  */
-#define Int_STargAbtEn	       0x00000004 /* 1:Signalled Target Abort Enable */
-#define Int_BLExEn	       0x00000002 /* 1:Buffer List Exhausted Enable  */
-#define Int_FDAExEn	       0x00000001 /* 1:Free Descriptor Area	     */
+#घोषणा Int_NRAbtEn	       0x00000800 /* 1:Non-recoverable Abort Enable  */
+#घोषणा Int_TxCtlCmpEn	       0x00000400 /* 1:Transmit Ctl Complete Enable  */
+#घोषणा Int_DmParErrEn	       0x00000200 /* 1:DMA Parity Error Enable	     */
+#घोषणा Int_DParDEn	       0x00000100 /* 1:Data Parity Error Enable	     */
+#घोषणा Int_EarNotEn	       0x00000080 /* 1:Early Notअगरy Enable	     */
+#घोषणा Int_DParErrEn	       0x00000040 /* 1:Detected Parity Error Enable  */
+#घोषणा Int_SSysErrEn	       0x00000020 /* 1:Signalled System Error Enable */
+#घोषणा Int_RMasAbtEn	       0x00000010 /* 1:Received Master Abort Enable  */
+#घोषणा Int_RTargAbtEn	       0x00000008 /* 1:Received Target Abort Enable  */
+#घोषणा Int_STargAbtEn	       0x00000004 /* 1:Signalled Target Abort Enable */
+#घोषणा Int_BLExEn	       0x00000002 /* 1:Buffer List Exhausted Enable  */
+#घोषणा Int_FDAExEn	       0x00000001 /* 1:Free Descriptor Area	     */
 					  /*		   Exhausted Enable  */
 
 /* Int_Src bit assign ------------------------------------------------------- */
-#define Int_NRabt	       0x00004000 /* 1:Non Recoverable error	     */
-#define Int_DmParErrStat       0x00002000 /* 1:DMA Parity Error & Clear	     */
-#define Int_BLEx	       0x00001000 /* 1:Buffer List Empty & Clear     */
-#define Int_FDAEx	       0x00000800 /* 1:FDA Empty & Clear	     */
-#define Int_IntNRAbt	       0x00000400 /* 1:Non Recoverable Abort	     */
-#define Int_IntCmp	       0x00000200 /* 1:MAC control packet complete   */
-#define Int_IntExBD	       0x00000100 /* 1:Interrupt Extra BD & Clear    */
-#define Int_DmParErr	       0x00000080 /* 1:DMA Parity Error & Clear	     */
-#define Int_IntEarNot	       0x00000040 /* 1:Receive Data write & Clear    */
-#define Int_SWInt	       0x00000020 /* 1:Software request & Clear	     */
-#define Int_IntBLEx	       0x00000010 /* 1:Buffer List Empty & Clear     */
-#define Int_IntFDAEx	       0x00000008 /* 1:FDA Empty & Clear	     */
-#define Int_IntPCI	       0x00000004 /* 1:PCI controller & Clear	     */
-#define Int_IntMacRx	       0x00000002 /* 1:Rx controller & Clear	     */
-#define Int_IntMacTx	       0x00000001 /* 1:Tx controller & Clear	     */
+#घोषणा Int_NRabt	       0x00004000 /* 1:Non Recoverable error	     */
+#घोषणा Int_DmParErrStat       0x00002000 /* 1:DMA Parity Error & Clear	     */
+#घोषणा Int_BLEx	       0x00001000 /* 1:Buffer List Empty & Clear     */
+#घोषणा Int_FDAEx	       0x00000800 /* 1:FDA Empty & Clear	     */
+#घोषणा Int_IntNRAbt	       0x00000400 /* 1:Non Recoverable Abort	     */
+#घोषणा Int_IntCmp	       0x00000200 /* 1:MAC control packet complete   */
+#घोषणा Int_IntExBD	       0x00000100 /* 1:Interrupt Extra BD & Clear    */
+#घोषणा Int_DmParErr	       0x00000080 /* 1:DMA Parity Error & Clear	     */
+#घोषणा Int_IntEarNot	       0x00000040 /* 1:Receive Data ग_लिखो & Clear    */
+#घोषणा Int_SWInt	       0x00000020 /* 1:Software request & Clear	     */
+#घोषणा Int_IntBLEx	       0x00000010 /* 1:Buffer List Empty & Clear     */
+#घोषणा Int_IntFDAEx	       0x00000008 /* 1:FDA Empty & Clear	     */
+#घोषणा Int_IntPCI	       0x00000004 /* 1:PCI controller & Clear	     */
+#घोषणा Int_IntMacRx	       0x00000002 /* 1:Rx controller & Clear	     */
+#घोषणा Int_IntMacTx	       0x00000001 /* 1:Tx controller & Clear	     */
 
 /* MD_CA bit assign --------------------------------------------------------- */
-#define MD_CA_PreSup	       0x00001000 /* 1:Preamble Suppress		     */
-#define MD_CA_Busy	       0x00000800 /* 1:Busy (Start Operation)	     */
-#define MD_CA_Wr	       0x00000400 /* 1:Write 0:Read		     */
+#घोषणा MD_CA_PreSup	       0x00001000 /* 1:Preamble Suppress		     */
+#घोषणा MD_CA_Busy	       0x00000800 /* 1:Busy (Start Operation)	     */
+#घोषणा MD_CA_Wr	       0x00000400 /* 1:Write 0:Read		     */
 
 
 /*
@@ -281,368 +282,368 @@ struct tc35815_regs {
  */
 
 /* Frame descriptor */
-struct FDesc {
-	volatile __u32 FDNext;
-	volatile __u32 FDSystem;
-	volatile __u32 FDStat;
-	volatile __u32 FDCtl;
-};
+काष्ठा FDesc अणु
+	अस्थिर __u32 FDNext;
+	अस्थिर __u32 FDSystem;
+	अस्थिर __u32 FDStat;
+	अस्थिर __u32 FDCtl;
+पूर्ण;
 
 /* Buffer descriptor */
-struct BDesc {
-	volatile __u32 BuffData;
-	volatile __u32 BDCtl;
-};
+काष्ठा BDesc अणु
+	अस्थिर __u32 BuffData;
+	अस्थिर __u32 BDCtl;
+पूर्ण;
 
-#define FD_ALIGN	16
+#घोषणा FD_ALIGN	16
 
 /* Frame Descriptor bit assign ---------------------------------------------- */
-#define FD_FDLength_MASK       0x0000FFFF /* Length MASK		     */
-#define FD_BDCnt_MASK	       0x001F0000 /* BD count MASK in FD	     */
-#define FD_FrmOpt_MASK	       0x7C000000 /* Frame option MASK		     */
-#define FD_FrmOpt_BigEndian    0x40000000 /* Tx/Rx */
-#define FD_FrmOpt_IntTx	       0x20000000 /* Tx only */
-#define FD_FrmOpt_NoCRC	       0x10000000 /* Tx only */
-#define FD_FrmOpt_NoPadding    0x08000000 /* Tx only */
-#define FD_FrmOpt_Packing      0x04000000 /* Rx only */
-#define FD_CownsFD	       0x80000000 /* FD Controller owner bit	     */
-#define FD_Next_EOL	       0x00000001 /* FD EOL indicator		     */
-#define FD_BDCnt_SHIFT	       16
+#घोषणा FD_FDLength_MASK       0x0000FFFF /* Length MASK		     */
+#घोषणा FD_BDCnt_MASK	       0x001F0000 /* BD count MASK in FD	     */
+#घोषणा FD_FrmOpt_MASK	       0x7C000000 /* Frame option MASK		     */
+#घोषणा FD_FrmOpt_BigEndian    0x40000000 /* Tx/Rx */
+#घोषणा FD_FrmOpt_IntTx	       0x20000000 /* Tx only */
+#घोषणा FD_FrmOpt_NoCRC	       0x10000000 /* Tx only */
+#घोषणा FD_FrmOpt_NoPadding    0x08000000 /* Tx only */
+#घोषणा FD_FrmOpt_Packing      0x04000000 /* Rx only */
+#घोषणा FD_CownsFD	       0x80000000 /* FD Controller owner bit	     */
+#घोषणा FD_Next_EOL	       0x00000001 /* FD EOL indicator		     */
+#घोषणा FD_BDCnt_SHIFT	       16
 
 /* Buffer Descriptor bit assign --------------------------------------------- */
-#define BD_BuffLength_MASK     0x0000FFFF /* Receive Data Size		     */
-#define BD_RxBDID_MASK	       0x00FF0000 /* BD ID Number MASK		     */
-#define BD_RxBDSeqN_MASK       0x7F000000 /* Rx BD Sequence Number	     */
-#define BD_CownsBD	       0x80000000 /* BD Controller owner bit	     */
-#define BD_RxBDID_SHIFT	       16
-#define BD_RxBDSeqN_SHIFT      24
+#घोषणा BD_BuffLength_MASK     0x0000FFFF /* Receive Data Size		     */
+#घोषणा BD_RxBDID_MASK	       0x00FF0000 /* BD ID Number MASK		     */
+#घोषणा BD_RxBDSeqN_MASK       0x7F000000 /* Rx BD Sequence Number	     */
+#घोषणा BD_CownsBD	       0x80000000 /* BD Controller owner bit	     */
+#घोषणा BD_RxBDID_SHIFT	       16
+#घोषणा BD_RxBDSeqN_SHIFT      24
 
 
-/* Some useful constants. */
+/* Some useful स्थिरants. */
 
-#define TX_CTL_CMD	(Tx_EnTxPar | Tx_EnLateColl | \
+#घोषणा TX_CTL_CMD	(Tx_EnTxPar | Tx_EnLateColl | \
 	Tx_EnExColl | Tx_EnLCarr | Tx_EnExDefer | Tx_EnUnder | \
 	Tx_En)	/* maybe  0x7b01 */
 /* Do not use Rx_StripCRC -- it causes trouble on BLEx/FDAEx condition */
-#define RX_CTL_CMD	(Rx_EnGood | Rx_EnRxPar | Rx_EnLongErr | Rx_EnOver \
+#घोषणा RX_CTL_CMD	(Rx_EnGood | Rx_EnRxPar | Rx_EnLongErr | Rx_EnOver \
 	| Rx_EnCRCErr | Rx_EnAlign | Rx_RxEn) /* maybe 0x6f01 */
-#define INT_EN_CMD  (Int_NRAbtEn | \
+#घोषणा INT_EN_CMD  (Int_NRAbtEn | \
 	Int_DmParErrEn | Int_DParDEn | Int_DParErrEn | \
 	Int_SSysErrEn  | Int_RMasAbtEn | Int_RTargAbtEn | \
 	Int_STargAbtEn | \
 	Int_BLExEn  | Int_FDAExEn) /* maybe 0xb7f*/
-#define DMA_CTL_CMD	DMA_BURST_SIZE
-#define HAVE_DMA_RXALIGN(lp)	likely((lp)->chiptype != TC35815CF)
+#घोषणा DMA_CTL_CMD	DMA_BURST_SIZE
+#घोषणा HAVE_DMA_RXALIGN(lp)	likely((lp)->chiptype != TC35815CF)
 
 /* Tuning parameters */
-#define DMA_BURST_SIZE	32
-#define TX_THRESHOLD	1024
-/* used threshold with packet max byte for low pci transfer ability.*/
-#define TX_THRESHOLD_MAX 1536
+#घोषणा DMA_BURST_SIZE	32
+#घोषणा TX_THRESHOLD	1024
+/* used threshold with packet max byte क्रम low pci transfer ability.*/
+#घोषणा TX_THRESHOLD_MAX 1536
 /* setting threshold max value when overrun error occurred this count. */
-#define TX_THRESHOLD_KEEP_LIMIT 10
+#घोषणा TX_THRESHOLD_KEEP_LIMIT 10
 
 /* 16 + RX_BUF_NUM * 8 + RX_FD_NUM * 16 + TX_FD_NUM * 32 <= PAGE_SIZE*FD_PAGE_NUM */
-#define FD_PAGE_NUM 4
-#define RX_BUF_NUM	128	/* < 256 */
-#define RX_FD_NUM	256	/* >= 32 */
-#define TX_FD_NUM	128
-#if RX_CTL_CMD & Rx_LongEn
-#define RX_BUF_SIZE	PAGE_SIZE
-#elif RX_CTL_CMD & Rx_StripCRC
-#define RX_BUF_SIZE	\
+#घोषणा FD_PAGE_NUM 4
+#घोषणा RX_BUF_NUM	128	/* < 256 */
+#घोषणा RX_FD_NUM	256	/* >= 32 */
+#घोषणा TX_FD_NUM	128
+#अगर RX_CTL_CMD & Rx_LongEn
+#घोषणा RX_BUF_SIZE	PAGE_SIZE
+#या_अगर RX_CTL_CMD & Rx_StripCRC
+#घोषणा RX_BUF_SIZE	\
 	L1_CACHE_ALIGN(ETH_FRAME_LEN + VLAN_HLEN + NET_IP_ALIGN)
-#else
-#define RX_BUF_SIZE	\
+#अन्यथा
+#घोषणा RX_BUF_SIZE	\
 	L1_CACHE_ALIGN(ETH_FRAME_LEN + VLAN_HLEN + ETH_FCS_LEN + NET_IP_ALIGN)
-#endif
-#define RX_FD_RESERVE	(2 / 2)	/* max 2 BD per RxFD */
-#define NAPI_WEIGHT	16
+#पूर्ण_अगर
+#घोषणा RX_FD_RESERVE	(2 / 2)	/* max 2 BD per RxFD */
+#घोषणा NAPI_WEIGHT	16
 
-struct TxFD {
-	struct FDesc fd;
-	struct BDesc bd;
-	struct BDesc unused;
-};
+काष्ठा TxFD अणु
+	काष्ठा FDesc fd;
+	काष्ठा BDesc bd;
+	काष्ठा BDesc unused;
+पूर्ण;
 
-struct RxFD {
-	struct FDesc fd;
-	struct BDesc bd[];	/* variable length */
-};
+काष्ठा RxFD अणु
+	काष्ठा FDesc fd;
+	काष्ठा BDesc bd[];	/* variable length */
+पूर्ण;
 
-struct FrFD {
-	struct FDesc fd;
-	struct BDesc bd[RX_BUF_NUM];
-};
+काष्ठा FrFD अणु
+	काष्ठा FDesc fd;
+	काष्ठा BDesc bd[RX_BUF_NUM];
+पूर्ण;
 
 
-#define tc_readl(addr)	ioread32(addr)
-#define tc_writel(d, addr)	iowrite32(d, addr)
+#घोषणा tc_पढ़ोl(addr)	ioपढ़ो32(addr)
+#घोषणा tc_ग_लिखोl(d, addr)	ioग_लिखो32(d, addr)
 
-#define TC35815_TX_TIMEOUT  msecs_to_jiffies(400)
+#घोषणा TC35815_TX_TIMEOUT  msecs_to_jअगरfies(400)
 
-/* Information that need to be kept for each controller. */
-struct tc35815_local {
-	struct pci_dev *pci_dev;
+/* Inक्रमmation that need to be kept क्रम each controller. */
+काष्ठा tc35815_local अणु
+	काष्ठा pci_dev *pci_dev;
 
-	struct net_device *dev;
-	struct napi_struct napi;
+	काष्ठा net_device *dev;
+	काष्ठा napi_काष्ठा napi;
 
 	/* statistics */
-	struct {
-		int max_tx_qlen;
-		int tx_ints;
-		int rx_ints;
-		int tx_underrun;
-	} lstats;
+	काष्ठा अणु
+		पूर्णांक max_tx_qlen;
+		पूर्णांक tx_पूर्णांकs;
+		पूर्णांक rx_पूर्णांकs;
+		पूर्णांक tx_underrun;
+	पूर्ण lstats;
 
 	/* Tx control lock.  This protects the transmit buffer ring
-	 * state along with the "tx full" state of the driver.  This
-	 * means all netif_queue flow control actions are protected
+	 * state aदीर्घ with the "tx full" state of the driver.  This
+	 * means all netअगर_queue flow control actions are रक्षित
 	 * by this lock as well.
 	 */
 	spinlock_t lock;
 	spinlock_t rx_lock;
 
-	struct mii_bus *mii_bus;
-	int duplex;
-	int speed;
-	int link;
-	struct work_struct restart_work;
+	काष्ठा mii_bus *mii_bus;
+	पूर्णांक duplex;
+	पूर्णांक speed;
+	पूर्णांक link;
+	काष्ठा work_काष्ठा restart_work;
 
 	/*
 	 * Transmitting: Batch Mode.
 	 *	1 BD in 1 TxFD.
 	 * Receiving: Non-Packing Mode.
-	 *	1 circular FD for Free Buffer List.
+	 *	1 circular FD क्रम Free Buffer List.
 	 *	RX_BUF_NUM BD in Free Buffer FD.
 	 *	One Free Buffer BD has ETH_FRAME_LEN data buffer.
 	 */
-	void *fd_buf;	/* for TxFD, RxFD, FrFD */
+	व्योम *fd_buf;	/* क्रम TxFD, RxFD, FrFD */
 	dma_addr_t fd_buf_dma;
-	struct TxFD *tfd_base;
-	unsigned int tfd_start;
-	unsigned int tfd_end;
-	struct RxFD *rfd_base;
-	struct RxFD *rfd_limit;
-	struct RxFD *rfd_cur;
-	struct FrFD *fbl_ptr;
-	unsigned int fbl_count;
-	struct {
-		struct sk_buff *skb;
+	काष्ठा TxFD *tfd_base;
+	अचिन्हित पूर्णांक tfd_start;
+	अचिन्हित पूर्णांक tfd_end;
+	काष्ठा RxFD *rfd_base;
+	काष्ठा RxFD *rfd_limit;
+	काष्ठा RxFD *rfd_cur;
+	काष्ठा FrFD *fbl_ptr;
+	अचिन्हित पूर्णांक fbl_count;
+	काष्ठा अणु
+		काष्ठा sk_buff *skb;
 		dma_addr_t skb_dma;
-	} tx_skbs[TX_FD_NUM], rx_skbs[RX_BUF_NUM];
+	पूर्ण tx_skbs[TX_FD_NUM], rx_skbs[RX_BUF_NUM];
 	u32 msg_enable;
-	enum tc35815_chiptype chiptype;
-};
+	क्रमागत tc35815_chiptype chiptype;
+पूर्ण;
 
-static inline dma_addr_t fd_virt_to_bus(struct tc35815_local *lp, void *virt)
-{
-	return lp->fd_buf_dma + ((u8 *)virt - (u8 *)lp->fd_buf);
-}
-#ifdef DEBUG
-static inline void *fd_bus_to_virt(struct tc35815_local *lp, dma_addr_t bus)
-{
-	return (void *)((u8 *)lp->fd_buf + (bus - lp->fd_buf_dma));
-}
-#endif
-static struct sk_buff *alloc_rxbuf_skb(struct net_device *dev,
-				       struct pci_dev *hwdev,
+अटल अंतरभूत dma_addr_t fd_virt_to_bus(काष्ठा tc35815_local *lp, व्योम *virt)
+अणु
+	वापस lp->fd_buf_dma + ((u8 *)virt - (u8 *)lp->fd_buf);
+पूर्ण
+#अगर_घोषित DEBUG
+अटल अंतरभूत व्योम *fd_bus_to_virt(काष्ठा tc35815_local *lp, dma_addr_t bus)
+अणु
+	वापस (व्योम *)((u8 *)lp->fd_buf + (bus - lp->fd_buf_dma));
+पूर्ण
+#पूर्ण_अगर
+अटल काष्ठा sk_buff *alloc_rxbuf_skb(काष्ठा net_device *dev,
+				       काष्ठा pci_dev *hwdev,
 				       dma_addr_t *dma_handle)
-{
-	struct sk_buff *skb;
+अणु
+	काष्ठा sk_buff *skb;
 	skb = netdev_alloc_skb(dev, RX_BUF_SIZE);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 	*dma_handle = dma_map_single(&hwdev->dev, skb->data, RX_BUF_SIZE,
 				     DMA_FROM_DEVICE);
-	if (dma_mapping_error(&hwdev->dev, *dma_handle)) {
-		dev_kfree_skb_any(skb);
-		return NULL;
-	}
+	अगर (dma_mapping_error(&hwdev->dev, *dma_handle)) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस शून्य;
+	पूर्ण
 	skb_reserve(skb, 2);	/* make IP header 4byte aligned */
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static void free_rxbuf_skb(struct pci_dev *hwdev, struct sk_buff *skb, dma_addr_t dma_handle)
-{
+अटल व्योम मुक्त_rxbuf_skb(काष्ठा pci_dev *hwdev, काष्ठा sk_buff *skb, dma_addr_t dma_handle)
+अणु
 	dma_unmap_single(&hwdev->dev, dma_handle, RX_BUF_SIZE,
 			 DMA_FROM_DEVICE);
-	dev_kfree_skb_any(skb);
-}
+	dev_kमुक्त_skb_any(skb);
+पूर्ण
 
 /* Index to functions, as function prototypes. */
 
-static int	tc35815_open(struct net_device *dev);
-static netdev_tx_t	tc35815_send_packet(struct sk_buff *skb,
-					    struct net_device *dev);
-static irqreturn_t	tc35815_interrupt(int irq, void *dev_id);
-static int	tc35815_rx(struct net_device *dev, int limit);
-static int	tc35815_poll(struct napi_struct *napi, int budget);
-static void	tc35815_txdone(struct net_device *dev);
-static int	tc35815_close(struct net_device *dev);
-static struct	net_device_stats *tc35815_get_stats(struct net_device *dev);
-static void	tc35815_set_multicast_list(struct net_device *dev);
-static void	tc35815_tx_timeout(struct net_device *dev, unsigned int txqueue);
-#ifdef CONFIG_NET_POLL_CONTROLLER
-static void	tc35815_poll_controller(struct net_device *dev);
-#endif
-static const struct ethtool_ops tc35815_ethtool_ops;
+अटल पूर्णांक	tc35815_खोलो(काष्ठा net_device *dev);
+अटल netdev_tx_t	tc35815_send_packet(काष्ठा sk_buff *skb,
+					    काष्ठा net_device *dev);
+अटल irqवापस_t	tc35815_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
+अटल पूर्णांक	tc35815_rx(काष्ठा net_device *dev, पूर्णांक limit);
+अटल पूर्णांक	tc35815_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget);
+अटल व्योम	tc35815_txकरोne(काष्ठा net_device *dev);
+अटल पूर्णांक	tc35815_बंद(काष्ठा net_device *dev);
+अटल काष्ठा	net_device_stats *tc35815_get_stats(काष्ठा net_device *dev);
+अटल व्योम	tc35815_set_multicast_list(काष्ठा net_device *dev);
+अटल व्योम	tc35815_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+अटल व्योम	tc35815_poll_controller(काष्ठा net_device *dev);
+#पूर्ण_अगर
+अटल स्थिर काष्ठा ethtool_ops tc35815_ethtool_ops;
 
-/* Example routines you must write ;->. */
-static void	tc35815_chip_reset(struct net_device *dev);
-static void	tc35815_chip_init(struct net_device *dev);
+/* Example routines you must ग_लिखो ;->. */
+अटल व्योम	tc35815_chip_reset(काष्ठा net_device *dev);
+अटल व्योम	tc35815_chip_init(काष्ठा net_device *dev);
 
-#ifdef DEBUG
-static void	panic_queues(struct net_device *dev);
-#endif
+#अगर_घोषित DEBUG
+अटल व्योम	panic_queues(काष्ठा net_device *dev);
+#पूर्ण_अगर
 
-static void tc35815_restart_work(struct work_struct *work);
+अटल व्योम tc35815_restart_work(काष्ठा work_काष्ठा *work);
 
-static int tc_mdio_read(struct mii_bus *bus, int mii_id, int regnum)
-{
-	struct net_device *dev = bus->priv;
-	struct tc35815_regs __iomem *tr =
-		(struct tc35815_regs __iomem *)dev->base_addr;
-	unsigned long timeout = jiffies + HZ;
+अटल पूर्णांक tc_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक mii_id, पूर्णांक regnum)
+अणु
+	काष्ठा net_device *dev = bus->priv;
+	काष्ठा tc35815_regs __iomem *tr =
+		(काष्ठा tc35815_regs __iomem *)dev->base_addr;
+	अचिन्हित दीर्घ समयout = jअगरfies + HZ;
 
-	tc_writel(MD_CA_Busy | (mii_id << 5) | (regnum & 0x1f), &tr->MD_CA);
+	tc_ग_लिखोl(MD_CA_Busy | (mii_id << 5) | (regnum & 0x1f), &tr->MD_CA);
 	udelay(12); /* it takes 32 x 400ns at least */
-	while (tc_readl(&tr->MD_CA) & MD_CA_Busy) {
-		if (time_after(jiffies, timeout))
-			return -EIO;
+	जबतक (tc_पढ़ोl(&tr->MD_CA) & MD_CA_Busy) अणु
+		अगर (समय_after(jअगरfies, समयout))
+			वापस -EIO;
 		cpu_relax();
-	}
-	return tc_readl(&tr->MD_Data) & 0xffff;
-}
+	पूर्ण
+	वापस tc_पढ़ोl(&tr->MD_Data) & 0xffff;
+पूर्ण
 
-static int tc_mdio_write(struct mii_bus *bus, int mii_id, int regnum, u16 val)
-{
-	struct net_device *dev = bus->priv;
-	struct tc35815_regs __iomem *tr =
-		(struct tc35815_regs __iomem *)dev->base_addr;
-	unsigned long timeout = jiffies + HZ;
+अटल पूर्णांक tc_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक mii_id, पूर्णांक regnum, u16 val)
+अणु
+	काष्ठा net_device *dev = bus->priv;
+	काष्ठा tc35815_regs __iomem *tr =
+		(काष्ठा tc35815_regs __iomem *)dev->base_addr;
+	अचिन्हित दीर्घ समयout = jअगरfies + HZ;
 
-	tc_writel(val, &tr->MD_Data);
-	tc_writel(MD_CA_Busy | MD_CA_Wr | (mii_id << 5) | (regnum & 0x1f),
+	tc_ग_लिखोl(val, &tr->MD_Data);
+	tc_ग_लिखोl(MD_CA_Busy | MD_CA_Wr | (mii_id << 5) | (regnum & 0x1f),
 		  &tr->MD_CA);
 	udelay(12); /* it takes 32 x 400ns at least */
-	while (tc_readl(&tr->MD_CA) & MD_CA_Busy) {
-		if (time_after(jiffies, timeout))
-			return -EIO;
+	जबतक (tc_पढ़ोl(&tr->MD_CA) & MD_CA_Busy) अणु
+		अगर (समय_after(jअगरfies, समयout))
+			वापस -EIO;
 		cpu_relax();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void tc_handle_link_change(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	struct phy_device *phydev = dev->phydev;
-	unsigned long flags;
-	int status_change = 0;
+अटल व्योम tc_handle_link_change(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	काष्ठा phy_device *phydev = dev->phydev;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक status_change = 0;
 
 	spin_lock_irqsave(&lp->lock, flags);
-	if (phydev->link &&
-	    (lp->speed != phydev->speed || lp->duplex != phydev->duplex)) {
-		struct tc35815_regs __iomem *tr =
-			(struct tc35815_regs __iomem *)dev->base_addr;
+	अगर (phydev->link &&
+	    (lp->speed != phydev->speed || lp->duplex != phydev->duplex)) अणु
+		काष्ठा tc35815_regs __iomem *tr =
+			(काष्ठा tc35815_regs __iomem *)dev->base_addr;
 		u32 reg;
 
-		reg = tc_readl(&tr->MAC_Ctl);
+		reg = tc_पढ़ोl(&tr->MAC_Ctl);
 		reg |= MAC_HaltReq;
-		tc_writel(reg, &tr->MAC_Ctl);
-		if (phydev->duplex == DUPLEX_FULL)
+		tc_ग_लिखोl(reg, &tr->MAC_Ctl);
+		अगर (phydev->duplex == DUPLEX_FULL)
 			reg |= MAC_FullDup;
-		else
+		अन्यथा
 			reg &= ~MAC_FullDup;
-		tc_writel(reg, &tr->MAC_Ctl);
+		tc_ग_लिखोl(reg, &tr->MAC_Ctl);
 		reg &= ~MAC_HaltReq;
-		tc_writel(reg, &tr->MAC_Ctl);
+		tc_ग_लिखोl(reg, &tr->MAC_Ctl);
 
 		/*
 		 * TX4939 PCFG.SPEEDn bit will be changed on
 		 * NETDEV_CHANGE event.
 		 */
 		/*
-		 * WORKAROUND: enable LostCrS only if half duplex
+		 * WORKAROUND: enable LostCrS only अगर half duplex
 		 * operation.
-		 * (TX4939 does not have EnLCarr)
+		 * (TX4939 करोes not have EnLCarr)
 		 */
-		if (phydev->duplex == DUPLEX_HALF &&
+		अगर (phydev->duplex == DUPLEX_HALF &&
 		    lp->chiptype != TC35815_TX4939)
-			tc_writel(tc_readl(&tr->Tx_Ctl) | Tx_EnLCarr,
+			tc_ग_लिखोl(tc_पढ़ोl(&tr->Tx_Ctl) | Tx_EnLCarr,
 				  &tr->Tx_Ctl);
 
 		lp->speed = phydev->speed;
 		lp->duplex = phydev->duplex;
 		status_change = 1;
-	}
+	पूर्ण
 
-	if (phydev->link != lp->link) {
-		if (phydev->link) {
+	अगर (phydev->link != lp->link) अणु
+		अगर (phydev->link) अणु
 			/* delayed promiscuous enabling */
-			if (dev->flags & IFF_PROMISC)
+			अगर (dev->flags & IFF_PROMISC)
 				tc35815_set_multicast_list(dev);
-		} else {
+		पूर्ण अन्यथा अणु
 			lp->speed = 0;
 			lp->duplex = -1;
-		}
+		पूर्ण
 		lp->link = phydev->link;
 
 		status_change = 1;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	if (status_change && netif_msg_link(lp)) {
-		phy_print_status(phydev);
+	अगर (status_change && netअगर_msg_link(lp)) अणु
+		phy_prपूर्णांक_status(phydev);
 		pr_debug("%s: MII BMCR %04x BMSR %04x LPA %04x\n",
 			 dev->name,
-			 phy_read(phydev, MII_BMCR),
-			 phy_read(phydev, MII_BMSR),
-			 phy_read(phydev, MII_LPA));
-	}
-}
+			 phy_पढ़ो(phydev, MII_BMCR),
+			 phy_पढ़ो(phydev, MII_BMSR),
+			 phy_पढ़ो(phydev, MII_LPA));
+	पूर्ण
+पूर्ण
 
-static int tc_mii_probe(struct net_device *dev)
-{
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
-	struct tc35815_local *lp = netdev_priv(dev);
-	struct phy_device *phydev;
+अटल पूर्णांक tc_mii_probe(काष्ठा net_device *dev)
+अणु
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = अणु 0, पूर्ण;
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	काष्ठा phy_device *phydev;
 
 	phydev = phy_find_first(lp->mii_bus);
-	if (!phydev) {
-		printk(KERN_ERR "%s: no PHY found\n", dev->name);
-		return -ENODEV;
-	}
+	अगर (!phydev) अणु
+		prपूर्णांकk(KERN_ERR "%s: no PHY found\n", dev->name);
+		वापस -ENODEV;
+	पूर्ण
 
 	/* attach the mac to the phy */
 	phydev = phy_connect(dev, phydev_name(phydev),
 			     &tc_handle_link_change,
 			     lp->chiptype == TC35815_TX4939 ? PHY_INTERFACE_MODE_RMII : PHY_INTERFACE_MODE_MII);
-	if (IS_ERR(phydev)) {
-		printk(KERN_ERR "%s: Could not attach to PHY\n", dev->name);
-		return PTR_ERR(phydev);
-	}
+	अगर (IS_ERR(phydev)) अणु
+		prपूर्णांकk(KERN_ERR "%s: Could not attach to PHY\n", dev->name);
+		वापस PTR_ERR(phydev);
+	पूर्ण
 
 	phy_attached_info(phydev);
 
 	/* mask with MAC supported features */
 	phy_set_max_speed(phydev, SPEED_100);
-	if (options.speed == 10) {
+	अगर (options.speed == 10) अणु
 		linkmode_set_bit(ETHTOOL_LINK_MODE_100baseT_Half_BIT, mask);
 		linkmode_set_bit(ETHTOOL_LINK_MODE_100baseT_Full_BIT, mask);
-	} else if (options.speed == 100) {
+	पूर्ण अन्यथा अगर (options.speed == 100) अणु
 		linkmode_set_bit(ETHTOOL_LINK_MODE_10baseT_Half_BIT, mask);
 		linkmode_set_bit(ETHTOOL_LINK_MODE_10baseT_Full_BIT, mask);
-	}
-	if (options.duplex == 1) {
+	पूर्ण
+	अगर (options.duplex == 1) अणु
 		linkmode_set_bit(ETHTOOL_LINK_MODE_10baseT_Full_BIT, mask);
 		linkmode_set_bit(ETHTOOL_LINK_MODE_100baseT_Full_BIT, mask);
-	} else if (options.duplex == 2) {
+	पूर्ण अन्यथा अगर (options.duplex == 2) अणु
 		linkmode_set_bit(ETHTOOL_LINK_MODE_10baseT_Half_BIT, mask);
 		linkmode_set_bit(ETHTOOL_LINK_MODE_100baseT_Half_BIT, mask);
-	}
+	पूर्ण
 	linkmode_andnot(phydev->supported, phydev->supported, mask);
 	linkmode_copy(phydev->advertising, phydev->supported);
 
@@ -650,139 +651,139 @@ static int tc_mii_probe(struct net_device *dev)
 	lp->speed = 0;
 	lp->duplex = -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tc_mii_init(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	int err;
+अटल पूर्णांक tc_mii_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	पूर्णांक err;
 
 	lp->mii_bus = mdiobus_alloc();
-	if (lp->mii_bus == NULL) {
+	अगर (lp->mii_bus == शून्य) अणु
 		err = -ENOMEM;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	lp->mii_bus->name = "tc35815_mii_bus";
-	lp->mii_bus->read = tc_mdio_read;
-	lp->mii_bus->write = tc_mdio_write;
-	snprintf(lp->mii_bus->id, MII_BUS_ID_SIZE, "%x",
+	lp->mii_bus->पढ़ो = tc_mdio_पढ़ो;
+	lp->mii_bus->ग_लिखो = tc_mdio_ग_लिखो;
+	snम_लिखो(lp->mii_bus->id, MII_BUS_ID_SIZE, "%x",
 		 (lp->pci_dev->bus->number << 8) | lp->pci_dev->devfn);
 	lp->mii_bus->priv = dev;
 	lp->mii_bus->parent = &lp->pci_dev->dev;
-	err = mdiobus_register(lp->mii_bus);
-	if (err)
-		goto err_out_free_mii_bus;
+	err = mdiobus_रेजिस्टर(lp->mii_bus);
+	अगर (err)
+		जाओ err_out_मुक्त_mii_bus;
 	err = tc_mii_probe(dev);
-	if (err)
-		goto err_out_unregister_bus;
-	return 0;
+	अगर (err)
+		जाओ err_out_unरेजिस्टर_bus;
+	वापस 0;
 
-err_out_unregister_bus:
-	mdiobus_unregister(lp->mii_bus);
-err_out_free_mii_bus:
-	mdiobus_free(lp->mii_bus);
+err_out_unरेजिस्टर_bus:
+	mdiobus_unरेजिस्टर(lp->mii_bus);
+err_out_मुक्त_mii_bus:
+	mdiobus_मुक्त(lp->mii_bus);
 err_out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_CPU_TX49XX
+#अगर_घोषित CONFIG_CPU_TX49XX
 /*
- * Find a platform_device providing a MAC address.  The platform code
+ * Find a platक्रमm_device providing a MAC address.  The platक्रमm code
  * should provide a "tc35815-mac" device with a MAC address in its
- * platform_data.
+ * platक्रमm_data.
  */
-static int tc35815_mac_match(struct device *dev, const void *data)
-{
-	struct platform_device *plat_dev = to_platform_device(dev);
-	const struct pci_dev *pci_dev = data;
-	unsigned int id = pci_dev->irq;
-	return !strcmp(plat_dev->name, "tc35815-mac") && plat_dev->id == id;
-}
+अटल पूर्णांक tc35815_mac_match(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *plat_dev = to_platक्रमm_device(dev);
+	स्थिर काष्ठा pci_dev *pci_dev = data;
+	अचिन्हित पूर्णांक id = pci_dev->irq;
+	वापस !म_भेद(plat_dev->name, "tc35815-mac") && plat_dev->id == id;
+पूर्ण
 
-static int tc35815_read_plat_dev_addr(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	struct device *pd = bus_find_device(&platform_bus_type, NULL,
+अटल पूर्णांक tc35815_पढ़ो_plat_dev_addr(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	काष्ठा device *pd = bus_find_device(&platक्रमm_bus_type, शून्य,
 					    lp->pci_dev, tc35815_mac_match);
-	if (pd) {
-		if (pd->platform_data)
-			memcpy(dev->dev_addr, pd->platform_data, ETH_ALEN);
+	अगर (pd) अणु
+		अगर (pd->platक्रमm_data)
+			स_नकल(dev->dev_addr, pd->platक्रमm_data, ETH_ALEN);
 		put_device(pd);
-		return is_valid_ether_addr(dev->dev_addr) ? 0 : -ENODEV;
-	}
-	return -ENODEV;
-}
-#else
-static int tc35815_read_plat_dev_addr(struct net_device *dev)
-{
-	return -ENODEV;
-}
-#endif
+		वापस is_valid_ether_addr(dev->dev_addr) ? 0 : -ENODEV;
+	पूर्ण
+	वापस -ENODEV;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक tc35815_पढ़ो_plat_dev_addr(काष्ठा net_device *dev)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
 
-static int tc35815_init_dev_addr(struct net_device *dev)
-{
-	struct tc35815_regs __iomem *tr =
-		(struct tc35815_regs __iomem *)dev->base_addr;
-	int i;
+अटल पूर्णांक tc35815_init_dev_addr(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_regs __iomem *tr =
+		(काष्ठा tc35815_regs __iomem *)dev->base_addr;
+	पूर्णांक i;
 
-	while (tc_readl(&tr->PROM_Ctl) & PROM_Busy)
+	जबतक (tc_पढ़ोl(&tr->PROM_Ctl) & PROM_Busy)
 		;
-	for (i = 0; i < 6; i += 2) {
-		unsigned short data;
-		tc_writel(PROM_Busy | PROM_Read | (i / 2 + 2), &tr->PROM_Ctl);
-		while (tc_readl(&tr->PROM_Ctl) & PROM_Busy)
+	क्रम (i = 0; i < 6; i += 2) अणु
+		अचिन्हित लघु data;
+		tc_ग_लिखोl(PROM_Busy | PROM_Read | (i / 2 + 2), &tr->PROM_Ctl);
+		जबतक (tc_पढ़ोl(&tr->PROM_Ctl) & PROM_Busy)
 			;
-		data = tc_readl(&tr->PROM_Data);
+		data = tc_पढ़ोl(&tr->PROM_Data);
 		dev->dev_addr[i] = data & 0xff;
 		dev->dev_addr[i+1] = data >> 8;
-	}
-	if (!is_valid_ether_addr(dev->dev_addr))
-		return tc35815_read_plat_dev_addr(dev);
-	return 0;
-}
+	पूर्ण
+	अगर (!is_valid_ether_addr(dev->dev_addr))
+		वापस tc35815_पढ़ो_plat_dev_addr(dev);
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops tc35815_netdev_ops = {
-	.ndo_open		= tc35815_open,
-	.ndo_stop		= tc35815_close,
-	.ndo_start_xmit		= tc35815_send_packet,
-	.ndo_get_stats		= tc35815_get_stats,
-	.ndo_set_rx_mode	= tc35815_set_multicast_list,
-	.ndo_tx_timeout		= tc35815_tx_timeout,
-	.ndo_do_ioctl		= phy_do_ioctl_running,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= eth_mac_addr,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	= tc35815_poll_controller,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops tc35815_netdev_ops = अणु
+	.nकरो_खोलो		= tc35815_खोलो,
+	.nकरो_stop		= tc35815_बंद,
+	.nकरो_start_xmit		= tc35815_send_packet,
+	.nकरो_get_stats		= tc35815_get_stats,
+	.nकरो_set_rx_mode	= tc35815_set_multicast_list,
+	.nकरो_tx_समयout		= tc35815_tx_समयout,
+	.nकरो_करो_ioctl		= phy_करो_ioctl_running,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= eth_mac_addr,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller	= tc35815_poll_controller,
+#पूर्ण_अगर
+पूर्ण;
 
-static int tc35815_init_one(struct pci_dev *pdev,
-			    const struct pci_device_id *ent)
-{
-	void __iomem *ioaddr = NULL;
-	struct net_device *dev;
-	struct tc35815_local *lp;
-	int rc;
+अटल पूर्णांक tc35815_init_one(काष्ठा pci_dev *pdev,
+			    स्थिर काष्ठा pci_device_id *ent)
+अणु
+	व्योम __iomem *ioaddr = शून्य;
+	काष्ठा net_device *dev;
+	काष्ठा tc35815_local *lp;
+	पूर्णांक rc;
 
-	static int printed_version;
-	if (!printed_version++) {
-		printk(version);
-		dev_printk(KERN_DEBUG, &pdev->dev,
+	अटल पूर्णांक prपूर्णांकed_version;
+	अगर (!prपूर्णांकed_version++) अणु
+		prपूर्णांकk(version);
+		dev_prपूर्णांकk(KERN_DEBUG, &pdev->dev,
 			   "speed:%d duplex:%d\n",
 			   options.speed, options.duplex);
-	}
+	पूर्ण
 
-	if (!pdev->irq) {
+	अगर (!pdev->irq) अणु
 		dev_warn(&pdev->dev, "no IRQ assigned.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* dev zeroed in alloc_etherdev */
-	dev = alloc_etherdev(sizeof(*lp));
-	if (dev == NULL)
-		return -ENOMEM;
+	dev = alloc_etherdev(माप(*lp));
+	अगर (dev == शून्य)
+		वापस -ENOMEM;
 
 	SET_NETDEV_DEV(dev, &pdev->dev);
 	lp = netdev_priv(dev);
@@ -790,22 +791,22 @@ static int tc35815_init_one(struct pci_dev *pdev,
 
 	/* enable device (incl. PCI PM wakeup), and bus-mastering */
 	rc = pcim_enable_device(pdev);
-	if (rc)
-		goto err_out;
+	अगर (rc)
+		जाओ err_out;
 	rc = pcim_iomap_regions(pdev, 1 << 1, MODNAME);
-	if (rc)
-		goto err_out;
+	अगर (rc)
+		जाओ err_out;
 	pci_set_master(pdev);
 	ioaddr = pcim_iomap_table(pdev)[1];
 
-	/* Initialize the device structure. */
+	/* Initialize the device काष्ठाure. */
 	dev->netdev_ops = &tc35815_netdev_ops;
 	dev->ethtool_ops = &tc35815_ethtool_ops;
-	dev->watchdog_timeo = TC35815_TX_TIMEOUT;
-	netif_napi_add(dev, &lp->napi, tc35815_poll, NAPI_WEIGHT);
+	dev->watchकरोg_समयo = TC35815_TX_TIMEOUT;
+	netअगर_napi_add(dev, &lp->napi, tc35815_poll, NAPI_WEIGHT);
 
 	dev->irq = pdev->irq;
-	dev->base_addr = (unsigned long)ioaddr;
+	dev->base_addr = (अचिन्हित दीर्घ)ioaddr;
 
 	INIT_WORK(&lp->restart_work, tc35815_restart_work);
 	spin_lock_init(&lp->lock);
@@ -820,16 +821,16 @@ static int tc35815_init_one(struct pci_dev *pdev,
 	tc35815_chip_reset(dev);
 
 	/* Retrieve the ethernet address. */
-	if (tc35815_init_dev_addr(dev)) {
+	अगर (tc35815_init_dev_addr(dev)) अणु
 		dev_warn(&pdev->dev, "not valid ether addr\n");
-		eth_hw_addr_random(dev);
-	}
+		eth_hw_addr_अक्रमom(dev);
+	पूर्ण
 
-	rc = register_netdev(dev);
-	if (rc)
-		goto err_out;
+	rc = रेजिस्टर_netdev(dev);
+	अगर (rc)
+		जाओ err_out;
 
-	printk(KERN_INFO "%s: %s at 0x%lx, %pM, IRQ %d\n",
+	prपूर्णांकk(KERN_INFO "%s: %s at 0x%lx, %pM, IRQ %d\n",
 		dev->name,
 		chip_info[ent->driver_data].name,
 		dev->base_addr,
@@ -837,322 +838,322 @@ static int tc35815_init_one(struct pci_dev *pdev,
 		dev->irq);
 
 	rc = tc_mii_init(dev);
-	if (rc)
-		goto err_out_unregister;
+	अगर (rc)
+		जाओ err_out_unरेजिस्टर;
 
-	return 0;
+	वापस 0;
 
-err_out_unregister:
-	unregister_netdev(dev);
+err_out_unरेजिस्टर:
+	unरेजिस्टर_netdev(dev);
 err_out:
-	free_netdev(dev);
-	return rc;
-}
+	मुक्त_netdev(dev);
+	वापस rc;
+पूर्ण
 
 
-static void tc35815_remove_one(struct pci_dev *pdev)
-{
-	struct net_device *dev = pci_get_drvdata(pdev);
-	struct tc35815_local *lp = netdev_priv(dev);
+अटल व्योम tc35815_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *dev = pci_get_drvdata(pdev);
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
 
 	phy_disconnect(dev->phydev);
-	mdiobus_unregister(lp->mii_bus);
-	mdiobus_free(lp->mii_bus);
-	unregister_netdev(dev);
-	free_netdev(dev);
-}
+	mdiobus_unरेजिस्टर(lp->mii_bus);
+	mdiobus_मुक्त(lp->mii_bus);
+	unरेजिस्टर_netdev(dev);
+	मुक्त_netdev(dev);
+पूर्ण
 
-static int
-tc35815_init_queues(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	int i;
-	unsigned long fd_addr;
+अटल पूर्णांक
+tc35815_init_queues(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	पूर्णांक i;
+	अचिन्हित दीर्घ fd_addr;
 
-	if (!lp->fd_buf) {
-		BUG_ON(sizeof(struct FDesc) +
-		       sizeof(struct BDesc) * RX_BUF_NUM +
-		       sizeof(struct FDesc) * RX_FD_NUM +
-		       sizeof(struct TxFD) * TX_FD_NUM >
+	अगर (!lp->fd_buf) अणु
+		BUG_ON(माप(काष्ठा FDesc) +
+		       माप(काष्ठा BDesc) * RX_BUF_NUM +
+		       माप(काष्ठा FDesc) * RX_FD_NUM +
+		       माप(काष्ठा TxFD) * TX_FD_NUM >
 		       PAGE_SIZE * FD_PAGE_NUM);
 
 		lp->fd_buf = dma_alloc_coherent(&lp->pci_dev->dev,
 						PAGE_SIZE * FD_PAGE_NUM,
 						&lp->fd_buf_dma, GFP_ATOMIC);
-		if (!lp->fd_buf)
-			return -ENOMEM;
-		for (i = 0; i < RX_BUF_NUM; i++) {
+		अगर (!lp->fd_buf)
+			वापस -ENOMEM;
+		क्रम (i = 0; i < RX_BUF_NUM; i++) अणु
 			lp->rx_skbs[i].skb =
 				alloc_rxbuf_skb(dev, lp->pci_dev,
 						&lp->rx_skbs[i].skb_dma);
-			if (!lp->rx_skbs[i].skb) {
-				while (--i >= 0) {
-					free_rxbuf_skb(lp->pci_dev,
+			अगर (!lp->rx_skbs[i].skb) अणु
+				जबतक (--i >= 0) अणु
+					मुक्त_rxbuf_skb(lp->pci_dev,
 						       lp->rx_skbs[i].skb,
 						       lp->rx_skbs[i].skb_dma);
-					lp->rx_skbs[i].skb = NULL;
-				}
-				dma_free_coherent(&lp->pci_dev->dev,
+					lp->rx_skbs[i].skb = शून्य;
+				पूर्ण
+				dma_मुक्त_coherent(&lp->pci_dev->dev,
 						  PAGE_SIZE * FD_PAGE_NUM,
 						  lp->fd_buf, lp->fd_buf_dma);
-				lp->fd_buf = NULL;
-				return -ENOMEM;
-			}
-		}
-		printk(KERN_DEBUG "%s: FD buf %p DataBuf",
+				lp->fd_buf = शून्य;
+				वापस -ENOMEM;
+			पूर्ण
+		पूर्ण
+		prपूर्णांकk(KERN_DEBUG "%s: FD buf %p DataBuf",
 		       dev->name, lp->fd_buf);
-		printk("\n");
-	} else {
-		for (i = 0; i < FD_PAGE_NUM; i++)
-			clear_page((void *)((unsigned long)lp->fd_buf +
+		prपूर्णांकk("\n");
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < FD_PAGE_NUM; i++)
+			clear_page((व्योम *)((अचिन्हित दीर्घ)lp->fd_buf +
 					    i * PAGE_SIZE));
-	}
-	fd_addr = (unsigned long)lp->fd_buf;
+	पूर्ण
+	fd_addr = (अचिन्हित दीर्घ)lp->fd_buf;
 
-	/* Free Descriptors (for Receive) */
-	lp->rfd_base = (struct RxFD *)fd_addr;
-	fd_addr += sizeof(struct RxFD) * RX_FD_NUM;
-	for (i = 0; i < RX_FD_NUM; i++)
+	/* Free Descriptors (क्रम Receive) */
+	lp->rfd_base = (काष्ठा RxFD *)fd_addr;
+	fd_addr += माप(काष्ठा RxFD) * RX_FD_NUM;
+	क्रम (i = 0; i < RX_FD_NUM; i++)
 		lp->rfd_base[i].fd.FDCtl = cpu_to_le32(FD_CownsFD);
 	lp->rfd_cur = lp->rfd_base;
-	lp->rfd_limit = (struct RxFD *)fd_addr - (RX_FD_RESERVE + 1);
+	lp->rfd_limit = (काष्ठा RxFD *)fd_addr - (RX_FD_RESERVE + 1);
 
 	/* Transmit Descriptors */
-	lp->tfd_base = (struct TxFD *)fd_addr;
-	fd_addr += sizeof(struct TxFD) * TX_FD_NUM;
-	for (i = 0; i < TX_FD_NUM; i++) {
+	lp->tfd_base = (काष्ठा TxFD *)fd_addr;
+	fd_addr += माप(काष्ठा TxFD) * TX_FD_NUM;
+	क्रम (i = 0; i < TX_FD_NUM; i++) अणु
 		lp->tfd_base[i].fd.FDNext = cpu_to_le32(fd_virt_to_bus(lp, &lp->tfd_base[i+1]));
 		lp->tfd_base[i].fd.FDSystem = cpu_to_le32(0xffffffff);
 		lp->tfd_base[i].fd.FDCtl = cpu_to_le32(0);
-	}
+	पूर्ण
 	lp->tfd_base[TX_FD_NUM-1].fd.FDNext = cpu_to_le32(fd_virt_to_bus(lp, &lp->tfd_base[0]));
 	lp->tfd_start = 0;
 	lp->tfd_end = 0;
 
-	/* Buffer List (for Receive) */
-	lp->fbl_ptr = (struct FrFD *)fd_addr;
+	/* Buffer List (क्रम Receive) */
+	lp->fbl_ptr = (काष्ठा FrFD *)fd_addr;
 	lp->fbl_ptr->fd.FDNext = cpu_to_le32(fd_virt_to_bus(lp, lp->fbl_ptr));
 	lp->fbl_ptr->fd.FDCtl = cpu_to_le32(RX_BUF_NUM | FD_CownsFD);
 	/*
 	 * move all allocated skbs to head of rx_skbs[] array.
-	 * fbl_count mighe not be RX_BUF_NUM if alloc_rxbuf_skb() in
+	 * fbl_count mighe not be RX_BUF_NUM अगर alloc_rxbuf_skb() in
 	 * tc35815_rx() had failed.
 	 */
 	lp->fbl_count = 0;
-	for (i = 0; i < RX_BUF_NUM; i++) {
-		if (lp->rx_skbs[i].skb) {
-			if (i != lp->fbl_count) {
+	क्रम (i = 0; i < RX_BUF_NUM; i++) अणु
+		अगर (lp->rx_skbs[i].skb) अणु
+			अगर (i != lp->fbl_count) अणु
 				lp->rx_skbs[lp->fbl_count].skb =
 					lp->rx_skbs[i].skb;
 				lp->rx_skbs[lp->fbl_count].skb_dma =
 					lp->rx_skbs[i].skb_dma;
-			}
+			पूर्ण
 			lp->fbl_count++;
-		}
-	}
-	for (i = 0; i < RX_BUF_NUM; i++) {
-		if (i >= lp->fbl_count) {
+		पूर्ण
+	पूर्ण
+	क्रम (i = 0; i < RX_BUF_NUM; i++) अणु
+		अगर (i >= lp->fbl_count) अणु
 			lp->fbl_ptr->bd[i].BuffData = 0;
 			lp->fbl_ptr->bd[i].BDCtl = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		lp->fbl_ptr->bd[i].BuffData =
 			cpu_to_le32(lp->rx_skbs[i].skb_dma);
 		/* BDID is index of FrFD.bd[] */
 		lp->fbl_ptr->bd[i].BDCtl =
 			cpu_to_le32(BD_CownsBD | (i << BD_RxBDID_SHIFT) |
 				    RX_BUF_SIZE);
-	}
+	पूर्ण
 
-	printk(KERN_DEBUG "%s: TxFD %p RxFD %p FrFD %p\n",
+	prपूर्णांकk(KERN_DEBUG "%s: TxFD %p RxFD %p FrFD %p\n",
 	       dev->name, lp->tfd_base, lp->rfd_base, lp->fbl_ptr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-tc35815_clear_queues(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	int i;
+अटल व्योम
+tc35815_clear_queues(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	पूर्णांक i;
 
-	for (i = 0; i < TX_FD_NUM; i++) {
-		u32 fdsystem = le32_to_cpu(lp->tfd_base[i].fd.FDSystem);
-		struct sk_buff *skb =
-			fdsystem != 0xffffffff ?
-			lp->tx_skbs[fdsystem].skb : NULL;
-#ifdef DEBUG
-		if (lp->tx_skbs[i].skb != skb) {
-			printk("%s: tx_skbs mismatch(%d).\n", dev->name, i);
+	क्रम (i = 0; i < TX_FD_NUM; i++) अणु
+		u32 fdप्रणाली = le32_to_cpu(lp->tfd_base[i].fd.FDSystem);
+		काष्ठा sk_buff *skb =
+			fdप्रणाली != 0xffffffff ?
+			lp->tx_skbs[fdप्रणाली].skb : शून्य;
+#अगर_घोषित DEBUG
+		अगर (lp->tx_skbs[i].skb != skb) अणु
+			prपूर्णांकk("%s: tx_skbs mismatch(%d).\n", dev->name, i);
 			panic_queues(dev);
-		}
-#else
+		पूर्ण
+#अन्यथा
 		BUG_ON(lp->tx_skbs[i].skb != skb);
-#endif
-		if (skb) {
+#पूर्ण_अगर
+		अगर (skb) अणु
 			dma_unmap_single(&lp->pci_dev->dev,
 					 lp->tx_skbs[i].skb_dma, skb->len,
 					 DMA_TO_DEVICE);
-			lp->tx_skbs[i].skb = NULL;
+			lp->tx_skbs[i].skb = शून्य;
 			lp->tx_skbs[i].skb_dma = 0;
-			dev_kfree_skb_any(skb);
-		}
+			dev_kमुक्त_skb_any(skb);
+		पूर्ण
 		lp->tfd_base[i].fd.FDSystem = cpu_to_le32(0xffffffff);
-	}
+	पूर्ण
 
 	tc35815_init_queues(dev);
-}
+पूर्ण
 
-static void
-tc35815_free_queues(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	int i;
+अटल व्योम
+tc35815_मुक्त_queues(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	पूर्णांक i;
 
-	if (lp->tfd_base) {
-		for (i = 0; i < TX_FD_NUM; i++) {
-			u32 fdsystem = le32_to_cpu(lp->tfd_base[i].fd.FDSystem);
-			struct sk_buff *skb =
-				fdsystem != 0xffffffff ?
-				lp->tx_skbs[fdsystem].skb : NULL;
-#ifdef DEBUG
-			if (lp->tx_skbs[i].skb != skb) {
-				printk("%s: tx_skbs mismatch(%d).\n", dev->name, i);
+	अगर (lp->tfd_base) अणु
+		क्रम (i = 0; i < TX_FD_NUM; i++) अणु
+			u32 fdप्रणाली = le32_to_cpu(lp->tfd_base[i].fd.FDSystem);
+			काष्ठा sk_buff *skb =
+				fdप्रणाली != 0xffffffff ?
+				lp->tx_skbs[fdप्रणाली].skb : शून्य;
+#अगर_घोषित DEBUG
+			अगर (lp->tx_skbs[i].skb != skb) अणु
+				prपूर्णांकk("%s: tx_skbs mismatch(%d).\n", dev->name, i);
 				panic_queues(dev);
-			}
-#else
+			पूर्ण
+#अन्यथा
 			BUG_ON(lp->tx_skbs[i].skb != skb);
-#endif
-			if (skb) {
+#पूर्ण_अगर
+			अगर (skb) अणु
 				dma_unmap_single(&lp->pci_dev->dev,
 						 lp->tx_skbs[i].skb_dma,
 						 skb->len, DMA_TO_DEVICE);
-				dev_kfree_skb(skb);
-				lp->tx_skbs[i].skb = NULL;
+				dev_kमुक्त_skb(skb);
+				lp->tx_skbs[i].skb = शून्य;
 				lp->tx_skbs[i].skb_dma = 0;
-			}
+			पूर्ण
 			lp->tfd_base[i].fd.FDSystem = cpu_to_le32(0xffffffff);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	lp->rfd_base = NULL;
-	lp->rfd_limit = NULL;
-	lp->rfd_cur = NULL;
-	lp->fbl_ptr = NULL;
+	lp->rfd_base = शून्य;
+	lp->rfd_limit = शून्य;
+	lp->rfd_cur = शून्य;
+	lp->fbl_ptr = शून्य;
 
-	for (i = 0; i < RX_BUF_NUM; i++) {
-		if (lp->rx_skbs[i].skb) {
-			free_rxbuf_skb(lp->pci_dev, lp->rx_skbs[i].skb,
+	क्रम (i = 0; i < RX_BUF_NUM; i++) अणु
+		अगर (lp->rx_skbs[i].skb) अणु
+			मुक्त_rxbuf_skb(lp->pci_dev, lp->rx_skbs[i].skb,
 				       lp->rx_skbs[i].skb_dma);
-			lp->rx_skbs[i].skb = NULL;
-		}
-	}
-	if (lp->fd_buf) {
-		dma_free_coherent(&lp->pci_dev->dev, PAGE_SIZE * FD_PAGE_NUM,
+			lp->rx_skbs[i].skb = शून्य;
+		पूर्ण
+	पूर्ण
+	अगर (lp->fd_buf) अणु
+		dma_मुक्त_coherent(&lp->pci_dev->dev, PAGE_SIZE * FD_PAGE_NUM,
 				  lp->fd_buf, lp->fd_buf_dma);
-		lp->fd_buf = NULL;
-	}
-}
+		lp->fd_buf = शून्य;
+	पूर्ण
+पूर्ण
 
-static void
-dump_txfd(struct TxFD *fd)
-{
-	printk("TxFD(%p): %08x %08x %08x %08x\n", fd,
+अटल व्योम
+dump_txfd(काष्ठा TxFD *fd)
+अणु
+	prपूर्णांकk("TxFD(%p): %08x %08x %08x %08x\n", fd,
 	       le32_to_cpu(fd->fd.FDNext),
 	       le32_to_cpu(fd->fd.FDSystem),
 	       le32_to_cpu(fd->fd.FDStat),
 	       le32_to_cpu(fd->fd.FDCtl));
-	printk("BD: ");
-	printk(" %08x %08x",
+	prपूर्णांकk("BD: ");
+	prपूर्णांकk(" %08x %08x",
 	       le32_to_cpu(fd->bd.BuffData),
 	       le32_to_cpu(fd->bd.BDCtl));
-	printk("\n");
-}
+	prपूर्णांकk("\n");
+पूर्ण
 
-static int
-dump_rxfd(struct RxFD *fd)
-{
-	int i, bd_count = (le32_to_cpu(fd->fd.FDCtl) & FD_BDCnt_MASK) >> FD_BDCnt_SHIFT;
-	if (bd_count > 8)
+अटल पूर्णांक
+dump_rxfd(काष्ठा RxFD *fd)
+अणु
+	पूर्णांक i, bd_count = (le32_to_cpu(fd->fd.FDCtl) & FD_BDCnt_MASK) >> FD_BDCnt_SHIFT;
+	अगर (bd_count > 8)
 		bd_count = 8;
-	printk("RxFD(%p): %08x %08x %08x %08x\n", fd,
+	prपूर्णांकk("RxFD(%p): %08x %08x %08x %08x\n", fd,
 	       le32_to_cpu(fd->fd.FDNext),
 	       le32_to_cpu(fd->fd.FDSystem),
 	       le32_to_cpu(fd->fd.FDStat),
 	       le32_to_cpu(fd->fd.FDCtl));
-	if (le32_to_cpu(fd->fd.FDCtl) & FD_CownsFD)
-		return 0;
-	printk("BD: ");
-	for (i = 0; i < bd_count; i++)
-		printk(" %08x %08x",
+	अगर (le32_to_cpu(fd->fd.FDCtl) & FD_CownsFD)
+		वापस 0;
+	prपूर्णांकk("BD: ");
+	क्रम (i = 0; i < bd_count; i++)
+		prपूर्णांकk(" %08x %08x",
 		       le32_to_cpu(fd->bd[i].BuffData),
 		       le32_to_cpu(fd->bd[i].BDCtl));
-	printk("\n");
-	return bd_count;
-}
+	prपूर्णांकk("\n");
+	वापस bd_count;
+पूर्ण
 
-#ifdef DEBUG
-static void
-dump_frfd(struct FrFD *fd)
-{
-	int i;
-	printk("FrFD(%p): %08x %08x %08x %08x\n", fd,
+#अगर_घोषित DEBUG
+अटल व्योम
+dump_frfd(काष्ठा FrFD *fd)
+अणु
+	पूर्णांक i;
+	prपूर्णांकk("FrFD(%p): %08x %08x %08x %08x\n", fd,
 	       le32_to_cpu(fd->fd.FDNext),
 	       le32_to_cpu(fd->fd.FDSystem),
 	       le32_to_cpu(fd->fd.FDStat),
 	       le32_to_cpu(fd->fd.FDCtl));
-	printk("BD: ");
-	for (i = 0; i < RX_BUF_NUM; i++)
-		printk(" %08x %08x",
+	prपूर्णांकk("BD: ");
+	क्रम (i = 0; i < RX_BUF_NUM; i++)
+		prपूर्णांकk(" %08x %08x",
 		       le32_to_cpu(fd->bd[i].BuffData),
 		       le32_to_cpu(fd->bd[i].BDCtl));
-	printk("\n");
-}
+	prपूर्णांकk("\n");
+पूर्ण
 
-static void
-panic_queues(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	int i;
+अटल व्योम
+panic_queues(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	पूर्णांक i;
 
-	printk("TxFD base %p, start %u, end %u\n",
+	prपूर्णांकk("TxFD base %p, start %u, end %u\n",
 	       lp->tfd_base, lp->tfd_start, lp->tfd_end);
-	printk("RxFD base %p limit %p cur %p\n",
+	prपूर्णांकk("RxFD base %p limit %p cur %p\n",
 	       lp->rfd_base, lp->rfd_limit, lp->rfd_cur);
-	printk("FrFD %p\n", lp->fbl_ptr);
-	for (i = 0; i < TX_FD_NUM; i++)
+	prपूर्णांकk("FrFD %p\n", lp->fbl_ptr);
+	क्रम (i = 0; i < TX_FD_NUM; i++)
 		dump_txfd(&lp->tfd_base[i]);
-	for (i = 0; i < RX_FD_NUM; i++) {
-		int bd_count = dump_rxfd(&lp->rfd_base[i]);
+	क्रम (i = 0; i < RX_FD_NUM; i++) अणु
+		पूर्णांक bd_count = dump_rxfd(&lp->rfd_base[i]);
 		i += (bd_count + 1) / 2;	/* skip BDs */
-	}
+	पूर्ण
 	dump_frfd(lp->fbl_ptr);
 	panic("%s: Illegal queue state.", dev->name);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void print_eth(const u8 *add)
-{
-	printk(KERN_DEBUG "print_eth(%p)\n", add);
-	printk(KERN_DEBUG " %pM => %pM : %02x%02x\n",
+अटल व्योम prपूर्णांक_eth(स्थिर u8 *add)
+अणु
+	prपूर्णांकk(KERN_DEBUG "print_eth(%p)\n", add);
+	prपूर्णांकk(KERN_DEBUG " %pM => %pM : %02x%02x\n",
 		add + 6, add, add[12], add[13]);
-}
+पूर्ण
 
-static int tc35815_tx_full(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	return (lp->tfd_start + 1) % TX_FD_NUM == lp->tfd_end;
-}
+अटल पूर्णांक tc35815_tx_full(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	वापस (lp->tfd_start + 1) % TX_FD_NUM == lp->tfd_end;
+पूर्ण
 
-static void tc35815_restart(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	int ret;
+अटल व्योम tc35815_restart(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	पूर्णांक ret;
 
-	if (dev->phydev) {
+	अगर (dev->phydev) अणु
 		ret = phy_init_hw(dev->phydev);
-		if (ret)
-			printk(KERN_ERR "%s: PHY init failed.\n", dev->name);
-	}
+		अगर (ret)
+			prपूर्णांकk(KERN_ERR "%s: PHY init failed.\n", dev->name);
+	पूर्ण
 
 	spin_lock_bh(&lp->rx_lock);
 	spin_lock_irq(&lp->lock);
@@ -1164,136 +1165,136 @@ static void tc35815_restart(struct net_device *dev)
 	spin_unlock_irq(&lp->lock);
 	spin_unlock_bh(&lp->rx_lock);
 
-	netif_wake_queue(dev);
-}
+	netअगर_wake_queue(dev);
+पूर्ण
 
-static void tc35815_restart_work(struct work_struct *work)
-{
-	struct tc35815_local *lp =
-		container_of(work, struct tc35815_local, restart_work);
-	struct net_device *dev = lp->dev;
+अटल व्योम tc35815_restart_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा tc35815_local *lp =
+		container_of(work, काष्ठा tc35815_local, restart_work);
+	काष्ठा net_device *dev = lp->dev;
 
 	tc35815_restart(dev);
-}
+पूर्ण
 
-static void tc35815_schedule_restart(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	struct tc35815_regs __iomem *tr =
-		(struct tc35815_regs __iomem *)dev->base_addr;
-	unsigned long flags;
+अटल व्योम tc35815_schedule_restart(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	काष्ठा tc35815_regs __iomem *tr =
+		(काष्ठा tc35815_regs __iomem *)dev->base_addr;
+	अचिन्हित दीर्घ flags;
 
-	/* disable interrupts */
+	/* disable पूर्णांकerrupts */
 	spin_lock_irqsave(&lp->lock, flags);
-	tc_writel(0, &tr->Int_En);
-	tc_writel(tc_readl(&tr->DMA_Ctl) | DMA_IntMask, &tr->DMA_Ctl);
+	tc_ग_लिखोl(0, &tr->Int_En);
+	tc_ग_लिखोl(tc_पढ़ोl(&tr->DMA_Ctl) | DMA_IntMask, &tr->DMA_Ctl);
 	schedule_work(&lp->restart_work);
 	spin_unlock_irqrestore(&lp->lock, flags);
-}
+पूर्ण
 
-static void tc35815_tx_timeout(struct net_device *dev, unsigned int txqueue)
-{
-	struct tc35815_regs __iomem *tr =
-		(struct tc35815_regs __iomem *)dev->base_addr;
+अटल व्योम tc35815_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा tc35815_regs __iomem *tr =
+		(काष्ठा tc35815_regs __iomem *)dev->base_addr;
 
-	printk(KERN_WARNING "%s: transmit timed out, status %#x\n",
-	       dev->name, tc_readl(&tr->Tx_Stat));
+	prपूर्णांकk(KERN_WARNING "%s: transmit timed out, status %#x\n",
+	       dev->name, tc_पढ़ोl(&tr->Tx_Stat));
 
 	/* Try to restart the adaptor. */
 	tc35815_schedule_restart(dev);
 	dev->stats.tx_errors++;
-}
+पूर्ण
 
 /*
  * Open/initialize the controller. This is called (in the current kernel)
- * sometime after booting when the 'ifconfig' program is run.
+ * someसमय after booting when the 'ifconfig' program is run.
  *
- * This routine should set everything up anew at each open, even
- * registers that "should" only need to be set once at boot, so that
- * there is non-reboot way to recover if something goes wrong.
+ * This routine should set everything up anew at each खोलो, even
+ * रेजिस्टरs that "should" only need to be set once at boot, so that
+ * there is non-reboot way to recover अगर something goes wrong.
  */
-static int
-tc35815_open(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
+अटल पूर्णांक
+tc35815_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
 
 	/*
-	 * This is used if the interrupt line can turned off (shared).
-	 * See 3c503.c for an example of selecting the IRQ at config-time.
+	 * This is used अगर the पूर्णांकerrupt line can turned off (shared).
+	 * See 3c503.c क्रम an example of selecting the IRQ at config-समय.
 	 */
-	if (request_irq(dev->irq, tc35815_interrupt, IRQF_SHARED,
+	अगर (request_irq(dev->irq, tc35815_पूर्णांकerrupt, IRQF_SHARED,
 			dev->name, dev))
-		return -EAGAIN;
+		वापस -EAGAIN;
 
 	tc35815_chip_reset(dev);
 
-	if (tc35815_init_queues(dev) != 0) {
-		free_irq(dev->irq, dev);
-		return -EAGAIN;
-	}
+	अगर (tc35815_init_queues(dev) != 0) अणु
+		मुक्त_irq(dev->irq, dev);
+		वापस -EAGAIN;
+	पूर्ण
 
 	napi_enable(&lp->napi);
 
-	/* Reset the hardware here. Don't forget to set the station address. */
+	/* Reset the hardware here. Don't क्रमget to set the station address. */
 	spin_lock_irq(&lp->lock);
 	tc35815_chip_init(dev);
 	spin_unlock_irq(&lp->lock);
 
-	netif_carrier_off(dev);
+	netअगर_carrier_off(dev);
 	/* schedule a link state check */
 	phy_start(dev->phydev);
 
-	/* We are now ready to accept transmit requeusts from
+	/* We are now पढ़ोy to accept transmit requeusts from
 	 * the queueing layer of the networking.
 	 */
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* This will only be invoked if your driver is _not_ in XOFF state.
+/* This will only be invoked अगर your driver is _not_ in XOFF state.
  * What this means is that you need not check it, and that this
- * invariant will hold if you make sure that the netif_*_queue()
- * calls are done at the proper times.
+ * invariant will hold अगर you make sure that the netअगर_*_queue()
+ * calls are करोne at the proper बार.
  */
-static netdev_tx_t
-tc35815_send_packet(struct sk_buff *skb, struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	struct TxFD *txfd;
-	unsigned long flags;
+अटल netdev_tx_t
+tc35815_send_packet(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	काष्ठा TxFD *txfd;
+	अचिन्हित दीर्घ flags;
 
-	/* If some error occurs while trying to transmit this
-	 * packet, you should return '1' from this function.
-	 * In such a case you _may not_ do anything to the
+	/* If some error occurs जबतक trying to transmit this
+	 * packet, you should वापस '1' from this function.
+	 * In such a हाल you _may not_ करो anything to the
 	 * SKB, it is still owned by the network queueing
-	 * layer when an error is returned.  This means you
-	 * may not modify any SKB fields, you may not free
+	 * layer when an error is वापसed.  This means you
+	 * may not modअगरy any SKB fields, you may not मुक्त
 	 * the SKB, etc.
 	 */
 
-	/* This is the most common case for modern hardware.
+	/* This is the most common हाल क्रम modern hardware.
 	 * The spinlock protects this code from the TX complete
-	 * hardware interrupt handler.  Queue flow control is
+	 * hardware पूर्णांकerrupt handler.  Queue flow control is
 	 * thus managed under this lock as well.
 	 */
 	spin_lock_irqsave(&lp->lock, flags);
 
-	/* failsafe... (handle txdone now if half of FDs are used) */
-	if ((lp->tfd_start + TX_FD_NUM - lp->tfd_end) % TX_FD_NUM >
+	/* failsafe... (handle txकरोne now अगर half of FDs are used) */
+	अगर ((lp->tfd_start + TX_FD_NUM - lp->tfd_end) % TX_FD_NUM >
 	    TX_FD_NUM / 2)
-		tc35815_txdone(dev);
+		tc35815_txकरोne(dev);
 
-	if (netif_msg_pktdata(lp))
-		print_eth(skb->data);
-#ifdef DEBUG
-	if (lp->tx_skbs[lp->tfd_start].skb) {
-		printk("%s: tx_skbs conflict.\n", dev->name);
+	अगर (netअगर_msg_pktdata(lp))
+		prपूर्णांक_eth(skb->data);
+#अगर_घोषित DEBUG
+	अगर (lp->tx_skbs[lp->tfd_start].skb) अणु
+		prपूर्णांकk("%s: tx_skbs conflict.\n", dev->name);
 		panic_queues(dev);
-	}
-#else
+	पूर्ण
+#अन्यथा
 	BUG_ON(lp->tx_skbs[lp->tfd_start].skb);
-#endif
+#पूर्ण_अगर
 	lp->tx_skbs[lp->tfd_start].skb = skb;
 	lp->tx_skbs[lp->tfd_start].skb_dma = dma_map_single(&lp->pci_dev->dev,
 							    skb->data,
@@ -1307,705 +1308,705 @@ tc35815_send_packet(struct sk_buff *skb, struct net_device *dev)
 	txfd->fd.FDSystem = cpu_to_le32(lp->tfd_start);
 	txfd->fd.FDCtl = cpu_to_le32(FD_CownsFD | (1 << FD_BDCnt_SHIFT));
 
-	if (lp->tfd_start == lp->tfd_end) {
-		struct tc35815_regs __iomem *tr =
-			(struct tc35815_regs __iomem *)dev->base_addr;
+	अगर (lp->tfd_start == lp->tfd_end) अणु
+		काष्ठा tc35815_regs __iomem *tr =
+			(काष्ठा tc35815_regs __iomem *)dev->base_addr;
 		/* Start DMA Transmitter. */
 		txfd->fd.FDNext |= cpu_to_le32(FD_Next_EOL);
 		txfd->fd.FDCtl |= cpu_to_le32(FD_FrmOpt_IntTx);
-		if (netif_msg_tx_queued(lp)) {
-			printk("%s: starting TxFD.\n", dev->name);
+		अगर (netअगर_msg_tx_queued(lp)) अणु
+			prपूर्णांकk("%s: starting TxFD.\n", dev->name);
 			dump_txfd(txfd);
-		}
-		tc_writel(fd_virt_to_bus(lp, txfd), &tr->TxFrmPtr);
-	} else {
+		पूर्ण
+		tc_ग_लिखोl(fd_virt_to_bus(lp, txfd), &tr->TxFrmPtr);
+	पूर्ण अन्यथा अणु
 		txfd->fd.FDNext &= cpu_to_le32(~FD_Next_EOL);
-		if (netif_msg_tx_queued(lp)) {
-			printk("%s: queueing TxFD.\n", dev->name);
+		अगर (netअगर_msg_tx_queued(lp)) अणु
+			prपूर्णांकk("%s: queueing TxFD.\n", dev->name);
 			dump_txfd(txfd);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	lp->tfd_start = (lp->tfd_start + 1) % TX_FD_NUM;
 
 	/* If we just used up the very last entry in the
 	 * TX ring on this device, tell the queueing
 	 * layer to send no more.
 	 */
-	if (tc35815_tx_full(dev)) {
-		if (netif_msg_tx_queued(lp))
-			printk(KERN_WARNING "%s: TxFD Exhausted.\n", dev->name);
-		netif_stop_queue(dev);
-	}
+	अगर (tc35815_tx_full(dev)) अणु
+		अगर (netअगर_msg_tx_queued(lp))
+			prपूर्णांकk(KERN_WARNING "%s: TxFD Exhausted.\n", dev->name);
+		netअगर_stop_queue(dev);
+	पूर्ण
 
-	/* When the TX completion hw interrupt arrives, this
+	/* When the TX completion hw पूर्णांकerrupt arrives, this
 	 * is when the transmit statistics are updated.
 	 */
 
 	spin_unlock_irqrestore(&lp->lock, flags);
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-#define FATAL_ERROR_INT \
+#घोषणा FATAL_ERROR_INT \
 	(Int_IntPCI | Int_DmParErr | Int_IntNRAbt)
-static void tc35815_fatal_error_interrupt(struct net_device *dev, u32 status)
-{
-	static int count;
-	printk(KERN_WARNING "%s: Fatal Error Interrupt (%#x):",
+अटल व्योम tc35815_fatal_error_पूर्णांकerrupt(काष्ठा net_device *dev, u32 status)
+अणु
+	अटल पूर्णांक count;
+	prपूर्णांकk(KERN_WARNING "%s: Fatal Error Interrupt (%#x):",
 	       dev->name, status);
-	if (status & Int_IntPCI)
-		printk(" IntPCI");
-	if (status & Int_DmParErr)
-		printk(" DmParErr");
-	if (status & Int_IntNRAbt)
-		printk(" IntNRAbt");
-	printk("\n");
-	if (count++ > 100)
+	अगर (status & Int_IntPCI)
+		prपूर्णांकk(" IntPCI");
+	अगर (status & Int_DmParErr)
+		prपूर्णांकk(" DmParErr");
+	अगर (status & Int_IntNRAbt)
+		prपूर्णांकk(" IntNRAbt");
+	prपूर्णांकk("\n");
+	अगर (count++ > 100)
 		panic("%s: Too many fatal errors.", dev->name);
-	printk(KERN_WARNING "%s: Resetting ...\n", dev->name);
+	prपूर्णांकk(KERN_WARNING "%s: Resetting ...\n", dev->name);
 	/* Try to restart the adaptor. */
 	tc35815_schedule_restart(dev);
-}
+पूर्ण
 
-static int tc35815_do_interrupt(struct net_device *dev, u32 status, int limit)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	int ret = -1;
+अटल पूर्णांक tc35815_करो_पूर्णांकerrupt(काष्ठा net_device *dev, u32 status, पूर्णांक limit)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	पूर्णांक ret = -1;
 
 	/* Fatal errors... */
-	if (status & FATAL_ERROR_INT) {
-		tc35815_fatal_error_interrupt(dev, status);
-		return 0;
-	}
+	अगर (status & FATAL_ERROR_INT) अणु
+		tc35815_fatal_error_पूर्णांकerrupt(dev, status);
+		वापस 0;
+	पूर्ण
 	/* recoverable errors */
-	if (status & Int_IntFDAEx) {
-		if (netif_msg_rx_err(lp))
+	अगर (status & Int_IntFDAEx) अणु
+		अगर (netअगर_msg_rx_err(lp))
 			dev_warn(&dev->dev,
 				 "Free Descriptor Area Exhausted (%#x).\n",
 				 status);
 		dev->stats.rx_dropped++;
 		ret = 0;
-	}
-	if (status & Int_IntBLEx) {
-		if (netif_msg_rx_err(lp))
+	पूर्ण
+	अगर (status & Int_IntBLEx) अणु
+		अगर (netअगर_msg_rx_err(lp))
 			dev_warn(&dev->dev,
 				 "Buffer List Exhausted (%#x).\n",
 				 status);
 		dev->stats.rx_dropped++;
 		ret = 0;
-	}
-	if (status & Int_IntExBD) {
-		if (netif_msg_rx_err(lp))
+	पूर्ण
+	अगर (status & Int_IntExBD) अणु
+		अगर (netअगर_msg_rx_err(lp))
 			dev_warn(&dev->dev,
 				 "Excessive Buffer Descriptors (%#x).\n",
 				 status);
 		dev->stats.rx_length_errors++;
 		ret = 0;
-	}
+	पूर्ण
 
-	/* normal notification */
-	if (status & Int_IntMacRx) {
+	/* normal notअगरication */
+	अगर (status & Int_IntMacRx) अणु
 		/* Got a packet(s). */
 		ret = tc35815_rx(dev, limit);
-		lp->lstats.rx_ints++;
-	}
-	if (status & Int_IntMacTx) {
+		lp->lstats.rx_पूर्णांकs++;
+	पूर्ण
+	अगर (status & Int_IntMacTx) अणु
 		/* Transmit complete. */
-		lp->lstats.tx_ints++;
+		lp->lstats.tx_पूर्णांकs++;
 		spin_lock_irq(&lp->lock);
-		tc35815_txdone(dev);
+		tc35815_txकरोne(dev);
 		spin_unlock_irq(&lp->lock);
-		if (ret < 0)
+		अगर (ret < 0)
 			ret = 0;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
  * The typical workload of the driver:
- * Handle the network interface interrupts.
+ * Handle the network पूर्णांकerface पूर्णांकerrupts.
  */
-static irqreturn_t tc35815_interrupt(int irq, void *dev_id)
-{
-	struct net_device *dev = dev_id;
-	struct tc35815_local *lp = netdev_priv(dev);
-	struct tc35815_regs __iomem *tr =
-		(struct tc35815_regs __iomem *)dev->base_addr;
-	u32 dmactl = tc_readl(&tr->DMA_Ctl);
+अटल irqवापस_t tc35815_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev = dev_id;
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	काष्ठा tc35815_regs __iomem *tr =
+		(काष्ठा tc35815_regs __iomem *)dev->base_addr;
+	u32 dmactl = tc_पढ़ोl(&tr->DMA_Ctl);
 
-	if (!(dmactl & DMA_IntMask)) {
-		/* disable interrupts */
-		tc_writel(dmactl | DMA_IntMask, &tr->DMA_Ctl);
-		if (napi_schedule_prep(&lp->napi))
+	अगर (!(dmactl & DMA_IntMask)) अणु
+		/* disable पूर्णांकerrupts */
+		tc_ग_लिखोl(dmactl | DMA_IntMask, &tr->DMA_Ctl);
+		अगर (napi_schedule_prep(&lp->napi))
 			__napi_schedule(&lp->napi);
-		else {
-			printk(KERN_ERR "%s: interrupt taken in poll\n",
+		अन्यथा अणु
+			prपूर्णांकk(KERN_ERR "%s: interrupt taken in poll\n",
 			       dev->name);
 			BUG();
-		}
-		(void)tc_readl(&tr->Int_Src);	/* flush */
-		return IRQ_HANDLED;
-	}
-	return IRQ_NONE;
-}
+		पूर्ण
+		(व्योम)tc_पढ़ोl(&tr->Int_Src);	/* flush */
+		वापस IRQ_HANDLED;
+	पूर्ण
+	वापस IRQ_NONE;
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
-static void tc35815_poll_controller(struct net_device *dev)
-{
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+अटल व्योम tc35815_poll_controller(काष्ठा net_device *dev)
+अणु
 	disable_irq(dev->irq);
-	tc35815_interrupt(dev->irq, dev);
+	tc35815_पूर्णांकerrupt(dev->irq, dev);
 	enable_irq(dev->irq);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /* We have a good packet(s), get it/them out of the buffers. */
-static int
-tc35815_rx(struct net_device *dev, int limit)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	unsigned int fdctl;
-	int i;
-	int received = 0;
+अटल पूर्णांक
+tc35815_rx(काष्ठा net_device *dev, पूर्णांक limit)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	अचिन्हित पूर्णांक fdctl;
+	पूर्णांक i;
+	पूर्णांक received = 0;
 
-	while (!((fdctl = le32_to_cpu(lp->rfd_cur->fd.FDCtl)) & FD_CownsFD)) {
-		int status = le32_to_cpu(lp->rfd_cur->fd.FDStat);
-		int pkt_len = fdctl & FD_FDLength_MASK;
-		int bd_count = (fdctl & FD_BDCnt_MASK) >> FD_BDCnt_SHIFT;
-#ifdef DEBUG
-		struct RxFD *next_rfd;
-#endif
-#if (RX_CTL_CMD & Rx_StripCRC) == 0
+	जबतक (!((fdctl = le32_to_cpu(lp->rfd_cur->fd.FDCtl)) & FD_CownsFD)) अणु
+		पूर्णांक status = le32_to_cpu(lp->rfd_cur->fd.FDStat);
+		पूर्णांक pkt_len = fdctl & FD_FDLength_MASK;
+		पूर्णांक bd_count = (fdctl & FD_BDCnt_MASK) >> FD_BDCnt_SHIFT;
+#अगर_घोषित DEBUG
+		काष्ठा RxFD *next_rfd;
+#पूर्ण_अगर
+#अगर (RX_CTL_CMD & Rx_StripCRC) == 0
 		pkt_len -= ETH_FCS_LEN;
-#endif
+#पूर्ण_अगर
 
-		if (netif_msg_rx_status(lp))
+		अगर (netअगर_msg_rx_status(lp))
 			dump_rxfd(lp->rfd_cur);
-		if (status & Rx_Good) {
-			struct sk_buff *skb;
-			unsigned char *data;
-			int cur_bd;
+		अगर (status & Rx_Good) अणु
+			काष्ठा sk_buff *skb;
+			अचिन्हित अक्षर *data;
+			पूर्णांक cur_bd;
 
-			if (--limit < 0)
-				break;
+			अगर (--limit < 0)
+				अवरोध;
 			BUG_ON(bd_count > 1);
 			cur_bd = (le32_to_cpu(lp->rfd_cur->bd[0].BDCtl)
 				  & BD_RxBDID_MASK) >> BD_RxBDID_SHIFT;
-#ifdef DEBUG
-			if (cur_bd >= RX_BUF_NUM) {
-				printk("%s: invalid BDID.\n", dev->name);
+#अगर_घोषित DEBUG
+			अगर (cur_bd >= RX_BUF_NUM) अणु
+				prपूर्णांकk("%s: invalid BDID.\n", dev->name);
 				panic_queues(dev);
-			}
+			पूर्ण
 			BUG_ON(lp->rx_skbs[cur_bd].skb_dma !=
 			       (le32_to_cpu(lp->rfd_cur->bd[0].BuffData) & ~3));
-			if (!lp->rx_skbs[cur_bd].skb) {
-				printk("%s: NULL skb.\n", dev->name);
+			अगर (!lp->rx_skbs[cur_bd].skb) अणु
+				prपूर्णांकk("%s: NULL skb.\n", dev->name);
 				panic_queues(dev);
-			}
-#else
+			पूर्ण
+#अन्यथा
 			BUG_ON(cur_bd >= RX_BUF_NUM);
-#endif
+#पूर्ण_अगर
 			skb = lp->rx_skbs[cur_bd].skb;
 			prefetch(skb->data);
-			lp->rx_skbs[cur_bd].skb = NULL;
+			lp->rx_skbs[cur_bd].skb = शून्य;
 			dma_unmap_single(&lp->pci_dev->dev,
 					 lp->rx_skbs[cur_bd].skb_dma,
 					 RX_BUF_SIZE, DMA_FROM_DEVICE);
-			if (!HAVE_DMA_RXALIGN(lp) && NET_IP_ALIGN != 0)
-				memmove(skb->data, skb->data - NET_IP_ALIGN,
+			अगर (!HAVE_DMA_RXALIGN(lp) && NET_IP_ALIGN != 0)
+				स_हटाओ(skb->data, skb->data - NET_IP_ALIGN,
 					pkt_len);
 			data = skb_put(skb, pkt_len);
-			if (netif_msg_pktdata(lp))
-				print_eth(data);
+			अगर (netअगर_msg_pktdata(lp))
+				prपूर्णांक_eth(data);
 			skb->protocol = eth_type_trans(skb, dev);
-			netif_receive_skb(skb);
+			netअगर_receive_skb(skb);
 			received++;
 			dev->stats.rx_packets++;
 			dev->stats.rx_bytes += pkt_len;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev->stats.rx_errors++;
-			if (netif_msg_rx_err(lp))
+			अगर (netअगर_msg_rx_err(lp))
 				dev_info(&dev->dev, "Rx error (status %x)\n",
 					 status & Rx_Stat_Mask);
 			/* WORKAROUND: LongErr and CRCErr means Overflow. */
-			if ((status & Rx_LongErr) && (status & Rx_CRCErr)) {
+			अगर ((status & Rx_LongErr) && (status & Rx_CRCErr)) अणु
 				status &= ~(Rx_LongErr|Rx_CRCErr);
 				status |= Rx_Over;
-			}
-			if (status & Rx_LongErr)
+			पूर्ण
+			अगर (status & Rx_LongErr)
 				dev->stats.rx_length_errors++;
-			if (status & Rx_Over)
-				dev->stats.rx_fifo_errors++;
-			if (status & Rx_CRCErr)
+			अगर (status & Rx_Over)
+				dev->stats.rx_fअगरo_errors++;
+			अगर (status & Rx_CRCErr)
 				dev->stats.rx_crc_errors++;
-			if (status & Rx_Align)
+			अगर (status & Rx_Align)
 				dev->stats.rx_frame_errors++;
-		}
+		पूर्ण
 
-		if (bd_count > 0) {
+		अगर (bd_count > 0) अणु
 			/* put Free Buffer back to controller */
-			int bdctl = le32_to_cpu(lp->rfd_cur->bd[bd_count - 1].BDCtl);
-			unsigned char id =
+			पूर्णांक bdctl = le32_to_cpu(lp->rfd_cur->bd[bd_count - 1].BDCtl);
+			अचिन्हित अक्षर id =
 				(bdctl & BD_RxBDID_MASK) >> BD_RxBDID_SHIFT;
-#ifdef DEBUG
-			if (id >= RX_BUF_NUM) {
-				printk("%s: invalid BDID.\n", dev->name);
+#अगर_घोषित DEBUG
+			अगर (id >= RX_BUF_NUM) अणु
+				prपूर्णांकk("%s: invalid BDID.\n", dev->name);
 				panic_queues(dev);
-			}
-#else
+			पूर्ण
+#अन्यथा
 			BUG_ON(id >= RX_BUF_NUM);
-#endif
-			/* free old buffers */
+#पूर्ण_अगर
+			/* मुक्त old buffers */
 			lp->fbl_count--;
-			while (lp->fbl_count < RX_BUF_NUM)
-			{
-				unsigned char curid =
+			जबतक (lp->fbl_count < RX_BUF_NUM)
+			अणु
+				अचिन्हित अक्षर curid =
 					(id + 1 + lp->fbl_count) % RX_BUF_NUM;
-				struct BDesc *bd = &lp->fbl_ptr->bd[curid];
-#ifdef DEBUG
+				काष्ठा BDesc *bd = &lp->fbl_ptr->bd[curid];
+#अगर_घोषित DEBUG
 				bdctl = le32_to_cpu(bd->BDCtl);
-				if (bdctl & BD_CownsBD) {
-					printk("%s: Freeing invalid BD.\n",
+				अगर (bdctl & BD_CownsBD) अणु
+					prपूर्णांकk("%s: Freeing invalid BD.\n",
 					       dev->name);
 					panic_queues(dev);
-				}
-#endif
+				पूर्ण
+#पूर्ण_अगर
 				/* pass BD to controller */
-				if (!lp->rx_skbs[curid].skb) {
+				अगर (!lp->rx_skbs[curid].skb) अणु
 					lp->rx_skbs[curid].skb =
 						alloc_rxbuf_skb(dev,
 								lp->pci_dev,
 								&lp->rx_skbs[curid].skb_dma);
-					if (!lp->rx_skbs[curid].skb)
-						break; /* try on next reception */
+					अगर (!lp->rx_skbs[curid].skb)
+						अवरोध; /* try on next reception */
 					bd->BuffData = cpu_to_le32(lp->rx_skbs[curid].skb_dma);
-				}
-				/* Note: BDLength was modified by chip. */
+				पूर्ण
+				/* Note: BDLength was modअगरied by chip. */
 				bd->BDCtl = cpu_to_le32(BD_CownsBD |
 							(curid << BD_RxBDID_SHIFT) |
 							RX_BUF_SIZE);
 				lp->fbl_count++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/* put RxFD back to controller */
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 		next_rfd = fd_bus_to_virt(lp,
 					  le32_to_cpu(lp->rfd_cur->fd.FDNext));
-		if (next_rfd < lp->rfd_base || next_rfd > lp->rfd_limit) {
-			printk("%s: RxFD FDNext invalid.\n", dev->name);
+		अगर (next_rfd < lp->rfd_base || next_rfd > lp->rfd_limit) अणु
+			prपूर्णांकk("%s: RxFD FDNext invalid.\n", dev->name);
 			panic_queues(dev);
-		}
-#endif
-		for (i = 0; i < (bd_count + 1) / 2 + 1; i++) {
+		पूर्ण
+#पूर्ण_अगर
+		क्रम (i = 0; i < (bd_count + 1) / 2 + 1; i++) अणु
 			/* pass FD to controller */
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 			lp->rfd_cur->fd.FDNext = cpu_to_le32(0xdeaddead);
-#else
+#अन्यथा
 			lp->rfd_cur->fd.FDNext = cpu_to_le32(FD_Next_EOL);
-#endif
+#पूर्ण_अगर
 			lp->rfd_cur->fd.FDCtl = cpu_to_le32(FD_CownsFD);
 			lp->rfd_cur++;
-		}
-		if (lp->rfd_cur > lp->rfd_limit)
+		पूर्ण
+		अगर (lp->rfd_cur > lp->rfd_limit)
 			lp->rfd_cur = lp->rfd_base;
-#ifdef DEBUG
-		if (lp->rfd_cur != next_rfd)
-			printk("rfd_cur = %p, next_rfd %p\n",
+#अगर_घोषित DEBUG
+		अगर (lp->rfd_cur != next_rfd)
+			prपूर्णांकk("rfd_cur = %p, next_rfd %p\n",
 			       lp->rfd_cur, next_rfd);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	return received;
-}
+	वापस received;
+पूर्ण
 
-static int tc35815_poll(struct napi_struct *napi, int budget)
-{
-	struct tc35815_local *lp = container_of(napi, struct tc35815_local, napi);
-	struct net_device *dev = lp->dev;
-	struct tc35815_regs __iomem *tr =
-		(struct tc35815_regs __iomem *)dev->base_addr;
-	int received = 0, handled;
+अटल पूर्णांक tc35815_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा tc35815_local *lp = container_of(napi, काष्ठा tc35815_local, napi);
+	काष्ठा net_device *dev = lp->dev;
+	काष्ठा tc35815_regs __iomem *tr =
+		(काष्ठा tc35815_regs __iomem *)dev->base_addr;
+	पूर्णांक received = 0, handled;
 	u32 status;
 
-	if (budget <= 0)
-		return received;
+	अगर (budget <= 0)
+		वापस received;
 
 	spin_lock(&lp->rx_lock);
-	status = tc_readl(&tr->Int_Src);
-	do {
+	status = tc_पढ़ोl(&tr->Int_Src);
+	करो अणु
 		/* BLEx, FDAEx will be cleared later */
-		tc_writel(status & ~(Int_BLEx | Int_FDAEx),
-			  &tr->Int_Src);	/* write to clear */
+		tc_ग_लिखोl(status & ~(Int_BLEx | Int_FDAEx),
+			  &tr->Int_Src);	/* ग_लिखो to clear */
 
-		handled = tc35815_do_interrupt(dev, status, budget - received);
-		if (status & (Int_BLEx | Int_FDAEx))
-			tc_writel(status & (Int_BLEx | Int_FDAEx),
+		handled = tc35815_करो_पूर्णांकerrupt(dev, status, budget - received);
+		अगर (status & (Int_BLEx | Int_FDAEx))
+			tc_ग_लिखोl(status & (Int_BLEx | Int_FDAEx),
 				  &tr->Int_Src);
-		if (handled >= 0) {
+		अगर (handled >= 0) अणु
 			received += handled;
-			if (received >= budget)
-				break;
-		}
-		status = tc_readl(&tr->Int_Src);
-	} while (status);
+			अगर (received >= budget)
+				अवरोध;
+		पूर्ण
+		status = tc_पढ़ोl(&tr->Int_Src);
+	पूर्ण जबतक (status);
 	spin_unlock(&lp->rx_lock);
 
-	if (received < budget) {
-		napi_complete_done(napi, received);
-		/* enable interrupts */
-		tc_writel(tc_readl(&tr->DMA_Ctl) & ~DMA_IntMask, &tr->DMA_Ctl);
-	}
-	return received;
-}
+	अगर (received < budget) अणु
+		napi_complete_करोne(napi, received);
+		/* enable पूर्णांकerrupts */
+		tc_ग_लिखोl(tc_पढ़ोl(&tr->DMA_Ctl) & ~DMA_IntMask, &tr->DMA_Ctl);
+	पूर्ण
+	वापस received;
+पूर्ण
 
-#define TX_STA_ERR	(Tx_ExColl|Tx_Under|Tx_Defer|Tx_NCarr|Tx_LateColl|Tx_TxPar|Tx_SQErr)
+#घोषणा TX_STA_ERR	(Tx_ExColl|Tx_Under|Tx_Defer|Tx_NCarr|Tx_LateColl|Tx_TxPar|Tx_SQErr)
 
-static void
-tc35815_check_tx_stat(struct net_device *dev, int status)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	const char *msg = NULL;
+अटल व्योम
+tc35815_check_tx_stat(काष्ठा net_device *dev, पूर्णांक status)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	स्थिर अक्षर *msg = शून्य;
 
 	/* count collisions */
-	if (status & Tx_ExColl)
+	अगर (status & Tx_ExColl)
 		dev->stats.collisions += 16;
-	if (status & Tx_TxColl_MASK)
+	अगर (status & Tx_TxColl_MASK)
 		dev->stats.collisions += status & Tx_TxColl_MASK;
 
-	/* TX4939 does not have NCarr */
-	if (lp->chiptype == TC35815_TX4939)
+	/* TX4939 करोes not have NCarr */
+	अगर (lp->chiptype == TC35815_TX4939)
 		status &= ~Tx_NCarr;
 	/* WORKAROUND: ignore LostCrS in full duplex operation */
-	if (!lp->link || lp->duplex == DUPLEX_FULL)
+	अगर (!lp->link || lp->duplex == DUPLEX_FULL)
 		status &= ~Tx_NCarr;
 
-	if (!(status & TX_STA_ERR)) {
+	अगर (!(status & TX_STA_ERR)) अणु
 		/* no error. */
 		dev->stats.tx_packets++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dev->stats.tx_errors++;
-	if (status & Tx_ExColl) {
-		dev->stats.tx_aborted_errors++;
+	अगर (status & Tx_ExColl) अणु
+		dev->stats.tx_पातed_errors++;
 		msg = "Excessive Collision.";
-	}
-	if (status & Tx_Under) {
-		dev->stats.tx_fifo_errors++;
+	पूर्ण
+	अगर (status & Tx_Under) अणु
+		dev->stats.tx_fअगरo_errors++;
 		msg = "Tx FIFO Underrun.";
-		if (lp->lstats.tx_underrun < TX_THRESHOLD_KEEP_LIMIT) {
+		अगर (lp->lstats.tx_underrun < TX_THRESHOLD_KEEP_LIMIT) अणु
 			lp->lstats.tx_underrun++;
-			if (lp->lstats.tx_underrun >= TX_THRESHOLD_KEEP_LIMIT) {
-				struct tc35815_regs __iomem *tr =
-					(struct tc35815_regs __iomem *)dev->base_addr;
-				tc_writel(TX_THRESHOLD_MAX, &tr->TxThrsh);
+			अगर (lp->lstats.tx_underrun >= TX_THRESHOLD_KEEP_LIMIT) अणु
+				काष्ठा tc35815_regs __iomem *tr =
+					(काष्ठा tc35815_regs __iomem *)dev->base_addr;
+				tc_ग_लिखोl(TX_THRESHOLD_MAX, &tr->TxThrsh);
 				msg = "Tx FIFO Underrun.Change Tx threshold to max.";
-			}
-		}
-	}
-	if (status & Tx_Defer) {
-		dev->stats.tx_fifo_errors++;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (status & Tx_Defer) अणु
+		dev->stats.tx_fअगरo_errors++;
 		msg = "Excessive Deferral.";
-	}
-	if (status & Tx_NCarr) {
+	पूर्ण
+	अगर (status & Tx_NCarr) अणु
 		dev->stats.tx_carrier_errors++;
 		msg = "Lost Carrier Sense.";
-	}
-	if (status & Tx_LateColl) {
-		dev->stats.tx_aborted_errors++;
+	पूर्ण
+	अगर (status & Tx_LateColl) अणु
+		dev->stats.tx_पातed_errors++;
 		msg = "Late Collision.";
-	}
-	if (status & Tx_TxPar) {
-		dev->stats.tx_fifo_errors++;
+	पूर्ण
+	अगर (status & Tx_TxPar) अणु
+		dev->stats.tx_fअगरo_errors++;
 		msg = "Transmit Parity Error.";
-	}
-	if (status & Tx_SQErr) {
+	पूर्ण
+	अगर (status & Tx_SQErr) अणु
 		dev->stats.tx_heartbeat_errors++;
 		msg = "Signal Quality Error.";
-	}
-	if (msg && netif_msg_tx_err(lp))
-		printk(KERN_WARNING "%s: %s (%#x)\n", dev->name, msg, status);
-}
+	पूर्ण
+	अगर (msg && netअगर_msg_tx_err(lp))
+		prपूर्णांकk(KERN_WARNING "%s: %s (%#x)\n", dev->name, msg, status);
+पूर्ण
 
 /* This handles TX complete events posted by the device
- * via interrupts.
+ * via पूर्णांकerrupts.
  */
-static void
-tc35815_txdone(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	struct TxFD *txfd;
-	unsigned int fdctl;
+अटल व्योम
+tc35815_txकरोne(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	काष्ठा TxFD *txfd;
+	अचिन्हित पूर्णांक fdctl;
 
 	txfd = &lp->tfd_base[lp->tfd_end];
-	while (lp->tfd_start != lp->tfd_end &&
-	       !((fdctl = le32_to_cpu(txfd->fd.FDCtl)) & FD_CownsFD)) {
-		int status = le32_to_cpu(txfd->fd.FDStat);
-		struct sk_buff *skb;
-		unsigned long fdnext = le32_to_cpu(txfd->fd.FDNext);
-		u32 fdsystem = le32_to_cpu(txfd->fd.FDSystem);
+	जबतक (lp->tfd_start != lp->tfd_end &&
+	       !((fdctl = le32_to_cpu(txfd->fd.FDCtl)) & FD_CownsFD)) अणु
+		पूर्णांक status = le32_to_cpu(txfd->fd.FDStat);
+		काष्ठा sk_buff *skb;
+		अचिन्हित दीर्घ fdnext = le32_to_cpu(txfd->fd.FDNext);
+		u32 fdप्रणाली = le32_to_cpu(txfd->fd.FDSystem);
 
-		if (netif_msg_tx_done(lp)) {
-			printk("%s: complete TxFD.\n", dev->name);
+		अगर (netअगर_msg_tx_करोne(lp)) अणु
+			prपूर्णांकk("%s: complete TxFD.\n", dev->name);
 			dump_txfd(txfd);
-		}
+		पूर्ण
 		tc35815_check_tx_stat(dev, status);
 
-		skb = fdsystem != 0xffffffff ?
-			lp->tx_skbs[fdsystem].skb : NULL;
-#ifdef DEBUG
-		if (lp->tx_skbs[lp->tfd_end].skb != skb) {
-			printk("%s: tx_skbs mismatch.\n", dev->name);
+		skb = fdप्रणाली != 0xffffffff ?
+			lp->tx_skbs[fdप्रणाली].skb : शून्य;
+#अगर_घोषित DEBUG
+		अगर (lp->tx_skbs[lp->tfd_end].skb != skb) अणु
+			prपूर्णांकk("%s: tx_skbs mismatch.\n", dev->name);
 			panic_queues(dev);
-		}
-#else
+		पूर्ण
+#अन्यथा
 		BUG_ON(lp->tx_skbs[lp->tfd_end].skb != skb);
-#endif
-		if (skb) {
+#पूर्ण_अगर
+		अगर (skb) अणु
 			dev->stats.tx_bytes += skb->len;
 			dma_unmap_single(&lp->pci_dev->dev,
 					 lp->tx_skbs[lp->tfd_end].skb_dma,
 					 skb->len, DMA_TO_DEVICE);
-			lp->tx_skbs[lp->tfd_end].skb = NULL;
+			lp->tx_skbs[lp->tfd_end].skb = शून्य;
 			lp->tx_skbs[lp->tfd_end].skb_dma = 0;
-			dev_kfree_skb_any(skb);
-		}
+			dev_kमुक्त_skb_any(skb);
+		पूर्ण
 		txfd->fd.FDSystem = cpu_to_le32(0xffffffff);
 
 		lp->tfd_end = (lp->tfd_end + 1) % TX_FD_NUM;
 		txfd = &lp->tfd_base[lp->tfd_end];
-#ifdef DEBUG
-		if ((fdnext & ~FD_Next_EOL) != fd_virt_to_bus(lp, txfd)) {
-			printk("%s: TxFD FDNext invalid.\n", dev->name);
+#अगर_घोषित DEBUG
+		अगर ((fdnext & ~FD_Next_EOL) != fd_virt_to_bus(lp, txfd)) अणु
+			prपूर्णांकk("%s: TxFD FDNext invalid.\n", dev->name);
 			panic_queues(dev);
-		}
-#endif
-		if (fdnext & FD_Next_EOL) {
+		पूर्ण
+#पूर्ण_अगर
+		अगर (fdnext & FD_Next_EOL) अणु
 			/* DMA Transmitter has been stopping... */
-			if (lp->tfd_end != lp->tfd_start) {
-				struct tc35815_regs __iomem *tr =
-					(struct tc35815_regs __iomem *)dev->base_addr;
-				int head = (lp->tfd_start + TX_FD_NUM - 1) % TX_FD_NUM;
-				struct TxFD *txhead = &lp->tfd_base[head];
-				int qlen = (lp->tfd_start + TX_FD_NUM
+			अगर (lp->tfd_end != lp->tfd_start) अणु
+				काष्ठा tc35815_regs __iomem *tr =
+					(काष्ठा tc35815_regs __iomem *)dev->base_addr;
+				पूर्णांक head = (lp->tfd_start + TX_FD_NUM - 1) % TX_FD_NUM;
+				काष्ठा TxFD *txhead = &lp->tfd_base[head];
+				पूर्णांक qlen = (lp->tfd_start + TX_FD_NUM
 					    - lp->tfd_end) % TX_FD_NUM;
 
-#ifdef DEBUG
-				if (!(le32_to_cpu(txfd->fd.FDCtl) & FD_CownsFD)) {
-					printk("%s: TxFD FDCtl invalid.\n", dev->name);
+#अगर_घोषित DEBUG
+				अगर (!(le32_to_cpu(txfd->fd.FDCtl) & FD_CownsFD)) अणु
+					prपूर्णांकk("%s: TxFD FDCtl invalid.\n", dev->name);
 					panic_queues(dev);
-				}
-#endif
+				पूर्ण
+#पूर्ण_अगर
 				/* log max queue length */
-				if (lp->lstats.max_tx_qlen < qlen)
+				अगर (lp->lstats.max_tx_qlen < qlen)
 					lp->lstats.max_tx_qlen = qlen;
 
 
 				/* start DMA Transmitter again */
 				txhead->fd.FDNext |= cpu_to_le32(FD_Next_EOL);
 				txhead->fd.FDCtl |= cpu_to_le32(FD_FrmOpt_IntTx);
-				if (netif_msg_tx_queued(lp)) {
-					printk("%s: start TxFD on queue.\n",
+				अगर (netअगर_msg_tx_queued(lp)) अणु
+					prपूर्णांकk("%s: start TxFD on queue.\n",
 					       dev->name);
 					dump_txfd(txfd);
-				}
-				tc_writel(fd_virt_to_bus(lp, txfd), &tr->TxFrmPtr);
-			}
-			break;
-		}
-	}
+				पूर्ण
+				tc_ग_लिखोl(fd_virt_to_bus(lp, txfd), &tr->TxFrmPtr);
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* If we had stopped the queue due to a "tx full"
 	 * condition, and space has now been made available,
 	 * wake up the queue.
 	 */
-	if (netif_queue_stopped(dev) && !tc35815_tx_full(dev))
-		netif_wake_queue(dev);
-}
+	अगर (netअगर_queue_stopped(dev) && !tc35815_tx_full(dev))
+		netअगर_wake_queue(dev);
+पूर्ण
 
-/* The inverse routine to tc35815_open(). */
-static int
-tc35815_close(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
+/* The inverse routine to tc35815_खोलो(). */
+अटल पूर्णांक
+tc35815_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 	napi_disable(&lp->napi);
-	if (dev->phydev)
+	अगर (dev->phydev)
 		phy_stop(dev->phydev);
 	cancel_work_sync(&lp->restart_work);
 
 	/* Flush the Tx and disable Rx here. */
 	tc35815_chip_reset(dev);
-	free_irq(dev->irq, dev);
+	मुक्त_irq(dev->irq, dev);
 
-	tc35815_free_queues(dev);
+	tc35815_मुक्त_queues(dev);
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
 /*
  * Get the current statistics.
- * This may be called with the card open or closed.
+ * This may be called with the card खोलो or बंदd.
  */
-static struct net_device_stats *tc35815_get_stats(struct net_device *dev)
-{
-	struct tc35815_regs __iomem *tr =
-		(struct tc35815_regs __iomem *)dev->base_addr;
-	if (netif_running(dev))
-		/* Update the statistics from the device registers. */
-		dev->stats.rx_missed_errors += tc_readl(&tr->Miss_Cnt);
+अटल काष्ठा net_device_stats *tc35815_get_stats(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_regs __iomem *tr =
+		(काष्ठा tc35815_regs __iomem *)dev->base_addr;
+	अगर (netअगर_running(dev))
+		/* Update the statistics from the device रेजिस्टरs. */
+		dev->stats.rx_missed_errors += tc_पढ़ोl(&tr->Miss_Cnt);
 
-	return &dev->stats;
-}
+	वापस &dev->stats;
+पूर्ण
 
-static void tc35815_set_cam_entry(struct net_device *dev, int index, unsigned char *addr)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	struct tc35815_regs __iomem *tr =
-		(struct tc35815_regs __iomem *)dev->base_addr;
-	int cam_index = index * 6;
+अटल व्योम tc35815_set_cam_entry(काष्ठा net_device *dev, पूर्णांक index, अचिन्हित अक्षर *addr)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	काष्ठा tc35815_regs __iomem *tr =
+		(काष्ठा tc35815_regs __iomem *)dev->base_addr;
+	पूर्णांक cam_index = index * 6;
 	u32 cam_data;
 	u32 saved_addr;
 
-	saved_addr = tc_readl(&tr->CAM_Adr);
+	saved_addr = tc_पढ़ोl(&tr->CAM_Adr);
 
-	if (netif_msg_hw(lp))
-		printk(KERN_DEBUG "%s: CAM %d: %pM\n",
+	अगर (netअगर_msg_hw(lp))
+		prपूर्णांकk(KERN_DEBUG "%s: CAM %d: %pM\n",
 			dev->name, index, addr);
-	if (index & 1) {
-		/* read modify write */
-		tc_writel(cam_index - 2, &tr->CAM_Adr);
-		cam_data = tc_readl(&tr->CAM_Data) & 0xffff0000;
+	अगर (index & 1) अणु
+		/* पढ़ो modअगरy ग_लिखो */
+		tc_ग_लिखोl(cam_index - 2, &tr->CAM_Adr);
+		cam_data = tc_पढ़ोl(&tr->CAM_Data) & 0xffff0000;
 		cam_data |= addr[0] << 8 | addr[1];
-		tc_writel(cam_data, &tr->CAM_Data);
-		/* write whole word */
-		tc_writel(cam_index + 2, &tr->CAM_Adr);
+		tc_ग_लिखोl(cam_data, &tr->CAM_Data);
+		/* ग_लिखो whole word */
+		tc_ग_लिखोl(cam_index + 2, &tr->CAM_Adr);
 		cam_data = (addr[2] << 24) | (addr[3] << 16) | (addr[4] << 8) | addr[5];
-		tc_writel(cam_data, &tr->CAM_Data);
-	} else {
-		/* write whole word */
-		tc_writel(cam_index, &tr->CAM_Adr);
+		tc_ग_लिखोl(cam_data, &tr->CAM_Data);
+	पूर्ण अन्यथा अणु
+		/* ग_लिखो whole word */
+		tc_ग_लिखोl(cam_index, &tr->CAM_Adr);
 		cam_data = (addr[0] << 24) | (addr[1] << 16) | (addr[2] << 8) | addr[3];
-		tc_writel(cam_data, &tr->CAM_Data);
-		/* read modify write */
-		tc_writel(cam_index + 4, &tr->CAM_Adr);
-		cam_data = tc_readl(&tr->CAM_Data) & 0x0000ffff;
+		tc_ग_लिखोl(cam_data, &tr->CAM_Data);
+		/* पढ़ो modअगरy ग_लिखो */
+		tc_ग_लिखोl(cam_index + 4, &tr->CAM_Adr);
+		cam_data = tc_पढ़ोl(&tr->CAM_Data) & 0x0000ffff;
 		cam_data |= addr[4] << 24 | (addr[5] << 16);
-		tc_writel(cam_data, &tr->CAM_Data);
-	}
+		tc_ग_लिखोl(cam_data, &tr->CAM_Data);
+	पूर्ण
 
-	tc_writel(saved_addr, &tr->CAM_Adr);
-}
+	tc_ग_लिखोl(saved_addr, &tr->CAM_Adr);
+पूर्ण
 
 
 /*
- * Set or clear the multicast filter for this adaptor.
+ * Set or clear the multicast filter क्रम this adaptor.
  * num_addrs == -1	Promiscuous mode, receive all packets
  * num_addrs == 0	Normal mode, clear multicast list
  * num_addrs > 0	Multicast mode, receive normal and MC packets,
- *			and do best-effort filtering.
+ *			and करो best-efक्रमt filtering.
  */
-static void
-tc35815_set_multicast_list(struct net_device *dev)
-{
-	struct tc35815_regs __iomem *tr =
-		(struct tc35815_regs __iomem *)dev->base_addr;
+अटल व्योम
+tc35815_set_multicast_list(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_regs __iomem *tr =
+		(काष्ठा tc35815_regs __iomem *)dev->base_addr;
 
-	if (dev->flags & IFF_PROMISC) {
+	अगर (dev->flags & IFF_PROMISC) अणु
 		/* With some (all?) 100MHalf HUB, controller will hang
-		 * if we enabled promiscuous mode before linkup...
+		 * अगर we enabled promiscuous mode beक्रमe linkup...
 		 */
-		struct tc35815_local *lp = netdev_priv(dev);
+		काष्ठा tc35815_local *lp = netdev_priv(dev);
 
-		if (!lp->link)
-			return;
+		अगर (!lp->link)
+			वापस;
 		/* Enable promiscuous mode */
-		tc_writel(CAM_CompEn | CAM_BroadAcc | CAM_GroupAcc | CAM_StationAcc, &tr->CAM_Ctl);
-	} else if ((dev->flags & IFF_ALLMULTI) ||
-		  netdev_mc_count(dev) > CAM_ENTRY_MAX - 3) {
+		tc_ग_लिखोl(CAM_CompEn | CAM_BroadAcc | CAM_GroupAcc | CAM_StationAcc, &tr->CAM_Ctl);
+	पूर्ण अन्यथा अगर ((dev->flags & IFF_ALLMULTI) ||
+		  netdev_mc_count(dev) > CAM_ENTRY_MAX - 3) अणु
 		/* CAM 0, 1, 20 are reserved. */
 		/* Disable promiscuous mode, use normal mode. */
-		tc_writel(CAM_CompEn | CAM_BroadAcc | CAM_GroupAcc, &tr->CAM_Ctl);
-	} else if (!netdev_mc_empty(dev)) {
-		struct netdev_hw_addr *ha;
-		int i;
-		int ena_bits = CAM_Ena_Bit(CAM_ENTRY_SOURCE);
+		tc_ग_लिखोl(CAM_CompEn | CAM_BroadAcc | CAM_GroupAcc, &tr->CAM_Ctl);
+	पूर्ण अन्यथा अगर (!netdev_mc_empty(dev)) अणु
+		काष्ठा netdev_hw_addr *ha;
+		पूर्णांक i;
+		पूर्णांक ena_bits = CAM_Ena_Bit(CAM_ENTRY_SOURCE);
 
-		tc_writel(0, &tr->CAM_Ctl);
+		tc_ग_लिखोl(0, &tr->CAM_Ctl);
 		/* Walk the address list, and load the filter */
 		i = 0;
-		netdev_for_each_mc_addr(ha, dev) {
+		netdev_क्रम_each_mc_addr(ha, dev) अणु
 			/* entry 0,1 is reserved. */
 			tc35815_set_cam_entry(dev, i + 2, ha->addr);
 			ena_bits |= CAM_Ena_Bit(i + 2);
 			i++;
-		}
-		tc_writel(ena_bits, &tr->CAM_Ena);
-		tc_writel(CAM_CompEn | CAM_BroadAcc, &tr->CAM_Ctl);
-	} else {
-		tc_writel(CAM_Ena_Bit(CAM_ENTRY_SOURCE), &tr->CAM_Ena);
-		tc_writel(CAM_CompEn | CAM_BroadAcc, &tr->CAM_Ctl);
-	}
-}
+		पूर्ण
+		tc_ग_लिखोl(ena_bits, &tr->CAM_Ena);
+		tc_ग_लिखोl(CAM_CompEn | CAM_BroadAcc, &tr->CAM_Ctl);
+	पूर्ण अन्यथा अणु
+		tc_ग_लिखोl(CAM_Ena_Bit(CAM_ENTRY_SOURCE), &tr->CAM_Ena);
+		tc_ग_लिखोl(CAM_CompEn | CAM_BroadAcc, &tr->CAM_Ctl);
+	पूर्ण
+पूर्ण
 
-static void tc35815_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
+अटल व्योम tc35815_get_drvinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
 
-	strlcpy(info->driver, MODNAME, sizeof(info->driver));
-	strlcpy(info->version, DRV_VERSION, sizeof(info->version));
-	strlcpy(info->bus_info, pci_name(lp->pci_dev), sizeof(info->bus_info));
-}
+	strlcpy(info->driver, MODNAME, माप(info->driver));
+	strlcpy(info->version, DRV_VERSION, माप(info->version));
+	strlcpy(info->bus_info, pci_name(lp->pci_dev), माप(info->bus_info));
+पूर्ण
 
-static u32 tc35815_get_msglevel(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	return lp->msg_enable;
-}
+अटल u32 tc35815_get_msglevel(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	वापस lp->msg_enable;
+पूर्ण
 
-static void tc35815_set_msglevel(struct net_device *dev, u32 datum)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
+अटल व्योम tc35815_set_msglevel(काष्ठा net_device *dev, u32 datum)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
 	lp->msg_enable = datum;
-}
+पूर्ण
 
-static int tc35815_get_sset_count(struct net_device *dev, int sset)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
+अटल पूर्णांक tc35815_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
 
-	switch (sset) {
-	case ETH_SS_STATS:
-		return sizeof(lp->lstats) / sizeof(int);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
+		वापस माप(lp->lstats) / माप(पूर्णांक);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static void tc35815_get_ethtool_stats(struct net_device *dev, struct ethtool_stats *stats, u64 *data)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
+अटल व्योम tc35815_get_ethtool_stats(काष्ठा net_device *dev, काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
 	data[0] = lp->lstats.max_tx_qlen;
-	data[1] = lp->lstats.tx_ints;
-	data[2] = lp->lstats.rx_ints;
+	data[1] = lp->lstats.tx_पूर्णांकs;
+	data[2] = lp->lstats.rx_पूर्णांकs;
 	data[3] = lp->lstats.tx_underrun;
-}
+पूर्ण
 
-static struct {
-	const char str[ETH_GSTRING_LEN];
-} ethtool_stats_keys[] = {
-	{ "max_tx_qlen" },
-	{ "tx_ints" },
-	{ "rx_ints" },
-	{ "tx_underrun" },
-};
+अटल काष्ठा अणु
+	स्थिर अक्षर str[ETH_GSTRING_LEN];
+पूर्ण ethtool_stats_keys[] = अणु
+	अणु "max_tx_qlen" पूर्ण,
+	अणु "tx_ints" पूर्ण,
+	अणु "rx_ints" पूर्ण,
+	अणु "tx_underrun" पूर्ण,
+पूर्ण;
 
-static void tc35815_get_strings(struct net_device *dev, u32 stringset, u8 *data)
-{
-	memcpy(data, ethtool_stats_keys, sizeof(ethtool_stats_keys));
-}
+अटल व्योम tc35815_get_strings(काष्ठा net_device *dev, u32 stringset, u8 *data)
+अणु
+	स_नकल(data, ethtool_stats_keys, माप(ethtool_stats_keys));
+पूर्ण
 
-static const struct ethtool_ops tc35815_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops tc35815_ethtool_ops = अणु
 	.get_drvinfo		= tc35815_get_drvinfo,
 	.get_link		= ethtool_op_get_link,
 	.get_msglevel		= tc35815_get_msglevel,
@@ -2015,146 +2016,146 @@ static const struct ethtool_ops tc35815_ethtool_ops = {
 	.get_ethtool_stats	= tc35815_get_ethtool_stats,
 	.get_link_ksettings = phy_ethtool_get_link_ksettings,
 	.set_link_ksettings = phy_ethtool_set_link_ksettings,
-};
+पूर्ण;
 
-static void tc35815_chip_reset(struct net_device *dev)
-{
-	struct tc35815_regs __iomem *tr =
-		(struct tc35815_regs __iomem *)dev->base_addr;
-	int i;
+अटल व्योम tc35815_chip_reset(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_regs __iomem *tr =
+		(काष्ठा tc35815_regs __iomem *)dev->base_addr;
+	पूर्णांक i;
 	/* reset the controller */
-	tc_writel(MAC_Reset, &tr->MAC_Ctl);
+	tc_ग_लिखोl(MAC_Reset, &tr->MAC_Ctl);
 	udelay(4); /* 3200ns */
 	i = 0;
-	while (tc_readl(&tr->MAC_Ctl) & MAC_Reset) {
-		if (i++ > 100) {
-			printk(KERN_ERR "%s: MAC reset failed.\n", dev->name);
-			break;
-		}
+	जबतक (tc_पढ़ोl(&tr->MAC_Ctl) & MAC_Reset) अणु
+		अगर (i++ > 100) अणु
+			prपूर्णांकk(KERN_ERR "%s: MAC reset failed.\n", dev->name);
+			अवरोध;
+		पूर्ण
 		mdelay(1);
-	}
-	tc_writel(0, &tr->MAC_Ctl);
+	पूर्ण
+	tc_ग_लिखोl(0, &tr->MAC_Ctl);
 
-	/* initialize registers to default value */
-	tc_writel(0, &tr->DMA_Ctl);
-	tc_writel(0, &tr->TxThrsh);
-	tc_writel(0, &tr->TxPollCtr);
-	tc_writel(0, &tr->RxFragSize);
-	tc_writel(0, &tr->Int_En);
-	tc_writel(0, &tr->FDA_Bas);
-	tc_writel(0, &tr->FDA_Lim);
-	tc_writel(0xffffffff, &tr->Int_Src);	/* Write 1 to clear */
-	tc_writel(0, &tr->CAM_Ctl);
-	tc_writel(0, &tr->Tx_Ctl);
-	tc_writel(0, &tr->Rx_Ctl);
-	tc_writel(0, &tr->CAM_Ena);
-	(void)tc_readl(&tr->Miss_Cnt);	/* Read to clear */
+	/* initialize रेजिस्टरs to शेष value */
+	tc_ग_लिखोl(0, &tr->DMA_Ctl);
+	tc_ग_लिखोl(0, &tr->TxThrsh);
+	tc_ग_लिखोl(0, &tr->TxPollCtr);
+	tc_ग_लिखोl(0, &tr->RxFragSize);
+	tc_ग_लिखोl(0, &tr->Int_En);
+	tc_ग_लिखोl(0, &tr->FDA_Bas);
+	tc_ग_लिखोl(0, &tr->FDA_Lim);
+	tc_ग_लिखोl(0xffffffff, &tr->Int_Src);	/* Write 1 to clear */
+	tc_ग_लिखोl(0, &tr->CAM_Ctl);
+	tc_ग_लिखोl(0, &tr->Tx_Ctl);
+	tc_ग_लिखोl(0, &tr->Rx_Ctl);
+	tc_ग_लिखोl(0, &tr->CAM_Ena);
+	(व्योम)tc_पढ़ोl(&tr->Miss_Cnt);	/* Read to clear */
 
-	/* initialize internal SRAM */
-	tc_writel(DMA_TestMode, &tr->DMA_Ctl);
-	for (i = 0; i < 0x1000; i += 4) {
-		tc_writel(i, &tr->CAM_Adr);
-		tc_writel(0, &tr->CAM_Data);
-	}
-	tc_writel(0, &tr->DMA_Ctl);
-}
+	/* initialize पूर्णांकernal SRAM */
+	tc_ग_लिखोl(DMA_TestMode, &tr->DMA_Ctl);
+	क्रम (i = 0; i < 0x1000; i += 4) अणु
+		tc_ग_लिखोl(i, &tr->CAM_Adr);
+		tc_ग_लिखोl(0, &tr->CAM_Data);
+	पूर्ण
+	tc_ग_लिखोl(0, &tr->DMA_Ctl);
+पूर्ण
 
-static void tc35815_chip_init(struct net_device *dev)
-{
-	struct tc35815_local *lp = netdev_priv(dev);
-	struct tc35815_regs __iomem *tr =
-		(struct tc35815_regs __iomem *)dev->base_addr;
-	unsigned long txctl = TX_CTL_CMD;
+अटल व्योम tc35815_chip_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	काष्ठा tc35815_regs __iomem *tr =
+		(काष्ठा tc35815_regs __iomem *)dev->base_addr;
+	अचिन्हित दीर्घ txctl = TX_CTL_CMD;
 
 	/* load station address to CAM */
 	tc35815_set_cam_entry(dev, CAM_ENTRY_SOURCE, dev->dev_addr);
 
 	/* Enable CAM (broadcast and unicast) */
-	tc_writel(CAM_Ena_Bit(CAM_ENTRY_SOURCE), &tr->CAM_Ena);
-	tc_writel(CAM_CompEn | CAM_BroadAcc, &tr->CAM_Ctl);
+	tc_ग_लिखोl(CAM_Ena_Bit(CAM_ENTRY_SOURCE), &tr->CAM_Ena);
+	tc_ग_लिखोl(CAM_CompEn | CAM_BroadAcc, &tr->CAM_Ctl);
 
 	/* Use DMA_RxAlign_2 to make IP header 4-byte aligned. */
-	if (HAVE_DMA_RXALIGN(lp))
-		tc_writel(DMA_BURST_SIZE | DMA_RxAlign_2, &tr->DMA_Ctl);
-	else
-		tc_writel(DMA_BURST_SIZE, &tr->DMA_Ctl);
-	tc_writel(0, &tr->TxPollCtr);	/* Batch mode */
-	tc_writel(TX_THRESHOLD, &tr->TxThrsh);
-	tc_writel(INT_EN_CMD, &tr->Int_En);
+	अगर (HAVE_DMA_RXALIGN(lp))
+		tc_ग_लिखोl(DMA_BURST_SIZE | DMA_RxAlign_2, &tr->DMA_Ctl);
+	अन्यथा
+		tc_ग_लिखोl(DMA_BURST_SIZE, &tr->DMA_Ctl);
+	tc_ग_लिखोl(0, &tr->TxPollCtr);	/* Batch mode */
+	tc_ग_लिखोl(TX_THRESHOLD, &tr->TxThrsh);
+	tc_ग_लिखोl(INT_EN_CMD, &tr->Int_En);
 
 	/* set queues */
-	tc_writel(fd_virt_to_bus(lp, lp->rfd_base), &tr->FDA_Bas);
-	tc_writel((unsigned long)lp->rfd_limit - (unsigned long)lp->rfd_base,
+	tc_ग_लिखोl(fd_virt_to_bus(lp, lp->rfd_base), &tr->FDA_Bas);
+	tc_ग_लिखोl((अचिन्हित दीर्घ)lp->rfd_limit - (अचिन्हित दीर्घ)lp->rfd_base,
 		  &tr->FDA_Lim);
 	/*
 	 * Activation method:
 	 * First, enable the MAC Transmitter and the DMA Receive circuits.
 	 * Then enable the DMA Transmitter and the MAC Receive circuits.
 	 */
-	tc_writel(fd_virt_to_bus(lp, lp->fbl_ptr), &tr->BLFrmPtr);	/* start DMA receiver */
-	tc_writel(RX_CTL_CMD, &tr->Rx_Ctl);	/* start MAC receiver */
+	tc_ग_लिखोl(fd_virt_to_bus(lp, lp->fbl_ptr), &tr->BLFrmPtr);	/* start DMA receiver */
+	tc_ग_लिखोl(RX_CTL_CMD, &tr->Rx_Ctl);	/* start MAC receiver */
 
 	/* start MAC transmitter */
-	/* TX4939 does not have EnLCarr */
-	if (lp->chiptype == TC35815_TX4939)
+	/* TX4939 करोes not have EnLCarr */
+	अगर (lp->chiptype == TC35815_TX4939)
 		txctl &= ~Tx_EnLCarr;
 	/* WORKAROUND: ignore LostCrS in full duplex operation */
-	if (!dev->phydev || !lp->link || lp->duplex == DUPLEX_FULL)
+	अगर (!dev->phydev || !lp->link || lp->duplex == DUPLEX_FULL)
 		txctl &= ~Tx_EnLCarr;
-	tc_writel(txctl, &tr->Tx_Ctl);
-}
+	tc_ग_लिखोl(txctl, &tr->Tx_Ctl);
+पूर्ण
 
-#ifdef CONFIG_PM
-static int tc35815_suspend(struct pci_dev *pdev, pm_message_t state)
-{
-	struct net_device *dev = pci_get_drvdata(pdev);
-	struct tc35815_local *lp = netdev_priv(dev);
-	unsigned long flags;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक tc35815_suspend(काष्ठा pci_dev *pdev, pm_message_t state)
+अणु
+	काष्ठा net_device *dev = pci_get_drvdata(pdev);
+	काष्ठा tc35815_local *lp = netdev_priv(dev);
+	अचिन्हित दीर्घ flags;
 
 	pci_save_state(pdev);
-	if (!netif_running(dev))
-		return 0;
-	netif_device_detach(dev);
-	if (dev->phydev)
+	अगर (!netअगर_running(dev))
+		वापस 0;
+	netअगर_device_detach(dev);
+	अगर (dev->phydev)
 		phy_stop(dev->phydev);
 	spin_lock_irqsave(&lp->lock, flags);
 	tc35815_chip_reset(dev);
 	spin_unlock_irqrestore(&lp->lock, flags);
-	pci_set_power_state(pdev, PCI_D3hot);
-	return 0;
-}
+	pci_set_घातer_state(pdev, PCI_D3hot);
+	वापस 0;
+पूर्ण
 
-static int tc35815_resume(struct pci_dev *pdev)
-{
-	struct net_device *dev = pci_get_drvdata(pdev);
+अटल पूर्णांक tc35815_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *dev = pci_get_drvdata(pdev);
 
 	pci_restore_state(pdev);
-	if (!netif_running(dev))
-		return 0;
-	pci_set_power_state(pdev, PCI_D0);
+	अगर (!netअगर_running(dev))
+		वापस 0;
+	pci_set_घातer_state(pdev, PCI_D0);
 	tc35815_restart(dev);
-	netif_carrier_off(dev);
-	if (dev->phydev)
+	netअगर_carrier_off(dev);
+	अगर (dev->phydev)
 		phy_start(dev->phydev);
-	netif_device_attach(dev);
-	return 0;
-}
-#endif /* CONFIG_PM */
+	netअगर_device_attach(dev);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
-static struct pci_driver tc35815_pci_driver = {
+अटल काष्ठा pci_driver tc35815_pci_driver = अणु
 	.name		= MODNAME,
 	.id_table	= tc35815_pci_tbl,
 	.probe		= tc35815_init_one,
-	.remove		= tc35815_remove_one,
-#ifdef CONFIG_PM
+	.हटाओ		= tc35815_हटाओ_one,
+#अगर_घोषित CONFIG_PM
 	.suspend	= tc35815_suspend,
 	.resume		= tc35815_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-module_param_named(speed, options.speed, int, 0);
+module_param_named(speed, options.speed, पूर्णांक, 0);
 MODULE_PARM_DESC(speed, "0:auto, 10:10Mbps, 100:100Mbps");
-module_param_named(duplex, options.duplex, int, 0);
+module_param_named(duplex, options.duplex, पूर्णांक, 0);
 MODULE_PARM_DESC(duplex, "0:auto, 1:half, 2:full");
 
 module_pci_driver(tc35815_pci_driver);

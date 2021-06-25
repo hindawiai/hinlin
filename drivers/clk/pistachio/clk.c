@@ -1,138 +1,139 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Google, Inc.
  */
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/slab.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 
-struct pistachio_clk_provider *
-pistachio_clk_alloc_provider(struct device_node *node, unsigned int num_clks)
-{
-	struct pistachio_clk_provider *p;
+काष्ठा pistachio_clk_provider *
+pistachio_clk_alloc_provider(काष्ठा device_node *node, अचिन्हित पूर्णांक num_clks)
+अणु
+	काष्ठा pistachio_clk_provider *p;
 
-	p = kzalloc(sizeof(*p), GFP_KERNEL);
-	if (!p)
-		return p;
+	p = kzalloc(माप(*p), GFP_KERNEL);
+	अगर (!p)
+		वापस p;
 
-	p->clk_data.clks = kcalloc(num_clks, sizeof(struct clk *), GFP_KERNEL);
-	if (!p->clk_data.clks)
-		goto free_provider;
+	p->clk_data.clks = kसुस्मृति(num_clks, माप(काष्ठा clk *), GFP_KERNEL);
+	अगर (!p->clk_data.clks)
+		जाओ मुक्त_provider;
 	p->clk_data.clk_num = num_clks;
 	p->node = node;
 	p->base = of_iomap(node, 0);
-	if (!p->base) {
+	अगर (!p->base) अणु
 		pr_err("Failed to map clock provider registers\n");
-		goto free_clks;
-	}
+		जाओ मुक्त_clks;
+	पूर्ण
 
-	return p;
+	वापस p;
 
-free_clks:
-	kfree(p->clk_data.clks);
-free_provider:
-	kfree(p);
-	return NULL;
-}
+मुक्त_clks:
+	kमुक्त(p->clk_data.clks);
+मुक्त_provider:
+	kमुक्त(p);
+	वापस शून्य;
+पूर्ण
 
-void pistachio_clk_register_provider(struct pistachio_clk_provider *p)
-{
-	unsigned int i;
+व्योम pistachio_clk_रेजिस्टर_provider(काष्ठा pistachio_clk_provider *p)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < p->clk_data.clk_num; i++) {
-		if (IS_ERR(p->clk_data.clks[i]))
+	क्रम (i = 0; i < p->clk_data.clk_num; i++) अणु
+		अगर (IS_ERR(p->clk_data.clks[i]))
 			pr_warn("Failed to register clock %d: %ld\n", i,
 				PTR_ERR(p->clk_data.clks[i]));
-	}
+	पूर्ण
 
 	of_clk_add_provider(p->node, of_clk_src_onecell_get, &p->clk_data);
-}
+पूर्ण
 
-void pistachio_clk_register_gate(struct pistachio_clk_provider *p,
-				 struct pistachio_gate *gate,
-				 unsigned int num)
-{
-	struct clk *clk;
-	unsigned int i;
+व्योम pistachio_clk_रेजिस्टर_gate(काष्ठा pistachio_clk_provider *p,
+				 काष्ठा pistachio_gate *gate,
+				 अचिन्हित पूर्णांक num)
+अणु
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < num; i++) {
-		clk = clk_register_gate(NULL, gate[i].name, gate[i].parent,
+	क्रम (i = 0; i < num; i++) अणु
+		clk = clk_रेजिस्टर_gate(शून्य, gate[i].name, gate[i].parent,
 					CLK_SET_RATE_PARENT,
-					p->base + gate[i].reg, gate[i].shift,
-					0, NULL);
+					p->base + gate[i].reg, gate[i].shअगरt,
+					0, शून्य);
 		p->clk_data.clks[gate[i].id] = clk;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void pistachio_clk_register_mux(struct pistachio_clk_provider *p,
-				struct pistachio_mux *mux,
-				unsigned int num)
-{
-	struct clk *clk;
-	unsigned int i;
+व्योम pistachio_clk_रेजिस्टर_mux(काष्ठा pistachio_clk_provider *p,
+				काष्ठा pistachio_mux *mux,
+				अचिन्हित पूर्णांक num)
+अणु
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < num; i++) {
-		clk = clk_register_mux(NULL, mux[i].name, mux[i].parents,
+	क्रम (i = 0; i < num; i++) अणु
+		clk = clk_रेजिस्टर_mux(शून्य, mux[i].name, mux[i].parents,
 				       mux[i].num_parents,
 				       CLK_SET_RATE_NO_REPARENT,
-				       p->base + mux[i].reg, mux[i].shift,
+				       p->base + mux[i].reg, mux[i].shअगरt,
 				       get_count_order(mux[i].num_parents),
-				       0, NULL);
+				       0, शून्य);
 		p->clk_data.clks[mux[i].id] = clk;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void pistachio_clk_register_div(struct pistachio_clk_provider *p,
-				struct pistachio_div *div,
-				unsigned int num)
-{
-	struct clk *clk;
-	unsigned int i;
+व्योम pistachio_clk_रेजिस्टर_भाग(काष्ठा pistachio_clk_provider *p,
+				काष्ठा pistachio_भाग *भाग,
+				अचिन्हित पूर्णांक num)
+अणु
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < num; i++) {
-		clk = clk_register_divider(NULL, div[i].name, div[i].parent,
-					   0, p->base + div[i].reg, 0,
-					   div[i].width, div[i].div_flags,
-					   NULL);
-		p->clk_data.clks[div[i].id] = clk;
-	}
-}
+	क्रम (i = 0; i < num; i++) अणु
+		clk = clk_रेजिस्टर_भागider(शून्य, भाग[i].name, भाग[i].parent,
+					   0, p->base + भाग[i].reg, 0,
+					   भाग[i].width, भाग[i].भाग_flags,
+					   शून्य);
+		p->clk_data.clks[भाग[i].id] = clk;
+	पूर्ण
+पूर्ण
 
-void pistachio_clk_register_fixed_factor(struct pistachio_clk_provider *p,
-					 struct pistachio_fixed_factor *ff,
-					 unsigned int num)
-{
-	struct clk *clk;
-	unsigned int i;
+व्योम pistachio_clk_रेजिस्टर_fixed_factor(काष्ठा pistachio_clk_provider *p,
+					 काष्ठा pistachio_fixed_factor *ff,
+					 अचिन्हित पूर्णांक num)
+अणु
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < num; i++) {
-		clk = clk_register_fixed_factor(NULL, ff[i].name, ff[i].parent,
-						0, 1, ff[i].div);
+	क्रम (i = 0; i < num; i++) अणु
+		clk = clk_रेजिस्टर_fixed_factor(शून्य, ff[i].name, ff[i].parent,
+						0, 1, ff[i].भाग);
 		p->clk_data.clks[ff[i].id] = clk;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void pistachio_clk_force_enable(struct pistachio_clk_provider *p,
-				unsigned int *clk_ids, unsigned int num)
-{
-	unsigned int i;
-	int err;
+व्योम pistachio_clk_क्रमce_enable(काष्ठा pistachio_clk_provider *p,
+				अचिन्हित पूर्णांक *clk_ids, अचिन्हित पूर्णांक num)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	for (i = 0; i < num; i++) {
-		struct clk *clk = p->clk_data.clks[clk_ids[i]];
+	क्रम (i = 0; i < num; i++) अणु
+		काष्ठा clk *clk = p->clk_data.clks[clk_ids[i]];
 
-		if (IS_ERR(clk))
-			continue;
+		अगर (IS_ERR(clk))
+			जारी;
 
 		err = clk_prepare_enable(clk);
-		if (err)
+		अगर (err)
 			pr_err("Failed to enable clock %s: %d\n",
 			       __clk_get_name(clk), err);
-	}
-}
+	पूर्ण
+पूर्ण

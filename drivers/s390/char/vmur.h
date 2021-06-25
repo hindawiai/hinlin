@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Linux driver for System z and s390 unit record devices
- * (z/VM virtual punch, reader, printer)
+ * Linux driver क्रम System z and s390 unit record devices
+ * (z/VM भव punch, पढ़ोer, prपूर्णांकer)
  *
  * Copyright IBM Corp. 2001, 2007
  * Authors: Malcolm Beattie <beattiem@uk.ibm.com>
@@ -9,39 +10,39 @@
  *	    Frank Munzert <munzert@de.ibm.com>
  */
 
-#ifndef _VMUR_H_
-#define _VMUR_H_
+#अगर_अघोषित _VMUR_H_
+#घोषणा _VMUR_H_
 
-#include <linux/refcount.h>
+#समावेश <linux/refcount.h>
 
-#define DEV_CLASS_UR_I 0x20 /* diag210 unit record input device class */
-#define DEV_CLASS_UR_O 0x10 /* diag210 unit record output device class */
+#घोषणा DEV_CLASS_UR_I 0x20 /* diag210 unit record input device class */
+#घोषणा DEV_CLASS_UR_O 0x10 /* diag210 unit record output device class */
 /*
- * we only support z/VM's default unit record devices:
+ * we only support z/VM's शेष unit record devices:
  * both in SPOOL directory control statement and in CP DEFINE statement
- *	RDR defaults to 2540 reader
- *	PUN defaults to 2540 punch
- *	PRT defaults to 1403 printer
+ *	RDR शेषs to 2540 पढ़ोer
+ *	PUN शेषs to 2540 punch
+ *	PRT शेषs to 1403 prपूर्णांकer
  */
-#define READER_PUNCH_DEVTYPE	0x2540
-#define PRINTER_DEVTYPE		0x1403
+#घोषणा READER_PUNCH_DEVTYPE	0x2540
+#घोषणा PRINTER_DEVTYPE		0x1403
 
 /* z/VM spool file control block SFBLOK */
-struct file_control_block {
-	char reserved_1[8];
-	char user_owner[8];
-	char user_orig[8];
+काष्ठा file_control_block अणु
+	अक्षर reserved_1[8];
+	अक्षर user_owner[8];
+	अक्षर user_orig[8];
 	__s32 data_recs;
 	__s16 rec_len;
 	__s16 file_num;
 	__u8  file_stat;
 	__u8  dev_type;
-	char  reserved_2[6];
-	char  file_name[12];
-	char  file_type[12];
-	char  create_date[8];
-	char  create_time[8];
-	char  reserved_3[6];
+	अक्षर  reserved_2[6];
+	अक्षर  file_name[12];
+	अक्षर  file_type[12];
+	अक्षर  create_date[8];
+	अक्षर  create_समय[8];
+	अक्षर  reserved_3[6];
 	__u8  file_class;
 	__u8  sfb_lok;
 	__u64 distr_code;
@@ -50,64 +51,64 @@ struct file_control_block {
 	__u8  sfblock_cntrl_flags;
 	__u8  reserved_5;
 	__u8  more_status_flags;
-	char  rest[200];
-} __attribute__ ((packed));
+	अक्षर  rest[200];
+पूर्ण __attribute__ ((packed));
 
-#define FLG_SYSTEM_HOLD	0x04
-#define FLG_CP_DUMP	0x10
-#define FLG_USER_HOLD	0x20
-#define FLG_IN_USE	0x80
+#घोषणा FLG_SYSTEM_HOLD	0x04
+#घोषणा FLG_CP_DUMP	0x10
+#घोषणा FLG_USER_HOLD	0x20
+#घोषणा FLG_IN_USE	0x80
 
 /*
- * A struct urdev is created for each ur device that is made available
+ * A काष्ठा urdev is created क्रम each ur device that is made available
  * via the ccw_device driver model.
  */
-struct urdev {
-	struct ccw_device *cdev;	/* Backpointer to ccw device */
-	struct mutex io_mutex;		/* Serialises device IO */
-	struct completion *io_done;	/* do_ur_io waits; irq completes */
-	struct device *device;
-	struct cdev *char_device;
-	struct ccw_dev_id dev_id;	/* device id */
-	size_t reclen;			/* Record length for *write* CCWs */
-	int class;			/* VM device class */
-	int io_request_rc;		/* return code from I/O request */
+काष्ठा urdev अणु
+	काष्ठा ccw_device *cdev;	/* Backpoपूर्णांकer to ccw device */
+	काष्ठा mutex io_mutex;		/* Serialises device IO */
+	काष्ठा completion *io_करोne;	/* करो_ur_io रुकोs; irq completes */
+	काष्ठा device *device;
+	काष्ठा cdev *अक्षर_device;
+	काष्ठा ccw_dev_id dev_id;	/* device id */
+	माप_प्रकार reclen;			/* Record length क्रम *ग_लिखो* CCWs */
+	पूर्णांक class;			/* VM device class */
+	पूर्णांक io_request_rc;		/* वापस code from I/O request */
 	refcount_t ref_count;		/* reference counter */
-	wait_queue_head_t wait;		/* wait queue to serialize open */
-	int open_flag;			/* "urdev is open" flag */
-	spinlock_t open_lock;		/* serialize critical sections */
-};
+	रुको_queue_head_t रुको;		/* रुको queue to serialize खोलो */
+	पूर्णांक खोलो_flag;			/* "urdev is open" flag */
+	spinlock_t खोलो_lock;		/* serialize critical sections */
+पूर्ण;
 
 /*
- * A struct urfile is allocated at open() time for each device and
- * freed on release().
+ * A काष्ठा urfile is allocated at खोलो() समय क्रम each device and
+ * मुक्तd on release().
  */
-struct urfile {
-	struct urdev *urd;
-	unsigned int flags;
-	size_t dev_reclen;
+काष्ठा urfile अणु
+	काष्ठा urdev *urd;
+	अचिन्हित पूर्णांक flags;
+	माप_प्रकार dev_reclen;
 	__u16 file_reclen;
-};
+पूर्ण;
 
 /*
  * Device major/minor definitions.
  */
 
-#define UR_MAJOR 0	/* get dynamic major */
+#घोषणा UR_MAJOR 0	/* get dynamic major */
 /*
- * We map minor numbers directly to device numbers (0-FFFF) for simplicity.
- * This avoids having to allocate (and manage) slot numbers.
+ * We map minor numbers directly to device numbers (0-FFFF) क्रम simplicity.
+ * This aव्योमs having to allocate (and manage) slot numbers.
  */
-#define NUM_MINORS 65536
+#घोषणा NUM_MINORS 65536
 
 /* Limiting each I/O to 511 records limits chan prog to 4KB (511 r/w + 1 NOP) */
-#define MAX_RECS_PER_IO		511
-#define WRITE_CCW_CMD		0x01
+#घोषणा MAX_RECS_PER_IO		511
+#घोषणा WRITE_CCW_CMD		0x01
 
-#define TRACE(x...) debug_sprintf_event(vmur_dbf, 1, x)
-#define CCWDEV_CU_DI(cutype, di) \
+#घोषणा TRACE(x...) debug_प्र_लिखो_event(vmur_dbf, 1, x)
+#घोषणा CCWDEV_CU_DI(cutype, di) \
 		CCW_DEVICE(cutype, 0x00), .driver_info = (di)
 
-#define FILE_RECLEN_OFFSET	4064 /* reclen offset in spool data block */
+#घोषणा खाता_RECLEN_OFFSET	4064 /* reclen offset in spool data block */
 
-#endif /* _VMUR_H_ */
+#पूर्ण_अगर /* _VMUR_H_ */

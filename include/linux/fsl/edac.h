@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef FSL_EDAC_H
-#define FSL_EDAC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित FSL_EDAC_H
+#घोषणा FSL_EDAC_H
 
-struct mpc85xx_edac_pci_plat_data {
-	struct device_node *of_node;
-};
+काष्ठा mpc85xx_edac_pci_plat_data अणु
+	काष्ठा device_node *of_node;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

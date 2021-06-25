@@ -1,343 +1,344 @@
+<शैली गुरु>
 /*
- * B53 register access through memory mapped registers
+ * B53 रेजिस्टर access through memory mapped रेजिस्टरs
  *
- * Copyright (C) 2012-2013 Jonas Gorski <jogo@openwrt.org>
+ * Copyright (C) 2012-2013 Jonas Gorski <jogo@खोलोwrt.org>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <linux/bits.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/platform_data/b53.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/platक्रमm_data/b53.h>
 
-#include "b53_priv.h"
+#समावेश "b53_priv.h"
 
-struct b53_mmap_priv {
-	void __iomem *regs;
-};
+काष्ठा b53_mmap_priv अणु
+	व्योम __iomem *regs;
+पूर्ण;
 
-static int b53_mmap_read8(struct b53_device *dev, u8 page, u8 reg, u8 *val)
-{
-	struct b53_mmap_priv *priv = dev->priv;
-	void __iomem *regs = priv->regs;
+अटल पूर्णांक b53_mmap_पढ़ो8(काष्ठा b53_device *dev, u8 page, u8 reg, u8 *val)
+अणु
+	काष्ठा b53_mmap_priv *priv = dev->priv;
+	व्योम __iomem *regs = priv->regs;
 
-	*val = readb(regs + (page << 8) + reg);
+	*val = पढ़ोb(regs + (page << 8) + reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int b53_mmap_read16(struct b53_device *dev, u8 page, u8 reg, u16 *val)
-{
-	struct b53_mmap_priv *priv = dev->priv;
-	void __iomem *regs = priv->regs;
+अटल पूर्णांक b53_mmap_पढ़ो16(काष्ठा b53_device *dev, u8 page, u8 reg, u16 *val)
+अणु
+	काष्ठा b53_mmap_priv *priv = dev->priv;
+	व्योम __iomem *regs = priv->regs;
 
-	if (WARN_ON(reg % 2))
-		return -EINVAL;
+	अगर (WARN_ON(reg % 2))
+		वापस -EINVAL;
 
-	if (dev->pdata && dev->pdata->big_endian)
-		*val = ioread16be(regs + (page << 8) + reg);
-	else
-		*val = readw(regs + (page << 8) + reg);
+	अगर (dev->pdata && dev->pdata->big_endian)
+		*val = ioपढ़ो16be(regs + (page << 8) + reg);
+	अन्यथा
+		*val = पढ़ोw(regs + (page << 8) + reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int b53_mmap_read32(struct b53_device *dev, u8 page, u8 reg, u32 *val)
-{
-	struct b53_mmap_priv *priv = dev->priv;
-	void __iomem *regs = priv->regs;
+अटल पूर्णांक b53_mmap_पढ़ो32(काष्ठा b53_device *dev, u8 page, u8 reg, u32 *val)
+अणु
+	काष्ठा b53_mmap_priv *priv = dev->priv;
+	व्योम __iomem *regs = priv->regs;
 
-	if (WARN_ON(reg % 4))
-		return -EINVAL;
+	अगर (WARN_ON(reg % 4))
+		वापस -EINVAL;
 
-	if (dev->pdata && dev->pdata->big_endian)
-		*val = ioread32be(regs + (page << 8) + reg);
-	else
-		*val = readl(regs + (page << 8) + reg);
+	अगर (dev->pdata && dev->pdata->big_endian)
+		*val = ioपढ़ो32be(regs + (page << 8) + reg);
+	अन्यथा
+		*val = पढ़ोl(regs + (page << 8) + reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int b53_mmap_read48(struct b53_device *dev, u8 page, u8 reg, u64 *val)
-{
-	struct b53_mmap_priv *priv = dev->priv;
-	void __iomem *regs = priv->regs;
+अटल पूर्णांक b53_mmap_पढ़ो48(काष्ठा b53_device *dev, u8 page, u8 reg, u64 *val)
+अणु
+	काष्ठा b53_mmap_priv *priv = dev->priv;
+	व्योम __iomem *regs = priv->regs;
 
-	if (WARN_ON(reg % 2))
-		return -EINVAL;
+	अगर (WARN_ON(reg % 2))
+		वापस -EINVAL;
 
-	if (reg % 4) {
+	अगर (reg % 4) अणु
 		u16 lo;
 		u32 hi;
 
-		if (dev->pdata && dev->pdata->big_endian) {
-			lo = ioread16be(regs + (page << 8) + reg);
-			hi = ioread32be(regs + (page << 8) + reg + 2);
-		} else {
-			lo = readw(regs + (page << 8) + reg);
-			hi = readl(regs + (page << 8) + reg + 2);
-		}
+		अगर (dev->pdata && dev->pdata->big_endian) अणु
+			lo = ioपढ़ो16be(regs + (page << 8) + reg);
+			hi = ioपढ़ो32be(regs + (page << 8) + reg + 2);
+		पूर्ण अन्यथा अणु
+			lo = पढ़ोw(regs + (page << 8) + reg);
+			hi = पढ़ोl(regs + (page << 8) + reg + 2);
+		पूर्ण
 
 		*val = ((u64)hi << 16) | lo;
-	} else {
+	पूर्ण अन्यथा अणु
 		u32 lo;
 		u16 hi;
 
-		if (dev->pdata && dev->pdata->big_endian) {
-			lo = ioread32be(regs + (page << 8) + reg);
-			hi = ioread16be(regs + (page << 8) + reg + 4);
-		} else {
-			lo = readl(regs + (page << 8) + reg);
-			hi = readw(regs + (page << 8) + reg + 4);
-		}
+		अगर (dev->pdata && dev->pdata->big_endian) अणु
+			lo = ioपढ़ो32be(regs + (page << 8) + reg);
+			hi = ioपढ़ो16be(regs + (page << 8) + reg + 4);
+		पूर्ण अन्यथा अणु
+			lo = पढ़ोl(regs + (page << 8) + reg);
+			hi = पढ़ोw(regs + (page << 8) + reg + 4);
+		पूर्ण
 
 		*val = ((u64)hi << 32) | lo;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int b53_mmap_read64(struct b53_device *dev, u8 page, u8 reg, u64 *val)
-{
-	struct b53_mmap_priv *priv = dev->priv;
-	void __iomem *regs = priv->regs;
+अटल पूर्णांक b53_mmap_पढ़ो64(काष्ठा b53_device *dev, u8 page, u8 reg, u64 *val)
+अणु
+	काष्ठा b53_mmap_priv *priv = dev->priv;
+	व्योम __iomem *regs = priv->regs;
 	u32 hi, lo;
 
-	if (WARN_ON(reg % 4))
-		return -EINVAL;
+	अगर (WARN_ON(reg % 4))
+		वापस -EINVAL;
 
-	if (dev->pdata && dev->pdata->big_endian) {
-		lo = ioread32be(regs + (page << 8) + reg);
-		hi = ioread32be(regs + (page << 8) + reg + 4);
-	} else {
-		lo = readl(regs + (page << 8) + reg);
-		hi = readl(regs + (page << 8) + reg + 4);
-	}
+	अगर (dev->pdata && dev->pdata->big_endian) अणु
+		lo = ioपढ़ो32be(regs + (page << 8) + reg);
+		hi = ioपढ़ो32be(regs + (page << 8) + reg + 4);
+	पूर्ण अन्यथा अणु
+		lo = पढ़ोl(regs + (page << 8) + reg);
+		hi = पढ़ोl(regs + (page << 8) + reg + 4);
+	पूर्ण
 
 	*val = ((u64)hi << 32) | lo;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int b53_mmap_write8(struct b53_device *dev, u8 page, u8 reg, u8 value)
-{
-	struct b53_mmap_priv *priv = dev->priv;
-	void __iomem *regs = priv->regs;
+अटल पूर्णांक b53_mmap_ग_लिखो8(काष्ठा b53_device *dev, u8 page, u8 reg, u8 value)
+अणु
+	काष्ठा b53_mmap_priv *priv = dev->priv;
+	व्योम __iomem *regs = priv->regs;
 
-	writeb(value, regs + (page << 8) + reg);
+	ग_लिखोb(value, regs + (page << 8) + reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int b53_mmap_write16(struct b53_device *dev, u8 page, u8 reg,
+अटल पूर्णांक b53_mmap_ग_लिखो16(काष्ठा b53_device *dev, u8 page, u8 reg,
 			    u16 value)
-{
-	struct b53_mmap_priv *priv = dev->priv;
-	void __iomem *regs = priv->regs;
+अणु
+	काष्ठा b53_mmap_priv *priv = dev->priv;
+	व्योम __iomem *regs = priv->regs;
 
-	if (WARN_ON(reg % 2))
-		return -EINVAL;
+	अगर (WARN_ON(reg % 2))
+		वापस -EINVAL;
 
-	if (dev->pdata && dev->pdata->big_endian)
-		iowrite16be(value, regs + (page << 8) + reg);
-	else
-		writew(value, regs + (page << 8) + reg);
+	अगर (dev->pdata && dev->pdata->big_endian)
+		ioग_लिखो16be(value, regs + (page << 8) + reg);
+	अन्यथा
+		ग_लिखोw(value, regs + (page << 8) + reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int b53_mmap_write32(struct b53_device *dev, u8 page, u8 reg,
+अटल पूर्णांक b53_mmap_ग_लिखो32(काष्ठा b53_device *dev, u8 page, u8 reg,
 			    u32 value)
-{
-	struct b53_mmap_priv *priv = dev->priv;
-	void __iomem *regs = priv->regs;
+अणु
+	काष्ठा b53_mmap_priv *priv = dev->priv;
+	व्योम __iomem *regs = priv->regs;
 
-	if (WARN_ON(reg % 4))
-		return -EINVAL;
+	अगर (WARN_ON(reg % 4))
+		वापस -EINVAL;
 
-	if (dev->pdata && dev->pdata->big_endian)
-		iowrite32be(value, regs + (page << 8) + reg);
-	else
-		writel(value, regs + (page << 8) + reg);
+	अगर (dev->pdata && dev->pdata->big_endian)
+		ioग_लिखो32be(value, regs + (page << 8) + reg);
+	अन्यथा
+		ग_लिखोl(value, regs + (page << 8) + reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int b53_mmap_write48(struct b53_device *dev, u8 page, u8 reg,
+अटल पूर्णांक b53_mmap_ग_लिखो48(काष्ठा b53_device *dev, u8 page, u8 reg,
 			    u64 value)
-{
-	if (WARN_ON(reg % 2))
-		return -EINVAL;
+अणु
+	अगर (WARN_ON(reg % 2))
+		वापस -EINVAL;
 
-	if (reg % 4) {
+	अगर (reg % 4) अणु
 		u32 hi = (u32)(value >> 16);
 		u16 lo = (u16)value;
 
-		b53_mmap_write16(dev, page, reg, lo);
-		b53_mmap_write32(dev, page, reg + 2, hi);
-	} else {
+		b53_mmap_ग_लिखो16(dev, page, reg, lo);
+		b53_mmap_ग_लिखो32(dev, page, reg + 2, hi);
+	पूर्ण अन्यथा अणु
 		u16 hi = (u16)(value >> 32);
 		u32 lo = (u32)value;
 
-		b53_mmap_write32(dev, page, reg, lo);
-		b53_mmap_write16(dev, page, reg + 4, hi);
-	}
+		b53_mmap_ग_लिखो32(dev, page, reg, lo);
+		b53_mmap_ग_लिखो16(dev, page, reg + 4, hi);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int b53_mmap_write64(struct b53_device *dev, u8 page, u8 reg,
+अटल पूर्णांक b53_mmap_ग_लिखो64(काष्ठा b53_device *dev, u8 page, u8 reg,
 			    u64 value)
-{
+अणु
 	u32 hi, lo;
 
 	hi = upper_32_bits(value);
 	lo = lower_32_bits(value);
 
-	if (WARN_ON(reg % 4))
-		return -EINVAL;
+	अगर (WARN_ON(reg % 4))
+		वापस -EINVAL;
 
-	b53_mmap_write32(dev, page, reg, lo);
-	b53_mmap_write32(dev, page, reg + 4, hi);
+	b53_mmap_ग_लिखो32(dev, page, reg, lo);
+	b53_mmap_ग_लिखो32(dev, page, reg + 4, hi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct b53_io_ops b53_mmap_ops = {
-	.read8 = b53_mmap_read8,
-	.read16 = b53_mmap_read16,
-	.read32 = b53_mmap_read32,
-	.read48 = b53_mmap_read48,
-	.read64 = b53_mmap_read64,
-	.write8 = b53_mmap_write8,
-	.write16 = b53_mmap_write16,
-	.write32 = b53_mmap_write32,
-	.write48 = b53_mmap_write48,
-	.write64 = b53_mmap_write64,
-};
+अटल स्थिर काष्ठा b53_io_ops b53_mmap_ops = अणु
+	.पढ़ो8 = b53_mmap_पढ़ो8,
+	.पढ़ो16 = b53_mmap_पढ़ो16,
+	.पढ़ो32 = b53_mmap_पढ़ो32,
+	.पढ़ो48 = b53_mmap_पढ़ो48,
+	.पढ़ो64 = b53_mmap_पढ़ो64,
+	.ग_लिखो8 = b53_mmap_ग_लिखो8,
+	.ग_लिखो16 = b53_mmap_ग_लिखो16,
+	.ग_लिखो32 = b53_mmap_ग_लिखो32,
+	.ग_लिखो48 = b53_mmap_ग_लिखो48,
+	.ग_लिखो64 = b53_mmap_ग_लिखो64,
+पूर्ण;
 
-static int b53_mmap_probe_of(struct platform_device *pdev,
-			     struct b53_platform_data **ppdata)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct device_node *of_ports, *of_port;
-	struct device *dev = &pdev->dev;
-	struct b53_platform_data *pdata;
-	void __iomem *mem;
+अटल पूर्णांक b53_mmap_probe_of(काष्ठा platक्रमm_device *pdev,
+			     काष्ठा b53_platक्रमm_data **ppdata)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा device_node *of_ports, *of_port;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा b53_platक्रमm_data *pdata;
+	व्योम __iomem *mem;
 
-	mem = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(mem))
-		return PTR_ERR(mem);
+	mem = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(mem))
+		वापस PTR_ERR(mem);
 
-	pdata = devm_kzalloc(dev, sizeof(struct b53_platform_data),
+	pdata = devm_kzalloc(dev, माप(काष्ठा b53_platक्रमm_data),
 			     GFP_KERNEL);
-	if (!pdata)
-		return -ENOMEM;
+	अगर (!pdata)
+		वापस -ENOMEM;
 
 	pdata->regs = mem;
 	pdata->chip_id = BCM63XX_DEVICE_ID;
-	pdata->big_endian = of_property_read_bool(np, "big-endian");
+	pdata->big_endian = of_property_पढ़ो_bool(np, "big-endian");
 
 	of_ports = of_get_child_by_name(np, "ports");
-	if (!of_ports) {
+	अगर (!of_ports) अणु
 		dev_err(dev, "no ports child node found\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for_each_available_child_of_node(of_ports, of_port) {
+	क्रम_each_available_child_of_node(of_ports, of_port) अणु
 		u32 reg;
 
-		if (of_property_read_u32(of_port, "reg", &reg))
-			continue;
+		अगर (of_property_पढ़ो_u32(of_port, "reg", &reg))
+			जारी;
 
-		if (reg < B53_CPU_PORT)
+		अगर (reg < B53_CPU_PORT)
 			pdata->enabled_ports |= BIT(reg);
-	}
+	पूर्ण
 
 	of_node_put(of_ports);
 	*ppdata = pdata;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int b53_mmap_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct b53_platform_data *pdata = pdev->dev.platform_data;
-	struct b53_mmap_priv *priv;
-	struct b53_device *dev;
-	int ret;
+अटल पूर्णांक b53_mmap_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा b53_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
+	काष्ठा b53_mmap_priv *priv;
+	काष्ठा b53_device *dev;
+	पूर्णांक ret;
 
-	if (!pdata && np) {
+	अगर (!pdata && np) अणु
 		ret = b53_mmap_probe_of(pdev, &pdata);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "OF probe error\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (!pdata)
-		return -EINVAL;
+	अगर (!pdata)
+		वापस -EINVAL;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->regs = pdata->regs;
 
-	dev = b53_switch_alloc(&pdev->dev, &b53_mmap_ops, priv);
-	if (!dev)
-		return -ENOMEM;
+	dev = b53_चयन_alloc(&pdev->dev, &b53_mmap_ops, priv);
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	dev->pdata = pdata;
 
-	platform_set_drvdata(pdev, dev);
+	platक्रमm_set_drvdata(pdev, dev);
 
-	return b53_switch_register(dev);
-}
+	वापस b53_चयन_रेजिस्टर(dev);
+पूर्ण
 
-static int b53_mmap_remove(struct platform_device *pdev)
-{
-	struct b53_device *dev = platform_get_drvdata(pdev);
+अटल पूर्णांक b53_mmap_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा b53_device *dev = platक्रमm_get_drvdata(pdev);
 
-	if (dev)
-		b53_switch_remove(dev);
+	अगर (dev)
+		b53_चयन_हटाओ(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id b53_mmap_of_table[] = {
-	{ .compatible = "brcm,bcm3384-switch" },
-	{ .compatible = "brcm,bcm6328-switch" },
-	{ .compatible = "brcm,bcm6368-switch" },
-	{ .compatible = "brcm,bcm63xx-switch" },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id b53_mmap_of_table[] = अणु
+	अणु .compatible = "brcm,bcm3384-switch" पूर्ण,
+	अणु .compatible = "brcm,bcm6328-switch" पूर्ण,
+	अणु .compatible = "brcm,bcm6368-switch" पूर्ण,
+	अणु .compatible = "brcm,bcm63xx-switch" पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, b53_mmap_of_table);
 
-static struct platform_driver b53_mmap_driver = {
+अटल काष्ठा platक्रमm_driver b53_mmap_driver = अणु
 	.probe = b53_mmap_probe,
-	.remove = b53_mmap_remove,
-	.driver = {
+	.हटाओ = b53_mmap_हटाओ,
+	.driver = अणु
 		.name = "b53-switch",
 		.of_match_table = b53_mmap_of_table,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(b53_mmap_driver);
+module_platक्रमm_driver(b53_mmap_driver);
 MODULE_AUTHOR("Jonas Gorski <jogo@openwrt.org>");
 MODULE_DESCRIPTION("B53 MMAP access driver");
 MODULE_LICENSE("Dual BSD/GPL");

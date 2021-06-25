@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Extended Error Log driver
  *
  * Copyright (C) 2013 Intel Corp.
- * Author: Chen, Gong <gong.chen@intel.com>
+ * Author: Chen, Gong <gong.chen@पूर्णांकel.com>
  */
 
-#include <linux/module.h>
-#include <linux/acpi.h>
-#include <linux/cper.h>
-#include <linux/ratelimit.h>
-#include <linux/edac.h>
-#include <linux/ras.h>
-#include <asm/cpu.h>
-#include <asm/mce.h>
+#समावेश <linux/module.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/cper.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/edac.h>
+#समावेश <linux/ras.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/mce.h>
 
-#include "apei/apei-internal.h"
-#include <ras/ras_event.h>
+#समावेश "apei/apei-internal.h"
+#समावेश <ras/ras_event.h>
 
-#define EXT_ELOG_ENTRY_MASK	GENMASK_ULL(51, 0) /* elog entry address mask */
+#घोषणा EXT_ELOG_ENTRY_MASK	GENMASK_ULL(51, 0) /* elog entry address mask */
 
-#define EXTLOG_DSM_REV		0x0
-#define	EXTLOG_FN_ADDR		0x1
+#घोषणा EXTLOG_DSM_REV		0x0
+#घोषणा	EXTLOG_FN_ADDR		0x1
 
-#define FLAG_OS_OPTIN		BIT(0)
-#define ELOG_ENTRY_VALID	(1ULL<<63)
-#define ELOG_ENTRY_LEN		0x1000
+#घोषणा FLAG_OS_OPTIN		BIT(0)
+#घोषणा ELOG_ENTRY_VALID	(1ULL<<63)
+#घोषणा ELOG_ENTRY_LEN		0x1000
 
-#define EMCA_BUG \
+#घोषणा EMCA_BUG \
 	"Can not request iomem region <0x%016llx-0x%016llx> - eMCA disabled\n"
 
-struct extlog_l1_head {
+काष्ठा extlog_l1_head अणु
 	u32 ver;	/* Header Version */
 	u32 hdr_len;	/* Header Length */
 	u64 total_len;	/* entire L1 Directory length including this header */
@@ -40,206 +41,206 @@ struct extlog_l1_head {
 	u8  rev0[12];
 	u32 entries;	/* Valid L1 Directory entries per logical processor */
 	u8  rev1[12];
-};
+पूर्ण;
 
-static u8 extlog_dsm_uuid[] __initdata = "663E35AF-CC10-41A4-88EA-5470AF055295";
+अटल u8 extlog_dsm_uuid[] __initdata = "663E35AF-CC10-41A4-88EA-5470AF055295";
 
 /* L1 table related physical address */
-static u64 elog_base;
-static size_t elog_size;
-static u64 l1_dirbase;
-static size_t l1_size;
+अटल u64 elog_base;
+अटल माप_प्रकार elog_size;
+अटल u64 l1_dirbase;
+अटल माप_प्रकार l1_size;
 
-/* L1 table related virtual address */
-static void __iomem *extlog_l1_addr;
-static void __iomem *elog_addr;
+/* L1 table related भव address */
+अटल व्योम __iomem *extlog_l1_addr;
+अटल व्योम __iomem *elog_addr;
 
-static void *elog_buf;
+अटल व्योम *elog_buf;
 
-static u64 *l1_entry_base;
-static u32 l1_percpu_entry;
+अटल u64 *l1_entry_base;
+अटल u32 l1_percpu_entry;
 
-#define ELOG_IDX(cpu, bank) \
+#घोषणा ELOG_IDX(cpu, bank) \
 	(cpu_physical_id(cpu) * l1_percpu_entry + (bank))
 
-#define ELOG_ENTRY_DATA(idx) \
+#घोषणा ELOG_ENTRY_DATA(idx) \
 	(*(l1_entry_base + (idx)))
 
-#define ELOG_ENTRY_ADDR(phyaddr) \
+#घोषणा ELOG_ENTRY_ADDR(phyaddr) \
 	(phyaddr - elog_base + (u8 *)elog_addr)
 
-static struct acpi_hest_generic_status *extlog_elog_entry_check(int cpu, int bank)
-{
-	int idx;
+अटल काष्ठा acpi_hest_generic_status *extlog_elog_entry_check(पूर्णांक cpu, पूर्णांक bank)
+अणु
+	पूर्णांक idx;
 	u64 data;
-	struct acpi_hest_generic_status *estatus;
+	काष्ठा acpi_hest_generic_status *estatus;
 
 	WARN_ON(cpu < 0);
 	idx = ELOG_IDX(cpu, bank);
 	data = ELOG_ENTRY_DATA(idx);
-	if ((data & ELOG_ENTRY_VALID) == 0)
-		return NULL;
+	अगर ((data & ELOG_ENTRY_VALID) == 0)
+		वापस शून्य;
 
 	data &= EXT_ELOG_ENTRY_MASK;
-	estatus = (struct acpi_hest_generic_status *)ELOG_ENTRY_ADDR(data);
+	estatus = (काष्ठा acpi_hest_generic_status *)ELOG_ENTRY_ADDR(data);
 
-	/* if no valid data in elog entry, just return */
-	if (estatus->block_status == 0)
-		return NULL;
+	/* अगर no valid data in elog entry, just वापस */
+	अगर (estatus->block_status == 0)
+		वापस शून्य;
 
-	return estatus;
-}
+	वापस estatus;
+पूर्ण
 
-static void __print_extlog_rcd(const char *pfx,
-			       struct acpi_hest_generic_status *estatus, int cpu)
-{
-	static atomic_t seqno;
-	unsigned int curr_seqno;
-	char pfx_seq[64];
+अटल व्योम __prपूर्णांक_extlog_rcd(स्थिर अक्षर *pfx,
+			       काष्ठा acpi_hest_generic_status *estatus, पूर्णांक cpu)
+अणु
+	अटल atomic_t seqno;
+	अचिन्हित पूर्णांक curr_seqno;
+	अक्षर pfx_seq[64];
 
-	if (!pfx) {
-		if (estatus->error_severity <= CPER_SEV_CORRECTED)
+	अगर (!pfx) अणु
+		अगर (estatus->error_severity <= CPER_SEV_CORRECTED)
 			pfx = KERN_INFO;
-		else
+		अन्यथा
 			pfx = KERN_ERR;
-	}
-	curr_seqno = atomic_inc_return(&seqno);
-	snprintf(pfx_seq, sizeof(pfx_seq), "%s{%u}", pfx, curr_seqno);
-	printk("%s""Hardware error detected on CPU%d\n", pfx_seq, cpu);
-	cper_estatus_print(pfx_seq, estatus);
-}
+	पूर्ण
+	curr_seqno = atomic_inc_वापस(&seqno);
+	snम_लिखो(pfx_seq, माप(pfx_seq), "%s{%u}", pfx, curr_seqno);
+	prपूर्णांकk("%s""Hardware error detected on CPU%d\n", pfx_seq, cpu);
+	cper_estatus_prपूर्णांक(pfx_seq, estatus);
+पूर्ण
 
-static int print_extlog_rcd(const char *pfx,
-			    struct acpi_hest_generic_status *estatus, int cpu)
-{
+अटल पूर्णांक prपूर्णांक_extlog_rcd(स्थिर अक्षर *pfx,
+			    काष्ठा acpi_hest_generic_status *estatus, पूर्णांक cpu)
+अणु
 	/* Not more than 2 messages every 5 seconds */
-	static DEFINE_RATELIMIT_STATE(ratelimit_corrected, 5*HZ, 2);
-	static DEFINE_RATELIMIT_STATE(ratelimit_uncorrected, 5*HZ, 2);
-	struct ratelimit_state *ratelimit;
+	अटल DEFINE_RATELIMIT_STATE(ratelimit_corrected, 5*HZ, 2);
+	अटल DEFINE_RATELIMIT_STATE(ratelimit_uncorrected, 5*HZ, 2);
+	काष्ठा ratelimit_state *ratelimit;
 
-	if (estatus->error_severity == CPER_SEV_CORRECTED ||
+	अगर (estatus->error_severity == CPER_SEV_CORRECTED ||
 	    (estatus->error_severity == CPER_SEV_INFORMATIONAL))
 		ratelimit = &ratelimit_corrected;
-	else
+	अन्यथा
 		ratelimit = &ratelimit_uncorrected;
-	if (__ratelimit(ratelimit)) {
-		__print_extlog_rcd(pfx, estatus, cpu);
-		return 0;
-	}
+	अगर (__ratelimit(ratelimit)) अणु
+		__prपूर्णांक_extlog_rcd(pfx, estatus, cpu);
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int extlog_print(struct notifier_block *nb, unsigned long val,
-			void *data)
-{
-	struct mce *mce = (struct mce *)data;
-	int	bank = mce->bank;
-	int	cpu = mce->extcpu;
-	struct acpi_hest_generic_status *estatus, *tmp;
-	struct acpi_hest_generic_data *gdata;
-	const guid_t *fru_id = &guid_null;
-	char *fru_text = "";
+अटल पूर्णांक extlog_prपूर्णांक(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
+			व्योम *data)
+अणु
+	काष्ठा mce *mce = (काष्ठा mce *)data;
+	पूर्णांक	bank = mce->bank;
+	पूर्णांक	cpu = mce->extcpu;
+	काष्ठा acpi_hest_generic_status *estatus, *पंचांगp;
+	काष्ठा acpi_hest_generic_data *gdata;
+	स्थिर guid_t *fru_id = &guid_null;
+	अक्षर *fru_text = "";
 	guid_t *sec_type;
-	static u32 err_seq;
+	अटल u32 err_seq;
 
 	estatus = extlog_elog_entry_check(cpu, bank);
-	if (estatus == NULL || (mce->kflags & MCE_HANDLED_CEC))
-		return NOTIFY_DONE;
+	अगर (estatus == शून्य || (mce->kflags & MCE_HANDLED_CEC))
+		वापस NOTIFY_DONE;
 
-	memcpy(elog_buf, (void *)estatus, ELOG_ENTRY_LEN);
+	स_नकल(elog_buf, (व्योम *)estatus, ELOG_ENTRY_LEN);
 	/* clear record status to enable BIOS to update it again */
 	estatus->block_status = 0;
 
-	tmp = (struct acpi_hest_generic_status *)elog_buf;
+	पंचांगp = (काष्ठा acpi_hest_generic_status *)elog_buf;
 
-	if (!ras_userspace_consumers()) {
-		print_extlog_rcd(NULL, tmp, cpu);
-		goto out;
-	}
+	अगर (!ras_userspace_consumers()) अणु
+		prपूर्णांक_extlog_rcd(शून्य, पंचांगp, cpu);
+		जाओ out;
+	पूर्ण
 
 	/* log event via trace */
 	err_seq++;
-	gdata = (struct acpi_hest_generic_data *)(tmp + 1);
-	if (gdata->validation_bits & CPER_SEC_VALID_FRU_ID)
+	gdata = (काष्ठा acpi_hest_generic_data *)(पंचांगp + 1);
+	अगर (gdata->validation_bits & CPER_SEC_VALID_FRU_ID)
 		fru_id = (guid_t *)gdata->fru_id;
-	if (gdata->validation_bits & CPER_SEC_VALID_FRU_TEXT)
+	अगर (gdata->validation_bits & CPER_SEC_VALID_FRU_TEXT)
 		fru_text = gdata->fru_text;
 	sec_type = (guid_t *)gdata->section_type;
-	if (guid_equal(sec_type, &CPER_SEC_PLATFORM_MEM)) {
-		struct cper_sec_mem_err *mem = (void *)(gdata + 1);
-		if (gdata->error_data_length >= sizeof(*mem))
+	अगर (guid_equal(sec_type, &CPER_SEC_PLATFORM_MEM)) अणु
+		काष्ठा cper_sec_mem_err *mem = (व्योम *)(gdata + 1);
+		अगर (gdata->error_data_length >= माप(*mem))
 			trace_extlog_mem_event(mem, err_seq, fru_id, fru_text,
 					       (u8)gdata->error_severity);
-	}
+	पूर्ण
 
 out:
 	mce->kflags |= MCE_HANDLED_EXTLOG;
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static bool __init extlog_get_l1addr(void)
-{
+अटल bool __init extlog_get_l1addr(व्योम)
+अणु
 	guid_t guid;
 	acpi_handle handle;
-	union acpi_object *obj;
+	जोड़ acpi_object *obj;
 
-	if (guid_parse(extlog_dsm_uuid, &guid))
-		return false;
-	if (ACPI_FAILURE(acpi_get_handle(NULL, "\\_SB", &handle)))
-		return false;
-	if (!acpi_check_dsm(handle, &guid, EXTLOG_DSM_REV, 1 << EXTLOG_FN_ADDR))
-		return false;
+	अगर (guid_parse(extlog_dsm_uuid, &guid))
+		वापस false;
+	अगर (ACPI_FAILURE(acpi_get_handle(शून्य, "\\_SB", &handle)))
+		वापस false;
+	अगर (!acpi_check_dsm(handle, &guid, EXTLOG_DSM_REV, 1 << EXTLOG_FN_ADDR))
+		वापस false;
 	obj = acpi_evaluate_dsm_typed(handle, &guid, EXTLOG_DSM_REV,
-				      EXTLOG_FN_ADDR, NULL, ACPI_TYPE_INTEGER);
-	if (!obj) {
-		return false;
-	} else {
-		l1_dirbase = obj->integer.value;
+				      EXTLOG_FN_ADDR, शून्य, ACPI_TYPE_INTEGER);
+	अगर (!obj) अणु
+		वापस false;
+	पूर्ण अन्यथा अणु
+		l1_dirbase = obj->पूर्णांकeger.value;
 		ACPI_FREE(obj);
-	}
+	पूर्ण
 
-	/* Spec says L1 directory must be 4K aligned, bail out if it isn't */
-	if (l1_dirbase & ((1 << 12) - 1)) {
+	/* Spec says L1 directory must be 4K aligned, bail out अगर it isn't */
+	अगर (l1_dirbase & ((1 << 12) - 1)) अणु
 		pr_warn(FW_BUG "L1 Directory is invalid at physical %llx\n",
 			l1_dirbase);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
-static struct notifier_block extlog_mce_dec = {
-	.notifier_call	= extlog_print,
+	वापस true;
+पूर्ण
+अटल काष्ठा notअगरier_block extlog_mce_dec = अणु
+	.notअगरier_call	= extlog_prपूर्णांक,
 	.priority	= MCE_PRIO_EXTLOG,
-};
+पूर्ण;
 
-static int __init extlog_init(void)
-{
-	struct extlog_l1_head *l1_head;
-	void __iomem *extlog_l1_hdr;
-	size_t l1_hdr_size;
-	struct resource *r;
+अटल पूर्णांक __init extlog_init(व्योम)
+अणु
+	काष्ठा extlog_l1_head *l1_head;
+	व्योम __iomem *extlog_l1_hdr;
+	माप_प्रकार l1_hdr_size;
+	काष्ठा resource *r;
 	u64 cap;
-	int rc;
+	पूर्णांक rc;
 
-	if (rdmsrl_safe(MSR_IA32_MCG_CAP, &cap) ||
+	अगर (rdmsrl_safe(MSR_IA32_MCG_CAP, &cap) ||
 	    !(cap & MCG_ELOG_P) ||
 	    !extlog_get_l1addr())
-		return -ENODEV;
+		वापस -ENODEV;
 
 	rc = -EINVAL;
-	/* get L1 header to fetch necessary information */
-	l1_hdr_size = sizeof(struct extlog_l1_head);
+	/* get L1 header to fetch necessary inक्रमmation */
+	l1_hdr_size = माप(काष्ठा extlog_l1_head);
 	r = request_mem_region(l1_dirbase, l1_hdr_size, "L1 DIR HDR");
-	if (!r) {
+	अगर (!r) अणु
 		pr_warn(FW_BUG EMCA_BUG,
-			(unsigned long long)l1_dirbase,
-			(unsigned long long)l1_dirbase + l1_hdr_size);
-		goto err;
-	}
+			(अचिन्हित दीर्घ दीर्घ)l1_dirbase,
+			(अचिन्हित दीर्घ दीर्घ)l1_dirbase + l1_hdr_size);
+		जाओ err;
+	पूर्ण
 
 	extlog_l1_hdr = acpi_os_map_iomem(l1_dirbase, l1_hdr_size);
-	l1_head = (struct extlog_l1_head *)extlog_l1_hdr;
+	l1_head = (काष्ठा extlog_l1_head *)extlog_l1_hdr;
 	l1_size = l1_head->total_len;
 	l1_percpu_entry = l1_head->entries;
 	elog_base = l1_head->elog_base;
@@ -247,67 +248,67 @@ static int __init extlog_init(void)
 	acpi_os_unmap_iomem(extlog_l1_hdr, l1_hdr_size);
 	release_mem_region(l1_dirbase, l1_hdr_size);
 
-	/* remap L1 header again based on completed information */
+	/* remap L1 header again based on completed inक्रमmation */
 	r = request_mem_region(l1_dirbase, l1_size, "L1 Table");
-	if (!r) {
+	अगर (!r) अणु
 		pr_warn(FW_BUG EMCA_BUG,
-			(unsigned long long)l1_dirbase,
-			(unsigned long long)l1_dirbase + l1_size);
-		goto err;
-	}
+			(अचिन्हित दीर्घ दीर्घ)l1_dirbase,
+			(अचिन्हित दीर्घ दीर्घ)l1_dirbase + l1_size);
+		जाओ err;
+	पूर्ण
 	extlog_l1_addr = acpi_os_map_iomem(l1_dirbase, l1_size);
 	l1_entry_base = (u64 *)((u8 *)extlog_l1_addr + l1_hdr_size);
 
 	/* remap elog table */
 	r = request_mem_region(elog_base, elog_size, "Elog Table");
-	if (!r) {
+	अगर (!r) अणु
 		pr_warn(FW_BUG EMCA_BUG,
-			(unsigned long long)elog_base,
-			(unsigned long long)elog_base + elog_size);
-		goto err_release_l1_dir;
-	}
+			(अचिन्हित दीर्घ दीर्घ)elog_base,
+			(अचिन्हित दीर्घ दीर्घ)elog_base + elog_size);
+		जाओ err_release_l1_dir;
+	पूर्ण
 	elog_addr = acpi_os_map_iomem(elog_base, elog_size);
 
 	rc = -ENOMEM;
 	/* allocate buffer to save elog record */
-	elog_buf = kmalloc(ELOG_ENTRY_LEN, GFP_KERNEL);
-	if (elog_buf == NULL)
-		goto err_release_elog;
+	elog_buf = kदो_स्मृति(ELOG_ENTRY_LEN, GFP_KERNEL);
+	अगर (elog_buf == शून्य)
+		जाओ err_release_elog;
 
-	mce_register_decode_chain(&extlog_mce_dec);
+	mce_रेजिस्टर_decode_chain(&extlog_mce_dec);
 	/* enable OS to be involved to take over management from BIOS */
-	((struct extlog_l1_head *)extlog_l1_addr)->flags |= FLAG_OS_OPTIN;
+	((काष्ठा extlog_l1_head *)extlog_l1_addr)->flags |= FLAG_OS_OPTIN;
 
-	return 0;
+	वापस 0;
 
 err_release_elog:
-	if (elog_addr)
+	अगर (elog_addr)
 		acpi_os_unmap_iomem(elog_addr, elog_size);
 	release_mem_region(elog_base, elog_size);
 err_release_l1_dir:
-	if (extlog_l1_addr)
+	अगर (extlog_l1_addr)
 		acpi_os_unmap_iomem(extlog_l1_addr, l1_size);
 	release_mem_region(l1_dirbase, l1_size);
 err:
 	pr_warn(FW_BUG "Extended error log disabled because of problems parsing f/w tables\n");
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit extlog_exit(void)
-{
-	mce_unregister_decode_chain(&extlog_mce_dec);
-	((struct extlog_l1_head *)extlog_l1_addr)->flags &= ~FLAG_OS_OPTIN;
-	if (extlog_l1_addr)
+अटल व्योम __निकास extlog_निकास(व्योम)
+अणु
+	mce_unरेजिस्टर_decode_chain(&extlog_mce_dec);
+	((काष्ठा extlog_l1_head *)extlog_l1_addr)->flags &= ~FLAG_OS_OPTIN;
+	अगर (extlog_l1_addr)
 		acpi_os_unmap_iomem(extlog_l1_addr, l1_size);
-	if (elog_addr)
+	अगर (elog_addr)
 		acpi_os_unmap_iomem(elog_addr, elog_size);
 	release_mem_region(elog_base, elog_size);
 	release_mem_region(l1_dirbase, l1_size);
-	kfree(elog_buf);
-}
+	kमुक्त(elog_buf);
+पूर्ण
 
 module_init(extlog_init);
-module_exit(extlog_exit);
+module_निकास(extlog_निकास);
 
 MODULE_AUTHOR("Chen, Gong <gong.chen@intel.com>");
 MODULE_DESCRIPTION("Extended MCA Error Log Driver");

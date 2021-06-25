@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0
-/* This utility makes a bootblock suitable for the SRM console/miniloader */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* This utility makes a bootblock suitable क्रम the SRM console/miniloader */
 
 /* Usage:
  *	mkbb <device> <lxboot>
@@ -7,34 +8,34 @@
  * Where <device> is the name of the device to install the bootblock on,
  * and <lxboot> is the name of a bootblock to merge in.  This bootblock
  * contains the offset and size of the bootloader.  It must be exactly
- * 512 bytes long.
+ * 512 bytes दीर्घ.
  */
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
+#समावेश <fcntl.h>
+#समावेश <unistd.h>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
 
-/* Minimal definition of disklabel, so we don't have to include
- * asm/disklabel.h (confuses make)
+/* Minimal definition of disklabel, so we करोn't have to include
+ * यंत्र/disklabel.h (confuses make)
  */
-#ifndef MAXPARTITIONS
-#define MAXPARTITIONS   8                       /* max. # of partitions */
-#endif
+#अगर_अघोषित MAXPARTITIONS
+#घोषणा MAXPARTITIONS   8                       /* max. # of partitions */
+#पूर्ण_अगर
 
-#ifndef u8
-#define u8 unsigned char
-#endif
+#अगर_अघोषित u8
+#घोषणा u8 अचिन्हित अक्षर
+#पूर्ण_अगर
 
-#ifndef u16
-#define u16 unsigned short
-#endif
+#अगर_अघोषित u16
+#घोषणा u16 अचिन्हित लघु
+#पूर्ण_अगर
 
-#ifndef u32
-#define u32 unsigned int
-#endif
+#अगर_अघोषित u32
+#घोषणा u32 अचिन्हित पूर्णांक
+#पूर्ण_अगर
 
-struct disklabel {
+काष्ठा disklabel अणु
     u32	d_magic;				/* must be DISKLABELMAGIC */
     u16	d_type, d_subtype;
     u8	d_typename[16];
@@ -48,106 +49,106 @@ struct disklabel {
     u16	d_sparespertrack;
     u16	d_sparespercyl;
     u32	d_acylinders;
-    u16	d_rpm, d_interleave, d_trackskew, d_cylskew;
-    u32	d_headswitch, d_trkseek, d_flags;
+    u16	d_rpm, d_पूर्णांकerleave, d_trackskew, d_cylskew;
+    u32	d_headचयन, d_trkseek, d_flags;
     u32	d_drivedata[5];
     u32	d_spare[5];
     u32	d_magic2;				/* must be DISKLABELMAGIC */
     u16	d_checksum;
     u16	d_npartitions;
     u32	d_bbsize, d_sbsize;
-    struct d_partition {
+    काष्ठा d_partition अणु
 	u32	p_size;
 	u32	p_offset;
 	u32	p_fsize;
 	u8	p_fstype;
 	u8	p_frag;
 	u16	p_cpg;
-    } d_partitions[MAXPARTITIONS];
-};
+    पूर्ण d_partitions[MAXPARTITIONS];
+पूर्ण;
 
 
-typedef union __bootblock {
-    struct {
-        char			__pad1[64];
-        struct disklabel	__label;
-    } __u1;
-    struct {
-	unsigned long		__pad2[63];
-	unsigned long		__checksum;
-    } __u2;
-    char		bootblock_bytes[512];
-    unsigned long	bootblock_quadwords[64];
-} bootblock;
+प्रकार जोड़ __bootblock अणु
+    काष्ठा अणु
+        अक्षर			__pad1[64];
+        काष्ठा disklabel	__label;
+    पूर्ण __u1;
+    काष्ठा अणु
+	अचिन्हित दीर्घ		__pad2[63];
+	अचिन्हित दीर्घ		__checksum;
+    पूर्ण __u2;
+    अक्षर		bootblock_bytes[512];
+    अचिन्हित दीर्घ	bootblock_quadwords[64];
+पूर्ण bootblock;
 
-#define	bootblock_label		__u1.__label
-#define bootblock_checksum	__u2.__checksum
+#घोषणा	bootblock_label		__u1.__label
+#घोषणा bootblock_checksum	__u2.__checksum
 
-int main(int argc, char ** argv)
-{
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर ** argv)
+अणु
     bootblock		bootblock_from_disk;
     bootblock		bootloader_image;
-    int			dev, fd;
-    int			i;
-    int			nread;
+    पूर्णांक			dev, fd;
+    पूर्णांक			i;
+    पूर्णांक			nपढ़ो;
 
     /* Make sure of the arg count */
-    if(argc != 3) {
-	fprintf(stderr, "Usage: %s device lxboot\n", argv[0]);
-	exit(0);
-    }
+    अगर(argc != 3) अणु
+	ख_लिखो(मानक_त्रुटि, "Usage: %s device lxboot\n", argv[0]);
+	निकास(0);
+    पूर्ण
 
-    /* First, open the device and make sure it's accessible */
-    dev = open(argv[1], O_RDWR);
-    if(dev < 0) {
-	perror(argv[1]);
-	exit(0);
-    }
+    /* First, खोलो the device and make sure it's accessible */
+    dev = खोलो(argv[1], O_RDWR);
+    अगर(dev < 0) अणु
+	लिखो_त्रुटि(argv[1]);
+	निकास(0);
+    पूर्ण
 
-    /* Now open the lxboot and make sure it's reasonable */
-    fd = open(argv[2], O_RDONLY);
-    if(fd < 0) {
-	perror(argv[2]);
-	close(dev);
-	exit(0);
-    }
+    /* Now खोलो the lxboot and make sure it's reasonable */
+    fd = खोलो(argv[2], O_RDONLY);
+    अगर(fd < 0) अणु
+	लिखो_त्रुटि(argv[2]);
+	बंद(dev);
+	निकास(0);
+    पूर्ण
 
     /* Read in the lxboot */
-    nread = read(fd, &bootloader_image, sizeof(bootblock));
-    if(nread != sizeof(bootblock)) {
-	perror("lxboot read");
-	fprintf(stderr, "expected %zd, got %d\n", sizeof(bootblock), nread);
-	exit(0);
-    }
+    nपढ़ो = पढ़ो(fd, &bootloader_image, माप(bootblock));
+    अगर(nपढ़ो != माप(bootblock)) अणु
+	लिखो_त्रुटि("lxboot read");
+	ख_लिखो(मानक_त्रुटि, "expected %zd, got %d\n", माप(bootblock), nपढ़ो);
+	निकास(0);
+    पूर्ण
 
     /* Read in the bootblock from disk. */
-    nread = read(dev, &bootblock_from_disk, sizeof(bootblock));
-    if(nread != sizeof(bootblock)) {
-	perror("bootblock read");
-	fprintf(stderr, "expected %zd, got %d\n", sizeof(bootblock), nread);
-	exit(0);
-    }
+    nपढ़ो = पढ़ो(dev, &bootblock_from_disk, माप(bootblock));
+    अगर(nपढ़ो != माप(bootblock)) अणु
+	लिखो_त्रुटि("bootblock read");
+	ख_लिखो(मानक_त्रुटि, "expected %zd, got %d\n", माप(bootblock), nपढ़ो);
+	निकास(0);
+    पूर्ण
 
-    /* Swap the bootblock's disklabel into the bootloader */
+    /* Swap the bootblock's disklabel पूर्णांकo the bootloader */
     bootloader_image.bootblock_label = bootblock_from_disk.bootblock_label;
 
     /* Calculate the bootblock checksum */
     bootloader_image.bootblock_checksum = 0;
-    for(i = 0; i < 63; i++) {
+    क्रम(i = 0; i < 63; i++) अणु
 	bootloader_image.bootblock_checksum += 
 			bootloader_image.bootblock_quadwords[i];
-    }
+    पूर्ण
 
     /* Write the whole thing out! */
-    lseek(dev, 0L, SEEK_SET);
-    if(write(dev, &bootloader_image, sizeof(bootblock)) != sizeof(bootblock)) {
-	perror("bootblock write");
-	exit(0);
-    }
+    lseek(dev, 0L, शुरू_से);
+    अगर(ग_लिखो(dev, &bootloader_image, माप(bootblock)) != माप(bootblock)) अणु
+	लिखो_त्रुटि("bootblock write");
+	निकास(0);
+    पूर्ण
 
-    close(fd);
-    close(dev);
-    exit(0);
-}
+    बंद(fd);
+    बंद(dev);
+    निकास(0);
+पूर्ण
 
 

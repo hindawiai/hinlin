@@ -1,77 +1,78 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * MDIO bus driver for the Xilinx Axi Ethernet device
+ * MDIO bus driver क्रम the Xilinx Axi Ethernet device
  *
  * Copyright (c) 2009 Secret Lab Technologies, Ltd.
  * Copyright (c) 2010 - 2011 Michal Simek <monstr@monstr.eu>
  * Copyright (c) 2010 - 2011 PetaLogix
- * Copyright (c) 2019 SED Systems, a division of Calian Ltd.
+ * Copyright (c) 2019 SED Systems, a भागision of Calian Ltd.
  * Copyright (c) 2010 - 2012 Xilinx, Inc. All rights reserved.
  */
 
-#include <linux/clk.h>
-#include <linux/of_address.h>
-#include <linux/of_mdio.h>
-#include <linux/jiffies.h>
-#include <linux/iopoll.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/iopoll.h>
 
-#include "xilinx_axienet.h"
+#समावेश "xilinx_axienet.h"
 
-#define MAX_MDIO_FREQ		2500000 /* 2.5 MHz */
-#define DEFAULT_HOST_CLOCK	150000000 /* 150 MHz */
+#घोषणा MAX_MDIO_FREQ		2500000 /* 2.5 MHz */
+#घोषणा DEFAULT_HOST_CLOCK	150000000 /* 150 MHz */
 
-/* Wait till MDIO interface is ready to accept a new transaction.*/
-static int axienet_mdio_wait_until_ready(struct axienet_local *lp)
-{
+/* Wait till MDIO पूर्णांकerface is पढ़ोy to accept a new transaction.*/
+अटल पूर्णांक axienet_mdio_रुको_until_पढ़ोy(काष्ठा axienet_local *lp)
+अणु
 	u32 val;
 
-	return readx_poll_timeout(axinet_ior_read_mcr, lp,
+	वापस पढ़ोx_poll_समयout(axinet_ior_पढ़ो_mcr, lp,
 				  val, val & XAE_MDIO_MCR_READY_MASK,
 				  1, 20000);
-}
+पूर्ण
 
-/* Enable the MDIO MDC. Called prior to a read/write operation */
-static void axienet_mdio_mdc_enable(struct axienet_local *lp)
-{
+/* Enable the MDIO MDC. Called prior to a पढ़ो/ग_लिखो operation */
+अटल व्योम axienet_mdio_mdc_enable(काष्ठा axienet_local *lp)
+अणु
 	axienet_iow(lp, XAE_MDIO_MC_OFFSET,
-		    ((u32)lp->mii_clk_div | XAE_MDIO_MC_MDIOEN_MASK));
-}
+		    ((u32)lp->mii_clk_भाग | XAE_MDIO_MC_MDIOEN_MASK));
+पूर्ण
 
-/* Disable the MDIO MDC. Called after a read/write operation*/
-static void axienet_mdio_mdc_disable(struct axienet_local *lp)
-{
+/* Disable the MDIO MDC. Called after a पढ़ो/ग_लिखो operation*/
+अटल व्योम axienet_mdio_mdc_disable(काष्ठा axienet_local *lp)
+अणु
 	u32 mc_reg;
 
 	mc_reg = axienet_ior(lp, XAE_MDIO_MC_OFFSET);
 	axienet_iow(lp, XAE_MDIO_MC_OFFSET,
 		    (mc_reg & ~XAE_MDIO_MC_MDIOEN_MASK));
-}
+पूर्ण
 
 /**
- * axienet_mdio_read - MDIO interface read function
- * @bus:	Pointer to mii bus structure
+ * axienet_mdio_पढ़ो - MDIO पूर्णांकerface पढ़ो function
+ * @bus:	Poपूर्णांकer to mii bus काष्ठाure
  * @phy_id:	Address of the PHY device
- * @reg:	PHY register to read
+ * @reg:	PHY रेजिस्टर to पढ़ो
  *
- * Return:	The register contents on success, -ETIMEDOUT on a timeout
+ * Return:	The रेजिस्टर contents on success, -ETIMEDOUT on a समयout
  *
- * Reads the contents of the requested register from the requested PHY
- * address by first writing the details into MCR register. After a while
- * the register MRD is read to obtain the PHY register content.
+ * Reads the contents of the requested रेजिस्टर from the requested PHY
+ * address by first writing the details पूर्णांकo MCR रेजिस्टर. After a जबतक
+ * the रेजिस्टर MRD is पढ़ो to obtain the PHY रेजिस्टर content.
  */
-static int axienet_mdio_read(struct mii_bus *bus, int phy_id, int reg)
-{
+अटल पूर्णांक axienet_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg)
+अणु
 	u32 rc;
-	int ret;
-	struct axienet_local *lp = bus->priv;
+	पूर्णांक ret;
+	काष्ठा axienet_local *lp = bus->priv;
 
 	axienet_mdio_mdc_enable(lp);
 
-	ret = axienet_mdio_wait_until_ready(lp);
-	if (ret < 0) {
+	ret = axienet_mdio_रुको_until_पढ़ोy(lp);
+	अगर (ret < 0) अणु
 		axienet_mdio_mdc_disable(lp);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	axienet_iow(lp, XAE_MDIO_MCR_OFFSET,
 		    (((phy_id << XAE_MDIO_MCR_PHYAD_SHIFT) &
@@ -81,11 +82,11 @@ static int axienet_mdio_read(struct mii_bus *bus, int phy_id, int reg)
 		     XAE_MDIO_MCR_INITIATE_MASK |
 		     XAE_MDIO_MCR_OP_READ_MASK));
 
-	ret = axienet_mdio_wait_until_ready(lp);
-	if (ret < 0) {
+	ret = axienet_mdio_रुको_until_पढ़ोy(lp);
+	अगर (ret < 0) अणु
 		axienet_mdio_mdc_disable(lp);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	rc = axienet_ior(lp, XAE_MDIO_MRD_OFFSET) & 0x0000FFFF;
 
@@ -93,38 +94,38 @@ static int axienet_mdio_read(struct mii_bus *bus, int phy_id, int reg)
 		phy_id, reg, rc);
 
 	axienet_mdio_mdc_disable(lp);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * axienet_mdio_write - MDIO interface write function
- * @bus:	Pointer to mii bus structure
+ * axienet_mdio_ग_लिखो - MDIO पूर्णांकerface ग_लिखो function
+ * @bus:	Poपूर्णांकer to mii bus काष्ठाure
  * @phy_id:	Address of the PHY device
- * @reg:	PHY register to write to
- * @val:	Value to be written into the register
+ * @reg:	PHY रेजिस्टर to ग_लिखो to
+ * @val:	Value to be written पूर्णांकo the रेजिस्टर
  *
- * Return:	0 on success, -ETIMEDOUT on a timeout
+ * Return:	0 on success, -ETIMEDOUT on a समयout
  *
- * Writes the value to the requested register by first writing the value
- * into MWD register. The the MCR register is then appropriately setup
- * to finish the write operation.
+ * Writes the value to the requested रेजिस्टर by first writing the value
+ * पूर्णांकo MWD रेजिस्टर. The the MCR रेजिस्टर is then appropriately setup
+ * to finish the ग_लिखो operation.
  */
-static int axienet_mdio_write(struct mii_bus *bus, int phy_id, int reg,
+अटल पूर्णांक axienet_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg,
 			      u16 val)
-{
-	int ret;
-	struct axienet_local *lp = bus->priv;
+अणु
+	पूर्णांक ret;
+	काष्ठा axienet_local *lp = bus->priv;
 
 	dev_dbg(lp->dev, "axienet_mdio_write(phy_id=%i, reg=%x, val=%x)\n",
 		phy_id, reg, val);
 
 	axienet_mdio_mdc_enable(lp);
 
-	ret = axienet_mdio_wait_until_ready(lp);
-	if (ret < 0) {
+	ret = axienet_mdio_रुको_until_पढ़ोy(lp);
+	अगर (ret < 0) अणु
 		axienet_mdio_mdc_disable(lp);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	axienet_iow(lp, XAE_MDIO_MWD_OFFSET, (u32) val);
 	axienet_iow(lp, XAE_MDIO_MCR_OFFSET,
@@ -135,163 +136,163 @@ static int axienet_mdio_write(struct mii_bus *bus, int phy_id, int reg,
 		     XAE_MDIO_MCR_INITIATE_MASK |
 		     XAE_MDIO_MCR_OP_WRITE_MASK));
 
-	ret = axienet_mdio_wait_until_ready(lp);
-	if (ret < 0) {
+	ret = axienet_mdio_रुको_until_पढ़ोy(lp);
+	अगर (ret < 0) अणु
 		axienet_mdio_mdc_disable(lp);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	axienet_mdio_mdc_disable(lp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * axienet_mdio_enable - MDIO hardware setup function
- * @lp:		Pointer to axienet local data structure.
+ * @lp:		Poपूर्णांकer to axienet local data काष्ठाure.
  *
- * Return:	0 on success, -ETIMEDOUT on a timeout.
+ * Return:	0 on success, -ETIMEDOUT on a समयout.
  *
- * Sets up the MDIO interface by initializing the MDIO clock and enabling the
- * MDIO interface in hardware.
+ * Sets up the MDIO पूर्णांकerface by initializing the MDIO घड़ी and enabling the
+ * MDIO पूर्णांकerface in hardware.
  **/
-int axienet_mdio_enable(struct axienet_local *lp)
-{
-	u32 host_clock;
+पूर्णांक axienet_mdio_enable(काष्ठा axienet_local *lp)
+अणु
+	u32 host_घड़ी;
 
-	lp->mii_clk_div = 0;
+	lp->mii_clk_भाग = 0;
 
-	if (lp->axi_clk) {
-		host_clock = clk_get_rate(lp->axi_clk);
-	} else {
-		struct device_node *np1;
+	अगर (lp->axi_clk) अणु
+		host_घड़ी = clk_get_rate(lp->axi_clk);
+	पूर्ण अन्यथा अणु
+		काष्ठा device_node *np1;
 
-		/* Legacy fallback: detect CPU clock frequency and use as AXI
-		 * bus clock frequency. This only works on certain platforms.
+		/* Legacy fallback: detect CPU घड़ी frequency and use as AXI
+		 * bus घड़ी frequency. This only works on certain platक्रमms.
 		 */
-		np1 = of_find_node_by_name(NULL, "cpu");
-		if (!np1) {
+		np1 = of_find_node_by_name(शून्य, "cpu");
+		अगर (!np1) अणु
 			netdev_warn(lp->ndev, "Could not find CPU device node.\n");
-			host_clock = DEFAULT_HOST_CLOCK;
-		} else {
-			int ret = of_property_read_u32(np1, "clock-frequency",
-						       &host_clock);
-			if (ret) {
+			host_घड़ी = DEFAULT_HOST_CLOCK;
+		पूर्ण अन्यथा अणु
+			पूर्णांक ret = of_property_पढ़ो_u32(np1, "clock-frequency",
+						       &host_घड़ी);
+			अगर (ret) अणु
 				netdev_warn(lp->ndev, "CPU clock-frequency property not found.\n");
-				host_clock = DEFAULT_HOST_CLOCK;
-			}
+				host_घड़ी = DEFAULT_HOST_CLOCK;
+			पूर्ण
 			of_node_put(np1);
-		}
+		पूर्ण
 		netdev_info(lp->ndev, "Setting assumed host clock to %u\n",
-			    host_clock);
-	}
+			    host_घड़ी);
+	पूर्ण
 
-	/* clk_div can be calculated by deriving it from the equation:
-	 * fMDIO = fHOST / ((1 + clk_div) * 2)
+	/* clk_भाग can be calculated by deriving it from the equation:
+	 * fMDIO = fHOST / ((1 + clk_भाग) * 2)
 	 *
 	 * Where fMDIO <= 2500000, so we get:
-	 * fHOST / ((1 + clk_div) * 2) <= 2500000
+	 * fHOST / ((1 + clk_भाग) * 2) <= 2500000
 	 *
 	 * Then we get:
-	 * 1 / ((1 + clk_div) * 2) <= (2500000 / fHOST)
+	 * 1 / ((1 + clk_भाग) * 2) <= (2500000 / fHOST)
 	 *
 	 * Then we get:
-	 * 1 / (1 + clk_div) <= ((2500000 * 2) / fHOST)
+	 * 1 / (1 + clk_भाग) <= ((2500000 * 2) / fHOST)
 	 *
 	 * Then we get:
-	 * 1 / (1 + clk_div) <= (5000000 / fHOST)
+	 * 1 / (1 + clk_भाग) <= (5000000 / fHOST)
 	 *
 	 * So:
-	 * (1 + clk_div) >= (fHOST / 5000000)
+	 * (1 + clk_भाग) >= (fHOST / 5000000)
 	 *
 	 * And finally:
-	 * clk_div >= (fHOST / 5000000) - 1
+	 * clk_भाग >= (fHOST / 5000000) - 1
 	 *
-	 * fHOST can be read from the flattened device tree as property
+	 * fHOST can be पढ़ो from the flattened device tree as property
 	 * "clock-frequency" from the CPU
 	 */
 
-	lp->mii_clk_div = (host_clock / (MAX_MDIO_FREQ * 2)) - 1;
-	/* If there is any remainder from the division of
+	lp->mii_clk_भाग = (host_घड़ी / (MAX_MDIO_FREQ * 2)) - 1;
+	/* If there is any reमुख्यder from the भागision of
 	 * fHOST / (MAX_MDIO_FREQ * 2), then we need to add
-	 * 1 to the clock divisor or we will surely be above 2.5 MHz
+	 * 1 to the घड़ी भागisor or we will surely be above 2.5 MHz
 	 */
-	if (host_clock % (MAX_MDIO_FREQ * 2))
-		lp->mii_clk_div++;
+	अगर (host_घड़ी % (MAX_MDIO_FREQ * 2))
+		lp->mii_clk_भाग++;
 
 	netdev_dbg(lp->ndev,
 		   "Setting MDIO clock divisor to %u/%u Hz host clock.\n",
-		   lp->mii_clk_div, host_clock);
+		   lp->mii_clk_भाग, host_घड़ी);
 
-	axienet_iow(lp, XAE_MDIO_MC_OFFSET, lp->mii_clk_div | XAE_MDIO_MC_MDIOEN_MASK);
+	axienet_iow(lp, XAE_MDIO_MC_OFFSET, lp->mii_clk_भाग | XAE_MDIO_MC_MDIOEN_MASK);
 
-	return axienet_mdio_wait_until_ready(lp);
-}
+	वापस axienet_mdio_रुको_until_पढ़ोy(lp);
+पूर्ण
 
 /**
  * axienet_mdio_disable - MDIO hardware disable function
- * @lp:		Pointer to axienet local data structure.
+ * @lp:		Poपूर्णांकer to axienet local data काष्ठाure.
  *
- * Disable the MDIO interface in hardware.
+ * Disable the MDIO पूर्णांकerface in hardware.
  **/
-void axienet_mdio_disable(struct axienet_local *lp)
-{
+व्योम axienet_mdio_disable(काष्ठा axienet_local *lp)
+अणु
 	axienet_iow(lp, XAE_MDIO_MC_OFFSET, 0);
-}
+पूर्ण
 
 /**
  * axienet_mdio_setup - MDIO setup function
- * @lp:		Pointer to axienet local data structure.
+ * @lp:		Poपूर्णांकer to axienet local data काष्ठाure.
  *
- * Return:	0 on success, -ETIMEDOUT on a timeout, -ENOMEM when
- *		mdiobus_alloc (to allocate memory for mii bus structure) fails.
+ * Return:	0 on success, -ETIMEDOUT on a समयout, -ENOMEM when
+ *		mdiobus_alloc (to allocate memory क्रम mii bus काष्ठाure) fails.
  *
- * Sets up the MDIO interface by initializing the MDIO clock.
- * Register the MDIO interface.
+ * Sets up the MDIO पूर्णांकerface by initializing the MDIO घड़ी.
+ * Register the MDIO पूर्णांकerface.
  **/
-int axienet_mdio_setup(struct axienet_local *lp)
-{
-	struct device_node *mdio_node;
-	struct mii_bus *bus;
-	int ret;
+पूर्णांक axienet_mdio_setup(काष्ठा axienet_local *lp)
+अणु
+	काष्ठा device_node *mdio_node;
+	काष्ठा mii_bus *bus;
+	पूर्णांक ret;
 
 	ret = axienet_mdio_enable(lp);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	bus = mdiobus_alloc();
-	if (!bus)
-		return -ENOMEM;
+	अगर (!bus)
+		वापस -ENOMEM;
 
-	snprintf(bus->id, MII_BUS_ID_SIZE, "axienet-%.8llx",
-		 (unsigned long long)lp->regs_start);
+	snम_लिखो(bus->id, MII_BUS_ID_SIZE, "axienet-%.8llx",
+		 (अचिन्हित दीर्घ दीर्घ)lp->regs_start);
 
 	bus->priv = lp;
 	bus->name = "Xilinx Axi Ethernet MDIO";
-	bus->read = axienet_mdio_read;
-	bus->write = axienet_mdio_write;
+	bus->पढ़ो = axienet_mdio_पढ़ो;
+	bus->ग_लिखो = axienet_mdio_ग_लिखो;
 	bus->parent = lp->dev;
 	lp->mii_bus = bus;
 
 	mdio_node = of_get_child_by_name(lp->dev->of_node, "mdio");
-	ret = of_mdiobus_register(bus, mdio_node);
+	ret = of_mdiobus_रेजिस्टर(bus, mdio_node);
 	of_node_put(mdio_node);
-	if (ret) {
-		mdiobus_free(bus);
-		lp->mii_bus = NULL;
-		return ret;
-	}
+	अगर (ret) अणु
+		mdiobus_मुक्त(bus);
+		lp->mii_bus = शून्य;
+		वापस ret;
+	पूर्ण
 	axienet_mdio_mdc_disable(lp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * axienet_mdio_teardown - MDIO remove function
- * @lp:		Pointer to axienet local data structure.
+ * axienet_mdio_tearकरोwn - MDIO हटाओ function
+ * @lp:		Poपूर्णांकer to axienet local data काष्ठाure.
  *
- * Unregisters the MDIO and frees any associate memory for mii bus.
+ * Unरेजिस्टरs the MDIO and मुक्तs any associate memory क्रम mii bus.
  */
-void axienet_mdio_teardown(struct axienet_local *lp)
-{
-	mdiobus_unregister(lp->mii_bus);
-	mdiobus_free(lp->mii_bus);
-	lp->mii_bus = NULL;
-}
+व्योम axienet_mdio_tearकरोwn(काष्ठा axienet_local *lp)
+अणु
+	mdiobus_unरेजिस्टर(lp->mii_bus);
+	mdiobus_मुक्त(lp->mii_bus);
+	lp->mii_bus = शून्य;
+पूर्ण

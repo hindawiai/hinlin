@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // Actions Semi Owl SoCs DMA driver
 //
@@ -8,124 +9,124 @@
 // Copyright (c) 2018 Linaro Ltd.
 // Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
 
-#include <linux/bitops.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/dmaengine.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmapool.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/of_dma.h>
-#include <linux/slab.h>
-#include "virt-dma.h"
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_dma.h>
+#समावेश <linux/slab.h>
+#समावेश "virt-dma.h"
 
-#define OWL_DMA_FRAME_MAX_LENGTH		0xfffff
+#घोषणा OWL_DMA_FRAME_MAX_LENGTH		0xfffff
 
 /* Global DMA Controller Registers */
-#define OWL_DMA_IRQ_PD0				0x00
-#define OWL_DMA_IRQ_PD1				0x04
-#define OWL_DMA_IRQ_PD2				0x08
-#define OWL_DMA_IRQ_PD3				0x0C
-#define OWL_DMA_IRQ_EN0				0x10
-#define OWL_DMA_IRQ_EN1				0x14
-#define OWL_DMA_IRQ_EN2				0x18
-#define OWL_DMA_IRQ_EN3				0x1C
-#define OWL_DMA_SECURE_ACCESS_CTL		0x20
-#define OWL_DMA_NIC_QOS				0x24
-#define OWL_DMA_DBGSEL				0x28
-#define OWL_DMA_IDLE_STAT			0x2C
+#घोषणा OWL_DMA_IRQ_PD0				0x00
+#घोषणा OWL_DMA_IRQ_PD1				0x04
+#घोषणा OWL_DMA_IRQ_PD2				0x08
+#घोषणा OWL_DMA_IRQ_PD3				0x0C
+#घोषणा OWL_DMA_IRQ_EN0				0x10
+#घोषणा OWL_DMA_IRQ_EN1				0x14
+#घोषणा OWL_DMA_IRQ_EN2				0x18
+#घोषणा OWL_DMA_IRQ_EN3				0x1C
+#घोषणा OWL_DMA_SECURE_ACCESS_CTL		0x20
+#घोषणा OWL_DMA_NIC_QOS				0x24
+#घोषणा OWL_DMA_DBGSEL				0x28
+#घोषणा OWL_DMA_IDLE_STAT			0x2C
 
 /* Channel Registers */
-#define OWL_DMA_CHAN_BASE(i)			(0x100 + (i) * 0x100)
-#define OWL_DMAX_MODE				0x00
-#define OWL_DMAX_SOURCE				0x04
-#define OWL_DMAX_DESTINATION			0x08
-#define OWL_DMAX_FRAME_LEN			0x0C
-#define OWL_DMAX_FRAME_CNT			0x10
-#define OWL_DMAX_REMAIN_FRAME_CNT		0x14
-#define OWL_DMAX_REMAIN_CNT			0x18
-#define OWL_DMAX_SOURCE_STRIDE			0x1C
-#define OWL_DMAX_DESTINATION_STRIDE		0x20
-#define OWL_DMAX_START				0x24
-#define OWL_DMAX_PAUSE				0x28
-#define OWL_DMAX_CHAINED_CTL			0x2C
-#define OWL_DMAX_CONSTANT			0x30
-#define OWL_DMAX_LINKLIST_CTL			0x34
-#define OWL_DMAX_NEXT_DESCRIPTOR		0x38
-#define OWL_DMAX_CURRENT_DESCRIPTOR_NUM		0x3C
-#define OWL_DMAX_INT_CTL			0x40
-#define OWL_DMAX_INT_STATUS			0x44
-#define OWL_DMAX_CURRENT_SOURCE_POINTER		0x48
-#define OWL_DMAX_CURRENT_DESTINATION_POINTER	0x4C
+#घोषणा OWL_DMA_CHAN_BASE(i)			(0x100 + (i) * 0x100)
+#घोषणा OWL_DMAX_MODE				0x00
+#घोषणा OWL_DMAX_SOURCE				0x04
+#घोषणा OWL_DMAX_DESTINATION			0x08
+#घोषणा OWL_DMAX_FRAME_LEN			0x0C
+#घोषणा OWL_DMAX_FRAME_CNT			0x10
+#घोषणा OWL_DMAX_REMAIN_FRAME_CNT		0x14
+#घोषणा OWL_DMAX_REMAIN_CNT			0x18
+#घोषणा OWL_DMAX_SOURCE_STRIDE			0x1C
+#घोषणा OWL_DMAX_DESTINATION_STRIDE		0x20
+#घोषणा OWL_DMAX_START				0x24
+#घोषणा OWL_DMAX_PAUSE				0x28
+#घोषणा OWL_DMAX_CHAINED_CTL			0x2C
+#घोषणा OWL_DMAX_CONSTANT			0x30
+#घोषणा OWL_DMAX_LINKLIST_CTL			0x34
+#घोषणा OWL_DMAX_NEXT_DESCRIPTOR		0x38
+#घोषणा OWL_DMAX_CURRENT_DESCRIPTOR_NUM		0x3C
+#घोषणा OWL_DMAX_INT_CTL			0x40
+#घोषणा OWL_DMAX_INT_STATUS			0x44
+#घोषणा OWL_DMAX_CURRENT_SOURCE_POINTER		0x48
+#घोषणा OWL_DMAX_CURRENT_DESTINATION_POINTER	0x4C
 
 /* OWL_DMAX_MODE Bits */
-#define OWL_DMA_MODE_TS(x)			(((x) & GENMASK(5, 0)) << 0)
-#define OWL_DMA_MODE_ST(x)			(((x) & GENMASK(1, 0)) << 8)
-#define	OWL_DMA_MODE_ST_DEV			OWL_DMA_MODE_ST(0)
-#define	OWL_DMA_MODE_ST_DCU			OWL_DMA_MODE_ST(2)
-#define	OWL_DMA_MODE_ST_SRAM			OWL_DMA_MODE_ST(3)
-#define OWL_DMA_MODE_DT(x)			(((x) & GENMASK(1, 0)) << 10)
-#define	OWL_DMA_MODE_DT_DEV			OWL_DMA_MODE_DT(0)
-#define	OWL_DMA_MODE_DT_DCU			OWL_DMA_MODE_DT(2)
-#define	OWL_DMA_MODE_DT_SRAM			OWL_DMA_MODE_DT(3)
-#define OWL_DMA_MODE_SAM(x)			(((x) & GENMASK(1, 0)) << 16)
-#define	OWL_DMA_MODE_SAM_CONST			OWL_DMA_MODE_SAM(0)
-#define	OWL_DMA_MODE_SAM_INC			OWL_DMA_MODE_SAM(1)
-#define	OWL_DMA_MODE_SAM_STRIDE			OWL_DMA_MODE_SAM(2)
-#define OWL_DMA_MODE_DAM(x)			(((x) & GENMASK(1, 0)) << 18)
-#define	OWL_DMA_MODE_DAM_CONST			OWL_DMA_MODE_DAM(0)
-#define	OWL_DMA_MODE_DAM_INC			OWL_DMA_MODE_DAM(1)
-#define	OWL_DMA_MODE_DAM_STRIDE			OWL_DMA_MODE_DAM(2)
-#define OWL_DMA_MODE_PW(x)			(((x) & GENMASK(2, 0)) << 20)
-#define OWL_DMA_MODE_CB				BIT(23)
-#define OWL_DMA_MODE_NDDBW(x)			(((x) & 0x1) << 28)
-#define	OWL_DMA_MODE_NDDBW_32BIT		OWL_DMA_MODE_NDDBW(0)
-#define	OWL_DMA_MODE_NDDBW_8BIT			OWL_DMA_MODE_NDDBW(1)
-#define OWL_DMA_MODE_CFE			BIT(29)
-#define OWL_DMA_MODE_LME			BIT(30)
-#define OWL_DMA_MODE_CME			BIT(31)
+#घोषणा OWL_DMA_MODE_TS(x)			(((x) & GENMASK(5, 0)) << 0)
+#घोषणा OWL_DMA_MODE_ST(x)			(((x) & GENMASK(1, 0)) << 8)
+#घोषणा	OWL_DMA_MODE_ST_DEV			OWL_DMA_MODE_ST(0)
+#घोषणा	OWL_DMA_MODE_ST_DCU			OWL_DMA_MODE_ST(2)
+#घोषणा	OWL_DMA_MODE_ST_SRAM			OWL_DMA_MODE_ST(3)
+#घोषणा OWL_DMA_MODE_DT(x)			(((x) & GENMASK(1, 0)) << 10)
+#घोषणा	OWL_DMA_MODE_DT_DEV			OWL_DMA_MODE_DT(0)
+#घोषणा	OWL_DMA_MODE_DT_DCU			OWL_DMA_MODE_DT(2)
+#घोषणा	OWL_DMA_MODE_DT_SRAM			OWL_DMA_MODE_DT(3)
+#घोषणा OWL_DMA_MODE_SAM(x)			(((x) & GENMASK(1, 0)) << 16)
+#घोषणा	OWL_DMA_MODE_SAM_CONST			OWL_DMA_MODE_SAM(0)
+#घोषणा	OWL_DMA_MODE_SAM_INC			OWL_DMA_MODE_SAM(1)
+#घोषणा	OWL_DMA_MODE_SAM_STRIDE			OWL_DMA_MODE_SAM(2)
+#घोषणा OWL_DMA_MODE_DAM(x)			(((x) & GENMASK(1, 0)) << 18)
+#घोषणा	OWL_DMA_MODE_DAM_CONST			OWL_DMA_MODE_DAM(0)
+#घोषणा	OWL_DMA_MODE_DAM_INC			OWL_DMA_MODE_DAM(1)
+#घोषणा	OWL_DMA_MODE_DAM_STRIDE			OWL_DMA_MODE_DAM(2)
+#घोषणा OWL_DMA_MODE_PW(x)			(((x) & GENMASK(2, 0)) << 20)
+#घोषणा OWL_DMA_MODE_CB				BIT(23)
+#घोषणा OWL_DMA_MODE_NDDBW(x)			(((x) & 0x1) << 28)
+#घोषणा	OWL_DMA_MODE_NDDBW_32BIT		OWL_DMA_MODE_NDDBW(0)
+#घोषणा	OWL_DMA_MODE_NDDBW_8BIT			OWL_DMA_MODE_NDDBW(1)
+#घोषणा OWL_DMA_MODE_CFE			BIT(29)
+#घोषणा OWL_DMA_MODE_LME			BIT(30)
+#घोषणा OWL_DMA_MODE_CME			BIT(31)
 
 /* OWL_DMAX_LINKLIST_CTL Bits */
-#define OWL_DMA_LLC_SAV(x)			(((x) & GENMASK(1, 0)) << 8)
-#define	OWL_DMA_LLC_SAV_INC			OWL_DMA_LLC_SAV(0)
-#define	OWL_DMA_LLC_SAV_LOAD_NEXT		OWL_DMA_LLC_SAV(1)
-#define	OWL_DMA_LLC_SAV_LOAD_PREV		OWL_DMA_LLC_SAV(2)
-#define OWL_DMA_LLC_DAV(x)			(((x) & GENMASK(1, 0)) << 10)
-#define	OWL_DMA_LLC_DAV_INC			OWL_DMA_LLC_DAV(0)
-#define	OWL_DMA_LLC_DAV_LOAD_NEXT		OWL_DMA_LLC_DAV(1)
-#define	OWL_DMA_LLC_DAV_LOAD_PREV		OWL_DMA_LLC_DAV(2)
-#define OWL_DMA_LLC_SUSPEND			BIT(16)
+#घोषणा OWL_DMA_LLC_SAV(x)			(((x) & GENMASK(1, 0)) << 8)
+#घोषणा	OWL_DMA_LLC_SAV_INC			OWL_DMA_LLC_SAV(0)
+#घोषणा	OWL_DMA_LLC_SAV_LOAD_NEXT		OWL_DMA_LLC_SAV(1)
+#घोषणा	OWL_DMA_LLC_SAV_LOAD_PREV		OWL_DMA_LLC_SAV(2)
+#घोषणा OWL_DMA_LLC_DAV(x)			(((x) & GENMASK(1, 0)) << 10)
+#घोषणा	OWL_DMA_LLC_DAV_INC			OWL_DMA_LLC_DAV(0)
+#घोषणा	OWL_DMA_LLC_DAV_LOAD_NEXT		OWL_DMA_LLC_DAV(1)
+#घोषणा	OWL_DMA_LLC_DAV_LOAD_PREV		OWL_DMA_LLC_DAV(2)
+#घोषणा OWL_DMA_LLC_SUSPEND			BIT(16)
 
 /* OWL_DMAX_INT_CTL Bits */
-#define OWL_DMA_INTCTL_BLOCK			BIT(0)
-#define OWL_DMA_INTCTL_SUPER_BLOCK		BIT(1)
-#define OWL_DMA_INTCTL_FRAME			BIT(2)
-#define OWL_DMA_INTCTL_HALF_FRAME		BIT(3)
-#define OWL_DMA_INTCTL_LAST_FRAME		BIT(4)
+#घोषणा OWL_DMA_INTCTL_BLOCK			BIT(0)
+#घोषणा OWL_DMA_INTCTL_SUPER_BLOCK		BIT(1)
+#घोषणा OWL_DMA_INTCTL_FRAME			BIT(2)
+#घोषणा OWL_DMA_INTCTL_HALF_FRAME		BIT(3)
+#घोषणा OWL_DMA_INTCTL_LAST_FRAME		BIT(4)
 
 /* OWL_DMAX_INT_STATUS Bits */
-#define OWL_DMA_INTSTAT_BLOCK			BIT(0)
-#define OWL_DMA_INTSTAT_SUPER_BLOCK		BIT(1)
-#define OWL_DMA_INTSTAT_FRAME			BIT(2)
-#define OWL_DMA_INTSTAT_HALF_FRAME		BIT(3)
-#define OWL_DMA_INTSTAT_LAST_FRAME		BIT(4)
+#घोषणा OWL_DMA_INTSTAT_BLOCK			BIT(0)
+#घोषणा OWL_DMA_INTSTAT_SUPER_BLOCK		BIT(1)
+#घोषणा OWL_DMA_INTSTAT_FRAME			BIT(2)
+#घोषणा OWL_DMA_INTSTAT_HALF_FRAME		BIT(3)
+#घोषणा OWL_DMA_INTSTAT_LAST_FRAME		BIT(4)
 
-/* Pack shift and newshift in a single word */
-#define BIT_FIELD(val, width, shift, newshift)	\
-		((((val) >> (shift)) & ((BIT(width)) - 1)) << (newshift))
+/* Pack shअगरt and newshअगरt in a single word */
+#घोषणा BIT_FIELD(val, width, shअगरt, newshअगरt)	\
+		((((val) >> (shअगरt)) & ((BIT(width)) - 1)) << (newshअगरt))
 
 /* Frame count value is fixed as 1 */
-#define FCNT_VAL				0x1
+#घोषणा FCNT_VAL				0x1
 
 /**
- * enum owl_dmadesc_offsets - Describe DMA descriptor, hardware link
- * list for dma transfer
+ * क्रमागत owl_dmadesc_offsets - Describe DMA descriptor, hardware link
+ * list क्रम dma transfer
  * @OWL_DMADESC_NEXT_LLI: physical address of the next link list
  * @OWL_DMADESC_SADDR: source physical address
  * @OWL_DMADESC_DADDR: destination physical address
@@ -133,11 +134,11 @@
  * @OWL_DMADESC_SRC_STRIDE: source stride
  * @OWL_DMADESC_DST_STRIDE: destination stride
  * @OWL_DMADESC_CTRLA: dma_mode and linklist ctrl config
- * @OWL_DMADESC_CTRLB: interrupt config
- * @OWL_DMADESC_CONST_NUM: data for constant fill
- * @OWL_DMADESC_SIZE: max size of this enum
+ * @OWL_DMADESC_CTRLB: पूर्णांकerrupt config
+ * @OWL_DMADESC_CONST_NUM: data क्रम स्थिरant fill
+ * @OWL_DMADESC_SIZE: max size of this क्रमागत
  */
-enum owl_dmadesc_offsets {
+क्रमागत owl_dmadesc_offsets अणु
 	OWL_DMADESC_NEXT_LLI = 0,
 	OWL_DMADESC_SADDR,
 	OWL_DMADESC_DADDR,
@@ -148,166 +149,166 @@ enum owl_dmadesc_offsets {
 	OWL_DMADESC_CTRLB,
 	OWL_DMADESC_CONST_NUM,
 	OWL_DMADESC_SIZE
-};
+पूर्ण;
 
-enum owl_dma_id {
+क्रमागत owl_dma_id अणु
 	S900_DMA,
 	S700_DMA,
-};
+पूर्ण;
 
 /**
- * struct owl_dma_lli - Link list for dma transfer
+ * काष्ठा owl_dma_lli - Link list क्रम dma transfer
  * @hw: hardware link list
  * @phys: physical address of hardware link list
- * @node: node for txd's lli_list
+ * @node: node क्रम txd's lli_list
  */
-struct owl_dma_lli {
+काष्ठा owl_dma_lli अणु
 	u32			hw[OWL_DMADESC_SIZE];
 	dma_addr_t		phys;
-	struct list_head	node;
-};
+	काष्ठा list_head	node;
+पूर्ण;
 
 /**
- * struct owl_dma_txd - Wrapper for struct dma_async_tx_descriptor
- * @vd: virtual DMA descriptor
+ * काष्ठा owl_dma_txd - Wrapper क्रम काष्ठा dma_async_tx_descriptor
+ * @vd: भव DMA descriptor
  * @lli_list: link list of lli nodes
  * @cyclic: flag to indicate cyclic transfers
  */
-struct owl_dma_txd {
-	struct virt_dma_desc	vd;
-	struct list_head	lli_list;
+काष्ठा owl_dma_txd अणु
+	काष्ठा virt_dma_desc	vd;
+	काष्ठा list_head	lli_list;
 	bool			cyclic;
-};
+पूर्ण;
 
 /**
- * struct owl_dma_pchan - Holder for the physical channels
+ * काष्ठा owl_dma_pchan - Holder क्रम the physical channels
  * @id: physical index to this channel
- * @base: virtual memory base for the dma channel
- * @vchan: the virtual channel currently being served by this physical channel
+ * @base: भव memory base क्रम the dma channel
+ * @vchan: the भव channel currently being served by this physical channel
  */
-struct owl_dma_pchan {
+काष्ठा owl_dma_pchan अणु
 	u32			id;
-	void __iomem		*base;
-	struct owl_dma_vchan	*vchan;
-};
+	व्योम __iomem		*base;
+	काष्ठा owl_dma_vchan	*vchan;
+पूर्ण;
 
 /**
- * struct owl_dma_pchan - Wrapper for DMA ENGINE channel
- * @vc: wrappped virtual channel
+ * काष्ठा owl_dma_pchan - Wrapper क्रम DMA ENGINE channel
+ * @vc: wrappped भव channel
  * @pchan: the physical channel utilized by this channel
  * @txd: active transaction on this channel
- * @cfg: slave configuration for this channel
- * @drq: physical DMA request ID for this channel
+ * @cfg: slave configuration क्रम this channel
+ * @drq: physical DMA request ID क्रम this channel
  */
-struct owl_dma_vchan {
-	struct virt_dma_chan	vc;
-	struct owl_dma_pchan	*pchan;
-	struct owl_dma_txd	*txd;
-	struct dma_slave_config cfg;
+काष्ठा owl_dma_vchan अणु
+	काष्ठा virt_dma_chan	vc;
+	काष्ठा owl_dma_pchan	*pchan;
+	काष्ठा owl_dma_txd	*txd;
+	काष्ठा dma_slave_config cfg;
 	u8			drq;
-};
+पूर्ण;
 
 /**
- * struct owl_dma - Holder for the Owl DMA controller
- * @dma: dma engine for this instance
- * @base: virtual memory base for the DMA controller
- * @clk: clock for the DMA controller
- * @lock: a lock to use when change DMA controller global register
- * @lli_pool: a pool for the LLI descriptors
- * @irq: interrupt ID for the DMA controller
+ * काष्ठा owl_dma - Holder क्रम the Owl DMA controller
+ * @dma: dma engine क्रम this instance
+ * @base: भव memory base क्रम the DMA controller
+ * @clk: घड़ी क्रम the DMA controller
+ * @lock: a lock to use when change DMA controller global रेजिस्टर
+ * @lli_pool: a pool क्रम the LLI descriptors
+ * @irq: पूर्णांकerrupt ID क्रम the DMA controller
  * @nr_pchans: the number of physical channels
- * @pchans: array of data for the physical channels
+ * @pchans: array of data क्रम the physical channels
  * @nr_vchans: the number of physical channels
- * @vchans: array of data for the physical channels
+ * @vchans: array of data क्रम the physical channels
  * @devid: device id based on OWL SoC
  */
-struct owl_dma {
-	struct dma_device	dma;
-	void __iomem		*base;
-	struct clk		*clk;
+काष्ठा owl_dma अणु
+	काष्ठा dma_device	dma;
+	व्योम __iomem		*base;
+	काष्ठा clk		*clk;
 	spinlock_t		lock;
-	struct dma_pool		*lli_pool;
-	int			irq;
+	काष्ठा dma_pool		*lli_pool;
+	पूर्णांक			irq;
 
-	unsigned int		nr_pchans;
-	struct owl_dma_pchan	*pchans;
+	अचिन्हित पूर्णांक		nr_pchans;
+	काष्ठा owl_dma_pchan	*pchans;
 
-	unsigned int		nr_vchans;
-	struct owl_dma_vchan	*vchans;
-	enum owl_dma_id		devid;
-};
+	अचिन्हित पूर्णांक		nr_vchans;
+	काष्ठा owl_dma_vchan	*vchans;
+	क्रमागत owl_dma_id		devid;
+पूर्ण;
 
-static void pchan_update(struct owl_dma_pchan *pchan, u32 reg,
+अटल व्योम pchan_update(काष्ठा owl_dma_pchan *pchan, u32 reg,
 			 u32 val, bool state)
-{
+अणु
 	u32 regval;
 
-	regval = readl(pchan->base + reg);
+	regval = पढ़ोl(pchan->base + reg);
 
-	if (state)
+	अगर (state)
 		regval |= val;
-	else
+	अन्यथा
 		regval &= ~val;
 
-	writel(val, pchan->base + reg);
-}
+	ग_लिखोl(val, pchan->base + reg);
+पूर्ण
 
-static void pchan_writel(struct owl_dma_pchan *pchan, u32 reg, u32 data)
-{
-	writel(data, pchan->base + reg);
-}
+अटल व्योम pchan_ग_लिखोl(काष्ठा owl_dma_pchan *pchan, u32 reg, u32 data)
+अणु
+	ग_लिखोl(data, pchan->base + reg);
+पूर्ण
 
-static u32 pchan_readl(struct owl_dma_pchan *pchan, u32 reg)
-{
-	return readl(pchan->base + reg);
-}
+अटल u32 pchan_पढ़ोl(काष्ठा owl_dma_pchan *pchan, u32 reg)
+अणु
+	वापस पढ़ोl(pchan->base + reg);
+पूर्ण
 
-static void dma_update(struct owl_dma *od, u32 reg, u32 val, bool state)
-{
+अटल व्योम dma_update(काष्ठा owl_dma *od, u32 reg, u32 val, bool state)
+अणु
 	u32 regval;
 
-	regval = readl(od->base + reg);
+	regval = पढ़ोl(od->base + reg);
 
-	if (state)
+	अगर (state)
 		regval |= val;
-	else
+	अन्यथा
 		regval &= ~val;
 
-	writel(val, od->base + reg);
-}
+	ग_लिखोl(val, od->base + reg);
+पूर्ण
 
-static void dma_writel(struct owl_dma *od, u32 reg, u32 data)
-{
-	writel(data, od->base + reg);
-}
+अटल व्योम dma_ग_लिखोl(काष्ठा owl_dma *od, u32 reg, u32 data)
+अणु
+	ग_लिखोl(data, od->base + reg);
+पूर्ण
 
-static u32 dma_readl(struct owl_dma *od, u32 reg)
-{
-	return readl(od->base + reg);
-}
+अटल u32 dma_पढ़ोl(काष्ठा owl_dma *od, u32 reg)
+अणु
+	वापस पढ़ोl(od->base + reg);
+पूर्ण
 
-static inline struct owl_dma *to_owl_dma(struct dma_device *dd)
-{
-	return container_of(dd, struct owl_dma, dma);
-}
+अटल अंतरभूत काष्ठा owl_dma *to_owl_dma(काष्ठा dma_device *dd)
+अणु
+	वापस container_of(dd, काष्ठा owl_dma, dma);
+पूर्ण
 
-static struct device *chan2dev(struct dma_chan *chan)
-{
-	return &chan->dev->device;
-}
+अटल काष्ठा device *chan2dev(काष्ठा dma_chan *chan)
+अणु
+	वापस &chan->dev->device;
+पूर्ण
 
-static inline struct owl_dma_vchan *to_owl_vchan(struct dma_chan *chan)
-{
-	return container_of(chan, struct owl_dma_vchan, vc.chan);
-}
+अटल अंतरभूत काष्ठा owl_dma_vchan *to_owl_vchan(काष्ठा dma_chan *chan)
+अणु
+	वापस container_of(chan, काष्ठा owl_dma_vchan, vc.chan);
+पूर्ण
 
-static inline struct owl_dma_txd *to_owl_txd(struct dma_async_tx_descriptor *tx)
-{
-	return container_of(tx, struct owl_dma_txd, vd.tx);
-}
+अटल अंतरभूत काष्ठा owl_dma_txd *to_owl_txd(काष्ठा dma_async_tx_descriptor *tx)
+अणु
+	वापस container_of(tx, काष्ठा owl_dma_txd, vd.tx);
+पूर्ण
 
-static inline u32 llc_hw_ctrla(u32 mode, u32 llc_ctl)
-{
+अटल अंतरभूत u32 llc_hw_ctrla(u32 mode, u32 llc_ctl)
+अणु
 	u32 ctl;
 
 	ctl = BIT_FIELD(mode, 4, 28, 28) |
@@ -317,253 +318,253 @@ static inline u32 llc_hw_ctrla(u32 mode, u32 llc_ctl)
 	      BIT_FIELD(llc_ctl, 2, 10, 8) |
 	      BIT_FIELD(llc_ctl, 2, 8, 6);
 
-	return ctl;
-}
+	वापस ctl;
+पूर्ण
 
-static inline u32 llc_hw_ctrlb(u32 int_ctl)
-{
+अटल अंतरभूत u32 llc_hw_ctrlb(u32 पूर्णांक_ctl)
+अणु
 	u32 ctl;
 
 	/*
 	 * Irrespective of the SoC, ctrlb value starts filling from
 	 * bit 18.
 	 */
-	ctl = BIT_FIELD(int_ctl, 7, 0, 18);
+	ctl = BIT_FIELD(पूर्णांक_ctl, 7, 0, 18);
 
-	return ctl;
-}
+	वापस ctl;
+पूर्ण
 
-static u32 llc_hw_flen(struct owl_dma_lli *lli)
-{
-	return lli->hw[OWL_DMADESC_FLEN] & GENMASK(19, 0);
-}
+अटल u32 llc_hw_flen(काष्ठा owl_dma_lli *lli)
+अणु
+	वापस lli->hw[OWL_DMADESC_FLEN] & GENMASK(19, 0);
+पूर्ण
 
-static void owl_dma_free_lli(struct owl_dma *od,
-			     struct owl_dma_lli *lli)
-{
+अटल व्योम owl_dma_मुक्त_lli(काष्ठा owl_dma *od,
+			     काष्ठा owl_dma_lli *lli)
+अणु
 	list_del(&lli->node);
-	dma_pool_free(od->lli_pool, lli, lli->phys);
-}
+	dma_pool_मुक्त(od->lli_pool, lli, lli->phys);
+पूर्ण
 
-static struct owl_dma_lli *owl_dma_alloc_lli(struct owl_dma *od)
-{
-	struct owl_dma_lli *lli;
+अटल काष्ठा owl_dma_lli *owl_dma_alloc_lli(काष्ठा owl_dma *od)
+अणु
+	काष्ठा owl_dma_lli *lli;
 	dma_addr_t phys;
 
 	lli = dma_pool_alloc(od->lli_pool, GFP_NOWAIT, &phys);
-	if (!lli)
-		return NULL;
+	अगर (!lli)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&lli->node);
 	lli->phys = phys;
 
-	return lli;
-}
+	वापस lli;
+पूर्ण
 
-static struct owl_dma_lli *owl_dma_add_lli(struct owl_dma_txd *txd,
-					   struct owl_dma_lli *prev,
-					   struct owl_dma_lli *next,
+अटल काष्ठा owl_dma_lli *owl_dma_add_lli(काष्ठा owl_dma_txd *txd,
+					   काष्ठा owl_dma_lli *prev,
+					   काष्ठा owl_dma_lli *next,
 					   bool is_cyclic)
-{
-	if (!is_cyclic)
+अणु
+	अगर (!is_cyclic)
 		list_add_tail(&next->node, &txd->lli_list);
 
-	if (prev) {
+	अगर (prev) अणु
 		prev->hw[OWL_DMADESC_NEXT_LLI] = next->phys;
 		prev->hw[OWL_DMADESC_CTRLA] |=
 					llc_hw_ctrla(OWL_DMA_MODE_LME, 0);
-	}
+	पूर्ण
 
-	return next;
-}
+	वापस next;
+पूर्ण
 
-static inline int owl_dma_cfg_lli(struct owl_dma_vchan *vchan,
-				  struct owl_dma_lli *lli,
+अटल अंतरभूत पूर्णांक owl_dma_cfg_lli(काष्ठा owl_dma_vchan *vchan,
+				  काष्ठा owl_dma_lli *lli,
 				  dma_addr_t src, dma_addr_t dst,
-				  u32 len, enum dma_transfer_direction dir,
-				  struct dma_slave_config *sconfig,
+				  u32 len, क्रमागत dma_transfer_direction dir,
+				  काष्ठा dma_slave_config *sconfig,
 				  bool is_cyclic)
-{
-	struct owl_dma *od = to_owl_dma(vchan->vc.chan.device);
+अणु
+	काष्ठा owl_dma *od = to_owl_dma(vchan->vc.chan.device);
 	u32 mode, ctrlb;
 
 	mode = OWL_DMA_MODE_PW(0);
 
-	switch (dir) {
-	case DMA_MEM_TO_MEM:
+	चयन (dir) अणु
+	हाल DMA_MEM_TO_MEM:
 		mode |= OWL_DMA_MODE_TS(0) | OWL_DMA_MODE_ST_DCU |
 			OWL_DMA_MODE_DT_DCU | OWL_DMA_MODE_SAM_INC |
 			OWL_DMA_MODE_DAM_INC;
 
-		break;
-	case DMA_MEM_TO_DEV:
+		अवरोध;
+	हाल DMA_MEM_TO_DEV:
 		mode |= OWL_DMA_MODE_TS(vchan->drq)
 			| OWL_DMA_MODE_ST_DCU | OWL_DMA_MODE_DT_DEV
 			| OWL_DMA_MODE_SAM_INC | OWL_DMA_MODE_DAM_CONST;
 
 		/*
 		 * Hardware only supports 32bit and 8bit buswidth. Since the
-		 * default is 32bit, select 8bit only when requested.
+		 * शेष is 32bit, select 8bit only when requested.
 		 */
-		if (sconfig->dst_addr_width == DMA_SLAVE_BUSWIDTH_1_BYTE)
+		अगर (sconfig->dst_addr_width == DMA_SLAVE_BUSWIDTH_1_BYTE)
 			mode |= OWL_DMA_MODE_NDDBW_8BIT;
 
-		break;
-	case DMA_DEV_TO_MEM:
+		अवरोध;
+	हाल DMA_DEV_TO_MEM:
 		 mode |= OWL_DMA_MODE_TS(vchan->drq)
 			| OWL_DMA_MODE_ST_DEV | OWL_DMA_MODE_DT_DCU
 			| OWL_DMA_MODE_SAM_CONST | OWL_DMA_MODE_DAM_INC;
 
 		/*
 		 * Hardware only supports 32bit and 8bit buswidth. Since the
-		 * default is 32bit, select 8bit only when requested.
+		 * शेष is 32bit, select 8bit only when requested.
 		 */
-		if (sconfig->src_addr_width == DMA_SLAVE_BUSWIDTH_1_BYTE)
+		अगर (sconfig->src_addr_width == DMA_SLAVE_BUSWIDTH_1_BYTE)
 			mode |= OWL_DMA_MODE_NDDBW_8BIT;
 
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	lli->hw[OWL_DMADESC_CTRLA] = llc_hw_ctrla(mode,
 						  OWL_DMA_LLC_SAV_LOAD_NEXT |
 						  OWL_DMA_LLC_DAV_LOAD_NEXT);
 
-	if (is_cyclic)
+	अगर (is_cyclic)
 		ctrlb = llc_hw_ctrlb(OWL_DMA_INTCTL_BLOCK);
-	else
+	अन्यथा
 		ctrlb = llc_hw_ctrlb(OWL_DMA_INTCTL_SUPER_BLOCK);
 
-	lli->hw[OWL_DMADESC_NEXT_LLI] = 0; /* One link list by default */
+	lli->hw[OWL_DMADESC_NEXT_LLI] = 0; /* One link list by शेष */
 	lli->hw[OWL_DMADESC_SADDR] = src;
 	lli->hw[OWL_DMADESC_DADDR] = dst;
 	lli->hw[OWL_DMADESC_SRC_STRIDE] = 0;
 	lli->hw[OWL_DMADESC_DST_STRIDE] = 0;
 
-	if (od->devid == S700_DMA) {
+	अगर (od->devid == S700_DMA) अणु
 		/* Max frame length is 1MB */
 		lli->hw[OWL_DMADESC_FLEN] = len;
 		/*
 		 * On S700, word starts from offset 0x1C is shared between
-		 * frame count and ctrlb, where first 12 bits are for frame
-		 * count and rest of 20 bits are for ctrlb.
+		 * frame count and ctrlb, where first 12 bits are क्रम frame
+		 * count and rest of 20 bits are क्रम ctrlb.
 		 */
 		lli->hw[OWL_DMADESC_CTRLB] = FCNT_VAL | ctrlb;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * On S900, word starts from offset 0xC is shared between
 		 * frame length (max frame length is 1MB) and frame count,
-		 * where first 20 bits are for frame length and rest of
-		 * 12 bits are for frame count.
+		 * where first 20 bits are क्रम frame length and rest of
+		 * 12 bits are क्रम frame count.
 		 */
 		lli->hw[OWL_DMADESC_FLEN] = len | FCNT_VAL << 20;
 		lli->hw[OWL_DMADESC_CTRLB] = ctrlb;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct owl_dma_pchan *owl_dma_get_pchan(struct owl_dma *od,
-					       struct owl_dma_vchan *vchan)
-{
-	struct owl_dma_pchan *pchan = NULL;
-	unsigned long flags;
-	int i;
+अटल काष्ठा owl_dma_pchan *owl_dma_get_pchan(काष्ठा owl_dma *od,
+					       काष्ठा owl_dma_vchan *vchan)
+अणु
+	काष्ठा owl_dma_pchan *pchan = शून्य;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
-	for (i = 0; i < od->nr_pchans; i++) {
+	क्रम (i = 0; i < od->nr_pchans; i++) अणु
 		pchan = &od->pchans[i];
 
 		spin_lock_irqsave(&od->lock, flags);
-		if (!pchan->vchan) {
+		अगर (!pchan->vchan) अणु
 			pchan->vchan = vchan;
 			spin_unlock_irqrestore(&od->lock, flags);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		spin_unlock_irqrestore(&od->lock, flags);
-	}
+	पूर्ण
 
-	return pchan;
-}
+	वापस pchan;
+पूर्ण
 
-static int owl_dma_pchan_busy(struct owl_dma *od, struct owl_dma_pchan *pchan)
-{
-	unsigned int val;
+अटल पूर्णांक owl_dma_pchan_busy(काष्ठा owl_dma *od, काष्ठा owl_dma_pchan *pchan)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	val = dma_readl(od, OWL_DMA_IDLE_STAT);
+	val = dma_पढ़ोl(od, OWL_DMA_IDLE_STAT);
 
-	return !(val & (1 << pchan->id));
-}
+	वापस !(val & (1 << pchan->id));
+पूर्ण
 
-static void owl_dma_terminate_pchan(struct owl_dma *od,
-				    struct owl_dma_pchan *pchan)
-{
-	unsigned long flags;
+अटल व्योम owl_dma_terminate_pchan(काष्ठा owl_dma *od,
+				    काष्ठा owl_dma_pchan *pchan)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 irq_pd;
 
-	pchan_writel(pchan, OWL_DMAX_START, 0);
+	pchan_ग_लिखोl(pchan, OWL_DMAX_START, 0);
 	pchan_update(pchan, OWL_DMAX_INT_STATUS, 0xff, false);
 
 	spin_lock_irqsave(&od->lock, flags);
 	dma_update(od, OWL_DMA_IRQ_EN0, (1 << pchan->id), false);
 
-	irq_pd = dma_readl(od, OWL_DMA_IRQ_PD0);
-	if (irq_pd & (1 << pchan->id)) {
+	irq_pd = dma_पढ़ोl(od, OWL_DMA_IRQ_PD0);
+	अगर (irq_pd & (1 << pchan->id)) अणु
 		dev_warn(od->dma.dev,
 			 "terminating pchan %d that still has pending irq\n",
 			 pchan->id);
-		dma_writel(od, OWL_DMA_IRQ_PD0, (1 << pchan->id));
-	}
+		dma_ग_लिखोl(od, OWL_DMA_IRQ_PD0, (1 << pchan->id));
+	पूर्ण
 
-	pchan->vchan = NULL;
+	pchan->vchan = शून्य;
 
 	spin_unlock_irqrestore(&od->lock, flags);
-}
+पूर्ण
 
-static void owl_dma_pause_pchan(struct owl_dma_pchan *pchan)
-{
-	pchan_writel(pchan, 1, OWL_DMAX_PAUSE);
-}
+अटल व्योम owl_dma_छोड़ो_pchan(काष्ठा owl_dma_pchan *pchan)
+अणु
+	pchan_ग_लिखोl(pchan, 1, OWL_DMAX_PAUSE);
+पूर्ण
 
-static void owl_dma_resume_pchan(struct owl_dma_pchan *pchan)
-{
-	pchan_writel(pchan, 0, OWL_DMAX_PAUSE);
-}
+अटल व्योम owl_dma_resume_pchan(काष्ठा owl_dma_pchan *pchan)
+अणु
+	pchan_ग_लिखोl(pchan, 0, OWL_DMAX_PAUSE);
+पूर्ण
 
-static int owl_dma_start_next_txd(struct owl_dma_vchan *vchan)
-{
-	struct owl_dma *od = to_owl_dma(vchan->vc.chan.device);
-	struct virt_dma_desc *vd = vchan_next_desc(&vchan->vc);
-	struct owl_dma_pchan *pchan = vchan->pchan;
-	struct owl_dma_txd *txd = to_owl_txd(&vd->tx);
-	struct owl_dma_lli *lli;
-	unsigned long flags;
-	u32 int_ctl;
+अटल पूर्णांक owl_dma_start_next_txd(काष्ठा owl_dma_vchan *vchan)
+अणु
+	काष्ठा owl_dma *od = to_owl_dma(vchan->vc.chan.device);
+	काष्ठा virt_dma_desc *vd = vchan_next_desc(&vchan->vc);
+	काष्ठा owl_dma_pchan *pchan = vchan->pchan;
+	काष्ठा owl_dma_txd *txd = to_owl_txd(&vd->tx);
+	काष्ठा owl_dma_lli *lli;
+	अचिन्हित दीर्घ flags;
+	u32 पूर्णांक_ctl;
 
 	list_del(&vd->node);
 
 	vchan->txd = txd;
 
-	/* Wait for channel inactive */
-	while (owl_dma_pchan_busy(od, pchan))
+	/* Wait क्रम channel inactive */
+	जबतक (owl_dma_pchan_busy(od, pchan))
 		cpu_relax();
 
 	lli = list_first_entry(&txd->lli_list,
-			       struct owl_dma_lli, node);
+			       काष्ठा owl_dma_lli, node);
 
-	if (txd->cyclic)
-		int_ctl = OWL_DMA_INTCTL_BLOCK;
-	else
-		int_ctl = OWL_DMA_INTCTL_SUPER_BLOCK;
+	अगर (txd->cyclic)
+		पूर्णांक_ctl = OWL_DMA_INTCTL_BLOCK;
+	अन्यथा
+		पूर्णांक_ctl = OWL_DMA_INTCTL_SUPER_BLOCK;
 
-	pchan_writel(pchan, OWL_DMAX_MODE, OWL_DMA_MODE_LME);
-	pchan_writel(pchan, OWL_DMAX_LINKLIST_CTL,
+	pchan_ग_लिखोl(pchan, OWL_DMAX_MODE, OWL_DMA_MODE_LME);
+	pchan_ग_लिखोl(pchan, OWL_DMAX_LINKLIST_CTL,
 		     OWL_DMA_LLC_SAV_LOAD_NEXT | OWL_DMA_LLC_DAV_LOAD_NEXT);
-	pchan_writel(pchan, OWL_DMAX_NEXT_DESCRIPTOR, lli->phys);
-	pchan_writel(pchan, OWL_DMAX_INT_CTL, int_ctl);
+	pchan_ग_लिखोl(pchan, OWL_DMAX_NEXT_DESCRIPTOR, lli->phys);
+	pchan_ग_लिखोl(pchan, OWL_DMAX_INT_CTL, पूर्णांक_ctl);
 
-	/* Clear IRQ status for this pchan */
+	/* Clear IRQ status क्रम this pchan */
 	pchan_update(pchan, OWL_DMAX_INT_STATUS, 0xff, false);
 
 	spin_lock_irqsave(&od->lock, flags);
@@ -574,187 +575,187 @@ static int owl_dma_start_next_txd(struct owl_dma_vchan *vchan)
 
 	dev_dbg(chan2dev(&vchan->vc.chan), "starting pchan %d\n", pchan->id);
 
-	/* Start DMA transfer for this pchan */
-	pchan_writel(pchan, OWL_DMAX_START, 0x1);
+	/* Start DMA transfer क्रम this pchan */
+	pchan_ग_लिखोl(pchan, OWL_DMAX_START, 0x1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void owl_dma_phy_free(struct owl_dma *od, struct owl_dma_vchan *vchan)
-{
+अटल व्योम owl_dma_phy_मुक्त(काष्ठा owl_dma *od, काष्ठा owl_dma_vchan *vchan)
+अणु
 	/* Ensure that the physical channel is stopped */
 	owl_dma_terminate_pchan(od, vchan->pchan);
 
-	vchan->pchan = NULL;
-}
+	vchan->pchan = शून्य;
+पूर्ण
 
-static irqreturn_t owl_dma_interrupt(int irq, void *dev_id)
-{
-	struct owl_dma *od = dev_id;
-	struct owl_dma_vchan *vchan;
-	struct owl_dma_pchan *pchan;
-	unsigned long pending;
-	int i;
-	unsigned int global_irq_pending, chan_irq_pending;
+अटल irqवापस_t owl_dma_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा owl_dma *od = dev_id;
+	काष्ठा owl_dma_vchan *vchan;
+	काष्ठा owl_dma_pchan *pchan;
+	अचिन्हित दीर्घ pending;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक global_irq_pending, chan_irq_pending;
 
 	spin_lock(&od->lock);
 
-	pending = dma_readl(od, OWL_DMA_IRQ_PD0);
+	pending = dma_पढ़ोl(od, OWL_DMA_IRQ_PD0);
 
-	/* Clear IRQ status for each pchan */
-	for_each_set_bit(i, &pending, od->nr_pchans) {
+	/* Clear IRQ status क्रम each pchan */
+	क्रम_each_set_bit(i, &pending, od->nr_pchans) अणु
 		pchan = &od->pchans[i];
 		pchan_update(pchan, OWL_DMAX_INT_STATUS, 0xff, false);
-	}
+	पूर्ण
 
 	/* Clear pending IRQ */
-	dma_writel(od, OWL_DMA_IRQ_PD0, pending);
+	dma_ग_लिखोl(od, OWL_DMA_IRQ_PD0, pending);
 
 	/* Check missed pending IRQ */
-	for (i = 0; i < od->nr_pchans; i++) {
+	क्रम (i = 0; i < od->nr_pchans; i++) अणु
 		pchan = &od->pchans[i];
-		chan_irq_pending = pchan_readl(pchan, OWL_DMAX_INT_CTL) &
-				   pchan_readl(pchan, OWL_DMAX_INT_STATUS);
+		chan_irq_pending = pchan_पढ़ोl(pchan, OWL_DMAX_INT_CTL) &
+				   pchan_पढ़ोl(pchan, OWL_DMAX_INT_STATUS);
 
-		/* Dummy read to ensure OWL_DMA_IRQ_PD0 value is updated */
-		dma_readl(od, OWL_DMA_IRQ_PD0);
+		/* Dummy पढ़ो to ensure OWL_DMA_IRQ_PD0 value is updated */
+		dma_पढ़ोl(od, OWL_DMA_IRQ_PD0);
 
-		global_irq_pending = dma_readl(od, OWL_DMA_IRQ_PD0);
+		global_irq_pending = dma_पढ़ोl(od, OWL_DMA_IRQ_PD0);
 
-		if (chan_irq_pending && !(global_irq_pending & BIT(i))) {
+		अगर (chan_irq_pending && !(global_irq_pending & BIT(i))) अणु
 			dev_dbg(od->dma.dev,
 				"global and channel IRQ pending match err\n");
 
-			/* Clear IRQ status for this pchan */
+			/* Clear IRQ status क्रम this pchan */
 			pchan_update(pchan, OWL_DMAX_INT_STATUS,
 				     0xff, false);
 
 			/* Update global IRQ pending */
 			pending |= BIT(i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&od->lock);
 
-	for_each_set_bit(i, &pending, od->nr_pchans) {
-		struct owl_dma_txd *txd;
+	क्रम_each_set_bit(i, &pending, od->nr_pchans) अणु
+		काष्ठा owl_dma_txd *txd;
 
 		pchan = &od->pchans[i];
 
 		vchan = pchan->vchan;
-		if (!vchan) {
+		अगर (!vchan) अणु
 			dev_warn(od->dma.dev, "no vchan attached on pchan %d\n",
 				 pchan->id);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		spin_lock(&vchan->vc.lock);
 
 		txd = vchan->txd;
-		if (txd) {
-			vchan->txd = NULL;
+		अगर (txd) अणु
+			vchan->txd = शून्य;
 
 			vchan_cookie_complete(&txd->vd);
 
 			/*
-			 * Start the next descriptor (if any),
-			 * otherwise free this channel.
+			 * Start the next descriptor (अगर any),
+			 * otherwise मुक्त this channel.
 			 */
-			if (vchan_next_desc(&vchan->vc))
+			अगर (vchan_next_desc(&vchan->vc))
 				owl_dma_start_next_txd(vchan);
-			else
-				owl_dma_phy_free(od, vchan);
-		}
+			अन्यथा
+				owl_dma_phy_मुक्त(od, vchan);
+		पूर्ण
 
 		spin_unlock(&vchan->vc.lock);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void owl_dma_free_txd(struct owl_dma *od, struct owl_dma_txd *txd)
-{
-	struct owl_dma_lli *lli, *_lli;
+अटल व्योम owl_dma_मुक्त_txd(काष्ठा owl_dma *od, काष्ठा owl_dma_txd *txd)
+अणु
+	काष्ठा owl_dma_lli *lli, *_lli;
 
-	if (unlikely(!txd))
-		return;
+	अगर (unlikely(!txd))
+		वापस;
 
-	list_for_each_entry_safe(lli, _lli, &txd->lli_list, node)
-		owl_dma_free_lli(od, lli);
+	list_क्रम_each_entry_safe(lli, _lli, &txd->lli_list, node)
+		owl_dma_मुक्त_lli(od, lli);
 
-	kfree(txd);
-}
+	kमुक्त(txd);
+पूर्ण
 
-static void owl_dma_desc_free(struct virt_dma_desc *vd)
-{
-	struct owl_dma *od = to_owl_dma(vd->tx.chan->device);
-	struct owl_dma_txd *txd = to_owl_txd(&vd->tx);
+अटल व्योम owl_dma_desc_मुक्त(काष्ठा virt_dma_desc *vd)
+अणु
+	काष्ठा owl_dma *od = to_owl_dma(vd->tx.chan->device);
+	काष्ठा owl_dma_txd *txd = to_owl_txd(&vd->tx);
 
-	owl_dma_free_txd(od, txd);
-}
+	owl_dma_मुक्त_txd(od, txd);
+पूर्ण
 
-static int owl_dma_terminate_all(struct dma_chan *chan)
-{
-	struct owl_dma *od = to_owl_dma(chan->device);
-	struct owl_dma_vchan *vchan = to_owl_vchan(chan);
-	unsigned long flags;
+अटल पूर्णांक owl_dma_terminate_all(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा owl_dma *od = to_owl_dma(chan->device);
+	काष्ठा owl_dma_vchan *vchan = to_owl_vchan(chan);
+	अचिन्हित दीर्घ flags;
 	LIST_HEAD(head);
 
 	spin_lock_irqsave(&vchan->vc.lock, flags);
 
-	if (vchan->pchan)
-		owl_dma_phy_free(od, vchan);
+	अगर (vchan->pchan)
+		owl_dma_phy_मुक्त(od, vchan);
 
-	if (vchan->txd) {
-		owl_dma_desc_free(&vchan->txd->vd);
-		vchan->txd = NULL;
-	}
+	अगर (vchan->txd) अणु
+		owl_dma_desc_मुक्त(&vchan->txd->vd);
+		vchan->txd = शून्य;
+	पूर्ण
 
 	vchan_get_all_descriptors(&vchan->vc, &head);
 
 	spin_unlock_irqrestore(&vchan->vc.lock, flags);
 
-	vchan_dma_desc_free_list(&vchan->vc, &head);
+	vchan_dma_desc_मुक्त_list(&vchan->vc, &head);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int owl_dma_config(struct dma_chan *chan,
-			  struct dma_slave_config *config)
-{
-	struct owl_dma_vchan *vchan = to_owl_vchan(chan);
+अटल पूर्णांक owl_dma_config(काष्ठा dma_chan *chan,
+			  काष्ठा dma_slave_config *config)
+अणु
+	काष्ठा owl_dma_vchan *vchan = to_owl_vchan(chan);
 
 	/* Reject definitely invalid configurations */
-	if (config->src_addr_width == DMA_SLAVE_BUSWIDTH_8_BYTES ||
+	अगर (config->src_addr_width == DMA_SLAVE_BUSWIDTH_8_BYTES ||
 	    config->dst_addr_width == DMA_SLAVE_BUSWIDTH_8_BYTES)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	memcpy(&vchan->cfg, config, sizeof(struct dma_slave_config));
+	स_नकल(&vchan->cfg, config, माप(काष्ठा dma_slave_config));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int owl_dma_pause(struct dma_chan *chan)
-{
-	struct owl_dma_vchan *vchan = to_owl_vchan(chan);
-	unsigned long flags;
+अटल पूर्णांक owl_dma_छोड़ो(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा owl_dma_vchan *vchan = to_owl_vchan(chan);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vchan->vc.lock, flags);
 
-	owl_dma_pause_pchan(vchan->pchan);
+	owl_dma_छोड़ो_pchan(vchan->pchan);
 
 	spin_unlock_irqrestore(&vchan->vc.lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int owl_dma_resume(struct dma_chan *chan)
-{
-	struct owl_dma_vchan *vchan = to_owl_vchan(chan);
-	unsigned long flags;
+अटल पूर्णांक owl_dma_resume(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा owl_dma_vchan *vchan = to_owl_vchan(chan);
+	अचिन्हित दीर्घ flags;
 
-	if (!vchan->pchan && !vchan->txd)
-		return 0;
+	अगर (!vchan->pchan && !vchan->txd)
+		वापस 0;
 
 	dev_dbg(chan2dev(chan), "vchan %p: resume\n", &vchan->vc);
 
@@ -764,366 +765,366 @@ static int owl_dma_resume(struct dma_chan *chan)
 
 	spin_unlock_irqrestore(&vchan->vc.lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 owl_dma_getbytes_chan(struct owl_dma_vchan *vchan)
-{
-	struct owl_dma_pchan *pchan;
-	struct owl_dma_txd *txd;
-	struct owl_dma_lli *lli;
-	unsigned int next_lli_phy;
-	size_t bytes;
+अटल u32 owl_dma_getbytes_chan(काष्ठा owl_dma_vchan *vchan)
+अणु
+	काष्ठा owl_dma_pchan *pchan;
+	काष्ठा owl_dma_txd *txd;
+	काष्ठा owl_dma_lli *lli;
+	अचिन्हित पूर्णांक next_lli_phy;
+	माप_प्रकार bytes;
 
 	pchan = vchan->pchan;
 	txd = vchan->txd;
 
-	if (!pchan || !txd)
-		return 0;
+	अगर (!pchan || !txd)
+		वापस 0;
 
-	/* Get remain count of current node in link list */
-	bytes = pchan_readl(pchan, OWL_DMAX_REMAIN_CNT);
+	/* Get reमुख्य count of current node in link list */
+	bytes = pchan_पढ़ोl(pchan, OWL_DMAX_REMAIN_CNT);
 
-	/* Loop through the preceding nodes to get total remaining bytes */
-	if (pchan_readl(pchan, OWL_DMAX_MODE) & OWL_DMA_MODE_LME) {
-		next_lli_phy = pchan_readl(pchan, OWL_DMAX_NEXT_DESCRIPTOR);
-		list_for_each_entry(lli, &txd->lli_list, node) {
+	/* Loop through the preceding nodes to get total reमुख्यing bytes */
+	अगर (pchan_पढ़ोl(pchan, OWL_DMAX_MODE) & OWL_DMA_MODE_LME) अणु
+		next_lli_phy = pchan_पढ़ोl(pchan, OWL_DMAX_NEXT_DESCRIPTOR);
+		list_क्रम_each_entry(lli, &txd->lli_list, node) अणु
 			/* Start from the next active node */
-			if (lli->phys == next_lli_phy) {
-				list_for_each_entry(lli, &txd->lli_list, node)
+			अगर (lli->phys == next_lli_phy) अणु
+				list_क्रम_each_entry(lli, &txd->lli_list, node)
 					bytes += llc_hw_flen(lli);
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return bytes;
-}
+	वापस bytes;
+पूर्ण
 
-static enum dma_status owl_dma_tx_status(struct dma_chan *chan,
+अटल क्रमागत dma_status owl_dma_tx_status(काष्ठा dma_chan *chan,
 					 dma_cookie_t cookie,
-					 struct dma_tx_state *state)
-{
-	struct owl_dma_vchan *vchan = to_owl_vchan(chan);
-	struct owl_dma_lli *lli;
-	struct virt_dma_desc *vd;
-	struct owl_dma_txd *txd;
-	enum dma_status ret;
-	unsigned long flags;
-	size_t bytes = 0;
+					 काष्ठा dma_tx_state *state)
+अणु
+	काष्ठा owl_dma_vchan *vchan = to_owl_vchan(chan);
+	काष्ठा owl_dma_lli *lli;
+	काष्ठा virt_dma_desc *vd;
+	काष्ठा owl_dma_txd *txd;
+	क्रमागत dma_status ret;
+	अचिन्हित दीर्घ flags;
+	माप_प्रकार bytes = 0;
 
 	ret = dma_cookie_status(chan, cookie, state);
-	if (ret == DMA_COMPLETE || !state)
-		return ret;
+	अगर (ret == DMA_COMPLETE || !state)
+		वापस ret;
 
 	spin_lock_irqsave(&vchan->vc.lock, flags);
 
 	vd = vchan_find_desc(&vchan->vc, cookie);
-	if (vd) {
+	अगर (vd) अणु
 		txd = to_owl_txd(&vd->tx);
-		list_for_each_entry(lli, &txd->lli_list, node)
+		list_क्रम_each_entry(lli, &txd->lli_list, node)
 			bytes += llc_hw_flen(lli);
-	} else {
+	पूर्ण अन्यथा अणु
 		bytes = owl_dma_getbytes_chan(vchan);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&vchan->vc.lock, flags);
 
 	dma_set_residue(state, bytes);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void owl_dma_phy_alloc_and_start(struct owl_dma_vchan *vchan)
-{
-	struct owl_dma *od = to_owl_dma(vchan->vc.chan.device);
-	struct owl_dma_pchan *pchan;
+अटल व्योम owl_dma_phy_alloc_and_start(काष्ठा owl_dma_vchan *vchan)
+अणु
+	काष्ठा owl_dma *od = to_owl_dma(vchan->vc.chan.device);
+	काष्ठा owl_dma_pchan *pchan;
 
 	pchan = owl_dma_get_pchan(od, vchan);
-	if (!pchan)
-		return;
+	अगर (!pchan)
+		वापस;
 
 	dev_dbg(od->dma.dev, "allocated pchan %d\n", pchan->id);
 
 	vchan->pchan = pchan;
 	owl_dma_start_next_txd(vchan);
-}
+पूर्ण
 
-static void owl_dma_issue_pending(struct dma_chan *chan)
-{
-	struct owl_dma_vchan *vchan = to_owl_vchan(chan);
-	unsigned long flags;
+अटल व्योम owl_dma_issue_pending(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा owl_dma_vchan *vchan = to_owl_vchan(chan);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vchan->vc.lock, flags);
-	if (vchan_issue_pending(&vchan->vc)) {
-		if (!vchan->pchan)
+	अगर (vchan_issue_pending(&vchan->vc)) अणु
+		अगर (!vchan->pchan)
 			owl_dma_phy_alloc_and_start(vchan);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&vchan->vc.lock, flags);
-}
+पूर्ण
 
-static struct dma_async_tx_descriptor
-		*owl_dma_prep_memcpy(struct dma_chan *chan,
+अटल काष्ठा dma_async_tx_descriptor
+		*owl_dma_prep_स_नकल(काष्ठा dma_chan *chan,
 				     dma_addr_t dst, dma_addr_t src,
-				     size_t len, unsigned long flags)
-{
-	struct owl_dma *od = to_owl_dma(chan->device);
-	struct owl_dma_vchan *vchan = to_owl_vchan(chan);
-	struct owl_dma_txd *txd;
-	struct owl_dma_lli *lli, *prev = NULL;
-	size_t offset, bytes;
-	int ret;
+				     माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा owl_dma *od = to_owl_dma(chan->device);
+	काष्ठा owl_dma_vchan *vchan = to_owl_vchan(chan);
+	काष्ठा owl_dma_txd *txd;
+	काष्ठा owl_dma_lli *lli, *prev = शून्य;
+	माप_प्रकार offset, bytes;
+	पूर्णांक ret;
 
-	if (!len)
-		return NULL;
+	अगर (!len)
+		वापस शून्य;
 
-	txd = kzalloc(sizeof(*txd), GFP_NOWAIT);
-	if (!txd)
-		return NULL;
+	txd = kzalloc(माप(*txd), GFP_NOWAIT);
+	अगर (!txd)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&txd->lli_list);
 
 	/* Process the transfer as frame by frame */
-	for (offset = 0; offset < len; offset += bytes) {
+	क्रम (offset = 0; offset < len; offset += bytes) अणु
 		lli = owl_dma_alloc_lli(od);
-		if (!lli) {
+		अगर (!lli) अणु
 			dev_warn(chan2dev(chan), "failed to allocate lli\n");
-			goto err_txd_free;
-		}
+			जाओ err_txd_मुक्त;
+		पूर्ण
 
-		bytes = min_t(size_t, (len - offset), OWL_DMA_FRAME_MAX_LENGTH);
+		bytes = min_t(माप_प्रकार, (len - offset), OWL_DMA_FRAME_MAX_LENGTH);
 
 		ret = owl_dma_cfg_lli(vchan, lli, src + offset, dst + offset,
 				      bytes, DMA_MEM_TO_MEM,
 				      &vchan->cfg, txd->cyclic);
-		if (ret) {
+		अगर (ret) अणु
 			dev_warn(chan2dev(chan), "failed to config lli\n");
-			goto err_txd_free;
-		}
+			जाओ err_txd_मुक्त;
+		पूर्ण
 
 		prev = owl_dma_add_lli(txd, prev, lli, false);
-	}
+	पूर्ण
 
-	return vchan_tx_prep(&vchan->vc, &txd->vd, flags);
+	वापस vchan_tx_prep(&vchan->vc, &txd->vd, flags);
 
-err_txd_free:
-	owl_dma_free_txd(od, txd);
-	return NULL;
-}
+err_txd_मुक्त:
+	owl_dma_मुक्त_txd(od, txd);
+	वापस शून्य;
+पूर्ण
 
-static struct dma_async_tx_descriptor
-		*owl_dma_prep_slave_sg(struct dma_chan *chan,
-				       struct scatterlist *sgl,
-				       unsigned int sg_len,
-				       enum dma_transfer_direction dir,
-				       unsigned long flags, void *context)
-{
-	struct owl_dma *od = to_owl_dma(chan->device);
-	struct owl_dma_vchan *vchan = to_owl_vchan(chan);
-	struct dma_slave_config *sconfig = &vchan->cfg;
-	struct owl_dma_txd *txd;
-	struct owl_dma_lli *lli, *prev = NULL;
-	struct scatterlist *sg;
+अटल काष्ठा dma_async_tx_descriptor
+		*owl_dma_prep_slave_sg(काष्ठा dma_chan *chan,
+				       काष्ठा scatterlist *sgl,
+				       अचिन्हित पूर्णांक sg_len,
+				       क्रमागत dma_transfer_direction dir,
+				       अचिन्हित दीर्घ flags, व्योम *context)
+अणु
+	काष्ठा owl_dma *od = to_owl_dma(chan->device);
+	काष्ठा owl_dma_vchan *vchan = to_owl_vchan(chan);
+	काष्ठा dma_slave_config *sconfig = &vchan->cfg;
+	काष्ठा owl_dma_txd *txd;
+	काष्ठा owl_dma_lli *lli, *prev = शून्य;
+	काष्ठा scatterlist *sg;
 	dma_addr_t addr, src = 0, dst = 0;
-	size_t len;
-	int ret, i;
+	माप_प्रकार len;
+	पूर्णांक ret, i;
 
-	txd = kzalloc(sizeof(*txd), GFP_NOWAIT);
-	if (!txd)
-		return NULL;
+	txd = kzalloc(माप(*txd), GFP_NOWAIT);
+	अगर (!txd)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&txd->lli_list);
 
-	for_each_sg(sgl, sg, sg_len, i) {
+	क्रम_each_sg(sgl, sg, sg_len, i) अणु
 		addr = sg_dma_address(sg);
 		len = sg_dma_len(sg);
 
-		if (len > OWL_DMA_FRAME_MAX_LENGTH) {
+		अगर (len > OWL_DMA_FRAME_MAX_LENGTH) अणु
 			dev_err(od->dma.dev,
 				"frame length exceeds max supported length");
-			goto err_txd_free;
-		}
+			जाओ err_txd_मुक्त;
+		पूर्ण
 
 		lli = owl_dma_alloc_lli(od);
-		if (!lli) {
+		अगर (!lli) अणु
 			dev_err(chan2dev(chan), "failed to allocate lli");
-			goto err_txd_free;
-		}
+			जाओ err_txd_मुक्त;
+		पूर्ण
 
-		if (dir == DMA_MEM_TO_DEV) {
+		अगर (dir == DMA_MEM_TO_DEV) अणु
 			src = addr;
 			dst = sconfig->dst_addr;
-		} else {
+		पूर्ण अन्यथा अणु
 			src = sconfig->src_addr;
 			dst = addr;
-		}
+		पूर्ण
 
 		ret = owl_dma_cfg_lli(vchan, lli, src, dst, len, dir, sconfig,
 				      txd->cyclic);
-		if (ret) {
+		अगर (ret) अणु
 			dev_warn(chan2dev(chan), "failed to config lli");
-			goto err_txd_free;
-		}
+			जाओ err_txd_मुक्त;
+		पूर्ण
 
 		prev = owl_dma_add_lli(txd, prev, lli, false);
-	}
+	पूर्ण
 
-	return vchan_tx_prep(&vchan->vc, &txd->vd, flags);
+	वापस vchan_tx_prep(&vchan->vc, &txd->vd, flags);
 
-err_txd_free:
-	owl_dma_free_txd(od, txd);
+err_txd_मुक्त:
+	owl_dma_मुक्त_txd(od, txd);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct dma_async_tx_descriptor
-		*owl_prep_dma_cyclic(struct dma_chan *chan,
-				     dma_addr_t buf_addr, size_t buf_len,
-				     size_t period_len,
-				     enum dma_transfer_direction dir,
-				     unsigned long flags)
-{
-	struct owl_dma *od = to_owl_dma(chan->device);
-	struct owl_dma_vchan *vchan = to_owl_vchan(chan);
-	struct dma_slave_config *sconfig = &vchan->cfg;
-	struct owl_dma_txd *txd;
-	struct owl_dma_lli *lli, *prev = NULL, *first = NULL;
+अटल काष्ठा dma_async_tx_descriptor
+		*owl_prep_dma_cyclic(काष्ठा dma_chan *chan,
+				     dma_addr_t buf_addr, माप_प्रकार buf_len,
+				     माप_प्रकार period_len,
+				     क्रमागत dma_transfer_direction dir,
+				     अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा owl_dma *od = to_owl_dma(chan->device);
+	काष्ठा owl_dma_vchan *vchan = to_owl_vchan(chan);
+	काष्ठा dma_slave_config *sconfig = &vchan->cfg;
+	काष्ठा owl_dma_txd *txd;
+	काष्ठा owl_dma_lli *lli, *prev = शून्य, *first = शून्य;
 	dma_addr_t src = 0, dst = 0;
-	unsigned int periods = buf_len / period_len;
-	int ret, i;
+	अचिन्हित पूर्णांक periods = buf_len / period_len;
+	पूर्णांक ret, i;
 
-	txd = kzalloc(sizeof(*txd), GFP_NOWAIT);
-	if (!txd)
-		return NULL;
+	txd = kzalloc(माप(*txd), GFP_NOWAIT);
+	अगर (!txd)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&txd->lli_list);
 	txd->cyclic = true;
 
-	for (i = 0; i < periods; i++) {
+	क्रम (i = 0; i < periods; i++) अणु
 		lli = owl_dma_alloc_lli(od);
-		if (!lli) {
+		अगर (!lli) अणु
 			dev_warn(chan2dev(chan), "failed to allocate lli");
-			goto err_txd_free;
-		}
+			जाओ err_txd_मुक्त;
+		पूर्ण
 
-		if (dir == DMA_MEM_TO_DEV) {
+		अगर (dir == DMA_MEM_TO_DEV) अणु
 			src = buf_addr + (period_len * i);
 			dst = sconfig->dst_addr;
-		} else if (dir == DMA_DEV_TO_MEM) {
+		पूर्ण अन्यथा अगर (dir == DMA_DEV_TO_MEM) अणु
 			src = sconfig->src_addr;
 			dst = buf_addr + (period_len * i);
-		}
+		पूर्ण
 
 		ret = owl_dma_cfg_lli(vchan, lli, src, dst, period_len,
 				      dir, sconfig, txd->cyclic);
-		if (ret) {
+		अगर (ret) अणु
 			dev_warn(chan2dev(chan), "failed to config lli");
-			goto err_txd_free;
-		}
+			जाओ err_txd_मुक्त;
+		पूर्ण
 
-		if (!first)
+		अगर (!first)
 			first = lli;
 
 		prev = owl_dma_add_lli(txd, prev, lli, false);
-	}
+	पूर्ण
 
-	/* close the cyclic list */
+	/* बंद the cyclic list */
 	owl_dma_add_lli(txd, prev, first, true);
 
-	return vchan_tx_prep(&vchan->vc, &txd->vd, flags);
+	वापस vchan_tx_prep(&vchan->vc, &txd->vd, flags);
 
-err_txd_free:
-	owl_dma_free_txd(od, txd);
+err_txd_मुक्त:
+	owl_dma_मुक्त_txd(od, txd);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void owl_dma_free_chan_resources(struct dma_chan *chan)
-{
-	struct owl_dma_vchan *vchan = to_owl_vchan(chan);
+अटल व्योम owl_dma_मुक्त_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा owl_dma_vchan *vchan = to_owl_vchan(chan);
 
-	/* Ensure all queued descriptors are freed */
-	vchan_free_chan_resources(&vchan->vc);
-}
+	/* Ensure all queued descriptors are मुक्तd */
+	vchan_मुक्त_chan_resources(&vchan->vc);
+पूर्ण
 
-static inline void owl_dma_free(struct owl_dma *od)
-{
-	struct owl_dma_vchan *vchan = NULL;
-	struct owl_dma_vchan *next;
+अटल अंतरभूत व्योम owl_dma_मुक्त(काष्ठा owl_dma *od)
+अणु
+	काष्ठा owl_dma_vchan *vchan = शून्य;
+	काष्ठा owl_dma_vchan *next;
 
-	list_for_each_entry_safe(vchan,
-				 next, &od->dma.channels, vc.chan.device_node) {
+	list_क्रम_each_entry_safe(vchan,
+				 next, &od->dma.channels, vc.chan.device_node) अणु
 		list_del(&vchan->vc.chan.device_node);
-		tasklet_kill(&vchan->vc.task);
-	}
-}
+		tasklet_समाप्त(&vchan->vc.task);
+	पूर्ण
+पूर्ण
 
-static struct dma_chan *owl_dma_of_xlate(struct of_phandle_args *dma_spec,
-					 struct of_dma *ofdma)
-{
-	struct owl_dma *od = ofdma->of_dma_data;
-	struct owl_dma_vchan *vchan;
-	struct dma_chan *chan;
+अटल काष्ठा dma_chan *owl_dma_of_xlate(काष्ठा of_phandle_args *dma_spec,
+					 काष्ठा of_dma *ofdma)
+अणु
+	काष्ठा owl_dma *od = ofdma->of_dma_data;
+	काष्ठा owl_dma_vchan *vchan;
+	काष्ठा dma_chan *chan;
 	u8 drq = dma_spec->args[0];
 
-	if (drq > od->nr_vchans)
-		return NULL;
+	अगर (drq > od->nr_vchans)
+		वापस शून्य;
 
 	chan = dma_get_any_slave_channel(&od->dma);
-	if (!chan)
-		return NULL;
+	अगर (!chan)
+		वापस शून्य;
 
 	vchan = to_owl_vchan(chan);
 	vchan->drq = drq;
 
-	return chan;
-}
+	वापस chan;
+पूर्ण
 
-static const struct of_device_id owl_dma_match[] = {
-	{ .compatible = "actions,s500-dma", .data = (void *)S900_DMA,},
-	{ .compatible = "actions,s700-dma", .data = (void *)S700_DMA,},
-	{ .compatible = "actions,s900-dma", .data = (void *)S900_DMA,},
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id owl_dma_match[] = अणु
+	अणु .compatible = "actions,s500-dma", .data = (व्योम *)S900_DMA,पूर्ण,
+	अणु .compatible = "actions,s700-dma", .data = (व्योम *)S700_DMA,पूर्ण,
+	अणु .compatible = "actions,s900-dma", .data = (व्योम *)S900_DMA,पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, owl_dma_match);
 
-static int owl_dma_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct owl_dma *od;
-	int ret, i, nr_channels, nr_requests;
+अटल पूर्णांक owl_dma_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा owl_dma *od;
+	पूर्णांक ret, i, nr_channels, nr_requests;
 
-	od = devm_kzalloc(&pdev->dev, sizeof(*od), GFP_KERNEL);
-	if (!od)
-		return -ENOMEM;
+	od = devm_kzalloc(&pdev->dev, माप(*od), GFP_KERNEL);
+	अगर (!od)
+		वापस -ENOMEM;
 
-	od->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(od->base))
-		return PTR_ERR(od->base);
+	od->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(od->base))
+		वापस PTR_ERR(od->base);
 
-	ret = of_property_read_u32(np, "dma-channels", &nr_channels);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(np, "dma-channels", &nr_channels);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "can't get dma-channels\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = of_property_read_u32(np, "dma-requests", &nr_requests);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(np, "dma-requests", &nr_requests);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "can't get dma-requests\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_info(&pdev->dev, "dma-channels %d, dma-requests %d\n",
 		 nr_channels, nr_requests);
 
-	od->devid = (enum owl_dma_id)of_device_get_match_data(&pdev->dev);
+	od->devid = (क्रमागत owl_dma_id)of_device_get_match_data(&pdev->dev);
 
 	od->nr_pchans = nr_channels;
 	od->nr_vchans = nr_requests;
 
 	pdev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
 
-	platform_set_drvdata(pdev, od);
+	platक्रमm_set_drvdata(pdev, od);
 	spin_lock_init(&od->lock);
 
 	dma_cap_set(DMA_MEMCPY, od->dma.cap_mask);
@@ -1131,14 +1132,14 @@ static int owl_dma_probe(struct platform_device *pdev)
 	dma_cap_set(DMA_CYCLIC, od->dma.cap_mask);
 
 	od->dma.dev = &pdev->dev;
-	od->dma.device_free_chan_resources = owl_dma_free_chan_resources;
+	od->dma.device_मुक्त_chan_resources = owl_dma_मुक्त_chan_resources;
 	od->dma.device_tx_status = owl_dma_tx_status;
 	od->dma.device_issue_pending = owl_dma_issue_pending;
-	od->dma.device_prep_dma_memcpy = owl_dma_prep_memcpy;
+	od->dma.device_prep_dma_स_नकल = owl_dma_prep_स_नकल;
 	od->dma.device_prep_slave_sg = owl_dma_prep_slave_sg;
 	od->dma.device_prep_dma_cyclic = owl_prep_dma_cyclic;
 	od->dma.device_config = owl_dma_config;
-	od->dma.device_pause = owl_dma_pause;
+	od->dma.device_छोड़ो = owl_dma_छोड़ो;
 	od->dma.device_resume = owl_dma_resume;
 	od->dma.device_terminate_all = owl_dma_terminate_all;
 	od->dma.src_addr_widths = BIT(DMA_SLAVE_BUSWIDTH_4_BYTES);
@@ -1148,129 +1149,129 @@ static int owl_dma_probe(struct platform_device *pdev)
 
 	INIT_LIST_HEAD(&od->dma.channels);
 
-	od->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(od->clk)) {
+	od->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(od->clk)) अणु
 		dev_err(&pdev->dev, "unable to get clock\n");
-		return PTR_ERR(od->clk);
-	}
+		वापस PTR_ERR(od->clk);
+	पूर्ण
 
 	/*
 	 * Eventhough the DMA controller is capable of generating 4
-	 * IRQ's for DMA priority feature, we only use 1 IRQ for
-	 * simplification.
+	 * IRQ's क्रम DMA priority feature, we only use 1 IRQ क्रम
+	 * simplअगरication.
 	 */
-	od->irq = platform_get_irq(pdev, 0);
-	ret = devm_request_irq(&pdev->dev, od->irq, owl_dma_interrupt, 0,
+	od->irq = platक्रमm_get_irq(pdev, 0);
+	ret = devm_request_irq(&pdev->dev, od->irq, owl_dma_पूर्णांकerrupt, 0,
 			       dev_name(&pdev->dev), od);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "unable to request IRQ\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Init physical channel */
-	od->pchans = devm_kcalloc(&pdev->dev, od->nr_pchans,
-				  sizeof(struct owl_dma_pchan), GFP_KERNEL);
-	if (!od->pchans)
-		return -ENOMEM;
+	od->pchans = devm_kसुस्मृति(&pdev->dev, od->nr_pchans,
+				  माप(काष्ठा owl_dma_pchan), GFP_KERNEL);
+	अगर (!od->pchans)
+		वापस -ENOMEM;
 
-	for (i = 0; i < od->nr_pchans; i++) {
-		struct owl_dma_pchan *pchan = &od->pchans[i];
+	क्रम (i = 0; i < od->nr_pchans; i++) अणु
+		काष्ठा owl_dma_pchan *pchan = &od->pchans[i];
 
 		pchan->id = i;
 		pchan->base = od->base + OWL_DMA_CHAN_BASE(i);
-	}
+	पूर्ण
 
-	/* Init virtual channel */
-	od->vchans = devm_kcalloc(&pdev->dev, od->nr_vchans,
-				  sizeof(struct owl_dma_vchan), GFP_KERNEL);
-	if (!od->vchans)
-		return -ENOMEM;
+	/* Init भव channel */
+	od->vchans = devm_kसुस्मृति(&pdev->dev, od->nr_vchans,
+				  माप(काष्ठा owl_dma_vchan), GFP_KERNEL);
+	अगर (!od->vchans)
+		वापस -ENOMEM;
 
-	for (i = 0; i < od->nr_vchans; i++) {
-		struct owl_dma_vchan *vchan = &od->vchans[i];
+	क्रम (i = 0; i < od->nr_vchans; i++) अणु
+		काष्ठा owl_dma_vchan *vchan = &od->vchans[i];
 
-		vchan->vc.desc_free = owl_dma_desc_free;
+		vchan->vc.desc_मुक्त = owl_dma_desc_मुक्त;
 		vchan_init(&vchan->vc, &od->dma);
-	}
+	पूर्ण
 
-	/* Create a pool of consistent memory blocks for hardware descriptors */
+	/* Create a pool of consistent memory blocks क्रम hardware descriptors */
 	od->lli_pool = dma_pool_create(dev_name(od->dma.dev), od->dma.dev,
-				       sizeof(struct owl_dma_lli),
-				       __alignof__(struct owl_dma_lli),
+				       माप(काष्ठा owl_dma_lli),
+				       __alignof__(काष्ठा owl_dma_lli),
 				       0);
-	if (!od->lli_pool) {
+	अगर (!od->lli_pool) अणु
 		dev_err(&pdev->dev, "unable to allocate DMA descriptor pool\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	clk_prepare_enable(od->clk);
 
-	ret = dma_async_device_register(&od->dma);
-	if (ret) {
+	ret = dma_async_device_रेजिस्टर(&od->dma);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to register DMA engine device\n");
-		goto err_pool_free;
-	}
+		जाओ err_pool_मुक्त;
+	पूर्ण
 
 	/* Device-tree DMA controller registration */
-	ret = of_dma_controller_register(pdev->dev.of_node,
+	ret = of_dma_controller_रेजिस्टर(pdev->dev.of_node,
 					 owl_dma_of_xlate, od);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "of_dma_controller_register failed\n");
-		goto err_dma_unregister;
-	}
+		जाओ err_dma_unरेजिस्टर;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_dma_unregister:
-	dma_async_device_unregister(&od->dma);
-err_pool_free:
+err_dma_unरेजिस्टर:
+	dma_async_device_unरेजिस्टर(&od->dma);
+err_pool_मुक्त:
 	clk_disable_unprepare(od->clk);
 	dma_pool_destroy(od->lli_pool);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int owl_dma_remove(struct platform_device *pdev)
-{
-	struct owl_dma *od = platform_get_drvdata(pdev);
+अटल पूर्णांक owl_dma_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा owl_dma *od = platक्रमm_get_drvdata(pdev);
 
-	of_dma_controller_free(pdev->dev.of_node);
-	dma_async_device_unregister(&od->dma);
+	of_dma_controller_मुक्त(pdev->dev.of_node);
+	dma_async_device_unरेजिस्टर(&od->dma);
 
-	/* Mask all interrupts for this execution environment */
-	dma_writel(od, OWL_DMA_IRQ_EN0, 0x0);
+	/* Mask all पूर्णांकerrupts क्रम this execution environment */
+	dma_ग_लिखोl(od, OWL_DMA_IRQ_EN0, 0x0);
 
-	/* Make sure we won't have any further interrupts */
-	devm_free_irq(od->dma.dev, od->irq, od);
+	/* Make sure we won't have any further पूर्णांकerrupts */
+	devm_मुक्त_irq(od->dma.dev, od->irq, od);
 
-	owl_dma_free(od);
+	owl_dma_मुक्त(od);
 
 	clk_disable_unprepare(od->clk);
 	dma_pool_destroy(od->lli_pool);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver owl_dma_driver = {
+अटल काष्ठा platक्रमm_driver owl_dma_driver = अणु
 	.probe	= owl_dma_probe,
-	.remove	= owl_dma_remove,
-	.driver = {
+	.हटाओ	= owl_dma_हटाओ,
+	.driver = अणु
 		.name = "dma-owl",
 		.of_match_table = of_match_ptr(owl_dma_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int owl_dma_init(void)
-{
-	return platform_driver_register(&owl_dma_driver);
-}
+अटल पूर्णांक owl_dma_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&owl_dma_driver);
+पूर्ण
 subsys_initcall(owl_dma_init);
 
-static void __exit owl_dma_exit(void)
-{
-	platform_driver_unregister(&owl_dma_driver);
-}
-module_exit(owl_dma_exit);
+अटल व्योम __निकास owl_dma_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&owl_dma_driver);
+पूर्ण
+module_निकास(owl_dma_निकास);
 
 MODULE_AUTHOR("David Liu <liuwei@actions-semi.com>");
 MODULE_AUTHOR("Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>");

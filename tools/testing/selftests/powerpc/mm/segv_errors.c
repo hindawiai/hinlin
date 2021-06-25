@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
  * Copyright 2017 John Sperbeck
@@ -7,43 +8,43 @@
  * reports si_code == SEGV_ACCERR.
  */
 
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <signal.h>
-#include <sys/mman.h>
-#include <assert.h>
-#include <ucontext.h>
+#समावेश <stdbool.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <संकेत.स>
+#समावेश <sys/mman.h>
+#समावेश <निश्चित.स>
+#समावेश <ucontext.h>
 
-#include "utils.h"
+#समावेश "utils.h"
 
-static bool faulted;
-static int si_code;
+अटल bool faulted;
+अटल पूर्णांक si_code;
 
-static void segv_handler(int n, siginfo_t *info, void *ctxt_v)
-{
+अटल व्योम segv_handler(पूर्णांक n, siginfo_t *info, व्योम *ctxt_v)
+अणु
 	ucontext_t *ctxt = (ucontext_t *)ctxt_v;
-	struct pt_regs *regs = ctxt->uc_mcontext.regs;
+	काष्ठा pt_regs *regs = ctxt->uc_mcontext.regs;
 
 	faulted = true;
 	si_code = info->si_code;
 	regs->nip += 4;
-}
+पूर्ण
 
-int test_segv_errors(void)
-{
-	struct sigaction act = {
+पूर्णांक test_segv_errors(व्योम)
+अणु
+	काष्ठा sigaction act = अणु
 		.sa_sigaction = segv_handler,
 		.sa_flags = SA_SIGINFO,
-	};
-	char c, *p = NULL;
+	पूर्ण;
+	अक्षर c, *p = शून्य;
 
-	p = mmap(NULL, getpagesize(), 0, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+	p = mmap(शून्य, getpagesize(), 0, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 	FAIL_IF(p == MAP_FAILED);
 
-	FAIL_IF(sigaction(SIGSEGV, &act, NULL) != 0);
+	FAIL_IF(sigaction(संक_अंश, &act, शून्य) != 0);
 
 	faulted = false;
 	si_code = 0;
@@ -69,10 +70,10 @@ int test_segv_errors(void)
 	FAIL_IF(!faulted);
 	FAIL_IF(si_code != SEGV_ACCERR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	return test_harness(test_segv_errors, "segv_errors");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(test_segv_errors, "segv_errors");
+पूर्ण

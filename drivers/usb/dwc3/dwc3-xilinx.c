@@ -1,240 +1,241 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * dwc3-xilinx.c - Xilinx DWC3 controller specific glue driver
+ * dwc3-xilinx.c - Xilinx DWC3 controller specअगरic glue driver
  *
  * Authors: Manish Narani <manish.narani@xilinx.com>
  *          Anurag Kumar Vulisha <anurag.kumar.vulisha@xilinx.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/clk.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/of_platform.h>
-#include <linux/pm_runtime.h>
-#include <linux/reset.h>
-#include <linux/of_address.h>
-#include <linux/delay.h>
-#include <linux/firmware/xlnx-zynqmp.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/reset.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/firmware/xlnx-zynqmp.h>
+#समावेश <linux/पन.स>
 
-#include <linux/phy/phy.h>
+#समावेश <linux/phy/phy.h>
 
-/* USB phy reset mask register */
-#define XLNX_USB_PHY_RST_EN			0x001C
-#define XLNX_PHY_RST_MASK			0x1
+/* USB phy reset mask रेजिस्टर */
+#घोषणा XLNX_USB_PHY_RST_EN			0x001C
+#घोषणा XLNX_PHY_RST_MASK			0x1
 
 /* Xilinx USB 3.0 IP Register */
-#define XLNX_USB_TRAFFIC_ROUTE_CONFIG		0x005C
-#define XLNX_USB_TRAFFIC_ROUTE_FPD		0x1
+#घोषणा XLNX_USB_TRAFFIC_ROUTE_CONFIG		0x005C
+#घोषणा XLNX_USB_TRAFFIC_ROUTE_FPD		0x1
 
 /* Versal USB Reset ID */
-#define VERSAL_USB_RESET_ID			0xC104036
+#घोषणा VERSAL_USB_RESET_ID			0xC104036
 
-#define XLNX_USB_FPD_PIPE_CLK			0x7c
-#define PIPE_CLK_DESELECT			1
-#define PIPE_CLK_SELECT				0
-#define XLNX_USB_FPD_POWER_PRSNT		0x80
-#define FPD_POWER_PRSNT_OPTION			BIT(0)
+#घोषणा XLNX_USB_FPD_PIPE_CLK			0x7c
+#घोषणा PIPE_CLK_DESELECT			1
+#घोषणा PIPE_CLK_SELECT				0
+#घोषणा XLNX_USB_FPD_POWER_PRSNT		0x80
+#घोषणा FPD_POWER_PRSNT_OPTION			BIT(0)
 
-struct dwc3_xlnx {
-	int				num_clocks;
-	struct clk_bulk_data		*clks;
-	struct device			*dev;
-	void __iomem			*regs;
-	int				(*pltfm_init)(struct dwc3_xlnx *data);
-};
+काष्ठा dwc3_xlnx अणु
+	पूर्णांक				num_घड़ीs;
+	काष्ठा clk_bulk_data		*clks;
+	काष्ठा device			*dev;
+	व्योम __iomem			*regs;
+	पूर्णांक				(*pltfm_init)(काष्ठा dwc3_xlnx *data);
+पूर्ण;
 
-static void dwc3_xlnx_mask_phy_rst(struct dwc3_xlnx *priv_data, bool mask)
-{
+अटल व्योम dwc3_xlnx_mask_phy_rst(काष्ठा dwc3_xlnx *priv_data, bool mask)
+अणु
 	u32 reg;
 
 	/*
 	 * Enable or disable ULPI PHY reset from USB Controller.
-	 * This does not actually reset the phy, but just controls
+	 * This करोes not actually reset the phy, but just controls
 	 * whether USB controller can or cannot reset ULPI PHY.
 	 */
-	reg = readl(priv_data->regs + XLNX_USB_PHY_RST_EN);
+	reg = पढ़ोl(priv_data->regs + XLNX_USB_PHY_RST_EN);
 
-	if (mask)
+	अगर (mask)
 		reg &= ~XLNX_PHY_RST_MASK;
-	else
+	अन्यथा
 		reg |= XLNX_PHY_RST_MASK;
 
-	writel(reg, priv_data->regs + XLNX_USB_PHY_RST_EN);
-}
+	ग_लिखोl(reg, priv_data->regs + XLNX_USB_PHY_RST_EN);
+पूर्ण
 
-static int dwc3_xlnx_init_versal(struct dwc3_xlnx *priv_data)
-{
-	struct device		*dev = priv_data->dev;
-	int			ret;
+अटल पूर्णांक dwc3_xlnx_init_versal(काष्ठा dwc3_xlnx *priv_data)
+अणु
+	काष्ठा device		*dev = priv_data->dev;
+	पूर्णांक			ret;
 
 	dwc3_xlnx_mask_phy_rst(priv_data, false);
 
-	/* Assert and De-assert reset */
-	ret = zynqmp_pm_reset_assert(VERSAL_USB_RESET_ID,
+	/* Assert and De-निश्चित reset */
+	ret = zynqmp_pm_reset_निश्चित(VERSAL_USB_RESET_ID,
 				     PM_RESET_ACTION_ASSERT);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err_probe(dev, ret, "failed to assert Reset\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = zynqmp_pm_reset_assert(VERSAL_USB_RESET_ID,
+	ret = zynqmp_pm_reset_निश्चित(VERSAL_USB_RESET_ID,
 				     PM_RESET_ACTION_RELEASE);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err_probe(dev, ret, "failed to De-assert Reset\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dwc3_xlnx_mask_phy_rst(priv_data, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dwc3_xlnx_init_zynqmp(struct dwc3_xlnx *priv_data)
-{
-	struct device		*dev = priv_data->dev;
-	struct reset_control	*crst, *hibrst, *apbrst;
-	struct phy		*usb3_phy;
-	int			ret;
+अटल पूर्णांक dwc3_xlnx_init_zynqmp(काष्ठा dwc3_xlnx *priv_data)
+अणु
+	काष्ठा device		*dev = priv_data->dev;
+	काष्ठा reset_control	*crst, *hibrst, *apbrst;
+	काष्ठा phy		*usb3_phy;
+	पूर्णांक			ret;
 	u32			reg;
 
 	usb3_phy = devm_phy_get(dev, "usb3-phy");
-	if (PTR_ERR(usb3_phy) == -EPROBE_DEFER) {
+	अगर (PTR_ERR(usb3_phy) == -EPROBE_DEFER) अणु
 		ret = -EPROBE_DEFER;
-		goto err;
-	} else if (IS_ERR(usb3_phy)) {
-		usb3_phy = NULL;
-	}
+		जाओ err;
+	पूर्ण अन्यथा अगर (IS_ERR(usb3_phy)) अणु
+		usb3_phy = शून्य;
+	पूर्ण
 
 	crst = devm_reset_control_get_exclusive(dev, "usb_crst");
-	if (IS_ERR(crst)) {
+	अगर (IS_ERR(crst)) अणु
 		ret = PTR_ERR(crst);
 		dev_err_probe(dev, ret,
 			      "failed to get core reset signal\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	hibrst = devm_reset_control_get_exclusive(dev, "usb_hibrst");
-	if (IS_ERR(hibrst)) {
+	अगर (IS_ERR(hibrst)) अणु
 		ret = PTR_ERR(hibrst);
 		dev_err_probe(dev, ret,
 			      "failed to get hibernation reset signal\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	apbrst = devm_reset_control_get_exclusive(dev, "usb_apbrst");
-	if (IS_ERR(apbrst)) {
+	अगर (IS_ERR(apbrst)) अणु
 		ret = PTR_ERR(apbrst);
 		dev_err_probe(dev, ret,
 			      "failed to get APB reset signal\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = reset_control_assert(crst);
-	if (ret < 0) {
+	ret = reset_control_निश्चित(crst);
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to assert core reset\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = reset_control_assert(hibrst);
-	if (ret < 0) {
+	ret = reset_control_निश्चित(hibrst);
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to assert hibernation reset\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = reset_control_assert(apbrst);
-	if (ret < 0) {
+	ret = reset_control_निश्चित(apbrst);
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to assert APB reset\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = phy_init(usb3_phy);
-	if (ret < 0) {
-		phy_exit(usb3_phy);
-		goto err;
-	}
+	अगर (ret < 0) अणु
+		phy_निकास(usb3_phy);
+		जाओ err;
+	पूर्ण
 
-	ret = reset_control_deassert(apbrst);
-	if (ret < 0) {
+	ret = reset_control_deनिश्चित(apbrst);
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to release APB reset\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* Set PIPE Power Present signal in FPD Power Present Register*/
-	writel(FPD_POWER_PRSNT_OPTION, priv_data->regs + XLNX_USB_FPD_POWER_PRSNT);
+	/* Set PIPE Power Present संकेत in FPD Power Present Register*/
+	ग_लिखोl(FPD_POWER_PRSNT_OPTION, priv_data->regs + XLNX_USB_FPD_POWER_PRSNT);
 
-	/* Set the PIPE Clock Select bit in FPD PIPE Clock register */
-	writel(PIPE_CLK_SELECT, priv_data->regs + XLNX_USB_FPD_PIPE_CLK);
+	/* Set the PIPE Clock Select bit in FPD PIPE Clock रेजिस्टर */
+	ग_लिखोl(PIPE_CLK_SELECT, priv_data->regs + XLNX_USB_FPD_PIPE_CLK);
 
-	ret = reset_control_deassert(crst);
-	if (ret < 0) {
+	ret = reset_control_deनिश्चित(crst);
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to release core reset\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = reset_control_deassert(hibrst);
-	if (ret < 0) {
+	ret = reset_control_deनिश्चित(hibrst);
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to release hibernation reset\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = phy_power_on(usb3_phy);
-	if (ret < 0) {
-		phy_exit(usb3_phy);
-		goto err;
-	}
+	ret = phy_घातer_on(usb3_phy);
+	अगर (ret < 0) अणु
+		phy_निकास(usb3_phy);
+		जाओ err;
+	पूर्ण
 
 	/*
 	 * This routes the USB DMA traffic to go through FPD path instead
 	 * of reaching DDR directly. This traffic routing is needed to
 	 * make SMMU and CCI work with USB DMA.
 	 */
-	if (of_dma_is_coherent(dev->of_node) || device_iommu_mapped(dev)) {
-		reg = readl(priv_data->regs + XLNX_USB_TRAFFIC_ROUTE_CONFIG);
+	अगर (of_dma_is_coherent(dev->of_node) || device_iommu_mapped(dev)) अणु
+		reg = पढ़ोl(priv_data->regs + XLNX_USB_TRAFFIC_ROUTE_CONFIG);
 		reg |= XLNX_USB_TRAFFIC_ROUTE_FPD;
-		writel(reg, priv_data->regs + XLNX_USB_TRAFFIC_ROUTE_CONFIG);
-	}
+		ग_लिखोl(reg, priv_data->regs + XLNX_USB_TRAFFIC_ROUTE_CONFIG);
+	पूर्ण
 
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id dwc3_xlnx_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id dwc3_xlnx_of_match[] = अणु
+	अणु
 		.compatible = "xlnx,zynqmp-dwc3",
 		.data = &dwc3_xlnx_init_zynqmp,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "xlnx,versal-dwc3",
 		.data = &dwc3_xlnx_init_versal,
-	},
-	{ /* Sentinel */ }
-};
+	पूर्ण,
+	अणु /* Sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, dwc3_xlnx_of_match);
 
-static int dwc3_xlnx_probe(struct platform_device *pdev)
-{
-	struct dwc3_xlnx		*priv_data;
-	struct device			*dev = &pdev->dev;
-	struct device_node		*np = dev->of_node;
-	const struct of_device_id	*match;
-	void __iomem			*regs;
-	int				ret;
+अटल पूर्णांक dwc3_xlnx_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dwc3_xlnx		*priv_data;
+	काष्ठा device			*dev = &pdev->dev;
+	काष्ठा device_node		*np = dev->of_node;
+	स्थिर काष्ठा of_device_id	*match;
+	व्योम __iomem			*regs;
+	पूर्णांक				ret;
 
-	priv_data = devm_kzalloc(dev, sizeof(*priv_data), GFP_KERNEL);
-	if (!priv_data)
-		return -ENOMEM;
+	priv_data = devm_kzalloc(dev, माप(*priv_data), GFP_KERNEL);
+	अगर (!priv_data)
+		वापस -ENOMEM;
 
-	regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(regs)) {
+	regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(regs)) अणु
 		ret = PTR_ERR(regs);
 		dev_err_probe(dev, ret, "failed to map registers\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	match = of_match_node(dwc3_xlnx_of_match, pdev->dev.of_node);
 
@@ -242,94 +243,94 @@ static int dwc3_xlnx_probe(struct platform_device *pdev)
 	priv_data->regs = regs;
 	priv_data->dev = dev;
 
-	platform_set_drvdata(pdev, priv_data);
+	platक्रमm_set_drvdata(pdev, priv_data);
 
 	ret = devm_clk_bulk_get_all(priv_data->dev, &priv_data->clks);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	priv_data->num_clocks = ret;
+	priv_data->num_घड़ीs = ret;
 
-	ret = clk_bulk_prepare_enable(priv_data->num_clocks, priv_data->clks);
-	if (ret)
-		return ret;
+	ret = clk_bulk_prepare_enable(priv_data->num_घड़ीs, priv_data->clks);
+	अगर (ret)
+		वापस ret;
 
 	ret = priv_data->pltfm_init(priv_data);
-	if (ret)
-		goto err_clk_put;
+	अगर (ret)
+		जाओ err_clk_put;
 
-	ret = of_platform_populate(np, NULL, NULL, dev);
-	if (ret)
-		goto err_clk_put;
+	ret = of_platक्रमm_populate(np, शून्य, शून्य, dev);
+	अगर (ret)
+		जाओ err_clk_put;
 
-	pm_runtime_set_active(dev);
-	pm_runtime_enable(dev);
+	pm_runसमय_set_active(dev);
+	pm_runसमय_enable(dev);
 	pm_suspend_ignore_children(dev, false);
-	pm_runtime_get_sync(dev);
+	pm_runसमय_get_sync(dev);
 
-	return 0;
+	वापस 0;
 
 err_clk_put:
-	clk_bulk_disable_unprepare(priv_data->num_clocks, priv_data->clks);
+	clk_bulk_disable_unprepare(priv_data->num_घड़ीs, priv_data->clks);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dwc3_xlnx_remove(struct platform_device *pdev)
-{
-	struct dwc3_xlnx	*priv_data = platform_get_drvdata(pdev);
-	struct device		*dev = &pdev->dev;
+अटल पूर्णांक dwc3_xlnx_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dwc3_xlnx	*priv_data = platक्रमm_get_drvdata(pdev);
+	काष्ठा device		*dev = &pdev->dev;
 
-	of_platform_depopulate(dev);
+	of_platक्रमm_depopulate(dev);
 
-	clk_bulk_disable_unprepare(priv_data->num_clocks, priv_data->clks);
-	priv_data->num_clocks = 0;
+	clk_bulk_disable_unprepare(priv_data->num_घड़ीs, priv_data->clks);
+	priv_data->num_घड़ीs = 0;
 
-	pm_runtime_disable(dev);
-	pm_runtime_put_noidle(dev);
-	pm_runtime_set_suspended(dev);
+	pm_runसमय_disable(dev);
+	pm_runसमय_put_noidle(dev);
+	pm_runसमय_set_suspended(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused dwc3_xlnx_suspend_common(struct device *dev)
-{
-	struct dwc3_xlnx *priv_data = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused dwc3_xlnx_suspend_common(काष्ठा device *dev)
+अणु
+	काष्ठा dwc3_xlnx *priv_data = dev_get_drvdata(dev);
 
-	clk_bulk_disable(priv_data->num_clocks, priv_data->clks);
+	clk_bulk_disable(priv_data->num_घड़ीs, priv_data->clks);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused dwc3_xlnx_resume_common(struct device *dev)
-{
-	struct dwc3_xlnx *priv_data = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused dwc3_xlnx_resume_common(काष्ठा device *dev)
+अणु
+	काष्ठा dwc3_xlnx *priv_data = dev_get_drvdata(dev);
 
-	return clk_bulk_enable(priv_data->num_clocks, priv_data->clks);
-}
+	वापस clk_bulk_enable(priv_data->num_घड़ीs, priv_data->clks);
+पूर्ण
 
-static int __maybe_unused dwc3_xlnx_runtime_idle(struct device *dev)
-{
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_autosuspend(dev);
+अटल पूर्णांक __maybe_unused dwc3_xlnx_runसमय_idle(काष्ठा device *dev)
+अणु
+	pm_runसमय_mark_last_busy(dev);
+	pm_runसमय_स्वतःsuspend(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static UNIVERSAL_DEV_PM_OPS(dwc3_xlnx_dev_pm_ops, dwc3_xlnx_suspend_common,
-			    dwc3_xlnx_resume_common, dwc3_xlnx_runtime_idle);
+अटल UNIVERSAL_DEV_PM_OPS(dwc3_xlnx_dev_pm_ops, dwc3_xlnx_suspend_common,
+			    dwc3_xlnx_resume_common, dwc3_xlnx_runसमय_idle);
 
-static struct platform_driver dwc3_xlnx_driver = {
+अटल काष्ठा platक्रमm_driver dwc3_xlnx_driver = अणु
 	.probe		= dwc3_xlnx_probe,
-	.remove		= dwc3_xlnx_remove,
-	.driver		= {
+	.हटाओ		= dwc3_xlnx_हटाओ,
+	.driver		= अणु
 		.name		= "dwc3-xilinx",
 		.of_match_table	= dwc3_xlnx_of_match,
 		.pm		= &dwc3_xlnx_dev_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(dwc3_xlnx_driver);
+module_platक्रमm_driver(dwc3_xlnx_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Xilinx DWC3 controller specific glue driver");

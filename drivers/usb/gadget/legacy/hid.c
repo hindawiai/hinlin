@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * hid.c -- HID Composite driver
  *
@@ -8,39 +9,39 @@
  */
 
 
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/usb/composite.h>
-#include <linux/usb/g_hid.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb/composite.h>
+#समावेश <linux/usb/g_hid.h>
 
-#define DRIVER_DESC		"HID Gadget"
-#define DRIVER_VERSION		"2010/03/16"
+#घोषणा DRIVER_DESC		"HID Gadget"
+#घोषणा DRIVER_VERSION		"2010/03/16"
 
-#include "u_hid.h"
-
-/*-------------------------------------------------------------------------*/
-
-#define HIDG_VENDOR_NUM		0x0525	/* XXX NetChip */
-#define HIDG_PRODUCT_NUM	0xa4ac	/* Linux-USB HID gadget */
+#समावेश "u_hid.h"
 
 /*-------------------------------------------------------------------------*/
 
-struct hidg_func_node {
-	struct usb_function_instance *fi;
-	struct usb_function *f;
-	struct list_head node;
-	struct hidg_func_descriptor *func;
-};
+#घोषणा HIDG_VENDOR_NUM		0x0525	/* XXX NetChip */
+#घोषणा HIDG_PRODUCT_NUM	0xa4ac	/* Linux-USB HID gadget */
 
-static LIST_HEAD(hidg_func_list);
+/*-------------------------------------------------------------------------*/
+
+काष्ठा hidg_func_node अणु
+	काष्ठा usb_function_instance *fi;
+	काष्ठा usb_function *f;
+	काष्ठा list_head node;
+	काष्ठा hidg_func_descriptor *func;
+पूर्ण;
+
+अटल LIST_HEAD(hidg_func_list);
 
 /*-------------------------------------------------------------------------*/
 USB_GADGET_COMPOSITE_OPTIONS();
 
-static struct usb_device_descriptor device_desc = {
-	.bLength =		sizeof device_desc,
+अटल काष्ठा usb_device_descriptor device_desc = अणु
+	.bLength =		माप device_desc,
 	.bDescriptorType =	USB_DT_DEVICE,
 
 	/* .bcdUSB = DYNAMIC */
@@ -53,108 +54,108 @@ static struct usb_device_descriptor device_desc = {
 	.bDeviceProtocol =	0,
 	/* .bMaxPacketSize0 = f(hardware) */
 
-	/* Vendor and product id can be overridden by module parameters.  */
-	.idVendor =		cpu_to_le16(HIDG_VENDOR_NUM),
+	/* Venकरोr and product id can be overridden by module parameters.  */
+	.idVenकरोr =		cpu_to_le16(HIDG_VENDOR_NUM),
 	.idProduct =		cpu_to_le16(HIDG_PRODUCT_NUM),
 	/* .bcdDevice = f(hardware) */
 	/* .iManufacturer = DYNAMIC */
 	/* .iProduct = DYNAMIC */
 	/* NO SERIAL NUMBER */
 	.bNumConfigurations =	1,
-};
+पूर्ण;
 
-static const struct usb_descriptor_header *otg_desc[2];
+अटल स्थिर काष्ठा usb_descriptor_header *otg_desc[2];
 
-/* string IDs are assigned dynamically */
-static struct usb_string strings_dev[] = {
+/* string IDs are asचिन्हित dynamically */
+अटल काष्ठा usb_string strings_dev[] = अणु
 	[USB_GADGET_MANUFACTURER_IDX].s = "",
 	[USB_GADGET_PRODUCT_IDX].s = DRIVER_DESC,
 	[USB_GADGET_SERIAL_IDX].s = "",
-	{  } /* end of list */
-};
+	अणु  पूर्ण /* end of list */
+पूर्ण;
 
-static struct usb_gadget_strings stringtab_dev = {
+अटल काष्ठा usb_gadget_strings stringtab_dev = अणु
 	.language	= 0x0409,	/* en-us */
 	.strings	= strings_dev,
-};
+पूर्ण;
 
-static struct usb_gadget_strings *dev_strings[] = {
+अटल काष्ठा usb_gadget_strings *dev_strings[] = अणु
 	&stringtab_dev,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 
 
 /****************************** Configurations ******************************/
 
-static int do_config(struct usb_configuration *c)
-{
-	struct hidg_func_node *e, *n;
-	int status = 0;
+अटल पूर्णांक करो_config(काष्ठा usb_configuration *c)
+अणु
+	काष्ठा hidg_func_node *e, *n;
+	पूर्णांक status = 0;
 
-	if (gadget_is_otg(c->cdev->gadget)) {
+	अगर (gadget_is_otg(c->cdev->gadget)) अणु
 		c->descriptors = otg_desc;
 		c->bmAttributes |= USB_CONFIG_ATT_WAKEUP;
-	}
+	पूर्ण
 
-	list_for_each_entry(e, &hidg_func_list, node) {
+	list_क्रम_each_entry(e, &hidg_func_list, node) अणु
 		e->f = usb_get_function(e->fi);
-		if (IS_ERR(e->f))
-			goto put;
+		अगर (IS_ERR(e->f))
+			जाओ put;
 		status = usb_add_function(c, e->f);
-		if (status < 0) {
+		अगर (status < 0) अणु
 			usb_put_function(e->f);
-			goto put;
-		}
-	}
+			जाओ put;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 put:
-	list_for_each_entry(n, &hidg_func_list, node) {
-		if (n == e)
-			break;
-		usb_remove_function(c, n->f);
+	list_क्रम_each_entry(n, &hidg_func_list, node) अणु
+		अगर (n == e)
+			अवरोध;
+		usb_हटाओ_function(c, n->f);
 		usb_put_function(n->f);
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
-static struct usb_configuration config_driver = {
+अटल काष्ठा usb_configuration config_driver = अणु
 	.label			= "HID Gadget",
 	.bConfigurationValue	= 1,
 	/* .iConfiguration = DYNAMIC */
 	.bmAttributes		= USB_CONFIG_ATT_SELFPOWER,
-};
+पूर्ण;
 
 /****************************** Gadget Bind ******************************/
 
-static int hid_bind(struct usb_composite_dev *cdev)
-{
-	struct usb_gadget *gadget = cdev->gadget;
-	struct list_head *tmp;
-	struct hidg_func_node *n, *m;
-	struct f_hid_opts *hid_opts;
-	int status, funcs = 0;
+अटल पूर्णांक hid_bind(काष्ठा usb_composite_dev *cdev)
+अणु
+	काष्ठा usb_gadget *gadget = cdev->gadget;
+	काष्ठा list_head *पंचांगp;
+	काष्ठा hidg_func_node *n, *m;
+	काष्ठा f_hid_opts *hid_opts;
+	पूर्णांक status, funcs = 0;
 
-	list_for_each(tmp, &hidg_func_list)
+	list_क्रम_each(पंचांगp, &hidg_func_list)
 		funcs++;
 
-	if (!funcs)
-		return -ENODEV;
+	अगर (!funcs)
+		वापस -ENODEV;
 
-	list_for_each_entry(n, &hidg_func_list, node) {
+	list_क्रम_each_entry(n, &hidg_func_list, node) अणु
 		n->fi = usb_get_function_instance("hid");
-		if (IS_ERR(n->fi)) {
+		अगर (IS_ERR(n->fi)) अणु
 			status = PTR_ERR(n->fi);
-			goto put;
-		}
-		hid_opts = container_of(n->fi, struct f_hid_opts, func_inst);
+			जाओ put;
+		पूर्ण
+		hid_opts = container_of(n->fi, काष्ठा f_hid_opts, func_inst);
 		hid_opts->subclass = n->func->subclass;
 		hid_opts->protocol = n->func->protocol;
 		hid_opts->report_length = n->func->report_length;
 		hid_opts->report_desc_length = n->func->report_desc_length;
 		hid_opts->report_desc = n->func->report_desc;
-	}
+	पूर्ण
 
 
 	/* Allocate string descriptor numbers ... note that string
@@ -162,136 +163,136 @@ static int hid_bind(struct usb_composite_dev *cdev)
 	 */
 
 	status = usb_string_ids_tab(cdev, strings_dev);
-	if (status < 0)
-		goto put;
+	अगर (status < 0)
+		जाओ put;
 	device_desc.iManufacturer = strings_dev[USB_GADGET_MANUFACTURER_IDX].id;
 	device_desc.iProduct = strings_dev[USB_GADGET_PRODUCT_IDX].id;
 
-	if (gadget_is_otg(gadget) && !otg_desc[0]) {
-		struct usb_descriptor_header *usb_desc;
+	अगर (gadget_is_otg(gadget) && !otg_desc[0]) अणु
+		काष्ठा usb_descriptor_header *usb_desc;
 
 		usb_desc = usb_otg_descriptor_alloc(gadget);
-		if (!usb_desc)
-			goto put;
+		अगर (!usb_desc)
+			जाओ put;
 		usb_otg_descriptor_init(gadget, usb_desc);
 		otg_desc[0] = usb_desc;
-		otg_desc[1] = NULL;
-	}
+		otg_desc[1] = शून्य;
+	पूर्ण
 
-	/* register our configuration */
-	status = usb_add_config(cdev, &config_driver, do_config);
-	if (status < 0)
-		goto free_otg_desc;
+	/* रेजिस्टर our configuration */
+	status = usb_add_config(cdev, &config_driver, करो_config);
+	अगर (status < 0)
+		जाओ मुक्त_otg_desc;
 
-	usb_composite_overwrite_options(cdev, &coverwrite);
+	usb_composite_overग_लिखो_options(cdev, &coverग_लिखो);
 	dev_info(&gadget->dev, DRIVER_DESC ", version: " DRIVER_VERSION "\n");
 
-	return 0;
+	वापस 0;
 
-free_otg_desc:
-	kfree(otg_desc[0]);
-	otg_desc[0] = NULL;
+मुक्त_otg_desc:
+	kमुक्त(otg_desc[0]);
+	otg_desc[0] = शून्य;
 put:
-	list_for_each_entry(m, &hidg_func_list, node) {
-		if (m == n)
-			break;
+	list_क्रम_each_entry(m, &hidg_func_list, node) अणु
+		अगर (m == n)
+			अवरोध;
 		usb_put_function_instance(m->fi);
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
-static int hid_unbind(struct usb_composite_dev *cdev)
-{
-	struct hidg_func_node *n;
+अटल पूर्णांक hid_unbind(काष्ठा usb_composite_dev *cdev)
+अणु
+	काष्ठा hidg_func_node *n;
 
-	list_for_each_entry(n, &hidg_func_list, node) {
+	list_क्रम_each_entry(n, &hidg_func_list, node) अणु
 		usb_put_function(n->f);
 		usb_put_function_instance(n->fi);
-	}
+	पूर्ण
 
-	kfree(otg_desc[0]);
-	otg_desc[0] = NULL;
+	kमुक्त(otg_desc[0]);
+	otg_desc[0] = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hidg_plat_driver_probe(struct platform_device *pdev)
-{
-	struct hidg_func_descriptor *func = dev_get_platdata(&pdev->dev);
-	struct hidg_func_node *entry;
+अटल पूर्णांक hidg_plat_driver_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा hidg_func_descriptor *func = dev_get_platdata(&pdev->dev);
+	काष्ठा hidg_func_node *entry;
 
-	if (!func) {
+	अगर (!func) अणु
 		dev_err(&pdev->dev, "Platform data missing\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
-	if (!entry)
-		return -ENOMEM;
+	entry = kzalloc(माप(*entry), GFP_KERNEL);
+	अगर (!entry)
+		वापस -ENOMEM;
 
 	entry->func = func;
 	list_add_tail(&entry->node, &hidg_func_list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hidg_plat_driver_remove(struct platform_device *pdev)
-{
-	struct hidg_func_node *e, *n;
+अटल पूर्णांक hidg_plat_driver_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा hidg_func_node *e, *n;
 
-	list_for_each_entry_safe(e, n, &hidg_func_list, node) {
+	list_क्रम_each_entry_safe(e, n, &hidg_func_list, node) अणु
 		list_del(&e->node);
-		kfree(e);
-	}
+		kमुक्त(e);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /****************************** Some noise ******************************/
 
 
-static struct usb_composite_driver hidg_driver = {
+अटल काष्ठा usb_composite_driver hidg_driver = अणु
 	.name		= "g_hid",
 	.dev		= &device_desc,
 	.strings	= dev_strings,
 	.max_speed	= USB_SPEED_HIGH,
 	.bind		= hid_bind,
 	.unbind		= hid_unbind,
-};
+पूर्ण;
 
-static struct platform_driver hidg_plat_driver = {
-	.remove		= hidg_plat_driver_remove,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver hidg_plat_driver = अणु
+	.हटाओ		= hidg_plat_driver_हटाओ,
+	.driver		= अणु
 		.name	= "hidg",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR("Fabien Chouteau, Peter Korsgaard");
 MODULE_LICENSE("GPL");
 
-static int __init hidg_init(void)
-{
-	int status;
+अटल पूर्णांक __init hidg_init(व्योम)
+अणु
+	पूर्णांक status;
 
-	status = platform_driver_probe(&hidg_plat_driver,
+	status = platक्रमm_driver_probe(&hidg_plat_driver,
 				hidg_plat_driver_probe);
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
 	status = usb_composite_probe(&hidg_driver);
-	if (status < 0)
-		platform_driver_unregister(&hidg_plat_driver);
+	अगर (status < 0)
+		platक्रमm_driver_unरेजिस्टर(&hidg_plat_driver);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 module_init(hidg_init);
 
-static void __exit hidg_cleanup(void)
-{
-	usb_composite_unregister(&hidg_driver);
-	platform_driver_unregister(&hidg_plat_driver);
-}
-module_exit(hidg_cleanup);
+अटल व्योम __निकास hidg_cleanup(व्योम)
+अणु
+	usb_composite_unरेजिस्टर(&hidg_driver);
+	platक्रमm_driver_unरेजिस्टर(&hidg_plat_driver);
+पूर्ण
+module_निकास(hidg_cleanup);

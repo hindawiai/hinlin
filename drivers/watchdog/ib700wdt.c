@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *	IB700 Single Board Computer WDT driver
  *
@@ -16,65 +17,65 @@
  *						All Rights Reserved.
  *
  *	Neither Alan Cox nor CymruNet Ltd. admit liability nor provide
- *	warranty for any of this software. This material is provided
- *	"AS-IS" and at no charge.
+ *	warranty क्रम any of this software. This material is provided
+ *	"AS-IS" and at no अक्षरge.
  *
  *	(c) Copyright 1995    Alan Cox <alan@lxorguk.ukuu.org.uk>
  *
  *	14-Dec-2001 Matt Domsch <Matt_Domsch@dell.com>
  *	     Added nowayout module option to override CONFIG_WATCHDOG_NOWAYOUT
- *	     Added timeout module option to override default
+ *	     Added समयout module option to override शेष
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/miscdevice.h>
-#include <linux/watchdog.h>
-#include <linux/ioport.h>
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/spinlock.h>
-#include <linux/moduleparam.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/uaccess.h>
 
 
-static struct platform_device *ibwdt_platform_device;
-static unsigned long ibwdt_is_open;
-static DEFINE_SPINLOCK(ibwdt_lock);
-static char expect_close;
+अटल काष्ठा platक्रमm_device *ibwdt_platक्रमm_device;
+अटल अचिन्हित दीर्घ ibwdt_is_खोलो;
+अटल DEFINE_SPINLOCK(ibwdt_lock);
+अटल अक्षर expect_बंद;
 
-/* Module information */
-#define DRV_NAME "ib700wdt"
+/* Module inक्रमmation */
+#घोषणा DRV_NAME "ib700wdt"
 
 /*
  *
- * Watchdog Timer Configuration
+ * Watchकरोg Timer Configuration
  *
- * The function of the watchdog timer is to reset the system
- * automatically and is defined at I/O port 0443H.  To enable the
- * watchdog timer and allow the system to reset, write I/O port 0443H.
- * To disable the timer, write I/O port 0441H for the system to stop the
- * watchdog function.  The timer has a tolerance of 20% for its
- * intervals.
+ * The function of the watchकरोg समयr is to reset the प्रणाली
+ * स्वतःmatically and is defined at I/O port 0443H.  To enable the
+ * watchकरोg समयr and allow the प्रणाली to reset, ग_लिखो I/O port 0443H.
+ * To disable the समयr, ग_लिखो I/O port 0441H क्रम the प्रणाली to stop the
+ * watchकरोg function.  The समयr has a tolerance of 20% क्रम its
+ * पूर्णांकervals.
  *
- * The following describes how the timer should be programmed.
+ * The following describes how the समयr should be programmed.
  *
- * Enabling Watchdog:
+ * Enabling Watchकरोg:
  * MOV AX,000FH (Choose the values from 0 to F)
  * MOV DX,0443H
  * OUT DX,AX
  *
- * Disabling Watchdog:
+ * Disabling Watchकरोg:
  * MOV AX,000FH (Any value is fine.)
  * MOV DX,0441H
  * OUT DX,AX
  *
- * Watchdog timer control table:
+ * Watchकरोg समयr control table:
  * Level   Value  Time/sec | Level Value Time/sec
  *   1       F       0     |   9     7      16
  *   2       E       2     |   10    6      18
@@ -87,18 +88,18 @@ static char expect_close;
  *
  */
 
-#define WDT_STOP 0x441
-#define WDT_START 0x443
+#घोषणा WDT_STOP 0x441
+#घोषणा WDT_START 0x443
 
-/* Default timeout */
-#define WATCHDOG_TIMEOUT 30		/* 30 seconds +/- 20% */
-static int timeout = WATCHDOG_TIMEOUT;	/* in seconds */
-module_param(timeout, int, 0);
-MODULE_PARM_DESC(timeout,
+/* Default समयout */
+#घोषणा WATCHDOG_TIMEOUT 30		/* 30 seconds +/- 20% */
+अटल पूर्णांक समयout = WATCHDOG_TIMEOUT;	/* in seconds */
+module_param(समयout, पूर्णांक, 0);
+MODULE_PARM_DESC(समयout,
 	"Watchdog timeout in seconds. 0<= timeout <=30, default="
 		__MODULE_STRING(WATCHDOG_TIMEOUT) ".");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		"Watchdog cannot be stopped once started (default="
@@ -106,271 +107,271 @@ MODULE_PARM_DESC(nowayout,
 
 
 /*
- *	Watchdog Operations
+ *	Watchकरोg Operations
  */
 
-static void ibwdt_ping(void)
-{
-	int wd_margin = 15 - ((timeout + 1) / 2);
+अटल व्योम ibwdt_ping(व्योम)
+अणु
+	पूर्णांक wd_margin = 15 - ((समयout + 1) / 2);
 
 	spin_lock(&ibwdt_lock);
 
-	/* Write a watchdog value */
+	/* Write a watchकरोg value */
 	outb_p(wd_margin, WDT_START);
 
 	spin_unlock(&ibwdt_lock);
-}
+पूर्ण
 
-static void ibwdt_disable(void)
-{
+अटल व्योम ibwdt_disable(व्योम)
+अणु
 	spin_lock(&ibwdt_lock);
 	outb_p(0, WDT_STOP);
 	spin_unlock(&ibwdt_lock);
-}
+पूर्ण
 
-static int ibwdt_set_heartbeat(int t)
-{
-	if (t < 0 || t > 30)
-		return -EINVAL;
+अटल पूर्णांक ibwdt_set_heartbeat(पूर्णांक t)
+अणु
+	अगर (t < 0 || t > 30)
+		वापस -EINVAL;
 
-	timeout = t;
-	return 0;
-}
+	समयout = t;
+	वापस 0;
+पूर्ण
 
 /*
- *	/dev/watchdog handling
+ *	/dev/watchकरोg handling
  */
 
-static ssize_t ibwdt_write(struct file *file, const char __user *buf,
-						size_t count, loff_t *ppos)
-{
-	if (count) {
-		if (!nowayout) {
-			size_t i;
+अटल sमाप_प्रकार ibwdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+						माप_प्रकार count, loff_t *ppos)
+अणु
+	अगर (count) अणु
+		अगर (!nowayout) अणु
+			माप_प्रकार i;
 
-			/* In case it was set long ago */
-			expect_close = 0;
+			/* In हाल it was set दीर्घ ago */
+			expect_बंद = 0;
 
-			for (i = 0; i != count; i++) {
-				char c;
-				if (get_user(c, buf + i))
-					return -EFAULT;
-				if (c == 'V')
-					expect_close = 42;
-			}
-		}
+			क्रम (i = 0; i != count; i++) अणु
+				अक्षर c;
+				अगर (get_user(c, buf + i))
+					वापस -EFAULT;
+				अगर (c == 'V')
+					expect_बंद = 42;
+			पूर्ण
+		पूर्ण
 		ibwdt_ping();
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static long ibwdt_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	int new_margin;
-	void __user *argp = (void __user *)arg;
-	int __user *p = argp;
+अटल दीर्घ ibwdt_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक new_margin;
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक __user *p = argp;
 
-	static const struct watchdog_info ident = {
+	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
 		.options = WDIOF_KEEPALIVEPING | WDIOF_SETTIMEOUT
 							| WDIOF_MAGICCLOSE,
 		.firmware_version = 1,
 		.identity = "IB700 WDT",
-	};
+	पूर्ण;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		if (copy_to_user(argp, &ident, sizeof(ident)))
-			return -EFAULT;
-		break;
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		अगर (copy_to_user(argp, &ident, माप(ident)))
+			वापस -EFAULT;
+		अवरोध;
 
-	case WDIOC_GETSTATUS:
-	case WDIOC_GETBOOTSTATUS:
-		return put_user(0, p);
+	हाल WDIOC_GETSTATUS:
+	हाल WDIOC_GETBOOTSTATUS:
+		वापस put_user(0, p);
 
-	case WDIOC_SETOPTIONS:
-	{
-		int options, retval = -EINVAL;
+	हाल WDIOC_SETOPTIONS:
+	अणु
+		पूर्णांक options, retval = -EINVAL;
 
-		if (get_user(options, p))
-			return -EFAULT;
+		अगर (get_user(options, p))
+			वापस -EFAULT;
 
-		if (options & WDIOS_DISABLECARD) {
+		अगर (options & WDIOS_DISABLECARD) अणु
 			ibwdt_disable();
 			retval = 0;
-		}
-		if (options & WDIOS_ENABLECARD) {
+		पूर्ण
+		अगर (options & WDIOS_ENABLECARD) अणु
 			ibwdt_ping();
 			retval = 0;
-		}
-		return retval;
-	}
-	case WDIOC_KEEPALIVE:
+		पूर्ण
+		वापस retval;
+	पूर्ण
+	हाल WDIOC_KEEPALIVE:
 		ibwdt_ping();
-		break;
+		अवरोध;
 
-	case WDIOC_SETTIMEOUT:
-		if (get_user(new_margin, p))
-			return -EFAULT;
-		if (ibwdt_set_heartbeat(new_margin))
-			return -EINVAL;
+	हाल WDIOC_SETTIMEOUT:
+		अगर (get_user(new_margin, p))
+			वापस -EFAULT;
+		अगर (ibwdt_set_heartbeat(new_margin))
+			वापस -EINVAL;
 		ibwdt_ping();
 		fallthrough;
 
-	case WDIOC_GETTIMEOUT:
-		return put_user(timeout, p);
+	हाल WDIOC_GETTIMEOUT:
+		वापस put_user(समयout, p);
 
-	default:
-		return -ENOTTY;
-	}
-	return 0;
-}
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ibwdt_open(struct inode *inode, struct file *file)
-{
-	if (test_and_set_bit(0, &ibwdt_is_open))
-		return -EBUSY;
-	if (nowayout)
+अटल पूर्णांक ibwdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (test_and_set_bit(0, &ibwdt_is_खोलो))
+		वापस -EBUSY;
+	अगर (nowayout)
 		__module_get(THIS_MODULE);
 
 	/* Activate */
 	ibwdt_ping();
-	return stream_open(inode, file);
-}
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int ibwdt_close(struct inode *inode, struct file *file)
-{
-	if (expect_close == 42) {
+अटल पूर्णांक ibwdt_बंद(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (expect_बंद == 42) अणु
 		ibwdt_disable();
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_crit("WDT device closed unexpectedly.  WDT will not stop!\n");
 		ibwdt_ping();
-	}
-	clear_bit(0, &ibwdt_is_open);
-	expect_close = 0;
-	return 0;
-}
+	पूर्ण
+	clear_bit(0, &ibwdt_is_खोलो);
+	expect_बंद = 0;
+	वापस 0;
+पूर्ण
 
 /*
  *	Kernel Interfaces
  */
 
-static const struct file_operations ibwdt_fops = {
+अटल स्थिर काष्ठा file_operations ibwdt_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.write		= ibwdt_write,
+	.ग_लिखो		= ibwdt_ग_लिखो,
 	.unlocked_ioctl	= ibwdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.open		= ibwdt_open,
-	.release	= ibwdt_close,
-};
+	.खोलो		= ibwdt_खोलो,
+	.release	= ibwdt_बंद,
+पूर्ण;
 
-static struct miscdevice ibwdt_miscdev = {
+अटल काष्ठा miscdevice ibwdt_miscdev = अणु
 	.minor = WATCHDOG_MINOR,
 	.name = "watchdog",
 	.fops = &ibwdt_fops,
-};
+पूर्ण;
 
 /*
- *	Init & exit routines
+ *	Init & निकास routines
  */
 
-static int __init ibwdt_probe(struct platform_device *dev)
-{
-	int res;
+अटल पूर्णांक __init ibwdt_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक res;
 
-#if WDT_START != WDT_STOP
-	if (!request_region(WDT_STOP, 1, "IB700 WDT")) {
+#अगर WDT_START != WDT_STOP
+	अगर (!request_region(WDT_STOP, 1, "IB700 WDT")) अणु
 		pr_err("STOP method I/O %X is not available\n", WDT_STOP);
 		res = -EIO;
-		goto out_nostopreg;
-	}
-#endif
+		जाओ out_nostopreg;
+	पूर्ण
+#पूर्ण_अगर
 
-	if (!request_region(WDT_START, 1, "IB700 WDT")) {
+	अगर (!request_region(WDT_START, 1, "IB700 WDT")) अणु
 		pr_err("START method I/O %X is not available\n", WDT_START);
 		res = -EIO;
-		goto out_nostartreg;
-	}
+		जाओ out_nostartreg;
+	पूर्ण
 
 	/* Check that the heartbeat value is within it's range ;
-	 * if not reset to the default */
-	if (ibwdt_set_heartbeat(timeout)) {
+	 * अगर not reset to the शेष */
+	अगर (ibwdt_set_heartbeat(समयout)) अणु
 		ibwdt_set_heartbeat(WATCHDOG_TIMEOUT);
-		pr_info("timeout value must be 0<=x<=30, using %d\n", timeout);
-	}
+		pr_info("timeout value must be 0<=x<=30, using %d\n", समयout);
+	पूर्ण
 
-	res = misc_register(&ibwdt_miscdev);
-	if (res) {
+	res = misc_रेजिस्टर(&ibwdt_miscdev);
+	अगर (res) अणु
 		pr_err("failed to register misc device\n");
-		goto out_nomisc;
-	}
-	return 0;
+		जाओ out_nomisc;
+	पूर्ण
+	वापस 0;
 
 out_nomisc:
 	release_region(WDT_START, 1);
 out_nostartreg:
-#if WDT_START != WDT_STOP
+#अगर WDT_START != WDT_STOP
 	release_region(WDT_STOP, 1);
-#endif
+#पूर्ण_अगर
 out_nostopreg:
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int ibwdt_remove(struct platform_device *dev)
-{
-	misc_deregister(&ibwdt_miscdev);
+अटल पूर्णांक ibwdt_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	misc_deरेजिस्टर(&ibwdt_miscdev);
 	release_region(WDT_START, 1);
-#if WDT_START != WDT_STOP
+#अगर WDT_START != WDT_STOP
 	release_region(WDT_STOP, 1);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void ibwdt_shutdown(struct platform_device *dev)
-{
-	/* Turn the WDT off if we have a soft shutdown */
+अटल व्योम ibwdt_shutकरोwn(काष्ठा platक्रमm_device *dev)
+अणु
+	/* Turn the WDT off अगर we have a soft shutकरोwn */
 	ibwdt_disable();
-}
+पूर्ण
 
-static struct platform_driver ibwdt_driver = {
-	.remove		= ibwdt_remove,
-	.shutdown	= ibwdt_shutdown,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver ibwdt_driver = अणु
+	.हटाओ		= ibwdt_हटाओ,
+	.shutकरोwn	= ibwdt_shutकरोwn,
+	.driver		= अणु
 		.name	= DRV_NAME,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init ibwdt_init(void)
-{
-	int err;
+अटल पूर्णांक __init ibwdt_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	pr_info("WDT driver for IB700 single board computer initialising\n");
 
-	ibwdt_platform_device = platform_device_register_simple(DRV_NAME,
-								-1, NULL, 0);
-	if (IS_ERR(ibwdt_platform_device))
-		return PTR_ERR(ibwdt_platform_device);
+	ibwdt_platक्रमm_device = platक्रमm_device_रेजिस्टर_simple(DRV_NAME,
+								-1, शून्य, 0);
+	अगर (IS_ERR(ibwdt_platक्रमm_device))
+		वापस PTR_ERR(ibwdt_platक्रमm_device);
 
-	err = platform_driver_probe(&ibwdt_driver, ibwdt_probe);
-	if (err)
-		goto unreg_platform_device;
+	err = platक्रमm_driver_probe(&ibwdt_driver, ibwdt_probe);
+	अगर (err)
+		जाओ unreg_platक्रमm_device;
 
-	return 0;
+	वापस 0;
 
-unreg_platform_device:
-	platform_device_unregister(ibwdt_platform_device);
-	return err;
-}
+unreg_platक्रमm_device:
+	platक्रमm_device_unरेजिस्टर(ibwdt_platक्रमm_device);
+	वापस err;
+पूर्ण
 
-static void __exit ibwdt_exit(void)
-{
-	platform_device_unregister(ibwdt_platform_device);
-	platform_driver_unregister(&ibwdt_driver);
+अटल व्योम __निकास ibwdt_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(ibwdt_platक्रमm_device);
+	platक्रमm_driver_unरेजिस्टर(&ibwdt_driver);
 	pr_info("Watchdog Module Unloaded\n");
-}
+पूर्ण
 
 module_init(ibwdt_init);
-module_exit(ibwdt_exit);
+module_निकास(ibwdt_निकास);
 
 MODULE_AUTHOR("Charles Howes <chowes@vsol.net>");
 MODULE_DESCRIPTION("IB700 SBC watchdog driver");

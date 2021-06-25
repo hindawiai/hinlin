@@ -1,207 +1,208 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
-#include <linux/list.h>
-#include <linux/errno.h>
+#समावेश <linux/list.h>
+#समावेश <linux/त्रुटिसं.स>
 
-#include "iavf.h"
-#include "iavf_prototype.h"
-#include "iavf_client.h"
+#समावेश "iavf.h"
+#समावेश "iavf_prototype.h"
+#समावेश "iavf_client.h"
 
-static
-const char iavf_client_interface_version_str[] = IAVF_CLIENT_VERSION_STR;
-static struct iavf_client *vf_registered_client;
-static LIST_HEAD(iavf_devices);
-static DEFINE_MUTEX(iavf_device_mutex);
+अटल
+स्थिर अक्षर iavf_client_पूर्णांकerface_version_str[] = IAVF_CLIENT_VERSION_STR;
+अटल काष्ठा iavf_client *vf_रेजिस्टरed_client;
+अटल LIST_HEAD(iavf_devices);
+अटल DEFINE_MUTEX(iavf_device_mutex);
 
-static u32 iavf_client_virtchnl_send(struct iavf_info *ldev,
-				     struct iavf_client *client,
+अटल u32 iavf_client_virtchnl_send(काष्ठा iavf_info *ldev,
+				     काष्ठा iavf_client *client,
 				     u8 *msg, u16 len);
 
-static int iavf_client_setup_qvlist(struct iavf_info *ldev,
-				    struct iavf_client *client,
-				    struct iavf_qvlist_info *qvlist_info);
+अटल पूर्णांक iavf_client_setup_qvlist(काष्ठा iavf_info *ldev,
+				    काष्ठा iavf_client *client,
+				    काष्ठा iavf_qvlist_info *qvlist_info);
 
-static struct iavf_ops iavf_lan_ops = {
+अटल काष्ठा iavf_ops iavf_lan_ops = अणु
 	.virtchnl_send = iavf_client_virtchnl_send,
 	.setup_qvlist = iavf_client_setup_qvlist,
-};
+पूर्ण;
 
 /**
  * iavf_client_get_params - retrieve relevant client parameters
  * @vsi: VSI with parameters
- * @params: client param struct
+ * @params: client param काष्ठा
  **/
-static
-void iavf_client_get_params(struct iavf_vsi *vsi, struct iavf_params *params)
-{
-	int i;
+अटल
+व्योम iavf_client_get_params(काष्ठा iavf_vsi *vsi, काष्ठा iavf_params *params)
+अणु
+	पूर्णांक i;
 
-	memset(params, 0, sizeof(struct iavf_params));
+	स_रखो(params, 0, माप(काष्ठा iavf_params));
 	params->mtu = vsi->netdev->mtu;
 	params->link_up = vsi->back->link_up;
 
-	for (i = 0; i < IAVF_MAX_USER_PRIORITY; i++) {
+	क्रम (i = 0; i < IAVF_MAX_USER_PRIORITY; i++) अणु
 		params->qos.prio_qos[i].tc = 0;
 		params->qos.prio_qos[i].qs_handle = vsi->qs_handle;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * iavf_notify_client_message - call the client message receive callback
+ * iavf_notअगरy_client_message - call the client message receive callback
  * @vsi: the VSI associated with this client
  * @msg: message buffer
  * @len: length of message
  *
  * If there is a client to this VSI, call the client
  **/
-void iavf_notify_client_message(struct iavf_vsi *vsi, u8 *msg, u16 len)
-{
-	struct iavf_client_instance *cinst;
+व्योम iavf_notअगरy_client_message(काष्ठा iavf_vsi *vsi, u8 *msg, u16 len)
+अणु
+	काष्ठा iavf_client_instance *cinst;
 
-	if (!vsi)
-		return;
+	अगर (!vsi)
+		वापस;
 
 	cinst = vsi->back->cinst;
-	if (!cinst || !cinst->client || !cinst->client->ops ||
-	    !cinst->client->ops->virtchnl_receive) {
+	अगर (!cinst || !cinst->client || !cinst->client->ops ||
+	    !cinst->client->ops->virtchnl_receive) अणु
 		dev_dbg(&vsi->back->pdev->dev,
 			"Cannot locate client instance virtchnl_receive function\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	cinst->client->ops->virtchnl_receive(&cinst->lan_info,  cinst->client,
 					     msg, len);
-}
+पूर्ण
 
 /**
- * iavf_notify_client_l2_params - call the client notify callback
+ * iavf_notअगरy_client_l2_params - call the client notअगरy callback
  * @vsi: the VSI with l2 param changes
  *
  * If there is a client to this VSI, call the client
  **/
-void iavf_notify_client_l2_params(struct iavf_vsi *vsi)
-{
-	struct iavf_client_instance *cinst;
-	struct iavf_params params;
+व्योम iavf_notअगरy_client_l2_params(काष्ठा iavf_vsi *vsi)
+अणु
+	काष्ठा iavf_client_instance *cinst;
+	काष्ठा iavf_params params;
 
-	if (!vsi)
-		return;
+	अगर (!vsi)
+		वापस;
 
 	cinst = vsi->back->cinst;
 
-	if (!cinst || !cinst->client || !cinst->client->ops ||
-	    !cinst->client->ops->l2_param_change) {
+	अगर (!cinst || !cinst->client || !cinst->client->ops ||
+	    !cinst->client->ops->l2_param_change) अणु
 		dev_dbg(&vsi->back->pdev->dev,
 			"Cannot locate client instance l2_param_change function\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	iavf_client_get_params(vsi, &params);
 	cinst->lan_info.params = params;
 	cinst->client->ops->l2_param_change(&cinst->lan_info, cinst->client,
 					    &params);
-}
+पूर्ण
 
 /**
- * iavf_notify_client_open - call the client open callback
- * @vsi: the VSI with netdev opened
+ * iavf_notअगरy_client_खोलो - call the client खोलो callback
+ * @vsi: the VSI with netdev खोलोed
  *
- * If there is a client to this netdev, call the client with open
+ * If there is a client to this netdev, call the client with खोलो
  **/
-void iavf_notify_client_open(struct iavf_vsi *vsi)
-{
-	struct iavf_adapter *adapter = vsi->back;
-	struct iavf_client_instance *cinst = adapter->cinst;
-	int ret;
+व्योम iavf_notअगरy_client_खोलो(काष्ठा iavf_vsi *vsi)
+अणु
+	काष्ठा iavf_adapter *adapter = vsi->back;
+	काष्ठा iavf_client_instance *cinst = adapter->cinst;
+	पूर्णांक ret;
 
-	if (!cinst || !cinst->client || !cinst->client->ops ||
-	    !cinst->client->ops->open) {
+	अगर (!cinst || !cinst->client || !cinst->client->ops ||
+	    !cinst->client->ops->खोलो) अणु
 		dev_dbg(&vsi->back->pdev->dev,
 			"Cannot locate client instance open function\n");
-		return;
-	}
-	if (!(test_bit(__IAVF_CLIENT_INSTANCE_OPENED, &cinst->state))) {
-		ret = cinst->client->ops->open(&cinst->lan_info, cinst->client);
-		if (!ret)
+		वापस;
+	पूर्ण
+	अगर (!(test_bit(__IAVF_CLIENT_INSTANCE_OPENED, &cinst->state))) अणु
+		ret = cinst->client->ops->खोलो(&cinst->lan_info, cinst->client);
+		अगर (!ret)
 			set_bit(__IAVF_CLIENT_INSTANCE_OPENED, &cinst->state);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * iavf_client_release_qvlist - send a message to the PF to release iwarp qv map
- * @ldev: pointer to L2 context.
+ * @ldev: poपूर्णांकer to L2 context.
  *
  * Return 0 on success or < 0 on error
  **/
-static int iavf_client_release_qvlist(struct iavf_info *ldev)
-{
-	struct iavf_adapter *adapter = ldev->vf;
-	enum iavf_status err;
+अटल पूर्णांक iavf_client_release_qvlist(काष्ठा iavf_info *ldev)
+अणु
+	काष्ठा iavf_adapter *adapter = ldev->vf;
+	क्रमागत iavf_status err;
 
-	if (adapter->aq_required)
-		return -EAGAIN;
+	अगर (adapter->aq_required)
+		वापस -EAGAIN;
 
 	err = iavf_aq_send_msg_to_pf(&adapter->hw,
 				     VIRTCHNL_OP_RELEASE_IWARP_IRQ_MAP,
-				     IAVF_SUCCESS, NULL, 0, NULL);
+				     IAVF_SUCCESS, शून्य, 0, शून्य);
 
-	if (err)
+	अगर (err)
 		dev_err(&adapter->pdev->dev,
 			"Unable to send iWarp vector release message to PF, error %d, aq status %d\n",
 			err, adapter->hw.aq.asq_last_status);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * iavf_notify_client_close - call the client close callback
- * @vsi: the VSI with netdev closed
- * @reset: true when close called due to reset pending
+ * iavf_notअगरy_client_बंद - call the client बंद callback
+ * @vsi: the VSI with netdev बंदd
+ * @reset: true when बंद called due to reset pending
  *
- * If there is a client to this netdev, call the client with close
+ * If there is a client to this netdev, call the client with बंद
  **/
-void iavf_notify_client_close(struct iavf_vsi *vsi, bool reset)
-{
-	struct iavf_adapter *adapter = vsi->back;
-	struct iavf_client_instance *cinst = adapter->cinst;
+व्योम iavf_notअगरy_client_बंद(काष्ठा iavf_vsi *vsi, bool reset)
+अणु
+	काष्ठा iavf_adapter *adapter = vsi->back;
+	काष्ठा iavf_client_instance *cinst = adapter->cinst;
 
-	if (!cinst || !cinst->client || !cinst->client->ops ||
-	    !cinst->client->ops->close) {
+	अगर (!cinst || !cinst->client || !cinst->client->ops ||
+	    !cinst->client->ops->बंद) अणु
 		dev_dbg(&vsi->back->pdev->dev,
 			"Cannot locate client instance close function\n");
-		return;
-	}
-	cinst->client->ops->close(&cinst->lan_info, cinst->client, reset);
+		वापस;
+	पूर्ण
+	cinst->client->ops->बंद(&cinst->lan_info, cinst->client, reset);
 	iavf_client_release_qvlist(&cinst->lan_info);
 	clear_bit(__IAVF_CLIENT_INSTANCE_OPENED, &cinst->state);
-}
+पूर्ण
 
 /**
  * iavf_client_add_instance - add a client instance to the instance list
- * @adapter: pointer to the board struct
+ * @adapter: poपूर्णांकer to the board काष्ठा
  *
- * Returns cinst ptr on success, NULL on failure
+ * Returns cinst ptr on success, शून्य on failure
  **/
-static struct iavf_client_instance *
-iavf_client_add_instance(struct iavf_adapter *adapter)
-{
-	struct iavf_client_instance *cinst = NULL;
-	struct iavf_vsi *vsi = &adapter->vsi;
-	struct netdev_hw_addr *mac = NULL;
-	struct iavf_params params;
+अटल काष्ठा iavf_client_instance *
+iavf_client_add_instance(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा iavf_client_instance *cinst = शून्य;
+	काष्ठा iavf_vsi *vsi = &adapter->vsi;
+	काष्ठा netdev_hw_addr *mac = शून्य;
+	काष्ठा iavf_params params;
 
-	if (!vf_registered_client)
-		goto out;
+	अगर (!vf_रेजिस्टरed_client)
+		जाओ out;
 
-	if (adapter->cinst) {
+	अगर (adapter->cinst) अणु
 		cinst = adapter->cinst;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	cinst = kzalloc(sizeof(*cinst), GFP_KERNEL);
-	if (!cinst)
-		goto out;
+	cinst = kzalloc(माप(*cinst), GFP_KERNEL);
+	अगर (!cinst)
+		जाओ out;
 
-	cinst->lan_info.vf = (void *)adapter;
+	cinst->lan_info.vf = (व्योम *)adapter;
 	cinst->lan_info.netdev = vsi->netdev;
 	cinst->lan_info.pcidev = adapter->pdev;
 	cinst->lan_info.fid = 0;
@@ -220,92 +221,92 @@ iavf_client_add_instance(struct iavf_adapter *adapter)
 			&adapter->msix_entries[adapter->iwarp_base_vector];
 
 	mac = list_first_entry(&cinst->lan_info.netdev->dev_addrs.list,
-			       struct netdev_hw_addr, list);
-	if (mac)
+			       काष्ठा netdev_hw_addr, list);
+	अगर (mac)
 		ether_addr_copy(cinst->lan_info.lanmac, mac->addr);
-	else
+	अन्यथा
 		dev_err(&adapter->pdev->dev, "MAC address list is empty!\n");
 
-	cinst->client = vf_registered_client;
+	cinst->client = vf_रेजिस्टरed_client;
 	adapter->cinst = cinst;
 out:
-	return cinst;
-}
+	वापस cinst;
+पूर्ण
 
 /**
- * iavf_client_del_instance - removes a client instance from the list
- * @adapter: pointer to the board struct
+ * iavf_client_del_instance - हटाओs a client instance from the list
+ * @adapter: poपूर्णांकer to the board काष्ठा
  *
  **/
-static
-void iavf_client_del_instance(struct iavf_adapter *adapter)
-{
-	kfree(adapter->cinst);
-	adapter->cinst = NULL;
-}
+अटल
+व्योम iavf_client_del_instance(काष्ठा iavf_adapter *adapter)
+अणु
+	kमुक्त(adapter->cinst);
+	adapter->cinst = शून्य;
+पूर्ण
 
 /**
- * iavf_client_subtask - client maintenance work
- * @adapter: board private structure
+ * iavf_client_subtask - client मुख्यtenance work
+ * @adapter: board निजी काष्ठाure
  **/
-void iavf_client_subtask(struct iavf_adapter *adapter)
-{
-	struct iavf_client *client = vf_registered_client;
-	struct iavf_client_instance *cinst;
-	int ret = 0;
+व्योम iavf_client_subtask(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा iavf_client *client = vf_रेजिस्टरed_client;
+	काष्ठा iavf_client_instance *cinst;
+	पूर्णांक ret = 0;
 
-	if (adapter->state < __IAVF_DOWN)
-		return;
+	अगर (adapter->state < __IAVF_DOWN)
+		वापस;
 
-	/* first check client is registered */
-	if (!client)
-		return;
+	/* first check client is रेजिस्टरed */
+	अगर (!client)
+		वापस;
 
 	/* Add the client instance to the instance list */
 	cinst = iavf_client_add_instance(adapter);
-	if (!cinst)
-		return;
+	अगर (!cinst)
+		वापस;
 
 	dev_info(&adapter->pdev->dev, "Added instance of Client %s\n",
 		 client->name);
 
-	if (!test_bit(__IAVF_CLIENT_INSTANCE_OPENED, &cinst->state)) {
+	अगर (!test_bit(__IAVF_CLIENT_INSTANCE_OPENED, &cinst->state)) अणु
 		/* Send an Open request to the client */
 
-		if (client->ops && client->ops->open)
-			ret = client->ops->open(&cinst->lan_info, client);
-		if (!ret)
+		अगर (client->ops && client->ops->खोलो)
+			ret = client->ops->खोलो(&cinst->lan_info, client);
+		अगर (!ret)
 			set_bit(__IAVF_CLIENT_INSTANCE_OPENED,
 				&cinst->state);
-		else
-			/* remove client instance */
+		अन्यथा
+			/* हटाओ client instance */
 			iavf_client_del_instance(adapter);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * iavf_lan_add_device - add a lan device struct to the list of lan devices
- * @adapter: pointer to the board struct
+ * iavf_lan_add_device - add a lan device काष्ठा to the list of lan devices
+ * @adapter: poपूर्णांकer to the board काष्ठा
  *
  * Returns 0 on success or none 0 on error
  **/
-int iavf_lan_add_device(struct iavf_adapter *adapter)
-{
-	struct iavf_device *ldev;
-	int ret = 0;
+पूर्णांक iavf_lan_add_device(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा iavf_device *ldev;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&iavf_device_mutex);
-	list_for_each_entry(ldev, &iavf_devices, list) {
-		if (ldev->vf == adapter) {
+	list_क्रम_each_entry(ldev, &iavf_devices, list) अणु
+		अगर (ldev->vf == adapter) अणु
 			ret = -EEXIST;
-			goto out;
-		}
-	}
-	ldev = kzalloc(sizeof(*ldev), GFP_KERNEL);
-	if (!ldev) {
+			जाओ out;
+		पूर्ण
+	पूर्ण
+	ldev = kzalloc(माप(*ldev), GFP_KERNEL);
+	अगर (!ldev) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	ldev->vf = adapter;
 	INIT_LIST_HEAD(&ldev->list);
 	list_add(&ldev->list, &iavf_devices);
@@ -313,266 +314,266 @@ int iavf_lan_add_device(struct iavf_adapter *adapter)
 		 adapter->hw.bus.bus_id, adapter->hw.bus.device,
 		 adapter->hw.bus.func);
 
-	/* Since in some cases register may have happened before a device gets
+	/* Since in some हालs रेजिस्टर may have happened beक्रमe a device माला_लो
 	 * added, we can schedule a subtask to go initiate the clients.
 	 */
 	adapter->flags |= IAVF_FLAG_SERVICE_CLIENT_REQUESTED;
 
 out:
 	mutex_unlock(&iavf_device_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * iavf_lan_del_device - removes a lan device from the device list
- * @adapter: pointer to the board struct
+ * iavf_lan_del_device - हटाओs a lan device from the device list
+ * @adapter: poपूर्णांकer to the board काष्ठा
  *
  * Returns 0 on success or non-0 on error
  **/
-int iavf_lan_del_device(struct iavf_adapter *adapter)
-{
-	struct iavf_device *ldev, *tmp;
-	int ret = -ENODEV;
+पूर्णांक iavf_lan_del_device(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा iavf_device *ldev, *पंचांगp;
+	पूर्णांक ret = -ENODEV;
 
 	mutex_lock(&iavf_device_mutex);
-	list_for_each_entry_safe(ldev, tmp, &iavf_devices, list) {
-		if (ldev->vf == adapter) {
+	list_क्रम_each_entry_safe(ldev, पंचांगp, &iavf_devices, list) अणु
+		अगर (ldev->vf == adapter) अणु
 			dev_info(&adapter->pdev->dev,
 				 "Deleted LAN device bus=0x%02x dev=0x%02x func=0x%02x\n",
 				 adapter->hw.bus.bus_id, adapter->hw.bus.device,
 				 adapter->hw.bus.func);
 			list_del(&ldev->list);
-			kfree(ldev);
+			kमुक्त(ldev);
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&iavf_device_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * iavf_client_release - release client specific resources
- * @client: pointer to the registered client
+ * iavf_client_release - release client specअगरic resources
+ * @client: poपूर्णांकer to the रेजिस्टरed client
  *
  **/
-static void iavf_client_release(struct iavf_client *client)
-{
-	struct iavf_client_instance *cinst;
-	struct iavf_device *ldev;
-	struct iavf_adapter *adapter;
+अटल व्योम iavf_client_release(काष्ठा iavf_client *client)
+अणु
+	काष्ठा iavf_client_instance *cinst;
+	काष्ठा iavf_device *ldev;
+	काष्ठा iavf_adapter *adapter;
 
 	mutex_lock(&iavf_device_mutex);
-	list_for_each_entry(ldev, &iavf_devices, list) {
+	list_क्रम_each_entry(ldev, &iavf_devices, list) अणु
 		adapter = ldev->vf;
 		cinst = adapter->cinst;
-		if (!cinst)
-			continue;
-		if (test_bit(__IAVF_CLIENT_INSTANCE_OPENED, &cinst->state)) {
-			if (client->ops && client->ops->close)
-				client->ops->close(&cinst->lan_info, client,
+		अगर (!cinst)
+			जारी;
+		अगर (test_bit(__IAVF_CLIENT_INSTANCE_OPENED, &cinst->state)) अणु
+			अगर (client->ops && client->ops->बंद)
+				client->ops->बंद(&cinst->lan_info, client,
 						   false);
 			iavf_client_release_qvlist(&cinst->lan_info);
 			clear_bit(__IAVF_CLIENT_INSTANCE_OPENED, &cinst->state);
 
 			dev_warn(&adapter->pdev->dev,
 				 "Client %s instance closed\n", client->name);
-		}
+		पूर्ण
 		/* delete the client instance */
 		iavf_client_del_instance(adapter);
 		dev_info(&adapter->pdev->dev, "Deleted client instance of Client %s\n",
 			 client->name);
-	}
+	पूर्ण
 	mutex_unlock(&iavf_device_mutex);
-}
+पूर्ण
 
 /**
- * iavf_client_prepare - prepare client specific resources
- * @client: pointer to the registered client
+ * iavf_client_prepare - prepare client specअगरic resources
+ * @client: poपूर्णांकer to the रेजिस्टरed client
  *
  **/
-static void iavf_client_prepare(struct iavf_client *client)
-{
-	struct iavf_device *ldev;
-	struct iavf_adapter *adapter;
+अटल व्योम iavf_client_prepare(काष्ठा iavf_client *client)
+अणु
+	काष्ठा iavf_device *ldev;
+	काष्ठा iavf_adapter *adapter;
 
 	mutex_lock(&iavf_device_mutex);
-	list_for_each_entry(ldev, &iavf_devices, list) {
+	list_क्रम_each_entry(ldev, &iavf_devices, list) अणु
 		adapter = ldev->vf;
-		/* Signal the watchdog to service the client */
+		/* Signal the watchकरोg to service the client */
 		adapter->flags |= IAVF_FLAG_SERVICE_CLIENT_REQUESTED;
-	}
+	पूर्ण
 	mutex_unlock(&iavf_device_mutex);
-}
+पूर्ण
 
 /**
  * iavf_client_virtchnl_send - send a message to the PF instance
- * @ldev: pointer to L2 context.
- * @client: Client pointer.
- * @msg: pointer to message buffer
+ * @ldev: poपूर्णांकer to L2 context.
+ * @client: Client poपूर्णांकer.
+ * @msg: poपूर्णांकer to message buffer
  * @len: message length
  *
  * Return 0 on success or < 0 on error
  **/
-static u32 iavf_client_virtchnl_send(struct iavf_info *ldev,
-				     struct iavf_client *client,
+अटल u32 iavf_client_virtchnl_send(काष्ठा iavf_info *ldev,
+				     काष्ठा iavf_client *client,
 				     u8 *msg, u16 len)
-{
-	struct iavf_adapter *adapter = ldev->vf;
-	enum iavf_status err;
+अणु
+	काष्ठा iavf_adapter *adapter = ldev->vf;
+	क्रमागत iavf_status err;
 
-	if (adapter->aq_required)
-		return -EAGAIN;
+	अगर (adapter->aq_required)
+		वापस -EAGAIN;
 
 	err = iavf_aq_send_msg_to_pf(&adapter->hw, VIRTCHNL_OP_IWARP,
-				     IAVF_SUCCESS, msg, len, NULL);
-	if (err)
+				     IAVF_SUCCESS, msg, len, शून्य);
+	अगर (err)
 		dev_err(&adapter->pdev->dev, "Unable to send iWarp message to PF, error %d, aq status %d\n",
 			err, adapter->hw.aq.asq_last_status);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * iavf_client_setup_qvlist - send a message to the PF to setup iwarp qv map
- * @ldev: pointer to L2 context.
- * @client: Client pointer.
+ * @ldev: poपूर्णांकer to L2 context.
+ * @client: Client poपूर्णांकer.
  * @qvlist_info: queue and vector list
  *
  * Return 0 on success or < 0 on error
  **/
-static int iavf_client_setup_qvlist(struct iavf_info *ldev,
-				    struct iavf_client *client,
-				    struct iavf_qvlist_info *qvlist_info)
-{
-	struct virtchnl_iwarp_qvlist_info *v_qvlist_info;
-	struct iavf_adapter *adapter = ldev->vf;
-	struct iavf_qv_info *qv_info;
-	enum iavf_status err;
+अटल पूर्णांक iavf_client_setup_qvlist(काष्ठा iavf_info *ldev,
+				    काष्ठा iavf_client *client,
+				    काष्ठा iavf_qvlist_info *qvlist_info)
+अणु
+	काष्ठा virtchnl_iwarp_qvlist_info *v_qvlist_info;
+	काष्ठा iavf_adapter *adapter = ldev->vf;
+	काष्ठा iavf_qv_info *qv_info;
+	क्रमागत iavf_status err;
 	u32 v_idx, i;
-	size_t msg_size;
+	माप_प्रकार msg_size;
 
-	if (adapter->aq_required)
-		return -EAGAIN;
+	अगर (adapter->aq_required)
+		वापस -EAGAIN;
 
-	/* A quick check on whether the vectors belong to the client */
-	for (i = 0; i < qvlist_info->num_vectors; i++) {
+	/* A quick check on whether the vectors beदीर्घ to the client */
+	क्रम (i = 0; i < qvlist_info->num_vectors; i++) अणु
 		qv_info = &qvlist_info->qv_info[i];
-		if (!qv_info)
-			continue;
+		अगर (!qv_info)
+			जारी;
 		v_idx = qv_info->v_idx;
-		if ((v_idx >=
+		अगर ((v_idx >=
 		    (adapter->iwarp_base_vector + adapter->num_iwarp_msix)) ||
 		    (v_idx < adapter->iwarp_base_vector))
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
-	v_qvlist_info = (struct virtchnl_iwarp_qvlist_info *)qvlist_info;
-	msg_size = struct_size(v_qvlist_info, qv_info,
+	v_qvlist_info = (काष्ठा virtchnl_iwarp_qvlist_info *)qvlist_info;
+	msg_size = काष्ठा_size(v_qvlist_info, qv_info,
 			       v_qvlist_info->num_vectors - 1);
 
 	adapter->client_pending |= BIT(VIRTCHNL_OP_CONFIG_IWARP_IRQ_MAP);
 	err = iavf_aq_send_msg_to_pf(&adapter->hw,
 				VIRTCHNL_OP_CONFIG_IWARP_IRQ_MAP, IAVF_SUCCESS,
-				(u8 *)v_qvlist_info, msg_size, NULL);
+				(u8 *)v_qvlist_info, msg_size, शून्य);
 
-	if (err) {
+	अगर (err) अणु
 		dev_err(&adapter->pdev->dev,
 			"Unable to send iWarp vector config message to PF, error %d, aq status %d\n",
 			err, adapter->hw.aq.asq_last_status);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = -EBUSY;
-	for (i = 0; i < 5; i++) {
+	क्रम (i = 0; i < 5; i++) अणु
 		msleep(100);
-		if (!(adapter->client_pending &
-		      BIT(VIRTCHNL_OP_CONFIG_IWARP_IRQ_MAP))) {
+		अगर (!(adapter->client_pending &
+		      BIT(VIRTCHNL_OP_CONFIG_IWARP_IRQ_MAP))) अणु
 			err = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * iavf_register_client - Register a iavf client driver with the L2 driver
- * @client: pointer to the iavf_client struct
+ * iavf_रेजिस्टर_client - Register a iavf client driver with the L2 driver
+ * @client: poपूर्णांकer to the iavf_client काष्ठा
  *
  * Returns 0 on success or non-0 on error
  **/
-int iavf_register_client(struct iavf_client *client)
-{
-	int ret = 0;
+पूर्णांक iavf_रेजिस्टर_client(काष्ठा iavf_client *client)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!client) {
+	अगर (!client) अणु
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (strlen(client->name) == 0) {
+	अगर (म_माप(client->name) == 0) अणु
 		pr_info("iavf: Failed to register client with no name\n");
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (vf_registered_client) {
+	अगर (vf_रेजिस्टरed_client) अणु
 		pr_info("iavf: Client %s has already been registered!\n",
 			client->name);
 		ret = -EEXIST;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if ((client->version.major != IAVF_CLIENT_VERSION_MAJOR) ||
-	    (client->version.minor != IAVF_CLIENT_VERSION_MINOR)) {
+	अगर ((client->version.major != IAVF_CLIENT_VERSION_MAJOR) ||
+	    (client->version.minor != IAVF_CLIENT_VERSION_MINOR)) अणु
 		pr_info("iavf: Failed to register client %s due to mismatched client interface version\n",
 			client->name);
 		pr_info("Client is using version: %02d.%02d.%02d while LAN driver supports %s\n",
 			client->version.major, client->version.minor,
 			client->version.build,
-			iavf_client_interface_version_str);
+			iavf_client_पूर्णांकerface_version_str);
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	vf_registered_client = client;
+	vf_रेजिस्टरed_client = client;
 
 	iavf_client_prepare(client);
 
 	pr_info("iavf: Registered client %s with return code %d\n",
 		client->name, ret);
 out:
-	return ret;
-}
-EXPORT_SYMBOL(iavf_register_client);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(iavf_रेजिस्टर_client);
 
 /**
- * iavf_unregister_client - Unregister a iavf client driver with the L2 driver
- * @client: pointer to the iavf_client struct
+ * iavf_unरेजिस्टर_client - Unरेजिस्टर a iavf client driver with the L2 driver
+ * @client: poपूर्णांकer to the iavf_client काष्ठा
  *
  * Returns 0 on success or non-0 on error
  **/
-int iavf_unregister_client(struct iavf_client *client)
-{
-	int ret = 0;
+पूर्णांक iavf_unरेजिस्टर_client(काष्ठा iavf_client *client)
+अणु
+	पूर्णांक ret = 0;
 
-	/* When a unregister request comes through we would have to send
-	 * a close for each of the client instances that were opened.
+	/* When a unरेजिस्टर request comes through we would have to send
+	 * a बंद क्रम each of the client instances that were खोलोed.
 	 * client_release function is called to handle this.
 	 */
 	iavf_client_release(client);
 
-	if (vf_registered_client != client) {
+	अगर (vf_रेजिस्टरed_client != client) अणु
 		pr_info("iavf: Client %s has not been registered\n",
 			client->name);
 		ret = -ENODEV;
-		goto out;
-	}
-	vf_registered_client = NULL;
+		जाओ out;
+	पूर्ण
+	vf_रेजिस्टरed_client = शून्य;
 	pr_info("iavf: Unregistered client %s\n", client->name);
 out:
-	return ret;
-}
-EXPORT_SYMBOL(iavf_unregister_client);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(iavf_unरेजिस्टर_client);

@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/types.h>
-#include <linux/export.h>
-#include <asm/cpu.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/types.h>
+#समावेश <linux/export.h>
+#समावेश <यंत्र/cpu.h>
 
-unsigned int x86_family(unsigned int sig)
-{
-	unsigned int x86;
+अचिन्हित पूर्णांक x86_family(अचिन्हित पूर्णांक sig)
+अणु
+	अचिन्हित पूर्णांक x86;
 
 	x86 = (sig >> 8) & 0xf;
 
-	if (x86 == 0xf)
+	अगर (x86 == 0xf)
 		x86 += (sig >> 20) & 0xff;
 
-	return x86;
-}
+	वापस x86;
+पूर्ण
 EXPORT_SYMBOL_GPL(x86_family);
 
-unsigned int x86_model(unsigned int sig)
-{
-	unsigned int fam, model;
+अचिन्हित पूर्णांक x86_model(अचिन्हित पूर्णांक sig)
+अणु
+	अचिन्हित पूर्णांक fam, model;
 
 	fam = x86_family(sig);
 
 	model = (sig >> 4) & 0xf;
 
-	if (fam >= 0x6)
+	अगर (fam >= 0x6)
 		model += ((sig >> 16) & 0xf) << 4;
 
-	return model;
-}
+	वापस model;
+पूर्ण
 EXPORT_SYMBOL_GPL(x86_model);
 
-unsigned int x86_stepping(unsigned int sig)
-{
-	return sig & 0xf;
-}
+अचिन्हित पूर्णांक x86_stepping(अचिन्हित पूर्णांक sig)
+अणु
+	वापस sig & 0xf;
+पूर्ण
 EXPORT_SYMBOL_GPL(x86_stepping);

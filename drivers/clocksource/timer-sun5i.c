@@ -1,375 +1,376 @@
+<शैली गुरु>
 /*
- * Allwinner SoCs hstimer driver.
+ * Allwinner SoCs hsसमयr driver.
  *
  * Copyright (C) 2013 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/clk.h>
-#include <linux/clockchips.h>
-#include <linux/clocksource.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/irqreturn.h>
-#include <linux/reset.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
 
-#define TIMER_IRQ_EN_REG		0x00
-#define TIMER_IRQ_EN(val)			BIT(val)
-#define TIMER_IRQ_ST_REG		0x04
-#define TIMER_CTL_REG(val)		(0x20 * (val) + 0x10)
-#define TIMER_CTL_ENABLE			BIT(0)
-#define TIMER_CTL_RELOAD			BIT(1)
-#define TIMER_CTL_CLK_PRES(val)			(((val) & 0x7) << 4)
-#define TIMER_CTL_ONESHOT			BIT(7)
-#define TIMER_INTVAL_LO_REG(val)	(0x20 * (val) + 0x14)
-#define TIMER_INTVAL_HI_REG(val)	(0x20 * (val) + 0x18)
-#define TIMER_CNTVAL_LO_REG(val)	(0x20 * (val) + 0x1c)
-#define TIMER_CNTVAL_HI_REG(val)	(0x20 * (val) + 0x20)
+#घोषणा TIMER_IRQ_EN_REG		0x00
+#घोषणा TIMER_IRQ_EN(val)			BIT(val)
+#घोषणा TIMER_IRQ_ST_REG		0x04
+#घोषणा TIMER_CTL_REG(val)		(0x20 * (val) + 0x10)
+#घोषणा TIMER_CTL_ENABLE			BIT(0)
+#घोषणा TIMER_CTL_RELOAD			BIT(1)
+#घोषणा TIMER_CTL_CLK_PRES(val)			(((val) & 0x7) << 4)
+#घोषणा TIMER_CTL_ONESHOT			BIT(7)
+#घोषणा TIMER_INTVAL_LO_REG(val)	(0x20 * (val) + 0x14)
+#घोषणा TIMER_INTVAL_HI_REG(val)	(0x20 * (val) + 0x18)
+#घोषणा TIMER_CNTVAL_LO_REG(val)	(0x20 * (val) + 0x1c)
+#घोषणा TIMER_CNTVAL_HI_REG(val)	(0x20 * (val) + 0x20)
 
-#define TIMER_SYNC_TICKS	3
+#घोषणा TIMER_SYNC_TICKS	3
 
-struct sun5i_timer {
-	void __iomem		*base;
-	struct clk		*clk;
-	struct notifier_block	clk_rate_cb;
-	u32			ticks_per_jiffy;
-};
+काष्ठा sun5i_समयr अणु
+	व्योम __iomem		*base;
+	काष्ठा clk		*clk;
+	काष्ठा notअगरier_block	clk_rate_cb;
+	u32			ticks_per_jअगरfy;
+पूर्ण;
 
-#define to_sun5i_timer(x) \
-	container_of(x, struct sun5i_timer, clk_rate_cb)
+#घोषणा to_sun5i_समयr(x) \
+	container_of(x, काष्ठा sun5i_समयr, clk_rate_cb)
 
-struct sun5i_timer_clksrc {
-	struct sun5i_timer	timer;
-	struct clocksource	clksrc;
-};
+काष्ठा sun5i_समयr_clksrc अणु
+	काष्ठा sun5i_समयr	समयr;
+	काष्ठा घड़ीsource	clksrc;
+पूर्ण;
 
-#define to_sun5i_timer_clksrc(x) \
-	container_of(x, struct sun5i_timer_clksrc, clksrc)
+#घोषणा to_sun5i_समयr_clksrc(x) \
+	container_of(x, काष्ठा sun5i_समयr_clksrc, clksrc)
 
-struct sun5i_timer_clkevt {
-	struct sun5i_timer		timer;
-	struct clock_event_device	clkevt;
-};
+काष्ठा sun5i_समयr_clkevt अणु
+	काष्ठा sun5i_समयr		समयr;
+	काष्ठा घड़ी_event_device	clkevt;
+पूर्ण;
 
-#define to_sun5i_timer_clkevt(x) \
-	container_of(x, struct sun5i_timer_clkevt, clkevt)
+#घोषणा to_sun5i_समयr_clkevt(x) \
+	container_of(x, काष्ठा sun5i_समयr_clkevt, clkevt)
 
 /*
- * When we disable a timer, we need to wait at least for 2 cycles of
- * the timer source clock. We will use for that the clocksource timer
- * that is already setup and runs at the same frequency than the other
- * timers, and we never will be disabled.
+ * When we disable a समयr, we need to रुको at least क्रम 2 cycles of
+ * the समयr source घड़ी. We will use क्रम that the घड़ीsource समयr
+ * that is alपढ़ोy setup and runs at the same frequency than the other
+ * समयrs, and we never will be disabled.
  */
-static void sun5i_clkevt_sync(struct sun5i_timer_clkevt *ce)
-{
-	u32 old = readl(ce->timer.base + TIMER_CNTVAL_LO_REG(1));
+अटल व्योम sun5i_clkevt_sync(काष्ठा sun5i_समयr_clkevt *ce)
+अणु
+	u32 old = पढ़ोl(ce->समयr.base + TIMER_CNTVAL_LO_REG(1));
 
-	while ((old - readl(ce->timer.base + TIMER_CNTVAL_LO_REG(1))) < TIMER_SYNC_TICKS)
+	जबतक ((old - पढ़ोl(ce->समयr.base + TIMER_CNTVAL_LO_REG(1))) < TIMER_SYNC_TICKS)
 		cpu_relax();
-}
+पूर्ण
 
-static void sun5i_clkevt_time_stop(struct sun5i_timer_clkevt *ce, u8 timer)
-{
-	u32 val = readl(ce->timer.base + TIMER_CTL_REG(timer));
-	writel(val & ~TIMER_CTL_ENABLE, ce->timer.base + TIMER_CTL_REG(timer));
+अटल व्योम sun5i_clkevt_समय_stop(काष्ठा sun5i_समयr_clkevt *ce, u8 समयr)
+अणु
+	u32 val = पढ़ोl(ce->समयr.base + TIMER_CTL_REG(समयr));
+	ग_लिखोl(val & ~TIMER_CTL_ENABLE, ce->समयr.base + TIMER_CTL_REG(समयr));
 
 	sun5i_clkevt_sync(ce);
-}
+पूर्ण
 
-static void sun5i_clkevt_time_setup(struct sun5i_timer_clkevt *ce, u8 timer, u32 delay)
-{
-	writel(delay, ce->timer.base + TIMER_INTVAL_LO_REG(timer));
-}
+अटल व्योम sun5i_clkevt_समय_setup(काष्ठा sun5i_समयr_clkevt *ce, u8 समयr, u32 delay)
+अणु
+	ग_लिखोl(delay, ce->समयr.base + TIMER_INTVAL_LO_REG(समयr));
+पूर्ण
 
-static void sun5i_clkevt_time_start(struct sun5i_timer_clkevt *ce, u8 timer, bool periodic)
-{
-	u32 val = readl(ce->timer.base + TIMER_CTL_REG(timer));
+अटल व्योम sun5i_clkevt_समय_start(काष्ठा sun5i_समयr_clkevt *ce, u8 समयr, bool periodic)
+अणु
+	u32 val = पढ़ोl(ce->समयr.base + TIMER_CTL_REG(समयr));
 
-	if (periodic)
+	अगर (periodic)
 		val &= ~TIMER_CTL_ONESHOT;
-	else
+	अन्यथा
 		val |= TIMER_CTL_ONESHOT;
 
-	writel(val | TIMER_CTL_ENABLE | TIMER_CTL_RELOAD,
-	       ce->timer.base + TIMER_CTL_REG(timer));
-}
+	ग_लिखोl(val | TIMER_CTL_ENABLE | TIMER_CTL_RELOAD,
+	       ce->समयr.base + TIMER_CTL_REG(समयr));
+पूर्ण
 
-static int sun5i_clkevt_shutdown(struct clock_event_device *clkevt)
-{
-	struct sun5i_timer_clkevt *ce = to_sun5i_timer_clkevt(clkevt);
+अटल पूर्णांक sun5i_clkevt_shutकरोwn(काष्ठा घड़ी_event_device *clkevt)
+अणु
+	काष्ठा sun5i_समयr_clkevt *ce = to_sun5i_समयr_clkevt(clkevt);
 
-	sun5i_clkevt_time_stop(ce, 0);
-	return 0;
-}
+	sun5i_clkevt_समय_stop(ce, 0);
+	वापस 0;
+पूर्ण
 
-static int sun5i_clkevt_set_oneshot(struct clock_event_device *clkevt)
-{
-	struct sun5i_timer_clkevt *ce = to_sun5i_timer_clkevt(clkevt);
+अटल पूर्णांक sun5i_clkevt_set_oneshot(काष्ठा घड़ी_event_device *clkevt)
+अणु
+	काष्ठा sun5i_समयr_clkevt *ce = to_sun5i_समयr_clkevt(clkevt);
 
-	sun5i_clkevt_time_stop(ce, 0);
-	sun5i_clkevt_time_start(ce, 0, false);
-	return 0;
-}
+	sun5i_clkevt_समय_stop(ce, 0);
+	sun5i_clkevt_समय_start(ce, 0, false);
+	वापस 0;
+पूर्ण
 
-static int sun5i_clkevt_set_periodic(struct clock_event_device *clkevt)
-{
-	struct sun5i_timer_clkevt *ce = to_sun5i_timer_clkevt(clkevt);
+अटल पूर्णांक sun5i_clkevt_set_periodic(काष्ठा घड़ी_event_device *clkevt)
+अणु
+	काष्ठा sun5i_समयr_clkevt *ce = to_sun5i_समयr_clkevt(clkevt);
 
-	sun5i_clkevt_time_stop(ce, 0);
-	sun5i_clkevt_time_setup(ce, 0, ce->timer.ticks_per_jiffy);
-	sun5i_clkevt_time_start(ce, 0, true);
-	return 0;
-}
+	sun5i_clkevt_समय_stop(ce, 0);
+	sun5i_clkevt_समय_setup(ce, 0, ce->समयr.ticks_per_jअगरfy);
+	sun5i_clkevt_समय_start(ce, 0, true);
+	वापस 0;
+पूर्ण
 
-static int sun5i_clkevt_next_event(unsigned long evt,
-				   struct clock_event_device *clkevt)
-{
-	struct sun5i_timer_clkevt *ce = to_sun5i_timer_clkevt(clkevt);
+अटल पूर्णांक sun5i_clkevt_next_event(अचिन्हित दीर्घ evt,
+				   काष्ठा घड़ी_event_device *clkevt)
+अणु
+	काष्ठा sun5i_समयr_clkevt *ce = to_sun5i_समयr_clkevt(clkevt);
 
-	sun5i_clkevt_time_stop(ce, 0);
-	sun5i_clkevt_time_setup(ce, 0, evt - TIMER_SYNC_TICKS);
-	sun5i_clkevt_time_start(ce, 0, false);
+	sun5i_clkevt_समय_stop(ce, 0);
+	sun5i_clkevt_समय_setup(ce, 0, evt - TIMER_SYNC_TICKS);
+	sun5i_clkevt_समय_start(ce, 0, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t sun5i_timer_interrupt(int irq, void *dev_id)
-{
-	struct sun5i_timer_clkevt *ce = (struct sun5i_timer_clkevt *)dev_id;
+अटल irqवापस_t sun5i_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा sun5i_समयr_clkevt *ce = (काष्ठा sun5i_समयr_clkevt *)dev_id;
 
-	writel(0x1, ce->timer.base + TIMER_IRQ_ST_REG);
+	ग_लिखोl(0x1, ce->समयr.base + TIMER_IRQ_ST_REG);
 	ce->clkevt.event_handler(&ce->clkevt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static u64 sun5i_clksrc_read(struct clocksource *clksrc)
-{
-	struct sun5i_timer_clksrc *cs = to_sun5i_timer_clksrc(clksrc);
+अटल u64 sun5i_clksrc_पढ़ो(काष्ठा घड़ीsource *clksrc)
+अणु
+	काष्ठा sun5i_समयr_clksrc *cs = to_sun5i_समयr_clksrc(clksrc);
 
-	return ~readl(cs->timer.base + TIMER_CNTVAL_LO_REG(1));
-}
+	वापस ~पढ़ोl(cs->समयr.base + TIMER_CNTVAL_LO_REG(1));
+पूर्ण
 
-static int sun5i_rate_cb_clksrc(struct notifier_block *nb,
-				unsigned long event, void *data)
-{
-	struct clk_notifier_data *ndata = data;
-	struct sun5i_timer *timer = to_sun5i_timer(nb);
-	struct sun5i_timer_clksrc *cs = container_of(timer, struct sun5i_timer_clksrc, timer);
+अटल पूर्णांक sun5i_rate_cb_clksrc(काष्ठा notअगरier_block *nb,
+				अचिन्हित दीर्घ event, व्योम *data)
+अणु
+	काष्ठा clk_notअगरier_data *ndata = data;
+	काष्ठा sun5i_समयr *समयr = to_sun5i_समयr(nb);
+	काष्ठा sun5i_समयr_clksrc *cs = container_of(समयr, काष्ठा sun5i_समयr_clksrc, समयr);
 
-	switch (event) {
-	case PRE_RATE_CHANGE:
-		clocksource_unregister(&cs->clksrc);
-		break;
+	चयन (event) अणु
+	हाल PRE_RATE_CHANGE:
+		घड़ीsource_unरेजिस्टर(&cs->clksrc);
+		अवरोध;
 
-	case POST_RATE_CHANGE:
-		clocksource_register_hz(&cs->clksrc, ndata->new_rate);
-		break;
+	हाल POST_RATE_CHANGE:
+		घड़ीsource_रेजिस्टर_hz(&cs->clksrc, ndata->new_rate);
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int __init sun5i_setup_clocksource(struct device_node *node,
-					  void __iomem *base,
-					  struct clk *clk, int irq)
-{
-	struct sun5i_timer_clksrc *cs;
-	unsigned long rate;
-	int ret;
+अटल पूर्णांक __init sun5i_setup_घड़ीsource(काष्ठा device_node *node,
+					  व्योम __iomem *base,
+					  काष्ठा clk *clk, पूर्णांक irq)
+अणु
+	काष्ठा sun5i_समयr_clksrc *cs;
+	अचिन्हित दीर्घ rate;
+	पूर्णांक ret;
 
-	cs = kzalloc(sizeof(*cs), GFP_KERNEL);
-	if (!cs)
-		return -ENOMEM;
+	cs = kzalloc(माप(*cs), GFP_KERNEL);
+	अगर (!cs)
+		वापस -ENOMEM;
 
 	ret = clk_prepare_enable(clk);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Couldn't enable parent clock\n");
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	rate = clk_get_rate(clk);
-	if (!rate) {
+	अगर (!rate) अणु
 		pr_err("Couldn't get parent clock rate\n");
 		ret = -EINVAL;
-		goto err_disable_clk;
-	}
+		जाओ err_disable_clk;
+	पूर्ण
 
-	cs->timer.base = base;
-	cs->timer.clk = clk;
-	cs->timer.clk_rate_cb.notifier_call = sun5i_rate_cb_clksrc;
-	cs->timer.clk_rate_cb.next = NULL;
+	cs->समयr.base = base;
+	cs->समयr.clk = clk;
+	cs->समयr.clk_rate_cb.notअगरier_call = sun5i_rate_cb_clksrc;
+	cs->समयr.clk_rate_cb.next = शून्य;
 
-	ret = clk_notifier_register(clk, &cs->timer.clk_rate_cb);
-	if (ret) {
+	ret = clk_notअगरier_रेजिस्टर(clk, &cs->समयr.clk_rate_cb);
+	अगर (ret) अणु
 		pr_err("Unable to register clock notifier.\n");
-		goto err_disable_clk;
-	}
+		जाओ err_disable_clk;
+	पूर्ण
 
-	writel(~0, base + TIMER_INTVAL_LO_REG(1));
-	writel(TIMER_CTL_ENABLE | TIMER_CTL_RELOAD,
+	ग_लिखोl(~0, base + TIMER_INTVAL_LO_REG(1));
+	ग_लिखोl(TIMER_CTL_ENABLE | TIMER_CTL_RELOAD,
 	       base + TIMER_CTL_REG(1));
 
 	cs->clksrc.name = node->name;
 	cs->clksrc.rating = 340;
-	cs->clksrc.read = sun5i_clksrc_read;
+	cs->clksrc.पढ़ो = sun5i_clksrc_पढ़ो;
 	cs->clksrc.mask = CLOCKSOURCE_MASK(32);
 	cs->clksrc.flags = CLOCK_SOURCE_IS_CONTINUOUS;
 
-	ret = clocksource_register_hz(&cs->clksrc, rate);
-	if (ret) {
+	ret = घड़ीsource_रेजिस्टर_hz(&cs->clksrc, rate);
+	अगर (ret) अणु
 		pr_err("Couldn't register clock source.\n");
-		goto err_remove_notifier;
-	}
+		जाओ err_हटाओ_notअगरier;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_remove_notifier:
-	clk_notifier_unregister(clk, &cs->timer.clk_rate_cb);
+err_हटाओ_notअगरier:
+	clk_notअगरier_unरेजिस्टर(clk, &cs->समयr.clk_rate_cb);
 err_disable_clk:
 	clk_disable_unprepare(clk);
-err_free:
-	kfree(cs);
-	return ret;
-}
+err_मुक्त:
+	kमुक्त(cs);
+	वापस ret;
+पूर्ण
 
-static int sun5i_rate_cb_clkevt(struct notifier_block *nb,
-				unsigned long event, void *data)
-{
-	struct clk_notifier_data *ndata = data;
-	struct sun5i_timer *timer = to_sun5i_timer(nb);
-	struct sun5i_timer_clkevt *ce = container_of(timer, struct sun5i_timer_clkevt, timer);
+अटल पूर्णांक sun5i_rate_cb_clkevt(काष्ठा notअगरier_block *nb,
+				अचिन्हित दीर्घ event, व्योम *data)
+अणु
+	काष्ठा clk_notअगरier_data *ndata = data;
+	काष्ठा sun5i_समयr *समयr = to_sun5i_समयr(nb);
+	काष्ठा sun5i_समयr_clkevt *ce = container_of(समयr, काष्ठा sun5i_समयr_clkevt, समयr);
 
-	if (event == POST_RATE_CHANGE) {
-		clockevents_update_freq(&ce->clkevt, ndata->new_rate);
-		ce->timer.ticks_per_jiffy = DIV_ROUND_UP(ndata->new_rate, HZ);
-	}
+	अगर (event == POST_RATE_CHANGE) अणु
+		घड़ीevents_update_freq(&ce->clkevt, ndata->new_rate);
+		ce->समयr.ticks_per_jअगरfy = DIV_ROUND_UP(ndata->new_rate, HZ);
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int __init sun5i_setup_clockevent(struct device_node *node, void __iomem *base,
-					 struct clk *clk, int irq)
-{
-	struct sun5i_timer_clkevt *ce;
-	unsigned long rate;
-	int ret;
+अटल पूर्णांक __init sun5i_setup_घड़ीevent(काष्ठा device_node *node, व्योम __iomem *base,
+					 काष्ठा clk *clk, पूर्णांक irq)
+अणु
+	काष्ठा sun5i_समयr_clkevt *ce;
+	अचिन्हित दीर्घ rate;
+	पूर्णांक ret;
 	u32 val;
 
-	ce = kzalloc(sizeof(*ce), GFP_KERNEL);
-	if (!ce)
-		return -ENOMEM;
+	ce = kzalloc(माप(*ce), GFP_KERNEL);
+	अगर (!ce)
+		वापस -ENOMEM;
 
 	ret = clk_prepare_enable(clk);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Couldn't enable parent clock\n");
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	rate = clk_get_rate(clk);
-	if (!rate) {
+	अगर (!rate) अणु
 		pr_err("Couldn't get parent clock rate\n");
 		ret = -EINVAL;
-		goto err_disable_clk;
-	}
+		जाओ err_disable_clk;
+	पूर्ण
 
-	ce->timer.base = base;
-	ce->timer.ticks_per_jiffy = DIV_ROUND_UP(rate, HZ);
-	ce->timer.clk = clk;
-	ce->timer.clk_rate_cb.notifier_call = sun5i_rate_cb_clkevt;
-	ce->timer.clk_rate_cb.next = NULL;
+	ce->समयr.base = base;
+	ce->समयr.ticks_per_jअगरfy = DIV_ROUND_UP(rate, HZ);
+	ce->समयr.clk = clk;
+	ce->समयr.clk_rate_cb.notअगरier_call = sun5i_rate_cb_clkevt;
+	ce->समयr.clk_rate_cb.next = शून्य;
 
-	ret = clk_notifier_register(clk, &ce->timer.clk_rate_cb);
-	if (ret) {
+	ret = clk_notअगरier_रेजिस्टर(clk, &ce->समयr.clk_rate_cb);
+	अगर (ret) अणु
 		pr_err("Unable to register clock notifier.\n");
-		goto err_disable_clk;
-	}
+		जाओ err_disable_clk;
+	पूर्ण
 
 	ce->clkevt.name = node->name;
 	ce->clkevt.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT;
 	ce->clkevt.set_next_event = sun5i_clkevt_next_event;
-	ce->clkevt.set_state_shutdown = sun5i_clkevt_shutdown;
+	ce->clkevt.set_state_shutकरोwn = sun5i_clkevt_shutकरोwn;
 	ce->clkevt.set_state_periodic = sun5i_clkevt_set_periodic;
 	ce->clkevt.set_state_oneshot = sun5i_clkevt_set_oneshot;
-	ce->clkevt.tick_resume = sun5i_clkevt_shutdown;
+	ce->clkevt.tick_resume = sun5i_clkevt_shutकरोwn;
 	ce->clkevt.rating = 340;
 	ce->clkevt.irq = irq;
 	ce->clkevt.cpumask = cpu_possible_mask;
 
-	/* Enable timer0 interrupt */
-	val = readl(base + TIMER_IRQ_EN_REG);
-	writel(val | TIMER_IRQ_EN(0), base + TIMER_IRQ_EN_REG);
+	/* Enable समयr0 पूर्णांकerrupt */
+	val = पढ़ोl(base + TIMER_IRQ_EN_REG);
+	ग_लिखोl(val | TIMER_IRQ_EN(0), base + TIMER_IRQ_EN_REG);
 
-	clockevents_config_and_register(&ce->clkevt, rate,
+	घड़ीevents_config_and_रेजिस्टर(&ce->clkevt, rate,
 					TIMER_SYNC_TICKS, 0xffffffff);
 
-	ret = request_irq(irq, sun5i_timer_interrupt, IRQF_TIMER | IRQF_IRQPOLL,
+	ret = request_irq(irq, sun5i_समयr_पूर्णांकerrupt, IRQF_TIMER | IRQF_IRQPOLL,
 			  "sun5i_timer0", ce);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Unable to register interrupt\n");
-		goto err_remove_notifier;
-	}
+		जाओ err_हटाओ_notअगरier;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_remove_notifier:
-	clk_notifier_unregister(clk, &ce->timer.clk_rate_cb);
+err_हटाओ_notअगरier:
+	clk_notअगरier_unरेजिस्टर(clk, &ce->समयr.clk_rate_cb);
 err_disable_clk:
 	clk_disable_unprepare(clk);
-err_free:
-	kfree(ce);
-	return ret;
-}
+err_मुक्त:
+	kमुक्त(ce);
+	वापस ret;
+पूर्ण
 
-static int __init sun5i_timer_init(struct device_node *node)
-{
-	struct reset_control *rstc;
-	void __iomem *timer_base;
-	struct clk *clk;
-	int irq, ret;
+अटल पूर्णांक __init sun5i_समयr_init(काष्ठा device_node *node)
+अणु
+	काष्ठा reset_control *rstc;
+	व्योम __iomem *समयr_base;
+	काष्ठा clk *clk;
+	पूर्णांक irq, ret;
 
-	timer_base = of_io_request_and_map(node, 0, of_node_full_name(node));
-	if (IS_ERR(timer_base)) {
+	समयr_base = of_io_request_and_map(node, 0, of_node_full_name(node));
+	अगर (IS_ERR(समयr_base)) अणु
 		pr_err("Can't map registers\n");
-		return PTR_ERR(timer_base);
-	}
+		वापस PTR_ERR(समयr_base);
+	पूर्ण
 
 	irq = irq_of_parse_and_map(node, 0);
-	if (irq <= 0) {
+	अगर (irq <= 0) अणु
 		pr_err("Can't parse IRQ\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	clk = of_clk_get(node, 0);
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		pr_err("Can't get timer clock\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
-	rstc = of_reset_control_get(node, NULL);
-	if (!IS_ERR(rstc))
-		reset_control_deassert(rstc);
+	rstc = of_reset_control_get(node, शून्य);
+	अगर (!IS_ERR(rstc))
+		reset_control_deनिश्चित(rstc);
 
-	ret = sun5i_setup_clocksource(node, timer_base, clk, irq);
-	if (ret)
-		return ret;
+	ret = sun5i_setup_घड़ीsource(node, समयr_base, clk, irq);
+	अगर (ret)
+		वापस ret;
 
-	return sun5i_setup_clockevent(node, timer_base, clk, irq);
-}
+	वापस sun5i_setup_घड़ीevent(node, समयr_base, clk, irq);
+पूर्ण
 TIMER_OF_DECLARE(sun5i_a13, "allwinner,sun5i-a13-hstimer",
-			   sun5i_timer_init);
+			   sun5i_समयr_init);
 TIMER_OF_DECLARE(sun7i_a20, "allwinner,sun7i-a20-hstimer",
-			   sun5i_timer_init);
+			   sun5i_समयr_init);

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics SA 2017
  *
@@ -6,289 +7,289 @@
  *          Yannick Fertre <yannick.fertre@st.com>
  */
 
-#include <linux/clk.h>
-#include <linux/iopoll.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <video/mipi_display.h>
+#समावेश <video/mipi_display.h>
 
-#include <drm/bridge/dw_mipi_dsi.h>
-#include <drm/drm_mipi_dsi.h>
-#include <drm/drm_print.h>
+#समावेश <drm/bridge/dw_mipi_dsi.h>
+#समावेश <drm/drm_mipi_dsi.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#define HWVER_130			0x31333000	/* IP version 1.30 */
-#define HWVER_131			0x31333100	/* IP version 1.31 */
+#घोषणा HWVER_130			0x31333000	/* IP version 1.30 */
+#घोषणा HWVER_131			0x31333100	/* IP version 1.31 */
 
-/* DSI digital registers & bit definitions */
-#define DSI_VERSION			0x00
-#define VERSION				GENMASK(31, 8)
+/* DSI digital रेजिस्टरs & bit definitions */
+#घोषणा DSI_VERSION			0x00
+#घोषणा VERSION				GENMASK(31, 8)
 
-/* DSI wrapper registers & bit definitions */
-/* Note: registers are named as in the Reference Manual */
-#define DSI_WCFGR	0x0400		/* Wrapper ConFiGuration Reg */
-#define WCFGR_DSIM	BIT(0)		/* DSI Mode */
-#define WCFGR_COLMUX	GENMASK(3, 1)	/* COLor MUltipleXing */
+/* DSI wrapper रेजिस्टरs & bit definitions */
+/* Note: रेजिस्टरs are named as in the Reference Manual */
+#घोषणा DSI_WCFGR	0x0400		/* Wrapper ConFiGuration Reg */
+#घोषणा WCFGR_DSIM	BIT(0)		/* DSI Mode */
+#घोषणा WCFGR_COLMUX	GENMASK(3, 1)	/* COLor MUltipleXing */
 
-#define DSI_WCR		0x0404		/* Wrapper Control Reg */
-#define WCR_DSIEN	BIT(3)		/* DSI ENable */
+#घोषणा DSI_WCR		0x0404		/* Wrapper Control Reg */
+#घोषणा WCR_DSIEN	BIT(3)		/* DSI ENable */
 
-#define DSI_WISR	0x040C		/* Wrapper Interrupt and Status Reg */
-#define WISR_PLLLS	BIT(8)		/* PLL Lock Status */
-#define WISR_RRS	BIT(12)		/* Regulator Ready Status */
+#घोषणा DSI_WISR	0x040C		/* Wrapper Interrupt and Status Reg */
+#घोषणा WISR_PLLLS	BIT(8)		/* PLL Lock Status */
+#घोषणा WISR_RRS	BIT(12)		/* Regulator Ready Status */
 
-#define DSI_WPCR0	0x0418		/* Wrapper Phy Conf Reg 0 */
-#define WPCR0_UIX4	GENMASK(5, 0)	/* Unit Interval X 4 */
-#define WPCR0_TDDL	BIT(16)		/* Turn Disable Data Lanes */
+#घोषणा DSI_WPCR0	0x0418		/* Wrapper Phy Conf Reg 0 */
+#घोषणा WPCR0_UIX4	GENMASK(5, 0)	/* Unit Interval X 4 */
+#घोषणा WPCR0_TDDL	BIT(16)		/* Turn Disable Data Lanes */
 
-#define DSI_WRPCR	0x0430		/* Wrapper Regulator & Pll Ctrl Reg */
-#define WRPCR_PLLEN	BIT(0)		/* PLL ENable */
-#define WRPCR_NDIV	GENMASK(8, 2)	/* pll loop DIVision Factor */
-#define WRPCR_IDF	GENMASK(14, 11)	/* pll Input Division Factor */
-#define WRPCR_ODF	GENMASK(17, 16)	/* pll Output Division Factor */
-#define WRPCR_REGEN	BIT(24)		/* REGulator ENable */
-#define WRPCR_BGREN	BIT(28)		/* BandGap Reference ENable */
-#define IDF_MIN		1
-#define IDF_MAX		7
-#define NDIV_MIN	10
-#define NDIV_MAX	125
-#define ODF_MIN		1
-#define ODF_MAX		8
+#घोषणा DSI_WRPCR	0x0430		/* Wrapper Regulator & Pll Ctrl Reg */
+#घोषणा WRPCR_PLLEN	BIT(0)		/* PLL ENable */
+#घोषणा WRPCR_NDIV	GENMASK(8, 2)	/* pll loop DIVision Factor */
+#घोषणा WRPCR_IDF	GENMASK(14, 11)	/* pll Input Division Factor */
+#घोषणा WRPCR_ODF	GENMASK(17, 16)	/* pll Output Division Factor */
+#घोषणा WRPCR_REGEN	BIT(24)		/* REGulator ENable */
+#घोषणा WRPCR_BGREN	BIT(28)		/* BandGap Reference ENable */
+#घोषणा IDF_MIN		1
+#घोषणा IDF_MAX		7
+#घोषणा NDIV_MIN	10
+#घोषणा NDIV_MAX	125
+#घोषणा ODF_MIN		1
+#घोषणा ODF_MAX		8
 
-/* dsi color format coding according to the datasheet */
-enum dsi_color {
+/* dsi color क्रमmat coding according to the datasheet */
+क्रमागत dsi_color अणु
 	DSI_RGB565_CONF1,
 	DSI_RGB565_CONF2,
 	DSI_RGB565_CONF3,
 	DSI_RGB666_CONF1,
 	DSI_RGB666_CONF2,
 	DSI_RGB888,
-};
+पूर्ण;
 
-#define LANE_MIN_KBPS	31250
-#define LANE_MAX_KBPS	500000
+#घोषणा LANE_MIN_KBPS	31250
+#घोषणा LANE_MAX_KBPS	500000
 
-/* Sleep & timeout for regulator on/off, pll lock/unlock & fifo empty */
-#define SLEEP_US	1000
-#define TIMEOUT_US	200000
+/* Sleep & समयout क्रम regulator on/off, pll lock/unlock & fअगरo empty */
+#घोषणा SLEEP_US	1000
+#घोषणा TIMEOUT_US	200000
 
-struct dw_mipi_dsi_stm {
-	void __iomem *base;
-	struct clk *pllref_clk;
-	struct dw_mipi_dsi *dsi;
+काष्ठा dw_mipi_dsi_sपंचांग अणु
+	व्योम __iomem *base;
+	काष्ठा clk *pllref_clk;
+	काष्ठा dw_mipi_dsi *dsi;
 	u32 hw_version;
-	int lane_min_kbps;
-	int lane_max_kbps;
-	struct regulator *vdd_supply;
-};
+	पूर्णांक lane_min_kbps;
+	पूर्णांक lane_max_kbps;
+	काष्ठा regulator *vdd_supply;
+पूर्ण;
 
-static inline void dsi_write(struct dw_mipi_dsi_stm *dsi, u32 reg, u32 val)
-{
-	writel(val, dsi->base + reg);
-}
+अटल अंतरभूत व्योम dsi_ग_लिखो(काष्ठा dw_mipi_dsi_sपंचांग *dsi, u32 reg, u32 val)
+अणु
+	ग_लिखोl(val, dsi->base + reg);
+पूर्ण
 
-static inline u32 dsi_read(struct dw_mipi_dsi_stm *dsi, u32 reg)
-{
-	return readl(dsi->base + reg);
-}
+अटल अंतरभूत u32 dsi_पढ़ो(काष्ठा dw_mipi_dsi_sपंचांग *dsi, u32 reg)
+अणु
+	वापस पढ़ोl(dsi->base + reg);
+पूर्ण
 
-static inline void dsi_set(struct dw_mipi_dsi_stm *dsi, u32 reg, u32 mask)
-{
-	dsi_write(dsi, reg, dsi_read(dsi, reg) | mask);
-}
+अटल अंतरभूत व्योम dsi_set(काष्ठा dw_mipi_dsi_sपंचांग *dsi, u32 reg, u32 mask)
+अणु
+	dsi_ग_लिखो(dsi, reg, dsi_पढ़ो(dsi, reg) | mask);
+पूर्ण
 
-static inline void dsi_clear(struct dw_mipi_dsi_stm *dsi, u32 reg, u32 mask)
-{
-	dsi_write(dsi, reg, dsi_read(dsi, reg) & ~mask);
-}
+अटल अंतरभूत व्योम dsi_clear(काष्ठा dw_mipi_dsi_sपंचांग *dsi, u32 reg, u32 mask)
+अणु
+	dsi_ग_लिखो(dsi, reg, dsi_पढ़ो(dsi, reg) & ~mask);
+पूर्ण
 
-static inline void dsi_update_bits(struct dw_mipi_dsi_stm *dsi, u32 reg,
+अटल अंतरभूत व्योम dsi_update_bits(काष्ठा dw_mipi_dsi_sपंचांग *dsi, u32 reg,
 				   u32 mask, u32 val)
-{
-	dsi_write(dsi, reg, (dsi_read(dsi, reg) & ~mask) | val);
-}
+अणु
+	dsi_ग_लिखो(dsi, reg, (dsi_पढ़ो(dsi, reg) & ~mask) | val);
+पूर्ण
 
-static enum dsi_color dsi_color_from_mipi(enum mipi_dsi_pixel_format fmt)
-{
-	switch (fmt) {
-	case MIPI_DSI_FMT_RGB888:
-		return DSI_RGB888;
-	case MIPI_DSI_FMT_RGB666:
-		return DSI_RGB666_CONF2;
-	case MIPI_DSI_FMT_RGB666_PACKED:
-		return DSI_RGB666_CONF1;
-	case MIPI_DSI_FMT_RGB565:
-		return DSI_RGB565_CONF1;
-	default:
+अटल क्रमागत dsi_color dsi_color_from_mipi(क्रमागत mipi_dsi_pixel_क्रमmat fmt)
+अणु
+	चयन (fmt) अणु
+	हाल MIPI_DSI_FMT_RGB888:
+		वापस DSI_RGB888;
+	हाल MIPI_DSI_FMT_RGB666:
+		वापस DSI_RGB666_CONF2;
+	हाल MIPI_DSI_FMT_RGB666_PACKED:
+		वापस DSI_RGB666_CONF1;
+	हाल MIPI_DSI_FMT_RGB565:
+		वापस DSI_RGB565_CONF1;
+	शेष:
 		DRM_DEBUG_DRIVER("MIPI color invalid, so we use rgb888\n");
-	}
-	return DSI_RGB888;
-}
+	पूर्ण
+	वापस DSI_RGB888;
+पूर्ण
 
-static int dsi_pll_get_clkout_khz(int clkin_khz, int idf, int ndiv, int odf)
-{
-	int divisor = idf * odf;
+अटल पूर्णांक dsi_pll_get_clkout_khz(पूर्णांक clkin_khz, पूर्णांक idf, पूर्णांक nभाग, पूर्णांक odf)
+अणु
+	पूर्णांक भागisor = idf * odf;
 
-	/* prevent from division by 0 */
-	if (!divisor)
-		return 0;
+	/* prevent from भागision by 0 */
+	अगर (!भागisor)
+		वापस 0;
 
-	return DIV_ROUND_CLOSEST(clkin_khz * ndiv, divisor);
-}
+	वापस DIV_ROUND_CLOSEST(clkin_khz * nभाग, भागisor);
+पूर्ण
 
-static int dsi_pll_get_params(struct dw_mipi_dsi_stm *dsi,
-			      int clkin_khz, int clkout_khz,
-			      int *idf, int *ndiv, int *odf)
-{
-	int i, o, n, n_min, n_max;
-	int fvco_min, fvco_max, delta, best_delta; /* all in khz */
+अटल पूर्णांक dsi_pll_get_params(काष्ठा dw_mipi_dsi_sपंचांग *dsi,
+			      पूर्णांक clkin_khz, पूर्णांक clkout_khz,
+			      पूर्णांक *idf, पूर्णांक *nभाग, पूर्णांक *odf)
+अणु
+	पूर्णांक i, o, n, n_min, n_max;
+	पूर्णांक fvco_min, fvco_max, delta, best_delta; /* all in khz */
 
-	/* Early checks preventing division by 0 & odd results */
-	if (clkin_khz <= 0 || clkout_khz <= 0)
-		return -EINVAL;
+	/* Early checks preventing भागision by 0 & odd results */
+	अगर (clkin_khz <= 0 || clkout_khz <= 0)
+		वापस -EINVAL;
 
 	fvco_min = dsi->lane_min_kbps * 2 * ODF_MAX;
 	fvco_max = dsi->lane_max_kbps * 2 * ODF_MIN;
 
 	best_delta = 1000000; /* big started value (1000000khz) */
 
-	for (i = IDF_MIN; i <= IDF_MAX; i++) {
-		/* Compute ndiv range according to Fvco */
+	क्रम (i = IDF_MIN; i <= IDF_MAX; i++) अणु
+		/* Compute nभाग range according to Fvco */
 		n_min = ((fvco_min * i) / (2 * clkin_khz)) + 1;
 		n_max = (fvco_max * i) / (2 * clkin_khz);
 
-		/* No need to continue idf loop if we reach ndiv max */
-		if (n_min >= NDIV_MAX)
-			break;
+		/* No need to जारी idf loop अगर we reach nभाग max */
+		अगर (n_min >= NDIV_MAX)
+			अवरोध;
 
-		/* Clamp ndiv to valid values */
-		if (n_min < NDIV_MIN)
+		/* Clamp nभाग to valid values */
+		अगर (n_min < NDIV_MIN)
 			n_min = NDIV_MIN;
-		if (n_max > NDIV_MAX)
+		अगर (n_max > NDIV_MAX)
 			n_max = NDIV_MAX;
 
-		for (o = ODF_MIN; o <= ODF_MAX; o *= 2) {
+		क्रम (o = ODF_MIN; o <= ODF_MAX; o *= 2) अणु
 			n = DIV_ROUND_CLOSEST(i * o * clkout_khz, clkin_khz);
-			/* Check ndiv according to vco range */
-			if (n < n_min || n > n_max)
-				continue;
-			/* Check if new delta is better & saves parameters */
+			/* Check nभाग according to vco range */
+			अगर (n < n_min || n > n_max)
+				जारी;
+			/* Check अगर new delta is better & saves parameters */
 			delta = dsi_pll_get_clkout_khz(clkin_khz, i, n, o) -
 				clkout_khz;
-			if (delta < 0)
+			अगर (delta < 0)
 				delta = -delta;
-			if (delta < best_delta) {
+			अगर (delta < best_delta) अणु
 				*idf = i;
-				*ndiv = n;
+				*nभाग = n;
 				*odf = o;
 				best_delta = delta;
-			}
-			/* fast return in case of "perfect result" */
-			if (!delta)
-				return 0;
-		}
-	}
+			पूर्ण
+			/* fast वापस in हाल of "perfect result" */
+			अगर (!delta)
+				वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dw_mipi_dsi_phy_init(void *priv_data)
-{
-	struct dw_mipi_dsi_stm *dsi = priv_data;
+अटल पूर्णांक dw_mipi_dsi_phy_init(व्योम *priv_data)
+अणु
+	काष्ठा dw_mipi_dsi_sपंचांग *dsi = priv_data;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
 	/* Enable the regulator */
 	dsi_set(dsi, DSI_WRPCR, WRPCR_REGEN | WRPCR_BGREN);
-	ret = readl_poll_timeout(dsi->base + DSI_WISR, val, val & WISR_RRS,
+	ret = पढ़ोl_poll_समयout(dsi->base + DSI_WISR, val, val & WISR_RRS,
 				 SLEEP_US, TIMEOUT_US);
-	if (ret)
+	अगर (ret)
 		DRM_DEBUG_DRIVER("!TIMEOUT! waiting REGU, let's continue\n");
 
-	/* Enable the DSI PLL & wait for its lock */
+	/* Enable the DSI PLL & रुको क्रम its lock */
 	dsi_set(dsi, DSI_WRPCR, WRPCR_PLLEN);
-	ret = readl_poll_timeout(dsi->base + DSI_WISR, val, val & WISR_PLLLS,
+	ret = पढ़ोl_poll_समयout(dsi->base + DSI_WISR, val, val & WISR_PLLLS,
 				 SLEEP_US, TIMEOUT_US);
-	if (ret)
+	अगर (ret)
 		DRM_DEBUG_DRIVER("!TIMEOUT! waiting PLL, let's continue\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dw_mipi_dsi_phy_power_on(void *priv_data)
-{
-	struct dw_mipi_dsi_stm *dsi = priv_data;
+अटल व्योम dw_mipi_dsi_phy_घातer_on(व्योम *priv_data)
+अणु
+	काष्ठा dw_mipi_dsi_sपंचांग *dsi = priv_data;
 
 	DRM_DEBUG_DRIVER("\n");
 
 	/* Enable the DSI wrapper */
 	dsi_set(dsi, DSI_WCR, WCR_DSIEN);
-}
+पूर्ण
 
-static void dw_mipi_dsi_phy_power_off(void *priv_data)
-{
-	struct dw_mipi_dsi_stm *dsi = priv_data;
+अटल व्योम dw_mipi_dsi_phy_घातer_off(व्योम *priv_data)
+अणु
+	काष्ठा dw_mipi_dsi_sपंचांग *dsi = priv_data;
 
 	DRM_DEBUG_DRIVER("\n");
 
 	/* Disable the DSI wrapper */
 	dsi_clear(dsi, DSI_WCR, WCR_DSIEN);
-}
+पूर्ण
 
-static int
-dw_mipi_dsi_get_lane_mbps(void *priv_data, const struct drm_display_mode *mode,
-			  unsigned long mode_flags, u32 lanes, u32 format,
-			  unsigned int *lane_mbps)
-{
-	struct dw_mipi_dsi_stm *dsi = priv_data;
-	unsigned int idf, ndiv, odf, pll_in_khz, pll_out_khz;
-	int ret, bpp;
+अटल पूर्णांक
+dw_mipi_dsi_get_lane_mbps(व्योम *priv_data, स्थिर काष्ठा drm_display_mode *mode,
+			  अचिन्हित दीर्घ mode_flags, u32 lanes, u32 क्रमmat,
+			  अचिन्हित पूर्णांक *lane_mbps)
+अणु
+	काष्ठा dw_mipi_dsi_sपंचांग *dsi = priv_data;
+	अचिन्हित पूर्णांक idf, nभाग, odf, pll_in_khz, pll_out_khz;
+	पूर्णांक ret, bpp;
 	u32 val;
 
 	/* Update lane capabilities according to hw version */
 	dsi->lane_min_kbps = LANE_MIN_KBPS;
 	dsi->lane_max_kbps = LANE_MAX_KBPS;
-	if (dsi->hw_version == HWVER_131) {
+	अगर (dsi->hw_version == HWVER_131) अणु
 		dsi->lane_min_kbps *= 2;
 		dsi->lane_max_kbps *= 2;
-	}
+	पूर्ण
 
-	pll_in_khz = (unsigned int)(clk_get_rate(dsi->pllref_clk) / 1000);
+	pll_in_khz = (अचिन्हित पूर्णांक)(clk_get_rate(dsi->pllref_clk) / 1000);
 
 	/* Compute requested pll out */
-	bpp = mipi_dsi_pixel_format_to_bpp(format);
-	pll_out_khz = mode->clock * bpp / lanes;
+	bpp = mipi_dsi_pixel_क्रमmat_to_bpp(क्रमmat);
+	pll_out_khz = mode->घड़ी * bpp / lanes;
 
 	/* Add 20% to pll out to be higher than pixel bw (burst mode only) */
-	if (mode_flags & MIPI_DSI_MODE_VIDEO_BURST)
+	अगर (mode_flags & MIPI_DSI_MODE_VIDEO_BURST)
 		pll_out_khz = (pll_out_khz * 12) / 10;
 
-	if (pll_out_khz > dsi->lane_max_kbps) {
+	अगर (pll_out_khz > dsi->lane_max_kbps) अणु
 		pll_out_khz = dsi->lane_max_kbps;
 		DRM_WARN("Warning max phy mbps is used\n");
-	}
-	if (pll_out_khz < dsi->lane_min_kbps) {
+	पूर्ण
+	अगर (pll_out_khz < dsi->lane_min_kbps) अणु
 		pll_out_khz = dsi->lane_min_kbps;
 		DRM_WARN("Warning min phy mbps is used\n");
-	}
+	पूर्ण
 
 	/* Compute best pll parameters */
 	idf = 0;
-	ndiv = 0;
+	nभाग = 0;
 	odf = 0;
 	ret = dsi_pll_get_params(dsi, pll_in_khz, pll_out_khz,
-				 &idf, &ndiv, &odf);
-	if (ret)
+				 &idf, &nभाग, &odf);
+	अगर (ret)
 		DRM_WARN("Warning dsi_pll_get_params(): bad params\n");
 
 	/* Get the adjusted pll out value */
-	pll_out_khz = dsi_pll_get_clkout_khz(pll_in_khz, idf, ndiv, odf);
+	pll_out_khz = dsi_pll_get_clkout_khz(pll_in_khz, idf, nभाग, odf);
 
-	/* Set the PLL division factors */
+	/* Set the PLL भागision factors */
 	dsi_update_bits(dsi, DSI_WRPCR,	WRPCR_NDIV | WRPCR_IDF | WRPCR_ODF,
-			(ndiv << 2) | (idf << 11) | ((ffs(odf) - 1) << 16));
+			(nभाग << 2) | (idf << 11) | ((ffs(odf) - 1) << 16));
 
 	/* Compute uix4 & set the bit period in high-speed mode */
 	val = 4000000 / pll_out_khz;
@@ -299,199 +300,199 @@ dw_mipi_dsi_get_lane_mbps(void *priv_data, const struct drm_display_mode *mode,
 
 	/* Select the color coding */
 	dsi_update_bits(dsi, DSI_WCFGR, WCFGR_COLMUX,
-			dsi_color_from_mipi(format) << 1);
+			dsi_color_from_mipi(क्रमmat) << 1);
 
 	*lane_mbps = pll_out_khz / 1000;
 
 	DRM_DEBUG_DRIVER("pll_in %ukHz pll_out %ukHz lane_mbps %uMHz\n",
 			 pll_in_khz, pll_out_khz, *lane_mbps);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-dw_mipi_dsi_phy_get_timing(void *priv_data, unsigned int lane_mbps,
-			   struct dw_mipi_dsi_dphy_timing *timing)
-{
+अटल पूर्णांक
+dw_mipi_dsi_phy_get_timing(व्योम *priv_data, अचिन्हित पूर्णांक lane_mbps,
+			   काष्ठा dw_mipi_dsi_dphy_timing *timing)
+अणु
 	timing->clk_hs2lp = 0x40;
 	timing->clk_lp2hs = 0x40;
 	timing->data_hs2lp = 0x40;
 	timing->data_lp2hs = 0x40;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dw_mipi_dsi_phy_ops dw_mipi_dsi_stm_phy_ops = {
+अटल स्थिर काष्ठा dw_mipi_dsi_phy_ops dw_mipi_dsi_sपंचांग_phy_ops = अणु
 	.init = dw_mipi_dsi_phy_init,
-	.power_on = dw_mipi_dsi_phy_power_on,
-	.power_off = dw_mipi_dsi_phy_power_off,
+	.घातer_on = dw_mipi_dsi_phy_घातer_on,
+	.घातer_off = dw_mipi_dsi_phy_घातer_off,
 	.get_lane_mbps = dw_mipi_dsi_get_lane_mbps,
 	.get_timing = dw_mipi_dsi_phy_get_timing,
-};
+पूर्ण;
 
-static struct dw_mipi_dsi_plat_data dw_mipi_dsi_stm_plat_data = {
+अटल काष्ठा dw_mipi_dsi_plat_data dw_mipi_dsi_sपंचांग_plat_data = अणु
 	.max_data_lanes = 2,
-	.phy_ops = &dw_mipi_dsi_stm_phy_ops,
-};
+	.phy_ops = &dw_mipi_dsi_sपंचांग_phy_ops,
+पूर्ण;
 
-static const struct of_device_id dw_mipi_dsi_stm_dt_ids[] = {
-	{ .compatible = "st,stm32-dsi", .data = &dw_mipi_dsi_stm_plat_data, },
-	{ },
-};
-MODULE_DEVICE_TABLE(of, dw_mipi_dsi_stm_dt_ids);
+अटल स्थिर काष्ठा of_device_id dw_mipi_dsi_sपंचांग_dt_ids[] = अणु
+	अणु .compatible = "st,stm32-dsi", .data = &dw_mipi_dsi_sपंचांग_plat_data, पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, dw_mipi_dsi_sपंचांग_dt_ids);
 
-static int dw_mipi_dsi_stm_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct dw_mipi_dsi_stm *dsi;
-	struct clk *pclk;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक dw_mipi_dsi_sपंचांग_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा dw_mipi_dsi_sपंचांग *dsi;
+	काष्ठा clk *pclk;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	dsi = devm_kzalloc(dev, sizeof(*dsi), GFP_KERNEL);
-	if (!dsi)
-		return -ENOMEM;
+	dsi = devm_kzalloc(dev, माप(*dsi), GFP_KERNEL);
+	अगर (!dsi)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	dsi->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(dsi->base)) {
+	अगर (IS_ERR(dsi->base)) अणु
 		ret = PTR_ERR(dsi->base);
 		DRM_ERROR("Unable to get dsi registers %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dsi->vdd_supply = devm_regulator_get(dev, "phy-dsi");
-	if (IS_ERR(dsi->vdd_supply)) {
+	अगर (IS_ERR(dsi->vdd_supply)) अणु
 		ret = PTR_ERR(dsi->vdd_supply);
 		dev_err_probe(dev, ret, "Failed to request regulator\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = regulator_enable(dsi->vdd_supply);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("Failed to enable regulator: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dsi->pllref_clk = devm_clk_get(dev, "ref");
-	if (IS_ERR(dsi->pllref_clk)) {
+	अगर (IS_ERR(dsi->pllref_clk)) अणु
 		ret = PTR_ERR(dsi->pllref_clk);
 		dev_err_probe(dev, ret, "Unable to get pll reference clock\n");
-		goto err_clk_get;
-	}
+		जाओ err_clk_get;
+	पूर्ण
 
 	ret = clk_prepare_enable(dsi->pllref_clk);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("Failed to enable pllref_clk: %d\n", ret);
-		goto err_clk_get;
-	}
+		जाओ err_clk_get;
+	पूर्ण
 
 	pclk = devm_clk_get(dev, "pclk");
-	if (IS_ERR(pclk)) {
+	अगर (IS_ERR(pclk)) अणु
 		ret = PTR_ERR(pclk);
 		DRM_ERROR("Unable to get peripheral clock: %d\n", ret);
-		goto err_dsi_probe;
-	}
+		जाओ err_dsi_probe;
+	पूर्ण
 
 	ret = clk_prepare_enable(pclk);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("%s: Failed to enable peripheral clk\n", __func__);
-		goto err_dsi_probe;
-	}
+		जाओ err_dsi_probe;
+	पूर्ण
 
-	dsi->hw_version = dsi_read(dsi, DSI_VERSION) & VERSION;
+	dsi->hw_version = dsi_पढ़ो(dsi, DSI_VERSION) & VERSION;
 	clk_disable_unprepare(pclk);
 
-	if (dsi->hw_version != HWVER_130 && dsi->hw_version != HWVER_131) {
+	अगर (dsi->hw_version != HWVER_130 && dsi->hw_version != HWVER_131) अणु
 		ret = -ENODEV;
 		DRM_ERROR("bad dsi hardware version\n");
-		goto err_dsi_probe;
-	}
+		जाओ err_dsi_probe;
+	पूर्ण
 
-	dw_mipi_dsi_stm_plat_data.base = dsi->base;
-	dw_mipi_dsi_stm_plat_data.priv_data = dsi;
+	dw_mipi_dsi_sपंचांग_plat_data.base = dsi->base;
+	dw_mipi_dsi_sपंचांग_plat_data.priv_data = dsi;
 
-	platform_set_drvdata(pdev, dsi);
+	platक्रमm_set_drvdata(pdev, dsi);
 
-	dsi->dsi = dw_mipi_dsi_probe(pdev, &dw_mipi_dsi_stm_plat_data);
-	if (IS_ERR(dsi->dsi)) {
+	dsi->dsi = dw_mipi_dsi_probe(pdev, &dw_mipi_dsi_sपंचांग_plat_data);
+	अगर (IS_ERR(dsi->dsi)) अणु
 		ret = PTR_ERR(dsi->dsi);
 		dev_err_probe(dev, ret, "Failed to initialize mipi dsi host\n");
-		goto err_dsi_probe;
-	}
+		जाओ err_dsi_probe;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_dsi_probe:
 	clk_disable_unprepare(dsi->pllref_clk);
 err_clk_get:
 	regulator_disable(dsi->vdd_supply);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dw_mipi_dsi_stm_remove(struct platform_device *pdev)
-{
-	struct dw_mipi_dsi_stm *dsi = platform_get_drvdata(pdev);
+अटल पूर्णांक dw_mipi_dsi_sपंचांग_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dw_mipi_dsi_sपंचांग *dsi = platक्रमm_get_drvdata(pdev);
 
-	dw_mipi_dsi_remove(dsi->dsi);
+	dw_mipi_dsi_हटाओ(dsi->dsi);
 	clk_disable_unprepare(dsi->pllref_clk);
 	regulator_disable(dsi->vdd_supply);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused dw_mipi_dsi_stm_suspend(struct device *dev)
-{
-	struct dw_mipi_dsi_stm *dsi = dw_mipi_dsi_stm_plat_data.priv_data;
+अटल पूर्णांक __maybe_unused dw_mipi_dsi_sपंचांग_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा dw_mipi_dsi_sपंचांग *dsi = dw_mipi_dsi_sपंचांग_plat_data.priv_data;
 
 	DRM_DEBUG_DRIVER("\n");
 
 	clk_disable_unprepare(dsi->pllref_clk);
 	regulator_disable(dsi->vdd_supply);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused dw_mipi_dsi_stm_resume(struct device *dev)
-{
-	struct dw_mipi_dsi_stm *dsi = dw_mipi_dsi_stm_plat_data.priv_data;
-	int ret;
+अटल पूर्णांक __maybe_unused dw_mipi_dsi_sपंचांग_resume(काष्ठा device *dev)
+अणु
+	काष्ठा dw_mipi_dsi_sपंचांग *dsi = dw_mipi_dsi_sपंचांग_plat_data.priv_data;
+	पूर्णांक ret;
 
 	DRM_DEBUG_DRIVER("\n");
 
 	ret = regulator_enable(dsi->vdd_supply);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("Failed to enable regulator: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(dsi->pllref_clk);
-	if (ret) {
+	अगर (ret) अणु
 		regulator_disable(dsi->vdd_supply);
 		DRM_ERROR("Failed to enable pllref_clk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops dw_mipi_dsi_stm_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(dw_mipi_dsi_stm_suspend,
-				dw_mipi_dsi_stm_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops dw_mipi_dsi_sपंचांग_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(dw_mipi_dsi_sपंचांग_suspend,
+				dw_mipi_dsi_sपंचांग_resume)
+पूर्ण;
 
-static struct platform_driver dw_mipi_dsi_stm_driver = {
-	.probe		= dw_mipi_dsi_stm_probe,
-	.remove		= dw_mipi_dsi_stm_remove,
-	.driver		= {
-		.of_match_table = dw_mipi_dsi_stm_dt_ids,
+अटल काष्ठा platक्रमm_driver dw_mipi_dsi_sपंचांग_driver = अणु
+	.probe		= dw_mipi_dsi_sपंचांग_probe,
+	.हटाओ		= dw_mipi_dsi_sपंचांग_हटाओ,
+	.driver		= अणु
+		.of_match_table = dw_mipi_dsi_sपंचांग_dt_ids,
 		.name	= "stm32-display-dsi",
-		.pm = &dw_mipi_dsi_stm_pm_ops,
-	},
-};
+		.pm = &dw_mipi_dsi_sपंचांग_pm_ops,
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(dw_mipi_dsi_stm_driver);
+module_platक्रमm_driver(dw_mipi_dsi_sपंचांग_driver);
 
 MODULE_AUTHOR("Philippe Cornu <philippe.cornu@st.com>");
 MODULE_AUTHOR("Yannick Fertre <yannick.fertre@st.com>");

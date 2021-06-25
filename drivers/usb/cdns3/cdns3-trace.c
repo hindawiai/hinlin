@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * USBSS device controller driver Trace Support
  *
@@ -7,5 +8,5 @@
  * Author: Pawel Laszczak <pawell@cadence.com>
  */
 
-#define CREATE_TRACE_POINTS
-#include "cdns3-trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "cdns3-trace.h"

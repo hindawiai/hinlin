@@ -1,255 +1,256 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * QLogic qlcnic NIC Driver
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
-#include <linux/netdevice.h>
-#include <linux/if_vlan.h>
-#include <net/ip.h>
-#include <linux/ipv6.h>
-#include <net/checksum.h>
-#include <linux/printk.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <net/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <net/checksum.h>
+#समावेश <linux/prपूर्णांकk.h>
 
-#include "qlcnic.h"
+#समावेश "qlcnic.h"
 
-#define QLCNIC_TX_ETHER_PKT		0x01
-#define QLCNIC_TX_TCP_PKT		0x02
-#define QLCNIC_TX_UDP_PKT		0x03
-#define QLCNIC_TX_IP_PKT		0x04
-#define QLCNIC_TX_TCP_LSO		0x05
-#define QLCNIC_TX_TCP_LSO6		0x06
-#define QLCNIC_TX_ENCAP_PKT		0x07
-#define QLCNIC_TX_ENCAP_LSO		0x08
-#define QLCNIC_TX_TCPV6_PKT		0x0b
-#define QLCNIC_TX_UDPV6_PKT		0x0c
+#घोषणा QLCNIC_TX_ETHER_PKT		0x01
+#घोषणा QLCNIC_TX_TCP_PKT		0x02
+#घोषणा QLCNIC_TX_UDP_PKT		0x03
+#घोषणा QLCNIC_TX_IP_PKT		0x04
+#घोषणा QLCNIC_TX_TCP_LSO		0x05
+#घोषणा QLCNIC_TX_TCP_LSO6		0x06
+#घोषणा QLCNIC_TX_ENCAP_PKT		0x07
+#घोषणा QLCNIC_TX_ENCAP_LSO		0x08
+#घोषणा QLCNIC_TX_TCPV6_PKT		0x0b
+#घोषणा QLCNIC_TX_UDPV6_PKT		0x0c
 
-#define QLCNIC_FLAGS_VLAN_TAGGED	0x10
-#define QLCNIC_FLAGS_VLAN_OOB		0x40
+#घोषणा QLCNIC_FLAGS_VLAN_TAGGED	0x10
+#घोषणा QLCNIC_FLAGS_VLAN_OOB		0x40
 
-#define qlcnic_set_tx_vlan_tci(cmd_desc, v)	\
+#घोषणा qlcnic_set_tx_vlan_tci(cmd_desc, v)	\
 	(cmd_desc)->vlan_TCI = cpu_to_le16(v);
-#define qlcnic_set_cmd_desc_port(cmd_desc, var)	\
+#घोषणा qlcnic_set_cmd_desc_port(cmd_desc, var)	\
 	((cmd_desc)->port_ctxid |= ((var) & 0x0F))
-#define qlcnic_set_cmd_desc_ctxid(cmd_desc, var)	\
+#घोषणा qlcnic_set_cmd_desc_ctxid(cmd_desc, var)	\
 	((cmd_desc)->port_ctxid |= ((var) << 4 & 0xF0))
 
-#define qlcnic_set_tx_port(_desc, _port) \
+#घोषणा qlcnic_set_tx_port(_desc, _port) \
 	((_desc)->port_ctxid = ((_port) & 0xf) | (((_port) << 4) & 0xf0))
 
-#define qlcnic_set_tx_flags_opcode(_desc, _flags, _opcode) \
+#घोषणा qlcnic_set_tx_flags_opcode(_desc, _flags, _opcode) \
 	((_desc)->flags_opcode |= \
 	cpu_to_le16(((_flags) & 0x7f) | (((_opcode) & 0x3f) << 7)))
 
-#define qlcnic_set_tx_frags_len(_desc, _frags, _len) \
+#घोषणा qlcnic_set_tx_frags_len(_desc, _frags, _len) \
 	((_desc)->nfrags__length = \
 	cpu_to_le32(((_frags) & 0xff) | (((_len) & 0xffffff) << 8)))
 
 /* owner bits of status_desc */
-#define STATUS_OWNER_HOST	(0x1ULL << 56)
-#define STATUS_OWNER_PHANTOM	(0x2ULL << 56)
+#घोषणा STATUS_OWNER_HOST	(0x1ULL << 56)
+#घोषणा STATUS_OWNER_PHANTOM	(0x2ULL << 56)
 
 /* Status descriptor:
    0-3 port, 4-7 status, 8-11 type, 12-27 total_length
    28-43 reference_handle, 44-47 protocol, 48-52 pkt_offset
    53-55 desc_cnt, 56-57 owner, 58-63 opcode
  */
-#define qlcnic_get_sts_port(sts_data)	\
+#घोषणा qlcnic_get_sts_port(sts_data)	\
 	((sts_data) & 0x0F)
-#define qlcnic_get_sts_status(sts_data)	\
+#घोषणा qlcnic_get_sts_status(sts_data)	\
 	(((sts_data) >> 4) & 0x0F)
-#define qlcnic_get_sts_type(sts_data)	\
+#घोषणा qlcnic_get_sts_type(sts_data)	\
 	(((sts_data) >> 8) & 0x0F)
-#define qlcnic_get_sts_totallength(sts_data)	\
+#घोषणा qlcnic_get_sts_totallength(sts_data)	\
 	(((sts_data) >> 12) & 0xFFFF)
-#define qlcnic_get_sts_refhandle(sts_data)	\
+#घोषणा qlcnic_get_sts_refhandle(sts_data)	\
 	(((sts_data) >> 28) & 0xFFFF)
-#define qlcnic_get_sts_prot(sts_data)	\
+#घोषणा qlcnic_get_sts_prot(sts_data)	\
 	(((sts_data) >> 44) & 0x0F)
-#define qlcnic_get_sts_pkt_offset(sts_data)	\
+#घोषणा qlcnic_get_sts_pkt_offset(sts_data)	\
 	(((sts_data) >> 48) & 0x1F)
-#define qlcnic_get_sts_desc_cnt(sts_data)	\
+#घोषणा qlcnic_get_sts_desc_cnt(sts_data)	\
 	(((sts_data) >> 53) & 0x7)
-#define qlcnic_get_sts_opcode(sts_data)	\
+#घोषणा qlcnic_get_sts_opcode(sts_data)	\
 	(((sts_data) >> 58) & 0x03F)
 
-#define qlcnic_get_lro_sts_refhandle(sts_data) 	\
+#घोषणा qlcnic_get_lro_sts_refhandle(sts_data) 	\
 	((sts_data) & 0x07FFF)
-#define qlcnic_get_lro_sts_length(sts_data)	\
+#घोषणा qlcnic_get_lro_sts_length(sts_data)	\
 	(((sts_data) >> 16) & 0x0FFFF)
-#define qlcnic_get_lro_sts_l2_hdr_offset(sts_data)	\
+#घोषणा qlcnic_get_lro_sts_l2_hdr_offset(sts_data)	\
 	(((sts_data) >> 32) & 0x0FF)
-#define qlcnic_get_lro_sts_l4_hdr_offset(sts_data)	\
+#घोषणा qlcnic_get_lro_sts_l4_hdr_offset(sts_data)	\
 	(((sts_data) >> 40) & 0x0FF)
-#define qlcnic_get_lro_sts_timestamp(sts_data)	\
+#घोषणा qlcnic_get_lro_sts_बारtamp(sts_data)	\
 	(((sts_data) >> 48) & 0x1)
-#define qlcnic_get_lro_sts_type(sts_data)	\
+#घोषणा qlcnic_get_lro_sts_type(sts_data)	\
 	(((sts_data) >> 49) & 0x7)
-#define qlcnic_get_lro_sts_push_flag(sts_data)		\
+#घोषणा qlcnic_get_lro_sts_push_flag(sts_data)		\
 	(((sts_data) >> 52) & 0x1)
-#define qlcnic_get_lro_sts_seq_number(sts_data)		\
+#घोषणा qlcnic_get_lro_sts_seq_number(sts_data)		\
 	((sts_data) & 0x0FFFFFFFF)
-#define qlcnic_get_lro_sts_mss(sts_data1)		\
+#घोषणा qlcnic_get_lro_sts_mss(sts_data1)		\
 	((sts_data1 >> 32) & 0x0FFFF)
 
-#define qlcnic_83xx_get_lro_sts_mss(sts) ((sts) & 0xffff)
+#घोषणा qlcnic_83xx_get_lro_sts_mss(sts) ((sts) & 0xffff)
 
 /* opcode field in status_desc */
-#define QLCNIC_SYN_OFFLOAD	0x03
-#define QLCNIC_RXPKT_DESC  	0x04
-#define QLCNIC_OLD_RXPKT_DESC	0x3f
-#define QLCNIC_RESPONSE_DESC	0x05
-#define QLCNIC_LRO_DESC  	0x12
+#घोषणा QLCNIC_SYN_OFFLOAD	0x03
+#घोषणा QLCNIC_RXPKT_DESC  	0x04
+#घोषणा QLCNIC_OLD_RXPKT_DESC	0x3f
+#घोषणा QLCNIC_RESPONSE_DESC	0x05
+#घोषणा QLCNIC_LRO_DESC  	0x12
 
-#define QLCNIC_TCP_HDR_SIZE		20
-#define QLCNIC_TCP_TS_OPTION_SIZE	12
-#define QLCNIC_FETCH_RING_ID(handle)	((handle) >> 63)
-#define QLCNIC_DESC_OWNER_FW		cpu_to_le64(STATUS_OWNER_PHANTOM)
+#घोषणा QLCNIC_TCP_HDR_SIZE		20
+#घोषणा QLCNIC_TCP_TS_OPTION_SIZE	12
+#घोषणा QLCNIC_FETCH_RING_ID(handle)	((handle) >> 63)
+#घोषणा QLCNIC_DESC_OWNER_FW		cpu_to_le64(STATUS_OWNER_PHANTOM)
 
-#define QLCNIC_TCP_TS_HDR_SIZE (QLCNIC_TCP_HDR_SIZE + QLCNIC_TCP_TS_OPTION_SIZE)
+#घोषणा QLCNIC_TCP_TS_HDR_SIZE (QLCNIC_TCP_HDR_SIZE + QLCNIC_TCP_TS_OPTION_SIZE)
 
-/* for status field in status_desc */
-#define STATUS_CKSUM_LOOP	0
-#define STATUS_CKSUM_OK		2
+/* क्रम status field in status_desc */
+#घोषणा STATUS_CKSUM_LOOP	0
+#घोषणा STATUS_CKSUM_OK		2
 
-#define qlcnic_83xx_pktln(sts)		((sts >> 32) & 0x3FFF)
-#define qlcnic_83xx_hndl(sts)		((sts >> 48) & 0x7FFF)
-#define qlcnic_83xx_csum_status(sts)	((sts >> 39) & 7)
-#define qlcnic_83xx_opcode(sts)	((sts >> 42) & 0xF)
-#define qlcnic_83xx_vlan_tag(sts)	(((sts) >> 48) & 0xFFFF)
-#define qlcnic_83xx_lro_pktln(sts)	(((sts) >> 32) & 0x3FFF)
-#define qlcnic_83xx_l2_hdr_off(sts)	(((sts) >> 16) & 0xFF)
-#define qlcnic_83xx_l4_hdr_off(sts)	(((sts) >> 24) & 0xFF)
-#define qlcnic_83xx_pkt_cnt(sts)	(((sts) >> 16) & 0x7)
-#define qlcnic_83xx_is_tstamp(sts)	(((sts) >> 40) & 1)
-#define qlcnic_83xx_is_psh_bit(sts)	(((sts) >> 41) & 1)
-#define qlcnic_83xx_is_ip_align(sts)	(((sts) >> 46) & 1)
-#define qlcnic_83xx_has_vlan_tag(sts)	(((sts) >> 47) & 1)
+#घोषणा qlcnic_83xx_pktln(sts)		((sts >> 32) & 0x3FFF)
+#घोषणा qlcnic_83xx_hndl(sts)		((sts >> 48) & 0x7FFF)
+#घोषणा qlcnic_83xx_csum_status(sts)	((sts >> 39) & 7)
+#घोषणा qlcnic_83xx_opcode(sts)	((sts >> 42) & 0xF)
+#घोषणा qlcnic_83xx_vlan_tag(sts)	(((sts) >> 48) & 0xFFFF)
+#घोषणा qlcnic_83xx_lro_pktln(sts)	(((sts) >> 32) & 0x3FFF)
+#घोषणा qlcnic_83xx_l2_hdr_off(sts)	(((sts) >> 16) & 0xFF)
+#घोषणा qlcnic_83xx_l4_hdr_off(sts)	(((sts) >> 24) & 0xFF)
+#घोषणा qlcnic_83xx_pkt_cnt(sts)	(((sts) >> 16) & 0x7)
+#घोषणा qlcnic_83xx_is_tstamp(sts)	(((sts) >> 40) & 1)
+#घोषणा qlcnic_83xx_is_psh_bit(sts)	(((sts) >> 41) & 1)
+#घोषणा qlcnic_83xx_is_ip_align(sts)	(((sts) >> 46) & 1)
+#घोषणा qlcnic_83xx_has_vlan_tag(sts)	(((sts) >> 47) & 1)
 
-static int qlcnic_process_rcv_ring(struct qlcnic_host_sds_ring *sds_ring,
-				   int max);
+अटल पूर्णांक qlcnic_process_rcv_ring(काष्ठा qlcnic_host_sds_ring *sds_ring,
+				   पूर्णांक max);
 
-static struct sk_buff *qlcnic_process_rxbuf(struct qlcnic_adapter *,
-					    struct qlcnic_host_rds_ring *,
+अटल काष्ठा sk_buff *qlcnic_process_rxbuf(काष्ठा qlcnic_adapter *,
+					    काष्ठा qlcnic_host_rds_ring *,
 					    u16, u16);
 
-static inline u8 qlcnic_mac_hash(u64 mac, u16 vlan)
-{
-	return (u8)((mac & 0xff) ^ ((mac >> 40) & 0xff) ^ (vlan & 0xff));
-}
+अटल अंतरभूत u8 qlcnic_mac_hash(u64 mac, u16 vlan)
+अणु
+	वापस (u8)((mac & 0xff) ^ ((mac >> 40) & 0xff) ^ (vlan & 0xff));
+पूर्ण
 
-static inline u32 qlcnic_get_ref_handle(struct qlcnic_adapter *adapter,
+अटल अंतरभूत u32 qlcnic_get_ref_handle(काष्ठा qlcnic_adapter *adapter,
 					u16 handle, u8 ring_id)
-{
-	if (qlcnic_83xx_check(adapter))
-		return handle | (ring_id << 15);
-	else
-		return handle;
-}
+अणु
+	अगर (qlcnic_83xx_check(adapter))
+		वापस handle | (ring_id << 15);
+	अन्यथा
+		वापस handle;
+पूर्ण
 
-static inline int qlcnic_82xx_is_lb_pkt(u64 sts_data)
-{
-	return (qlcnic_get_sts_status(sts_data) == STATUS_CKSUM_LOOP) ? 1 : 0;
-}
+अटल अंतरभूत पूर्णांक qlcnic_82xx_is_lb_pkt(u64 sts_data)
+अणु
+	वापस (qlcnic_get_sts_status(sts_data) == STATUS_CKSUM_LOOP) ? 1 : 0;
+पूर्ण
 
-static void qlcnic_delete_rx_list_mac(struct qlcnic_adapter *adapter,
-				      struct qlcnic_filter *fil,
-				      void *addr, u16 vlan_id)
-{
-	int ret;
+अटल व्योम qlcnic_delete_rx_list_mac(काष्ठा qlcnic_adapter *adapter,
+				      काष्ठा qlcnic_filter *fil,
+				      व्योम *addr, u16 vlan_id)
+अणु
+	पूर्णांक ret;
 	u8 op;
 
 	op = vlan_id ? QLCNIC_MAC_VLAN_ADD : QLCNIC_MAC_ADD;
 	ret = qlcnic_sre_macaddr_change(adapter, addr, vlan_id, op);
-	if (ret)
-		return;
+	अगर (ret)
+		वापस;
 
 	op = vlan_id ? QLCNIC_MAC_VLAN_DEL : QLCNIC_MAC_DEL;
 	ret = qlcnic_sre_macaddr_change(adapter, addr, vlan_id, op);
-	if (!ret) {
+	अगर (!ret) अणु
 		hlist_del(&fil->fnode);
 		adapter->rx_fhash.fnum--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct qlcnic_filter *qlcnic_find_mac_filter(struct hlist_head *head,
-						    void *addr, u16 vlan_id)
-{
-	struct qlcnic_filter *tmp_fil = NULL;
-	struct hlist_node *n;
+अटल काष्ठा qlcnic_filter *qlcnic_find_mac_filter(काष्ठा hlist_head *head,
+						    व्योम *addr, u16 vlan_id)
+अणु
+	काष्ठा qlcnic_filter *पंचांगp_fil = शून्य;
+	काष्ठा hlist_node *n;
 
-	hlist_for_each_entry_safe(tmp_fil, n, head, fnode) {
-		if (ether_addr_equal(tmp_fil->faddr, addr) &&
-		    tmp_fil->vlan_id == vlan_id)
-			return tmp_fil;
-	}
+	hlist_क्रम_each_entry_safe(पंचांगp_fil, n, head, fnode) अणु
+		अगर (ether_addr_equal(पंचांगp_fil->faddr, addr) &&
+		    पंचांगp_fil->vlan_id == vlan_id)
+			वापस पंचांगp_fil;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void qlcnic_add_lb_filter(struct qlcnic_adapter *adapter,
-				 struct sk_buff *skb, int loopback_pkt, u16 vlan_id)
-{
-	struct ethhdr *phdr = (struct ethhdr *)(skb->data);
-	struct qlcnic_filter *fil, *tmp_fil;
-	struct hlist_head *head;
-	unsigned long time;
+अटल व्योम qlcnic_add_lb_filter(काष्ठा qlcnic_adapter *adapter,
+				 काष्ठा sk_buff *skb, पूर्णांक loopback_pkt, u16 vlan_id)
+अणु
+	काष्ठा ethhdr *phdr = (काष्ठा ethhdr *)(skb->data);
+	काष्ठा qlcnic_filter *fil, *पंचांगp_fil;
+	काष्ठा hlist_head *head;
+	अचिन्हित दीर्घ समय;
 	u64 src_addr = 0;
 	u8 hindex, op;
-	int ret;
+	पूर्णांक ret;
 
-	if (!qlcnic_sriov_pf_check(adapter) || (vlan_id == 0xffff))
+	अगर (!qlcnic_sriov_pf_check(adapter) || (vlan_id == 0xffff))
 		vlan_id = 0;
 
-	memcpy(&src_addr, phdr->h_source, ETH_ALEN);
+	स_नकल(&src_addr, phdr->h_source, ETH_ALEN);
 	hindex = qlcnic_mac_hash(src_addr, vlan_id) &
 		 (adapter->fhash.fbucket_size - 1);
 
-	if (loopback_pkt) {
-		if (adapter->rx_fhash.fnum >= adapter->rx_fhash.fmax)
-			return;
+	अगर (loopback_pkt) अणु
+		अगर (adapter->rx_fhash.fnum >= adapter->rx_fhash.fmax)
+			वापस;
 
 		head = &(adapter->rx_fhash.fhead[hindex]);
 
-		tmp_fil = qlcnic_find_mac_filter(head, &src_addr, vlan_id);
-		if (tmp_fil) {
-			time = tmp_fil->ftime;
-			if (time_after(jiffies, QLCNIC_READD_AGE * HZ + time))
-				tmp_fil->ftime = jiffies;
-			return;
-		}
+		पंचांगp_fil = qlcnic_find_mac_filter(head, &src_addr, vlan_id);
+		अगर (पंचांगp_fil) अणु
+			समय = पंचांगp_fil->fसमय;
+			अगर (समय_after(jअगरfies, QLCNIC_READD_AGE * HZ + समय))
+				पंचांगp_fil->fसमय = jअगरfies;
+			वापस;
+		पूर्ण
 
-		fil = kzalloc(sizeof(struct qlcnic_filter), GFP_ATOMIC);
-		if (!fil)
-			return;
+		fil = kzalloc(माप(काष्ठा qlcnic_filter), GFP_ATOMIC);
+		अगर (!fil)
+			वापस;
 
-		fil->ftime = jiffies;
-		memcpy(fil->faddr, &src_addr, ETH_ALEN);
+		fil->fसमय = jअगरfies;
+		स_नकल(fil->faddr, &src_addr, ETH_ALEN);
 		fil->vlan_id = vlan_id;
 		spin_lock(&adapter->rx_mac_learn_lock);
 		hlist_add_head(&(fil->fnode), head);
 		adapter->rx_fhash.fnum++;
 		spin_unlock(&adapter->rx_mac_learn_lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		head = &adapter->fhash.fhead[hindex];
 
 		spin_lock(&adapter->mac_learn_lock);
 
-		tmp_fil = qlcnic_find_mac_filter(head, &src_addr, vlan_id);
-		if (tmp_fil) {
+		पंचांगp_fil = qlcnic_find_mac_filter(head, &src_addr, vlan_id);
+		अगर (पंचांगp_fil) अणु
 			op = vlan_id ? QLCNIC_MAC_VLAN_DEL : QLCNIC_MAC_DEL;
 			ret = qlcnic_sre_macaddr_change(adapter,
 							(u8 *)&src_addr,
 							vlan_id, op);
-			if (!ret) {
-				hlist_del(&tmp_fil->fnode);
+			अगर (!ret) अणु
+				hlist_del(&पंचांगp_fil->fnode);
 				adapter->fhash.fnum--;
-			}
+			पूर्ण
 
 			spin_unlock(&adapter->mac_learn_lock);
 
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		spin_unlock(&adapter->mac_learn_lock);
 
@@ -257,137 +258,137 @@ static void qlcnic_add_lb_filter(struct qlcnic_adapter *adapter,
 
 		spin_lock(&adapter->rx_mac_learn_lock);
 
-		tmp_fil = qlcnic_find_mac_filter(head, &src_addr, vlan_id);
-		if (tmp_fil)
-			qlcnic_delete_rx_list_mac(adapter, tmp_fil, &src_addr,
+		पंचांगp_fil = qlcnic_find_mac_filter(head, &src_addr, vlan_id);
+		अगर (पंचांगp_fil)
+			qlcnic_delete_rx_list_mac(adapter, पंचांगp_fil, &src_addr,
 						  vlan_id);
 
 		spin_unlock(&adapter->rx_mac_learn_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void qlcnic_82xx_change_filter(struct qlcnic_adapter *adapter, u64 *uaddr,
-			       u16 vlan_id, struct qlcnic_host_tx_ring *tx_ring)
-{
-	struct cmd_desc_type0 *hwdesc;
-	struct qlcnic_nic_req *req;
-	struct qlcnic_mac_req *mac_req;
-	struct qlcnic_vlan_req *vlan_req;
+व्योम qlcnic_82xx_change_filter(काष्ठा qlcnic_adapter *adapter, u64 *uaddr,
+			       u16 vlan_id, काष्ठा qlcnic_host_tx_ring *tx_ring)
+अणु
+	काष्ठा cmd_desc_type0 *hwdesc;
+	काष्ठा qlcnic_nic_req *req;
+	काष्ठा qlcnic_mac_req *mac_req;
+	काष्ठा qlcnic_vlan_req *vlan_req;
 	u32 producer;
 	u64 word;
 
 	producer = tx_ring->producer;
 	hwdesc = &tx_ring->desc_head[tx_ring->producer];
 
-	req = (struct qlcnic_nic_req *)hwdesc;
-	memset(req, 0, sizeof(struct qlcnic_nic_req));
+	req = (काष्ठा qlcnic_nic_req *)hwdesc;
+	स_रखो(req, 0, माप(काष्ठा qlcnic_nic_req));
 	req->qhdr = cpu_to_le64(QLCNIC_REQUEST << 23);
 
 	word = QLCNIC_MAC_EVENT | ((u64)(adapter->portnum) << 16);
 	req->req_hdr = cpu_to_le64(word);
 
-	mac_req = (struct qlcnic_mac_req *)&(req->words[0]);
+	mac_req = (काष्ठा qlcnic_mac_req *)&(req->words[0]);
 	mac_req->op = vlan_id ? QLCNIC_MAC_VLAN_ADD : QLCNIC_MAC_ADD;
-	memcpy(mac_req->mac_addr, uaddr, ETH_ALEN);
+	स_नकल(mac_req->mac_addr, uaddr, ETH_ALEN);
 
-	vlan_req = (struct qlcnic_vlan_req *)&req->words[1];
+	vlan_req = (काष्ठा qlcnic_vlan_req *)&req->words[1];
 	vlan_req->vlan_id = cpu_to_le16(vlan_id);
 
 	tx_ring->producer = get_next_index(producer, tx_ring->num_desc);
 	smp_mb();
-}
+पूर्ण
 
-static void qlcnic_send_filter(struct qlcnic_adapter *adapter,
-			       struct cmd_desc_type0 *first_desc,
-			       struct sk_buff *skb,
-			       struct qlcnic_host_tx_ring *tx_ring)
-{
-	struct vlan_ethhdr *vh = (struct vlan_ethhdr *)(skb->data);
-	struct ethhdr *phdr = (struct ethhdr *)(skb->data);
+अटल व्योम qlcnic_send_filter(काष्ठा qlcnic_adapter *adapter,
+			       काष्ठा cmd_desc_type0 *first_desc,
+			       काष्ठा sk_buff *skb,
+			       काष्ठा qlcnic_host_tx_ring *tx_ring)
+अणु
+	काष्ठा vlan_ethhdr *vh = (काष्ठा vlan_ethhdr *)(skb->data);
+	काष्ठा ethhdr *phdr = (काष्ठा ethhdr *)(skb->data);
 	u16 protocol = ntohs(skb->protocol);
-	struct qlcnic_filter *fil, *tmp_fil;
-	struct hlist_head *head;
-	struct hlist_node *n;
+	काष्ठा qlcnic_filter *fil, *पंचांगp_fil;
+	काष्ठा hlist_head *head;
+	काष्ठा hlist_node *n;
 	u64 src_addr = 0;
 	u16 vlan_id = 0;
 	u8 hindex, hval;
 
-	if (ether_addr_equal(phdr->h_source, adapter->mac_addr))
-		return;
+	अगर (ether_addr_equal(phdr->h_source, adapter->mac_addr))
+		वापस;
 
-	if (adapter->flags & QLCNIC_VLAN_FILTERING) {
-		if (protocol == ETH_P_8021Q) {
-			vh = (struct vlan_ethhdr *)skb->data;
+	अगर (adapter->flags & QLCNIC_VLAN_FILTERING) अणु
+		अगर (protocol == ETH_P_8021Q) अणु
+			vh = (काष्ठा vlan_ethhdr *)skb->data;
 			vlan_id = ntohs(vh->h_vlan_TCI);
-		} else if (skb_vlan_tag_present(skb)) {
+		पूर्ण अन्यथा अगर (skb_vlan_tag_present(skb)) अणु
 			vlan_id = skb_vlan_tag_get(skb);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	memcpy(&src_addr, phdr->h_source, ETH_ALEN);
+	स_नकल(&src_addr, phdr->h_source, ETH_ALEN);
 	hval = qlcnic_mac_hash(src_addr, vlan_id);
 	hindex = hval & (adapter->fhash.fbucket_size - 1);
 	head = &(adapter->fhash.fhead[hindex]);
 
-	hlist_for_each_entry_safe(tmp_fil, n, head, fnode) {
-		if (ether_addr_equal(tmp_fil->faddr, (u8 *)&src_addr) &&
-		    tmp_fil->vlan_id == vlan_id) {
-			if (jiffies > (QLCNIC_READD_AGE * HZ + tmp_fil->ftime))
+	hlist_क्रम_each_entry_safe(पंचांगp_fil, n, head, fnode) अणु
+		अगर (ether_addr_equal(पंचांगp_fil->faddr, (u8 *)&src_addr) &&
+		    पंचांगp_fil->vlan_id == vlan_id) अणु
+			अगर (jअगरfies > (QLCNIC_READD_AGE * HZ + पंचांगp_fil->fसमय))
 				qlcnic_change_filter(adapter, &src_addr,
 						     vlan_id, tx_ring);
-			tmp_fil->ftime = jiffies;
-			return;
-		}
-	}
+			पंचांगp_fil->fसमय = jअगरfies;
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (unlikely(adapter->fhash.fnum >= adapter->fhash.fmax)) {
+	अगर (unlikely(adapter->fhash.fnum >= adapter->fhash.fmax)) अणु
 		adapter->stats.mac_filter_limit_overrun++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	fil = kzalloc(sizeof(struct qlcnic_filter), GFP_ATOMIC);
-	if (!fil)
-		return;
+	fil = kzalloc(माप(काष्ठा qlcnic_filter), GFP_ATOMIC);
+	अगर (!fil)
+		वापस;
 
 	qlcnic_change_filter(adapter, &src_addr, vlan_id, tx_ring);
-	fil->ftime = jiffies;
+	fil->fसमय = jअगरfies;
 	fil->vlan_id = vlan_id;
-	memcpy(fil->faddr, &src_addr, ETH_ALEN);
+	स_नकल(fil->faddr, &src_addr, ETH_ALEN);
 	spin_lock(&adapter->mac_learn_lock);
 	hlist_add_head(&(fil->fnode), head);
 	adapter->fhash.fnum++;
 	spin_unlock(&adapter->mac_learn_lock);
-}
+पूर्ण
 
-#define QLCNIC_ENCAP_VXLAN_PKT		BIT_0
-#define QLCNIC_ENCAP_OUTER_L3_IP6	BIT_1
-#define QLCNIC_ENCAP_INNER_L3_IP6	BIT_2
-#define QLCNIC_ENCAP_INNER_L4_UDP	BIT_3
-#define QLCNIC_ENCAP_DO_L3_CSUM		BIT_4
-#define QLCNIC_ENCAP_DO_L4_CSUM		BIT_5
+#घोषणा QLCNIC_ENCAP_VXLAN_PKT		BIT_0
+#घोषणा QLCNIC_ENCAP_OUTER_L3_IP6	BIT_1
+#घोषणा QLCNIC_ENCAP_INNER_L3_IP6	BIT_2
+#घोषणा QLCNIC_ENCAP_INNER_L4_UDP	BIT_3
+#घोषणा QLCNIC_ENCAP_DO_L3_CSUM		BIT_4
+#घोषणा QLCNIC_ENCAP_DO_L4_CSUM		BIT_5
 
-static int qlcnic_tx_encap_pkt(struct qlcnic_adapter *adapter,
-			       struct cmd_desc_type0 *first_desc,
-			       struct sk_buff *skb,
-			       struct qlcnic_host_tx_ring *tx_ring)
-{
+अटल पूर्णांक qlcnic_tx_encap_pkt(काष्ठा qlcnic_adapter *adapter,
+			       काष्ठा cmd_desc_type0 *first_desc,
+			       काष्ठा sk_buff *skb,
+			       काष्ठा qlcnic_host_tx_ring *tx_ring)
+अणु
 	u8 opcode = 0, inner_hdr_len = 0, outer_hdr_len = 0, total_hdr_len = 0;
-	int copied, copy_len, descr_size;
+	पूर्णांक copied, copy_len, descr_size;
 	u32 producer = tx_ring->producer;
-	struct cmd_desc_type0 *hwdesc;
+	काष्ठा cmd_desc_type0 *hwdesc;
 	u16 flags = 0, encap_descr = 0;
 
 	opcode = QLCNIC_TX_ETHER_PKT;
 	encap_descr = QLCNIC_ENCAP_VXLAN_PKT;
 
-	if (skb_is_gso(skb)) {
+	अगर (skb_is_gso(skb)) अणु
 		inner_hdr_len = skb_inner_transport_header(skb) +
 				inner_tcp_hdrlen(skb) -
 				skb_inner_mac_header(skb);
 
 		/* VXLAN header size = 8 */
 		outer_hdr_len = skb_transport_offset(skb) + 8 +
-				sizeof(struct udphdr);
+				माप(काष्ठा udphdr);
 		first_desc->outer_hdr_length = outer_hdr_len;
 		total_hdr_len = inner_hdr_len + outer_hdr_len;
 		encap_descr |= QLCNIC_ENCAP_DO_L3_CSUM |
@@ -400,42 +401,42 @@ static int qlcnic_tx_encap_pkt(struct qlcnic_adapter *adapter,
 		 * descriptors
 		 */
 		copied = 0;
-		descr_size = (int)sizeof(struct cmd_desc_type0);
-		while (copied < total_hdr_len) {
+		descr_size = (पूर्णांक)माप(काष्ठा cmd_desc_type0);
+		जबतक (copied < total_hdr_len) अणु
 			copy_len = min(descr_size, (total_hdr_len - copied));
 			hwdesc = &tx_ring->desc_head[producer];
-			tx_ring->cmd_buf_arr[producer].skb = NULL;
+			tx_ring->cmd_buf_arr[producer].skb = शून्य;
 			skb_copy_from_linear_data_offset(skb, copied,
-							 (char *)hwdesc,
+							 (अक्षर *)hwdesc,
 							 copy_len);
 			copied += copy_len;
 			producer = get_next_index(producer, tx_ring->num_desc);
-		}
+		पूर्ण
 
 		tx_ring->producer = producer;
 
 		/* Make sure updated tx_ring->producer is visible
-		 * for qlcnic_tx_avail()
+		 * क्रम qlcnic_tx_avail()
 		 */
 		smp_mb();
 		adapter->stats.encap_lso_frames++;
 
 		opcode = QLCNIC_TX_ENCAP_LSO;
-	} else if (skb->ip_summed == CHECKSUM_PARTIAL) {
-		if (inner_ip_hdr(skb)->version == 6) {
-			if (inner_ipv6_hdr(skb)->nexthdr == IPPROTO_UDP)
+	पूर्ण अन्यथा अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
+		अगर (inner_ip_hdr(skb)->version == 6) अणु
+			अगर (inner_ipv6_hdr(skb)->nexthdr == IPPROTO_UDP)
 				encap_descr |= QLCNIC_ENCAP_INNER_L4_UDP;
-		} else {
-			if (inner_ip_hdr(skb)->protocol == IPPROTO_UDP)
+		पूर्ण अन्यथा अणु
+			अगर (inner_ip_hdr(skb)->protocol == IPPROTO_UDP)
 				encap_descr |= QLCNIC_ENCAP_INNER_L4_UDP;
-		}
+		पूर्ण
 
 		adapter->stats.encap_tx_csummed++;
 		opcode = QLCNIC_TX_ENCAP_PKT;
-	}
+	पूर्ण
 
 	/* Prepare first 16 bits of byte offset 16 of Tx descriptor */
-	if (ip_hdr(skb)->version == 6)
+	अगर (ip_hdr(skb)->version == 6)
 		encap_descr |= QLCNIC_ENCAP_OUTER_L3_IP6;
 
 	/* outer IP header's size in 32bit words size*/
@@ -451,137 +452,137 @@ static int qlcnic_tx_encap_pkt(struct qlcnic_adapter *adapter,
 
 	qlcnic_set_tx_flags_opcode(first_desc, flags, opcode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qlcnic_tx_pkt(struct qlcnic_adapter *adapter,
-			 struct cmd_desc_type0 *first_desc, struct sk_buff *skb,
-			 struct qlcnic_host_tx_ring *tx_ring)
-{
+अटल पूर्णांक qlcnic_tx_pkt(काष्ठा qlcnic_adapter *adapter,
+			 काष्ठा cmd_desc_type0 *first_desc, काष्ठा sk_buff *skb,
+			 काष्ठा qlcnic_host_tx_ring *tx_ring)
+अणु
 	u8 l4proto, opcode = 0, hdr_len = 0, tag_vlan = 0;
 	u16 flags = 0, vlan_tci = 0;
-	int copied, offset, copy_len, size;
-	struct cmd_desc_type0 *hwdesc;
-	struct vlan_ethhdr *vh;
+	पूर्णांक copied, offset, copy_len, size;
+	काष्ठा cmd_desc_type0 *hwdesc;
+	काष्ठा vlan_ethhdr *vh;
 	u16 protocol = ntohs(skb->protocol);
 	u32 producer = tx_ring->producer;
 
-	if (protocol == ETH_P_8021Q) {
-		vh = (struct vlan_ethhdr *)skb->data;
+	अगर (protocol == ETH_P_8021Q) अणु
+		vh = (काष्ठा vlan_ethhdr *)skb->data;
 		flags = QLCNIC_FLAGS_VLAN_TAGGED;
 		vlan_tci = ntohs(vh->h_vlan_TCI);
 		protocol = ntohs(vh->h_vlan_encapsulated_proto);
 		tag_vlan = 1;
-	} else if (skb_vlan_tag_present(skb)) {
+	पूर्ण अन्यथा अगर (skb_vlan_tag_present(skb)) अणु
 		flags = QLCNIC_FLAGS_VLAN_OOB;
 		vlan_tci = skb_vlan_tag_get(skb);
 		tag_vlan = 1;
-	}
-	if (unlikely(adapter->tx_pvid)) {
-		if (tag_vlan && !(adapter->flags & QLCNIC_TAGGING_ENABLED))
-			return -EIO;
-		if (tag_vlan && (adapter->flags & QLCNIC_TAGGING_ENABLED))
-			goto set_flags;
+	पूर्ण
+	अगर (unlikely(adapter->tx_pvid)) अणु
+		अगर (tag_vlan && !(adapter->flags & QLCNIC_TAGGING_ENABLED))
+			वापस -EIO;
+		अगर (tag_vlan && (adapter->flags & QLCNIC_TAGGING_ENABLED))
+			जाओ set_flags;
 
 		flags = QLCNIC_FLAGS_VLAN_OOB;
 		vlan_tci = adapter->tx_pvid;
-	}
+	पूर्ण
 set_flags:
 	qlcnic_set_tx_vlan_tci(first_desc, vlan_tci);
 	qlcnic_set_tx_flags_opcode(first_desc, flags, opcode);
 
-	if (*(skb->data) & BIT_0) {
+	अगर (*(skb->data) & BIT_0) अणु
 		flags |= BIT_0;
-		memcpy(&first_desc->eth_addr, skb->data, ETH_ALEN);
-	}
+		स_नकल(&first_desc->eth_addr, skb->data, ETH_ALEN);
+	पूर्ण
 	opcode = QLCNIC_TX_ETHER_PKT;
-	if (skb_is_gso(skb)) {
+	अगर (skb_is_gso(skb)) अणु
 		hdr_len = skb_transport_offset(skb) + tcp_hdrlen(skb);
 		first_desc->mss = cpu_to_le16(skb_shinfo(skb)->gso_size);
 		first_desc->hdr_length = hdr_len;
 		opcode = (protocol == ETH_P_IPV6) ? QLCNIC_TX_TCP_LSO6 :
 						    QLCNIC_TX_TCP_LSO;
 
-		/* For LSO, we need to copy the MAC/IP/TCP headers into
+		/* For LSO, we need to copy the MAC/IP/TCP headers पूर्णांकo
 		* the descriptor ring */
 		copied = 0;
 		offset = 2;
 
-		if (flags & QLCNIC_FLAGS_VLAN_OOB) {
+		अगर (flags & QLCNIC_FLAGS_VLAN_OOB) अणु
 			first_desc->hdr_length += VLAN_HLEN;
 			first_desc->tcp_hdr_offset = VLAN_HLEN;
 			first_desc->ip_hdr_offset = VLAN_HLEN;
 
-			/* Only in case of TSO on vlan device */
+			/* Only in हाल of TSO on vlan device */
 			flags |= QLCNIC_FLAGS_VLAN_TAGGED;
 
-			/* Create a TSO vlan header template for firmware */
+			/* Create a TSO vlan header ढाँचा क्रम firmware */
 			hwdesc = &tx_ring->desc_head[producer];
-			tx_ring->cmd_buf_arr[producer].skb = NULL;
+			tx_ring->cmd_buf_arr[producer].skb = शून्य;
 
-			copy_len = min((int)sizeof(struct cmd_desc_type0) -
+			copy_len = min((पूर्णांक)माप(काष्ठा cmd_desc_type0) -
 				       offset, hdr_len + VLAN_HLEN);
 
-			vh = (struct vlan_ethhdr *)((char *) hwdesc + 2);
+			vh = (काष्ठा vlan_ethhdr *)((अक्षर *) hwdesc + 2);
 			skb_copy_from_linear_data(skb, vh, 12);
 			vh->h_vlan_proto = htons(ETH_P_8021Q);
 			vh->h_vlan_TCI = htons(vlan_tci);
 
 			skb_copy_from_linear_data_offset(skb, 12,
-							 (char *)vh + 16,
+							 (अक्षर *)vh + 16,
 							 copy_len - 16);
 			copied = copy_len - VLAN_HLEN;
 			offset = 0;
 			producer = get_next_index(producer, tx_ring->num_desc);
-		}
+		पूर्ण
 
-		while (copied < hdr_len) {
-			size = (int)sizeof(struct cmd_desc_type0) - offset;
+		जबतक (copied < hdr_len) अणु
+			size = (पूर्णांक)माप(काष्ठा cmd_desc_type0) - offset;
 			copy_len = min(size, (hdr_len - copied));
 			hwdesc = &tx_ring->desc_head[producer];
-			tx_ring->cmd_buf_arr[producer].skb = NULL;
+			tx_ring->cmd_buf_arr[producer].skb = शून्य;
 			skb_copy_from_linear_data_offset(skb, copied,
-							 (char *)hwdesc +
+							 (अक्षर *)hwdesc +
 							 offset, copy_len);
 			copied += copy_len;
 			offset = 0;
 			producer = get_next_index(producer, tx_ring->num_desc);
-		}
+		पूर्ण
 
 		tx_ring->producer = producer;
 		smp_mb();
 		adapter->stats.lso_frames++;
 
-	} else if (skb->ip_summed == CHECKSUM_PARTIAL) {
-		if (protocol == ETH_P_IP) {
+	पूर्ण अन्यथा अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
+		अगर (protocol == ETH_P_IP) अणु
 			l4proto = ip_hdr(skb)->protocol;
 
-			if (l4proto == IPPROTO_TCP)
+			अगर (l4proto == IPPROTO_TCP)
 				opcode = QLCNIC_TX_TCP_PKT;
-			else if (l4proto == IPPROTO_UDP)
+			अन्यथा अगर (l4proto == IPPROTO_UDP)
 				opcode = QLCNIC_TX_UDP_PKT;
-		} else if (protocol == ETH_P_IPV6) {
+		पूर्ण अन्यथा अगर (protocol == ETH_P_IPV6) अणु
 			l4proto = ipv6_hdr(skb)->nexthdr;
 
-			if (l4proto == IPPROTO_TCP)
+			अगर (l4proto == IPPROTO_TCP)
 				opcode = QLCNIC_TX_TCPV6_PKT;
-			else if (l4proto == IPPROTO_UDP)
+			अन्यथा अगर (l4proto == IPPROTO_UDP)
 				opcode = QLCNIC_TX_UDPV6_PKT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	first_desc->tcp_hdr_offset += skb_transport_offset(skb);
 	first_desc->ip_hdr_offset += skb_network_offset(skb);
 	qlcnic_set_tx_flags_opcode(first_desc, flags, opcode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qlcnic_map_tx_skb(struct pci_dev *pdev, struct sk_buff *skb,
-			     struct qlcnic_cmd_buffer *pbuf)
-{
-	struct qlcnic_skb_frag *nf;
+अटल पूर्णांक qlcnic_map_tx_skb(काष्ठा pci_dev *pdev, काष्ठा sk_buff *skb,
+			     काष्ठा qlcnic_cmd_buffer *pbuf)
+अणु
+	काष्ठा qlcnic_skb_frag *nf;
 	skb_frag_t *frag;
-	int i, nr_frags;
+	पूर्णांक i, nr_frags;
 	dma_addr_t map;
 
 	nr_frags = skb_shinfo(skb)->nr_frags;
@@ -589,114 +590,114 @@ static int qlcnic_map_tx_skb(struct pci_dev *pdev, struct sk_buff *skb,
 
 	map = pci_map_single(pdev, skb->data, skb_headlen(skb),
 			     PCI_DMA_TODEVICE);
-	if (pci_dma_mapping_error(pdev, map))
-		goto out_err;
+	अगर (pci_dma_mapping_error(pdev, map))
+		जाओ out_err;
 
 	nf->dma = map;
 	nf->length = skb_headlen(skb);
 
-	for (i = 0; i < nr_frags; i++) {
+	क्रम (i = 0; i < nr_frags; i++) अणु
 		frag = &skb_shinfo(skb)->frags[i];
 		nf = &pbuf->frag_array[i+1];
 		map = skb_frag_dma_map(&pdev->dev, frag, 0, skb_frag_size(frag),
 				       DMA_TO_DEVICE);
-		if (dma_mapping_error(&pdev->dev, map))
-			goto unwind;
+		अगर (dma_mapping_error(&pdev->dev, map))
+			जाओ unwind;
 
 		nf->dma = map;
 		nf->length = skb_frag_size(frag);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 unwind:
-	while (--i >= 0) {
+	जबतक (--i >= 0) अणु
 		nf = &pbuf->frag_array[i+1];
 		pci_unmap_page(pdev, nf->dma, nf->length, PCI_DMA_TODEVICE);
-	}
+	पूर्ण
 
 	nf = &pbuf->frag_array[0];
 	pci_unmap_single(pdev, nf->dma, skb_headlen(skb), PCI_DMA_TODEVICE);
 
 out_err:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void qlcnic_unmap_buffers(struct pci_dev *pdev, struct sk_buff *skb,
-				 struct qlcnic_cmd_buffer *pbuf)
-{
-	struct qlcnic_skb_frag *nf = &pbuf->frag_array[0];
-	int i, nr_frags = skb_shinfo(skb)->nr_frags;
+अटल व्योम qlcnic_unmap_buffers(काष्ठा pci_dev *pdev, काष्ठा sk_buff *skb,
+				 काष्ठा qlcnic_cmd_buffer *pbuf)
+अणु
+	काष्ठा qlcnic_skb_frag *nf = &pbuf->frag_array[0];
+	पूर्णांक i, nr_frags = skb_shinfo(skb)->nr_frags;
 
-	for (i = 0; i < nr_frags; i++) {
+	क्रम (i = 0; i < nr_frags; i++) अणु
 		nf = &pbuf->frag_array[i+1];
 		pci_unmap_page(pdev, nf->dma, nf->length, PCI_DMA_TODEVICE);
-	}
+	पूर्ण
 
 	nf = &pbuf->frag_array[0];
 	pci_unmap_single(pdev, nf->dma, skb_headlen(skb), PCI_DMA_TODEVICE);
-	pbuf->skb = NULL;
-}
+	pbuf->skb = शून्य;
+पूर्ण
 
-static inline void qlcnic_clear_cmddesc(u64 *desc)
-{
+अटल अंतरभूत व्योम qlcnic_clear_cmddesc(u64 *desc)
+अणु
 	desc[0] = 0ULL;
 	desc[2] = 0ULL;
 	desc[7] = 0ULL;
-}
+पूर्ण
 
-netdev_tx_t qlcnic_xmit_frame(struct sk_buff *skb, struct net_device *netdev)
-{
-	struct qlcnic_adapter *adapter = netdev_priv(netdev);
-	struct qlcnic_host_tx_ring *tx_ring;
-	struct qlcnic_cmd_buffer *pbuf;
-	struct qlcnic_skb_frag *buffrag;
-	struct cmd_desc_type0 *hwdesc, *first_desc;
-	struct pci_dev *pdev;
-	struct ethhdr *phdr;
-	int i, k, frag_count, delta = 0;
+netdev_tx_t qlcnic_xmit_frame(काष्ठा sk_buff *skb, काष्ठा net_device *netdev)
+अणु
+	काष्ठा qlcnic_adapter *adapter = netdev_priv(netdev);
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
+	काष्ठा qlcnic_cmd_buffer *pbuf;
+	काष्ठा qlcnic_skb_frag *buffrag;
+	काष्ठा cmd_desc_type0 *hwdesc, *first_desc;
+	काष्ठा pci_dev *pdev;
+	काष्ठा ethhdr *phdr;
+	पूर्णांक i, k, frag_count, delta = 0;
 	u32 producer, num_txd;
 	u16 protocol;
 	bool l4_is_udp = false;
 
-	if (!test_bit(__QLCNIC_DEV_UP, &adapter->state)) {
-		netif_tx_stop_all_queues(netdev);
-		return NETDEV_TX_BUSY;
-	}
+	अगर (!test_bit(__QLCNIC_DEV_UP, &adapter->state)) अणु
+		netअगर_tx_stop_all_queues(netdev);
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	if (adapter->flags & QLCNIC_MACSPOOF) {
-		phdr = (struct ethhdr *)skb->data;
-		if (!ether_addr_equal(phdr->h_source, adapter->mac_addr))
-			goto drop_packet;
-	}
+	अगर (adapter->flags & QLCNIC_MACSPOOF) अणु
+		phdr = (काष्ठा ethhdr *)skb->data;
+		अगर (!ether_addr_equal(phdr->h_source, adapter->mac_addr))
+			जाओ drop_packet;
+	पूर्ण
 
 	tx_ring = &adapter->tx_ring[skb_get_queue_mapping(skb)];
 	num_txd = tx_ring->num_desc;
 
 	frag_count = skb_shinfo(skb)->nr_frags + 1;
 
-	/* 14 frags supported for normal packet and
-	 * 32 frags supported for TSO packet
+	/* 14 frags supported क्रम normal packet and
+	 * 32 frags supported क्रम TSO packet
 	 */
-	if (!skb_is_gso(skb) && frag_count > QLCNIC_MAX_FRAGS_PER_TX) {
-		for (i = 0; i < (frag_count - QLCNIC_MAX_FRAGS_PER_TX); i++)
+	अगर (!skb_is_gso(skb) && frag_count > QLCNIC_MAX_FRAGS_PER_TX) अणु
+		क्रम (i = 0; i < (frag_count - QLCNIC_MAX_FRAGS_PER_TX); i++)
 			delta += skb_frag_size(&skb_shinfo(skb)->frags[i]);
 
-		if (!__pskb_pull_tail(skb, delta))
-			goto drop_packet;
+		अगर (!__pskb_pull_tail(skb, delta))
+			जाओ drop_packet;
 
 		frag_count = 1 + skb_shinfo(skb)->nr_frags;
-	}
+	पूर्ण
 
-	if (unlikely(qlcnic_tx_avail(tx_ring) <= TX_STOP_THRESH)) {
-		netif_tx_stop_queue(tx_ring->txq);
-		if (qlcnic_tx_avail(tx_ring) > TX_STOP_THRESH) {
-			netif_tx_start_queue(tx_ring->txq);
-		} else {
+	अगर (unlikely(qlcnic_tx_avail(tx_ring) <= TX_STOP_THRESH)) अणु
+		netअगर_tx_stop_queue(tx_ring->txq);
+		अगर (qlcnic_tx_avail(tx_ring) > TX_STOP_THRESH) अणु
+			netअगर_tx_start_queue(tx_ring->txq);
+		पूर्ण अन्यथा अणु
 			tx_ring->tx_stats.xmit_off++;
-			return NETDEV_TX_BUSY;
-		}
-	}
+			वापस NETDEV_TX_BUSY;
+		पूर्ण
+	पूर्ण
 
 	producer = tx_ring->producer;
 	pbuf = &tx_ring->cmd_buf_arr[producer];
@@ -705,10 +706,10 @@ netdev_tx_t qlcnic_xmit_frame(struct sk_buff *skb, struct net_device *netdev)
 	hwdesc = &tx_ring->desc_head[producer];
 	qlcnic_clear_cmddesc((u64 *)hwdesc);
 
-	if (qlcnic_map_tx_skb(pdev, skb, pbuf)) {
+	अगर (qlcnic_map_tx_skb(pdev, skb, pbuf)) अणु
 		adapter->stats.tx_dma_map_error++;
-		goto drop_packet;
-	}
+		जाओ drop_packet;
+	पूर्ण
 
 	pbuf->skb = skb;
 	pbuf->frag_count = frag_count;
@@ -716,152 +717,152 @@ netdev_tx_t qlcnic_xmit_frame(struct sk_buff *skb, struct net_device *netdev)
 	qlcnic_set_tx_frags_len(first_desc, frag_count, skb->len);
 	qlcnic_set_tx_port(first_desc, adapter->portnum);
 
-	for (i = 0; i < frag_count; i++) {
+	क्रम (i = 0; i < frag_count; i++) अणु
 		k = i % 4;
 
-		if ((k == 0) && (i > 0)) {
+		अगर ((k == 0) && (i > 0)) अणु
 			/* move to next desc.*/
 			producer = get_next_index(producer, num_txd);
 			hwdesc = &tx_ring->desc_head[producer];
 			qlcnic_clear_cmddesc((u64 *)hwdesc);
-			tx_ring->cmd_buf_arr[producer].skb = NULL;
-		}
+			tx_ring->cmd_buf_arr[producer].skb = शून्य;
+		पूर्ण
 
 		buffrag = &pbuf->frag_array[i];
 		hwdesc->buffer_length[k] = cpu_to_le16(buffrag->length);
-		switch (k) {
-		case 0:
+		चयन (k) अणु
+		हाल 0:
 			hwdesc->addr_buffer1 = cpu_to_le64(buffrag->dma);
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			hwdesc->addr_buffer2 = cpu_to_le64(buffrag->dma);
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			hwdesc->addr_buffer3 = cpu_to_le64(buffrag->dma);
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			hwdesc->addr_buffer4 = cpu_to_le64(buffrag->dma);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	tx_ring->producer = get_next_index(producer, num_txd);
 	smp_mb();
 
 	protocol = ntohs(skb->protocol);
-	if (protocol == ETH_P_IP)
+	अगर (protocol == ETH_P_IP)
 		l4_is_udp = ip_hdr(skb)->protocol == IPPROTO_UDP;
-	else if (protocol == ETH_P_IPV6)
+	अन्यथा अगर (protocol == ETH_P_IPV6)
 		l4_is_udp = ipv6_hdr(skb)->nexthdr == IPPROTO_UDP;
 
-	/* Check if it is a VXLAN packet */
-	if (!skb->encapsulation || !l4_is_udp ||
-	    !qlcnic_encap_tx_offload(adapter)) {
-		if (unlikely(qlcnic_tx_pkt(adapter, first_desc, skb,
+	/* Check अगर it is a VXLAN packet */
+	अगर (!skb->encapsulation || !l4_is_udp ||
+	    !qlcnic_encap_tx_offload(adapter)) अणु
+		अगर (unlikely(qlcnic_tx_pkt(adapter, first_desc, skb,
 					   tx_ring)))
-			goto unwind_buff;
-	} else {
-		if (unlikely(qlcnic_tx_encap_pkt(adapter, first_desc,
+			जाओ unwind_buff;
+	पूर्ण अन्यथा अणु
+		अगर (unlikely(qlcnic_tx_encap_pkt(adapter, first_desc,
 						 skb, tx_ring)))
-			goto unwind_buff;
-	}
+			जाओ unwind_buff;
+	पूर्ण
 
-	if (adapter->drv_mac_learn)
+	अगर (adapter->drv_mac_learn)
 		qlcnic_send_filter(adapter, first_desc, skb, tx_ring);
 
 	tx_ring->tx_stats.tx_bytes += skb->len;
 	tx_ring->tx_stats.xmit_called++;
 
-	/* Ensure writes are complete before HW fetches Tx descriptors */
+	/* Ensure ग_लिखोs are complete beक्रमe HW fetches Tx descriptors */
 	wmb();
 	qlcnic_update_cmd_producer(tx_ring);
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 unwind_buff:
 	qlcnic_unmap_buffers(pdev, skb, pbuf);
 drop_packet:
 	adapter->stats.txdropped++;
-	dev_kfree_skb_any(skb);
-	return NETDEV_TX_OK;
-}
+	dev_kमुक्त_skb_any(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-void qlcnic_advert_link_change(struct qlcnic_adapter *adapter, int linkup)
-{
-	struct net_device *netdev = adapter->netdev;
+व्योम qlcnic_advert_link_change(काष्ठा qlcnic_adapter *adapter, पूर्णांक linkup)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
 
-	if (adapter->ahw->linkup && !linkup) {
+	अगर (adapter->ahw->linkup && !linkup) अणु
 		netdev_info(netdev, "NIC Link is down\n");
 		adapter->ahw->linkup = 0;
-		netif_carrier_off(netdev);
-	} else if (!adapter->ahw->linkup && linkup) {
+		netअगर_carrier_off(netdev);
+	पूर्ण अन्यथा अगर (!adapter->ahw->linkup && linkup) अणु
 		adapter->ahw->linkup = 1;
 
-		/* Do not advertise Link up to the stack if device
+		/* Do not advertise Link up to the stack अगर device
 		 * is in loopback mode
 		 */
-		if (qlcnic_83xx_check(adapter) && adapter->ahw->lb_mode) {
+		अगर (qlcnic_83xx_check(adapter) && adapter->ahw->lb_mode) अणु
 			netdev_info(netdev, "NIC Link is up for loopback test\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		netdev_info(netdev, "NIC Link is up\n");
-		netif_carrier_on(netdev);
-	}
-}
+		netअगर_carrier_on(netdev);
+	पूर्ण
+पूर्ण
 
-static int qlcnic_alloc_rx_skb(struct qlcnic_adapter *adapter,
-			       struct qlcnic_host_rds_ring *rds_ring,
-			       struct qlcnic_rx_buffer *buffer)
-{
-	struct sk_buff *skb;
+अटल पूर्णांक qlcnic_alloc_rx_skb(काष्ठा qlcnic_adapter *adapter,
+			       काष्ठा qlcnic_host_rds_ring *rds_ring,
+			       काष्ठा qlcnic_rx_buffer *buffer)
+अणु
+	काष्ठा sk_buff *skb;
 	dma_addr_t dma;
-	struct pci_dev *pdev = adapter->pdev;
+	काष्ठा pci_dev *pdev = adapter->pdev;
 
 	skb = netdev_alloc_skb(adapter->netdev, rds_ring->skb_size);
-	if (!skb) {
+	अगर (!skb) अणु
 		adapter->stats.skb_alloc_failure++;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	skb_reserve(skb, NET_IP_ALIGN);
 	dma = pci_map_single(pdev, skb->data,
 			     rds_ring->dma_size, PCI_DMA_FROMDEVICE);
 
-	if (pci_dma_mapping_error(pdev, dma)) {
+	अगर (pci_dma_mapping_error(pdev, dma)) अणु
 		adapter->stats.rx_dma_map_error++;
-		dev_kfree_skb_any(skb);
-		return -ENOMEM;
-	}
+		dev_kमुक्त_skb_any(skb);
+		वापस -ENOMEM;
+	पूर्ण
 
 	buffer->skb = skb;
 	buffer->dma = dma;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qlcnic_post_rx_buffers_nodb(struct qlcnic_adapter *adapter,
-					struct qlcnic_host_rds_ring *rds_ring,
+अटल व्योम qlcnic_post_rx_buffers_nodb(काष्ठा qlcnic_adapter *adapter,
+					काष्ठा qlcnic_host_rds_ring *rds_ring,
 					u8 ring_id)
-{
-	struct rcv_desc *pdesc;
-	struct qlcnic_rx_buffer *buffer;
-	int  count = 0;
-	uint32_t producer, handle;
-	struct list_head *head;
+अणु
+	काष्ठा rcv_desc *pdesc;
+	काष्ठा qlcnic_rx_buffer *buffer;
+	पूर्णांक  count = 0;
+	uपूर्णांक32_t producer, handle;
+	काष्ठा list_head *head;
 
-	if (!spin_trylock(&rds_ring->lock))
-		return;
+	अगर (!spin_trylock(&rds_ring->lock))
+		वापस;
 
 	producer = rds_ring->producer;
-	head = &rds_ring->free_list;
-	while (!list_empty(head)) {
-		buffer = list_entry(head->next, struct qlcnic_rx_buffer, list);
+	head = &rds_ring->मुक्त_list;
+	जबतक (!list_empty(head)) अणु
+		buffer = list_entry(head->next, काष्ठा qlcnic_rx_buffer, list);
 
-		if (!buffer->skb) {
-			if (qlcnic_alloc_rx_skb(adapter, rds_ring, buffer))
-				break;
-		}
+		अगर (!buffer->skb) अणु
+			अगर (qlcnic_alloc_rx_skb(adapter, rds_ring, buffer))
+				अवरोध;
+		पूर्ण
 		count++;
 		list_del(&buffer->list);
 
@@ -873,168 +874,168 @@ static void qlcnic_post_rx_buffers_nodb(struct qlcnic_adapter *adapter,
 		pdesc->buffer_length = cpu_to_le32(rds_ring->dma_size);
 		pdesc->addr_buffer = cpu_to_le64(buffer->dma);
 		producer = get_next_index(producer, rds_ring->num_desc);
-	}
-	if (count) {
+	पूर्ण
+	अगर (count) अणु
 		rds_ring->producer = producer;
-		writel((producer - 1) & (rds_ring->num_desc - 1),
+		ग_लिखोl((producer - 1) & (rds_ring->num_desc - 1),
 		       rds_ring->crb_rcv_producer);
-	}
+	पूर्ण
 	spin_unlock(&rds_ring->lock);
-}
+पूर्ण
 
-static int qlcnic_process_cmd_ring(struct qlcnic_adapter *adapter,
-				   struct qlcnic_host_tx_ring *tx_ring,
-				   int budget)
-{
+अटल पूर्णांक qlcnic_process_cmd_ring(काष्ठा qlcnic_adapter *adapter,
+				   काष्ठा qlcnic_host_tx_ring *tx_ring,
+				   पूर्णांक budget)
+अणु
 	u32 sw_consumer, hw_consumer;
-	int i, done, count = 0;
-	struct qlcnic_cmd_buffer *buffer;
-	struct pci_dev *pdev = adapter->pdev;
-	struct net_device *netdev = adapter->netdev;
-	struct qlcnic_skb_frag *frag;
+	पूर्णांक i, करोne, count = 0;
+	काष्ठा qlcnic_cmd_buffer *buffer;
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा qlcnic_skb_frag *frag;
 
-	if (!spin_trylock(&tx_ring->tx_clean_lock))
-		return 1;
+	अगर (!spin_trylock(&tx_ring->tx_clean_lock))
+		वापस 1;
 
 	sw_consumer = tx_ring->sw_consumer;
 	hw_consumer = le32_to_cpu(*(tx_ring->hw_consumer));
 
-	while (sw_consumer != hw_consumer) {
+	जबतक (sw_consumer != hw_consumer) अणु
 		buffer = &tx_ring->cmd_buf_arr[sw_consumer];
-		if (buffer->skb) {
+		अगर (buffer->skb) अणु
 			frag = &buffer->frag_array[0];
 			pci_unmap_single(pdev, frag->dma, frag->length,
 					 PCI_DMA_TODEVICE);
 			frag->dma = 0ULL;
-			for (i = 1; i < buffer->frag_count; i++) {
+			क्रम (i = 1; i < buffer->frag_count; i++) अणु
 				frag++;
 				pci_unmap_page(pdev, frag->dma, frag->length,
 					       PCI_DMA_TODEVICE);
 				frag->dma = 0ULL;
-			}
+			पूर्ण
 			tx_ring->tx_stats.xmit_finished++;
-			dev_kfree_skb_any(buffer->skb);
-			buffer->skb = NULL;
-		}
+			dev_kमुक्त_skb_any(buffer->skb);
+			buffer->skb = शून्य;
+		पूर्ण
 
 		sw_consumer = get_next_index(sw_consumer, tx_ring->num_desc);
-		if (++count >= budget)
-			break;
-	}
+		अगर (++count >= budget)
+			अवरोध;
+	पूर्ण
 
 	tx_ring->sw_consumer = sw_consumer;
 
-	if (count && netif_running(netdev)) {
+	अगर (count && netअगर_running(netdev)) अणु
 		smp_mb();
-		if (netif_tx_queue_stopped(tx_ring->txq) &&
-		    netif_carrier_ok(netdev)) {
-			if (qlcnic_tx_avail(tx_ring) > TX_STOP_THRESH) {
-				netif_tx_wake_queue(tx_ring->txq);
+		अगर (netअगर_tx_queue_stopped(tx_ring->txq) &&
+		    netअगर_carrier_ok(netdev)) अणु
+			अगर (qlcnic_tx_avail(tx_ring) > TX_STOP_THRESH) अणु
+				netअगर_tx_wake_queue(tx_ring->txq);
 				tx_ring->tx_stats.xmit_on++;
-			}
-		}
-		adapter->tx_timeo_cnt = 0;
-	}
+			पूर्ण
+		पूर्ण
+		adapter->tx_समयo_cnt = 0;
+	पूर्ण
 	/*
-	 * If everything is freed up to consumer then check if the ring is full
-	 * If the ring is full then check if more needs to be freed and
+	 * If everything is मुक्तd up to consumer then check अगर the ring is full
+	 * If the ring is full then check अगर more needs to be मुक्तd and
 	 * schedule the call back again.
 	 *
-	 * This happens when there are 2 CPUs. One could be freeing and the
+	 * This happens when there are 2 CPUs. One could be मुक्तing and the
 	 * other filling it. If the ring is full when we get out of here and
-	 * the card has already interrupted the host then the host can miss the
-	 * interrupt.
+	 * the card has alपढ़ोy पूर्णांकerrupted the host then the host can miss the
+	 * पूर्णांकerrupt.
 	 *
 	 * There is still a possible race condition and the host could miss an
-	 * interrupt. The card has to take care of this.
+	 * पूर्णांकerrupt. The card has to take care of this.
 	 */
 	hw_consumer = le32_to_cpu(*(tx_ring->hw_consumer));
-	done = (sw_consumer == hw_consumer);
+	करोne = (sw_consumer == hw_consumer);
 
 	spin_unlock(&tx_ring->tx_clean_lock);
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-static int qlcnic_poll(struct napi_struct *napi, int budget)
-{
-	int tx_complete, work_done;
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_adapter *adapter;
-	struct qlcnic_host_tx_ring *tx_ring;
+अटल पूर्णांक qlcnic_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	पूर्णांक tx_complete, work_करोne;
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_adapter *adapter;
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
 
-	sds_ring = container_of(napi, struct qlcnic_host_sds_ring, napi);
+	sds_ring = container_of(napi, काष्ठा qlcnic_host_sds_ring, napi);
 	adapter = sds_ring->adapter;
 	tx_ring = sds_ring->tx_ring;
 
 	tx_complete = qlcnic_process_cmd_ring(adapter, tx_ring,
 					      budget);
-	work_done = qlcnic_process_rcv_ring(sds_ring, budget);
+	work_करोne = qlcnic_process_rcv_ring(sds_ring, budget);
 
-	/* Check if we need a repoll */
-	if (!tx_complete)
-		work_done = budget;
+	/* Check अगर we need a repoll */
+	अगर (!tx_complete)
+		work_करोne = budget;
 
-	if (work_done < budget) {
-		napi_complete_done(&sds_ring->napi, work_done);
-		if (test_bit(__QLCNIC_DEV_UP, &adapter->state)) {
-			qlcnic_enable_sds_intr(adapter, sds_ring);
-			qlcnic_enable_tx_intr(adapter, tx_ring);
-		}
-	}
+	अगर (work_करोne < budget) अणु
+		napi_complete_करोne(&sds_ring->napi, work_करोne);
+		अगर (test_bit(__QLCNIC_DEV_UP, &adapter->state)) अणु
+			qlcnic_enable_sds_पूर्णांकr(adapter, sds_ring);
+			qlcnic_enable_tx_पूर्णांकr(adapter, tx_ring);
+		पूर्ण
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-static int qlcnic_tx_poll(struct napi_struct *napi, int budget)
-{
-	struct qlcnic_host_tx_ring *tx_ring;
-	struct qlcnic_adapter *adapter;
-	int work_done;
+अटल पूर्णांक qlcnic_tx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
+	काष्ठा qlcnic_adapter *adapter;
+	पूर्णांक work_करोne;
 
-	tx_ring = container_of(napi, struct qlcnic_host_tx_ring, napi);
+	tx_ring = container_of(napi, काष्ठा qlcnic_host_tx_ring, napi);
 	adapter = tx_ring->adapter;
 
-	work_done = qlcnic_process_cmd_ring(adapter, tx_ring, budget);
-	if (work_done) {
+	work_करोne = qlcnic_process_cmd_ring(adapter, tx_ring, budget);
+	अगर (work_करोne) अणु
 		napi_complete(&tx_ring->napi);
-		if (test_bit(__QLCNIC_DEV_UP, &adapter->state))
-			qlcnic_enable_tx_intr(adapter, tx_ring);
-	} else {
-		/* As qlcnic_process_cmd_ring() returned 0, we need a repoll*/
-		work_done = budget;
-	}
+		अगर (test_bit(__QLCNIC_DEV_UP, &adapter->state))
+			qlcnic_enable_tx_पूर्णांकr(adapter, tx_ring);
+	पूर्ण अन्यथा अणु
+		/* As qlcnic_process_cmd_ring() वापसed 0, we need a repoll*/
+		work_करोne = budget;
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-static int qlcnic_rx_poll(struct napi_struct *napi, int budget)
-{
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_adapter *adapter;
-	int work_done;
+अटल पूर्णांक qlcnic_rx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_adapter *adapter;
+	पूर्णांक work_करोne;
 
-	sds_ring = container_of(napi, struct qlcnic_host_sds_ring, napi);
+	sds_ring = container_of(napi, काष्ठा qlcnic_host_sds_ring, napi);
 	adapter = sds_ring->adapter;
 
-	work_done = qlcnic_process_rcv_ring(sds_ring, budget);
+	work_करोne = qlcnic_process_rcv_ring(sds_ring, budget);
 
-	if (work_done < budget) {
-		napi_complete_done(&sds_ring->napi, work_done);
-		if (test_bit(__QLCNIC_DEV_UP, &adapter->state))
-			qlcnic_enable_sds_intr(adapter, sds_ring);
-	}
+	अगर (work_करोne < budget) अणु
+		napi_complete_करोne(&sds_ring->napi, work_करोne);
+		अगर (test_bit(__QLCNIC_DEV_UP, &adapter->state))
+			qlcnic_enable_sds_पूर्णांकr(adapter, sds_ring);
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-static void qlcnic_handle_linkevent(struct qlcnic_adapter *adapter,
-				    struct qlcnic_fw_msg *msg)
-{
+अटल व्योम qlcnic_handle_linkevent(काष्ठा qlcnic_adapter *adapter,
+				    काष्ठा qlcnic_fw_msg *msg)
+अणु
 	u32 cable_OUI;
 	u16 cable_len, link_speed;
-	u8  link_status, module, duplex, autoneg, lb_status = 0;
-	struct net_device *netdev = adapter->netdev;
+	u8  link_status, module, duplex, स्वतःneg, lb_status = 0;
+	काष्ठा net_device *netdev = adapter->netdev;
 
 	adapter->ahw->has_link_events = 1;
 
@@ -1044,172 +1045,172 @@ static void qlcnic_handle_linkevent(struct qlcnic_adapter *adapter,
 
 	link_status = msg->body[2] & 0xff;
 	duplex = (msg->body[2] >> 16) & 0xff;
-	autoneg = (msg->body[2] >> 24) & 0xff;
+	स्वतःneg = (msg->body[2] >> 24) & 0xff;
 	lb_status = (msg->body[2] >> 32) & 0x3;
 
 	module = (msg->body[2] >> 8) & 0xff;
-	if (module == LINKEVENT_MODULE_TWINAX_UNSUPPORTED_CABLE)
+	अगर (module == LINKEVENT_MODULE_TWINAX_UNSUPPORTED_CABLE)
 		dev_info(&netdev->dev,
 			 "unsupported cable: OUI 0x%x, length %d\n",
 			 cable_OUI, cable_len);
-	else if (module == LINKEVENT_MODULE_TWINAX_UNSUPPORTED_CABLELEN)
+	अन्यथा अगर (module == LINKEVENT_MODULE_TWINAX_UNSUPPORTED_CABLELEN)
 		dev_info(&netdev->dev, "unsupported cable length %d\n",
 			 cable_len);
 
-	if (!link_status && (lb_status == QLCNIC_ILB_MODE ||
+	अगर (!link_status && (lb_status == QLCNIC_ILB_MODE ||
 	    lb_status == QLCNIC_ELB_MODE))
 		adapter->ahw->loopback_state |= QLCNIC_LINKEVENT;
 
 	qlcnic_advert_link_change(adapter, link_status);
 
-	if (duplex == LINKEVENT_FULL_DUPLEX)
+	अगर (duplex == LINKEVENT_FULL_DUPLEX)
 		adapter->ahw->link_duplex = DUPLEX_FULL;
-	else
+	अन्यथा
 		adapter->ahw->link_duplex = DUPLEX_HALF;
 
 	adapter->ahw->module_type = module;
-	adapter->ahw->link_autoneg = autoneg;
+	adapter->ahw->link_स्वतःneg = स्वतःneg;
 
-	if (link_status) {
+	अगर (link_status) अणु
 		adapter->ahw->link_speed = link_speed;
-	} else {
+	पूर्ण अन्यथा अणु
 		adapter->ahw->link_speed = SPEED_UNKNOWN;
 		adapter->ahw->link_duplex = DUPLEX_UNKNOWN;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void qlcnic_handle_fw_message(int desc_cnt, int index,
-				     struct qlcnic_host_sds_ring *sds_ring)
-{
-	struct qlcnic_fw_msg msg;
-	struct status_desc *desc;
-	struct qlcnic_adapter *adapter;
-	struct device *dev;
-	int i = 0, opcode, ret;
+अटल व्योम qlcnic_handle_fw_message(पूर्णांक desc_cnt, पूर्णांक index,
+				     काष्ठा qlcnic_host_sds_ring *sds_ring)
+अणु
+	काष्ठा qlcnic_fw_msg msg;
+	काष्ठा status_desc *desc;
+	काष्ठा qlcnic_adapter *adapter;
+	काष्ठा device *dev;
+	पूर्णांक i = 0, opcode, ret;
 
-	while (desc_cnt > 0 && i < 8) {
+	जबतक (desc_cnt > 0 && i < 8) अणु
 		desc = &sds_ring->desc_head[index];
 		msg.words[i++] = le64_to_cpu(desc->status_desc_data[0]);
 		msg.words[i++] = le64_to_cpu(desc->status_desc_data[1]);
 
 		index = get_next_index(index, sds_ring->num_desc);
 		desc_cnt--;
-	}
+	पूर्ण
 
 	adapter = sds_ring->adapter;
 	dev = &adapter->pdev->dev;
 	opcode = qlcnic_get_nic_msg_opcode(msg.body[0]);
 
-	switch (opcode) {
-	case QLCNIC_C2H_OPCODE_GET_LINKEVENT_RESPONSE:
+	चयन (opcode) अणु
+	हाल QLCNIC_C2H_OPCODE_GET_LINKEVENT_RESPONSE:
 		qlcnic_handle_linkevent(adapter, &msg);
-		break;
-	case QLCNIC_C2H_OPCODE_CONFIG_LOOPBACK:
+		अवरोध;
+	हाल QLCNIC_C2H_OPCODE_CONFIG_LOOPBACK:
 		ret = (u32)(msg.body[1]);
-		switch (ret) {
-		case 0:
+		चयन (ret) अणु
+		हाल 0:
 			adapter->ahw->loopback_state |= QLCNIC_LB_RESPONSE;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			dev_info(dev, "loopback already in progress\n");
 			adapter->ahw->diag_cnt = -EINPROGRESS;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			dev_info(dev, "loopback cable is not connected\n");
 			adapter->ahw->diag_cnt = -ENODEV;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_info(dev,
 				 "loopback configure request failed, err %x\n",
 				 ret);
 			adapter->ahw->diag_cnt = -EIO;
-			break;
-		}
-		break;
-	case QLCNIC_C2H_OPCODE_GET_DCB_AEN:
-		qlcnic_dcb_aen_handler(adapter->dcb, (void *)&msg);
-		break;
-	default:
-		break;
-	}
-}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल QLCNIC_C2H_OPCODE_GET_DCB_AEN:
+		qlcnic_dcb_aen_handler(adapter->dcb, (व्योम *)&msg);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static struct sk_buff *qlcnic_process_rxbuf(struct qlcnic_adapter *adapter,
-					    struct qlcnic_host_rds_ring *ring,
+अटल काष्ठा sk_buff *qlcnic_process_rxbuf(काष्ठा qlcnic_adapter *adapter,
+					    काष्ठा qlcnic_host_rds_ring *ring,
 					    u16 index, u16 cksum)
-{
-	struct qlcnic_rx_buffer *buffer;
-	struct sk_buff *skb;
+अणु
+	काष्ठा qlcnic_rx_buffer *buffer;
+	काष्ठा sk_buff *skb;
 
 	buffer = &ring->rx_buf_arr[index];
-	if (unlikely(buffer->skb == NULL)) {
+	अगर (unlikely(buffer->skb == शून्य)) अणु
 		WARN_ON(1);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	pci_unmap_single(adapter->pdev, buffer->dma, ring->dma_size,
 			 PCI_DMA_FROMDEVICE);
 
 	skb = buffer->skb;
-	if (likely((adapter->netdev->features & NETIF_F_RXCSUM) &&
-		   (cksum == STATUS_CKSUM_OK || cksum == STATUS_CKSUM_LOOP))) {
+	अगर (likely((adapter->netdev->features & NETIF_F_RXCSUM) &&
+		   (cksum == STATUS_CKSUM_OK || cksum == STATUS_CKSUM_LOOP))) अणु
 		adapter->stats.csummed++;
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
-	} else {
-		skb_checksum_none_assert(skb);
-	}
+	पूर्ण अन्यथा अणु
+		skb_checksum_none_निश्चित(skb);
+	पूर्ण
 
 
-	buffer->skb = NULL;
+	buffer->skb = शून्य;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static inline int qlcnic_check_rx_tagging(struct qlcnic_adapter *adapter,
-					  struct sk_buff *skb, u16 *vlan_tag)
-{
-	struct ethhdr *eth_hdr;
+अटल अंतरभूत पूर्णांक qlcnic_check_rx_tagging(काष्ठा qlcnic_adapter *adapter,
+					  काष्ठा sk_buff *skb, u16 *vlan_tag)
+अणु
+	काष्ठा ethhdr *eth_hdr;
 
-	if (!__vlan_get_tag(skb, vlan_tag)) {
-		eth_hdr = (struct ethhdr *)skb->data;
-		memmove(skb->data + VLAN_HLEN, eth_hdr, ETH_ALEN * 2);
+	अगर (!__vlan_get_tag(skb, vlan_tag)) अणु
+		eth_hdr = (काष्ठा ethhdr *)skb->data;
+		स_हटाओ(skb->data + VLAN_HLEN, eth_hdr, ETH_ALEN * 2);
 		skb_pull(skb, VLAN_HLEN);
-	}
-	if (!adapter->rx_pvid)
-		return 0;
+	पूर्ण
+	अगर (!adapter->rx_pvid)
+		वापस 0;
 
-	if (*vlan_tag == adapter->rx_pvid) {
+	अगर (*vlan_tag == adapter->rx_pvid) अणु
 		/* Outer vlan tag. Packet should follow non-vlan path */
 		*vlan_tag = 0xffff;
-		return 0;
-	}
-	if (adapter->flags & QLCNIC_TAGGING_ENABLED)
-		return 0;
+		वापस 0;
+	पूर्ण
+	अगर (adapter->flags & QLCNIC_TAGGING_ENABLED)
+		वापस 0;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static struct qlcnic_rx_buffer *
-qlcnic_process_rcv(struct qlcnic_adapter *adapter,
-		   struct qlcnic_host_sds_ring *sds_ring, int ring,
+अटल काष्ठा qlcnic_rx_buffer *
+qlcnic_process_rcv(काष्ठा qlcnic_adapter *adapter,
+		   काष्ठा qlcnic_host_sds_ring *sds_ring, पूर्णांक ring,
 		   u64 sts_data0)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
-	struct qlcnic_rx_buffer *buffer;
-	struct sk_buff *skb;
-	struct qlcnic_host_rds_ring *rds_ring;
-	int index, length, cksum, pkt_offset, is_lb_pkt;
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+	काष्ठा qlcnic_rx_buffer *buffer;
+	काष्ठा sk_buff *skb;
+	काष्ठा qlcnic_host_rds_ring *rds_ring;
+	पूर्णांक index, length, cksum, pkt_offset, is_lb_pkt;
 	u16 vid = 0xffff, t_vid;
 
-	if (unlikely(ring >= adapter->max_rds_rings))
-		return NULL;
+	अगर (unlikely(ring >= adapter->max_rds_rings))
+		वापस शून्य;
 
 	rds_ring = &recv_ctx->rds_rings[ring];
 
 	index = qlcnic_get_sts_refhandle(sts_data0);
-	if (unlikely(index >= rds_ring->num_desc))
-		return NULL;
+	अगर (unlikely(index >= rds_ring->num_desc))
+		वापस शून्य;
 
 	buffer = &rds_ring->rx_buf_arr[index];
 	length = qlcnic_get_sts_totallength(sts_data0);
@@ -1217,32 +1218,32 @@ qlcnic_process_rcv(struct qlcnic_adapter *adapter,
 	pkt_offset = qlcnic_get_sts_pkt_offset(sts_data0);
 
 	skb = qlcnic_process_rxbuf(adapter, rds_ring, index, cksum);
-	if (!skb)
-		return buffer;
+	अगर (!skb)
+		वापस buffer;
 
-	if (adapter->rx_mac_learn) {
+	अगर (adapter->rx_mac_learn) अणु
 		t_vid = 0;
 		is_lb_pkt = qlcnic_82xx_is_lb_pkt(sts_data0);
 		qlcnic_add_lb_filter(adapter, skb, is_lb_pkt, t_vid);
-	}
+	पूर्ण
 
-	if (length > rds_ring->skb_size)
+	अगर (length > rds_ring->skb_size)
 		skb_put(skb, rds_ring->skb_size);
-	else
+	अन्यथा
 		skb_put(skb, length);
 
-	if (pkt_offset)
+	अगर (pkt_offset)
 		skb_pull(skb, pkt_offset);
 
-	if (unlikely(qlcnic_check_rx_tagging(adapter, skb, &vid))) {
+	अगर (unlikely(qlcnic_check_rx_tagging(adapter, skb, &vid))) अणु
 		adapter->stats.rxdropped++;
-		dev_kfree_skb(skb);
-		return buffer;
-	}
+		dev_kमुक्त_skb(skb);
+		वापस buffer;
+	पूर्ण
 
 	skb->protocol = eth_type_trans(skb, netdev);
 
-	if (vid != 0xffff)
+	अगर (vid != 0xffff)
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vid);
 
 	napi_gro_receive(&sds_ring->napi, skb);
@@ -1250,42 +1251,42 @@ qlcnic_process_rcv(struct qlcnic_adapter *adapter,
 	adapter->stats.rx_pkts++;
 	adapter->stats.rxbytes += length;
 
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
-#define QLC_TCP_HDR_SIZE            20
-#define QLC_TCP_TS_OPTION_SIZE      12
-#define QLC_TCP_TS_HDR_SIZE         (QLC_TCP_HDR_SIZE + QLC_TCP_TS_OPTION_SIZE)
+#घोषणा QLC_TCP_HDR_SIZE            20
+#घोषणा QLC_TCP_TS_OPTION_SIZE      12
+#घोषणा QLC_TCP_TS_HDR_SIZE         (QLC_TCP_HDR_SIZE + QLC_TCP_TS_OPTION_SIZE)
 
-static struct qlcnic_rx_buffer *
-qlcnic_process_lro(struct qlcnic_adapter *adapter,
-		   int ring, u64 sts_data0, u64 sts_data1)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
-	struct qlcnic_rx_buffer *buffer;
-	struct sk_buff *skb;
-	struct qlcnic_host_rds_ring *rds_ring;
-	struct iphdr *iph;
-	struct ipv6hdr *ipv6h;
-	struct tcphdr *th;
-	bool push, timestamp;
-	int index, l2_hdr_offset, l4_hdr_offset, is_lb_pkt;
+अटल काष्ठा qlcnic_rx_buffer *
+qlcnic_process_lro(काष्ठा qlcnic_adapter *adapter,
+		   पूर्णांक ring, u64 sts_data0, u64 sts_data1)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+	काष्ठा qlcnic_rx_buffer *buffer;
+	काष्ठा sk_buff *skb;
+	काष्ठा qlcnic_host_rds_ring *rds_ring;
+	काष्ठा iphdr *iph;
+	काष्ठा ipv6hdr *ipv6h;
+	काष्ठा tcphdr *th;
+	bool push, बारtamp;
+	पूर्णांक index, l2_hdr_offset, l4_hdr_offset, is_lb_pkt;
 	u16 lro_length, length, data_offset, t_vid, vid = 0xffff;
 	u32 seq_number;
 
-	if (unlikely(ring >= adapter->max_rds_rings))
-		return NULL;
+	अगर (unlikely(ring >= adapter->max_rds_rings))
+		वापस शून्य;
 
 	rds_ring = &recv_ctx->rds_rings[ring];
 
 	index = qlcnic_get_lro_sts_refhandle(sts_data0);
-	if (unlikely(index >= rds_ring->num_desc))
-		return NULL;
+	अगर (unlikely(index >= rds_ring->num_desc))
+		वापस शून्य;
 
 	buffer = &rds_ring->rx_buf_arr[index];
 
-	timestamp = qlcnic_get_lro_sts_timestamp(sts_data0);
+	बारtamp = qlcnic_get_lro_sts_बारtamp(sts_data0);
 	lro_length = qlcnic_get_lro_sts_length(sts_data0);
 	l2_hdr_offset = qlcnic_get_lro_sts_l2_hdr_offset(sts_data0);
 	l4_hdr_offset = qlcnic_get_lro_sts_l4_hdr_offset(sts_data0);
@@ -1293,166 +1294,166 @@ qlcnic_process_lro(struct qlcnic_adapter *adapter,
 	seq_number = qlcnic_get_lro_sts_seq_number(sts_data1);
 
 	skb = qlcnic_process_rxbuf(adapter, rds_ring, index, STATUS_CKSUM_OK);
-	if (!skb)
-		return buffer;
+	अगर (!skb)
+		वापस buffer;
 
-	if (adapter->rx_mac_learn) {
+	अगर (adapter->rx_mac_learn) अणु
 		t_vid = 0;
 		is_lb_pkt = qlcnic_82xx_is_lb_pkt(sts_data0);
 		qlcnic_add_lb_filter(adapter, skb, is_lb_pkt, t_vid);
-	}
+	पूर्ण
 
-	if (timestamp)
+	अगर (बारtamp)
 		data_offset = l4_hdr_offset + QLC_TCP_TS_HDR_SIZE;
-	else
+	अन्यथा
 		data_offset = l4_hdr_offset + QLC_TCP_HDR_SIZE;
 
 	skb_put(skb, lro_length + data_offset);
 	skb_pull(skb, l2_hdr_offset);
 
-	if (unlikely(qlcnic_check_rx_tagging(adapter, skb, &vid))) {
+	अगर (unlikely(qlcnic_check_rx_tagging(adapter, skb, &vid))) अणु
 		adapter->stats.rxdropped++;
-		dev_kfree_skb(skb);
-		return buffer;
-	}
+		dev_kमुक्त_skb(skb);
+		वापस buffer;
+	पूर्ण
 
 	skb->protocol = eth_type_trans(skb, netdev);
 
-	if (ntohs(skb->protocol) == ETH_P_IPV6) {
-		ipv6h = (struct ipv6hdr *)skb->data;
-		th = (struct tcphdr *)(skb->data + sizeof(struct ipv6hdr));
-		length = (th->doff << 2) + lro_length;
+	अगर (ntohs(skb->protocol) == ETH_P_IPV6) अणु
+		ipv6h = (काष्ठा ipv6hdr *)skb->data;
+		th = (काष्ठा tcphdr *)(skb->data + माप(काष्ठा ipv6hdr));
+		length = (th->करोff << 2) + lro_length;
 		ipv6h->payload_len = htons(length);
-	} else {
-		iph = (struct iphdr *)skb->data;
-		th = (struct tcphdr *)(skb->data + (iph->ihl << 2));
-		length = (iph->ihl << 2) + (th->doff << 2) + lro_length;
+	पूर्ण अन्यथा अणु
+		iph = (काष्ठा iphdr *)skb->data;
+		th = (काष्ठा tcphdr *)(skb->data + (iph->ihl << 2));
+		length = (iph->ihl << 2) + (th->करोff << 2) + lro_length;
 		csum_replace2(&iph->check, iph->tot_len, htons(length));
 		iph->tot_len = htons(length);
-	}
+	पूर्ण
 
 	th->psh = push;
 	th->seq = htonl(seq_number);
 	length = skb->len;
 
-	if (adapter->flags & QLCNIC_FW_LRO_MSS_CAP) {
+	अगर (adapter->flags & QLCNIC_FW_LRO_MSS_CAP) अणु
 		skb_shinfo(skb)->gso_size = qlcnic_get_lro_sts_mss(sts_data1);
-		if (skb->protocol == htons(ETH_P_IPV6))
+		अगर (skb->protocol == htons(ETH_P_IPV6))
 			skb_shinfo(skb)->gso_type = SKB_GSO_TCPV6;
-		else
+		अन्यथा
 			skb_shinfo(skb)->gso_type = SKB_GSO_TCPV4;
-	}
+	पूर्ण
 
-	if (vid != 0xffff)
+	अगर (vid != 0xffff)
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vid);
-	netif_receive_skb(skb);
+	netअगर_receive_skb(skb);
 
 	adapter->stats.lro_pkts++;
 	adapter->stats.lrobytes += length;
 
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
-static int qlcnic_process_rcv_ring(struct qlcnic_host_sds_ring *sds_ring, int max)
-{
-	struct qlcnic_host_rds_ring *rds_ring;
-	struct qlcnic_adapter *adapter = sds_ring->adapter;
-	struct list_head *cur;
-	struct status_desc *desc;
-	struct qlcnic_rx_buffer *rxbuf;
-	int opcode, desc_cnt, count = 0;
+अटल पूर्णांक qlcnic_process_rcv_ring(काष्ठा qlcnic_host_sds_ring *sds_ring, पूर्णांक max)
+अणु
+	काष्ठा qlcnic_host_rds_ring *rds_ring;
+	काष्ठा qlcnic_adapter *adapter = sds_ring->adapter;
+	काष्ठा list_head *cur;
+	काष्ठा status_desc *desc;
+	काष्ठा qlcnic_rx_buffer *rxbuf;
+	पूर्णांक opcode, desc_cnt, count = 0;
 	u64 sts_data0, sts_data1;
 	u8 ring;
 	u32 consumer = sds_ring->consumer;
 
-	while (count < max) {
+	जबतक (count < max) अणु
 		desc = &sds_ring->desc_head[consumer];
 		sts_data0 = le64_to_cpu(desc->status_desc_data[0]);
 
-		if (!(sts_data0 & STATUS_OWNER_HOST))
-			break;
+		अगर (!(sts_data0 & STATUS_OWNER_HOST))
+			अवरोध;
 
 		desc_cnt = qlcnic_get_sts_desc_cnt(sts_data0);
 		opcode = qlcnic_get_sts_opcode(sts_data0);
-		switch (opcode) {
-		case QLCNIC_RXPKT_DESC:
-		case QLCNIC_OLD_RXPKT_DESC:
-		case QLCNIC_SYN_OFFLOAD:
+		चयन (opcode) अणु
+		हाल QLCNIC_RXPKT_DESC:
+		हाल QLCNIC_OLD_RXPKT_DESC:
+		हाल QLCNIC_SYN_OFFLOAD:
 			ring = qlcnic_get_sts_type(sts_data0);
 			rxbuf = qlcnic_process_rcv(adapter, sds_ring, ring,
 						   sts_data0);
-			break;
-		case QLCNIC_LRO_DESC:
+			अवरोध;
+		हाल QLCNIC_LRO_DESC:
 			ring = qlcnic_get_lro_sts_type(sts_data0);
 			sts_data1 = le64_to_cpu(desc->status_desc_data[1]);
 			rxbuf = qlcnic_process_lro(adapter, ring, sts_data0,
 						   sts_data1);
-			break;
-		case QLCNIC_RESPONSE_DESC:
+			अवरोध;
+		हाल QLCNIC_RESPONSE_DESC:
 			qlcnic_handle_fw_message(desc_cnt, consumer, sds_ring);
-		default:
-			goto skip;
-		}
+		शेष:
+			जाओ skip;
+		पूर्ण
 		WARN_ON(desc_cnt > 1);
 
-		if (likely(rxbuf))
-			list_add_tail(&rxbuf->list, &sds_ring->free_list[ring]);
-		else
+		अगर (likely(rxbuf))
+			list_add_tail(&rxbuf->list, &sds_ring->मुक्त_list[ring]);
+		अन्यथा
 			adapter->stats.null_rxbuf++;
 skip:
-		for (; desc_cnt > 0; desc_cnt--) {
+		क्रम (; desc_cnt > 0; desc_cnt--) अणु
 			desc = &sds_ring->desc_head[consumer];
 			desc->status_desc_data[0] = QLCNIC_DESC_OWNER_FW;
 			consumer = get_next_index(consumer, sds_ring->num_desc);
-		}
+		पूर्ण
 		count++;
-	}
+	पूर्ण
 
-	for (ring = 0; ring < adapter->max_rds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->max_rds_rings; ring++) अणु
 		rds_ring = &adapter->recv_ctx->rds_rings[ring];
-		if (!list_empty(&sds_ring->free_list[ring])) {
-			list_for_each(cur, &sds_ring->free_list[ring]) {
-				rxbuf = list_entry(cur, struct qlcnic_rx_buffer,
+		अगर (!list_empty(&sds_ring->मुक्त_list[ring])) अणु
+			list_क्रम_each(cur, &sds_ring->मुक्त_list[ring]) अणु
+				rxbuf = list_entry(cur, काष्ठा qlcnic_rx_buffer,
 						   list);
 				qlcnic_alloc_rx_skb(adapter, rds_ring, rxbuf);
-			}
+			पूर्ण
 			spin_lock(&rds_ring->lock);
-			list_splice_tail_init(&sds_ring->free_list[ring],
-					      &rds_ring->free_list);
+			list_splice_tail_init(&sds_ring->मुक्त_list[ring],
+					      &rds_ring->मुक्त_list);
 			spin_unlock(&rds_ring->lock);
-		}
+		पूर्ण
 
 		qlcnic_post_rx_buffers_nodb(adapter, rds_ring, ring);
-	}
+	पूर्ण
 
-	if (count) {
+	अगर (count) अणु
 		sds_ring->consumer = consumer;
-		writel(consumer, sds_ring->crb_sts_consumer);
-	}
+		ग_लिखोl(consumer, sds_ring->crb_sts_consumer);
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-void qlcnic_post_rx_buffers(struct qlcnic_adapter *adapter,
-			    struct qlcnic_host_rds_ring *rds_ring, u8 ring_id)
-{
-	struct rcv_desc *pdesc;
-	struct qlcnic_rx_buffer *buffer;
-	int count = 0;
+व्योम qlcnic_post_rx_buffers(काष्ठा qlcnic_adapter *adapter,
+			    काष्ठा qlcnic_host_rds_ring *rds_ring, u8 ring_id)
+अणु
+	काष्ठा rcv_desc *pdesc;
+	काष्ठा qlcnic_rx_buffer *buffer;
+	पूर्णांक count = 0;
 	u32 producer, handle;
-	struct list_head *head;
+	काष्ठा list_head *head;
 
 	producer = rds_ring->producer;
-	head = &rds_ring->free_list;
+	head = &rds_ring->मुक्त_list;
 
-	while (!list_empty(head)) {
+	जबतक (!list_empty(head)) अणु
 
-		buffer = list_entry(head->next, struct qlcnic_rx_buffer, list);
+		buffer = list_entry(head->next, काष्ठा qlcnic_rx_buffer, list);
 
-		if (!buffer->skb) {
-			if (qlcnic_alloc_rx_skb(adapter, rds_ring, buffer))
-				break;
-		}
+		अगर (!buffer->skb) अणु
+			अगर (qlcnic_alloc_rx_skb(adapter, rds_ring, buffer))
+				अवरोध;
+		पूर्ण
 
 		count++;
 		list_del(&buffer->list);
@@ -1465,310 +1466,310 @@ void qlcnic_post_rx_buffers(struct qlcnic_adapter *adapter,
 		pdesc->reference_handle = cpu_to_le16(handle);
 		pdesc->buffer_length = cpu_to_le32(rds_ring->dma_size);
 		producer = get_next_index(producer, rds_ring->num_desc);
-	}
+	पूर्ण
 
-	if (count) {
+	अगर (count) अणु
 		rds_ring->producer = producer;
-		writel((producer-1) & (rds_ring->num_desc-1),
+		ग_लिखोl((producer-1) & (rds_ring->num_desc-1),
 		       rds_ring->crb_rcv_producer);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dump_skb(struct sk_buff *skb, struct qlcnic_adapter *adapter)
-{
-	if (adapter->ahw->msg_enable & NETIF_MSG_DRV) {
-		char prefix[30];
+अटल व्योम dump_skb(काष्ठा sk_buff *skb, काष्ठा qlcnic_adapter *adapter)
+अणु
+	अगर (adapter->ahw->msg_enable & NETIF_MSG_DRV) अणु
+		अक्षर prefix[30];
 
-		scnprintf(prefix, sizeof(prefix), "%s: %s: ",
+		scnम_लिखो(prefix, माप(prefix), "%s: %s: ",
 			  dev_name(&adapter->pdev->dev), __func__);
 
-		print_hex_dump_debug(prefix, DUMP_PREFIX_NONE, 16, 1,
+		prपूर्णांक_hex_dump_debug(prefix, DUMP_PREFIX_NONE, 16, 1,
 				     skb->data, skb->len, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void qlcnic_process_rcv_diag(struct qlcnic_adapter *adapter, int ring,
+अटल व्योम qlcnic_process_rcv_diag(काष्ठा qlcnic_adapter *adapter, पूर्णांक ring,
 				    u64 sts_data0)
-{
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
-	struct sk_buff *skb;
-	struct qlcnic_host_rds_ring *rds_ring;
-	int index, length, cksum, pkt_offset;
+अणु
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+	काष्ठा sk_buff *skb;
+	काष्ठा qlcnic_host_rds_ring *rds_ring;
+	पूर्णांक index, length, cksum, pkt_offset;
 
-	if (unlikely(ring >= adapter->max_rds_rings))
-		return;
+	अगर (unlikely(ring >= adapter->max_rds_rings))
+		वापस;
 
 	rds_ring = &recv_ctx->rds_rings[ring];
 
 	index = qlcnic_get_sts_refhandle(sts_data0);
 	length = qlcnic_get_sts_totallength(sts_data0);
-	if (unlikely(index >= rds_ring->num_desc))
-		return;
+	अगर (unlikely(index >= rds_ring->num_desc))
+		वापस;
 
 	cksum  = qlcnic_get_sts_status(sts_data0);
 	pkt_offset = qlcnic_get_sts_pkt_offset(sts_data0);
 
 	skb = qlcnic_process_rxbuf(adapter, rds_ring, index, cksum);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
-	if (length > rds_ring->skb_size)
+	अगर (length > rds_ring->skb_size)
 		skb_put(skb, rds_ring->skb_size);
-	else
+	अन्यथा
 		skb_put(skb, length);
 
-	if (pkt_offset)
+	अगर (pkt_offset)
 		skb_pull(skb, pkt_offset);
 
-	if (!qlcnic_check_loopback_buff(skb->data, adapter->mac_addr))
+	अगर (!qlcnic_check_loopback_buff(skb->data, adapter->mac_addr))
 		adapter->ahw->diag_cnt++;
-	else
+	अन्यथा
 		dump_skb(skb, adapter);
 
-	dev_kfree_skb_any(skb);
+	dev_kमुक्त_skb_any(skb);
 	adapter->stats.rx_pkts++;
 	adapter->stats.rxbytes += length;
 
-	return;
-}
+	वापस;
+पूर्ण
 
-void qlcnic_82xx_process_rcv_ring_diag(struct qlcnic_host_sds_ring *sds_ring)
-{
-	struct qlcnic_adapter *adapter = sds_ring->adapter;
-	struct status_desc *desc;
+व्योम qlcnic_82xx_process_rcv_ring_diag(काष्ठा qlcnic_host_sds_ring *sds_ring)
+अणु
+	काष्ठा qlcnic_adapter *adapter = sds_ring->adapter;
+	काष्ठा status_desc *desc;
 	u64 sts_data0;
-	int ring, opcode, desc_cnt;
+	पूर्णांक ring, opcode, desc_cnt;
 
 	u32 consumer = sds_ring->consumer;
 
 	desc = &sds_ring->desc_head[consumer];
 	sts_data0 = le64_to_cpu(desc->status_desc_data[0]);
 
-	if (!(sts_data0 & STATUS_OWNER_HOST))
-		return;
+	अगर (!(sts_data0 & STATUS_OWNER_HOST))
+		वापस;
 
 	desc_cnt = qlcnic_get_sts_desc_cnt(sts_data0);
 	opcode = qlcnic_get_sts_opcode(sts_data0);
-	switch (opcode) {
-	case QLCNIC_RESPONSE_DESC:
+	चयन (opcode) अणु
+	हाल QLCNIC_RESPONSE_DESC:
 		qlcnic_handle_fw_message(desc_cnt, consumer, sds_ring);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ring = qlcnic_get_sts_type(sts_data0);
 		qlcnic_process_rcv_diag(adapter, ring, sts_data0);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	for (; desc_cnt > 0; desc_cnt--) {
+	क्रम (; desc_cnt > 0; desc_cnt--) अणु
 		desc = &sds_ring->desc_head[consumer];
 		desc->status_desc_data[0] = cpu_to_le64(STATUS_OWNER_PHANTOM);
 		consumer = get_next_index(consumer, sds_ring->num_desc);
-	}
+	पूर्ण
 
 	sds_ring->consumer = consumer;
-	writel(consumer, sds_ring->crb_sts_consumer);
-}
+	ग_लिखोl(consumer, sds_ring->crb_sts_consumer);
+पूर्ण
 
-int qlcnic_82xx_napi_add(struct qlcnic_adapter *adapter,
-			 struct net_device *netdev)
-{
-	int ring;
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
-	struct qlcnic_host_tx_ring *tx_ring;
+पूर्णांक qlcnic_82xx_napi_add(काष्ठा qlcnic_adapter *adapter,
+			 काष्ठा net_device *netdev)
+अणु
+	पूर्णांक ring;
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
 
-	if (qlcnic_alloc_sds_rings(recv_ctx, adapter->drv_sds_rings))
-		return -ENOMEM;
+	अगर (qlcnic_alloc_sds_rings(recv_ctx, adapter->drv_sds_rings))
+		वापस -ENOMEM;
 
-	for (ring = 0; ring < adapter->drv_sds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->drv_sds_rings; ring++) अणु
 		sds_ring = &recv_ctx->sds_rings[ring];
-		if (qlcnic_check_multi_tx(adapter) &&
-		    !adapter->ahw->diag_test) {
-			netif_napi_add(netdev, &sds_ring->napi, qlcnic_rx_poll,
+		अगर (qlcnic_check_multi_tx(adapter) &&
+		    !adapter->ahw->diag_test) अणु
+			netअगर_napi_add(netdev, &sds_ring->napi, qlcnic_rx_poll,
 				       NAPI_POLL_WEIGHT);
-		} else {
-			if (ring == (adapter->drv_sds_rings - 1))
-				netif_napi_add(netdev, &sds_ring->napi,
+		पूर्ण अन्यथा अणु
+			अगर (ring == (adapter->drv_sds_rings - 1))
+				netअगर_napi_add(netdev, &sds_ring->napi,
 					       qlcnic_poll,
 					       NAPI_POLL_WEIGHT);
-			else
-				netif_napi_add(netdev, &sds_ring->napi,
+			अन्यथा
+				netअगर_napi_add(netdev, &sds_ring->napi,
 					       qlcnic_rx_poll,
 					       NAPI_POLL_WEIGHT);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (qlcnic_alloc_tx_rings(adapter, netdev)) {
-		qlcnic_free_sds_rings(recv_ctx);
-		return -ENOMEM;
-	}
+	अगर (qlcnic_alloc_tx_rings(adapter, netdev)) अणु
+		qlcnic_मुक्त_sds_rings(recv_ctx);
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (qlcnic_check_multi_tx(adapter) && !adapter->ahw->diag_test) {
-		for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
+	अगर (qlcnic_check_multi_tx(adapter) && !adapter->ahw->diag_test) अणु
+		क्रम (ring = 0; ring < adapter->drv_tx_rings; ring++) अणु
 			tx_ring = &adapter->tx_ring[ring];
-			netif_tx_napi_add(netdev, &tx_ring->napi, qlcnic_tx_poll,
+			netअगर_tx_napi_add(netdev, &tx_ring->napi, qlcnic_tx_poll,
 				       NAPI_POLL_WEIGHT);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void qlcnic_82xx_napi_del(struct qlcnic_adapter *adapter)
-{
-	int ring;
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
-	struct qlcnic_host_tx_ring *tx_ring;
+व्योम qlcnic_82xx_napi_del(काष्ठा qlcnic_adapter *adapter)
+अणु
+	पूर्णांक ring;
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
 
-	for (ring = 0; ring < adapter->drv_sds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->drv_sds_rings; ring++) अणु
 		sds_ring = &recv_ctx->sds_rings[ring];
-		netif_napi_del(&sds_ring->napi);
-	}
+		netअगर_napi_del(&sds_ring->napi);
+	पूर्ण
 
-	qlcnic_free_sds_rings(adapter->recv_ctx);
+	qlcnic_मुक्त_sds_rings(adapter->recv_ctx);
 
-	if (qlcnic_check_multi_tx(adapter) && !adapter->ahw->diag_test) {
-		for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
+	अगर (qlcnic_check_multi_tx(adapter) && !adapter->ahw->diag_test) अणु
+		क्रम (ring = 0; ring < adapter->drv_tx_rings; ring++) अणु
 			tx_ring = &adapter->tx_ring[ring];
-			netif_napi_del(&tx_ring->napi);
-		}
-	}
+			netअगर_napi_del(&tx_ring->napi);
+		पूर्ण
+	पूर्ण
 
-	qlcnic_free_tx_rings(adapter);
-}
+	qlcnic_मुक्त_tx_rings(adapter);
+पूर्ण
 
-void qlcnic_82xx_napi_enable(struct qlcnic_adapter *adapter)
-{
-	int ring;
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_host_tx_ring *tx_ring;
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+व्योम qlcnic_82xx_napi_enable(काष्ठा qlcnic_adapter *adapter)
+अणु
+	पूर्णांक ring;
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
 
-	if (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
-		return;
+	अगर (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
+		वापस;
 
-	for (ring = 0; ring < adapter->drv_sds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->drv_sds_rings; ring++) अणु
 		sds_ring = &recv_ctx->sds_rings[ring];
 		napi_enable(&sds_ring->napi);
-		qlcnic_enable_sds_intr(adapter, sds_ring);
-	}
+		qlcnic_enable_sds_पूर्णांकr(adapter, sds_ring);
+	पूर्ण
 
-	if (qlcnic_check_multi_tx(adapter) &&
+	अगर (qlcnic_check_multi_tx(adapter) &&
 	    (adapter->flags & QLCNIC_MSIX_ENABLED) &&
-	    !adapter->ahw->diag_test) {
-		for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
+	    !adapter->ahw->diag_test) अणु
+		क्रम (ring = 0; ring < adapter->drv_tx_rings; ring++) अणु
 			tx_ring = &adapter->tx_ring[ring];
 			napi_enable(&tx_ring->napi);
-			qlcnic_enable_tx_intr(adapter, tx_ring);
-		}
-	}
-}
+			qlcnic_enable_tx_पूर्णांकr(adapter, tx_ring);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void qlcnic_82xx_napi_disable(struct qlcnic_adapter *adapter)
-{
-	int ring;
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_host_tx_ring *tx_ring;
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+व्योम qlcnic_82xx_napi_disable(काष्ठा qlcnic_adapter *adapter)
+अणु
+	पूर्णांक ring;
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
 
-	if (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
-		return;
+	अगर (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
+		वापस;
 
-	for (ring = 0; ring < adapter->drv_sds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->drv_sds_rings; ring++) अणु
 		sds_ring = &recv_ctx->sds_rings[ring];
-		qlcnic_disable_sds_intr(adapter, sds_ring);
+		qlcnic_disable_sds_पूर्णांकr(adapter, sds_ring);
 		napi_synchronize(&sds_ring->napi);
 		napi_disable(&sds_ring->napi);
-	}
+	पूर्ण
 
-	if ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
+	अगर ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
 	    !adapter->ahw->diag_test &&
-	    qlcnic_check_multi_tx(adapter)) {
-		for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
+	    qlcnic_check_multi_tx(adapter)) अणु
+		क्रम (ring = 0; ring < adapter->drv_tx_rings; ring++) अणु
 			tx_ring = &adapter->tx_ring[ring];
-			qlcnic_disable_tx_intr(adapter, tx_ring);
+			qlcnic_disable_tx_पूर्णांकr(adapter, tx_ring);
 			napi_synchronize(&tx_ring->napi);
 			napi_disable(&tx_ring->napi);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#define QLC_83XX_NORMAL_LB_PKT	(1ULL << 36)
-#define QLC_83XX_LRO_LB_PKT	(1ULL << 46)
+#घोषणा QLC_83XX_NORMAL_LB_PKT	(1ULL << 36)
+#घोषणा QLC_83XX_LRO_LB_PKT	(1ULL << 46)
 
-static inline int qlcnic_83xx_is_lb_pkt(u64 sts_data, int lro_pkt)
-{
-	if (lro_pkt)
-		return (sts_data & QLC_83XX_LRO_LB_PKT) ? 1 : 0;
-	else
-		return (sts_data & QLC_83XX_NORMAL_LB_PKT) ? 1 : 0;
-}
+अटल अंतरभूत पूर्णांक qlcnic_83xx_is_lb_pkt(u64 sts_data, पूर्णांक lro_pkt)
+अणु
+	अगर (lro_pkt)
+		वापस (sts_data & QLC_83XX_LRO_LB_PKT) ? 1 : 0;
+	अन्यथा
+		वापस (sts_data & QLC_83XX_NORMAL_LB_PKT) ? 1 : 0;
+पूर्ण
 
-#define QLCNIC_ENCAP_LENGTH_MASK	0x7f
+#घोषणा QLCNIC_ENCAP_LENGTH_MASK	0x7f
 
-static inline u8 qlcnic_encap_length(u64 sts_data)
-{
-	return sts_data & QLCNIC_ENCAP_LENGTH_MASK;
-}
+अटल अंतरभूत u8 qlcnic_encap_length(u64 sts_data)
+अणु
+	वापस sts_data & QLCNIC_ENCAP_LENGTH_MASK;
+पूर्ण
 
-static struct qlcnic_rx_buffer *
-qlcnic_83xx_process_rcv(struct qlcnic_adapter *adapter,
-			struct qlcnic_host_sds_ring *sds_ring,
+अटल काष्ठा qlcnic_rx_buffer *
+qlcnic_83xx_process_rcv(काष्ठा qlcnic_adapter *adapter,
+			काष्ठा qlcnic_host_sds_ring *sds_ring,
 			u8 ring, u64 sts_data[])
-{
-	struct net_device *netdev = adapter->netdev;
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
-	struct qlcnic_rx_buffer *buffer;
-	struct sk_buff *skb;
-	struct qlcnic_host_rds_ring *rds_ring;
-	int index, length, cksum, is_lb_pkt;
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+	काष्ठा qlcnic_rx_buffer *buffer;
+	काष्ठा sk_buff *skb;
+	काष्ठा qlcnic_host_rds_ring *rds_ring;
+	पूर्णांक index, length, cksum, is_lb_pkt;
 	u16 vid = 0xffff;
-	int err;
+	पूर्णांक err;
 
-	if (unlikely(ring >= adapter->max_rds_rings))
-		return NULL;
+	अगर (unlikely(ring >= adapter->max_rds_rings))
+		वापस शून्य;
 
 	rds_ring = &recv_ctx->rds_rings[ring];
 
 	index = qlcnic_83xx_hndl(sts_data[0]);
-	if (unlikely(index >= rds_ring->num_desc))
-		return NULL;
+	अगर (unlikely(index >= rds_ring->num_desc))
+		वापस शून्य;
 
 	buffer = &rds_ring->rx_buf_arr[index];
 	length = qlcnic_83xx_pktln(sts_data[0]);
 	cksum  = qlcnic_83xx_csum_status(sts_data[1]);
 	skb = qlcnic_process_rxbuf(adapter, rds_ring, index, cksum);
-	if (!skb)
-		return buffer;
+	अगर (!skb)
+		वापस buffer;
 
-	if (length > rds_ring->skb_size)
+	अगर (length > rds_ring->skb_size)
 		skb_put(skb, rds_ring->skb_size);
-	else
+	अन्यथा
 		skb_put(skb, length);
 
 	err = qlcnic_check_rx_tagging(adapter, skb, &vid);
 
-	if (adapter->rx_mac_learn) {
+	अगर (adapter->rx_mac_learn) अणु
 		is_lb_pkt = qlcnic_83xx_is_lb_pkt(sts_data[1], 0);
 		qlcnic_add_lb_filter(adapter, skb, is_lb_pkt, vid);
-	}
+	पूर्ण
 
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		adapter->stats.rxdropped++;
-		dev_kfree_skb(skb);
-		return buffer;
-	}
+		dev_kमुक्त_skb(skb);
+		वापस buffer;
+	पूर्ण
 
 	skb->protocol = eth_type_trans(skb, netdev);
 
-	if (qlcnic_encap_length(sts_data[1]) &&
-	    skb->ip_summed == CHECKSUM_UNNECESSARY) {
+	अगर (qlcnic_encap_length(sts_data[1]) &&
+	    skb->ip_summed == CHECKSUM_UNNECESSARY) अणु
 		skb->csum_level = 1;
 		adapter->stats.encap_rx_csummed++;
-	}
+	पूर्ण
 
-	if (vid != 0xffff)
+	अगर (vid != 0xffff)
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vid);
 
 	napi_gro_receive(&sds_ring->napi, skb);
@@ -1776,36 +1777,36 @@ qlcnic_83xx_process_rcv(struct qlcnic_adapter *adapter,
 	adapter->stats.rx_pkts++;
 	adapter->stats.rxbytes += length;
 
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
-static struct qlcnic_rx_buffer *
-qlcnic_83xx_process_lro(struct qlcnic_adapter *adapter,
+अटल काष्ठा qlcnic_rx_buffer *
+qlcnic_83xx_process_lro(काष्ठा qlcnic_adapter *adapter,
 			u8 ring, u64 sts_data[])
-{
-	struct net_device *netdev = adapter->netdev;
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
-	struct qlcnic_rx_buffer *buffer;
-	struct sk_buff *skb;
-	struct qlcnic_host_rds_ring *rds_ring;
-	struct iphdr *iph;
-	struct ipv6hdr *ipv6h;
-	struct tcphdr *th;
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+	काष्ठा qlcnic_rx_buffer *buffer;
+	काष्ठा sk_buff *skb;
+	काष्ठा qlcnic_host_rds_ring *rds_ring;
+	काष्ठा iphdr *iph;
+	काष्ठा ipv6hdr *ipv6h;
+	काष्ठा tcphdr *th;
 	bool push;
-	int l2_hdr_offset, l4_hdr_offset;
-	int index, is_lb_pkt;
+	पूर्णांक l2_hdr_offset, l4_hdr_offset;
+	पूर्णांक index, is_lb_pkt;
 	u16 lro_length, length, data_offset, gso_size;
 	u16 vid = 0xffff;
-	int err;
+	पूर्णांक err;
 
-	if (unlikely(ring >= adapter->max_rds_rings))
-		return NULL;
+	अगर (unlikely(ring >= adapter->max_rds_rings))
+		वापस शून्य;
 
 	rds_ring = &recv_ctx->rds_rings[ring];
 
 	index = qlcnic_83xx_hndl(sts_data[0]);
-	if (unlikely(index >= rds_ring->num_desc))
-		return NULL;
+	अगर (unlikely(index >= rds_ring->num_desc))
+		वापस शून्य;
 
 	buffer = &rds_ring->rx_buf_arr[index];
 
@@ -1815,12 +1816,12 @@ qlcnic_83xx_process_lro(struct qlcnic_adapter *adapter,
 	push = qlcnic_83xx_is_psh_bit(sts_data[1]);
 
 	skb = qlcnic_process_rxbuf(adapter, rds_ring, index, STATUS_CKSUM_OK);
-	if (!skb)
-		return buffer;
+	अगर (!skb)
+		वापस buffer;
 
-	if (qlcnic_83xx_is_tstamp(sts_data[1]))
+	अगर (qlcnic_83xx_is_tstamp(sts_data[1]))
 		data_offset = l4_hdr_offset + QLCNIC_TCP_TS_HDR_SIZE;
-	else
+	अन्यथा
 		data_offset = l4_hdr_offset + QLCNIC_TCP_HDR_SIZE;
 
 	skb_put(skb, lro_length + data_offset);
@@ -1828,94 +1829,94 @@ qlcnic_83xx_process_lro(struct qlcnic_adapter *adapter,
 
 	err = qlcnic_check_rx_tagging(adapter, skb, &vid);
 
-	if (adapter->rx_mac_learn) {
+	अगर (adapter->rx_mac_learn) अणु
 		is_lb_pkt = qlcnic_83xx_is_lb_pkt(sts_data[1], 1);
 		qlcnic_add_lb_filter(adapter, skb, is_lb_pkt, vid);
-	}
+	पूर्ण
 
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		adapter->stats.rxdropped++;
-		dev_kfree_skb(skb);
-		return buffer;
-	}
+		dev_kमुक्त_skb(skb);
+		वापस buffer;
+	पूर्ण
 
 	skb->protocol = eth_type_trans(skb, netdev);
-	if (ntohs(skb->protocol) == ETH_P_IPV6) {
-		ipv6h = (struct ipv6hdr *)skb->data;
-		th = (struct tcphdr *)(skb->data + sizeof(struct ipv6hdr));
+	अगर (ntohs(skb->protocol) == ETH_P_IPV6) अणु
+		ipv6h = (काष्ठा ipv6hdr *)skb->data;
+		th = (काष्ठा tcphdr *)(skb->data + माप(काष्ठा ipv6hdr));
 
-		length = (th->doff << 2) + lro_length;
+		length = (th->करोff << 2) + lro_length;
 		ipv6h->payload_len = htons(length);
-	} else {
-		iph = (struct iphdr *)skb->data;
-		th = (struct tcphdr *)(skb->data + (iph->ihl << 2));
-		length = (iph->ihl << 2) + (th->doff << 2) + lro_length;
+	पूर्ण अन्यथा अणु
+		iph = (काष्ठा iphdr *)skb->data;
+		th = (काष्ठा tcphdr *)(skb->data + (iph->ihl << 2));
+		length = (iph->ihl << 2) + (th->करोff << 2) + lro_length;
 		csum_replace2(&iph->check, iph->tot_len, htons(length));
 		iph->tot_len = htons(length);
-	}
+	पूर्ण
 
 	th->psh = push;
 	length = skb->len;
 
-	if (adapter->flags & QLCNIC_FW_LRO_MSS_CAP) {
+	अगर (adapter->flags & QLCNIC_FW_LRO_MSS_CAP) अणु
 		gso_size = qlcnic_83xx_get_lro_sts_mss(sts_data[0]);
 		skb_shinfo(skb)->gso_size = gso_size;
-		if (skb->protocol == htons(ETH_P_IPV6))
+		अगर (skb->protocol == htons(ETH_P_IPV6))
 			skb_shinfo(skb)->gso_type = SKB_GSO_TCPV6;
-		else
+		अन्यथा
 			skb_shinfo(skb)->gso_type = SKB_GSO_TCPV4;
-	}
+	पूर्ण
 
-	if (vid != 0xffff)
+	अगर (vid != 0xffff)
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vid);
 
-	netif_receive_skb(skb);
+	netअगर_receive_skb(skb);
 
 	adapter->stats.lro_pkts++;
 	adapter->stats.lrobytes += length;
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
-static int qlcnic_83xx_process_rcv_ring(struct qlcnic_host_sds_ring *sds_ring,
-					int max)
-{
-	struct qlcnic_host_rds_ring *rds_ring;
-	struct qlcnic_adapter *adapter = sds_ring->adapter;
-	struct list_head *cur;
-	struct status_desc *desc;
-	struct qlcnic_rx_buffer *rxbuf = NULL;
+अटल पूर्णांक qlcnic_83xx_process_rcv_ring(काष्ठा qlcnic_host_sds_ring *sds_ring,
+					पूर्णांक max)
+अणु
+	काष्ठा qlcnic_host_rds_ring *rds_ring;
+	काष्ठा qlcnic_adapter *adapter = sds_ring->adapter;
+	काष्ठा list_head *cur;
+	काष्ठा status_desc *desc;
+	काष्ठा qlcnic_rx_buffer *rxbuf = शून्य;
 	u8 ring;
 	u64 sts_data[2];
-	int count = 0, opcode;
+	पूर्णांक count = 0, opcode;
 	u32 consumer = sds_ring->consumer;
 
-	while (count < max) {
+	जबतक (count < max) अणु
 		desc = &sds_ring->desc_head[consumer];
 		sts_data[1] = le64_to_cpu(desc->status_desc_data[1]);
 		opcode = qlcnic_83xx_opcode(sts_data[1]);
-		if (!opcode)
-			break;
+		अगर (!opcode)
+			अवरोध;
 		sts_data[0] = le64_to_cpu(desc->status_desc_data[0]);
 		ring = QLCNIC_FETCH_RING_ID(sts_data[0]);
 
-		switch (opcode) {
-		case QLC_83XX_REG_DESC:
+		चयन (opcode) अणु
+		हाल QLC_83XX_REG_DESC:
 			rxbuf = qlcnic_83xx_process_rcv(adapter, sds_ring,
 							ring, sts_data);
-			break;
-		case QLC_83XX_LRO_DESC:
+			अवरोध;
+		हाल QLC_83XX_LRO_DESC:
 			rxbuf = qlcnic_83xx_process_lro(adapter, ring,
 							sts_data);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_info(&adapter->pdev->dev,
 				 "Unknown opcode: 0x%x\n", opcode);
-			goto skip;
-		}
+			जाओ skip;
+		पूर्ण
 
-		if (likely(rxbuf))
-			list_add_tail(&rxbuf->list, &sds_ring->free_list[ring]);
-		else
+		अगर (likely(rxbuf))
+			list_add_tail(&rxbuf->list, &sds_ring->मुक्त_list[ring]);
+		अन्यथा
 			adapter->stats.null_rxbuf++;
 skip:
 		desc = &sds_ring->desc_head[consumer];
@@ -1923,303 +1924,303 @@ skip:
 		desc->status_desc_data[1] = 0;
 		consumer = get_next_index(consumer, sds_ring->num_desc);
 		count++;
-	}
-	for (ring = 0; ring < adapter->max_rds_rings; ring++) {
+	पूर्ण
+	क्रम (ring = 0; ring < adapter->max_rds_rings; ring++) अणु
 		rds_ring = &adapter->recv_ctx->rds_rings[ring];
-		if (!list_empty(&sds_ring->free_list[ring])) {
-			list_for_each(cur, &sds_ring->free_list[ring]) {
-				rxbuf = list_entry(cur, struct qlcnic_rx_buffer,
+		अगर (!list_empty(&sds_ring->मुक्त_list[ring])) अणु
+			list_क्रम_each(cur, &sds_ring->मुक्त_list[ring]) अणु
+				rxbuf = list_entry(cur, काष्ठा qlcnic_rx_buffer,
 						   list);
 				qlcnic_alloc_rx_skb(adapter, rds_ring, rxbuf);
-			}
+			पूर्ण
 			spin_lock(&rds_ring->lock);
-			list_splice_tail_init(&sds_ring->free_list[ring],
-					      &rds_ring->free_list);
+			list_splice_tail_init(&sds_ring->मुक्त_list[ring],
+					      &rds_ring->मुक्त_list);
 			spin_unlock(&rds_ring->lock);
-		}
+		पूर्ण
 		qlcnic_post_rx_buffers_nodb(adapter, rds_ring, ring);
-	}
-	if (count) {
+	पूर्ण
+	अगर (count) अणु
 		sds_ring->consumer = consumer;
-		writel(consumer, sds_ring->crb_sts_consumer);
-	}
-	return count;
-}
+		ग_लिखोl(consumer, sds_ring->crb_sts_consumer);
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static int qlcnic_83xx_msix_sriov_vf_poll(struct napi_struct *napi, int budget)
-{
-	int tx_complete;
-	int work_done;
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_adapter *adapter;
-	struct qlcnic_host_tx_ring *tx_ring;
+अटल पूर्णांक qlcnic_83xx_msix_sriov_vf_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	पूर्णांक tx_complete;
+	पूर्णांक work_करोne;
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_adapter *adapter;
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
 
-	sds_ring = container_of(napi, struct qlcnic_host_sds_ring, napi);
+	sds_ring = container_of(napi, काष्ठा qlcnic_host_sds_ring, napi);
 	adapter = sds_ring->adapter;
 	/* tx ring count = 1 */
 	tx_ring = adapter->tx_ring;
 
 	tx_complete = qlcnic_process_cmd_ring(adapter, tx_ring, budget);
-	work_done = qlcnic_83xx_process_rcv_ring(sds_ring, budget);
+	work_करोne = qlcnic_83xx_process_rcv_ring(sds_ring, budget);
 
-	/* Check if we need a repoll */
-	if (!tx_complete)
-		work_done = budget;
+	/* Check अगर we need a repoll */
+	अगर (!tx_complete)
+		work_करोne = budget;
 
-	if (work_done < budget) {
-		napi_complete_done(&sds_ring->napi, work_done);
-		qlcnic_enable_sds_intr(adapter, sds_ring);
-	}
+	अगर (work_करोne < budget) अणु
+		napi_complete_करोne(&sds_ring->napi, work_करोne);
+		qlcnic_enable_sds_पूर्णांकr(adapter, sds_ring);
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-static int qlcnic_83xx_poll(struct napi_struct *napi, int budget)
-{
-	int tx_complete;
-	int work_done;
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_adapter *adapter;
-	struct qlcnic_host_tx_ring *tx_ring;
+अटल पूर्णांक qlcnic_83xx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	पूर्णांक tx_complete;
+	पूर्णांक work_करोne;
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_adapter *adapter;
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
 
-	sds_ring = container_of(napi, struct qlcnic_host_sds_ring, napi);
+	sds_ring = container_of(napi, काष्ठा qlcnic_host_sds_ring, napi);
 	adapter = sds_ring->adapter;
 	/* tx ring count = 1 */
 	tx_ring = adapter->tx_ring;
 
 	tx_complete = qlcnic_process_cmd_ring(adapter, tx_ring, budget);
-	work_done = qlcnic_83xx_process_rcv_ring(sds_ring, budget);
+	work_करोne = qlcnic_83xx_process_rcv_ring(sds_ring, budget);
 
-	/* Check if we need a repoll */
-	if (!tx_complete)
-		work_done = budget;
+	/* Check अगर we need a repoll */
+	अगर (!tx_complete)
+		work_करोne = budget;
 
-	if (work_done < budget) {
-		napi_complete_done(&sds_ring->napi, work_done);
-		qlcnic_enable_sds_intr(adapter, sds_ring);
-	}
+	अगर (work_करोne < budget) अणु
+		napi_complete_करोne(&sds_ring->napi, work_करोne);
+		qlcnic_enable_sds_पूर्णांकr(adapter, sds_ring);
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-static int qlcnic_83xx_msix_tx_poll(struct napi_struct *napi, int budget)
-{
-	int work_done;
-	struct qlcnic_host_tx_ring *tx_ring;
-	struct qlcnic_adapter *adapter;
+अटल पूर्णांक qlcnic_83xx_msix_tx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	पूर्णांक work_करोne;
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
+	काष्ठा qlcnic_adapter *adapter;
 
-	tx_ring = container_of(napi, struct qlcnic_host_tx_ring, napi);
+	tx_ring = container_of(napi, काष्ठा qlcnic_host_tx_ring, napi);
 	adapter = tx_ring->adapter;
-	work_done = qlcnic_process_cmd_ring(adapter, tx_ring, budget);
-	if (work_done) {
+	work_करोne = qlcnic_process_cmd_ring(adapter, tx_ring, budget);
+	अगर (work_करोne) अणु
 		napi_complete(&tx_ring->napi);
-		if (test_bit(__QLCNIC_DEV_UP , &adapter->state))
-			qlcnic_enable_tx_intr(adapter, tx_ring);
-	} else {
+		अगर (test_bit(__QLCNIC_DEV_UP , &adapter->state))
+			qlcnic_enable_tx_पूर्णांकr(adapter, tx_ring);
+	पूर्ण अन्यथा अणु
 		/* need a repoll */
-		work_done = budget;
-	}
+		work_करोne = budget;
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-static int qlcnic_83xx_rx_poll(struct napi_struct *napi, int budget)
-{
-	int work_done;
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_adapter *adapter;
+अटल पूर्णांक qlcnic_83xx_rx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	पूर्णांक work_करोne;
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_adapter *adapter;
 
-	sds_ring = container_of(napi, struct qlcnic_host_sds_ring, napi);
+	sds_ring = container_of(napi, काष्ठा qlcnic_host_sds_ring, napi);
 	adapter = sds_ring->adapter;
-	work_done = qlcnic_83xx_process_rcv_ring(sds_ring, budget);
-	if (work_done < budget) {
-		napi_complete_done(&sds_ring->napi, work_done);
-		if (test_bit(__QLCNIC_DEV_UP, &adapter->state))
-			qlcnic_enable_sds_intr(adapter, sds_ring);
-	}
+	work_करोne = qlcnic_83xx_process_rcv_ring(sds_ring, budget);
+	अगर (work_करोne < budget) अणु
+		napi_complete_करोne(&sds_ring->napi, work_करोne);
+		अगर (test_bit(__QLCNIC_DEV_UP, &adapter->state))
+			qlcnic_enable_sds_पूर्णांकr(adapter, sds_ring);
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-void qlcnic_83xx_napi_enable(struct qlcnic_adapter *adapter)
-{
-	int ring;
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_host_tx_ring *tx_ring;
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+व्योम qlcnic_83xx_napi_enable(काष्ठा qlcnic_adapter *adapter)
+अणु
+	पूर्णांक ring;
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
 
-	if (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
-		return;
+	अगर (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
+		वापस;
 
-	for (ring = 0; ring < adapter->drv_sds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->drv_sds_rings; ring++) अणु
 		sds_ring = &recv_ctx->sds_rings[ring];
 		napi_enable(&sds_ring->napi);
-		if (adapter->flags & QLCNIC_MSIX_ENABLED)
-			qlcnic_enable_sds_intr(adapter, sds_ring);
-	}
+		अगर (adapter->flags & QLCNIC_MSIX_ENABLED)
+			qlcnic_enable_sds_पूर्णांकr(adapter, sds_ring);
+	पूर्ण
 
-	if ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
-	    !(adapter->flags & QLCNIC_TX_INTR_SHARED)) {
-		for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
+	अगर ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
+	    !(adapter->flags & QLCNIC_TX_INTR_SHARED)) अणु
+		क्रम (ring = 0; ring < adapter->drv_tx_rings; ring++) अणु
 			tx_ring = &adapter->tx_ring[ring];
 			napi_enable(&tx_ring->napi);
-			qlcnic_enable_tx_intr(adapter, tx_ring);
-		}
-	}
-}
+			qlcnic_enable_tx_पूर्णांकr(adapter, tx_ring);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void qlcnic_83xx_napi_disable(struct qlcnic_adapter *adapter)
-{
-	int ring;
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
-	struct qlcnic_host_tx_ring *tx_ring;
+व्योम qlcnic_83xx_napi_disable(काष्ठा qlcnic_adapter *adapter)
+अणु
+	पूर्णांक ring;
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
 
-	if (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
-		return;
+	अगर (adapter->is_up != QLCNIC_ADAPTER_UP_MAGIC)
+		वापस;
 
-	for (ring = 0; ring < adapter->drv_sds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->drv_sds_rings; ring++) अणु
 		sds_ring = &recv_ctx->sds_rings[ring];
-		if (adapter->flags & QLCNIC_MSIX_ENABLED)
-			qlcnic_disable_sds_intr(adapter, sds_ring);
+		अगर (adapter->flags & QLCNIC_MSIX_ENABLED)
+			qlcnic_disable_sds_पूर्णांकr(adapter, sds_ring);
 		napi_synchronize(&sds_ring->napi);
 		napi_disable(&sds_ring->napi);
-	}
+	पूर्ण
 
-	if ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
-	    !(adapter->flags & QLCNIC_TX_INTR_SHARED)) {
-		for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
+	अगर ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
+	    !(adapter->flags & QLCNIC_TX_INTR_SHARED)) अणु
+		क्रम (ring = 0; ring < adapter->drv_tx_rings; ring++) अणु
 			tx_ring = &adapter->tx_ring[ring];
-			qlcnic_disable_tx_intr(adapter, tx_ring);
+			qlcnic_disable_tx_पूर्णांकr(adapter, tx_ring);
 			napi_synchronize(&tx_ring->napi);
 			napi_disable(&tx_ring->napi);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int qlcnic_83xx_napi_add(struct qlcnic_adapter *adapter,
-			 struct net_device *netdev)
-{
-	int ring;
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_host_tx_ring *tx_ring;
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+पूर्णांक qlcnic_83xx_napi_add(काष्ठा qlcnic_adapter *adapter,
+			 काष्ठा net_device *netdev)
+अणु
+	पूर्णांक ring;
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
 
-	if (qlcnic_alloc_sds_rings(recv_ctx, adapter->drv_sds_rings))
-		return -ENOMEM;
+	अगर (qlcnic_alloc_sds_rings(recv_ctx, adapter->drv_sds_rings))
+		वापस -ENOMEM;
 
-	for (ring = 0; ring < adapter->drv_sds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->drv_sds_rings; ring++) अणु
 		sds_ring = &recv_ctx->sds_rings[ring];
-		if (adapter->flags & QLCNIC_MSIX_ENABLED) {
-			if (!(adapter->flags & QLCNIC_TX_INTR_SHARED))
-				netif_napi_add(netdev, &sds_ring->napi,
+		अगर (adapter->flags & QLCNIC_MSIX_ENABLED) अणु
+			अगर (!(adapter->flags & QLCNIC_TX_INTR_SHARED))
+				netअगर_napi_add(netdev, &sds_ring->napi,
 					       qlcnic_83xx_rx_poll,
 					       NAPI_POLL_WEIGHT);
-			else
-				netif_napi_add(netdev, &sds_ring->napi,
+			अन्यथा
+				netअगर_napi_add(netdev, &sds_ring->napi,
 					       qlcnic_83xx_msix_sriov_vf_poll,
 					       NAPI_POLL_WEIGHT);
 
-		} else {
-			netif_napi_add(netdev, &sds_ring->napi,
+		पूर्ण अन्यथा अणु
+			netअगर_napi_add(netdev, &sds_ring->napi,
 				       qlcnic_83xx_poll,
 				       NAPI_POLL_WEIGHT);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (qlcnic_alloc_tx_rings(adapter, netdev)) {
-		qlcnic_free_sds_rings(recv_ctx);
-		return -ENOMEM;
-	}
+	अगर (qlcnic_alloc_tx_rings(adapter, netdev)) अणु
+		qlcnic_मुक्त_sds_rings(recv_ctx);
+		वापस -ENOMEM;
+	पूर्ण
 
-	if ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
-	    !(adapter->flags & QLCNIC_TX_INTR_SHARED)) {
-		for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
+	अगर ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
+	    !(adapter->flags & QLCNIC_TX_INTR_SHARED)) अणु
+		क्रम (ring = 0; ring < adapter->drv_tx_rings; ring++) अणु
 			tx_ring = &adapter->tx_ring[ring];
-			netif_tx_napi_add(netdev, &tx_ring->napi,
+			netअगर_tx_napi_add(netdev, &tx_ring->napi,
 				       qlcnic_83xx_msix_tx_poll,
 				       NAPI_POLL_WEIGHT);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void qlcnic_83xx_napi_del(struct qlcnic_adapter *adapter)
-{
-	int ring;
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
-	struct qlcnic_host_tx_ring *tx_ring;
+व्योम qlcnic_83xx_napi_del(काष्ठा qlcnic_adapter *adapter)
+अणु
+	पूर्णांक ring;
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+	काष्ठा qlcnic_host_tx_ring *tx_ring;
 
-	for (ring = 0; ring < adapter->drv_sds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->drv_sds_rings; ring++) अणु
 		sds_ring = &recv_ctx->sds_rings[ring];
-		netif_napi_del(&sds_ring->napi);
-	}
+		netअगर_napi_del(&sds_ring->napi);
+	पूर्ण
 
-	qlcnic_free_sds_rings(adapter->recv_ctx);
+	qlcnic_मुक्त_sds_rings(adapter->recv_ctx);
 
-	if ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
-	    !(adapter->flags & QLCNIC_TX_INTR_SHARED)) {
-		for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
+	अगर ((adapter->flags & QLCNIC_MSIX_ENABLED) &&
+	    !(adapter->flags & QLCNIC_TX_INTR_SHARED)) अणु
+		क्रम (ring = 0; ring < adapter->drv_tx_rings; ring++) अणु
 			tx_ring = &adapter->tx_ring[ring];
-			netif_napi_del(&tx_ring->napi);
-		}
-	}
+			netअगर_napi_del(&tx_ring->napi);
+		पूर्ण
+	पूर्ण
 
-	qlcnic_free_tx_rings(adapter);
-}
+	qlcnic_मुक्त_tx_rings(adapter);
+पूर्ण
 
-static void qlcnic_83xx_process_rcv_diag(struct qlcnic_adapter *adapter,
-					 int ring, u64 sts_data[])
-{
-	struct qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
-	struct sk_buff *skb;
-	struct qlcnic_host_rds_ring *rds_ring;
-	int index, length;
+अटल व्योम qlcnic_83xx_process_rcv_diag(काष्ठा qlcnic_adapter *adapter,
+					 पूर्णांक ring, u64 sts_data[])
+अणु
+	काष्ठा qlcnic_recv_context *recv_ctx = adapter->recv_ctx;
+	काष्ठा sk_buff *skb;
+	काष्ठा qlcnic_host_rds_ring *rds_ring;
+	पूर्णांक index, length;
 
-	if (unlikely(ring >= adapter->max_rds_rings))
-		return;
+	अगर (unlikely(ring >= adapter->max_rds_rings))
+		वापस;
 
 	rds_ring = &recv_ctx->rds_rings[ring];
 	index = qlcnic_83xx_hndl(sts_data[0]);
-	if (unlikely(index >= rds_ring->num_desc))
-		return;
+	अगर (unlikely(index >= rds_ring->num_desc))
+		वापस;
 
 	length = qlcnic_83xx_pktln(sts_data[0]);
 
 	skb = qlcnic_process_rxbuf(adapter, rds_ring, index, STATUS_CKSUM_OK);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
-	if (length > rds_ring->skb_size)
+	अगर (length > rds_ring->skb_size)
 		skb_put(skb, rds_ring->skb_size);
-	else
+	अन्यथा
 		skb_put(skb, length);
 
-	if (!qlcnic_check_loopback_buff(skb->data, adapter->mac_addr))
+	अगर (!qlcnic_check_loopback_buff(skb->data, adapter->mac_addr))
 		adapter->ahw->diag_cnt++;
-	else
+	अन्यथा
 		dump_skb(skb, adapter);
 
-	dev_kfree_skb_any(skb);
-	return;
-}
+	dev_kमुक्त_skb_any(skb);
+	वापस;
+पूर्ण
 
-void qlcnic_83xx_process_rcv_ring_diag(struct qlcnic_host_sds_ring *sds_ring)
-{
-	struct qlcnic_adapter *adapter = sds_ring->adapter;
-	struct status_desc *desc;
+व्योम qlcnic_83xx_process_rcv_ring_diag(काष्ठा qlcnic_host_sds_ring *sds_ring)
+अणु
+	काष्ठा qlcnic_adapter *adapter = sds_ring->adapter;
+	काष्ठा status_desc *desc;
 	u64 sts_data[2];
-	int ring, opcode;
+	पूर्णांक ring, opcode;
 	u32 consumer = sds_ring->consumer;
 
 	desc = &sds_ring->desc_head[consumer];
 	sts_data[0] = le64_to_cpu(desc->status_desc_data[0]);
 	sts_data[1] = le64_to_cpu(desc->status_desc_data[1]);
 	opcode = qlcnic_83xx_opcode(sts_data[1]);
-	if (!opcode)
-		return;
+	अगर (!opcode)
+		वापस;
 
 	ring = QLCNIC_FETCH_RING_ID(sts_data[0]);
 	qlcnic_83xx_process_rcv_diag(adapter, ring, sts_data);
@@ -2227,5 +2228,5 @@ void qlcnic_83xx_process_rcv_ring_diag(struct qlcnic_host_sds_ring *sds_ring)
 	desc->status_desc_data[0] = cpu_to_le64(STATUS_OWNER_PHANTOM);
 	consumer = get_next_index(consumer, sds_ring->num_desc);
 	sds_ring->consumer = consumer;
-	writel(consumer, sds_ring->crb_sts_consumer);
-}
+	ग_लिखोl(consumer, sds_ring->crb_sts_consumer);
+पूर्ण

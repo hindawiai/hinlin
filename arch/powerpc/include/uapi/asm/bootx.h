@@ -1,88 +1,89 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * This file describes the structure passed from the BootX application
- * (for MacOS) when it is used to boot Linux.
+ * This file describes the काष्ठाure passed from the BootX application
+ * (क्रम MacOS) when it is used to boot Linux.
  *
  * Written by Benjamin Herrenschmidt.
  */
 
 
-#ifndef _UAPI__ASM_BOOTX_H__
-#define _UAPI__ASM_BOOTX_H__
+#अगर_अघोषित _UAPI__ASM_BOOTX_H__
+#घोषणा _UAPI__ASM_BOOTX_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#ifdef macintosh
-#include <Types.h>
-#include "linux_type_defs.h"
-#endif
+#अगर_घोषित macपूर्णांकosh
+#समावेश <Types.h>
+#समावेश "linux_type_defs.h"
+#पूर्ण_अगर
 
-#ifdef macintosh
+#अगर_घोषित macपूर्णांकosh
 /* All this requires PowerPC alignment */
-#pragma options align=power
-#endif
+#आशय options align=घातer
+#पूर्ण_अगर
 
 /* On kernel entry:
  *
  * r3 = 0x426f6f58    ('BooX')
- * r4 = pointer to boot_infos
- * r5 = NULL
+ * r4 = poपूर्णांकer to boot_infos
+ * r5 = शून्य
  *
- * Data and instruction translation disabled, interrupts
+ * Data and inकाष्ठाion translation disabled, पूर्णांकerrupts
  * disabled, kernel loaded at physical 0x00000000 on PCI
- * machines (will be different on NuBus).
+ * machines (will be dअगरferent on NuBus).
  */
 
-#define BOOT_INFO_VERSION               5
-#define BOOT_INFO_COMPATIBLE_VERSION    1
+#घोषणा BOOT_INFO_VERSION               5
+#घोषणा BOOT_INFO_COMPATIBLE_VERSION    1
 
 /* Bit in the architecture flag mask. More to be defined in
    future versions. Note that either BOOT_ARCH_PCI or
    BOOT_ARCH_NUBUS is set. The other BOOT_ARCH_NUBUS_xxx are
    set additionally when BOOT_ARCH_NUBUS is set.
  */
-#define BOOT_ARCH_PCI                   0x00000001UL
-#define BOOT_ARCH_NUBUS                 0x00000002UL
-#define BOOT_ARCH_NUBUS_PDM             0x00000010UL
-#define BOOT_ARCH_NUBUS_PERFORMA        0x00000020UL
-#define BOOT_ARCH_NUBUS_POWERBOOK       0x00000040UL
+#घोषणा BOOT_ARCH_PCI                   0x00000001UL
+#घोषणा BOOT_ARCH_NUBUS                 0x00000002UL
+#घोषणा BOOT_ARCH_NUBUS_PDM             0x00000010UL
+#घोषणा BOOT_ARCH_NUBUS_PERFORMA        0x00000020UL
+#घोषणा BOOT_ARCH_NUBUS_POWERBOOK       0x00000040UL
 
 /*  Maximum number of ranges in phys memory map */
-#define MAX_MEM_MAP_SIZE				26
+#घोषणा MAX_MEM_MAP_SIZE				26
 
-/* This is the format of an element in the physical memory map. Note that
-   the map is optional and current BootX will only build it for pre-PCI
+/* This is the क्रमmat of an element in the physical memory map. Note that
+   the map is optional and current BootX will only build it क्रम pre-PCI
    machines */
-typedef struct boot_info_map_entry
-{
+प्रकार काष्ठा boot_info_map_entry
+अणु
     __u32       physAddr;                /* Physical starting address */
     __u32       size;                    /* Size in bytes */
-} boot_info_map_entry_t;
+पूर्ण boot_info_map_entry_t;
 
 
-/* Here are the boot informations that are passed to the bootstrap
+/* Here are the boot inक्रमmations that are passed to the bootstrap
  * Note that the kernel arguments and the device tree are appended
- * at the end of this structure. */
-typedef struct boot_infos
-{
-    /* Version of this structure */
+ * at the end of this काष्ठाure. */
+प्रकार काष्ठा boot_infos
+अणु
+    /* Version of this काष्ठाure */
     __u32       version;
-    /* backward compatible down to version: */
+    /* backward compatible करोwn to version: */
     __u32       compatible_version;
 
     /* NEW (vers. 2) this holds the current _logical_ base addr of
-       the frame buffer (for use by early boot message) */
+       the frame buffer (क्रम use by early boot message) */
     __u8*       logicalDisplayBase;
 
-    /* NEW (vers. 4) Apple's machine identification */
+    /* NEW (vers. 4) Apple's machine identअगरication */
     __u32       machineID;
 
     /* NEW (vers. 4) Detected hw architecture */
     __u32       architecture;
 
-    /* The device tree (internal addresses relative to the beginning of the tree,
-     * device tree offset relative to the beginning of this structure).
-     * On pre-PCI macintosh (BOOT_ARCH_PCI bit set to 0 in architecture), this
+    /* The device tree (पूर्णांकernal addresses relative to the beginning of the tree,
+     * device tree offset relative to the beginning of this काष्ठाure).
+     * On pre-PCI macपूर्णांकosh (BOOT_ARCH_PCI bit set to 0 in architecture), this
      * field is 0.
      */
     __u32       deviceTreeOffset;        /* Device tree offset */
@@ -98,11 +99,11 @@ typedef struct boot_infos
      * MacOS display. (Can be 0 when not detected) */
      __u32      dispDeviceRegEntryOffset;
 
-    /* Optional pointer to boot ramdisk (offset from this structure) */
+    /* Optional poपूर्णांकer to boot ramdisk (offset from this काष्ठाure) */
     __u32       ramDisk;
     __u32       ramDiskSize;             /* size of ramdisk image */
 
-    /* Kernel command line arguments (offset from this structure) */
+    /* Kernel command line arguments (offset from this काष्ठाure) */
     __u32       kernelParamsOffset;
 
     /* ALL BELOW NEW (vers. 4) */
@@ -123,11 +124,11 @@ typedef struct boot_infos
     /* Total params size (args + colormap + device tree + ramdisk) */
     __u32       totalParamsSize;
 
-} boot_infos_t;
+पूर्ण boot_infos_t;
 
 
-#ifdef macintosh
-#pragma options align=reset
-#endif
+#अगर_घोषित macपूर्णांकosh
+#आशय options align=reset
+#पूर्ण_अगर
 
-#endif /* _UAPI__ASM_BOOTX_H__ */
+#पूर्ण_अगर /* _UAPI__ASM_BOOTX_H__ */

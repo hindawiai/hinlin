@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
+#घोषणा pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
 
-#include <linux/slab.h>
-#include <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
 
-#include "dp_hpd.h"
+#समावेश "dp_hpd.h"
 
-/* DP specific VDM commands */
-#define DP_USBPD_VDM_STATUS	0x10
-#define DP_USBPD_VDM_CONFIGURE	0x11
+/* DP specअगरic VDM commands */
+#घोषणा DP_USBPD_VDM_STATUS	0x10
+#घोषणा DP_USBPD_VDM_CONFIGURE	0x11
 
-/* USBPD-TypeC specific Macros */
-#define VDM_VERSION		0x0
-#define USB_C_DP_SID		0xFF01
+/* USBPD-TypeC specअगरic Macros */
+#घोषणा VDM_VERSION		0x0
+#घोषणा USB_C_DP_SID		0xFF01
 
-struct dp_hpd_private {
-	struct device *dev;
-	struct dp_usbpd_cb *dp_cb;
-	struct dp_usbpd dp_usbpd;
-};
+काष्ठा dp_hpd_निजी अणु
+	काष्ठा device *dev;
+	काष्ठा dp_usbpd_cb *dp_cb;
+	काष्ठा dp_usbpd dp_usbpd;
+पूर्ण;
 
-int dp_hpd_connect(struct dp_usbpd *dp_usbpd, bool hpd)
-{
-	int rc = 0;
-	struct dp_hpd_private *hpd_priv;
+पूर्णांक dp_hpd_connect(काष्ठा dp_usbpd *dp_usbpd, bool hpd)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा dp_hpd_निजी *hpd_priv;
 
-	hpd_priv = container_of(dp_usbpd, struct dp_hpd_private,
+	hpd_priv = container_of(dp_usbpd, काष्ठा dp_hpd_निजी,
 					dp_usbpd);
 
 	dp_usbpd->hpd_high = hpd;
 
-	if (!hpd_priv->dp_cb || !hpd_priv->dp_cb->configure
-				|| !hpd_priv->dp_cb->disconnect) {
+	अगर (!hpd_priv->dp_cb || !hpd_priv->dp_cb->configure
+				|| !hpd_priv->dp_cb->disconnect) अणु
 		pr_err("hpd dp_cb not initialized\n");
-		return -EINVAL;
-	}
-	if (hpd)
+		वापस -EINVAL;
+	पूर्ण
+	अगर (hpd)
 		hpd_priv->dp_cb->configure(hpd_priv->dev);
-	else
+	अन्यथा
 		hpd_priv->dp_cb->disconnect(hpd_priv->dev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-struct dp_usbpd *dp_hpd_get(struct device *dev, struct dp_usbpd_cb *cb)
-{
-	struct dp_hpd_private *dp_hpd;
+काष्ठा dp_usbpd *dp_hpd_get(काष्ठा device *dev, काष्ठा dp_usbpd_cb *cb)
+अणु
+	काष्ठा dp_hpd_निजी *dp_hpd;
 
-	if (!cb) {
+	अगर (!cb) अणु
 		pr_err("invalid cb data\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	dp_hpd = devm_kzalloc(dev, sizeof(*dp_hpd), GFP_KERNEL);
-	if (!dp_hpd)
-		return ERR_PTR(-ENOMEM);
+	dp_hpd = devm_kzalloc(dev, माप(*dp_hpd), GFP_KERNEL);
+	अगर (!dp_hpd)
+		वापस ERR_PTR(-ENOMEM);
 
 	dp_hpd->dev = dev;
 	dp_hpd->dp_cb = cb;
 
 	dp_hpd->dp_usbpd.connect = dp_hpd_connect;
 
-	return &dp_hpd->dp_usbpd;
-}
+	वापस &dp_hpd->dp_usbpd;
+पूर्ण

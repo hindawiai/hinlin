@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *	Comtrol SV11 card driver
  *
@@ -7,200 +8,200 @@
  *
  *	Its a genuine Z85230
  *
- *	It supports DMA using two DMA channels in SYNC mode. The driver doesn't
+ *	It supports DMA using two DMA channels in SYNC mode. The driver करोesn't
  *	use these facilities
  *	
  *	The control port is at io+1, the data at io+3 and turning off the DMA
- *	is done by writing 0 to io+4
+ *	is करोne by writing 0 to io+4
  *
- *	The hardware does the bus handling to avoid the need for delays between
- *	touching control registers.
+ *	The hardware करोes the bus handling to aव्योम the need क्रम delays between
+ *	touching control रेजिस्टरs.
  *
  *	Port B isn't wired (why - beats me)
  *
  *	Generic HDLC port Copyright (C) 2008 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/net.h>
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/delay.h>
-#include <linux/hdlc.h>
-#include <linux/ioport.h>
-#include <linux/slab.h>
-#include <net/arp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/net.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/hdlc.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/slab.h>
+#समावेश <net/arp.h>
 
-#include <asm/irq.h>
-#include <asm/io.h>
-#include <asm/dma.h>
-#include <asm/byteorder.h>
-#include "z85230.h"
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश "z85230.h"
 
-static int dma;
+अटल पूर्णांक dma;
 
 /*
  *	Network driver support routines
  */
 
-static inline struct z8530_dev* dev_to_sv(struct net_device *dev)
-{
-	return (struct z8530_dev *)dev_to_hdlc(dev)->priv;
-}
+अटल अंतरभूत काष्ठा z8530_dev* dev_to_sv(काष्ठा net_device *dev)
+अणु
+	वापस (काष्ठा z8530_dev *)dev_to_hdlc(dev)->priv;
+पूर्ण
 
 /*
- *	Frame receive. Simple for our card as we do HDLC and there
+ *	Frame receive. Simple क्रम our card as we करो HDLC and there
  *	is no funny garbage involved
  */
 
-static void hostess_input(struct z8530_channel *c, struct sk_buff *skb)
-{
+अटल व्योम hostess_input(काष्ठा z8530_channel *c, काष्ठा sk_buff *skb)
+अणु
 	/* Drop the CRC - it's not a good idea to try and negotiate it ;) */
 	skb_trim(skb, skb->len - 2);
 	skb->protocol = hdlc_type_trans(skb, c->netdevice);
 	skb_reset_mac_header(skb);
 	skb->dev = c->netdevice;
 	/*
-	 *	Send it to the PPP layer. We don't have time to process
+	 *	Send it to the PPP layer. We करोn't have समय to process
 	 *	it right now.
 	 */
-	netif_rx(skb);
-}
+	netअगर_rx(skb);
+पूर्ण
 
 /*
  *	We've been placed in the UP state
  */
 
-static int hostess_open(struct net_device *d)
-{
-	struct z8530_dev *sv11 = dev_to_sv(d);
-	int err = -1;
+अटल पूर्णांक hostess_खोलो(काष्ठा net_device *d)
+अणु
+	काष्ठा z8530_dev *sv11 = dev_to_sv(d);
+	पूर्णांक err = -1;
 
 	/*
 	 *	Link layer up
 	 */
-	switch (dma) {
-		case 0:
-			err = z8530_sync_open(d, &sv11->chanA);
-			break;
-		case 1:
-			err = z8530_sync_dma_open(d, &sv11->chanA);
-			break;
-		case 2:
-			err = z8530_sync_txdma_open(d, &sv11->chanA);
-			break;
-	}
+	चयन (dma) अणु
+		हाल 0:
+			err = z8530_sync_खोलो(d, &sv11->chanA);
+			अवरोध;
+		हाल 1:
+			err = z8530_sync_dma_खोलो(d, &sv11->chanA);
+			अवरोध;
+		हाल 2:
+			err = z8530_sync_txdma_खोलो(d, &sv11->chanA);
+			अवरोध;
+	पूर्ण
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = hdlc_open(d);
-	if (err) {
-		switch (dma) {
-			case 0:
-				z8530_sync_close(d, &sv11->chanA);
-				break;
-			case 1:
-				z8530_sync_dma_close(d, &sv11->chanA);
-				break;
-			case 2:
-				z8530_sync_txdma_close(d, &sv11->chanA);
-				break;
-		}
-		return err;
-	}
+	err = hdlc_खोलो(d);
+	अगर (err) अणु
+		चयन (dma) अणु
+			हाल 0:
+				z8530_sync_बंद(d, &sv11->chanA);
+				अवरोध;
+			हाल 1:
+				z8530_sync_dma_बंद(d, &sv11->chanA);
+				अवरोध;
+			हाल 2:
+				z8530_sync_txdma_बंद(d, &sv11->chanA);
+				अवरोध;
+		पूर्ण
+		वापस err;
+	पूर्ण
 	sv11->chanA.rx_function = hostess_input;
 
 	/*
 	 *	Go go go
 	 */
 
-	netif_start_queue(d);
-	return 0;
-}
+	netअगर_start_queue(d);
+	वापस 0;
+पूर्ण
 
-static int hostess_close(struct net_device *d)
-{
-	struct z8530_dev *sv11 = dev_to_sv(d);
+अटल पूर्णांक hostess_बंद(काष्ठा net_device *d)
+अणु
+	काष्ठा z8530_dev *sv11 = dev_to_sv(d);
 	/*
 	 *	Discard new frames
 	 */
 	sv11->chanA.rx_function = z8530_null_rx;
 
-	hdlc_close(d);
-	netif_stop_queue(d);
+	hdlc_बंद(d);
+	netअगर_stop_queue(d);
 
-	switch (dma) {
-		case 0:
-			z8530_sync_close(d, &sv11->chanA);
-			break;
-		case 1:
-			z8530_sync_dma_close(d, &sv11->chanA);
-			break;
-		case 2:
-			z8530_sync_txdma_close(d, &sv11->chanA);
-			break;
-	}
-	return 0;
-}
+	चयन (dma) अणु
+		हाल 0:
+			z8530_sync_बंद(d, &sv11->chanA);
+			अवरोध;
+		हाल 1:
+			z8530_sync_dma_बंद(d, &sv11->chanA);
+			अवरोध;
+		हाल 2:
+			z8530_sync_txdma_बंद(d, &sv11->chanA);
+			अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int hostess_ioctl(struct net_device *d, struct ifreq *ifr, int cmd)
-{
-	/* struct z8530_dev *sv11=dev_to_sv(d);
-	   z8530_ioctl(d,&sv11->chanA,ifr,cmd) */
-	return hdlc_ioctl(d, ifr, cmd);
-}
-
-/*
- *	Passed network frames, fire them downwind.
- */
-
-static netdev_tx_t hostess_queue_xmit(struct sk_buff *skb,
-					    struct net_device *d)
-{
-	return z8530_queue_xmit(&dev_to_sv(d)->chanA, skb);
-}
-
-static int hostess_attach(struct net_device *dev, unsigned short encoding,
-			  unsigned short parity)
-{
-	if (encoding == ENCODING_NRZ && parity == PARITY_CRC16_PR1_CCITT)
-		return 0;
-	return -EINVAL;
-}
+अटल पूर्णांक hostess_ioctl(काष्ठा net_device *d, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	/* काष्ठा z8530_dev *sv11=dev_to_sv(d);
+	   z8530_ioctl(d,&sv11->chanA,अगरr,cmd) */
+	वापस hdlc_ioctl(d, अगरr, cmd);
+पूर्ण
 
 /*
- *	Description block for a Comtrol Hostess SV11 card
+ *	Passed network frames, fire them करोwnwind.
  */
 
-static const struct net_device_ops hostess_ops = {
-	.ndo_open       = hostess_open,
-	.ndo_stop       = hostess_close,
-	.ndo_start_xmit = hdlc_start_xmit,
-	.ndo_do_ioctl   = hostess_ioctl,
-};
+अटल netdev_tx_t hostess_queue_xmit(काष्ठा sk_buff *skb,
+					    काष्ठा net_device *d)
+अणु
+	वापस z8530_queue_xmit(&dev_to_sv(d)->chanA, skb);
+पूर्ण
 
-static struct z8530_dev *sv11_init(int iobase, int irq)
-{
-	struct z8530_dev *sv;
-	struct net_device *netdev;
+अटल पूर्णांक hostess_attach(काष्ठा net_device *dev, अचिन्हित लघु encoding,
+			  अचिन्हित लघु parity)
+अणु
+	अगर (encoding == ENCODING_NRZ && parity == PARITY_CRC16_PR1_CCITT)
+		वापस 0;
+	वापस -EINVAL;
+पूर्ण
+
+/*
+ *	Description block क्रम a Comtrol Hostess SV11 card
+ */
+
+अटल स्थिर काष्ठा net_device_ops hostess_ops = अणु
+	.nकरो_खोलो       = hostess_खोलो,
+	.nकरो_stop       = hostess_बंद,
+	.nकरो_start_xmit = hdlc_start_xmit,
+	.nकरो_करो_ioctl   = hostess_ioctl,
+पूर्ण;
+
+अटल काष्ठा z8530_dev *sv11_init(पूर्णांक iobase, पूर्णांक irq)
+अणु
+	काष्ठा z8530_dev *sv;
+	काष्ठा net_device *netdev;
 	/*
 	 *	Get the needed I/O space
 	 */
 
-	if (!request_region(iobase, 8, "Comtrol SV11")) {
+	अगर (!request_region(iobase, 8, "Comtrol SV11")) अणु
 		pr_warn("I/O 0x%X already in use\n", iobase);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	sv = kzalloc(sizeof(struct z8530_dev), GFP_KERNEL);
-	if (!sv)
-		goto err_kzalloc;
+	sv = kzalloc(माप(काष्ठा z8530_dev), GFP_KERNEL);
+	अगर (!sv)
+		जाओ err_kzalloc;
 
 	/*
 	 *	Stuff in the I/O addressing
@@ -217,21 +218,21 @@ static struct z8530_dev *sv11_init(int iobase, int irq)
 
 	outb(0, iobase + 4);		/* DMA off */
 
-	/* We want a fast IRQ for this device. Actually we'd like an even faster
-	   IRQ ;) - This is one driver RtLinux is made for */
+	/* We want a fast IRQ क्रम this device. Actually we'd like an even faster
+	   IRQ ;) - This is one driver RtLinux is made क्रम */
 
-	if (request_irq(irq, z8530_interrupt, 0,
-			"Hostess SV11", sv) < 0) {
+	अगर (request_irq(irq, z8530_पूर्णांकerrupt, 0,
+			"Hostess SV11", sv) < 0) अणु
 		pr_warn("IRQ %d already in use\n", irq);
-		goto err_irq;
-	}
+		जाओ err_irq;
+	पूर्ण
 
 	sv->irq = irq;
-	sv->chanA.private = sv;
+	sv->chanA.निजी = sv;
 	sv->chanA.dev = sv;
 	sv->chanB.dev = sv;
 
-	if (dma) {
+	अगर (dma) अणु
 		/*
 		 *	You can have DMA off or 1 and 3 thats the lot
 		 *	on the Comtrol.
@@ -239,15 +240,15 @@ static struct z8530_dev *sv11_init(int iobase, int irq)
 		sv->chanA.txdma = 3;
 		sv->chanA.rxdma = 1;
 		outb(0x03 | 0x08, iobase + 4);		/* DMA on */
-		if (request_dma(sv->chanA.txdma, "Hostess SV/11 (TX)"))
-			goto err_txdma;
+		अगर (request_dma(sv->chanA.txdma, "Hostess SV/11 (TX)"))
+			जाओ err_txdma;
 
-		if (dma == 1)
-			if (request_dma(sv->chanA.rxdma, "Hostess SV/11 (RX)"))
-				goto err_rxdma;
-	}
+		अगर (dma == 1)
+			अगर (request_dma(sv->chanA.rxdma, "Hostess SV/11 (RX)"))
+				जाओ err_rxdma;
+	पूर्ण
 
-	/* Kill our private IRQ line the hostess can end up chattering
+	/* Kill our निजी IRQ line the hostess can end up chattering
 	   until the configuration is set */
 	disable_irq(irq);
 
@@ -255,15 +256,15 @@ static struct z8530_dev *sv11_init(int iobase, int irq)
 	 *	Begin normal initialise
 	 */
 
-	if (z8530_init(sv)) {
+	अगर (z8530_init(sv)) अणु
 		pr_err("Z8530 series device not found\n");
 		enable_irq(irq);
-		goto free_dma;
-	}
+		जाओ मुक्त_dma;
+	पूर्ण
 	z8530_channel_load(&sv->chanB, z8530_dead_port);
-	if (sv->type == Z85C30)
+	अगर (sv->type == Z85C30)
 		z8530_channel_load(&sv->chanA, z8530_hdlc_kilostream);
-	else
+	अन्यथा
 		z8530_channel_load(&sv->chanA, z8530_hdlc_kilostream_85230);
 
 	enable_irq(irq);
@@ -273,8 +274,8 @@ static struct z8530_dev *sv11_init(int iobase, int irq)
 	 */
 
 	sv->chanA.netdevice = netdev = alloc_hdlcdev(sv);
-	if (!netdev)
-		goto free_dma;
+	अगर (!netdev)
+		जाओ मुक्त_dma;
 
 	dev_to_hdlc(netdev)->attach = hostess_attach;
 	dev_to_hdlc(netdev)->xmit = hostess_queue_xmit;
@@ -282,71 +283,71 @@ static struct z8530_dev *sv11_init(int iobase, int irq)
 	netdev->base_addr = iobase;
 	netdev->irq = irq;
 
-	if (register_hdlc_device(netdev)) {
+	अगर (रेजिस्टर_hdlc_device(netdev)) अणु
 		pr_err("unable to register HDLC device\n");
-		free_netdev(netdev);
-		goto free_dma;
-	}
+		मुक्त_netdev(netdev);
+		जाओ मुक्त_dma;
+	पूर्ण
 
 	z8530_describe(sv, "I/O", iobase);
 	sv->active = 1;
-	return sv;
+	वापस sv;
 
-free_dma:
-	if (dma == 1)
-		free_dma(sv->chanA.rxdma);
+मुक्त_dma:
+	अगर (dma == 1)
+		मुक्त_dma(sv->chanA.rxdma);
 err_rxdma:
-	if (dma)
-		free_dma(sv->chanA.txdma);
+	अगर (dma)
+		मुक्त_dma(sv->chanA.txdma);
 err_txdma:
-	free_irq(irq, sv);
+	मुक्त_irq(irq, sv);
 err_irq:
-	kfree(sv);
+	kमुक्त(sv);
 err_kzalloc:
 	release_region(iobase, 8);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void sv11_shutdown(struct z8530_dev *dev)
-{
-	unregister_hdlc_device(dev->chanA.netdevice);
-	z8530_shutdown(dev);
-	free_irq(dev->irq, dev);
-	if (dma) {
-		if (dma == 1)
-			free_dma(dev->chanA.rxdma);
-		free_dma(dev->chanA.txdma);
-	}
+अटल व्योम sv11_shutकरोwn(काष्ठा z8530_dev *dev)
+अणु
+	unरेजिस्टर_hdlc_device(dev->chanA.netdevice);
+	z8530_shutकरोwn(dev);
+	मुक्त_irq(dev->irq, dev);
+	अगर (dma) अणु
+		अगर (dma == 1)
+			मुक्त_dma(dev->chanA.rxdma);
+		मुक्त_dma(dev->chanA.txdma);
+	पूर्ण
 	release_region(dev->chanA.ctrlio - 1, 8);
-	free_netdev(dev->chanA.netdevice);
-	kfree(dev);
-}
+	मुक्त_netdev(dev->chanA.netdevice);
+	kमुक्त(dev);
+पूर्ण
 
-static int io = 0x200;
-static int irq = 9;
+अटल पूर्णांक io = 0x200;
+अटल पूर्णांक irq = 9;
 
-module_param_hw(io, int, ioport, 0);
+module_param_hw(io, पूर्णांक, ioport, 0);
 MODULE_PARM_DESC(io, "The I/O base of the Comtrol Hostess SV11 card");
-module_param_hw(dma, int, dma, 0);
+module_param_hw(dma, पूर्णांक, dma, 0);
 MODULE_PARM_DESC(dma, "Set this to 1 to use DMA1/DMA3 for TX/RX");
-module_param_hw(irq, int, irq, 0);
+module_param_hw(irq, पूर्णांक, irq, 0);
 MODULE_PARM_DESC(irq, "The interrupt line setting for the Comtrol Hostess SV11 card");
 
 MODULE_AUTHOR("Alan Cox");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Modular driver for the Comtrol Hostess SV11");
 
-static struct z8530_dev *sv11_unit;
+अटल काष्ठा z8530_dev *sv11_unit;
 
-int init_module(void)
-{
-	if ((sv11_unit = sv11_init(io, irq)) == NULL)
-		return -ENODEV;
-	return 0;
-}
+पूर्णांक init_module(व्योम)
+अणु
+	अगर ((sv11_unit = sv11_init(io, irq)) == शून्य)
+		वापस -ENODEV;
+	वापस 0;
+पूर्ण
 
-void cleanup_module(void)
-{
-	if (sv11_unit)
-		sv11_shutdown(sv11_unit);
-}
+व्योम cleanup_module(व्योम)
+अणु
+	अगर (sv11_unit)
+		sv11_shutकरोwn(sv11_unit);
+पूर्ण

@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright 2004 James Cleverdon, IBM.
+ * Copyright 2004 James Cleverकरोn, IBM.
  *
  * Generic APIC sub-arch probe layer.
  *
- * Hacked for x86-64 by James Cleverdon from i386 architecture code by
+ * Hacked क्रम x86-64 by James Cleverकरोn from i386 architecture code by
  * Martin Bligh, Andi Kleen, James Bottomley, John Stultz, and
- * James Cleverdon.
+ * James Cleverकरोn.
  */
-#include <linux/thread_info.h>
-#include <asm/apic.h>
+#समावेश <linux/thपढ़ो_info.h>
+#समावेश <यंत्र/apic.h>
 
-#include "local.h"
+#समावेश "local.h"
 
 /*
  * Check the APIC IDs in bios_cpu_apicid and choose the APIC mode.
  */
-void __init default_setup_apic_routing(void)
-{
-	struct apic **drv;
+व्योम __init शेष_setup_apic_routing(व्योम)
+अणु
+	काष्ठा apic **drv;
 
 	enable_IR_x2apic();
 
-	for (drv = __apicdrivers; drv < __apicdrivers_end; drv++) {
-		if ((*drv)->probe && (*drv)->probe()) {
-			if (apic != *drv) {
+	क्रम (drv = __apicdrivers; drv < __apicdrivers_end; drv++) अणु
+		अगर ((*drv)->probe && (*drv)->probe()) अणु
+			अगर (apic != *drv) अणु
 				apic = *drv;
 				pr_info("Switched APIC routing to %s.\n",
 					apic->name);
-			}
-			break;
-		}
-	}
-}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int __init default_acpi_madt_oem_check(char *oem_id, char *oem_table_id)
-{
-	struct apic **drv;
+पूर्णांक __init शेष_acpi_madt_oem_check(अक्षर *oem_id, अक्षर *oem_table_id)
+अणु
+	काष्ठा apic **drv;
 
-	for (drv = __apicdrivers; drv < __apicdrivers_end; drv++) {
-		if ((*drv)->acpi_madt_oem_check(oem_id, oem_table_id)) {
-			if (apic != *drv) {
+	क्रम (drv = __apicdrivers; drv < __apicdrivers_end; drv++) अणु
+		अगर ((*drv)->acpi_madt_oem_check(oem_id, oem_table_id)) अणु
+			अगर (apic != *drv) अणु
 				apic = *drv;
 				pr_info("Setting APIC routing to %s.\n",
 					apic->name);
-			}
-			return 1;
-		}
-	}
-	return 0;
-}
+			पूर्ण
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण

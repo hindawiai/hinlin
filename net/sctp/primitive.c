@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* SCTP kernel implementation
  * Copyright (c) 1999-2000 Cisco, Inc.
  * Copyright (c) 1999-2001 Motorola, Inc.
@@ -7,50 +8,50 @@
  *
  * These functions implement the SCTP primitive functions from Section 10.
  *
- * Note that the descriptions from the specification are USER level
- * functions--this file is the functions which populate the struct proto
- * for SCTP which is the BOTTOM of the sockets interface.
+ * Note that the descriptions from the specअगरication are USER level
+ * functions--this file is the functions which populate the काष्ठा proto
+ * क्रम SCTP which is the BOTTOM of the sockets पूर्णांकerface.
  *
  * Please send any bug reports or fixes you make to the
  * email address(es):
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modified by:
+ * Written or modअगरied by:
  *    La Monte H.P. Yarroll <piggy@acm.org>
  *    Narasimha Budihal     <narasimha@refcode.org>
  *    Karl Knutson          <karl@athena.chicago.il.us>
- *    Ardelle Fan	    <ardelle.fan@intel.com>
- *    Kevin Gao             <kevin.gao@intel.com>
+ *    Ardelle Fan	    <ardelle.fan@पूर्णांकel.com>
+ *    Kevin Gao             <kevin.gao@पूर्णांकel.com>
  */
 
-#include <linux/types.h>
-#include <linux/list.h> /* For struct list_head */
-#include <linux/socket.h>
-#include <linux/ip.h>
-#include <linux/time.h> /* For struct timeval */
-#include <linux/gfp.h>
-#include <net/sock.h>
-#include <net/sctp/sctp.h>
-#include <net/sctp/sm.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h> /* For काष्ठा list_head */
+#समावेश <linux/socket.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/समय.स> /* For काष्ठा समयval */
+#समावेश <linux/gfp.h>
+#समावेश <net/sock.h>
+#समावेश <net/sctp/sctp.h>
+#समावेश <net/sctp/sm.h>
 
-#define DECLARE_PRIMITIVE(name) \
+#घोषणा DECLARE_PRIMITIVE(name) \
 /* This is called in the code as sctp_primitive_ ## name.  */ \
-int sctp_primitive_ ## name(struct net *net, struct sctp_association *asoc, \
-			    void *arg) { \
-	int error = 0; \
-	enum sctp_event_type event_type; union sctp_subtype subtype; \
-	enum sctp_state state; \
-	struct sctp_endpoint *ep; \
+पूर्णांक sctp_primitive_ ## name(काष्ठा net *net, काष्ठा sctp_association *asoc, \
+			    व्योम *arg) अणु \
+	पूर्णांक error = 0; \
+	क्रमागत sctp_event_type event_type; जोड़ sctp_subtype subtype; \
+	क्रमागत sctp_state state; \
+	काष्ठा sctp_endpoपूर्णांक *ep; \
 	\
 	event_type = SCTP_EVENT_T_PRIMITIVE; \
 	subtype = SCTP_ST_PRIMITIVE(SCTP_PRIMITIVE_ ## name); \
 	state = asoc ? asoc->state : SCTP_STATE_CLOSED; \
-	ep = asoc ? asoc->ep : NULL; \
+	ep = asoc ? asoc->ep : शून्य; \
 	\
-	error = sctp_do_sm(net, event_type, subtype, state, ep, asoc,	\
+	error = sctp_करो_sm(net, event_type, subtype, state, ep, asoc,	\
 			   arg, GFP_KERNEL); \
-	return error; \
-}
+	वापस error; \
+पूर्ण
 
 /* 10.1 ULP-to-SCTP
  * B) Associate
@@ -61,10 +62,10 @@ int sctp_primitive_ ## name(struct net *net, struct sctp_association *asoc, \
  *    count]
  *
  * This primitive allows the upper layer to initiate an association to a
- * specific peer endpoint.
+ * specअगरic peer endpoपूर्णांक.
  *
  * This version assumes that asoc is fully populated with the initial
- * parameters.  We then return a traditional kernel indicator of
+ * parameters.  We then वापस a traditional kernel indicator of
  * success or failure.
  */
 
@@ -73,17 +74,17 @@ int sctp_primitive_ ## name(struct net *net, struct sctp_association *asoc, \
 DECLARE_PRIMITIVE(ASSOCIATE)
 
 /* 10.1 ULP-to-SCTP
- * C) Shutdown
+ * C) Shutकरोwn
  *
  * Format: SHUTDOWN(association id)
  * -> result
  *
- * Gracefully closes an association. Any locally queued user data
+ * Gracefully बंदs an association. Any locally queued user data
  * will be delivered to the peer. The association will be terminated only
  * after the peer acknowledges all the SCTP packets sent.  A success code
- * will be returned on successful termination of the association. If
+ * will be वापसed on successful termination of the association. If
  * attempting to terminate the association results in a failure, an error
- * code shall be returned.
+ * code shall be वापसed.
  */
 
 DECLARE_PRIMITIVE(SHUTDOWN);
@@ -94,11 +95,11 @@ DECLARE_PRIMITIVE(SHUTDOWN);
  * Format: Abort(association id [, cause code])
  * -> result
  *
- * Ungracefully closes an association. Any locally queued user data
+ * Ungracefully बंदs an association. Any locally queued user data
  * will be discarded and an ABORT chunk is sent to the peer. A success
- * code will be returned on successful abortion of the association. If
- * attempting to abort the association results in a failure, an error
- * code shall be returned.
+ * code will be वापसed on successful पातion of the association. If
+ * attempting to पात the association results in a failure, an error
+ * code shall be वापसed.
  */
 
 DECLARE_PRIMITIVE(ABORT);
@@ -107,11 +108,11 @@ DECLARE_PRIMITIVE(ABORT);
  * E) Send
  *
  * Format: SEND(association id, buffer address, byte count [,context]
- *         [,stream id] [,life time] [,destination transport address]
+ *         [,stream id] [,lअगरe समय] [,destination transport address]
  *         [,unorder flag] [,no-bundle flag] [,payload protocol-id] )
  * -> result
  *
- * This is the main method to send user data via SCTP.
+ * This is the मुख्य method to send user data via SCTP.
  *
  * Mandatory attributes:
  *
@@ -124,38 +125,38 @@ DECLARE_PRIMITIVE(ABORT);
  *
  * Optional attributes:
  *
- *  o context - an optional 32 bit integer that will be carried in the
- *    sending failure notification to the ULP if the transportation of
+ *  o context - an optional 32 bit पूर्णांकeger that will be carried in the
+ *    sending failure notअगरication to the ULP अगर the transportation of
  *    this User Message fails.
  *
  *  o stream id - to indicate which stream to send the data on. If not
- *    specified, stream 0 will be used.
+ *    specअगरied, stream 0 will be used.
  *
- *  o life time - specifies the life time of the user data. The user data
- *    will not be sent by SCTP after the life time expires. This
- *    parameter can be used to avoid efforts to transmit stale
- *    user messages. SCTP notifies the ULP if the data cannot be
+ *  o lअगरe समय - specअगरies the lअगरe समय of the user data. The user data
+ *    will not be sent by SCTP after the lअगरe समय expires. This
+ *    parameter can be used to aव्योम efक्रमts to transmit stale
+ *    user messages. SCTP notअगरies the ULP अगर the data cannot be
  *    initiated to transport (i.e. sent to the destination via SCTP's
- *    send primitive) within the life time variable. However, the
- *    user data will be transmitted if SCTP has attempted to transmit a
- *    chunk before the life time expired.
+ *    send primitive) within the lअगरe समय variable. However, the
+ *    user data will be transmitted अगर SCTP has attempted to transmit a
+ *    chunk beक्रमe the lअगरe समय expired.
  *
- *  o destination transport address - specified as one of the destination
- *    transport addresses of the peer endpoint to which this packet
+ *  o destination transport address - specअगरied as one of the destination
+ *    transport addresses of the peer endpoपूर्णांक to which this packet
  *    should be sent. Whenever possible, SCTP should use this destination
- *    transport address for sending the packets, instead of the current
+ *    transport address क्रम sending the packets, instead of the current
  *    primary path.
  *
- *  o unorder flag - this flag, if present, indicates that the user
+ *  o unorder flag - this flag, अगर present, indicates that the user
  *    would like the data delivered in an unordered fashion to the peer
  *    (i.e., the U flag is set to 1 on all DATA chunks carrying this
  *    message).
  *
- *  o no-bundle flag - instructs SCTP not to bundle this user data with
+ *  o no-bundle flag - inकाष्ठाs SCTP not to bundle this user data with
  *    other outbound DATA chunks. SCTP MAY still bundle even when
  *    this flag is present, when faced with network congestion.
  *
- *  o payload protocol-id - A 32 bit unsigned integer that is to be
+ *  o payload protocol-id - A 32 bit अचिन्हित पूर्णांकeger that is to be
  *    passed to the peer indicating the type of payload protocol data
  *    being transmitted. This value is passed as opaque data by SCTP.
  */
@@ -169,8 +170,8 @@ DECLARE_PRIMITIVE(SEND);
  *
  * -> result
  *
- * Instructs the local endpoint to perform a HeartBeat on the specified
- * destination transport address of the given association. The returned
+ * Inकाष्ठाs the local endpoपूर्णांक to perक्रमm a HeartBeat on the specअगरied
+ * destination transport address of the given association. The वापसed
  * result should indicate whether the transmission of the HEARTBEAT
  * chunk to the destination address is successful.
  *
@@ -187,11 +188,11 @@ DECLARE_PRIMITIVE(REQUESTHEARTBEAT);
 /* ADDIP
 * 3.1.1 Address Configuration Change Chunk (ASCONF)
 *
-* This chunk is used to communicate to the remote endpoint one of the
+* This chunk is used to communicate to the remote endpoपूर्णांक one of the
 * configuration change requests that MUST be acknowledged.  The
-* information carried in the ASCONF Chunk uses the form of a
+* inक्रमmation carried in the ASCONF Chunk uses the क्रमm of a
 * Type-Length-Value (TLV), as described in "3.2.1 Optional/
-* Variable-length Parameter Format" in RFC2960 [5], forall variable
+* Variable-length Parameter Format" in RFC2960 [5], क्रमall variable
 * parameters.
 */
 

@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *   ALSA sequencer /proc info
  *   Copyright (c) 1998 by Frank van de Pol <fvdpol@coil.demon.nl>
  */
-#ifndef __SND_SEQ_INFO_H
-#define __SND_SEQ_INFO_H
+#अगर_अघोषित __SND_SEQ_INFO_H
+#घोषणा __SND_SEQ_INFO_H
 
-#include <sound/info.h>
-#include <sound/seq_kernel.h>
+#समावेश <sound/info.h>
+#समावेश <sound/seq_kernel.h>
 
-void snd_seq_info_clients_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer);
-void snd_seq_info_timer_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer);
-void snd_seq_info_queues_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer);
+व्योम snd_seq_info_clients_पढ़ो(काष्ठा snd_info_entry *entry, काष्ठा snd_info_buffer *buffer);
+व्योम snd_seq_info_समयr_पढ़ो(काष्ठा snd_info_entry *entry, काष्ठा snd_info_buffer *buffer);
+व्योम snd_seq_info_queues_पढ़ो(काष्ठा snd_info_entry *entry, काष्ठा snd_info_buffer *buffer);
 
 
-#ifdef CONFIG_SND_PROC_FS
-int snd_seq_info_init(void);
-void snd_seq_info_done(void);
-#else
-static inline int snd_seq_info_init(void) { return 0; }
-static inline void snd_seq_info_done(void) {}
-#endif
+#अगर_घोषित CONFIG_SND_PROC_FS
+पूर्णांक snd_seq_info_init(व्योम);
+व्योम snd_seq_info_करोne(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक snd_seq_info_init(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम snd_seq_info_करोne(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2017 Chen Liqin <liqin.chen@sunplusct.com>
- * Copyright (C) 2012 Regents of the University of California
+ * Copyright (C) 2012 Regents of the University of Calअगरornia
  */
 
-#ifndef _ASM_RISCV_CACHE_H
-#define _ASM_RISCV_CACHE_H
+#अगर_अघोषित _ASM_RISCV_CACHE_H
+#घोषणा _ASM_RISCV_CACHE_H
 
-#define L1_CACHE_SHIFT		6
+#घोषणा L1_CACHE_SHIFT		6
 
-#define L1_CACHE_BYTES		(1 << L1_CACHE_SHIFT)
+#घोषणा L1_CACHE_BYTES		(1 << L1_CACHE_SHIFT)
 
 /*
- * RISC-V requires the stack pointer to be 16-byte aligned, so ensure that
+ * RISC-V requires the stack poपूर्णांकer to be 16-byte aligned, so ensure that
  * the flat loader aligns it accordingly.
  */
-#ifndef CONFIG_MMU
-#define ARCH_SLAB_MINALIGN	16
-#endif
+#अगर_अघोषित CONFIG_MMU
+#घोषणा ARCH_SLAB_MINALIGN	16
+#पूर्ण_अगर
 
-#endif /* _ASM_RISCV_CACHE_H */
+#पूर्ण_अगर /* _ASM_RISCV_CACHE_H */

@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_TCPMSS_H
-#define _XT_TCPMSS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_TCPMSS_H
+#घोषणा _XT_TCPMSS_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct xt_tcpmss_info {
+काष्ठा xt_tcpmss_info अणु
 	__u16 mss;
-};
+पूर्ण;
 
-#define XT_TCPMSS_CLAMP_PMTU 0xffff
+#घोषणा XT_TCPMSS_CLAMP_PMTU 0xffff
 
-#endif /* _XT_TCPMSS_H */
+#पूर्ण_अगर /* _XT_TCPMSS_H */

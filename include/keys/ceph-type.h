@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _KEYS_CEPH_TYPE_H
-#define _KEYS_CEPH_TYPE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _KEYS_CEPH_TYPE_H
+#घोषणा _KEYS_CEPH_TYPE_H
 
-#include <linux/key.h>
+#समावेश <linux/key.h>
 
-extern struct key_type key_type_ceph;
+बाह्य काष्ठा key_type key_type_ceph;
 
-#endif
+#पूर्ण_अगर

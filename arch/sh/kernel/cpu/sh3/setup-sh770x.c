@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * SH3 Setup code for SH7706, SH7707, SH7708, SH7709
+ * SH3 Setup code क्रम SH7706, SH7707, SH7708, SH7709
  *
  *  Copyright (C) 2007  Magnus Damm
  *  Copyright (C) 2009  Paul Mundt
@@ -9,30 +10,30 @@
  *
  *  Copyright (C) 2006  Paul Mundt
  */
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/platform_device.h>
-#include <linux/serial.h>
-#include <linux/serial_sci.h>
-#include <linux/sh_timer.h>
-#include <linux/sh_intc.h>
-#include <cpu/serial.h>
-#include <asm/platform_early.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_sci.h>
+#समावेश <linux/sh_समयr.h>
+#समावेश <linux/sh_पूर्णांकc.h>
+#समावेश <cpu/serial.h>
+#समावेश <यंत्र/platक्रमm_early.h>
 
-enum {
+क्रमागत अणु
 	UNUSED = 0,
 
-	/* interrupt sources */
+	/* पूर्णांकerrupt sources */
 	IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5,
 	PINT07, PINT815,
 	DMAC, SCIF0, SCIF2, SCI, ADC_ADI,
 	LCDC, PCC0, PCC1,
 	TMU0, TMU1, TMU2,
 	RTC, WDT, REF,
-};
+पूर्ण;
 
-static struct intc_vect vectors[] __initdata = {
+अटल काष्ठा पूर्णांकc_vect vectors[] __initdata = अणु
 	INTC_VECT(TMU0, 0x400), INTC_VECT(TMU1, 0x420),
 	INTC_VECT(TMU2, 0x440), INTC_VECT(TMU2, 0x460),
 	INTC_VECT(RTC, 0x480), INTC_VECT(RTC, 0x4a0),
@@ -42,7 +43,7 @@ static struct intc_vect vectors[] __initdata = {
 	INTC_VECT(WDT, 0x560),
 	INTC_VECT(REF, 0x580),
 	INTC_VECT(REF, 0x5a0),
-#if defined(CONFIG_CPU_SUBTYPE_SH7706) || \
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7706) || \
     defined(CONFIG_CPU_SUBTYPE_SH7707) || \
     defined(CONFIG_CPU_SUBTYPE_SH7709)
 	/* IRQ0->5 are handled in setup-sh3.c */
@@ -51,196 +52,196 @@ static struct intc_vect vectors[] __initdata = {
 	INTC_VECT(ADC_ADI, 0x980),
 	INTC_VECT(SCIF2, 0x900), INTC_VECT(SCIF2, 0x920),
 	INTC_VECT(SCIF2, 0x940), INTC_VECT(SCIF2, 0x960),
-#endif
-#if defined(CONFIG_CPU_SUBTYPE_SH7707) || \
+#पूर्ण_अगर
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7707) || \
     defined(CONFIG_CPU_SUBTYPE_SH7709)
 	INTC_VECT(PINT07, 0x700), INTC_VECT(PINT815, 0x720),
 	INTC_VECT(SCIF0, 0x880), INTC_VECT(SCIF0, 0x8a0),
 	INTC_VECT(SCIF0, 0x8c0), INTC_VECT(SCIF0, 0x8e0),
-#endif
-#if defined(CONFIG_CPU_SUBTYPE_SH7707)
+#पूर्ण_अगर
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7707)
 	INTC_VECT(LCDC, 0x9a0),
 	INTC_VECT(PCC0, 0x9c0), INTC_VECT(PCC1, 0x9e0),
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static struct intc_prio_reg prio_registers[] __initdata = {
-	{ 0xfffffee2, 0, 16, 4, /* IPRA */ { TMU0, TMU1, TMU2, RTC } },
-	{ 0xfffffee4, 0, 16, 4, /* IPRB */ { WDT, REF, SCI, 0 } },
-#if defined(CONFIG_CPU_SUBTYPE_SH7706) || \
+अटल काष्ठा पूर्णांकc_prio_reg prio_रेजिस्टरs[] __initdata = अणु
+	अणु 0xfffffee2, 0, 16, 4, /* IPRA */ अणु TMU0, TMU1, TMU2, RTC पूर्ण पूर्ण,
+	अणु 0xfffffee4, 0, 16, 4, /* IPRB */ अणु WDT, REF, SCI, 0 पूर्ण पूर्ण,
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7706) || \
     defined(CONFIG_CPU_SUBTYPE_SH7707) || \
     defined(CONFIG_CPU_SUBTYPE_SH7709)
-	{ 0xa4000016, 0, 16, 4, /* IPRC */ { IRQ3, IRQ2, IRQ1, IRQ0 } },
-	{ 0xa4000018, 0, 16, 4, /* IPRD */ { 0, 0, IRQ5, IRQ4 } },
-	{ 0xa400001a, 0, 16, 4, /* IPRE */ { DMAC, 0, SCIF2, ADC_ADI } },
-#endif
-#if defined(CONFIG_CPU_SUBTYPE_SH7707) || \
+	अणु 0xa4000016, 0, 16, 4, /* IPRC */ अणु IRQ3, IRQ2, IRQ1, IRQ0 पूर्ण पूर्ण,
+	अणु 0xa4000018, 0, 16, 4, /* IPRD */ अणु 0, 0, IRQ5, IRQ4 पूर्ण पूर्ण,
+	अणु 0xa400001a, 0, 16, 4, /* IPRE */ अणु DMAC, 0, SCIF2, ADC_ADI पूर्ण पूर्ण,
+#पूर्ण_अगर
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7707) || \
     defined(CONFIG_CPU_SUBTYPE_SH7709)
-	{ 0xa4000018, 0, 16, 4, /* IPRD */ { PINT07, PINT815, } },
-	{ 0xa400001a, 0, 16, 4, /* IPRE */ { 0, SCIF0 } },
-#endif
-#if defined(CONFIG_CPU_SUBTYPE_SH7707)
-	{ 0xa400001c, 0, 16, 4, /* IPRF */ { 0, LCDC, PCC0, PCC1, } },
-#endif
-};
+	अणु 0xa4000018, 0, 16, 4, /* IPRD */ अणु PINT07, PINT815, पूर्ण पूर्ण,
+	अणु 0xa400001a, 0, 16, 4, /* IPRE */ अणु 0, SCIF0 पूर्ण पूर्ण,
+#पूर्ण_अगर
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7707)
+	अणु 0xa400001c, 0, 16, 4, /* IPRF */ अणु 0, LCDC, PCC0, PCC1, पूर्ण पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static DECLARE_INTC_DESC(intc_desc, "sh770x", vectors, NULL,
-			 NULL, prio_registers, NULL);
+अटल DECLARE_INTC_DESC(पूर्णांकc_desc, "sh770x", vectors, शून्य,
+			 शून्य, prio_रेजिस्टरs, शून्य);
 
-static struct resource rtc_resources[] = {
-	[0] =	{
+अटल काष्ठा resource rtc_resources[] = अणु
+	[0] =	अणु
 		.start	= 0xfffffec0,
 		.end	= 0xfffffec0 + 0x1e,
 		.flags  = IORESOURCE_IO,
-	},
-	[1] =	{
+	पूर्ण,
+	[1] =	अणु
 		.start	= evt2irq(0x480),
 		.flags  = IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device rtc_device = {
+अटल काष्ठा platक्रमm_device rtc_device = अणु
 	.name		= "sh-rtc",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(rtc_resources),
 	.resource	= rtc_resources,
-};
+पूर्ण;
 
-static struct plat_sci_port scif0_platform_data = {
+अटल काष्ठा plat_sci_port scअगर0_platक्रमm_data = अणु
 	.type		= PORT_SCI,
 	.ops		= &sh770x_sci_port_ops,
-};
+पूर्ण;
 
-static struct resource scif0_resources[] = {
+अटल काष्ठा resource scअगर0_resources[] = अणु
 	DEFINE_RES_MEM(0xfffffe80, 0x10),
 	DEFINE_RES_IRQ(evt2irq(0x4e0)),
-};
+पूर्ण;
 
-static struct platform_device scif0_device = {
+अटल काष्ठा platक्रमm_device scअगर0_device = अणु
 	.name		= "sh-sci",
 	.id		= 0,
-	.resource	= scif0_resources,
-	.num_resources	= ARRAY_SIZE(scif0_resources),
-	.dev		= {
-		.platform_data	= &scif0_platform_data,
-	},
-};
-#if defined(CONFIG_CPU_SUBTYPE_SH7706) || \
+	.resource	= scअगर0_resources,
+	.num_resources	= ARRAY_SIZE(scअगर0_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर0_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7706) || \
     defined(CONFIG_CPU_SUBTYPE_SH7707) || \
     defined(CONFIG_CPU_SUBTYPE_SH7709)
-static struct plat_sci_port scif1_platform_data = {
+अटल काष्ठा plat_sci_port scअगर1_platक्रमm_data = अणु
 	.type		= PORT_SCIF,
 	.ops		= &sh770x_sci_port_ops,
 	.regtype	= SCIx_SH3_SCIF_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif1_resources[] = {
+अटल काष्ठा resource scअगर1_resources[] = अणु
 	DEFINE_RES_MEM(0xa4000150, 0x10),
 	DEFINE_RES_IRQ(evt2irq(0x900)),
-};
+पूर्ण;
 
-static struct platform_device scif1_device = {
+अटल काष्ठा platक्रमm_device scअगर1_device = अणु
 	.name		= "sh-sci",
 	.id		= 1,
-	.resource	= scif1_resources,
-	.num_resources	= ARRAY_SIZE(scif1_resources),
-	.dev		= {
-		.platform_data	= &scif1_platform_data,
-	},
-};
-#endif
-#if defined(CONFIG_CPU_SUBTYPE_SH7707) || \
+	.resource	= scअगर1_resources,
+	.num_resources	= ARRAY_SIZE(scअगर1_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर1_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
+#पूर्ण_अगर
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7707) || \
     defined(CONFIG_CPU_SUBTYPE_SH7709)
-static struct plat_sci_port scif2_platform_data = {
+अटल काष्ठा plat_sci_port scअगर2_platक्रमm_data = अणु
 	.type		= PORT_IRDA,
 	.ops		= &sh770x_sci_port_ops,
-};
+पूर्ण;
 
-static struct resource scif2_resources[] = {
+अटल काष्ठा resource scअगर2_resources[] = अणु
 	DEFINE_RES_MEM(0xa4000140, 0x10),
 	DEFINE_RES_IRQ(evt2irq(0x880)),
-};
+पूर्ण;
 
-static struct platform_device scif2_device = {
+अटल काष्ठा platक्रमm_device scअगर2_device = अणु
 	.name		= "sh-sci",
 	.id		= 2,
-	.resource	= scif2_resources,
-	.num_resources	= ARRAY_SIZE(scif2_resources),
-	.dev		= {
-		.platform_data	= &scif2_platform_data,
-	},
-};
-#endif
+	.resource	= scअगर2_resources,
+	.num_resources	= ARRAY_SIZE(scअगर2_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर2_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
+#पूर्ण_अगर
 
-static struct sh_timer_config tmu0_platform_data = {
+अटल काष्ठा sh_समयr_config पंचांगu0_platक्रमm_data = अणु
 	.channels_mask = 7,
-};
+पूर्ण;
 
-static struct resource tmu0_resources[] = {
+अटल काष्ठा resource पंचांगu0_resources[] = अणु
 	DEFINE_RES_MEM(0xfffffe90, 0x2c),
 	DEFINE_RES_IRQ(evt2irq(0x400)),
 	DEFINE_RES_IRQ(evt2irq(0x420)),
 	DEFINE_RES_IRQ(evt2irq(0x440)),
-};
+पूर्ण;
 
-static struct platform_device tmu0_device = {
+अटल काष्ठा platक्रमm_device पंचांगu0_device = अणु
 	.name		= "sh-tmu-sh3",
 	.id		= 0,
-	.dev = {
-		.platform_data	= &tmu0_platform_data,
-	},
-	.resource	= tmu0_resources,
-	.num_resources	= ARRAY_SIZE(tmu0_resources),
-};
+	.dev = अणु
+		.platक्रमm_data	= &पंचांगu0_platक्रमm_data,
+	पूर्ण,
+	.resource	= पंचांगu0_resources,
+	.num_resources	= ARRAY_SIZE(पंचांगu0_resources),
+पूर्ण;
 
-static struct platform_device *sh770x_devices[] __initdata = {
-	&scif0_device,
-#if defined(CONFIG_CPU_SUBTYPE_SH7706) || \
+अटल काष्ठा platक्रमm_device *sh770x_devices[] __initdata = अणु
+	&scअगर0_device,
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7706) || \
     defined(CONFIG_CPU_SUBTYPE_SH7707) || \
     defined(CONFIG_CPU_SUBTYPE_SH7709)
-	&scif1_device,
-#endif
-#if defined(CONFIG_CPU_SUBTYPE_SH7707) || \
+	&scअगर1_device,
+#पूर्ण_अगर
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7707) || \
     defined(CONFIG_CPU_SUBTYPE_SH7709)
-	&scif2_device,
-#endif
-	&tmu0_device,
+	&scअगर2_device,
+#पूर्ण_अगर
+	&पंचांगu0_device,
 	&rtc_device,
-};
+पूर्ण;
 
-static int __init sh770x_devices_setup(void)
-{
-	return platform_add_devices(sh770x_devices,
+अटल पूर्णांक __init sh770x_devices_setup(व्योम)
+अणु
+	वापस platक्रमm_add_devices(sh770x_devices,
 		ARRAY_SIZE(sh770x_devices));
-}
+पूर्ण
 arch_initcall(sh770x_devices_setup);
 
-static struct platform_device *sh770x_early_devices[] __initdata = {
-	&scif0_device,
-#if defined(CONFIG_CPU_SUBTYPE_SH7706) || \
+अटल काष्ठा platक्रमm_device *sh770x_early_devices[] __initdata = अणु
+	&scअगर0_device,
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7706) || \
     defined(CONFIG_CPU_SUBTYPE_SH7707) || \
     defined(CONFIG_CPU_SUBTYPE_SH7709)
-	&scif1_device,
-#endif
-#if defined(CONFIG_CPU_SUBTYPE_SH7707) || \
+	&scअगर1_device,
+#पूर्ण_अगर
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7707) || \
     defined(CONFIG_CPU_SUBTYPE_SH7709)
-	&scif2_device,
-#endif
-	&tmu0_device,
-};
+	&scअगर2_device,
+#पूर्ण_अगर
+	&पंचांगu0_device,
+पूर्ण;
 
-void __init plat_early_device_setup(void)
-{
-	sh_early_platform_add_devices(sh770x_early_devices,
+व्योम __init plat_early_device_setup(व्योम)
+अणु
+	sh_early_platक्रमm_add_devices(sh770x_early_devices,
 				   ARRAY_SIZE(sh770x_early_devices));
-}
+पूर्ण
 
-void __init plat_irq_setup(void)
-{
-	register_intc_controller(&intc_desc);
-#if defined(CONFIG_CPU_SUBTYPE_SH7706) || \
+व्योम __init plat_irq_setup(व्योम)
+अणु
+	रेजिस्टर_पूर्णांकc_controller(&पूर्णांकc_desc);
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7706) || \
     defined(CONFIG_CPU_SUBTYPE_SH7707) || \
     defined(CONFIG_CPU_SUBTYPE_SH7709)
 	plat_irq_setup_sh3();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण

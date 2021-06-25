@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/debugfs.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/debugfs.h>
 
-struct dentry *arch_debugfs_dir;
+काष्ठा dentry *arch_debugfs_dir;
 EXPORT_SYMBOL(arch_debugfs_dir);
 
-static int __init arch_kdebugfs_init(void)
-{
-	arch_debugfs_dir = debugfs_create_dir("sh", NULL);
-	return 0;
-}
+अटल पूर्णांक __init arch_kdebugfs_init(व्योम)
+अणु
+	arch_debugfs_dir = debugfs_create_dir("sh", शून्य);
+	वापस 0;
+पूर्ण
 arch_initcall(arch_kdebugfs_init);

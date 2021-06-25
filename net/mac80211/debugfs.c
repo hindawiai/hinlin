@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * mac80211 debugfs for wireless PHYs
+ * mac80211 debugfs क्रम wireless PHYs
  *
  * Copyright 2007	Johannes Berg <johannes@sipsolutions.net>
  * Copyright 2013-2014  Intel Mobile Communications GmbH
  * Copyright (C) 2018 - 2019, 2021 Intel Corporation
  */
 
-#include <linux/debugfs.h>
-#include <linux/rtnetlink.h>
-#include <linux/vmalloc.h>
-#include "ieee80211_i.h"
-#include "driver-ops.h"
-#include "rate.h"
-#include "debugfs.h"
+#समावेश <linux/debugfs.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश "ieee80211_i.h"
+#समावेश "driver-ops.h"
+#समावेश "rate.h"
+#समावेश "debugfs.h"
 
-#define DEBUGFS_FORMAT_BUFFER_SIZE 100
+#घोषणा DEBUGFS_FORMAT_BUFFER_SIZE 100
 
-int mac80211_format_buffer(char __user *userbuf, size_t count,
-				  loff_t *ppos, char *fmt, ...)
-{
-	va_list args;
-	char buf[DEBUGFS_FORMAT_BUFFER_SIZE];
-	int res;
+पूर्णांक mac80211_क्रमmat_buffer(अक्षर __user *userbuf, माप_प्रकार count,
+				  loff_t *ppos, अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	अक्षर buf[DEBUGFS_FORMAT_BUFFER_SIZE];
+	पूर्णांक res;
 
-	va_start(args, fmt);
-	res = vscnprintf(buf, sizeof(buf), fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	res = vscnम_लिखो(buf, माप(buf), fmt, args);
+	बहु_पूर्ण(args);
 
-	return simple_read_from_buffer(userbuf, count, ppos, buf, res);
-}
+	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, res);
+पूर्ण
 
-#define DEBUGFS_READONLY_FILE_FN(name, fmt, value...)			\
-static ssize_t name## _read(struct file *file, char __user *userbuf,	\
-			    size_t count, loff_t *ppos)			\
-{									\
-	struct ieee80211_local *local = file->private_data;		\
+#घोषणा DEBUGFS_READONLY_खाता_FN(name, fmt, value...)			\
+अटल sमाप_प्रकार name## _पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,	\
+			    माप_प्रकार count, loff_t *ppos)			\
+अणु									\
+	काष्ठा ieee80211_local *local = file->निजी_data;		\
 									\
-	return mac80211_format_buffer(userbuf, count, ppos, 		\
+	वापस mac80211_क्रमmat_buffer(userbuf, count, ppos, 		\
 				      fmt "\n", ##value);		\
-}
+पूर्ण
 
-#define DEBUGFS_READONLY_FILE_OPS(name)			\
-static const struct file_operations name## _ops = {			\
-	.read = name## _read,						\
-	.open = simple_open,						\
+#घोषणा DEBUGFS_READONLY_खाता_OPS(name)			\
+अटल स्थिर काष्ठा file_operations name## _ops = अणु			\
+	.पढ़ो = name## _पढ़ो,						\
+	.खोलो = simple_खोलो,						\
 	.llseek = generic_file_llseek,					\
-};
+पूर्ण;
 
-#define DEBUGFS_READONLY_FILE(name, fmt, value...)		\
-	DEBUGFS_READONLY_FILE_FN(name, fmt, value)		\
-	DEBUGFS_READONLY_FILE_OPS(name)
+#घोषणा DEBUGFS_READONLY_खाता(name, fmt, value...)		\
+	DEBUGFS_READONLY_खाता_FN(name, fmt, value)		\
+	DEBUGFS_READONLY_खाता_OPS(name)
 
-#define DEBUGFS_ADD(name)						\
+#घोषणा DEBUGFS_ADD(name)						\
 	debugfs_create_file(#name, 0400, phyd, local, &name## _ops)
 
-#define DEBUGFS_ADD_MODE(name, mode)					\
+#घोषणा DEBUGFS_ADD_MODE(name, mode)					\
 	debugfs_create_file(#name, mode, phyd, local, &name## _ops);
 
 
-DEBUGFS_READONLY_FILE(hw_conf, "%x",
+DEBUGFS_READONLY_खाता(hw_conf, "%x",
 		      local->hw.conf.flags);
-DEBUGFS_READONLY_FILE(user_power, "%d",
-		      local->user_power_level);
-DEBUGFS_READONLY_FILE(power, "%d",
-		      local->hw.conf.power_level);
-DEBUGFS_READONLY_FILE(total_ps_buffered, "%d",
+DEBUGFS_READONLY_खाता(user_घातer, "%d",
+		      local->user_घातer_level);
+DEBUGFS_READONLY_खाता(घातer, "%d",
+		      local->hw.conf.घातer_level);
+DEBUGFS_READONLY_खाता(total_ps_buffered, "%d",
 		      local->total_ps_buffered);
-DEBUGFS_READONLY_FILE(wep_iv, "%#08x",
+DEBUGFS_READONLY_खाता(wep_iv, "%#08x",
 		      local->wep_iv & 0xffffff);
-DEBUGFS_READONLY_FILE(rate_ctrl_alg, "%s",
+DEBUGFS_READONLY_खाता(rate_ctrl_alg, "%s",
 	local->rate_ctrl ? local->rate_ctrl->ops->name : "hw/driver");
 
-static ssize_t aqm_read(struct file *file,
-			char __user *user_buf,
-			size_t count,
+अटल sमाप_प्रकार aqm_पढ़ो(काष्ठा file *file,
+			अक्षर __user *user_buf,
+			माप_प्रकार count,
 			loff_t *ppos)
-{
-	struct ieee80211_local *local = file->private_data;
-	struct fq *fq = &local->fq;
-	char buf[200];
-	int len = 0;
+अणु
+	काष्ठा ieee80211_local *local = file->निजी_data;
+	काष्ठा fq *fq = &local->fq;
+	अक्षर buf[200];
+	पूर्णांक len = 0;
 
 	spin_lock_bh(&local->fq.lock);
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	len = scnprintf(buf, sizeof(buf),
+	len = scnम_लिखो(buf, माप(buf),
 			"access name value\n"
 			"R fq_flows_cnt %u\n"
 			"R fq_backlog %u\n"
@@ -106,111 +107,111 @@ static ssize_t aqm_read(struct file *file,
 			fq->limit,
 			fq->quantum);
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	spin_unlock_bh(&local->fq.lock);
 
-	return simple_read_from_buffer(user_buf, count, ppos,
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos,
 				       buf, len);
-}
+पूर्ण
 
-static ssize_t aqm_write(struct file *file,
-			 const char __user *user_buf,
-			 size_t count,
+अटल sमाप_प्रकार aqm_ग_लिखो(काष्ठा file *file,
+			 स्थिर अक्षर __user *user_buf,
+			 माप_प्रकार count,
 			 loff_t *ppos)
-{
-	struct ieee80211_local *local = file->private_data;
-	char buf[100];
+अणु
+	काष्ठा ieee80211_local *local = file->निजी_data;
+	अक्षर buf[100];
 
-	if (count >= sizeof(buf))
-		return -EINVAL;
+	अगर (count >= माप(buf))
+		वापस -EINVAL;
 
-	if (copy_from_user(buf, user_buf, count))
-		return -EFAULT;
+	अगर (copy_from_user(buf, user_buf, count))
+		वापस -EFAULT;
 
-	if (count && buf[count - 1] == '\n')
+	अगर (count && buf[count - 1] == '\n')
 		buf[count - 1] = '\0';
-	else
+	अन्यथा
 		buf[count] = '\0';
 
-	if (sscanf(buf, "fq_limit %u", &local->fq.limit) == 1)
-		return count;
-	else if (sscanf(buf, "fq_memory_limit %u", &local->fq.memory_limit) == 1)
-		return count;
-	else if (sscanf(buf, "fq_quantum %u", &local->fq.quantum) == 1)
-		return count;
+	अगर (माला_पूछो(buf, "fq_limit %u", &local->fq.limit) == 1)
+		वापस count;
+	अन्यथा अगर (माला_पूछो(buf, "fq_memory_limit %u", &local->fq.memory_limit) == 1)
+		वापस count;
+	अन्यथा अगर (माला_पूछो(buf, "fq_quantum %u", &local->fq.quantum) == 1)
+		वापस count;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct file_operations aqm_ops = {
-	.write = aqm_write,
-	.read = aqm_read,
-	.open = simple_open,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations aqm_ops = अणु
+	.ग_लिखो = aqm_ग_लिखो,
+	.पढ़ो = aqm_पढ़ो,
+	.खोलो = simple_खोलो,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-static ssize_t airtime_flags_read(struct file *file,
-				  char __user *user_buf,
-				  size_t count, loff_t *ppos)
-{
-	struct ieee80211_local *local = file->private_data;
-	char buf[128] = {}, *pos, *end;
+अटल sमाप_प्रकार airसमय_flags_पढ़ो(काष्ठा file *file,
+				  अक्षर __user *user_buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा ieee80211_local *local = file->निजी_data;
+	अक्षर buf[128] = अणुपूर्ण, *pos, *end;
 
 	pos = buf;
-	end = pos + sizeof(buf) - 1;
+	end = pos + माप(buf) - 1;
 
-	if (local->airtime_flags & AIRTIME_USE_TX)
-		pos += scnprintf(pos, end - pos, "AIRTIME_TX\t(%lx)\n",
+	अगर (local->airसमय_flags & AIRTIME_USE_TX)
+		pos += scnम_लिखो(pos, end - pos, "AIRTIME_TX\t(%lx)\n",
 				 AIRTIME_USE_TX);
-	if (local->airtime_flags & AIRTIME_USE_RX)
-		pos += scnprintf(pos, end - pos, "AIRTIME_RX\t(%lx)\n",
+	अगर (local->airसमय_flags & AIRTIME_USE_RX)
+		pos += scnम_लिखो(pos, end - pos, "AIRTIME_RX\t(%lx)\n",
 				 AIRTIME_USE_RX);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf,
-				       strlen(buf));
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf,
+				       म_माप(buf));
+पूर्ण
 
-static ssize_t airtime_flags_write(struct file *file,
-				   const char __user *user_buf,
-				   size_t count, loff_t *ppos)
-{
-	struct ieee80211_local *local = file->private_data;
-	char buf[16];
+अटल sमाप_प्रकार airसमय_flags_ग_लिखो(काष्ठा file *file,
+				   स्थिर अक्षर __user *user_buf,
+				   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा ieee80211_local *local = file->निजी_data;
+	अक्षर buf[16];
 
-	if (count >= sizeof(buf))
-		return -EINVAL;
+	अगर (count >= माप(buf))
+		वापस -EINVAL;
 
-	if (copy_from_user(buf, user_buf, count))
-		return -EFAULT;
+	अगर (copy_from_user(buf, user_buf, count))
+		वापस -EFAULT;
 
-	if (count && buf[count - 1] == '\n')
+	अगर (count && buf[count - 1] == '\n')
 		buf[count - 1] = '\0';
-	else
+	अन्यथा
 		buf[count] = '\0';
 
-	if (kstrtou16(buf, 0, &local->airtime_flags))
-		return -EINVAL;
+	अगर (kstrtou16(buf, 0, &local->airसमय_flags))
+		वापस -EINVAL;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations airtime_flags_ops = {
-	.write = airtime_flags_write,
-	.read = airtime_flags_read,
-	.open = simple_open,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations airसमय_flags_ops = अणु
+	.ग_लिखो = airसमय_flags_ग_लिखो,
+	.पढ़ो = airसमय_flags_पढ़ो,
+	.खोलो = simple_खोलो,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-static ssize_t aql_txq_limit_read(struct file *file,
-				  char __user *user_buf,
-				  size_t count,
+अटल sमाप_प्रकार aql_txq_limit_पढ़ो(काष्ठा file *file,
+				  अक्षर __user *user_buf,
+				  माप_प्रकार count,
 				  loff_t *ppos)
-{
-	struct ieee80211_local *local = file->private_data;
-	char buf[400];
-	int len = 0;
+अणु
+	काष्ठा ieee80211_local *local = file->निजी_data;
+	अक्षर buf[400];
+	पूर्णांक len = 0;
 
-	len = scnprintf(buf, sizeof(buf),
+	len = scnम_लिखो(buf, माप(buf),
 			"AC	AQL limit low	AQL limit high\n"
 			"VO	%u		%u\n"
 			"VI	%u		%u\n"
@@ -224,36 +225,36 @@ static ssize_t aql_txq_limit_read(struct file *file,
 			local->aql_txq_limit_high[IEEE80211_AC_BE],
 			local->aql_txq_limit_low[IEEE80211_AC_BK],
 			local->aql_txq_limit_high[IEEE80211_AC_BK]);
-	return simple_read_from_buffer(user_buf, count, ppos,
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos,
 				       buf, len);
-}
+पूर्ण
 
-static ssize_t aql_txq_limit_write(struct file *file,
-				   const char __user *user_buf,
-				   size_t count,
+अटल sमाप_प्रकार aql_txq_limit_ग_लिखो(काष्ठा file *file,
+				   स्थिर अक्षर __user *user_buf,
+				   माप_प्रकार count,
 				   loff_t *ppos)
-{
-	struct ieee80211_local *local = file->private_data;
-	char buf[100];
+अणु
+	काष्ठा ieee80211_local *local = file->निजी_data;
+	अक्षर buf[100];
 	u32 ac, q_limit_low, q_limit_high, q_limit_low_old, q_limit_high_old;
-	struct sta_info *sta;
+	काष्ठा sta_info *sta;
 
-	if (count >= sizeof(buf))
-		return -EINVAL;
+	अगर (count >= माप(buf))
+		वापस -EINVAL;
 
-	if (copy_from_user(buf, user_buf, count))
-		return -EFAULT;
+	अगर (copy_from_user(buf, user_buf, count))
+		वापस -EFAULT;
 
-	if (count && buf[count - 1] == '\n')
+	अगर (count && buf[count - 1] == '\n')
 		buf[count - 1] = '\0';
-	else
+	अन्यथा
 		buf[count] = '\0';
 
-	if (sscanf(buf, "%u %u %u", &ac, &q_limit_low, &q_limit_high) != 3)
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%u %u %u", &ac, &q_limit_low, &q_limit_high) != 3)
+		वापस -EINVAL;
 
-	if (ac >= IEEE80211_NUM_ACS)
-		return -EINVAL;
+	अगर (ac >= IEEE80211_NUM_ACS)
+		वापस -EINVAL;
 
 	q_limit_low_old = local->aql_txq_limit_low[ac];
 	q_limit_high_old = local->aql_txq_limit_high[ac];
@@ -262,156 +263,156 @@ static ssize_t aql_txq_limit_write(struct file *file,
 	local->aql_txq_limit_high[ac] = q_limit_high;
 
 	mutex_lock(&local->sta_mtx);
-	list_for_each_entry(sta, &local->sta_list, list) {
+	list_क्रम_each_entry(sta, &local->sta_list, list) अणु
 		/* If a sta has customized queue limits, keep it */
-		if (sta->airtime[ac].aql_limit_low == q_limit_low_old &&
-		    sta->airtime[ac].aql_limit_high == q_limit_high_old) {
-			sta->airtime[ac].aql_limit_low = q_limit_low;
-			sta->airtime[ac].aql_limit_high = q_limit_high;
-		}
-	}
+		अगर (sta->airसमय[ac].aql_limit_low == q_limit_low_old &&
+		    sta->airसमय[ac].aql_limit_high == q_limit_high_old) अणु
+			sta->airसमय[ac].aql_limit_low = q_limit_low;
+			sta->airसमय[ac].aql_limit_high = q_limit_high;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&local->sta_mtx);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations aql_txq_limit_ops = {
-	.write = aql_txq_limit_write,
-	.read = aql_txq_limit_read,
-	.open = simple_open,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations aql_txq_limit_ops = अणु
+	.ग_लिखो = aql_txq_limit_ग_लिखो,
+	.पढ़ो = aql_txq_limit_पढ़ो,
+	.खोलो = simple_खोलो,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-static ssize_t aql_enable_read(struct file *file, char __user *user_buf,
-			       size_t count, loff_t *ppos)
-{
-	char buf[3];
-	int len;
+अटल sमाप_प्रकार aql_enable_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+			       माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर buf[3];
+	पूर्णांक len;
 
-	len = scnprintf(buf, sizeof(buf), "%d\n",
-			!static_key_false(&aql_disable.key));
+	len = scnम_लिखो(buf, माप(buf), "%d\n",
+			!अटल_key_false(&aql_disable.key));
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
+पूर्ण
 
-static ssize_t aql_enable_write(struct file *file, const char __user *user_buf,
-				size_t count, loff_t *ppos)
-{
-	bool aql_disabled = static_key_false(&aql_disable.key);
-	char buf[3];
-	size_t len;
+अटल sमाप_प्रकार aql_enable_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	bool aql_disabled = अटल_key_false(&aql_disable.key);
+	अक्षर buf[3];
+	माप_प्रकार len;
 
-	if (count > sizeof(buf))
-		return -EINVAL;
+	अगर (count > माप(buf))
+		वापस -EINVAL;
 
-	if (copy_from_user(buf, user_buf, count))
-		return -EFAULT;
+	अगर (copy_from_user(buf, user_buf, count))
+		वापस -EFAULT;
 
-	buf[sizeof(buf) - 1] = '\0';
-	len = strlen(buf);
-	if (len > 0 && buf[len - 1] == '\n')
+	buf[माप(buf) - 1] = '\0';
+	len = म_माप(buf);
+	अगर (len > 0 && buf[len - 1] == '\n')
 		buf[len - 1] = 0;
 
-	if (buf[0] == '0' && buf[1] == '\0') {
-		if (!aql_disabled)
-			static_branch_inc(&aql_disable);
-	} else if (buf[0] == '1' && buf[1] == '\0') {
-		if (aql_disabled)
-			static_branch_dec(&aql_disable);
-	} else {
-		return -EINVAL;
-	}
+	अगर (buf[0] == '0' && buf[1] == '\0') अणु
+		अगर (!aql_disabled)
+			अटल_branch_inc(&aql_disable);
+	पूर्ण अन्यथा अगर (buf[0] == '1' && buf[1] == '\0') अणु
+		अगर (aql_disabled)
+			अटल_branch_dec(&aql_disable);
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations aql_enable_ops = {
-	.write = aql_enable_write,
-	.read = aql_enable_read,
-	.open = simple_open,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations aql_enable_ops = अणु
+	.ग_लिखो = aql_enable_ग_लिखो,
+	.पढ़ो = aql_enable_पढ़ो,
+	.खोलो = simple_खोलो,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-static ssize_t force_tx_status_read(struct file *file,
-				    char __user *user_buf,
-				    size_t count,
+अटल sमाप_प्रकार क्रमce_tx_status_पढ़ो(काष्ठा file *file,
+				    अक्षर __user *user_buf,
+				    माप_प्रकार count,
 				    loff_t *ppos)
-{
-	struct ieee80211_local *local = file->private_data;
-	char buf[3];
-	int len = 0;
+अणु
+	काष्ठा ieee80211_local *local = file->निजी_data;
+	अक्षर buf[3];
+	पूर्णांक len = 0;
 
-	len = scnprintf(buf, sizeof(buf), "%d\n", (int)local->force_tx_status);
+	len = scnम_लिखो(buf, माप(buf), "%d\n", (पूर्णांक)local->क्रमce_tx_status);
 
-	return simple_read_from_buffer(user_buf, count, ppos,
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos,
 				       buf, len);
-}
+पूर्ण
 
-static ssize_t force_tx_status_write(struct file *file,
-				     const char __user *user_buf,
-				     size_t count,
+अटल sमाप_प्रकार क्रमce_tx_status_ग_लिखो(काष्ठा file *file,
+				     स्थिर अक्षर __user *user_buf,
+				     माप_प्रकार count,
 				     loff_t *ppos)
-{
-	struct ieee80211_local *local = file->private_data;
-	char buf[3];
+अणु
+	काष्ठा ieee80211_local *local = file->निजी_data;
+	अक्षर buf[3];
 
-	if (count >= sizeof(buf))
-		return -EINVAL;
+	अगर (count >= माप(buf))
+		वापस -EINVAL;
 
-	if (copy_from_user(buf, user_buf, count))
-		return -EFAULT;
+	अगर (copy_from_user(buf, user_buf, count))
+		वापस -EFAULT;
 
-	if (count && buf[count - 1] == '\n')
+	अगर (count && buf[count - 1] == '\n')
 		buf[count - 1] = '\0';
-	else
+	अन्यथा
 		buf[count] = '\0';
 
-	if (buf[0] == '0' && buf[1] == '\0')
-		local->force_tx_status = 0;
-	else if (buf[0] == '1' && buf[1] == '\0')
-		local->force_tx_status = 1;
-	else
-		return -EINVAL;
+	अगर (buf[0] == '0' && buf[1] == '\0')
+		local->क्रमce_tx_status = 0;
+	अन्यथा अगर (buf[0] == '1' && buf[1] == '\0')
+		local->क्रमce_tx_status = 1;
+	अन्यथा
+		वापस -EINVAL;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations force_tx_status_ops = {
-	.write = force_tx_status_write,
-	.read = force_tx_status_read,
-	.open = simple_open,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations क्रमce_tx_status_ops = अणु
+	.ग_लिखो = क्रमce_tx_status_ग_लिखो,
+	.पढ़ो = क्रमce_tx_status_पढ़ो,
+	.खोलो = simple_खोलो,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-#ifdef CONFIG_PM
-static ssize_t reset_write(struct file *file, const char __user *user_buf,
-			   size_t count, loff_t *ppos)
-{
-	struct ieee80211_local *local = file->private_data;
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल sमाप_प्रकार reset_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
+			   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा ieee80211_local *local = file->निजी_data;
+	पूर्णांक ret;
 
 	rtnl_lock();
 	wiphy_lock(local->hw.wiphy);
-	__ieee80211_suspend(&local->hw, NULL);
+	__ieee80211_suspend(&local->hw, शून्य);
 	ret = __ieee80211_resume(&local->hw);
 	wiphy_unlock(local->hw.wiphy);
 
-	if (ret)
-		cfg80211_shutdown_all_interfaces(local->hw.wiphy);
+	अगर (ret)
+		cfg80211_shutकरोwn_all_पूर्णांकerfaces(local->hw.wiphy);
 
 	rtnl_unlock();
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations reset_ops = {
-	.write = reset_write,
-	.open = simple_open,
+अटल स्थिर काष्ठा file_operations reset_ops = अणु
+	.ग_लिखो = reset_ग_लिखो,
+	.खोलो = simple_खोलो,
 	.llseek = noop_llseek,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static const char *hw_flag_names[] = {
-#define FLAG(F)	[IEEE80211_HW_##F] = #F
+अटल स्थिर अक्षर *hw_flag_names[] = अणु
+#घोषणा FLAG(F)	[IEEE80211_HW_##F] = #F
 	FLAG(HAS_RATE_CONTROL),
 	FLAG(RX_INCLUDES_FCS),
 	FLAG(HOST_BROADCAST_PS_BUFFERING),
@@ -421,7 +422,7 @@ static const char *hw_flag_names[] = {
 	FLAG(SPECTRUM_MGMT),
 	FLAG(AMPDU_AGGREGATION),
 	FLAG(SUPPORTS_PS),
-	FLAG(PS_NULLFUNC_STACK),
+	FLAG(PS_शून्यFUNC_STACK),
 	FLAG(SUPPORTS_DYNAMIC_PS),
 	FLAG(MFP_CAPABLE),
 	FLAG(WANT_MONITOR_VIF),
@@ -464,153 +465,153 @@ static const char *hw_flag_names[] = {
 	FLAG(SUPPORTS_TX_ENCAP_OFFLOAD),
 	FLAG(SUPPORTS_RX_DECAP_OFFLOAD),
 	FLAG(SUPPORTS_CONC_MON_RX_DECAP),
-#undef FLAG
-};
+#अघोषित FLAG
+पूर्ण;
 
-static ssize_t hwflags_read(struct file *file, char __user *user_buf,
-			    size_t count, loff_t *ppos)
-{
-	struct ieee80211_local *local = file->private_data;
-	size_t bufsz = 30 * NUM_IEEE80211_HW_FLAGS;
-	char *buf = kzalloc(bufsz, GFP_KERNEL);
-	char *pos = buf, *end = buf + bufsz - 1;
-	ssize_t rv;
-	int i;
+अटल sमाप_प्रकार hwflags_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+			    माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा ieee80211_local *local = file->निजी_data;
+	माप_प्रकार bufsz = 30 * NUM_IEEE80211_HW_FLAGS;
+	अक्षर *buf = kzalloc(bufsz, GFP_KERNEL);
+	अक्षर *pos = buf, *end = buf + bufsz - 1;
+	sमाप_प्रकार rv;
+	पूर्णांक i;
 
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	/* fail compilation if somebody adds or removes
+	/* fail compilation अगर somebody adds or हटाओs
 	 * a flag without updating the name array above
 	 */
 	BUILD_BUG_ON(ARRAY_SIZE(hw_flag_names) != NUM_IEEE80211_HW_FLAGS);
 
-	for (i = 0; i < NUM_IEEE80211_HW_FLAGS; i++) {
-		if (test_bit(i, local->hw.flags))
-			pos += scnprintf(pos, end - pos, "%s\n",
+	क्रम (i = 0; i < NUM_IEEE80211_HW_FLAGS; i++) अणु
+		अगर (test_bit(i, local->hw.flags))
+			pos += scnम_लिखो(pos, end - pos, "%s\n",
 					 hw_flag_names[i]);
-	}
+	पूर्ण
 
-	rv = simple_read_from_buffer(user_buf, count, ppos, buf, strlen(buf));
-	kfree(buf);
-	return rv;
-}
+	rv = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, म_माप(buf));
+	kमुक्त(buf);
+	वापस rv;
+पूर्ण
 
-static ssize_t misc_read(struct file *file, char __user *user_buf,
-			 size_t count, loff_t *ppos)
-{
-	struct ieee80211_local *local = file->private_data;
-	/* Max len of each line is 16 characters, plus 9 for 'pending:\n' */
-	size_t bufsz = IEEE80211_MAX_QUEUES * 16 + 9;
-	char *buf;
-	char *pos, *end;
-	ssize_t rv;
-	int i;
-	int ln;
+अटल sमाप_प्रकार misc_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+			 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा ieee80211_local *local = file->निजी_data;
+	/* Max len of each line is 16 अक्षरacters, plus 9 क्रम 'pending:\n' */
+	माप_प्रकार bufsz = IEEE80211_MAX_QUEUES * 16 + 9;
+	अक्षर *buf;
+	अक्षर *pos, *end;
+	sमाप_प्रकार rv;
+	पूर्णांक i;
+	पूर्णांक ln;
 
 	buf = kzalloc(bufsz, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	pos = buf;
 	end = buf + bufsz - 1;
 
-	pos += scnprintf(pos, end - pos, "pending:\n");
+	pos += scnम_लिखो(pos, end - pos, "pending:\n");
 
-	for (i = 0; i < IEEE80211_MAX_QUEUES; i++) {
+	क्रम (i = 0; i < IEEE80211_MAX_QUEUES; i++) अणु
 		ln = skb_queue_len(&local->pending[i]);
-		pos += scnprintf(pos, end - pos, "[%i] %d\n",
+		pos += scnम_लिखो(pos, end - pos, "[%i] %d\n",
 				 i, ln);
-	}
+	पूर्ण
 
-	rv = simple_read_from_buffer(user_buf, count, ppos, buf, strlen(buf));
-	kfree(buf);
-	return rv;
-}
+	rv = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, म_माप(buf));
+	kमुक्त(buf);
+	वापस rv;
+पूर्ण
 
-static ssize_t queues_read(struct file *file, char __user *user_buf,
-			   size_t count, loff_t *ppos)
-{
-	struct ieee80211_local *local = file->private_data;
-	unsigned long flags;
-	char buf[IEEE80211_MAX_QUEUES * 20];
-	int q, res = 0;
+अटल sमाप_प्रकार queues_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+			   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा ieee80211_local *local = file->निजी_data;
+	अचिन्हित दीर्घ flags;
+	अक्षर buf[IEEE80211_MAX_QUEUES * 20];
+	पूर्णांक q, res = 0;
 
 	spin_lock_irqsave(&local->queue_stop_reason_lock, flags);
-	for (q = 0; q < local->hw.queues; q++)
-		res += sprintf(buf + res, "%02d: %#.8lx/%d\n", q,
+	क्रम (q = 0; q < local->hw.queues; q++)
+		res += प्र_लिखो(buf + res, "%02d: %#.8lx/%d\n", q,
 				local->queue_stop_reasons[q],
 				skb_queue_len(&local->pending[q]));
 	spin_unlock_irqrestore(&local->queue_stop_reason_lock, flags);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, res);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, res);
+पूर्ण
 
-DEBUGFS_READONLY_FILE_OPS(hwflags);
-DEBUGFS_READONLY_FILE_OPS(queues);
-DEBUGFS_READONLY_FILE_OPS(misc);
+DEBUGFS_READONLY_खाता_OPS(hwflags);
+DEBUGFS_READONLY_खाता_OPS(queues);
+DEBUGFS_READONLY_खाता_OPS(misc);
 
 /* statistics stuff */
 
-static ssize_t format_devstat_counter(struct ieee80211_local *local,
-	char __user *userbuf,
-	size_t count, loff_t *ppos,
-	int (*printvalue)(struct ieee80211_low_level_stats *stats, char *buf,
-			  int buflen))
-{
-	struct ieee80211_low_level_stats stats;
-	char buf[20];
-	int res;
+अटल sमाप_प्रकार क्रमmat_devstat_counter(काष्ठा ieee80211_local *local,
+	अक्षर __user *userbuf,
+	माप_प्रकार count, loff_t *ppos,
+	पूर्णांक (*prपूर्णांकvalue)(काष्ठा ieee80211_low_level_stats *stats, अक्षर *buf,
+			  पूर्णांक buflen))
+अणु
+	काष्ठा ieee80211_low_level_stats stats;
+	अक्षर buf[20];
+	पूर्णांक res;
 
 	rtnl_lock();
 	res = drv_get_stats(local, &stats);
 	rtnl_unlock();
-	if (res)
-		return res;
-	res = printvalue(&stats, buf, sizeof(buf));
-	return simple_read_from_buffer(userbuf, count, ppos, buf, res);
-}
+	अगर (res)
+		वापस res;
+	res = prपूर्णांकvalue(&stats, buf, माप(buf));
+	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, res);
+पूर्ण
 
-#define DEBUGFS_DEVSTATS_FILE(name)					\
-static int print_devstats_##name(struct ieee80211_low_level_stats *stats,\
-				 char *buf, int buflen)			\
-{									\
-	return scnprintf(buf, buflen, "%u\n", stats->name);		\
-}									\
-static ssize_t stats_ ##name## _read(struct file *file,			\
-				     char __user *userbuf,		\
-				     size_t count, loff_t *ppos)	\
-{									\
-	return format_devstat_counter(file->private_data,		\
+#घोषणा DEBUGFS_DEVSTATS_खाता(name)					\
+अटल पूर्णांक prपूर्णांक_devstats_##name(काष्ठा ieee80211_low_level_stats *stats,\
+				 अक्षर *buf, पूर्णांक buflen)			\
+अणु									\
+	वापस scnम_लिखो(buf, buflen, "%u\n", stats->name);		\
+पूर्ण									\
+अटल sमाप_प्रकार stats_ ##name## _पढ़ो(काष्ठा file *file,			\
+				     अक्षर __user *userbuf,		\
+				     माप_प्रकार count, loff_t *ppos)	\
+अणु									\
+	वापस क्रमmat_devstat_counter(file->निजी_data,		\
 				      userbuf,				\
 				      count,				\
 				      ppos,				\
-				      print_devstats_##name);		\
-}									\
+				      prपूर्णांक_devstats_##name);		\
+पूर्ण									\
 									\
-static const struct file_operations stats_ ##name## _ops = {		\
-	.read = stats_ ##name## _read,					\
-	.open = simple_open,						\
+अटल स्थिर काष्ठा file_operations stats_ ##name## _ops = अणु		\
+	.पढ़ो = stats_ ##name## _पढ़ो,					\
+	.खोलो = simple_खोलो,						\
 	.llseek = generic_file_llseek,					\
-};
+पूर्ण;
 
-#define DEBUGFS_STATS_ADD(name)					\
+#घोषणा DEBUGFS_STATS_ADD(name)					\
 	debugfs_create_u32(#name, 0400, statsd, &local->name);
-#define DEBUGFS_DEVSTATS_ADD(name)					\
+#घोषणा DEBUGFS_DEVSTATS_ADD(name)					\
 	debugfs_create_file(#name, 0400, statsd, local, &stats_ ##name## _ops);
 
-DEBUGFS_DEVSTATS_FILE(dot11ACKFailureCount);
-DEBUGFS_DEVSTATS_FILE(dot11RTSFailureCount);
-DEBUGFS_DEVSTATS_FILE(dot11FCSErrorCount);
-DEBUGFS_DEVSTATS_FILE(dot11RTSSuccessCount);
+DEBUGFS_DEVSTATS_खाता(करोt11ACKFailureCount);
+DEBUGFS_DEVSTATS_खाता(करोt11RTSFailureCount);
+DEBUGFS_DEVSTATS_खाता(करोt11FCSErrorCount);
+DEBUGFS_DEVSTATS_खाता(करोt11RTSSuccessCount);
 
-void debugfs_hw_add(struct ieee80211_local *local)
-{
-	struct dentry *phyd = local->hw.wiphy->debugfsdir;
-	struct dentry *statsd;
+व्योम debugfs_hw_add(काष्ठा ieee80211_local *local)
+अणु
+	काष्ठा dentry *phyd = local->hw.wiphy->debugfsdir;
+	काष्ठा dentry *statsd;
 
-	if (!phyd)
-		return;
+	अगर (!phyd)
+		वापस;
 
 	local->debugfs.keys = debugfs_create_dir("keys", phyd);
 
@@ -619,20 +620,20 @@ void debugfs_hw_add(struct ieee80211_local *local)
 	DEBUGFS_ADD(rate_ctrl_alg);
 	DEBUGFS_ADD(queues);
 	DEBUGFS_ADD(misc);
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	DEBUGFS_ADD_MODE(reset, 0200);
-#endif
+#पूर्ण_अगर
 	DEBUGFS_ADD(hwflags);
-	DEBUGFS_ADD(user_power);
-	DEBUGFS_ADD(power);
+	DEBUGFS_ADD(user_घातer);
+	DEBUGFS_ADD(घातer);
 	DEBUGFS_ADD(hw_conf);
-	DEBUGFS_ADD_MODE(force_tx_status, 0600);
+	DEBUGFS_ADD_MODE(क्रमce_tx_status, 0600);
 	DEBUGFS_ADD_MODE(aql_enable, 0600);
 
-	if (local->ops->wake_tx_queue)
+	अगर (local->ops->wake_tx_queue)
 		DEBUGFS_ADD_MODE(aqm, 0600);
 
-	DEBUGFS_ADD_MODE(airtime_flags, 0600);
+	DEBUGFS_ADD_MODE(airसमय_flags, 0600);
 
 	DEBUGFS_ADD(aql_txq_limit);
 	debugfs_create_u32("aql_threshold", 0600,
@@ -640,20 +641,20 @@ void debugfs_hw_add(struct ieee80211_local *local)
 
 	statsd = debugfs_create_dir("statistics", phyd);
 
-	/* if the dir failed, don't put all the other things into the root! */
-	if (!statsd)
-		return;
+	/* अगर the dir failed, करोn't put all the other things पूर्णांकo the root! */
+	अगर (!statsd)
+		वापस;
 
-#ifdef CONFIG_MAC80211_DEBUG_COUNTERS
-	DEBUGFS_STATS_ADD(dot11TransmittedFragmentCount);
-	DEBUGFS_STATS_ADD(dot11MulticastTransmittedFrameCount);
-	DEBUGFS_STATS_ADD(dot11FailedCount);
-	DEBUGFS_STATS_ADD(dot11RetryCount);
-	DEBUGFS_STATS_ADD(dot11MultipleRetryCount);
-	DEBUGFS_STATS_ADD(dot11FrameDuplicateCount);
-	DEBUGFS_STATS_ADD(dot11ReceivedFragmentCount);
-	DEBUGFS_STATS_ADD(dot11MulticastReceivedFrameCount);
-	DEBUGFS_STATS_ADD(dot11TransmittedFrameCount);
+#अगर_घोषित CONFIG_MAC80211_DEBUG_COUNTERS
+	DEBUGFS_STATS_ADD(करोt11TransmittedFragmentCount);
+	DEBUGFS_STATS_ADD(करोt11MulticastTransmittedFrameCount);
+	DEBUGFS_STATS_ADD(करोt11FailedCount);
+	DEBUGFS_STATS_ADD(करोt11RetryCount);
+	DEBUGFS_STATS_ADD(करोt11MultipleRetryCount);
+	DEBUGFS_STATS_ADD(करोt11FrameDuplicateCount);
+	DEBUGFS_STATS_ADD(करोt11ReceivedFragmentCount);
+	DEBUGFS_STATS_ADD(करोt11MulticastReceivedFrameCount);
+	DEBUGFS_STATS_ADD(करोt11TransmittedFrameCount);
 	DEBUGFS_STATS_ADD(tx_handlers_drop);
 	DEBUGFS_STATS_ADD(tx_handlers_queued);
 	DEBUGFS_STATS_ADD(tx_handlers_drop_wep);
@@ -668,9 +669,9 @@ void debugfs_hw_add(struct ieee80211_local *local)
 	DEBUGFS_STATS_ADD(rx_expand_skb_head_defrag);
 	DEBUGFS_STATS_ADD(rx_handlers_fragments);
 	DEBUGFS_STATS_ADD(tx_status_drop);
-#endif
-	DEBUGFS_DEVSTATS_ADD(dot11ACKFailureCount);
-	DEBUGFS_DEVSTATS_ADD(dot11RTSFailureCount);
-	DEBUGFS_DEVSTATS_ADD(dot11FCSErrorCount);
-	DEBUGFS_DEVSTATS_ADD(dot11RTSSuccessCount);
-}
+#पूर्ण_अगर
+	DEBUGFS_DEVSTATS_ADD(करोt11ACKFailureCount);
+	DEBUGFS_DEVSTATS_ADD(करोt11RTSFailureCount);
+	DEBUGFS_DEVSTATS_ADD(करोt11FCSErrorCount);
+	DEBUGFS_DEVSTATS_ADD(करोt11RTSSuccessCount);
+पूर्ण

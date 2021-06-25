@@ -1,152 +1,153 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /******************************************************************************
  *
  *	(C)Copyright 1998,1999 SysKonnect,
- *	a business unit of Schneider & Koch & Co. Datensysteme GmbH.
+ *	a business unit of Schneider & Koch & Co. Datenप्रणालीe GmbH.
  *
- *	See the file "skfddi.c" for further information.
+ *	See the file "skfddi.c" क्रम further inक्रमmation.
  *
- *	The information in this file is provided "AS IS" without warranty.
+ *	The inक्रमmation in this file is provided "AS IS" without warranty.
  *
  ******************************************************************************/
 
-#include "h/types.h"
-#include "h/fddi.h"
-#include "h/smc.h"
-#include "h/smt_p.h"
-#include <linux/bitrev.h>
-#include <linux/kernel.h>
+#समावेश "h/types.h"
+#समावेश "h/fddi.h"
+#समावेश "h/smc.h"
+#समावेश "h/smt_p.h"
+#समावेश <linux/bitrev.h>
+#समावेश <linux/kernel.h>
 
-#define KERNEL
-#include "h/smtstate.h"
+#घोषणा KERNEL
+#समावेश "h/smtstate.h"
 
 /*
  * FC in SMbuf
  */
-#define m_fc(mb)	((mb)->sm_data[0])
+#घोषणा m_fc(mb)	((mb)->sm_data[0])
 
-#define SMT_TID_MAGIC	0x1f0a7b3c
+#घोषणा SMT_TID_MAGIC	0x1f0a7b3c
 
-static const char *const smt_type_name[] = {
+अटल स्थिर अक्षर *स्थिर smt_type_name[] = अणु
 	"SMT_00??", "SMT_INFO", "SMT_02??", "SMT_03??",
 	"SMT_04??", "SMT_05??", "SMT_06??", "SMT_07??",
 	"SMT_08??", "SMT_09??", "SMT_0A??", "SMT_0B??",
 	"SMT_0C??", "SMT_0D??", "SMT_0E??", "SMT_NSA"
-} ;
+पूर्ण ;
 
-static const char *const smt_class_name[] = {
+अटल स्थिर अक्षर *स्थिर smt_class_name[] = अणु
 	"UNKNOWN","NIF","SIF_CONFIG","SIF_OPER","ECF","RAF","RDF",
 	"SRF","PMF_GET","PMF_SET","ESF"
-} ;
+पूर्ण ;
 
-#define LAST_CLASS	(SMT_PMF_SET)
+#घोषणा LAST_CLASS	(SMT_PMF_SET)
 
-static const struct fddi_addr SMT_Unknown = {
-	{ 0,0,0x1f,0,0,0 }
-} ;
+अटल स्थिर काष्ठा fddi_addr SMT_Unknown = अणु
+	अणु 0,0,0x1f,0,0,0 पूर्ण
+पूर्ण ;
 
 /*
  * function prototypes
  */
-#ifdef	LITTLE_ENDIAN
-static int smt_swap_short(u_short s);
-#endif
-static int mac_index(struct s_smc *smc, int mac);
-static int phy_index(struct s_smc *smc, int phy);
-static int mac_con_resource_index(struct s_smc *smc, int mac);
-static int phy_con_resource_index(struct s_smc *smc, int phy);
-static void smt_send_rdf(struct s_smc *smc, SMbuf *rej, int fc, int reason,
-			 int local);
-static void smt_send_nif(struct s_smc *smc, const struct fddi_addr *dest, 
-			 int fc, u_long tid, int type, int local);
-static void smt_send_ecf(struct s_smc *smc, struct fddi_addr *dest, int fc,
-                         u_long tid, int type, int len);
-static void smt_echo_test(struct s_smc *smc, int dna);
-static void smt_send_sif_config(struct s_smc *smc, struct fddi_addr *dest,
-				u_long tid, int local);
-static void smt_send_sif_operation(struct s_smc *smc, struct fddi_addr *dest,
-				   u_long tid, int local);
-#ifdef LITTLE_ENDIAN
-static void smt_string_swap(char *data, const char *format, int len);
-#endif
-static void smt_add_frame_len(SMbuf *mb, int len);
-static void smt_fill_una(struct s_smc *smc, struct smt_p_una *una);
-static void smt_fill_sde(struct s_smc *smc, struct smt_p_sde *sde);
-static void smt_fill_state(struct s_smc *smc, struct smt_p_state *state);
-static void smt_fill_timestamp(struct s_smc *smc, struct smt_p_timestamp *ts);
-static void smt_fill_policy(struct s_smc *smc, struct smt_p_policy *policy);
-static void smt_fill_latency(struct s_smc *smc, struct smt_p_latency *latency);
-static void smt_fill_neighbor(struct s_smc *smc, struct smt_p_neighbor *neighbor);
-static int smt_fill_path(struct s_smc *smc, struct smt_p_path *path);
-static void smt_fill_mac_status(struct s_smc *smc, struct smt_p_mac_status *st);
-static void smt_fill_lem(struct s_smc *smc, struct smt_p_lem *lem, int phy);
-static void smt_fill_version(struct s_smc *smc, struct smt_p_version *vers);
-static void smt_fill_fsc(struct s_smc *smc, struct smt_p_fsc *fsc);
-static void smt_fill_mac_counter(struct s_smc *smc, struct smt_p_mac_counter *mc);
-static void smt_fill_mac_fnc(struct s_smc *smc, struct smt_p_mac_fnc *fnc);
-static void smt_fill_manufacturer(struct s_smc *smc, 
-				  struct smp_p_manufacturer *man);
-static void smt_fill_user(struct s_smc *smc, struct smp_p_user *user);
-static void smt_fill_setcount(struct s_smc *smc, struct smt_p_setcount *setcount);
-static void smt_fill_echo(struct s_smc *smc, struct smt_p_echo *echo, u_long seed,
-			  int len);
+#अगर_घोषित	LITTLE_ENDIAN
+अटल पूर्णांक smt_swap_लघु(u_लघु s);
+#पूर्ण_अगर
+अटल पूर्णांक mac_index(काष्ठा s_smc *smc, पूर्णांक mac);
+अटल पूर्णांक phy_index(काष्ठा s_smc *smc, पूर्णांक phy);
+अटल पूर्णांक mac_con_resource_index(काष्ठा s_smc *smc, पूर्णांक mac);
+अटल पूर्णांक phy_con_resource_index(काष्ठा s_smc *smc, पूर्णांक phy);
+अटल व्योम smt_send_rdf(काष्ठा s_smc *smc, SMbuf *rej, पूर्णांक fc, पूर्णांक reason,
+			 पूर्णांक local);
+अटल व्योम smt_send_nअगर(काष्ठा s_smc *smc, स्थिर काष्ठा fddi_addr *dest, 
+			 पूर्णांक fc, u_दीर्घ tid, पूर्णांक type, पूर्णांक local);
+अटल व्योम smt_send_ecf(काष्ठा s_smc *smc, काष्ठा fddi_addr *dest, पूर्णांक fc,
+                         u_दीर्घ tid, पूर्णांक type, पूर्णांक len);
+अटल व्योम smt_echo_test(काष्ठा s_smc *smc, पूर्णांक dna);
+अटल व्योम smt_send_sअगर_config(काष्ठा s_smc *smc, काष्ठा fddi_addr *dest,
+				u_दीर्घ tid, पूर्णांक local);
+अटल व्योम smt_send_sअगर_operation(काष्ठा s_smc *smc, काष्ठा fddi_addr *dest,
+				   u_दीर्घ tid, पूर्णांक local);
+#अगर_घोषित LITTLE_ENDIAN
+अटल व्योम smt_string_swap(अक्षर *data, स्थिर अक्षर *क्रमmat, पूर्णांक len);
+#पूर्ण_अगर
+अटल व्योम smt_add_frame_len(SMbuf *mb, पूर्णांक len);
+अटल व्योम smt_fill_una(काष्ठा s_smc *smc, काष्ठा smt_p_una *una);
+अटल व्योम smt_fill_sde(काष्ठा s_smc *smc, काष्ठा smt_p_sde *sde);
+अटल व्योम smt_fill_state(काष्ठा s_smc *smc, काष्ठा smt_p_state *state);
+अटल व्योम smt_fill_बारtamp(काष्ठा s_smc *smc, काष्ठा smt_p_बारtamp *ts);
+अटल व्योम smt_fill_policy(काष्ठा s_smc *smc, काष्ठा smt_p_policy *policy);
+अटल व्योम smt_fill_latency(काष्ठा s_smc *smc, काष्ठा smt_p_latency *latency);
+अटल व्योम smt_fill_neighbor(काष्ठा s_smc *smc, काष्ठा smt_p_neighbor *neighbor);
+अटल पूर्णांक smt_fill_path(काष्ठा s_smc *smc, काष्ठा smt_p_path *path);
+अटल व्योम smt_fill_mac_status(काष्ठा s_smc *smc, काष्ठा smt_p_mac_status *st);
+अटल व्योम smt_fill_lem(काष्ठा s_smc *smc, काष्ठा smt_p_lem *lem, पूर्णांक phy);
+अटल व्योम smt_fill_version(काष्ठा s_smc *smc, काष्ठा smt_p_version *vers);
+अटल व्योम smt_fill_fsc(काष्ठा s_smc *smc, काष्ठा smt_p_fsc *fsc);
+अटल व्योम smt_fill_mac_counter(काष्ठा s_smc *smc, काष्ठा smt_p_mac_counter *mc);
+अटल व्योम smt_fill_mac_fnc(काष्ठा s_smc *smc, काष्ठा smt_p_mac_fnc *fnc);
+अटल व्योम smt_fill_manufacturer(काष्ठा s_smc *smc, 
+				  काष्ठा smp_p_manufacturer *man);
+अटल व्योम smt_fill_user(काष्ठा s_smc *smc, काष्ठा smp_p_user *user);
+अटल व्योम smt_fill_setcount(काष्ठा s_smc *smc, काष्ठा smt_p_setcount *setcount);
+अटल व्योम smt_fill_echo(काष्ठा s_smc *smc, काष्ठा smt_p_echo *echo, u_दीर्घ seed,
+			  पूर्णांक len);
 
-static void smt_clear_una_dna(struct s_smc *smc);
-static void smt_clear_old_una_dna(struct s_smc *smc);
-#ifdef	CONCENTRATOR
-static int entity_to_index(void);
-#endif
-static void update_dac(struct s_smc *smc, int report);
-static int div_ratio(u_long upper, u_long lower);
-#ifdef  USE_CAN_ADDR
-static void	hwm_conv_can(struct s_smc *smc, char *data, int len);
-#else
-#define		hwm_conv_can(smc,data,len)
-#endif
+अटल व्योम smt_clear_una_dna(काष्ठा s_smc *smc);
+अटल व्योम smt_clear_old_una_dna(काष्ठा s_smc *smc);
+#अगर_घोषित	CONCENTRATOR
+अटल पूर्णांक entity_to_index(व्योम);
+#पूर्ण_अगर
+अटल व्योम update_dac(काष्ठा s_smc *smc, पूर्णांक report);
+अटल पूर्णांक भाग_ratio(u_दीर्घ upper, u_दीर्घ lower);
+#अगर_घोषित  USE_CAN_ADDR
+अटल व्योम	hwm_conv_can(काष्ठा s_smc *smc, अक्षर *data, पूर्णांक len);
+#अन्यथा
+#घोषणा		hwm_conv_can(smc,data,len)
+#पूर्ण_अगर
 
 
-static inline int is_my_addr(const struct s_smc *smc, 
-			     const struct fddi_addr *addr)
-{
-	return(*(short *)(&addr->a[0]) ==
-		*(short *)(&smc->mib.m[MAC0].fddiMACSMTAddress.a[0])
-	  && *(short *)(&addr->a[2]) ==
-		*(short *)(&smc->mib.m[MAC0].fddiMACSMTAddress.a[2])
-	  && *(short *)(&addr->a[4]) ==
-		*(short *)(&smc->mib.m[MAC0].fddiMACSMTAddress.a[4])) ;
-}
+अटल अंतरभूत पूर्णांक is_my_addr(स्थिर काष्ठा s_smc *smc, 
+			     स्थिर काष्ठा fddi_addr *addr)
+अणु
+	वापस(*(लघु *)(&addr->a[0]) ==
+		*(लघु *)(&smc->mib.m[MAC0].fddiMACSMTAddress.a[0])
+	  && *(लघु *)(&addr->a[2]) ==
+		*(लघु *)(&smc->mib.m[MAC0].fddiMACSMTAddress.a[2])
+	  && *(लघु *)(&addr->a[4]) ==
+		*(लघु *)(&smc->mib.m[MAC0].fddiMACSMTAddress.a[4])) ;
+पूर्ण
 
-static inline int is_broadcast(const struct fddi_addr *addr)
-{
-	return *(u_short *)(&addr->a[0]) == 0xffff &&
-	       *(u_short *)(&addr->a[2]) == 0xffff &&
-	       *(u_short *)(&addr->a[4]) == 0xffff;
-}
+अटल अंतरभूत पूर्णांक is_broadcast(स्थिर काष्ठा fddi_addr *addr)
+अणु
+	वापस *(u_लघु *)(&addr->a[0]) == 0xffff &&
+	       *(u_लघु *)(&addr->a[2]) == 0xffff &&
+	       *(u_लघु *)(&addr->a[4]) == 0xffff;
+पूर्ण
 
-static inline int is_individual(const struct fddi_addr *addr)
-{
-	return !(addr->a[0] & GROUP_ADDR);
-}
+अटल अंतरभूत पूर्णांक is_inभागidual(स्थिर काष्ठा fddi_addr *addr)
+अणु
+	वापस !(addr->a[0] & GROUP_ADDR);
+पूर्ण
 
-static inline int is_equal(const struct fddi_addr *addr1, 
-			   const struct fddi_addr *addr2)
-{
-	return *(u_short *)(&addr1->a[0]) == *(u_short *)(&addr2->a[0]) &&
-	       *(u_short *)(&addr1->a[2]) == *(u_short *)(&addr2->a[2]) &&
-	       *(u_short *)(&addr1->a[4]) == *(u_short *)(&addr2->a[4]);
-}
+अटल अंतरभूत पूर्णांक is_equal(स्थिर काष्ठा fddi_addr *addr1, 
+			   स्थिर काष्ठा fddi_addr *addr2)
+अणु
+	वापस *(u_लघु *)(&addr1->a[0]) == *(u_लघु *)(&addr2->a[0]) &&
+	       *(u_लघु *)(&addr1->a[2]) == *(u_लघु *)(&addr2->a[2]) &&
+	       *(u_लघु *)(&addr1->a[4]) == *(u_लघु *)(&addr2->a[4]);
+पूर्ण
 
 /*
  * list of mandatory paras in frames
  */
-static const u_short plist_nif[] = { SMT_P_UNA,SMT_P_SDE,SMT_P_STATE,0 } ;
+अटल स्थिर u_लघु plist_nअगर[] = अणु SMT_P_UNA,SMT_P_SDE,SMT_P_STATE,0 पूर्ण ;
 
 /*
  * init SMT agent
  */
-void smt_agent_init(struct s_smc *smc)
-{
-	int		i ;
+व्योम smt_agent_init(काष्ठा s_smc *smc)
+अणु
+	पूर्णांक		i ;
 
 	/*
 	 * get MAC address
@@ -159,10 +160,10 @@ void smt_agent_init(struct s_smc *smc)
 	smc->mib.fddiSMTStationId.sid_oem[0] = 0 ;
 	smc->mib.fddiSMTStationId.sid_oem[1] = 0 ;
 	driver_get_bia(smc,&smc->mib.fddiSMTStationId.sid_node) ;
-	for (i = 0 ; i < 6 ; i ++) {
+	क्रम (i = 0 ; i < 6 ; i ++) अणु
 		smc->mib.fddiSMTStationId.sid_node.a[i] =
 			bitrev8(smc->mib.fddiSMTStationId.sid_node.a[i]);
-	}
+	पूर्ण
 	smc->mib.fddiSMTManufacturerData[0] =
 		smc->mib.fddiSMTStationId.sid_node.a[0] ;
 	smc->mib.fddiSMTManufacturerData[1] =
@@ -172,123 +173,123 @@ void smt_agent_init(struct s_smc *smc)
 	smc->sm.smt_tid = 0 ;
 	smc->mib.m[MAC0].fddiMACDupAddressTest = DA_NONE ;
 	smc->mib.m[MAC0].fddiMACUNDA_Flag = FALSE ;
-#ifndef	SLIM_SMT
+#अगर_अघोषित	SLIM_SMT
 	smt_clear_una_dna(smc) ;
 	smt_clear_old_una_dna(smc) ;
-#endif
-	for (i = 0 ; i < SMT_MAX_TEST ; i++)
+#पूर्ण_अगर
+	क्रम (i = 0 ; i < SMT_MAX_TEST ; i++)
 		smc->sm.pend[i] = 0 ;
 	smc->sm.please_reconnect = 0 ;
 	smc->sm.uniq_ticks = 0 ;
-}
+पूर्ण
 
 /*
  * SMT task
- * forever
+ * क्रमever
  *	delay 30 seconds
  *	send NIF
  *	check tvu & tvd
  * end
  */
-void smt_agent_task(struct s_smc *smc)
-{
-	smt_timer_start(smc,&smc->sm.smt_timer, (u_long)1000000L,
+व्योम smt_agent_task(काष्ठा s_smc *smc)
+अणु
+	smt_समयr_start(smc,&smc->sm.smt_समयr, (u_दीर्घ)1000000L,
 		EV_TOKEN(EVENT_SMT,SM_TIMER)) ;
 	DB_SMT("SMT agent task");
-}
+पूर्ण
 
-#ifndef SMT_REAL_TOKEN_CT
-void smt_emulate_token_ct(struct s_smc *smc, int mac_index)
-{
-	u_long	count;
-	u_long	time;
+#अगर_अघोषित SMT_REAL_TOKEN_CT
+व्योम smt_emulate_token_ct(काष्ठा s_smc *smc, पूर्णांक mac_index)
+अणु
+	u_दीर्घ	count;
+	u_दीर्घ	समय;
 
 
-	time = smt_get_time();
-	count =	((time - smc->sm.last_tok_time[mac_index]) *
+	समय = smt_get_समय();
+	count =	((समय - smc->sm.last_tok_समय[mac_index]) *
 					100)/TICKS_PER_SECOND;
 
 	/*
 	 * Only when ring is up we will have a token count. The
-	 * flag is unfortunately a single instance value. This
-	 * doesn't matter now, because we currently have only
+	 * flag is unक्रमtunately a single instance value. This
+	 * करोesn't matter now, because we currently have only
 	 * one MAC instance.
 	 */
-	if (smc->hw.mac_ring_is_up){
+	अगर (smc->hw.mac_ring_is_up)अणु
 		smc->mib.m[mac_index].fddiMACToken_Ct += count;
-	}
+	पूर्ण
 
-	/* Remember current time */
-	smc->sm.last_tok_time[mac_index] = time;
+	/* Remember current समय */
+	smc->sm.last_tok_समय[mac_index] = समय;
 
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*ARGSUSED1*/
-void smt_event(struct s_smc *smc, int event)
-{
-	u_long		time ;
-#ifndef SMT_REAL_TOKEN_CT
-	int		i ;
-#endif
+व्योम smt_event(काष्ठा s_smc *smc, पूर्णांक event)
+अणु
+	u_दीर्घ		समय ;
+#अगर_अघोषित SMT_REAL_TOKEN_CT
+	पूर्णांक		i ;
+#पूर्ण_अगर
 
 
-	if (smc->sm.please_reconnect) {
+	अगर (smc->sm.please_reconnect) अणु
 		smc->sm.please_reconnect -- ;
-		if (smc->sm.please_reconnect == 0) {
-			/* Counted down */
+		अगर (smc->sm.please_reconnect == 0) अणु
+			/* Counted करोwn */
 			queue_event(smc,EVENT_ECM,EC_CONNECT) ;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (event == SM_FAST)
-		return ;
+	अगर (event == SM_FAST)
+		वापस ;
 
 	/*
-	 * timer for periodic cleanup in driver
-	 * reset and start the watchdog (FM2)
-	 * ESS timer
-	 * SBA timer
+	 * समयr क्रम periodic cleanup in driver
+	 * reset and start the watchकरोg (FM2)
+	 * ESS समयr
+	 * SBA समयr
 	 */
-	smt_timer_poll(smc) ;
-	smt_start_watchdog(smc) ;
-#ifndef	SLIM_SMT
-#ifndef BOOT
-#ifdef	ESS
-	ess_timer_poll(smc) ;
-#endif
-#endif
-#ifdef	SBA
-	sba_timer_poll(smc) ;
-#endif
+	smt_समयr_poll(smc) ;
+	smt_start_watchकरोg(smc) ;
+#अगर_अघोषित	SLIM_SMT
+#अगर_अघोषित BOOT
+#अगर_घोषित	ESS
+	ess_समयr_poll(smc) ;
+#पूर्ण_अगर
+#पूर्ण_अगर
+#अगर_घोषित	SBA
+	sba_समयr_poll(smc) ;
+#पूर्ण_अगर
 
 	smt_srf_event(smc,0,0,0) ;
 
-#endif	/* no SLIM_SMT */
+#पूर्ण_अगर	/* no SLIM_SMT */
 
-	time = smt_get_time() ;
+	समय = smt_get_समय() ;
 
-	if (time - smc->sm.smt_last_lem >= TICKS_PER_SECOND*8) {
+	अगर (समय - smc->sm.smt_last_lem >= TICKS_PER_SECOND*8) अणु
 		/*
-		 * Use 8 sec. for the time intervall, it simplifies the
+		 * Use 8 sec. क्रम the समय पूर्णांकervall, it simplअगरies the
 		 * LER estimation.
 		 */
-		struct fddi_mib_m	*mib ;
-		u_long			upper ;
-		u_long			lower ;
-		int			cond ;
-		int			port;
-		struct s_phy		*phy ;
+		काष्ठा fddi_mib_m	*mib ;
+		u_दीर्घ			upper ;
+		u_दीर्घ			lower ;
+		पूर्णांक			cond ;
+		पूर्णांक			port;
+		काष्ठा s_phy		*phy ;
 		/*
 		 * calculate LEM bit error rate
 		 */
 		sm_lem_evaluate(smc) ;
-		smc->sm.smt_last_lem = time ;
+		smc->sm.smt_last_lem = समय ;
 
 		/*
 		 * check conditions
 		 */
-#ifndef	SLIM_SMT
+#अगर_अघोषित	SLIM_SMT
 		mac_update_counter(smc) ;
 		mib = smc->mib.m ;
 		upper =
@@ -297,7 +298,7 @@ void smt_event(struct s_smc *smc, int event)
 		lower =
 		(mib->fddiMACFrame_Ct - mib->fddiMACOld_Frame_Ct) +
 		(mib->fddiMACLost_Ct - mib->fddiMACOld_Lost_Ct) ;
-		mib->fddiMACFrameErrorRatio = div_ratio(upper,lower) ;
+		mib->fddiMACFrameErrorRatio = भाग_ratio(upper,lower) ;
 
 		cond =
 			((!mib->fddiMACFrameErrorThreshold &&
@@ -305,7 +306,7 @@ void smt_event(struct s_smc *smc, int event)
 			(mib->fddiMACFrameErrorRatio >
 			mib->fddiMACFrameErrorThreshold)) ;
 
-		if (cond != mib->fddiMACFrameErrorFlag)
+		अगर (cond != mib->fddiMACFrameErrorFlag)
 			smt_srf_event(smc,SMT_COND_MAC_FRAME_ERROR,
 				INDEX_MAC,cond) ;
 
@@ -314,7 +315,7 @@ void smt_event(struct s_smc *smc, int event)
 		lower =
 		upper +
 		(mib->fddiMACCopied_Ct - mib->fddiMACOld_Copied_Ct) ;
-		mib->fddiMACNotCopiedRatio = div_ratio(upper,lower) ;
+		mib->fddiMACNotCopiedRatio = भाग_ratio(upper,lower) ;
 
 		cond =
 			((!mib->fddiMACNotCopiedThreshold &&
@@ -323,7 +324,7 @@ void smt_event(struct s_smc *smc, int event)
 			(mib->fddiMACNotCopiedRatio >
 			mib->fddiMACNotCopiedThreshold)) ;
 
-		if (cond != mib->fddiMACNotCopiedFlag)
+		अगर (cond != mib->fddiMACNotCopiedFlag)
 			smt_srf_event(smc,SMT_COND_MAC_NOT_COPIED,
 				INDEX_MAC,cond) ;
 
@@ -339,12 +340,12 @@ void smt_event(struct s_smc *smc, int event)
 		/*
 		 * Check port EBError Condition
 		 */
-		for (port = 0; port < NUMPHYS; port ++) {
+		क्रम (port = 0; port < NUMPHYS; port ++) अणु
 			phy = &smc->y[port] ;
 
-			if (!phy->mib->fddiPORTHardwarePresent) {
-				continue;
-			}
+			अगर (!phy->mib->fddiPORTHardwarePresent) अणु
+				जारी;
+			पूर्ण
 
 			cond = (phy->mib->fddiPORTEBError_Ct -
 				phy->mib->fddiPORTOldEBError_Ct > 5) ;
@@ -353,239 +354,239 @@ void smt_event(struct s_smc *smc, int event)
 			 * Set the condition.
 			 */
 			smt_srf_event(smc,SMT_COND_PORT_EB_ERROR,
-				(int) (INDEX_PORT+ phy->np) ,cond) ;
+				(पूर्णांक) (INDEX_PORT+ phy->np) ,cond) ;
 
 			/*
 			 * set old values
 			 */
 			phy->mib->fddiPORTOldEBError_Ct =
 				phy->mib->fddiPORTEBError_Ct ;
-		}
+		पूर्ण
 
-#endif	/* no SLIM_SMT */
-	}
+#पूर्ण_अगर	/* no SLIM_SMT */
+	पूर्ण
 
-#ifndef	SLIM_SMT
+#अगर_अघोषित	SLIM_SMT
 
-	if (time - smc->sm.smt_last_notify >= (u_long)
-		(smc->mib.fddiSMTTT_Notify * TICKS_PER_SECOND) ) {
+	अगर (समय - smc->sm.smt_last_notअगरy >= (u_दीर्घ)
+		(smc->mib.fddiSMTTT_Notअगरy * TICKS_PER_SECOND) ) अणु
 		/*
 		 * we can either send an announcement or a request
 		 * a request will trigger a reply so that we can update
 		 * our dna
 		 * note: same tid must be used until reply is received
 		 */
-		if (!smc->sm.pend[SMT_TID_NIF])
+		अगर (!smc->sm.pend[SMT_TID_NIF])
 			smc->sm.pend[SMT_TID_NIF] = smt_get_tid(smc) ;
-		smt_send_nif(smc,&fddi_broadcast, FC_SMT_NSA,
+		smt_send_nअगर(smc,&fddi_broadcast, FC_SMT_NSA,
 			smc->sm.pend[SMT_TID_NIF], SMT_REQUEST,0) ;
-		smc->sm.smt_last_notify = time ;
-	}
+		smc->sm.smt_last_notअगरy = समय ;
+	पूर्ण
 
 	/*
-	 * check timer
+	 * check समयr
 	 */
-	if (smc->sm.smt_tvu &&
-	    time - smc->sm.smt_tvu > 228*TICKS_PER_SECOND) {
+	अगर (smc->sm.smt_tvu &&
+	    समय - smc->sm.smt_tvu > 228*TICKS_PER_SECOND) अणु
 		DB_SMT("SMT : UNA expired");
 		smc->sm.smt_tvu = 0 ;
 
-		if (!is_equal(&smc->mib.m[MAC0].fddiMACUpstreamNbr,
-			&SMT_Unknown)){
+		अगर (!is_equal(&smc->mib.m[MAC0].fddiMACUpstreamNbr,
+			&SMT_Unknown))अणु
 			/* Do not update unknown address */
 			smc->mib.m[MAC0].fddiMACOldUpstreamNbr=
 				smc->mib.m[MAC0].fddiMACUpstreamNbr ;
-		}
+		पूर्ण
 		smc->mib.m[MAC0].fddiMACUpstreamNbr = SMT_Unknown ;
 		smc->mib.m[MAC0].fddiMACUNDA_Flag = FALSE ;
 		/*
 		 * Make sure the fddiMACUNDA_Flag = FALSE is
-		 * included in the SRF so we don't generate
-		 * a separate SRF for the deassertion of this
+		 * included in the SRF so we करोn't generate
+		 * a separate SRF क्रम the deनिश्चितion of this
 		 * condition
 		 */
 		update_dac(smc,0) ;
 		smt_srf_event(smc, SMT_EVENT_MAC_NEIGHBOR_CHANGE,
 			INDEX_MAC,0) ;
-	}
-	if (smc->sm.smt_tvd &&
-	    time - smc->sm.smt_tvd > 228*TICKS_PER_SECOND) {
+	पूर्ण
+	अगर (smc->sm.smt_tvd &&
+	    समय - smc->sm.smt_tvd > 228*TICKS_PER_SECOND) अणु
 		DB_SMT("SMT : DNA expired");
 		smc->sm.smt_tvd = 0 ;
-		if (!is_equal(&smc->mib.m[MAC0].fddiMACDownstreamNbr,
-			&SMT_Unknown)){
+		अगर (!is_equal(&smc->mib.m[MAC0].fddiMACDownstreamNbr,
+			&SMT_Unknown))अणु
 			/* Do not update unknown address */
 			smc->mib.m[MAC0].fddiMACOldDownstreamNbr=
 				smc->mib.m[MAC0].fddiMACDownstreamNbr ;
-		}
+		पूर्ण
 		smc->mib.m[MAC0].fddiMACDownstreamNbr = SMT_Unknown ;
 		smt_srf_event(smc, SMT_EVENT_MAC_NEIGHBOR_CHANGE,
 			INDEX_MAC,0) ;
-	}
+	पूर्ण
 
-#endif	/* no SLIM_SMT */
+#पूर्ण_अगर	/* no SLIM_SMT */
 
-#ifndef SMT_REAL_TOKEN_CT
+#अगर_अघोषित SMT_REAL_TOKEN_CT
 	/*
 	 * Token counter emulation section. If hardware supports the token
 	 * count, the token counter will be updated in mac_update_counter.
 	 */
-	for (i = MAC0; i < NUMMACS; i++ ){
-		if (time - smc->sm.last_tok_time[i] > 2*TICKS_PER_SECOND ){
+	क्रम (i = MAC0; i < NUMMACS; i++ )अणु
+		अगर (समय - smc->sm.last_tok_समय[i] > 2*TICKS_PER_SECOND )अणु
 			smt_emulate_token_ct( smc, i );
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	smt_timer_start(smc,&smc->sm.smt_timer, (u_long)1000000L,
+	smt_समयr_start(smc,&smc->sm.smt_समयr, (u_दीर्घ)1000000L,
 		EV_TOKEN(EVENT_SMT,SM_TIMER)) ;
-}
+पूर्ण
 
-static int div_ratio(u_long upper, u_long lower)
-{
-	if ((upper<<16L) < upper)
+अटल पूर्णांक भाग_ratio(u_दीर्घ upper, u_दीर्घ lower)
+अणु
+	अगर ((upper<<16L) < upper)
 		upper = 0xffff0000L ;
-	else
+	अन्यथा
 		upper <<= 16L ;
-	if (!lower)
-		return 0;
-	return (int)(upper/lower) ;
-}
+	अगर (!lower)
+		वापस 0;
+	वापस (पूर्णांक)(upper/lower) ;
+पूर्ण
 
-#ifndef	SLIM_SMT
+#अगर_अघोषित	SLIM_SMT
 
 /*
  * receive packet handler
  */
-void smt_received_pack(struct s_smc *smc, SMbuf *mb, int fs)
-/* int fs;  frame status */
-{
-	struct smt_header	*sm ;
-	int			local ;
+व्योम smt_received_pack(काष्ठा s_smc *smc, SMbuf *mb, पूर्णांक fs)
+/* पूर्णांक fs;  frame status */
+अणु
+	काष्ठा smt_header	*sm ;
+	पूर्णांक			local ;
 
-	int			illegal = 0 ;
+	पूर्णांक			illegal = 0 ;
 
-	switch (m_fc(mb)) {
-	case FC_SMT_INFO :
-	case FC_SMT_LAN_LOC :
-	case FC_SMT_LOC :
-	case FC_SMT_NSA :
-		break ;
-	default :
-		smt_free_mbuf(smc,mb) ;
-		return ;
-	}
+	चयन (m_fc(mb)) अणु
+	हाल FC_SMT_INFO :
+	हाल FC_SMT_LAN_LOC :
+	हाल FC_SMT_LOC :
+	हाल FC_SMT_NSA :
+		अवरोध ;
+	शेष :
+		smt_मुक्त_mbuf(smc,mb) ;
+		वापस ;
+	पूर्ण
 
 	smc->mib.m[MAC0].fddiMACSMTCopied_Ct++ ;
-	sm = smtod(mb,struct smt_header *) ;
+	sm = smtod(mb,काष्ठा smt_header *) ;
 	local = ((fs & L_INDICATOR) != 0) ;
-	hwm_conv_can(smc,(char *)sm,12) ;
+	hwm_conv_can(smc,(अक्षर *)sm,12) ;
 
 	/* check destination address */
-	if (is_individual(&sm->smt_dest) && !is_my_addr(smc,&sm->smt_dest)) {
-		smt_free_mbuf(smc,mb) ;
-		return ;
-	}
-#if	0		/* for DUP recognition, do NOT filter them */
+	अगर (is_inभागidual(&sm->smt_dest) && !is_my_addr(smc,&sm->smt_dest)) अणु
+		smt_मुक्त_mbuf(smc,mb) ;
+		वापस ;
+	पूर्ण
+#अगर	0		/* क्रम DUP recognition, करो NOT filter them */
 	/* ignore loop back packets */
-	if (is_my_addr(smc,&sm->smt_source) && !local) {
-		smt_free_mbuf(smc,mb) ;
-		return ;
-	}
-#endif
+	अगर (is_my_addr(smc,&sm->smt_source) && !local) अणु
+		smt_मुक्त_mbuf(smc,mb) ;
+		वापस ;
+	पूर्ण
+#पूर्ण_अगर
 
-	smt_swap_para(sm,(int) mb->sm_len,1) ;
+	smt_swap_para(sm,(पूर्णांक) mb->sm_len,1) ;
 	DB_SMT("SMT : received packet [%s] at 0x%p",
 	       smt_type_name[m_fc(mb) & 0xf], sm);
 	DB_SMT("SMT : version %d, class %s",
 	       sm->smt_version,
 	       smt_class_name[sm->smt_class > LAST_CLASS ? 0 : sm->smt_class]);
 
-#ifdef	SBA
+#अगर_घोषित	SBA
 	/*
-	 * check if NSA frame
+	 * check अगर NSA frame
 	 */
-	if (m_fc(mb) == FC_SMT_NSA && sm->smt_class == SMT_NIF &&
-		(sm->smt_type == SMT_ANNOUNCE || sm->smt_type == SMT_REQUEST)) {
+	अगर (m_fc(mb) == FC_SMT_NSA && sm->smt_class == SMT_NIF &&
+		(sm->smt_type == SMT_ANNOUNCE || sm->smt_type == SMT_REQUEST)) अणु
 			smc->sba.sm = sm ;
 			sba(smc,NIF) ;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
 	 * ignore any packet with NSA and A-indicator set
 	 */
-	if ( (fs & A_INDICATOR) && m_fc(mb) == FC_SMT_NSA) {
+	अगर ( (fs & A_INDICATOR) && m_fc(mb) == FC_SMT_NSA) अणु
 		DB_SMT("SMT : ignoring NSA with A-indicator set from %pM",
 		       &sm->smt_source);
-		smt_free_mbuf(smc,mb) ;
-		return ;
-	}
+		smt_मुक्त_mbuf(smc,mb) ;
+		वापस ;
+	पूर्ण
 
 	/*
 	 * ignore frames with illegal length
 	 */
-	if (((sm->smt_class == SMT_ECF) && (sm->smt_len > SMT_MAX_ECHO_LEN)) ||
-	    ((sm->smt_class != SMT_ECF) && (sm->smt_len > SMT_MAX_INFO_LEN))) {
-		smt_free_mbuf(smc,mb) ;
-		return ;
-	}
+	अगर (((sm->smt_class == SMT_ECF) && (sm->smt_len > SMT_MAX_ECHO_LEN)) ||
+	    ((sm->smt_class != SMT_ECF) && (sm->smt_len > SMT_MAX_INFO_LEN))) अणु
+		smt_मुक्त_mbuf(smc,mb) ;
+		वापस ;
+	पूर्ण
 
 	/*
 	 * check SMT version
 	 */
-	switch (sm->smt_class) {
-	case SMT_NIF :
-	case SMT_SIF_CONFIG :
-	case SMT_SIF_OPER :
-	case SMT_ECF :
-		if (sm->smt_version != SMT_VID)
+	चयन (sm->smt_class) अणु
+	हाल SMT_NIF :
+	हाल SMT_SIF_CONFIG :
+	हाल SMT_SIF_OPER :
+	हाल SMT_ECF :
+		अगर (sm->smt_version != SMT_VID)
 			illegal = 1;
-		break ;
-	default :
-		if (sm->smt_version != SMT_VID_2)
+		अवरोध ;
+	शेष :
+		अगर (sm->smt_version != SMT_VID_2)
 			illegal = 1;
-		break ;
-	}
-	if (illegal) {
+		अवरोध ;
+	पूर्ण
+	अगर (illegal) अणु
 		DB_SMT("SMT : version = %d, dest = %pM",
 		       sm->smt_version, &sm->smt_source);
 		smt_send_rdf(smc,mb,m_fc(mb),SMT_RDF_VERSION,local) ;
-		smt_free_mbuf(smc,mb) ;
-		return ;
-	}
-	if ((sm->smt_len > mb->sm_len - sizeof(struct smt_header)) ||
-	    ((sm->smt_len & 3) && (sm->smt_class != SMT_ECF))) {
+		smt_मुक्त_mbuf(smc,mb) ;
+		वापस ;
+	पूर्ण
+	अगर ((sm->smt_len > mb->sm_len - माप(काष्ठा smt_header)) ||
+	    ((sm->smt_len & 3) && (sm->smt_class != SMT_ECF))) अणु
 		DB_SMT("SMT: info length error, len = %d", sm->smt_len);
 		smt_send_rdf(smc,mb,m_fc(mb),SMT_RDF_LENGTH,local) ;
-		smt_free_mbuf(smc,mb) ;
-		return ;
-	}
-	switch (sm->smt_class) {
-	case SMT_NIF :
-		if (smt_check_para(smc,sm,plist_nif)) {
+		smt_मुक्त_mbuf(smc,mb) ;
+		वापस ;
+	पूर्ण
+	चयन (sm->smt_class) अणु
+	हाल SMT_NIF :
+		अगर (smt_check_para(smc,sm,plist_nअगर)) अणु
 			DB_SMT("SMT: NIF with para problem, ignoring");
-			break ;
-		}
-		switch (sm->smt_type) {
-		case SMT_ANNOUNCE :
-		case SMT_REQUEST :
-			if (!(fs & C_INDICATOR) && m_fc(mb) == FC_SMT_NSA
-				&& is_broadcast(&sm->smt_dest)) {
-				struct smt_p_state	*st ;
+			अवरोध ;
+		पूर्ण
+		चयन (sm->smt_type) अणु
+		हाल SMT_ANNOUNCE :
+		हाल SMT_REQUEST :
+			अगर (!(fs & C_INDICATOR) && m_fc(mb) == FC_SMT_NSA
+				&& is_broadcast(&sm->smt_dest)) अणु
+				काष्ठा smt_p_state	*st ;
 
 				/* set my UNA */
-				if (!is_equal(
+				अगर (!is_equal(
 					&smc->mib.m[MAC0].fddiMACUpstreamNbr,
-					&sm->smt_source)) {
+					&sm->smt_source)) अणु
 					DB_SMT("SMT : updated my UNA = %pM",
 					       &sm->smt_source);
-					if (!is_equal(&smc->mib.m[MAC0].
-					    fddiMACUpstreamNbr,&SMT_Unknown)){
+					अगर (!is_equal(&smc->mib.m[MAC0].
+					    fddiMACUpstreamNbr,&SMT_Unknown))अणु
 					 /* Do not update unknown address */
 					 smc->mib.m[MAC0].fddiMACOldUpstreamNbr=
 					 smc->mib.m[MAC0].fddiMACUpstreamNbr ;
-					}
+					पूर्ण
 
 					smc->mib.m[MAC0].fddiMACUpstreamNbr =
 						sm->smt_source ;
@@ -593,33 +594,33 @@ void smt_received_pack(struct s_smc *smc, SMbuf *mb, int fs)
 						SMT_EVENT_MAC_NEIGHBOR_CHANGE,
 						INDEX_MAC,0) ;
 					smt_echo_test(smc,0) ;
-				}
-				smc->sm.smt_tvu = smt_get_time() ;
-				st = (struct smt_p_state *)
+				पूर्ण
+				smc->sm.smt_tvu = smt_get_समय() ;
+				st = (काष्ठा smt_p_state *)
 					sm_to_para(smc,sm,SMT_P_STATE) ;
-				if (st) {
+				अगर (st) अणु
 					smc->mib.m[MAC0].fddiMACUNDA_Flag =
 					(st->st_dupl_addr & SMT_ST_MY_DUPA) ?
 					TRUE : FALSE ;
 					update_dac(smc,1) ;
-				}
-			}
-			if ((sm->smt_type == SMT_REQUEST) &&
-			    is_individual(&sm->smt_source) &&
+				पूर्ण
+			पूर्ण
+			अगर ((sm->smt_type == SMT_REQUEST) &&
+			    is_inभागidual(&sm->smt_source) &&
 			    ((!(fs & A_INDICATOR) && m_fc(mb) == FC_SMT_NSA) ||
-			     (m_fc(mb) != FC_SMT_NSA))) {
+			     (m_fc(mb) != FC_SMT_NSA))) अणु
 				DB_SMT("SMT : replying to NIF request %pM",
 				       &sm->smt_source);
-				smt_send_nif(smc,&sm->smt_source,
+				smt_send_nअगर(smc,&sm->smt_source,
 					FC_SMT_INFO,
 					sm->smt_tid,
 					SMT_REPLY,local) ;
-			}
-			break ;
-		case SMT_REPLY :
+			पूर्ण
+			अवरोध ;
+		हाल SMT_REPLY :
 			DB_SMT("SMT : received NIF response from %pM",
 			       &sm->smt_source);
-			if (fs & A_INDICATOR) {
+			अगर (fs & A_INDICATOR) अणु
 				smc->sm.pend[SMT_TID_NIF] = 0 ;
 				DB_SMT("SMT : duplicate address");
 				smc->mib.m[MAC0].fddiMACDupAddressTest =
@@ -628,21 +629,21 @@ void smt_received_pack(struct s_smc *smc, SMbuf *mb, int fs)
 				queue_event(smc,EVENT_RMT,RM_DUP_ADDR) ;
 				smc->mib.m[MAC0].fddiMACDA_Flag = TRUE ;
 				update_dac(smc,1) ;
-				break ;
-			}
-			if (sm->smt_tid == smc->sm.pend[SMT_TID_NIF]) {
+				अवरोध ;
+			पूर्ण
+			अगर (sm->smt_tid == smc->sm.pend[SMT_TID_NIF]) अणु
 				smc->sm.pend[SMT_TID_NIF] = 0 ;
 				/* set my DNA */
-				if (!is_equal(
+				अगर (!is_equal(
 					&smc->mib.m[MAC0].fddiMACDownstreamNbr,
-					&sm->smt_source)) {
+					&sm->smt_source)) अणु
 					DB_SMT("SMT : updated my DNA");
-					if (!is_equal(&smc->mib.m[MAC0].
-					 fddiMACDownstreamNbr, &SMT_Unknown)){
+					अगर (!is_equal(&smc->mib.m[MAC0].
+					 fddiMACDownstreamNbr, &SMT_Unknown))अणु
 					 /* Do not update unknown address */
 				smc->mib.m[MAC0].fddiMACOldDownstreamNbr =
 					 smc->mib.m[MAC0].fddiMACDownstreamNbr ;
-					}
+					पूर्ण
 
 					smc->mib.m[MAC0].fddiMACDownstreamNbr =
 						sm->smt_source ;
@@ -650,79 +651,79 @@ void smt_received_pack(struct s_smc *smc, SMbuf *mb, int fs)
 						SMT_EVENT_MAC_NEIGHBOR_CHANGE,
 						INDEX_MAC,0) ;
 					smt_echo_test(smc,1) ;
-				}
+				पूर्ण
 				smc->mib.m[MAC0].fddiMACDA_Flag = FALSE ;
 				update_dac(smc,1) ;
-				smc->sm.smt_tvd = smt_get_time() ;
+				smc->sm.smt_tvd = smt_get_समय() ;
 				smc->mib.m[MAC0].fddiMACDupAddressTest =
 					DA_PASSED ;
-				if (smc->r.dup_addr_test != DA_PASSED) {
+				अगर (smc->r.dup_addr_test != DA_PASSED) अणु
 					smc->r.dup_addr_test = DA_PASSED ;
 					queue_event(smc,EVENT_RMT,RM_DUP_ADDR) ;
-				}
-			}
-			else if (sm->smt_tid ==
-				smc->sm.pend[SMT_TID_NIF_TEST]) {
+				पूर्ण
+			पूर्ण
+			अन्यथा अगर (sm->smt_tid ==
+				smc->sm.pend[SMT_TID_NIF_TEST]) अणु
 				DB_SMT("SMT : NIF test TID ok");
-			}
-			else {
+			पूर्ण
+			अन्यथा अणु
 				DB_SMT("SMT : expected TID %lx, got %x",
 				       smc->sm.pend[SMT_TID_NIF], sm->smt_tid);
-			}
-			break ;
-		default :
+			पूर्ण
+			अवरोध ;
+		शेष :
 			illegal = 2 ;
-			break ;
-		}
-		break ;
-	case SMT_SIF_CONFIG :	/* station information */
-		if (sm->smt_type != SMT_REQUEST)
-			break ;
+			अवरोध ;
+		पूर्ण
+		अवरोध ;
+	हाल SMT_SIF_CONFIG :	/* station inक्रमmation */
+		अगर (sm->smt_type != SMT_REQUEST)
+			अवरोध ;
 		DB_SMT("SMT : replying to SIF Config request from %pM",
 		       &sm->smt_source);
-		smt_send_sif_config(smc,&sm->smt_source,sm->smt_tid,local) ;
-		break ;
-	case SMT_SIF_OPER :	/* station information */
-		if (sm->smt_type != SMT_REQUEST)
-			break ;
+		smt_send_sअगर_config(smc,&sm->smt_source,sm->smt_tid,local) ;
+		अवरोध ;
+	हाल SMT_SIF_OPER :	/* station inक्रमmation */
+		अगर (sm->smt_type != SMT_REQUEST)
+			अवरोध ;
 		DB_SMT("SMT : replying to SIF Operation request from %pM",
 		       &sm->smt_source);
-		smt_send_sif_operation(smc,&sm->smt_source,sm->smt_tid,local) ;
-		break ;
-	case SMT_ECF :		/* echo frame */
-		switch (sm->smt_type) {
-		case SMT_REPLY :
+		smt_send_sअगर_operation(smc,&sm->smt_source,sm->smt_tid,local) ;
+		अवरोध ;
+	हाल SMT_ECF :		/* echo frame */
+		चयन (sm->smt_type) अणु
+		हाल SMT_REPLY :
 			smc->mib.priv.fddiPRIVECF_Reply_Rx++ ;
 			DB_SMT("SMT: received ECF reply from %pM",
 			       &sm->smt_source);
-			if (sm_to_para(smc,sm,SMT_P_ECHODATA) == NULL) {
+			अगर (sm_to_para(smc,sm,SMT_P_ECHODATA) == शून्य) अणु
 				DB_SMT("SMT: ECHODATA missing");
-				break ;
-			}
-			if (sm->smt_tid == smc->sm.pend[SMT_TID_ECF]) {
+				अवरोध ;
+			पूर्ण
+			अगर (sm->smt_tid == smc->sm.pend[SMT_TID_ECF]) अणु
 				DB_SMT("SMT : ECF test TID ok");
-			}
-			else if (sm->smt_tid == smc->sm.pend[SMT_TID_ECF_UNA]) {
+			पूर्ण
+			अन्यथा अगर (sm->smt_tid == smc->sm.pend[SMT_TID_ECF_UNA]) अणु
 				DB_SMT("SMT : ECF test UNA ok");
-			}
-			else if (sm->smt_tid == smc->sm.pend[SMT_TID_ECF_DNA]) {
+			पूर्ण
+			अन्यथा अगर (sm->smt_tid == smc->sm.pend[SMT_TID_ECF_DNA]) अणु
 				DB_SMT("SMT : ECF test DNA ok");
-			}
-			else {
+			पूर्ण
+			अन्यथा अणु
 				DB_SMT("SMT : expected TID %lx, got %x",
 				       smc->sm.pend[SMT_TID_ECF],
 				       sm->smt_tid);
-			}
-			break ;
-		case SMT_REQUEST :
+			पूर्ण
+			अवरोध ;
+		हाल SMT_REQUEST :
 			smc->mib.priv.fddiPRIVECF_Req_Rx++ ;
-			{
-			if (sm->smt_len && !sm_to_para(smc,sm,SMT_P_ECHODATA)) {
+			अणु
+			अगर (sm->smt_len && !sm_to_para(smc,sm,SMT_P_ECHODATA)) अणु
 				DB_SMT("SMT: ECF with para problem,sending RDF");
 				smt_send_rdf(smc,mb,m_fc(mb),SMT_RDF_LENGTH,
 					local) ;
-				break ;
-			}
+				अवरोध ;
+			पूर्ण
 			DB_SMT("SMT - sending ECF reply to %pM",
 			       &sm->smt_source);
 
@@ -732,88 +733,88 @@ void smt_received_pack(struct s_smc *smc, SMbuf *mb, int fs)
 			dump_smt(smc,sm,"ECF REPLY") ;
 			smc->mib.priv.fddiPRIVECF_Reply_Tx++ ;
 			smt_send_frame(smc,mb,FC_SMT_INFO,local) ;
-			return ;		/* DON'T free mbuf */
-			}
-		default :
+			वापस ;		/* DON'T मुक्त mbuf */
+			पूर्ण
+		शेष :
 			illegal = 1 ;
-			break ;
-		}
-		break ;
-#ifndef	BOOT
-	case SMT_RAF :		/* resource allocation */
-#ifdef	ESS
+			अवरोध ;
+		पूर्ण
+		अवरोध ;
+#अगर_अघोषित	BOOT
+	हाल SMT_RAF :		/* resource allocation */
+#अगर_घोषित	ESS
 		DB_ESSN(2, "ESS: RAF frame received");
 		fs = ess_raf_received_pack(smc,mb,sm,fs) ;
-#endif
+#पूर्ण_अगर
 
-#ifdef	SBA
+#अगर_घोषित	SBA
 		DB_SBAN(2,"SBA: RAF frame received\n",0,0) ;
 		sba_raf_received_pack(smc,sm,fs) ;
-#endif
-		break ;
-	case SMT_RDF :		/* request denied */
+#पूर्ण_अगर
+		अवरोध ;
+	हाल SMT_RDF :		/* request denied */
 		smc->mib.priv.fddiPRIVRDF_Rx++ ;
-		break ;
-	case SMT_ESF :		/* extended service - not supported */
-		if (sm->smt_type == SMT_REQUEST) {
+		अवरोध ;
+	हाल SMT_ESF :		/* extended service - not supported */
+		अगर (sm->smt_type == SMT_REQUEST) अणु
 			DB_SMT("SMT - received ESF, sending RDF");
 			smt_send_rdf(smc,mb,m_fc(mb),SMT_RDF_CLASS,local) ;
-		}
-		break ;
-	case SMT_PMF_GET :
-	case SMT_PMF_SET :
-		if (sm->smt_type != SMT_REQUEST)
-			break ;
+		पूर्ण
+		अवरोध ;
+	हाल SMT_PMF_GET :
+	हाल SMT_PMF_SET :
+		अगर (sm->smt_type != SMT_REQUEST)
+			अवरोध ;
 		/* update statistics */
-		if (sm->smt_class == SMT_PMF_GET)
+		अगर (sm->smt_class == SMT_PMF_GET)
 			smc->mib.priv.fddiPRIVPMF_Get_Rx++ ;
-		else
+		अन्यथा
 			smc->mib.priv.fddiPRIVPMF_Set_Rx++ ;
 		/*
 		 * ignore PMF SET with I/G set
 		 */
-		if ((sm->smt_class == SMT_PMF_SET) &&
-			!is_individual(&sm->smt_dest)) {
+		अगर ((sm->smt_class == SMT_PMF_SET) &&
+			!is_inभागidual(&sm->smt_dest)) अणु
 			DB_SMT("SMT: ignoring PMF-SET with I/G set");
-			break ;
-		}
+			अवरोध ;
+		पूर्ण
 		smt_pmf_received_pack(smc,mb, local) ;
-		break ;
-	case SMT_SRF :
+		अवरोध ;
+	हाल SMT_SRF :
 		dump_smt(smc,sm,"SRF received") ;
-		break ;
-	default :
-		if (sm->smt_type != SMT_REQUEST)
-			break ;
+		अवरोध ;
+	शेष :
+		अगर (sm->smt_type != SMT_REQUEST)
+			अवरोध ;
 		/*
 		 * For frames with unknown class:
 		 * we need to send a RDF frame according to 8.1.3.1.1,
-		 * only if it is a REQUEST.
+		 * only अगर it is a REQUEST.
 		 */
 		DB_SMT("SMT : class = %d, send RDF to %pM",
 		       sm->smt_class, &sm->smt_source);
 
 		smt_send_rdf(smc,mb,m_fc(mb),SMT_RDF_CLASS,local) ;
-		break ;
-#endif
-	}
-	if (illegal) {
+		अवरोध ;
+#पूर्ण_अगर
+	पूर्ण
+	अगर (illegal) अणु
 		DB_SMT("SMT: discarding invalid frame, reason = %d", illegal);
-	}
-	smt_free_mbuf(smc,mb) ;
-}
+	पूर्ण
+	smt_मुक्त_mbuf(smc,mb) ;
+पूर्ण
 
-static void update_dac(struct s_smc *smc, int report)
-{
-	int	cond ;
+अटल व्योम update_dac(काष्ठा s_smc *smc, पूर्णांक report)
+अणु
+	पूर्णांक	cond ;
 
 	cond = ( smc->mib.m[MAC0].fddiMACUNDA_Flag |
 		smc->mib.m[MAC0].fddiMACDA_Flag) != 0 ;
-	if (report && (cond != smc->mib.m[MAC0].fddiMACDuplicateAddressCond))
+	अगर (report && (cond != smc->mib.m[MAC0].fddiMACDuplicateAddressCond))
 		smt_srf_event(smc, SMT_COND_MAC_DUP_ADDR,INDEX_MAC,cond) ;
-	else
+	अन्यथा
 		smc->mib.m[MAC0].fddiMACDuplicateAddressCond = cond ;
-}
+पूर्ण
 
 /*
  * send SMT frame
@@ -821,44 +822,44 @@ static void update_dac(struct s_smc *smc, int report)
  *	set station ID
  *	send frame
  */
-void smt_send_frame(struct s_smc *smc, SMbuf *mb, int fc, int local)
+व्योम smt_send_frame(काष्ठा s_smc *smc, SMbuf *mb, पूर्णांक fc, पूर्णांक local)
 /* SMbuf *mb;	buffer to send */
-/* int fc;	FC value */
-{
-	struct smt_header	*sm ;
+/* पूर्णांक fc;	FC value */
+अणु
+	काष्ठा smt_header	*sm ;
 
-	if (!smc->r.sm_ma_avail && !local) {
-		smt_free_mbuf(smc,mb) ;
-		return ;
-	}
-	sm = smtod(mb,struct smt_header *) ;
+	अगर (!smc->r.sm_ma_avail && !local) अणु
+		smt_मुक्त_mbuf(smc,mb) ;
+		वापस ;
+	पूर्ण
+	sm = smtod(mb,काष्ठा smt_header *) ;
 	sm->smt_source = smc->mib.m[MAC0].fddiMACSMTAddress ;
 	sm->smt_sid = smc->mib.fddiSMTStationId ;
 
-	smt_swap_para(sm,(int) mb->sm_len,0) ;		/* swap para & header */
-	hwm_conv_can(smc,(char *)sm,12) ;		/* convert SA and DA */
+	smt_swap_para(sm,(पूर्णांक) mb->sm_len,0) ;		/* swap para & header */
+	hwm_conv_can(smc,(अक्षर *)sm,12) ;		/* convert SA and DA */
 	smc->mib.m[MAC0].fddiMACSMTTransmit_Ct++ ;
 	smt_send_mbuf(smc,mb,local ? FC_SMT_LOC : fc) ;
-}
+पूर्ण
 
 /*
  * generate and send RDF
  */
-static void smt_send_rdf(struct s_smc *smc, SMbuf *rej, int fc, int reason,
-			 int local)
+अटल व्योम smt_send_rdf(काष्ठा s_smc *smc, SMbuf *rej, पूर्णांक fc, पूर्णांक reason,
+			 पूर्णांक local)
 /* SMbuf *rej;	mbuf of offending frame */
-/* int fc;	FC of denied frame */
-/* int reason;	reason code */
-{
+/* पूर्णांक fc;	FC of denied frame */
+/* पूर्णांक reason;	reason code */
+अणु
 	SMbuf	*mb ;
-	struct smt_header	*sm ;	/* header of offending frame */
-	struct smt_rdf	*rdf ;
-	int		len ;
-	int		frame_len ;
+	काष्ठा smt_header	*sm ;	/* header of offending frame */
+	काष्ठा smt_rdf	*rdf ;
+	पूर्णांक		len ;
+	पूर्णांक		frame_len ;
 
-	sm = smtod(rej,struct smt_header *) ;
-	if (sm->smt_type != SMT_REQUEST)
-		return ;
+	sm = smtod(rej,काष्ठा smt_header *) ;
+	अगर (sm->smt_type != SMT_REQUEST)
+		वापस ;
 
 	DB_SMT("SMT: sending RDF to %pM,reason = 0x%x",
 	       &sm->smt_source, reason);
@@ -870,20 +871,20 @@ static void smt_send_rdf(struct s_smc *smc, SMbuf *rej, int fc, int reason,
 	 */
 	frame_len = rej->sm_len ;
 
-	if (!(mb=smt_build_frame(smc,SMT_RDF,SMT_REPLY,sizeof(struct smt_rdf))))
-		return ;
-	rdf = smtod(mb,struct smt_rdf *) ;
+	अगर (!(mb=smt_build_frame(smc,SMT_RDF,SMT_REPLY,माप(काष्ठा smt_rdf))))
+		वापस ;
+	rdf = smtod(mb,काष्ठा smt_rdf *) ;
 	rdf->smt.smt_tid = sm->smt_tid ;		/* use TID from sm */
 	rdf->smt.smt_dest = sm->smt_source ;		/* set dest = source */
 
 	/* set P12 */
 	rdf->reason.para.p_type = SMT_P_REASON ;
-	rdf->reason.para.p_len = sizeof(struct smt_p_reason) - PARA_LEN ;
+	rdf->reason.para.p_len = माप(काष्ठा smt_p_reason) - PARA_LEN ;
 	rdf->reason.rdf_reason = reason ;
 
 	/* set P14 */
 	rdf->version.para.p_type = SMT_P_VERSION ;
-	rdf->version.para.p_len = sizeof(struct smt_p_version) - PARA_LEN ;
+	rdf->version.para.p_len = माप(काष्ठा smt_p_version) - PARA_LEN ;
 	rdf->version.v_pad = 0 ;
 	rdf->version.v_n = 1 ;
 	rdf->version.v_index = 1 ;
@@ -891,12 +892,12 @@ static void smt_send_rdf(struct s_smc *smc, SMbuf *rej, int fc, int reason,
 	rdf->version.v_pad2 = 0 ;
 
 	/* set P13 */
-	if ((unsigned int) frame_len <= SMT_MAX_INFO_LEN - sizeof(*rdf) +
-		2*sizeof(struct smt_header))
+	अगर ((अचिन्हित पूर्णांक) frame_len <= SMT_MAX_INFO_LEN - माप(*rdf) +
+		2*माप(काष्ठा smt_header))
 		len = frame_len ;
-	else
-		len = SMT_MAX_INFO_LEN - sizeof(*rdf) +
-			2*sizeof(struct smt_header) ;
+	अन्यथा
+		len = SMT_MAX_INFO_LEN - माप(*rdf) +
+			2*माप(काष्ठा smt_header) ;
 	/* make length multiple of 4 */
 	len &= ~3 ;
 	rdf->refused.para.p_type = SMT_P_REFUSED ;
@@ -907,74 +908,74 @@ static void smt_send_rdf(struct s_smc *smc, SMbuf *rej, int fc, int reason,
 	/* swap it back */
 	smt_swap_para(sm,frame_len,0) ;
 
-	memcpy((char *) &rdf->refused.ref_header,(char *) sm,len) ;
+	स_नकल((अक्षर *) &rdf->refused.ref_header,(अक्षर *) sm,len) ;
 
-	len -= sizeof(struct smt_header) ;
+	len -= माप(काष्ठा smt_header) ;
 	mb->sm_len += len ;
 	rdf->smt.smt_len += len ;
 
-	dump_smt(smc,(struct smt_header *)rdf,"RDF") ;
+	dump_smt(smc,(काष्ठा smt_header *)rdf,"RDF") ;
 	smc->mib.priv.fddiPRIVRDF_Tx++ ;
 	smt_send_frame(smc,mb,FC_SMT_INFO,local) ;
-}
+पूर्ण
 
 /*
  * generate and send NIF
  */
-static void smt_send_nif(struct s_smc *smc, const struct fddi_addr *dest, 
-			 int fc, u_long tid, int type, int local)
-/* struct fddi_addr *dest;	dest address */
-/* int fc;			frame control */
-/* u_long tid;			transaction id */
-/* int type;			frame type */
-{
-	struct smt_nif	*nif ;
+अटल व्योम smt_send_nअगर(काष्ठा s_smc *smc, स्थिर काष्ठा fddi_addr *dest, 
+			 पूर्णांक fc, u_दीर्घ tid, पूर्णांक type, पूर्णांक local)
+/* काष्ठा fddi_addr *dest;	dest address */
+/* पूर्णांक fc;			frame control */
+/* u_दीर्घ tid;			transaction id */
+/* पूर्णांक type;			frame type */
+अणु
+	काष्ठा smt_nअगर	*nअगर ;
 	SMbuf		*mb ;
 
-	if (!(mb = smt_build_frame(smc,SMT_NIF,type,sizeof(struct smt_nif))))
-		return ;
-	nif = smtod(mb, struct smt_nif *) ;
-	smt_fill_una(smc,&nif->una) ;	/* set UNA */
-	smt_fill_sde(smc,&nif->sde) ;	/* set station descriptor */
-	smt_fill_state(smc,&nif->state) ;	/* set state information */
-#ifdef	SMT6_10
-	smt_fill_fsc(smc,&nif->fsc) ;	/* set frame status cap. */
-#endif
-	nif->smt.smt_dest = *dest ;	/* destination address */
-	nif->smt.smt_tid = tid ;	/* transaction ID */
-	dump_smt(smc,(struct smt_header *)nif,"NIF") ;
+	अगर (!(mb = smt_build_frame(smc,SMT_NIF,type,माप(काष्ठा smt_nअगर))))
+		वापस ;
+	nअगर = smtod(mb, काष्ठा smt_nअगर *) ;
+	smt_fill_una(smc,&nअगर->una) ;	/* set UNA */
+	smt_fill_sde(smc,&nअगर->sde) ;	/* set station descriptor */
+	smt_fill_state(smc,&nअगर->state) ;	/* set state inक्रमmation */
+#अगर_घोषित	SMT6_10
+	smt_fill_fsc(smc,&nअगर->fsc) ;	/* set frame status cap. */
+#पूर्ण_अगर
+	nअगर->smt.smt_dest = *dest ;	/* destination address */
+	nअगर->smt.smt_tid = tid ;	/* transaction ID */
+	dump_smt(smc,(काष्ठा smt_header *)nअगर,"NIF") ;
 	smt_send_frame(smc,mb,fc,local) ;
-}
+पूर्ण
 
-#ifdef	DEBUG
+#अगर_घोषित	DEBUG
 /*
  * send NIF request (test purpose)
  */
-static void smt_send_nif_request(struct s_smc *smc, struct fddi_addr *dest)
-{
+अटल व्योम smt_send_nअगर_request(काष्ठा s_smc *smc, काष्ठा fddi_addr *dest)
+अणु
 	smc->sm.pend[SMT_TID_NIF_TEST] = smt_get_tid(smc) ;
-	smt_send_nif(smc,dest, FC_SMT_INFO, smc->sm.pend[SMT_TID_NIF_TEST],
+	smt_send_nअगर(smc,dest, FC_SMT_INFO, smc->sm.pend[SMT_TID_NIF_TEST],
 		SMT_REQUEST,0) ;
-}
+पूर्ण
 
 /*
  * send ECF request (test purpose)
  */
-static void smt_send_ecf_request(struct s_smc *smc, struct fddi_addr *dest,
-				 int len)
-{
+अटल व्योम smt_send_ecf_request(काष्ठा s_smc *smc, काष्ठा fddi_addr *dest,
+				 पूर्णांक len)
+अणु
 	smc->sm.pend[SMT_TID_ECF] = smt_get_tid(smc) ;
 	smt_send_ecf(smc,dest, FC_SMT_INFO, smc->sm.pend[SMT_TID_ECF],
 		SMT_REQUEST,len) ;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * echo test
  */
-static void smt_echo_test(struct s_smc *smc, int dna)
-{
-	u_long	tid ;
+अटल व्योम smt_echo_test(काष्ठा s_smc *smc, पूर्णांक dna)
+अणु
+	u_दीर्घ	tid ;
 
 	smc->sm.pend[dna ? SMT_TID_ECF_DNA : SMT_TID_ECF_UNA] =
 		tid = smt_get_tid(smc) ;
@@ -982,398 +983,398 @@ static void smt_echo_test(struct s_smc *smc, int dna)
 		&smc->mib.m[MAC0].fddiMACDownstreamNbr :
 		&smc->mib.m[MAC0].fddiMACUpstreamNbr,
 		FC_SMT_INFO,tid, SMT_REQUEST, (SMT_TEST_ECHO_LEN & ~3)-8) ;
-}
+पूर्ण
 
 /*
  * generate and send ECF
  */
-static void smt_send_ecf(struct s_smc *smc, struct fddi_addr *dest, int fc,
-			 u_long tid, int type, int len)
-/* struct fddi_addr *dest;	dest address */
-/* int fc;			frame control */
-/* u_long tid;			transaction id */
-/* int type;			frame type */
-/* int len;			frame length */
-{
-	struct smt_ecf	*ecf ;
+अटल व्योम smt_send_ecf(काष्ठा s_smc *smc, काष्ठा fddi_addr *dest, पूर्णांक fc,
+			 u_दीर्घ tid, पूर्णांक type, पूर्णांक len)
+/* काष्ठा fddi_addr *dest;	dest address */
+/* पूर्णांक fc;			frame control */
+/* u_दीर्घ tid;			transaction id */
+/* पूर्णांक type;			frame type */
+/* पूर्णांक len;			frame length */
+अणु
+	काष्ठा smt_ecf	*ecf ;
 	SMbuf		*mb ;
 
-	if (!(mb = smt_build_frame(smc,SMT_ECF,type,SMT_ECF_LEN + len)))
-		return ;
-	ecf = smtod(mb, struct smt_ecf *) ;
+	अगर (!(mb = smt_build_frame(smc,SMT_ECF,type,SMT_ECF_LEN + len)))
+		वापस ;
+	ecf = smtod(mb, काष्ठा smt_ecf *) ;
 
 	smt_fill_echo(smc,&ecf->ec_echo,tid,len) ;	/* set ECHO */
 	ecf->smt.smt_dest = *dest ;	/* destination address */
 	ecf->smt.smt_tid = tid ;	/* transaction ID */
 	smc->mib.priv.fddiPRIVECF_Req_Tx++ ;
 	smt_send_frame(smc,mb,fc,0) ;
-}
+पूर्ण
 
 /*
  * generate and send SIF config response
  */
 
-static void smt_send_sif_config(struct s_smc *smc, struct fddi_addr *dest,
-				u_long tid, int local)
-/* struct fddi_addr *dest;	dest address */
-/* u_long tid;			transaction id */
-{
-	struct smt_sif_config	*sif ;
+अटल व्योम smt_send_sअगर_config(काष्ठा s_smc *smc, काष्ठा fddi_addr *dest,
+				u_दीर्घ tid, पूर्णांक local)
+/* काष्ठा fddi_addr *dest;	dest address */
+/* u_दीर्घ tid;			transaction id */
+अणु
+	काष्ठा smt_sअगर_config	*sअगर ;
 	SMbuf			*mb ;
-	int			len ;
-	if (!(mb = smt_build_frame(smc,SMT_SIF_CONFIG,SMT_REPLY,
-		SIZEOF_SMT_SIF_CONFIG)))
-		return ;
+	पूर्णांक			len ;
+	अगर (!(mb = smt_build_frame(smc,SMT_SIF_CONFIG,SMT_REPLY,
+		SIZखातापूर्ण_SMT_SIF_CONFIG)))
+		वापस ;
 
-	sif = smtod(mb, struct smt_sif_config *) ;
-	smt_fill_timestamp(smc,&sif->ts) ;	/* set time stamp */
-	smt_fill_sde(smc,&sif->sde) ;		/* set station descriptor */
-	smt_fill_version(smc,&sif->version) ;	/* set version information */
-	smt_fill_state(smc,&sif->state) ;	/* set state information */
-	smt_fill_policy(smc,&sif->policy) ;	/* set station policy */
-	smt_fill_latency(smc,&sif->latency);	/* set station latency */
-	smt_fill_neighbor(smc,&sif->neighbor);	/* set station neighbor */
-	smt_fill_setcount(smc,&sif->setcount) ;	/* set count */
-	len = smt_fill_path(smc,&sif->path);	/* set station path descriptor*/
-	sif->smt.smt_dest = *dest ;		/* destination address */
-	sif->smt.smt_tid = tid ;		/* transaction ID */
+	sअगर = smtod(mb, काष्ठा smt_sअगर_config *) ;
+	smt_fill_बारtamp(smc,&sअगर->ts) ;	/* set समय stamp */
+	smt_fill_sde(smc,&sअगर->sde) ;		/* set station descriptor */
+	smt_fill_version(smc,&sअगर->version) ;	/* set version inक्रमmation */
+	smt_fill_state(smc,&sअगर->state) ;	/* set state inक्रमmation */
+	smt_fill_policy(smc,&sअगर->policy) ;	/* set station policy */
+	smt_fill_latency(smc,&sअगर->latency);	/* set station latency */
+	smt_fill_neighbor(smc,&sअगर->neighbor);	/* set station neighbor */
+	smt_fill_setcount(smc,&sअगर->setcount) ;	/* set count */
+	len = smt_fill_path(smc,&sअगर->path);	/* set station path descriptor*/
+	sअगर->smt.smt_dest = *dest ;		/* destination address */
+	sअगर->smt.smt_tid = tid ;		/* transaction ID */
 	smt_add_frame_len(mb,len) ;		/* adjust length fields */
-	dump_smt(smc,(struct smt_header *)sif,"SIF Configuration Reply") ;
+	dump_smt(smc,(काष्ठा smt_header *)sअगर,"SIF Configuration Reply") ;
 	smt_send_frame(smc,mb,FC_SMT_INFO,local) ;
-}
+पूर्ण
 
 /*
  * generate and send SIF operation response
  */
 
-static void smt_send_sif_operation(struct s_smc *smc, struct fddi_addr *dest,
-				   u_long tid, int local)
-/* struct fddi_addr *dest;	dest address */
-/* u_long tid;			transaction id */
-{
-	struct smt_sif_operation *sif ;
+अटल व्योम smt_send_sअगर_operation(काष्ठा s_smc *smc, काष्ठा fddi_addr *dest,
+				   u_दीर्घ tid, पूर्णांक local)
+/* काष्ठा fddi_addr *dest;	dest address */
+/* u_दीर्घ tid;			transaction id */
+अणु
+	काष्ठा smt_sअगर_operation *sअगर ;
 	SMbuf			*mb ;
-	int			ports ;
-	int			i ;
+	पूर्णांक			ports ;
+	पूर्णांक			i ;
 
 	ports = NUMPHYS ;
-#ifndef	CONCENTRATOR
-	if (smc->s.sas == SMT_SAS)
+#अगर_अघोषित	CONCENTRATOR
+	अगर (smc->s.sas == SMT_SAS)
 		ports = 1 ;
-#endif
+#पूर्ण_अगर
 
-	if (!(mb = smt_build_frame(smc,SMT_SIF_OPER,SMT_REPLY,
-				   struct_size(sif, lem, ports))))
-		return ;
-	sif = smtod(mb, typeof(sif));
-	smt_fill_timestamp(smc,&sif->ts) ;	/* set time stamp */
-	smt_fill_mac_status(smc,&sif->status) ; /* set mac status */
-	smt_fill_mac_counter(smc,&sif->mc) ; /* set mac counter field */
-	smt_fill_mac_fnc(smc,&sif->fnc) ; /* set frame not copied counter */
-	smt_fill_manufacturer(smc,&sif->man) ; /* set manufacturer field */
-	smt_fill_user(smc,&sif->user) ;		/* set user field */
-	smt_fill_setcount(smc,&sif->setcount) ;	/* set count */
+	अगर (!(mb = smt_build_frame(smc,SMT_SIF_OPER,SMT_REPLY,
+				   काष्ठा_size(sअगर, lem, ports))))
+		वापस ;
+	sअगर = smtod(mb, typeof(sअगर));
+	smt_fill_बारtamp(smc,&sअगर->ts) ;	/* set समय stamp */
+	smt_fill_mac_status(smc,&sअगर->status) ; /* set mac status */
+	smt_fill_mac_counter(smc,&sअगर->mc) ; /* set mac counter field */
+	smt_fill_mac_fnc(smc,&sअगर->fnc) ; /* set frame not copied counter */
+	smt_fill_manufacturer(smc,&sअगर->man) ; /* set manufacturer field */
+	smt_fill_user(smc,&sअगर->user) ;		/* set user field */
+	smt_fill_setcount(smc,&sअगर->setcount) ;	/* set count */
 	/*
-	 * set link error mon information
+	 * set link error mon inक्रमmation
 	 */
-	if (ports == 1) {
-		smt_fill_lem(smc,sif->lem,PS) ;
-	}
-	else {
-		for (i = 0 ; i < ports ; i++) {
-			smt_fill_lem(smc,&sif->lem[i],i) ;
-		}
-	}
+	अगर (ports == 1) अणु
+		smt_fill_lem(smc,sअगर->lem,PS) ;
+	पूर्ण
+	अन्यथा अणु
+		क्रम (i = 0 ; i < ports ; i++) अणु
+			smt_fill_lem(smc,&sअगर->lem[i],i) ;
+		पूर्ण
+	पूर्ण
 
-	sif->smt.smt_dest = *dest ;	/* destination address */
-	sif->smt.smt_tid = tid ;	/* transaction ID */
-	dump_smt(smc,(struct smt_header *)sif,"SIF Operation Reply") ;
+	sअगर->smt.smt_dest = *dest ;	/* destination address */
+	sअगर->smt.smt_tid = tid ;	/* transaction ID */
+	dump_smt(smc,(काष्ठा smt_header *)sअगर,"SIF Operation Reply") ;
 	smt_send_frame(smc,mb,FC_SMT_INFO,local) ;
-}
+पूर्ण
 
 /*
  * get and initialize SMT frame
  */
-SMbuf *smt_build_frame(struct s_smc *smc, int class, int type,
-				  int length)
-{
+SMbuf *smt_build_frame(काष्ठा s_smc *smc, पूर्णांक class, पूर्णांक type,
+				  पूर्णांक length)
+अणु
 	SMbuf			*mb ;
-	struct smt_header	*smt ;
+	काष्ठा smt_header	*smt ;
 
-#if	0
-	if (!smc->r.sm_ma_avail) {
-		return 0;
-	}
-#endif
-	if (!(mb = smt_get_mbuf(smc)))
-		return mb;
+#अगर	0
+	अगर (!smc->r.sm_ma_avail) अणु
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर
+	अगर (!(mb = smt_get_mbuf(smc)))
+		वापस mb;
 
 	mb->sm_len = length ;
-	smt = smtod(mb, struct smt_header *) ;
+	smt = smtod(mb, काष्ठा smt_header *) ;
 	smt->smt_dest = fddi_broadcast ; /* set dest = broadcast */
 	smt->smt_class = class ;
 	smt->smt_type = type ;
-	switch (class) {
-	case SMT_NIF :
-	case SMT_SIF_CONFIG :
-	case SMT_SIF_OPER :
-	case SMT_ECF :
+	चयन (class) अणु
+	हाल SMT_NIF :
+	हाल SMT_SIF_CONFIG :
+	हाल SMT_SIF_OPER :
+	हाल SMT_ECF :
 		smt->smt_version = SMT_VID ;
-		break ;
-	default :
+		अवरोध ;
+	शेष :
 		smt->smt_version = SMT_VID_2 ;
-		break ;
-	}
+		अवरोध ;
+	पूर्ण
 	smt->smt_tid = smt_get_tid(smc) ;	/* set transaction ID */
 	smt->smt_pad = 0 ;
-	smt->smt_len = length - sizeof(struct smt_header) ;
-	return mb;
-}
+	smt->smt_len = length - माप(काष्ठा smt_header) ;
+	वापस mb;
+पूर्ण
 
-static void smt_add_frame_len(SMbuf *mb, int len)
-{
-	struct smt_header	*smt ;
+अटल व्योम smt_add_frame_len(SMbuf *mb, पूर्णांक len)
+अणु
+	काष्ठा smt_header	*smt ;
 
-	smt = smtod(mb, struct smt_header *) ;
+	smt = smtod(mb, काष्ठा smt_header *) ;
 	smt->smt_len += len ;
 	mb->sm_len += len ;
-}
+पूर्ण
 
 
 
 /*
  * fill values in UNA parameter
  */
-static void smt_fill_una(struct s_smc *smc, struct smt_p_una *una)
-{
+अटल व्योम smt_fill_una(काष्ठा s_smc *smc, काष्ठा smt_p_una *una)
+अणु
 	SMTSETPARA(una,SMT_P_UNA) ;
 	una->una_pad = 0 ;
 	una->una_node = smc->mib.m[MAC0].fddiMACUpstreamNbr ;
-}
+पूर्ण
 
 /*
  * fill values in SDE parameter
  */
-static void smt_fill_sde(struct s_smc *smc, struct smt_p_sde *sde)
-{
+अटल व्योम smt_fill_sde(काष्ठा s_smc *smc, काष्ठा smt_p_sde *sde)
+अणु
 	SMTSETPARA(sde,SMT_P_SDE) ;
 	sde->sde_non_master = smc->mib.fddiSMTNonMaster_Ct ;
 	sde->sde_master = smc->mib.fddiSMTMaster_Ct ;
 	sde->sde_mac_count = NUMMACS ;		/* only 1 MAC */
-#ifdef	CONCENTRATOR
+#अगर_घोषित	CONCENTRATOR
 	sde->sde_type = SMT_SDE_CONCENTRATOR ;
-#else
+#अन्यथा
 	sde->sde_type = SMT_SDE_STATION ;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*
  * fill in values in station state parameter
  */
-static void smt_fill_state(struct s_smc *smc, struct smt_p_state *state)
-{
-	int	top ;
-	int	twist ;
+अटल व्योम smt_fill_state(काष्ठा s_smc *smc, काष्ठा smt_p_state *state)
+अणु
+	पूर्णांक	top ;
+	पूर्णांक	twist ;
 
 	SMTSETPARA(state,SMT_P_STATE) ;
 	state->st_pad = 0 ;
 
 	/* determine topology */
 	top = 0 ;
-	if (smc->mib.fddiSMTPeerWrapFlag) {
+	अगर (smc->mib.fddiSMTPeerWrapFlag) अणु
 		top |= SMT_ST_WRAPPED ;		/* state wrapped */
-	}
-#ifdef	CONCENTRATOR
-	if (cfm_status_unattached(smc)) {
+	पूर्ण
+#अगर_घोषित	CONCENTRATOR
+	अगर (cfm_status_unattached(smc)) अणु
 		top |= SMT_ST_UNATTACHED ;	/* unattached concentrator */
-	}
-#endif
-	if ((twist = pcm_status_twisted(smc)) & 1) {
+	पूर्ण
+#पूर्ण_अगर
+	अगर ((twist = pcm_status_twisted(smc)) & 1) अणु
 		top |= SMT_ST_TWISTED_A ;	/* twisted cable */
-	}
-	if (twist & 2) {
+	पूर्ण
+	अगर (twist & 2) अणु
 		top |= SMT_ST_TWISTED_B ;	/* twisted cable */
-	}
-#ifdef	OPT_SRF
+	पूर्ण
+#अगर_घोषित	OPT_SRF
 	top |= SMT_ST_SRF ;
-#endif
-	if (pcm_rooted_station(smc))
+#पूर्ण_अगर
+	अगर (pcm_rooted_station(smc))
 		top |= SMT_ST_ROOTED_S ;
-	if (smc->mib.a[0].fddiPATHSbaPayload != 0)
+	अगर (smc->mib.a[0].fddiPATHSbaPayload != 0)
 		top |= SMT_ST_SYNC_SERVICE ;
 	state->st_topology = top ;
 	state->st_dupl_addr =
 		((smc->mib.m[MAC0].fddiMACDA_Flag ? SMT_ST_MY_DUPA : 0 ) |
 		 (smc->mib.m[MAC0].fddiMACUNDA_Flag ? SMT_ST_UNA_DUPA : 0)) ;
-}
+पूर्ण
 
 /*
- * fill values in timestamp parameter
+ * fill values in बारtamp parameter
  */
-static void smt_fill_timestamp(struct s_smc *smc, struct smt_p_timestamp *ts)
-{
+अटल व्योम smt_fill_बारtamp(काष्ठा s_smc *smc, काष्ठा smt_p_बारtamp *ts)
+अणु
 
 	SMTSETPARA(ts,SMT_P_TIMESTAMP) ;
-	smt_set_timestamp(smc,ts->ts_time) ;
-}
+	smt_set_बारtamp(smc,ts->ts_समय) ;
+पूर्ण
 
-void smt_set_timestamp(struct s_smc *smc, u_char *p)
-{
-	u_long	time ;
-	u_long	utime ;
+व्योम smt_set_बारtamp(काष्ठा s_smc *smc, u_अक्षर *p)
+अणु
+	u_दीर्घ	समय ;
+	u_दीर्घ	uसमय ;
 
 	/*
-	 * timestamp is 64 bits long ; resolution is 80 nS
-	 * our clock resolution is 10mS
+	 * बारtamp is 64 bits दीर्घ ; resolution is 80 nS
+	 * our घड़ी resolution is 10mS
 	 * 10mS/80ns = 125000 ~ 2^17 = 131072
 	 */
-	utime = smt_get_time() ;
-	time = utime * 100 ;
-	time /= TICKS_PER_SECOND ;
+	uसमय = smt_get_समय() ;
+	समय = uसमय * 100 ;
+	समय /= TICKS_PER_SECOND ;
 	p[0] = 0 ;
-	p[1] = (u_char)((time>>(8+8+8+8-1)) & 1) ;
-	p[2] = (u_char)(time>>(8+8+8-1)) ;
-	p[3] = (u_char)(time>>(8+8-1)) ;
-	p[4] = (u_char)(time>>(8-1)) ;
-	p[5] = (u_char)(time<<1) ;
-	p[6] = (u_char)(smc->sm.uniq_ticks>>8) ;
-	p[7] = (u_char)smc->sm.uniq_ticks ;
+	p[1] = (u_अक्षर)((समय>>(8+8+8+8-1)) & 1) ;
+	p[2] = (u_अक्षर)(समय>>(8+8+8-1)) ;
+	p[3] = (u_अक्षर)(समय>>(8+8-1)) ;
+	p[4] = (u_अक्षर)(समय>>(8-1)) ;
+	p[5] = (u_अक्षर)(समय<<1) ;
+	p[6] = (u_अक्षर)(smc->sm.uniq_ticks>>8) ;
+	p[7] = (u_अक्षर)smc->sm.uniq_ticks ;
 	/*
-	 * make sure we don't wrap: restart whenever the upper digits change
+	 * make sure we करोn't wrap: restart whenever the upper digits change
 	 */
-	if (utime != smc->sm.uniq_time) {
+	अगर (uसमय != smc->sm.uniq_समय) अणु
 		smc->sm.uniq_ticks = 0 ;
-	}
+	पूर्ण
 	smc->sm.uniq_ticks++ ;
-	smc->sm.uniq_time = utime ;
-}
+	smc->sm.uniq_समय = uसमय ;
+पूर्ण
 
 /*
  * fill values in station policy parameter
  */
-static void smt_fill_policy(struct s_smc *smc, struct smt_p_policy *policy)
-{
-	int	i ;
-	const u_char *map ;
-	u_short	in ;
-	u_short	out ;
+अटल व्योम smt_fill_policy(काष्ठा s_smc *smc, काष्ठा smt_p_policy *policy)
+अणु
+	पूर्णांक	i ;
+	स्थिर u_अक्षर *map ;
+	u_लघु	in ;
+	u_लघु	out ;
 
 	/*
 	 * MIB para 101b (fddiSMTConnectionPolicy) coding
-	 * is different from 0005 coding
+	 * is dअगरferent from 0005 coding
 	 */
-	static const u_char ansi_weirdness[16] = {
+	अटल स्थिर u_अक्षर ansi_weirdness[16] = अणु
 		0,7,5,3,8,1,6,4,9,10,2,11,12,13,14,15
-	} ;
+	पूर्ण ;
 	SMTSETPARA(policy,SMT_P_POLICY) ;
 
 	out = 0 ;
 	in = smc->mib.fddiSMTConnectionPolicy ;
-	for (i = 0, map = ansi_weirdness ; i < 16 ; i++) {
-		if (in & 1)
+	क्रम (i = 0, map = ansi_weirdness ; i < 16 ; i++) अणु
+		अगर (in & 1)
 			out |= (1<<*map) ;
 		in >>= 1 ;
 		map++ ;
-	}
+	पूर्ण
 	policy->pl_config = smc->mib.fddiSMTConfigPolicy ;
 	policy->pl_connect = out ;
-}
+पूर्ण
 
 /*
  * fill values in latency equivalent parameter
  */
-static void smt_fill_latency(struct s_smc *smc, struct smt_p_latency *latency)
-{
+अटल व्योम smt_fill_latency(काष्ठा s_smc *smc, काष्ठा smt_p_latency *latency)
+अणु
 	SMTSETPARA(latency,SMT_P_LATENCY) ;
 
 	latency->lt_phyout_idx1 = phy_index(smc,0) ;
-	latency->lt_latency1 = 10 ;	/* in octets (byte clock) */
+	latency->lt_latency1 = 10 ;	/* in octets (byte घड़ी) */
 	/*
 	 * note: latency has two phy entries by definition
-	 * for a SAS, the 2nd one is null
+	 * क्रम a SAS, the 2nd one is null
 	 */
-	if (smc->s.sas == SMT_DAS) {
+	अगर (smc->s.sas == SMT_DAS) अणु
 		latency->lt_phyout_idx2 = phy_index(smc,1) ;
-		latency->lt_latency2 = 10 ;	/* in octets (byte clock) */
-	}
-	else {
+		latency->lt_latency2 = 10 ;	/* in octets (byte घड़ी) */
+	पूर्ण
+	अन्यथा अणु
 		latency->lt_phyout_idx2 = 0 ;
 		latency->lt_latency2 = 0 ;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * fill values in MAC neighbors parameter
  */
-static void smt_fill_neighbor(struct s_smc *smc, struct smt_p_neighbor *neighbor)
-{
+अटल व्योम smt_fill_neighbor(काष्ठा s_smc *smc, काष्ठा smt_p_neighbor *neighbor)
+अणु
 	SMTSETPARA(neighbor,SMT_P_NEIGHBORS) ;
 
 	neighbor->nb_mib_index = INDEX_MAC ;
 	neighbor->nb_mac_index = mac_index(smc,1) ;
 	neighbor->nb_una = smc->mib.m[MAC0].fddiMACUpstreamNbr ;
 	neighbor->nb_dna = smc->mib.m[MAC0].fddiMACDownstreamNbr ;
-}
+पूर्ण
 
 /*
  * fill values in path descriptor
  */
-#ifdef	CONCENTRATOR
-#define ALLPHYS	NUMPHYS
-#else
-#define ALLPHYS	((smc->s.sas == SMT_SAS) ? 1 : 2)
-#endif
+#अगर_घोषित	CONCENTRATOR
+#घोषणा ALLPHYS	NUMPHYS
+#अन्यथा
+#घोषणा ALLPHYS	((smc->s.sas == SMT_SAS) ? 1 : 2)
+#पूर्ण_अगर
 
-static int smt_fill_path(struct s_smc *smc, struct smt_p_path *path)
-{
-	SK_LOC_DECL(int,type) ;
-	SK_LOC_DECL(int,state) ;
-	SK_LOC_DECL(int,remote) ;
-	SK_LOC_DECL(int,mac) ;
-	int	len ;
-	int	p ;
-	int	physp ;
-	struct smt_phy_rec	*phy ;
-	struct smt_mac_rec	*pd_mac ;
+अटल पूर्णांक smt_fill_path(काष्ठा s_smc *smc, काष्ठा smt_p_path *path)
+अणु
+	SK_LOC_DECL(पूर्णांक,type) ;
+	SK_LOC_DECL(पूर्णांक,state) ;
+	SK_LOC_DECL(पूर्णांक,remote) ;
+	SK_LOC_DECL(पूर्णांक,mac) ;
+	पूर्णांक	len ;
+	पूर्णांक	p ;
+	पूर्णांक	physp ;
+	काष्ठा smt_phy_rec	*phy ;
+	काष्ठा smt_mac_rec	*pd_mac ;
 
 	len =	PARA_LEN +
-		sizeof(struct smt_mac_rec) * NUMMACS +
-		sizeof(struct smt_phy_rec) * ALLPHYS ;
+		माप(काष्ठा smt_mac_rec) * NUMMACS +
+		माप(काष्ठा smt_phy_rec) * ALLPHYS ;
 	path->para.p_type = SMT_P_PATH ;
 	path->para.p_len = len - PARA_LEN ;
 
 	/* PHYs */
-	for (p = 0,phy = path->pd_phy ; p < ALLPHYS ; p++, phy++) {
+	क्रम (p = 0,phy = path->pd_phy ; p < ALLPHYS ; p++, phy++) अणु
 		physp = p ;
-#ifndef	CONCENTRATOR
-		if (smc->s.sas == SMT_SAS)
+#अगर_अघोषित	CONCENTRATOR
+		अगर (smc->s.sas == SMT_SAS)
 			physp = PS ;
-#endif
+#पूर्ण_अगर
 		pcm_status_state(smc,physp,&type,&state,&remote,&mac) ;
-#ifdef	LITTLE_ENDIAN
-		phy->phy_mib_index = smt_swap_short((u_short)p+INDEX_PORT) ;
-#else
+#अगर_घोषित	LITTLE_ENDIAN
+		phy->phy_mib_index = smt_swap_लघु((u_लघु)p+INDEX_PORT) ;
+#अन्यथा
 		phy->phy_mib_index = p+INDEX_PORT ;
-#endif
+#पूर्ण_अगर
 		phy->phy_type = type ;
 		phy->phy_connect_state = state ;
 		phy->phy_remote_type = remote ;
 		phy->phy_remote_mac = mac ;
 		phy->phy_resource_idx = phy_con_resource_index(smc,p) ;
-	}
+	पूर्ण
 
 	/* MAC */
-	pd_mac = (struct smt_mac_rec *) phy ;
+	pd_mac = (काष्ठा smt_mac_rec *) phy ;
 	pd_mac->mac_addr = smc->mib.m[MAC0].fddiMACSMTAddress ;
 	pd_mac->mac_resource_idx = mac_con_resource_index(smc,1) ;
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /*
  * fill values in mac status
  */
-static void smt_fill_mac_status(struct s_smc *smc, struct smt_p_mac_status *st)
-{
+अटल व्योम smt_fill_mac_status(काष्ठा s_smc *smc, काष्ठा smt_p_mac_status *st)
+अणु
 	SMTSETPARA(st,SMT_P_MAC_STATUS) ;
 
 	st->st_mib_index = INDEX_MAC ;
@@ -1381,8 +1382,8 @@ static void smt_fill_mac_status(struct s_smc *smc, struct smt_p_mac_status *st)
 
 	mac_update_counter(smc) ;
 	/*
-	 * timer values are represented in SMT as 2's complement numbers
-	 * units :	internal :  2's complement BCLK
+	 * समयr values are represented in SMT as 2's complement numbers
+	 * units :	पूर्णांकernal :  2's complement BCLK
 	 */
 	st->st_t_req = smc->mib.m[MAC0].fddiMACT_Req ;
 	st->st_t_neg = smc->mib.m[MAC0].fddiMACT_Neg ;
@@ -1394,14 +1395,14 @@ static void smt_fill_mac_status(struct s_smc *smc, struct smt_p_mac_status *st)
 	st->st_frame_ct = smc->mib.m[MAC0].fddiMACFrame_Ct ;
 	st->st_error_ct = smc->mib.m[MAC0].fddiMACError_Ct ;
 	st->st_lost_ct = smc->mib.m[MAC0].fddiMACLost_Ct ;
-}
+पूर्ण
 
 /*
  * fill values in LEM status
  */
-static void smt_fill_lem(struct s_smc *smc, struct smt_p_lem *lem, int phy)
-{
-	struct fddi_mib_p	*mib ;
+अटल व्योम smt_fill_lem(काष्ठा s_smc *smc, काष्ठा smt_p_lem *lem, पूर्णांक phy)
+अणु
+	काष्ठा fddi_mib_p	*mib ;
 
 	mib = smc->y[phy].mib ;
 
@@ -1411,18 +1412,18 @@ static void smt_fill_lem(struct s_smc *smc, struct smt_p_lem *lem, int phy)
 	lem->lem_pad2 = 0 ;
 	lem->lem_cutoff = mib->fddiPORTLer_Cutoff ;
 	lem->lem_alarm = mib->fddiPORTLer_Alarm ;
-	/* long term bit error rate */
+	/* दीर्घ term bit error rate */
 	lem->lem_estimate = mib->fddiPORTLer_Estimate ;
 	/* # of rejected connections */
 	lem->lem_reject_ct = mib->fddiPORTLem_Reject_Ct ;
 	lem->lem_ct = mib->fddiPORTLem_Ct ;	/* total number of errors */
-}
+पूर्ण
 
 /*
  * fill version parameter
  */
-static void smt_fill_version(struct s_smc *smc, struct smt_p_version *vers)
-{
+अटल व्योम smt_fill_version(काष्ठा s_smc *smc, काष्ठा smt_p_version *vers)
+अणु
 	SK_UNUSED(smc) ;
 	SMTSETPARA(vers,SMT_P_VERSION) ;
 	vers->v_pad = 0 ;
@@ -1430,9 +1431,9 @@ static void smt_fill_version(struct s_smc *smc, struct smt_p_version *vers)
 	vers->v_index = 1 ;
 	vers->v_version[0] = SMT_VID_2 ;
 	vers->v_pad2 = 0 ;
-}
+पूर्ण
 
-#ifdef	SMT6_10
+#अगर_घोषित	SMT6_10
 /*
  * fill frame status capabilities
  */
@@ -1440,8 +1441,8 @@ static void smt_fill_version(struct s_smc *smc, struct smt_p_version *vers)
  * note: this para 200B is NOT in swap table, because it's also set in
  * PMF add_para
  */
-static void smt_fill_fsc(struct s_smc *smc, struct smt_p_fsc *fsc)
-{
+अटल व्योम smt_fill_fsc(काष्ठा s_smc *smc, काष्ठा smt_p_fsc *fsc)
+अणु
 	SK_UNUSED(smc) ;
 	SMTSETPARA(fsc,SMT_P_FSC) ;
 	fsc->fsc_pad0 = 0 ;
@@ -1450,439 +1451,439 @@ static void smt_fill_fsc(struct s_smc *smc, struct smt_p_fsc *fsc)
 						 */
 	fsc->fsc_pad1 = 0 ;
 	fsc->fsc_value = FSC_TYPE0 ;		/* "normal" node */
-#ifdef	LITTLE_ENDIAN
-	fsc->fsc_mac_index = smt_swap_short(INDEX_MAC) ;
-	fsc->fsc_value = smt_swap_short(FSC_TYPE0) ;
-#endif
-}
-#endif
+#अगर_घोषित	LITTLE_ENDIAN
+	fsc->fsc_mac_index = smt_swap_लघु(INDEX_MAC) ;
+	fsc->fsc_value = smt_swap_लघु(FSC_TYPE0) ;
+#पूर्ण_अगर
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * fill mac counter field
  */
-static void smt_fill_mac_counter(struct s_smc *smc, struct smt_p_mac_counter *mc)
-{
+अटल व्योम smt_fill_mac_counter(काष्ठा s_smc *smc, काष्ठा smt_p_mac_counter *mc)
+अणु
 	SMTSETPARA(mc,SMT_P_MAC_COUNTER) ;
 	mc->mc_mib_index = INDEX_MAC ;
 	mc->mc_index = mac_index(smc,1) ;
 	mc->mc_receive_ct = smc->mib.m[MAC0].fddiMACCopied_Ct ;
 	mc->mc_transmit_ct =  smc->mib.m[MAC0].fddiMACTransmit_Ct ;
-}
+पूर्ण
 
 /*
  * fill mac frame not copied counter
  */
-static void smt_fill_mac_fnc(struct s_smc *smc, struct smt_p_mac_fnc *fnc)
-{
+अटल व्योम smt_fill_mac_fnc(काष्ठा s_smc *smc, काष्ठा smt_p_mac_fnc *fnc)
+अणु
 	SMTSETPARA(fnc,SMT_P_MAC_FNC) ;
 	fnc->nc_mib_index = INDEX_MAC ;
 	fnc->nc_index = mac_index(smc,1) ;
 	fnc->nc_counter = smc->mib.m[MAC0].fddiMACNotCopied_Ct ;
-}
+पूर्ण
 
 
 /*
  * fill manufacturer field
  */
-static void smt_fill_manufacturer(struct s_smc *smc, 
-				  struct smp_p_manufacturer *man)
-{
+अटल व्योम smt_fill_manufacturer(काष्ठा s_smc *smc, 
+				  काष्ठा smp_p_manufacturer *man)
+अणु
 	SMTSETPARA(man,SMT_P_MANUFACTURER) ;
-	memcpy((char *) man->mf_data,
-		(char *) smc->mib.fddiSMTManufacturerData,
-		sizeof(man->mf_data)) ;
-}
+	स_नकल((अक्षर *) man->mf_data,
+		(अक्षर *) smc->mib.fddiSMTManufacturerData,
+		माप(man->mf_data)) ;
+पूर्ण
 
 /*
  * fill user field
  */
-static void smt_fill_user(struct s_smc *smc, struct smp_p_user *user)
-{
+अटल व्योम smt_fill_user(काष्ठा s_smc *smc, काष्ठा smp_p_user *user)
+अणु
 	SMTSETPARA(user,SMT_P_USER) ;
-	memcpy((char *) user->us_data,
-		(char *) smc->mib.fddiSMTUserData,
-		sizeof(user->us_data)) ;
-}
+	स_नकल((अक्षर *) user->us_data,
+		(अक्षर *) smc->mib.fddiSMTUserData,
+		माप(user->us_data)) ;
+पूर्ण
 
 /*
  * fill set count
  */
-static void smt_fill_setcount(struct s_smc *smc, struct smt_p_setcount *setcount)
-{
+अटल व्योम smt_fill_setcount(काष्ठा s_smc *smc, काष्ठा smt_p_setcount *setcount)
+अणु
 	SK_UNUSED(smc) ;
 	SMTSETPARA(setcount,SMT_P_SETCOUNT) ;
 	setcount->count = smc->mib.fddiSMTSetCount.count ;
-	memcpy((char *)setcount->timestamp,
-		(char *)smc->mib.fddiSMTSetCount.timestamp,8) ;
-}
+	स_नकल((अक्षर *)setcount->बारtamp,
+		(अक्षर *)smc->mib.fddiSMTSetCount.बारtamp,8) ;
+पूर्ण
 
 /*
  * fill echo data
  */
-static void smt_fill_echo(struct s_smc *smc, struct smt_p_echo *echo, u_long seed,
-			  int len)
-{
-	u_char	*p ;
+अटल व्योम smt_fill_echo(काष्ठा s_smc *smc, काष्ठा smt_p_echo *echo, u_दीर्घ seed,
+			  पूर्णांक len)
+अणु
+	u_अक्षर	*p ;
 
 	SK_UNUSED(smc) ;
 	SMTSETPARA(echo,SMT_P_ECHODATA) ;
 	echo->para.p_len = len ;
-	for (p = echo->ec_data ; len ; len--) {
-		*p++ = (u_char) seed ;
+	क्रम (p = echo->ec_data ; len ; len--) अणु
+		*p++ = (u_अक्षर) seed ;
 		seed += 13 ;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * clear DNA and UNA
- * called from CFM if configuration changes
+ * called from CFM अगर configuration changes
  */
-static void smt_clear_una_dna(struct s_smc *smc)
-{
+अटल व्योम smt_clear_una_dna(काष्ठा s_smc *smc)
+अणु
 	smc->mib.m[MAC0].fddiMACUpstreamNbr = SMT_Unknown ;
 	smc->mib.m[MAC0].fddiMACDownstreamNbr = SMT_Unknown ;
-}
+पूर्ण
 
-static void smt_clear_old_una_dna(struct s_smc *smc)
-{
+अटल व्योम smt_clear_old_una_dna(काष्ठा s_smc *smc)
+अणु
 	smc->mib.m[MAC0].fddiMACOldUpstreamNbr = SMT_Unknown ;
 	smc->mib.m[MAC0].fddiMACOldDownstreamNbr = SMT_Unknown ;
-}
+पूर्ण
 
-u_long smt_get_tid(struct s_smc *smc)
-{
-	u_long	tid ;
-	while ((tid = ++(smc->sm.smt_tid) ^ SMT_TID_MAGIC) == 0)
+u_दीर्घ smt_get_tid(काष्ठा s_smc *smc)
+अणु
+	u_दीर्घ	tid ;
+	जबतक ((tid = ++(smc->sm.smt_tid) ^ SMT_TID_MAGIC) == 0)
 		;
-	return tid & 0x3fffffffL;
-}
+	वापस tid & 0x3fffffffL;
+पूर्ण
 
-#ifdef	LITTLE_ENDIAN
+#अगर_घोषित	LITTLE_ENDIAN
 /*
  * table of parameter lengths
  */
-static const struct smt_pdef {
-	int	ptype ;
-	int	plen ;
-	const char	*pswap ;
-} smt_pdef[] = {
-	{ SMT_P_UNA,	sizeof(struct smt_p_una) ,
-		SWAP_SMT_P_UNA					} ,
-	{ SMT_P_SDE,	sizeof(struct smt_p_sde) ,
-		SWAP_SMT_P_SDE					} ,
-	{ SMT_P_STATE,	sizeof(struct smt_p_state) ,
-		SWAP_SMT_P_STATE				} ,
-	{ SMT_P_TIMESTAMP,sizeof(struct smt_p_timestamp) ,
-		SWAP_SMT_P_TIMESTAMP				} ,
-	{ SMT_P_POLICY,	sizeof(struct smt_p_policy) ,
-		SWAP_SMT_P_POLICY				} ,
-	{ SMT_P_LATENCY,	sizeof(struct smt_p_latency) ,
-		SWAP_SMT_P_LATENCY				} ,
-	{ SMT_P_NEIGHBORS,sizeof(struct smt_p_neighbor) ,
-		SWAP_SMT_P_NEIGHBORS				} ,
-	{ SMT_P_PATH,	sizeof(struct smt_p_path) ,
-		SWAP_SMT_P_PATH					} ,
-	{ SMT_P_MAC_STATUS,sizeof(struct smt_p_mac_status) ,
-		SWAP_SMT_P_MAC_STATUS				} ,
-	{ SMT_P_LEM,	sizeof(struct smt_p_lem) ,
-		SWAP_SMT_P_LEM					} ,
-	{ SMT_P_MAC_COUNTER,sizeof(struct smt_p_mac_counter) ,
-		SWAP_SMT_P_MAC_COUNTER				} ,
-	{ SMT_P_MAC_FNC,sizeof(struct smt_p_mac_fnc) ,
-		SWAP_SMT_P_MAC_FNC				} ,
-	{ SMT_P_PRIORITY,sizeof(struct smt_p_priority) ,
-		SWAP_SMT_P_PRIORITY				} ,
-	{ SMT_P_EB,sizeof(struct smt_p_eb) ,
-		SWAP_SMT_P_EB					} ,
-	{ SMT_P_MANUFACTURER,sizeof(struct smp_p_manufacturer) ,
-		SWAP_SMT_P_MANUFACTURER				} ,
-	{ SMT_P_REASON,	sizeof(struct smt_p_reason) ,
-		SWAP_SMT_P_REASON				} ,
-	{ SMT_P_REFUSED, sizeof(struct smt_p_refused) ,
-		SWAP_SMT_P_REFUSED				} ,
-	{ SMT_P_VERSION, sizeof(struct smt_p_version) ,
-		SWAP_SMT_P_VERSION				} ,
-#ifdef ESS
-	{ SMT_P0015, sizeof(struct smt_p_0015) , SWAP_SMT_P0015 } ,
-	{ SMT_P0016, sizeof(struct smt_p_0016) , SWAP_SMT_P0016 } ,
-	{ SMT_P0017, sizeof(struct smt_p_0017) , SWAP_SMT_P0017 } ,
-	{ SMT_P0018, sizeof(struct smt_p_0018) , SWAP_SMT_P0018 } ,
-	{ SMT_P0019, sizeof(struct smt_p_0019) , SWAP_SMT_P0019 } ,
-	{ SMT_P001A, sizeof(struct smt_p_001a) , SWAP_SMT_P001A } ,
-	{ SMT_P001B, sizeof(struct smt_p_001b) , SWAP_SMT_P001B } ,
-	{ SMT_P001C, sizeof(struct smt_p_001c) , SWAP_SMT_P001C } ,
-	{ SMT_P001D, sizeof(struct smt_p_001d) , SWAP_SMT_P001D } ,
-#endif
-#if	0
-	{ SMT_P_FSC,	sizeof(struct smt_p_fsc) ,
-		SWAP_SMT_P_FSC					} ,
-#endif
+अटल स्थिर काष्ठा smt_pdef अणु
+	पूर्णांक	ptype ;
+	पूर्णांक	plen ;
+	स्थिर अक्षर	*pswap ;
+पूर्ण smt_pdef[] = अणु
+	अणु SMT_P_UNA,	माप(काष्ठा smt_p_una) ,
+		SWAP_SMT_P_UNA					पूर्ण ,
+	अणु SMT_P_SDE,	माप(काष्ठा smt_p_sde) ,
+		SWAP_SMT_P_SDE					पूर्ण ,
+	अणु SMT_P_STATE,	माप(काष्ठा smt_p_state) ,
+		SWAP_SMT_P_STATE				पूर्ण ,
+	अणु SMT_P_TIMESTAMP,माप(काष्ठा smt_p_बारtamp) ,
+		SWAP_SMT_P_TIMESTAMP				पूर्ण ,
+	अणु SMT_P_POLICY,	माप(काष्ठा smt_p_policy) ,
+		SWAP_SMT_P_POLICY				पूर्ण ,
+	अणु SMT_P_LATENCY,	माप(काष्ठा smt_p_latency) ,
+		SWAP_SMT_P_LATENCY				पूर्ण ,
+	अणु SMT_P_NEIGHBORS,माप(काष्ठा smt_p_neighbor) ,
+		SWAP_SMT_P_NEIGHBORS				पूर्ण ,
+	अणु SMT_P_PATH,	माप(काष्ठा smt_p_path) ,
+		SWAP_SMT_P_PATH					पूर्ण ,
+	अणु SMT_P_MAC_STATUS,माप(काष्ठा smt_p_mac_status) ,
+		SWAP_SMT_P_MAC_STATUS				पूर्ण ,
+	अणु SMT_P_LEM,	माप(काष्ठा smt_p_lem) ,
+		SWAP_SMT_P_LEM					पूर्ण ,
+	अणु SMT_P_MAC_COUNTER,माप(काष्ठा smt_p_mac_counter) ,
+		SWAP_SMT_P_MAC_COUNTER				पूर्ण ,
+	अणु SMT_P_MAC_FNC,माप(काष्ठा smt_p_mac_fnc) ,
+		SWAP_SMT_P_MAC_FNC				पूर्ण ,
+	अणु SMT_P_PRIORITY,माप(काष्ठा smt_p_priority) ,
+		SWAP_SMT_P_PRIORITY				पूर्ण ,
+	अणु SMT_P_EB,माप(काष्ठा smt_p_eb) ,
+		SWAP_SMT_P_EB					पूर्ण ,
+	अणु SMT_P_MANUFACTURER,माप(काष्ठा smp_p_manufacturer) ,
+		SWAP_SMT_P_MANUFACTURER				पूर्ण ,
+	अणु SMT_P_REASON,	माप(काष्ठा smt_p_reason) ,
+		SWAP_SMT_P_REASON				पूर्ण ,
+	अणु SMT_P_REFUSED, माप(काष्ठा smt_p_refused) ,
+		SWAP_SMT_P_REFUSED				पूर्ण ,
+	अणु SMT_P_VERSION, माप(काष्ठा smt_p_version) ,
+		SWAP_SMT_P_VERSION				पूर्ण ,
+#अगर_घोषित ESS
+	अणु SMT_P0015, माप(काष्ठा smt_p_0015) , SWAP_SMT_P0015 पूर्ण ,
+	अणु SMT_P0016, माप(काष्ठा smt_p_0016) , SWAP_SMT_P0016 पूर्ण ,
+	अणु SMT_P0017, माप(काष्ठा smt_p_0017) , SWAP_SMT_P0017 पूर्ण ,
+	अणु SMT_P0018, माप(काष्ठा smt_p_0018) , SWAP_SMT_P0018 पूर्ण ,
+	अणु SMT_P0019, माप(काष्ठा smt_p_0019) , SWAP_SMT_P0019 पूर्ण ,
+	अणु SMT_P001A, माप(काष्ठा smt_p_001a) , SWAP_SMT_P001A पूर्ण ,
+	अणु SMT_P001B, माप(काष्ठा smt_p_001b) , SWAP_SMT_P001B पूर्ण ,
+	अणु SMT_P001C, माप(काष्ठा smt_p_001c) , SWAP_SMT_P001C पूर्ण ,
+	अणु SMT_P001D, माप(काष्ठा smt_p_001d) , SWAP_SMT_P001D पूर्ण ,
+#पूर्ण_अगर
+#अगर	0
+	अणु SMT_P_FSC,	माप(काष्ठा smt_p_fsc) ,
+		SWAP_SMT_P_FSC					पूर्ण ,
+#पूर्ण_अगर
 
-	{ SMT_P_SETCOUNT,0,	SWAP_SMT_P_SETCOUNT		} ,
-	{ SMT_P1048,	0,	SWAP_SMT_P1048			} ,
-	{ SMT_P208C,	0,	SWAP_SMT_P208C			} ,
-	{ SMT_P208D,	0,	SWAP_SMT_P208D			} ,
-	{ SMT_P208E,	0,	SWAP_SMT_P208E			} ,
-	{ SMT_P208F,	0,	SWAP_SMT_P208F			} ,
-	{ SMT_P2090,	0,	SWAP_SMT_P2090			} ,
-#ifdef	ESS
-	{ SMT_P320B, sizeof(struct smt_p_320b) , SWAP_SMT_P320B } ,
-	{ SMT_P320F, sizeof(struct smt_p_320f) , SWAP_SMT_P320F } ,
-	{ SMT_P3210, sizeof(struct smt_p_3210) , SWAP_SMT_P3210 } ,
-#endif
-	{ SMT_P4050,	0,	SWAP_SMT_P4050			} ,
-	{ SMT_P4051,	0,	SWAP_SMT_P4051			} ,
-	{ SMT_P4052,	0,	SWAP_SMT_P4052			} ,
-	{ SMT_P4053,	0,	SWAP_SMT_P4053			} ,
-} ;
+	अणु SMT_P_SETCOUNT,0,	SWAP_SMT_P_SETCOUNT		पूर्ण ,
+	अणु SMT_P1048,	0,	SWAP_SMT_P1048			पूर्ण ,
+	अणु SMT_P208C,	0,	SWAP_SMT_P208C			पूर्ण ,
+	अणु SMT_P208D,	0,	SWAP_SMT_P208D			पूर्ण ,
+	अणु SMT_P208E,	0,	SWAP_SMT_P208E			पूर्ण ,
+	अणु SMT_P208F,	0,	SWAP_SMT_P208F			पूर्ण ,
+	अणु SMT_P2090,	0,	SWAP_SMT_P2090			पूर्ण ,
+#अगर_घोषित	ESS
+	अणु SMT_P320B, माप(काष्ठा smt_p_320b) , SWAP_SMT_P320B पूर्ण ,
+	अणु SMT_P320F, माप(काष्ठा smt_p_320f) , SWAP_SMT_P320F पूर्ण ,
+	अणु SMT_P3210, माप(काष्ठा smt_p_3210) , SWAP_SMT_P3210 पूर्ण ,
+#पूर्ण_अगर
+	अणु SMT_P4050,	0,	SWAP_SMT_P4050			पूर्ण ,
+	अणु SMT_P4051,	0,	SWAP_SMT_P4051			पूर्ण ,
+	अणु SMT_P4052,	0,	SWAP_SMT_P4052			पूर्ण ,
+	अणु SMT_P4053,	0,	SWAP_SMT_P4053			पूर्ण ,
+पूर्ण ;
 
-#define N_SMT_PLEN	ARRAY_SIZE(smt_pdef)
-#endif
+#घोषणा N_SMT_PLEN	ARRAY_SIZE(smt_pdef)
+#पूर्ण_अगर
 
-int smt_check_para(struct s_smc *smc, struct smt_header	*sm,
-		   const u_short list[])
-{
-	const u_short		*p = list ;
-	while (*p) {
-		if (!sm_to_para(smc,sm,(int) *p)) {
+पूर्णांक smt_check_para(काष्ठा s_smc *smc, काष्ठा smt_header	*sm,
+		   स्थिर u_लघु list[])
+अणु
+	स्थिर u_लघु		*p = list ;
+	जबतक (*p) अणु
+		अगर (!sm_to_para(smc,sm,(पूर्णांक) *p)) अणु
 			DB_SMT("SMT: smt_check_para - missing para %hx", *p);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		p++ ;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void *sm_to_para(struct s_smc *smc, struct smt_header *sm, int para)
-{
-	char	*p ;
-	int	len ;
-	int	plen ;
-	void	*found = NULL;
+व्योम *sm_to_para(काष्ठा s_smc *smc, काष्ठा smt_header *sm, पूर्णांक para)
+अणु
+	अक्षर	*p ;
+	पूर्णांक	len ;
+	पूर्णांक	plen ;
+	व्योम	*found = शून्य;
 
 	SK_UNUSED(smc) ;
 
 	len = sm->smt_len ;
-	p = (char *)(sm+1) ;		/* pointer to info */
-	while (len > 0 ) {
-		if (((struct smt_para *)p)->p_type == para)
-			found = (void *) p ;
-		plen = ((struct smt_para *)p)->p_len + PARA_LEN ;
+	p = (अक्षर *)(sm+1) ;		/* poपूर्णांकer to info */
+	जबतक (len > 0 ) अणु
+		अगर (((काष्ठा smt_para *)p)->p_type == para)
+			found = (व्योम *) p ;
+		plen = ((काष्ठा smt_para *)p)->p_len + PARA_LEN ;
 		p += plen ;
 		len -= plen ;
-		if (len < 0) {
+		अगर (len < 0) अणु
 			DB_SMT("SMT : sm_to_para - length error %d", plen);
-			return NULL;
-		}
-		if ((plen & 3) && (para != SMT_P_ECHODATA)) {
+			वापस शून्य;
+		पूर्ण
+		अगर ((plen & 3) && (para != SMT_P_ECHODATA)) अणु
 			DB_SMT("SMT : sm_to_para - odd length %d", plen);
-			return NULL;
-		}
-		if (found)
-			return found;
-	}
-	return NULL;
-}
+			वापस शून्य;
+		पूर्ण
+		अगर (found)
+			वापस found;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-#if	0
+#अगर	0
 /*
  * send ANTC data test frame
  */
-void fddi_send_antc(struct s_smc *smc, struct fddi_addr *dest)
-{
+व्योम fddi_send_antc(काष्ठा s_smc *smc, काष्ठा fddi_addr *dest)
+अणु
 	SK_UNUSED(smc) ;
 	SK_UNUSED(dest) ;
-#if	0
+#अगर	0
 	SMbuf			*mb ;
-	struct smt_header	*smt ;
-	int			i ;
-	char			*p ;
+	काष्ठा smt_header	*smt ;
+	पूर्णांक			i ;
+	अक्षर			*p ;
 
 	mb = smt_get_mbuf() ;
 	mb->sm_len = 3000+12 ;
-	p = smtod(mb, char *) + 12 ;
-	for (i = 0 ; i < 3000 ; i++)
+	p = smtod(mb, अक्षर *) + 12 ;
+	क्रम (i = 0 ; i < 3000 ; i++)
 		*p++ = 1 << (i&7) ;
 
-	smt = smtod(mb, struct smt_header *) ;
+	smt = smtod(mb, काष्ठा smt_header *) ;
 	smt->smt_dest = *dest ;
 	smt->smt_source = smc->mib.m[MAC0].fddiMACSMTAddress ;
 	smt_send_mbuf(smc,mb,FC_ASYNC_LLC) ;
-#endif
-}
-#endif
+#पूर्ण_अगर
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * return static mac index
+ * वापस अटल mac index
  */
-static int mac_index(struct s_smc *smc, int mac)
-{
+अटल पूर्णांक mac_index(काष्ठा s_smc *smc, पूर्णांक mac)
+अणु
 	SK_UNUSED(mac) ;
-#ifdef	CONCENTRATOR
+#अगर_घोषित	CONCENTRATOR
 	SK_UNUSED(smc) ;
-	return NUMPHYS + 1;
-#else
-	return (smc->s.sas == SMT_SAS) ? 2 : 3;
-#endif
-}
+	वापस NUMPHYS + 1;
+#अन्यथा
+	वापस (smc->s.sas == SMT_SAS) ? 2 : 3;
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * return static phy index
+ * वापस अटल phy index
  */
-static int phy_index(struct s_smc *smc, int phy)
-{
+अटल पूर्णांक phy_index(काष्ठा s_smc *smc, पूर्णांक phy)
+अणु
 	SK_UNUSED(smc) ;
-	return phy + 1;
-}
+	वापस phy + 1;
+पूर्ण
 
 /*
- * return dynamic mac connection resource index
+ * वापस dynamic mac connection resource index
  */
-static int mac_con_resource_index(struct s_smc *smc, int mac)
-{
-#ifdef	CONCENTRATOR
+अटल पूर्णांक mac_con_resource_index(काष्ठा s_smc *smc, पूर्णांक mac)
+अणु
+#अगर_घोषित	CONCENTRATOR
 	SK_UNUSED(smc) ;
 	SK_UNUSED(mac) ;
-	return entity_to_index(smc, cem_get_downstream(smc, ENTITY_MAC));
-#else
+	वापस entity_to_index(smc, cem_get_करोwnstream(smc, ENTITY_MAC));
+#अन्यथा
 	SK_UNUSED(mac) ;
-	switch (smc->mib.fddiSMTCF_State) {
-	case SC9_C_WRAP_A :
-	case SC5_THRU_B :
-	case SC11_C_WRAP_S :
-		return 1;
-	case SC10_C_WRAP_B :
-	case SC4_THRU_A :
-		return 2;
-	}
-	return smc->s.sas == SMT_SAS ? 2 : 3;
-#endif
-}
+	चयन (smc->mib.fddiSMTCF_State) अणु
+	हाल SC9_C_WRAP_A :
+	हाल SC5_THRU_B :
+	हाल SC11_C_WRAP_S :
+		वापस 1;
+	हाल SC10_C_WRAP_B :
+	हाल SC4_THRU_A :
+		वापस 2;
+	पूर्ण
+	वापस smc->s.sas == SMT_SAS ? 2 : 3;
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * return dynamic phy connection resource index
+ * वापस dynamic phy connection resource index
  */
-static int phy_con_resource_index(struct s_smc *smc, int phy)
-{
-#ifdef	CONCENTRATOR
-	return entity_to_index(smc, cem_get_downstream(smc, ENTITY_PHY(phy))) ;
-#else
-	switch (smc->mib.fddiSMTCF_State) {
-	case SC9_C_WRAP_A :
-		return phy == PA ? 3 : 2;
-	case SC10_C_WRAP_B :
-		return phy == PA ? 1 : 3;
-	case SC4_THRU_A :
-		return phy == PA ? 3 : 1;
-	case SC5_THRU_B :
-		return phy == PA ? 2 : 3;
-	case SC11_C_WRAP_S :
-		return 2;
-	}
-	return phy;
-#endif
-}
+अटल पूर्णांक phy_con_resource_index(काष्ठा s_smc *smc, पूर्णांक phy)
+अणु
+#अगर_घोषित	CONCENTRATOR
+	वापस entity_to_index(smc, cem_get_करोwnstream(smc, ENTITY_PHY(phy))) ;
+#अन्यथा
+	चयन (smc->mib.fddiSMTCF_State) अणु
+	हाल SC9_C_WRAP_A :
+		वापस phy == PA ? 3 : 2;
+	हाल SC10_C_WRAP_B :
+		वापस phy == PA ? 1 : 3;
+	हाल SC4_THRU_A :
+		वापस phy == PA ? 3 : 1;
+	हाल SC5_THRU_B :
+		वापस phy == PA ? 2 : 3;
+	हाल SC11_C_WRAP_S :
+		वापस 2;
+	पूर्ण
+	वापस phy;
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef	CONCENTRATOR
-static int entity_to_index(struct s_smc *smc, int e)
-{
-	if (e == ENTITY_MAC)
-		return mac_index(smc, 1);
-	else
-		return phy_index(smc, e - ENTITY_PHY(0));
-}
-#endif
+#अगर_घोषित	CONCENTRATOR
+अटल पूर्णांक entity_to_index(काष्ठा s_smc *smc, पूर्णांक e)
+अणु
+	अगर (e == ENTITY_MAC)
+		वापस mac_index(smc, 1);
+	अन्यथा
+		वापस phy_index(smc, e - ENTITY_PHY(0));
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef	LITTLE_ENDIAN
-static int smt_swap_short(u_short s)
-{
-	return ((s>>8)&0xff) | ((s&0xff)<<8);
-}
+#अगर_घोषित	LITTLE_ENDIAN
+अटल पूर्णांक smt_swap_लघु(u_लघु s)
+अणु
+	वापस ((s>>8)&0xff) | ((s&0xff)<<8);
+पूर्ण
 
-void smt_swap_para(struct smt_header *sm, int len, int direction)
-/* int direction;	0 encode 1 decode */
-{
-	struct smt_para	*pa ;
-	const  struct smt_pdef	*pd ;
-	char	*p ;
-	int	plen ;
-	int	type ;
-	int	i ;
+व्योम smt_swap_para(काष्ठा smt_header *sm, पूर्णांक len, पूर्णांक direction)
+/* पूर्णांक direction;	0 encode 1 decode */
+अणु
+	काष्ठा smt_para	*pa ;
+	स्थिर  काष्ठा smt_pdef	*pd ;
+	अक्षर	*p ;
+	पूर्णांक	plen ;
+	पूर्णांक	type ;
+	पूर्णांक	i ;
 
-/*	printf("smt_swap_para sm %x len %d dir %d\n",
+/*	म_लिखो("smt_swap_para sm %x len %d dir %d\n",
 		sm,len,direction) ;
  */
-	smt_string_swap((char *)sm,SWAP_SMTHEADER,len) ;
+	smt_string_swap((अक्षर *)sm,SWAP_SMTHEADER,len) ;
 
 	/* swap args */
-	len -= sizeof(struct smt_header) ;
+	len -= माप(काष्ठा smt_header) ;
 
-	p = (char *) (sm + 1) ;
-	while (len > 0) {
-		pa = (struct smt_para *) p ;
+	p = (अक्षर *) (sm + 1) ;
+	जबतक (len > 0) अणु
+		pa = (काष्ठा smt_para *) p ;
 		plen = pa->p_len ;
 		type = pa->p_type ;
-		pa->p_type = smt_swap_short(pa->p_type) ;
-		pa->p_len = smt_swap_short(pa->p_len) ;
-		if (direction) {
+		pa->p_type = smt_swap_लघु(pa->p_type) ;
+		pa->p_len = smt_swap_लघु(pa->p_len) ;
+		अगर (direction) अणु
 			plen = pa->p_len ;
 			type = pa->p_type ;
-		}
+		पूर्ण
 		/*
 		 * note: paras can have 0 length !
 		 */
-		if (plen < 0)
-			break ;
+		अगर (plen < 0)
+			अवरोध ;
 		plen += PARA_LEN ;
-		for (i = N_SMT_PLEN, pd = smt_pdef; i ; i--,pd++) {
-			if (pd->ptype == type)
-				break ;
-		}
-		if (i && pd->pswap) {
+		क्रम (i = N_SMT_PLEN, pd = smt_pdef; i ; i--,pd++) अणु
+			अगर (pd->ptype == type)
+				अवरोध ;
+		पूर्ण
+		अगर (i && pd->pswap) अणु
 			smt_string_swap(p+PARA_LEN,pd->pswap,len) ;
-		}
+		पूर्ण
 		len -= plen ;
 		p += plen ;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void smt_string_swap(char *data, const char *format, int len)
-{
-	const char	*open_paren = NULL ;
-	int	x ;
+अटल व्योम smt_string_swap(अक्षर *data, स्थिर अक्षर *क्रमmat, पूर्णांक len)
+अणु
+	स्थिर अक्षर	*खोलो_paren = शून्य ;
+	पूर्णांक	x ;
 
-	while (len > 0  && *format) {
-		switch (*format) {
-		case '[' :
-			open_paren = format ;
-			break ;
-		case ']' :
-			format = open_paren ;
-			break ;
-		case '1' :
-		case '2' :
-		case '3' :
-		case '4' :
-		case '5' :
-		case '6' :
-		case '7' :
-		case '8' :
-		case '9' :
-			data  += *format - '0' ;
-			len   -= *format - '0' ;
-			break ;
-		case 'c':
+	जबतक (len > 0  && *क्रमmat) अणु
+		चयन (*क्रमmat) अणु
+		हाल '[' :
+			खोलो_paren = क्रमmat ;
+			अवरोध ;
+		हाल ']' :
+			क्रमmat = खोलो_paren ;
+			अवरोध ;
+		हाल '1' :
+		हाल '2' :
+		हाल '3' :
+		हाल '4' :
+		हाल '5' :
+		हाल '6' :
+		हाल '7' :
+		हाल '8' :
+		हाल '9' :
+			data  += *क्रमmat - '0' ;
+			len   -= *क्रमmat - '0' ;
+			अवरोध ;
+		हाल 'c':
 			data++ ;
 			len-- ;
-			break ;
-		case 's' :
+			अवरोध ;
+		हाल 's' :
 			x = data[0] ;
 			data[0] = data[1] ;
 			data[1] = x ;
 			data += 2 ;
 			len -= 2 ;
-			break ;
-		case 'l' :
+			अवरोध ;
+		हाल 'l' :
 			x = data[0] ;
 			data[0] = data[3] ;
 			data[3] = x ;
@@ -1891,120 +1892,120 @@ static void smt_string_swap(char *data, const char *format, int len)
 			data[2] = x ;
 			data += 4 ;
 			len -= 4 ;
-			break ;
-		}
-		format++ ;
-	}
-}
-#else
-void smt_swap_para(struct smt_header *sm, int len, int direction)
-/* int direction;	0 encode 1 decode */
-{
+			अवरोध ;
+		पूर्ण
+		क्रमmat++ ;
+	पूर्ण
+पूर्ण
+#अन्यथा
+व्योम smt_swap_para(काष्ठा smt_header *sm, पूर्णांक len, पूर्णांक direction)
+/* पूर्णांक direction;	0 encode 1 decode */
+अणु
 	SK_UNUSED(sm) ;
 	SK_UNUSED(len) ;
 	SK_UNUSED(direction) ;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * PMF actions
  */
-int smt_action(struct s_smc *smc, int class, int code, int index)
-{
-	int	event ;
-	int	port ;
+पूर्णांक smt_action(काष्ठा s_smc *smc, पूर्णांक class, पूर्णांक code, पूर्णांक index)
+अणु
+	पूर्णांक	event ;
+	पूर्णांक	port ;
 	DB_SMT("SMT: action %d code %d", class, code);
-	switch(class) {
-	case SMT_STATION_ACTION :
-		switch(code) {
-		case SMT_STATION_ACTION_CONNECT :
+	चयन(class) अणु
+	हाल SMT_STATION_ACTION :
+		चयन(code) अणु
+		हाल SMT_STATION_ACTION_CONNECT :
 			smc->mib.fddiSMTRemoteDisconnectFlag = FALSE ;
 			queue_event(smc,EVENT_ECM,EC_CONNECT) ;
-			break ;
-		case SMT_STATION_ACTION_DISCONNECT :
+			अवरोध ;
+		हाल SMT_STATION_ACTION_DISCONNECT :
 			queue_event(smc,EVENT_ECM,EC_DISCONNECT) ;
 			smc->mib.fddiSMTRemoteDisconnectFlag = TRUE ;
 			RS_SET(smc,RS_DISCONNECT) ;
-			AIX_EVENT(smc, (u_long) FDDI_RING_STATUS, (u_long)
-				FDDI_SMT_EVENT, (u_long) FDDI_REMOTE_DISCONNECT,
+			AIX_EVENT(smc, (u_दीर्घ) FDDI_RING_STATUS, (u_दीर्घ)
+				FDDI_SMT_EVENT, (u_दीर्घ) FDDI_REMOTE_DISCONNECT,
 				smt_get_event_word(smc));
-			break ;
-		case SMT_STATION_ACTION_PATHTEST :
-			AIX_EVENT(smc, (u_long) FDDI_RING_STATUS, (u_long)
-				FDDI_SMT_EVENT, (u_long) FDDI_PATH_TEST,
+			अवरोध ;
+		हाल SMT_STATION_ACTION_PATHTEST :
+			AIX_EVENT(smc, (u_दीर्घ) FDDI_RING_STATUS, (u_दीर्घ)
+				FDDI_SMT_EVENT, (u_दीर्घ) FDDI_PATH_TEST,
 				smt_get_event_word(smc));
-			break ;
-		case SMT_STATION_ACTION_SELFTEST :
-			AIX_EVENT(smc, (u_long) FDDI_RING_STATUS, (u_long)
-				FDDI_SMT_EVENT, (u_long) FDDI_REMOTE_SELF_TEST,
+			अवरोध ;
+		हाल SMT_STATION_ACTION_SELFTEST :
+			AIX_EVENT(smc, (u_दीर्घ) FDDI_RING_STATUS, (u_दीर्घ)
+				FDDI_SMT_EVENT, (u_दीर्घ) FDDI_REMOTE_SELF_TEST,
 				smt_get_event_word(smc));
-			break ;
-		case SMT_STATION_ACTION_DISABLE_A :
-			if (smc->y[PA].pc_mode == PM_PEER) {
+			अवरोध ;
+		हाल SMT_STATION_ACTION_DISABLE_A :
+			अगर (smc->y[PA].pc_mode == PM_PEER) अणु
 				RS_SET(smc,RS_EVENT) ;
 				queue_event(smc,EVENT_PCM+PA,PC_DISABLE) ;
-			}
-			break ;
-		case SMT_STATION_ACTION_DISABLE_B :
-			if (smc->y[PB].pc_mode == PM_PEER) {
+			पूर्ण
+			अवरोध ;
+		हाल SMT_STATION_ACTION_DISABLE_B :
+			अगर (smc->y[PB].pc_mode == PM_PEER) अणु
 				RS_SET(smc,RS_EVENT) ;
 				queue_event(smc,EVENT_PCM+PB,PC_DISABLE) ;
-			}
-			break ;
-		case SMT_STATION_ACTION_DISABLE_M :
-			for (port = 0 ; port <  NUMPHYS ; port++) {
-				if (smc->mib.p[port].fddiPORTMy_Type != TM)
-					continue ;
+			पूर्ण
+			अवरोध ;
+		हाल SMT_STATION_ACTION_DISABLE_M :
+			क्रम (port = 0 ; port <  NUMPHYS ; port++) अणु
+				अगर (smc->mib.p[port].fddiPORTMy_Type != TM)
+					जारी ;
 				RS_SET(smc,RS_EVENT) ;
 				queue_event(smc,EVENT_PCM+port,PC_DISABLE) ;
-			}
-			break ;
-		default :
-			return 1;
-		}
-		break ;
-	case SMT_PORT_ACTION :
-		switch(code) {
-		case SMT_PORT_ACTION_ENABLE :
+			पूर्ण
+			अवरोध ;
+		शेष :
+			वापस 1;
+		पूर्ण
+		अवरोध ;
+	हाल SMT_PORT_ACTION :
+		चयन(code) अणु
+		हाल SMT_PORT_ACTION_ENABLE :
 			event = PC_ENABLE ;
-			break ;
-		case SMT_PORT_ACTION_DISABLE :
+			अवरोध ;
+		हाल SMT_PORT_ACTION_DISABLE :
 			event = PC_DISABLE ;
-			break ;
-		case SMT_PORT_ACTION_MAINT :
+			अवरोध ;
+		हाल SMT_PORT_ACTION_MAINT :
 			event = PC_MAINT ;
-			break ;
-		case SMT_PORT_ACTION_START :
+			अवरोध ;
+		हाल SMT_PORT_ACTION_START :
 			event = PC_START ;
-			break ;
-		case SMT_PORT_ACTION_STOP :
+			अवरोध ;
+		हाल SMT_PORT_ACTION_STOP :
 			event = PC_STOP ;
-			break ;
-		default :
-			return 1;
-		}
+			अवरोध ;
+		शेष :
+			वापस 1;
+		पूर्ण
 		queue_event(smc,EVENT_PCM+index,event) ;
-		break ;
-	default :
-		return 1;
-	}
-	return 0;
-}
+		अवरोध ;
+	शेष :
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * canonical conversion of <len> bytes beginning form *data
+ * canonical conversion of <len> bytes beginning क्रमm *data
  */
-#ifdef  USE_CAN_ADDR
-static void hwm_conv_can(struct s_smc *smc, char *data, int len)
-{
-	int i ;
+#अगर_घोषित  USE_CAN_ADDR
+अटल व्योम hwm_conv_can(काष्ठा s_smc *smc, अक्षर *data, पूर्णांक len)
+अणु
+	पूर्णांक i ;
 
 	SK_UNUSED(smc) ;
 
-	for (i = len; i ; i--, data++)
+	क्रम (i = len; i ; i--, data++)
 		*data = bitrev8(*data);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#endif	/* no SLIM_SMT */
+#पूर्ण_अगर	/* no SLIM_SMT */
 

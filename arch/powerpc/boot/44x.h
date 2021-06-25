@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * PowerPC 44x related functions
  *
@@ -7,10 +8,10 @@
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
-#ifndef _PPC_BOOT_44X_H_
-#define _PPC_BOOT_44X_H_
+#अगर_अघोषित _PPC_BOOT_44X_H_
+#घोषणा _PPC_BOOT_44X_H_
 
-void ebony_init(void *mac0, void *mac1);
-void bamboo_init(void *mac0, void *mac1);
+व्योम ebony_init(व्योम *mac0, व्योम *mac1);
+व्योम bamboo_init(व्योम *mac0, व्योम *mac1);
 
-#endif /* _PPC_BOOT_44X_H_ */
+#पूर्ण_अगर /* _PPC_BOOT_44X_H_ */

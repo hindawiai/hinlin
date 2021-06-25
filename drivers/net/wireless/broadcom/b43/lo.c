@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 
   Broadcom B43 wireless driver
@@ -14,336 +15,336 @@
 
 */
 
-#include "b43.h"
-#include "lo.h"
-#include "phy_g.h"
-#include "main.h"
+#समावेश "b43.h"
+#समावेश "lo.h"
+#समावेश "phy_g.h"
+#समावेश "main.h"
 
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
 
 
-static struct b43_lo_calib *b43_find_lo_calib(struct b43_txpower_lo_control *lo,
-					      const struct b43_bbatt *bbatt,
-					       const struct b43_rfatt *rfatt)
-{
-	struct b43_lo_calib *c;
+अटल काष्ठा b43_lo_calib *b43_find_lo_calib(काष्ठा b43_txघातer_lo_control *lo,
+					      स्थिर काष्ठा b43_bbatt *bbatt,
+					       स्थिर काष्ठा b43_rfatt *rfatt)
+अणु
+	काष्ठा b43_lo_calib *c;
 
-	list_for_each_entry(c, &lo->calib_list, list) {
-		if (!b43_compare_bbatt(&c->bbatt, bbatt))
-			continue;
-		if (!b43_compare_rfatt(&c->rfatt, rfatt))
-			continue;
-		return c;
-	}
+	list_क्रम_each_entry(c, &lo->calib_list, list) अणु
+		अगर (!b43_compare_bbatt(&c->bbatt, bbatt))
+			जारी;
+		अगर (!b43_compare_rfatt(&c->rfatt, rfatt))
+			जारी;
+		वापस c;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* Write the LocalOscillator Control (adjust) value-pair. */
-static void b43_lo_write(struct b43_wldev *dev, struct b43_loctl *control)
-{
-	struct b43_phy *phy = &dev->phy;
+अटल व्योम b43_lo_ग_लिखो(काष्ठा b43_wldev *dev, काष्ठा b43_loctl *control)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
 	u16 value;
 
-	if (B43_DEBUG) {
-		if (unlikely(abs(control->i) > 16 || abs(control->q) > 16)) {
+	अगर (B43_DEBUG) अणु
+		अगर (unlikely(असल(control->i) > 16 || असल(control->q) > 16)) अणु
 			b43dbg(dev->wl, "Invalid LO control pair "
 			       "(I: %d, Q: %d)\n", control->i, control->q);
 			dump_stack();
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	B43_WARN_ON(phy->type != B43_PHYTYPE_G);
 
 	value = (u8) (control->q);
 	value |= ((u8) (control->i)) << 8;
-	b43_phy_write(dev, B43_PHY_LO_CTL, value);
-}
+	b43_phy_ग_लिखो(dev, B43_PHY_LO_CTL, value);
+पूर्ण
 
-static u16 lo_measure_feedthrough(struct b43_wldev *dev,
+अटल u16 lo_measure_feedthrough(काष्ठा b43_wldev *dev,
 				  u16 lna, u16 pga, u16 trsw_rx)
-{
-	struct b43_phy *phy = &dev->phy;
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
 	u16 rfover;
 	u16 feedthrough;
 
-	if (phy->gmode) {
+	अगर (phy->gmode) अणु
 		lna <<= B43_PHY_RFOVERVAL_LNA_SHIFT;
 		pga <<= B43_PHY_RFOVERVAL_PGA_SHIFT;
 
 		B43_WARN_ON(lna & ~B43_PHY_RFOVERVAL_LNA);
 		B43_WARN_ON(pga & ~B43_PHY_RFOVERVAL_PGA);
-/*FIXME This assertion fails		B43_WARN_ON(trsw_rx & ~(B43_PHY_RFOVERVAL_TRSWRX |
+/*FIXME This निश्चितion fails		B43_WARN_ON(trsw_rx & ~(B43_PHY_RFOVERVAL_TRSWRX |
 				    B43_PHY_RFOVERVAL_BW));
 */
 		trsw_rx &= (B43_PHY_RFOVERVAL_TRSWRX | B43_PHY_RFOVERVAL_BW);
 
-		/* Construct the RF Override Value */
+		/* Conकाष्ठा the RF Override Value */
 		rfover = B43_PHY_RFOVERVAL_UNK;
 		rfover |= pga;
 		rfover |= lna;
 		rfover |= trsw_rx;
-		if ((dev->dev->bus_sprom->boardflags_lo & B43_BFL_EXTLNA)
+		अगर ((dev->dev->bus_sprom->boardflags_lo & B43_BFL_EXTLNA)
 		    && phy->rev > 6)
 			rfover |= B43_PHY_RFOVERVAL_EXTLNA;
 
-		b43_phy_write(dev, B43_PHY_PGACTL, 0xE300);
-		b43_phy_write(dev, B43_PHY_RFOVERVAL, rfover);
+		b43_phy_ग_लिखो(dev, B43_PHY_PGACTL, 0xE300);
+		b43_phy_ग_लिखो(dev, B43_PHY_RFOVERVAL, rfover);
 		udelay(10);
 		rfover |= B43_PHY_RFOVERVAL_BW_LBW;
-		b43_phy_write(dev, B43_PHY_RFOVERVAL, rfover);
+		b43_phy_ग_लिखो(dev, B43_PHY_RFOVERVAL, rfover);
 		udelay(10);
 		rfover |= B43_PHY_RFOVERVAL_BW_LPF;
-		b43_phy_write(dev, B43_PHY_RFOVERVAL, rfover);
+		b43_phy_ग_लिखो(dev, B43_PHY_RFOVERVAL, rfover);
 		udelay(10);
-		b43_phy_write(dev, B43_PHY_PGACTL, 0xF300);
-	} else {
+		b43_phy_ग_लिखो(dev, B43_PHY_PGACTL, 0xF300);
+	पूर्ण अन्यथा अणु
 		pga |= B43_PHY_PGACTL_UNKNOWN;
-		b43_phy_write(dev, B43_PHY_PGACTL, pga);
+		b43_phy_ग_लिखो(dev, B43_PHY_PGACTL, pga);
 		udelay(10);
 		pga |= B43_PHY_PGACTL_LOWBANDW;
-		b43_phy_write(dev, B43_PHY_PGACTL, pga);
+		b43_phy_ग_लिखो(dev, B43_PHY_PGACTL, pga);
 		udelay(10);
 		pga |= B43_PHY_PGACTL_LPF;
-		b43_phy_write(dev, B43_PHY_PGACTL, pga);
-	}
+		b43_phy_ग_लिखो(dev, B43_PHY_PGACTL, pga);
+	पूर्ण
 	udelay(21);
-	feedthrough = b43_phy_read(dev, B43_PHY_LO_LEAKAGE);
+	feedthrough = b43_phy_पढ़ो(dev, B43_PHY_LO_LEAKAGE);
 
-	/* This is a good place to check if we need to relax a bit,
-	 * as this is the main function called regularly
+	/* This is a good place to check अगर we need to relax a bit,
+	 * as this is the मुख्य function called regularly
 	 * in the LO calibration. */
 	cond_resched();
 
-	return feedthrough;
-}
+	वापस feedthrough;
+पूर्ण
 
 /* TXCTL Register and Value Table.
  * Returns the "TXCTL Register".
  * "value" is the "TXCTL Value".
  * "pad_mix_gain" is the PAD Mixer Gain.
  */
-static u16 lo_txctl_register_table(struct b43_wldev *dev,
+अटल u16 lo_txctl_रेजिस्टर_table(काष्ठा b43_wldev *dev,
 				   u16 *value, u16 *pad_mix_gain)
-{
-	struct b43_phy *phy = &dev->phy;
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
 	u16 reg, v, padmix;
 
-	if (phy->type == B43_PHYTYPE_B) {
+	अगर (phy->type == B43_PHYTYPE_B) अणु
 		v = 0x30;
-		if (phy->radio_rev <= 5) {
+		अगर (phy->radio_rev <= 5) अणु
 			reg = 0x43;
 			padmix = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			reg = 0x52;
 			padmix = 5;
-		}
-	} else {
-		if (phy->rev >= 2 && phy->radio_rev == 8) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (phy->rev >= 2 && phy->radio_rev == 8) अणु
 			reg = 0x43;
 			v = 0x10;
 			padmix = 2;
-		} else {
+		पूर्ण अन्यथा अणु
 			reg = 0x52;
 			v = 0x30;
 			padmix = 5;
-		}
-	}
-	if (value)
+		पूर्ण
+	पूर्ण
+	अगर (value)
 		*value = v;
-	if (pad_mix_gain)
+	अगर (pad_mix_gain)
 		*pad_mix_gain = padmix;
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
-static void lo_measure_txctl_values(struct b43_wldev *dev)
-{
-	struct b43_phy *phy = &dev->phy;
-	struct b43_phy_g *gphy = phy->g;
-	struct b43_txpower_lo_control *lo = gphy->lo_control;
+अटल व्योम lo_measure_txctl_values(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	काष्ठा b43_phy_g *gphy = phy->g;
+	काष्ठा b43_txघातer_lo_control *lo = gphy->lo_control;
 	u16 reg, mask;
 	u16 trsw_rx, pga;
 	u16 radio_pctl_reg;
 
-	static const u8 tx_bias_values[] = {
+	अटल स्थिर u8 tx_bias_values[] = अणु
 		0x09, 0x08, 0x0A, 0x01, 0x00,
 		0x02, 0x05, 0x04, 0x06,
-	};
-	static const u8 tx_magn_values[] = {
+	पूर्ण;
+	अटल स्थिर u8 tx_magn_values[] = अणु
 		0x70, 0x40,
-	};
+	पूर्ण;
 
-	if (!has_loopback_gain(phy)) {
+	अगर (!has_loopback_gain(phy)) अणु
 		radio_pctl_reg = 6;
 		trsw_rx = 2;
 		pga = 0;
-	} else {
-		int lb_gain;	/* Loopback gain (in dB) */
+	पूर्ण अन्यथा अणु
+		पूर्णांक lb_gain;	/* Loopback gain (in dB) */
 
 		trsw_rx = 0;
 		lb_gain = gphy->max_lb_gain / 2;
-		if (lb_gain > 10) {
+		अगर (lb_gain > 10) अणु
 			radio_pctl_reg = 0;
-			pga = abs(10 - lb_gain) / 6;
+			pga = असल(10 - lb_gain) / 6;
 			pga = clamp_val(pga, 0, 15);
-		} else {
-			int cmp_val;
-			int tmp;
+		पूर्ण अन्यथा अणु
+			पूर्णांक cmp_val;
+			पूर्णांक पंचांगp;
 
 			pga = 0;
 			cmp_val = 0x24;
-			if ((phy->rev >= 2) &&
+			अगर ((phy->rev >= 2) &&
 			    (phy->radio_ver == 0x2050) && (phy->radio_rev == 8))
 				cmp_val = 0x3C;
-			tmp = lb_gain;
-			if ((10 - lb_gain) < cmp_val)
-				tmp = (10 - lb_gain);
-			if (tmp < 0)
-				tmp += 6;
-			else
-				tmp += 3;
+			पंचांगp = lb_gain;
+			अगर ((10 - lb_gain) < cmp_val)
+				पंचांगp = (10 - lb_gain);
+			अगर (पंचांगp < 0)
+				पंचांगp += 6;
+			अन्यथा
+				पंचांगp += 3;
 			cmp_val /= 4;
-			tmp /= 4;
-			if (tmp >= cmp_val)
+			पंचांगp /= 4;
+			अगर (पंचांगp >= cmp_val)
 				radio_pctl_reg = cmp_val;
-			else
-				radio_pctl_reg = tmp;
-		}
-	}
+			अन्यथा
+				radio_pctl_reg = पंचांगp;
+		पूर्ण
+	पूर्ण
 	b43_radio_maskset(dev, 0x43, 0xFFF0, radio_pctl_reg);
 	b43_gphy_set_baseband_attenuation(dev, 2);
 
-	reg = lo_txctl_register_table(dev, &mask, NULL);
+	reg = lo_txctl_रेजिस्टर_table(dev, &mask, शून्य);
 	mask = ~mask;
 	b43_radio_mask(dev, reg, mask);
 
-	if (has_tx_magnification(phy)) {
-		int i, j;
-		int feedthrough;
-		int min_feedth = 0xFFFF;
+	अगर (has_tx_magnअगरication(phy)) अणु
+		पूर्णांक i, j;
+		पूर्णांक feedthrough;
+		पूर्णांक min_feedth = 0xFFFF;
 		u8 tx_magn, tx_bias;
 
-		for (i = 0; i < ARRAY_SIZE(tx_magn_values); i++) {
+		क्रम (i = 0; i < ARRAY_SIZE(tx_magn_values); i++) अणु
 			tx_magn = tx_magn_values[i];
 			b43_radio_maskset(dev, 0x52, 0xFF0F, tx_magn);
-			for (j = 0; j < ARRAY_SIZE(tx_bias_values); j++) {
+			क्रम (j = 0; j < ARRAY_SIZE(tx_bias_values); j++) अणु
 				tx_bias = tx_bias_values[j];
 				b43_radio_maskset(dev, 0x52, 0xFFF0, tx_bias);
 				feedthrough =
 				    lo_measure_feedthrough(dev, 0, pga,
 							   trsw_rx);
-				if (feedthrough < min_feedth) {
+				अगर (feedthrough < min_feedth) अणु
 					lo->tx_bias = tx_bias;
 					lo->tx_magn = tx_magn;
 					min_feedth = feedthrough;
-				}
-				if (lo->tx_bias == 0)
-					break;
-			}
-			b43_radio_write16(dev, 0x52,
-					  (b43_radio_read16(dev, 0x52)
+				पूर्ण
+				अगर (lo->tx_bias == 0)
+					अवरोध;
+			पूर्ण
+			b43_radio_ग_लिखो16(dev, 0x52,
+					  (b43_radio_पढ़ो16(dev, 0x52)
 					   & 0xFF00) | lo->tx_bias | lo->
 					  tx_magn);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		lo->tx_magn = 0;
 		lo->tx_bias = 0;
 		b43_radio_mask(dev, 0x52, 0xFFF0);	/* TX bias == 0 */
-	}
-	lo->txctl_measured_time = jiffies;
-}
+	पूर्ण
+	lo->txctl_measured_समय = jअगरfies;
+पूर्ण
 
-static void lo_read_power_vector(struct b43_wldev *dev)
-{
-	struct b43_phy *phy = &dev->phy;
-	struct b43_phy_g *gphy = phy->g;
-	struct b43_txpower_lo_control *lo = gphy->lo_control;
-	int i;
-	u64 tmp;
-	u64 power_vector = 0;
+अटल व्योम lo_पढ़ो_घातer_vector(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	काष्ठा b43_phy_g *gphy = phy->g;
+	काष्ठा b43_txघातer_lo_control *lo = gphy->lo_control;
+	पूर्णांक i;
+	u64 पंचांगp;
+	u64 घातer_vector = 0;
 
-	for (i = 0; i < 8; i += 2) {
-		tmp = b43_shm_read16(dev, B43_SHM_SHARED, 0x310 + i);
-		power_vector |= (tmp << (i * 8));
+	क्रम (i = 0; i < 8; i += 2) अणु
+		पंचांगp = b43_shm_पढ़ो16(dev, B43_SHM_SHARED, 0x310 + i);
+		घातer_vector |= (पंचांगp << (i * 8));
 		/* Clear the vector on the device. */
-		b43_shm_write16(dev, B43_SHM_SHARED, 0x310 + i, 0);
-	}
-	if (power_vector)
-		lo->power_vector = power_vector;
-	lo->pwr_vec_read_time = jiffies;
-}
+		b43_shm_ग_लिखो16(dev, B43_SHM_SHARED, 0x310 + i, 0);
+	पूर्ण
+	अगर (घातer_vector)
+		lo->घातer_vector = घातer_vector;
+	lo->pwr_vec_पढ़ो_समय = jअगरfies;
+पूर्ण
 
 /* 802.11/LO/GPHY/MeasuringGains */
-static void lo_measure_gain_values(struct b43_wldev *dev,
-				   s16 max_rx_gain, int use_trsw_rx)
-{
-	struct b43_phy *phy = &dev->phy;
-	struct b43_phy_g *gphy = phy->g;
-	u16 tmp;
+अटल व्योम lo_measure_gain_values(काष्ठा b43_wldev *dev,
+				   s16 max_rx_gain, पूर्णांक use_trsw_rx)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	काष्ठा b43_phy_g *gphy = phy->g;
+	u16 पंचांगp;
 
-	if (max_rx_gain < 0)
+	अगर (max_rx_gain < 0)
 		max_rx_gain = 0;
 
-	if (has_loopback_gain(phy)) {
-		int trsw_rx_gain;
+	अगर (has_loopback_gain(phy)) अणु
+		पूर्णांक trsw_rx_gain;
 
-		if (use_trsw_rx) {
+		अगर (use_trsw_rx) अणु
 			trsw_rx_gain = gphy->trsw_rx_gain / 2;
-			if (max_rx_gain >= trsw_rx_gain) {
+			अगर (max_rx_gain >= trsw_rx_gain) अणु
 				trsw_rx_gain = max_rx_gain - trsw_rx_gain;
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			trsw_rx_gain = max_rx_gain;
-		if (trsw_rx_gain < 9) {
+		अगर (trsw_rx_gain < 9) अणु
 			gphy->lna_lod_gain = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			gphy->lna_lod_gain = 1;
 			trsw_rx_gain -= 8;
-		}
+		पूर्ण
 		trsw_rx_gain = clamp_val(trsw_rx_gain, 0, 0x2D);
 		gphy->pga_gain = trsw_rx_gain / 3;
-		if (gphy->pga_gain >= 5) {
+		अगर (gphy->pga_gain >= 5) अणु
 			gphy->pga_gain -= 5;
 			gphy->lna_gain = 2;
-		} else
+		पूर्ण अन्यथा
 			gphy->lna_gain = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		gphy->lna_gain = 0;
 		gphy->trsw_rx_gain = 0x20;
-		if (max_rx_gain >= 0x14) {
+		अगर (max_rx_gain >= 0x14) अणु
 			gphy->lna_lod_gain = 1;
 			gphy->pga_gain = 2;
-		} else if (max_rx_gain >= 0x12) {
+		पूर्ण अन्यथा अगर (max_rx_gain >= 0x12) अणु
 			gphy->lna_lod_gain = 1;
 			gphy->pga_gain = 1;
-		} else if (max_rx_gain >= 0xF) {
+		पूर्ण अन्यथा अगर (max_rx_gain >= 0xF) अणु
 			gphy->lna_lod_gain = 1;
 			gphy->pga_gain = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			gphy->lna_lod_gain = 0;
 			gphy->pga_gain = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	tmp = b43_radio_read16(dev, 0x7A);
-	if (gphy->lna_lod_gain == 0)
-		tmp &= ~0x0008;
-	else
-		tmp |= 0x0008;
-	b43_radio_write16(dev, 0x7A, tmp);
-}
+	पंचांगp = b43_radio_पढ़ो16(dev, 0x7A);
+	अगर (gphy->lna_lod_gain == 0)
+		पंचांगp &= ~0x0008;
+	अन्यथा
+		पंचांगp |= 0x0008;
+	b43_radio_ग_लिखो16(dev, 0x7A, पंचांगp);
+पूर्ण
 
-struct lo_g_saved_values {
+काष्ठा lo_g_saved_values अणु
 	u8 old_channel;
 
-	/* Core registers */
+	/* Core रेजिस्टरs */
 	u16 reg_3F4;
 	u16 reg_3E2;
 
-	/* PHY registers */
+	/* PHY रेजिस्टरs */
 	u16 phy_lo_mask;
 	u16 phy_extg_01;
 	u16 phy_dacctl_hwpctl;
@@ -363,373 +364,373 @@ struct lo_g_saved_values {
 	u16 phy_cck_30;
 	u16 phy_cck_06;
 
-	/* Radio registers */
+	/* Radio रेजिस्टरs */
 	u16 radio_43;
 	u16 radio_7A;
 	u16 radio_52;
-};
+पूर्ण;
 
-static void lo_measure_setup(struct b43_wldev *dev,
-			     struct lo_g_saved_values *sav)
-{
-	struct ssb_sprom *sprom = dev->dev->bus_sprom;
-	struct b43_phy *phy = &dev->phy;
-	struct b43_phy_g *gphy = phy->g;
-	struct b43_txpower_lo_control *lo = gphy->lo_control;
-	u16 tmp;
+अटल व्योम lo_measure_setup(काष्ठा b43_wldev *dev,
+			     काष्ठा lo_g_saved_values *sav)
+अणु
+	काष्ठा ssb_sprom *sprom = dev->dev->bus_sprom;
+	काष्ठा b43_phy *phy = &dev->phy;
+	काष्ठा b43_phy_g *gphy = phy->g;
+	काष्ठा b43_txघातer_lo_control *lo = gphy->lo_control;
+	u16 पंचांगp;
 
-	if (b43_has_hardware_pctl(dev)) {
-		sav->phy_lo_mask = b43_phy_read(dev, B43_PHY_LO_MASK);
-		sav->phy_extg_01 = b43_phy_read(dev, B43_PHY_EXTG(0x01));
-		sav->phy_dacctl_hwpctl = b43_phy_read(dev, B43_PHY_DACCTL);
-		sav->phy_cck_14 = b43_phy_read(dev, B43_PHY_CCK(0x14));
-		sav->phy_hpwr_tssictl = b43_phy_read(dev, B43_PHY_HPWR_TSSICTL);
+	अगर (b43_has_hardware_pctl(dev)) अणु
+		sav->phy_lo_mask = b43_phy_पढ़ो(dev, B43_PHY_LO_MASK);
+		sav->phy_extg_01 = b43_phy_पढ़ो(dev, B43_PHY_EXTG(0x01));
+		sav->phy_dacctl_hwpctl = b43_phy_पढ़ो(dev, B43_PHY_DACCTL);
+		sav->phy_cck_14 = b43_phy_पढ़ो(dev, B43_PHY_CCK(0x14));
+		sav->phy_hpwr_tssictl = b43_phy_पढ़ो(dev, B43_PHY_HPWR_TSSICTL);
 
 		b43_phy_set(dev, B43_PHY_HPWR_TSSICTL, 0x100);
 		b43_phy_set(dev, B43_PHY_EXTG(0x01), 0x40);
 		b43_phy_set(dev, B43_PHY_DACCTL, 0x40);
 		b43_phy_set(dev, B43_PHY_CCK(0x14), 0x200);
-	}
-	if (phy->type == B43_PHYTYPE_B &&
-	    phy->radio_ver == 0x2050 && phy->radio_rev < 6) {
-		b43_phy_write(dev, B43_PHY_CCK(0x16), 0x410);
-		b43_phy_write(dev, B43_PHY_CCK(0x17), 0x820);
-	}
-	if (phy->rev >= 2) {
-		sav->phy_analogover = b43_phy_read(dev, B43_PHY_ANALOGOVER);
+	पूर्ण
+	अगर (phy->type == B43_PHYTYPE_B &&
+	    phy->radio_ver == 0x2050 && phy->radio_rev < 6) अणु
+		b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x16), 0x410);
+		b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x17), 0x820);
+	पूर्ण
+	अगर (phy->rev >= 2) अणु
+		sav->phy_analogover = b43_phy_पढ़ो(dev, B43_PHY_ANALOGOVER);
 		sav->phy_analogoverval =
-		    b43_phy_read(dev, B43_PHY_ANALOGOVERVAL);
-		sav->phy_rfover = b43_phy_read(dev, B43_PHY_RFOVER);
-		sav->phy_rfoverval = b43_phy_read(dev, B43_PHY_RFOVERVAL);
-		sav->phy_classctl = b43_phy_read(dev, B43_PHY_CLASSCTL);
-		sav->phy_cck_3E = b43_phy_read(dev, B43_PHY_CCK(0x3E));
-		sav->phy_crs0 = b43_phy_read(dev, B43_PHY_CRS0);
+		    b43_phy_पढ़ो(dev, B43_PHY_ANALOGOVERVAL);
+		sav->phy_rfover = b43_phy_पढ़ो(dev, B43_PHY_RFOVER);
+		sav->phy_rfoverval = b43_phy_पढ़ो(dev, B43_PHY_RFOVERVAL);
+		sav->phy_classctl = b43_phy_पढ़ो(dev, B43_PHY_CLASSCTL);
+		sav->phy_cck_3E = b43_phy_पढ़ो(dev, B43_PHY_CCK(0x3E));
+		sav->phy_crs0 = b43_phy_पढ़ो(dev, B43_PHY_CRS0);
 
 		b43_phy_mask(dev, B43_PHY_CLASSCTL, 0xFFFC);
 		b43_phy_mask(dev, B43_PHY_CRS0, 0x7FFF);
 		b43_phy_set(dev, B43_PHY_ANALOGOVER, 0x0003);
 		b43_phy_mask(dev, B43_PHY_ANALOGOVERVAL, 0xFFFC);
-		if (phy->type == B43_PHYTYPE_G) {
-			if ((phy->rev >= 7) &&
-			    (sprom->boardflags_lo & B43_BFL_EXTLNA)) {
-				b43_phy_write(dev, B43_PHY_RFOVER, 0x933);
-			} else {
-				b43_phy_write(dev, B43_PHY_RFOVER, 0x133);
-			}
-		} else {
-			b43_phy_write(dev, B43_PHY_RFOVER, 0);
-		}
-		b43_phy_write(dev, B43_PHY_CCK(0x3E), 0);
-	}
-	sav->reg_3F4 = b43_read16(dev, 0x3F4);
-	sav->reg_3E2 = b43_read16(dev, 0x3E2);
-	sav->radio_43 = b43_radio_read16(dev, 0x43);
-	sav->radio_7A = b43_radio_read16(dev, 0x7A);
-	sav->phy_pgactl = b43_phy_read(dev, B43_PHY_PGACTL);
-	sav->phy_cck_2A = b43_phy_read(dev, B43_PHY_CCK(0x2A));
-	sav->phy_syncctl = b43_phy_read(dev, B43_PHY_SYNCCTL);
-	sav->phy_dacctl = b43_phy_read(dev, B43_PHY_DACCTL);
+		अगर (phy->type == B43_PHYTYPE_G) अणु
+			अगर ((phy->rev >= 7) &&
+			    (sprom->boardflags_lo & B43_BFL_EXTLNA)) अणु
+				b43_phy_ग_लिखो(dev, B43_PHY_RFOVER, 0x933);
+			पूर्ण अन्यथा अणु
+				b43_phy_ग_लिखो(dev, B43_PHY_RFOVER, 0x133);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			b43_phy_ग_लिखो(dev, B43_PHY_RFOVER, 0);
+		पूर्ण
+		b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x3E), 0);
+	पूर्ण
+	sav->reg_3F4 = b43_पढ़ो16(dev, 0x3F4);
+	sav->reg_3E2 = b43_पढ़ो16(dev, 0x3E2);
+	sav->radio_43 = b43_radio_पढ़ो16(dev, 0x43);
+	sav->radio_7A = b43_radio_पढ़ो16(dev, 0x7A);
+	sav->phy_pgactl = b43_phy_पढ़ो(dev, B43_PHY_PGACTL);
+	sav->phy_cck_2A = b43_phy_पढ़ो(dev, B43_PHY_CCK(0x2A));
+	sav->phy_syncctl = b43_phy_पढ़ो(dev, B43_PHY_SYNCCTL);
+	sav->phy_dacctl = b43_phy_पढ़ो(dev, B43_PHY_DACCTL);
 
-	if (!has_tx_magnification(phy)) {
-		sav->radio_52 = b43_radio_read16(dev, 0x52);
+	अगर (!has_tx_magnअगरication(phy)) अणु
+		sav->radio_52 = b43_radio_पढ़ो16(dev, 0x52);
 		sav->radio_52 &= 0x00F0;
-	}
-	if (phy->type == B43_PHYTYPE_B) {
-		sav->phy_cck_30 = b43_phy_read(dev, B43_PHY_CCK(0x30));
-		sav->phy_cck_06 = b43_phy_read(dev, B43_PHY_CCK(0x06));
-		b43_phy_write(dev, B43_PHY_CCK(0x30), 0x00FF);
-		b43_phy_write(dev, B43_PHY_CCK(0x06), 0x3F3F);
-	} else {
-		b43_write16(dev, 0x3E2, b43_read16(dev, 0x3E2)
+	पूर्ण
+	अगर (phy->type == B43_PHYTYPE_B) अणु
+		sav->phy_cck_30 = b43_phy_पढ़ो(dev, B43_PHY_CCK(0x30));
+		sav->phy_cck_06 = b43_phy_पढ़ो(dev, B43_PHY_CCK(0x06));
+		b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x30), 0x00FF);
+		b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x06), 0x3F3F);
+	पूर्ण अन्यथा अणु
+		b43_ग_लिखो16(dev, 0x3E2, b43_पढ़ो16(dev, 0x3E2)
 			    | 0x8000);
-	}
-	b43_write16(dev, 0x3F4, b43_read16(dev, 0x3F4)
+	पूर्ण
+	b43_ग_लिखो16(dev, 0x3F4, b43_पढ़ो16(dev, 0x3F4)
 		    & 0xF000);
 
-	tmp =
+	पंचांगp =
 	    (phy->type == B43_PHYTYPE_G) ? B43_PHY_LO_MASK : B43_PHY_CCK(0x2E);
-	b43_phy_write(dev, tmp, 0x007F);
+	b43_phy_ग_लिखो(dev, पंचांगp, 0x007F);
 
-	tmp = sav->phy_syncctl;
-	b43_phy_write(dev, B43_PHY_SYNCCTL, tmp & 0xFF7F);
-	tmp = sav->radio_7A;
-	b43_radio_write16(dev, 0x007A, tmp & 0xFFF0);
+	पंचांगp = sav->phy_syncctl;
+	b43_phy_ग_लिखो(dev, B43_PHY_SYNCCTL, पंचांगp & 0xFF7F);
+	पंचांगp = sav->radio_7A;
+	b43_radio_ग_लिखो16(dev, 0x007A, पंचांगp & 0xFFF0);
 
-	b43_phy_write(dev, B43_PHY_CCK(0x2A), 0x8A3);
-	if (phy->type == B43_PHYTYPE_G ||
+	b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x2A), 0x8A3);
+	अगर (phy->type == B43_PHYTYPE_G ||
 	    (phy->type == B43_PHYTYPE_B &&
-	     phy->radio_ver == 0x2050 && phy->radio_rev >= 6)) {
-		b43_phy_write(dev, B43_PHY_CCK(0x2B), 0x1003);
-	} else
-		b43_phy_write(dev, B43_PHY_CCK(0x2B), 0x0802);
-	if (phy->rev >= 2)
+	     phy->radio_ver == 0x2050 && phy->radio_rev >= 6)) अणु
+		b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x2B), 0x1003);
+	पूर्ण अन्यथा
+		b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x2B), 0x0802);
+	अगर (phy->rev >= 2)
 		b43_dummy_transmission(dev, false, true);
-	b43_gphy_channel_switch(dev, 6, 0);
-	b43_radio_read16(dev, 0x51);	/* dummy read */
-	if (phy->type == B43_PHYTYPE_G)
-		b43_phy_write(dev, B43_PHY_CCK(0x2F), 0);
+	b43_gphy_channel_चयन(dev, 6, 0);
+	b43_radio_पढ़ो16(dev, 0x51);	/* dummy पढ़ो */
+	अगर (phy->type == B43_PHYTYPE_G)
+		b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x2F), 0);
 
-	/* Re-measure the txctl values, if needed. */
-	if (time_before(lo->txctl_measured_time,
-			jiffies - B43_LO_TXCTL_EXPIRE))
+	/* Re-measure the txctl values, अगर needed. */
+	अगर (समय_beक्रमe(lo->txctl_measured_समय,
+			jअगरfies - B43_LO_TXCTL_EXPIRE))
 		lo_measure_txctl_values(dev);
 
-	if (phy->type == B43_PHYTYPE_G && phy->rev >= 3) {
-		b43_phy_write(dev, B43_PHY_LO_MASK, 0xC078);
-	} else {
-		if (phy->type == B43_PHYTYPE_B)
-			b43_phy_write(dev, B43_PHY_CCK(0x2E), 0x8078);
-		else
-			b43_phy_write(dev, B43_PHY_LO_MASK, 0x8078);
-	}
-}
+	अगर (phy->type == B43_PHYTYPE_G && phy->rev >= 3) अणु
+		b43_phy_ग_लिखो(dev, B43_PHY_LO_MASK, 0xC078);
+	पूर्ण अन्यथा अणु
+		अगर (phy->type == B43_PHYTYPE_B)
+			b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x2E), 0x8078);
+		अन्यथा
+			b43_phy_ग_लिखो(dev, B43_PHY_LO_MASK, 0x8078);
+	पूर्ण
+पूर्ण
 
-static void lo_measure_restore(struct b43_wldev *dev,
-			       struct lo_g_saved_values *sav)
-{
-	struct b43_phy *phy = &dev->phy;
-	struct b43_phy_g *gphy = phy->g;
-	u16 tmp;
+अटल व्योम lo_measure_restore(काष्ठा b43_wldev *dev,
+			       काष्ठा lo_g_saved_values *sav)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	काष्ठा b43_phy_g *gphy = phy->g;
+	u16 पंचांगp;
 
-	if (phy->rev >= 2) {
-		b43_phy_write(dev, B43_PHY_PGACTL, 0xE300);
-		tmp = (gphy->pga_gain << 8);
-		b43_phy_write(dev, B43_PHY_RFOVERVAL, tmp | 0xA0);
+	अगर (phy->rev >= 2) अणु
+		b43_phy_ग_लिखो(dev, B43_PHY_PGACTL, 0xE300);
+		पंचांगp = (gphy->pga_gain << 8);
+		b43_phy_ग_लिखो(dev, B43_PHY_RFOVERVAL, पंचांगp | 0xA0);
 		udelay(5);
-		b43_phy_write(dev, B43_PHY_RFOVERVAL, tmp | 0xA2);
+		b43_phy_ग_लिखो(dev, B43_PHY_RFOVERVAL, पंचांगp | 0xA2);
 		udelay(2);
-		b43_phy_write(dev, B43_PHY_RFOVERVAL, tmp | 0xA3);
-	} else {
-		tmp = (gphy->pga_gain | 0xEFA0);
-		b43_phy_write(dev, B43_PHY_PGACTL, tmp);
-	}
-	if (phy->type == B43_PHYTYPE_G) {
-		if (phy->rev >= 3)
-			b43_phy_write(dev, B43_PHY_CCK(0x2E), 0xC078);
-		else
-			b43_phy_write(dev, B43_PHY_CCK(0x2E), 0x8078);
-		if (phy->rev >= 2)
-			b43_phy_write(dev, B43_PHY_CCK(0x2F), 0x0202);
-		else
-			b43_phy_write(dev, B43_PHY_CCK(0x2F), 0x0101);
-	}
-	b43_write16(dev, 0x3F4, sav->reg_3F4);
-	b43_phy_write(dev, B43_PHY_PGACTL, sav->phy_pgactl);
-	b43_phy_write(dev, B43_PHY_CCK(0x2A), sav->phy_cck_2A);
-	b43_phy_write(dev, B43_PHY_SYNCCTL, sav->phy_syncctl);
-	b43_phy_write(dev, B43_PHY_DACCTL, sav->phy_dacctl);
-	b43_radio_write16(dev, 0x43, sav->radio_43);
-	b43_radio_write16(dev, 0x7A, sav->radio_7A);
-	if (!has_tx_magnification(phy)) {
-		tmp = sav->radio_52;
-		b43_radio_maskset(dev, 0x52, 0xFF0F, tmp);
-	}
-	b43_write16(dev, 0x3E2, sav->reg_3E2);
-	if (phy->type == B43_PHYTYPE_B &&
-	    phy->radio_ver == 0x2050 && phy->radio_rev <= 5) {
-		b43_phy_write(dev, B43_PHY_CCK(0x30), sav->phy_cck_30);
-		b43_phy_write(dev, B43_PHY_CCK(0x06), sav->phy_cck_06);
-	}
-	if (phy->rev >= 2) {
-		b43_phy_write(dev, B43_PHY_ANALOGOVER, sav->phy_analogover);
-		b43_phy_write(dev, B43_PHY_ANALOGOVERVAL,
+		b43_phy_ग_लिखो(dev, B43_PHY_RFOVERVAL, पंचांगp | 0xA3);
+	पूर्ण अन्यथा अणु
+		पंचांगp = (gphy->pga_gain | 0xEFA0);
+		b43_phy_ग_लिखो(dev, B43_PHY_PGACTL, पंचांगp);
+	पूर्ण
+	अगर (phy->type == B43_PHYTYPE_G) अणु
+		अगर (phy->rev >= 3)
+			b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x2E), 0xC078);
+		अन्यथा
+			b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x2E), 0x8078);
+		अगर (phy->rev >= 2)
+			b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x2F), 0x0202);
+		अन्यथा
+			b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x2F), 0x0101);
+	पूर्ण
+	b43_ग_लिखो16(dev, 0x3F4, sav->reg_3F4);
+	b43_phy_ग_लिखो(dev, B43_PHY_PGACTL, sav->phy_pgactl);
+	b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x2A), sav->phy_cck_2A);
+	b43_phy_ग_लिखो(dev, B43_PHY_SYNCCTL, sav->phy_syncctl);
+	b43_phy_ग_लिखो(dev, B43_PHY_DACCTL, sav->phy_dacctl);
+	b43_radio_ग_लिखो16(dev, 0x43, sav->radio_43);
+	b43_radio_ग_लिखो16(dev, 0x7A, sav->radio_7A);
+	अगर (!has_tx_magnअगरication(phy)) अणु
+		पंचांगp = sav->radio_52;
+		b43_radio_maskset(dev, 0x52, 0xFF0F, पंचांगp);
+	पूर्ण
+	b43_ग_लिखो16(dev, 0x3E2, sav->reg_3E2);
+	अगर (phy->type == B43_PHYTYPE_B &&
+	    phy->radio_ver == 0x2050 && phy->radio_rev <= 5) अणु
+		b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x30), sav->phy_cck_30);
+		b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x06), sav->phy_cck_06);
+	पूर्ण
+	अगर (phy->rev >= 2) अणु
+		b43_phy_ग_लिखो(dev, B43_PHY_ANALOGOVER, sav->phy_analogover);
+		b43_phy_ग_लिखो(dev, B43_PHY_ANALOGOVERVAL,
 			      sav->phy_analogoverval);
-		b43_phy_write(dev, B43_PHY_CLASSCTL, sav->phy_classctl);
-		b43_phy_write(dev, B43_PHY_RFOVER, sav->phy_rfover);
-		b43_phy_write(dev, B43_PHY_RFOVERVAL, sav->phy_rfoverval);
-		b43_phy_write(dev, B43_PHY_CCK(0x3E), sav->phy_cck_3E);
-		b43_phy_write(dev, B43_PHY_CRS0, sav->phy_crs0);
-	}
-	if (b43_has_hardware_pctl(dev)) {
-		tmp = (sav->phy_lo_mask & 0xBFFF);
-		b43_phy_write(dev, B43_PHY_LO_MASK, tmp);
-		b43_phy_write(dev, B43_PHY_EXTG(0x01), sav->phy_extg_01);
-		b43_phy_write(dev, B43_PHY_DACCTL, sav->phy_dacctl_hwpctl);
-		b43_phy_write(dev, B43_PHY_CCK(0x14), sav->phy_cck_14);
-		b43_phy_write(dev, B43_PHY_HPWR_TSSICTL, sav->phy_hpwr_tssictl);
-	}
-	b43_gphy_channel_switch(dev, sav->old_channel, 1);
-}
+		b43_phy_ग_लिखो(dev, B43_PHY_CLASSCTL, sav->phy_classctl);
+		b43_phy_ग_लिखो(dev, B43_PHY_RFOVER, sav->phy_rfover);
+		b43_phy_ग_लिखो(dev, B43_PHY_RFOVERVAL, sav->phy_rfoverval);
+		b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x3E), sav->phy_cck_3E);
+		b43_phy_ग_लिखो(dev, B43_PHY_CRS0, sav->phy_crs0);
+	पूर्ण
+	अगर (b43_has_hardware_pctl(dev)) अणु
+		पंचांगp = (sav->phy_lo_mask & 0xBFFF);
+		b43_phy_ग_लिखो(dev, B43_PHY_LO_MASK, पंचांगp);
+		b43_phy_ग_लिखो(dev, B43_PHY_EXTG(0x01), sav->phy_extg_01);
+		b43_phy_ग_लिखो(dev, B43_PHY_DACCTL, sav->phy_dacctl_hwpctl);
+		b43_phy_ग_लिखो(dev, B43_PHY_CCK(0x14), sav->phy_cck_14);
+		b43_phy_ग_लिखो(dev, B43_PHY_HPWR_TSSICTL, sav->phy_hpwr_tssictl);
+	पूर्ण
+	b43_gphy_channel_चयन(dev, sav->old_channel, 1);
+पूर्ण
 
-struct b43_lo_g_statemachine {
-	int current_state;
-	int nr_measured;
-	int state_val_multiplier;
+काष्ठा b43_lo_g_statemachine अणु
+	पूर्णांक current_state;
+	पूर्णांक nr_measured;
+	पूर्णांक state_val_multiplier;
 	u16 lowest_feedth;
-	struct b43_loctl min_loctl;
-};
+	काष्ठा b43_loctl min_loctl;
+पूर्ण;
 
 /* Loop over each possible value in this state. */
-static int lo_probe_possible_loctls(struct b43_wldev *dev,
-				    struct b43_loctl *probe_loctl,
-				    struct b43_lo_g_statemachine *d)
-{
-	struct b43_phy *phy = &dev->phy;
-	struct b43_phy_g *gphy = phy->g;
-	struct b43_loctl test_loctl;
-	struct b43_loctl orig_loctl;
-	struct b43_loctl prev_loctl = {
+अटल पूर्णांक lo_probe_possible_loctls(काष्ठा b43_wldev *dev,
+				    काष्ठा b43_loctl *probe_loctl,
+				    काष्ठा b43_lo_g_statemachine *d)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	काष्ठा b43_phy_g *gphy = phy->g;
+	काष्ठा b43_loctl test_loctl;
+	काष्ठा b43_loctl orig_loctl;
+	काष्ठा b43_loctl prev_loctl = अणु
 		.i = -100,
 		.q = -100,
-	};
-	int i;
-	int begin, end;
-	int found_lower = 0;
+	पूर्ण;
+	पूर्णांक i;
+	पूर्णांक begin, end;
+	पूर्णांक found_lower = 0;
 	u16 feedth;
 
-	static const struct b43_loctl modifiers[] = {
-		{.i = 1,.q = 1,},
-		{.i = 1,.q = 0,},
-		{.i = 1,.q = -1,},
-		{.i = 0,.q = -1,},
-		{.i = -1,.q = -1,},
-		{.i = -1,.q = 0,},
-		{.i = -1,.q = 1,},
-		{.i = 0,.q = 1,},
-	};
+	अटल स्थिर काष्ठा b43_loctl modअगरiers[] = अणु
+		अणु.i = 1,.q = 1,पूर्ण,
+		अणु.i = 1,.q = 0,पूर्ण,
+		अणु.i = 1,.q = -1,पूर्ण,
+		अणु.i = 0,.q = -1,पूर्ण,
+		अणु.i = -1,.q = -1,पूर्ण,
+		अणु.i = -1,.q = 0,पूर्ण,
+		अणु.i = -1,.q = 1,पूर्ण,
+		अणु.i = 0,.q = 1,पूर्ण,
+	पूर्ण;
 
-	if (d->current_state == 0) {
+	अगर (d->current_state == 0) अणु
 		begin = 1;
 		end = 8;
-	} else if (d->current_state % 2 == 0) {
+	पूर्ण अन्यथा अगर (d->current_state % 2 == 0) अणु
 		begin = d->current_state - 1;
 		end = d->current_state + 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		begin = d->current_state - 2;
 		end = d->current_state + 2;
-	}
-	if (begin < 1)
+	पूर्ण
+	अगर (begin < 1)
 		begin += 8;
-	if (end > 8)
+	अगर (end > 8)
 		end -= 8;
 
-	memcpy(&orig_loctl, probe_loctl, sizeof(struct b43_loctl));
+	स_नकल(&orig_loctl, probe_loctl, माप(काष्ठा b43_loctl));
 	i = begin;
 	d->current_state = i;
-	while (1) {
+	जबतक (1) अणु
 		B43_WARN_ON(!(i >= 1 && i <= 8));
-		memcpy(&test_loctl, &orig_loctl, sizeof(struct b43_loctl));
-		test_loctl.i += modifiers[i - 1].i * d->state_val_multiplier;
-		test_loctl.q += modifiers[i - 1].q * d->state_val_multiplier;
-		if ((test_loctl.i != prev_loctl.i ||
+		स_नकल(&test_loctl, &orig_loctl, माप(काष्ठा b43_loctl));
+		test_loctl.i += modअगरiers[i - 1].i * d->state_val_multiplier;
+		test_loctl.q += modअगरiers[i - 1].q * d->state_val_multiplier;
+		अगर ((test_loctl.i != prev_loctl.i ||
 		     test_loctl.q != prev_loctl.q) &&
-		    (abs(test_loctl.i) <= 16 && abs(test_loctl.q) <= 16)) {
-			b43_lo_write(dev, &test_loctl);
+		    (असल(test_loctl.i) <= 16 && असल(test_loctl.q) <= 16)) अणु
+			b43_lo_ग_लिखो(dev, &test_loctl);
 			feedth = lo_measure_feedthrough(dev, gphy->lna_gain,
 							gphy->pga_gain,
 							gphy->trsw_rx_gain);
-			if (feedth < d->lowest_feedth) {
-				memcpy(probe_loctl, &test_loctl,
-				       sizeof(struct b43_loctl));
+			अगर (feedth < d->lowest_feedth) अणु
+				स_नकल(probe_loctl, &test_loctl,
+				       माप(काष्ठा b43_loctl));
 				found_lower = 1;
 				d->lowest_feedth = feedth;
-				if ((d->nr_measured < 2) &&
+				अगर ((d->nr_measured < 2) &&
 				    !has_loopback_gain(phy))
-					break;
-			}
-		}
-		memcpy(&prev_loctl, &test_loctl, sizeof(prev_loctl));
-		if (i == end)
-			break;
-		if (i == 8)
+					अवरोध;
+			पूर्ण
+		पूर्ण
+		स_नकल(&prev_loctl, &test_loctl, माप(prev_loctl));
+		अगर (i == end)
+			अवरोध;
+		अगर (i == 8)
 			i = 1;
-		else
+		अन्यथा
 			i++;
 		d->current_state = i;
-	}
+	पूर्ण
 
-	return found_lower;
-}
+	वापस found_lower;
+पूर्ण
 
-static void lo_probe_loctls_statemachine(struct b43_wldev *dev,
-					 struct b43_loctl *loctl,
-					 int *max_rx_gain)
-{
-	struct b43_phy *phy = &dev->phy;
-	struct b43_phy_g *gphy = phy->g;
-	struct b43_lo_g_statemachine d;
+अटल व्योम lo_probe_loctls_statemachine(काष्ठा b43_wldev *dev,
+					 काष्ठा b43_loctl *loctl,
+					 पूर्णांक *max_rx_gain)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	काष्ठा b43_phy_g *gphy = phy->g;
+	काष्ठा b43_lo_g_statemachine d;
 	u16 feedth;
-	int found_lower;
-	struct b43_loctl probe_loctl;
-	int max_repeat = 1, repeat_cnt = 0;
+	पूर्णांक found_lower;
+	काष्ठा b43_loctl probe_loctl;
+	पूर्णांक max_repeat = 1, repeat_cnt = 0;
 
 	d.nr_measured = 0;
 	d.state_val_multiplier = 1;
-	if (has_loopback_gain(phy))
+	अगर (has_loopback_gain(phy))
 		d.state_val_multiplier = 3;
 
-	memcpy(&d.min_loctl, loctl, sizeof(struct b43_loctl));
-	if (has_loopback_gain(phy))
+	स_नकल(&d.min_loctl, loctl, माप(काष्ठा b43_loctl));
+	अगर (has_loopback_gain(phy))
 		max_repeat = 4;
-	do {
-		b43_lo_write(dev, &d.min_loctl);
+	करो अणु
+		b43_lo_ग_लिखो(dev, &d.min_loctl);
 		feedth = lo_measure_feedthrough(dev, gphy->lna_gain,
 						gphy->pga_gain,
 						gphy->trsw_rx_gain);
-		if (feedth < 0x258) {
-			if (feedth >= 0x12C)
+		अगर (feedth < 0x258) अणु
+			अगर (feedth >= 0x12C)
 				*max_rx_gain += 6;
-			else
+			अन्यथा
 				*max_rx_gain += 3;
 			feedth = lo_measure_feedthrough(dev, gphy->lna_gain,
 							gphy->pga_gain,
 							gphy->trsw_rx_gain);
-		}
+		पूर्ण
 		d.lowest_feedth = feedth;
 
 		d.current_state = 0;
-		do {
+		करो अणु
 			B43_WARN_ON(!
 				    (d.current_state >= 0
 				     && d.current_state <= 8));
-			memcpy(&probe_loctl, &d.min_loctl,
-			       sizeof(struct b43_loctl));
+			स_नकल(&probe_loctl, &d.min_loctl,
+			       माप(काष्ठा b43_loctl));
 			found_lower =
 			    lo_probe_possible_loctls(dev, &probe_loctl, &d);
-			if (!found_lower)
-				break;
-			if ((probe_loctl.i == d.min_loctl.i) &&
+			अगर (!found_lower)
+				अवरोध;
+			अगर ((probe_loctl.i == d.min_loctl.i) &&
 			    (probe_loctl.q == d.min_loctl.q))
-				break;
-			memcpy(&d.min_loctl, &probe_loctl,
-			       sizeof(struct b43_loctl));
+				अवरोध;
+			स_नकल(&d.min_loctl, &probe_loctl,
+			       माप(काष्ठा b43_loctl));
 			d.nr_measured++;
-		} while (d.nr_measured < 24);
-		memcpy(loctl, &d.min_loctl, sizeof(struct b43_loctl));
+		पूर्ण जबतक (d.nr_measured < 24);
+		स_नकल(loctl, &d.min_loctl, माप(काष्ठा b43_loctl));
 
-		if (has_loopback_gain(phy)) {
-			if (d.lowest_feedth > 0x1194)
+		अगर (has_loopback_gain(phy)) अणु
+			अगर (d.lowest_feedth > 0x1194)
 				*max_rx_gain -= 6;
-			else if (d.lowest_feedth < 0x5DC)
+			अन्यथा अगर (d.lowest_feedth < 0x5DC)
 				*max_rx_gain += 3;
-			if (repeat_cnt == 0) {
-				if (d.lowest_feedth <= 0x5DC) {
+			अगर (repeat_cnt == 0) अणु
+				अगर (d.lowest_feedth <= 0x5DC) अणु
 					d.state_val_multiplier = 1;
 					repeat_cnt++;
-				} else
+				पूर्ण अन्यथा
 					d.state_val_multiplier = 2;
-			} else if (repeat_cnt == 2)
+			पूर्ण अन्यथा अगर (repeat_cnt == 2)
 				d.state_val_multiplier = 1;
-		}
+		पूर्ण
 		lo_measure_gain_values(dev, *max_rx_gain,
 				       has_loopback_gain(phy));
-	} while (++repeat_cnt < max_repeat);
-}
+	पूर्ण जबतक (++repeat_cnt < max_repeat);
+पूर्ण
 
-static
-struct b43_lo_calib *b43_calibrate_lo_setting(struct b43_wldev *dev,
-					      const struct b43_bbatt *bbatt,
-					      const struct b43_rfatt *rfatt)
-{
-	struct b43_phy *phy = &dev->phy;
-	struct b43_phy_g *gphy = phy->g;
-	struct b43_loctl loctl = {
+अटल
+काष्ठा b43_lo_calib *b43_calibrate_lo_setting(काष्ठा b43_wldev *dev,
+					      स्थिर काष्ठा b43_bbatt *bbatt,
+					      स्थिर काष्ठा b43_rfatt *rfatt)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	काष्ठा b43_phy_g *gphy = phy->g;
+	काष्ठा b43_loctl loctl = अणु
 		.i = 0,
 		.q = 0,
-	};
-	int max_rx_gain;
-	struct b43_lo_calib *cal;
-	struct lo_g_saved_values saved_regs;
+	पूर्ण;
+	पूर्णांक max_rx_gain;
+	काष्ठा b43_lo_calib *cal;
+	काष्ठा lo_g_saved_values saved_regs;
 	/* Values from the "TXCTL Register and Value Table" */
 	u16 txctl_reg;
 	u16 txctl_value;
@@ -739,16 +740,16 @@ struct b43_lo_calib *b43_calibrate_lo_setting(struct b43_wldev *dev,
 	b43_mac_suspend(dev);
 	lo_measure_setup(dev, &saved_regs);
 
-	txctl_reg = lo_txctl_register_table(dev, &txctl_value, &pad_mix_gain);
+	txctl_reg = lo_txctl_रेजिस्टर_table(dev, &txctl_value, &pad_mix_gain);
 
 	b43_radio_maskset(dev, 0x43, 0xFFF0, rfatt->att);
 	b43_radio_maskset(dev, txctl_reg, ~txctl_value, (rfatt->with_padmix ? txctl_value :0));
 
 	max_rx_gain = rfatt->att * 2;
 	max_rx_gain += bbatt->att / 2;
-	if (rfatt->with_padmix)
+	अगर (rfatt->with_padmix)
 		max_rx_gain -= pad_mix_gain;
-	if (has_loopback_gain(phy))
+	अगर (has_loopback_gain(phy))
 		max_rx_gain += gphy->max_lb_gain;
 	lo_measure_gain_values(dev, max_rx_gain,
 			       has_loopback_gain(phy));
@@ -759,81 +760,81 @@ struct b43_lo_calib *b43_calibrate_lo_setting(struct b43_wldev *dev,
 	lo_measure_restore(dev, &saved_regs);
 	b43_mac_enable(dev);
 
-	if (b43_debug(dev, B43_DBG_LO)) {
+	अगर (b43_debug(dev, B43_DBG_LO)) अणु
 		b43dbg(dev->wl, "LO: Calibrated for BB(%u), RF(%u,%u) "
 		       "=> I=%d Q=%d\n",
 		       bbatt->att, rfatt->att, rfatt->with_padmix,
 		       loctl.i, loctl.q);
-	}
+	पूर्ण
 
-	cal = kmalloc(sizeof(*cal), GFP_KERNEL);
-	if (!cal) {
+	cal = kदो_स्मृति(माप(*cal), GFP_KERNEL);
+	अगर (!cal) अणु
 		b43warn(dev->wl, "LO calib: out of memory\n");
-		return NULL;
-	}
-	memcpy(&cal->bbatt, bbatt, sizeof(*bbatt));
-	memcpy(&cal->rfatt, rfatt, sizeof(*rfatt));
-	memcpy(&cal->ctl, &loctl, sizeof(loctl));
-	cal->calib_time = jiffies;
+		वापस शून्य;
+	पूर्ण
+	स_नकल(&cal->bbatt, bbatt, माप(*bbatt));
+	स_नकल(&cal->rfatt, rfatt, माप(*rfatt));
+	स_नकल(&cal->ctl, &loctl, माप(loctl));
+	cal->calib_समय = jअगरfies;
 	INIT_LIST_HEAD(&cal->list);
 
-	return cal;
-}
+	वापस cal;
+पूर्ण
 
-/* Get a calibrated LO setting for the given attenuation values.
- * Might return a NULL pointer under OOM! */
-static
-struct b43_lo_calib *b43_get_calib_lo_settings(struct b43_wldev *dev,
-					       const struct b43_bbatt *bbatt,
-					       const struct b43_rfatt *rfatt)
-{
-	struct b43_txpower_lo_control *lo = dev->phy.g->lo_control;
-	struct b43_lo_calib *c;
+/* Get a calibrated LO setting क्रम the given attenuation values.
+ * Might वापस a शून्य poपूर्णांकer under OOM! */
+अटल
+काष्ठा b43_lo_calib *b43_get_calib_lo_settings(काष्ठा b43_wldev *dev,
+					       स्थिर काष्ठा b43_bbatt *bbatt,
+					       स्थिर काष्ठा b43_rfatt *rfatt)
+अणु
+	काष्ठा b43_txघातer_lo_control *lo = dev->phy.g->lo_control;
+	काष्ठा b43_lo_calib *c;
 
 	c = b43_find_lo_calib(lo, bbatt, rfatt);
-	if (c)
-		return c;
+	अगर (c)
+		वापस c;
 	/* Not in the list of calibrated LO settings.
 	 * Calibrate it now. */
 	c = b43_calibrate_lo_setting(dev, bbatt, rfatt);
-	if (!c)
-		return NULL;
+	अगर (!c)
+		वापस शून्य;
 	list_add(&c->list, &lo->calib_list);
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-void b43_gphy_dc_lt_init(struct b43_wldev *dev, bool update_all)
-{
-	struct b43_phy *phy = &dev->phy;
-	struct b43_phy_g *gphy = phy->g;
-	struct b43_txpower_lo_control *lo = gphy->lo_control;
-	int i;
-	int rf_offset, bb_offset;
-	const struct b43_rfatt *rfatt;
-	const struct b43_bbatt *bbatt;
-	u64 power_vector;
+व्योम b43_gphy_dc_lt_init(काष्ठा b43_wldev *dev, bool update_all)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	काष्ठा b43_phy_g *gphy = phy->g;
+	काष्ठा b43_txघातer_lo_control *lo = gphy->lo_control;
+	पूर्णांक i;
+	पूर्णांक rf_offset, bb_offset;
+	स्थिर काष्ठा b43_rfatt *rfatt;
+	स्थिर काष्ठा b43_bbatt *bbatt;
+	u64 घातer_vector;
 	bool table_changed = false;
 
 	BUILD_BUG_ON(B43_DC_LT_SIZE != 32);
 	B43_WARN_ON(lo->rfatt_list.len * lo->bbatt_list.len > 64);
 
-	power_vector = lo->power_vector;
-	if (!update_all && !power_vector)
-		return; /* Nothing to do. */
+	घातer_vector = lo->घातer_vector;
+	अगर (!update_all && !घातer_vector)
+		वापस; /* Nothing to करो. */
 
-	/* Suspend the MAC now to avoid continuous suspend/enable
+	/* Suspend the MAC now to aव्योम continuous suspend/enable
 	 * cycles in the loop. */
 	b43_mac_suspend(dev);
 
-	for (i = 0; i < B43_DC_LT_SIZE * 2; i++) {
-		struct b43_lo_calib *cal;
-		int idx;
+	क्रम (i = 0; i < B43_DC_LT_SIZE * 2; i++) अणु
+		काष्ठा b43_lo_calib *cal;
+		पूर्णांक idx;
 		u16 val;
 
-		if (!update_all && !(power_vector & (((u64)1ULL) << i)))
-			continue;
-		/* Update the table entry for this power_vector bit.
+		अगर (!update_all && !(घातer_vector & (((u64)1ULL) << i)))
+			जारी;
+		/* Update the table entry क्रम this घातer_vector bit.
 		 * The table rows are RFatt entries and columns are BBatt. */
 		bb_offset = i / lo->rfatt_list.len;
 		rf_offset = i % lo->rfatt_list.len;
@@ -841,163 +842,163 @@ void b43_gphy_dc_lt_init(struct b43_wldev *dev, bool update_all)
 		rfatt = &(lo->rfatt_list.list[rf_offset]);
 
 		cal = b43_calibrate_lo_setting(dev, bbatt, rfatt);
-		if (!cal) {
+		अगर (!cal) अणु
 			b43warn(dev->wl, "LO: Could not "
 				"calibrate DC table entry\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 		/*FIXME: Is Q really in the low nibble? */
 		val = (u8)(cal->ctl.q);
 		val |= ((u8)(cal->ctl.i)) << 4;
-		kfree(cal);
+		kमुक्त(cal);
 
-		/* Get the index into the hardware DC LT. */
+		/* Get the index पूर्णांकo the hardware DC LT. */
 		idx = i / 2;
 		/* Change the table in memory. */
-		if (i % 2) {
+		अगर (i % 2) अणु
 			/* Change the high byte. */
 			lo->dc_lt[idx] = (lo->dc_lt[idx] & 0x00FF)
 					 | ((val & 0x00FF) << 8);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Change the low byte. */
 			lo->dc_lt[idx] = (lo->dc_lt[idx] & 0xFF00)
 					 | (val & 0x00FF);
-		}
+		पूर्ण
 		table_changed = true;
-	}
-	if (table_changed) {
+	पूर्ण
+	अगर (table_changed) अणु
 		/* The table changed in memory. Update the hardware table. */
-		for (i = 0; i < B43_DC_LT_SIZE; i++)
-			b43_phy_write(dev, 0x3A0 + i, lo->dc_lt[i]);
-	}
+		क्रम (i = 0; i < B43_DC_LT_SIZE; i++)
+			b43_phy_ग_लिखो(dev, 0x3A0 + i, lo->dc_lt[i]);
+	पूर्ण
 	b43_mac_enable(dev);
-}
+पूर्ण
 
-/* Fixup the RF attenuation value for the case where we are
+/* Fixup the RF attenuation value क्रम the हाल where we are
  * using the PAD mixer. */
-static inline void b43_lo_fixup_rfatt(struct b43_rfatt *rf)
-{
-	if (!rf->with_padmix)
-		return;
-	if ((rf->att != 1) && (rf->att != 2) && (rf->att != 3))
+अटल अंतरभूत व्योम b43_lo_fixup_rfatt(काष्ठा b43_rfatt *rf)
+अणु
+	अगर (!rf->with_padmix)
+		वापस;
+	अगर ((rf->att != 1) && (rf->att != 2) && (rf->att != 3))
 		rf->att = 4;
-}
+पूर्ण
 
-void b43_lo_g_adjust(struct b43_wldev *dev)
-{
-	struct b43_phy_g *gphy = dev->phy.g;
-	struct b43_lo_calib *cal;
-	struct b43_rfatt rf;
+व्योम b43_lo_g_adjust(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा b43_phy_g *gphy = dev->phy.g;
+	काष्ठा b43_lo_calib *cal;
+	काष्ठा b43_rfatt rf;
 
-	memcpy(&rf, &gphy->rfatt, sizeof(rf));
+	स_नकल(&rf, &gphy->rfatt, माप(rf));
 	b43_lo_fixup_rfatt(&rf);
 
 	cal = b43_get_calib_lo_settings(dev, &gphy->bbatt, &rf);
-	if (!cal)
-		return;
-	b43_lo_write(dev, &cal->ctl);
-}
+	अगर (!cal)
+		वापस;
+	b43_lo_ग_लिखो(dev, &cal->ctl);
+पूर्ण
 
-void b43_lo_g_adjust_to(struct b43_wldev *dev,
+व्योम b43_lo_g_adjust_to(काष्ठा b43_wldev *dev,
 			u16 rfatt, u16 bbatt, u16 tx_control)
-{
-	struct b43_rfatt rf;
-	struct b43_bbatt bb;
-	struct b43_lo_calib *cal;
+अणु
+	काष्ठा b43_rfatt rf;
+	काष्ठा b43_bbatt bb;
+	काष्ठा b43_lo_calib *cal;
 
-	memset(&rf, 0, sizeof(rf));
-	memset(&bb, 0, sizeof(bb));
+	स_रखो(&rf, 0, माप(rf));
+	स_रखो(&bb, 0, माप(bb));
 	rf.att = rfatt;
 	bb.att = bbatt;
 	b43_lo_fixup_rfatt(&rf);
 	cal = b43_get_calib_lo_settings(dev, &bb, &rf);
-	if (!cal)
-		return;
-	b43_lo_write(dev, &cal->ctl);
-}
+	अगर (!cal)
+		वापस;
+	b43_lo_ग_लिखो(dev, &cal->ctl);
+पूर्ण
 
-/* Periodic LO maintenance work */
-void b43_lo_g_maintenance_work(struct b43_wldev *dev)
-{
-	struct b43_phy *phy = &dev->phy;
-	struct b43_phy_g *gphy = phy->g;
-	struct b43_txpower_lo_control *lo = gphy->lo_control;
-	unsigned long now;
-	unsigned long expire;
-	struct b43_lo_calib *cal, *tmp;
+/* Periodic LO मुख्यtenance work */
+व्योम b43_lo_g_मुख्यtenance_work(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	काष्ठा b43_phy_g *gphy = phy->g;
+	काष्ठा b43_txघातer_lo_control *lo = gphy->lo_control;
+	अचिन्हित दीर्घ now;
+	अचिन्हित दीर्घ expire;
+	काष्ठा b43_lo_calib *cal, *पंचांगp;
 	bool current_item_expired = false;
 	bool hwpctl;
 
-	if (!lo)
-		return;
-	now = jiffies;
+	अगर (!lo)
+		वापस;
+	now = jअगरfies;
 	hwpctl = b43_has_hardware_pctl(dev);
 
-	if (hwpctl) {
-		/* Read the power vector and update it, if needed. */
+	अगर (hwpctl) अणु
+		/* Read the घातer vector and update it, अगर needed. */
 		expire = now - B43_LO_PWRVEC_EXPIRE;
-		if (time_before(lo->pwr_vec_read_time, expire)) {
-			lo_read_power_vector(dev);
+		अगर (समय_beक्रमe(lo->pwr_vec_पढ़ो_समय, expire)) अणु
+			lo_पढ़ो_घातer_vector(dev);
 			b43_gphy_dc_lt_init(dev, 0);
-		}
-		//FIXME Recalc the whole DC table from time to time?
-	}
+		पूर्ण
+		//FIXME Recalc the whole DC table from समय to समय?
+	पूर्ण
 
-	if (hwpctl)
-		return;
-	/* Search for expired LO settings. Remove them.
-	 * Recalibrate the current setting, if expired. */
+	अगर (hwpctl)
+		वापस;
+	/* Search क्रम expired LO settings. Remove them.
+	 * Recalibrate the current setting, अगर expired. */
 	expire = now - B43_LO_CALIB_EXPIRE;
-	list_for_each_entry_safe(cal, tmp, &lo->calib_list, list) {
-		if (!time_before(cal->calib_time, expire))
-			continue;
+	list_क्रम_each_entry_safe(cal, पंचांगp, &lo->calib_list, list) अणु
+		अगर (!समय_beक्रमe(cal->calib_समय, expire))
+			जारी;
 		/* This item expired. */
-		if (b43_compare_bbatt(&cal->bbatt, &gphy->bbatt) &&
-		    b43_compare_rfatt(&cal->rfatt, &gphy->rfatt)) {
+		अगर (b43_compare_bbatt(&cal->bbatt, &gphy->bbatt) &&
+		    b43_compare_rfatt(&cal->rfatt, &gphy->rfatt)) अणु
 			B43_WARN_ON(current_item_expired);
 			current_item_expired = true;
-		}
-		if (b43_debug(dev, B43_DBG_LO)) {
+		पूर्ण
+		अगर (b43_debug(dev, B43_DBG_LO)) अणु
 			b43dbg(dev->wl, "LO: Item BB(%u), RF(%u,%u), "
 			       "I=%d, Q=%d expired\n",
 			       cal->bbatt.att, cal->rfatt.att,
 			       cal->rfatt.with_padmix,
 			       cal->ctl.i, cal->ctl.q);
-		}
+		पूर्ण
 		list_del(&cal->list);
-		kfree(cal);
-	}
-	if (current_item_expired || unlikely(list_empty(&lo->calib_list))) {
+		kमुक्त(cal);
+	पूर्ण
+	अगर (current_item_expired || unlikely(list_empty(&lo->calib_list))) अणु
 		/* Recalibrate currently used LO setting. */
-		if (b43_debug(dev, B43_DBG_LO))
+		अगर (b43_debug(dev, B43_DBG_LO))
 			b43dbg(dev->wl, "LO: Recalibrating current LO setting\n");
 		cal = b43_calibrate_lo_setting(dev, &gphy->bbatt, &gphy->rfatt);
-		if (cal) {
+		अगर (cal) अणु
 			list_add(&cal->list, &lo->calib_list);
-			b43_lo_write(dev, &cal->ctl);
-		} else
+			b43_lo_ग_लिखो(dev, &cal->ctl);
+		पूर्ण अन्यथा
 			b43warn(dev->wl, "Failed to recalibrate current LO setting\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-void b43_lo_g_cleanup(struct b43_wldev *dev)
-{
-	struct b43_txpower_lo_control *lo = dev->phy.g->lo_control;
-	struct b43_lo_calib *cal, *tmp;
+व्योम b43_lo_g_cleanup(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा b43_txघातer_lo_control *lo = dev->phy.g->lo_control;
+	काष्ठा b43_lo_calib *cal, *पंचांगp;
 
-	if (!lo)
-		return;
-	list_for_each_entry_safe(cal, tmp, &lo->calib_list, list) {
+	अगर (!lo)
+		वापस;
+	list_क्रम_each_entry_safe(cal, पंचांगp, &lo->calib_list, list) अणु
 		list_del(&cal->list);
-		kfree(cal);
-	}
-}
+		kमुक्त(cal);
+	पूर्ण
+पूर्ण
 
 /* LO Initialization */
-void b43_lo_g_init(struct b43_wldev *dev)
-{
-	if (b43_has_hardware_pctl(dev)) {
-		lo_read_power_vector(dev);
+व्योम b43_lo_g_init(काष्ठा b43_wldev *dev)
+अणु
+	अगर (b43_has_hardware_pctl(dev)) अणु
+		lo_पढ़ो_घातer_vector(dev);
 		b43_gphy_dc_lt_init(dev, 1);
-	}
-}
+	पूर्ण
+पूर्ण

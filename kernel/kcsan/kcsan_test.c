@@ -1,201 +1,202 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * KCSAN test with various race scenarious to test runtime behaviour. Since the
- * interface with which KCSAN's reports are obtained is via the console, this is
- * the output we should verify. For each test case checks the presence (or
- * absence) of generated reports. Relies on 'console' tracepoint to capture
+ * KCSAN test with various race scenarious to test runसमय behaviour. Since the
+ * पूर्णांकerface with which KCSAN's reports are obtained is via the console, this is
+ * the output we should verअगरy. For each test हाल checks the presence (or
+ * असलence) of generated reports. Relies on 'console' tracepoपूर्णांक to capture
  * reports as they appear in the kernel log.
  *
- * Makes use of KUnit for test organization, and the Torture framework for test
- * thread control.
+ * Makes use of KUnit क्रम test organization, and the Torture framework क्रम test
+ * thपढ़ो control.
  *
  * Copyright (C) 2020, Google LLC.
  * Author: Marco Elver <elver@google.com>
  */
 
-#define pr_fmt(fmt) "kcsan_test: " fmt
+#घोषणा pr_fmt(fmt) "kcsan_test: " fmt
 
-#include <kunit/test.h>
-#include <linux/jiffies.h>
-#include <linux/kcsan-checks.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/seqlock.h>
-#include <linux/spinlock.h>
-#include <linux/string.h>
-#include <linux/timer.h>
-#include <linux/torture.h>
-#include <linux/tracepoint.h>
-#include <linux/types.h>
-#include <trace/events/printk.h>
+#समावेश <kunit/test.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kcsan-checks.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/seqlock.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/torture.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <linux/types.h>
+#समावेश <trace/events/prपूर्णांकk.h>
 
-#ifdef CONFIG_CC_HAS_TSAN_COMPOUND_READ_BEFORE_WRITE
-#define __KCSAN_ACCESS_RW(alt) (KCSAN_ACCESS_COMPOUND | KCSAN_ACCESS_WRITE)
-#else
-#define __KCSAN_ACCESS_RW(alt) (alt)
-#endif
+#अगर_घोषित CONFIG_CC_HAS_TSAN_COMPOUND_READ_BEFORE_WRITE
+#घोषणा __KCSAN_ACCESS_RW(alt) (KCSAN_ACCESS_COMPOUND | KCSAN_ACCESS_WRITE)
+#अन्यथा
+#घोषणा __KCSAN_ACCESS_RW(alt) (alt)
+#पूर्ण_अगर
 
-/* Points to current test-case memory access "kernels". */
-static void (*access_kernels[2])(void);
+/* Poपूर्णांकs to current test-हाल memory access "kernels". */
+अटल व्योम (*access_kernels[2])(व्योम);
 
-static struct task_struct **threads; /* Lists of threads. */
-static unsigned long end_time;       /* End time of test. */
+अटल काष्ठा task_काष्ठा **thपढ़ोs; /* Lists of thपढ़ोs. */
+अटल अचिन्हित दीर्घ end_समय;       /* End समय of test. */
 
 /* Report as observed from console. */
-static struct {
+अटल काष्ठा अणु
 	spinlock_t lock;
-	int nlines;
-	char lines[3][512];
-} observed = {
+	पूर्णांक nlines;
+	अक्षर lines[3][512];
+पूर्ण observed = अणु
 	.lock = __SPIN_LOCK_UNLOCKED(observed.lock),
-};
+पूर्ण;
 
 /* Setup test checking loop. */
-static __no_kcsan inline void
-begin_test_checks(void (*func1)(void), void (*func2)(void))
-{
+अटल __no_kcsan अंतरभूत व्योम
+begin_test_checks(व्योम (*func1)(व्योम), व्योम (*func2)(व्योम))
+अणु
 	kcsan_disable_current();
 
 	/*
-	 * Require at least as long as KCSAN_REPORT_ONCE_IN_MS, to ensure at
+	 * Require at least as दीर्घ as KCSAN_REPORT_ONCE_IN_MS, to ensure at
 	 * least one race is reported.
 	 */
-	end_time = jiffies + msecs_to_jiffies(CONFIG_KCSAN_REPORT_ONCE_IN_MS + 500);
+	end_समय = jअगरfies + msecs_to_jअगरfies(CONFIG_KCSAN_REPORT_ONCE_IN_MS + 500);
 
 	/* Signal start; release potential initialization of shared data. */
 	smp_store_release(&access_kernels[0], func1);
 	smp_store_release(&access_kernels[1], func2);
-}
+पूर्ण
 
 /* End test checking loop. */
-static __no_kcsan inline bool
+अटल __no_kcsan अंतरभूत bool
 end_test_checks(bool stop)
-{
-	if (!stop && time_before(jiffies, end_time)) {
+अणु
+	अगर (!stop && समय_beक्रमe(jअगरfies, end_समय)) अणु
 		/* Continue checking */
 		might_sleep();
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	kcsan_enable_current();
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Probe for console output: checks if a race was reported, and obtains observed
- * lines of interest.
+ * Probe क्रम console output: checks अगर a race was reported, and obtains observed
+ * lines of पूर्णांकerest.
  */
 __no_kcsan
-static void probe_console(void *ignore, const char *buf, size_t len)
-{
-	unsigned long flags;
-	int nlines;
+अटल व्योम probe_console(व्योम *ignore, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक nlines;
 
 	/*
-	 * Note that KCSAN reports under a global lock, so we do not risk the
-	 * possibility of having multiple reports interleaved. If that were the
-	 * case, we'd expect tests to fail.
+	 * Note that KCSAN reports under a global lock, so we करो not risk the
+	 * possibility of having multiple reports पूर्णांकerleaved. If that were the
+	 * हाल, we'd expect tests to fail.
 	 */
 
 	spin_lock_irqsave(&observed.lock, flags);
 	nlines = observed.nlines;
 
-	if (strnstr(buf, "BUG: KCSAN: ", len) && strnstr(buf, "test_", len)) {
+	अगर (strnstr(buf, "BUG: KCSAN: ", len) && strnstr(buf, "test_", len)) अणु
 		/*
 		 * KCSAN report and related to the test.
 		 *
 		 * The provided @buf is not NUL-terminated; copy no more than
 		 * @len bytes and let strscpy() add the missing NUL-terminator.
 		 */
-		strscpy(observed.lines[0], buf, min(len + 1, sizeof(observed.lines[0])));
+		strscpy(observed.lines[0], buf, min(len + 1, माप(observed.lines[0])));
 		nlines = 1;
-	} else if ((nlines == 1 || nlines == 2) && strnstr(buf, "bytes by", len)) {
-		strscpy(observed.lines[nlines++], buf, min(len + 1, sizeof(observed.lines[0])));
+	पूर्ण अन्यथा अगर ((nlines == 1 || nlines == 2) && strnstr(buf, "bytes by", len)) अणु
+		strscpy(observed.lines[nlines++], buf, min(len + 1, माप(observed.lines[0])));
 
-		if (strnstr(buf, "race at unknown origin", len)) {
-			if (WARN_ON(nlines != 2))
-				goto out;
+		अगर (strnstr(buf, "race at unknown origin", len)) अणु
+			अगर (WARN_ON(nlines != 2))
+				जाओ out;
 
-			/* No second line of interest. */
-			strcpy(observed.lines[nlines++], "<none>");
-		}
-	}
+			/* No second line of पूर्णांकerest. */
+			म_नकल(observed.lines[nlines++], "<none>");
+		पूर्ण
+	पूर्ण
 
 out:
 	WRITE_ONCE(observed.nlines, nlines); /* Publish new nlines. */
 	spin_unlock_irqrestore(&observed.lock, flags);
-}
+पूर्ण
 
-/* Check if a report related to the test exists. */
+/* Check अगर a report related to the test exists. */
 __no_kcsan
-static bool report_available(void)
-{
-	return READ_ONCE(observed.nlines) == ARRAY_SIZE(observed.lines);
-}
+अटल bool report_available(व्योम)
+अणु
+	वापस READ_ONCE(observed.nlines) == ARRAY_SIZE(observed.lines);
+पूर्ण
 
-/* Report information we expect in a report. */
-struct expect_report {
-	/* Access information of both accesses. */
-	struct {
-		void *fn;    /* Function pointer to expected function of top frame. */
-		void *addr;  /* Address of access; unchecked if NULL. */
-		size_t size; /* Size of access; unchecked if @addr is NULL. */
-		int type;    /* Access type, see KCSAN_ACCESS definitions. */
-	} access[2];
-};
+/* Report inक्रमmation we expect in a report. */
+काष्ठा expect_report अणु
+	/* Access inक्रमmation of both accesses. */
+	काष्ठा अणु
+		व्योम *fn;    /* Function poपूर्णांकer to expected function of top frame. */
+		व्योम *addr;  /* Address of access; unchecked अगर शून्य. */
+		माप_प्रकार size; /* Size of access; unchecked अगर @addr is शून्य. */
+		पूर्णांक type;    /* Access type, see KCSAN_ACCESS definitions. */
+	पूर्ण access[2];
+पूर्ण;
 
-/* Check observed report matches information in @r. */
+/* Check observed report matches inक्रमmation in @r. */
 __no_kcsan
-static bool report_matches(const struct expect_report *r)
-{
-	const bool is_assert = (r->access[0].type | r->access[1].type) & KCSAN_ACCESS_ASSERT;
+अटल bool report_matches(स्थिर काष्ठा expect_report *r)
+अणु
+	स्थिर bool is_निश्चित = (r->access[0].type | r->access[1].type) & KCSAN_ACCESS_ASSERT;
 	bool ret = false;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	typeof(observed.lines) expect;
-	const char *end;
-	char *cur;
-	int i;
+	स्थिर अक्षर *end;
+	अक्षर *cur;
+	पूर्णांक i;
 
 	/* Doubled-checked locking. */
-	if (!report_available())
-		return false;
+	अगर (!report_available())
+		वापस false;
 
 	/* Generate expected report contents. */
 
 	/* Title */
 	cur = expect[0];
-	end = &expect[0][sizeof(expect[0]) - 1];
-	cur += scnprintf(cur, end - cur, "BUG: KCSAN: %s in ",
-			 is_assert ? "assert: race" : "data-race");
-	if (r->access[1].fn) {
-		char tmp[2][64];
-		int cmp;
+	end = &expect[0][माप(expect[0]) - 1];
+	cur += scnम_लिखो(cur, end - cur, "BUG: KCSAN: %s in ",
+			 is_निश्चित ? "assert: race" : "data-race");
+	अगर (r->access[1].fn) अणु
+		अक्षर पंचांगp[2][64];
+		पूर्णांक cmp;
 
 		/* Expect lexographically sorted function names in title. */
-		scnprintf(tmp[0], sizeof(tmp[0]), "%pS", r->access[0].fn);
-		scnprintf(tmp[1], sizeof(tmp[1]), "%pS", r->access[1].fn);
-		cmp = strcmp(tmp[0], tmp[1]);
-		cur += scnprintf(cur, end - cur, "%ps / %ps",
+		scnम_लिखो(पंचांगp[0], माप(पंचांगp[0]), "%pS", r->access[0].fn);
+		scnम_लिखो(पंचांगp[1], माप(पंचांगp[1]), "%pS", r->access[1].fn);
+		cmp = म_भेद(पंचांगp[0], पंचांगp[1]);
+		cur += scnम_लिखो(cur, end - cur, "%ps / %ps",
 				 cmp < 0 ? r->access[0].fn : r->access[1].fn,
 				 cmp < 0 ? r->access[1].fn : r->access[0].fn);
-	} else {
-		scnprintf(cur, end - cur, "%pS", r->access[0].fn);
-		/* The exact offset won't match, remove it. */
-		cur = strchr(expect[0], '+');
-		if (cur)
+	पूर्ण अन्यथा अणु
+		scnम_लिखो(cur, end - cur, "%pS", r->access[0].fn);
+		/* The exact offset won't match, हटाओ it. */
+		cur = म_अक्षर(expect[0], '+');
+		अगर (cur)
 			*cur = '\0';
-	}
+	पूर्ण
 
 	/* Access 1 */
 	cur = expect[1];
-	end = &expect[1][sizeof(expect[1]) - 1];
-	if (!r->access[1].fn)
-		cur += scnprintf(cur, end - cur, "race at unknown origin, with ");
+	end = &expect[1][माप(expect[1]) - 1];
+	अगर (!r->access[1].fn)
+		cur += scnम_लिखो(cur, end - cur, "race at unknown origin, with ");
 
 	/* Access 1 & 2 */
-	for (i = 0; i < 2; ++i) {
-		const int ty = r->access[i].type;
-		const char *const access_type =
+	क्रम (i = 0; i < 2; ++i) अणु
+		स्थिर पूर्णांक ty = r->access[i].type;
+		स्थिर अक्षर *स्थिर access_type =
 			(ty & KCSAN_ACCESS_ASSERT) ?
 				      ((ty & KCSAN_ACCESS_WRITE) ?
 					       "assert no accesses" :
@@ -205,699 +206,699 @@ static bool report_matches(const struct expect_report *r)
 							"read-write" :
 							"write") :
 					       "read");
-		const char *const access_type_aux =
+		स्थिर अक्षर *स्थिर access_type_aux =
 			(ty & KCSAN_ACCESS_ATOMIC) ?
 				      " (marked)" :
 				      ((ty & KCSAN_ACCESS_SCOPED) ? " (scoped)" : "");
 
-		if (i == 1) {
+		अगर (i == 1) अणु
 			/* Access 2 */
 			cur = expect[2];
-			end = &expect[2][sizeof(expect[2]) - 1];
+			end = &expect[2][माप(expect[2]) - 1];
 
-			if (!r->access[1].fn) {
-				/* Dummy string if no second access is available. */
-				strcpy(cur, "<none>");
-				break;
-			}
-		}
+			अगर (!r->access[1].fn) अणु
+				/* Dummy string अगर no second access is available. */
+				म_नकल(cur, "<none>");
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		cur += scnprintf(cur, end - cur, "%s%s to ", access_type,
+		cur += scnम_लिखो(cur, end - cur, "%s%s to ", access_type,
 				 access_type_aux);
 
-		if (r->access[i].addr) /* Address is optional. */
-			cur += scnprintf(cur, end - cur, "0x%px of %zu bytes",
+		अगर (r->access[i].addr) /* Address is optional. */
+			cur += scnम_लिखो(cur, end - cur, "0x%px of %zu bytes",
 					 r->access[i].addr, r->access[i].size);
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&observed.lock, flags);
-	if (!report_available())
-		goto out; /* A new report is being captured. */
+	अगर (!report_available())
+		जाओ out; /* A new report is being captured. */
 
 	/* Finally match expected output to what we actually observed. */
-	ret = strstr(observed.lines[0], expect[0]) &&
+	ret = म_माला(observed.lines[0], expect[0]) &&
 	      /* Access info may appear in any order. */
-	      ((strstr(observed.lines[1], expect[1]) &&
-		strstr(observed.lines[2], expect[2])) ||
-	       (strstr(observed.lines[1], expect[2]) &&
-		strstr(observed.lines[2], expect[1])));
+	      ((म_माला(observed.lines[1], expect[1]) &&
+		म_माला(observed.lines[2], expect[2])) ||
+	       (म_माला(observed.lines[1], expect[2]) &&
+		म_माला(observed.lines[2], expect[1])));
 out:
 	spin_unlock_irqrestore(&observed.lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* ===== Test kernels ===== */
 
-static long test_sink;
-static long test_var;
-/* @test_array should be large enough to fall into multiple watchpoint slots. */
-static long test_array[3 * PAGE_SIZE / sizeof(long)];
-static struct {
-	long val[8];
-} test_struct;
-static DEFINE_SEQLOCK(test_seqlock);
+अटल दीर्घ test_sink;
+अटल दीर्घ test_var;
+/* @test_array should be large enough to fall पूर्णांकo multiple watchpoपूर्णांक slots. */
+अटल दीर्घ test_array[3 * PAGE_SIZE / माप(दीर्घ)];
+अटल काष्ठा अणु
+	दीर्घ val[8];
+पूर्ण test_काष्ठा;
+अटल DEFINE_SEQLOCK(test_seqlock);
 
 /*
- * Helper to avoid compiler optimizing out reads, and to generate source values
- * for writes.
+ * Helper to aव्योम compiler optimizing out पढ़ोs, and to generate source values
+ * क्रम ग_लिखोs.
  */
 __no_kcsan
-static noinline void sink_value(long v) { WRITE_ONCE(test_sink, v); }
+अटल noअंतरभूत व्योम sink_value(दीर्घ v) अणु WRITE_ONCE(test_sink, v); पूर्ण
 
-static noinline void test_kernel_read(void) { sink_value(test_var); }
+अटल noअंतरभूत व्योम test_kernel_पढ़ो(व्योम) अणु sink_value(test_var); पूर्ण
 
-static noinline void test_kernel_write(void)
-{
+अटल noअंतरभूत व्योम test_kernel_ग_लिखो(व्योम)
+अणु
 	test_var = READ_ONCE_NOCHECK(test_sink) + 1;
-}
+पूर्ण
 
-static noinline void test_kernel_write_nochange(void) { test_var = 42; }
+अटल noअंतरभूत व्योम test_kernel_ग_लिखो_nochange(व्योम) अणु test_var = 42; पूर्ण
 
 /* Suffixed by value-change exception filter. */
-static noinline void test_kernel_write_nochange_rcu(void) { test_var = 42; }
+अटल noअंतरभूत व्योम test_kernel_ग_लिखो_nochange_rcu(व्योम) अणु test_var = 42; पूर्ण
 
-static noinline void test_kernel_read_atomic(void)
-{
+अटल noअंतरभूत व्योम test_kernel_पढ़ो_atomic(व्योम)
+अणु
 	sink_value(READ_ONCE(test_var));
-}
+पूर्ण
 
-static noinline void test_kernel_write_atomic(void)
-{
+अटल noअंतरभूत व्योम test_kernel_ग_लिखो_atomic(व्योम)
+अणु
 	WRITE_ONCE(test_var, READ_ONCE_NOCHECK(test_sink) + 1);
-}
+पूर्ण
 
-static noinline void test_kernel_atomic_rmw(void)
-{
+अटल noअंतरभूत व्योम test_kernel_atomic_rmw(व्योम)
+अणु
 	/* Use builtin, so we can set up the "bad" atomic/non-atomic scenario. */
 	__atomic_fetch_add(&test_var, 1, __ATOMIC_RELAXED);
-}
+पूर्ण
 
 __no_kcsan
-static noinline void test_kernel_write_uninstrumented(void) { test_var++; }
+अटल noअंतरभूत व्योम test_kernel_ग_लिखो_uninstrumented(व्योम) अणु test_var++; पूर्ण
 
-static noinline void test_kernel_data_race(void) { data_race(test_var++); }
+अटल noअंतरभूत व्योम test_kernel_data_race(व्योम) अणु data_race(test_var++); पूर्ण
 
-static noinline void test_kernel_assert_writer(void)
-{
+अटल noअंतरभूत व्योम test_kernel_निश्चित_ग_लिखोr(व्योम)
+अणु
 	ASSERT_EXCLUSIVE_WRITER(test_var);
-}
+पूर्ण
 
-static noinline void test_kernel_assert_access(void)
-{
+अटल noअंतरभूत व्योम test_kernel_निश्चित_access(व्योम)
+अणु
 	ASSERT_EXCLUSIVE_ACCESS(test_var);
-}
+पूर्ण
 
-#define TEST_CHANGE_BITS 0xff00ff00
+#घोषणा TEST_CHANGE_BITS 0xff00ff00
 
-static noinline void test_kernel_change_bits(void)
-{
-	if (IS_ENABLED(CONFIG_KCSAN_IGNORE_ATOMICS)) {
+अटल noअंतरभूत व्योम test_kernel_change_bits(व्योम)
+अणु
+	अगर (IS_ENABLED(CONFIG_KCSAN_IGNORE_ATOMICS)) अणु
 		/*
-		 * Avoid race of unknown origin for this test, just pretend they
+		 * Aव्योम race of unknown origin क्रम this test, just pretend they
 		 * are atomic.
 		 */
 		kcsan_nestable_atomic_begin();
 		test_var ^= TEST_CHANGE_BITS;
 		kcsan_nestable_atomic_end();
-	} else
+	पूर्ण अन्यथा
 		WRITE_ONCE(test_var, READ_ONCE(test_var) ^ TEST_CHANGE_BITS);
-}
+पूर्ण
 
-static noinline void test_kernel_assert_bits_change(void)
-{
+अटल noअंतरभूत व्योम test_kernel_निश्चित_bits_change(व्योम)
+अणु
 	ASSERT_EXCLUSIVE_BITS(test_var, TEST_CHANGE_BITS);
-}
+पूर्ण
 
-static noinline void test_kernel_assert_bits_nochange(void)
-{
+अटल noअंतरभूत व्योम test_kernel_निश्चित_bits_nochange(व्योम)
+अणु
 	ASSERT_EXCLUSIVE_BITS(test_var, ~TEST_CHANGE_BITS);
-}
+पूर्ण
 
-/* To check that scoped assertions do trigger anywhere in scope. */
-static noinline void test_enter_scope(void)
-{
-	int x = 0;
+/* To check that scoped निश्चितions करो trigger anywhere in scope. */
+अटल noअंतरभूत व्योम test_enter_scope(व्योम)
+अणु
+	पूर्णांक x = 0;
 
-	/* Unrelated accesses to scoped assert. */
+	/* Unrelated accesses to scoped निश्चित. */
 	READ_ONCE(test_sink);
-	kcsan_check_read(&x, sizeof(x));
-}
+	kcsan_check_पढ़ो(&x, माप(x));
+पूर्ण
 
-static noinline void test_kernel_assert_writer_scoped(void)
-{
+अटल noअंतरभूत व्योम test_kernel_निश्चित_ग_लिखोr_scoped(व्योम)
+अणु
 	ASSERT_EXCLUSIVE_WRITER_SCOPED(test_var);
 	test_enter_scope();
-}
+पूर्ण
 
-static noinline void test_kernel_assert_access_scoped(void)
-{
+अटल noअंतरभूत व्योम test_kernel_निश्चित_access_scoped(व्योम)
+अणु
 	ASSERT_EXCLUSIVE_ACCESS_SCOPED(test_var);
 	test_enter_scope();
-}
+पूर्ण
 
-static noinline void test_kernel_rmw_array(void)
-{
-	int i;
+अटल noअंतरभूत व्योम test_kernel_rmw_array(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(test_array); ++i)
+	क्रम (i = 0; i < ARRAY_SIZE(test_array); ++i)
 		test_array[i]++;
-}
+पूर्ण
 
-static noinline void test_kernel_write_struct(void)
-{
-	kcsan_check_write(&test_struct, sizeof(test_struct));
+अटल noअंतरभूत व्योम test_kernel_ग_लिखो_काष्ठा(व्योम)
+अणु
+	kcsan_check_ग_लिखो(&test_काष्ठा, माप(test_काष्ठा));
 	kcsan_disable_current();
-	test_struct.val[3]++; /* induce value change */
+	test_काष्ठा.val[3]++; /* induce value change */
 	kcsan_enable_current();
-}
+पूर्ण
 
-static noinline void test_kernel_write_struct_part(void)
-{
-	test_struct.val[3] = 42;
-}
+अटल noअंतरभूत व्योम test_kernel_ग_लिखो_काष्ठा_part(व्योम)
+अणु
+	test_काष्ठा.val[3] = 42;
+पूर्ण
 
-static noinline void test_kernel_read_struct_zero_size(void)
-{
-	kcsan_check_read(&test_struct.val[3], 0);
-}
+अटल noअंतरभूत व्योम test_kernel_पढ़ो_काष्ठा_zero_size(व्योम)
+अणु
+	kcsan_check_पढ़ो(&test_काष्ठा.val[3], 0);
+पूर्ण
 
-static noinline void test_kernel_jiffies_reader(void)
-{
-	sink_value((long)jiffies);
-}
+अटल noअंतरभूत व्योम test_kernel_jअगरfies_पढ़ोer(व्योम)
+अणु
+	sink_value((दीर्घ)jअगरfies);
+पूर्ण
 
-static noinline void test_kernel_seqlock_reader(void)
-{
-	unsigned int seq;
+अटल noअंतरभूत व्योम test_kernel_seqlock_पढ़ोer(व्योम)
+अणु
+	अचिन्हित पूर्णांक seq;
 
-	do {
-		seq = read_seqbegin(&test_seqlock);
+	करो अणु
+		seq = पढ़ो_seqbegin(&test_seqlock);
 		sink_value(test_var);
-	} while (read_seqretry(&test_seqlock, seq));
-}
+	पूर्ण जबतक (पढ़ो_seqretry(&test_seqlock, seq));
+पूर्ण
 
-static noinline void test_kernel_seqlock_writer(void)
-{
-	unsigned long flags;
+अटल noअंतरभूत व्योम test_kernel_seqlock_ग_लिखोr(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	write_seqlock_irqsave(&test_seqlock, flags);
+	ग_लिखो_seqlock_irqsave(&test_seqlock, flags);
 	test_var++;
-	write_sequnlock_irqrestore(&test_seqlock, flags);
-}
+	ग_लिखो_sequnlock_irqrestore(&test_seqlock, flags);
+पूर्ण
 
-static noinline void test_kernel_atomic_builtins(void)
-{
+अटल noअंतरभूत व्योम test_kernel_atomic_builtins(व्योम)
+अणु
 	/*
 	 * Generate concurrent accesses, expecting no reports, ensuring KCSAN
 	 * treats builtin atomics as actually atomic.
 	 */
 	__atomic_load_n(&test_var, __ATOMIC_RELAXED);
-}
+पूर्ण
 
-/* ===== Test cases ===== */
+/* ===== Test हालs ===== */
 
 /* Simple test with normal data race. */
 __no_kcsan
-static void test_basic(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			{ test_kernel_write, &test_var, sizeof(test_var), KCSAN_ACCESS_WRITE },
-			{ test_kernel_read, &test_var, sizeof(test_var), 0 },
-		},
-	};
-	static const struct expect_report never = {
-		.access = {
-			{ test_kernel_read, &test_var, sizeof(test_var), 0 },
-			{ test_kernel_read, &test_var, sizeof(test_var), 0 },
-		},
-	};
+अटल व्योम test_basic(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			अणु test_kernel_ग_लिखो, &test_var, माप(test_var), KCSAN_ACCESS_WRITE पूर्ण,
+			अणु test_kernel_पढ़ो, &test_var, माप(test_var), 0 पूर्ण,
+		पूर्ण,
+	पूर्ण;
+	अटल स्थिर काष्ठा expect_report never = अणु
+		.access = अणु
+			अणु test_kernel_पढ़ो, &test_var, माप(test_var), 0 पूर्ण,
+			अणु test_kernel_पढ़ो, &test_var, माप(test_var), 0 पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 	bool match_never = false;
 
-	begin_test_checks(test_kernel_write, test_kernel_read);
-	do {
+	begin_test_checks(test_kernel_ग_लिखो, test_kernel_पढ़ो);
+	करो अणु
 		match_expect |= report_matches(&expect);
 		match_never = report_matches(&never);
-	} while (!end_test_checks(match_never));
+	पूर्ण जबतक (!end_test_checks(match_never));
 	KUNIT_EXPECT_TRUE(test, match_expect);
 	KUNIT_EXPECT_FALSE(test, match_never);
-}
+पूर्ण
 
 /*
- * Stress KCSAN with lots of concurrent races on different addresses until
- * timeout.
+ * Stress KCSAN with lots of concurrent races on dअगरferent addresses until
+ * समयout.
  */
 __no_kcsan
-static void test_concurrent_races(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			/* NULL will match any address. */
-			{ test_kernel_rmw_array, NULL, 0, __KCSAN_ACCESS_RW(KCSAN_ACCESS_WRITE) },
-			{ test_kernel_rmw_array, NULL, 0, __KCSAN_ACCESS_RW(0) },
-		},
-	};
-	static const struct expect_report never = {
-		.access = {
-			{ test_kernel_rmw_array, NULL, 0, 0 },
-			{ test_kernel_rmw_array, NULL, 0, 0 },
-		},
-	};
+अटल व्योम test_concurrent_races(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			/* शून्य will match any address. */
+			अणु test_kernel_rmw_array, शून्य, 0, __KCSAN_ACCESS_RW(KCSAN_ACCESS_WRITE) पूर्ण,
+			अणु test_kernel_rmw_array, शून्य, 0, __KCSAN_ACCESS_RW(0) पूर्ण,
+		पूर्ण,
+	पूर्ण;
+	अटल स्थिर काष्ठा expect_report never = अणु
+		.access = अणु
+			अणु test_kernel_rmw_array, शून्य, 0, 0 पूर्ण,
+			अणु test_kernel_rmw_array, शून्य, 0, 0 पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 	bool match_never = false;
 
 	begin_test_checks(test_kernel_rmw_array, test_kernel_rmw_array);
-	do {
+	करो अणु
 		match_expect |= report_matches(&expect);
 		match_never |= report_matches(&never);
-	} while (!end_test_checks(false));
+	पूर्ण जबतक (!end_test_checks(false));
 	KUNIT_EXPECT_TRUE(test, match_expect); /* Sanity check matches exist. */
 	KUNIT_EXPECT_FALSE(test, match_never);
-}
+पूर्ण
 
 /* Test the KCSAN_REPORT_VALUE_CHANGE_ONLY option. */
 __no_kcsan
-static void test_novalue_change(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			{ test_kernel_write_nochange, &test_var, sizeof(test_var), KCSAN_ACCESS_WRITE },
-			{ test_kernel_read, &test_var, sizeof(test_var), 0 },
-		},
-	};
+अटल व्योम test_novalue_change(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			अणु test_kernel_ग_लिखो_nochange, &test_var, माप(test_var), KCSAN_ACCESS_WRITE पूर्ण,
+			अणु test_kernel_पढ़ो, &test_var, माप(test_var), 0 पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 
-	begin_test_checks(test_kernel_write_nochange, test_kernel_read);
-	do {
+	begin_test_checks(test_kernel_ग_लिखो_nochange, test_kernel_पढ़ो);
+	करो अणु
 		match_expect = report_matches(&expect);
-	} while (!end_test_checks(match_expect));
-	if (IS_ENABLED(CONFIG_KCSAN_REPORT_VALUE_CHANGE_ONLY))
+	पूर्ण जबतक (!end_test_checks(match_expect));
+	अगर (IS_ENABLED(CONFIG_KCSAN_REPORT_VALUE_CHANGE_ONLY))
 		KUNIT_EXPECT_FALSE(test, match_expect);
-	else
+	अन्यथा
 		KUNIT_EXPECT_TRUE(test, match_expect);
-}
+पूर्ण
 
 /*
  * Test that the rules where the KCSAN_REPORT_VALUE_CHANGE_ONLY option should
  * never apply work.
  */
 __no_kcsan
-static void test_novalue_change_exception(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			{ test_kernel_write_nochange_rcu, &test_var, sizeof(test_var), KCSAN_ACCESS_WRITE },
-			{ test_kernel_read, &test_var, sizeof(test_var), 0 },
-		},
-	};
+अटल व्योम test_novalue_change_exception(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			अणु test_kernel_ग_लिखो_nochange_rcu, &test_var, माप(test_var), KCSAN_ACCESS_WRITE पूर्ण,
+			अणु test_kernel_पढ़ो, &test_var, माप(test_var), 0 पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 
-	begin_test_checks(test_kernel_write_nochange_rcu, test_kernel_read);
-	do {
+	begin_test_checks(test_kernel_ग_लिखो_nochange_rcu, test_kernel_पढ़ो);
+	करो अणु
 		match_expect = report_matches(&expect);
-	} while (!end_test_checks(match_expect));
+	पूर्ण जबतक (!end_test_checks(match_expect));
 	KUNIT_EXPECT_TRUE(test, match_expect);
-}
+पूर्ण
 
 /* Test that data races of unknown origin are reported. */
 __no_kcsan
-static void test_unknown_origin(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			{ test_kernel_read, &test_var, sizeof(test_var), 0 },
-			{ NULL },
-		},
-	};
+अटल व्योम test_unknown_origin(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			अणु test_kernel_पढ़ो, &test_var, माप(test_var), 0 पूर्ण,
+			अणु शून्य पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 
-	begin_test_checks(test_kernel_write_uninstrumented, test_kernel_read);
-	do {
+	begin_test_checks(test_kernel_ग_लिखो_uninstrumented, test_kernel_पढ़ो);
+	करो अणु
 		match_expect = report_matches(&expect);
-	} while (!end_test_checks(match_expect));
-	if (IS_ENABLED(CONFIG_KCSAN_REPORT_RACE_UNKNOWN_ORIGIN))
+	पूर्ण जबतक (!end_test_checks(match_expect));
+	अगर (IS_ENABLED(CONFIG_KCSAN_REPORT_RACE_UNKNOWN_ORIGIN))
 		KUNIT_EXPECT_TRUE(test, match_expect);
-	else
+	अन्यथा
 		KUNIT_EXPECT_FALSE(test, match_expect);
-}
+पूर्ण
 
-/* Test KCSAN_ASSUME_PLAIN_WRITES_ATOMIC if it is selected. */
+/* Test KCSAN_ASSUME_PLAIN_WRITES_ATOMIC अगर it is selected. */
 __no_kcsan
-static void test_write_write_assume_atomic(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			{ test_kernel_write, &test_var, sizeof(test_var), KCSAN_ACCESS_WRITE },
-			{ test_kernel_write, &test_var, sizeof(test_var), KCSAN_ACCESS_WRITE },
-		},
-	};
+अटल व्योम test_ग_लिखो_ग_लिखो_assume_atomic(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			अणु test_kernel_ग_लिखो, &test_var, माप(test_var), KCSAN_ACCESS_WRITE पूर्ण,
+			अणु test_kernel_ग_लिखो, &test_var, माप(test_var), KCSAN_ACCESS_WRITE पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 
-	begin_test_checks(test_kernel_write, test_kernel_write);
-	do {
+	begin_test_checks(test_kernel_ग_लिखो, test_kernel_ग_लिखो);
+	करो अणु
 		sink_value(READ_ONCE(test_var)); /* induce value-change */
 		match_expect = report_matches(&expect);
-	} while (!end_test_checks(match_expect));
-	if (IS_ENABLED(CONFIG_KCSAN_ASSUME_PLAIN_WRITES_ATOMIC))
+	पूर्ण जबतक (!end_test_checks(match_expect));
+	अगर (IS_ENABLED(CONFIG_KCSAN_ASSUME_PLAIN_WRITES_ATOMIC))
 		KUNIT_EXPECT_FALSE(test, match_expect);
-	else
+	अन्यथा
 		KUNIT_EXPECT_TRUE(test, match_expect);
-}
+पूर्ण
 
 /*
- * Test that data races with writes larger than word-size are always reported,
- * even if KCSAN_ASSUME_PLAIN_WRITES_ATOMIC is selected.
+ * Test that data races with ग_लिखोs larger than word-size are always reported,
+ * even अगर KCSAN_ASSUME_PLAIN_WRITES_ATOMIC is selected.
  */
 __no_kcsan
-static void test_write_write_struct(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			{ test_kernel_write_struct, &test_struct, sizeof(test_struct), KCSAN_ACCESS_WRITE },
-			{ test_kernel_write_struct, &test_struct, sizeof(test_struct), KCSAN_ACCESS_WRITE },
-		},
-	};
+अटल व्योम test_ग_लिखो_ग_लिखो_काष्ठा(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			अणु test_kernel_ग_लिखो_काष्ठा, &test_काष्ठा, माप(test_काष्ठा), KCSAN_ACCESS_WRITE पूर्ण,
+			अणु test_kernel_ग_लिखो_काष्ठा, &test_काष्ठा, माप(test_काष्ठा), KCSAN_ACCESS_WRITE पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 
-	begin_test_checks(test_kernel_write_struct, test_kernel_write_struct);
-	do {
+	begin_test_checks(test_kernel_ग_लिखो_काष्ठा, test_kernel_ग_लिखो_काष्ठा);
+	करो अणु
 		match_expect = report_matches(&expect);
-	} while (!end_test_checks(match_expect));
+	पूर्ण जबतक (!end_test_checks(match_expect));
 	KUNIT_EXPECT_TRUE(test, match_expect);
-}
+पूर्ण
 
 /*
- * Test that data races where only one write is larger than word-size are always
- * reported, even if KCSAN_ASSUME_PLAIN_WRITES_ATOMIC is selected.
+ * Test that data races where only one ग_लिखो is larger than word-size are always
+ * reported, even अगर KCSAN_ASSUME_PLAIN_WRITES_ATOMIC is selected.
  */
 __no_kcsan
-static void test_write_write_struct_part(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			{ test_kernel_write_struct, &test_struct, sizeof(test_struct), KCSAN_ACCESS_WRITE },
-			{ test_kernel_write_struct_part, &test_struct.val[3], sizeof(test_struct.val[3]), KCSAN_ACCESS_WRITE },
-		},
-	};
+अटल व्योम test_ग_लिखो_ग_लिखो_काष्ठा_part(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			अणु test_kernel_ग_लिखो_काष्ठा, &test_काष्ठा, माप(test_काष्ठा), KCSAN_ACCESS_WRITE पूर्ण,
+			अणु test_kernel_ग_लिखो_काष्ठा_part, &test_काष्ठा.val[3], माप(test_काष्ठा.val[3]), KCSAN_ACCESS_WRITE पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 
-	begin_test_checks(test_kernel_write_struct, test_kernel_write_struct_part);
-	do {
+	begin_test_checks(test_kernel_ग_लिखो_काष्ठा, test_kernel_ग_लिखो_काष्ठा_part);
+	करो अणु
 		match_expect = report_matches(&expect);
-	} while (!end_test_checks(match_expect));
+	पूर्ण जबतक (!end_test_checks(match_expect));
 	KUNIT_EXPECT_TRUE(test, match_expect);
-}
+पूर्ण
 
 /* Test that races with atomic accesses never result in reports. */
 __no_kcsan
-static void test_read_atomic_write_atomic(struct kunit *test)
-{
+अटल व्योम test_पढ़ो_atomic_ग_लिखो_atomic(काष्ठा kunit *test)
+अणु
 	bool match_never = false;
 
-	begin_test_checks(test_kernel_read_atomic, test_kernel_write_atomic);
-	do {
+	begin_test_checks(test_kernel_पढ़ो_atomic, test_kernel_ग_लिखो_atomic);
+	करो अणु
 		match_never = report_available();
-	} while (!end_test_checks(match_never));
+	पूर्ण जबतक (!end_test_checks(match_never));
 	KUNIT_EXPECT_FALSE(test, match_never);
-}
+पूर्ण
 
 /* Test that a race with an atomic and plain access result in reports. */
 __no_kcsan
-static void test_read_plain_atomic_write(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			{ test_kernel_read, &test_var, sizeof(test_var), 0 },
-			{ test_kernel_write_atomic, &test_var, sizeof(test_var), KCSAN_ACCESS_WRITE | KCSAN_ACCESS_ATOMIC },
-		},
-	};
+अटल व्योम test_पढ़ो_plain_atomic_ग_लिखो(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			अणु test_kernel_पढ़ो, &test_var, माप(test_var), 0 पूर्ण,
+			अणु test_kernel_ग_लिखो_atomic, &test_var, माप(test_var), KCSAN_ACCESS_WRITE | KCSAN_ACCESS_ATOMIC पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 
-	if (IS_ENABLED(CONFIG_KCSAN_IGNORE_ATOMICS))
-		return;
+	अगर (IS_ENABLED(CONFIG_KCSAN_IGNORE_ATOMICS))
+		वापस;
 
-	begin_test_checks(test_kernel_read, test_kernel_write_atomic);
-	do {
+	begin_test_checks(test_kernel_पढ़ो, test_kernel_ग_लिखो_atomic);
+	करो अणु
 		match_expect = report_matches(&expect);
-	} while (!end_test_checks(match_expect));
+	पूर्ण जबतक (!end_test_checks(match_expect));
 	KUNIT_EXPECT_TRUE(test, match_expect);
-}
+पूर्ण
 
 /* Test that atomic RMWs generate correct report. */
 __no_kcsan
-static void test_read_plain_atomic_rmw(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			{ test_kernel_read, &test_var, sizeof(test_var), 0 },
-			{ test_kernel_atomic_rmw, &test_var, sizeof(test_var),
-				KCSAN_ACCESS_COMPOUND | KCSAN_ACCESS_WRITE | KCSAN_ACCESS_ATOMIC },
-		},
-	};
+अटल व्योम test_पढ़ो_plain_atomic_rmw(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			अणु test_kernel_पढ़ो, &test_var, माप(test_var), 0 पूर्ण,
+			अणु test_kernel_atomic_rmw, &test_var, माप(test_var),
+				KCSAN_ACCESS_COMPOUND | KCSAN_ACCESS_WRITE | KCSAN_ACCESS_ATOMIC पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 
-	if (IS_ENABLED(CONFIG_KCSAN_IGNORE_ATOMICS))
-		return;
+	अगर (IS_ENABLED(CONFIG_KCSAN_IGNORE_ATOMICS))
+		वापस;
 
-	begin_test_checks(test_kernel_read, test_kernel_atomic_rmw);
-	do {
+	begin_test_checks(test_kernel_पढ़ो, test_kernel_atomic_rmw);
+	करो अणु
 		match_expect = report_matches(&expect);
-	} while (!end_test_checks(match_expect));
+	पूर्ण जबतक (!end_test_checks(match_expect));
 	KUNIT_EXPECT_TRUE(test, match_expect);
-}
+पूर्ण
 
 /* Zero-sized accesses should never cause data race reports. */
 __no_kcsan
-static void test_zero_size_access(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			{ test_kernel_write_struct, &test_struct, sizeof(test_struct), KCSAN_ACCESS_WRITE },
-			{ test_kernel_write_struct, &test_struct, sizeof(test_struct), KCSAN_ACCESS_WRITE },
-		},
-	};
-	const struct expect_report never = {
-		.access = {
-			{ test_kernel_write_struct, &test_struct, sizeof(test_struct), KCSAN_ACCESS_WRITE },
-			{ test_kernel_read_struct_zero_size, &test_struct.val[3], 0, 0 },
-		},
-	};
+अटल व्योम test_zero_size_access(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			अणु test_kernel_ग_लिखो_काष्ठा, &test_काष्ठा, माप(test_काष्ठा), KCSAN_ACCESS_WRITE पूर्ण,
+			अणु test_kernel_ग_लिखो_काष्ठा, &test_काष्ठा, माप(test_काष्ठा), KCSAN_ACCESS_WRITE पूर्ण,
+		पूर्ण,
+	पूर्ण;
+	स्थिर काष्ठा expect_report never = अणु
+		.access = अणु
+			अणु test_kernel_ग_लिखो_काष्ठा, &test_काष्ठा, माप(test_काष्ठा), KCSAN_ACCESS_WRITE पूर्ण,
+			अणु test_kernel_पढ़ो_काष्ठा_zero_size, &test_काष्ठा.val[3], 0, 0 पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 	bool match_never = false;
 
-	begin_test_checks(test_kernel_write_struct, test_kernel_read_struct_zero_size);
-	do {
+	begin_test_checks(test_kernel_ग_लिखो_काष्ठा, test_kernel_पढ़ो_काष्ठा_zero_size);
+	करो अणु
 		match_expect |= report_matches(&expect);
 		match_never = report_matches(&never);
-	} while (!end_test_checks(match_never));
+	पूर्ण जबतक (!end_test_checks(match_never));
 	KUNIT_EXPECT_TRUE(test, match_expect); /* Sanity check. */
 	KUNIT_EXPECT_FALSE(test, match_never);
-}
+पूर्ण
 
 /* Test the data_race() macro. */
 __no_kcsan
-static void test_data_race(struct kunit *test)
-{
+अटल व्योम test_data_race(काष्ठा kunit *test)
+अणु
 	bool match_never = false;
 
 	begin_test_checks(test_kernel_data_race, test_kernel_data_race);
-	do {
+	करो अणु
 		match_never = report_available();
-	} while (!end_test_checks(match_never));
+	पूर्ण जबतक (!end_test_checks(match_never));
 	KUNIT_EXPECT_FALSE(test, match_never);
-}
+पूर्ण
 
 __no_kcsan
-static void test_assert_exclusive_writer(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			{ test_kernel_assert_writer, &test_var, sizeof(test_var), KCSAN_ACCESS_ASSERT },
-			{ test_kernel_write_nochange, &test_var, sizeof(test_var), KCSAN_ACCESS_WRITE },
-		},
-	};
+अटल व्योम test_निश्चित_exclusive_ग_लिखोr(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			अणु test_kernel_निश्चित_ग_लिखोr, &test_var, माप(test_var), KCSAN_ACCESS_ASSERT पूर्ण,
+			अणु test_kernel_ग_लिखो_nochange, &test_var, माप(test_var), KCSAN_ACCESS_WRITE पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 
-	begin_test_checks(test_kernel_assert_writer, test_kernel_write_nochange);
-	do {
+	begin_test_checks(test_kernel_निश्चित_ग_लिखोr, test_kernel_ग_लिखो_nochange);
+	करो अणु
 		match_expect = report_matches(&expect);
-	} while (!end_test_checks(match_expect));
+	पूर्ण जबतक (!end_test_checks(match_expect));
 	KUNIT_EXPECT_TRUE(test, match_expect);
-}
+पूर्ण
 
 __no_kcsan
-static void test_assert_exclusive_access(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			{ test_kernel_assert_access, &test_var, sizeof(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_WRITE },
-			{ test_kernel_read, &test_var, sizeof(test_var), 0 },
-		},
-	};
+अटल व्योम test_निश्चित_exclusive_access(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			अणु test_kernel_निश्चित_access, &test_var, माप(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_WRITE पूर्ण,
+			अणु test_kernel_पढ़ो, &test_var, माप(test_var), 0 पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 
-	begin_test_checks(test_kernel_assert_access, test_kernel_read);
-	do {
+	begin_test_checks(test_kernel_निश्चित_access, test_kernel_पढ़ो);
+	करो अणु
 		match_expect = report_matches(&expect);
-	} while (!end_test_checks(match_expect));
+	पूर्ण जबतक (!end_test_checks(match_expect));
 	KUNIT_EXPECT_TRUE(test, match_expect);
-}
+पूर्ण
 
 __no_kcsan
-static void test_assert_exclusive_access_writer(struct kunit *test)
-{
-	const struct expect_report expect_access_writer = {
-		.access = {
-			{ test_kernel_assert_access, &test_var, sizeof(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_WRITE },
-			{ test_kernel_assert_writer, &test_var, sizeof(test_var), KCSAN_ACCESS_ASSERT },
-		},
-	};
-	const struct expect_report expect_access_access = {
-		.access = {
-			{ test_kernel_assert_access, &test_var, sizeof(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_WRITE },
-			{ test_kernel_assert_access, &test_var, sizeof(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_WRITE },
-		},
-	};
-	const struct expect_report never = {
-		.access = {
-			{ test_kernel_assert_writer, &test_var, sizeof(test_var), KCSAN_ACCESS_ASSERT },
-			{ test_kernel_assert_writer, &test_var, sizeof(test_var), KCSAN_ACCESS_ASSERT },
-		},
-	};
-	bool match_expect_access_writer = false;
+अटल व्योम test_निश्चित_exclusive_access_ग_लिखोr(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect_access_ग_लिखोr = अणु
+		.access = अणु
+			अणु test_kernel_निश्चित_access, &test_var, माप(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_WRITE पूर्ण,
+			अणु test_kernel_निश्चित_ग_लिखोr, &test_var, माप(test_var), KCSAN_ACCESS_ASSERT पूर्ण,
+		पूर्ण,
+	पूर्ण;
+	स्थिर काष्ठा expect_report expect_access_access = अणु
+		.access = अणु
+			अणु test_kernel_निश्चित_access, &test_var, माप(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_WRITE पूर्ण,
+			अणु test_kernel_निश्चित_access, &test_var, माप(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_WRITE पूर्ण,
+		पूर्ण,
+	पूर्ण;
+	स्थिर काष्ठा expect_report never = अणु
+		.access = अणु
+			अणु test_kernel_निश्चित_ग_लिखोr, &test_var, माप(test_var), KCSAN_ACCESS_ASSERT पूर्ण,
+			अणु test_kernel_निश्चित_ग_लिखोr, &test_var, माप(test_var), KCSAN_ACCESS_ASSERT पूर्ण,
+		पूर्ण,
+	पूर्ण;
+	bool match_expect_access_ग_लिखोr = false;
 	bool match_expect_access_access = false;
 	bool match_never = false;
 
-	begin_test_checks(test_kernel_assert_access, test_kernel_assert_writer);
-	do {
-		match_expect_access_writer |= report_matches(&expect_access_writer);
+	begin_test_checks(test_kernel_निश्चित_access, test_kernel_निश्चित_ग_लिखोr);
+	करो अणु
+		match_expect_access_ग_लिखोr |= report_matches(&expect_access_ग_लिखोr);
 		match_expect_access_access |= report_matches(&expect_access_access);
 		match_never |= report_matches(&never);
-	} while (!end_test_checks(match_never));
-	KUNIT_EXPECT_TRUE(test, match_expect_access_writer);
+	पूर्ण जबतक (!end_test_checks(match_never));
+	KUNIT_EXPECT_TRUE(test, match_expect_access_ग_लिखोr);
 	KUNIT_EXPECT_TRUE(test, match_expect_access_access);
 	KUNIT_EXPECT_FALSE(test, match_never);
-}
+पूर्ण
 
 __no_kcsan
-static void test_assert_exclusive_bits_change(struct kunit *test)
-{
-	const struct expect_report expect = {
-		.access = {
-			{ test_kernel_assert_bits_change, &test_var, sizeof(test_var), KCSAN_ACCESS_ASSERT },
-			{ test_kernel_change_bits, &test_var, sizeof(test_var),
-				KCSAN_ACCESS_WRITE | (IS_ENABLED(CONFIG_KCSAN_IGNORE_ATOMICS) ? 0 : KCSAN_ACCESS_ATOMIC) },
-		},
-	};
+अटल व्योम test_निश्चित_exclusive_bits_change(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect = अणु
+		.access = अणु
+			अणु test_kernel_निश्चित_bits_change, &test_var, माप(test_var), KCSAN_ACCESS_ASSERT पूर्ण,
+			अणु test_kernel_change_bits, &test_var, माप(test_var),
+				KCSAN_ACCESS_WRITE | (IS_ENABLED(CONFIG_KCSAN_IGNORE_ATOMICS) ? 0 : KCSAN_ACCESS_ATOMIC) पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect = false;
 
-	begin_test_checks(test_kernel_assert_bits_change, test_kernel_change_bits);
-	do {
+	begin_test_checks(test_kernel_निश्चित_bits_change, test_kernel_change_bits);
+	करो अणु
 		match_expect = report_matches(&expect);
-	} while (!end_test_checks(match_expect));
+	पूर्ण जबतक (!end_test_checks(match_expect));
 	KUNIT_EXPECT_TRUE(test, match_expect);
-}
+पूर्ण
 
 __no_kcsan
-static void test_assert_exclusive_bits_nochange(struct kunit *test)
-{
+अटल व्योम test_निश्चित_exclusive_bits_nochange(काष्ठा kunit *test)
+अणु
 	bool match_never = false;
 
-	begin_test_checks(test_kernel_assert_bits_nochange, test_kernel_change_bits);
-	do {
+	begin_test_checks(test_kernel_निश्चित_bits_nochange, test_kernel_change_bits);
+	करो अणु
 		match_never = report_available();
-	} while (!end_test_checks(match_never));
+	पूर्ण जबतक (!end_test_checks(match_never));
 	KUNIT_EXPECT_FALSE(test, match_never);
-}
+पूर्ण
 
 __no_kcsan
-static void test_assert_exclusive_writer_scoped(struct kunit *test)
-{
-	const struct expect_report expect_start = {
-		.access = {
-			{ test_kernel_assert_writer_scoped, &test_var, sizeof(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_SCOPED },
-			{ test_kernel_write_nochange, &test_var, sizeof(test_var), KCSAN_ACCESS_WRITE },
-		},
-	};
-	const struct expect_report expect_anywhere = {
-		.access = {
-			{ test_enter_scope, &test_var, sizeof(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_SCOPED },
-			{ test_kernel_write_nochange, &test_var, sizeof(test_var), KCSAN_ACCESS_WRITE },
-		},
-	};
+अटल व्योम test_निश्चित_exclusive_ग_लिखोr_scoped(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect_start = अणु
+		.access = अणु
+			अणु test_kernel_निश्चित_ग_लिखोr_scoped, &test_var, माप(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_SCOPED पूर्ण,
+			अणु test_kernel_ग_लिखो_nochange, &test_var, माप(test_var), KCSAN_ACCESS_WRITE पूर्ण,
+		पूर्ण,
+	पूर्ण;
+	स्थिर काष्ठा expect_report expect_anywhere = अणु
+		.access = अणु
+			अणु test_enter_scope, &test_var, माप(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_SCOPED पूर्ण,
+			अणु test_kernel_ग_लिखो_nochange, &test_var, माप(test_var), KCSAN_ACCESS_WRITE पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect_start = false;
 	bool match_expect_anywhere = false;
 
-	begin_test_checks(test_kernel_assert_writer_scoped, test_kernel_write_nochange);
-	do {
+	begin_test_checks(test_kernel_निश्चित_ग_लिखोr_scoped, test_kernel_ग_लिखो_nochange);
+	करो अणु
 		match_expect_start |= report_matches(&expect_start);
 		match_expect_anywhere |= report_matches(&expect_anywhere);
-	} while (!end_test_checks(match_expect_start && match_expect_anywhere));
+	पूर्ण जबतक (!end_test_checks(match_expect_start && match_expect_anywhere));
 	KUNIT_EXPECT_TRUE(test, match_expect_start);
 	KUNIT_EXPECT_TRUE(test, match_expect_anywhere);
-}
+पूर्ण
 
 __no_kcsan
-static void test_assert_exclusive_access_scoped(struct kunit *test)
-{
-	const struct expect_report expect_start1 = {
-		.access = {
-			{ test_kernel_assert_access_scoped, &test_var, sizeof(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_WRITE | KCSAN_ACCESS_SCOPED },
-			{ test_kernel_read, &test_var, sizeof(test_var), 0 },
-		},
-	};
-	const struct expect_report expect_start2 = {
-		.access = { expect_start1.access[0], expect_start1.access[0] },
-	};
-	const struct expect_report expect_inscope = {
-		.access = {
-			{ test_enter_scope, &test_var, sizeof(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_WRITE | KCSAN_ACCESS_SCOPED },
-			{ test_kernel_read, &test_var, sizeof(test_var), 0 },
-		},
-	};
+अटल व्योम test_निश्चित_exclusive_access_scoped(काष्ठा kunit *test)
+अणु
+	स्थिर काष्ठा expect_report expect_start1 = अणु
+		.access = अणु
+			अणु test_kernel_निश्चित_access_scoped, &test_var, माप(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_WRITE | KCSAN_ACCESS_SCOPED पूर्ण,
+			अणु test_kernel_पढ़ो, &test_var, माप(test_var), 0 पूर्ण,
+		पूर्ण,
+	पूर्ण;
+	स्थिर काष्ठा expect_report expect_start2 = अणु
+		.access = अणु expect_start1.access[0], expect_start1.access[0] पूर्ण,
+	पूर्ण;
+	स्थिर काष्ठा expect_report expect_inscope = अणु
+		.access = अणु
+			अणु test_enter_scope, &test_var, माप(test_var), KCSAN_ACCESS_ASSERT | KCSAN_ACCESS_WRITE | KCSAN_ACCESS_SCOPED पूर्ण,
+			अणु test_kernel_पढ़ो, &test_var, माप(test_var), 0 पूर्ण,
+		पूर्ण,
+	पूर्ण;
 	bool match_expect_start = false;
 	bool match_expect_inscope = false;
 
-	begin_test_checks(test_kernel_assert_access_scoped, test_kernel_read);
-	end_time += msecs_to_jiffies(1000); /* This test requires a bit more time. */
-	do {
+	begin_test_checks(test_kernel_निश्चित_access_scoped, test_kernel_पढ़ो);
+	end_समय += msecs_to_jअगरfies(1000); /* This test requires a bit more समय. */
+	करो अणु
 		match_expect_start |= report_matches(&expect_start1) || report_matches(&expect_start2);
 		match_expect_inscope |= report_matches(&expect_inscope);
-	} while (!end_test_checks(match_expect_start && match_expect_inscope));
+	पूर्ण जबतक (!end_test_checks(match_expect_start && match_expect_inscope));
 	KUNIT_EXPECT_TRUE(test, match_expect_start);
 	KUNIT_EXPECT_TRUE(test, match_expect_inscope);
-}
+पूर्ण
 
 /*
- * jiffies is special (declared to be volatile) and its accesses are typically
- * not marked; this test ensures that the compiler nor KCSAN gets confused about
- * jiffies's declaration on different architectures.
+ * jअगरfies is special (declared to be अस्थिर) and its accesses are typically
+ * not marked; this test ensures that the compiler nor KCSAN माला_लो confused about
+ * jअगरfies's declaration on dअगरferent architectures.
  */
 __no_kcsan
-static void test_jiffies_noreport(struct kunit *test)
-{
+अटल व्योम test_jअगरfies_noreport(काष्ठा kunit *test)
+अणु
 	bool match_never = false;
 
-	begin_test_checks(test_kernel_jiffies_reader, test_kernel_jiffies_reader);
-	do {
+	begin_test_checks(test_kernel_jअगरfies_पढ़ोer, test_kernel_jअगरfies_पढ़ोer);
+	करो अणु
 		match_never = report_available();
-	} while (!end_test_checks(match_never));
+	पूर्ण जबतक (!end_test_checks(match_never));
 	KUNIT_EXPECT_FALSE(test, match_never);
-}
+पूर्ण
 
 /* Test that racing accesses in seqlock critical sections are not reported. */
 __no_kcsan
-static void test_seqlock_noreport(struct kunit *test)
-{
+अटल व्योम test_seqlock_noreport(काष्ठा kunit *test)
+अणु
 	bool match_never = false;
 
-	begin_test_checks(test_kernel_seqlock_reader, test_kernel_seqlock_writer);
-	do {
+	begin_test_checks(test_kernel_seqlock_पढ़ोer, test_kernel_seqlock_ग_लिखोr);
+	करो अणु
 		match_never = report_available();
-	} while (!end_test_checks(match_never));
+	पूर्ण जबतक (!end_test_checks(match_never));
 	KUNIT_EXPECT_FALSE(test, match_never);
-}
+पूर्ण
 
 /*
  * Test atomic builtins work and required instrumentation functions exist. We
@@ -906,13 +907,13 @@ static void test_seqlock_noreport(struct kunit *test)
  *
  * The atomic builtins _SHOULD NOT_ be used in normal kernel code!
  */
-static void test_atomic_builtins(struct kunit *test)
-{
+अटल व्योम test_atomic_builtins(काष्ठा kunit *test)
+अणु
 	bool match_never = false;
 
 	begin_test_checks(test_kernel_atomic_builtins, test_kernel_atomic_builtins);
-	do {
-		long tmp;
+	करो अणु
+		दीर्घ पंचांगp;
 
 		kcsan_enable_current();
 
@@ -922,16 +923,16 @@ static void test_atomic_builtins(struct kunit *test)
 		KUNIT_EXPECT_EQ(test, 42L, __atomic_exchange_n(&test_var, 20, __ATOMIC_RELAXED));
 		KUNIT_EXPECT_EQ(test, 20L, test_var);
 
-		tmp = 20L;
-		KUNIT_EXPECT_TRUE(test, __atomic_compare_exchange_n(&test_var, &tmp, 30L,
+		पंचांगp = 20L;
+		KUNIT_EXPECT_TRUE(test, __atomic_compare_exchange_n(&test_var, &पंचांगp, 30L,
 								    0, __ATOMIC_RELAXED,
 								    __ATOMIC_RELAXED));
-		KUNIT_EXPECT_EQ(test, tmp, 20L);
+		KUNIT_EXPECT_EQ(test, पंचांगp, 20L);
 		KUNIT_EXPECT_EQ(test, test_var, 30L);
-		KUNIT_EXPECT_FALSE(test, __atomic_compare_exchange_n(&test_var, &tmp, 40L,
+		KUNIT_EXPECT_FALSE(test, __atomic_compare_exchange_n(&test_var, &पंचांगp, 40L,
 								     1, __ATOMIC_RELAXED,
 								     __ATOMIC_RELAXED));
-		KUNIT_EXPECT_EQ(test, tmp, 30L);
+		KUNIT_EXPECT_EQ(test, पंचांगp, 30L);
 		KUNIT_EXPECT_EQ(test, test_var, 30L);
 
 		KUNIT_EXPECT_EQ(test, 30L, __atomic_fetch_add(&test_var, 1, __ATOMIC_RELAXED));
@@ -942,258 +943,258 @@ static void test_atomic_builtins(struct kunit *test)
 		KUNIT_EXPECT_EQ(test, 241L, __atomic_fetch_nand(&test_var, 0xf, __ATOMIC_RELAXED));
 		KUNIT_EXPECT_EQ(test, -2L, test_var);
 
-		__atomic_thread_fence(__ATOMIC_SEQ_CST);
-		__atomic_signal_fence(__ATOMIC_SEQ_CST);
+		__atomic_thपढ़ो_fence(__ATOMIC_SEQ_CST);
+		__atomic_संकेत_fence(__ATOMIC_SEQ_CST);
 
 		kcsan_disable_current();
 
 		match_never = report_available();
-	} while (!end_test_checks(match_never));
+	पूर्ण जबतक (!end_test_checks(match_never));
 	KUNIT_EXPECT_FALSE(test, match_never);
-}
+पूर्ण
 
 /*
- * Generate thread counts for all test cases. Values generated are in interval
- * [2, 5] followed by exponentially increasing thread counts from 8 to 32.
+ * Generate thपढ़ो counts क्रम all test हालs. Values generated are in पूर्णांकerval
+ * [2, 5] followed by exponentially increasing thपढ़ो counts from 8 to 32.
  *
- * The thread counts are chosen to cover potentially interesting boundaries and
- * corner cases (2 to 5), and then stress the system with larger counts.
+ * The thपढ़ो counts are chosen to cover potentially पूर्णांकeresting boundaries and
+ * corner हालs (2 to 5), and then stress the प्रणाली with larger counts.
  */
-static const void *nthreads_gen_params(const void *prev, char *desc)
-{
-	long nthreads = (long)prev;
+अटल स्थिर व्योम *nthपढ़ोs_gen_params(स्थिर व्योम *prev, अक्षर *desc)
+अणु
+	दीर्घ nthपढ़ोs = (दीर्घ)prev;
 
-	if (nthreads < 0 || nthreads >= 32)
-		nthreads = 0; /* stop */
-	else if (!nthreads)
-		nthreads = 2; /* initial value */
-	else if (nthreads < 5)
-		nthreads++;
-	else if (nthreads == 5)
-		nthreads = 8;
-	else
-		nthreads *= 2;
+	अगर (nthपढ़ोs < 0 || nthपढ़ोs >= 32)
+		nthपढ़ोs = 0; /* stop */
+	अन्यथा अगर (!nthपढ़ोs)
+		nthपढ़ोs = 2; /* initial value */
+	अन्यथा अगर (nthपढ़ोs < 5)
+		nthपढ़ोs++;
+	अन्यथा अगर (nthपढ़ोs == 5)
+		nthपढ़ोs = 8;
+	अन्यथा
+		nthपढ़ोs *= 2;
 
-	if (!IS_ENABLED(CONFIG_PREEMPT) || !IS_ENABLED(CONFIG_KCSAN_INTERRUPT_WATCHER)) {
+	अगर (!IS_ENABLED(CONFIG_PREEMPT) || !IS_ENABLED(CONFIG_KCSAN_INTERRUPT_WATCHER)) अणु
 		/*
-		 * Without any preemption, keep 2 CPUs free for other tasks, one
-		 * of which is the main test case function checking for
+		 * Without any preemption, keep 2 CPUs मुक्त क्रम other tasks, one
+		 * of which is the मुख्य test हाल function checking क्रम
 		 * completion or failure.
 		 */
-		const long min_unused_cpus = IS_ENABLED(CONFIG_PREEMPT_NONE) ? 2 : 0;
-		const long min_required_cpus = 2 + min_unused_cpus;
+		स्थिर दीर्घ min_unused_cpus = IS_ENABLED(CONFIG_PREEMPT_NONE) ? 2 : 0;
+		स्थिर दीर्घ min_required_cpus = 2 + min_unused_cpus;
 
-		if (num_online_cpus() < min_required_cpus) {
+		अगर (num_online_cpus() < min_required_cpus) अणु
 			pr_err_once("Too few online CPUs (%u < %ld) for test\n",
 				    num_online_cpus(), min_required_cpus);
-			nthreads = 0;
-		} else if (nthreads >= num_online_cpus() - min_unused_cpus) {
+			nthपढ़ोs = 0;
+		पूर्ण अन्यथा अगर (nthपढ़ोs >= num_online_cpus() - min_unused_cpus) अणु
 			/* Use negative value to indicate last param. */
-			nthreads = -(num_online_cpus() - min_unused_cpus);
+			nthपढ़ोs = -(num_online_cpus() - min_unused_cpus);
 			pr_warn_once("Limiting number of threads to %ld (only %d online CPUs)\n",
-				     -nthreads, num_online_cpus());
-		}
-	}
+				     -nthपढ़ोs, num_online_cpus());
+		पूर्ण
+	पूर्ण
 
-	snprintf(desc, KUNIT_PARAM_DESC_SIZE, "threads=%ld", abs(nthreads));
-	return (void *)nthreads;
-}
+	snम_लिखो(desc, KUNIT_PARAM_DESC_SIZE, "threads=%ld", असल(nthपढ़ोs));
+	वापस (व्योम *)nthपढ़ोs;
+पूर्ण
 
-#define KCSAN_KUNIT_CASE(test_name) KUNIT_CASE_PARAM(test_name, nthreads_gen_params)
-static struct kunit_case kcsan_test_cases[] = {
+#घोषणा KCSAN_KUNIT_CASE(test_name) KUNIT_CASE_PARAM(test_name, nthपढ़ोs_gen_params)
+अटल काष्ठा kunit_हाल kcsan_test_हालs[] = अणु
 	KCSAN_KUNIT_CASE(test_basic),
 	KCSAN_KUNIT_CASE(test_concurrent_races),
 	KCSAN_KUNIT_CASE(test_novalue_change),
 	KCSAN_KUNIT_CASE(test_novalue_change_exception),
 	KCSAN_KUNIT_CASE(test_unknown_origin),
-	KCSAN_KUNIT_CASE(test_write_write_assume_atomic),
-	KCSAN_KUNIT_CASE(test_write_write_struct),
-	KCSAN_KUNIT_CASE(test_write_write_struct_part),
-	KCSAN_KUNIT_CASE(test_read_atomic_write_atomic),
-	KCSAN_KUNIT_CASE(test_read_plain_atomic_write),
-	KCSAN_KUNIT_CASE(test_read_plain_atomic_rmw),
+	KCSAN_KUNIT_CASE(test_ग_लिखो_ग_लिखो_assume_atomic),
+	KCSAN_KUNIT_CASE(test_ग_लिखो_ग_लिखो_काष्ठा),
+	KCSAN_KUNIT_CASE(test_ग_लिखो_ग_लिखो_काष्ठा_part),
+	KCSAN_KUNIT_CASE(test_पढ़ो_atomic_ग_लिखो_atomic),
+	KCSAN_KUNIT_CASE(test_पढ़ो_plain_atomic_ग_लिखो),
+	KCSAN_KUNIT_CASE(test_पढ़ो_plain_atomic_rmw),
 	KCSAN_KUNIT_CASE(test_zero_size_access),
 	KCSAN_KUNIT_CASE(test_data_race),
-	KCSAN_KUNIT_CASE(test_assert_exclusive_writer),
-	KCSAN_KUNIT_CASE(test_assert_exclusive_access),
-	KCSAN_KUNIT_CASE(test_assert_exclusive_access_writer),
-	KCSAN_KUNIT_CASE(test_assert_exclusive_bits_change),
-	KCSAN_KUNIT_CASE(test_assert_exclusive_bits_nochange),
-	KCSAN_KUNIT_CASE(test_assert_exclusive_writer_scoped),
-	KCSAN_KUNIT_CASE(test_assert_exclusive_access_scoped),
-	KCSAN_KUNIT_CASE(test_jiffies_noreport),
+	KCSAN_KUNIT_CASE(test_निश्चित_exclusive_ग_लिखोr),
+	KCSAN_KUNIT_CASE(test_निश्चित_exclusive_access),
+	KCSAN_KUNIT_CASE(test_निश्चित_exclusive_access_ग_लिखोr),
+	KCSAN_KUNIT_CASE(test_निश्चित_exclusive_bits_change),
+	KCSAN_KUNIT_CASE(test_निश्चित_exclusive_bits_nochange),
+	KCSAN_KUNIT_CASE(test_निश्चित_exclusive_ग_लिखोr_scoped),
+	KCSAN_KUNIT_CASE(test_निश्चित_exclusive_access_scoped),
+	KCSAN_KUNIT_CASE(test_jअगरfies_noreport),
 	KCSAN_KUNIT_CASE(test_seqlock_noreport),
 	KCSAN_KUNIT_CASE(test_atomic_builtins),
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 
-/* ===== End test cases ===== */
+/* ===== End test हालs ===== */
 
-/* Concurrent accesses from interrupts. */
+/* Concurrent accesses from पूर्णांकerrupts. */
 __no_kcsan
-static void access_thread_timer(struct timer_list *timer)
-{
-	static atomic_t cnt = ATOMIC_INIT(0);
-	unsigned int idx;
-	void (*func)(void);
+अटल व्योम access_thपढ़ो_समयr(काष्ठा समयr_list *समयr)
+अणु
+	अटल atomic_t cnt = ATOMIC_INIT(0);
+	अचिन्हित पूर्णांक idx;
+	व्योम (*func)(व्योम);
 
-	idx = (unsigned int)atomic_inc_return(&cnt) % ARRAY_SIZE(access_kernels);
+	idx = (अचिन्हित पूर्णांक)atomic_inc_वापस(&cnt) % ARRAY_SIZE(access_kernels);
 	/* Acquire potential initialization. */
 	func = smp_load_acquire(&access_kernels[idx]);
-	if (func)
+	अगर (func)
 		func();
-}
+पूर्ण
 
-/* The main loop for each thread. */
+/* The मुख्य loop क्रम each thपढ़ो. */
 __no_kcsan
-static int access_thread(void *arg)
-{
-	struct timer_list timer;
-	unsigned int cnt = 0;
-	unsigned int idx;
-	void (*func)(void);
+अटल पूर्णांक access_thपढ़ो(व्योम *arg)
+अणु
+	काष्ठा समयr_list समयr;
+	अचिन्हित पूर्णांक cnt = 0;
+	अचिन्हित पूर्णांक idx;
+	व्योम (*func)(व्योम);
 
-	timer_setup_on_stack(&timer, access_thread_timer, 0);
-	do {
+	समयr_setup_on_stack(&समयr, access_thपढ़ो_समयr, 0);
+	करो अणु
 		might_sleep();
 
-		if (!timer_pending(&timer))
-			mod_timer(&timer, jiffies + 1);
-		else {
+		अगर (!समयr_pending(&समयr))
+			mod_समयr(&समयr, jअगरfies + 1);
+		अन्यथा अणु
 			/* Iterate through all kernels. */
 			idx = cnt++ % ARRAY_SIZE(access_kernels);
 			/* Acquire potential initialization. */
 			func = smp_load_acquire(&access_kernels[idx]);
-			if (func)
+			अगर (func)
 				func();
-		}
-	} while (!torture_must_stop());
-	del_timer_sync(&timer);
-	destroy_timer_on_stack(&timer);
+		पूर्ण
+	पूर्ण जबतक (!torture_must_stop());
+	del_समयr_sync(&समयr);
+	destroy_समयr_on_stack(&समयr);
 
-	torture_kthread_stopping("access_thread");
-	return 0;
-}
+	torture_kthपढ़ो_stopping("access_thread");
+	वापस 0;
+पूर्ण
 
 __no_kcsan
-static int test_init(struct kunit *test)
-{
-	unsigned long flags;
-	int nthreads;
-	int i;
+अटल पूर्णांक test_init(काष्ठा kunit *test)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक nthपढ़ोs;
+	पूर्णांक i;
 
 	spin_lock_irqsave(&observed.lock, flags);
-	for (i = 0; i < ARRAY_SIZE(observed.lines); ++i)
+	क्रम (i = 0; i < ARRAY_SIZE(observed.lines); ++i)
 		observed.lines[i][0] = '\0';
 	observed.nlines = 0;
 	spin_unlock_irqrestore(&observed.lock, flags);
 
-	if (!torture_init_begin((char *)test->name, 1))
-		return -EBUSY;
+	अगर (!torture_init_begin((अक्षर *)test->name, 1))
+		वापस -EBUSY;
 
-	if (WARN_ON(threads))
-		goto err;
+	अगर (WARN_ON(thपढ़ोs))
+		जाओ err;
 
-	for (i = 0; i < ARRAY_SIZE(access_kernels); ++i) {
-		if (WARN_ON(access_kernels[i]))
-			goto err;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(access_kernels); ++i) अणु
+		अगर (WARN_ON(access_kernels[i]))
+			जाओ err;
+	पूर्ण
 
-	nthreads = abs((long)test->param_value);
-	if (WARN_ON(!nthreads))
-		goto err;
+	nthपढ़ोs = असल((दीर्घ)test->param_value);
+	अगर (WARN_ON(!nthपढ़ोs))
+		जाओ err;
 
-	threads = kcalloc(nthreads + 1, sizeof(struct task_struct *), GFP_KERNEL);
-	if (WARN_ON(!threads))
-		goto err;
+	thपढ़ोs = kसुस्मृति(nthपढ़ोs + 1, माप(काष्ठा task_काष्ठा *), GFP_KERNEL);
+	अगर (WARN_ON(!thपढ़ोs))
+		जाओ err;
 
-	threads[nthreads] = NULL;
-	for (i = 0; i < nthreads; ++i) {
-		if (torture_create_kthread(access_thread, NULL, threads[i]))
-			goto err;
-	}
+	thपढ़ोs[nthपढ़ोs] = शून्य;
+	क्रम (i = 0; i < nthपढ़ोs; ++i) अणु
+		अगर (torture_create_kthपढ़ो(access_thपढ़ो, शून्य, thपढ़ोs[i]))
+			जाओ err;
+	पूर्ण
 
 	torture_init_end();
 
-	return 0;
+	वापस 0;
 
 err:
-	kfree(threads);
-	threads = NULL;
+	kमुक्त(thपढ़ोs);
+	thपढ़ोs = शून्य;
 	torture_init_end();
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 __no_kcsan
-static void test_exit(struct kunit *test)
-{
-	struct task_struct **stop_thread;
-	int i;
+अटल व्योम test_निकास(काष्ठा kunit *test)
+अणु
+	काष्ठा task_काष्ठा **stop_thपढ़ो;
+	पूर्णांक i;
 
-	if (torture_cleanup_begin())
-		return;
+	अगर (torture_cleanup_begin())
+		वापस;
 
-	for (i = 0; i < ARRAY_SIZE(access_kernels); ++i)
-		WRITE_ONCE(access_kernels[i], NULL);
+	क्रम (i = 0; i < ARRAY_SIZE(access_kernels); ++i)
+		WRITE_ONCE(access_kernels[i], शून्य);
 
-	if (threads) {
-		for (stop_thread = threads; *stop_thread; stop_thread++)
-			torture_stop_kthread(reader_thread, *stop_thread);
+	अगर (thपढ़ोs) अणु
+		क्रम (stop_thपढ़ो = thपढ़ोs; *stop_thपढ़ो; stop_thपढ़ो++)
+			torture_stop_kthपढ़ो(पढ़ोer_thपढ़ो, *stop_thपढ़ो);
 
-		kfree(threads);
-		threads = NULL;
-	}
+		kमुक्त(thपढ़ोs);
+		thपढ़ोs = शून्य;
+	पूर्ण
 
 	torture_cleanup_end();
-}
+पूर्ण
 
-static struct kunit_suite kcsan_test_suite = {
+अटल काष्ठा kunit_suite kcsan_test_suite = अणु
 	.name = "kcsan",
-	.test_cases = kcsan_test_cases,
+	.test_हालs = kcsan_test_हालs,
 	.init = test_init,
-	.exit = test_exit,
-};
-static struct kunit_suite *kcsan_test_suites[] = { &kcsan_test_suite, NULL };
+	.निकास = test_निकास,
+पूर्ण;
+अटल काष्ठा kunit_suite *kcsan_test_suites[] = अणु &kcsan_test_suite, शून्य पूर्ण;
 
 __no_kcsan
-static void register_tracepoints(struct tracepoint *tp, void *ignore)
-{
+अटल व्योम रेजिस्टर_tracepoपूर्णांकs(काष्ठा tracepoपूर्णांक *tp, व्योम *ignore)
+अणु
 	check_trace_callback_type_console(probe_console);
-	if (!strcmp(tp->name, "console"))
-		WARN_ON(tracepoint_probe_register(tp, probe_console, NULL));
-}
+	अगर (!म_भेद(tp->name, "console"))
+		WARN_ON(tracepoपूर्णांक_probe_रेजिस्टर(tp, probe_console, शून्य));
+पूर्ण
 
 __no_kcsan
-static void unregister_tracepoints(struct tracepoint *tp, void *ignore)
-{
-	if (!strcmp(tp->name, "console"))
-		tracepoint_probe_unregister(tp, probe_console, NULL);
-}
+अटल व्योम unरेजिस्टर_tracepoपूर्णांकs(काष्ठा tracepoपूर्णांक *tp, व्योम *ignore)
+अणु
+	अगर (!म_भेद(tp->name, "console"))
+		tracepoपूर्णांक_probe_unरेजिस्टर(tp, probe_console, शून्य);
+पूर्ण
 
 /*
- * We only want to do tracepoints setup and teardown once, therefore we have to
- * customize the init and exit functions and cannot rely on kunit_test_suite().
+ * We only want to करो tracepoपूर्णांकs setup and tearकरोwn once, thereक्रमe we have to
+ * customize the init and निकास functions and cannot rely on kunit_test_suite().
  */
-static int __init kcsan_test_init(void)
-{
+अटल पूर्णांक __init kcsan_test_init(व्योम)
+अणु
 	/*
 	 * Because we want to be able to build the test as a module, we need to
-	 * iterate through all known tracepoints, since the static registration
+	 * iterate through all known tracepoपूर्णांकs, since the अटल registration
 	 * won't work here.
 	 */
-	for_each_kernel_tracepoint(register_tracepoints, NULL);
-	return __kunit_test_suites_init(kcsan_test_suites);
-}
+	क्रम_each_kernel_tracepoपूर्णांक(रेजिस्टर_tracepoपूर्णांकs, शून्य);
+	वापस __kunit_test_suites_init(kcsan_test_suites);
+पूर्ण
 
-static void kcsan_test_exit(void)
-{
-	__kunit_test_suites_exit(kcsan_test_suites);
-	for_each_kernel_tracepoint(unregister_tracepoints, NULL);
-	tracepoint_synchronize_unregister();
-}
+अटल व्योम kcsan_test_निकास(व्योम)
+अणु
+	__kunit_test_suites_निकास(kcsan_test_suites);
+	क्रम_each_kernel_tracepoपूर्णांक(unरेजिस्टर_tracepoपूर्णांकs, शून्य);
+	tracepoपूर्णांक_synchronize_unरेजिस्टर();
+पूर्ण
 
 late_initcall(kcsan_test_init);
-module_exit(kcsan_test_exit);
+module_निकास(kcsan_test_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Marco Elver <elver@google.com>");

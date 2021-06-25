@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NITROX_REQ_H
-#define __NITROX_REQ_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NITROX_REQ_H
+#घोषणा __NITROX_REQ_H
 
-#include <linux/dma-mapping.h>
-#include <crypto/aes.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <crypto/aes.h>
 
-#include "nitrox_dev.h"
+#समावेश "nitrox_dev.h"
 
-#define PENDING_SIG	0xFFFFFFFFFFFFFFFFUL
-#define PRIO 4001
+#घोषणा PENDING_SIG	0xFFFFFFFFFFFFFFFFUL
+#घोषणा PRIO 4001
 
-typedef void (*sereq_completion_t)(void *req, int err);
+प्रकार व्योम (*sereq_completion_t)(व्योम *req, पूर्णांक err);
 
 /**
- * struct gphdr - General purpose Header
+ * काष्ठा gphdr - General purpose Header
  * @param0: first parameter.
  * @param1: second parameter.
  * @param2: third parameter.
@@ -21,25 +22,25 @@ typedef void (*sereq_completion_t)(void *req, int err);
  *
  * Params tell the iv and enc/dec data offsets.
  */
-struct gphdr {
+काष्ठा gphdr अणु
 	__be16 param0;
 	__be16 param1;
 	__be16 param2;
 	__be16 param3;
-};
+पूर्ण;
 
 /**
- * struct se_req_ctrl - SE request information.
+ * काष्ठा se_req_ctrl - SE request inक्रमmation.
  * @arg: Minor number of the opcode
  * @ctxc: Context control.
  * @unca: Uncertainity enabled.
- * @info: Additional information for SE cores.
+ * @info: Additional inक्रमmation क्रम SE cores.
  * @ctxl: Context length in bytes.
  * @uddl: User defined data length
  */
-union se_req_ctrl {
+जोड़ se_req_ctrl अणु
 	u64 value;
-	struct {
+	काष्ठा अणु
 		u64 raz	: 22;
 		u64 arg	: 8;
 		u64 ctxc : 2;
@@ -48,53 +49,53 @@ union se_req_ctrl {
 		u64 unc : 8;
 		u64 ctxl : 12;
 		u64 uddl : 8;
-	} s;
-};
+	पूर्ण s;
+पूर्ण;
 
-#define MAX_IV_LEN 16
+#घोषणा MAX_IV_LEN 16
 
 /**
- * struct se_crypto_request - SE crypto request structure.
+ * काष्ठा se_crypto_request - SE crypto request काष्ठाure.
  * @opcode: Request opcode (enc/dec)
- * @flags: flags from crypto subsystem
+ * @flags: flags from crypto subप्रणाली
  * @ctx_handle: Crypto context handle.
  * @gph: GP Header
- * @ctrl: Request Information.
+ * @ctrl: Request Inक्रमmation.
  * @orh: ORH address
  * @comp: completion address
  * @src: Input sglist
  * @dst: Output sglist
  */
-struct se_crypto_request {
+काष्ठा se_crypto_request अणु
 	u8 opcode;
 	gfp_t gfp;
 	u32 flags;
 	u64 ctx_handle;
 
-	struct gphdr gph;
-	union se_req_ctrl ctrl;
+	काष्ठा gphdr gph;
+	जोड़ se_req_ctrl ctrl;
 	u64 *orh;
 	u64 *comp;
 
-	struct scatterlist *src;
-	struct scatterlist *dst;
-};
+	काष्ठा scatterlist *src;
+	काष्ठा scatterlist *dst;
+पूर्ण;
 
 /* Crypto opcodes */
-#define FLEXI_CRYPTO_ENCRYPT_HMAC	0x33
-#define ENCRYPT	0
-#define DECRYPT 1
+#घोषणा FLEXI_CRYPTO_ENCRYPT_HMAC	0x33
+#घोषणा ENCRYPT	0
+#घोषणा DECRYPT 1
 
 /* IV from context */
-#define IV_FROM_CTX	0
+#घोषणा IV_FROM_CTX	0
 /* IV from Input data */
-#define IV_FROM_DPTR	1
+#घोषणा IV_FROM_DPTR	1
 
 /**
- * cipher opcodes for firmware
+ * cipher opcodes क्रम firmware
  */
-enum flexi_cipher {
-	CIPHER_NULL = 0,
+क्रमागत flexi_cipher अणु
+	CIPHER_शून्य = 0,
 	CIPHER_3DES_CBC,
 	CIPHER_3DES_ECB,
 	CIPHER_AES_CBC,
@@ -107,10 +108,10 @@ enum flexi_cipher {
 	CIPHER_AES_CBC_CTS,
 	CIPHER_AES_ECB_CTS,
 	CIPHER_INVALID
-};
+पूर्ण;
 
-enum flexi_auth {
-	AUTH_NULL = 0,
+क्रमागत flexi_auth अणु
+	AUTH_शून्य = 0,
 	AUTH_MD5,
 	AUTH_SHA1,
 	AUTH_SHA2_SHA224,
@@ -119,39 +120,39 @@ enum flexi_auth {
 	AUTH_SHA2_SHA512,
 	AUTH_GMAC,
 	AUTH_INVALID
-};
+पूर्ण;
 
 /**
- * struct crypto_keys - Crypto keys
- * @key: Encryption key or KEY1 for AES-XTS
- * @iv: Encryption IV or Tweak for AES-XTS
+ * काष्ठा crypto_keys - Crypto keys
+ * @key: Encryption key or KEY1 क्रम AES-XTS
+ * @iv: Encryption IV or Tweak क्रम AES-XTS
  */
-struct crypto_keys {
-	union {
+काष्ठा crypto_keys अणु
+	जोड़ अणु
 		u8 key[AES_MAX_KEY_SIZE];
 		u8 key1[AES_MAX_KEY_SIZE];
-	} u;
+	पूर्ण u;
 	u8 iv[AES_BLOCK_SIZE];
-};
+पूर्ण;
 
 /**
- * struct auth_keys - Authentication keys
- * @ipad: IPAD or KEY2 for AES-XTS
- * @opad: OPAD or AUTH KEY if auth_input_type = 1
+ * काष्ठा auth_keys - Authentication keys
+ * @ipad: IPAD or KEY2 क्रम AES-XTS
+ * @opad: OPAD or AUTH KEY अगर auth_input_type = 1
  */
-struct auth_keys {
-	union {
+काष्ठा auth_keys अणु
+	जोड़ अणु
 		u8 ipad[64];
 		u8 key2[64];
-	} u;
+	पूर्ण u;
 	u8 opad[64];
-};
+पूर्ण;
 
-union fc_ctx_flags {
+जोड़ fc_ctx_flags अणु
 	__be64 f;
 	u64 fu;
-	struct {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 cipher_type	: 4;
 		u64 reserved_59	: 1;
 		u64 aes_keylen : 2;
@@ -161,7 +162,7 @@ union fc_ctx_flags {
 		u64 auth_input_type: 1;
 		u64 mac_len : 8;
 		u64 reserved_0_39 : 40;
-#else
+#अन्यथा
 		u64 reserved_0_39 : 40;
 		u64 mac_len : 8;
 		u64 auth_input_type: 1;
@@ -171,11 +172,11 @@ union fc_ctx_flags {
 		u64 aes_keylen : 2;
 		u64 reserved_59	: 1;
 		u64 cipher_type	: 4;
-#endif
-	} w0;
-};
+#पूर्ण_अगर
+	पूर्ण w0;
+पूर्ण;
 /**
- * struct flexi_crypto_context - Crypto context
+ * काष्ठा flexi_crypto_context - Crypto context
  * @cipher_type: Encryption cipher type
  * @aes_keylen: AES key length
  * @iv_source: Encryption IV source
@@ -187,37 +188,37 @@ union fc_ctx_flags {
  * @crypto: Crypto keys
  * @auth: Authentication keys
  */
-struct flexi_crypto_context {
-	union fc_ctx_flags flags;
-	struct crypto_keys crypto;
-	struct auth_keys auth;
-};
+काष्ठा flexi_crypto_context अणु
+	जोड़ fc_ctx_flags flags;
+	काष्ठा crypto_keys crypto;
+	काष्ठा auth_keys auth;
+पूर्ण;
 
-struct crypto_ctx_hdr {
-	struct dma_pool *pool;
+काष्ठा crypto_ctx_hdr अणु
+	काष्ठा dma_pool *pool;
 	dma_addr_t dma;
-	void *vaddr;
-};
+	व्योम *vaddr;
+पूर्ण;
 
-struct nitrox_crypto_ctx {
-	struct nitrox_device *ndev;
-	union {
+काष्ठा nitrox_crypto_ctx अणु
+	काष्ठा nitrox_device *ndev;
+	जोड़ अणु
 		u64 ctx_handle;
-		struct flexi_crypto_context *fctx;
-	} u;
-	struct crypto_ctx_hdr *chdr;
+		काष्ठा flexi_crypto_context *fctx;
+	पूर्ण u;
+	काष्ठा crypto_ctx_hdr *chdr;
 	sereq_completion_t callback;
-};
+पूर्ण;
 
-struct nitrox_kcrypt_request {
-	struct se_crypto_request creq;
+काष्ठा nitrox_kcrypt_request अणु
+	काष्ठा se_crypto_request creq;
 	u8 *src;
 	u8 *dst;
 	u8 *iv_out;
-};
+पूर्ण;
 
 /**
- * struct nitrox_aead_rctx - AEAD request context
+ * काष्ठा nitrox_aead_rctx - AEAD request context
  * @nkreq: Base request context
  * @cryptlen: Encryption/Decryption data length
  * @assoclen: AAD length
@@ -229,62 +230,62 @@ struct nitrox_kcrypt_request {
  * @ctx_handle: Device context handle
  * @src: Source sglist
  * @dst: Destination sglist
- * @ctrl_arg: Identifies the request type (ENCRYPT/DECRYPT)
+ * @ctrl_arg: Identअगरies the request type (ENCRYPT/DECRYPT)
  */
-struct nitrox_aead_rctx {
-	struct nitrox_kcrypt_request nkreq;
-	unsigned int cryptlen;
-	unsigned int assoclen;
-	unsigned int srclen;
-	unsigned int dstlen;
+काष्ठा nitrox_aead_rctx अणु
+	काष्ठा nitrox_kcrypt_request nkreq;
+	अचिन्हित पूर्णांक cryptlen;
+	अचिन्हित पूर्णांक assoclen;
+	अचिन्हित पूर्णांक srclen;
+	अचिन्हित पूर्णांक dstlen;
 	u8 *iv;
-	int ivsize;
+	पूर्णांक ivsize;
 	u32 flags;
 	u64 ctx_handle;
-	struct scatterlist *src;
-	struct scatterlist *dst;
+	काष्ठा scatterlist *src;
+	काष्ठा scatterlist *dst;
 	u8 ctrl_arg;
-};
+पूर्ण;
 
 /**
- * struct nitrox_rfc4106_rctx - rfc4106 cipher request context
+ * काष्ठा nitrox_rfc4106_rctx - rfc4106 cipher request context
  * @base: AEAD request context
  * @src: Source sglist
  * @dst: Destination sglist
  * @assoc: AAD
  */
-struct nitrox_rfc4106_rctx {
-	struct nitrox_aead_rctx base;
-	struct scatterlist src[3];
-	struct scatterlist dst[3];
+काष्ठा nitrox_rfc4106_rctx अणु
+	काष्ठा nitrox_aead_rctx base;
+	काष्ठा scatterlist src[3];
+	काष्ठा scatterlist dst[3];
 	u8 assoc[20];
-};
+पूर्ण;
 
 /**
- * struct pkt_instr_hdr - Packet Instruction Header
+ * काष्ठा pkt_instr_hdr - Packet Inकाष्ठाion Header
  * @g: Gather used
- *   When [G] is set and [GSZ] != 0, the instruction is
- *   indirect gather instruction.
- *   When [G] is set and [GSZ] = 0, the instruction is
- *   direct gather instruction.
- * @gsz: Number of pointers in the indirect gather list
+ *   When [G] is set and [GSZ] != 0, the inकाष्ठाion is
+ *   indirect gather inकाष्ठाion.
+ *   When [G] is set and [GSZ] = 0, the inकाष्ठाion is
+ *   direct gather inकाष्ठाion.
+ * @gsz: Number of poपूर्णांकers in the indirect gather list
  * @ihi: When set hardware duplicates the 1st 8 bytes of pkt_instr_hdr
- *   and adds them to the packet after the pkt_instr_hdr but before any UDD
- * @ssz: Not used by the input hardware. But can become slc_store_int[SSZ]
+ *   and adds them to the packet after the pkt_instr_hdr but beक्रमe any UDD
+ * @ssz: Not used by the input hardware. But can become slc_store_पूर्णांक[SSZ]
  *   when [IHI] is set.
  * @fsz: The number of front data bytes directly included in the
- *   PCIe instruction.
+ *   PCIe inकाष्ठाion.
  * @tlen: The length of the input packet in bytes, include:
  *   - 16B pkt_hdr
- *   - Inline context bytes if any,
- *   - UDD if any,
+ *   - Inline context bytes अगर any,
+ *   - UDD अगर any,
  *   - packet payload bytes
  */
-union pkt_instr_hdr {
+जोड़ pkt_instr_hdr अणु
 	__be64 bev;
 	u64 value;
-	struct {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 raz_48_63 : 16;
 		u64 g : 1;
 		u64 gsz	: 7;
@@ -294,7 +295,7 @@ union pkt_instr_hdr {
 		u64 fsz	: 6;
 		u64 raz_16_23 : 8;
 		u64 tlen : 16;
-#else
+#अन्यथा
 		u64 tlen : 16;
 		u64 raz_16_23 : 8;
 		u64 fsz	: 6;
@@ -304,32 +305,32 @@ union pkt_instr_hdr {
 		u64 gsz	: 7;
 		u64 g : 1;
 		u64 raz_48_63 : 16;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
 /**
- * struct pkt_hdr - Packet Input Header
+ * काष्ठा pkt_hdr - Packet Input Header
  * @opcode: Request opcode (Major)
  * @arg: Request opcode (Minor)
  * @ctxc: Context control.
- * @unca: When set [UNC] is the uncertainty count for an input packet.
- *        The hardware uses uncertainty counts to predict
- *        output buffer use and avoid deadlock.
- * @info: Not used by input hardware. Available for use
+ * @unca: When set [UNC] is the uncertaपूर्णांकy count क्रम an input packet.
+ *        The hardware uses uncertaपूर्णांकy counts to predict
+ *        output buffer use and aव्योम deadlock.
+ * @info: Not used by input hardware. Available क्रम use
  *        during SE processing.
- * @destport: The expected destination port/ring/channel for the packet.
- * @unc: Uncertainty count for an input packet.
+ * @destport: The expected destination port/ring/channel क्रम the packet.
+ * @unc: Uncertaपूर्णांकy count क्रम an input packet.
  * @grp: SE group that will process the input packet.
  * @ctxl: Context Length in 64-bit words.
  * @uddl: User-defined data (UDD) length in bytes.
- * @ctxp: Context pointer. CTXP<63,2:0> must be zero in all cases.
+ * @ctxp: Context poपूर्णांकer. CTXP<63,2:0> must be zero in all हालs.
  */
-union pkt_hdr {
+जोड़ pkt_hdr अणु
 	__be64 bev[2];
 	u64 value[2];
-	struct {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 opcode : 8;
 		u64 arg	: 8;
 		u64 ctxc : 2;
@@ -343,7 +344,7 @@ union pkt_hdr {
 		u64 raz_15 : 1;
 		u64 ctxl : 7;
 		u64 uddl : 8;
-#else
+#अन्यथा
 		u64 uddl : 8;
 		u64 ctxl : 7;
 		u64 raz_15 : 1;
@@ -357,226 +358,226 @@ union pkt_hdr {
 		u64 ctxc : 2;
 		u64 arg	: 8;
 		u64 opcode : 8;
-#endif
+#पूर्ण_अगर
 		__be64 ctxp;
-	} s;
-};
+	पूर्ण s;
+पूर्ण;
 
 /**
- * struct slc_store_info - Solicited Paceket Output Store Information.
- * @ssz: The number of scatterlist pointers for the solicited output port
+ * काष्ठा slc_store_info - Solicited Paceket Output Store Inक्रमmation.
+ * @ssz: The number of scatterlist poपूर्णांकers क्रम the solicited output port
  *       packet.
- * @rptr: The result pointer for the solicited output port packet.
- *        If [SSZ]=0, [RPTR] must point directly to a buffer on the remote
+ * @rptr: The result poपूर्णांकer क्रम the solicited output port packet.
+ *        If [SSZ]=0, [RPTR] must poपूर्णांक directly to a buffer on the remote
  *        host that is large enough to hold the entire output packet.
- *        If [SSZ]!=0, [RPTR] must point to an array of ([SSZ]+3)/4
+ *        If [SSZ]!=0, [RPTR] must poपूर्णांक to an array of ([SSZ]+3)/4
  *        sglist components at [RPTR] on the remote host.
  */
-union slc_store_info {
+जोड़ slc_store_info अणु
 	__be64 bev[2];
 	u64 value[2];
-	struct {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 raz_39_63 : 25;
 		u64 ssz	: 7;
 		u64 raz_0_31 : 32;
-#else
+#अन्यथा
 		u64 raz_0_31 : 32;
 		u64 ssz	: 7;
 		u64 raz_39_63 : 25;
-#endif
+#पूर्ण_अगर
 		__be64 rptr;
-	} s;
-};
+	पूर्ण s;
+पूर्ण;
 
 /**
- * struct nps_pkt_instr - NPS Packet Instruction of SE cores.
- * @dptr0 : Input pointer points to buffer in remote host.
- * @ih: Packet Instruction Header (8 bytes)
+ * काष्ठा nps_pkt_instr - NPS Packet Inकाष्ठाion of SE cores.
+ * @dptr0 : Input poपूर्णांकer poपूर्णांकs to buffer in remote host.
+ * @ih: Packet Inकाष्ठाion Header (8 bytes)
  * @irh: Packet Input Header (16 bytes)
- * @slc: Solicited Packet Output Store Information (16 bytes)
+ * @slc: Solicited Packet Output Store Inक्रमmation (16 bytes)
  * @fdata: Front data
  *
- * 64-Byte Instruction Format
+ * 64-Byte Inकाष्ठाion Format
  */
-struct nps_pkt_instr {
+काष्ठा nps_pkt_instr अणु
 	__be64 dptr0;
-	union pkt_instr_hdr ih;
-	union pkt_hdr irh;
-	union slc_store_info slc;
+	जोड़ pkt_instr_hdr ih;
+	जोड़ pkt_hdr irh;
+	जोड़ slc_store_info slc;
 	u64 fdata[2];
-};
+पूर्ण;
 
 /**
- * struct aqmq_command_s - The 32 byte command for AE processing.
+ * काष्ठा aqmq_command_s - The 32 byte command क्रम AE processing.
  * @opcode: Request opcode
  * @param1: Request control parameter 1
  * @param2: Request control parameter 2
  * @dlen: Input length
- * @dptr: Input pointer points to buffer in remote host
- * @rptr: Result pointer points to buffer in remote host
+ * @dptr: Input poपूर्णांकer poपूर्णांकs to buffer in remote host
+ * @rptr: Result poपूर्णांकer poपूर्णांकs to buffer in remote host
  * @grp: AQM Group (0..7)
- * @cptr: Context pointer
+ * @cptr: Context poपूर्णांकer
  */
-struct aqmq_command_s {
+काष्ठा aqmq_command_s अणु
 	__be16 opcode;
 	__be16 param1;
 	__be16 param2;
 	__be16 dlen;
 	__be64 dptr;
 	__be64 rptr;
-	union {
+	जोड़ अणु
 		__be64 word3;
-#if defined(__BIG_ENDIAN_BITFIELD)
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 grp : 3;
 		u64 cptr : 61;
-#else
+#अन्यथा
 		u64 cptr : 61;
 		u64 grp : 3;
-#endif
-	};
-};
+#पूर्ण_अगर
+	पूर्ण;
+पूर्ण;
 
 /**
- * struct ctx_hdr - Book keeping data about the crypto context
+ * काष्ठा ctx_hdr - Book keeping data about the crypto context
  * @pool: Pool used to allocate crypto context
  * @dma: Base DMA address of the cypto context
- * @ctx_dma: Actual usable crypto context for NITROX
+ * @ctx_dma: Actual usable crypto context क्रम NITROX
  */
-struct ctx_hdr {
-	struct dma_pool *pool;
+काष्ठा ctx_hdr अणु
+	काष्ठा dma_pool *pool;
 	dma_addr_t dma;
 	dma_addr_t ctx_dma;
-};
+पूर्ण;
 
 /*
- * struct sglist_component - SG list component format
+ * काष्ठा sglist_component - SG list component क्रमmat
  * @len0: The number of bytes at [PTR0] on the remote host.
  * @len1: The number of bytes at [PTR1] on the remote host.
  * @len2: The number of bytes at [PTR2] on the remote host.
  * @len3: The number of bytes at [PTR3] on the remote host.
- * @dma0: First pointer point to buffer in remote host.
- * @dma1: Second pointer point to buffer in remote host.
- * @dma2: Third pointer point to buffer in remote host.
- * @dma3: Fourth pointer point to buffer in remote host.
+ * @dma0: First poपूर्णांकer poपूर्णांक to buffer in remote host.
+ * @dma1: Second poपूर्णांकer poपूर्णांक to buffer in remote host.
+ * @dma2: Third poपूर्णांकer poपूर्णांक to buffer in remote host.
+ * @dma3: Fourth poपूर्णांकer poपूर्णांक to buffer in remote host.
  */
-struct nitrox_sgcomp {
+काष्ठा nitrox_sgcomp अणु
 	__be16 len[4];
 	__be64 dma[4];
-};
+पूर्ण;
 
 /*
- * strutct nitrox_sgtable - SG list information
+ * strutct nitrox_sgtable - SG list inक्रमmation
  * @sgmap_cnt: Number of buffers mapped
  * @total_bytes: Total bytes in sglist.
  * @sgcomp_len: Total sglist components length.
  * @sgcomp_dma: DMA address of sglist component.
  * @sg: crypto request buffer.
- * @sgcomp: sglist component for NITROX.
+ * @sgcomp: sglist component क्रम NITROX.
  */
-struct nitrox_sgtable {
+काष्ठा nitrox_sgtable अणु
 	u8 sgmap_cnt;
 	u16 total_bytes;
 	u32 sgcomp_len;
 	dma_addr_t sgcomp_dma;
-	struct scatterlist *sg;
-	struct nitrox_sgcomp *sgcomp;
-};
+	काष्ठा scatterlist *sg;
+	काष्ठा nitrox_sgcomp *sgcomp;
+पूर्ण;
 
 /* Response Header Length */
-#define ORH_HLEN	8
+#घोषणा ORH_HLEN	8
 /* Completion bytes Length */
-#define COMP_HLEN	8
+#घोषणा COMP_HLEN	8
 
-struct resp_hdr {
+काष्ठा resp_hdr अणु
 	u64 *orh;
 	u64 *completion;
-};
+पूर्ण;
 
-typedef void (*completion_t)(void *arg, int err);
+प्रकार व्योम (*completion_t)(व्योम *arg, पूर्णांक err);
 
 /**
- * struct nitrox_softreq - Represents the NIROX Request.
+ * काष्ठा nitrox_softreq - Represents the NIROX Request.
  * @response: response list entry
  * @backlog: Backlog list entry
  * @ndev: Device used to submit the request
- * @cmdq: Command queue for submission
+ * @cmdq: Command queue क्रम submission
  * @resp: Response headers
- * @instr: 64B instruction
- * @in: SG table for input
- * @out SG table for output
- * @tstamp: Request submitted time in jiffies
- * @callback: callback after request completion/timeout
+ * @instr: 64B inकाष्ठाion
+ * @in: SG table क्रम input
+ * @out SG table क्रम output
+ * @tstamp: Request submitted समय in jअगरfies
+ * @callback: callback after request completion/समयout
  * @cb_arg: callback argument
  */
-struct nitrox_softreq {
-	struct list_head response;
-	struct list_head backlog;
+काष्ठा nitrox_softreq अणु
+	काष्ठा list_head response;
+	काष्ठा list_head backlog;
 
 	u32 flags;
 	gfp_t gfp;
 	atomic_t status;
 
-	struct nitrox_device *ndev;
-	struct nitrox_cmdq *cmdq;
+	काष्ठा nitrox_device *ndev;
+	काष्ठा nitrox_cmdq *cmdq;
 
-	struct nps_pkt_instr instr;
-	struct resp_hdr resp;
-	struct nitrox_sgtable in;
-	struct nitrox_sgtable out;
+	काष्ठा nps_pkt_instr instr;
+	काष्ठा resp_hdr resp;
+	काष्ठा nitrox_sgtable in;
+	काष्ठा nitrox_sgtable out;
 
-	unsigned long tstamp;
+	अचिन्हित दीर्घ tstamp;
 
 	completion_t callback;
-	void *cb_arg;
-};
+	व्योम *cb_arg;
+पूर्ण;
 
-static inline int flexi_aes_keylen(int keylen)
-{
-	int aes_keylen;
+अटल अंतरभूत पूर्णांक flexi_aes_keylen(पूर्णांक keylen)
+अणु
+	पूर्णांक aes_keylen;
 
-	switch (keylen) {
-	case AES_KEYSIZE_128:
+	चयन (keylen) अणु
+	हाल AES_KEYSIZE_128:
 		aes_keylen = 1;
-		break;
-	case AES_KEYSIZE_192:
+		अवरोध;
+	हाल AES_KEYSIZE_192:
 		aes_keylen = 2;
-		break;
-	case AES_KEYSIZE_256:
+		अवरोध;
+	हाल AES_KEYSIZE_256:
 		aes_keylen = 3;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		aes_keylen = -EINVAL;
-		break;
-	}
-	return aes_keylen;
-}
+		अवरोध;
+	पूर्ण
+	वापस aes_keylen;
+पूर्ण
 
-static inline void *alloc_req_buf(int nents, int extralen, gfp_t gfp)
-{
-	size_t size;
+अटल अंतरभूत व्योम *alloc_req_buf(पूर्णांक nents, पूर्णांक extralen, gfp_t gfp)
+अणु
+	माप_प्रकार size;
 
-	size = sizeof(struct scatterlist) * nents;
+	size = माप(काष्ठा scatterlist) * nents;
 	size += extralen;
 
-	return kzalloc(size, gfp);
-}
+	वापस kzalloc(size, gfp);
+पूर्ण
 
 /**
- * create_single_sg - Point SG entry to the data
+ * create_single_sg - Poपूर्णांक SG entry to the data
  * @sg:		Destination SG list
  * @buf:	Data
  * @buflen:	Data length
  *
- * Returns next free entry in the destination SG list
+ * Returns next मुक्त entry in the destination SG list
  **/
-static inline struct scatterlist *create_single_sg(struct scatterlist *sg,
-						   void *buf, int buflen)
-{
+अटल अंतरभूत काष्ठा scatterlist *create_single_sg(काष्ठा scatterlist *sg,
+						   व्योम *buf, पूर्णांक buflen)
+अणु
 	sg_set_buf(sg, buf, buflen);
 	sg++;
-	return sg;
-}
+	वापस sg;
+पूर्ण
 
 /**
  * create_multi_sg - Create multiple sg entries with buflen data length from
@@ -585,73 +586,73 @@ static inline struct scatterlist *create_single_sg(struct scatterlist *sg,
  * @from_sg:	Source SG list
  * @buflen:	Data length
  *
- * Returns next free entry in the destination SG list
+ * Returns next मुक्त entry in the destination SG list
  **/
-static inline struct scatterlist *create_multi_sg(struct scatterlist *to_sg,
-						  struct scatterlist *from_sg,
-						  int buflen)
-{
-	struct scatterlist *sg = to_sg;
-	unsigned int sglen;
+अटल अंतरभूत काष्ठा scatterlist *create_multi_sg(काष्ठा scatterlist *to_sg,
+						  काष्ठा scatterlist *from_sg,
+						  पूर्णांक buflen)
+अणु
+	काष्ठा scatterlist *sg = to_sg;
+	अचिन्हित पूर्णांक sglen;
 
-	for (; buflen && from_sg; buflen -= sglen) {
+	क्रम (; buflen && from_sg; buflen -= sglen) अणु
 		sglen = from_sg->length;
-		if (sglen > buflen)
+		अगर (sglen > buflen)
 			sglen = buflen;
 
 		sg_set_buf(sg, sg_virt(from_sg), sglen);
 		from_sg = sg_next(from_sg);
 		sg++;
-	}
+	पूर्ण
 
-	return sg;
-}
+	वापस sg;
+पूर्ण
 
-static inline void set_orh_value(u64 *orh)
-{
+अटल अंतरभूत व्योम set_orh_value(u64 *orh)
+अणु
 	WRITE_ONCE(*orh, PENDING_SIG);
-}
+पूर्ण
 
-static inline void set_comp_value(u64 *comp)
-{
+अटल अंतरभूत व्योम set_comp_value(u64 *comp)
+अणु
 	WRITE_ONCE(*comp, PENDING_SIG);
-}
+पूर्ण
 
-static inline int alloc_src_req_buf(struct nitrox_kcrypt_request *nkreq,
-				    int nents, int ivsize)
-{
-	struct se_crypto_request *creq = &nkreq->creq;
+अटल अंतरभूत पूर्णांक alloc_src_req_buf(काष्ठा nitrox_kcrypt_request *nkreq,
+				    पूर्णांक nents, पूर्णांक ivsize)
+अणु
+	काष्ठा se_crypto_request *creq = &nkreq->creq;
 
 	nkreq->src = alloc_req_buf(nents, ivsize, creq->gfp);
-	if (!nkreq->src)
-		return -ENOMEM;
+	अगर (!nkreq->src)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void nitrox_creq_copy_iv(char *dst, char *src, int size)
-{
-	memcpy(dst, src, size);
-}
+अटल अंतरभूत व्योम nitrox_creq_copy_iv(अक्षर *dst, अक्षर *src, पूर्णांक size)
+अणु
+	स_नकल(dst, src, size);
+पूर्ण
 
-static inline struct scatterlist *nitrox_creq_src_sg(char *iv, int ivsize)
-{
-	return (struct scatterlist *)(iv + ivsize);
-}
+अटल अंतरभूत काष्ठा scatterlist *nitrox_creq_src_sg(अक्षर *iv, पूर्णांक ivsize)
+अणु
+	वापस (काष्ठा scatterlist *)(iv + ivsize);
+पूर्ण
 
-static inline void nitrox_creq_set_src_sg(struct nitrox_kcrypt_request *nkreq,
-					  int nents, int ivsize,
-					  struct scatterlist *src, int buflen)
-{
-	char *iv = nkreq->src;
-	struct scatterlist *sg;
-	struct se_crypto_request *creq = &nkreq->creq;
+अटल अंतरभूत व्योम nitrox_creq_set_src_sg(काष्ठा nitrox_kcrypt_request *nkreq,
+					  पूर्णांक nents, पूर्णांक ivsize,
+					  काष्ठा scatterlist *src, पूर्णांक buflen)
+अणु
+	अक्षर *iv = nkreq->src;
+	काष्ठा scatterlist *sg;
+	काष्ठा se_crypto_request *creq = &nkreq->creq;
 
 	creq->src = nitrox_creq_src_sg(iv, ivsize);
 	sg = creq->src;
 	sg_init_table(sg, nents);
 
-	/* Input format:
+	/* Input क्रमmat:
 	 * +----+----------------+
 	 * | IV | SRC sg entries |
 	 * +----+----------------+
@@ -661,55 +662,55 @@ static inline void nitrox_creq_set_src_sg(struct nitrox_kcrypt_request *nkreq,
 	sg = create_single_sg(sg, iv, ivsize);
 	/* SRC entries */
 	create_multi_sg(sg, src, buflen);
-}
+पूर्ण
 
-static inline int alloc_dst_req_buf(struct nitrox_kcrypt_request *nkreq,
-				    int nents)
-{
-	int extralen = ORH_HLEN + COMP_HLEN;
-	struct se_crypto_request *creq = &nkreq->creq;
+अटल अंतरभूत पूर्णांक alloc_dst_req_buf(काष्ठा nitrox_kcrypt_request *nkreq,
+				    पूर्णांक nents)
+अणु
+	पूर्णांक extralen = ORH_HLEN + COMP_HLEN;
+	काष्ठा se_crypto_request *creq = &nkreq->creq;
 
 	nkreq->dst = alloc_req_buf(nents, extralen, creq->gfp);
-	if (!nkreq->dst)
-		return -ENOMEM;
+	अगर (!nkreq->dst)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void nitrox_creq_set_orh(struct nitrox_kcrypt_request *nkreq)
-{
-	struct se_crypto_request *creq = &nkreq->creq;
+अटल अंतरभूत व्योम nitrox_creq_set_orh(काष्ठा nitrox_kcrypt_request *nkreq)
+अणु
+	काष्ठा se_crypto_request *creq = &nkreq->creq;
 
 	creq->orh = (u64 *)(nkreq->dst);
 	set_orh_value(creq->orh);
-}
+पूर्ण
 
-static inline void nitrox_creq_set_comp(struct nitrox_kcrypt_request *nkreq)
-{
-	struct se_crypto_request *creq = &nkreq->creq;
+अटल अंतरभूत व्योम nitrox_creq_set_comp(काष्ठा nitrox_kcrypt_request *nkreq)
+अणु
+	काष्ठा se_crypto_request *creq = &nkreq->creq;
 
 	creq->comp = (u64 *)(nkreq->dst + ORH_HLEN);
 	set_comp_value(creq->comp);
-}
+पूर्ण
 
-static inline struct scatterlist *nitrox_creq_dst_sg(char *dst)
-{
-	return (struct scatterlist *)(dst + ORH_HLEN + COMP_HLEN);
-}
+अटल अंतरभूत काष्ठा scatterlist *nitrox_creq_dst_sg(अक्षर *dst)
+अणु
+	वापस (काष्ठा scatterlist *)(dst + ORH_HLEN + COMP_HLEN);
+पूर्ण
 
-static inline void nitrox_creq_set_dst_sg(struct nitrox_kcrypt_request *nkreq,
-					  int nents, int ivsize,
-					  struct scatterlist *dst, int buflen)
-{
-	struct se_crypto_request *creq = &nkreq->creq;
-	struct scatterlist *sg;
-	char *iv = nkreq->src;
+अटल अंतरभूत व्योम nitrox_creq_set_dst_sg(काष्ठा nitrox_kcrypt_request *nkreq,
+					  पूर्णांक nents, पूर्णांक ivsize,
+					  काष्ठा scatterlist *dst, पूर्णांक buflen)
+अणु
+	काष्ठा se_crypto_request *creq = &nkreq->creq;
+	काष्ठा scatterlist *sg;
+	अक्षर *iv = nkreq->src;
 
 	creq->dst = nitrox_creq_dst_sg(nkreq->dst);
 	sg = creq->dst;
 	sg_init_table(sg, nents);
 
-	/* Output format:
+	/* Output क्रमmat:
 	 * +-----+----+----------------+-----------------+
 	 * | ORH | IV | DST sg entries | COMPLETION Bytes|
 	 * +-----+----+----------------+-----------------+
@@ -723,6 +724,6 @@ static inline void nitrox_creq_set_dst_sg(struct nitrox_kcrypt_request *nkreq,
 	sg = create_multi_sg(sg, dst, buflen);
 	/* COMPLETION Bytes */
 	create_single_sg(sg, creq->comp, COMP_HLEN);
-}
+पूर्ण
 
-#endif /* __NITROX_REQ_H */
+#पूर्ण_अगर /* __NITROX_REQ_H */

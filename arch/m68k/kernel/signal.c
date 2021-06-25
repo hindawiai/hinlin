@@ -1,128 +1,129 @@
+<शैली गुरु>
 /*
- *  linux/arch/m68k/kernel/signal.c
+ *  linux/arch/m68k/kernel/संकेत.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
 /*
- * Linux/m68k support by Hamish Macdonald
+ * Linux/m68k support by Hamish Macकरोnald
  *
  * 68060 fixes by Jesper Skov
  *
- * 1997-12-01  Modified for POSIX.1b signals by Andreas Schwab
+ * 1997-12-01  Modअगरied क्रम POSIX.1b संकेतs by Andreas Schwab
  *
  * mathemu support by Roman Zippel
- *  (Note: fpstate in the signal context is completely ignored for the emulator
- *         and the internal floating point format is put on stack)
+ *  (Note: fpstate in the संकेत context is completely ignored क्रम the emulator
+ *         and the पूर्णांकernal भग्नing poपूर्णांक क्रमmat is put on stack)
  */
 
 /*
- * ++roman (07/09/96): implemented signal stacks (specially for tosemu on
- * Atari :-) Current limitation: Only one sigstack can be active at one time.
- * If a second signal with SA_ONSTACK set arrives while working on a sigstack,
- * SA_ONSTACK is ignored. This behaviour avoids lots of trouble with nested
- * signal handlers!
+ * ++roman (07/09/96): implemented संकेत stacks (specially क्रम tosemu on
+ * Atari :-) Current limitation: Only one sigstack can be active at one समय.
+ * If a second संकेत with SA_ONSTACK set arrives जबतक working on a sigstack,
+ * SA_ONSTACK is ignored. This behaviour aव्योमs lots of trouble with nested
+ * संकेत handlers!
  */
 
-#include <linux/sched.h>
-#include <linux/mm.h>
-#include <linux/kernel.h>
-#include <linux/signal.h>
-#include <linux/syscalls.h>
-#include <linux/errno.h>
-#include <linux/wait.h>
-#include <linux/ptrace.h>
-#include <linux/unistd.h>
-#include <linux/stddef.h>
-#include <linux/highuid.h>
-#include <linux/personality.h>
-#include <linux/tty.h>
-#include <linux/binfmts.h>
-#include <linux/extable.h>
-#include <linux/tracehook.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/highuid.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/binfmts.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/tracehook.h>
 
-#include <asm/setup.h>
-#include <linux/uaccess.h>
-#include <asm/traps.h>
-#include <asm/ucontext.h>
-#include <asm/cacheflush.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/ucontext.h>
+#समावेश <यंत्र/cacheflush.h>
 
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 
 /*
- * Handle the slight differences in classic 68k and ColdFire trap frames.
+ * Handle the slight dअगरferences in classic 68k and ColdFire trap frames.
  */
-#ifdef CONFIG_COLDFIRE
-#define	FORMAT		4
-#define	FMT4SIZE	0
-#else
-#define	FORMAT		0
-#define	FMT4SIZE	sizeof_field(struct frame, un.fmt4)
-#endif
+#अगर_घोषित CONFIG_COLDFIRE
+#घोषणा	FORMAT		4
+#घोषणा	FMT4SIZE	0
+#अन्यथा
+#घोषणा	FORMAT		0
+#घोषणा	FMT4SIZE	माप_field(काष्ठा frame, un.fmt4)
+#पूर्ण_अगर
 
-static const int frame_size_change[16] = {
-  [1]	= -1, /* sizeof_field(struct frame, un.fmt1), */
-  [2]	= sizeof_field(struct frame, un.fmt2),
-  [3]	= sizeof_field(struct frame, un.fmt3),
+अटल स्थिर पूर्णांक frame_size_change[16] = अणु
+  [1]	= -1, /* माप_field(काष्ठा frame, un.fmt1), */
+  [2]	= माप_field(काष्ठा frame, un.fmt2),
+  [3]	= माप_field(काष्ठा frame, un.fmt3),
   [4]	= FMT4SIZE,
-  [5]	= -1, /* sizeof_field(struct frame, un.fmt5), */
-  [6]	= -1, /* sizeof_field(struct frame, un.fmt6), */
-  [7]	= sizeof_field(struct frame, un.fmt7),
-  [8]	= -1, /* sizeof_field(struct frame, un.fmt8), */
-  [9]	= sizeof_field(struct frame, un.fmt9),
-  [10]	= sizeof_field(struct frame, un.fmta),
-  [11]	= sizeof_field(struct frame, un.fmtb),
-  [12]	= -1, /* sizeof_field(struct frame, un.fmtc), */
-  [13]	= -1, /* sizeof_field(struct frame, un.fmtd), */
-  [14]	= -1, /* sizeof_field(struct frame, un.fmte), */
-  [15]	= -1, /* sizeof_field(struct frame, un.fmtf), */
-};
+  [5]	= -1, /* माप_field(काष्ठा frame, un.fmt5), */
+  [6]	= -1, /* माप_field(काष्ठा frame, un.fmt6), */
+  [7]	= माप_field(काष्ठा frame, un.fmt7),
+  [8]	= -1, /* माप_field(काष्ठा frame, un.fmt8), */
+  [9]	= माप_field(काष्ठा frame, un.fmt9),
+  [10]	= माप_field(काष्ठा frame, un.fmta),
+  [11]	= माप_field(काष्ठा frame, un.fmtb),
+  [12]	= -1, /* माप_field(काष्ठा frame, un.fmtc), */
+  [13]	= -1, /* माप_field(काष्ठा frame, un.fmtd), */
+  [14]	= -1, /* माप_field(काष्ठा frame, un.fmte), */
+  [15]	= -1, /* माप_field(काष्ठा frame, un.fmtf), */
+पूर्ण;
 
-static inline int frame_extra_sizes(int f)
-{
-	return frame_size_change[f];
-}
+अटल अंतरभूत पूर्णांक frame_extra_sizes(पूर्णांक f)
+अणु
+	वापस frame_size_change[f];
+पूर्ण
 
-int fixup_exception(struct pt_regs *regs)
-{
-	const struct exception_table_entry *fixup;
-	struct pt_regs *tregs;
+पूर्णांक fixup_exception(काष्ठा pt_regs *regs)
+अणु
+	स्थिर काष्ठा exception_table_entry *fixup;
+	काष्ठा pt_regs *tregs;
 
 	/* Are we prepared to handle this kernel fault? */
 	fixup = search_exception_tables(regs->pc);
-	if (!fixup)
-		return 0;
+	अगर (!fixup)
+		वापस 0;
 
 	/* Create a new four word stack frame, discarding the old one. */
-	regs->stkadj = frame_extra_sizes(regs->format);
-	tregs =	(struct pt_regs *)((long)regs + regs->stkadj);
+	regs->stkadj = frame_extra_sizes(regs->क्रमmat);
+	tregs =	(काष्ठा pt_regs *)((दीर्घ)regs + regs->stkadj);
 	tregs->vector = regs->vector;
-	tregs->format = FORMAT;
+	tregs->क्रमmat = FORMAT;
 	tregs->pc = fixup->fixup;
 	tregs->sr = regs->sr;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static inline void push_cache (unsigned long vaddr)
-{
+अटल अंतरभूत व्योम push_cache (अचिन्हित दीर्घ vaddr)
+अणु
 	/*
 	 * Using the old cache_push_v() was really a big waste.
 	 *
-	 * What we are trying to do is to flush 8 bytes to ram.
+	 * What we are trying to करो is to flush 8 bytes to ram.
 	 * Flushing 2 cache lines of 16 bytes is much cheaper than
-	 * flushing 1 or 2 pages, as previously done in
+	 * flushing 1 or 2 pages, as previously करोne in
 	 * cache_push_v().
 	 *                                                     Jes
 	 */
-	if (CPU_IS_040) {
-		unsigned long temp;
+	अगर (CPU_IS_040) अणु
+		अचिन्हित दीर्घ temp;
 
-		__asm__ __volatile__ (".chip 68040\n\t"
+		__यंत्र__ __अस्थिर__ (".chip 68040\n\t"
 				      "nop\n\t"
 				      "ptestr (%1)\n\t"
 				      "movec %%mmusr,%0\n\t"
@@ -133,330 +134,330 @@ static inline void push_cache (unsigned long vaddr)
 		temp &= PAGE_MASK;
 		temp |= vaddr & ~PAGE_MASK;
 
-		__asm__ __volatile__ (".chip 68040\n\t"
+		__यंत्र__ __अस्थिर__ (".chip 68040\n\t"
 				      "nop\n\t"
 				      "cpushl %%bc,(%0)\n\t"
 				      ".chip 68k"
 				      : : "a" (temp));
-	}
-	else if (CPU_IS_060) {
-		unsigned long temp;
-		__asm__ __volatile__ (".chip 68060\n\t"
+	पूर्ण
+	अन्यथा अगर (CPU_IS_060) अणु
+		अचिन्हित दीर्घ temp;
+		__यंत्र__ __अस्थिर__ (".chip 68060\n\t"
 				      "plpar (%0)\n\t"
 				      ".chip 68k"
 				      : "=a" (temp)
 				      : "0" (vaddr));
-		__asm__ __volatile__ (".chip 68060\n\t"
+		__यंत्र__ __अस्थिर__ (".chip 68060\n\t"
 				      "cpushl %%bc,(%0)\n\t"
 				      ".chip 68k"
 				      : : "a" (temp));
-	} else if (!CPU_IS_COLDFIRE) {
+	पूर्ण अन्यथा अगर (!CPU_IS_COLDFIRE) अणु
 		/*
-		 * 68030/68020 have no writeback cache;
+		 * 68030/68020 have no ग_लिखोback cache;
 		 * still need to clear icache.
-		 * Note that vaddr is guaranteed to be long word aligned.
+		 * Note that vaddr is guaranteed to be दीर्घ word aligned.
 		 */
-		unsigned long temp;
-		asm volatile ("movec %%cacr,%0" : "=r" (temp));
+		अचिन्हित दीर्घ temp;
+		यंत्र अस्थिर ("movec %%cacr,%0" : "=r" (temp));
 		temp += 4;
-		asm volatile ("movec %0,%%caar\n\t"
+		यंत्र अस्थिर ("movec %0,%%caar\n\t"
 			      "movec %1,%%cacr"
 			      : : "r" (vaddr), "r" (temp));
-		asm volatile ("movec %0,%%caar\n\t"
+		यंत्र अस्थिर ("movec %0,%%caar\n\t"
 			      "movec %1,%%cacr"
 			      : : "r" (vaddr + 4), "r" (temp));
-	} else {
+	पूर्ण अन्यथा अणु
 		/* CPU_IS_COLDFIRE */
-#if defined(CONFIG_CACHE_COPYBACK)
+#अगर defined(CONFIG_CACHE_COPYBACK)
 		flush_cf_dcache(0, DCACHE_MAX_ADDR);
-#endif
-		/* Invalidate instruction cache for the pushed bytes */
+#पूर्ण_अगर
+		/* Invalidate inकाष्ठाion cache क्रम the pushed bytes */
 		clear_cf_icache(vaddr, vaddr + 8);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void adjustformat(struct pt_regs *regs)
-{
-}
+अटल अंतरभूत व्योम adjustक्रमmat(काष्ठा pt_regs *regs)
+अणु
+पूर्ण
 
-static inline void save_a5_state(struct sigcontext *sc, struct pt_regs *regs)
-{
-}
+अटल अंतरभूत व्योम save_a5_state(काष्ठा sigcontext *sc, काष्ठा pt_regs *regs)
+अणु
+पूर्ण
 
-#else /* CONFIG_MMU */
+#अन्यथा /* CONFIG_MMU */
 
-void ret_from_user_signal(void);
-void ret_from_user_rt_signal(void);
+व्योम ret_from_user_संकेत(व्योम);
+व्योम ret_from_user_rt_संकेत(व्योम);
 
-static inline int frame_extra_sizes(int f)
-{
-	/* No frame size adjustments required on non-MMU CPUs */
-	return 0;
-}
+अटल अंतरभूत पूर्णांक frame_extra_sizes(पूर्णांक f)
+अणु
+	/* No frame size adjusपंचांगents required on non-MMU CPUs */
+	वापस 0;
+पूर्ण
 
-static inline void adjustformat(struct pt_regs *regs)
-{
+अटल अंतरभूत व्योम adjustक्रमmat(काष्ठा pt_regs *regs)
+अणु
 	/*
-	 * set format byte to make stack appear modulo 4, which it will
-	 * be when doing the rte
+	 * set क्रमmat byte to make stack appear modulo 4, which it will
+	 * be when करोing the rte
 	 */
-	regs->format = 0x4;
-}
+	regs->क्रमmat = 0x4;
+पूर्ण
 
-static inline void save_a5_state(struct sigcontext *sc, struct pt_regs *regs)
-{
-	sc->sc_a5 = ((struct switch_stack *)regs - 1)->a5;
-}
+अटल अंतरभूत व्योम save_a5_state(काष्ठा sigcontext *sc, काष्ठा pt_regs *regs)
+अणु
+	sc->sc_a5 = ((काष्ठा चयन_stack *)regs - 1)->a5;
+पूर्ण
 
-static inline void push_cache(unsigned long vaddr)
-{
-}
+अटल अंतरभूत व्योम push_cache(अचिन्हित दीर्घ vaddr)
+अणु
+पूर्ण
 
-#endif /* CONFIG_MMU */
+#पूर्ण_अगर /* CONFIG_MMU */
 
 /*
- * Do a signal return; undo the signal stack.
+ * Do a संकेत वापस; unकरो the संकेत stack.
  *
- * Keep the return code on the stack quadword aligned!
+ * Keep the वापस code on the stack quadword aligned!
  * That makes the cache flush below easier.
  */
 
-struct sigframe
-{
-	char __user *pretcode;
-	int sig;
-	int code;
-	struct sigcontext __user *psc;
-	char retcode[8];
-	unsigned long extramask[_NSIG_WORDS-1];
-	struct sigcontext sc;
-};
+काष्ठा sigframe
+अणु
+	अक्षर __user *pretcode;
+	पूर्णांक sig;
+	पूर्णांक code;
+	काष्ठा sigcontext __user *psc;
+	अक्षर retcode[8];
+	अचिन्हित दीर्घ extramask[_NSIG_WORDS-1];
+	काष्ठा sigcontext sc;
+पूर्ण;
 
-struct rt_sigframe
-{
-	char __user *pretcode;
-	int sig;
-	struct siginfo __user *pinfo;
-	void __user *puc;
-	char retcode[8];
-	struct siginfo info;
-	struct ucontext uc;
-};
+काष्ठा rt_sigframe
+अणु
+	अक्षर __user *pretcode;
+	पूर्णांक sig;
+	काष्ठा siginfo __user *pinfo;
+	व्योम __user *puc;
+	अक्षर retcode[8];
+	काष्ठा siginfo info;
+	काष्ठा ucontext uc;
+पूर्ण;
 
-#define FPCONTEXT_SIZE	216
-#define uc_fpstate	uc_filler[0]
-#define uc_formatvec	uc_filler[FPCONTEXT_SIZE/4]
-#define uc_extra	uc_filler[FPCONTEXT_SIZE/4+1]
+#घोषणा FPCONTEXT_SIZE	216
+#घोषणा uc_fpstate	uc_filler[0]
+#घोषणा uc_क्रमmatvec	uc_filler[FPCONTEXT_SIZE/4]
+#घोषणा uc_extra	uc_filler[FPCONTEXT_SIZE/4+1]
 
-#ifdef CONFIG_FPU
+#अगर_घोषित CONFIG_FPU
 
-static unsigned char fpu_version;	/* version number of fpu, set by setup_frame */
+अटल अचिन्हित अक्षर fpu_version;	/* version number of fpu, set by setup_frame */
 
-static inline int restore_fpu_state(struct sigcontext *sc)
-{
-	int err = 1;
+अटल अंतरभूत पूर्णांक restore_fpu_state(काष्ठा sigcontext *sc)
+अणु
+	पूर्णांक err = 1;
 
-	if (FPU_IS_EMU) {
-	    /* restore registers */
-	    memcpy(current->thread.fpcntl, sc->sc_fpcntl, 12);
-	    memcpy(current->thread.fp, sc->sc_fpregs, 24);
-	    return 0;
-	}
+	अगर (FPU_IS_EMU) अणु
+	    /* restore रेजिस्टरs */
+	    स_नकल(current->thपढ़ो.fpcntl, sc->sc_fpcntl, 12);
+	    स_नकल(current->thपढ़ो.fp, sc->sc_fpregs, 24);
+	    वापस 0;
+	पूर्ण
 
-	if (CPU_IS_060 ? sc->sc_fpstate[2] : sc->sc_fpstate[0]) {
-	    /* Verify the frame format.  */
-	    if (!(CPU_IS_060 || CPU_IS_COLDFIRE) &&
+	अगर (CPU_IS_060 ? sc->sc_fpstate[2] : sc->sc_fpstate[0]) अणु
+	    /* Verअगरy the frame क्रमmat.  */
+	    अगर (!(CPU_IS_060 || CPU_IS_COLDFIRE) &&
 		 (sc->sc_fpstate[0] != fpu_version))
-		goto out;
-	    if (CPU_IS_020_OR_030) {
-		if (m68k_fputype & FPU_68881 &&
+		जाओ out;
+	    अगर (CPU_IS_020_OR_030) अणु
+		अगर (m68k_fputype & FPU_68881 &&
 		    !(sc->sc_fpstate[1] == 0x18 || sc->sc_fpstate[1] == 0xb4))
-		    goto out;
-		if (m68k_fputype & FPU_68882 &&
+		    जाओ out;
+		अगर (m68k_fputype & FPU_68882 &&
 		    !(sc->sc_fpstate[1] == 0x38 || sc->sc_fpstate[1] == 0xd4))
-		    goto out;
-	    } else if (CPU_IS_040) {
-		if (!(sc->sc_fpstate[1] == 0x00 ||
+		    जाओ out;
+	    पूर्ण अन्यथा अगर (CPU_IS_040) अणु
+		अगर (!(sc->sc_fpstate[1] == 0x00 ||
                       sc->sc_fpstate[1] == 0x28 ||
                       sc->sc_fpstate[1] == 0x60))
-		    goto out;
-	    } else if (CPU_IS_060) {
-		if (!(sc->sc_fpstate[3] == 0x00 ||
+		    जाओ out;
+	    पूर्ण अन्यथा अगर (CPU_IS_060) अणु
+		अगर (!(sc->sc_fpstate[3] == 0x00 ||
                       sc->sc_fpstate[3] == 0x60 ||
 		      sc->sc_fpstate[3] == 0xe0))
-		    goto out;
-	    } else if (CPU_IS_COLDFIRE) {
-		if (!(sc->sc_fpstate[0] == 0x00 ||
+		    जाओ out;
+	    पूर्ण अन्यथा अगर (CPU_IS_COLDFIRE) अणु
+		अगर (!(sc->sc_fpstate[0] == 0x00 ||
 		      sc->sc_fpstate[0] == 0x05 ||
 		      sc->sc_fpstate[0] == 0xe5))
-		    goto out;
-	    } else
-		goto out;
+		    जाओ out;
+	    पूर्ण अन्यथा
+		जाओ out;
 
-	    if (CPU_IS_COLDFIRE) {
-		__asm__ volatile ("fmovemd %0,%%fp0-%%fp1\n\t"
+	    अगर (CPU_IS_COLDFIRE) अणु
+		__यंत्र__ अस्थिर ("fmovemd %0,%%fp0-%%fp1\n\t"
 				  "fmovel %1,%%fpcr\n\t"
 				  "fmovel %2,%%fpsr\n\t"
 				  "fmovel %3,%%fpiar"
-				  : /* no outputs */
+				  : /* no outमाला_दो */
 				  : "m" (sc->sc_fpregs[0]),
 				    "m" (sc->sc_fpcntl[0]),
 				    "m" (sc->sc_fpcntl[1]),
 				    "m" (sc->sc_fpcntl[2]));
-	    } else {
-		__asm__ volatile (".chip 68k/68881\n\t"
+	    पूर्ण अन्यथा अणु
+		__यंत्र__ अस्थिर (".chip 68k/68881\n\t"
 				  "fmovemx %0,%%fp0-%%fp1\n\t"
 				  "fmoveml %1,%%fpcr/%%fpsr/%%fpiar\n\t"
 				  ".chip 68k"
-				  : /* no outputs */
+				  : /* no outमाला_दो */
 				  : "m" (*sc->sc_fpregs),
 				    "m" (*sc->sc_fpcntl));
-	    }
-	}
+	    पूर्ण
+	पूर्ण
 
-	if (CPU_IS_COLDFIRE) {
-		__asm__ volatile ("frestore %0" : : "m" (*sc->sc_fpstate));
-	} else {
-		__asm__ volatile (".chip 68k/68881\n\t"
+	अगर (CPU_IS_COLDFIRE) अणु
+		__यंत्र__ अस्थिर ("frestore %0" : : "m" (*sc->sc_fpstate));
+	पूर्ण अन्यथा अणु
+		__यंत्र__ अस्थिर (".chip 68k/68881\n\t"
 				  "frestore %0\n\t"
 				  ".chip 68k"
 				  : : "m" (*sc->sc_fpstate));
-	}
+	पूर्ण
 	err = 0;
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline int rt_restore_fpu_state(struct ucontext __user *uc)
-{
-	unsigned char fpstate[FPCONTEXT_SIZE];
-	int context_size = CPU_IS_060 ? 8 : (CPU_IS_COLDFIRE ? 12 : 0);
+अटल अंतरभूत पूर्णांक rt_restore_fpu_state(काष्ठा ucontext __user *uc)
+अणु
+	अचिन्हित अक्षर fpstate[FPCONTEXT_SIZE];
+	पूर्णांक context_size = CPU_IS_060 ? 8 : (CPU_IS_COLDFIRE ? 12 : 0);
 	fpregset_t fpregs;
-	int err = 1;
+	पूर्णांक err = 1;
 
-	if (FPU_IS_EMU) {
-		/* restore fpu control register */
-		if (__copy_from_user(current->thread.fpcntl,
+	अगर (FPU_IS_EMU) अणु
+		/* restore fpu control रेजिस्टर */
+		अगर (__copy_from_user(current->thपढ़ो.fpcntl,
 				uc->uc_mcontext.fpregs.f_fpcntl, 12))
-			goto out;
-		/* restore all other fpu register */
-		if (__copy_from_user(current->thread.fp,
+			जाओ out;
+		/* restore all other fpu रेजिस्टर */
+		अगर (__copy_from_user(current->thपढ़ो.fp,
 				uc->uc_mcontext.fpregs.f_fpregs, 96))
-			goto out;
-		return 0;
-	}
+			जाओ out;
+		वापस 0;
+	पूर्ण
 
-	if (__get_user(*(long *)fpstate, (long __user *)&uc->uc_fpstate))
-		goto out;
-	if (CPU_IS_060 ? fpstate[2] : fpstate[0]) {
-		if (!(CPU_IS_060 || CPU_IS_COLDFIRE))
+	अगर (__get_user(*(दीर्घ *)fpstate, (दीर्घ __user *)&uc->uc_fpstate))
+		जाओ out;
+	अगर (CPU_IS_060 ? fpstate[2] : fpstate[0]) अणु
+		अगर (!(CPU_IS_060 || CPU_IS_COLDFIRE))
 			context_size = fpstate[1];
-		/* Verify the frame format.  */
-		if (!(CPU_IS_060 || CPU_IS_COLDFIRE) &&
+		/* Verअगरy the frame क्रमmat.  */
+		अगर (!(CPU_IS_060 || CPU_IS_COLDFIRE) &&
 		     (fpstate[0] != fpu_version))
-			goto out;
-		if (CPU_IS_020_OR_030) {
-			if (m68k_fputype & FPU_68881 &&
+			जाओ out;
+		अगर (CPU_IS_020_OR_030) अणु
+			अगर (m68k_fputype & FPU_68881 &&
 			    !(context_size == 0x18 || context_size == 0xb4))
-				goto out;
-			if (m68k_fputype & FPU_68882 &&
+				जाओ out;
+			अगर (m68k_fputype & FPU_68882 &&
 			    !(context_size == 0x38 || context_size == 0xd4))
-				goto out;
-		} else if (CPU_IS_040) {
-			if (!(context_size == 0x00 ||
+				जाओ out;
+		पूर्ण अन्यथा अगर (CPU_IS_040) अणु
+			अगर (!(context_size == 0x00 ||
 			      context_size == 0x28 ||
 			      context_size == 0x60))
-				goto out;
-		} else if (CPU_IS_060) {
-			if (!(fpstate[3] == 0x00 ||
+				जाओ out;
+		पूर्ण अन्यथा अगर (CPU_IS_060) अणु
+			अगर (!(fpstate[3] == 0x00 ||
 			      fpstate[3] == 0x60 ||
 			      fpstate[3] == 0xe0))
-				goto out;
-		} else if (CPU_IS_COLDFIRE) {
-			if (!(fpstate[3] == 0x00 ||
+				जाओ out;
+		पूर्ण अन्यथा अगर (CPU_IS_COLDFIRE) अणु
+			अगर (!(fpstate[3] == 0x00 ||
 			      fpstate[3] == 0x05 ||
 			      fpstate[3] == 0xe5))
-				goto out;
-		} else
-			goto out;
-		if (__copy_from_user(&fpregs, &uc->uc_mcontext.fpregs,
-				     sizeof(fpregs)))
-			goto out;
+				जाओ out;
+		पूर्ण अन्यथा
+			जाओ out;
+		अगर (__copy_from_user(&fpregs, &uc->uc_mcontext.fpregs,
+				     माप(fpregs)))
+			जाओ out;
 
-		if (CPU_IS_COLDFIRE) {
-			__asm__ volatile ("fmovemd %0,%%fp0-%%fp7\n\t"
+		अगर (CPU_IS_COLDFIRE) अणु
+			__यंत्र__ अस्थिर ("fmovemd %0,%%fp0-%%fp7\n\t"
 					  "fmovel %1,%%fpcr\n\t"
 					  "fmovel %2,%%fpsr\n\t"
 					  "fmovel %3,%%fpiar"
-					  : /* no outputs */
+					  : /* no outमाला_दो */
 					  : "m" (fpregs.f_fpregs[0]),
 					    "m" (fpregs.f_fpcntl[0]),
 					    "m" (fpregs.f_fpcntl[1]),
 					    "m" (fpregs.f_fpcntl[2]));
-		} else {
-			__asm__ volatile (".chip 68k/68881\n\t"
+		पूर्ण अन्यथा अणु
+			__यंत्र__ अस्थिर (".chip 68k/68881\n\t"
 					  "fmovemx %0,%%fp0-%%fp7\n\t"
 					  "fmoveml %1,%%fpcr/%%fpsr/%%fpiar\n\t"
 					  ".chip 68k"
-					  : /* no outputs */
+					  : /* no outमाला_दो */
 					  : "m" (*fpregs.f_fpregs),
 					    "m" (*fpregs.f_fpcntl));
-		}
-	}
-	if (context_size &&
-	    __copy_from_user(fpstate + 4, (long __user *)&uc->uc_fpstate + 1,
+		पूर्ण
+	पूर्ण
+	अगर (context_size &&
+	    __copy_from_user(fpstate + 4, (दीर्घ __user *)&uc->uc_fpstate + 1,
 			     context_size))
-		goto out;
+		जाओ out;
 
-	if (CPU_IS_COLDFIRE) {
-		__asm__ volatile ("frestore %0" : : "m" (*fpstate));
-	} else {
-		__asm__ volatile (".chip 68k/68881\n\t"
+	अगर (CPU_IS_COLDFIRE) अणु
+		__यंत्र__ अस्थिर ("frestore %0" : : "m" (*fpstate));
+	पूर्ण अन्यथा अणु
+		__यंत्र__ अस्थिर (".chip 68k/68881\n\t"
 				  "frestore %0\n\t"
 				  ".chip 68k"
 				  : : "m" (*fpstate));
-	}
+	पूर्ण
 	err = 0;
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Set up a signal frame.
+ * Set up a संकेत frame.
  */
-static inline void save_fpu_state(struct sigcontext *sc, struct pt_regs *regs)
-{
-	if (FPU_IS_EMU) {
-		/* save registers */
-		memcpy(sc->sc_fpcntl, current->thread.fpcntl, 12);
-		memcpy(sc->sc_fpregs, current->thread.fp, 24);
-		return;
-	}
+अटल अंतरभूत व्योम save_fpu_state(काष्ठा sigcontext *sc, काष्ठा pt_regs *regs)
+अणु
+	अगर (FPU_IS_EMU) अणु
+		/* save रेजिस्टरs */
+		स_नकल(sc->sc_fpcntl, current->thपढ़ो.fpcntl, 12);
+		स_नकल(sc->sc_fpregs, current->thपढ़ो.fp, 24);
+		वापस;
+	पूर्ण
 
-	if (CPU_IS_COLDFIRE) {
-		__asm__ volatile ("fsave %0"
+	अगर (CPU_IS_COLDFIRE) अणु
+		__यंत्र__ अस्थिर ("fsave %0"
 				  : : "m" (*sc->sc_fpstate) : "memory");
-	} else {
-		__asm__ volatile (".chip 68k/68881\n\t"
+	पूर्ण अन्यथा अणु
+		__यंत्र__ अस्थिर (".chip 68k/68881\n\t"
 				  "fsave %0\n\t"
 				  ".chip 68k"
 				  : : "m" (*sc->sc_fpstate) : "memory");
-	}
+	पूर्ण
 
-	if (CPU_IS_060 ? sc->sc_fpstate[2] : sc->sc_fpstate[0]) {
+	अगर (CPU_IS_060 ? sc->sc_fpstate[2] : sc->sc_fpstate[0]) अणु
 		fpu_version = sc->sc_fpstate[0];
-		if (CPU_IS_020_OR_030 &&
+		अगर (CPU_IS_020_OR_030 &&
 		    regs->vector >= (VEC_FPBRUC * 4) &&
-		    regs->vector <= (VEC_FPNAN * 4)) {
+		    regs->vector <= (VEC_FPन_अंक * 4)) अणु
 			/* Clear pending exception in 68882 idle frame */
-			if (*(unsigned short *) sc->sc_fpstate == 0x1f38)
+			अगर (*(अचिन्हित लघु *) sc->sc_fpstate == 0x1f38)
 				sc->sc_fpstate[0x38] |= 1 << 3;
-		}
+		पूर्ण
 
-		if (CPU_IS_COLDFIRE) {
-			__asm__ volatile ("fmovemd %%fp0-%%fp1,%0\n\t"
+		अगर (CPU_IS_COLDFIRE) अणु
+			__यंत्र__ अस्थिर ("fmovemd %%fp0-%%fp1,%0\n\t"
 					  "fmovel %%fpcr,%1\n\t"
 					  "fmovel %%fpsr,%2\n\t"
 					  "fmovel %%fpiar,%3"
@@ -464,61 +465,61 @@ static inline void save_fpu_state(struct sigcontext *sc, struct pt_regs *regs)
 					    "=m" (sc->sc_fpcntl[0]),
 					    "=m" (sc->sc_fpcntl[1]),
 					    "=m" (sc->sc_fpcntl[2])
-					  : /* no inputs */
+					  : /* no inमाला_दो */
 					  : "memory");
-		} else {
-			__asm__ volatile (".chip 68k/68881\n\t"
+		पूर्ण अन्यथा अणु
+			__यंत्र__ अस्थिर (".chip 68k/68881\n\t"
 					  "fmovemx %%fp0-%%fp1,%0\n\t"
 					  "fmoveml %%fpcr/%%fpsr/%%fpiar,%1\n\t"
 					  ".chip 68k"
 					  : "=m" (*sc->sc_fpregs),
 					    "=m" (*sc->sc_fpcntl)
-					  : /* no inputs */
+					  : /* no inमाला_दो */
 					  : "memory");
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline int rt_save_fpu_state(struct ucontext __user *uc, struct pt_regs *regs)
-{
-	unsigned char fpstate[FPCONTEXT_SIZE];
-	int context_size = CPU_IS_060 ? 8 : (CPU_IS_COLDFIRE ? 12 : 0);
-	int err = 0;
+अटल अंतरभूत पूर्णांक rt_save_fpu_state(काष्ठा ucontext __user *uc, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित अक्षर fpstate[FPCONTEXT_SIZE];
+	पूर्णांक context_size = CPU_IS_060 ? 8 : (CPU_IS_COLDFIRE ? 12 : 0);
+	पूर्णांक err = 0;
 
-	if (FPU_IS_EMU) {
-		/* save fpu control register */
+	अगर (FPU_IS_EMU) अणु
+		/* save fpu control रेजिस्टर */
 		err |= copy_to_user(uc->uc_mcontext.fpregs.f_fpcntl,
-				current->thread.fpcntl, 12);
-		/* save all other fpu register */
+				current->thपढ़ो.fpcntl, 12);
+		/* save all other fpu रेजिस्टर */
 		err |= copy_to_user(uc->uc_mcontext.fpregs.f_fpregs,
-				current->thread.fp, 96);
-		return err;
-	}
+				current->thपढ़ो.fp, 96);
+		वापस err;
+	पूर्ण
 
-	if (CPU_IS_COLDFIRE) {
-		__asm__ volatile ("fsave %0" : : "m" (*fpstate) : "memory");
-	} else {
-		__asm__ volatile (".chip 68k/68881\n\t"
+	अगर (CPU_IS_COLDFIRE) अणु
+		__यंत्र__ अस्थिर ("fsave %0" : : "m" (*fpstate) : "memory");
+	पूर्ण अन्यथा अणु
+		__यंत्र__ अस्थिर (".chip 68k/68881\n\t"
 				  "fsave %0\n\t"
 				  ".chip 68k"
 				  : : "m" (*fpstate) : "memory");
-	}
+	पूर्ण
 
-	err |= __put_user(*(long *)fpstate, (long __user *)&uc->uc_fpstate);
-	if (CPU_IS_060 ? fpstate[2] : fpstate[0]) {
+	err |= __put_user(*(दीर्घ *)fpstate, (दीर्घ __user *)&uc->uc_fpstate);
+	अगर (CPU_IS_060 ? fpstate[2] : fpstate[0]) अणु
 		fpregset_t fpregs;
-		if (!(CPU_IS_060 || CPU_IS_COLDFIRE))
+		अगर (!(CPU_IS_060 || CPU_IS_COLDFIRE))
 			context_size = fpstate[1];
 		fpu_version = fpstate[0];
-		if (CPU_IS_020_OR_030 &&
+		अगर (CPU_IS_020_OR_030 &&
 		    regs->vector >= (VEC_FPBRUC * 4) &&
-		    regs->vector <= (VEC_FPNAN * 4)) {
+		    regs->vector <= (VEC_FPन_अंक * 4)) अणु
 			/* Clear pending exception in 68882 idle frame */
-			if (*(unsigned short *) fpstate == 0x1f38)
+			अगर (*(अचिन्हित लघु *) fpstate == 0x1f38)
 				fpstate[0x38] |= 1 << 3;
-		}
-		if (CPU_IS_COLDFIRE) {
-			__asm__ volatile ("fmovemd %%fp0-%%fp7,%0\n\t"
+		पूर्ण
+		अगर (CPU_IS_COLDFIRE) अणु
+			__यंत्र__ अस्थिर ("fmovemd %%fp0-%%fp7,%0\n\t"
 					  "fmovel %%fpcr,%1\n\t"
 					  "fmovel %%fpsr,%2\n\t"
 					  "fmovel %%fpiar,%3"
@@ -526,154 +527,154 @@ static inline int rt_save_fpu_state(struct ucontext __user *uc, struct pt_regs *
 					    "=m" (fpregs.f_fpcntl[0]),
 					    "=m" (fpregs.f_fpcntl[1]),
 					    "=m" (fpregs.f_fpcntl[2])
-					  : /* no inputs */
+					  : /* no inमाला_दो */
 					  : "memory");
-		} else {
-			__asm__ volatile (".chip 68k/68881\n\t"
+		पूर्ण अन्यथा अणु
+			__यंत्र__ अस्थिर (".chip 68k/68881\n\t"
 					  "fmovemx %%fp0-%%fp7,%0\n\t"
 					  "fmoveml %%fpcr/%%fpsr/%%fpiar,%1\n\t"
 					  ".chip 68k"
 					  : "=m" (*fpregs.f_fpregs),
 					    "=m" (*fpregs.f_fpcntl)
-					  : /* no inputs */
+					  : /* no inमाला_दो */
 					  : "memory");
-		}
+		पूर्ण
 		err |= copy_to_user(&uc->uc_mcontext.fpregs, &fpregs,
-				    sizeof(fpregs));
-	}
-	if (context_size)
-		err |= copy_to_user((long __user *)&uc->uc_fpstate + 1, fpstate + 4,
+				    माप(fpregs));
+	पूर्ण
+	अगर (context_size)
+		err |= copy_to_user((दीर्घ __user *)&uc->uc_fpstate + 1, fpstate + 4,
 				    context_size);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#else /* CONFIG_FPU */
+#अन्यथा /* CONFIG_FPU */
 
 /*
- * For the case with no FPU configured these all do nothing.
+ * For the हाल with no FPU configured these all करो nothing.
  */
-static inline int restore_fpu_state(struct sigcontext *sc)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक restore_fpu_state(काष्ठा sigcontext *sc)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int rt_restore_fpu_state(struct ucontext __user *uc)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक rt_restore_fpu_state(काष्ठा ucontext __user *uc)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void save_fpu_state(struct sigcontext *sc, struct pt_regs *regs)
-{
-}
+अटल अंतरभूत व्योम save_fpu_state(काष्ठा sigcontext *sc, काष्ठा pt_regs *regs)
+अणु
+पूर्ण
 
-static inline int rt_save_fpu_state(struct ucontext __user *uc, struct pt_regs *regs)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक rt_save_fpu_state(काष्ठा ucontext __user *uc, काष्ठा pt_regs *regs)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_FPU */
+#पूर्ण_अगर /* CONFIG_FPU */
 
-static inline void siginfo_build_tests(void)
-{
+अटल अंतरभूत व्योम siginfo_build_tests(व्योम)
+अणु
 	/*
 	 * This needs to be tested on m68k as it has a lesser
 	 * alignment requirement than x86 and that can cause surprises.
 	 */
 
 	/* This is part of the ABI and can never change in size: */
-	BUILD_BUG_ON(sizeof(siginfo_t) != 128);
+	BUILD_BUG_ON(माप(siginfo_t) != 128);
 
 	/* Ensure the known fields never change in location */
-	BUILD_BUG_ON(offsetof(siginfo_t, si_signo) != 0);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_errno) != 4);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_code)  != 8);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_signo) != 0);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_त्रुटि_सं) != 4);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_code)  != 8);
 
-	/* _kill */
-	BUILD_BUG_ON(offsetof(siginfo_t, si_pid) != 0x0c);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_uid) != 0x10);
+	/* _समाप्त */
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_pid) != 0x0c);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_uid) != 0x10);
 
-	/* _timer */
-	BUILD_BUG_ON(offsetof(siginfo_t, si_tid)     != 0x0c);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_overrun) != 0x10);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_value)   != 0x14);
+	/* _समयr */
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_tid)     != 0x0c);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_overrun) != 0x10);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_value)   != 0x14);
 
 	/* _rt */
-	BUILD_BUG_ON(offsetof(siginfo_t, si_pid)   != 0x0c);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_uid)   != 0x10);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_value) != 0x14);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_pid)   != 0x0c);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_uid)   != 0x10);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_value) != 0x14);
 
 	/* _sigchld */
-	BUILD_BUG_ON(offsetof(siginfo_t, si_pid)    != 0x0c);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_uid)    != 0x10);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_status) != 0x14);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_utime)  != 0x18);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_stime)  != 0x1c);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_pid)    != 0x0c);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_uid)    != 0x10);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_status) != 0x14);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_uसमय)  != 0x18);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_sसमय)  != 0x1c);
 
 	/* _sigfault */
-	BUILD_BUG_ON(offsetof(siginfo_t, si_addr) != 0x0c);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_addr) != 0x0c);
 
 	/* _sigfault._mcerr */
-	BUILD_BUG_ON(offsetof(siginfo_t, si_addr_lsb) != 0x10);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_addr_lsb) != 0x10);
 
 	/* _sigfault._addr_bnd */
-	BUILD_BUG_ON(offsetof(siginfo_t, si_lower) != 0x12);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_upper) != 0x16);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_lower) != 0x12);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_upper) != 0x16);
 
 	/* _sigfault._addr_pkey */
-	BUILD_BUG_ON(offsetof(siginfo_t, si_pkey) != 0x12);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_pkey) != 0x12);
 
 	/* _sigfault._perf */
-	BUILD_BUG_ON(offsetof(siginfo_t, si_perf_data) != 0x10);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_perf_type) != 0x14);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_perf_data) != 0x10);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_perf_type) != 0x14);
 
 	/* _sigpoll */
-	BUILD_BUG_ON(offsetof(siginfo_t, si_band)   != 0x0c);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_fd)     != 0x10);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_band)   != 0x0c);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_fd)     != 0x10);
 
 	/* _sigsys */
-	BUILD_BUG_ON(offsetof(siginfo_t, si_call_addr) != 0x0c);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_syscall)   != 0x10);
-	BUILD_BUG_ON(offsetof(siginfo_t, si_arch)      != 0x14);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_call_addr) != 0x0c);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_syscall)   != 0x10);
+	BUILD_BUG_ON(दुरत्व(siginfo_t, si_arch)      != 0x14);
 
 	/* any new si_fields should be added here */
-}
+पूर्ण
 
-static int mangle_kernel_stack(struct pt_regs *regs, int formatvec,
-			       void __user *fp)
-{
-	int fsize = frame_extra_sizes(formatvec >> 12);
-	if (fsize < 0) {
+अटल पूर्णांक mangle_kernel_stack(काष्ठा pt_regs *regs, पूर्णांक क्रमmatvec,
+			       व्योम __user *fp)
+अणु
+	पूर्णांक fsize = frame_extra_sizes(क्रमmatvec >> 12);
+	अगर (fsize < 0) अणु
 		/*
-		 * user process trying to return with weird frame format
+		 * user process trying to वापस with weird frame क्रमmat
 		 */
 		pr_debug("user process returning with weird frame format\n");
-		return 1;
-	}
-	if (!fsize) {
-		regs->format = formatvec >> 12;
-		regs->vector = formatvec & 0xfff;
-	} else {
-		struct switch_stack *sw = (struct switch_stack *)regs - 1;
-		/* yes, twice as much as max(sizeof(frame.un.fmt<x>)) */
-		unsigned long buf[sizeof_field(struct frame, un) / 2];
+		वापस 1;
+	पूर्ण
+	अगर (!fsize) अणु
+		regs->क्रमmat = क्रमmatvec >> 12;
+		regs->vector = क्रमmatvec & 0xfff;
+	पूर्ण अन्यथा अणु
+		काष्ठा चयन_stack *sw = (काष्ठा चयन_stack *)regs - 1;
+		/* yes, twice as much as max(माप(frame.un.fmt<x>)) */
+		अचिन्हित दीर्घ buf[माप_field(काष्ठा frame, un) / 2];
 
 		/* that'll make sure that expansion won't crap over data */
-		if (copy_from_user(buf + fsize / 4, fp, fsize))
-			return 1;
+		अगर (copy_from_user(buf + fsize / 4, fp, fsize))
+			वापस 1;
 
-		/* point of no return */
-		regs->format = formatvec >> 12;
-		regs->vector = formatvec & 0xfff;
-#define frame_offset (sizeof(struct pt_regs)+sizeof(struct switch_stack))
-		__asm__ __volatile__ (
-#ifdef CONFIG_COLDFIRE
+		/* poपूर्णांक of no वापस */
+		regs->क्रमmat = क्रमmatvec >> 12;
+		regs->vector = क्रमmatvec & 0xfff;
+#घोषणा frame_offset (माप(काष्ठा pt_regs)+माप(काष्ठा चयन_stack))
+		__यंत्र__ __अस्थिर__ (
+#अगर_घोषित CONFIG_COLDFIRE
 			 "   movel %0,%/sp\n\t"
 			 "   bra ret_from_signal\n"
-#else
+#अन्यथा
 			 "   movel %0,%/a0\n\t"
 			 "   subl %1,%/a0\n\t"     /* make room on stack */
-			 "   movel %/a0,%/sp\n\t"  /* set stack pointer */
-			 /* move switch_stack and pt_regs */
+			 "   movel %/a0,%/sp\n\t"  /* set stack poपूर्णांकer */
+			 /* move चयन_stack and pt_regs */
 			 "1: movel %0@+,%/a0@+\n\t"
 			 "   dbra %2,1b\n\t"
 			 "   lea %/sp@(%c3),%/a0\n\t" /* add offset of fmt */
@@ -683,33 +684,33 @@ static int mangle_kernel_stack(struct pt_regs *regs, int formatvec,
 			 "2: movel %4@+,%/a0@+\n\t"
 			 "   dbra %1,2b\n\t"
 			 "   bral ret_from_signal\n"
-#endif
-			 : /* no outputs, it doesn't ever return */
+#पूर्ण_अगर
+			 : /* no outमाला_दो, it करोesn't ever वापस */
 			 : "a" (sw), "d" (fsize), "d" (frame_offset/4-1),
 			   "n" (frame_offset), "a" (buf + fsize/4)
 			 : "a0");
-#undef frame_offset
-	}
-	return 0;
-}
+#अघोषित frame_offset
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline int
-restore_sigcontext(struct pt_regs *regs, struct sigcontext __user *usc, void __user *fp)
-{
-	int formatvec;
-	struct sigcontext context;
-	int err = 0;
+अटल अंतरभूत पूर्णांक
+restore_sigcontext(काष्ठा pt_regs *regs, काष्ठा sigcontext __user *usc, व्योम __user *fp)
+अणु
+	पूर्णांक क्रमmatvec;
+	काष्ठा sigcontext context;
+	पूर्णांक err = 0;
 
 	siginfo_build_tests();
 
-	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	/* Always make any pending restarted प्रणाली calls वापस -EINTR */
+	current->restart_block.fn = करो_no_restart_syscall;
 
 	/* get previous context */
-	if (copy_from_user(&context, usc, sizeof(context)))
-		goto badframe;
+	अगर (copy_from_user(&context, usc, माप(context)))
+		जाओ badframe;
 
-	/* restore passed registers */
+	/* restore passed रेजिस्टरs */
 	regs->d0 = context.sc_d0;
 	regs->d1 = context.sc_d1;
 	regs->a0 = context.sc_a0;
@@ -718,35 +719,35 @@ restore_sigcontext(struct pt_regs *regs, struct sigcontext __user *usc, void __u
 	regs->pc = context.sc_pc;
 	regs->orig_d0 = -1;		/* disable syscall checks */
 	wrusp(context.sc_usp);
-	formatvec = context.sc_formatvec;
+	क्रमmatvec = context.sc_क्रमmatvec;
 
 	err = restore_fpu_state(&context);
 
-	if (err || mangle_kernel_stack(regs, formatvec, fp))
-		goto badframe;
+	अगर (err || mangle_kernel_stack(regs, क्रमmatvec, fp))
+		जाओ badframe;
 
-	return 0;
+	वापस 0;
 
 badframe:
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static inline int
-rt_restore_ucontext(struct pt_regs *regs, struct switch_stack *sw,
-		    struct ucontext __user *uc)
-{
-	int temp;
+अटल अंतरभूत पूर्णांक
+rt_restore_ucontext(काष्ठा pt_regs *regs, काष्ठा चयन_stack *sw,
+		    काष्ठा ucontext __user *uc)
+अणु
+	पूर्णांक temp;
 	greg_t __user *gregs = uc->uc_mcontext.gregs;
-	unsigned long usp;
-	int err;
+	अचिन्हित दीर्घ usp;
+	पूर्णांक err;
 
-	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	/* Always make any pending restarted प्रणाली calls वापस -EINTR */
+	current->restart_block.fn = करो_no_restart_syscall;
 
 	err = __get_user(temp, &uc->uc_mcontext.version);
-	if (temp != MCONTEXT_VERSION)
-		goto badframe;
-	/* restore passed registers */
+	अगर (temp != MCONTEXT_VERSION)
+		जाओ badframe;
+	/* restore passed रेजिस्टरs */
 	err |= __get_user(regs->d0, &gregs[0]);
 	err |= __get_user(regs->d1, &gregs[1]);
 	err |= __get_user(regs->d2, &gregs[2]);
@@ -768,73 +769,73 @@ rt_restore_ucontext(struct pt_regs *regs, struct switch_stack *sw,
 	err |= __get_user(temp, &gregs[17]);
 	regs->sr = (regs->sr & 0xff00) | (temp & 0xff);
 	regs->orig_d0 = -1;		/* disable syscall checks */
-	err |= __get_user(temp, &uc->uc_formatvec);
+	err |= __get_user(temp, &uc->uc_क्रमmatvec);
 
 	err |= rt_restore_fpu_state(uc);
 	err |= restore_altstack(&uc->uc_stack);
 
-	if (err)
-		goto badframe;
+	अगर (err)
+		जाओ badframe;
 
-	if (mangle_kernel_stack(regs, temp, &uc->uc_extra))
-		goto badframe;
+	अगर (mangle_kernel_stack(regs, temp, &uc->uc_extra))
+		जाओ badframe;
 
-	return 0;
+	वापस 0;
 
 badframe:
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-asmlinkage int do_sigreturn(struct pt_regs *regs, struct switch_stack *sw)
-{
-	unsigned long usp = rdusp();
-	struct sigframe __user *frame = (struct sigframe __user *)(usp - 4);
+यंत्रlinkage पूर्णांक करो_sigवापस(काष्ठा pt_regs *regs, काष्ठा चयन_stack *sw)
+अणु
+	अचिन्हित दीर्घ usp = rdusp();
+	काष्ठा sigframe __user *frame = (काष्ठा sigframe __user *)(usp - 4);
 	sigset_t set;
 
-	if (!access_ok(frame, sizeof(*frame)))
-		goto badframe;
-	if (__get_user(set.sig[0], &frame->sc.sc_mask) ||
+	अगर (!access_ok(frame, माप(*frame)))
+		जाओ badframe;
+	अगर (__get_user(set.sig[0], &frame->sc.sc_mask) ||
 	    (_NSIG_WORDS > 1 &&
 	     __copy_from_user(&set.sig[1], &frame->extramask,
-			      sizeof(frame->extramask))))
-		goto badframe;
+			      माप(frame->extramask))))
+		जाओ badframe;
 
 	set_current_blocked(&set);
 
-	if (restore_sigcontext(regs, &frame->sc, frame + 1))
-		goto badframe;
-	return regs->d0;
+	अगर (restore_sigcontext(regs, &frame->sc, frame + 1))
+		जाओ badframe;
+	वापस regs->d0;
 
 badframe:
-	force_sig(SIGSEGV);
-	return 0;
-}
+	क्रमce_sig(संक_अंश);
+	वापस 0;
+पूर्ण
 
-asmlinkage int do_rt_sigreturn(struct pt_regs *regs, struct switch_stack *sw)
-{
-	unsigned long usp = rdusp();
-	struct rt_sigframe __user *frame = (struct rt_sigframe __user *)(usp - 4);
+यंत्रlinkage पूर्णांक करो_rt_sigवापस(काष्ठा pt_regs *regs, काष्ठा चयन_stack *sw)
+अणु
+	अचिन्हित दीर्घ usp = rdusp();
+	काष्ठा rt_sigframe __user *frame = (काष्ठा rt_sigframe __user *)(usp - 4);
 	sigset_t set;
 
-	if (!access_ok(frame, sizeof(*frame)))
-		goto badframe;
-	if (__copy_from_user(&set, &frame->uc.uc_sigmask, sizeof(set)))
-		goto badframe;
+	अगर (!access_ok(frame, माप(*frame)))
+		जाओ badframe;
+	अगर (__copy_from_user(&set, &frame->uc.uc_sigmask, माप(set)))
+		जाओ badframe;
 
 	set_current_blocked(&set);
 
-	if (rt_restore_ucontext(regs, sw, &frame->uc))
-		goto badframe;
-	return regs->d0;
+	अगर (rt_restore_ucontext(regs, sw, &frame->uc))
+		जाओ badframe;
+	वापस regs->d0;
 
 badframe:
-	force_sig(SIGSEGV);
-	return 0;
-}
+	क्रमce_sig(संक_अंश);
+	वापस 0;
+पूर्ण
 
-static void setup_sigcontext(struct sigcontext *sc, struct pt_regs *regs,
-			     unsigned long mask)
-{
+अटल व्योम setup_sigcontext(काष्ठा sigcontext *sc, काष्ठा pt_regs *regs,
+			     अचिन्हित दीर्घ mask)
+अणु
 	sc->sc_mask = mask;
 	sc->sc_usp = rdusp();
 	sc->sc_d0 = regs->d0;
@@ -843,16 +844,16 @@ static void setup_sigcontext(struct sigcontext *sc, struct pt_regs *regs,
 	sc->sc_a1 = regs->a1;
 	sc->sc_sr = regs->sr;
 	sc->sc_pc = regs->pc;
-	sc->sc_formatvec = regs->format << 12 | regs->vector;
+	sc->sc_क्रमmatvec = regs->क्रमmat << 12 | regs->vector;
 	save_a5_state(sc, regs);
 	save_fpu_state(sc, regs);
-}
+पूर्ण
 
-static inline int rt_setup_ucontext(struct ucontext __user *uc, struct pt_regs *regs)
-{
-	struct switch_stack *sw = (struct switch_stack *)regs - 1;
+अटल अंतरभूत पूर्णांक rt_setup_ucontext(काष्ठा ucontext __user *uc, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा चयन_stack *sw = (काष्ठा चयन_stack *)regs - 1;
 	greg_t __user *gregs = uc->uc_mcontext.gregs;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	err |= __put_user(MCONTEXT_VERSION, &uc->uc_mcontext.version);
 	err |= __put_user(regs->d0, &gregs[0]);
@@ -873,36 +874,36 @@ static inline int rt_setup_ucontext(struct ucontext __user *uc, struct pt_regs *
 	err |= __put_user(rdusp(), &gregs[15]);
 	err |= __put_user(regs->pc, &gregs[16]);
 	err |= __put_user(regs->sr, &gregs[17]);
-	err |= __put_user((regs->format << 12) | regs->vector, &uc->uc_formatvec);
+	err |= __put_user((regs->क्रमmat << 12) | regs->vector, &uc->uc_क्रमmatvec);
 	err |= rt_save_fpu_state(uc, regs);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline void __user *
-get_sigframe(struct ksignal *ksig, size_t frame_size)
-{
-	unsigned long usp = sigsp(rdusp(), ksig);
+अटल अंतरभूत व्योम __user *
+get_sigframe(काष्ठा kसंकेत *ksig, माप_प्रकार frame_size)
+अणु
+	अचिन्हित दीर्घ usp = sigsp(rdusp(), ksig);
 
-	return (void __user *)((usp - frame_size) & -8UL);
-}
+	वापस (व्योम __user *)((usp - frame_size) & -8UL);
+पूर्ण
 
-static int setup_frame(struct ksignal *ksig, sigset_t *set,
-			struct pt_regs *regs)
-{
-	struct sigframe __user *frame;
-	int fsize = frame_extra_sizes(regs->format);
-	struct sigcontext context;
-	int err = 0, sig = ksig->sig;
+अटल पूर्णांक setup_frame(काष्ठा kसंकेत *ksig, sigset_t *set,
+			काष्ठा pt_regs *regs)
+अणु
+	काष्ठा sigframe __user *frame;
+	पूर्णांक fsize = frame_extra_sizes(regs->क्रमmat);
+	काष्ठा sigcontext context;
+	पूर्णांक err = 0, sig = ksig->sig;
 
-	if (fsize < 0) {
+	अगर (fsize < 0) अणु
 		pr_debug("setup_frame: Unknown frame format %#x\n",
-			 regs->format);
-		return -EFAULT;
-	}
+			 regs->क्रमmat);
+		वापस -EFAULT;
+	पूर्ण
 
-	frame = get_sigframe(ksig, sizeof(*frame) + fsize);
+	frame = get_sigframe(ksig, माप(*frame) + fsize);
 
-	if (fsize)
+	अगर (fsize)
 		err |= copy_to_user (frame + 1, regs + 1, fsize);
 
 	err |= __put_user(sig, &frame->sig);
@@ -910,76 +911,76 @@ static int setup_frame(struct ksignal *ksig, sigset_t *set,
 	err |= __put_user(regs->vector, &frame->code);
 	err |= __put_user(&frame->sc, &frame->psc);
 
-	if (_NSIG_WORDS > 1)
+	अगर (_NSIG_WORDS > 1)
 		err |= copy_to_user(frame->extramask, &set->sig[1],
-				    sizeof(frame->extramask));
+				    माप(frame->extramask));
 
 	setup_sigcontext(&context, regs, set->sig[0]);
-	err |= copy_to_user (&frame->sc, &context, sizeof(context));
+	err |= copy_to_user (&frame->sc, &context, माप(context));
 
-	/* Set up to return from userspace.  */
-#ifdef CONFIG_MMU
+	/* Set up to वापस from userspace.  */
+#अगर_घोषित CONFIG_MMU
 	err |= __put_user(frame->retcode, &frame->pretcode);
 	/* moveq #,d0; trap #0 */
-	err |= __put_user(0x70004e40 + (__NR_sigreturn << 16),
-			  (long __user *)(frame->retcode));
-#else
-	err |= __put_user((long) ret_from_user_signal,
-			  (long __user *) &frame->pretcode);
-#endif
+	err |= __put_user(0x70004e40 + (__NR_sigवापस << 16),
+			  (दीर्घ __user *)(frame->retcode));
+#अन्यथा
+	err |= __put_user((दीर्घ) ret_from_user_संकेत,
+			  (दीर्घ __user *) &frame->pretcode);
+#पूर्ण_अगर
 
-	if (err)
-		return -EFAULT;
+	अगर (err)
+		वापस -EFAULT;
 
-	push_cache ((unsigned long) &frame->retcode);
+	push_cache ((अचिन्हित दीर्घ) &frame->retcode);
 
 	/*
-	 * Set up registers for signal handler.  All the state we are about
+	 * Set up रेजिस्टरs क्रम संकेत handler.  All the state we are about
 	 * to destroy is successfully copied to sigframe.
 	 */
-	wrusp ((unsigned long) frame);
-	regs->pc = (unsigned long) ksig->ka.sa.sa_handler;
-	adjustformat(regs);
+	wrusp ((अचिन्हित दीर्घ) frame);
+	regs->pc = (अचिन्हित दीर्घ) ksig->ka.sa.sa_handler;
+	adjustक्रमmat(regs);
 
 	/*
-	 * This is subtle; if we build more than one sigframe, all but the
-	 * first one will see frame format 0 and have fsize == 0, so we won't
+	 * This is subtle; अगर we build more than one sigframe, all but the
+	 * first one will see frame क्रमmat 0 and have fsize == 0, so we won't
 	 * screw stkadj.
 	 */
-	if (fsize)
+	अगर (fsize)
 		regs->stkadj = fsize;
 
 	/* Prepare to skip over the extra stuff in the exception frame.  */
-	if (regs->stkadj) {
-		struct pt_regs *tregs =
-			(struct pt_regs *)((ulong)regs + regs->stkadj);
+	अगर (regs->stkadj) अणु
+		काष्ठा pt_regs *tregs =
+			(काष्ठा pt_regs *)((uदीर्घ)regs + regs->stkadj);
 		pr_debug("Performing stackadjust=%04lx\n", regs->stkadj);
 		/* This must be copied with decreasing addresses to
                    handle overlaps.  */
 		tregs->vector = 0;
-		tregs->format = 0;
+		tregs->क्रमmat = 0;
 		tregs->pc = regs->pc;
 		tregs->sr = regs->sr;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int setup_rt_frame(struct ksignal *ksig, sigset_t *set,
-			   struct pt_regs *regs)
-{
-	struct rt_sigframe __user *frame;
-	int fsize = frame_extra_sizes(regs->format);
-	int err = 0, sig = ksig->sig;
+अटल पूर्णांक setup_rt_frame(काष्ठा kसंकेत *ksig, sigset_t *set,
+			   काष्ठा pt_regs *regs)
+अणु
+	काष्ठा rt_sigframe __user *frame;
+	पूर्णांक fsize = frame_extra_sizes(regs->क्रमmat);
+	पूर्णांक err = 0, sig = ksig->sig;
 
-	if (fsize < 0) {
+	अगर (fsize < 0) अणु
 		pr_debug("setup_frame: Unknown frame format %#x\n",
-			 regs->format);
-		return -EFAULT;
-	}
+			 regs->क्रमmat);
+		वापस -EFAULT;
+	पूर्ण
 
-	frame = get_sigframe(ksig, sizeof(*frame));
+	frame = get_sigframe(ksig, माप(*frame));
 
-	if (fsize)
+	अगर (fsize)
 		err |= copy_to_user (&frame->uc.uc_extra, regs + 1, fsize);
 
 	err |= __put_user(sig, &frame->sig);
@@ -989,158 +990,158 @@ static int setup_rt_frame(struct ksignal *ksig, sigset_t *set,
 
 	/* Create the ucontext.  */
 	err |= __put_user(0, &frame->uc.uc_flags);
-	err |= __put_user(NULL, &frame->uc.uc_link);
+	err |= __put_user(शून्य, &frame->uc.uc_link);
 	err |= __save_altstack(&frame->uc.uc_stack, rdusp());
 	err |= rt_setup_ucontext(&frame->uc, regs);
-	err |= copy_to_user (&frame->uc.uc_sigmask, set, sizeof(*set));
+	err |= copy_to_user (&frame->uc.uc_sigmask, set, माप(*set));
 
-	/* Set up to return from userspace.  */
-#ifdef CONFIG_MMU
+	/* Set up to वापस from userspace.  */
+#अगर_घोषित CONFIG_MMU
 	err |= __put_user(frame->retcode, &frame->pretcode);
-#ifdef __mcoldfire__
-	/* movel #__NR_rt_sigreturn,d0; trap #0 */
-	err |= __put_user(0x203c0000, (long __user *)(frame->retcode + 0));
-	err |= __put_user(0x00004e40 + (__NR_rt_sigreturn << 16),
-			  (long __user *)(frame->retcode + 4));
-#else
+#अगर_घोषित __mcoldfire__
+	/* movel #__NR_rt_sigवापस,d0; trap #0 */
+	err |= __put_user(0x203c0000, (दीर्घ __user *)(frame->retcode + 0));
+	err |= __put_user(0x00004e40 + (__NR_rt_sigवापस << 16),
+			  (दीर्घ __user *)(frame->retcode + 4));
+#अन्यथा
 	/* moveq #,d0; notb d0; trap #0 */
-	err |= __put_user(0x70004600 + ((__NR_rt_sigreturn ^ 0xff) << 16),
-			  (long __user *)(frame->retcode + 0));
-	err |= __put_user(0x4e40, (short __user *)(frame->retcode + 4));
-#endif
-#else
-	err |= __put_user((long) ret_from_user_rt_signal,
-			  (long __user *) &frame->pretcode);
-#endif /* CONFIG_MMU */
+	err |= __put_user(0x70004600 + ((__NR_rt_sigवापस ^ 0xff) << 16),
+			  (दीर्घ __user *)(frame->retcode + 0));
+	err |= __put_user(0x4e40, (लघु __user *)(frame->retcode + 4));
+#पूर्ण_अगर
+#अन्यथा
+	err |= __put_user((दीर्घ) ret_from_user_rt_संकेत,
+			  (दीर्घ __user *) &frame->pretcode);
+#पूर्ण_अगर /* CONFIG_MMU */
 
-	if (err)
-		return -EFAULT;
+	अगर (err)
+		वापस -EFAULT;
 
-	push_cache ((unsigned long) &frame->retcode);
+	push_cache ((अचिन्हित दीर्घ) &frame->retcode);
 
 	/*
-	 * Set up registers for signal handler.  All the state we are about
+	 * Set up रेजिस्टरs क्रम संकेत handler.  All the state we are about
 	 * to destroy is successfully copied to sigframe.
 	 */
-	wrusp ((unsigned long) frame);
-	regs->pc = (unsigned long) ksig->ka.sa.sa_handler;
-	adjustformat(regs);
+	wrusp ((अचिन्हित दीर्घ) frame);
+	regs->pc = (अचिन्हित दीर्घ) ksig->ka.sa.sa_handler;
+	adjustक्रमmat(regs);
 
 	/*
-	 * This is subtle; if we build more than one sigframe, all but the
-	 * first one will see frame format 0 and have fsize == 0, so we won't
+	 * This is subtle; अगर we build more than one sigframe, all but the
+	 * first one will see frame क्रमmat 0 and have fsize == 0, so we won't
 	 * screw stkadj.
 	 */
-	if (fsize)
+	अगर (fsize)
 		regs->stkadj = fsize;
 
 	/* Prepare to skip over the extra stuff in the exception frame.  */
-	if (regs->stkadj) {
-		struct pt_regs *tregs =
-			(struct pt_regs *)((ulong)regs + regs->stkadj);
+	अगर (regs->stkadj) अणु
+		काष्ठा pt_regs *tregs =
+			(काष्ठा pt_regs *)((uदीर्घ)regs + regs->stkadj);
 		pr_debug("Performing stackadjust=%04lx\n", regs->stkadj);
 		/* This must be copied with decreasing addresses to
                    handle overlaps.  */
 		tregs->vector = 0;
-		tregs->format = 0;
+		tregs->क्रमmat = 0;
 		tregs->pc = regs->pc;
 		tregs->sr = regs->sr;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline void
-handle_restart(struct pt_regs *regs, struct k_sigaction *ka, int has_handler)
-{
-	switch (regs->d0) {
-	case -ERESTARTNOHAND:
-		if (!has_handler)
-			goto do_restart;
+अटल अंतरभूत व्योम
+handle_restart(काष्ठा pt_regs *regs, काष्ठा k_sigaction *ka, पूर्णांक has_handler)
+अणु
+	चयन (regs->d0) अणु
+	हाल -ERESTARTNOHAND:
+		अगर (!has_handler)
+			जाओ करो_restart;
 		regs->d0 = -EINTR;
-		break;
+		अवरोध;
 
-	case -ERESTART_RESTARTBLOCK:
-		if (!has_handler) {
+	हाल -ERESTART_RESTARTBLOCK:
+		अगर (!has_handler) अणु
 			regs->d0 = __NR_restart_syscall;
 			regs->pc -= 2;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		regs->d0 = -EINTR;
-		break;
+		अवरोध;
 
-	case -ERESTARTSYS:
-		if (has_handler && !(ka->sa.sa_flags & SA_RESTART)) {
+	हाल -ERESTARTSYS:
+		अगर (has_handler && !(ka->sa.sa_flags & SA_RESTART)) अणु
 			regs->d0 = -EINTR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	case -ERESTARTNOINTR:
-	do_restart:
+	हाल -ERESTARTNOINTR:
+	करो_restart:
 		regs->d0 = regs->orig_d0;
 		regs->pc -= 2;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * OK, we're invoking a handler
  */
-static void
-handle_signal(struct ksignal *ksig, struct pt_regs *regs)
-{
+अटल व्योम
+handle_संकेत(काष्ठा kसंकेत *ksig, काष्ठा pt_regs *regs)
+अणु
 	sigset_t *oldset = sigmask_to_save();
-	int err;
-	/* are we from a system call? */
-	if (regs->orig_d0 >= 0)
-		/* If so, check system call restarting.. */
+	पूर्णांक err;
+	/* are we from a प्रणाली call? */
+	अगर (regs->orig_d0 >= 0)
+		/* If so, check प्रणाली call restarting.. */
 		handle_restart(regs, &ksig->ka, 1);
 
 	/* set up the stack frame */
-	if (ksig->ka.sa.sa_flags & SA_SIGINFO)
+	अगर (ksig->ka.sa.sa_flags & SA_SIGINFO)
 		err = setup_rt_frame(ksig, oldset, regs);
-	else
+	अन्यथा
 		err = setup_frame(ksig, oldset, regs);
 
-	signal_setup_done(err, ksig, 0);
+	संकेत_setup_करोne(err, ksig, 0);
 
-	if (test_thread_flag(TIF_DELAYED_TRACE)) {
+	अगर (test_thपढ़ो_flag(TIF_DELAYED_TRACE)) अणु
 		regs->sr &= ~0x8000;
 		send_sig(SIGTRAP, current, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Note that 'init' is a special process: it doesn't get signals it doesn't
- * want to handle. Thus you cannot kill init even with a SIGKILL even by
+ * want to handle. Thus you cannot समाप्त init even with a SIGKILL even by
  * mistake.
  */
-static void do_signal(struct pt_regs *regs)
-{
-	struct ksignal ksig;
+अटल व्योम करो_संकेत(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा kसंकेत ksig;
 
-	current->thread.esp0 = (unsigned long) regs;
+	current->thपढ़ो.esp0 = (अचिन्हित दीर्घ) regs;
 
-	if (get_signal(&ksig)) {
-		/* Whee!  Actually deliver the signal.  */
-		handle_signal(&ksig, regs);
-		return;
-	}
+	अगर (get_संकेत(&ksig)) अणु
+		/* Whee!  Actually deliver the संकेत.  */
+		handle_संकेत(&ksig, regs);
+		वापस;
+	पूर्ण
 
-	/* Did we come from a system call? */
-	if (regs->orig_d0 >= 0)
-		/* Restart the system call - no handlers present */
-		handle_restart(regs, NULL, 0);
+	/* Did we come from a प्रणाली call? */
+	अगर (regs->orig_d0 >= 0)
+		/* Restart the प्रणाली call - no handlers present */
+		handle_restart(regs, शून्य, 0);
 
-	/* If there's no signal to deliver, we just restore the saved mask.  */
+	/* If there's no संकेत to deliver, we just restore the saved mask.  */
 	restore_saved_sigmask();
-}
+पूर्ण
 
-void do_notify_resume(struct pt_regs *regs)
-{
-	if (test_thread_flag(TIF_NOTIFY_SIGNAL) ||
-	    test_thread_flag(TIF_SIGPENDING))
-		do_signal(regs);
+व्योम करो_notअगरy_resume(काष्ठा pt_regs *regs)
+अणु
+	अगर (test_thपढ़ो_flag(TIF_NOTIFY_SIGNAL) ||
+	    test_thपढ़ो_flag(TIF_SIGPENDING))
+		करो_संकेत(regs);
 
-	if (test_thread_flag(TIF_NOTIFY_RESUME))
-		tracehook_notify_resume(regs);
-}
+	अगर (test_thपढ़ो_flag(TIF_NOTIFY_RESUME))
+		tracehook_notअगरy_resume(regs);
+पूर्ण

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * AEGIS common definitions
  *
@@ -6,63 +7,63 @@
  * Copyright (c) 2018 Red Hat, Inc. All rights reserved.
  */
 
-#ifndef _CRYPTO_AEGIS_H
-#define _CRYPTO_AEGIS_H
+#अगर_अघोषित _CRYPTO_AEGIS_H
+#घोषणा _CRYPTO_AEGIS_H
 
-#include <crypto/aes.h>
-#include <linux/bitops.h>
-#include <linux/types.h>
+#समावेश <crypto/aes.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/types.h>
 
-#define AEGIS_BLOCK_SIZE 16
+#घोषणा AEGIS_BLOCK_SIZE 16
 
-union aegis_block {
-	__le64 words64[AEGIS_BLOCK_SIZE / sizeof(__le64)];
-	__le32 words32[AEGIS_BLOCK_SIZE / sizeof(__le32)];
+जोड़ aegis_block अणु
+	__le64 words64[AEGIS_BLOCK_SIZE / माप(__le64)];
+	__le32 words32[AEGIS_BLOCK_SIZE / माप(__le32)];
 	u8 bytes[AEGIS_BLOCK_SIZE];
-};
+पूर्ण;
 
-struct aegis_state;
+काष्ठा aegis_state;
 
-extern int aegis128_have_aes_insn;
+बाह्य पूर्णांक aegis128_have_aes_insn;
 
-#define AEGIS_BLOCK_ALIGN (__alignof__(union aegis_block))
-#define AEGIS_ALIGNED(p) IS_ALIGNED((uintptr_t)p, AEGIS_BLOCK_ALIGN)
+#घोषणा AEGIS_BLOCK_ALIGN (__alignof__(जोड़ aegis_block))
+#घोषणा AEGIS_ALIGNED(p) IS_ALIGNED((uपूर्णांकptr_t)p, AEGIS_BLOCK_ALIGN)
 
-bool crypto_aegis128_have_simd(void);
-void crypto_aegis128_update_simd(struct aegis_state *state, const void *msg);
-void crypto_aegis128_init_simd(struct aegis_state *state,
-			       const union aegis_block *key,
-			       const u8 *iv);
-void crypto_aegis128_encrypt_chunk_simd(struct aegis_state *state, u8 *dst,
-					const u8 *src, unsigned int size);
-void crypto_aegis128_decrypt_chunk_simd(struct aegis_state *state, u8 *dst,
-					const u8 *src, unsigned int size);
-int crypto_aegis128_final_simd(struct aegis_state *state,
-			       union aegis_block *tag_xor,
-			       unsigned int assoclen,
-			       unsigned int cryptlen,
-			       unsigned int authsize);
+bool crypto_aegis128_have_simd(व्योम);
+व्योम crypto_aegis128_update_simd(काष्ठा aegis_state *state, स्थिर व्योम *msg);
+व्योम crypto_aegis128_init_simd(काष्ठा aegis_state *state,
+			       स्थिर जोड़ aegis_block *key,
+			       स्थिर u8 *iv);
+व्योम crypto_aegis128_encrypt_chunk_simd(काष्ठा aegis_state *state, u8 *dst,
+					स्थिर u8 *src, अचिन्हित पूर्णांक size);
+व्योम crypto_aegis128_decrypt_chunk_simd(काष्ठा aegis_state *state, u8 *dst,
+					स्थिर u8 *src, अचिन्हित पूर्णांक size);
+पूर्णांक crypto_aegis128_final_simd(काष्ठा aegis_state *state,
+			       जोड़ aegis_block *tag_xor,
+			       अचिन्हित पूर्णांक assoclen,
+			       अचिन्हित पूर्णांक cryptlen,
+			       अचिन्हित पूर्णांक authsize);
 
-static __always_inline void crypto_aegis_block_xor(union aegis_block *dst,
-						   const union aegis_block *src)
-{
+अटल __always_अंतरभूत व्योम crypto_aegis_block_xor(जोड़ aegis_block *dst,
+						   स्थिर जोड़ aegis_block *src)
+अणु
 	dst->words64[0] ^= src->words64[0];
 	dst->words64[1] ^= src->words64[1];
-}
+पूर्ण
 
-static __always_inline void crypto_aegis_block_and(union aegis_block *dst,
-						   const union aegis_block *src)
-{
+अटल __always_अंतरभूत व्योम crypto_aegis_block_and(जोड़ aegis_block *dst,
+						   स्थिर जोड़ aegis_block *src)
+अणु
 	dst->words64[0] &= src->words64[0];
 	dst->words64[1] &= src->words64[1];
-}
+पूर्ण
 
-static __always_inline void crypto_aegis_aesenc(union aegis_block *dst,
-						const union aegis_block *src,
-						const union aegis_block *key)
-{
-	const u8  *s  = src->bytes;
-	const u32 *t = crypto_ft_tab[0];
+अटल __always_अंतरभूत व्योम crypto_aegis_aesenc(जोड़ aegis_block *dst,
+						स्थिर जोड़ aegis_block *src,
+						स्थिर जोड़ aegis_block *key)
+अणु
+	स्थिर u8  *s  = src->bytes;
+	स्थिर u32 *t = crypto_ft_tab[0];
 	u32 d0, d1, d2, d3;
 
 	d0 = t[s[ 0]] ^ rol32(t[s[ 5]], 8) ^ rol32(t[s[10]], 16) ^ rol32(t[s[15]], 24);
@@ -74,6 +75,6 @@ static __always_inline void crypto_aegis_aesenc(union aegis_block *dst,
 	dst->words32[1] = cpu_to_le32(d1) ^ key->words32[1];
 	dst->words32[2] = cpu_to_le32(d2) ^ key->words32[2];
 	dst->words32[3] = cpu_to_le32(d3) ^ key->words32[3];
-}
+पूर्ण
 
-#endif /* _CRYPTO_AEGIS_H */
+#पूर्ण_अगर /* _CRYPTO_AEGIS_H */

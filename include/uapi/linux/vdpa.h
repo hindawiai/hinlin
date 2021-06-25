@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
- * vdpa device management interface
+ * vdpa device management पूर्णांकerface
  * Copyright (c) 2020 Mellanox Technologies Ltd. All rights reserved.
  */
 
-#ifndef _UAPI_LINUX_VDPA_H_
-#define _UAPI_LINUX_VDPA_H_
+#अगर_अघोषित _UAPI_LINUX_VDPA_H_
+#घोषणा _UAPI_LINUX_VDPA_H_
 
-#define VDPA_GENL_NAME "vdpa"
-#define VDPA_GENL_VERSION 0x1
+#घोषणा VDPA_GENL_NAME "vdpa"
+#घोषणा VDPA_GENL_VERSION 0x1
 
-enum vdpa_command {
+क्रमागत vdpa_command अणु
 	VDPA_CMD_UNSPEC,
 	VDPA_CMD_MGMTDEV_NEW,
 	VDPA_CMD_MGMTDEV_GET,		/* can dump */
 	VDPA_CMD_DEV_NEW,
 	VDPA_CMD_DEV_DEL,
 	VDPA_CMD_DEV_GET,		/* can dump */
-};
+पूर्ण;
 
-enum vdpa_attr {
+क्रमागत vdpa_attr अणु
 	VDPA_ATTR_UNSPEC,
 
 	/* bus name (optional) + dev name together make the parent device handle */
@@ -35,6 +36,6 @@ enum vdpa_attr {
 
 	/* new attributes must be added above here */
 	VDPA_ATTR_MAX,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

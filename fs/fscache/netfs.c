@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* FS-Cache netfs (client) registration
  *
  * Copyright (C) 2008 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define FSCACHE_DEBUG_LEVEL COOKIE
-#include <linux/module.h>
-#include <linux/slab.h>
-#include "internal.h"
+#घोषणा FSCACHE_DEBUG_LEVEL COOKIE
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश "internal.h"
 
 /*
- * register a network filesystem for caching
+ * रेजिस्टर a network fileप्रणाली क्रम caching
  */
-int __fscache_register_netfs(struct fscache_netfs *netfs)
-{
-	struct fscache_cookie *candidate, *cookie;
+पूर्णांक __fscache_रेजिस्टर_netfs(काष्ठा fscache_netfs *netfs)
+अणु
+	काष्ठा fscache_cookie *candidate, *cookie;
 
 	_enter("{%s}", netfs->name);
 
-	/* allocate a cookie for the primary index */
+	/* allocate a cookie क्रम the primary index */
 	candidate = fscache_alloc_cookie(&fscache_fsdef_index,
 					 &fscache_fsdef_netfs_def,
-					 netfs->name, strlen(netfs->name),
-					 &netfs->version, sizeof(netfs->version),
+					 netfs->name, म_माप(netfs->name),
+					 &netfs->version, माप(netfs->version),
 					 netfs, 0);
-	if (!candidate) {
+	अगर (!candidate) अणु
 		_leave(" = -ENOMEM");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	candidate->flags = 1 << FSCACHE_COOKIE_ENABLED;
 
-	/* check the netfs type is not already present */
+	/* check the netfs type is not alपढ़ोy present */
 	cookie = fscache_hash_cookie(candidate);
-	if (!cookie)
-		goto already_registered;
-	if (cookie != candidate) {
+	अगर (!cookie)
+		जाओ alपढ़ोy_रेजिस्टरed;
+	अगर (cookie != candidate) अणु
 		trace_fscache_cookie(candidate, fscache_cookie_discard, 1);
-		fscache_free_cookie(candidate);
-	}
+		fscache_मुक्त_cookie(candidate);
+	पूर्ण
 
-	fscache_cookie_get(cookie->parent, fscache_cookie_get_register_netfs);
+	fscache_cookie_get(cookie->parent, fscache_cookie_get_रेजिस्टर_netfs);
 	atomic_inc(&cookie->parent->n_children);
 
 	netfs->primary_index = cookie;
@@ -49,26 +50,26 @@ int __fscache_register_netfs(struct fscache_netfs *netfs)
 	pr_notice("Netfs '%s' registered for caching\n", netfs->name);
 	trace_fscache_netfs(netfs);
 	_leave(" = 0");
-	return 0;
+	वापस 0;
 
-already_registered:
+alपढ़ोy_रेजिस्टरed:
 	fscache_cookie_put(candidate, fscache_cookie_put_dup_netfs);
 	_leave(" = -EEXIST");
-	return -EEXIST;
-}
-EXPORT_SYMBOL(__fscache_register_netfs);
+	वापस -EEXIST;
+पूर्ण
+EXPORT_SYMBOL(__fscache_रेजिस्टर_netfs);
 
 /*
- * unregister a network filesystem from the cache
+ * unरेजिस्टर a network fileप्रणाली from the cache
  * - all cookies must have been released first
  */
-void __fscache_unregister_netfs(struct fscache_netfs *netfs)
-{
+व्योम __fscache_unरेजिस्टर_netfs(काष्ठा fscache_netfs *netfs)
+अणु
 	_enter("{%s.%u}", netfs->name, netfs->version);
 
-	fscache_relinquish_cookie(netfs->primary_index, NULL, false);
+	fscache_relinquish_cookie(netfs->primary_index, शून्य, false);
 	pr_notice("Netfs '%s' unregistered from caching\n", netfs->name);
 
 	_leave("");
-}
-EXPORT_SYMBOL(__fscache_unregister_netfs);
+पूर्ण
+EXPORT_SYMBOL(__fscache_unरेजिस्टर_netfs);

@@ -1,212 +1,213 @@
+<शैली गुरु>
 /*
- * intc-2.c
+ * पूर्णांकc-2.c
  *
- * General interrupt controller code for the many ColdFire cores that use
- * interrupt controllers with 63 interrupt sources, organized as 56 fully-
- * programmable + 7 fixed-level interrupt sources. This includes the 523x
+ * General पूर्णांकerrupt controller code क्रम the many ColdFire cores that use
+ * पूर्णांकerrupt controllers with 63 पूर्णांकerrupt sources, organized as 56 fully-
+ * programmable + 7 fixed-level पूर्णांकerrupt sources. This includes the 523x
  * family, the 5270, 5271, 5274, 5275, and the 528x family which have two such
  * controllers, and the 547x and 548x families which have only one of them.
  *
- * The external 7 fixed interrupts are part the the Edge Port unit of these
+ * The बाह्यal 7 fixed पूर्णांकerrupts are part the the Edge Port unit of these
  * ColdFire parts. They can be configured as level or edge triggered.
  *
  * (C) Copyright 2009-2011, Greg Ungerer <gerg@snapgear.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/io.h>
-#include <asm/coldfire.h>
-#include <asm/mcfsim.h>
-#include <asm/traps.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/coldfire.h>
+#समावेश <यंत्र/mcfsim.h>
+#समावेश <यंत्र/traps.h>
 
 /*
- * Bit definitions for the ICR family of registers.
+ * Bit definitions क्रम the ICR family of रेजिस्टरs.
  */
-#define MCFSIM_ICR_LEVEL(l)	((l)<<3)	/* Level l intr */
-#define MCFSIM_ICR_PRI(p)	(p)		/* Priority p intr */
+#घोषणा MCFSIM_ICR_LEVEL(l)	((l)<<3)	/* Level l पूर्णांकr */
+#घोषणा MCFSIM_ICR_PRI(p)	(p)		/* Priority p पूर्णांकr */
 
 /*
- *	The EDGE Port interrupts are the fixed 7 external interrupts.
- *	They need some special treatment, for example they need to be acked.
+ *	The EDGE Port पूर्णांकerrupts are the fixed 7 बाह्यal पूर्णांकerrupts.
+ *	They need some special treaपंचांगent, क्रम example they need to be acked.
  */
-#define	EINT0	64	/* Is not actually used, but spot reserved for it */
-#define	EINT1	65	/* EDGE Port interrupt 1 */
-#define	EINT7	71	/* EDGE Port interrupt 7 */
+#घोषणा	EINT0	64	/* Is not actually used, but spot reserved क्रम it */
+#घोषणा	EINT1	65	/* EDGE Port पूर्णांकerrupt 1 */
+#घोषणा	EINT7	71	/* EDGE Port पूर्णांकerrupt 7 */
 
-#ifdef MCFICM_INTC1
-#define NR_VECS	128
-#else
-#define NR_VECS	64
-#endif
+#अगर_घोषित MCFICM_INTC1
+#घोषणा NR_VECS	128
+#अन्यथा
+#घोषणा NR_VECS	64
+#पूर्ण_अगर
 
-static void intc_irq_mask(struct irq_data *d)
-{
-	unsigned int irq = d->irq - MCFINT_VECBASE;
-	unsigned long imraddr;
+अटल व्योम पूर्णांकc_irq_mask(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक irq = d->irq - MCFINT_VECBASE;
+	अचिन्हित दीर्घ imraddr;
 	u32 val, imrbit;
 
-#ifdef MCFICM_INTC1
+#अगर_घोषित MCFICM_INTC1
 	imraddr = (irq & 0x40) ? MCFICM_INTC1 : MCFICM_INTC0;
-#else
+#अन्यथा
 	imraddr = MCFICM_INTC0;
-#endif
+#पूर्ण_अगर
 	imraddr += (irq & 0x20) ? MCFINTC_IMRH : MCFINTC_IMRL;
 	imrbit = 0x1 << (irq & 0x1f);
 
-	val = __raw_readl(imraddr);
-	__raw_writel(val | imrbit, imraddr);
-}
+	val = __raw_पढ़ोl(imraddr);
+	__raw_ग_लिखोl(val | imrbit, imraddr);
+पूर्ण
 
-static void intc_irq_unmask(struct irq_data *d)
-{
-	unsigned int irq = d->irq - MCFINT_VECBASE;
-	unsigned long imraddr;
+अटल व्योम पूर्णांकc_irq_unmask(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक irq = d->irq - MCFINT_VECBASE;
+	अचिन्हित दीर्घ imraddr;
 	u32 val, imrbit;
 
-#ifdef MCFICM_INTC1
+#अगर_घोषित MCFICM_INTC1
 	imraddr = (irq & 0x40) ? MCFICM_INTC1 : MCFICM_INTC0;
-#else
+#अन्यथा
 	imraddr = MCFICM_INTC0;
-#endif
+#पूर्ण_अगर
 	imraddr += ((irq & 0x20) ? MCFINTC_IMRH : MCFINTC_IMRL);
 	imrbit = 0x1 << (irq & 0x1f);
 
 	/* Don't set the "maskall" bit! */
-	if ((irq & 0x20) == 0)
+	अगर ((irq & 0x20) == 0)
 		imrbit |= 0x1;
 
-	val = __raw_readl(imraddr);
-	__raw_writel(val & ~imrbit, imraddr);
-}
+	val = __raw_पढ़ोl(imraddr);
+	__raw_ग_लिखोl(val & ~imrbit, imraddr);
+पूर्ण
 
 /*
- *	Only the external (or EDGE Port) interrupts need to be acknowledged
+ *	Only the बाह्यal (or EDGE Port) पूर्णांकerrupts need to be acknowledged
  *	here, as part of the IRQ handler. They only really need to be ack'ed
- *	if they are in edge triggered mode, but there is no harm in doing it
- *	for all types.
+ *	अगर they are in edge triggered mode, but there is no harm in करोing it
+ *	क्रम all types.
  */
-static void intc_irq_ack(struct irq_data *d)
-{
-	unsigned int irq = d->irq;
+अटल व्योम पूर्णांकc_irq_ack(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक irq = d->irq;
 
-	__raw_writeb(0x1 << (irq - EINT0), MCFEPORT_EPFR);
-}
+	__raw_ग_लिखोb(0x1 << (irq - EINT0), MCFEPORT_EPFR);
+पूर्ण
 
 /*
  *	Each vector needs a unique priority and level associated with it.
- *	We don't really care so much what they are, we don't rely on the
- *	traditional priority interrupt scheme of the m68k/ColdFire. This
- *	only needs to be set once for an interrupt, and we will never change
+ *	We करोn't really care so much what they are, we don't rely on the
+ *	traditional priority पूर्णांकerrupt scheme of the m68k/ColdFire. This
+ *	only needs to be set once क्रम an पूर्णांकerrupt, and we will never change
  *	these values once we have set them.
  */
-static u8 intc_intpri = MCFSIM_ICR_LEVEL(6) | MCFSIM_ICR_PRI(6);
+अटल u8 पूर्णांकc_पूर्णांकpri = MCFSIM_ICR_LEVEL(6) | MCFSIM_ICR_PRI(6);
 
-static unsigned int intc_irq_startup(struct irq_data *d)
-{
-	unsigned int irq = d->irq - MCFINT_VECBASE;
-	unsigned long icraddr;
+अटल अचिन्हित पूर्णांक पूर्णांकc_irq_startup(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक irq = d->irq - MCFINT_VECBASE;
+	अचिन्हित दीर्घ icraddr;
 
-#ifdef MCFICM_INTC1
+#अगर_घोषित MCFICM_INTC1
 	icraddr = (irq & 0x40) ? MCFICM_INTC1 : MCFICM_INTC0;
-#else
+#अन्यथा
 	icraddr = MCFICM_INTC0;
-#endif
+#पूर्ण_अगर
 	icraddr += MCFINTC_ICR0 + (irq & 0x3f);
-	if (__raw_readb(icraddr) == 0)
-		__raw_writeb(intc_intpri--, icraddr);
+	अगर (__raw_पढ़ोb(icraddr) == 0)
+		__raw_ग_लिखोb(पूर्णांकc_पूर्णांकpri--, icraddr);
 
 	irq = d->irq;
-	if ((irq >= EINT1) && (irq <= EINT7)) {
+	अगर ((irq >= EINT1) && (irq <= EINT7)) अणु
 		u8 v;
 
 		irq -= EINT0;
 
 		/* Set EPORT line as input */
-		v = __raw_readb(MCFEPORT_EPDDR);
-		__raw_writeb(v & ~(0x1 << irq), MCFEPORT_EPDDR);
+		v = __raw_पढ़ोb(MCFEPORT_EPDDR);
+		__raw_ग_लिखोb(v & ~(0x1 << irq), MCFEPORT_EPDDR);
 
-		/* Set EPORT line as interrupt source */
-		v = __raw_readb(MCFEPORT_EPIER);
-		__raw_writeb(v | (0x1 << irq), MCFEPORT_EPIER);
-	}
+		/* Set EPORT line as पूर्णांकerrupt source */
+		v = __raw_पढ़ोb(MCFEPORT_EPIER);
+		__raw_ग_लिखोb(v | (0x1 << irq), MCFEPORT_EPIER);
+	पूर्ण
 
-	intc_irq_unmask(d);
-	return 0;
-}
+	पूर्णांकc_irq_unmask(d);
+	वापस 0;
+पूर्ण
 
-static int intc_irq_set_type(struct irq_data *d, unsigned int type)
-{
-	unsigned int irq = d->irq;
+अटल पूर्णांक पूर्णांकc_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	अचिन्हित पूर्णांक irq = d->irq;
 	u16 pa, tb;
 
-	switch (type) {
-	case IRQ_TYPE_EDGE_RISING:
+	चयन (type) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
 		tb = 0x1;
-		break;
-	case IRQ_TYPE_EDGE_FALLING:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_FALLING:
 		tb = 0x2;
-		break;
-	case IRQ_TYPE_EDGE_BOTH:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_BOTH:
 		tb = 0x3;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Level triggered */
 		tb = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (tb)
+	अगर (tb)
 		irq_set_handler(irq, handle_edge_irq);
 
 	irq -= EINT0;
-	pa = __raw_readw(MCFEPORT_EPPAR);
+	pa = __raw_पढ़ोw(MCFEPORT_EPPAR);
 	pa = (pa & ~(0x3 << (irq * 2))) | (tb << (irq * 2));
-	__raw_writew(pa, MCFEPORT_EPPAR);
+	__raw_ग_लिखोw(pa, MCFEPORT_EPPAR);
 	
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct irq_chip intc_irq_chip = {
+अटल काष्ठा irq_chip पूर्णांकc_irq_chip = अणु
 	.name		= "CF-INTC",
-	.irq_startup	= intc_irq_startup,
-	.irq_mask	= intc_irq_mask,
-	.irq_unmask	= intc_irq_unmask,
-};
+	.irq_startup	= पूर्णांकc_irq_startup,
+	.irq_mask	= पूर्णांकc_irq_mask,
+	.irq_unmask	= पूर्णांकc_irq_unmask,
+पूर्ण;
 
-static struct irq_chip intc_irq_chip_edge_port = {
+अटल काष्ठा irq_chip पूर्णांकc_irq_chip_edge_port = अणु
 	.name		= "CF-INTC-EP",
-	.irq_startup	= intc_irq_startup,
-	.irq_mask	= intc_irq_mask,
-	.irq_unmask	= intc_irq_unmask,
-	.irq_ack	= intc_irq_ack,
-	.irq_set_type	= intc_irq_set_type,
-};
+	.irq_startup	= पूर्णांकc_irq_startup,
+	.irq_mask	= पूर्णांकc_irq_mask,
+	.irq_unmask	= पूर्णांकc_irq_unmask,
+	.irq_ack	= पूर्णांकc_irq_ack,
+	.irq_set_type	= पूर्णांकc_irq_set_type,
+पूर्ण;
 
-void __init init_IRQ(void)
-{
-	int irq;
+व्योम __init init_IRQ(व्योम)
+अणु
+	पूर्णांक irq;
 
-	/* Mask all interrupt sources */
-	__raw_writel(0x1, MCFICM_INTC0 + MCFINTC_IMRL);
-#ifdef MCFICM_INTC1
-	__raw_writel(0x1, MCFICM_INTC1 + MCFINTC_IMRL);
-#endif
+	/* Mask all पूर्णांकerrupt sources */
+	__raw_ग_लिखोl(0x1, MCFICM_INTC0 + MCFINTC_IMRL);
+#अगर_घोषित MCFICM_INTC1
+	__raw_ग_लिखोl(0x1, MCFICM_INTC1 + MCFINTC_IMRL);
+#पूर्ण_अगर
 
-	for (irq = MCFINT_VECBASE; (irq < MCFINT_VECBASE + NR_VECS); irq++) {
-		if ((irq >= EINT1) && (irq <=EINT7))
-			irq_set_chip(irq, &intc_irq_chip_edge_port);
-		else
-			irq_set_chip(irq, &intc_irq_chip);
+	क्रम (irq = MCFINT_VECBASE; (irq < MCFINT_VECBASE + NR_VECS); irq++) अणु
+		अगर ((irq >= EINT1) && (irq <=EINT7))
+			irq_set_chip(irq, &पूर्णांकc_irq_chip_edge_port);
+		अन्यथा
+			irq_set_chip(irq, &पूर्णांकc_irq_chip);
 		irq_set_irq_type(irq, IRQ_TYPE_LEVEL_HIGH);
 		irq_set_handler(irq, handle_level_irq);
-	}
-}
+	पूर्ण
+पूर्ण
 

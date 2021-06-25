@@ -1,123 +1,124 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2014 Google, Inc.
  */
 
-#ifndef __PISTACHIO_CLK_H
-#define __PISTACHIO_CLK_H
+#अगर_अघोषित __PISTACHIO_CLK_H
+#घोषणा __PISTACHIO_CLK_H
 
-#include <linux/clk-provider.h>
+#समावेश <linux/clk-provider.h>
 
-struct pistachio_gate {
-	unsigned int id;
-	unsigned long reg;
-	unsigned int shift;
-	const char *name;
-	const char *parent;
-};
+काष्ठा pistachio_gate अणु
+	अचिन्हित पूर्णांक id;
+	अचिन्हित दीर्घ reg;
+	अचिन्हित पूर्णांक shअगरt;
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *parent;
+पूर्ण;
 
-#define GATE(_id, _name, _pname, _reg, _shift)	\
-	{					\
+#घोषणा GATE(_id, _name, _pname, _reg, _shअगरt)	\
+	अणु					\
 		.id	= _id,			\
 		.reg	= _reg,			\
-		.shift	= _shift,		\
+		.shअगरt	= _shअगरt,		\
 		.name	= _name,		\
 		.parent = _pname,		\
-	}
+	पूर्ण
 
-struct pistachio_mux {
-	unsigned int id;
-	unsigned long reg;
-	unsigned int shift;
-	unsigned int num_parents;
-	const char *name;
-	const char **parents;
-};
+काष्ठा pistachio_mux अणु
+	अचिन्हित पूर्णांक id;
+	अचिन्हित दीर्घ reg;
+	अचिन्हित पूर्णांक shअगरt;
+	अचिन्हित पूर्णांक num_parents;
+	स्थिर अक्षर *name;
+	स्थिर अक्षर **parents;
+पूर्ण;
 
-#define PNAME(x) static const char *x[] __initconst
+#घोषणा PNAME(x) अटल स्थिर अक्षर *x[] __initस्थिर
 
-#define MUX(_id, _name, _pnames, _reg, _shift)			\
-	{							\
+#घोषणा MUX(_id, _name, _pnames, _reg, _shअगरt)			\
+	अणु							\
 		.id		= _id,				\
 		.reg		= _reg,				\
-		.shift		= _shift,			\
+		.shअगरt		= _shअगरt,			\
 		.name		= _name,			\
 		.parents	= _pnames,			\
 		.num_parents	= ARRAY_SIZE(_pnames)		\
-	}
+	पूर्ण
 
 
-struct pistachio_div {
-	unsigned int id;
-	unsigned long reg;
-	unsigned int width;
-	unsigned int div_flags;
-	const char *name;
-	const char *parent;
-};
+काष्ठा pistachio_भाग अणु
+	अचिन्हित पूर्णांक id;
+	अचिन्हित दीर्घ reg;
+	अचिन्हित पूर्णांक width;
+	अचिन्हित पूर्णांक भाग_flags;
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *parent;
+पूर्ण;
 
-#define DIV(_id, _name, _pname, _reg, _width)			\
-	{							\
+#घोषणा DIV(_id, _name, _pname, _reg, _width)			\
+	अणु							\
 		.id		= _id,				\
 		.reg		= _reg,				\
 		.width		= _width,			\
-		.div_flags	= 0,				\
+		.भाग_flags	= 0,				\
 		.name		= _name,			\
 		.parent		= _pname,			\
-	}
+	पूर्ण
 
-#define DIV_F(_id, _name, _pname, _reg, _width, _div_flags)	\
-	{							\
+#घोषणा DIV_F(_id, _name, _pname, _reg, _width, _भाग_flags)	\
+	अणु							\
 		.id		= _id,				\
 		.reg		= _reg,				\
 		.width		= _width,			\
-		.div_flags	= _div_flags,			\
+		.भाग_flags	= _भाग_flags,			\
 		.name		= _name,			\
 		.parent		= _pname,			\
-	}
+	पूर्ण
 
-struct pistachio_fixed_factor {
-	unsigned int id;
-	unsigned int div;
-	const char *name;
-	const char *parent;
-};
+काष्ठा pistachio_fixed_factor अणु
+	अचिन्हित पूर्णांक id;
+	अचिन्हित पूर्णांक भाग;
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *parent;
+पूर्ण;
 
-#define FIXED_FACTOR(_id, _name, _pname, _div)			\
-	{							\
+#घोषणा FIXED_FACTOR(_id, _name, _pname, _भाग)			\
+	अणु							\
 		.id		= _id,				\
-		.div		= _div,				\
+		.भाग		= _भाग,				\
 		.name		= _name,			\
 		.parent		= _pname,			\
-	}
+	पूर्ण
 
-struct pistachio_pll_rate_table {
-	unsigned long long fref;
-	unsigned long long fout;
-	unsigned long long refdiv;
-	unsigned long long fbdiv;
-	unsigned long long postdiv1;
-	unsigned long long postdiv2;
-	unsigned long long frac;
-};
+काष्ठा pistachio_pll_rate_table अणु
+	अचिन्हित दीर्घ दीर्घ fref;
+	अचिन्हित दीर्घ दीर्घ fout;
+	अचिन्हित दीर्घ दीर्घ refभाग;
+	अचिन्हित दीर्घ दीर्घ fbभाग;
+	अचिन्हित दीर्घ दीर्घ postभाग1;
+	अचिन्हित दीर्घ दीर्घ postभाग2;
+	अचिन्हित दीर्घ दीर्घ frac;
+पूर्ण;
 
-enum pistachio_pll_type {
+क्रमागत pistachio_pll_type अणु
 	PLL_GF40LP_LAINT,
 	PLL_GF40LP_FRAC,
-};
+पूर्ण;
 
-struct pistachio_pll {
-	unsigned int id;
-	unsigned long reg_base;
-	enum pistachio_pll_type type;
-	struct pistachio_pll_rate_table *rates;
-	unsigned int nr_rates;
-	const char *name;
-	const char *parent;
-};
+काष्ठा pistachio_pll अणु
+	अचिन्हित पूर्णांक id;
+	अचिन्हित दीर्घ reg_base;
+	क्रमागत pistachio_pll_type type;
+	काष्ठा pistachio_pll_rate_table *rates;
+	अचिन्हित पूर्णांक nr_rates;
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *parent;
+पूर्ण;
 
-#define PLL(_id, _name, _pname, _type, _reg, _rates)		\
-	{							\
+#घोषणा PLL(_id, _name, _pname, _type, _reg, _rates)		\
+	अणु							\
 		.id		= _id,				\
 		.reg_base	= _reg,				\
 		.type		= _type,			\
@@ -125,47 +126,47 @@ struct pistachio_pll {
 		.nr_rates	= ARRAY_SIZE(_rates),		\
 		.name		= _name,			\
 		.parent		= _pname,			\
-	}
+	पूर्ण
 
-#define PLL_FIXED(_id, _name, _pname, _type, _reg)		\
-	{							\
+#घोषणा PLL_FIXED(_id, _name, _pname, _type, _reg)		\
+	अणु							\
 		.id		= _id,				\
 		.reg_base	= _reg,				\
 		.type		= _type,			\
-		.rates		= NULL,				\
+		.rates		= शून्य,				\
 		.nr_rates	= 0,				\
 		.name		= _name,			\
 		.parent		= _pname,			\
-	}
+	पूर्ण
 
-struct pistachio_clk_provider {
-	struct device_node *node;
-	void __iomem *base;
-	struct clk_onecell_data clk_data;
-};
+काष्ठा pistachio_clk_provider अणु
+	काष्ठा device_node *node;
+	व्योम __iomem *base;
+	काष्ठा clk_onecell_data clk_data;
+पूर्ण;
 
-extern struct pistachio_clk_provider *
-pistachio_clk_alloc_provider(struct device_node *node, unsigned int num_clks);
-extern void pistachio_clk_register_provider(struct pistachio_clk_provider *p);
+बाह्य काष्ठा pistachio_clk_provider *
+pistachio_clk_alloc_provider(काष्ठा device_node *node, अचिन्हित पूर्णांक num_clks);
+बाह्य व्योम pistachio_clk_रेजिस्टर_provider(काष्ठा pistachio_clk_provider *p);
 
-extern void pistachio_clk_register_gate(struct pistachio_clk_provider *p,
-					struct pistachio_gate *gate,
-					unsigned int num);
-extern void pistachio_clk_register_mux(struct pistachio_clk_provider *p,
-				       struct pistachio_mux *mux,
-				       unsigned int num);
-extern void pistachio_clk_register_div(struct pistachio_clk_provider *p,
-				       struct pistachio_div *div,
-				       unsigned int num);
-extern void
-pistachio_clk_register_fixed_factor(struct pistachio_clk_provider *p,
-				    struct pistachio_fixed_factor *ff,
-				    unsigned int num);
-extern void pistachio_clk_register_pll(struct pistachio_clk_provider *p,
-				       struct pistachio_pll *pll,
-				       unsigned int num);
+बाह्य व्योम pistachio_clk_रेजिस्टर_gate(काष्ठा pistachio_clk_provider *p,
+					काष्ठा pistachio_gate *gate,
+					अचिन्हित पूर्णांक num);
+बाह्य व्योम pistachio_clk_रेजिस्टर_mux(काष्ठा pistachio_clk_provider *p,
+				       काष्ठा pistachio_mux *mux,
+				       अचिन्हित पूर्णांक num);
+बाह्य व्योम pistachio_clk_रेजिस्टर_भाग(काष्ठा pistachio_clk_provider *p,
+				       काष्ठा pistachio_भाग *भाग,
+				       अचिन्हित पूर्णांक num);
+बाह्य व्योम
+pistachio_clk_रेजिस्टर_fixed_factor(काष्ठा pistachio_clk_provider *p,
+				    काष्ठा pistachio_fixed_factor *ff,
+				    अचिन्हित पूर्णांक num);
+बाह्य व्योम pistachio_clk_रेजिस्टर_pll(काष्ठा pistachio_clk_provider *p,
+				       काष्ठा pistachio_pll *pll,
+				       अचिन्हित पूर्णांक num);
 
-extern void pistachio_clk_force_enable(struct pistachio_clk_provider *p,
-				       unsigned int *clk_ids, unsigned int num);
+बाह्य व्योम pistachio_clk_क्रमce_enable(काष्ठा pistachio_clk_provider *p,
+				       अचिन्हित पूर्णांक *clk_ids, अचिन्हित पूर्णांक num);
 
-#endif
+#पूर्ण_अगर

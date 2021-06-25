@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Squashfs - a compressed read only filesystem for Linux
+ * Squashfs - a compressed पढ़ो only fileप्रणाली क्रम Linux
  *
  * Copyright (c) 2010
  * Phillip Lougher <phillip@squashfs.org.uk>
@@ -8,264 +9,264 @@
  * xattr.c
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/fs.h>
-#include <linux/vfs.h>
-#include <linux/xattr.h>
-#include <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/vfs.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/slab.h>
 
-#include "squashfs_fs.h"
-#include "squashfs_fs_sb.h"
-#include "squashfs_fs_i.h"
-#include "squashfs.h"
+#समावेश "squashfs_fs.h"
+#समावेश "squashfs_fs_sb.h"
+#समावेश "squashfs_fs_i.h"
+#समावेश "squashfs.h"
 
-static const struct xattr_handler *squashfs_xattr_handler(int);
+अटल स्थिर काष्ठा xattr_handler *squashfs_xattr_handler(पूर्णांक);
 
-ssize_t squashfs_listxattr(struct dentry *d, char *buffer,
-	size_t buffer_size)
-{
-	struct inode *inode = d_inode(d);
-	struct super_block *sb = inode->i_sb;
-	struct squashfs_sb_info *msblk = sb->s_fs_info;
+sमाप_प्रकार squashfs_listxattr(काष्ठा dentry *d, अक्षर *buffer,
+	माप_प्रकार buffer_size)
+अणु
+	काष्ठा inode *inode = d_inode(d);
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा squashfs_sb_info *msblk = sb->s_fs_info;
 	u64 start = SQUASHFS_XATTR_BLK(squashfs_i(inode)->xattr)
 						 + msblk->xattr_table;
-	int offset = SQUASHFS_XATTR_OFFSET(squashfs_i(inode)->xattr);
-	int count = squashfs_i(inode)->xattr_count;
-	size_t rest = buffer_size;
-	int err;
+	पूर्णांक offset = SQUASHFS_XATTR_OFFSET(squashfs_i(inode)->xattr);
+	पूर्णांक count = squashfs_i(inode)->xattr_count;
+	माप_प्रकार rest = buffer_size;
+	पूर्णांक err;
 
-	/* check that the file system has xattrs */
-	if (msblk->xattr_id_table == NULL)
-		return -EOPNOTSUPP;
+	/* check that the file प्रणाली has xattrs */
+	अगर (msblk->xattr_id_table == शून्य)
+		वापस -EOPNOTSUPP;
 
-	/* loop reading each xattr name */
-	while (count--) {
-		struct squashfs_xattr_entry entry;
-		struct squashfs_xattr_val val;
-		const struct xattr_handler *handler;
-		int name_size;
+	/* loop पढ़ोing each xattr name */
+	जबतक (count--) अणु
+		काष्ठा squashfs_xattr_entry entry;
+		काष्ठा squashfs_xattr_val val;
+		स्थिर काष्ठा xattr_handler *handler;
+		पूर्णांक name_size;
 
-		err = squashfs_read_metadata(sb, &entry, &start, &offset,
-							sizeof(entry));
-		if (err < 0)
-			goto failed;
+		err = squashfs_पढ़ो_metadata(sb, &entry, &start, &offset,
+							माप(entry));
+		अगर (err < 0)
+			जाओ failed;
 
 		name_size = le16_to_cpu(entry.size);
 		handler = squashfs_xattr_handler(le16_to_cpu(entry.type));
-		if (handler && (!handler->list || handler->list(d))) {
-			const char *prefix = handler->prefix ?: handler->name;
-			size_t prefix_size = strlen(prefix);
+		अगर (handler && (!handler->list || handler->list(d))) अणु
+			स्थिर अक्षर *prefix = handler->prefix ?: handler->name;
+			माप_प्रकार prefix_size = म_माप(prefix);
 
-			if (buffer) {
-				if (prefix_size + name_size + 1 > rest) {
-					err = -ERANGE;
-					goto failed;
-				}
-				memcpy(buffer, prefix, prefix_size);
+			अगर (buffer) अणु
+				अगर (prefix_size + name_size + 1 > rest) अणु
+					err = -दुस्फल;
+					जाओ failed;
+				पूर्ण
+				स_नकल(buffer, prefix, prefix_size);
 				buffer += prefix_size;
-			}
-			err = squashfs_read_metadata(sb, buffer, &start,
+			पूर्ण
+			err = squashfs_पढ़ो_metadata(sb, buffer, &start,
 				&offset, name_size);
-			if (err < 0)
-				goto failed;
-			if (buffer) {
+			अगर (err < 0)
+				जाओ failed;
+			अगर (buffer) अणु
 				buffer[name_size] = '\0';
 				buffer += name_size + 1;
-			}
+			पूर्ण
 			rest -= prefix_size + name_size + 1;
-		} else  {
+		पूर्ण अन्यथा  अणु
 			/* no handler or insuffficient privileges, so skip */
-			err = squashfs_read_metadata(sb, NULL, &start,
+			err = squashfs_पढ़ो_metadata(sb, शून्य, &start,
 				&offset, name_size);
-			if (err < 0)
-				goto failed;
-		}
+			अगर (err < 0)
+				जाओ failed;
+		पूर्ण
 
 
-		/* skip remaining xattr entry */
-		err = squashfs_read_metadata(sb, &val, &start, &offset,
-						sizeof(val));
-		if (err < 0)
-			goto failed;
+		/* skip reमुख्यing xattr entry */
+		err = squashfs_पढ़ो_metadata(sb, &val, &start, &offset,
+						माप(val));
+		अगर (err < 0)
+			जाओ failed;
 
-		err = squashfs_read_metadata(sb, NULL, &start, &offset,
+		err = squashfs_पढ़ो_metadata(sb, शून्य, &start, &offset,
 						le32_to_cpu(val.vsize));
-		if (err < 0)
-			goto failed;
-	}
+		अगर (err < 0)
+			जाओ failed;
+	पूर्ण
 	err = buffer_size - rest;
 
 failed:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
-static int squashfs_xattr_get(struct inode *inode, int name_index,
-	const char *name, void *buffer, size_t buffer_size)
-{
-	struct super_block *sb = inode->i_sb;
-	struct squashfs_sb_info *msblk = sb->s_fs_info;
+अटल पूर्णांक squashfs_xattr_get(काष्ठा inode *inode, पूर्णांक name_index,
+	स्थिर अक्षर *name, व्योम *buffer, माप_प्रकार buffer_size)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा squashfs_sb_info *msblk = sb->s_fs_info;
 	u64 start = SQUASHFS_XATTR_BLK(squashfs_i(inode)->xattr)
 						 + msblk->xattr_table;
-	int offset = SQUASHFS_XATTR_OFFSET(squashfs_i(inode)->xattr);
-	int count = squashfs_i(inode)->xattr_count;
-	int name_len = strlen(name);
-	int err, vsize;
-	char *target = kmalloc(name_len, GFP_KERNEL);
+	पूर्णांक offset = SQUASHFS_XATTR_OFFSET(squashfs_i(inode)->xattr);
+	पूर्णांक count = squashfs_i(inode)->xattr_count;
+	पूर्णांक name_len = म_माप(name);
+	पूर्णांक err, vsize;
+	अक्षर *target = kदो_स्मृति(name_len, GFP_KERNEL);
 
-	if (target == NULL)
-		return  -ENOMEM;
+	अगर (target == शून्य)
+		वापस  -ENOMEM;
 
-	/* loop reading each xattr name */
-	for (; count; count--) {
-		struct squashfs_xattr_entry entry;
-		struct squashfs_xattr_val val;
-		int type, prefix, name_size;
+	/* loop पढ़ोing each xattr name */
+	क्रम (; count; count--) अणु
+		काष्ठा squashfs_xattr_entry entry;
+		काष्ठा squashfs_xattr_val val;
+		पूर्णांक type, prefix, name_size;
 
-		err = squashfs_read_metadata(sb, &entry, &start, &offset,
-							sizeof(entry));
-		if (err < 0)
-			goto failed;
+		err = squashfs_पढ़ो_metadata(sb, &entry, &start, &offset,
+							माप(entry));
+		अगर (err < 0)
+			जाओ failed;
 
 		name_size = le16_to_cpu(entry.size);
 		type = le16_to_cpu(entry.type);
 		prefix = type & SQUASHFS_XATTR_PREFIX_MASK;
 
-		if (prefix == name_index && name_size == name_len)
-			err = squashfs_read_metadata(sb, target, &start,
+		अगर (prefix == name_index && name_size == name_len)
+			err = squashfs_पढ़ो_metadata(sb, target, &start,
 						&offset, name_size);
-		else
-			err = squashfs_read_metadata(sb, NULL, &start,
+		अन्यथा
+			err = squashfs_पढ़ो_metadata(sb, शून्य, &start,
 						&offset, name_size);
-		if (err < 0)
-			goto failed;
+		अगर (err < 0)
+			जाओ failed;
 
-		if (prefix == name_index && name_size == name_len &&
-					strncmp(target, name, name_size) == 0) {
+		अगर (prefix == name_index && name_size == name_len &&
+					म_भेदन(target, name, name_size) == 0) अणु
 			/* found xattr */
-			if (type & SQUASHFS_XATTR_VALUE_OOL) {
+			अगर (type & SQUASHFS_XATTR_VALUE_OOL) अणु
 				__le64 xattr_val;
 				u64 xattr;
 				/* val is a reference to the real location */
-				err = squashfs_read_metadata(sb, &val, &start,
-						&offset, sizeof(val));
-				if (err < 0)
-					goto failed;
-				err = squashfs_read_metadata(sb, &xattr_val,
-					&start, &offset, sizeof(xattr_val));
-				if (err < 0)
-					goto failed;
+				err = squashfs_पढ़ो_metadata(sb, &val, &start,
+						&offset, माप(val));
+				अगर (err < 0)
+					जाओ failed;
+				err = squashfs_पढ़ो_metadata(sb, &xattr_val,
+					&start, &offset, माप(xattr_val));
+				अगर (err < 0)
+					जाओ failed;
 				xattr = le64_to_cpu(xattr_val);
 				start = SQUASHFS_XATTR_BLK(xattr) +
 							msblk->xattr_table;
 				offset = SQUASHFS_XATTR_OFFSET(xattr);
-			}
-			/* read xattr value */
-			err = squashfs_read_metadata(sb, &val, &start, &offset,
-							sizeof(val));
-			if (err < 0)
-				goto failed;
+			पूर्ण
+			/* पढ़ो xattr value */
+			err = squashfs_पढ़ो_metadata(sb, &val, &start, &offset,
+							माप(val));
+			अगर (err < 0)
+				जाओ failed;
 
 			vsize = le32_to_cpu(val.vsize);
-			if (buffer) {
-				if (vsize > buffer_size) {
-					err = -ERANGE;
-					goto failed;
-				}
-				err = squashfs_read_metadata(sb, buffer, &start,
+			अगर (buffer) अणु
+				अगर (vsize > buffer_size) अणु
+					err = -दुस्फल;
+					जाओ failed;
+				पूर्ण
+				err = squashfs_पढ़ो_metadata(sb, buffer, &start,
 					 &offset, vsize);
-				if (err < 0)
-					goto failed;
-			}
-			break;
-		}
+				अगर (err < 0)
+					जाओ failed;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		/* no match, skip remaining xattr entry */
-		err = squashfs_read_metadata(sb, &val, &start, &offset,
-							sizeof(val));
-		if (err < 0)
-			goto failed;
-		err = squashfs_read_metadata(sb, NULL, &start, &offset,
+		/* no match, skip reमुख्यing xattr entry */
+		err = squashfs_पढ़ो_metadata(sb, &val, &start, &offset,
+							माप(val));
+		अगर (err < 0)
+			जाओ failed;
+		err = squashfs_पढ़ो_metadata(sb, शून्य, &start, &offset,
 						le32_to_cpu(val.vsize));
-		if (err < 0)
-			goto failed;
-	}
+		अगर (err < 0)
+			जाओ failed;
+	पूर्ण
 	err = count ? vsize : -ENODATA;
 
 failed:
-	kfree(target);
-	return err;
-}
+	kमुक्त(target);
+	वापस err;
+पूर्ण
 
 
-static int squashfs_xattr_handler_get(const struct xattr_handler *handler,
-				      struct dentry *unused,
-				      struct inode *inode,
-				      const char *name,
-				      void *buffer, size_t size)
-{
-	return squashfs_xattr_get(inode, handler->flags, name,
+अटल पूर्णांक squashfs_xattr_handler_get(स्थिर काष्ठा xattr_handler *handler,
+				      काष्ठा dentry *unused,
+				      काष्ठा inode *inode,
+				      स्थिर अक्षर *name,
+				      व्योम *buffer, माप_प्रकार size)
+अणु
+	वापस squashfs_xattr_get(inode, handler->flags, name,
 		buffer, size);
-}
+पूर्ण
 
 /*
  * User namespace support
  */
-static const struct xattr_handler squashfs_xattr_user_handler = {
+अटल स्थिर काष्ठा xattr_handler squashfs_xattr_user_handler = अणु
 	.prefix	= XATTR_USER_PREFIX,
 	.flags	= SQUASHFS_XATTR_USER,
 	.get	= squashfs_xattr_handler_get
-};
+पूर्ण;
 
 /*
  * Trusted namespace support
  */
-static bool squashfs_trusted_xattr_handler_list(struct dentry *d)
-{
-	return capable(CAP_SYS_ADMIN);
-}
+अटल bool squashfs_trusted_xattr_handler_list(काष्ठा dentry *d)
+अणु
+	वापस capable(CAP_SYS_ADMIN);
+पूर्ण
 
-static const struct xattr_handler squashfs_xattr_trusted_handler = {
+अटल स्थिर काष्ठा xattr_handler squashfs_xattr_trusted_handler = अणु
 	.prefix	= XATTR_TRUSTED_PREFIX,
 	.flags	= SQUASHFS_XATTR_TRUSTED,
 	.list	= squashfs_trusted_xattr_handler_list,
 	.get	= squashfs_xattr_handler_get
-};
+पूर्ण;
 
 /*
  * Security namespace support
  */
-static const struct xattr_handler squashfs_xattr_security_handler = {
+अटल स्थिर काष्ठा xattr_handler squashfs_xattr_security_handler = अणु
 	.prefix	= XATTR_SECURITY_PREFIX,
 	.flags	= SQUASHFS_XATTR_SECURITY,
 	.get	= squashfs_xattr_handler_get
-};
+पूर्ण;
 
-static const struct xattr_handler *squashfs_xattr_handler(int type)
-{
-	if (type & ~(SQUASHFS_XATTR_PREFIX_MASK | SQUASHFS_XATTR_VALUE_OOL))
+अटल स्थिर काष्ठा xattr_handler *squashfs_xattr_handler(पूर्णांक type)
+अणु
+	अगर (type & ~(SQUASHFS_XATTR_PREFIX_MASK | SQUASHFS_XATTR_VALUE_OOL))
 		/* ignore unrecognised type */
-		return NULL;
+		वापस शून्य;
 
-	switch (type & SQUASHFS_XATTR_PREFIX_MASK) {
-	case SQUASHFS_XATTR_USER:
-		return &squashfs_xattr_user_handler;
-	case SQUASHFS_XATTR_TRUSTED:
-		return &squashfs_xattr_trusted_handler;
-	case SQUASHFS_XATTR_SECURITY:
-		return &squashfs_xattr_security_handler;
-	default:
+	चयन (type & SQUASHFS_XATTR_PREFIX_MASK) अणु
+	हाल SQUASHFS_XATTR_USER:
+		वापस &squashfs_xattr_user_handler;
+	हाल SQUASHFS_XATTR_TRUSTED:
+		वापस &squashfs_xattr_trusted_handler;
+	हाल SQUASHFS_XATTR_SECURITY:
+		वापस &squashfs_xattr_security_handler;
+	शेष:
 		/* ignore unrecognised type */
-		return NULL;
-	}
-}
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-const struct xattr_handler *squashfs_xattr_handlers[] = {
+स्थिर काष्ठा xattr_handler *squashfs_xattr_handlers[] = अणु
 	&squashfs_xattr_user_handler,
 	&squashfs_xattr_trusted_handler,
 	&squashfs_xattr_security_handler,
-	NULL
-};
+	शून्य
+पूर्ण;
 

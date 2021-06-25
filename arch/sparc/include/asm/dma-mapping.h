@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ___ASM_SPARC_DMA_MAPPING_H
-#define ___ASM_SPARC_DMA_MAPPING_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ___ASM_SPARC_DMA_MAPPING_H
+#घोषणा ___ASM_SPARC_DMA_MAPPING_H
 
-extern const struct dma_map_ops *dma_ops;
+बाह्य स्थिर काष्ठा dma_map_ops *dma_ops;
 
-static inline const struct dma_map_ops *get_arch_dma_ops(struct bus_type *bus)
-{
+अटल अंतरभूत स्थिर काष्ठा dma_map_ops *get_arch_dma_ops(काष्ठा bus_type *bus)
+अणु
 	/* sparc32 uses per-device dma_ops */
-	return IS_ENABLED(CONFIG_SPARC64) ? dma_ops : NULL;
-}
+	वापस IS_ENABLED(CONFIG_SPARC64) ? dma_ops : शून्य;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

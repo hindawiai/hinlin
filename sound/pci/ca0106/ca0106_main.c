@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (c) 2004 James Courtier-Dutton <James@superbug.demon.co.uk>
  *  Driver CA0106 chips. e.g. Sound Blaster Audigy LS and Live 24bit
@@ -11,16 +12,16 @@
  *    SPDIF digital playback of PCM stereo and AC3/DTS works.
  *    (One can use a standard mono mini-jack to one RCA plugs cable.
  *     or one can use a standard stereo mini-jack to two RCA plugs cable.
- *     Plug one of the RCA plugs into the Coax input of the external decoder/receiver.)
- *    ( In theory one could output 3 different AC3 streams at once, to 3 different SPDIF outputs. )
+ *     Plug one of the RCA plugs पूर्णांकo the Coax input of the बाह्यal decoder/receiver.)
+ *    ( In theory one could output 3 dअगरferent AC3 streams at once, to 3 dअगरferent SPDIF outमाला_दो. )
  *    Notes on how to capture sound:
  *      The AC97 is used in the PLAYBACK direction.
- *      The output from the AC97 chip, instead of reaching the speakers, is fed into the Philips 1361T ADC.
+ *      The output from the AC97 chip, instead of reaching the speakers, is fed पूर्णांकo the Philips 1361T ADC.
  *      So, to record from the MIC, set the MIC Playback volume to max,
  *      unmute the MIC and turn up the MASTER Playback volume.
  *      So, to prevent feedback when capturing, minimise the "Capture feedback into Playback" volume.
  *   
- *    The only playback controls that currently do anything are: -
+ *    The only playback controls that currently करो anything are: -
  *    Analog Front
  *    Analog Rear
  *    Analog Center/LFE
@@ -29,61 +30,61 @@
  *    SPDIF Center/LFE
  *   
  *    For capture from Mic in or Line in.
- *    Digital/Analog ( switch must be in Analog mode for CAPTURE. )
+ *    Digital/Analog ( चयन must be in Analog mode क्रम CAPTURE. )
  * 
- *    CAPTURE feedback into PLAYBACK
+ *    CAPTURE feedback पूर्णांकo PLAYBACK
  * 
  *  Changelog:
- *    Support interrupts per period.
+ *    Support पूर्णांकerrupts per period.
  *    Removed noise from Center/LFE channel when in Analog mode.
- *    Rename and remove mixer controls.
+ *    Rename and हटाओ mixer controls.
  *  0.0.6
- *    Use separate card based DMA buffer for periods table list.
+ *    Use separate card based DMA buffer क्रम periods table list.
  *  0.0.7
- *    Change remove and rename ctrls into lists.
+ *    Change हटाओ and नाम ctrls पूर्णांकo lists.
  *  0.0.8
  *    Try to fix capture sources.
  *  0.0.9
  *    Fix AC3 output.
- *    Enable S32_LE format support.
+ *    Enable S32_LE क्रमmat support.
  *  0.0.10
- *    Enable playback 48000 and 96000 rates. (Rates other that these do not work, even with "plug:front".)
+ *    Enable playback 48000 and 96000 rates. (Rates other that these करो not work, even with "plug:front".)
  *  0.0.11
  *    Add Model name recognition.
  *  0.0.12
- *    Correct interrupt timing. interrupt at end of period, instead of in the middle of a playback period.
+ *    Correct पूर्णांकerrupt timing. पूर्णांकerrupt at end of period, instead of in the middle of a playback period.
  *    Remove redundent "voice" handling.
  *  0.0.13
- *    Single trigger call for multi channels.
+ *    Single trigger call क्रम multi channels.
  *  0.0.14
- *    Set limits based on what the sound card hardware can do.
+ *    Set limits based on what the sound card hardware can करो.
  *    playback periods_min=2, periods_max=8
- *    capture hw constraints require period_size = n * 64 bytes.
- *    playback hw constraints require period_size = n * 64 bytes.
+ *    capture hw स्थिरraपूर्णांकs require period_size = n * 64 bytes.
+ *    playback hw स्थिरraपूर्णांकs require period_size = n * 64 bytes.
  *  0.0.15
  *    Minor updates.
  *  0.0.16
  *    Implement 192000 sample rate.
  *  0.0.17
- *    Add support for SB0410 and SB0413.
+ *    Add support क्रम SB0410 and SB0413.
  *  0.0.18
- *    Modified Copyright message.
+ *    Modअगरied Copyright message.
  *  0.0.19
- *    Finally fix support for SB Live 24 bit. SB0410 and SB0413.
+ *    Finally fix support क्रम SB Live 24 bit. SB0410 and SB0413.
  *    The output codec needs resetting, otherwise all output is muted.
  *  0.0.20
  *    Merge "pci_disable_device(pci);" fixes.
  *  0.0.21
  *    Add 4 capture channels. (SPDIF only comes in on channel 0. )
- *    Add SPDIF capture using optional digital I/O module for SB Live 24bit. (Analog capture does not yet work.)
+ *    Add SPDIF capture using optional digital I/O module क्रम SB Live 24bit. (Analog capture करोes not yet work.)
  *  0.0.22
- *    Add support for MSI K8N Diamond Motherboard with onboard SB Live 24bit without AC97. From kiksen, bug #901
+ *    Add support क्रम MSI K8N Diamond Motherboard with onboard SB Live 24bit without AC97. From kiksen, bug #901
  *  0.0.23
- *    Implement support for Line-in capture on SB Live 24bit.
+ *    Implement support क्रम Line-in capture on SB Live 24bit.
  *  0.0.24
- *    Add support for mute control on SB Live 24bit (cards w/ SPI DAC)
+ *    Add support क्रम mute control on SB Live 24bit (cards w/ SPI DAC)
  *  0.0.25
- *    Powerdown SPI DAC channels when not in use
+ *    Powerकरोwn SPI DAC channels when not in use
  *
  *  BUGS:
  *    Some stability problems when unloading the snd-ca0106 kernel module.
@@ -107,7 +108,7 @@
  *    AC97 Codec: None
  *    ADC: WM8775EDS (4 Channel)
  *    DAC: CS4382 (114 dB, 24-Bit, 192 kHz, 8-Channel D/A Converter with DSD Support)
- *    SPDIF Out control switches between Mic in and SPDIF out.
+ *    SPDIF Out control चयनes between Mic in and SPDIF out.
  *    No sound out or mic input working yet.
  * 
  *  GENERAL INFO:
@@ -121,51 +122,51 @@
  *  This code was initially based on code from ALSA's emu10k1x.c which is:
  *  Copyright (c) by Francisco Moraes <fmoraes@nc.rr.com>
  */
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/dma-mapping.h>
-#include <sound/core.h>
-#include <sound/initval.h>
-#include <sound/pcm.h>
-#include <sound/ac97_codec.h>
-#include <sound/info.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <sound/core.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/ac97_codec.h>
+#समावेश <sound/info.h>
 
 MODULE_AUTHOR("James Courtier-Dutton <James@superbug.demon.co.uk>");
 MODULE_DESCRIPTION("CA0106");
 MODULE_LICENSE("GPL");
 
 // module parameters (see "Module Parameters")
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
-static uint subsystem[SNDRV_CARDS]; /* Force card subsystem model */
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
+अटल uपूर्णांक subप्रणाली[SNDRV_CARDS]; /* Force card subप्रणाली model */
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for the CA0106 soundcard.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for the CA0106 soundcard.");
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "Enable the CA0106 soundcard.");
-module_param_array(subsystem, uint, NULL, 0444);
-MODULE_PARM_DESC(subsystem, "Force card subsystem model.");
+module_param_array(subप्रणाली, uपूर्णांक, शून्य, 0444);
+MODULE_PARM_DESC(subप्रणाली, "Force card subsystem model.");
 
-#include "ca0106.h"
+#समावेश "ca0106.h"
 
-static const struct snd_ca0106_details ca0106_chip_details[] = {
-	 /* Sound Blaster X-Fi Extreme Audio. This does not have an AC97. 53SB079000000 */
+अटल स्थिर काष्ठा snd_ca0106_details ca0106_chip_details[] = अणु
+	 /* Sound Blaster X-Fi Extreme Audio. This करोes not have an AC97. 53SB079000000 */
 	 /* It is really just a normal SB Live 24bit. */
 	 /* Tested:
 	  * See ALSA bug#3251
 	  */
-	 { .serial = 0x10131102,
+	 अणु .serial = 0x10131102,
 	   .name   = "X-Fi Extreme Audio [SBxxxx]",
 	   .gpio_type = 1,
-	   .i2c_adc = 1 } ,
-	 /* Sound Blaster X-Fi Extreme Audio. This does not have an AC97. 53SB079000000 */
+	   .i2c_adc = 1 पूर्ण ,
+	 /* Sound Blaster X-Fi Extreme Audio. This करोes not have an AC97. 53SB079000000 */
 	 /* It is really just a normal SB Live 24bit. */
 	 /*
  	  * CTRL:CA0111-WTLF
@@ -179,115 +180,115 @@ static const struct snd_ca0106_details ca0106_chip_details[] = {
 	  * Capture from Line in.
 	  * Playback to digital out.
 	  */
-	 { .serial = 0x10121102,
+	 अणु .serial = 0x10121102,
 	   .name   = "X-Fi Extreme Audio [SB0790]",
 	   .gpio_type = 1,
-	   .i2c_adc = 1 } ,
-	 /* New Dell Sound Blaster Live! 7.1 24bit. This does not have an AC97.  */
+	   .i2c_adc = 1 पूर्ण ,
+	 /* New Dell Sound Blaster Live! 7.1 24bit. This करोes not have an AC97.  */
 	 /* AudigyLS[SB0310] */
-	 { .serial = 0x10021102,
+	 अणु .serial = 0x10021102,
 	   .name   = "AudigyLS [SB0310]",
-	   .ac97   = 1 } , 
+	   .ac97   = 1 पूर्ण , 
 	 /* Unknown AudigyLS that also says SB0310 on it */
-	 { .serial = 0x10051102,
+	 अणु .serial = 0x10051102,
 	   .name   = "AudigyLS [SB0310b]",
-	   .ac97   = 1 } ,
-	 /* New Sound Blaster Live! 7.1 24bit. This does not have an AC97. 53SB041000001 */
-	 { .serial = 0x10061102,
+	   .ac97   = 1 पूर्ण ,
+	 /* New Sound Blaster Live! 7.1 24bit. This करोes not have an AC97. 53SB041000001 */
+	 अणु .serial = 0x10061102,
 	   .name   = "Live! 7.1 24bit [SB0410]",
 	   .gpio_type = 1,
-	   .i2c_adc = 1 } ,
-	 /* New Dell Sound Blaster Live! 7.1 24bit. This does not have an AC97.  */
-	 { .serial = 0x10071102,
+	   .i2c_adc = 1 पूर्ण ,
+	 /* New Dell Sound Blaster Live! 7.1 24bit. This करोes not have an AC97.  */
+	 अणु .serial = 0x10071102,
 	   .name   = "Live! 7.1 24bit [SB0413]",
 	   .gpio_type = 1,
-	   .i2c_adc = 1 } ,
-	 /* New Audigy SE. Has a different DAC. */
+	   .i2c_adc = 1 पूर्ण ,
+	 /* New Audigy SE. Has a dअगरferent DAC. */
 	 /* SB0570:
 	  * CTRL:CA0106-DAT
 	  * ADC: WM8775EDS
 	  * DAC: WM8768GEDS
 	  */
-	 { .serial = 0x100a1102,
+	 अणु .serial = 0x100a1102,
 	   .name   = "Audigy SE [SB0570]",
 	   .gpio_type = 1,
 	   .i2c_adc = 1,
-	   .spi_dac = 0x4021 } ,
-	 /* New Audigy LS. Has a different DAC. */
+	   .spi_dac = 0x4021 पूर्ण ,
+	 /* New Audigy LS. Has a dअगरferent DAC. */
 	 /* SB0570:
 	  * CTRL:CA0106-DAT
 	  * ADC: WM8775EDS
 	  * DAC: WM8768GEDS
 	  */
-	 { .serial = 0x10111102,
+	 अणु .serial = 0x10111102,
 	   .name   = "Audigy SE OEM [SB0570a]",
 	   .gpio_type = 1,
 	   .i2c_adc = 1,
-	   .spi_dac = 0x4021 } ,
+	   .spi_dac = 0x4021 पूर्ण ,
 	/* Sound Blaster 5.1vx
 	 * Tested: Playback on front, rear, center/lfe speakers
 	 * Not-Tested: Capture
 	 */
-	{ .serial = 0x10041102,
+	अणु .serial = 0x10041102,
 	  .name   = "Sound Blaster 5.1vx [SB1070]",
 	  .gpio_type = 1,
 	  .i2c_adc = 0,
 	  .spi_dac = 0x0124
-	 } ,
+	 पूर्ण ,
 	 /* MSI K8N Diamond Motherboard with onboard SB Live 24bit without AC97 */
 	 /* SB0438
 	  * CTRL:CA0106-DAT
 	  * ADC: WM8775SEDS
 	  * DAC: CS4382-KQZ
 	  */
-	 { .serial = 0x10091462,
+	 अणु .serial = 0x10091462,
 	   .name   = "MSI K8N Diamond MB [SB0438]",
 	   .gpio_type = 2,
-	   .i2c_adc = 1 } ,
+	   .i2c_adc = 1 पूर्ण ,
 	 /* MSI K8N Diamond PLUS MB */
-	 { .serial = 0x10091102,
+	 अणु .serial = 0x10091102,
 	   .name   = "MSI K8N Diamond MB",
 	   .gpio_type = 2,
 	   .i2c_adc = 1,
-	   .spi_dac = 0x4021 } ,
+	   .spi_dac = 0x4021 पूर्ण ,
 	/* Giga-byte GA-G1975X mobo
 	 * Novell bnc#395807
 	 */
 	/* FIXME: the GPIO and I2C setting aren't tested well */
-	{ .serial = 0x1458a006,
+	अणु .serial = 0x1458a006,
 	  .name = "Giga-byte GA-G1975X",
 	  .gpio_type = 1,
-	  .i2c_adc = 1 },
-	 /* Shuttle XPC SD31P which has an onboard Creative Labs
+	  .i2c_adc = 1 पूर्ण,
+	 /* Shuttle XPC SD31P which has an onboard Creative Lअसल
 	  * Sound Blaster Live! 24-bit EAX
 	  * high-definition 7.1 audio processor".
 	  * Added using info from andrewvegan in alsa bug #1298
 	  */
-	 { .serial = 0x30381297,
+	 अणु .serial = 0x30381297,
 	   .name   = "Shuttle XPC SD31P [SD31P]",
 	   .gpio_type = 1,
-	   .i2c_adc = 1 } ,
-	/* Shuttle XPC SD11G5 which has an onboard Creative Labs
+	   .i2c_adc = 1 पूर्ण ,
+	/* Shuttle XPC SD11G5 which has an onboard Creative Lअसल
 	 * Sound Blaster Live! 24-bit EAX
 	 * high-definition 7.1 audio processor".
 	 * Fixes ALSA bug#1600
          */
-	{ .serial = 0x30411297,
+	अणु .serial = 0x30411297,
 	  .name = "Shuttle XPC SD11G5 [SD11G5]",
 	  .gpio_type = 1,
-	  .i2c_adc = 1 } ,
-	 { .serial = 0,
-	   .name   = "AudigyLS [Unknown]" }
-};
+	  .i2c_adc = 1 पूर्ण ,
+	 अणु .serial = 0,
+	   .name   = "AudigyLS [Unknown]" पूर्ण
+पूर्ण;
 
 /* hardware definition */
-static const struct snd_pcm_hardware snd_ca0106_playback_hw = {
+अटल स्थिर काष्ठा snd_pcm_hardware snd_ca0106_playback_hw = अणु
 	.info =			SNDRV_PCM_INFO_MMAP | 
 				SNDRV_PCM_INFO_INTERLEAVED |
 				SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				SNDRV_PCM_INFO_MMAP_VALID |
 				SNDRV_PCM_INFO_SYNC_START,
-	.formats =		SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S32_LE,
+	.क्रमmats =		SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S32_LE,
 	.rates =		(SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_96000 |
 				 SNDRV_PCM_RATE_192000),
 	.rate_min =		48000,
@@ -299,24 +300,24 @@ static const struct snd_pcm_hardware snd_ca0106_playback_hw = {
 	.period_bytes_max =	(65536 - 64),
 	.periods_min =		2,
 	.periods_max =		8,
-	.fifo_size =		0,
-};
+	.fअगरo_size =		0,
+पूर्ण;
 
-static const struct snd_pcm_hardware snd_ca0106_capture_hw = {
+अटल स्थिर काष्ठा snd_pcm_hardware snd_ca0106_capture_hw = अणु
 	.info =			(SNDRV_PCM_INFO_MMAP | 
 				 SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				 SNDRV_PCM_INFO_MMAP_VALID),
-	.formats =		SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S32_LE,
-#if 0 /* FIXME: looks like 44.1kHz capture causes noisy output on 48kHz */
+	.क्रमmats =		SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S32_LE,
+#अगर 0 /* FIXME: looks like 44.1kHz capture causes noisy output on 48kHz */
 	.rates =		(SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000 |
 				 SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000),
 	.rate_min =		44100,
-#else
+#अन्यथा
 	.rates =		(SNDRV_PCM_RATE_48000 |
 				 SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000),
 	.rate_min =		48000,
-#endif /* FIXME */
+#पूर्ण_अगर /* FIXME */
 	.rate_max =		192000,
 	.channels_min =		2,
 	.channels_max =		2,
@@ -325,15 +326,15 @@ static const struct snd_pcm_hardware snd_ca0106_capture_hw = {
 	.period_bytes_max =	32768 - 64,
 	.periods_min =		2,
 	.periods_max =		2,
-	.fifo_size =		0,
-};
+	.fअगरo_size =		0,
+पूर्ण;
 
-unsigned int snd_ca0106_ptr_read(struct snd_ca0106 * emu, 
-					  unsigned int reg, 
-					  unsigned int chn)
-{
-	unsigned long flags;
-	unsigned int regptr, val;
+अचिन्हित पूर्णांक snd_ca0106_ptr_पढ़ो(काष्ठा snd_ca0106 * emu, 
+					  अचिन्हित पूर्णांक reg, 
+					  अचिन्हित पूर्णांक chn)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक regptr, val;
   
 	regptr = (reg << 16) | chn;
 
@@ -341,16 +342,16 @@ unsigned int snd_ca0106_ptr_read(struct snd_ca0106 * emu,
 	outl(regptr, emu->port + PTR);
 	val = inl(emu->port + DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-void snd_ca0106_ptr_write(struct snd_ca0106 *emu, 
-				   unsigned int reg, 
-				   unsigned int chn, 
-				   unsigned int data)
-{
-	unsigned int regptr;
-	unsigned long flags;
+व्योम snd_ca0106_ptr_ग_लिखो(काष्ठा snd_ca0106 *emu, 
+				   अचिन्हित पूर्णांक reg, 
+				   अचिन्हित पूर्णांक chn, 
+				   अचिन्हित पूर्णांक data)
+अणु
+	अचिन्हित पूर्णांक regptr;
+	अचिन्हित दीर्घ flags;
 
 	regptr = (reg << 16) | chn;
 
@@ -358,212 +359,212 @@ void snd_ca0106_ptr_write(struct snd_ca0106 *emu,
 	outl(regptr, emu->port + PTR);
 	outl(data, emu->port + DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-}
+पूर्ण
 
-int snd_ca0106_spi_write(struct snd_ca0106 * emu,
-				   unsigned int data)
-{
-	unsigned int reset, set;
-	unsigned int reg, tmp;
-	int n, result;
+पूर्णांक snd_ca0106_spi_ग_लिखो(काष्ठा snd_ca0106 * emu,
+				   अचिन्हित पूर्णांक data)
+अणु
+	अचिन्हित पूर्णांक reset, set;
+	अचिन्हित पूर्णांक reg, पंचांगp;
+	पूर्णांक n, result;
 	reg = SPI;
-	if (data > 0xffff) /* Only 16bit values allowed */
-		return 1;
-	tmp = snd_ca0106_ptr_read(emu, reg, 0);
-	reset = (tmp & ~0x3ffff) | 0x20000; /* Set xxx20000 */
+	अगर (data > 0xffff) /* Only 16bit values allowed */
+		वापस 1;
+	पंचांगp = snd_ca0106_ptr_पढ़ो(emu, reg, 0);
+	reset = (पंचांगp & ~0x3ffff) | 0x20000; /* Set xxx20000 */
 	set = reset | 0x10000; /* Set xxx1xxxx */
-	snd_ca0106_ptr_write(emu, reg, 0, reset | data);
-	tmp = snd_ca0106_ptr_read(emu, reg, 0); /* write post */
-	snd_ca0106_ptr_write(emu, reg, 0, set | data);
+	snd_ca0106_ptr_ग_लिखो(emu, reg, 0, reset | data);
+	पंचांगp = snd_ca0106_ptr_पढ़ो(emu, reg, 0); /* ग_लिखो post */
+	snd_ca0106_ptr_ग_लिखो(emu, reg, 0, set | data);
 	result = 1;
-	/* Wait for status bit to return to 0 */
-	for (n = 0; n < 100; n++) {
+	/* Wait क्रम status bit to वापस to 0 */
+	क्रम (n = 0; n < 100; n++) अणु
 		udelay(10);
-		tmp = snd_ca0106_ptr_read(emu, reg, 0);
-		if (!(tmp & 0x10000)) {
+		पंचांगp = snd_ca0106_ptr_पढ़ो(emu, reg, 0);
+		अगर (!(पंचांगp & 0x10000)) अणु
 			result = 0;
-			break;
-		}
-	}
-	if (result) /* Timed out */
-		return 1;
-	snd_ca0106_ptr_write(emu, reg, 0, reset | data);
-	tmp = snd_ca0106_ptr_read(emu, reg, 0); /* Write post */
-	return 0;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (result) /* Timed out */
+		वापस 1;
+	snd_ca0106_ptr_ग_लिखो(emu, reg, 0, reset | data);
+	पंचांगp = snd_ca0106_ptr_पढ़ो(emu, reg, 0); /* Write post */
+	वापस 0;
+पूर्ण
 
-/* The ADC does not support i2c read, so only write is implemented */
-int snd_ca0106_i2c_write(struct snd_ca0106 *emu,
+/* The ADC करोes not support i2c पढ़ो, so only ग_लिखो is implemented */
+पूर्णांक snd_ca0106_i2c_ग_लिखो(काष्ठा snd_ca0106 *emu,
 				u32 reg,
 				u32 value)
-{
-	u32 tmp;
-	int timeout = 0;
-	int status;
-	int retry;
-	if ((reg > 0x7f) || (value > 0x1ff)) {
+अणु
+	u32 पंचांगp;
+	पूर्णांक समयout = 0;
+	पूर्णांक status;
+	पूर्णांक retry;
+	अगर ((reg > 0x7f) || (value > 0x1ff)) अणु
 		dev_err(emu->card->dev, "i2c_write: invalid values.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	tmp = reg << 25 | value << 16;
+	पंचांगp = reg << 25 | value << 16;
 	/*
 	dev_dbg(emu->card->dev, "I2C-write:reg=0x%x, value=0x%x\n", reg, value);
 	*/
 	/* Not sure what this I2C channel controls. */
-	/* snd_ca0106_ptr_write(emu, I2C_D0, 0, tmp); */
+	/* snd_ca0106_ptr_ग_लिखो(emu, I2C_D0, 0, पंचांगp); */
 
 	/* This controls the I2C connected to the WM8775 ADC Codec */
-	snd_ca0106_ptr_write(emu, I2C_D1, 0, tmp);
+	snd_ca0106_ptr_ग_लिखो(emu, I2C_D1, 0, पंचांगp);
 
-	for (retry = 0; retry < 10; retry++) {
+	क्रम (retry = 0; retry < 10; retry++) अणु
 		/* Send the data to i2c */
-		//tmp = snd_ca0106_ptr_read(emu, I2C_A, 0);
-		//tmp = tmp & ~(I2C_A_ADC_READ|I2C_A_ADC_LAST|I2C_A_ADC_START|I2C_A_ADC_ADD_MASK);
-		tmp = 0;
-		tmp = tmp | (I2C_A_ADC_LAST|I2C_A_ADC_START|I2C_A_ADC_ADD);
-		snd_ca0106_ptr_write(emu, I2C_A, 0, tmp);
+		//पंचांगp = snd_ca0106_ptr_पढ़ो(emu, I2C_A, 0);
+		//पंचांगp = पंचांगp & ~(I2C_A_ADC_READ|I2C_A_ADC_LAST|I2C_A_ADC_START|I2C_A_ADC_ADD_MASK);
+		पंचांगp = 0;
+		पंचांगp = पंचांगp | (I2C_A_ADC_LAST|I2C_A_ADC_START|I2C_A_ADC_ADD);
+		snd_ca0106_ptr_ग_लिखो(emu, I2C_A, 0, पंचांगp);
 
 		/* Wait till the transaction ends */
-		while (1) {
-			status = snd_ca0106_ptr_read(emu, I2C_A, 0);
+		जबतक (1) अणु
+			status = snd_ca0106_ptr_पढ़ो(emu, I2C_A, 0);
 			/*dev_dbg(emu->card->dev, "I2C:status=0x%x\n", status);*/
-			timeout++;
-			if ((status & I2C_A_ADC_START) == 0)
-				break;
+			समयout++;
+			अगर ((status & I2C_A_ADC_START) == 0)
+				अवरोध;
 
-			if (timeout > 1000)
-				break;
-		}
-		//Read back and see if the transaction is successful
-		if ((status & I2C_A_ADC_ABORT) == 0)
-			break;
-	}
+			अगर (समयout > 1000)
+				अवरोध;
+		पूर्ण
+		//Read back and see अगर the transaction is successful
+		अगर ((status & I2C_A_ADC_ABORT) == 0)
+			अवरोध;
+	पूर्ण
 
-	if (retry == 10) {
+	अगर (retry == 10) अणु
 		dev_err(emu->card->dev, "Writing to ADC failed!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
     
-    	return 0;
-}
+    	वापस 0;
+पूर्ण
 
 
-static void snd_ca0106_intr_enable(struct snd_ca0106 *emu, unsigned int intrenb)
-{
-	unsigned long flags;
-	unsigned int intr_enable;
-
-	spin_lock_irqsave(&emu->emu_lock, flags);
-	intr_enable = inl(emu->port + INTE) | intrenb;
-	outl(intr_enable, emu->port + INTE);
-	spin_unlock_irqrestore(&emu->emu_lock, flags);
-}
-
-static void snd_ca0106_intr_disable(struct snd_ca0106 *emu, unsigned int intrenb)
-{
-	unsigned long flags;
-	unsigned int intr_enable;
+अटल व्योम snd_ca0106_पूर्णांकr_enable(काष्ठा snd_ca0106 *emu, अचिन्हित पूर्णांक पूर्णांकrenb)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक पूर्णांकr_enable;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
-	intr_enable = inl(emu->port + INTE) & ~intrenb;
-	outl(intr_enable, emu->port + INTE);
+	पूर्णांकr_enable = inl(emu->port + INTE) | पूर्णांकrenb;
+	outl(पूर्णांकr_enable, emu->port + INTE);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-}
+पूर्ण
+
+अटल व्योम snd_ca0106_पूर्णांकr_disable(काष्ठा snd_ca0106 *emu, अचिन्हित पूर्णांक पूर्णांकrenb)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक पूर्णांकr_enable;
+
+	spin_lock_irqsave(&emu->emu_lock, flags);
+	पूर्णांकr_enable = inl(emu->port + INTE) & ~पूर्णांकrenb;
+	outl(पूर्णांकr_enable, emu->port + INTE);
+	spin_unlock_irqrestore(&emu->emu_lock, flags);
+पूर्ण
 
 
-static void snd_ca0106_pcm_free_substream(struct snd_pcm_runtime *runtime)
-{
-	kfree(runtime->private_data);
-}
+अटल व्योम snd_ca0106_pcm_मुक्त_substream(काष्ठा snd_pcm_runसमय *runसमय)
+अणु
+	kमुक्त(runसमय->निजी_data);
+पूर्ण
 
-static const int spi_dacd_reg[] = {
+अटल स्थिर पूर्णांक spi_dacd_reg[] = अणु
 	SPI_DACD0_REG,
 	SPI_DACD1_REG,
 	SPI_DACD2_REG,
 	0,
 	SPI_DACD4_REG,
-};
-static const int spi_dacd_bit[] = {
+पूर्ण;
+अटल स्थिर पूर्णांक spi_dacd_bit[] = अणु
 	SPI_DACD0_BIT,
 	SPI_DACD1_BIT,
 	SPI_DACD2_BIT,
 	0,
 	SPI_DACD4_BIT,
-};
+पूर्ण;
 
-static void restore_spdif_bits(struct snd_ca0106 *chip, int idx)
-{
-	if (chip->spdif_str_bits[idx] != chip->spdif_bits[idx]) {
-		chip->spdif_str_bits[idx] = chip->spdif_bits[idx];
-		snd_ca0106_ptr_write(chip, SPCS0 + idx, 0,
-				     chip->spdif_str_bits[idx]);
-	}
-}
+अटल व्योम restore_spdअगर_bits(काष्ठा snd_ca0106 *chip, पूर्णांक idx)
+अणु
+	अगर (chip->spdअगर_str_bits[idx] != chip->spdअगर_bits[idx]) अणु
+		chip->spdअगर_str_bits[idx] = chip->spdअगर_bits[idx];
+		snd_ca0106_ptr_ग_लिखो(chip, SPCS0 + idx, 0,
+				     chip->spdअगर_str_bits[idx]);
+	पूर्ण
+पूर्ण
 
-static int snd_ca0106_channel_dac(struct snd_ca0106 *chip,
-				  const struct snd_ca0106_details *details,
-				  int channel_id)
-{
-	switch (channel_id) {
-	case PCM_FRONT_CHANNEL:
-		return (details->spi_dac & 0xf000) >> (4 * 3);
-	case PCM_REAR_CHANNEL:
-		return (details->spi_dac & 0x0f00) >> (4 * 2);
-	case PCM_CENTER_LFE_CHANNEL:
-		return (details->spi_dac & 0x00f0) >> (4 * 1);
-	case PCM_UNKNOWN_CHANNEL:
-		return (details->spi_dac & 0x000f) >> (4 * 0);
-	default:
+अटल पूर्णांक snd_ca0106_channel_dac(काष्ठा snd_ca0106 *chip,
+				  स्थिर काष्ठा snd_ca0106_details *details,
+				  पूर्णांक channel_id)
+अणु
+	चयन (channel_id) अणु
+	हाल PCM_FRONT_CHANNEL:
+		वापस (details->spi_dac & 0xf000) >> (4 * 3);
+	हाल PCM_REAR_CHANNEL:
+		वापस (details->spi_dac & 0x0f00) >> (4 * 2);
+	हाल PCM_CENTER_LFE_CHANNEL:
+		वापस (details->spi_dac & 0x00f0) >> (4 * 1);
+	हाल PCM_UNKNOWN_CHANNEL:
+		वापस (details->spi_dac & 0x000f) >> (4 * 0);
+	शेष:
 		dev_dbg(chip->card->dev, "ca0106: unknown channel_id %d\n",
 			   channel_id);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_ca0106_pcm_power_dac(struct snd_ca0106 *chip, int channel_id,
-				    int power)
-{
-	if (chip->details->spi_dac) {
-		const int dac = snd_ca0106_channel_dac(chip, chip->details,
+अटल पूर्णांक snd_ca0106_pcm_घातer_dac(काष्ठा snd_ca0106 *chip, पूर्णांक channel_id,
+				    पूर्णांक घातer)
+अणु
+	अगर (chip->details->spi_dac) अणु
+		स्थिर पूर्णांक dac = snd_ca0106_channel_dac(chip, chip->details,
 						       channel_id);
-		const int reg = spi_dacd_reg[dac];
-		const int bit = spi_dacd_bit[dac];
+		स्थिर पूर्णांक reg = spi_dacd_reg[dac];
+		स्थिर पूर्णांक bit = spi_dacd_bit[dac];
 
-		if (power)
+		अगर (घातer)
 			/* Power up */
 			chip->spi_dac_reg[reg] &= ~bit;
-		else
-			/* Power down */
+		अन्यथा
+			/* Power करोwn */
 			chip->spi_dac_reg[reg] |= bit;
-		if (snd_ca0106_spi_write(chip, chip->spi_dac_reg[reg]) != 0)
-			return -ENXIO;
-	}
-	return 0;
-}
+		अगर (snd_ca0106_spi_ग_लिखो(chip, chip->spi_dac_reg[reg]) != 0)
+			वापस -ENXIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* open_playback callback */
-static int snd_ca0106_pcm_open_playback_channel(struct snd_pcm_substream *substream,
-						int channel_id)
-{
-	struct snd_ca0106 *chip = snd_pcm_substream_chip(substream);
-        struct snd_ca0106_channel *channel = &(chip->playback_channels[channel_id]);
-	struct snd_ca0106_pcm *epcm;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int err;
+/* खोलो_playback callback */
+अटल पूर्णांक snd_ca0106_pcm_खोलो_playback_channel(काष्ठा snd_pcm_substream *substream,
+						पूर्णांक channel_id)
+अणु
+	काष्ठा snd_ca0106 *chip = snd_pcm_substream_chip(substream);
+        काष्ठा snd_ca0106_channel *channel = &(chip->playback_channels[channel_id]);
+	काष्ठा snd_ca0106_pcm *epcm;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक err;
 
-	epcm = kzalloc(sizeof(*epcm), GFP_KERNEL);
+	epcm = kzalloc(माप(*epcm), GFP_KERNEL);
 
-	if (epcm == NULL)
-		return -ENOMEM;
+	अगर (epcm == शून्य)
+		वापस -ENOMEM;
 	epcm->emu = chip;
 	epcm->substream = substream;
         epcm->channel_id=channel_id;
   
-	runtime->private_data = epcm;
-	runtime->private_free = snd_ca0106_pcm_free_substream;
+	runसमय->निजी_data = epcm;
+	runसमय->निजी_मुक्त = snd_ca0106_pcm_मुक्त_substream;
   
-	runtime->hw = snd_ca0106_playback_hw;
+	runसमय->hw = snd_ca0106_playback_hw;
 
         channel->emu = chip;
         channel->number = channel_id;
@@ -573,90 +574,90 @@ static int snd_ca0106_pcm_open_playback_channel(struct snd_pcm_substream *substr
 	dev_dbg(chip->card->dev, "open:channel_id=%d, chip=%p, channel=%p\n",
 	       channel_id, chip, channel);
 	*/
-        //channel->interrupt = snd_ca0106_pcm_channel_interrupt;
+        //channel->पूर्णांकerrupt = snd_ca0106_pcm_channel_पूर्णांकerrupt;
 	channel->epcm = epcm;
-	if ((err = snd_pcm_hw_constraint_integer(runtime, SNDRV_PCM_HW_PARAM_PERIODS)) < 0)
-                return err;
-	if ((err = snd_pcm_hw_constraint_step(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 64)) < 0)
-                return err;
+	अगर ((err = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय, SNDRV_PCM_HW_PARAM_PERIODS)) < 0)
+                वापस err;
+	अगर ((err = snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 64)) < 0)
+                वापस err;
 	snd_pcm_set_sync(substream);
 
-	/* Front channel dac should already be on */
-	if (channel_id != PCM_FRONT_CHANNEL) {
-		err = snd_ca0106_pcm_power_dac(chip, channel_id, 1);
-		if (err < 0)
-			return err;
-	}
+	/* Front channel dac should alपढ़ोy be on */
+	अगर (channel_id != PCM_FRONT_CHANNEL) अणु
+		err = snd_ca0106_pcm_घातer_dac(chip, channel_id, 1);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	restore_spdif_bits(chip, channel_id);
+	restore_spdअगर_bits(chip, channel_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* close callback */
-static int snd_ca0106_pcm_close_playback(struct snd_pcm_substream *substream)
-{
-	struct snd_ca0106 *chip = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-        struct snd_ca0106_pcm *epcm = runtime->private_data;
+/* बंद callback */
+अटल पूर्णांक snd_ca0106_pcm_बंद_playback(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_ca0106 *chip = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+        काष्ठा snd_ca0106_pcm *epcm = runसमय->निजी_data;
 	chip->playback_channels[epcm->channel_id].use = 0;
 
-	restore_spdif_bits(chip, epcm->channel_id);
+	restore_spdअगर_bits(chip, epcm->channel_id);
 
 	/* Front channel dac should stay on */
-	if (epcm->channel_id != PCM_FRONT_CHANNEL) {
-		int err;
-		err = snd_ca0106_pcm_power_dac(chip, epcm->channel_id, 0);
-		if (err < 0)
-			return err;
-	}
+	अगर (epcm->channel_id != PCM_FRONT_CHANNEL) अणु
+		पूर्णांक err;
+		err = snd_ca0106_pcm_घातer_dac(chip, epcm->channel_id, 0);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	/* FIXME: maybe zero others */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_ca0106_pcm_open_playback_front(struct snd_pcm_substream *substream)
-{
-	return snd_ca0106_pcm_open_playback_channel(substream, PCM_FRONT_CHANNEL);
-}
+अटल पूर्णांक snd_ca0106_pcm_खोलो_playback_front(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_ca0106_pcm_खोलो_playback_channel(substream, PCM_FRONT_CHANNEL);
+पूर्ण
 
-static int snd_ca0106_pcm_open_playback_center_lfe(struct snd_pcm_substream *substream)
-{
-	return snd_ca0106_pcm_open_playback_channel(substream, PCM_CENTER_LFE_CHANNEL);
-}
+अटल पूर्णांक snd_ca0106_pcm_खोलो_playback_center_lfe(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_ca0106_pcm_खोलो_playback_channel(substream, PCM_CENTER_LFE_CHANNEL);
+पूर्ण
 
-static int snd_ca0106_pcm_open_playback_unknown(struct snd_pcm_substream *substream)
-{
-	return snd_ca0106_pcm_open_playback_channel(substream, PCM_UNKNOWN_CHANNEL);
-}
+अटल पूर्णांक snd_ca0106_pcm_खोलो_playback_unknown(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_ca0106_pcm_खोलो_playback_channel(substream, PCM_UNKNOWN_CHANNEL);
+पूर्ण
 
-static int snd_ca0106_pcm_open_playback_rear(struct snd_pcm_substream *substream)
-{
-	return snd_ca0106_pcm_open_playback_channel(substream, PCM_REAR_CHANNEL);
-}
+अटल पूर्णांक snd_ca0106_pcm_खोलो_playback_rear(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_ca0106_pcm_खोलो_playback_channel(substream, PCM_REAR_CHANNEL);
+पूर्ण
 
-/* open_capture callback */
-static int snd_ca0106_pcm_open_capture_channel(struct snd_pcm_substream *substream,
-					       int channel_id)
-{
-	struct snd_ca0106 *chip = snd_pcm_substream_chip(substream);
-        struct snd_ca0106_channel *channel = &(chip->capture_channels[channel_id]);
-	struct snd_ca0106_pcm *epcm;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int err;
+/* खोलो_capture callback */
+अटल पूर्णांक snd_ca0106_pcm_खोलो_capture_channel(काष्ठा snd_pcm_substream *substream,
+					       पूर्णांक channel_id)
+अणु
+	काष्ठा snd_ca0106 *chip = snd_pcm_substream_chip(substream);
+        काष्ठा snd_ca0106_channel *channel = &(chip->capture_channels[channel_id]);
+	काष्ठा snd_ca0106_pcm *epcm;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक err;
 
-	epcm = kzalloc(sizeof(*epcm), GFP_KERNEL);
-	if (!epcm)
-		return -ENOMEM;
+	epcm = kzalloc(माप(*epcm), GFP_KERNEL);
+	अगर (!epcm)
+		वापस -ENOMEM;
 
 	epcm->emu = chip;
 	epcm->substream = substream;
         epcm->channel_id=channel_id;
   
-	runtime->private_data = epcm;
-	runtime->private_free = snd_ca0106_pcm_free_substream;
+	runसमय->निजी_data = epcm;
+	runसमय->निजी_मुक्त = snd_ca0106_pcm_मुक्त_substream;
   
-	runtime->hw = snd_ca0106_capture_hw;
+	runसमय->hw = snd_ca0106_capture_hw;
 
         channel->emu = chip;
         channel->number = channel_id;
@@ -666,167 +667,167 @@ static int snd_ca0106_pcm_open_capture_channel(struct snd_pcm_substream *substre
 	dev_dbg(chip->card->dev, "open:channel_id=%d, chip=%p, channel=%p\n",
 	       channel_id, chip, channel);
 	*/
-        //channel->interrupt = snd_ca0106_pcm_channel_interrupt;
+        //channel->पूर्णांकerrupt = snd_ca0106_pcm_channel_पूर्णांकerrupt;
         channel->epcm = epcm;
-	if ((err = snd_pcm_hw_constraint_integer(runtime, SNDRV_PCM_HW_PARAM_PERIODS)) < 0)
-                return err;
-	//snd_pcm_hw_constraint_list(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, &hw_constraints_capture_period_sizes);
-	if ((err = snd_pcm_hw_constraint_step(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 64)) < 0)
-                return err;
-	return 0;
-}
+	अगर ((err = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय, SNDRV_PCM_HW_PARAM_PERIODS)) < 0)
+                वापस err;
+	//snd_pcm_hw_स्थिरraपूर्णांक_list(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, &hw_स्थिरraपूर्णांकs_capture_period_sizes);
+	अगर ((err = snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 64)) < 0)
+                वापस err;
+	वापस 0;
+पूर्ण
 
-/* close callback */
-static int snd_ca0106_pcm_close_capture(struct snd_pcm_substream *substream)
-{
-	struct snd_ca0106 *chip = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-        struct snd_ca0106_pcm *epcm = runtime->private_data;
+/* बंद callback */
+अटल पूर्णांक snd_ca0106_pcm_बंद_capture(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_ca0106 *chip = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+        काष्ठा snd_ca0106_pcm *epcm = runसमय->निजी_data;
 	chip->capture_channels[epcm->channel_id].use = 0;
 	/* FIXME: maybe zero others */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_ca0106_pcm_open_0_capture(struct snd_pcm_substream *substream)
-{
-	return snd_ca0106_pcm_open_capture_channel(substream, 0);
-}
+अटल पूर्णांक snd_ca0106_pcm_खोलो_0_capture(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_ca0106_pcm_खोलो_capture_channel(substream, 0);
+पूर्ण
 
-static int snd_ca0106_pcm_open_1_capture(struct snd_pcm_substream *substream)
-{
-	return snd_ca0106_pcm_open_capture_channel(substream, 1);
-}
+अटल पूर्णांक snd_ca0106_pcm_खोलो_1_capture(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_ca0106_pcm_खोलो_capture_channel(substream, 1);
+पूर्ण
 
-static int snd_ca0106_pcm_open_2_capture(struct snd_pcm_substream *substream)
-{
-	return snd_ca0106_pcm_open_capture_channel(substream, 2);
-}
+अटल पूर्णांक snd_ca0106_pcm_खोलो_2_capture(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_ca0106_pcm_खोलो_capture_channel(substream, 2);
+पूर्ण
 
-static int snd_ca0106_pcm_open_3_capture(struct snd_pcm_substream *substream)
-{
-	return snd_ca0106_pcm_open_capture_channel(substream, 3);
-}
+अटल पूर्णांक snd_ca0106_pcm_खोलो_3_capture(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_ca0106_pcm_खोलो_capture_channel(substream, 3);
+पूर्ण
 
 /* prepare playback callback */
-static int snd_ca0106_pcm_prepare_playback(struct snd_pcm_substream *substream)
-{
-	struct snd_ca0106 *emu = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_ca0106_pcm *epcm = runtime->private_data;
-	int channel = epcm->channel_id;
+अटल पूर्णांक snd_ca0106_pcm_prepare_playback(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_ca0106 *emu = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_ca0106_pcm *epcm = runसमय->निजी_data;
+	पूर्णांक channel = epcm->channel_id;
 	u32 *table_base = (u32 *)(emu->buffer.area+(8*16*channel));
-	u32 period_size_bytes = frames_to_bytes(runtime, runtime->period_size);
+	u32 period_size_bytes = frames_to_bytes(runसमय, runसमय->period_size);
 	u32 hcfg_mask = HCFG_PLAYBACK_S32_LE;
 	u32 hcfg_set = 0x00000000;
 	u32 hcfg;
 	u32 reg40_mask = 0x30000 << (channel<<1);
 	u32 reg40_set = 0;
 	u32 reg40;
-	/* FIXME: Depending on mixer selection of SPDIF out or not, select the spdif rate or the DAC rate. */
-	u32 reg71_mask = 0x03030000 ; /* Global. Set SPDIF rate. We only support 44100 to spdif, not to DAC. */
+	/* FIXME: Depending on mixer selection of SPDIF out or not, select the spdअगर rate or the DAC rate. */
+	u32 reg71_mask = 0x03030000 ; /* Global. Set SPDIF rate. We only support 44100 to spdअगर, not to DAC. */
 	u32 reg71_set = 0;
 	u32 reg71;
-	int i;
+	पूर्णांक i;
 	
-#if 0 /* debug */
+#अगर 0 /* debug */
 	dev_dbg(emu->card->dev,
 		   "prepare:channel_number=%d, rate=%d, format=0x%x, "
 		   "channels=%d, buffer_size=%ld, period_size=%ld, "
 		   "periods=%u, frames_to_bytes=%d\n",
-		   channel, runtime->rate, runtime->format,
-		   runtime->channels, runtime->buffer_size,
-		   runtime->period_size, runtime->periods,
-		   frames_to_bytes(runtime, 1));
+		   channel, runसमय->rate, runसमय->क्रमmat,
+		   runसमय->channels, runसमय->buffer_size,
+		   runसमय->period_size, runसमय->periods,
+		   frames_to_bytes(runसमय, 1));
 	dev_dbg(emu->card->dev,
 		"dma_addr=%x, dma_area=%p, table_base=%p\n",
-		   runtime->dma_addr, runtime->dma_area, table_base);
+		   runसमय->dma_addr, runसमय->dma_area, table_base);
 	dev_dbg(emu->card->dev,
 		"dma_addr=%x, dma_area=%p, dma_bytes(size)=%x\n",
 		   emu->buffer.addr, emu->buffer.area, emu->buffer.bytes);
-#endif /* debug */
+#पूर्ण_अगर /* debug */
 	/* Rate can be set per channel. */
-	/* reg40 control host to fifo */
+	/* reg40 control host to fअगरo */
 	/* reg71 controls DAC rate. */
-	switch (runtime->rate) {
-	case 44100:
+	चयन (runसमय->rate) अणु
+	हाल 44100:
 		reg40_set = 0x10000 << (channel<<1);
 		reg71_set = 0x01010000; 
-		break;
-        case 48000:
+		अवरोध;
+        हाल 48000:
 		reg40_set = 0;
 		reg71_set = 0; 
-		break;
-	case 96000:
+		अवरोध;
+	हाल 96000:
 		reg40_set = 0x20000 << (channel<<1);
 		reg71_set = 0x02020000; 
-		break;
-	case 192000:
+		अवरोध;
+	हाल 192000:
 		reg40_set = 0x30000 << (channel<<1);
 		reg71_set = 0x03030000; 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		reg40_set = 0;
 		reg71_set = 0; 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	/* Format is a global setting */
 	/* FIXME: Only let the first channel accessed set this. */
-	switch (runtime->format) {
-	case SNDRV_PCM_FORMAT_S16_LE:
+	चयन (runसमय->क्रमmat) अणु
+	हाल SNDRV_PCM_FORMAT_S16_LE:
 		hcfg_set = 0;
-		break;
-	case SNDRV_PCM_FORMAT_S32_LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S32_LE:
 		hcfg_set = HCFG_PLAYBACK_S32_LE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		hcfg_set = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	hcfg = inl(emu->port + HCFG) ;
 	hcfg = (hcfg & ~hcfg_mask) | hcfg_set;
 	outl(hcfg, emu->port + HCFG);
-	reg40 = snd_ca0106_ptr_read(emu, 0x40, 0);
+	reg40 = snd_ca0106_ptr_पढ़ो(emu, 0x40, 0);
 	reg40 = (reg40 & ~reg40_mask) | reg40_set;
-	snd_ca0106_ptr_write(emu, 0x40, 0, reg40);
-	reg71 = snd_ca0106_ptr_read(emu, 0x71, 0);
+	snd_ca0106_ptr_ग_लिखो(emu, 0x40, 0, reg40);
+	reg71 = snd_ca0106_ptr_पढ़ो(emu, 0x71, 0);
 	reg71 = (reg71 & ~reg71_mask) | reg71_set;
-	snd_ca0106_ptr_write(emu, 0x71, 0, reg71);
+	snd_ca0106_ptr_ग_लिखो(emu, 0x71, 0, reg71);
 
-	/* FIXME: Check emu->buffer.size before actually writing to it. */
-        for(i=0; i < runtime->periods; i++) {
-		table_base[i*2] = runtime->dma_addr + (i * period_size_bytes);
+	/* FIXME: Check emu->buffer.size beक्रमe actually writing to it. */
+        क्रम(i=0; i < runसमय->periods; i++) अणु
+		table_base[i*2] = runसमय->dma_addr + (i * period_size_bytes);
 		table_base[i*2+1] = period_size_bytes << 16;
-	}
+	पूर्ण
  
-	snd_ca0106_ptr_write(emu, PLAYBACK_LIST_ADDR, channel, emu->buffer.addr+(8*16*channel));
-	snd_ca0106_ptr_write(emu, PLAYBACK_LIST_SIZE, channel, (runtime->periods - 1) << 19);
-	snd_ca0106_ptr_write(emu, PLAYBACK_LIST_PTR, channel, 0);
-	snd_ca0106_ptr_write(emu, PLAYBACK_DMA_ADDR, channel, runtime->dma_addr);
-	snd_ca0106_ptr_write(emu, PLAYBACK_PERIOD_SIZE, channel, frames_to_bytes(runtime, runtime->period_size)<<16); // buffer size in bytes
-	/* FIXME  test what 0 bytes does. */
-	snd_ca0106_ptr_write(emu, PLAYBACK_PERIOD_SIZE, channel, 0); // buffer size in bytes
-	snd_ca0106_ptr_write(emu, PLAYBACK_POINTER, channel, 0);
-	snd_ca0106_ptr_write(emu, 0x07, channel, 0x0);
-	snd_ca0106_ptr_write(emu, 0x08, channel, 0);
-        snd_ca0106_ptr_write(emu, PLAYBACK_MUTE, 0x0, 0x0); /* Unmute output */
-#if 0
-	snd_ca0106_ptr_write(emu, SPCS0, 0,
+	snd_ca0106_ptr_ग_लिखो(emu, PLAYBACK_LIST_ADDR, channel, emu->buffer.addr+(8*16*channel));
+	snd_ca0106_ptr_ग_लिखो(emu, PLAYBACK_LIST_SIZE, channel, (runसमय->periods - 1) << 19);
+	snd_ca0106_ptr_ग_लिखो(emu, PLAYBACK_LIST_PTR, channel, 0);
+	snd_ca0106_ptr_ग_लिखो(emu, PLAYBACK_DMA_ADDR, channel, runसमय->dma_addr);
+	snd_ca0106_ptr_ग_लिखो(emu, PLAYBACK_PERIOD_SIZE, channel, frames_to_bytes(runसमय, runसमय->period_size)<<16); // buffer size in bytes
+	/* FIXME  test what 0 bytes करोes. */
+	snd_ca0106_ptr_ग_लिखो(emu, PLAYBACK_PERIOD_SIZE, channel, 0); // buffer size in bytes
+	snd_ca0106_ptr_ग_लिखो(emu, PLAYBACK_POINTER, channel, 0);
+	snd_ca0106_ptr_ग_लिखो(emu, 0x07, channel, 0x0);
+	snd_ca0106_ptr_ग_लिखो(emu, 0x08, channel, 0);
+        snd_ca0106_ptr_ग_लिखो(emu, PLAYBACK_MUTE, 0x0, 0x0); /* Unmute output */
+#अगर 0
+	snd_ca0106_ptr_ग_लिखो(emu, SPCS0, 0,
 			       SPCS_CLKACCY_1000PPM | SPCS_SAMPLERATE_48 |
 			       SPCS_CHANNELNUM_LEFT | SPCS_SOURCENUM_UNSPEC |
 			       SPCS_GENERATIONSTATUS | 0x00001200 |
 			       0x00000000 | SPCS_EMPHASIS_NONE | SPCS_COPYRIGHT );
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* prepare capture callback */
-static int snd_ca0106_pcm_prepare_capture(struct snd_pcm_substream *substream)
-{
-	struct snd_ca0106 *emu = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_ca0106_pcm *epcm = runtime->private_data;
-	int channel = epcm->channel_id;
+अटल पूर्णांक snd_ca0106_pcm_prepare_capture(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_ca0106 *emu = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_ca0106_pcm *epcm = runसमय->निजी_data;
+	पूर्णांक channel = epcm->channel_id;
 	u32 hcfg_mask = HCFG_CAPTURE_S32_LE;
 	u32 hcfg_set = 0x00000000;
 	u32 hcfg;
@@ -835,532 +836,532 @@ static int snd_ca0106_pcm_prepare_capture(struct snd_pcm_substream *substream)
 	u32 reg71_set = 0;
 	u32 reg71;
 	
-#if 0 /* debug */
+#अगर 0 /* debug */
 	dev_dbg(emu->card->dev,
 		   "prepare:channel_number=%d, rate=%d, format=0x%x, "
 		   "channels=%d, buffer_size=%ld, period_size=%ld, "
 		   "periods=%u, frames_to_bytes=%d\n",
-		   channel, runtime->rate, runtime->format,
-		   runtime->channels, runtime->buffer_size,
-		   runtime->period_size, runtime->periods,
-		   frames_to_bytes(runtime, 1));
+		   channel, runसमय->rate, runसमय->क्रमmat,
+		   runसमय->channels, runसमय->buffer_size,
+		   runसमय->period_size, runसमय->periods,
+		   frames_to_bytes(runसमय, 1));
 	dev_dbg(emu->card->dev,
 		"dma_addr=%x, dma_area=%p, table_base=%p\n",
-		   runtime->dma_addr, runtime->dma_area, table_base);
+		   runसमय->dma_addr, runसमय->dma_area, table_base);
 	dev_dbg(emu->card->dev,
 		"dma_addr=%x, dma_area=%p, dma_bytes(size)=%x\n",
 		   emu->buffer.addr, emu->buffer.area, emu->buffer.bytes);
-#endif /* debug */
+#पूर्ण_अगर /* debug */
 	/* reg71 controls ADC rate. */
-	switch (runtime->rate) {
-	case 44100:
+	चयन (runसमय->rate) अणु
+	हाल 44100:
 		reg71_set = 0x00004000;
-		break;
-        case 48000:
+		अवरोध;
+        हाल 48000:
 		reg71_set = 0; 
-		break;
-	case 96000:
+		अवरोध;
+	हाल 96000:
 		reg71_set = 0x00008000;
 		over_sampling=0xa;
-		break;
-	case 192000:
+		अवरोध;
+	हाल 192000:
 		reg71_set = 0x0000c000; 
 		over_sampling=0xa;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		reg71_set = 0; 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	/* Format is a global setting */
 	/* FIXME: Only let the first channel accessed set this. */
-	switch (runtime->format) {
-	case SNDRV_PCM_FORMAT_S16_LE:
+	चयन (runसमय->क्रमmat) अणु
+	हाल SNDRV_PCM_FORMAT_S16_LE:
 		hcfg_set = 0;
-		break;
-	case SNDRV_PCM_FORMAT_S32_LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S32_LE:
 		hcfg_set = HCFG_CAPTURE_S32_LE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		hcfg_set = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	hcfg = inl(emu->port + HCFG) ;
 	hcfg = (hcfg & ~hcfg_mask) | hcfg_set;
 	outl(hcfg, emu->port + HCFG);
-	reg71 = snd_ca0106_ptr_read(emu, 0x71, 0);
+	reg71 = snd_ca0106_ptr_पढ़ो(emu, 0x71, 0);
 	reg71 = (reg71 & ~reg71_mask) | reg71_set;
-	snd_ca0106_ptr_write(emu, 0x71, 0, reg71);
-        if (emu->details->i2c_adc == 1) { /* The SB0410 and SB0413 use I2C to control ADC. */
-	        snd_ca0106_i2c_write(emu, ADC_MASTER, over_sampling); /* Adjust the over sampler to better suit the capture rate. */
-	}
+	snd_ca0106_ptr_ग_लिखो(emu, 0x71, 0, reg71);
+        अगर (emu->details->i2c_adc == 1) अणु /* The SB0410 and SB0413 use I2C to control ADC. */
+	        snd_ca0106_i2c_ग_लिखो(emu, ADC_MASTER, over_sampling); /* Adjust the over sampler to better suit the capture rate. */
+	पूर्ण
 
 
 	/*
 	dev_dbg(emu->card->dev,
 	       "prepare:channel_number=%d, rate=%d, format=0x%x, channels=%d, "
 	       "buffer_size=%ld, period_size=%ld, frames_to_bytes=%d\n",
-	       channel, runtime->rate, runtime->format, runtime->channels,
-	       runtime->buffer_size, runtime->period_size,
-	       frames_to_bytes(runtime, 1));
+	       channel, runसमय->rate, runसमय->क्रमmat, runसमय->channels,
+	       runसमय->buffer_size, runसमय->period_size,
+	       frames_to_bytes(runसमय, 1));
 	*/
-	snd_ca0106_ptr_write(emu, 0x13, channel, 0);
-	snd_ca0106_ptr_write(emu, CAPTURE_DMA_ADDR, channel, runtime->dma_addr);
-	snd_ca0106_ptr_write(emu, CAPTURE_BUFFER_SIZE, channel, frames_to_bytes(runtime, runtime->buffer_size)<<16); // buffer size in bytes
-	snd_ca0106_ptr_write(emu, CAPTURE_POINTER, channel, 0);
+	snd_ca0106_ptr_ग_लिखो(emu, 0x13, channel, 0);
+	snd_ca0106_ptr_ग_लिखो(emu, CAPTURE_DMA_ADDR, channel, runसमय->dma_addr);
+	snd_ca0106_ptr_ग_लिखो(emu, CAPTURE_BUFFER_SIZE, channel, frames_to_bytes(runसमय, runसमय->buffer_size)<<16); // buffer size in bytes
+	snd_ca0106_ptr_ग_लिखो(emu, CAPTURE_POINTER, channel, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* trigger_playback callback */
-static int snd_ca0106_pcm_trigger_playback(struct snd_pcm_substream *substream,
-				    int cmd)
-{
-	struct snd_ca0106 *emu = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime;
-	struct snd_ca0106_pcm *epcm;
-	int channel;
-	int result = 0;
-        struct snd_pcm_substream *s;
+अटल पूर्णांक snd_ca0106_pcm_trigger_playback(काष्ठा snd_pcm_substream *substream,
+				    पूर्णांक cmd)
+अणु
+	काष्ठा snd_ca0106 *emu = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय;
+	काष्ठा snd_ca0106_pcm *epcm;
+	पूर्णांक channel;
+	पूर्णांक result = 0;
+        काष्ठा snd_pcm_substream *s;
 	u32 basic = 0;
 	u32 extended = 0;
 	u32 bits;
-	int running = 0;
+	पूर्णांक running = 0;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
 		running = 1;
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	default:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	शेष:
 		running = 0;
-		break;
-	}
-        snd_pcm_group_for_each_entry(s, substream) {
-		if (snd_pcm_substream_chip(s) != emu ||
+		अवरोध;
+	पूर्ण
+        snd_pcm_group_क्रम_each_entry(s, substream) अणु
+		अगर (snd_pcm_substream_chip(s) != emu ||
 		    s->stream != SNDRV_PCM_STREAM_PLAYBACK)
-			continue;
-		runtime = s->runtime;
-		epcm = runtime->private_data;
+			जारी;
+		runसमय = s->runसमय;
+		epcm = runसमय->निजी_data;
 		channel = epcm->channel_id;
 		/* dev_dbg(emu->card->dev, "channel=%d\n", channel); */
 		epcm->running = running;
 		basic |= (0x1 << channel);
 		extended |= (0x10 << channel);
-                snd_pcm_trigger_done(s, substream);
-        }
+                snd_pcm_trigger_करोne(s, substream);
+        पूर्ण
 	/* dev_dbg(emu->card->dev, "basic=0x%x, extended=0x%x\n",basic, extended); */
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-		bits = snd_ca0106_ptr_read(emu, EXTENDED_INT_MASK, 0);
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+		bits = snd_ca0106_ptr_पढ़ो(emu, EXTENDED_INT_MASK, 0);
 		bits |= extended;
-		snd_ca0106_ptr_write(emu, EXTENDED_INT_MASK, 0, bits);
-		bits = snd_ca0106_ptr_read(emu, BASIC_INTERRUPT, 0);
+		snd_ca0106_ptr_ग_लिखो(emu, EXTENDED_INT_MASK, 0, bits);
+		bits = snd_ca0106_ptr_पढ़ो(emu, BASIC_INTERRUPT, 0);
 		bits |= basic;
-		snd_ca0106_ptr_write(emu, BASIC_INTERRUPT, 0, bits);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-		bits = snd_ca0106_ptr_read(emu, BASIC_INTERRUPT, 0);
+		snd_ca0106_ptr_ग_लिखो(emu, BASIC_INTERRUPT, 0, bits);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+		bits = snd_ca0106_ptr_पढ़ो(emu, BASIC_INTERRUPT, 0);
 		bits &= ~basic;
-		snd_ca0106_ptr_write(emu, BASIC_INTERRUPT, 0, bits);
-		bits = snd_ca0106_ptr_read(emu, EXTENDED_INT_MASK, 0);
+		snd_ca0106_ptr_ग_लिखो(emu, BASIC_INTERRUPT, 0, bits);
+		bits = snd_ca0106_ptr_पढ़ो(emu, EXTENDED_INT_MASK, 0);
 		bits &= ~extended;
-		snd_ca0106_ptr_write(emu, EXTENDED_INT_MASK, 0, bits);
-		break;
-	default:
+		snd_ca0106_ptr_ग_लिखो(emu, EXTENDED_INT_MASK, 0, bits);
+		अवरोध;
+	शेष:
 		result = -EINVAL;
-		break;
-	}
-	return result;
-}
+		अवरोध;
+	पूर्ण
+	वापस result;
+पूर्ण
 
 /* trigger_capture callback */
-static int snd_ca0106_pcm_trigger_capture(struct snd_pcm_substream *substream,
-				    int cmd)
-{
-	struct snd_ca0106 *emu = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_ca0106_pcm *epcm = runtime->private_data;
-	int channel = epcm->channel_id;
-	int result = 0;
+अटल पूर्णांक snd_ca0106_pcm_trigger_capture(काष्ठा snd_pcm_substream *substream,
+				    पूर्णांक cmd)
+अणु
+	काष्ठा snd_ca0106 *emu = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_ca0106_pcm *epcm = runसमय->निजी_data;
+	पूर्णांक channel = epcm->channel_id;
+	पूर्णांक result = 0;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-		snd_ca0106_ptr_write(emu, EXTENDED_INT_MASK, 0, snd_ca0106_ptr_read(emu, EXTENDED_INT_MASK, 0) | (0x110000<<channel));
-		snd_ca0106_ptr_write(emu, BASIC_INTERRUPT, 0, snd_ca0106_ptr_read(emu, BASIC_INTERRUPT, 0)|(0x100<<channel));
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+		snd_ca0106_ptr_ग_लिखो(emu, EXTENDED_INT_MASK, 0, snd_ca0106_ptr_पढ़ो(emu, EXTENDED_INT_MASK, 0) | (0x110000<<channel));
+		snd_ca0106_ptr_ग_लिखो(emu, BASIC_INTERRUPT, 0, snd_ca0106_ptr_पढ़ो(emu, BASIC_INTERRUPT, 0)|(0x100<<channel));
 		epcm->running = 1;
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-		snd_ca0106_ptr_write(emu, BASIC_INTERRUPT, 0, snd_ca0106_ptr_read(emu, BASIC_INTERRUPT, 0) & ~(0x100<<channel));
-		snd_ca0106_ptr_write(emu, EXTENDED_INT_MASK, 0, snd_ca0106_ptr_read(emu, EXTENDED_INT_MASK, 0) & ~(0x110000<<channel));
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+		snd_ca0106_ptr_ग_लिखो(emu, BASIC_INTERRUPT, 0, snd_ca0106_ptr_पढ़ो(emu, BASIC_INTERRUPT, 0) & ~(0x100<<channel));
+		snd_ca0106_ptr_ग_लिखो(emu, EXTENDED_INT_MASK, 0, snd_ca0106_ptr_पढ़ो(emu, EXTENDED_INT_MASK, 0) & ~(0x110000<<channel));
 		epcm->running = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		result = -EINVAL;
-		break;
-	}
-	return result;
-}
+		अवरोध;
+	पूर्ण
+	वापस result;
+पूर्ण
 
-/* pointer_playback callback */
-static snd_pcm_uframes_t
-snd_ca0106_pcm_pointer_playback(struct snd_pcm_substream *substream)
-{
-	struct snd_ca0106 *emu = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_ca0106_pcm *epcm = runtime->private_data;
-	unsigned int ptr, prev_ptr;
-	int channel = epcm->channel_id;
-	int timeout = 10;
+/* poपूर्णांकer_playback callback */
+अटल snd_pcm_uframes_t
+snd_ca0106_pcm_poपूर्णांकer_playback(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_ca0106 *emu = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_ca0106_pcm *epcm = runसमय->निजी_data;
+	अचिन्हित पूर्णांक ptr, prev_ptr;
+	पूर्णांक channel = epcm->channel_id;
+	पूर्णांक समयout = 10;
 
-	if (!epcm->running)
-		return 0;
+	अगर (!epcm->running)
+		वापस 0;
 
 	prev_ptr = -1;
-	do {
-		ptr = snd_ca0106_ptr_read(emu, PLAYBACK_LIST_PTR, channel);
-		ptr = (ptr >> 3) * runtime->period_size;
-		ptr += bytes_to_frames(runtime,
-			snd_ca0106_ptr_read(emu, PLAYBACK_POINTER, channel));
-		if (ptr >= runtime->buffer_size)
-			ptr -= runtime->buffer_size;
-		if (prev_ptr == ptr)
-			return ptr;
+	करो अणु
+		ptr = snd_ca0106_ptr_पढ़ो(emu, PLAYBACK_LIST_PTR, channel);
+		ptr = (ptr >> 3) * runसमय->period_size;
+		ptr += bytes_to_frames(runसमय,
+			snd_ca0106_ptr_पढ़ो(emu, PLAYBACK_POINTER, channel));
+		अगर (ptr >= runसमय->buffer_size)
+			ptr -= runसमय->buffer_size;
+		अगर (prev_ptr == ptr)
+			वापस ptr;
 		prev_ptr = ptr;
-	} while (--timeout);
+	पूर्ण जबतक (--समयout);
 	dev_warn(emu->card->dev, "ca0106: unstable DMA pointer!\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* pointer_capture callback */
-static snd_pcm_uframes_t
-snd_ca0106_pcm_pointer_capture(struct snd_pcm_substream *substream)
-{
-	struct snd_ca0106 *emu = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_ca0106_pcm *epcm = runtime->private_data;
+/* poपूर्णांकer_capture callback */
+अटल snd_pcm_uframes_t
+snd_ca0106_pcm_poपूर्णांकer_capture(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_ca0106 *emu = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_ca0106_pcm *epcm = runसमय->निजी_data;
 	snd_pcm_uframes_t ptr, ptr1, ptr2 = 0;
-	int channel = epcm->channel_id;
+	पूर्णांक channel = epcm->channel_id;
 
-	if (!epcm->running)
-		return 0;
+	अगर (!epcm->running)
+		वापस 0;
 
-	ptr1 = snd_ca0106_ptr_read(emu, CAPTURE_POINTER, channel);
-	ptr2 = bytes_to_frames(runtime, ptr1);
+	ptr1 = snd_ca0106_ptr_पढ़ो(emu, CAPTURE_POINTER, channel);
+	ptr2 = bytes_to_frames(runसमय, ptr1);
 	ptr=ptr2;
-        if (ptr >= runtime->buffer_size)
-		ptr -= runtime->buffer_size;
+        अगर (ptr >= runसमय->buffer_size)
+		ptr -= runसमय->buffer_size;
 	/*
 	dev_dbg(emu->card->dev, "ptr1 = 0x%lx, ptr2=0x%lx, ptr=0x%lx, "
 	       "buffer_size = 0x%x, period_size = 0x%x, bits=%d, rate=%d\n",
-	       ptr1, ptr2, ptr, (int)runtime->buffer_size,
-	       (int)runtime->period_size, (int)runtime->frame_bits,
-	       (int)runtime->rate);
+	       ptr1, ptr2, ptr, (पूर्णांक)runसमय->buffer_size,
+	       (पूर्णांक)runसमय->period_size, (पूर्णांक)runसमय->frame_bits,
+	       (पूर्णांक)runसमय->rate);
 	*/
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-/* operators */
-static const struct snd_pcm_ops snd_ca0106_playback_front_ops = {
-	.open =        snd_ca0106_pcm_open_playback_front,
-	.close =       snd_ca0106_pcm_close_playback,
+/* चालकs */
+अटल स्थिर काष्ठा snd_pcm_ops snd_ca0106_playback_front_ops = अणु
+	.खोलो =        snd_ca0106_pcm_खोलो_playback_front,
+	.बंद =       snd_ca0106_pcm_बंद_playback,
 	.prepare =     snd_ca0106_pcm_prepare_playback,
 	.trigger =     snd_ca0106_pcm_trigger_playback,
-	.pointer =     snd_ca0106_pcm_pointer_playback,
-};
+	.poपूर्णांकer =     snd_ca0106_pcm_poपूर्णांकer_playback,
+पूर्ण;
 
-static const struct snd_pcm_ops snd_ca0106_capture_0_ops = {
-	.open =        snd_ca0106_pcm_open_0_capture,
-	.close =       snd_ca0106_pcm_close_capture,
+अटल स्थिर काष्ठा snd_pcm_ops snd_ca0106_capture_0_ops = अणु
+	.खोलो =        snd_ca0106_pcm_खोलो_0_capture,
+	.बंद =       snd_ca0106_pcm_बंद_capture,
 	.prepare =     snd_ca0106_pcm_prepare_capture,
 	.trigger =     snd_ca0106_pcm_trigger_capture,
-	.pointer =     snd_ca0106_pcm_pointer_capture,
-};
+	.poपूर्णांकer =     snd_ca0106_pcm_poपूर्णांकer_capture,
+पूर्ण;
 
-static const struct snd_pcm_ops snd_ca0106_capture_1_ops = {
-	.open =        snd_ca0106_pcm_open_1_capture,
-	.close =       snd_ca0106_pcm_close_capture,
+अटल स्थिर काष्ठा snd_pcm_ops snd_ca0106_capture_1_ops = अणु
+	.खोलो =        snd_ca0106_pcm_खोलो_1_capture,
+	.बंद =       snd_ca0106_pcm_बंद_capture,
 	.prepare =     snd_ca0106_pcm_prepare_capture,
 	.trigger =     snd_ca0106_pcm_trigger_capture,
-	.pointer =     snd_ca0106_pcm_pointer_capture,
-};
+	.poपूर्णांकer =     snd_ca0106_pcm_poपूर्णांकer_capture,
+पूर्ण;
 
-static const struct snd_pcm_ops snd_ca0106_capture_2_ops = {
-	.open =        snd_ca0106_pcm_open_2_capture,
-	.close =       snd_ca0106_pcm_close_capture,
+अटल स्थिर काष्ठा snd_pcm_ops snd_ca0106_capture_2_ops = अणु
+	.खोलो =        snd_ca0106_pcm_खोलो_2_capture,
+	.बंद =       snd_ca0106_pcm_बंद_capture,
 	.prepare =     snd_ca0106_pcm_prepare_capture,
 	.trigger =     snd_ca0106_pcm_trigger_capture,
-	.pointer =     snd_ca0106_pcm_pointer_capture,
-};
+	.poपूर्णांकer =     snd_ca0106_pcm_poपूर्णांकer_capture,
+पूर्ण;
 
-static const struct snd_pcm_ops snd_ca0106_capture_3_ops = {
-	.open =        snd_ca0106_pcm_open_3_capture,
-	.close =       snd_ca0106_pcm_close_capture,
+अटल स्थिर काष्ठा snd_pcm_ops snd_ca0106_capture_3_ops = अणु
+	.खोलो =        snd_ca0106_pcm_खोलो_3_capture,
+	.बंद =       snd_ca0106_pcm_बंद_capture,
 	.prepare =     snd_ca0106_pcm_prepare_capture,
 	.trigger =     snd_ca0106_pcm_trigger_capture,
-	.pointer =     snd_ca0106_pcm_pointer_capture,
-};
+	.poपूर्णांकer =     snd_ca0106_pcm_poपूर्णांकer_capture,
+पूर्ण;
 
-static const struct snd_pcm_ops snd_ca0106_playback_center_lfe_ops = {
-        .open =         snd_ca0106_pcm_open_playback_center_lfe,
-        .close =        snd_ca0106_pcm_close_playback,
+अटल स्थिर काष्ठा snd_pcm_ops snd_ca0106_playback_center_lfe_ops = अणु
+        .खोलो =         snd_ca0106_pcm_खोलो_playback_center_lfe,
+        .बंद =        snd_ca0106_pcm_बंद_playback,
         .prepare =      snd_ca0106_pcm_prepare_playback,     
         .trigger =      snd_ca0106_pcm_trigger_playback,  
-        .pointer =      snd_ca0106_pcm_pointer_playback, 
-};
+        .poपूर्णांकer =      snd_ca0106_pcm_poपूर्णांकer_playback, 
+पूर्ण;
 
-static const struct snd_pcm_ops snd_ca0106_playback_unknown_ops = {
-        .open =         snd_ca0106_pcm_open_playback_unknown,
-        .close =        snd_ca0106_pcm_close_playback,
+अटल स्थिर काष्ठा snd_pcm_ops snd_ca0106_playback_unknown_ops = अणु
+        .खोलो =         snd_ca0106_pcm_खोलो_playback_unknown,
+        .बंद =        snd_ca0106_pcm_बंद_playback,
         .prepare =      snd_ca0106_pcm_prepare_playback,     
         .trigger =      snd_ca0106_pcm_trigger_playback,  
-        .pointer =      snd_ca0106_pcm_pointer_playback, 
-};
+        .poपूर्णांकer =      snd_ca0106_pcm_poपूर्णांकer_playback, 
+पूर्ण;
 
-static const struct snd_pcm_ops snd_ca0106_playback_rear_ops = {
-        .open =         snd_ca0106_pcm_open_playback_rear,
-        .close =        snd_ca0106_pcm_close_playback,
+अटल स्थिर काष्ठा snd_pcm_ops snd_ca0106_playback_rear_ops = अणु
+        .खोलो =         snd_ca0106_pcm_खोलो_playback_rear,
+        .बंद =        snd_ca0106_pcm_बंद_playback,
         .prepare =      snd_ca0106_pcm_prepare_playback,     
         .trigger =      snd_ca0106_pcm_trigger_playback,  
-        .pointer =      snd_ca0106_pcm_pointer_playback, 
-};
+        .poपूर्णांकer =      snd_ca0106_pcm_poपूर्णांकer_playback, 
+पूर्ण;
 
 
-static unsigned short snd_ca0106_ac97_read(struct snd_ac97 *ac97,
-					     unsigned short reg)
-{
-	struct snd_ca0106 *emu = ac97->private_data;
-	unsigned long flags;
-	unsigned short val;
+अटल अचिन्हित लघु snd_ca0106_ac97_पढ़ो(काष्ठा snd_ac97 *ac97,
+					     अचिन्हित लघु reg)
+अणु
+	काष्ठा snd_ca0106 *emu = ac97->निजी_data;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित लघु val;
 
 	spin_lock_irqsave(&emu->emu_lock, flags);
 	outb(reg, emu->port + AC97ADDRESS);
 	val = inw(emu->port + AC97DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void snd_ca0106_ac97_write(struct snd_ac97 *ac97,
-				    unsigned short reg, unsigned short val)
-{
-	struct snd_ca0106 *emu = ac97->private_data;
-	unsigned long flags;
+अटल व्योम snd_ca0106_ac97_ग_लिखो(काष्ठा snd_ac97 *ac97,
+				    अचिन्हित लघु reg, अचिन्हित लघु val)
+अणु
+	काष्ठा snd_ca0106 *emu = ac97->निजी_data;
+	अचिन्हित दीर्घ flags;
   
 	spin_lock_irqsave(&emu->emu_lock, flags);
 	outb(reg, emu->port + AC97ADDRESS);
 	outw(val, emu->port + AC97DATA);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
-}
+पूर्ण
 
-static int snd_ca0106_ac97(struct snd_ca0106 *chip)
-{
-	struct snd_ac97_bus *pbus;
-	struct snd_ac97_template ac97;
-	int err;
-	static const struct snd_ac97_bus_ops ops = {
-		.write = snd_ca0106_ac97_write,
-		.read = snd_ca0106_ac97_read,
-	};
+अटल पूर्णांक snd_ca0106_ac97(काष्ठा snd_ca0106 *chip)
+अणु
+	काष्ठा snd_ac97_bus *pbus;
+	काष्ठा snd_ac97_ढाँचा ac97;
+	पूर्णांक err;
+	अटल स्थिर काष्ठा snd_ac97_bus_ops ops = अणु
+		.ग_लिखो = snd_ca0106_ac97_ग_लिखो,
+		.पढ़ो = snd_ca0106_ac97_पढ़ो,
+	पूर्ण;
   
-	if ((err = snd_ac97_bus(chip->card, 0, &ops, NULL, &pbus)) < 0)
-		return err;
-	pbus->no_vra = 1; /* we don't need VRA */
+	अगर ((err = snd_ac97_bus(chip->card, 0, &ops, शून्य, &pbus)) < 0)
+		वापस err;
+	pbus->no_vra = 1; /* we करोn't need VRA */
 
-	memset(&ac97, 0, sizeof(ac97));
-	ac97.private_data = chip;
+	स_रखो(&ac97, 0, माप(ac97));
+	ac97.निजी_data = chip;
 	ac97.scaps = AC97_SCAP_NO_SPDIF;
-	return snd_ac97_mixer(pbus, &ac97, &chip->ac97);
-}
+	वापस snd_ac97_mixer(pbus, &ac97, &chip->ac97);
+पूर्ण
 
-static void ca0106_stop_chip(struct snd_ca0106 *chip);
+अटल व्योम ca0106_stop_chip(काष्ठा snd_ca0106 *chip);
 
-static int snd_ca0106_free(struct snd_ca0106 *chip)
-{
-	if (chip->res_port != NULL) {
-		/* avoid access to already used hardware */
+अटल पूर्णांक snd_ca0106_मुक्त(काष्ठा snd_ca0106 *chip)
+अणु
+	अगर (chip->res_port != शून्य) अणु
+		/* aव्योम access to alपढ़ोy used hardware */
 		ca0106_stop_chip(chip);
-	}
-	if (chip->irq >= 0)
-		free_irq(chip->irq, chip);
+	पूर्ण
+	अगर (chip->irq >= 0)
+		मुक्त_irq(chip->irq, chip);
 	// release the data
-#if 1
-	if (chip->buffer.area)
-		snd_dma_free_pages(&chip->buffer);
-#endif
+#अगर 1
+	अगर (chip->buffer.area)
+		snd_dma_मुक्त_pages(&chip->buffer);
+#पूर्ण_अगर
 
 	// release the i/o port
-	release_and_free_resource(chip->res_port);
+	release_and_मुक्त_resource(chip->res_port);
 
 	pci_disable_device(chip->pci);
-	kfree(chip);
-	return 0;
-}
+	kमुक्त(chip);
+	वापस 0;
+पूर्ण
 
-static int snd_ca0106_dev_free(struct snd_device *device)
-{
-	struct snd_ca0106 *chip = device->device_data;
-	return snd_ca0106_free(chip);
-}
+अटल पूर्णांक snd_ca0106_dev_मुक्त(काष्ठा snd_device *device)
+अणु
+	काष्ठा snd_ca0106 *chip = device->device_data;
+	वापस snd_ca0106_मुक्त(chip);
+पूर्ण
 
-static irqreturn_t snd_ca0106_interrupt(int irq, void *dev_id)
-{
-	unsigned int status;
+अटल irqवापस_t snd_ca0106_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	अचिन्हित पूर्णांक status;
 
-	struct snd_ca0106 *chip = dev_id;
-	int i;
-	int mask;
-        unsigned int stat76;
-	struct snd_ca0106_channel *pchannel;
+	काष्ठा snd_ca0106 *chip = dev_id;
+	पूर्णांक i;
+	पूर्णांक mask;
+        अचिन्हित पूर्णांक stat76;
+	काष्ठा snd_ca0106_channel *pchannel;
 
 	status = inl(chip->port + IPR);
-	if (! status)
-		return IRQ_NONE;
+	अगर (! status)
+		वापस IRQ_NONE;
 
-        stat76 = snd_ca0106_ptr_read(chip, EXTENDED_INT, 0);
+        stat76 = snd_ca0106_ptr_पढ़ो(chip, EXTENDED_INT, 0);
 	/*
 	dev_dbg(emu->card->dev, "interrupt status = 0x%08x, stat76=0x%08x\n",
 		   status, stat76);
 	dev_dbg(emu->card->dev, "ptr=0x%08x\n",
-		   snd_ca0106_ptr_read(chip, PLAYBACK_POINTER, 0));
+		   snd_ca0106_ptr_पढ़ो(chip, PLAYBACK_POINTER, 0));
 	*/
-        mask = 0x11; /* 0x1 for one half, 0x10 for the other half period. */
-	for(i = 0; i < 4; i++) {
+        mask = 0x11; /* 0x1 क्रम one half, 0x10 क्रम the other half period. */
+	क्रम(i = 0; i < 4; i++) अणु
 		pchannel = &(chip->playback_channels[i]);
-		if (stat76 & mask) {
-/* FIXME: Select the correct substream for period elapsed */
-			if(pchannel->use) {
+		अगर (stat76 & mask) अणु
+/* FIXME: Select the correct substream क्रम period elapsed */
+			अगर(pchannel->use) अणु
 				snd_pcm_period_elapsed(pchannel->epcm->substream);
 				/* dev_dbg(emu->card->dev, "interrupt [%d] used\n", i); */
-                        }
-		}
+                        पूर्ण
+		पूर्ण
 		/*
 		dev_dbg(emu->card->dev, "channel=%p\n", pchannel);
 		dev_dbg(emu->card->dev, "interrupt stat76[%d] = %08x, use=%d, channel=%d\n", i, stat76, pchannel->use, pchannel->number);
 		*/
 		mask <<= 1;
-	}
-        mask = 0x110000; /* 0x1 for one half, 0x10 for the other half period. */
-	for(i = 0; i < 4; i++) {
+	पूर्ण
+        mask = 0x110000; /* 0x1 क्रम one half, 0x10 क्रम the other half period. */
+	क्रम(i = 0; i < 4; i++) अणु
 		pchannel = &(chip->capture_channels[i]);
-		if (stat76 & mask) {
-/* FIXME: Select the correct substream for period elapsed */
-			if(pchannel->use) {
+		अगर (stat76 & mask) अणु
+/* FIXME: Select the correct substream क्रम period elapsed */
+			अगर(pchannel->use) अणु
 				snd_pcm_period_elapsed(pchannel->epcm->substream);
 				/* dev_dbg(emu->card->dev, "interrupt [%d] used\n", i); */
-                        }
-		}
+                        पूर्ण
+		पूर्ण
 		/*
 		dev_dbg(emu->card->dev, "channel=%p\n", pchannel);
 		dev_dbg(emu->card->dev, "interrupt stat76[%d] = %08x, use=%d, channel=%d\n", i, stat76, pchannel->use, pchannel->number);
 		*/
 		mask <<= 1;
-	}
+	पूर्ण
 
-        snd_ca0106_ptr_write(chip, EXTENDED_INT, 0, stat76);
+        snd_ca0106_ptr_ग_लिखो(chip, EXTENDED_INT, 0, stat76);
 
-	if (chip->midi.dev_id &&
-	    (status & (chip->midi.ipr_tx|chip->midi.ipr_rx))) {
-		if (chip->midi.interrupt)
-			chip->midi.interrupt(&chip->midi, status);
-		else
-			chip->midi.interrupt_disable(&chip->midi, chip->midi.tx_enable | chip->midi.rx_enable);
-	}
+	अगर (chip->midi.dev_id &&
+	    (status & (chip->midi.ipr_tx|chip->midi.ipr_rx))) अणु
+		अगर (chip->midi.पूर्णांकerrupt)
+			chip->midi.पूर्णांकerrupt(&chip->midi, status);
+		अन्यथा
+			chip->midi.पूर्णांकerrupt_disable(&chip->midi, chip->midi.tx_enable | chip->midi.rx_enable);
+	पूर्ण
 
-	// acknowledge the interrupt if necessary
+	// acknowledge the पूर्णांकerrupt अगर necessary
 	outl(status, chip->port+IPR);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct snd_pcm_chmap_elem surround_map[] = {
-	{ .channels = 2,
-	  .map = { SNDRV_CHMAP_RL, SNDRV_CHMAP_RR } },
-	{ }
-};
+अटल स्थिर काष्ठा snd_pcm_chmap_elem surround_map[] = अणु
+	अणु .channels = 2,
+	  .map = अणु SNDRV_CHMAP_RL, SNDRV_CHMAP_RR पूर्ण पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static const struct snd_pcm_chmap_elem clfe_map[] = {
-	{ .channels = 2,
-	  .map = { SNDRV_CHMAP_FC, SNDRV_CHMAP_LFE } },
-	{ }
-};
+अटल स्थिर काष्ठा snd_pcm_chmap_elem clfe_map[] = अणु
+	अणु .channels = 2,
+	  .map = अणु SNDRV_CHMAP_FC, SNDRV_CHMAP_LFE पूर्ण पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static const struct snd_pcm_chmap_elem side_map[] = {
-	{ .channels = 2,
-	  .map = { SNDRV_CHMAP_SL, SNDRV_CHMAP_SR } },
-	{ }
-};
+अटल स्थिर काष्ठा snd_pcm_chmap_elem side_map[] = अणु
+	अणु .channels = 2,
+	  .map = अणु SNDRV_CHMAP_SL, SNDRV_CHMAP_SR पूर्ण पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static int snd_ca0106_pcm(struct snd_ca0106 *emu, int device)
-{
-	struct snd_pcm *pcm;
-	struct snd_pcm_substream *substream;
-	const struct snd_pcm_chmap_elem *map = NULL;
-	int err;
+अटल पूर्णांक snd_ca0106_pcm(काष्ठा snd_ca0106 *emu, पूर्णांक device)
+अणु
+	काष्ठा snd_pcm *pcm;
+	काष्ठा snd_pcm_substream *substream;
+	स्थिर काष्ठा snd_pcm_chmap_elem *map = शून्य;
+	पूर्णांक err;
   
 	err = snd_pcm_new(emu->card, "ca0106", device, 1, 1, &pcm);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
   
-	pcm->private_data = emu;
+	pcm->निजी_data = emu;
 
-	switch (device) {
-	case 0:
+	चयन (device) अणु
+	हाल 0:
 	  snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_ca0106_playback_front_ops);
 	  snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_ca0106_capture_0_ops);
 	  map = snd_pcm_std_chmaps;
-          break;
-	case 1:
+          अवरोध;
+	हाल 1:
 	  snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_ca0106_playback_rear_ops);
 	  snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_ca0106_capture_1_ops);
 	  map = surround_map;
-          break;
-	case 2:
+          अवरोध;
+	हाल 2:
 	  snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_ca0106_playback_center_lfe_ops);
 	  snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_ca0106_capture_2_ops);
 	  map = clfe_map;
-          break;
-	case 3:
+          अवरोध;
+	हाल 3:
 	  snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_ca0106_playback_unknown_ops);
 	  snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_ca0106_capture_3_ops);
 	  map = side_map;
-          break;
-        }
+          अवरोध;
+        पूर्ण
 
 	pcm->info_flags = 0;
-	strcpy(pcm->name, "CA0106");
+	म_नकल(pcm->name, "CA0106");
 
-	for(substream = pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream; 
+	क्रम(substream = pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream; 
 	    substream; 
-	    substream = substream->next) {
+	    substream = substream->next) अणु
 		snd_pcm_set_managed_buffer(substream, SNDRV_DMA_TYPE_DEV,
 					   &emu->pci->dev,
 					   64*1024, 64*1024);
-	}
+	पूर्ण
 
-	for (substream = pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream; 
+	क्रम (substream = pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream; 
 	      substream; 
-	      substream = substream->next) {
+	      substream = substream->next) अणु
 		snd_pcm_set_managed_buffer(substream, SNDRV_DMA_TYPE_DEV,
 					   &emu->pci->dev,
 					   64*1024, 64*1024);
-	}
+	पूर्ण
   
 	err = snd_pcm_add_chmap_ctls(pcm, SNDRV_PCM_STREAM_PLAYBACK, map, 2,
-				     1 << 2, NULL);
-	if (err < 0)
-		return err;
+				     1 << 2, शून्य);
+	अगर (err < 0)
+		वापस err;
 
 	emu->pcm[device] = pcm;
   
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define SPI_REG(reg, value)	(((reg) << SPI_REG_SHIFT) | (value))
-static const unsigned int spi_dac_init[] = {
+#घोषणा SPI_REG(reg, value)	(((reg) << SPI_REG_SHIFT) | (value))
+अटल स्थिर अचिन्हित पूर्णांक spi_dac_init[] = अणु
 	SPI_REG(SPI_LDA1_REG,	SPI_DA_BIT_0dB), /* 0dB dig. attenuation */
 	SPI_REG(SPI_RDA1_REG,	SPI_DA_BIT_0dB),
 	SPI_REG(SPI_PL_REG,	SPI_PL_BIT_L_L | SPI_PL_BIT_R_R | SPI_IZD_BIT),
@@ -1376,28 +1377,28 @@ static const unsigned int spi_dac_init[] = {
 	SPI_REG(SPI_LDA4_REG,	SPI_DA_BIT_0dB),
 	SPI_REG(SPI_RDA4_REG,	SPI_DA_BIT_0dB | SPI_DA_BIT_UPDATE),
 	SPI_REG(SPI_DACD4_REG,	SPI_DACD4_BIT),
-};
+पूर्ण;
 
-static const unsigned int i2c_adc_init[][2] = {
-	{ 0x17, 0x00 }, /* Reset */
-	{ 0x07, 0x00 }, /* Timeout */
-	{ 0x0b, 0x22 },  /* Interface control */
-	{ 0x0c, 0x22 },  /* Master mode control */
-	{ 0x0d, 0x08 },  /* Powerdown control */
-	{ 0x0e, 0xcf },  /* Attenuation Left  0x01 = -103dB, 0xff = 24dB */
-	{ 0x0f, 0xcf },  /* Attenuation Right 0.5dB steps */
-	{ 0x10, 0x7b },  /* ALC Control 1 */
-	{ 0x11, 0x00 },  /* ALC Control 2 */
-	{ 0x12, 0x32 },  /* ALC Control 3 */
-	{ 0x13, 0x00 },  /* Noise gate control */
-	{ 0x14, 0xa6 },  /* Limiter control */
-	{ 0x15, ADC_MUX_LINEIN },  /* ADC Mixer control */
-};
+अटल स्थिर अचिन्हित पूर्णांक i2c_adc_init[][2] = अणु
+	अणु 0x17, 0x00 पूर्ण, /* Reset */
+	अणु 0x07, 0x00 पूर्ण, /* Timeout */
+	अणु 0x0b, 0x22 पूर्ण,  /* Interface control */
+	अणु 0x0c, 0x22 पूर्ण,  /* Master mode control */
+	अणु 0x0d, 0x08 पूर्ण,  /* Powerकरोwn control */
+	अणु 0x0e, 0xcf पूर्ण,  /* Attenuation Left  0x01 = -103dB, 0xff = 24dB */
+	अणु 0x0f, 0xcf पूर्ण,  /* Attenuation Right 0.5dB steps */
+	अणु 0x10, 0x7b पूर्ण,  /* ALC Control 1 */
+	अणु 0x11, 0x00 पूर्ण,  /* ALC Control 2 */
+	अणु 0x12, 0x32 पूर्ण,  /* ALC Control 3 */
+	अणु 0x13, 0x00 पूर्ण,  /* Noise gate control */
+	अणु 0x14, 0xa6 पूर्ण,  /* Limiter control */
+	अणु 0x15, ADC_MUX_LINEIN पूर्ण,  /* ADC Mixer control */
+पूर्ण;
 
-static void ca0106_init_chip(struct snd_ca0106 *chip, int resume)
-{
-	int ch;
-	unsigned int def_bits;
+अटल व्योम ca0106_init_chip(काष्ठा snd_ca0106 *chip, पूर्णांक resume)
+अणु
+	पूर्णांक ch;
+	अचिन्हित पूर्णांक def_bits;
 
 	outl(0, chip->port + INTE);
 
@@ -1406,12 +1407,12 @@ static void ca0106_init_chip(struct snd_ca0106 *chip, int resume)
 	 *  Clock accuracy    = 0     (1000ppm)
 	 *  Sample Rate       = 2     (48kHz)
 	 *  Audio Channel     = 1     (Left of 2)
-	 *  Source Number     = 0     (Unspecified)
-	 *  Generation Status = 1     (Original for Cat Code 12)
+	 *  Source Number     = 0     (Unspecअगरied)
+	 *  Generation Status = 1     (Original क्रम Cat Code 12)
 	 *  Cat Code          = 12    (Digital Signal Mixer)
 	 *  Mode              = 0     (Mode 0)
 	 *  Emphasis          = 0     (None)
-	 *  CP                = 1     (Copyright unasserted)
+	 *  CP                = 1     (Copyright unनिश्चितed)
 	 *  AN                = 0     (Audio data)
 	 *  P                 = 0     (Consumer)
 	 */
@@ -1420,201 +1421,201 @@ static void ca0106_init_chip(struct snd_ca0106 *chip, int resume)
 		SPCS_CHANNELNUM_LEFT | SPCS_SOURCENUM_UNSPEC |
 		SPCS_GENERATIONSTATUS | 0x00001200 |
 		0x00000000 | SPCS_EMPHASIS_NONE | SPCS_COPYRIGHT;
-	if (!resume) {
-		chip->spdif_str_bits[0] = chip->spdif_bits[0] = def_bits;
-		chip->spdif_str_bits[1] = chip->spdif_bits[1] = def_bits;
-		chip->spdif_str_bits[2] = chip->spdif_bits[2] = def_bits;
-		chip->spdif_str_bits[3] = chip->spdif_bits[3] = def_bits;
-	}
+	अगर (!resume) अणु
+		chip->spdअगर_str_bits[0] = chip->spdअगर_bits[0] = def_bits;
+		chip->spdअगर_str_bits[1] = chip->spdअगर_bits[1] = def_bits;
+		chip->spdअगर_str_bits[2] = chip->spdअगर_bits[2] = def_bits;
+		chip->spdअगर_str_bits[3] = chip->spdअगर_bits[3] = def_bits;
+	पूर्ण
 	/* Only SPCS1 has been tested */
-	snd_ca0106_ptr_write(chip, SPCS1, 0, chip->spdif_str_bits[1]);
-	snd_ca0106_ptr_write(chip, SPCS0, 0, chip->spdif_str_bits[0]);
-	snd_ca0106_ptr_write(chip, SPCS2, 0, chip->spdif_str_bits[2]);
-	snd_ca0106_ptr_write(chip, SPCS3, 0, chip->spdif_str_bits[3]);
+	snd_ca0106_ptr_ग_लिखो(chip, SPCS1, 0, chip->spdअगर_str_bits[1]);
+	snd_ca0106_ptr_ग_लिखो(chip, SPCS0, 0, chip->spdअगर_str_bits[0]);
+	snd_ca0106_ptr_ग_लिखो(chip, SPCS2, 0, chip->spdअगर_str_bits[2]);
+	snd_ca0106_ptr_ग_लिखो(chip, SPCS3, 0, chip->spdअगर_str_bits[3]);
 
-        snd_ca0106_ptr_write(chip, PLAYBACK_MUTE, 0, 0x00fc0000);
-        snd_ca0106_ptr_write(chip, CAPTURE_MUTE, 0, 0x00fc0000);
+        snd_ca0106_ptr_ग_लिखो(chip, PLAYBACK_MUTE, 0, 0x00fc0000);
+        snd_ca0106_ptr_ग_लिखो(chip, CAPTURE_MUTE, 0, 0x00fc0000);
 
         /* Write 0x8000 to AC97_REC_GAIN to mute it. */
         outb(AC97_REC_GAIN, chip->port + AC97ADDRESS);
         outw(0x8000, chip->port + AC97DATA);
-#if 0 /* FIXME: what are these? */
-	snd_ca0106_ptr_write(chip, SPCS0, 0, 0x2108006);
-	snd_ca0106_ptr_write(chip, 0x42, 0, 0x2108006);
-	snd_ca0106_ptr_write(chip, 0x43, 0, 0x2108006);
-	snd_ca0106_ptr_write(chip, 0x44, 0, 0x2108006);
-#endif
+#अगर 0 /* FIXME: what are these? */
+	snd_ca0106_ptr_ग_लिखो(chip, SPCS0, 0, 0x2108006);
+	snd_ca0106_ptr_ग_लिखो(chip, 0x42, 0, 0x2108006);
+	snd_ca0106_ptr_ग_लिखो(chip, 0x43, 0, 0x2108006);
+	snd_ca0106_ptr_ग_लिखो(chip, 0x44, 0, 0x2108006);
+#पूर्ण_अगर
 
 	/* OSS drivers set this. */
-	/* snd_ca0106_ptr_write(chip, SPDIF_SELECT2, 0, 0xf0f003f); */
+	/* snd_ca0106_ptr_ग_लिखो(chip, SPDIF_SELECT2, 0, 0xf0f003f); */
 
 	/* Analog or Digital output */
-	snd_ca0106_ptr_write(chip, SPDIF_SELECT1, 0, 0xf);
-	/* 0x0b000000 for digital, 0x000b0000 for analog, from win2000 drivers.
-	 * Use 0x000f0000 for surround71
+	snd_ca0106_ptr_ग_लिखो(chip, SPDIF_SELECT1, 0, 0xf);
+	/* 0x0b000000 क्रम digital, 0x000b0000 क्रम analog, from win2000 drivers.
+	 * Use 0x000f0000 क्रम surround71
 	 */
-	snd_ca0106_ptr_write(chip, SPDIF_SELECT2, 0, 0x000f0000);
+	snd_ca0106_ptr_ग_लिखो(chip, SPDIF_SELECT2, 0, 0x000f0000);
 
-	chip->spdif_enable = 0; /* Set digital SPDIF output off */
-	/*snd_ca0106_ptr_write(chip, 0x45, 0, 0);*/ /* Analogue out */
-	/*snd_ca0106_ptr_write(chip, 0x45, 0, 0xf00);*/ /* Digital out */
+	chip->spdअगर_enable = 0; /* Set digital SPDIF output off */
+	/*snd_ca0106_ptr_ग_लिखो(chip, 0x45, 0, 0);*/ /* Analogue out */
+	/*snd_ca0106_ptr_ग_लिखो(chip, 0x45, 0, 0xf00);*/ /* Digital out */
 
-	/* goes to 0x40c80000 when doing SPDIF IN/OUT */
-	snd_ca0106_ptr_write(chip, CAPTURE_CONTROL, 0, 0x40c81000);
-	/* (Mute) CAPTURE feedback into PLAYBACK volume.
+	/* goes to 0x40c80000 when करोing SPDIF IN/OUT */
+	snd_ca0106_ptr_ग_लिखो(chip, CAPTURE_CONTROL, 0, 0x40c81000);
+	/* (Mute) CAPTURE feedback पूर्णांकo PLAYBACK volume.
 	 * Only lower 16 bits matter.
 	 */
-	snd_ca0106_ptr_write(chip, CAPTURE_CONTROL, 1, 0xffffffff);
+	snd_ca0106_ptr_ग_लिखो(chip, CAPTURE_CONTROL, 1, 0xffffffff);
 	/* SPDIF IN Volume */
-	snd_ca0106_ptr_write(chip, CAPTURE_CONTROL, 2, 0x30300000);
+	snd_ca0106_ptr_ग_लिखो(chip, CAPTURE_CONTROL, 2, 0x30300000);
 	/* SPDIF IN Volume, 0x70 = (vol & 0x3f) | 0x40 */
-	snd_ca0106_ptr_write(chip, CAPTURE_CONTROL, 3, 0x00700000);
+	snd_ca0106_ptr_ग_लिखो(chip, CAPTURE_CONTROL, 3, 0x00700000);
 
-	snd_ca0106_ptr_write(chip, PLAYBACK_ROUTING1, 0, 0x32765410);
-	snd_ca0106_ptr_write(chip, PLAYBACK_ROUTING2, 0, 0x76767676);
-	snd_ca0106_ptr_write(chip, CAPTURE_ROUTING1, 0, 0x32765410);
-	snd_ca0106_ptr_write(chip, CAPTURE_ROUTING2, 0, 0x76767676);
+	snd_ca0106_ptr_ग_लिखो(chip, PLAYBACK_ROUTING1, 0, 0x32765410);
+	snd_ca0106_ptr_ग_लिखो(chip, PLAYBACK_ROUTING2, 0, 0x76767676);
+	snd_ca0106_ptr_ग_लिखो(chip, CAPTURE_ROUTING1, 0, 0x32765410);
+	snd_ca0106_ptr_ग_लिखो(chip, CAPTURE_ROUTING2, 0, 0x76767676);
 
-	for (ch = 0; ch < 4; ch++) {
+	क्रम (ch = 0; ch < 4; ch++) अणु
 		/* Only high 16 bits matter */
-		snd_ca0106_ptr_write(chip, CAPTURE_VOLUME1, ch, 0x30303030);
-		snd_ca0106_ptr_write(chip, CAPTURE_VOLUME2, ch, 0x30303030);
-#if 0 /* Mute */
-		snd_ca0106_ptr_write(chip, PLAYBACK_VOLUME1, ch, 0x40404040);
-		snd_ca0106_ptr_write(chip, PLAYBACK_VOLUME2, ch, 0x40404040);
-		snd_ca0106_ptr_write(chip, PLAYBACK_VOLUME1, ch, 0xffffffff);
-		snd_ca0106_ptr_write(chip, PLAYBACK_VOLUME2, ch, 0xffffffff);
-#endif
-	}
-	if (chip->details->i2c_adc == 1) {
+		snd_ca0106_ptr_ग_लिखो(chip, CAPTURE_VOLUME1, ch, 0x30303030);
+		snd_ca0106_ptr_ग_लिखो(chip, CAPTURE_VOLUME2, ch, 0x30303030);
+#अगर 0 /* Mute */
+		snd_ca0106_ptr_ग_लिखो(chip, PLAYBACK_VOLUME1, ch, 0x40404040);
+		snd_ca0106_ptr_ग_लिखो(chip, PLAYBACK_VOLUME2, ch, 0x40404040);
+		snd_ca0106_ptr_ग_लिखो(chip, PLAYBACK_VOLUME1, ch, 0xffffffff);
+		snd_ca0106_ptr_ग_लिखो(chip, PLAYBACK_VOLUME2, ch, 0xffffffff);
+#पूर्ण_अगर
+	पूर्ण
+	अगर (chip->details->i2c_adc == 1) अणु
 	        /* Select MIC, Line in, TAD in, AUX in */
-	        snd_ca0106_ptr_write(chip, CAPTURE_SOURCE, 0x0, 0x333300e4);
+	        snd_ca0106_ptr_ग_लिखो(chip, CAPTURE_SOURCE, 0x0, 0x333300e4);
 		/* Default to CAPTURE_SOURCE to i2s in */
-		if (!resume)
+		अगर (!resume)
 			chip->capture_source = 3;
-	} else if (chip->details->ac97 == 1) {
+	पूर्ण अन्यथा अगर (chip->details->ac97 == 1) अणु
 	        /* Default to AC97 in */
-	        snd_ca0106_ptr_write(chip, CAPTURE_SOURCE, 0x0, 0x444400e4);
+	        snd_ca0106_ptr_ग_लिखो(chip, CAPTURE_SOURCE, 0x0, 0x444400e4);
 		/* Default to CAPTURE_SOURCE to AC97 in */
-		if (!resume)
+		अगर (!resume)
 			chip->capture_source = 4;
-	} else {
+	पूर्ण अन्यथा अणु
 	        /* Select MIC, Line in, TAD in, AUX in */
-	        snd_ca0106_ptr_write(chip, CAPTURE_SOURCE, 0x0, 0x333300e4);
+	        snd_ca0106_ptr_ग_लिखो(chip, CAPTURE_SOURCE, 0x0, 0x333300e4);
 		/* Default to Set CAPTURE_SOURCE to i2s in */
-		if (!resume)
+		अगर (!resume)
 			chip->capture_source = 3;
-	}
+	पूर्ण
 
-	if (chip->details->gpio_type == 2) {
-		/* The SB0438 use GPIO differently. */
-		/* FIXME: Still need to find out what the other GPIO bits do.
-		 * E.g. For digital spdif out.
+	अगर (chip->details->gpio_type == 2) अणु
+		/* The SB0438 use GPIO dअगरferently. */
+		/* FIXME: Still need to find out what the other GPIO bits करो.
+		 * E.g. For digital spdअगर out.
 		 */
 		outl(0x0, chip->port+GPIO);
 		/* outl(0x00f0e000, chip->port+GPIO); */ /* Analog */
 		outl(0x005f5301, chip->port+GPIO); /* Analog */
-	} else if (chip->details->gpio_type == 1) {
-		/* The SB0410 and SB0413 use GPIO differently. */
-		/* FIXME: Still need to find out what the other GPIO bits do.
-		 * E.g. For digital spdif out.
+	पूर्ण अन्यथा अगर (chip->details->gpio_type == 1) अणु
+		/* The SB0410 and SB0413 use GPIO dअगरferently. */
+		/* FIXME: Still need to find out what the other GPIO bits करो.
+		 * E.g. For digital spdअगर out.
 		 */
 		outl(0x0, chip->port+GPIO);
 		/* outl(0x00f0e000, chip->port+GPIO); */ /* Analog */
 		outl(0x005f5301, chip->port+GPIO); /* Analog */
-	} else {
+	पूर्ण अन्यथा अणु
 		outl(0x0, chip->port+GPIO);
 		outl(0x005f03a3, chip->port+GPIO); /* Analog */
 		/* outl(0x005f02a2, chip->port+GPIO); */ /* SPDIF */
-	}
-	snd_ca0106_intr_enable(chip, 0x105); /* Win2000 uses 0x1e0 */
+	पूर्ण
+	snd_ca0106_पूर्णांकr_enable(chip, 0x105); /* Win2000 uses 0x1e0 */
 
 	/* outl(HCFG_LOCKSOUNDCACHE|HCFG_AUDIOENABLE, chip->port+HCFG); */
 	/* 0x1000 causes AC3 to fails. Maybe it effects 24 bit output. */
 	/* outl(0x00001409, chip->port+HCFG); */
 	/* outl(0x00000009, chip->port+HCFG); */
-	/* AC97 2.0, Enable outputs. */
+	/* AC97 2.0, Enable outमाला_दो. */
 	outl(HCFG_AC97 | HCFG_AUDIOENABLE, chip->port+HCFG);
 
-	if (chip->details->i2c_adc == 1) {
+	अगर (chip->details->i2c_adc == 1) अणु
 		/* The SB0410 and SB0413 use I2C to control ADC. */
-		int size, n;
+		पूर्णांक size, n;
 
 		size = ARRAY_SIZE(i2c_adc_init);
 		/* dev_dbg(emu->card->dev, "I2C:array size=0x%x\n", size); */
-		for (n = 0; n < size; n++)
-			snd_ca0106_i2c_write(chip, i2c_adc_init[n][0],
+		क्रम (n = 0; n < size; n++)
+			snd_ca0106_i2c_ग_लिखो(chip, i2c_adc_init[n][0],
 					     i2c_adc_init[n][1]);
-		for (n = 0; n < 4; n++) {
+		क्रम (n = 0; n < 4; n++) अणु
 			chip->i2c_capture_volume[n][0] = 0xcf;
 			chip->i2c_capture_volume[n][1] = 0xcf;
-		}
+		पूर्ण
 		chip->i2c_capture_source = 2; /* Line in */
 		/* Enable Line-in capture. MIC in currently untested. */
-		/* snd_ca0106_i2c_write(chip, ADC_MUX, ADC_MUX_LINEIN); */
-	}
+		/* snd_ca0106_i2c_ग_लिखो(chip, ADC_MUX, ADC_MUX_LINEIN); */
+	पूर्ण
 
-	if (chip->details->spi_dac) {
+	अगर (chip->details->spi_dac) अणु
 		/* The SB0570 use SPI to control DAC. */
-		int size, n;
+		पूर्णांक size, n;
 
 		size = ARRAY_SIZE(spi_dac_init);
-		for (n = 0; n < size; n++) {
-			int reg = spi_dac_init[n] >> SPI_REG_SHIFT;
+		क्रम (n = 0; n < size; n++) अणु
+			पूर्णांक reg = spi_dac_init[n] >> SPI_REG_SHIFT;
 
-			snd_ca0106_spi_write(chip, spi_dac_init[n]);
-			if (reg < ARRAY_SIZE(chip->spi_dac_reg))
+			snd_ca0106_spi_ग_लिखो(chip, spi_dac_init[n]);
+			अगर (reg < ARRAY_SIZE(chip->spi_dac_reg))
 				chip->spi_dac_reg[reg] = spi_dac_init[n];
-		}
+		पूर्ण
 
 		/* Enable front dac only */
-		snd_ca0106_pcm_power_dac(chip, PCM_FRONT_CHANNEL, 1);
-	}
-}
+		snd_ca0106_pcm_घातer_dac(chip, PCM_FRONT_CHANNEL, 1);
+	पूर्ण
+पूर्ण
 
-static void ca0106_stop_chip(struct snd_ca0106 *chip)
-{
-	/* disable interrupts */
-	snd_ca0106_ptr_write(chip, BASIC_INTERRUPT, 0, 0);
+अटल व्योम ca0106_stop_chip(काष्ठा snd_ca0106 *chip)
+अणु
+	/* disable पूर्णांकerrupts */
+	snd_ca0106_ptr_ग_लिखो(chip, BASIC_INTERRUPT, 0, 0);
 	outl(0, chip->port + INTE);
-	snd_ca0106_ptr_write(chip, EXTENDED_INT_MASK, 0, 0);
+	snd_ca0106_ptr_ग_लिखो(chip, EXTENDED_INT_MASK, 0, 0);
 	udelay(1000);
 	/* disable audio */
 	/* outl(HCFG_LOCKSOUNDCACHE, chip->port + HCFG); */
 	outl(0, chip->port + HCFG);
 	/* FIXME: We need to stop and DMA transfers here.
 	 *        But as I am not sure how yet, we cannot from the dma pages.
-	 * So we can fix: snd-malloc: Memory leak?  pages not freed = 8
+	 * So we can fix: snd-दो_स्मृति: Memory leak?  pages not मुक्तd = 8
 	 */
-}
+पूर्ण
 
-static int snd_ca0106_create(int dev, struct snd_card *card,
-					 struct pci_dev *pci,
-					 struct snd_ca0106 **rchip)
-{
-	struct snd_ca0106 *chip;
-	const struct snd_ca0106_details *c;
-	int err;
-	static const struct snd_device_ops ops = {
-		.dev_free = snd_ca0106_dev_free,
-	};
+अटल पूर्णांक snd_ca0106_create(पूर्णांक dev, काष्ठा snd_card *card,
+					 काष्ठा pci_dev *pci,
+					 काष्ठा snd_ca0106 **rchip)
+अणु
+	काष्ठा snd_ca0106 *chip;
+	स्थिर काष्ठा snd_ca0106_details *c;
+	पूर्णांक err;
+	अटल स्थिर काष्ठा snd_device_ops ops = अणु
+		.dev_मुक्त = snd_ca0106_dev_मुक्त,
+	पूर्ण;
 
-	*rchip = NULL;
+	*rchip = शून्य;
 
 	err = pci_enable_device(pci);
-	if (err < 0)
-		return err;
-	if (dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(32))) {
+	अगर (err < 0)
+		वापस err;
+	अगर (dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(32))) अणु
 		dev_err(card->dev, "error to set 32bit mask DMA\n");
 		pci_disable_device(pci);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
-	if (chip == NULL) {
+	chip = kzalloc(माप(*chip), GFP_KERNEL);
+	अगर (chip == शून्य) अणु
 		pci_disable_device(pci);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	chip->card = card;
 	chip->pci = pci;
@@ -1624,104 +1625,104 @@ static int snd_ca0106_create(int dev, struct snd_card *card,
 
 	chip->port = pci_resource_start(pci, 0);
 	chip->res_port = request_region(chip->port, 0x20, "snd_ca0106");
-	if (!chip->res_port) {
-		snd_ca0106_free(chip);
+	अगर (!chip->res_port) अणु
+		snd_ca0106_मुक्त(chip);
 		dev_err(card->dev, "cannot allocate the port\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (request_irq(pci->irq, snd_ca0106_interrupt,
-			IRQF_SHARED, KBUILD_MODNAME, chip)) {
-		snd_ca0106_free(chip);
+	अगर (request_irq(pci->irq, snd_ca0106_पूर्णांकerrupt,
+			IRQF_SHARED, KBUILD_MODNAME, chip)) अणु
+		snd_ca0106_मुक्त(chip);
 		dev_err(card->dev, "cannot grab irq\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;
 
 	/* This stores the periods table. */
-	if (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &pci->dev,
-				1024, &chip->buffer) < 0) {
-		snd_ca0106_free(chip);
-		return -ENOMEM;
-	}
+	अगर (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &pci->dev,
+				1024, &chip->buffer) < 0) अणु
+		snd_ca0106_मुक्त(chip);
+		वापस -ENOMEM;
+	पूर्ण
 
 	pci_set_master(pci);
-	/* read serial */
-	pci_read_config_dword(pci, PCI_SUBSYSTEM_VENDOR_ID, &chip->serial);
-	pci_read_config_word(pci, PCI_SUBSYSTEM_ID, &chip->model);
+	/* पढ़ो serial */
+	pci_पढ़ो_config_dword(pci, PCI_SUBSYSTEM_VENDOR_ID, &chip->serial);
+	pci_पढ़ो_config_word(pci, PCI_SUBSYSTEM_ID, &chip->model);
 	dev_info(card->dev, "Model %04x Rev %08x Serial %08x\n",
 	       chip->model, pci->revision, chip->serial);
-	strcpy(card->driver, "CA0106");
-	strcpy(card->shortname, "CA0106");
+	म_नकल(card->driver, "CA0106");
+	म_नकल(card->लघुname, "CA0106");
 
-	for (c = ca0106_chip_details; c->serial; c++) {
-		if (subsystem[dev]) {
-			if (c->serial == subsystem[dev])
-				break;
-		} else if (c->serial == chip->serial)
-			break;
-	}
+	क्रम (c = ca0106_chip_details; c->serial; c++) अणु
+		अगर (subप्रणाली[dev]) अणु
+			अगर (c->serial == subप्रणाली[dev])
+				अवरोध;
+		पूर्ण अन्यथा अगर (c->serial == chip->serial)
+			अवरोध;
+	पूर्ण
 	chip->details = c;
-	if (subsystem[dev]) {
+	अगर (subप्रणाली[dev]) अणु
 		dev_info(card->dev, "Sound card name=%s, "
 		       "subsystem=0x%x. Forced to subsystem=0x%x\n",
-		       c->name, chip->serial, subsystem[dev]);
-	}
+		       c->name, chip->serial, subप्रणाली[dev]);
+	पूर्ण
 
-	sprintf(card->longname, "%s at 0x%lx irq %i",
+	प्र_लिखो(card->दीर्घname, "%s at 0x%lx irq %i",
 		c->name, chip->port, chip->irq);
 
 	ca0106_init_chip(chip, 0);
 
 	err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops);
-	if (err < 0) {
-		snd_ca0106_free(chip);
-		return err;
-	}
+	अगर (err < 0) अणु
+		snd_ca0106_मुक्त(chip);
+		वापस err;
+	पूर्ण
 	*rchip = chip;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void ca0106_midi_interrupt_enable(struct snd_ca_midi *midi, int intr)
-{
-	snd_ca0106_intr_enable((struct snd_ca0106 *)(midi->dev_id), intr);
-}
+अटल व्योम ca0106_midi_पूर्णांकerrupt_enable(काष्ठा snd_ca_midi *midi, पूर्णांक पूर्णांकr)
+अणु
+	snd_ca0106_पूर्णांकr_enable((काष्ठा snd_ca0106 *)(midi->dev_id), पूर्णांकr);
+पूर्ण
 
-static void ca0106_midi_interrupt_disable(struct snd_ca_midi *midi, int intr)
-{
-	snd_ca0106_intr_disable((struct snd_ca0106 *)(midi->dev_id), intr);
-}
+अटल व्योम ca0106_midi_पूर्णांकerrupt_disable(काष्ठा snd_ca_midi *midi, पूर्णांक पूर्णांकr)
+अणु
+	snd_ca0106_पूर्णांकr_disable((काष्ठा snd_ca0106 *)(midi->dev_id), पूर्णांकr);
+पूर्ण
 
-static unsigned char ca0106_midi_read(struct snd_ca_midi *midi, int idx)
-{
-	return (unsigned char)snd_ca0106_ptr_read((struct snd_ca0106 *)(midi->dev_id),
+अटल अचिन्हित अक्षर ca0106_midi_पढ़ो(काष्ठा snd_ca_midi *midi, पूर्णांक idx)
+अणु
+	वापस (अचिन्हित अक्षर)snd_ca0106_ptr_पढ़ो((काष्ठा snd_ca0106 *)(midi->dev_id),
 						  midi->port + idx, 0);
-}
+पूर्ण
 
-static void ca0106_midi_write(struct snd_ca_midi *midi, int data, int idx)
-{
-	snd_ca0106_ptr_write((struct snd_ca0106 *)(midi->dev_id), midi->port + idx, 0, data);
-}
+अटल व्योम ca0106_midi_ग_लिखो(काष्ठा snd_ca_midi *midi, पूर्णांक data, पूर्णांक idx)
+अणु
+	snd_ca0106_ptr_ग_लिखो((काष्ठा snd_ca0106 *)(midi->dev_id), midi->port + idx, 0, data);
+पूर्ण
 
-static struct snd_card *ca0106_dev_id_card(void *dev_id)
-{
-	return ((struct snd_ca0106 *)dev_id)->card;
-}
+अटल काष्ठा snd_card *ca0106_dev_id_card(व्योम *dev_id)
+अणु
+	वापस ((काष्ठा snd_ca0106 *)dev_id)->card;
+पूर्ण
 
-static int ca0106_dev_id_port(void *dev_id)
-{
-	return ((struct snd_ca0106 *)dev_id)->port;
-}
+अटल पूर्णांक ca0106_dev_id_port(व्योम *dev_id)
+अणु
+	वापस ((काष्ठा snd_ca0106 *)dev_id)->port;
+पूर्ण
 
-static int snd_ca0106_midi(struct snd_ca0106 *chip, unsigned int channel)
-{
-	struct snd_ca_midi *midi;
-	char *name;
-	int err;
+अटल पूर्णांक snd_ca0106_midi(काष्ठा snd_ca0106 *chip, अचिन्हित पूर्णांक channel)
+अणु
+	काष्ठा snd_ca_midi *midi;
+	अक्षर *name;
+	पूर्णांक err;
 
-	if (channel == CA0106_MIDI_CHAN_B) {
+	अगर (channel == CA0106_MIDI_CHAN_B) अणु
 		name = "CA0106 MPU-401 (UART) B";
 		midi =  &chip->midi2;
 		midi->tx_enable = INTE_MIDI_TX_B;
@@ -1729,7 +1730,7 @@ static int snd_ca0106_midi(struct snd_ca0106 *chip, unsigned int channel)
 		midi->ipr_tx = IPR_MIDI_TX_B;
 		midi->ipr_rx = IPR_MIDI_RX_B;
 		midi->port = MIDI_UART_B_DATA;
-	} else {
+	पूर्ण अन्यथा अणु
 		name = "CA0106 MPU-401 (UART)";
 		midi =  &chip->midi;
 		midi->tx_enable = INTE_MIDI_TX_A;
@@ -1737,161 +1738,161 @@ static int snd_ca0106_midi(struct snd_ca0106 *chip, unsigned int channel)
 		midi->ipr_tx = IPR_MIDI_TX_A;
 		midi->ipr_rx = IPR_MIDI_RX_A;
 		midi->port = MIDI_UART_A_DATA;
-	}
+	पूर्ण
 
 	midi->reset = CA0106_MPU401_RESET;
 	midi->enter_uart = CA0106_MPU401_ENTER_UART;
 	midi->ack = CA0106_MPU401_ACK;
 
 	midi->input_avail = CA0106_MIDI_INPUT_AVAIL;
-	midi->output_ready = CA0106_MIDI_OUTPUT_READY;
+	midi->output_पढ़ोy = CA0106_MIDI_OUTPUT_READY;
 
 	midi->channel = channel;
 
-	midi->interrupt_enable = ca0106_midi_interrupt_enable;
-	midi->interrupt_disable = ca0106_midi_interrupt_disable;
+	midi->पूर्णांकerrupt_enable = ca0106_midi_पूर्णांकerrupt_enable;
+	midi->पूर्णांकerrupt_disable = ca0106_midi_पूर्णांकerrupt_disable;
 
-	midi->read = ca0106_midi_read;
-	midi->write = ca0106_midi_write;
+	midi->पढ़ो = ca0106_midi_पढ़ो;
+	midi->ग_लिखो = ca0106_midi_ग_लिखो;
 
 	midi->get_dev_id_card = ca0106_dev_id_card;
 	midi->get_dev_id_port = ca0106_dev_id_port;
 
 	midi->dev_id = chip;
 	
-	if ((err = ca_midi_init(chip, midi, 0, name)) < 0)
-		return err;
+	अगर ((err = ca_midi_init(chip, midi, 0, name)) < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int snd_ca0106_probe(struct pci_dev *pci,
-					const struct pci_device_id *pci_id)
-{
-	static int dev;
-	struct snd_card *card;
-	struct snd_ca0106 *chip;
-	int i, err;
+अटल पूर्णांक snd_ca0106_probe(काष्ठा pci_dev *pci,
+					स्थिर काष्ठा pci_device_id *pci_id)
+अणु
+	अटल पूर्णांक dev;
+	काष्ठा snd_card *card;
+	काष्ठा snd_ca0106 *chip;
+	पूर्णांक i, err;
 
-	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
-	if (!enable[dev]) {
+	अगर (dev >= SNDRV_CARDS)
+		वापस -ENODEV;
+	अगर (!enable[dev]) अणु
 		dev++;
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,
 			   0, &card);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = snd_ca0106_create(dev, card, pci, &chip);
-	if (err < 0)
-		goto error;
-	card->private_data = chip;
+	अगर (err < 0)
+		जाओ error;
+	card->निजी_data = chip;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		err = snd_ca0106_pcm(chip, i);
-		if (err < 0)
-			goto error;
-	}
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
 
-	if (chip->details->ac97 == 1) {
-		/* The SB0410 and SB0413 do not have an AC97 chip. */
+	अगर (chip->details->ac97 == 1) अणु
+		/* The SB0410 and SB0413 करो not have an AC97 chip. */
 		err = snd_ca0106_ac97(chip);
-		if (err < 0)
-			goto error;
-	}
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
 	err = snd_ca0106_mixer(chip);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	dev_dbg(card->dev, "probe for MIDI channel A ...");
 	err = snd_ca0106_midi(chip, CA0106_MIDI_CHAN_A);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 	dev_dbg(card->dev, " done.\n");
 
-#ifdef CONFIG_SND_PROC_FS
+#अगर_घोषित CONFIG_SND_PROC_FS
 	snd_ca0106_proc_init(chip);
-#endif
+#पूर्ण_अगर
 
-	err = snd_card_register(card);
-	if (err < 0)
-		goto error;
+	err = snd_card_रेजिस्टर(card);
+	अगर (err < 0)
+		जाओ error;
 
 	pci_set_drvdata(pci, card);
 	dev++;
-	return 0;
+	वापस 0;
 
  error:
-	snd_card_free(card);
-	return err;
-}
+	snd_card_मुक्त(card);
+	वापस err;
+पूर्ण
 
-static void snd_ca0106_remove(struct pci_dev *pci)
-{
-	snd_card_free(pci_get_drvdata(pci));
-}
+अटल व्योम snd_ca0106_हटाओ(काष्ठा pci_dev *pci)
+अणु
+	snd_card_मुक्त(pci_get_drvdata(pci));
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int snd_ca0106_suspend(struct device *dev)
-{
-	struct snd_card *card = dev_get_drvdata(dev);
-	struct snd_ca0106 *chip = card->private_data;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक snd_ca0106_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा snd_card *card = dev_get_drvdata(dev);
+	काष्ठा snd_ca0106 *chip = card->निजी_data;
 
-	snd_power_change_state(card, SNDRV_CTL_POWER_D3hot);
-	if (chip->details->ac97)
+	snd_घातer_change_state(card, SNDRV_CTL_POWER_D3hot);
+	अगर (chip->details->ac97)
 		snd_ac97_suspend(chip->ac97);
 	snd_ca0106_mixer_suspend(chip);
 
 	ca0106_stop_chip(chip);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_ca0106_resume(struct device *dev)
-{
-	struct snd_card *card = dev_get_drvdata(dev);
-	struct snd_ca0106 *chip = card->private_data;
-	int i;
+अटल पूर्णांक snd_ca0106_resume(काष्ठा device *dev)
+अणु
+	काष्ठा snd_card *card = dev_get_drvdata(dev);
+	काष्ठा snd_ca0106 *chip = card->निजी_data;
+	पूर्णांक i;
 
 	ca0106_init_chip(chip, 1);
 
-	if (chip->details->ac97)
+	अगर (chip->details->ac97)
 		snd_ac97_resume(chip->ac97);
 	snd_ca0106_mixer_resume(chip);
-	if (chip->details->spi_dac) {
-		for (i = 0; i < ARRAY_SIZE(chip->spi_dac_reg); i++)
-			snd_ca0106_spi_write(chip, chip->spi_dac_reg[i]);
-	}
+	अगर (chip->details->spi_dac) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(chip->spi_dac_reg); i++)
+			snd_ca0106_spi_ग_लिखो(chip, chip->spi_dac_reg[i]);
+	पूर्ण
 
-	snd_power_change_state(card, SNDRV_CTL_POWER_D0);
-	return 0;
-}
+	snd_घातer_change_state(card, SNDRV_CTL_POWER_D0);
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(snd_ca0106_pm, snd_ca0106_suspend, snd_ca0106_resume);
-#define SND_CA0106_PM_OPS	&snd_ca0106_pm
-#else
-#define SND_CA0106_PM_OPS	NULL
-#endif
+अटल SIMPLE_DEV_PM_OPS(snd_ca0106_pm, snd_ca0106_suspend, snd_ca0106_resume);
+#घोषणा SND_CA0106_PM_OPS	&snd_ca0106_pm
+#अन्यथा
+#घोषणा SND_CA0106_PM_OPS	शून्य
+#पूर्ण_अगर
 
 // PCI IDs
-static const struct pci_device_id snd_ca0106_ids[] = {
-	{ PCI_VDEVICE(CREATIVE, 0x0007), 0 },	/* Audigy LS or Live 24bit */
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id snd_ca0106_ids[] = अणु
+	अणु PCI_VDEVICE(CREATIVE, 0x0007), 0 पूर्ण,	/* Audigy LS or Live 24bit */
+	अणु 0, पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, snd_ca0106_ids);
 
 // pci_driver definition
-static struct pci_driver ca0106_driver = {
+अटल काष्ठा pci_driver ca0106_driver = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = snd_ca0106_ids,
 	.probe = snd_ca0106_probe,
-	.remove = snd_ca0106_remove,
-	.driver = {
+	.हटाओ = snd_ca0106_हटाओ,
+	.driver = अणु
 		.pm = SND_CA0106_PM_OPS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 module_pci_driver(ca0106_driver);

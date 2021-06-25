@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2015 IBM Corp.
  */
 
-#ifndef __CHECKER__
-#define CREATE_TRACE_POINTS
-#include "trace.h"
-#endif
+#अगर_अघोषित __CHECKER__
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "trace.h"
+#पूर्ण_अगर

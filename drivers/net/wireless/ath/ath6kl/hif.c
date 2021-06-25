@@ -1,58 +1,59 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2007-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2012 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include "hif.h"
+#समावेश "hif.h"
 
-#include <linux/export.h>
+#समावेश <linux/export.h>
 
-#include "core.h"
-#include "target.h"
-#include "hif-ops.h"
-#include "debug.h"
-#include "trace.h"
+#समावेश "core.h"
+#समावेश "target.h"
+#समावेश "hif-ops.h"
+#समावेश "debug.h"
+#समावेश "trace.h"
 
-#define MAILBOX_FOR_BLOCK_SIZE          1
+#घोषणा MAILBOX_FOR_BLOCK_SIZE          1
 
-#define ATH6KL_TIME_QUANTUM	10  /* in ms */
+#घोषणा ATH6KL_TIME_QUANTUM	10  /* in ms */
 
-static int ath6kl_hif_cp_scat_dma_buf(struct hif_scatter_req *req,
+अटल पूर्णांक ath6kl_hअगर_cp_scat_dma_buf(काष्ठा hअगर_scatter_req *req,
 				      bool from_dma)
-{
+अणु
 	u8 *buf;
-	int i;
+	पूर्णांक i;
 
 	buf = req->virt_dma_buf;
 
-	for (i = 0; i < req->scat_entries; i++) {
-		if (from_dma)
-			memcpy(req->scat_list[i].buf, buf,
+	क्रम (i = 0; i < req->scat_entries; i++) अणु
+		अगर (from_dma)
+			स_नकल(req->scat_list[i].buf, buf,
 			       req->scat_list[i].len);
-		else
-			memcpy(buf, req->scat_list[i].buf,
+		अन्यथा
+			स_नकल(buf, req->scat_list[i].buf,
 			       req->scat_list[i].len);
 
 		buf += req->scat_list[i].len;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath6kl_hif_rw_comp_handler(void *context, int status)
-{
-	struct htc_packet *packet = context;
+पूर्णांक ath6kl_hअगर_rw_comp_handler(व्योम *context, पूर्णांक status)
+अणु
+	काष्ठा htc_packet *packet = context;
 
 	ath6kl_dbg(ATH6KL_DBG_HIF, "hif rw completion pkt 0x%p status %d\n",
 		   packet, status);
@@ -60,43 +61,43 @@ int ath6kl_hif_rw_comp_handler(void *context, int status)
 	packet->status = status;
 	packet->completion(packet->context, packet);
 
-	return 0;
-}
-EXPORT_SYMBOL(ath6kl_hif_rw_comp_handler);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(ath6kl_hअगर_rw_comp_handler);
 
-#define REGISTER_DUMP_COUNT     60
-#define REGISTER_DUMP_LEN_MAX   60
+#घोषणा REGISTER_DUMP_COUNT     60
+#घोषणा REGISTER_DUMP_LEN_MAX   60
 
-static void ath6kl_hif_dump_fw_crash(struct ath6kl *ar)
-{
+अटल व्योम ath6kl_hअगर_dump_fw_crash(काष्ठा ath6kl *ar)
+अणु
 	__le32 regdump_val[REGISTER_DUMP_LEN_MAX];
 	u32 i, address, regdump_addr = 0;
-	int ret;
+	पूर्णांक ret;
 
-	/* the reg dump pointer is copied to the host interest area */
+	/* the reg dump poपूर्णांकer is copied to the host पूर्णांकerest area */
 	address = ath6kl_get_hi_item_addr(ar, HI_ITEM(hi_failure_state));
 	address = TARG_VTOP(ar->target_type, address);
 
-	/* read RAM location through diagnostic window */
-	ret = ath6kl_diag_read32(ar, address, &regdump_addr);
+	/* पढ़ो RAM location through diagnostic winकरोw */
+	ret = ath6kl_diag_पढ़ो32(ar, address, &regdump_addr);
 
-	if (ret || !regdump_addr) {
+	अगर (ret || !regdump_addr) अणु
 		ath6kl_warn("failed to get ptr to register dump area: %d\n",
 			    ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ath6kl_dbg(ATH6KL_DBG_IRQ, "register dump data address 0x%x\n",
 		   regdump_addr);
 	regdump_addr = TARG_VTOP(ar->target_type, regdump_addr);
 
-	/* fetch register dump data */
-	ret = ath6kl_diag_read(ar, regdump_addr, (u8 *)&regdump_val[0],
-				  REGISTER_DUMP_COUNT * (sizeof(u32)));
-	if (ret) {
+	/* fetch रेजिस्टर dump data */
+	ret = ath6kl_diag_पढ़ो(ar, regdump_addr, (u8 *)&regdump_val[0],
+				  REGISTER_DUMP_COUNT * (माप(u32)));
+	अगर (ret) अणु
 		ath6kl_warn("failed to get register dump: %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ath6kl_info("crash dump:\n");
 	ath6kl_info("hw 0x%x fw %s\n", ar->wiphy->hw_version,
@@ -104,63 +105,63 @@ static void ath6kl_hif_dump_fw_crash(struct ath6kl *ar)
 
 	BUILD_BUG_ON(REGISTER_DUMP_COUNT % 4);
 
-	for (i = 0; i < REGISTER_DUMP_COUNT; i += 4) {
+	क्रम (i = 0; i < REGISTER_DUMP_COUNT; i += 4) अणु
 		ath6kl_info("%d: 0x%8.8x 0x%8.8x 0x%8.8x 0x%8.8x\n",
 			    i,
 			    le32_to_cpu(regdump_val[i]),
 			    le32_to_cpu(regdump_val[i + 1]),
 			    le32_to_cpu(regdump_val[i + 2]),
 			    le32_to_cpu(regdump_val[i + 3]));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ath6kl_hif_proc_dbg_intr(struct ath6kl_device *dev)
-{
+अटल पूर्णांक ath6kl_hअगर_proc_dbg_पूर्णांकr(काष्ठा ath6kl_device *dev)
+अणु
 	u32 dummy;
-	int ret;
+	पूर्णांक ret;
 
 	ath6kl_warn("firmware crashed\n");
 
 	/*
-	 * read counter to clear the interrupt, the debug error interrupt is
+	 * पढ़ो counter to clear the पूर्णांकerrupt, the debug error पूर्णांकerrupt is
 	 * counter 0.
 	 */
-	ret = hif_read_write_sync(dev->ar, COUNT_DEC_ADDRESS,
+	ret = hअगर_पढ़ो_ग_लिखो_sync(dev->ar, COUNT_DEC_ADDRESS,
 				     (u8 *)&dummy, 4, HIF_RD_SYNC_BYTE_INC);
-	if (ret)
+	अगर (ret)
 		ath6kl_warn("Failed to clear debug interrupt: %d\n", ret);
 
-	ath6kl_hif_dump_fw_crash(dev->ar);
-	ath6kl_read_fwlogs(dev->ar);
-	ath6kl_recovery_err_notify(dev->ar, ATH6KL_FW_ASSERT);
+	ath6kl_hअगर_dump_fw_crash(dev->ar);
+	ath6kl_पढ़ो_fwlogs(dev->ar);
+	ath6kl_recovery_err_notअगरy(dev->ar, ATH6KL_FW_ASSERT);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* mailbox recv message polling */
-int ath6kl_hif_poll_mboxmsg_rx(struct ath6kl_device *dev, u32 *lk_ahd,
-			      int timeout)
-{
-	struct ath6kl_irq_proc_registers *rg;
-	int status = 0, i;
+पूर्णांक ath6kl_hअगर_poll_mboxmsg_rx(काष्ठा ath6kl_device *dev, u32 *lk_ahd,
+			      पूर्णांक समयout)
+अणु
+	काष्ठा ath6kl_irq_proc_रेजिस्टरs *rg;
+	पूर्णांक status = 0, i;
 	u8 htc_mbox = 1 << HTC_MAILBOX;
 
-	for (i = timeout / ATH6KL_TIME_QUANTUM; i > 0; i--) {
+	क्रम (i = समयout / ATH6KL_TIME_QUANTUM; i > 0; i--) अणु
 		/* this is the standard HIF way, load the reg table */
-		status = hif_read_write_sync(dev->ar, HOST_INT_STATUS_ADDRESS,
+		status = hअगर_पढ़ो_ग_लिखो_sync(dev->ar, HOST_INT_STATUS_ADDRESS,
 					     (u8 *) &dev->irq_proc_reg,
-					     sizeof(dev->irq_proc_reg),
+					     माप(dev->irq_proc_reg),
 					     HIF_RD_SYNC_BYTE_INC);
 
-		if (status) {
+		अगर (status) अणु
 			ath6kl_err("failed to read reg table\n");
-			return status;
-		}
+			वापस status;
+		पूर्ण
 
-		/* check for MBOX data and valid lookahead */
-		if (dev->irq_proc_reg.host_int_status & htc_mbox) {
-			if (dev->irq_proc_reg.rx_lkahd_valid &
-			    htc_mbox) {
+		/* check क्रम MBOX data and valid lookahead */
+		अगर (dev->irq_proc_reg.host_पूर्णांक_status & htc_mbox) अणु
+			अगर (dev->irq_proc_reg.rx_lkahd_valid &
+			    htc_mbox) अणु
 				/*
 				 * Mailbox has a message and the look ahead
 				 * is valid.
@@ -168,228 +169,228 @@ int ath6kl_hif_poll_mboxmsg_rx(struct ath6kl_device *dev, u32 *lk_ahd,
 				rg = &dev->irq_proc_reg;
 				*lk_ahd =
 					le32_to_cpu(rg->rx_lkahd[HTC_MAILBOX]);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		/* delay a little  */
 		mdelay(ATH6KL_TIME_QUANTUM);
 		ath6kl_dbg(ATH6KL_DBG_HIF, "hif retry mbox poll try %d\n", i);
-	}
+	पूर्ण
 
-	if (i == 0) {
+	अगर (i == 0) अणु
 		ath6kl_err("timeout waiting for recv message\n");
 		status = -ETIME;
-		/* check if the target asserted */
-		if (dev->irq_proc_reg.counter_int_status &
+		/* check अगर the target निश्चितed */
+		अगर (dev->irq_proc_reg.counter_पूर्णांक_status &
 		    ATH6KL_TARGET_DEBUG_INTR_MASK)
 			/*
-			 * Target failure handler will be called in case of
-			 * an assert.
+			 * Target failure handler will be called in हाल of
+			 * an निश्चित.
 			 */
-			ath6kl_hif_proc_dbg_intr(dev);
-	}
+			ath6kl_hअगर_proc_dbg_पूर्णांकr(dev);
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
- * Disable packet reception (used in case the host runs out of buffers)
- * using the interrupt enable registers through the host I/F
+ * Disable packet reception (used in हाल the host runs out of buffers)
+ * using the पूर्णांकerrupt enable रेजिस्टरs through the host I/F
  */
-int ath6kl_hif_rx_control(struct ath6kl_device *dev, bool enable_rx)
-{
-	struct ath6kl_irq_enable_reg regs;
-	int status = 0;
+पूर्णांक ath6kl_hअगर_rx_control(काष्ठा ath6kl_device *dev, bool enable_rx)
+अणु
+	काष्ठा ath6kl_irq_enable_reg regs;
+	पूर्णांक status = 0;
 
 	ath6kl_dbg(ATH6KL_DBG_HIF, "hif rx %s\n",
 		   enable_rx ? "enable" : "disable");
 
-	/* take the lock to protect interrupt enable shadows */
+	/* take the lock to protect पूर्णांकerrupt enable shaकरोws */
 	spin_lock_bh(&dev->lock);
 
-	if (enable_rx)
-		dev->irq_en_reg.int_status_en |=
+	अगर (enable_rx)
+		dev->irq_en_reg.पूर्णांक_status_en |=
 			SM(INT_STATUS_ENABLE_MBOX_DATA, 0x01);
-	else
-		dev->irq_en_reg.int_status_en &=
+	अन्यथा
+		dev->irq_en_reg.पूर्णांक_status_en &=
 		    ~SM(INT_STATUS_ENABLE_MBOX_DATA, 0x01);
 
-	memcpy(&regs, &dev->irq_en_reg, sizeof(regs));
+	स_नकल(&regs, &dev->irq_en_reg, माप(regs));
 
 	spin_unlock_bh(&dev->lock);
 
-	status = hif_read_write_sync(dev->ar, INT_STATUS_ENABLE_ADDRESS,
-				     &regs.int_status_en,
-				     sizeof(struct ath6kl_irq_enable_reg),
+	status = hअगर_पढ़ो_ग_लिखो_sync(dev->ar, INT_STATUS_ENABLE_ADDRESS,
+				     &regs.पूर्णांक_status_en,
+				     माप(काष्ठा ath6kl_irq_enable_reg),
 				     HIF_WR_SYNC_BYTE_INC);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ath6kl_hif_submit_scat_req(struct ath6kl_device *dev,
-			      struct hif_scatter_req *scat_req, bool read)
-{
-	int status = 0;
+पूर्णांक ath6kl_hअगर_submit_scat_req(काष्ठा ath6kl_device *dev,
+			      काष्ठा hअगर_scatter_req *scat_req, bool पढ़ो)
+अणु
+	पूर्णांक status = 0;
 
-	if (read) {
+	अगर (पढ़ो) अणु
 		scat_req->req = HIF_RD_SYNC_BLOCK_FIX;
 		scat_req->addr = dev->ar->mbox_info.htc_addr;
-	} else {
+	पूर्ण अन्यथा अणु
 		scat_req->req = HIF_WR_ASYNC_BLOCK_INC;
 
 		scat_req->addr =
 			(scat_req->len > HIF_MBOX_WIDTH) ?
 			dev->ar->mbox_info.htc_ext_addr :
 			dev->ar->mbox_info.htc_addr;
-	}
+	पूर्ण
 
 	ath6kl_dbg(ATH6KL_DBG_HIF,
 		   "hif submit scatter request entries %d len %d mbox 0x%x %s %s\n",
 		   scat_req->scat_entries, scat_req->len,
-		   scat_req->addr, !read ? "async" : "sync",
-		   (read) ? "rd" : "wr");
+		   scat_req->addr, !पढ़ो ? "async" : "sync",
+		   (पढ़ो) ? "rd" : "wr");
 
-	if (!read && scat_req->virt_scat) {
-		status = ath6kl_hif_cp_scat_dma_buf(scat_req, false);
-		if (status) {
+	अगर (!पढ़ो && scat_req->virt_scat) अणु
+		status = ath6kl_hअगर_cp_scat_dma_buf(scat_req, false);
+		अगर (status) अणु
 			scat_req->status = status;
 			scat_req->complete(dev->ar->htc_target, scat_req);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	status = ath6kl_hif_scat_req_rw(dev->ar, scat_req);
+	status = ath6kl_hअगर_scat_req_rw(dev->ar, scat_req);
 
-	if (read) {
+	अगर (पढ़ो) अणु
 		/* in sync mode, we can touch the scatter request */
 		scat_req->status = status;
-		if (!status && scat_req->virt_scat)
+		अगर (!status && scat_req->virt_scat)
 			scat_req->status =
-				ath6kl_hif_cp_scat_dma_buf(scat_req, true);
-	}
+				ath6kl_hअगर_cp_scat_dma_buf(scat_req, true);
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ath6kl_hif_proc_counter_intr(struct ath6kl_device *dev)
-{
-	u8 counter_int_status;
+अटल पूर्णांक ath6kl_hअगर_proc_counter_पूर्णांकr(काष्ठा ath6kl_device *dev)
+अणु
+	u8 counter_पूर्णांक_status;
 
 	ath6kl_dbg(ATH6KL_DBG_IRQ, "counter interrupt\n");
 
-	counter_int_status = dev->irq_proc_reg.counter_int_status &
-			     dev->irq_en_reg.cntr_int_status_en;
+	counter_पूर्णांक_status = dev->irq_proc_reg.counter_पूर्णांक_status &
+			     dev->irq_en_reg.cntr_पूर्णांक_status_en;
 
 	ath6kl_dbg(ATH6KL_DBG_IRQ,
 		   "valid interrupt source(s) in COUNTER_INT_STATUS: 0x%x\n",
-		counter_int_status);
+		counter_पूर्णांक_status);
 
 	/*
-	 * NOTE: other modules like GMBOX may use the counter interrupt for
-	 * credit flow control on other counters, we only need to check for
-	 * the debug assertion counter interrupt.
+	 * NOTE: other modules like GMBOX may use the counter पूर्णांकerrupt क्रम
+	 * credit flow control on other counters, we only need to check क्रम
+	 * the debug निश्चितion counter पूर्णांकerrupt.
 	 */
-	if (counter_int_status & ATH6KL_TARGET_DEBUG_INTR_MASK)
-		return ath6kl_hif_proc_dbg_intr(dev);
+	अगर (counter_पूर्णांक_status & ATH6KL_TARGET_DEBUG_INTR_MASK)
+		वापस ath6kl_hअगर_proc_dbg_पूर्णांकr(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_hif_proc_err_intr(struct ath6kl_device *dev)
-{
-	int status;
-	u8 error_int_status;
+अटल पूर्णांक ath6kl_hअगर_proc_err_पूर्णांकr(काष्ठा ath6kl_device *dev)
+अणु
+	पूर्णांक status;
+	u8 error_पूर्णांक_status;
 	u8 reg_buf[4];
 
 	ath6kl_dbg(ATH6KL_DBG_IRQ, "error interrupt\n");
 
-	error_int_status = dev->irq_proc_reg.error_int_status & 0x0F;
-	if (!error_int_status) {
+	error_पूर्णांक_status = dev->irq_proc_reg.error_पूर्णांक_status & 0x0F;
+	अगर (!error_पूर्णांक_status) अणु
 		WARN_ON(1);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	ath6kl_dbg(ATH6KL_DBG_IRQ,
 		   "valid interrupt source(s) in ERROR_INT_STATUS: 0x%x\n",
-		   error_int_status);
+		   error_पूर्णांक_status);
 
-	if (MS(ERROR_INT_STATUS_WAKEUP, error_int_status))
+	अगर (MS(ERROR_INT_STATUS_WAKEUP, error_पूर्णांक_status))
 		ath6kl_dbg(ATH6KL_DBG_IRQ, "error : wakeup\n");
 
-	if (MS(ERROR_INT_STATUS_RX_UNDERFLOW, error_int_status))
+	अगर (MS(ERROR_INT_STATUS_RX_UNDERFLOW, error_पूर्णांक_status))
 		ath6kl_err("rx underflow\n");
 
-	if (MS(ERROR_INT_STATUS_TX_OVERFLOW, error_int_status))
+	अगर (MS(ERROR_INT_STATUS_TX_OVERFLOW, error_पूर्णांक_status))
 		ath6kl_err("tx overflow\n");
 
-	/* Clear the interrupt */
-	dev->irq_proc_reg.error_int_status &= ~error_int_status;
+	/* Clear the पूर्णांकerrupt */
+	dev->irq_proc_reg.error_पूर्णांक_status &= ~error_पूर्णांक_status;
 
-	/* set W1C value to clear the interrupt, this hits the register first */
-	reg_buf[0] = error_int_status;
+	/* set W1C value to clear the पूर्णांकerrupt, this hits the रेजिस्टर first */
+	reg_buf[0] = error_पूर्णांक_status;
 	reg_buf[1] = 0;
 	reg_buf[2] = 0;
 	reg_buf[3] = 0;
 
-	status = hif_read_write_sync(dev->ar, ERROR_INT_STATUS_ADDRESS,
+	status = hअगर_पढ़ो_ग_लिखो_sync(dev->ar, ERROR_INT_STATUS_ADDRESS,
 				     reg_buf, 4, HIF_WR_SYNC_BYTE_FIX);
 
 	WARN_ON(status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ath6kl_hif_proc_cpu_intr(struct ath6kl_device *dev)
-{
-	int status;
-	u8 cpu_int_status;
+अटल पूर्णांक ath6kl_hअगर_proc_cpu_पूर्णांकr(काष्ठा ath6kl_device *dev)
+अणु
+	पूर्णांक status;
+	u8 cpu_पूर्णांक_status;
 	u8 reg_buf[4];
 
 	ath6kl_dbg(ATH6KL_DBG_IRQ, "cpu interrupt\n");
 
-	cpu_int_status = dev->irq_proc_reg.cpu_int_status &
-			 dev->irq_en_reg.cpu_int_status_en;
-	if (!cpu_int_status) {
+	cpu_पूर्णांक_status = dev->irq_proc_reg.cpu_पूर्णांक_status &
+			 dev->irq_en_reg.cpu_पूर्णांक_status_en;
+	अगर (!cpu_पूर्णांक_status) अणु
 		WARN_ON(1);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	ath6kl_dbg(ATH6KL_DBG_IRQ,
 		   "valid interrupt source(s) in CPU_INT_STATUS: 0x%x\n",
-		cpu_int_status);
+		cpu_पूर्णांक_status);
 
-	/* Clear the interrupt */
-	dev->irq_proc_reg.cpu_int_status &= ~cpu_int_status;
+	/* Clear the पूर्णांकerrupt */
+	dev->irq_proc_reg.cpu_पूर्णांक_status &= ~cpu_पूर्णांक_status;
 
 	/*
-	 * Set up the register transfer buffer to hit the register 4 times ,
-	 * this is done to make the access 4-byte aligned to mitigate issues
-	 * with host bus interconnects that restrict bus transfer lengths to
+	 * Set up the रेजिस्टर transfer buffer to hit the रेजिस्टर 4 बार ,
+	 * this is करोne to make the access 4-byte aligned to mitigate issues
+	 * with host bus पूर्णांकerconnects that restrict bus transfer lengths to
 	 * be a multiple of 4-bytes.
 	 */
 
-	/* set W1C value to clear the interrupt, this hits the register first */
-	reg_buf[0] = cpu_int_status;
-	/* the remaining are set to zero which have no-effect  */
+	/* set W1C value to clear the पूर्णांकerrupt, this hits the रेजिस्टर first */
+	reg_buf[0] = cpu_पूर्णांक_status;
+	/* the reमुख्यing are set to zero which have no-effect  */
 	reg_buf[1] = 0;
 	reg_buf[2] = 0;
 	reg_buf[3] = 0;
 
-	status = hif_read_write_sync(dev->ar, CPU_INT_STATUS_ADDRESS,
+	status = hअगर_पढ़ो_ग_लिखो_sync(dev->ar, CPU_INT_STATUS_ADDRESS,
 				     reg_buf, 4, HIF_WR_SYNC_BYTE_FIX);
 
 	WARN_ON(status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-/* process pending interrupts synchronously */
-static int proc_pending_irqs(struct ath6kl_device *dev, bool *done)
-{
-	struct ath6kl_irq_proc_registers *rg;
-	int status = 0;
-	u8 host_int_status = 0;
+/* process pending पूर्णांकerrupts synchronously */
+अटल पूर्णांक proc_pending_irqs(काष्ठा ath6kl_device *dev, bool *करोne)
+अणु
+	काष्ठा ath6kl_irq_proc_रेजिस्टरs *rg;
+	पूर्णांक status = 0;
+	u8 host_पूर्णांक_status = 0;
 	u32 lk_ahd = 0;
 	u8 htc_mbox = 1 << HTC_MAILBOX;
 
@@ -397,72 +398,72 @@ static int proc_pending_irqs(struct ath6kl_device *dev, bool *done)
 
 	/*
 	 * NOTE: HIF implementation guarantees that the context of this
-	 * call allows us to perform SYNCHRONOUS I/O, that is we can block,
-	 * sleep or call any API that can block or switch thread/task
+	 * call allows us to perक्रमm SYNCHRONOUS I/O, that is we can block,
+	 * sleep or call any API that can block or चयन thपढ़ो/task
 	 * contexts. This is a fully schedulable context.
 	 */
 
 	/*
-	 * Process pending intr only when int_status_en is clear, it may
+	 * Process pending पूर्णांकr only when पूर्णांक_status_en is clear, it may
 	 * result in unnecessary bus transaction otherwise. Target may be
-	 * unresponsive at the time.
+	 * unresponsive at the समय.
 	 */
-	if (dev->irq_en_reg.int_status_en) {
+	अगर (dev->irq_en_reg.पूर्णांक_status_en) अणु
 		/*
-		 * Read the first 28 bytes of the HTC register table. This
-		 * will yield us the value of different int status
-		 * registers and the lookahead registers.
+		 * Read the first 28 bytes of the HTC रेजिस्टर table. This
+		 * will yield us the value of dअगरferent पूर्णांक status
+		 * रेजिस्टरs and the lookahead रेजिस्टरs.
 		 *
-		 *    length = sizeof(int_status) + sizeof(cpu_int_status)
-		 *             + sizeof(error_int_status) +
-		 *             sizeof(counter_int_status) +
-		 *             sizeof(mbox_frame) + sizeof(rx_lkahd_valid)
-		 *             + sizeof(hole) + sizeof(rx_lkahd) +
-		 *             sizeof(int_status_en) +
-		 *             sizeof(cpu_int_status_en) +
-		 *             sizeof(err_int_status_en) +
-		 *             sizeof(cntr_int_status_en);
+		 *    length = माप(पूर्णांक_status) + माप(cpu_पूर्णांक_status)
+		 *             + माप(error_पूर्णांक_status) +
+		 *             माप(counter_पूर्णांक_status) +
+		 *             माप(mbox_frame) + माप(rx_lkahd_valid)
+		 *             + माप(hole) + माप(rx_lkahd) +
+		 *             माप(पूर्णांक_status_en) +
+		 *             माप(cpu_पूर्णांक_status_en) +
+		 *             माप(err_पूर्णांक_status_en) +
+		 *             माप(cntr_पूर्णांक_status_en);
 		 */
-		status = hif_read_write_sync(dev->ar, HOST_INT_STATUS_ADDRESS,
+		status = hअगर_पढ़ो_ग_लिखो_sync(dev->ar, HOST_INT_STATUS_ADDRESS,
 					     (u8 *) &dev->irq_proc_reg,
-					     sizeof(dev->irq_proc_reg),
+					     माप(dev->irq_proc_reg),
 					     HIF_RD_SYNC_BYTE_INC);
-		if (status)
-			goto out;
+		अगर (status)
+			जाओ out;
 
-		ath6kl_dump_registers(dev, &dev->irq_proc_reg,
+		ath6kl_dump_रेजिस्टरs(dev, &dev->irq_proc_reg,
 				      &dev->irq_en_reg);
 		trace_ath6kl_sdio_irq(&dev->irq_en_reg,
-				      sizeof(dev->irq_en_reg));
+				      माप(dev->irq_en_reg));
 
-		/* Update only those registers that are enabled */
-		host_int_status = dev->irq_proc_reg.host_int_status &
-				  dev->irq_en_reg.int_status_en;
+		/* Update only those रेजिस्टरs that are enabled */
+		host_पूर्णांक_status = dev->irq_proc_reg.host_पूर्णांक_status &
+				  dev->irq_en_reg.पूर्णांक_status_en;
 
 		/* Look at mbox status */
-		if (host_int_status & htc_mbox) {
+		अगर (host_पूर्णांक_status & htc_mbox) अणु
 			/*
 			 * Mask out pending mbox value, we use "lookAhead as
-			 * the real flag for mbox processing.
+			 * the real flag क्रम mbox processing.
 			 */
-			host_int_status &= ~htc_mbox;
-			if (dev->irq_proc_reg.rx_lkahd_valid &
-			    htc_mbox) {
+			host_पूर्णांक_status &= ~htc_mbox;
+			अगर (dev->irq_proc_reg.rx_lkahd_valid &
+			    htc_mbox) अणु
 				rg = &dev->irq_proc_reg;
 				lk_ahd = le32_to_cpu(rg->rx_lkahd[HTC_MAILBOX]);
-				if (!lk_ahd)
+				अगर (!lk_ahd)
 					ath6kl_err("lookAhead is zero!\n");
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!host_int_status && !lk_ahd) {
-		*done = true;
-		goto out;
-	}
+	अगर (!host_पूर्णांक_status && !lk_ahd) अणु
+		*करोne = true;
+		जाओ out;
+	पूर्ण
 
-	if (lk_ahd) {
-		int fetched = 0;
+	अगर (lk_ahd) अणु
+		पूर्णांक fetched = 0;
 
 		ath6kl_dbg(ATH6KL_DBG_IRQ,
 			   "pending mailbox msg, lk_ahd: 0x%X\n", lk_ahd);
@@ -470,230 +471,230 @@ static int proc_pending_irqs(struct ath6kl_device *dev, bool *done)
 		 * Mailbox Interrupt, the HTC layer may issue async
 		 * requests to empty the mailbox. When emptying the recv
 		 * mailbox we use the async handler above called from the
-		 * completion routine of the callers read request. This can
-		 * improve performance by reducing context switching when
+		 * completion routine of the callers पढ़ो request. This can
+		 * improve perक्रमmance by reducing context चयनing when
 		 * we rapidly pull packets.
 		 */
 		status = ath6kl_htc_rxmsg_pending_handler(dev->htc_cnxt,
 							  lk_ahd, &fetched);
-		if (status)
-			goto out;
+		अगर (status)
+			जाओ out;
 
-		if (!fetched)
+		अगर (!fetched)
 			/*
 			 * HTC could not pull any messages out due to lack
 			 * of resources.
 			 */
 			dev->htc_cnxt->chk_irq_status_cnt = 0;
-	}
+	पूर्ण
 
 	/* now handle the rest of them */
 	ath6kl_dbg(ATH6KL_DBG_IRQ,
 		   "valid interrupt source(s) for other interrupts: 0x%x\n",
-		   host_int_status);
+		   host_पूर्णांक_status);
 
-	if (MS(HOST_INT_STATUS_CPU, host_int_status)) {
+	अगर (MS(HOST_INT_STATUS_CPU, host_पूर्णांक_status)) अणु
 		/* CPU Interrupt */
-		status = ath6kl_hif_proc_cpu_intr(dev);
-		if (status)
-			goto out;
-	}
+		status = ath6kl_hअगर_proc_cpu_पूर्णांकr(dev);
+		अगर (status)
+			जाओ out;
+	पूर्ण
 
-	if (MS(HOST_INT_STATUS_ERROR, host_int_status)) {
+	अगर (MS(HOST_INT_STATUS_ERROR, host_पूर्णांक_status)) अणु
 		/* Error Interrupt */
-		status = ath6kl_hif_proc_err_intr(dev);
-		if (status)
-			goto out;
-	}
+		status = ath6kl_hअगर_proc_err_पूर्णांकr(dev);
+		अगर (status)
+			जाओ out;
+	पूर्ण
 
-	if (MS(HOST_INT_STATUS_COUNTER, host_int_status))
+	अगर (MS(HOST_INT_STATUS_COUNTER, host_पूर्णांक_status))
 		/* Counter Interrupt */
-		status = ath6kl_hif_proc_counter_intr(dev);
+		status = ath6kl_hअगर_proc_counter_पूर्णांकr(dev);
 
 out:
 	/*
-	 * An optimization to bypass reading the IRQ status registers
-	 * unecessarily which can re-wake the target, if upper layers
+	 * An optimization to bypass पढ़ोing the IRQ status रेजिस्टरs
+	 * unecessarily which can re-wake the target, अगर upper layers
 	 * determine that we are in a low-throughput mode, we can rely on
-	 * taking another interrupt rather than re-checking the status
-	 * registers which can re-wake the target.
+	 * taking another पूर्णांकerrupt rather than re-checking the status
+	 * रेजिस्टरs which can re-wake the target.
 	 *
-	 * NOTE : for host interfaces that makes use of detecting pending
-	 * mbox messages at hif can not use this optimization due to
+	 * NOTE : क्रम host पूर्णांकerfaces that makes use of detecting pending
+	 * mbox messages at hअगर can not use this optimization due to
 	 * possible side effects, SPI requires the host to drain all
-	 * messages from the mailbox before exiting the ISR routine.
+	 * messages from the mailbox beक्रमe निकासing the ISR routine.
 	 */
 
 	ath6kl_dbg(ATH6KL_DBG_IRQ,
 		   "bypassing irq status re-check, forcing done\n");
 
-	if (!dev->htc_cnxt->chk_irq_status_cnt)
-		*done = true;
+	अगर (!dev->htc_cnxt->chk_irq_status_cnt)
+		*करोne = true;
 
 	ath6kl_dbg(ATH6KL_DBG_IRQ,
-		   "proc_pending_irqs: (done:%d, status=%d\n", *done, status);
+		   "proc_pending_irqs: (done:%d, status=%d\n", *करोne, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-/* interrupt handler, kicks off all interrupt processing */
-int ath6kl_hif_intr_bh_handler(struct ath6kl *ar)
-{
-	struct ath6kl_device *dev = ar->htc_target->dev;
-	unsigned long timeout;
-	int status = 0;
-	bool done = false;
+/* पूर्णांकerrupt handler, kicks off all पूर्णांकerrupt processing */
+पूर्णांक ath6kl_hअगर_पूर्णांकr_bh_handler(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_device *dev = ar->htc_target->dev;
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक status = 0;
+	bool करोne = false;
 
 	/*
-	 * Reset counter used to flag a re-scan of IRQ status registers on
+	 * Reset counter used to flag a re-scan of IRQ status रेजिस्टरs on
 	 * the target.
 	 */
 	dev->htc_cnxt->chk_irq_status_cnt = 0;
 
 	/*
-	 * IRQ processing is synchronous, interrupt status registers can be
-	 * re-read.
+	 * IRQ processing is synchronous, पूर्णांकerrupt status रेजिस्टरs can be
+	 * re-पढ़ो.
 	 */
-	timeout = jiffies + msecs_to_jiffies(ATH6KL_HIF_COMMUNICATION_TIMEOUT);
-	while (time_before(jiffies, timeout) && !done) {
-		status = proc_pending_irqs(dev, &done);
-		if (status)
-			break;
-	}
+	समयout = jअगरfies + msecs_to_jअगरfies(ATH6KL_HIF_COMMUNICATION_TIMEOUT);
+	जबतक (समय_beक्रमe(jअगरfies, समयout) && !करोne) अणु
+		status = proc_pending_irqs(dev, &करोne);
+		अगर (status)
+			अवरोध;
+	पूर्ण
 
-	return status;
-}
-EXPORT_SYMBOL(ath6kl_hif_intr_bh_handler);
+	वापस status;
+पूर्ण
+EXPORT_SYMBOL(ath6kl_hअगर_पूर्णांकr_bh_handler);
 
-static int ath6kl_hif_enable_intrs(struct ath6kl_device *dev)
-{
-	struct ath6kl_irq_enable_reg regs;
-	int status;
+अटल पूर्णांक ath6kl_hअगर_enable_पूर्णांकrs(काष्ठा ath6kl_device *dev)
+अणु
+	काष्ठा ath6kl_irq_enable_reg regs;
+	पूर्णांक status;
 
 	spin_lock_bh(&dev->lock);
 
-	/* Enable all but ATH6KL CPU interrupts */
-	dev->irq_en_reg.int_status_en =
+	/* Enable all but ATH6KL CPU पूर्णांकerrupts */
+	dev->irq_en_reg.पूर्णांक_status_en =
 			SM(INT_STATUS_ENABLE_ERROR, 0x01) |
 			SM(INT_STATUS_ENABLE_CPU, 0x01) |
 			SM(INT_STATUS_ENABLE_COUNTER, 0x01);
 
 	/*
-	 * NOTE: There are some cases where HIF can do detection of
+	 * NOTE: There are some हालs where HIF can करो detection of
 	 * pending mbox messages which is disabled now.
 	 */
-	dev->irq_en_reg.int_status_en |= SM(INT_STATUS_ENABLE_MBOX_DATA, 0x01);
+	dev->irq_en_reg.पूर्णांक_status_en |= SM(INT_STATUS_ENABLE_MBOX_DATA, 0x01);
 
 	/* Set up the CPU Interrupt status Register */
-	dev->irq_en_reg.cpu_int_status_en = 0;
+	dev->irq_en_reg.cpu_पूर्णांक_status_en = 0;
 
 	/* Set up the Error Interrupt status Register */
-	dev->irq_en_reg.err_int_status_en =
+	dev->irq_en_reg.err_पूर्णांक_status_en =
 		SM(ERROR_STATUS_ENABLE_RX_UNDERFLOW, 0x01) |
 		SM(ERROR_STATUS_ENABLE_TX_OVERFLOW, 0x1);
 
 	/*
-	 * Enable Counter interrupt status register to get fatal errors for
+	 * Enable Counter पूर्णांकerrupt status रेजिस्टर to get fatal errors क्रम
 	 * debugging.
 	 */
-	dev->irq_en_reg.cntr_int_status_en = SM(COUNTER_INT_STATUS_ENABLE_BIT,
+	dev->irq_en_reg.cntr_पूर्णांक_status_en = SM(COUNTER_INT_STATUS_ENABLE_BIT,
 						ATH6KL_TARGET_DEBUG_INTR_MASK);
-	memcpy(&regs, &dev->irq_en_reg, sizeof(regs));
+	स_नकल(&regs, &dev->irq_en_reg, माप(regs));
 
 	spin_unlock_bh(&dev->lock);
 
-	status = hif_read_write_sync(dev->ar, INT_STATUS_ENABLE_ADDRESS,
-				     &regs.int_status_en, sizeof(regs),
+	status = hअगर_पढ़ो_ग_लिखो_sync(dev->ar, INT_STATUS_ENABLE_ADDRESS,
+				     &regs.पूर्णांक_status_en, माप(regs),
 				     HIF_WR_SYNC_BYTE_INC);
 
-	if (status)
+	अगर (status)
 		ath6kl_err("failed to update interrupt ctl reg err: %d\n",
 			   status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ath6kl_hif_disable_intrs(struct ath6kl_device *dev)
-{
-	struct ath6kl_irq_enable_reg regs;
+पूर्णांक ath6kl_hअगर_disable_पूर्णांकrs(काष्ठा ath6kl_device *dev)
+अणु
+	काष्ठा ath6kl_irq_enable_reg regs;
 
 	spin_lock_bh(&dev->lock);
-	/* Disable all interrupts */
-	dev->irq_en_reg.int_status_en = 0;
-	dev->irq_en_reg.cpu_int_status_en = 0;
-	dev->irq_en_reg.err_int_status_en = 0;
-	dev->irq_en_reg.cntr_int_status_en = 0;
-	memcpy(&regs, &dev->irq_en_reg, sizeof(regs));
+	/* Disable all पूर्णांकerrupts */
+	dev->irq_en_reg.पूर्णांक_status_en = 0;
+	dev->irq_en_reg.cpu_पूर्णांक_status_en = 0;
+	dev->irq_en_reg.err_पूर्णांक_status_en = 0;
+	dev->irq_en_reg.cntr_पूर्णांक_status_en = 0;
+	स_नकल(&regs, &dev->irq_en_reg, माप(regs));
 	spin_unlock_bh(&dev->lock);
 
-	return hif_read_write_sync(dev->ar, INT_STATUS_ENABLE_ADDRESS,
-				   &regs.int_status_en, sizeof(regs),
+	वापस hअगर_पढ़ो_ग_लिखो_sync(dev->ar, INT_STATUS_ENABLE_ADDRESS,
+				   &regs.पूर्णांक_status_en, माप(regs),
 				   HIF_WR_SYNC_BYTE_INC);
-}
+पूर्ण
 
-/* enable device interrupts */
-int ath6kl_hif_unmask_intrs(struct ath6kl_device *dev)
-{
-	int status = 0;
+/* enable device पूर्णांकerrupts */
+पूर्णांक ath6kl_hअगर_unmask_पूर्णांकrs(काष्ठा ath6kl_device *dev)
+अणु
+	पूर्णांक status = 0;
 
 	/*
-	 * Make sure interrupt are disabled before unmasking at the HIF
+	 * Make sure पूर्णांकerrupt are disabled beक्रमe unmasking at the HIF
 	 * layer. The rationale here is that between device insertion
-	 * (where we clear the interrupts the first time) and when HTC
-	 * is finally ready to handle interrupts, other software can perform
-	 * target "soft" resets. The ATH6KL interrupt enables reset back to an
+	 * (where we clear the पूर्णांकerrupts the first समय) and when HTC
+	 * is finally पढ़ोy to handle पूर्णांकerrupts, other software can perक्रमm
+	 * target "soft" resets. The ATH6KL पूर्णांकerrupt enables reset back to an
 	 * "enabled" state when this happens.
 	 */
-	ath6kl_hif_disable_intrs(dev);
+	ath6kl_hअगर_disable_पूर्णांकrs(dev);
 
-	/* unmask the host controller interrupts */
-	ath6kl_hif_irq_enable(dev->ar);
-	status = ath6kl_hif_enable_intrs(dev);
+	/* unmask the host controller पूर्णांकerrupts */
+	ath6kl_hअगर_irq_enable(dev->ar);
+	status = ath6kl_hअगर_enable_पूर्णांकrs(dev);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-/* disable all device interrupts */
-int ath6kl_hif_mask_intrs(struct ath6kl_device *dev)
-{
+/* disable all device पूर्णांकerrupts */
+पूर्णांक ath6kl_hअगर_mask_पूर्णांकrs(काष्ठा ath6kl_device *dev)
+अणु
 	/*
-	 * Mask the interrupt at the HIF layer to avoid any stray interrupt
-	 * taken while we zero out our shadow registers in
-	 * ath6kl_hif_disable_intrs().
+	 * Mask the पूर्णांकerrupt at the HIF layer to aव्योम any stray पूर्णांकerrupt
+	 * taken जबतक we zero out our shaकरोw रेजिस्टरs in
+	 * ath6kl_hअगर_disable_पूर्णांकrs().
 	 */
-	ath6kl_hif_irq_disable(dev->ar);
+	ath6kl_hअगर_irq_disable(dev->ar);
 
-	return ath6kl_hif_disable_intrs(dev);
-}
+	वापस ath6kl_hअगर_disable_पूर्णांकrs(dev);
+पूर्ण
 
-int ath6kl_hif_setup(struct ath6kl_device *dev)
-{
-	int status = 0;
+पूर्णांक ath6kl_hअगर_setup(काष्ठा ath6kl_device *dev)
+अणु
+	पूर्णांक status = 0;
 
 	spin_lock_init(&dev->lock);
 
 	/*
 	 * NOTE: we actually get the block size of a mailbox other than 0,
-	 * for SDIO the block size on mailbox 0 is artificially set to 1.
-	 * So we use the block size that is set for the other 3 mailboxes.
+	 * क्रम SDIO the block size on mailbox 0 is artअगरicially set to 1.
+	 * So we use the block size that is set क्रम the other 3 mailboxes.
 	 */
 	dev->htc_cnxt->block_sz = dev->ar->mbox_info.block_size;
 
-	/* must be a power of 2 */
-	if ((dev->htc_cnxt->block_sz & (dev->htc_cnxt->block_sz - 1)) != 0) {
+	/* must be a घातer of 2 */
+	अगर ((dev->htc_cnxt->block_sz & (dev->htc_cnxt->block_sz - 1)) != 0) अणु
 		WARN_ON(1);
 		status = -EINVAL;
-		goto fail_setup;
-	}
+		जाओ fail_setup;
+	पूर्ण
 
-	/* assemble mask, used for padding to a block */
+	/* assemble mask, used क्रम padding to a block */
 	dev->htc_cnxt->block_mask = dev->htc_cnxt->block_sz - 1;
 
 	ath6kl_dbg(ATH6KL_DBG_HIF, "hif block size %d mbox addr 0x%x\n",
 		   dev->htc_cnxt->block_sz, dev->ar->mbox_info.htc_addr);
 
-	status = ath6kl_hif_disable_intrs(dev);
+	status = ath6kl_hअगर_disable_पूर्णांकrs(dev);
 
 fail_setup:
-	return status;
-}
+	वापस status;
+पूर्ण

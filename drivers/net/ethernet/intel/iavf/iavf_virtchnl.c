@@ -1,132 +1,133 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
-#include "iavf.h"
-#include "iavf_prototype.h"
-#include "iavf_client.h"
+#समावेश "iavf.h"
+#समावेश "iavf_prototype.h"
+#समावेश "iavf_client.h"
 
-/* busy wait delay in msec */
-#define IAVF_BUSY_WAIT_DELAY 10
-#define IAVF_BUSY_WAIT_COUNT 50
+/* busy रुको delay in msec */
+#घोषणा IAVF_BUSY_WAIT_DELAY 10
+#घोषणा IAVF_BUSY_WAIT_COUNT 50
 
 /**
  * iavf_send_pf_msg
- * @adapter: adapter structure
- * @op: virtual channel opcode
- * @msg: pointer to message buffer
+ * @adapter: adapter काष्ठाure
+ * @op: भव channel opcode
+ * @msg: poपूर्णांकer to message buffer
  * @len: message length
  *
- * Send message to PF and print status if failure.
+ * Send message to PF and prपूर्णांक status अगर failure.
  **/
-static int iavf_send_pf_msg(struct iavf_adapter *adapter,
-			    enum virtchnl_ops op, u8 *msg, u16 len)
-{
-	struct iavf_hw *hw = &adapter->hw;
-	enum iavf_status err;
+अटल पूर्णांक iavf_send_pf_msg(काष्ठा iavf_adapter *adapter,
+			    क्रमागत virtchnl_ops op, u8 *msg, u16 len)
+अणु
+	काष्ठा iavf_hw *hw = &adapter->hw;
+	क्रमागत iavf_status err;
 
-	if (adapter->flags & IAVF_FLAG_PF_COMMS_FAILED)
-		return 0; /* nothing to see here, move along */
+	अगर (adapter->flags & IAVF_FLAG_PF_COMMS_FAILED)
+		वापस 0; /* nothing to see here, move aदीर्घ */
 
-	err = iavf_aq_send_msg_to_pf(hw, op, 0, msg, len, NULL);
-	if (err)
+	err = iavf_aq_send_msg_to_pf(hw, op, 0, msg, len, शून्य);
+	अगर (err)
 		dev_dbg(&adapter->pdev->dev, "Unable to send opcode %d to PF, err %s, aq_err %s\n",
 			op, iavf_stat_str(hw, err),
 			iavf_aq_str(hw, hw->aq.asq_last_status));
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * iavf_send_api_ver
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Send API version admin queue message to the PF. The reply is not checked
- * in this function. Returns 0 if the message was successfully
- * sent, or one of the IAVF_ADMIN_QUEUE_ERROR_ statuses if not.
+ * in this function. Returns 0 अगर the message was successfully
+ * sent, or one of the IAVF_ADMIN_QUEUE_ERROR_ statuses अगर not.
  **/
-int iavf_send_api_ver(struct iavf_adapter *adapter)
-{
-	struct virtchnl_version_info vvi;
+पूर्णांक iavf_send_api_ver(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_version_info vvi;
 
 	vvi.major = VIRTCHNL_VERSION_MAJOR;
 	vvi.minor = VIRTCHNL_VERSION_MINOR;
 
-	return iavf_send_pf_msg(adapter, VIRTCHNL_OP_VERSION, (u8 *)&vvi,
-				sizeof(vvi));
-}
+	वापस iavf_send_pf_msg(adapter, VIRTCHNL_OP_VERSION, (u8 *)&vvi,
+				माप(vvi));
+पूर्ण
 
 /**
- * iavf_verify_api_ver
- * @adapter: adapter structure
+ * iavf_verअगरy_api_ver
+ * @adapter: adapter काष्ठाure
  *
  * Compare API versions with the PF. Must be called after admin queue is
- * initialized. Returns 0 if API versions match, -EIO if they do not,
- * IAVF_ERR_ADMIN_QUEUE_NO_WORK if the admin queue is empty, and any errors
+ * initialized. Returns 0 अगर API versions match, -EIO अगर they करो not,
+ * IAVF_ERR_ADMIN_QUEUE_NO_WORK अगर the admin queue is empty, and any errors
  * from the firmware are propagated.
  **/
-int iavf_verify_api_ver(struct iavf_adapter *adapter)
-{
-	struct virtchnl_version_info *pf_vvi;
-	struct iavf_hw *hw = &adapter->hw;
-	struct iavf_arq_event_info event;
-	enum virtchnl_ops op;
-	enum iavf_status err;
+पूर्णांक iavf_verअगरy_api_ver(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_version_info *pf_vvi;
+	काष्ठा iavf_hw *hw = &adapter->hw;
+	काष्ठा iavf_arq_event_info event;
+	क्रमागत virtchnl_ops op;
+	क्रमागत iavf_status err;
 
 	event.buf_len = IAVF_MAX_AQ_BUF_SIZE;
 	event.msg_buf = kzalloc(event.buf_len, GFP_KERNEL);
-	if (!event.msg_buf) {
+	अगर (!event.msg_buf) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while (1) {
-		err = iavf_clean_arq_element(hw, &event, NULL);
-		/* When the AQ is empty, iavf_clean_arq_element will return
+	जबतक (1) अणु
+		err = iavf_clean_arq_element(hw, &event, शून्य);
+		/* When the AQ is empty, iavf_clean_arq_element will वापस
 		 * nonzero and this loop will terminate.
 		 */
-		if (err)
-			goto out_alloc;
+		अगर (err)
+			जाओ out_alloc;
 		op =
-		    (enum virtchnl_ops)le32_to_cpu(event.desc.cookie_high);
-		if (op == VIRTCHNL_OP_VERSION)
-			break;
-	}
+		    (क्रमागत virtchnl_ops)le32_to_cpu(event.desc.cookie_high);
+		अगर (op == VIRTCHNL_OP_VERSION)
+			अवरोध;
+	पूर्ण
 
 
-	err = (enum iavf_status)le32_to_cpu(event.desc.cookie_low);
-	if (err)
-		goto out_alloc;
+	err = (क्रमागत iavf_status)le32_to_cpu(event.desc.cookie_low);
+	अगर (err)
+		जाओ out_alloc;
 
-	if (op != VIRTCHNL_OP_VERSION) {
+	अगर (op != VIRTCHNL_OP_VERSION) अणु
 		dev_info(&adapter->pdev->dev, "Invalid reply type %d from PF\n",
 			op);
 		err = -EIO;
-		goto out_alloc;
-	}
+		जाओ out_alloc;
+	पूर्ण
 
-	pf_vvi = (struct virtchnl_version_info *)event.msg_buf;
+	pf_vvi = (काष्ठा virtchnl_version_info *)event.msg_buf;
 	adapter->pf_version = *pf_vvi;
 
-	if ((pf_vvi->major > VIRTCHNL_VERSION_MAJOR) ||
+	अगर ((pf_vvi->major > VIRTCHNL_VERSION_MAJOR) ||
 	    ((pf_vvi->major == VIRTCHNL_VERSION_MAJOR) &&
 	     (pf_vvi->minor > VIRTCHNL_VERSION_MINOR)))
 		err = -EIO;
 
 out_alloc:
-	kfree(event.msg_buf);
+	kमुक्त(event.msg_buf);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * iavf_send_vf_config_msg
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Send VF configuration request admin queue message to the PF. The reply
- * is not checked in this function. Returns 0 if the message was
- * successfully sent, or one of the IAVF_ADMIN_QUEUE_ERROR_ statuses if not.
+ * is not checked in this function. Returns 0 अगर the message was
+ * successfully sent, or one of the IAVF_ADMIN_QUEUE_ERROR_ statuses अगर not.
  **/
-int iavf_send_vf_config_msg(struct iavf_adapter *adapter)
-{
+पूर्णांक iavf_send_vf_config_msg(काष्ठा iavf_adapter *adapter)
+अणु
 	u32 caps;
 
 	caps = VIRTCHNL_VF_OFFLOAD_L2 |
@@ -141,32 +142,32 @@ int iavf_send_vf_config_msg(struct iavf_adapter *adapter)
 	       VIRTCHNL_VF_OFFLOAD_REQ_QUEUES |
 	       VIRTCHNL_VF_OFFLOAD_ADQ |
 	       VIRTCHNL_VF_OFFLOAD_USO |
-	       VIRTCHNL_VF_OFFLOAD_FDIR_PF |
+	       VIRTCHNL_VF_OFFLOAD_Fसूची_PF |
 	       VIRTCHNL_VF_OFFLOAD_ADV_RSS_PF |
 	       VIRTCHNL_VF_CAP_ADV_LINK_SPEED;
 
 	adapter->current_op = VIRTCHNL_OP_GET_VF_RESOURCES;
 	adapter->aq_required &= ~IAVF_FLAG_AQ_GET_CONFIG;
-	if (PF_IS_V11(adapter))
-		return iavf_send_pf_msg(adapter, VIRTCHNL_OP_GET_VF_RESOURCES,
-					(u8 *)&caps, sizeof(caps));
-	else
-		return iavf_send_pf_msg(adapter, VIRTCHNL_OP_GET_VF_RESOURCES,
-					NULL, 0);
-}
+	अगर (PF_IS_V11(adapter))
+		वापस iavf_send_pf_msg(adapter, VIRTCHNL_OP_GET_VF_RESOURCES,
+					(u8 *)&caps, माप(caps));
+	अन्यथा
+		वापस iavf_send_pf_msg(adapter, VIRTCHNL_OP_GET_VF_RESOURCES,
+					शून्य, 0);
+पूर्ण
 
 /**
  * iavf_validate_num_queues
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Validate that the number of queues the PF has sent in
  * VIRTCHNL_OP_GET_VF_RESOURCES is not larger than the VF can handle.
  **/
-static void iavf_validate_num_queues(struct iavf_adapter *adapter)
-{
-	if (adapter->vf_res->num_queue_pairs > IAVF_MAX_REQ_QUEUES) {
-		struct virtchnl_vsi_resource *vsi_res;
-		int i;
+अटल व्योम iavf_validate_num_queues(काष्ठा iavf_adapter *adapter)
+अणु
+	अगर (adapter->vf_res->num_queue_pairs > IAVF_MAX_REQ_QUEUES) अणु
+		काष्ठा virtchnl_vsi_resource *vsi_res;
+		पूर्णांक i;
 
 		dev_info(&adapter->pdev->dev, "Received %d queues, but can only have a max of %d\n",
 			 adapter->vf_res->num_queue_pairs,
@@ -174,95 +175,95 @@ static void iavf_validate_num_queues(struct iavf_adapter *adapter)
 		dev_info(&adapter->pdev->dev, "Fixing by reducing queues to %d\n",
 			 IAVF_MAX_REQ_QUEUES);
 		adapter->vf_res->num_queue_pairs = IAVF_MAX_REQ_QUEUES;
-		for (i = 0; i < adapter->vf_res->num_vsis; i++) {
+		क्रम (i = 0; i < adapter->vf_res->num_vsis; i++) अणु
 			vsi_res = &adapter->vf_res->vsi_res[i];
 			vsi_res->num_queue_pairs = IAVF_MAX_REQ_QUEUES;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * iavf_get_vf_config
- * @adapter: private adapter structure
+ * @adapter: निजी adapter काष्ठाure
  *
- * Get VF configuration from PF and populate hw structure. Must be called after
- * admin queue is initialized. Busy waits until response is received from PF,
- * with maximum timeout. Response from PF is returned in the buffer for further
+ * Get VF configuration from PF and populate hw काष्ठाure. Must be called after
+ * admin queue is initialized. Busy रुकोs until response is received from PF,
+ * with maximum समयout. Response from PF is वापसed in the buffer क्रम further
  * processing by the caller.
  **/
-int iavf_get_vf_config(struct iavf_adapter *adapter)
-{
-	struct iavf_hw *hw = &adapter->hw;
-	struct iavf_arq_event_info event;
-	enum virtchnl_ops op;
-	enum iavf_status err;
+पूर्णांक iavf_get_vf_config(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा iavf_hw *hw = &adapter->hw;
+	काष्ठा iavf_arq_event_info event;
+	क्रमागत virtchnl_ops op;
+	क्रमागत iavf_status err;
 	u16 len;
 
-	len =  sizeof(struct virtchnl_vf_resource) +
-		IAVF_MAX_VF_VSI * sizeof(struct virtchnl_vsi_resource);
+	len =  माप(काष्ठा virtchnl_vf_resource) +
+		IAVF_MAX_VF_VSI * माप(काष्ठा virtchnl_vsi_resource);
 	event.buf_len = len;
 	event.msg_buf = kzalloc(event.buf_len, GFP_KERNEL);
-	if (!event.msg_buf) {
+	अगर (!event.msg_buf) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while (1) {
-		/* When the AQ is empty, iavf_clean_arq_element will return
+	जबतक (1) अणु
+		/* When the AQ is empty, iavf_clean_arq_element will वापस
 		 * nonzero and this loop will terminate.
 		 */
-		err = iavf_clean_arq_element(hw, &event, NULL);
-		if (err)
-			goto out_alloc;
+		err = iavf_clean_arq_element(hw, &event, शून्य);
+		अगर (err)
+			जाओ out_alloc;
 		op =
-		    (enum virtchnl_ops)le32_to_cpu(event.desc.cookie_high);
-		if (op == VIRTCHNL_OP_GET_VF_RESOURCES)
-			break;
-	}
+		    (क्रमागत virtchnl_ops)le32_to_cpu(event.desc.cookie_high);
+		अगर (op == VIRTCHNL_OP_GET_VF_RESOURCES)
+			अवरोध;
+	पूर्ण
 
-	err = (enum iavf_status)le32_to_cpu(event.desc.cookie_low);
-	memcpy(adapter->vf_res, event.msg_buf, min(event.msg_len, len));
+	err = (क्रमागत iavf_status)le32_to_cpu(event.desc.cookie_low);
+	स_नकल(adapter->vf_res, event.msg_buf, min(event.msg_len, len));
 
 	/* some PFs send more queues than we should have so validate that
 	 * we aren't getting too many queues
 	 */
-	if (!err)
+	अगर (!err)
 		iavf_validate_num_queues(adapter);
 	iavf_vf_parse_hw_config(hw, adapter->vf_res);
 out_alloc:
-	kfree(event.msg_buf);
+	kमुक्त(event.msg_buf);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * iavf_configure_queues
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request that the PF set up our (previously allocated) queues.
  **/
-void iavf_configure_queues(struct iavf_adapter *adapter)
-{
-	struct virtchnl_vsi_queue_config_info *vqci;
-	struct virtchnl_queue_pair_info *vqpi;
-	int pairs = adapter->num_active_queues;
-	int i, max_frame = IAVF_MAX_RXBUFFER;
-	size_t len;
+व्योम iavf_configure_queues(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_vsi_queue_config_info *vqci;
+	काष्ठा virtchnl_queue_pair_info *vqpi;
+	पूर्णांक pairs = adapter->num_active_queues;
+	पूर्णांक i, max_frame = IAVF_MAX_RXBUFFER;
+	माप_प्रकार len;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot configure queues, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_CONFIG_VSI_QUEUES;
-	len = struct_size(vqci, qpair, pairs);
+	len = काष्ठा_size(vqci, qpair, pairs);
 	vqci = kzalloc(len, GFP_KERNEL);
-	if (!vqci)
-		return;
+	अगर (!vqci)
+		वापस;
 
 	/* Limit maximum frame size when jumbo frames is not enabled */
-	if (!(adapter->flags & IAVF_FLAG_LEGACY_RX) &&
+	अगर (!(adapter->flags & IAVF_FLAG_LEGACY_RX) &&
 	    (adapter->netdev->mtu <= ETH_DATA_LEN))
 		max_frame = IAVF_RXBUFFER_1536 - NET_IP_ALIGN;
 
@@ -270,9 +271,9 @@ void iavf_configure_queues(struct iavf_adapter *adapter)
 	vqci->num_queue_pairs = pairs;
 	vqpi = vqci->qpair;
 	/* Size check is not needed here - HW max is 16 queue pairs, and we
-	 * can fit info for 31 of them into the AQ buffer before it overflows.
+	 * can fit info क्रम 31 of them पूर्णांकo the AQ buffer beक्रमe it overflows.
 	 */
-	for (i = 0; i < pairs; i++) {
+	क्रम (i = 0; i < pairs; i++) अणु
 		vqpi->txq.vsi_id = vqci->vsi_id;
 		vqpi->txq.queue_id = i;
 		vqpi->txq.ring_len = adapter->tx_rings[i].count;
@@ -286,97 +287,97 @@ void iavf_configure_queues(struct iavf_adapter *adapter)
 			ALIGN(adapter->rx_rings[i].rx_buf_len,
 			      BIT_ULL(IAVF_RXQ_CTX_DBUFF_SHIFT));
 		vqpi++;
-	}
+	पूर्ण
 
 	adapter->aq_required &= ~IAVF_FLAG_AQ_CONFIGURE_QUEUES;
 	iavf_send_pf_msg(adapter, VIRTCHNL_OP_CONFIG_VSI_QUEUES,
 			 (u8 *)vqci, len);
-	kfree(vqci);
-}
+	kमुक्त(vqci);
+पूर्ण
 
 /**
  * iavf_enable_queues
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request that the PF enable all of our queues.
  **/
-void iavf_enable_queues(struct iavf_adapter *adapter)
-{
-	struct virtchnl_queue_select vqs;
+व्योम iavf_enable_queues(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_queue_select vqs;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot enable queues, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_ENABLE_QUEUES;
 	vqs.vsi_id = adapter->vsi_res->vsi_id;
 	vqs.tx_queues = BIT(adapter->num_active_queues) - 1;
 	vqs.rx_queues = vqs.tx_queues;
 	adapter->aq_required &= ~IAVF_FLAG_AQ_ENABLE_QUEUES;
 	iavf_send_pf_msg(adapter, VIRTCHNL_OP_ENABLE_QUEUES,
-			 (u8 *)&vqs, sizeof(vqs));
-}
+			 (u8 *)&vqs, माप(vqs));
+पूर्ण
 
 /**
  * iavf_disable_queues
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request that the PF disable all of our queues.
  **/
-void iavf_disable_queues(struct iavf_adapter *adapter)
-{
-	struct virtchnl_queue_select vqs;
+व्योम iavf_disable_queues(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_queue_select vqs;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot disable queues, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_DISABLE_QUEUES;
 	vqs.vsi_id = adapter->vsi_res->vsi_id;
 	vqs.tx_queues = BIT(adapter->num_active_queues) - 1;
 	vqs.rx_queues = vqs.tx_queues;
 	adapter->aq_required &= ~IAVF_FLAG_AQ_DISABLE_QUEUES;
 	iavf_send_pf_msg(adapter, VIRTCHNL_OP_DISABLE_QUEUES,
-			 (u8 *)&vqs, sizeof(vqs));
-}
+			 (u8 *)&vqs, माप(vqs));
+पूर्ण
 
 /**
  * iavf_map_queues
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
- * Request that the PF map queues to interrupt vectors. Misc causes, including
+ * Request that the PF map queues to पूर्णांकerrupt vectors. Misc causes, including
  * admin queue, are always mapped to vector 0.
  **/
-void iavf_map_queues(struct iavf_adapter *adapter)
-{
-	struct virtchnl_irq_map_info *vimi;
-	struct virtchnl_vector_map *vecmap;
-	struct iavf_q_vector *q_vector;
-	int v_idx, q_vectors;
-	size_t len;
+व्योम iavf_map_queues(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_irq_map_info *vimi;
+	काष्ठा virtchnl_vector_map *vecmap;
+	काष्ठा iavf_q_vector *q_vector;
+	पूर्णांक v_idx, q_vectors;
+	माप_प्रकार len;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot map queues to vectors, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_CONFIG_IRQ_MAP;
 
 	q_vectors = adapter->num_msix_vectors - NONQ_VECS;
 
-	len = struct_size(vimi, vecmap, adapter->num_msix_vectors);
+	len = काष्ठा_size(vimi, vecmap, adapter->num_msix_vectors);
 	vimi = kzalloc(len, GFP_KERNEL);
-	if (!vimi)
-		return;
+	अगर (!vimi)
+		वापस;
 
 	vimi->num_vectors = adapter->num_msix_vectors;
 	/* Queue vectors first */
-	for (v_idx = 0; v_idx < q_vectors; v_idx++) {
+	क्रम (v_idx = 0; v_idx < q_vectors; v_idx++) अणु
 		q_vector = &adapter->q_vectors[v_idx];
 		vecmap = &vimi->vecmap[v_idx];
 
@@ -386,8 +387,8 @@ void iavf_map_queues(struct iavf_adapter *adapter)
 		vecmap->rxq_map = q_vector->ring_mask;
 		vecmap->rxitr_idx = IAVF_RX_ITR;
 		vecmap->txitr_idx = IAVF_TX_ITR;
-	}
-	/* Misc vector last - this is only for AdminQ messages */
+	पूर्ण
+	/* Misc vector last - this is only क्रम AdminQ messages */
 	vecmap = &vimi->vecmap[v_idx];
 	vecmap->vsi_id = adapter->vsi_res->vsi_id;
 	vecmap->vector_id = 0;
@@ -397,691 +398,691 @@ void iavf_map_queues(struct iavf_adapter *adapter)
 	adapter->aq_required &= ~IAVF_FLAG_AQ_MAP_VECTORS;
 	iavf_send_pf_msg(adapter, VIRTCHNL_OP_CONFIG_IRQ_MAP,
 			 (u8 *)vimi, len);
-	kfree(vimi);
-}
+	kमुक्त(vimi);
+पूर्ण
 
 /**
  * iavf_add_ether_addrs
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request that the PF add one or more addresses to our filters.
  **/
-void iavf_add_ether_addrs(struct iavf_adapter *adapter)
-{
-	struct virtchnl_ether_addr_list *veal;
-	struct iavf_mac_filter *f;
-	int i = 0, count = 0;
+व्योम iavf_add_ether_addrs(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_ether_addr_list *veal;
+	काष्ठा iavf_mac_filter *f;
+	पूर्णांक i = 0, count = 0;
 	bool more = false;
-	size_t len;
+	माप_प्रकार len;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot add filters, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_bh(&adapter->mac_vlan_list_lock);
 
-	list_for_each_entry(f, &adapter->mac_filter_list, list) {
-		if (f->add)
+	list_क्रम_each_entry(f, &adapter->mac_filter_list, list) अणु
+		अगर (f->add)
 			count++;
-	}
-	if (!count) {
+	पूर्ण
+	अगर (!count) अणु
 		adapter->aq_required &= ~IAVF_FLAG_AQ_ADD_MAC_FILTER;
 		spin_unlock_bh(&adapter->mac_vlan_list_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_ADD_ETH_ADDR;
 
-	len = struct_size(veal, list, count);
-	if (len > IAVF_MAX_AQ_BUF_SIZE) {
+	len = काष्ठा_size(veal, list, count);
+	अगर (len > IAVF_MAX_AQ_BUF_SIZE) अणु
 		dev_warn(&adapter->pdev->dev, "Too many add MAC changes in one request\n");
 		count = (IAVF_MAX_AQ_BUF_SIZE -
-			 sizeof(struct virtchnl_ether_addr_list)) /
-			sizeof(struct virtchnl_ether_addr);
-		len = struct_size(veal, list, count);
+			 माप(काष्ठा virtchnl_ether_addr_list)) /
+			माप(काष्ठा virtchnl_ether_addr);
+		len = काष्ठा_size(veal, list, count);
 		more = true;
-	}
+	पूर्ण
 
 	veal = kzalloc(len, GFP_ATOMIC);
-	if (!veal) {
+	अगर (!veal) अणु
 		spin_unlock_bh(&adapter->mac_vlan_list_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	veal->vsi_id = adapter->vsi_res->vsi_id;
 	veal->num_elements = count;
-	list_for_each_entry(f, &adapter->mac_filter_list, list) {
-		if (f->add) {
+	list_क्रम_each_entry(f, &adapter->mac_filter_list, list) अणु
+		अगर (f->add) अणु
 			ether_addr_copy(veal->list[i].addr, f->macaddr);
 			i++;
 			f->add = false;
-			if (i == count)
-				break;
-		}
-	}
-	if (!more)
+			अगर (i == count)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!more)
 		adapter->aq_required &= ~IAVF_FLAG_AQ_ADD_MAC_FILTER;
 
 	spin_unlock_bh(&adapter->mac_vlan_list_lock);
 
 	iavf_send_pf_msg(adapter, VIRTCHNL_OP_ADD_ETH_ADDR, (u8 *)veal, len);
-	kfree(veal);
-}
+	kमुक्त(veal);
+पूर्ण
 
 /**
  * iavf_del_ether_addrs
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
- * Request that the PF remove one or more addresses from our filters.
+ * Request that the PF हटाओ one or more addresses from our filters.
  **/
-void iavf_del_ether_addrs(struct iavf_adapter *adapter)
-{
-	struct virtchnl_ether_addr_list *veal;
-	struct iavf_mac_filter *f, *ftmp;
-	int i = 0, count = 0;
+व्योम iavf_del_ether_addrs(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_ether_addr_list *veal;
+	काष्ठा iavf_mac_filter *f, *fपंचांगp;
+	पूर्णांक i = 0, count = 0;
 	bool more = false;
-	size_t len;
+	माप_प्रकार len;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot remove filters, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_bh(&adapter->mac_vlan_list_lock);
 
-	list_for_each_entry(f, &adapter->mac_filter_list, list) {
-		if (f->remove)
+	list_क्रम_each_entry(f, &adapter->mac_filter_list, list) अणु
+		अगर (f->हटाओ)
 			count++;
-	}
-	if (!count) {
+	पूर्ण
+	अगर (!count) अणु
 		adapter->aq_required &= ~IAVF_FLAG_AQ_DEL_MAC_FILTER;
 		spin_unlock_bh(&adapter->mac_vlan_list_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_DEL_ETH_ADDR;
 
-	len = struct_size(veal, list, count);
-	if (len > IAVF_MAX_AQ_BUF_SIZE) {
+	len = काष्ठा_size(veal, list, count);
+	अगर (len > IAVF_MAX_AQ_BUF_SIZE) अणु
 		dev_warn(&adapter->pdev->dev, "Too many delete MAC changes in one request\n");
 		count = (IAVF_MAX_AQ_BUF_SIZE -
-			 sizeof(struct virtchnl_ether_addr_list)) /
-			sizeof(struct virtchnl_ether_addr);
-		len = struct_size(veal, list, count);
+			 माप(काष्ठा virtchnl_ether_addr_list)) /
+			माप(काष्ठा virtchnl_ether_addr);
+		len = काष्ठा_size(veal, list, count);
 		more = true;
-	}
+	पूर्ण
 	veal = kzalloc(len, GFP_ATOMIC);
-	if (!veal) {
+	अगर (!veal) अणु
 		spin_unlock_bh(&adapter->mac_vlan_list_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	veal->vsi_id = adapter->vsi_res->vsi_id;
 	veal->num_elements = count;
-	list_for_each_entry_safe(f, ftmp, &adapter->mac_filter_list, list) {
-		if (f->remove) {
+	list_क्रम_each_entry_safe(f, fपंचांगp, &adapter->mac_filter_list, list) अणु
+		अगर (f->हटाओ) अणु
 			ether_addr_copy(veal->list[i].addr, f->macaddr);
 			i++;
 			list_del(&f->list);
-			kfree(f);
-			if (i == count)
-				break;
-		}
-	}
-	if (!more)
+			kमुक्त(f);
+			अगर (i == count)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!more)
 		adapter->aq_required &= ~IAVF_FLAG_AQ_DEL_MAC_FILTER;
 
 	spin_unlock_bh(&adapter->mac_vlan_list_lock);
 
 	iavf_send_pf_msg(adapter, VIRTCHNL_OP_DEL_ETH_ADDR, (u8 *)veal, len);
-	kfree(veal);
-}
+	kमुक्त(veal);
+पूर्ण
 
 /**
  * iavf_add_vlans
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request that the PF add one or more VLAN filters to our VSI.
  **/
-void iavf_add_vlans(struct iavf_adapter *adapter)
-{
-	struct virtchnl_vlan_filter_list *vvfl;
-	int len, i = 0, count = 0;
-	struct iavf_vlan_filter *f;
+व्योम iavf_add_vlans(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_vlan_filter_list *vvfl;
+	पूर्णांक len, i = 0, count = 0;
+	काष्ठा iavf_vlan_filter *f;
 	bool more = false;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot add VLANs, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_bh(&adapter->mac_vlan_list_lock);
 
-	list_for_each_entry(f, &adapter->vlan_filter_list, list) {
-		if (f->add)
+	list_क्रम_each_entry(f, &adapter->vlan_filter_list, list) अणु
+		अगर (f->add)
 			count++;
-	}
-	if (!count) {
+	पूर्ण
+	अगर (!count) अणु
 		adapter->aq_required &= ~IAVF_FLAG_AQ_ADD_VLAN_FILTER;
 		spin_unlock_bh(&adapter->mac_vlan_list_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_ADD_VLAN;
 
-	len = sizeof(struct virtchnl_vlan_filter_list) +
-	      (count * sizeof(u16));
-	if (len > IAVF_MAX_AQ_BUF_SIZE) {
+	len = माप(काष्ठा virtchnl_vlan_filter_list) +
+	      (count * माप(u16));
+	अगर (len > IAVF_MAX_AQ_BUF_SIZE) अणु
 		dev_warn(&adapter->pdev->dev, "Too many add VLAN changes in one request\n");
 		count = (IAVF_MAX_AQ_BUF_SIZE -
-			 sizeof(struct virtchnl_vlan_filter_list)) /
-			sizeof(u16);
-		len = sizeof(struct virtchnl_vlan_filter_list) +
-		      (count * sizeof(u16));
+			 माप(काष्ठा virtchnl_vlan_filter_list)) /
+			माप(u16);
+		len = माप(काष्ठा virtchnl_vlan_filter_list) +
+		      (count * माप(u16));
 		more = true;
-	}
+	पूर्ण
 	vvfl = kzalloc(len, GFP_ATOMIC);
-	if (!vvfl) {
+	अगर (!vvfl) अणु
 		spin_unlock_bh(&adapter->mac_vlan_list_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	vvfl->vsi_id = adapter->vsi_res->vsi_id;
 	vvfl->num_elements = count;
-	list_for_each_entry(f, &adapter->vlan_filter_list, list) {
-		if (f->add) {
+	list_क्रम_each_entry(f, &adapter->vlan_filter_list, list) अणु
+		अगर (f->add) अणु
 			vvfl->vlan_id[i] = f->vlan;
 			i++;
 			f->add = false;
-			if (i == count)
-				break;
-		}
-	}
-	if (!more)
+			अगर (i == count)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!more)
 		adapter->aq_required &= ~IAVF_FLAG_AQ_ADD_VLAN_FILTER;
 
 	spin_unlock_bh(&adapter->mac_vlan_list_lock);
 
 	iavf_send_pf_msg(adapter, VIRTCHNL_OP_ADD_VLAN, (u8 *)vvfl, len);
-	kfree(vvfl);
-}
+	kमुक्त(vvfl);
+पूर्ण
 
 /**
  * iavf_del_vlans
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
- * Request that the PF remove one or more VLAN filters from our VSI.
+ * Request that the PF हटाओ one or more VLAN filters from our VSI.
  **/
-void iavf_del_vlans(struct iavf_adapter *adapter)
-{
-	struct virtchnl_vlan_filter_list *vvfl;
-	struct iavf_vlan_filter *f, *ftmp;
-	int len, i = 0, count = 0;
+व्योम iavf_del_vlans(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_vlan_filter_list *vvfl;
+	काष्ठा iavf_vlan_filter *f, *fपंचांगp;
+	पूर्णांक len, i = 0, count = 0;
 	bool more = false;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot remove VLANs, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_bh(&adapter->mac_vlan_list_lock);
 
-	list_for_each_entry(f, &adapter->vlan_filter_list, list) {
-		if (f->remove)
+	list_क्रम_each_entry(f, &adapter->vlan_filter_list, list) अणु
+		अगर (f->हटाओ)
 			count++;
-	}
-	if (!count) {
+	पूर्ण
+	अगर (!count) अणु
 		adapter->aq_required &= ~IAVF_FLAG_AQ_DEL_VLAN_FILTER;
 		spin_unlock_bh(&adapter->mac_vlan_list_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_DEL_VLAN;
 
-	len = sizeof(struct virtchnl_vlan_filter_list) +
-	      (count * sizeof(u16));
-	if (len > IAVF_MAX_AQ_BUF_SIZE) {
+	len = माप(काष्ठा virtchnl_vlan_filter_list) +
+	      (count * माप(u16));
+	अगर (len > IAVF_MAX_AQ_BUF_SIZE) अणु
 		dev_warn(&adapter->pdev->dev, "Too many delete VLAN changes in one request\n");
 		count = (IAVF_MAX_AQ_BUF_SIZE -
-			 sizeof(struct virtchnl_vlan_filter_list)) /
-			sizeof(u16);
-		len = sizeof(struct virtchnl_vlan_filter_list) +
-		      (count * sizeof(u16));
+			 माप(काष्ठा virtchnl_vlan_filter_list)) /
+			माप(u16);
+		len = माप(काष्ठा virtchnl_vlan_filter_list) +
+		      (count * माप(u16));
 		more = true;
-	}
+	पूर्ण
 	vvfl = kzalloc(len, GFP_ATOMIC);
-	if (!vvfl) {
+	अगर (!vvfl) अणु
 		spin_unlock_bh(&adapter->mac_vlan_list_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	vvfl->vsi_id = adapter->vsi_res->vsi_id;
 	vvfl->num_elements = count;
-	list_for_each_entry_safe(f, ftmp, &adapter->vlan_filter_list, list) {
-		if (f->remove) {
+	list_क्रम_each_entry_safe(f, fपंचांगp, &adapter->vlan_filter_list, list) अणु
+		अगर (f->हटाओ) अणु
 			vvfl->vlan_id[i] = f->vlan;
 			i++;
 			list_del(&f->list);
-			kfree(f);
-			if (i == count)
-				break;
-		}
-	}
-	if (!more)
+			kमुक्त(f);
+			अगर (i == count)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!more)
 		adapter->aq_required &= ~IAVF_FLAG_AQ_DEL_VLAN_FILTER;
 
 	spin_unlock_bh(&adapter->mac_vlan_list_lock);
 
 	iavf_send_pf_msg(adapter, VIRTCHNL_OP_DEL_VLAN, (u8 *)vvfl, len);
-	kfree(vvfl);
-}
+	kमुक्त(vvfl);
+पूर्ण
 
 /**
  * iavf_set_promiscuous
- * @adapter: adapter structure
- * @flags: bitmask to control unicast/multicast promiscuous.
+ * @adapter: adapter काष्ठाure
+ * @flags: biपंचांगask to control unicast/multicast promiscuous.
  *
- * Request that the PF enable promiscuous mode for our VSI.
+ * Request that the PF enable promiscuous mode क्रम our VSI.
  **/
-void iavf_set_promiscuous(struct iavf_adapter *adapter, int flags)
-{
-	struct virtchnl_promisc_info vpi;
-	int promisc_all;
+व्योम iavf_set_promiscuous(काष्ठा iavf_adapter *adapter, पूर्णांक flags)
+अणु
+	काष्ठा virtchnl_promisc_info vpi;
+	पूर्णांक promisc_all;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot set promiscuous mode, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	promisc_all = FLAG_VF_UNICAST_PROMISC |
 		      FLAG_VF_MULTICAST_PROMISC;
-	if ((flags & promisc_all) == promisc_all) {
+	अगर ((flags & promisc_all) == promisc_all) अणु
 		adapter->flags |= IAVF_FLAG_PROMISC_ON;
 		adapter->aq_required &= ~IAVF_FLAG_AQ_REQUEST_PROMISC;
 		dev_info(&adapter->pdev->dev, "Entering promiscuous mode\n");
-	}
+	पूर्ण
 
-	if (flags & FLAG_VF_MULTICAST_PROMISC) {
+	अगर (flags & FLAG_VF_MULTICAST_PROMISC) अणु
 		adapter->flags |= IAVF_FLAG_ALLMULTI_ON;
 		adapter->aq_required &= ~IAVF_FLAG_AQ_REQUEST_ALLMULTI;
 		dev_info(&adapter->pdev->dev, "Entering multicast promiscuous mode\n");
-	}
+	पूर्ण
 
-	if (!flags) {
+	अगर (!flags) अणु
 		adapter->flags &= ~(IAVF_FLAG_PROMISC_ON |
 				    IAVF_FLAG_ALLMULTI_ON);
 		adapter->aq_required &= ~(IAVF_FLAG_AQ_RELEASE_PROMISC |
 					  IAVF_FLAG_AQ_RELEASE_ALLMULTI);
 		dev_info(&adapter->pdev->dev, "Leaving promiscuous mode\n");
-	}
+	पूर्ण
 
 	adapter->current_op = VIRTCHNL_OP_CONFIG_PROMISCUOUS_MODE;
 	vpi.vsi_id = adapter->vsi_res->vsi_id;
 	vpi.flags = flags;
 	iavf_send_pf_msg(adapter, VIRTCHNL_OP_CONFIG_PROMISCUOUS_MODE,
-			 (u8 *)&vpi, sizeof(vpi));
-}
+			 (u8 *)&vpi, माप(vpi));
+पूर्ण
 
 /**
  * iavf_request_stats
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request VSI statistics from PF.
  **/
-void iavf_request_stats(struct iavf_adapter *adapter)
-{
-	struct virtchnl_queue_select vqs;
+व्योम iavf_request_stats(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_queue_select vqs;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
 		/* no error message, this isn't crucial */
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_GET_STATS;
 	vqs.vsi_id = adapter->vsi_res->vsi_id;
-	/* queue maps are ignored for this message - only the vsi is used */
-	if (iavf_send_pf_msg(adapter, VIRTCHNL_OP_GET_STATS, (u8 *)&vqs,
-			     sizeof(vqs)))
-		/* if the request failed, don't lock out others */
+	/* queue maps are ignored क्रम this message - only the vsi is used */
+	अगर (iavf_send_pf_msg(adapter, VIRTCHNL_OP_GET_STATS, (u8 *)&vqs,
+			     माप(vqs)))
+		/* अगर the request failed, करोn't lock out others */
 		adapter->current_op = VIRTCHNL_OP_UNKNOWN;
-}
+पूर्ण
 
 /**
  * iavf_get_hena
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request hash enable capabilities from PF
  **/
-void iavf_get_hena(struct iavf_adapter *adapter)
-{
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+व्योम iavf_get_hena(काष्ठा iavf_adapter *adapter)
+अणु
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot get RSS hash capabilities, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_GET_RSS_HENA_CAPS;
 	adapter->aq_required &= ~IAVF_FLAG_AQ_GET_HENA;
-	iavf_send_pf_msg(adapter, VIRTCHNL_OP_GET_RSS_HENA_CAPS, NULL, 0);
-}
+	iavf_send_pf_msg(adapter, VIRTCHNL_OP_GET_RSS_HENA_CAPS, शून्य, 0);
+पूर्ण
 
 /**
  * iavf_set_hena
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request the PF to set our RSS hash capabilities
  **/
-void iavf_set_hena(struct iavf_adapter *adapter)
-{
-	struct virtchnl_rss_hena vrh;
+व्योम iavf_set_hena(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_rss_hena vrh;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot set RSS hash enable, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 	vrh.hena = adapter->hena;
 	adapter->current_op = VIRTCHNL_OP_SET_RSS_HENA;
 	adapter->aq_required &= ~IAVF_FLAG_AQ_SET_HENA;
 	iavf_send_pf_msg(adapter, VIRTCHNL_OP_SET_RSS_HENA, (u8 *)&vrh,
-			 sizeof(vrh));
-}
+			 माप(vrh));
+पूर्ण
 
 /**
  * iavf_set_rss_key
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request the PF to set our RSS hash key
  **/
-void iavf_set_rss_key(struct iavf_adapter *adapter)
-{
-	struct virtchnl_rss_key *vrk;
-	int len;
+व्योम iavf_set_rss_key(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_rss_key *vrk;
+	पूर्णांक len;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot set RSS key, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
-	len = sizeof(struct virtchnl_rss_key) +
-	      (adapter->rss_key_size * sizeof(u8)) - 1;
+		वापस;
+	पूर्ण
+	len = माप(काष्ठा virtchnl_rss_key) +
+	      (adapter->rss_key_size * माप(u8)) - 1;
 	vrk = kzalloc(len, GFP_KERNEL);
-	if (!vrk)
-		return;
+	अगर (!vrk)
+		वापस;
 	vrk->vsi_id = adapter->vsi.id;
 	vrk->key_len = adapter->rss_key_size;
-	memcpy(vrk->key, adapter->rss_key, adapter->rss_key_size);
+	स_नकल(vrk->key, adapter->rss_key, adapter->rss_key_size);
 
 	adapter->current_op = VIRTCHNL_OP_CONFIG_RSS_KEY;
 	adapter->aq_required &= ~IAVF_FLAG_AQ_SET_RSS_KEY;
 	iavf_send_pf_msg(adapter, VIRTCHNL_OP_CONFIG_RSS_KEY, (u8 *)vrk, len);
-	kfree(vrk);
-}
+	kमुक्त(vrk);
+पूर्ण
 
 /**
  * iavf_set_rss_lut
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request the PF to set our RSS lookup table
  **/
-void iavf_set_rss_lut(struct iavf_adapter *adapter)
-{
-	struct virtchnl_rss_lut *vrl;
-	int len;
+व्योम iavf_set_rss_lut(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_rss_lut *vrl;
+	पूर्णांक len;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot set RSS LUT, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
-	len = sizeof(struct virtchnl_rss_lut) +
-	      (adapter->rss_lut_size * sizeof(u8)) - 1;
+		वापस;
+	पूर्ण
+	len = माप(काष्ठा virtchnl_rss_lut) +
+	      (adapter->rss_lut_size * माप(u8)) - 1;
 	vrl = kzalloc(len, GFP_KERNEL);
-	if (!vrl)
-		return;
+	अगर (!vrl)
+		वापस;
 	vrl->vsi_id = adapter->vsi.id;
 	vrl->lut_entries = adapter->rss_lut_size;
-	memcpy(vrl->lut, adapter->rss_lut, adapter->rss_lut_size);
+	स_नकल(vrl->lut, adapter->rss_lut, adapter->rss_lut_size);
 	adapter->current_op = VIRTCHNL_OP_CONFIG_RSS_LUT;
 	adapter->aq_required &= ~IAVF_FLAG_AQ_SET_RSS_LUT;
 	iavf_send_pf_msg(adapter, VIRTCHNL_OP_CONFIG_RSS_LUT, (u8 *)vrl, len);
-	kfree(vrl);
-}
+	kमुक्त(vrl);
+पूर्ण
 
 /**
  * iavf_enable_vlan_stripping
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request VLAN header stripping to be enabled
  **/
-void iavf_enable_vlan_stripping(struct iavf_adapter *adapter)
-{
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+व्योम iavf_enable_vlan_stripping(काष्ठा iavf_adapter *adapter)
+अणु
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot enable stripping, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_ENABLE_VLAN_STRIPPING;
 	adapter->aq_required &= ~IAVF_FLAG_AQ_ENABLE_VLAN_STRIPPING;
-	iavf_send_pf_msg(adapter, VIRTCHNL_OP_ENABLE_VLAN_STRIPPING, NULL, 0);
-}
+	iavf_send_pf_msg(adapter, VIRTCHNL_OP_ENABLE_VLAN_STRIPPING, शून्य, 0);
+पूर्ण
 
 /**
  * iavf_disable_vlan_stripping
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request VLAN header stripping to be disabled
  **/
-void iavf_disable_vlan_stripping(struct iavf_adapter *adapter)
-{
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+व्योम iavf_disable_vlan_stripping(काष्ठा iavf_adapter *adapter)
+अणु
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot disable stripping, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_DISABLE_VLAN_STRIPPING;
 	adapter->aq_required &= ~IAVF_FLAG_AQ_DISABLE_VLAN_STRIPPING;
-	iavf_send_pf_msg(adapter, VIRTCHNL_OP_DISABLE_VLAN_STRIPPING, NULL, 0);
-}
+	iavf_send_pf_msg(adapter, VIRTCHNL_OP_DISABLE_VLAN_STRIPPING, शून्य, 0);
+पूर्ण
 
-#define IAVF_MAX_SPEED_STRLEN	13
+#घोषणा IAVF_MAX_SPEED_STRLEN	13
 
 /**
- * iavf_print_link_message - print link up or down
- * @adapter: adapter structure
+ * iavf_prपूर्णांक_link_message - prपूर्णांक link up or करोwn
+ * @adapter: adapter काष्ठाure
  *
  * Log a message telling the world of our wonderous link status
  */
-static void iavf_print_link_message(struct iavf_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	int link_speed_mbps;
-	char *speed;
+अटल व्योम iavf_prपूर्णांक_link_message(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	पूर्णांक link_speed_mbps;
+	अक्षर *speed;
 
-	if (!adapter->link_up) {
+	अगर (!adapter->link_up) अणु
 		netdev_info(netdev, "NIC Link is Down\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	speed = kzalloc(IAVF_MAX_SPEED_STRLEN, GFP_KERNEL);
-	if (!speed)
-		return;
+	अगर (!speed)
+		वापस;
 
-	if (ADV_LINK_SUPPORT(adapter)) {
+	अगर (ADV_LINK_SUPPORT(adapter)) अणु
 		link_speed_mbps = adapter->link_speed_mbps;
-		goto print_link_msg;
-	}
+		जाओ prपूर्णांक_link_msg;
+	पूर्ण
 
-	switch (adapter->link_speed) {
-	case VIRTCHNL_LINK_SPEED_40GB:
+	चयन (adapter->link_speed) अणु
+	हाल VIRTCHNL_LINK_SPEED_40GB:
 		link_speed_mbps = SPEED_40000;
-		break;
-	case VIRTCHNL_LINK_SPEED_25GB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_25GB:
 		link_speed_mbps = SPEED_25000;
-		break;
-	case VIRTCHNL_LINK_SPEED_20GB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_20GB:
 		link_speed_mbps = SPEED_20000;
-		break;
-	case VIRTCHNL_LINK_SPEED_10GB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_10GB:
 		link_speed_mbps = SPEED_10000;
-		break;
-	case VIRTCHNL_LINK_SPEED_5GB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_5GB:
 		link_speed_mbps = SPEED_5000;
-		break;
-	case VIRTCHNL_LINK_SPEED_2_5GB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_2_5GB:
 		link_speed_mbps = SPEED_2500;
-		break;
-	case VIRTCHNL_LINK_SPEED_1GB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_1GB:
 		link_speed_mbps = SPEED_1000;
-		break;
-	case VIRTCHNL_LINK_SPEED_100MB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_100MB:
 		link_speed_mbps = SPEED_100;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		link_speed_mbps = SPEED_UNKNOWN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-print_link_msg:
-	if (link_speed_mbps > SPEED_1000) {
-		if (link_speed_mbps == SPEED_2500)
-			snprintf(speed, IAVF_MAX_SPEED_STRLEN, "2.5 Gbps");
-		else
-			/* convert to Gbps inline */
-			snprintf(speed, IAVF_MAX_SPEED_STRLEN, "%d %s",
+prपूर्णांक_link_msg:
+	अगर (link_speed_mbps > SPEED_1000) अणु
+		अगर (link_speed_mbps == SPEED_2500)
+			snम_लिखो(speed, IAVF_MAX_SPEED_STRLEN, "2.5 Gbps");
+		अन्यथा
+			/* convert to Gbps अंतरभूत */
+			snम_लिखो(speed, IAVF_MAX_SPEED_STRLEN, "%d %s",
 				 link_speed_mbps / 1000, "Gbps");
-	} else if (link_speed_mbps == SPEED_UNKNOWN) {
-		snprintf(speed, IAVF_MAX_SPEED_STRLEN, "%s", "Unknown Mbps");
-	} else {
-		snprintf(speed, IAVF_MAX_SPEED_STRLEN, "%u %s",
+	पूर्ण अन्यथा अगर (link_speed_mbps == SPEED_UNKNOWN) अणु
+		snम_लिखो(speed, IAVF_MAX_SPEED_STRLEN, "%s", "Unknown Mbps");
+	पूर्ण अन्यथा अणु
+		snम_लिखो(speed, IAVF_MAX_SPEED_STRLEN, "%u %s",
 			 link_speed_mbps, "Mbps");
-	}
+	पूर्ण
 
 	netdev_info(netdev, "NIC Link is Up Speed is %s Full Duplex\n", speed);
-	kfree(speed);
-}
+	kमुक्त(speed);
+पूर्ण
 
 /**
  * iavf_get_vpe_link_status
- * @adapter: adapter structure
- * @vpe: virtchnl_pf_event structure
+ * @adapter: adapter काष्ठाure
+ * @vpe: virtchnl_pf_event काष्ठाure
  *
- * Helper function for determining the link status
+ * Helper function क्रम determining the link status
  **/
-static bool
-iavf_get_vpe_link_status(struct iavf_adapter *adapter,
-			 struct virtchnl_pf_event *vpe)
-{
-	if (ADV_LINK_SUPPORT(adapter))
-		return vpe->event_data.link_event_adv.link_status;
-	else
-		return vpe->event_data.link_event.link_status;
-}
+अटल bool
+iavf_get_vpe_link_status(काष्ठा iavf_adapter *adapter,
+			 काष्ठा virtchnl_pf_event *vpe)
+अणु
+	अगर (ADV_LINK_SUPPORT(adapter))
+		वापस vpe->event_data.link_event_adv.link_status;
+	अन्यथा
+		वापस vpe->event_data.link_event.link_status;
+पूर्ण
 
 /**
  * iavf_set_adapter_link_speed_from_vpe
- * @adapter: adapter structure for which we are setting the link speed
- * @vpe: virtchnl_pf_event structure that contains the link speed we are setting
+ * @adapter: adapter काष्ठाure क्रम which we are setting the link speed
+ * @vpe: virtchnl_pf_event काष्ठाure that contains the link speed we are setting
  *
- * Helper function for setting iavf_adapter link speed
+ * Helper function क्रम setting iavf_adapter link speed
  **/
-static void
-iavf_set_adapter_link_speed_from_vpe(struct iavf_adapter *adapter,
-				     struct virtchnl_pf_event *vpe)
-{
-	if (ADV_LINK_SUPPORT(adapter))
+अटल व्योम
+iavf_set_adapter_link_speed_from_vpe(काष्ठा iavf_adapter *adapter,
+				     काष्ठा virtchnl_pf_event *vpe)
+अणु
+	अगर (ADV_LINK_SUPPORT(adapter))
 		adapter->link_speed_mbps =
 			vpe->event_data.link_event_adv.link_speed;
-	else
+	अन्यथा
 		adapter->link_speed = vpe->event_data.link_event.link_speed;
-}
+पूर्ण
 
 /**
  * iavf_enable_channels
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
- * Request that the PF enable channels as specified by
+ * Request that the PF enable channels as specअगरied by
  * the user via tc tool.
  **/
-void iavf_enable_channels(struct iavf_adapter *adapter)
-{
-	struct virtchnl_tc_info *vti = NULL;
-	size_t len;
-	int i;
+व्योम iavf_enable_channels(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_tc_info *vti = शून्य;
+	माप_प्रकार len;
+	पूर्णांक i;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot configure mqprio, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	len = struct_size(vti, list, adapter->num_tc - 1);
+	len = काष्ठा_size(vti, list, adapter->num_tc - 1);
 	vti = kzalloc(len, GFP_KERNEL);
-	if (!vti)
-		return;
+	अगर (!vti)
+		वापस;
 	vti->num_tc = adapter->num_tc;
-	for (i = 0; i < vti->num_tc; i++) {
+	क्रम (i = 0; i < vti->num_tc; i++) अणु
 		vti->list[i].count = adapter->ch_config.ch_info[i].count;
 		vti->list[i].offset = adapter->ch_config.ch_info[i].offset;
 		vti->list[i].pad = 0;
 		vti->list[i].max_tx_rate =
 				adapter->ch_config.ch_info[i].max_tx_rate;
-	}
+	पूर्ण
 
 	adapter->ch_config.state = __IAVF_TC_RUNNING;
 	adapter->flags |= IAVF_FLAG_REINIT_ITR_NEEDED;
 	adapter->current_op = VIRTCHNL_OP_ENABLE_CHANNELS;
 	adapter->aq_required &= ~IAVF_FLAG_AQ_ENABLE_CHANNELS;
 	iavf_send_pf_msg(adapter, VIRTCHNL_OP_ENABLE_CHANNELS, (u8 *)vti, len);
-	kfree(vti);
-}
+	kमुक्त(vti);
+पूर्ण
 
 /**
  * iavf_disable_channels
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request that the PF disable channels that are configured
  **/
-void iavf_disable_channels(struct iavf_adapter *adapter)
-{
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+व्योम iavf_disable_channels(काष्ठा iavf_adapter *adapter)
+अणु
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot configure mqprio, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	adapter->ch_config.state = __IAVF_TC_INVALID;
 	adapter->flags |= IAVF_FLAG_REINIT_ITR_NEEDED;
 	adapter->current_op = VIRTCHNL_OP_DISABLE_CHANNELS;
 	adapter->aq_required &= ~IAVF_FLAG_AQ_DISABLE_CHANNELS;
-	iavf_send_pf_msg(adapter, VIRTCHNL_OP_DISABLE_CHANNELS, NULL, 0);
-}
+	iavf_send_pf_msg(adapter, VIRTCHNL_OP_DISABLE_CHANNELS, शून्य, 0);
+पूर्ण
 
 /**
- * iavf_print_cloud_filter
- * @adapter: adapter structure
- * @f: cloud filter to print
+ * iavf_prपूर्णांक_cloud_filter
+ * @adapter: adapter काष्ठाure
+ * @f: cloud filter to prपूर्णांक
  *
- * Print the cloud filter
+ * Prपूर्णांक the cloud filter
  **/
-static void iavf_print_cloud_filter(struct iavf_adapter *adapter,
-				    struct virtchnl_filter *f)
-{
-	switch (f->flow_type) {
-	case VIRTCHNL_TCP_V4_FLOW:
+अटल व्योम iavf_prपूर्णांक_cloud_filter(काष्ठा iavf_adapter *adapter,
+				    काष्ठा virtchnl_filter *f)
+अणु
+	चयन (f->flow_type) अणु
+	हाल VIRTCHNL_TCP_V4_FLOW:
 		dev_info(&adapter->pdev->dev, "dst_mac: %pM src_mac: %pM vlan_id: %hu dst_ip: %pI4 src_ip %pI4 dst_port %hu src_port %hu\n",
 			 &f->data.tcp_spec.dst_mac,
 			 &f->data.tcp_spec.src_mac,
@@ -1090,8 +1091,8 @@ static void iavf_print_cloud_filter(struct iavf_adapter *adapter,
 			 &f->data.tcp_spec.src_ip[0],
 			 ntohs(f->data.tcp_spec.dst_port),
 			 ntohs(f->data.tcp_spec.src_port));
-		break;
-	case VIRTCHNL_TCP_V6_FLOW:
+		अवरोध;
+	हाल VIRTCHNL_TCP_V6_FLOW:
 		dev_info(&adapter->pdev->dev, "dst_mac: %pM src_mac: %pM vlan_id: %hu dst_ip: %pI6 src_ip %pI6 dst_port %hu src_port %hu\n",
 			 &f->data.tcp_spec.dst_mac,
 			 &f->data.tcp_spec.src_mac,
@@ -1100,553 +1101,553 @@ static void iavf_print_cloud_filter(struct iavf_adapter *adapter,
 			 &f->data.tcp_spec.src_ip,
 			 ntohs(f->data.tcp_spec.dst_port),
 			 ntohs(f->data.tcp_spec.src_port));
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * iavf_add_cloud_filter
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
- * Request that the PF add cloud filters as specified
+ * Request that the PF add cloud filters as specअगरied
  * by the user via tc tool.
  **/
-void iavf_add_cloud_filter(struct iavf_adapter *adapter)
-{
-	struct iavf_cloud_filter *cf;
-	struct virtchnl_filter *f;
-	int len = 0, count = 0;
+व्योम iavf_add_cloud_filter(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा iavf_cloud_filter *cf;
+	काष्ठा virtchnl_filter *f;
+	पूर्णांक len = 0, count = 0;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot add cloud filter, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
-	list_for_each_entry(cf, &adapter->cloud_filter_list, list) {
-		if (cf->add) {
+		वापस;
+	पूर्ण
+	list_क्रम_each_entry(cf, &adapter->cloud_filter_list, list) अणु
+		अगर (cf->add) अणु
 			count++;
-			break;
-		}
-	}
-	if (!count) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!count) अणु
 		adapter->aq_required &= ~IAVF_FLAG_AQ_ADD_CLOUD_FILTER;
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_ADD_CLOUD_FILTER;
 
-	len = sizeof(struct virtchnl_filter);
+	len = माप(काष्ठा virtchnl_filter);
 	f = kzalloc(len, GFP_KERNEL);
-	if (!f)
-		return;
+	अगर (!f)
+		वापस;
 
-	list_for_each_entry(cf, &adapter->cloud_filter_list, list) {
-		if (cf->add) {
-			memcpy(f, &cf->f, sizeof(struct virtchnl_filter));
+	list_क्रम_each_entry(cf, &adapter->cloud_filter_list, list) अणु
+		अगर (cf->add) अणु
+			स_नकल(f, &cf->f, माप(काष्ठा virtchnl_filter));
 			cf->add = false;
 			cf->state = __IAVF_CF_ADD_PENDING;
 			iavf_send_pf_msg(adapter, VIRTCHNL_OP_ADD_CLOUD_FILTER,
 					 (u8 *)f, len);
-		}
-	}
-	kfree(f);
-}
+		पूर्ण
+	पूर्ण
+	kमुक्त(f);
+पूर्ण
 
 /**
  * iavf_del_cloud_filter
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
- * Request that the PF delete cloud filters as specified
+ * Request that the PF delete cloud filters as specअगरied
  * by the user via tc tool.
  **/
-void iavf_del_cloud_filter(struct iavf_adapter *adapter)
-{
-	struct iavf_cloud_filter *cf, *cftmp;
-	struct virtchnl_filter *f;
-	int len = 0, count = 0;
+व्योम iavf_del_cloud_filter(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा iavf_cloud_filter *cf, *cfपंचांगp;
+	काष्ठा virtchnl_filter *f;
+	पूर्णांक len = 0, count = 0;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot remove cloud filter, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
-	list_for_each_entry(cf, &adapter->cloud_filter_list, list) {
-		if (cf->del) {
+		वापस;
+	पूर्ण
+	list_क्रम_each_entry(cf, &adapter->cloud_filter_list, list) अणु
+		अगर (cf->del) अणु
 			count++;
-			break;
-		}
-	}
-	if (!count) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!count) अणु
 		adapter->aq_required &= ~IAVF_FLAG_AQ_DEL_CLOUD_FILTER;
-		return;
-	}
+		वापस;
+	पूर्ण
 	adapter->current_op = VIRTCHNL_OP_DEL_CLOUD_FILTER;
 
-	len = sizeof(struct virtchnl_filter);
+	len = माप(काष्ठा virtchnl_filter);
 	f = kzalloc(len, GFP_KERNEL);
-	if (!f)
-		return;
+	अगर (!f)
+		वापस;
 
-	list_for_each_entry_safe(cf, cftmp, &adapter->cloud_filter_list, list) {
-		if (cf->del) {
-			memcpy(f, &cf->f, sizeof(struct virtchnl_filter));
+	list_क्रम_each_entry_safe(cf, cfपंचांगp, &adapter->cloud_filter_list, list) अणु
+		अगर (cf->del) अणु
+			स_नकल(f, &cf->f, माप(काष्ठा virtchnl_filter));
 			cf->del = false;
 			cf->state = __IAVF_CF_DEL_PENDING;
 			iavf_send_pf_msg(adapter, VIRTCHNL_OP_DEL_CLOUD_FILTER,
 					 (u8 *)f, len);
-		}
-	}
-	kfree(f);
-}
+		पूर्ण
+	पूर्ण
+	kमुक्त(f);
+पूर्ण
 
 /**
  * iavf_add_fdir_filter
- * @adapter: the VF adapter structure
+ * @adapter: the VF adapter काष्ठाure
  *
- * Request that the PF add Flow Director filters as specified
+ * Request that the PF add Flow Director filters as specअगरied
  * by the user via ethtool.
  **/
-void iavf_add_fdir_filter(struct iavf_adapter *adapter)
-{
-	struct iavf_fdir_fltr *fdir;
-	struct virtchnl_fdir_add *f;
+व्योम iavf_add_fdir_filter(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा iavf_fdir_fltr *fdir;
+	काष्ठा virtchnl_fdir_add *f;
 	bool process_fltr = false;
-	int len;
+	पूर्णांक len;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot add Flow Director filter, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	len = sizeof(struct virtchnl_fdir_add);
+	len = माप(काष्ठा virtchnl_fdir_add);
 	f = kzalloc(len, GFP_KERNEL);
-	if (!f)
-		return;
+	अगर (!f)
+		वापस;
 
 	spin_lock_bh(&adapter->fdir_fltr_lock);
-	list_for_each_entry(fdir, &adapter->fdir_list_head, list) {
-		if (fdir->state == IAVF_FDIR_FLTR_ADD_REQUEST) {
+	list_क्रम_each_entry(fdir, &adapter->fdir_list_head, list) अणु
+		अगर (fdir->state == IAVF_Fसूची_FLTR_ADD_REQUEST) अणु
 			process_fltr = true;
-			fdir->state = IAVF_FDIR_FLTR_ADD_PENDING;
-			memcpy(f, &fdir->vc_add_msg, len);
-			break;
-		}
-	}
+			fdir->state = IAVF_Fसूची_FLTR_ADD_PENDING;
+			स_नकल(f, &fdir->vc_add_msg, len);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&adapter->fdir_fltr_lock);
 
-	if (!process_fltr) {
+	अगर (!process_fltr) अणु
 		/* prevent iavf_add_fdir_filter() from being called when there
 		 * are no filters to add
 		 */
-		adapter->aq_required &= ~IAVF_FLAG_AQ_ADD_FDIR_FILTER;
-		kfree(f);
-		return;
-	}
-	adapter->current_op = VIRTCHNL_OP_ADD_FDIR_FILTER;
-	iavf_send_pf_msg(adapter, VIRTCHNL_OP_ADD_FDIR_FILTER, (u8 *)f, len);
-	kfree(f);
-}
+		adapter->aq_required &= ~IAVF_FLAG_AQ_ADD_Fसूची_FILTER;
+		kमुक्त(f);
+		वापस;
+	पूर्ण
+	adapter->current_op = VIRTCHNL_OP_ADD_Fसूची_FILTER;
+	iavf_send_pf_msg(adapter, VIRTCHNL_OP_ADD_Fसूची_FILTER, (u8 *)f, len);
+	kमुक्त(f);
+पूर्ण
 
 /**
  * iavf_del_fdir_filter
- * @adapter: the VF adapter structure
+ * @adapter: the VF adapter काष्ठाure
  *
- * Request that the PF delete Flow Director filters as specified
+ * Request that the PF delete Flow Director filters as specअगरied
  * by the user via ethtool.
  **/
-void iavf_del_fdir_filter(struct iavf_adapter *adapter)
-{
-	struct iavf_fdir_fltr *fdir;
-	struct virtchnl_fdir_del f;
+व्योम iavf_del_fdir_filter(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा iavf_fdir_fltr *fdir;
+	काष्ठा virtchnl_fdir_del f;
 	bool process_fltr = false;
-	int len;
+	पूर्णांक len;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot remove Flow Director filter, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	len = sizeof(struct virtchnl_fdir_del);
+	len = माप(काष्ठा virtchnl_fdir_del);
 
 	spin_lock_bh(&adapter->fdir_fltr_lock);
-	list_for_each_entry(fdir, &adapter->fdir_list_head, list) {
-		if (fdir->state == IAVF_FDIR_FLTR_DEL_REQUEST) {
+	list_क्रम_each_entry(fdir, &adapter->fdir_list_head, list) अणु
+		अगर (fdir->state == IAVF_Fसूची_FLTR_DEL_REQUEST) अणु
 			process_fltr = true;
-			memset(&f, 0, len);
+			स_रखो(&f, 0, len);
 			f.vsi_id = fdir->vc_add_msg.vsi_id;
 			f.flow_id = fdir->flow_id;
-			fdir->state = IAVF_FDIR_FLTR_DEL_PENDING;
-			break;
-		}
-	}
+			fdir->state = IAVF_Fसूची_FLTR_DEL_PENDING;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&adapter->fdir_fltr_lock);
 
-	if (!process_fltr) {
-		adapter->aq_required &= ~IAVF_FLAG_AQ_DEL_FDIR_FILTER;
-		return;
-	}
+	अगर (!process_fltr) अणु
+		adapter->aq_required &= ~IAVF_FLAG_AQ_DEL_Fसूची_FILTER;
+		वापस;
+	पूर्ण
 
-	adapter->current_op = VIRTCHNL_OP_DEL_FDIR_FILTER;
-	iavf_send_pf_msg(adapter, VIRTCHNL_OP_DEL_FDIR_FILTER, (u8 *)&f, len);
-}
+	adapter->current_op = VIRTCHNL_OP_DEL_Fसूची_FILTER;
+	iavf_send_pf_msg(adapter, VIRTCHNL_OP_DEL_Fसूची_FILTER, (u8 *)&f, len);
+पूर्ण
 
 /**
  * iavf_add_adv_rss_cfg
- * @adapter: the VF adapter structure
+ * @adapter: the VF adapter काष्ठाure
  *
- * Request that the PF add RSS configuration as specified
+ * Request that the PF add RSS configuration as specअगरied
  * by the user via ethtool.
  **/
-void iavf_add_adv_rss_cfg(struct iavf_adapter *adapter)
-{
-	struct virtchnl_rss_cfg *rss_cfg;
-	struct iavf_adv_rss *rss;
+व्योम iavf_add_adv_rss_cfg(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_rss_cfg *rss_cfg;
+	काष्ठा iavf_adv_rss *rss;
 	bool process_rss = false;
-	int len;
+	पूर्णांक len;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot add RSS configuration, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	len = sizeof(struct virtchnl_rss_cfg);
+	len = माप(काष्ठा virtchnl_rss_cfg);
 	rss_cfg = kzalloc(len, GFP_KERNEL);
-	if (!rss_cfg)
-		return;
+	अगर (!rss_cfg)
+		वापस;
 
 	spin_lock_bh(&adapter->adv_rss_lock);
-	list_for_each_entry(rss, &adapter->adv_rss_list_head, list) {
-		if (rss->state == IAVF_ADV_RSS_ADD_REQUEST) {
+	list_क्रम_each_entry(rss, &adapter->adv_rss_list_head, list) अणु
+		अगर (rss->state == IAVF_ADV_RSS_ADD_REQUEST) अणु
 			process_rss = true;
 			rss->state = IAVF_ADV_RSS_ADD_PENDING;
-			memcpy(rss_cfg, &rss->cfg_msg, len);
-			iavf_print_adv_rss_cfg(adapter, rss,
+			स_नकल(rss_cfg, &rss->cfg_msg, len);
+			iavf_prपूर्णांक_adv_rss_cfg(adapter, rss,
 					       "Input set change for",
 					       "is pending");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&adapter->adv_rss_lock);
 
-	if (process_rss) {
+	अगर (process_rss) अणु
 		adapter->current_op = VIRTCHNL_OP_ADD_RSS_CFG;
 		iavf_send_pf_msg(adapter, VIRTCHNL_OP_ADD_RSS_CFG,
 				 (u8 *)rss_cfg, len);
-	} else {
+	पूर्ण अन्यथा अणु
 		adapter->aq_required &= ~IAVF_FLAG_AQ_ADD_ADV_RSS_CFG;
-	}
+	पूर्ण
 
-	kfree(rss_cfg);
-}
+	kमुक्त(rss_cfg);
+पूर्ण
 
 /**
  * iavf_del_adv_rss_cfg
- * @adapter: the VF adapter structure
+ * @adapter: the VF adapter काष्ठाure
  *
- * Request that the PF delete RSS configuration as specified
+ * Request that the PF delete RSS configuration as specअगरied
  * by the user via ethtool.
  **/
-void iavf_del_adv_rss_cfg(struct iavf_adapter *adapter)
-{
-	struct virtchnl_rss_cfg *rss_cfg;
-	struct iavf_adv_rss *rss;
+व्योम iavf_del_adv_rss_cfg(काष्ठा iavf_adapter *adapter)
+अणु
+	काष्ठा virtchnl_rss_cfg *rss_cfg;
+	काष्ठा iavf_adv_rss *rss;
 	bool process_rss = false;
-	int len;
+	पूर्णांक len;
 
-	if (adapter->current_op != VIRTCHNL_OP_UNKNOWN) {
-		/* bail because we already have a command pending */
+	अगर (adapter->current_op != VIRTCHNL_OP_UNKNOWN) अणु
+		/* bail because we alपढ़ोy have a command pending */
 		dev_err(&adapter->pdev->dev, "Cannot remove RSS configuration, command %d pending\n",
 			adapter->current_op);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	len = sizeof(struct virtchnl_rss_cfg);
+	len = माप(काष्ठा virtchnl_rss_cfg);
 	rss_cfg = kzalloc(len, GFP_KERNEL);
-	if (!rss_cfg)
-		return;
+	अगर (!rss_cfg)
+		वापस;
 
 	spin_lock_bh(&adapter->adv_rss_lock);
-	list_for_each_entry(rss, &adapter->adv_rss_list_head, list) {
-		if (rss->state == IAVF_ADV_RSS_DEL_REQUEST) {
+	list_क्रम_each_entry(rss, &adapter->adv_rss_list_head, list) अणु
+		अगर (rss->state == IAVF_ADV_RSS_DEL_REQUEST) अणु
 			process_rss = true;
 			rss->state = IAVF_ADV_RSS_DEL_PENDING;
-			memcpy(rss_cfg, &rss->cfg_msg, len);
-			break;
-		}
-	}
+			स_नकल(rss_cfg, &rss->cfg_msg, len);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&adapter->adv_rss_lock);
 
-	if (process_rss) {
+	अगर (process_rss) अणु
 		adapter->current_op = VIRTCHNL_OP_DEL_RSS_CFG;
 		iavf_send_pf_msg(adapter, VIRTCHNL_OP_DEL_RSS_CFG,
 				 (u8 *)rss_cfg, len);
-	} else {
+	पूर्ण अन्यथा अणु
 		adapter->aq_required &= ~IAVF_FLAG_AQ_DEL_ADV_RSS_CFG;
-	}
+	पूर्ण
 
-	kfree(rss_cfg);
-}
+	kमुक्त(rss_cfg);
+पूर्ण
 
 /**
  * iavf_request_reset
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  *
  * Request that the PF reset this VF. No response is expected.
  **/
-void iavf_request_reset(struct iavf_adapter *adapter)
-{
+व्योम iavf_request_reset(काष्ठा iavf_adapter *adapter)
+अणु
 	/* Don't check CURRENT_OP - this is always higher priority */
-	iavf_send_pf_msg(adapter, VIRTCHNL_OP_RESET_VF, NULL, 0);
+	iavf_send_pf_msg(adapter, VIRTCHNL_OP_RESET_VF, शून्य, 0);
 	adapter->current_op = VIRTCHNL_OP_UNKNOWN;
-}
+पूर्ण
 
 /**
  * iavf_virtchnl_completion
- * @adapter: adapter structure
+ * @adapter: adapter काष्ठाure
  * @v_opcode: opcode sent by PF
  * @v_retval: retval sent by PF
  * @msg: message sent by PF
  * @msglen: message length
  *
- * Asynchronous completion function for admin queue messages. Rather than busy
- * wait, we fire off our requests and assume that no errors will be returned.
+ * Asynchronous completion function क्रम admin queue messages. Rather than busy
+ * रुको, we fire off our requests and assume that no errors will be वापसed.
  * This function handles the reply messages.
  **/
-void iavf_virtchnl_completion(struct iavf_adapter *adapter,
-			      enum virtchnl_ops v_opcode,
-			      enum iavf_status v_retval, u8 *msg, u16 msglen)
-{
-	struct net_device *netdev = adapter->netdev;
+व्योम iavf_virtchnl_completion(काष्ठा iavf_adapter *adapter,
+			      क्रमागत virtchnl_ops v_opcode,
+			      क्रमागत iavf_status v_retval, u8 *msg, u16 msglen)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
 
-	if (v_opcode == VIRTCHNL_OP_EVENT) {
-		struct virtchnl_pf_event *vpe =
-			(struct virtchnl_pf_event *)msg;
+	अगर (v_opcode == VIRTCHNL_OP_EVENT) अणु
+		काष्ठा virtchnl_pf_event *vpe =
+			(काष्ठा virtchnl_pf_event *)msg;
 		bool link_up = iavf_get_vpe_link_status(adapter, vpe);
 
-		switch (vpe->event) {
-		case VIRTCHNL_EVENT_LINK_CHANGE:
+		चयन (vpe->event) अणु
+		हाल VIRTCHNL_EVENT_LINK_CHANGE:
 			iavf_set_adapter_link_speed_from_vpe(adapter, vpe);
 
-			/* we've already got the right link status, bail */
-			if (adapter->link_up == link_up)
-				break;
+			/* we've alपढ़ोy got the right link status, bail */
+			अगर (adapter->link_up == link_up)
+				अवरोध;
 
-			if (link_up) {
+			अगर (link_up) अणु
 				/* If we get link up message and start queues
-				 * before our queues are configured it will
-				 * trigger a TX hang. In that case, just ignore
+				 * beक्रमe our queues are configured it will
+				 * trigger a TX hang. In that हाल, just ignore
 				 * the link status message,we'll get another one
 				 * after we enable queues and actually prepared
 				 * to send traffic.
 				 */
-				if (adapter->state != __IAVF_RUNNING)
-					break;
+				अगर (adapter->state != __IAVF_RUNNING)
+					अवरोध;
 
 				/* For ADq enabled VF, we reconfigure VSIs and
-				 * re-allocate queues. Hence wait till all
+				 * re-allocate queues. Hence रुको till all
 				 * queues are enabled.
 				 */
-				if (adapter->flags &
+				अगर (adapter->flags &
 				    IAVF_FLAG_QUEUES_DISABLED)
-					break;
-			}
+					अवरोध;
+			पूर्ण
 
 			adapter->link_up = link_up;
-			if (link_up) {
-				netif_tx_start_all_queues(netdev);
-				netif_carrier_on(netdev);
-			} else {
-				netif_tx_stop_all_queues(netdev);
-				netif_carrier_off(netdev);
-			}
-			iavf_print_link_message(adapter);
-			break;
-		case VIRTCHNL_EVENT_RESET_IMPENDING:
+			अगर (link_up) अणु
+				netअगर_tx_start_all_queues(netdev);
+				netअगर_carrier_on(netdev);
+			पूर्ण अन्यथा अणु
+				netअगर_tx_stop_all_queues(netdev);
+				netअगर_carrier_off(netdev);
+			पूर्ण
+			iavf_prपूर्णांक_link_message(adapter);
+			अवरोध;
+		हाल VIRTCHNL_EVENT_RESET_IMPENDING:
 			dev_info(&adapter->pdev->dev, "Reset warning received from the PF\n");
-			if (!(adapter->flags & IAVF_FLAG_RESET_PENDING)) {
+			अगर (!(adapter->flags & IAVF_FLAG_RESET_PENDING)) अणु
 				adapter->flags |= IAVF_FLAG_RESET_PENDING;
 				dev_info(&adapter->pdev->dev, "Scheduling reset task\n");
 				queue_work(iavf_wq, &adapter->reset_task);
-			}
-			break;
-		default:
+			पूर्ण
+			अवरोध;
+		शेष:
 			dev_err(&adapter->pdev->dev, "Unknown event %d from PF\n",
 				vpe->event);
-			break;
-		}
-		return;
-	}
-	if (v_retval) {
-		switch (v_opcode) {
-		case VIRTCHNL_OP_ADD_VLAN:
+			अवरोध;
+		पूर्ण
+		वापस;
+	पूर्ण
+	अगर (v_retval) अणु
+		चयन (v_opcode) अणु
+		हाल VIRTCHNL_OP_ADD_VLAN:
 			dev_err(&adapter->pdev->dev, "Failed to add VLAN filter, error %s\n",
 				iavf_stat_str(&adapter->hw, v_retval));
-			break;
-		case VIRTCHNL_OP_ADD_ETH_ADDR:
+			अवरोध;
+		हाल VIRTCHNL_OP_ADD_ETH_ADDR:
 			dev_err(&adapter->pdev->dev, "Failed to add MAC filter, error %s\n",
 				iavf_stat_str(&adapter->hw, v_retval));
 			/* restore administratively set MAC address */
 			ether_addr_copy(adapter->hw.mac.addr, netdev->dev_addr);
-			break;
-		case VIRTCHNL_OP_DEL_VLAN:
+			अवरोध;
+		हाल VIRTCHNL_OP_DEL_VLAN:
 			dev_err(&adapter->pdev->dev, "Failed to delete VLAN filter, error %s\n",
 				iavf_stat_str(&adapter->hw, v_retval));
-			break;
-		case VIRTCHNL_OP_DEL_ETH_ADDR:
+			अवरोध;
+		हाल VIRTCHNL_OP_DEL_ETH_ADDR:
 			dev_err(&adapter->pdev->dev, "Failed to delete MAC filter, error %s\n",
 				iavf_stat_str(&adapter->hw, v_retval));
-			break;
-		case VIRTCHNL_OP_ENABLE_CHANNELS:
+			अवरोध;
+		हाल VIRTCHNL_OP_ENABLE_CHANNELS:
 			dev_err(&adapter->pdev->dev, "Failed to configure queue channels, error %s\n",
 				iavf_stat_str(&adapter->hw, v_retval));
 			adapter->flags &= ~IAVF_FLAG_REINIT_ITR_NEEDED;
 			adapter->ch_config.state = __IAVF_TC_INVALID;
 			netdev_reset_tc(netdev);
-			netif_tx_start_all_queues(netdev);
-			break;
-		case VIRTCHNL_OP_DISABLE_CHANNELS:
+			netअगर_tx_start_all_queues(netdev);
+			अवरोध;
+		हाल VIRTCHNL_OP_DISABLE_CHANNELS:
 			dev_err(&adapter->pdev->dev, "Failed to disable queue channels, error %s\n",
 				iavf_stat_str(&adapter->hw, v_retval));
 			adapter->flags &= ~IAVF_FLAG_REINIT_ITR_NEEDED;
 			adapter->ch_config.state = __IAVF_TC_RUNNING;
-			netif_tx_start_all_queues(netdev);
-			break;
-		case VIRTCHNL_OP_ADD_CLOUD_FILTER: {
-			struct iavf_cloud_filter *cf, *cftmp;
+			netअगर_tx_start_all_queues(netdev);
+			अवरोध;
+		हाल VIRTCHNL_OP_ADD_CLOUD_FILTER: अणु
+			काष्ठा iavf_cloud_filter *cf, *cfपंचांगp;
 
-			list_for_each_entry_safe(cf, cftmp,
+			list_क्रम_each_entry_safe(cf, cfपंचांगp,
 						 &adapter->cloud_filter_list,
-						 list) {
-				if (cf->state == __IAVF_CF_ADD_PENDING) {
+						 list) अणु
+				अगर (cf->state == __IAVF_CF_ADD_PENDING) अणु
 					cf->state = __IAVF_CF_INVALID;
 					dev_info(&adapter->pdev->dev, "Failed to add cloud filter, error %s\n",
 						 iavf_stat_str(&adapter->hw,
 							       v_retval));
-					iavf_print_cloud_filter(adapter,
+					iavf_prपूर्णांक_cloud_filter(adapter,
 								&cf->f);
 					list_del(&cf->list);
-					kfree(cf);
+					kमुक्त(cf);
 					adapter->num_cloud_filters--;
-				}
-			}
-			}
-			break;
-		case VIRTCHNL_OP_DEL_CLOUD_FILTER: {
-			struct iavf_cloud_filter *cf;
+				पूर्ण
+			पूर्ण
+			पूर्ण
+			अवरोध;
+		हाल VIRTCHNL_OP_DEL_CLOUD_FILTER: अणु
+			काष्ठा iavf_cloud_filter *cf;
 
-			list_for_each_entry(cf, &adapter->cloud_filter_list,
-					    list) {
-				if (cf->state == __IAVF_CF_DEL_PENDING) {
+			list_क्रम_each_entry(cf, &adapter->cloud_filter_list,
+					    list) अणु
+				अगर (cf->state == __IAVF_CF_DEL_PENDING) अणु
 					cf->state = __IAVF_CF_ACTIVE;
 					dev_info(&adapter->pdev->dev, "Failed to del cloud filter, error %s\n",
 						 iavf_stat_str(&adapter->hw,
 							       v_retval));
-					iavf_print_cloud_filter(adapter,
+					iavf_prपूर्णांक_cloud_filter(adapter,
 								&cf->f);
-				}
-			}
-			}
-			break;
-		case VIRTCHNL_OP_ADD_FDIR_FILTER: {
-			struct iavf_fdir_fltr *fdir, *fdir_tmp;
+				पूर्ण
+			पूर्ण
+			पूर्ण
+			अवरोध;
+		हाल VIRTCHNL_OP_ADD_Fसूची_FILTER: अणु
+			काष्ठा iavf_fdir_fltr *fdir, *fdir_पंचांगp;
 
 			spin_lock_bh(&adapter->fdir_fltr_lock);
-			list_for_each_entry_safe(fdir, fdir_tmp,
+			list_क्रम_each_entry_safe(fdir, fdir_पंचांगp,
 						 &adapter->fdir_list_head,
-						 list) {
-				if (fdir->state == IAVF_FDIR_FLTR_ADD_PENDING) {
+						 list) अणु
+				अगर (fdir->state == IAVF_Fसूची_FLTR_ADD_PENDING) अणु
 					dev_info(&adapter->pdev->dev, "Failed to add Flow Director filter, error %s\n",
 						 iavf_stat_str(&adapter->hw,
 							       v_retval));
-					iavf_print_fdir_fltr(adapter, fdir);
-					if (msglen)
+					iavf_prपूर्णांक_fdir_fltr(adapter, fdir);
+					अगर (msglen)
 						dev_err(&adapter->pdev->dev,
 							"%s\n", msg);
 					list_del(&fdir->list);
-					kfree(fdir);
+					kमुक्त(fdir);
 					adapter->fdir_active_fltr--;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			spin_unlock_bh(&adapter->fdir_fltr_lock);
-			}
-			break;
-		case VIRTCHNL_OP_DEL_FDIR_FILTER: {
-			struct iavf_fdir_fltr *fdir;
+			पूर्ण
+			अवरोध;
+		हाल VIRTCHNL_OP_DEL_Fसूची_FILTER: अणु
+			काष्ठा iavf_fdir_fltr *fdir;
 
 			spin_lock_bh(&adapter->fdir_fltr_lock);
-			list_for_each_entry(fdir, &adapter->fdir_list_head,
-					    list) {
-				if (fdir->state == IAVF_FDIR_FLTR_DEL_PENDING) {
-					fdir->state = IAVF_FDIR_FLTR_ACTIVE;
+			list_क्रम_each_entry(fdir, &adapter->fdir_list_head,
+					    list) अणु
+				अगर (fdir->state == IAVF_Fसूची_FLTR_DEL_PENDING) अणु
+					fdir->state = IAVF_Fसूची_FLTR_ACTIVE;
 					dev_info(&adapter->pdev->dev, "Failed to del Flow Director filter, error %s\n",
 						 iavf_stat_str(&adapter->hw,
 							       v_retval));
-					iavf_print_fdir_fltr(adapter, fdir);
-				}
-			}
+					iavf_prपूर्णांक_fdir_fltr(adapter, fdir);
+				पूर्ण
+			पूर्ण
 			spin_unlock_bh(&adapter->fdir_fltr_lock);
-			}
-			break;
-		case VIRTCHNL_OP_ADD_RSS_CFG: {
-			struct iavf_adv_rss *rss, *rss_tmp;
+			पूर्ण
+			अवरोध;
+		हाल VIRTCHNL_OP_ADD_RSS_CFG: अणु
+			काष्ठा iavf_adv_rss *rss, *rss_पंचांगp;
 
 			spin_lock_bh(&adapter->adv_rss_lock);
-			list_for_each_entry_safe(rss, rss_tmp,
+			list_क्रम_each_entry_safe(rss, rss_पंचांगp,
 						 &adapter->adv_rss_list_head,
-						 list) {
-				if (rss->state == IAVF_ADV_RSS_ADD_PENDING) {
-					iavf_print_adv_rss_cfg(adapter, rss,
+						 list) अणु
+				अगर (rss->state == IAVF_ADV_RSS_ADD_PENDING) अणु
+					iavf_prपूर्णांक_adv_rss_cfg(adapter, rss,
 							       "Failed to change the input set for",
-							       NULL);
+							       शून्य);
 					list_del(&rss->list);
-					kfree(rss);
-				}
-			}
+					kमुक्त(rss);
+				पूर्ण
+			पूर्ण
 			spin_unlock_bh(&adapter->adv_rss_lock);
-			}
-			break;
-		case VIRTCHNL_OP_DEL_RSS_CFG: {
-			struct iavf_adv_rss *rss;
+			पूर्ण
+			अवरोध;
+		हाल VIRTCHNL_OP_DEL_RSS_CFG: अणु
+			काष्ठा iavf_adv_rss *rss;
 
 			spin_lock_bh(&adapter->adv_rss_lock);
-			list_for_each_entry(rss, &adapter->adv_rss_list_head,
-					    list) {
-				if (rss->state == IAVF_ADV_RSS_DEL_PENDING) {
+			list_क्रम_each_entry(rss, &adapter->adv_rss_list_head,
+					    list) अणु
+				अगर (rss->state == IAVF_ADV_RSS_DEL_PENDING) अणु
 					rss->state = IAVF_ADV_RSS_ACTIVE;
 					dev_err(&adapter->pdev->dev, "Failed to delete RSS configuration, error %s\n",
 						iavf_stat_str(&adapter->hw,
 							      v_retval));
-				}
-			}
+				पूर्ण
+			पूर्ण
 			spin_unlock_bh(&adapter->adv_rss_lock);
-			}
-			break;
-		case VIRTCHNL_OP_ENABLE_VLAN_STRIPPING:
-		case VIRTCHNL_OP_DISABLE_VLAN_STRIPPING:
+			पूर्ण
+			अवरोध;
+		हाल VIRTCHNL_OP_ENABLE_VLAN_STRIPPING:
+		हाल VIRTCHNL_OP_DISABLE_VLAN_STRIPPING:
 			dev_warn(&adapter->pdev->dev, "Changing VLAN Stripping is not allowed when Port VLAN is configured\n");
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(&adapter->pdev->dev, "PF returned error %d (%s) to our request %d\n",
 				v_retval, iavf_stat_str(&adapter->hw, v_retval),
 				v_opcode);
-		}
-	}
-	switch (v_opcode) {
-	case VIRTCHNL_OP_ADD_ETH_ADDR: {
-		if (!ether_addr_equal(netdev->dev_addr, adapter->hw.mac.addr))
+		पूर्ण
+	पूर्ण
+	चयन (v_opcode) अणु
+	हाल VIRTCHNL_OP_ADD_ETH_ADDR: अणु
+		अगर (!ether_addr_equal(netdev->dev_addr, adapter->hw.mac.addr))
 			ether_addr_copy(netdev->dev_addr, adapter->hw.mac.addr);
-		}
-		break;
-	case VIRTCHNL_OP_GET_STATS: {
-		struct iavf_eth_stats *stats =
-			(struct iavf_eth_stats *)msg;
+		पूर्ण
+		अवरोध;
+	हाल VIRTCHNL_OP_GET_STATS: अणु
+		काष्ठा iavf_eth_stats *stats =
+			(काष्ठा iavf_eth_stats *)msg;
 		netdev->stats.rx_packets = stats->rx_unicast +
 					   stats->rx_multicast +
 					   stats->rx_broadcast;
@@ -1659,198 +1660,198 @@ void iavf_virtchnl_completion(struct iavf_adapter *adapter,
 		netdev->stats.rx_dropped = stats->rx_discards;
 		netdev->stats.tx_dropped = stats->tx_discards;
 		adapter->current_stats = *stats;
-		}
-		break;
-	case VIRTCHNL_OP_GET_VF_RESOURCES: {
-		u16 len = sizeof(struct virtchnl_vf_resource) +
+		पूर्ण
+		अवरोध;
+	हाल VIRTCHNL_OP_GET_VF_RESOURCES: अणु
+		u16 len = माप(काष्ठा virtchnl_vf_resource) +
 			  IAVF_MAX_VF_VSI *
-			  sizeof(struct virtchnl_vsi_resource);
-		memcpy(adapter->vf_res, msg, min(msglen, len));
+			  माप(काष्ठा virtchnl_vsi_resource);
+		स_नकल(adapter->vf_res, msg, min(msglen, len));
 		iavf_validate_num_queues(adapter);
 		iavf_vf_parse_hw_config(&adapter->hw, adapter->vf_res);
-		if (is_zero_ether_addr(adapter->hw.mac.addr)) {
+		अगर (is_zero_ether_addr(adapter->hw.mac.addr)) अणु
 			/* restore current mac address */
 			ether_addr_copy(adapter->hw.mac.addr, netdev->dev_addr);
-		} else {
-			/* refresh current mac address if changed */
+		पूर्ण अन्यथा अणु
+			/* refresh current mac address अगर changed */
 			ether_addr_copy(netdev->dev_addr, adapter->hw.mac.addr);
 			ether_addr_copy(netdev->perm_addr,
 					adapter->hw.mac.addr);
-		}
+		पूर्ण
 		spin_lock_bh(&adapter->mac_vlan_list_lock);
 		iavf_add_filter(adapter, adapter->hw.mac.addr);
 		spin_unlock_bh(&adapter->mac_vlan_list_lock);
 		iavf_process_config(adapter);
-		}
-		break;
-	case VIRTCHNL_OP_ENABLE_QUEUES:
+		पूर्ण
+		अवरोध;
+	हाल VIRTCHNL_OP_ENABLE_QUEUES:
 		/* enable transmits */
 		iavf_irq_enable(adapter, true);
 		adapter->flags &= ~IAVF_FLAG_QUEUES_DISABLED;
-		break;
-	case VIRTCHNL_OP_DISABLE_QUEUES:
-		iavf_free_all_tx_resources(adapter);
-		iavf_free_all_rx_resources(adapter);
-		if (adapter->state == __IAVF_DOWN_PENDING) {
+		अवरोध;
+	हाल VIRTCHNL_OP_DISABLE_QUEUES:
+		iavf_मुक्त_all_tx_resources(adapter);
+		iavf_मुक्त_all_rx_resources(adapter);
+		अगर (adapter->state == __IAVF_DOWN_PENDING) अणु
 			adapter->state = __IAVF_DOWN;
-			wake_up(&adapter->down_waitqueue);
-		}
-		break;
-	case VIRTCHNL_OP_VERSION:
-	case VIRTCHNL_OP_CONFIG_IRQ_MAP:
-		/* Don't display an error if we get these out of sequence.
+			wake_up(&adapter->करोwn_रुकोqueue);
+		पूर्ण
+		अवरोध;
+	हाल VIRTCHNL_OP_VERSION:
+	हाल VIRTCHNL_OP_CONFIG_IRQ_MAP:
+		/* Don't display an error अगर we get these out of sequence.
 		 * If the firmware needed to get kicked, we'll get these and
 		 * it's no problem.
 		 */
-		if (v_opcode != adapter->current_op)
-			return;
-		break;
-	case VIRTCHNL_OP_IWARP:
+		अगर (v_opcode != adapter->current_op)
+			वापस;
+		अवरोध;
+	हाल VIRTCHNL_OP_IWARP:
 		/* Gobble zero-length replies from the PF. They indicate that
-		 * a previous message was received OK, and the client doesn't
+		 * a previous message was received OK, and the client करोesn't
 		 * care about that.
 		 */
-		if (msglen && CLIENT_ENABLED(adapter))
-			iavf_notify_client_message(&adapter->vsi, msg, msglen);
-		break;
+		अगर (msglen && CLIENT_ENABLED(adapter))
+			iavf_notअगरy_client_message(&adapter->vsi, msg, msglen);
+		अवरोध;
 
-	case VIRTCHNL_OP_CONFIG_IWARP_IRQ_MAP:
+	हाल VIRTCHNL_OP_CONFIG_IWARP_IRQ_MAP:
 		adapter->client_pending &=
 				~(BIT(VIRTCHNL_OP_CONFIG_IWARP_IRQ_MAP));
-		break;
-	case VIRTCHNL_OP_GET_RSS_HENA_CAPS: {
-		struct virtchnl_rss_hena *vrh = (struct virtchnl_rss_hena *)msg;
+		अवरोध;
+	हाल VIRTCHNL_OP_GET_RSS_HENA_CAPS: अणु
+		काष्ठा virtchnl_rss_hena *vrh = (काष्ठा virtchnl_rss_hena *)msg;
 
-		if (msglen == sizeof(*vrh))
+		अगर (msglen == माप(*vrh))
 			adapter->hena = vrh->hena;
-		else
+		अन्यथा
 			dev_warn(&adapter->pdev->dev,
 				 "Invalid message %d from PF\n", v_opcode);
-		}
-		break;
-	case VIRTCHNL_OP_REQUEST_QUEUES: {
-		struct virtchnl_vf_res_request *vfres =
-			(struct virtchnl_vf_res_request *)msg;
+		पूर्ण
+		अवरोध;
+	हाल VIRTCHNL_OP_REQUEST_QUEUES: अणु
+		काष्ठा virtchnl_vf_res_request *vfres =
+			(काष्ठा virtchnl_vf_res_request *)msg;
 
-		if (vfres->num_queue_pairs != adapter->num_req_queues) {
+		अगर (vfres->num_queue_pairs != adapter->num_req_queues) अणु
 			dev_info(&adapter->pdev->dev,
 				 "Requested %d queues, PF can support %d\n",
 				 adapter->num_req_queues,
 				 vfres->num_queue_pairs);
 			adapter->num_req_queues = 0;
 			adapter->flags &= ~IAVF_FLAG_REINIT_ITR_NEEDED;
-		}
-		}
-		break;
-	case VIRTCHNL_OP_ADD_CLOUD_FILTER: {
-		struct iavf_cloud_filter *cf;
+		पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल VIRTCHNL_OP_ADD_CLOUD_FILTER: अणु
+		काष्ठा iavf_cloud_filter *cf;
 
-		list_for_each_entry(cf, &adapter->cloud_filter_list, list) {
-			if (cf->state == __IAVF_CF_ADD_PENDING)
+		list_क्रम_each_entry(cf, &adapter->cloud_filter_list, list) अणु
+			अगर (cf->state == __IAVF_CF_ADD_PENDING)
 				cf->state = __IAVF_CF_ACTIVE;
-		}
-		}
-		break;
-	case VIRTCHNL_OP_DEL_CLOUD_FILTER: {
-		struct iavf_cloud_filter *cf, *cftmp;
+		पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल VIRTCHNL_OP_DEL_CLOUD_FILTER: अणु
+		काष्ठा iavf_cloud_filter *cf, *cfपंचांगp;
 
-		list_for_each_entry_safe(cf, cftmp, &adapter->cloud_filter_list,
-					 list) {
-			if (cf->state == __IAVF_CF_DEL_PENDING) {
+		list_क्रम_each_entry_safe(cf, cfपंचांगp, &adapter->cloud_filter_list,
+					 list) अणु
+			अगर (cf->state == __IAVF_CF_DEL_PENDING) अणु
 				cf->state = __IAVF_CF_INVALID;
 				list_del(&cf->list);
-				kfree(cf);
+				kमुक्त(cf);
 				adapter->num_cloud_filters--;
-			}
-		}
-		}
-		break;
-	case VIRTCHNL_OP_ADD_FDIR_FILTER: {
-		struct virtchnl_fdir_add *add_fltr = (struct virtchnl_fdir_add *)msg;
-		struct iavf_fdir_fltr *fdir, *fdir_tmp;
+			पूर्ण
+		पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल VIRTCHNL_OP_ADD_Fसूची_FILTER: अणु
+		काष्ठा virtchnl_fdir_add *add_fltr = (काष्ठा virtchnl_fdir_add *)msg;
+		काष्ठा iavf_fdir_fltr *fdir, *fdir_पंचांगp;
 
 		spin_lock_bh(&adapter->fdir_fltr_lock);
-		list_for_each_entry_safe(fdir, fdir_tmp,
+		list_क्रम_each_entry_safe(fdir, fdir_पंचांगp,
 					 &adapter->fdir_list_head,
-					 list) {
-			if (fdir->state == IAVF_FDIR_FLTR_ADD_PENDING) {
-				if (add_fltr->status == VIRTCHNL_FDIR_SUCCESS) {
+					 list) अणु
+			अगर (fdir->state == IAVF_Fसूची_FLTR_ADD_PENDING) अणु
+				अगर (add_fltr->status == VIRTCHNL_Fसूची_SUCCESS) अणु
 					dev_info(&adapter->pdev->dev, "Flow Director filter with location %u is added\n",
 						 fdir->loc);
-					fdir->state = IAVF_FDIR_FLTR_ACTIVE;
+					fdir->state = IAVF_Fसूची_FLTR_ACTIVE;
 					fdir->flow_id = add_fltr->flow_id;
-				} else {
+				पूर्ण अन्यथा अणु
 					dev_info(&adapter->pdev->dev, "Failed to add Flow Director filter with status: %d\n",
 						 add_fltr->status);
-					iavf_print_fdir_fltr(adapter, fdir);
+					iavf_prपूर्णांक_fdir_fltr(adapter, fdir);
 					list_del(&fdir->list);
-					kfree(fdir);
+					kमुक्त(fdir);
 					adapter->fdir_active_fltr--;
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 		spin_unlock_bh(&adapter->fdir_fltr_lock);
-		}
-		break;
-	case VIRTCHNL_OP_DEL_FDIR_FILTER: {
-		struct virtchnl_fdir_del *del_fltr = (struct virtchnl_fdir_del *)msg;
-		struct iavf_fdir_fltr *fdir, *fdir_tmp;
+		पूर्ण
+		अवरोध;
+	हाल VIRTCHNL_OP_DEL_Fसूची_FILTER: अणु
+		काष्ठा virtchnl_fdir_del *del_fltr = (काष्ठा virtchnl_fdir_del *)msg;
+		काष्ठा iavf_fdir_fltr *fdir, *fdir_पंचांगp;
 
 		spin_lock_bh(&adapter->fdir_fltr_lock);
-		list_for_each_entry_safe(fdir, fdir_tmp, &adapter->fdir_list_head,
-					 list) {
-			if (fdir->state == IAVF_FDIR_FLTR_DEL_PENDING) {
-				if (del_fltr->status == VIRTCHNL_FDIR_SUCCESS) {
+		list_क्रम_each_entry_safe(fdir, fdir_पंचांगp, &adapter->fdir_list_head,
+					 list) अणु
+			अगर (fdir->state == IAVF_Fसूची_FLTR_DEL_PENDING) अणु
+				अगर (del_fltr->status == VIRTCHNL_Fसूची_SUCCESS) अणु
 					dev_info(&adapter->pdev->dev, "Flow Director filter with location %u is deleted\n",
 						 fdir->loc);
 					list_del(&fdir->list);
-					kfree(fdir);
+					kमुक्त(fdir);
 					adapter->fdir_active_fltr--;
-				} else {
-					fdir->state = IAVF_FDIR_FLTR_ACTIVE;
+				पूर्ण अन्यथा अणु
+					fdir->state = IAVF_Fसूची_FLTR_ACTIVE;
 					dev_info(&adapter->pdev->dev, "Failed to delete Flow Director filter with status: %d\n",
 						 del_fltr->status);
-					iavf_print_fdir_fltr(adapter, fdir);
-				}
-			}
-		}
+					iavf_prपूर्णांक_fdir_fltr(adapter, fdir);
+				पूर्ण
+			पूर्ण
+		पूर्ण
 		spin_unlock_bh(&adapter->fdir_fltr_lock);
-		}
-		break;
-	case VIRTCHNL_OP_ADD_RSS_CFG: {
-		struct iavf_adv_rss *rss;
+		पूर्ण
+		अवरोध;
+	हाल VIRTCHNL_OP_ADD_RSS_CFG: अणु
+		काष्ठा iavf_adv_rss *rss;
 
 		spin_lock_bh(&adapter->adv_rss_lock);
-		list_for_each_entry(rss, &adapter->adv_rss_list_head, list) {
-			if (rss->state == IAVF_ADV_RSS_ADD_PENDING) {
-				iavf_print_adv_rss_cfg(adapter, rss,
+		list_क्रम_each_entry(rss, &adapter->adv_rss_list_head, list) अणु
+			अगर (rss->state == IAVF_ADV_RSS_ADD_PENDING) अणु
+				iavf_prपूर्णांक_adv_rss_cfg(adapter, rss,
 						       "Input set change for",
 						       "successful");
 				rss->state = IAVF_ADV_RSS_ACTIVE;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		spin_unlock_bh(&adapter->adv_rss_lock);
-		}
-		break;
-	case VIRTCHNL_OP_DEL_RSS_CFG: {
-		struct iavf_adv_rss *rss, *rss_tmp;
+		पूर्ण
+		अवरोध;
+	हाल VIRTCHNL_OP_DEL_RSS_CFG: अणु
+		काष्ठा iavf_adv_rss *rss, *rss_पंचांगp;
 
 		spin_lock_bh(&adapter->adv_rss_lock);
-		list_for_each_entry_safe(rss, rss_tmp,
-					 &adapter->adv_rss_list_head, list) {
-			if (rss->state == IAVF_ADV_RSS_DEL_PENDING) {
+		list_क्रम_each_entry_safe(rss, rss_पंचांगp,
+					 &adapter->adv_rss_list_head, list) अणु
+			अगर (rss->state == IAVF_ADV_RSS_DEL_PENDING) अणु
 				list_del(&rss->list);
-				kfree(rss);
-			}
-		}
+				kमुक्त(rss);
+			पूर्ण
+		पूर्ण
 		spin_unlock_bh(&adapter->adv_rss_lock);
-		}
-		break;
-	default:
-		if (adapter->current_op && (v_opcode != adapter->current_op))
+		पूर्ण
+		अवरोध;
+	शेष:
+		अगर (adapter->current_op && (v_opcode != adapter->current_op))
 			dev_warn(&adapter->pdev->dev, "Expected response %d from PF, received %d\n",
 				 adapter->current_op, v_opcode);
-		break;
-	} /* switch v_opcode */
+		अवरोध;
+	पूर्ण /* चयन v_opcode */
 	adapter->current_op = VIRTCHNL_OP_UNKNOWN;
-}
+पूर्ण

@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Freescale SPI controller driver cpm functions.
  *
- * Maintainer: Kumar Gala
+ * Maपूर्णांकainer: Kumar Gala
  *
  * Copyright (C) 2006 Polycom, Inc.
  * Copyright 2010 Freescale Semiconductor, Inc.
@@ -12,28 +13,28 @@
  * Author: Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
-#ifndef __SPI_FSL_CPM_H__
-#define __SPI_FSL_CPM_H__
+#अगर_अघोषित __SPI_FSL_CPM_H__
+#घोषणा __SPI_FSL_CPM_H__
 
-#include "spi-fsl-lib.h"
+#समावेश "spi-fsl-lib.h"
 
-#ifdef CONFIG_FSL_SOC
-extern void fsl_spi_cpm_reinit_txrx(struct mpc8xxx_spi *mspi);
-extern int fsl_spi_cpm_bufs(struct mpc8xxx_spi *mspi,
-			    struct spi_transfer *t, bool is_dma_mapped);
-extern void fsl_spi_cpm_bufs_complete(struct mpc8xxx_spi *mspi);
-extern void fsl_spi_cpm_irq(struct mpc8xxx_spi *mspi, u32 events);
-extern int fsl_spi_cpm_init(struct mpc8xxx_spi *mspi);
-extern void fsl_spi_cpm_free(struct mpc8xxx_spi *mspi);
-#else
-static inline void fsl_spi_cpm_reinit_txrx(struct mpc8xxx_spi *mspi) { }
-static inline int fsl_spi_cpm_bufs(struct mpc8xxx_spi *mspi,
-				   struct spi_transfer *t,
-				   bool is_dma_mapped) { return 0; }
-static inline void fsl_spi_cpm_bufs_complete(struct mpc8xxx_spi *mspi) { }
-static inline void fsl_spi_cpm_irq(struct mpc8xxx_spi *mspi, u32 events) { }
-static inline int fsl_spi_cpm_init(struct mpc8xxx_spi *mspi) { return 0; }
-static inline void fsl_spi_cpm_free(struct mpc8xxx_spi *mspi) { }
-#endif
+#अगर_घोषित CONFIG_FSL_SOC
+बाह्य व्योम fsl_spi_cpm_reinit_txrx(काष्ठा mpc8xxx_spi *mspi);
+बाह्य पूर्णांक fsl_spi_cpm_bufs(काष्ठा mpc8xxx_spi *mspi,
+			    काष्ठा spi_transfer *t, bool is_dma_mapped);
+बाह्य व्योम fsl_spi_cpm_bufs_complete(काष्ठा mpc8xxx_spi *mspi);
+बाह्य व्योम fsl_spi_cpm_irq(काष्ठा mpc8xxx_spi *mspi, u32 events);
+बाह्य पूर्णांक fsl_spi_cpm_init(काष्ठा mpc8xxx_spi *mspi);
+बाह्य व्योम fsl_spi_cpm_मुक्त(काष्ठा mpc8xxx_spi *mspi);
+#अन्यथा
+अटल अंतरभूत व्योम fsl_spi_cpm_reinit_txrx(काष्ठा mpc8xxx_spi *mspi) अणु पूर्ण
+अटल अंतरभूत पूर्णांक fsl_spi_cpm_bufs(काष्ठा mpc8xxx_spi *mspi,
+				   काष्ठा spi_transfer *t,
+				   bool is_dma_mapped) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम fsl_spi_cpm_bufs_complete(काष्ठा mpc8xxx_spi *mspi) अणु पूर्ण
+अटल अंतरभूत व्योम fsl_spi_cpm_irq(काष्ठा mpc8xxx_spi *mspi, u32 events) अणु पूर्ण
+अटल अंतरभूत पूर्णांक fsl_spi_cpm_init(काष्ठा mpc8xxx_spi *mspi) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम fsl_spi_cpm_मुक्त(काष्ठा mpc8xxx_spi *mspi) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif /* __SPI_FSL_CPM_H__ */
+#पूर्ण_अगर /* __SPI_FSL_CPM_H__ */

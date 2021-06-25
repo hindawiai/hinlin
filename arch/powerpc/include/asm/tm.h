@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Transactional memory support routines to reclaim and recheckpoint
+ * Transactional memory support routines to reclaim and recheckpoपूर्णांक
  * transactional process state.
  *
  * Copyright 2012 Matt Evans & Michael Neuling, IBM Corporation.
  */
 
-#include <uapi/asm/tm.h>
+#समावेश <uapi/यंत्र/पंचांग.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-extern void tm_reclaim(struct thread_struct *thread,
-		       uint8_t cause);
-extern void tm_reclaim_current(uint8_t cause);
-extern void tm_recheckpoint(struct thread_struct *thread);
-extern void tm_save_sprs(struct thread_struct *thread);
-extern void tm_restore_sprs(struct thread_struct *thread);
+बाह्य व्योम पंचांग_reclaim(काष्ठा thपढ़ो_काष्ठा *thपढ़ो,
+		       uपूर्णांक8_t cause);
+बाह्य व्योम पंचांग_reclaim_current(uपूर्णांक8_t cause);
+बाह्य व्योम पंचांग_recheckpoपूर्णांक(काष्ठा thपढ़ो_काष्ठा *thपढ़ो);
+बाह्य व्योम पंचांग_save_sprs(काष्ठा thपढ़ो_काष्ठा *thपढ़ो);
+बाह्य व्योम पंचांग_restore_sprs(काष्ठा thपढ़ो_काष्ठा *thपढ़ो);
 
-extern bool tm_suspend_disabled;
+बाह्य bool पंचांग_suspend_disabled;
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */

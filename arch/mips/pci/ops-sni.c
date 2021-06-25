@@ -1,164 +1,165 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * SNI specific PCI support for RM200/RM300.
+ * SNI specअगरic PCI support क्रम RM200/RM300.
  *
  * Copyright (C) 1997 - 2000, 2003 Ralf Baechle <ralf@linux-mips.org>
  */
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/types.h>
-#include <asm/sni.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/sni.h>
 
 /*
  * It seems that on the RM200 only lower 3 bits of the 5 bit PCI device
- * address are decoded.	 We therefore manually have to reject attempts at
- * reading outside this range.	Being on the paranoid side we only do this
- * test for bus 0 and hope forwarding and decoding work properly for any
+ * address are decoded.	 We thereक्रमe manually have to reject attempts at
+ * पढ़ोing outside this range.	Being on the paranoid side we only करो this
+ * test क्रम bus 0 and hope क्रमwarding and decoding work properly क्रम any
  * subordinated busses.
  *
  * ASIC PCI only supports type 1 config cycles.
  */
-static int set_config_address(unsigned int busno, unsigned int devfn, int reg)
-{
-	if ((devfn > 255) || (reg > 255))
-		return PCIBIOS_BAD_REGISTER_NUMBER;
+अटल पूर्णांक set_config_address(अचिन्हित पूर्णांक busno, अचिन्हित पूर्णांक devfn, पूर्णांक reg)
+अणु
+	अगर ((devfn > 255) || (reg > 255))
+		वापस PCIBIOS_BAD_REGISTER_NUMBER;
 
-	if (busno == 0 && devfn >= PCI_DEVFN(8, 0))
-		return PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (busno == 0 && devfn >= PCI_DEVFN(8, 0))
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
-	*(volatile u32 *)PCIMT_CONFIG_ADDRESS =
+	*(अस्थिर u32 *)PCIMT_CONFIG_ADDRESS =
 		 ((busno    & 0xff) << 16) |
 		 ((devfn    & 0xff) <<	8) |
 		  (reg	    & 0xfc);
 
-	return PCIBIOS_SUCCESSFUL;
-}
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int pcimt_read(struct pci_bus *bus, unsigned int devfn, int reg,
-		      int size, u32 * val)
-{
-	int res;
+अटल पूर्णांक pcimt_पढ़ो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक reg,
+		      पूर्णांक size, u32 * val)
+अणु
+	पूर्णांक res;
 
-	if ((res = set_config_address(bus->number, devfn, reg)))
-		return res;
+	अगर ((res = set_config_address(bus->number, devfn, reg)))
+		वापस res;
 
-	switch (size) {
-	case 1:
+	चयन (size) अणु
+	हाल 1:
 		*val = inb(PCIMT_CONFIG_DATA + (reg & 3));
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		*val = inw(PCIMT_CONFIG_DATA + (reg & 2));
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		*val = inl(PCIMT_CONFIG_DATA);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcimt_write(struct pci_bus *bus, unsigned int devfn, int reg,
-		       int size, u32 val)
-{
-	int res;
+अटल पूर्णांक pcimt_ग_लिखो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक reg,
+		       पूर्णांक size, u32 val)
+अणु
+	पूर्णांक res;
 
-	if ((res = set_config_address(bus->number, devfn, reg)))
-		return res;
+	अगर ((res = set_config_address(bus->number, devfn, reg)))
+		वापस res;
 
-	switch (size) {
-	case 1:
+	चयन (size) अणु
+	हाल 1:
 		outb(val, PCIMT_CONFIG_DATA + (reg & 3));
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		outw(val, PCIMT_CONFIG_DATA + (reg & 2));
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		outl(val, PCIMT_CONFIG_DATA);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct pci_ops sni_pcimt_ops = {
-	.read = pcimt_read,
-	.write = pcimt_write,
-};
+काष्ठा pci_ops sni_pcimt_ops = अणु
+	.पढ़ो = pcimt_पढ़ो,
+	.ग_लिखो = pcimt_ग_लिखो,
+पूर्ण;
 
-static int pcit_set_config_address(unsigned int busno, unsigned int devfn, int reg)
-{
-	if ((devfn > 255) || (reg > 255) || (busno > 255))
-		return PCIBIOS_BAD_REGISTER_NUMBER;
+अटल पूर्णांक pcit_set_config_address(अचिन्हित पूर्णांक busno, अचिन्हित पूर्णांक devfn, पूर्णांक reg)
+अणु
+	अगर ((devfn > 255) || (reg > 255) || (busno > 255))
+		वापस PCIBIOS_BAD_REGISTER_NUMBER;
 
 	outl((1 << 31) | ((busno & 0xff) << 16) | ((devfn & 0xff) << 8) | (reg & 0xfc), 0xcf8);
-	return PCIBIOS_SUCCESSFUL;
-}
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int pcit_read(struct pci_bus *bus, unsigned int devfn, int reg,
-		      int size, u32 * val)
-{
-	int res;
+अटल पूर्णांक pcit_पढ़ो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक reg,
+		      पूर्णांक size, u32 * val)
+अणु
+	पूर्णांक res;
 
 	/*
 	 * on bus 0 we need to check, whether there is a device answering
-	 * for the devfn by doing a config write and checking the result. If
-	 * we don't do it, we will get a data bus error
+	 * क्रम the devfn by करोing a config ग_लिखो and checking the result. If
+	 * we करोn't करो it, we will get a data bus error
 	 */
-	if (bus->number == 0) {
+	अगर (bus->number == 0) अणु
 		pcit_set_config_address(0, 0, 0x68);
 		outl(inl(0xcfc) | 0xc0000000, 0xcfc);
-		if ((res = pcit_set_config_address(0, devfn, 0)))
-			return res;
+		अगर ((res = pcit_set_config_address(0, devfn, 0)))
+			वापस res;
 		outl(0xffffffff, 0xcfc);
 		pcit_set_config_address(0, 0, 0x68);
-		if (inl(0xcfc) & 0x100000)
-			return PCIBIOS_DEVICE_NOT_FOUND;
-	}
-	if ((res = pcit_set_config_address(bus->number, devfn, reg)))
-		return res;
+		अगर (inl(0xcfc) & 0x100000)
+			वापस PCIBIOS_DEVICE_NOT_FOUND;
+	पूर्ण
+	अगर ((res = pcit_set_config_address(bus->number, devfn, reg)))
+		वापस res;
 
-	switch (size) {
-	case 1:
+	चयन (size) अणु
+	हाल 1:
 		*val = inb(PCIMT_CONFIG_DATA + (reg & 3));
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		*val = inw(PCIMT_CONFIG_DATA + (reg & 2));
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		*val = inl(PCIMT_CONFIG_DATA);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int pcit_write(struct pci_bus *bus, unsigned int devfn, int reg,
-		       int size, u32 val)
-{
-	int res;
+अटल पूर्णांक pcit_ग_लिखो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक reg,
+		       पूर्णांक size, u32 val)
+अणु
+	पूर्णांक res;
 
-	if ((res = pcit_set_config_address(bus->number, devfn, reg)))
-		return res;
+	अगर ((res = pcit_set_config_address(bus->number, devfn, reg)))
+		वापस res;
 
-	switch (size) {
-	case 1:
+	चयन (size) अणु
+	हाल 1:
 		outb(val, PCIMT_CONFIG_DATA + (reg & 3));
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		outw(val, PCIMT_CONFIG_DATA + (reg & 2));
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		outl(val, PCIMT_CONFIG_DATA);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-struct pci_ops sni_pcit_ops = {
-	.read = pcit_read,
-	.write = pcit_write,
-};
+काष्ठा pci_ops sni_pcit_ops = अणु
+	.पढ़ो = pcit_पढ़ो,
+	.ग_लिखो = pcit_ग_लिखो,
+पूर्ण;

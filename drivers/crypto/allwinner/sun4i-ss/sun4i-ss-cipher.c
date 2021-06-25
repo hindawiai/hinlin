@@ -1,650 +1,651 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * sun4i-ss-cipher.c - hardware cryptographic accelerator for Allwinner A20 SoC
+ * sun4i-ss-cipher.c - hardware cryptographic accelerator क्रम Allwinner A20 SoC
  *
  * Copyright (C) 2013-2015 Corentin LABBE <clabbe.montjoie@gmail.com>
  *
- * This file add support for AES cipher with 128,192,256 bits
+ * This file add support क्रम AES cipher with 128,192,256 bits
  * keysize in CBC and ECB mode.
- * Add support also for DES and 3DES in CBC and ECB mode.
+ * Add support also क्रम DES and 3DES in CBC and ECB mode.
  *
  * You could find the datasheet in Documentation/arm/sunxi.rst
  */
-#include "sun4i-ss.h"
+#समावेश "sun4i-ss.h"
 
-static int noinline_for_stack sun4i_ss_opti_poll(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_ss_ctx *ss = op->ss;
-	unsigned int ivsize = crypto_skcipher_ivsize(tfm);
-	struct sun4i_cipher_req_ctx *ctx = skcipher_request_ctx(areq);
+अटल पूर्णांक noअंतरभूत_क्रम_stack sun4i_ss_opti_poll(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_ss_ctx *ss = op->ss;
+	अचिन्हित पूर्णांक ivsize = crypto_skcipher_ivsize(tfm);
+	काष्ठा sun4i_cipher_req_ctx *ctx = skcipher_request_ctx(areq);
 	u32 mode = ctx->mode;
-	void *backup_iv = NULL;
-	/* when activating SS, the default FIFO space is SS_RX_DEFAULT(32) */
+	व्योम *backup_iv = शून्य;
+	/* when activating SS, the शेष FIFO space is SS_RX_DEFAULT(32) */
 	u32 rx_cnt = SS_RX_DEFAULT;
 	u32 tx_cnt = 0;
 	u32 spaces;
 	u32 v;
-	int err = 0;
-	unsigned int i;
-	unsigned int ileft = areq->cryptlen;
-	unsigned int oleft = areq->cryptlen;
-	unsigned int todo;
-	unsigned long pi = 0, po = 0; /* progress for in and out */
+	पूर्णांक err = 0;
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक ileft = areq->cryptlen;
+	अचिन्हित पूर्णांक oleft = areq->cryptlen;
+	अचिन्हित पूर्णांक toकरो;
+	अचिन्हित दीर्घ pi = 0, po = 0; /* progress क्रम in and out */
 	bool miter_err;
-	struct sg_mapping_iter mi, mo;
-	unsigned int oi, oo; /* offset for in and out */
-	unsigned long flags;
-	struct skcipher_alg *alg = crypto_skcipher_alg(tfm);
-	struct sun4i_ss_alg_template *algt;
+	काष्ठा sg_mapping_iter mi, mo;
+	अचिन्हित पूर्णांक oi, oo; /* offset क्रम in and out */
+	अचिन्हित दीर्घ flags;
+	काष्ठा skcipher_alg *alg = crypto_skcipher_alg(tfm);
+	काष्ठा sun4i_ss_alg_ढाँचा *algt;
 
-	if (!areq->cryptlen)
-		return 0;
+	अगर (!areq->cryptlen)
+		वापस 0;
 
-	if (!areq->src || !areq->dst) {
+	अगर (!areq->src || !areq->dst) अणु
 		dev_err_ratelimited(ss->dev, "ERROR: Some SGs are NULL\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (areq->iv && ivsize > 0 && mode & SS_DECRYPTION) {
+	अगर (areq->iv && ivsize > 0 && mode & SS_DECRYPTION) अणु
 		backup_iv = kzalloc(ivsize, GFP_KERNEL);
-		if (!backup_iv)
-			return -ENOMEM;
+		अगर (!backup_iv)
+			वापस -ENOMEM;
 		scatterwalk_map_and_copy(backup_iv, areq->src, areq->cryptlen - ivsize, ivsize, 0);
-	}
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_CRYPTO_DEV_SUN4I_SS_DEBUG)) {
-		algt = container_of(alg, struct sun4i_ss_alg_template, alg.crypto);
+	अगर (IS_ENABLED(CONFIG_CRYPTO_DEV_SUN4I_SS_DEBUG)) अणु
+		algt = container_of(alg, काष्ठा sun4i_ss_alg_ढाँचा, alg.crypto);
 		algt->stat_opti++;
 		algt->stat_bytes += areq->cryptlen;
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&ss->slock, flags);
 
-	for (i = 0; i < op->keylen / 4; i++)
-		writesl(ss->base + SS_KEY0 + i * 4, &op->key[i], 1);
+	क्रम (i = 0; i < op->keylen / 4; i++)
+		ग_लिखोsl(ss->base + SS_KEY0 + i * 4, &op->key[i], 1);
 
-	if (areq->iv) {
-		for (i = 0; i < 4 && i < ivsize / 4; i++) {
+	अगर (areq->iv) अणु
+		क्रम (i = 0; i < 4 && i < ivsize / 4; i++) अणु
 			v = *(u32 *)(areq->iv + i * 4);
-			writesl(ss->base + SS_IV0 + i * 4, &v, 1);
-		}
-	}
-	writel(mode, ss->base + SS_CTL);
+			ग_लिखोsl(ss->base + SS_IV0 + i * 4, &v, 1);
+		पूर्ण
+	पूर्ण
+	ग_लिखोl(mode, ss->base + SS_CTL);
 
 
 	ileft = areq->cryptlen / 4;
 	oleft = areq->cryptlen / 4;
 	oi = 0;
 	oo = 0;
-	do {
-		if (ileft) {
+	करो अणु
+		अगर (ileft) अणु
 			sg_miter_start(&mi, areq->src, sg_nents(areq->src),
 					SG_MITER_FROM_SG | SG_MITER_ATOMIC);
-			if (pi)
+			अगर (pi)
 				sg_miter_skip(&mi, pi);
 			miter_err = sg_miter_next(&mi);
-			if (!miter_err || !mi.addr) {
+			अगर (!miter_err || !mi.addr) अणु
 				dev_err_ratelimited(ss->dev, "ERROR: sg_miter return null\n");
 				err = -EINVAL;
-				goto release_ss;
-			}
-			todo = min(rx_cnt, ileft);
-			todo = min_t(size_t, todo, (mi.length - oi) / 4);
-			if (todo) {
-				ileft -= todo;
-				writesl(ss->base + SS_RXFIFO, mi.addr + oi, todo);
-				oi += todo * 4;
-			}
-			if (oi == mi.length) {
+				जाओ release_ss;
+			पूर्ण
+			toकरो = min(rx_cnt, ileft);
+			toकरो = min_t(माप_प्रकार, toकरो, (mi.length - oi) / 4);
+			अगर (toकरो) अणु
+				ileft -= toकरो;
+				ग_लिखोsl(ss->base + SS_RXFIFO, mi.addr + oi, toकरो);
+				oi += toकरो * 4;
+			पूर्ण
+			अगर (oi == mi.length) अणु
 				pi += mi.length;
 				oi = 0;
-			}
+			पूर्ण
 			sg_miter_stop(&mi);
-		}
+		पूर्ण
 
-		spaces = readl(ss->base + SS_FCSR);
+		spaces = पढ़ोl(ss->base + SS_FCSR);
 		rx_cnt = SS_RXFIFO_SPACES(spaces);
 		tx_cnt = SS_TXFIFO_SPACES(spaces);
 
 		sg_miter_start(&mo, areq->dst, sg_nents(areq->dst),
 			       SG_MITER_TO_SG | SG_MITER_ATOMIC);
-		if (po)
+		अगर (po)
 			sg_miter_skip(&mo, po);
 		miter_err = sg_miter_next(&mo);
-		if (!miter_err || !mo.addr) {
+		अगर (!miter_err || !mo.addr) अणु
 			dev_err_ratelimited(ss->dev, "ERROR: sg_miter return null\n");
 			err = -EINVAL;
-			goto release_ss;
-		}
-		todo = min(tx_cnt, oleft);
-		todo = min_t(size_t, todo, (mo.length - oo) / 4);
-		if (todo) {
-			oleft -= todo;
-			readsl(ss->base + SS_TXFIFO, mo.addr + oo, todo);
-			oo += todo * 4;
-		}
-		if (oo == mo.length) {
+			जाओ release_ss;
+		पूर्ण
+		toकरो = min(tx_cnt, oleft);
+		toकरो = min_t(माप_प्रकार, toकरो, (mo.length - oo) / 4);
+		अगर (toकरो) अणु
+			oleft -= toकरो;
+			पढ़ोsl(ss->base + SS_TXFIFO, mo.addr + oo, toकरो);
+			oo += toकरो * 4;
+		पूर्ण
+		अगर (oo == mo.length) अणु
 			oo = 0;
 			po += mo.length;
-		}
+		पूर्ण
 		sg_miter_stop(&mo);
-	} while (oleft);
+	पूर्ण जबतक (oleft);
 
-	if (areq->iv) {
-		if (mode & SS_DECRYPTION) {
-			memcpy(areq->iv, backup_iv, ivsize);
-			kfree_sensitive(backup_iv);
-		} else {
+	अगर (areq->iv) अणु
+		अगर (mode & SS_DECRYPTION) अणु
+			स_नकल(areq->iv, backup_iv, ivsize);
+			kमुक्त_sensitive(backup_iv);
+		पूर्ण अन्यथा अणु
 			scatterwalk_map_and_copy(areq->iv, areq->dst, areq->cryptlen - ivsize,
 						 ivsize, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 release_ss:
-	writel(0, ss->base + SS_CTL);
+	ग_लिखोl(0, ss->base + SS_CTL);
 	spin_unlock_irqrestore(&ss->slock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int noinline_for_stack sun4i_ss_cipher_poll_fallback(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_cipher_req_ctx *ctx = skcipher_request_ctx(areq);
-	int err;
-	struct skcipher_alg *alg = crypto_skcipher_alg(tfm);
-	struct sun4i_ss_alg_template *algt;
+अटल पूर्णांक noअंतरभूत_क्रम_stack sun4i_ss_cipher_poll_fallback(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_cipher_req_ctx *ctx = skcipher_request_ctx(areq);
+	पूर्णांक err;
+	काष्ठा skcipher_alg *alg = crypto_skcipher_alg(tfm);
+	काष्ठा sun4i_ss_alg_ढाँचा *algt;
 
-	if (IS_ENABLED(CONFIG_CRYPTO_DEV_SUN4I_SS_DEBUG)) {
-		algt = container_of(alg, struct sun4i_ss_alg_template, alg.crypto);
+	अगर (IS_ENABLED(CONFIG_CRYPTO_DEV_SUN4I_SS_DEBUG)) अणु
+		algt = container_of(alg, काष्ठा sun4i_ss_alg_ढाँचा, alg.crypto);
 		algt->stat_fb++;
-	}
+	पूर्ण
 
 	skcipher_request_set_tfm(&ctx->fallback_req, op->fallback_tfm);
 	skcipher_request_set_callback(&ctx->fallback_req, areq->base.flags,
 				      areq->base.complete, areq->base.data);
 	skcipher_request_set_crypt(&ctx->fallback_req, areq->src, areq->dst,
 				   areq->cryptlen, areq->iv);
-	if (ctx->mode & SS_DECRYPTION)
+	अगर (ctx->mode & SS_DECRYPTION)
 		err = crypto_skcipher_decrypt(&ctx->fallback_req);
-	else
+	अन्यथा
 		err = crypto_skcipher_encrypt(&ctx->fallback_req);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Generic function that support SG with size not multiple of 4 */
-static int sun4i_ss_cipher_poll(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_ss_ctx *ss = op->ss;
-	int no_chunk = 1;
-	struct scatterlist *in_sg = areq->src;
-	struct scatterlist *out_sg = areq->dst;
-	unsigned int ivsize = crypto_skcipher_ivsize(tfm);
-	struct sun4i_cipher_req_ctx *ctx = skcipher_request_ctx(areq);
-	struct skcipher_alg *alg = crypto_skcipher_alg(tfm);
-	struct sun4i_ss_alg_template *algt;
+अटल पूर्णांक sun4i_ss_cipher_poll(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_ss_ctx *ss = op->ss;
+	पूर्णांक no_chunk = 1;
+	काष्ठा scatterlist *in_sg = areq->src;
+	काष्ठा scatterlist *out_sg = areq->dst;
+	अचिन्हित पूर्णांक ivsize = crypto_skcipher_ivsize(tfm);
+	काष्ठा sun4i_cipher_req_ctx *ctx = skcipher_request_ctx(areq);
+	काष्ठा skcipher_alg *alg = crypto_skcipher_alg(tfm);
+	काष्ठा sun4i_ss_alg_ढाँचा *algt;
 	u32 mode = ctx->mode;
-	/* when activating SS, the default FIFO space is SS_RX_DEFAULT(32) */
+	/* when activating SS, the शेष FIFO space is SS_RX_DEFAULT(32) */
 	u32 rx_cnt = SS_RX_DEFAULT;
 	u32 tx_cnt = 0;
 	u32 v;
 	u32 spaces;
-	int err = 0;
-	unsigned int i;
-	unsigned int ileft = areq->cryptlen;
-	unsigned int oleft = areq->cryptlen;
-	unsigned int todo;
-	void *backup_iv = NULL;
-	struct sg_mapping_iter mi, mo;
-	unsigned long pi = 0, po = 0; /* progress for in and out */
+	पूर्णांक err = 0;
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक ileft = areq->cryptlen;
+	अचिन्हित पूर्णांक oleft = areq->cryptlen;
+	अचिन्हित पूर्णांक toकरो;
+	व्योम *backup_iv = शून्य;
+	काष्ठा sg_mapping_iter mi, mo;
+	अचिन्हित दीर्घ pi = 0, po = 0; /* progress क्रम in and out */
 	bool miter_err;
-	unsigned int oi, oo;	/* offset for in and out */
-	unsigned int ob = 0;	/* offset in buf */
-	unsigned int obo = 0;	/* offset in bufo*/
-	unsigned int obl = 0;	/* length of data in bufo */
-	unsigned long flags;
+	अचिन्हित पूर्णांक oi, oo;	/* offset क्रम in and out */
+	अचिन्हित पूर्णांक ob = 0;	/* offset in buf */
+	अचिन्हित पूर्णांक obo = 0;	/* offset in bufo*/
+	अचिन्हित पूर्णांक obl = 0;	/* length of data in bufo */
+	अचिन्हित दीर्घ flags;
 	bool need_fallback = false;
 
-	if (!areq->cryptlen)
-		return 0;
+	अगर (!areq->cryptlen)
+		वापस 0;
 
-	if (!areq->src || !areq->dst) {
+	अगर (!areq->src || !areq->dst) अणु
 		dev_err_ratelimited(ss->dev, "ERROR: Some SGs are NULL\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	algt = container_of(alg, struct sun4i_ss_alg_template, alg.crypto);
-	if (areq->cryptlen % algt->alg.crypto.base.cra_blocksize)
+	algt = container_of(alg, काष्ठा sun4i_ss_alg_ढाँचा, alg.crypto);
+	अगर (areq->cryptlen % algt->alg.crypto.base.cra_blocksize)
 		need_fallback = true;
 
 	/*
-	 * if we have only SGs with size multiple of 4,
+	 * अगर we have only SGs with size multiple of 4,
 	 * we can use the SS optimized function
 	 */
-	while (in_sg && no_chunk == 1) {
-		if ((in_sg->length | in_sg->offset) & 3u)
+	जबतक (in_sg && no_chunk == 1) अणु
+		अगर ((in_sg->length | in_sg->offset) & 3u)
 			no_chunk = 0;
 		in_sg = sg_next(in_sg);
-	}
-	while (out_sg && no_chunk == 1) {
-		if ((out_sg->length | out_sg->offset) & 3u)
+	पूर्ण
+	जबतक (out_sg && no_chunk == 1) अणु
+		अगर ((out_sg->length | out_sg->offset) & 3u)
 			no_chunk = 0;
 		out_sg = sg_next(out_sg);
-	}
+	पूर्ण
 
-	if (no_chunk == 1 && !need_fallback)
-		return sun4i_ss_opti_poll(areq);
+	अगर (no_chunk == 1 && !need_fallback)
+		वापस sun4i_ss_opti_poll(areq);
 
-	if (need_fallback)
-		return sun4i_ss_cipher_poll_fallback(areq);
+	अगर (need_fallback)
+		वापस sun4i_ss_cipher_poll_fallback(areq);
 
-	if (areq->iv && ivsize > 0 && mode & SS_DECRYPTION) {
+	अगर (areq->iv && ivsize > 0 && mode & SS_DECRYPTION) अणु
 		backup_iv = kzalloc(ivsize, GFP_KERNEL);
-		if (!backup_iv)
-			return -ENOMEM;
+		अगर (!backup_iv)
+			वापस -ENOMEM;
 		scatterwalk_map_and_copy(backup_iv, areq->src, areq->cryptlen - ivsize, ivsize, 0);
-	}
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_CRYPTO_DEV_SUN4I_SS_DEBUG)) {
+	अगर (IS_ENABLED(CONFIG_CRYPTO_DEV_SUN4I_SS_DEBUG)) अणु
 		algt->stat_req++;
 		algt->stat_bytes += areq->cryptlen;
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&ss->slock, flags);
 
-	for (i = 0; i < op->keylen / 4; i++)
-		writesl(ss->base + SS_KEY0 + i * 4, &op->key[i], 1);
+	क्रम (i = 0; i < op->keylen / 4; i++)
+		ग_लिखोsl(ss->base + SS_KEY0 + i * 4, &op->key[i], 1);
 
-	if (areq->iv) {
-		for (i = 0; i < 4 && i < ivsize / 4; i++) {
+	अगर (areq->iv) अणु
+		क्रम (i = 0; i < 4 && i < ivsize / 4; i++) अणु
 			v = *(u32 *)(areq->iv + i * 4);
-			writesl(ss->base + SS_IV0 + i * 4, &v, 1);
-		}
-	}
-	writel(mode, ss->base + SS_CTL);
+			ग_लिखोsl(ss->base + SS_IV0 + i * 4, &v, 1);
+		पूर्ण
+	पूर्ण
+	ग_लिखोl(mode, ss->base + SS_CTL);
 
 	ileft = areq->cryptlen;
 	oleft = areq->cryptlen;
 	oi = 0;
 	oo = 0;
 
-	while (oleft) {
-		if (ileft) {
+	जबतक (oleft) अणु
+		अगर (ileft) अणु
 			sg_miter_start(&mi, areq->src, sg_nents(areq->src),
 				       SG_MITER_FROM_SG | SG_MITER_ATOMIC);
-			if (pi)
+			अगर (pi)
 				sg_miter_skip(&mi, pi);
 			miter_err = sg_miter_next(&mi);
-			if (!miter_err || !mi.addr) {
+			अगर (!miter_err || !mi.addr) अणु
 				dev_err_ratelimited(ss->dev, "ERROR: sg_miter return null\n");
 				err = -EINVAL;
-				goto release_ss;
-			}
+				जाओ release_ss;
+			पूर्ण
 			/*
-			 * todo is the number of consecutive 4byte word that we
-			 * can read from current SG
+			 * toकरो is the number of consecutive 4byte word that we
+			 * can पढ़ो from current SG
 			 */
-			todo = min(rx_cnt, ileft / 4);
-			todo = min_t(size_t, todo, (mi.length - oi) / 4);
-			if (todo && !ob) {
-				writesl(ss->base + SS_RXFIFO, mi.addr + oi,
-					todo);
-				ileft -= todo * 4;
-				oi += todo * 4;
-			} else {
+			toकरो = min(rx_cnt, ileft / 4);
+			toकरो = min_t(माप_प्रकार, toकरो, (mi.length - oi) / 4);
+			अगर (toकरो && !ob) अणु
+				ग_लिखोsl(ss->base + SS_RXFIFO, mi.addr + oi,
+					toकरो);
+				ileft -= toकरो * 4;
+				oi += toकरो * 4;
+			पूर्ण अन्यथा अणु
 				/*
 				 * not enough consecutive bytes, so we need to
-				 * linearize in buf. todo is in bytes
-				 * After that copy, if we have a multiple of 4
-				 * we need to be able to write all buf in one
+				 * linearize in buf. toकरो is in bytes
+				 * After that copy, अगर we have a multiple of 4
+				 * we need to be able to ग_लिखो all buf in one
 				 * pass, so it is why we min() with rx_cnt
 				 */
-				todo = min(rx_cnt * 4 - ob, ileft);
-				todo = min_t(size_t, todo, mi.length - oi);
-				memcpy(ss->buf + ob, mi.addr + oi, todo);
-				ileft -= todo;
-				oi += todo;
-				ob += todo;
-				if (!(ob % 4)) {
-					writesl(ss->base + SS_RXFIFO, ss->buf,
+				toकरो = min(rx_cnt * 4 - ob, ileft);
+				toकरो = min_t(माप_प्रकार, toकरो, mi.length - oi);
+				स_नकल(ss->buf + ob, mi.addr + oi, toकरो);
+				ileft -= toकरो;
+				oi += toकरो;
+				ob += toकरो;
+				अगर (!(ob % 4)) अणु
+					ग_लिखोsl(ss->base + SS_RXFIFO, ss->buf,
 						ob / 4);
 					ob = 0;
-				}
-			}
-			if (oi == mi.length) {
+				पूर्ण
+			पूर्ण
+			अगर (oi == mi.length) अणु
 				pi += mi.length;
 				oi = 0;
-			}
+			पूर्ण
 			sg_miter_stop(&mi);
-		}
+		पूर्ण
 
-		spaces = readl(ss->base + SS_FCSR);
+		spaces = पढ़ोl(ss->base + SS_FCSR);
 		rx_cnt = SS_RXFIFO_SPACES(spaces);
 		tx_cnt = SS_TXFIFO_SPACES(spaces);
 
-		if (!tx_cnt)
-			continue;
+		अगर (!tx_cnt)
+			जारी;
 		sg_miter_start(&mo, areq->dst, sg_nents(areq->dst),
 			       SG_MITER_TO_SG | SG_MITER_ATOMIC);
-		if (po)
+		अगर (po)
 			sg_miter_skip(&mo, po);
 		miter_err = sg_miter_next(&mo);
-		if (!miter_err || !mo.addr) {
+		अगर (!miter_err || !mo.addr) अणु
 			dev_err_ratelimited(ss->dev, "ERROR: sg_miter return null\n");
 			err = -EINVAL;
-			goto release_ss;
-		}
-		/* todo in 4bytes word */
-		todo = min(tx_cnt, oleft / 4);
-		todo = min_t(size_t, todo, (mo.length - oo) / 4);
+			जाओ release_ss;
+		पूर्ण
+		/* toकरो in 4bytes word */
+		toकरो = min(tx_cnt, oleft / 4);
+		toकरो = min_t(माप_प्रकार, toकरो, (mo.length - oo) / 4);
 
-		if (todo) {
-			readsl(ss->base + SS_TXFIFO, mo.addr + oo, todo);
-			oleft -= todo * 4;
-			oo += todo * 4;
-			if (oo == mo.length) {
+		अगर (toकरो) अणु
+			पढ़ोsl(ss->base + SS_TXFIFO, mo.addr + oo, toकरो);
+			oleft -= toकरो * 4;
+			oo += toकरो * 4;
+			अगर (oo == mo.length) अणु
 				po += mo.length;
 				oo = 0;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/*
-			 * read obl bytes in bufo, we read at maximum for
+			 * पढ़ो obl bytes in bufo, we पढ़ो at maximum क्रम
 			 * emptying the device
 			 */
-			readsl(ss->base + SS_TXFIFO, ss->bufo, tx_cnt);
+			पढ़ोsl(ss->base + SS_TXFIFO, ss->bufo, tx_cnt);
 			obl = tx_cnt * 4;
 			obo = 0;
-			do {
+			करो अणु
 				/*
 				 * how many bytes we can copy ?
-				 * no more than remaining SG size
-				 * no more than remaining buffer
+				 * no more than reमुख्यing SG size
+				 * no more than reमुख्यing buffer
 				 * no need to test against oleft
 				 */
-				todo = min_t(size_t,
+				toकरो = min_t(माप_प्रकार,
 					     mo.length - oo, obl - obo);
-				memcpy(mo.addr + oo, ss->bufo + obo, todo);
-				oleft -= todo;
-				obo += todo;
-				oo += todo;
-				if (oo == mo.length) {
+				स_नकल(mo.addr + oo, ss->bufo + obo, toकरो);
+				oleft -= toकरो;
+				obo += toकरो;
+				oo += toकरो;
+				अगर (oo == mo.length) अणु
 					po += mo.length;
 					sg_miter_next(&mo);
 					oo = 0;
-				}
-			} while (obo < obl);
+				पूर्ण
+			पूर्ण जबतक (obo < obl);
 			/* bufo must be fully used here */
-		}
+		पूर्ण
 		sg_miter_stop(&mo);
-	}
-	if (areq->iv) {
-		if (mode & SS_DECRYPTION) {
-			memcpy(areq->iv, backup_iv, ivsize);
-			kfree_sensitive(backup_iv);
-		} else {
+	पूर्ण
+	अगर (areq->iv) अणु
+		अगर (mode & SS_DECRYPTION) अणु
+			स_नकल(areq->iv, backup_iv, ivsize);
+			kमुक्त_sensitive(backup_iv);
+		पूर्ण अन्यथा अणु
 			scatterwalk_map_and_copy(areq->iv, areq->dst, areq->cryptlen - ivsize,
 						 ivsize, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 release_ss:
-	writel(0, ss->base + SS_CTL);
+	ग_लिखोl(0, ss->base + SS_CTL);
 	spin_unlock_irqrestore(&ss->slock, flags);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* CBC AES */
-int sun4i_ss_cbc_aes_encrypt(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
+पूर्णांक sun4i_ss_cbc_aes_encrypt(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
 
 	rctx->mode = SS_OP_AES | SS_CBC | SS_ENABLED | SS_ENCRYPTION |
 		op->keymode;
-	return sun4i_ss_cipher_poll(areq);
-}
+	वापस sun4i_ss_cipher_poll(areq);
+पूर्ण
 
-int sun4i_ss_cbc_aes_decrypt(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
+पूर्णांक sun4i_ss_cbc_aes_decrypt(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
 
 	rctx->mode = SS_OP_AES | SS_CBC | SS_ENABLED | SS_DECRYPTION |
 		op->keymode;
-	return sun4i_ss_cipher_poll(areq);
-}
+	वापस sun4i_ss_cipher_poll(areq);
+पूर्ण
 
 /* ECB AES */
-int sun4i_ss_ecb_aes_encrypt(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
+पूर्णांक sun4i_ss_ecb_aes_encrypt(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
 
 	rctx->mode = SS_OP_AES | SS_ECB | SS_ENABLED | SS_ENCRYPTION |
 		op->keymode;
-	return sun4i_ss_cipher_poll(areq);
-}
+	वापस sun4i_ss_cipher_poll(areq);
+पूर्ण
 
-int sun4i_ss_ecb_aes_decrypt(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
+पूर्णांक sun4i_ss_ecb_aes_decrypt(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
 
 	rctx->mode = SS_OP_AES | SS_ECB | SS_ENABLED | SS_DECRYPTION |
 		op->keymode;
-	return sun4i_ss_cipher_poll(areq);
-}
+	वापस sun4i_ss_cipher_poll(areq);
+पूर्ण
 
 /* CBC DES */
-int sun4i_ss_cbc_des_encrypt(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
+पूर्णांक sun4i_ss_cbc_des_encrypt(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
 
 	rctx->mode = SS_OP_DES | SS_CBC | SS_ENABLED | SS_ENCRYPTION |
 		op->keymode;
-	return sun4i_ss_cipher_poll(areq);
-}
+	वापस sun4i_ss_cipher_poll(areq);
+पूर्ण
 
-int sun4i_ss_cbc_des_decrypt(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
+पूर्णांक sun4i_ss_cbc_des_decrypt(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
 
 	rctx->mode = SS_OP_DES | SS_CBC | SS_ENABLED | SS_DECRYPTION |
 		op->keymode;
-	return sun4i_ss_cipher_poll(areq);
-}
+	वापस sun4i_ss_cipher_poll(areq);
+पूर्ण
 
 /* ECB DES */
-int sun4i_ss_ecb_des_encrypt(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
+पूर्णांक sun4i_ss_ecb_des_encrypt(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
 
 	rctx->mode = SS_OP_DES | SS_ECB | SS_ENABLED | SS_ENCRYPTION |
 		op->keymode;
-	return sun4i_ss_cipher_poll(areq);
-}
+	वापस sun4i_ss_cipher_poll(areq);
+पूर्ण
 
-int sun4i_ss_ecb_des_decrypt(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
+पूर्णांक sun4i_ss_ecb_des_decrypt(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
 
 	rctx->mode = SS_OP_DES | SS_ECB | SS_ENABLED | SS_DECRYPTION |
 		op->keymode;
-	return sun4i_ss_cipher_poll(areq);
-}
+	वापस sun4i_ss_cipher_poll(areq);
+पूर्ण
 
 /* CBC 3DES */
-int sun4i_ss_cbc_des3_encrypt(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
+पूर्णांक sun4i_ss_cbc_des3_encrypt(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
 
 	rctx->mode = SS_OP_3DES | SS_CBC | SS_ENABLED | SS_ENCRYPTION |
 		op->keymode;
-	return sun4i_ss_cipher_poll(areq);
-}
+	वापस sun4i_ss_cipher_poll(areq);
+पूर्ण
 
-int sun4i_ss_cbc_des3_decrypt(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
+पूर्णांक sun4i_ss_cbc_des3_decrypt(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
 
 	rctx->mode = SS_OP_3DES | SS_CBC | SS_ENABLED | SS_DECRYPTION |
 		op->keymode;
-	return sun4i_ss_cipher_poll(areq);
-}
+	वापस sun4i_ss_cipher_poll(areq);
+पूर्ण
 
 /* ECB 3DES */
-int sun4i_ss_ecb_des3_encrypt(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
+पूर्णांक sun4i_ss_ecb_des3_encrypt(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
 
 	rctx->mode = SS_OP_3DES | SS_ECB | SS_ENABLED | SS_ENCRYPTION |
 		op->keymode;
-	return sun4i_ss_cipher_poll(areq);
-}
+	वापस sun4i_ss_cipher_poll(areq);
+पूर्ण
 
-int sun4i_ss_ecb_des3_decrypt(struct skcipher_request *areq)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
+पूर्णांक sun4i_ss_ecb_des3_decrypt(काष्ठा skcipher_request *areq)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(areq);
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_cipher_req_ctx *rctx = skcipher_request_ctx(areq);
 
 	rctx->mode = SS_OP_3DES | SS_ECB | SS_ENABLED | SS_DECRYPTION |
 		op->keymode;
-	return sun4i_ss_cipher_poll(areq);
-}
+	वापस sun4i_ss_cipher_poll(areq);
+पूर्ण
 
-int sun4i_ss_cipher_init(struct crypto_tfm *tfm)
-{
-	struct sun4i_tfm_ctx *op = crypto_tfm_ctx(tfm);
-	struct sun4i_ss_alg_template *algt;
-	const char *name = crypto_tfm_alg_name(tfm);
-	int err;
+पूर्णांक sun4i_ss_cipher_init(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा sun4i_tfm_ctx *op = crypto_tfm_ctx(tfm);
+	काष्ठा sun4i_ss_alg_ढाँचा *algt;
+	स्थिर अक्षर *name = crypto_tfm_alg_name(tfm);
+	पूर्णांक err;
 
-	memset(op, 0, sizeof(struct sun4i_tfm_ctx));
+	स_रखो(op, 0, माप(काष्ठा sun4i_tfm_ctx));
 
-	algt = container_of(tfm->__crt_alg, struct sun4i_ss_alg_template,
+	algt = container_of(tfm->__crt_alg, काष्ठा sun4i_ss_alg_ढाँचा,
 			    alg.crypto.base);
 	op->ss = algt->ss;
 
 	op->fallback_tfm = crypto_alloc_skcipher(name, 0, CRYPTO_ALG_NEED_FALLBACK);
-	if (IS_ERR(op->fallback_tfm)) {
+	अगर (IS_ERR(op->fallback_tfm)) अणु
 		dev_err(op->ss->dev, "ERROR: Cannot allocate fallback for %s %ld\n",
 			name, PTR_ERR(op->fallback_tfm));
-		return PTR_ERR(op->fallback_tfm);
-	}
+		वापस PTR_ERR(op->fallback_tfm);
+	पूर्ण
 
 	crypto_skcipher_set_reqsize(__crypto_skcipher_cast(tfm),
-				    sizeof(struct sun4i_cipher_req_ctx) +
+				    माप(काष्ठा sun4i_cipher_req_ctx) +
 				    crypto_skcipher_reqsize(op->fallback_tfm));
 
-	err = pm_runtime_resume_and_get(op->ss->dev);
-	if (err < 0)
-		goto error_pm;
+	err = pm_runसमय_resume_and_get(op->ss->dev);
+	अगर (err < 0)
+		जाओ error_pm;
 
-	return 0;
+	वापस 0;
 error_pm:
-	crypto_free_skcipher(op->fallback_tfm);
-	return err;
-}
+	crypto_मुक्त_skcipher(op->fallback_tfm);
+	वापस err;
+पूर्ण
 
-void sun4i_ss_cipher_exit(struct crypto_tfm *tfm)
-{
-	struct sun4i_tfm_ctx *op = crypto_tfm_ctx(tfm);
+व्योम sun4i_ss_cipher_निकास(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा sun4i_tfm_ctx *op = crypto_tfm_ctx(tfm);
 
-	crypto_free_skcipher(op->fallback_tfm);
-	pm_runtime_put(op->ss->dev);
-}
+	crypto_मुक्त_skcipher(op->fallback_tfm);
+	pm_runसमय_put(op->ss->dev);
+पूर्ण
 
 /* check and set the AES key, prepare the mode to be used */
-int sun4i_ss_aes_setkey(struct crypto_skcipher *tfm, const u8 *key,
-			unsigned int keylen)
-{
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	struct sun4i_ss_ctx *ss = op->ss;
+पूर्णांक sun4i_ss_aes_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+			अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	काष्ठा sun4i_ss_ctx *ss = op->ss;
 
-	switch (keylen) {
-	case 128 / 8:
+	चयन (keylen) अणु
+	हाल 128 / 8:
 		op->keymode = SS_AES_128BITS;
-		break;
-	case 192 / 8:
+		अवरोध;
+	हाल 192 / 8:
 		op->keymode = SS_AES_192BITS;
-		break;
-	case 256 / 8:
+		अवरोध;
+	हाल 256 / 8:
 		op->keymode = SS_AES_256BITS;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg(ss->dev, "ERROR: Invalid keylen %u\n", keylen);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	op->keylen = keylen;
-	memcpy(op->key, key, keylen);
+	स_नकल(op->key, key, keylen);
 
 	crypto_skcipher_clear_flags(op->fallback_tfm, CRYPTO_TFM_REQ_MASK);
 	crypto_skcipher_set_flags(op->fallback_tfm, tfm->base.crt_flags & CRYPTO_TFM_REQ_MASK);
 
-	return crypto_skcipher_setkey(op->fallback_tfm, key, keylen);
-}
+	वापस crypto_skcipher_setkey(op->fallback_tfm, key, keylen);
+पूर्ण
 
 /* check and set the DES key, prepare the mode to be used */
-int sun4i_ss_des_setkey(struct crypto_skcipher *tfm, const u8 *key,
-			unsigned int keylen)
-{
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	int err;
+पूर्णांक sun4i_ss_des_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+			अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	पूर्णांक err;
 
-	err = verify_skcipher_des_key(tfm, key);
-	if (err)
-		return err;
+	err = verअगरy_skcipher_des_key(tfm, key);
+	अगर (err)
+		वापस err;
 
 	op->keylen = keylen;
-	memcpy(op->key, key, keylen);
+	स_नकल(op->key, key, keylen);
 
 	crypto_skcipher_clear_flags(op->fallback_tfm, CRYPTO_TFM_REQ_MASK);
 	crypto_skcipher_set_flags(op->fallback_tfm, tfm->base.crt_flags & CRYPTO_TFM_REQ_MASK);
 
-	return crypto_skcipher_setkey(op->fallback_tfm, key, keylen);
-}
+	वापस crypto_skcipher_setkey(op->fallback_tfm, key, keylen);
+पूर्ण
 
 /* check and set the 3DES key, prepare the mode to be used */
-int sun4i_ss_des3_setkey(struct crypto_skcipher *tfm, const u8 *key,
-			 unsigned int keylen)
-{
-	struct sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
-	int err;
+पूर्णांक sun4i_ss_des3_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+			 अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा sun4i_tfm_ctx *op = crypto_skcipher_ctx(tfm);
+	पूर्णांक err;
 
-	err = verify_skcipher_des3_key(tfm, key);
-	if (err)
-		return err;
+	err = verअगरy_skcipher_des3_key(tfm, key);
+	अगर (err)
+		वापस err;
 
 	op->keylen = keylen;
-	memcpy(op->key, key, keylen);
+	स_नकल(op->key, key, keylen);
 
 	crypto_skcipher_clear_flags(op->fallback_tfm, CRYPTO_TFM_REQ_MASK);
 	crypto_skcipher_set_flags(op->fallback_tfm, tfm->base.crt_flags & CRYPTO_TFM_REQ_MASK);
 
-	return crypto_skcipher_setkey(op->fallback_tfm, key, keylen);
-}
+	वापस crypto_skcipher_setkey(op->fallback_tfm, key, keylen);
+पूर्ण

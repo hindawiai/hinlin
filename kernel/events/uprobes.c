@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * User-space Probes (UProbes)
  *
@@ -9,517 +10,517 @@
  * Copyright (C) 2011-2012 Red Hat, Inc., Peter Zijlstra
  */
 
-#include <linux/kernel.h>
-#include <linux/highmem.h>
-#include <linux/pagemap.h>	/* read_mapping_page */
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/sched/mm.h>
-#include <linux/sched/coredump.h>
-#include <linux/export.h>
-#include <linux/rmap.h>		/* anon_vma_prepare */
-#include <linux/mmu_notifier.h>	/* set_pte_at_notify */
-#include <linux/swap.h>		/* try_to_free_swap */
-#include <linux/ptrace.h>	/* user_enable_single_step */
-#include <linux/kdebug.h>	/* notifier mechanism */
-#include "../../mm/internal.h"	/* munlock_vma_page */
-#include <linux/percpu-rwsem.h>
-#include <linux/task_work.h>
-#include <linux/shmem_fs.h>
-#include <linux/khugepaged.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/pagemap.h>	/* पढ़ो_mapping_page */
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/coredump.h>
+#समावेश <linux/export.h>
+#समावेश <linux/rmap.h>		/* anon_vma_prepare */
+#समावेश <linux/mmu_notअगरier.h>	/* set_pte_at_notअगरy */
+#समावेश <linux/swap.h>		/* try_to_मुक्त_swap */
+#समावेश <linux/ptrace.h>	/* user_enable_single_step */
+#समावेश <linux/kdebug.h>	/* notअगरier mechanism */
+#समावेश "../../mm/internal.h"	/* munlock_vma_page */
+#समावेश <linux/percpu-rwsem.h>
+#समावेश <linux/task_work.h>
+#समावेश <linux/shmem_fs.h>
+#समावेश <linux/khugepaged.h>
 
-#include <linux/uprobes.h>
+#समावेश <linux/uprobes.h>
 
-#define UINSNS_PER_PAGE			(PAGE_SIZE/UPROBE_XOL_SLOT_BYTES)
-#define MAX_UPROBE_XOL_SLOTS		UINSNS_PER_PAGE
+#घोषणा UINSNS_PER_PAGE			(PAGE_SIZE/UPROBE_XOL_SLOT_BYTES)
+#घोषणा MAX_UPROBE_XOL_SLOTS		UINSNS_PER_PAGE
 
-static struct rb_root uprobes_tree = RB_ROOT;
+अटल काष्ठा rb_root uprobes_tree = RB_ROOT;
 /*
- * allows us to skip the uprobe_mmap if there are no uprobe events active
- * at this time.  Probably a fine grained per inode count is better?
+ * allows us to skip the uprobe_mmap अगर there are no uprobe events active
+ * at this समय.  Probably a fine grained per inode count is better?
  */
-#define no_uprobe_events()	RB_EMPTY_ROOT(&uprobes_tree)
+#घोषणा no_uprobe_events()	RB_EMPTY_ROOT(&uprobes_tree)
 
-static DEFINE_SPINLOCK(uprobes_treelock);	/* serialize rbtree access */
+अटल DEFINE_SPINLOCK(uprobes_treelock);	/* serialize rbtree access */
 
-#define UPROBES_HASH_SZ	13
+#घोषणा UPROBES_HASH_SZ	13
 /* serialize uprobe->pending_list */
-static struct mutex uprobes_mmap_mutex[UPROBES_HASH_SZ];
-#define uprobes_mmap_hash(v)	(&uprobes_mmap_mutex[((unsigned long)(v)) % UPROBES_HASH_SZ])
+अटल काष्ठा mutex uprobes_mmap_mutex[UPROBES_HASH_SZ];
+#घोषणा uprobes_mmap_hash(v)	(&uprobes_mmap_mutex[((अचिन्हित दीर्घ)(v)) % UPROBES_HASH_SZ])
 
 DEFINE_STATIC_PERCPU_RWSEM(dup_mmap_sem);
 
-/* Have a copy of original instruction */
-#define UPROBE_COPY_INSN	0
+/* Have a copy of original inकाष्ठाion */
+#घोषणा UPROBE_COPY_INSN	0
 
-struct uprobe {
-	struct rb_node		rb_node;	/* node in the rb tree */
+काष्ठा uprobe अणु
+	काष्ठा rb_node		rb_node;	/* node in the rb tree */
 	refcount_t		ref;
-	struct rw_semaphore	register_rwsem;
-	struct rw_semaphore	consumer_rwsem;
-	struct list_head	pending_list;
-	struct uprobe_consumer	*consumers;
-	struct inode		*inode;		/* Also hold a ref to inode */
+	काष्ठा rw_semaphore	रेजिस्टर_rwsem;
+	काष्ठा rw_semaphore	consumer_rwsem;
+	काष्ठा list_head	pending_list;
+	काष्ठा uprobe_consumer	*consumers;
+	काष्ठा inode		*inode;		/* Also hold a ref to inode */
 	loff_t			offset;
 	loff_t			ref_ctr_offset;
-	unsigned long		flags;
+	अचिन्हित दीर्घ		flags;
 
 	/*
 	 * The generic code assumes that it has two members of unknown type
-	 * owned by the arch-specific code:
+	 * owned by the arch-specअगरic code:
 	 *
-	 * 	insn -	copy_insn() saves the original instruction here for
+	 * 	insn -	copy_insn() saves the original inकाष्ठाion here क्रम
 	 *		arch_uprobe_analyze_insn().
 	 *
-	 *	ixol -	potentially modified instruction to execute out of
+	 *	ixol -	potentially modअगरied inकाष्ठाion to execute out of
 	 *		line, copied to xol_area by xol_get_insn_slot().
 	 */
-	struct arch_uprobe	arch;
-};
+	काष्ठा arch_uprobe	arch;
+पूर्ण;
 
-struct delayed_uprobe {
-	struct list_head list;
-	struct uprobe *uprobe;
-	struct mm_struct *mm;
-};
+काष्ठा delayed_uprobe अणु
+	काष्ठा list_head list;
+	काष्ठा uprobe *uprobe;
+	काष्ठा mm_काष्ठा *mm;
+पूर्ण;
 
-static DEFINE_MUTEX(delayed_uprobe_lock);
-static LIST_HEAD(delayed_uprobe_list);
+अटल DEFINE_MUTEX(delayed_uprobe_lock);
+अटल LIST_HEAD(delayed_uprobe_list);
 
 /*
  * Execute out of line area: anonymous executable mapping installed
- * by the probed task to execute the copy of the original instruction
+ * by the probed task to execute the copy of the original inकाष्ठाion
  * mangled by set_swbp().
  *
- * On a breakpoint hit, thread contests for a slot.  It frees the
+ * On a अवरोधpoपूर्णांक hit, thपढ़ो contests क्रम a slot.  It मुक्तs the
  * slot after singlestep. Currently a fixed number of slots are
  * allocated.
  */
-struct xol_area {
-	wait_queue_head_t 		wq;		/* if all slots are busy */
+काष्ठा xol_area अणु
+	रुको_queue_head_t 		wq;		/* अगर all slots are busy */
 	atomic_t 			slot_count;	/* number of in-use slots */
-	unsigned long 			*bitmap;	/* 0 = free slot */
+	अचिन्हित दीर्घ 			*biपंचांगap;	/* 0 = मुक्त slot */
 
-	struct vm_special_mapping	xol_mapping;
-	struct page 			*pages[2];
+	काष्ठा vm_special_mapping	xol_mapping;
+	काष्ठा page 			*pages[2];
 	/*
-	 * We keep the vma's vm_start rather than a pointer to the vma
+	 * We keep the vma's vm_start rather than a poपूर्णांकer to the vma
 	 * itself.  The probed process or a naughty kernel module could make
 	 * the vma go away, and we must handle that reasonably gracefully.
 	 */
-	unsigned long 			vaddr;		/* Page(s) of instruction slots */
-};
+	अचिन्हित दीर्घ 			vaddr;		/* Page(s) of inकाष्ठाion slots */
+पूर्ण;
 
 /*
- * valid_vma: Verify if the specified vma is an executable vma
- * Relax restrictions while unregistering: vm_flags might have
- * changed after breakpoint was inserted.
- *	- is_register: indicates if we are in register context.
- *	- Return 1 if the specified virtual address is in an
+ * valid_vma: Verअगरy अगर the specअगरied vma is an executable vma
+ * Relax restrictions जबतक unरेजिस्टरing: vm_flags might have
+ * changed after अवरोधpoपूर्णांक was inserted.
+ *	- is_रेजिस्टर: indicates अगर we are in रेजिस्टर context.
+ *	- Return 1 अगर the specअगरied भव address is in an
  *	  executable vma.
  */
-static bool valid_vma(struct vm_area_struct *vma, bool is_register)
-{
+अटल bool valid_vma(काष्ठा vm_area_काष्ठा *vma, bool is_रेजिस्टर)
+अणु
 	vm_flags_t flags = VM_HUGETLB | VM_MAYEXEC | VM_MAYSHARE;
 
-	if (is_register)
+	अगर (is_रेजिस्टर)
 		flags |= VM_WRITE;
 
-	return vma->vm_file && (vma->vm_flags & flags) == VM_MAYEXEC;
-}
+	वापस vma->vm_file && (vma->vm_flags & flags) == VM_MAYEXEC;
+पूर्ण
 
-static unsigned long offset_to_vaddr(struct vm_area_struct *vma, loff_t offset)
-{
-	return vma->vm_start + offset - ((loff_t)vma->vm_pgoff << PAGE_SHIFT);
-}
+अटल अचिन्हित दीर्घ offset_to_vaddr(काष्ठा vm_area_काष्ठा *vma, loff_t offset)
+अणु
+	वापस vma->vm_start + offset - ((loff_t)vma->vm_pgoff << PAGE_SHIFT);
+पूर्ण
 
-static loff_t vaddr_to_offset(struct vm_area_struct *vma, unsigned long vaddr)
-{
-	return ((loff_t)vma->vm_pgoff << PAGE_SHIFT) + (vaddr - vma->vm_start);
-}
+अटल loff_t vaddr_to_offset(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ vaddr)
+अणु
+	वापस ((loff_t)vma->vm_pgoff << PAGE_SHIFT) + (vaddr - vma->vm_start);
+पूर्ण
 
 /**
  * __replace_page - replace page in vma by new page.
  * based on replace_page in mm/ksm.c
  *
- * @vma:      vma that holds the pte pointing to page
+ * @vma:      vma that holds the pte poपूर्णांकing to page
  * @addr:     address the old @page is mapped at
  * @old_page: the page we are replacing by new_page
- * @new_page: the modified page we replace page by
+ * @new_page: the modअगरied page we replace page by
  *
- * If @new_page is NULL, only unmap @old_page.
+ * If @new_page is शून्य, only unmap @old_page.
  *
  * Returns 0 on success, negative error code otherwise.
  */
-static int __replace_page(struct vm_area_struct *vma, unsigned long addr,
-				struct page *old_page, struct page *new_page)
-{
-	struct mm_struct *mm = vma->vm_mm;
-	struct page_vma_mapped_walk pvmw = {
+अटल पूर्णांक __replace_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+				काष्ठा page *old_page, काष्ठा page *new_page)
+अणु
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
+	काष्ठा page_vma_mapped_walk pvmw = अणु
 		.page = compound_head(old_page),
 		.vma = vma,
 		.address = addr,
-	};
-	int err;
-	struct mmu_notifier_range range;
+	पूर्ण;
+	पूर्णांक err;
+	काष्ठा mmu_notअगरier_range range;
 
-	mmu_notifier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, mm, addr,
+	mmu_notअगरier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, mm, addr,
 				addr + PAGE_SIZE);
 
-	if (new_page) {
-		err = mem_cgroup_charge(new_page, vma->vm_mm, GFP_KERNEL);
-		if (err)
-			return err;
-	}
+	अगर (new_page) अणु
+		err = mem_cgroup_अक्षरge(new_page, vma->vm_mm, GFP_KERNEL);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	/* For try_to_free_swap() and munlock_vma_page() below */
+	/* For try_to_मुक्त_swap() and munlock_vma_page() below */
 	lock_page(old_page);
 
-	mmu_notifier_invalidate_range_start(&range);
+	mmu_notअगरier_invalidate_range_start(&range);
 	err = -EAGAIN;
-	if (!page_vma_mapped_walk(&pvmw))
-		goto unlock;
+	अगर (!page_vma_mapped_walk(&pvmw))
+		जाओ unlock;
 	VM_BUG_ON_PAGE(addr != pvmw.address, old_page);
 
-	if (new_page) {
+	अगर (new_page) अणु
 		get_page(new_page);
 		page_add_new_anon_rmap(new_page, vma, addr, false);
 		lru_cache_add_inactive_or_unevictable(new_page, vma);
-	} else
-		/* no new page, just dec_mm_counter for old_page */
+	पूर्ण अन्यथा
+		/* no new page, just dec_mm_counter क्रम old_page */
 		dec_mm_counter(mm, MM_ANONPAGES);
 
-	if (!PageAnon(old_page)) {
+	अगर (!PageAnon(old_page)) अणु
 		dec_mm_counter(mm, mm_counter_file(old_page));
 		inc_mm_counter(mm, MM_ANONPAGES);
-	}
+	पूर्ण
 
 	flush_cache_page(vma, addr, pte_pfn(*pvmw.pte));
-	ptep_clear_flush_notify(vma, addr, pvmw.pte);
-	if (new_page)
-		set_pte_at_notify(mm, addr, pvmw.pte,
+	ptep_clear_flush_notअगरy(vma, addr, pvmw.pte);
+	अगर (new_page)
+		set_pte_at_notअगरy(mm, addr, pvmw.pte,
 				  mk_pte(new_page, vma->vm_page_prot));
 
-	page_remove_rmap(old_page, false);
-	if (!page_mapped(old_page))
-		try_to_free_swap(old_page);
-	page_vma_mapped_walk_done(&pvmw);
+	page_हटाओ_rmap(old_page, false);
+	अगर (!page_mapped(old_page))
+		try_to_मुक्त_swap(old_page);
+	page_vma_mapped_walk_करोne(&pvmw);
 
-	if ((vma->vm_flags & VM_LOCKED) && !PageCompound(old_page))
+	अगर ((vma->vm_flags & VM_LOCKED) && !PageCompound(old_page))
 		munlock_vma_page(old_page);
 	put_page(old_page);
 
 	err = 0;
  unlock:
-	mmu_notifier_invalidate_range_end(&range);
+	mmu_notअगरier_invalidate_range_end(&range);
 	unlock_page(old_page);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * is_swbp_insn - check if instruction is breakpoint instruction.
- * @insn: instruction to be checked.
+ * is_swbp_insn - check अगर inकाष्ठाion is अवरोधpoपूर्णांक inकाष्ठाion.
+ * @insn: inकाष्ठाion to be checked.
  * Default implementation of is_swbp_insn
- * Returns true if @insn is a breakpoint instruction.
+ * Returns true अगर @insn is a अवरोधpoपूर्णांक inकाष्ठाion.
  */
 bool __weak is_swbp_insn(uprobe_opcode_t *insn)
-{
-	return *insn == UPROBE_SWBP_INSN;
-}
+अणु
+	वापस *insn == UPROBE_SWBP_INSN;
+पूर्ण
 
 /**
- * is_trap_insn - check if instruction is breakpoint instruction.
- * @insn: instruction to be checked.
+ * is_trap_insn - check अगर inकाष्ठाion is अवरोधpoपूर्णांक inकाष्ठाion.
+ * @insn: inकाष्ठाion to be checked.
  * Default implementation of is_trap_insn
- * Returns true if @insn is a breakpoint instruction.
+ * Returns true अगर @insn is a अवरोधpoपूर्णांक inकाष्ठाion.
  *
- * This function is needed for the case where an architecture has multiple
- * trap instructions (like powerpc).
+ * This function is needed क्रम the हाल where an architecture has multiple
+ * trap inकाष्ठाions (like घातerpc).
  */
 bool __weak is_trap_insn(uprobe_opcode_t *insn)
-{
-	return is_swbp_insn(insn);
-}
+अणु
+	वापस is_swbp_insn(insn);
+पूर्ण
 
-static void copy_from_page(struct page *page, unsigned long vaddr, void *dst, int len)
-{
-	void *kaddr = kmap_atomic(page);
-	memcpy(dst, kaddr + (vaddr & ~PAGE_MASK), len);
+अटल व्योम copy_from_page(काष्ठा page *page, अचिन्हित दीर्घ vaddr, व्योम *dst, पूर्णांक len)
+अणु
+	व्योम *kaddr = kmap_atomic(page);
+	स_नकल(dst, kaddr + (vaddr & ~PAGE_MASK), len);
 	kunmap_atomic(kaddr);
-}
+पूर्ण
 
-static void copy_to_page(struct page *page, unsigned long vaddr, const void *src, int len)
-{
-	void *kaddr = kmap_atomic(page);
-	memcpy(kaddr + (vaddr & ~PAGE_MASK), src, len);
+अटल व्योम copy_to_page(काष्ठा page *page, अचिन्हित दीर्घ vaddr, स्थिर व्योम *src, पूर्णांक len)
+अणु
+	व्योम *kaddr = kmap_atomic(page);
+	स_नकल(kaddr + (vaddr & ~PAGE_MASK), src, len);
 	kunmap_atomic(kaddr);
-}
+पूर्ण
 
-static int verify_opcode(struct page *page, unsigned long vaddr, uprobe_opcode_t *new_opcode)
-{
+अटल पूर्णांक verअगरy_opcode(काष्ठा page *page, अचिन्हित दीर्घ vaddr, uprobe_opcode_t *new_opcode)
+अणु
 	uprobe_opcode_t old_opcode;
 	bool is_swbp;
 
 	/*
-	 * Note: We only check if the old_opcode is UPROBE_SWBP_INSN here.
-	 * We do not check if it is any other 'trap variant' which could
-	 * be conditional trap instruction such as the one powerpc supports.
+	 * Note: We only check अगर the old_opcode is UPROBE_SWBP_INSN here.
+	 * We करो not check अगर it is any other 'trap variant' which could
+	 * be conditional trap inकाष्ठाion such as the one घातerpc supports.
 	 *
-	 * The logic is that we do not care if the underlying instruction
+	 * The logic is that we करो not care अगर the underlying inकाष्ठाion
 	 * is a trap variant; uprobes always wins over any other (gdb)
-	 * breakpoint.
+	 * अवरोधpoपूर्णांक.
 	 */
 	copy_from_page(page, vaddr, &old_opcode, UPROBE_SWBP_INSN_SIZE);
 	is_swbp = is_swbp_insn(&old_opcode);
 
-	if (is_swbp_insn(new_opcode)) {
-		if (is_swbp)		/* register: already installed? */
-			return 0;
-	} else {
-		if (!is_swbp)		/* unregister: was it changed by us? */
-			return 0;
-	}
+	अगर (is_swbp_insn(new_opcode)) अणु
+		अगर (is_swbp)		/* रेजिस्टर: alपढ़ोy installed? */
+			वापस 0;
+	पूर्ण अन्यथा अणु
+		अगर (!is_swbp)		/* unरेजिस्टर: was it changed by us? */
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static struct delayed_uprobe *
-delayed_uprobe_check(struct uprobe *uprobe, struct mm_struct *mm)
-{
-	struct delayed_uprobe *du;
+अटल काष्ठा delayed_uprobe *
+delayed_uprobe_check(काष्ठा uprobe *uprobe, काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा delayed_uprobe *du;
 
-	list_for_each_entry(du, &delayed_uprobe_list, list)
-		if (du->uprobe == uprobe && du->mm == mm)
-			return du;
-	return NULL;
-}
+	list_क्रम_each_entry(du, &delayed_uprobe_list, list)
+		अगर (du->uprobe == uprobe && du->mm == mm)
+			वापस du;
+	वापस शून्य;
+पूर्ण
 
-static int delayed_uprobe_add(struct uprobe *uprobe, struct mm_struct *mm)
-{
-	struct delayed_uprobe *du;
+अटल पूर्णांक delayed_uprobe_add(काष्ठा uprobe *uprobe, काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा delayed_uprobe *du;
 
-	if (delayed_uprobe_check(uprobe, mm))
-		return 0;
+	अगर (delayed_uprobe_check(uprobe, mm))
+		वापस 0;
 
-	du  = kzalloc(sizeof(*du), GFP_KERNEL);
-	if (!du)
-		return -ENOMEM;
+	du  = kzalloc(माप(*du), GFP_KERNEL);
+	अगर (!du)
+		वापस -ENOMEM;
 
 	du->uprobe = uprobe;
 	du->mm = mm;
 	list_add(&du->list, &delayed_uprobe_list);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void delayed_uprobe_delete(struct delayed_uprobe *du)
-{
-	if (WARN_ON(!du))
-		return;
+अटल व्योम delayed_uprobe_delete(काष्ठा delayed_uprobe *du)
+अणु
+	अगर (WARN_ON(!du))
+		वापस;
 	list_del(&du->list);
-	kfree(du);
-}
+	kमुक्त(du);
+पूर्ण
 
-static void delayed_uprobe_remove(struct uprobe *uprobe, struct mm_struct *mm)
-{
-	struct list_head *pos, *q;
-	struct delayed_uprobe *du;
+अटल व्योम delayed_uprobe_हटाओ(काष्ठा uprobe *uprobe, काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा list_head *pos, *q;
+	काष्ठा delayed_uprobe *du;
 
-	if (!uprobe && !mm)
-		return;
+	अगर (!uprobe && !mm)
+		वापस;
 
-	list_for_each_safe(pos, q, &delayed_uprobe_list) {
-		du = list_entry(pos, struct delayed_uprobe, list);
+	list_क्रम_each_safe(pos, q, &delayed_uprobe_list) अणु
+		du = list_entry(pos, काष्ठा delayed_uprobe, list);
 
-		if (uprobe && du->uprobe != uprobe)
-			continue;
-		if (mm && du->mm != mm)
-			continue;
+		अगर (uprobe && du->uprobe != uprobe)
+			जारी;
+		अगर (mm && du->mm != mm)
+			जारी;
 
 		delayed_uprobe_delete(du);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool valid_ref_ctr_vma(struct uprobe *uprobe,
-			      struct vm_area_struct *vma)
-{
-	unsigned long vaddr = offset_to_vaddr(vma, uprobe->ref_ctr_offset);
+अटल bool valid_ref_ctr_vma(काष्ठा uprobe *uprobe,
+			      काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अचिन्हित दीर्घ vaddr = offset_to_vaddr(vma, uprobe->ref_ctr_offset);
 
-	return uprobe->ref_ctr_offset &&
+	वापस uprobe->ref_ctr_offset &&
 		vma->vm_file &&
 		file_inode(vma->vm_file) == uprobe->inode &&
 		(vma->vm_flags & (VM_WRITE|VM_SHARED)) == VM_WRITE &&
 		vma->vm_start <= vaddr &&
 		vma->vm_end > vaddr;
-}
+पूर्ण
 
-static struct vm_area_struct *
-find_ref_ctr_vma(struct uprobe *uprobe, struct mm_struct *mm)
-{
-	struct vm_area_struct *tmp;
+अटल काष्ठा vm_area_काष्ठा *
+find_ref_ctr_vma(काष्ठा uprobe *uprobe, काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा vm_area_काष्ठा *पंचांगp;
 
-	for (tmp = mm->mmap; tmp; tmp = tmp->vm_next)
-		if (valid_ref_ctr_vma(uprobe, tmp))
-			return tmp;
+	क्रम (पंचांगp = mm->mmap; पंचांगp; पंचांगp = पंचांगp->vm_next)
+		अगर (valid_ref_ctr_vma(uprobe, पंचांगp))
+			वापस पंचांगp;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int
-__update_ref_ctr(struct mm_struct *mm, unsigned long vaddr, short d)
-{
-	void *kaddr;
-	struct page *page;
-	struct vm_area_struct *vma;
-	int ret;
-	short *ptr;
+अटल पूर्णांक
+__update_ref_ctr(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vaddr, लघु d)
+अणु
+	व्योम *kaddr;
+	काष्ठा page *page;
+	काष्ठा vm_area_काष्ठा *vma;
+	पूर्णांक ret;
+	लघु *ptr;
 
-	if (!vaddr || !d)
-		return -EINVAL;
+	अगर (!vaddr || !d)
+		वापस -EINVAL;
 
 	ret = get_user_pages_remote(mm, vaddr, 1,
-			FOLL_WRITE, &page, &vma, NULL);
-	if (unlikely(ret <= 0)) {
+			FOLL_WRITE, &page, &vma, शून्य);
+	अगर (unlikely(ret <= 0)) अणु
 		/*
-		 * We are asking for 1 page. If get_user_pages_remote() fails,
-		 * it may return 0, in that case we have to return error.
+		 * We are asking क्रम 1 page. If get_user_pages_remote() fails,
+		 * it may वापस 0, in that हाल we have to वापस error.
 		 */
-		return ret == 0 ? -EBUSY : ret;
-	}
+		वापस ret == 0 ? -EBUSY : ret;
+	पूर्ण
 
 	kaddr = kmap_atomic(page);
 	ptr = kaddr + (vaddr & ~PAGE_MASK);
 
-	if (unlikely(*ptr + d < 0)) {
+	अगर (unlikely(*ptr + d < 0)) अणु
 		pr_warn("ref_ctr going negative. vaddr: 0x%lx, "
 			"curr val: %d, delta: %d\n", vaddr, *ptr, d);
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	*ptr += d;
 	ret = 0;
 out:
 	kunmap_atomic(kaddr);
 	put_page(page);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void update_ref_ctr_warn(struct uprobe *uprobe,
-				struct mm_struct *mm, short d)
-{
+अटल व्योम update_ref_ctr_warn(काष्ठा uprobe *uprobe,
+				काष्ठा mm_काष्ठा *mm, लघु d)
+अणु
 	pr_warn("ref_ctr %s failed for inode: 0x%lx offset: "
 		"0x%llx ref_ctr_offset: 0x%llx of mm: 0x%pK\n",
 		d > 0 ? "increment" : "decrement", uprobe->inode->i_ino,
-		(unsigned long long) uprobe->offset,
-		(unsigned long long) uprobe->ref_ctr_offset, mm);
-}
+		(अचिन्हित दीर्घ दीर्घ) uprobe->offset,
+		(अचिन्हित दीर्घ दीर्घ) uprobe->ref_ctr_offset, mm);
+पूर्ण
 
-static int update_ref_ctr(struct uprobe *uprobe, struct mm_struct *mm,
-			  short d)
-{
-	struct vm_area_struct *rc_vma;
-	unsigned long rc_vaddr;
-	int ret = 0;
+अटल पूर्णांक update_ref_ctr(काष्ठा uprobe *uprobe, काष्ठा mm_काष्ठा *mm,
+			  लघु d)
+अणु
+	काष्ठा vm_area_काष्ठा *rc_vma;
+	अचिन्हित दीर्घ rc_vaddr;
+	पूर्णांक ret = 0;
 
 	rc_vma = find_ref_ctr_vma(uprobe, mm);
 
-	if (rc_vma) {
+	अगर (rc_vma) अणु
 		rc_vaddr = offset_to_vaddr(rc_vma, uprobe->ref_ctr_offset);
 		ret = __update_ref_ctr(mm, rc_vaddr, d);
-		if (ret)
+		अगर (ret)
 			update_ref_ctr_warn(uprobe, mm, d);
 
-		if (d > 0)
-			return ret;
-	}
+		अगर (d > 0)
+			वापस ret;
+	पूर्ण
 
 	mutex_lock(&delayed_uprobe_lock);
-	if (d > 0)
+	अगर (d > 0)
 		ret = delayed_uprobe_add(uprobe, mm);
-	else
-		delayed_uprobe_remove(uprobe, mm);
+	अन्यथा
+		delayed_uprobe_हटाओ(uprobe, mm);
 	mutex_unlock(&delayed_uprobe_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * NOTE:
- * Expect the breakpoint instruction to be the smallest size instruction for
- * the architecture. If an arch has variable length instruction and the
- * breakpoint instruction is not of the smallest length instruction
- * supported by that architecture then we need to modify is_trap_at_addr and
- * uprobe_write_opcode accordingly. This would never be a problem for archs
- * that have fixed length instructions.
+ * Expect the अवरोधpoपूर्णांक inकाष्ठाion to be the smallest size inकाष्ठाion क्रम
+ * the architecture. If an arch has variable length inकाष्ठाion and the
+ * अवरोधpoपूर्णांक inकाष्ठाion is not of the smallest length inकाष्ठाion
+ * supported by that architecture then we need to modअगरy is_trap_at_addr and
+ * uprobe_ग_लिखो_opcode accordingly. This would never be a problem क्रम archs
+ * that have fixed length inकाष्ठाions.
  *
- * uprobe_write_opcode - write the opcode at a given virtual address.
+ * uprobe_ग_लिखो_opcode - ग_लिखो the opcode at a given भव address.
  * @mm: the probed process address space.
- * @vaddr: the virtual address to store the opcode.
+ * @vaddr: the भव address to store the opcode.
  * @opcode: opcode to be written at @vaddr.
  *
- * Called with mm->mmap_lock held for write.
- * Return 0 (success) or a negative errno.
+ * Called with mm->mmap_lock held क्रम ग_लिखो.
+ * Return 0 (success) or a negative त्रुटि_सं.
  */
-int uprobe_write_opcode(struct arch_uprobe *auprobe, struct mm_struct *mm,
-			unsigned long vaddr, uprobe_opcode_t opcode)
-{
-	struct uprobe *uprobe;
-	struct page *old_page, *new_page;
-	struct vm_area_struct *vma;
-	int ret, is_register, ref_ctr_updated = 0;
+पूर्णांक uprobe_ग_लिखो_opcode(काष्ठा arch_uprobe *auprobe, काष्ठा mm_काष्ठा *mm,
+			अचिन्हित दीर्घ vaddr, uprobe_opcode_t opcode)
+अणु
+	काष्ठा uprobe *uprobe;
+	काष्ठा page *old_page, *new_page;
+	काष्ठा vm_area_काष्ठा *vma;
+	पूर्णांक ret, is_रेजिस्टर, ref_ctr_updated = 0;
 	bool orig_page_huge = false;
-	unsigned int gup_flags = FOLL_FORCE;
+	अचिन्हित पूर्णांक gup_flags = FOLL_FORCE;
 
-	is_register = is_swbp_insn(&opcode);
-	uprobe = container_of(auprobe, struct uprobe, arch);
+	is_रेजिस्टर = is_swbp_insn(&opcode);
+	uprobe = container_of(auprobe, काष्ठा uprobe, arch);
 
 retry:
-	if (is_register)
+	अगर (is_रेजिस्टर)
 		gup_flags |= FOLL_SPLIT_PMD;
-	/* Read the page with vaddr into memory */
+	/* Read the page with vaddr पूर्णांकo memory */
 	ret = get_user_pages_remote(mm, vaddr, 1, gup_flags,
-				    &old_page, &vma, NULL);
-	if (ret <= 0)
-		return ret;
+				    &old_page, &vma, शून्य);
+	अगर (ret <= 0)
+		वापस ret;
 
-	ret = verify_opcode(old_page, vaddr, &opcode);
-	if (ret <= 0)
-		goto put_old;
+	ret = verअगरy_opcode(old_page, vaddr, &opcode);
+	अगर (ret <= 0)
+		जाओ put_old;
 
-	if (WARN(!is_register && PageCompound(old_page),
-		 "uprobe unregister should never work on compound page\n")) {
+	अगर (WARN(!is_रेजिस्टर && PageCompound(old_page),
+		 "uprobe unregister should never work on compound page\n")) अणु
 		ret = -EINVAL;
-		goto put_old;
-	}
+		जाओ put_old;
+	पूर्ण
 
-	/* We are going to replace instruction, update ref_ctr. */
-	if (!ref_ctr_updated && uprobe->ref_ctr_offset) {
-		ret = update_ref_ctr(uprobe, mm, is_register ? 1 : -1);
-		if (ret)
-			goto put_old;
+	/* We are going to replace inकाष्ठाion, update ref_ctr. */
+	अगर (!ref_ctr_updated && uprobe->ref_ctr_offset) अणु
+		ret = update_ref_ctr(uprobe, mm, is_रेजिस्टर ? 1 : -1);
+		अगर (ret)
+			जाओ put_old;
 
 		ref_ctr_updated = 1;
-	}
+	पूर्ण
 
 	ret = 0;
-	if (!is_register && !PageAnon(old_page))
-		goto put_old;
+	अगर (!is_रेजिस्टर && !PageAnon(old_page))
+		जाओ put_old;
 
 	ret = anon_vma_prepare(vma);
-	if (ret)
-		goto put_old;
+	अगर (ret)
+		जाओ put_old;
 
 	ret = -ENOMEM;
 	new_page = alloc_page_vma(GFP_HIGHUSER_MOVABLE, vma, vaddr);
-	if (!new_page)
-		goto put_old;
+	अगर (!new_page)
+		जाओ put_old;
 
 	__SetPageUptodate(new_page);
 	copy_highpage(new_page, old_page);
 	copy_to_page(new_page, vaddr, &opcode, UPROBE_SWBP_INSN_SIZE);
 
-	if (!is_register) {
-		struct page *orig_page;
+	अगर (!is_रेजिस्टर) अणु
+		काष्ठा page *orig_page;
 		pgoff_t index;
 
 		VM_BUG_ON_PAGE(!PageAnon(old_page), old_page);
@@ -528,471 +529,471 @@ retry:
 		orig_page = find_get_page(vma->vm_file->f_inode->i_mapping,
 					  index);
 
-		if (orig_page) {
-			if (PageUptodate(orig_page) &&
-			    pages_identical(new_page, orig_page)) {
+		अगर (orig_page) अणु
+			अगर (PageUptodate(orig_page) &&
+			    pages_identical(new_page, orig_page)) अणु
 				/* let go new_page */
 				put_page(new_page);
-				new_page = NULL;
+				new_page = शून्य;
 
-				if (PageCompound(orig_page))
+				अगर (PageCompound(orig_page))
 					orig_page_huge = true;
-			}
+			पूर्ण
 			put_page(orig_page);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ret = __replace_page(vma, vaddr, old_page, new_page);
-	if (new_page)
+	अगर (new_page)
 		put_page(new_page);
 put_old:
 	put_page(old_page);
 
-	if (unlikely(ret == -EAGAIN))
-		goto retry;
+	अगर (unlikely(ret == -EAGAIN))
+		जाओ retry;
 
-	/* Revert back reference counter if instruction update failed. */
-	if (ret && is_register && ref_ctr_updated)
+	/* Revert back reference counter अगर inकाष्ठाion update failed. */
+	अगर (ret && is_रेजिस्टर && ref_ctr_updated)
 		update_ref_ctr(uprobe, mm, -1);
 
-	/* try collapse pmd for compound page */
-	if (!ret && orig_page_huge)
+	/* try collapse pmd क्रम compound page */
+	अगर (!ret && orig_page_huge)
 		collapse_pte_mapped_thp(mm, vaddr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * set_swbp - store breakpoint at a given address.
- * @auprobe: arch specific probepoint information.
+ * set_swbp - store अवरोधpoपूर्णांक at a given address.
+ * @auprobe: arch specअगरic probepoपूर्णांक inक्रमmation.
  * @mm: the probed process address space.
- * @vaddr: the virtual address to insert the opcode.
+ * @vaddr: the भव address to insert the opcode.
  *
- * For mm @mm, store the breakpoint instruction at @vaddr.
- * Return 0 (success) or a negative errno.
+ * For mm @mm, store the अवरोधpoपूर्णांक inकाष्ठाion at @vaddr.
+ * Return 0 (success) or a negative त्रुटि_सं.
  */
-int __weak set_swbp(struct arch_uprobe *auprobe, struct mm_struct *mm, unsigned long vaddr)
-{
-	return uprobe_write_opcode(auprobe, mm, vaddr, UPROBE_SWBP_INSN);
-}
+पूर्णांक __weak set_swbp(काष्ठा arch_uprobe *auprobe, काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vaddr)
+अणु
+	वापस uprobe_ग_लिखो_opcode(auprobe, mm, vaddr, UPROBE_SWBP_INSN);
+पूर्ण
 
 /**
- * set_orig_insn - Restore the original instruction.
+ * set_orig_insn - Restore the original inकाष्ठाion.
  * @mm: the probed process address space.
- * @auprobe: arch specific probepoint information.
- * @vaddr: the virtual address to insert the opcode.
+ * @auprobe: arch specअगरic probepoपूर्णांक inक्रमmation.
+ * @vaddr: the भव address to insert the opcode.
  *
  * For mm @mm, restore the original opcode (opcode) at @vaddr.
- * Return 0 (success) or a negative errno.
+ * Return 0 (success) or a negative त्रुटि_सं.
  */
-int __weak
-set_orig_insn(struct arch_uprobe *auprobe, struct mm_struct *mm, unsigned long vaddr)
-{
-	return uprobe_write_opcode(auprobe, mm, vaddr,
+पूर्णांक __weak
+set_orig_insn(काष्ठा arch_uprobe *auprobe, काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vaddr)
+अणु
+	वापस uprobe_ग_लिखो_opcode(auprobe, mm, vaddr,
 			*(uprobe_opcode_t *)&auprobe->insn);
-}
+पूर्ण
 
-static struct uprobe *get_uprobe(struct uprobe *uprobe)
-{
+अटल काष्ठा uprobe *get_uprobe(काष्ठा uprobe *uprobe)
+अणु
 	refcount_inc(&uprobe->ref);
-	return uprobe;
-}
+	वापस uprobe;
+पूर्ण
 
-static void put_uprobe(struct uprobe *uprobe)
-{
-	if (refcount_dec_and_test(&uprobe->ref)) {
+अटल व्योम put_uprobe(काष्ठा uprobe *uprobe)
+अणु
+	अगर (refcount_dec_and_test(&uprobe->ref)) अणु
 		/*
-		 * If application munmap(exec_vma) before uprobe_unregister()
-		 * gets called, we don't get a chance to remove uprobe from
-		 * delayed_uprobe_list from remove_breakpoint(). Do it here.
+		 * If application munmap(exec_vma) beक्रमe uprobe_unरेजिस्टर()
+		 * माला_लो called, we करोn't get a chance to हटाओ uprobe from
+		 * delayed_uprobe_list from हटाओ_अवरोधpoपूर्णांक(). Do it here.
 		 */
 		mutex_lock(&delayed_uprobe_lock);
-		delayed_uprobe_remove(uprobe, NULL);
+		delayed_uprobe_हटाओ(uprobe, शून्य);
 		mutex_unlock(&delayed_uprobe_lock);
-		kfree(uprobe);
-	}
-}
+		kमुक्त(uprobe);
+	पूर्ण
+पूर्ण
 
-static __always_inline
-int uprobe_cmp(const struct inode *l_inode, const loff_t l_offset,
-	       const struct uprobe *r)
-{
-	if (l_inode < r->inode)
-		return -1;
+अटल __always_अंतरभूत
+पूर्णांक uprobe_cmp(स्थिर काष्ठा inode *l_inode, स्थिर loff_t l_offset,
+	       स्थिर काष्ठा uprobe *r)
+अणु
+	अगर (l_inode < r->inode)
+		वापस -1;
 
-	if (l_inode > r->inode)
-		return 1;
+	अगर (l_inode > r->inode)
+		वापस 1;
 
-	if (l_offset < r->offset)
-		return -1;
+	अगर (l_offset < r->offset)
+		वापस -1;
 
-	if (l_offset > r->offset)
-		return 1;
+	अगर (l_offset > r->offset)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define __node_2_uprobe(node) \
-	rb_entry((node), struct uprobe, rb_node)
+#घोषणा __node_2_uprobe(node) \
+	rb_entry((node), काष्ठा uprobe, rb_node)
 
-struct __uprobe_key {
-	struct inode *inode;
+काष्ठा __uprobe_key अणु
+	काष्ठा inode *inode;
 	loff_t offset;
-};
+पूर्ण;
 
-static inline int __uprobe_cmp_key(const void *key, const struct rb_node *b)
-{
-	const struct __uprobe_key *a = key;
-	return uprobe_cmp(a->inode, a->offset, __node_2_uprobe(b));
-}
+अटल अंतरभूत पूर्णांक __uprobe_cmp_key(स्थिर व्योम *key, स्थिर काष्ठा rb_node *b)
+अणु
+	स्थिर काष्ठा __uprobe_key *a = key;
+	वापस uprobe_cmp(a->inode, a->offset, __node_2_uprobe(b));
+पूर्ण
 
-static inline int __uprobe_cmp(struct rb_node *a, const struct rb_node *b)
-{
-	struct uprobe *u = __node_2_uprobe(a);
-	return uprobe_cmp(u->inode, u->offset, __node_2_uprobe(b));
-}
+अटल अंतरभूत पूर्णांक __uprobe_cmp(काष्ठा rb_node *a, स्थिर काष्ठा rb_node *b)
+अणु
+	काष्ठा uprobe *u = __node_2_uprobe(a);
+	वापस uprobe_cmp(u->inode, u->offset, __node_2_uprobe(b));
+पूर्ण
 
-static struct uprobe *__find_uprobe(struct inode *inode, loff_t offset)
-{
-	struct __uprobe_key key = {
+अटल काष्ठा uprobe *__find_uprobe(काष्ठा inode *inode, loff_t offset)
+अणु
+	काष्ठा __uprobe_key key = अणु
 		.inode = inode,
 		.offset = offset,
-	};
-	struct rb_node *node = rb_find(&key, &uprobes_tree, __uprobe_cmp_key);
+	पूर्ण;
+	काष्ठा rb_node *node = rb_find(&key, &uprobes_tree, __uprobe_cmp_key);
 
-	if (node)
-		return get_uprobe(__node_2_uprobe(node));
+	अगर (node)
+		वापस get_uprobe(__node_2_uprobe(node));
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Find a uprobe corresponding to a given inode:offset
  * Acquires uprobes_treelock
  */
-static struct uprobe *find_uprobe(struct inode *inode, loff_t offset)
-{
-	struct uprobe *uprobe;
+अटल काष्ठा uprobe *find_uprobe(काष्ठा inode *inode, loff_t offset)
+अणु
+	काष्ठा uprobe *uprobe;
 
 	spin_lock(&uprobes_treelock);
 	uprobe = __find_uprobe(inode, offset);
 	spin_unlock(&uprobes_treelock);
 
-	return uprobe;
-}
+	वापस uprobe;
+पूर्ण
 
-static struct uprobe *__insert_uprobe(struct uprobe *uprobe)
-{
-	struct rb_node *node;
+अटल काष्ठा uprobe *__insert_uprobe(काष्ठा uprobe *uprobe)
+अणु
+	काष्ठा rb_node *node;
 
 	node = rb_find_add(&uprobe->rb_node, &uprobes_tree, __uprobe_cmp);
-	if (node)
-		return get_uprobe(__node_2_uprobe(node));
+	अगर (node)
+		वापस get_uprobe(__node_2_uprobe(node));
 
 	/* get access + creation ref */
 	refcount_set(&uprobe->ref, 2);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Acquire uprobes_treelock.
- * Matching uprobe already exists in rbtree;
- *	increment (access refcount) and return the matching uprobe.
+ * Matching uprobe alपढ़ोy exists in rbtree;
+ *	increment (access refcount) and वापस the matching uprobe.
  *
  * No matching uprobe; insert the uprobe in rb_tree;
- *	get a double refcount (access + creation) and return NULL.
+ *	get a द्विगुन refcount (access + creation) and वापस शून्य.
  */
-static struct uprobe *insert_uprobe(struct uprobe *uprobe)
-{
-	struct uprobe *u;
+अटल काष्ठा uprobe *insert_uprobe(काष्ठा uprobe *uprobe)
+अणु
+	काष्ठा uprobe *u;
 
 	spin_lock(&uprobes_treelock);
 	u = __insert_uprobe(uprobe);
 	spin_unlock(&uprobes_treelock);
 
-	return u;
-}
+	वापस u;
+पूर्ण
 
-static void
-ref_ctr_mismatch_warn(struct uprobe *cur_uprobe, struct uprobe *uprobe)
-{
+अटल व्योम
+ref_ctr_mismatch_warn(काष्ठा uprobe *cur_uprobe, काष्ठा uprobe *uprobe)
+अणु
 	pr_warn("ref_ctr_offset mismatch. inode: 0x%lx offset: 0x%llx "
 		"ref_ctr_offset(old): 0x%llx ref_ctr_offset(new): 0x%llx\n",
-		uprobe->inode->i_ino, (unsigned long long) uprobe->offset,
-		(unsigned long long) cur_uprobe->ref_ctr_offset,
-		(unsigned long long) uprobe->ref_ctr_offset);
-}
+		uprobe->inode->i_ino, (अचिन्हित दीर्घ दीर्घ) uprobe->offset,
+		(अचिन्हित दीर्घ दीर्घ) cur_uprobe->ref_ctr_offset,
+		(अचिन्हित दीर्घ दीर्घ) uprobe->ref_ctr_offset);
+पूर्ण
 
-static struct uprobe *alloc_uprobe(struct inode *inode, loff_t offset,
+अटल काष्ठा uprobe *alloc_uprobe(काष्ठा inode *inode, loff_t offset,
 				   loff_t ref_ctr_offset)
-{
-	struct uprobe *uprobe, *cur_uprobe;
+अणु
+	काष्ठा uprobe *uprobe, *cur_uprobe;
 
-	uprobe = kzalloc(sizeof(struct uprobe), GFP_KERNEL);
-	if (!uprobe)
-		return NULL;
+	uprobe = kzalloc(माप(काष्ठा uprobe), GFP_KERNEL);
+	अगर (!uprobe)
+		वापस शून्य;
 
 	uprobe->inode = inode;
 	uprobe->offset = offset;
 	uprobe->ref_ctr_offset = ref_ctr_offset;
-	init_rwsem(&uprobe->register_rwsem);
+	init_rwsem(&uprobe->रेजिस्टर_rwsem);
 	init_rwsem(&uprobe->consumer_rwsem);
 
 	/* add to uprobes_tree, sorted on inode:offset */
 	cur_uprobe = insert_uprobe(uprobe);
-	/* a uprobe exists for this inode:offset combination */
-	if (cur_uprobe) {
-		if (cur_uprobe->ref_ctr_offset != uprobe->ref_ctr_offset) {
+	/* a uprobe exists क्रम this inode:offset combination */
+	अगर (cur_uprobe) अणु
+		अगर (cur_uprobe->ref_ctr_offset != uprobe->ref_ctr_offset) अणु
 			ref_ctr_mismatch_warn(cur_uprobe, uprobe);
 			put_uprobe(cur_uprobe);
-			kfree(uprobe);
-			return ERR_PTR(-EINVAL);
-		}
-		kfree(uprobe);
+			kमुक्त(uprobe);
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
+		kमुक्त(uprobe);
 		uprobe = cur_uprobe;
-	}
+	पूर्ण
 
-	return uprobe;
-}
+	वापस uprobe;
+पूर्ण
 
-static void consumer_add(struct uprobe *uprobe, struct uprobe_consumer *uc)
-{
-	down_write(&uprobe->consumer_rwsem);
+अटल व्योम consumer_add(काष्ठा uprobe *uprobe, काष्ठा uprobe_consumer *uc)
+अणु
+	करोwn_ग_लिखो(&uprobe->consumer_rwsem);
 	uc->next = uprobe->consumers;
 	uprobe->consumers = uc;
-	up_write(&uprobe->consumer_rwsem);
-}
+	up_ग_लिखो(&uprobe->consumer_rwsem);
+पूर्ण
 
 /*
  * For uprobe @uprobe, delete the consumer @uc.
- * Return true if the @uc is deleted successfully
- * or return false.
+ * Return true अगर the @uc is deleted successfully
+ * or वापस false.
  */
-static bool consumer_del(struct uprobe *uprobe, struct uprobe_consumer *uc)
-{
-	struct uprobe_consumer **con;
+अटल bool consumer_del(काष्ठा uprobe *uprobe, काष्ठा uprobe_consumer *uc)
+अणु
+	काष्ठा uprobe_consumer **con;
 	bool ret = false;
 
-	down_write(&uprobe->consumer_rwsem);
-	for (con = &uprobe->consumers; *con; con = &(*con)->next) {
-		if (*con == uc) {
+	करोwn_ग_लिखो(&uprobe->consumer_rwsem);
+	क्रम (con = &uprobe->consumers; *con; con = &(*con)->next) अणु
+		अगर (*con == uc) अणु
 			*con = uc->next;
 			ret = true;
-			break;
-		}
-	}
-	up_write(&uprobe->consumer_rwsem);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	up_ग_लिखो(&uprobe->consumer_rwsem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __copy_insn(struct address_space *mapping, struct file *filp,
-			void *insn, int nbytes, loff_t offset)
-{
-	struct page *page;
+अटल पूर्णांक __copy_insn(काष्ठा address_space *mapping, काष्ठा file *filp,
+			व्योम *insn, पूर्णांक nbytes, loff_t offset)
+अणु
+	काष्ठा page *page;
 	/*
-	 * Ensure that the page that has the original instruction is populated
-	 * and in page-cache. If ->readpage == NULL it must be shmem_mapping(),
-	 * see uprobe_register().
+	 * Ensure that the page that has the original inकाष्ठाion is populated
+	 * and in page-cache. If ->पढ़ोpage == शून्य it must be shmem_mapping(),
+	 * see uprobe_रेजिस्टर().
 	 */
-	if (mapping->a_ops->readpage)
-		page = read_mapping_page(mapping, offset >> PAGE_SHIFT, filp);
-	else
-		page = shmem_read_mapping_page(mapping, offset >> PAGE_SHIFT);
-	if (IS_ERR(page))
-		return PTR_ERR(page);
+	अगर (mapping->a_ops->पढ़ोpage)
+		page = पढ़ो_mapping_page(mapping, offset >> PAGE_SHIFT, filp);
+	अन्यथा
+		page = shmem_पढ़ो_mapping_page(mapping, offset >> PAGE_SHIFT);
+	अगर (IS_ERR(page))
+		वापस PTR_ERR(page);
 
 	copy_from_page(page, offset, insn, nbytes);
 	put_page(page);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int copy_insn(struct uprobe *uprobe, struct file *filp)
-{
-	struct address_space *mapping = uprobe->inode->i_mapping;
+अटल पूर्णांक copy_insn(काष्ठा uprobe *uprobe, काष्ठा file *filp)
+अणु
+	काष्ठा address_space *mapping = uprobe->inode->i_mapping;
 	loff_t offs = uprobe->offset;
-	void *insn = &uprobe->arch.insn;
-	int size = sizeof(uprobe->arch.insn);
-	int len, err = -EIO;
+	व्योम *insn = &uprobe->arch.insn;
+	पूर्णांक size = माप(uprobe->arch.insn);
+	पूर्णांक len, err = -EIO;
 
-	/* Copy only available bytes, -EIO if nothing was read */
-	do {
-		if (offs >= i_size_read(uprobe->inode))
-			break;
+	/* Copy only available bytes, -EIO अगर nothing was पढ़ो */
+	करो अणु
+		अगर (offs >= i_size_पढ़ो(uprobe->inode))
+			अवरोध;
 
-		len = min_t(int, size, PAGE_SIZE - (offs & ~PAGE_MASK));
+		len = min_t(पूर्णांक, size, PAGE_SIZE - (offs & ~PAGE_MASK));
 		err = __copy_insn(mapping, filp, insn, len, offs);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
 		insn += len;
 		offs += len;
 		size -= len;
-	} while (size);
+	पूर्ण जबतक (size);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int prepare_uprobe(struct uprobe *uprobe, struct file *file,
-				struct mm_struct *mm, unsigned long vaddr)
-{
-	int ret = 0;
+अटल पूर्णांक prepare_uprobe(काष्ठा uprobe *uprobe, काष्ठा file *file,
+				काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vaddr)
+अणु
+	पूर्णांक ret = 0;
 
-	if (test_bit(UPROBE_COPY_INSN, &uprobe->flags))
-		return ret;
+	अगर (test_bit(UPROBE_COPY_INSN, &uprobe->flags))
+		वापस ret;
 
-	/* TODO: move this into _register, until then we abuse this sem. */
-	down_write(&uprobe->consumer_rwsem);
-	if (test_bit(UPROBE_COPY_INSN, &uprobe->flags))
-		goto out;
+	/* TODO: move this पूर्णांकo _रेजिस्टर, until then we abuse this sem. */
+	करोwn_ग_लिखो(&uprobe->consumer_rwsem);
+	अगर (test_bit(UPROBE_COPY_INSN, &uprobe->flags))
+		जाओ out;
 
 	ret = copy_insn(uprobe, file);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = -ENOTSUPP;
-	if (is_trap_insn((uprobe_opcode_t *)&uprobe->arch.insn))
-		goto out;
+	अगर (is_trap_insn((uprobe_opcode_t *)&uprobe->arch.insn))
+		जाओ out;
 
 	ret = arch_uprobe_analyze_insn(&uprobe->arch, mm, vaddr);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	smp_wmb(); /* pairs with the smp_rmb() in handle_swbp() */
 	set_bit(UPROBE_COPY_INSN, &uprobe->flags);
 
  out:
-	up_write(&uprobe->consumer_rwsem);
+	up_ग_लिखो(&uprobe->consumer_rwsem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline bool consumer_filter(struct uprobe_consumer *uc,
-				   enum uprobe_filter_ctx ctx, struct mm_struct *mm)
-{
-	return !uc->filter || uc->filter(uc, ctx, mm);
-}
+अटल अंतरभूत bool consumer_filter(काष्ठा uprobe_consumer *uc,
+				   क्रमागत uprobe_filter_ctx ctx, काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस !uc->filter || uc->filter(uc, ctx, mm);
+पूर्ण
 
-static bool filter_chain(struct uprobe *uprobe,
-			 enum uprobe_filter_ctx ctx, struct mm_struct *mm)
-{
-	struct uprobe_consumer *uc;
+अटल bool filter_chain(काष्ठा uprobe *uprobe,
+			 क्रमागत uprobe_filter_ctx ctx, काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा uprobe_consumer *uc;
 	bool ret = false;
 
-	down_read(&uprobe->consumer_rwsem);
-	for (uc = uprobe->consumers; uc; uc = uc->next) {
+	करोwn_पढ़ो(&uprobe->consumer_rwsem);
+	क्रम (uc = uprobe->consumers; uc; uc = uc->next) अणु
 		ret = consumer_filter(uc, ctx, mm);
-		if (ret)
-			break;
-	}
-	up_read(&uprobe->consumer_rwsem);
+		अगर (ret)
+			अवरोध;
+	पूर्ण
+	up_पढ़ो(&uprobe->consumer_rwsem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-install_breakpoint(struct uprobe *uprobe, struct mm_struct *mm,
-			struct vm_area_struct *vma, unsigned long vaddr)
-{
+अटल पूर्णांक
+install_अवरोधpoपूर्णांक(काष्ठा uprobe *uprobe, काष्ठा mm_काष्ठा *mm,
+			काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ vaddr)
+अणु
 	bool first_uprobe;
-	int ret;
+	पूर्णांक ret;
 
 	ret = prepare_uprobe(uprobe, vma->vm_file, mm, vaddr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * set MMF_HAS_UPROBES in advance for uprobe_pre_sstep_notifier(),
-	 * the task can hit this breakpoint right after __replace_page().
+	 * set MMF_HAS_UPROBES in advance क्रम uprobe_pre_sstep_notअगरier(),
+	 * the task can hit this अवरोधpoपूर्णांक right after __replace_page().
 	 */
 	first_uprobe = !test_bit(MMF_HAS_UPROBES, &mm->flags);
-	if (first_uprobe)
+	अगर (first_uprobe)
 		set_bit(MMF_HAS_UPROBES, &mm->flags);
 
 	ret = set_swbp(&uprobe->arch, mm, vaddr);
-	if (!ret)
+	अगर (!ret)
 		clear_bit(MMF_RECALC_UPROBES, &mm->flags);
-	else if (first_uprobe)
+	अन्यथा अगर (first_uprobe)
 		clear_bit(MMF_HAS_UPROBES, &mm->flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-remove_breakpoint(struct uprobe *uprobe, struct mm_struct *mm, unsigned long vaddr)
-{
+अटल पूर्णांक
+हटाओ_अवरोधpoपूर्णांक(काष्ठा uprobe *uprobe, काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vaddr)
+अणु
 	set_bit(MMF_RECALC_UPROBES, &mm->flags);
-	return set_orig_insn(&uprobe->arch, mm, vaddr);
-}
+	वापस set_orig_insn(&uprobe->arch, mm, vaddr);
+पूर्ण
 
-static inline bool uprobe_is_active(struct uprobe *uprobe)
-{
-	return !RB_EMPTY_NODE(&uprobe->rb_node);
-}
+अटल अंतरभूत bool uprobe_is_active(काष्ठा uprobe *uprobe)
+अणु
+	वापस !RB_EMPTY_NODE(&uprobe->rb_node);
+पूर्ण
 /*
- * There could be threads that have already hit the breakpoint. They
- * will recheck the current insn and restart if find_uprobe() fails.
+ * There could be thपढ़ोs that have alपढ़ोy hit the अवरोधpoपूर्णांक. They
+ * will recheck the current insn and restart अगर find_uprobe() fails.
  * See find_active_uprobe().
  */
-static void delete_uprobe(struct uprobe *uprobe)
-{
-	if (WARN_ON(!uprobe_is_active(uprobe)))
-		return;
+अटल व्योम delete_uprobe(काष्ठा uprobe *uprobe)
+अणु
+	अगर (WARN_ON(!uprobe_is_active(uprobe)))
+		वापस;
 
 	spin_lock(&uprobes_treelock);
 	rb_erase(&uprobe->rb_node, &uprobes_tree);
 	spin_unlock(&uprobes_treelock);
-	RB_CLEAR_NODE(&uprobe->rb_node); /* for uprobe_is_active() */
+	RB_CLEAR_NODE(&uprobe->rb_node); /* क्रम uprobe_is_active() */
 	put_uprobe(uprobe);
-}
+पूर्ण
 
-struct map_info {
-	struct map_info *next;
-	struct mm_struct *mm;
-	unsigned long vaddr;
-};
+काष्ठा map_info अणु
+	काष्ठा map_info *next;
+	काष्ठा mm_काष्ठा *mm;
+	अचिन्हित दीर्घ vaddr;
+पूर्ण;
 
-static inline struct map_info *free_map_info(struct map_info *info)
-{
-	struct map_info *next = info->next;
-	kfree(info);
-	return next;
-}
+अटल अंतरभूत काष्ठा map_info *मुक्त_map_info(काष्ठा map_info *info)
+अणु
+	काष्ठा map_info *next = info->next;
+	kमुक्त(info);
+	वापस next;
+पूर्ण
 
-static struct map_info *
-build_map_info(struct address_space *mapping, loff_t offset, bool is_register)
-{
-	unsigned long pgoff = offset >> PAGE_SHIFT;
-	struct vm_area_struct *vma;
-	struct map_info *curr = NULL;
-	struct map_info *prev = NULL;
-	struct map_info *info;
-	int more = 0;
+अटल काष्ठा map_info *
+build_map_info(काष्ठा address_space *mapping, loff_t offset, bool is_रेजिस्टर)
+अणु
+	अचिन्हित दीर्घ pgoff = offset >> PAGE_SHIFT;
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा map_info *curr = शून्य;
+	काष्ठा map_info *prev = शून्य;
+	काष्ठा map_info *info;
+	पूर्णांक more = 0;
 
  again:
-	i_mmap_lock_read(mapping);
-	vma_interval_tree_foreach(vma, &mapping->i_mmap, pgoff, pgoff) {
-		if (!valid_vma(vma, is_register))
-			continue;
+	i_mmap_lock_पढ़ो(mapping);
+	vma_पूर्णांकerval_tree_क्रमeach(vma, &mapping->i_mmap, pgoff, pgoff) अणु
+		अगर (!valid_vma(vma, is_रेजिस्टर))
+			जारी;
 
-		if (!prev && !more) {
+		अगर (!prev && !more) अणु
 			/*
-			 * Needs GFP_NOWAIT to avoid i_mmap_rwsem recursion through
-			 * reclaim. This is optimistic, no harm done if it fails.
+			 * Needs GFP_NOWAIT to aव्योम i_mmap_rwsem recursion through
+			 * reclaim. This is optimistic, no harm करोne अगर it fails.
 			 */
-			prev = kmalloc(sizeof(struct map_info),
+			prev = kदो_स्मृति(माप(काष्ठा map_info),
 					GFP_NOWAIT | __GFP_NOMEMALLOC | __GFP_NOWARN);
-			if (prev)
-				prev->next = NULL;
-		}
-		if (!prev) {
+			अगर (prev)
+				prev->next = शून्य;
+		पूर्ण
+		अगर (!prev) अणु
 			more++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!mmget_not_zero(vma->vm_mm))
-			continue;
+		अगर (!mmget_not_zero(vma->vm_mm))
+			जारी;
 
 		info = prev;
 		prev = prev->next;
@@ -1001,301 +1002,301 @@ build_map_info(struct address_space *mapping, loff_t offset, bool is_register)
 
 		info->mm = vma->vm_mm;
 		info->vaddr = offset_to_vaddr(vma, offset);
-	}
-	i_mmap_unlock_read(mapping);
+	पूर्ण
+	i_mmap_unlock_पढ़ो(mapping);
 
-	if (!more)
-		goto out;
+	अगर (!more)
+		जाओ out;
 
 	prev = curr;
-	while (curr) {
+	जबतक (curr) अणु
 		mmput(curr->mm);
 		curr = curr->next;
-	}
+	पूर्ण
 
-	do {
-		info = kmalloc(sizeof(struct map_info), GFP_KERNEL);
-		if (!info) {
+	करो अणु
+		info = kदो_स्मृति(माप(काष्ठा map_info), GFP_KERNEL);
+		अगर (!info) अणु
 			curr = ERR_PTR(-ENOMEM);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		info->next = prev;
 		prev = info;
-	} while (--more);
+	पूर्ण जबतक (--more);
 
-	goto again;
+	जाओ again;
  out:
-	while (prev)
-		prev = free_map_info(prev);
-	return curr;
-}
+	जबतक (prev)
+		prev = मुक्त_map_info(prev);
+	वापस curr;
+पूर्ण
 
-static int
-register_for_each_vma(struct uprobe *uprobe, struct uprobe_consumer *new)
-{
-	bool is_register = !!new;
-	struct map_info *info;
-	int err = 0;
+अटल पूर्णांक
+रेजिस्टर_क्रम_each_vma(काष्ठा uprobe *uprobe, काष्ठा uprobe_consumer *new)
+अणु
+	bool is_रेजिस्टर = !!new;
+	काष्ठा map_info *info;
+	पूर्णांक err = 0;
 
-	percpu_down_write(&dup_mmap_sem);
+	percpu_करोwn_ग_लिखो(&dup_mmap_sem);
 	info = build_map_info(uprobe->inode->i_mapping,
-					uprobe->offset, is_register);
-	if (IS_ERR(info)) {
+					uprobe->offset, is_रेजिस्टर);
+	अगर (IS_ERR(info)) अणु
 		err = PTR_ERR(info);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while (info) {
-		struct mm_struct *mm = info->mm;
-		struct vm_area_struct *vma;
+	जबतक (info) अणु
+		काष्ठा mm_काष्ठा *mm = info->mm;
+		काष्ठा vm_area_काष्ठा *vma;
 
-		if (err && is_register)
-			goto free;
+		अगर (err && is_रेजिस्टर)
+			जाओ मुक्त;
 
-		mmap_write_lock(mm);
+		mmap_ग_लिखो_lock(mm);
 		vma = find_vma(mm, info->vaddr);
-		if (!vma || !valid_vma(vma, is_register) ||
+		अगर (!vma || !valid_vma(vma, is_रेजिस्टर) ||
 		    file_inode(vma->vm_file) != uprobe->inode)
-			goto unlock;
+			जाओ unlock;
 
-		if (vma->vm_start > info->vaddr ||
+		अगर (vma->vm_start > info->vaddr ||
 		    vaddr_to_offset(vma, info->vaddr) != uprobe->offset)
-			goto unlock;
+			जाओ unlock;
 
-		if (is_register) {
+		अगर (is_रेजिस्टर) अणु
 			/* consult only the "caller", new consumer. */
-			if (consumer_filter(new,
+			अगर (consumer_filter(new,
 					UPROBE_FILTER_REGISTER, mm))
-				err = install_breakpoint(uprobe, mm, vma, info->vaddr);
-		} else if (test_bit(MMF_HAS_UPROBES, &mm->flags)) {
-			if (!filter_chain(uprobe,
+				err = install_अवरोधpoपूर्णांक(uprobe, mm, vma, info->vaddr);
+		पूर्ण अन्यथा अगर (test_bit(MMF_HAS_UPROBES, &mm->flags)) अणु
+			अगर (!filter_chain(uprobe,
 					UPROBE_FILTER_UNREGISTER, mm))
-				err |= remove_breakpoint(uprobe, mm, info->vaddr);
-		}
+				err |= हटाओ_अवरोधpoपूर्णांक(uprobe, mm, info->vaddr);
+		पूर्ण
 
  unlock:
-		mmap_write_unlock(mm);
- free:
+		mmap_ग_लिखो_unlock(mm);
+ मुक्त:
 		mmput(mm);
-		info = free_map_info(info);
-	}
+		info = मुक्त_map_info(info);
+	पूर्ण
  out:
-	percpu_up_write(&dup_mmap_sem);
-	return err;
-}
+	percpu_up_ग_लिखो(&dup_mmap_sem);
+	वापस err;
+पूर्ण
 
-static void
-__uprobe_unregister(struct uprobe *uprobe, struct uprobe_consumer *uc)
-{
-	int err;
+अटल व्योम
+__uprobe_unरेजिस्टर(काष्ठा uprobe *uprobe, काष्ठा uprobe_consumer *uc)
+अणु
+	पूर्णांक err;
 
-	if (WARN_ON(!consumer_del(uprobe, uc)))
-		return;
+	अगर (WARN_ON(!consumer_del(uprobe, uc)))
+		वापस;
 
-	err = register_for_each_vma(uprobe, NULL);
-	/* TODO : cant unregister? schedule a worker thread */
-	if (!uprobe->consumers && !err)
+	err = रेजिस्टर_क्रम_each_vma(uprobe, शून्य);
+	/* TODO : cant unरेजिस्टर? schedule a worker thपढ़ो */
+	अगर (!uprobe->consumers && !err)
 		delete_uprobe(uprobe);
-}
+पूर्ण
 
 /*
- * uprobe_unregister - unregister an already registered probe.
- * @inode: the file in which the probe has to be removed.
+ * uprobe_unरेजिस्टर - unरेजिस्टर an alपढ़ोy रेजिस्टरed probe.
+ * @inode: the file in which the probe has to be हटाओd.
  * @offset: offset from the start of the file.
- * @uc: identify which probe if multiple probes are colocated.
+ * @uc: identअगरy which probe अगर multiple probes are colocated.
  */
-void uprobe_unregister(struct inode *inode, loff_t offset, struct uprobe_consumer *uc)
-{
-	struct uprobe *uprobe;
+व्योम uprobe_unरेजिस्टर(काष्ठा inode *inode, loff_t offset, काष्ठा uprobe_consumer *uc)
+अणु
+	काष्ठा uprobe *uprobe;
 
 	uprobe = find_uprobe(inode, offset);
-	if (WARN_ON(!uprobe))
-		return;
+	अगर (WARN_ON(!uprobe))
+		वापस;
 
-	down_write(&uprobe->register_rwsem);
-	__uprobe_unregister(uprobe, uc);
-	up_write(&uprobe->register_rwsem);
+	करोwn_ग_लिखो(&uprobe->रेजिस्टर_rwsem);
+	__uprobe_unरेजिस्टर(uprobe, uc);
+	up_ग_लिखो(&uprobe->रेजिस्टर_rwsem);
 	put_uprobe(uprobe);
-}
-EXPORT_SYMBOL_GPL(uprobe_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(uprobe_unरेजिस्टर);
 
 /*
- * __uprobe_register - register a probe
+ * __uprobe_रेजिस्टर - रेजिस्टर a probe
  * @inode: the file in which the probe has to be placed.
  * @offset: offset from the start of the file.
- * @uc: information on howto handle the probe..
+ * @uc: inक्रमmation on howto handle the probe..
  *
- * Apart from the access refcount, __uprobe_register() takes a creation
- * refcount (thro alloc_uprobe) if and only if this @uprobe is getting
- * inserted into the rbtree (i.e first consumer for a @inode:@offset
- * tuple).  Creation refcount stops uprobe_unregister from freeing the
- * @uprobe even before the register operation is complete. Creation
- * refcount is released when the last @uc for the @uprobe
- * unregisters. Caller of __uprobe_register() is required to keep @inode
+ * Apart from the access refcount, __uprobe_रेजिस्टर() takes a creation
+ * refcount (thro alloc_uprobe) अगर and only अगर this @uprobe is getting
+ * inserted पूर्णांकo the rbtree (i.e first consumer क्रम a @inode:@offset
+ * tuple).  Creation refcount stops uprobe_unरेजिस्टर from मुक्तing the
+ * @uprobe even beक्रमe the रेजिस्टर operation is complete. Creation
+ * refcount is released when the last @uc क्रम the @uprobe
+ * unरेजिस्टरs. Caller of __uprobe_रेजिस्टर() is required to keep @inode
  * (and the containing mount) referenced.
  *
- * Return errno if it cannot successully install probes
- * else return 0 (success)
+ * Return त्रुटि_सं अगर it cannot successully install probes
+ * अन्यथा वापस 0 (success)
  */
-static int __uprobe_register(struct inode *inode, loff_t offset,
-			     loff_t ref_ctr_offset, struct uprobe_consumer *uc)
-{
-	struct uprobe *uprobe;
-	int ret;
+अटल पूर्णांक __uprobe_रेजिस्टर(काष्ठा inode *inode, loff_t offset,
+			     loff_t ref_ctr_offset, काष्ठा uprobe_consumer *uc)
+अणु
+	काष्ठा uprobe *uprobe;
+	पूर्णांक ret;
 
 	/* Uprobe must have at least one set consumer */
-	if (!uc->handler && !uc->ret_handler)
-		return -EINVAL;
+	अगर (!uc->handler && !uc->ret_handler)
+		वापस -EINVAL;
 
-	/* copy_insn() uses read_mapping_page() or shmem_read_mapping_page() */
-	if (!inode->i_mapping->a_ops->readpage && !shmem_mapping(inode->i_mapping))
-		return -EIO;
+	/* copy_insn() uses पढ़ो_mapping_page() or shmem_पढ़ो_mapping_page() */
+	अगर (!inode->i_mapping->a_ops->पढ़ोpage && !shmem_mapping(inode->i_mapping))
+		वापस -EIO;
 	/* Racy, just to catch the obvious mistakes */
-	if (offset > i_size_read(inode))
-		return -EINVAL;
+	अगर (offset > i_size_पढ़ो(inode))
+		वापस -EINVAL;
 
 	/*
 	 * This ensures that copy_from_page(), copy_to_page() and
 	 * __update_ref_ctr() can't cross page boundary.
 	 */
-	if (!IS_ALIGNED(offset, UPROBE_SWBP_INSN_SIZE))
-		return -EINVAL;
-	if (!IS_ALIGNED(ref_ctr_offset, sizeof(short)))
-		return -EINVAL;
+	अगर (!IS_ALIGNED(offset, UPROBE_SWBP_INSN_SIZE))
+		वापस -EINVAL;
+	अगर (!IS_ALIGNED(ref_ctr_offset, माप(लघु)))
+		वापस -EINVAL;
 
  retry:
 	uprobe = alloc_uprobe(inode, offset, ref_ctr_offset);
-	if (!uprobe)
-		return -ENOMEM;
-	if (IS_ERR(uprobe))
-		return PTR_ERR(uprobe);
+	अगर (!uprobe)
+		वापस -ENOMEM;
+	अगर (IS_ERR(uprobe))
+		वापस PTR_ERR(uprobe);
 
 	/*
-	 * We can race with uprobe_unregister()->delete_uprobe().
-	 * Check uprobe_is_active() and retry if it is false.
+	 * We can race with uprobe_unरेजिस्टर()->delete_uprobe().
+	 * Check uprobe_is_active() and retry अगर it is false.
 	 */
-	down_write(&uprobe->register_rwsem);
+	करोwn_ग_लिखो(&uprobe->रेजिस्टर_rwsem);
 	ret = -EAGAIN;
-	if (likely(uprobe_is_active(uprobe))) {
+	अगर (likely(uprobe_is_active(uprobe))) अणु
 		consumer_add(uprobe, uc);
-		ret = register_for_each_vma(uprobe, uc);
-		if (ret)
-			__uprobe_unregister(uprobe, uc);
-	}
-	up_write(&uprobe->register_rwsem);
+		ret = रेजिस्टर_क्रम_each_vma(uprobe, uc);
+		अगर (ret)
+			__uprobe_unरेजिस्टर(uprobe, uc);
+	पूर्ण
+	up_ग_लिखो(&uprobe->रेजिस्टर_rwsem);
 	put_uprobe(uprobe);
 
-	if (unlikely(ret == -EAGAIN))
-		goto retry;
-	return ret;
-}
+	अगर (unlikely(ret == -EAGAIN))
+		जाओ retry;
+	वापस ret;
+पूर्ण
 
-int uprobe_register(struct inode *inode, loff_t offset,
-		    struct uprobe_consumer *uc)
-{
-	return __uprobe_register(inode, offset, 0, uc);
-}
-EXPORT_SYMBOL_GPL(uprobe_register);
+पूर्णांक uprobe_रेजिस्टर(काष्ठा inode *inode, loff_t offset,
+		    काष्ठा uprobe_consumer *uc)
+अणु
+	वापस __uprobe_रेजिस्टर(inode, offset, 0, uc);
+पूर्ण
+EXPORT_SYMBOL_GPL(uprobe_रेजिस्टर);
 
-int uprobe_register_refctr(struct inode *inode, loff_t offset,
-			   loff_t ref_ctr_offset, struct uprobe_consumer *uc)
-{
-	return __uprobe_register(inode, offset, ref_ctr_offset, uc);
-}
-EXPORT_SYMBOL_GPL(uprobe_register_refctr);
+पूर्णांक uprobe_रेजिस्टर_refctr(काष्ठा inode *inode, loff_t offset,
+			   loff_t ref_ctr_offset, काष्ठा uprobe_consumer *uc)
+अणु
+	वापस __uprobe_रेजिस्टर(inode, offset, ref_ctr_offset, uc);
+पूर्ण
+EXPORT_SYMBOL_GPL(uprobe_रेजिस्टर_refctr);
 
 /*
- * uprobe_apply - unregister an already registered probe.
- * @inode: the file in which the probe has to be removed.
+ * uprobe_apply - unरेजिस्टर an alपढ़ोy रेजिस्टरed probe.
+ * @inode: the file in which the probe has to be हटाओd.
  * @offset: offset from the start of the file.
- * @uc: consumer which wants to add more or remove some breakpoints
- * @add: add or remove the breakpoints
+ * @uc: consumer which wants to add more or हटाओ some अवरोधpoपूर्णांकs
+ * @add: add or हटाओ the अवरोधpoपूर्णांकs
  */
-int uprobe_apply(struct inode *inode, loff_t offset,
-			struct uprobe_consumer *uc, bool add)
-{
-	struct uprobe *uprobe;
-	struct uprobe_consumer *con;
-	int ret = -ENOENT;
+पूर्णांक uprobe_apply(काष्ठा inode *inode, loff_t offset,
+			काष्ठा uprobe_consumer *uc, bool add)
+अणु
+	काष्ठा uprobe *uprobe;
+	काष्ठा uprobe_consumer *con;
+	पूर्णांक ret = -ENOENT;
 
 	uprobe = find_uprobe(inode, offset);
-	if (WARN_ON(!uprobe))
-		return ret;
+	अगर (WARN_ON(!uprobe))
+		वापस ret;
 
-	down_write(&uprobe->register_rwsem);
-	for (con = uprobe->consumers; con && con != uc ; con = con->next)
+	करोwn_ग_लिखो(&uprobe->रेजिस्टर_rwsem);
+	क्रम (con = uprobe->consumers; con && con != uc ; con = con->next)
 		;
-	if (con)
-		ret = register_for_each_vma(uprobe, add ? uc : NULL);
-	up_write(&uprobe->register_rwsem);
+	अगर (con)
+		ret = रेजिस्टर_क्रम_each_vma(uprobe, add ? uc : शून्य);
+	up_ग_लिखो(&uprobe->रेजिस्टर_rwsem);
 	put_uprobe(uprobe);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int unapply_uprobe(struct uprobe *uprobe, struct mm_struct *mm)
-{
-	struct vm_area_struct *vma;
-	int err = 0;
+अटल पूर्णांक unapply_uprobe(काष्ठा uprobe *uprobe, काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	पूर्णांक err = 0;
 
-	mmap_read_lock(mm);
-	for (vma = mm->mmap; vma; vma = vma->vm_next) {
-		unsigned long vaddr;
+	mmap_पढ़ो_lock(mm);
+	क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
+		अचिन्हित दीर्घ vaddr;
 		loff_t offset;
 
-		if (!valid_vma(vma, false) ||
+		अगर (!valid_vma(vma, false) ||
 		    file_inode(vma->vm_file) != uprobe->inode)
-			continue;
+			जारी;
 
 		offset = (loff_t)vma->vm_pgoff << PAGE_SHIFT;
-		if (uprobe->offset <  offset ||
+		अगर (uprobe->offset <  offset ||
 		    uprobe->offset >= offset + vma->vm_end - vma->vm_start)
-			continue;
+			जारी;
 
 		vaddr = offset_to_vaddr(vma, uprobe->offset);
-		err |= remove_breakpoint(uprobe, mm, vaddr);
-	}
-	mmap_read_unlock(mm);
+		err |= हटाओ_अवरोधpoपूर्णांक(uprobe, mm, vaddr);
+	पूर्ण
+	mmap_पढ़ो_unlock(mm);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct rb_node *
-find_node_in_range(struct inode *inode, loff_t min, loff_t max)
-{
-	struct rb_node *n = uprobes_tree.rb_node;
+अटल काष्ठा rb_node *
+find_node_in_range(काष्ठा inode *inode, loff_t min, loff_t max)
+अणु
+	काष्ठा rb_node *n = uprobes_tree.rb_node;
 
-	while (n) {
-		struct uprobe *u = rb_entry(n, struct uprobe, rb_node);
+	जबतक (n) अणु
+		काष्ठा uprobe *u = rb_entry(n, काष्ठा uprobe, rb_node);
 
-		if (inode < u->inode) {
+		अगर (inode < u->inode) अणु
 			n = n->rb_left;
-		} else if (inode > u->inode) {
+		पूर्ण अन्यथा अगर (inode > u->inode) अणु
 			n = n->rb_right;
-		} else {
-			if (max < u->offset)
+		पूर्ण अन्यथा अणु
+			अगर (max < u->offset)
 				n = n->rb_left;
-			else if (min > u->offset)
+			अन्यथा अगर (min > u->offset)
 				n = n->rb_right;
-			else
-				break;
-		}
-	}
+			अन्यथा
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
 /*
  * For a given range in vma, build a list of probes that need to be inserted.
  */
-static void build_probe_list(struct inode *inode,
-				struct vm_area_struct *vma,
-				unsigned long start, unsigned long end,
-				struct list_head *head)
-{
+अटल व्योम build_probe_list(काष्ठा inode *inode,
+				काष्ठा vm_area_काष्ठा *vma,
+				अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
+				काष्ठा list_head *head)
+अणु
 	loff_t min, max;
-	struct rb_node *n, *t;
-	struct uprobe *u;
+	काष्ठा rb_node *n, *t;
+	काष्ठा uprobe *u;
 
 	INIT_LIST_HEAD(head);
 	min = vaddr_to_offset(vma, start);
@@ -1303,107 +1304,107 @@ static void build_probe_list(struct inode *inode,
 
 	spin_lock(&uprobes_treelock);
 	n = find_node_in_range(inode, min, max);
-	if (n) {
-		for (t = n; t; t = rb_prev(t)) {
-			u = rb_entry(t, struct uprobe, rb_node);
-			if (u->inode != inode || u->offset < min)
-				break;
+	अगर (n) अणु
+		क्रम (t = n; t; t = rb_prev(t)) अणु
+			u = rb_entry(t, काष्ठा uprobe, rb_node);
+			अगर (u->inode != inode || u->offset < min)
+				अवरोध;
 			list_add(&u->pending_list, head);
 			get_uprobe(u);
-		}
-		for (t = n; (t = rb_next(t)); ) {
-			u = rb_entry(t, struct uprobe, rb_node);
-			if (u->inode != inode || u->offset > max)
-				break;
+		पूर्ण
+		क्रम (t = n; (t = rb_next(t)); ) अणु
+			u = rb_entry(t, काष्ठा uprobe, rb_node);
+			अगर (u->inode != inode || u->offset > max)
+				अवरोध;
 			list_add(&u->pending_list, head);
 			get_uprobe(u);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&uprobes_treelock);
-}
+पूर्ण
 
-/* @vma contains reference counter, not the probed instruction. */
-static int delayed_ref_ctr_inc(struct vm_area_struct *vma)
-{
-	struct list_head *pos, *q;
-	struct delayed_uprobe *du;
-	unsigned long vaddr;
-	int ret = 0, err = 0;
+/* @vma contains reference counter, not the probed inकाष्ठाion. */
+अटल पूर्णांक delayed_ref_ctr_inc(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा list_head *pos, *q;
+	काष्ठा delayed_uprobe *du;
+	अचिन्हित दीर्घ vaddr;
+	पूर्णांक ret = 0, err = 0;
 
 	mutex_lock(&delayed_uprobe_lock);
-	list_for_each_safe(pos, q, &delayed_uprobe_list) {
-		du = list_entry(pos, struct delayed_uprobe, list);
+	list_क्रम_each_safe(pos, q, &delayed_uprobe_list) अणु
+		du = list_entry(pos, काष्ठा delayed_uprobe, list);
 
-		if (du->mm != vma->vm_mm ||
+		अगर (du->mm != vma->vm_mm ||
 		    !valid_ref_ctr_vma(du->uprobe, vma))
-			continue;
+			जारी;
 
 		vaddr = offset_to_vaddr(vma, du->uprobe->ref_ctr_offset);
 		ret = __update_ref_ctr(vma->vm_mm, vaddr, 1);
-		if (ret) {
+		अगर (ret) अणु
 			update_ref_ctr_warn(du->uprobe, vma->vm_mm, 1);
-			if (!err)
+			अगर (!err)
 				err = ret;
-		}
+		पूर्ण
 		delayed_uprobe_delete(du);
-	}
+	पूर्ण
 	mutex_unlock(&delayed_uprobe_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Called from mmap_region/vma_adjust with mm->mmap_lock acquired.
  *
- * Currently we ignore all errors and always return 0, the callers
+ * Currently we ignore all errors and always वापस 0, the callers
  * can't handle the failure anyway.
  */
-int uprobe_mmap(struct vm_area_struct *vma)
-{
-	struct list_head tmp_list;
-	struct uprobe *uprobe, *u;
-	struct inode *inode;
+पूर्णांक uprobe_mmap(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा list_head पंचांगp_list;
+	काष्ठा uprobe *uprobe, *u;
+	काष्ठा inode *inode;
 
-	if (no_uprobe_events())
-		return 0;
+	अगर (no_uprobe_events())
+		वापस 0;
 
-	if (vma->vm_file &&
+	अगर (vma->vm_file &&
 	    (vma->vm_flags & (VM_WRITE|VM_SHARED)) == VM_WRITE &&
 	    test_bit(MMF_HAS_UPROBES, &vma->vm_mm->flags))
 		delayed_ref_ctr_inc(vma);
 
-	if (!valid_vma(vma, true))
-		return 0;
+	अगर (!valid_vma(vma, true))
+		वापस 0;
 
 	inode = file_inode(vma->vm_file);
-	if (!inode)
-		return 0;
+	अगर (!inode)
+		वापस 0;
 
 	mutex_lock(uprobes_mmap_hash(inode));
-	build_probe_list(inode, vma, vma->vm_start, vma->vm_end, &tmp_list);
+	build_probe_list(inode, vma, vma->vm_start, vma->vm_end, &पंचांगp_list);
 	/*
-	 * We can race with uprobe_unregister(), this uprobe can be already
-	 * removed. But in this case filter_chain() must return false, all
+	 * We can race with uprobe_unरेजिस्टर(), this uprobe can be alपढ़ोy
+	 * हटाओd. But in this हाल filter_chain() must वापस false, all
 	 * consumers have gone away.
 	 */
-	list_for_each_entry_safe(uprobe, u, &tmp_list, pending_list) {
-		if (!fatal_signal_pending(current) &&
-		    filter_chain(uprobe, UPROBE_FILTER_MMAP, vma->vm_mm)) {
-			unsigned long vaddr = offset_to_vaddr(vma, uprobe->offset);
-			install_breakpoint(uprobe, vma->vm_mm, vma, vaddr);
-		}
+	list_क्रम_each_entry_safe(uprobe, u, &पंचांगp_list, pending_list) अणु
+		अगर (!fatal_संकेत_pending(current) &&
+		    filter_chain(uprobe, UPROBE_FILTER_MMAP, vma->vm_mm)) अणु
+			अचिन्हित दीर्घ vaddr = offset_to_vaddr(vma, uprobe->offset);
+			install_अवरोधpoपूर्णांक(uprobe, vma->vm_mm, vma, vaddr);
+		पूर्ण
 		put_uprobe(uprobe);
-	}
+	पूर्ण
 	mutex_unlock(uprobes_mmap_hash(inode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool
-vma_has_uprobes(struct vm_area_struct *vma, unsigned long start, unsigned long end)
-{
+अटल bool
+vma_has_uprobes(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	loff_t min, max;
-	struct inode *inode;
-	struct rb_node *n;
+	काष्ठा inode *inode;
+	काष्ठा rb_node *n;
 
 	inode = file_inode(vma->vm_file);
 
@@ -1414,945 +1415,945 @@ vma_has_uprobes(struct vm_area_struct *vma, unsigned long start, unsigned long e
 	n = find_node_in_range(inode, min, max);
 	spin_unlock(&uprobes_treelock);
 
-	return !!n;
-}
+	वापस !!n;
+पूर्ण
 
 /*
  * Called in context of a munmap of a vma.
  */
-void uprobe_munmap(struct vm_area_struct *vma, unsigned long start, unsigned long end)
-{
-	if (no_uprobe_events() || !valid_vma(vma, false))
-		return;
+व्योम uprobe_munmap(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अगर (no_uprobe_events() || !valid_vma(vma, false))
+		वापस;
 
-	if (!atomic_read(&vma->vm_mm->mm_users)) /* called by mmput() ? */
-		return;
+	अगर (!atomic_पढ़ो(&vma->vm_mm->mm_users)) /* called by mmput() ? */
+		वापस;
 
-	if (!test_bit(MMF_HAS_UPROBES, &vma->vm_mm->flags) ||
+	अगर (!test_bit(MMF_HAS_UPROBES, &vma->vm_mm->flags) ||
 	     test_bit(MMF_RECALC_UPROBES, &vma->vm_mm->flags))
-		return;
+		वापस;
 
-	if (vma_has_uprobes(vma, start, end))
+	अगर (vma_has_uprobes(vma, start, end))
 		set_bit(MMF_RECALC_UPROBES, &vma->vm_mm->flags);
-}
+पूर्ण
 
-/* Slot allocation for XOL */
-static int xol_add_vma(struct mm_struct *mm, struct xol_area *area)
-{
-	struct vm_area_struct *vma;
-	int ret;
+/* Slot allocation क्रम XOL */
+अटल पूर्णांक xol_add_vma(काष्ठा mm_काष्ठा *mm, काष्ठा xol_area *area)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	पूर्णांक ret;
 
-	if (mmap_write_lock_killable(mm))
-		return -EINTR;
+	अगर (mmap_ग_लिखो_lock_समाप्तable(mm))
+		वापस -EINTR;
 
-	if (mm->uprobes_state.xol_area) {
+	अगर (mm->uprobes_state.xol_area) अणु
 		ret = -EALREADY;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (!area->vaddr) {
-		/* Try to map as high as possible, this is only a hint. */
-		area->vaddr = get_unmapped_area(NULL, TASK_SIZE - PAGE_SIZE,
+	अगर (!area->vaddr) अणु
+		/* Try to map as high as possible, this is only a hपूर्णांक. */
+		area->vaddr = get_unmapped_area(शून्य, TASK_SIZE - PAGE_SIZE,
 						PAGE_SIZE, 0, 0);
-		if (IS_ERR_VALUE(area->vaddr)) {
+		अगर (IS_ERR_VALUE(area->vaddr)) अणु
 			ret = area->vaddr;
-			goto fail;
-		}
-	}
+			जाओ fail;
+		पूर्ण
+	पूर्ण
 
 	vma = _install_special_mapping(mm, area->vaddr, PAGE_SIZE,
 				VM_EXEC|VM_MAYEXEC|VM_DONTCOPY|VM_IO,
 				&area->xol_mapping);
-	if (IS_ERR(vma)) {
+	अगर (IS_ERR(vma)) अणु
 		ret = PTR_ERR(vma);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	ret = 0;
 	/* pairs with get_xol_area() */
 	smp_store_release(&mm->uprobes_state.xol_area, area); /* ^^^ */
  fail:
-	mmap_write_unlock(mm);
+	mmap_ग_लिखो_unlock(mm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct xol_area *__create_xol_area(unsigned long vaddr)
-{
-	struct mm_struct *mm = current->mm;
+अटल काष्ठा xol_area *__create_xol_area(अचिन्हित दीर्घ vaddr)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
 	uprobe_opcode_t insn = UPROBE_SWBP_INSN;
-	struct xol_area *area;
+	काष्ठा xol_area *area;
 
-	area = kmalloc(sizeof(*area), GFP_KERNEL);
-	if (unlikely(!area))
-		goto out;
+	area = kदो_स्मृति(माप(*area), GFP_KERNEL);
+	अगर (unlikely(!area))
+		जाओ out;
 
-	area->bitmap = kcalloc(BITS_TO_LONGS(UINSNS_PER_PAGE), sizeof(long),
+	area->biपंचांगap = kसुस्मृति(BITS_TO_LONGS(UINSNS_PER_PAGE), माप(दीर्घ),
 			       GFP_KERNEL);
-	if (!area->bitmap)
-		goto free_area;
+	अगर (!area->biपंचांगap)
+		जाओ मुक्त_area;
 
 	area->xol_mapping.name = "[uprobes]";
-	area->xol_mapping.fault = NULL;
+	area->xol_mapping.fault = शून्य;
 	area->xol_mapping.pages = area->pages;
 	area->pages[0] = alloc_page(GFP_HIGHUSER);
-	if (!area->pages[0])
-		goto free_bitmap;
-	area->pages[1] = NULL;
+	अगर (!area->pages[0])
+		जाओ मुक्त_biपंचांगap;
+	area->pages[1] = शून्य;
 
 	area->vaddr = vaddr;
-	init_waitqueue_head(&area->wq);
-	/* Reserve the 1st slot for get_trampoline_vaddr() */
-	set_bit(0, area->bitmap);
+	init_रुकोqueue_head(&area->wq);
+	/* Reserve the 1st slot क्रम get_trampoline_vaddr() */
+	set_bit(0, area->biपंचांगap);
 	atomic_set(&area->slot_count, 1);
 	arch_uprobe_copy_ixol(area->pages[0], 0, &insn, UPROBE_SWBP_INSN_SIZE);
 
-	if (!xol_add_vma(mm, area))
-		return area;
+	अगर (!xol_add_vma(mm, area))
+		वापस area;
 
-	__free_page(area->pages[0]);
- free_bitmap:
-	kfree(area->bitmap);
- free_area:
-	kfree(area);
+	__मुक्त_page(area->pages[0]);
+ मुक्त_biपंचांगap:
+	kमुक्त(area->biपंचांगap);
+ मुक्त_area:
+	kमुक्त(area);
  out:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * get_xol_area - Allocate process's xol_area if necessary.
- * This area will be used for storing instructions for execution out of line.
+ * get_xol_area - Allocate process's xol_area अगर necessary.
+ * This area will be used क्रम storing inकाष्ठाions क्रम execution out of line.
  *
- * Returns the allocated area or NULL.
+ * Returns the allocated area or शून्य.
  */
-static struct xol_area *get_xol_area(void)
-{
-	struct mm_struct *mm = current->mm;
-	struct xol_area *area;
+अटल काष्ठा xol_area *get_xol_area(व्योम)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा xol_area *area;
 
-	if (!mm->uprobes_state.xol_area)
+	अगर (!mm->uprobes_state.xol_area)
 		__create_xol_area(0);
 
 	/* Pairs with xol_add_vma() smp_store_release() */
 	area = READ_ONCE(mm->uprobes_state.xol_area); /* ^^^ */
-	return area;
-}
+	वापस area;
+पूर्ण
 
 /*
- * uprobe_clear_state - Free the area allocated for slots.
+ * uprobe_clear_state - Free the area allocated क्रम slots.
  */
-void uprobe_clear_state(struct mm_struct *mm)
-{
-	struct xol_area *area = mm->uprobes_state.xol_area;
+व्योम uprobe_clear_state(काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा xol_area *area = mm->uprobes_state.xol_area;
 
 	mutex_lock(&delayed_uprobe_lock);
-	delayed_uprobe_remove(NULL, mm);
+	delayed_uprobe_हटाओ(शून्य, mm);
 	mutex_unlock(&delayed_uprobe_lock);
 
-	if (!area)
-		return;
+	अगर (!area)
+		वापस;
 
 	put_page(area->pages[0]);
-	kfree(area->bitmap);
-	kfree(area);
-}
+	kमुक्त(area->biपंचांगap);
+	kमुक्त(area);
+पूर्ण
 
-void uprobe_start_dup_mmap(void)
-{
-	percpu_down_read(&dup_mmap_sem);
-}
+व्योम uprobe_start_dup_mmap(व्योम)
+अणु
+	percpu_करोwn_पढ़ो(&dup_mmap_sem);
+पूर्ण
 
-void uprobe_end_dup_mmap(void)
-{
-	percpu_up_read(&dup_mmap_sem);
-}
+व्योम uprobe_end_dup_mmap(व्योम)
+अणु
+	percpu_up_पढ़ो(&dup_mmap_sem);
+पूर्ण
 
-void uprobe_dup_mmap(struct mm_struct *oldmm, struct mm_struct *newmm)
-{
-	if (test_bit(MMF_HAS_UPROBES, &oldmm->flags)) {
+व्योम uprobe_dup_mmap(काष्ठा mm_काष्ठा *oldmm, काष्ठा mm_काष्ठा *newmm)
+अणु
+	अगर (test_bit(MMF_HAS_UPROBES, &oldmm->flags)) अणु
 		set_bit(MMF_HAS_UPROBES, &newmm->flags);
 		/* unconditionally, dup_mmap() skips VM_DONTCOPY vmas */
 		set_bit(MMF_RECALC_UPROBES, &newmm->flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *  - search for a free slot.
+ *  - search क्रम a मुक्त slot.
  */
-static unsigned long xol_take_insn_slot(struct xol_area *area)
-{
-	unsigned long slot_addr;
-	int slot_nr;
+अटल अचिन्हित दीर्घ xol_take_insn_slot(काष्ठा xol_area *area)
+अणु
+	अचिन्हित दीर्घ slot_addr;
+	पूर्णांक slot_nr;
 
-	do {
-		slot_nr = find_first_zero_bit(area->bitmap, UINSNS_PER_PAGE);
-		if (slot_nr < UINSNS_PER_PAGE) {
-			if (!test_and_set_bit(slot_nr, area->bitmap))
-				break;
+	करो अणु
+		slot_nr = find_first_zero_bit(area->biपंचांगap, UINSNS_PER_PAGE);
+		अगर (slot_nr < UINSNS_PER_PAGE) अणु
+			अगर (!test_and_set_bit(slot_nr, area->biपंचांगap))
+				अवरोध;
 
 			slot_nr = UINSNS_PER_PAGE;
-			continue;
-		}
-		wait_event(area->wq, (atomic_read(&area->slot_count) < UINSNS_PER_PAGE));
-	} while (slot_nr >= UINSNS_PER_PAGE);
+			जारी;
+		पूर्ण
+		रुको_event(area->wq, (atomic_पढ़ो(&area->slot_count) < UINSNS_PER_PAGE));
+	पूर्ण जबतक (slot_nr >= UINSNS_PER_PAGE);
 
 	slot_addr = area->vaddr + (slot_nr * UPROBE_XOL_SLOT_BYTES);
 	atomic_inc(&area->slot_count);
 
-	return slot_addr;
-}
+	वापस slot_addr;
+पूर्ण
 
 /*
- * xol_get_insn_slot - allocate a slot for xol.
+ * xol_get_insn_slot - allocate a slot क्रम xol.
  * Returns the allocated slot address or 0.
  */
-static unsigned long xol_get_insn_slot(struct uprobe *uprobe)
-{
-	struct xol_area *area;
-	unsigned long xol_vaddr;
+अटल अचिन्हित दीर्घ xol_get_insn_slot(काष्ठा uprobe *uprobe)
+अणु
+	काष्ठा xol_area *area;
+	अचिन्हित दीर्घ xol_vaddr;
 
 	area = get_xol_area();
-	if (!area)
-		return 0;
+	अगर (!area)
+		वापस 0;
 
 	xol_vaddr = xol_take_insn_slot(area);
-	if (unlikely(!xol_vaddr))
-		return 0;
+	अगर (unlikely(!xol_vaddr))
+		वापस 0;
 
 	arch_uprobe_copy_ixol(area->pages[0], xol_vaddr,
-			      &uprobe->arch.ixol, sizeof(uprobe->arch.ixol));
+			      &uprobe->arch.ixol, माप(uprobe->arch.ixol));
 
-	return xol_vaddr;
-}
+	वापस xol_vaddr;
+पूर्ण
 
 /*
- * xol_free_insn_slot - If slot was earlier allocated by
- * @xol_get_insn_slot(), make the slot available for
+ * xol_मुक्त_insn_slot - If slot was earlier allocated by
+ * @xol_get_insn_slot(), make the slot available क्रम
  * subsequent requests.
  */
-static void xol_free_insn_slot(struct task_struct *tsk)
-{
-	struct xol_area *area;
-	unsigned long vma_end;
-	unsigned long slot_addr;
+अटल व्योम xol_मुक्त_insn_slot(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा xol_area *area;
+	अचिन्हित दीर्घ vma_end;
+	अचिन्हित दीर्घ slot_addr;
 
-	if (!tsk->mm || !tsk->mm->uprobes_state.xol_area || !tsk->utask)
-		return;
+	अगर (!tsk->mm || !tsk->mm->uprobes_state.xol_area || !tsk->utask)
+		वापस;
 
 	slot_addr = tsk->utask->xol_vaddr;
-	if (unlikely(!slot_addr))
-		return;
+	अगर (unlikely(!slot_addr))
+		वापस;
 
 	area = tsk->mm->uprobes_state.xol_area;
 	vma_end = area->vaddr + PAGE_SIZE;
-	if (area->vaddr <= slot_addr && slot_addr < vma_end) {
-		unsigned long offset;
-		int slot_nr;
+	अगर (area->vaddr <= slot_addr && slot_addr < vma_end) अणु
+		अचिन्हित दीर्घ offset;
+		पूर्णांक slot_nr;
 
 		offset = slot_addr - area->vaddr;
 		slot_nr = offset / UPROBE_XOL_SLOT_BYTES;
-		if (slot_nr >= UINSNS_PER_PAGE)
-			return;
+		अगर (slot_nr >= UINSNS_PER_PAGE)
+			वापस;
 
-		clear_bit(slot_nr, area->bitmap);
+		clear_bit(slot_nr, area->biपंचांगap);
 		atomic_dec(&area->slot_count);
-		smp_mb__after_atomic(); /* pairs with prepare_to_wait() */
-		if (waitqueue_active(&area->wq))
+		smp_mb__after_atomic(); /* pairs with prepare_to_रुको() */
+		अगर (रुकोqueue_active(&area->wq))
 			wake_up(&area->wq);
 
 		tsk->utask->xol_vaddr = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __weak arch_uprobe_copy_ixol(struct page *page, unsigned long vaddr,
-				  void *src, unsigned long len)
-{
+व्योम __weak arch_uprobe_copy_ixol(काष्ठा page *page, अचिन्हित दीर्घ vaddr,
+				  व्योम *src, अचिन्हित दीर्घ len)
+अणु
 	/* Initialize the slot */
 	copy_to_page(page, vaddr, src, len);
 
 	/*
 	 * We probably need flush_icache_user_page() but it needs vma.
-	 * This should work on most of architectures by default. If
-	 * architecture needs to do something different it can define
+	 * This should work on most of architectures by शेष. If
+	 * architecture needs to करो something dअगरferent it can define
 	 * its own version of the function.
 	 */
 	flush_dcache_page(page);
-}
+पूर्ण
 
 /**
  * uprobe_get_swbp_addr - compute address of swbp given post-swbp regs
- * @regs: Reflects the saved state of the task after it has hit a breakpoint
- * instruction.
- * Return the address of the breakpoint instruction.
+ * @regs: Reflects the saved state of the task after it has hit a अवरोधpoपूर्णांक
+ * inकाष्ठाion.
+ * Return the address of the अवरोधpoपूर्णांक inकाष्ठाion.
  */
-unsigned long __weak uprobe_get_swbp_addr(struct pt_regs *regs)
-{
-	return instruction_pointer(regs) - UPROBE_SWBP_INSN_SIZE;
-}
+अचिन्हित दीर्घ __weak uprobe_get_swbp_addr(काष्ठा pt_regs *regs)
+अणु
+	वापस inकाष्ठाion_poपूर्णांकer(regs) - UPROBE_SWBP_INSN_SIZE;
+पूर्ण
 
-unsigned long uprobe_get_trap_addr(struct pt_regs *regs)
-{
-	struct uprobe_task *utask = current->utask;
+अचिन्हित दीर्घ uprobe_get_trap_addr(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा uprobe_task *utask = current->utask;
 
-	if (unlikely(utask && utask->active_uprobe))
-		return utask->vaddr;
+	अगर (unlikely(utask && utask->active_uprobe))
+		वापस utask->vaddr;
 
-	return instruction_pointer(regs);
-}
+	वापस inकाष्ठाion_poपूर्णांकer(regs);
+पूर्ण
 
-static struct return_instance *free_ret_instance(struct return_instance *ri)
-{
-	struct return_instance *next = ri->next;
+अटल काष्ठा वापस_instance *मुक्त_ret_instance(काष्ठा वापस_instance *ri)
+अणु
+	काष्ठा वापस_instance *next = ri->next;
 	put_uprobe(ri->uprobe);
-	kfree(ri);
-	return next;
-}
+	kमुक्त(ri);
+	वापस next;
+पूर्ण
 
 /*
  * Called with no locks held.
- * Called in context of an exiting or an exec-ing thread.
+ * Called in context of an निकासing or an exec-ing thपढ़ो.
  */
-void uprobe_free_utask(struct task_struct *t)
-{
-	struct uprobe_task *utask = t->utask;
-	struct return_instance *ri;
+व्योम uprobe_मुक्त_utask(काष्ठा task_काष्ठा *t)
+अणु
+	काष्ठा uprobe_task *utask = t->utask;
+	काष्ठा वापस_instance *ri;
 
-	if (!utask)
-		return;
+	अगर (!utask)
+		वापस;
 
-	if (utask->active_uprobe)
+	अगर (utask->active_uprobe)
 		put_uprobe(utask->active_uprobe);
 
-	ri = utask->return_instances;
-	while (ri)
-		ri = free_ret_instance(ri);
+	ri = utask->वापस_instances;
+	जबतक (ri)
+		ri = मुक्त_ret_instance(ri);
 
-	xol_free_insn_slot(t);
-	kfree(utask);
-	t->utask = NULL;
-}
+	xol_मुक्त_insn_slot(t);
+	kमुक्त(utask);
+	t->utask = शून्य;
+पूर्ण
 
 /*
- * Allocate a uprobe_task object for the task if necessary.
- * Called when the thread hits a breakpoint.
+ * Allocate a uprobe_task object क्रम the task अगर necessary.
+ * Called when the thपढ़ो hits a अवरोधpoपूर्णांक.
  *
  * Returns:
- * - pointer to new uprobe_task on success
- * - NULL otherwise
+ * - poपूर्णांकer to new uprobe_task on success
+ * - शून्य otherwise
  */
-static struct uprobe_task *get_utask(void)
-{
-	if (!current->utask)
-		current->utask = kzalloc(sizeof(struct uprobe_task), GFP_KERNEL);
-	return current->utask;
-}
+अटल काष्ठा uprobe_task *get_utask(व्योम)
+अणु
+	अगर (!current->utask)
+		current->utask = kzalloc(माप(काष्ठा uprobe_task), GFP_KERNEL);
+	वापस current->utask;
+पूर्ण
 
-static int dup_utask(struct task_struct *t, struct uprobe_task *o_utask)
-{
-	struct uprobe_task *n_utask;
-	struct return_instance **p, *o, *n;
+अटल पूर्णांक dup_utask(काष्ठा task_काष्ठा *t, काष्ठा uprobe_task *o_utask)
+अणु
+	काष्ठा uprobe_task *n_utask;
+	काष्ठा वापस_instance **p, *o, *n;
 
-	n_utask = kzalloc(sizeof(struct uprobe_task), GFP_KERNEL);
-	if (!n_utask)
-		return -ENOMEM;
+	n_utask = kzalloc(माप(काष्ठा uprobe_task), GFP_KERNEL);
+	अगर (!n_utask)
+		वापस -ENOMEM;
 	t->utask = n_utask;
 
-	p = &n_utask->return_instances;
-	for (o = o_utask->return_instances; o; o = o->next) {
-		n = kmalloc(sizeof(struct return_instance), GFP_KERNEL);
-		if (!n)
-			return -ENOMEM;
+	p = &n_utask->वापस_instances;
+	क्रम (o = o_utask->वापस_instances; o; o = o->next) अणु
+		n = kदो_स्मृति(माप(काष्ठा वापस_instance), GFP_KERNEL);
+		अगर (!n)
+			वापस -ENOMEM;
 
 		*n = *o;
 		get_uprobe(n->uprobe);
-		n->next = NULL;
+		n->next = शून्य;
 
 		*p = n;
 		p = &n->next;
 		n_utask->depth++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void uprobe_warn(struct task_struct *t, const char *msg)
-{
+अटल व्योम uprobe_warn(काष्ठा task_काष्ठा *t, स्थिर अक्षर *msg)
+अणु
 	pr_warn("uprobe: %s:%d failed to %s\n",
 			current->comm, current->pid, msg);
-}
+पूर्ण
 
-static void dup_xol_work(struct callback_head *work)
-{
-	if (current->flags & PF_EXITING)
-		return;
+अटल व्योम dup_xol_work(काष्ठा callback_head *work)
+अणु
+	अगर (current->flags & PF_EXITING)
+		वापस;
 
-	if (!__create_xol_area(current->utask->dup_xol_addr) &&
-			!fatal_signal_pending(current))
+	अगर (!__create_xol_area(current->utask->dup_xol_addr) &&
+			!fatal_संकेत_pending(current))
 		uprobe_warn(current, "dup xol area");
-}
+पूर्ण
 
 /*
- * Called in context of a new clone/fork from copy_process.
+ * Called in context of a new clone/विभाजन from copy_process.
  */
-void uprobe_copy_process(struct task_struct *t, unsigned long flags)
-{
-	struct uprobe_task *utask = current->utask;
-	struct mm_struct *mm = current->mm;
-	struct xol_area *area;
+व्योम uprobe_copy_process(काष्ठा task_काष्ठा *t, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा uprobe_task *utask = current->utask;
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा xol_area *area;
 
-	t->utask = NULL;
+	t->utask = शून्य;
 
-	if (!utask || !utask->return_instances)
-		return;
+	अगर (!utask || !utask->वापस_instances)
+		वापस;
 
-	if (mm == t->mm && !(flags & CLONE_VFORK))
-		return;
+	अगर (mm == t->mm && !(flags & CLONE_VFORK))
+		वापस;
 
-	if (dup_utask(t, utask))
-		return uprobe_warn(t, "dup ret instances");
+	अगर (dup_utask(t, utask))
+		वापस uprobe_warn(t, "dup ret instances");
 
-	/* The task can fork() after dup_xol_work() fails */
+	/* The task can विभाजन() after dup_xol_work() fails */
 	area = mm->uprobes_state.xol_area;
-	if (!area)
-		return uprobe_warn(t, "dup xol area");
+	अगर (!area)
+		वापस uprobe_warn(t, "dup xol area");
 
-	if (mm == t->mm)
-		return;
+	अगर (mm == t->mm)
+		वापस;
 
 	t->utask->dup_xol_addr = area->vaddr;
 	init_task_work(&t->utask->dup_xol_work, dup_xol_work);
 	task_work_add(t, &t->utask->dup_xol_work, TWA_RESUME);
-}
+पूर्ण
 
 /*
  * Current area->vaddr notion assume the trampoline address is always
  * equal area->vaddr.
  *
- * Returns -1 in case the xol_area is not allocated.
+ * Returns -1 in हाल the xol_area is not allocated.
  */
-static unsigned long get_trampoline_vaddr(void)
-{
-	struct xol_area *area;
-	unsigned long trampoline_vaddr = -1;
+अटल अचिन्हित दीर्घ get_trampoline_vaddr(व्योम)
+अणु
+	काष्ठा xol_area *area;
+	अचिन्हित दीर्घ trampoline_vaddr = -1;
 
 	/* Pairs with xol_add_vma() smp_store_release() */
 	area = READ_ONCE(current->mm->uprobes_state.xol_area); /* ^^^ */
-	if (area)
+	अगर (area)
 		trampoline_vaddr = area->vaddr;
 
-	return trampoline_vaddr;
-}
+	वापस trampoline_vaddr;
+पूर्ण
 
-static void cleanup_return_instances(struct uprobe_task *utask, bool chained,
-					struct pt_regs *regs)
-{
-	struct return_instance *ri = utask->return_instances;
-	enum rp_check ctx = chained ? RP_CHECK_CHAIN_CALL : RP_CHECK_CALL;
+अटल व्योम cleanup_वापस_instances(काष्ठा uprobe_task *utask, bool chained,
+					काष्ठा pt_regs *regs)
+अणु
+	काष्ठा वापस_instance *ri = utask->वापस_instances;
+	क्रमागत rp_check ctx = chained ? RP_CHECK_CHAIN_CALL : RP_CHECK_CALL;
 
-	while (ri && !arch_uretprobe_is_alive(ri, ctx, regs)) {
-		ri = free_ret_instance(ri);
+	जबतक (ri && !arch_uretprobe_is_alive(ri, ctx, regs)) अणु
+		ri = मुक्त_ret_instance(ri);
 		utask->depth--;
-	}
-	utask->return_instances = ri;
-}
+	पूर्ण
+	utask->वापस_instances = ri;
+पूर्ण
 
-static void prepare_uretprobe(struct uprobe *uprobe, struct pt_regs *regs)
-{
-	struct return_instance *ri;
-	struct uprobe_task *utask;
-	unsigned long orig_ret_vaddr, trampoline_vaddr;
+अटल व्योम prepare_uretprobe(काष्ठा uprobe *uprobe, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा वापस_instance *ri;
+	काष्ठा uprobe_task *utask;
+	अचिन्हित दीर्घ orig_ret_vaddr, trampoline_vaddr;
 	bool chained;
 
-	if (!get_xol_area())
-		return;
+	अगर (!get_xol_area())
+		वापस;
 
 	utask = get_utask();
-	if (!utask)
-		return;
+	अगर (!utask)
+		वापस;
 
-	if (utask->depth >= MAX_URETPROBE_DEPTH) {
-		printk_ratelimited(KERN_INFO "uprobe: omit uretprobe due to"
+	अगर (utask->depth >= MAX_URETPROBE_DEPTH) अणु
+		prपूर्णांकk_ratelimited(KERN_INFO "uprobe: omit uretprobe due to"
 				" nestedness limit pid/tgid=%d/%d\n",
 				current->pid, current->tgid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ri = kmalloc(sizeof(struct return_instance), GFP_KERNEL);
-	if (!ri)
-		return;
+	ri = kदो_स्मृति(माप(काष्ठा वापस_instance), GFP_KERNEL);
+	अगर (!ri)
+		वापस;
 
 	trampoline_vaddr = get_trampoline_vaddr();
-	orig_ret_vaddr = arch_uretprobe_hijack_return_addr(trampoline_vaddr, regs);
-	if (orig_ret_vaddr == -1)
-		goto fail;
+	orig_ret_vaddr = arch_uretprobe_hijack_वापस_addr(trampoline_vaddr, regs);
+	अगर (orig_ret_vaddr == -1)
+		जाओ fail;
 
-	/* drop the entries invalidated by longjmp() */
+	/* drop the entries invalidated by दीर्घ_लाँघ() */
 	chained = (orig_ret_vaddr == trampoline_vaddr);
-	cleanup_return_instances(utask, chained, regs);
+	cleanup_वापस_instances(utask, chained, regs);
 
 	/*
-	 * We don't want to keep trampoline address in stack, rather keep the
-	 * original return address of first caller thru all the consequent
-	 * instances. This also makes breakpoint unwrapping easier.
+	 * We करोn't want to keep trampoline address in stack, rather keep the
+	 * original वापस address of first caller thru all the consequent
+	 * instances. This also makes अवरोधpoपूर्णांक unwrapping easier.
 	 */
-	if (chained) {
-		if (!utask->return_instances) {
+	अगर (chained) अणु
+		अगर (!utask->वापस_instances) अणु
 			/*
 			 * This situation is not possible. Likely we have an
 			 * attack from user-space.
 			 */
 			uprobe_warn(current, "handle tail call");
-			goto fail;
-		}
-		orig_ret_vaddr = utask->return_instances->orig_ret_vaddr;
-	}
+			जाओ fail;
+		पूर्ण
+		orig_ret_vaddr = utask->वापस_instances->orig_ret_vaddr;
+	पूर्ण
 
 	ri->uprobe = get_uprobe(uprobe);
-	ri->func = instruction_pointer(regs);
-	ri->stack = user_stack_pointer(regs);
+	ri->func = inकाष्ठाion_poपूर्णांकer(regs);
+	ri->stack = user_stack_poपूर्णांकer(regs);
 	ri->orig_ret_vaddr = orig_ret_vaddr;
 	ri->chained = chained;
 
 	utask->depth++;
-	ri->next = utask->return_instances;
-	utask->return_instances = ri;
+	ri->next = utask->वापस_instances;
+	utask->वापस_instances = ri;
 
-	return;
+	वापस;
  fail:
-	kfree(ri);
-}
+	kमुक्त(ri);
+पूर्ण
 
-/* Prepare to single-step probed instruction out of line. */
-static int
-pre_ssout(struct uprobe *uprobe, struct pt_regs *regs, unsigned long bp_vaddr)
-{
-	struct uprobe_task *utask;
-	unsigned long xol_vaddr;
-	int err;
+/* Prepare to single-step probed inकाष्ठाion out of line. */
+अटल पूर्णांक
+pre_ssout(काष्ठा uprobe *uprobe, काष्ठा pt_regs *regs, अचिन्हित दीर्घ bp_vaddr)
+अणु
+	काष्ठा uprobe_task *utask;
+	अचिन्हित दीर्घ xol_vaddr;
+	पूर्णांक err;
 
 	utask = get_utask();
-	if (!utask)
-		return -ENOMEM;
+	अगर (!utask)
+		वापस -ENOMEM;
 
 	xol_vaddr = xol_get_insn_slot(uprobe);
-	if (!xol_vaddr)
-		return -ENOMEM;
+	अगर (!xol_vaddr)
+		वापस -ENOMEM;
 
 	utask->xol_vaddr = xol_vaddr;
 	utask->vaddr = bp_vaddr;
 
 	err = arch_uprobe_pre_xol(&uprobe->arch, regs);
-	if (unlikely(err)) {
-		xol_free_insn_slot(current);
-		return err;
-	}
+	अगर (unlikely(err)) अणु
+		xol_मुक्त_insn_slot(current);
+		वापस err;
+	पूर्ण
 
 	utask->active_uprobe = uprobe;
 	utask->state = UTASK_SSTEP;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * If we are singlestepping, then ensure this thread is not connected to
- * non-fatal signals until completion of singlestep.  When xol insn itself
- * triggers the signal,  restart the original insn even if the task is
- * already SIGKILL'ed (since coredump should report the correct ip).  This
- * is even more important if the task has a handler for SIGSEGV/etc, The
- * _same_ instruction should be repeated again after return from the signal
- * handler, and SSTEP can never finish in this case.
+ * If we are singlestepping, then ensure this thपढ़ो is not connected to
+ * non-fatal संकेतs until completion of singlestep.  When xol insn itself
+ * triggers the संकेत,  restart the original insn even अगर the task is
+ * alपढ़ोy SIGKILL'ed (since coredump should report the correct ip).  This
+ * is even more important अगर the task has a handler क्रम संक_अंश/etc, The
+ * _same_ inकाष्ठाion should be repeated again after वापस from the संकेत
+ * handler, and SSTEP can never finish in this हाल.
  */
-bool uprobe_deny_signal(void)
-{
-	struct task_struct *t = current;
-	struct uprobe_task *utask = t->utask;
+bool uprobe_deny_संकेत(व्योम)
+अणु
+	काष्ठा task_काष्ठा *t = current;
+	काष्ठा uprobe_task *utask = t->utask;
 
-	if (likely(!utask || !utask->active_uprobe))
-		return false;
+	अगर (likely(!utask || !utask->active_uprobe))
+		वापस false;
 
 	WARN_ON_ONCE(utask->state != UTASK_SSTEP);
 
-	if (task_sigpending(t)) {
+	अगर (task_संक_बाकी(t)) अणु
 		spin_lock_irq(&t->sighand->siglock);
-		clear_tsk_thread_flag(t, TIF_SIGPENDING);
+		clear_tsk_thपढ़ो_flag(t, TIF_SIGPENDING);
 		spin_unlock_irq(&t->sighand->siglock);
 
-		if (__fatal_signal_pending(t) || arch_uprobe_xol_was_trapped(t)) {
+		अगर (__fatal_संकेत_pending(t) || arch_uprobe_xol_was_trapped(t)) अणु
 			utask->state = UTASK_SSTEP_TRAPPED;
-			set_tsk_thread_flag(t, TIF_UPROBE);
-		}
-	}
+			set_tsk_thपढ़ो_flag(t, TIF_UPROBE);
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void mmf_recalc_uprobes(struct mm_struct *mm)
-{
-	struct vm_area_struct *vma;
+अटल व्योम mmf_recalc_uprobes(काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
 
-	for (vma = mm->mmap; vma; vma = vma->vm_next) {
-		if (!valid_vma(vma, false))
-			continue;
+	क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
+		अगर (!valid_vma(vma, false))
+			जारी;
 		/*
 		 * This is not strictly accurate, we can race with
-		 * uprobe_unregister() and see the already removed
-		 * uprobe if delete_uprobe() was not yet called.
+		 * uprobe_unरेजिस्टर() and see the alपढ़ोy हटाओd
+		 * uprobe अगर delete_uprobe() was not yet called.
 		 * Or this uprobe can be filtered out.
 		 */
-		if (vma_has_uprobes(vma, vma->vm_start, vma->vm_end))
-			return;
-	}
+		अगर (vma_has_uprobes(vma, vma->vm_start, vma->vm_end))
+			वापस;
+	पूर्ण
 
 	clear_bit(MMF_HAS_UPROBES, &mm->flags);
-}
+पूर्ण
 
-static int is_trap_at_addr(struct mm_struct *mm, unsigned long vaddr)
-{
-	struct page *page;
+अटल पूर्णांक is_trap_at_addr(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vaddr)
+अणु
+	काष्ठा page *page;
 	uprobe_opcode_t opcode;
-	int result;
+	पूर्णांक result;
 
-	if (WARN_ON_ONCE(!IS_ALIGNED(vaddr, UPROBE_SWBP_INSN_SIZE)))
-		return -EINVAL;
+	अगर (WARN_ON_ONCE(!IS_ALIGNED(vaddr, UPROBE_SWBP_INSN_SIZE)))
+		वापस -EINVAL;
 
 	pagefault_disable();
 	result = __get_user(opcode, (uprobe_opcode_t __user *)vaddr);
 	pagefault_enable();
 
-	if (likely(result == 0))
-		goto out;
+	अगर (likely(result == 0))
+		जाओ out;
 
 	/*
-	 * The NULL 'tsk' here ensures that any faults that occur here
+	 * The शून्य 'tsk' here ensures that any faults that occur here
 	 * will not be accounted to the task.  'mm' *is* current->mm,
 	 * but we treat this as a 'remote' access since it is
 	 * essentially a kernel access to the memory.
 	 */
 	result = get_user_pages_remote(mm, vaddr, 1, FOLL_FORCE, &page,
-			NULL, NULL);
-	if (result < 0)
-		return result;
+			शून्य, शून्य);
+	अगर (result < 0)
+		वापस result;
 
 	copy_from_page(page, vaddr, &opcode, UPROBE_SWBP_INSN_SIZE);
 	put_page(page);
  out:
-	/* This needs to return true for any variant of the trap insn */
-	return is_trap_insn(&opcode);
-}
+	/* This needs to वापस true क्रम any variant of the trap insn */
+	वापस is_trap_insn(&opcode);
+पूर्ण
 
-static struct uprobe *find_active_uprobe(unsigned long bp_vaddr, int *is_swbp)
-{
-	struct mm_struct *mm = current->mm;
-	struct uprobe *uprobe = NULL;
-	struct vm_area_struct *vma;
+अटल काष्ठा uprobe *find_active_uprobe(अचिन्हित दीर्घ bp_vaddr, पूर्णांक *is_swbp)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा uprobe *uprobe = शून्य;
+	काष्ठा vm_area_काष्ठा *vma;
 
-	mmap_read_lock(mm);
+	mmap_पढ़ो_lock(mm);
 	vma = find_vma(mm, bp_vaddr);
-	if (vma && vma->vm_start <= bp_vaddr) {
-		if (valid_vma(vma, false)) {
-			struct inode *inode = file_inode(vma->vm_file);
+	अगर (vma && vma->vm_start <= bp_vaddr) अणु
+		अगर (valid_vma(vma, false)) अणु
+			काष्ठा inode *inode = file_inode(vma->vm_file);
 			loff_t offset = vaddr_to_offset(vma, bp_vaddr);
 
 			uprobe = find_uprobe(inode, offset);
-		}
+		पूर्ण
 
-		if (!uprobe)
+		अगर (!uprobe)
 			*is_swbp = is_trap_at_addr(mm, bp_vaddr);
-	} else {
+	पूर्ण अन्यथा अणु
 		*is_swbp = -EFAULT;
-	}
+	पूर्ण
 
-	if (!uprobe && test_and_clear_bit(MMF_RECALC_UPROBES, &mm->flags))
+	अगर (!uprobe && test_and_clear_bit(MMF_RECALC_UPROBES, &mm->flags))
 		mmf_recalc_uprobes(mm);
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 
-	return uprobe;
-}
+	वापस uprobe;
+पूर्ण
 
-static void handler_chain(struct uprobe *uprobe, struct pt_regs *regs)
-{
-	struct uprobe_consumer *uc;
-	int remove = UPROBE_HANDLER_REMOVE;
-	bool need_prep = false; /* prepare return uprobe, when needed */
+अटल व्योम handler_chain(काष्ठा uprobe *uprobe, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा uprobe_consumer *uc;
+	पूर्णांक हटाओ = UPROBE_HANDLER_REMOVE;
+	bool need_prep = false; /* prepare वापस uprobe, when needed */
 
-	down_read(&uprobe->register_rwsem);
-	for (uc = uprobe->consumers; uc; uc = uc->next) {
-		int rc = 0;
+	करोwn_पढ़ो(&uprobe->रेजिस्टर_rwsem);
+	क्रम (uc = uprobe->consumers; uc; uc = uc->next) अणु
+		पूर्णांक rc = 0;
 
-		if (uc->handler) {
+		अगर (uc->handler) अणु
 			rc = uc->handler(uc, regs);
 			WARN(rc & ~UPROBE_HANDLER_MASK,
 				"bad rc=0x%x from %ps()\n", rc, uc->handler);
-		}
+		पूर्ण
 
-		if (uc->ret_handler)
+		अगर (uc->ret_handler)
 			need_prep = true;
 
-		remove &= rc;
-	}
+		हटाओ &= rc;
+	पूर्ण
 
-	if (need_prep && !remove)
-		prepare_uretprobe(uprobe, regs); /* put bp at return */
+	अगर (need_prep && !हटाओ)
+		prepare_uretprobe(uprobe, regs); /* put bp at वापस */
 
-	if (remove && uprobe->consumers) {
+	अगर (हटाओ && uprobe->consumers) अणु
 		WARN_ON(!uprobe_is_active(uprobe));
 		unapply_uprobe(uprobe, current->mm);
-	}
-	up_read(&uprobe->register_rwsem);
-}
+	पूर्ण
+	up_पढ़ो(&uprobe->रेजिस्टर_rwsem);
+पूर्ण
 
-static void
-handle_uretprobe_chain(struct return_instance *ri, struct pt_regs *regs)
-{
-	struct uprobe *uprobe = ri->uprobe;
-	struct uprobe_consumer *uc;
+अटल व्योम
+handle_uretprobe_chain(काष्ठा वापस_instance *ri, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा uprobe *uprobe = ri->uprobe;
+	काष्ठा uprobe_consumer *uc;
 
-	down_read(&uprobe->register_rwsem);
-	for (uc = uprobe->consumers; uc; uc = uc->next) {
-		if (uc->ret_handler)
+	करोwn_पढ़ो(&uprobe->रेजिस्टर_rwsem);
+	क्रम (uc = uprobe->consumers; uc; uc = uc->next) अणु
+		अगर (uc->ret_handler)
 			uc->ret_handler(uc, ri->func, regs);
-	}
-	up_read(&uprobe->register_rwsem);
-}
+	पूर्ण
+	up_पढ़ो(&uprobe->रेजिस्टर_rwsem);
+पूर्ण
 
-static struct return_instance *find_next_ret_chain(struct return_instance *ri)
-{
+अटल काष्ठा वापस_instance *find_next_ret_chain(काष्ठा वापस_instance *ri)
+अणु
 	bool chained;
 
-	do {
+	करो अणु
 		chained = ri->chained;
-		ri = ri->next;	/* can't be NULL if chained */
-	} while (chained);
+		ri = ri->next;	/* can't be शून्य अगर chained */
+	पूर्ण जबतक (chained);
 
-	return ri;
-}
+	वापस ri;
+पूर्ण
 
-static void handle_trampoline(struct pt_regs *regs)
-{
-	struct uprobe_task *utask;
-	struct return_instance *ri, *next;
+अटल व्योम handle_trampoline(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा uprobe_task *utask;
+	काष्ठा वापस_instance *ri, *next;
 	bool valid;
 
 	utask = current->utask;
-	if (!utask)
-		goto sigill;
+	अगर (!utask)
+		जाओ sigill;
 
-	ri = utask->return_instances;
-	if (!ri)
-		goto sigill;
+	ri = utask->वापस_instances;
+	अगर (!ri)
+		जाओ sigill;
 
-	do {
+	करो अणु
 		/*
-		 * We should throw out the frames invalidated by longjmp().
+		 * We should throw out the frames invalidated by दीर्घ_लाँघ().
 		 * If this chain is valid, then the next one should be alive
-		 * or NULL; the latter case means that nobody but ri->func
-		 * could hit this trampoline on return. TODO: sigaltstack().
+		 * or शून्य; the latter हाल means that nobody but ri->func
+		 * could hit this trampoline on वापस. TODO: sigaltstack().
 		 */
 		next = find_next_ret_chain(ri);
 		valid = !next || arch_uretprobe_is_alive(next, RP_CHECK_RET, regs);
 
-		instruction_pointer_set(regs, ri->orig_ret_vaddr);
-		do {
-			if (valid)
+		inकाष्ठाion_poपूर्णांकer_set(regs, ri->orig_ret_vaddr);
+		करो अणु
+			अगर (valid)
 				handle_uretprobe_chain(ri, regs);
-			ri = free_ret_instance(ri);
+			ri = मुक्त_ret_instance(ri);
 			utask->depth--;
-		} while (ri != next);
-	} while (!valid);
+		पूर्ण जबतक (ri != next);
+	पूर्ण जबतक (!valid);
 
-	utask->return_instances = ri;
-	return;
+	utask->वापस_instances = ri;
+	वापस;
 
  sigill:
 	uprobe_warn(current, "handle uretprobe, sending SIGILL.");
-	force_sig(SIGILL);
+	क्रमce_sig(संक_अवैध);
 
-}
+पूर्ण
 
-bool __weak arch_uprobe_ignore(struct arch_uprobe *aup, struct pt_regs *regs)
-{
-	return false;
-}
+bool __weak arch_uprobe_ignore(काष्ठा arch_uprobe *aup, काष्ठा pt_regs *regs)
+अणु
+	वापस false;
+पूर्ण
 
-bool __weak arch_uretprobe_is_alive(struct return_instance *ret, enum rp_check ctx,
-					struct pt_regs *regs)
-{
-	return true;
-}
+bool __weak arch_uretprobe_is_alive(काष्ठा वापस_instance *ret, क्रमागत rp_check ctx,
+					काष्ठा pt_regs *regs)
+अणु
+	वापस true;
+पूर्ण
 
 /*
- * Run handler and ask thread to singlestep.
- * Ensure all non-fatal signals cannot interrupt thread while it singlesteps.
+ * Run handler and ask thपढ़ो to singlestep.
+ * Ensure all non-fatal संकेतs cannot पूर्णांकerrupt thपढ़ो जबतक it singlesteps.
  */
-static void handle_swbp(struct pt_regs *regs)
-{
-	struct uprobe *uprobe;
-	unsigned long bp_vaddr;
-	int is_swbp;
+अटल व्योम handle_swbp(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा uprobe *uprobe;
+	अचिन्हित दीर्घ bp_vaddr;
+	पूर्णांक is_swbp;
 
 	bp_vaddr = uprobe_get_swbp_addr(regs);
-	if (bp_vaddr == get_trampoline_vaddr())
-		return handle_trampoline(regs);
+	अगर (bp_vaddr == get_trampoline_vaddr())
+		वापस handle_trampoline(regs);
 
 	uprobe = find_active_uprobe(bp_vaddr, &is_swbp);
-	if (!uprobe) {
-		if (is_swbp > 0) {
-			/* No matching uprobe; signal SIGTRAP. */
-			force_sig(SIGTRAP);
-		} else {
+	अगर (!uprobe) अणु
+		अगर (is_swbp > 0) अणु
+			/* No matching uprobe; संकेत SIGTRAP. */
+			क्रमce_sig(SIGTRAP);
+		पूर्ण अन्यथा अणु
 			/*
-			 * Either we raced with uprobe_unregister() or we can't
-			 * access this memory. The latter is only possible if
-			 * another thread plays with our ->mm. In both cases
+			 * Either we raced with uprobe_unरेजिस्टर() or we can't
+			 * access this memory. The latter is only possible अगर
+			 * another thपढ़ो plays with our ->mm. In both हालs
 			 * we can simply restart. If this vma was unmapped we
 			 * can pretend this insn was not executed yet and get
-			 * the (correct) SIGSEGV after restart.
+			 * the (correct) संक_अंश after restart.
 			 */
-			instruction_pointer_set(regs, bp_vaddr);
-		}
-		return;
-	}
+			inकाष्ठाion_poपूर्णांकer_set(regs, bp_vaddr);
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	/* change it in advance for ->handler() and restart */
-	instruction_pointer_set(regs, bp_vaddr);
+	/* change it in advance क्रम ->handler() and restart */
+	inकाष्ठाion_poपूर्णांकer_set(regs, bp_vaddr);
 
 	/*
-	 * TODO: move copy_insn/etc into _register and remove this hack.
-	 * After we hit the bp, _unregister + _register can install the
+	 * TODO: move copy_insn/etc पूर्णांकo _रेजिस्टर and हटाओ this hack.
+	 * After we hit the bp, _unरेजिस्टर + _रेजिस्टर can install the
 	 * new and not-yet-analyzed uprobe at the same address, restart.
 	 */
-	if (unlikely(!test_bit(UPROBE_COPY_INSN, &uprobe->flags)))
-		goto out;
+	अगर (unlikely(!test_bit(UPROBE_COPY_INSN, &uprobe->flags)))
+		जाओ out;
 
 	/*
 	 * Pairs with the smp_wmb() in prepare_uprobe().
 	 *
-	 * Guarantees that if we see the UPROBE_COPY_INSN bit set, then
-	 * we must also see the stores to &uprobe->arch performed by the
+	 * Guarantees that अगर we see the UPROBE_COPY_INSN bit set, then
+	 * we must also see the stores to &uprobe->arch perक्रमmed by the
 	 * prepare_uprobe() call.
 	 */
 	smp_rmb();
 
 	/* Tracing handlers use ->utask to communicate with fetch methods */
-	if (!get_utask())
-		goto out;
+	अगर (!get_utask())
+		जाओ out;
 
-	if (arch_uprobe_ignore(&uprobe->arch, regs))
-		goto out;
+	अगर (arch_uprobe_ignore(&uprobe->arch, regs))
+		जाओ out;
 
 	handler_chain(uprobe, regs);
 
-	if (arch_uprobe_skip_sstep(&uprobe->arch, regs))
-		goto out;
+	अगर (arch_uprobe_skip_sstep(&uprobe->arch, regs))
+		जाओ out;
 
-	if (!pre_ssout(uprobe, regs, bp_vaddr))
-		return;
+	अगर (!pre_ssout(uprobe, regs, bp_vaddr))
+		वापस;
 
-	/* arch_uprobe_skip_sstep() succeeded, or restart if can't singlestep */
+	/* arch_uprobe_skip_sstep() succeeded, or restart अगर can't singlestep */
 out:
 	put_uprobe(uprobe);
-}
+पूर्ण
 
 /*
- * Perform required fix-ups and disable singlestep.
- * Allow pending signals to take effect.
+ * Perक्रमm required fix-ups and disable singlestep.
+ * Allow pending संकेतs to take effect.
  */
-static void handle_singlestep(struct uprobe_task *utask, struct pt_regs *regs)
-{
-	struct uprobe *uprobe;
-	int err = 0;
+अटल व्योम handle_singlestep(काष्ठा uprobe_task *utask, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा uprobe *uprobe;
+	पूर्णांक err = 0;
 
 	uprobe = utask->active_uprobe;
-	if (utask->state == UTASK_SSTEP_ACK)
+	अगर (utask->state == UTASK_SSTEP_ACK)
 		err = arch_uprobe_post_xol(&uprobe->arch, regs);
-	else if (utask->state == UTASK_SSTEP_TRAPPED)
-		arch_uprobe_abort_xol(&uprobe->arch, regs);
-	else
+	अन्यथा अगर (utask->state == UTASK_SSTEP_TRAPPED)
+		arch_uprobe_पात_xol(&uprobe->arch, regs);
+	अन्यथा
 		WARN_ON_ONCE(1);
 
 	put_uprobe(uprobe);
-	utask->active_uprobe = NULL;
+	utask->active_uprobe = शून्य;
 	utask->state = UTASK_RUNNING;
-	xol_free_insn_slot(current);
+	xol_मुक्त_insn_slot(current);
 
 	spin_lock_irq(&current->sighand->siglock);
-	recalc_sigpending(); /* see uprobe_deny_signal() */
+	recalc_संक_बाकी(); /* see uprobe_deny_संकेत() */
 	spin_unlock_irq(&current->sighand->siglock);
 
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		uprobe_warn(current, "execute the probed insn, sending SIGILL.");
-		force_sig(SIGILL);
-	}
-}
+		क्रमce_sig(संक_अवैध);
+	पूर्ण
+पूर्ण
 
 /*
- * On breakpoint hit, breakpoint notifier sets the TIF_UPROBE flag and
- * allows the thread to return from interrupt. After that handle_swbp()
+ * On अवरोधpoपूर्णांक hit, अवरोधpoपूर्णांक notअगरier sets the TIF_UPROBE flag and
+ * allows the thपढ़ो to वापस from पूर्णांकerrupt. After that handle_swbp()
  * sets utask->active_uprobe.
  *
- * On singlestep exception, singlestep notifier sets the TIF_UPROBE flag
- * and allows the thread to return from interrupt.
+ * On singlestep exception, singlestep notअगरier sets the TIF_UPROBE flag
+ * and allows the thपढ़ो to वापस from पूर्णांकerrupt.
  *
- * While returning to userspace, thread notices the TIF_UPROBE flag and calls
- * uprobe_notify_resume().
+ * While वापसing to userspace, thपढ़ो notices the TIF_UPROBE flag and calls
+ * uprobe_notअगरy_resume().
  */
-void uprobe_notify_resume(struct pt_regs *regs)
-{
-	struct uprobe_task *utask;
+व्योम uprobe_notअगरy_resume(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा uprobe_task *utask;
 
-	clear_thread_flag(TIF_UPROBE);
+	clear_thपढ़ो_flag(TIF_UPROBE);
 
 	utask = current->utask;
-	if (utask && utask->active_uprobe)
+	अगर (utask && utask->active_uprobe)
 		handle_singlestep(utask, regs);
-	else
+	अन्यथा
 		handle_swbp(regs);
-}
+पूर्ण
 
 /*
- * uprobe_pre_sstep_notifier gets called from interrupt context as part of
- * notifier mechanism. Set TIF_UPROBE flag and indicate breakpoint hit.
+ * uprobe_pre_sstep_notअगरier माला_लो called from पूर्णांकerrupt context as part of
+ * notअगरier mechanism. Set TIF_UPROBE flag and indicate अवरोधpoपूर्णांक hit.
  */
-int uprobe_pre_sstep_notifier(struct pt_regs *regs)
-{
-	if (!current->mm)
-		return 0;
+पूर्णांक uprobe_pre_sstep_notअगरier(काष्ठा pt_regs *regs)
+अणु
+	अगर (!current->mm)
+		वापस 0;
 
-	if (!test_bit(MMF_HAS_UPROBES, &current->mm->flags) &&
-	    (!current->utask || !current->utask->return_instances))
-		return 0;
+	अगर (!test_bit(MMF_HAS_UPROBES, &current->mm->flags) &&
+	    (!current->utask || !current->utask->वापस_instances))
+		वापस 0;
 
-	set_thread_flag(TIF_UPROBE);
-	return 1;
-}
+	set_thपढ़ो_flag(TIF_UPROBE);
+	वापस 1;
+पूर्ण
 
 /*
- * uprobe_post_sstep_notifier gets called in interrupt context as part of notifier
+ * uprobe_post_sstep_notअगरier माला_लो called in पूर्णांकerrupt context as part of notअगरier
  * mechanism. Set TIF_UPROBE flag and indicate completion of singlestep.
  */
-int uprobe_post_sstep_notifier(struct pt_regs *regs)
-{
-	struct uprobe_task *utask = current->utask;
+पूर्णांक uprobe_post_sstep_notअगरier(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा uprobe_task *utask = current->utask;
 
-	if (!current->mm || !utask || !utask->active_uprobe)
+	अगर (!current->mm || !utask || !utask->active_uprobe)
 		/* task is currently not uprobed */
-		return 0;
+		वापस 0;
 
 	utask->state = UTASK_SSTEP_ACK;
-	set_thread_flag(TIF_UPROBE);
-	return 1;
-}
+	set_thपढ़ो_flag(TIF_UPROBE);
+	वापस 1;
+पूर्ण
 
-static struct notifier_block uprobe_exception_nb = {
-	.notifier_call		= arch_uprobe_exception_notify,
-	.priority		= INT_MAX-1,	/* notified after kprobes, kgdb */
-};
+अटल काष्ठा notअगरier_block uprobe_exception_nb = अणु
+	.notअगरier_call		= arch_uprobe_exception_notअगरy,
+	.priority		= पूर्णांक_उच्च-1,	/* notअगरied after kprobes, kgdb */
+पूर्ण;
 
-void __init uprobes_init(void)
-{
-	int i;
+व्योम __init uprobes_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < UPROBES_HASH_SZ; i++)
+	क्रम (i = 0; i < UPROBES_HASH_SZ; i++)
 		mutex_init(&uprobes_mmap_mutex[i]);
 
-	BUG_ON(register_die_notifier(&uprobe_exception_nb));
-}
+	BUG_ON(रेजिस्टर_die_notअगरier(&uprobe_exception_nb));
+पूर्ण

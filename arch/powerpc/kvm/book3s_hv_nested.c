@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright IBM Corporation, 2018
  * Authors Suraj Jitindar Singh <sjitindarsingh@gmail.com>
- *	   Paul Mackerras <paulus@ozlabs.org>
+ *	   Paul Mackerras <paulus@ozद_असल.org>
  *
- * Description: KVM functions specific to running nested KVM-HV guests
- * on Book3S processors (specifically POWER9 and later).
+ * Description: KVM functions specअगरic to running nested KVM-HV guests
+ * on Book3S processors (specअगरically POWER9 and later).
  */
 
-#include <linux/kernel.h>
-#include <linux/kvm_host.h>
-#include <linux/llist.h>
-#include <linux/pgtable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/llist.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/kvm_ppc.h>
-#include <asm/kvm_book3s.h>
-#include <asm/mmu.h>
-#include <asm/pgalloc.h>
-#include <asm/pte-walk.h>
-#include <asm/reg.h>
+#समावेश <यंत्र/kvm_ppc.h>
+#समावेश <यंत्र/kvm_book3s.h>
+#समावेश <यंत्र/mmu.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/pte-walk.h>
+#समावेश <यंत्र/reg.h>
 
-static struct patb_entry *pseries_partition_tb;
+अटल काष्ठा patb_entry *pseries_partition_tb;
 
-static void kvmhv_update_ptbl_cache(struct kvm_nested_guest *gp);
-static void kvmhv_free_memslot_nest_rmap(struct kvm_memory_slot *free);
+अटल व्योम kvmhv_update_ptbl_cache(काष्ठा kvm_nested_guest *gp);
+अटल व्योम kvmhv_मुक्त_memslot_nest_rmap(काष्ठा kvm_memory_slot *मुक्त);
 
-void kvmhv_save_hv_regs(struct kvm_vcpu *vcpu, struct hv_guest_state *hr)
-{
-	struct kvmppc_vcore *vc = vcpu->arch.vcore;
+व्योम kvmhv_save_hv_regs(काष्ठा kvm_vcpu *vcpu, काष्ठा hv_guest_state *hr)
+अणु
+	काष्ठा kvmppc_vcore *vc = vcpu->arch.vcore;
 
 	hr->pcr = vc->pcr | PCR_MASK;
 	hr->dpdes = vc->dpdes;
@@ -51,18 +52,18 @@ void kvmhv_save_hv_regs(struct kvm_vcpu *vcpu, struct hv_guest_state *hr)
 	hr->ppr = vcpu->arch.ppr;
 	hr->dawr1 = vcpu->arch.dawr1;
 	hr->dawrx1 = vcpu->arch.dawrx1;
-}
+पूर्ण
 
-static void byteswap_pt_regs(struct pt_regs *regs)
-{
-	unsigned long *addr = (unsigned long *) regs;
+अटल व्योम byteswap_pt_regs(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ *addr = (अचिन्हित दीर्घ *) regs;
 
-	for (; addr < ((unsigned long *) (regs + 1)); addr++)
+	क्रम (; addr < ((अचिन्हित दीर्घ *) (regs + 1)); addr++)
 		*addr = swab64(*addr);
-}
+पूर्ण
 
-static void byteswap_hv_regs(struct hv_guest_state *hr)
-{
+अटल व्योम byteswap_hv_regs(काष्ठा hv_guest_state *hr)
+अणु
 	hr->version = swab64(hr->version);
 	hr->lpid = swab32(hr->lpid);
 	hr->vcpu_token = swab32(hr->vcpu_token);
@@ -95,12 +96,12 @@ static void byteswap_hv_regs(struct hv_guest_state *hr)
 	hr->ppr = swab64(hr->ppr);
 	hr->dawr1 = swab64(hr->dawr1);
 	hr->dawrx1 = swab64(hr->dawrx1);
-}
+पूर्ण
 
-static void save_hv_return_state(struct kvm_vcpu *vcpu, int trap,
-				 struct hv_guest_state *hr)
-{
-	struct kvmppc_vcore *vc = vcpu->arch.vcore;
+अटल व्योम save_hv_वापस_state(काष्ठा kvm_vcpu *vcpu, पूर्णांक trap,
+				 काष्ठा hv_guest_state *hr)
+अणु
+	काष्ठा kvmppc_vcore *vc = vcpu->arch.vcore;
 
 	hr->dpdes = vc->dpdes;
 	hr->hfscr = vcpu->arch.hfscr;
@@ -117,37 +118,37 @@ static void save_hv_return_state(struct kvm_vcpu *vcpu, int trap,
 	hr->pidr = vcpu->arch.pid;
 	hr->cfar = vcpu->arch.cfar;
 	hr->ppr = vcpu->arch.ppr;
-	switch (trap) {
-	case BOOK3S_INTERRUPT_H_DATA_STORAGE:
+	चयन (trap) अणु
+	हाल BOOK3S_INTERRUPT_H_DATA_STORAGE:
 		hr->hdar = vcpu->arch.fault_dar;
 		hr->hdsisr = vcpu->arch.fault_dsisr;
 		hr->asdr = vcpu->arch.fault_gpa;
-		break;
-	case BOOK3S_INTERRUPT_H_INST_STORAGE:
+		अवरोध;
+	हाल BOOK3S_INTERRUPT_H_INST_STORAGE:
 		hr->asdr = vcpu->arch.fault_gpa;
-		break;
-	case BOOK3S_INTERRUPT_H_EMUL_ASSIST:
+		अवरोध;
+	हाल BOOK3S_INTERRUPT_H_EMUL_ASSIST:
 		hr->heir = vcpu->arch.emul_inst;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * This can result in some L0 HV register state being leaked to an L1
+ * This can result in some L0 HV रेजिस्टर state being leaked to an L1
  * hypervisor when the hv_guest_state is copied back to the guest after
- * being modified here.
+ * being modअगरied here.
  *
- * There is no known problem with such a leak, and in many cases these
- * register settings could be derived by the guest by observing behaviour
- * and timing, interrupts, etc., but it is an issue to consider.
+ * There is no known problem with such a leak, and in many हालs these
+ * रेजिस्टर settings could be derived by the guest by observing behaviour
+ * and timing, पूर्णांकerrupts, etc., but it is an issue to consider.
  */
-static void sanitise_hv_regs(struct kvm_vcpu *vcpu, struct hv_guest_state *hr)
-{
-	struct kvmppc_vcore *vc = vcpu->arch.vcore;
+अटल व्योम sanitise_hv_regs(काष्ठा kvm_vcpu *vcpu, काष्ठा hv_guest_state *hr)
+अणु
+	काष्ठा kvmppc_vcore *vc = vcpu->arch.vcore;
 	u64 mask;
 
 	/*
-	 * Don't let L1 change LPCR bits for the L2 except these:
+	 * Don't let L1 change LPCR bits क्रम the L2 except these:
 	 */
 	mask = LPCR_DPFD | LPCR_ILE | LPCR_TC | LPCR_AIL | LPCR_LD |
 		LPCR_LPES | LPCR_MER;
@@ -160,23 +161,23 @@ static void sanitise_hv_regs(struct kvm_vcpu *vcpu, struct hv_guest_state *hr)
 			(vc->lpcr & ~mask) | (hr->lpcr & mask));
 
 	/*
-	 * Don't let L1 enable features for L2 which we've disabled for L1,
-	 * but preserve the interrupt cause field.
+	 * Don't let L1 enable features for L2 which we've disabled क्रम L1,
+	 * but preserve the पूर्णांकerrupt cause field.
 	 */
 	hr->hfscr &= (HFSCR_INTR_CAUSE | vcpu->arch.hfscr);
 
-	/* Don't let data address watchpoint match in hypervisor state */
+	/* Don't let data address watchpoपूर्णांक match in hypervisor state */
 	hr->dawrx0 &= ~DAWRX_HYP;
 	hr->dawrx1 &= ~DAWRX_HYP;
 
-	/* Don't let completed instruction address breakpt match in HV state */
-	if ((hr->ciabr & CIABR_PRIV) == CIABR_PRIV_HYPER)
+	/* Don't let completed inकाष्ठाion address अवरोधpt match in HV state */
+	अगर ((hr->ciabr & CIABR_PRIV) == CIABR_PRIV_HYPER)
 		hr->ciabr &= ~CIABR_PRIV;
-}
+पूर्ण
 
-static void restore_hv_regs(struct kvm_vcpu *vcpu, struct hv_guest_state *hr)
-{
-	struct kvmppc_vcore *vc = vcpu->arch.vcore;
+अटल व्योम restore_hv_regs(काष्ठा kvm_vcpu *vcpu, काष्ठा hv_guest_state *hr)
+अणु
+	काष्ठा kvmppc_vcore *vc = vcpu->arch.vcore;
 
 	vc->pcr = hr->pcr | PCR_MASK;
 	vc->dpdes = hr->dpdes;
@@ -199,12 +200,12 @@ static void restore_hv_regs(struct kvm_vcpu *vcpu, struct hv_guest_state *hr)
 	vcpu->arch.ppr = hr->ppr;
 	vcpu->arch.dawr1 = hr->dawr1;
 	vcpu->arch.dawrx1 = hr->dawrx1;
-}
+पूर्ण
 
-void kvmhv_restore_hv_return_state(struct kvm_vcpu *vcpu,
-				   struct hv_guest_state *hr)
-{
-	struct kvmppc_vcore *vc = vcpu->arch.vcore;
+व्योम kvmhv_restore_hv_वापस_state(काष्ठा kvm_vcpu *vcpu,
+				   काष्ठा hv_guest_state *hr)
+अणु
+	काष्ठा kvmppc_vcore *vc = vcpu->arch.vcore;
 
 	vc->dpdes = hr->dpdes;
 	vcpu->arch.hfscr = hr->hfscr;
@@ -225,110 +226,110 @@ void kvmhv_restore_hv_return_state(struct kvm_vcpu *vcpu,
 	vcpu->arch.pid = hr->pidr;
 	vcpu->arch.cfar = hr->cfar;
 	vcpu->arch.ppr = hr->ppr;
-}
+पूर्ण
 
-static void kvmhv_nested_mmio_needed(struct kvm_vcpu *vcpu, u64 regs_ptr)
-{
+अटल व्योम kvmhv_nested_mmio_needed(काष्ठा kvm_vcpu *vcpu, u64 regs_ptr)
+अणु
 	/* No need to reflect the page fault to L1, we've handled it */
 	vcpu->arch.trap = 0;
 
 	/*
-	 * Since the L2 gprs have already been written back into L1 memory when
+	 * Since the L2 gprs have alपढ़ोy been written back पूर्णांकo L1 memory when
 	 * we complete the mmio, store the L1 memory location of the L2 gpr
-	 * being loaded into by the mmio so that the loaded value can be
+	 * being loaded पूर्णांकo by the mmio so that the loaded value can be
 	 * written there in kvmppc_complete_mmio_load()
 	 */
-	if (((vcpu->arch.io_gpr & KVM_MMIO_REG_EXT_MASK) == KVM_MMIO_REG_GPR)
-	    && (vcpu->mmio_is_write == 0)) {
+	अगर (((vcpu->arch.io_gpr & KVM_MMIO_REG_EXT_MASK) == KVM_MMIO_REG_GPR)
+	    && (vcpu->mmio_is_ग_लिखो == 0)) अणु
 		vcpu->arch.nested_io_gpr = (gpa_t) regs_ptr +
-					   offsetof(struct pt_regs,
+					   दुरत्व(काष्ठा pt_regs,
 						    gpr[vcpu->arch.io_gpr]);
 		vcpu->arch.io_gpr = KVM_MMIO_REG_NESTED_GPR;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int kvmhv_read_guest_state_and_regs(struct kvm_vcpu *vcpu,
-					   struct hv_guest_state *l2_hv,
-					   struct pt_regs *l2_regs,
+अटल पूर्णांक kvmhv_पढ़ो_guest_state_and_regs(काष्ठा kvm_vcpu *vcpu,
+					   काष्ठा hv_guest_state *l2_hv,
+					   काष्ठा pt_regs *l2_regs,
 					   u64 hv_ptr, u64 regs_ptr)
-{
-	int size;
+अणु
+	पूर्णांक size;
 
-	if (kvm_vcpu_read_guest(vcpu, hv_ptr, &l2_hv->version,
-				sizeof(l2_hv->version)))
-		return -1;
+	अगर (kvm_vcpu_पढ़ो_guest(vcpu, hv_ptr, &l2_hv->version,
+				माप(l2_hv->version)))
+		वापस -1;
 
-	if (kvmppc_need_byteswap(vcpu))
+	अगर (kvmppc_need_byteswap(vcpu))
 		l2_hv->version = swab64(l2_hv->version);
 
 	size = hv_guest_state_size(l2_hv->version);
-	if (size < 0)
-		return -1;
+	अगर (size < 0)
+		वापस -1;
 
-	return kvm_vcpu_read_guest(vcpu, hv_ptr, l2_hv, size) ||
-		kvm_vcpu_read_guest(vcpu, regs_ptr, l2_regs,
-				    sizeof(struct pt_regs));
-}
+	वापस kvm_vcpu_पढ़ो_guest(vcpu, hv_ptr, l2_hv, size) ||
+		kvm_vcpu_पढ़ो_guest(vcpu, regs_ptr, l2_regs,
+				    माप(काष्ठा pt_regs));
+पूर्ण
 
-static int kvmhv_write_guest_state_and_regs(struct kvm_vcpu *vcpu,
-					    struct hv_guest_state *l2_hv,
-					    struct pt_regs *l2_regs,
+अटल पूर्णांक kvmhv_ग_लिखो_guest_state_and_regs(काष्ठा kvm_vcpu *vcpu,
+					    काष्ठा hv_guest_state *l2_hv,
+					    काष्ठा pt_regs *l2_regs,
 					    u64 hv_ptr, u64 regs_ptr)
-{
-	int size;
+अणु
+	पूर्णांक size;
 
 	size = hv_guest_state_size(l2_hv->version);
-	if (size < 0)
-		return -1;
+	अगर (size < 0)
+		वापस -1;
 
-	return kvm_vcpu_write_guest(vcpu, hv_ptr, l2_hv, size) ||
-		kvm_vcpu_write_guest(vcpu, regs_ptr, l2_regs,
-				     sizeof(struct pt_regs));
-}
+	वापस kvm_vcpu_ग_लिखो_guest(vcpu, hv_ptr, l2_hv, size) ||
+		kvm_vcpu_ग_लिखो_guest(vcpu, regs_ptr, l2_regs,
+				     माप(काष्ठा pt_regs));
+पूर्ण
 
-long kvmhv_enter_nested_guest(struct kvm_vcpu *vcpu)
-{
-	long int err, r;
-	struct kvm_nested_guest *l2;
-	struct pt_regs l2_regs, saved_l1_regs;
-	struct hv_guest_state l2_hv = {0}, saved_l1_hv;
-	struct kvmppc_vcore *vc = vcpu->arch.vcore;
+दीर्घ kvmhv_enter_nested_guest(काष्ठा kvm_vcpu *vcpu)
+अणु
+	दीर्घ पूर्णांक err, r;
+	काष्ठा kvm_nested_guest *l2;
+	काष्ठा pt_regs l2_regs, saved_l1_regs;
+	काष्ठा hv_guest_state l2_hv = अणु0पूर्ण, saved_l1_hv;
+	काष्ठा kvmppc_vcore *vc = vcpu->arch.vcore;
 	u64 hv_ptr, regs_ptr;
 	u64 hdec_exp;
 	s64 delta_purr, delta_spurr, delta_ic, delta_vtb;
 
-	if (vcpu->kvm->arch.l1_ptcr == 0)
-		return H_NOT_AVAILABLE;
+	अगर (vcpu->kvm->arch.l1_ptcr == 0)
+		वापस H_NOT_AVAILABLE;
 
 	/* copy parameters in */
 	hv_ptr = kvmppc_get_gpr(vcpu, 4);
 	regs_ptr = kvmppc_get_gpr(vcpu, 5);
-	vcpu->srcu_idx = srcu_read_lock(&vcpu->kvm->srcu);
-	err = kvmhv_read_guest_state_and_regs(vcpu, &l2_hv, &l2_regs,
+	vcpu->srcu_idx = srcu_पढ़ो_lock(&vcpu->kvm->srcu);
+	err = kvmhv_पढ़ो_guest_state_and_regs(vcpu, &l2_hv, &l2_regs,
 					      hv_ptr, regs_ptr);
-	srcu_read_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);
-	if (err)
-		return H_PARAMETER;
+	srcu_पढ़ो_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);
+	अगर (err)
+		वापस H_PARAMETER;
 
-	if (kvmppc_need_byteswap(vcpu))
+	अगर (kvmppc_need_byteswap(vcpu))
 		byteswap_hv_regs(&l2_hv);
-	if (l2_hv.version > HV_GUEST_STATE_VERSION)
-		return H_P2;
+	अगर (l2_hv.version > HV_GUEST_STATE_VERSION)
+		वापस H_P2;
 
-	if (kvmppc_need_byteswap(vcpu))
+	अगर (kvmppc_need_byteswap(vcpu))
 		byteswap_pt_regs(&l2_regs);
-	if (l2_hv.vcpu_token >= NR_CPUS)
-		return H_PARAMETER;
+	अगर (l2_hv.vcpu_token >= NR_CPUS)
+		वापस H_PARAMETER;
 
 	/* translate lpid */
 	l2 = kvmhv_get_nested(vcpu->kvm, l2_hv.lpid, true);
-	if (!l2)
-		return H_PARAMETER;
-	if (!l2->l1_gr_to_hr) {
+	अगर (!l2)
+		वापस H_PARAMETER;
+	अगर (!l2->l1_gr_to_hr) अणु
 		mutex_lock(&l2->tlb_lock);
 		kvmhv_update_ptbl_cache(l2);
 		mutex_unlock(&l2->tlb_lock);
-	}
+	पूर्ण
 
 	/* save l1 values of things */
 	vcpu->arch.regs.msr = vcpu->arch.shregs.msr;
@@ -352,30 +353,30 @@ long kvmhv_enter_nested_guest(struct kvm_vcpu *vcpu)
 
 	vcpu->arch.ret = RESUME_GUEST;
 	vcpu->arch.trap = 0;
-	do {
-		if (mftb() >= hdec_exp) {
+	करो अणु
+		अगर (mftb() >= hdec_exp) अणु
 			vcpu->arch.trap = BOOK3S_INTERRUPT_HV_DECREMENTER;
 			r = RESUME_HOST;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		r = kvmhv_run_single_vcpu(vcpu, hdec_exp, l2_hv.lpcr);
-	} while (is_kvmppc_resume_guest(r));
+	पूर्ण जबतक (is_kvmppc_resume_guest(r));
 
-	/* save L2 state for return */
+	/* save L2 state क्रम वापस */
 	l2_regs = vcpu->arch.regs;
 	l2_regs.msr = vcpu->arch.shregs.msr;
 	delta_purr = vcpu->arch.purr - l2_hv.purr;
 	delta_spurr = vcpu->arch.spurr - l2_hv.spurr;
 	delta_ic = vcpu->arch.ic - l2_hv.ic;
 	delta_vtb = vc->vtb - l2_hv.vtb;
-	save_hv_return_state(vcpu, vcpu->arch.trap, &l2_hv);
+	save_hv_वापस_state(vcpu, vcpu->arch.trap, &l2_hv);
 
 	/* restore L1 state */
-	vcpu->arch.nested = NULL;
+	vcpu->arch.nested = शून्य;
 	vcpu->arch.regs = saved_l1_regs;
 	vcpu->arch.shregs.msr = saved_l1_regs.msr & ~MSR_TS_MASK;
 	/* set L1 MSR TS field according to L2 transaction state */
-	if (l2_regs.msr & MSR_TS_MASK)
+	अगर (l2_regs.msr & MSR_TS_MASK)
 		vcpu->arch.shregs.msr |= MSR_TS_S;
 	vc->tb_offset = saved_l1_hv.tb_offset;
 	restore_hv_regs(vcpu, &saved_l1_hv);
@@ -387,144 +388,144 @@ long kvmhv_enter_nested_guest(struct kvm_vcpu *vcpu)
 	kvmhv_put_nested(l2);
 
 	/* copy l2_hv_state and regs back to guest */
-	if (kvmppc_need_byteswap(vcpu)) {
+	अगर (kvmppc_need_byteswap(vcpu)) अणु
 		byteswap_hv_regs(&l2_hv);
 		byteswap_pt_regs(&l2_regs);
-	}
-	vcpu->srcu_idx = srcu_read_lock(&vcpu->kvm->srcu);
-	err = kvmhv_write_guest_state_and_regs(vcpu, &l2_hv, &l2_regs,
+	पूर्ण
+	vcpu->srcu_idx = srcu_पढ़ो_lock(&vcpu->kvm->srcu);
+	err = kvmhv_ग_लिखो_guest_state_and_regs(vcpu, &l2_hv, &l2_regs,
 					       hv_ptr, regs_ptr);
-	srcu_read_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);
-	if (err)
-		return H_AUTHORITY;
+	srcu_पढ़ो_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);
+	अगर (err)
+		वापस H_AUTHORITY;
 
-	if (r == -EINTR)
-		return H_INTERRUPT;
+	अगर (r == -EINTR)
+		वापस H_INTERRUPT;
 
-	if (vcpu->mmio_needed) {
+	अगर (vcpu->mmio_needed) अणु
 		kvmhv_nested_mmio_needed(vcpu, regs_ptr);
-		return H_TOO_HARD;
-	}
+		वापस H_TOO_HARD;
+	पूर्ण
 
-	return vcpu->arch.trap;
-}
+	वापस vcpu->arch.trap;
+पूर्ण
 
-long kvmhv_nested_init(void)
-{
-	long int ptb_order;
-	unsigned long ptcr;
-	long rc;
+दीर्घ kvmhv_nested_init(व्योम)
+अणु
+	दीर्घ पूर्णांक ptb_order;
+	अचिन्हित दीर्घ ptcr;
+	दीर्घ rc;
 
-	if (!kvmhv_on_pseries())
-		return 0;
-	if (!radix_enabled())
-		return -ENODEV;
+	अगर (!kvmhv_on_pseries())
+		वापस 0;
+	अगर (!radix_enabled())
+		वापस -ENODEV;
 
 	/* find log base 2 of KVMPPC_NR_LPIDS, rounding up */
 	ptb_order = __ilog2(KVMPPC_NR_LPIDS - 1) + 1;
-	if (ptb_order < 8)
+	अगर (ptb_order < 8)
 		ptb_order = 8;
-	pseries_partition_tb = kmalloc(sizeof(struct patb_entry) << ptb_order,
+	pseries_partition_tb = kदो_स्मृति(माप(काष्ठा patb_entry) << ptb_order,
 				       GFP_KERNEL);
-	if (!pseries_partition_tb) {
+	अगर (!pseries_partition_tb) अणु
 		pr_err("kvm-hv: failed to allocated nested partition table\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ptcr = __pa(pseries_partition_tb) | (ptb_order - 8);
 	rc = plpar_hcall_norets(H_SET_PARTITION_TABLE, ptcr);
-	if (rc != H_SUCCESS) {
+	अगर (rc != H_SUCCESS) अणु
 		pr_err("kvm-hv: Parent hypervisor does not support nesting (rc=%ld)\n",
 		       rc);
-		kfree(pseries_partition_tb);
-		pseries_partition_tb = NULL;
-		return -ENODEV;
-	}
+		kमुक्त(pseries_partition_tb);
+		pseries_partition_tb = शून्य;
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void kvmhv_nested_exit(void)
-{
+व्योम kvmhv_nested_निकास(व्योम)
+अणु
 	/*
 	 * N.B. the kvmhv_on_pseries() test is there because it enables
-	 * the compiler to remove the call to plpar_hcall_norets()
+	 * the compiler to हटाओ the call to plpar_hcall_norets()
 	 * when CONFIG_PPC_PSERIES=n.
 	 */
-	if (kvmhv_on_pseries() && pseries_partition_tb) {
+	अगर (kvmhv_on_pseries() && pseries_partition_tb) अणु
 		plpar_hcall_norets(H_SET_PARTITION_TABLE, 0);
-		kfree(pseries_partition_tb);
-		pseries_partition_tb = NULL;
-	}
-}
+		kमुक्त(pseries_partition_tb);
+		pseries_partition_tb = शून्य;
+	पूर्ण
+पूर्ण
 
-static void kvmhv_flush_lpid(unsigned int lpid)
-{
-	long rc;
+अटल व्योम kvmhv_flush_lpid(अचिन्हित पूर्णांक lpid)
+अणु
+	दीर्घ rc;
 
-	if (!kvmhv_on_pseries()) {
+	अगर (!kvmhv_on_pseries()) अणु
 		radix__flush_all_lpid(lpid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rc = plpar_hcall_norets(H_TLB_INVALIDATE, H_TLBIE_P1_ENC(2, 0, 1),
 				lpid, TLBIEL_INVAL_SET_LPID);
-	if (rc)
+	अगर (rc)
 		pr_err("KVM: TLB LPID invalidation hcall failed, rc=%ld\n", rc);
-}
+पूर्ण
 
-void kvmhv_set_ptbl_entry(unsigned int lpid, u64 dw0, u64 dw1)
-{
-	if (!kvmhv_on_pseries()) {
+व्योम kvmhv_set_ptbl_entry(अचिन्हित पूर्णांक lpid, u64 dw0, u64 dw1)
+अणु
+	अगर (!kvmhv_on_pseries()) अणु
 		mmu_partition_table_set_entry(lpid, dw0, dw1, true);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pseries_partition_tb[lpid].patb0 = cpu_to_be64(dw0);
 	pseries_partition_tb[lpid].patb1 = cpu_to_be64(dw1);
-	/* L0 will do the necessary barriers */
+	/* L0 will करो the necessary barriers */
 	kvmhv_flush_lpid(lpid);
-}
+पूर्ण
 
-static void kvmhv_set_nested_ptbl(struct kvm_nested_guest *gp)
-{
-	unsigned long dw0;
+अटल व्योम kvmhv_set_nested_ptbl(काष्ठा kvm_nested_guest *gp)
+अणु
+	अचिन्हित दीर्घ dw0;
 
 	dw0 = PATB_HR | radix__get_tree_size() |
-		__pa(gp->shadow_pgtable) | RADIX_PGD_INDEX_SIZE;
-	kvmhv_set_ptbl_entry(gp->shadow_lpid, dw0, gp->process_table);
-}
+		__pa(gp->shaकरोw_pgtable) | RADIX_PGD_INDEX_SIZE;
+	kvmhv_set_ptbl_entry(gp->shaकरोw_lpid, dw0, gp->process_table);
+पूर्ण
 
-void kvmhv_vm_nested_init(struct kvm *kvm)
-{
+व्योम kvmhv_vm_nested_init(काष्ठा kvm *kvm)
+अणु
 	kvm->arch.max_nested_lpid = -1;
-}
+पूर्ण
 
 /*
  * Handle the H_SET_PARTITION_TABLE hcall.
  * r4 = guest real address of partition table + log_2(size) - 12
- * (formatted as for the PTCR).
+ * (क्रमmatted as क्रम the PTCR).
  */
-long kvmhv_set_partition_table(struct kvm_vcpu *vcpu)
-{
-	struct kvm *kvm = vcpu->kvm;
-	unsigned long ptcr = kvmppc_get_gpr(vcpu, 4);
-	int srcu_idx;
-	long ret = H_SUCCESS;
+दीर्घ kvmhv_set_partition_table(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm *kvm = vcpu->kvm;
+	अचिन्हित दीर्घ ptcr = kvmppc_get_gpr(vcpu, 4);
+	पूर्णांक srcu_idx;
+	दीर्घ ret = H_SUCCESS;
 
-	srcu_idx = srcu_read_lock(&kvm->srcu);
+	srcu_idx = srcu_पढ़ो_lock(&kvm->srcu);
 	/*
 	 * Limit the partition table to 4096 entries (because that's what
 	 * hardware supports), and check the base address.
 	 */
-	if ((ptcr & PRTS_MASK) > 12 - 8 ||
+	अगर ((ptcr & PRTS_MASK) > 12 - 8 ||
 	    !kvm_is_visible_gfn(vcpu->kvm, (ptcr & PRTB_MASK) >> PAGE_SHIFT))
 		ret = H_PARAMETER;
-	srcu_read_unlock(&kvm->srcu, srcu_idx);
-	if (ret == H_SUCCESS)
+	srcu_पढ़ो_unlock(&kvm->srcu, srcu_idx);
+	अगर (ret == H_SUCCESS)
 		kvm->arch.l1_ptcr = ptcr;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Handle the H_COPY_TOFROM_GUEST hcall.
@@ -535,620 +536,620 @@ long kvmhv_set_partition_table(struct kvm_vcpu *vcpu)
  * r8 = from buffer (L1 gpa)
  * r9 = n bytes to copy
  */
-long kvmhv_copy_tofrom_guest_nested(struct kvm_vcpu *vcpu)
-{
-	struct kvm_nested_guest *gp;
-	int l1_lpid = kvmppc_get_gpr(vcpu, 4);
-	int pid = kvmppc_get_gpr(vcpu, 5);
+दीर्घ kvmhv_copy_tofrom_guest_nested(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm_nested_guest *gp;
+	पूर्णांक l1_lpid = kvmppc_get_gpr(vcpu, 4);
+	पूर्णांक pid = kvmppc_get_gpr(vcpu, 5);
 	gva_t eaddr = kvmppc_get_gpr(vcpu, 6);
 	gpa_t gp_to = (gpa_t) kvmppc_get_gpr(vcpu, 7);
 	gpa_t gp_from = (gpa_t) kvmppc_get_gpr(vcpu, 8);
-	void *buf;
-	unsigned long n = kvmppc_get_gpr(vcpu, 9);
+	व्योम *buf;
+	अचिन्हित दीर्घ n = kvmppc_get_gpr(vcpu, 9);
 	bool is_load = !!gp_to;
-	long rc;
+	दीर्घ rc;
 
-	if (gp_to && gp_from) /* One must be NULL to determine the direction */
-		return H_PARAMETER;
+	अगर (gp_to && gp_from) /* One must be शून्य to determine the direction */
+		वापस H_PARAMETER;
 
-	if (eaddr & (0xFFFUL << 52))
-		return H_PARAMETER;
+	अगर (eaddr & (0xFFFUL << 52))
+		वापस H_PARAMETER;
 
 	buf = kzalloc(n, GFP_KERNEL);
-	if (!buf)
-		return H_NO_MEM;
+	अगर (!buf)
+		वापस H_NO_MEM;
 
 	gp = kvmhv_get_nested(vcpu->kvm, l1_lpid, false);
-	if (!gp) {
+	अगर (!gp) अणु
 		rc = H_PARAMETER;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	mutex_lock(&gp->tlb_lock);
 
-	if (is_load) {
-		/* Load from the nested guest into our buffer */
-		rc = __kvmhv_copy_tofrom_guest_radix(gp->shadow_lpid, pid,
-						     eaddr, buf, NULL, n);
-		if (rc)
-			goto not_found;
+	अगर (is_load) अणु
+		/* Load from the nested guest पूर्णांकo our buffer */
+		rc = __kvmhv_copy_tofrom_guest_radix(gp->shaकरोw_lpid, pid,
+						     eaddr, buf, शून्य, n);
+		अगर (rc)
+			जाओ not_found;
 
-		/* Write what was loaded into our buffer back to the L1 guest */
-		vcpu->srcu_idx = srcu_read_lock(&vcpu->kvm->srcu);
-		rc = kvm_vcpu_write_guest(vcpu, gp_to, buf, n);
-		srcu_read_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);
-		if (rc)
-			goto not_found;
-	} else {
-		/* Load the data to be stored from the L1 guest into our buf */
-		vcpu->srcu_idx = srcu_read_lock(&vcpu->kvm->srcu);
-		rc = kvm_vcpu_read_guest(vcpu, gp_from, buf, n);
-		srcu_read_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);
-		if (rc)
-			goto not_found;
+		/* Write what was loaded पूर्णांकo our buffer back to the L1 guest */
+		vcpu->srcu_idx = srcu_पढ़ो_lock(&vcpu->kvm->srcu);
+		rc = kvm_vcpu_ग_लिखो_guest(vcpu, gp_to, buf, n);
+		srcu_पढ़ो_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);
+		अगर (rc)
+			जाओ not_found;
+	पूर्ण अन्यथा अणु
+		/* Load the data to be stored from the L1 guest पूर्णांकo our buf */
+		vcpu->srcu_idx = srcu_पढ़ो_lock(&vcpu->kvm->srcu);
+		rc = kvm_vcpu_पढ़ो_guest(vcpu, gp_from, buf, n);
+		srcu_पढ़ो_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);
+		अगर (rc)
+			जाओ not_found;
 
-		/* Store from our buffer into the nested guest */
-		rc = __kvmhv_copy_tofrom_guest_radix(gp->shadow_lpid, pid,
-						     eaddr, NULL, buf, n);
-		if (rc)
-			goto not_found;
-	}
+		/* Store from our buffer पूर्णांकo the nested guest */
+		rc = __kvmhv_copy_tofrom_guest_radix(gp->shaकरोw_lpid, pid,
+						     eaddr, शून्य, buf, n);
+		अगर (rc)
+			जाओ not_found;
+	पूर्ण
 
 out_unlock:
 	mutex_unlock(&gp->tlb_lock);
 	kvmhv_put_nested(gp);
-out_free:
-	kfree(buf);
-	return rc;
+out_मुक्त:
+	kमुक्त(buf);
+	वापस rc;
 not_found:
 	rc = H_NOT_FOUND;
-	goto out_unlock;
-}
+	जाओ out_unlock;
+पूर्ण
 
 /*
- * Reload the partition table entry for a guest.
+ * Reload the partition table entry क्रम a guest.
  * Caller must hold gp->tlb_lock.
  */
-static void kvmhv_update_ptbl_cache(struct kvm_nested_guest *gp)
-{
-	int ret;
-	struct patb_entry ptbl_entry;
-	unsigned long ptbl_addr;
-	struct kvm *kvm = gp->l1_host;
+अटल व्योम kvmhv_update_ptbl_cache(काष्ठा kvm_nested_guest *gp)
+अणु
+	पूर्णांक ret;
+	काष्ठा patb_entry ptbl_entry;
+	अचिन्हित दीर्घ ptbl_addr;
+	काष्ठा kvm *kvm = gp->l1_host;
 
 	ret = -EFAULT;
 	ptbl_addr = (kvm->arch.l1_ptcr & PRTB_MASK) + (gp->l1_lpid << 4);
-	if (gp->l1_lpid < (1ul << ((kvm->arch.l1_ptcr & PRTS_MASK) + 8))) {
-		int srcu_idx = srcu_read_lock(&kvm->srcu);
-		ret = kvm_read_guest(kvm, ptbl_addr,
-				     &ptbl_entry, sizeof(ptbl_entry));
-		srcu_read_unlock(&kvm->srcu, srcu_idx);
-	}
-	if (ret) {
+	अगर (gp->l1_lpid < (1ul << ((kvm->arch.l1_ptcr & PRTS_MASK) + 8))) अणु
+		पूर्णांक srcu_idx = srcu_पढ़ो_lock(&kvm->srcu);
+		ret = kvm_पढ़ो_guest(kvm, ptbl_addr,
+				     &ptbl_entry, माप(ptbl_entry));
+		srcu_पढ़ो_unlock(&kvm->srcu, srcu_idx);
+	पूर्ण
+	अगर (ret) अणु
 		gp->l1_gr_to_hr = 0;
 		gp->process_table = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		gp->l1_gr_to_hr = be64_to_cpu(ptbl_entry.patb0);
 		gp->process_table = be64_to_cpu(ptbl_entry.patb1);
-	}
+	पूर्ण
 	kvmhv_set_nested_ptbl(gp);
-}
+पूर्ण
 
-static struct kvm_nested_guest *kvmhv_alloc_nested(struct kvm *kvm, unsigned int lpid)
-{
-	struct kvm_nested_guest *gp;
-	long shadow_lpid;
+अटल काष्ठा kvm_nested_guest *kvmhv_alloc_nested(काष्ठा kvm *kvm, अचिन्हित पूर्णांक lpid)
+अणु
+	काष्ठा kvm_nested_guest *gp;
+	दीर्घ shaकरोw_lpid;
 
-	gp = kzalloc(sizeof(*gp), GFP_KERNEL);
-	if (!gp)
-		return NULL;
+	gp = kzalloc(माप(*gp), GFP_KERNEL);
+	अगर (!gp)
+		वापस शून्य;
 	gp->l1_host = kvm;
 	gp->l1_lpid = lpid;
 	mutex_init(&gp->tlb_lock);
-	gp->shadow_pgtable = pgd_alloc(kvm->mm);
-	if (!gp->shadow_pgtable)
-		goto out_free;
-	shadow_lpid = kvmppc_alloc_lpid();
-	if (shadow_lpid < 0)
-		goto out_free2;
-	gp->shadow_lpid = shadow_lpid;
+	gp->shaकरोw_pgtable = pgd_alloc(kvm->mm);
+	अगर (!gp->shaकरोw_pgtable)
+		जाओ out_मुक्त;
+	shaकरोw_lpid = kvmppc_alloc_lpid();
+	अगर (shaकरोw_lpid < 0)
+		जाओ out_मुक्त2;
+	gp->shaकरोw_lpid = shaकरोw_lpid;
 	gp->radix = 1;
 
-	memset(gp->prev_cpu, -1, sizeof(gp->prev_cpu));
+	स_रखो(gp->prev_cpu, -1, माप(gp->prev_cpu));
 
-	return gp;
+	वापस gp;
 
- out_free2:
-	pgd_free(kvm->mm, gp->shadow_pgtable);
- out_free:
-	kfree(gp);
-	return NULL;
-}
+ out_मुक्त2:
+	pgd_मुक्त(kvm->mm, gp->shaकरोw_pgtable);
+ out_मुक्त:
+	kमुक्त(gp);
+	वापस शून्य;
+पूर्ण
 
 /*
- * Free up any resources allocated for a nested guest.
+ * Free up any resources allocated क्रम a nested guest.
  */
-static void kvmhv_release_nested(struct kvm_nested_guest *gp)
-{
-	struct kvm *kvm = gp->l1_host;
+अटल व्योम kvmhv_release_nested(काष्ठा kvm_nested_guest *gp)
+अणु
+	काष्ठा kvm *kvm = gp->l1_host;
 
-	if (gp->shadow_pgtable) {
+	अगर (gp->shaकरोw_pgtable) अणु
 		/*
-		 * No vcpu is using this struct and no call to
-		 * kvmhv_get_nested can find this struct,
-		 * so we don't need to hold kvm->mmu_lock.
+		 * No vcpu is using this काष्ठा and no call to
+		 * kvmhv_get_nested can find this काष्ठा,
+		 * so we करोn't need to hold kvm->mmu_lock.
 		 */
-		kvmppc_free_pgtable_radix(kvm, gp->shadow_pgtable,
-					  gp->shadow_lpid);
-		pgd_free(kvm->mm, gp->shadow_pgtable);
-	}
-	kvmhv_set_ptbl_entry(gp->shadow_lpid, 0, 0);
-	kvmppc_free_lpid(gp->shadow_lpid);
-	kfree(gp);
-}
+		kvmppc_मुक्त_pgtable_radix(kvm, gp->shaकरोw_pgtable,
+					  gp->shaकरोw_lpid);
+		pgd_मुक्त(kvm->mm, gp->shaकरोw_pgtable);
+	पूर्ण
+	kvmhv_set_ptbl_entry(gp->shaकरोw_lpid, 0, 0);
+	kvmppc_मुक्त_lpid(gp->shaकरोw_lpid);
+	kमुक्त(gp);
+पूर्ण
 
-static void kvmhv_remove_nested(struct kvm_nested_guest *gp)
-{
-	struct kvm *kvm = gp->l1_host;
-	int lpid = gp->l1_lpid;
-	long ref;
+अटल व्योम kvmhv_हटाओ_nested(काष्ठा kvm_nested_guest *gp)
+अणु
+	काष्ठा kvm *kvm = gp->l1_host;
+	पूर्णांक lpid = gp->l1_lpid;
+	दीर्घ ref;
 
 	spin_lock(&kvm->mmu_lock);
-	if (gp == kvm->arch.nested_guests[lpid]) {
-		kvm->arch.nested_guests[lpid] = NULL;
-		if (lpid == kvm->arch.max_nested_lpid) {
-			while (--lpid >= 0 && !kvm->arch.nested_guests[lpid])
+	अगर (gp == kvm->arch.nested_guests[lpid]) अणु
+		kvm->arch.nested_guests[lpid] = शून्य;
+		अगर (lpid == kvm->arch.max_nested_lpid) अणु
+			जबतक (--lpid >= 0 && !kvm->arch.nested_guests[lpid])
 				;
 			kvm->arch.max_nested_lpid = lpid;
-		}
+		पूर्ण
 		--gp->refcnt;
-	}
+	पूर्ण
 	ref = gp->refcnt;
 	spin_unlock(&kvm->mmu_lock);
-	if (ref == 0)
+	अगर (ref == 0)
 		kvmhv_release_nested(gp);
-}
+पूर्ण
 
 /*
- * Free up all nested resources allocated for this guest.
+ * Free up all nested resources allocated क्रम this guest.
  * This is called with no vcpus of the guest running, when
- * switching the guest to HPT mode or when destroying the
+ * चयनing the guest to HPT mode or when destroying the
  * guest.
  */
-void kvmhv_release_all_nested(struct kvm *kvm)
-{
-	int i;
-	struct kvm_nested_guest *gp;
-	struct kvm_nested_guest *freelist = NULL;
-	struct kvm_memory_slot *memslot;
-	int srcu_idx;
+व्योम kvmhv_release_all_nested(काष्ठा kvm *kvm)
+अणु
+	पूर्णांक i;
+	काष्ठा kvm_nested_guest *gp;
+	काष्ठा kvm_nested_guest *मुक्तlist = शून्य;
+	काष्ठा kvm_memory_slot *memslot;
+	पूर्णांक srcu_idx;
 
 	spin_lock(&kvm->mmu_lock);
-	for (i = 0; i <= kvm->arch.max_nested_lpid; i++) {
+	क्रम (i = 0; i <= kvm->arch.max_nested_lpid; i++) अणु
 		gp = kvm->arch.nested_guests[i];
-		if (!gp)
-			continue;
-		kvm->arch.nested_guests[i] = NULL;
-		if (--gp->refcnt == 0) {
-			gp->next = freelist;
-			freelist = gp;
-		}
-	}
+		अगर (!gp)
+			जारी;
+		kvm->arch.nested_guests[i] = शून्य;
+		अगर (--gp->refcnt == 0) अणु
+			gp->next = मुक्तlist;
+			मुक्तlist = gp;
+		पूर्ण
+	पूर्ण
 	kvm->arch.max_nested_lpid = -1;
 	spin_unlock(&kvm->mmu_lock);
-	while ((gp = freelist) != NULL) {
-		freelist = gp->next;
+	जबतक ((gp = मुक्तlist) != शून्य) अणु
+		मुक्तlist = gp->next;
 		kvmhv_release_nested(gp);
-	}
+	पूर्ण
 
-	srcu_idx = srcu_read_lock(&kvm->srcu);
-	kvm_for_each_memslot(memslot, kvm_memslots(kvm))
-		kvmhv_free_memslot_nest_rmap(memslot);
-	srcu_read_unlock(&kvm->srcu, srcu_idx);
-}
+	srcu_idx = srcu_पढ़ो_lock(&kvm->srcu);
+	kvm_क्रम_each_memslot(memslot, kvm_memslots(kvm))
+		kvmhv_मुक्त_memslot_nest_rmap(memslot);
+	srcu_पढ़ो_unlock(&kvm->srcu, srcu_idx);
+पूर्ण
 
 /* caller must hold gp->tlb_lock */
-static void kvmhv_flush_nested(struct kvm_nested_guest *gp)
-{
-	struct kvm *kvm = gp->l1_host;
+अटल व्योम kvmhv_flush_nested(काष्ठा kvm_nested_guest *gp)
+अणु
+	काष्ठा kvm *kvm = gp->l1_host;
 
 	spin_lock(&kvm->mmu_lock);
-	kvmppc_free_pgtable_radix(kvm, gp->shadow_pgtable, gp->shadow_lpid);
+	kvmppc_मुक्त_pgtable_radix(kvm, gp->shaकरोw_pgtable, gp->shaकरोw_lpid);
 	spin_unlock(&kvm->mmu_lock);
-	kvmhv_flush_lpid(gp->shadow_lpid);
+	kvmhv_flush_lpid(gp->shaकरोw_lpid);
 	kvmhv_update_ptbl_cache(gp);
-	if (gp->l1_gr_to_hr == 0)
-		kvmhv_remove_nested(gp);
-}
+	अगर (gp->l1_gr_to_hr == 0)
+		kvmhv_हटाओ_nested(gp);
+पूर्ण
 
-struct kvm_nested_guest *kvmhv_get_nested(struct kvm *kvm, int l1_lpid,
+काष्ठा kvm_nested_guest *kvmhv_get_nested(काष्ठा kvm *kvm, पूर्णांक l1_lpid,
 					  bool create)
-{
-	struct kvm_nested_guest *gp, *newgp;
+अणु
+	काष्ठा kvm_nested_guest *gp, *newgp;
 
-	if (l1_lpid >= KVM_MAX_NESTED_GUESTS ||
+	अगर (l1_lpid >= KVM_MAX_NESTED_GUESTS ||
 	    l1_lpid >= (1ul << ((kvm->arch.l1_ptcr & PRTS_MASK) + 12 - 4)))
-		return NULL;
+		वापस शून्य;
 
 	spin_lock(&kvm->mmu_lock);
 	gp = kvm->arch.nested_guests[l1_lpid];
-	if (gp)
+	अगर (gp)
 		++gp->refcnt;
 	spin_unlock(&kvm->mmu_lock);
 
-	if (gp || !create)
-		return gp;
+	अगर (gp || !create)
+		वापस gp;
 
 	newgp = kvmhv_alloc_nested(kvm, l1_lpid);
-	if (!newgp)
-		return NULL;
+	अगर (!newgp)
+		वापस शून्य;
 	spin_lock(&kvm->mmu_lock);
-	if (kvm->arch.nested_guests[l1_lpid]) {
-		/* someone else beat us to it */
+	अगर (kvm->arch.nested_guests[l1_lpid]) अणु
+		/* someone अन्यथा beat us to it */
 		gp = kvm->arch.nested_guests[l1_lpid];
-	} else {
+	पूर्ण अन्यथा अणु
 		kvm->arch.nested_guests[l1_lpid] = newgp;
 		++newgp->refcnt;
 		gp = newgp;
-		newgp = NULL;
-		if (l1_lpid > kvm->arch.max_nested_lpid)
+		newgp = शून्य;
+		अगर (l1_lpid > kvm->arch.max_nested_lpid)
 			kvm->arch.max_nested_lpid = l1_lpid;
-	}
+	पूर्ण
 	++gp->refcnt;
 	spin_unlock(&kvm->mmu_lock);
 
-	if (newgp)
+	अगर (newgp)
 		kvmhv_release_nested(newgp);
 
-	return gp;
-}
+	वापस gp;
+पूर्ण
 
-void kvmhv_put_nested(struct kvm_nested_guest *gp)
-{
-	struct kvm *kvm = gp->l1_host;
-	long ref;
+व्योम kvmhv_put_nested(काष्ठा kvm_nested_guest *gp)
+अणु
+	काष्ठा kvm *kvm = gp->l1_host;
+	दीर्घ ref;
 
 	spin_lock(&kvm->mmu_lock);
 	ref = --gp->refcnt;
 	spin_unlock(&kvm->mmu_lock);
-	if (ref == 0)
+	अगर (ref == 0)
 		kvmhv_release_nested(gp);
-}
+पूर्ण
 
-static struct kvm_nested_guest *kvmhv_find_nested(struct kvm *kvm, int lpid)
-{
-	if (lpid > kvm->arch.max_nested_lpid)
-		return NULL;
-	return kvm->arch.nested_guests[lpid];
-}
+अटल काष्ठा kvm_nested_guest *kvmhv_find_nested(काष्ठा kvm *kvm, पूर्णांक lpid)
+अणु
+	अगर (lpid > kvm->arch.max_nested_lpid)
+		वापस शून्य;
+	वापस kvm->arch.nested_guests[lpid];
+पूर्ण
 
-pte_t *find_kvm_nested_guest_pte(struct kvm *kvm, unsigned long lpid,
-				 unsigned long ea, unsigned *hshift)
-{
-	struct kvm_nested_guest *gp;
+pte_t *find_kvm_nested_guest_pte(काष्ठा kvm *kvm, अचिन्हित दीर्घ lpid,
+				 अचिन्हित दीर्घ ea, अचिन्हित *hshअगरt)
+अणु
+	काष्ठा kvm_nested_guest *gp;
 	pte_t *pte;
 
 	gp = kvmhv_find_nested(kvm, lpid);
-	if (!gp)
-		return NULL;
+	अगर (!gp)
+		वापस शून्य;
 
 	VM_WARN(!spin_is_locked(&kvm->mmu_lock),
 		"%s called with kvm mmu_lock not held \n", __func__);
-	pte = __find_linux_pte(gp->shadow_pgtable, ea, NULL, hshift);
+	pte = __find_linux_pte(gp->shaकरोw_pgtable, ea, शून्य, hshअगरt);
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline bool kvmhv_n_rmap_is_equal(u64 rmap_1, u64 rmap_2)
-{
-	return !((rmap_1 ^ rmap_2) & (RMAP_NESTED_LPID_MASK |
+अटल अंतरभूत bool kvmhv_n_rmap_is_equal(u64 rmap_1, u64 rmap_2)
+अणु
+	वापस !((rmap_1 ^ rmap_2) & (RMAP_NESTED_LPID_MASK |
 				       RMAP_NESTED_GPA_MASK));
-}
+पूर्ण
 
-void kvmhv_insert_nest_rmap(struct kvm *kvm, unsigned long *rmapp,
-			    struct rmap_nested **n_rmap)
-{
-	struct llist_node *entry = ((struct llist_head *) rmapp)->first;
-	struct rmap_nested *cursor;
+व्योम kvmhv_insert_nest_rmap(काष्ठा kvm *kvm, अचिन्हित दीर्घ *rmapp,
+			    काष्ठा rmap_nested **n_rmap)
+अणु
+	काष्ठा llist_node *entry = ((काष्ठा llist_head *) rmapp)->first;
+	काष्ठा rmap_nested *cursor;
 	u64 rmap, new_rmap = (*n_rmap)->rmap;
 
 	/* Are there any existing entries? */
-	if (!(*rmapp)) {
+	अगर (!(*rmapp)) अणु
 		/* No -> use the rmap as a single entry */
 		*rmapp = new_rmap | RMAP_NESTED_IS_SINGLE_ENTRY;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Do any entries match what we're trying to insert? */
-	for_each_nest_rmap_safe(cursor, entry, &rmap) {
-		if (kvmhv_n_rmap_is_equal(rmap, new_rmap))
-			return;
-	}
+	क्रम_each_nest_rmap_safe(cursor, entry, &rmap) अणु
+		अगर (kvmhv_n_rmap_is_equal(rmap, new_rmap))
+			वापस;
+	पूर्ण
 
 	/* Do we need to create a list or just add the new entry? */
 	rmap = *rmapp;
-	if (rmap & RMAP_NESTED_IS_SINGLE_ENTRY) /* Not previously a list */
+	अगर (rmap & RMAP_NESTED_IS_SINGLE_ENTRY) /* Not previously a list */
 		*rmapp = 0UL;
-	llist_add(&((*n_rmap)->list), (struct llist_head *) rmapp);
-	if (rmap & RMAP_NESTED_IS_SINGLE_ENTRY) /* Not previously a list */
-		(*n_rmap)->list.next = (struct llist_node *) rmap;
+	llist_add(&((*n_rmap)->list), (काष्ठा llist_head *) rmapp);
+	अगर (rmap & RMAP_NESTED_IS_SINGLE_ENTRY) /* Not previously a list */
+		(*n_rmap)->list.next = (काष्ठा llist_node *) rmap;
 
-	/* Set NULL so not freed by caller */
-	*n_rmap = NULL;
-}
+	/* Set शून्य so not मुक्तd by caller */
+	*n_rmap = शून्य;
+पूर्ण
 
-static void kvmhv_update_nest_rmap_rc(struct kvm *kvm, u64 n_rmap,
-				      unsigned long clr, unsigned long set,
-				      unsigned long hpa, unsigned long mask)
-{
-	unsigned long gpa;
-	unsigned int shift, lpid;
+अटल व्योम kvmhv_update_nest_rmap_rc(काष्ठा kvm *kvm, u64 n_rmap,
+				      अचिन्हित दीर्घ clr, अचिन्हित दीर्घ set,
+				      अचिन्हित दीर्घ hpa, अचिन्हित दीर्घ mask)
+अणु
+	अचिन्हित दीर्घ gpa;
+	अचिन्हित पूर्णांक shअगरt, lpid;
 	pte_t *ptep;
 
 	gpa = n_rmap & RMAP_NESTED_GPA_MASK;
 	lpid = (n_rmap & RMAP_NESTED_LPID_MASK) >> RMAP_NESTED_LPID_SHIFT;
 
 	/* Find the pte */
-	ptep = find_kvm_nested_guest_pte(kvm, lpid, gpa, &shift);
+	ptep = find_kvm_nested_guest_pte(kvm, lpid, gpa, &shअगरt);
 	/*
 	 * If the pte is present and the pfn is still the same, update the pte.
 	 * If the pfn has changed then this is a stale rmap entry, the nested
-	 * gpa actually points somewhere else now, and there is nothing to do.
-	 * XXX A future optimisation would be to remove the rmap entry here.
+	 * gpa actually poपूर्णांकs somewhere अन्यथा now, and there is nothing to करो.
+	 * XXX A future optimisation would be to हटाओ the rmap entry here.
 	 */
-	if (ptep && pte_present(*ptep) && ((pte_val(*ptep) & mask) == hpa)) {
+	अगर (ptep && pte_present(*ptep) && ((pte_val(*ptep) & mask) == hpa)) अणु
 		__radix_pte_update(ptep, clr, set);
-		kvmppc_radix_tlbie_page(kvm, gpa, shift, lpid);
-	}
-}
+		kvmppc_radix_tlbie_page(kvm, gpa, shअगरt, lpid);
+	पूर्ण
+पूर्ण
 
 /*
- * For a given list of rmap entries, update the rc bits in all ptes in shadow
- * page tables for nested guests which are referenced by the rmap list.
+ * For a given list of rmap entries, update the rc bits in all ptes in shaकरोw
+ * page tables क्रम nested guests which are referenced by the rmap list.
  */
-void kvmhv_update_nest_rmap_rc_list(struct kvm *kvm, unsigned long *rmapp,
-				    unsigned long clr, unsigned long set,
-				    unsigned long hpa, unsigned long nbytes)
-{
-	struct llist_node *entry = ((struct llist_head *) rmapp)->first;
-	struct rmap_nested *cursor;
-	unsigned long rmap, mask;
+व्योम kvmhv_update_nest_rmap_rc_list(काष्ठा kvm *kvm, अचिन्हित दीर्घ *rmapp,
+				    अचिन्हित दीर्घ clr, अचिन्हित दीर्घ set,
+				    अचिन्हित दीर्घ hpa, अचिन्हित दीर्घ nbytes)
+अणु
+	काष्ठा llist_node *entry = ((काष्ठा llist_head *) rmapp)->first;
+	काष्ठा rmap_nested *cursor;
+	अचिन्हित दीर्घ rmap, mask;
 
-	if ((clr | set) & ~(_PAGE_DIRTY | _PAGE_ACCESSED))
-		return;
+	अगर ((clr | set) & ~(_PAGE_सूचीTY | _PAGE_ACCESSED))
+		वापस;
 
 	mask = PTE_RPN_MASK & ~(nbytes - 1);
 	hpa &= mask;
 
-	for_each_nest_rmap_safe(cursor, entry, &rmap)
+	क्रम_each_nest_rmap_safe(cursor, entry, &rmap)
 		kvmhv_update_nest_rmap_rc(kvm, rmap, clr, set, hpa, mask);
-}
+पूर्ण
 
-static void kvmhv_remove_nest_rmap(struct kvm *kvm, u64 n_rmap,
-				   unsigned long hpa, unsigned long mask)
-{
-	struct kvm_nested_guest *gp;
-	unsigned long gpa;
-	unsigned int shift, lpid;
+अटल व्योम kvmhv_हटाओ_nest_rmap(काष्ठा kvm *kvm, u64 n_rmap,
+				   अचिन्हित दीर्घ hpa, अचिन्हित दीर्घ mask)
+अणु
+	काष्ठा kvm_nested_guest *gp;
+	अचिन्हित दीर्घ gpa;
+	अचिन्हित पूर्णांक shअगरt, lpid;
 	pte_t *ptep;
 
 	gpa = n_rmap & RMAP_NESTED_GPA_MASK;
 	lpid = (n_rmap & RMAP_NESTED_LPID_MASK) >> RMAP_NESTED_LPID_SHIFT;
 	gp = kvmhv_find_nested(kvm, lpid);
-	if (!gp)
-		return;
+	अगर (!gp)
+		वापस;
 
 	/* Find and invalidate the pte */
-	ptep = find_kvm_nested_guest_pte(kvm, lpid, gpa, &shift);
-	/* Don't spuriously invalidate ptes if the pfn has changed */
-	if (ptep && pte_present(*ptep) && ((pte_val(*ptep) & mask) == hpa))
-		kvmppc_unmap_pte(kvm, ptep, gpa, shift, NULL, gp->shadow_lpid);
-}
+	ptep = find_kvm_nested_guest_pte(kvm, lpid, gpa, &shअगरt);
+	/* Don't spuriously invalidate ptes अगर the pfn has changed */
+	अगर (ptep && pte_present(*ptep) && ((pte_val(*ptep) & mask) == hpa))
+		kvmppc_unmap_pte(kvm, ptep, gpa, shअगरt, शून्य, gp->shaकरोw_lpid);
+पूर्ण
 
-static void kvmhv_remove_nest_rmap_list(struct kvm *kvm, unsigned long *rmapp,
-					unsigned long hpa, unsigned long mask)
-{
-	struct llist_node *entry = llist_del_all((struct llist_head *) rmapp);
-	struct rmap_nested *cursor;
-	unsigned long rmap;
+अटल व्योम kvmhv_हटाओ_nest_rmap_list(काष्ठा kvm *kvm, अचिन्हित दीर्घ *rmapp,
+					अचिन्हित दीर्घ hpa, अचिन्हित दीर्घ mask)
+अणु
+	काष्ठा llist_node *entry = llist_del_all((काष्ठा llist_head *) rmapp);
+	काष्ठा rmap_nested *cursor;
+	अचिन्हित दीर्घ rmap;
 
-	for_each_nest_rmap_safe(cursor, entry, &rmap) {
-		kvmhv_remove_nest_rmap(kvm, rmap, hpa, mask);
-		kfree(cursor);
-	}
-}
+	क्रम_each_nest_rmap_safe(cursor, entry, &rmap) अणु
+		kvmhv_हटाओ_nest_rmap(kvm, rmap, hpa, mask);
+		kमुक्त(cursor);
+	पूर्ण
+पूर्ण
 
 /* called with kvm->mmu_lock held */
-void kvmhv_remove_nest_rmap_range(struct kvm *kvm,
-				  const struct kvm_memory_slot *memslot,
-				  unsigned long gpa, unsigned long hpa,
-				  unsigned long nbytes)
-{
-	unsigned long gfn, end_gfn;
-	unsigned long addr_mask;
+व्योम kvmhv_हटाओ_nest_rmap_range(काष्ठा kvm *kvm,
+				  स्थिर काष्ठा kvm_memory_slot *memslot,
+				  अचिन्हित दीर्घ gpa, अचिन्हित दीर्घ hpa,
+				  अचिन्हित दीर्घ nbytes)
+अणु
+	अचिन्हित दीर्घ gfn, end_gfn;
+	अचिन्हित दीर्घ addr_mask;
 
-	if (!memslot)
-		return;
+	अगर (!memslot)
+		वापस;
 	gfn = (gpa >> PAGE_SHIFT) - memslot->base_gfn;
 	end_gfn = gfn + (nbytes >> PAGE_SHIFT);
 
 	addr_mask = PTE_RPN_MASK & ~(nbytes - 1);
 	hpa &= addr_mask;
 
-	for (; gfn < end_gfn; gfn++) {
-		unsigned long *rmap = &memslot->arch.rmap[gfn];
-		kvmhv_remove_nest_rmap_list(kvm, rmap, hpa, addr_mask);
-	}
-}
+	क्रम (; gfn < end_gfn; gfn++) अणु
+		अचिन्हित दीर्घ *rmap = &memslot->arch.rmap[gfn];
+		kvmhv_हटाओ_nest_rmap_list(kvm, rmap, hpa, addr_mask);
+	पूर्ण
+पूर्ण
 
-static void kvmhv_free_memslot_nest_rmap(struct kvm_memory_slot *free)
-{
-	unsigned long page;
+अटल व्योम kvmhv_मुक्त_memslot_nest_rmap(काष्ठा kvm_memory_slot *मुक्त)
+अणु
+	अचिन्हित दीर्घ page;
 
-	for (page = 0; page < free->npages; page++) {
-		unsigned long rmap, *rmapp = &free->arch.rmap[page];
-		struct rmap_nested *cursor;
-		struct llist_node *entry;
+	क्रम (page = 0; page < मुक्त->npages; page++) अणु
+		अचिन्हित दीर्घ rmap, *rmapp = &मुक्त->arch.rmap[page];
+		काष्ठा rmap_nested *cursor;
+		काष्ठा llist_node *entry;
 
-		entry = llist_del_all((struct llist_head *) rmapp);
-		for_each_nest_rmap_safe(cursor, entry, &rmap)
-			kfree(cursor);
-	}
-}
+		entry = llist_del_all((काष्ठा llist_head *) rmapp);
+		क्रम_each_nest_rmap_safe(cursor, entry, &rmap)
+			kमुक्त(cursor);
+	पूर्ण
+पूर्ण
 
-static bool kvmhv_invalidate_shadow_pte(struct kvm_vcpu *vcpu,
-					struct kvm_nested_guest *gp,
-					long gpa, int *shift_ret)
-{
-	struct kvm *kvm = vcpu->kvm;
+अटल bool kvmhv_invalidate_shaकरोw_pte(काष्ठा kvm_vcpu *vcpu,
+					काष्ठा kvm_nested_guest *gp,
+					दीर्घ gpa, पूर्णांक *shअगरt_ret)
+अणु
+	काष्ठा kvm *kvm = vcpu->kvm;
 	bool ret = false;
 	pte_t *ptep;
-	int shift;
+	पूर्णांक shअगरt;
 
 	spin_lock(&kvm->mmu_lock);
-	ptep = find_kvm_nested_guest_pte(kvm, gp->l1_lpid, gpa, &shift);
-	if (!shift)
-		shift = PAGE_SHIFT;
-	if (ptep && pte_present(*ptep)) {
-		kvmppc_unmap_pte(kvm, ptep, gpa, shift, NULL, gp->shadow_lpid);
+	ptep = find_kvm_nested_guest_pte(kvm, gp->l1_lpid, gpa, &shअगरt);
+	अगर (!shअगरt)
+		shअगरt = PAGE_SHIFT;
+	अगर (ptep && pte_present(*ptep)) अणु
+		kvmppc_unmap_pte(kvm, ptep, gpa, shअगरt, शून्य, gp->shaकरोw_lpid);
 		ret = true;
-	}
+	पूर्ण
 	spin_unlock(&kvm->mmu_lock);
 
-	if (shift_ret)
-		*shift_ret = shift;
-	return ret;
-}
+	अगर (shअगरt_ret)
+		*shअगरt_ret = shअगरt;
+	वापस ret;
+पूर्ण
 
-static inline int get_ric(unsigned int instr)
-{
-	return (instr >> 18) & 0x3;
-}
+अटल अंतरभूत पूर्णांक get_ric(अचिन्हित पूर्णांक instr)
+अणु
+	वापस (instr >> 18) & 0x3;
+पूर्ण
 
-static inline int get_prs(unsigned int instr)
-{
-	return (instr >> 17) & 0x1;
-}
+अटल अंतरभूत पूर्णांक get_prs(अचिन्हित पूर्णांक instr)
+अणु
+	वापस (instr >> 17) & 0x1;
+पूर्ण
 
-static inline int get_r(unsigned int instr)
-{
-	return (instr >> 16) & 0x1;
-}
+अटल अंतरभूत पूर्णांक get_r(अचिन्हित पूर्णांक instr)
+अणु
+	वापस (instr >> 16) & 0x1;
+पूर्ण
 
-static inline int get_lpid(unsigned long r_val)
-{
-	return r_val & 0xffffffff;
-}
+अटल अंतरभूत पूर्णांक get_lpid(अचिन्हित दीर्घ r_val)
+अणु
+	वापस r_val & 0xffffffff;
+पूर्ण
 
-static inline int get_is(unsigned long r_val)
-{
-	return (r_val >> 10) & 0x3;
-}
+अटल अंतरभूत पूर्णांक get_is(अचिन्हित दीर्घ r_val)
+अणु
+	वापस (r_val >> 10) & 0x3;
+पूर्ण
 
-static inline int get_ap(unsigned long r_val)
-{
-	return (r_val >> 5) & 0x7;
-}
+अटल अंतरभूत पूर्णांक get_ap(अचिन्हित दीर्घ r_val)
+अणु
+	वापस (r_val >> 5) & 0x7;
+पूर्ण
 
-static inline long get_epn(unsigned long r_val)
-{
-	return r_val >> 12;
-}
+अटल अंतरभूत दीर्घ get_epn(अचिन्हित दीर्घ r_val)
+अणु
+	वापस r_val >> 12;
+पूर्ण
 
-static int kvmhv_emulate_tlbie_tlb_addr(struct kvm_vcpu *vcpu, int lpid,
-					int ap, long epn)
-{
-	struct kvm *kvm = vcpu->kvm;
-	struct kvm_nested_guest *gp;
-	long npages;
-	int shift, shadow_shift;
-	unsigned long addr;
+अटल पूर्णांक kvmhv_emulate_tlbie_tlb_addr(काष्ठा kvm_vcpu *vcpu, पूर्णांक lpid,
+					पूर्णांक ap, दीर्घ epn)
+अणु
+	काष्ठा kvm *kvm = vcpu->kvm;
+	काष्ठा kvm_nested_guest *gp;
+	दीर्घ npages;
+	पूर्णांक shअगरt, shaकरोw_shअगरt;
+	अचिन्हित दीर्घ addr;
 
-	shift = ap_to_shift(ap);
+	shअगरt = ap_to_shअगरt(ap);
 	addr = epn << 12;
-	if (shift < 0)
+	अगर (shअगरt < 0)
 		/* Invalid ap encoding */
-		return -EINVAL;
+		वापस -EINVAL;
 
-	addr &= ~((1UL << shift) - 1);
-	npages = 1UL << (shift - PAGE_SHIFT);
+	addr &= ~((1UL << shअगरt) - 1);
+	npages = 1UL << (shअगरt - PAGE_SHIFT);
 
 	gp = kvmhv_get_nested(kvm, lpid, false);
-	if (!gp) /* No such guest -> nothing to do */
-		return 0;
+	अगर (!gp) /* No such guest -> nothing to करो */
+		वापस 0;
 	mutex_lock(&gp->tlb_lock);
 
 	/* There may be more than one host page backing this single guest pte */
-	do {
-		kvmhv_invalidate_shadow_pte(vcpu, gp, addr, &shadow_shift);
+	करो अणु
+		kvmhv_invalidate_shaकरोw_pte(vcpu, gp, addr, &shaकरोw_shअगरt);
 
-		npages -= 1UL << (shadow_shift - PAGE_SHIFT);
-		addr += 1UL << shadow_shift;
-	} while (npages > 0);
+		npages -= 1UL << (shaकरोw_shअगरt - PAGE_SHIFT);
+		addr += 1UL << shaकरोw_shअगरt;
+	पूर्ण जबतक (npages > 0);
 
 	mutex_unlock(&gp->tlb_lock);
 	kvmhv_put_nested(gp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void kvmhv_emulate_tlbie_lpid(struct kvm_vcpu *vcpu,
-				     struct kvm_nested_guest *gp, int ric)
-{
-	struct kvm *kvm = vcpu->kvm;
+अटल व्योम kvmhv_emulate_tlbie_lpid(काष्ठा kvm_vcpu *vcpu,
+				     काष्ठा kvm_nested_guest *gp, पूर्णांक ric)
+अणु
+	काष्ठा kvm *kvm = vcpu->kvm;
 
 	mutex_lock(&gp->tlb_lock);
-	switch (ric) {
-	case 0:
+	चयन (ric) अणु
+	हाल 0:
 		/* Invalidate TLB */
 		spin_lock(&kvm->mmu_lock);
-		kvmppc_free_pgtable_radix(kvm, gp->shadow_pgtable,
-					  gp->shadow_lpid);
-		kvmhv_flush_lpid(gp->shadow_lpid);
+		kvmppc_मुक्त_pgtable_radix(kvm, gp->shaकरोw_pgtable,
+					  gp->shaकरोw_lpid);
+		kvmhv_flush_lpid(gp->shaकरोw_lpid);
 		spin_unlock(&kvm->mmu_lock);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		/*
 		 * Invalidate PWC
-		 * We don't cache this -> nothing to do
+		 * We करोn't cache this -> nothing to करो
 		 */
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		/* Invalidate TLB, PWC and caching of partition table entries */
 		kvmhv_flush_nested(gp);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&gp->tlb_lock);
-}
+पूर्ण
 
-static void kvmhv_emulate_tlbie_all_lpid(struct kvm_vcpu *vcpu, int ric)
-{
-	struct kvm *kvm = vcpu->kvm;
-	struct kvm_nested_guest *gp;
-	int i;
+अटल व्योम kvmhv_emulate_tlbie_all_lpid(काष्ठा kvm_vcpu *vcpu, पूर्णांक ric)
+अणु
+	काष्ठा kvm *kvm = vcpu->kvm;
+	काष्ठा kvm_nested_guest *gp;
+	पूर्णांक i;
 
 	spin_lock(&kvm->mmu_lock);
-	for (i = 0; i <= kvm->arch.max_nested_lpid; i++) {
+	क्रम (i = 0; i <= kvm->arch.max_nested_lpid; i++) अणु
 		gp = kvm->arch.nested_guests[i];
-		if (gp) {
+		अगर (gp) अणु
 			spin_unlock(&kvm->mmu_lock);
 			kvmhv_emulate_tlbie_lpid(vcpu, gp, ric);
 			spin_lock(&kvm->mmu_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&kvm->mmu_lock);
-}
+पूर्ण
 
-static int kvmhv_emulate_priv_tlbie(struct kvm_vcpu *vcpu, unsigned int instr,
-				    unsigned long rsval, unsigned long rbval)
-{
-	struct kvm *kvm = vcpu->kvm;
-	struct kvm_nested_guest *gp;
-	int r, ric, prs, is, ap;
-	int lpid;
-	long epn;
-	int ret = 0;
+अटल पूर्णांक kvmhv_emulate_priv_tlbie(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक instr,
+				    अचिन्हित दीर्घ rsval, अचिन्हित दीर्घ rbval)
+अणु
+	काष्ठा kvm *kvm = vcpu->kvm;
+	काष्ठा kvm_nested_guest *gp;
+	पूर्णांक r, ric, prs, is, ap;
+	पूर्णांक lpid;
+	दीर्घ epn;
+	पूर्णांक ret = 0;
 
 	ric = get_ric(instr);
 	prs = get_prs(instr);
@@ -1157,382 +1158,382 @@ static int kvmhv_emulate_priv_tlbie(struct kvm_vcpu *vcpu, unsigned int instr,
 	is = get_is(rbval);
 
 	/*
-	 * These cases are invalid and are not handled:
+	 * These हालs are invalid and are not handled:
 	 * r   != 1 -> Only radix supported
 	 * prs == 1 -> Not HV privileged
-	 * ric == 3 -> No cluster bombs for radix
+	 * ric == 3 -> No cluster bombs क्रम radix
 	 * is  == 1 -> Partition scoped translations not associated with pid
 	 * (!is) && (ric == 1 || ric == 2) -> Not supported by ISA
 	 */
-	if ((!r) || (prs) || (ric == 3) || (is == 1) ||
+	अगर ((!r) || (prs) || (ric == 3) || (is == 1) ||
 	    ((!is) && (ric == 1 || ric == 2)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	switch (is) {
-	case 0:
+	चयन (is) अणु
+	हाल 0:
 		/*
 		 * We know ric == 0
-		 * Invalidate TLB for a given target address
+		 * Invalidate TLB क्रम a given target address
 		 */
 		epn = get_epn(rbval);
 		ap = get_ap(rbval);
 		ret = kvmhv_emulate_tlbie_tlb_addr(vcpu, lpid, ap, epn);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		/* Invalidate matching LPID */
 		gp = kvmhv_get_nested(kvm, lpid, false);
-		if (gp) {
+		अगर (gp) अणु
 			kvmhv_emulate_tlbie_lpid(vcpu, gp, ric);
 			kvmhv_put_nested(gp);
-		}
-		break;
-	case 3:
+		पूर्ण
+		अवरोध;
+	हाल 3:
 		/* Invalidate ALL LPIDs */
 		kvmhv_emulate_tlbie_all_lpid(vcpu, ric);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This handles the H_TLB_INVALIDATE hcall.
- * Parameters are (r4) tlbie instruction code, (r5) rS contents,
+ * Parameters are (r4) tlbie inकाष्ठाion code, (r5) rS contents,
  * (r6) rB contents.
  */
-long kvmhv_do_nested_tlbie(struct kvm_vcpu *vcpu)
-{
-	int ret;
+दीर्घ kvmhv_करो_nested_tlbie(काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक ret;
 
 	ret = kvmhv_emulate_priv_tlbie(vcpu, kvmppc_get_gpr(vcpu, 4),
 			kvmppc_get_gpr(vcpu, 5), kvmppc_get_gpr(vcpu, 6));
-	if (ret)
-		return H_PARAMETER;
-	return H_SUCCESS;
-}
+	अगर (ret)
+		वापस H_PARAMETER;
+	वापस H_SUCCESS;
+पूर्ण
 
 /* Used to convert a nested guest real address to a L1 guest real address */
-static int kvmhv_translate_addr_nested(struct kvm_vcpu *vcpu,
-				       struct kvm_nested_guest *gp,
-				       unsigned long n_gpa, unsigned long dsisr,
-				       struct kvmppc_pte *gpte_p)
-{
+अटल पूर्णांक kvmhv_translate_addr_nested(काष्ठा kvm_vcpu *vcpu,
+				       काष्ठा kvm_nested_guest *gp,
+				       अचिन्हित दीर्घ n_gpa, अचिन्हित दीर्घ dsisr,
+				       काष्ठा kvmppc_pte *gpte_p)
+अणु
 	u64 fault_addr, flags = dsisr & DSISR_ISSTORE;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kvmppc_mmu_walk_radix_tree(vcpu, n_gpa, gpte_p, gp->l1_gr_to_hr,
 					 &fault_addr);
 
-	if (ret) {
+	अगर (ret) अणु
 		/* We didn't find a pte */
-		if (ret == -EINVAL) {
+		अगर (ret == -EINVAL) अणु
 			/* Unsupported mmu config */
 			flags |= DSISR_UNSUPP_MMU;
-		} else if (ret == -ENOENT) {
+		पूर्ण अन्यथा अगर (ret == -ENOENT) अणु
 			/* No translation found */
 			flags |= DSISR_NOHPTE;
-		} else if (ret == -EFAULT) {
+		पूर्ण अन्यथा अगर (ret == -EFAULT) अणु
 			/* Couldn't access L1 real address */
 			flags |= DSISR_PRTABLE_FAULT;
 			vcpu->arch.fault_gpa = fault_addr;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Unknown error */
-			return ret;
-		}
-		goto forward_to_l1;
-	} else {
+			वापस ret;
+		पूर्ण
+		जाओ क्रमward_to_l1;
+	पूर्ण अन्यथा अणु
 		/* We found a pte -> check permissions */
-		if (dsisr & DSISR_ISSTORE) {
-			/* Can we write? */
-			if (!gpte_p->may_write) {
+		अगर (dsisr & DSISR_ISSTORE) अणु
+			/* Can we ग_लिखो? */
+			अगर (!gpte_p->may_ग_लिखो) अणु
 				flags |= DSISR_PROTFAULT;
-				goto forward_to_l1;
-			}
-		} else if (vcpu->arch.trap == BOOK3S_INTERRUPT_H_INST_STORAGE) {
+				जाओ क्रमward_to_l1;
+			पूर्ण
+		पूर्ण अन्यथा अगर (vcpu->arch.trap == BOOK3S_INTERRUPT_H_INST_STORAGE) अणु
 			/* Can we execute? */
-			if (!gpte_p->may_execute) {
+			अगर (!gpte_p->may_execute) अणु
 				flags |= SRR1_ISI_N_G_OR_CIP;
-				goto forward_to_l1;
-			}
-		} else {
-			/* Can we read? */
-			if (!gpte_p->may_read && !gpte_p->may_write) {
+				जाओ क्रमward_to_l1;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			/* Can we पढ़ो? */
+			अगर (!gpte_p->may_पढ़ो && !gpte_p->may_ग_लिखो) अणु
 				flags |= DSISR_PROTFAULT;
-				goto forward_to_l1;
-			}
-		}
-	}
+				जाओ क्रमward_to_l1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-forward_to_l1:
+क्रमward_to_l1:
 	vcpu->arch.fault_dsisr = flags;
-	if (vcpu->arch.trap == BOOK3S_INTERRUPT_H_INST_STORAGE) {
+	अगर (vcpu->arch.trap == BOOK3S_INTERRUPT_H_INST_STORAGE) अणु
 		vcpu->arch.shregs.msr &= SRR1_MSR_BITS;
 		vcpu->arch.shregs.msr |= flags;
-	}
-	return RESUME_HOST;
-}
+	पूर्ण
+	वापस RESUME_HOST;
+पूर्ण
 
-static long kvmhv_handle_nested_set_rc(struct kvm_vcpu *vcpu,
-				       struct kvm_nested_guest *gp,
-				       unsigned long n_gpa,
-				       struct kvmppc_pte gpte,
-				       unsigned long dsisr)
-{
-	struct kvm *kvm = vcpu->kvm;
+अटल दीर्घ kvmhv_handle_nested_set_rc(काष्ठा kvm_vcpu *vcpu,
+				       काष्ठा kvm_nested_guest *gp,
+				       अचिन्हित दीर्घ n_gpa,
+				       काष्ठा kvmppc_pte gpte,
+				       अचिन्हित दीर्घ dsisr)
+अणु
+	काष्ठा kvm *kvm = vcpu->kvm;
 	bool writing = !!(dsisr & DSISR_ISSTORE);
 	u64 pgflags;
-	long ret;
+	दीर्घ ret;
 
 	/* Are the rc bits set in the L1 partition scoped pte? */
 	pgflags = _PAGE_ACCESSED;
-	if (writing)
-		pgflags |= _PAGE_DIRTY;
-	if (pgflags & ~gpte.rc)
-		return RESUME_HOST;
+	अगर (writing)
+		pgflags |= _PAGE_सूचीTY;
+	अगर (pgflags & ~gpte.rc)
+		वापस RESUME_HOST;
 
 	spin_lock(&kvm->mmu_lock);
-	/* Set the rc bit in the pte of our (L0) pgtable for the L1 guest */
+	/* Set the rc bit in the pte of our (L0) pgtable क्रम the L1 guest */
 	ret = kvmppc_hv_handle_set_rc(kvm, false, writing,
 				      gpte.raddr, kvm->arch.lpid);
-	if (!ret) {
+	अगर (!ret) अणु
 		ret = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	/* Set the rc bit in the pte of the shadow_pgtable for the nest guest */
+	/* Set the rc bit in the pte of the shaकरोw_pgtable क्रम the nest guest */
 	ret = kvmppc_hv_handle_set_rc(kvm, true, writing,
 				      n_gpa, gp->l1_lpid);
-	if (!ret)
+	अगर (!ret)
 		ret = -EINVAL;
-	else
+	अन्यथा
 		ret = 0;
 
 out_unlock:
 	spin_unlock(&kvm->mmu_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int kvmppc_radix_level_to_shift(int level)
-{
-	switch (level) {
-	case 2:
-		return PUD_SHIFT;
-	case 1:
-		return PMD_SHIFT;
-	default:
-		return PAGE_SHIFT;
-	}
-}
+अटल अंतरभूत पूर्णांक kvmppc_radix_level_to_shअगरt(पूर्णांक level)
+अणु
+	चयन (level) अणु
+	हाल 2:
+		वापस PUD_SHIFT;
+	हाल 1:
+		वापस PMD_SHIFT;
+	शेष:
+		वापस PAGE_SHIFT;
+	पूर्ण
+पूर्ण
 
-static inline int kvmppc_radix_shift_to_level(int shift)
-{
-	if (shift == PUD_SHIFT)
-		return 2;
-	if (shift == PMD_SHIFT)
-		return 1;
-	if (shift == PAGE_SHIFT)
-		return 0;
+अटल अंतरभूत पूर्णांक kvmppc_radix_shअगरt_to_level(पूर्णांक shअगरt)
+अणु
+	अगर (shअगरt == PUD_SHIFT)
+		वापस 2;
+	अगर (shअगरt == PMD_SHIFT)
+		वापस 1;
+	अगर (shअगरt == PAGE_SHIFT)
+		वापस 0;
 	WARN_ON_ONCE(1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* called with gp->tlb_lock held */
-static long int __kvmhv_nested_page_fault(struct kvm_vcpu *vcpu,
-					  struct kvm_nested_guest *gp)
-{
-	struct kvm *kvm = vcpu->kvm;
-	struct kvm_memory_slot *memslot;
-	struct rmap_nested *n_rmap;
-	struct kvmppc_pte gpte;
+अटल दीर्घ पूर्णांक __kvmhv_nested_page_fault(काष्ठा kvm_vcpu *vcpu,
+					  काष्ठा kvm_nested_guest *gp)
+अणु
+	काष्ठा kvm *kvm = vcpu->kvm;
+	काष्ठा kvm_memory_slot *memslot;
+	काष्ठा rmap_nested *n_rmap;
+	काष्ठा kvmppc_pte gpte;
 	pte_t pte, *pte_p;
-	unsigned long mmu_seq;
-	unsigned long dsisr = vcpu->arch.fault_dsisr;
-	unsigned long ea = vcpu->arch.fault_dar;
-	unsigned long *rmapp;
-	unsigned long n_gpa, gpa, gfn, perm = 0UL;
-	unsigned int shift, l1_shift, level;
+	अचिन्हित दीर्घ mmu_seq;
+	अचिन्हित दीर्घ dsisr = vcpu->arch.fault_dsisr;
+	अचिन्हित दीर्घ ea = vcpu->arch.fault_dar;
+	अचिन्हित दीर्घ *rmapp;
+	अचिन्हित दीर्घ n_gpa, gpa, gfn, perm = 0UL;
+	अचिन्हित पूर्णांक shअगरt, l1_shअगरt, level;
 	bool writing = !!(dsisr & DSISR_ISSTORE);
 	bool kvm_ro = false;
-	long int ret;
+	दीर्घ पूर्णांक ret;
 
-	if (!gp->l1_gr_to_hr) {
+	अगर (!gp->l1_gr_to_hr) अणु
 		kvmhv_update_ptbl_cache(gp);
-		if (!gp->l1_gr_to_hr)
-			return RESUME_HOST;
-	}
+		अगर (!gp->l1_gr_to_hr)
+			वापस RESUME_HOST;
+	पूर्ण
 
-	/* Convert the nested guest real address into a L1 guest real address */
+	/* Convert the nested guest real address पूर्णांकo a L1 guest real address */
 
 	n_gpa = vcpu->arch.fault_gpa & ~0xF000000000000FFFULL;
-	if (!(dsisr & DSISR_PRTABLE_FAULT))
+	अगर (!(dsisr & DSISR_PRTABLE_FAULT))
 		n_gpa |= ea & 0xFFF;
 	ret = kvmhv_translate_addr_nested(vcpu, gp, n_gpa, dsisr, &gpte);
 
 	/*
-	 * If the hardware found a translation but we don't now have a usable
-	 * translation in the l1 partition-scoped tree, remove the shadow pte
+	 * If the hardware found a translation but we करोn't now have a usable
+	 * translation in the l1 partition-scoped tree, हटाओ the shaकरोw pte
 	 * and let the guest retry.
 	 */
-	if (ret == RESUME_HOST &&
+	अगर (ret == RESUME_HOST &&
 	    (dsisr & (DSISR_PROTFAULT | DSISR_BADACCESS | DSISR_NOEXEC_OR_G |
 		      DSISR_BAD_COPYPASTE)))
-		goto inval;
-	if (ret)
-		return ret;
+		जाओ inval;
+	अगर (ret)
+		वापस ret;
 
 	/* Failed to set the reference/change bits */
-	if (dsisr & DSISR_SET_RC) {
+	अगर (dsisr & DSISR_SET_RC) अणु
 		ret = kvmhv_handle_nested_set_rc(vcpu, gp, n_gpa, gpte, dsisr);
-		if (ret == RESUME_HOST)
-			return ret;
-		if (ret)
-			goto inval;
+		अगर (ret == RESUME_HOST)
+			वापस ret;
+		अगर (ret)
+			जाओ inval;
 		dsisr &= ~DSISR_SET_RC;
-		if (!(dsisr & (DSISR_BAD_FAULT_64S | DSISR_NOHPTE |
+		अगर (!(dsisr & (DSISR_BAD_FAULT_64S | DSISR_NOHPTE |
 			       DSISR_PROTFAULT)))
-			return RESUME_GUEST;
-	}
+			वापस RESUME_GUEST;
+	पूर्ण
 
 	/*
-	 * We took an HISI or HDSI while we were running a nested guest which
-	 * means we have no partition scoped translation for that. This means
-	 * we need to insert a pte for the mapping into our shadow_pgtable.
+	 * We took an HISI or HDSI जबतक we were running a nested guest which
+	 * means we have no partition scoped translation क्रम that. This means
+	 * we need to insert a pte क्रम the mapping पूर्णांकo our shaकरोw_pgtable.
 	 */
 
-	l1_shift = gpte.page_shift;
-	if (l1_shift < PAGE_SHIFT) {
-		/* We don't support l1 using a page size smaller than our own */
+	l1_shअगरt = gpte.page_shअगरt;
+	अगर (l1_shअगरt < PAGE_SHIFT) अणु
+		/* We करोn't support l1 using a page size smaller than our own */
 		pr_err("KVM: L1 guest page shift (%d) less than our own (%d)\n",
-			l1_shift, PAGE_SHIFT);
-		return -EINVAL;
-	}
+			l1_shअगरt, PAGE_SHIFT);
+		वापस -EINVAL;
+	पूर्ण
 	gpa = gpte.raddr;
 	gfn = gpa >> PAGE_SHIFT;
 
 	/* 1. Get the corresponding host memslot */
 
 	memslot = gfn_to_memslot(kvm, gfn);
-	if (!memslot || (memslot->flags & KVM_MEMSLOT_INVALID)) {
-		if (dsisr & (DSISR_PRTABLE_FAULT | DSISR_BADACCESS)) {
+	अगर (!memslot || (memslot->flags & KVM_MEMSLOT_INVALID)) अणु
+		अगर (dsisr & (DSISR_PRTABLE_FAULT | DSISR_BADACCESS)) अणु
 			/* unusual error -> reflect to the guest as a DSI */
 			kvmppc_core_queue_data_storage(vcpu, ea, dsisr);
-			return RESUME_GUEST;
-		}
+			वापस RESUME_GUEST;
+		पूर्ण
 
-		/* passthrough of emulated MMIO case */
-		return kvmppc_hv_emulate_mmio(vcpu, gpa, ea, writing);
-	}
-	if (memslot->flags & KVM_MEM_READONLY) {
-		if (writing) {
+		/* passthrough of emulated MMIO हाल */
+		वापस kvmppc_hv_emulate_mmio(vcpu, gpa, ea, writing);
+	पूर्ण
+	अगर (memslot->flags & KVM_MEM_READONLY) अणु
+		अगर (writing) अणु
 			/* Give the guest a DSI */
 			kvmppc_core_queue_data_storage(vcpu, ea,
 					DSISR_ISSTORE | DSISR_PROTFAULT);
-			return RESUME_GUEST;
-		}
+			वापस RESUME_GUEST;
+		पूर्ण
 		kvm_ro = true;
-	}
+	पूर्ण
 
-	/* 2. Find the host pte for this L1 guest real address */
+	/* 2. Find the host pte क्रम this L1 guest real address */
 
-	/* Used to check for invalidations in progress */
-	mmu_seq = kvm->mmu_notifier_seq;
+	/* Used to check क्रम invalidations in progress */
+	mmu_seq = kvm->mmu_notअगरier_seq;
 	smp_rmb();
 
-	/* See if can find translation in our partition scoped tables for L1 */
+	/* See अगर can find translation in our partition scoped tables क्रम L1 */
 	pte = __pte(0);
 	spin_lock(&kvm->mmu_lock);
-	pte_p = find_kvm_secondary_pte(kvm, gpa, &shift);
-	if (!shift)
-		shift = PAGE_SHIFT;
-	if (pte_p)
+	pte_p = find_kvm_secondary_pte(kvm, gpa, &shअगरt);
+	अगर (!shअगरt)
+		shअगरt = PAGE_SHIFT;
+	अगर (pte_p)
 		pte = *pte_p;
 	spin_unlock(&kvm->mmu_lock);
 
-	if (!pte_present(pte) || (writing && !(pte_val(pte) & _PAGE_WRITE))) {
+	अगर (!pte_present(pte) || (writing && !(pte_val(pte) & _PAGE_WRITE))) अणु
 		/* No suitable pte found -> try to insert a mapping */
 		ret = kvmppc_book3s_instantiate_page(vcpu, gpa, memslot,
 					writing, kvm_ro, &pte, &level);
-		if (ret == -EAGAIN)
-			return RESUME_GUEST;
-		else if (ret)
-			return ret;
-		shift = kvmppc_radix_level_to_shift(level);
-	}
+		अगर (ret == -EAGAIN)
+			वापस RESUME_GUEST;
+		अन्यथा अगर (ret)
+			वापस ret;
+		shअगरt = kvmppc_radix_level_to_shअगरt(level);
+	पूर्ण
 	/* Align gfn to the start of the page */
-	gfn = (gpa & ~((1UL << shift) - 1)) >> PAGE_SHIFT;
+	gfn = (gpa & ~((1UL << shअगरt) - 1)) >> PAGE_SHIFT;
 
-	/* 3. Compute the pte we need to insert for nest_gpa -> host r_addr */
+	/* 3. Compute the pte we need to insert क्रम nest_gpa -> host r_addr */
 
 	/* The permissions is the combination of the host and l1 guest ptes */
-	perm |= gpte.may_read ? 0UL : _PAGE_READ;
-	perm |= gpte.may_write ? 0UL : _PAGE_WRITE;
+	perm |= gpte.may_पढ़ो ? 0UL : _PAGE_READ;
+	perm |= gpte.may_ग_लिखो ? 0UL : _PAGE_WRITE;
 	perm |= gpte.may_execute ? 0UL : _PAGE_EXEC;
-	/* Only set accessed/dirty (rc) bits if set in host and l1 guest ptes */
+	/* Only set accessed/dirty (rc) bits अगर set in host and l1 guest ptes */
 	perm |= (gpte.rc & _PAGE_ACCESSED) ? 0UL : _PAGE_ACCESSED;
-	perm |= ((gpte.rc & _PAGE_DIRTY) && writing) ? 0UL : _PAGE_DIRTY;
+	perm |= ((gpte.rc & _PAGE_सूचीTY) && writing) ? 0UL : _PAGE_सूचीTY;
 	pte = __pte(pte_val(pte) & ~perm);
 
 	/* What size pte can we insert? */
-	if (shift > l1_shift) {
+	अगर (shअगरt > l1_shअगरt) अणु
 		u64 mask;
-		unsigned int actual_shift = PAGE_SHIFT;
-		if (PMD_SHIFT < l1_shift)
-			actual_shift = PMD_SHIFT;
-		mask = (1UL << shift) - (1UL << actual_shift);
+		अचिन्हित पूर्णांक actual_shअगरt = PAGE_SHIFT;
+		अगर (PMD_SHIFT < l1_shअगरt)
+			actual_shअगरt = PMD_SHIFT;
+		mask = (1UL << shअगरt) - (1UL << actual_shअगरt);
 		pte = __pte(pte_val(pte) | (gpa & mask));
-		shift = actual_shift;
-	}
-	level = kvmppc_radix_shift_to_level(shift);
-	n_gpa &= ~((1UL << shift) - 1);
+		shअगरt = actual_shअगरt;
+	पूर्ण
+	level = kvmppc_radix_shअगरt_to_level(shअगरt);
+	n_gpa &= ~((1UL << shअगरt) - 1);
 
-	/* 4. Insert the pte into our shadow_pgtable */
+	/* 4. Insert the pte पूर्णांकo our shaकरोw_pgtable */
 
-	n_rmap = kzalloc(sizeof(*n_rmap), GFP_KERNEL);
-	if (!n_rmap)
-		return RESUME_GUEST; /* Let the guest try again */
+	n_rmap = kzalloc(माप(*n_rmap), GFP_KERNEL);
+	अगर (!n_rmap)
+		वापस RESUME_GUEST; /* Let the guest try again */
 	n_rmap->rmap = (n_gpa & RMAP_NESTED_GPA_MASK) |
-		(((unsigned long) gp->l1_lpid) << RMAP_NESTED_LPID_SHIFT);
+		(((अचिन्हित दीर्घ) gp->l1_lpid) << RMAP_NESTED_LPID_SHIFT);
 	rmapp = &memslot->arch.rmap[gfn - memslot->base_gfn];
-	ret = kvmppc_create_pte(kvm, gp->shadow_pgtable, pte, n_gpa, level,
-				mmu_seq, gp->shadow_lpid, rmapp, &n_rmap);
-	kfree(n_rmap);
-	if (ret == -EAGAIN)
+	ret = kvmppc_create_pte(kvm, gp->shaकरोw_pgtable, pte, n_gpa, level,
+				mmu_seq, gp->shaकरोw_lpid, rmapp, &n_rmap);
+	kमुक्त(n_rmap);
+	अगर (ret == -EAGAIN)
 		ret = RESUME_GUEST;	/* Let the guest try again */
 
-	return ret;
+	वापस ret;
 
  inval:
-	kvmhv_invalidate_shadow_pte(vcpu, gp, n_gpa, NULL);
-	return RESUME_GUEST;
-}
+	kvmhv_invalidate_shaकरोw_pte(vcpu, gp, n_gpa, शून्य);
+	वापस RESUME_GUEST;
+पूर्ण
 
-long int kvmhv_nested_page_fault(struct kvm_vcpu *vcpu)
-{
-	struct kvm_nested_guest *gp = vcpu->arch.nested;
-	long int ret;
+दीर्घ पूर्णांक kvmhv_nested_page_fault(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm_nested_guest *gp = vcpu->arch.nested;
+	दीर्घ पूर्णांक ret;
 
 	mutex_lock(&gp->tlb_lock);
 	ret = __kvmhv_nested_page_fault(vcpu, gp);
 	mutex_unlock(&gp->tlb_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int kvmhv_nested_next_lpid(struct kvm *kvm, int lpid)
-{
-	int ret = -1;
+पूर्णांक kvmhv_nested_next_lpid(काष्ठा kvm *kvm, पूर्णांक lpid)
+अणु
+	पूर्णांक ret = -1;
 
 	spin_lock(&kvm->mmu_lock);
-	while (++lpid <= kvm->arch.max_nested_lpid) {
-		if (kvm->arch.nested_guests[lpid]) {
+	जबतक (++lpid <= kvm->arch.max_nested_lpid) अणु
+		अगर (kvm->arch.nested_guests[lpid]) अणु
 			ret = lpid;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&kvm->mmu_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण

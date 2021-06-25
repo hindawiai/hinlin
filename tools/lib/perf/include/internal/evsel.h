@@ -1,64 +1,65 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LIBPERF_INTERNAL_EVSEL_H
-#define __LIBPERF_INTERNAL_EVSEL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LIBPERF_INTERNAL_EVSEL_H
+#घोषणा __LIBPERF_INTERNAL_EVSEL_H
 
-#include <linux/types.h>
-#include <linux/perf_event.h>
-#include <stdbool.h>
-#include <sys/types.h>
+#समावेश <linux/types.h>
+#समावेश <linux/perf_event.h>
+#समावेश <stdbool.h>
+#समावेश <sys/types.h>
 
-struct perf_cpu_map;
-struct perf_thread_map;
-struct xyarray;
+काष्ठा perf_cpu_map;
+काष्ठा perf_thपढ़ो_map;
+काष्ठा xyarray;
 
 /*
  * Per fd, to map back from PERF_SAMPLE_ID to evsel, only used when there are
  * more than one entry in the evlist.
  */
-struct perf_sample_id {
-	struct hlist_node	 node;
+काष्ठा perf_sample_id अणु
+	काष्ठा hlist_node	 node;
 	u64			 id;
-	struct perf_evsel	*evsel;
+	काष्ठा perf_evsel	*evsel;
        /*
-	* 'idx' will be used for AUX area sampling. A sample will have AUX area
-	* data that will be queued for decoding, where there are separate
-	* queues for each CPU (per-cpu tracing) or task (per-thread tracing).
+	* 'idx' will be used क्रम AUX area sampling. A sample will have AUX area
+	* data that will be queued क्रम decoding, where there are separate
+	* queues क्रम each CPU (per-cpu tracing) or task (per-thपढ़ो tracing).
 	* The sample ID can be used to lookup 'idx' which is effectively the
 	* queue number.
 	*/
-	int			 idx;
-	int			 cpu;
+	पूर्णांक			 idx;
+	पूर्णांक			 cpu;
 	pid_t			 tid;
 
-	/* Holds total ID period value for PERF_SAMPLE_READ processing. */
+	/* Holds total ID period value क्रम PERF_SAMPLE_READ processing. */
 	u64			 period;
-};
+पूर्ण;
 
-struct perf_evsel {
-	struct list_head	 node;
-	struct perf_event_attr	 attr;
-	struct perf_cpu_map	*cpus;
-	struct perf_cpu_map	*own_cpus;
-	struct perf_thread_map	*threads;
-	struct xyarray		*fd;
-	struct xyarray		*mmap;
-	struct xyarray		*sample_id;
+काष्ठा perf_evsel अणु
+	काष्ठा list_head	 node;
+	काष्ठा perf_event_attr	 attr;
+	काष्ठा perf_cpu_map	*cpus;
+	काष्ठा perf_cpu_map	*own_cpus;
+	काष्ठा perf_thपढ़ो_map	*thपढ़ोs;
+	काष्ठा xyarray		*fd;
+	काष्ठा xyarray		*mmap;
+	काष्ठा xyarray		*sample_id;
 	u64			*id;
 	u32			 ids;
 
-	/* parse modifier helper */
-	int			 nr_members;
-	bool			 system_wide;
-};
+	/* parse modअगरier helper */
+	पूर्णांक			 nr_members;
+	bool			 प्रणाली_wide;
+पूर्ण;
 
-void perf_evsel__init(struct perf_evsel *evsel, struct perf_event_attr *attr);
-int perf_evsel__alloc_fd(struct perf_evsel *evsel, int ncpus, int nthreads);
-void perf_evsel__close_fd(struct perf_evsel *evsel);
-void perf_evsel__free_fd(struct perf_evsel *evsel);
-int perf_evsel__read_size(struct perf_evsel *evsel);
-int perf_evsel__apply_filter(struct perf_evsel *evsel, const char *filter);
+व्योम perf_evsel__init(काष्ठा perf_evsel *evsel, काष्ठा perf_event_attr *attr);
+पूर्णांक perf_evsel__alloc_fd(काष्ठा perf_evsel *evsel, पूर्णांक ncpus, पूर्णांक nthपढ़ोs);
+व्योम perf_evsel__बंद_fd(काष्ठा perf_evsel *evsel);
+व्योम perf_evsel__मुक्त_fd(काष्ठा perf_evsel *evsel);
+पूर्णांक perf_evsel__पढ़ो_size(काष्ठा perf_evsel *evsel);
+पूर्णांक perf_evsel__apply_filter(काष्ठा perf_evsel *evsel, स्थिर अक्षर *filter);
 
-int perf_evsel__alloc_id(struct perf_evsel *evsel, int ncpus, int nthreads);
-void perf_evsel__free_id(struct perf_evsel *evsel);
+पूर्णांक perf_evsel__alloc_id(काष्ठा perf_evsel *evsel, पूर्णांक ncpus, पूर्णांक nthपढ़ोs);
+व्योम perf_evsel__मुक्त_id(काष्ठा perf_evsel *evsel);
 
-#endif /* __LIBPERF_INTERNAL_EVSEL_H */
+#पूर्ण_अगर /* __LIBPERF_INTERNAL_EVSEL_H */

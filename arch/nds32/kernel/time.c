@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#include <linux/clocksource.h>
-#include <linux/of_clk.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/of_clk.h>
 
-void __init time_init(void)
-{
-	of_clk_init(NULL);
-	timer_probe();
-}
+व्योम __init समय_init(व्योम)
+अणु
+	of_clk_init(शून्य);
+	समयr_probe();
+पूर्ण

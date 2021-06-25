@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <elfutils/libdwfl.h>
-#include "../../../util/unwind-libdw.h"
-#include "../../../util/perf_regs.h"
-#include "../../../util/event.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <elfutils/libdwfl.h>
+#समावेश "../../../util/unwind-libdw.h"
+#समावेश "../../../util/perf_regs.h"
+#समावेश "../../../util/event.h"
 
-bool libdw__arch_set_initial_registers(Dwfl_Thread *thread, void *arg)
-{
-	struct unwind_info *ui = arg;
-	struct regs_dump *user_regs = &ui->sample->user_regs;
+bool libdw__arch_set_initial_रेजिस्टरs(Dwfl_Thपढ़ो *thपढ़ो, व्योम *arg)
+अणु
+	काष्ठा unwind_info *ui = arg;
+	काष्ठा regs_dump *user_regs = &ui->sample->user_regs;
 	Dwarf_Word dwarf_regs[17];
-	unsigned nregs;
+	अचिन्हित nregs;
 
-#define REG(r) ({						\
+#घोषणा REG(r) (अणु						\
 	Dwarf_Word val = 0;					\
 	perf_reg_value(&val, user_regs, PERF_REG_X86_##r);	\
 	val;							\
-})
+पूर्ण)
 
-	if (user_regs->abi == PERF_SAMPLE_REGS_ABI_32) {
+	अगर (user_regs->abi == PERF_SAMPLE_REGS_ABI_32) अणु
 		dwarf_regs[0] = REG(AX);
 		dwarf_regs[1] = REG(CX);
 		dwarf_regs[2] = REG(DX);
@@ -28,7 +29,7 @@ bool libdw__arch_set_initial_registers(Dwfl_Thread *thread, void *arg)
 		dwarf_regs[7] = REG(DI);
 		dwarf_regs[8] = REG(IP);
 		nregs = 9;
-	} else {
+	पूर्ण अन्यथा अणु
 		dwarf_regs[0]  = REG(AX);
 		dwarf_regs[1]  = REG(DX);
 		dwarf_regs[2]  = REG(CX);
@@ -47,7 +48,7 @@ bool libdw__arch_set_initial_registers(Dwfl_Thread *thread, void *arg)
 		dwarf_regs[15] = REG(R15);
 		dwarf_regs[16] = REG(IP);
 		nregs = 17;
-	}
+	पूर्ण
 
-	return dwfl_thread_state_registers(thread, 0, nregs, dwarf_regs);
-}
+	वापस dwfl_thपढ़ो_state_रेजिस्टरs(thपढ़ो, 0, nregs, dwarf_regs);
+पूर्ण

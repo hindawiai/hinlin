@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2005 Cisco Systems.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,37 +31,37 @@
  * SOFTWARE.
  */
 
-#include <linux/jiffies.h>
-#include <linux/module.h>
-#include <linux/timer.h>
-#include <linux/workqueue.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/module.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/workqueue.h>
 
-#include "mthca_dev.h"
+#समावेश "mthca_dev.h"
 
-enum {
+क्रमागत अणु
 	MTHCA_CATAS_POLL_INTERVAL	= 5 * HZ,
 
 	MTHCA_CATAS_TYPE_INTERNAL	= 0,
 	MTHCA_CATAS_TYPE_UPLINK		= 3,
 	MTHCA_CATAS_TYPE_DDR		= 4,
 	MTHCA_CATAS_TYPE_PARITY		= 5,
-};
+पूर्ण;
 
-static DEFINE_SPINLOCK(catas_lock);
+अटल DEFINE_SPINLOCK(catas_lock);
 
-static LIST_HEAD(catas_list);
-static struct workqueue_struct *catas_wq;
-static struct work_struct catas_work;
+अटल LIST_HEAD(catas_list);
+अटल काष्ठा workqueue_काष्ठा *catas_wq;
+अटल काष्ठा work_काष्ठा catas_work;
 
-static int catas_reset_disable;
-module_param_named(catas_reset_disable, catas_reset_disable, int, 0644);
+अटल पूर्णांक catas_reset_disable;
+module_param_named(catas_reset_disable, catas_reset_disable, पूर्णांक, 0644);
 MODULE_PARM_DESC(catas_reset_disable, "disable reset on catastrophic event if nonzero");
 
-static void catas_reset(struct work_struct *work)
-{
-	struct mthca_dev *dev, *tmpdev;
+अटल व्योम catas_reset(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mthca_dev *dev, *पंचांगpdev;
 	LIST_HEAD(tlist);
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&mthca_device_mutex);
 
@@ -68,28 +69,28 @@ static void catas_reset(struct work_struct *work)
 	list_splice_init(&catas_list, &tlist);
 	spin_unlock_irq(&catas_lock);
 
-	list_for_each_entry_safe(dev, tmpdev, &tlist, catas_err.list) {
-		struct pci_dev *pdev = dev->pdev;
+	list_क्रम_each_entry_safe(dev, पंचांगpdev, &tlist, catas_err.list) अणु
+		काष्ठा pci_dev *pdev = dev->pdev;
 		ret = __mthca_restart_one(dev->pdev);
 		/* 'dev' now is not valid */
-		if (ret)
-			printk(KERN_ERR "mthca %s: Reset failed (%d)\n",
+		अगर (ret)
+			prपूर्णांकk(KERN_ERR "mthca %s: Reset failed (%d)\n",
 			       pci_name(pdev), ret);
-		else {
-			struct mthca_dev *d = pci_get_drvdata(pdev);
+		अन्यथा अणु
+			काष्ठा mthca_dev *d = pci_get_drvdata(pdev);
 			mthca_dbg(d, "Reset succeeded\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&mthca_device_mutex);
-}
+पूर्ण
 
-static void handle_catas(struct mthca_dev *dev)
-{
-	struct ib_event event;
-	unsigned long flags;
-	const char *type;
-	int i;
+अटल व्योम handle_catas(काष्ठा mthca_dev *dev)
+अणु
+	काष्ठा ib_event event;
+	अचिन्हित दीर्घ flags;
+	स्थिर अक्षर *type;
+	पूर्णांक i;
 
 	event.device = &dev->ib_dev;
 	event.event  = IB_EVENT_DEVICE_FATAL;
@@ -98,101 +99,101 @@ static void handle_catas(struct mthca_dev *dev)
 
 	ib_dispatch_event(&event);
 
-	switch (swab32(readl(dev->catas_err.map)) >> 24) {
-	case MTHCA_CATAS_TYPE_INTERNAL:
+	चयन (swab32(पढ़ोl(dev->catas_err.map)) >> 24) अणु
+	हाल MTHCA_CATAS_TYPE_INTERNAL:
 		type = "internal error";
-		break;
-	case MTHCA_CATAS_TYPE_UPLINK:
+		अवरोध;
+	हाल MTHCA_CATAS_TYPE_UPLINK:
 		type = "uplink bus error";
-		break;
-	case MTHCA_CATAS_TYPE_DDR:
+		अवरोध;
+	हाल MTHCA_CATAS_TYPE_DDR:
 		type = "DDR data error";
-		break;
-	case MTHCA_CATAS_TYPE_PARITY:
+		अवरोध;
+	हाल MTHCA_CATAS_TYPE_PARITY:
 		type = "internal parity error";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		type = "unknown error";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mthca_err(dev, "Catastrophic error detected: %s\n", type);
-	for (i = 0; i < dev->catas_err.size; ++i)
+	क्रम (i = 0; i < dev->catas_err.size; ++i)
 		mthca_err(dev, "  buf[%02x]: %08x\n",
-			  i, swab32(readl(dev->catas_err.map + i)));
+			  i, swab32(पढ़ोl(dev->catas_err.map + i)));
 
-	if (catas_reset_disable)
-		return;
+	अगर (catas_reset_disable)
+		वापस;
 
 	spin_lock_irqsave(&catas_lock, flags);
 	list_add(&dev->catas_err.list, &catas_list);
 	queue_work(catas_wq, &catas_work);
 	spin_unlock_irqrestore(&catas_lock, flags);
-}
+पूर्ण
 
-static void poll_catas(struct timer_list *t)
-{
-	struct mthca_dev *dev = from_timer(dev, t, catas_err.timer);
-	int i;
+अटल व्योम poll_catas(काष्ठा समयr_list *t)
+अणु
+	काष्ठा mthca_dev *dev = from_समयr(dev, t, catas_err.समयr);
+	पूर्णांक i;
 
-	for (i = 0; i < dev->catas_err.size; ++i)
-		if (readl(dev->catas_err.map + i)) {
+	क्रम (i = 0; i < dev->catas_err.size; ++i)
+		अगर (पढ़ोl(dev->catas_err.map + i)) अणु
 			handle_catas(dev);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-	mod_timer(&dev->catas_err.timer,
-		  round_jiffies(jiffies + MTHCA_CATAS_POLL_INTERVAL));
-}
+	mod_समयr(&dev->catas_err.समयr,
+		  round_jअगरfies(jअगरfies + MTHCA_CATAS_POLL_INTERVAL));
+पूर्ण
 
-void mthca_start_catas_poll(struct mthca_dev *dev)
-{
+व्योम mthca_start_catas_poll(काष्ठा mthca_dev *dev)
+अणु
 	phys_addr_t addr;
 
-	timer_setup(&dev->catas_err.timer, poll_catas, 0);
-	dev->catas_err.map  = NULL;
+	समयr_setup(&dev->catas_err.समयr, poll_catas, 0);
+	dev->catas_err.map  = शून्य;
 
 	addr = pci_resource_start(dev->pdev, 0) +
 		((pci_resource_len(dev->pdev, 0) - 1) &
 		 dev->catas_err.addr);
 
 	dev->catas_err.map = ioremap(addr, dev->catas_err.size * 4);
-	if (!dev->catas_err.map) {
+	अगर (!dev->catas_err.map) अणु
 		mthca_warn(dev, "couldn't map catastrophic error region "
-			   "at 0x%llx/0x%x\n", (unsigned long long) addr,
+			   "at 0x%llx/0x%x\n", (अचिन्हित दीर्घ दीर्घ) addr,
 			   dev->catas_err.size * 4);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	dev->catas_err.timer.expires  = jiffies + MTHCA_CATAS_POLL_INTERVAL;
+	dev->catas_err.समयr.expires  = jअगरfies + MTHCA_CATAS_POLL_INTERVAL;
 	INIT_LIST_HEAD(&dev->catas_err.list);
-	add_timer(&dev->catas_err.timer);
-}
+	add_समयr(&dev->catas_err.समयr);
+पूर्ण
 
-void mthca_stop_catas_poll(struct mthca_dev *dev)
-{
-	del_timer_sync(&dev->catas_err.timer);
+व्योम mthca_stop_catas_poll(काष्ठा mthca_dev *dev)
+अणु
+	del_समयr_sync(&dev->catas_err.समयr);
 
-	if (dev->catas_err.map)
+	अगर (dev->catas_err.map)
 		iounmap(dev->catas_err.map);
 
 	spin_lock_irq(&catas_lock);
 	list_del(&dev->catas_err.list);
 	spin_unlock_irq(&catas_lock);
-}
+पूर्ण
 
-int __init mthca_catas_init(void)
-{
+पूर्णांक __init mthca_catas_init(व्योम)
+अणु
 	INIT_WORK(&catas_work, catas_reset);
 
 	catas_wq = alloc_ordered_workqueue("mthca_catas", WQ_MEM_RECLAIM);
-	if (!catas_wq)
-		return -ENOMEM;
+	अगर (!catas_wq)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mthca_catas_cleanup(void)
-{
+व्योम mthca_catas_cleanup(व्योम)
+अणु
 	destroy_workqueue(catas_wq);
-}
+पूर्ण

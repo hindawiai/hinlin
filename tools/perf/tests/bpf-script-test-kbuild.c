@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * bpf-script-test-kbuild.c
  * Test include from kernel header
  */
-#ifndef LINUX_VERSION_CODE
+#अगर_अघोषित LINUX_VERSION_CODE
 # error Need LINUX_VERSION_CODE
-# error Example: for 4.2 kernel, put 'clang-opt="-DLINUX_VERSION_CODE=0x40200" into llvm section of ~/.perfconfig'
-#endif
-#define SEC(NAME) __attribute__((section(NAME), used))
+# error Example: क्रम 4.2 kernel, put 'clang-opt="-DLINUX_VERSION_CODE=0x40200" into llvm section of ~/.perfconfig'
+#पूर्ण_अगर
+#घोषणा SEC(NAME) __attribute__((section(NAME), used))
 
-#include <uapi/linux/fs.h>
+#समावेश <uapi/linux/fs.h>
 
 SEC("func=vfs_llseek")
-int bpf_func__vfs_llseek(void *ctx)
-{
-	return 0;
-}
+पूर्णांक bpf_func__vfs_llseek(व्योम *ctx)
+अणु
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
-int _version SEC("version") = LINUX_VERSION_CODE;
+अक्षर _license[] SEC("license") = "GPL";
+पूर्णांक _version SEC("version") = LINUX_VERSION_CODE;

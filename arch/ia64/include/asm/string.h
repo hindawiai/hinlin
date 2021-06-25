@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_STRING_H
-#define _ASM_IA64_STRING_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_STRING_H
+#घोषणा _ASM_IA64_STRING_H
 
 /*
  * Here is where we want to put optimized versions of the string
@@ -11,12 +12,12 @@
  */
 
 
-#define __HAVE_ARCH_STRLEN	1 /* see arch/ia64/lib/strlen.S */
-#define __HAVE_ARCH_MEMSET	1 /* see arch/ia64/lib/memset.S */
-#define __HAVE_ARCH_MEMCPY	1 /* see arch/ia64/lib/memcpy.S */
+#घोषणा __HAVE_ARCH_STRLEN	1 /* see arch/ia64/lib/म_माप.S */
+#घोषणा __HAVE_ARCH_MEMSET	1 /* see arch/ia64/lib/स_रखो.S */
+#घोषणा __HAVE_ARCH_MEMCPY	1 /* see arch/ia64/lib/स_नकल.S */
 
-extern __kernel_size_t strlen (const char *);
-extern void *memcpy (void *, const void *, __kernel_size_t);
-extern void *memset (void *, int, __kernel_size_t);
+बाह्य __kernel_माप_प्रकार म_माप (स्थिर अक्षर *);
+बाह्य व्योम *स_नकल (व्योम *, स्थिर व्योम *, __kernel_माप_प्रकार);
+बाह्य व्योम *स_रखो (व्योम *, पूर्णांक, __kernel_माप_प्रकार);
 
-#endif /* _ASM_IA64_STRING_H */
+#पूर्ण_अगर /* _ASM_IA64_STRING_H */

@@ -1,402 +1,403 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/clockchips.h>
-#include <linux/interrupt.h>
-#include <linux/export.h>
-#include <linux/delay.h>
-#include <linux/hpet.h>
-#include <linux/cpu.h>
-#include <linux/irq.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/export.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/hpet.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/irq.h>
 
-#include <asm/irq_remapping.h>
-#include <asm/hpet.h>
-#include <asm/time.h>
+#समावेश <यंत्र/irq_remapping.h>
+#समावेश <यंत्र/hpet.h>
+#समावेश <यंत्र/समय.स>
 
-#undef  pr_fmt
-#define pr_fmt(fmt) "hpet: " fmt
+#अघोषित  pr_fmt
+#घोषणा pr_fmt(fmt) "hpet: " fmt
 
-enum hpet_mode {
+क्रमागत hpet_mode अणु
 	HPET_MODE_UNUSED,
 	HPET_MODE_LEGACY,
 	HPET_MODE_CLOCKEVT,
 	HPET_MODE_DEVICE,
-};
+पूर्ण;
 
-struct hpet_channel {
-	struct clock_event_device	evt;
-	unsigned int			num;
-	unsigned int			cpu;
-	unsigned int			irq;
-	unsigned int			in_use;
-	enum hpet_mode			mode;
-	unsigned int			boot_cfg;
-	char				name[10];
-};
+काष्ठा hpet_channel अणु
+	काष्ठा घड़ी_event_device	evt;
+	अचिन्हित पूर्णांक			num;
+	अचिन्हित पूर्णांक			cpu;
+	अचिन्हित पूर्णांक			irq;
+	अचिन्हित पूर्णांक			in_use;
+	क्रमागत hpet_mode			mode;
+	अचिन्हित पूर्णांक			boot_cfg;
+	अक्षर				name[10];
+पूर्ण;
 
-struct hpet_base {
-	unsigned int			nr_channels;
-	unsigned int			nr_clockevents;
-	unsigned int			boot_cfg;
-	struct hpet_channel		*channels;
-};
+काष्ठा hpet_base अणु
+	अचिन्हित पूर्णांक			nr_channels;
+	अचिन्हित पूर्णांक			nr_घड़ीevents;
+	अचिन्हित पूर्णांक			boot_cfg;
+	काष्ठा hpet_channel		*channels;
+पूर्ण;
 
-#define HPET_MASK			CLOCKSOURCE_MASK(32)
+#घोषणा HPET_MASK			CLOCKSOURCE_MASK(32)
 
-#define HPET_MIN_CYCLES			128
-#define HPET_MIN_PROG_DELTA		(HPET_MIN_CYCLES + (HPET_MIN_CYCLES >> 1))
+#घोषणा HPET_MIN_CYCLES			128
+#घोषणा HPET_MIN_PROG_DELTA		(HPET_MIN_CYCLES + (HPET_MIN_CYCLES >> 1))
 
 /*
  * HPET address is set in acpi/boot.c, when an ACPI entry exists
  */
-unsigned long				hpet_address;
-u8					hpet_blockid; /* OS timer block num */
+अचिन्हित दीर्घ				hpet_address;
+u8					hpet_blockid; /* OS समयr block num */
 bool					hpet_msi_disable;
 
-#ifdef CONFIG_GENERIC_MSI_IRQ
-static DEFINE_PER_CPU(struct hpet_channel *, cpu_hpet_channel);
-static struct irq_domain		*hpet_domain;
-#endif
+#अगर_घोषित CONFIG_GENERIC_MSI_IRQ
+अटल DEFINE_PER_CPU(काष्ठा hpet_channel *, cpu_hpet_channel);
+अटल काष्ठा irq_करोमुख्य		*hpet_करोमुख्य;
+#पूर्ण_अगर
 
-static void __iomem			*hpet_virt_address;
+अटल व्योम __iomem			*hpet_virt_address;
 
-static struct hpet_base			hpet_base;
+अटल काष्ठा hpet_base			hpet_base;
 
-static bool				hpet_legacy_int_enabled;
-static unsigned long			hpet_freq;
+अटल bool				hpet_legacy_पूर्णांक_enabled;
+अटल अचिन्हित दीर्घ			hpet_freq;
 
 bool					boot_hpet_disable;
-bool					hpet_force_user;
-static bool				hpet_verbose;
+bool					hpet_क्रमce_user;
+अटल bool				hpet_verbose;
 
-static inline
-struct hpet_channel *clockevent_to_channel(struct clock_event_device *evt)
-{
-	return container_of(evt, struct hpet_channel, evt);
-}
+अटल अंतरभूत
+काष्ठा hpet_channel *घड़ीevent_to_channel(काष्ठा घड़ी_event_device *evt)
+अणु
+	वापस container_of(evt, काष्ठा hpet_channel, evt);
+पूर्ण
 
-inline unsigned int hpet_readl(unsigned int a)
-{
-	return readl(hpet_virt_address + a);
-}
+अंतरभूत अचिन्हित पूर्णांक hpet_पढ़ोl(अचिन्हित पूर्णांक a)
+अणु
+	वापस पढ़ोl(hpet_virt_address + a);
+पूर्ण
 
-static inline void hpet_writel(unsigned int d, unsigned int a)
-{
-	writel(d, hpet_virt_address + a);
-}
+अटल अंतरभूत व्योम hpet_ग_लिखोl(अचिन्हित पूर्णांक d, अचिन्हित पूर्णांक a)
+अणु
+	ग_लिखोl(d, hpet_virt_address + a);
+पूर्ण
 
-static inline void hpet_set_mapping(void)
-{
+अटल अंतरभूत व्योम hpet_set_mapping(व्योम)
+अणु
 	hpet_virt_address = ioremap(hpet_address, HPET_MMAP_SIZE);
-}
+पूर्ण
 
-static inline void hpet_clear_mapping(void)
-{
+अटल अंतरभूत व्योम hpet_clear_mapping(व्योम)
+अणु
 	iounmap(hpet_virt_address);
-	hpet_virt_address = NULL;
-}
+	hpet_virt_address = शून्य;
+पूर्ण
 
 /*
  * HPET command line enable / disable
  */
-static int __init hpet_setup(char *str)
-{
-	while (str) {
-		char *next = strchr(str, ',');
+अटल पूर्णांक __init hpet_setup(अक्षर *str)
+अणु
+	जबतक (str) अणु
+		अक्षर *next = म_अक्षर(str, ',');
 
-		if (next)
+		अगर (next)
 			*next++ = 0;
-		if (!strncmp("disable", str, 7))
+		अगर (!म_भेदन("disable", str, 7))
 			boot_hpet_disable = true;
-		if (!strncmp("force", str, 5))
-			hpet_force_user = true;
-		if (!strncmp("verbose", str, 7))
+		अगर (!म_भेदन("force", str, 5))
+			hpet_क्रमce_user = true;
+		अगर (!म_भेदन("verbose", str, 7))
 			hpet_verbose = true;
 		str = next;
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 __setup("hpet=", hpet_setup);
 
-static int __init disable_hpet(char *str)
-{
+अटल पूर्णांक __init disable_hpet(अक्षर *str)
+अणु
 	boot_hpet_disable = true;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("nohpet", disable_hpet);
 
-static inline int is_hpet_capable(void)
-{
-	return !boot_hpet_disable && hpet_address;
-}
+अटल अंतरभूत पूर्णांक is_hpet_capable(व्योम)
+अणु
+	वापस !boot_hpet_disable && hpet_address;
+पूर्ण
 
 /**
- * is_hpet_enabled - Check whether the legacy HPET timer interrupt is enabled
+ * is_hpet_enabled - Check whether the legacy HPET समयr पूर्णांकerrupt is enabled
  */
-int is_hpet_enabled(void)
-{
-	return is_hpet_capable() && hpet_legacy_int_enabled;
-}
+पूर्णांक is_hpet_enabled(व्योम)
+अणु
+	वापस is_hpet_capable() && hpet_legacy_पूर्णांक_enabled;
+पूर्ण
 EXPORT_SYMBOL_GPL(is_hpet_enabled);
 
-static void _hpet_print_config(const char *function, int line)
-{
+अटल व्योम _hpet_prपूर्णांक_config(स्थिर अक्षर *function, पूर्णांक line)
+अणु
 	u32 i, id, period, cfg, status, channels, l, h;
 
 	pr_info("%s(%d):\n", function, line);
 
-	id = hpet_readl(HPET_ID);
-	period = hpet_readl(HPET_PERIOD);
+	id = hpet_पढ़ोl(HPET_ID);
+	period = hpet_पढ़ोl(HPET_PERIOD);
 	pr_info("ID: 0x%x, PERIOD: 0x%x\n", id, period);
 
-	cfg = hpet_readl(HPET_CFG);
-	status = hpet_readl(HPET_STATUS);
+	cfg = hpet_पढ़ोl(HPET_CFG);
+	status = hpet_पढ़ोl(HPET_STATUS);
 	pr_info("CFG: 0x%x, STATUS: 0x%x\n", cfg, status);
 
-	l = hpet_readl(HPET_COUNTER);
-	h = hpet_readl(HPET_COUNTER+4);
+	l = hpet_पढ़ोl(HPET_COUNTER);
+	h = hpet_पढ़ोl(HPET_COUNTER+4);
 	pr_info("COUNTER_l: 0x%x, COUNTER_h: 0x%x\n", l, h);
 
 	channels = ((id & HPET_ID_NUMBER) >> HPET_ID_NUMBER_SHIFT) + 1;
 
-	for (i = 0; i < channels; i++) {
-		l = hpet_readl(HPET_Tn_CFG(i));
-		h = hpet_readl(HPET_Tn_CFG(i)+4);
+	क्रम (i = 0; i < channels; i++) अणु
+		l = hpet_पढ़ोl(HPET_Tn_CFG(i));
+		h = hpet_पढ़ोl(HPET_Tn_CFG(i)+4);
 		pr_info("T%d: CFG_l: 0x%x, CFG_h: 0x%x\n", i, l, h);
 
-		l = hpet_readl(HPET_Tn_CMP(i));
-		h = hpet_readl(HPET_Tn_CMP(i)+4);
+		l = hpet_पढ़ोl(HPET_Tn_CMP(i));
+		h = hpet_पढ़ोl(HPET_Tn_CMP(i)+4);
 		pr_info("T%d: CMP_l: 0x%x, CMP_h: 0x%x\n", i, l, h);
 
-		l = hpet_readl(HPET_Tn_ROUTE(i));
-		h = hpet_readl(HPET_Tn_ROUTE(i)+4);
+		l = hpet_पढ़ोl(HPET_Tn_ROUTE(i));
+		h = hpet_पढ़ोl(HPET_Tn_ROUTE(i)+4);
 		pr_info("T%d ROUTE_l: 0x%x, ROUTE_h: 0x%x\n", i, l, h);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define hpet_print_config()					\
-do {								\
-	if (hpet_verbose)					\
-		_hpet_print_config(__func__, __LINE__);	\
-} while (0)
+#घोषणा hpet_prपूर्णांक_config()					\
+करो अणु								\
+	अगर (hpet_verbose)					\
+		_hpet_prपूर्णांक_config(__func__, __LINE__);	\
+पूर्ण जबतक (0)
 
 /*
  * When the HPET driver (/dev/hpet) is enabled, we need to reserve
- * timer 0 and timer 1 in case of RTC emulation.
+ * समयr 0 and समयr 1 in हाल of RTC emulation.
  */
-#ifdef CONFIG_HPET
+#अगर_घोषित CONFIG_HPET
 
-static void __init hpet_reserve_platform_timers(void)
-{
-	struct hpet_data hd;
-	unsigned int i;
+अटल व्योम __init hpet_reserve_platक्रमm_समयrs(व्योम)
+अणु
+	काष्ठा hpet_data hd;
+	अचिन्हित पूर्णांक i;
 
-	memset(&hd, 0, sizeof(hd));
+	स_रखो(&hd, 0, माप(hd));
 	hd.hd_phys_address	= hpet_address;
 	hd.hd_address		= hpet_virt_address;
 	hd.hd_nirqs		= hpet_base.nr_channels;
 
 	/*
 	 * NOTE that hd_irq[] reflects IOAPIC input pins (LEGACY_8254
-	 * is wrong for i8259!) not the output IRQ.  Many BIOS writers
-	 * don't bother configuring *any* comparator interrupts.
+	 * is wrong क्रम i8259!) not the output IRQ.  Many BIOS ग_लिखोrs
+	 * करोn't bother configuring *any* comparator पूर्णांकerrupts.
 	 */
 	hd.hd_irq[0] = HPET_LEGACY_8254;
 	hd.hd_irq[1] = HPET_LEGACY_RTC;
 
-	for (i = 0; i < hpet_base.nr_channels; i++) {
-		struct hpet_channel *hc = hpet_base.channels + i;
+	क्रम (i = 0; i < hpet_base.nr_channels; i++) अणु
+		काष्ठा hpet_channel *hc = hpet_base.channels + i;
 
-		if (i >= 2)
+		अगर (i >= 2)
 			hd.hd_irq[i] = hc->irq;
 
-		switch (hc->mode) {
-		case HPET_MODE_UNUSED:
-		case HPET_MODE_DEVICE:
+		चयन (hc->mode) अणु
+		हाल HPET_MODE_UNUSED:
+		हाल HPET_MODE_DEVICE:
 			hc->mode = HPET_MODE_DEVICE;
-			break;
-		case HPET_MODE_CLOCKEVT:
-		case HPET_MODE_LEGACY:
-			hpet_reserve_timer(&hd, hc->num);
-			break;
-		}
-	}
+			अवरोध;
+		हाल HPET_MODE_CLOCKEVT:
+		हाल HPET_MODE_LEGACY:
+			hpet_reserve_समयr(&hd, hc->num);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	hpet_alloc(&hd);
-}
+पूर्ण
 
-static void __init hpet_select_device_channel(void)
-{
-	int i;
+अटल व्योम __init hpet_select_device_channel(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < hpet_base.nr_channels; i++) {
-		struct hpet_channel *hc = hpet_base.channels + i;
+	क्रम (i = 0; i < hpet_base.nr_channels; i++) अणु
+		काष्ठा hpet_channel *hc = hpet_base.channels + i;
 
 		/* Associate the first unused channel to /dev/hpet */
-		if (hc->mode == HPET_MODE_UNUSED) {
+		अगर (hc->mode == HPET_MODE_UNUSED) अणु
 			hc->mode = HPET_MODE_DEVICE;
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#else
-static inline void hpet_reserve_platform_timers(void) { }
-static inline void hpet_select_device_channel(void) {}
-#endif
+#अन्यथा
+अटल अंतरभूत व्योम hpet_reserve_platक्रमm_समयrs(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम hpet_select_device_channel(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /* Common HPET functions */
-static void hpet_stop_counter(void)
-{
-	u32 cfg = hpet_readl(HPET_CFG);
+अटल व्योम hpet_stop_counter(व्योम)
+अणु
+	u32 cfg = hpet_पढ़ोl(HPET_CFG);
 
 	cfg &= ~HPET_CFG_ENABLE;
-	hpet_writel(cfg, HPET_CFG);
-}
+	hpet_ग_लिखोl(cfg, HPET_CFG);
+पूर्ण
 
-static void hpet_reset_counter(void)
-{
-	hpet_writel(0, HPET_COUNTER);
-	hpet_writel(0, HPET_COUNTER + 4);
-}
+अटल व्योम hpet_reset_counter(व्योम)
+अणु
+	hpet_ग_लिखोl(0, HPET_COUNTER);
+	hpet_ग_लिखोl(0, HPET_COUNTER + 4);
+पूर्ण
 
-static void hpet_start_counter(void)
-{
-	unsigned int cfg = hpet_readl(HPET_CFG);
+अटल व्योम hpet_start_counter(व्योम)
+अणु
+	अचिन्हित पूर्णांक cfg = hpet_पढ़ोl(HPET_CFG);
 
 	cfg |= HPET_CFG_ENABLE;
-	hpet_writel(cfg, HPET_CFG);
-}
+	hpet_ग_लिखोl(cfg, HPET_CFG);
+पूर्ण
 
-static void hpet_restart_counter(void)
-{
+अटल व्योम hpet_restart_counter(व्योम)
+अणु
 	hpet_stop_counter();
 	hpet_reset_counter();
 	hpet_start_counter();
-}
+पूर्ण
 
-static void hpet_resume_device(void)
-{
-	force_hpet_resume();
-}
+अटल व्योम hpet_resume_device(व्योम)
+अणु
+	क्रमce_hpet_resume();
+पूर्ण
 
-static void hpet_resume_counter(struct clocksource *cs)
-{
+अटल व्योम hpet_resume_counter(काष्ठा घड़ीsource *cs)
+अणु
 	hpet_resume_device();
 	hpet_restart_counter();
-}
+पूर्ण
 
-static void hpet_enable_legacy_int(void)
-{
-	unsigned int cfg = hpet_readl(HPET_CFG);
+अटल व्योम hpet_enable_legacy_पूर्णांक(व्योम)
+अणु
+	अचिन्हित पूर्णांक cfg = hpet_पढ़ोl(HPET_CFG);
 
 	cfg |= HPET_CFG_LEGACY;
-	hpet_writel(cfg, HPET_CFG);
-	hpet_legacy_int_enabled = true;
-}
+	hpet_ग_लिखोl(cfg, HPET_CFG);
+	hpet_legacy_पूर्णांक_enabled = true;
+पूर्ण
 
-static int hpet_clkevt_set_state_periodic(struct clock_event_device *evt)
-{
-	unsigned int channel = clockevent_to_channel(evt)->num;
-	unsigned int cfg, cmp, now;
-	uint64_t delta;
+अटल पूर्णांक hpet_clkevt_set_state_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
+	अचिन्हित पूर्णांक channel = घड़ीevent_to_channel(evt)->num;
+	अचिन्हित पूर्णांक cfg, cmp, now;
+	uपूर्णांक64_t delta;
 
 	hpet_stop_counter();
-	delta = ((uint64_t)(NSEC_PER_SEC / HZ)) * evt->mult;
-	delta >>= evt->shift;
-	now = hpet_readl(HPET_COUNTER);
-	cmp = now + (unsigned int)delta;
-	cfg = hpet_readl(HPET_Tn_CFG(channel));
+	delta = ((uपूर्णांक64_t)(NSEC_PER_SEC / HZ)) * evt->mult;
+	delta >>= evt->shअगरt;
+	now = hpet_पढ़ोl(HPET_COUNTER);
+	cmp = now + (अचिन्हित पूर्णांक)delta;
+	cfg = hpet_पढ़ोl(HPET_Tn_CFG(channel));
 	cfg |= HPET_TN_ENABLE | HPET_TN_PERIODIC | HPET_TN_SETVAL |
 	       HPET_TN_32BIT;
-	hpet_writel(cfg, HPET_Tn_CFG(channel));
-	hpet_writel(cmp, HPET_Tn_CMP(channel));
+	hpet_ग_लिखोl(cfg, HPET_Tn_CFG(channel));
+	hpet_ग_लिखोl(cmp, HPET_Tn_CMP(channel));
 	udelay(1);
 	/*
-	 * HPET on AMD 81xx needs a second write (with HPET_TN_SETVAL
+	 * HPET on AMD 81xx needs a second ग_लिखो (with HPET_TN_SETVAL
 	 * cleared) to T0_CMP to set the period. The HPET_TN_SETVAL
-	 * bit is automatically cleared after the first write.
+	 * bit is स्वतःmatically cleared after the first ग_लिखो.
 	 * (See AMD-8111 HyperTransport I/O Hub Data Sheet,
 	 * Publication # 24674)
 	 */
-	hpet_writel((unsigned int)delta, HPET_Tn_CMP(channel));
+	hpet_ग_लिखोl((अचिन्हित पूर्णांक)delta, HPET_Tn_CMP(channel));
 	hpet_start_counter();
-	hpet_print_config();
+	hpet_prपूर्णांक_config();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hpet_clkevt_set_state_oneshot(struct clock_event_device *evt)
-{
-	unsigned int channel = clockevent_to_channel(evt)->num;
-	unsigned int cfg;
+अटल पूर्णांक hpet_clkevt_set_state_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	अचिन्हित पूर्णांक channel = घड़ीevent_to_channel(evt)->num;
+	अचिन्हित पूर्णांक cfg;
 
-	cfg = hpet_readl(HPET_Tn_CFG(channel));
+	cfg = hpet_पढ़ोl(HPET_Tn_CFG(channel));
 	cfg &= ~HPET_TN_PERIODIC;
 	cfg |= HPET_TN_ENABLE | HPET_TN_32BIT;
-	hpet_writel(cfg, HPET_Tn_CFG(channel));
+	hpet_ग_लिखोl(cfg, HPET_Tn_CFG(channel));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hpet_clkevt_set_state_shutdown(struct clock_event_device *evt)
-{
-	unsigned int channel = clockevent_to_channel(evt)->num;
-	unsigned int cfg;
+अटल पूर्णांक hpet_clkevt_set_state_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	अचिन्हित पूर्णांक channel = घड़ीevent_to_channel(evt)->num;
+	अचिन्हित पूर्णांक cfg;
 
-	cfg = hpet_readl(HPET_Tn_CFG(channel));
+	cfg = hpet_पढ़ोl(HPET_Tn_CFG(channel));
 	cfg &= ~HPET_TN_ENABLE;
-	hpet_writel(cfg, HPET_Tn_CFG(channel));
+	hpet_ग_लिखोl(cfg, HPET_Tn_CFG(channel));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hpet_clkevt_legacy_resume(struct clock_event_device *evt)
-{
-	hpet_enable_legacy_int();
-	hpet_print_config();
-	return 0;
-}
+अटल पूर्णांक hpet_clkevt_legacy_resume(काष्ठा घड़ी_event_device *evt)
+अणु
+	hpet_enable_legacy_पूर्णांक();
+	hpet_prपूर्णांक_config();
+	वापस 0;
+पूर्ण
 
-static int
-hpet_clkevt_set_next_event(unsigned long delta, struct clock_event_device *evt)
-{
-	unsigned int channel = clockevent_to_channel(evt)->num;
+अटल पूर्णांक
+hpet_clkevt_set_next_event(अचिन्हित दीर्घ delta, काष्ठा घड़ी_event_device *evt)
+अणु
+	अचिन्हित पूर्णांक channel = घड़ीevent_to_channel(evt)->num;
 	u32 cnt;
 	s32 res;
 
-	cnt = hpet_readl(HPET_COUNTER);
+	cnt = hpet_पढ़ोl(HPET_COUNTER);
 	cnt += (u32) delta;
-	hpet_writel(cnt, HPET_Tn_CMP(channel));
+	hpet_ग_लिखोl(cnt, HPET_Tn_CMP(channel));
 
 	/*
-	 * HPETs are a complete disaster. The compare register is
+	 * HPETs are a complete disaster. The compare रेजिस्टर is
 	 * based on a equal comparison and neither provides a less
 	 * than or equal functionality (which would require to take
-	 * the wraparound into account) nor a simple count down event
-	 * mode. Further the write to the comparator register is
-	 * delayed internally up to two HPET clock cycles in certain
+	 * the wraparound पूर्णांकo account) nor a simple count करोwn event
+	 * mode. Further the ग_लिखो to the comparator रेजिस्टर is
+	 * delayed पूर्णांकernally up to two HPET घड़ी cycles in certain
 	 * chipsets (ATI, ICH9,10). Some newer AMD chipsets have even
-	 * longer delays. We worked around that by reading back the
-	 * compare register, but that required another workaround for
-	 * ICH9,10 chips where the first readout after write can
-	 * return the old stale value. We already had a minimum
-	 * programming delta of 5us enforced, but a NMI or SMI hitting
-	 * between the counter readout and the comparator write can
-	 * move us behind that point easily. Now instead of reading
-	 * the compare register back several times, we make the ETIME
-	 * decision based on the following: Return ETIME if the
-	 * counter value after the write is less than HPET_MIN_CYCLES
-	 * away from the event or if the counter is already ahead of
-	 * the event. The minimum programming delta for the generic
-	 * clockevents code is set to 1.5 * HPET_MIN_CYCLES.
+	 * दीर्घer delays. We worked around that by पढ़ोing back the
+	 * compare रेजिस्टर, but that required another workaround क्रम
+	 * ICH9,10 chips where the first पढ़ोout after ग_लिखो can
+	 * वापस the old stale value. We alपढ़ोy had a minimum
+	 * programming delta of 5us enक्रमced, but a NMI or SMI hitting
+	 * between the counter पढ़ोout and the comparator ग_लिखो can
+	 * move us behind that poपूर्णांक easily. Now instead of पढ़ोing
+	 * the compare रेजिस्टर back several बार, we make the ETIME
+	 * decision based on the following: Return ETIME अगर the
+	 * counter value after the ग_लिखो is less than HPET_MIN_CYCLES
+	 * away from the event or अगर the counter is alपढ़ोy ahead of
+	 * the event. The minimum programming delta क्रम the generic
+	 * घड़ीevents code is set to 1.5 * HPET_MIN_CYCLES.
 	 */
-	res = (s32)(cnt - hpet_readl(HPET_COUNTER));
+	res = (s32)(cnt - hpet_पढ़ोl(HPET_COUNTER));
 
-	return res < HPET_MIN_CYCLES ? -ETIME : 0;
-}
+	वापस res < HPET_MIN_CYCLES ? -ETIME : 0;
+पूर्ण
 
-static void hpet_init_clockevent(struct hpet_channel *hc, unsigned int rating)
-{
-	struct clock_event_device *evt = &hc->evt;
+अटल व्योम hpet_init_घड़ीevent(काष्ठा hpet_channel *hc, अचिन्हित पूर्णांक rating)
+अणु
+	काष्ठा घड़ी_event_device *evt = &hc->evt;
 
 	evt->rating		= rating;
 	evt->irq		= hc->irq;
@@ -404,44 +405,44 @@ static void hpet_init_clockevent(struct hpet_channel *hc, unsigned int rating)
 	evt->cpumask		= cpumask_of(hc->cpu);
 	evt->set_state_oneshot	= hpet_clkevt_set_state_oneshot;
 	evt->set_next_event	= hpet_clkevt_set_next_event;
-	evt->set_state_shutdown	= hpet_clkevt_set_state_shutdown;
+	evt->set_state_shutकरोwn	= hpet_clkevt_set_state_shutकरोwn;
 
 	evt->features = CLOCK_EVT_FEAT_ONESHOT;
-	if (hc->boot_cfg & HPET_TN_PERIODIC) {
+	अगर (hc->boot_cfg & HPET_TN_PERIODIC) अणु
 		evt->features		|= CLOCK_EVT_FEAT_PERIODIC;
 		evt->set_state_periodic	= hpet_clkevt_set_state_periodic;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init hpet_legacy_clockevent_register(struct hpet_channel *hc)
-{
+अटल व्योम __init hpet_legacy_घड़ीevent_रेजिस्टर(काष्ठा hpet_channel *hc)
+अणु
 	/*
 	 * Start HPET with the boot CPU's cpumask and make it global after
 	 * the IO_APIC has been initialized.
 	 */
 	hc->cpu = boot_cpu_data.cpu_index;
-	strncpy(hc->name, "hpet", sizeof(hc->name));
-	hpet_init_clockevent(hc, 50);
+	म_नकलन(hc->name, "hpet", माप(hc->name));
+	hpet_init_घड़ीevent(hc, 50);
 
 	hc->evt.tick_resume	= hpet_clkevt_legacy_resume;
 
 	/*
 	 * Legacy horrors and sins from the past. HPET used periodic mode
-	 * unconditionally forever on the legacy channel 0. Removing the
-	 * below hack and using the conditional in hpet_init_clockevent()
+	 * unconditionally क्रमever on the legacy channel 0. Removing the
+	 * below hack and using the conditional in hpet_init_घड़ीevent()
 	 * makes at least Qemu and one hardware machine fail to boot.
 	 * There are two issues which cause the boot failure:
 	 *
-	 * #1 After the timer delivery test in IOAPIC and the IOAPIC setup
-	 *    the next interrupt is not delivered despite the HPET channel
+	 * #1 After the समयr delivery test in IOAPIC and the IOAPIC setup
+	 *    the next पूर्णांकerrupt is not delivered despite the HPET channel
 	 *    being programmed correctly. Reprogramming the HPET after
-	 *    switching to IOAPIC makes it work again. After fixing this,
+	 *    चयनing to IOAPIC makes it work again. After fixing this,
 	 *    the next issue surfaces:
 	 *
 	 * #2 Due to the unconditional periodic mode availability the Local
-	 *    APIC timer calibration can hijack the global clockevents
+	 *    APIC समयr calibration can hijack the global घड़ीevents
 	 *    event handler without causing damage. Using oneshot at this
-	 *    stage makes if hang because the HPET does not get
+	 *    stage makes अगर hang because the HPET करोes not get
 	 *    reprogrammed due to the handler hijacking. Duh, stupid me!
 	 *
 	 * Both issues require major surgery and especially the kick HPET
@@ -449,195 +450,195 @@ static void __init hpet_legacy_clockevent_register(struct hpet_channel *hc)
 	 * This 'assume periodic works' magic has survived since HPET
 	 * support got added, so it's questionable whether this should be
 	 * fixed. Both Qemu and the failing hardware machine support
-	 * periodic mode despite the fact that both don't advertise it in
-	 * the configuration register and both need that extra kick after
-	 * switching to IOAPIC. Seems to be a feature...
+	 * periodic mode despite the fact that both करोn't advertise it in
+	 * the configuration रेजिस्टर and both need that extra kick after
+	 * चयनing to IOAPIC. Seems to be a feature...
 	 */
 	hc->evt.features		|= CLOCK_EVT_FEAT_PERIODIC;
 	hc->evt.set_state_periodic	= hpet_clkevt_set_state_periodic;
 
-	/* Start HPET legacy interrupts */
-	hpet_enable_legacy_int();
+	/* Start HPET legacy पूर्णांकerrupts */
+	hpet_enable_legacy_पूर्णांक();
 
-	clockevents_config_and_register(&hc->evt, hpet_freq,
+	घड़ीevents_config_and_रेजिस्टर(&hc->evt, hpet_freq,
 					HPET_MIN_PROG_DELTA, 0x7FFFFFFF);
-	global_clock_event = &hc->evt;
+	global_घड़ी_event = &hc->evt;
 	pr_debug("Clockevent registered\n");
-}
+पूर्ण
 
 /*
  * HPET MSI Support
  */
-#ifdef CONFIG_GENERIC_MSI_IRQ
-static void hpet_msi_unmask(struct irq_data *data)
-{
-	struct hpet_channel *hc = irq_data_get_irq_handler_data(data);
-	unsigned int cfg;
+#अगर_घोषित CONFIG_GENERIC_MSI_IRQ
+अटल व्योम hpet_msi_unmask(काष्ठा irq_data *data)
+अणु
+	काष्ठा hpet_channel *hc = irq_data_get_irq_handler_data(data);
+	अचिन्हित पूर्णांक cfg;
 
-	cfg = hpet_readl(HPET_Tn_CFG(hc->num));
+	cfg = hpet_पढ़ोl(HPET_Tn_CFG(hc->num));
 	cfg |= HPET_TN_ENABLE | HPET_TN_FSB;
-	hpet_writel(cfg, HPET_Tn_CFG(hc->num));
-}
+	hpet_ग_लिखोl(cfg, HPET_Tn_CFG(hc->num));
+पूर्ण
 
-static void hpet_msi_mask(struct irq_data *data)
-{
-	struct hpet_channel *hc = irq_data_get_irq_handler_data(data);
-	unsigned int cfg;
+अटल व्योम hpet_msi_mask(काष्ठा irq_data *data)
+अणु
+	काष्ठा hpet_channel *hc = irq_data_get_irq_handler_data(data);
+	अचिन्हित पूर्णांक cfg;
 
-	cfg = hpet_readl(HPET_Tn_CFG(hc->num));
+	cfg = hpet_पढ़ोl(HPET_Tn_CFG(hc->num));
 	cfg &= ~(HPET_TN_ENABLE | HPET_TN_FSB);
-	hpet_writel(cfg, HPET_Tn_CFG(hc->num));
-}
+	hpet_ग_लिखोl(cfg, HPET_Tn_CFG(hc->num));
+पूर्ण
 
-static void hpet_msi_write(struct hpet_channel *hc, struct msi_msg *msg)
-{
-	hpet_writel(msg->data, HPET_Tn_ROUTE(hc->num));
-	hpet_writel(msg->address_lo, HPET_Tn_ROUTE(hc->num) + 4);
-}
+अटल व्योम hpet_msi_ग_लिखो(काष्ठा hpet_channel *hc, काष्ठा msi_msg *msg)
+अणु
+	hpet_ग_लिखोl(msg->data, HPET_Tn_ROUTE(hc->num));
+	hpet_ग_लिखोl(msg->address_lo, HPET_Tn_ROUTE(hc->num) + 4);
+पूर्ण
 
-static void hpet_msi_write_msg(struct irq_data *data, struct msi_msg *msg)
-{
-	hpet_msi_write(irq_data_get_irq_handler_data(data), msg);
-}
+अटल व्योम hpet_msi_ग_लिखो_msg(काष्ठा irq_data *data, काष्ठा msi_msg *msg)
+अणु
+	hpet_msi_ग_लिखो(irq_data_get_irq_handler_data(data), msg);
+पूर्ण
 
-static struct irq_chip hpet_msi_controller __ro_after_init = {
+अटल काष्ठा irq_chip hpet_msi_controller __ro_after_init = अणु
 	.name = "HPET-MSI",
 	.irq_unmask = hpet_msi_unmask,
 	.irq_mask = hpet_msi_mask,
 	.irq_ack = irq_chip_ack_parent,
-	.irq_set_affinity = msi_domain_set_affinity,
+	.irq_set_affinity = msi_करोमुख्य_set_affinity,
 	.irq_retrigger = irq_chip_retrigger_hierarchy,
-	.irq_write_msi_msg = hpet_msi_write_msg,
+	.irq_ग_लिखो_msi_msg = hpet_msi_ग_लिखो_msg,
 	.flags = IRQCHIP_SKIP_SET_WAKE,
-};
+पूर्ण;
 
-static int hpet_msi_init(struct irq_domain *domain,
-			 struct msi_domain_info *info, unsigned int virq,
+अटल पूर्णांक hpet_msi_init(काष्ठा irq_करोमुख्य *करोमुख्य,
+			 काष्ठा msi_करोमुख्य_info *info, अचिन्हित पूर्णांक virq,
 			 irq_hw_number_t hwirq, msi_alloc_info_t *arg)
-{
+अणु
 	irq_set_status_flags(virq, IRQ_MOVE_PCNTXT);
-	irq_domain_set_info(domain, virq, arg->hwirq, info->chip, NULL,
+	irq_करोमुख्य_set_info(करोमुख्य, virq, arg->hwirq, info->chip, शून्य,
 			    handle_edge_irq, arg->data, "edge");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hpet_msi_free(struct irq_domain *domain,
-			  struct msi_domain_info *info, unsigned int virq)
-{
+अटल व्योम hpet_msi_मुक्त(काष्ठा irq_करोमुख्य *करोमुख्य,
+			  काष्ठा msi_करोमुख्य_info *info, अचिन्हित पूर्णांक virq)
+अणु
 	irq_clear_status_flags(virq, IRQ_MOVE_PCNTXT);
-}
+पूर्ण
 
-static struct msi_domain_ops hpet_msi_domain_ops = {
+अटल काष्ठा msi_करोमुख्य_ops hpet_msi_करोमुख्य_ops = अणु
 	.msi_init	= hpet_msi_init,
-	.msi_free	= hpet_msi_free,
-};
+	.msi_मुक्त	= hpet_msi_मुक्त,
+पूर्ण;
 
-static struct msi_domain_info hpet_msi_domain_info = {
-	.ops		= &hpet_msi_domain_ops,
+अटल काष्ठा msi_करोमुख्य_info hpet_msi_करोमुख्य_info = अणु
+	.ops		= &hpet_msi_करोमुख्य_ops,
 	.chip		= &hpet_msi_controller,
 	.flags		= MSI_FLAG_USE_DEF_DOM_OPS,
-};
+पूर्ण;
 
-static struct irq_domain *hpet_create_irq_domain(int hpet_id)
-{
-	struct msi_domain_info *domain_info;
-	struct irq_domain *parent, *d;
-	struct fwnode_handle *fn;
-	struct irq_fwspec fwspec;
+अटल काष्ठा irq_करोमुख्य *hpet_create_irq_करोमुख्य(पूर्णांक hpet_id)
+अणु
+	काष्ठा msi_करोमुख्य_info *करोमुख्य_info;
+	काष्ठा irq_करोमुख्य *parent, *d;
+	काष्ठा fwnode_handle *fn;
+	काष्ठा irq_fwspec fwspec;
 
-	if (x86_vector_domain == NULL)
-		return NULL;
+	अगर (x86_vector_करोमुख्य == शून्य)
+		वापस शून्य;
 
-	domain_info = kzalloc(sizeof(*domain_info), GFP_KERNEL);
-	if (!domain_info)
-		return NULL;
+	करोमुख्य_info = kzalloc(माप(*करोमुख्य_info), GFP_KERNEL);
+	अगर (!करोमुख्य_info)
+		वापस शून्य;
 
-	*domain_info = hpet_msi_domain_info;
-	domain_info->data = (void *)(long)hpet_id;
+	*करोमुख्य_info = hpet_msi_करोमुख्य_info;
+	करोमुख्य_info->data = (व्योम *)(दीर्घ)hpet_id;
 
-	fn = irq_domain_alloc_named_id_fwnode(hpet_msi_controller.name,
+	fn = irq_करोमुख्य_alloc_named_id_fwnode(hpet_msi_controller.name,
 					      hpet_id);
-	if (!fn) {
-		kfree(domain_info);
-		return NULL;
-	}
+	अगर (!fn) अणु
+		kमुक्त(करोमुख्य_info);
+		वापस शून्य;
+	पूर्ण
 
 	fwspec.fwnode = fn;
 	fwspec.param_count = 1;
 	fwspec.param[0] = hpet_id;
 
 	parent = irq_find_matching_fwspec(&fwspec, DOMAIN_BUS_ANY);
-	if (!parent) {
-		irq_domain_free_fwnode(fn);
-		kfree(domain_info);
-		return NULL;
-	}
-	if (parent != x86_vector_domain)
+	अगर (!parent) अणु
+		irq_करोमुख्य_मुक्त_fwnode(fn);
+		kमुक्त(करोमुख्य_info);
+		वापस शून्य;
+	पूर्ण
+	अगर (parent != x86_vector_करोमुख्य)
 		hpet_msi_controller.name = "IR-HPET-MSI";
 
-	d = msi_create_irq_domain(fn, domain_info, parent);
-	if (!d) {
-		irq_domain_free_fwnode(fn);
-		kfree(domain_info);
-	}
-	return d;
-}
+	d = msi_create_irq_करोमुख्य(fn, करोमुख्य_info, parent);
+	अगर (!d) अणु
+		irq_करोमुख्य_मुक्त_fwnode(fn);
+		kमुक्त(करोमुख्य_info);
+	पूर्ण
+	वापस d;
+पूर्ण
 
-static inline int hpet_dev_id(struct irq_domain *domain)
-{
-	struct msi_domain_info *info = msi_get_domain_info(domain);
+अटल अंतरभूत पूर्णांक hpet_dev_id(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा msi_करोमुख्य_info *info = msi_get_करोमुख्य_info(करोमुख्य);
 
-	return (int)(long)info->data;
-}
+	वापस (पूर्णांक)(दीर्घ)info->data;
+पूर्ण
 
-static int hpet_assign_irq(struct irq_domain *domain, struct hpet_channel *hc,
-			   int dev_num)
-{
-	struct irq_alloc_info info;
+अटल पूर्णांक hpet_assign_irq(काष्ठा irq_करोमुख्य *करोमुख्य, काष्ठा hpet_channel *hc,
+			   पूर्णांक dev_num)
+अणु
+	काष्ठा irq_alloc_info info;
 
-	init_irq_alloc_info(&info, NULL);
+	init_irq_alloc_info(&info, शून्य);
 	info.type = X86_IRQ_ALLOC_TYPE_HPET;
 	info.data = hc;
-	info.devid = hpet_dev_id(domain);
+	info.devid = hpet_dev_id(करोमुख्य);
 	info.hwirq = dev_num;
 
-	return irq_domain_alloc_irqs(domain, 1, NUMA_NO_NODE, &info);
-}
+	वापस irq_करोमुख्य_alloc_irqs(करोमुख्य, 1, NUMA_NO_NODE, &info);
+पूर्ण
 
-static int hpet_clkevt_msi_resume(struct clock_event_device *evt)
-{
-	struct hpet_channel *hc = clockevent_to_channel(evt);
-	struct irq_data *data = irq_get_irq_data(hc->irq);
-	struct msi_msg msg;
+अटल पूर्णांक hpet_clkevt_msi_resume(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा hpet_channel *hc = घड़ीevent_to_channel(evt);
+	काष्ठा irq_data *data = irq_get_irq_data(hc->irq);
+	काष्ठा msi_msg msg;
 
-	/* Restore the MSI msg and unmask the interrupt */
+	/* Restore the MSI msg and unmask the पूर्णांकerrupt */
 	irq_chip_compose_msi_msg(data, &msg);
-	hpet_msi_write(hc, &msg);
+	hpet_msi_ग_लिखो(hc, &msg);
 	hpet_msi_unmask(data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t hpet_msi_interrupt_handler(int irq, void *data)
-{
-	struct hpet_channel *hc = data;
-	struct clock_event_device *evt = &hc->evt;
+अटल irqवापस_t hpet_msi_पूर्णांकerrupt_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा hpet_channel *hc = data;
+	काष्ठा घड़ी_event_device *evt = &hc->evt;
 
-	if (!evt->event_handler) {
+	अगर (!evt->event_handler) अणु
 		pr_info("Spurious interrupt HPET channel %d\n", hc->num);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	evt->event_handler(evt);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int hpet_setup_msi_irq(struct hpet_channel *hc)
-{
-	if (request_irq(hc->irq, hpet_msi_interrupt_handler,
+अटल पूर्णांक hpet_setup_msi_irq(काष्ठा hpet_channel *hc)
+अणु
+	अगर (request_irq(hc->irq, hpet_msi_पूर्णांकerrupt_handler,
 			IRQF_TIMER | IRQF_NOBALANCING,
 			hc->name, hc))
-		return -1;
+		वापस -1;
 
 	disable_irq(hc->irq);
 	irq_set_affinity(hc->irq, cpumask_of(hc->cpu));
@@ -645,742 +646,742 @@ static int hpet_setup_msi_irq(struct hpet_channel *hc)
 
 	pr_debug("%s irq %u for MSI\n", hc->name, hc->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Invoked from the hotplug callback on @cpu */
-static void init_one_hpet_msi_clockevent(struct hpet_channel *hc, int cpu)
-{
-	struct clock_event_device *evt = &hc->evt;
+अटल व्योम init_one_hpet_msi_घड़ीevent(काष्ठा hpet_channel *hc, पूर्णांक cpu)
+अणु
+	काष्ठा घड़ी_event_device *evt = &hc->evt;
 
 	hc->cpu = cpu;
 	per_cpu(cpu_hpet_channel, cpu) = hc;
 	hpet_setup_msi_irq(hc);
 
-	hpet_init_clockevent(hc, 110);
+	hpet_init_घड़ीevent(hc, 110);
 	evt->tick_resume = hpet_clkevt_msi_resume;
 
-	clockevents_config_and_register(evt, hpet_freq, HPET_MIN_PROG_DELTA,
+	घड़ीevents_config_and_रेजिस्टर(evt, hpet_freq, HPET_MIN_PROG_DELTA,
 					0x7FFFFFFF);
-}
+पूर्ण
 
-static struct hpet_channel *hpet_get_unused_clockevent(void)
-{
-	int i;
+अटल काष्ठा hpet_channel *hpet_get_unused_घड़ीevent(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < hpet_base.nr_channels; i++) {
-		struct hpet_channel *hc = hpet_base.channels + i;
+	क्रम (i = 0; i < hpet_base.nr_channels; i++) अणु
+		काष्ठा hpet_channel *hc = hpet_base.channels + i;
 
-		if (hc->mode != HPET_MODE_CLOCKEVT || hc->in_use)
-			continue;
+		अगर (hc->mode != HPET_MODE_CLOCKEVT || hc->in_use)
+			जारी;
 		hc->in_use = 1;
-		return hc;
-	}
-	return NULL;
-}
+		वापस hc;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int hpet_cpuhp_online(unsigned int cpu)
-{
-	struct hpet_channel *hc = hpet_get_unused_clockevent();
+अटल पूर्णांक hpet_cpuhp_online(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा hpet_channel *hc = hpet_get_unused_घड़ीevent();
 
-	if (hc)
-		init_one_hpet_msi_clockevent(hc, cpu);
-	return 0;
-}
+	अगर (hc)
+		init_one_hpet_msi_घड़ीevent(hc, cpu);
+	वापस 0;
+पूर्ण
 
-static int hpet_cpuhp_dead(unsigned int cpu)
-{
-	struct hpet_channel *hc = per_cpu(cpu_hpet_channel, cpu);
+अटल पूर्णांक hpet_cpuhp_dead(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा hpet_channel *hc = per_cpu(cpu_hpet_channel, cpu);
 
-	if (!hc)
-		return 0;
-	free_irq(hc->irq, hc);
+	अगर (!hc)
+		वापस 0;
+	मुक्त_irq(hc->irq, hc);
 	hc->in_use = 0;
-	per_cpu(cpu_hpet_channel, cpu) = NULL;
-	return 0;
-}
+	per_cpu(cpu_hpet_channel, cpu) = शून्य;
+	वापस 0;
+पूर्ण
 
-static void __init hpet_select_clockevents(void)
-{
-	unsigned int i;
+अटल व्योम __init hpet_select_घड़ीevents(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	hpet_base.nr_clockevents = 0;
+	hpet_base.nr_घड़ीevents = 0;
 
-	/* No point if MSI is disabled or CPU has an Always Runing APIC Timer */
-	if (hpet_msi_disable || boot_cpu_has(X86_FEATURE_ARAT))
-		return;
+	/* No poपूर्णांक अगर MSI is disabled or CPU has an Always Runing APIC Timer */
+	अगर (hpet_msi_disable || boot_cpu_has(X86_FEATURE_ARAT))
+		वापस;
 
-	hpet_print_config();
+	hpet_prपूर्णांक_config();
 
-	hpet_domain = hpet_create_irq_domain(hpet_blockid);
-	if (!hpet_domain)
-		return;
+	hpet_करोमुख्य = hpet_create_irq_करोमुख्य(hpet_blockid);
+	अगर (!hpet_करोमुख्य)
+		वापस;
 
-	for (i = 0; i < hpet_base.nr_channels; i++) {
-		struct hpet_channel *hc = hpet_base.channels + i;
-		int irq;
+	क्रम (i = 0; i < hpet_base.nr_channels; i++) अणु
+		काष्ठा hpet_channel *hc = hpet_base.channels + i;
+		पूर्णांक irq;
 
-		if (hc->mode != HPET_MODE_UNUSED)
-			continue;
+		अगर (hc->mode != HPET_MODE_UNUSED)
+			जारी;
 
 		/* Only consider HPET channel with MSI support */
-		if (!(hc->boot_cfg & HPET_TN_FSB_CAP))
-			continue;
+		अगर (!(hc->boot_cfg & HPET_TN_FSB_CAP))
+			जारी;
 
-		sprintf(hc->name, "hpet%d", i);
+		प्र_लिखो(hc->name, "hpet%d", i);
 
-		irq = hpet_assign_irq(hpet_domain, hc, hc->num);
-		if (irq <= 0)
-			continue;
+		irq = hpet_assign_irq(hpet_करोमुख्य, hc, hc->num);
+		अगर (irq <= 0)
+			जारी;
 
 		hc->irq = irq;
 		hc->mode = HPET_MODE_CLOCKEVT;
 
-		if (++hpet_base.nr_clockevents == num_possible_cpus())
-			break;
-	}
+		अगर (++hpet_base.nr_घड़ीevents == num_possible_cpus())
+			अवरोध;
+	पूर्ण
 
 	pr_info("%d channels of %d reserved for per-cpu timers\n",
-		hpet_base.nr_channels, hpet_base.nr_clockevents);
-}
+		hpet_base.nr_channels, hpet_base.nr_घड़ीevents);
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline void hpet_select_clockevents(void) { }
+अटल अंतरभूत व्योम hpet_select_घड़ीevents(व्योम) अणु पूर्ण
 
-#define hpet_cpuhp_online	NULL
-#define hpet_cpuhp_dead		NULL
+#घोषणा hpet_cpuhp_online	शून्य
+#घोषणा hpet_cpuhp_dead		शून्य
 
-#endif
+#पूर्ण_अगर
 
 /*
  * Clock source related code
  */
-#if defined(CONFIG_SMP) && defined(CONFIG_64BIT)
+#अगर defined(CONFIG_SMP) && defined(CONFIG_64BIT)
 /*
  * Reading the HPET counter is a very slow operation. If a large number of
  * CPUs are trying to access the HPET counter simultaneously, it can cause
- * massive delays and slow down system performance dramatically. This may
- * happen when HPET is the default clock source instead of TSC. For a
- * really large system with hundreds of CPUs, the slowdown may be so
- * severe, that it can actually crash the system because of a NMI watchdog
- * soft lockup, for example.
+ * massive delays and slow करोwn प्रणाली perक्रमmance dramatically. This may
+ * happen when HPET is the शेष घड़ी source instead of TSC. For a
+ * really large प्रणाली with hundreds of CPUs, the slowकरोwn may be so
+ * severe, that it can actually crash the प्रणाली because of a NMI watchकरोg
+ * soft lockup, क्रम example.
  *
- * If multiple CPUs are trying to access the HPET counter at the same time,
- * we don't actually need to read the counter multiple times. Instead, the
- * other CPUs can use the counter value read by the first CPU in the group.
+ * If multiple CPUs are trying to access the HPET counter at the same समय,
+ * we करोn't actually need to पढ़ो the counter multiple बार. Instead, the
+ * other CPUs can use the counter value पढ़ो by the first CPU in the group.
  *
- * This special feature is only enabled on x86-64 systems. It is unlikely
- * that 32-bit x86 systems will have enough CPUs to require this feature
- * with its associated locking overhead. We also need 64-bit atomic read.
+ * This special feature is only enabled on x86-64 प्रणालीs. It is unlikely
+ * that 32-bit x86 प्रणालीs will have enough CPUs to require this feature
+ * with its associated locking overhead. We also need 64-bit atomic पढ़ो.
  *
- * The lock and the HPET value are stored together and can be read in a
- * single atomic 64-bit read. It is explicitly assumed that arch_spinlock_t
+ * The lock and the HPET value are stored together and can be पढ़ो in a
+ * single atomic 64-bit पढ़ो. It is explicitly assumed that arch_spinlock_t
  * is 32 bits in size.
  */
-union hpet_lock {
-	struct {
+जोड़ hpet_lock अणु
+	काष्ठा अणु
 		arch_spinlock_t lock;
 		u32 value;
-	};
+	पूर्ण;
 	u64 lockval;
-};
+पूर्ण;
 
-static union hpet_lock hpet __cacheline_aligned = {
-	{ .lock = __ARCH_SPIN_LOCK_UNLOCKED, },
-};
+अटल जोड़ hpet_lock hpet __cacheline_aligned = अणु
+	अणु .lock = __ARCH_SPIN_LOCK_UNLOCKED, पूर्ण,
+पूर्ण;
 
-static u64 read_hpet(struct clocksource *cs)
-{
-	unsigned long flags;
-	union hpet_lock old, new;
+अटल u64 पढ़ो_hpet(काष्ठा घड़ीsource *cs)
+अणु
+	अचिन्हित दीर्घ flags;
+	जोड़ hpet_lock old, new;
 
-	BUILD_BUG_ON(sizeof(union hpet_lock) != 8);
+	BUILD_BUG_ON(माप(जोड़ hpet_lock) != 8);
 
 	/*
-	 * Read HPET directly if in NMI.
+	 * Read HPET directly अगर in NMI.
 	 */
-	if (in_nmi())
-		return (u64)hpet_readl(HPET_COUNTER);
+	अगर (in_nmi())
+		वापस (u64)hpet_पढ़ोl(HPET_COUNTER);
 
 	/*
 	 * Read the current state of the lock and HPET value atomically.
 	 */
 	old.lockval = READ_ONCE(hpet.lockval);
 
-	if (arch_spin_is_locked(&old.lock))
-		goto contended;
+	अगर (arch_spin_is_locked(&old.lock))
+		जाओ contended;
 
 	local_irq_save(flags);
-	if (arch_spin_trylock(&hpet.lock)) {
-		new.value = hpet_readl(HPET_COUNTER);
+	अगर (arch_spin_trylock(&hpet.lock)) अणु
+		new.value = hpet_पढ़ोl(HPET_COUNTER);
 		/*
 		 * Use WRITE_ONCE() to prevent store tearing.
 		 */
 		WRITE_ONCE(hpet.value, new.value);
 		arch_spin_unlock(&hpet.lock);
 		local_irq_restore(flags);
-		return (u64)new.value;
-	}
+		वापस (u64)new.value;
+	पूर्ण
 	local_irq_restore(flags);
 
 contended:
 	/*
-	 * Contended case
+	 * Contended हाल
 	 * --------------
-	 * Wait until the HPET value change or the lock is free to indicate
+	 * Wait until the HPET value change or the lock is मुक्त to indicate
 	 * its value is up-to-date.
 	 *
-	 * It is possible that old.value has already contained the latest
-	 * HPET value while the lock holder was in the process of releasing
-	 * the lock. Checking for lock state change will enable us to return
-	 * the value immediately instead of waiting for the next HPET reader
-	 * to come along.
+	 * It is possible that old.value has alपढ़ोy contained the latest
+	 * HPET value जबतक the lock holder was in the process of releasing
+	 * the lock. Checking क्रम lock state change will enable us to वापस
+	 * the value immediately instead of रुकोing क्रम the next HPET पढ़ोer
+	 * to come aदीर्घ.
 	 */
-	do {
+	करो अणु
 		cpu_relax();
 		new.lockval = READ_ONCE(hpet.lockval);
-	} while ((new.value == old.value) && arch_spin_is_locked(&new.lock));
+	पूर्ण जबतक ((new.value == old.value) && arch_spin_is_locked(&new.lock));
 
-	return (u64)new.value;
-}
-#else
+	वापस (u64)new.value;
+पूर्ण
+#अन्यथा
 /*
  * For UP or 32-bit.
  */
-static u64 read_hpet(struct clocksource *cs)
-{
-	return (u64)hpet_readl(HPET_COUNTER);
-}
-#endif
+अटल u64 पढ़ो_hpet(काष्ठा घड़ीsource *cs)
+अणु
+	वापस (u64)hpet_पढ़ोl(HPET_COUNTER);
+पूर्ण
+#पूर्ण_अगर
 
-static struct clocksource clocksource_hpet = {
+अटल काष्ठा घड़ीsource घड़ीsource_hpet = अणु
 	.name		= "hpet",
 	.rating		= 250,
-	.read		= read_hpet,
+	.पढ़ो		= पढ़ो_hpet,
 	.mask		= HPET_MASK,
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
 	.resume		= hpet_resume_counter,
-};
+पूर्ण;
 
 /*
- * AMD SB700 based systems with spread spectrum enabled use a SMM based
+ * AMD SB700 based प्रणालीs with spपढ़ो spectrum enabled use a SMM based
  * HPET emulation to provide proper frequency setting.
  *
- * On such systems the SMM code is initialized with the first HPET register
- * access and takes some time to complete. During this time the config
- * register reads 0xffffffff. We check for max 1000 loops whether the
- * config register reads a non-0xffffffff value to make sure that the
- * HPET is up and running before we proceed any further.
+ * On such प्रणालीs the SMM code is initialized with the first HPET रेजिस्टर
+ * access and takes some समय to complete. During this समय the config
+ * रेजिस्टर पढ़ोs 0xffffffff. We check क्रम max 1000 loops whether the
+ * config रेजिस्टर पढ़ोs a non-0xffffffff value to make sure that the
+ * HPET is up and running beक्रमe we proceed any further.
  *
  * A counting loop is safe, as the HPET access takes thousands of CPU cycles.
  *
- * On non-SB700 based machines this check is only done once and has no
+ * On non-SB700 based machines this check is only करोne once and has no
  * side effects.
  */
-static bool __init hpet_cfg_working(void)
-{
-	int i;
+अटल bool __init hpet_cfg_working(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 1000; i++) {
-		if (hpet_readl(HPET_CFG) != 0xFFFFFFFF)
-			return true;
-	}
+	क्रम (i = 0; i < 1000; i++) अणु
+		अगर (hpet_पढ़ोl(HPET_CFG) != 0xFFFFFFFF)
+			वापस true;
+	पूर्ण
 
 	pr_warn("Config register invalid. Disabling HPET\n");
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool __init hpet_counting(void)
-{
+अटल bool __init hpet_counting(व्योम)
+अणु
 	u64 start, now, t1;
 
 	hpet_restart_counter();
 
-	t1 = hpet_readl(HPET_COUNTER);
+	t1 = hpet_पढ़ोl(HPET_COUNTER);
 	start = rdtsc();
 
 	/*
-	 * We don't know the TSC frequency yet, but waiting for
+	 * We करोn't know the TSC frequency yet, but रुकोing क्रम
 	 * 200000 TSC cycles is safe:
 	 * 4 GHz == 50us
 	 * 1 GHz == 200us
 	 */
-	do {
-		if (t1 != hpet_readl(HPET_COUNTER))
-			return true;
+	करो अणु
+		अगर (t1 != hpet_पढ़ोl(HPET_COUNTER))
+			वापस true;
 		now = rdtsc();
-	} while ((now - start) < 200000UL);
+	पूर्ण जबतक ((now - start) < 200000UL);
 
 	pr_warn("Counter not counting. HPET disabled\n");
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * hpet_enable - Try to setup the HPET timer. Returns 1 on success.
+ * hpet_enable - Try to setup the HPET समयr. Returns 1 on success.
  */
-int __init hpet_enable(void)
-{
+पूर्णांक __init hpet_enable(व्योम)
+अणु
 	u32 hpet_period, cfg, id, irq;
-	unsigned int i, channels;
-	struct hpet_channel *hc;
+	अचिन्हित पूर्णांक i, channels;
+	काष्ठा hpet_channel *hc;
 	u64 freq;
 
-	if (!is_hpet_capable())
-		return 0;
+	अगर (!is_hpet_capable())
+		वापस 0;
 
 	hpet_set_mapping();
-	if (!hpet_virt_address)
-		return 0;
+	अगर (!hpet_virt_address)
+		वापस 0;
 
-	/* Validate that the config register is working */
-	if (!hpet_cfg_working())
-		goto out_nohpet;
+	/* Validate that the config रेजिस्टर is working */
+	अगर (!hpet_cfg_working())
+		जाओ out_nohpet;
 
 	/*
-	 * Read the period and check for a sane value:
+	 * Read the period and check क्रम a sane value:
 	 */
-	hpet_period = hpet_readl(HPET_PERIOD);
-	if (hpet_period < HPET_MIN_PERIOD || hpet_period > HPET_MAX_PERIOD)
-		goto out_nohpet;
+	hpet_period = hpet_पढ़ोl(HPET_PERIOD);
+	अगर (hpet_period < HPET_MIN_PERIOD || hpet_period > HPET_MAX_PERIOD)
+		जाओ out_nohpet;
 
 	/* The period is a femtoseconds value. Convert it to a frequency. */
 	freq = FSEC_PER_SEC;
-	do_div(freq, hpet_period);
+	करो_भाग(freq, hpet_period);
 	hpet_freq = freq;
 
 	/*
-	 * Read the HPET ID register to retrieve the IRQ routing
-	 * information and the number of channels
+	 * Read the HPET ID रेजिस्टर to retrieve the IRQ routing
+	 * inक्रमmation and the number of channels
 	 */
-	id = hpet_readl(HPET_ID);
-	hpet_print_config();
+	id = hpet_पढ़ोl(HPET_ID);
+	hpet_prपूर्णांक_config();
 
 	/* This is the HPET channel number which is zero based */
 	channels = ((id & HPET_ID_NUMBER) >> HPET_ID_NUMBER_SHIFT) + 1;
 
 	/*
-	 * The legacy routing mode needs at least two channels, tick timer
+	 * The legacy routing mode needs at least two channels, tick समयr
 	 * and the rtc emulation channel.
 	 */
-	if (IS_ENABLED(CONFIG_HPET_EMULATE_RTC) && channels < 2)
-		goto out_nohpet;
+	अगर (IS_ENABLED(CONFIG_HPET_EMULATE_RTC) && channels < 2)
+		जाओ out_nohpet;
 
-	hc = kcalloc(channels, sizeof(*hc), GFP_KERNEL);
-	if (!hc) {
+	hc = kसुस्मृति(channels, माप(*hc), GFP_KERNEL);
+	अगर (!hc) अणु
 		pr_warn("Disabling HPET.\n");
-		goto out_nohpet;
-	}
+		जाओ out_nohpet;
+	पूर्ण
 	hpet_base.channels = hc;
 	hpet_base.nr_channels = channels;
 
 	/* Read, store and sanitize the global configuration */
-	cfg = hpet_readl(HPET_CFG);
+	cfg = hpet_पढ़ोl(HPET_CFG);
 	hpet_base.boot_cfg = cfg;
 	cfg &= ~(HPET_CFG_ENABLE | HPET_CFG_LEGACY);
-	hpet_writel(cfg, HPET_CFG);
-	if (cfg)
+	hpet_ग_लिखोl(cfg, HPET_CFG);
+	अगर (cfg)
 		pr_warn("Global config: Unknown bits %#x\n", cfg);
 
 	/* Read, store and sanitize the per channel configuration */
-	for (i = 0; i < channels; i++, hc++) {
+	क्रम (i = 0; i < channels; i++, hc++) अणु
 		hc->num = i;
 
-		cfg = hpet_readl(HPET_Tn_CFG(i));
+		cfg = hpet_पढ़ोl(HPET_Tn_CFG(i));
 		hc->boot_cfg = cfg;
 		irq = (cfg & Tn_INT_ROUTE_CNF_MASK) >> Tn_INT_ROUTE_CNF_SHIFT;
 		hc->irq = irq;
 
 		cfg &= ~(HPET_TN_ENABLE | HPET_TN_LEVEL | HPET_TN_FSB);
-		hpet_writel(cfg, HPET_Tn_CFG(i));
+		hpet_ग_लिखोl(cfg, HPET_Tn_CFG(i));
 
 		cfg &= ~(HPET_TN_PERIODIC | HPET_TN_PERIODIC_CAP
 			 | HPET_TN_64BIT_CAP | HPET_TN_32BIT | HPET_TN_ROUTE
 			 | HPET_TN_FSB | HPET_TN_FSB_CAP);
-		if (cfg)
+		अगर (cfg)
 			pr_warn("Channel #%u config: Unknown bits %#x\n", i, cfg);
-	}
-	hpet_print_config();
+	पूर्ण
+	hpet_prपूर्णांक_config();
 
 	/*
-	 * Validate that the counter is counting. This needs to be done
-	 * after sanitizing the config registers to properly deal with
-	 * force enabled HPETs.
+	 * Validate that the counter is counting. This needs to be करोne
+	 * after sanitizing the config रेजिस्टरs to properly deal with
+	 * क्रमce enabled HPETs.
 	 */
-	if (!hpet_counting())
-		goto out_nohpet;
+	अगर (!hpet_counting())
+		जाओ out_nohpet;
 
-	clocksource_register_hz(&clocksource_hpet, (u32)hpet_freq);
+	घड़ीsource_रेजिस्टर_hz(&घड़ीsource_hpet, (u32)hpet_freq);
 
-	if (id & HPET_ID_LEGSUP) {
-		hpet_legacy_clockevent_register(&hpet_base.channels[0]);
+	अगर (id & HPET_ID_LEGSUP) अणु
+		hpet_legacy_घड़ीevent_रेजिस्टर(&hpet_base.channels[0]);
 		hpet_base.channels[0].mode = HPET_MODE_LEGACY;
-		if (IS_ENABLED(CONFIG_HPET_EMULATE_RTC))
+		अगर (IS_ENABLED(CONFIG_HPET_EMULATE_RTC))
 			hpet_base.channels[1].mode = HPET_MODE_LEGACY;
-		return 1;
-	}
-	return 0;
+		वापस 1;
+	पूर्ण
+	वापस 0;
 
 out_nohpet:
-	kfree(hpet_base.channels);
-	hpet_base.channels = NULL;
+	kमुक्त(hpet_base.channels);
+	hpet_base.channels = शून्य;
 	hpet_base.nr_channels = 0;
 	hpet_clear_mapping();
 	hpet_address = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * The late initialization runs after the PCI quirks have been invoked
- * which might have detected a system on which the HPET can be enforced.
+ * which might have detected a प्रणाली on which the HPET can be enक्रमced.
  *
  * Also, the MSI machinery is not working yet when the HPET is initialized
  * early.
  *
  * If the HPET is enabled, then:
  *
- *  1) Reserve one channel for /dev/hpet if CONFIG_HPET=y
- *  2) Reserve up to num_possible_cpus() channels as per CPU clockevents
- *  3) Setup /dev/hpet if CONFIG_HPET=y
- *  4) Register hotplug callbacks when clockevents are available
+ *  1) Reserve one channel क्रम /dev/hpet अगर CONFIG_HPET=y
+ *  2) Reserve up to num_possible_cpus() channels as per CPU घड़ीevents
+ *  3) Setup /dev/hpet अगर CONFIG_HPET=y
+ *  4) Register hotplug callbacks when घड़ीevents are available
  */
-static __init int hpet_late_init(void)
-{
-	int ret;
+अटल __init पूर्णांक hpet_late_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!hpet_address) {
-		if (!force_hpet_address)
-			return -ENODEV;
+	अगर (!hpet_address) अणु
+		अगर (!क्रमce_hpet_address)
+			वापस -ENODEV;
 
-		hpet_address = force_hpet_address;
+		hpet_address = क्रमce_hpet_address;
 		hpet_enable();
-	}
+	पूर्ण
 
-	if (!hpet_virt_address)
-		return -ENODEV;
+	अगर (!hpet_virt_address)
+		वापस -ENODEV;
 
 	hpet_select_device_channel();
-	hpet_select_clockevents();
-	hpet_reserve_platform_timers();
-	hpet_print_config();
+	hpet_select_घड़ीevents();
+	hpet_reserve_platक्रमm_समयrs();
+	hpet_prपूर्णांक_config();
 
-	if (!hpet_base.nr_clockevents)
-		return 0;
+	अगर (!hpet_base.nr_घड़ीevents)
+		वापस 0;
 
 	ret = cpuhp_setup_state(CPUHP_AP_X86_HPET_ONLINE, "x86/hpet:online",
-				hpet_cpuhp_online, NULL);
-	if (ret)
-		return ret;
-	ret = cpuhp_setup_state(CPUHP_X86_HPET_DEAD, "x86/hpet:dead", NULL,
+				hpet_cpuhp_online, शून्य);
+	अगर (ret)
+		वापस ret;
+	ret = cpuhp_setup_state(CPUHP_X86_HPET_DEAD, "x86/hpet:dead", शून्य,
 				hpet_cpuhp_dead);
-	if (ret)
-		goto err_cpuhp;
-	return 0;
+	अगर (ret)
+		जाओ err_cpuhp;
+	वापस 0;
 
 err_cpuhp:
-	cpuhp_remove_state(CPUHP_AP_X86_HPET_ONLINE);
-	return ret;
-}
+	cpuhp_हटाओ_state(CPUHP_AP_X86_HPET_ONLINE);
+	वापस ret;
+पूर्ण
 fs_initcall(hpet_late_init);
 
-void hpet_disable(void)
-{
-	unsigned int i;
+व्योम hpet_disable(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 	u32 cfg;
 
-	if (!is_hpet_capable() || !hpet_virt_address)
-		return;
+	अगर (!is_hpet_capable() || !hpet_virt_address)
+		वापस;
 
 	/* Restore boot configuration with the enable bit cleared */
 	cfg = hpet_base.boot_cfg;
 	cfg &= ~HPET_CFG_ENABLE;
-	hpet_writel(cfg, HPET_CFG);
+	hpet_ग_लिखोl(cfg, HPET_CFG);
 
 	/* Restore the channel boot configuration */
-	for (i = 0; i < hpet_base.nr_channels; i++)
-		hpet_writel(hpet_base.channels[i].boot_cfg, HPET_Tn_CFG(i));
+	क्रम (i = 0; i < hpet_base.nr_channels; i++)
+		hpet_ग_लिखोl(hpet_base.channels[i].boot_cfg, HPET_Tn_CFG(i));
 
-	/* If the HPET was enabled at boot time, reenable it */
-	if (hpet_base.boot_cfg & HPET_CFG_ENABLE)
-		hpet_writel(hpet_base.boot_cfg, HPET_CFG);
-}
+	/* If the HPET was enabled at boot समय, reenable it */
+	अगर (hpet_base.boot_cfg & HPET_CFG_ENABLE)
+		hpet_ग_लिखोl(hpet_base.boot_cfg, HPET_CFG);
+पूर्ण
 
-#ifdef CONFIG_HPET_EMULATE_RTC
+#अगर_घोषित CONFIG_HPET_EMULATE_RTC
 
 /*
- * HPET in LegacyReplacement mode eats up the RTC interrupt line. When HPET
- * is enabled, we support RTC interrupt functionality in software.
+ * HPET in LegacyReplacement mode eats up the RTC पूर्णांकerrupt line. When HPET
+ * is enabled, we support RTC पूर्णांकerrupt functionality in software.
  *
- * RTC has 3 kinds of interrupts:
+ * RTC has 3 kinds of पूर्णांकerrupts:
  *
- *  1) Update Interrupt - generate an interrupt, every second, when the
- *     RTC clock is updated
- *  2) Alarm Interrupt - generate an interrupt at a specific time of day
- *  3) Periodic Interrupt - generate periodic interrupt, with frequencies
- *     2Hz-8192Hz (2Hz-64Hz for non-root user) (all frequencies in powers of 2)
+ *  1) Update Interrupt - generate an पूर्णांकerrupt, every second, when the
+ *     RTC घड़ी is updated
+ *  2) Alarm Interrupt - generate an पूर्णांकerrupt at a specअगरic समय of day
+ *  3) Periodic Interrupt - generate periodic पूर्णांकerrupt, with frequencies
+ *     2Hz-8192Hz (2Hz-64Hz क्रम non-root user) (all frequencies in घातers of 2)
  *
  * (1) and (2) above are implemented using polling at a frequency of 64 Hz:
  * DEFAULT_RTC_INT_FREQ.
  *
- * The exact frequency is a tradeoff between accuracy and interrupt overhead.
+ * The exact frequency is a tradeoff between accuracy and पूर्णांकerrupt overhead.
  *
- * For (3), we use interrupts at 64 Hz, or the user specified periodic frequency,
- * if it's higher.
+ * For (3), we use पूर्णांकerrupts at 64 Hz, or the user specअगरied periodic frequency,
+ * अगर it's higher.
  */
-#include <linux/mc146818rtc.h>
-#include <linux/rtc.h>
+#समावेश <linux/mc146818rtc.h>
+#समावेश <linux/rtc.h>
 
-#define DEFAULT_RTC_INT_FREQ	64
-#define DEFAULT_RTC_SHIFT	6
-#define RTC_NUM_INTS		1
+#घोषणा DEFAULT_RTC_INT_FREQ	64
+#घोषणा DEFAULT_RTC_SHIFT	6
+#घोषणा RTC_NUM_INTS		1
 
-static unsigned long hpet_rtc_flags;
-static int hpet_prev_update_sec;
-static struct rtc_time hpet_alarm_time;
-static unsigned long hpet_pie_count;
-static u32 hpet_t1_cmp;
-static u32 hpet_default_delta;
-static u32 hpet_pie_delta;
-static unsigned long hpet_pie_limit;
+अटल अचिन्हित दीर्घ hpet_rtc_flags;
+अटल पूर्णांक hpet_prev_update_sec;
+अटल काष्ठा rtc_समय hpet_alarm_समय;
+अटल अचिन्हित दीर्घ hpet_pie_count;
+अटल u32 hpet_t1_cmp;
+अटल u32 hpet_शेष_delta;
+अटल u32 hpet_pie_delta;
+अटल अचिन्हित दीर्घ hpet_pie_limit;
 
-static rtc_irq_handler irq_handler;
+अटल rtc_irq_handler irq_handler;
 
 /*
  * Check that the HPET counter c1 is ahead of c2
  */
-static inline int hpet_cnt_ahead(u32 c1, u32 c2)
-{
-	return (s32)(c2 - c1) < 0;
-}
+अटल अंतरभूत पूर्णांक hpet_cnt_ahead(u32 c1, u32 c2)
+अणु
+	वापस (s32)(c2 - c1) < 0;
+पूर्ण
 
 /*
  * Registers a IRQ handler.
  */
-int hpet_register_irq_handler(rtc_irq_handler handler)
-{
-	if (!is_hpet_enabled())
-		return -ENODEV;
-	if (irq_handler)
-		return -EBUSY;
+पूर्णांक hpet_रेजिस्टर_irq_handler(rtc_irq_handler handler)
+अणु
+	अगर (!is_hpet_enabled())
+		वापस -ENODEV;
+	अगर (irq_handler)
+		वापस -EBUSY;
 
 	irq_handler = handler;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(hpet_register_irq_handler);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(hpet_रेजिस्टर_irq_handler);
 
 /*
- * Deregisters the IRQ handler registered with hpet_register_irq_handler()
- * and does cleanup.
+ * Deरेजिस्टरs the IRQ handler रेजिस्टरed with hpet_रेजिस्टर_irq_handler()
+ * and करोes cleanup.
  */
-void hpet_unregister_irq_handler(rtc_irq_handler handler)
-{
-	if (!is_hpet_enabled())
-		return;
+व्योम hpet_unरेजिस्टर_irq_handler(rtc_irq_handler handler)
+अणु
+	अगर (!is_hpet_enabled())
+		वापस;
 
-	irq_handler = NULL;
+	irq_handler = शून्य;
 	hpet_rtc_flags = 0;
-}
-EXPORT_SYMBOL_GPL(hpet_unregister_irq_handler);
+पूर्ण
+EXPORT_SYMBOL_GPL(hpet_unरेजिस्टर_irq_handler);
 
 /*
- * Channel 1 for RTC emulation. We use one shot mode, as periodic mode
- * is not supported by all HPET implementations for channel 1.
+ * Channel 1 क्रम RTC emulation. We use one shot mode, as periodic mode
+ * is not supported by all HPET implementations क्रम channel 1.
  *
- * hpet_rtc_timer_init() is called when the rtc is initialized.
+ * hpet_rtc_समयr_init() is called when the rtc is initialized.
  */
-int hpet_rtc_timer_init(void)
-{
-	unsigned int cfg, cnt, delta;
-	unsigned long flags;
+पूर्णांक hpet_rtc_समयr_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक cfg, cnt, delta;
+	अचिन्हित दीर्घ flags;
 
-	if (!is_hpet_enabled())
-		return 0;
+	अगर (!is_hpet_enabled())
+		वापस 0;
 
-	if (!hpet_default_delta) {
-		struct clock_event_device *evt = &hpet_base.channels[0].evt;
-		uint64_t clc;
+	अगर (!hpet_शेष_delta) अणु
+		काष्ठा घड़ी_event_device *evt = &hpet_base.channels[0].evt;
+		uपूर्णांक64_t clc;
 
-		clc = (uint64_t) evt->mult * NSEC_PER_SEC;
-		clc >>= evt->shift + DEFAULT_RTC_SHIFT;
-		hpet_default_delta = clc;
-	}
+		clc = (uपूर्णांक64_t) evt->mult * NSEC_PER_SEC;
+		clc >>= evt->shअगरt + DEFAULT_RTC_SHIFT;
+		hpet_शेष_delta = clc;
+	पूर्ण
 
-	if (!(hpet_rtc_flags & RTC_PIE) || hpet_pie_limit)
-		delta = hpet_default_delta;
-	else
+	अगर (!(hpet_rtc_flags & RTC_PIE) || hpet_pie_limit)
+		delta = hpet_शेष_delta;
+	अन्यथा
 		delta = hpet_pie_delta;
 
 	local_irq_save(flags);
 
-	cnt = delta + hpet_readl(HPET_COUNTER);
-	hpet_writel(cnt, HPET_T1_CMP);
+	cnt = delta + hpet_पढ़ोl(HPET_COUNTER);
+	hpet_ग_लिखोl(cnt, HPET_T1_CMP);
 	hpet_t1_cmp = cnt;
 
-	cfg = hpet_readl(HPET_T1_CFG);
+	cfg = hpet_पढ़ोl(HPET_T1_CFG);
 	cfg &= ~HPET_TN_PERIODIC;
 	cfg |= HPET_TN_ENABLE | HPET_TN_32BIT;
-	hpet_writel(cfg, HPET_T1_CFG);
+	hpet_ग_लिखोl(cfg, HPET_T1_CFG);
 
 	local_irq_restore(flags);
 
-	return 1;
-}
-EXPORT_SYMBOL_GPL(hpet_rtc_timer_init);
+	वापस 1;
+पूर्ण
+EXPORT_SYMBOL_GPL(hpet_rtc_समयr_init);
 
-static void hpet_disable_rtc_channel(void)
-{
-	u32 cfg = hpet_readl(HPET_T1_CFG);
+अटल व्योम hpet_disable_rtc_channel(व्योम)
+अणु
+	u32 cfg = hpet_पढ़ोl(HPET_T1_CFG);
 
 	cfg &= ~HPET_TN_ENABLE;
-	hpet_writel(cfg, HPET_T1_CFG);
-}
+	hpet_ग_लिखोl(cfg, HPET_T1_CFG);
+पूर्ण
 
 /*
  * The functions below are called from rtc driver.
- * Return 0 if HPET is not being used.
- * Otherwise do the necessary changes and return 1.
+ * Return 0 अगर HPET is not being used.
+ * Otherwise करो the necessary changes and वापस 1.
  */
-int hpet_mask_rtc_irq_bit(unsigned long bit_mask)
-{
-	if (!is_hpet_enabled())
-		return 0;
+पूर्णांक hpet_mask_rtc_irq_bit(अचिन्हित दीर्घ bit_mask)
+अणु
+	अगर (!is_hpet_enabled())
+		वापस 0;
 
 	hpet_rtc_flags &= ~bit_mask;
-	if (unlikely(!hpet_rtc_flags))
+	अगर (unlikely(!hpet_rtc_flags))
 		hpet_disable_rtc_channel();
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(hpet_mask_rtc_irq_bit);
 
-int hpet_set_rtc_irq_bit(unsigned long bit_mask)
-{
-	unsigned long oldbits = hpet_rtc_flags;
+पूर्णांक hpet_set_rtc_irq_bit(अचिन्हित दीर्घ bit_mask)
+अणु
+	अचिन्हित दीर्घ oldbits = hpet_rtc_flags;
 
-	if (!is_hpet_enabled())
-		return 0;
+	अगर (!is_hpet_enabled())
+		वापस 0;
 
 	hpet_rtc_flags |= bit_mask;
 
-	if ((bit_mask & RTC_UIE) && !(oldbits & RTC_UIE))
+	अगर ((bit_mask & RTC_UIE) && !(oldbits & RTC_UIE))
 		hpet_prev_update_sec = -1;
 
-	if (!oldbits)
-		hpet_rtc_timer_init();
+	अगर (!oldbits)
+		hpet_rtc_समयr_init();
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(hpet_set_rtc_irq_bit);
 
-int hpet_set_alarm_time(unsigned char hrs, unsigned char min, unsigned char sec)
-{
-	if (!is_hpet_enabled())
-		return 0;
+पूर्णांक hpet_set_alarm_समय(अचिन्हित अक्षर hrs, अचिन्हित अक्षर min, अचिन्हित अक्षर sec)
+अणु
+	अगर (!is_hpet_enabled())
+		वापस 0;
 
-	hpet_alarm_time.tm_hour = hrs;
-	hpet_alarm_time.tm_min = min;
-	hpet_alarm_time.tm_sec = sec;
+	hpet_alarm_समय.पंचांग_hour = hrs;
+	hpet_alarm_समय.पंचांग_min = min;
+	hpet_alarm_समय.पंचांग_sec = sec;
 
-	return 1;
-}
-EXPORT_SYMBOL_GPL(hpet_set_alarm_time);
+	वापस 1;
+पूर्ण
+EXPORT_SYMBOL_GPL(hpet_set_alarm_समय);
 
-int hpet_set_periodic_freq(unsigned long freq)
-{
-	uint64_t clc;
+पूर्णांक hpet_set_periodic_freq(अचिन्हित दीर्घ freq)
+अणु
+	uपूर्णांक64_t clc;
 
-	if (!is_hpet_enabled())
-		return 0;
+	अगर (!is_hpet_enabled())
+		वापस 0;
 
-	if (freq <= DEFAULT_RTC_INT_FREQ) {
+	अगर (freq <= DEFAULT_RTC_INT_FREQ) अणु
 		hpet_pie_limit = DEFAULT_RTC_INT_FREQ / freq;
-	} else {
-		struct clock_event_device *evt = &hpet_base.channels[0].evt;
+	पूर्ण अन्यथा अणु
+		काष्ठा घड़ी_event_device *evt = &hpet_base.channels[0].evt;
 
-		clc = (uint64_t) evt->mult * NSEC_PER_SEC;
-		do_div(clc, freq);
-		clc >>= evt->shift;
+		clc = (uपूर्णांक64_t) evt->mult * NSEC_PER_SEC;
+		करो_भाग(clc, freq);
+		clc >>= evt->shअगरt;
 		hpet_pie_delta = clc;
 		hpet_pie_limit = 0;
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(hpet_set_periodic_freq);
 
-int hpet_rtc_dropped_irq(void)
-{
-	return is_hpet_enabled();
-}
+पूर्णांक hpet_rtc_dropped_irq(व्योम)
+अणु
+	वापस is_hpet_enabled();
+पूर्ण
 EXPORT_SYMBOL_GPL(hpet_rtc_dropped_irq);
 
-static void hpet_rtc_timer_reinit(void)
-{
-	unsigned int delta;
-	int lost_ints = -1;
+अटल व्योम hpet_rtc_समयr_reinit(व्योम)
+अणु
+	अचिन्हित पूर्णांक delta;
+	पूर्णांक lost_पूर्णांकs = -1;
 
-	if (unlikely(!hpet_rtc_flags))
+	अगर (unlikely(!hpet_rtc_flags))
 		hpet_disable_rtc_channel();
 
-	if (!(hpet_rtc_flags & RTC_PIE) || hpet_pie_limit)
-		delta = hpet_default_delta;
-	else
+	अगर (!(hpet_rtc_flags & RTC_PIE) || hpet_pie_limit)
+		delta = hpet_शेष_delta;
+	अन्यथा
 		delta = hpet_pie_delta;
 
 	/*
 	 * Increment the comparator value until we are ahead of the
 	 * current count.
 	 */
-	do {
+	करो अणु
 		hpet_t1_cmp += delta;
-		hpet_writel(hpet_t1_cmp, HPET_T1_CMP);
-		lost_ints++;
-	} while (!hpet_cnt_ahead(hpet_t1_cmp, hpet_readl(HPET_COUNTER)));
+		hpet_ग_लिखोl(hpet_t1_cmp, HPET_T1_CMP);
+		lost_पूर्णांकs++;
+	पूर्ण जबतक (!hpet_cnt_ahead(hpet_t1_cmp, hpet_पढ़ोl(HPET_COUNTER)));
 
-	if (lost_ints) {
-		if (hpet_rtc_flags & RTC_PIE)
-			hpet_pie_count += lost_ints;
-		if (printk_ratelimit())
-			pr_warn("Lost %d RTC interrupts\n", lost_ints);
-	}
-}
+	अगर (lost_पूर्णांकs) अणु
+		अगर (hpet_rtc_flags & RTC_PIE)
+			hpet_pie_count += lost_पूर्णांकs;
+		अगर (prपूर्णांकk_ratelimit())
+			pr_warn("Lost %d RTC interrupts\n", lost_पूर्णांकs);
+	पूर्ण
+पूर्ण
 
-irqreturn_t hpet_rtc_interrupt(int irq, void *dev_id)
-{
-	struct rtc_time curr_time;
-	unsigned long rtc_int_flag = 0;
+irqवापस_t hpet_rtc_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा rtc_समय curr_समय;
+	अचिन्हित दीर्घ rtc_पूर्णांक_flag = 0;
 
-	hpet_rtc_timer_reinit();
-	memset(&curr_time, 0, sizeof(struct rtc_time));
+	hpet_rtc_समयr_reinit();
+	स_रखो(&curr_समय, 0, माप(काष्ठा rtc_समय));
 
-	if (hpet_rtc_flags & (RTC_UIE | RTC_AIE))
-		mc146818_get_time(&curr_time);
+	अगर (hpet_rtc_flags & (RTC_UIE | RTC_AIE))
+		mc146818_get_समय(&curr_समय);
 
-	if (hpet_rtc_flags & RTC_UIE &&
-	    curr_time.tm_sec != hpet_prev_update_sec) {
-		if (hpet_prev_update_sec >= 0)
-			rtc_int_flag = RTC_UF;
-		hpet_prev_update_sec = curr_time.tm_sec;
-	}
+	अगर (hpet_rtc_flags & RTC_UIE &&
+	    curr_समय.पंचांग_sec != hpet_prev_update_sec) अणु
+		अगर (hpet_prev_update_sec >= 0)
+			rtc_पूर्णांक_flag = RTC_UF;
+		hpet_prev_update_sec = curr_समय.पंचांग_sec;
+	पूर्ण
 
-	if (hpet_rtc_flags & RTC_PIE && ++hpet_pie_count >= hpet_pie_limit) {
-		rtc_int_flag |= RTC_PF;
+	अगर (hpet_rtc_flags & RTC_PIE && ++hpet_pie_count >= hpet_pie_limit) अणु
+		rtc_पूर्णांक_flag |= RTC_PF;
 		hpet_pie_count = 0;
-	}
+	पूर्ण
 
-	if (hpet_rtc_flags & RTC_AIE &&
-	    (curr_time.tm_sec == hpet_alarm_time.tm_sec) &&
-	    (curr_time.tm_min == hpet_alarm_time.tm_min) &&
-	    (curr_time.tm_hour == hpet_alarm_time.tm_hour))
-		rtc_int_flag |= RTC_AF;
+	अगर (hpet_rtc_flags & RTC_AIE &&
+	    (curr_समय.पंचांग_sec == hpet_alarm_समय.पंचांग_sec) &&
+	    (curr_समय.पंचांग_min == hpet_alarm_समय.पंचांग_min) &&
+	    (curr_समय.पंचांग_hour == hpet_alarm_समय.पंचांग_hour))
+		rtc_पूर्णांक_flag |= RTC_AF;
 
-	if (rtc_int_flag) {
-		rtc_int_flag |= (RTC_IRQF | (RTC_NUM_INTS << 8));
-		if (irq_handler)
-			irq_handler(rtc_int_flag, dev_id);
-	}
-	return IRQ_HANDLED;
-}
-EXPORT_SYMBOL_GPL(hpet_rtc_interrupt);
-#endif
+	अगर (rtc_पूर्णांक_flag) अणु
+		rtc_पूर्णांक_flag |= (RTC_IRQF | (RTC_NUM_INTS << 8));
+		अगर (irq_handler)
+			irq_handler(rtc_पूर्णांक_flag, dev_id);
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
+EXPORT_SYMBOL_GPL(hpet_rtc_पूर्णांकerrupt);
+#पूर्ण_अगर

@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2018, The Linux Foundation. All rights reserved.
 
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/regmap.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/clk-provider.h>
-#include <linux/spinlock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/spinlock.h>
 
-#include "clk-regmap.h"
-#include "clk-hfpll.h"
+#समावेश "clk-regmap.h"
+#समावेश "clk-hfpll.h"
 
-#define PLL_OUTCTRL	BIT(0)
-#define PLL_BYPASSNL	BIT(1)
-#define PLL_RESET_N	BIT(2)
+#घोषणा PLL_OUTCTRL	BIT(0)
+#घोषणा PLL_BYPASSNL	BIT(1)
+#घोषणा PLL_RESET_N	BIT(2)
 
 /* Initialize a HFPLL at a given rate and enable it. */
-static void __clk_hfpll_init_once(struct clk_hw *hw)
-{
-	struct clk_hfpll *h = to_clk_hfpll(hw);
-	struct hfpll_data const *hd = h->d;
-	struct regmap *regmap = h->clkr.regmap;
+अटल व्योम __clk_hfpll_init_once(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_hfpll *h = to_clk_hfpll(hw);
+	काष्ठा hfpll_data स्थिर *hd = h->d;
+	काष्ठा regmap *regmap = h->clkr.regmap;
 
-	if (likely(h->init_done))
-		return;
+	अगर (likely(h->init_करोne))
+		वापस;
 
-	/* Configure PLL parameters for integer mode. */
-	if (hd->config_val)
-		regmap_write(regmap, hd->config_reg, hd->config_val);
-	regmap_write(regmap, hd->m_reg, 0);
-	regmap_write(regmap, hd->n_reg, 1);
+	/* Configure PLL parameters क्रम पूर्णांकeger mode. */
+	अगर (hd->config_val)
+		regmap_ग_लिखो(regmap, hd->config_reg, hd->config_val);
+	regmap_ग_लिखो(regmap, hd->m_reg, 0);
+	regmap_ग_लिखो(regmap, hd->n_reg, 1);
 
-	if (hd->user_reg) {
+	अगर (hd->user_reg) अणु
 		u32 regval = hd->user_val;
-		unsigned long rate;
+		अचिन्हित दीर्घ rate;
 
 		rate = clk_hw_get_rate(hw);
 
 		/* Pick the right VCO. */
-		if (hd->user_vco_mask && rate > hd->low_vco_max_rate)
+		अगर (hd->user_vco_mask && rate > hd->low_vco_max_rate)
 			regval |= hd->user_vco_mask;
-		regmap_write(regmap, hd->user_reg, regval);
-	}
+		regmap_ग_लिखो(regmap, hd->user_reg, regval);
+	पूर्ण
 
-	if (hd->droop_reg)
-		regmap_write(regmap, hd->droop_reg, hd->droop_val);
+	अगर (hd->droop_reg)
+		regmap_ग_लिखो(regmap, hd->droop_reg, hd->droop_val);
 
-	h->init_done = true;
-}
+	h->init_करोne = true;
+पूर्ण
 
-static void __clk_hfpll_enable(struct clk_hw *hw)
-{
-	struct clk_hfpll *h = to_clk_hfpll(hw);
-	struct hfpll_data const *hd = h->d;
-	struct regmap *regmap = h->clkr.regmap;
+अटल व्योम __clk_hfpll_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_hfpll *h = to_clk_hfpll(hw);
+	काष्ठा hfpll_data स्थिर *hd = h->d;
+	काष्ठा regmap *regmap = h->clkr.regmap;
 	u32 val;
 
 	__clk_hfpll_init_once(hw);
@@ -64,94 +65,94 @@ static void __clk_hfpll_enable(struct clk_hw *hw)
 
 	/*
 	 * H/W requires a 5us delay between disabling the bypass and
-	 * de-asserting the reset. Delay 10us just to be safe.
+	 * de-निश्चितing the reset. Delay 10us just to be safe.
 	 */
 	udelay(10);
 
-	/* De-assert active-low PLL reset. */
+	/* De-निश्चित active-low PLL reset. */
 	regmap_update_bits(regmap, hd->mode_reg, PLL_RESET_N, PLL_RESET_N);
 
-	/* Wait for PLL to lock. */
-	if (hd->status_reg) {
-		do {
-			regmap_read(regmap, hd->status_reg, &val);
-		} while (!(val & BIT(hd->lock_bit)));
-	} else {
+	/* Wait क्रम PLL to lock. */
+	अगर (hd->status_reg) अणु
+		करो अणु
+			regmap_पढ़ो(regmap, hd->status_reg, &val);
+		पूर्ण जबतक (!(val & BIT(hd->lock_bit)));
+	पूर्ण अन्यथा अणु
 		udelay(60);
-	}
+	पूर्ण
 
 	/* Enable PLL output. */
 	regmap_update_bits(regmap, hd->mode_reg, PLL_OUTCTRL, PLL_OUTCTRL);
-}
+पूर्ण
 
-/* Enable an already-configured HFPLL. */
-static int clk_hfpll_enable(struct clk_hw *hw)
-{
-	unsigned long flags;
-	struct clk_hfpll *h = to_clk_hfpll(hw);
-	struct hfpll_data const *hd = h->d;
-	struct regmap *regmap = h->clkr.regmap;
+/* Enable an alपढ़ोy-configured HFPLL. */
+अटल पूर्णांक clk_hfpll_enable(काष्ठा clk_hw *hw)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा clk_hfpll *h = to_clk_hfpll(hw);
+	काष्ठा hfpll_data स्थिर *hd = h->d;
+	काष्ठा regmap *regmap = h->clkr.regmap;
 	u32 mode;
 
 	spin_lock_irqsave(&h->lock, flags);
-	regmap_read(regmap, hd->mode_reg, &mode);
-	if (!(mode & (PLL_BYPASSNL | PLL_RESET_N | PLL_OUTCTRL)))
+	regmap_पढ़ो(regmap, hd->mode_reg, &mode);
+	अगर (!(mode & (PLL_BYPASSNL | PLL_RESET_N | PLL_OUTCTRL)))
 		__clk_hfpll_enable(hw);
 	spin_unlock_irqrestore(&h->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __clk_hfpll_disable(struct clk_hfpll *h)
-{
-	struct hfpll_data const *hd = h->d;
-	struct regmap *regmap = h->clkr.regmap;
+अटल व्योम __clk_hfpll_disable(काष्ठा clk_hfpll *h)
+अणु
+	काष्ठा hfpll_data स्थिर *hd = h->d;
+	काष्ठा regmap *regmap = h->clkr.regmap;
 
 	/*
 	 * Disable the PLL output, disable test mode, enable the bypass mode,
-	 * and assert the reset.
+	 * and निश्चित the reset.
 	 */
 	regmap_update_bits(regmap, hd->mode_reg,
 			   PLL_BYPASSNL | PLL_RESET_N | PLL_OUTCTRL, 0);
-}
+पूर्ण
 
-static void clk_hfpll_disable(struct clk_hw *hw)
-{
-	struct clk_hfpll *h = to_clk_hfpll(hw);
-	unsigned long flags;
+अटल व्योम clk_hfpll_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_hfpll *h = to_clk_hfpll(hw);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&h->lock, flags);
 	__clk_hfpll_disable(h);
 	spin_unlock_irqrestore(&h->lock, flags);
-}
+पूर्ण
 
-static long clk_hfpll_round_rate(struct clk_hw *hw, unsigned long rate,
-				 unsigned long *parent_rate)
-{
-	struct clk_hfpll *h = to_clk_hfpll(hw);
-	struct hfpll_data const *hd = h->d;
-	unsigned long rrate;
+अटल दीर्घ clk_hfpll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				 अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा clk_hfpll *h = to_clk_hfpll(hw);
+	काष्ठा hfpll_data स्थिर *hd = h->d;
+	अचिन्हित दीर्घ rrate;
 
 	rate = clamp(rate, hd->min_rate, hd->max_rate);
 
 	rrate = DIV_ROUND_UP(rate, *parent_rate) * *parent_rate;
-	if (rrate > hd->max_rate)
+	अगर (rrate > hd->max_rate)
 		rrate -= *parent_rate;
 
-	return rrate;
-}
+	वापस rrate;
+पूर्ण
 
 /*
- * For optimization reasons, assumes no downstream clocks are actively using
+ * For optimization reasons, assumes no करोwnstream घड़ीs are actively using
  * it.
  */
-static int clk_hfpll_set_rate(struct clk_hw *hw, unsigned long rate,
-			      unsigned long parent_rate)
-{
-	struct clk_hfpll *h = to_clk_hfpll(hw);
-	struct hfpll_data const *hd = h->d;
-	struct regmap *regmap = h->clkr.regmap;
-	unsigned long flags;
+अटल पूर्णांक clk_hfpll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			      अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_hfpll *h = to_clk_hfpll(hw);
+	काष्ठा hfpll_data स्थिर *hd = h->d;
+	काष्ठा regmap *regmap = h->clkr.regmap;
+	अचिन्हित दीर्घ flags;
 	u32 l_val, val;
 	bool enabled;
 
@@ -160,81 +161,81 @@ static int clk_hfpll_set_rate(struct clk_hw *hw, unsigned long rate,
 	spin_lock_irqsave(&h->lock, flags);
 
 	enabled = __clk_is_enabled(hw->clk);
-	if (enabled)
+	अगर (enabled)
 		__clk_hfpll_disable(h);
 
 	/* Pick the right VCO. */
-	if (hd->user_reg && hd->user_vco_mask) {
-		regmap_read(regmap, hd->user_reg, &val);
-		if (rate <= hd->low_vco_max_rate)
+	अगर (hd->user_reg && hd->user_vco_mask) अणु
+		regmap_पढ़ो(regmap, hd->user_reg, &val);
+		अगर (rate <= hd->low_vco_max_rate)
 			val &= ~hd->user_vco_mask;
-		else
+		अन्यथा
 			val |= hd->user_vco_mask;
-		regmap_write(regmap, hd->user_reg, val);
-	}
+		regmap_ग_लिखो(regmap, hd->user_reg, val);
+	पूर्ण
 
-	regmap_write(regmap, hd->l_reg, l_val);
+	regmap_ग_लिखो(regmap, hd->l_reg, l_val);
 
-	if (enabled)
+	अगर (enabled)
 		__clk_hfpll_enable(hw);
 
 	spin_unlock_irqrestore(&h->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long clk_hfpll_recalc_rate(struct clk_hw *hw,
-					   unsigned long parent_rate)
-{
-	struct clk_hfpll *h = to_clk_hfpll(hw);
-	struct hfpll_data const *hd = h->d;
-	struct regmap *regmap = h->clkr.regmap;
+अटल अचिन्हित दीर्घ clk_hfpll_recalc_rate(काष्ठा clk_hw *hw,
+					   अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_hfpll *h = to_clk_hfpll(hw);
+	काष्ठा hfpll_data स्थिर *hd = h->d;
+	काष्ठा regmap *regmap = h->clkr.regmap;
 	u32 l_val;
 
-	regmap_read(regmap, hd->l_reg, &l_val);
+	regmap_पढ़ो(regmap, hd->l_reg, &l_val);
 
-	return l_val * parent_rate;
-}
+	वापस l_val * parent_rate;
+पूर्ण
 
-static int clk_hfpll_init(struct clk_hw *hw)
-{
-	struct clk_hfpll *h = to_clk_hfpll(hw);
-	struct hfpll_data const *hd = h->d;
-	struct regmap *regmap = h->clkr.regmap;
+अटल पूर्णांक clk_hfpll_init(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_hfpll *h = to_clk_hfpll(hw);
+	काष्ठा hfpll_data स्थिर *hd = h->d;
+	काष्ठा regmap *regmap = h->clkr.regmap;
 	u32 mode, status;
 
-	regmap_read(regmap, hd->mode_reg, &mode);
-	if (mode != (PLL_BYPASSNL | PLL_RESET_N | PLL_OUTCTRL)) {
+	regmap_पढ़ो(regmap, hd->mode_reg, &mode);
+	अगर (mode != (PLL_BYPASSNL | PLL_RESET_N | PLL_OUTCTRL)) अणु
 		__clk_hfpll_init_once(hw);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (hd->status_reg) {
-		regmap_read(regmap, hd->status_reg, &status);
-		if (!(status & BIT(hd->lock_bit))) {
+	अगर (hd->status_reg) अणु
+		regmap_पढ़ो(regmap, hd->status_reg, &status);
+		अगर (!(status & BIT(hd->lock_bit))) अणु
 			WARN(1, "HFPLL %s is ON, but not locked!\n",
 			     __clk_get_name(hw->clk));
 			clk_hfpll_disable(hw);
 			__clk_hfpll_init_once(hw);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hfpll_is_enabled(struct clk_hw *hw)
-{
-	struct clk_hfpll *h = to_clk_hfpll(hw);
-	struct hfpll_data const *hd = h->d;
-	struct regmap *regmap = h->clkr.regmap;
+अटल पूर्णांक hfpll_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_hfpll *h = to_clk_hfpll(hw);
+	काष्ठा hfpll_data स्थिर *hd = h->d;
+	काष्ठा regmap *regmap = h->clkr.regmap;
 	u32 mode;
 
-	regmap_read(regmap, hd->mode_reg, &mode);
+	regmap_पढ़ो(regmap, hd->mode_reg, &mode);
 	mode &= 0x7;
-	return mode == (PLL_BYPASSNL | PLL_RESET_N | PLL_OUTCTRL);
-}
+	वापस mode == (PLL_BYPASSNL | PLL_RESET_N | PLL_OUTCTRL);
+पूर्ण
 
-const struct clk_ops clk_ops_hfpll = {
+स्थिर काष्ठा clk_ops clk_ops_hfpll = अणु
 	.enable = clk_hfpll_enable,
 	.disable = clk_hfpll_disable,
 	.is_enabled = hfpll_is_enabled,
@@ -242,5 +243,5 @@ const struct clk_ops clk_ops_hfpll = {
 	.set_rate = clk_hfpll_set_rate,
 	.recalc_rate = clk_hfpll_recalc_rate,
 	.init = clk_hfpll_init,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(clk_ops_hfpll);

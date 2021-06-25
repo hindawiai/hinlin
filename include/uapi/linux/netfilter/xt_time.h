@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_TIME_H
-#define _XT_TIME_H 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_TIME_H
+#घोषणा _XT_TIME_H 1
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct xt_time_info {
+काष्ठा xt_समय_info अणु
 	__u32 date_start;
 	__u32 date_stop;
-	__u32 daytime_start;
-	__u32 daytime_stop;
+	__u32 dayसमय_start;
+	__u32 dayसमय_stop;
 	__u32 monthdays_match;
 	__u8 weekdays_match;
 	__u8 flags;
-};
+पूर्ण;
 
-enum {
-	/* Match against local time (instead of UTC) */
+क्रमागत अणु
+	/* Match against local समय (instead of UTC) */
 	XT_TIME_LOCAL_TZ = 1 << 0,
 
-	/* treat timestart > timestop (e.g. 23:00-01:00) as single period */
+	/* treat बारtart > बारtop (e.g. 23:00-01:00) as single period */
 	XT_TIME_CONTIGUOUS = 1 << 1,
 
 	/* Shortcuts */
@@ -26,8 +27,8 @@ enum {
 	XT_TIME_ALL_WEEKDAYS  = 0xFE,
 	XT_TIME_MIN_DAYTIME   = 0,
 	XT_TIME_MAX_DAYTIME   = 24 * 60 * 60 - 1,
-};
+पूर्ण;
 
-#define XT_TIME_ALL_FLAGS (XT_TIME_LOCAL_TZ|XT_TIME_CONTIGUOUS)
+#घोषणा XT_TIME_ALL_FLAGS (XT_TIME_LOCAL_TZ|XT_TIME_CONTIGUOUS)
 
-#endif /* _XT_TIME_H */
+#पूर्ण_अगर /* _XT_TIME_H */

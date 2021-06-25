@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * This file is part of wl1271
  *
@@ -7,374 +8,374 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
-#include "wlcore.h"
-#include "debug.h"
-#include "io.h"
-#include "event.h"
-#include "ps.h"
-#include "scan.h"
-#include "wl12xx_80211.h"
-#include "hw_ops.h"
+#समावेश "wlcore.h"
+#समावेश "debug.h"
+#समावेश "io.h"
+#समावेश "event.h"
+#समावेश "ps.h"
+#समावेश "scan.h"
+#समावेश "wl12xx_80211.h"
+#समावेश "hw_ops.h"
 
-#define WL18XX_LOGGER_SDIO_BUFF_MAX	(0x1020)
-#define WL18XX_DATA_RAM_BASE_ADDRESS	(0x20000000)
-#define WL18XX_LOGGER_SDIO_BUFF_ADDR	(0x40159c)
-#define WL18XX_LOGGER_BUFF_OFFSET	(sizeof(struct fw_logger_information))
-#define WL18XX_LOGGER_READ_POINT_OFFSET		(12)
+#घोषणा WL18XX_LOGGER_SDIO_BUFF_MAX	(0x1020)
+#घोषणा WL18XX_DATA_RAM_BASE_ADDRESS	(0x20000000)
+#घोषणा WL18XX_LOGGER_SDIO_BUFF_ADDR	(0x40159c)
+#घोषणा WL18XX_LOGGER_BUFF_OFFSET	(माप(काष्ठा fw_logger_inक्रमmation))
+#घोषणा WL18XX_LOGGER_READ_POINT_OFFSET		(12)
 
-int wlcore_event_fw_logger(struct wl1271 *wl)
-{
-	int ret;
-	struct fw_logger_information fw_log;
+पूर्णांक wlcore_event_fw_logger(काष्ठा wl1271 *wl)
+अणु
+	पूर्णांक ret;
+	काष्ठा fw_logger_inक्रमmation fw_log;
 	u8  *buffer;
-	u32 internal_fw_addrbase = WL18XX_DATA_RAM_BASE_ADDRESS;
+	u32 पूर्णांकernal_fw_addrbase = WL18XX_DATA_RAM_BASE_ADDRESS;
 	u32 addr = WL18XX_LOGGER_SDIO_BUFF_ADDR;
 	u32 end_buff_addr = WL18XX_LOGGER_SDIO_BUFF_ADDR +
 				WL18XX_LOGGER_BUFF_OFFSET;
 	u32 available_len;
 	u32 actual_len;
 	u32 clear_addr;
-	size_t len;
+	माप_प्रकार len;
 	u32 start_loc;
 
 	buffer = kzalloc(WL18XX_LOGGER_SDIO_BUFF_MAX, GFP_KERNEL);
-	if (!buffer) {
+	अगर (!buffer) अणु
 		wl1271_error("Fail to allocate fw logger memory");
 		fw_log.actual_buff_size = cpu_to_le32(0);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = wlcore_read(wl, addr, buffer, WL18XX_LOGGER_SDIO_BUFF_MAX,
+	ret = wlcore_पढ़ो(wl, addr, buffer, WL18XX_LOGGER_SDIO_BUFF_MAX,
 			  false);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		wl1271_error("Fail to read logger buffer, error_id = %d",
 			     ret);
 		fw_log.actual_buff_size = cpu_to_le32(0);
-		goto free_out;
-	}
+		जाओ मुक्त_out;
+	पूर्ण
 
-	memcpy(&fw_log, buffer, sizeof(fw_log));
+	स_नकल(&fw_log, buffer, माप(fw_log));
 
-	if (le32_to_cpu(fw_log.actual_buff_size) == 0)
-		goto free_out;
+	अगर (le32_to_cpu(fw_log.actual_buff_size) == 0)
+		जाओ मुक्त_out;
 
 	actual_len = le32_to_cpu(fw_log.actual_buff_size);
-	start_loc = (le32_to_cpu(fw_log.buff_read_ptr) -
-			internal_fw_addrbase) - addr;
+	start_loc = (le32_to_cpu(fw_log.buff_पढ़ो_ptr) -
+			पूर्णांकernal_fw_addrbase) - addr;
 	end_buff_addr += le32_to_cpu(fw_log.max_buff_size);
 	available_len = end_buff_addr -
-			(le32_to_cpu(fw_log.buff_read_ptr) -
-				 internal_fw_addrbase);
+			(le32_to_cpu(fw_log.buff_पढ़ो_ptr) -
+				 पूर्णांकernal_fw_addrbase);
 	actual_len = min(actual_len, available_len);
 	len = actual_len;
 
 	wl12xx_copy_fwlog(wl, &buffer[start_loc], len);
 	clear_addr = addr + start_loc + le32_to_cpu(fw_log.actual_buff_size) +
-			internal_fw_addrbase;
+			पूर्णांकernal_fw_addrbase;
 
 	len = le32_to_cpu(fw_log.actual_buff_size) - len;
-	if (len) {
+	अगर (len) अणु
 		wl12xx_copy_fwlog(wl,
 				  &buffer[WL18XX_LOGGER_BUFF_OFFSET],
 				  len);
 		clear_addr = addr + WL18XX_LOGGER_BUFF_OFFSET + len +
-				internal_fw_addrbase;
-	}
+				पूर्णांकernal_fw_addrbase;
+	पूर्ण
 
-	/* double check that clear address and write pointer are the same */
-	if (clear_addr != le32_to_cpu(fw_log.buff_write_ptr)) {
+	/* द्विगुन check that clear address and ग_लिखो poपूर्णांकer are the same */
+	अगर (clear_addr != le32_to_cpu(fw_log.buff_ग_लिखो_ptr)) अणु
 		wl1271_error("Calculate of clear addr Clear = %x, write = %x",
-			     clear_addr, le32_to_cpu(fw_log.buff_write_ptr));
-	}
+			     clear_addr, le32_to_cpu(fw_log.buff_ग_लिखो_ptr));
+	पूर्ण
 
 	/* indicate FW about Clear buffer */
-	ret = wlcore_write32(wl, addr + WL18XX_LOGGER_READ_POINT_OFFSET,
-			     fw_log.buff_write_ptr);
-free_out:
-	kfree(buffer);
+	ret = wlcore_ग_लिखो32(wl, addr + WL18XX_LOGGER_READ_POINT_OFFSET,
+			     fw_log.buff_ग_लिखो_ptr);
+मुक्त_out:
+	kमुक्त(buffer);
 out:
-	return le32_to_cpu(fw_log.actual_buff_size);
-}
+	वापस le32_to_cpu(fw_log.actual_buff_size);
+पूर्ण
 EXPORT_SYMBOL_GPL(wlcore_event_fw_logger);
 
-void wlcore_event_rssi_trigger(struct wl1271 *wl, s8 *metric_arr)
-{
-	struct wl12xx_vif *wlvif;
-	struct ieee80211_vif *vif;
-	enum nl80211_cqm_rssi_threshold_event event;
+व्योम wlcore_event_rssi_trigger(काष्ठा wl1271 *wl, s8 *metric_arr)
+अणु
+	काष्ठा wl12xx_vअगर *wlvअगर;
+	काष्ठा ieee80211_vअगर *vअगर;
+	क्रमागत nl80211_cqm_rssi_threshold_event event;
 	s8 metric = metric_arr[0];
 
 	wl1271_debug(DEBUG_EVENT, "RSSI trigger metric: %d", metric);
 
 	/* TODO: check actual multi-role support */
-	wl12xx_for_each_wlvif_sta(wl, wlvif) {
-		if (metric <= wlvif->rssi_thold)
+	wl12xx_क्रम_each_wlvअगर_sta(wl, wlvअगर) अणु
+		अगर (metric <= wlvअगर->rssi_thold)
 			event = NL80211_CQM_RSSI_THRESHOLD_EVENT_LOW;
-		else
+		अन्यथा
 			event = NL80211_CQM_RSSI_THRESHOLD_EVENT_HIGH;
 
-		vif = wl12xx_wlvif_to_vif(wlvif);
-		if (event != wlvif->last_rssi_event)
-			ieee80211_cqm_rssi_notify(vif, event, metric,
+		vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
+		अगर (event != wlvअगर->last_rssi_event)
+			ieee80211_cqm_rssi_notअगरy(vअगर, event, metric,
 						  GFP_KERNEL);
-		wlvif->last_rssi_event = event;
-	}
-}
+		wlvअगर->last_rssi_event = event;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(wlcore_event_rssi_trigger);
 
-static void wl1271_stop_ba_event(struct wl1271 *wl, struct wl12xx_vif *wlvif)
-{
-	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
+अटल व्योम wl1271_stop_ba_event(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
+अणु
+	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
 
-	if (wlvif->bss_type != BSS_TYPE_AP_BSS) {
-		u8 hlid = wlvif->sta.hlid;
-		if (!wl->links[hlid].ba_bitmap)
-			return;
-		ieee80211_stop_rx_ba_session(vif, wl->links[hlid].ba_bitmap,
-					     vif->bss_conf.bssid);
-	} else {
+	अगर (wlvअगर->bss_type != BSS_TYPE_AP_BSS) अणु
+		u8 hlid = wlvअगर->sta.hlid;
+		अगर (!wl->links[hlid].ba_biपंचांगap)
+			वापस;
+		ieee80211_stop_rx_ba_session(vअगर, wl->links[hlid].ba_biपंचांगap,
+					     vअगर->bss_conf.bssid);
+	पूर्ण अन्यथा अणु
 		u8 hlid;
-		struct wl1271_link *lnk;
-		for_each_set_bit(hlid, wlvif->ap.sta_hlid_map,
-				 wl->num_links) {
+		काष्ठा wl1271_link *lnk;
+		क्रम_each_set_bit(hlid, wlvअगर->ap.sta_hlid_map,
+				 wl->num_links) अणु
 			lnk = &wl->links[hlid];
-			if (!lnk->ba_bitmap)
-				continue;
+			अगर (!lnk->ba_biपंचांगap)
+				जारी;
 
-			ieee80211_stop_rx_ba_session(vif,
-						     lnk->ba_bitmap,
+			ieee80211_stop_rx_ba_session(vअगर,
+						     lnk->ba_biपंचांगap,
 						     lnk->addr);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void wlcore_event_soft_gemini_sense(struct wl1271 *wl, u8 enable)
-{
-	struct wl12xx_vif *wlvif;
+व्योम wlcore_event_soft_gemini_sense(काष्ठा wl1271 *wl, u8 enable)
+अणु
+	काष्ठा wl12xx_vअगर *wlvअगर;
 
-	if (enable) {
+	अगर (enable) अणु
 		set_bit(WL1271_FLAG_SOFT_GEMINI, &wl->flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		clear_bit(WL1271_FLAG_SOFT_GEMINI, &wl->flags);
-		wl12xx_for_each_wlvif_sta(wl, wlvif) {
-			wl1271_recalc_rx_streaming(wl, wlvif);
-		}
-	}
-}
+		wl12xx_क्रम_each_wlvअगर_sta(wl, wlvअगर) अणु
+			wl1271_recalc_rx_streaming(wl, wlvअगर);
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(wlcore_event_soft_gemini_sense);
 
-void wlcore_event_sched_scan_completed(struct wl1271 *wl,
+व्योम wlcore_event_sched_scan_completed(काष्ठा wl1271 *wl,
 				       u8 status)
-{
+अणु
 	wl1271_debug(DEBUG_EVENT, "PERIODIC_SCAN_COMPLETE_EVENT (status 0x%0x)",
 		     status);
 
-	if (wl->sched_vif) {
+	अगर (wl->sched_vअगर) अणु
 		ieee80211_sched_scan_stopped(wl->hw);
-		wl->sched_vif = NULL;
-	}
-}
+		wl->sched_vअगर = शून्य;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(wlcore_event_sched_scan_completed);
 
-void wlcore_event_ba_rx_constraint(struct wl1271 *wl,
-				   unsigned long roles_bitmap,
-				   unsigned long allowed_bitmap)
-{
-	struct wl12xx_vif *wlvif;
+व्योम wlcore_event_ba_rx_स्थिरraपूर्णांक(काष्ठा wl1271 *wl,
+				   अचिन्हित दीर्घ roles_biपंचांगap,
+				   अचिन्हित दीर्घ allowed_biपंचांगap)
+अणु
+	काष्ठा wl12xx_vअगर *wlvअगर;
 
 	wl1271_debug(DEBUG_EVENT, "%s: roles=0x%lx allowed=0x%lx",
-		     __func__, roles_bitmap, allowed_bitmap);
+		     __func__, roles_biपंचांगap, allowed_biपंचांगap);
 
-	wl12xx_for_each_wlvif(wl, wlvif) {
-		if (wlvif->role_id == WL12XX_INVALID_ROLE_ID ||
-		    !test_bit(wlvif->role_id , &roles_bitmap))
-			continue;
+	wl12xx_क्रम_each_wlvअगर(wl, wlvअगर) अणु
+		अगर (wlvअगर->role_id == WL12XX_INVALID_ROLE_ID ||
+		    !test_bit(wlvअगर->role_id , &roles_biपंचांगap))
+			जारी;
 
-		wlvif->ba_allowed = !!test_bit(wlvif->role_id,
-					       &allowed_bitmap);
-		if (!wlvif->ba_allowed)
-			wl1271_stop_ba_event(wl, wlvif);
-	}
-}
-EXPORT_SYMBOL_GPL(wlcore_event_ba_rx_constraint);
+		wlvअगर->ba_allowed = !!test_bit(wlvअगर->role_id,
+					       &allowed_biपंचांगap);
+		अगर (!wlvअगर->ba_allowed)
+			wl1271_stop_ba_event(wl, wlvअगर);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(wlcore_event_ba_rx_स्थिरraपूर्णांक);
 
-void wlcore_event_channel_switch(struct wl1271 *wl,
-				 unsigned long roles_bitmap,
+व्योम wlcore_event_channel_चयन(काष्ठा wl1271 *wl,
+				 अचिन्हित दीर्घ roles_biपंचांगap,
 				 bool success)
-{
-	struct wl12xx_vif *wlvif;
-	struct ieee80211_vif *vif;
+अणु
+	काष्ठा wl12xx_vअगर *wlvअगर;
+	काष्ठा ieee80211_vअगर *vअगर;
 
 	wl1271_debug(DEBUG_EVENT, "%s: roles=0x%lx success=%d",
-		     __func__, roles_bitmap, success);
+		     __func__, roles_biपंचांगap, success);
 
-	wl12xx_for_each_wlvif(wl, wlvif) {
-		if (wlvif->role_id == WL12XX_INVALID_ROLE_ID ||
-		    !test_bit(wlvif->role_id , &roles_bitmap))
-			continue;
+	wl12xx_क्रम_each_wlvअगर(wl, wlvअगर) अणु
+		अगर (wlvअगर->role_id == WL12XX_INVALID_ROLE_ID ||
+		    !test_bit(wlvअगर->role_id , &roles_biपंचांगap))
+			जारी;
 
-		if (!test_and_clear_bit(WLVIF_FLAG_CS_PROGRESS,
-					&wlvif->flags))
-			continue;
+		अगर (!test_and_clear_bit(WLVIF_FLAG_CS_PROGRESS,
+					&wlvअगर->flags))
+			जारी;
 
-		vif = wl12xx_wlvif_to_vif(wlvif);
+		vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
 
-		if (wlvif->bss_type == BSS_TYPE_STA_BSS) {
-			ieee80211_chswitch_done(vif, success);
-			cancel_delayed_work(&wlvif->channel_switch_work);
-		} else {
-			set_bit(WLVIF_FLAG_BEACON_DISABLED, &wlvif->flags);
-			ieee80211_csa_finish(vif);
-		}
-	}
-}
-EXPORT_SYMBOL_GPL(wlcore_event_channel_switch);
+		अगर (wlvअगर->bss_type == BSS_TYPE_STA_BSS) अणु
+			ieee80211_chचयन_करोne(vअगर, success);
+			cancel_delayed_work(&wlvअगर->channel_चयन_work);
+		पूर्ण अन्यथा अणु
+			set_bit(WLVIF_FLAG_BEACON_DISABLED, &wlvअगर->flags);
+			ieee80211_csa_finish(vअगर);
+		पूर्ण
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(wlcore_event_channel_चयन);
 
-void wlcore_event_dummy_packet(struct wl1271 *wl)
-{
-	if (wl->plt) {
+व्योम wlcore_event_dummy_packet(काष्ठा wl1271 *wl)
+अणु
+	अगर (wl->plt) अणु
 		wl1271_info("Got DUMMY_PACKET event in PLT mode.  FW bug, ignoring.");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	wl1271_debug(DEBUG_EVENT, "DUMMY_PACKET_ID_EVENT_ID");
 	wl1271_tx_dummy_packet(wl);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(wlcore_event_dummy_packet);
 
-static void wlcore_disconnect_sta(struct wl1271 *wl, unsigned long sta_bitmap)
-{
+अटल व्योम wlcore_disconnect_sta(काष्ठा wl1271 *wl, अचिन्हित दीर्घ sta_biपंचांगap)
+अणु
 	u32 num_packets = wl->conf.tx.max_tx_retries;
-	struct wl12xx_vif *wlvif;
-	struct ieee80211_vif *vif;
-	struct ieee80211_sta *sta;
-	const u8 *addr;
-	int h;
+	काष्ठा wl12xx_vअगर *wlvअगर;
+	काष्ठा ieee80211_vअगर *vअगर;
+	काष्ठा ieee80211_sta *sta;
+	स्थिर u8 *addr;
+	पूर्णांक h;
 
-	for_each_set_bit(h, &sta_bitmap, wl->num_links) {
+	क्रम_each_set_bit(h, &sta_biपंचांगap, wl->num_links) अणु
 		bool found = false;
-		/* find the ap vif connected to this sta */
-		wl12xx_for_each_wlvif_ap(wl, wlvif) {
-			if (!test_bit(h, wlvif->ap.sta_hlid_map))
-				continue;
+		/* find the ap vअगर connected to this sta */
+		wl12xx_क्रम_each_wlvअगर_ap(wl, wlvअगर) अणु
+			अगर (!test_bit(h, wlvअगर->ap.sta_hlid_map))
+				जारी;
 			found = true;
-			break;
-		}
-		if (!found)
-			continue;
+			अवरोध;
+		पूर्ण
+		अगर (!found)
+			जारी;
 
-		vif = wl12xx_wlvif_to_vif(wlvif);
+		vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
 		addr = wl->links[h].addr;
 
-		rcu_read_lock();
-		sta = ieee80211_find_sta(vif, addr);
-		if (sta) {
+		rcu_पढ़ो_lock();
+		sta = ieee80211_find_sta(vअगर, addr);
+		अगर (sta) अणु
 			wl1271_debug(DEBUG_EVENT, "remove sta %d", h);
 			ieee80211_report_low_ack(sta, num_packets);
-		}
-		rcu_read_unlock();
-	}
-}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
+पूर्ण
 
-void wlcore_event_max_tx_failure(struct wl1271 *wl, unsigned long sta_bitmap)
-{
+व्योम wlcore_event_max_tx_failure(काष्ठा wl1271 *wl, अचिन्हित दीर्घ sta_biपंचांगap)
+अणु
 	wl1271_debug(DEBUG_EVENT, "MAX_TX_FAILURE_EVENT_ID");
-	wlcore_disconnect_sta(wl, sta_bitmap);
-}
+	wlcore_disconnect_sta(wl, sta_biपंचांगap);
+पूर्ण
 EXPORT_SYMBOL_GPL(wlcore_event_max_tx_failure);
 
-void wlcore_event_inactive_sta(struct wl1271 *wl, unsigned long sta_bitmap)
-{
+व्योम wlcore_event_inactive_sta(काष्ठा wl1271 *wl, अचिन्हित दीर्घ sta_biपंचांगap)
+अणु
 	wl1271_debug(DEBUG_EVENT, "INACTIVE_STA_EVENT_ID");
-	wlcore_disconnect_sta(wl, sta_bitmap);
-}
+	wlcore_disconnect_sta(wl, sta_biपंचांगap);
+पूर्ण
 EXPORT_SYMBOL_GPL(wlcore_event_inactive_sta);
 
-void wlcore_event_roc_complete(struct wl1271 *wl)
-{
+व्योम wlcore_event_roc_complete(काष्ठा wl1271 *wl)
+अणु
 	wl1271_debug(DEBUG_EVENT, "REMAIN_ON_CHANNEL_COMPLETE_EVENT_ID");
-	if (wl->roc_vif)
-		ieee80211_ready_on_channel(wl->hw);
-}
+	अगर (wl->roc_vअगर)
+		ieee80211_पढ़ोy_on_channel(wl->hw);
+पूर्ण
 EXPORT_SYMBOL_GPL(wlcore_event_roc_complete);
 
-void wlcore_event_beacon_loss(struct wl1271 *wl, unsigned long roles_bitmap)
-{
+व्योम wlcore_event_beacon_loss(काष्ठा wl1271 *wl, अचिन्हित दीर्घ roles_biपंचांगap)
+अणु
 	/*
 	 * We are HW_MONITOR device. On beacon loss - queue
 	 * connection loss work. Cancel it on REGAINED event.
 	 */
-	struct wl12xx_vif *wlvif;
-	struct ieee80211_vif *vif;
-	int delay = wl->conf.conn.synch_fail_thold *
-				wl->conf.conn.bss_lose_timeout;
+	काष्ठा wl12xx_vअगर *wlvअगर;
+	काष्ठा ieee80211_vअगर *vअगर;
+	पूर्णांक delay = wl->conf.conn.synch_fail_thold *
+				wl->conf.conn.bss_lose_समयout;
 
-	wl1271_info("Beacon loss detected. roles:0x%lx", roles_bitmap);
+	wl1271_info("Beacon loss detected. roles:0x%lx", roles_biपंचांगap);
 
-	wl12xx_for_each_wlvif_sta(wl, wlvif) {
-		if (wlvif->role_id == WL12XX_INVALID_ROLE_ID ||
-		    !test_bit(wlvif->role_id , &roles_bitmap))
-			continue;
+	wl12xx_क्रम_each_wlvअगर_sta(wl, wlvअगर) अणु
+		अगर (wlvअगर->role_id == WL12XX_INVALID_ROLE_ID ||
+		    !test_bit(wlvअगर->role_id , &roles_biपंचांगap))
+			जारी;
 
-		vif = wl12xx_wlvif_to_vif(wlvif);
+		vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
 
-		/* don't attempt roaming in case of p2p */
-		if (wlvif->p2p) {
-			ieee80211_connection_loss(vif);
-			continue;
-		}
+		/* करोn't attempt roaming in हाल of p2p */
+		अगर (wlvअगर->p2p) अणु
+			ieee80211_connection_loss(vअगर);
+			जारी;
+		पूर्ण
 
 		/*
-		 * if the work is already queued, it should take place.
-		 * We don't want to delay the connection loss
+		 * अगर the work is alपढ़ोy queued, it should take place.
+		 * We करोn't want to delay the connection loss
 		 * indication any more.
 		 */
 		ieee80211_queue_delayed_work(wl->hw,
-					     &wlvif->connection_loss_work,
-					     msecs_to_jiffies(delay));
+					     &wlvअगर->connection_loss_work,
+					     msecs_to_jअगरfies(delay));
 
-		ieee80211_cqm_beacon_loss_notify(vif, GFP_KERNEL);
-	}
-}
+		ieee80211_cqm_beacon_loss_notअगरy(vअगर, GFP_KERNEL);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(wlcore_event_beacon_loss);
 
-int wl1271_event_unmask(struct wl1271 *wl)
-{
-	int ret;
+पूर्णांक wl1271_event_unmask(काष्ठा wl1271 *wl)
+अणु
+	पूर्णांक ret;
 
 	wl1271_debug(DEBUG_EVENT, "unmasking event_mask 0x%x", wl->event_mask);
 	ret = wl1271_acx_event_mbox_mask(wl, ~(wl->event_mask));
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int wl1271_event_handle(struct wl1271 *wl, u8 mbox_num)
-{
-	int ret;
+पूर्णांक wl1271_event_handle(काष्ठा wl1271 *wl, u8 mbox_num)
+अणु
+	पूर्णांक ret;
 
 	wl1271_debug(DEBUG_EVENT, "EVENT on mbox %d", mbox_num);
 
-	if (mbox_num > 1)
-		return -EINVAL;
+	अगर (mbox_num > 1)
+		वापस -EINVAL;
 
-	/* first we read the mbox descriptor */
-	ret = wlcore_read(wl, wl->mbox_ptr[mbox_num], wl->mbox,
+	/* first we पढ़ो the mbox descriptor */
+	ret = wlcore_पढ़ो(wl, wl->mbox_ptr[mbox_num], wl->mbox,
 			  wl->mbox_size, false);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* process the descriptor */
 	ret = wl->ops->process_mailbox_events(wl);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
-	 * TODO: we just need this because one bit is in a different
+	 * TODO: we just need this because one bit is in a dअगरferent
 	 * place.  Is there any better way?
 	 */
 	ret = wl->ops->ack_event(wl);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

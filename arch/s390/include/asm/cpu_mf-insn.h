@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for CPU-MF instructions
+ * Support क्रम CPU-MF inकाष्ठाions
  *
  * Copyright IBM Corp. 2019
  * Author(s): Hendrik Brueckner <brueckner@linux.vnet.ibm.com>
  */
-#ifndef _ASM_S390_CPU_MF_INSN_H
-#define _ASM_S390_CPU_MF_INSN_H
+#अगर_अघोषित _ASM_S390_CPU_MF_INSN_H
+#घोषणा _ASM_S390_CPU_MF_INSN_H
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
-/* Macro to generate the STCCTM instruction with a customized
+/* Macro to generate the STCCTM inकाष्ठाion with a customized
  * M3 field designating the counter set.
  */
 .macro	STCCTM	r1 m3 db2
-	.insn	rsy,0xeb0000000017,\r1,\m3 & 0xf,\db2
+	.insn	rsy,0xeb0000000017,\ल1,\m3 & 0xf,\db2
 .endm
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif
+#पूर्ण_अगर

@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * include/asm-xtensa/stat.h
+ * include/यंत्र-xtensa/स्थिति.स
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001 - 2007 Tensilica Inc.
  */
 
-#ifndef _XTENSA_STAT_H
-#define _XTENSA_STAT_H
+#अगर_अघोषित _XTENSA_STAT_H
+#घोषणा _XTENSA_STAT_H
 
-#define STAT_HAVE_NSEC 1
+#घोषणा STAT_HAVE_NSEC 1
 
-struct stat {
-	unsigned long	st_dev;
-	unsigned long	st_ino;
-	unsigned int	st_mode;
-	unsigned int	st_nlink;
-	unsigned int	st_uid;
-	unsigned int	st_gid;
-	unsigned long	st_rdev;
-	long		st_size;
-	unsigned long	st_blksize;
-	unsigned long	st_blocks;
-	unsigned long	st_atime;
-	unsigned long	st_atime_nsec;
-	unsigned long	st_mtime;
-	unsigned long	st_mtime_nsec;
-	unsigned long	st_ctime;
-	unsigned long	st_ctime_nsec;
-	unsigned long	__unused4;
-	unsigned long	__unused5;
-};
+काष्ठा stat अणु
+	अचिन्हित दीर्घ	st_dev;
+	अचिन्हित दीर्घ	st_ino;
+	अचिन्हित पूर्णांक	st_mode;
+	अचिन्हित पूर्णांक	st_nlink;
+	अचिन्हित पूर्णांक	st_uid;
+	अचिन्हित पूर्णांक	st_gid;
+	अचिन्हित दीर्घ	st_rdev;
+	दीर्घ		st_size;
+	अचिन्हित दीर्घ	st_blksize;
+	अचिन्हित दीर्घ	st_blocks;
+	अचिन्हित दीर्घ	st_aसमय;
+	अचिन्हित दीर्घ	st_aसमय_nsec;
+	अचिन्हित दीर्घ	st_mसमय;
+	अचिन्हित दीर्घ	st_mसमय_nsec;
+	अचिन्हित दीर्घ	st_स_समय;
+	अचिन्हित दीर्घ	st_स_समय_nsec;
+	अचिन्हित दीर्घ	__unused4;
+	अचिन्हित दीर्घ	__unused5;
+पूर्ण;
 
-struct stat64  {
-	unsigned long long st_dev;	/* Device */
-	unsigned long long st_ino;	/* File serial number */
-	unsigned int  st_mode;		/* File mode. */
-	unsigned int  st_nlink;		/* Link count. */
-	unsigned int  st_uid;		/* User ID of the file's owner. */
-	unsigned int  st_gid;		/* Group ID of the file's group. */
-	unsigned long long st_rdev;	/* Device number, if device. */
-	long long st_size;		/* Size of file, in bytes. */
-	unsigned long st_blksize;	/* Optimal block size for I/O. */
-	unsigned long __unused2;
-	unsigned long long st_blocks;	/* Number 512-byte blocks allocated. */
-	unsigned long st_atime;		/* Time of last access. */
-	unsigned long st_atime_nsec;
-	unsigned long st_mtime;		/* Time of last modification. */
-	unsigned long st_mtime_nsec;
-	unsigned long st_ctime;		/* Time of last status change. */
-	unsigned long st_ctime_nsec;
-	unsigned long __unused4;
-	unsigned long __unused5;
-};
+काष्ठा stat64  अणु
+	अचिन्हित दीर्घ दीर्घ st_dev;	/* Device */
+	अचिन्हित दीर्घ दीर्घ st_ino;	/* File serial number */
+	अचिन्हित पूर्णांक  st_mode;		/* File mode. */
+	अचिन्हित पूर्णांक  st_nlink;		/* Link count. */
+	अचिन्हित पूर्णांक  st_uid;		/* User ID of the file's owner. */
+	अचिन्हित पूर्णांक  st_gid;		/* Group ID of the file's group. */
+	अचिन्हित दीर्घ दीर्घ st_rdev;	/* Device number, अगर device. */
+	दीर्घ दीर्घ st_size;		/* Size of file, in bytes. */
+	अचिन्हित दीर्घ st_blksize;	/* Optimal block size क्रम I/O. */
+	अचिन्हित दीर्घ __unused2;
+	अचिन्हित दीर्घ दीर्घ st_blocks;	/* Number 512-byte blocks allocated. */
+	अचिन्हित दीर्घ st_aसमय;		/* Time of last access. */
+	अचिन्हित दीर्घ st_aसमय_nsec;
+	अचिन्हित दीर्घ st_mसमय;		/* Time of last modअगरication. */
+	अचिन्हित दीर्घ st_mसमय_nsec;
+	अचिन्हित दीर्घ st_स_समय;		/* Time of last status change. */
+	अचिन्हित दीर्घ st_स_समय_nsec;
+	अचिन्हित दीर्घ __unused4;
+	अचिन्हित दीर्घ __unused5;
+पूर्ण;
 
-#endif	/* _XTENSA_STAT_H */
+#पूर्ण_अगर	/* _XTENSA_STAT_H */

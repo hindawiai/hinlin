@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,24 +22,24 @@
  *
  */
 
-#ifndef __AMDGPU_GDS_H__
-#define __AMDGPU_GDS_H__
+#अगर_अघोषित __AMDGPU_GDS_H__
+#घोषणा __AMDGPU_GDS_H__
 
-struct amdgpu_ring;
-struct amdgpu_bo;
+काष्ठा amdgpu_ring;
+काष्ठा amdgpu_bo;
 
-struct amdgpu_gds {
-	uint32_t gds_size;
-	uint32_t gws_size;
-	uint32_t oa_size;
-	uint32_t gds_compute_max_wave_id;
-};
+काष्ठा amdgpu_gds अणु
+	uपूर्णांक32_t gds_size;
+	uपूर्णांक32_t gws_size;
+	uपूर्णांक32_t oa_size;
+	uपूर्णांक32_t gds_compute_max_wave_id;
+पूर्ण;
 
-struct amdgpu_gds_reg_offset {
-	uint32_t	mem_base;
-	uint32_t	mem_size;
-	uint32_t	gws;
-	uint32_t	oa;
-};
+काष्ठा amdgpu_gds_reg_offset अणु
+	uपूर्णांक32_t	mem_base;
+	uपूर्णांक32_t	mem_size;
+	uपूर्णांक32_t	gws;
+	uपूर्णांक32_t	oa;
+पूर्ण;
 
-#endif /* __AMDGPU_GDS_H__ */
+#पूर्ण_अगर /* __AMDGPU_GDS_H__ */

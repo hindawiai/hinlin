@@ -1,142 +1,143 @@
-// SPDX-License-Identifier: GPL-2.0
-#ifdef __KERNEL__
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#अगर_घोषित __KERNEL__
 # include <linux/slab.h>
 # include <linux/crush/crush.h>
-#else
+#अन्यथा
 # include "crush_compat.h"
 # include "crush.h"
-#endif
+#पूर्ण_अगर
 
-const char *crush_bucket_alg_name(int alg)
-{
-	switch (alg) {
-	case CRUSH_BUCKET_UNIFORM: return "uniform";
-	case CRUSH_BUCKET_LIST: return "list";
-	case CRUSH_BUCKET_TREE: return "tree";
-	case CRUSH_BUCKET_STRAW: return "straw";
-	case CRUSH_BUCKET_STRAW2: return "straw2";
-	default: return "unknown";
-	}
-}
+स्थिर अक्षर *crush_bucket_alg_name(पूर्णांक alg)
+अणु
+	चयन (alg) अणु
+	हाल CRUSH_BUCKET_UNIFORM: वापस "uniform";
+	हाल CRUSH_BUCKET_LIST: वापस "list";
+	हाल CRUSH_BUCKET_TREE: वापस "tree";
+	हाल CRUSH_BUCKET_STRAW: वापस "straw";
+	हाल CRUSH_BUCKET_STRAW2: वापस "straw2";
+	शेष: वापस "unknown";
+	पूर्ण
+पूर्ण
 
 /**
  * crush_get_bucket_item_weight - Get weight of an item in given bucket
- * @b: bucket pointer
+ * @b: bucket poपूर्णांकer
  * @p: item index in bucket
  */
-int crush_get_bucket_item_weight(const struct crush_bucket *b, int p)
-{
-	if ((__u32)p >= b->size)
-		return 0;
+पूर्णांक crush_get_bucket_item_weight(स्थिर काष्ठा crush_bucket *b, पूर्णांक p)
+अणु
+	अगर ((__u32)p >= b->size)
+		वापस 0;
 
-	switch (b->alg) {
-	case CRUSH_BUCKET_UNIFORM:
-		return ((struct crush_bucket_uniform *)b)->item_weight;
-	case CRUSH_BUCKET_LIST:
-		return ((struct crush_bucket_list *)b)->item_weights[p];
-	case CRUSH_BUCKET_TREE:
-		return ((struct crush_bucket_tree *)b)->node_weights[crush_calc_tree_node(p)];
-	case CRUSH_BUCKET_STRAW:
-		return ((struct crush_bucket_straw *)b)->item_weights[p];
-	case CRUSH_BUCKET_STRAW2:
-		return ((struct crush_bucket_straw2 *)b)->item_weights[p];
-	}
-	return 0;
-}
+	चयन (b->alg) अणु
+	हाल CRUSH_BUCKET_UNIFORM:
+		वापस ((काष्ठा crush_bucket_unअगरorm *)b)->item_weight;
+	हाल CRUSH_BUCKET_LIST:
+		वापस ((काष्ठा crush_bucket_list *)b)->item_weights[p];
+	हाल CRUSH_BUCKET_TREE:
+		वापस ((काष्ठा crush_bucket_tree *)b)->node_weights[crush_calc_tree_node(p)];
+	हाल CRUSH_BUCKET_STRAW:
+		वापस ((काष्ठा crush_bucket_straw *)b)->item_weights[p];
+	हाल CRUSH_BUCKET_STRAW2:
+		वापस ((काष्ठा crush_bucket_straw2 *)b)->item_weights[p];
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void crush_destroy_bucket_uniform(struct crush_bucket_uniform *b)
-{
-	kfree(b->h.items);
-	kfree(b);
-}
+व्योम crush_destroy_bucket_unअगरorm(काष्ठा crush_bucket_unअगरorm *b)
+अणु
+	kमुक्त(b->h.items);
+	kमुक्त(b);
+पूर्ण
 
-void crush_destroy_bucket_list(struct crush_bucket_list *b)
-{
-	kfree(b->item_weights);
-	kfree(b->sum_weights);
-	kfree(b->h.items);
-	kfree(b);
-}
+व्योम crush_destroy_bucket_list(काष्ठा crush_bucket_list *b)
+अणु
+	kमुक्त(b->item_weights);
+	kमुक्त(b->sum_weights);
+	kमुक्त(b->h.items);
+	kमुक्त(b);
+पूर्ण
 
-void crush_destroy_bucket_tree(struct crush_bucket_tree *b)
-{
-	kfree(b->h.items);
-	kfree(b->node_weights);
-	kfree(b);
-}
+व्योम crush_destroy_bucket_tree(काष्ठा crush_bucket_tree *b)
+अणु
+	kमुक्त(b->h.items);
+	kमुक्त(b->node_weights);
+	kमुक्त(b);
+पूर्ण
 
-void crush_destroy_bucket_straw(struct crush_bucket_straw *b)
-{
-	kfree(b->straws);
-	kfree(b->item_weights);
-	kfree(b->h.items);
-	kfree(b);
-}
+व्योम crush_destroy_bucket_straw(काष्ठा crush_bucket_straw *b)
+अणु
+	kमुक्त(b->straws);
+	kमुक्त(b->item_weights);
+	kमुक्त(b->h.items);
+	kमुक्त(b);
+पूर्ण
 
-void crush_destroy_bucket_straw2(struct crush_bucket_straw2 *b)
-{
-	kfree(b->item_weights);
-	kfree(b->h.items);
-	kfree(b);
-}
+व्योम crush_destroy_bucket_straw2(काष्ठा crush_bucket_straw2 *b)
+अणु
+	kमुक्त(b->item_weights);
+	kमुक्त(b->h.items);
+	kमुक्त(b);
+पूर्ण
 
-void crush_destroy_bucket(struct crush_bucket *b)
-{
-	switch (b->alg) {
-	case CRUSH_BUCKET_UNIFORM:
-		crush_destroy_bucket_uniform((struct crush_bucket_uniform *)b);
-		break;
-	case CRUSH_BUCKET_LIST:
-		crush_destroy_bucket_list((struct crush_bucket_list *)b);
-		break;
-	case CRUSH_BUCKET_TREE:
-		crush_destroy_bucket_tree((struct crush_bucket_tree *)b);
-		break;
-	case CRUSH_BUCKET_STRAW:
-		crush_destroy_bucket_straw((struct crush_bucket_straw *)b);
-		break;
-	case CRUSH_BUCKET_STRAW2:
-		crush_destroy_bucket_straw2((struct crush_bucket_straw2 *)b);
-		break;
-	}
-}
+व्योम crush_destroy_bucket(काष्ठा crush_bucket *b)
+अणु
+	चयन (b->alg) अणु
+	हाल CRUSH_BUCKET_UNIFORM:
+		crush_destroy_bucket_unअगरorm((काष्ठा crush_bucket_unअगरorm *)b);
+		अवरोध;
+	हाल CRUSH_BUCKET_LIST:
+		crush_destroy_bucket_list((काष्ठा crush_bucket_list *)b);
+		अवरोध;
+	हाल CRUSH_BUCKET_TREE:
+		crush_destroy_bucket_tree((काष्ठा crush_bucket_tree *)b);
+		अवरोध;
+	हाल CRUSH_BUCKET_STRAW:
+		crush_destroy_bucket_straw((काष्ठा crush_bucket_straw *)b);
+		अवरोध;
+	हाल CRUSH_BUCKET_STRAW2:
+		crush_destroy_bucket_straw2((काष्ठा crush_bucket_straw2 *)b);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * crush_destroy - Destroy a crush_map
- * @map: crush_map pointer
+ * @map: crush_map poपूर्णांकer
  */
-void crush_destroy(struct crush_map *map)
-{
+व्योम crush_destroy(काष्ठा crush_map *map)
+अणु
 	/* buckets */
-	if (map->buckets) {
+	अगर (map->buckets) अणु
 		__s32 b;
-		for (b = 0; b < map->max_buckets; b++) {
-			if (map->buckets[b] == NULL)
-				continue;
+		क्रम (b = 0; b < map->max_buckets; b++) अणु
+			अगर (map->buckets[b] == शून्य)
+				जारी;
 			crush_destroy_bucket(map->buckets[b]);
-		}
-		kfree(map->buckets);
-	}
+		पूर्ण
+		kमुक्त(map->buckets);
+	पूर्ण
 
 	/* rules */
-	if (map->rules) {
+	अगर (map->rules) अणु
 		__u32 b;
-		for (b = 0; b < map->max_rules; b++)
+		क्रम (b = 0; b < map->max_rules; b++)
 			crush_destroy_rule(map->rules[b]);
-		kfree(map->rules);
-	}
+		kमुक्त(map->rules);
+	पूर्ण
 
-#ifndef __KERNEL__
-	kfree(map->choose_tries);
-#else
+#अगर_अघोषित __KERNEL__
+	kमुक्त(map->choose_tries);
+#अन्यथा
 	clear_crush_names(&map->type_names);
 	clear_crush_names(&map->names);
 	clear_choose_args(map);
-#endif
-	kfree(map);
-}
+#पूर्ण_अगर
+	kमुक्त(map);
+पूर्ण
 
-void crush_destroy_rule(struct crush_rule *rule)
-{
-	kfree(rule);
-}
+व्योम crush_destroy_rule(काष्ठा crush_rule *rule)
+अणु
+	kमुक्त(rule);
+पूर्ण

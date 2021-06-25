@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  cobalt driver initialization and card probing
  *
@@ -8,38 +9,38 @@
  *  All rights reserved.
  */
 
-#include <linux/delay.h>
-#include <media/i2c/adv7604.h>
-#include <media/i2c/adv7842.h>
-#include <media/i2c/adv7511.h>
-#include <media/v4l2-event.h>
-#include <media/v4l2-ctrls.h>
+#समावेश <linux/delay.h>
+#समावेश <media/i2c/adv7604.h>
+#समावेश <media/i2c/adv7842.h>
+#समावेश <media/i2c/adv7511.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/v4l2-ctrls.h>
 
-#include "cobalt-driver.h"
-#include "cobalt-irq.h"
-#include "cobalt-i2c.h"
-#include "cobalt-v4l2.h"
-#include "cobalt-flash.h"
-#include "cobalt-alsa.h"
-#include "cobalt-omnitek.h"
+#समावेश "cobalt-driver.h"
+#समावेश "cobalt-irq.h"
+#समावेश "cobalt-i2c.h"
+#समावेश "cobalt-v4l2.h"
+#समावेश "cobalt-flash.h"
+#समावेश "cobalt-alsa.h"
+#समावेश "cobalt-omnitek.h"
 
 /* add your revision and whatnot here */
-static const struct pci_device_id cobalt_pci_tbl[] = {
-	{PCI_VENDOR_ID_CISCO, PCI_DEVICE_ID_COBALT,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{0,}
-};
+अटल स्थिर काष्ठा pci_device_id cobalt_pci_tbl[] = अणु
+	अणुPCI_VENDOR_ID_CISCO, PCI_DEVICE_ID_COBALT,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणु0,पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, cobalt_pci_tbl);
 
-static atomic_t cobalt_instance = ATOMIC_INIT(0);
+अटल atomic_t cobalt_instance = ATOMIC_INIT(0);
 
-int cobalt_debug;
-module_param_named(debug, cobalt_debug, int, 0644);
+पूर्णांक cobalt_debug;
+module_param_named(debug, cobalt_debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Debug level. Default: 0\n");
 
-int cobalt_ignore_err;
-module_param_named(ignore_err, cobalt_ignore_err, int, 0644);
+पूर्णांक cobalt_ignore_err;
+module_param_named(ignore_err, cobalt_ignore_err, पूर्णांक, 0644);
 MODULE_PARM_DESC(ignore_err,
 	"If set then ignore missing i2c adapters/receivers. Default: 0\n");
 
@@ -47,7 +48,7 @@ MODULE_AUTHOR("Hans Verkuil <hans.verkuil@cisco.com> & Morten Hestnes");
 MODULE_DESCRIPTION("cobalt driver");
 MODULE_LICENSE("GPL");
 
-static u8 edid[256] = {
+अटल u8 edid[256] = अणु
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 	0x50, 0x21, 0x32, 0x27, 0x00, 0x00, 0x00, 0x00,
 	0x22, 0x1a, 0x01, 0x03, 0x80, 0x30, 0x1b, 0x78,
@@ -81,12 +82,12 @@ static u8 edid[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46,
-};
+पूर्ण;
 
-static void cobalt_set_interrupt(struct cobalt *cobalt, bool enable)
-{
-	if (enable) {
-		unsigned irqs = COBALT_SYSSTAT_VI0_INT1_MSK |
+अटल व्योम cobalt_set_पूर्णांकerrupt(काष्ठा cobalt *cobalt, bool enable)
+अणु
+	अगर (enable) अणु
+		अचिन्हित irqs = COBALT_SYSSTAT_VI0_INT1_MSK |
 				COBALT_SYSSTAT_VI1_INT1_MSK |
 				COBALT_SYSSTAT_VI2_INT1_MSK |
 				COBALT_SYSSTAT_VI3_INT1_MSK |
@@ -100,102 +101,102 @@ static void cobalt_set_interrupt(struct cobalt *cobalt, bool enable)
 				COBALT_SYSSTAT_VI3_LOST_DATA_MSK |
 				COBALT_SYSSTAT_AUD_IN_LOST_DATA_MSK;
 
-		if (cobalt->have_hsma_rx)
+		अगर (cobalt->have_hsma_rx)
 			irqs |= COBALT_SYSSTAT_VIHSMA_INT1_MSK |
 				COBALT_SYSSTAT_VIHSMA_INT2_MSK |
 				COBALT_SYSSTAT_VIHSMA_LOST_DATA_MSK;
 
-		if (cobalt->have_hsma_tx)
+		अगर (cobalt->have_hsma_tx)
 			irqs |= COBALT_SYSSTAT_VOHSMA_INT1_MSK |
 				COBALT_SYSSTAT_VOHSMA_LOST_DATA_MSK |
 				COBALT_SYSSTAT_AUD_OUT_LOST_DATA_MSK;
-		/* Clear any existing interrupts */
-		cobalt_write_bar1(cobalt, COBALT_SYS_STAT_EDGE, 0xffffffff);
-		/* PIO Core interrupt mask register.
-		   Enable ADV7604 INT1 interrupts */
-		cobalt_write_bar1(cobalt, COBALT_SYS_STAT_MASK, irqs);
-	} else {
-		/* Disable all ADV7604 interrupts */
-		cobalt_write_bar1(cobalt, COBALT_SYS_STAT_MASK, 0);
-	}
-}
+		/* Clear any existing पूर्णांकerrupts */
+		cobalt_ग_लिखो_bar1(cobalt, COBALT_SYS_STAT_EDGE, 0xffffffff);
+		/* PIO Core पूर्णांकerrupt mask रेजिस्टर.
+		   Enable ADV7604 INT1 पूर्णांकerrupts */
+		cobalt_ग_लिखो_bar1(cobalt, COBALT_SYS_STAT_MASK, irqs);
+	पूर्ण अन्यथा अणु
+		/* Disable all ADV7604 पूर्णांकerrupts */
+		cobalt_ग_लिखो_bar1(cobalt, COBALT_SYS_STAT_MASK, 0);
+	पूर्ण
+पूर्ण
 
-static unsigned cobalt_get_sd_nr(struct v4l2_subdev *sd)
-{
-	struct cobalt *cobalt = to_cobalt(sd->v4l2_dev);
-	unsigned i;
+अटल अचिन्हित cobalt_get_sd_nr(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा cobalt *cobalt = to_cobalt(sd->v4l2_dev);
+	अचिन्हित i;
 
-	for (i = 0; i < COBALT_NUM_NODES; i++)
-		if (sd == cobalt->streams[i].sd)
-			return i;
+	क्रम (i = 0; i < COBALT_NUM_NODES; i++)
+		अगर (sd == cobalt->streams[i].sd)
+			वापस i;
 	cobalt_err("Invalid adv7604 subdev pointer!\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cobalt_notify(struct v4l2_subdev *sd,
-			  unsigned int notification, void *arg)
-{
-	struct cobalt *cobalt = to_cobalt(sd->v4l2_dev);
-	unsigned sd_nr = cobalt_get_sd_nr(sd);
-	struct cobalt_stream *s = &cobalt->streams[sd_nr];
-	bool hotplug = arg ? *((int *)arg) : false;
+अटल व्योम cobalt_notअगरy(काष्ठा v4l2_subdev *sd,
+			  अचिन्हित पूर्णांक notअगरication, व्योम *arg)
+अणु
+	काष्ठा cobalt *cobalt = to_cobalt(sd->v4l2_dev);
+	अचिन्हित sd_nr = cobalt_get_sd_nr(sd);
+	काष्ठा cobalt_stream *s = &cobalt->streams[sd_nr];
+	bool hotplug = arg ? *((पूर्णांक *)arg) : false;
 
-	if (s->is_output)
-		return;
+	अगर (s->is_output)
+		वापस;
 
-	switch (notification) {
-	case ADV76XX_HOTPLUG:
+	चयन (notअगरication) अणु
+	हाल ADV76XX_HOTPLUG:
 		cobalt_s_bit_sysctrl(cobalt,
 			COBALT_SYS_CTRL_HPD_TO_CONNECTOR_BIT(sd_nr), hotplug);
 		cobalt_dbg(1, "Set hotplug for adv %d to %d\n", sd_nr, hotplug);
-		break;
-	case V4L2_DEVICE_NOTIFY_EVENT:
+		अवरोध;
+	हाल V4L2_DEVICE_NOTIFY_EVENT:
 		cobalt_dbg(1, "Format changed for adv %d\n", sd_nr);
 		v4l2_event_queue(&s->vdev, arg);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int get_payload_size(u16 code)
-{
-	switch (code) {
-	case 0: return 128;
-	case 1: return 256;
-	case 2: return 512;
-	case 3: return 1024;
-	case 4: return 2048;
-	case 5: return 4096;
-	default: return 0;
-	}
-	return 0;
-}
+अटल पूर्णांक get_payload_size(u16 code)
+अणु
+	चयन (code) अणु
+	हाल 0: वापस 128;
+	हाल 1: वापस 256;
+	हाल 2: वापस 512;
+	हाल 3: वापस 1024;
+	हाल 4: वापस 2048;
+	हाल 5: वापस 4096;
+	शेष: वापस 0;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const char *get_link_speed(u16 stat)
-{
-	switch (stat & PCI_EXP_LNKSTA_CLS) {
-	case 1:	return "2.5 Gbit/s";
-	case 2:	return "5 Gbit/s";
-	case 3:	return "10 Gbit/s";
-	}
-	return "Unknown speed";
-}
+अटल स्थिर अक्षर *get_link_speed(u16 stat)
+अणु
+	चयन (stat & PCI_EXP_LNKSTA_CLS) अणु
+	हाल 1:	वापस "2.5 Gbit/s";
+	हाल 2:	वापस "5 Gbit/s";
+	हाल 3:	वापस "10 Gbit/s";
+	पूर्ण
+	वापस "Unknown speed";
+पूर्ण
 
-void cobalt_pcie_status_show(struct cobalt *cobalt)
-{
-	struct pci_dev *pci_dev = cobalt->pci_dev;
-	struct pci_dev *pci_bus_dev = cobalt->pci_dev->bus->self;
+व्योम cobalt_pcie_status_show(काष्ठा cobalt *cobalt)
+अणु
+	काष्ठा pci_dev *pci_dev = cobalt->pci_dev;
+	काष्ठा pci_dev *pci_bus_dev = cobalt->pci_dev->bus->self;
 	u32 capa;
 	u16 stat, ctrl;
 
-	if (!pci_is_pcie(pci_dev) || !pci_is_pcie(pci_bus_dev))
-		return;
+	अगर (!pci_is_pcie(pci_dev) || !pci_is_pcie(pci_bus_dev))
+		वापस;
 
 	/* Device */
-	pcie_capability_read_dword(pci_dev, PCI_EXP_DEVCAP, &capa);
-	pcie_capability_read_word(pci_dev, PCI_EXP_DEVCTL, &ctrl);
-	pcie_capability_read_word(pci_dev, PCI_EXP_DEVSTA, &stat);
+	pcie_capability_पढ़ो_dword(pci_dev, PCI_EXP_DEVCAP, &capa);
+	pcie_capability_पढ़ो_word(pci_dev, PCI_EXP_DEVCTL, &ctrl);
+	pcie_capability_पढ़ो_word(pci_dev, PCI_EXP_DEVSTA, &stat);
 	cobalt_info("PCIe device capability 0x%08x: Max payload %d\n",
 		    capa, get_payload_size(capa & PCI_EXP_DEVCAP_PAYLOAD));
 	cobalt_info("PCIe device control 0x%04x: Max payload %d. Max read request %d\n",
@@ -205,9 +206,9 @@ void cobalt_pcie_status_show(struct cobalt *cobalt)
 	cobalt_info("PCIe device status 0x%04x\n", stat);
 
 	/* Link */
-	pcie_capability_read_dword(pci_dev, PCI_EXP_LNKCAP, &capa);
-	pcie_capability_read_word(pci_dev, PCI_EXP_LNKCTL, &ctrl);
-	pcie_capability_read_word(pci_dev, PCI_EXP_LNKSTA, &stat);
+	pcie_capability_पढ़ो_dword(pci_dev, PCI_EXP_LNKCAP, &capa);
+	pcie_capability_पढ़ो_word(pci_dev, PCI_EXP_LNKCTL, &ctrl);
+	pcie_capability_पढ़ो_word(pci_dev, PCI_EXP_LNKSTA, &stat);
 	cobalt_info("PCIe link capability 0x%08x: %s per lane and %u lanes\n",
 			capa, get_link_speed(capa),
 			(capa & PCI_EXP_LNKCAP_MLW) >> 4);
@@ -217,173 +218,173 @@ void cobalt_pcie_status_show(struct cobalt *cobalt)
 		    (stat & PCI_EXP_LNKSTA_NLW) >> 4);
 
 	/* Bus */
-	pcie_capability_read_dword(pci_bus_dev, PCI_EXP_LNKCAP, &capa);
+	pcie_capability_पढ़ो_dword(pci_bus_dev, PCI_EXP_LNKCAP, &capa);
 	cobalt_info("PCIe bus link capability 0x%08x: %s per lane and %u lanes\n",
 			capa, get_link_speed(capa),
 			(capa & PCI_EXP_LNKCAP_MLW) >> 4);
 
 	/* Slot */
-	pcie_capability_read_dword(pci_dev, PCI_EXP_SLTCAP, &capa);
-	pcie_capability_read_word(pci_dev, PCI_EXP_SLTCTL, &ctrl);
-	pcie_capability_read_word(pci_dev, PCI_EXP_SLTSTA, &stat);
+	pcie_capability_पढ़ो_dword(pci_dev, PCI_EXP_SLTCAP, &capa);
+	pcie_capability_पढ़ो_word(pci_dev, PCI_EXP_SLTCTL, &ctrl);
+	pcie_capability_पढ़ो_word(pci_dev, PCI_EXP_SLTSTA, &stat);
 	cobalt_info("PCIe slot capability 0x%08x\n", capa);
 	cobalt_info("PCIe slot control 0x%04x\n", ctrl);
 	cobalt_info("PCIe slot status 0x%04x\n", stat);
-}
+पूर्ण
 
-static unsigned pcie_link_get_lanes(struct cobalt *cobalt)
-{
-	struct pci_dev *pci_dev = cobalt->pci_dev;
+अटल अचिन्हित pcie_link_get_lanes(काष्ठा cobalt *cobalt)
+अणु
+	काष्ठा pci_dev *pci_dev = cobalt->pci_dev;
 	u16 link;
 
-	if (!pci_is_pcie(pci_dev))
-		return 0;
-	pcie_capability_read_word(pci_dev, PCI_EXP_LNKSTA, &link);
-	return (link & PCI_EXP_LNKSTA_NLW) >> 4;
-}
+	अगर (!pci_is_pcie(pci_dev))
+		वापस 0;
+	pcie_capability_पढ़ो_word(pci_dev, PCI_EXP_LNKSTA, &link);
+	वापस (link & PCI_EXP_LNKSTA_NLW) >> 4;
+पूर्ण
 
-static unsigned pcie_bus_link_get_lanes(struct cobalt *cobalt)
-{
-	struct pci_dev *pci_dev = cobalt->pci_dev->bus->self;
+अटल अचिन्हित pcie_bus_link_get_lanes(काष्ठा cobalt *cobalt)
+अणु
+	काष्ठा pci_dev *pci_dev = cobalt->pci_dev->bus->self;
 	u32 link;
 
-	if (!pci_is_pcie(pci_dev))
-		return 0;
-	pcie_capability_read_dword(pci_dev, PCI_EXP_LNKCAP, &link);
-	return (link & PCI_EXP_LNKCAP_MLW) >> 4;
-}
+	अगर (!pci_is_pcie(pci_dev))
+		वापस 0;
+	pcie_capability_पढ़ो_dword(pci_dev, PCI_EXP_LNKCAP, &link);
+	वापस (link & PCI_EXP_LNKCAP_MLW) >> 4;
+पूर्ण
 
-static void msi_config_show(struct cobalt *cobalt, struct pci_dev *pci_dev)
-{
+अटल व्योम msi_config_show(काष्ठा cobalt *cobalt, काष्ठा pci_dev *pci_dev)
+अणु
 	u16 ctrl, data;
 	u32 adrs_l, adrs_h;
 
-	pci_read_config_word(pci_dev, 0x52, &ctrl);
+	pci_पढ़ो_config_word(pci_dev, 0x52, &ctrl);
 	cobalt_info("MSI %s\n", ctrl & 1 ? "enable" : "disable");
 	cobalt_info("MSI multiple message: Capable %u. Enable %u\n",
 		    (1 << ((ctrl >> 1) & 7)), (1 << ((ctrl >> 4) & 7)));
-	if (ctrl & 0x80)
+	अगर (ctrl & 0x80)
 		cobalt_info("MSI: 64-bit address capable\n");
-	pci_read_config_dword(pci_dev, 0x54, &adrs_l);
-	pci_read_config_dword(pci_dev, 0x58, &adrs_h);
-	pci_read_config_word(pci_dev, 0x5c, &data);
-	if (ctrl & 0x80)
+	pci_पढ़ो_config_dword(pci_dev, 0x54, &adrs_l);
+	pci_पढ़ो_config_dword(pci_dev, 0x58, &adrs_h);
+	pci_पढ़ो_config_word(pci_dev, 0x5c, &data);
+	अगर (ctrl & 0x80)
 		cobalt_info("MSI: Address 0x%08x%08x. Data 0x%04x\n",
 				adrs_h, adrs_l, data);
-	else
+	अन्यथा
 		cobalt_info("MSI: Address 0x%08x. Data 0x%04x\n",
 				adrs_l, data);
-}
+पूर्ण
 
-static void cobalt_pci_iounmap(struct cobalt *cobalt, struct pci_dev *pci_dev)
-{
-	if (cobalt->bar0) {
+अटल व्योम cobalt_pci_iounmap(काष्ठा cobalt *cobalt, काष्ठा pci_dev *pci_dev)
+अणु
+	अगर (cobalt->bar0) अणु
 		pci_iounmap(pci_dev, cobalt->bar0);
-		cobalt->bar0 = NULL;
-	}
-	if (cobalt->bar1) {
+		cobalt->bar0 = शून्य;
+	पूर्ण
+	अगर (cobalt->bar1) अणु
 		pci_iounmap(pci_dev, cobalt->bar1);
-		cobalt->bar1 = NULL;
-	}
-}
+		cobalt->bar1 = शून्य;
+	पूर्ण
+पूर्ण
 
-static void cobalt_free_msi(struct cobalt *cobalt, struct pci_dev *pci_dev)
-{
-	free_irq(pci_dev->irq, (void *)cobalt);
-	pci_free_irq_vectors(pci_dev);
-}
+अटल व्योम cobalt_मुक्त_msi(काष्ठा cobalt *cobalt, काष्ठा pci_dev *pci_dev)
+अणु
+	मुक्त_irq(pci_dev->irq, (व्योम *)cobalt);
+	pci_मुक्त_irq_vectors(pci_dev);
+पूर्ण
 
-static int cobalt_setup_pci(struct cobalt *cobalt, struct pci_dev *pci_dev,
-			    const struct pci_device_id *pci_id)
-{
+अटल पूर्णांक cobalt_setup_pci(काष्ठा cobalt *cobalt, काष्ठा pci_dev *pci_dev,
+			    स्थिर काष्ठा pci_device_id *pci_id)
+अणु
 	u32 ctrl;
-	int ret;
+	पूर्णांक ret;
 
 	cobalt_dbg(1, "enabling pci device\n");
 
 	ret = pci_enable_device(pci_dev);
-	if (ret) {
+	अगर (ret) अणु
 		cobalt_err("can't enable device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	pci_set_master(pci_dev);
-	pci_read_config_byte(pci_dev, PCI_CLASS_REVISION, &cobalt->card_rev);
-	pci_read_config_word(pci_dev, PCI_DEVICE_ID, &cobalt->device_id);
+	pci_पढ़ो_config_byte(pci_dev, PCI_CLASS_REVISION, &cobalt->card_rev);
+	pci_पढ़ो_config_word(pci_dev, PCI_DEVICE_ID, &cobalt->device_id);
 
-	switch (cobalt->device_id) {
-	case PCI_DEVICE_ID_COBALT:
+	चयन (cobalt->device_id) अणु
+	हाल PCI_DEVICE_ID_COBALT:
 		cobalt_info("PCI Express interface from Omnitek\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		cobalt_info("PCI Express interface provider is unknown!\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (pcie_link_get_lanes(cobalt) != 8) {
+	अगर (pcie_link_get_lanes(cobalt) != 8) अणु
 		cobalt_warn("PCI Express link width is %d lanes.\n",
 				pcie_link_get_lanes(cobalt));
-		if (pcie_bus_link_get_lanes(cobalt) < 8)
+		अगर (pcie_bus_link_get_lanes(cobalt) < 8)
 			cobalt_warn("The current slot only supports %d lanes, for best performance 8 are needed\n",
 					pcie_bus_link_get_lanes(cobalt));
-		if (pcie_link_get_lanes(cobalt) != pcie_bus_link_get_lanes(cobalt)) {
+		अगर (pcie_link_get_lanes(cobalt) != pcie_bus_link_get_lanes(cobalt)) अणु
 			cobalt_err("The card is most likely not seated correctly in the PCIe slot\n");
 			ret = -EIO;
-			goto err_disable;
-		}
-	}
+			जाओ err_disable;
+		पूर्ण
+	पूर्ण
 
-	if (pci_set_dma_mask(pci_dev, DMA_BIT_MASK(64))) {
+	अगर (pci_set_dma_mask(pci_dev, DMA_BIT_MASK(64))) अणु
 		ret = pci_set_dma_mask(pci_dev, DMA_BIT_MASK(32));
-		if (ret) {
+		अगर (ret) अणु
 			cobalt_err("no suitable DMA available\n");
-			goto err_disable;
-		}
-	}
+			जाओ err_disable;
+		पूर्ण
+	पूर्ण
 
 	ret = pci_request_regions(pci_dev, "cobalt");
-	if (ret) {
+	अगर (ret) अणु
 		cobalt_err("error requesting regions\n");
-		goto err_disable;
-	}
+		जाओ err_disable;
+	पूर्ण
 
 	cobalt_pcie_status_show(cobalt);
 
 	cobalt->bar0 = pci_iomap(pci_dev, 0, 0);
 	cobalt->bar1 = pci_iomap(pci_dev, 1, 0);
-	if (cobalt->bar1 == NULL) {
+	अगर (cobalt->bar1 == शून्य) अणु
 		cobalt->bar1 = pci_iomap(pci_dev, 2, 0);
 		cobalt_info("64-bit BAR\n");
-	}
-	if (!cobalt->bar0 || !cobalt->bar1) {
+	पूर्ण
+	अगर (!cobalt->bar0 || !cobalt->bar1) अणु
 		ret = -EIO;
-		goto err_release;
-	}
+		जाओ err_release;
+	पूर्ण
 
-	/* Reset the video inputs before enabling any interrupts */
-	ctrl = cobalt_read_bar1(cobalt, COBALT_SYS_CTRL_BASE);
-	cobalt_write_bar1(cobalt, COBALT_SYS_CTRL_BASE, ctrl & ~0xf00);
+	/* Reset the video inमाला_दो beक्रमe enabling any पूर्णांकerrupts */
+	ctrl = cobalt_पढ़ो_bar1(cobalt, COBALT_SYS_CTRL_BASE);
+	cobalt_ग_लिखो_bar1(cobalt, COBALT_SYS_CTRL_BASE, ctrl & ~0xf00);
 
-	/* Disable interrupts to prevent any spurious interrupts
+	/* Disable पूर्णांकerrupts to prevent any spurious पूर्णांकerrupts
 	   from being generated. */
-	cobalt_set_interrupt(cobalt, false);
+	cobalt_set_पूर्णांकerrupt(cobalt, false);
 
-	if (pci_alloc_irq_vectors(pci_dev, 1, 1, PCI_IRQ_MSI) < 1) {
+	अगर (pci_alloc_irq_vectors(pci_dev, 1, 1, PCI_IRQ_MSI) < 1) अणु
 		cobalt_err("Could not enable MSI\n");
 		ret = -EIO;
-		goto err_release;
-	}
+		जाओ err_release;
+	पूर्ण
 	msi_config_show(cobalt, pci_dev);
 
 	/* Register IRQ */
-	if (request_irq(pci_dev->irq, cobalt_irq_handler, IRQF_SHARED,
-			cobalt->v4l2_dev.name, (void *)cobalt)) {
+	अगर (request_irq(pci_dev->irq, cobalt_irq_handler, IRQF_SHARED,
+			cobalt->v4l2_dev.name, (व्योम *)cobalt)) अणु
 		cobalt_err("Failed to register irq %d\n", pci_dev->irq);
 		ret = -EIO;
-		goto err_msi;
-	}
+		जाओ err_msi;
+	पूर्ण
 
 	omni_sg_dma_init(cobalt);
-	return 0;
+	वापस 0;
 
 err_msi:
 	pci_disable_msi(pci_dev);
@@ -394,29 +395,29 @@ err_release:
 
 err_disable:
 	pci_disable_device(cobalt->pci_dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cobalt_hdl_info_get(struct cobalt *cobalt)
-{
-	int i;
+अटल पूर्णांक cobalt_hdl_info_get(काष्ठा cobalt *cobalt)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < COBALT_HDL_INFO_SIZE; i++)
+	क्रम (i = 0; i < COBALT_HDL_INFO_SIZE; i++)
 		cobalt->hdl_info[i] =
-			ioread8(cobalt->bar1 + COBALT_HDL_INFO_BASE + i);
+			ioपढ़ो8(cobalt->bar1 + COBALT_HDL_INFO_BASE + i);
 	cobalt->hdl_info[COBALT_HDL_INFO_SIZE - 1] = '\0';
-	if (strstr(cobalt->hdl_info, COBALT_HDL_SEARCH_STR))
-		return 0;
+	अगर (म_माला(cobalt->hdl_info, COBALT_HDL_SEARCH_STR))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void cobalt_stream_struct_init(struct cobalt *cobalt)
-{
-	int i;
+अटल व्योम cobalt_stream_काष्ठा_init(काष्ठा cobalt *cobalt)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < COBALT_NUM_STREAMS; i++) {
-		struct cobalt_stream *s = &cobalt->streams[i];
+	क्रम (i = 0; i < COBALT_NUM_STREAMS; i++) अणु
+		काष्ठा cobalt_stream *s = &cobalt->streams[i];
 
 		s->cobalt = cobalt;
 		s->flags = 0;
@@ -426,108 +427,108 @@ static void cobalt_stream_struct_init(struct cobalt *cobalt)
 
 		/* The Memory DMA channels will always get a lower channel
 		 * number than the FIFO DMA. Video input should map to the
-		 * stream 0-3. The other can use stream struct from 4 and
+		 * stream 0-3. The other can use stream काष्ठा from 4 and
 		 * higher */
-		if (i <= COBALT_HSMA_IN_NODE) {
-			s->dma_channel = i + cobalt->first_fifo_channel;
+		अगर (i <= COBALT_HSMA_IN_NODE) अणु
+			s->dma_channel = i + cobalt->first_fअगरo_channel;
 			s->video_channel = i;
-			s->dma_fifo_mask =
+			s->dma_fअगरo_mask =
 				COBALT_SYSSTAT_VI0_LOST_DATA_MSK << (4 * i);
 			s->adv_irq_mask =
 				COBALT_SYSSTAT_VI0_INT1_MSK << (4 * i);
-		} else if (i >= COBALT_AUDIO_IN_STREAM &&
-			   i <= COBALT_AUDIO_IN_STREAM + 4) {
-			unsigned idx = i - COBALT_AUDIO_IN_STREAM;
+		पूर्ण अन्यथा अगर (i >= COBALT_AUDIO_IN_STREAM &&
+			   i <= COBALT_AUDIO_IN_STREAM + 4) अणु
+			अचिन्हित idx = i - COBALT_AUDIO_IN_STREAM;
 
 			s->dma_channel = 6 + idx;
 			s->is_audio = true;
 			s->video_channel = idx;
-			s->dma_fifo_mask = COBALT_SYSSTAT_AUD_IN_LOST_DATA_MSK;
-		} else if (i == COBALT_HSMA_OUT_NODE) {
+			s->dma_fअगरo_mask = COBALT_SYSSTAT_AUD_IN_LOST_DATA_MSK;
+		पूर्ण अन्यथा अगर (i == COBALT_HSMA_OUT_NODE) अणु
 			s->dma_channel = 11;
 			s->is_output = true;
 			s->video_channel = 5;
-			s->dma_fifo_mask = COBALT_SYSSTAT_VOHSMA_LOST_DATA_MSK;
+			s->dma_fअगरo_mask = COBALT_SYSSTAT_VOHSMA_LOST_DATA_MSK;
 			s->adv_irq_mask = COBALT_SYSSTAT_VOHSMA_INT1_MSK;
-		} else if (i == COBALT_AUDIO_OUT_STREAM) {
+		पूर्ण अन्यथा अगर (i == COBALT_AUDIO_OUT_STREAM) अणु
 			s->dma_channel = 12;
 			s->is_audio = true;
 			s->is_output = true;
 			s->video_channel = 5;
-			s->dma_fifo_mask = COBALT_SYSSTAT_AUD_OUT_LOST_DATA_MSK;
-		} else {
-			/* FIXME: Memory DMA for debug purpose */
+			s->dma_fअगरo_mask = COBALT_SYSSTAT_AUD_OUT_LOST_DATA_MSK;
+		पूर्ण अन्यथा अणु
+			/* FIXME: Memory DMA क्रम debug purpose */
 			s->dma_channel = i - COBALT_NUM_NODES;
-		}
+		पूर्ण
 		cobalt_info("stream #%d -> dma channel #%d <- video channel %d\n",
 			    i, s->dma_channel, s->video_channel);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int cobalt_subdevs_init(struct cobalt *cobalt)
-{
-	static struct adv76xx_platform_data adv7604_pdata = {
+अटल पूर्णांक cobalt_subdevs_init(काष्ठा cobalt *cobalt)
+अणु
+	अटल काष्ठा adv76xx_platक्रमm_data adv7604_pdata = अणु
 		.disable_pwrdnb = 1,
 		.ain_sel = ADV7604_AIN7_8_9_NC_SYNC_3_1,
 		.bus_order = ADV7604_BUS_ORDER_BRG,
 		.blank_data = 1,
-		.op_format_mode_sel = ADV7604_OP_FORMAT_MODE0,
-		.int1_config = ADV76XX_INT1_CONFIG_ACTIVE_HIGH,
+		.op_क्रमmat_mode_sel = ADV7604_OP_FORMAT_MODE0,
+		.पूर्णांक1_config = ADV76XX_INT1_CONFIG_ACTIVE_HIGH,
 		.dr_str_data = ADV76XX_DR_STR_HIGH,
 		.dr_str_clk = ADV76XX_DR_STR_HIGH,
 		.dr_str_sync = ADV76XX_DR_STR_HIGH,
-		.hdmi_free_run_mode = 1,
+		.hdmi_मुक्त_run_mode = 1,
 		.inv_vs_pol = 1,
 		.inv_hs_pol = 1,
-	};
-	static struct i2c_board_info adv7604_info = {
+	पूर्ण;
+	अटल काष्ठा i2c_board_info adv7604_info = अणु
 		.type = "adv7604",
 		.addr = 0x20,
-		.platform_data = &adv7604_pdata,
-	};
+		.platक्रमm_data = &adv7604_pdata,
+	पूर्ण;
 
-	struct cobalt_stream *s = cobalt->streams;
-	int i;
+	काष्ठा cobalt_stream *s = cobalt->streams;
+	पूर्णांक i;
 
-	for (i = 0; i < COBALT_NUM_INPUTS; i++) {
-		struct v4l2_subdev_format sd_fmt = {
+	क्रम (i = 0; i < COBALT_NUM_INPUTS; i++) अणु
+		काष्ठा v4l2_subdev_क्रमmat sd_fmt = अणु
 			.pad = ADV7604_PAD_SOURCE,
 			.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-			.format.code = MEDIA_BUS_FMT_YUYV8_1X16,
-		};
-		struct v4l2_subdev_edid cobalt_edid = {
+			.क्रमmat.code = MEDIA_BUS_FMT_YUYV8_1X16,
+		पूर्ण;
+		काष्ठा v4l2_subdev_edid cobalt_edid = अणु
 			.pad = ADV76XX_PAD_HDMI_PORT_A,
 			.start_block = 0,
 			.blocks = 2,
 			.edid = edid,
-		};
-		int err;
+		पूर्ण;
+		पूर्णांक err;
 
 		s[i].pad_source = ADV7604_PAD_SOURCE;
 		s[i].i2c_adap = &cobalt->i2c_adap[i];
-		if (s[i].i2c_adap->dev.parent == NULL)
-			continue;
+		अगर (s[i].i2c_adap->dev.parent == शून्य)
+			जारी;
 		cobalt_s_bit_sysctrl(cobalt,
 				COBALT_SYS_CTRL_NRESET_TO_HDMI_BIT(i), 1);
 		s[i].sd = v4l2_i2c_new_subdev_board(&cobalt->v4l2_dev,
-			s[i].i2c_adap, &adv7604_info, NULL);
-		if (!s[i].sd) {
-			if (cobalt_ignore_err)
-				continue;
-			return -ENODEV;
-		}
+			s[i].i2c_adap, &adv7604_info, शून्य);
+		अगर (!s[i].sd) अणु
+			अगर (cobalt_ignore_err)
+				जारी;
+			वापस -ENODEV;
+		पूर्ण
 		err = v4l2_subdev_call(s[i].sd, video, s_routing,
 				ADV76XX_PAD_HDMI_PORT_A, 0, 0);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = v4l2_subdev_call(s[i].sd, pad, set_edid,
 				&cobalt_edid);
-		if (err)
-			return err;
-		err = v4l2_subdev_call(s[i].sd, pad, set_fmt, NULL,
+		अगर (err)
+			वापस err;
+		err = v4l2_subdev_call(s[i].sd, pad, set_fmt, शून्य,
 				&sd_fmt);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		/* Reset channel video module */
 		cobalt_s_bit_sysctrl(cobalt,
 				COBALT_SYS_CTRL_VIDEO_RX_RESETN_BIT(i), 0);
@@ -537,23 +538,23 @@ static int cobalt_subdevs_init(struct cobalt *cobalt)
 		mdelay(1);
 		s[i].is_dummy = false;
 		cobalt->streams[i + COBALT_AUDIO_IN_STREAM].is_dummy = false;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int cobalt_subdevs_hsma_init(struct cobalt *cobalt)
-{
-	static struct adv7842_platform_data adv7842_pdata = {
+अटल पूर्णांक cobalt_subdevs_hsma_init(काष्ठा cobalt *cobalt)
+अणु
+	अटल काष्ठा adv7842_platक्रमm_data adv7842_pdata = अणु
 		.disable_pwrdnb = 1,
 		.ain_sel = ADV7842_AIN1_2_3_NC_SYNC_1_2,
 		.bus_order = ADV7842_BUS_ORDER_RBG,
-		.op_format_mode_sel = ADV7842_OP_FORMAT_MODE0,
+		.op_क्रमmat_mode_sel = ADV7842_OP_FORMAT_MODE0,
 		.blank_data = 1,
 		.dr_str_data = 3,
 		.dr_str_clk = 3,
 		.dr_str_sync = 3,
 		.mode = ADV7842_MODE_HDMI,
-		.hdmi_free_run_enable = 1,
+		.hdmi_मुक्त_run_enable = 1,
 		.vid_std_select = ADV7842_HDMI_COMP_VID_STD_HD_1250P,
 		.i2c_sdp_io = 0x4a,
 		.i2c_sdp = 0x48,
@@ -566,52 +567,52 @@ static int cobalt_subdevs_hsma_init(struct cobalt *cobalt)
 		.i2c_infoframe = 0x3e,
 		.i2c_cec = 0x40,
 		.i2c_avlink = 0x42,
-	};
-	static struct i2c_board_info adv7842_info = {
+	पूर्ण;
+	अटल काष्ठा i2c_board_info adv7842_info = अणु
 		.type = "adv7842",
 		.addr = 0x20,
-		.platform_data = &adv7842_pdata,
-	};
-	struct v4l2_subdev_format sd_fmt = {
+		.platक्रमm_data = &adv7842_pdata,
+	पूर्ण;
+	काष्ठा v4l2_subdev_क्रमmat sd_fmt = अणु
 		.pad = ADV7842_PAD_SOURCE,
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-		.format.code = MEDIA_BUS_FMT_YUYV8_1X16,
-	};
-	static struct adv7511_platform_data adv7511_pdata = {
+		.क्रमmat.code = MEDIA_BUS_FMT_YUYV8_1X16,
+	पूर्ण;
+	अटल काष्ठा adv7511_platक्रमm_data adv7511_pdata = अणु
 		.i2c_edid = 0x7e >> 1,
 		.i2c_cec = 0x7c >> 1,
-		.i2c_pktmem = 0x70 >> 1,
+		.i2c_pkपंचांगem = 0x70 >> 1,
 		.cec_clk = 12000000,
-	};
-	static struct i2c_board_info adv7511_info = {
+	पूर्ण;
+	अटल काष्ठा i2c_board_info adv7511_info = अणु
 		.type = "adv7511-v4l2",
 		.addr = 0x39, /* 0x39 or 0x3d */
-		.platform_data = &adv7511_pdata,
-	};
-	struct v4l2_subdev_edid cobalt_edid = {
+		.platक्रमm_data = &adv7511_pdata,
+	पूर्ण;
+	काष्ठा v4l2_subdev_edid cobalt_edid = अणु
 		.pad = ADV7842_EDID_PORT_A,
 		.start_block = 0,
 		.blocks = 2,
 		.edid = edid,
-	};
-	struct cobalt_stream *s = &cobalt->streams[COBALT_HSMA_IN_NODE];
+	पूर्ण;
+	काष्ठा cobalt_stream *s = &cobalt->streams[COBALT_HSMA_IN_NODE];
 
 	s->i2c_adap = &cobalt->i2c_adap[COBALT_NUM_ADAPTERS - 1];
-	if (s->i2c_adap->dev.parent == NULL)
-		return 0;
+	अगर (s->i2c_adap->dev.parent == शून्य)
+		वापस 0;
 	cobalt_s_bit_sysctrl(cobalt, COBALT_SYS_CTRL_NRESET_TO_HDMI_BIT(4), 1);
 
 	s->sd = v4l2_i2c_new_subdev_board(&cobalt->v4l2_dev,
-			s->i2c_adap, &adv7842_info, NULL);
-	if (s->sd) {
-		int err = v4l2_subdev_call(s->sd, pad, set_edid, &cobalt_edid);
+			s->i2c_adap, &adv7842_info, शून्य);
+	अगर (s->sd) अणु
+		पूर्णांक err = v4l2_subdev_call(s->sd, pad, set_edid, &cobalt_edid);
 
-		if (err)
-			return err;
-		err = v4l2_subdev_call(s->sd, pad, set_fmt, NULL,
+		अगर (err)
+			वापस err;
+		err = v4l2_subdev_call(s->sd, pad, set_fmt, शून्य,
 				&sd_fmt);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		cobalt->have_hsma_rx = true;
 		s->pad_source = ADV7842_PAD_SOURCE;
 		s->is_dummy = false;
@@ -623,15 +624,15 @@ static int cobalt_subdevs_hsma_init(struct cobalt *cobalt)
 		cobalt_s_bit_sysctrl(cobalt,
 				COBALT_SYS_CTRL_VIDEO_RX_RESETN_BIT(4), 1);
 		mdelay(1);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	cobalt_s_bit_sysctrl(cobalt, COBALT_SYS_CTRL_NRESET_TO_HDMI_BIT(4), 0);
 	cobalt_s_bit_sysctrl(cobalt, COBALT_SYS_CTRL_PWRDN0_TO_HSMA_TX_BIT, 0);
 	s++;
 	s->i2c_adap = &cobalt->i2c_adap[COBALT_NUM_ADAPTERS - 1];
 	s->sd = v4l2_i2c_new_subdev_board(&cobalt->v4l2_dev,
-			s->i2c_adap, &adv7511_info, NULL);
-	if (s->sd) {
+			s->i2c_adap, &adv7511_info, शून्य);
+	अगर (s->sd) अणु
 		/* A transmitter is hooked up, so we can set this bit */
 		cobalt_s_bit_sysctrl(cobalt,
 				COBALT_SYS_CTRL_HSMA_TX_ENABLE_BIT, 1);
@@ -640,104 +641,104 @@ static int cobalt_subdevs_hsma_init(struct cobalt *cobalt)
 		cobalt_s_bit_sysctrl(cobalt,
 				COBALT_SYS_CTRL_VIDEO_TX_RESETN_BIT, 1);
 		cobalt->have_hsma_tx = true;
-		v4l2_subdev_call(s->sd, core, s_power, 1);
+		v4l2_subdev_call(s->sd, core, s_घातer, 1);
 		v4l2_subdev_call(s->sd, video, s_stream, 1);
 		v4l2_subdev_call(s->sd, audio, s_stream, 1);
 		v4l2_ctrl_s_ctrl(v4l2_ctrl_find(s->sd->ctrl_handler,
 				 V4L2_CID_DV_TX_MODE), V4L2_DV_TX_MODE_HDMI);
 		s->is_dummy = false;
 		cobalt->streams[COBALT_AUDIO_OUT_STREAM].is_dummy = false;
-		return 0;
-	}
-	return -ENODEV;
-}
+		वापस 0;
+	पूर्ण
+	वापस -ENODEV;
+पूर्ण
 
-static int cobalt_probe(struct pci_dev *pci_dev,
-				  const struct pci_device_id *pci_id)
-{
-	struct cobalt *cobalt;
-	int retval = 0;
-	int i;
+अटल पूर्णांक cobalt_probe(काष्ठा pci_dev *pci_dev,
+				  स्थिर काष्ठा pci_device_id *pci_id)
+अणु
+	काष्ठा cobalt *cobalt;
+	पूर्णांक retval = 0;
+	पूर्णांक i;
 
-	/* FIXME - module parameter arrays constrain max instances */
-	i = atomic_inc_return(&cobalt_instance) - 1;
+	/* FIXME - module parameter arrays स्थिरrain max instances */
+	i = atomic_inc_वापस(&cobalt_instance) - 1;
 
-	cobalt = kzalloc(sizeof(struct cobalt), GFP_KERNEL);
-	if (cobalt == NULL)
-		return -ENOMEM;
+	cobalt = kzalloc(माप(काष्ठा cobalt), GFP_KERNEL);
+	अगर (cobalt == शून्य)
+		वापस -ENOMEM;
 	cobalt->pci_dev = pci_dev;
 	cobalt->instance = i;
 
-	retval = v4l2_device_register(&pci_dev->dev, &cobalt->v4l2_dev);
-	if (retval) {
+	retval = v4l2_device_रेजिस्टर(&pci_dev->dev, &cobalt->v4l2_dev);
+	अगर (retval) अणु
 		pr_err("cobalt: v4l2_device_register of card %d failed\n",
 				cobalt->instance);
-		kfree(cobalt);
-		return retval;
-	}
-	snprintf(cobalt->v4l2_dev.name, sizeof(cobalt->v4l2_dev.name),
+		kमुक्त(cobalt);
+		वापस retval;
+	पूर्ण
+	snम_लिखो(cobalt->v4l2_dev.name, माप(cobalt->v4l2_dev.name),
 		 "cobalt-%d", cobalt->instance);
-	cobalt->v4l2_dev.notify = cobalt_notify;
+	cobalt->v4l2_dev.notअगरy = cobalt_notअगरy;
 	cobalt_info("Initializing card %d\n", cobalt->instance);
 
 	cobalt->irq_work_queues =
-		create_singlethread_workqueue(cobalt->v4l2_dev.name);
-	if (cobalt->irq_work_queues == NULL) {
+		create_singlethपढ़ो_workqueue(cobalt->v4l2_dev.name);
+	अगर (cobalt->irq_work_queues == शून्य) अणु
 		cobalt_err("Could not create workqueue\n");
 		retval = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	INIT_WORK(&cobalt->irq_work_queue, cobalt_irq_work_handler);
 
 	/* PCI Device Setup */
 	retval = cobalt_setup_pci(cobalt, pci_dev, pci_id);
-	if (retval != 0)
-		goto err_wq;
+	अगर (retval != 0)
+		जाओ err_wq;
 
 	/* Show HDL version info */
-	if (cobalt_hdl_info_get(cobalt))
+	अगर (cobalt_hdl_info_get(cobalt))
 		cobalt_info("Not able to read the HDL info\n");
-	else
+	अन्यथा
 		cobalt_info("%s", cobalt->hdl_info);
 
 	retval = cobalt_i2c_init(cobalt);
-	if (retval)
-		goto err_pci;
+	अगर (retval)
+		जाओ err_pci;
 
-	cobalt_stream_struct_init(cobalt);
+	cobalt_stream_काष्ठा_init(cobalt);
 
 	retval = cobalt_subdevs_init(cobalt);
-	if (retval)
-		goto err_i2c;
+	अगर (retval)
+		जाओ err_i2c;
 
-	if (!(cobalt_read_bar1(cobalt, COBALT_SYS_STAT_BASE) &
-			COBALT_SYSSTAT_HSMA_PRSNTN_MSK)) {
+	अगर (!(cobalt_पढ़ो_bar1(cobalt, COBALT_SYS_STAT_BASE) &
+			COBALT_SYSSTAT_HSMA_PRSNTN_MSK)) अणु
 		retval = cobalt_subdevs_hsma_init(cobalt);
-		if (retval)
-			goto err_i2c;
-	}
+		अगर (retval)
+			जाओ err_i2c;
+	पूर्ण
 
-	retval = cobalt_nodes_register(cobalt);
-	if (retval) {
+	retval = cobalt_nodes_रेजिस्टर(cobalt);
+	अगर (retval) अणु
 		cobalt_err("Error %d registering device nodes\n", retval);
-		goto err_i2c;
-	}
-	cobalt_set_interrupt(cobalt, true);
+		जाओ err_i2c;
+	पूर्ण
+	cobalt_set_पूर्णांकerrupt(cobalt, true);
 	v4l2_device_call_all(&cobalt->v4l2_dev, 0, core,
-					interrupt_service_routine, 0, NULL);
+					पूर्णांकerrupt_service_routine, 0, शून्य);
 
 	cobalt_info("Initialized cobalt card\n");
 
 	cobalt_flash_probe(cobalt);
 
-	return 0;
+	वापस 0;
 
 err_i2c:
-	cobalt_i2c_exit(cobalt);
+	cobalt_i2c_निकास(cobalt);
 	cobalt_s_bit_sysctrl(cobalt, COBALT_SYS_CTRL_HSMA_TX_ENABLE_BIT, 0);
 err_pci:
-	cobalt_free_msi(cobalt, pci_dev);
+	cobalt_मुक्त_msi(cobalt, pci_dev);
 	cobalt_pci_iounmap(cobalt, pci_dev);
 	pci_release_regions(cobalt->pci_dev);
 	pci_disable_device(cobalt->pci_dev);
@@ -746,33 +747,33 @@ err_wq:
 err:
 	cobalt_err("error %d on initialization\n", retval);
 
-	v4l2_device_unregister(&cobalt->v4l2_dev);
-	kfree(cobalt);
-	return retval;
-}
+	v4l2_device_unरेजिस्टर(&cobalt->v4l2_dev);
+	kमुक्त(cobalt);
+	वापस retval;
+पूर्ण
 
-static void cobalt_remove(struct pci_dev *pci_dev)
-{
-	struct v4l2_device *v4l2_dev = pci_get_drvdata(pci_dev);
-	struct cobalt *cobalt = to_cobalt(v4l2_dev);
-	int i;
+अटल व्योम cobalt_हटाओ(काष्ठा pci_dev *pci_dev)
+अणु
+	काष्ठा v4l2_device *v4l2_dev = pci_get_drvdata(pci_dev);
+	काष्ठा cobalt *cobalt = to_cobalt(v4l2_dev);
+	पूर्णांक i;
 
-	cobalt_flash_remove(cobalt);
-	cobalt_set_interrupt(cobalt, false);
+	cobalt_flash_हटाओ(cobalt);
+	cobalt_set_पूर्णांकerrupt(cobalt, false);
 	flush_workqueue(cobalt->irq_work_queues);
-	cobalt_nodes_unregister(cobalt);
-	for (i = 0; i < COBALT_NUM_ADAPTERS; i++) {
-		struct v4l2_subdev *sd = cobalt->streams[i].sd;
-		struct i2c_client *client;
+	cobalt_nodes_unरेजिस्टर(cobalt);
+	क्रम (i = 0; i < COBALT_NUM_ADAPTERS; i++) अणु
+		काष्ठा v4l2_subdev *sd = cobalt->streams[i].sd;
+		काष्ठा i2c_client *client;
 
-		if (sd == NULL)
-			continue;
+		अगर (sd == शून्य)
+			जारी;
 		client = v4l2_get_subdevdata(sd);
-		v4l2_device_unregister_subdev(sd);
-		i2c_unregister_device(client);
-	}
-	cobalt_i2c_exit(cobalt);
-	cobalt_free_msi(cobalt, pci_dev);
+		v4l2_device_unरेजिस्टर_subdev(sd);
+		i2c_unरेजिस्टर_device(client);
+	पूर्ण
+	cobalt_i2c_निकास(cobalt);
+	cobalt_मुक्त_msi(cobalt, pci_dev);
 	cobalt_s_bit_sysctrl(cobalt, COBALT_SYS_CTRL_HSMA_TX_ENABLE_BIT, 0);
 	cobalt_pci_iounmap(cobalt, pci_dev);
 	pci_release_regions(cobalt->pci_dev);
@@ -781,16 +782,16 @@ static void cobalt_remove(struct pci_dev *pci_dev)
 
 	cobalt_info("removed cobalt card\n");
 
-	v4l2_device_unregister(v4l2_dev);
-	kfree(cobalt);
-}
+	v4l2_device_unरेजिस्टर(v4l2_dev);
+	kमुक्त(cobalt);
+पूर्ण
 
-/* define a pci_driver for card detection */
-static struct pci_driver cobalt_pci_driver = {
+/* define a pci_driver क्रम card detection */
+अटल काष्ठा pci_driver cobalt_pci_driver = अणु
 	.name =     "cobalt",
 	.id_table = cobalt_pci_tbl,
 	.probe =    cobalt_probe,
-	.remove =   cobalt_remove,
-};
+	.हटाओ =   cobalt_हटाओ,
+पूर्ण;
 
 module_pci_driver(cobalt_pci_driver);

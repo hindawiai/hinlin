@@ -1,184 +1,185 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Linux driver for digital TV devices equipped with B2C2 FlexcopII(b)/III
- * flexcop-fe-tuner.c - methods for frontend attachment and DiSEqC controlling
- * see flexcop.c for copyright information
+ * Linux driver क्रम digital TV devices equipped with B2C2 FlexcopII(b)/III
+ * flexcop-fe-tuner.c - methods क्रम frontend attachment and DiSEqC controlling
+ * see flexcop.c क्रम copyright inक्रमmation
  */
-#include <media/tuner.h>
-#include "flexcop.h"
-#include "mt312.h"
-#include "stv0299.h"
-#include "s5h1420.h"
-#include "itd1000.h"
-#include "cx24113.h"
-#include "cx24123.h"
-#include "isl6421.h"
-#include "cx24120.h"
-#include "mt352.h"
-#include "bcm3510.h"
-#include "nxt200x.h"
-#include "dvb-pll.h"
-#include "lgdt330x.h"
-#include "tuner-simple.h"
-#include "stv0297.h"
+#समावेश <media/tuner.h>
+#समावेश "flexcop.h"
+#समावेश "mt312.h"
+#समावेश "stv0299.h"
+#समावेश "s5h1420.h"
+#समावेश "itd1000.h"
+#समावेश "cx24113.h"
+#समावेश "cx24123.h"
+#समावेश "isl6421.h"
+#समावेश "cx24120.h"
+#समावेश "mt352.h"
+#समावेश "bcm3510.h"
+#समावेश "nxt200x.h"
+#समावेश "dvb-pll.h"
+#समावेश "lgdt330x.h"
+#समावेश "tuner-simple.h"
+#समावेश "stv0297.h"
 
 
-/* Can we use the specified front-end?  Remember that if we are compiled
- * into the kernel we can't call code that's in modules.  */
-#define FE_SUPPORTED(fe) IS_REACHABLE(CONFIG_DVB_ ## fe)
+/* Can we use the specअगरied front-end?  Remember that अगर we are compiled
+ * पूर्णांकo the kernel we can't call code that's in modules.  */
+#घोषणा FE_SUPPORTED(fe) IS_REACHABLE(CONFIG_DVB_ ## fe)
 
-#if FE_SUPPORTED(BCM3510) || (FE_SUPPORTED(CX24120) && FE_SUPPORTED(ISL6421))
-static int flexcop_fe_request_firmware(struct dvb_frontend *fe,
-	const struct firmware **fw, char *name)
-{
-	struct flexcop_device *fc = fe->dvb->priv;
+#अगर FE_SUPPORTED(BCM3510) || (FE_SUPPORTED(CX24120) && FE_SUPPORTED(ISL6421))
+अटल पूर्णांक flexcop_fe_request_firmware(काष्ठा dvb_frontend *fe,
+	स्थिर काष्ठा firmware **fw, अक्षर *name)
+अणु
+	काष्ठा flexcop_device *fc = fe->dvb->priv;
 
-	return request_firmware(fw, name, fc->dev);
-}
-#endif
+	वापस request_firmware(fw, name, fc->dev);
+पूर्ण
+#पूर्ण_अगर
 
 /* lnb control */
-#if (FE_SUPPORTED(MT312) || FE_SUPPORTED(STV0299)) && FE_SUPPORTED(PLL)
-static int flexcop_set_voltage(struct dvb_frontend *fe,
-			       enum fe_sec_voltage voltage)
-{
-	struct flexcop_device *fc = fe->dvb->priv;
+#अगर (FE_SUPPORTED(MT312) || FE_SUPPORTED(STV0299)) && FE_SUPPORTED(PLL)
+अटल पूर्णांक flexcop_set_voltage(काष्ठा dvb_frontend *fe,
+			       क्रमागत fe_sec_voltage voltage)
+अणु
+	काष्ठा flexcop_device *fc = fe->dvb->priv;
 	flexcop_ibi_value v;
 	deb_tuner("polarity/voltage = %u\n", voltage);
 
-	v = fc->read_ibi_reg(fc, misc_204);
-	switch (voltage) {
-	case SEC_VOLTAGE_OFF:
+	v = fc->पढ़ो_ibi_reg(fc, misc_204);
+	चयन (voltage) अणु
+	हाल SEC_VOLTAGE_OFF:
 		v.misc_204.ACPI1_sig = 1;
-		break;
-	case SEC_VOLTAGE_13:
+		अवरोध;
+	हाल SEC_VOLTAGE_13:
 		v.misc_204.ACPI1_sig = 0;
 		v.misc_204.LNB_L_H_sig = 0;
-		break;
-	case SEC_VOLTAGE_18:
+		अवरोध;
+	हाल SEC_VOLTAGE_18:
 		v.misc_204.ACPI1_sig = 0;
 		v.misc_204.LNB_L_H_sig = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err("unknown SEC_VOLTAGE value");
-		return -EINVAL;
-	}
-	return fc->write_ibi_reg(fc, misc_204, v);
-}
-#endif
+		वापस -EINVAL;
+	पूर्ण
+	वापस fc->ग_लिखो_ibi_reg(fc, misc_204, v);
+पूर्ण
+#पूर्ण_अगर
 
-#if FE_SUPPORTED(S5H1420) || FE_SUPPORTED(STV0299) || FE_SUPPORTED(MT312)
-static int __maybe_unused flexcop_sleep(struct dvb_frontend* fe)
-{
-	struct flexcop_device *fc = fe->dvb->priv;
-	if (fc->fe_sleep)
-		return fc->fe_sleep(fe);
-	return 0;
-}
-#endif
+#अगर FE_SUPPORTED(S5H1420) || FE_SUPPORTED(STV0299) || FE_SUPPORTED(MT312)
+अटल पूर्णांक __maybe_unused flexcop_sleep(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा flexcop_device *fc = fe->dvb->priv;
+	अगर (fc->fe_sleep)
+		वापस fc->fe_sleep(fe);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /* SkyStar2 DVB-S rev 2.3 */
-#if FE_SUPPORTED(MT312) && FE_SUPPORTED(PLL)
-static int flexcop_set_tone(struct dvb_frontend *fe, enum fe_sec_tone_mode tone)
-{
-/* u16 wz_half_period_for_45_mhz[] = { 0x01ff, 0x0154, 0x00ff, 0x00cc }; */
-	struct flexcop_device *fc = fe->dvb->priv;
+#अगर FE_SUPPORTED(MT312) && FE_SUPPORTED(PLL)
+अटल पूर्णांक flexcop_set_tone(काष्ठा dvb_frontend *fe, क्रमागत fe_sec_tone_mode tone)
+अणु
+/* u16 wz_half_period_क्रम_45_mhz[] = अणु 0x01ff, 0x0154, 0x00ff, 0x00cc पूर्ण; */
+	काष्ठा flexcop_device *fc = fe->dvb->priv;
 	flexcop_ibi_value v;
 	u16 ax;
 	v.raw = 0;
 	deb_tuner("tone = %u\n",tone);
 
-	switch (tone) {
-	case SEC_TONE_ON:
+	चयन (tone) अणु
+	हाल SEC_TONE_ON:
 		ax = 0x01ff;
-		break;
-	case SEC_TONE_OFF:
+		अवरोध;
+	हाल SEC_TONE_OFF:
 		ax = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err("unknown SEC_TONE value");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	v.lnb_switch_freq_200.LNB_CTLPrescaler_sig = 1; /* divide by 2 */
-	v.lnb_switch_freq_200.LNB_CTLHighCount_sig = ax;
-	v.lnb_switch_freq_200.LNB_CTLLowCount_sig  = ax == 0 ? 0x1ff : ax;
-	return fc->write_ibi_reg(fc,lnb_switch_freq_200,v);
-}
+	v.lnb_चयन_freq_200.LNB_CTLPrescaler_sig = 1; /* भागide by 2 */
+	v.lnb_चयन_freq_200.LNB_CTLHighCount_sig = ax;
+	v.lnb_चयन_freq_200.LNB_CTLLowCount_sig  = ax == 0 ? 0x1ff : ax;
+	वापस fc->ग_लिखो_ibi_reg(fc,lnb_चयन_freq_200,v);
+पूर्ण
 
-static void flexcop_diseqc_send_bit(struct dvb_frontend* fe, int data)
-{
+अटल व्योम flexcop_diseqc_send_bit(काष्ठा dvb_frontend* fe, पूर्णांक data)
+अणु
 	flexcop_set_tone(fe, SEC_TONE_ON);
 	udelay(data ? 500 : 1000);
 	flexcop_set_tone(fe, SEC_TONE_OFF);
 	udelay(data ? 1000 : 500);
-}
+पूर्ण
 
-static void flexcop_diseqc_send_byte(struct dvb_frontend* fe, int data)
-{
-	int i, par = 1, d;
-	for (i = 7; i >= 0; i--) {
+अटल व्योम flexcop_diseqc_send_byte(काष्ठा dvb_frontend* fe, पूर्णांक data)
+अणु
+	पूर्णांक i, par = 1, d;
+	क्रम (i = 7; i >= 0; i--) अणु
 		d = (data >> i) & 1;
 		par ^= d;
 		flexcop_diseqc_send_bit(fe, d);
-	}
+	पूर्ण
 	flexcop_diseqc_send_bit(fe, par);
-}
+पूर्ण
 
-static int flexcop_send_diseqc_msg(struct dvb_frontend *fe,
-	int len, u8 *msg, unsigned long burst)
-{
-	int i;
+अटल पूर्णांक flexcop_send_diseqc_msg(काष्ठा dvb_frontend *fe,
+	पूर्णांक len, u8 *msg, अचिन्हित दीर्घ burst)
+अणु
+	पूर्णांक i;
 
 	flexcop_set_tone(fe, SEC_TONE_OFF);
 	mdelay(16);
 
-	for (i = 0; i < len; i++)
+	क्रम (i = 0; i < len; i++)
 		flexcop_diseqc_send_byte(fe,msg[i]);
 	mdelay(16);
 
-	if (burst != -1) {
-		if (burst)
+	अगर (burst != -1) अणु
+		अगर (burst)
 			flexcop_diseqc_send_byte(fe, 0xff);
-		else {
+		अन्यथा अणु
 			flexcop_set_tone(fe, SEC_TONE_ON);
 			mdelay(12);
 			udelay(500);
 			flexcop_set_tone(fe, SEC_TONE_OFF);
-		}
+		पूर्ण
 		msleep(20);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int flexcop_diseqc_send_master_cmd(struct dvb_frontend *fe,
-	struct dvb_diseqc_master_cmd *cmd)
-{
-	return flexcop_send_diseqc_msg(fe, cmd->msg_len, cmd->msg, 0);
-}
+अटल पूर्णांक flexcop_diseqc_send_master_cmd(काष्ठा dvb_frontend *fe,
+	काष्ठा dvb_diseqc_master_cmd *cmd)
+अणु
+	वापस flexcop_send_diseqc_msg(fe, cmd->msg_len, cmd->msg, 0);
+पूर्ण
 
-static int flexcop_diseqc_send_burst(struct dvb_frontend *fe,
-				     enum fe_sec_mini_cmd minicmd)
-{
-	return flexcop_send_diseqc_msg(fe, 0, NULL, minicmd);
-}
+अटल पूर्णांक flexcop_diseqc_send_burst(काष्ठा dvb_frontend *fe,
+				     क्रमागत fe_sec_mini_cmd minicmd)
+अणु
+	वापस flexcop_send_diseqc_msg(fe, 0, शून्य, minicmd);
+पूर्ण
 
-static struct mt312_config skystar23_samsung_tbdu18132_config = {
+अटल काष्ठा mt312_config skystar23_samsung_tbdu18132_config = अणु
 	.demod_address = 0x0e,
-};
+पूर्ण;
 
-static int skystar2_rev23_attach(struct flexcop_device *fc,
-	struct i2c_adapter *i2c)
-{
-	struct dvb_frontend_ops *ops;
+अटल पूर्णांक skystar2_rev23_attach(काष्ठा flexcop_device *fc,
+	काष्ठा i2c_adapter *i2c)
+अणु
+	काष्ठा dvb_frontend_ops *ops;
 
 	fc->fe = dvb_attach(mt312_attach, &skystar23_samsung_tbdu18132_config, i2c);
-	if (!fc->fe)
-		return 0;
+	अगर (!fc->fe)
+		वापस 0;
 
-	if (!dvb_attach(dvb_pll_attach, fc->fe, 0x61, i2c,
+	अगर (!dvb_attach(dvb_pll_attach, fc->fe, 0x61, i2c,
 			DVB_PLL_SAMSUNG_TBDU18132))
-		return 0;
+		वापस 0;
 
 	ops = &fc->fe->ops;
 	ops->diseqc_send_master_cmd = flexcop_diseqc_send_master_cmd;
@@ -187,43 +188,43 @@ static int skystar2_rev23_attach(struct flexcop_device *fc,
 	ops->set_voltage            = flexcop_set_voltage;
 	fc->fe_sleep                = ops->sleep;
 	ops->sleep                  = flexcop_sleep;
-	return 1;
-}
-#else
-#define skystar2_rev23_attach NULL
-#endif
+	वापस 1;
+पूर्ण
+#अन्यथा
+#घोषणा skystar2_rev23_attach शून्य
+#पूर्ण_अगर
 
 /* SkyStar2 DVB-S rev 2.6 */
-#if FE_SUPPORTED(STV0299) && FE_SUPPORTED(PLL)
-static int samsung_tbmu24112_set_symbol_rate(struct dvb_frontend *fe,
+#अगर FE_SUPPORTED(STV0299) && FE_SUPPORTED(PLL)
+अटल पूर्णांक samsung_tbmu24112_set_symbol_rate(काष्ठा dvb_frontend *fe,
 	u32 srate, u32 ratio)
-{
+अणु
 	u8 aclk = 0;
 	u8 bclk = 0;
 
-	if (srate < 1500000) {
+	अगर (srate < 1500000) अणु
 		aclk = 0xb7; bclk = 0x47;
-	} else if (srate < 3000000) {
+	पूर्ण अन्यथा अगर (srate < 3000000) अणु
 		aclk = 0xb7; bclk = 0x4b;
-	} else if (srate < 7000000) {
+	पूर्ण अन्यथा अगर (srate < 7000000) अणु
 		aclk = 0xb7; bclk = 0x4f;
-	} else if (srate < 14000000) {
+	पूर्ण अन्यथा अगर (srate < 14000000) अणु
 		aclk = 0xb7; bclk = 0x53;
-	} else if (srate < 30000000) {
+	पूर्ण अन्यथा अगर (srate < 30000000) अणु
 		aclk = 0xb6; bclk = 0x53;
-	} else if (srate < 45000000) {
+	पूर्ण अन्यथा अगर (srate < 45000000) अणु
 		aclk = 0xb4; bclk = 0x51;
-	}
+	पूर्ण
 
-	stv0299_writereg(fe, 0x13, aclk);
-	stv0299_writereg(fe, 0x14, bclk);
-	stv0299_writereg(fe, 0x1f, (ratio >> 16) & 0xff);
-	stv0299_writereg(fe, 0x20, (ratio >>  8) & 0xff);
-	stv0299_writereg(fe, 0x21,  ratio        & 0xf0);
-	return 0;
-}
+	stv0299_ग_लिखोreg(fe, 0x13, aclk);
+	stv0299_ग_लिखोreg(fe, 0x14, bclk);
+	stv0299_ग_लिखोreg(fe, 0x1f, (ratio >> 16) & 0xff);
+	stv0299_ग_लिखोreg(fe, 0x20, (ratio >>  8) & 0xff);
+	stv0299_ग_लिखोreg(fe, 0x21,  ratio        & 0xf0);
+	वापस 0;
+पूर्ण
 
-static u8 samsung_tbmu24112_inittab[] = {
+अटल u8 samsung_tbmu24112_inittab[] = अणु
 	0x01, 0x15,
 	0x02, 0x30,
 	0x03, 0x00,
@@ -266,9 +267,9 @@ static u8 samsung_tbmu24112_inittab[] = {
 	0x33, 0xFE,
 	0x34, 0x93,
 	0xff, 0xff,
-};
+पूर्ण;
 
-static struct stv0299_config samsung_tbmu24112_config = {
+अटल काष्ठा stv0299_config samsung_tbmu24112_config = अणु
 	.demod_address = 0x68,
 	.inittab = samsung_tbmu24112_inittab,
 	.mclk = 88000000UL,
@@ -278,246 +279,246 @@ static struct stv0299_config samsung_tbmu24112_config = {
 	.volt13_op0_op1 = STV0299_VOLT13_OP1,
 	.min_delay_ms = 100,
 	.set_symbol_rate = samsung_tbmu24112_set_symbol_rate,
-};
+पूर्ण;
 
-static int skystar2_rev26_attach(struct flexcop_device *fc,
-	struct i2c_adapter *i2c)
-{
+अटल पूर्णांक skystar2_rev26_attach(काष्ठा flexcop_device *fc,
+	काष्ठा i2c_adapter *i2c)
+अणु
 	fc->fe = dvb_attach(stv0299_attach, &samsung_tbmu24112_config, i2c);
-	if (!fc->fe)
-		return 0;
+	अगर (!fc->fe)
+		वापस 0;
 
-	if (!dvb_attach(dvb_pll_attach, fc->fe, 0x61, i2c,
+	अगर (!dvb_attach(dvb_pll_attach, fc->fe, 0x61, i2c,
 			DVB_PLL_SAMSUNG_TBMU24112))
-		return 0;
+		वापस 0;
 
 	fc->fe->ops.set_voltage = flexcop_set_voltage;
 	fc->fe_sleep = fc->fe->ops.sleep;
 	fc->fe->ops.sleep = flexcop_sleep;
-	return 1;
+	वापस 1;
 
-}
-#else
-#define skystar2_rev26_attach NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा skystar2_rev26_attach शून्य
+#पूर्ण_अगर
 
 /* SkyStar2 DVB-S rev 2.7 */
-#if FE_SUPPORTED(S5H1420) && FE_SUPPORTED(ISL6421) && FE_SUPPORTED(TUNER_ITD1000)
-static struct s5h1420_config skystar2_rev2_7_s5h1420_config = {
+#अगर FE_SUPPORTED(S5H1420) && FE_SUPPORTED(ISL6421) && FE_SUPPORTED(TUNER_ITD1000)
+अटल काष्ठा s5h1420_config skystar2_rev2_7_s5h1420_config = अणु
 	.demod_address = 0x53,
 	.invert = 1,
 	.repeated_start_workaround = 1,
 	.serial_mpeg = 1,
-};
+पूर्ण;
 
-static struct itd1000_config skystar2_rev2_7_itd1000_config = {
+अटल काष्ठा itd1000_config skystar2_rev2_7_itd1000_config = अणु
 	.i2c_address = 0x61,
-};
+पूर्ण;
 
-static int skystar2_rev27_attach(struct flexcop_device *fc,
-	struct i2c_adapter *i2c)
-{
+अटल पूर्णांक skystar2_rev27_attach(काष्ठा flexcop_device *fc,
+	काष्ठा i2c_adapter *i2c)
+अणु
 	flexcop_ibi_value r108;
-	struct i2c_adapter *i2c_tuner;
+	काष्ठा i2c_adapter *i2c_tuner;
 
-	/* enable no_base_addr - no repeated start when reading */
+	/* enable no_base_addr - no repeated start when पढ़ोing */
 	fc->fc_i2c_adap[0].no_base_addr = 1;
 	fc->fe = dvb_attach(s5h1420_attach, &skystar2_rev2_7_s5h1420_config,
 			    i2c);
-	if (!fc->fe)
-		goto fail;
+	अगर (!fc->fe)
+		जाओ fail;
 
 	i2c_tuner = s5h1420_get_tuner_i2c_adapter(fc->fe);
-	if (!i2c_tuner)
-		goto fail;
+	अगर (!i2c_tuner)
+		जाओ fail;
 
 	fc->fe_sleep = fc->fe->ops.sleep;
 	fc->fe->ops.sleep = flexcop_sleep;
 
-	/* enable no_base_addr - no repeated start when reading */
+	/* enable no_base_addr - no repeated start when पढ़ोing */
 	fc->fc_i2c_adap[2].no_base_addr = 1;
-	if (!dvb_attach(isl6421_attach, fc->fe, &fc->fc_i2c_adap[2].i2c_adap,
-			0x08, 1, 1, false)) {
+	अगर (!dvb_attach(isl6421_attach, fc->fe, &fc->fc_i2c_adap[2].i2c_adap,
+			0x08, 1, 1, false)) अणु
 		err("ISL6421 could NOT be attached");
-		goto fail_isl;
-	}
+		जाओ fail_isl;
+	पूर्ण
 	info("ISL6421 successfully attached");
 
-	/* the ITD1000 requires a lower i2c clock - is it a problem ? */
+	/* the ITD1000 requires a lower i2c घड़ी - is it a problem ? */
 	r108.raw = 0x00000506;
-	fc->write_ibi_reg(fc, tw_sm_c_108, r108);
-	if (!dvb_attach(itd1000_attach, fc->fe, i2c_tuner,
-			&skystar2_rev2_7_itd1000_config)) {
+	fc->ग_लिखो_ibi_reg(fc, tw_sm_c_108, r108);
+	अगर (!dvb_attach(itd1000_attach, fc->fe, i2c_tuner,
+			&skystar2_rev2_7_itd1000_config)) अणु
 		err("ITD1000 could NOT be attached");
-		/* Should i2c clock be restored? */
-		goto fail_isl;
-	}
+		/* Should i2c घड़ी be restored? */
+		जाओ fail_isl;
+	पूर्ण
 	info("ITD1000 successfully attached");
 
-	return 1;
+	वापस 1;
 
 fail_isl:
 	fc->fc_i2c_adap[2].no_base_addr = 0;
 fail:
-	/* for the next devices we need it again */
+	/* क्रम the next devices we need it again */
 	fc->fc_i2c_adap[0].no_base_addr = 0;
-	return 0;
-}
-#else
-#define skystar2_rev27_attach NULL
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा skystar2_rev27_attach शून्य
+#पूर्ण_अगर
 
 /* SkyStar2 rev 2.8 */
-#if FE_SUPPORTED(CX24123) && FE_SUPPORTED(ISL6421) && FE_SUPPORTED(TUNER_CX24113)
-static struct cx24123_config skystar2_rev2_8_cx24123_config = {
+#अगर FE_SUPPORTED(CX24123) && FE_SUPPORTED(ISL6421) && FE_SUPPORTED(TUNER_CX24113)
+अटल काष्ठा cx24123_config skystar2_rev2_8_cx24123_config = अणु
 	.demod_address = 0x55,
-	.dont_use_pll = 1,
+	.करोnt_use_pll = 1,
 	.agc_callback = cx24113_agc_callback,
-};
+पूर्ण;
 
-static const struct cx24113_config skystar2_rev2_8_cx24113_config = {
+अटल स्थिर काष्ठा cx24113_config skystar2_rev2_8_cx24113_config = अणु
 	.i2c_addr = 0x54,
 	.xtal_khz = 10111,
-};
+पूर्ण;
 
-static int skystar2_rev28_attach(struct flexcop_device *fc,
-	struct i2c_adapter *i2c)
-{
-	struct i2c_adapter *i2c_tuner;
+अटल पूर्णांक skystar2_rev28_attach(काष्ठा flexcop_device *fc,
+	काष्ठा i2c_adapter *i2c)
+अणु
+	काष्ठा i2c_adapter *i2c_tuner;
 
 	fc->fe = dvb_attach(cx24123_attach, &skystar2_rev2_8_cx24123_config,
 			    i2c);
-	if (!fc->fe)
-		return 0;
+	अगर (!fc->fe)
+		वापस 0;
 
 	i2c_tuner = cx24123_get_tuner_i2c_adapter(fc->fe);
-	if (!i2c_tuner)
-		return 0;
+	अगर (!i2c_tuner)
+		वापस 0;
 
-	if (!dvb_attach(cx24113_attach, fc->fe, &skystar2_rev2_8_cx24113_config,
-			i2c_tuner)) {
+	अगर (!dvb_attach(cx24113_attach, fc->fe, &skystar2_rev2_8_cx24113_config,
+			i2c_tuner)) अणु
 		err("CX24113 could NOT be attached");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	info("CX24113 successfully attached");
 
 	fc->fc_i2c_adap[2].no_base_addr = 1;
-	if (!dvb_attach(isl6421_attach, fc->fe, &fc->fc_i2c_adap[2].i2c_adap,
-			0x08, 0, 0, false)) {
+	अगर (!dvb_attach(isl6421_attach, fc->fe, &fc->fc_i2c_adap[2].i2c_adap,
+			0x08, 0, 0, false)) अणु
 		err("ISL6421 could NOT be attached");
 		fc->fc_i2c_adap[2].no_base_addr = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	info("ISL6421 successfully attached");
 	/* TODO on i2c_adap[1] addr 0x11 (EEPROM) there seems to be an
-	 * IR-receiver (PIC16F818) - but the card has no input for that ??? */
-	return 1;
-}
-#else
-#define skystar2_rev28_attach NULL
-#endif
+	 * IR-receiver (PIC16F818) - but the card has no input क्रम that ??? */
+	वापस 1;
+पूर्ण
+#अन्यथा
+#घोषणा skystar2_rev28_attach शून्य
+#पूर्ण_अगर
 
 /* AirStar DVB-T */
-#if FE_SUPPORTED(MT352) && FE_SUPPORTED(PLL)
-static int samsung_tdtc9251dh0_demod_init(struct dvb_frontend *fe)
-{
-	static u8 mt352_clock_config[] = { 0x89, 0x18, 0x2d };
-	static u8 mt352_reset[] = { 0x50, 0x80 };
-	static u8 mt352_adc_ctl_1_cfg[] = { 0x8E, 0x40 };
-	static u8 mt352_agc_cfg[] = { 0x67, 0x28, 0xa1 };
-	static u8 mt352_capt_range_cfg[] = { 0x75, 0x32 };
+#अगर FE_SUPPORTED(MT352) && FE_SUPPORTED(PLL)
+अटल पूर्णांक samsung_tdtc9251dh0_demod_init(काष्ठा dvb_frontend *fe)
+अणु
+	अटल u8 mt352_घड़ी_config[] = अणु 0x89, 0x18, 0x2d पूर्ण;
+	अटल u8 mt352_reset[] = अणु 0x50, 0x80 पूर्ण;
+	अटल u8 mt352_adc_ctl_1_cfg[] = अणु 0x8E, 0x40 पूर्ण;
+	अटल u8 mt352_agc_cfg[] = अणु 0x67, 0x28, 0xa1 पूर्ण;
+	अटल u8 mt352_capt_range_cfg[] = अणु 0x75, 0x32 पूर्ण;
 
-	mt352_write(fe, mt352_clock_config, sizeof(mt352_clock_config));
+	mt352_ग_लिखो(fe, mt352_घड़ी_config, माप(mt352_घड़ी_config));
 	udelay(2000);
-	mt352_write(fe, mt352_reset, sizeof(mt352_reset));
-	mt352_write(fe, mt352_adc_ctl_1_cfg, sizeof(mt352_adc_ctl_1_cfg));
-	mt352_write(fe, mt352_agc_cfg, sizeof(mt352_agc_cfg));
-	mt352_write(fe, mt352_capt_range_cfg, sizeof(mt352_capt_range_cfg));
-	return 0;
-}
+	mt352_ग_लिखो(fe, mt352_reset, माप(mt352_reset));
+	mt352_ग_लिखो(fe, mt352_adc_ctl_1_cfg, माप(mt352_adc_ctl_1_cfg));
+	mt352_ग_लिखो(fe, mt352_agc_cfg, माप(mt352_agc_cfg));
+	mt352_ग_लिखो(fe, mt352_capt_range_cfg, माप(mt352_capt_range_cfg));
+	वापस 0;
+पूर्ण
 
-static struct mt352_config samsung_tdtc9251dh0_config = {
+अटल काष्ठा mt352_config samsung_tdtc9251dh0_config = अणु
 	.demod_address = 0x0f,
 	.demod_init    = samsung_tdtc9251dh0_demod_init,
-};
+पूर्ण;
 
-static int airstar_dvbt_attach(struct flexcop_device *fc,
-	struct i2c_adapter *i2c)
-{
+अटल पूर्णांक airstar_dvbt_attach(काष्ठा flexcop_device *fc,
+	काष्ठा i2c_adapter *i2c)
+अणु
 	fc->fe = dvb_attach(mt352_attach, &samsung_tdtc9251dh0_config, i2c);
-	if (!fc->fe)
-		return 0;
+	अगर (!fc->fe)
+		वापस 0;
 
-	return !!dvb_attach(dvb_pll_attach, fc->fe, 0x61, NULL,
+	वापस !!dvb_attach(dvb_pll_attach, fc->fe, 0x61, शून्य,
 			    DVB_PLL_SAMSUNG_TDTC9251DH0);
-}
-#else
-#define airstar_dvbt_attach NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा airstar_dvbt_attach शून्य
+#पूर्ण_अगर
 
 /* AirStar ATSC 1st generation */
-#if FE_SUPPORTED(BCM3510)
-static struct bcm3510_config air2pc_atsc_first_gen_config = {
+#अगर FE_SUPPORTED(BCM3510)
+अटल काष्ठा bcm3510_config air2pc_atsc_first_gen_config = अणु
 	.demod_address    = 0x0f,
 	.request_firmware = flexcop_fe_request_firmware,
-};
+पूर्ण;
 
-static int airstar_atsc1_attach(struct flexcop_device *fc,
-	struct i2c_adapter *i2c)
-{
+अटल पूर्णांक airstar_atsc1_attach(काष्ठा flexcop_device *fc,
+	काष्ठा i2c_adapter *i2c)
+अणु
 	fc->fe = dvb_attach(bcm3510_attach, &air2pc_atsc_first_gen_config, i2c);
-	return fc->fe != NULL;
-}
-#else
-#define airstar_atsc1_attach NULL
-#endif
+	वापस fc->fe != शून्य;
+पूर्ण
+#अन्यथा
+#घोषणा airstar_atsc1_attach शून्य
+#पूर्ण_अगर
 
 /* AirStar ATSC 2nd generation */
-#if FE_SUPPORTED(NXT200X) && FE_SUPPORTED(PLL)
-static const struct nxt200x_config samsung_tbmv_config = {
+#अगर FE_SUPPORTED(NXT200X) && FE_SUPPORTED(PLL)
+अटल स्थिर काष्ठा nxt200x_config samsung_tbmv_config = अणु
 	.demod_address = 0x0a,
-};
+पूर्ण;
 
-static int airstar_atsc2_attach(struct flexcop_device *fc,
-	struct i2c_adapter *i2c)
-{
+अटल पूर्णांक airstar_atsc2_attach(काष्ठा flexcop_device *fc,
+	काष्ठा i2c_adapter *i2c)
+अणु
 	fc->fe = dvb_attach(nxt200x_attach, &samsung_tbmv_config, i2c);
-	if (!fc->fe)
-		return 0;
+	अगर (!fc->fe)
+		वापस 0;
 
-	return !!dvb_attach(dvb_pll_attach, fc->fe, 0x61, NULL,
+	वापस !!dvb_attach(dvb_pll_attach, fc->fe, 0x61, शून्य,
 			    DVB_PLL_SAMSUNG_TBMV);
-}
-#else
-#define airstar_atsc2_attach NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा airstar_atsc2_attach शून्य
+#पूर्ण_अगर
 
 /* AirStar ATSC 3rd generation */
-#if FE_SUPPORTED(LGDT330X)
-static struct lgdt330x_config air2pc_atsc_hd5000_config = {
+#अगर FE_SUPPORTED(LGDT330X)
+अटल काष्ठा lgdt330x_config air2pc_atsc_hd5000_config = अणु
 	.demod_chip          = LGDT3303,
 	.serial_mpeg         = 0x04,
-	.clock_polarity_flip = 1,
-};
+	.घड़ी_polarity_flip = 1,
+पूर्ण;
 
-static int airstar_atsc3_attach(struct flexcop_device *fc,
-	struct i2c_adapter *i2c)
-{
+अटल पूर्णांक airstar_atsc3_attach(काष्ठा flexcop_device *fc,
+	काष्ठा i2c_adapter *i2c)
+अणु
 	fc->fe = dvb_attach(lgdt330x_attach, &air2pc_atsc_hd5000_config,
 			    0x59, i2c);
-	if (!fc->fe)
-		return 0;
+	अगर (!fc->fe)
+		वापस 0;
 
-	return !!dvb_attach(simple_tuner_attach, fc->fe, i2c, 0x61,
+	वापस !!dvb_attach(simple_tuner_attach, fc->fe, i2c, 0x61,
 			    TUNER_LG_TDVS_H06XF);
-}
-#else
-#define airstar_atsc3_attach NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा airstar_atsc3_attach शून्य
+#पूर्ण_अगर
 
 /* CableStar2 DVB-C */
-#if FE_SUPPORTED(STV0297) && FE_SUPPORTED(PLL)
-static u8 alps_tdee4_stv0297_inittab[] = {
+#अगर FE_SUPPORTED(STV0297) && FE_SUPPORTED(PLL)
+अटल u8 alps_tdee4_stv0297_inittab[] = अणु
 	0x80, 0x01,
 	0x80, 0x00,
 	0x81, 0x01,
@@ -588,134 +589,134 @@ static u8 alps_tdee4_stv0297_inittab[] = {
 	0xde, 0x00,
 	0xdf, 0x01,
 	0xff, 0xff,
-};
+पूर्ण;
 
-static struct stv0297_config alps_tdee4_stv0297_config = {
+अटल काष्ठा stv0297_config alps_tdee4_stv0297_config = अणु
 	.demod_address = 0x1c,
 	.inittab = alps_tdee4_stv0297_inittab,
-};
+पूर्ण;
 
-static int cablestar2_attach(struct flexcop_device *fc,
-	struct i2c_adapter *i2c)
-{
+अटल पूर्णांक cablestar2_attach(काष्ठा flexcop_device *fc,
+	काष्ठा i2c_adapter *i2c)
+अणु
 	fc->fc_i2c_adap[0].no_base_addr = 1;
 	fc->fe = dvb_attach(stv0297_attach, &alps_tdee4_stv0297_config, i2c);
-	if (!fc->fe)
-		goto fail;
+	अगर (!fc->fe)
+		जाओ fail;
 
-	/* This tuner doesn't use the stv0297's I2C gate, but instead the
-	 * tuner is connected to a different flexcop I2C adapter.  */
-	if (fc->fe->ops.i2c_gate_ctrl)
+	/* This tuner करोesn't use the stv0297's I2C gate, but instead the
+	 * tuner is connected to a dअगरferent flexcop I2C adapter.  */
+	अगर (fc->fe->ops.i2c_gate_ctrl)
 		fc->fe->ops.i2c_gate_ctrl(fc->fe, 0);
-	fc->fe->ops.i2c_gate_ctrl = NULL;
+	fc->fe->ops.i2c_gate_ctrl = शून्य;
 
-	if (!dvb_attach(dvb_pll_attach, fc->fe, 0x61,
+	अगर (!dvb_attach(dvb_pll_attach, fc->fe, 0x61,
 			&fc->fc_i2c_adap[2].i2c_adap, DVB_PLL_TDEE4))
-		goto fail;
+		जाओ fail;
 
-	return 1;
+	वापस 1;
 
 fail:
-	/* Reset for next frontend to try */
+	/* Reset क्रम next frontend to try */
 	fc->fc_i2c_adap[0].no_base_addr = 0;
-	return 0;
-}
-#else
-#define cablestar2_attach NULL
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा cablestar2_attach शून्य
+#पूर्ण_अगर
 
 /* SkyStar S2 PCI DVB-S/S2 card based on Conexant cx24120/cx24118 */
-#if FE_SUPPORTED(CX24120) && FE_SUPPORTED(ISL6421)
-static const struct cx24120_config skystar2_rev3_3_cx24120_config = {
+#अगर FE_SUPPORTED(CX24120) && FE_SUPPORTED(ISL6421)
+अटल स्थिर काष्ठा cx24120_config skystar2_rev3_3_cx24120_config = अणु
 	.i2c_addr = 0x55,
 	.xtal_khz = 10111,
-	.initial_mpeg_config = { 0xa1, 0x76, 0x07 },
+	.initial_mpeg_config = अणु 0xa1, 0x76, 0x07 पूर्ण,
 	.request_firmware = flexcop_fe_request_firmware,
 	.i2c_wr_max = 4,
-};
+पूर्ण;
 
-static int skystarS2_rev33_attach(struct flexcop_device *fc,
-	struct i2c_adapter *i2c)
-{
+अटल पूर्णांक skystarS2_rev33_attach(काष्ठा flexcop_device *fc,
+	काष्ठा i2c_adapter *i2c)
+अणु
 	fc->fe = dvb_attach(cx24120_attach,
 			    &skystar2_rev3_3_cx24120_config, i2c);
-	if (!fc->fe)
-		return 0;
+	अगर (!fc->fe)
+		वापस 0;
 
 	fc->dev_type = FC_SKYS2_REV33;
 	fc->fc_i2c_adap[2].no_base_addr = 1;
-	if (!dvb_attach(isl6421_attach, fc->fe, &fc->fc_i2c_adap[2].i2c_adap,
-			0x08, 0, 0, false)) {
+	अगर (!dvb_attach(isl6421_attach, fc->fe, &fc->fc_i2c_adap[2].i2c_adap,
+			0x08, 0, 0, false)) अणु
 		err("ISL6421 could NOT be attached!");
 		fc->fc_i2c_adap[2].no_base_addr = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	info("ISL6421 successfully attached.");
 
-	if (fc->has_32_hw_pid_filter)
+	अगर (fc->has_32_hw_pid_filter)
 		fc->skip_6_hw_pid_filter = 1;
 
-	return 1;
-}
-#else
-#define skystarS2_rev33_attach NULL
-#endif
+	वापस 1;
+पूर्ण
+#अन्यथा
+#घोषणा skystarS2_rev33_attach शून्य
+#पूर्ण_अगर
 
-static struct {
+अटल काष्ठा अणु
 	flexcop_device_type_t type;
-	int (*attach)(struct flexcop_device *, struct i2c_adapter *);
-} flexcop_frontends[] = {
-	{ FC_SKY_REV27, skystar2_rev27_attach },
-	{ FC_SKY_REV28, skystar2_rev28_attach },
-	{ FC_SKY_REV26, skystar2_rev26_attach },
-	{ FC_AIR_DVBT, airstar_dvbt_attach },
-	{ FC_AIR_ATSC2, airstar_atsc2_attach },
-	{ FC_AIR_ATSC3, airstar_atsc3_attach },
-	{ FC_AIR_ATSC1, airstar_atsc1_attach },
-	{ FC_CABLE, cablestar2_attach },
-	{ FC_SKY_REV23, skystar2_rev23_attach },
-	{ FC_SKYS2_REV33, skystarS2_rev33_attach },
-};
+	पूर्णांक (*attach)(काष्ठा flexcop_device *, काष्ठा i2c_adapter *);
+पूर्ण flexcop_frontends[] = अणु
+	अणु FC_SKY_REV27, skystar2_rev27_attach पूर्ण,
+	अणु FC_SKY_REV28, skystar2_rev28_attach पूर्ण,
+	अणु FC_SKY_REV26, skystar2_rev26_attach पूर्ण,
+	अणु FC_AIR_DVBT, airstar_dvbt_attach पूर्ण,
+	अणु FC_AIR_ATSC2, airstar_atsc2_attach पूर्ण,
+	अणु FC_AIR_ATSC3, airstar_atsc3_attach पूर्ण,
+	अणु FC_AIR_ATSC1, airstar_atsc1_attach पूर्ण,
+	अणु FC_CABLE, cablestar2_attach पूर्ण,
+	अणु FC_SKY_REV23, skystar2_rev23_attach पूर्ण,
+	अणु FC_SKYS2_REV33, skystarS2_rev33_attach पूर्ण,
+पूर्ण;
 
 /* try to figure out the frontend */
-int flexcop_frontend_init(struct flexcop_device *fc)
-{
-	int i;
-	for (i = 0; i < ARRAY_SIZE(flexcop_frontends); i++) {
-		if (!flexcop_frontends[i].attach)
-			continue;
-		/* type needs to be set before, because of some workarounds
-		 * done based on the probed card type */
+पूर्णांक flexcop_frontend_init(काष्ठा flexcop_device *fc)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < ARRAY_SIZE(flexcop_frontends); i++) अणु
+		अगर (!flexcop_frontends[i].attach)
+			जारी;
+		/* type needs to be set beक्रमe, because of some workarounds
+		 * करोne based on the probed card type */
 		fc->dev_type = flexcop_frontends[i].type;
-		if (flexcop_frontends[i].attach(fc, &fc->fc_i2c_adap[0].i2c_adap))
-			goto fe_found;
+		अगर (flexcop_frontends[i].attach(fc, &fc->fc_i2c_adap[0].i2c_adap))
+			जाओ fe_found;
 		/* Clean up partially attached frontend */
-		if (fc->fe) {
+		अगर (fc->fe) अणु
 			dvb_frontend_detach(fc->fe);
-			fc->fe = NULL;
-		}
-	}
+			fc->fe = शून्य;
+		पूर्ण
+	पूर्ण
 	fc->dev_type = FC_UNK;
 	err("no frontend driver found for this B2C2/FlexCop adapter");
-	return -ENODEV;
+	वापस -ENODEV;
 
 fe_found:
 	info("found '%s' .", fc->fe->ops.info.name);
-	if (dvb_register_frontend(&fc->dvb_adapter, fc->fe)) {
+	अगर (dvb_रेजिस्टर_frontend(&fc->dvb_adapter, fc->fe)) अणु
 		err("frontend registration failed!");
 		dvb_frontend_detach(fc->fe);
-		fc->fe = NULL;
-		return -EINVAL;
-	}
+		fc->fe = शून्य;
+		वापस -EINVAL;
+	पूर्ण
 	fc->init_state |= FC_STATE_FE_INIT;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void flexcop_frontend_exit(struct flexcop_device *fc)
-{
-	if (fc->init_state & FC_STATE_FE_INIT) {
-		dvb_unregister_frontend(fc->fe);
+व्योम flexcop_frontend_निकास(काष्ठा flexcop_device *fc)
+अणु
+	अगर (fc->init_state & FC_STATE_FE_INIT) अणु
+		dvb_unरेजिस्टर_frontend(fc->fe);
 		dvb_frontend_detach(fc->fe);
-	}
+	पूर्ण
 	fc->init_state &= ~FC_STATE_FE_INIT;
-}
+पूर्ण

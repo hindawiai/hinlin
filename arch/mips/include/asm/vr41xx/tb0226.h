@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *  tb0226.h, Include file for TANBAC TB0226.
+ *  tb0226.h, Include file क्रम TANBAC TB0226.
  *
  *  Copyright (C) 2002-2004  Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#ifndef __TANBAC_TB0226_H
-#define __TANBAC_TB0226_H
+#अगर_अघोषित __TANBAC_TB0226_H
+#घोषणा __TANBAC_TB0226_H
 
-#include <asm/vr41xx/irq.h>
+#समावेश <यंत्र/vr41xx/irq.h>
 
 /*
  * General-Purpose I/O Pin Number
  */
-#define GD82559_1_PIN			2
-#define GD82559_2_PIN			3
-#define UPD720100_INTA_PIN		4
-#define UPD720100_INTB_PIN		8
-#define UPD720100_INTC_PIN		13
+#घोषणा GD82559_1_PIN			2
+#घोषणा GD82559_2_PIN			3
+#घोषणा UPD720100_INTA_PIN		4
+#घोषणा UPD720100_INTB_PIN		8
+#घोषणा UPD720100_INTC_PIN		13
 
 /*
  * Interrupt Number
  */
-#define GD82559_1_IRQ			GIU_IRQ(GD82559_1_PIN)
-#define GD82559_2_IRQ			GIU_IRQ(GD82559_2_PIN)
-#define UPD720100_INTA_IRQ		GIU_IRQ(UPD720100_INTA_PIN)
-#define UPD720100_INTB_IRQ		GIU_IRQ(UPD720100_INTB_PIN)
-#define UPD720100_INTC_IRQ		GIU_IRQ(UPD720100_INTC_PIN)
+#घोषणा GD82559_1_IRQ			GIU_IRQ(GD82559_1_PIN)
+#घोषणा GD82559_2_IRQ			GIU_IRQ(GD82559_2_PIN)
+#घोषणा UPD720100_INTA_IRQ		GIU_IRQ(UPD720100_INTA_PIN)
+#घोषणा UPD720100_INTB_IRQ		GIU_IRQ(UPD720100_INTB_PIN)
+#घोषणा UPD720100_INTC_IRQ		GIU_IRQ(UPD720100_INTC_PIN)
 
-#endif /* __TANBAC_TB0226_H */
+#पूर्ण_अगर /* __TANBAC_TB0226_H */

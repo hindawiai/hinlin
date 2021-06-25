@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Based on intlist.c by:
- * (c) 2009 Arnaldo Carvalho de Melo <acme@redhat.com>
+ * Based on पूर्णांकlist.c by:
+ * (c) 2009 Arnalकरो Carvalho de Melo <acme@redhat.com>
  */
 
-#include <errno.h>
-#include <stdlib.h>
-#include <linux/compiler.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानककोष.स>
+#समावेश <linux/compiler.h>
 
-#include "intlist.h"
+#समावेश "intlist.h"
 
-static struct rb_node *intlist__node_new(struct rblist *rblist __maybe_unused,
-					 const void *entry)
-{
-	unsigned long i = (unsigned long)entry;
-	struct rb_node *rc = NULL;
-	struct int_node *node = malloc(sizeof(*node));
+अटल काष्ठा rb_node *पूर्णांकlist__node_new(काष्ठा rblist *rblist __maybe_unused,
+					 स्थिर व्योम *entry)
+अणु
+	अचिन्हित दीर्घ i = (अचिन्हित दीर्घ)entry;
+	काष्ठा rb_node *rc = शून्य;
+	काष्ठा पूर्णांक_node *node = दो_स्मृति(माप(*node));
 
-	if (node != NULL) {
+	अगर (node != शून्य) अणु
 		node->i = i;
-		node->priv = NULL;
+		node->priv = शून्य;
 		rc = &node->rb_node;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void int_node__delete(struct int_node *ilist)
-{
-	free(ilist);
-}
+अटल व्योम पूर्णांक_node__delete(काष्ठा पूर्णांक_node *ilist)
+अणु
+	मुक्त(ilist);
+पूर्ण
 
-static void intlist__node_delete(struct rblist *rblist __maybe_unused,
-				 struct rb_node *rb_node)
-{
-	struct int_node *node = container_of(rb_node, struct int_node, rb_node);
+अटल व्योम पूर्णांकlist__node_delete(काष्ठा rblist *rblist __maybe_unused,
+				 काष्ठा rb_node *rb_node)
+अणु
+	काष्ठा पूर्णांक_node *node = container_of(rb_node, काष्ठा पूर्णांक_node, rb_node);
 
-	int_node__delete(node);
-}
+	पूर्णांक_node__delete(node);
+पूर्ण
 
-static int intlist__node_cmp(struct rb_node *rb_node, const void *entry)
-{
-	unsigned long i = (unsigned long)entry;
-	struct int_node *node = container_of(rb_node, struct int_node, rb_node);
+अटल पूर्णांक पूर्णांकlist__node_cmp(काष्ठा rb_node *rb_node, स्थिर व्योम *entry)
+अणु
+	अचिन्हित दीर्घ i = (अचिन्हित दीर्घ)entry;
+	काष्ठा पूर्णांक_node *node = container_of(rb_node, काष्ठा पूर्णांक_node, rb_node);
 
-	if (node->i > i)
-		return 1;
-	else if (node->i < i)
-		return -1;
+	अगर (node->i > i)
+		वापस 1;
+	अन्यथा अगर (node->i < i)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int intlist__add(struct intlist *ilist, unsigned long i)
-{
-	return rblist__add_node(&ilist->rblist, (void *)i);
-}
+पूर्णांक पूर्णांकlist__add(काष्ठा पूर्णांकlist *ilist, अचिन्हित दीर्घ i)
+अणु
+	वापस rblist__add_node(&ilist->rblist, (व्योम *)i);
+पूर्ण
 
-void intlist__remove(struct intlist *ilist, struct int_node *node)
-{
-	rblist__remove_node(&ilist->rblist, &node->rb_node);
-}
+व्योम पूर्णांकlist__हटाओ(काष्ठा पूर्णांकlist *ilist, काष्ठा पूर्णांक_node *node)
+अणु
+	rblist__हटाओ_node(&ilist->rblist, &node->rb_node);
+पूर्ण
 
-static struct int_node *__intlist__findnew(struct intlist *ilist,
-					   unsigned long i, bool create)
-{
-	struct int_node *node = NULL;
-	struct rb_node *rb_node;
+अटल काष्ठा पूर्णांक_node *__पूर्णांकlist__findnew(काष्ठा पूर्णांकlist *ilist,
+					   अचिन्हित दीर्घ i, bool create)
+अणु
+	काष्ठा पूर्णांक_node *node = शून्य;
+	काष्ठा rb_node *rb_node;
 
-	if (ilist == NULL)
-		return NULL;
+	अगर (ilist == शून्य)
+		वापस शून्य;
 
-	if (create)
-		rb_node = rblist__findnew(&ilist->rblist, (void *)i);
-	else
-		rb_node = rblist__find(&ilist->rblist, (void *)i);
+	अगर (create)
+		rb_node = rblist__findnew(&ilist->rblist, (व्योम *)i);
+	अन्यथा
+		rb_node = rblist__find(&ilist->rblist, (व्योम *)i);
 
-	if (rb_node)
-		node = container_of(rb_node, struct int_node, rb_node);
+	अगर (rb_node)
+		node = container_of(rb_node, काष्ठा पूर्णांक_node, rb_node);
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
-struct int_node *intlist__find(struct intlist *ilist, unsigned long i)
-{
-	return __intlist__findnew(ilist, i, false);
-}
+काष्ठा पूर्णांक_node *पूर्णांकlist__find(काष्ठा पूर्णांकlist *ilist, अचिन्हित दीर्घ i)
+अणु
+	वापस __पूर्णांकlist__findnew(ilist, i, false);
+पूर्ण
 
-struct int_node *intlist__findnew(struct intlist *ilist, unsigned long i)
-{
-	return __intlist__findnew(ilist, i, true);
-}
+काष्ठा पूर्णांक_node *पूर्णांकlist__findnew(काष्ठा पूर्णांकlist *ilist, अचिन्हित दीर्घ i)
+अणु
+	वापस __पूर्णांकlist__findnew(ilist, i, true);
+पूर्ण
 
-static int intlist__parse_list(struct intlist *ilist, const char *s)
-{
-	char *sep;
-	int err;
+अटल पूर्णांक पूर्णांकlist__parse_list(काष्ठा पूर्णांकlist *ilist, स्थिर अक्षर *s)
+अणु
+	अक्षर *sep;
+	पूर्णांक err;
 
-	do {
-		unsigned long value = strtol(s, &sep, 10);
+	करो अणु
+		अचिन्हित दीर्घ value = म_से_दीर्घ(s, &sep, 10);
 		err = -EINVAL;
-		if (*sep != ',' && *sep != '\0')
-			break;
-		err = intlist__add(ilist, value);
-		if (err)
-			break;
+		अगर (*sep != ',' && *sep != '\0')
+			अवरोध;
+		err = पूर्णांकlist__add(ilist, value);
+		अगर (err)
+			अवरोध;
 		s = sep + 1;
-	} while (*sep != '\0');
+	पूर्ण जबतक (*sep != '\0');
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct intlist *intlist__new(const char *slist)
-{
-	struct intlist *ilist = malloc(sizeof(*ilist));
+काष्ठा पूर्णांकlist *पूर्णांकlist__new(स्थिर अक्षर *slist)
+अणु
+	काष्ठा पूर्णांकlist *ilist = दो_स्मृति(माप(*ilist));
 
-	if (ilist != NULL) {
+	अगर (ilist != शून्य) अणु
 		rblist__init(&ilist->rblist);
-		ilist->rblist.node_cmp    = intlist__node_cmp;
-		ilist->rblist.node_new    = intlist__node_new;
-		ilist->rblist.node_delete = intlist__node_delete;
+		ilist->rblist.node_cmp    = पूर्णांकlist__node_cmp;
+		ilist->rblist.node_new    = पूर्णांकlist__node_new;
+		ilist->rblist.node_delete = पूर्णांकlist__node_delete;
 
-		if (slist && intlist__parse_list(ilist, slist))
-			goto out_delete;
-	}
+		अगर (slist && पूर्णांकlist__parse_list(ilist, slist))
+			जाओ out_delete;
+	पूर्ण
 
-	return ilist;
+	वापस ilist;
 out_delete:
-	intlist__delete(ilist);
-	return NULL;
-}
+	पूर्णांकlist__delete(ilist);
+	वापस शून्य;
+पूर्ण
 
-void intlist__delete(struct intlist *ilist)
-{
-	if (ilist != NULL)
+व्योम पूर्णांकlist__delete(काष्ठा पूर्णांकlist *ilist)
+अणु
+	अगर (ilist != शून्य)
 		rblist__delete(&ilist->rblist);
-}
+पूर्ण
 
-struct int_node *intlist__entry(const struct intlist *ilist, unsigned int idx)
-{
-	struct int_node *node = NULL;
-	struct rb_node *rb_node;
+काष्ठा पूर्णांक_node *पूर्णांकlist__entry(स्थिर काष्ठा पूर्णांकlist *ilist, अचिन्हित पूर्णांक idx)
+अणु
+	काष्ठा पूर्णांक_node *node = शून्य;
+	काष्ठा rb_node *rb_node;
 
 	rb_node = rblist__entry(&ilist->rblist, idx);
-	if (rb_node)
-		node = container_of(rb_node, struct int_node, rb_node);
+	अगर (rb_node)
+		node = container_of(rb_node, काष्ठा पूर्णांक_node, rb_node);
 
-	return node;
-}
+	वापस node;
+पूर्ण

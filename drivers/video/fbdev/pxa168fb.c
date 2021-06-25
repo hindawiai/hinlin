@@ -1,182 +1,183 @@
+<शैली गुरु>
 /*
  * linux/drivers/video/pxa168fb.c -- Marvell PXA168 LCD Controller
  *
  *  Copyright (C) 2008 Marvell International Ltd.
  *  All rights reserved.
  *
- *  2009-02-16  adapted from original version for PXA168/910
+ *  2009-02-16  adapted from original version क्रम PXA168/910
  *              Jun Nie <njun@marvell.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file COPYING in the main directory of this archive for
+ * License. See the file COPYING in the मुख्य directory of this archive क्रम
  * more details.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/string.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <linux/fb.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/platform_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/uaccess.h>
-#include <video/pxa168fb.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/uaccess.h>
+#समावेश <video/pxa168fb.h>
 
-#include "pxa168fb.h"
+#समावेश "pxa168fb.h"
 
-#define DEFAULT_REFRESH		60	/* Hz */
+#घोषणा DEFAULT_REFRESH		60	/* Hz */
 
-static int determine_best_pix_fmt(struct fb_var_screeninfo *var)
-{
+अटल पूर्णांक determine_best_pix_fmt(काष्ठा fb_var_screeninfo *var)
+अणु
 	/*
-	 * Pseudocolor mode?
+	 * Pseuकरोcolor mode?
 	 */
-	if (var->bits_per_pixel == 8)
-		return PIX_FMT_PSEUDOCOLOR;
-
-	/*
-	 * Check for 565/1555.
-	 */
-	if (var->bits_per_pixel == 16 && var->red.length <= 5 &&
-	    var->green.length <= 6 && var->blue.length <= 5) {
-		if (var->transp.length == 0) {
-			if (var->red.offset >= var->blue.offset)
-				return PIX_FMT_RGB565;
-			else
-				return PIX_FMT_BGR565;
-		}
-
-		if (var->transp.length == 1 && var->green.length <= 5) {
-			if (var->red.offset >= var->blue.offset)
-				return PIX_FMT_RGB1555;
-			else
-				return PIX_FMT_BGR1555;
-		}
-	}
+	अगर (var->bits_per_pixel == 8)
+		वापस PIX_FMT_PSEUDOCOLOR;
 
 	/*
-	 * Check for 888/A888.
+	 * Check क्रम 565/1555.
 	 */
-	if (var->bits_per_pixel <= 32 && var->red.length <= 8 &&
-	    var->green.length <= 8 && var->blue.length <= 8) {
-		if (var->bits_per_pixel == 24 && var->transp.length == 0) {
-			if (var->red.offset >= var->blue.offset)
-				return PIX_FMT_RGB888PACK;
-			else
-				return PIX_FMT_BGR888PACK;
-		}
+	अगर (var->bits_per_pixel == 16 && var->red.length <= 5 &&
+	    var->green.length <= 6 && var->blue.length <= 5) अणु
+		अगर (var->transp.length == 0) अणु
+			अगर (var->red.offset >= var->blue.offset)
+				वापस PIX_FMT_RGB565;
+			अन्यथा
+				वापस PIX_FMT_BGR565;
+		पूर्ण
 
-		if (var->bits_per_pixel == 32 && var->transp.length == 8) {
-			if (var->red.offset >= var->blue.offset)
-				return PIX_FMT_RGBA888;
-			else
-				return PIX_FMT_BGRA888;
-		} else {
-			if (var->red.offset >= var->blue.offset)
-				return PIX_FMT_RGB888UNPACK;
-			else
-				return PIX_FMT_BGR888UNPACK;
-		}
-	}
+		अगर (var->transp.length == 1 && var->green.length <= 5) अणु
+			अगर (var->red.offset >= var->blue.offset)
+				वापस PIX_FMT_RGB1555;
+			अन्यथा
+				वापस PIX_FMT_BGR1555;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	/*
+	 * Check क्रम 888/A888.
+	 */
+	अगर (var->bits_per_pixel <= 32 && var->red.length <= 8 &&
+	    var->green.length <= 8 && var->blue.length <= 8) अणु
+		अगर (var->bits_per_pixel == 24 && var->transp.length == 0) अणु
+			अगर (var->red.offset >= var->blue.offset)
+				वापस PIX_FMT_RGB888PACK;
+			अन्यथा
+				वापस PIX_FMT_BGR888PACK;
+		पूर्ण
 
-static void set_pix_fmt(struct fb_var_screeninfo *var, int pix_fmt)
-{
-	switch (pix_fmt) {
-	case PIX_FMT_RGB565:
+		अगर (var->bits_per_pixel == 32 && var->transp.length == 8) अणु
+			अगर (var->red.offset >= var->blue.offset)
+				वापस PIX_FMT_RGBA888;
+			अन्यथा
+				वापस PIX_FMT_BGRA888;
+		पूर्ण अन्यथा अणु
+			अगर (var->red.offset >= var->blue.offset)
+				वापस PIX_FMT_RGB888UNPACK;
+			अन्यथा
+				वापस PIX_FMT_BGR888UNPACK;
+		पूर्ण
+	पूर्ण
+
+	वापस -EINVAL;
+पूर्ण
+
+अटल व्योम set_pix_fmt(काष्ठा fb_var_screeninfo *var, पूर्णांक pix_fmt)
+अणु
+	चयन (pix_fmt) अणु
+	हाल PIX_FMT_RGB565:
 		var->bits_per_pixel = 16;
 		var->red.offset = 11;    var->red.length = 5;
 		var->green.offset = 5;   var->green.length = 6;
 		var->blue.offset = 0;    var->blue.length = 5;
 		var->transp.offset = 0;  var->transp.length = 0;
-		break;
-	case PIX_FMT_BGR565:
+		अवरोध;
+	हाल PIX_FMT_BGR565:
 		var->bits_per_pixel = 16;
 		var->red.offset = 0;     var->red.length = 5;
 		var->green.offset = 5;   var->green.length = 6;
 		var->blue.offset = 11;   var->blue.length = 5;
 		var->transp.offset = 0;  var->transp.length = 0;
-		break;
-	case PIX_FMT_RGB1555:
+		अवरोध;
+	हाल PIX_FMT_RGB1555:
 		var->bits_per_pixel = 16;
 		var->red.offset = 10;    var->red.length = 5;
 		var->green.offset = 5;   var->green.length = 5;
 		var->blue.offset = 0;    var->blue.length = 5;
 		var->transp.offset = 15; var->transp.length = 1;
-		break;
-	case PIX_FMT_BGR1555:
+		अवरोध;
+	हाल PIX_FMT_BGR1555:
 		var->bits_per_pixel = 16;
 		var->red.offset = 0;     var->red.length = 5;
 		var->green.offset = 5;   var->green.length = 5;
 		var->blue.offset = 10;   var->blue.length = 5;
 		var->transp.offset = 15; var->transp.length = 1;
-		break;
-	case PIX_FMT_RGB888PACK:
+		अवरोध;
+	हाल PIX_FMT_RGB888PACK:
 		var->bits_per_pixel = 24;
 		var->red.offset = 16;    var->red.length = 8;
 		var->green.offset = 8;   var->green.length = 8;
 		var->blue.offset = 0;    var->blue.length = 8;
 		var->transp.offset = 0;  var->transp.length = 0;
-		break;
-	case PIX_FMT_BGR888PACK:
+		अवरोध;
+	हाल PIX_FMT_BGR888PACK:
 		var->bits_per_pixel = 24;
 		var->red.offset = 0;     var->red.length = 8;
 		var->green.offset = 8;   var->green.length = 8;
 		var->blue.offset = 16;   var->blue.length = 8;
 		var->transp.offset = 0;  var->transp.length = 0;
-		break;
-	case PIX_FMT_RGBA888:
+		अवरोध;
+	हाल PIX_FMT_RGBA888:
 		var->bits_per_pixel = 32;
 		var->red.offset = 16;    var->red.length = 8;
 		var->green.offset = 8;   var->green.length = 8;
 		var->blue.offset = 0;    var->blue.length = 8;
 		var->transp.offset = 24; var->transp.length = 8;
-		break;
-	case PIX_FMT_BGRA888:
+		अवरोध;
+	हाल PIX_FMT_BGRA888:
 		var->bits_per_pixel = 32;
 		var->red.offset = 0;     var->red.length = 8;
 		var->green.offset = 8;   var->green.length = 8;
 		var->blue.offset = 16;   var->blue.length = 8;
 		var->transp.offset = 24; var->transp.length = 8;
-		break;
-	case PIX_FMT_PSEUDOCOLOR:
+		अवरोध;
+	हाल PIX_FMT_PSEUDOCOLOR:
 		var->bits_per_pixel = 8;
 		var->red.offset = 0;     var->red.length = 8;
 		var->green.offset = 0;   var->green.length = 8;
 		var->blue.offset = 0;    var->blue.length = 8;
 		var->transp.offset = 0;  var->transp.length = 0;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void set_mode(struct pxa168fb_info *fbi, struct fb_var_screeninfo *var,
-		     struct fb_videomode *mode, int pix_fmt, int ystretch)
-{
-	struct fb_info *info = fbi->info;
+अटल व्योम set_mode(काष्ठा pxa168fb_info *fbi, काष्ठा fb_var_screeninfo *var,
+		     काष्ठा fb_videomode *mode, पूर्णांक pix_fmt, पूर्णांक ystretch)
+अणु
+	काष्ठा fb_info *info = fbi->info;
 
 	set_pix_fmt(var, pix_fmt);
 
 	var->xres = mode->xres;
 	var->yres = mode->yres;
-	var->xres_virtual = max(var->xres, var->xres_virtual);
-	if (ystretch)
-		var->yres_virtual = info->fix.smem_len /
-			(var->xres_virtual * (var->bits_per_pixel >> 3));
-	else
-		var->yres_virtual = max(var->yres, var->yres_virtual);
+	var->xres_भव = max(var->xres, var->xres_भव);
+	अगर (ystretch)
+		var->yres_भव = info->fix.smem_len /
+			(var->xres_भव * (var->bits_per_pixel >> 3));
+	अन्यथा
+		var->yres_भव = max(var->yres, var->yres_भव);
 	var->grayscale = 0;
 	var->accel_flags = FB_ACCEL_NONE;
-	var->pixclock = mode->pixclock;
+	var->pixघड़ी = mode->pixघड़ी;
 	var->left_margin = mode->left_margin;
 	var->right_margin = mode->right_margin;
 	var->upper_margin = mode->upper_margin;
@@ -186,127 +187,127 @@ static void set_mode(struct pxa168fb_info *fbi, struct fb_var_screeninfo *var,
 	var->sync = mode->sync;
 	var->vmode = FB_VMODE_NONINTERLACED;
 	var->rotate = FB_ROTATE_UR;
-}
+पूर्ण
 
-static int pxa168fb_check_var(struct fb_var_screeninfo *var,
-			      struct fb_info *info)
-{
-	struct pxa168fb_info *fbi = info->par;
-	int pix_fmt;
+अटल पूर्णांक pxa168fb_check_var(काष्ठा fb_var_screeninfo *var,
+			      काष्ठा fb_info *info)
+अणु
+	काष्ठा pxa168fb_info *fbi = info->par;
+	पूर्णांक pix_fmt;
 
 	/*
-	 * Determine which pixel format we're going to use.
+	 * Determine which pixel क्रमmat we're going to use.
 	 */
 	pix_fmt = determine_best_pix_fmt(var);
-	if (pix_fmt < 0)
-		return pix_fmt;
+	अगर (pix_fmt < 0)
+		वापस pix_fmt;
 	set_pix_fmt(var, pix_fmt);
 	fbi->pix_fmt = pix_fmt;
 
 	/*
 	 * Basic geometry sanity checks.
 	 */
-	if (var->xoffset + var->xres > var->xres_virtual)
-		return -EINVAL;
-	if (var->yoffset + var->yres > var->yres_virtual)
-		return -EINVAL;
-	if (var->xres + var->right_margin +
+	अगर (var->xoffset + var->xres > var->xres_भव)
+		वापस -EINVAL;
+	अगर (var->yoffset + var->yres > var->yres_भव)
+		वापस -EINVAL;
+	अगर (var->xres + var->right_margin +
 	    var->hsync_len + var->left_margin > 2048)
-		return -EINVAL;
-	if (var->yres + var->lower_margin +
+		वापस -EINVAL;
+	अगर (var->yres + var->lower_margin +
 	    var->vsync_len + var->upper_margin > 2048)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/*
 	 * Check size of framebuffer.
 	 */
-	if (var->xres_virtual * var->yres_virtual *
+	अगर (var->xres_भव * var->yres_भव *
 	    (var->bits_per_pixel >> 3) > info->fix.smem_len)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The hardware clock divider has an integer and a fractional
+ * The hardware घड़ी भागider has an पूर्णांकeger and a fractional
  * stage:
  *
- *	clk2 = clk_in / integer_divider
- *	clk_out = clk2 * (1 - (fractional_divider >> 12))
+ *	clk2 = clk_in / पूर्णांकeger_भागider
+ *	clk_out = clk2 * (1 - (fractional_भागider >> 12))
  *
- * Calculate integer and fractional divider for given clk_in
+ * Calculate पूर्णांकeger and fractional भागider क्रम given clk_in
  * and clk_out.
  */
-static void set_clock_divider(struct pxa168fb_info *fbi,
-			      const struct fb_videomode *m)
-{
-	int divider_int;
-	int needed_pixclk;
-	u64 div_result;
+अटल व्योम set_घड़ी_भागider(काष्ठा pxa168fb_info *fbi,
+			      स्थिर काष्ठा fb_videomode *m)
+अणु
+	पूर्णांक भागider_पूर्णांक;
+	पूर्णांक needed_pixclk;
+	u64 भाग_result;
 	u32 x = 0;
 
 	/*
-	 * Notice: The field pixclock is used by linux fb
-	 * is in pixel second. E.g. struct fb_videomode &
-	 * struct fb_var_screeninfo
+	 * Notice: The field pixघड़ी is used by linux fb
+	 * is in pixel second. E.g. काष्ठा fb_videomode &
+	 * काष्ठा fb_var_screeninfo
 	 */
 
 	/*
 	 * Check input values.
 	 */
-	if (!m || !m->pixclock || !m->refresh) {
+	अगर (!m || !m->pixघड़ी || !m->refresh) अणु
 		dev_err(fbi->dev, "Input refresh or pixclock is wrong.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Using PLL/AXI clock.
+	 * Using PLL/AXI घड़ी.
 	 */
 	x = 0x80000000;
 
 	/*
-	 * Calc divider according to refresh rate.
+	 * Calc भागider according to refresh rate.
 	 */
-	div_result = 1000000000000ll;
-	do_div(div_result, m->pixclock);
-	needed_pixclk = (u32)div_result;
+	भाग_result = 1000000000000ll;
+	करो_भाग(भाग_result, m->pixघड़ी);
+	needed_pixclk = (u32)भाग_result;
 
-	divider_int = clk_get_rate(fbi->clk) / needed_pixclk;
+	भागider_पूर्णांक = clk_get_rate(fbi->clk) / needed_pixclk;
 
-	/* check whether divisor is too small. */
-	if (divider_int < 2) {
+	/* check whether भागisor is too small. */
+	अगर (भागider_पूर्णांक < 2) अणु
 		dev_warn(fbi->dev, "Warning: clock source is too slow. "
 				"Try smaller resolution\n");
-		divider_int = 2;
-	}
+		भागider_पूर्णांक = 2;
+	पूर्ण
 
 	/*
 	 * Set setting to reg.
 	 */
-	x |= divider_int;
-	writel(x, fbi->reg_base + LCD_CFG_SCLK_DIV);
-}
+	x |= भागider_पूर्णांक;
+	ग_लिखोl(x, fbi->reg_base + LCD_CFG_SCLK_DIV);
+पूर्ण
 
-static void set_dma_control0(struct pxa168fb_info *fbi)
-{
+अटल व्योम set_dma_control0(काष्ठा pxa168fb_info *fbi)
+अणु
 	u32 x;
 
 	/*
 	 * Set bit to enable graphics DMA.
 	 */
-	x = readl(fbi->reg_base + LCD_SPU_DMA_CTRL0);
+	x = पढ़ोl(fbi->reg_base + LCD_SPU_DMA_CTRL0);
 	x &= ~CFG_GRA_ENA_MASK;
 	x |= fbi->active ? CFG_GRA_ENA(1) : CFG_GRA_ENA(0);
 
 	/*
-	 * If we are in a pseudo-color mode, we need to enable
+	 * If we are in a pseuकरो-color mode, we need to enable
 	 * palette lookup.
 	 */
-	if (fbi->pix_fmt == PIX_FMT_PSEUDOCOLOR)
+	अगर (fbi->pix_fmt == PIX_FMT_PSEUDOCOLOR)
 		x |= 0x10000000;
 
 	/*
-	 * Configure hardware pixel format.
+	 * Configure hardware pixel क्रमmat.
 	 */
 	x &= ~(0xF << 16);
 	x |= (fbi->pix_fmt >> 1) << 16;
@@ -319,54 +320,54 @@ static void set_dma_control0(struct pxa168fb_info *fbi)
 	x &= ~(1 << 12);
 	x |= ((fbi->pix_fmt & 1) ^ (fbi->panel_rbswap)) << 12;
 
-	writel(x, fbi->reg_base + LCD_SPU_DMA_CTRL0);
-}
+	ग_लिखोl(x, fbi->reg_base + LCD_SPU_DMA_CTRL0);
+पूर्ण
 
-static void set_dma_control1(struct pxa168fb_info *fbi, int sync)
-{
+अटल व्योम set_dma_control1(काष्ठा pxa168fb_info *fbi, पूर्णांक sync)
+अणु
 	u32 x;
 
 	/*
-	 * Configure default bits: vsync triggers DMA, gated clock
-	 * enable, power save enable, configure alpha registers to
+	 * Configure शेष bits: vsync triggers DMA, gated घड़ी
+	 * enable, घातer save enable, configure alpha रेजिस्टरs to
 	 * display 100% graphics, and set pixel command.
 	 */
-	x = readl(fbi->reg_base + LCD_SPU_DMA_CTRL1);
+	x = पढ़ोl(fbi->reg_base + LCD_SPU_DMA_CTRL1);
 	x |= 0x2032ff81;
 
 	/*
-	 * We trigger DMA on the falling edge of vsync if vsync is
-	 * active low, or on the rising edge if vsync is active high.
+	 * We trigger DMA on the falling edge of vsync अगर vsync is
+	 * active low, or on the rising edge अगर vsync is active high.
 	 */
-	if (!(sync & FB_SYNC_VERT_HIGH_ACT))
+	अगर (!(sync & FB_SYNC_VERT_HIGH_ACT))
 		x |= 0x08000000;
 
-	writel(x, fbi->reg_base + LCD_SPU_DMA_CTRL1);
-}
+	ग_लिखोl(x, fbi->reg_base + LCD_SPU_DMA_CTRL1);
+पूर्ण
 
-static void set_graphics_start(struct fb_info *info, int xoffset, int yoffset)
-{
-	struct pxa168fb_info *fbi = info->par;
-	struct fb_var_screeninfo *var = &info->var;
-	int pixel_offset;
-	unsigned long addr;
+अटल व्योम set_graphics_start(काष्ठा fb_info *info, पूर्णांक xoffset, पूर्णांक yoffset)
+अणु
+	काष्ठा pxa168fb_info *fbi = info->par;
+	काष्ठा fb_var_screeninfo *var = &info->var;
+	पूर्णांक pixel_offset;
+	अचिन्हित दीर्घ addr;
 
-	pixel_offset = (yoffset * var->xres_virtual) + xoffset;
+	pixel_offset = (yoffset * var->xres_भव) + xoffset;
 
 	addr = fbi->fb_start_dma + (pixel_offset * (var->bits_per_pixel >> 3));
-	writel(addr, fbi->reg_base + LCD_CFG_GRA_START_ADDR0);
-}
+	ग_लिखोl(addr, fbi->reg_base + LCD_CFG_GRA_START_ADDR0);
+पूर्ण
 
-static void set_dumb_panel_control(struct fb_info *info)
-{
-	struct pxa168fb_info *fbi = info->par;
-	struct pxa168fb_mach_info *mi = dev_get_platdata(fbi->dev);
+अटल व्योम set_dumb_panel_control(काष्ठा fb_info *info)
+अणु
+	काष्ठा pxa168fb_info *fbi = info->par;
+	काष्ठा pxa168fb_mach_info *mi = dev_get_platdata(fbi->dev);
 	u32 x;
 
 	/*
 	 * Preserve enable flag.
 	 */
-	x = readl(fbi->reg_base + LCD_SPU_DUMB_CTRL) & 0x00000001;
+	x = पढ़ोl(fbi->reg_base + LCD_SPU_DUMB_CTRL) & 0x00000001;
 
 	x |= (fbi->is_blanked ? 0x7 : mi->dumb_mode) << 28;
 	x |= mi->gpio_output_data << 20;
@@ -377,51 +378,51 @@ static void set_dumb_panel_control(struct fb_info *info)
 	x |= mi->invert_pix_val_ena ? 0x00000010 : 0;
 	x |= (info->var.sync & FB_SYNC_VERT_HIGH_ACT) ? 0 : 0x00000008;
 	x |= (info->var.sync & FB_SYNC_HOR_HIGH_ACT) ? 0 : 0x00000004;
-	x |= mi->invert_pixclock ? 0x00000002 : 0;
+	x |= mi->invert_pixघड़ी ? 0x00000002 : 0;
 
-	writel(x, fbi->reg_base + LCD_SPU_DUMB_CTRL);
-}
+	ग_लिखोl(x, fbi->reg_base + LCD_SPU_DUMB_CTRL);
+पूर्ण
 
-static void set_dumb_screen_dimensions(struct fb_info *info)
-{
-	struct pxa168fb_info *fbi = info->par;
-	struct fb_var_screeninfo *v = &info->var;
-	int x;
-	int y;
+अटल व्योम set_dumb_screen_dimensions(काष्ठा fb_info *info)
+अणु
+	काष्ठा pxa168fb_info *fbi = info->par;
+	काष्ठा fb_var_screeninfo *v = &info->var;
+	पूर्णांक x;
+	पूर्णांक y;
 
 	x = v->xres + v->right_margin + v->hsync_len + v->left_margin;
 	y = v->yres + v->lower_margin + v->vsync_len + v->upper_margin;
 
-	writel((y << 16) | x, fbi->reg_base + LCD_SPUT_V_H_TOTAL);
-}
+	ग_लिखोl((y << 16) | x, fbi->reg_base + LCD_SPUT_V_H_TOTAL);
+पूर्ण
 
-static int pxa168fb_set_par(struct fb_info *info)
-{
-	struct pxa168fb_info *fbi = info->par;
-	struct fb_var_screeninfo *var = &info->var;
-	struct fb_videomode mode;
+अटल पूर्णांक pxa168fb_set_par(काष्ठा fb_info *info)
+अणु
+	काष्ठा pxa168fb_info *fbi = info->par;
+	काष्ठा fb_var_screeninfo *var = &info->var;
+	काष्ठा fb_videomode mode;
 	u32 x;
 
 	/*
 	 * Set additional mode info.
 	 */
-	if (fbi->pix_fmt == PIX_FMT_PSEUDOCOLOR)
+	अगर (fbi->pix_fmt == PIX_FMT_PSEUDOCOLOR)
 		info->fix.visual = FB_VISUAL_PSEUDOCOLOR;
-	else
+	अन्यथा
 		info->fix.visual = FB_VISUAL_TRUECOLOR;
-	info->fix.line_length = var->xres_virtual * var->bits_per_pixel / 8;
+	info->fix.line_length = var->xres_भव * var->bits_per_pixel / 8;
 	info->fix.ypanstep = var->yres;
 
 	/*
-	 * Disable panel output while we setup the display.
+	 * Disable panel output जबतक we setup the display.
 	 */
-	x = readl(fbi->reg_base + LCD_SPU_DUMB_CTRL);
-	writel(x & ~1, fbi->reg_base + LCD_SPU_DUMB_CTRL);
+	x = पढ़ोl(fbi->reg_base + LCD_SPU_DUMB_CTRL);
+	ग_लिखोl(x & ~1, fbi->reg_base + LCD_SPU_DUMB_CTRL);
 
 	/*
 	 * Configure global panel parameters.
 	 */
-	writel((var->yres << 16) | var->xres,
+	ग_लिखोl((var->yres << 16) | var->xres,
 		fbi->reg_base + LCD_SPU_V_H_ACTIVE);
 
 	/*
@@ -429,8 +430,8 @@ static int pxa168fb_set_par(struct fb_info *info)
 	 */
 	fb_var_to_videomode(&mode, &info->var);
 
-	/* Calculate clock divisor. */
-	set_clock_divider(fbi, &mode);
+	/* Calculate घड़ी भागisor. */
+	set_घड़ी_भागider(fbi, &mode);
 
 	/* Configure dma ctrl regs. */
 	set_dma_control0(fbi);
@@ -439,12 +440,12 @@ static int pxa168fb_set_par(struct fb_info *info)
 	/*
 	 * Configure graphics DMA parameters.
 	 */
-	x = readl(fbi->reg_base + LCD_CFG_GRA_PITCH);
-	x = (x & ~0xFFFF) | ((var->xres_virtual * var->bits_per_pixel) >> 3);
-	writel(x, fbi->reg_base + LCD_CFG_GRA_PITCH);
-	writel((var->yres << 16) | var->xres,
+	x = पढ़ोl(fbi->reg_base + LCD_CFG_GRA_PITCH);
+	x = (x & ~0xFFFF) | ((var->xres_भव * var->bits_per_pixel) >> 3);
+	ग_लिखोl(x, fbi->reg_base + LCD_CFG_GRA_PITCH);
+	ग_लिखोl((var->yres << 16) | var->xres,
 		fbi->reg_base + LCD_SPU_GRA_HPXL_VLN);
-	writel((var->yres << 16) | var->xres,
+	ग_लिखोl((var->yres << 16) | var->xres,
 		fbi->reg_base + LCD_SPU_GZM_HPXL_VLN);
 
 	/*
@@ -453,95 +454,95 @@ static int pxa168fb_set_par(struct fb_info *info)
 	set_dumb_panel_control(info);
 	set_dumb_screen_dimensions(info);
 
-	writel((var->left_margin << 16) | var->right_margin,
+	ग_लिखोl((var->left_margin << 16) | var->right_margin,
 			fbi->reg_base + LCD_SPU_H_PORCH);
-	writel((var->upper_margin << 16) | var->lower_margin,
+	ग_लिखोl((var->upper_margin << 16) | var->lower_margin,
 			fbi->reg_base + LCD_SPU_V_PORCH);
 
 	/*
 	 * Re-enable panel output.
 	 */
-	x = readl(fbi->reg_base + LCD_SPU_DUMB_CTRL);
-	writel(x | 1, fbi->reg_base + LCD_SPU_DUMB_CTRL);
+	x = पढ़ोl(fbi->reg_base + LCD_SPU_DUMB_CTRL);
+	ग_लिखोl(x | 1, fbi->reg_base + LCD_SPU_DUMB_CTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int chan_to_field(unsigned int chan, struct fb_bitfield *bf)
-{
-	return ((chan & 0xffff) >> (16 - bf->length)) << bf->offset;
-}
+अटल अचिन्हित पूर्णांक chan_to_field(अचिन्हित पूर्णांक chan, काष्ठा fb_bitfield *bf)
+अणु
+	वापस ((chan & 0xffff) >> (16 - bf->length)) << bf->offset;
+पूर्ण
 
-static u32 to_rgb(u16 red, u16 green, u16 blue)
-{
+अटल u32 to_rgb(u16 red, u16 green, u16 blue)
+अणु
 	red >>= 8;
 	green >>= 8;
 	blue >>= 8;
 
-	return (red << 16) | (green << 8) | blue;
-}
+	वापस (red << 16) | (green << 8) | blue;
+पूर्ण
 
-static int
-pxa168fb_setcolreg(unsigned int regno, unsigned int red, unsigned int green,
-		 unsigned int blue, unsigned int trans, struct fb_info *info)
-{
-	struct pxa168fb_info *fbi = info->par;
+अटल पूर्णांक
+pxa168fb_setcolreg(अचिन्हित पूर्णांक regno, अचिन्हित पूर्णांक red, अचिन्हित पूर्णांक green,
+		 अचिन्हित पूर्णांक blue, अचिन्हित पूर्णांक trans, काष्ठा fb_info *info)
+अणु
+	काष्ठा pxa168fb_info *fbi = info->par;
 	u32 val;
 
-	if (info->var.grayscale)
+	अगर (info->var.grayscale)
 		red = green = blue = (19595 * red + 38470 * green +
 					7471 * blue) >> 16;
 
-	if (info->fix.visual == FB_VISUAL_TRUECOLOR && regno < 16) {
+	अगर (info->fix.visual == FB_VISUAL_TRUECOLOR && regno < 16) अणु
 		val =  chan_to_field(red,   &info->var.red);
 		val |= chan_to_field(green, &info->var.green);
 		val |= chan_to_field(blue , &info->var.blue);
-		fbi->pseudo_palette[regno] = val;
-	}
+		fbi->pseuकरो_palette[regno] = val;
+	पूर्ण
 
-	if (info->fix.visual == FB_VISUAL_PSEUDOCOLOR && regno < 256) {
+	अगर (info->fix.visual == FB_VISUAL_PSEUDOCOLOR && regno < 256) अणु
 		val = to_rgb(red, green, blue);
-		writel(val, fbi->reg_base + LCD_SPU_SRAM_WRDAT);
-		writel(0x8300 | regno, fbi->reg_base + LCD_SPU_SRAM_CTRL);
-	}
+		ग_लिखोl(val, fbi->reg_base + LCD_SPU_SRAM_WRDAT);
+		ग_लिखोl(0x8300 | regno, fbi->reg_base + LCD_SPU_SRAM_CTRL);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pxa168fb_blank(int blank, struct fb_info *info)
-{
-	struct pxa168fb_info *fbi = info->par;
+अटल पूर्णांक pxa168fb_blank(पूर्णांक blank, काष्ठा fb_info *info)
+अणु
+	काष्ठा pxa168fb_info *fbi = info->par;
 
 	fbi->is_blanked = (blank == FB_BLANK_UNBLANK) ? 0 : 1;
 	set_dumb_panel_control(info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pxa168fb_pan_display(struct fb_var_screeninfo *var,
-				struct fb_info *info)
-{
+अटल पूर्णांक pxa168fb_pan_display(काष्ठा fb_var_screeninfo *var,
+				काष्ठा fb_info *info)
+अणु
 	set_graphics_start(info, var->xoffset, var->yoffset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t pxa168fb_handle_irq(int irq, void *dev_id)
-{
-	struct pxa168fb_info *fbi = dev_id;
-	u32 isr = readl(fbi->reg_base + SPU_IRQ_ISR);
+अटल irqवापस_t pxa168fb_handle_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा pxa168fb_info *fbi = dev_id;
+	u32 isr = पढ़ोl(fbi->reg_base + SPU_IRQ_ISR);
 
-	if ((isr & GRA_FRAME_IRQ0_ENA_MASK)) {
+	अगर ((isr & GRA_FRAME_IRQ0_ENA_MASK)) अणु
 
-		writel(isr & (~GRA_FRAME_IRQ0_ENA_MASK),
+		ग_लिखोl(isr & (~GRA_FRAME_IRQ0_ENA_MASK),
 			fbi->reg_base + SPU_IRQ_ISR);
 
-		return IRQ_HANDLED;
-	}
-	return IRQ_NONE;
-}
+		वापस IRQ_HANDLED;
+	पूर्ण
+	वापस IRQ_NONE;
+पूर्ण
 
-static const struct fb_ops pxa168fb_ops = {
+अटल स्थिर काष्ठा fb_ops pxa168fb_ops = अणु
 	.owner		= THIS_MODULE,
 	.fb_check_var	= pxa168fb_check_var,
 	.fb_set_par	= pxa168fb_set_par,
@@ -551,84 +552,84 @@ static const struct fb_ops pxa168fb_ops = {
 	.fb_fillrect	= cfb_fillrect,
 	.fb_copyarea	= cfb_copyarea,
 	.fb_imageblit	= cfb_imageblit,
-};
+पूर्ण;
 
-static void pxa168fb_init_mode(struct fb_info *info,
-			      struct pxa168fb_mach_info *mi)
-{
-	struct pxa168fb_info *fbi = info->par;
-	struct fb_var_screeninfo *var = &info->var;
+अटल व्योम pxa168fb_init_mode(काष्ठा fb_info *info,
+			      काष्ठा pxa168fb_mach_info *mi)
+अणु
+	काष्ठा pxa168fb_info *fbi = info->par;
+	काष्ठा fb_var_screeninfo *var = &info->var;
 	u32 total_w, total_h, refresh;
-	u64 div_result;
-	const struct fb_videomode *m;
+	u64 भाग_result;
+	स्थिर काष्ठा fb_videomode *m;
 
 	/*
-	 * Set default value
+	 * Set शेष value
 	 */
 	refresh = DEFAULT_REFRESH;
 
 	/* try to find best video mode. */
 	m = fb_find_best_mode(&info->var, &info->modelist);
-	if (m)
+	अगर (m)
 		fb_videomode_to_var(&info->var, m);
 
 	/* Init settings. */
-	var->xres_virtual = var->xres;
-	var->yres_virtual = info->fix.smem_len /
-		(var->xres_virtual * (var->bits_per_pixel >> 3));
+	var->xres_भव = var->xres;
+	var->yres_भव = info->fix.smem_len /
+		(var->xres_भव * (var->bits_per_pixel >> 3));
 	dev_dbg(fbi->dev, "pxa168fb: find best mode: res = %dx%d\n",
 				var->xres, var->yres);
 
-	/* correct pixclock. */
+	/* correct pixघड़ी. */
 	total_w = var->xres + var->left_margin + var->right_margin +
 		  var->hsync_len;
 	total_h = var->yres + var->upper_margin + var->lower_margin +
 		  var->vsync_len;
 
-	div_result = 1000000000000ll;
-	do_div(div_result, total_w * total_h * refresh);
-	var->pixclock = (u32)div_result;
-}
+	भाग_result = 1000000000000ll;
+	करो_भाग(भाग_result, total_w * total_h * refresh);
+	var->pixघड़ी = (u32)भाग_result;
+पूर्ण
 
-static int pxa168fb_probe(struct platform_device *pdev)
-{
-	struct pxa168fb_mach_info *mi;
-	struct fb_info *info = 0;
-	struct pxa168fb_info *fbi = 0;
-	struct resource *res;
-	struct clk *clk;
-	int irq, ret;
+अटल पूर्णांक pxa168fb_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pxa168fb_mach_info *mi;
+	काष्ठा fb_info *info = 0;
+	काष्ठा pxa168fb_info *fbi = 0;
+	काष्ठा resource *res;
+	काष्ठा clk *clk;
+	पूर्णांक irq, ret;
 
 	mi = dev_get_platdata(&pdev->dev);
-	if (mi == NULL) {
+	अगर (mi == शून्य) अणु
 		dev_err(&pdev->dev, "no platform data defined\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	clk = devm_clk_get(&pdev->dev, "LCDCLK");
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		dev_err(&pdev->dev, "unable to get LCDCLK");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (res == NULL) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (res == शून्य) अणु
 		dev_err(&pdev->dev, "no IO memory defined\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0) अणु
 		dev_err(&pdev->dev, "no IRQ defined\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	info = framebuffer_alloc(sizeof(struct pxa168fb_info), &pdev->dev);
-	if (info == NULL) {
-		return -ENOMEM;
-	}
+	info = framebuffer_alloc(माप(काष्ठा pxa168fb_info), &pdev->dev);
+	अगर (info == शून्य) अणु
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* Initialize private data */
+	/* Initialize निजी data */
 	fbi = info->par;
 	fbi->info = info;
 	fbi->clk = clk;
@@ -638,7 +639,7 @@ static int pxa168fb_probe(struct platform_device *pdev)
 	fbi->active = mi->active;
 
 	/*
-	 * Initialise static fb parameters.
+	 * Initialise अटल fb parameters.
 	 */
 	info->flags = FBINFO_DEFAULT | FBINFO_PARTIAL_PAN_OK |
 		      FBINFO_HWACCEL_XPAN | FBINFO_HWACCEL_YPAN;
@@ -653,17 +654,17 @@ static int pxa168fb_probe(struct platform_device *pdev)
 	info->fix.mmio_len = resource_size(res);
 	info->fix.accel = FB_ACCEL_NONE;
 	info->fbops = &pxa168fb_ops;
-	info->pseudo_palette = fbi->pseudo_palette;
+	info->pseuकरो_palette = fbi->pseuकरो_palette;
 
 	/*
-	 * Map LCD controller registers.
+	 * Map LCD controller रेजिस्टरs.
 	 */
 	fbi->reg_base = devm_ioremap(&pdev->dev, res->start,
 					     resource_size(res));
-	if (fbi->reg_base == NULL) {
+	अगर (fbi->reg_base == शून्य) अणु
 		ret = -ENOMEM;
-		goto failed_free_info;
-	}
+		जाओ failed_मुक्त_info;
+	पूर्ण
 
 	/*
 	 * Allocate framebuffer memory.
@@ -672,16 +673,16 @@ static int pxa168fb_probe(struct platform_device *pdev)
 
 	info->screen_base = dma_alloc_wc(fbi->dev, info->fix.smem_len,
 					 &fbi->fb_start_dma, GFP_KERNEL);
-	if (info->screen_base == NULL) {
+	अगर (info->screen_base == शून्य) अणु
 		ret = -ENOMEM;
-		goto failed_free_info;
-	}
+		जाओ failed_मुक्त_info;
+	पूर्ण
 
-	info->fix.smem_start = (unsigned long)fbi->fb_start_dma;
+	info->fix.smem_start = (अचिन्हित दीर्घ)fbi->fb_start_dma;
 	set_graphics_start(info, 0, 0);
 
 	/*
-	 * Set video mode according to platform data.
+	 * Set video mode according to platक्रमm data.
 	 */
 	set_mode(fbi, &info->var, mi->modes, mi->pix_fmt, 1);
 
@@ -693,123 +694,123 @@ static int pxa168fb_probe(struct platform_device *pdev)
 	pxa168fb_init_mode(info, mi);
 
 	/*
-	 * Fill in sane defaults.
+	 * Fill in sane शेषs.
 	 */
 	ret = pxa168fb_check_var(&info->var, info);
-	if (ret)
-		goto failed_free_fbmem;
+	अगर (ret)
+		जाओ failed_मुक्त_fbmem;
 
 	/*
-	 * enable controller clock
+	 * enable controller घड़ी
 	 */
 	clk_prepare_enable(fbi->clk);
 
 	pxa168fb_set_par(info);
 
 	/*
-	 * Configure default register values.
+	 * Configure शेष रेजिस्टर values.
 	 */
-	writel(0, fbi->reg_base + LCD_SPU_BLANKCOLOR);
-	writel(mi->io_pin_allocation_mode, fbi->reg_base + SPU_IOPAD_CONTROL);
-	writel(0, fbi->reg_base + LCD_CFG_GRA_START_ADDR1);
-	writel(0, fbi->reg_base + LCD_SPU_GRA_OVSA_HPXL_VLN);
-	writel(0, fbi->reg_base + LCD_SPU_SRAM_PARA0);
-	writel(CFG_CSB_256x32(0x1)|CFG_CSB_256x24(0x1)|CFG_CSB_256x8(0x1),
+	ग_लिखोl(0, fbi->reg_base + LCD_SPU_BLANKCOLOR);
+	ग_लिखोl(mi->io_pin_allocation_mode, fbi->reg_base + SPU_IOPAD_CONTROL);
+	ग_लिखोl(0, fbi->reg_base + LCD_CFG_GRA_START_ADDR1);
+	ग_लिखोl(0, fbi->reg_base + LCD_SPU_GRA_OVSA_HPXL_VLN);
+	ग_लिखोl(0, fbi->reg_base + LCD_SPU_SRAM_PARA0);
+	ग_लिखोl(CFG_CSB_256x32(0x1)|CFG_CSB_256x24(0x1)|CFG_CSB_256x8(0x1),
 		fbi->reg_base + LCD_SPU_SRAM_PARA1);
 
 	/*
 	 * Allocate color map.
 	 */
-	if (fb_alloc_cmap(&info->cmap, 256, 0) < 0) {
+	अगर (fb_alloc_cmap(&info->cmap, 256, 0) < 0) अणु
 		ret = -ENOMEM;
-		goto failed_free_clk;
-	}
+		जाओ failed_मुक्त_clk;
+	पूर्ण
 
 	/*
 	 * Register irq handler.
 	 */
 	ret = devm_request_irq(&pdev->dev, irq, pxa168fb_handle_irq,
 			       IRQF_SHARED, info->fix.id, fbi);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "unable to request IRQ\n");
 		ret = -ENXIO;
-		goto failed_free_cmap;
-	}
+		जाओ failed_मुक्त_cmap;
+	पूर्ण
 
 	/*
-	 * Enable GFX interrupt
+	 * Enable GFX पूर्णांकerrupt
 	 */
-	writel(GRA_FRAME_IRQ0_ENA(0x1), fbi->reg_base + SPU_IRQ_ENA);
+	ग_लिखोl(GRA_FRAME_IRQ0_ENA(0x1), fbi->reg_base + SPU_IRQ_ENA);
 
 	/*
 	 * Register framebuffer.
 	 */
-	ret = register_framebuffer(info);
-	if (ret < 0) {
+	ret = रेजिस्टर_framebuffer(info);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Failed to register pxa168-fb: %d\n", ret);
 		ret = -ENXIO;
-		goto failed_free_cmap;
-	}
+		जाओ failed_मुक्त_cmap;
+	पूर्ण
 
-	platform_set_drvdata(pdev, fbi);
-	return 0;
+	platक्रमm_set_drvdata(pdev, fbi);
+	वापस 0;
 
-failed_free_cmap:
+failed_मुक्त_cmap:
 	fb_dealloc_cmap(&info->cmap);
-failed_free_clk:
+failed_मुक्त_clk:
 	clk_disable_unprepare(fbi->clk);
-failed_free_fbmem:
-	dma_free_wc(fbi->dev, info->fix.smem_len,
+failed_मुक्त_fbmem:
+	dma_मुक्त_wc(fbi->dev, info->fix.smem_len,
 		    info->screen_base, fbi->fb_start_dma);
-failed_free_info:
+failed_मुक्त_info:
 	framebuffer_release(info);
 
 	dev_err(&pdev->dev, "frame buffer device init failed with %d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pxa168fb_remove(struct platform_device *pdev)
-{
-	struct pxa168fb_info *fbi = platform_get_drvdata(pdev);
-	struct fb_info *info;
-	unsigned int data;
+अटल पूर्णांक pxa168fb_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pxa168fb_info *fbi = platक्रमm_get_drvdata(pdev);
+	काष्ठा fb_info *info;
+	अचिन्हित पूर्णांक data;
 
-	if (!fbi)
-		return 0;
+	अगर (!fbi)
+		वापस 0;
 
 	/* disable DMA transfer */
-	data = readl(fbi->reg_base + LCD_SPU_DMA_CTRL0);
+	data = पढ़ोl(fbi->reg_base + LCD_SPU_DMA_CTRL0);
 	data &= ~CFG_GRA_ENA_MASK;
-	writel(data, fbi->reg_base + LCD_SPU_DMA_CTRL0);
+	ग_लिखोl(data, fbi->reg_base + LCD_SPU_DMA_CTRL0);
 
 	info = fbi->info;
 
-	unregister_framebuffer(info);
+	unरेजिस्टर_framebuffer(info);
 
-	writel(GRA_FRAME_IRQ0_ENA(0x0), fbi->reg_base + SPU_IRQ_ENA);
+	ग_लिखोl(GRA_FRAME_IRQ0_ENA(0x0), fbi->reg_base + SPU_IRQ_ENA);
 
-	if (info->cmap.len)
+	अगर (info->cmap.len)
 		fb_dealloc_cmap(&info->cmap);
 
-	dma_free_wc(fbi->dev, info->fix.smem_len,
+	dma_मुक्त_wc(fbi->dev, info->fix.smem_len,
 		    info->screen_base, info->fix.smem_start);
 
 	clk_disable_unprepare(fbi->clk);
 
 	framebuffer_release(info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver pxa168fb_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver pxa168fb_driver = अणु
+	.driver		= अणु
 		.name	= "pxa168-fb",
-	},
+	पूर्ण,
 	.probe		= pxa168fb_probe,
-	.remove		= pxa168fb_remove,
-};
+	.हटाओ		= pxa168fb_हटाओ,
+पूर्ण;
 
-module_platform_driver(pxa168fb_driver);
+module_platक्रमm_driver(pxa168fb_driver);
 
 MODULE_AUTHOR("Lennert Buytenhek <buytenh@marvell.com> "
 	      "Green Wan <gwan@marvell.com>");

@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_POWERPC_SYSCALLS_H
-#define __ASM_POWERPC_SYSCALLS_H
-#ifdef __KERNEL__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_POWERPC_SYSCALLS_H
+#घोषणा __ASM_POWERPC_SYSCALLS_H
+#अगर_घोषित __KERNEL__
 
-#include <linux/compiler.h>
-#include <linux/linkage.h>
-#include <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/types.h>
 
-struct rtas_args;
+काष्ठा rtas_args;
 
-asmlinkage long sys_mmap(unsigned long addr, size_t len,
-		unsigned long prot, unsigned long flags,
-		unsigned long fd, off_t offset);
-asmlinkage long sys_mmap2(unsigned long addr, size_t len,
-		unsigned long prot, unsigned long flags,
-		unsigned long fd, unsigned long pgoff);
-asmlinkage long ppc64_personality(unsigned long personality);
-asmlinkage long sys_rtas(struct rtas_args __user *uargs);
+यंत्रlinkage दीर्घ sys_mmap(अचिन्हित दीर्घ addr, माप_प्रकार len,
+		अचिन्हित दीर्घ prot, अचिन्हित दीर्घ flags,
+		अचिन्हित दीर्घ fd, off_t offset);
+यंत्रlinkage दीर्घ sys_mmap2(अचिन्हित दीर्घ addr, माप_प्रकार len,
+		अचिन्हित दीर्घ prot, अचिन्हित दीर्घ flags,
+		अचिन्हित दीर्घ fd, अचिन्हित दीर्घ pgoff);
+यंत्रlinkage दीर्घ ppc64_personality(अचिन्हित दीर्घ personality);
+यंत्रlinkage दीर्घ sys_rtas(काष्ठा rtas_args __user *uargs);
 
-#endif /* __KERNEL__ */
-#endif /* __ASM_POWERPC_SYSCALLS_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* __ASM_POWERPC_SYSCALLS_H */

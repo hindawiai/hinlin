@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  S390 version
  *    Copyright IBM Corp. 1999
@@ -7,229 +8,229 @@
  *    Copyright (C) 1992, Linus Torvalds
  */
 
-#ifndef _ASM_S390_TIMEX_H
-#define _ASM_S390_TIMEX_H
+#अगर_अघोषित _ASM_S390_TIMEX_H
+#घोषणा _ASM_S390_TIMEX_H
 
-#include <linux/preempt.h>
-#include <linux/time64.h>
-#include <asm/lowcore.h>
+#समावेश <linux/preempt.h>
+#समावेश <linux/समय64.h>
+#समावेश <यंत्र/lowcore.h>
 
-/* The value of the TOD clock for 1.1.1970. */
-#define TOD_UNIX_EPOCH 0x7d91048bca000000ULL
+/* The value of the TOD घड़ी क्रम 1.1.1970. */
+#घोषणा TOD_UNIX_EPOCH 0x7d91048bca000000ULL
 
-extern u64 clock_comparator_max;
+बाह्य u64 घड़ी_comparator_max;
 
-union tod_clock {
-	__uint128_t val;
-	struct {
-		__uint128_t ei	:  8; /* epoch index */
-		__uint128_t tod : 64; /* bits 0-63 of tod clock */
-		__uint128_t	: 40;
-		__uint128_t pf	: 16; /* programmable field */
-	};
-	struct {
-		__uint128_t eitod : 72; /* epoch index + bits 0-63 tod clock */
-		__uint128_t	  : 56;
-	};
-	struct {
-		__uint128_t us	: 60; /* micro-seconds */
-		__uint128_t sus	: 12; /* sub-microseconds */
-		__uint128_t	: 56;
-	};
-} __packed;
+जोड़ tod_घड़ी अणु
+	__uपूर्णांक128_t val;
+	काष्ठा अणु
+		__uपूर्णांक128_t ei	:  8; /* epoch index */
+		__uपूर्णांक128_t tod : 64; /* bits 0-63 of tod घड़ी */
+		__uपूर्णांक128_t	: 40;
+		__uपूर्णांक128_t pf	: 16; /* programmable field */
+	पूर्ण;
+	काष्ठा अणु
+		__uपूर्णांक128_t eitod : 72; /* epoch index + bits 0-63 tod घड़ी */
+		__uपूर्णांक128_t	  : 56;
+	पूर्ण;
+	काष्ठा अणु
+		__uपूर्णांक128_t us	: 60; /* micro-seconds */
+		__uपूर्णांक128_t sus	: 12; /* sub-microseconds */
+		__uपूर्णांक128_t	: 56;
+	पूर्ण;
+पूर्ण __packed;
 
-/* Inline functions for clock register access. */
-static inline int set_tod_clock(__u64 time)
-{
-	int cc;
+/* Inline functions क्रम घड़ी रेजिस्टर access. */
+अटल अंतरभूत पूर्णांक set_tod_घड़ी(__u64 समय)
+अणु
+	पूर्णांक cc;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		"   sck   %1\n"
 		"   ipm   %0\n"
 		"   srl   %0,28\n"
-		: "=d" (cc) : "Q" (time) : "cc");
-	return cc;
-}
+		: "=d" (cc) : "Q" (समय) : "cc");
+	वापस cc;
+पूर्ण
 
-static inline int store_tod_clock_ext_cc(union tod_clock *clk)
-{
-	int cc;
+अटल अंतरभूत पूर्णांक store_tod_घड़ी_ext_cc(जोड़ tod_घड़ी *clk)
+अणु
+	पूर्णांक cc;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		"   stcke  %1\n"
 		"   ipm   %0\n"
 		"   srl   %0,28\n"
 		: "=d" (cc), "=Q" (*clk) : : "cc");
-	return cc;
-}
+	वापस cc;
+पूर्ण
 
-static inline void store_tod_clock_ext(union tod_clock *tod)
-{
-	asm volatile("stcke %0" : "=Q" (*tod) : : "cc");
-}
+अटल अंतरभूत व्योम store_tod_घड़ी_ext(जोड़ tod_घड़ी *tod)
+अणु
+	यंत्र अस्थिर("stcke %0" : "=Q" (*tod) : : "cc");
+पूर्ण
 
-static inline void set_clock_comparator(__u64 time)
-{
-	asm volatile("sckc %0" : : "Q" (time));
-}
+अटल अंतरभूत व्योम set_घड़ी_comparator(__u64 समय)
+अणु
+	यंत्र अस्थिर("sckc %0" : : "Q" (समय));
+पूर्ण
 
-static inline void set_tod_programmable_field(u16 val)
-{
-	register unsigned long reg0 asm("0") = val;
+अटल अंतरभूत व्योम set_tod_programmable_field(u16 val)
+अणु
+	रेजिस्टर अचिन्हित दीर्घ reg0 यंत्र("0") = val;
 
-	asm volatile("sckpf" : : "d" (reg0));
-}
+	यंत्र अस्थिर("sckpf" : : "d" (reg0));
+पूर्ण
 
-void clock_comparator_work(void);
+व्योम घड़ी_comparator_work(व्योम);
 
-void __init time_early_init(void);
+व्योम __init समय_early_init(व्योम);
 
-extern unsigned char ptff_function_mask[16];
+बाह्य अचिन्हित अक्षर ptff_function_mask[16];
 
-/* Function codes for the ptff instruction. */
-#define PTFF_QAF	0x00	/* query available functions */
-#define PTFF_QTO	0x01	/* query tod offset */
-#define PTFF_QSI	0x02	/* query steering information */
-#define PTFF_QUI	0x04	/* query UTC information */
-#define PTFF_ATO	0x40	/* adjust tod offset */
-#define PTFF_STO	0x41	/* set tod offset */
-#define PTFF_SFS	0x42	/* set fine steering rate */
-#define PTFF_SGS	0x43	/* set gross steering rate */
+/* Function codes क्रम the ptff inकाष्ठाion. */
+#घोषणा PTFF_QAF	0x00	/* query available functions */
+#घोषणा PTFF_QTO	0x01	/* query tod offset */
+#घोषणा PTFF_QSI	0x02	/* query steering inक्रमmation */
+#घोषणा PTFF_QUI	0x04	/* query UTC inक्रमmation */
+#घोषणा PTFF_ATO	0x40	/* adjust tod offset */
+#घोषणा PTFF_STO	0x41	/* set tod offset */
+#घोषणा PTFF_SFS	0x42	/* set fine steering rate */
+#घोषणा PTFF_SGS	0x43	/* set gross steering rate */
 
 /* Query TOD offset result */
-struct ptff_qto {
-	unsigned long physical_clock;
-	unsigned long tod_offset;
-	unsigned long logical_tod_offset;
-	unsigned long tod_epoch_difference;
-} __packed;
+काष्ठा ptff_qto अणु
+	अचिन्हित दीर्घ physical_घड़ी;
+	अचिन्हित दीर्घ tod_offset;
+	अचिन्हित दीर्घ logical_tod_offset;
+	अचिन्हित दीर्घ tod_epoch_dअगरference;
+पूर्ण __packed;
 
-static inline int ptff_query(unsigned int nr)
-{
-	unsigned char *ptr;
+अटल अंतरभूत पूर्णांक ptff_query(अचिन्हित पूर्णांक nr)
+अणु
+	अचिन्हित अक्षर *ptr;
 
 	ptr = ptff_function_mask + (nr >> 3);
-	return (*ptr & (0x80 >> (nr & 7))) != 0;
-}
+	वापस (*ptr & (0x80 >> (nr & 7))) != 0;
+पूर्ण
 
-/* Query UTC information result */
-struct ptff_qui {
-	unsigned int tm : 2;
-	unsigned int ts : 2;
-	unsigned int : 28;
-	unsigned int pad_0x04;
-	unsigned long leap_event;
-	short old_leap;
-	short new_leap;
-	unsigned int pad_0x14;
-	unsigned long prt[5];
-	unsigned long cst[3];
-	unsigned int skew;
-	unsigned int pad_0x5c[41];
-} __packed;
+/* Query UTC inक्रमmation result */
+काष्ठा ptff_qui अणु
+	अचिन्हित पूर्णांक पंचांग : 2;
+	अचिन्हित पूर्णांक ts : 2;
+	अचिन्हित पूर्णांक : 28;
+	अचिन्हित पूर्णांक pad_0x04;
+	अचिन्हित दीर्घ leap_event;
+	लघु old_leap;
+	लघु new_leap;
+	अचिन्हित पूर्णांक pad_0x14;
+	अचिन्हित दीर्घ prt[5];
+	अचिन्हित दीर्घ cst[3];
+	अचिन्हित पूर्णांक skew;
+	अचिन्हित पूर्णांक pad_0x5c[41];
+पूर्ण __packed;
 
 /*
- * ptff - Perform timing facility function
- * @ptff_block: Pointer to ptff parameter block
+ * ptff - Perक्रमm timing facility function
+ * @ptff_block: Poपूर्णांकer to ptff parameter block
  * @len: Length of parameter block
  * @func: Function code
  * Returns: Condition code (0 on success)
  */
-#define ptff(ptff_block, len, func)					\
-({									\
-	struct addrtype { char _[len]; };				\
-	register unsigned int reg0 asm("0") = func;			\
-	register unsigned long reg1 asm("1") = (unsigned long) (ptff_block);\
-	int rc;								\
+#घोषणा ptff(ptff_block, len, func)					\
+(अणु									\
+	काष्ठा addrtype अणु अक्षर _[len]; पूर्ण;				\
+	रेजिस्टर अचिन्हित पूर्णांक reg0 यंत्र("0") = func;			\
+	रेजिस्टर अचिन्हित दीर्घ reg1 यंत्र("1") = (अचिन्हित दीर्घ) (ptff_block);\
+	पूर्णांक rc;								\
 									\
-	asm volatile(							\
+	यंत्र अस्थिर(							\
 		"	.word	0x0104\n"				\
 		"	ipm	%0\n"					\
 		"	srl	%0,28\n"				\
-		: "=d" (rc), "+m" (*(struct addrtype *) reg1)		\
+		: "=d" (rc), "+m" (*(काष्ठा addrtype *) reg1)		\
 		: "d" (reg0), "d" (reg1) : "cc");			\
 	rc;								\
-})
+पूर्ण)
 
-static inline unsigned long local_tick_disable(void)
-{
-	unsigned long old;
+अटल अंतरभूत अचिन्हित दीर्घ local_tick_disable(व्योम)
+अणु
+	अचिन्हित दीर्घ old;
 
-	old = S390_lowcore.clock_comparator;
-	S390_lowcore.clock_comparator = clock_comparator_max;
-	set_clock_comparator(S390_lowcore.clock_comparator);
-	return old;
-}
+	old = S390_lowcore.घड़ी_comparator;
+	S390_lowcore.घड़ी_comparator = घड़ी_comparator_max;
+	set_घड़ी_comparator(S390_lowcore.घड़ी_comparator);
+	वापस old;
+पूर्ण
 
-static inline void local_tick_enable(unsigned long comp)
-{
-	S390_lowcore.clock_comparator = comp;
-	set_clock_comparator(S390_lowcore.clock_comparator);
-}
+अटल अंतरभूत व्योम local_tick_enable(अचिन्हित दीर्घ comp)
+अणु
+	S390_lowcore.घड़ी_comparator = comp;
+	set_घड़ी_comparator(S390_lowcore.घड़ी_comparator);
+पूर्ण
 
-#define CLOCK_TICK_RATE		1193180 /* Underlying HZ */
+#घोषणा CLOCK_TICK_RATE		1193180 /* Underlying HZ */
 
-typedef unsigned long cycles_t;
+प्रकार अचिन्हित दीर्घ cycles_t;
 
-static inline unsigned long get_tod_clock(void)
-{
-	union tod_clock clk;
+अटल अंतरभूत अचिन्हित दीर्घ get_tod_घड़ी(व्योम)
+अणु
+	जोड़ tod_घड़ी clk;
 
-	store_tod_clock_ext(&clk);
-	return clk.tod;
-}
+	store_tod_घड़ी_ext(&clk);
+	वापस clk.tod;
+पूर्ण
 
-static inline unsigned long get_tod_clock_fast(void)
-{
-#ifdef CONFIG_HAVE_MARCH_Z9_109_FEATURES
-	unsigned long clk;
+अटल अंतरभूत अचिन्हित दीर्घ get_tod_घड़ी_fast(व्योम)
+अणु
+#अगर_घोषित CONFIG_HAVE_MARCH_Z9_109_FEATURES
+	अचिन्हित दीर्घ clk;
 
-	asm volatile("stckf %0" : "=Q" (clk) : : "cc");
-	return clk;
-#else
-	return get_tod_clock();
-#endif
-}
+	यंत्र अस्थिर("stckf %0" : "=Q" (clk) : : "cc");
+	वापस clk;
+#अन्यथा
+	वापस get_tod_घड़ी();
+#पूर्ण_अगर
+पूर्ण
 
-static inline cycles_t get_cycles(void)
-{
-	return (cycles_t) get_tod_clock() >> 2;
-}
+अटल अंतरभूत cycles_t get_cycles(व्योम)
+अणु
+	वापस (cycles_t) get_tod_घड़ी() >> 2;
+पूर्ण
 
-int get_phys_clock(unsigned long *clock);
-void init_cpu_timer(void);
+पूर्णांक get_phys_घड़ी(अचिन्हित दीर्घ *घड़ी);
+व्योम init_cpu_समयr(व्योम);
 
-extern union tod_clock tod_clock_base;
+बाह्य जोड़ tod_घड़ी tod_घड़ी_base;
 
 /**
- * get_clock_monotonic - returns current time in clock rate units
+ * get_घड़ी_monotonic - वापसs current समय in घड़ी rate units
  *
- * The clock and tod_clock_base get changed via stop_machine.
- * Therefore preemption must be disabled, otherwise the returned
+ * The घड़ी and tod_घड़ी_base get changed via stop_machine.
+ * Thereक्रमe preemption must be disabled, otherwise the वापसed
  * value is not guaranteed to be monotonic.
  */
-static inline unsigned long get_tod_clock_monotonic(void)
-{
-	unsigned long tod;
+अटल अंतरभूत अचिन्हित दीर्घ get_tod_घड़ी_monotonic(व्योम)
+अणु
+	अचिन्हित दीर्घ tod;
 
 	preempt_disable_notrace();
-	tod = get_tod_clock() - tod_clock_base.tod;
+	tod = get_tod_घड़ी() - tod_घड़ी_base.tod;
 	preempt_enable_notrace();
-	return tod;
-}
+	वापस tod;
+पूर्ण
 
 /**
- * tod_to_ns - convert a TOD format value to nanoseconds
- * @todval: to be converted TOD format value
- * Returns: number of nanoseconds that correspond to the TOD format value
+ * tod_to_ns - convert a TOD क्रमmat value to nanoseconds
+ * @todval: to be converted TOD क्रमmat value
+ * Returns: number of nanoseconds that correspond to the TOD क्रमmat value
  *
- * Converting a 64 Bit TOD format value to nanoseconds means that the value
- * must be divided by 4.096. In order to achieve that we multiply with 125
- * and divide by 512:
+ * Converting a 64 Bit TOD क्रमmat value to nanoseconds means that the value
+ * must be भागided by 4.096. In order to achieve that we multiply with 125
+ * and भागide by 512:
  *
  *    ns = (todval * 125) >> 9;
  *
- * In order to avoid an overflow with the multiplication we can rewrite this.
+ * In order to aव्योम an overflow with the multiplication we can reग_लिखो this.
  * With a split todval == 2^9 * th + tl (th upper 55 bits, tl lower 9 bits)
  * we end up with
  *
@@ -237,37 +238,37 @@ static inline unsigned long get_tod_clock_monotonic(void)
  * -> ns = (th * 125) + ((tl * 125) >> 9);
  *
  */
-static inline unsigned long tod_to_ns(unsigned long todval)
-{
-	return ((todval >> 9) * 125) + (((todval & 0x1ff) * 125) >> 9);
-}
+अटल अंतरभूत अचिन्हित दीर्घ tod_to_ns(अचिन्हित दीर्घ todval)
+अणु
+	वापस ((todval >> 9) * 125) + (((todval & 0x1ff) * 125) >> 9);
+पूर्ण
 
 /**
  * tod_after - compare two 64 bit TOD values
- * @a: first 64 bit TOD timestamp
- * @b: second 64 bit TOD timestamp
+ * @a: first 64 bit TOD बारtamp
+ * @b: second 64 bit TOD बारtamp
  *
- * Returns: true if a is later than b
+ * Returns: true अगर a is later than b
  */
-static inline int tod_after(unsigned long a, unsigned long b)
-{
-	if (MACHINE_HAS_SCC)
-		return (long) a > (long) b;
-	return a > b;
-}
+अटल अंतरभूत पूर्णांक tod_after(अचिन्हित दीर्घ a, अचिन्हित दीर्घ b)
+अणु
+	अगर (MACHINE_HAS_SCC)
+		वापस (दीर्घ) a > (दीर्घ) b;
+	वापस a > b;
+पूर्ण
 
 /**
  * tod_after_eq - compare two 64 bit TOD values
- * @a: first 64 bit TOD timestamp
- * @b: second 64 bit TOD timestamp
+ * @a: first 64 bit TOD बारtamp
+ * @b: second 64 bit TOD बारtamp
  *
- * Returns: true if a is later than b
+ * Returns: true अगर a is later than b
  */
-static inline int tod_after_eq(unsigned long a, unsigned long b)
-{
-	if (MACHINE_HAS_SCC)
-		return (long) a >= (long) b;
-	return a >= b;
-}
+अटल अंतरभूत पूर्णांक tod_after_eq(अचिन्हित दीर्घ a, अचिन्हित दीर्घ b)
+अणु
+	अगर (MACHINE_HAS_SCC)
+		वापस (दीर्घ) a >= (दीर्घ) b;
+	वापस a >= b;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

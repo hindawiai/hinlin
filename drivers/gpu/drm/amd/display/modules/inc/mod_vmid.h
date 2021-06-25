@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,24 +24,24 @@
  *
  */
 
-#ifndef MOD_VMID_H_
-#define MOD_VMID_H_
+#अगर_अघोषित MOD_VMID_H_
+#घोषणा MOD_VMID_H_
 
-#define MAX_VMID 16
+#घोषणा MAX_VMID 16
 
-#include "dc.h"
+#समावेश "dc.h"
 
-struct mod_vmid {
-	int dummy;
-};
+काष्ठा mod_vmid अणु
+	पूर्णांक dummy;
+पूर्ण;
 
-uint8_t mod_vmid_get_for_ptb(struct mod_vmid *mod_vmid, uint64_t ptb);
-void mod_vmid_reset(struct mod_vmid *mod_vmid);
-struct mod_vmid *mod_vmid_create(
-		struct dc *dc,
-		unsigned int num_vmid,
-		struct dc_virtual_addr_space_config *va_config);
+uपूर्णांक8_t mod_vmid_get_क्रम_ptb(काष्ठा mod_vmid *mod_vmid, uपूर्णांक64_t ptb);
+व्योम mod_vmid_reset(काष्ठा mod_vmid *mod_vmid);
+काष्ठा mod_vmid *mod_vmid_create(
+		काष्ठा dc *dc,
+		अचिन्हित पूर्णांक num_vmid,
+		काष्ठा dc_भव_addr_space_config *va_config);
 
-void mod_vmid_destroy(struct mod_vmid *mod_vmid);
+व्योम mod_vmid_destroy(काष्ठा mod_vmid *mod_vmid);
 
-#endif /* MOD_VMID_H_ */
+#पूर्ण_अगर /* MOD_VMID_H_ */

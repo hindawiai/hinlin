@@ -1,371 +1,372 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2014 Jiri Pirko <jiri@resnulli.us>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/rtnetlink.h>
-#include <linux/if_vlan.h>
-#include <net/netlink.h>
-#include <net/pkt_sched.h>
-#include <net/pkt_cls.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <net/netlink.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/pkt_cls.h>
 
-#include <linux/tc_act/tc_vlan.h>
-#include <net/tc_act/tc_vlan.h>
+#समावेश <linux/tc_act/tc_vlan.h>
+#समावेश <net/tc_act/tc_vlan.h>
 
-static unsigned int vlan_net_id;
-static struct tc_action_ops act_vlan_ops;
+अटल अचिन्हित पूर्णांक vlan_net_id;
+अटल काष्ठा tc_action_ops act_vlan_ops;
 
-static int tcf_vlan_act(struct sk_buff *skb, const struct tc_action *a,
-			struct tcf_result *res)
-{
-	struct tcf_vlan *v = to_vlan(a);
-	struct tcf_vlan_params *p;
-	int action;
-	int err;
+अटल पूर्णांक tcf_vlan_act(काष्ठा sk_buff *skb, स्थिर काष्ठा tc_action *a,
+			काष्ठा tcf_result *res)
+अणु
+	काष्ठा tcf_vlan *v = to_vlan(a);
+	काष्ठा tcf_vlan_params *p;
+	पूर्णांक action;
+	पूर्णांक err;
 	u16 tci;
 
-	tcf_lastuse_update(&v->tcf_tm);
+	tcf_lastuse_update(&v->tcf_पंचांग);
 	tcf_action_update_bstats(&v->common, skb);
 
-	/* Ensure 'data' points at mac_header prior calling vlan manipulating
+	/* Ensure 'data' poपूर्णांकs at mac_header prior calling vlan manipulating
 	 * functions.
 	 */
-	if (skb_at_tc_ingress(skb))
+	अगर (skb_at_tc_ingress(skb))
 		skb_push_rcsum(skb, skb->mac_len);
 
 	action = READ_ONCE(v->tcf_action);
 
 	p = rcu_dereference_bh(v->vlan_p);
 
-	switch (p->tcfv_action) {
-	case TCA_VLAN_ACT_POP:
+	चयन (p->tcfv_action) अणु
+	हाल TCA_VLAN_ACT_POP:
 		err = skb_vlan_pop(skb);
-		if (err)
-			goto drop;
-		break;
-	case TCA_VLAN_ACT_PUSH:
+		अगर (err)
+			जाओ drop;
+		अवरोध;
+	हाल TCA_VLAN_ACT_PUSH:
 		err = skb_vlan_push(skb, p->tcfv_push_proto, p->tcfv_push_vid |
 				    (p->tcfv_push_prio << VLAN_PRIO_SHIFT));
-		if (err)
-			goto drop;
-		break;
-	case TCA_VLAN_ACT_MODIFY:
-		/* No-op if no vlan tag (either hw-accel or in-payload) */
-		if (!skb_vlan_tagged(skb))
-			goto out;
+		अगर (err)
+			जाओ drop;
+		अवरोध;
+	हाल TCA_VLAN_ACT_MODIFY:
+		/* No-op अगर no vlan tag (either hw-accel or in-payload) */
+		अगर (!skb_vlan_tagged(skb))
+			जाओ out;
 		/* extract existing tag (and guarantee no hw-accel tag) */
-		if (skb_vlan_tag_present(skb)) {
+		अगर (skb_vlan_tag_present(skb)) अणु
 			tci = skb_vlan_tag_get(skb);
 			__vlan_hwaccel_clear_tag(skb);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* in-payload vlan tag, pop it */
 			err = __skb_vlan_pop(skb, &tci);
-			if (err)
-				goto drop;
-		}
+			अगर (err)
+				जाओ drop;
+		पूर्ण
 		/* replace the vid */
 		tci = (tci & ~VLAN_VID_MASK) | p->tcfv_push_vid;
-		/* replace prio bits, if tcfv_push_prio specified */
-		if (p->tcfv_push_prio) {
+		/* replace prio bits, अगर tcfv_push_prio specअगरied */
+		अगर (p->tcfv_push_prio) अणु
 			tci &= ~VLAN_PRIO_MASK;
 			tci |= p->tcfv_push_prio << VLAN_PRIO_SHIFT;
-		}
+		पूर्ण
 		/* put updated tci as hwaccel tag */
 		__vlan_hwaccel_put_tag(skb, p->tcfv_push_proto, tci);
-		break;
-	case TCA_VLAN_ACT_POP_ETH:
+		अवरोध;
+	हाल TCA_VLAN_ACT_POP_ETH:
 		err = skb_eth_pop(skb);
-		if (err)
-			goto drop;
-		break;
-	case TCA_VLAN_ACT_PUSH_ETH:
+		अगर (err)
+			जाओ drop;
+		अवरोध;
+	हाल TCA_VLAN_ACT_PUSH_ETH:
 		err = skb_eth_push(skb, p->tcfv_push_dst, p->tcfv_push_src);
-		if (err)
-			goto drop;
-		break;
-	default:
+		अगर (err)
+			जाओ drop;
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 out:
-	if (skb_at_tc_ingress(skb))
+	अगर (skb_at_tc_ingress(skb))
 		skb_pull_rcsum(skb, skb->mac_len);
 
-	return action;
+	वापस action;
 
 drop:
 	tcf_action_inc_drop_qstats(&v->common);
-	return TC_ACT_SHOT;
-}
+	वापस TC_ACT_SHOT;
+पूर्ण
 
-static const struct nla_policy vlan_policy[TCA_VLAN_MAX + 1] = {
-	[TCA_VLAN_UNSPEC]		= { .strict_start_type = TCA_VLAN_PUSH_ETH_DST },
-	[TCA_VLAN_PARMS]		= { .len = sizeof(struct tc_vlan) },
-	[TCA_VLAN_PUSH_VLAN_ID]		= { .type = NLA_U16 },
-	[TCA_VLAN_PUSH_VLAN_PROTOCOL]	= { .type = NLA_U16 },
-	[TCA_VLAN_PUSH_VLAN_PRIORITY]	= { .type = NLA_U8 },
+अटल स्थिर काष्ठा nla_policy vlan_policy[TCA_VLAN_MAX + 1] = अणु
+	[TCA_VLAN_UNSPEC]		= अणु .strict_start_type = TCA_VLAN_PUSH_ETH_DST पूर्ण,
+	[TCA_VLAN_PARMS]		= अणु .len = माप(काष्ठा tc_vlan) पूर्ण,
+	[TCA_VLAN_PUSH_VLAN_ID]		= अणु .type = NLA_U16 पूर्ण,
+	[TCA_VLAN_PUSH_VLAN_PROTOCOL]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_VLAN_PUSH_VLAN_PRIORITY]	= अणु .type = NLA_U8 पूर्ण,
 	[TCA_VLAN_PUSH_ETH_DST]		= NLA_POLICY_ETH_ADDR,
 	[TCA_VLAN_PUSH_ETH_SRC]		= NLA_POLICY_ETH_ADDR,
-};
+पूर्ण;
 
-static int tcf_vlan_init(struct net *net, struct nlattr *nla,
-			 struct nlattr *est, struct tc_action **a,
-			 int ovr, int bind, bool rtnl_held,
-			 struct tcf_proto *tp, u32 flags,
-			 struct netlink_ext_ack *extack)
-{
-	struct tc_action_net *tn = net_generic(net, vlan_net_id);
-	struct nlattr *tb[TCA_VLAN_MAX + 1];
-	struct tcf_chain *goto_ch = NULL;
-	struct tcf_vlan_params *p;
-	struct tc_vlan *parm;
-	struct tcf_vlan *v;
-	int action;
+अटल पूर्णांक tcf_vlan_init(काष्ठा net *net, काष्ठा nlattr *nla,
+			 काष्ठा nlattr *est, काष्ठा tc_action **a,
+			 पूर्णांक ovr, पूर्णांक bind, bool rtnl_held,
+			 काष्ठा tcf_proto *tp, u32 flags,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, vlan_net_id);
+	काष्ठा nlattr *tb[TCA_VLAN_MAX + 1];
+	काष्ठा tcf_chain *जाओ_ch = शून्य;
+	काष्ठा tcf_vlan_params *p;
+	काष्ठा tc_vlan *parm;
+	काष्ठा tcf_vlan *v;
+	पूर्णांक action;
 	u16 push_vid = 0;
 	__be16 push_proto = 0;
 	u8 push_prio = 0;
 	bool exists = false;
-	int ret = 0, err;
+	पूर्णांक ret = 0, err;
 	u32 index;
 
-	if (!nla)
-		return -EINVAL;
+	अगर (!nla)
+		वापस -EINVAL;
 
 	err = nla_parse_nested_deprecated(tb, TCA_VLAN_MAX, nla, vlan_policy,
-					  NULL);
-	if (err < 0)
-		return err;
+					  शून्य);
+	अगर (err < 0)
+		वापस err;
 
-	if (!tb[TCA_VLAN_PARMS])
-		return -EINVAL;
+	अगर (!tb[TCA_VLAN_PARMS])
+		वापस -EINVAL;
 	parm = nla_data(tb[TCA_VLAN_PARMS]);
 	index = parm->index;
 	err = tcf_idr_check_alloc(tn, &index, a, bind);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	exists = err;
-	if (exists && bind)
-		return 0;
+	अगर (exists && bind)
+		वापस 0;
 
-	switch (parm->v_action) {
-	case TCA_VLAN_ACT_POP:
-		break;
-	case TCA_VLAN_ACT_PUSH:
-	case TCA_VLAN_ACT_MODIFY:
-		if (!tb[TCA_VLAN_PUSH_VLAN_ID]) {
-			if (exists)
+	चयन (parm->v_action) अणु
+	हाल TCA_VLAN_ACT_POP:
+		अवरोध;
+	हाल TCA_VLAN_ACT_PUSH:
+	हाल TCA_VLAN_ACT_MODIFY:
+		अगर (!tb[TCA_VLAN_PUSH_VLAN_ID]) अणु
+			अगर (exists)
 				tcf_idr_release(*a, bind);
-			else
+			अन्यथा
 				tcf_idr_cleanup(tn, index);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		push_vid = nla_get_u16(tb[TCA_VLAN_PUSH_VLAN_ID]);
-		if (push_vid >= VLAN_VID_MASK) {
-			if (exists)
+		अगर (push_vid >= VLAN_VID_MASK) अणु
+			अगर (exists)
 				tcf_idr_release(*a, bind);
-			else
+			अन्यथा
 				tcf_idr_cleanup(tn, index);
-			return -ERANGE;
-		}
+			वापस -दुस्फल;
+		पूर्ण
 
-		if (tb[TCA_VLAN_PUSH_VLAN_PROTOCOL]) {
+		अगर (tb[TCA_VLAN_PUSH_VLAN_PROTOCOL]) अणु
 			push_proto = nla_get_be16(tb[TCA_VLAN_PUSH_VLAN_PROTOCOL]);
-			switch (push_proto) {
-			case htons(ETH_P_8021Q):
-			case htons(ETH_P_8021AD):
-				break;
-			default:
-				if (exists)
+			चयन (push_proto) अणु
+			हाल htons(ETH_P_8021Q):
+			हाल htons(ETH_P_8021AD):
+				अवरोध;
+			शेष:
+				अगर (exists)
 					tcf_idr_release(*a, bind);
-				else
+				अन्यथा
 					tcf_idr_cleanup(tn, index);
-				return -EPROTONOSUPPORT;
-			}
-		} else {
+				वापस -EPROTONOSUPPORT;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			push_proto = htons(ETH_P_8021Q);
-		}
+		पूर्ण
 
-		if (tb[TCA_VLAN_PUSH_VLAN_PRIORITY])
+		अगर (tb[TCA_VLAN_PUSH_VLAN_PRIORITY])
 			push_prio = nla_get_u8(tb[TCA_VLAN_PUSH_VLAN_PRIORITY]);
-		break;
-	case TCA_VLAN_ACT_POP_ETH:
-		break;
-	case TCA_VLAN_ACT_PUSH_ETH:
-		if (!tb[TCA_VLAN_PUSH_ETH_DST] || !tb[TCA_VLAN_PUSH_ETH_SRC]) {
-			if (exists)
+		अवरोध;
+	हाल TCA_VLAN_ACT_POP_ETH:
+		अवरोध;
+	हाल TCA_VLAN_ACT_PUSH_ETH:
+		अगर (!tb[TCA_VLAN_PUSH_ETH_DST] || !tb[TCA_VLAN_PUSH_ETH_SRC]) अणु
+			अगर (exists)
 				tcf_idr_release(*a, bind);
-			else
+			अन्यथा
 				tcf_idr_cleanup(tn, index);
-			return -EINVAL;
-		}
-		break;
-	default:
-		if (exists)
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अगर (exists)
 			tcf_idr_release(*a, bind);
-		else
+		अन्यथा
 			tcf_idr_cleanup(tn, index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	action = parm->v_action;
 
-	if (!exists) {
+	अगर (!exists) अणु
 		ret = tcf_idr_create_from_flags(tn, index, est, a,
 						&act_vlan_ops, bind, flags);
-		if (ret) {
+		अगर (ret) अणु
 			tcf_idr_cleanup(tn, index);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		ret = ACT_P_CREATED;
-	} else if (!ovr) {
+	पूर्ण अन्यथा अगर (!ovr) अणु
 		tcf_idr_release(*a, bind);
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 
-	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);
-	if (err < 0)
-		goto release_idr;
+	err = tcf_action_check_ctrlact(parm->action, tp, &जाओ_ch, extack);
+	अगर (err < 0)
+		जाओ release_idr;
 
 	v = to_vlan(*a);
 
-	p = kzalloc(sizeof(*p), GFP_KERNEL);
-	if (!p) {
+	p = kzalloc(माप(*p), GFP_KERNEL);
+	अगर (!p) अणु
 		err = -ENOMEM;
-		goto put_chain;
-	}
+		जाओ put_chain;
+	पूर्ण
 
 	p->tcfv_action = action;
 	p->tcfv_push_vid = push_vid;
 	p->tcfv_push_prio = push_prio;
 	p->tcfv_push_proto = push_proto;
 
-	if (action == TCA_VLAN_ACT_PUSH_ETH) {
-		nla_memcpy(&p->tcfv_push_dst, tb[TCA_VLAN_PUSH_ETH_DST],
+	अगर (action == TCA_VLAN_ACT_PUSH_ETH) अणु
+		nla_स_नकल(&p->tcfv_push_dst, tb[TCA_VLAN_PUSH_ETH_DST],
 			   ETH_ALEN);
-		nla_memcpy(&p->tcfv_push_src, tb[TCA_VLAN_PUSH_ETH_SRC],
+		nla_स_नकल(&p->tcfv_push_src, tb[TCA_VLAN_PUSH_ETH_SRC],
 			   ETH_ALEN);
-	}
+	पूर्ण
 
 	spin_lock_bh(&v->tcf_lock);
-	goto_ch = tcf_action_set_ctrlact(*a, parm->action, goto_ch);
-	p = rcu_replace_pointer(v->vlan_p, p, lockdep_is_held(&v->tcf_lock));
+	जाओ_ch = tcf_action_set_ctrlact(*a, parm->action, जाओ_ch);
+	p = rcu_replace_poपूर्णांकer(v->vlan_p, p, lockdep_is_held(&v->tcf_lock));
 	spin_unlock_bh(&v->tcf_lock);
 
-	if (goto_ch)
-		tcf_chain_put_by_act(goto_ch);
-	if (p)
-		kfree_rcu(p, rcu);
+	अगर (जाओ_ch)
+		tcf_chain_put_by_act(जाओ_ch);
+	अगर (p)
+		kमुक्त_rcu(p, rcu);
 
-	return ret;
+	वापस ret;
 put_chain:
-	if (goto_ch)
-		tcf_chain_put_by_act(goto_ch);
+	अगर (जाओ_ch)
+		tcf_chain_put_by_act(जाओ_ch);
 release_idr:
 	tcf_idr_release(*a, bind);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void tcf_vlan_cleanup(struct tc_action *a)
-{
-	struct tcf_vlan *v = to_vlan(a);
-	struct tcf_vlan_params *p;
+अटल व्योम tcf_vlan_cleanup(काष्ठा tc_action *a)
+अणु
+	काष्ठा tcf_vlan *v = to_vlan(a);
+	काष्ठा tcf_vlan_params *p;
 
-	p = rcu_dereference_protected(v->vlan_p, 1);
-	if (p)
-		kfree_rcu(p, rcu);
-}
+	p = rcu_dereference_रक्षित(v->vlan_p, 1);
+	अगर (p)
+		kमुक्त_rcu(p, rcu);
+पूर्ण
 
-static int tcf_vlan_dump(struct sk_buff *skb, struct tc_action *a,
-			 int bind, int ref)
-{
-	unsigned char *b = skb_tail_pointer(skb);
-	struct tcf_vlan *v = to_vlan(a);
-	struct tcf_vlan_params *p;
-	struct tc_vlan opt = {
+अटल पूर्णांक tcf_vlan_dump(काष्ठा sk_buff *skb, काष्ठा tc_action *a,
+			 पूर्णांक bind, पूर्णांक ref)
+अणु
+	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
+	काष्ठा tcf_vlan *v = to_vlan(a);
+	काष्ठा tcf_vlan_params *p;
+	काष्ठा tc_vlan opt = अणु
 		.index    = v->tcf_index,
-		.refcnt   = refcount_read(&v->tcf_refcnt) - ref,
-		.bindcnt  = atomic_read(&v->tcf_bindcnt) - bind,
-	};
-	struct tcf_t t;
+		.refcnt   = refcount_पढ़ो(&v->tcf_refcnt) - ref,
+		.bindcnt  = atomic_पढ़ो(&v->tcf_bindcnt) - bind,
+	पूर्ण;
+	काष्ठा tcf_t t;
 
 	spin_lock_bh(&v->tcf_lock);
 	opt.action = v->tcf_action;
-	p = rcu_dereference_protected(v->vlan_p, lockdep_is_held(&v->tcf_lock));
+	p = rcu_dereference_रक्षित(v->vlan_p, lockdep_is_held(&v->tcf_lock));
 	opt.v_action = p->tcfv_action;
-	if (nla_put(skb, TCA_VLAN_PARMS, sizeof(opt), &opt))
-		goto nla_put_failure;
+	अगर (nla_put(skb, TCA_VLAN_PARMS, माप(opt), &opt))
+		जाओ nla_put_failure;
 
-	if ((p->tcfv_action == TCA_VLAN_ACT_PUSH ||
+	अगर ((p->tcfv_action == TCA_VLAN_ACT_PUSH ||
 	     p->tcfv_action == TCA_VLAN_ACT_MODIFY) &&
 	    (nla_put_u16(skb, TCA_VLAN_PUSH_VLAN_ID, p->tcfv_push_vid) ||
 	     nla_put_be16(skb, TCA_VLAN_PUSH_VLAN_PROTOCOL,
 			  p->tcfv_push_proto) ||
 	     (nla_put_u8(skb, TCA_VLAN_PUSH_VLAN_PRIORITY,
 					      p->tcfv_push_prio))))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (p->tcfv_action == TCA_VLAN_ACT_PUSH_ETH) {
-		if (nla_put(skb, TCA_VLAN_PUSH_ETH_DST, ETH_ALEN,
+	अगर (p->tcfv_action == TCA_VLAN_ACT_PUSH_ETH) अणु
+		अगर (nla_put(skb, TCA_VLAN_PUSH_ETH_DST, ETH_ALEN,
 			    p->tcfv_push_dst))
-			goto nla_put_failure;
-		if (nla_put(skb, TCA_VLAN_PUSH_ETH_SRC, ETH_ALEN,
+			जाओ nla_put_failure;
+		अगर (nla_put(skb, TCA_VLAN_PUSH_ETH_SRC, ETH_ALEN,
 			    p->tcfv_push_src))
-			goto nla_put_failure;
-	}
+			जाओ nla_put_failure;
+	पूर्ण
 
-	tcf_tm_dump(&t, &v->tcf_tm);
-	if (nla_put_64bit(skb, TCA_VLAN_TM, sizeof(t), &t, TCA_VLAN_PAD))
-		goto nla_put_failure;
+	tcf_पंचांग_dump(&t, &v->tcf_पंचांग);
+	अगर (nla_put_64bit(skb, TCA_VLAN_TM, माप(t), &t, TCA_VLAN_PAD))
+		जाओ nla_put_failure;
 	spin_unlock_bh(&v->tcf_lock);
 
-	return skb->len;
+	वापस skb->len;
 
 nla_put_failure:
 	spin_unlock_bh(&v->tcf_lock);
 	nlmsg_trim(skb, b);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int tcf_vlan_walker(struct net *net, struct sk_buff *skb,
-			   struct netlink_callback *cb, int type,
-			   const struct tc_action_ops *ops,
-			   struct netlink_ext_ack *extack)
-{
-	struct tc_action_net *tn = net_generic(net, vlan_net_id);
+अटल पूर्णांक tcf_vlan_walker(काष्ठा net *net, काष्ठा sk_buff *skb,
+			   काष्ठा netlink_callback *cb, पूर्णांक type,
+			   स्थिर काष्ठा tc_action_ops *ops,
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, vlan_net_id);
 
-	return tcf_generic_walker(tn, skb, cb, type, ops, extack);
-}
+	वापस tcf_generic_walker(tn, skb, cb, type, ops, extack);
+पूर्ण
 
-static void tcf_vlan_stats_update(struct tc_action *a, u64 bytes, u64 packets,
+अटल व्योम tcf_vlan_stats_update(काष्ठा tc_action *a, u64 bytes, u64 packets,
 				  u64 drops, u64 lastuse, bool hw)
-{
-	struct tcf_vlan *v = to_vlan(a);
-	struct tcf_t *tm = &v->tcf_tm;
+अणु
+	काष्ठा tcf_vlan *v = to_vlan(a);
+	काष्ठा tcf_t *पंचांग = &v->tcf_पंचांग;
 
 	tcf_action_update_stats(a, bytes, packets, drops, hw);
-	tm->lastuse = max_t(u64, tm->lastuse, lastuse);
-}
+	पंचांग->lastuse = max_t(u64, पंचांग->lastuse, lastuse);
+पूर्ण
 
-static int tcf_vlan_search(struct net *net, struct tc_action **a, u32 index)
-{
-	struct tc_action_net *tn = net_generic(net, vlan_net_id);
+अटल पूर्णांक tcf_vlan_search(काष्ठा net *net, काष्ठा tc_action **a, u32 index)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, vlan_net_id);
 
-	return tcf_idr_search(tn, a, index);
-}
+	वापस tcf_idr_search(tn, a, index);
+पूर्ण
 
-static size_t tcf_vlan_get_fill_size(const struct tc_action *act)
-{
-	return nla_total_size(sizeof(struct tc_vlan))
-		+ nla_total_size(sizeof(u16)) /* TCA_VLAN_PUSH_VLAN_ID */
-		+ nla_total_size(sizeof(u16)) /* TCA_VLAN_PUSH_VLAN_PROTOCOL */
-		+ nla_total_size(sizeof(u8)); /* TCA_VLAN_PUSH_VLAN_PRIORITY */
-}
+अटल माप_प्रकार tcf_vlan_get_fill_size(स्थिर काष्ठा tc_action *act)
+अणु
+	वापस nla_total_size(माप(काष्ठा tc_vlan))
+		+ nla_total_size(माप(u16)) /* TCA_VLAN_PUSH_VLAN_ID */
+		+ nla_total_size(माप(u16)) /* TCA_VLAN_PUSH_VLAN_PROTOCOL */
+		+ nla_total_size(माप(u8)); /* TCA_VLAN_PUSH_VLAN_PRIORITY */
+पूर्ण
 
-static struct tc_action_ops act_vlan_ops = {
+अटल काष्ठा tc_action_ops act_vlan_ops = अणु
 	.kind		=	"vlan",
 	.id		=	TCA_ID_VLAN,
 	.owner		=	THIS_MODULE,
@@ -377,40 +378,40 @@ static struct tc_action_ops act_vlan_ops = {
 	.stats_update	=	tcf_vlan_stats_update,
 	.get_fill_size	=	tcf_vlan_get_fill_size,
 	.lookup		=	tcf_vlan_search,
-	.size		=	sizeof(struct tcf_vlan),
-};
+	.size		=	माप(काष्ठा tcf_vlan),
+पूर्ण;
 
-static __net_init int vlan_init_net(struct net *net)
-{
-	struct tc_action_net *tn = net_generic(net, vlan_net_id);
+अटल __net_init पूर्णांक vlan_init_net(काष्ठा net *net)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, vlan_net_id);
 
-	return tc_action_net_init(net, tn, &act_vlan_ops);
-}
+	वापस tc_action_net_init(net, tn, &act_vlan_ops);
+पूर्ण
 
-static void __net_exit vlan_exit_net(struct list_head *net_list)
-{
-	tc_action_net_exit(net_list, vlan_net_id);
-}
+अटल व्योम __net_निकास vlan_निकास_net(काष्ठा list_head *net_list)
+अणु
+	tc_action_net_निकास(net_list, vlan_net_id);
+पूर्ण
 
-static struct pernet_operations vlan_net_ops = {
+अटल काष्ठा pernet_operations vlan_net_ops = अणु
 	.init = vlan_init_net,
-	.exit_batch = vlan_exit_net,
+	.निकास_batch = vlan_निकास_net,
 	.id   = &vlan_net_id,
-	.size = sizeof(struct tc_action_net),
-};
+	.size = माप(काष्ठा tc_action_net),
+पूर्ण;
 
-static int __init vlan_init_module(void)
-{
-	return tcf_register_action(&act_vlan_ops, &vlan_net_ops);
-}
+अटल पूर्णांक __init vlan_init_module(व्योम)
+अणु
+	वापस tcf_रेजिस्टर_action(&act_vlan_ops, &vlan_net_ops);
+पूर्ण
 
-static void __exit vlan_cleanup_module(void)
-{
-	tcf_unregister_action(&act_vlan_ops, &vlan_net_ops);
-}
+अटल व्योम __निकास vlan_cleanup_module(व्योम)
+अणु
+	tcf_unरेजिस्टर_action(&act_vlan_ops, &vlan_net_ops);
+पूर्ण
 
 module_init(vlan_init_module);
-module_exit(vlan_cleanup_module);
+module_निकास(vlan_cleanup_module);
 
 MODULE_AUTHOR("Jiri Pirko <jiri@resnulli.us>");
 MODULE_DESCRIPTION("vlan manipulation actions");

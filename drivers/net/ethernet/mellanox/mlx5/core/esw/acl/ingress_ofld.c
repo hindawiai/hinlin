@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020 Mellanox Technologies Inc. All rights reserved. */
 
-#include "mlx5_core.h"
-#include "eswitch.h"
-#include "helper.h"
-#include "ofld.h"
+#समावेश "mlx5_core.h"
+#समावेश "eswitch.h"
+#समावेश "helper.h"
+#समावेश "ofld.h"
 
-static bool
-esw_acl_ingress_prio_tag_enabled(struct mlx5_eswitch *esw,
-				 const struct mlx5_vport *vport)
-{
-	return (MLX5_CAP_GEN(esw->dev, prio_tag_required) &&
-		mlx5_eswitch_is_vf_vport(esw, vport->vport));
-}
+अटल bool
+esw_acl_ingress_prio_tag_enabled(काष्ठा mlx5_eचयन *esw,
+				 स्थिर काष्ठा mlx5_vport *vport)
+अणु
+	वापस (MLX5_CAP_GEN(esw->dev, prio_tag_required) &&
+		mlx5_eचयन_is_vf_vport(esw, vport->vport));
+पूर्ण
 
-static int esw_acl_ingress_prio_tag_create(struct mlx5_eswitch *esw,
-					   struct mlx5_vport *vport)
-{
-	struct mlx5_flow_act flow_act = {};
-	struct mlx5_flow_spec *spec;
-	int err = 0;
+अटल पूर्णांक esw_acl_ingress_prio_tag_create(काष्ठा mlx5_eचयन *esw,
+					   काष्ठा mlx5_vport *vport)
+अणु
+	काष्ठा mlx5_flow_act flow_act = अणुपूर्ण;
+	काष्ठा mlx5_flow_spec *spec;
+	पूर्णांक err = 0;
 
 	/* For prio tag mode, there is only 1 FTEs:
-	 * 1) Untagged packets - push prio tag VLAN and modify metadata if
+	 * 1) Untagged packets - push prio tag VLAN and modअगरy metadata अगर
 	 * required, allow
-	 * Unmatched traffic is allowed by default
+	 * Unmatched traffic is allowed by शेष
 	 */
-	spec = kvzalloc(sizeof(*spec), GFP_KERNEL);
-	if (!spec)
-		return -ENOMEM;
+	spec = kvzalloc(माप(*spec), GFP_KERNEL);
+	अगर (!spec)
+		वापस -ENOMEM;
 
 	/* Untagged packets - push prio tag VLAN, allow */
 	MLX5_SET_TO_ONES(fte_match_param, spec->match_criteria, outer_headers.cvlan_tag);
@@ -40,34 +41,34 @@ static int esw_acl_ingress_prio_tag_create(struct mlx5_eswitch *esw,
 	flow_act.vlan[0].vid = 0;
 	flow_act.vlan[0].prio = 0;
 
-	if (vport->ingress.offloads.modify_metadata_rule) {
+	अगर (vport->ingress.offloads.modअगरy_metadata_rule) अणु
 		flow_act.action |= MLX5_FLOW_CONTEXT_ACTION_MOD_HDR;
-		flow_act.modify_hdr = vport->ingress.offloads.modify_metadata;
-	}
+		flow_act.modअगरy_hdr = vport->ingress.offloads.modअगरy_metadata;
+	पूर्ण
 
 	vport->ingress.allow_rule = mlx5_add_flow_rules(vport->ingress.acl, spec,
-							&flow_act, NULL, 0);
-	if (IS_ERR(vport->ingress.allow_rule)) {
+							&flow_act, शून्य, 0);
+	अगर (IS_ERR(vport->ingress.allow_rule)) अणु
 		err = PTR_ERR(vport->ingress.allow_rule);
 		esw_warn(esw->dev,
 			 "vport[%d] configure ingress untagged allow rule, err(%d)\n",
 			 vport->vport, err);
-		vport->ingress.allow_rule = NULL;
-	}
+		vport->ingress.allow_rule = शून्य;
+	पूर्ण
 
-	kvfree(spec);
-	return err;
-}
+	kvमुक्त(spec);
+	वापस err;
+पूर्ण
 
-static int esw_acl_ingress_mod_metadata_create(struct mlx5_eswitch *esw,
-					       struct mlx5_vport *vport)
-{
-	u8 action[MLX5_UN_SZ_BYTES(set_add_copy_action_in_auto)] = {};
-	struct mlx5_flow_act flow_act = {};
-	int err = 0;
+अटल पूर्णांक esw_acl_ingress_mod_metadata_create(काष्ठा mlx5_eचयन *esw,
+					       काष्ठा mlx5_vport *vport)
+अणु
+	u8 action[MLX5_UN_SZ_BYTES(set_add_copy_action_in_स्वतः)] = अणुपूर्ण;
+	काष्ठा mlx5_flow_act flow_act = अणुपूर्ण;
+	पूर्णांक err = 0;
 	u32 key;
 
-	key = mlx5_eswitch_get_vport_metadata_for_match(esw, vport->vport);
+	key = mlx5_eचयन_get_vport_metadata_क्रम_match(esw, vport->vport);
 	key >>= ESW_SOURCE_PORT_METADATA_OFFSET;
 
 	MLX5_SET(set_action_in, action, action_type, MLX5_ACTION_TYPE_SET);
@@ -79,98 +80,98 @@ static int esw_acl_ingress_mod_metadata_create(struct mlx5_eswitch *esw,
 	MLX5_SET(set_action_in, action, length,
 		 ESW_SOURCE_PORT_METADATA_BITS);
 
-	vport->ingress.offloads.modify_metadata =
-		mlx5_modify_header_alloc(esw->dev, MLX5_FLOW_NAMESPACE_ESW_INGRESS,
+	vport->ingress.offloads.modअगरy_metadata =
+		mlx5_modअगरy_header_alloc(esw->dev, MLX5_FLOW_NAMESPACE_ESW_INGRESS,
 					 1, action);
-	if (IS_ERR(vport->ingress.offloads.modify_metadata)) {
-		err = PTR_ERR(vport->ingress.offloads.modify_metadata);
+	अगर (IS_ERR(vport->ingress.offloads.modअगरy_metadata)) अणु
+		err = PTR_ERR(vport->ingress.offloads.modअगरy_metadata);
 		esw_warn(esw->dev,
 			 "failed to alloc modify header for vport %d ingress acl (%d)\n",
 			 vport->vport, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	flow_act.action = MLX5_FLOW_CONTEXT_ACTION_MOD_HDR | MLX5_FLOW_CONTEXT_ACTION_ALLOW;
-	flow_act.modify_hdr = vport->ingress.offloads.modify_metadata;
-	vport->ingress.offloads.modify_metadata_rule =
+	flow_act.modअगरy_hdr = vport->ingress.offloads.modअगरy_metadata;
+	vport->ingress.offloads.modअगरy_metadata_rule =
 				mlx5_add_flow_rules(vport->ingress.acl,
-						    NULL, &flow_act, NULL, 0);
-	if (IS_ERR(vport->ingress.offloads.modify_metadata_rule)) {
-		err = PTR_ERR(vport->ingress.offloads.modify_metadata_rule);
+						    शून्य, &flow_act, शून्य, 0);
+	अगर (IS_ERR(vport->ingress.offloads.modअगरy_metadata_rule)) अणु
+		err = PTR_ERR(vport->ingress.offloads.modअगरy_metadata_rule);
 		esw_warn(esw->dev,
 			 "failed to add setting metadata rule for vport %d ingress acl, err(%d)\n",
 			 vport->vport, err);
-		mlx5_modify_header_dealloc(esw->dev, vport->ingress.offloads.modify_metadata);
-		vport->ingress.offloads.modify_metadata_rule = NULL;
-	}
-	return err;
-}
+		mlx5_modअगरy_header_dealloc(esw->dev, vport->ingress.offloads.modअगरy_metadata);
+		vport->ingress.offloads.modअगरy_metadata_rule = शून्य;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void esw_acl_ingress_mod_metadata_destroy(struct mlx5_eswitch *esw,
-						 struct mlx5_vport *vport)
-{
-	if (!vport->ingress.offloads.modify_metadata_rule)
-		return;
+अटल व्योम esw_acl_ingress_mod_metadata_destroy(काष्ठा mlx5_eचयन *esw,
+						 काष्ठा mlx5_vport *vport)
+अणु
+	अगर (!vport->ingress.offloads.modअगरy_metadata_rule)
+		वापस;
 
-	mlx5_del_flow_rules(vport->ingress.offloads.modify_metadata_rule);
-	mlx5_modify_header_dealloc(esw->dev, vport->ingress.offloads.modify_metadata);
-	vport->ingress.offloads.modify_metadata_rule = NULL;
-}
+	mlx5_del_flow_rules(vport->ingress.offloads.modअगरy_metadata_rule);
+	mlx5_modअगरy_header_dealloc(esw->dev, vport->ingress.offloads.modअगरy_metadata);
+	vport->ingress.offloads.modअगरy_metadata_rule = शून्य;
+पूर्ण
 
-static int esw_acl_ingress_ofld_rules_create(struct mlx5_eswitch *esw,
-					     struct mlx5_vport *vport)
-{
-	int err;
+अटल पूर्णांक esw_acl_ingress_ofld_rules_create(काष्ठा mlx5_eचयन *esw,
+					     काष्ठा mlx5_vport *vport)
+अणु
+	पूर्णांक err;
 
-	if (mlx5_eswitch_vport_match_metadata_enabled(esw)) {
+	अगर (mlx5_eचयन_vport_match_metadata_enabled(esw)) अणु
 		err = esw_acl_ingress_mod_metadata_create(esw, vport);
-		if (err) {
+		अगर (err) अणु
 			esw_warn(esw->dev,
 				 "vport(%d) create ingress modify metadata, err(%d)\n",
 				 vport->vport, err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (esw_acl_ingress_prio_tag_enabled(esw, vport)) {
+	अगर (esw_acl_ingress_prio_tag_enabled(esw, vport)) अणु
 		err = esw_acl_ingress_prio_tag_create(esw, vport);
-		if (err) {
+		अगर (err) अणु
 			esw_warn(esw->dev,
 				 "vport(%d) create ingress prio tag rule, err(%d)\n",
 				 vport->vport, err);
-			goto prio_tag_err;
-		}
-	}
+			जाओ prio_tag_err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 prio_tag_err:
 	esw_acl_ingress_mod_metadata_destroy(esw, vport);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void esw_acl_ingress_ofld_rules_destroy(struct mlx5_eswitch *esw,
-					       struct mlx5_vport *vport)
-{
+अटल व्योम esw_acl_ingress_ofld_rules_destroy(काष्ठा mlx5_eचयन *esw,
+					       काष्ठा mlx5_vport *vport)
+अणु
 	esw_acl_ingress_allow_rule_destroy(vport);
 	esw_acl_ingress_mod_metadata_destroy(esw, vport);
-}
+पूर्ण
 
-static int esw_acl_ingress_ofld_groups_create(struct mlx5_eswitch *esw,
-					      struct mlx5_vport *vport)
-{
-	int inlen = MLX5_ST_SZ_BYTES(create_flow_group_in);
-	struct mlx5_flow_group *g;
-	void *match_criteria;
+अटल पूर्णांक esw_acl_ingress_ofld_groups_create(काष्ठा mlx5_eचयन *esw,
+					      काष्ठा mlx5_vport *vport)
+अणु
+	पूर्णांक inlen = MLX5_ST_SZ_BYTES(create_flow_group_in);
+	काष्ठा mlx5_flow_group *g;
+	व्योम *match_criteria;
 	u32 *flow_group_in;
 	u32 flow_index = 0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	flow_group_in = kvzalloc(inlen, GFP_KERNEL);
-	if (!flow_group_in)
-		return -ENOMEM;
+	अगर (!flow_group_in)
+		वापस -ENOMEM;
 
-	if (esw_acl_ingress_prio_tag_enabled(esw, vport)) {
+	अगर (esw_acl_ingress_prio_tag_enabled(esw, vport)) अणु
 		/* This group is to hold FTE to match untagged packets when prio_tag
 		 * is enabled.
 		 */
@@ -183,140 +184,140 @@ static int esw_acl_ingress_ofld_groups_create(struct mlx5_eswitch *esw,
 		MLX5_SET(create_flow_group_in, flow_group_in, end_flow_index, flow_index);
 
 		g = mlx5_create_flow_group(vport->ingress.acl, flow_group_in);
-		if (IS_ERR(g)) {
+		अगर (IS_ERR(g)) अणु
 			ret = PTR_ERR(g);
 			esw_warn(esw->dev, "vport[%d] ingress create untagged flow group, err(%d)\n",
 				 vport->vport, ret);
-			goto prio_tag_err;
-		}
+			जाओ prio_tag_err;
+		पूर्ण
 		vport->ingress.offloads.metadata_prio_tag_grp = g;
 		flow_index++;
-	}
+	पूर्ण
 
-	if (mlx5_eswitch_vport_match_metadata_enabled(esw)) {
-		/* This group holds an FTE with no match to add metadata for
-		 * tagged packets if prio-tag is enabled, or for all untagged
-		 * traffic in case prio-tag is disabled.
+	अगर (mlx5_eचयन_vport_match_metadata_enabled(esw)) अणु
+		/* This group holds an FTE with no match to add metadata क्रम
+		 * tagged packets अगर prio-tag is enabled, or क्रम all untagged
+		 * traffic in हाल prio-tag is disabled.
 		 */
-		memset(flow_group_in, 0, inlen);
+		स_रखो(flow_group_in, 0, inlen);
 		MLX5_SET(create_flow_group_in, flow_group_in, start_flow_index, flow_index);
 		MLX5_SET(create_flow_group_in, flow_group_in, end_flow_index, flow_index);
 
 		g = mlx5_create_flow_group(vport->ingress.acl, flow_group_in);
-		if (IS_ERR(g)) {
+		अगर (IS_ERR(g)) अणु
 			ret = PTR_ERR(g);
 			esw_warn(esw->dev, "vport[%d] ingress create drop flow group, err(%d)\n",
 				 vport->vport, ret);
-			goto metadata_err;
-		}
+			जाओ metadata_err;
+		पूर्ण
 		vport->ingress.offloads.metadata_allmatch_grp = g;
-	}
+	पूर्ण
 
-	kvfree(flow_group_in);
-	return 0;
+	kvमुक्त(flow_group_in);
+	वापस 0;
 
 metadata_err:
-	if (!IS_ERR_OR_NULL(vport->ingress.offloads.metadata_prio_tag_grp)) {
+	अगर (!IS_ERR_OR_शून्य(vport->ingress.offloads.metadata_prio_tag_grp)) अणु
 		mlx5_destroy_flow_group(vport->ingress.offloads.metadata_prio_tag_grp);
-		vport->ingress.offloads.metadata_prio_tag_grp = NULL;
-	}
+		vport->ingress.offloads.metadata_prio_tag_grp = शून्य;
+	पूर्ण
 prio_tag_err:
-	kvfree(flow_group_in);
-	return ret;
-}
+	kvमुक्त(flow_group_in);
+	वापस ret;
+पूर्ण
 
-static void esw_acl_ingress_ofld_groups_destroy(struct mlx5_vport *vport)
-{
-	if (vport->ingress.offloads.metadata_allmatch_grp) {
+अटल व्योम esw_acl_ingress_ofld_groups_destroy(काष्ठा mlx5_vport *vport)
+अणु
+	अगर (vport->ingress.offloads.metadata_allmatch_grp) अणु
 		mlx5_destroy_flow_group(vport->ingress.offloads.metadata_allmatch_grp);
-		vport->ingress.offloads.metadata_allmatch_grp = NULL;
-	}
+		vport->ingress.offloads.metadata_allmatch_grp = शून्य;
+	पूर्ण
 
-	if (vport->ingress.offloads.metadata_prio_tag_grp) {
+	अगर (vport->ingress.offloads.metadata_prio_tag_grp) अणु
 		mlx5_destroy_flow_group(vport->ingress.offloads.metadata_prio_tag_grp);
-		vport->ingress.offloads.metadata_prio_tag_grp = NULL;
-	}
-}
+		vport->ingress.offloads.metadata_prio_tag_grp = शून्य;
+	पूर्ण
+पूर्ण
 
-int esw_acl_ingress_ofld_setup(struct mlx5_eswitch *esw,
-			       struct mlx5_vport *vport)
-{
-	int num_ftes = 0;
-	int err;
+पूर्णांक esw_acl_ingress_ofld_setup(काष्ठा mlx5_eचयन *esw,
+			       काष्ठा mlx5_vport *vport)
+अणु
+	पूर्णांक num_ftes = 0;
+	पूर्णांक err;
 
-	if (!mlx5_eswitch_vport_match_metadata_enabled(esw) &&
+	अगर (!mlx5_eचयन_vport_match_metadata_enabled(esw) &&
 	    !esw_acl_ingress_prio_tag_enabled(esw, vport))
-		return 0;
+		वापस 0;
 
 	esw_acl_ingress_allow_rule_destroy(vport);
 
-	if (mlx5_eswitch_vport_match_metadata_enabled(esw))
+	अगर (mlx5_eचयन_vport_match_metadata_enabled(esw))
 		num_ftes++;
-	if (esw_acl_ingress_prio_tag_enabled(esw, vport))
+	अगर (esw_acl_ingress_prio_tag_enabled(esw, vport))
 		num_ftes++;
 
 	vport->ingress.acl = esw_acl_table_create(esw, vport,
 						  MLX5_FLOW_NAMESPACE_ESW_INGRESS,
 						  num_ftes);
-	if (IS_ERR(vport->ingress.acl)) {
+	अगर (IS_ERR(vport->ingress.acl)) अणु
 		err = PTR_ERR(vport->ingress.acl);
-		vport->ingress.acl = NULL;
-		return err;
-	}
+		vport->ingress.acl = शून्य;
+		वापस err;
+	पूर्ण
 
 	err = esw_acl_ingress_ofld_groups_create(esw, vport);
-	if (err)
-		goto group_err;
+	अगर (err)
+		जाओ group_err;
 
 	esw_debug(esw->dev,
 		  "vport[%d] configure ingress rules\n", vport->vport);
 
 	err = esw_acl_ingress_ofld_rules_create(esw, vport);
-	if (err)
-		goto rules_err;
+	अगर (err)
+		जाओ rules_err;
 
-	return 0;
+	वापस 0;
 
 rules_err:
 	esw_acl_ingress_ofld_groups_destroy(vport);
 group_err:
 	esw_acl_ingress_table_destroy(vport);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void esw_acl_ingress_ofld_cleanup(struct mlx5_eswitch *esw,
-				  struct mlx5_vport *vport)
-{
+व्योम esw_acl_ingress_ofld_cleanup(काष्ठा mlx5_eचयन *esw,
+				  काष्ठा mlx5_vport *vport)
+अणु
 	esw_acl_ingress_ofld_rules_destroy(esw, vport);
 	esw_acl_ingress_ofld_groups_destroy(vport);
 	esw_acl_ingress_table_destroy(vport);
-}
+पूर्ण
 
 /* Caller must hold rtnl_lock */
-int mlx5_esw_acl_ingress_vport_bond_update(struct mlx5_eswitch *esw, u16 vport_num,
+पूर्णांक mlx5_esw_acl_ingress_vport_bond_update(काष्ठा mlx5_eचयन *esw, u16 vport_num,
 					   u32 metadata)
-{
-	struct mlx5_vport *vport = mlx5_eswitch_get_vport(esw, vport_num);
-	int err;
+अणु
+	काष्ठा mlx5_vport *vport = mlx5_eचयन_get_vport(esw, vport_num);
+	पूर्णांक err;
 
-	if (WARN_ON_ONCE(IS_ERR(vport))) {
+	अगर (WARN_ON_ONCE(IS_ERR(vport))) अणु
 		esw_warn(esw->dev, "vport(%d) invalid!\n", vport_num);
 		err = PTR_ERR(vport);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	esw_acl_ingress_ofld_rules_destroy(esw, vport);
 
-	vport->metadata = metadata ? metadata : vport->default_metadata;
+	vport->metadata = metadata ? metadata : vport->शेष_metadata;
 
 	/* Recreate ingress acl rules with vport->metadata */
 	err = esw_acl_ingress_ofld_rules_create(esw, vport);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	return 0;
+	वापस 0;
 
 out:
-	vport->metadata = vport->default_metadata;
-	return err;
-}
+	vport->metadata = vport->शेष_metadata;
+	वापस err;
+पूर्ण

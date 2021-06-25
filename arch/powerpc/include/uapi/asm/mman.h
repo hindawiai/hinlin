@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version
  * 2 of the License, or (at your option) any later version.
  */
-#ifndef _UAPI_ASM_POWERPC_MMAN_H
-#define _UAPI_ASM_POWERPC_MMAN_H
+#अगर_अघोषित _UAPI_ASM_POWERPC_MMAN_H
+#घोषणा _UAPI_ASM_POWERPC_MMAN_H
 
-#include <asm-generic/mman-common.h>
-
-
-#define PROT_SAO	0x10		/* Strong Access Ordering */
-
-#define MAP_RENAME      MAP_ANONYMOUS   /* In SunOS terminology */
-#define MAP_NORESERVE   0x40            /* don't reserve swap pages */
-#define MAP_LOCKED	0x80
-
-#define MAP_GROWSDOWN	0x0100		/* stack-like segment */
-#define MAP_DENYWRITE	0x0800		/* ETXTBSY */
-#define MAP_EXECUTABLE	0x1000		/* mark it as an executable */
+#समावेश <यंत्र-generic/mman-common.h>
 
 
-#define MCL_CURRENT     0x2000          /* lock all currently mapped pages */
-#define MCL_FUTURE      0x4000          /* lock all additions to address space */
-#define MCL_ONFAULT	0x8000		/* lock all pages that are faulted in */
+#घोषणा PROT_SAO	0x10		/* Strong Access Ordering */
+
+#घोषणा MAP_RENAME      MAP_ANONYMOUS   /* In SunOS terminology */
+#घोषणा MAP_NORESERVE   0x40            /* करोn't reserve swap pages */
+#घोषणा MAP_LOCKED	0x80
+
+#घोषणा MAP_GROWSDOWN	0x0100		/* stack-like segment */
+#घोषणा MAP_DENYWRITE	0x0800		/* ETXTBSY */
+#घोषणा MAP_EXECUTABLE	0x1000		/* mark it as an executable */
+
+
+#घोषणा MCL_CURRENT     0x2000          /* lock all currently mapped pages */
+#घोषणा MCL_FUTURE      0x4000          /* lock all additions to address space */
+#घोषणा MCL_ONFAULT	0x8000		/* lock all pages that are faulted in */
 
 /* Override any generic PKEY permission defines */
-#define PKEY_DISABLE_EXECUTE   0x4
-#undef PKEY_ACCESS_MASK
-#define PKEY_ACCESS_MASK       (PKEY_DISABLE_ACCESS |\
+#घोषणा PKEY_DISABLE_EXECUTE   0x4
+#अघोषित PKEY_ACCESS_MASK
+#घोषणा PKEY_ACCESS_MASK       (PKEY_DISABLE_ACCESS |\
 				PKEY_DISABLE_WRITE  |\
 				PKEY_DISABLE_EXECUTE)
-#endif /* _UAPI_ASM_POWERPC_MMAN_H */
+#पूर्ण_अगर /* _UAPI_ASM_POWERPC_MMAN_H */

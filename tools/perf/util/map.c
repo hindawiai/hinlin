@@ -1,120 +1,121 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "symbol.h"
-#include <assert.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <uapi/linux/mman.h> /* To get things like MAP_HUGETLB even on older libc headers */
-#include "dso.h"
-#include "map.h"
-#include "map_symbol.h"
-#include "thread.h"
-#include "vdso.h"
-#include "build-id.h"
-#include "debug.h"
-#include "machine.h"
-#include <linux/string.h>
-#include <linux/zalloc.h>
-#include "srcline.h"
-#include "namespaces.h"
-#include "unwind.h"
-#include "srccode.h"
-#include "ui/ui.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "symbol.h"
+#समावेश <निश्चित.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <सीमा.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <uapi/linux/mman.h> /* To get things like MAP_HUGETLB even on older libc headers */
+#समावेश "dso.h"
+#समावेश "map.h"
+#समावेश "map_symbol.h"
+#समावेश "thread.h"
+#समावेश "vdso.h"
+#समावेश "build-id.h"
+#समावेश "debug.h"
+#समावेश "machine.h"
+#समावेश <linux/माला.स>
+#समावेश <linux/zभाग.स>
+#समावेश "srcline.h"
+#समावेश "namespaces.h"
+#समावेश "unwind.h"
+#समावेश "srccode.h"
+#समावेश "ui/ui.h"
 
-static void __maps__insert(struct maps *maps, struct map *map);
+अटल व्योम __maps__insert(काष्ठा maps *maps, काष्ठा map *map);
 
-static inline int is_android_lib(const char *filename)
-{
-	return strstarts(filename, "/data/app-lib/") ||
+अटल अंतरभूत पूर्णांक is_android_lib(स्थिर अक्षर *filename)
+अणु
+	वापस strstarts(filename, "/data/app-lib/") ||
 	       strstarts(filename, "/system/lib/");
-}
+पूर्ण
 
-static inline bool replace_android_lib(const char *filename, char *newfilename)
-{
-	const char *libname;
-	char *app_abi;
-	size_t app_abi_length, new_length;
-	size_t lib_length = 0;
+अटल अंतरभूत bool replace_android_lib(स्थिर अक्षर *filename, अक्षर *newfilename)
+अणु
+	स्थिर अक्षर *libname;
+	अक्षर *app_abi;
+	माप_प्रकार app_abi_length, new_length;
+	माप_प्रकार lib_length = 0;
 
-	libname  = strrchr(filename, '/');
-	if (libname)
-		lib_length = strlen(libname);
+	libname  = म_खोजप(filename, '/');
+	अगर (libname)
+		lib_length = म_माप(libname);
 
-	app_abi = getenv("APP_ABI");
-	if (!app_abi)
-		return false;
+	app_abi = दो_पर्या("APP_ABI");
+	अगर (!app_abi)
+		वापस false;
 
-	app_abi_length = strlen(app_abi);
+	app_abi_length = म_माप(app_abi);
 
-	if (strstarts(filename, "/data/app-lib/")) {
-		char *apk_path;
+	अगर (strstarts(filename, "/data/app-lib/")) अणु
+		अक्षर *apk_path;
 
-		if (!app_abi_length)
-			return false;
+		अगर (!app_abi_length)
+			वापस false;
 
 		new_length = 7 + app_abi_length + lib_length;
 
-		apk_path = getenv("APK_PATH");
-		if (apk_path) {
-			new_length += strlen(apk_path) + 1;
-			if (new_length > PATH_MAX)
-				return false;
-			snprintf(newfilename, new_length,
+		apk_path = दो_पर्या("APK_PATH");
+		अगर (apk_path) अणु
+			new_length += म_माप(apk_path) + 1;
+			अगर (new_length > PATH_MAX)
+				वापस false;
+			snम_लिखो(newfilename, new_length,
 				 "%s/libs/%s/%s", apk_path, app_abi, libname);
-		} else {
-			if (new_length > PATH_MAX)
-				return false;
-			snprintf(newfilename, new_length,
+		पूर्ण अन्यथा अणु
+			अगर (new_length > PATH_MAX)
+				वापस false;
+			snम_लिखो(newfilename, new_length,
 				 "libs/%s/%s", app_abi, libname);
-		}
-		return true;
-	}
+		पूर्ण
+		वापस true;
+	पूर्ण
 
-	if (strstarts(filename, "/system/lib/")) {
-		char *ndk, *app;
-		const char *arch;
-		int ndk_length, app_length;
+	अगर (strstarts(filename, "/system/lib/")) अणु
+		अक्षर *ndk, *app;
+		स्थिर अक्षर *arch;
+		पूर्णांक ndk_length, app_length;
 
-		ndk = getenv("NDK_ROOT");
-		app = getenv("APP_PLATFORM");
+		ndk = दो_पर्या("NDK_ROOT");
+		app = दो_पर्या("APP_PLATFORM");
 
-		if (!(ndk && app))
-			return false;
+		अगर (!(ndk && app))
+			वापस false;
 
-		ndk_length = strlen(ndk);
-		app_length = strlen(app);
+		ndk_length = म_माप(ndk);
+		app_length = म_माप(app);
 
-		if (!(ndk_length && app_length && app_abi_length))
-			return false;
+		अगर (!(ndk_length && app_length && app_abi_length))
+			वापस false;
 
-		arch = !strncmp(app_abi, "arm", 3) ? "arm" :
-		       !strncmp(app_abi, "mips", 4) ? "mips" :
-		       !strncmp(app_abi, "x86", 3) ? "x86" : NULL;
+		arch = !म_भेदन(app_abi, "arm", 3) ? "arm" :
+		       !म_भेदन(app_abi, "mips", 4) ? "mips" :
+		       !म_भेदन(app_abi, "x86", 3) ? "x86" : शून्य;
 
-		if (!arch)
-			return false;
+		अगर (!arch)
+			वापस false;
 
 		new_length = 27 + ndk_length +
 			     app_length + lib_length
-			   + strlen(arch);
+			   + म_माप(arch);
 
-		if (new_length > PATH_MAX)
-			return false;
-		snprintf(newfilename, new_length,
+		अगर (new_length > PATH_MAX)
+			वापस false;
+		snम_लिखो(newfilename, new_length,
 			"%.*s/platforms/%.*s/arch-%s/usr/lib/%s",
 			ndk_length, ndk, app_length, app, arch, libname);
 
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-void map__init(struct map *map, u64 start, u64 end, u64 pgoff, struct dso *dso)
-{
+व्योम map__init(काष्ठा map *map, u64 start, u64 end, u64 pgoff, काष्ठा dso *dso)
+अणु
 	map->start    = start;
 	map->end      = end;
 	map->pgoff    = pgoff;
@@ -125,21 +126,21 @@ void map__init(struct map *map, u64 start, u64 end, u64 pgoff, struct dso *dso)
 	RB_CLEAR_NODE(&map->rb_node);
 	map->erange_warned = false;
 	refcount_set(&map->refcnt, 1);
-}
+पूर्ण
 
-struct map *map__new(struct machine *machine, u64 start, u64 len,
-		     u64 pgoff, struct dso_id *id,
-		     u32 prot, u32 flags, struct build_id *bid,
-		     char *filename, struct thread *thread)
-{
-	struct map *map = malloc(sizeof(*map));
-	struct nsinfo *nsi = NULL;
-	struct nsinfo *nnsi;
+काष्ठा map *map__new(काष्ठा machine *machine, u64 start, u64 len,
+		     u64 pgoff, काष्ठा dso_id *id,
+		     u32 prot, u32 flags, काष्ठा build_id *bid,
+		     अक्षर *filename, काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	काष्ठा map *map = दो_स्मृति(माप(*map));
+	काष्ठा nsinfo *nsi = शून्य;
+	काष्ठा nsinfo *nnsi;
 
-	if (map != NULL) {
-		char newfilename[PATH_MAX];
-		struct dso *dso;
-		int anon, no_dso, vdso, android;
+	अगर (map != शून्य) अणु
+		अक्षर newfilename[PATH_MAX];
+		काष्ठा dso *dso;
+		पूर्णांक anon, no_dso, vdso, android;
 
 		android = is_android_lib(filename);
 		anon = is_anon_memory(filename) || flags & MAP_HUGETLB;
@@ -147,352 +148,352 @@ struct map *map__new(struct machine *machine, u64 start, u64 len,
 		no_dso = is_no_dso_memory(filename);
 		map->prot = prot;
 		map->flags = flags;
-		nsi = nsinfo__get(thread->nsinfo);
+		nsi = nsinfo__get(thपढ़ो->nsinfo);
 
-		if ((anon || no_dso) && nsi && (prot & PROT_EXEC)) {
-			snprintf(newfilename, sizeof(newfilename),
+		अगर ((anon || no_dso) && nsi && (prot & PROT_EXEC)) अणु
+			snम_लिखो(newfilename, माप(newfilename),
 				 "/tmp/perf-%d.map", nsi->pid);
 			filename = newfilename;
-		}
+		पूर्ण
 
-		if (android) {
-			if (replace_android_lib(filename, newfilename))
+		अगर (android) अणु
+			अगर (replace_android_lib(filename, newfilename))
 				filename = newfilename;
-		}
+		पूर्ण
 
-		if (vdso) {
+		अगर (vdso) अणु
 			/* The vdso maps are always on the host and not the
-			 * container.  Ensure that we don't use setns to look
+			 * container.  Ensure that we करोn't use setns to look
 			 * them up.
 			 */
 			nnsi = nsinfo__copy(nsi);
-			if (nnsi) {
+			अगर (nnsi) अणु
 				nsinfo__put(nsi);
 				nnsi->need_setns = false;
 				nsi = nnsi;
-			}
+			पूर्ण
 			pgoff = 0;
-			dso = machine__findnew_vdso(machine, thread);
-		} else
+			dso = machine__findnew_vdso(machine, thपढ़ो);
+		पूर्ण अन्यथा
 			dso = machine__findnew_dso_id(machine, filename, id);
 
-		if (dso == NULL)
-			goto out_delete;
+		अगर (dso == शून्य)
+			जाओ out_delete;
 
 		map__init(map, start, start + len, pgoff, dso);
 
-		if (anon || no_dso) {
+		अगर (anon || no_dso) अणु
 			map->map_ip = map->unmap_ip = identity__map_ip;
 
 			/*
 			 * Set memory without DSO as loaded. All map__find_*
-			 * functions still return NULL, and we avoid the
+			 * functions still वापस शून्य, and we aव्योम the
 			 * unnecessary map__load warning.
 			 */
-			if (!(prot & PROT_EXEC))
+			अगर (!(prot & PROT_EXEC))
 				dso__set_loaded(dso);
-		}
+		पूर्ण
 		dso->nsinfo = nsi;
 
-		if (build_id__is_defined(bid))
+		अगर (build_id__is_defined(bid))
 			dso__set_build_id(dso, bid);
 
 		dso__put(dso);
-	}
-	return map;
+	पूर्ण
+	वापस map;
 out_delete:
 	nsinfo__put(nsi);
-	free(map);
-	return NULL;
-}
+	मुक्त(map);
+	वापस शून्य;
+पूर्ण
 
 /*
- * Constructor variant for modules (where we know from /proc/modules where
- * they are loaded) and for vmlinux, where only after we load all the
+ * Conकाष्ठाor variant क्रम modules (where we know from /proc/modules where
+ * they are loaded) and क्रम vmlinux, where only after we load all the
  * symbols we'll know where it starts and ends.
  */
-struct map *map__new2(u64 start, struct dso *dso)
-{
-	struct map *map = calloc(1, (sizeof(*map) +
-				     (dso->kernel ? sizeof(struct kmap) : 0)));
-	if (map != NULL) {
+काष्ठा map *map__new2(u64 start, काष्ठा dso *dso)
+अणु
+	काष्ठा map *map = सुस्मृति(1, (माप(*map) +
+				     (dso->kernel ? माप(काष्ठा kmap) : 0)));
+	अगर (map != शून्य) अणु
 		/*
 		 * ->end will be filled after we load all the symbols
 		 */
 		map__init(map, start, 0, 0, dso);
-	}
+	पूर्ण
 
-	return map;
-}
+	वापस map;
+पूर्ण
 
-bool __map__is_kernel(const struct map *map)
-{
-	if (!map->dso->kernel)
-		return false;
-	return machine__kernel_map(map__kmaps((struct map *)map)->machine) == map;
-}
+bool __map__is_kernel(स्थिर काष्ठा map *map)
+अणु
+	अगर (!map->dso->kernel)
+		वापस false;
+	वापस machine__kernel_map(map__kmaps((काष्ठा map *)map)->machine) == map;
+पूर्ण
 
-bool __map__is_extra_kernel_map(const struct map *map)
-{
-	struct kmap *kmap = __map__kmap((struct map *)map);
+bool __map__is_extra_kernel_map(स्थिर काष्ठा map *map)
+अणु
+	काष्ठा kmap *kmap = __map__kmap((काष्ठा map *)map);
 
-	return kmap && kmap->name[0];
-}
+	वापस kmap && kmap->name[0];
+पूर्ण
 
-bool __map__is_bpf_prog(const struct map *map)
-{
-	const char *name;
+bool __map__is_bpf_prog(स्थिर काष्ठा map *map)
+अणु
+	स्थिर अक्षर *name;
 
-	if (map->dso->binary_type == DSO_BINARY_TYPE__BPF_PROG_INFO)
-		return true;
+	अगर (map->dso->binary_type == DSO_BINARY_TYPE__BPF_PROG_INFO)
+		वापस true;
 
 	/*
 	 * If PERF_RECORD_BPF_EVENT is not included, the dso will not have
-	 * type of DSO_BINARY_TYPE__BPF_PROG_INFO. In such cases, we can
+	 * type of DSO_BINARY_TYPE__BPF_PROG_INFO. In such हालs, we can
 	 * guess the type based on name.
 	 */
-	name = map->dso->short_name;
-	return name && (strstr(name, "bpf_prog_") == name);
-}
+	name = map->dso->लघु_name;
+	वापस name && (म_माला(name, "bpf_prog_") == name);
+पूर्ण
 
-bool __map__is_bpf_image(const struct map *map)
-{
-	const char *name;
+bool __map__is_bpf_image(स्थिर काष्ठा map *map)
+अणु
+	स्थिर अक्षर *name;
 
-	if (map->dso->binary_type == DSO_BINARY_TYPE__BPF_IMAGE)
-		return true;
+	अगर (map->dso->binary_type == DSO_BINARY_TYPE__BPF_IMAGE)
+		वापस true;
 
 	/*
 	 * If PERF_RECORD_KSYMBOL is not included, the dso will not have
-	 * type of DSO_BINARY_TYPE__BPF_IMAGE. In such cases, we can
+	 * type of DSO_BINARY_TYPE__BPF_IMAGE. In such हालs, we can
 	 * guess the type based on name.
 	 */
-	name = map->dso->short_name;
-	return name && is_bpf_image(name);
-}
+	name = map->dso->लघु_name;
+	वापस name && is_bpf_image(name);
+पूर्ण
 
-bool __map__is_ool(const struct map *map)
-{
-	return map->dso && map->dso->binary_type == DSO_BINARY_TYPE__OOL;
-}
+bool __map__is_ool(स्थिर काष्ठा map *map)
+अणु
+	वापस map->dso && map->dso->binary_type == DSO_BINARY_TYPE__OOL;
+पूर्ण
 
-bool map__has_symbols(const struct map *map)
-{
-	return dso__has_symbols(map->dso);
-}
+bool map__has_symbols(स्थिर काष्ठा map *map)
+अणु
+	वापस dso__has_symbols(map->dso);
+पूर्ण
 
-static void map__exit(struct map *map)
-{
-	BUG_ON(refcount_read(&map->refcnt) != 0);
+अटल व्योम map__निकास(काष्ठा map *map)
+अणु
+	BUG_ON(refcount_पढ़ो(&map->refcnt) != 0);
 	dso__zput(map->dso);
-}
+पूर्ण
 
-void map__delete(struct map *map)
-{
-	map__exit(map);
-	free(map);
-}
+व्योम map__delete(काष्ठा map *map)
+अणु
+	map__निकास(map);
+	मुक्त(map);
+पूर्ण
 
-void map__put(struct map *map)
-{
-	if (map && refcount_dec_and_test(&map->refcnt))
+व्योम map__put(काष्ठा map *map)
+अणु
+	अगर (map && refcount_dec_and_test(&map->refcnt))
 		map__delete(map);
-}
+पूर्ण
 
-void map__fixup_start(struct map *map)
-{
-	struct rb_root_cached *symbols = &map->dso->symbols;
-	struct rb_node *nd = rb_first_cached(symbols);
-	if (nd != NULL) {
-		struct symbol *sym = rb_entry(nd, struct symbol, rb_node);
+व्योम map__fixup_start(काष्ठा map *map)
+अणु
+	काष्ठा rb_root_cached *symbols = &map->dso->symbols;
+	काष्ठा rb_node *nd = rb_first_cached(symbols);
+	अगर (nd != शून्य) अणु
+		काष्ठा symbol *sym = rb_entry(nd, काष्ठा symbol, rb_node);
 		map->start = sym->start;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void map__fixup_end(struct map *map)
-{
-	struct rb_root_cached *symbols = &map->dso->symbols;
-	struct rb_node *nd = rb_last(&symbols->rb_root);
-	if (nd != NULL) {
-		struct symbol *sym = rb_entry(nd, struct symbol, rb_node);
+व्योम map__fixup_end(काष्ठा map *map)
+अणु
+	काष्ठा rb_root_cached *symbols = &map->dso->symbols;
+	काष्ठा rb_node *nd = rb_last(&symbols->rb_root);
+	अगर (nd != शून्य) अणु
+		काष्ठा symbol *sym = rb_entry(nd, काष्ठा symbol, rb_node);
 		map->end = sym->end;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define DSO__DELETED "(deleted)"
+#घोषणा DSO__DELETED "(deleted)"
 
-int map__load(struct map *map)
-{
-	const char *name = map->dso->long_name;
-	int nr;
+पूर्णांक map__load(काष्ठा map *map)
+अणु
+	स्थिर अक्षर *name = map->dso->दीर्घ_name;
+	पूर्णांक nr;
 
-	if (dso__loaded(map->dso))
-		return 0;
+	अगर (dso__loaded(map->dso))
+		वापस 0;
 
 	nr = dso__load(map->dso, map);
-	if (nr < 0) {
-		if (map->dso->has_build_id) {
-			char sbuild_id[SBUILD_ID_SIZE];
+	अगर (nr < 0) अणु
+		अगर (map->dso->has_build_id) अणु
+			अक्षर sbuild_id[SBUILD_ID_SIZE];
 
-			build_id__sprintf(&map->dso->bid, sbuild_id);
+			build_id__प्र_लिखो(&map->dso->bid, sbuild_id);
 			pr_debug("%s with build id %s not found", name, sbuild_id);
-		} else
+		पूर्ण अन्यथा
 			pr_debug("Failed to open %s", name);
 
 		pr_debug(", continuing without symbols\n");
-		return -1;
-	} else if (nr == 0) {
-#ifdef HAVE_LIBELF_SUPPORT
-		const size_t len = strlen(name);
-		const size_t real_len = len - sizeof(DSO__DELETED);
+		वापस -1;
+	पूर्ण अन्यथा अगर (nr == 0) अणु
+#अगर_घोषित HAVE_LIBELF_SUPPORT
+		स्थिर माप_प्रकार len = म_माप(name);
+		स्थिर माप_प्रकार real_len = len - माप(DSO__DELETED);
 
-		if (len > sizeof(DSO__DELETED) &&
-		    strcmp(name + real_len + 1, DSO__DELETED) == 0) {
+		अगर (len > माप(DSO__DELETED) &&
+		    म_भेद(name + real_len + 1, DSO__DELETED) == 0) अणु
 			pr_debug("%.*s was updated (is prelink enabled?). "
 				"Restart the long running apps that use it!\n",
-				   (int)real_len, name);
-		} else {
+				   (पूर्णांक)real_len, name);
+		पूर्ण अन्यथा अणु
 			pr_debug("no symbols found in %s, maybe install a debug package?\n", name);
-		}
-#endif
-		return -1;
-	}
+		पूर्ण
+#पूर्ण_अगर
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct symbol *map__find_symbol(struct map *map, u64 addr)
-{
-	if (map__load(map) < 0)
-		return NULL;
+काष्ठा symbol *map__find_symbol(काष्ठा map *map, u64 addr)
+अणु
+	अगर (map__load(map) < 0)
+		वापस शून्य;
 
-	return dso__find_symbol(map->dso, addr);
-}
+	वापस dso__find_symbol(map->dso, addr);
+पूर्ण
 
-struct symbol *map__find_symbol_by_name(struct map *map, const char *name)
-{
-	if (map__load(map) < 0)
-		return NULL;
+काष्ठा symbol *map__find_symbol_by_name(काष्ठा map *map, स्थिर अक्षर *name)
+अणु
+	अगर (map__load(map) < 0)
+		वापस शून्य;
 
-	if (!dso__sorted_by_name(map->dso))
+	अगर (!dso__sorted_by_name(map->dso))
 		dso__sort_by_name(map->dso);
 
-	return dso__find_symbol_by_name(map->dso, name);
-}
+	वापस dso__find_symbol_by_name(map->dso, name);
+पूर्ण
 
-struct map *map__clone(struct map *from)
-{
-	size_t size = sizeof(struct map);
-	struct map *map;
+काष्ठा map *map__clone(काष्ठा map *from)
+अणु
+	माप_प्रकार size = माप(काष्ठा map);
+	काष्ठा map *map;
 
-	if (from->dso && from->dso->kernel)
-		size += sizeof(struct kmap);
+	अगर (from->dso && from->dso->kernel)
+		size += माप(काष्ठा kmap);
 
 	map = memdup(from, size);
-	if (map != NULL) {
+	अगर (map != शून्य) अणु
 		refcount_set(&map->refcnt, 1);
 		RB_CLEAR_NODE(&map->rb_node);
 		dso__get(map->dso);
-	}
+	पूर्ण
 
-	return map;
-}
+	वापस map;
+पूर्ण
 
-size_t map__fprintf(struct map *map, FILE *fp)
-{
-	return fprintf(fp, " %" PRIx64 "-%" PRIx64 " %" PRIx64 " %s\n",
+माप_प्रकार map__ख_लिखो(काष्ठा map *map, खाता *fp)
+अणु
+	वापस ख_लिखो(fp, " %" PRIx64 "-%" PRIx64 " %" PRIx64 " %s\n",
 		       map->start, map->end, map->pgoff, map->dso->name);
-}
+पूर्ण
 
-size_t map__fprintf_dsoname(struct map *map, FILE *fp)
-{
-	char buf[symbol_conf.pad_output_len_dso + 1];
-	const char *dsoname = "[unknown]";
+माप_प्रकार map__ख_लिखो_dsoname(काष्ठा map *map, खाता *fp)
+अणु
+	अक्षर buf[symbol_conf.pad_output_len_dso + 1];
+	स्थिर अक्षर *dsoname = "[unknown]";
 
-	if (map && map->dso) {
-		if (symbol_conf.show_kernel_path && map->dso->long_name)
-			dsoname = map->dso->long_name;
-		else
+	अगर (map && map->dso) अणु
+		अगर (symbol_conf.show_kernel_path && map->dso->दीर्घ_name)
+			dsoname = map->dso->दीर्घ_name;
+		अन्यथा
 			dsoname = map->dso->name;
-	}
+	पूर्ण
 
-	if (symbol_conf.pad_output_len_dso) {
-		scnprintf_pad(buf, symbol_conf.pad_output_len_dso, "%s", dsoname);
+	अगर (symbol_conf.pad_output_len_dso) अणु
+		scnम_लिखो_pad(buf, symbol_conf.pad_output_len_dso, "%s", dsoname);
 		dsoname = buf;
-	}
+	पूर्ण
 
-	return fprintf(fp, "%s", dsoname);
-}
+	वापस ख_लिखो(fp, "%s", dsoname);
+पूर्ण
 
-char *map__srcline(struct map *map, u64 addr, struct symbol *sym)
-{
-	if (map == NULL)
-		return SRCLINE_UNKNOWN;
-	return get_srcline(map->dso, map__rip_2objdump(map, addr), sym, true, true, addr);
-}
+अक्षर *map__srcline(काष्ठा map *map, u64 addr, काष्ठा symbol *sym)
+अणु
+	अगर (map == शून्य)
+		वापस SRCLINE_UNKNOWN;
+	वापस get_srcline(map->dso, map__rip_2objdump(map, addr), sym, true, true, addr);
+पूर्ण
 
-int map__fprintf_srcline(struct map *map, u64 addr, const char *prefix,
-			 FILE *fp)
-{
-	int ret = 0;
+पूर्णांक map__ख_लिखो_srcline(काष्ठा map *map, u64 addr, स्थिर अक्षर *prefix,
+			 खाता *fp)
+अणु
+	पूर्णांक ret = 0;
 
-	if (map && map->dso) {
-		char *srcline = map__srcline(map, addr, NULL);
-		if (strncmp(srcline, SRCLINE_UNKNOWN, strlen(SRCLINE_UNKNOWN)) != 0)
-			ret = fprintf(fp, "%s%s", prefix, srcline);
-		free_srcline(srcline);
-	}
-	return ret;
-}
+	अगर (map && map->dso) अणु
+		अक्षर *srcline = map__srcline(map, addr, शून्य);
+		अगर (म_भेदन(srcline, SRCLINE_UNKNOWN, म_माप(SRCLINE_UNKNOWN)) != 0)
+			ret = ख_लिखो(fp, "%s%s", prefix, srcline);
+		मुक्त_srcline(srcline);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-void srccode_state_free(struct srccode_state *state)
-{
-	zfree(&state->srcfile);
+व्योम srccode_state_मुक्त(काष्ठा srccode_state *state)
+अणु
+	zमुक्त(&state->srcfile);
 	state->line = 0;
-}
+पूर्ण
 
 /**
  * map__rip_2objdump - convert symbol start address to objdump address.
  * @map: memory map
  * @rip: symbol start address
  *
- * objdump wants/reports absolute IPs for ET_EXEC, and RIPs for ET_DYN.
- * map->dso->adjust_symbols==1 for ET_EXEC-like cases except ET_REL which is
+ * objdump wants/reports असलolute IPs क्रम ET_EXEC, and RIPs क्रम ET_DYN.
+ * map->dso->adjust_symbols==1 क्रम ET_EXEC-like हालs except ET_REL which is
  * relative to section start.
  *
- * Return: Address suitable for passing to "objdump --start-address="
+ * Return: Address suitable क्रम passing to "objdump --start-address="
  */
-u64 map__rip_2objdump(struct map *map, u64 rip)
-{
-	struct kmap *kmap = __map__kmap(map);
+u64 map__rip_2objdump(काष्ठा map *map, u64 rip)
+अणु
+	काष्ठा kmap *kmap = __map__kmap(map);
 
 	/*
-	 * vmlinux does not have program headers for PTI entry trampolines and
+	 * vmlinux करोes not have program headers क्रम PTI entry trampolines and
 	 * kcore may not either. However the trampoline object code is on the
-	 * main kernel map, so just use that instead.
+	 * मुख्य kernel map, so just use that instead.
 	 */
-	if (kmap && is_entry_trampoline(kmap->name) && kmap->kmaps && kmap->kmaps->machine) {
-		struct map *kernel_map = machine__kernel_map(kmap->kmaps->machine);
+	अगर (kmap && is_entry_trampoline(kmap->name) && kmap->kmaps && kmap->kmaps->machine) अणु
+		काष्ठा map *kernel_map = machine__kernel_map(kmap->kmaps->machine);
 
-		if (kernel_map)
+		अगर (kernel_map)
 			map = kernel_map;
-	}
+	पूर्ण
 
-	if (!map->dso->adjust_symbols)
-		return rip;
+	अगर (!map->dso->adjust_symbols)
+		वापस rip;
 
-	if (map->dso->rel)
-		return rip - map->pgoff;
+	अगर (map->dso->rel)
+		वापस rip - map->pgoff;
 
 	/*
 	 * kernel modules also have DSO_TYPE_USER in dso->kernel,
 	 * but all kernel modules are ET_REL, so won't get here.
 	 */
-	if (map->dso->kernel == DSO_SPACE__USER)
-		return rip + map->dso->text_offset;
+	अगर (map->dso->kernel == DSO_SPACE__USER)
+		वापस rip + map->dso->text_offset;
 
-	return map->unmap_ip(map, rip) - map->reloc;
-}
+	वापस map->unmap_ip(map, rip) - map->reloc;
+पूर्ण
 
 /**
  * map__objdump_2mem - convert objdump address to a memory address.
@@ -501,245 +502,245 @@ u64 map__rip_2objdump(struct map *map, u64 rip)
  *
  * Closely related to map__rip_2objdump(), this function takes an address from
  * objdump and converts it to a memory address.  Note this assumes that @map
- * contains the address.  To be sure the result is valid, check it forwards
+ * contains the address.  To be sure the result is valid, check it क्रमwards
  * e.g. map__rip_2objdump(map->map_ip(map, map__objdump_2mem(map, ip))) == ip
  *
  * Return: Memory address.
  */
-u64 map__objdump_2mem(struct map *map, u64 ip)
-{
-	if (!map->dso->adjust_symbols)
-		return map->unmap_ip(map, ip);
+u64 map__objdump_2mem(काष्ठा map *map, u64 ip)
+अणु
+	अगर (!map->dso->adjust_symbols)
+		वापस map->unmap_ip(map, ip);
 
-	if (map->dso->rel)
-		return map->unmap_ip(map, ip + map->pgoff);
+	अगर (map->dso->rel)
+		वापस map->unmap_ip(map, ip + map->pgoff);
 
 	/*
 	 * kernel modules also have DSO_TYPE_USER in dso->kernel,
 	 * but all kernel modules are ET_REL, so won't get here.
 	 */
-	if (map->dso->kernel == DSO_SPACE__USER)
-		return map->unmap_ip(map, ip - map->dso->text_offset);
+	अगर (map->dso->kernel == DSO_SPACE__USER)
+		वापस map->unmap_ip(map, ip - map->dso->text_offset);
 
-	return ip + map->reloc;
-}
+	वापस ip + map->reloc;
+पूर्ण
 
-void maps__init(struct maps *maps, struct machine *machine)
-{
+व्योम maps__init(काष्ठा maps *maps, काष्ठा machine *machine)
+अणु
 	maps->entries = RB_ROOT;
 	init_rwsem(&maps->lock);
 	maps->machine = machine;
-	maps->last_search_by_name = NULL;
+	maps->last_search_by_name = शून्य;
 	maps->nr_maps = 0;
-	maps->maps_by_name = NULL;
+	maps->maps_by_name = शून्य;
 	refcount_set(&maps->refcnt, 1);
-}
+पूर्ण
 
-static void __maps__free_maps_by_name(struct maps *maps)
-{
+अटल व्योम __maps__मुक्त_maps_by_name(काष्ठा maps *maps)
+अणु
 	/*
-	 * Free everything to try to do it from the rbtree in the next search
+	 * Free everything to try to करो it from the rbtree in the next search
 	 */
-	zfree(&maps->maps_by_name);
+	zमुक्त(&maps->maps_by_name);
 	maps->nr_maps_allocated = 0;
-}
+पूर्ण
 
-void maps__insert(struct maps *maps, struct map *map)
-{
-	down_write(&maps->lock);
+व्योम maps__insert(काष्ठा maps *maps, काष्ठा map *map)
+अणु
+	करोwn_ग_लिखो(&maps->lock);
 	__maps__insert(maps, map);
 	++maps->nr_maps;
 
-	if (map->dso && map->dso->kernel) {
-		struct kmap *kmap = map__kmap(map);
+	अगर (map->dso && map->dso->kernel) अणु
+		काष्ठा kmap *kmap = map__kmap(map);
 
-		if (kmap)
+		अगर (kmap)
 			kmap->kmaps = maps;
-		else
+		अन्यथा
 			pr_err("Internal error: kernel dso with non kernel map\n");
-	}
+	पूर्ण
 
 
 	/*
-	 * If we already performed some search by name, then we need to add the just
+	 * If we alपढ़ोy perक्रमmed some search by name, then we need to add the just
 	 * inserted map and resort.
 	 */
-	if (maps->maps_by_name) {
-		if (maps->nr_maps > maps->nr_maps_allocated) {
-			int nr_allocate = maps->nr_maps * 2;
-			struct map **maps_by_name = realloc(maps->maps_by_name, nr_allocate * sizeof(map));
+	अगर (maps->maps_by_name) अणु
+		अगर (maps->nr_maps > maps->nr_maps_allocated) अणु
+			पूर्णांक nr_allocate = maps->nr_maps * 2;
+			काष्ठा map **maps_by_name = पुनः_स्मृति(maps->maps_by_name, nr_allocate * माप(map));
 
-			if (maps_by_name == NULL) {
-				__maps__free_maps_by_name(maps);
-				up_write(&maps->lock);
-				return;
-			}
+			अगर (maps_by_name == शून्य) अणु
+				__maps__मुक्त_maps_by_name(maps);
+				up_ग_लिखो(&maps->lock);
+				वापस;
+			पूर्ण
 
 			maps->maps_by_name = maps_by_name;
 			maps->nr_maps_allocated = nr_allocate;
-		}
+		पूर्ण
 		maps->maps_by_name[maps->nr_maps - 1] = map;
 		__maps__sort_by_name(maps);
-	}
-	up_write(&maps->lock);
-}
+	पूर्ण
+	up_ग_लिखो(&maps->lock);
+पूर्ण
 
-static void __maps__remove(struct maps *maps, struct map *map)
-{
+अटल व्योम __maps__हटाओ(काष्ठा maps *maps, काष्ठा map *map)
+अणु
 	rb_erase_init(&map->rb_node, &maps->entries);
 	map__put(map);
-}
+पूर्ण
 
-void maps__remove(struct maps *maps, struct map *map)
-{
-	down_write(&maps->lock);
-	if (maps->last_search_by_name == map)
-		maps->last_search_by_name = NULL;
+व्योम maps__हटाओ(काष्ठा maps *maps, काष्ठा map *map)
+अणु
+	करोwn_ग_लिखो(&maps->lock);
+	अगर (maps->last_search_by_name == map)
+		maps->last_search_by_name = शून्य;
 
-	__maps__remove(maps, map);
+	__maps__हटाओ(maps, map);
 	--maps->nr_maps;
-	if (maps->maps_by_name)
-		__maps__free_maps_by_name(maps);
-	up_write(&maps->lock);
-}
+	अगर (maps->maps_by_name)
+		__maps__मुक्त_maps_by_name(maps);
+	up_ग_लिखो(&maps->lock);
+पूर्ण
 
-static void __maps__purge(struct maps *maps)
-{
-	struct map *pos, *next;
+अटल व्योम __maps__purge(काष्ठा maps *maps)
+अणु
+	काष्ठा map *pos, *next;
 
-	maps__for_each_entry_safe(maps, pos, next) {
+	maps__क्रम_each_entry_safe(maps, pos, next) अणु
 		rb_erase_init(&pos->rb_node,  &maps->entries);
 		map__put(pos);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void maps__exit(struct maps *maps)
-{
-	down_write(&maps->lock);
+व्योम maps__निकास(काष्ठा maps *maps)
+अणु
+	करोwn_ग_लिखो(&maps->lock);
 	__maps__purge(maps);
-	up_write(&maps->lock);
-}
+	up_ग_लिखो(&maps->lock);
+पूर्ण
 
-bool maps__empty(struct maps *maps)
-{
-	return !maps__first(maps);
-}
+bool maps__empty(काष्ठा maps *maps)
+अणु
+	वापस !maps__first(maps);
+पूर्ण
 
-struct maps *maps__new(struct machine *machine)
-{
-	struct maps *maps = zalloc(sizeof(*maps));
+काष्ठा maps *maps__new(काष्ठा machine *machine)
+अणु
+	काष्ठा maps *maps = zalloc(माप(*maps));
 
-	if (maps != NULL)
+	अगर (maps != शून्य)
 		maps__init(maps, machine);
 
-	return maps;
-}
+	वापस maps;
+पूर्ण
 
-void maps__delete(struct maps *maps)
-{
-	maps__exit(maps);
+व्योम maps__delete(काष्ठा maps *maps)
+अणु
+	maps__निकास(maps);
 	unwind__finish_access(maps);
-	free(maps);
-}
+	मुक्त(maps);
+पूर्ण
 
-void maps__put(struct maps *maps)
-{
-	if (maps && refcount_dec_and_test(&maps->refcnt))
+व्योम maps__put(काष्ठा maps *maps)
+अणु
+	अगर (maps && refcount_dec_and_test(&maps->refcnt))
 		maps__delete(maps);
-}
+पूर्ण
 
-struct symbol *maps__find_symbol(struct maps *maps, u64 addr, struct map **mapp)
-{
-	struct map *map = maps__find(maps, addr);
+काष्ठा symbol *maps__find_symbol(काष्ठा maps *maps, u64 addr, काष्ठा map **mapp)
+अणु
+	काष्ठा map *map = maps__find(maps, addr);
 
-	/* Ensure map is loaded before using map->map_ip */
-	if (map != NULL && map__load(map) >= 0) {
-		if (mapp != NULL)
+	/* Ensure map is loaded beक्रमe using map->map_ip */
+	अगर (map != शून्य && map__load(map) >= 0) अणु
+		अगर (mapp != शून्य)
 			*mapp = map;
-		return map__find_symbol(map, map->map_ip(map, addr));
-	}
+		वापस map__find_symbol(map, map->map_ip(map, addr));
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool map__contains_symbol(struct map *map, struct symbol *sym)
-{
+अटल bool map__contains_symbol(काष्ठा map *map, काष्ठा symbol *sym)
+अणु
 	u64 ip = map->unmap_ip(map, sym->start);
 
-	return ip >= map->start && ip < map->end;
-}
+	वापस ip >= map->start && ip < map->end;
+पूर्ण
 
-struct symbol *maps__find_symbol_by_name(struct maps *maps, const char *name, struct map **mapp)
-{
-	struct symbol *sym;
-	struct map *pos;
+काष्ठा symbol *maps__find_symbol_by_name(काष्ठा maps *maps, स्थिर अक्षर *name, काष्ठा map **mapp)
+अणु
+	काष्ठा symbol *sym;
+	काष्ठा map *pos;
 
-	down_read(&maps->lock);
+	करोwn_पढ़ो(&maps->lock);
 
-	maps__for_each_entry(maps, pos) {
+	maps__क्रम_each_entry(maps, pos) अणु
 		sym = map__find_symbol_by_name(pos, name);
 
-		if (sym == NULL)
-			continue;
-		if (!map__contains_symbol(pos, sym)) {
-			sym = NULL;
-			continue;
-		}
-		if (mapp != NULL)
+		अगर (sym == शून्य)
+			जारी;
+		अगर (!map__contains_symbol(pos, sym)) अणु
+			sym = शून्य;
+			जारी;
+		पूर्ण
+		अगर (mapp != शून्य)
 			*mapp = pos;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	sym = NULL;
+	sym = शून्य;
 out:
-	up_read(&maps->lock);
-	return sym;
-}
+	up_पढ़ो(&maps->lock);
+	वापस sym;
+पूर्ण
 
-int maps__find_ams(struct maps *maps, struct addr_map_symbol *ams)
-{
-	if (ams->addr < ams->ms.map->start || ams->addr >= ams->ms.map->end) {
-		if (maps == NULL)
-			return -1;
+पूर्णांक maps__find_ams(काष्ठा maps *maps, काष्ठा addr_map_symbol *ams)
+अणु
+	अगर (ams->addr < ams->ms.map->start || ams->addr >= ams->ms.map->end) अणु
+		अगर (maps == शून्य)
+			वापस -1;
 		ams->ms.map = maps__find(maps, ams->addr);
-		if (ams->ms.map == NULL)
-			return -1;
-	}
+		अगर (ams->ms.map == शून्य)
+			वापस -1;
+	पूर्ण
 
 	ams->al_addr = ams->ms.map->map_ip(ams->ms.map, ams->addr);
 	ams->ms.sym = map__find_symbol(ams->ms.map, ams->al_addr);
 
-	return ams->ms.sym ? 0 : -1;
-}
+	वापस ams->ms.sym ? 0 : -1;
+पूर्ण
 
-size_t maps__fprintf(struct maps *maps, FILE *fp)
-{
-	size_t printed = 0;
-	struct map *pos;
+माप_प्रकार maps__ख_लिखो(काष्ठा maps *maps, खाता *fp)
+अणु
+	माप_प्रकार prपूर्णांकed = 0;
+	काष्ठा map *pos;
 
-	down_read(&maps->lock);
+	करोwn_पढ़ो(&maps->lock);
 
-	maps__for_each_entry(maps, pos) {
-		printed += fprintf(fp, "Map:");
-		printed += map__fprintf(pos, fp);
-		if (verbose > 2) {
-			printed += dso__fprintf(pos->dso, fp);
-			printed += fprintf(fp, "--\n");
-		}
-	}
+	maps__क्रम_each_entry(maps, pos) अणु
+		prपूर्णांकed += ख_लिखो(fp, "Map:");
+		prपूर्णांकed += map__ख_लिखो(pos, fp);
+		अगर (verbose > 2) अणु
+			prपूर्णांकed += dso__ख_लिखो(pos->dso, fp);
+			prपूर्णांकed += ख_लिखो(fp, "--\n");
+		पूर्ण
+	पूर्ण
 
-	up_read(&maps->lock);
+	up_पढ़ो(&maps->lock);
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-int maps__fixup_overlappings(struct maps *maps, struct map *map, FILE *fp)
-{
-	struct rb_root *root;
-	struct rb_node *next, *first;
-	int err = 0;
+पूर्णांक maps__fixup_overlappings(काष्ठा maps *maps, काष्ठा map *map, खाता *fp)
+अणु
+	काष्ठा rb_root *root;
+	काष्ठा rb_node *next, *first;
+	पूर्णांक err = 0;
 
-	down_write(&maps->lock);
+	करोwn_ग_लिखो(&maps->lock);
 
 	root = &maps->entries;
 
@@ -748,216 +749,216 @@ int maps__fixup_overlappings(struct maps *maps, struct map *map, FILE *fp)
 	 * Same as find_vma() in kernel.
 	 */
 	next = root->rb_node;
-	first = NULL;
-	while (next) {
-		struct map *pos = rb_entry(next, struct map, rb_node);
+	first = शून्य;
+	जबतक (next) अणु
+		काष्ठा map *pos = rb_entry(next, काष्ठा map, rb_node);
 
-		if (pos->end > map->start) {
+		अगर (pos->end > map->start) अणु
 			first = next;
-			if (pos->start <= map->start)
-				break;
+			अगर (pos->start <= map->start)
+				अवरोध;
 			next = next->rb_left;
-		} else
+		पूर्ण अन्यथा
 			next = next->rb_right;
-	}
+	पूर्ण
 
 	next = first;
-	while (next) {
-		struct map *pos = rb_entry(next, struct map, rb_node);
+	जबतक (next) अणु
+		काष्ठा map *pos = rb_entry(next, काष्ठा map, rb_node);
 		next = rb_next(&pos->rb_node);
 
 		/*
-		 * Stop if current map starts after map->end.
-		 * Maps are ordered by start: next will not overlap for sure.
+		 * Stop अगर current map starts after map->end.
+		 * Maps are ordered by start: next will not overlap क्रम sure.
 		 */
-		if (pos->start >= map->end)
-			break;
+		अगर (pos->start >= map->end)
+			अवरोध;
 
-		if (verbose >= 2) {
+		अगर (verbose >= 2) अणु
 
-			if (use_browser) {
+			अगर (use_browser) अणु
 				pr_debug("overlapping maps in %s (disable tui for more info)\n",
 					   map->dso->name);
-			} else {
-				fputs("overlapping maps:\n", fp);
-				map__fprintf(map, fp);
-				map__fprintf(pos, fp);
-			}
-		}
+			पूर्ण अन्यथा अणु
+				ख_माला_दो("overlapping maps:\n", fp);
+				map__ख_लिखो(map, fp);
+				map__ख_लिखो(pos, fp);
+			पूर्ण
+		पूर्ण
 
 		rb_erase_init(&pos->rb_node, root);
 		/*
-		 * Now check if we need to create new maps for areas not
+		 * Now check अगर we need to create new maps क्रम areas not
 		 * overlapped by the new map:
 		 */
-		if (map->start > pos->start) {
-			struct map *before = map__clone(pos);
+		अगर (map->start > pos->start) अणु
+			काष्ठा map *beक्रमe = map__clone(pos);
 
-			if (before == NULL) {
+			अगर (beक्रमe == शून्य) अणु
 				err = -ENOMEM;
-				goto put_map;
-			}
+				जाओ put_map;
+			पूर्ण
 
-			before->end = map->start;
-			__maps__insert(maps, before);
-			if (verbose >= 2 && !use_browser)
-				map__fprintf(before, fp);
-			map__put(before);
-		}
+			beक्रमe->end = map->start;
+			__maps__insert(maps, beक्रमe);
+			अगर (verbose >= 2 && !use_browser)
+				map__ख_लिखो(beक्रमe, fp);
+			map__put(beक्रमe);
+		पूर्ण
 
-		if (map->end < pos->end) {
-			struct map *after = map__clone(pos);
+		अगर (map->end < pos->end) अणु
+			काष्ठा map *after = map__clone(pos);
 
-			if (after == NULL) {
+			अगर (after == शून्य) अणु
 				err = -ENOMEM;
-				goto put_map;
-			}
+				जाओ put_map;
+			पूर्ण
 
 			after->start = map->end;
 			after->pgoff += map->end - pos->start;
-			assert(pos->map_ip(pos, map->end) == after->map_ip(after, map->end));
+			निश्चित(pos->map_ip(pos, map->end) == after->map_ip(after, map->end));
 			__maps__insert(maps, after);
-			if (verbose >= 2 && !use_browser)
-				map__fprintf(after, fp);
+			अगर (verbose >= 2 && !use_browser)
+				map__ख_लिखो(after, fp);
 			map__put(after);
-		}
+		पूर्ण
 put_map:
 		map__put(pos);
 
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
 	err = 0;
 out:
-	up_write(&maps->lock);
-	return err;
-}
+	up_ग_लिखो(&maps->lock);
+	वापस err;
+पूर्ण
 
 /*
  * XXX This should not really _copy_ te maps, but refcount them.
  */
-int maps__clone(struct thread *thread, struct maps *parent)
-{
-	struct maps *maps = thread->maps;
-	int err;
-	struct map *map;
+पूर्णांक maps__clone(काष्ठा thपढ़ो *thपढ़ो, काष्ठा maps *parent)
+अणु
+	काष्ठा maps *maps = thपढ़ो->maps;
+	पूर्णांक err;
+	काष्ठा map *map;
 
-	down_read(&parent->lock);
+	करोwn_पढ़ो(&parent->lock);
 
-	maps__for_each_entry(parent, map) {
-		struct map *new = map__clone(map);
+	maps__क्रम_each_entry(parent, map) अणु
+		काष्ठा map *new = map__clone(map);
 
-		if (new == NULL) {
+		अगर (new == शून्य) अणु
 			err = -ENOMEM;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
-		err = unwind__prepare_access(maps, new, NULL);
-		if (err)
-			goto out_unlock;
+		err = unwind__prepare_access(maps, new, शून्य);
+		अगर (err)
+			जाओ out_unlock;
 
 		maps__insert(maps, new);
 		map__put(new);
-	}
+	पूर्ण
 
 	err = 0;
 out_unlock:
-	up_read(&parent->lock);
-	return err;
-}
+	up_पढ़ो(&parent->lock);
+	वापस err;
+पूर्ण
 
-static void __maps__insert(struct maps *maps, struct map *map)
-{
-	struct rb_node **p = &maps->entries.rb_node;
-	struct rb_node *parent = NULL;
-	const u64 ip = map->start;
-	struct map *m;
+अटल व्योम __maps__insert(काष्ठा maps *maps, काष्ठा map *map)
+अणु
+	काष्ठा rb_node **p = &maps->entries.rb_node;
+	काष्ठा rb_node *parent = शून्य;
+	स्थिर u64 ip = map->start;
+	काष्ठा map *m;
 
-	while (*p != NULL) {
+	जबतक (*p != शून्य) अणु
 		parent = *p;
-		m = rb_entry(parent, struct map, rb_node);
-		if (ip < m->start)
+		m = rb_entry(parent, काष्ठा map, rb_node);
+		अगर (ip < m->start)
 			p = &(*p)->rb_left;
-		else
+		अन्यथा
 			p = &(*p)->rb_right;
-	}
+	पूर्ण
 
 	rb_link_node(&map->rb_node, parent, p);
 	rb_insert_color(&map->rb_node, &maps->entries);
 	map__get(map);
-}
+पूर्ण
 
-struct map *maps__find(struct maps *maps, u64 ip)
-{
-	struct rb_node *p;
-	struct map *m;
+काष्ठा map *maps__find(काष्ठा maps *maps, u64 ip)
+अणु
+	काष्ठा rb_node *p;
+	काष्ठा map *m;
 
-	down_read(&maps->lock);
+	करोwn_पढ़ो(&maps->lock);
 
 	p = maps->entries.rb_node;
-	while (p != NULL) {
-		m = rb_entry(p, struct map, rb_node);
-		if (ip < m->start)
+	जबतक (p != शून्य) अणु
+		m = rb_entry(p, काष्ठा map, rb_node);
+		अगर (ip < m->start)
 			p = p->rb_left;
-		else if (ip >= m->end)
+		अन्यथा अगर (ip >= m->end)
 			p = p->rb_right;
-		else
-			goto out;
-	}
+		अन्यथा
+			जाओ out;
+	पूर्ण
 
-	m = NULL;
+	m = शून्य;
 out:
-	up_read(&maps->lock);
-	return m;
-}
+	up_पढ़ो(&maps->lock);
+	वापस m;
+पूर्ण
 
-struct map *maps__first(struct maps *maps)
-{
-	struct rb_node *first = rb_first(&maps->entries);
+काष्ठा map *maps__first(काष्ठा maps *maps)
+अणु
+	काष्ठा rb_node *first = rb_first(&maps->entries);
 
-	if (first)
-		return rb_entry(first, struct map, rb_node);
-	return NULL;
-}
+	अगर (first)
+		वापस rb_entry(first, काष्ठा map, rb_node);
+	वापस शून्य;
+पूर्ण
 
-static struct map *__map__next(struct map *map)
-{
-	struct rb_node *next = rb_next(&map->rb_node);
+अटल काष्ठा map *__map__next(काष्ठा map *map)
+अणु
+	काष्ठा rb_node *next = rb_next(&map->rb_node);
 
-	if (next)
-		return rb_entry(next, struct map, rb_node);
-	return NULL;
-}
+	अगर (next)
+		वापस rb_entry(next, काष्ठा map, rb_node);
+	वापस शून्य;
+पूर्ण
 
-struct map *map__next(struct map *map)
-{
-	return map ? __map__next(map) : NULL;
-}
+काष्ठा map *map__next(काष्ठा map *map)
+अणु
+	वापस map ? __map__next(map) : शून्य;
+पूर्ण
 
-struct kmap *__map__kmap(struct map *map)
-{
-	if (!map->dso || !map->dso->kernel)
-		return NULL;
-	return (struct kmap *)(map + 1);
-}
+काष्ठा kmap *__map__kmap(काष्ठा map *map)
+अणु
+	अगर (!map->dso || !map->dso->kernel)
+		वापस शून्य;
+	वापस (काष्ठा kmap *)(map + 1);
+पूर्ण
 
-struct kmap *map__kmap(struct map *map)
-{
-	struct kmap *kmap = __map__kmap(map);
+काष्ठा kmap *map__kmap(काष्ठा map *map)
+अणु
+	काष्ठा kmap *kmap = __map__kmap(map);
 
-	if (!kmap)
+	अगर (!kmap)
 		pr_err("Internal error: map__kmap with a non-kernel map\n");
-	return kmap;
-}
+	वापस kmap;
+पूर्ण
 
-struct maps *map__kmaps(struct map *map)
-{
-	struct kmap *kmap = map__kmap(map);
+काष्ठा maps *map__kmaps(काष्ठा map *map)
+अणु
+	काष्ठा kmap *kmap = map__kmap(map);
 
-	if (!kmap || !kmap->kmaps) {
+	अगर (!kmap || !kmap->kmaps) अणु
 		pr_err("Internal error: map__kmaps with a non-kernel map\n");
-		return NULL;
-	}
-	return kmap->kmaps;
-}
+		वापस शून्य;
+	पूर्ण
+	वापस kmap->kmaps;
+पूर्ण

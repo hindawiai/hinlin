@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * DA9055 ALSA Soc codec driver
  *
@@ -9,21 +10,21 @@
  * Ashish Chavan <ashish.chavan@kpitcummins.com>
  */
 
-#ifndef __SOUND_DA9055_H__
-#define __SOUND_DA9055_H__
+#अगर_अघोषित __SOUND_DA9055_H__
+#घोषणा __SOUND_DA9055_H__
 
-enum da9055_micbias_voltage {
+क्रमागत da9055_micbias_voltage अणु
 	DA9055_MICBIAS_1_6V = 0,
 	DA9055_MICBIAS_1_8V = 1,
 	DA9055_MICBIAS_2_1V = 2,
 	DA9055_MICBIAS_2_2V = 3,
-};
+पूर्ण;
 
-struct da9055_platform_data {
+काष्ठा da9055_platक्रमm_data अणु
 	/* Selects which of the two MicBias pins acts as the bias source */
 	bool micbias_source;
 	/* Selects the micbias voltage */
-	enum da9055_micbias_voltage micbias;
-};
+	क्रमागत da9055_micbias_voltage micbias;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

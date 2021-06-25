@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2007-2015, 2018-2020 Intel Corporation
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
-#include <linux/pci.h>
-#include <linux/interrupt.h>
-#include <linux/debugfs.h>
-#include <linux/sched.h>
-#include <linux/bitops.h>
-#include <linux/gfp.h>
-#include <linux/vmalloc.h>
-#include <linux/module.h>
-#include <linux/wait.h>
-#include <linux/seq_file.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/module.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/seq_file.h>
 
-#include "iwl-drv.h"
-#include "iwl-trans.h"
-#include "iwl-csr.h"
-#include "iwl-prph.h"
-#include "iwl-scd.h"
-#include "iwl-agn-hw.h"
-#include "fw/error-dump.h"
-#include "fw/dbg.h"
-#include "fw/api/tx.h"
-#include "internal.h"
-#include "iwl-fh.h"
-#include "iwl-context-info-gen3.h"
+#समावेश "iwl-drv.h"
+#समावेश "iwl-trans.h"
+#समावेश "iwl-csr.h"
+#समावेश "iwl-prph.h"
+#समावेश "iwl-scd.h"
+#समावेश "iwl-agn-hw.h"
+#समावेश "fw/error-dump.h"
+#समावेश "fw/dbg.h"
+#समावेश "fw/api/tx.h"
+#समावेश "internal.h"
+#समावेश "iwl-fh.h"
+#समावेश "iwl-context-info-gen3.h"
 
 /* extended range in FW SRAM */
-#define IWL_FW_MEM_EXTENDED_START	0x40000
-#define IWL_FW_MEM_EXTENDED_END		0x57FFF
+#घोषणा IWL_FW_MEM_EXTENDED_START	0x40000
+#घोषणा IWL_FW_MEM_EXTENDED_END		0x57FFF
 
-void iwl_trans_pcie_dump_regs(struct iwl_trans *trans)
-{
-#define PCI_DUMP_SIZE		352
-#define PCI_MEM_DUMP_SIZE	64
-#define PCI_PARENT_DUMP_SIZE	524
-#define PREFIX_LEN		32
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	struct pci_dev *pdev = trans_pcie->pci_dev;
+व्योम iwl_trans_pcie_dump_regs(काष्ठा iwl_trans *trans)
+अणु
+#घोषणा PCI_DUMP_SIZE		352
+#घोषणा PCI_MEM_DUMP_SIZE	64
+#घोषणा PCI_PARENT_DUMP_SIZE	524
+#घोषणा PREFIX_LEN		32
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	काष्ठा pci_dev *pdev = trans_pcie->pci_dev;
 	u32 i, pos, alloc_size, *ptr, *buf;
-	char *prefix;
+	अक्षर *prefix;
 
-	if (trans_pcie->pcie_dbg_dumped_once)
-		return;
+	अगर (trans_pcie->pcie_dbg_dumped_once)
+		वापस;
 
 	/* Should be a multiple of 4 */
 	BUILD_BUG_ON(PCI_DUMP_SIZE > 4096 || PCI_DUMP_SIZE & 0x3);
@@ -57,191 +58,191 @@ void iwl_trans_pcie_dump_regs(struct iwl_trans *trans)
 	alloc_size = max_t(u32, alloc_size, PCI_MEM_DUMP_SIZE + PREFIX_LEN);
 	alloc_size = max_t(u32, alloc_size, PCI_PARENT_DUMP_SIZE + PREFIX_LEN);
 
-	buf = kmalloc(alloc_size, GFP_ATOMIC);
-	if (!buf)
-		return;
-	prefix = (char *)buf + alloc_size - PREFIX_LEN;
+	buf = kदो_स्मृति(alloc_size, GFP_ATOMIC);
+	अगर (!buf)
+		वापस;
+	prefix = (अक्षर *)buf + alloc_size - PREFIX_LEN;
 
 	IWL_ERR(trans, "iwlwifi transaction failed, dumping registers\n");
 
-	/* Print wifi device registers */
-	sprintf(prefix, "iwlwifi %s: ", pci_name(pdev));
+	/* Prपूर्णांक wअगरi device रेजिस्टरs */
+	प्र_लिखो(prefix, "iwlwifi %s: ", pci_name(pdev));
 	IWL_ERR(trans, "iwlwifi device config registers:\n");
-	for (i = 0, ptr = buf; i < PCI_DUMP_SIZE; i += 4, ptr++)
-		if (pci_read_config_dword(pdev, i, ptr))
-			goto err_read;
-	print_hex_dump(KERN_ERR, prefix, DUMP_PREFIX_OFFSET, 32, 4, buf, i, 0);
+	क्रम (i = 0, ptr = buf; i < PCI_DUMP_SIZE; i += 4, ptr++)
+		अगर (pci_पढ़ो_config_dword(pdev, i, ptr))
+			जाओ err_पढ़ो;
+	prपूर्णांक_hex_dump(KERN_ERR, prefix, DUMP_PREFIX_OFFSET, 32, 4, buf, i, 0);
 
 	IWL_ERR(trans, "iwlwifi device memory mapped registers:\n");
-	for (i = 0, ptr = buf; i < PCI_MEM_DUMP_SIZE; i += 4, ptr++)
-		*ptr = iwl_read32(trans, i);
-	print_hex_dump(KERN_ERR, prefix, DUMP_PREFIX_OFFSET, 32, 4, buf, i, 0);
+	क्रम (i = 0, ptr = buf; i < PCI_MEM_DUMP_SIZE; i += 4, ptr++)
+		*ptr = iwl_पढ़ो32(trans, i);
+	prपूर्णांक_hex_dump(KERN_ERR, prefix, DUMP_PREFIX_OFFSET, 32, 4, buf, i, 0);
 
 	pos = pci_find_ext_capability(pdev, PCI_EXT_CAP_ID_ERR);
-	if (pos) {
+	अगर (pos) अणु
 		IWL_ERR(trans, "iwlwifi device AER capability structure:\n");
-		for (i = 0, ptr = buf; i < PCI_ERR_ROOT_COMMAND; i += 4, ptr++)
-			if (pci_read_config_dword(pdev, pos + i, ptr))
-				goto err_read;
-		print_hex_dump(KERN_ERR, prefix, DUMP_PREFIX_OFFSET,
+		क्रम (i = 0, ptr = buf; i < PCI_ERR_ROOT_COMMAND; i += 4, ptr++)
+			अगर (pci_पढ़ो_config_dword(pdev, pos + i, ptr))
+				जाओ err_पढ़ो;
+		prपूर्णांक_hex_dump(KERN_ERR, prefix, DUMP_PREFIX_OFFSET,
 			       32, 4, buf, i, 0);
-	}
+	पूर्ण
 
-	/* Print parent device registers next */
-	if (!pdev->bus->self)
-		goto out;
+	/* Prपूर्णांक parent device रेजिस्टरs next */
+	अगर (!pdev->bus->self)
+		जाओ out;
 
 	pdev = pdev->bus->self;
-	sprintf(prefix, "iwlwifi %s: ", pci_name(pdev));
+	प्र_लिखो(prefix, "iwlwifi %s: ", pci_name(pdev));
 
 	IWL_ERR(trans, "iwlwifi parent port (%s) config registers:\n",
 		pci_name(pdev));
-	for (i = 0, ptr = buf; i < PCI_PARENT_DUMP_SIZE; i += 4, ptr++)
-		if (pci_read_config_dword(pdev, i, ptr))
-			goto err_read;
-	print_hex_dump(KERN_ERR, prefix, DUMP_PREFIX_OFFSET, 32, 4, buf, i, 0);
+	क्रम (i = 0, ptr = buf; i < PCI_PARENT_DUMP_SIZE; i += 4, ptr++)
+		अगर (pci_पढ़ो_config_dword(pdev, i, ptr))
+			जाओ err_पढ़ो;
+	prपूर्णांक_hex_dump(KERN_ERR, prefix, DUMP_PREFIX_OFFSET, 32, 4, buf, i, 0);
 
-	/* Print root port AER registers */
+	/* Prपूर्णांक root port AER रेजिस्टरs */
 	pos = 0;
 	pdev = pcie_find_root_port(pdev);
-	if (pdev)
+	अगर (pdev)
 		pos = pci_find_ext_capability(pdev, PCI_EXT_CAP_ID_ERR);
-	if (pos) {
+	अगर (pos) अणु
 		IWL_ERR(trans, "iwlwifi root port (%s) AER cap structure:\n",
 			pci_name(pdev));
-		sprintf(prefix, "iwlwifi %s: ", pci_name(pdev));
-		for (i = 0, ptr = buf; i <= PCI_ERR_ROOT_ERR_SRC; i += 4, ptr++)
-			if (pci_read_config_dword(pdev, pos + i, ptr))
-				goto err_read;
-		print_hex_dump(KERN_ERR, prefix, DUMP_PREFIX_OFFSET, 32,
+		प्र_लिखो(prefix, "iwlwifi %s: ", pci_name(pdev));
+		क्रम (i = 0, ptr = buf; i <= PCI_ERR_ROOT_ERR_SRC; i += 4, ptr++)
+			अगर (pci_पढ़ो_config_dword(pdev, pos + i, ptr))
+				जाओ err_पढ़ो;
+		prपूर्णांक_hex_dump(KERN_ERR, prefix, DUMP_PREFIX_OFFSET, 32,
 			       4, buf, i, 0);
-	}
-	goto out;
+	पूर्ण
+	जाओ out;
 
-err_read:
-	print_hex_dump(KERN_ERR, prefix, DUMP_PREFIX_OFFSET, 32, 4, buf, i, 0);
+err_पढ़ो:
+	prपूर्णांक_hex_dump(KERN_ERR, prefix, DUMP_PREFIX_OFFSET, 32, 4, buf, i, 0);
 	IWL_ERR(trans, "Read failed at 0x%X\n", i);
 out:
 	trans_pcie->pcie_dbg_dumped_once = 1;
-	kfree(buf);
-}
+	kमुक्त(buf);
+पूर्ण
 
-static void iwl_trans_pcie_sw_reset(struct iwl_trans *trans)
-{
-	/* Reset entire device - do controller reset (results in SHRD_HW_RST) */
+अटल व्योम iwl_trans_pcie_sw_reset(काष्ठा iwl_trans *trans)
+अणु
+	/* Reset entire device - करो controller reset (results in SHRD_HW_RST) */
 	iwl_set_bit(trans, CSR_RESET, CSR_RESET_REG_FLAG_SW_RESET);
 	usleep_range(5000, 6000);
-}
+पूर्ण
 
-static void iwl_pcie_free_fw_monitor(struct iwl_trans *trans)
-{
-	struct iwl_dram_data *fw_mon = &trans->dbg.fw_mon;
+अटल व्योम iwl_pcie_मुक्त_fw_monitor(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_dram_data *fw_mon = &trans->dbg.fw_mon;
 
-	if (!fw_mon->size)
-		return;
+	अगर (!fw_mon->size)
+		वापस;
 
-	dma_free_coherent(trans->dev, fw_mon->size, fw_mon->block,
+	dma_मुक्त_coherent(trans->dev, fw_mon->size, fw_mon->block,
 			  fw_mon->physical);
 
-	fw_mon->block = NULL;
+	fw_mon->block = शून्य;
 	fw_mon->physical = 0;
 	fw_mon->size = 0;
-}
+पूर्ण
 
-static void iwl_pcie_alloc_fw_monitor_block(struct iwl_trans *trans,
-					    u8 max_power, u8 min_power)
-{
-	struct iwl_dram_data *fw_mon = &trans->dbg.fw_mon;
-	void *block = NULL;
+अटल व्योम iwl_pcie_alloc_fw_monitor_block(काष्ठा iwl_trans *trans,
+					    u8 max_घातer, u8 min_घातer)
+अणु
+	काष्ठा iwl_dram_data *fw_mon = &trans->dbg.fw_mon;
+	व्योम *block = शून्य;
 	dma_addr_t physical = 0;
 	u32 size = 0;
-	u8 power;
+	u8 घातer;
 
-	if (fw_mon->size)
-		return;
+	अगर (fw_mon->size)
+		वापस;
 
-	for (power = max_power; power >= min_power; power--) {
-		size = BIT(power);
+	क्रम (घातer = max_घातer; घातer >= min_घातer; घातer--) अणु
+		size = BIT(घातer);
 		block = dma_alloc_coherent(trans->dev, size, &physical,
 					   GFP_KERNEL | __GFP_NOWARN);
-		if (!block)
-			continue;
+		अगर (!block)
+			जारी;
 
 		IWL_INFO(trans,
 			 "Allocated 0x%08x bytes for firmware monitor.\n",
 			 size);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (WARN_ON_ONCE(!block))
-		return;
+	अगर (WARN_ON_ONCE(!block))
+		वापस;
 
-	if (power != max_power)
+	अगर (घातer != max_घातer)
 		IWL_ERR(trans,
 			"Sorry - debug buffer is only %luK while you requested %luK\n",
-			(unsigned long)BIT(power - 10),
-			(unsigned long)BIT(max_power - 10));
+			(अचिन्हित दीर्घ)BIT(घातer - 10),
+			(अचिन्हित दीर्घ)BIT(max_घातer - 10));
 
 	fw_mon->block = block;
 	fw_mon->physical = physical;
 	fw_mon->size = size;
-}
+पूर्ण
 
-void iwl_pcie_alloc_fw_monitor(struct iwl_trans *trans, u8 max_power)
-{
-	if (!max_power) {
-		/* default max_power is maximum */
-		max_power = 26;
-	} else {
-		max_power += 11;
-	}
+व्योम iwl_pcie_alloc_fw_monitor(काष्ठा iwl_trans *trans, u8 max_घातer)
+अणु
+	अगर (!max_घातer) अणु
+		/* शेष max_घातer is maximum */
+		max_घातer = 26;
+	पूर्ण अन्यथा अणु
+		max_घातer += 11;
+	पूर्ण
 
-	if (WARN(max_power > 26,
+	अगर (WARN(max_घातer > 26,
 		 "External buffer size for monitor is too big %d, check the FW TLV\n",
-		 max_power))
-		return;
+		 max_घातer))
+		वापस;
 
-	if (trans->dbg.fw_mon.size)
-		return;
+	अगर (trans->dbg.fw_mon.size)
+		वापस;
 
-	iwl_pcie_alloc_fw_monitor_block(trans, max_power, 11);
-}
+	iwl_pcie_alloc_fw_monitor_block(trans, max_घातer, 11);
+पूर्ण
 
-static u32 iwl_trans_pcie_read_shr(struct iwl_trans *trans, u32 reg)
-{
-	iwl_write32(trans, HEEP_CTRL_WRD_PCIEX_CTRL_REG,
+अटल u32 iwl_trans_pcie_पढ़ो_shr(काष्ठा iwl_trans *trans, u32 reg)
+अणु
+	iwl_ग_लिखो32(trans, HEEP_CTRL_WRD_PCIEX_CTRL_REG,
 		    ((reg & 0x0000ffff) | (2 << 28)));
-	return iwl_read32(trans, HEEP_CTRL_WRD_PCIEX_DATA_REG);
-}
+	वापस iwl_पढ़ो32(trans, HEEP_CTRL_WRD_PCIEX_DATA_REG);
+पूर्ण
 
-static void iwl_trans_pcie_write_shr(struct iwl_trans *trans, u32 reg, u32 val)
-{
-	iwl_write32(trans, HEEP_CTRL_WRD_PCIEX_DATA_REG, val);
-	iwl_write32(trans, HEEP_CTRL_WRD_PCIEX_CTRL_REG,
+अटल व्योम iwl_trans_pcie_ग_लिखो_shr(काष्ठा iwl_trans *trans, u32 reg, u32 val)
+अणु
+	iwl_ग_लिखो32(trans, HEEP_CTRL_WRD_PCIEX_DATA_REG, val);
+	iwl_ग_लिखो32(trans, HEEP_CTRL_WRD_PCIEX_CTRL_REG,
 		    ((reg & 0x0000ffff) | (3 << 28)));
-}
+पूर्ण
 
-static void iwl_pcie_set_pwr(struct iwl_trans *trans, bool vaux)
-{
-	if (trans->cfg->apmg_not_supported)
-		return;
+अटल व्योम iwl_pcie_set_pwr(काष्ठा iwl_trans *trans, bool vaux)
+अणु
+	अगर (trans->cfg->apmg_not_supported)
+		वापस;
 
-	if (vaux && pci_pme_capable(to_pci_dev(trans->dev), PCI_D3cold))
+	अगर (vaux && pci_pme_capable(to_pci_dev(trans->dev), PCI_D3cold))
 		iwl_set_bits_mask_prph(trans, APMG_PS_CTRL_REG,
 				       APMG_PS_CTRL_VAL_PWR_SRC_VAUX,
 				       ~APMG_PS_CTRL_MSK_PWR_SRC);
-	else
+	अन्यथा
 		iwl_set_bits_mask_prph(trans, APMG_PS_CTRL_REG,
 				       APMG_PS_CTRL_VAL_PWR_SRC_VMAIN,
 				       ~APMG_PS_CTRL_MSK_PWR_SRC);
-}
+पूर्ण
 
-/* PCI registers */
-#define PCI_CFG_RETRY_TIMEOUT	0x041
+/* PCI रेजिस्टरs */
+#घोषणा PCI_CFG_RETRY_TIMEOUT	0x041
 
-void iwl_pcie_apm_config(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+व्योम iwl_pcie_apm_config(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 	u16 lctl;
 	u16 cap;
 
@@ -252,49 +253,49 @@ void iwl_pcie_apm_config(struct iwl_trans *trans)
 	 */
 	iwl_set_bit(trans, CSR_GIO_REG, CSR_GIO_REG_VAL_L0S_DISABLED);
 
-	pcie_capability_read_word(trans_pcie->pci_dev, PCI_EXP_LNKCTL, &lctl);
+	pcie_capability_पढ़ो_word(trans_pcie->pci_dev, PCI_EXP_LNKCTL, &lctl);
 	trans->pm_support = !(lctl & PCI_EXP_LNKCTL_ASPM_L0S);
 
-	pcie_capability_read_word(trans_pcie->pci_dev, PCI_EXP_DEVCTL2, &cap);
+	pcie_capability_पढ़ो_word(trans_pcie->pci_dev, PCI_EXP_DEVCTL2, &cap);
 	trans->ltr_enabled = cap & PCI_EXP_DEVCTL2_LTR_EN;
 	IWL_DEBUG_POWER(trans, "L1 %sabled - LTR %sabled\n",
 			(lctl & PCI_EXP_LNKCTL_ASPM_L1) ? "En" : "Dis",
 			trans->ltr_enabled ? "En" : "Dis");
-}
+पूर्ण
 
 /*
  * Start up NIC's basic functionality after it has been reset
- * (e.g. after platform boot, or shutdown via iwl_pcie_apm_stop())
- * NOTE:  This does not load uCode nor start the embedded processor
+ * (e.g. after platक्रमm boot, or shutकरोwn via iwl_pcie_apm_stop())
+ * NOTE:  This करोes not load uCode nor start the embedded processor
  */
-static int iwl_pcie_apm_init(struct iwl_trans *trans)
-{
-	int ret;
+अटल पूर्णांक iwl_pcie_apm_init(काष्ठा iwl_trans *trans)
+अणु
+	पूर्णांक ret;
 
 	IWL_DEBUG_INFO(trans, "Init card's basic functions\n");
 
 	/*
 	 * Use "set_bit" below rather than "write", to preserve any hardware
-	 * bits already set by default after reset.
+	 * bits alपढ़ोy set by शेष after reset.
 	 */
 
-	/* Disable L0S exit timer (platform NMI Work/Around) */
-	if (trans->trans_cfg->device_family < IWL_DEVICE_FAMILY_8000)
+	/* Disable L0S निकास समयr (platक्रमm NMI Work/Around) */
+	अगर (trans->trans_cfg->device_family < IWL_DEVICE_FAMILY_8000)
 		iwl_set_bit(trans, CSR_GIO_CHICKEN_BITS,
 			    CSR_GIO_CHICKEN_BITS_REG_BIT_DIS_L0S_EXIT_TIMER);
 
 	/*
 	 * Disable L0s without affecting L1;
-	 *  don't wait for ICH L0s (ICH bug W/A)
+	 *  करोn't रुको क्रम ICH L0s (ICH bug W/A)
 	 */
 	iwl_set_bit(trans, CSR_GIO_CHICKEN_BITS,
 		    CSR_GIO_CHICKEN_BITS_REG_BIT_L1A_NO_L0S_RX);
 
-	/* Set FH wait threshold to maximum (HW error during stress W/A) */
+	/* Set FH रुको threshold to maximum (HW error during stress W/A) */
 	iwl_set_bit(trans, CSR_DBG_HPET_MEM_REG, CSR_DBG_HPET_MEM_REG_VAL);
 
 	/*
-	 * Enable HAP INTA (interrupt from management bus) to
+	 * Enable HAP INTA (पूर्णांकerrupt from management bus) to
 	 * wake device's PCI Express link L1a -> L0s
 	 */
 	iwl_set_bit(trans, CSR_HW_IF_CONFIG_REG,
@@ -302,45 +303,45 @@ static int iwl_pcie_apm_init(struct iwl_trans *trans)
 
 	iwl_pcie_apm_config(trans);
 
-	/* Configure analog phase-lock-loop before activating to D0A */
-	if (trans->trans_cfg->base_params->pll_cfg)
+	/* Configure analog phase-lock-loop beक्रमe activating to D0A */
+	अगर (trans->trans_cfg->base_params->pll_cfg)
 		iwl_set_bit(trans, CSR_ANA_PLL_CFG, CSR50_ANA_PLL_CFG_VAL);
 
 	ret = iwl_finish_nic_init(trans, trans->trans_cfg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (trans->cfg->host_interrupt_operation_mode) {
+	अगर (trans->cfg->host_पूर्णांकerrupt_operation_mode) अणु
 		/*
-		 * This is a bit of an abuse - This is needed for 7260 / 3160
-		 * only check host_interrupt_operation_mode even if this is
-		 * not related to host_interrupt_operation_mode.
+		 * This is a bit of an abuse - This is needed क्रम 7260 / 3160
+		 * only check host_पूर्णांकerrupt_operation_mode even अगर this is
+		 * not related to host_पूर्णांकerrupt_operation_mode.
 		 *
-		 * Enable the oscillator to count wake up time for L1 exit. This
-		 * consumes slightly more power (100uA) - but allows to be sure
-		 * that we wake up from L1 on time.
+		 * Enable the oscillator to count wake up समय क्रम L1 निकास. This
+		 * consumes slightly more घातer (100uA) - but allows to be sure
+		 * that we wake up from L1 on समय.
 		 *
-		 * This looks weird: read twice the same register, discard the
-		 * value, set a bit, and yet again, read that same register
+		 * This looks weird: पढ़ो twice the same रेजिस्टर, discard the
+		 * value, set a bit, and yet again, पढ़ो that same रेजिस्टर
 		 * just to discard the value. But that's the way the hardware
 		 * seems to like it.
 		 */
-		iwl_read_prph(trans, OSC_CLK);
-		iwl_read_prph(trans, OSC_CLK);
+		iwl_पढ़ो_prph(trans, OSC_CLK);
+		iwl_पढ़ो_prph(trans, OSC_CLK);
 		iwl_set_bits_prph(trans, OSC_CLK, OSC_CLK_FORCE_CONTROL);
-		iwl_read_prph(trans, OSC_CLK);
-		iwl_read_prph(trans, OSC_CLK);
-	}
+		iwl_पढ़ो_prph(trans, OSC_CLK);
+		iwl_पढ़ो_prph(trans, OSC_CLK);
+	पूर्ण
 
 	/*
-	 * Enable DMA clock and wait for it to stabilize.
+	 * Enable DMA घड़ी and रुको क्रम it to stabilize.
 	 *
-	 * Write to "CLK_EN_REG"; "1" bits enable clocks, while "0"
-	 * bits do not disable clocks.  This preserves any hardware
-	 * bits already set by default in "CLK_CTRL_REG" after reset.
+	 * Write to "CLK_EN_REG"; "1" bits enable घड़ीs, जबतक "0"
+	 * bits करो not disable घड़ीs.  This preserves any hardware
+	 * bits alपढ़ोy set by शेष in "CLK_CTRL_REG" after reset.
 	 */
-	if (!trans->cfg->apmg_not_supported) {
-		iwl_write_prph(trans, APMG_CLK_EN_REG,
+	अगर (!trans->cfg->apmg_not_supported) अणु
+		iwl_ग_लिखो_prph(trans, APMG_CLK_EN_REG,
 			       APMG_CLK_VAL_DMA_CLK_RQT);
 		udelay(20);
 
@@ -348,26 +349,26 @@ static int iwl_pcie_apm_init(struct iwl_trans *trans)
 		iwl_set_bits_prph(trans, APMG_PCIDEV_STT_REG,
 				  APMG_PCIDEV_STT_VAL_L1_ACT_DIS);
 
-		/* Clear the interrupt in APMG if the NIC is in RFKILL */
-		iwl_write_prph(trans, APMG_RTC_INT_STT_REG,
+		/* Clear the पूर्णांकerrupt in APMG अगर the NIC is in RFKILL */
+		iwl_ग_लिखो_prph(trans, APMG_RTC_INT_STT_REG,
 			       APMG_RTC_INT_STT_RFKILL);
-	}
+	पूर्ण
 
 	set_bit(STATUS_DEVICE_ENABLED, &trans->status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Enable LP XTAL to avoid HW bug where device may consume much power if
- * FW is not loaded after device reset. LP XTAL is disabled by default
- * after device HW reset. Do it only if XTAL is fed by internal source.
- * Configure device's "persistence" mode to avoid resetting XTAL again when
+ * Enable LP XTAL to aव्योम HW bug where device may consume much घातer अगर
+ * FW is not loaded after device reset. LP XTAL is disabled by शेष
+ * after device HW reset. Do it only अगर XTAL is fed by पूर्णांकernal source.
+ * Configure device's "persistence" mode to aव्योम resetting XTAL again when
  * SHRD_HW_RST occurs in S3.
  */
-static void iwl_pcie_apm_lp_xtal_enable(struct iwl_trans *trans)
-{
-	int ret;
+अटल व्योम iwl_pcie_apm_lp_xtal_enable(काष्ठा iwl_trans *trans)
+अणु
+	पूर्णांक ret;
 	u32 apmg_gp1_reg;
 	u32 apmg_xtal_cfg_reg;
 	u32 dl_cfg_reg;
@@ -379,15 +380,15 @@ static void iwl_pcie_apm_lp_xtal_enable(struct iwl_trans *trans)
 	iwl_trans_pcie_sw_reset(trans);
 
 	ret = iwl_finish_nic_init(trans, trans->trans_cfg);
-	if (WARN_ON(ret)) {
+	अगर (WARN_ON(ret)) अणु
 		/* Release XTAL ON request */
 		__iwl_trans_pcie_clear_bit(trans, CSR_GP_CNTRL,
 					   CSR_GP_CNTRL_REG_FLAG_XTAL_ON);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Clear "disable persistence" to avoid LP XTAL resetting when
+	 * Clear "disable persistence" to aव्योम LP XTAL resetting when
 	 * SHRD_HW_RST is applied in S3.
 	 */
 	iwl_clear_bits_prph(trans, APMG_PCIDEV_STT_REG,
@@ -397,27 +398,27 @@ static void iwl_pcie_apm_lp_xtal_enable(struct iwl_trans *trans)
 	 * Force APMG XTAL to be active to prevent its disabling by HW
 	 * caused by APMG idle state.
 	 */
-	apmg_xtal_cfg_reg = iwl_trans_pcie_read_shr(trans,
+	apmg_xtal_cfg_reg = iwl_trans_pcie_पढ़ो_shr(trans,
 						    SHR_APMG_XTAL_CFG_REG);
-	iwl_trans_pcie_write_shr(trans, SHR_APMG_XTAL_CFG_REG,
+	iwl_trans_pcie_ग_लिखो_shr(trans, SHR_APMG_XTAL_CFG_REG,
 				 apmg_xtal_cfg_reg |
 				 SHR_APMG_XTAL_CFG_XTAL_ON_REQ);
 
 	iwl_trans_pcie_sw_reset(trans);
 
 	/* Enable LP XTAL by indirect access through CSR */
-	apmg_gp1_reg = iwl_trans_pcie_read_shr(trans, SHR_APMG_GP1_REG);
-	iwl_trans_pcie_write_shr(trans, SHR_APMG_GP1_REG, apmg_gp1_reg |
+	apmg_gp1_reg = iwl_trans_pcie_पढ़ो_shr(trans, SHR_APMG_GP1_REG);
+	iwl_trans_pcie_ग_लिखो_shr(trans, SHR_APMG_GP1_REG, apmg_gp1_reg |
 				 SHR_APMG_GP1_WF_XTAL_LP_EN |
 				 SHR_APMG_GP1_CHICKEN_BIT_SELECT);
 
-	/* Clear delay line clock power up */
-	dl_cfg_reg = iwl_trans_pcie_read_shr(trans, SHR_APMG_DL_CFG_REG);
-	iwl_trans_pcie_write_shr(trans, SHR_APMG_DL_CFG_REG, dl_cfg_reg &
+	/* Clear delay line घड़ी घातer up */
+	dl_cfg_reg = iwl_trans_pcie_पढ़ो_shr(trans, SHR_APMG_DL_CFG_REG);
+	iwl_trans_pcie_ग_लिखो_shr(trans, SHR_APMG_DL_CFG_REG, dl_cfg_reg &
 				 ~SHR_APMG_DL_CFG_DL_CLOCK_POWER_UP);
 
 	/*
-	 * Enable persistence mode to avoid LP XTAL resetting when
+	 * Enable persistence mode to aव्योम LP XTAL resetting when
 	 * SHRD_HW_RST is applied in S3.
 	 */
 	iwl_set_bit(trans, CSR_HW_IF_CONFIG_REG,
@@ -425,7 +426,7 @@ static void iwl_pcie_apm_lp_xtal_enable(struct iwl_trans *trans)
 
 	/*
 	 * Clear "initialization complete" bit to move adapter from
-	 * D0A* (powered-up Active) --> D0U* (Uninitialized) state.
+	 * D0A* (घातered-up Active) --> D0U* (Uninitialized) state.
 	 */
 	iwl_clear_bit(trans, CSR_GP_CNTRL, CSR_GP_CNTRL_REG_FLAG_INIT_DONE);
 
@@ -439,14 +440,14 @@ static void iwl_pcie_apm_lp_xtal_enable(struct iwl_trans *trans)
 	udelay(10);
 
 	/* Release APMG XTAL */
-	iwl_trans_pcie_write_shr(trans, SHR_APMG_XTAL_CFG_REG,
+	iwl_trans_pcie_ग_लिखो_shr(trans, SHR_APMG_XTAL_CFG_REG,
 				 apmg_xtal_cfg_reg &
 				 ~SHR_APMG_XTAL_CFG_XTAL_ON_REQ);
-}
+पूर्ण
 
-void iwl_pcie_apm_stop_master(struct iwl_trans *trans)
-{
-	int ret;
+व्योम iwl_pcie_apm_stop_master(काष्ठा iwl_trans *trans)
+अणु
+	पूर्णांक ret;
 
 	/* stop device's busmaster DMA activity */
 	iwl_set_bit(trans, CSR_RESET, CSR_RESET_REG_FLAG_STOP_MASTER);
@@ -454,26 +455,26 @@ void iwl_pcie_apm_stop_master(struct iwl_trans *trans)
 	ret = iwl_poll_bit(trans, CSR_RESET,
 			   CSR_RESET_REG_FLAG_MASTER_DISABLED,
 			   CSR_RESET_REG_FLAG_MASTER_DISABLED, 100);
-	if (ret < 0)
+	अगर (ret < 0)
 		IWL_WARN(trans, "Master Disable Timed Out, 100 usec\n");
 
 	IWL_DEBUG_INFO(trans, "stop master\n");
-}
+पूर्ण
 
-static void iwl_pcie_apm_stop(struct iwl_trans *trans, bool op_mode_leave)
-{
+अटल व्योम iwl_pcie_apm_stop(काष्ठा iwl_trans *trans, bool op_mode_leave)
+अणु
 	IWL_DEBUG_INFO(trans, "Stop card, put in low power state\n");
 
-	if (op_mode_leave) {
-		if (!test_bit(STATUS_DEVICE_ENABLED, &trans->status))
+	अगर (op_mode_leave) अणु
+		अगर (!test_bit(STATUS_DEVICE_ENABLED, &trans->status))
 			iwl_pcie_apm_init(trans);
 
-		/* inform ME that we are leaving */
-		if (trans->trans_cfg->device_family == IWL_DEVICE_FAMILY_7000)
+		/* inक्रमm ME that we are leaving */
+		अगर (trans->trans_cfg->device_family == IWL_DEVICE_FAMILY_7000)
 			iwl_set_bits_prph(trans, APMG_PCIDEV_STT_REG,
 					  APMG_PCIDEV_STT_VAL_WAKE_ME);
-		else if (trans->trans_cfg->device_family >=
-			 IWL_DEVICE_FAMILY_8000) {
+		अन्यथा अगर (trans->trans_cfg->device_family >=
+			 IWL_DEVICE_FAMILY_8000) अणु
 			iwl_set_bit(trans, CSR_DBG_LINK_PWR_MGMT_REG,
 				    CSR_RESET_LINK_PWR_MGMT_DISABLED);
 			iwl_set_bit(trans, CSR_HW_IF_CONFIG_REG,
@@ -482,262 +483,262 @@ static void iwl_pcie_apm_stop(struct iwl_trans *trans, bool op_mode_leave)
 			mdelay(1);
 			iwl_clear_bit(trans, CSR_DBG_LINK_PWR_MGMT_REG,
 				      CSR_RESET_LINK_PWR_MGMT_DISABLED);
-		}
+		पूर्ण
 		mdelay(5);
-	}
+	पूर्ण
 
 	clear_bit(STATUS_DEVICE_ENABLED, &trans->status);
 
 	/* Stop device's DMA activity */
 	iwl_pcie_apm_stop_master(trans);
 
-	if (trans->cfg->lp_xtal_workaround) {
+	अगर (trans->cfg->lp_xtal_workaround) अणु
 		iwl_pcie_apm_lp_xtal_enable(trans);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	iwl_trans_pcie_sw_reset(trans);
 
 	/*
 	 * Clear "initialization complete" bit to move adapter from
-	 * D0A* (powered-up Active) --> D0U* (Uninitialized) state.
+	 * D0A* (घातered-up Active) --> D0U* (Uninitialized) state.
 	 */
 	iwl_clear_bit(trans, CSR_GP_CNTRL, CSR_GP_CNTRL_REG_FLAG_INIT_DONE);
-}
+पूर्ण
 
-static int iwl_pcie_nic_init(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	int ret;
+अटल पूर्णांक iwl_pcie_nic_init(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	पूर्णांक ret;
 
 	/* nic_init */
 	spin_lock_bh(&trans_pcie->irq_lock);
 	ret = iwl_pcie_apm_init(trans);
 	spin_unlock_bh(&trans_pcie->irq_lock);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	iwl_pcie_set_pwr(trans, false);
 
 	iwl_op_mode_nic_config(trans->op_mode);
 
-	/* Allocate the RX queue, or reset if it is already allocated */
+	/* Allocate the RX queue, or reset अगर it is alपढ़ोy allocated */
 	ret = iwl_pcie_rx_init(trans);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Allocate or reset and init all Tx and Command queues */
-	if (iwl_pcie_tx_init(trans)) {
-		iwl_pcie_rx_free(trans);
-		return -ENOMEM;
-	}
+	अगर (iwl_pcie_tx_init(trans)) अणु
+		iwl_pcie_rx_मुक्त(trans);
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (trans->trans_cfg->base_params->shadow_reg_enable) {
-		/* enable shadow regs in HW */
+	अगर (trans->trans_cfg->base_params->shaकरोw_reg_enable) अणु
+		/* enable shaकरोw regs in HW */
 		iwl_set_bit(trans, CSR_MAC_SHADOW_REG_CTRL, 0x800FFFFF);
 		IWL_DEBUG_INFO(trans, "Enabling shadow registers in device\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define HW_READY_TIMEOUT (50)
+#घोषणा HW_READY_TIMEOUT (50)
 
-/* Note: returns poll_bit return value, which is >= 0 if success */
-static int iwl_pcie_set_hw_ready(struct iwl_trans *trans)
-{
-	int ret;
+/* Note: वापसs poll_bit वापस value, which is >= 0 अगर success */
+अटल पूर्णांक iwl_pcie_set_hw_पढ़ोy(काष्ठा iwl_trans *trans)
+अणु
+	पूर्णांक ret;
 
 	iwl_set_bit(trans, CSR_HW_IF_CONFIG_REG,
 		    CSR_HW_IF_CONFIG_REG_BIT_NIC_READY);
 
-	/* See if we got it */
+	/* See अगर we got it */
 	ret = iwl_poll_bit(trans, CSR_HW_IF_CONFIG_REG,
 			   CSR_HW_IF_CONFIG_REG_BIT_NIC_READY,
 			   CSR_HW_IF_CONFIG_REG_BIT_NIC_READY,
 			   HW_READY_TIMEOUT);
 
-	if (ret >= 0)
+	अगर (ret >= 0)
 		iwl_set_bit(trans, CSR_MBOX_SET_REG, CSR_MBOX_SET_REG_OS_ALIVE);
 
 	IWL_DEBUG_INFO(trans, "hardware%s ready\n", ret < 0 ? " not" : "");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Note: returns standard 0/-ERROR code */
-int iwl_pcie_prepare_card_hw(struct iwl_trans *trans)
-{
-	int ret;
-	int t = 0;
-	int iter;
+/* Note: वापसs standard 0/-ERROR code */
+पूर्णांक iwl_pcie_prepare_card_hw(काष्ठा iwl_trans *trans)
+अणु
+	पूर्णांक ret;
+	पूर्णांक t = 0;
+	पूर्णांक iter;
 
 	IWL_DEBUG_INFO(trans, "iwl_trans_prepare_card_hw enter\n");
 
-	ret = iwl_pcie_set_hw_ready(trans);
-	/* If the card is ready, exit 0 */
-	if (ret >= 0)
-		return 0;
+	ret = iwl_pcie_set_hw_पढ़ोy(trans);
+	/* If the card is पढ़ोy, निकास 0 */
+	अगर (ret >= 0)
+		वापस 0;
 
 	iwl_set_bit(trans, CSR_DBG_LINK_PWR_MGMT_REG,
 		    CSR_RESET_LINK_PWR_MGMT_DISABLED);
 	usleep_range(1000, 2000);
 
-	for (iter = 0; iter < 10; iter++) {
-		/* If HW is not ready, prepare the conditions to check again */
+	क्रम (iter = 0; iter < 10; iter++) अणु
+		/* If HW is not पढ़ोy, prepare the conditions to check again */
 		iwl_set_bit(trans, CSR_HW_IF_CONFIG_REG,
 			    CSR_HW_IF_CONFIG_REG_PREPARE);
 
-		do {
-			ret = iwl_pcie_set_hw_ready(trans);
-			if (ret >= 0)
-				return 0;
+		करो अणु
+			ret = iwl_pcie_set_hw_पढ़ोy(trans);
+			अगर (ret >= 0)
+				वापस 0;
 
 			usleep_range(200, 1000);
 			t += 200;
-		} while (t < 150000);
+		पूर्ण जबतक (t < 150000);
 		msleep(25);
-	}
+	पूर्ण
 
 	IWL_ERR(trans, "Couldn't prepare the card\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * ucode
  */
-static void iwl_pcie_load_firmware_chunk_fh(struct iwl_trans *trans,
+अटल व्योम iwl_pcie_load_firmware_chunk_fh(काष्ठा iwl_trans *trans,
 					    u32 dst_addr, dma_addr_t phy_addr,
 					    u32 byte_cnt)
-{
-	iwl_write32(trans, FH_TCSR_CHNL_TX_CONFIG_REG(FH_SRVC_CHNL),
+अणु
+	iwl_ग_लिखो32(trans, FH_TCSR_CHNL_TX_CONFIG_REG(FH_SRVC_CHNL),
 		    FH_TCSR_TX_CONFIG_REG_VAL_DMA_CHNL_PAUSE);
 
-	iwl_write32(trans, FH_SRVC_CHNL_SRAM_ADDR_REG(FH_SRVC_CHNL),
+	iwl_ग_लिखो32(trans, FH_SRVC_CHNL_SRAM_ADDR_REG(FH_SRVC_CHNL),
 		    dst_addr);
 
-	iwl_write32(trans, FH_TFDIB_CTRL0_REG(FH_SRVC_CHNL),
+	iwl_ग_लिखो32(trans, FH_TFDIB_CTRL0_REG(FH_SRVC_CHNL),
 		    phy_addr & FH_MEM_TFDIB_DRAM_ADDR_LSB_MSK);
 
-	iwl_write32(trans, FH_TFDIB_CTRL1_REG(FH_SRVC_CHNL),
+	iwl_ग_लिखो32(trans, FH_TFDIB_CTRL1_REG(FH_SRVC_CHNL),
 		    (iwl_get_dma_hi_addr(phy_addr)
 			<< FH_MEM_TFDIB_REG1_ADDR_BITSHIFT) | byte_cnt);
 
-	iwl_write32(trans, FH_TCSR_CHNL_TX_BUF_STS_REG(FH_SRVC_CHNL),
+	iwl_ग_लिखो32(trans, FH_TCSR_CHNL_TX_BUF_STS_REG(FH_SRVC_CHNL),
 		    BIT(FH_TCSR_CHNL_TX_BUF_STS_REG_POS_TB_NUM) |
 		    BIT(FH_TCSR_CHNL_TX_BUF_STS_REG_POS_TB_IDX) |
 		    FH_TCSR_CHNL_TX_BUF_STS_REG_VAL_TFDB_VALID);
 
-	iwl_write32(trans, FH_TCSR_CHNL_TX_CONFIG_REG(FH_SRVC_CHNL),
+	iwl_ग_लिखो32(trans, FH_TCSR_CHNL_TX_CONFIG_REG(FH_SRVC_CHNL),
 		    FH_TCSR_TX_CONFIG_REG_VAL_DMA_CHNL_ENABLE |
 		    FH_TCSR_TX_CONFIG_REG_VAL_DMA_CREDIT_DISABLE |
 		    FH_TCSR_TX_CONFIG_REG_VAL_CIRQ_HOST_ENDTFD);
-}
+पूर्ण
 
-static int iwl_pcie_load_firmware_chunk(struct iwl_trans *trans,
+अटल पूर्णांक iwl_pcie_load_firmware_chunk(काष्ठा iwl_trans *trans,
 					u32 dst_addr, dma_addr_t phy_addr,
 					u32 byte_cnt)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	int ret;
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	पूर्णांक ret;
 
-	trans_pcie->ucode_write_complete = false;
+	trans_pcie->ucode_ग_लिखो_complete = false;
 
-	if (!iwl_trans_grab_nic_access(trans))
-		return -EIO;
+	अगर (!iwl_trans_grab_nic_access(trans))
+		वापस -EIO;
 
 	iwl_pcie_load_firmware_chunk_fh(trans, dst_addr, phy_addr,
 					byte_cnt);
 	iwl_trans_release_nic_access(trans);
 
-	ret = wait_event_timeout(trans_pcie->ucode_write_waitq,
-				 trans_pcie->ucode_write_complete, 5 * HZ);
-	if (!ret) {
+	ret = रुको_event_समयout(trans_pcie->ucode_ग_लिखो_रुकोq,
+				 trans_pcie->ucode_ग_लिखो_complete, 5 * HZ);
+	अगर (!ret) अणु
 		IWL_ERR(trans, "Failed to load firmware chunk!\n");
 		iwl_trans_pcie_dump_regs(trans);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iwl_pcie_load_section(struct iwl_trans *trans, u8 section_num,
-			    const struct fw_desc *section)
-{
+अटल पूर्णांक iwl_pcie_load_section(काष्ठा iwl_trans *trans, u8 section_num,
+			    स्थिर काष्ठा fw_desc *section)
+अणु
 	u8 *v_addr;
 	dma_addr_t p_addr;
 	u32 offset, chunk_sz = min_t(u32, FH_MEM_TB_MAX_LENGTH, section->len);
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	IWL_DEBUG_FW(trans, "[%d] uCode section being loaded...\n",
 		     section_num);
 
 	v_addr = dma_alloc_coherent(trans->dev, chunk_sz, &p_addr,
 				    GFP_KERNEL | __GFP_NOWARN);
-	if (!v_addr) {
+	अगर (!v_addr) अणु
 		IWL_DEBUG_INFO(trans, "Falling back to small chunks of DMA\n");
 		chunk_sz = PAGE_SIZE;
 		v_addr = dma_alloc_coherent(trans->dev, chunk_sz,
 					    &p_addr, GFP_KERNEL);
-		if (!v_addr)
-			return -ENOMEM;
-	}
+		अगर (!v_addr)
+			वापस -ENOMEM;
+	पूर्ण
 
-	for (offset = 0; offset < section->len; offset += chunk_sz) {
+	क्रम (offset = 0; offset < section->len; offset += chunk_sz) अणु
 		u32 copy_size, dst_addr;
 		bool extended_addr = false;
 
 		copy_size = min_t(u32, chunk_sz, section->len - offset);
 		dst_addr = section->offset + offset;
 
-		if (dst_addr >= IWL_FW_MEM_EXTENDED_START &&
+		अगर (dst_addr >= IWL_FW_MEM_EXTENDED_START &&
 		    dst_addr <= IWL_FW_MEM_EXTENDED_END)
 			extended_addr = true;
 
-		if (extended_addr)
+		अगर (extended_addr)
 			iwl_set_bits_prph(trans, LMPM_CHICK,
 					  LMPM_CHICK_EXTENDED_ADDR_SPACE);
 
-		memcpy(v_addr, (u8 *)section->data + offset, copy_size);
+		स_नकल(v_addr, (u8 *)section->data + offset, copy_size);
 		ret = iwl_pcie_load_firmware_chunk(trans, dst_addr, p_addr,
 						   copy_size);
 
-		if (extended_addr)
+		अगर (extended_addr)
 			iwl_clear_bits_prph(trans, LMPM_CHICK,
 					    LMPM_CHICK_EXTENDED_ADDR_SPACE);
 
-		if (ret) {
+		अगर (ret) अणु
 			IWL_ERR(trans,
 				"Could not load the [%d] uCode section\n",
 				section_num);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	dma_free_coherent(trans->dev, chunk_sz, v_addr, p_addr);
-	return ret;
-}
+	dma_मुक्त_coherent(trans->dev, chunk_sz, v_addr, p_addr);
+	वापस ret;
+पूर्ण
 
-static int iwl_pcie_load_cpu_sections_8000(struct iwl_trans *trans,
-					   const struct fw_img *image,
-					   int cpu,
-					   int *first_ucode_section)
-{
-	int shift_param;
-	int i, ret = 0, sec_num = 0x1;
-	u32 val, last_read_idx = 0;
+अटल पूर्णांक iwl_pcie_load_cpu_sections_8000(काष्ठा iwl_trans *trans,
+					   स्थिर काष्ठा fw_img *image,
+					   पूर्णांक cpu,
+					   पूर्णांक *first_ucode_section)
+अणु
+	पूर्णांक shअगरt_param;
+	पूर्णांक i, ret = 0, sec_num = 0x1;
+	u32 val, last_पढ़ो_idx = 0;
 
-	if (cpu == 1) {
-		shift_param = 0;
+	अगर (cpu == 1) अणु
+		shअगरt_param = 0;
 		*first_ucode_section = 0;
-	} else {
-		shift_param = 16;
+	पूर्ण अन्यथा अणु
+		shअगरt_param = 16;
 		(*first_ucode_section)++;
-	}
+	पूर्ण
 
-	for (i = *first_ucode_section; i < image->num_sec; i++) {
-		last_read_idx = i;
+	क्रम (i = *first_ucode_section; i < image->num_sec; i++) अणु
+		last_पढ़ो_idx = i;
 
 		/*
 		 * CPU1_CPU2_SEPARATOR_SECTION delimiter - separate between
@@ -745,65 +746,65 @@ static int iwl_pcie_load_cpu_sections_8000(struct iwl_trans *trans,
 		 * PAGING_SEPARATOR_SECTION delimiter - separate between
 		 * CPU2 non paged to CPU2 paging sec.
 		 */
-		if (!image->sec[i].data ||
+		अगर (!image->sec[i].data ||
 		    image->sec[i].offset == CPU1_CPU2_SEPARATOR_SECTION ||
-		    image->sec[i].offset == PAGING_SEPARATOR_SECTION) {
+		    image->sec[i].offset == PAGING_SEPARATOR_SECTION) अणु
 			IWL_DEBUG_FW(trans,
 				     "Break since Data not valid or Empty section, sec = %d\n",
 				     i);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = iwl_pcie_load_section(trans, i, &image->sec[i]);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		/* Notify ucode of loaded section number and status */
-		val = iwl_read_direct32(trans, FH_UCODE_LOAD_STATUS);
-		val = val | (sec_num << shift_param);
-		iwl_write_direct32(trans, FH_UCODE_LOAD_STATUS, val);
+		/* Notअगरy ucode of loaded section number and status */
+		val = iwl_पढ़ो_direct32(trans, FH_UCODE_LOAD_STATUS);
+		val = val | (sec_num << shअगरt_param);
+		iwl_ग_लिखो_direct32(trans, FH_UCODE_LOAD_STATUS, val);
 
 		sec_num = (sec_num << 1) | 0x1;
-	}
+	पूर्ण
 
-	*first_ucode_section = last_read_idx;
+	*first_ucode_section = last_पढ़ो_idx;
 
-	iwl_enable_interrupts(trans);
+	iwl_enable_पूर्णांकerrupts(trans);
 
-	if (trans->trans_cfg->use_tfh) {
-		if (cpu == 1)
-			iwl_write_prph(trans, UREG_UCODE_LOAD_STATUS,
+	अगर (trans->trans_cfg->use_tfh) अणु
+		अगर (cpu == 1)
+			iwl_ग_लिखो_prph(trans, UREG_UCODE_LOAD_STATUS,
 				       0xFFFF);
-		else
-			iwl_write_prph(trans, UREG_UCODE_LOAD_STATUS,
+		अन्यथा
+			iwl_ग_लिखो_prph(trans, UREG_UCODE_LOAD_STATUS,
 				       0xFFFFFFFF);
-	} else {
-		if (cpu == 1)
-			iwl_write_direct32(trans, FH_UCODE_LOAD_STATUS,
+	पूर्ण अन्यथा अणु
+		अगर (cpu == 1)
+			iwl_ग_लिखो_direct32(trans, FH_UCODE_LOAD_STATUS,
 					   0xFFFF);
-		else
-			iwl_write_direct32(trans, FH_UCODE_LOAD_STATUS,
+		अन्यथा
+			iwl_ग_लिखो_direct32(trans, FH_UCODE_LOAD_STATUS,
 					   0xFFFFFFFF);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iwl_pcie_load_cpu_sections(struct iwl_trans *trans,
-				      const struct fw_img *image,
-				      int cpu,
-				      int *first_ucode_section)
-{
-	int i, ret = 0;
-	u32 last_read_idx = 0;
+अटल पूर्णांक iwl_pcie_load_cpu_sections(काष्ठा iwl_trans *trans,
+				      स्थिर काष्ठा fw_img *image,
+				      पूर्णांक cpu,
+				      पूर्णांक *first_ucode_section)
+अणु
+	पूर्णांक i, ret = 0;
+	u32 last_पढ़ो_idx = 0;
 
-	if (cpu == 1)
+	अगर (cpu == 1)
 		*first_ucode_section = 0;
-	else
+	अन्यथा
 		(*first_ucode_section)++;
 
-	for (i = *first_ucode_section; i < image->num_sec; i++) {
-		last_read_idx = i;
+	क्रम (i = *first_ucode_section; i < image->num_sec; i++) अणु
+		last_पढ़ो_idx = i;
 
 		/*
 		 * CPU1_CPU2_SEPARATOR_SECTION delimiter - separate between
@@ -811,416 +812,416 @@ static int iwl_pcie_load_cpu_sections(struct iwl_trans *trans,
 		 * PAGING_SEPARATOR_SECTION delimiter - separate between
 		 * CPU2 non paged to CPU2 paging sec.
 		 */
-		if (!image->sec[i].data ||
+		अगर (!image->sec[i].data ||
 		    image->sec[i].offset == CPU1_CPU2_SEPARATOR_SECTION ||
-		    image->sec[i].offset == PAGING_SEPARATOR_SECTION) {
+		    image->sec[i].offset == PAGING_SEPARATOR_SECTION) अणु
 			IWL_DEBUG_FW(trans,
 				     "Break since Data not valid or Empty section, sec = %d\n",
 				     i);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = iwl_pcie_load_section(trans, i, &image->sec[i]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	*first_ucode_section = last_read_idx;
+	*first_ucode_section = last_पढ़ो_idx;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void iwl_pcie_apply_destination_ini(struct iwl_trans *trans)
-{
-	enum iwl_fw_ini_allocation_id alloc_id = IWL_FW_INI_ALLOCATION_ID_DBGC1;
-	struct iwl_fw_ini_allocation_tlv *fw_mon_cfg =
+अटल व्योम iwl_pcie_apply_destination_ini(काष्ठा iwl_trans *trans)
+अणु
+	क्रमागत iwl_fw_ini_allocation_id alloc_id = IWL_FW_INI_ALLOCATION_ID_DBGC1;
+	काष्ठा iwl_fw_ini_allocation_tlv *fw_mon_cfg =
 		&trans->dbg.fw_mon_cfg[alloc_id];
-	struct iwl_dram_data *frag;
+	काष्ठा iwl_dram_data *frag;
 
-	if (!iwl_trans_dbg_ini_valid(trans))
-		return;
+	अगर (!iwl_trans_dbg_ini_valid(trans))
+		वापस;
 
-	if (le32_to_cpu(fw_mon_cfg->buf_location) ==
-	    IWL_FW_INI_LOCATION_SRAM_PATH) {
+	अगर (le32_to_cpu(fw_mon_cfg->buf_location) ==
+	    IWL_FW_INI_LOCATION_SRAM_PATH) अणु
 		IWL_DEBUG_FW(trans, "WRT: Applying SMEM buffer destination\n");
 		/* set sram monitor by enabling bit 7 */
 		iwl_set_bit(trans, CSR_HW_IF_CONFIG_REG,
 			    CSR_HW_IF_CONFIG_REG_BIT_MONITOR_SRAM);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (le32_to_cpu(fw_mon_cfg->buf_location) !=
+	अगर (le32_to_cpu(fw_mon_cfg->buf_location) !=
 	    IWL_FW_INI_LOCATION_DRAM_PATH ||
 	    !trans->dbg.fw_mon_ini[alloc_id].num_frags)
-		return;
+		वापस;
 
 	frag = &trans->dbg.fw_mon_ini[alloc_id].frags[0];
 
 	IWL_DEBUG_FW(trans, "WRT: Applying DRAM destination (alloc_id=%u)\n",
 		     alloc_id);
 
-	iwl_write_umac_prph(trans, MON_BUFF_BASE_ADDR_VER2,
+	iwl_ग_लिखो_umac_prph(trans, MON_BUFF_BASE_ADDR_VER2,
 			    frag->physical >> MON_BUFF_SHIFT_VER2);
-	iwl_write_umac_prph(trans, MON_BUFF_END_ADDR_VER2,
+	iwl_ग_लिखो_umac_prph(trans, MON_BUFF_END_ADDR_VER2,
 			    (frag->physical + frag->size - 256) >>
 			    MON_BUFF_SHIFT_VER2);
-}
+पूर्ण
 
-void iwl_pcie_apply_destination(struct iwl_trans *trans)
-{
-	const struct iwl_fw_dbg_dest_tlv_v1 *dest = trans->dbg.dest_tlv;
-	const struct iwl_dram_data *fw_mon = &trans->dbg.fw_mon;
-	int i;
+व्योम iwl_pcie_apply_destination(काष्ठा iwl_trans *trans)
+अणु
+	स्थिर काष्ठा iwl_fw_dbg_dest_tlv_v1 *dest = trans->dbg.dest_tlv;
+	स्थिर काष्ठा iwl_dram_data *fw_mon = &trans->dbg.fw_mon;
+	पूर्णांक i;
 
-	if (iwl_trans_dbg_ini_valid(trans)) {
+	अगर (iwl_trans_dbg_ini_valid(trans)) अणु
 		iwl_pcie_apply_destination_ini(trans);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	IWL_INFO(trans, "Applying debug destination %s\n",
 		 get_fw_dbg_mode_string(dest->monitor_mode));
 
-	if (dest->monitor_mode == EXTERNAL_MODE)
-		iwl_pcie_alloc_fw_monitor(trans, dest->size_power);
-	else
+	अगर (dest->monitor_mode == EXTERNAL_MODE)
+		iwl_pcie_alloc_fw_monitor(trans, dest->size_घातer);
+	अन्यथा
 		IWL_WARN(trans, "PCI should have external buffer debug\n");
 
-	for (i = 0; i < trans->dbg.n_dest_reg; i++) {
+	क्रम (i = 0; i < trans->dbg.n_dest_reg; i++) अणु
 		u32 addr = le32_to_cpu(dest->reg_ops[i].addr);
 		u32 val = le32_to_cpu(dest->reg_ops[i].val);
 
-		switch (dest->reg_ops[i].op) {
-		case CSR_ASSIGN:
-			iwl_write32(trans, addr, val);
-			break;
-		case CSR_SETBIT:
+		चयन (dest->reg_ops[i].op) अणु
+		हाल CSR_ASSIGN:
+			iwl_ग_लिखो32(trans, addr, val);
+			अवरोध;
+		हाल CSR_SETBIT:
 			iwl_set_bit(trans, addr, BIT(val));
-			break;
-		case CSR_CLEARBIT:
+			अवरोध;
+		हाल CSR_CLEARBIT:
 			iwl_clear_bit(trans, addr, BIT(val));
-			break;
-		case PRPH_ASSIGN:
-			iwl_write_prph(trans, addr, val);
-			break;
-		case PRPH_SETBIT:
+			अवरोध;
+		हाल PRPH_ASSIGN:
+			iwl_ग_लिखो_prph(trans, addr, val);
+			अवरोध;
+		हाल PRPH_SETBIT:
 			iwl_set_bits_prph(trans, addr, BIT(val));
-			break;
-		case PRPH_CLEARBIT:
+			अवरोध;
+		हाल PRPH_CLEARBIT:
 			iwl_clear_bits_prph(trans, addr, BIT(val));
-			break;
-		case PRPH_BLOCKBIT:
-			if (iwl_read_prph(trans, addr) & BIT(val)) {
+			अवरोध;
+		हाल PRPH_BLOCKBIT:
+			अगर (iwl_पढ़ो_prph(trans, addr) & BIT(val)) अणु
 				IWL_ERR(trans,
 					"BIT(%u) in address 0x%x is 1, stopping FW configuration\n",
 					val, addr);
-				goto monitor;
-			}
-			break;
-		default:
+				जाओ monitor;
+			पूर्ण
+			अवरोध;
+		शेष:
 			IWL_ERR(trans, "FW debug - unknown OP %d\n",
 				dest->reg_ops[i].op);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 monitor:
-	if (dest->monitor_mode == EXTERNAL_MODE && fw_mon->size) {
-		iwl_write_prph(trans, le32_to_cpu(dest->base_reg),
-			       fw_mon->physical >> dest->base_shift);
-		if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_8000)
-			iwl_write_prph(trans, le32_to_cpu(dest->end_reg),
+	अगर (dest->monitor_mode == EXTERNAL_MODE && fw_mon->size) अणु
+		iwl_ग_लिखो_prph(trans, le32_to_cpu(dest->base_reg),
+			       fw_mon->physical >> dest->base_shअगरt);
+		अगर (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_8000)
+			iwl_ग_लिखो_prph(trans, le32_to_cpu(dest->end_reg),
 				       (fw_mon->physical + fw_mon->size -
-					256) >> dest->end_shift);
-		else
-			iwl_write_prph(trans, le32_to_cpu(dest->end_reg),
+					256) >> dest->end_shअगरt);
+		अन्यथा
+			iwl_ग_लिखो_prph(trans, le32_to_cpu(dest->end_reg),
 				       (fw_mon->physical + fw_mon->size) >>
-				       dest->end_shift);
-	}
-}
+				       dest->end_shअगरt);
+	पूर्ण
+पूर्ण
 
-static int iwl_pcie_load_given_ucode(struct iwl_trans *trans,
-				const struct fw_img *image)
-{
-	int ret = 0;
-	int first_ucode_section;
+अटल पूर्णांक iwl_pcie_load_given_ucode(काष्ठा iwl_trans *trans,
+				स्थिर काष्ठा fw_img *image)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक first_ucode_section;
 
 	IWL_DEBUG_FW(trans, "working with %s CPU\n",
 		     image->is_dual_cpus ? "Dual" : "Single");
 
 	/* load to FW the binary non secured sections of CPU1 */
 	ret = iwl_pcie_load_cpu_sections(trans, image, 1, &first_ucode_section);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (image->is_dual_cpus) {
+	अगर (image->is_dual_cpus) अणु
 		/* set CPU2 header address */
-		iwl_write_prph(trans,
+		iwl_ग_लिखो_prph(trans,
 			       LMPM_SECURE_UCODE_LOAD_CPU2_HDR_ADDR,
 			       LMPM_SECURE_CPU2_HDR_MEM_SPACE);
 
 		/* load to FW the binary sections of CPU2 */
 		ret = iwl_pcie_load_cpu_sections(trans, image, 2,
 						 &first_ucode_section);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (iwl_pcie_dbg_on(trans))
+	अगर (iwl_pcie_dbg_on(trans))
 		iwl_pcie_apply_destination(trans);
 
-	iwl_enable_interrupts(trans);
+	iwl_enable_पूर्णांकerrupts(trans);
 
 	/* release CPU reset */
-	iwl_write32(trans, CSR_RESET, 0);
+	iwl_ग_लिखो32(trans, CSR_RESET, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iwl_pcie_load_given_ucode_8000(struct iwl_trans *trans,
-					  const struct fw_img *image)
-{
-	int ret = 0;
-	int first_ucode_section;
+अटल पूर्णांक iwl_pcie_load_given_ucode_8000(काष्ठा iwl_trans *trans,
+					  स्थिर काष्ठा fw_img *image)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक first_ucode_section;
 
 	IWL_DEBUG_FW(trans, "working with %s CPU\n",
 		     image->is_dual_cpus ? "Dual" : "Single");
 
-	if (iwl_pcie_dbg_on(trans))
+	अगर (iwl_pcie_dbg_on(trans))
 		iwl_pcie_apply_destination(trans);
 
 	IWL_DEBUG_POWER(trans, "Original WFPM value = 0x%08X\n",
-			iwl_read_prph(trans, WFPM_GP2));
+			iwl_पढ़ो_prph(trans, WFPM_GP2));
 
 	/*
-	 * Set default value. On resume reading the values that were
+	 * Set शेष value. On resume पढ़ोing the values that were
 	 * zeored can provide debug data on the resume flow.
-	 * This is for debugging only and has no functional impact.
+	 * This is क्रम debugging only and has no functional impact.
 	 */
-	iwl_write_prph(trans, WFPM_GP2, 0x01010101);
+	iwl_ग_लिखो_prph(trans, WFPM_GP2, 0x01010101);
 
-	/* configure the ucode to be ready to get the secured image */
+	/* configure the ucode to be पढ़ोy to get the secured image */
 	/* release CPU reset */
-	iwl_write_prph(trans, RELEASE_CPU_RESET, RELEASE_CPU_RESET_BIT);
+	iwl_ग_लिखो_prph(trans, RELEASE_CPU_RESET, RELEASE_CPU_RESET_BIT);
 
 	/* load to FW the binary Secured sections of CPU1 */
 	ret = iwl_pcie_load_cpu_sections_8000(trans, image, 1,
 					      &first_ucode_section);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* load to FW the binary sections of CPU2 */
-	return iwl_pcie_load_cpu_sections_8000(trans, image, 2,
+	वापस iwl_pcie_load_cpu_sections_8000(trans, image, 2,
 					       &first_ucode_section);
-}
+पूर्ण
 
-bool iwl_pcie_check_hw_rf_kill(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie =  IWL_TRANS_GET_PCIE_TRANS(trans);
-	bool hw_rfkill = iwl_is_rfkill_set(trans);
+bool iwl_pcie_check_hw_rf_समाप्त(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie =  IWL_TRANS_GET_PCIE_TRANS(trans);
+	bool hw_rfसमाप्त = iwl_is_rfसमाप्त_set(trans);
 	bool prev = test_bit(STATUS_RFKILL_OPMODE, &trans->status);
 	bool report;
 
-	if (hw_rfkill) {
+	अगर (hw_rfसमाप्त) अणु
 		set_bit(STATUS_RFKILL_HW, &trans->status);
 		set_bit(STATUS_RFKILL_OPMODE, &trans->status);
-	} else {
+	पूर्ण अन्यथा अणु
 		clear_bit(STATUS_RFKILL_HW, &trans->status);
-		if (trans_pcie->opmode_down)
+		अगर (trans_pcie->opmode_करोwn)
 			clear_bit(STATUS_RFKILL_OPMODE, &trans->status);
-	}
+	पूर्ण
 
 	report = test_bit(STATUS_RFKILL_OPMODE, &trans->status);
 
-	if (prev != report)
-		iwl_trans_pcie_rf_kill(trans, report);
+	अगर (prev != report)
+		iwl_trans_pcie_rf_समाप्त(trans, report);
 
-	return hw_rfkill;
-}
+	वापस hw_rfसमाप्त;
+पूर्ण
 
-struct iwl_causes_list {
+काष्ठा iwl_causes_list अणु
 	u32 cause_num;
 	u32 mask_reg;
 	u8 addr;
-};
+पूर्ण;
 
-static struct iwl_causes_list causes_list[] = {
-	{MSIX_FH_INT_CAUSES_D2S_CH0_NUM,	CSR_MSIX_FH_INT_MASK_AD, 0},
-	{MSIX_FH_INT_CAUSES_D2S_CH1_NUM,	CSR_MSIX_FH_INT_MASK_AD, 0x1},
-	{MSIX_FH_INT_CAUSES_S2D,		CSR_MSIX_FH_INT_MASK_AD, 0x3},
-	{MSIX_FH_INT_CAUSES_FH_ERR,		CSR_MSIX_FH_INT_MASK_AD, 0x5},
-	{MSIX_HW_INT_CAUSES_REG_ALIVE,		CSR_MSIX_HW_INT_MASK_AD, 0x10},
-	{MSIX_HW_INT_CAUSES_REG_WAKEUP,		CSR_MSIX_HW_INT_MASK_AD, 0x11},
-	{MSIX_HW_INT_CAUSES_REG_RESET_DONE,	CSR_MSIX_HW_INT_MASK_AD, 0x12},
-	{MSIX_HW_INT_CAUSES_REG_CT_KILL,	CSR_MSIX_HW_INT_MASK_AD, 0x16},
-	{MSIX_HW_INT_CAUSES_REG_RF_KILL,	CSR_MSIX_HW_INT_MASK_AD, 0x17},
-	{MSIX_HW_INT_CAUSES_REG_PERIODIC,	CSR_MSIX_HW_INT_MASK_AD, 0x18},
-	{MSIX_HW_INT_CAUSES_REG_SW_ERR,		CSR_MSIX_HW_INT_MASK_AD, 0x29},
-	{MSIX_HW_INT_CAUSES_REG_SCD,		CSR_MSIX_HW_INT_MASK_AD, 0x2A},
-	{MSIX_HW_INT_CAUSES_REG_FH_TX,		CSR_MSIX_HW_INT_MASK_AD, 0x2B},
-	{MSIX_HW_INT_CAUSES_REG_HW_ERR,		CSR_MSIX_HW_INT_MASK_AD, 0x2D},
-	{MSIX_HW_INT_CAUSES_REG_HAP,		CSR_MSIX_HW_INT_MASK_AD, 0x2E},
-};
+अटल काष्ठा iwl_causes_list causes_list[] = अणु
+	अणुMSIX_FH_INT_CAUSES_D2S_CH0_NUM,	CSR_MSIX_FH_INT_MASK_AD, 0पूर्ण,
+	अणुMSIX_FH_INT_CAUSES_D2S_CH1_NUM,	CSR_MSIX_FH_INT_MASK_AD, 0x1पूर्ण,
+	अणुMSIX_FH_INT_CAUSES_S2D,		CSR_MSIX_FH_INT_MASK_AD, 0x3पूर्ण,
+	अणुMSIX_FH_INT_CAUSES_FH_ERR,		CSR_MSIX_FH_INT_MASK_AD, 0x5पूर्ण,
+	अणुMSIX_HW_INT_CAUSES_REG_ALIVE,		CSR_MSIX_HW_INT_MASK_AD, 0x10पूर्ण,
+	अणुMSIX_HW_INT_CAUSES_REG_WAKEUP,		CSR_MSIX_HW_INT_MASK_AD, 0x11पूर्ण,
+	अणुMSIX_HW_INT_CAUSES_REG_RESET_DONE,	CSR_MSIX_HW_INT_MASK_AD, 0x12पूर्ण,
+	अणुMSIX_HW_INT_CAUSES_REG_CT_KILL,	CSR_MSIX_HW_INT_MASK_AD, 0x16पूर्ण,
+	अणुMSIX_HW_INT_CAUSES_REG_RF_KILL,	CSR_MSIX_HW_INT_MASK_AD, 0x17पूर्ण,
+	अणुMSIX_HW_INT_CAUSES_REG_PERIODIC,	CSR_MSIX_HW_INT_MASK_AD, 0x18पूर्ण,
+	अणुMSIX_HW_INT_CAUSES_REG_SW_ERR,		CSR_MSIX_HW_INT_MASK_AD, 0x29पूर्ण,
+	अणुMSIX_HW_INT_CAUSES_REG_SCD,		CSR_MSIX_HW_INT_MASK_AD, 0x2Aपूर्ण,
+	अणुMSIX_HW_INT_CAUSES_REG_FH_TX,		CSR_MSIX_HW_INT_MASK_AD, 0x2Bपूर्ण,
+	अणुMSIX_HW_INT_CAUSES_REG_HW_ERR,		CSR_MSIX_HW_INT_MASK_AD, 0x2Dपूर्ण,
+	अणुMSIX_HW_INT_CAUSES_REG_HAP,		CSR_MSIX_HW_INT_MASK_AD, 0x2Eपूर्ण,
+पूर्ण;
 
-static void iwl_pcie_map_non_rx_causes(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie =  IWL_TRANS_GET_PCIE_TRANS(trans);
-	int val = trans_pcie->def_irq | MSIX_NON_AUTO_CLEAR_CAUSE;
-	int i, arr_size = ARRAY_SIZE(causes_list);
-	struct iwl_causes_list *causes = causes_list;
+अटल व्योम iwl_pcie_map_non_rx_causes(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie =  IWL_TRANS_GET_PCIE_TRANS(trans);
+	पूर्णांक val = trans_pcie->def_irq | MSIX_NON_AUTO_CLEAR_CAUSE;
+	पूर्णांक i, arr_size = ARRAY_SIZE(causes_list);
+	काष्ठा iwl_causes_list *causes = causes_list;
 
 	/*
-	 * Access all non RX causes and map them to the default irq.
-	 * In case we are missing at least one interrupt vector,
-	 * the first interrupt vector will serve non-RX and FBQ causes.
+	 * Access all non RX causes and map them to the शेष irq.
+	 * In हाल we are missing at least one पूर्णांकerrupt vector,
+	 * the first पूर्णांकerrupt vector will serve non-RX and FBQ causes.
 	 */
-	for (i = 0; i < arr_size; i++) {
-		iwl_write8(trans, CSR_MSIX_IVAR(causes[i].addr), val);
+	क्रम (i = 0; i < arr_size; i++) अणु
+		iwl_ग_लिखो8(trans, CSR_MSIX_IVAR(causes[i].addr), val);
 		iwl_clear_bit(trans, causes[i].mask_reg,
 			      causes[i].cause_num);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void iwl_pcie_map_rx_causes(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+अटल व्योम iwl_pcie_map_rx_causes(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 	u32 offset =
 		trans_pcie->shared_vec_mask & IWL_SHARED_IRQ_FIRST_RSS ? 1 : 0;
 	u32 val, idx;
 
 	/*
-	 * The first RX queue - fallback queue, which is designated for
+	 * The first RX queue - fallback queue, which is designated क्रम
 	 * management frame, command responses etc, is always mapped to the
-	 * first interrupt vector. The other RX queues are mapped to
-	 * the other (N - 2) interrupt vectors.
+	 * first पूर्णांकerrupt vector. The other RX queues are mapped to
+	 * the other (N - 2) पूर्णांकerrupt vectors.
 	 */
 	val = BIT(MSIX_FH_INT_CAUSES_Q(0));
-	for (idx = 1; idx < trans->num_rx_queues; idx++) {
-		iwl_write8(trans, CSR_MSIX_RX_IVAR(idx),
+	क्रम (idx = 1; idx < trans->num_rx_queues; idx++) अणु
+		iwl_ग_लिखो8(trans, CSR_MSIX_RX_IVAR(idx),
 			   MSIX_FH_INT_CAUSES_Q(idx - offset));
 		val |= BIT(MSIX_FH_INT_CAUSES_Q(idx));
-	}
-	iwl_write32(trans, CSR_MSIX_FH_INT_MASK_AD, ~val);
+	पूर्ण
+	iwl_ग_लिखो32(trans, CSR_MSIX_FH_INT_MASK_AD, ~val);
 
 	val = MSIX_FH_INT_CAUSES_Q(0);
-	if (trans_pcie->shared_vec_mask & IWL_SHARED_IRQ_NON_RX)
+	अगर (trans_pcie->shared_vec_mask & IWL_SHARED_IRQ_NON_RX)
 		val |= MSIX_NON_AUTO_CLEAR_CAUSE;
-	iwl_write8(trans, CSR_MSIX_RX_IVAR(0), val);
+	iwl_ग_लिखो8(trans, CSR_MSIX_RX_IVAR(0), val);
 
-	if (trans_pcie->shared_vec_mask & IWL_SHARED_IRQ_FIRST_RSS)
-		iwl_write8(trans, CSR_MSIX_RX_IVAR(1), val);
-}
+	अगर (trans_pcie->shared_vec_mask & IWL_SHARED_IRQ_FIRST_RSS)
+		iwl_ग_लिखो8(trans, CSR_MSIX_RX_IVAR(1), val);
+पूर्ण
 
-void iwl_pcie_conf_msix_hw(struct iwl_trans_pcie *trans_pcie)
-{
-	struct iwl_trans *trans = trans_pcie->trans;
+व्योम iwl_pcie_conf_msix_hw(काष्ठा iwl_trans_pcie *trans_pcie)
+अणु
+	काष्ठा iwl_trans *trans = trans_pcie->trans;
 
-	if (!trans_pcie->msix_enabled) {
-		if (trans->trans_cfg->mq_rx_supported &&
+	अगर (!trans_pcie->msix_enabled) अणु
+		अगर (trans->trans_cfg->mq_rx_supported &&
 		    test_bit(STATUS_DEVICE_ENABLED, &trans->status))
-			iwl_write_umac_prph(trans, UREG_CHICK,
+			iwl_ग_लिखो_umac_prph(trans, UREG_CHICK,
 					    UREG_CHICK_MSI_ENABLE);
-		return;
-	}
+		वापस;
+	पूर्ण
 	/*
 	 * The IVAR table needs to be configured again after reset,
-	 * but if the device is disabled, we can't write to
+	 * but अगर the device is disabled, we can't ग_लिखो to
 	 * prph.
 	 */
-	if (test_bit(STATUS_DEVICE_ENABLED, &trans->status))
-		iwl_write_umac_prph(trans, UREG_CHICK, UREG_CHICK_MSIX_ENABLE);
+	अगर (test_bit(STATUS_DEVICE_ENABLED, &trans->status))
+		iwl_ग_लिखो_umac_prph(trans, UREG_CHICK, UREG_CHICK_MSIX_ENABLE);
 
 	/*
 	 * Each cause from the causes list above and the RX causes is
 	 * represented as a byte in the IVAR table. The first nibble
-	 * represents the bound interrupt vector of the cause, the second
-	 * represents no auto clear for this cause. This will be set if its
-	 * interrupt vector is bound to serve other causes.
+	 * represents the bound पूर्णांकerrupt vector of the cause, the second
+	 * represents no स्वतः clear क्रम this cause. This will be set अगर its
+	 * पूर्णांकerrupt vector is bound to serve other causes.
 	 */
 	iwl_pcie_map_rx_causes(trans);
 
 	iwl_pcie_map_non_rx_causes(trans);
-}
+पूर्ण
 
-static void iwl_pcie_init_msix(struct iwl_trans_pcie *trans_pcie)
-{
-	struct iwl_trans *trans = trans_pcie->trans;
+अटल व्योम iwl_pcie_init_msix(काष्ठा iwl_trans_pcie *trans_pcie)
+अणु
+	काष्ठा iwl_trans *trans = trans_pcie->trans;
 
 	iwl_pcie_conf_msix_hw(trans_pcie);
 
-	if (!trans_pcie->msix_enabled)
-		return;
+	अगर (!trans_pcie->msix_enabled)
+		वापस;
 
-	trans_pcie->fh_init_mask = ~iwl_read32(trans, CSR_MSIX_FH_INT_MASK_AD);
+	trans_pcie->fh_init_mask = ~iwl_पढ़ो32(trans, CSR_MSIX_FH_INT_MASK_AD);
 	trans_pcie->fh_mask = trans_pcie->fh_init_mask;
-	trans_pcie->hw_init_mask = ~iwl_read32(trans, CSR_MSIX_HW_INT_MASK_AD);
+	trans_pcie->hw_init_mask = ~iwl_पढ़ो32(trans, CSR_MSIX_HW_INT_MASK_AD);
 	trans_pcie->hw_mask = trans_pcie->hw_init_mask;
-}
+पूर्ण
 
-static void _iwl_trans_pcie_stop_device(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+अटल व्योम _iwl_trans_pcie_stop_device(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
-	lockdep_assert_held(&trans_pcie->mutex);
+	lockdep_निश्चित_held(&trans_pcie->mutex);
 
-	if (trans_pcie->is_down)
-		return;
+	अगर (trans_pcie->is_करोwn)
+		वापस;
 
-	trans_pcie->is_down = true;
+	trans_pcie->is_करोwn = true;
 
-	/* tell the device to stop sending interrupts */
-	iwl_disable_interrupts(trans);
+	/* tell the device to stop sending पूर्णांकerrupts */
+	iwl_disable_पूर्णांकerrupts(trans);
 
-	/* device going down, Stop using ICT table */
+	/* device going करोwn, Stop using ICT table */
 	iwl_pcie_disable_ict(trans);
 
 	/*
 	 * If a HW restart happens during firmware loading,
 	 * then the firmware loading might call this function
 	 * and later it might be called again due to the
-	 * restart. So don't process again if the device is
-	 * already dead.
+	 * restart. So करोn't process again अगर the device is
+	 * alपढ़ोy dead.
 	 */
-	if (test_and_clear_bit(STATUS_DEVICE_ENABLED, &trans->status)) {
+	अगर (test_and_clear_bit(STATUS_DEVICE_ENABLED, &trans->status)) अणु
 		IWL_DEBUG_INFO(trans,
 			       "DEVICE_ENABLED bit was set and is now cleared\n");
 		iwl_pcie_tx_stop(trans);
 		iwl_pcie_rx_stop(trans);
 
-		/* Power-down device's busmaster DMA clocks */
-		if (!trans->cfg->apmg_not_supported) {
-			iwl_write_prph(trans, APMG_CLK_DIS_REG,
+		/* Power-करोwn device's busmaster DMA घड़ीs */
+		अगर (!trans->cfg->apmg_not_supported) अणु
+			iwl_ग_लिखो_prph(trans, APMG_CLK_DIS_REG,
 				       APMG_CLK_VAL_DMA_CLK_RQT);
 			udelay(5);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Make sure (redundant) we've released our request to stay awake */
 	iwl_clear_bit(trans, CSR_GP_CNTRL,
 		      CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
 
-	/* Stop the device, and put it in low power state */
+	/* Stop the device, and put it in low घातer state */
 	iwl_pcie_apm_stop(trans, false);
 
 	iwl_trans_pcie_sw_reset(trans);
 
 	/*
-	 * Upon stop, the IVAR table gets erased, so msi-x won't
-	 * work. This causes a bug in RF-KILL flows, since the interrupt
+	 * Upon stop, the IVAR table माला_लो erased, so msi-x won't
+	 * work. This causes a bug in RF-KILL flows, since the पूर्णांकerrupt
 	 * that enables radio won't fire on the correct irq, and the
-	 * driver won't be able to handle the interrupt.
+	 * driver won't be able to handle the पूर्णांकerrupt.
 	 * Configure the IVAR table again after reset.
 	 */
 	iwl_pcie_conf_msix_hw(trans_pcie);
 
 	/*
-	 * Upon stop, the APM issues an interrupt if HW RF kill is set.
+	 * Upon stop, the APM issues an पूर्णांकerrupt अगर HW RF समाप्त is set.
 	 * This is a bug in certain verions of the hardware.
-	 * Certain devices also keep sending HW RF kill interrupt all
-	 * the time, unless the interrupt is ACKed even if the interrupt
-	 * should be masked. Re-ACK all the interrupts here.
+	 * Certain devices also keep sending HW RF समाप्त पूर्णांकerrupt all
+	 * the समय, unless the पूर्णांकerrupt is ACKed even अगर the पूर्णांकerrupt
+	 * should be masked. Re-ACK all the पूर्णांकerrupts here.
 	 */
-	iwl_disable_interrupts(trans);
+	iwl_disable_पूर्णांकerrupts(trans);
 
 	/* clear all status bits */
 	clear_bit(STATUS_SYNC_HCMD_ACTIVE, &trans->status);
@@ -1228,197 +1229,197 @@ static void _iwl_trans_pcie_stop_device(struct iwl_trans *trans)
 	clear_bit(STATUS_TPOWER_PMI, &trans->status);
 
 	/*
-	 * Even if we stop the HW, we still want the RF kill
-	 * interrupt
+	 * Even अगर we stop the HW, we still want the RF समाप्त
+	 * पूर्णांकerrupt
 	 */
-	iwl_enable_rfkill_int(trans);
+	iwl_enable_rfसमाप्त_पूर्णांक(trans);
 
 	/* re-take ownership to prevent other users from stealing the device */
 	iwl_pcie_prepare_card_hw(trans);
-}
+पूर्ण
 
-void iwl_pcie_synchronize_irqs(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+व्योम iwl_pcie_synchronize_irqs(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
-	if (trans_pcie->msix_enabled) {
-		int i;
+	अगर (trans_pcie->msix_enabled) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < trans_pcie->alloc_vecs; i++)
+		क्रम (i = 0; i < trans_pcie->alloc_vecs; i++)
 			synchronize_irq(trans_pcie->msix_entries[i].vector);
-	} else {
+	पूर्ण अन्यथा अणु
 		synchronize_irq(trans_pcie->pci_dev->irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int iwl_trans_pcie_start_fw(struct iwl_trans *trans,
-				   const struct fw_img *fw, bool run_in_rfkill)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	bool hw_rfkill;
-	int ret;
+अटल पूर्णांक iwl_trans_pcie_start_fw(काष्ठा iwl_trans *trans,
+				   स्थिर काष्ठा fw_img *fw, bool run_in_rfसमाप्त)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	bool hw_rfसमाप्त;
+	पूर्णांक ret;
 
-	/* This may fail if AMT took ownership of the device */
-	if (iwl_pcie_prepare_card_hw(trans)) {
+	/* This may fail अगर AMT took ownership of the device */
+	अगर (iwl_pcie_prepare_card_hw(trans)) अणु
 		IWL_WARN(trans, "Exit HW not ready\n");
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	iwl_enable_rfkill_int(trans);
+	iwl_enable_rfसमाप्त_पूर्णांक(trans);
 
-	iwl_write32(trans, CSR_INT, 0xFFFFFFFF);
+	iwl_ग_लिखो32(trans, CSR_INT, 0xFFFFFFFF);
 
 	/*
-	 * We enabled the RF-Kill interrupt and the handler may very
-	 * well be running. Disable the interrupts to make sure no other
-	 * interrupt can be fired.
+	 * We enabled the RF-Kill पूर्णांकerrupt and the handler may very
+	 * well be running. Disable the पूर्णांकerrupts to make sure no other
+	 * पूर्णांकerrupt can be fired.
 	 */
-	iwl_disable_interrupts(trans);
+	iwl_disable_पूर्णांकerrupts(trans);
 
 	/* Make sure it finished running */
 	iwl_pcie_synchronize_irqs(trans);
 
 	mutex_lock(&trans_pcie->mutex);
 
-	/* If platform's RF_KILL switch is NOT set to KILL */
-	hw_rfkill = iwl_pcie_check_hw_rf_kill(trans);
-	if (hw_rfkill && !run_in_rfkill) {
+	/* If platक्रमm's RF_KILL चयन is NOT set to KILL */
+	hw_rfसमाप्त = iwl_pcie_check_hw_rf_समाप्त(trans);
+	अगर (hw_rfसमाप्त && !run_in_rfसमाप्त) अणु
 		ret = -ERFKILL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Someone called stop_device, don't try to start_fw */
-	if (trans_pcie->is_down) {
+	/* Someone called stop_device, करोn't try to start_fw */
+	अगर (trans_pcie->is_करोwn) अणु
 		IWL_WARN(trans,
 			 "Can't start_fw since the HW hasn't been started\n");
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* make sure rfkill handshake bits are cleared */
-	iwl_write32(trans, CSR_UCODE_DRV_GP1_CLR, CSR_UCODE_SW_BIT_RFKILL);
-	iwl_write32(trans, CSR_UCODE_DRV_GP1_CLR,
+	/* make sure rfसमाप्त handshake bits are cleared */
+	iwl_ग_लिखो32(trans, CSR_UCODE_DRV_GP1_CLR, CSR_UCODE_SW_BIT_RFKILL);
+	iwl_ग_लिखो32(trans, CSR_UCODE_DRV_GP1_CLR,
 		    CSR_UCODE_DRV_GP1_BIT_CMD_BLOCKED);
 
-	/* clear (again), then enable host interrupts */
-	iwl_write32(trans, CSR_INT, 0xFFFFFFFF);
+	/* clear (again), then enable host पूर्णांकerrupts */
+	iwl_ग_लिखो32(trans, CSR_INT, 0xFFFFFFFF);
 
 	ret = iwl_pcie_nic_init(trans);
-	if (ret) {
+	अगर (ret) अणु
 		IWL_ERR(trans, "Unable to init nic\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Now, we load the firmware and don't want to be interrupted, even
-	 * by the RF-Kill interrupt (hence mask all the interrupt besides the
-	 * FH_TX interrupt which is needed to load the firmware). If the
-	 * RF-Kill switch is toggled, we will find out after having loaded
-	 * the firmware and return the proper value to the caller.
+	 * Now, we load the firmware and करोn't want to be पूर्णांकerrupted, even
+	 * by the RF-Kill पूर्णांकerrupt (hence mask all the पूर्णांकerrupt besides the
+	 * FH_TX पूर्णांकerrupt which is needed to load the firmware). If the
+	 * RF-Kill चयन is toggled, we will find out after having loaded
+	 * the firmware and वापस the proper value to the caller.
 	 */
-	iwl_enable_fw_load_int(trans);
+	iwl_enable_fw_load_पूर्णांक(trans);
 
-	/* really make sure rfkill handshake bits are cleared */
-	iwl_write32(trans, CSR_UCODE_DRV_GP1_CLR, CSR_UCODE_SW_BIT_RFKILL);
-	iwl_write32(trans, CSR_UCODE_DRV_GP1_CLR, CSR_UCODE_SW_BIT_RFKILL);
+	/* really make sure rfसमाप्त handshake bits are cleared */
+	iwl_ग_लिखो32(trans, CSR_UCODE_DRV_GP1_CLR, CSR_UCODE_SW_BIT_RFKILL);
+	iwl_ग_लिखो32(trans, CSR_UCODE_DRV_GP1_CLR, CSR_UCODE_SW_BIT_RFKILL);
 
 	/* Load the given image to the HW */
-	if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_8000)
+	अगर (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_8000)
 		ret = iwl_pcie_load_given_ucode_8000(trans, fw);
-	else
+	अन्यथा
 		ret = iwl_pcie_load_given_ucode(trans, fw);
 
-	/* re-check RF-Kill state since we may have missed the interrupt */
-	hw_rfkill = iwl_pcie_check_hw_rf_kill(trans);
-	if (hw_rfkill && !run_in_rfkill)
+	/* re-check RF-Kill state since we may have missed the पूर्णांकerrupt */
+	hw_rfसमाप्त = iwl_pcie_check_hw_rf_समाप्त(trans);
+	अगर (hw_rfसमाप्त && !run_in_rfसमाप्त)
 		ret = -ERFKILL;
 
 out:
 	mutex_unlock(&trans_pcie->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void iwl_trans_pcie_fw_alive(struct iwl_trans *trans, u32 scd_addr)
-{
+अटल व्योम iwl_trans_pcie_fw_alive(काष्ठा iwl_trans *trans, u32 scd_addr)
+अणु
 	iwl_pcie_reset_ict(trans);
 	iwl_pcie_tx_start(trans, scd_addr);
-}
+पूर्ण
 
-void iwl_trans_pcie_handle_stop_rfkill(struct iwl_trans *trans,
-				       bool was_in_rfkill)
-{
-	bool hw_rfkill;
+व्योम iwl_trans_pcie_handle_stop_rfसमाप्त(काष्ठा iwl_trans *trans,
+				       bool was_in_rfसमाप्त)
+अणु
+	bool hw_rfसमाप्त;
 
 	/*
-	 * Check again since the RF kill state may have changed while
-	 * all the interrupts were disabled, in this case we couldn't
-	 * receive the RF kill interrupt and update the state in the
+	 * Check again since the RF समाप्त state may have changed जबतक
+	 * all the पूर्णांकerrupts were disabled, in this हाल we couldn't
+	 * receive the RF समाप्त पूर्णांकerrupt and update the state in the
 	 * op_mode.
 	 * Don't call the op_mode if the rkfill state hasn't changed.
-	 * This allows the op_mode to call stop_device from the rfkill
-	 * notification without endless recursion. Under very rare
-	 * circumstances, we might have a small recursion if the rfkill
-	 * state changed exactly now while we were called from stop_device.
+	 * This allows the op_mode to call stop_device from the rfसमाप्त
+	 * notअगरication without endless recursion. Under very rare
+	 * circumstances, we might have a small recursion अगर the rfसमाप्त
+	 * state changed exactly now जबतक we were called from stop_device.
 	 * This is very unlikely but can happen and is supported.
 	 */
-	hw_rfkill = iwl_is_rfkill_set(trans);
-	if (hw_rfkill) {
+	hw_rfसमाप्त = iwl_is_rfसमाप्त_set(trans);
+	अगर (hw_rfसमाप्त) अणु
 		set_bit(STATUS_RFKILL_HW, &trans->status);
 		set_bit(STATUS_RFKILL_OPMODE, &trans->status);
-	} else {
+	पूर्ण अन्यथा अणु
 		clear_bit(STATUS_RFKILL_HW, &trans->status);
 		clear_bit(STATUS_RFKILL_OPMODE, &trans->status);
-	}
-	if (hw_rfkill != was_in_rfkill)
-		iwl_trans_pcie_rf_kill(trans, hw_rfkill);
-}
+	पूर्ण
+	अगर (hw_rfसमाप्त != was_in_rfसमाप्त)
+		iwl_trans_pcie_rf_समाप्त(trans, hw_rfसमाप्त);
+पूर्ण
 
-static void iwl_trans_pcie_stop_device(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	bool was_in_rfkill;
+अटल व्योम iwl_trans_pcie_stop_device(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	bool was_in_rfसमाप्त;
 
-	iwl_op_mode_time_point(trans->op_mode,
+	iwl_op_mode_समय_poपूर्णांक(trans->op_mode,
 			       IWL_FW_INI_TIME_POINT_HOST_DEVICE_DISABLE,
-			       NULL);
+			       शून्य);
 
 	mutex_lock(&trans_pcie->mutex);
-	trans_pcie->opmode_down = true;
-	was_in_rfkill = test_bit(STATUS_RFKILL_OPMODE, &trans->status);
+	trans_pcie->opmode_करोwn = true;
+	was_in_rfसमाप्त = test_bit(STATUS_RFKILL_OPMODE, &trans->status);
 	_iwl_trans_pcie_stop_device(trans);
-	iwl_trans_pcie_handle_stop_rfkill(trans, was_in_rfkill);
+	iwl_trans_pcie_handle_stop_rfसमाप्त(trans, was_in_rfसमाप्त);
 	mutex_unlock(&trans_pcie->mutex);
-}
+पूर्ण
 
-void iwl_trans_pcie_rf_kill(struct iwl_trans *trans, bool state)
-{
-	struct iwl_trans_pcie __maybe_unused *trans_pcie =
+व्योम iwl_trans_pcie_rf_समाप्त(काष्ठा iwl_trans *trans, bool state)
+अणु
+	काष्ठा iwl_trans_pcie __maybe_unused *trans_pcie =
 		IWL_TRANS_GET_PCIE_TRANS(trans);
 
-	lockdep_assert_held(&trans_pcie->mutex);
+	lockdep_निश्चित_held(&trans_pcie->mutex);
 
 	IWL_WARN(trans, "reporting RF_KILL (radio %s)\n",
 		 state ? "disabled" : "enabled");
-	if (iwl_op_mode_hw_rf_kill(trans->op_mode, state)) {
-		if (trans->trans_cfg->gen2)
+	अगर (iwl_op_mode_hw_rf_समाप्त(trans->op_mode, state)) अणु
+		अगर (trans->trans_cfg->gen2)
 			_iwl_trans_pcie_gen2_stop_device(trans);
-		else
+		अन्यथा
 			_iwl_trans_pcie_stop_device(trans);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void iwl_pcie_d3_complete_suspend(struct iwl_trans *trans,
+व्योम iwl_pcie_d3_complete_suspend(काष्ठा iwl_trans *trans,
 				  bool test, bool reset)
-{
-	iwl_disable_interrupts(trans);
+अणु
+	iwl_disable_पूर्णांकerrupts(trans);
 
 	/*
 	 * in testing mode, the host stays awake and the
 	 * hardware won't be reset (not even partially)
 	 */
-	if (test)
-		return;
+	अगर (test)
+		वापस;
 
 	iwl_pcie_disable_ict(trans);
 
@@ -1428,159 +1429,159 @@ void iwl_pcie_d3_complete_suspend(struct iwl_trans *trans,
 		      CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
 	iwl_clear_bit(trans, CSR_GP_CNTRL, CSR_GP_CNTRL_REG_FLAG_INIT_DONE);
 
-	if (reset) {
+	अगर (reset) अणु
 		/*
-		 * reset TX queues -- some of their registers reset during S3
-		 * so if we don't reset everything here the D3 image would try
+		 * reset TX queues -- some of their रेजिस्टरs reset during S3
+		 * so अगर we करोn't reset everything here the D3 image would try
 		 * to execute some invalid memory upon resume
 		 */
 		iwl_trans_pcie_tx_reset(trans);
-	}
+	पूर्ण
 
 	iwl_pcie_set_pwr(trans, true);
-}
+पूर्ण
 
-static int iwl_trans_pcie_d3_suspend(struct iwl_trans *trans, bool test,
+अटल पूर्णांक iwl_trans_pcie_d3_suspend(काष्ठा iwl_trans *trans, bool test,
 				     bool reset)
-{
-	int ret;
-	struct iwl_trans_pcie *trans_pcie =  IWL_TRANS_GET_PCIE_TRANS(trans);
+अणु
+	पूर्णांक ret;
+	काष्ठा iwl_trans_pcie *trans_pcie =  IWL_TRANS_GET_PCIE_TRANS(trans);
 
-	if (!reset)
-		/* Enable persistence mode to avoid reset */
+	अगर (!reset)
+		/* Enable persistence mode to aव्योम reset */
 		iwl_set_bit(trans, CSR_HW_IF_CONFIG_REG,
 			    CSR_HW_IF_CONFIG_REG_PERSIST_MODE);
 
-	if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210) {
-		iwl_write_umac_prph(trans, UREG_DOORBELL_TO_ISR6,
+	अगर (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210) अणु
+		iwl_ग_लिखो_umac_prph(trans, UREG_DOORBELL_TO_ISR6,
 				    UREG_DOORBELL_TO_ISR6_SUSPEND);
 
-		ret = wait_event_timeout(trans_pcie->sx_waitq,
+		ret = रुको_event_समयout(trans_pcie->sx_रुकोq,
 					 trans_pcie->sx_complete, 2 * HZ);
 		/*
 		 * Invalidate it toward resume.
 		 */
 		trans_pcie->sx_complete = false;
 
-		if (!ret) {
+		अगर (!ret) अणु
 			IWL_ERR(trans, "Timeout entering D3\n");
-			return -ETIMEDOUT;
-		}
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
 	iwl_pcie_d3_complete_suspend(trans, test, reset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iwl_trans_pcie_d3_resume(struct iwl_trans *trans,
-				    enum iwl_d3_status *status,
+अटल पूर्णांक iwl_trans_pcie_d3_resume(काष्ठा iwl_trans *trans,
+				    क्रमागत iwl_d3_status *status,
 				    bool test,  bool reset)
-{
-	struct iwl_trans_pcie *trans_pcie =  IWL_TRANS_GET_PCIE_TRANS(trans);
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie =  IWL_TRANS_GET_PCIE_TRANS(trans);
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	if (test) {
-		iwl_enable_interrupts(trans);
+	अगर (test) अणु
+		iwl_enable_पूर्णांकerrupts(trans);
 		*status = IWL_D3_STATUS_ALIVE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	iwl_set_bit(trans, CSR_GP_CNTRL,
 		    CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
 
 	ret = iwl_finish_nic_init(trans, trans->trans_cfg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Reconfigure IVAR table in case of MSIX or reset ict table in
+	 * Reconfigure IVAR table in हाल of MSIX or reset ict table in
 	 * MSI mode since HW reset erased it.
-	 * Also enables interrupts - none will happen as
-	 * the device doesn't know we're waking it up, only when
+	 * Also enables पूर्णांकerrupts - none will happen as
+	 * the device करोesn't know we're waking it up, only when
 	 * the opmode actually tells it after this call.
 	 */
 	iwl_pcie_conf_msix_hw(trans_pcie);
-	if (!trans_pcie->msix_enabled)
+	अगर (!trans_pcie->msix_enabled)
 		iwl_pcie_reset_ict(trans);
-	iwl_enable_interrupts(trans);
+	iwl_enable_पूर्णांकerrupts(trans);
 
 	iwl_pcie_set_pwr(trans, false);
 
-	if (!reset) {
+	अगर (!reset) अणु
 		iwl_clear_bit(trans, CSR_GP_CNTRL,
 			      CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
-	} else {
+	पूर्ण अन्यथा अणु
 		iwl_trans_pcie_tx_reset(trans);
 
 		ret = iwl_pcie_rx_init(trans);
-		if (ret) {
+		अगर (ret) अणु
 			IWL_ERR(trans,
 				"Failed to resume the device (RX reset)\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	IWL_DEBUG_POWER(trans, "WFPM value upon resume = 0x%08X\n",
-			iwl_read_umac_prph(trans, WFPM_GP2));
+			iwl_पढ़ो_umac_prph(trans, WFPM_GP2));
 
-	val = iwl_read32(trans, CSR_RESET);
-	if (val & CSR_RESET_REG_FLAG_NEVO_RESET)
+	val = iwl_पढ़ो32(trans, CSR_RESET);
+	अगर (val & CSR_RESET_REG_FLAG_NEVO_RESET)
 		*status = IWL_D3_STATUS_RESET;
-	else
+	अन्यथा
 		*status = IWL_D3_STATUS_ALIVE;
 
 out:
-	if (*status == IWL_D3_STATUS_ALIVE &&
-	    trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210) {
+	अगर (*status == IWL_D3_STATUS_ALIVE &&
+	    trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210) अणु
 		trans_pcie->sx_complete = false;
-		iwl_write_umac_prph(trans, UREG_DOORBELL_TO_ISR6,
+		iwl_ग_लिखो_umac_prph(trans, UREG_DOORBELL_TO_ISR6,
 				    UREG_DOORBELL_TO_ISR6_RESUME);
 
-		ret = wait_event_timeout(trans_pcie->sx_waitq,
+		ret = रुको_event_समयout(trans_pcie->sx_रुकोq,
 					 trans_pcie->sx_complete, 2 * HZ);
 		/*
 		 * Invalidate it toward next suspend.
 		 */
 		trans_pcie->sx_complete = false;
 
-		if (!ret) {
+		अगर (!ret) अणु
 			IWL_ERR(trans, "Timeout exiting D3\n");
-			return -ETIMEDOUT;
-		}
-	}
-	return 0;
-}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void
-iwl_pcie_set_interrupt_capa(struct pci_dev *pdev,
-			    struct iwl_trans *trans,
-			    const struct iwl_cfg_trans_params *cfg_trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	int max_irqs, num_irqs, i, ret;
+अटल व्योम
+iwl_pcie_set_पूर्णांकerrupt_capa(काष्ठा pci_dev *pdev,
+			    काष्ठा iwl_trans *trans,
+			    स्थिर काष्ठा iwl_cfg_trans_params *cfg_trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	पूर्णांक max_irqs, num_irqs, i, ret;
 	u16 pci_cmd;
 	u32 max_rx_queues = IWL_MAX_RX_HW_QUEUES;
 
-	if (!cfg_trans->mq_rx_supported)
-		goto enable_msi;
+	अगर (!cfg_trans->mq_rx_supported)
+		जाओ enable_msi;
 
-	if (cfg_trans->device_family <= IWL_DEVICE_FAMILY_9000)
+	अगर (cfg_trans->device_family <= IWL_DEVICE_FAMILY_9000)
 		max_rx_queues = IWL_9000_MAX_RX_HW_QUEUES;
 
 	max_irqs = min_t(u32, num_online_cpus() + 2, max_rx_queues);
-	for (i = 0; i < max_irqs; i++)
+	क्रम (i = 0; i < max_irqs; i++)
 		trans_pcie->msix_entries[i].entry = i;
 
 	num_irqs = pci_enable_msix_range(pdev, trans_pcie->msix_entries,
 					 MSIX_MIN_INTERRUPT_VECTORS,
 					 max_irqs);
-	if (num_irqs < 0) {
+	अगर (num_irqs < 0) अणु
 		IWL_DEBUG_INFO(trans,
 			       "Failed to enable msi-x mode (ret %d). Moving to msi mode.\n",
 			       num_irqs);
-		goto enable_msi;
-	}
+		जाओ enable_msi;
+	पूर्ण
 	trans_pcie->def_irq = (num_irqs == max_irqs) ? num_irqs - 1 : 0;
 
 	IWL_DEBUG_INFO(trans,
@@ -1588,22 +1589,22 @@ iwl_pcie_set_interrupt_capa(struct pci_dev *pdev,
 		       num_irqs);
 
 	/*
-	 * In case the OS provides fewer interrupts than requested, different
-	 * causes will share the same interrupt vector as follows:
-	 * One interrupt less: non rx causes shared with FBQ.
-	 * Two interrupts less: non rx causes shared with FBQ and RSS.
-	 * More than two interrupts: we will use fewer RSS queues.
+	 * In हाल the OS provides fewer पूर्णांकerrupts than requested, dअगरferent
+	 * causes will share the same पूर्णांकerrupt vector as follows:
+	 * One पूर्णांकerrupt less: non rx causes shared with FBQ.
+	 * Two पूर्णांकerrupts less: non rx causes shared with FBQ and RSS.
+	 * More than two पूर्णांकerrupts: we will use fewer RSS queues.
 	 */
-	if (num_irqs <= max_irqs - 2) {
+	अगर (num_irqs <= max_irqs - 2) अणु
 		trans_pcie->trans->num_rx_queues = num_irqs + 1;
 		trans_pcie->shared_vec_mask = IWL_SHARED_IRQ_NON_RX |
 			IWL_SHARED_IRQ_FIRST_RSS;
-	} else if (num_irqs == max_irqs - 1) {
+	पूर्ण अन्यथा अगर (num_irqs == max_irqs - 1) अणु
 		trans_pcie->trans->num_rx_queues = num_irqs;
 		trans_pcie->shared_vec_mask = IWL_SHARED_IRQ_NON_RX;
-	} else {
+	पूर्ण अन्यथा अणु
 		trans_pcie->trans->num_rx_queues = num_irqs - 1;
-	}
+	पूर्ण
 
 	IWL_DEBUG_INFO(trans,
 		       "MSI-X enabled with rx queues %d, vec mask 0x%x\n",
@@ -1613,60 +1614,60 @@ iwl_pcie_set_interrupt_capa(struct pci_dev *pdev,
 
 	trans_pcie->alloc_vecs = num_irqs;
 	trans_pcie->msix_enabled = true;
-	return;
+	वापस;
 
 enable_msi:
 	ret = pci_enable_msi(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "pci_enable_msi failed - %d\n", ret);
-		/* enable rfkill interrupt: hw bug w/a */
-		pci_read_config_word(pdev, PCI_COMMAND, &pci_cmd);
-		if (pci_cmd & PCI_COMMAND_INTX_DISABLE) {
+		/* enable rfसमाप्त पूर्णांकerrupt: hw bug w/a */
+		pci_पढ़ो_config_word(pdev, PCI_COMMAND, &pci_cmd);
+		अगर (pci_cmd & PCI_COMMAND_INTX_DISABLE) अणु
 			pci_cmd &= ~PCI_COMMAND_INTX_DISABLE;
-			pci_write_config_word(pdev, PCI_COMMAND, pci_cmd);
-		}
-	}
-}
+			pci_ग_लिखो_config_word(pdev, PCI_COMMAND, pci_cmd);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void iwl_pcie_irq_set_affinity(struct iwl_trans *trans)
-{
-	int iter_rx_q, i, ret, cpu, offset;
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+अटल व्योम iwl_pcie_irq_set_affinity(काष्ठा iwl_trans *trans)
+अणु
+	पूर्णांक iter_rx_q, i, ret, cpu, offset;
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
 	i = trans_pcie->shared_vec_mask & IWL_SHARED_IRQ_FIRST_RSS ? 0 : 1;
 	iter_rx_q = trans_pcie->trans->num_rx_queues - 1 + i;
 	offset = 1 + i;
-	for (; i < iter_rx_q ; i++) {
+	क्रम (; i < iter_rx_q ; i++) अणु
 		/*
 		 * Get the cpu prior to the place to search
-		 * (i.e. return will be > i - 1).
+		 * (i.e. वापस will be > i - 1).
 		 */
 		cpu = cpumask_next(i - offset, cpu_online_mask);
 		cpumask_set_cpu(cpu, &trans_pcie->affinity_mask[i]);
-		ret = irq_set_affinity_hint(trans_pcie->msix_entries[i].vector,
+		ret = irq_set_affinity_hपूर्णांक(trans_pcie->msix_entries[i].vector,
 					    &trans_pcie->affinity_mask[i]);
-		if (ret)
+		अगर (ret)
 			IWL_ERR(trans_pcie->trans,
 				"Failed to set affinity mask for IRQ %d\n",
 				i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int iwl_pcie_init_msix_handler(struct pci_dev *pdev,
-				      struct iwl_trans_pcie *trans_pcie)
-{
-	int i;
+अटल पूर्णांक iwl_pcie_init_msix_handler(काष्ठा pci_dev *pdev,
+				      काष्ठा iwl_trans_pcie *trans_pcie)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < trans_pcie->alloc_vecs; i++) {
-		int ret;
-		struct msix_entry *msix_entry;
-		const char *qname = queue_name(&pdev->dev, trans_pcie, i);
+	क्रम (i = 0; i < trans_pcie->alloc_vecs; i++) अणु
+		पूर्णांक ret;
+		काष्ठा msix_entry *msix_entry;
+		स्थिर अक्षर *qname = queue_name(&pdev->dev, trans_pcie, i);
 
-		if (!qname)
-			return -ENOMEM;
+		अगर (!qname)
+			वापस -ENOMEM;
 
 		msix_entry = &trans_pcie->msix_entries[i];
-		ret = devm_request_threaded_irq(&pdev->dev,
+		ret = devm_request_thपढ़ोed_irq(&pdev->dev,
 						msix_entry->vector,
 						iwl_pcie_msix_isr,
 						(i == trans_pcie->def_irq) ?
@@ -1675,56 +1676,56 @@ static int iwl_pcie_init_msix_handler(struct pci_dev *pdev,
 						IRQF_SHARED,
 						qname,
 						msix_entry);
-		if (ret) {
+		अगर (ret) अणु
 			IWL_ERR(trans_pcie->trans,
 				"Error allocating IRQ %d\n", i);
 
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	iwl_pcie_irq_set_affinity(trans_pcie->trans);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iwl_trans_pcie_clear_persistence_bit(struct iwl_trans *trans)
-{
+अटल पूर्णांक iwl_trans_pcie_clear_persistence_bit(काष्ठा iwl_trans *trans)
+अणु
 	u32 hpm, wprot;
 
-	switch (trans->trans_cfg->device_family) {
-	case IWL_DEVICE_FAMILY_9000:
+	चयन (trans->trans_cfg->device_family) अणु
+	हाल IWL_DEVICE_FAMILY_9000:
 		wprot = PREG_PRPH_WPROT_9000;
-		break;
-	case IWL_DEVICE_FAMILY_22000:
+		अवरोध;
+	हाल IWL_DEVICE_FAMILY_22000:
 		wprot = PREG_PRPH_WPROT_22000;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	hpm = iwl_read_umac_prph_no_grab(trans, HPM_DEBUG);
-	if (hpm != 0xa5a5a5a0 && (hpm & PERSISTENCE_BIT)) {
-		u32 wprot_val = iwl_read_umac_prph_no_grab(trans, wprot);
+	hpm = iwl_पढ़ो_umac_prph_no_grab(trans, HPM_DEBUG);
+	अगर (hpm != 0xa5a5a5a0 && (hpm & PERSISTENCE_BIT)) अणु
+		u32 wprot_val = iwl_पढ़ो_umac_prph_no_grab(trans, wprot);
 
-		if (wprot_val & PREG_WFPM_ACCESS) {
+		अगर (wprot_val & PREG_WFPM_ACCESS) अणु
 			IWL_ERR(trans,
 				"Error, can not clear persistence bit\n");
-			return -EPERM;
-		}
-		iwl_write_umac_prph_no_grab(trans, HPM_DEBUG,
+			वापस -EPERM;
+		पूर्ण
+		iwl_ग_लिखो_umac_prph_no_grab(trans, HPM_DEBUG,
 					    hpm & ~PERSISTENCE_BIT);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iwl_pcie_gen2_force_power_gating(struct iwl_trans *trans)
-{
-	int ret;
+अटल पूर्णांक iwl_pcie_gen2_क्रमce_घातer_gating(काष्ठा iwl_trans *trans)
+अणु
+	पूर्णांक ret;
 
 	ret = iwl_finish_nic_init(trans, trans->trans_cfg);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	iwl_set_bits_prph(trans, HPM_HIPM_GEN_CFG,
 			  HPM_HIPM_GEN_CFG_CR_FORCE_ACTIVE);
@@ -1738,147 +1739,147 @@ static int iwl_pcie_gen2_force_power_gating(struct iwl_trans *trans)
 
 	iwl_trans_pcie_sw_reset(trans);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _iwl_trans_pcie_start_hw(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	int err;
+अटल पूर्णांक _iwl_trans_pcie_start_hw(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	पूर्णांक err;
 
-	lockdep_assert_held(&trans_pcie->mutex);
+	lockdep_निश्चित_held(&trans_pcie->mutex);
 
 	err = iwl_pcie_prepare_card_hw(trans);
-	if (err) {
+	अगर (err) अणु
 		IWL_ERR(trans, "Error while preparing HW: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = iwl_trans_pcie_clear_persistence_bit(trans);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	iwl_trans_pcie_sw_reset(trans);
 
-	if (trans->trans_cfg->device_family == IWL_DEVICE_FAMILY_22000 &&
-	    trans->trans_cfg->integrated) {
-		err = iwl_pcie_gen2_force_power_gating(trans);
-		if (err)
-			return err;
-	}
+	अगर (trans->trans_cfg->device_family == IWL_DEVICE_FAMILY_22000 &&
+	    trans->trans_cfg->पूर्णांकegrated) अणु
+		err = iwl_pcie_gen2_क्रमce_घातer_gating(trans);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	err = iwl_pcie_apm_init(trans);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	iwl_pcie_init_msix(trans_pcie);
 
-	/* From now on, the op_mode will be kept updated about RF kill state */
-	iwl_enable_rfkill_int(trans);
+	/* From now on, the op_mode will be kept updated about RF समाप्त state */
+	iwl_enable_rfसमाप्त_पूर्णांक(trans);
 
-	trans_pcie->opmode_down = false;
+	trans_pcie->opmode_करोwn = false;
 
-	/* Set is_down to false here so that...*/
-	trans_pcie->is_down = false;
+	/* Set is_करोwn to false here so that...*/
+	trans_pcie->is_करोwn = false;
 
-	/* ...rfkill can call stop_device and set it false if needed */
-	iwl_pcie_check_hw_rf_kill(trans);
+	/* ...rfसमाप्त can call stop_device and set it false अगर needed */
+	iwl_pcie_check_hw_rf_समाप्त(trans);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iwl_trans_pcie_start_hw(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	int ret;
+अटल पूर्णांक iwl_trans_pcie_start_hw(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	पूर्णांक ret;
 
 	mutex_lock(&trans_pcie->mutex);
 	ret = _iwl_trans_pcie_start_hw(trans);
 	mutex_unlock(&trans_pcie->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void iwl_trans_pcie_op_mode_leave(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+अटल व्योम iwl_trans_pcie_op_mode_leave(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
 	mutex_lock(&trans_pcie->mutex);
 
-	/* disable interrupts - don't enable HW RF kill interrupt */
-	iwl_disable_interrupts(trans);
+	/* disable पूर्णांकerrupts - करोn't enable HW RF समाप्त पूर्णांकerrupt */
+	iwl_disable_पूर्णांकerrupts(trans);
 
 	iwl_pcie_apm_stop(trans, true);
 
-	iwl_disable_interrupts(trans);
+	iwl_disable_पूर्णांकerrupts(trans);
 
 	iwl_pcie_disable_ict(trans);
 
 	mutex_unlock(&trans_pcie->mutex);
 
 	iwl_pcie_synchronize_irqs(trans);
-}
+पूर्ण
 
-static void iwl_trans_pcie_write8(struct iwl_trans *trans, u32 ofs, u8 val)
-{
-	writeb(val, IWL_TRANS_GET_PCIE_TRANS(trans)->hw_base + ofs);
-}
+अटल व्योम iwl_trans_pcie_ग_लिखो8(काष्ठा iwl_trans *trans, u32 ofs, u8 val)
+अणु
+	ग_लिखोb(val, IWL_TRANS_GET_PCIE_TRANS(trans)->hw_base + ofs);
+पूर्ण
 
-static void iwl_trans_pcie_write32(struct iwl_trans *trans, u32 ofs, u32 val)
-{
-	writel(val, IWL_TRANS_GET_PCIE_TRANS(trans)->hw_base + ofs);
-}
+अटल व्योम iwl_trans_pcie_ग_लिखो32(काष्ठा iwl_trans *trans, u32 ofs, u32 val)
+अणु
+	ग_लिखोl(val, IWL_TRANS_GET_PCIE_TRANS(trans)->hw_base + ofs);
+पूर्ण
 
-static u32 iwl_trans_pcie_read32(struct iwl_trans *trans, u32 ofs)
-{
-	return readl(IWL_TRANS_GET_PCIE_TRANS(trans)->hw_base + ofs);
-}
+अटल u32 iwl_trans_pcie_पढ़ो32(काष्ठा iwl_trans *trans, u32 ofs)
+अणु
+	वापस पढ़ोl(IWL_TRANS_GET_PCIE_TRANS(trans)->hw_base + ofs);
+पूर्ण
 
-static u32 iwl_trans_pcie_prph_msk(struct iwl_trans *trans)
-{
-	if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210)
-		return 0x00FFFFFF;
-	else
-		return 0x000FFFFF;
-}
+अटल u32 iwl_trans_pcie_prph_msk(काष्ठा iwl_trans *trans)
+अणु
+	अगर (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210)
+		वापस 0x00FFFFFF;
+	अन्यथा
+		वापस 0x000FFFFF;
+पूर्ण
 
-static u32 iwl_trans_pcie_read_prph(struct iwl_trans *trans, u32 reg)
-{
+अटल u32 iwl_trans_pcie_पढ़ो_prph(काष्ठा iwl_trans *trans, u32 reg)
+अणु
 	u32 mask = iwl_trans_pcie_prph_msk(trans);
 
-	iwl_trans_pcie_write32(trans, HBUS_TARG_PRPH_RADDR,
+	iwl_trans_pcie_ग_लिखो32(trans, HBUS_TARG_PRPH_RADDR,
 			       ((reg & mask) | (3 << 24)));
-	return iwl_trans_pcie_read32(trans, HBUS_TARG_PRPH_RDAT);
-}
+	वापस iwl_trans_pcie_पढ़ो32(trans, HBUS_TARG_PRPH_RDAT);
+पूर्ण
 
-static void iwl_trans_pcie_write_prph(struct iwl_trans *trans, u32 addr,
+अटल व्योम iwl_trans_pcie_ग_लिखो_prph(काष्ठा iwl_trans *trans, u32 addr,
 				      u32 val)
-{
+अणु
 	u32 mask = iwl_trans_pcie_prph_msk(trans);
 
-	iwl_trans_pcie_write32(trans, HBUS_TARG_PRPH_WADDR,
+	iwl_trans_pcie_ग_लिखो32(trans, HBUS_TARG_PRPH_WADDR,
 			       ((addr & mask) | (3 << 24)));
-	iwl_trans_pcie_write32(trans, HBUS_TARG_PRPH_WDAT, val);
-}
+	iwl_trans_pcie_ग_लिखो32(trans, HBUS_TARG_PRPH_WDAT, val);
+पूर्ण
 
-static void iwl_trans_pcie_configure(struct iwl_trans *trans,
-				     const struct iwl_trans_config *trans_cfg)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+अटल व्योम iwl_trans_pcie_configure(काष्ठा iwl_trans *trans,
+				     स्थिर काष्ठा iwl_trans_config *trans_cfg)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
 	trans->txqs.cmd.q_id = trans_cfg->cmd_queue;
-	trans->txqs.cmd.fifo = trans_cfg->cmd_fifo;
-	trans->txqs.cmd.wdg_timeout = trans_cfg->cmd_q_wdg_timeout;
+	trans->txqs.cmd.fअगरo = trans_cfg->cmd_fअगरo;
+	trans->txqs.cmd.wdg_समयout = trans_cfg->cmd_q_wdg_समयout;
 	trans->txqs.page_offs = trans_cfg->cb_data_offs;
-	trans->txqs.dev_cmd_offs = trans_cfg->cb_data_offs + sizeof(void *);
+	trans->txqs.dev_cmd_offs = trans_cfg->cb_data_offs + माप(व्योम *);
 
-	if (WARN_ON(trans_cfg->n_no_reclaim_cmds > MAX_NO_RECLAIM_CMDS))
+	अगर (WARN_ON(trans_cfg->n_no_reclaim_cmds > MAX_NO_RECLAIM_CMDS))
 		trans_pcie->n_no_reclaim_cmds = 0;
-	else
+	अन्यथा
 		trans_pcie->n_no_reclaim_cmds = trans_cfg->n_no_reclaim_cmds;
-	if (trans_pcie->n_no_reclaim_cmds)
-		memcpy(trans_pcie->no_reclaim_cmds, trans_cfg->no_reclaim_cmds,
-		       trans_pcie->n_no_reclaim_cmds * sizeof(u8));
+	अगर (trans_pcie->n_no_reclaim_cmds)
+		स_नकल(trans_pcie->no_reclaim_cmds, trans_cfg->no_reclaim_cmds,
+		       trans_pcie->n_no_reclaim_cmds * माप(u8));
 
 	trans_pcie->rx_buf_size = trans_cfg->rx_buf_size;
 	trans_pcie->rx_page_order =
@@ -1886,7 +1887,7 @@ static void iwl_trans_pcie_configure(struct iwl_trans *trans,
 	trans_pcie->rx_buf_bytes =
 		iwl_trans_get_rb_size(trans_pcie->rx_buf_size);
 	trans_pcie->supported_dma_mask = DMA_BIT_MASK(12);
-	if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210)
+	अगर (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210)
 		trans_pcie->supported_dma_mask = DMA_BIT_MASK(11);
 
 	trans->txqs.bc_table_dword = trans_cfg->bc_table_dword;
@@ -1895,135 +1896,135 @@ static void iwl_trans_pcie_configure(struct iwl_trans *trans,
 	trans->command_groups = trans_cfg->command_groups;
 	trans->command_groups_size = trans_cfg->command_groups_size;
 
-	/* Initialize NAPI here - it should be before registering to mac80211
-	 * in the opmode but after the HW struct is allocated.
-	 * As this function may be called again in some corner cases don't
-	 * do anything if NAPI was already initialized.
+	/* Initialize NAPI here - it should be beक्रमe रेजिस्टरing to mac80211
+	 * in the opmode but after the HW काष्ठा is allocated.
+	 * As this function may be called again in some corner हालs करोn't
+	 * करो anything अगर NAPI was alपढ़ोy initialized.
 	 */
-	if (trans_pcie->napi_dev.reg_state != NETREG_DUMMY)
+	अगर (trans_pcie->napi_dev.reg_state != NETREG_DUMMY)
 		init_dummy_netdev(&trans_pcie->napi_dev);
 
 	trans_pcie->fw_reset_handshake = trans_cfg->fw_reset_handshake;
-}
+पूर्ण
 
-void iwl_trans_pcie_free(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	int i;
+व्योम iwl_trans_pcie_मुक्त(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	पूर्णांक i;
 
 	iwl_pcie_synchronize_irqs(trans);
 
-	if (trans->trans_cfg->gen2)
-		iwl_txq_gen2_tx_free(trans);
-	else
-		iwl_pcie_tx_free(trans);
-	iwl_pcie_rx_free(trans);
+	अगर (trans->trans_cfg->gen2)
+		iwl_txq_gen2_tx_मुक्त(trans);
+	अन्यथा
+		iwl_pcie_tx_मुक्त(trans);
+	iwl_pcie_rx_मुक्त(trans);
 
-	if (trans_pcie->rba.alloc_wq) {
+	अगर (trans_pcie->rba.alloc_wq) अणु
 		destroy_workqueue(trans_pcie->rba.alloc_wq);
-		trans_pcie->rba.alloc_wq = NULL;
-	}
+		trans_pcie->rba.alloc_wq = शून्य;
+	पूर्ण
 
-	if (trans_pcie->msix_enabled) {
-		for (i = 0; i < trans_pcie->alloc_vecs; i++) {
-			irq_set_affinity_hint(
+	अगर (trans_pcie->msix_enabled) अणु
+		क्रम (i = 0; i < trans_pcie->alloc_vecs; i++) अणु
+			irq_set_affinity_hपूर्णांक(
 				trans_pcie->msix_entries[i].vector,
-				NULL);
-		}
+				शून्य);
+		पूर्ण
 
 		trans_pcie->msix_enabled = false;
-	} else {
-		iwl_pcie_free_ict(trans);
-	}
+	पूर्ण अन्यथा अणु
+		iwl_pcie_मुक्त_ict(trans);
+	पूर्ण
 
-	iwl_pcie_free_fw_monitor(trans);
+	iwl_pcie_मुक्त_fw_monitor(trans);
 
-	if (trans_pcie->pnvm_dram.size)
-		dma_free_coherent(trans->dev, trans_pcie->pnvm_dram.size,
+	अगर (trans_pcie->pnvm_dram.size)
+		dma_मुक्त_coherent(trans->dev, trans_pcie->pnvm_dram.size,
 				  trans_pcie->pnvm_dram.block,
 				  trans_pcie->pnvm_dram.physical);
 
 	mutex_destroy(&trans_pcie->mutex);
-	iwl_trans_free(trans);
-}
+	iwl_trans_मुक्त(trans);
+पूर्ण
 
-static void iwl_trans_pcie_set_pmi(struct iwl_trans *trans, bool state)
-{
-	if (state)
+अटल व्योम iwl_trans_pcie_set_pmi(काष्ठा iwl_trans *trans, bool state)
+अणु
+	अगर (state)
 		set_bit(STATUS_TPOWER_PMI, &trans->status);
-	else
+	अन्यथा
 		clear_bit(STATUS_TPOWER_PMI, &trans->status);
-}
+पूर्ण
 
-struct iwl_trans_pcie_removal {
-	struct pci_dev *pdev;
-	struct work_struct work;
-};
+काष्ठा iwl_trans_pcie_removal अणु
+	काष्ठा pci_dev *pdev;
+	काष्ठा work_काष्ठा work;
+पूर्ण;
 
-static void iwl_trans_pcie_removal_wk(struct work_struct *wk)
-{
-	struct iwl_trans_pcie_removal *removal =
-		container_of(wk, struct iwl_trans_pcie_removal, work);
-	struct pci_dev *pdev = removal->pdev;
-	static char *prop[] = {"EVENT=INACCESSIBLE", NULL};
+अटल व्योम iwl_trans_pcie_removal_wk(काष्ठा work_काष्ठा *wk)
+अणु
+	काष्ठा iwl_trans_pcie_removal *removal =
+		container_of(wk, काष्ठा iwl_trans_pcie_removal, work);
+	काष्ठा pci_dev *pdev = removal->pdev;
+	अटल अक्षर *prop[] = अणु"EVENT=INACCESSIBLE", शून्यपूर्ण;
 
 	dev_err(&pdev->dev, "Device gone - attempting removal\n");
 	kobject_uevent_env(&pdev->dev.kobj, KOBJ_CHANGE, prop);
-	pci_lock_rescan_remove();
+	pci_lock_rescan_हटाओ();
 	pci_dev_put(pdev);
-	pci_stop_and_remove_bus_device(pdev);
-	pci_unlock_rescan_remove();
+	pci_stop_and_हटाओ_bus_device(pdev);
+	pci_unlock_rescan_हटाओ();
 
-	kfree(removal);
+	kमुक्त(removal);
 	module_put(THIS_MODULE);
-}
+पूर्ण
 
 /*
- * This version doesn't disable BHs but rather assumes they're
- * already disabled.
+ * This version करोesn't disable BHs but rather assumes they're
+ * alपढ़ोy disabled.
  */
-bool __iwl_trans_pcie_grab_nic_access(struct iwl_trans *trans)
-{
-	int ret;
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+bool __iwl_trans_pcie_grab_nic_access(काष्ठा iwl_trans *trans)
+अणु
+	पूर्णांक ret;
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
 	spin_lock(&trans_pcie->reg_lock);
 
-	if (trans_pcie->cmd_hold_nic_awake)
-		goto out;
+	अगर (trans_pcie->cmd_hold_nic_awake)
+		जाओ out;
 
 	/* this bit wakes up the NIC */
 	__iwl_trans_pcie_set_bit(trans, CSR_GP_CNTRL,
 				 CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
-	if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_8000)
+	अगर (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_8000)
 		udelay(2);
 
 	/*
-	 * These bits say the device is running, and should keep running for
-	 * at least a short while (at least as long as MAC_ACCESS_REQ stays 1),
-	 * but they do not indicate that embedded SRAM is restored yet;
-	 * HW with volatile SRAM must save/restore contents to/from
-	 * host DRAM when sleeping/waking for power-saving.
+	 * These bits say the device is running, and should keep running क्रम
+	 * at least a लघु जबतक (at least as दीर्घ as MAC_ACCESS_REQ stays 1),
+	 * but they करो not indicate that embedded SRAM is restored yet;
+	 * HW with अस्थिर SRAM must save/restore contents to/from
+	 * host DRAM when sleeping/waking क्रम घातer-saving.
 	 * Each direction takes approximately 1/4 millisecond; with this
-	 * overhead, it's a good idea to grab and hold MAC_ACCESS_REQUEST if a
-	 * series of register accesses are expected (e.g. reading Event Log),
+	 * overhead, it's a good idea to grab and hold MAC_ACCESS_REQUEST अगर a
+	 * series of रेजिस्टर accesses are expected (e.g. पढ़ोing Event Log),
 	 * to keep device from sleeping.
 	 *
-	 * CSR_UCODE_DRV_GP1 register bit MAC_SLEEP == 0 indicates that
-	 * SRAM is okay/restored.  We don't check that here because this call
-	 * is just for hardware register access; but GP1 MAC_SLEEP
-	 * check is a good idea before accessing the SRAM of HW with
-	 * volatile SRAM (e.g. reading Event Log).
+	 * CSR_UCODE_DRV_GP1 रेजिस्टर bit MAC_SLEEP == 0 indicates that
+	 * SRAM is okay/restored.  We करोn't check that here because this call
+	 * is just क्रम hardware रेजिस्टर access; but GP1 MAC_SLEEP
+	 * check is a good idea beक्रमe accessing the SRAM of HW with
+	 * अस्थिर SRAM (e.g. पढ़ोing Event Log).
 	 *
-	 * 5000 series and later (including 1000 series) have non-volatile SRAM,
-	 * and do not save/restore SRAM when power cycling.
+	 * 5000 series and later (including 1000 series) have non-अस्थिर SRAM,
+	 * and करो not save/restore SRAM when घातer cycling.
 	 */
 	ret = iwl_poll_bit(trans, CSR_GP_CNTRL,
 			   CSR_GP_CNTRL_REG_VAL_MAC_ACCESS_EN,
 			   (CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY |
 			    CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP), 15000);
-	if (unlikely(ret < 0)) {
-		u32 cntrl = iwl_read32(trans, CSR_GP_CNTRL);
+	अगर (unlikely(ret < 0)) अणु
+		u32 cntrl = iwl_पढ़ो32(trans, CSR_GP_CNTRL);
 
 		WARN_ONCE(1,
 			  "Timeout waiting for hardware access (CSR_GP_CNTRL 0x%08x)\n",
@@ -2031,34 +2032,34 @@ bool __iwl_trans_pcie_grab_nic_access(struct iwl_trans *trans)
 
 		iwl_trans_pcie_dump_regs(trans);
 
-		if (iwlwifi_mod_params.remove_when_gone && cntrl == ~0U) {
-			struct iwl_trans_pcie_removal *removal;
+		अगर (iwlwअगरi_mod_params.हटाओ_when_gone && cntrl == ~0U) अणु
+			काष्ठा iwl_trans_pcie_removal *removal;
 
-			if (test_bit(STATUS_TRANS_DEAD, &trans->status))
-				goto err;
+			अगर (test_bit(STATUS_TRANS_DEAD, &trans->status))
+				जाओ err;
 
 			IWL_ERR(trans, "Device gone - scheduling removal!\n");
 
 			/*
-			 * get a module reference to avoid doing this
-			 * while unloading anyway and to avoid
+			 * get a module reference to aव्योम करोing this
+			 * जबतक unloading anyway and to aव्योम
 			 * scheduling a work with code that's being
-			 * removed.
+			 * हटाओd.
 			 */
-			if (!try_module_get(THIS_MODULE)) {
+			अगर (!try_module_get(THIS_MODULE)) अणु
 				IWL_ERR(trans,
 					"Module is being unloaded - abort\n");
-				goto err;
-			}
+				जाओ err;
+			पूर्ण
 
-			removal = kzalloc(sizeof(*removal), GFP_ATOMIC);
-			if (!removal) {
+			removal = kzalloc(माप(*removal), GFP_ATOMIC);
+			अगर (!removal) अणु
 				module_put(THIS_MODULE);
-				goto err;
-			}
+				जाओ err;
+			पूर्ण
 			/*
-			 * we don't need to clear this flag, because
-			 * the trans will be freed and reallocated.
+			 * we करोn't need to clear this flag, because
+			 * the trans will be मुक्तd and पुनः_स्मृतिated.
 			*/
 			set_bit(STATUS_TRANS_DEAD, &trans->status);
 
@@ -2066,15 +2067,15 @@ bool __iwl_trans_pcie_grab_nic_access(struct iwl_trans *trans)
 			INIT_WORK(&removal->work, iwl_trans_pcie_removal_wk);
 			pci_dev_get(removal->pdev);
 			schedule_work(&removal->work);
-		} else {
-			iwl_write32(trans, CSR_RESET,
+		पूर्ण अन्यथा अणु
+			iwl_ग_लिखो32(trans, CSR_RESET,
 				    CSR_RESET_REG_FLAG_FORCE_NMI);
-		}
+		पूर्ण
 
 err:
 		spin_unlock(&trans_pcie->reg_lock);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 out:
 	/*
@@ -2082,28 +2083,28 @@ out:
 	 * track nic_access anyway.
 	 */
 	__release(&trans_pcie->reg_lock);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool iwl_trans_pcie_grab_nic_access(struct iwl_trans *trans)
-{
+अटल bool iwl_trans_pcie_grab_nic_access(काष्ठा iwl_trans *trans)
+अणु
 	bool ret;
 
 	local_bh_disable();
 	ret = __iwl_trans_pcie_grab_nic_access(trans);
-	if (ret) {
+	अगर (ret) अणु
 		/* keep BHs disabled until iwl_trans_pcie_release_nic_access */
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	local_bh_enable();
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void iwl_trans_pcie_release_nic_access(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+अटल व्योम iwl_trans_pcie_release_nic_access(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
-	lockdep_assert_held(&trans_pcie->reg_lock);
+	lockdep_निश्चित_held(&trans_pcie->reg_lock);
 
 	/*
 	 * Fool sparse by faking we acquiring the lock - sparse will
@@ -2111,140 +2112,140 @@ static void iwl_trans_pcie_release_nic_access(struct iwl_trans *trans)
 	 */
 	__acquire(&trans_pcie->reg_lock);
 
-	if (trans_pcie->cmd_hold_nic_awake)
-		goto out;
+	अगर (trans_pcie->cmd_hold_nic_awake)
+		जाओ out;
 
 	__iwl_trans_pcie_clear_bit(trans, CSR_GP_CNTRL,
 				   CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
 	/*
-	 * Above we read the CSR_GP_CNTRL register, which will flush
-	 * any previous writes, but we need the write that clears the
-	 * MAC_ACCESS_REQ bit to be performed before any other writes
-	 * scheduled on different CPUs (after we drop reg_lock).
+	 * Above we पढ़ो the CSR_GP_CNTRL रेजिस्टर, which will flush
+	 * any previous ग_लिखोs, but we need the ग_लिखो that clears the
+	 * MAC_ACCESS_REQ bit to be perक्रमmed beक्रमe any other ग_लिखोs
+	 * scheduled on dअगरferent CPUs (after we drop reg_lock).
 	 */
 out:
 	spin_unlock_bh(&trans_pcie->reg_lock);
-}
+पूर्ण
 
-static int iwl_trans_pcie_read_mem(struct iwl_trans *trans, u32 addr,
-				   void *buf, int dwords)
-{
-	int offs = 0;
+अटल पूर्णांक iwl_trans_pcie_पढ़ो_mem(काष्ठा iwl_trans *trans, u32 addr,
+				   व्योम *buf, पूर्णांक dwords)
+अणु
+	पूर्णांक offs = 0;
 	u32 *vals = buf;
 
-	while (offs < dwords) {
-		/* limit the time we spin here under lock to 1/2s */
-		unsigned long end = jiffies + HZ / 2;
+	जबतक (offs < dwords) अणु
+		/* limit the समय we spin here under lock to 1/2s */
+		अचिन्हित दीर्घ end = jअगरfies + HZ / 2;
 		bool resched = false;
 
-		if (iwl_trans_grab_nic_access(trans)) {
-			iwl_write32(trans, HBUS_TARG_MEM_RADDR,
+		अगर (iwl_trans_grab_nic_access(trans)) अणु
+			iwl_ग_लिखो32(trans, HBUS_TARG_MEM_RADDR,
 				    addr + 4 * offs);
 
-			while (offs < dwords) {
-				vals[offs] = iwl_read32(trans,
+			जबतक (offs < dwords) अणु
+				vals[offs] = iwl_पढ़ो32(trans,
 							HBUS_TARG_MEM_RDAT);
 				offs++;
 
-				if (time_after(jiffies, end)) {
+				अगर (समय_after(jअगरfies, end)) अणु
 					resched = true;
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 			iwl_trans_release_nic_access(trans);
 
-			if (resched)
+			अगर (resched)
 				cond_resched();
-		} else {
-			return -EBUSY;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iwl_trans_pcie_write_mem(struct iwl_trans *trans, u32 addr,
-				    const void *buf, int dwords)
-{
-	int offs, ret = 0;
-	const u32 *vals = buf;
+अटल पूर्णांक iwl_trans_pcie_ग_लिखो_mem(काष्ठा iwl_trans *trans, u32 addr,
+				    स्थिर व्योम *buf, पूर्णांक dwords)
+अणु
+	पूर्णांक offs, ret = 0;
+	स्थिर u32 *vals = buf;
 
-	if (iwl_trans_grab_nic_access(trans)) {
-		iwl_write32(trans, HBUS_TARG_MEM_WADDR, addr);
-		for (offs = 0; offs < dwords; offs++)
-			iwl_write32(trans, HBUS_TARG_MEM_WDAT,
+	अगर (iwl_trans_grab_nic_access(trans)) अणु
+		iwl_ग_लिखो32(trans, HBUS_TARG_MEM_WADDR, addr);
+		क्रम (offs = 0; offs < dwords; offs++)
+			iwl_ग_लिखो32(trans, HBUS_TARG_MEM_WDAT,
 				    vals ? vals[offs] : 0);
 		iwl_trans_release_nic_access(trans);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EBUSY;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int iwl_trans_pcie_read_config32(struct iwl_trans *trans, u32 ofs,
+अटल पूर्णांक iwl_trans_pcie_पढ़ो_config32(काष्ठा iwl_trans *trans, u32 ofs,
 					u32 *val)
-{
-	return pci_read_config_dword(IWL_TRANS_GET_PCIE_TRANS(trans)->pci_dev,
+अणु
+	वापस pci_पढ़ो_config_dword(IWL_TRANS_GET_PCIE_TRANS(trans)->pci_dev,
 				     ofs, val);
-}
+पूर्ण
 
-static void iwl_trans_pcie_block_txq_ptrs(struct iwl_trans *trans, bool block)
-{
-	int i;
+अटल व्योम iwl_trans_pcie_block_txq_ptrs(काष्ठा iwl_trans *trans, bool block)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < trans->trans_cfg->base_params->num_of_queues; i++) {
-		struct iwl_txq *txq = trans->txqs.txq[i];
+	क्रम (i = 0; i < trans->trans_cfg->base_params->num_of_queues; i++) अणु
+		काष्ठा iwl_txq *txq = trans->txqs.txq[i];
 
-		if (i == trans->txqs.cmd.q_id)
-			continue;
+		अगर (i == trans->txqs.cmd.q_id)
+			जारी;
 
 		spin_lock_bh(&txq->lock);
 
-		if (!block && !(WARN_ON_ONCE(!txq->block))) {
+		अगर (!block && !(WARN_ON_ONCE(!txq->block))) अणु
 			txq->block--;
-			if (!txq->block) {
-				iwl_write32(trans, HBUS_TARG_WRPTR,
-					    txq->write_ptr | (i << 8));
-			}
-		} else if (block) {
+			अगर (!txq->block) अणु
+				iwl_ग_लिखो32(trans, HBUS_TARG_WRPTR,
+					    txq->ग_लिखो_ptr | (i << 8));
+			पूर्ण
+		पूर्ण अन्यथा अगर (block) अणु
 			txq->block++;
-		}
+		पूर्ण
 
 		spin_unlock_bh(&txq->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define IWL_FLUSH_WAIT_MS	2000
+#घोषणा IWL_FLUSH_WAIT_MS	2000
 
-static int iwl_trans_pcie_rxq_dma_data(struct iwl_trans *trans, int queue,
-				       struct iwl_trans_rxq_dma_data *data)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+अटल पूर्णांक iwl_trans_pcie_rxq_dma_data(काष्ठा iwl_trans *trans, पूर्णांक queue,
+				       काष्ठा iwl_trans_rxq_dma_data *data)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
-	if (queue >= trans->num_rx_queues || !trans_pcie->rxq)
-		return -EINVAL;
+	अगर (queue >= trans->num_rx_queues || !trans_pcie->rxq)
+		वापस -EINVAL;
 
 	data->fr_bd_cb = trans_pcie->rxq[queue].bd_dma;
 	data->urbd_stts_wrptr = trans_pcie->rxq[queue].rb_stts_dma;
 	data->ur_bd_cb = trans_pcie->rxq[queue].used_bd_dma;
 	data->fr_bd_wid = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iwl_trans_pcie_wait_txq_empty(struct iwl_trans *trans, int txq_idx)
-{
-	struct iwl_txq *txq;
-	unsigned long now = jiffies;
+अटल पूर्णांक iwl_trans_pcie_रुको_txq_empty(काष्ठा iwl_trans *trans, पूर्णांक txq_idx)
+अणु
+	काष्ठा iwl_txq *txq;
+	अचिन्हित दीर्घ now = jअगरfies;
 	bool overflow_tx;
 	u8 wr_ptr;
 
 	/* Make sure the NIC is still alive in the bus */
-	if (test_bit(STATUS_TRANS_DEAD, &trans->status))
-		return -ENODEV;
+	अगर (test_bit(STATUS_TRANS_DEAD, &trans->status))
+		वापस -ENODEV;
 
-	if (!test_bit(txq_idx, trans->txqs.queue_used))
-		return -EINVAL;
+	अगर (!test_bit(txq_idx, trans->txqs.queue_used))
+		वापस -EINVAL;
 
 	IWL_DEBUG_TX_QUEUES(trans, "Emptying queue %d...\n", txq_idx);
 	txq = trans->txqs.txq[txq_idx];
@@ -2254,24 +2255,24 @@ static int iwl_trans_pcie_wait_txq_empty(struct iwl_trans *trans, int txq_idx)
 		      !skb_queue_empty(&txq->overflow_q);
 	spin_unlock_bh(&txq->lock);
 
-	wr_ptr = READ_ONCE(txq->write_ptr);
+	wr_ptr = READ_ONCE(txq->ग_लिखो_ptr);
 
-	while ((txq->read_ptr != READ_ONCE(txq->write_ptr) ||
+	जबतक ((txq->पढ़ो_ptr != READ_ONCE(txq->ग_लिखो_ptr) ||
 		overflow_tx) &&
-	       !time_after(jiffies,
-			   now + msecs_to_jiffies(IWL_FLUSH_WAIT_MS))) {
-		u8 write_ptr = READ_ONCE(txq->write_ptr);
+	       !समय_after(jअगरfies,
+			   now + msecs_to_jअगरfies(IWL_FLUSH_WAIT_MS))) अणु
+		u8 ग_लिखो_ptr = READ_ONCE(txq->ग_लिखो_ptr);
 
 		/*
-		 * If write pointer moved during the wait, warn only
-		 * if the TX came from op mode. In case TX came from
-		 * trans layer (overflow TX) don't warn.
+		 * If ग_लिखो poपूर्णांकer moved during the रुको, warn only
+		 * अगर the TX came from op mode. In हाल TX came from
+		 * trans layer (overflow TX) करोn't warn.
 		 */
-		if (WARN_ONCE(wr_ptr != write_ptr && !overflow_tx,
+		अगर (WARN_ONCE(wr_ptr != ग_लिखो_ptr && !overflow_tx,
 			      "WR pointer moved while flushing %d -> %d\n",
-			      wr_ptr, write_ptr))
-			return -ETIMEDOUT;
-		wr_ptr = write_ptr;
+			      wr_ptr, ग_लिखो_ptr))
+			वापस -ETIMEDOUT;
+		wr_ptr = ग_लिखो_ptr;
 
 		usleep_range(1000, 2000);
 
@@ -2279,59 +2280,59 @@ static int iwl_trans_pcie_wait_txq_empty(struct iwl_trans *trans, int txq_idx)
 		overflow_tx = txq->overflow_tx ||
 			      !skb_queue_empty(&txq->overflow_q);
 		spin_unlock_bh(&txq->lock);
-	}
+	पूर्ण
 
-	if (txq->read_ptr != txq->write_ptr) {
+	अगर (txq->पढ़ो_ptr != txq->ग_लिखो_ptr) अणु
 		IWL_ERR(trans,
 			"fail to flush all tx fifo queues Q %d\n", txq_idx);
 		iwl_txq_log_scd_error(trans, txq);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	IWL_DEBUG_TX_QUEUES(trans, "Queue %d is now empty.\n", txq_idx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iwl_trans_pcie_wait_txqs_empty(struct iwl_trans *trans, u32 txq_bm)
-{
-	int cnt;
-	int ret = 0;
+अटल पूर्णांक iwl_trans_pcie_रुको_txqs_empty(काष्ठा iwl_trans *trans, u32 txq_bm)
+अणु
+	पूर्णांक cnt;
+	पूर्णांक ret = 0;
 
-	/* waiting for all the tx frames complete might take a while */
-	for (cnt = 0;
+	/* रुकोing क्रम all the tx frames complete might take a जबतक */
+	क्रम (cnt = 0;
 	     cnt < trans->trans_cfg->base_params->num_of_queues;
-	     cnt++) {
+	     cnt++) अणु
 
-		if (cnt == trans->txqs.cmd.q_id)
-			continue;
-		if (!test_bit(cnt, trans->txqs.queue_used))
-			continue;
-		if (!(BIT(cnt) & txq_bm))
-			continue;
+		अगर (cnt == trans->txqs.cmd.q_id)
+			जारी;
+		अगर (!test_bit(cnt, trans->txqs.queue_used))
+			जारी;
+		अगर (!(BIT(cnt) & txq_bm))
+			जारी;
 
-		ret = iwl_trans_pcie_wait_txq_empty(trans, cnt);
-		if (ret)
-			break;
-	}
+		ret = iwl_trans_pcie_रुको_txq_empty(trans, cnt);
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void iwl_trans_pcie_set_bits_mask(struct iwl_trans *trans, u32 reg,
+अटल व्योम iwl_trans_pcie_set_bits_mask(काष्ठा iwl_trans *trans, u32 reg,
 					 u32 mask, u32 value)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
 	spin_lock_bh(&trans_pcie->reg_lock);
 	__iwl_trans_pcie_set_bits_mask(trans, reg, mask, value);
 	spin_unlock_bh(&trans_pcie->reg_lock);
-}
+पूर्ण
 
-static const char *get_csr_string(int cmd)
-{
-#define IWL_CMD(x) case x: return #x
-	switch (cmd) {
+अटल स्थिर अक्षर *get_csr_string(पूर्णांक cmd)
+अणु
+#घोषणा IWL_CMD(x) हाल x: वापस #x
+	चयन (cmd) अणु
 	IWL_CMD(CSR_HW_IF_CONFIG_REG);
 	IWL_CMD(CSR_INT_COALESCING);
 	IWL_CMD(CSR_INT);
@@ -2356,16 +2357,16 @@ static const char *get_csr_string(int cmd)
 	IWL_CMD(CSR_HW_REV_WA_REG);
 	IWL_CMD(CSR_MONITOR_STATUS_REG);
 	IWL_CMD(CSR_DBG_HPET_MEM_REG);
-	default:
-		return "UNKNOWN";
-	}
-#undef IWL_CMD
-}
+	शेष:
+		वापस "UNKNOWN";
+	पूर्ण
+#अघोषित IWL_CMD
+पूर्ण
 
-void iwl_pcie_dump_csr(struct iwl_trans *trans)
-{
-	int i;
-	static const u32 csr_tbl[] = {
+व्योम iwl_pcie_dump_csr(काष्ठा iwl_trans *trans)
+अणु
+	पूर्णांक i;
+	अटल स्थिर u32 csr_tbl[] = अणु
 		CSR_HW_IF_CONFIG_REG,
 		CSR_INT_COALESCING,
 		CSR_INT,
@@ -2390,867 +2391,867 @@ void iwl_pcie_dump_csr(struct iwl_trans *trans)
 		CSR_MONITOR_STATUS_REG,
 		CSR_HW_REV_WA_REG,
 		CSR_DBG_HPET_MEM_REG
-	};
+	पूर्ण;
 	IWL_ERR(trans, "CSR values:\n");
 	IWL_ERR(trans, "(2nd byte of CSR_INT_COALESCING is "
 		"CSR_INT_PERIODIC_REG)\n");
-	for (i = 0; i <  ARRAY_SIZE(csr_tbl); i++) {
+	क्रम (i = 0; i <  ARRAY_SIZE(csr_tbl); i++) अणु
 		IWL_ERR(trans, "  %25s: 0X%08x\n",
 			get_csr_string(csr_tbl[i]),
-			iwl_read32(trans, csr_tbl[i]));
-	}
-}
+			iwl_पढ़ो32(trans, csr_tbl[i]));
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_IWLWIFI_DEBUGFS
-/* create and remove of files */
-#define DEBUGFS_ADD_FILE(name, parent, mode) do {			\
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
+/* create and हटाओ of files */
+#घोषणा DEBUGFS_ADD_खाता(name, parent, mode) करो अणु			\
 	debugfs_create_file(#name, mode, parent, trans,			\
 			    &iwl_dbgfs_##name##_ops);			\
-} while (0)
+पूर्ण जबतक (0)
 
 /* file operation */
-#define DEBUGFS_READ_FILE_OPS(name)					\
-static const struct file_operations iwl_dbgfs_##name##_ops = {		\
-	.read = iwl_dbgfs_##name##_read,				\
-	.open = simple_open,						\
+#घोषणा DEBUGFS_READ_खाता_OPS(name)					\
+अटल स्थिर काष्ठा file_operations iwl_dbgfs_##name##_ops = अणु		\
+	.पढ़ो = iwl_dbgfs_##name##_पढ़ो,				\
+	.खोलो = simple_खोलो,						\
 	.llseek = generic_file_llseek,					\
-};
+पूर्ण;
 
-#define DEBUGFS_WRITE_FILE_OPS(name)                                    \
-static const struct file_operations iwl_dbgfs_##name##_ops = {          \
-	.write = iwl_dbgfs_##name##_write,                              \
-	.open = simple_open,						\
+#घोषणा DEBUGFS_WRITE_खाता_OPS(name)                                    \
+अटल स्थिर काष्ठा file_operations iwl_dbgfs_##name##_ops = अणु          \
+	.ग_लिखो = iwl_dbgfs_##name##_ग_लिखो,                              \
+	.खोलो = simple_खोलो,						\
 	.llseek = generic_file_llseek,					\
-};
+पूर्ण;
 
-#define DEBUGFS_READ_WRITE_FILE_OPS(name)				\
-static const struct file_operations iwl_dbgfs_##name##_ops = {		\
-	.write = iwl_dbgfs_##name##_write,				\
-	.read = iwl_dbgfs_##name##_read,				\
-	.open = simple_open,						\
+#घोषणा DEBUGFS_READ_WRITE_खाता_OPS(name)				\
+अटल स्थिर काष्ठा file_operations iwl_dbgfs_##name##_ops = अणु		\
+	.ग_लिखो = iwl_dbgfs_##name##_ग_लिखो,				\
+	.पढ़ो = iwl_dbgfs_##name##_पढ़ो,				\
+	.खोलो = simple_खोलो,						\
 	.llseek = generic_file_llseek,					\
-};
+पूर्ण;
 
-struct iwl_dbgfs_tx_queue_priv {
-	struct iwl_trans *trans;
-};
+काष्ठा iwl_dbgfs_tx_queue_priv अणु
+	काष्ठा iwl_trans *trans;
+पूर्ण;
 
-struct iwl_dbgfs_tx_queue_state {
+काष्ठा iwl_dbgfs_tx_queue_state अणु
 	loff_t pos;
-};
+पूर्ण;
 
-static void *iwl_dbgfs_tx_queue_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	struct iwl_dbgfs_tx_queue_priv *priv = seq->private;
-	struct iwl_dbgfs_tx_queue_state *state;
+अटल व्योम *iwl_dbgfs_tx_queue_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा iwl_dbgfs_tx_queue_priv *priv = seq->निजी;
+	काष्ठा iwl_dbgfs_tx_queue_state *state;
 
-	if (*pos >= priv->trans->trans_cfg->base_params->num_of_queues)
-		return NULL;
+	अगर (*pos >= priv->trans->trans_cfg->base_params->num_of_queues)
+		वापस शून्य;
 
-	state = kmalloc(sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return NULL;
+	state = kदो_स्मृति(माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस शून्य;
 	state->pos = *pos;
-	return state;
-}
+	वापस state;
+पूर्ण
 
-static void *iwl_dbgfs_tx_queue_seq_next(struct seq_file *seq,
-					 void *v, loff_t *pos)
-{
-	struct iwl_dbgfs_tx_queue_priv *priv = seq->private;
-	struct iwl_dbgfs_tx_queue_state *state = v;
+अटल व्योम *iwl_dbgfs_tx_queue_seq_next(काष्ठा seq_file *seq,
+					 व्योम *v, loff_t *pos)
+अणु
+	काष्ठा iwl_dbgfs_tx_queue_priv *priv = seq->निजी;
+	काष्ठा iwl_dbgfs_tx_queue_state *state = v;
 
 	*pos = ++state->pos;
 
-	if (*pos >= priv->trans->trans_cfg->base_params->num_of_queues)
-		return NULL;
+	अगर (*pos >= priv->trans->trans_cfg->base_params->num_of_queues)
+		वापस शून्य;
 
-	return state;
-}
+	वापस state;
+पूर्ण
 
-static void iwl_dbgfs_tx_queue_seq_stop(struct seq_file *seq, void *v)
-{
-	kfree(v);
-}
+अटल व्योम iwl_dbgfs_tx_queue_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	kमुक्त(v);
+पूर्ण
 
-static int iwl_dbgfs_tx_queue_seq_show(struct seq_file *seq, void *v)
-{
-	struct iwl_dbgfs_tx_queue_priv *priv = seq->private;
-	struct iwl_dbgfs_tx_queue_state *state = v;
-	struct iwl_trans *trans = priv->trans;
-	struct iwl_txq *txq = trans->txqs.txq[state->pos];
+अटल पूर्णांक iwl_dbgfs_tx_queue_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा iwl_dbgfs_tx_queue_priv *priv = seq->निजी;
+	काष्ठा iwl_dbgfs_tx_queue_state *state = v;
+	काष्ठा iwl_trans *trans = priv->trans;
+	काष्ठा iwl_txq *txq = trans->txqs.txq[state->pos];
 
-	seq_printf(seq, "hwq %.3u: used=%d stopped=%d ",
-		   (unsigned int)state->pos,
+	seq_म_लिखो(seq, "hwq %.3u: used=%d stopped=%d ",
+		   (अचिन्हित पूर्णांक)state->pos,
 		   !!test_bit(state->pos, trans->txqs.queue_used),
 		   !!test_bit(state->pos, trans->txqs.queue_stopped));
-	if (txq)
-		seq_printf(seq,
+	अगर (txq)
+		seq_म_लिखो(seq,
 			   "read=%u write=%u need_update=%d frozen=%d n_window=%d ampdu=%d",
-			   txq->read_ptr, txq->write_ptr,
+			   txq->पढ़ो_ptr, txq->ग_लिखो_ptr,
 			   txq->need_update, txq->frozen,
-			   txq->n_window, txq->ampdu);
-	else
-		seq_puts(seq, "(unallocated)");
+			   txq->n_winकरोw, txq->ampdu);
+	अन्यथा
+		seq_माला_दो(seq, "(unallocated)");
 
-	if (state->pos == trans->txqs.cmd.q_id)
-		seq_puts(seq, " (HCMD)");
-	seq_puts(seq, "\n");
+	अगर (state->pos == trans->txqs.cmd.q_id)
+		seq_माला_दो(seq, " (HCMD)");
+	seq_माला_दो(seq, "\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations iwl_dbgfs_tx_queue_seq_ops = {
+अटल स्थिर काष्ठा seq_operations iwl_dbgfs_tx_queue_seq_ops = अणु
 	.start = iwl_dbgfs_tx_queue_seq_start,
 	.next = iwl_dbgfs_tx_queue_seq_next,
 	.stop = iwl_dbgfs_tx_queue_seq_stop,
 	.show = iwl_dbgfs_tx_queue_seq_show,
-};
+पूर्ण;
 
-static int iwl_dbgfs_tx_queue_open(struct inode *inode, struct file *filp)
-{
-	struct iwl_dbgfs_tx_queue_priv *priv;
+अटल पूर्णांक iwl_dbgfs_tx_queue_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा iwl_dbgfs_tx_queue_priv *priv;
 
-	priv = __seq_open_private(filp, &iwl_dbgfs_tx_queue_seq_ops,
-				  sizeof(*priv));
+	priv = __seq_खोलो_निजी(filp, &iwl_dbgfs_tx_queue_seq_ops,
+				  माप(*priv));
 
-	if (!priv)
-		return -ENOMEM;
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	priv->trans = inode->i_private;
-	return 0;
-}
+	priv->trans = inode->i_निजी;
+	वापस 0;
+पूर्ण
 
-static ssize_t iwl_dbgfs_rx_queue_read(struct file *file,
-				       char __user *user_buf,
-				       size_t count, loff_t *ppos)
-{
-	struct iwl_trans *trans = file->private_data;
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	char *buf;
-	int pos = 0, i, ret;
-	size_t bufsz;
+अटल sमाप_प्रकार iwl_dbgfs_rx_queue_पढ़ो(काष्ठा file *file,
+				       अक्षर __user *user_buf,
+				       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_trans *trans = file->निजी_data;
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	अक्षर *buf;
+	पूर्णांक pos = 0, i, ret;
+	माप_प्रकार bufsz;
 
-	bufsz = sizeof(char) * 121 * trans->num_rx_queues;
+	bufsz = माप(अक्षर) * 121 * trans->num_rx_queues;
 
-	if (!trans_pcie->rxq)
-		return -EAGAIN;
+	अगर (!trans_pcie->rxq)
+		वापस -EAGAIN;
 
 	buf = kzalloc(bufsz, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	for (i = 0; i < trans->num_rx_queues && pos < bufsz; i++) {
-		struct iwl_rxq *rxq = &trans_pcie->rxq[i];
+	क्रम (i = 0; i < trans->num_rx_queues && pos < bufsz; i++) अणु
+		काष्ठा iwl_rxq *rxq = &trans_pcie->rxq[i];
 
-		pos += scnprintf(buf + pos, bufsz - pos, "queue#: %2d\n",
+		pos += scnम_लिखो(buf + pos, bufsz - pos, "queue#: %2d\n",
 				 i);
-		pos += scnprintf(buf + pos, bufsz - pos, "\tread: %u\n",
-				 rxq->read);
-		pos += scnprintf(buf + pos, bufsz - pos, "\twrite: %u\n",
-				 rxq->write);
-		pos += scnprintf(buf + pos, bufsz - pos, "\twrite_actual: %u\n",
-				 rxq->write_actual);
-		pos += scnprintf(buf + pos, bufsz - pos, "\tneed_update: %2d\n",
+		pos += scnम_लिखो(buf + pos, bufsz - pos, "\tread: %u\n",
+				 rxq->पढ़ो);
+		pos += scnम_लिखो(buf + pos, bufsz - pos, "\twrite: %u\n",
+				 rxq->ग_लिखो);
+		pos += scnम_लिखो(buf + pos, bufsz - pos, "\twrite_actual: %u\n",
+				 rxq->ग_लिखो_actual);
+		pos += scnम_लिखो(buf + pos, bufsz - pos, "\tneed_update: %2d\n",
 				 rxq->need_update);
-		pos += scnprintf(buf + pos, bufsz - pos, "\tfree_count: %u\n",
-				 rxq->free_count);
-		if (rxq->rb_stts) {
-			u32 r =	__le16_to_cpu(iwl_get_closed_rb_stts(trans,
+		pos += scnम_लिखो(buf + pos, bufsz - pos, "\tfree_count: %u\n",
+				 rxq->मुक्त_count);
+		अगर (rxq->rb_stts) अणु
+			u32 r =	__le16_to_cpu(iwl_get_बंदd_rb_stts(trans,
 								     rxq));
-			pos += scnprintf(buf + pos, bufsz - pos,
+			pos += scnम_लिखो(buf + pos, bufsz - pos,
 					 "\tclosed_rb_num: %u\n",
 					 r & 0x0FFF);
-		} else {
-			pos += scnprintf(buf + pos, bufsz - pos,
+		पूर्ण अन्यथा अणु
+			pos += scnम_लिखो(buf + pos, bufsz - pos,
 					 "\tclosed_rb_num: Not Allocated\n");
-		}
-	}
-	ret = simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-	kfree(buf);
+		पूर्ण
+	पूर्ण
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+	kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t iwl_dbgfs_interrupt_read(struct file *file,
-					char __user *user_buf,
-					size_t count, loff_t *ppos)
-{
-	struct iwl_trans *trans = file->private_data;
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	struct isr_statistics *isr_stats = &trans_pcie->isr_stats;
+अटल sमाप_प्रकार iwl_dbgfs_पूर्णांकerrupt_पढ़ो(काष्ठा file *file,
+					अक्षर __user *user_buf,
+					माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_trans *trans = file->निजी_data;
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	काष्ठा isr_statistics *isr_stats = &trans_pcie->isr_stats;
 
-	int pos = 0;
-	char *buf;
-	int bufsz = 24 * 64; /* 24 items * 64 char per item */
-	ssize_t ret;
+	पूर्णांक pos = 0;
+	अक्षर *buf;
+	पूर्णांक bufsz = 24 * 64; /* 24 items * 64 अक्षर per item */
+	sमाप_प्रकार ret;
 
 	buf = kzalloc(bufsz, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	pos += scnprintf(buf + pos, bufsz - pos,
+	pos += scnम_लिखो(buf + pos, bufsz - pos,
 			"Interrupt Statistics Report:\n");
 
-	pos += scnprintf(buf + pos, bufsz - pos, "HW Error:\t\t\t %u\n",
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "HW Error:\t\t\t %u\n",
 		isr_stats->hw);
-	pos += scnprintf(buf + pos, bufsz - pos, "SW Error:\t\t\t %u\n",
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "SW Error:\t\t\t %u\n",
 		isr_stats->sw);
-	if (isr_stats->sw || isr_stats->hw) {
-		pos += scnprintf(buf + pos, bufsz - pos,
+	अगर (isr_stats->sw || isr_stats->hw) अणु
+		pos += scnम_लिखो(buf + pos, bufsz - pos,
 			"\tLast Restarting Code:  0x%X\n",
 			isr_stats->err_code);
-	}
-#ifdef CONFIG_IWLWIFI_DEBUG
-	pos += scnprintf(buf + pos, bufsz - pos, "Frame transmitted:\t\t %u\n",
+	पूर्ण
+#अगर_घोषित CONFIG_IWLWIFI_DEBUG
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "Frame transmitted:\t\t %u\n",
 		isr_stats->sch);
-	pos += scnprintf(buf + pos, bufsz - pos, "Alive interrupt:\t\t %u\n",
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "Alive interrupt:\t\t %u\n",
 		isr_stats->alive);
-#endif
-	pos += scnprintf(buf + pos, bufsz - pos,
-		"HW RF KILL switch toggled:\t %u\n", isr_stats->rfkill);
+#पूर्ण_अगर
+	pos += scnम_लिखो(buf + pos, bufsz - pos,
+		"HW RF KILL switch toggled:\t %u\n", isr_stats->rfसमाप्त);
 
-	pos += scnprintf(buf + pos, bufsz - pos, "CT KILL:\t\t\t %u\n",
-		isr_stats->ctkill);
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "CT KILL:\t\t\t %u\n",
+		isr_stats->ctसमाप्त);
 
-	pos += scnprintf(buf + pos, bufsz - pos, "Wakeup Interrupt:\t\t %u\n",
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "Wakeup Interrupt:\t\t %u\n",
 		isr_stats->wakeup);
 
-	pos += scnprintf(buf + pos, bufsz - pos,
+	pos += scnम_लिखो(buf + pos, bufsz - pos,
 		"Rx command responses:\t\t %u\n", isr_stats->rx);
 
-	pos += scnprintf(buf + pos, bufsz - pos, "Tx/FH interrupt:\t\t %u\n",
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "Tx/FH interrupt:\t\t %u\n",
 		isr_stats->tx);
 
-	pos += scnprintf(buf + pos, bufsz - pos, "Unexpected INTA:\t\t %u\n",
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "Unexpected INTA:\t\t %u\n",
 		isr_stats->unhandled);
 
-	ret = simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-	kfree(buf);
-	return ret;
-}
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static ssize_t iwl_dbgfs_interrupt_write(struct file *file,
-					 const char __user *user_buf,
-					 size_t count, loff_t *ppos)
-{
-	struct iwl_trans *trans = file->private_data;
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	struct isr_statistics *isr_stats = &trans_pcie->isr_stats;
+अटल sमाप_प्रकार iwl_dbgfs_पूर्णांकerrupt_ग_लिखो(काष्ठा file *file,
+					 स्थिर अक्षर __user *user_buf,
+					 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_trans *trans = file->निजी_data;
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	काष्ठा isr_statistics *isr_stats = &trans_pcie->isr_stats;
 	u32 reset_flag;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou32_from_user(user_buf, count, 16, &reset_flag);
-	if (ret)
-		return ret;
-	if (reset_flag == 0)
-		memset(isr_stats, 0, sizeof(*isr_stats));
+	अगर (ret)
+		वापस ret;
+	अगर (reset_flag == 0)
+		स_रखो(isr_stats, 0, माप(*isr_stats));
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_csr_write(struct file *file,
-				   const char __user *user_buf,
-				   size_t count, loff_t *ppos)
-{
-	struct iwl_trans *trans = file->private_data;
+अटल sमाप_प्रकार iwl_dbgfs_csr_ग_लिखो(काष्ठा file *file,
+				   स्थिर अक्षर __user *user_buf,
+				   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_trans *trans = file->निजी_data;
 
 	iwl_pcie_dump_csr(trans);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_fh_reg_read(struct file *file,
-				     char __user *user_buf,
-				     size_t count, loff_t *ppos)
-{
-	struct iwl_trans *trans = file->private_data;
-	char *buf = NULL;
-	ssize_t ret;
+अटल sमाप_प्रकार iwl_dbgfs_fh_reg_पढ़ो(काष्ठा file *file,
+				     अक्षर __user *user_buf,
+				     माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_trans *trans = file->निजी_data;
+	अक्षर *buf = शून्य;
+	sमाप_प्रकार ret;
 
 	ret = iwl_dump_fh(trans, &buf);
-	if (ret < 0)
-		return ret;
-	if (!buf)
-		return -EINVAL;
-	ret = simple_read_from_buffer(user_buf, count, ppos, buf, ret);
-	kfree(buf);
-	return ret;
-}
+	अगर (ret < 0)
+		वापस ret;
+	अगर (!buf)
+		वापस -EINVAL;
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, ret);
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static ssize_t iwl_dbgfs_rfkill_read(struct file *file,
-				     char __user *user_buf,
-				     size_t count, loff_t *ppos)
-{
-	struct iwl_trans *trans = file->private_data;
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	char buf[100];
-	int pos;
+अटल sमाप_प्रकार iwl_dbgfs_rfसमाप्त_पढ़ो(काष्ठा file *file,
+				     अक्षर __user *user_buf,
+				     माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_trans *trans = file->निजी_data;
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	अक्षर buf[100];
+	पूर्णांक pos;
 
-	pos = scnprintf(buf, sizeof(buf), "debug: %d\nhw: %d\n",
-			trans_pcie->debug_rfkill,
-			!(iwl_read32(trans, CSR_GP_CNTRL) &
+	pos = scnम_लिखो(buf, माप(buf), "debug: %d\nhw: %d\n",
+			trans_pcie->debug_rfसमाप्त,
+			!(iwl_पढ़ो32(trans, CSR_GP_CNTRL) &
 				CSR_GP_CNTRL_REG_FLAG_HW_RF_KILL_SW));
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
 
-static ssize_t iwl_dbgfs_rfkill_write(struct file *file,
-				      const char __user *user_buf,
-				      size_t count, loff_t *ppos)
-{
-	struct iwl_trans *trans = file->private_data;
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+अटल sमाप_प्रकार iwl_dbgfs_rfसमाप्त_ग_लिखो(काष्ठा file *file,
+				      स्थिर अक्षर __user *user_buf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_trans *trans = file->निजी_data;
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 	bool new_value;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtobool_from_user(user_buf, count, &new_value);
-	if (ret)
-		return ret;
-	if (new_value == trans_pcie->debug_rfkill)
-		return count;
+	अगर (ret)
+		वापस ret;
+	अगर (new_value == trans_pcie->debug_rfसमाप्त)
+		वापस count;
 	IWL_WARN(trans, "changing debug rfkill %d->%d\n",
-		 trans_pcie->debug_rfkill, new_value);
-	trans_pcie->debug_rfkill = new_value;
-	iwl_pcie_handle_rfkill_irq(trans);
+		 trans_pcie->debug_rfसमाप्त, new_value);
+	trans_pcie->debug_rfसमाप्त = new_value;
+	iwl_pcie_handle_rfसमाप्त_irq(trans);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int iwl_dbgfs_monitor_data_open(struct inode *inode,
-				       struct file *file)
-{
-	struct iwl_trans *trans = inode->i_private;
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+अटल पूर्णांक iwl_dbgfs_monitor_data_खोलो(काष्ठा inode *inode,
+				       काष्ठा file *file)
+अणु
+	काष्ठा iwl_trans *trans = inode->i_निजी;
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
-	if (!trans->dbg.dest_tlv ||
-	    trans->dbg.dest_tlv->monitor_mode != EXTERNAL_MODE) {
+	अगर (!trans->dbg.dest_tlv ||
+	    trans->dbg.dest_tlv->monitor_mode != EXTERNAL_MODE) अणु
 		IWL_ERR(trans, "Debug destination is not set to DRAM\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	if (trans_pcie->fw_mon_data.state != IWL_FW_MON_DBGFS_STATE_CLOSED)
-		return -EBUSY;
+	अगर (trans_pcie->fw_mon_data.state != IWL_FW_MON_DBGFS_STATE_CLOSED)
+		वापस -EBUSY;
 
 	trans_pcie->fw_mon_data.state = IWL_FW_MON_DBGFS_STATE_OPEN;
-	return simple_open(inode, file);
-}
+	वापस simple_खोलो(inode, file);
+पूर्ण
 
-static int iwl_dbgfs_monitor_data_release(struct inode *inode,
-					  struct file *file)
-{
-	struct iwl_trans_pcie *trans_pcie =
-		IWL_TRANS_GET_PCIE_TRANS(inode->i_private);
+अटल पूर्णांक iwl_dbgfs_monitor_data_release(काष्ठा inode *inode,
+					  काष्ठा file *file)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie =
+		IWL_TRANS_GET_PCIE_TRANS(inode->i_निजी);
 
-	if (trans_pcie->fw_mon_data.state == IWL_FW_MON_DBGFS_STATE_OPEN)
+	अगर (trans_pcie->fw_mon_data.state == IWL_FW_MON_DBGFS_STATE_OPEN)
 		trans_pcie->fw_mon_data.state = IWL_FW_MON_DBGFS_STATE_CLOSED;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool iwl_write_to_user_buf(char __user *user_buf, ssize_t count,
-				  void *buf, ssize_t *size,
-				  ssize_t *bytes_copied)
-{
-	int buf_size_left = count - *bytes_copied;
+अटल bool iwl_ग_लिखो_to_user_buf(अक्षर __user *user_buf, sमाप_प्रकार count,
+				  व्योम *buf, sमाप_प्रकार *size,
+				  sमाप_प्रकार *bytes_copied)
+अणु
+	पूर्णांक buf_size_left = count - *bytes_copied;
 
-	buf_size_left = buf_size_left - (buf_size_left % sizeof(u32));
-	if (*size > buf_size_left)
+	buf_size_left = buf_size_left - (buf_size_left % माप(u32));
+	अगर (*size > buf_size_left)
 		*size = buf_size_left;
 
 	*size -= copy_to_user(user_buf, buf, *size);
 	*bytes_copied += *size;
 
-	if (buf_size_left == *size)
-		return true;
-	return false;
-}
+	अगर (buf_size_left == *size)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static ssize_t iwl_dbgfs_monitor_data_read(struct file *file,
-					   char __user *user_buf,
-					   size_t count, loff_t *ppos)
-{
-	struct iwl_trans *trans = file->private_data;
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	void *cpu_addr = (void *)trans->dbg.fw_mon.block, *curr_buf;
-	struct cont_rec *data = &trans_pcie->fw_mon_data;
-	u32 write_ptr_addr, wrap_cnt_addr, write_ptr, wrap_cnt;
-	ssize_t size, bytes_copied = 0;
+अटल sमाप_प्रकार iwl_dbgfs_monitor_data_पढ़ो(काष्ठा file *file,
+					   अक्षर __user *user_buf,
+					   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_trans *trans = file->निजी_data;
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	व्योम *cpu_addr = (व्योम *)trans->dbg.fw_mon.block, *curr_buf;
+	काष्ठा cont_rec *data = &trans_pcie->fw_mon_data;
+	u32 ग_लिखो_ptr_addr, wrap_cnt_addr, ग_लिखो_ptr, wrap_cnt;
+	sमाप_प्रकार size, bytes_copied = 0;
 	bool b_full;
 
-	if (trans->dbg.dest_tlv) {
-		write_ptr_addr =
-			le32_to_cpu(trans->dbg.dest_tlv->write_ptr_reg);
+	अगर (trans->dbg.dest_tlv) अणु
+		ग_लिखो_ptr_addr =
+			le32_to_cpu(trans->dbg.dest_tlv->ग_लिखो_ptr_reg);
 		wrap_cnt_addr = le32_to_cpu(trans->dbg.dest_tlv->wrap_count);
-	} else {
-		write_ptr_addr = MON_BUFF_WRPTR;
+	पूर्ण अन्यथा अणु
+		ग_लिखो_ptr_addr = MON_BUFF_WRPTR;
 		wrap_cnt_addr = MON_BUFF_CYCLE_CNT;
-	}
+	पूर्ण
 
-	if (unlikely(!trans->dbg.rec_on))
-		return 0;
+	अगर (unlikely(!trans->dbg.rec_on))
+		वापस 0;
 
 	mutex_lock(&data->mutex);
-	if (data->state ==
-	    IWL_FW_MON_DBGFS_STATE_DISABLED) {
+	अगर (data->state ==
+	    IWL_FW_MON_DBGFS_STATE_DISABLED) अणु
 		mutex_unlock(&data->mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* write_ptr position in bytes rather then DW */
-	write_ptr = iwl_read_prph(trans, write_ptr_addr) * sizeof(u32);
-	wrap_cnt = iwl_read_prph(trans, wrap_cnt_addr);
+	/* ग_लिखो_ptr position in bytes rather then DW */
+	ग_लिखो_ptr = iwl_पढ़ो_prph(trans, ग_लिखो_ptr_addr) * माप(u32);
+	wrap_cnt = iwl_पढ़ो_prph(trans, wrap_cnt_addr);
 
-	if (data->prev_wrap_cnt == wrap_cnt) {
-		size = write_ptr - data->prev_wr_ptr;
+	अगर (data->prev_wrap_cnt == wrap_cnt) अणु
+		size = ग_लिखो_ptr - data->prev_wr_ptr;
 		curr_buf = cpu_addr + data->prev_wr_ptr;
-		b_full = iwl_write_to_user_buf(user_buf, count,
+		b_full = iwl_ग_लिखो_to_user_buf(user_buf, count,
 					       curr_buf, &size,
 					       &bytes_copied);
 		data->prev_wr_ptr += size;
 
-	} else if (data->prev_wrap_cnt == wrap_cnt - 1 &&
-		   write_ptr < data->prev_wr_ptr) {
+	पूर्ण अन्यथा अगर (data->prev_wrap_cnt == wrap_cnt - 1 &&
+		   ग_लिखो_ptr < data->prev_wr_ptr) अणु
 		size = trans->dbg.fw_mon.size - data->prev_wr_ptr;
 		curr_buf = cpu_addr + data->prev_wr_ptr;
-		b_full = iwl_write_to_user_buf(user_buf, count,
+		b_full = iwl_ग_लिखो_to_user_buf(user_buf, count,
 					       curr_buf, &size,
 					       &bytes_copied);
 		data->prev_wr_ptr += size;
 
-		if (!b_full) {
-			size = write_ptr;
-			b_full = iwl_write_to_user_buf(user_buf, count,
+		अगर (!b_full) अणु
+			size = ग_लिखो_ptr;
+			b_full = iwl_ग_लिखो_to_user_buf(user_buf, count,
 						       cpu_addr, &size,
 						       &bytes_copied);
 			data->prev_wr_ptr = size;
 			data->prev_wrap_cnt++;
-		}
-	} else {
-		if (data->prev_wrap_cnt == wrap_cnt - 1 &&
-		    write_ptr > data->prev_wr_ptr)
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (data->prev_wrap_cnt == wrap_cnt - 1 &&
+		    ग_लिखो_ptr > data->prev_wr_ptr)
 			IWL_WARN(trans,
 				 "write pointer passed previous write pointer, start copying from the beginning\n");
-		else if (!unlikely(data->prev_wrap_cnt == 0 &&
+		अन्यथा अगर (!unlikely(data->prev_wrap_cnt == 0 &&
 				   data->prev_wr_ptr == 0))
 			IWL_WARN(trans,
 				 "monitor data is out of sync, start copying from the beginning\n");
 
-		size = write_ptr;
-		b_full = iwl_write_to_user_buf(user_buf, count,
+		size = ग_लिखो_ptr;
+		b_full = iwl_ग_लिखो_to_user_buf(user_buf, count,
 					       cpu_addr, &size,
 					       &bytes_copied);
 		data->prev_wr_ptr = size;
 		data->prev_wrap_cnt = wrap_cnt;
-	}
+	पूर्ण
 
 	mutex_unlock(&data->mutex);
 
-	return bytes_copied;
-}
+	वापस bytes_copied;
+पूर्ण
 
-DEBUGFS_READ_WRITE_FILE_OPS(interrupt);
-DEBUGFS_READ_FILE_OPS(fh_reg);
-DEBUGFS_READ_FILE_OPS(rx_queue);
-DEBUGFS_WRITE_FILE_OPS(csr);
-DEBUGFS_READ_WRITE_FILE_OPS(rfkill);
-static const struct file_operations iwl_dbgfs_tx_queue_ops = {
+DEBUGFS_READ_WRITE_खाता_OPS(पूर्णांकerrupt);
+DEBUGFS_READ_खाता_OPS(fh_reg);
+DEBUGFS_READ_खाता_OPS(rx_queue);
+DEBUGFS_WRITE_खाता_OPS(csr);
+DEBUGFS_READ_WRITE_खाता_OPS(rfसमाप्त);
+अटल स्थिर काष्ठा file_operations iwl_dbgfs_tx_queue_ops = अणु
 	.owner = THIS_MODULE,
-	.open = iwl_dbgfs_tx_queue_open,
-	.read = seq_read,
+	.खोलो = iwl_dbgfs_tx_queue_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
-	.release = seq_release_private,
-};
+	.release = seq_release_निजी,
+पूर्ण;
 
-static const struct file_operations iwl_dbgfs_monitor_data_ops = {
-	.read = iwl_dbgfs_monitor_data_read,
-	.open = iwl_dbgfs_monitor_data_open,
+अटल स्थिर काष्ठा file_operations iwl_dbgfs_monitor_data_ops = अणु
+	.पढ़ो = iwl_dbgfs_monitor_data_पढ़ो,
+	.खोलो = iwl_dbgfs_monitor_data_खोलो,
 	.release = iwl_dbgfs_monitor_data_release,
-};
+पूर्ण;
 
 /* Create the debugfs files and directories */
-void iwl_trans_pcie_dbgfs_register(struct iwl_trans *trans)
-{
-	struct dentry *dir = trans->dbgfs_dir;
+व्योम iwl_trans_pcie_dbgfs_रेजिस्टर(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा dentry *dir = trans->dbgfs_dir;
 
-	DEBUGFS_ADD_FILE(rx_queue, dir, 0400);
-	DEBUGFS_ADD_FILE(tx_queue, dir, 0400);
-	DEBUGFS_ADD_FILE(interrupt, dir, 0600);
-	DEBUGFS_ADD_FILE(csr, dir, 0200);
-	DEBUGFS_ADD_FILE(fh_reg, dir, 0400);
-	DEBUGFS_ADD_FILE(rfkill, dir, 0600);
-	DEBUGFS_ADD_FILE(monitor_data, dir, 0400);
-}
+	DEBUGFS_ADD_खाता(rx_queue, dir, 0400);
+	DEBUGFS_ADD_खाता(tx_queue, dir, 0400);
+	DEBUGFS_ADD_खाता(पूर्णांकerrupt, dir, 0600);
+	DEBUGFS_ADD_खाता(csr, dir, 0200);
+	DEBUGFS_ADD_खाता(fh_reg, dir, 0400);
+	DEBUGFS_ADD_खाता(rfसमाप्त, dir, 0600);
+	DEBUGFS_ADD_खाता(monitor_data, dir, 0400);
+पूर्ण
 
-static void iwl_trans_pcie_debugfs_cleanup(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	struct cont_rec *data = &trans_pcie->fw_mon_data;
+अटल व्योम iwl_trans_pcie_debugfs_cleanup(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	काष्ठा cont_rec *data = &trans_pcie->fw_mon_data;
 
 	mutex_lock(&data->mutex);
 	data->state = IWL_FW_MON_DBGFS_STATE_DISABLED;
 	mutex_unlock(&data->mutex);
-}
-#endif /*CONFIG_IWLWIFI_DEBUGFS */
+पूर्ण
+#पूर्ण_अगर /*CONFIG_IWLWIFI_DEBUGFS */
 
-static u32 iwl_trans_pcie_get_cmdlen(struct iwl_trans *trans, void *tfd)
-{
+अटल u32 iwl_trans_pcie_get_cmdlen(काष्ठा iwl_trans *trans, व्योम *tfd)
+अणु
 	u32 cmdlen = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < trans->txqs.tfd.max_tbs; i++)
+	क्रम (i = 0; i < trans->txqs.tfd.max_tbs; i++)
 		cmdlen += iwl_txq_gen1_tfd_tb_get_len(trans, tfd, i);
 
-	return cmdlen;
-}
+	वापस cmdlen;
+पूर्ण
 
-static u32 iwl_trans_pcie_dump_rbs(struct iwl_trans *trans,
-				   struct iwl_fw_error_dump_data **data,
-				   int allocated_rb_nums)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	int max_len = trans_pcie->rx_buf_bytes;
-	/* Dump RBs is supported only for pre-9000 devices (1 queue) */
-	struct iwl_rxq *rxq = &trans_pcie->rxq[0];
+अटल u32 iwl_trans_pcie_dump_rbs(काष्ठा iwl_trans *trans,
+				   काष्ठा iwl_fw_error_dump_data **data,
+				   पूर्णांक allocated_rb_nums)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	पूर्णांक max_len = trans_pcie->rx_buf_bytes;
+	/* Dump RBs is supported only क्रम pre-9000 devices (1 queue) */
+	काष्ठा iwl_rxq *rxq = &trans_pcie->rxq[0];
 	u32 i, r, j, rb_len = 0;
 
 	spin_lock(&rxq->lock);
 
-	r = le16_to_cpu(iwl_get_closed_rb_stts(trans, rxq)) & 0x0FFF;
+	r = le16_to_cpu(iwl_get_बंदd_rb_stts(trans, rxq)) & 0x0FFF;
 
-	for (i = rxq->read, j = 0;
+	क्रम (i = rxq->पढ़ो, j = 0;
 	     i != r && j < allocated_rb_nums;
-	     i = (i + 1) & RX_QUEUE_MASK, j++) {
-		struct iwl_rx_mem_buffer *rxb = rxq->queue[i];
-		struct iwl_fw_error_dump_rb *rb;
+	     i = (i + 1) & RX_QUEUE_MASK, j++) अणु
+		काष्ठा iwl_rx_mem_buffer *rxb = rxq->queue[i];
+		काष्ठा iwl_fw_error_dump_rb *rb;
 
 		dma_unmap_page(trans->dev, rxb->page_dma, max_len,
 			       DMA_FROM_DEVICE);
 
-		rb_len += sizeof(**data) + sizeof(*rb) + max_len;
+		rb_len += माप(**data) + माप(*rb) + max_len;
 
 		(*data)->type = cpu_to_le32(IWL_FW_ERROR_DUMP_RB);
-		(*data)->len = cpu_to_le32(sizeof(*rb) + max_len);
-		rb = (void *)(*data)->data;
+		(*data)->len = cpu_to_le32(माप(*rb) + max_len);
+		rb = (व्योम *)(*data)->data;
 		rb->index = cpu_to_le32(i);
-		memcpy(rb->data, page_address(rxb->page), max_len);
-		/* remap the page for the free benefit */
+		स_नकल(rb->data, page_address(rxb->page), max_len);
+		/* remap the page क्रम the मुक्त benefit */
 		rxb->page_dma = dma_map_page(trans->dev, rxb->page,
 					     rxb->offset, max_len,
 					     DMA_FROM_DEVICE);
 
 		*data = iwl_fw_error_next_data(*data);
-	}
+	पूर्ण
 
 	spin_unlock(&rxq->lock);
 
-	return rb_len;
-}
-#define IWL_CSR_TO_DUMP (0x250)
+	वापस rb_len;
+पूर्ण
+#घोषणा IWL_CSR_TO_DUMP (0x250)
 
-static u32 iwl_trans_pcie_dump_csr(struct iwl_trans *trans,
-				   struct iwl_fw_error_dump_data **data)
-{
-	u32 csr_len = sizeof(**data) + IWL_CSR_TO_DUMP;
+अटल u32 iwl_trans_pcie_dump_csr(काष्ठा iwl_trans *trans,
+				   काष्ठा iwl_fw_error_dump_data **data)
+अणु
+	u32 csr_len = माप(**data) + IWL_CSR_TO_DUMP;
 	__le32 *val;
-	int i;
+	पूर्णांक i;
 
 	(*data)->type = cpu_to_le32(IWL_FW_ERROR_DUMP_CSR);
 	(*data)->len = cpu_to_le32(IWL_CSR_TO_DUMP);
-	val = (void *)(*data)->data;
+	val = (व्योम *)(*data)->data;
 
-	for (i = 0; i < IWL_CSR_TO_DUMP; i += 4)
-		*val++ = cpu_to_le32(iwl_trans_pcie_read32(trans, i));
+	क्रम (i = 0; i < IWL_CSR_TO_DUMP; i += 4)
+		*val++ = cpu_to_le32(iwl_trans_pcie_पढ़ो32(trans, i));
 
 	*data = iwl_fw_error_next_data(*data);
 
-	return csr_len;
-}
+	वापस csr_len;
+पूर्ण
 
-static u32 iwl_trans_pcie_fh_regs_dump(struct iwl_trans *trans,
-				       struct iwl_fw_error_dump_data **data)
-{
+अटल u32 iwl_trans_pcie_fh_regs_dump(काष्ठा iwl_trans *trans,
+				       काष्ठा iwl_fw_error_dump_data **data)
+अणु
 	u32 fh_regs_len = FH_MEM_UPPER_BOUND - FH_MEM_LOWER_BOUND;
 	__le32 *val;
-	int i;
+	पूर्णांक i;
 
-	if (!iwl_trans_grab_nic_access(trans))
-		return 0;
+	अगर (!iwl_trans_grab_nic_access(trans))
+		वापस 0;
 
 	(*data)->type = cpu_to_le32(IWL_FW_ERROR_DUMP_FH_REGS);
 	(*data)->len = cpu_to_le32(fh_regs_len);
-	val = (void *)(*data)->data;
+	val = (व्योम *)(*data)->data;
 
-	if (!trans->trans_cfg->gen2)
-		for (i = FH_MEM_LOWER_BOUND; i < FH_MEM_UPPER_BOUND;
-		     i += sizeof(u32))
-			*val++ = cpu_to_le32(iwl_trans_pcie_read32(trans, i));
-	else
-		for (i = iwl_umac_prph(trans, FH_MEM_LOWER_BOUND_GEN2);
+	अगर (!trans->trans_cfg->gen2)
+		क्रम (i = FH_MEM_LOWER_BOUND; i < FH_MEM_UPPER_BOUND;
+		     i += माप(u32))
+			*val++ = cpu_to_le32(iwl_trans_pcie_पढ़ो32(trans, i));
+	अन्यथा
+		क्रम (i = iwl_umac_prph(trans, FH_MEM_LOWER_BOUND_GEN2);
 		     i < iwl_umac_prph(trans, FH_MEM_UPPER_BOUND_GEN2);
-		     i += sizeof(u32))
-			*val++ = cpu_to_le32(iwl_trans_pcie_read_prph(trans,
+		     i += माप(u32))
+			*val++ = cpu_to_le32(iwl_trans_pcie_पढ़ो_prph(trans,
 								      i));
 
 	iwl_trans_release_nic_access(trans);
 
 	*data = iwl_fw_error_next_data(*data);
 
-	return sizeof(**data) + fh_regs_len;
-}
+	वापस माप(**data) + fh_regs_len;
+पूर्ण
 
-static u32
-iwl_trans_pci_dump_marbh_monitor(struct iwl_trans *trans,
-				 struct iwl_fw_error_dump_fw_mon *fw_mon_data,
+अटल u32
+iwl_trans_pci_dump_marbh_monitor(काष्ठा iwl_trans *trans,
+				 काष्ठा iwl_fw_error_dump_fw_mon *fw_mon_data,
 				 u32 monitor_len)
-{
+अणु
 	u32 buf_size_in_dwords = (monitor_len >> 2);
 	u32 *buffer = (u32 *)fw_mon_data->data;
 	u32 i;
 
-	if (!iwl_trans_grab_nic_access(trans))
-		return 0;
+	अगर (!iwl_trans_grab_nic_access(trans))
+		वापस 0;
 
-	iwl_write_umac_prph_no_grab(trans, MON_DMARB_RD_CTL_ADDR, 0x1);
-	for (i = 0; i < buf_size_in_dwords; i++)
-		buffer[i] = iwl_read_umac_prph_no_grab(trans,
+	iwl_ग_लिखो_umac_prph_no_grab(trans, MON_DMARB_RD_CTL_ADDR, 0x1);
+	क्रम (i = 0; i < buf_size_in_dwords; i++)
+		buffer[i] = iwl_पढ़ो_umac_prph_no_grab(trans,
 						       MON_DMARB_RD_DATA_ADDR);
-	iwl_write_umac_prph_no_grab(trans, MON_DMARB_RD_CTL_ADDR, 0x0);
+	iwl_ग_लिखो_umac_prph_no_grab(trans, MON_DMARB_RD_CTL_ADDR, 0x0);
 
 	iwl_trans_release_nic_access(trans);
 
-	return monitor_len;
-}
+	वापस monitor_len;
+पूर्ण
 
-static void
-iwl_trans_pcie_dump_pointers(struct iwl_trans *trans,
-			     struct iwl_fw_error_dump_fw_mon *fw_mon_data)
-{
-	u32 base, base_high, write_ptr, write_ptr_val, wrap_cnt;
+अटल व्योम
+iwl_trans_pcie_dump_poपूर्णांकers(काष्ठा iwl_trans *trans,
+			     काष्ठा iwl_fw_error_dump_fw_mon *fw_mon_data)
+अणु
+	u32 base, base_high, ग_लिखो_ptr, ग_लिखो_ptr_val, wrap_cnt;
 
-	if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210) {
+	अगर (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210) अणु
 		base = DBGC_CUR_DBGBUF_BASE_ADDR_LSB;
 		base_high = DBGC_CUR_DBGBUF_BASE_ADDR_MSB;
-		write_ptr = DBGC_CUR_DBGBUF_STATUS;
+		ग_लिखो_ptr = DBGC_CUR_DBGBUF_STATUS;
 		wrap_cnt = DBGC_DBGBUF_WRAP_AROUND;
-	} else if (trans->dbg.dest_tlv) {
-		write_ptr = le32_to_cpu(trans->dbg.dest_tlv->write_ptr_reg);
+	पूर्ण अन्यथा अगर (trans->dbg.dest_tlv) अणु
+		ग_लिखो_ptr = le32_to_cpu(trans->dbg.dest_tlv->ग_लिखो_ptr_reg);
 		wrap_cnt = le32_to_cpu(trans->dbg.dest_tlv->wrap_count);
 		base = le32_to_cpu(trans->dbg.dest_tlv->base_reg);
-	} else {
+	पूर्ण अन्यथा अणु
 		base = MON_BUFF_BASE_ADDR;
-		write_ptr = MON_BUFF_WRPTR;
+		ग_लिखो_ptr = MON_BUFF_WRPTR;
 		wrap_cnt = MON_BUFF_CYCLE_CNT;
-	}
+	पूर्ण
 
-	write_ptr_val = iwl_read_prph(trans, write_ptr);
+	ग_लिखो_ptr_val = iwl_पढ़ो_prph(trans, ग_लिखो_ptr);
 	fw_mon_data->fw_mon_cycle_cnt =
-		cpu_to_le32(iwl_read_prph(trans, wrap_cnt));
+		cpu_to_le32(iwl_पढ़ो_prph(trans, wrap_cnt));
 	fw_mon_data->fw_mon_base_ptr =
-		cpu_to_le32(iwl_read_prph(trans, base));
-	if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210) {
+		cpu_to_le32(iwl_पढ़ो_prph(trans, base));
+	अगर (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210) अणु
 		fw_mon_data->fw_mon_base_high_ptr =
-			cpu_to_le32(iwl_read_prph(trans, base_high));
-		write_ptr_val &= DBGC_CUR_DBGBUF_STATUS_OFFSET_MSK;
+			cpu_to_le32(iwl_पढ़ो_prph(trans, base_high));
+		ग_लिखो_ptr_val &= DBGC_CUR_DBGBUF_STATUS_OFFSET_MSK;
 		/* convert wrtPtr to DWs, to align with all HWs */
-		write_ptr_val >>= 2;
-	}
-	fw_mon_data->fw_mon_wr_ptr = cpu_to_le32(write_ptr_val);
-}
+		ग_लिखो_ptr_val >>= 2;
+	पूर्ण
+	fw_mon_data->fw_mon_wr_ptr = cpu_to_le32(ग_लिखो_ptr_val);
+पूर्ण
 
-static u32
-iwl_trans_pcie_dump_monitor(struct iwl_trans *trans,
-			    struct iwl_fw_error_dump_data **data,
+अटल u32
+iwl_trans_pcie_dump_monitor(काष्ठा iwl_trans *trans,
+			    काष्ठा iwl_fw_error_dump_data **data,
 			    u32 monitor_len)
-{
-	struct iwl_dram_data *fw_mon = &trans->dbg.fw_mon;
+अणु
+	काष्ठा iwl_dram_data *fw_mon = &trans->dbg.fw_mon;
 	u32 len = 0;
 
-	if (trans->dbg.dest_tlv ||
+	अगर (trans->dbg.dest_tlv ||
 	    (fw_mon->size &&
 	     (trans->trans_cfg->device_family == IWL_DEVICE_FAMILY_7000 ||
-	      trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210))) {
-		struct iwl_fw_error_dump_fw_mon *fw_mon_data;
+	      trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210))) अणु
+		काष्ठा iwl_fw_error_dump_fw_mon *fw_mon_data;
 
 		(*data)->type = cpu_to_le32(IWL_FW_ERROR_DUMP_FW_MONITOR);
-		fw_mon_data = (void *)(*data)->data;
+		fw_mon_data = (व्योम *)(*data)->data;
 
-		iwl_trans_pcie_dump_pointers(trans, fw_mon_data);
+		iwl_trans_pcie_dump_poपूर्णांकers(trans, fw_mon_data);
 
-		len += sizeof(**data) + sizeof(*fw_mon_data);
-		if (fw_mon->size) {
-			memcpy(fw_mon_data->data, fw_mon->block, fw_mon->size);
+		len += माप(**data) + माप(*fw_mon_data);
+		अगर (fw_mon->size) अणु
+			स_नकल(fw_mon_data->data, fw_mon->block, fw_mon->size);
 			monitor_len = fw_mon->size;
-		} else if (trans->dbg.dest_tlv->monitor_mode == SMEM_MODE) {
+		पूर्ण अन्यथा अगर (trans->dbg.dest_tlv->monitor_mode == SMEM_MODE) अणु
 			u32 base = le32_to_cpu(fw_mon_data->fw_mon_base_ptr);
 			/*
-			 * Update pointers to reflect actual values after
-			 * shifting
+			 * Update poपूर्णांकers to reflect actual values after
+			 * shअगरting
 			 */
-			if (trans->dbg.dest_tlv->version) {
-				base = (iwl_read_prph(trans, base) &
+			अगर (trans->dbg.dest_tlv->version) अणु
+				base = (iwl_पढ़ो_prph(trans, base) &
 					IWL_LDBG_M2S_BUF_BA_MSK) <<
-				       trans->dbg.dest_tlv->base_shift;
+				       trans->dbg.dest_tlv->base_shअगरt;
 				base *= IWL_M2S_UNIT_SIZE;
 				base += trans->cfg->smem_offset;
-			} else {
-				base = iwl_read_prph(trans, base) <<
-				       trans->dbg.dest_tlv->base_shift;
-			}
+			पूर्ण अन्यथा अणु
+				base = iwl_पढ़ो_prph(trans, base) <<
+				       trans->dbg.dest_tlv->base_shअगरt;
+			पूर्ण
 
-			iwl_trans_read_mem(trans, base, fw_mon_data->data,
-					   monitor_len / sizeof(u32));
-		} else if (trans->dbg.dest_tlv->monitor_mode == MARBH_MODE) {
+			iwl_trans_पढ़ो_mem(trans, base, fw_mon_data->data,
+					   monitor_len / माप(u32));
+		पूर्ण अन्यथा अगर (trans->dbg.dest_tlv->monitor_mode == MARBH_MODE) अणु
 			monitor_len =
 				iwl_trans_pci_dump_marbh_monitor(trans,
 								 fw_mon_data,
 								 monitor_len);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Didn't match anything - output no monitor data */
 			monitor_len = 0;
-		}
+		पूर्ण
 
 		len += monitor_len;
-		(*data)->len = cpu_to_le32(monitor_len + sizeof(*fw_mon_data));
-	}
+		(*data)->len = cpu_to_le32(monitor_len + माप(*fw_mon_data));
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int iwl_trans_get_fw_monitor_len(struct iwl_trans *trans, u32 *len)
-{
-	if (trans->dbg.fw_mon.size) {
-		*len += sizeof(struct iwl_fw_error_dump_data) +
-			sizeof(struct iwl_fw_error_dump_fw_mon) +
+अटल पूर्णांक iwl_trans_get_fw_monitor_len(काष्ठा iwl_trans *trans, u32 *len)
+अणु
+	अगर (trans->dbg.fw_mon.size) अणु
+		*len += माप(काष्ठा iwl_fw_error_dump_data) +
+			माप(काष्ठा iwl_fw_error_dump_fw_mon) +
 			trans->dbg.fw_mon.size;
-		return trans->dbg.fw_mon.size;
-	} else if (trans->dbg.dest_tlv) {
+		वापस trans->dbg.fw_mon.size;
+	पूर्ण अन्यथा अगर (trans->dbg.dest_tlv) अणु
 		u32 base, end, cfg_reg, monitor_len;
 
-		if (trans->dbg.dest_tlv->version == 1) {
+		अगर (trans->dbg.dest_tlv->version == 1) अणु
 			cfg_reg = le32_to_cpu(trans->dbg.dest_tlv->base_reg);
-			cfg_reg = iwl_read_prph(trans, cfg_reg);
+			cfg_reg = iwl_पढ़ो_prph(trans, cfg_reg);
 			base = (cfg_reg & IWL_LDBG_M2S_BUF_BA_MSK) <<
-				trans->dbg.dest_tlv->base_shift;
+				trans->dbg.dest_tlv->base_shअगरt;
 			base *= IWL_M2S_UNIT_SIZE;
 			base += trans->cfg->smem_offset;
 
 			monitor_len =
 				(cfg_reg & IWL_LDBG_M2S_BUF_SIZE_MSK) >>
-				trans->dbg.dest_tlv->end_shift;
+				trans->dbg.dest_tlv->end_shअगरt;
 			monitor_len *= IWL_M2S_UNIT_SIZE;
-		} else {
+		पूर्ण अन्यथा अणु
 			base = le32_to_cpu(trans->dbg.dest_tlv->base_reg);
 			end = le32_to_cpu(trans->dbg.dest_tlv->end_reg);
 
-			base = iwl_read_prph(trans, base) <<
-			       trans->dbg.dest_tlv->base_shift;
-			end = iwl_read_prph(trans, end) <<
-			      trans->dbg.dest_tlv->end_shift;
+			base = iwl_पढ़ो_prph(trans, base) <<
+			       trans->dbg.dest_tlv->base_shअगरt;
+			end = iwl_पढ़ो_prph(trans, end) <<
+			      trans->dbg.dest_tlv->end_shअगरt;
 
-			/* Make "end" point to the actual end */
-			if (trans->trans_cfg->device_family >=
+			/* Make "end" poपूर्णांक to the actual end */
+			अगर (trans->trans_cfg->device_family >=
 			    IWL_DEVICE_FAMILY_8000 ||
 			    trans->dbg.dest_tlv->monitor_mode == MARBH_MODE)
-				end += (1 << trans->dbg.dest_tlv->end_shift);
+				end += (1 << trans->dbg.dest_tlv->end_shअगरt);
 			monitor_len = end - base;
-		}
-		*len += sizeof(struct iwl_fw_error_dump_data) +
-			sizeof(struct iwl_fw_error_dump_fw_mon) +
+		पूर्ण
+		*len += माप(काष्ठा iwl_fw_error_dump_data) +
+			माप(काष्ठा iwl_fw_error_dump_fw_mon) +
 			monitor_len;
-		return monitor_len;
-	}
-	return 0;
-}
+		वापस monitor_len;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct iwl_trans_dump_data
-*iwl_trans_pcie_dump_data(struct iwl_trans *trans,
+अटल काष्ठा iwl_trans_dump_data
+*iwl_trans_pcie_dump_data(काष्ठा iwl_trans *trans,
 			  u32 dump_mask)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	struct iwl_fw_error_dump_data *data;
-	struct iwl_txq *cmdq = trans->txqs.txq[trans->txqs.cmd.q_id];
-	struct iwl_fw_error_dump_txcmd *txcmd;
-	struct iwl_trans_dump_data *dump_data;
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	काष्ठा iwl_fw_error_dump_data *data;
+	काष्ठा iwl_txq *cmdq = trans->txqs.txq[trans->txqs.cmd.q_id];
+	काष्ठा iwl_fw_error_dump_txcmd *txcmd;
+	काष्ठा iwl_trans_dump_data *dump_data;
 	u32 len, num_rbs = 0, monitor_len = 0;
-	int i, ptr;
+	पूर्णांक i, ptr;
 	bool dump_rbs = test_bit(STATUS_FW_ERROR, &trans->status) &&
 			!trans->trans_cfg->mq_rx_supported &&
 			dump_mask & BIT(IWL_FW_ERROR_DUMP_RB);
 
-	if (!dump_mask)
-		return NULL;
+	अगर (!dump_mask)
+		वापस शून्य;
 
 	/* transport dump header */
-	len = sizeof(*dump_data);
+	len = माप(*dump_data);
 
 	/* host commands */
-	if (dump_mask & BIT(IWL_FW_ERROR_DUMP_TXCMD) && cmdq)
-		len += sizeof(*data) +
-			cmdq->n_window * (sizeof(*txcmd) +
+	अगर (dump_mask & BIT(IWL_FW_ERROR_DUMP_TXCMD) && cmdq)
+		len += माप(*data) +
+			cmdq->n_winकरोw * (माप(*txcmd) +
 					  TFD_MAX_PAYLOAD_SIZE);
 
 	/* FW monitor */
-	if (dump_mask & BIT(IWL_FW_ERROR_DUMP_FW_MONITOR))
+	अगर (dump_mask & BIT(IWL_FW_ERROR_DUMP_FW_MONITOR))
 		monitor_len = iwl_trans_get_fw_monitor_len(trans, &len);
 
-	/* CSR registers */
-	if (dump_mask & BIT(IWL_FW_ERROR_DUMP_CSR))
-		len += sizeof(*data) + IWL_CSR_TO_DUMP;
+	/* CSR रेजिस्टरs */
+	अगर (dump_mask & BIT(IWL_FW_ERROR_DUMP_CSR))
+		len += माप(*data) + IWL_CSR_TO_DUMP;
 
-	/* FH registers */
-	if (dump_mask & BIT(IWL_FW_ERROR_DUMP_FH_REGS)) {
-		if (trans->trans_cfg->gen2)
-			len += sizeof(*data) +
+	/* FH रेजिस्टरs */
+	अगर (dump_mask & BIT(IWL_FW_ERROR_DUMP_FH_REGS)) अणु
+		अगर (trans->trans_cfg->gen2)
+			len += माप(*data) +
 			       (iwl_umac_prph(trans, FH_MEM_UPPER_BOUND_GEN2) -
 				iwl_umac_prph(trans, FH_MEM_LOWER_BOUND_GEN2));
-		else
-			len += sizeof(*data) +
+		अन्यथा
+			len += माप(*data) +
 			       (FH_MEM_UPPER_BOUND -
 				FH_MEM_LOWER_BOUND);
-	}
+	पूर्ण
 
-	if (dump_rbs) {
-		/* Dump RBs is supported only for pre-9000 devices (1 queue) */
-		struct iwl_rxq *rxq = &trans_pcie->rxq[0];
+	अगर (dump_rbs) अणु
+		/* Dump RBs is supported only क्रम pre-9000 devices (1 queue) */
+		काष्ठा iwl_rxq *rxq = &trans_pcie->rxq[0];
 		/* RBs */
 		num_rbs =
-			le16_to_cpu(iwl_get_closed_rb_stts(trans, rxq))
+			le16_to_cpu(iwl_get_बंदd_rb_stts(trans, rxq))
 			& 0x0FFF;
-		num_rbs = (num_rbs - rxq->read) & RX_QUEUE_MASK;
-		len += num_rbs * (sizeof(*data) +
-				  sizeof(struct iwl_fw_error_dump_rb) +
+		num_rbs = (num_rbs - rxq->पढ़ो) & RX_QUEUE_MASK;
+		len += num_rbs * (माप(*data) +
+				  माप(काष्ठा iwl_fw_error_dump_rb) +
 				  (PAGE_SIZE << trans_pcie->rx_page_order));
-	}
+	पूर्ण
 
-	/* Paged memory for gen2 HW */
-	if (trans->trans_cfg->gen2 && dump_mask & BIT(IWL_FW_ERROR_DUMP_PAGING))
-		for (i = 0; i < trans->init_dram.paging_cnt; i++)
-			len += sizeof(*data) +
-			       sizeof(struct iwl_fw_error_dump_paging) +
+	/* Paged memory क्रम gen2 HW */
+	अगर (trans->trans_cfg->gen2 && dump_mask & BIT(IWL_FW_ERROR_DUMP_PAGING))
+		क्रम (i = 0; i < trans->init_dram.paging_cnt; i++)
+			len += माप(*data) +
+			       माप(काष्ठा iwl_fw_error_dump_paging) +
 			       trans->init_dram.paging[i].size;
 
 	dump_data = vzalloc(len);
-	if (!dump_data)
-		return NULL;
+	अगर (!dump_data)
+		वापस शून्य;
 
 	len = 0;
-	data = (void *)dump_data->data;
+	data = (व्योम *)dump_data->data;
 
-	if (dump_mask & BIT(IWL_FW_ERROR_DUMP_TXCMD) && cmdq) {
+	अगर (dump_mask & BIT(IWL_FW_ERROR_DUMP_TXCMD) && cmdq) अणु
 		u16 tfd_size = trans->txqs.tfd.size;
 
 		data->type = cpu_to_le32(IWL_FW_ERROR_DUMP_TXCMD);
-		txcmd = (void *)data->data;
+		txcmd = (व्योम *)data->data;
 		spin_lock_bh(&cmdq->lock);
-		ptr = cmdq->write_ptr;
-		for (i = 0; i < cmdq->n_window; i++) {
+		ptr = cmdq->ग_लिखो_ptr;
+		क्रम (i = 0; i < cmdq->n_winकरोw; i++) अणु
 			u8 idx = iwl_txq_get_cmd_index(cmdq, ptr);
 			u8 tfdidx;
 			u32 caplen, cmdlen;
 
-			if (trans->trans_cfg->use_tfh)
+			अगर (trans->trans_cfg->use_tfh)
 				tfdidx = idx;
-			else
+			अन्यथा
 				tfdidx = ptr;
 
 			cmdlen = iwl_trans_pcie_get_cmdlen(trans,
@@ -3258,91 +3259,91 @@ static struct iwl_trans_dump_data
 							   tfd_size * tfdidx);
 			caplen = min_t(u32, TFD_MAX_PAYLOAD_SIZE, cmdlen);
 
-			if (cmdlen) {
-				len += sizeof(*txcmd) + caplen;
+			अगर (cmdlen) अणु
+				len += माप(*txcmd) + caplen;
 				txcmd->cmdlen = cpu_to_le32(cmdlen);
 				txcmd->caplen = cpu_to_le32(caplen);
-				memcpy(txcmd->data, cmdq->entries[idx].cmd,
+				स_नकल(txcmd->data, cmdq->entries[idx].cmd,
 				       caplen);
-				txcmd = (void *)((u8 *)txcmd->data + caplen);
-			}
+				txcmd = (व्योम *)((u8 *)txcmd->data + caplen);
+			पूर्ण
 
 			ptr = iwl_txq_dec_wrap(trans, ptr);
-		}
+		पूर्ण
 		spin_unlock_bh(&cmdq->lock);
 
 		data->len = cpu_to_le32(len);
-		len += sizeof(*data);
+		len += माप(*data);
 		data = iwl_fw_error_next_data(data);
-	}
+	पूर्ण
 
-	if (dump_mask & BIT(IWL_FW_ERROR_DUMP_CSR))
+	अगर (dump_mask & BIT(IWL_FW_ERROR_DUMP_CSR))
 		len += iwl_trans_pcie_dump_csr(trans, &data);
-	if (dump_mask & BIT(IWL_FW_ERROR_DUMP_FH_REGS))
+	अगर (dump_mask & BIT(IWL_FW_ERROR_DUMP_FH_REGS))
 		len += iwl_trans_pcie_fh_regs_dump(trans, &data);
-	if (dump_rbs)
+	अगर (dump_rbs)
 		len += iwl_trans_pcie_dump_rbs(trans, &data, num_rbs);
 
-	/* Paged memory for gen2 HW */
-	if (trans->trans_cfg->gen2 &&
-	    dump_mask & BIT(IWL_FW_ERROR_DUMP_PAGING)) {
-		for (i = 0; i < trans->init_dram.paging_cnt; i++) {
-			struct iwl_fw_error_dump_paging *paging;
+	/* Paged memory क्रम gen2 HW */
+	अगर (trans->trans_cfg->gen2 &&
+	    dump_mask & BIT(IWL_FW_ERROR_DUMP_PAGING)) अणु
+		क्रम (i = 0; i < trans->init_dram.paging_cnt; i++) अणु
+			काष्ठा iwl_fw_error_dump_paging *paging;
 			u32 page_len = trans->init_dram.paging[i].size;
 
 			data->type = cpu_to_le32(IWL_FW_ERROR_DUMP_PAGING);
-			data->len = cpu_to_le32(sizeof(*paging) + page_len);
-			paging = (void *)data->data;
+			data->len = cpu_to_le32(माप(*paging) + page_len);
+			paging = (व्योम *)data->data;
 			paging->index = cpu_to_le32(i);
-			memcpy(paging->data,
+			स_नकल(paging->data,
 			       trans->init_dram.paging[i].block, page_len);
 			data = iwl_fw_error_next_data(data);
 
-			len += sizeof(*data) + sizeof(*paging) + page_len;
-		}
-	}
-	if (dump_mask & BIT(IWL_FW_ERROR_DUMP_FW_MONITOR))
+			len += माप(*data) + माप(*paging) + page_len;
+		पूर्ण
+	पूर्ण
+	अगर (dump_mask & BIT(IWL_FW_ERROR_DUMP_FW_MONITOR))
 		len += iwl_trans_pcie_dump_monitor(trans, &data, monitor_len);
 
 	dump_data->len = len;
 
-	return dump_data;
-}
+	वापस dump_data;
+पूर्ण
 
-static void iwl_trans_pci_interrupts(struct iwl_trans *trans, bool enable)
-{
-	if (enable)
-		iwl_enable_interrupts(trans);
-	else
-		iwl_disable_interrupts(trans);
-}
+अटल व्योम iwl_trans_pci_पूर्णांकerrupts(काष्ठा iwl_trans *trans, bool enable)
+अणु
+	अगर (enable)
+		iwl_enable_पूर्णांकerrupts(trans);
+	अन्यथा
+		iwl_disable_पूर्णांकerrupts(trans);
+पूर्ण
 
-static void iwl_trans_pcie_sync_nmi(struct iwl_trans *trans)
-{
-	u32 inta_addr, sw_err_bit;
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+अटल व्योम iwl_trans_pcie_sync_nmi(काष्ठा iwl_trans *trans)
+अणु
+	u32 पूर्णांकa_addr, sw_err_bit;
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
-	if (trans_pcie->msix_enabled) {
-		inta_addr = CSR_MSIX_HW_INT_CAUSES_AD;
+	अगर (trans_pcie->msix_enabled) अणु
+		पूर्णांकa_addr = CSR_MSIX_HW_INT_CAUSES_AD;
 		sw_err_bit = MSIX_HW_INT_CAUSES_REG_SW_ERR;
-	} else {
-		inta_addr = CSR_INT;
+	पूर्ण अन्यथा अणु
+		पूर्णांकa_addr = CSR_INT;
 		sw_err_bit = CSR_INT_BIT_SW_ERR;
-	}
+	पूर्ण
 
-	iwl_trans_sync_nmi_with_addr(trans, inta_addr, sw_err_bit);
-}
+	iwl_trans_sync_nmi_with_addr(trans, पूर्णांकa_addr, sw_err_bit);
+पूर्ण
 
-#define IWL_TRANS_COMMON_OPS						\
+#घोषणा IWL_TRANS_COMMON_OPS						\
 	.op_mode_leave = iwl_trans_pcie_op_mode_leave,			\
-	.write8 = iwl_trans_pcie_write8,				\
-	.write32 = iwl_trans_pcie_write32,				\
-	.read32 = iwl_trans_pcie_read32,				\
-	.read_prph = iwl_trans_pcie_read_prph,				\
-	.write_prph = iwl_trans_pcie_write_prph,			\
-	.read_mem = iwl_trans_pcie_read_mem,				\
-	.write_mem = iwl_trans_pcie_write_mem,				\
-	.read_config32 = iwl_trans_pcie_read_config32,			\
+	.ग_लिखो8 = iwl_trans_pcie_ग_लिखो8,				\
+	.ग_लिखो32 = iwl_trans_pcie_ग_लिखो32,				\
+	.पढ़ो32 = iwl_trans_pcie_पढ़ो32,				\
+	.पढ़ो_prph = iwl_trans_pcie_पढ़ो_prph,				\
+	.ग_लिखो_prph = iwl_trans_pcie_ग_लिखो_prph,			\
+	.पढ़ो_mem = iwl_trans_pcie_पढ़ो_mem,				\
+	.ग_लिखो_mem = iwl_trans_pcie_ग_लिखो_mem,				\
+	.पढ़ो_config32 = iwl_trans_pcie_पढ़ो_config32,			\
 	.configure = iwl_trans_pcie_configure,				\
 	.set_pmi = iwl_trans_pcie_set_pmi,				\
 	.sw_reset = iwl_trans_pcie_sw_reset,				\
@@ -3352,10 +3353,10 @@ static void iwl_trans_pcie_sync_nmi(struct iwl_trans *trans)
 	.dump_data = iwl_trans_pcie_dump_data,				\
 	.d3_suspend = iwl_trans_pcie_d3_suspend,			\
 	.d3_resume = iwl_trans_pcie_d3_resume,				\
-	.interrupts = iwl_trans_pci_interrupts,				\
+	.पूर्णांकerrupts = iwl_trans_pci_पूर्णांकerrupts,				\
 	.sync_nmi = iwl_trans_pcie_sync_nmi				\
 
-static const struct iwl_trans_ops trans_ops_pcie = {
+अटल स्थिर काष्ठा iwl_trans_ops trans_ops_pcie = अणु
 	IWL_TRANS_COMMON_OPS,
 	.start_hw = iwl_trans_pcie_start_hw,
 	.fw_alive = iwl_trans_pcie_fw_alive,
@@ -3372,16 +3373,16 @@ static const struct iwl_trans_ops trans_ops_pcie = {
 
 	.txq_set_shared_mode = iwl_trans_pcie_txq_set_shared_mode,
 
-	.wait_tx_queues_empty = iwl_trans_pcie_wait_txqs_empty,
+	.रुको_tx_queues_empty = iwl_trans_pcie_रुको_txqs_empty,
 
-	.freeze_txq_timer = iwl_trans_txq_freeze_timer,
+	.मुक्तze_txq_समयr = iwl_trans_txq_मुक्तze_समयr,
 	.block_txq_ptrs = iwl_trans_pcie_block_txq_ptrs,
-#ifdef CONFIG_IWLWIFI_DEBUGFS
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
 	.debugfs_cleanup = iwl_trans_pcie_debugfs_cleanup,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct iwl_trans_ops trans_ops_pcie_gen2 = {
+अटल स्थिर काष्ठा iwl_trans_ops trans_ops_pcie_gen2 = अणु
 	IWL_TRANS_COMMON_OPS,
 	.start_hw = iwl_trans_pcie_start_hw,
 	.fw_alive = iwl_trans_pcie_gen2_fw_alive,
@@ -3396,67 +3397,67 @@ static const struct iwl_trans_ops trans_ops_pcie_gen2 = {
 	.set_q_ptrs = iwl_txq_set_q_ptrs,
 
 	.txq_alloc = iwl_txq_dyn_alloc,
-	.txq_free = iwl_txq_dyn_free,
-	.wait_txq_empty = iwl_trans_pcie_wait_txq_empty,
+	.txq_मुक्त = iwl_txq_dyn_मुक्त,
+	.रुको_txq_empty = iwl_trans_pcie_रुको_txq_empty,
 	.rxq_dma_data = iwl_trans_pcie_rxq_dma_data,
 	.set_pnvm = iwl_trans_pcie_ctx_info_gen3_set_pnvm,
-#ifdef CONFIG_IWLWIFI_DEBUGFS
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
 	.debugfs_cleanup = iwl_trans_pcie_debugfs_cleanup,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-struct iwl_trans *iwl_trans_pcie_alloc(struct pci_dev *pdev,
-			       const struct pci_device_id *ent,
-			       const struct iwl_cfg_trans_params *cfg_trans)
-{
-	struct iwl_trans_pcie *trans_pcie;
-	struct iwl_trans *trans;
-	int ret, addr_size;
-	const struct iwl_trans_ops *ops = &trans_ops_pcie_gen2;
+काष्ठा iwl_trans *iwl_trans_pcie_alloc(काष्ठा pci_dev *pdev,
+			       स्थिर काष्ठा pci_device_id *ent,
+			       स्थिर काष्ठा iwl_cfg_trans_params *cfg_trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie;
+	काष्ठा iwl_trans *trans;
+	पूर्णांक ret, addr_size;
+	स्थिर काष्ठा iwl_trans_ops *ops = &trans_ops_pcie_gen2;
 
-	if (!cfg_trans->gen2)
+	अगर (!cfg_trans->gen2)
 		ops = &trans_ops_pcie;
 
 	ret = pcim_enable_device(pdev);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	trans = iwl_trans_alloc(sizeof(struct iwl_trans_pcie), &pdev->dev, ops,
+	trans = iwl_trans_alloc(माप(काष्ठा iwl_trans_pcie), &pdev->dev, ops,
 				cfg_trans);
-	if (!trans)
-		return ERR_PTR(-ENOMEM);
+	अगर (!trans)
+		वापस ERR_PTR(-ENOMEM);
 
 	trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
 	trans_pcie->trans = trans;
-	trans_pcie->opmode_down = true;
+	trans_pcie->opmode_करोwn = true;
 	spin_lock_init(&trans_pcie->irq_lock);
 	spin_lock_init(&trans_pcie->reg_lock);
 	spin_lock_init(&trans_pcie->alloc_page_lock);
 	mutex_init(&trans_pcie->mutex);
-	init_waitqueue_head(&trans_pcie->ucode_write_waitq);
-	init_waitqueue_head(&trans_pcie->fw_reset_waitq);
+	init_रुकोqueue_head(&trans_pcie->ucode_ग_लिखो_रुकोq);
+	init_रुकोqueue_head(&trans_pcie->fw_reset_रुकोq);
 
 	trans_pcie->rba.alloc_wq = alloc_workqueue("rb_allocator",
 						   WQ_HIGHPRI | WQ_UNBOUND, 1);
-	if (!trans_pcie->rba.alloc_wq) {
+	अगर (!trans_pcie->rba.alloc_wq) अणु
 		ret = -ENOMEM;
-		goto out_free_trans;
-	}
+		जाओ out_मुक्त_trans;
+	पूर्ण
 	INIT_WORK(&trans_pcie->rba.rx_alloc, iwl_pcie_rx_allocator_work);
 
-	trans_pcie->debug_rfkill = -1;
+	trans_pcie->debug_rfसमाप्त = -1;
 
-	if (!cfg_trans->base_params->pcie_l1_allowed) {
+	अगर (!cfg_trans->base_params->pcie_l1_allowed) अणु
 		/*
-		 * W/A - seems to solve weird behavior. We need to remove this
-		 * if we don't want to stay in L1 all the time. This wastes a
-		 * lot of power.
+		 * W/A - seems to solve weird behavior. We need to हटाओ this
+		 * अगर we करोn't want to stay in L1 all the समय. This wastes a
+		 * lot of घातer.
 		 */
 		pci_disable_link_state(pdev, PCIE_LINK_STATE_L0S |
 				       PCIE_LINK_STATE_L1 |
 				       PCIE_LINK_STATE_CLKPM);
-	}
+	पूर्ण
 
 	trans_pcie->def_rx_queue = 0;
 
@@ -3464,101 +3465,101 @@ struct iwl_trans *iwl_trans_pcie_alloc(struct pci_dev *pdev,
 
 	addr_size = trans->txqs.tfd.addr_size;
 	ret = pci_set_dma_mask(pdev, DMA_BIT_MASK(addr_size));
-	if (!ret)
+	अगर (!ret)
 		ret = pci_set_consistent_dma_mask(pdev,
 						  DMA_BIT_MASK(addr_size));
-	if (ret) {
+	अगर (ret) अणु
 		ret = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-		if (!ret)
+		अगर (!ret)
 			ret = pci_set_consistent_dma_mask(pdev,
 							  DMA_BIT_MASK(32));
 		/* both attempts failed: */
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "No suitable DMA available\n");
-			goto out_no_pci;
-		}
-	}
+			जाओ out_no_pci;
+		पूर्ण
+	पूर्ण
 
 	ret = pcim_iomap_regions_request_all(pdev, BIT(0), DRV_NAME);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "pcim_iomap_regions_request_all failed\n");
-		goto out_no_pci;
-	}
+		जाओ out_no_pci;
+	पूर्ण
 
 	trans_pcie->hw_base = pcim_iomap_table(pdev)[0];
-	if (!trans_pcie->hw_base) {
+	अगर (!trans_pcie->hw_base) अणु
 		dev_err(&pdev->dev, "pcim_iomap_table failed\n");
 		ret = -ENODEV;
-		goto out_no_pci;
-	}
+		जाओ out_no_pci;
+	पूर्ण
 
-	/* We disable the RETRY_TIMEOUT register (0x41) to keep
-	 * PCI Tx retries from interfering with C3 CPU state */
-	pci_write_config_byte(pdev, PCI_CFG_RETRY_TIMEOUT, 0x00);
+	/* We disable the RETRY_TIMEOUT रेजिस्टर (0x41) to keep
+	 * PCI Tx retries from पूर्णांकerfering with C3 CPU state */
+	pci_ग_लिखो_config_byte(pdev, PCI_CFG_RETRY_TIMEOUT, 0x00);
 
 	trans_pcie->pci_dev = pdev;
-	iwl_disable_interrupts(trans);
+	iwl_disable_पूर्णांकerrupts(trans);
 
-	trans->hw_rev = iwl_read32(trans, CSR_HW_REV);
-	if (trans->hw_rev == 0xffffffff) {
+	trans->hw_rev = iwl_पढ़ो32(trans, CSR_HW_REV);
+	अगर (trans->hw_rev == 0xffffffff) अणु
 		dev_err(&pdev->dev, "HW_REV=0xFFFFFFFF, PCI issues?\n");
 		ret = -EIO;
-		goto out_no_pci;
-	}
+		जाओ out_no_pci;
+	पूर्ण
 
 	/*
-	 * In the 8000 HW family the format of the 4 bytes of CSR_HW_REV have
+	 * In the 8000 HW family the क्रमmat of the 4 bytes of CSR_HW_REV have
 	 * changed, and now the revision step also includes bit 0-1 (no more
 	 * "dash" value). To keep hw_rev backwards compatible - we'll store it
-	 * in the old format.
+	 * in the old क्रमmat.
 	 */
-	if (cfg_trans->device_family >= IWL_DEVICE_FAMILY_8000)
+	अगर (cfg_trans->device_family >= IWL_DEVICE_FAMILY_8000)
 		trans->hw_rev = (trans->hw_rev & 0xfff0) |
 				(CSR_HW_REV_STEP(trans->hw_rev << 2) << 2);
 
 	IWL_DEBUG_INFO(trans, "HW REV: 0x%0x\n", trans->hw_rev);
 
-	iwl_pcie_set_interrupt_capa(pdev, trans, cfg_trans);
-	trans->hw_id = (pdev->device << 16) + pdev->subsystem_device;
-	snprintf(trans->hw_id_str, sizeof(trans->hw_id_str),
-		 "PCI ID: 0x%04X:0x%04X", pdev->device, pdev->subsystem_device);
+	iwl_pcie_set_पूर्णांकerrupt_capa(pdev, trans, cfg_trans);
+	trans->hw_id = (pdev->device << 16) + pdev->subप्रणाली_device;
+	snम_लिखो(trans->hw_id_str, माप(trans->hw_id_str),
+		 "PCI ID: 0x%04X:0x%04X", pdev->device, pdev->subप्रणाली_device);
 
-	init_waitqueue_head(&trans_pcie->sx_waitq);
+	init_रुकोqueue_head(&trans_pcie->sx_रुकोq);
 
 
-	if (trans_pcie->msix_enabled) {
+	अगर (trans_pcie->msix_enabled) अणु
 		ret = iwl_pcie_init_msix_handler(pdev, trans_pcie);
-		if (ret)
-			goto out_no_pci;
-	 } else {
+		अगर (ret)
+			जाओ out_no_pci;
+	 पूर्ण अन्यथा अणु
 		ret = iwl_pcie_alloc_ict(trans);
-		if (ret)
-			goto out_no_pci;
+		अगर (ret)
+			जाओ out_no_pci;
 
-		ret = devm_request_threaded_irq(&pdev->dev, pdev->irq,
+		ret = devm_request_thपढ़ोed_irq(&pdev->dev, pdev->irq,
 						iwl_pcie_isr,
 						iwl_pcie_irq_handler,
 						IRQF_SHARED, DRV_NAME, trans);
-		if (ret) {
+		अगर (ret) अणु
 			IWL_ERR(trans, "Error allocating IRQ %d\n", pdev->irq);
-			goto out_free_ict;
-		}
-	 }
+			जाओ out_मुक्त_ict;
+		पूर्ण
+	 पूर्ण
 
-#ifdef CONFIG_IWLWIFI_DEBUGFS
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
 	trans_pcie->fw_mon_data.state = IWL_FW_MON_DBGFS_STATE_CLOSED;
 	mutex_init(&trans_pcie->fw_mon_data.mutex);
-#endif
+#पूर्ण_अगर
 
 	iwl_dbg_tlv_init(trans);
 
-	return trans;
+	वापस trans;
 
-out_free_ict:
-	iwl_pcie_free_ict(trans);
+out_मुक्त_ict:
+	iwl_pcie_मुक्त_ict(trans);
 out_no_pci:
 	destroy_workqueue(trans_pcie->rba.alloc_wq);
-out_free_trans:
-	iwl_trans_free(trans);
-	return ERR_PTR(ret);
-}
+out_मुक्त_trans:
+	iwl_trans_मुक्त(trans);
+	वापस ERR_PTR(ret);
+पूर्ण

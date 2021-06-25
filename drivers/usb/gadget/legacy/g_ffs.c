@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * g_ffs.c -- user mode file system API for USB composite function controllers
+ * g_ffs.c -- user mode file प्रणाली API क्रम USB composite function controllers
  *
  * Copyright (C) 2010 Samsung Electronics
  * Author: Michal Nazarewicz <mina86@mina86.com>
  */
 
-#define pr_fmt(fmt) "g_ffs: " fmt
+#घोषणा pr_fmt(fmt) "g_ffs: " fmt
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#if defined CONFIG_USB_FUNCTIONFS_ETH || defined CONFIG_USB_FUNCTIONFS_RNDIS
-#include <linux/netdevice.h>
+#अगर defined CONFIG_USB_FUNCTIONFS_ETH || defined CONFIG_USB_FUNCTIONFS_RNDIS
+#समावेश <linux/netdevice.h>
 
-#  if defined USB_ETH_RNDIS
+#  अगर defined USB_ETH_RNDIS
 #    undef USB_ETH_RNDIS
-#  endif
-#  ifdef CONFIG_USB_FUNCTIONFS_RNDIS
+#  endअगर
+#  अगरdef CONFIG_USB_FUNCTIONFS_RNDIS
 #    define USB_ETH_RNDIS y
-#  endif
+#  endअगर
 
 #  include "u_ecm.h"
 #  include "u_gether.h"
-#  ifdef USB_ETH_RNDIS
+#  अगरdef USB_ETH_RNDIS
 #    include "u_rndis.h"
 #    include "rndis.h"
-#  endif
+#  endअगर
 #  include "u_ether.h"
 
 USB_ETHERNET_MODULE_PARAMETERS();
 
-#  ifdef CONFIG_USB_FUNCTIONFS_ETH
-static int eth_bind_config(struct usb_configuration *c);
-static struct usb_function_instance *fi_ecm;
-static struct usb_function *f_ecm;
-static struct usb_function_instance *fi_geth;
-static struct usb_function *f_geth;
-#  endif
-#  ifdef CONFIG_USB_FUNCTIONFS_RNDIS
-static int bind_rndis_config(struct usb_configuration *c);
-static struct usb_function_instance *fi_rndis;
-static struct usb_function *f_rndis;
-#  endif
-#endif
+#  अगरdef CONFIG_USB_FUNCTIONFS_ETH
+अटल पूर्णांक eth_bind_config(काष्ठा usb_configuration *c);
+अटल काष्ठा usb_function_instance *fi_ecm;
+अटल काष्ठा usb_function *f_ecm;
+अटल काष्ठा usb_function_instance *fi_geth;
+अटल काष्ठा usb_function *f_geth;
+#  endअगर
+#  अगरdef CONFIG_USB_FUNCTIONFS_RNDIS
+अटल पूर्णांक bind_rndis_config(काष्ठा usb_configuration *c);
+अटल काष्ठा usb_function_instance *fi_rndis;
+अटल काष्ठा usb_function *f_rndis;
+#  endअगर
+#पूर्ण_अगर
 
-#include "u_fs.h"
+#समावेश "u_fs.h"
 
-#define DRIVER_NAME	"g_ffs"
-#define DRIVER_DESC	"USB Function Filesystem"
-#define DRIVER_VERSION	"24 Aug 2004"
+#घोषणा DRIVER_NAME	"g_ffs"
+#घोषणा DRIVER_DESC	"USB Function Filesystem"
+#घोषणा DRIVER_VERSION	"24 Aug 2004"
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR("Michal Nazarewicz");
 MODULE_LICENSE("GPL");
 
-#define GFS_VENDOR_ID	0x1d6b	/* Linux Foundation */
-#define GFS_PRODUCT_ID	0x0105	/* FunctionFS Gadget */
+#घोषणा GFS_VENDOR_ID	0x1d6b	/* Linux Foundation */
+#घोषणा GFS_PRODUCT_ID	0x0105	/* FunctionFS Gadget */
 
-#define GFS_MAX_DEVS	10
+#घोषणा GFS_MAX_DEVS	10
 
 USB_GADGET_COMPOSITE_OPTIONS();
 
-static struct usb_device_descriptor gfs_dev_desc = {
-	.bLength		= sizeof gfs_dev_desc,
+अटल काष्ठा usb_device_descriptor gfs_dev_desc = अणु
+	.bLength		= माप gfs_dev_desc,
 	.bDescriptorType	= USB_DT_DEVICE,
 
 	/* .bcdUSB = DYNAMIC */
 	.bDeviceClass		= USB_CLASS_PER_INTERFACE,
 
-	.idVendor		= cpu_to_le16(GFS_VENDOR_ID),
+	.idVenकरोr		= cpu_to_le16(GFS_VENDOR_ID),
 	.idProduct		= cpu_to_le16(GFS_PRODUCT_ID),
-};
+पूर्ण;
 
-static char *func_names[GFS_MAX_DEVS];
-static unsigned int func_num;
+अटल अक्षर *func_names[GFS_MAX_DEVS];
+अटल अचिन्हित पूर्णांक func_num;
 
 module_param_named(bDeviceClass,    gfs_dev_desc.bDeviceClass,    byte,   0644);
 MODULE_PARM_DESC(bDeviceClass, "USB Device class");
@@ -81,330 +82,330 @@ module_param_named(bDeviceSubClass, gfs_dev_desc.bDeviceSubClass, byte,   0644);
 MODULE_PARM_DESC(bDeviceSubClass, "USB Device subclass");
 module_param_named(bDeviceProtocol, gfs_dev_desc.bDeviceProtocol, byte,   0644);
 MODULE_PARM_DESC(bDeviceProtocol, "USB Device protocol");
-module_param_array_named(functions, func_names, charp, &func_num, 0);
+module_param_array_named(functions, func_names, अक्षरp, &func_num, 0);
 MODULE_PARM_DESC(functions, "USB Functions list");
 
-static const struct usb_descriptor_header *gfs_otg_desc[2];
+अटल स्थिर काष्ठा usb_descriptor_header *gfs_otg_desc[2];
 
-/* String IDs are assigned dynamically */
-static struct usb_string gfs_strings[] = {
+/* String IDs are asचिन्हित dynamically */
+अटल काष्ठा usb_string gfs_strings[] = अणु
 	[USB_GADGET_MANUFACTURER_IDX].s = "",
 	[USB_GADGET_PRODUCT_IDX].s = DRIVER_DESC,
 	[USB_GADGET_SERIAL_IDX].s = "",
-#ifdef CONFIG_USB_FUNCTIONFS_RNDIS
-	{ .s = "FunctionFS + RNDIS" },
-#endif
-#ifdef CONFIG_USB_FUNCTIONFS_ETH
-	{ .s = "FunctionFS + ECM" },
-#endif
-#ifdef CONFIG_USB_FUNCTIONFS_GENERIC
-	{ .s = "FunctionFS" },
-#endif
-	{  } /* end of list */
-};
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_RNDIS
+	अणु .s = "FunctionFS + RNDIS" पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_ETH
+	अणु .s = "FunctionFS + ECM" पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_GENERIC
+	अणु .s = "FunctionFS" पूर्ण,
+#पूर्ण_अगर
+	अणु  पूर्ण /* end of list */
+पूर्ण;
 
-static struct usb_gadget_strings *gfs_dev_strings[] = {
-	&(struct usb_gadget_strings) {
+अटल काष्ठा usb_gadget_strings *gfs_dev_strings[] = अणु
+	&(काष्ठा usb_gadget_strings) अणु
 		.language	= 0x0409,	/* en-us */
 		.strings	= gfs_strings,
-	},
-	NULL,
-};
+	पूर्ण,
+	शून्य,
+पूर्ण;
 
-struct gfs_configuration {
-	struct usb_configuration c;
-	int (*eth)(struct usb_configuration *c);
-	int num;
-};
+काष्ठा gfs_configuration अणु
+	काष्ठा usb_configuration c;
+	पूर्णांक (*eth)(काष्ठा usb_configuration *c);
+	पूर्णांक num;
+पूर्ण;
 
-static struct gfs_configuration gfs_configurations[] = {
-#ifdef CONFIG_USB_FUNCTIONFS_RNDIS
-	{
+अटल काष्ठा gfs_configuration gfs_configurations[] = अणु
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_RNDIS
+	अणु
 		.eth		= bind_rndis_config,
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 
-#ifdef CONFIG_USB_FUNCTIONFS_ETH
-	{
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_ETH
+	अणु
 		.eth		= eth_bind_config,
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 
-#ifdef CONFIG_USB_FUNCTIONFS_GENERIC
-	{
-	},
-#endif
-};
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_GENERIC
+	अणु
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static void *functionfs_acquire_dev(struct ffs_dev *dev);
-static void functionfs_release_dev(struct ffs_dev *dev);
-static int functionfs_ready_callback(struct ffs_data *ffs);
-static void functionfs_closed_callback(struct ffs_data *ffs);
-static int gfs_bind(struct usb_composite_dev *cdev);
-static int gfs_unbind(struct usb_composite_dev *cdev);
-static int gfs_do_config(struct usb_configuration *c);
+अटल व्योम *functionfs_acquire_dev(काष्ठा ffs_dev *dev);
+अटल व्योम functionfs_release_dev(काष्ठा ffs_dev *dev);
+अटल पूर्णांक functionfs_पढ़ोy_callback(काष्ठा ffs_data *ffs);
+अटल व्योम functionfs_बंदd_callback(काष्ठा ffs_data *ffs);
+अटल पूर्णांक gfs_bind(काष्ठा usb_composite_dev *cdev);
+अटल पूर्णांक gfs_unbind(काष्ठा usb_composite_dev *cdev);
+अटल पूर्णांक gfs_करो_config(काष्ठा usb_configuration *c);
 
 
-static struct usb_composite_driver gfs_driver = {
+अटल काष्ठा usb_composite_driver gfs_driver = अणु
 	.name		= DRIVER_NAME,
 	.dev		= &gfs_dev_desc,
 	.strings	= gfs_dev_strings,
 	.max_speed	= USB_SPEED_SUPER,
 	.bind		= gfs_bind,
 	.unbind		= gfs_unbind,
-};
+पूर्ण;
 
-static unsigned int missing_funcs;
-static bool gfs_registered;
-static bool gfs_single_func;
-static struct usb_function_instance **fi_ffs;
-static struct usb_function **f_ffs[] = {
-#ifdef CONFIG_USB_FUNCTIONFS_RNDIS
-	NULL,
-#endif
+अटल अचिन्हित पूर्णांक missing_funcs;
+अटल bool gfs_रेजिस्टरed;
+अटल bool gfs_single_func;
+अटल काष्ठा usb_function_instance **fi_ffs;
+अटल काष्ठा usb_function **f_ffs[] = अणु
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_RNDIS
+	शून्य,
+#पूर्ण_अगर
 
-#ifdef CONFIG_USB_FUNCTIONFS_ETH
-	NULL,
-#endif
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_ETH
+	शून्य,
+#पूर्ण_अगर
 
-#ifdef CONFIG_USB_FUNCTIONFS_GENERIC
-	NULL,
-#endif
-};
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_GENERIC
+	शून्य,
+#पूर्ण_अगर
+पूर्ण;
 
-#define N_CONF ARRAY_SIZE(f_ffs)
+#घोषणा N_CONF ARRAY_SIZE(f_ffs)
 
-static int __init gfs_init(void)
-{
-	struct f_fs_opts *opts;
-	int i;
-	int ret = 0;
+अटल पूर्णांक __init gfs_init(व्योम)
+अणु
+	काष्ठा f_fs_opts *opts;
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
 	ENTER();
 
-	if (func_num < 2) {
+	अगर (func_num < 2) अणु
 		gfs_single_func = true;
 		func_num = 1;
-	}
+	पूर्ण
 
 	/*
-	 * Allocate in one chunk for easier maintenance
+	 * Allocate in one chunk क्रम easier मुख्यtenance
 	 */
-	f_ffs[0] = kcalloc(func_num * N_CONF, sizeof(*f_ffs), GFP_KERNEL);
-	if (!f_ffs[0]) {
+	f_ffs[0] = kसुस्मृति(func_num * N_CONF, माप(*f_ffs), GFP_KERNEL);
+	अगर (!f_ffs[0]) अणु
 		ret = -ENOMEM;
-		goto no_func;
-	}
-	for (i = 1; i < N_CONF; ++i)
+		जाओ no_func;
+	पूर्ण
+	क्रम (i = 1; i < N_CONF; ++i)
 		f_ffs[i] = f_ffs[0] + i * func_num;
 
-	fi_ffs = kcalloc(func_num, sizeof(*fi_ffs), GFP_KERNEL);
-	if (!fi_ffs) {
+	fi_ffs = kसुस्मृति(func_num, माप(*fi_ffs), GFP_KERNEL);
+	अगर (!fi_ffs) अणु
 		ret = -ENOMEM;
-		goto no_func;
-	}
+		जाओ no_func;
+	पूर्ण
 
-	for (i = 0; i < func_num; i++) {
+	क्रम (i = 0; i < func_num; i++) अणु
 		fi_ffs[i] = usb_get_function_instance("ffs");
-		if (IS_ERR(fi_ffs[i])) {
+		अगर (IS_ERR(fi_ffs[i])) अणु
 			ret = PTR_ERR(fi_ffs[i]);
 			--i;
-			goto no_dev;
-		}
+			जाओ no_dev;
+		पूर्ण
 		opts = to_f_fs_opts(fi_ffs[i]);
-		if (gfs_single_func)
+		अगर (gfs_single_func)
 			ret = ffs_single_dev(opts->dev);
-		else
+		अन्यथा
 			ret = ffs_name_dev(opts->dev, func_names[i]);
-		if (ret)
-			goto no_dev;
-		opts->dev->ffs_ready_callback = functionfs_ready_callback;
-		opts->dev->ffs_closed_callback = functionfs_closed_callback;
+		अगर (ret)
+			जाओ no_dev;
+		opts->dev->ffs_पढ़ोy_callback = functionfs_पढ़ोy_callback;
+		opts->dev->ffs_बंदd_callback = functionfs_बंदd_callback;
 		opts->dev->ffs_acquire_dev_callback = functionfs_acquire_dev;
 		opts->dev->ffs_release_dev_callback = functionfs_release_dev;
 		opts->no_configfs = true;
-	}
+	पूर्ण
 
 	missing_funcs = func_num;
 
-	return 0;
+	वापस 0;
 no_dev:
-	while (i >= 0)
+	जबतक (i >= 0)
 		usb_put_function_instance(fi_ffs[i--]);
-	kfree(fi_ffs);
+	kमुक्त(fi_ffs);
 no_func:
-	kfree(f_ffs[0]);
-	return ret;
-}
+	kमुक्त(f_ffs[0]);
+	वापस ret;
+पूर्ण
 module_init(gfs_init);
 
-static void __exit gfs_exit(void)
-{
-	int i;
+अटल व्योम __निकास gfs_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
 	ENTER();
 
-	if (gfs_registered)
-		usb_composite_unregister(&gfs_driver);
-	gfs_registered = false;
+	अगर (gfs_रेजिस्टरed)
+		usb_composite_unरेजिस्टर(&gfs_driver);
+	gfs_रेजिस्टरed = false;
 
-	kfree(f_ffs[0]);
+	kमुक्त(f_ffs[0]);
 
-	for (i = 0; i < func_num; i++)
+	क्रम (i = 0; i < func_num; i++)
 		usb_put_function_instance(fi_ffs[i]);
 
-	kfree(fi_ffs);
-}
-module_exit(gfs_exit);
+	kमुक्त(fi_ffs);
+पूर्ण
+module_निकास(gfs_निकास);
 
-static void *functionfs_acquire_dev(struct ffs_dev *dev)
-{
-	if (!try_module_get(THIS_MODULE))
-		return ERR_PTR(-ENOENT);
+अटल व्योम *functionfs_acquire_dev(काष्ठा ffs_dev *dev)
+अणु
+	अगर (!try_module_get(THIS_MODULE))
+		वापस ERR_PTR(-ENOENT);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void functionfs_release_dev(struct ffs_dev *dev)
-{
+अटल व्योम functionfs_release_dev(काष्ठा ffs_dev *dev)
+अणु
 	module_put(THIS_MODULE);
-}
+पूर्ण
 
 /*
  * The caller of this function takes ffs_lock
  */
-static int functionfs_ready_callback(struct ffs_data *ffs)
-{
-	int ret = 0;
+अटल पूर्णांक functionfs_पढ़ोy_callback(काष्ठा ffs_data *ffs)
+अणु
+	पूर्णांक ret = 0;
 
-	if (--missing_funcs)
-		return 0;
+	अगर (--missing_funcs)
+		वापस 0;
 
-	if (gfs_registered)
-		return -EBUSY;
+	अगर (gfs_रेजिस्टरed)
+		वापस -EBUSY;
 
-	gfs_registered = true;
+	gfs_रेजिस्टरed = true;
 
 	ret = usb_composite_probe(&gfs_driver);
-	if (unlikely(ret < 0)) {
+	अगर (unlikely(ret < 0)) अणु
 		++missing_funcs;
-		gfs_registered = false;
-	}
+		gfs_रेजिस्टरed = false;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * The caller of this function takes ffs_lock
  */
-static void functionfs_closed_callback(struct ffs_data *ffs)
-{
+अटल व्योम functionfs_बंदd_callback(काष्ठा ffs_data *ffs)
+अणु
 	missing_funcs++;
 
-	if (gfs_registered)
-		usb_composite_unregister(&gfs_driver);
-	gfs_registered = false;
-}
+	अगर (gfs_रेजिस्टरed)
+		usb_composite_unरेजिस्टर(&gfs_driver);
+	gfs_रेजिस्टरed = false;
+पूर्ण
 
 /*
  * It is assumed that gfs_bind is called from a context where ffs_lock is held
  */
-static int gfs_bind(struct usb_composite_dev *cdev)
-{
-#if defined CONFIG_USB_FUNCTIONFS_ETH || defined CONFIG_USB_FUNCTIONFS_RNDIS
-	struct net_device *net;
-#endif
-	int ret, i;
+अटल पूर्णांक gfs_bind(काष्ठा usb_composite_dev *cdev)
+अणु
+#अगर defined CONFIG_USB_FUNCTIONFS_ETH || defined CONFIG_USB_FUNCTIONFS_RNDIS
+	काष्ठा net_device *net;
+#पूर्ण_अगर
+	पूर्णांक ret, i;
 
 	ENTER();
 
-	if (missing_funcs)
-		return -ENODEV;
-#if defined CONFIG_USB_FUNCTIONFS_ETH
-	if (can_support_ecm(cdev->gadget)) {
-		struct f_ecm_opts *ecm_opts;
+	अगर (missing_funcs)
+		वापस -ENODEV;
+#अगर defined CONFIG_USB_FUNCTIONFS_ETH
+	अगर (can_support_ecm(cdev->gadget)) अणु
+		काष्ठा f_ecm_opts *ecm_opts;
 
 		fi_ecm = usb_get_function_instance("ecm");
-		if (IS_ERR(fi_ecm))
-			return PTR_ERR(fi_ecm);
-		ecm_opts = container_of(fi_ecm, struct f_ecm_opts, func_inst);
+		अगर (IS_ERR(fi_ecm))
+			वापस PTR_ERR(fi_ecm);
+		ecm_opts = container_of(fi_ecm, काष्ठा f_ecm_opts, func_inst);
 		net = ecm_opts->net;
-	} else {
-		struct f_gether_opts *geth_opts;
+	पूर्ण अन्यथा अणु
+		काष्ठा f_gether_opts *geth_opts;
 
 		fi_geth = usb_get_function_instance("geth");
-		if (IS_ERR(fi_geth))
-			return PTR_ERR(fi_geth);
-		geth_opts = container_of(fi_geth, struct f_gether_opts,
+		अगर (IS_ERR(fi_geth))
+			वापस PTR_ERR(fi_geth);
+		geth_opts = container_of(fi_geth, काष्ठा f_gether_opts,
 					 func_inst);
 		net = geth_opts->net;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_USB_FUNCTIONFS_RNDIS
-	{
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_RNDIS
+	अणु
 		fi_rndis = usb_get_function_instance("rndis");
-		if (IS_ERR(fi_rndis)) {
+		अगर (IS_ERR(fi_rndis)) अणु
 			ret = PTR_ERR(fi_rndis);
-			goto error;
-		}
-#ifndef CONFIG_USB_FUNCTIONFS_ETH
-		net = container_of(fi_rndis, struct f_rndis_opts,
+			जाओ error;
+		पूर्ण
+#अगर_अघोषित CONFIG_USB_FUNCTIONFS_ETH
+		net = container_of(fi_rndis, काष्ठा f_rndis_opts,
 				   func_inst)->net;
-#endif
-	}
-#endif
+#पूर्ण_अगर
+	पूर्ण
+#पूर्ण_अगर
 
-#if defined CONFIG_USB_FUNCTIONFS_ETH || defined CONFIG_USB_FUNCTIONFS_RNDIS
+#अगर defined CONFIG_USB_FUNCTIONFS_ETH || defined CONFIG_USB_FUNCTIONFS_RNDIS
 	gether_set_qmult(net, qmult);
-	if (!gether_set_host_addr(net, host_addr))
+	अगर (!gether_set_host_addr(net, host_addr))
 		pr_info("using host ethernet address: %s", host_addr);
-	if (!gether_set_dev_addr(net, dev_addr))
+	अगर (!gether_set_dev_addr(net, dev_addr))
 		pr_info("using self ethernet address: %s", dev_addr);
-#endif
+#पूर्ण_अगर
 
-#if defined CONFIG_USB_FUNCTIONFS_RNDIS && defined CONFIG_USB_FUNCTIONFS_ETH
+#अगर defined CONFIG_USB_FUNCTIONFS_RNDIS && defined CONFIG_USB_FUNCTIONFS_ETH
 	gether_set_gadget(net, cdev->gadget);
-	ret = gether_register_netdev(net);
-	if (ret)
-		goto error_rndis;
+	ret = gether_रेजिस्टर_netdev(net);
+	अगर (ret)
+		जाओ error_rndis;
 
-	if (can_support_ecm(cdev->gadget)) {
-		struct f_ecm_opts *ecm_opts;
+	अगर (can_support_ecm(cdev->gadget)) अणु
+		काष्ठा f_ecm_opts *ecm_opts;
 
-		ecm_opts = container_of(fi_ecm, struct f_ecm_opts, func_inst);
+		ecm_opts = container_of(fi_ecm, काष्ठा f_ecm_opts, func_inst);
 		ecm_opts->bound = true;
-	} else {
-		struct f_gether_opts *geth_opts;
+	पूर्ण अन्यथा अणु
+		काष्ठा f_gether_opts *geth_opts;
 
-		geth_opts = container_of(fi_geth, struct f_gether_opts,
+		geth_opts = container_of(fi_geth, काष्ठा f_gether_opts,
 					 func_inst);
 		geth_opts->bound = true;
-	}
+	पूर्ण
 
 	rndis_borrow_net(fi_rndis, net);
-#endif
+#पूर्ण_अगर
 
 	/* TODO: gstrings_attach? */
 	ret = usb_string_ids_tab(cdev, gfs_strings);
-	if (unlikely(ret < 0))
-		goto error_rndis;
+	अगर (unlikely(ret < 0))
+		जाओ error_rndis;
 	gfs_dev_desc.iProduct = gfs_strings[USB_GADGET_PRODUCT_IDX].id;
 
-	if (gadget_is_otg(cdev->gadget) && !gfs_otg_desc[0]) {
-		struct usb_descriptor_header *usb_desc;
+	अगर (gadget_is_otg(cdev->gadget) && !gfs_otg_desc[0]) अणु
+		काष्ठा usb_descriptor_header *usb_desc;
 
 		usb_desc = usb_otg_descriptor_alloc(cdev->gadget);
-		if (!usb_desc)
-			goto error_rndis;
+		अगर (!usb_desc)
+			जाओ error_rndis;
 		usb_otg_descriptor_init(cdev->gadget, usb_desc);
 		gfs_otg_desc[0] = usb_desc;
-		gfs_otg_desc[1] = NULL;
-	}
+		gfs_otg_desc[1] = शून्य;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(gfs_configurations); ++i) {
-		struct gfs_configuration *c = gfs_configurations + i;
-		int sid = USB_GADGET_FIRST_AVAIL_IDX + i;
+	क्रम (i = 0; i < ARRAY_SIZE(gfs_configurations); ++i) अणु
+		काष्ठा gfs_configuration *c = gfs_configurations + i;
+		पूर्णांक sid = USB_GADGET_FIRST_AVAIL_IDX + i;
 
 		c->c.label			= gfs_strings[sid].s;
 		c->c.iConfiguration		= gfs_strings[sid].id;
@@ -413,169 +414,169 @@ static int gfs_bind(struct usb_composite_dev *cdev)
 
 		c->num = i;
 
-		ret = usb_add_config(cdev, &c->c, gfs_do_config);
-		if (unlikely(ret < 0))
-			goto error_unbind;
-	}
-	usb_composite_overwrite_options(cdev, &coverwrite);
-	return 0;
+		ret = usb_add_config(cdev, &c->c, gfs_करो_config);
+		अगर (unlikely(ret < 0))
+			जाओ error_unbind;
+	पूर्ण
+	usb_composite_overग_लिखो_options(cdev, &coverग_लिखो);
+	वापस 0;
 
 /* TODO */
 error_unbind:
-	kfree(gfs_otg_desc[0]);
-	gfs_otg_desc[0] = NULL;
+	kमुक्त(gfs_otg_desc[0]);
+	gfs_otg_desc[0] = शून्य;
 error_rndis:
-#ifdef CONFIG_USB_FUNCTIONFS_RNDIS
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_RNDIS
 	usb_put_function_instance(fi_rndis);
 error:
-#endif
-#if defined CONFIG_USB_FUNCTIONFS_ETH
-	if (can_support_ecm(cdev->gadget))
+#पूर्ण_अगर
+#अगर defined CONFIG_USB_FUNCTIONFS_ETH
+	अगर (can_support_ecm(cdev->gadget))
 		usb_put_function_instance(fi_ecm);
-	else
+	अन्यथा
 		usb_put_function_instance(fi_geth);
-#endif
-	return ret;
-}
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
 /*
  * It is assumed that gfs_unbind is called from a context where ffs_lock is held
  */
-static int gfs_unbind(struct usb_composite_dev *cdev)
-{
-	int i;
+अटल पूर्णांक gfs_unbind(काष्ठा usb_composite_dev *cdev)
+अणु
+	पूर्णांक i;
 
 	ENTER();
 
 
-#ifdef CONFIG_USB_FUNCTIONFS_RNDIS
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_RNDIS
 	usb_put_function(f_rndis);
 	usb_put_function_instance(fi_rndis);
-#endif
+#पूर्ण_अगर
 
-#if defined CONFIG_USB_FUNCTIONFS_ETH
-	if (can_support_ecm(cdev->gadget)) {
+#अगर defined CONFIG_USB_FUNCTIONFS_ETH
+	अगर (can_support_ecm(cdev->gadget)) अणु
 		usb_put_function(f_ecm);
 		usb_put_function_instance(fi_ecm);
-	} else {
+	पूर्ण अन्यथा अणु
 		usb_put_function(f_geth);
 		usb_put_function_instance(fi_geth);
-	}
-#endif
-	for (i = 0; i < N_CONF * func_num; ++i)
+	पूर्ण
+#पूर्ण_अगर
+	क्रम (i = 0; i < N_CONF * func_num; ++i)
 		usb_put_function(*(f_ffs[0] + i));
 
-	kfree(gfs_otg_desc[0]);
-	gfs_otg_desc[0] = NULL;
+	kमुक्त(gfs_otg_desc[0]);
+	gfs_otg_desc[0] = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * It is assumed that gfs_do_config is called from a context where
+ * It is assumed that gfs_करो_config is called from a context where
  * ffs_lock is held
  */
-static int gfs_do_config(struct usb_configuration *c)
-{
-	struct gfs_configuration *gc =
-		container_of(c, struct gfs_configuration, c);
-	int i;
-	int ret;
+अटल पूर्णांक gfs_करो_config(काष्ठा usb_configuration *c)
+अणु
+	काष्ठा gfs_configuration *gc =
+		container_of(c, काष्ठा gfs_configuration, c);
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	if (missing_funcs)
-		return -ENODEV;
+	अगर (missing_funcs)
+		वापस -ENODEV;
 
-	if (gadget_is_otg(c->cdev->gadget)) {
+	अगर (gadget_is_otg(c->cdev->gadget)) अणु
 		c->descriptors = gfs_otg_desc;
 		c->bmAttributes |= USB_CONFIG_ATT_WAKEUP;
-	}
+	पूर्ण
 
-	if (gc->eth) {
+	अगर (gc->eth) अणु
 		ret = gc->eth(c);
-		if (unlikely(ret < 0))
-			return ret;
-	}
+		अगर (unlikely(ret < 0))
+			वापस ret;
+	पूर्ण
 
-	for (i = 0; i < func_num; i++) {
+	क्रम (i = 0; i < func_num; i++) अणु
 		f_ffs[gc->num][i] = usb_get_function(fi_ffs[i]);
-		if (IS_ERR(f_ffs[gc->num][i])) {
+		अगर (IS_ERR(f_ffs[gc->num][i])) अणु
 			ret = PTR_ERR(f_ffs[gc->num][i]);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		ret = usb_add_function(c, f_ffs[gc->num][i]);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			usb_put_function(f_ffs[gc->num][i]);
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * After previous do_configs there may be some invalid
-	 * pointers in c->interface array.  This happens every time
-	 * a user space function with fewer interfaces than a user
-	 * space function that was run before the new one is run.  The
-	 * compasit's set_config() assumes that if there is no more
-	 * then MAX_CONFIG_INTERFACES interfaces in a configuration
-	 * then there is a NULL pointer after the last interface in
-	 * c->interface array.  We need to make sure this is true.
+	 * After previous करो_configs there may be some invalid
+	 * poपूर्णांकers in c->पूर्णांकerface array.  This happens every समय
+	 * a user space function with fewer पूर्णांकerfaces than a user
+	 * space function that was run beक्रमe the new one is run.  The
+	 * compasit's set_config() assumes that अगर there is no more
+	 * then MAX_CONFIG_INTERFACES पूर्णांकerfaces in a configuration
+	 * then there is a शून्य poपूर्णांकer after the last पूर्णांकerface in
+	 * c->पूर्णांकerface array.  We need to make sure this is true.
 	 */
-	if (c->next_interface_id < ARRAY_SIZE(c->interface))
-		c->interface[c->next_interface_id] = NULL;
+	अगर (c->next_पूर्णांकerface_id < ARRAY_SIZE(c->पूर्णांकerface))
+		c->पूर्णांकerface[c->next_पूर्णांकerface_id] = शून्य;
 
-	return 0;
+	वापस 0;
 error:
-	while (--i >= 0) {
-		if (!IS_ERR(f_ffs[gc->num][i]))
-			usb_remove_function(c, f_ffs[gc->num][i]);
+	जबतक (--i >= 0) अणु
+		अगर (!IS_ERR(f_ffs[gc->num][i]))
+			usb_हटाओ_function(c, f_ffs[gc->num][i]);
 		usb_put_function(f_ffs[gc->num][i]);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_USB_FUNCTIONFS_ETH
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_ETH
 
-static int eth_bind_config(struct usb_configuration *c)
-{
-	int status = 0;
+अटल पूर्णांक eth_bind_config(काष्ठा usb_configuration *c)
+अणु
+	पूर्णांक status = 0;
 
-	if (can_support_ecm(c->cdev->gadget)) {
+	अगर (can_support_ecm(c->cdev->gadget)) अणु
 		f_ecm = usb_get_function(fi_ecm);
-		if (IS_ERR(f_ecm))
-			return PTR_ERR(f_ecm);
+		अगर (IS_ERR(f_ecm))
+			वापस PTR_ERR(f_ecm);
 
 		status = usb_add_function(c, f_ecm);
-		if (status < 0)
+		अगर (status < 0)
 			usb_put_function(f_ecm);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		f_geth = usb_get_function(fi_geth);
-		if (IS_ERR(f_geth))
-			return PTR_ERR(f_geth);
+		अगर (IS_ERR(f_geth))
+			वापस PTR_ERR(f_geth);
 
 		status = usb_add_function(c, f_geth);
-		if (status < 0)
+		अगर (status < 0)
 			usb_put_function(f_geth);
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_USB_FUNCTIONFS_RNDIS
+#अगर_घोषित CONFIG_USB_FUNCTIONFS_RNDIS
 
-static int bind_rndis_config(struct usb_configuration *c)
-{
-	int status = 0;
+अटल पूर्णांक bind_rndis_config(काष्ठा usb_configuration *c)
+अणु
+	पूर्णांक status = 0;
 
 	f_rndis = usb_get_function(fi_rndis);
-	if (IS_ERR(f_rndis))
-		return PTR_ERR(f_rndis);
+	अगर (IS_ERR(f_rndis))
+		वापस PTR_ERR(f_rndis);
 
 	status = usb_add_function(c, f_rndis);
-	if (status < 0)
+	अगर (status < 0)
 		usb_put_function(f_rndis);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

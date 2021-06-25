@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Mapping of DWARF debug register numbers into register names.
+ * Mapping of DWARF debug रेजिस्टर numbers पूर्णांकo रेजिस्टर names.
  *
  * Copyright IBM Corp. 2010, 2017
  * Author(s): Heiko Carstens <heiko.carstens@de.ibm.com>,
@@ -8,37 +9,37 @@
  *
  */
 
-#include <errno.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <linux/kernel.h>
-#include <asm/ptrace.h>
-#include <string.h>
-#include <dwarf-regs.h>
-#include "dwarf-regs-table.h"
+#समावेश <त्रुटिसं.स>
+#समावेश <मानकघोष.स>
+#समावेश <मानककोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <माला.स>
+#समावेश <dwarf-regs.h>
+#समावेश "dwarf-regs-table.h"
 
-const char *get_arch_regstr(unsigned int n)
-{
-	return (n >= ARRAY_SIZE(s390_dwarf_regs)) ? NULL : s390_dwarf_regs[n];
-}
+स्थिर अक्षर *get_arch_regstr(अचिन्हित पूर्णांक n)
+अणु
+	वापस (n >= ARRAY_SIZE(s390_dwarf_regs)) ? शून्य : s390_dwarf_regs[n];
+पूर्ण
 
 /*
- * Convert the register name into an offset to struct pt_regs (kernel).
+ * Convert the रेजिस्टर name पूर्णांकo an offset to काष्ठा pt_regs (kernel).
  * This is required by the BPF prologue generator.  The BPF
  * program is called in the BPF overflow handler in the perf
  * core.
  */
-int regs_query_register_offset(const char *name)
-{
-	unsigned long gpr;
+पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name)
+अणु
+	अचिन्हित दीर्घ gpr;
 
-	if (!name || strncmp(name, "%r", 2))
-		return -EINVAL;
+	अगर (!name || म_भेदन(name, "%r", 2))
+		वापस -EINVAL;
 
-	errno = 0;
-	gpr = strtoul(name + 2, NULL, 10);
-	if (errno || gpr >= 16)
-		return -EINVAL;
+	त्रुटि_सं = 0;
+	gpr = म_से_अदीर्घ(name + 2, शून्य, 10);
+	अगर (त्रुटि_सं || gpr >= 16)
+		वापस -EINVAL;
 
-	return offsetof(user_pt_regs, gprs) + 8 * gpr;
-}
+	वापस दुरत्व(user_pt_regs, gprs) + 8 * gpr;
+पूर्ण

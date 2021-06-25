@@ -1,439 +1,440 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/module.h>
-#include <linux/kernel.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
 
-#include <linux/capability.h>
-#include <linux/if.h>
-#include <linux/inetdevice.h>
-#include <linux/ip.h>
-#include <linux/list.h>
-#include <linux/rculist.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/tcp.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tcp.h>
 
-#include <net/ip.h>
-#include <net/tcp.h>
+#समावेश <net/ip.h>
+#समावेश <net/tcp.h>
 
-#include <linux/netfilter/nfnetlink.h>
-#include <linux/netfilter/x_tables.h>
-#include <net/netfilter/nf_log.h>
-#include <linux/netfilter/nfnetlink_osf.h>
+#समावेश <linux/netfilter/nfnetlink.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <net/netfilter/nf_log.h>
+#समावेश <linux/netfilter/nfnetlink_osf.h>
 
 /*
- * Indexed by dont-fragment bit.
- * It is the only constant value in the fingerprint.
+ * Indexed by करोnt-fragment bit.
+ * It is the only स्थिरant value in the fingerprपूर्णांक.
  */
-struct list_head nf_osf_fingers[2];
+काष्ठा list_head nf_osf_fingers[2];
 EXPORT_SYMBOL_GPL(nf_osf_fingers);
 
-static inline int nf_osf_ttl(const struct sk_buff *skb,
-			     int ttl_check, unsigned char f_ttl)
-{
-	struct in_device *in_dev = __in_dev_get_rcu(skb->dev);
-	const struct iphdr *ip = ip_hdr(skb);
-	const struct in_ifaddr *ifa;
-	int ret = 0;
+अटल अंतरभूत पूर्णांक nf_osf_ttl(स्थिर काष्ठा sk_buff *skb,
+			     पूर्णांक ttl_check, अचिन्हित अक्षर f_ttl)
+अणु
+	काष्ठा in_device *in_dev = __in_dev_get_rcu(skb->dev);
+	स्थिर काष्ठा iphdr *ip = ip_hdr(skb);
+	स्थिर काष्ठा in_अगरaddr *अगरa;
+	पूर्णांक ret = 0;
 
-	if (ttl_check == NF_OSF_TTL_TRUE)
-		return ip->ttl == f_ttl;
-	if (ttl_check == NF_OSF_TTL_NOCHECK)
-		return 1;
-	else if (ip->ttl <= f_ttl)
-		return 1;
+	अगर (ttl_check == NF_OSF_TTL_TRUE)
+		वापस ip->ttl == f_ttl;
+	अगर (ttl_check == NF_OSF_TTL_NOCHECK)
+		वापस 1;
+	अन्यथा अगर (ip->ttl <= f_ttl)
+		वापस 1;
 
-	in_dev_for_each_ifa_rcu(ifa, in_dev) {
-		if (inet_ifa_match(ip->saddr, ifa)) {
+	in_dev_क्रम_each_अगरa_rcu(अगरa, in_dev) अणु
+		अगर (inet_अगरa_match(ip->saddr, अगरa)) अणु
 			ret = (ip->ttl == f_ttl);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct nf_osf_hdr_ctx {
+काष्ठा nf_osf_hdr_ctx अणु
 	bool			df;
-	u16			window;
+	u16			winकरोw;
 	u16			totlen;
-	const unsigned char	*optp;
-	unsigned int		optsize;
-};
+	स्थिर अचिन्हित अक्षर	*optp;
+	अचिन्हित पूर्णांक		optsize;
+पूर्ण;
 
-static bool nf_osf_match_one(const struct sk_buff *skb,
-			     const struct nf_osf_user_finger *f,
-			     int ttl_check,
-			     struct nf_osf_hdr_ctx *ctx)
-{
-	const __u8 *optpinit = ctx->optp;
-	unsigned int check_WSS = 0;
-	int fmatch = FMATCH_WRONG;
-	int foptsize, optnum;
+अटल bool nf_osf_match_one(स्थिर काष्ठा sk_buff *skb,
+			     स्थिर काष्ठा nf_osf_user_finger *f,
+			     पूर्णांक ttl_check,
+			     काष्ठा nf_osf_hdr_ctx *ctx)
+अणु
+	स्थिर __u8 *optpinit = ctx->optp;
+	अचिन्हित पूर्णांक check_WSS = 0;
+	पूर्णांक fmatch = FMATCH_WRONG;
+	पूर्णांक foptsize, optnum;
 	u16 mss = 0;
 
-	if (ctx->totlen != f->ss || !nf_osf_ttl(skb, ttl_check, f->ttl))
-		return false;
+	अगर (ctx->totlen != f->ss || !nf_osf_ttl(skb, ttl_check, f->ttl))
+		वापस false;
 
 	/*
-	 * Should not happen if userspace parser was written correctly.
+	 * Should not happen अगर userspace parser was written correctly.
 	 */
-	if (f->wss.wc >= OSF_WSS_MAX)
-		return false;
+	अगर (f->wss.wc >= OSF_WSS_MAX)
+		वापस false;
 
 	/* Check options */
 
 	foptsize = 0;
-	for (optnum = 0; optnum < f->opt_num; ++optnum)
+	क्रम (optnum = 0; optnum < f->opt_num; ++optnum)
 		foptsize += f->opt[optnum].length;
 
-	if (foptsize > MAX_IPOPTLEN ||
+	अगर (foptsize > MAX_IPOPTLEN ||
 	    ctx->optsize > MAX_IPOPTLEN ||
 	    ctx->optsize != foptsize)
-		return false;
+		वापस false;
 
 	check_WSS = f->wss.wc;
 
-	for (optnum = 0; optnum < f->opt_num; ++optnum) {
-		if (f->opt[optnum].kind == *ctx->optp) {
+	क्रम (optnum = 0; optnum < f->opt_num; ++optnum) अणु
+		अगर (f->opt[optnum].kind == *ctx->optp) अणु
 			__u32 len = f->opt[optnum].length;
-			const __u8 *optend = ctx->optp + len;
+			स्थिर __u8 *optend = ctx->optp + len;
 
 			fmatch = FMATCH_OK;
 
-			switch (*ctx->optp) {
-			case OSFOPT_MSS:
+			चयन (*ctx->optp) अणु
+			हाल OSFOPT_MSS:
 				mss = ctx->optp[3];
 				mss <<= 8;
 				mss |= ctx->optp[2];
 
-				mss = ntohs((__force __be16)mss);
-				break;
-			case OSFOPT_TS:
-				break;
-			}
+				mss = ntohs((__क्रमce __be16)mss);
+				अवरोध;
+			हाल OSFOPT_TS:
+				अवरोध;
+			पूर्ण
 
 			ctx->optp = optend;
-		} else
+		पूर्ण अन्यथा
 			fmatch = FMATCH_OPT_WRONG;
 
-		if (fmatch != FMATCH_OK)
-			break;
-	}
+		अगर (fmatch != FMATCH_OK)
+			अवरोध;
+	पूर्ण
 
-	if (fmatch != FMATCH_OPT_WRONG) {
+	अगर (fmatch != FMATCH_OPT_WRONG) अणु
 		fmatch = FMATCH_WRONG;
 
-		switch (check_WSS) {
-		case OSF_WSS_PLAIN:
-			if (f->wss.val == 0 || ctx->window == f->wss.val)
+		चयन (check_WSS) अणु
+		हाल OSF_WSS_PLAIN:
+			अगर (f->wss.val == 0 || ctx->winकरोw == f->wss.val)
 				fmatch = FMATCH_OK;
-			break;
-		case OSF_WSS_MSS:
+			अवरोध;
+		हाल OSF_WSS_MSS:
 			/*
 			 * Some smart modems decrease mangle MSS to
 			 * SMART_MSS_2, so we check standard, decreased
-			 * and the one provided in the fingerprint MSS
+			 * and the one provided in the fingerprपूर्णांक MSS
 			 * values.
 			 */
-#define SMART_MSS_1	1460
-#define SMART_MSS_2	1448
-			if (ctx->window == f->wss.val * mss ||
-			    ctx->window == f->wss.val * SMART_MSS_1 ||
-			    ctx->window == f->wss.val * SMART_MSS_2)
+#घोषणा SMART_MSS_1	1460
+#घोषणा SMART_MSS_2	1448
+			अगर (ctx->winकरोw == f->wss.val * mss ||
+			    ctx->winकरोw == f->wss.val * SMART_MSS_1 ||
+			    ctx->winकरोw == f->wss.val * SMART_MSS_2)
 				fmatch = FMATCH_OK;
-			break;
-		case OSF_WSS_MTU:
-			if (ctx->window == f->wss.val * (mss + 40) ||
-			    ctx->window == f->wss.val * (SMART_MSS_1 + 40) ||
-			    ctx->window == f->wss.val * (SMART_MSS_2 + 40))
+			अवरोध;
+		हाल OSF_WSS_MTU:
+			अगर (ctx->winकरोw == f->wss.val * (mss + 40) ||
+			    ctx->winकरोw == f->wss.val * (SMART_MSS_1 + 40) ||
+			    ctx->winकरोw == f->wss.val * (SMART_MSS_2 + 40))
 				fmatch = FMATCH_OK;
-			break;
-		case OSF_WSS_MODULO:
-			if ((ctx->window % f->wss.val) == 0)
+			अवरोध;
+		हाल OSF_WSS_MODULO:
+			अगर ((ctx->winकरोw % f->wss.val) == 0)
 				fmatch = FMATCH_OK;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (fmatch != FMATCH_OK)
+	अगर (fmatch != FMATCH_OK)
 		ctx->optp = optpinit;
 
-	return fmatch == FMATCH_OK;
-}
+	वापस fmatch == FMATCH_OK;
+पूर्ण
 
-static const struct tcphdr *nf_osf_hdr_ctx_init(struct nf_osf_hdr_ctx *ctx,
-						const struct sk_buff *skb,
-						const struct iphdr *ip,
-						unsigned char *opts,
-						struct tcphdr *_tcph)
-{
-	const struct tcphdr *tcp;
+अटल स्थिर काष्ठा tcphdr *nf_osf_hdr_ctx_init(काष्ठा nf_osf_hdr_ctx *ctx,
+						स्थिर काष्ठा sk_buff *skb,
+						स्थिर काष्ठा iphdr *ip,
+						अचिन्हित अक्षर *opts,
+						काष्ठा tcphdr *_tcph)
+अणु
+	स्थिर काष्ठा tcphdr *tcp;
 
-	tcp = skb_header_pointer(skb, ip_hdrlen(skb), sizeof(struct tcphdr), _tcph);
-	if (!tcp)
-		return NULL;
+	tcp = skb_header_poपूर्णांकer(skb, ip_hdrlen(skb), माप(काष्ठा tcphdr), _tcph);
+	अगर (!tcp)
+		वापस शून्य;
 
-	if (!tcp->syn)
-		return NULL;
+	अगर (!tcp->syn)
+		वापस शून्य;
 
 	ctx->totlen = ntohs(ip->tot_len);
 	ctx->df = ntohs(ip->frag_off) & IP_DF;
-	ctx->window = ntohs(tcp->window);
+	ctx->winकरोw = ntohs(tcp->winकरोw);
 
-	if (tcp->doff * 4 > sizeof(struct tcphdr)) {
-		ctx->optsize = tcp->doff * 4 - sizeof(struct tcphdr);
+	अगर (tcp->करोff * 4 > माप(काष्ठा tcphdr)) अणु
+		ctx->optsize = tcp->करोff * 4 - माप(काष्ठा tcphdr);
 
-		ctx->optp = skb_header_pointer(skb, ip_hdrlen(skb) +
-				sizeof(struct tcphdr), ctx->optsize, opts);
-		if (!ctx->optp)
-			return NULL;
-	}
+		ctx->optp = skb_header_poपूर्णांकer(skb, ip_hdrlen(skb) +
+				माप(काष्ठा tcphdr), ctx->optsize, opts);
+		अगर (!ctx->optp)
+			वापस शून्य;
+	पूर्ण
 
-	return tcp;
-}
+	वापस tcp;
+पूर्ण
 
 bool
-nf_osf_match(const struct sk_buff *skb, u_int8_t family,
-	     int hooknum, struct net_device *in, struct net_device *out,
-	     const struct nf_osf_info *info, struct net *net,
-	     const struct list_head *nf_osf_fingers)
-{
-	const struct iphdr *ip = ip_hdr(skb);
-	const struct nf_osf_user_finger *f;
-	unsigned char opts[MAX_IPOPTLEN];
-	const struct nf_osf_finger *kf;
-	int fcount = 0, ttl_check;
-	int fmatch = FMATCH_WRONG;
-	struct nf_osf_hdr_ctx ctx;
-	const struct tcphdr *tcp;
-	struct tcphdr _tcph;
+nf_osf_match(स्थिर काष्ठा sk_buff *skb, u_पूर्णांक8_t family,
+	     पूर्णांक hooknum, काष्ठा net_device *in, काष्ठा net_device *out,
+	     स्थिर काष्ठा nf_osf_info *info, काष्ठा net *net,
+	     स्थिर काष्ठा list_head *nf_osf_fingers)
+अणु
+	स्थिर काष्ठा iphdr *ip = ip_hdr(skb);
+	स्थिर काष्ठा nf_osf_user_finger *f;
+	अचिन्हित अक्षर opts[MAX_IPOPTLEN];
+	स्थिर काष्ठा nf_osf_finger *kf;
+	पूर्णांक fcount = 0, ttl_check;
+	पूर्णांक fmatch = FMATCH_WRONG;
+	काष्ठा nf_osf_hdr_ctx ctx;
+	स्थिर काष्ठा tcphdr *tcp;
+	काष्ठा tcphdr _tcph;
 
-	memset(&ctx, 0, sizeof(ctx));
+	स_रखो(&ctx, 0, माप(ctx));
 
 	tcp = nf_osf_hdr_ctx_init(&ctx, skb, ip, opts, &_tcph);
-	if (!tcp)
-		return false;
+	अगर (!tcp)
+		वापस false;
 
 	ttl_check = (info->flags & NF_OSF_TTL) ? info->ttl : 0;
 
-	list_for_each_entry_rcu(kf, &nf_osf_fingers[ctx.df], finger_entry) {
+	list_क्रम_each_entry_rcu(kf, &nf_osf_fingers[ctx.df], finger_entry) अणु
 
 		f = &kf->finger;
 
-		if (!(info->flags & NF_OSF_LOG) && strcmp(info->genre, f->genre))
-			continue;
+		अगर (!(info->flags & NF_OSF_LOG) && म_भेद(info->genre, f->genre))
+			जारी;
 
-		if (!nf_osf_match_one(skb, f, ttl_check, &ctx))
-			continue;
+		अगर (!nf_osf_match_one(skb, f, ttl_check, &ctx))
+			जारी;
 
 		fmatch = FMATCH_OK;
 
 		fcount++;
 
-		if (info->flags & NF_OSF_LOG)
+		अगर (info->flags & NF_OSF_LOG)
 			nf_log_packet(net, family, hooknum, skb,
-				      in, out, NULL,
+				      in, out, शून्य,
 				      "%s [%s:%s] : %pI4:%d -> %pI4:%d hops=%d\n",
 				      f->genre, f->version, f->subtype,
 				      &ip->saddr, ntohs(tcp->source),
 				      &ip->daddr, ntohs(tcp->dest),
 				      f->ttl - ip->ttl);
 
-		if ((info->flags & NF_OSF_LOG) &&
+		अगर ((info->flags & NF_OSF_LOG) &&
 		    info->loglevel == NF_OSF_LOGLEVEL_FIRST)
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	if (!fcount && (info->flags & NF_OSF_LOG))
-		nf_log_packet(net, family, hooknum, skb, in, out, NULL,
+	अगर (!fcount && (info->flags & NF_OSF_LOG))
+		nf_log_packet(net, family, hooknum, skb, in, out, शून्य,
 			      "Remote OS is not known: %pI4:%u -> %pI4:%u\n",
 			      &ip->saddr, ntohs(tcp->source),
 			      &ip->daddr, ntohs(tcp->dest));
 
-	if (fcount)
+	अगर (fcount)
 		fmatch = FMATCH_OK;
 
-	return fmatch == FMATCH_OK;
-}
+	वापस fmatch == FMATCH_OK;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_osf_match);
 
-bool nf_osf_find(const struct sk_buff *skb,
-		 const struct list_head *nf_osf_fingers,
-		 const int ttl_check, struct nf_osf_data *data)
-{
-	const struct iphdr *ip = ip_hdr(skb);
-	const struct nf_osf_user_finger *f;
-	unsigned char opts[MAX_IPOPTLEN];
-	const struct nf_osf_finger *kf;
-	struct nf_osf_hdr_ctx ctx;
-	const struct tcphdr *tcp;
-	struct tcphdr _tcph;
+bool nf_osf_find(स्थिर काष्ठा sk_buff *skb,
+		 स्थिर काष्ठा list_head *nf_osf_fingers,
+		 स्थिर पूर्णांक ttl_check, काष्ठा nf_osf_data *data)
+अणु
+	स्थिर काष्ठा iphdr *ip = ip_hdr(skb);
+	स्थिर काष्ठा nf_osf_user_finger *f;
+	अचिन्हित अक्षर opts[MAX_IPOPTLEN];
+	स्थिर काष्ठा nf_osf_finger *kf;
+	काष्ठा nf_osf_hdr_ctx ctx;
+	स्थिर काष्ठा tcphdr *tcp;
+	काष्ठा tcphdr _tcph;
 
-	memset(&ctx, 0, sizeof(ctx));
+	स_रखो(&ctx, 0, माप(ctx));
 
 	tcp = nf_osf_hdr_ctx_init(&ctx, skb, ip, opts, &_tcph);
-	if (!tcp)
-		return false;
+	अगर (!tcp)
+		वापस false;
 
-	list_for_each_entry_rcu(kf, &nf_osf_fingers[ctx.df], finger_entry) {
+	list_क्रम_each_entry_rcu(kf, &nf_osf_fingers[ctx.df], finger_entry) अणु
 		f = &kf->finger;
-		if (!nf_osf_match_one(skb, f, ttl_check, &ctx))
-			continue;
+		अगर (!nf_osf_match_one(skb, f, ttl_check, &ctx))
+			जारी;
 
 		data->genre = f->genre;
 		data->version = f->version;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_osf_find);
 
-static const struct nla_policy nfnl_osf_policy[OSF_ATTR_MAX + 1] = {
-	[OSF_ATTR_FINGER]	= { .len = sizeof(struct nf_osf_user_finger) },
-};
+अटल स्थिर काष्ठा nla_policy nfnl_osf_policy[OSF_ATTR_MAX + 1] = अणु
+	[OSF_ATTR_FINGER]	= अणु .len = माप(काष्ठा nf_osf_user_finger) पूर्ण,
+पूर्ण;
 
-static int nfnl_osf_add_callback(struct sk_buff *skb,
-				 const struct nfnl_info *info,
-				 const struct nlattr * const osf_attrs[])
-{
-	struct nf_osf_user_finger *f;
-	struct nf_osf_finger *kf = NULL, *sf;
-	int err = 0;
+अटल पूर्णांक nfnl_osf_add_callback(काष्ठा sk_buff *skb,
+				 स्थिर काष्ठा nfnl_info *info,
+				 स्थिर काष्ठा nlattr * स्थिर osf_attrs[])
+अणु
+	काष्ठा nf_osf_user_finger *f;
+	काष्ठा nf_osf_finger *kf = शून्य, *sf;
+	पूर्णांक err = 0;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (!osf_attrs[OSF_ATTR_FINGER])
-		return -EINVAL;
+	अगर (!osf_attrs[OSF_ATTR_FINGER])
+		वापस -EINVAL;
 
-	if (!(info->nlh->nlmsg_flags & NLM_F_CREATE))
-		return -EINVAL;
+	अगर (!(info->nlh->nlmsg_flags & NLM_F_CREATE))
+		वापस -EINVAL;
 
 	f = nla_data(osf_attrs[OSF_ATTR_FINGER]);
 
-	kf = kmalloc(sizeof(struct nf_osf_finger), GFP_KERNEL);
-	if (!kf)
-		return -ENOMEM;
+	kf = kदो_स्मृति(माप(काष्ठा nf_osf_finger), GFP_KERNEL);
+	अगर (!kf)
+		वापस -ENOMEM;
 
-	memcpy(&kf->finger, f, sizeof(struct nf_osf_user_finger));
+	स_नकल(&kf->finger, f, माप(काष्ठा nf_osf_user_finger));
 
-	list_for_each_entry(sf, &nf_osf_fingers[!!f->df], finger_entry) {
-		if (memcmp(&sf->finger, f, sizeof(struct nf_osf_user_finger)))
-			continue;
+	list_क्रम_each_entry(sf, &nf_osf_fingers[!!f->df], finger_entry) अणु
+		अगर (स_भेद(&sf->finger, f, माप(काष्ठा nf_osf_user_finger)))
+			जारी;
 
-		kfree(kf);
-		kf = NULL;
+		kमुक्त(kf);
+		kf = शून्य;
 
-		if (info->nlh->nlmsg_flags & NLM_F_EXCL)
+		अगर (info->nlh->nlmsg_flags & NLM_F_EXCL)
 			err = -EEXIST;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * We are protected by nfnl mutex.
+	 * We are रक्षित by nfnl mutex.
 	 */
-	if (kf)
+	अगर (kf)
 		list_add_tail_rcu(&kf->finger_entry, &nf_osf_fingers[!!f->df]);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int nfnl_osf_remove_callback(struct sk_buff *skb,
-				    const struct nfnl_info *info,
-				    const struct nlattr * const osf_attrs[])
-{
-	struct nf_osf_user_finger *f;
-	struct nf_osf_finger *sf;
-	int err = -ENOENT;
+अटल पूर्णांक nfnl_osf_हटाओ_callback(काष्ठा sk_buff *skb,
+				    स्थिर काष्ठा nfnl_info *info,
+				    स्थिर काष्ठा nlattr * स्थिर osf_attrs[])
+अणु
+	काष्ठा nf_osf_user_finger *f;
+	काष्ठा nf_osf_finger *sf;
+	पूर्णांक err = -ENOENT;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (!osf_attrs[OSF_ATTR_FINGER])
-		return -EINVAL;
+	अगर (!osf_attrs[OSF_ATTR_FINGER])
+		वापस -EINVAL;
 
 	f = nla_data(osf_attrs[OSF_ATTR_FINGER]);
 
-	list_for_each_entry(sf, &nf_osf_fingers[!!f->df], finger_entry) {
-		if (memcmp(&sf->finger, f, sizeof(struct nf_osf_user_finger)))
-			continue;
+	list_क्रम_each_entry(sf, &nf_osf_fingers[!!f->df], finger_entry) अणु
+		अगर (स_भेद(&sf->finger, f, माप(काष्ठा nf_osf_user_finger)))
+			जारी;
 
 		/*
-		 * We are protected by nfnl mutex.
+		 * We are रक्षित by nfnl mutex.
 		 */
 		list_del_rcu(&sf->finger_entry);
-		kfree_rcu(sf, rcu_head);
+		kमुक्त_rcu(sf, rcu_head);
 
 		err = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct nfnl_callback nfnl_osf_callbacks[OSF_MSG_MAX] = {
-	[OSF_MSG_ADD]	= {
+अटल स्थिर काष्ठा nfnl_callback nfnl_osf_callbacks[OSF_MSG_MAX] = अणु
+	[OSF_MSG_ADD]	= अणु
 		.call		= nfnl_osf_add_callback,
 		.type		= NFNL_CB_MUTEX,
 		.attr_count	= OSF_ATTR_MAX,
 		.policy		= nfnl_osf_policy,
-	},
-	[OSF_MSG_REMOVE]	= {
-		.call		= nfnl_osf_remove_callback,
+	पूर्ण,
+	[OSF_MSG_REMOVE]	= अणु
+		.call		= nfnl_osf_हटाओ_callback,
 		.type		= NFNL_CB_MUTEX,
 		.attr_count	= OSF_ATTR_MAX,
 		.policy		= nfnl_osf_policy,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct nfnetlink_subsystem nfnl_osf_subsys = {
+अटल स्थिर काष्ठा nfnetlink_subप्रणाली nfnl_osf_subsys = अणु
 	.name			= "osf",
 	.subsys_id		= NFNL_SUBSYS_OSF,
 	.cb_count		= OSF_MSG_MAX,
 	.cb			= nfnl_osf_callbacks,
-};
+पूर्ण;
 
-static int __init nfnl_osf_init(void)
-{
-	int err = -EINVAL;
-	int i;
+अटल पूर्णांक __init nfnl_osf_init(व्योम)
+अणु
+	पूर्णांक err = -EINVAL;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(nf_osf_fingers); ++i)
+	क्रम (i = 0; i < ARRAY_SIZE(nf_osf_fingers); ++i)
 		INIT_LIST_HEAD(&nf_osf_fingers[i]);
 
-	err = nfnetlink_subsys_register(&nfnl_osf_subsys);
-	if (err < 0) {
+	err = nfnetlink_subsys_रेजिस्टर(&nfnl_osf_subsys);
+	अगर (err < 0) अणु
 		pr_err("Failed to register OSF nsfnetlink helper (%d)\n", err);
-		goto err_out_exit;
-	}
-	return 0;
+		जाओ err_out_निकास;
+	पूर्ण
+	वापस 0;
 
-err_out_exit:
-	return err;
-}
+err_out_निकास:
+	वापस err;
+पूर्ण
 
-static void __exit nfnl_osf_fini(void)
-{
-	struct nf_osf_finger *f;
-	int i;
+अटल व्योम __निकास nfnl_osf_fini(व्योम)
+अणु
+	काष्ठा nf_osf_finger *f;
+	पूर्णांक i;
 
-	nfnetlink_subsys_unregister(&nfnl_osf_subsys);
+	nfnetlink_subsys_unरेजिस्टर(&nfnl_osf_subsys);
 
-	rcu_read_lock();
-	for (i = 0; i < ARRAY_SIZE(nf_osf_fingers); ++i) {
-		list_for_each_entry_rcu(f, &nf_osf_fingers[i], finger_entry) {
+	rcu_पढ़ो_lock();
+	क्रम (i = 0; i < ARRAY_SIZE(nf_osf_fingers); ++i) अणु
+		list_क्रम_each_entry_rcu(f, &nf_osf_fingers[i], finger_entry) अणु
 			list_del_rcu(&f->finger_entry);
-			kfree_rcu(f, rcu_head);
-		}
-	}
-	rcu_read_unlock();
+			kमुक्त_rcu(f, rcu_head);
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	rcu_barrier();
-}
+पूर्ण
 
 module_init(nfnl_osf_init);
-module_exit(nfnl_osf_fini);
+module_निकास(nfnl_osf_fini);
 
 MODULE_LICENSE("GPL");

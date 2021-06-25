@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: evxfevnt - External Interfaces, ACPI event disable/enable
@@ -7,16 +8,16 @@
  *
  *****************************************************************************/
 
-#define EXPORT_ACPI_INTERFACES
+#घोषणा EXPORT_ACPI_INTERFACES
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "actables.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "actables.h"
 
-#define _COMPONENT          ACPI_EVENTS
+#घोषणा _COMPONENT          ACPI_EVENTS
 ACPI_MODULE_NAME("evxfevnt")
 
-#if (!ACPI_REDUCED_HARDWARE)	/* Entire module */
+#अगर (!ACPI_REDUCED_HARDWARE)	/* Entire module */
 /*******************************************************************************
  *
  * FUNCTION:    acpi_enable
@@ -25,60 +26,60 @@ ACPI_MODULE_NAME("evxfevnt")
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Transfers the system into ACPI mode.
+ * DESCRIPTION: Transfers the प्रणाली पूर्णांकo ACPI mode.
  *
  ******************************************************************************/
-acpi_status acpi_enable(void)
-{
+acpi_status acpi_enable(व्योम)
+अणु
 	acpi_status status;
-	int retry;
+	पूर्णांक retry;
 
 	ACPI_FUNCTION_TRACE(acpi_enable);
 
 	/* ACPI tables must be present */
 
-	if (acpi_gbl_fadt_index == ACPI_INVALID_TABLE_INDEX) {
-		return_ACPI_STATUS(AE_NO_ACPI_TABLES);
-	}
+	अगर (acpi_gbl_fadt_index == ACPI_INVALID_TABLE_INDEX) अणु
+		वापस_ACPI_STATUS(AE_NO_ACPI_TABLES);
+	पूर्ण
 
 	/* If the Hardware Reduced flag is set, machine is always in acpi mode */
 
-	if (acpi_gbl_reduced_hardware) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (acpi_gbl_reduced_hardware) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/* Check current mode */
 
-	if (acpi_hw_get_mode() == ACPI_SYS_MODE_ACPI) {
+	अगर (acpi_hw_get_mode() == ACPI_SYS_MODE_ACPI) अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_INIT,
 				  "System is already in ACPI mode\n"));
-		return_ACPI_STATUS(AE_OK);
-	}
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/* Transition to ACPI mode */
 
 	status = acpi_hw_set_mode(ACPI_SYS_MODE_ACPI);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_ERROR((AE_INFO,
 			    "Could not transition to ACPI mode"));
-		return_ACPI_STATUS(status);
-	}
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	/* Sanity check that transition succeeded */
 
-	for (retry = 0; retry < 30000; ++retry) {
-		if (acpi_hw_get_mode() == ACPI_SYS_MODE_ACPI) {
-			if (retry != 0)
+	क्रम (retry = 0; retry < 30000; ++retry) अणु
+		अगर (acpi_hw_get_mode() == ACPI_SYS_MODE_ACPI) अणु
+			अगर (retry != 0)
 				ACPI_WARNING((AE_INFO,
 				"Platform took > %d00 usec to enter ACPI mode", retry));
-			return_ACPI_STATUS(AE_OK);
-		}
+			वापस_ACPI_STATUS(AE_OK);
+		पूर्ण
 		acpi_os_stall(100);	/* 100 usec */
-	}
+	पूर्ण
 
 	ACPI_ERROR((AE_INFO, "Hardware did not enter ACPI mode"));
-	return_ACPI_STATUS(AE_NO_HARDWARE_RESPONSE);
-}
+	वापस_ACPI_STATUS(AE_NO_HARDWARE_RESPONSE);
+पूर्ण
 
 ACPI_EXPORT_SYMBOL(acpi_enable)
 
@@ -90,40 +91,40 @@ ACPI_EXPORT_SYMBOL(acpi_enable)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Transfers the system into LEGACY (non-ACPI) mode.
+ * DESCRIPTION: Transfers the प्रणाली पूर्णांकo LEGACY (non-ACPI) mode.
  *
  ******************************************************************************/
-acpi_status acpi_disable(void)
-{
+acpi_status acpi_disable(व्योम)
+अणु
 	acpi_status status = AE_OK;
 
 	ACPI_FUNCTION_TRACE(acpi_disable);
 
 	/* If the Hardware Reduced flag is set, machine is always in acpi mode */
 
-	if (acpi_gbl_reduced_hardware) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (acpi_gbl_reduced_hardware) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
-	if (acpi_hw_get_mode() == ACPI_SYS_MODE_LEGACY) {
+	अगर (acpi_hw_get_mode() == ACPI_SYS_MODE_LEGACY) अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_INIT,
 				  "System is already in legacy (non-ACPI) mode\n"));
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Transition to LEGACY mode */
 
 		status = acpi_hw_set_mode(ACPI_SYS_MODE_LEGACY);
 
-		if (ACPI_FAILURE(status)) {
+		अगर (ACPI_FAILURE(status)) अणु
 			ACPI_ERROR((AE_INFO,
 				    "Could not exit ACPI mode to legacy mode"));
-			return_ACPI_STATUS(status);
-		}
+			वापस_ACPI_STATUS(status);
+		पूर्ण
 
 		ACPI_DEBUG_PRINT((ACPI_DB_INIT, "ACPI mode disabled\n"));
-	}
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 ACPI_EXPORT_SYMBOL(acpi_disable)
 
@@ -140,7 +141,7 @@ ACPI_EXPORT_SYMBOL(acpi_disable)
  *
  ******************************************************************************/
 acpi_status acpi_enable_event(u32 event, u32 flags)
-{
+अणु
 	acpi_status status = AE_OK;
 	u32 value;
 
@@ -148,45 +149,45 @@ acpi_status acpi_enable_event(u32 event, u32 flags)
 
 	/* If Hardware Reduced flag is set, there are no fixed events */
 
-	if (acpi_gbl_reduced_hardware) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (acpi_gbl_reduced_hardware) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/* Decode the Fixed Event */
 
-	if (event > ACPI_EVENT_MAX) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर (event > ACPI_EVENT_MAX) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
 	/*
 	 * Enable the requested fixed event (by writing a one to the enable
-	 * register bit)
+	 * रेजिस्टर bit)
 	 */
 	status =
-	    acpi_write_bit_register(acpi_gbl_fixed_event_info[event].
-				    enable_register_id, ACPI_ENABLE_EVENT);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	    acpi_ग_लिखो_bit_रेजिस्टर(acpi_gbl_fixed_event_info[event].
+				    enable_रेजिस्टर_id, ACPI_ENABLE_EVENT);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	/* Make sure that the hardware responded */
 
 	status =
-	    acpi_read_bit_register(acpi_gbl_fixed_event_info[event].
-				   enable_register_id, &value);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	    acpi_पढ़ो_bit_रेजिस्टर(acpi_gbl_fixed_event_info[event].
+				   enable_रेजिस्टर_id, &value);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
-	if (value != 1) {
+	अगर (value != 1) अणु
 		ACPI_ERROR((AE_INFO,
 			    "Could not enable %s event",
 			    acpi_ut_get_event_name(event)));
-		return_ACPI_STATUS(AE_NO_HARDWARE_RESPONSE);
-	}
+		वापस_ACPI_STATUS(AE_NO_HARDWARE_RESPONSE);
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 ACPI_EXPORT_SYMBOL(acpi_enable_event)
 
@@ -203,7 +204,7 @@ ACPI_EXPORT_SYMBOL(acpi_enable_event)
  *
  ******************************************************************************/
 acpi_status acpi_disable_event(u32 event, u32 flags)
-{
+अणु
 	acpi_status status = AE_OK;
 	u32 value;
 
@@ -211,43 +212,43 @@ acpi_status acpi_disable_event(u32 event, u32 flags)
 
 	/* If Hardware Reduced flag is set, there are no fixed events */
 
-	if (acpi_gbl_reduced_hardware) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (acpi_gbl_reduced_hardware) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/* Decode the Fixed Event */
 
-	if (event > ACPI_EVENT_MAX) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर (event > ACPI_EVENT_MAX) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
 	/*
 	 * Disable the requested fixed event (by writing a zero to the enable
-	 * register bit)
+	 * रेजिस्टर bit)
 	 */
 	status =
-	    acpi_write_bit_register(acpi_gbl_fixed_event_info[event].
-				    enable_register_id, ACPI_DISABLE_EVENT);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	    acpi_ग_लिखो_bit_रेजिस्टर(acpi_gbl_fixed_event_info[event].
+				    enable_रेजिस्टर_id, ACPI_DISABLE_EVENT);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	status =
-	    acpi_read_bit_register(acpi_gbl_fixed_event_info[event].
-				   enable_register_id, &value);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	    acpi_पढ़ो_bit_रेजिस्टर(acpi_gbl_fixed_event_info[event].
+				   enable_रेजिस्टर_id, &value);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
-	if (value != 0) {
+	अगर (value != 0) अणु
 		ACPI_ERROR((AE_INFO,
 			    "Could not disable %s events",
 			    acpi_ut_get_event_name(event)));
-		return_ACPI_STATUS(AE_NO_HARDWARE_RESPONSE);
-	}
+		वापस_ACPI_STATUS(AE_NO_HARDWARE_RESPONSE);
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 ACPI_EXPORT_SYMBOL(acpi_disable_event)
 
@@ -263,33 +264,33 @@ ACPI_EXPORT_SYMBOL(acpi_disable_event)
  *
  ******************************************************************************/
 acpi_status acpi_clear_event(u32 event)
-{
+अणु
 	acpi_status status = AE_OK;
 
 	ACPI_FUNCTION_TRACE(acpi_clear_event);
 
 	/* If Hardware Reduced flag is set, there are no fixed events */
 
-	if (acpi_gbl_reduced_hardware) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (acpi_gbl_reduced_hardware) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/* Decode the Fixed Event */
 
-	if (event > ACPI_EVENT_MAX) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर (event > ACPI_EVENT_MAX) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
 	/*
 	 * Clear the requested fixed event (By writing a one to the status
-	 * register bit)
+	 * रेजिस्टर bit)
 	 */
 	status =
-	    acpi_write_bit_register(acpi_gbl_fixed_event_info[event].
-				    status_register_id, ACPI_CLEAR_STATUS);
+	    acpi_ग_लिखो_bit_रेजिस्टर(acpi_gbl_fixed_event_info[event].
+				    status_रेजिस्टर_id, ACPI_CLEAR_STATUS);
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 ACPI_EXPORT_SYMBOL(acpi_clear_event)
 
@@ -299,67 +300,67 @@ ACPI_EXPORT_SYMBOL(acpi_clear_event)
  *
  * PARAMETERS:  event           - The fixed event
  *              event_status    - Where the current status of the event will
- *                                be returned
+ *                                be वापसed
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Obtains and returns the current status of the event
+ * DESCRIPTION: Obtains and वापसs the current status of the event
  *
  ******************************************************************************/
 acpi_status acpi_get_event_status(u32 event, acpi_event_status * event_status)
-{
+अणु
 	acpi_status status;
 	acpi_event_status local_event_status = 0;
 	u32 in_byte;
 
 	ACPI_FUNCTION_TRACE(acpi_get_event_status);
 
-	if (!event_status) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर (!event_status) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
 	/* Decode the Fixed Event */
 
-	if (event > ACPI_EVENT_MAX) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर (event > ACPI_EVENT_MAX) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
 	/* Fixed event currently can be dispatched? */
 
-	if (acpi_gbl_fixed_event_handlers[event].handler) {
+	अगर (acpi_gbl_fixed_event_handlers[event].handler) अणु
 		local_event_status |= ACPI_EVENT_FLAG_HAS_HANDLER;
-	}
+	पूर्ण
 
 	/* Fixed event currently enabled? */
 
 	status =
-	    acpi_read_bit_register(acpi_gbl_fixed_event_info[event].
-				   enable_register_id, &in_byte);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	    acpi_पढ़ो_bit_रेजिस्टर(acpi_gbl_fixed_event_info[event].
+				   enable_रेजिस्टर_id, &in_byte);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
-	if (in_byte) {
+	अगर (in_byte) अणु
 		local_event_status |=
 		    (ACPI_EVENT_FLAG_ENABLED | ACPI_EVENT_FLAG_ENABLE_SET);
-	}
+	पूर्ण
 
 	/* Fixed event currently active? */
 
 	status =
-	    acpi_read_bit_register(acpi_gbl_fixed_event_info[event].
-				   status_register_id, &in_byte);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	    acpi_पढ़ो_bit_रेजिस्टर(acpi_gbl_fixed_event_info[event].
+				   status_रेजिस्टर_id, &in_byte);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
-	if (in_byte) {
+	अगर (in_byte) अणु
 		local_event_status |= ACPI_EVENT_FLAG_STATUS_SET;
-	}
+	पूर्ण
 
 	(*event_status) = local_event_status;
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 ACPI_EXPORT_SYMBOL(acpi_get_event_status)
-#endif				/* !ACPI_REDUCED_HARDWARE */
+#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */

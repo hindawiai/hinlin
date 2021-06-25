@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
- * Copyright 2016-2018 HabanaLabs, Ltd.
+ * Copyright 2016-2018 HabanaLअसल, Ltd.
  * All Rights Reserved.
  *
  */
 
-#ifndef GOYA_CORESIGHT_H
-#define GOYA_CORESIGHT_H
+#अगर_अघोषित GOYA_CORESIGHT_H
+#घोषणा GOYA_CORESIGHT_H
 
-enum goya_debug_stm_regs_index {
+क्रमागत goya_debug_sपंचांग_regs_index अणु
 	GOYA_STM_FIRST = 0,
 	GOYA_STM_CPU = GOYA_STM_FIRST,
 	GOYA_STM_DMA_CH_0_CS,
@@ -33,9 +34,9 @@ enum goya_debug_stm_regs_index {
 	GOYA_STM_TPC6_EML,
 	GOYA_STM_TPC7_EML,
 	GOYA_STM_LAST = GOYA_STM_TPC7_EML
-};
+पूर्ण;
 
-enum goya_debug_etf_regs_index {
+क्रमागत goya_debug_etf_regs_index अणु
 	GOYA_ETF_FIRST = 0,
 	GOYA_ETF_CPU_0 = GOYA_ETF_FIRST,
 	GOYA_ETF_CPU_1,
@@ -62,9 +63,9 @@ enum goya_debug_etf_regs_index {
 	GOYA_ETF_TPC6_EML,
 	GOYA_ETF_TPC7_EML,
 	GOYA_ETF_LAST = GOYA_ETF_TPC7_EML
-};
+पूर्ण;
 
-enum goya_debug_funnel_regs_index {
+क्रमागत goya_debug_funnel_regs_index अणु
 	GOYA_FUNNEL_FIRST = 0,
 	GOYA_FUNNEL_CPU = GOYA_FUNNEL_FIRST,
 	GOYA_FUNNEL_DMA_CH_6_1,
@@ -92,9 +93,9 @@ enum goya_debug_funnel_regs_index {
 	GOYA_FUNNEL_TPC6_RTR,
 	GOYA_FUNNEL_TPC7_EML,
 	GOYA_FUNNEL_LAST = GOYA_FUNNEL_TPC7_EML
-};
+पूर्ण;
 
-enum goya_debug_bmon_regs_index {
+क्रमागत goya_debug_bmon_regs_index अणु
 	GOYA_BMON_FIRST = 0,
 	GOYA_BMON_CPU_RD = GOYA_BMON_FIRST,
 	GOYA_BMON_CPU_WR,
@@ -169,9 +170,9 @@ enum goya_debug_bmon_regs_index {
 	GOYA_BMON_TPC7_EML_2,
 	GOYA_BMON_TPC7_EML_3,
 	GOYA_BMON_LAST = GOYA_BMON_TPC7_EML_3
-};
+पूर्ण;
 
-enum goya_debug_spmu_regs_index {
+क्रमागत goya_debug_spmu_regs_index अणु
 	GOYA_SPMU_FIRST = 0,
 	GOYA_SPMU_DMA_CH_0_CS = GOYA_SPMU_FIRST,
 	GOYA_SPMU_DMA_CH_1_CS,
@@ -194,6 +195,6 @@ enum goya_debug_spmu_regs_index {
 	GOYA_SPMU_TPC6_EML,
 	GOYA_SPMU_TPC7_EML,
 	GOYA_SPMU_LAST = GOYA_SPMU_TPC7_EML
-};
+पूर्ण;
 
-#endif /* GOYA_CORESIGHT_H */
+#पूर्ण_अगर /* GOYA_CORESIGHT_H */

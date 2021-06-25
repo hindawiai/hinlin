@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics SA 2013
- * Author: Hugues Fruchet <hugues.fruchet@st.com> for STMicroelectronics.
+ * Author: Hugues Fruchet <hugues.fruchet@st.com> क्रम STMicroelectronics.
  */
 
-#include "delta.h"
-#include "delta-mjpeg.h"
+#समावेश "delta.h"
+#समावेश "delta-mjpeg.h"
 
-#define MJPEG_SOF_0  0xc0
-#define MJPEG_SOF_1  0xc1
-#define MJPEG_SOI    0xd8
-#define MJPEG_MARKER 0xff
+#घोषणा MJPEG_SOF_0  0xc0
+#घोषणा MJPEG_SOF_1  0xc1
+#घोषणा MJPEG_SOI    0xd8
+#घोषणा MJPEG_MARKER 0xff
 
-static char *header_str(struct mjpeg_header *header,
-			char *str,
-			unsigned int len)
-{
-	char *cur = str;
-	unsigned int left = len;
+अटल अक्षर *header_str(काष्ठा mjpeg_header *header,
+			अक्षर *str,
+			अचिन्हित पूर्णांक len)
+अणु
+	अक्षर *cur = str;
+	अचिन्हित पूर्णांक left = len;
 
-	if (!header)
-		return "";
+	अगर (!header)
+		वापस "";
 
-	snprintf(cur, left, "[MJPEG header]\n"
+	snम_लिखो(cur, left, "[MJPEG header]\n"
 			"|- length     = %d\n"
 			"|- precision  = %d\n"
 			"|- width      = %d\n"
@@ -34,116 +35,116 @@ static char *header_str(struct mjpeg_header *header,
 			header->frame_height,
 			header->nb_of_components);
 
-	return str;
-}
+	वापस str;
+पूर्ण
 
-static int delta_mjpeg_read_sof(struct delta_ctx *pctx,
-				unsigned char *data, unsigned int size,
-				struct mjpeg_header *header)
-{
-	struct delta_dev *delta = pctx->dev;
-	unsigned int offset = 0;
+अटल पूर्णांक delta_mjpeg_पढ़ो_sof(काष्ठा delta_ctx *pctx,
+				अचिन्हित अक्षर *data, अचिन्हित पूर्णांक size,
+				काष्ठा mjpeg_header *header)
+अणु
+	काष्ठा delta_dev *delta = pctx->dev;
+	अचिन्हित पूर्णांक offset = 0;
 
-	if (size < 64)
-		goto err_no_more;
+	अगर (size < 64)
+		जाओ err_no_more;
 
-	memset(header, 0, sizeof(*header));
+	स_रखो(header, 0, माप(*header));
 	header->length           = be16_to_cpu(*(__be16 *)(data + offset));
-	offset += sizeof(u16);
+	offset += माप(u16);
 	header->sample_precision = *(u8 *)(data + offset);
-	offset += sizeof(u8);
+	offset += माप(u8);
 	header->frame_height     = be16_to_cpu(*(__be16 *)(data + offset));
-	offset += sizeof(u16);
+	offset += माप(u16);
 	header->frame_width      = be16_to_cpu(*(__be16 *)(data + offset));
-	offset += sizeof(u16);
+	offset += माप(u16);
 	header->nb_of_components = *(u8 *)(data + offset);
-	offset += sizeof(u8);
+	offset += माप(u8);
 
-	if (header->nb_of_components >= MJPEG_MAX_COMPONENTS) {
+	अगर (header->nb_of_components >= MJPEG_MAX_COMPONENTS) अणु
 		dev_err(delta->dev,
 			"%s   unsupported number of components (%d > %d)\n",
 			pctx->name, header->nb_of_components,
 			MJPEG_MAX_COMPONENTS);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((offset + header->nb_of_components *
-	     sizeof(header->components[0])) > size)
-		goto err_no_more;
+	अगर ((offset + header->nb_of_components *
+	     माप(header->components[0])) > size)
+		जाओ err_no_more;
 
-	return 0;
+	वापस 0;
 
 err_no_more:
 	dev_err(delta->dev,
 		"%s   sof: reached end of %d size input stream\n",
 		pctx->name, size);
-	return -ENODATA;
-}
+	वापस -ENODATA;
+पूर्ण
 
-int delta_mjpeg_read_header(struct delta_ctx *pctx,
-			    unsigned char *data, unsigned int size,
-			    struct mjpeg_header *header,
-			    unsigned int *data_offset)
-{
-	struct delta_dev *delta = pctx->dev;
-	unsigned char str[200];
+पूर्णांक delta_mjpeg_पढ़ो_header(काष्ठा delta_ctx *pctx,
+			    अचिन्हित अक्षर *data, अचिन्हित पूर्णांक size,
+			    काष्ठा mjpeg_header *header,
+			    अचिन्हित पूर्णांक *data_offset)
+अणु
+	काष्ठा delta_dev *delta = pctx->dev;
+	अचिन्हित अक्षर str[200];
 
-	unsigned int ret = 0;
-	unsigned int offset = 0;
-	unsigned int soi = 0;
+	अचिन्हित पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक offset = 0;
+	अचिन्हित पूर्णांक soi = 0;
 
-	if (size < 2)
-		goto err_no_more;
+	अगर (size < 2)
+		जाओ err_no_more;
 
 	offset = 0;
-	while (1) {
-		if (data[offset] == MJPEG_MARKER)
-			switch (data[offset + 1]) {
-			case MJPEG_SOI:
+	जबतक (1) अणु
+		अगर (data[offset] == MJPEG_MARKER)
+			चयन (data[offset + 1]) अणु
+			हाल MJPEG_SOI:
 				soi = 1;
 				*data_offset = offset;
-				break;
+				अवरोध;
 
-			case MJPEG_SOF_0:
-			case MJPEG_SOF_1:
-				if (!soi) {
+			हाल MJPEG_SOF_0:
+			हाल MJPEG_SOF_1:
+				अगर (!soi) अणु
 					dev_err(delta->dev,
 						"%s   wrong sequence, got SOF while SOI not seen\n",
 						pctx->name);
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 
-				ret = delta_mjpeg_read_sof(pctx,
+				ret = delta_mjpeg_पढ़ो_sof(pctx,
 							   &data[offset + 2],
 							   size - (offset + 2),
 							   header);
-				if (ret)
-					goto err;
+				अगर (ret)
+					जाओ err;
 
-				goto done;
+				जाओ करोne;
 
-			default:
-				break;
-			}
+			शेष:
+				अवरोध;
+			पूर्ण
 
 		offset++;
-		if ((offset + 2) >= size)
-			goto err_no_more;
-	}
+		अगर ((offset + 2) >= size)
+			जाओ err_no_more;
+	पूर्ण
 
-done:
+करोne:
 	dev_dbg(delta->dev,
 		"%s   found header @ offset %d:\n%s", pctx->name,
 		*data_offset,
-		header_str(header, str, sizeof(str)));
-	return 0;
+		header_str(header, str, माप(str)));
+	वापस 0;
 
 err_no_more:
 	dev_err(delta->dev,
 		"%s   no header found within %d bytes input stream\n",
 		pctx->name, size);
-	return -ENODATA;
+	वापस -ENODATA;
 
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण

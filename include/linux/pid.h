@@ -1,215 +1,216 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_PID_H
-#define _LINUX_PID_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_PID_H
+#घोषणा _LINUX_PID_H
 
-#include <linux/rculist.h>
-#include <linux/wait.h>
-#include <linux/refcount.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/refcount.h>
 
-enum pid_type
-{
+क्रमागत pid_type
+अणु
 	PIDTYPE_PID,
 	PIDTYPE_TGID,
 	PIDTYPE_PGID,
 	PIDTYPE_SID,
 	PIDTYPE_MAX,
-};
+पूर्ण;
 
 /*
- * What is struct pid?
+ * What is काष्ठा pid?
  *
- * A struct pid is the kernel's internal notion of a process identifier.
- * It refers to individual tasks, process groups, and sessions.  While
- * there are processes attached to it the struct pid lives in a hash
+ * A काष्ठा pid is the kernel's पूर्णांकernal notion of a process identअगरier.
+ * It refers to inभागidual tasks, process groups, and sessions.  While
+ * there are processes attached to it the काष्ठा pid lives in a hash
  * table, so it and then the processes that it refers to can be found
  * quickly from the numeric pid value.  The attached processes may be
- * quickly accessed by following pointers from struct pid.
+ * quickly accessed by following poपूर्णांकers from काष्ठा pid.
  *
  * Storing pid_t values in the kernel and referring to them later has a
- * problem.  The process originally with that pid may have exited and the
- * pid allocator wrapped, and another process could have come along
- * and been assigned that pid.
+ * problem.  The process originally with that pid may have निकासed and the
+ * pid allocator wrapped, and another process could have come aदीर्घ
+ * and been asचिन्हित that pid.
  *
- * Referring to user space processes by holding a reference to struct
- * task_struct has a problem.  When the user space process exits
- * the now useless task_struct is still kept.  A task_struct plus a
+ * Referring to user space processes by holding a reference to काष्ठा
+ * task_काष्ठा has a problem.  When the user space process निकासs
+ * the now useless task_काष्ठा is still kept.  A task_काष्ठा plus a
  * stack consumes around 10K of low kernel memory.  More precisely
- * this is THREAD_SIZE + sizeof(struct task_struct).  By comparison
- * a struct pid is about 64 bytes.
+ * this is THREAD_SIZE + माप(काष्ठा task_काष्ठा).  By comparison
+ * a काष्ठा pid is about 64 bytes.
  *
- * Holding a reference to struct pid solves both of these problems.
- * It is small so holding a reference does not consume a lot of
- * resources, and since a new struct pid is allocated when the numeric pid
- * value is reused (when pids wrap around) we don't mistakenly refer to new
+ * Holding a reference to काष्ठा pid solves both of these problems.
+ * It is small so holding a reference करोes not consume a lot of
+ * resources, and since a new काष्ठा pid is allocated when the numeric pid
+ * value is reused (when pids wrap around) we करोn't mistakenly refer to new
  * processes.
  */
 
 
 /*
- * struct upid is used to get the id of the struct pid, as it is
- * seen in particular namespace. Later the struct pid is found with
- * find_pid_ns() using the int nr and struct pid_namespace *ns.
+ * काष्ठा upid is used to get the id of the काष्ठा pid, as it is
+ * seen in particular namespace. Later the काष्ठा pid is found with
+ * find_pid_ns() using the पूर्णांक nr and काष्ठा pid_namespace *ns.
  */
 
-struct upid {
-	int nr;
-	struct pid_namespace *ns;
-};
+काष्ठा upid अणु
+	पूर्णांक nr;
+	काष्ठा pid_namespace *ns;
+पूर्ण;
 
-struct pid
-{
+काष्ठा pid
+अणु
 	refcount_t count;
-	unsigned int level;
+	अचिन्हित पूर्णांक level;
 	spinlock_t lock;
 	/* lists of tasks that use this pid */
-	struct hlist_head tasks[PIDTYPE_MAX];
-	struct hlist_head inodes;
-	/* wait queue for pidfd notifications */
-	wait_queue_head_t wait_pidfd;
-	struct rcu_head rcu;
-	struct upid numbers[1];
-};
+	काष्ठा hlist_head tasks[PIDTYPE_MAX];
+	काष्ठा hlist_head inodes;
+	/* रुको queue क्रम pidfd notअगरications */
+	रुको_queue_head_t रुको_pidfd;
+	काष्ठा rcu_head rcu;
+	काष्ठा upid numbers[1];
+पूर्ण;
 
-extern struct pid init_struct_pid;
+बाह्य काष्ठा pid init_काष्ठा_pid;
 
-extern const struct file_operations pidfd_fops;
+बाह्य स्थिर काष्ठा file_operations pidfd_fops;
 
-struct file;
+काष्ठा file;
 
-extern struct pid *pidfd_pid(const struct file *file);
-struct pid *pidfd_get_pid(unsigned int fd, unsigned int *flags);
+बाह्य काष्ठा pid *pidfd_pid(स्थिर काष्ठा file *file);
+काष्ठा pid *pidfd_get_pid(अचिन्हित पूर्णांक fd, अचिन्हित पूर्णांक *flags);
 
-static inline struct pid *get_pid(struct pid *pid)
-{
-	if (pid)
+अटल अंतरभूत काष्ठा pid *get_pid(काष्ठा pid *pid)
+अणु
+	अगर (pid)
 		refcount_inc(&pid->count);
-	return pid;
-}
+	वापस pid;
+पूर्ण
 
-extern void put_pid(struct pid *pid);
-extern struct task_struct *pid_task(struct pid *pid, enum pid_type);
-static inline bool pid_has_task(struct pid *pid, enum pid_type type)
-{
-	return !hlist_empty(&pid->tasks[type]);
-}
-extern struct task_struct *get_pid_task(struct pid *pid, enum pid_type);
+बाह्य व्योम put_pid(काष्ठा pid *pid);
+बाह्य काष्ठा task_काष्ठा *pid_task(काष्ठा pid *pid, क्रमागत pid_type);
+अटल अंतरभूत bool pid_has_task(काष्ठा pid *pid, क्रमागत pid_type type)
+अणु
+	वापस !hlist_empty(&pid->tasks[type]);
+पूर्ण
+बाह्य काष्ठा task_काष्ठा *get_pid_task(काष्ठा pid *pid, क्रमागत pid_type);
 
-extern struct pid *get_task_pid(struct task_struct *task, enum pid_type type);
+बाह्य काष्ठा pid *get_task_pid(काष्ठा task_काष्ठा *task, क्रमागत pid_type type);
 
 /*
- * these helpers must be called with the tasklist_lock write-held.
+ * these helpers must be called with the tasklist_lock ग_लिखो-held.
  */
-extern void attach_pid(struct task_struct *task, enum pid_type);
-extern void detach_pid(struct task_struct *task, enum pid_type);
-extern void change_pid(struct task_struct *task, enum pid_type,
-			struct pid *pid);
-extern void exchange_tids(struct task_struct *task, struct task_struct *old);
-extern void transfer_pid(struct task_struct *old, struct task_struct *new,
-			 enum pid_type);
+बाह्य व्योम attach_pid(काष्ठा task_काष्ठा *task, क्रमागत pid_type);
+बाह्य व्योम detach_pid(काष्ठा task_काष्ठा *task, क्रमागत pid_type);
+बाह्य व्योम change_pid(काष्ठा task_काष्ठा *task, क्रमागत pid_type,
+			काष्ठा pid *pid);
+बाह्य व्योम exchange_tids(काष्ठा task_काष्ठा *task, काष्ठा task_काष्ठा *old);
+बाह्य व्योम transfer_pid(काष्ठा task_काष्ठा *old, काष्ठा task_काष्ठा *new,
+			 क्रमागत pid_type);
 
-struct pid_namespace;
-extern struct pid_namespace init_pid_ns;
+काष्ठा pid_namespace;
+बाह्य काष्ठा pid_namespace init_pid_ns;
 
-extern int pid_max;
-extern int pid_max_min, pid_max_max;
+बाह्य पूर्णांक pid_max;
+बाह्य पूर्णांक pid_max_min, pid_max_max;
 
 /*
  * look up a PID in the hash table. Must be called with the tasklist_lock
- * or rcu_read_lock() held.
+ * or rcu_पढ़ो_lock() held.
  *
- * find_pid_ns() finds the pid in the namespace specified
- * find_vpid() finds the pid by its virtual id, i.e. in the current namespace
+ * find_pid_ns() finds the pid in the namespace specअगरied
+ * find_vpid() finds the pid by its भव id, i.e. in the current namespace
  *
  * see also find_task_by_vpid() set in include/linux/sched.h
  */
-extern struct pid *find_pid_ns(int nr, struct pid_namespace *ns);
-extern struct pid *find_vpid(int nr);
+बाह्य काष्ठा pid *find_pid_ns(पूर्णांक nr, काष्ठा pid_namespace *ns);
+बाह्य काष्ठा pid *find_vpid(पूर्णांक nr);
 
 /*
- * Lookup a PID in the hash table, and return with it's count elevated.
+ * Lookup a PID in the hash table, and वापस with it's count elevated.
  */
-extern struct pid *find_get_pid(int nr);
-extern struct pid *find_ge_pid(int nr, struct pid_namespace *);
+बाह्य काष्ठा pid *find_get_pid(पूर्णांक nr);
+बाह्य काष्ठा pid *find_ge_pid(पूर्णांक nr, काष्ठा pid_namespace *);
 
-extern struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
-			     size_t set_tid_size);
-extern void free_pid(struct pid *pid);
-extern void disable_pid_allocation(struct pid_namespace *ns);
+बाह्य काष्ठा pid *alloc_pid(काष्ठा pid_namespace *ns, pid_t *set_tid,
+			     माप_प्रकार set_tid_size);
+बाह्य व्योम मुक्त_pid(काष्ठा pid *pid);
+बाह्य व्योम disable_pid_allocation(काष्ठा pid_namespace *ns);
 
 /*
- * ns_of_pid() returns the pid namespace in which the specified pid was
+ * ns_of_pid() वापसs the pid namespace in which the specअगरied pid was
  * allocated.
  *
  * NOTE:
- * 	ns_of_pid() is expected to be called for a process (task) that has
+ * 	ns_of_pid() is expected to be called क्रम a process (task) that has
  * 	an attached 'struct pid' (see attach_pid(), detach_pid()) i.e @pid
- * 	is expected to be non-NULL. If @pid is NULL, caller should handle
- * 	the resulting NULL pid-ns.
+ * 	is expected to be non-शून्य. If @pid is शून्य, caller should handle
+ * 	the resulting शून्य pid-ns.
  */
-static inline struct pid_namespace *ns_of_pid(struct pid *pid)
-{
-	struct pid_namespace *ns = NULL;
-	if (pid)
+अटल अंतरभूत काष्ठा pid_namespace *ns_of_pid(काष्ठा pid *pid)
+अणु
+	काष्ठा pid_namespace *ns = शून्य;
+	अगर (pid)
 		ns = pid->numbers[pid->level].ns;
-	return ns;
-}
+	वापस ns;
+पूर्ण
 
 /*
- * is_child_reaper returns true if the pid is the init process
- * of the current namespace. As this one could be checked before
- * pid_ns->child_reaper is assigned in copy_process, we check
+ * is_child_reaper वापसs true अगर the pid is the init process
+ * of the current namespace. As this one could be checked beक्रमe
+ * pid_ns->child_reaper is asचिन्हित in copy_process, we check
  * with the pid number.
  */
-static inline bool is_child_reaper(struct pid *pid)
-{
-	return pid->numbers[pid->level].nr == 1;
-}
+अटल अंतरभूत bool is_child_reaper(काष्ठा pid *pid)
+अणु
+	वापस pid->numbers[pid->level].nr == 1;
+पूर्ण
 
 /*
- * the helpers to get the pid's id seen from different namespaces
+ * the helpers to get the pid's id seen from dअगरferent namespaces
  *
  * pid_nr()    : global id, i.e. the id seen from the init namespace;
- * pid_vnr()   : virtual id, i.e. the id seen from the pid namespace of
+ * pid_vnr()   : भव id, i.e. the id seen from the pid namespace of
  *               current.
- * pid_nr_ns() : id seen from the ns specified.
+ * pid_nr_ns() : id seen from the ns specअगरied.
  *
  * see also task_xid_nr() etc in include/linux/sched.h
  */
 
-static inline pid_t pid_nr(struct pid *pid)
-{
+अटल अंतरभूत pid_t pid_nr(काष्ठा pid *pid)
+अणु
 	pid_t nr = 0;
-	if (pid)
+	अगर (pid)
 		nr = pid->numbers[0].nr;
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
-pid_t pid_nr_ns(struct pid *pid, struct pid_namespace *ns);
-pid_t pid_vnr(struct pid *pid);
+pid_t pid_nr_ns(काष्ठा pid *pid, काष्ठा pid_namespace *ns);
+pid_t pid_vnr(काष्ठा pid *pid);
 
-#define do_each_pid_task(pid, type, task)				\
-	do {								\
-		if ((pid) != NULL)					\
-			hlist_for_each_entry_rcu((task),		\
-				&(pid)->tasks[type], pid_links[type]) {
+#घोषणा करो_each_pid_task(pid, type, task)				\
+	करो अणु								\
+		अगर ((pid) != शून्य)					\
+			hlist_क्रम_each_entry_rcu((task),		\
+				&(pid)->tasks[type], pid_links[type]) अणु
 
 			/*
 			 * Both old and new leaders may be attached to
-			 * the same pid in the middle of de_thread().
+			 * the same pid in the middle of de_thपढ़ो().
 			 */
-#define while_each_pid_task(pid, type, task)				\
-				if (type == PIDTYPE_PID)		\
-					break;				\
-			}						\
-	} while (0)
+#घोषणा जबतक_each_pid_task(pid, type, task)				\
+				अगर (type == PIDTYPE_PID)		\
+					अवरोध;				\
+			पूर्ण						\
+	पूर्ण जबतक (0)
 
-#define do_each_pid_thread(pid, type, task)				\
-	do_each_pid_task(pid, type, task) {				\
-		struct task_struct *tg___ = task;			\
-		for_each_thread(tg___, task) {
+#घोषणा करो_each_pid_thपढ़ो(pid, type, task)				\
+	करो_each_pid_task(pid, type, task) अणु				\
+		काष्ठा task_काष्ठा *tg___ = task;			\
+		क्रम_each_thपढ़ो(tg___, task) अणु
 
-#define while_each_pid_thread(pid, type, task)				\
-		}							\
+#घोषणा जबतक_each_pid_thपढ़ो(pid, type, task)				\
+		पूर्ण							\
 		task = tg___;						\
-	} while_each_pid_task(pid, type, task)
-#endif /* _LINUX_PID_H */
+	पूर्ण जबतक_each_pid_task(pid, type, task)
+#पूर्ण_अगर /* _LINUX_PID_H */

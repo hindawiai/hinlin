@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/ide.h>
-#include <linux/scatterlist.h>
-#include <linux/dma-mapping.h>
-#include <linux/io.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/ide.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पन.स>
 
 /**
- *	config_drive_for_dma	-	attempt to activate IDE DMA
+ *	config_drive_क्रम_dma	-	attempt to activate IDE DMA
  *	@drive: the drive to place in DMA mode
  *
  *	If the drive supports at least mode 2 DMA or UDMA of any kind
- *	then attempt to place it into DMA mode. Drives that are known to
+ *	then attempt to place it पूर्णांकo DMA mode. Drives that are known to
  *	support DMA but predate the DMA properties or that are known
  *	to have DMA handling bugs are also set up appropriately based
  *	on the good/bad drive lists.
  */
 
-int config_drive_for_dma(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
+पूर्णांक config_drive_क्रम_dma(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
 	u16 *id = drive->id;
 
-	if (drive->media != ide_disk) {
-		if (hwif->host_flags & IDE_HFLAG_NO_ATAPI_DMA)
-			return 0;
-	}
+	अगर (drive->media != ide_disk) अणु
+		अगर (hwअगर->host_flags & IDE_HFLAG_NO_ATAPI_DMA)
+			वापस 0;
+	पूर्ण
 
 	/*
 	 * Enable DMA on any drive that has
 	 * UltraDMA (mode 0/1/2/3/4/5/6) enabled
 	 */
-	if ((id[ATA_ID_FIELD_VALID] & 4) &&
+	अगर ((id[ATA_ID_FIELD_VALID] & 4) &&
 	    ((id[ATA_ID_UDMA_MODES] >> 8) & 0x7f))
-		return 1;
+		वापस 1;
 
 	/*
 	 * Enable DMA on any drive that has mode2 DMA
 	 * (multi or single) enabled
 	 */
-	if ((id[ATA_ID_MWDMA_MODES] & 0x404) == 0x404 ||
+	अगर ((id[ATA_ID_MWDMA_MODES] & 0x404) == 0x404 ||
 	    (id[ATA_ID_SWDMA_MODES] & 0x404) == 0x404)
-		return 1;
+		वापस 1;
 
 	/* Consult the list of known "good" drives */
-	if (ide_dma_good_drive(drive))
-		return 1;
+	अगर (ide_dma_good_drive(drive))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u8 ide_dma_sff_read_status(ide_hwif_t *hwif)
-{
-	unsigned long addr = hwif->dma_base + ATA_DMA_STATUS;
+u8 ide_dma_sff_पढ़ो_status(ide_hwअगर_t *hwअगर)
+अणु
+	अचिन्हित दीर्घ addr = hwअगर->dma_base + ATA_DMA_STATUS;
 
-	if (hwif->host_flags & IDE_HFLAG_MMIO)
-		return readb((void __iomem *)addr);
-	else
-		return inb(addr);
-}
-EXPORT_SYMBOL_GPL(ide_dma_sff_read_status);
+	अगर (hwअगर->host_flags & IDE_HFLAG_MMIO)
+		वापस पढ़ोb((व्योम __iomem *)addr);
+	अन्यथा
+		वापस inb(addr);
+पूर्ण
+EXPORT_SYMBOL_GPL(ide_dma_sff_पढ़ो_status);
 
-static void ide_dma_sff_write_status(ide_hwif_t *hwif, u8 val)
-{
-	unsigned long addr = hwif->dma_base + ATA_DMA_STATUS;
+अटल व्योम ide_dma_sff_ग_लिखो_status(ide_hwअगर_t *hwअगर, u8 val)
+अणु
+	अचिन्हित दीर्घ addr = hwअगर->dma_base + ATA_DMA_STATUS;
 
-	if (hwif->host_flags & IDE_HFLAG_MMIO)
-		writeb(val, (void __iomem *)addr);
-	else
+	अगर (hwअगर->host_flags & IDE_HFLAG_MMIO)
+		ग_लिखोb(val, (व्योम __iomem *)addr);
+	अन्यथा
 		outb(val, addr);
-}
+पूर्ण
 
 /**
  *	ide_dma_host_set	-	Enable/disable DMA on a host
@@ -80,19 +81,19 @@ static void ide_dma_sff_write_status(ide_hwif_t *hwif, u8 val)
  *	bus-mastering IDE controller behaviour.
  */
 
-void ide_dma_host_set(ide_drive_t *drive, int on)
-{
-	ide_hwif_t *hwif = drive->hwif;
+व्योम ide_dma_host_set(ide_drive_t *drive, पूर्णांक on)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
 	u8 unit = drive->dn & 1;
-	u8 dma_stat = hwif->dma_ops->dma_sff_read_status(hwif);
+	u8 dma_stat = hwअगर->dma_ops->dma_sff_पढ़ो_status(hwअगर);
 
-	if (on)
+	अगर (on)
 		dma_stat |= (1 << (5 + unit));
-	else
+	अन्यथा
 		dma_stat &= ~(1 << (5 + unit));
 
-	ide_dma_sff_write_status(hwif, dma_stat);
-}
+	ide_dma_sff_ग_लिखो_status(hwअगर, dma_stat);
+पूर्ण
 EXPORT_SYMBOL_GPL(ide_dma_host_set);
 
 /**
@@ -102,26 +103,26 @@ EXPORT_SYMBOL_GPL(ide_dma_host_set);
  *	to get the pci bus addresses of the buffers and then build up
  *	the PRD table that the IDE layer wants to be fed.
  *
- *	Most chipsets correctly interpret a length of 0x0000 as 64KB,
- *	but at least one (e.g. CS5530) misinterprets it as zero (!).
- *	So we break the 64KB entry into two 32KB entries instead.
+ *	Most chipsets correctly पूर्णांकerpret a length of 0x0000 as 64KB,
+ *	but at least one (e.g. CS5530) misपूर्णांकerprets it as zero (!).
+ *	So we अवरोध the 64KB entry पूर्णांकo two 32KB entries instead.
  *
- *	Returns the number of built PRD entries if all went okay,
- *	returns 0 otherwise.
+ *	Returns the number of built PRD entries अगर all went okay,
+ *	वापसs 0 otherwise.
  *
  *	May also be invoked from trm290.c
  */
 
-int ide_build_dmatable(ide_drive_t *drive, struct ide_cmd *cmd)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	__le32 *table = (__le32 *)hwif->dmatable_cpu;
-	unsigned int count = 0;
-	int i;
-	struct scatterlist *sg;
-	u8 is_trm290 = !!(hwif->host_flags & IDE_HFLAG_TRM290);
+पूर्णांक ide_build_dmatable(ide_drive_t *drive, काष्ठा ide_cmd *cmd)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	__le32 *table = (__le32 *)hwअगर->dmatable_cpu;
+	अचिन्हित पूर्णांक count = 0;
+	पूर्णांक i;
+	काष्ठा scatterlist *sg;
+	u8 is_trm290 = !!(hwअगर->host_flags & IDE_HFLAG_TRM290);
 
-	for_each_sg(hwif->sg_table, sg, cmd->sg_nents, i) {
+	क्रम_each_sg(hwअगर->sg_table, sg, cmd->sg_nents, i) अणु
 		u32 cur_addr, cur_len, xcount, bcount;
 
 		cur_addr = sg_dma_address(sg);
@@ -133,42 +134,42 @@ int ide_build_dmatable(ide_drive_t *drive, struct ide_cmd *cmd)
 		 * but the trm290 requires 32-bit alignment.
 		 */
 
-		while (cur_len) {
-			if (count++ >= PRD_ENTRIES)
-				goto use_pio_instead;
+		जबतक (cur_len) अणु
+			अगर (count++ >= PRD_ENTRIES)
+				जाओ use_pio_instead;
 
 			bcount = 0x10000 - (cur_addr & 0xffff);
-			if (bcount > cur_len)
+			अगर (bcount > cur_len)
 				bcount = cur_len;
 			*table++ = cpu_to_le32(cur_addr);
 			xcount = bcount & 0xffff;
-			if (is_trm290)
+			अगर (is_trm290)
 				xcount = ((xcount >> 2) - 1) << 16;
-			else if (xcount == 0x0000) {
-				if (count++ >= PRD_ENTRIES)
-					goto use_pio_instead;
+			अन्यथा अगर (xcount == 0x0000) अणु
+				अगर (count++ >= PRD_ENTRIES)
+					जाओ use_pio_instead;
 				*table++ = cpu_to_le32(0x8000);
 				*table++ = cpu_to_le32(cur_addr + 0x8000);
 				xcount = 0x8000;
-			}
+			पूर्ण
 			*table++ = cpu_to_le32(xcount);
 			cur_addr += bcount;
 			cur_len -= bcount;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (count) {
-		if (!is_trm290)
+	अगर (count) अणु
+		अगर (!is_trm290)
 			*--table |= cpu_to_le32(0x80000000);
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
 use_pio_instead:
-	printk(KERN_ERR "%s: %s\n", drive->name,
+	prपूर्णांकk(KERN_ERR "%s: %s\n", drive->name,
 		count ? "DMA table too small" : "empty DMA table?");
 
-	return 0; /* revert to PIO for this request */
-}
+	वापस 0; /* revert to PIO क्रम this request */
+पूर्ण
 EXPORT_SYMBOL_GPL(ide_build_dmatable);
 
 /**
@@ -176,161 +177,161 @@ EXPORT_SYMBOL_GPL(ide_build_dmatable);
  *	@drive: target device
  *	@cmd: command
  *
- *	Build an IDE DMA PRD (IDE speak for scatter gather table)
- *	and then set up the DMA transfer registers for a device
+ *	Build an IDE DMA PRD (IDE speak क्रम scatter gather table)
+ *	and then set up the DMA transfer रेजिस्टरs क्रम a device
  *	that follows generic IDE PCI DMA behaviour. Controllers can
- *	override this function if they need to
+ *	override this function अगर they need to
  *
  *	Returns 0 on success. If a PIO fallback is required then 1
- *	is returned.
+ *	is वापसed.
  */
 
-int ide_dma_setup(ide_drive_t *drive, struct ide_cmd *cmd)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	u8 mmio = (hwif->host_flags & IDE_HFLAG_MMIO) ? 1 : 0;
+पूर्णांक ide_dma_setup(ide_drive_t *drive, काष्ठा ide_cmd *cmd)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	u8 mmio = (hwअगर->host_flags & IDE_HFLAG_MMIO) ? 1 : 0;
 	u8 rw = (cmd->tf_flags & IDE_TFLAG_WRITE) ? 0 : ATA_DMA_WR;
 	u8 dma_stat;
 
 	/* fall back to pio! */
-	if (ide_build_dmatable(drive, cmd) == 0) {
+	अगर (ide_build_dmatable(drive, cmd) == 0) अणु
 		ide_map_sg(drive, cmd);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* PRD table */
-	if (mmio)
-		writel(hwif->dmatable_dma,
-		       (void __iomem *)(hwif->dma_base + ATA_DMA_TABLE_OFS));
-	else
-		outl(hwif->dmatable_dma, hwif->dma_base + ATA_DMA_TABLE_OFS);
+	अगर (mmio)
+		ग_लिखोl(hwअगर->dmatable_dma,
+		       (व्योम __iomem *)(hwअगर->dma_base + ATA_DMA_TABLE_OFS));
+	अन्यथा
+		outl(hwअगर->dmatable_dma, hwअगर->dma_base + ATA_DMA_TABLE_OFS);
 
-	/* specify r/w */
-	if (mmio)
-		writeb(rw, (void __iomem *)(hwif->dma_base + ATA_DMA_CMD));
-	else
-		outb(rw, hwif->dma_base + ATA_DMA_CMD);
+	/* specअगरy r/w */
+	अगर (mmio)
+		ग_लिखोb(rw, (व्योम __iomem *)(hwअगर->dma_base + ATA_DMA_CMD));
+	अन्यथा
+		outb(rw, hwअगर->dma_base + ATA_DMA_CMD);
 
-	/* read DMA status for INTR & ERROR flags */
-	dma_stat = hwif->dma_ops->dma_sff_read_status(hwif);
+	/* पढ़ो DMA status क्रम INTR & ERROR flags */
+	dma_stat = hwअगर->dma_ops->dma_sff_पढ़ो_status(hwअगर);
 
 	/* clear INTR & ERROR flags */
-	ide_dma_sff_write_status(hwif, dma_stat | ATA_DMA_ERR | ATA_DMA_INTR);
+	ide_dma_sff_ग_लिखो_status(hwअगर, dma_stat | ATA_DMA_ERR | ATA_DMA_INTR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ide_dma_setup);
 
 /**
- *	ide_dma_sff_timer_expiry	-	handle a DMA timeout
- *	@drive: Drive that timed out
+ *	ide_dma_sff_समयr_expiry	-	handle a DMA समयout
+ *	@drive: Drive that समयd out
  *
- *	An IDE DMA transfer timed out. In the event of an error we ask
- *	the driver to resolve the problem, if a DMA transfer is still
- *	in progress we continue to wait (arguably we need to add a
- *	secondary 'I don't care what the drive thinks' timeout here)
- *	Finally if we have an interrupt we let it complete the I/O.
- *	But only one time - we clear expiry and if it's still not
+ *	An IDE DMA transfer समयd out. In the event of an error we ask
+ *	the driver to resolve the problem, अगर a DMA transfer is still
+ *	in progress we जारी to रुको (arguably we need to add a
+ *	secondary 'I don't care what the drive thinks' समयout here)
+ *	Finally अगर we have an पूर्णांकerrupt we let it complete the I/O.
+ *	But only one समय - we clear expiry and अगर it's still not
  *	completed after WAIT_CMD, we error and retry in PIO.
- *	This can occur if an interrupt is lost or due to hang or bugs.
+ *	This can occur अगर an पूर्णांकerrupt is lost or due to hang or bugs.
  */
 
-int ide_dma_sff_timer_expiry(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	u8 dma_stat = hwif->dma_ops->dma_sff_read_status(hwif);
+पूर्णांक ide_dma_sff_समयr_expiry(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	u8 dma_stat = hwअगर->dma_ops->dma_sff_पढ़ो_status(hwअगर);
 
-	printk(KERN_WARNING "%s: %s: DMA status (0x%02x)\n",
+	prपूर्णांकk(KERN_WARNING "%s: %s: DMA status (0x%02x)\n",
 		drive->name, __func__, dma_stat);
 
-	if ((dma_stat & 0x18) == 0x18)	/* BUSY Stupid Early Timer !! */
-		return WAIT_CMD;
+	अगर ((dma_stat & 0x18) == 0x18)	/* BUSY Stupid Early Timer !! */
+		वापस WAIT_CMD;
 
-	hwif->expiry = NULL;	/* one free ride for now */
+	hwअगर->expiry = शून्य;	/* one मुक्त ride क्रम now */
 
-	if (dma_stat & ATA_DMA_ERR)	/* ERROR */
-		return -1;
+	अगर (dma_stat & ATA_DMA_ERR)	/* ERROR */
+		वापस -1;
 
-	if (dma_stat & ATA_DMA_ACTIVE)	/* DMAing */
-		return WAIT_CMD;
+	अगर (dma_stat & ATA_DMA_ACTIVE)	/* DMAing */
+		वापस WAIT_CMD;
 
-	if (dma_stat & ATA_DMA_INTR)	/* Got an Interrupt */
-		return WAIT_CMD;
+	अगर (dma_stat & ATA_DMA_INTR)	/* Got an Interrupt */
+		वापस WAIT_CMD;
 
-	return 0;	/* Status is unknown -- reset the bus */
-}
-EXPORT_SYMBOL_GPL(ide_dma_sff_timer_expiry);
+	वापस 0;	/* Status is unknown -- reset the bus */
+पूर्ण
+EXPORT_SYMBOL_GPL(ide_dma_sff_समयr_expiry);
 
-void ide_dma_start(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
+व्योम ide_dma_start(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
 	u8 dma_cmd;
 
-	/* Note that this is done *after* the cmd has
+	/* Note that this is करोne *after* the cmd has
 	 * been issued to the drive, as per the BM-IDE spec.
-	 * The Promise Ultra33 doesn't work correctly when
-	 * we do this part before issuing the drive cmd.
+	 * The Promise Ultra33 करोesn't work correctly when
+	 * we करो this part beक्रमe issuing the drive cmd.
 	 */
-	if (hwif->host_flags & IDE_HFLAG_MMIO) {
-		dma_cmd = readb((void __iomem *)(hwif->dma_base + ATA_DMA_CMD));
-		writeb(dma_cmd | ATA_DMA_START,
-		       (void __iomem *)(hwif->dma_base + ATA_DMA_CMD));
-	} else {
-		dma_cmd = inb(hwif->dma_base + ATA_DMA_CMD);
-		outb(dma_cmd | ATA_DMA_START, hwif->dma_base + ATA_DMA_CMD);
-	}
-}
+	अगर (hwअगर->host_flags & IDE_HFLAG_MMIO) अणु
+		dma_cmd = पढ़ोb((व्योम __iomem *)(hwअगर->dma_base + ATA_DMA_CMD));
+		ग_लिखोb(dma_cmd | ATA_DMA_START,
+		       (व्योम __iomem *)(hwअगर->dma_base + ATA_DMA_CMD));
+	पूर्ण अन्यथा अणु
+		dma_cmd = inb(hwअगर->dma_base + ATA_DMA_CMD);
+		outb(dma_cmd | ATA_DMA_START, hwअगर->dma_base + ATA_DMA_CMD);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(ide_dma_start);
 
-/* returns 1 on error, 0 otherwise */
-int ide_dma_end(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
+/* वापसs 1 on error, 0 otherwise */
+पूर्णांक ide_dma_end(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
 	u8 dma_stat = 0, dma_cmd = 0;
 
 	/* stop DMA */
-	if (hwif->host_flags & IDE_HFLAG_MMIO) {
-		dma_cmd = readb((void __iomem *)(hwif->dma_base + ATA_DMA_CMD));
-		writeb(dma_cmd & ~ATA_DMA_START,
-		       (void __iomem *)(hwif->dma_base + ATA_DMA_CMD));
-	} else {
-		dma_cmd = inb(hwif->dma_base + ATA_DMA_CMD);
-		outb(dma_cmd & ~ATA_DMA_START, hwif->dma_base + ATA_DMA_CMD);
-	}
+	अगर (hwअगर->host_flags & IDE_HFLAG_MMIO) अणु
+		dma_cmd = पढ़ोb((व्योम __iomem *)(hwअगर->dma_base + ATA_DMA_CMD));
+		ग_लिखोb(dma_cmd & ~ATA_DMA_START,
+		       (व्योम __iomem *)(hwअगर->dma_base + ATA_DMA_CMD));
+	पूर्ण अन्यथा अणु
+		dma_cmd = inb(hwअगर->dma_base + ATA_DMA_CMD);
+		outb(dma_cmd & ~ATA_DMA_START, hwअगर->dma_base + ATA_DMA_CMD);
+	पूर्ण
 
 	/* get DMA status */
-	dma_stat = hwif->dma_ops->dma_sff_read_status(hwif);
+	dma_stat = hwअगर->dma_ops->dma_sff_पढ़ो_status(hwअगर);
 
 	/* clear INTR & ERROR bits */
-	ide_dma_sff_write_status(hwif, dma_stat | ATA_DMA_ERR | ATA_DMA_INTR);
+	ide_dma_sff_ग_लिखो_status(hwअगर, dma_stat | ATA_DMA_ERR | ATA_DMA_INTR);
 
-#define CHECK_DMA_MASK (ATA_DMA_ACTIVE | ATA_DMA_ERR | ATA_DMA_INTR)
+#घोषणा CHECK_DMA_MASK (ATA_DMA_ACTIVE | ATA_DMA_ERR | ATA_DMA_INTR)
 
-	/* verify good DMA status */
-	if ((dma_stat & CHECK_DMA_MASK) != ATA_DMA_INTR)
-		return 0x10 | dma_stat;
-	return 0;
-}
+	/* verअगरy good DMA status */
+	अगर ((dma_stat & CHECK_DMA_MASK) != ATA_DMA_INTR)
+		वापस 0x10 | dma_stat;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ide_dma_end);
 
-/* returns 1 if dma irq issued, 0 otherwise */
-int ide_dma_test_irq(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	u8 dma_stat = hwif->dma_ops->dma_sff_read_status(hwif);
+/* वापसs 1 अगर dma irq issued, 0 otherwise */
+पूर्णांक ide_dma_test_irq(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	u8 dma_stat = hwअगर->dma_ops->dma_sff_पढ़ो_status(hwअगर);
 
-	return (dma_stat & ATA_DMA_INTR) ? 1 : 0;
-}
+	वापस (dma_stat & ATA_DMA_INTR) ? 1 : 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ide_dma_test_irq);
 
-const struct ide_dma_ops sff_dma_ops = {
+स्थिर काष्ठा ide_dma_ops sff_dma_ops = अणु
 	.dma_host_set		= ide_dma_host_set,
 	.dma_setup		= ide_dma_setup,
 	.dma_start		= ide_dma_start,
 	.dma_end		= ide_dma_end,
 	.dma_test_irq		= ide_dma_test_irq,
 	.dma_lost_irq		= ide_dma_lost_irq,
-	.dma_timer_expiry	= ide_dma_sff_timer_expiry,
-	.dma_sff_read_status	= ide_dma_sff_read_status,
-};
+	.dma_समयr_expiry	= ide_dma_sff_समयr_expiry,
+	.dma_sff_पढ़ो_status	= ide_dma_sff_पढ़ो_status,
+पूर्ण;
 EXPORT_SYMBOL_GPL(sff_dma_ops);

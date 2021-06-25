@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * OHCI HCD (Host Controller Driver) for USB.
+ * OHCI HCD (Host Controller Driver) क्रम USB.
  *
  * TI DA8xx (OMAP-L1x) Bus Glue
  *
@@ -8,558 +9,558 @@
  * Copyright (C) 2008-2009 MontaVista Software, Inc. <source@mvista.com>
  */
 
-#include <linux/clk.h>
-#include <linux/gpio/consumer.h>
-#include <linux/io.h>
-#include <linux/interrupt.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/phy/phy.h>
-#include <linux/platform_data/usb-davinci.h>
-#include <linux/regulator/consumer.h>
-#include <linux/usb.h>
-#include <linux/usb/hcd.h>
-#include <asm/unaligned.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/platक्रमm_data/usb-davinci.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/hcd.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "ohci.h"
+#समावेश "ohci.h"
 
-#define DRIVER_DESC "DA8XX"
-#define DRV_NAME "ohci-da8xx"
+#घोषणा DRIVER_DESC "DA8XX"
+#घोषणा DRV_NAME "ohci-da8xx"
 
-static struct hc_driver __read_mostly ohci_da8xx_hc_driver;
+अटल काष्ठा hc_driver __पढ़ो_mostly ohci_da8xx_hc_driver;
 
-static int (*orig_ohci_hub_control)(struct usb_hcd  *hcd, u16 typeReq,
-			u16 wValue, u16 wIndex, char *buf, u16 wLength);
-static int (*orig_ohci_hub_status_data)(struct usb_hcd *hcd, char *buf);
+अटल पूर्णांक (*orig_ohci_hub_control)(काष्ठा usb_hcd  *hcd, u16 typeReq,
+			u16 wValue, u16 wIndex, अक्षर *buf, u16 wLength);
+अटल पूर्णांक (*orig_ohci_hub_status_data)(काष्ठा usb_hcd *hcd, अक्षर *buf);
 
-struct da8xx_ohci_hcd {
-	struct usb_hcd *hcd;
-	struct clk *usb11_clk;
-	struct phy *usb11_phy;
-	struct regulator *vbus_reg;
-	struct notifier_block nb;
-	struct gpio_desc *oc_gpio;
-};
+काष्ठा da8xx_ohci_hcd अणु
+	काष्ठा usb_hcd *hcd;
+	काष्ठा clk *usb11_clk;
+	काष्ठा phy *usb11_phy;
+	काष्ठा regulator *vbus_reg;
+	काष्ठा notअगरier_block nb;
+	काष्ठा gpio_desc *oc_gpio;
+पूर्ण;
 
-#define to_da8xx_ohci(hcd) (struct da8xx_ohci_hcd *)(hcd_to_ohci(hcd)->priv)
+#घोषणा to_da8xx_ohci(hcd) (काष्ठा da8xx_ohci_hcd *)(hcd_to_ohci(hcd)->priv)
 
-/* Over-current indicator change bitmask */
-static volatile u16 ocic_mask;
+/* Over-current indicator change biपंचांगask */
+अटल अस्थिर u16 ocic_mask;
 
-static int ohci_da8xx_enable(struct usb_hcd *hcd)
-{
-	struct da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
-	int ret;
+अटल पूर्णांक ohci_da8xx_enable(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(da8xx_ohci->usb11_clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = phy_init(da8xx_ohci->usb11_phy);
-	if (ret)
-		goto err_phy_init;
+	अगर (ret)
+		जाओ err_phy_init;
 
-	ret = phy_power_on(da8xx_ohci->usb11_phy);
-	if (ret)
-		goto err_phy_power_on;
+	ret = phy_घातer_on(da8xx_ohci->usb11_phy);
+	अगर (ret)
+		जाओ err_phy_घातer_on;
 
-	return 0;
+	वापस 0;
 
-err_phy_power_on:
-	phy_exit(da8xx_ohci->usb11_phy);
+err_phy_घातer_on:
+	phy_निकास(da8xx_ohci->usb11_phy);
 err_phy_init:
 	clk_disable_unprepare(da8xx_ohci->usb11_clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ohci_da8xx_disable(struct usb_hcd *hcd)
-{
-	struct da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
+अटल व्योम ohci_da8xx_disable(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
 
-	phy_power_off(da8xx_ohci->usb11_phy);
-	phy_exit(da8xx_ohci->usb11_phy);
+	phy_घातer_off(da8xx_ohci->usb11_phy);
+	phy_निकास(da8xx_ohci->usb11_phy);
 	clk_disable_unprepare(da8xx_ohci->usb11_clk);
-}
+पूर्ण
 
-static int ohci_da8xx_set_power(struct usb_hcd *hcd, int on)
-{
-	struct da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
-	struct device *dev = hcd->self.controller;
-	int ret;
+अटल पूर्णांक ohci_da8xx_set_घातer(काष्ठा usb_hcd *hcd, पूर्णांक on)
+अणु
+	काष्ठा da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
+	काष्ठा device *dev = hcd->self.controller;
+	पूर्णांक ret;
 
-	if (!da8xx_ohci->vbus_reg)
-		return 0;
+	अगर (!da8xx_ohci->vbus_reg)
+		वापस 0;
 
-	if (on) {
+	अगर (on) अणु
 		ret = regulator_enable(da8xx_ohci->vbus_reg);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to enable regulator: %d\n", ret);
-			return ret;
-		}
-	} else {
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = regulator_disable(da8xx_ohci->vbus_reg);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed  to disable regulator: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ohci_da8xx_get_power(struct usb_hcd *hcd)
-{
-	struct da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
+अटल पूर्णांक ohci_da8xx_get_घातer(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
 
-	if (da8xx_ohci->vbus_reg)
-		return regulator_is_enabled(da8xx_ohci->vbus_reg);
+	अगर (da8xx_ohci->vbus_reg)
+		वापस regulator_is_enabled(da8xx_ohci->vbus_reg);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int ohci_da8xx_get_oci(struct usb_hcd *hcd)
-{
-	struct da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
-	unsigned int flags;
-	int ret;
+अटल पूर्णांक ohci_da8xx_get_oci(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
+	अचिन्हित पूर्णांक flags;
+	पूर्णांक ret;
 
-	if (da8xx_ohci->oc_gpio)
-		return gpiod_get_value_cansleep(da8xx_ohci->oc_gpio);
+	अगर (da8xx_ohci->oc_gpio)
+		वापस gpiod_get_value_cansleep(da8xx_ohci->oc_gpio);
 
-	if (!da8xx_ohci->vbus_reg)
-		return 0;
+	अगर (!da8xx_ohci->vbus_reg)
+		वापस 0;
 
 	ret = regulator_get_error_flags(da8xx_ohci->vbus_reg, &flags);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (flags & REGULATOR_ERROR_OVER_CURRENT)
-		return 1;
+	अगर (flags & REGULATOR_ERROR_OVER_CURRENT)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ohci_da8xx_has_set_power(struct usb_hcd *hcd)
-{
-	struct da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
+अटल पूर्णांक ohci_da8xx_has_set_घातer(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
 
-	if (da8xx_ohci->vbus_reg)
-		return 1;
+	अगर (da8xx_ohci->vbus_reg)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ohci_da8xx_has_oci(struct usb_hcd *hcd)
-{
-	struct da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
+अटल पूर्णांक ohci_da8xx_has_oci(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
 
-	if (da8xx_ohci->oc_gpio)
-		return 1;
+	अगर (da8xx_ohci->oc_gpio)
+		वापस 1;
 
-	if (da8xx_ohci->vbus_reg)
-		return 1;
+	अगर (da8xx_ohci->vbus_reg)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ohci_da8xx_has_potpgt(struct usb_hcd *hcd)
-{
-	struct device *dev		= hcd->self.controller;
-	struct da8xx_ohci_root_hub *hub	= dev_get_platdata(dev);
+अटल पूर्णांक ohci_da8xx_has_potpgt(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा device *dev		= hcd->self.controller;
+	काष्ठा da8xx_ohci_root_hub *hub	= dev_get_platdata(dev);
 
-	if (hub && hub->potpgt)
-		return 1;
+	अगर (hub && hub->potpgt)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ohci_da8xx_regulator_event(struct notifier_block *nb,
-				unsigned long event, void *data)
-{
-	struct da8xx_ohci_hcd *da8xx_ohci =
-				container_of(nb, struct da8xx_ohci_hcd, nb);
+अटल पूर्णांक ohci_da8xx_regulator_event(काष्ठा notअगरier_block *nb,
+				अचिन्हित दीर्घ event, व्योम *data)
+अणु
+	काष्ठा da8xx_ohci_hcd *da8xx_ohci =
+				container_of(nb, काष्ठा da8xx_ohci_hcd, nb);
 
-	if (event & REGULATOR_EVENT_OVER_CURRENT) {
+	अगर (event & REGULATOR_EVENT_OVER_CURRENT) अणु
 		ocic_mask |= 1 << 1;
-		ohci_da8xx_set_power(da8xx_ohci->hcd, 0);
-	}
+		ohci_da8xx_set_घातer(da8xx_ohci->hcd, 0);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t ohci_da8xx_oc_thread(int irq, void *data)
-{
-	struct da8xx_ohci_hcd *da8xx_ohci = data;
-	struct device *dev = da8xx_ohci->hcd->self.controller;
-	int ret;
+अटल irqवापस_t ohci_da8xx_oc_thपढ़ो(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा da8xx_ohci_hcd *da8xx_ohci = data;
+	काष्ठा device *dev = da8xx_ohci->hcd->self.controller;
+	पूर्णांक ret;
 
-	if (gpiod_get_value_cansleep(da8xx_ohci->oc_gpio) &&
-	    da8xx_ohci->vbus_reg) {
+	अगर (gpiod_get_value_cansleep(da8xx_ohci->oc_gpio) &&
+	    da8xx_ohci->vbus_reg) अणु
 		ret = regulator_disable(da8xx_ohci->vbus_reg);
-		if (ret)
+		अगर (ret)
 			dev_err(dev, "Failed to disable regulator: %d\n", ret);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int ohci_da8xx_register_notify(struct usb_hcd *hcd)
-{
-	struct da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
-	struct device *dev		= hcd->self.controller;
-	int ret = 0;
+अटल पूर्णांक ohci_da8xx_रेजिस्टर_notअगरy(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा da8xx_ohci_hcd *da8xx_ohci = to_da8xx_ohci(hcd);
+	काष्ठा device *dev		= hcd->self.controller;
+	पूर्णांक ret = 0;
 
-	if (!da8xx_ohci->oc_gpio && da8xx_ohci->vbus_reg) {
-		da8xx_ohci->nb.notifier_call = ohci_da8xx_regulator_event;
-		ret = devm_regulator_register_notifier(da8xx_ohci->vbus_reg,
+	अगर (!da8xx_ohci->oc_gpio && da8xx_ohci->vbus_reg) अणु
+		da8xx_ohci->nb.notअगरier_call = ohci_da8xx_regulator_event;
+		ret = devm_regulator_रेजिस्टर_notअगरier(da8xx_ohci->vbus_reg,
 						&da8xx_ohci->nb);
-	}
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "Failed to register notifier: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ohci_da8xx_reset(struct usb_hcd *hcd)
-{
-	struct device *dev		= hcd->self.controller;
-	struct da8xx_ohci_root_hub *hub	= dev_get_platdata(dev);
-	struct ohci_hcd	*ohci		= hcd_to_ohci(hcd);
-	int result;
+अटल पूर्णांक ohci_da8xx_reset(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा device *dev		= hcd->self.controller;
+	काष्ठा da8xx_ohci_root_hub *hub	= dev_get_platdata(dev);
+	काष्ठा ohci_hcd	*ohci		= hcd_to_ohci(hcd);
+	पूर्णांक result;
 	u32 rh_a;
 
 	dev_dbg(dev, "starting USB controller\n");
 
 	result = ohci_da8xx_enable(hcd);
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 
 	/*
 	 * DA8xx only have 1 port connected to the pins but the HC root hub
-	 * register A reports 2 ports, thus we'll have to override it...
+	 * रेजिस्टर A reports 2 ports, thus we'll have to override it...
 	 */
 	ohci->num_ports = 1;
 
 	result = ohci_setup(hcd);
-	if (result < 0) {
+	अगर (result < 0) अणु
 		ohci_da8xx_disable(hcd);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	/*
-	 * Since we're providing a board-specific root hub port power control
+	 * Since we're providing a board-specअगरic root hub port घातer control
 	 * and over-current reporting, we have to override the HC root hub A
-	 * register's default value, so that ohci_hub_control() could return
+	 * रेजिस्टर's शेष value, so that ohci_hub_control() could वापस
 	 * the correct hub descriptor...
 	 */
-	rh_a = ohci_readl(ohci, &ohci->regs->roothub.a);
-	if (ohci_da8xx_has_set_power(hcd)) {
+	rh_a = ohci_पढ़ोl(ohci, &ohci->regs->roothub.a);
+	अगर (ohci_da8xx_has_set_घातer(hcd)) अणु
 		rh_a &= ~RH_A_NPS;
 		rh_a |=  RH_A_PSM;
-	}
-	if (ohci_da8xx_has_oci(hcd)) {
+	पूर्ण
+	अगर (ohci_da8xx_has_oci(hcd)) अणु
 		rh_a &= ~RH_A_NOCP;
 		rh_a |=  RH_A_OCPM;
-	}
-	if (ohci_da8xx_has_potpgt(hcd)) {
+	पूर्ण
+	अगर (ohci_da8xx_has_potpgt(hcd)) अणु
 		rh_a &= ~RH_A_POTPGT;
 		rh_a |= hub->potpgt << 24;
-	}
-	ohci_writel(ohci, rh_a, &ohci->regs->roothub.a);
+	पूर्ण
+	ohci_ग_लिखोl(ohci, rh_a, &ohci->regs->roothub.a);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
  * Update the status data from the hub with the over-current indicator change.
  */
-static int ohci_da8xx_hub_status_data(struct usb_hcd *hcd, char *buf)
-{
-	int length		= orig_ohci_hub_status_data(hcd, buf);
+अटल पूर्णांक ohci_da8xx_hub_status_data(काष्ठा usb_hcd *hcd, अक्षर *buf)
+अणु
+	पूर्णांक length		= orig_ohci_hub_status_data(hcd, buf);
 
-	/* See if we have OCIC bit set on port 1 */
-	if (ocic_mask & (1 << 1)) {
+	/* See अगर we have OCIC bit set on port 1 */
+	अगर (ocic_mask & (1 << 1)) अणु
 		dev_dbg(hcd->self.controller, "over-current indicator change "
 			"on port 1\n");
 
-		if (!length)
+		अगर (!length)
 			length = 1;
 
 		buf[0] |= 1 << 1;
-	}
-	return length;
-}
+	पूर्ण
+	वापस length;
+पूर्ण
 
 /*
- * Look at the control requests to the root hub and see if we need to override.
+ * Look at the control requests to the root hub and see अगर we need to override.
  */
-static int ohci_da8xx_hub_control(struct usb_hcd *hcd, u16 typeReq, u16 wValue,
-				  u16 wIndex, char *buf, u16 wLength)
-{
-	struct device *dev		= hcd->self.controller;
-	int temp;
+अटल पूर्णांक ohci_da8xx_hub_control(काष्ठा usb_hcd *hcd, u16 typeReq, u16 wValue,
+				  u16 wIndex, अक्षर *buf, u16 wLength)
+अणु
+	काष्ठा device *dev		= hcd->self.controller;
+	पूर्णांक temp;
 
-	switch (typeReq) {
-	case GetPortStatus:
+	चयन (typeReq) अणु
+	हाल GetPortStatus:
 		/* Check the port number */
-		if (wIndex != 1)
-			break;
+		अगर (wIndex != 1)
+			अवरोध;
 
 		dev_dbg(dev, "GetPortStatus(%u)\n", wIndex);
 
 		temp = roothub_portstatus(hcd_to_ohci(hcd), wIndex - 1);
 
-		/* The port power status (PPS) bit defaults to 1 */
-		if (!ohci_da8xx_get_power(hcd))
+		/* The port घातer status (PPS) bit शेषs to 1 */
+		अगर (!ohci_da8xx_get_घातer(hcd))
 			temp &= ~RH_PS_PPS;
 
 		/* The port over-current indicator (POCI) bit is always 0 */
-		if (ohci_da8xx_get_oci(hcd) > 0)
+		अगर (ohci_da8xx_get_oci(hcd) > 0)
 			temp |=  RH_PS_POCI;
 
 		/* The over-current indicator change (OCIC) bit is 0 too */
-		if (ocic_mask & (1 << wIndex))
+		अगर (ocic_mask & (1 << wIndex))
 			temp |=  RH_PS_OCIC;
 
 		put_unaligned(cpu_to_le32(temp), (__le32 *)buf);
-		return 0;
-	case SetPortFeature:
+		वापस 0;
+	हाल SetPortFeature:
 		temp = 1;
-		goto check_port;
-	case ClearPortFeature:
+		जाओ check_port;
+	हाल ClearPortFeature:
 		temp = 0;
 
 check_port:
 		/* Check the port number */
-		if (wIndex != 1)
-			break;
+		अगर (wIndex != 1)
+			अवरोध;
 
-		switch (wValue) {
-		case USB_PORT_FEAT_POWER:
+		चयन (wValue) अणु
+		हाल USB_PORT_FEAT_POWER:
 			dev_dbg(dev, "%sPortFeature(%u): %s\n",
 				temp ? "Set" : "Clear", wIndex, "POWER");
 
-			return ohci_da8xx_set_power(hcd, temp) ? -EPIPE : 0;
-		case USB_PORT_FEAT_C_OVER_CURRENT:
+			वापस ohci_da8xx_set_घातer(hcd, temp) ? -EPIPE : 0;
+		हाल USB_PORT_FEAT_C_OVER_CURRENT:
 			dev_dbg(dev, "%sPortFeature(%u): %s\n",
 				temp ? "Set" : "Clear", wIndex,
 				"C_OVER_CURRENT");
 
-			if (temp)
+			अगर (temp)
 				ocic_mask |= 1 << wIndex;
-			else
+			अन्यथा
 				ocic_mask &= ~(1 << wIndex);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return orig_ohci_hub_control(hcd, typeReq, wValue,
+	वापस orig_ohci_hub_control(hcd, typeReq, wValue,
 			wIndex, buf, wLength);
-}
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
-#ifdef CONFIG_OF
-static const struct of_device_id da8xx_ohci_ids[] = {
-	{ .compatible = "ti,da830-ohci" },
-	{ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id da8xx_ohci_ids[] = अणु
+	अणु .compatible = "ti,da830-ohci" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, da8xx_ohci_ids);
-#endif
+#पूर्ण_अगर
 
-static int ohci_da8xx_probe(struct platform_device *pdev)
-{
-	struct da8xx_ohci_hcd *da8xx_ohci;
-	struct device *dev = &pdev->dev;
-	int error, hcd_irq, oc_irq;
-	struct usb_hcd	*hcd;
-	struct resource *mem;
+अटल पूर्णांक ohci_da8xx_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा da8xx_ohci_hcd *da8xx_ohci;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक error, hcd_irq, oc_irq;
+	काष्ठा usb_hcd	*hcd;
+	काष्ठा resource *mem;
 
 	hcd = usb_create_hcd(&ohci_da8xx_hc_driver, dev, dev_name(dev));
-	if (!hcd)
-		return -ENOMEM;
+	अगर (!hcd)
+		वापस -ENOMEM;
 
 	da8xx_ohci = to_da8xx_ohci(hcd);
 	da8xx_ohci->hcd = hcd;
 
-	da8xx_ohci->usb11_clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(da8xx_ohci->usb11_clk)) {
+	da8xx_ohci->usb11_clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(da8xx_ohci->usb11_clk)) अणु
 		error = PTR_ERR(da8xx_ohci->usb11_clk);
-		if (error != -EPROBE_DEFER)
+		अगर (error != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get clock.\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	da8xx_ohci->usb11_phy = devm_phy_get(dev, "usb-phy");
-	if (IS_ERR(da8xx_ohci->usb11_phy)) {
+	अगर (IS_ERR(da8xx_ohci->usb11_phy)) अणु
 		error = PTR_ERR(da8xx_ohci->usb11_phy);
-		if (error != -EPROBE_DEFER)
+		अगर (error != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get phy.\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	da8xx_ohci->vbus_reg = devm_regulator_get_optional(dev, "vbus");
-	if (IS_ERR(da8xx_ohci->vbus_reg)) {
+	अगर (IS_ERR(da8xx_ohci->vbus_reg)) अणु
 		error = PTR_ERR(da8xx_ohci->vbus_reg);
-		if (error == -ENODEV) {
-			da8xx_ohci->vbus_reg = NULL;
-		} else if (error == -EPROBE_DEFER) {
-			goto err;
-		} else {
+		अगर (error == -ENODEV) अणु
+			da8xx_ohci->vbus_reg = शून्य;
+		पूर्ण अन्यथा अगर (error == -EPROBE_DEFER) अणु
+			जाओ err;
+		पूर्ण अन्यथा अणु
 			dev_err(dev, "Failed to get regulator\n");
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 	da8xx_ohci->oc_gpio = devm_gpiod_get_optional(dev, "oc", GPIOD_IN);
-	if (IS_ERR(da8xx_ohci->oc_gpio)) {
+	अगर (IS_ERR(da8xx_ohci->oc_gpio)) अणु
 		error = PTR_ERR(da8xx_ohci->oc_gpio);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (da8xx_ohci->oc_gpio) {
+	अगर (da8xx_ohci->oc_gpio) अणु
 		oc_irq = gpiod_to_irq(da8xx_ohci->oc_gpio);
-		if (oc_irq < 0) {
+		अगर (oc_irq < 0) अणु
 			error = oc_irq;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		error = devm_request_threaded_irq(dev, oc_irq, NULL,
-				ohci_da8xx_oc_thread, IRQF_TRIGGER_RISING |
+		error = devm_request_thपढ़ोed_irq(dev, oc_irq, शून्य,
+				ohci_da8xx_oc_thपढ़ो, IRQF_TRIGGER_RISING |
 				IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 				"OHCI over-current indicator", da8xx_ohci);
-		if (error)
-			goto err;
-	}
+		अगर (error)
+			जाओ err;
+	पूर्ण
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	hcd->regs = devm_ioremap_resource(dev, mem);
-	if (IS_ERR(hcd->regs)) {
+	अगर (IS_ERR(hcd->regs)) अणु
 		error = PTR_ERR(hcd->regs);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	hcd->rsrc_start = mem->start;
 	hcd->rsrc_len = resource_size(mem);
 
-	hcd_irq = platform_get_irq(pdev, 0);
-	if (hcd_irq < 0) {
+	hcd_irq = platक्रमm_get_irq(pdev, 0);
+	अगर (hcd_irq < 0) अणु
 		error = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	error = usb_add_hcd(hcd, hcd_irq, 0);
-	if (error)
-		goto err;
+	अगर (error)
+		जाओ err;
 
 	device_wakeup_enable(hcd->self.controller);
 
-	error = ohci_da8xx_register_notify(hcd);
-	if (error)
-		goto err_remove_hcd;
+	error = ohci_da8xx_रेजिस्टर_notअगरy(hcd);
+	अगर (error)
+		जाओ err_हटाओ_hcd;
 
-	return 0;
+	वापस 0;
 
-err_remove_hcd:
-	usb_remove_hcd(hcd);
+err_हटाओ_hcd:
+	usb_हटाओ_hcd(hcd);
 err:
 	usb_put_hcd(hcd);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int ohci_da8xx_remove(struct platform_device *pdev)
-{
-	struct usb_hcd	*hcd = platform_get_drvdata(pdev);
+अटल पूर्णांक ohci_da8xx_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb_hcd	*hcd = platक्रमm_get_drvdata(pdev);
 
-	usb_remove_hcd(hcd);
+	usb_हटाओ_hcd(hcd);
 	usb_put_hcd(hcd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int ohci_da8xx_suspend(struct platform_device *pdev,
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक ohci_da8xx_suspend(काष्ठा platक्रमm_device *pdev,
 				pm_message_t message)
-{
-	struct usb_hcd	*hcd	= platform_get_drvdata(pdev);
-	struct ohci_hcd	*ohci	= hcd_to_ohci(hcd);
-	bool		do_wakeup	= device_may_wakeup(&pdev->dev);
-	int		ret;
+अणु
+	काष्ठा usb_hcd	*hcd	= platक्रमm_get_drvdata(pdev);
+	काष्ठा ohci_hcd	*ohci	= hcd_to_ohci(hcd);
+	bool		करो_wakeup	= device_may_wakeup(&pdev->dev);
+	पूर्णांक		ret;
 
 
-	if (time_before(jiffies, ohci->next_statechange))
+	अगर (समय_beक्रमe(jअगरfies, ohci->next_statechange))
 		msleep(5);
-	ohci->next_statechange = jiffies;
+	ohci->next_statechange = jअगरfies;
 
-	ret = ohci_suspend(hcd, do_wakeup);
-	if (ret)
-		return ret;
+	ret = ohci_suspend(hcd, करो_wakeup);
+	अगर (ret)
+		वापस ret;
 
 	ohci_da8xx_disable(hcd);
 	hcd->state = HC_STATE_SUSPENDED;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ohci_da8xx_resume(struct platform_device *dev)
-{
-	struct usb_hcd	*hcd	= platform_get_drvdata(dev);
-	struct ohci_hcd	*ohci	= hcd_to_ohci(hcd);
-	int ret;
+अटल पूर्णांक ohci_da8xx_resume(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा usb_hcd	*hcd	= platक्रमm_get_drvdata(dev);
+	काष्ठा ohci_hcd	*ohci	= hcd_to_ohci(hcd);
+	पूर्णांक ret;
 
-	if (time_before(jiffies, ohci->next_statechange))
+	अगर (समय_beक्रमe(jअगरfies, ohci->next_statechange))
 		msleep(5);
-	ohci->next_statechange = jiffies;
+	ohci->next_statechange = jअगरfies;
 
 	ret = ohci_da8xx_enable(hcd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ohci_resume(hcd, false);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct ohci_driver_overrides da8xx_overrides __initconst = {
+अटल स्थिर काष्ठा ohci_driver_overrides da8xx_overrides __initस्थिर = अणु
 	.reset		 = ohci_da8xx_reset,
-	.extra_priv_size = sizeof(struct da8xx_ohci_hcd),
-};
+	.extra_priv_size = माप(काष्ठा da8xx_ohci_hcd),
+पूर्ण;
 
 /*
- * Driver definition to register with platform structure.
+ * Driver definition to रेजिस्टर with platक्रमm काष्ठाure.
  */
-static struct platform_driver ohci_hcd_da8xx_driver = {
+अटल काष्ठा platक्रमm_driver ohci_hcd_da8xx_driver = अणु
 	.probe		= ohci_da8xx_probe,
-	.remove		= ohci_da8xx_remove,
-	.shutdown 	= usb_hcd_platform_shutdown,
-#ifdef	CONFIG_PM
+	.हटाओ		= ohci_da8xx_हटाओ,
+	.shutकरोwn 	= usb_hcd_platक्रमm_shutकरोwn,
+#अगर_घोषित	CONFIG_PM
 	.suspend	= ohci_da8xx_suspend,
 	.resume		= ohci_da8xx_resume,
-#endif
-	.driver		= {
+#पूर्ण_अगर
+	.driver		= अणु
 		.name	= DRV_NAME,
 		.of_match_table = of_match_ptr(da8xx_ohci_ids),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init ohci_da8xx_init(void)
-{
+अटल पूर्णांक __init ohci_da8xx_init(व्योम)
+अणु
 
-	if (usb_disabled())
-		return -ENODEV;
+	अगर (usb_disabled())
+		वापस -ENODEV;
 
 	pr_info("%s: " DRIVER_DESC "\n", DRV_NAME);
 	ohci_init_driver(&ohci_da8xx_hc_driver, &da8xx_overrides);
 
 	/*
 	 * The Davinci da8xx HW has some unusual quirks, which require
-	 * da8xx-specific workarounds. We override certain hc_driver
-	 * functions here to achieve that. We explicitly do not enhance
+	 * da8xx-specअगरic workarounds. We override certain hc_driver
+	 * functions here to achieve that. We explicitly करो not enhance
 	 * ohci_driver_overrides to allow this more easily, since this
-	 * is an unusual case, and we don't want to encourage others to
+	 * is an unusual हाल, and we करोn't want to encourage others to
 	 * override these functions by making it too easy.
 	 */
 
@@ -569,15 +570,15 @@ static int __init ohci_da8xx_init(void)
 	ohci_da8xx_hc_driver.hub_status_data     = ohci_da8xx_hub_status_data;
 	ohci_da8xx_hc_driver.hub_control         = ohci_da8xx_hub_control;
 
-	return platform_driver_register(&ohci_hcd_da8xx_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&ohci_hcd_da8xx_driver);
+पूर्ण
 module_init(ohci_da8xx_init);
 
-static void __exit ohci_da8xx_exit(void)
-{
-	platform_driver_unregister(&ohci_hcd_da8xx_driver);
-}
-module_exit(ohci_da8xx_exit);
+अटल व्योम __निकास ohci_da8xx_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&ohci_hcd_da8xx_driver);
+पूर्ण
+module_निकास(ohci_da8xx_निकास);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:" DRV_NAME);

@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2014 Sergey Senozhatsky.
  */
 
-#ifndef _ZCOMP_H_
-#define _ZCOMP_H_
-#include <linux/local_lock.h>
+#अगर_अघोषित _ZCOMP_H_
+#घोषणा _ZCOMP_H_
+#समावेश <linux/local_lock.h>
 
-struct zcomp_strm {
-	/* The members ->buffer and ->tfm are protected by ->lock. */
+काष्ठा zcomp_strm अणु
+	/* The members ->buffer and ->tfm are रक्षित by ->lock. */
 	local_lock_t lock;
 	/* compression/decompression buffer */
-	void *buffer;
-	struct crypto_comp *tfm;
-};
+	व्योम *buffer;
+	काष्ठा crypto_comp *tfm;
+पूर्ण;
 
 /* dynamic per-device compression frontend */
-struct zcomp {
-	struct zcomp_strm __percpu *stream;
-	const char *name;
-	struct hlist_node node;
-};
+काष्ठा zcomp अणु
+	काष्ठा zcomp_strm __percpu *stream;
+	स्थिर अक्षर *name;
+	काष्ठा hlist_node node;
+पूर्ण;
 
-int zcomp_cpu_up_prepare(unsigned int cpu, struct hlist_node *node);
-int zcomp_cpu_dead(unsigned int cpu, struct hlist_node *node);
-ssize_t zcomp_available_show(const char *comp, char *buf);
-bool zcomp_available_algorithm(const char *comp);
+पूर्णांक zcomp_cpu_up_prepare(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node);
+पूर्णांक zcomp_cpu_dead(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node);
+sमाप_प्रकार zcomp_available_show(स्थिर अक्षर *comp, अक्षर *buf);
+bool zcomp_available_algorithm(स्थिर अक्षर *comp);
 
-struct zcomp *zcomp_create(const char *comp);
-void zcomp_destroy(struct zcomp *comp);
+काष्ठा zcomp *zcomp_create(स्थिर अक्षर *comp);
+व्योम zcomp_destroy(काष्ठा zcomp *comp);
 
-struct zcomp_strm *zcomp_stream_get(struct zcomp *comp);
-void zcomp_stream_put(struct zcomp *comp);
+काष्ठा zcomp_strm *zcomp_stream_get(काष्ठा zcomp *comp);
+व्योम zcomp_stream_put(काष्ठा zcomp *comp);
 
-int zcomp_compress(struct zcomp_strm *zstrm,
-		const void *src, unsigned int *dst_len);
+पूर्णांक zcomp_compress(काष्ठा zcomp_strm *zstrm,
+		स्थिर व्योम *src, अचिन्हित पूर्णांक *dst_len);
 
-int zcomp_decompress(struct zcomp_strm *zstrm,
-		const void *src, unsigned int src_len, void *dst);
+पूर्णांक zcomp_decompress(काष्ठा zcomp_strm *zstrm,
+		स्थिर व्योम *src, अचिन्हित पूर्णांक src_len, व्योम *dst);
 
-bool zcomp_set_max_streams(struct zcomp *comp, int num_strm);
-#endif /* _ZCOMP_H_ */
+bool zcomp_set_max_streams(काष्ठा zcomp *comp, पूर्णांक num_strm);
+#पूर्ण_अगर /* _ZCOMP_H_ */

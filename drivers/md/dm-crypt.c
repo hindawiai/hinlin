@@ -1,281 +1,282 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2003 Jana Saout <jana@saout.de>
- * Copyright (C) 2004 Clemens Fruhwirth <clemens@endorphin.org>
+ * Copyright (C) 2004 Clemens Fruhwirth <clemens@enकरोrphin.org>
  * Copyright (C) 2006-2020 Red Hat, Inc. All rights reserved.
  * Copyright (C) 2013-2020 Milan Broz <gmazyland@gmail.com>
  *
  * This file is released under the GPL.
  */
 
-#include <linux/completion.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/key.h>
-#include <linux/bio.h>
-#include <linux/blkdev.h>
-#include <linux/mempool.h>
-#include <linux/slab.h>
-#include <linux/crypto.h>
-#include <linux/workqueue.h>
-#include <linux/kthread.h>
-#include <linux/backing-dev.h>
-#include <linux/atomic.h>
-#include <linux/scatterlist.h>
-#include <linux/rbtree.h>
-#include <linux/ctype.h>
-#include <asm/page.h>
-#include <asm/unaligned.h>
-#include <crypto/hash.h>
-#include <crypto/md5.h>
-#include <crypto/algapi.h>
-#include <crypto/skcipher.h>
-#include <crypto/aead.h>
-#include <crypto/authenc.h>
-#include <linux/rtnetlink.h> /* for struct rtattr and RTA macros only */
-#include <linux/key-type.h>
-#include <keys/user-type.h>
-#include <keys/encrypted-type.h>
-#include <keys/trusted-type.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/key.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <crypto/hash.h>
+#समावेश <crypto/md5.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/skcipher.h>
+#समावेश <crypto/aead.h>
+#समावेश <crypto/authenc.h>
+#समावेश <linux/rtnetlink.h> /* क्रम काष्ठा rtattr and RTA macros only */
+#समावेश <linux/key-type.h>
+#समावेश <keys/user-type.h>
+#समावेश <keys/encrypted-type.h>
+#समावेश <keys/trusted-type.h>
 
-#include <linux/device-mapper.h>
+#समावेश <linux/device-mapper.h>
 
-#define DM_MSG_PREFIX "crypt"
+#घोषणा DM_MSG_PREFIX "crypt"
 
 /*
  * context holding the current state of a multi-part conversion
  */
-struct convert_context {
-	struct completion restart;
-	struct bio *bio_in;
-	struct bio *bio_out;
-	struct bvec_iter iter_in;
-	struct bvec_iter iter_out;
+काष्ठा convert_context अणु
+	काष्ठा completion restart;
+	काष्ठा bio *bio_in;
+	काष्ठा bio *bio_out;
+	काष्ठा bvec_iter iter_in;
+	काष्ठा bvec_iter iter_out;
 	u64 cc_sector;
 	atomic_t cc_pending;
-	union {
-		struct skcipher_request *req;
-		struct aead_request *req_aead;
-	} r;
+	जोड़ अणु
+		काष्ठा skcipher_request *req;
+		काष्ठा aead_request *req_aead;
+	पूर्ण r;
 
-};
+पूर्ण;
 
 /*
- * per bio private data
+ * per bio निजी data
  */
-struct dm_crypt_io {
-	struct crypt_config *cc;
-	struct bio *base_bio;
-	u8 *integrity_metadata;
-	bool integrity_metadata_from_pool;
-	struct work_struct work;
-	struct tasklet_struct tasklet;
+काष्ठा dm_crypt_io अणु
+	काष्ठा crypt_config *cc;
+	काष्ठा bio *base_bio;
+	u8 *पूर्णांकegrity_metadata;
+	bool पूर्णांकegrity_metadata_from_pool;
+	काष्ठा work_काष्ठा work;
+	काष्ठा tasklet_काष्ठा tasklet;
 
-	struct convert_context ctx;
+	काष्ठा convert_context ctx;
 
 	atomic_t io_pending;
 	blk_status_t error;
 	sector_t sector;
 
-	struct rb_node rb_node;
-} CRYPTO_MINALIGN_ATTR;
+	काष्ठा rb_node rb_node;
+पूर्ण CRYPTO_MINALIGN_ATTR;
 
-struct dm_crypt_request {
-	struct convert_context *ctx;
-	struct scatterlist sg_in[4];
-	struct scatterlist sg_out[4];
+काष्ठा dm_crypt_request अणु
+	काष्ठा convert_context *ctx;
+	काष्ठा scatterlist sg_in[4];
+	काष्ठा scatterlist sg_out[4];
 	u64 iv_sector;
-};
+पूर्ण;
 
-struct crypt_config;
+काष्ठा crypt_config;
 
-struct crypt_iv_operations {
-	int (*ctr)(struct crypt_config *cc, struct dm_target *ti,
-		   const char *opts);
-	void (*dtr)(struct crypt_config *cc);
-	int (*init)(struct crypt_config *cc);
-	int (*wipe)(struct crypt_config *cc);
-	int (*generator)(struct crypt_config *cc, u8 *iv,
-			 struct dm_crypt_request *dmreq);
-	int (*post)(struct crypt_config *cc, u8 *iv,
-		    struct dm_crypt_request *dmreq);
-};
+काष्ठा crypt_iv_operations अणु
+	पूर्णांक (*ctr)(काष्ठा crypt_config *cc, काष्ठा dm_target *ti,
+		   स्थिर अक्षर *opts);
+	व्योम (*dtr)(काष्ठा crypt_config *cc);
+	पूर्णांक (*init)(काष्ठा crypt_config *cc);
+	पूर्णांक (*wipe)(काष्ठा crypt_config *cc);
+	पूर्णांक (*generator)(काष्ठा crypt_config *cc, u8 *iv,
+			 काष्ठा dm_crypt_request *dmreq);
+	पूर्णांक (*post)(काष्ठा crypt_config *cc, u8 *iv,
+		    काष्ठा dm_crypt_request *dmreq);
+पूर्ण;
 
-struct iv_benbi_private {
-	int shift;
-};
+काष्ठा iv_benbi_निजी अणु
+	पूर्णांक shअगरt;
+पूर्ण;
 
-#define LMK_SEED_SIZE 64 /* hash + 0 */
-struct iv_lmk_private {
-	struct crypto_shash *hash_tfm;
+#घोषणा LMK_SEED_SIZE 64 /* hash + 0 */
+काष्ठा iv_lmk_निजी अणु
+	काष्ठा crypto_shash *hash_tfm;
 	u8 *seed;
-};
+पूर्ण;
 
-#define TCW_WHITENING_SIZE 16
-struct iv_tcw_private {
-	struct crypto_shash *crc32_tfm;
+#घोषणा TCW_WHITENING_SIZE 16
+काष्ठा iv_tcw_निजी अणु
+	काष्ठा crypto_shash *crc32_tfm;
 	u8 *iv_seed;
 	u8 *whitening;
-};
+पूर्ण;
 
-#define ELEPHANT_MAX_KEY_SIZE 32
-struct iv_elephant_private {
-	struct crypto_skcipher *tfm;
-};
+#घोषणा ELEPHANT_MAX_KEY_SIZE 32
+काष्ठा iv_elephant_निजी अणु
+	काष्ठा crypto_skcipher *tfm;
+पूर्ण;
 
 /*
  * Crypt: maps a linear range of a block device
- * and encrypts / decrypts at the same time.
+ * and encrypts / decrypts at the same समय.
  */
-enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,
+क्रमागत flags अणु DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,
 	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD,
 	     DM_CRYPT_NO_READ_WORKQUEUE, DM_CRYPT_NO_WRITE_WORKQUEUE,
-	     DM_CRYPT_WRITE_INLINE };
+	     DM_CRYPT_WRITE_INLINE पूर्ण;
 
-enum cipher_flags {
-	CRYPT_MODE_INTEGRITY_AEAD,	/* Use authenticated mode for cipher */
+क्रमागत cipher_flags अणु
+	CRYPT_MODE_INTEGRITY_AEAD,	/* Use authenticated mode क्रम cipher */
 	CRYPT_IV_LARGE_SECTORS,		/* Calculate IV from sector_size, not 512B sectors */
-	CRYPT_ENCRYPT_PREPROCESS,	/* Must preprocess data for encryption (elephant) */
-};
+	CRYPT_ENCRYPT_PREPROCESS,	/* Must preprocess data क्रम encryption (elephant) */
+पूर्ण;
 
 /*
- * The fields in here must be read only after initialization.
+ * The fields in here must be पढ़ो only after initialization.
  */
-struct crypt_config {
-	struct dm_dev *dev;
+काष्ठा crypt_config अणु
+	काष्ठा dm_dev *dev;
 	sector_t start;
 
-	struct percpu_counter n_allocated_pages;
+	काष्ठा percpu_counter n_allocated_pages;
 
-	struct workqueue_struct *io_queue;
-	struct workqueue_struct *crypt_queue;
+	काष्ठा workqueue_काष्ठा *io_queue;
+	काष्ठा workqueue_काष्ठा *crypt_queue;
 
-	spinlock_t write_thread_lock;
-	struct task_struct *write_thread;
-	struct rb_root write_tree;
+	spinlock_t ग_लिखो_thपढ़ो_lock;
+	काष्ठा task_काष्ठा *ग_लिखो_thपढ़ो;
+	काष्ठा rb_root ग_लिखो_tree;
 
-	char *cipher_string;
-	char *cipher_auth;
-	char *key_string;
+	अक्षर *cipher_string;
+	अक्षर *cipher_auth;
+	अक्षर *key_string;
 
-	const struct crypt_iv_operations *iv_gen_ops;
-	union {
-		struct iv_benbi_private benbi;
-		struct iv_lmk_private lmk;
-		struct iv_tcw_private tcw;
-		struct iv_elephant_private elephant;
-	} iv_gen_private;
+	स्थिर काष्ठा crypt_iv_operations *iv_gen_ops;
+	जोड़ अणु
+		काष्ठा iv_benbi_निजी benbi;
+		काष्ठा iv_lmk_निजी lmk;
+		काष्ठा iv_tcw_निजी tcw;
+		काष्ठा iv_elephant_निजी elephant;
+	पूर्ण iv_gen_निजी;
 	u64 iv_offset;
-	unsigned int iv_size;
-	unsigned short int sector_size;
-	unsigned char sector_shift;
+	अचिन्हित पूर्णांक iv_size;
+	अचिन्हित लघु पूर्णांक sector_size;
+	अचिन्हित अक्षर sector_shअगरt;
 
-	union {
-		struct crypto_skcipher **tfms;
-		struct crypto_aead **tfms_aead;
-	} cipher_tfm;
-	unsigned tfms_count;
-	unsigned long cipher_flags;
+	जोड़ अणु
+		काष्ठा crypto_skcipher **tfms;
+		काष्ठा crypto_aead **tfms_aead;
+	पूर्ण cipher_tfm;
+	अचिन्हित tfms_count;
+	अचिन्हित दीर्घ cipher_flags;
 
 	/*
 	 * Layout of each crypto request:
 	 *
-	 *   struct skcipher_request
+	 *   काष्ठा skcipher_request
 	 *      context
 	 *      padding
-	 *   struct dm_crypt_request
+	 *   काष्ठा dm_crypt_request
 	 *      padding
 	 *   IV
 	 *
 	 * The padding is added so that dm_crypt_request and the IV are
 	 * correctly aligned.
 	 */
-	unsigned int dmreq_start;
+	अचिन्हित पूर्णांक dmreq_start;
 
-	unsigned int per_bio_data_size;
+	अचिन्हित पूर्णांक per_bio_data_size;
 
-	unsigned long flags;
-	unsigned int key_size;
-	unsigned int key_parts;      /* independent parts in key buffer */
-	unsigned int key_extra_size; /* additional keys length */
-	unsigned int key_mac_size;   /* MAC key size for authenc(...) */
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक key_size;
+	अचिन्हित पूर्णांक key_parts;      /* independent parts in key buffer */
+	अचिन्हित पूर्णांक key_extra_size; /* additional keys length */
+	अचिन्हित पूर्णांक key_mac_size;   /* MAC key size क्रम authenc(...) */
 
-	unsigned int integrity_tag_size;
-	unsigned int integrity_iv_size;
-	unsigned int on_disk_tag_size;
+	अचिन्हित पूर्णांक पूर्णांकegrity_tag_size;
+	अचिन्हित पूर्णांक पूर्णांकegrity_iv_size;
+	अचिन्हित पूर्णांक on_disk_tag_size;
 
 	/*
-	 * pool for per bio private data, crypto requests,
-	 * encryption requeusts/buffer pages and integrity tags
+	 * pool क्रम per bio निजी data, crypto requests,
+	 * encryption requeusts/buffer pages and पूर्णांकegrity tags
 	 */
-	unsigned tag_pool_max_sectors;
+	अचिन्हित tag_pool_max_sectors;
 	mempool_t tag_pool;
 	mempool_t req_pool;
 	mempool_t page_pool;
 
-	struct bio_set bs;
-	struct mutex bio_alloc_lock;
+	काष्ठा bio_set bs;
+	काष्ठा mutex bio_alloc_lock;
 
-	u8 *authenc_key; /* space for keys in authenc() format (if used) */
+	u8 *authenc_key; /* space क्रम keys in authenc() क्रमmat (अगर used) */
 	u8 key[];
-};
+पूर्ण;
 
-#define MIN_IOS		64
-#define MAX_TAG_SIZE	480
-#define POOL_ENTRY_SIZE	512
+#घोषणा MIN_IOS		64
+#घोषणा MAX_TAG_SIZE	480
+#घोषणा POOL_ENTRY_SIZE	512
 
-static DEFINE_SPINLOCK(dm_crypt_clients_lock);
-static unsigned dm_crypt_clients_n = 0;
-static volatile unsigned long dm_crypt_pages_per_client;
-#define DM_CRYPT_MEMORY_PERCENT			2
-#define DM_CRYPT_MIN_PAGES_PER_CLIENT		(BIO_MAX_VECS * 16)
+अटल DEFINE_SPINLOCK(dm_crypt_clients_lock);
+अटल अचिन्हित dm_crypt_clients_n = 0;
+अटल अस्थिर अचिन्हित दीर्घ dm_crypt_pages_per_client;
+#घोषणा DM_CRYPT_MEMORY_PERCENT			2
+#घोषणा DM_CRYPT_MIN_PAGES_PER_CLIENT		(BIO_MAX_VECS * 16)
 
-static void clone_init(struct dm_crypt_io *, struct bio *);
-static void kcryptd_queue_crypt(struct dm_crypt_io *io);
-static struct scatterlist *crypt_get_sg_data(struct crypt_config *cc,
-					     struct scatterlist *sg);
+अटल व्योम clone_init(काष्ठा dm_crypt_io *, काष्ठा bio *);
+अटल व्योम kcryptd_queue_crypt(काष्ठा dm_crypt_io *io);
+अटल काष्ठा scatterlist *crypt_get_sg_data(काष्ठा crypt_config *cc,
+					     काष्ठा scatterlist *sg);
 
-static bool crypt_integrity_aead(struct crypt_config *cc);
+अटल bool crypt_पूर्णांकegrity_aead(काष्ठा crypt_config *cc);
 
 /*
  * Use this to access cipher attributes that are independent of the key.
  */
-static struct crypto_skcipher *any_tfm(struct crypt_config *cc)
-{
-	return cc->cipher_tfm.tfms[0];
-}
+अटल काष्ठा crypto_skcipher *any_tfm(काष्ठा crypt_config *cc)
+अणु
+	वापस cc->cipher_tfm.tfms[0];
+पूर्ण
 
-static struct crypto_aead *any_tfm_aead(struct crypt_config *cc)
-{
-	return cc->cipher_tfm.tfms_aead[0];
-}
+अटल काष्ठा crypto_aead *any_tfm_aead(काष्ठा crypt_config *cc)
+अणु
+	वापस cc->cipher_tfm.tfms_aead[0];
+पूर्ण
 
 /*
- * Different IV generation algorithms:
+ * Dअगरferent IV generation algorithms:
  *
  * plain: the initial vector is the 32-bit little-endian version of the sector
- *        number, padded with zeros if necessary.
+ *        number, padded with zeros अगर necessary.
  *
  * plain64: the initial vector is the 64-bit little-endian version of the sector
- *        number, padded with zeros if necessary.
+ *        number, padded with zeros अगर necessary.
  *
  * plain64be: the initial vector is the 64-bit big-endian version of the sector
- *        number, padded with zeros if necessary.
+ *        number, padded with zeros अगर necessary.
  *
  * essiv: "encrypted sector|salt initial vector", the sector number is
  *        encrypted with the bulk cipher using a salt as key. The salt
  *        should be derived from the bulk cipher's key via hashing.
  *
  * benbi: the 64-bit "big-endian 'narrow block'-count", starting at 1
- *        (needed for LRW-32-AES and possible other narrow block modes)
+ *        (needed क्रम LRW-32-AES and possible other narrow block modes)
  *
  * null: the initial vector is always zero.  Provides compatibility with
- *       obsolete loop_fish2 devices.  Do not use for new devices.
+ *       obsolete loop_fish2 devices.  Do not use क्रम new devices.
  *
  * lmk:  Compatible implementation of the block chaining mode used
- *       by the Loop-AES block device encryption system
- *       designed by Jari Ruusu. See http://loop-aes.sourceforge.net/
+ *       by the Loop-AES block device encryption प्रणाली
+ *       deचिन्हित by Jari Ruusu. See http://loop-aes.sourceक्रमge.net/
  *       It operates on full 512 byte sectors and uses CBC
  *       with an IV derived from the sector number, the data and
  *       optionally extra IV seed.
@@ -288,419 +289,419 @@ static struct crypto_aead *any_tfm_aead(struct crypt_config *cc)
  *                   (it uses 65 keys, last key is used as IV seed)
  *
  * tcw:  Compatible implementation of the block chaining mode used
- *       by the TrueCrypt device encryption system (prior to version 4.1).
+ *       by the TrueCrypt device encryption प्रणाली (prior to version 4.1).
  *       For more info see: https://gitlab.com/cryptsetup/cryptsetup/wikis/TrueCryptOnDiskFormat
  *       It operates on full 512 byte sectors and uses CBC
  *       with an IV derived from initial key and the sector number.
  *       In addition, whitening value is applied on every sector, whitening
  *       is calculated from initial key, sector number and mixed using CRC32.
  *       Note that this encryption scheme is vulnerable to watermarking attacks
- *       and should be used for old compatible containers access only.
+ *       and should be used क्रम old compatible containers access only.
  *
  * eboiv: Encrypted byte-offset IV (used in Bitlocker in CBC mode)
  *        The IV is encrypted little-endian byte-offset (with the same key
  *        and cipher as the volume).
  *
- * elephant: The extended version of eboiv with additional Elephant diffuser
+ * elephant: The extended version of eboiv with additional Elephant dअगरfuser
  *           used with Bitlocker CBC mode.
- *           This mode was used in older Windows systems
- *           https://download.microsoft.com/download/0/2/3/0238acaf-d3bf-4a6d-b3d6-0a0be4bbb36e/bitlockercipher200608.pdf
+ *           This mode was used in older Winकरोws प्रणालीs
+ *           https://करोwnload.microsoft.com/करोwnload/0/2/3/0238acaf-d3bf-4a6d-b3d6-0a0be4bbb36e/bitlockercipher200608.pdf
  */
 
-static int crypt_iv_plain_gen(struct crypt_config *cc, u8 *iv,
-			      struct dm_crypt_request *dmreq)
-{
-	memset(iv, 0, cc->iv_size);
+अटल पूर्णांक crypt_iv_plain_gen(काष्ठा crypt_config *cc, u8 *iv,
+			      काष्ठा dm_crypt_request *dmreq)
+अणु
+	स_रखो(iv, 0, cc->iv_size);
 	*(__le32 *)iv = cpu_to_le32(dmreq->iv_sector & 0xffffffff);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_plain64_gen(struct crypt_config *cc, u8 *iv,
-				struct dm_crypt_request *dmreq)
-{
-	memset(iv, 0, cc->iv_size);
+अटल पूर्णांक crypt_iv_plain64_gen(काष्ठा crypt_config *cc, u8 *iv,
+				काष्ठा dm_crypt_request *dmreq)
+अणु
+	स_रखो(iv, 0, cc->iv_size);
 	*(__le64 *)iv = cpu_to_le64(dmreq->iv_sector);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_plain64be_gen(struct crypt_config *cc, u8 *iv,
-				  struct dm_crypt_request *dmreq)
-{
-	memset(iv, 0, cc->iv_size);
+अटल पूर्णांक crypt_iv_plain64be_gen(काष्ठा crypt_config *cc, u8 *iv,
+				  काष्ठा dm_crypt_request *dmreq)
+अणु
+	स_रखो(iv, 0, cc->iv_size);
 	/* iv_size is at least of size u64; usually it is 16 bytes */
-	*(__be64 *)&iv[cc->iv_size - sizeof(u64)] = cpu_to_be64(dmreq->iv_sector);
+	*(__be64 *)&iv[cc->iv_size - माप(u64)] = cpu_to_be64(dmreq->iv_sector);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *iv,
-			      struct dm_crypt_request *dmreq)
-{
+अटल पूर्णांक crypt_iv_essiv_gen(काष्ठा crypt_config *cc, u8 *iv,
+			      काष्ठा dm_crypt_request *dmreq)
+अणु
 	/*
 	 * ESSIV encryption of the IV is now handled by the crypto API,
 	 * so just pass the plain sector number here.
 	 */
-	memset(iv, 0, cc->iv_size);
+	स_रखो(iv, 0, cc->iv_size);
 	*(__le64 *)iv = cpu_to_le64(dmreq->iv_sector);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_benbi_ctr(struct crypt_config *cc, struct dm_target *ti,
-			      const char *opts)
-{
-	unsigned bs;
-	int log;
+अटल पूर्णांक crypt_iv_benbi_ctr(काष्ठा crypt_config *cc, काष्ठा dm_target *ti,
+			      स्थिर अक्षर *opts)
+अणु
+	अचिन्हित bs;
+	पूर्णांक log;
 
-	if (crypt_integrity_aead(cc))
+	अगर (crypt_पूर्णांकegrity_aead(cc))
 		bs = crypto_aead_blocksize(any_tfm_aead(cc));
-	else
+	अन्यथा
 		bs = crypto_skcipher_blocksize(any_tfm(cc));
 	log = ilog2(bs);
 
-	/* we need to calculate how far we must shift the sector count
-	 * to get the cipher block count, we use this shift in _gen */
+	/* we need to calculate how far we must shअगरt the sector count
+	 * to get the cipher block count, we use this shअगरt in _gen */
 
-	if (1 << log != bs) {
+	अगर (1 << log != bs) अणु
 		ti->error = "cypher blocksize is not a power of 2";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (log > 9) {
+	अगर (log > 9) अणु
 		ti->error = "cypher blocksize is > 512";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	cc->iv_gen_private.benbi.shift = 9 - log;
+	cc->iv_gen_निजी.benbi.shअगरt = 9 - log;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void crypt_iv_benbi_dtr(struct crypt_config *cc)
-{
-}
+अटल व्योम crypt_iv_benbi_dtr(काष्ठा crypt_config *cc)
+अणु
+पूर्ण
 
-static int crypt_iv_benbi_gen(struct crypt_config *cc, u8 *iv,
-			      struct dm_crypt_request *dmreq)
-{
+अटल पूर्णांक crypt_iv_benbi_gen(काष्ठा crypt_config *cc, u8 *iv,
+			      काष्ठा dm_crypt_request *dmreq)
+अणु
 	__be64 val;
 
-	memset(iv, 0, cc->iv_size - sizeof(u64)); /* rest is cleared below */
+	स_रखो(iv, 0, cc->iv_size - माप(u64)); /* rest is cleared below */
 
-	val = cpu_to_be64(((u64)dmreq->iv_sector << cc->iv_gen_private.benbi.shift) + 1);
-	put_unaligned(val, (__be64 *)(iv + cc->iv_size - sizeof(u64)));
+	val = cpu_to_be64(((u64)dmreq->iv_sector << cc->iv_gen_निजी.benbi.shअगरt) + 1);
+	put_unaligned(val, (__be64 *)(iv + cc->iv_size - माप(u64)));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_null_gen(struct crypt_config *cc, u8 *iv,
-			     struct dm_crypt_request *dmreq)
-{
-	memset(iv, 0, cc->iv_size);
+अटल पूर्णांक crypt_iv_null_gen(काष्ठा crypt_config *cc, u8 *iv,
+			     काष्ठा dm_crypt_request *dmreq)
+अणु
+	स_रखो(iv, 0, cc->iv_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void crypt_iv_lmk_dtr(struct crypt_config *cc)
-{
-	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
+अटल व्योम crypt_iv_lmk_dtr(काष्ठा crypt_config *cc)
+अणु
+	काष्ठा iv_lmk_निजी *lmk = &cc->iv_gen_निजी.lmk;
 
-	if (lmk->hash_tfm && !IS_ERR(lmk->hash_tfm))
-		crypto_free_shash(lmk->hash_tfm);
-	lmk->hash_tfm = NULL;
+	अगर (lmk->hash_tfm && !IS_ERR(lmk->hash_tfm))
+		crypto_मुक्त_shash(lmk->hash_tfm);
+	lmk->hash_tfm = शून्य;
 
-	kfree_sensitive(lmk->seed);
-	lmk->seed = NULL;
-}
+	kमुक्त_sensitive(lmk->seed);
+	lmk->seed = शून्य;
+पूर्ण
 
-static int crypt_iv_lmk_ctr(struct crypt_config *cc, struct dm_target *ti,
-			    const char *opts)
-{
-	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
+अटल पूर्णांक crypt_iv_lmk_ctr(काष्ठा crypt_config *cc, काष्ठा dm_target *ti,
+			    स्थिर अक्षर *opts)
+अणु
+	काष्ठा iv_lmk_निजी *lmk = &cc->iv_gen_निजी.lmk;
 
-	if (cc->sector_size != (1 << SECTOR_SHIFT)) {
+	अगर (cc->sector_size != (1 << SECTOR_SHIFT)) अणु
 		ti->error = "Unsupported sector size for LMK";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	lmk->hash_tfm = crypto_alloc_shash("md5", 0,
 					   CRYPTO_ALG_ALLOCATES_MEMORY);
-	if (IS_ERR(lmk->hash_tfm)) {
+	अगर (IS_ERR(lmk->hash_tfm)) अणु
 		ti->error = "Error initializing LMK hash";
-		return PTR_ERR(lmk->hash_tfm);
-	}
+		वापस PTR_ERR(lmk->hash_tfm);
+	पूर्ण
 
 	/* No seed in LMK version 2 */
-	if (cc->key_parts == cc->tfms_count) {
-		lmk->seed = NULL;
-		return 0;
-	}
+	अगर (cc->key_parts == cc->tfms_count) अणु
+		lmk->seed = शून्य;
+		वापस 0;
+	पूर्ण
 
 	lmk->seed = kzalloc(LMK_SEED_SIZE, GFP_KERNEL);
-	if (!lmk->seed) {
+	अगर (!lmk->seed) अणु
 		crypt_iv_lmk_dtr(cc);
 		ti->error = "Error kmallocing seed storage in LMK";
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_lmk_init(struct crypt_config *cc)
-{
-	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
-	int subkey_size = cc->key_size / cc->key_parts;
+अटल पूर्णांक crypt_iv_lmk_init(काष्ठा crypt_config *cc)
+अणु
+	काष्ठा iv_lmk_निजी *lmk = &cc->iv_gen_निजी.lmk;
+	पूर्णांक subkey_size = cc->key_size / cc->key_parts;
 
 	/* LMK seed is on the position of LMK_KEYS + 1 key */
-	if (lmk->seed)
-		memcpy(lmk->seed, cc->key + (cc->tfms_count * subkey_size),
+	अगर (lmk->seed)
+		स_नकल(lmk->seed, cc->key + (cc->tfms_count * subkey_size),
 		       crypto_shash_digestsize(lmk->hash_tfm));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_lmk_wipe(struct crypt_config *cc)
-{
-	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
+अटल पूर्णांक crypt_iv_lmk_wipe(काष्ठा crypt_config *cc)
+अणु
+	काष्ठा iv_lmk_निजी *lmk = &cc->iv_gen_निजी.lmk;
 
-	if (lmk->seed)
-		memset(lmk->seed, 0, LMK_SEED_SIZE);
+	अगर (lmk->seed)
+		स_रखो(lmk->seed, 0, LMK_SEED_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_lmk_one(struct crypt_config *cc, u8 *iv,
-			    struct dm_crypt_request *dmreq,
+अटल पूर्णांक crypt_iv_lmk_one(काष्ठा crypt_config *cc, u8 *iv,
+			    काष्ठा dm_crypt_request *dmreq,
 			    u8 *data)
-{
-	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
+अणु
+	काष्ठा iv_lmk_निजी *lmk = &cc->iv_gen_निजी.lmk;
 	SHASH_DESC_ON_STACK(desc, lmk->hash_tfm);
-	struct md5_state md5state;
+	काष्ठा md5_state md5state;
 	__le32 buf[4];
-	int i, r;
+	पूर्णांक i, r;
 
 	desc->tfm = lmk->hash_tfm;
 
 	r = crypto_shash_init(desc);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	if (lmk->seed) {
+	अगर (lmk->seed) अणु
 		r = crypto_shash_update(desc, lmk->seed, LMK_SEED_SIZE);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
 	/* Sector is always 512B, block size 16, add data of blocks 1-31 */
 	r = crypto_shash_update(desc, data + 16, 16 * 31);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* Sector is cropped to 56 bits here */
 	buf[0] = cpu_to_le32(dmreq->iv_sector & 0xFFFFFFFF);
 	buf[1] = cpu_to_le32((((u64)dmreq->iv_sector >> 32) & 0x00FFFFFF) | 0x80000000);
 	buf[2] = cpu_to_le32(4024);
 	buf[3] = 0;
-	r = crypto_shash_update(desc, (u8 *)buf, sizeof(buf));
-	if (r)
-		return r;
+	r = crypto_shash_update(desc, (u8 *)buf, माप(buf));
+	अगर (r)
+		वापस r;
 
 	/* No MD5 padding here */
 	r = crypto_shash_export(desc, &md5state);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	for (i = 0; i < MD5_HASH_WORDS; i++)
+	क्रम (i = 0; i < MD5_HASH_WORDS; i++)
 		__cpu_to_le32s(&md5state.hash[i]);
-	memcpy(iv, &md5state.hash, cc->iv_size);
+	स_नकल(iv, &md5state.hash, cc->iv_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_lmk_gen(struct crypt_config *cc, u8 *iv,
-			    struct dm_crypt_request *dmreq)
-{
-	struct scatterlist *sg;
+अटल पूर्णांक crypt_iv_lmk_gen(काष्ठा crypt_config *cc, u8 *iv,
+			    काष्ठा dm_crypt_request *dmreq)
+अणु
+	काष्ठा scatterlist *sg;
 	u8 *src;
-	int r = 0;
+	पूर्णांक r = 0;
 
-	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
+	अगर (bio_data_dir(dmreq->ctx->bio_in) == WRITE) अणु
 		sg = crypt_get_sg_data(cc, dmreq->sg_in);
 		src = kmap_atomic(sg_page(sg));
 		r = crypt_iv_lmk_one(cc, iv, dmreq, src + sg->offset);
 		kunmap_atomic(src);
-	} else
-		memset(iv, 0, cc->iv_size);
+	पूर्ण अन्यथा
+		स_रखो(iv, 0, cc->iv_size);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int crypt_iv_lmk_post(struct crypt_config *cc, u8 *iv,
-			     struct dm_crypt_request *dmreq)
-{
-	struct scatterlist *sg;
+अटल पूर्णांक crypt_iv_lmk_post(काष्ठा crypt_config *cc, u8 *iv,
+			     काष्ठा dm_crypt_request *dmreq)
+अणु
+	काष्ठा scatterlist *sg;
 	u8 *dst;
-	int r;
+	पूर्णांक r;
 
-	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE)
-		return 0;
+	अगर (bio_data_dir(dmreq->ctx->bio_in) == WRITE)
+		वापस 0;
 
 	sg = crypt_get_sg_data(cc, dmreq->sg_out);
 	dst = kmap_atomic(sg_page(sg));
 	r = crypt_iv_lmk_one(cc, iv, dmreq, dst + sg->offset);
 
-	/* Tweak the first block of plaintext sector */
-	if (!r)
+	/* Tweak the first block of plaपूर्णांकext sector */
+	अगर (!r)
 		crypto_xor(dst + sg->offset, iv, cc->iv_size);
 
 	kunmap_atomic(dst);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void crypt_iv_tcw_dtr(struct crypt_config *cc)
-{
-	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
+अटल व्योम crypt_iv_tcw_dtr(काष्ठा crypt_config *cc)
+अणु
+	काष्ठा iv_tcw_निजी *tcw = &cc->iv_gen_निजी.tcw;
 
-	kfree_sensitive(tcw->iv_seed);
-	tcw->iv_seed = NULL;
-	kfree_sensitive(tcw->whitening);
-	tcw->whitening = NULL;
+	kमुक्त_sensitive(tcw->iv_seed);
+	tcw->iv_seed = शून्य;
+	kमुक्त_sensitive(tcw->whitening);
+	tcw->whitening = शून्य;
 
-	if (tcw->crc32_tfm && !IS_ERR(tcw->crc32_tfm))
-		crypto_free_shash(tcw->crc32_tfm);
-	tcw->crc32_tfm = NULL;
-}
+	अगर (tcw->crc32_tfm && !IS_ERR(tcw->crc32_tfm))
+		crypto_मुक्त_shash(tcw->crc32_tfm);
+	tcw->crc32_tfm = शून्य;
+पूर्ण
 
-static int crypt_iv_tcw_ctr(struct crypt_config *cc, struct dm_target *ti,
-			    const char *opts)
-{
-	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
+अटल पूर्णांक crypt_iv_tcw_ctr(काष्ठा crypt_config *cc, काष्ठा dm_target *ti,
+			    स्थिर अक्षर *opts)
+अणु
+	काष्ठा iv_tcw_निजी *tcw = &cc->iv_gen_निजी.tcw;
 
-	if (cc->sector_size != (1 << SECTOR_SHIFT)) {
+	अगर (cc->sector_size != (1 << SECTOR_SHIFT)) अणु
 		ti->error = "Unsupported sector size for TCW";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cc->key_size <= (cc->iv_size + TCW_WHITENING_SIZE)) {
+	अगर (cc->key_size <= (cc->iv_size + TCW_WHITENING_SIZE)) अणु
 		ti->error = "Wrong key size for TCW";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	tcw->crc32_tfm = crypto_alloc_shash("crc32", 0,
 					    CRYPTO_ALG_ALLOCATES_MEMORY);
-	if (IS_ERR(tcw->crc32_tfm)) {
+	अगर (IS_ERR(tcw->crc32_tfm)) अणु
 		ti->error = "Error initializing CRC32 in TCW";
-		return PTR_ERR(tcw->crc32_tfm);
-	}
+		वापस PTR_ERR(tcw->crc32_tfm);
+	पूर्ण
 
 	tcw->iv_seed = kzalloc(cc->iv_size, GFP_KERNEL);
 	tcw->whitening = kzalloc(TCW_WHITENING_SIZE, GFP_KERNEL);
-	if (!tcw->iv_seed || !tcw->whitening) {
+	अगर (!tcw->iv_seed || !tcw->whitening) अणु
 		crypt_iv_tcw_dtr(cc);
 		ti->error = "Error allocating seed storage in TCW";
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_tcw_init(struct crypt_config *cc)
-{
-	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
-	int key_offset = cc->key_size - cc->iv_size - TCW_WHITENING_SIZE;
+अटल पूर्णांक crypt_iv_tcw_init(काष्ठा crypt_config *cc)
+अणु
+	काष्ठा iv_tcw_निजी *tcw = &cc->iv_gen_निजी.tcw;
+	पूर्णांक key_offset = cc->key_size - cc->iv_size - TCW_WHITENING_SIZE;
 
-	memcpy(tcw->iv_seed, &cc->key[key_offset], cc->iv_size);
-	memcpy(tcw->whitening, &cc->key[key_offset + cc->iv_size],
+	स_नकल(tcw->iv_seed, &cc->key[key_offset], cc->iv_size);
+	स_नकल(tcw->whitening, &cc->key[key_offset + cc->iv_size],
 	       TCW_WHITENING_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_tcw_wipe(struct crypt_config *cc)
-{
-	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
+अटल पूर्णांक crypt_iv_tcw_wipe(काष्ठा crypt_config *cc)
+अणु
+	काष्ठा iv_tcw_निजी *tcw = &cc->iv_gen_निजी.tcw;
 
-	memset(tcw->iv_seed, 0, cc->iv_size);
-	memset(tcw->whitening, 0, TCW_WHITENING_SIZE);
+	स_रखो(tcw->iv_seed, 0, cc->iv_size);
+	स_रखो(tcw->whitening, 0, TCW_WHITENING_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_tcw_whitening(struct crypt_config *cc,
-				  struct dm_crypt_request *dmreq,
+अटल पूर्णांक crypt_iv_tcw_whitening(काष्ठा crypt_config *cc,
+				  काष्ठा dm_crypt_request *dmreq,
 				  u8 *data)
-{
-	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
+अणु
+	काष्ठा iv_tcw_निजी *tcw = &cc->iv_gen_निजी.tcw;
 	__le64 sector = cpu_to_le64(dmreq->iv_sector);
 	u8 buf[TCW_WHITENING_SIZE];
 	SHASH_DESC_ON_STACK(desc, tcw->crc32_tfm);
-	int i, r;
+	पूर्णांक i, r;
 
 	/* xor whitening with sector number */
 	crypto_xor_cpy(buf, tcw->whitening, (u8 *)&sector, 8);
 	crypto_xor_cpy(&buf[8], tcw->whitening + 8, (u8 *)&sector, 8);
 
-	/* calculate crc32 for every 32bit part and xor it */
+	/* calculate crc32 क्रम every 32bit part and xor it */
 	desc->tfm = tcw->crc32_tfm;
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		r = crypto_shash_init(desc);
-		if (r)
-			goto out;
+		अगर (r)
+			जाओ out;
 		r = crypto_shash_update(desc, &buf[i * 4], 4);
-		if (r)
-			goto out;
+		अगर (r)
+			जाओ out;
 		r = crypto_shash_final(desc, &buf[i * 4]);
-		if (r)
-			goto out;
-	}
+		अगर (r)
+			जाओ out;
+	पूर्ण
 	crypto_xor(&buf[0], &buf[12], 4);
 	crypto_xor(&buf[4], &buf[8], 4);
 
 	/* apply whitening (8 bytes) to whole sector */
-	for (i = 0; i < ((1 << SECTOR_SHIFT) / 8); i++)
+	क्रम (i = 0; i < ((1 << SECTOR_SHIFT) / 8); i++)
 		crypto_xor(data + i * 8, buf, 8);
 out:
-	memzero_explicit(buf, sizeof(buf));
-	return r;
-}
+	memzero_explicit(buf, माप(buf));
+	वापस r;
+पूर्ण
 
-static int crypt_iv_tcw_gen(struct crypt_config *cc, u8 *iv,
-			    struct dm_crypt_request *dmreq)
-{
-	struct scatterlist *sg;
-	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
+अटल पूर्णांक crypt_iv_tcw_gen(काष्ठा crypt_config *cc, u8 *iv,
+			    काष्ठा dm_crypt_request *dmreq)
+अणु
+	काष्ठा scatterlist *sg;
+	काष्ठा iv_tcw_निजी *tcw = &cc->iv_gen_निजी.tcw;
 	__le64 sector = cpu_to_le64(dmreq->iv_sector);
 	u8 *src;
-	int r = 0;
+	पूर्णांक r = 0;
 
 	/* Remove whitening from ciphertext */
-	if (bio_data_dir(dmreq->ctx->bio_in) != WRITE) {
+	अगर (bio_data_dir(dmreq->ctx->bio_in) != WRITE) अणु
 		sg = crypt_get_sg_data(cc, dmreq->sg_in);
 		src = kmap_atomic(sg_page(sg));
 		r = crypt_iv_tcw_whitening(cc, dmreq, src + sg->offset);
 		kunmap_atomic(src);
-	}
+	पूर्ण
 
 	/* Calculate IV */
 	crypto_xor_cpy(iv, tcw->iv_seed, (u8 *)&sector, 8);
-	if (cc->iv_size > 8)
+	अगर (cc->iv_size > 8)
 		crypto_xor_cpy(&iv[8], tcw->iv_seed + 8, (u8 *)&sector,
 			       cc->iv_size - 8);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int crypt_iv_tcw_post(struct crypt_config *cc, u8 *iv,
-			     struct dm_crypt_request *dmreq)
-{
-	struct scatterlist *sg;
+अटल पूर्णांक crypt_iv_tcw_post(काष्ठा crypt_config *cc, u8 *iv,
+			     काष्ठा dm_crypt_request *dmreq)
+अणु
+	काष्ठा scatterlist *sg;
 	u8 *dst;
-	int r;
+	पूर्णांक r;
 
-	if (bio_data_dir(dmreq->ctx->bio_in) != WRITE)
-		return 0;
+	अगर (bio_data_dir(dmreq->ctx->bio_in) != WRITE)
+		वापस 0;
 
 	/* Apply whitening on ciphertext */
 	sg = crypt_get_sg_data(cc, dmreq->sg_out);
@@ -708,128 +709,128 @@ static int crypt_iv_tcw_post(struct crypt_config *cc, u8 *iv,
 	r = crypt_iv_tcw_whitening(cc, dmreq, dst + sg->offset);
 	kunmap_atomic(dst);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int crypt_iv_random_gen(struct crypt_config *cc, u8 *iv,
-				struct dm_crypt_request *dmreq)
-{
-	/* Used only for writes, there must be an additional space to store IV */
-	get_random_bytes(iv, cc->iv_size);
-	return 0;
-}
+अटल पूर्णांक crypt_iv_अक्रमom_gen(काष्ठा crypt_config *cc, u8 *iv,
+				काष्ठा dm_crypt_request *dmreq)
+अणु
+	/* Used only क्रम ग_लिखोs, there must be an additional space to store IV */
+	get_अक्रमom_bytes(iv, cc->iv_size);
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_eboiv_ctr(struct crypt_config *cc, struct dm_target *ti,
-			    const char *opts)
-{
-	if (crypt_integrity_aead(cc)) {
+अटल पूर्णांक crypt_iv_eboiv_ctr(काष्ठा crypt_config *cc, काष्ठा dm_target *ti,
+			    स्थिर अक्षर *opts)
+अणु
+	अगर (crypt_पूर्णांकegrity_aead(cc)) अणु
 		ti->error = "AEAD transforms not supported for EBOIV";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (crypto_skcipher_blocksize(any_tfm(cc)) != cc->iv_size) {
+	अगर (crypto_skcipher_blocksize(any_tfm(cc)) != cc->iv_size) अणु
 		ti->error = "Block size of EBOIV cipher does "
 			    "not match IV size of block cipher";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_eboiv_gen(struct crypt_config *cc, u8 *iv,
-			    struct dm_crypt_request *dmreq)
-{
+अटल पूर्णांक crypt_iv_eboiv_gen(काष्ठा crypt_config *cc, u8 *iv,
+			    काष्ठा dm_crypt_request *dmreq)
+अणु
 	u8 buf[MAX_CIPHER_BLOCKSIZE] __aligned(__alignof__(__le64));
-	struct skcipher_request *req;
-	struct scatterlist src, dst;
-	DECLARE_CRYPTO_WAIT(wait);
-	int err;
+	काष्ठा skcipher_request *req;
+	काष्ठा scatterlist src, dst;
+	DECLARE_CRYPTO_WAIT(रुको);
+	पूर्णांक err;
 
 	req = skcipher_request_alloc(any_tfm(cc), GFP_NOIO);
-	if (!req)
-		return -ENOMEM;
+	अगर (!req)
+		वापस -ENOMEM;
 
-	memset(buf, 0, cc->iv_size);
+	स_रखो(buf, 0, cc->iv_size);
 	*(__le64 *)buf = cpu_to_le64(dmreq->iv_sector * cc->sector_size);
 
 	sg_init_one(&src, page_address(ZERO_PAGE(0)), cc->iv_size);
 	sg_init_one(&dst, iv, cc->iv_size);
 	skcipher_request_set_crypt(req, &src, &dst, cc->iv_size, buf);
-	skcipher_request_set_callback(req, 0, crypto_req_done, &wait);
-	err = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
-	skcipher_request_free(req);
+	skcipher_request_set_callback(req, 0, crypto_req_करोne, &रुको);
+	err = crypto_रुको_req(crypto_skcipher_encrypt(req), &रुको);
+	skcipher_request_मुक्त(req);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void crypt_iv_elephant_dtr(struct crypt_config *cc)
-{
-	struct iv_elephant_private *elephant = &cc->iv_gen_private.elephant;
+अटल व्योम crypt_iv_elephant_dtr(काष्ठा crypt_config *cc)
+अणु
+	काष्ठा iv_elephant_निजी *elephant = &cc->iv_gen_निजी.elephant;
 
-	crypto_free_skcipher(elephant->tfm);
-	elephant->tfm = NULL;
-}
+	crypto_मुक्त_skcipher(elephant->tfm);
+	elephant->tfm = शून्य;
+पूर्ण
 
-static int crypt_iv_elephant_ctr(struct crypt_config *cc, struct dm_target *ti,
-			    const char *opts)
-{
-	struct iv_elephant_private *elephant = &cc->iv_gen_private.elephant;
-	int r;
+अटल पूर्णांक crypt_iv_elephant_ctr(काष्ठा crypt_config *cc, काष्ठा dm_target *ti,
+			    स्थिर अक्षर *opts)
+अणु
+	काष्ठा iv_elephant_निजी *elephant = &cc->iv_gen_निजी.elephant;
+	पूर्णांक r;
 
 	elephant->tfm = crypto_alloc_skcipher("ecb(aes)", 0,
 					      CRYPTO_ALG_ALLOCATES_MEMORY);
-	if (IS_ERR(elephant->tfm)) {
+	अगर (IS_ERR(elephant->tfm)) अणु
 		r = PTR_ERR(elephant->tfm);
-		elephant->tfm = NULL;
-		return r;
-	}
+		elephant->tfm = शून्य;
+		वापस r;
+	पूर्ण
 
-	r = crypt_iv_eboiv_ctr(cc, ti, NULL);
-	if (r)
+	r = crypt_iv_eboiv_ctr(cc, ti, शून्य);
+	अगर (r)
 		crypt_iv_elephant_dtr(cc);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void diffuser_disk_to_cpu(u32 *d, size_t n)
-{
-#ifndef __LITTLE_ENDIAN
-	int i;
+अटल व्योम dअगरfuser_disk_to_cpu(u32 *d, माप_प्रकार n)
+अणु
+#अगर_अघोषित __LITTLE_ENDIAN
+	पूर्णांक i;
 
-	for (i = 0; i < n; i++)
+	क्रम (i = 0; i < n; i++)
 		d[i] = le32_to_cpu((__le32)d[i]);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void diffuser_cpu_to_disk(__le32 *d, size_t n)
-{
-#ifndef __LITTLE_ENDIAN
-	int i;
+अटल व्योम dअगरfuser_cpu_to_disk(__le32 *d, माप_प्रकार n)
+अणु
+#अगर_अघोषित __LITTLE_ENDIAN
+	पूर्णांक i;
 
-	for (i = 0; i < n; i++)
+	क्रम (i = 0; i < n; i++)
 		d[i] = cpu_to_le32((u32)d[i]);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void diffuser_a_decrypt(u32 *d, size_t n)
-{
-	int i, i1, i2, i3;
+अटल व्योम dअगरfuser_a_decrypt(u32 *d, माप_प्रकार n)
+अणु
+	पूर्णांक i, i1, i2, i3;
 
-	for (i = 0; i < 5; i++) {
+	क्रम (i = 0; i < 5; i++) अणु
 		i1 = 0;
 		i2 = n - 2;
 		i3 = n - 5;
 
-		while (i1 < (n - 1)) {
+		जबतक (i1 < (n - 1)) अणु
 			d[i1] += d[i2] ^ (d[i3] << 9 | d[i3] >> 23);
 			i1++; i2++; i3++;
 
-			if (i3 >= n)
+			अगर (i3 >= n)
 				i3 -= n;
 
 			d[i1] += d[i2] ^ d[i3];
 			i1++; i2++; i3++;
 
-			if (i2 >= n)
+			अगर (i2 >= n)
 				i2 -= n;
 
 			d[i1] += d[i2] ^ (d[i3] << 13 | d[i3] >> 19);
@@ -837,92 +838,92 @@ static void diffuser_a_decrypt(u32 *d, size_t n)
 
 			d[i1] += d[i2] ^ d[i3];
 			i1++; i2++; i3++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void diffuser_a_encrypt(u32 *d, size_t n)
-{
-	int i, i1, i2, i3;
+अटल व्योम dअगरfuser_a_encrypt(u32 *d, माप_प्रकार n)
+अणु
+	पूर्णांक i, i1, i2, i3;
 
-	for (i = 0; i < 5; i++) {
+	क्रम (i = 0; i < 5; i++) अणु
 		i1 = n - 1;
 		i2 = n - 2 - 1;
 		i3 = n - 5 - 1;
 
-		while (i1 > 0) {
+		जबतक (i1 > 0) अणु
 			d[i1] -= d[i2] ^ d[i3];
 			i1--; i2--; i3--;
 
 			d[i1] -= d[i2] ^ (d[i3] << 13 | d[i3] >> 19);
 			i1--; i2--; i3--;
 
-			if (i2 < 0)
+			अगर (i2 < 0)
 				i2 += n;
 
 			d[i1] -= d[i2] ^ d[i3];
 			i1--; i2--; i3--;
 
-			if (i3 < 0)
+			अगर (i3 < 0)
 				i3 += n;
 
 			d[i1] -= d[i2] ^ (d[i3] << 9 | d[i3] >> 23);
 			i1--; i2--; i3--;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void diffuser_b_decrypt(u32 *d, size_t n)
-{
-	int i, i1, i2, i3;
+अटल व्योम dअगरfuser_b_decrypt(u32 *d, माप_प्रकार n)
+अणु
+	पूर्णांक i, i1, i2, i3;
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		i1 = 0;
 		i2 = 2;
 		i3 = 5;
 
-		while (i1 < (n - 1)) {
+		जबतक (i1 < (n - 1)) अणु
 			d[i1] += d[i2] ^ d[i3];
 			i1++; i2++; i3++;
 
 			d[i1] += d[i2] ^ (d[i3] << 10 | d[i3] >> 22);
 			i1++; i2++; i3++;
 
-			if (i2 >= n)
+			अगर (i2 >= n)
 				i2 -= n;
 
 			d[i1] += d[i2] ^ d[i3];
 			i1++; i2++; i3++;
 
-			if (i3 >= n)
+			अगर (i3 >= n)
 				i3 -= n;
 
 			d[i1] += d[i2] ^ (d[i3] << 25 | d[i3] >> 7);
 			i1++; i2++; i3++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void diffuser_b_encrypt(u32 *d, size_t n)
-{
-	int i, i1, i2, i3;
+अटल व्योम dअगरfuser_b_encrypt(u32 *d, माप_प्रकार n)
+अणु
+	पूर्णांक i, i1, i2, i3;
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		i1 = n - 1;
 		i2 = 2 - 1;
 		i3 = 5 - 1;
 
-		while (i1 > 0) {
+		जबतक (i1 > 0) अणु
 			d[i1] -= d[i2] ^ (d[i3] << 25 | d[i3] >> 7);
 			i1--; i2--; i3--;
 
-			if (i3 < 0)
+			अगर (i3 < 0)
 				i3 += n;
 
 			d[i1] -= d[i2] ^ d[i3];
 			i1--; i2--; i3--;
 
-			if (i2 < 0)
+			अगर (i2 < 0)
 				i2 += n;
 
 			d[i1] -= d[i2] ^ (d[i3] << 10 | d[i3] >> 22);
@@ -930,377 +931,377 @@ static void diffuser_b_encrypt(u32 *d, size_t n)
 
 			d[i1] -= d[i2] ^ d[i3];
 			i1--; i2--; i3--;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int crypt_iv_elephant(struct crypt_config *cc, struct dm_crypt_request *dmreq)
-{
-	struct iv_elephant_private *elephant = &cc->iv_gen_private.elephant;
+अटल पूर्णांक crypt_iv_elephant(काष्ठा crypt_config *cc, काष्ठा dm_crypt_request *dmreq)
+अणु
+	काष्ठा iv_elephant_निजी *elephant = &cc->iv_gen_निजी.elephant;
 	u8 *es, *ks, *data, *data2, *data_offset;
-	struct skcipher_request *req;
-	struct scatterlist *sg, *sg2, src, dst;
-	DECLARE_CRYPTO_WAIT(wait);
-	int i, r;
+	काष्ठा skcipher_request *req;
+	काष्ठा scatterlist *sg, *sg2, src, dst;
+	DECLARE_CRYPTO_WAIT(रुको);
+	पूर्णांक i, r;
 
 	req = skcipher_request_alloc(elephant->tfm, GFP_NOIO);
-	es = kzalloc(16, GFP_NOIO); /* Key for AES */
+	es = kzalloc(16, GFP_NOIO); /* Key क्रम AES */
 	ks = kzalloc(32, GFP_NOIO); /* Elephant sector key */
 
-	if (!req || !es || !ks) {
+	अगर (!req || !es || !ks) अणु
 		r = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	*(__le64 *)es = cpu_to_le64(dmreq->iv_sector * cc->sector_size);
 
 	/* E(Ks, e(s)) */
 	sg_init_one(&src, es, 16);
 	sg_init_one(&dst, ks, 16);
-	skcipher_request_set_crypt(req, &src, &dst, 16, NULL);
-	skcipher_request_set_callback(req, 0, crypto_req_done, &wait);
-	r = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
-	if (r)
-		goto out;
+	skcipher_request_set_crypt(req, &src, &dst, 16, शून्य);
+	skcipher_request_set_callback(req, 0, crypto_req_करोne, &रुको);
+	r = crypto_रुको_req(crypto_skcipher_encrypt(req), &रुको);
+	अगर (r)
+		जाओ out;
 
 	/* E(Ks, e'(s)) */
 	es[15] = 0x80;
 	sg_init_one(&dst, &ks[16], 16);
-	r = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
-	if (r)
-		goto out;
+	r = crypto_रुको_req(crypto_skcipher_encrypt(req), &रुको);
+	अगर (r)
+		जाओ out;
 
 	sg = crypt_get_sg_data(cc, dmreq->sg_out);
 	data = kmap_atomic(sg_page(sg));
 	data_offset = data + sg->offset;
 
-	/* Cannot modify original bio, copy to sg_out and apply Elephant to it */
-	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
+	/* Cannot modअगरy original bio, copy to sg_out and apply Elephant to it */
+	अगर (bio_data_dir(dmreq->ctx->bio_in) == WRITE) अणु
 		sg2 = crypt_get_sg_data(cc, dmreq->sg_in);
 		data2 = kmap_atomic(sg_page(sg2));
-		memcpy(data_offset, data2 + sg2->offset, cc->sector_size);
+		स_नकल(data_offset, data2 + sg2->offset, cc->sector_size);
 		kunmap_atomic(data2);
-	}
+	पूर्ण
 
-	if (bio_data_dir(dmreq->ctx->bio_in) != WRITE) {
-		diffuser_disk_to_cpu((u32*)data_offset, cc->sector_size / sizeof(u32));
-		diffuser_b_decrypt((u32*)data_offset, cc->sector_size / sizeof(u32));
-		diffuser_a_decrypt((u32*)data_offset, cc->sector_size / sizeof(u32));
-		diffuser_cpu_to_disk((__le32*)data_offset, cc->sector_size / sizeof(u32));
-	}
+	अगर (bio_data_dir(dmreq->ctx->bio_in) != WRITE) अणु
+		dअगरfuser_disk_to_cpu((u32*)data_offset, cc->sector_size / माप(u32));
+		dअगरfuser_b_decrypt((u32*)data_offset, cc->sector_size / माप(u32));
+		dअगरfuser_a_decrypt((u32*)data_offset, cc->sector_size / माप(u32));
+		dअगरfuser_cpu_to_disk((__le32*)data_offset, cc->sector_size / माप(u32));
+	पूर्ण
 
-	for (i = 0; i < (cc->sector_size / 32); i++)
+	क्रम (i = 0; i < (cc->sector_size / 32); i++)
 		crypto_xor(data_offset + i * 32, ks, 32);
 
-	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
-		diffuser_disk_to_cpu((u32*)data_offset, cc->sector_size / sizeof(u32));
-		diffuser_a_encrypt((u32*)data_offset, cc->sector_size / sizeof(u32));
-		diffuser_b_encrypt((u32*)data_offset, cc->sector_size / sizeof(u32));
-		diffuser_cpu_to_disk((__le32*)data_offset, cc->sector_size / sizeof(u32));
-	}
+	अगर (bio_data_dir(dmreq->ctx->bio_in) == WRITE) अणु
+		dअगरfuser_disk_to_cpu((u32*)data_offset, cc->sector_size / माप(u32));
+		dअगरfuser_a_encrypt((u32*)data_offset, cc->sector_size / माप(u32));
+		dअगरfuser_b_encrypt((u32*)data_offset, cc->sector_size / माप(u32));
+		dअगरfuser_cpu_to_disk((__le32*)data_offset, cc->sector_size / माप(u32));
+	पूर्ण
 
 	kunmap_atomic(data);
 out:
-	kfree_sensitive(ks);
-	kfree_sensitive(es);
-	skcipher_request_free(req);
-	return r;
-}
+	kमुक्त_sensitive(ks);
+	kमुक्त_sensitive(es);
+	skcipher_request_मुक्त(req);
+	वापस r;
+पूर्ण
 
-static int crypt_iv_elephant_gen(struct crypt_config *cc, u8 *iv,
-			    struct dm_crypt_request *dmreq)
-{
-	int r;
+अटल पूर्णांक crypt_iv_elephant_gen(काष्ठा crypt_config *cc, u8 *iv,
+			    काष्ठा dm_crypt_request *dmreq)
+अणु
+	पूर्णांक r;
 
-	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
+	अगर (bio_data_dir(dmreq->ctx->bio_in) == WRITE) अणु
 		r = crypt_iv_elephant(cc, dmreq);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	return crypt_iv_eboiv_gen(cc, iv, dmreq);
-}
+	वापस crypt_iv_eboiv_gen(cc, iv, dmreq);
+पूर्ण
 
-static int crypt_iv_elephant_post(struct crypt_config *cc, u8 *iv,
-				  struct dm_crypt_request *dmreq)
-{
-	if (bio_data_dir(dmreq->ctx->bio_in) != WRITE)
-		return crypt_iv_elephant(cc, dmreq);
+अटल पूर्णांक crypt_iv_elephant_post(काष्ठा crypt_config *cc, u8 *iv,
+				  काष्ठा dm_crypt_request *dmreq)
+अणु
+	अगर (bio_data_dir(dmreq->ctx->bio_in) != WRITE)
+		वापस crypt_iv_elephant(cc, dmreq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_iv_elephant_init(struct crypt_config *cc)
-{
-	struct iv_elephant_private *elephant = &cc->iv_gen_private.elephant;
-	int key_offset = cc->key_size - cc->key_extra_size;
+अटल पूर्णांक crypt_iv_elephant_init(काष्ठा crypt_config *cc)
+अणु
+	काष्ठा iv_elephant_निजी *elephant = &cc->iv_gen_निजी.elephant;
+	पूर्णांक key_offset = cc->key_size - cc->key_extra_size;
 
-	return crypto_skcipher_setkey(elephant->tfm, &cc->key[key_offset], cc->key_extra_size);
-}
+	वापस crypto_skcipher_setkey(elephant->tfm, &cc->key[key_offset], cc->key_extra_size);
+पूर्ण
 
-static int crypt_iv_elephant_wipe(struct crypt_config *cc)
-{
-	struct iv_elephant_private *elephant = &cc->iv_gen_private.elephant;
+अटल पूर्णांक crypt_iv_elephant_wipe(काष्ठा crypt_config *cc)
+अणु
+	काष्ठा iv_elephant_निजी *elephant = &cc->iv_gen_निजी.elephant;
 	u8 key[ELEPHANT_MAX_KEY_SIZE];
 
-	memset(key, 0, cc->key_extra_size);
-	return crypto_skcipher_setkey(elephant->tfm, key, cc->key_extra_size);
-}
+	स_रखो(key, 0, cc->key_extra_size);
+	वापस crypto_skcipher_setkey(elephant->tfm, key, cc->key_extra_size);
+पूर्ण
 
-static const struct crypt_iv_operations crypt_iv_plain_ops = {
+अटल स्थिर काष्ठा crypt_iv_operations crypt_iv_plain_ops = अणु
 	.generator = crypt_iv_plain_gen
-};
+पूर्ण;
 
-static const struct crypt_iv_operations crypt_iv_plain64_ops = {
+अटल स्थिर काष्ठा crypt_iv_operations crypt_iv_plain64_ops = अणु
 	.generator = crypt_iv_plain64_gen
-};
+पूर्ण;
 
-static const struct crypt_iv_operations crypt_iv_plain64be_ops = {
+अटल स्थिर काष्ठा crypt_iv_operations crypt_iv_plain64be_ops = अणु
 	.generator = crypt_iv_plain64be_gen
-};
+पूर्ण;
 
-static const struct crypt_iv_operations crypt_iv_essiv_ops = {
+अटल स्थिर काष्ठा crypt_iv_operations crypt_iv_essiv_ops = अणु
 	.generator = crypt_iv_essiv_gen
-};
+पूर्ण;
 
-static const struct crypt_iv_operations crypt_iv_benbi_ops = {
+अटल स्थिर काष्ठा crypt_iv_operations crypt_iv_benbi_ops = अणु
 	.ctr	   = crypt_iv_benbi_ctr,
 	.dtr	   = crypt_iv_benbi_dtr,
 	.generator = crypt_iv_benbi_gen
-};
+पूर्ण;
 
-static const struct crypt_iv_operations crypt_iv_null_ops = {
+अटल स्थिर काष्ठा crypt_iv_operations crypt_iv_null_ops = अणु
 	.generator = crypt_iv_null_gen
-};
+पूर्ण;
 
-static const struct crypt_iv_operations crypt_iv_lmk_ops = {
+अटल स्थिर काष्ठा crypt_iv_operations crypt_iv_lmk_ops = अणु
 	.ctr	   = crypt_iv_lmk_ctr,
 	.dtr	   = crypt_iv_lmk_dtr,
 	.init	   = crypt_iv_lmk_init,
 	.wipe	   = crypt_iv_lmk_wipe,
 	.generator = crypt_iv_lmk_gen,
 	.post	   = crypt_iv_lmk_post
-};
+पूर्ण;
 
-static const struct crypt_iv_operations crypt_iv_tcw_ops = {
+अटल स्थिर काष्ठा crypt_iv_operations crypt_iv_tcw_ops = अणु
 	.ctr	   = crypt_iv_tcw_ctr,
 	.dtr	   = crypt_iv_tcw_dtr,
 	.init	   = crypt_iv_tcw_init,
 	.wipe	   = crypt_iv_tcw_wipe,
 	.generator = crypt_iv_tcw_gen,
 	.post	   = crypt_iv_tcw_post
-};
+पूर्ण;
 
-static const struct crypt_iv_operations crypt_iv_random_ops = {
-	.generator = crypt_iv_random_gen
-};
+अटल स्थिर काष्ठा crypt_iv_operations crypt_iv_अक्रमom_ops = अणु
+	.generator = crypt_iv_अक्रमom_gen
+पूर्ण;
 
-static const struct crypt_iv_operations crypt_iv_eboiv_ops = {
+अटल स्थिर काष्ठा crypt_iv_operations crypt_iv_eboiv_ops = अणु
 	.ctr	   = crypt_iv_eboiv_ctr,
 	.generator = crypt_iv_eboiv_gen
-};
+पूर्ण;
 
-static const struct crypt_iv_operations crypt_iv_elephant_ops = {
+अटल स्थिर काष्ठा crypt_iv_operations crypt_iv_elephant_ops = अणु
 	.ctr	   = crypt_iv_elephant_ctr,
 	.dtr	   = crypt_iv_elephant_dtr,
 	.init	   = crypt_iv_elephant_init,
 	.wipe	   = crypt_iv_elephant_wipe,
 	.generator = crypt_iv_elephant_gen,
 	.post	   = crypt_iv_elephant_post
-};
+पूर्ण;
 
 /*
  * Integrity extensions
  */
-static bool crypt_integrity_aead(struct crypt_config *cc)
-{
-	return test_bit(CRYPT_MODE_INTEGRITY_AEAD, &cc->cipher_flags);
-}
+अटल bool crypt_पूर्णांकegrity_aead(काष्ठा crypt_config *cc)
+अणु
+	वापस test_bit(CRYPT_MODE_INTEGRITY_AEAD, &cc->cipher_flags);
+पूर्ण
 
-static bool crypt_integrity_hmac(struct crypt_config *cc)
-{
-	return crypt_integrity_aead(cc) && cc->key_mac_size;
-}
+अटल bool crypt_पूर्णांकegrity_hmac(काष्ठा crypt_config *cc)
+अणु
+	वापस crypt_पूर्णांकegrity_aead(cc) && cc->key_mac_size;
+पूर्ण
 
 /* Get sg containing data */
-static struct scatterlist *crypt_get_sg_data(struct crypt_config *cc,
-					     struct scatterlist *sg)
-{
-	if (unlikely(crypt_integrity_aead(cc)))
-		return &sg[2];
+अटल काष्ठा scatterlist *crypt_get_sg_data(काष्ठा crypt_config *cc,
+					     काष्ठा scatterlist *sg)
+अणु
+	अगर (unlikely(crypt_पूर्णांकegrity_aead(cc)))
+		वापस &sg[2];
 
-	return sg;
-}
+	वापस sg;
+पूर्ण
 
-static int dm_crypt_integrity_io_alloc(struct dm_crypt_io *io, struct bio *bio)
-{
-	struct bio_integrity_payload *bip;
-	unsigned int tag_len;
-	int ret;
+अटल पूर्णांक dm_crypt_पूर्णांकegrity_io_alloc(काष्ठा dm_crypt_io *io, काष्ठा bio *bio)
+अणु
+	काष्ठा bio_पूर्णांकegrity_payload *bip;
+	अचिन्हित पूर्णांक tag_len;
+	पूर्णांक ret;
 
-	if (!bio_sectors(bio) || !io->cc->on_disk_tag_size)
-		return 0;
+	अगर (!bio_sectors(bio) || !io->cc->on_disk_tag_size)
+		वापस 0;
 
-	bip = bio_integrity_alloc(bio, GFP_NOIO, 1);
-	if (IS_ERR(bip))
-		return PTR_ERR(bip);
+	bip = bio_पूर्णांकegrity_alloc(bio, GFP_NOIO, 1);
+	अगर (IS_ERR(bip))
+		वापस PTR_ERR(bip);
 
-	tag_len = io->cc->on_disk_tag_size * (bio_sectors(bio) >> io->cc->sector_shift);
+	tag_len = io->cc->on_disk_tag_size * (bio_sectors(bio) >> io->cc->sector_shअगरt);
 
 	bip->bip_iter.bi_size = tag_len;
 	bip->bip_iter.bi_sector = io->cc->start + io->sector;
 
-	ret = bio_integrity_add_page(bio, virt_to_page(io->integrity_metadata),
-				     tag_len, offset_in_page(io->integrity_metadata));
-	if (unlikely(ret != tag_len))
-		return -ENOMEM;
+	ret = bio_पूर्णांकegrity_add_page(bio, virt_to_page(io->पूर्णांकegrity_metadata),
+				     tag_len, offset_in_page(io->पूर्णांकegrity_metadata));
+	अगर (unlikely(ret != tag_len))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_integrity_ctr(struct crypt_config *cc, struct dm_target *ti)
-{
-#ifdef CONFIG_BLK_DEV_INTEGRITY
-	struct blk_integrity *bi = blk_get_integrity(cc->dev->bdev->bd_disk);
-	struct mapped_device *md = dm_table_get_md(ti->table);
+अटल पूर्णांक crypt_पूर्णांकegrity_ctr(काष्ठा crypt_config *cc, काष्ठा dm_target *ti)
+अणु
+#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
+	काष्ठा blk_पूर्णांकegrity *bi = blk_get_पूर्णांकegrity(cc->dev->bdev->bd_disk);
+	काष्ठा mapped_device *md = dm_table_get_md(ti->table);
 
-	/* From now we require underlying device with our integrity profile */
-	if (!bi || strcasecmp(bi->profile->name, "DM-DIF-EXT-TAG")) {
+	/* From now we require underlying device with our पूर्णांकegrity profile */
+	अगर (!bi || strहालcmp(bi->profile->name, "DM-DIF-EXT-TAG")) अणु
 		ti->error = "Integrity profile not supported.";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (bi->tag_size != cc->on_disk_tag_size ||
-	    bi->tuple_size != cc->on_disk_tag_size) {
+	अगर (bi->tag_size != cc->on_disk_tag_size ||
+	    bi->tuple_size != cc->on_disk_tag_size) अणु
 		ti->error = "Integrity profile tag size mismatch.";
-		return -EINVAL;
-	}
-	if (1 << bi->interval_exp != cc->sector_size) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (1 << bi->पूर्णांकerval_exp != cc->sector_size) अणु
 		ti->error = "Integrity profile sector size mismatch.";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (crypt_integrity_aead(cc)) {
-		cc->integrity_tag_size = cc->on_disk_tag_size - cc->integrity_iv_size;
+	अगर (crypt_पूर्णांकegrity_aead(cc)) अणु
+		cc->पूर्णांकegrity_tag_size = cc->on_disk_tag_size - cc->पूर्णांकegrity_iv_size;
 		DMDEBUG("%s: Integrity AEAD, tag size %u, IV size %u.", dm_device_name(md),
-		       cc->integrity_tag_size, cc->integrity_iv_size);
+		       cc->पूर्णांकegrity_tag_size, cc->पूर्णांकegrity_iv_size);
 
-		if (crypto_aead_setauthsize(any_tfm_aead(cc), cc->integrity_tag_size)) {
+		अगर (crypto_aead_setauthsize(any_tfm_aead(cc), cc->पूर्णांकegrity_tag_size)) अणु
 			ti->error = "Integrity AEAD auth tag size is not supported.";
-			return -EINVAL;
-		}
-	} else if (cc->integrity_iv_size)
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अगर (cc->पूर्णांकegrity_iv_size)
 		DMDEBUG("%s: Additional per-sector space %u bytes for IV.", dm_device_name(md),
-		       cc->integrity_iv_size);
+		       cc->पूर्णांकegrity_iv_size);
 
-	if ((cc->integrity_tag_size + cc->integrity_iv_size) != bi->tag_size) {
+	अगर ((cc->पूर्णांकegrity_tag_size + cc->पूर्णांकegrity_iv_size) != bi->tag_size) अणु
 		ti->error = "Not enough space for integrity tag in the profile.";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-#else
+	वापस 0;
+#अन्यथा
 	ti->error = "Integrity profile not supported.";
-	return -EINVAL;
-#endif
-}
+	वापस -EINVAL;
+#पूर्ण_अगर
+पूर्ण
 
-static void crypt_convert_init(struct crypt_config *cc,
-			       struct convert_context *ctx,
-			       struct bio *bio_out, struct bio *bio_in,
+अटल व्योम crypt_convert_init(काष्ठा crypt_config *cc,
+			       काष्ठा convert_context *ctx,
+			       काष्ठा bio *bio_out, काष्ठा bio *bio_in,
 			       sector_t sector)
-{
+अणु
 	ctx->bio_in = bio_in;
 	ctx->bio_out = bio_out;
-	if (bio_in)
+	अगर (bio_in)
 		ctx->iter_in = bio_in->bi_iter;
-	if (bio_out)
+	अगर (bio_out)
 		ctx->iter_out = bio_out->bi_iter;
 	ctx->cc_sector = sector + cc->iv_offset;
 	init_completion(&ctx->restart);
-}
+पूर्ण
 
-static struct dm_crypt_request *dmreq_of_req(struct crypt_config *cc,
-					     void *req)
-{
-	return (struct dm_crypt_request *)((char *)req + cc->dmreq_start);
-}
+अटल काष्ठा dm_crypt_request *dmreq_of_req(काष्ठा crypt_config *cc,
+					     व्योम *req)
+अणु
+	वापस (काष्ठा dm_crypt_request *)((अक्षर *)req + cc->dmreq_start);
+पूर्ण
 
-static void *req_of_dmreq(struct crypt_config *cc, struct dm_crypt_request *dmreq)
-{
-	return (void *)((char *)dmreq - cc->dmreq_start);
-}
+अटल व्योम *req_of_dmreq(काष्ठा crypt_config *cc, काष्ठा dm_crypt_request *dmreq)
+अणु
+	वापस (व्योम *)((अक्षर *)dmreq - cc->dmreq_start);
+पूर्ण
 
-static u8 *iv_of_dmreq(struct crypt_config *cc,
-		       struct dm_crypt_request *dmreq)
-{
-	if (crypt_integrity_aead(cc))
-		return (u8 *)ALIGN((unsigned long)(dmreq + 1),
+अटल u8 *iv_of_dmreq(काष्ठा crypt_config *cc,
+		       काष्ठा dm_crypt_request *dmreq)
+अणु
+	अगर (crypt_पूर्णांकegrity_aead(cc))
+		वापस (u8 *)ALIGN((अचिन्हित दीर्घ)(dmreq + 1),
 			crypto_aead_alignmask(any_tfm_aead(cc)) + 1);
-	else
-		return (u8 *)ALIGN((unsigned long)(dmreq + 1),
+	अन्यथा
+		वापस (u8 *)ALIGN((अचिन्हित दीर्घ)(dmreq + 1),
 			crypto_skcipher_alignmask(any_tfm(cc)) + 1);
-}
+पूर्ण
 
-static u8 *org_iv_of_dmreq(struct crypt_config *cc,
-		       struct dm_crypt_request *dmreq)
-{
-	return iv_of_dmreq(cc, dmreq) + cc->iv_size;
-}
+अटल u8 *org_iv_of_dmreq(काष्ठा crypt_config *cc,
+		       काष्ठा dm_crypt_request *dmreq)
+अणु
+	वापस iv_of_dmreq(cc, dmreq) + cc->iv_size;
+पूर्ण
 
-static __le64 *org_sector_of_dmreq(struct crypt_config *cc,
-		       struct dm_crypt_request *dmreq)
-{
+अटल __le64 *org_sector_of_dmreq(काष्ठा crypt_config *cc,
+		       काष्ठा dm_crypt_request *dmreq)
+अणु
 	u8 *ptr = iv_of_dmreq(cc, dmreq) + cc->iv_size + cc->iv_size;
-	return (__le64 *) ptr;
-}
+	वापस (__le64 *) ptr;
+पूर्ण
 
-static unsigned int *org_tag_of_dmreq(struct crypt_config *cc,
-		       struct dm_crypt_request *dmreq)
-{
+अटल अचिन्हित पूर्णांक *org_tag_of_dmreq(काष्ठा crypt_config *cc,
+		       काष्ठा dm_crypt_request *dmreq)
+अणु
 	u8 *ptr = iv_of_dmreq(cc, dmreq) + cc->iv_size +
-		  cc->iv_size + sizeof(uint64_t);
-	return (unsigned int*)ptr;
-}
+		  cc->iv_size + माप(uपूर्णांक64_t);
+	वापस (अचिन्हित पूर्णांक*)ptr;
+पूर्ण
 
-static void *tag_from_dmreq(struct crypt_config *cc,
-				struct dm_crypt_request *dmreq)
-{
-	struct convert_context *ctx = dmreq->ctx;
-	struct dm_crypt_io *io = container_of(ctx, struct dm_crypt_io, ctx);
+अटल व्योम *tag_from_dmreq(काष्ठा crypt_config *cc,
+				काष्ठा dm_crypt_request *dmreq)
+अणु
+	काष्ठा convert_context *ctx = dmreq->ctx;
+	काष्ठा dm_crypt_io *io = container_of(ctx, काष्ठा dm_crypt_io, ctx);
 
-	return &io->integrity_metadata[*org_tag_of_dmreq(cc, dmreq) *
+	वापस &io->पूर्णांकegrity_metadata[*org_tag_of_dmreq(cc, dmreq) *
 		cc->on_disk_tag_size];
-}
+पूर्ण
 
-static void *iv_tag_from_dmreq(struct crypt_config *cc,
-			       struct dm_crypt_request *dmreq)
-{
-	return tag_from_dmreq(cc, dmreq) + cc->integrity_tag_size;
-}
+अटल व्योम *iv_tag_from_dmreq(काष्ठा crypt_config *cc,
+			       काष्ठा dm_crypt_request *dmreq)
+अणु
+	वापस tag_from_dmreq(cc, dmreq) + cc->पूर्णांकegrity_tag_size;
+पूर्ण
 
-static int crypt_convert_block_aead(struct crypt_config *cc,
-				     struct convert_context *ctx,
-				     struct aead_request *req,
-				     unsigned int tag_offset)
-{
-	struct bio_vec bv_in = bio_iter_iovec(ctx->bio_in, ctx->iter_in);
-	struct bio_vec bv_out = bio_iter_iovec(ctx->bio_out, ctx->iter_out);
-	struct dm_crypt_request *dmreq;
+अटल पूर्णांक crypt_convert_block_aead(काष्ठा crypt_config *cc,
+				     काष्ठा convert_context *ctx,
+				     काष्ठा aead_request *req,
+				     अचिन्हित पूर्णांक tag_offset)
+अणु
+	काष्ठा bio_vec bv_in = bio_iter_iovec(ctx->bio_in, ctx->iter_in);
+	काष्ठा bio_vec bv_out = bio_iter_iovec(ctx->bio_out, ctx->iter_out);
+	काष्ठा dm_crypt_request *dmreq;
 	u8 *iv, *org_iv, *tag_iv, *tag;
 	__le64 *sector;
-	int r = 0;
+	पूर्णांक r = 0;
 
-	BUG_ON(cc->integrity_iv_size && cc->integrity_iv_size != cc->iv_size);
+	BUG_ON(cc->पूर्णांकegrity_iv_size && cc->पूर्णांकegrity_iv_size != cc->iv_size);
 
 	/* Reject unexpected unaligned bio. */
-	if (unlikely(bv_in.bv_len & (cc->sector_size - 1)))
-		return -EIO;
+	अगर (unlikely(bv_in.bv_len & (cc->sector_size - 1)))
+		वापस -EIO;
 
 	dmreq = dmreq_of_req(cc, req);
 	dmreq->iv_sector = ctx->cc_sector;
-	if (test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags))
-		dmreq->iv_sector >>= cc->sector_shift;
+	अगर (test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags))
+		dmreq->iv_sector >>= cc->sector_shअगरt;
 	dmreq->ctx = ctx;
 
 	*org_tag_of_dmreq(cc, dmreq) = tag_offset;
@@ -1319,83 +1320,83 @@ static int crypt_convert_block_aead(struct crypt_config *cc,
 	 *  | sector_LE |  IV |  sector in/out    |  tag in/out  |
 	 */
 	sg_init_table(dmreq->sg_in, 4);
-	sg_set_buf(&dmreq->sg_in[0], sector, sizeof(uint64_t));
+	sg_set_buf(&dmreq->sg_in[0], sector, माप(uपूर्णांक64_t));
 	sg_set_buf(&dmreq->sg_in[1], org_iv, cc->iv_size);
 	sg_set_page(&dmreq->sg_in[2], bv_in.bv_page, cc->sector_size, bv_in.bv_offset);
-	sg_set_buf(&dmreq->sg_in[3], tag, cc->integrity_tag_size);
+	sg_set_buf(&dmreq->sg_in[3], tag, cc->पूर्णांकegrity_tag_size);
 
 	sg_init_table(dmreq->sg_out, 4);
-	sg_set_buf(&dmreq->sg_out[0], sector, sizeof(uint64_t));
+	sg_set_buf(&dmreq->sg_out[0], sector, माप(uपूर्णांक64_t));
 	sg_set_buf(&dmreq->sg_out[1], org_iv, cc->iv_size);
 	sg_set_page(&dmreq->sg_out[2], bv_out.bv_page, cc->sector_size, bv_out.bv_offset);
-	sg_set_buf(&dmreq->sg_out[3], tag, cc->integrity_tag_size);
+	sg_set_buf(&dmreq->sg_out[3], tag, cc->पूर्णांकegrity_tag_size);
 
-	if (cc->iv_gen_ops) {
-		/* For READs use IV stored in integrity metadata */
-		if (cc->integrity_iv_size && bio_data_dir(ctx->bio_in) != WRITE) {
-			memcpy(org_iv, tag_iv, cc->iv_size);
-		} else {
+	अगर (cc->iv_gen_ops) अणु
+		/* For READs use IV stored in पूर्णांकegrity metadata */
+		अगर (cc->पूर्णांकegrity_iv_size && bio_data_dir(ctx->bio_in) != WRITE) अणु
+			स_नकल(org_iv, tag_iv, cc->iv_size);
+		पूर्ण अन्यथा अणु
 			r = cc->iv_gen_ops->generator(cc, org_iv, dmreq);
-			if (r < 0)
-				return r;
-			/* Store generated IV in integrity metadata */
-			if (cc->integrity_iv_size)
-				memcpy(tag_iv, org_iv, cc->iv_size);
-		}
-		/* Working copy of IV, to be modified in crypto API */
-		memcpy(iv, org_iv, cc->iv_size);
-	}
+			अगर (r < 0)
+				वापस r;
+			/* Store generated IV in पूर्णांकegrity metadata */
+			अगर (cc->पूर्णांकegrity_iv_size)
+				स_नकल(tag_iv, org_iv, cc->iv_size);
+		पूर्ण
+		/* Working copy of IV, to be modअगरied in crypto API */
+		स_नकल(iv, org_iv, cc->iv_size);
+	पूर्ण
 
-	aead_request_set_ad(req, sizeof(uint64_t) + cc->iv_size);
-	if (bio_data_dir(ctx->bio_in) == WRITE) {
+	aead_request_set_ad(req, माप(uपूर्णांक64_t) + cc->iv_size);
+	अगर (bio_data_dir(ctx->bio_in) == WRITE) अणु
 		aead_request_set_crypt(req, dmreq->sg_in, dmreq->sg_out,
 				       cc->sector_size, iv);
 		r = crypto_aead_encrypt(req);
-		if (cc->integrity_tag_size + cc->integrity_iv_size != cc->on_disk_tag_size)
-			memset(tag + cc->integrity_tag_size + cc->integrity_iv_size, 0,
-			       cc->on_disk_tag_size - (cc->integrity_tag_size + cc->integrity_iv_size));
-	} else {
+		अगर (cc->पूर्णांकegrity_tag_size + cc->पूर्णांकegrity_iv_size != cc->on_disk_tag_size)
+			स_रखो(tag + cc->पूर्णांकegrity_tag_size + cc->पूर्णांकegrity_iv_size, 0,
+			       cc->on_disk_tag_size - (cc->पूर्णांकegrity_tag_size + cc->पूर्णांकegrity_iv_size));
+	पूर्ण अन्यथा अणु
 		aead_request_set_crypt(req, dmreq->sg_in, dmreq->sg_out,
-				       cc->sector_size + cc->integrity_tag_size, iv);
+				       cc->sector_size + cc->पूर्णांकegrity_tag_size, iv);
 		r = crypto_aead_decrypt(req);
-	}
+	पूर्ण
 
-	if (r == -EBADMSG) {
-		char b[BDEVNAME_SIZE];
+	अगर (r == -EBADMSG) अणु
+		अक्षर b[BDEVNAME_SIZE];
 		DMERR_LIMIT("%s: INTEGRITY AEAD ERROR, sector %llu", bio_devname(ctx->bio_in, b),
-			    (unsigned long long)le64_to_cpu(*sector));
-	}
+			    (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(*sector));
+	पूर्ण
 
-	if (!r && cc->iv_gen_ops && cc->iv_gen_ops->post)
+	अगर (!r && cc->iv_gen_ops && cc->iv_gen_ops->post)
 		r = cc->iv_gen_ops->post(cc, org_iv, dmreq);
 
 	bio_advance_iter(ctx->bio_in, &ctx->iter_in, cc->sector_size);
 	bio_advance_iter(ctx->bio_out, &ctx->iter_out, cc->sector_size);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int crypt_convert_block_skcipher(struct crypt_config *cc,
-					struct convert_context *ctx,
-					struct skcipher_request *req,
-					unsigned int tag_offset)
-{
-	struct bio_vec bv_in = bio_iter_iovec(ctx->bio_in, ctx->iter_in);
-	struct bio_vec bv_out = bio_iter_iovec(ctx->bio_out, ctx->iter_out);
-	struct scatterlist *sg_in, *sg_out;
-	struct dm_crypt_request *dmreq;
+अटल पूर्णांक crypt_convert_block_skcipher(काष्ठा crypt_config *cc,
+					काष्ठा convert_context *ctx,
+					काष्ठा skcipher_request *req,
+					अचिन्हित पूर्णांक tag_offset)
+अणु
+	काष्ठा bio_vec bv_in = bio_iter_iovec(ctx->bio_in, ctx->iter_in);
+	काष्ठा bio_vec bv_out = bio_iter_iovec(ctx->bio_out, ctx->iter_out);
+	काष्ठा scatterlist *sg_in, *sg_out;
+	काष्ठा dm_crypt_request *dmreq;
 	u8 *iv, *org_iv, *tag_iv;
 	__le64 *sector;
-	int r = 0;
+	पूर्णांक r = 0;
 
 	/* Reject unexpected unaligned bio. */
-	if (unlikely(bv_in.bv_len & (cc->sector_size - 1)))
-		return -EIO;
+	अगर (unlikely(bv_in.bv_len & (cc->sector_size - 1)))
+		वापस -EIO;
 
 	dmreq = dmreq_of_req(cc, req);
 	dmreq->iv_sector = ctx->cc_sector;
-	if (test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags))
-		dmreq->iv_sector >>= cc->sector_shift;
+	अगर (test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags))
+		dmreq->iv_sector >>= cc->sector_shअगरt;
 	dmreq->ctx = ctx;
 
 	*org_tag_of_dmreq(cc, dmreq) = tag_offset;
@@ -1417,346 +1418,346 @@ static int crypt_convert_block_skcipher(struct crypt_config *cc,
 	sg_init_table(sg_out, 1);
 	sg_set_page(sg_out, bv_out.bv_page, cc->sector_size, bv_out.bv_offset);
 
-	if (cc->iv_gen_ops) {
-		/* For READs use IV stored in integrity metadata */
-		if (cc->integrity_iv_size && bio_data_dir(ctx->bio_in) != WRITE) {
-			memcpy(org_iv, tag_iv, cc->integrity_iv_size);
-		} else {
+	अगर (cc->iv_gen_ops) अणु
+		/* For READs use IV stored in पूर्णांकegrity metadata */
+		अगर (cc->पूर्णांकegrity_iv_size && bio_data_dir(ctx->bio_in) != WRITE) अणु
+			स_नकल(org_iv, tag_iv, cc->पूर्णांकegrity_iv_size);
+		पूर्ण अन्यथा अणु
 			r = cc->iv_gen_ops->generator(cc, org_iv, dmreq);
-			if (r < 0)
-				return r;
-			/* Data can be already preprocessed in generator */
-			if (test_bit(CRYPT_ENCRYPT_PREPROCESS, &cc->cipher_flags))
+			अगर (r < 0)
+				वापस r;
+			/* Data can be alपढ़ोy preprocessed in generator */
+			अगर (test_bit(CRYPT_ENCRYPT_PREPROCESS, &cc->cipher_flags))
 				sg_in = sg_out;
-			/* Store generated IV in integrity metadata */
-			if (cc->integrity_iv_size)
-				memcpy(tag_iv, org_iv, cc->integrity_iv_size);
-		}
-		/* Working copy of IV, to be modified in crypto API */
-		memcpy(iv, org_iv, cc->iv_size);
-	}
+			/* Store generated IV in पूर्णांकegrity metadata */
+			अगर (cc->पूर्णांकegrity_iv_size)
+				स_नकल(tag_iv, org_iv, cc->पूर्णांकegrity_iv_size);
+		पूर्ण
+		/* Working copy of IV, to be modअगरied in crypto API */
+		स_नकल(iv, org_iv, cc->iv_size);
+	पूर्ण
 
 	skcipher_request_set_crypt(req, sg_in, sg_out, cc->sector_size, iv);
 
-	if (bio_data_dir(ctx->bio_in) == WRITE)
+	अगर (bio_data_dir(ctx->bio_in) == WRITE)
 		r = crypto_skcipher_encrypt(req);
-	else
+	अन्यथा
 		r = crypto_skcipher_decrypt(req);
 
-	if (!r && cc->iv_gen_ops && cc->iv_gen_ops->post)
+	अगर (!r && cc->iv_gen_ops && cc->iv_gen_ops->post)
 		r = cc->iv_gen_ops->post(cc, org_iv, dmreq);
 
 	bio_advance_iter(ctx->bio_in, &ctx->iter_in, cc->sector_size);
 	bio_advance_iter(ctx->bio_out, &ctx->iter_out, cc->sector_size);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void kcryptd_async_done(struct crypto_async_request *async_req,
-			       int error);
+अटल व्योम kcryptd_async_करोne(काष्ठा crypto_async_request *async_req,
+			       पूर्णांक error);
 
-static int crypt_alloc_req_skcipher(struct crypt_config *cc,
-				     struct convert_context *ctx)
-{
-	unsigned key_index = ctx->cc_sector & (cc->tfms_count - 1);
+अटल पूर्णांक crypt_alloc_req_skcipher(काष्ठा crypt_config *cc,
+				     काष्ठा convert_context *ctx)
+अणु
+	अचिन्हित key_index = ctx->cc_sector & (cc->tfms_count - 1);
 
-	if (!ctx->r.req) {
-		ctx->r.req = mempool_alloc(&cc->req_pool, in_interrupt() ? GFP_ATOMIC : GFP_NOIO);
-		if (!ctx->r.req)
-			return -ENOMEM;
-	}
+	अगर (!ctx->r.req) अणु
+		ctx->r.req = mempool_alloc(&cc->req_pool, in_पूर्णांकerrupt() ? GFP_ATOMIC : GFP_NOIO);
+		अगर (!ctx->r.req)
+			वापस -ENOMEM;
+	पूर्ण
 
 	skcipher_request_set_tfm(ctx->r.req, cc->cipher_tfm.tfms[key_index]);
 
 	/*
-	 * Use REQ_MAY_BACKLOG so a cipher driver internally backlogs
-	 * requests if driver request queue is full.
+	 * Use REQ_MAY_BACKLOG so a cipher driver पूर्णांकernally backlogs
+	 * requests अगर driver request queue is full.
 	 */
 	skcipher_request_set_callback(ctx->r.req,
 	    CRYPTO_TFM_REQ_MAY_BACKLOG,
-	    kcryptd_async_done, dmreq_of_req(cc, ctx->r.req));
+	    kcryptd_async_करोne, dmreq_of_req(cc, ctx->r.req));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_alloc_req_aead(struct crypt_config *cc,
-				 struct convert_context *ctx)
-{
-	if (!ctx->r.req_aead) {
-		ctx->r.req_aead = mempool_alloc(&cc->req_pool, in_interrupt() ? GFP_ATOMIC : GFP_NOIO);
-		if (!ctx->r.req_aead)
-			return -ENOMEM;
-	}
+अटल पूर्णांक crypt_alloc_req_aead(काष्ठा crypt_config *cc,
+				 काष्ठा convert_context *ctx)
+अणु
+	अगर (!ctx->r.req_aead) अणु
+		ctx->r.req_aead = mempool_alloc(&cc->req_pool, in_पूर्णांकerrupt() ? GFP_ATOMIC : GFP_NOIO);
+		अगर (!ctx->r.req_aead)
+			वापस -ENOMEM;
+	पूर्ण
 
 	aead_request_set_tfm(ctx->r.req_aead, cc->cipher_tfm.tfms_aead[0]);
 
 	/*
-	 * Use REQ_MAY_BACKLOG so a cipher driver internally backlogs
-	 * requests if driver request queue is full.
+	 * Use REQ_MAY_BACKLOG so a cipher driver पूर्णांकernally backlogs
+	 * requests अगर driver request queue is full.
 	 */
 	aead_request_set_callback(ctx->r.req_aead,
 	    CRYPTO_TFM_REQ_MAY_BACKLOG,
-	    kcryptd_async_done, dmreq_of_req(cc, ctx->r.req_aead));
+	    kcryptd_async_करोne, dmreq_of_req(cc, ctx->r.req_aead));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_alloc_req(struct crypt_config *cc,
-			    struct convert_context *ctx)
-{
-	if (crypt_integrity_aead(cc))
-		return crypt_alloc_req_aead(cc, ctx);
-	else
-		return crypt_alloc_req_skcipher(cc, ctx);
-}
+अटल पूर्णांक crypt_alloc_req(काष्ठा crypt_config *cc,
+			    काष्ठा convert_context *ctx)
+अणु
+	अगर (crypt_पूर्णांकegrity_aead(cc))
+		वापस crypt_alloc_req_aead(cc, ctx);
+	अन्यथा
+		वापस crypt_alloc_req_skcipher(cc, ctx);
+पूर्ण
 
-static void crypt_free_req_skcipher(struct crypt_config *cc,
-				    struct skcipher_request *req, struct bio *base_bio)
-{
-	struct dm_crypt_io *io = dm_per_bio_data(base_bio, cc->per_bio_data_size);
+अटल व्योम crypt_मुक्त_req_skcipher(काष्ठा crypt_config *cc,
+				    काष्ठा skcipher_request *req, काष्ठा bio *base_bio)
+अणु
+	काष्ठा dm_crypt_io *io = dm_per_bio_data(base_bio, cc->per_bio_data_size);
 
-	if ((struct skcipher_request *)(io + 1) != req)
-		mempool_free(req, &cc->req_pool);
-}
+	अगर ((काष्ठा skcipher_request *)(io + 1) != req)
+		mempool_मुक्त(req, &cc->req_pool);
+पूर्ण
 
-static void crypt_free_req_aead(struct crypt_config *cc,
-				struct aead_request *req, struct bio *base_bio)
-{
-	struct dm_crypt_io *io = dm_per_bio_data(base_bio, cc->per_bio_data_size);
+अटल व्योम crypt_मुक्त_req_aead(काष्ठा crypt_config *cc,
+				काष्ठा aead_request *req, काष्ठा bio *base_bio)
+अणु
+	काष्ठा dm_crypt_io *io = dm_per_bio_data(base_bio, cc->per_bio_data_size);
 
-	if ((struct aead_request *)(io + 1) != req)
-		mempool_free(req, &cc->req_pool);
-}
+	अगर ((काष्ठा aead_request *)(io + 1) != req)
+		mempool_मुक्त(req, &cc->req_pool);
+पूर्ण
 
-static void crypt_free_req(struct crypt_config *cc, void *req, struct bio *base_bio)
-{
-	if (crypt_integrity_aead(cc))
-		crypt_free_req_aead(cc, req, base_bio);
-	else
-		crypt_free_req_skcipher(cc, req, base_bio);
-}
+अटल व्योम crypt_मुक्त_req(काष्ठा crypt_config *cc, व्योम *req, काष्ठा bio *base_bio)
+अणु
+	अगर (crypt_पूर्णांकegrity_aead(cc))
+		crypt_मुक्त_req_aead(cc, req, base_bio);
+	अन्यथा
+		crypt_मुक्त_req_skcipher(cc, req, base_bio);
+पूर्ण
 
 /*
  * Encrypt / decrypt data from one bio to another one (can be the same one)
  */
-static blk_status_t crypt_convert(struct crypt_config *cc,
-			 struct convert_context *ctx, bool atomic, bool reset_pending)
-{
-	unsigned int tag_offset = 0;
-	unsigned int sector_step = cc->sector_size >> SECTOR_SHIFT;
-	int r;
+अटल blk_status_t crypt_convert(काष्ठा crypt_config *cc,
+			 काष्ठा convert_context *ctx, bool atomic, bool reset_pending)
+अणु
+	अचिन्हित पूर्णांक tag_offset = 0;
+	अचिन्हित पूर्णांक sector_step = cc->sector_size >> SECTOR_SHIFT;
+	पूर्णांक r;
 
 	/*
-	 * if reset_pending is set we are dealing with the bio for the first time,
-	 * else we're continuing to work on the previous bio, so don't mess with
+	 * अगर reset_pending is set we are dealing with the bio क्रम the first समय,
+	 * अन्यथा we're continuing to work on the previous bio, so don't mess with
 	 * the cc_pending counter
 	 */
-	if (reset_pending)
+	अगर (reset_pending)
 		atomic_set(&ctx->cc_pending, 1);
 
-	while (ctx->iter_in.bi_size && ctx->iter_out.bi_size) {
+	जबतक (ctx->iter_in.bi_size && ctx->iter_out.bi_size) अणु
 
 		r = crypt_alloc_req(cc, ctx);
-		if (r) {
+		अगर (r) अणु
 			complete(&ctx->restart);
-			return BLK_STS_DEV_RESOURCE;
-		}
+			वापस BLK_STS_DEV_RESOURCE;
+		पूर्ण
 
 		atomic_inc(&ctx->cc_pending);
 
-		if (crypt_integrity_aead(cc))
+		अगर (crypt_पूर्णांकegrity_aead(cc))
 			r = crypt_convert_block_aead(cc, ctx, ctx->r.req_aead, tag_offset);
-		else
+		अन्यथा
 			r = crypt_convert_block_skcipher(cc, ctx, ctx->r.req, tag_offset);
 
-		switch (r) {
+		चयन (r) अणु
 		/*
 		 * The request was queued by a crypto driver
-		 * but the driver request queue is full, let's wait.
+		 * but the driver request queue is full, let's रुको.
 		 */
-		case -EBUSY:
-			if (in_interrupt()) {
-				if (try_wait_for_completion(&ctx->restart)) {
+		हाल -EBUSY:
+			अगर (in_पूर्णांकerrupt()) अणु
+				अगर (try_रुको_क्रम_completion(&ctx->restart)) अणु
 					/*
-					 * we don't have to block to wait for completion,
+					 * we करोn't have to block to रुको क्रम completion,
 					 * so proceed
 					 */
-				} else {
+				पूर्ण अन्यथा अणु
 					/*
-					 * we can't wait for completion without blocking
-					 * exit and continue processing in a workqueue
+					 * we can't रुको क्रम completion without blocking
+					 * निकास and जारी processing in a workqueue
 					 */
-					ctx->r.req = NULL;
+					ctx->r.req = शून्य;
 					ctx->cc_sector += sector_step;
 					tag_offset++;
-					return BLK_STS_DEV_RESOURCE;
-				}
-			} else {
-				wait_for_completion(&ctx->restart);
-			}
+					वापस BLK_STS_DEV_RESOURCE;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				रुको_क्रम_completion(&ctx->restart);
+			पूर्ण
 			reinit_completion(&ctx->restart);
 			fallthrough;
 		/*
 		 * The request is queued and processed asynchronously,
-		 * completion function kcryptd_async_done() will be called.
+		 * completion function kcryptd_async_करोne() will be called.
 		 */
-		case -EINPROGRESS:
-			ctx->r.req = NULL;
+		हाल -EINPROGRESS:
+			ctx->r.req = शून्य;
 			ctx->cc_sector += sector_step;
 			tag_offset++;
-			continue;
+			जारी;
 		/*
-		 * The request was already processed (synchronously).
+		 * The request was alपढ़ोy processed (synchronously).
 		 */
-		case 0:
+		हाल 0:
 			atomic_dec(&ctx->cc_pending);
 			ctx->cc_sector += sector_step;
 			tag_offset++;
-			if (!atomic)
+			अगर (!atomic)
 				cond_resched();
-			continue;
+			जारी;
 		/*
-		 * There was a data integrity error.
+		 * There was a data पूर्णांकegrity error.
 		 */
-		case -EBADMSG:
+		हाल -EBADMSG:
 			atomic_dec(&ctx->cc_pending);
-			return BLK_STS_PROTECTION;
+			वापस BLK_STS_PROTECTION;
 		/*
-		 * There was an error while processing the request.
+		 * There was an error जबतक processing the request.
 		 */
-		default:
+		शेष:
 			atomic_dec(&ctx->cc_pending);
-			return BLK_STS_IOERR;
-		}
-	}
+			वापस BLK_STS_IOERR;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void crypt_free_buffer_pages(struct crypt_config *cc, struct bio *clone);
+अटल व्योम crypt_मुक्त_buffer_pages(काष्ठा crypt_config *cc, काष्ठा bio *clone);
 
 /*
  * Generate a new unfragmented bio with the given size
  * This should never violate the device limitations (but only because
- * max_segment_size is being constrained to PAGE_SIZE).
+ * max_segment_size is being स्थिरrained to PAGE_SIZE).
  *
  * This function may be called concurrently. If we allocate from the mempool
- * concurrently, there is a possibility of deadlock. For example, if we have
+ * concurrently, there is a possibility of deadlock. For example, अगर we have
  * mempool of 256 pages, two processes, each wanting 256, pages allocate from
  * the mempool concurrently, it may deadlock in a situation where both processes
  * have allocated 128 pages and the mempool is exhausted.
  *
- * In order to avoid this scenario we allocate the pages under a mutex.
+ * In order to aव्योम this scenario we allocate the pages under a mutex.
  *
- * In order to not degrade performance with excessive locking, we try
+ * In order to not degrade perक्रमmance with excessive locking, we try
  * non-blocking allocations without a mutex first but on failure we fallback
  * to blocking allocations with a mutex.
  */
-static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
-{
-	struct crypt_config *cc = io->cc;
-	struct bio *clone;
-	unsigned int nr_iovecs = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
+अटल काष्ठा bio *crypt_alloc_buffer(काष्ठा dm_crypt_io *io, अचिन्हित size)
+अणु
+	काष्ठा crypt_config *cc = io->cc;
+	काष्ठा bio *clone;
+	अचिन्हित पूर्णांक nr_iovecs = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	gfp_t gfp_mask = GFP_NOWAIT | __GFP_HIGHMEM;
-	unsigned i, len, remaining_size;
-	struct page *page;
+	अचिन्हित i, len, reमुख्यing_size;
+	काष्ठा page *page;
 
 retry:
-	if (unlikely(gfp_mask & __GFP_DIRECT_RECLAIM))
+	अगर (unlikely(gfp_mask & __GFP_सूचीECT_RECLAIM))
 		mutex_lock(&cc->bio_alloc_lock);
 
 	clone = bio_alloc_bioset(GFP_NOIO, nr_iovecs, &cc->bs);
-	if (!clone)
-		goto out;
+	अगर (!clone)
+		जाओ out;
 
 	clone_init(io, clone);
 
-	remaining_size = size;
+	reमुख्यing_size = size;
 
-	for (i = 0; i < nr_iovecs; i++) {
+	क्रम (i = 0; i < nr_iovecs; i++) अणु
 		page = mempool_alloc(&cc->page_pool, gfp_mask);
-		if (!page) {
-			crypt_free_buffer_pages(cc, clone);
+		अगर (!page) अणु
+			crypt_मुक्त_buffer_pages(cc, clone);
 			bio_put(clone);
-			gfp_mask |= __GFP_DIRECT_RECLAIM;
-			goto retry;
-		}
+			gfp_mask |= __GFP_सूचीECT_RECLAIM;
+			जाओ retry;
+		पूर्ण
 
-		len = (remaining_size > PAGE_SIZE) ? PAGE_SIZE : remaining_size;
+		len = (reमुख्यing_size > PAGE_SIZE) ? PAGE_SIZE : reमुख्यing_size;
 
 		bio_add_page(clone, page, len, 0);
 
-		remaining_size -= len;
-	}
+		reमुख्यing_size -= len;
+	पूर्ण
 
-	/* Allocate space for integrity tags */
-	if (dm_crypt_integrity_io_alloc(io, clone)) {
-		crypt_free_buffer_pages(cc, clone);
+	/* Allocate space क्रम पूर्णांकegrity tags */
+	अगर (dm_crypt_पूर्णांकegrity_io_alloc(io, clone)) अणु
+		crypt_मुक्त_buffer_pages(cc, clone);
 		bio_put(clone);
-		clone = NULL;
-	}
+		clone = शून्य;
+	पूर्ण
 out:
-	if (unlikely(gfp_mask & __GFP_DIRECT_RECLAIM))
+	अगर (unlikely(gfp_mask & __GFP_सूचीECT_RECLAIM))
 		mutex_unlock(&cc->bio_alloc_lock);
 
-	return clone;
-}
+	वापस clone;
+पूर्ण
 
-static void crypt_free_buffer_pages(struct crypt_config *cc, struct bio *clone)
-{
-	struct bio_vec *bv;
-	struct bvec_iter_all iter_all;
+अटल व्योम crypt_मुक्त_buffer_pages(काष्ठा crypt_config *cc, काष्ठा bio *clone)
+अणु
+	काष्ठा bio_vec *bv;
+	काष्ठा bvec_iter_all iter_all;
 
-	bio_for_each_segment_all(bv, clone, iter_all) {
+	bio_क्रम_each_segment_all(bv, clone, iter_all) अणु
 		BUG_ON(!bv->bv_page);
-		mempool_free(bv->bv_page, &cc->page_pool);
-	}
-}
+		mempool_मुक्त(bv->bv_page, &cc->page_pool);
+	पूर्ण
+पूर्ण
 
-static void crypt_io_init(struct dm_crypt_io *io, struct crypt_config *cc,
-			  struct bio *bio, sector_t sector)
-{
+अटल व्योम crypt_io_init(काष्ठा dm_crypt_io *io, काष्ठा crypt_config *cc,
+			  काष्ठा bio *bio, sector_t sector)
+अणु
 	io->cc = cc;
 	io->base_bio = bio;
 	io->sector = sector;
 	io->error = 0;
-	io->ctx.r.req = NULL;
-	io->integrity_metadata = NULL;
-	io->integrity_metadata_from_pool = false;
+	io->ctx.r.req = शून्य;
+	io->पूर्णांकegrity_metadata = शून्य;
+	io->पूर्णांकegrity_metadata_from_pool = false;
 	atomic_set(&io->io_pending, 0);
-}
+पूर्ण
 
-static void crypt_inc_pending(struct dm_crypt_io *io)
-{
+अटल व्योम crypt_inc_pending(काष्ठा dm_crypt_io *io)
+अणु
 	atomic_inc(&io->io_pending);
-}
+पूर्ण
 
-static void kcryptd_io_bio_endio(struct work_struct *work)
-{
-	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
+अटल व्योम kcryptd_io_bio_endio(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dm_crypt_io *io = container_of(work, काष्ठा dm_crypt_io, work);
 	bio_endio(io->base_bio);
-}
+पूर्ण
 
 /*
- * One of the bios was finished. Check for completion of
+ * One of the bios was finished. Check क्रम completion of
  * the whole request and correctly clean up the buffer.
  */
-static void crypt_dec_pending(struct dm_crypt_io *io)
-{
-	struct crypt_config *cc = io->cc;
-	struct bio *base_bio = io->base_bio;
+अटल व्योम crypt_dec_pending(काष्ठा dm_crypt_io *io)
+अणु
+	काष्ठा crypt_config *cc = io->cc;
+	काष्ठा bio *base_bio = io->base_bio;
 	blk_status_t error = io->error;
 
-	if (!atomic_dec_and_test(&io->io_pending))
-		return;
+	अगर (!atomic_dec_and_test(&io->io_pending))
+		वापस;
 
-	if (io->ctx.r.req)
-		crypt_free_req(cc, io->ctx.r.req, base_bio);
+	अगर (io->ctx.r.req)
+		crypt_मुक्त_req(cc, io->ctx.r.req, base_bio);
 
-	if (unlikely(io->integrity_metadata_from_pool))
-		mempool_free(io->integrity_metadata, &io->cc->tag_pool);
-	else
-		kfree(io->integrity_metadata);
+	अगर (unlikely(io->पूर्णांकegrity_metadata_from_pool))
+		mempool_मुक्त(io->पूर्णांकegrity_metadata, &io->cc->tag_pool);
+	अन्यथा
+		kमुक्त(io->पूर्णांकegrity_metadata);
 
 	base_bio->bi_status = error;
 
@@ -1764,286 +1765,286 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
 	 * If we are running this function from our tasklet,
 	 * we can't call bio_endio() here, because it will call
 	 * clone_endio() from dm.c, which in turn will
-	 * free the current struct dm_crypt_io structure with
-	 * our tasklet. In this case we need to delay bio_endio()
-	 * execution to after the tasklet is done and dequeued.
+	 * मुक्त the current काष्ठा dm_crypt_io काष्ठाure with
+	 * our tasklet. In this हाल we need to delay bio_endio()
+	 * execution to after the tasklet is करोne and dequeued.
 	 */
-	if (tasklet_trylock(&io->tasklet)) {
+	अगर (tasklet_trylock(&io->tasklet)) अणु
 		tasklet_unlock(&io->tasklet);
 		bio_endio(base_bio);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	INIT_WORK(&io->work, kcryptd_io_bio_endio);
 	queue_work(cc->io_queue, &io->work);
-}
+पूर्ण
 
 /*
  * kcryptd/kcryptd_io:
  *
- * Needed because it would be very unwise to do decryption in an
- * interrupt context.
+ * Needed because it would be very unwise to करो decryption in an
+ * पूर्णांकerrupt context.
  *
- * kcryptd performs the actual encryption or decryption.
+ * kcryptd perक्रमms the actual encryption or decryption.
  *
- * kcryptd_io performs the IO submission.
+ * kcryptd_io perक्रमms the IO submission.
  *
  * They must be separated as otherwise the final stages could be
  * starved by new requests which can block in the first stages due
  * to memory allocation.
  *
- * The work is done per CPU global for all dm-crypt instances.
- * They should not depend on each other and do not block.
+ * The work is करोne per CPU global क्रम all dm-crypt instances.
+ * They should not depend on each other and करो not block.
  */
-static void crypt_endio(struct bio *clone)
-{
-	struct dm_crypt_io *io = clone->bi_private;
-	struct crypt_config *cc = io->cc;
-	unsigned rw = bio_data_dir(clone);
+अटल व्योम crypt_endio(काष्ठा bio *clone)
+अणु
+	काष्ठा dm_crypt_io *io = clone->bi_निजी;
+	काष्ठा crypt_config *cc = io->cc;
+	अचिन्हित rw = bio_data_dir(clone);
 	blk_status_t error;
 
 	/*
-	 * free the processed pages
+	 * मुक्त the processed pages
 	 */
-	if (rw == WRITE)
-		crypt_free_buffer_pages(cc, clone);
+	अगर (rw == WRITE)
+		crypt_मुक्त_buffer_pages(cc, clone);
 
 	error = clone->bi_status;
 	bio_put(clone);
 
-	if (rw == READ && !error) {
+	अगर (rw == READ && !error) अणु
 		kcryptd_queue_crypt(io);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (unlikely(error))
+	अगर (unlikely(error))
 		io->error = error;
 
 	crypt_dec_pending(io);
-}
+पूर्ण
 
-static void clone_init(struct dm_crypt_io *io, struct bio *clone)
-{
-	struct crypt_config *cc = io->cc;
+अटल व्योम clone_init(काष्ठा dm_crypt_io *io, काष्ठा bio *clone)
+अणु
+	काष्ठा crypt_config *cc = io->cc;
 
-	clone->bi_private = io;
+	clone->bi_निजी = io;
 	clone->bi_end_io  = crypt_endio;
 	bio_set_dev(clone, cc->dev->bdev);
 	clone->bi_opf	  = io->base_bio->bi_opf;
-}
+पूर्ण
 
-static int kcryptd_io_read(struct dm_crypt_io *io, gfp_t gfp)
-{
-	struct crypt_config *cc = io->cc;
-	struct bio *clone;
+अटल पूर्णांक kcryptd_io_पढ़ो(काष्ठा dm_crypt_io *io, gfp_t gfp)
+अणु
+	काष्ठा crypt_config *cc = io->cc;
+	काष्ठा bio *clone;
 
 	/*
 	 * We need the original biovec array in order to decrypt
 	 * the whole bio data *afterwards* -- thanks to immutable
-	 * biovecs we don't need to worry about the block layer
-	 * modifying the biovec array; so leverage bio_clone_fast().
+	 * biovecs we करोn't need to worry about the block layer
+	 * modअगरying the biovec array; so leverage bio_clone_fast().
 	 */
 	clone = bio_clone_fast(io->base_bio, gfp, &cc->bs);
-	if (!clone)
-		return 1;
+	अगर (!clone)
+		वापस 1;
 
 	crypt_inc_pending(io);
 
 	clone_init(io, clone);
 	clone->bi_iter.bi_sector = cc->start + io->sector;
 
-	if (dm_crypt_integrity_io_alloc(io, clone)) {
+	अगर (dm_crypt_पूर्णांकegrity_io_alloc(io, clone)) अणु
 		crypt_dec_pending(io);
 		bio_put(clone);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	submit_bio_noacct(clone);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void kcryptd_io_read_work(struct work_struct *work)
-{
-	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
+अटल व्योम kcryptd_io_पढ़ो_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dm_crypt_io *io = container_of(work, काष्ठा dm_crypt_io, work);
 
 	crypt_inc_pending(io);
-	if (kcryptd_io_read(io, GFP_NOIO))
+	अगर (kcryptd_io_पढ़ो(io, GFP_NOIO))
 		io->error = BLK_STS_RESOURCE;
 	crypt_dec_pending(io);
-}
+पूर्ण
 
-static void kcryptd_queue_read(struct dm_crypt_io *io)
-{
-	struct crypt_config *cc = io->cc;
+अटल व्योम kcryptd_queue_पढ़ो(काष्ठा dm_crypt_io *io)
+अणु
+	काष्ठा crypt_config *cc = io->cc;
 
-	INIT_WORK(&io->work, kcryptd_io_read_work);
+	INIT_WORK(&io->work, kcryptd_io_पढ़ो_work);
 	queue_work(cc->io_queue, &io->work);
-}
+पूर्ण
 
-static void kcryptd_io_write(struct dm_crypt_io *io)
-{
-	struct bio *clone = io->ctx.bio_out;
+अटल व्योम kcryptd_io_ग_लिखो(काष्ठा dm_crypt_io *io)
+अणु
+	काष्ठा bio *clone = io->ctx.bio_out;
 
 	submit_bio_noacct(clone);
-}
+पूर्ण
 
-#define crypt_io_from_node(node) rb_entry((node), struct dm_crypt_io, rb_node)
+#घोषणा crypt_io_from_node(node) rb_entry((node), काष्ठा dm_crypt_io, rb_node)
 
-static int dmcrypt_write(void *data)
-{
-	struct crypt_config *cc = data;
-	struct dm_crypt_io *io;
+अटल पूर्णांक dmcrypt_ग_लिखो(व्योम *data)
+अणु
+	काष्ठा crypt_config *cc = data;
+	काष्ठा dm_crypt_io *io;
 
-	while (1) {
-		struct rb_root write_tree;
-		struct blk_plug plug;
+	जबतक (1) अणु
+		काष्ठा rb_root ग_लिखो_tree;
+		काष्ठा blk_plug plug;
 
-		spin_lock_irq(&cc->write_thread_lock);
-continue_locked:
+		spin_lock_irq(&cc->ग_लिखो_thपढ़ो_lock);
+जारी_locked:
 
-		if (!RB_EMPTY_ROOT(&cc->write_tree))
-			goto pop_from_list;
+		अगर (!RB_EMPTY_ROOT(&cc->ग_लिखो_tree))
+			जाओ pop_from_list;
 
 		set_current_state(TASK_INTERRUPTIBLE);
 
-		spin_unlock_irq(&cc->write_thread_lock);
+		spin_unlock_irq(&cc->ग_लिखो_thपढ़ो_lock);
 
-		if (unlikely(kthread_should_stop())) {
+		अगर (unlikely(kthपढ़ो_should_stop())) अणु
 			set_current_state(TASK_RUNNING);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		schedule();
 
 		set_current_state(TASK_RUNNING);
-		spin_lock_irq(&cc->write_thread_lock);
-		goto continue_locked;
+		spin_lock_irq(&cc->ग_लिखो_thपढ़ो_lock);
+		जाओ जारी_locked;
 
 pop_from_list:
-		write_tree = cc->write_tree;
-		cc->write_tree = RB_ROOT;
-		spin_unlock_irq(&cc->write_thread_lock);
+		ग_लिखो_tree = cc->ग_लिखो_tree;
+		cc->ग_लिखो_tree = RB_ROOT;
+		spin_unlock_irq(&cc->ग_लिखो_thपढ़ो_lock);
 
-		BUG_ON(rb_parent(write_tree.rb_node));
+		BUG_ON(rb_parent(ग_लिखो_tree.rb_node));
 
 		/*
 		 * Note: we cannot walk the tree here with rb_next because
-		 * the structures may be freed when kcryptd_io_write is called.
+		 * the काष्ठाures may be मुक्तd when kcryptd_io_ग_लिखो is called.
 		 */
 		blk_start_plug(&plug);
-		do {
-			io = crypt_io_from_node(rb_first(&write_tree));
-			rb_erase(&io->rb_node, &write_tree);
-			kcryptd_io_write(io);
-		} while (!RB_EMPTY_ROOT(&write_tree));
+		करो अणु
+			io = crypt_io_from_node(rb_first(&ग_लिखो_tree));
+			rb_erase(&io->rb_node, &ग_लिखो_tree);
+			kcryptd_io_ग_लिखो(io);
+		पूर्ण जबतक (!RB_EMPTY_ROOT(&ग_लिखो_tree));
 		blk_finish_plug(&plug);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
-{
-	struct bio *clone = io->ctx.bio_out;
-	struct crypt_config *cc = io->cc;
-	unsigned long flags;
+अटल व्योम kcryptd_crypt_ग_लिखो_io_submit(काष्ठा dm_crypt_io *io, पूर्णांक async)
+अणु
+	काष्ठा bio *clone = io->ctx.bio_out;
+	काष्ठा crypt_config *cc = io->cc;
+	अचिन्हित दीर्घ flags;
 	sector_t sector;
-	struct rb_node **rbp, *parent;
+	काष्ठा rb_node **rbp, *parent;
 
-	if (unlikely(io->error)) {
-		crypt_free_buffer_pages(cc, clone);
+	अगर (unlikely(io->error)) अणु
+		crypt_मुक्त_buffer_pages(cc, clone);
 		bio_put(clone);
 		crypt_dec_pending(io);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* crypt_convert should have filled the clone bio */
 	BUG_ON(io->ctx.iter_out.bi_size);
 
 	clone->bi_iter.bi_sector = cc->start + io->sector;
 
-	if ((likely(!async) && test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags)) ||
-	    test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags)) {
+	अगर ((likely(!async) && test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags)) ||
+	    test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags)) अणु
 		submit_bio_noacct(clone);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	spin_lock_irqsave(&cc->write_thread_lock, flags);
-	if (RB_EMPTY_ROOT(&cc->write_tree))
-		wake_up_process(cc->write_thread);
-	rbp = &cc->write_tree.rb_node;
-	parent = NULL;
+	spin_lock_irqsave(&cc->ग_लिखो_thपढ़ो_lock, flags);
+	अगर (RB_EMPTY_ROOT(&cc->ग_लिखो_tree))
+		wake_up_process(cc->ग_लिखो_thपढ़ो);
+	rbp = &cc->ग_लिखो_tree.rb_node;
+	parent = शून्य;
 	sector = io->sector;
-	while (*rbp) {
+	जबतक (*rbp) अणु
 		parent = *rbp;
-		if (sector < crypt_io_from_node(parent)->sector)
+		अगर (sector < crypt_io_from_node(parent)->sector)
 			rbp = &(*rbp)->rb_left;
-		else
+		अन्यथा
 			rbp = &(*rbp)->rb_right;
-	}
+	पूर्ण
 	rb_link_node(&io->rb_node, parent, rbp);
-	rb_insert_color(&io->rb_node, &cc->write_tree);
-	spin_unlock_irqrestore(&cc->write_thread_lock, flags);
-}
+	rb_insert_color(&io->rb_node, &cc->ग_लिखो_tree);
+	spin_unlock_irqrestore(&cc->ग_लिखो_thपढ़ो_lock, flags);
+पूर्ण
 
-static bool kcryptd_crypt_write_inline(struct crypt_config *cc,
-				       struct convert_context *ctx)
+अटल bool kcryptd_crypt_ग_लिखो_अंतरभूत(काष्ठा crypt_config *cc,
+				       काष्ठा convert_context *ctx)
 
-{
-	if (!test_bit(DM_CRYPT_WRITE_INLINE, &cc->flags))
-		return false;
+अणु
+	अगर (!test_bit(DM_CRYPT_WRITE_INLINE, &cc->flags))
+		वापस false;
 
 	/*
-	 * Note: zone append writes (REQ_OP_ZONE_APPEND) do not have ordering
-	 * constraints so they do not need to be issued inline by
-	 * kcryptd_crypt_write_convert().
+	 * Note: zone append ग_लिखोs (REQ_OP_ZONE_APPEND) करो not have ordering
+	 * स्थिरraपूर्णांकs so they करो not need to be issued अंतरभूत by
+	 * kcryptd_crypt_ग_लिखो_convert().
 	 */
-	switch (bio_op(ctx->bio_in)) {
-	case REQ_OP_WRITE:
-	case REQ_OP_WRITE_SAME:
-	case REQ_OP_WRITE_ZEROES:
-		return true;
-	default:
-		return false;
-	}
-}
+	चयन (bio_op(ctx->bio_in)) अणु
+	हाल REQ_OP_WRITE:
+	हाल REQ_OP_WRITE_SAME:
+	हाल REQ_OP_WRITE_ZEROES:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static void kcryptd_crypt_write_continue(struct work_struct *work)
-{
-	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
-	struct crypt_config *cc = io->cc;
-	struct convert_context *ctx = &io->ctx;
-	int crypt_finished;
+अटल व्योम kcryptd_crypt_ग_लिखो_जारी(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dm_crypt_io *io = container_of(work, काष्ठा dm_crypt_io, work);
+	काष्ठा crypt_config *cc = io->cc;
+	काष्ठा convert_context *ctx = &io->ctx;
+	पूर्णांक crypt_finished;
 	sector_t sector = io->sector;
 	blk_status_t r;
 
-	wait_for_completion(&ctx->restart);
+	रुको_क्रम_completion(&ctx->restart);
 	reinit_completion(&ctx->restart);
 
 	r = crypt_convert(cc, &io->ctx, true, false);
-	if (r)
+	अगर (r)
 		io->error = r;
 	crypt_finished = atomic_dec_and_test(&ctx->cc_pending);
-	if (!crypt_finished && kcryptd_crypt_write_inline(cc, ctx)) {
-		/* Wait for completion signaled by kcryptd_async_done() */
-		wait_for_completion(&ctx->restart);
+	अगर (!crypt_finished && kcryptd_crypt_ग_लिखो_अंतरभूत(cc, ctx)) अणु
+		/* Wait क्रम completion संकेतed by kcryptd_async_करोne() */
+		रुको_क्रम_completion(&ctx->restart);
 		crypt_finished = 1;
-	}
+	पूर्ण
 
-	/* Encryption was already finished, submit io now */
-	if (crypt_finished) {
-		kcryptd_crypt_write_io_submit(io, 0);
+	/* Encryption was alपढ़ोy finished, submit io now */
+	अगर (crypt_finished) अणु
+		kcryptd_crypt_ग_लिखो_io_submit(io, 0);
 		io->sector = sector;
-	}
+	पूर्ण
 
 	crypt_dec_pending(io);
-}
+पूर्ण
 
-static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
-{
-	struct crypt_config *cc = io->cc;
-	struct convert_context *ctx = &io->ctx;
-	struct bio *clone;
-	int crypt_finished;
+अटल व्योम kcryptd_crypt_ग_लिखो_convert(काष्ठा dm_crypt_io *io)
+अणु
+	काष्ठा crypt_config *cc = io->cc;
+	काष्ठा convert_context *ctx = &io->ctx;
+	काष्ठा bio *clone;
+	पूर्णांक crypt_finished;
 	sector_t sector = io->sector;
 	blk_status_t r;
 
@@ -2051,13 +2052,13 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
 	 * Prevent io from disappearing until this function completes.
 	 */
 	crypt_inc_pending(io);
-	crypt_convert_init(cc, ctx, NULL, io->base_bio, sector);
+	crypt_convert_init(cc, ctx, शून्य, io->base_bio, sector);
 
 	clone = crypt_alloc_buffer(io, io->base_bio->bi_iter.bi_size);
-	if (unlikely(!clone)) {
+	अगर (unlikely(!clone)) अणु
 		io->error = BLK_STS_IOERR;
-		goto dec;
-	}
+		जाओ dec;
+	पूर्ण
 
 	io->ctx.bio_out = clone;
 	io->ctx.iter_out = clone->bi_iter;
@@ -2069,60 +2070,60 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
 			  test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags), true);
 	/*
 	 * Crypto API backlogged the request, because its queue was full
-	 * and we're in softirq context, so continue from a workqueue
-	 * (TODO: is it actually possible to be in softirq in the write path?)
+	 * and we're in softirq context, so जारी from a workqueue
+	 * (TODO: is it actually possible to be in softirq in the ग_लिखो path?)
 	 */
-	if (r == BLK_STS_DEV_RESOURCE) {
-		INIT_WORK(&io->work, kcryptd_crypt_write_continue);
+	अगर (r == BLK_STS_DEV_RESOURCE) अणु
+		INIT_WORK(&io->work, kcryptd_crypt_ग_लिखो_जारी);
 		queue_work(cc->crypt_queue, &io->work);
-		return;
-	}
-	if (r)
+		वापस;
+	पूर्ण
+	अगर (r)
 		io->error = r;
 	crypt_finished = atomic_dec_and_test(&ctx->cc_pending);
-	if (!crypt_finished && kcryptd_crypt_write_inline(cc, ctx)) {
-		/* Wait for completion signaled by kcryptd_async_done() */
-		wait_for_completion(&ctx->restart);
+	अगर (!crypt_finished && kcryptd_crypt_ग_लिखो_अंतरभूत(cc, ctx)) अणु
+		/* Wait क्रम completion संकेतed by kcryptd_async_करोne() */
+		रुको_क्रम_completion(&ctx->restart);
 		crypt_finished = 1;
-	}
+	पूर्ण
 
-	/* Encryption was already finished, submit io now */
-	if (crypt_finished) {
-		kcryptd_crypt_write_io_submit(io, 0);
+	/* Encryption was alपढ़ोy finished, submit io now */
+	अगर (crypt_finished) अणु
+		kcryptd_crypt_ग_लिखो_io_submit(io, 0);
 		io->sector = sector;
-	}
+	पूर्ण
 
 dec:
 	crypt_dec_pending(io);
-}
+पूर्ण
 
-static void kcryptd_crypt_read_done(struct dm_crypt_io *io)
-{
+अटल व्योम kcryptd_crypt_पढ़ो_करोne(काष्ठा dm_crypt_io *io)
+अणु
 	crypt_dec_pending(io);
-}
+पूर्ण
 
-static void kcryptd_crypt_read_continue(struct work_struct *work)
-{
-	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
-	struct crypt_config *cc = io->cc;
+अटल व्योम kcryptd_crypt_पढ़ो_जारी(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dm_crypt_io *io = container_of(work, काष्ठा dm_crypt_io, work);
+	काष्ठा crypt_config *cc = io->cc;
 	blk_status_t r;
 
-	wait_for_completion(&io->ctx.restart);
+	रुको_क्रम_completion(&io->ctx.restart);
 	reinit_completion(&io->ctx.restart);
 
 	r = crypt_convert(cc, &io->ctx, true, false);
-	if (r)
+	अगर (r)
 		io->error = r;
 
-	if (atomic_dec_and_test(&io->ctx.cc_pending))
-		kcryptd_crypt_read_done(io);
+	अगर (atomic_dec_and_test(&io->ctx.cc_pending))
+		kcryptd_crypt_पढ़ो_करोne(io);
 
 	crypt_dec_pending(io);
-}
+पूर्ण
 
-static void kcryptd_crypt_read_convert(struct dm_crypt_io *io)
-{
-	struct crypt_config *cc = io->cc;
+अटल व्योम kcryptd_crypt_पढ़ो_convert(काष्ठा dm_crypt_io *io)
+अणु
+	काष्ठा crypt_config *cc = io->cc;
 	blk_status_t r;
 
 	crypt_inc_pending(io);
@@ -2134,402 +2135,402 @@ static void kcryptd_crypt_read_convert(struct dm_crypt_io *io)
 			  test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags), true);
 	/*
 	 * Crypto API backlogged the request, because its queue was full
-	 * and we're in softirq context, so continue from a workqueue
+	 * and we're in softirq context, so जारी from a workqueue
 	 */
-	if (r == BLK_STS_DEV_RESOURCE) {
-		INIT_WORK(&io->work, kcryptd_crypt_read_continue);
+	अगर (r == BLK_STS_DEV_RESOURCE) अणु
+		INIT_WORK(&io->work, kcryptd_crypt_पढ़ो_जारी);
 		queue_work(cc->crypt_queue, &io->work);
-		return;
-	}
-	if (r)
+		वापस;
+	पूर्ण
+	अगर (r)
 		io->error = r;
 
-	if (atomic_dec_and_test(&io->ctx.cc_pending))
-		kcryptd_crypt_read_done(io);
+	अगर (atomic_dec_and_test(&io->ctx.cc_pending))
+		kcryptd_crypt_पढ़ो_करोne(io);
 
 	crypt_dec_pending(io);
-}
+पूर्ण
 
-static void kcryptd_async_done(struct crypto_async_request *async_req,
-			       int error)
-{
-	struct dm_crypt_request *dmreq = async_req->data;
-	struct convert_context *ctx = dmreq->ctx;
-	struct dm_crypt_io *io = container_of(ctx, struct dm_crypt_io, ctx);
-	struct crypt_config *cc = io->cc;
+अटल व्योम kcryptd_async_करोne(काष्ठा crypto_async_request *async_req,
+			       पूर्णांक error)
+अणु
+	काष्ठा dm_crypt_request *dmreq = async_req->data;
+	काष्ठा convert_context *ctx = dmreq->ctx;
+	काष्ठा dm_crypt_io *io = container_of(ctx, काष्ठा dm_crypt_io, ctx);
+	काष्ठा crypt_config *cc = io->cc;
 
 	/*
 	 * A request from crypto driver backlog is going to be processed now,
-	 * finish the completion and continue in crypt_convert().
-	 * (Callback will be called for the second time for this request.)
+	 * finish the completion and जारी in crypt_convert().
+	 * (Callback will be called क्रम the second समय क्रम this request.)
 	 */
-	if (error == -EINPROGRESS) {
+	अगर (error == -EINPROGRESS) अणु
 		complete(&ctx->restart);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!error && cc->iv_gen_ops && cc->iv_gen_ops->post)
+	अगर (!error && cc->iv_gen_ops && cc->iv_gen_ops->post)
 		error = cc->iv_gen_ops->post(cc, org_iv_of_dmreq(cc, dmreq), dmreq);
 
-	if (error == -EBADMSG) {
-		char b[BDEVNAME_SIZE];
+	अगर (error == -EBADMSG) अणु
+		अक्षर b[BDEVNAME_SIZE];
 		DMERR_LIMIT("%s: INTEGRITY AEAD ERROR, sector %llu", bio_devname(ctx->bio_in, b),
-			    (unsigned long long)le64_to_cpu(*org_sector_of_dmreq(cc, dmreq)));
+			    (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(*org_sector_of_dmreq(cc, dmreq)));
 		io->error = BLK_STS_PROTECTION;
-	} else if (error < 0)
+	पूर्ण अन्यथा अगर (error < 0)
 		io->error = BLK_STS_IOERR;
 
-	crypt_free_req(cc, req_of_dmreq(cc, dmreq), io->base_bio);
+	crypt_मुक्त_req(cc, req_of_dmreq(cc, dmreq), io->base_bio);
 
-	if (!atomic_dec_and_test(&ctx->cc_pending))
-		return;
+	अगर (!atomic_dec_and_test(&ctx->cc_pending))
+		वापस;
 
 	/*
-	 * The request is fully completed: for inline writes, let
-	 * kcryptd_crypt_write_convert() do the IO submission.
+	 * The request is fully completed: क्रम अंतरभूत ग_लिखोs, let
+	 * kcryptd_crypt_ग_लिखो_convert() करो the IO submission.
 	 */
-	if (bio_data_dir(io->base_bio) == READ) {
-		kcryptd_crypt_read_done(io);
-		return;
-	}
+	अगर (bio_data_dir(io->base_bio) == READ) अणु
+		kcryptd_crypt_पढ़ो_करोne(io);
+		वापस;
+	पूर्ण
 
-	if (kcryptd_crypt_write_inline(cc, ctx)) {
+	अगर (kcryptd_crypt_ग_लिखो_अंतरभूत(cc, ctx)) अणु
 		complete(&ctx->restart);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	kcryptd_crypt_write_io_submit(io, 1);
-}
+	kcryptd_crypt_ग_लिखो_io_submit(io, 1);
+पूर्ण
 
-static void kcryptd_crypt(struct work_struct *work)
-{
-	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
+अटल व्योम kcryptd_crypt(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dm_crypt_io *io = container_of(work, काष्ठा dm_crypt_io, work);
 
-	if (bio_data_dir(io->base_bio) == READ)
-		kcryptd_crypt_read_convert(io);
-	else
-		kcryptd_crypt_write_convert(io);
-}
+	अगर (bio_data_dir(io->base_bio) == READ)
+		kcryptd_crypt_पढ़ो_convert(io);
+	अन्यथा
+		kcryptd_crypt_ग_लिखो_convert(io);
+पूर्ण
 
-static void kcryptd_crypt_tasklet(unsigned long work)
-{
-	kcryptd_crypt((struct work_struct *)work);
-}
+अटल व्योम kcryptd_crypt_tasklet(अचिन्हित दीर्घ work)
+अणु
+	kcryptd_crypt((काष्ठा work_काष्ठा *)work);
+पूर्ण
 
-static void kcryptd_queue_crypt(struct dm_crypt_io *io)
-{
-	struct crypt_config *cc = io->cc;
+अटल व्योम kcryptd_queue_crypt(काष्ठा dm_crypt_io *io)
+अणु
+	काष्ठा crypt_config *cc = io->cc;
 
-	if ((bio_data_dir(io->base_bio) == READ && test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags)) ||
-	    (bio_data_dir(io->base_bio) == WRITE && test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags))) {
+	अगर ((bio_data_dir(io->base_bio) == READ && test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags)) ||
+	    (bio_data_dir(io->base_bio) == WRITE && test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags))) अणु
 		/*
 		 * in_irq(): Crypto API's skcipher_walk_first() refuses to work in hard IRQ context.
-		 * irqs_disabled(): the kernel may run some IO completion from the idle thread, but
+		 * irqs_disabled(): the kernel may run some IO completion from the idle thपढ़ो, but
 		 * it is being executed with irqs disabled.
 		 */
-		if (in_irq() || irqs_disabled()) {
-			tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
+		अगर (in_irq() || irqs_disabled()) अणु
+			tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (अचिन्हित दीर्घ)&io->work);
 			tasklet_schedule(&io->tasklet);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		kcryptd_crypt(&io->work);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	INIT_WORK(&io->work, kcryptd_crypt);
 	queue_work(cc->crypt_queue, &io->work);
-}
+पूर्ण
 
-static void crypt_free_tfms_aead(struct crypt_config *cc)
-{
-	if (!cc->cipher_tfm.tfms_aead)
-		return;
+अटल व्योम crypt_मुक्त_tfms_aead(काष्ठा crypt_config *cc)
+अणु
+	अगर (!cc->cipher_tfm.tfms_aead)
+		वापस;
 
-	if (cc->cipher_tfm.tfms_aead[0] && !IS_ERR(cc->cipher_tfm.tfms_aead[0])) {
-		crypto_free_aead(cc->cipher_tfm.tfms_aead[0]);
-		cc->cipher_tfm.tfms_aead[0] = NULL;
-	}
+	अगर (cc->cipher_tfm.tfms_aead[0] && !IS_ERR(cc->cipher_tfm.tfms_aead[0])) अणु
+		crypto_मुक्त_aead(cc->cipher_tfm.tfms_aead[0]);
+		cc->cipher_tfm.tfms_aead[0] = शून्य;
+	पूर्ण
 
-	kfree(cc->cipher_tfm.tfms_aead);
-	cc->cipher_tfm.tfms_aead = NULL;
-}
+	kमुक्त(cc->cipher_tfm.tfms_aead);
+	cc->cipher_tfm.tfms_aead = शून्य;
+पूर्ण
 
-static void crypt_free_tfms_skcipher(struct crypt_config *cc)
-{
-	unsigned i;
+अटल व्योम crypt_मुक्त_tfms_skcipher(काष्ठा crypt_config *cc)
+अणु
+	अचिन्हित i;
 
-	if (!cc->cipher_tfm.tfms)
-		return;
+	अगर (!cc->cipher_tfm.tfms)
+		वापस;
 
-	for (i = 0; i < cc->tfms_count; i++)
-		if (cc->cipher_tfm.tfms[i] && !IS_ERR(cc->cipher_tfm.tfms[i])) {
-			crypto_free_skcipher(cc->cipher_tfm.tfms[i]);
-			cc->cipher_tfm.tfms[i] = NULL;
-		}
+	क्रम (i = 0; i < cc->tfms_count; i++)
+		अगर (cc->cipher_tfm.tfms[i] && !IS_ERR(cc->cipher_tfm.tfms[i])) अणु
+			crypto_मुक्त_skcipher(cc->cipher_tfm.tfms[i]);
+			cc->cipher_tfm.tfms[i] = शून्य;
+		पूर्ण
 
-	kfree(cc->cipher_tfm.tfms);
-	cc->cipher_tfm.tfms = NULL;
-}
+	kमुक्त(cc->cipher_tfm.tfms);
+	cc->cipher_tfm.tfms = शून्य;
+पूर्ण
 
-static void crypt_free_tfms(struct crypt_config *cc)
-{
-	if (crypt_integrity_aead(cc))
-		crypt_free_tfms_aead(cc);
-	else
-		crypt_free_tfms_skcipher(cc);
-}
+अटल व्योम crypt_मुक्त_tfms(काष्ठा crypt_config *cc)
+अणु
+	अगर (crypt_पूर्णांकegrity_aead(cc))
+		crypt_मुक्त_tfms_aead(cc);
+	अन्यथा
+		crypt_मुक्त_tfms_skcipher(cc);
+पूर्ण
 
-static int crypt_alloc_tfms_skcipher(struct crypt_config *cc, char *ciphermode)
-{
-	unsigned i;
-	int err;
+अटल पूर्णांक crypt_alloc_tfms_skcipher(काष्ठा crypt_config *cc, अक्षर *ciphermode)
+अणु
+	अचिन्हित i;
+	पूर्णांक err;
 
-	cc->cipher_tfm.tfms = kcalloc(cc->tfms_count,
-				      sizeof(struct crypto_skcipher *),
+	cc->cipher_tfm.tfms = kसुस्मृति(cc->tfms_count,
+				      माप(काष्ठा crypto_skcipher *),
 				      GFP_KERNEL);
-	if (!cc->cipher_tfm.tfms)
-		return -ENOMEM;
+	अगर (!cc->cipher_tfm.tfms)
+		वापस -ENOMEM;
 
-	for (i = 0; i < cc->tfms_count; i++) {
+	क्रम (i = 0; i < cc->tfms_count; i++) अणु
 		cc->cipher_tfm.tfms[i] = crypto_alloc_skcipher(ciphermode, 0,
 						CRYPTO_ALG_ALLOCATES_MEMORY);
-		if (IS_ERR(cc->cipher_tfm.tfms[i])) {
+		अगर (IS_ERR(cc->cipher_tfm.tfms[i])) अणु
 			err = PTR_ERR(cc->cipher_tfm.tfms[i]);
-			crypt_free_tfms(cc);
-			return err;
-		}
-	}
+			crypt_मुक्त_tfms(cc);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * dm-crypt performance can vary greatly depending on which crypto
-	 * algorithm implementation is used.  Help people debug performance
+	 * dm-crypt perक्रमmance can vary greatly depending on which crypto
+	 * algorithm implementation is used.  Help people debug perक्रमmance
 	 * problems by logging the ->cra_driver_name.
 	 */
 	DMDEBUG_LIMIT("%s using implementation \"%s\"", ciphermode,
 	       crypto_skcipher_alg(any_tfm(cc))->base.cra_driver_name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_alloc_tfms_aead(struct crypt_config *cc, char *ciphermode)
-{
-	int err;
+अटल पूर्णांक crypt_alloc_tfms_aead(काष्ठा crypt_config *cc, अक्षर *ciphermode)
+अणु
+	पूर्णांक err;
 
-	cc->cipher_tfm.tfms = kmalloc(sizeof(struct crypto_aead *), GFP_KERNEL);
-	if (!cc->cipher_tfm.tfms)
-		return -ENOMEM;
+	cc->cipher_tfm.tfms = kदो_स्मृति(माप(काष्ठा crypto_aead *), GFP_KERNEL);
+	अगर (!cc->cipher_tfm.tfms)
+		वापस -ENOMEM;
 
 	cc->cipher_tfm.tfms_aead[0] = crypto_alloc_aead(ciphermode, 0,
 						CRYPTO_ALG_ALLOCATES_MEMORY);
-	if (IS_ERR(cc->cipher_tfm.tfms_aead[0])) {
+	अगर (IS_ERR(cc->cipher_tfm.tfms_aead[0])) अणु
 		err = PTR_ERR(cc->cipher_tfm.tfms_aead[0]);
-		crypt_free_tfms(cc);
-		return err;
-	}
+		crypt_मुक्त_tfms(cc);
+		वापस err;
+	पूर्ण
 
 	DMDEBUG_LIMIT("%s using implementation \"%s\"", ciphermode,
 	       crypto_aead_alg(any_tfm_aead(cc))->base.cra_driver_name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_alloc_tfms(struct crypt_config *cc, char *ciphermode)
-{
-	if (crypt_integrity_aead(cc))
-		return crypt_alloc_tfms_aead(cc, ciphermode);
-	else
-		return crypt_alloc_tfms_skcipher(cc, ciphermode);
-}
+अटल पूर्णांक crypt_alloc_tfms(काष्ठा crypt_config *cc, अक्षर *ciphermode)
+अणु
+	अगर (crypt_पूर्णांकegrity_aead(cc))
+		वापस crypt_alloc_tfms_aead(cc, ciphermode);
+	अन्यथा
+		वापस crypt_alloc_tfms_skcipher(cc, ciphermode);
+पूर्ण
 
-static unsigned crypt_subkey_size(struct crypt_config *cc)
-{
-	return (cc->key_size - cc->key_extra_size) >> ilog2(cc->tfms_count);
-}
+अटल अचिन्हित crypt_subkey_size(काष्ठा crypt_config *cc)
+अणु
+	वापस (cc->key_size - cc->key_extra_size) >> ilog2(cc->tfms_count);
+पूर्ण
 
-static unsigned crypt_authenckey_size(struct crypt_config *cc)
-{
-	return crypt_subkey_size(cc) + RTA_SPACE(sizeof(struct crypto_authenc_key_param));
-}
+अटल अचिन्हित crypt_authenckey_size(काष्ठा crypt_config *cc)
+अणु
+	वापस crypt_subkey_size(cc) + RTA_SPACE(माप(काष्ठा crypto_authenc_key_param));
+पूर्ण
 
 /*
  * If AEAD is composed like authenc(hmac(sha256),xts(aes)),
- * the key must be for some reason in special format.
- * This funcion converts cc->key to this special format.
+ * the key must be क्रम some reason in special क्रमmat.
+ * This funcion converts cc->key to this special क्रमmat.
  */
-static void crypt_copy_authenckey(char *p, const void *key,
-				  unsigned enckeylen, unsigned authkeylen)
-{
-	struct crypto_authenc_key_param *param;
-	struct rtattr *rta;
+अटल व्योम crypt_copy_authenckey(अक्षर *p, स्थिर व्योम *key,
+				  अचिन्हित enckeylen, अचिन्हित authkeylen)
+अणु
+	काष्ठा crypto_authenc_key_param *param;
+	काष्ठा rtattr *rta;
 
-	rta = (struct rtattr *)p;
+	rta = (काष्ठा rtattr *)p;
 	param = RTA_DATA(rta);
 	param->enckeylen = cpu_to_be32(enckeylen);
-	rta->rta_len = RTA_LENGTH(sizeof(*param));
+	rta->rta_len = RTA_LENGTH(माप(*param));
 	rta->rta_type = CRYPTO_AUTHENC_KEYA_PARAM;
-	p += RTA_SPACE(sizeof(*param));
-	memcpy(p, key + enckeylen, authkeylen);
+	p += RTA_SPACE(माप(*param));
+	स_नकल(p, key + enckeylen, authkeylen);
 	p += authkeylen;
-	memcpy(p, key, enckeylen);
-}
+	स_नकल(p, key, enckeylen);
+पूर्ण
 
-static int crypt_setkey(struct crypt_config *cc)
-{
-	unsigned subkey_size;
-	int err = 0, i, r;
+अटल पूर्णांक crypt_setkey(काष्ठा crypt_config *cc)
+अणु
+	अचिन्हित subkey_size;
+	पूर्णांक err = 0, i, r;
 
-	/* Ignore extra keys (which are used for IV etc) */
+	/* Ignore extra keys (which are used क्रम IV etc) */
 	subkey_size = crypt_subkey_size(cc);
 
-	if (crypt_integrity_hmac(cc)) {
-		if (subkey_size < cc->key_mac_size)
-			return -EINVAL;
+	अगर (crypt_पूर्णांकegrity_hmac(cc)) अणु
+		अगर (subkey_size < cc->key_mac_size)
+			वापस -EINVAL;
 
 		crypt_copy_authenckey(cc->authenc_key, cc->key,
 				      subkey_size - cc->key_mac_size,
 				      cc->key_mac_size);
-	}
+	पूर्ण
 
-	for (i = 0; i < cc->tfms_count; i++) {
-		if (crypt_integrity_hmac(cc))
+	क्रम (i = 0; i < cc->tfms_count; i++) अणु
+		अगर (crypt_पूर्णांकegrity_hmac(cc))
 			r = crypto_aead_setkey(cc->cipher_tfm.tfms_aead[i],
 				cc->authenc_key, crypt_authenckey_size(cc));
-		else if (crypt_integrity_aead(cc))
+		अन्यथा अगर (crypt_पूर्णांकegrity_aead(cc))
 			r = crypto_aead_setkey(cc->cipher_tfm.tfms_aead[i],
 					       cc->key + (i * subkey_size),
 					       subkey_size);
-		else
+		अन्यथा
 			r = crypto_skcipher_setkey(cc->cipher_tfm.tfms[i],
 						   cc->key + (i * subkey_size),
 						   subkey_size);
-		if (r)
+		अगर (r)
 			err = r;
-	}
+	पूर्ण
 
-	if (crypt_integrity_hmac(cc))
+	अगर (crypt_पूर्णांकegrity_hmac(cc))
 		memzero_explicit(cc->authenc_key, crypt_authenckey_size(cc));
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_KEYS
+#अगर_घोषित CONFIG_KEYS
 
-static bool contains_whitespace(const char *str)
-{
-	while (*str)
-		if (isspace(*str++))
-			return true;
-	return false;
-}
+अटल bool contains_whitespace(स्थिर अक्षर *str)
+अणु
+	जबतक (*str)
+		अगर (है_खाली(*str++))
+			वापस true;
+	वापस false;
+पूर्ण
 
-static int set_key_user(struct crypt_config *cc, struct key *key)
-{
-	const struct user_key_payload *ukp;
+अटल पूर्णांक set_key_user(काष्ठा crypt_config *cc, काष्ठा key *key)
+अणु
+	स्थिर काष्ठा user_key_payload *ukp;
 
 	ukp = user_key_payload_locked(key);
-	if (!ukp)
-		return -EKEYREVOKED;
+	अगर (!ukp)
+		वापस -EKEYREVOKED;
 
-	if (cc->key_size != ukp->datalen)
-		return -EINVAL;
+	अगर (cc->key_size != ukp->datalen)
+		वापस -EINVAL;
 
-	memcpy(cc->key, ukp->data, cc->key_size);
+	स_नकल(cc->key, ukp->data, cc->key_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_key_encrypted(struct crypt_config *cc, struct key *key)
-{
-	const struct encrypted_key_payload *ekp;
+अटल पूर्णांक set_key_encrypted(काष्ठा crypt_config *cc, काष्ठा key *key)
+अणु
+	स्थिर काष्ठा encrypted_key_payload *ekp;
 
 	ekp = key->payload.data[0];
-	if (!ekp)
-		return -EKEYREVOKED;
+	अगर (!ekp)
+		वापस -EKEYREVOKED;
 
-	if (cc->key_size != ekp->decrypted_datalen)
-		return -EINVAL;
+	अगर (cc->key_size != ekp->decrypted_datalen)
+		वापस -EINVAL;
 
-	memcpy(cc->key, ekp->decrypted_data, cc->key_size);
+	स_नकल(cc->key, ekp->decrypted_data, cc->key_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_key_trusted(struct crypt_config *cc, struct key *key)
-{
-	const struct trusted_key_payload *tkp;
+अटल पूर्णांक set_key_trusted(काष्ठा crypt_config *cc, काष्ठा key *key)
+अणु
+	स्थिर काष्ठा trusted_key_payload *tkp;
 
 	tkp = key->payload.data[0];
-	if (!tkp)
-		return -EKEYREVOKED;
+	अगर (!tkp)
+		वापस -EKEYREVOKED;
 
-	if (cc->key_size != tkp->key_len)
-		return -EINVAL;
+	अगर (cc->key_size != tkp->key_len)
+		वापस -EINVAL;
 
-	memcpy(cc->key, tkp->key, cc->key_size);
+	स_नकल(cc->key, tkp->key, cc->key_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string)
-{
-	char *new_key_string, *key_desc;
-	int ret;
-	struct key_type *type;
-	struct key *key;
-	int (*set_key)(struct crypt_config *cc, struct key *key);
+अटल पूर्णांक crypt_set_keyring_key(काष्ठा crypt_config *cc, स्थिर अक्षर *key_string)
+अणु
+	अक्षर *new_key_string, *key_desc;
+	पूर्णांक ret;
+	काष्ठा key_type *type;
+	काष्ठा key *key;
+	पूर्णांक (*set_key)(काष्ठा crypt_config *cc, काष्ठा key *key);
 
 	/*
-	 * Reject key_string with whitespace. dm core currently lacks code for
+	 * Reject key_string with whitespace. dm core currently lacks code क्रम
 	 * proper whitespace escaping in arguments on DM_TABLE_STATUS path.
 	 */
-	if (contains_whitespace(key_string)) {
+	अगर (contains_whitespace(key_string)) अणु
 		DMERR("whitespace chars not allowed in key string");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* look for next ':' separating key_type from key_description */
+	/* look क्रम next ':' separating key_type from key_description */
 	key_desc = strpbrk(key_string, ":");
-	if (!key_desc || key_desc == key_string || !strlen(key_desc + 1))
-		return -EINVAL;
+	अगर (!key_desc || key_desc == key_string || !म_माप(key_desc + 1))
+		वापस -EINVAL;
 
-	if (!strncmp(key_string, "logon:", key_desc - key_string + 1)) {
+	अगर (!म_भेदन(key_string, "logon:", key_desc - key_string + 1)) अणु
 		type = &key_type_logon;
 		set_key = set_key_user;
-	} else if (!strncmp(key_string, "user:", key_desc - key_string + 1)) {
+	पूर्ण अन्यथा अगर (!म_भेदन(key_string, "user:", key_desc - key_string + 1)) अणु
 		type = &key_type_user;
 		set_key = set_key_user;
-	} else if (IS_ENABLED(CONFIG_ENCRYPTED_KEYS) &&
-		   !strncmp(key_string, "encrypted:", key_desc - key_string + 1)) {
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_ENCRYPTED_KEYS) &&
+		   !म_भेदन(key_string, "encrypted:", key_desc - key_string + 1)) अणु
 		type = &key_type_encrypted;
 		set_key = set_key_encrypted;
-	} else if (IS_ENABLED(CONFIG_TRUSTED_KEYS) &&
-	           !strncmp(key_string, "trusted:", key_desc - key_string + 1)) {
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_TRUSTED_KEYS) &&
+	           !म_भेदन(key_string, "trusted:", key_desc - key_string + 1)) अणु
 		type = &key_type_trusted;
 		set_key = set_key_trusted;
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	new_key_string = kstrdup(key_string, GFP_KERNEL);
-	if (!new_key_string)
-		return -ENOMEM;
+	अगर (!new_key_string)
+		वापस -ENOMEM;
 
-	key = request_key(type, key_desc + 1, NULL);
-	if (IS_ERR(key)) {
-		kfree_sensitive(new_key_string);
-		return PTR_ERR(key);
-	}
+	key = request_key(type, key_desc + 1, शून्य);
+	अगर (IS_ERR(key)) अणु
+		kमुक्त_sensitive(new_key_string);
+		वापस PTR_ERR(key);
+	पूर्ण
 
-	down_read(&key->sem);
+	करोwn_पढ़ो(&key->sem);
 
 	ret = set_key(cc, key);
-	if (ret < 0) {
-		up_read(&key->sem);
+	अगर (ret < 0) अणु
+		up_पढ़ो(&key->sem);
 		key_put(key);
-		kfree_sensitive(new_key_string);
-		return ret;
-	}
+		kमुक्त_sensitive(new_key_string);
+		वापस ret;
+	पूर्ण
 
-	up_read(&key->sem);
+	up_पढ़ो(&key->sem);
 	key_put(key);
 
 	/* clear the flag since following operations may invalidate previously valid key */
@@ -2537,243 +2538,243 @@ static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string
 
 	ret = crypt_setkey(cc);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
-		kfree_sensitive(cc->key_string);
+		kमुक्त_sensitive(cc->key_string);
 		cc->key_string = new_key_string;
-	} else
-		kfree_sensitive(new_key_string);
+	पूर्ण अन्यथा
+		kमुक्त_sensitive(new_key_string);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int get_key_size(char **key_string)
-{
-	char *colon, dummy;
-	int ret;
+अटल पूर्णांक get_key_size(अक्षर **key_string)
+अणु
+	अक्षर *colon, dummy;
+	पूर्णांक ret;
 
-	if (*key_string[0] != ':')
-		return strlen(*key_string) >> 1;
+	अगर (*key_string[0] != ':')
+		वापस म_माप(*key_string) >> 1;
 
-	/* look for next ':' in key string */
+	/* look क्रम next ':' in key string */
 	colon = strpbrk(*key_string + 1, ":");
-	if (!colon)
-		return -EINVAL;
+	अगर (!colon)
+		वापस -EINVAL;
 
-	if (sscanf(*key_string + 1, "%u%c", &ret, &dummy) != 2 || dummy != ':')
-		return -EINVAL;
+	अगर (माला_पूछो(*key_string + 1, "%u%c", &ret, &dummy) != 2 || dummy != ':')
+		वापस -EINVAL;
 
 	*key_string = colon;
 
-	/* remaining key string should be :<logon|user>:<key_desc> */
+	/* reमुख्यing key string should be :<logon|user>:<key_desc> */
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#else
+#अन्यथा
 
-static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string)
-{
-	return -EINVAL;
-}
+अटल पूर्णांक crypt_set_keyring_key(काष्ठा crypt_config *cc, स्थिर अक्षर *key_string)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static int get_key_size(char **key_string)
-{
-	return (*key_string[0] == ':') ? -EINVAL : strlen(*key_string) >> 1;
-}
+अटल पूर्णांक get_key_size(अक्षर **key_string)
+अणु
+	वापस (*key_string[0] == ':') ? -EINVAL : म_माप(*key_string) >> 1;
+पूर्ण
 
-#endif /* CONFIG_KEYS */
+#पूर्ण_अगर /* CONFIG_KEYS */
 
-static int crypt_set_key(struct crypt_config *cc, char *key)
-{
-	int r = -EINVAL;
-	int key_string_len = strlen(key);
+अटल पूर्णांक crypt_set_key(काष्ठा crypt_config *cc, अक्षर *key)
+अणु
+	पूर्णांक r = -EINVAL;
+	पूर्णांक key_string_len = म_माप(key);
 
 	/* Hyphen (which gives a key_size of zero) means there is no key. */
-	if (!cc->key_size && strcmp(key, "-"))
-		goto out;
+	अगर (!cc->key_size && म_भेद(key, "-"))
+		जाओ out;
 
-	/* ':' means the key is in kernel keyring, short-circuit normal key processing */
-	if (key[0] == ':') {
+	/* ':' means the key is in kernel keyring, लघु-circuit normal key processing */
+	अगर (key[0] == ':') अणु
 		r = crypt_set_keyring_key(cc, key + 1);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* clear the flag since following operations may invalidate previously valid key */
 	clear_bit(DM_CRYPT_KEY_VALID, &cc->flags);
 
 	/* wipe references to any kernel keyring key */
-	kfree_sensitive(cc->key_string);
-	cc->key_string = NULL;
+	kमुक्त_sensitive(cc->key_string);
+	cc->key_string = शून्य;
 
 	/* Decode key from its hex representation. */
-	if (cc->key_size && hex2bin(cc->key, key, cc->key_size) < 0)
-		goto out;
+	अगर (cc->key_size && hex2bin(cc->key, key, cc->key_size) < 0)
+		जाओ out;
 
 	r = crypt_setkey(cc);
-	if (!r)
+	अगर (!r)
 		set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
 
 out:
 	/* Hex key string not needed after here, so wipe it. */
-	memset(key, '0', key_string_len);
+	स_रखो(key, '0', key_string_len);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int crypt_wipe_key(struct crypt_config *cc)
-{
-	int r;
+अटल पूर्णांक crypt_wipe_key(काष्ठा crypt_config *cc)
+अणु
+	पूर्णांक r;
 
 	clear_bit(DM_CRYPT_KEY_VALID, &cc->flags);
-	get_random_bytes(&cc->key, cc->key_size);
+	get_अक्रमom_bytes(&cc->key, cc->key_size);
 
-	/* Wipe IV private keys */
-	if (cc->iv_gen_ops && cc->iv_gen_ops->wipe) {
+	/* Wipe IV निजी keys */
+	अगर (cc->iv_gen_ops && cc->iv_gen_ops->wipe) अणु
 		r = cc->iv_gen_ops->wipe(cc);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	kfree_sensitive(cc->key_string);
-	cc->key_string = NULL;
+	kमुक्त_sensitive(cc->key_string);
+	cc->key_string = शून्य;
 	r = crypt_setkey(cc);
-	memset(&cc->key, 0, cc->key_size * sizeof(u8));
+	स_रखो(&cc->key, 0, cc->key_size * माप(u8));
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void crypt_calculate_pages_per_client(void)
-{
-	unsigned long pages = (totalram_pages() - totalhigh_pages()) * DM_CRYPT_MEMORY_PERCENT / 100;
+अटल व्योम crypt_calculate_pages_per_client(व्योम)
+अणु
+	अचिन्हित दीर्घ pages = (totalram_pages() - totalhigh_pages()) * DM_CRYPT_MEMORY_PERCENT / 100;
 
-	if (!dm_crypt_clients_n)
-		return;
+	अगर (!dm_crypt_clients_n)
+		वापस;
 
 	pages /= dm_crypt_clients_n;
-	if (pages < DM_CRYPT_MIN_PAGES_PER_CLIENT)
+	अगर (pages < DM_CRYPT_MIN_PAGES_PER_CLIENT)
 		pages = DM_CRYPT_MIN_PAGES_PER_CLIENT;
 	dm_crypt_pages_per_client = pages;
-}
+पूर्ण
 
-static void *crypt_page_alloc(gfp_t gfp_mask, void *pool_data)
-{
-	struct crypt_config *cc = pool_data;
-	struct page *page;
+अटल व्योम *crypt_page_alloc(gfp_t gfp_mask, व्योम *pool_data)
+अणु
+	काष्ठा crypt_config *cc = pool_data;
+	काष्ठा page *page;
 
-	if (unlikely(percpu_counter_compare(&cc->n_allocated_pages, dm_crypt_pages_per_client) >= 0) &&
+	अगर (unlikely(percpu_counter_compare(&cc->n_allocated_pages, dm_crypt_pages_per_client) >= 0) &&
 	    likely(gfp_mask & __GFP_NORETRY))
-		return NULL;
+		वापस शून्य;
 
 	page = alloc_page(gfp_mask);
-	if (likely(page != NULL))
+	अगर (likely(page != शून्य))
 		percpu_counter_add(&cc->n_allocated_pages, 1);
 
-	return page;
-}
+	वापस page;
+पूर्ण
 
-static void crypt_page_free(void *page, void *pool_data)
-{
-	struct crypt_config *cc = pool_data;
+अटल व्योम crypt_page_मुक्त(व्योम *page, व्योम *pool_data)
+अणु
+	काष्ठा crypt_config *cc = pool_data;
 
-	__free_page(page);
+	__मुक्त_page(page);
 	percpu_counter_sub(&cc->n_allocated_pages, 1);
-}
+पूर्ण
 
-static void crypt_dtr(struct dm_target *ti)
-{
-	struct crypt_config *cc = ti->private;
+अटल व्योम crypt_dtr(काष्ठा dm_target *ti)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
 
-	ti->private = NULL;
+	ti->निजी = शून्य;
 
-	if (!cc)
-		return;
+	अगर (!cc)
+		वापस;
 
-	if (cc->write_thread)
-		kthread_stop(cc->write_thread);
+	अगर (cc->ग_लिखो_thपढ़ो)
+		kthपढ़ो_stop(cc->ग_लिखो_thपढ़ो);
 
-	if (cc->io_queue)
+	अगर (cc->io_queue)
 		destroy_workqueue(cc->io_queue);
-	if (cc->crypt_queue)
+	अगर (cc->crypt_queue)
 		destroy_workqueue(cc->crypt_queue);
 
-	crypt_free_tfms(cc);
+	crypt_मुक्त_tfms(cc);
 
-	bioset_exit(&cc->bs);
+	bioset_निकास(&cc->bs);
 
-	mempool_exit(&cc->page_pool);
-	mempool_exit(&cc->req_pool);
-	mempool_exit(&cc->tag_pool);
+	mempool_निकास(&cc->page_pool);
+	mempool_निकास(&cc->req_pool);
+	mempool_निकास(&cc->tag_pool);
 
 	WARN_ON(percpu_counter_sum(&cc->n_allocated_pages) != 0);
 	percpu_counter_destroy(&cc->n_allocated_pages);
 
-	if (cc->iv_gen_ops && cc->iv_gen_ops->dtr)
+	अगर (cc->iv_gen_ops && cc->iv_gen_ops->dtr)
 		cc->iv_gen_ops->dtr(cc);
 
-	if (cc->dev)
+	अगर (cc->dev)
 		dm_put_device(ti, cc->dev);
 
-	kfree_sensitive(cc->cipher_string);
-	kfree_sensitive(cc->key_string);
-	kfree_sensitive(cc->cipher_auth);
-	kfree_sensitive(cc->authenc_key);
+	kमुक्त_sensitive(cc->cipher_string);
+	kमुक्त_sensitive(cc->key_string);
+	kमुक्त_sensitive(cc->cipher_auth);
+	kमुक्त_sensitive(cc->authenc_key);
 
 	mutex_destroy(&cc->bio_alloc_lock);
 
-	/* Must zero key material before freeing */
-	kfree_sensitive(cc);
+	/* Must zero key material beक्रमe मुक्तing */
+	kमुक्त_sensitive(cc);
 
 	spin_lock(&dm_crypt_clients_lock);
 	WARN_ON(!dm_crypt_clients_n);
 	dm_crypt_clients_n--;
 	crypt_calculate_pages_per_client();
 	spin_unlock(&dm_crypt_clients_lock);
-}
+पूर्ण
 
-static int crypt_ctr_ivmode(struct dm_target *ti, const char *ivmode)
-{
-	struct crypt_config *cc = ti->private;
+अटल पूर्णांक crypt_ctr_ivmode(काष्ठा dm_target *ti, स्थिर अक्षर *ivmode)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
 
-	if (crypt_integrity_aead(cc))
+	अगर (crypt_पूर्णांकegrity_aead(cc))
 		cc->iv_size = crypto_aead_ivsize(any_tfm_aead(cc));
-	else
+	अन्यथा
 		cc->iv_size = crypto_skcipher_ivsize(any_tfm(cc));
 
-	if (cc->iv_size)
+	अगर (cc->iv_size)
 		/* at least a 64 bit sector number should fit in our buffer */
 		cc->iv_size = max(cc->iv_size,
-				  (unsigned int)(sizeof(u64) / sizeof(u8)));
-	else if (ivmode) {
+				  (अचिन्हित पूर्णांक)(माप(u64) / माप(u8)));
+	अन्यथा अगर (ivmode) अणु
 		DMWARN("Selected cipher does not support IVs");
-		ivmode = NULL;
-	}
+		ivmode = शून्य;
+	पूर्ण
 
 	/* Choose ivmode, see comments at iv code. */
-	if (ivmode == NULL)
-		cc->iv_gen_ops = NULL;
-	else if (strcmp(ivmode, "plain") == 0)
+	अगर (ivmode == शून्य)
+		cc->iv_gen_ops = शून्य;
+	अन्यथा अगर (म_भेद(ivmode, "plain") == 0)
 		cc->iv_gen_ops = &crypt_iv_plain_ops;
-	else if (strcmp(ivmode, "plain64") == 0)
+	अन्यथा अगर (म_भेद(ivmode, "plain64") == 0)
 		cc->iv_gen_ops = &crypt_iv_plain64_ops;
-	else if (strcmp(ivmode, "plain64be") == 0)
+	अन्यथा अगर (म_भेद(ivmode, "plain64be") == 0)
 		cc->iv_gen_ops = &crypt_iv_plain64be_ops;
-	else if (strcmp(ivmode, "essiv") == 0)
+	अन्यथा अगर (म_भेद(ivmode, "essiv") == 0)
 		cc->iv_gen_ops = &crypt_iv_essiv_ops;
-	else if (strcmp(ivmode, "benbi") == 0)
+	अन्यथा अगर (म_भेद(ivmode, "benbi") == 0)
 		cc->iv_gen_ops = &crypt_iv_benbi_ops;
-	else if (strcmp(ivmode, "null") == 0)
+	अन्यथा अगर (म_भेद(ivmode, "null") == 0)
 		cc->iv_gen_ops = &crypt_iv_null_ops;
-	else if (strcmp(ivmode, "eboiv") == 0)
+	अन्यथा अगर (म_भेद(ivmode, "eboiv") == 0)
 		cc->iv_gen_ops = &crypt_iv_eboiv_ops;
-	else if (strcmp(ivmode, "elephant") == 0) {
+	अन्यथा अगर (म_भेद(ivmode, "elephant") == 0) अणु
 		cc->iv_gen_ops = &crypt_iv_elephant_ops;
 		cc->key_parts = 2;
 		cc->key_extra_size = cc->key_size / 2;
-		if (cc->key_extra_size > ELEPHANT_MAX_KEY_SIZE)
-			return -EINVAL;
+		अगर (cc->key_extra_size > ELEPHANT_MAX_KEY_SIZE)
+			वापस -EINVAL;
 		set_bit(CRYPT_ENCRYPT_PREPROCESS, &cc->cipher_flags);
-	} else if (strcmp(ivmode, "lmk") == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(ivmode, "lmk") == 0) अणु
 		cc->iv_gen_ops = &crypt_iv_lmk_ops;
 		/*
 		 * Version 2 and 3 is recognised according
@@ -2781,409 +2782,409 @@ static int crypt_ctr_ivmode(struct dm_target *ti, const char *ivmode)
 		 * If present (version 3), last key is used as IV seed.
 		 * All keys (including IV seed) are always the same size.
 		 */
-		if (cc->key_size % cc->key_parts) {
+		अगर (cc->key_size % cc->key_parts) अणु
 			cc->key_parts++;
 			cc->key_extra_size = cc->key_size / cc->key_parts;
-		}
-	} else if (strcmp(ivmode, "tcw") == 0) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (म_भेद(ivmode, "tcw") == 0) अणु
 		cc->iv_gen_ops = &crypt_iv_tcw_ops;
 		cc->key_parts += 2; /* IV + whitening */
 		cc->key_extra_size = cc->iv_size + TCW_WHITENING_SIZE;
-	} else if (strcmp(ivmode, "random") == 0) {
-		cc->iv_gen_ops = &crypt_iv_random_ops;
-		/* Need storage space in integrity fields. */
-		cc->integrity_iv_size = cc->iv_size;
-	} else {
+	पूर्ण अन्यथा अगर (म_भेद(ivmode, "random") == 0) अणु
+		cc->iv_gen_ops = &crypt_iv_अक्रमom_ops;
+		/* Need storage space in पूर्णांकegrity fields. */
+		cc->पूर्णांकegrity_iv_size = cc->iv_size;
+	पूर्ण अन्यथा अणु
 		ti->error = "Invalid IV mode";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Workaround to parse HMAC algorithm from AEAD crypto API spec.
  * The HMAC is needed to calculate tag size (HMAC digest size).
- * This should be probably done by crypto-api calls (once available...)
+ * This should be probably करोne by crypto-api calls (once available...)
  */
-static int crypt_ctr_auth_cipher(struct crypt_config *cc, char *cipher_api)
-{
-	char *start, *end, *mac_alg = NULL;
-	struct crypto_ahash *mac;
+अटल पूर्णांक crypt_ctr_auth_cipher(काष्ठा crypt_config *cc, अक्षर *cipher_api)
+अणु
+	अक्षर *start, *end, *mac_alg = शून्य;
+	काष्ठा crypto_ahash *mac;
 
-	if (!strstarts(cipher_api, "authenc("))
-		return 0;
+	अगर (!strstarts(cipher_api, "authenc("))
+		वापस 0;
 
-	start = strchr(cipher_api, '(');
-	end = strchr(cipher_api, ',');
-	if (!start || !end || ++start > end)
-		return -EINVAL;
+	start = म_अक्षर(cipher_api, '(');
+	end = म_अक्षर(cipher_api, ',');
+	अगर (!start || !end || ++start > end)
+		वापस -EINVAL;
 
 	mac_alg = kzalloc(end - start + 1, GFP_KERNEL);
-	if (!mac_alg)
-		return -ENOMEM;
-	strncpy(mac_alg, start, end - start);
+	अगर (!mac_alg)
+		वापस -ENOMEM;
+	म_नकलन(mac_alg, start, end - start);
 
 	mac = crypto_alloc_ahash(mac_alg, 0, CRYPTO_ALG_ALLOCATES_MEMORY);
-	kfree(mac_alg);
+	kमुक्त(mac_alg);
 
-	if (IS_ERR(mac))
-		return PTR_ERR(mac);
+	अगर (IS_ERR(mac))
+		वापस PTR_ERR(mac);
 
 	cc->key_mac_size = crypto_ahash_digestsize(mac);
-	crypto_free_ahash(mac);
+	crypto_मुक्त_ahash(mac);
 
-	cc->authenc_key = kmalloc(crypt_authenckey_size(cc), GFP_KERNEL);
-	if (!cc->authenc_key)
-		return -ENOMEM;
+	cc->authenc_key = kदो_स्मृति(crypt_authenckey_size(cc), GFP_KERNEL);
+	अगर (!cc->authenc_key)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key,
-				char **ivmode, char **ivopts)
-{
-	struct crypt_config *cc = ti->private;
-	char *tmp, *cipher_api, buf[CRYPTO_MAX_ALG_NAME];
-	int ret = -EINVAL;
+अटल पूर्णांक crypt_ctr_cipher_new(काष्ठा dm_target *ti, अक्षर *cipher_in, अक्षर *key,
+				अक्षर **ivmode, अक्षर **ivopts)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
+	अक्षर *पंचांगp, *cipher_api, buf[CRYPTO_MAX_ALG_NAME];
+	पूर्णांक ret = -EINVAL;
 
 	cc->tfms_count = 1;
 
 	/*
-	 * New format (capi: prefix)
+	 * New क्रमmat (capi: prefix)
 	 * capi:cipher_api_spec-iv:ivopts
 	 */
-	tmp = &cipher_in[strlen("capi:")];
+	पंचांगp = &cipher_in[म_माप("capi:")];
 
-	/* Separate IV options if present, it can contain another '-' in hash name */
-	*ivopts = strrchr(tmp, ':');
-	if (*ivopts) {
+	/* Separate IV options अगर present, it can contain another '-' in hash name */
+	*ivopts = म_खोजप(पंचांगp, ':');
+	अगर (*ivopts) अणु
 		**ivopts = '\0';
 		(*ivopts)++;
-	}
+	पूर्ण
 	/* Parse IV mode */
-	*ivmode = strrchr(tmp, '-');
-	if (*ivmode) {
+	*ivmode = म_खोजप(पंचांगp, '-');
+	अगर (*ivmode) अणु
 		**ivmode = '\0';
 		(*ivmode)++;
-	}
+	पूर्ण
 	/* The rest is crypto API spec */
-	cipher_api = tmp;
+	cipher_api = पंचांगp;
 
-	/* Alloc AEAD, can be used only in new format. */
-	if (crypt_integrity_aead(cc)) {
+	/* Alloc AEAD, can be used only in new क्रमmat. */
+	अगर (crypt_पूर्णांकegrity_aead(cc)) अणु
 		ret = crypt_ctr_auth_cipher(cc, cipher_api);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			ti->error = "Invalid AEAD cipher spec";
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	if (*ivmode && !strcmp(*ivmode, "lmk"))
+	अगर (*ivmode && !म_भेद(*ivmode, "lmk"))
 		cc->tfms_count = 64;
 
-	if (*ivmode && !strcmp(*ivmode, "essiv")) {
-		if (!*ivopts) {
+	अगर (*ivmode && !म_भेद(*ivmode, "essiv")) अणु
+		अगर (!*ivopts) अणु
 			ti->error = "Digest algorithm missing for ESSIV mode";
-			return -EINVAL;
-		}
-		ret = snprintf(buf, CRYPTO_MAX_ALG_NAME, "essiv(%s,%s)",
+			वापस -EINVAL;
+		पूर्ण
+		ret = snम_लिखो(buf, CRYPTO_MAX_ALG_NAME, "essiv(%s,%s)",
 			       cipher_api, *ivopts);
-		if (ret < 0 || ret >= CRYPTO_MAX_ALG_NAME) {
+		अगर (ret < 0 || ret >= CRYPTO_MAX_ALG_NAME) अणु
 			ti->error = "Cannot allocate cipher string";
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		cipher_api = buf;
-	}
+	पूर्ण
 
 	cc->key_parts = cc->tfms_count;
 
 	/* Allocate cipher */
 	ret = crypt_alloc_tfms(cc, cipher_api);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		ti->error = "Error allocating crypto tfm";
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (crypt_integrity_aead(cc))
+	अगर (crypt_पूर्णांकegrity_aead(cc))
 		cc->iv_size = crypto_aead_ivsize(any_tfm_aead(cc));
-	else
+	अन्यथा
 		cc->iv_size = crypto_skcipher_ivsize(any_tfm(cc));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypt_ctr_cipher_old(struct dm_target *ti, char *cipher_in, char *key,
-				char **ivmode, char **ivopts)
-{
-	struct crypt_config *cc = ti->private;
-	char *tmp, *cipher, *chainmode, *keycount;
-	char *cipher_api = NULL;
-	int ret = -EINVAL;
-	char dummy;
+अटल पूर्णांक crypt_ctr_cipher_old(काष्ठा dm_target *ti, अक्षर *cipher_in, अक्षर *key,
+				अक्षर **ivmode, अक्षर **ivopts)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
+	अक्षर *पंचांगp, *cipher, *chainmode, *keycount;
+	अक्षर *cipher_api = शून्य;
+	पूर्णांक ret = -EINVAL;
+	अक्षर dummy;
 
-	if (strchr(cipher_in, '(') || crypt_integrity_aead(cc)) {
+	अगर (म_अक्षर(cipher_in, '(') || crypt_पूर्णांकegrity_aead(cc)) अणु
 		ti->error = "Bad cipher specification";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Legacy dm-crypt cipher specification
+	 * Legacy dm-crypt cipher specअगरication
 	 * cipher[:keycount]-mode-iv:ivopts
 	 */
-	tmp = cipher_in;
-	keycount = strsep(&tmp, "-");
+	पंचांगp = cipher_in;
+	keycount = strsep(&पंचांगp, "-");
 	cipher = strsep(&keycount, ":");
 
-	if (!keycount)
+	अगर (!keycount)
 		cc->tfms_count = 1;
-	else if (sscanf(keycount, "%u%c", &cc->tfms_count, &dummy) != 1 ||
-		 !is_power_of_2(cc->tfms_count)) {
+	अन्यथा अगर (माला_पूछो(keycount, "%u%c", &cc->tfms_count, &dummy) != 1 ||
+		 !is_घातer_of_2(cc->tfms_count)) अणु
 		ti->error = "Bad cipher key count specification";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	cc->key_parts = cc->tfms_count;
 
-	chainmode = strsep(&tmp, "-");
-	*ivmode = strsep(&tmp, ":");
-	*ivopts = tmp;
+	chainmode = strsep(&पंचांगp, "-");
+	*ivmode = strsep(&पंचांगp, ":");
+	*ivopts = पंचांगp;
 
 	/*
-	 * For compatibility with the original dm-crypt mapping format, if
+	 * For compatibility with the original dm-crypt mapping क्रमmat, अगर
 	 * only the cipher name is supplied, use cbc-plain.
 	 */
-	if (!chainmode || (!strcmp(chainmode, "plain") && !*ivmode)) {
+	अगर (!chainmode || (!म_भेद(chainmode, "plain") && !*ivmode)) अणु
 		chainmode = "cbc";
 		*ivmode = "plain";
-	}
+	पूर्ण
 
-	if (strcmp(chainmode, "ecb") && !*ivmode) {
+	अगर (म_भेद(chainmode, "ecb") && !*ivmode) अणु
 		ti->error = "IV mechanism required";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	cipher_api = kmalloc(CRYPTO_MAX_ALG_NAME, GFP_KERNEL);
-	if (!cipher_api)
-		goto bad_mem;
+	cipher_api = kदो_स्मृति(CRYPTO_MAX_ALG_NAME, GFP_KERNEL);
+	अगर (!cipher_api)
+		जाओ bad_mem;
 
-	if (*ivmode && !strcmp(*ivmode, "essiv")) {
-		if (!*ivopts) {
+	अगर (*ivmode && !म_भेद(*ivmode, "essiv")) अणु
+		अगर (!*ivopts) अणु
 			ti->error = "Digest algorithm missing for ESSIV mode";
-			kfree(cipher_api);
-			return -EINVAL;
-		}
-		ret = snprintf(cipher_api, CRYPTO_MAX_ALG_NAME,
+			kमुक्त(cipher_api);
+			वापस -EINVAL;
+		पूर्ण
+		ret = snम_लिखो(cipher_api, CRYPTO_MAX_ALG_NAME,
 			       "essiv(%s(%s),%s)", chainmode, cipher, *ivopts);
-	} else {
-		ret = snprintf(cipher_api, CRYPTO_MAX_ALG_NAME,
+	पूर्ण अन्यथा अणु
+		ret = snम_लिखो(cipher_api, CRYPTO_MAX_ALG_NAME,
 			       "%s(%s)", chainmode, cipher);
-	}
-	if (ret < 0 || ret >= CRYPTO_MAX_ALG_NAME) {
-		kfree(cipher_api);
-		goto bad_mem;
-	}
+	पूर्ण
+	अगर (ret < 0 || ret >= CRYPTO_MAX_ALG_NAME) अणु
+		kमुक्त(cipher_api);
+		जाओ bad_mem;
+	पूर्ण
 
 	/* Allocate cipher */
 	ret = crypt_alloc_tfms(cc, cipher_api);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		ti->error = "Error allocating crypto tfm";
-		kfree(cipher_api);
-		return ret;
-	}
-	kfree(cipher_api);
+		kमुक्त(cipher_api);
+		वापस ret;
+	पूर्ण
+	kमुक्त(cipher_api);
 
-	return 0;
+	वापस 0;
 bad_mem:
 	ti->error = "Cannot allocate cipher strings";
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int crypt_ctr_cipher(struct dm_target *ti, char *cipher_in, char *key)
-{
-	struct crypt_config *cc = ti->private;
-	char *ivmode = NULL, *ivopts = NULL;
-	int ret;
+अटल पूर्णांक crypt_ctr_cipher(काष्ठा dm_target *ti, अक्षर *cipher_in, अक्षर *key)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
+	अक्षर *ivmode = शून्य, *ivopts = शून्य;
+	पूर्णांक ret;
 
 	cc->cipher_string = kstrdup(cipher_in, GFP_KERNEL);
-	if (!cc->cipher_string) {
+	अगर (!cc->cipher_string) अणु
 		ti->error = "Cannot allocate cipher strings";
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (strstarts(cipher_in, "capi:"))
+	अगर (strstarts(cipher_in, "capi:"))
 		ret = crypt_ctr_cipher_new(ti, cipher_in, key, &ivmode, &ivopts);
-	else
+	अन्यथा
 		ret = crypt_ctr_cipher_old(ti, cipher_in, key, &ivmode, &ivopts);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Initialize IV */
 	ret = crypt_ctr_ivmode(ti, ivmode);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Initialize and set key */
 	ret = crypt_set_key(cc, key);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		ti->error = "Error decoding and setting key";
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Allocate IV */
-	if (cc->iv_gen_ops && cc->iv_gen_ops->ctr) {
+	अगर (cc->iv_gen_ops && cc->iv_gen_ops->ctr) अणु
 		ret = cc->iv_gen_ops->ctr(cc, ti, ivopts);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			ti->error = "Error creating IV";
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* Initialize IV (set keys for ESSIV etc) */
-	if (cc->iv_gen_ops && cc->iv_gen_ops->init) {
+	/* Initialize IV (set keys क्रम ESSIV etc) */
+	अगर (cc->iv_gen_ops && cc->iv_gen_ops->init) अणु
 		ret = cc->iv_gen_ops->init(cc);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			ti->error = "Error initialising IV";
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/* wipe the kernel key payload copy */
-	if (cc->key_string)
-		memset(cc->key, 0, cc->key_size * sizeof(u8));
+	अगर (cc->key_string)
+		स_रखो(cc->key, 0, cc->key_size * माप(u8));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int crypt_ctr_optional(struct dm_target *ti, unsigned int argc, char **argv)
-{
-	struct crypt_config *cc = ti->private;
-	struct dm_arg_set as;
-	static const struct dm_arg _args[] = {
-		{0, 8, "Invalid number of feature args"},
-	};
-	unsigned int opt_params, val;
-	const char *opt_string, *sval;
-	char dummy;
-	int ret;
+अटल पूर्णांक crypt_ctr_optional(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
+	काष्ठा dm_arg_set as;
+	अटल स्थिर काष्ठा dm_arg _args[] = अणु
+		अणु0, 8, "Invalid number of feature args"पूर्ण,
+	पूर्ण;
+	अचिन्हित पूर्णांक opt_params, val;
+	स्थिर अक्षर *opt_string, *sval;
+	अक्षर dummy;
+	पूर्णांक ret;
 
 	/* Optional parameters */
 	as.argc = argc;
 	as.argv = argv;
 
-	ret = dm_read_arg_group(_args, &as, &opt_params, &ti->error);
-	if (ret)
-		return ret;
+	ret = dm_पढ़ो_arg_group(_args, &as, &opt_params, &ti->error);
+	अगर (ret)
+		वापस ret;
 
-	while (opt_params--) {
-		opt_string = dm_shift_arg(&as);
-		if (!opt_string) {
+	जबतक (opt_params--) अणु
+		opt_string = dm_shअगरt_arg(&as);
+		अगर (!opt_string) अणु
 			ti->error = "Not enough feature arguments";
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!strcasecmp(opt_string, "allow_discards"))
+		अगर (!strहालcmp(opt_string, "allow_discards"))
 			ti->num_discard_bios = 1;
 
-		else if (!strcasecmp(opt_string, "same_cpu_crypt"))
+		अन्यथा अगर (!strहालcmp(opt_string, "same_cpu_crypt"))
 			set_bit(DM_CRYPT_SAME_CPU, &cc->flags);
 
-		else if (!strcasecmp(opt_string, "submit_from_crypt_cpus"))
+		अन्यथा अगर (!strहालcmp(opt_string, "submit_from_crypt_cpus"))
 			set_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);
-		else if (!strcasecmp(opt_string, "no_read_workqueue"))
+		अन्यथा अगर (!strहालcmp(opt_string, "no_read_workqueue"))
 			set_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags);
-		else if (!strcasecmp(opt_string, "no_write_workqueue"))
+		अन्यथा अगर (!strहालcmp(opt_string, "no_write_workqueue"))
 			set_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags);
-		else if (sscanf(opt_string, "integrity:%u:", &val) == 1) {
-			if (val == 0 || val > MAX_TAG_SIZE) {
+		अन्यथा अगर (माला_पूछो(opt_string, "integrity:%u:", &val) == 1) अणु
+			अगर (val == 0 || val > MAX_TAG_SIZE) अणु
 				ti->error = "Invalid integrity arguments";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			cc->on_disk_tag_size = val;
-			sval = strchr(opt_string + strlen("integrity:"), ':') + 1;
-			if (!strcasecmp(sval, "aead")) {
+			sval = म_अक्षर(opt_string + म_माप("integrity:"), ':') + 1;
+			अगर (!strहालcmp(sval, "aead")) अणु
 				set_bit(CRYPT_MODE_INTEGRITY_AEAD, &cc->cipher_flags);
-			} else  if (strcasecmp(sval, "none")) {
+			पूर्ण अन्यथा  अगर (strहालcmp(sval, "none")) अणु
 				ti->error = "Unknown integrity profile";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			cc->cipher_auth = kstrdup(sval, GFP_KERNEL);
-			if (!cc->cipher_auth)
-				return -ENOMEM;
-		} else if (sscanf(opt_string, "sector_size:%hu%c", &cc->sector_size, &dummy) == 1) {
-			if (cc->sector_size < (1 << SECTOR_SHIFT) ||
+			अगर (!cc->cipher_auth)
+				वापस -ENOMEM;
+		पूर्ण अन्यथा अगर (माला_पूछो(opt_string, "sector_size:%hu%c", &cc->sector_size, &dummy) == 1) अणु
+			अगर (cc->sector_size < (1 << SECTOR_SHIFT) ||
 			    cc->sector_size > 4096 ||
-			    (cc->sector_size & (cc->sector_size - 1))) {
+			    (cc->sector_size & (cc->sector_size - 1))) अणु
 				ti->error = "Invalid feature value for sector_size";
-				return -EINVAL;
-			}
-			if (ti->len & ((cc->sector_size >> SECTOR_SHIFT) - 1)) {
+				वापस -EINVAL;
+			पूर्ण
+			अगर (ti->len & ((cc->sector_size >> SECTOR_SHIFT) - 1)) अणु
 				ti->error = "Device size is not multiple of sector_size feature";
-				return -EINVAL;
-			}
-			cc->sector_shift = __ffs(cc->sector_size) - SECTOR_SHIFT;
-		} else if (!strcasecmp(opt_string, "iv_large_sectors"))
+				वापस -EINVAL;
+			पूर्ण
+			cc->sector_shअगरt = __ffs(cc->sector_size) - SECTOR_SHIFT;
+		पूर्ण अन्यथा अगर (!strहालcmp(opt_string, "iv_large_sectors"))
 			set_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags);
-		else {
+		अन्यथा अणु
 			ti->error = "Invalid feature arguments";
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_BLK_DEV_ZONED
-static int crypt_report_zones(struct dm_target *ti,
-		struct dm_report_zones_args *args, unsigned int nr_zones)
-{
-	struct crypt_config *cc = ti->private;
+#अगर_घोषित CONFIG_BLK_DEV_ZONED
+अटल पूर्णांक crypt_report_zones(काष्ठा dm_target *ti,
+		काष्ठा dm_report_zones_args *args, अचिन्हित पूर्णांक nr_zones)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
 	sector_t sector = cc->start + dm_target_offset(ti, args->next_sector);
 
 	args->start = cc->start;
-	return blkdev_report_zones(cc->dev->bdev, sector, nr_zones,
+	वापस blkdev_report_zones(cc->dev->bdev, sector, nr_zones,
 				   dm_report_zones_cb, args);
-}
-#else
-#define crypt_report_zones NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा crypt_report_zones शून्य
+#पूर्ण_अगर
 
 /*
- * Construct an encryption mapping:
+ * Conकाष्ठा an encryption mapping:
  * <cipher> [<key>|:<key_size>:<user|logon>:<key_description>] <iv_offset> <dev_path> <start>
  */
-static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-{
-	struct crypt_config *cc;
-	const char *devname = dm_table_device_name(ti->table);
-	int key_size;
-	unsigned int align_mask;
-	unsigned long long tmpll;
-	int ret;
-	size_t iv_size_padding, additional_req_size;
-	char dummy;
+अटल पूर्णांक crypt_ctr(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा crypt_config *cc;
+	स्थिर अक्षर *devname = dm_table_device_name(ti->table);
+	पूर्णांक key_size;
+	अचिन्हित पूर्णांक align_mask;
+	अचिन्हित दीर्घ दीर्घ पंचांगpll;
+	पूर्णांक ret;
+	माप_प्रकार iv_size_padding, additional_req_size;
+	अक्षर dummy;
 
-	if (argc < 5) {
+	अगर (argc < 5) अणु
 		ti->error = "Not enough arguments";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	key_size = get_key_size(&argv[1]);
-	if (key_size < 0) {
+	अगर (key_size < 0) अणु
 		ti->error = "Cannot parse key size";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	cc = kzalloc(struct_size(cc, key, key_size), GFP_KERNEL);
-	if (!cc) {
+	cc = kzalloc(काष्ठा_size(cc, key, key_size), GFP_KERNEL);
+	अगर (!cc) अणु
 		ti->error = "Cannot allocate encryption context";
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	cc->key_size = key_size;
 	cc->sector_size = (1 << SECTOR_SHIFT);
-	cc->sector_shift = 0;
+	cc->sector_shअगरt = 0;
 
-	ti->private = cc;
+	ti->निजी = cc;
 
 	spin_lock(&dm_crypt_clients_lock);
 	dm_crypt_clients_n++;
@@ -3191,258 +3192,258 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 	spin_unlock(&dm_crypt_clients_lock);
 
 	ret = percpu_counter_init(&cc->n_allocated_pages, 0, GFP_KERNEL);
-	if (ret < 0)
-		goto bad;
+	अगर (ret < 0)
+		जाओ bad;
 
-	/* Optional parameters need to be read before cipher constructor */
-	if (argc > 5) {
+	/* Optional parameters need to be पढ़ो beक्रमe cipher स्थिरructor */
+	अगर (argc > 5) अणु
 		ret = crypt_ctr_optional(ti, argc - 5, &argv[5]);
-		if (ret)
-			goto bad;
-	}
+		अगर (ret)
+			जाओ bad;
+	पूर्ण
 
 	ret = crypt_ctr_cipher(ti, argv[0], argv[1]);
-	if (ret < 0)
-		goto bad;
+	अगर (ret < 0)
+		जाओ bad;
 
-	if (crypt_integrity_aead(cc)) {
-		cc->dmreq_start = sizeof(struct aead_request);
+	अगर (crypt_पूर्णांकegrity_aead(cc)) अणु
+		cc->dmreq_start = माप(काष्ठा aead_request);
 		cc->dmreq_start += crypto_aead_reqsize(any_tfm_aead(cc));
 		align_mask = crypto_aead_alignmask(any_tfm_aead(cc));
-	} else {
-		cc->dmreq_start = sizeof(struct skcipher_request);
+	पूर्ण अन्यथा अणु
+		cc->dmreq_start = माप(काष्ठा skcipher_request);
 		cc->dmreq_start += crypto_skcipher_reqsize(any_tfm(cc));
 		align_mask = crypto_skcipher_alignmask(any_tfm(cc));
-	}
-	cc->dmreq_start = ALIGN(cc->dmreq_start, __alignof__(struct dm_crypt_request));
+	पूर्ण
+	cc->dmreq_start = ALIGN(cc->dmreq_start, __alignof__(काष्ठा dm_crypt_request));
 
-	if (align_mask < CRYPTO_MINALIGN) {
+	अगर (align_mask < CRYPTO_MINALIGN) अणु
 		/* Allocate the padding exactly */
-		iv_size_padding = -(cc->dmreq_start + sizeof(struct dm_crypt_request))
+		iv_size_padding = -(cc->dmreq_start + माप(काष्ठा dm_crypt_request))
 				& align_mask;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * If the cipher requires greater alignment than kmalloc
-		 * alignment, we don't know the exact position of the
-		 * initialization vector. We must assume worst case.
+		 * If the cipher requires greater alignment than kदो_स्मृति
+		 * alignment, we करोn't know the exact position of the
+		 * initialization vector. We must assume worst हाल.
 		 */
 		iv_size_padding = align_mask;
-	}
+	पूर्ण
 
 	/*  ...| IV + padding | original IV | original sec. number | bio tag offset | */
-	additional_req_size = sizeof(struct dm_crypt_request) +
+	additional_req_size = माप(काष्ठा dm_crypt_request) +
 		iv_size_padding + cc->iv_size +
 		cc->iv_size +
-		sizeof(uint64_t) +
-		sizeof(unsigned int);
+		माप(uपूर्णांक64_t) +
+		माप(अचिन्हित पूर्णांक);
 
-	ret = mempool_init_kmalloc_pool(&cc->req_pool, MIN_IOS, cc->dmreq_start + additional_req_size);
-	if (ret) {
+	ret = mempool_init_kदो_स्मृति_pool(&cc->req_pool, MIN_IOS, cc->dmreq_start + additional_req_size);
+	अगर (ret) अणु
 		ti->error = "Cannot allocate crypt request mempool";
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	cc->per_bio_data_size = ti->per_io_data_size =
-		ALIGN(sizeof(struct dm_crypt_io) + cc->dmreq_start + additional_req_size,
+		ALIGN(माप(काष्ठा dm_crypt_io) + cc->dmreq_start + additional_req_size,
 		      ARCH_KMALLOC_MINALIGN);
 
-	ret = mempool_init(&cc->page_pool, BIO_MAX_VECS, crypt_page_alloc, crypt_page_free, cc);
-	if (ret) {
+	ret = mempool_init(&cc->page_pool, BIO_MAX_VECS, crypt_page_alloc, crypt_page_मुक्त, cc);
+	अगर (ret) अणु
 		ti->error = "Cannot allocate page mempool";
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	ret = bioset_init(&cc->bs, MIN_IOS, 0, BIOSET_NEED_BVECS);
-	if (ret) {
+	अगर (ret) अणु
 		ti->error = "Cannot allocate crypt bioset";
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	mutex_init(&cc->bio_alloc_lock);
 
 	ret = -EINVAL;
-	if ((sscanf(argv[2], "%llu%c", &tmpll, &dummy) != 1) ||
-	    (tmpll & ((cc->sector_size >> SECTOR_SHIFT) - 1))) {
+	अगर ((माला_पूछो(argv[2], "%llu%c", &पंचांगpll, &dummy) != 1) ||
+	    (पंचांगpll & ((cc->sector_size >> SECTOR_SHIFT) - 1))) अणु
 		ti->error = "Invalid iv_offset sector";
-		goto bad;
-	}
-	cc->iv_offset = tmpll;
+		जाओ bad;
+	पूर्ण
+	cc->iv_offset = पंचांगpll;
 
 	ret = dm_get_device(ti, argv[3], dm_table_get_mode(ti->table), &cc->dev);
-	if (ret) {
+	अगर (ret) अणु
 		ti->error = "Device lookup failed";
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	ret = -EINVAL;
-	if (sscanf(argv[4], "%llu%c", &tmpll, &dummy) != 1 || tmpll != (sector_t)tmpll) {
+	अगर (माला_पूछो(argv[4], "%llu%c", &पंचांगpll, &dummy) != 1 || पंचांगpll != (sector_t)पंचांगpll) अणु
 		ti->error = "Invalid device sector";
-		goto bad;
-	}
-	cc->start = tmpll;
+		जाओ bad;
+	पूर्ण
+	cc->start = पंचांगpll;
 
 	/*
-	 * For zoned block devices, we need to preserve the issuer write
-	 * ordering. To do so, disable write workqueues and force inline
+	 * For zoned block devices, we need to preserve the issuer ग_लिखो
+	 * ordering. To करो so, disable ग_लिखो workqueues and क्रमce अंतरभूत
 	 * encryption completion.
 	 */
-	if (bdev_is_zoned(cc->dev->bdev)) {
+	अगर (bdev_is_zoned(cc->dev->bdev)) अणु
 		set_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags);
 		set_bit(DM_CRYPT_WRITE_INLINE, &cc->flags);
-	}
+	पूर्ण
 
-	if (crypt_integrity_aead(cc) || cc->integrity_iv_size) {
-		ret = crypt_integrity_ctr(cc, ti);
-		if (ret)
-			goto bad;
+	अगर (crypt_पूर्णांकegrity_aead(cc) || cc->पूर्णांकegrity_iv_size) अणु
+		ret = crypt_पूर्णांकegrity_ctr(cc, ti);
+		अगर (ret)
+			जाओ bad;
 
 		cc->tag_pool_max_sectors = POOL_ENTRY_SIZE / cc->on_disk_tag_size;
-		if (!cc->tag_pool_max_sectors)
+		अगर (!cc->tag_pool_max_sectors)
 			cc->tag_pool_max_sectors = 1;
 
-		ret = mempool_init_kmalloc_pool(&cc->tag_pool, MIN_IOS,
+		ret = mempool_init_kदो_स्मृति_pool(&cc->tag_pool, MIN_IOS,
 			cc->tag_pool_max_sectors * cc->on_disk_tag_size);
-		if (ret) {
+		अगर (ret) अणु
 			ti->error = "Cannot allocate integrity tags mempool";
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 
-		cc->tag_pool_max_sectors <<= cc->sector_shift;
-	}
+		cc->tag_pool_max_sectors <<= cc->sector_shअगरt;
+	पूर्ण
 
 	ret = -ENOMEM;
 	cc->io_queue = alloc_workqueue("kcryptd_io/%s", WQ_MEM_RECLAIM, 1, devname);
-	if (!cc->io_queue) {
+	अगर (!cc->io_queue) अणु
 		ti->error = "Couldn't create kcryptd io queue";
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
+	अगर (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
 		cc->crypt_queue = alloc_workqueue("kcryptd/%s", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
 						  1, devname);
-	else
+	अन्यथा
 		cc->crypt_queue = alloc_workqueue("kcryptd/%s",
 						  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND,
 						  num_online_cpus(), devname);
-	if (!cc->crypt_queue) {
+	अगर (!cc->crypt_queue) अणु
 		ti->error = "Couldn't create kcryptd queue";
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	spin_lock_init(&cc->write_thread_lock);
-	cc->write_tree = RB_ROOT;
+	spin_lock_init(&cc->ग_लिखो_thपढ़ो_lock);
+	cc->ग_लिखो_tree = RB_ROOT;
 
-	cc->write_thread = kthread_create(dmcrypt_write, cc, "dmcrypt_write/%s", devname);
-	if (IS_ERR(cc->write_thread)) {
-		ret = PTR_ERR(cc->write_thread);
-		cc->write_thread = NULL;
+	cc->ग_लिखो_thपढ़ो = kthपढ़ो_create(dmcrypt_ग_लिखो, cc, "dmcrypt_write/%s", devname);
+	अगर (IS_ERR(cc->ग_लिखो_thपढ़ो)) अणु
+		ret = PTR_ERR(cc->ग_लिखो_thपढ़ो);
+		cc->ग_लिखो_thपढ़ो = शून्य;
 		ti->error = "Couldn't spawn write thread";
-		goto bad;
-	}
-	wake_up_process(cc->write_thread);
+		जाओ bad;
+	पूर्ण
+	wake_up_process(cc->ग_लिखो_thपढ़ो);
 
 	ti->num_flush_bios = 1;
 	ti->limit_swap_bios = true;
 
-	return 0;
+	वापस 0;
 
 bad:
 	crypt_dtr(ti);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int crypt_map(struct dm_target *ti, struct bio *bio)
-{
-	struct dm_crypt_io *io;
-	struct crypt_config *cc = ti->private;
+अटल पूर्णांक crypt_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
+अणु
+	काष्ठा dm_crypt_io *io;
+	काष्ठा crypt_config *cc = ti->निजी;
 
 	/*
 	 * If bio is REQ_PREFLUSH or REQ_OP_DISCARD, just bypass crypt queues.
-	 * - for REQ_PREFLUSH device-mapper core ensures that no IO is in-flight
-	 * - for REQ_OP_DISCARD caller must use flush if IO ordering matters
+	 * - क्रम REQ_PREFLUSH device-mapper core ensures that no IO is in-flight
+	 * - क्रम REQ_OP_DISCARD caller must use flush अगर IO ordering matters
 	 */
-	if (unlikely(bio->bi_opf & REQ_PREFLUSH ||
-	    bio_op(bio) == REQ_OP_DISCARD)) {
+	अगर (unlikely(bio->bi_opf & REQ_PREFLUSH ||
+	    bio_op(bio) == REQ_OP_DISCARD)) अणु
 		bio_set_dev(bio, cc->dev->bdev);
-		if (bio_sectors(bio))
+		अगर (bio_sectors(bio))
 			bio->bi_iter.bi_sector = cc->start +
 				dm_target_offset(ti, bio->bi_iter.bi_sector);
-		return DM_MAPIO_REMAPPED;
-	}
+		वापस DM_MAPIO_REMAPPED;
+	पूर्ण
 
 	/*
-	 * Check if bio is too large, split as needed.
+	 * Check अगर bio is too large, split as needed.
 	 */
-	if (unlikely(bio->bi_iter.bi_size > (BIO_MAX_VECS << PAGE_SHIFT)) &&
+	अगर (unlikely(bio->bi_iter.bi_size > (BIO_MAX_VECS << PAGE_SHIFT)) &&
 	    (bio_data_dir(bio) == WRITE || cc->on_disk_tag_size))
 		dm_accept_partial_bio(bio, ((BIO_MAX_VECS << PAGE_SHIFT) >> SECTOR_SHIFT));
 
 	/*
-	 * Ensure that bio is a multiple of internal sector encryption size
-	 * and is aligned to this size as defined in IO hints.
+	 * Ensure that bio is a multiple of पूर्णांकernal sector encryption size
+	 * and is aligned to this size as defined in IO hपूर्णांकs.
 	 */
-	if (unlikely((bio->bi_iter.bi_sector & ((cc->sector_size >> SECTOR_SHIFT) - 1)) != 0))
-		return DM_MAPIO_KILL;
+	अगर (unlikely((bio->bi_iter.bi_sector & ((cc->sector_size >> SECTOR_SHIFT) - 1)) != 0))
+		वापस DM_MAPIO_KILL;
 
-	if (unlikely(bio->bi_iter.bi_size & (cc->sector_size - 1)))
-		return DM_MAPIO_KILL;
+	अगर (unlikely(bio->bi_iter.bi_size & (cc->sector_size - 1)))
+		वापस DM_MAPIO_KILL;
 
 	io = dm_per_bio_data(bio, cc->per_bio_data_size);
 	crypt_io_init(io, cc, bio, dm_target_offset(ti, bio->bi_iter.bi_sector));
 
-	if (cc->on_disk_tag_size) {
-		unsigned tag_len = cc->on_disk_tag_size * (bio_sectors(bio) >> cc->sector_shift);
+	अगर (cc->on_disk_tag_size) अणु
+		अचिन्हित tag_len = cc->on_disk_tag_size * (bio_sectors(bio) >> cc->sector_shअगरt);
 
-		if (unlikely(tag_len > KMALLOC_MAX_SIZE) ||
-		    unlikely(!(io->integrity_metadata = kmalloc(tag_len,
-				GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN)))) {
-			if (bio_sectors(bio) > cc->tag_pool_max_sectors)
+		अगर (unlikely(tag_len > KMALLOC_MAX_SIZE) ||
+		    unlikely(!(io->पूर्णांकegrity_metadata = kदो_स्मृति(tag_len,
+				GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN)))) अणु
+			अगर (bio_sectors(bio) > cc->tag_pool_max_sectors)
 				dm_accept_partial_bio(bio, cc->tag_pool_max_sectors);
-			io->integrity_metadata = mempool_alloc(&cc->tag_pool, GFP_NOIO);
-			io->integrity_metadata_from_pool = true;
-		}
-	}
+			io->पूर्णांकegrity_metadata = mempool_alloc(&cc->tag_pool, GFP_NOIO);
+			io->पूर्णांकegrity_metadata_from_pool = true;
+		पूर्ण
+	पूर्ण
 
-	if (crypt_integrity_aead(cc))
-		io->ctx.r.req_aead = (struct aead_request *)(io + 1);
-	else
-		io->ctx.r.req = (struct skcipher_request *)(io + 1);
+	अगर (crypt_पूर्णांकegrity_aead(cc))
+		io->ctx.r.req_aead = (काष्ठा aead_request *)(io + 1);
+	अन्यथा
+		io->ctx.r.req = (काष्ठा skcipher_request *)(io + 1);
 
-	if (bio_data_dir(io->base_bio) == READ) {
-		if (kcryptd_io_read(io, GFP_NOWAIT))
-			kcryptd_queue_read(io);
-	} else
+	अगर (bio_data_dir(io->base_bio) == READ) अणु
+		अगर (kcryptd_io_पढ़ो(io, GFP_NOWAIT))
+			kcryptd_queue_पढ़ो(io);
+	पूर्ण अन्यथा
 		kcryptd_queue_crypt(io);
 
-	return DM_MAPIO_SUBMITTED;
-}
+	वापस DM_MAPIO_SUBMITTED;
+पूर्ण
 
-static void crypt_status(struct dm_target *ti, status_type_t type,
-			 unsigned status_flags, char *result, unsigned maxlen)
-{
-	struct crypt_config *cc = ti->private;
-	unsigned i, sz = 0;
-	int num_feature_args = 0;
+अटल व्योम crypt_status(काष्ठा dm_target *ti, status_type_t type,
+			 अचिन्हित status_flags, अक्षर *result, अचिन्हित maxlen)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
+	अचिन्हित i, sz = 0;
+	पूर्णांक num_feature_args = 0;
 
-	switch (type) {
-	case STATUSTYPE_INFO:
+	चयन (type) अणु
+	हाल STATUSTYPE_INFO:
 		result[0] = '\0';
-		break;
+		अवरोध;
 
-	case STATUSTYPE_TABLE:
+	हाल STATUSTYPE_TABLE:
 		DMEMIT("%s ", cc->cipher_string);
 
-		if (cc->key_size > 0) {
-			if (cc->key_string)
+		अगर (cc->key_size > 0) अणु
+			अगर (cc->key_string)
 				DMEMIT(":%u:%s", cc->key_size, cc->key_string);
-			else
-				for (i = 0; i < cc->key_size; i++)
+			अन्यथा
+				क्रम (i = 0; i < cc->key_size; i++)
 					DMEMIT("%02x", cc->key[i]);
-		} else
+		पूर्ण अन्यथा
 			DMEMIT("-");
 
-		DMEMIT(" %llu %s %llu", (unsigned long long)cc->iv_offset,
-				cc->dev->name, (unsigned long long)cc->start);
+		DMEMIT(" %llu %s %llu", (अचिन्हित दीर्घ दीर्घ)cc->iv_offset,
+				cc->dev->name, (अचिन्हित दीर्घ दीर्घ)cc->start);
 
 		num_feature_args += !!ti->num_discard_bios;
 		num_feature_args += test_bit(DM_CRYPT_SAME_CPU, &cc->flags);
@@ -3451,133 +3452,133 @@ static void crypt_status(struct dm_target *ti, status_type_t type,
 		num_feature_args += test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags);
 		num_feature_args += cc->sector_size != (1 << SECTOR_SHIFT);
 		num_feature_args += test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags);
-		if (cc->on_disk_tag_size)
+		अगर (cc->on_disk_tag_size)
 			num_feature_args++;
-		if (num_feature_args) {
+		अगर (num_feature_args) अणु
 			DMEMIT(" %d", num_feature_args);
-			if (ti->num_discard_bios)
+			अगर (ti->num_discard_bios)
 				DMEMIT(" allow_discards");
-			if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
+			अगर (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
 				DMEMIT(" same_cpu_crypt");
-			if (test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags))
+			अगर (test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags))
 				DMEMIT(" submit_from_crypt_cpus");
-			if (test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags))
+			अगर (test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags))
 				DMEMIT(" no_read_workqueue");
-			if (test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags))
+			अगर (test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags))
 				DMEMIT(" no_write_workqueue");
-			if (cc->on_disk_tag_size)
+			अगर (cc->on_disk_tag_size)
 				DMEMIT(" integrity:%u:%s", cc->on_disk_tag_size, cc->cipher_auth);
-			if (cc->sector_size != (1 << SECTOR_SHIFT))
+			अगर (cc->sector_size != (1 << SECTOR_SHIFT))
 				DMEMIT(" sector_size:%d", cc->sector_size);
-			if (test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags))
+			अगर (test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags))
 				DMEMIT(" iv_large_sectors");
-		}
+		पूर्ण
 
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void crypt_postsuspend(struct dm_target *ti)
-{
-	struct crypt_config *cc = ti->private;
+अटल व्योम crypt_postsuspend(काष्ठा dm_target *ti)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
 
 	set_bit(DM_CRYPT_SUSPENDED, &cc->flags);
-}
+पूर्ण
 
-static int crypt_preresume(struct dm_target *ti)
-{
-	struct crypt_config *cc = ti->private;
+अटल पूर्णांक crypt_preresume(काष्ठा dm_target *ti)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
 
-	if (!test_bit(DM_CRYPT_KEY_VALID, &cc->flags)) {
+	अगर (!test_bit(DM_CRYPT_KEY_VALID, &cc->flags)) अणु
 		DMERR("aborting resume - crypt key is not set.");
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void crypt_resume(struct dm_target *ti)
-{
-	struct crypt_config *cc = ti->private;
+अटल व्योम crypt_resume(काष्ठा dm_target *ti)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
 
 	clear_bit(DM_CRYPT_SUSPENDED, &cc->flags);
-}
+पूर्ण
 
-/* Message interface
+/* Message पूर्णांकerface
  *	key set <key>
  *	key wipe
  */
-static int crypt_message(struct dm_target *ti, unsigned argc, char **argv,
-			 char *result, unsigned maxlen)
-{
-	struct crypt_config *cc = ti->private;
-	int key_size, ret = -EINVAL;
+अटल पूर्णांक crypt_message(काष्ठा dm_target *ti, अचिन्हित argc, अक्षर **argv,
+			 अक्षर *result, अचिन्हित maxlen)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
+	पूर्णांक key_size, ret = -EINVAL;
 
-	if (argc < 2)
-		goto error;
+	अगर (argc < 2)
+		जाओ error;
 
-	if (!strcasecmp(argv[0], "key")) {
-		if (!test_bit(DM_CRYPT_SUSPENDED, &cc->flags)) {
+	अगर (!strहालcmp(argv[0], "key")) अणु
+		अगर (!test_bit(DM_CRYPT_SUSPENDED, &cc->flags)) अणु
 			DMWARN("not suspended during key manipulation.");
-			return -EINVAL;
-		}
-		if (argc == 3 && !strcasecmp(argv[1], "set")) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (argc == 3 && !strहालcmp(argv[1], "set")) अणु
 			/* The key size may not be changed. */
 			key_size = get_key_size(&argv[2]);
-			if (key_size < 0 || cc->key_size != key_size) {
-				memset(argv[2], '0', strlen(argv[2]));
-				return -EINVAL;
-			}
+			अगर (key_size < 0 || cc->key_size != key_size) अणु
+				स_रखो(argv[2], '0', म_माप(argv[2]));
+				वापस -EINVAL;
+			पूर्ण
 
 			ret = crypt_set_key(cc, argv[2]);
-			if (ret)
-				return ret;
-			if (cc->iv_gen_ops && cc->iv_gen_ops->init)
+			अगर (ret)
+				वापस ret;
+			अगर (cc->iv_gen_ops && cc->iv_gen_ops->init)
 				ret = cc->iv_gen_ops->init(cc);
 			/* wipe the kernel key payload copy */
-			if (cc->key_string)
-				memset(cc->key, 0, cc->key_size * sizeof(u8));
-			return ret;
-		}
-		if (argc == 2 && !strcasecmp(argv[1], "wipe"))
-			return crypt_wipe_key(cc);
-	}
+			अगर (cc->key_string)
+				स_रखो(cc->key, 0, cc->key_size * माप(u8));
+			वापस ret;
+		पूर्ण
+		अगर (argc == 2 && !strहालcmp(argv[1], "wipe"))
+			वापस crypt_wipe_key(cc);
+	पूर्ण
 
 error:
 	DMWARN("unrecognised message received.");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int crypt_iterate_devices(struct dm_target *ti,
-				 iterate_devices_callout_fn fn, void *data)
-{
-	struct crypt_config *cc = ti->private;
+अटल पूर्णांक crypt_iterate_devices(काष्ठा dm_target *ti,
+				 iterate_devices_callout_fn fn, व्योम *data)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
 
-	return fn(ti, cc->dev, cc->start, ti->len, data);
-}
+	वापस fn(ti, cc->dev, cc->start, ti->len, data);
+पूर्ण
 
-static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
-{
-	struct crypt_config *cc = ti->private;
+अटल व्योम crypt_io_hपूर्णांकs(काष्ठा dm_target *ti, काष्ठा queue_limits *limits)
+अणु
+	काष्ठा crypt_config *cc = ti->निजी;
 
 	/*
-	 * Unfortunate constraint that is required to avoid the potential
-	 * for exceeding underlying device's max_segments limits -- due to
-	 * crypt_alloc_buffer() possibly allocating pages for the encryption
+	 * Unक्रमtunate स्थिरraपूर्णांक that is required to aव्योम the potential
+	 * क्रम exceeding underlying device's max_segments limits -- due to
+	 * crypt_alloc_buffer() possibly allocating pages क्रम the encryption
 	 * bio that are not as physically contiguous as the original bio.
 	 */
 	limits->max_segment_size = PAGE_SIZE;
 
 	limits->logical_block_size =
-		max_t(unsigned, limits->logical_block_size, cc->sector_size);
+		max_t(अचिन्हित, limits->logical_block_size, cc->sector_size);
 	limits->physical_block_size =
-		max_t(unsigned, limits->physical_block_size, cc->sector_size);
-	limits->io_min = max_t(unsigned, limits->io_min, cc->sector_size);
-}
+		max_t(अचिन्हित, limits->physical_block_size, cc->sector_size);
+	limits->io_min = max_t(अचिन्हित, limits->io_min, cc->sector_size);
+पूर्ण
 
-static struct target_type crypt_target = {
+अटल काष्ठा target_type crypt_target = अणु
 	.name   = "crypt",
-	.version = {1, 23, 0},
+	.version = अणु1, 23, 0पूर्ण,
 	.module = THIS_MODULE,
 	.ctr    = crypt_ctr,
 	.dtr    = crypt_dtr,
@@ -3590,27 +3591,27 @@ static struct target_type crypt_target = {
 	.resume = crypt_resume,
 	.message = crypt_message,
 	.iterate_devices = crypt_iterate_devices,
-	.io_hints = crypt_io_hints,
-};
+	.io_hपूर्णांकs = crypt_io_hपूर्णांकs,
+पूर्ण;
 
-static int __init dm_crypt_init(void)
-{
-	int r;
+अटल पूर्णांक __init dm_crypt_init(व्योम)
+अणु
+	पूर्णांक r;
 
-	r = dm_register_target(&crypt_target);
-	if (r < 0)
+	r = dm_रेजिस्टर_target(&crypt_target);
+	अगर (r < 0)
 		DMERR("register failed %d", r);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void __exit dm_crypt_exit(void)
-{
-	dm_unregister_target(&crypt_target);
-}
+अटल व्योम __निकास dm_crypt_निकास(व्योम)
+अणु
+	dm_unरेजिस्टर_target(&crypt_target);
+पूर्ण
 
 module_init(dm_crypt_init);
-module_exit(dm_crypt_exit);
+module_निकास(dm_crypt_निकास);
 
 MODULE_AUTHOR("Jana Saout <jana@saout.de>");
 MODULE_DESCRIPTION(DM_NAME " target for transparent encryption / decryption");

@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __RTC_SA1100_H__
-#define __RTC_SA1100_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __RTC_SA1100_H__
+#घोषणा __RTC_SA1100_H__
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-struct clk;
-struct platform_device;
+काष्ठा clk;
+काष्ठा platक्रमm_device;
 
-struct sa1100_rtc {
+काष्ठा sa1100_rtc अणु
 	spinlock_t		lock;
-	void __iomem		*rcnr;
-	void __iomem		*rtar;
-	void __iomem		*rtsr;
-	void __iomem		*rttr;
-	int			irq_1hz;
-	int			irq_alarm;
-	struct rtc_device	*rtc;
-	struct clk		*clk;
-};
+	व्योम __iomem		*rcnr;
+	व्योम __iomem		*rtar;
+	व्योम __iomem		*rtsr;
+	व्योम __iomem		*rttr;
+	पूर्णांक			irq_1hz;
+	पूर्णांक			irq_alarm;
+	काष्ठा rtc_device	*rtc;
+	काष्ठा clk		*clk;
+पूर्ण;
 
-int sa1100_rtc_init(struct platform_device *pdev, struct sa1100_rtc *info);
+पूर्णांक sa1100_rtc_init(काष्ठा platक्रमm_device *pdev, काष्ठा sa1100_rtc *info);
 
-#endif
+#पूर्ण_अगर

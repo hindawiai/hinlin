@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Device probe and register.
+ * Device probe and रेजिस्टर.
  *
  * Copyright (c) 2017-2020, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  * Copyright (c) 2006, Michael Wu <flamingice@sourmilk.net>
  * Copyright 2004-2006 Jean-Baptiste Note <jbnote@gmail.com>, et al.
  */
-#ifndef WFX_MAIN_H
-#define WFX_MAIN_H
+#अगर_अघोषित WFX_MAIN_H
+#घोषणा WFX_MAIN_H
 
-#include <linux/device.h>
-#include <linux/gpio/consumer.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gpio/consumer.h>
 
-#include "hif_api_general.h"
+#समावेश "hif_api_general.h"
 
-struct wfx_dev;
-struct hwbus_ops;
+काष्ठा wfx_dev;
+काष्ठा hwbus_ops;
 
-struct wfx_platform_data {
+काष्ठा wfx_platक्रमm_data अणु
 	/* Keyset and ".sec" extension will be appended to this string */
-	const char *file_fw;
-	const char *file_pds;
-	struct gpio_desc *gpio_wakeup;
+	स्थिर अक्षर *file_fw;
+	स्थिर अक्षर *file_pds;
+	काष्ठा gpio_desc *gpio_wakeup;
 	/*
-	 * if true HIF D_out is sampled on the rising edge of the clock
-	 * (intended to be used in 50Mhz SDIO)
+	 * अगर true HIF D_out is sampled on the rising edge of the घड़ी
+	 * (पूर्णांकended to be used in 50Mhz SDIO)
 	 */
 	bool use_rising_clk;
-};
+पूर्ण;
 
-struct wfx_dev *wfx_init_common(struct device *dev,
-				const struct wfx_platform_data *pdata,
-				const struct hwbus_ops *hwbus_ops,
-				void *hwbus_priv);
+काष्ठा wfx_dev *wfx_init_common(काष्ठा device *dev,
+				स्थिर काष्ठा wfx_platक्रमm_data *pdata,
+				स्थिर काष्ठा hwbus_ops *hwbus_ops,
+				व्योम *hwbus_priv);
 
-int wfx_probe(struct wfx_dev *wdev);
-void wfx_release(struct wfx_dev *wdev);
+पूर्णांक wfx_probe(काष्ठा wfx_dev *wdev);
+व्योम wfx_release(काष्ठा wfx_dev *wdev);
 
-bool wfx_api_older_than(struct wfx_dev *wdev, int major, int minor);
-int wfx_send_pds(struct wfx_dev *wdev, u8 *buf, size_t len);
+bool wfx_api_older_than(काष्ठा wfx_dev *wdev, पूर्णांक major, पूर्णांक minor);
+पूर्णांक wfx_send_pds(काष्ठा wfx_dev *wdev, u8 *buf, माप_प्रकार len);
 
-#endif
+#पूर्ण_अगर

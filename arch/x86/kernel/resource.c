@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/ioport.h>
-#include <asm/e820/api.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/ioport.h>
+#समावेश <यंत्र/e820/api.h>
 
-static void resource_clip(struct resource *res, resource_size_t start,
-			  resource_size_t end)
-{
-	resource_size_t low = 0, high = 0;
+अटल व्योम resource_clip(काष्ठा resource *res, resource_माप_प्रकार start,
+			  resource_माप_प्रकार end)
+अणु
+	resource_माप_प्रकार low = 0, high = 0;
 
-	if (res->end < start || res->start > end)
-		return;		/* no conflict */
+	अगर (res->end < start || res->start > end)
+		वापस;		/* no conflict */
 
-	if (res->start < start)
+	अगर (res->start < start)
 		low = start - res->start;
 
-	if (res->end > end)
+	अगर (res->end > end)
 		high = res->end - end;
 
 	/* Keep the area above or below the conflict, whichever is larger */
-	if (low > high)
+	अगर (low > high)
 		res->end = start - 1;
-	else
+	अन्यथा
 		res->start = end + 1;
-}
+पूर्ण
 
-static void remove_e820_regions(struct resource *avail)
-{
-	int i;
-	struct e820_entry *entry;
+अटल व्योम हटाओ_e820_regions(काष्ठा resource *avail)
+अणु
+	पूर्णांक i;
+	काष्ठा e820_entry *entry;
 
-	for (i = 0; i < e820_table->nr_entries; i++) {
+	क्रम (i = 0; i < e820_table->nr_entries; i++) अणु
 		entry = &e820_table->entries[i];
 
 		resource_clip(avail, entry->addr,
 			      entry->addr + entry->size - 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void arch_remove_reservations(struct resource *avail)
-{
+व्योम arch_हटाओ_reservations(काष्ठा resource *avail)
+अणु
 	/*
-	 * Trim out BIOS area (high 2MB) and E820 regions. We do not remove
-	 * the low 1MB unconditionally, as this area is needed for some ISA
+	 * Trim out BIOS area (high 2MB) and E820 regions. We करो not हटाओ
+	 * the low 1MB unconditionally, as this area is needed क्रम some ISA
 	 * cards requiring a memory range, e.g. the i82365 PCMCIA controller.
 	 */
-	if (avail->flags & IORESOURCE_MEM) {
+	अगर (avail->flags & IORESOURCE_MEM) अणु
 		resource_clip(avail, BIOS_ROM_BASE, BIOS_ROM_END);
 
-		remove_e820_regions(avail);
-	}
-}
+		हटाओ_e820_regions(avail);
+	पूर्ण
+पूर्ण

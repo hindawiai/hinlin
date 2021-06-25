@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/io.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/export.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/पन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/export.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
 
-static unsigned long acpi_iobase;
+अटल अचिन्हित दीर्घ acpi_iobase;
 
-#define ACPI_PM_EVT_BLK         (acpi_iobase + 0x00) /* 4 bytes */
-#define ACPI_PM_CNT_BLK         (acpi_iobase + 0x04) /* 2 bytes */
-#define ACPI_PMA_CNT_BLK        (acpi_iobase + 0x0F) /* 1 byte */
-#define ACPI_PM_TMR_BLK         (acpi_iobase + 0x18) /* 4 bytes */
-#define ACPI_GPE0_BLK           (acpi_iobase + 0x10) /* 8 bytes */
-#define ACPI_END                (acpi_iobase + 0x80)
+#घोषणा ACPI_PM_EVT_BLK         (acpi_iobase + 0x00) /* 4 bytes */
+#घोषणा ACPI_PM_CNT_BLK         (acpi_iobase + 0x04) /* 2 bytes */
+#घोषणा ACPI_PMA_CNT_BLK        (acpi_iobase + 0x0F) /* 1 byte */
+#घोषणा ACPI_PM_TMR_BLK         (acpi_iobase + 0x18) /* 4 bytes */
+#घोषणा ACPI_GPE0_BLK           (acpi_iobase + 0x10) /* 8 bytes */
+#घोषणा ACPI_END                (acpi_iobase + 0x80)
 
-#define PM_INDEX        0xCD6
-#define PM_DATA         0xCD7
-#define PM2_INDEX       0xCD0
-#define PM2_DATA        0xCD1
+#घोषणा PM_INDEX        0xCD6
+#घोषणा PM_DATA         0xCD7
+#घोषणा PM2_INDEX       0xCD0
+#घोषणा PM2_DATA        0xCD1
 
-static void pmio_write_index(u16 index, u8 reg, u8 value)
-{
+अटल व्योम pmio_ग_लिखो_index(u16 index, u8 reg, u8 value)
+अणु
 	outb(reg, index);
 	outb(value, index + 1);
-}
+पूर्ण
 
-static u8 pmio_read_index(u16 index, u8 reg)
-{
+अटल u8 pmio_पढ़ो_index(u16 index, u8 reg)
+अणु
 	outb(reg, index);
-	return inb(index + 1);
-}
+	वापस inb(index + 1);
+पूर्ण
 
-void pm_iowrite(u8 reg, u8 value)
-{
-	pmio_write_index(PM_INDEX, reg, value);
-}
-EXPORT_SYMBOL(pm_iowrite);
+व्योम pm_ioग_लिखो(u8 reg, u8 value)
+अणु
+	pmio_ग_लिखो_index(PM_INDEX, reg, value);
+पूर्ण
+EXPORT_SYMBOL(pm_ioग_लिखो);
 
-u8 pm_ioread(u8 reg)
-{
-	return pmio_read_index(PM_INDEX, reg);
-}
-EXPORT_SYMBOL(pm_ioread);
+u8 pm_ioपढ़ो(u8 reg)
+अणु
+	वापस pmio_पढ़ो_index(PM_INDEX, reg);
+पूर्ण
+EXPORT_SYMBOL(pm_ioपढ़ो);
 
-void pm2_iowrite(u8 reg, u8 value)
-{
-	pmio_write_index(PM2_INDEX, reg, value);
-}
-EXPORT_SYMBOL(pm2_iowrite);
+व्योम pm2_ioग_लिखो(u8 reg, u8 value)
+अणु
+	pmio_ग_लिखो_index(PM2_INDEX, reg, value);
+पूर्ण
+EXPORT_SYMBOL(pm2_ioग_लिखो);
 
-u8 pm2_ioread(u8 reg)
-{
-	return pmio_read_index(PM2_INDEX, reg);
-}
-EXPORT_SYMBOL(pm2_ioread);
+u8 pm2_ioपढ़ो(u8 reg)
+अणु
+	वापस pmio_पढ़ो_index(PM2_INDEX, reg);
+पूर्ण
+EXPORT_SYMBOL(pm2_ioपढ़ो);
 
-static void acpi_hw_clear_status(void)
-{
+अटल व्योम acpi_hw_clear_status(व्योम)
+अणु
 	u16 value;
 
 	/* PMStatus: Clear WakeStatus/PwrBtnStatus */
@@ -67,103 +68,103 @@ static void acpi_hw_clear_status(void)
 
 	/* GPEStatus: Clear all generated events */
 	outl(inl(ACPI_GPE0_BLK), ACPI_GPE0_BLK);
-}
+पूर्ण
 
-static void acpi_registers_setup(void)
-{
+अटल व्योम acpi_रेजिस्टरs_setup(व्योम)
+अणु
 	u32 value;
 
 	/* PM Status Base */
-	pm_iowrite(0x20, ACPI_PM_EVT_BLK & 0xff);
-	pm_iowrite(0x21, ACPI_PM_EVT_BLK >> 8);
+	pm_ioग_लिखो(0x20, ACPI_PM_EVT_BLK & 0xff);
+	pm_ioग_लिखो(0x21, ACPI_PM_EVT_BLK >> 8);
 
 	/* PM Control Base */
-	pm_iowrite(0x22, ACPI_PM_CNT_BLK & 0xff);
-	pm_iowrite(0x23, ACPI_PM_CNT_BLK >> 8);
+	pm_ioग_लिखो(0x22, ACPI_PM_CNT_BLK & 0xff);
+	pm_ioग_लिखो(0x23, ACPI_PM_CNT_BLK >> 8);
 
 	/* GPM Base */
-	pm_iowrite(0x28, ACPI_GPE0_BLK & 0xff);
-	pm_iowrite(0x29, ACPI_GPE0_BLK >> 8);
+	pm_ioग_लिखो(0x28, ACPI_GPE0_BLK & 0xff);
+	pm_ioग_लिखो(0x29, ACPI_GPE0_BLK >> 8);
 
 	/* ACPI End */
-	pm_iowrite(0x2e, ACPI_END & 0xff);
-	pm_iowrite(0x2f, ACPI_END >> 8);
+	pm_ioग_लिखो(0x2e, ACPI_END & 0xff);
+	pm_ioग_लिखो(0x2f, ACPI_END >> 8);
 
 	/* IO Decode: When AcpiDecodeEnable set, South-Bridge uses the contents
-	 * of the PM registers at index 0x20~0x2B to decode ACPI I/O address. */
-	pm_iowrite(0x0e, 1 << 3);
+	 * of the PM रेजिस्टरs at index 0x20~0x2B to decode ACPI I/O address. */
+	pm_ioग_लिखो(0x0e, 1 << 3);
 
 	/* SCI_EN set */
 	outw(1, ACPI_PM_CNT_BLK);
 
 	/* Enable to generate SCI */
-	pm_iowrite(0x10, pm_ioread(0x10) | 1);
+	pm_ioग_लिखो(0x10, pm_ioपढ़ो(0x10) | 1);
 
 	/* GPM3/GPM9 enable */
 	value = inl(ACPI_GPE0_BLK + 4);
 	outl(value | (1 << 14) | (1 << 22), ACPI_GPE0_BLK + 4);
 
 	/* Set GPM9 as input */
-	pm_iowrite(0x8d, pm_ioread(0x8d) & (~(1 << 1)));
+	pm_ioग_लिखो(0x8d, pm_ioपढ़ो(0x8d) & (~(1 << 1)));
 
 	/* Set GPM9 as non-output */
-	pm_iowrite(0x94, pm_ioread(0x94) | (1 << 3));
+	pm_ioग_लिखो(0x94, pm_ioपढ़ो(0x94) | (1 << 3));
 
 	/* GPM3 config ACPI trigger SCIOUT */
-	pm_iowrite(0x33, pm_ioread(0x33) & (~(3 << 4)));
+	pm_ioग_लिखो(0x33, pm_ioपढ़ो(0x33) & (~(3 << 4)));
 
 	/* GPM9 config ACPI trigger SCIOUT */
-	pm_iowrite(0x3d, pm_ioread(0x3d) & (~(3 << 2)));
+	pm_ioग_लिखो(0x3d, pm_ioपढ़ो(0x3d) & (~(3 << 2)));
 
 	/* GPM3 config falling edge trigger */
-	pm_iowrite(0x37, pm_ioread(0x37) & (~(1 << 6)));
+	pm_ioग_लिखो(0x37, pm_ioपढ़ो(0x37) & (~(1 << 6)));
 
-	/* No wait for STPGNT# in ACPI Sx state */
-	pm_iowrite(0x7c, pm_ioread(0x7c) | (1 << 6));
+	/* No रुको क्रम STPGNT# in ACPI Sx state */
+	pm_ioग_लिखो(0x7c, pm_ioपढ़ो(0x7c) | (1 << 6));
 
-	/* Set GPM3 pull-down enable */
-	value = pm2_ioread(0xf6);
+	/* Set GPM3 pull-करोwn enable */
+	value = pm2_ioपढ़ो(0xf6);
 	value |= ((1 << 7) | (1 << 3));
-	pm2_iowrite(0xf6, value);
+	pm2_ioग_लिखो(0xf6, value);
 
-	/* Set GPM9 pull-down enable */
-	value = pm2_ioread(0xf8);
+	/* Set GPM9 pull-करोwn enable */
+	value = pm2_ioपढ़ो(0xf8);
 	value |= ((1 << 5) | (1 << 1));
-	pm2_iowrite(0xf8, value);
-}
+	pm2_ioग_लिखो(0xf8, value);
+पूर्ण
 
-static int rs780e_acpi_probe(struct platform_device *pdev)
-{
-	struct resource *res;
+अटल पूर्णांक rs780e_acpi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
 
-	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
-	if (!res)
-		return -ENODEV;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
+	अगर (!res)
+		वापस -ENODEV;
 
-	/* SCI interrupt need acpi space, allocate here */
-	if (!request_region(res->start, resource_size(res), "acpi")) {
+	/* SCI पूर्णांकerrupt need acpi space, allocate here */
+	अगर (!request_region(res->start, resource_size(res), "acpi")) अणु
 		pr_err("RS780E-ACPI: Failed to request IO Region\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	acpi_iobase = res->start;
 
-	acpi_registers_setup();
+	acpi_रेजिस्टरs_setup();
 	acpi_hw_clear_status();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id rs780e_acpi_match[] = {
-	{ .compatible = "loongson,rs780e-acpi" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id rs780e_acpi_match[] = अणु
+	अणु .compatible = "loongson,rs780e-acpi" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver rs780e_acpi_driver = {
+अटल काष्ठा platक्रमm_driver rs780e_acpi_driver = अणु
 	.probe = rs780e_acpi_probe,
-	.driver = {
+	.driver = अणु
 		.name = "RS780E-ACPI",
 		.of_match_table = rs780e_acpi_match,
-	},
-};
-builtin_platform_driver(rs780e_acpi_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(rs780e_acpi_driver);

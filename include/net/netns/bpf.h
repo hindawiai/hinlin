@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * BPF programs attached to network namespace
  */
 
-#ifndef __NETNS_BPF_H__
-#define __NETNS_BPF_H__
+#अगर_अघोषित __NETNS_BPF_H__
+#घोषणा __NETNS_BPF_H__
 
-#include <linux/bpf-netns.h>
+#समावेश <linux/bpf-netns.h>
 
-struct bpf_prog;
-struct bpf_prog_array;
+काष्ठा bpf_prog;
+काष्ठा bpf_prog_array;
 
-struct netns_bpf {
+काष्ठा netns_bpf अणु
 	/* Array of programs to run compiled from progs or links */
-	struct bpf_prog_array __rcu *run_array[MAX_NETNS_BPF_ATTACH_TYPE];
-	struct bpf_prog *progs[MAX_NETNS_BPF_ATTACH_TYPE];
-	struct list_head links[MAX_NETNS_BPF_ATTACH_TYPE];
-};
+	काष्ठा bpf_prog_array __rcu *run_array[MAX_NETNS_BPF_ATTACH_TYPE];
+	काष्ठा bpf_prog *progs[MAX_NETNS_BPF_ATTACH_TYPE];
+	काष्ठा list_head links[MAX_NETNS_BPF_ATTACH_TYPE];
+पूर्ण;
 
-#endif /* __NETNS_BPF_H__ */
+#पूर्ण_अगर /* __NETNS_BPF_H__ */

@@ -1,77 +1,78 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2017 Intel Corporation
+ * Copyright तऊ 2017 Intel Corporation
  */
 
-#include <linux/prime_numbers.h>
+#समावेश <linux/prime_numbers.h>
 
-#include "gt/intel_engine_pm.h"
-#include "gt/intel_gpu_commands.h"
-#include "gt/intel_gt.h"
-#include "gt/intel_gt_pm.h"
-#include "gt/intel_ring.h"
+#समावेश "gt/intel_engine_pm.h"
+#समावेश "gt/intel_gpu_commands.h"
+#समावेश "gt/intel_gt.h"
+#समावेश "gt/intel_gt_pm.h"
+#समावेश "gt/intel_ring.h"
 
-#include "i915_selftest.h"
-#include "selftests/i915_random.h"
+#समावेश "i915_selftest.h"
+#समावेश "selftests/i915_random.h"
 
-struct context {
-	struct drm_i915_gem_object *obj;
-	struct intel_engine_cs *engine;
-};
+काष्ठा context अणु
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+पूर्ण;
 
-static int cpu_set(struct context *ctx, unsigned long offset, u32 v)
-{
-	unsigned int needs_clflush;
-	struct page *page;
-	void *map;
+अटल पूर्णांक cpu_set(काष्ठा context *ctx, अचिन्हित दीर्घ offset, u32 v)
+अणु
+	अचिन्हित पूर्णांक needs_clflush;
+	काष्ठा page *page;
+	व्योम *map;
 	u32 *cpu;
-	int err;
+	पूर्णांक err;
 
-	i915_gem_object_lock(ctx->obj, NULL);
-	err = i915_gem_object_prepare_write(ctx->obj, &needs_clflush);
-	if (err)
-		goto out;
+	i915_gem_object_lock(ctx->obj, शून्य);
+	err = i915_gem_object_prepare_ग_लिखो(ctx->obj, &needs_clflush);
+	अगर (err)
+		जाओ out;
 
 	page = i915_gem_object_get_page(ctx->obj, offset >> PAGE_SHIFT);
 	map = kmap_atomic(page);
 	cpu = map + offset_in_page(offset);
 
-	if (needs_clflush & CLFLUSH_BEFORE)
-		drm_clflush_virt_range(cpu, sizeof(*cpu));
+	अगर (needs_clflush & CLFLUSH_BEFORE)
+		drm_clflush_virt_range(cpu, माप(*cpu));
 
 	*cpu = v;
 
-	if (needs_clflush & CLFLUSH_AFTER)
-		drm_clflush_virt_range(cpu, sizeof(*cpu));
+	अगर (needs_clflush & CLFLUSH_AFTER)
+		drm_clflush_virt_range(cpu, माप(*cpu));
 
 	kunmap_atomic(map);
 	i915_gem_object_finish_access(ctx->obj);
 
 out:
 	i915_gem_object_unlock(ctx->obj);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int cpu_get(struct context *ctx, unsigned long offset, u32 *v)
-{
-	unsigned int needs_clflush;
-	struct page *page;
-	void *map;
+अटल पूर्णांक cpu_get(काष्ठा context *ctx, अचिन्हित दीर्घ offset, u32 *v)
+अणु
+	अचिन्हित पूर्णांक needs_clflush;
+	काष्ठा page *page;
+	व्योम *map;
 	u32 *cpu;
-	int err;
+	पूर्णांक err;
 
-	i915_gem_object_lock(ctx->obj, NULL);
-	err = i915_gem_object_prepare_read(ctx->obj, &needs_clflush);
-	if (err)
-		goto out;
+	i915_gem_object_lock(ctx->obj, शून्य);
+	err = i915_gem_object_prepare_पढ़ो(ctx->obj, &needs_clflush);
+	अगर (err)
+		जाओ out;
 
 	page = i915_gem_object_get_page(ctx->obj, offset >> PAGE_SHIFT);
 	map = kmap_atomic(page);
 	cpu = map + offset_in_page(offset);
 
-	if (needs_clflush & CLFLUSH_BEFORE)
-		drm_clflush_virt_range(cpu, sizeof(*cpu));
+	अगर (needs_clflush & CLFLUSH_BEFORE)
+		drm_clflush_virt_range(cpu, माप(*cpu));
 
 	*v = *cpu;
 
@@ -80,167 +81,167 @@ static int cpu_get(struct context *ctx, unsigned long offset, u32 *v)
 
 out:
 	i915_gem_object_unlock(ctx->obj);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int gtt_set(struct context *ctx, unsigned long offset, u32 v)
-{
-	struct i915_vma *vma;
+अटल पूर्णांक gtt_set(काष्ठा context *ctx, अचिन्हित दीर्घ offset, u32 v)
+अणु
+	काष्ठा i915_vma *vma;
 	u32 __iomem *map;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	i915_gem_object_lock(ctx->obj, NULL);
-	err = i915_gem_object_set_to_gtt_domain(ctx->obj, true);
+	i915_gem_object_lock(ctx->obj, शून्य);
+	err = i915_gem_object_set_to_gtt_करोमुख्य(ctx->obj, true);
 	i915_gem_object_unlock(ctx->obj);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	vma = i915_gem_object_ggtt_pin(ctx->obj, NULL, 0, 0, PIN_MAPPABLE);
-	if (IS_ERR(vma))
-		return PTR_ERR(vma);
+	vma = i915_gem_object_ggtt_pin(ctx->obj, शून्य, 0, 0, PIN_MAPPABLE);
+	अगर (IS_ERR(vma))
+		वापस PTR_ERR(vma);
 
-	intel_gt_pm_get(vma->vm->gt);
+	पूर्णांकel_gt_pm_get(vma->vm->gt);
 
 	map = i915_vma_pin_iomap(vma);
 	i915_vma_unpin(vma);
-	if (IS_ERR(map)) {
+	अगर (IS_ERR(map)) अणु
 		err = PTR_ERR(map);
-		goto out_rpm;
-	}
+		जाओ out_rpm;
+	पूर्ण
 
-	iowrite32(v, &map[offset / sizeof(*map)]);
+	ioग_लिखो32(v, &map[offset / माप(*map)]);
 	i915_vma_unpin_iomap(vma);
 
 out_rpm:
-	intel_gt_pm_put(vma->vm->gt);
-	return err;
-}
+	पूर्णांकel_gt_pm_put(vma->vm->gt);
+	वापस err;
+पूर्ण
 
-static int gtt_get(struct context *ctx, unsigned long offset, u32 *v)
-{
-	struct i915_vma *vma;
+अटल पूर्णांक gtt_get(काष्ठा context *ctx, अचिन्हित दीर्घ offset, u32 *v)
+अणु
+	काष्ठा i915_vma *vma;
 	u32 __iomem *map;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	i915_gem_object_lock(ctx->obj, NULL);
-	err = i915_gem_object_set_to_gtt_domain(ctx->obj, false);
+	i915_gem_object_lock(ctx->obj, शून्य);
+	err = i915_gem_object_set_to_gtt_करोमुख्य(ctx->obj, false);
 	i915_gem_object_unlock(ctx->obj);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	vma = i915_gem_object_ggtt_pin(ctx->obj, NULL, 0, 0, PIN_MAPPABLE);
-	if (IS_ERR(vma))
-		return PTR_ERR(vma);
+	vma = i915_gem_object_ggtt_pin(ctx->obj, शून्य, 0, 0, PIN_MAPPABLE);
+	अगर (IS_ERR(vma))
+		वापस PTR_ERR(vma);
 
-	intel_gt_pm_get(vma->vm->gt);
+	पूर्णांकel_gt_pm_get(vma->vm->gt);
 
 	map = i915_vma_pin_iomap(vma);
 	i915_vma_unpin(vma);
-	if (IS_ERR(map)) {
+	अगर (IS_ERR(map)) अणु
 		err = PTR_ERR(map);
-		goto out_rpm;
-	}
+		जाओ out_rpm;
+	पूर्ण
 
-	*v = ioread32(&map[offset / sizeof(*map)]);
+	*v = ioपढ़ो32(&map[offset / माप(*map)]);
 	i915_vma_unpin_iomap(vma);
 
 out_rpm:
-	intel_gt_pm_put(vma->vm->gt);
-	return err;
-}
+	पूर्णांकel_gt_pm_put(vma->vm->gt);
+	वापस err;
+पूर्ण
 
-static int wc_set(struct context *ctx, unsigned long offset, u32 v)
-{
+अटल पूर्णांक wc_set(काष्ठा context *ctx, अचिन्हित दीर्घ offset, u32 v)
+अणु
 	u32 *map;
-	int err;
+	पूर्णांक err;
 
-	i915_gem_object_lock(ctx->obj, NULL);
-	err = i915_gem_object_set_to_wc_domain(ctx->obj, true);
+	i915_gem_object_lock(ctx->obj, शून्य);
+	err = i915_gem_object_set_to_wc_करोमुख्य(ctx->obj, true);
 	i915_gem_object_unlock(ctx->obj);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	map = i915_gem_object_pin_map_unlocked(ctx->obj, I915_MAP_WC);
-	if (IS_ERR(map))
-		return PTR_ERR(map);
+	अगर (IS_ERR(map))
+		वापस PTR_ERR(map);
 
-	map[offset / sizeof(*map)] = v;
+	map[offset / माप(*map)] = v;
 
-	__i915_gem_object_flush_map(ctx->obj, offset, sizeof(*map));
+	__i915_gem_object_flush_map(ctx->obj, offset, माप(*map));
 	i915_gem_object_unpin_map(ctx->obj);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wc_get(struct context *ctx, unsigned long offset, u32 *v)
-{
+अटल पूर्णांक wc_get(काष्ठा context *ctx, अचिन्हित दीर्घ offset, u32 *v)
+अणु
 	u32 *map;
-	int err;
+	पूर्णांक err;
 
-	i915_gem_object_lock(ctx->obj, NULL);
-	err = i915_gem_object_set_to_wc_domain(ctx->obj, false);
+	i915_gem_object_lock(ctx->obj, शून्य);
+	err = i915_gem_object_set_to_wc_करोमुख्य(ctx->obj, false);
 	i915_gem_object_unlock(ctx->obj);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	map = i915_gem_object_pin_map_unlocked(ctx->obj, I915_MAP_WC);
-	if (IS_ERR(map))
-		return PTR_ERR(map);
+	अगर (IS_ERR(map))
+		वापस PTR_ERR(map);
 
-	*v = map[offset / sizeof(*map)];
+	*v = map[offset / माप(*map)];
 	i915_gem_object_unpin_map(ctx->obj);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gpu_set(struct context *ctx, unsigned long offset, u32 v)
-{
-	struct i915_request *rq;
-	struct i915_vma *vma;
+अटल पूर्णांक gpu_set(काष्ठा context *ctx, अचिन्हित दीर्घ offset, u32 v)
+अणु
+	काष्ठा i915_request *rq;
+	काष्ठा i915_vma *vma;
 	u32 *cs;
-	int err;
+	पूर्णांक err;
 
-	vma = i915_gem_object_ggtt_pin(ctx->obj, NULL, 0, 0, 0);
-	if (IS_ERR(vma))
-		return PTR_ERR(vma);
+	vma = i915_gem_object_ggtt_pin(ctx->obj, शून्य, 0, 0, 0);
+	अगर (IS_ERR(vma))
+		वापस PTR_ERR(vma);
 
-	i915_gem_object_lock(ctx->obj, NULL);
-	err = i915_gem_object_set_to_gtt_domain(ctx->obj, true);
-	if (err)
-		goto out_unlock;
+	i915_gem_object_lock(ctx->obj, शून्य);
+	err = i915_gem_object_set_to_gtt_करोमुख्य(ctx->obj, true);
+	अगर (err)
+		जाओ out_unlock;
 
-	rq = intel_engine_create_kernel_request(ctx->engine);
-	if (IS_ERR(rq)) {
+	rq = पूर्णांकel_engine_create_kernel_request(ctx->engine);
+	अगर (IS_ERR(rq)) अणु
 		err = PTR_ERR(rq);
-		goto out_unpin;
-	}
+		जाओ out_unpin;
+	पूर्ण
 
-	cs = intel_ring_begin(rq, 4);
-	if (IS_ERR(cs)) {
+	cs = पूर्णांकel_ring_begin(rq, 4);
+	अगर (IS_ERR(cs)) अणु
 		err = PTR_ERR(cs);
-		goto out_rq;
-	}
+		जाओ out_rq;
+	पूर्ण
 
-	if (INTEL_GEN(ctx->engine->i915) >= 8) {
+	अगर (INTEL_GEN(ctx->engine->i915) >= 8) अणु
 		*cs++ = MI_STORE_DWORD_IMM_GEN4 | 1 << 22;
 		*cs++ = lower_32_bits(i915_ggtt_offset(vma) + offset);
 		*cs++ = upper_32_bits(i915_ggtt_offset(vma) + offset);
 		*cs++ = v;
-	} else if (INTEL_GEN(ctx->engine->i915) >= 4) {
+	पूर्ण अन्यथा अगर (INTEL_GEN(ctx->engine->i915) >= 4) अणु
 		*cs++ = MI_STORE_DWORD_IMM_GEN4 | MI_USE_GGTT;
 		*cs++ = 0;
 		*cs++ = i915_ggtt_offset(vma) + offset;
 		*cs++ = v;
-	} else {
+	पूर्ण अन्यथा अणु
 		*cs++ = MI_STORE_DWORD_IMM | MI_MEM_VIRTUAL;
 		*cs++ = i915_ggtt_offset(vma) + offset;
 		*cs++ = v;
 		*cs++ = MI_NOOP;
-	}
-	intel_ring_advance(rq, cs);
+	पूर्ण
+	पूर्णांकel_ring_advance(rq, cs);
 
-	err = i915_request_await_object(rq, vma->obj, true);
-	if (err == 0)
+	err = i915_request_aरुको_object(rq, vma->obj, true);
+	अगर (err == 0)
 		err = i915_vma_move_to_active(vma, rq, EXEC_OBJECT_WRITE);
 
 out_rq:
@@ -250,189 +251,189 @@ out_unpin:
 out_unlock:
 	i915_gem_object_unlock(ctx->obj);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool always_valid(struct context *ctx)
-{
-	return true;
-}
+अटल bool always_valid(काष्ठा context *ctx)
+अणु
+	वापस true;
+पूर्ण
 
-static bool needs_fence_registers(struct context *ctx)
-{
-	struct intel_gt *gt = ctx->engine->gt;
+अटल bool needs_fence_रेजिस्टरs(काष्ठा context *ctx)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = ctx->engine->gt;
 
-	if (intel_gt_is_wedged(gt))
-		return false;
+	अगर (पूर्णांकel_gt_is_wedged(gt))
+		वापस false;
 
-	return gt->ggtt->num_fences;
-}
+	वापस gt->ggtt->num_fences;
+पूर्ण
 
-static bool needs_mi_store_dword(struct context *ctx)
-{
-	if (intel_gt_is_wedged(ctx->engine->gt))
-		return false;
+अटल bool needs_mi_store_dword(काष्ठा context *ctx)
+अणु
+	अगर (पूर्णांकel_gt_is_wedged(ctx->engine->gt))
+		वापस false;
 
-	return intel_engine_can_store_dword(ctx->engine);
-}
+	वापस पूर्णांकel_engine_can_store_dword(ctx->engine);
+पूर्ण
 
-static const struct igt_coherency_mode {
-	const char *name;
-	int (*set)(struct context *ctx, unsigned long offset, u32 v);
-	int (*get)(struct context *ctx, unsigned long offset, u32 *v);
-	bool (*valid)(struct context *ctx);
-} igt_coherency_mode[] = {
-	{ "cpu", cpu_set, cpu_get, always_valid },
-	{ "gtt", gtt_set, gtt_get, needs_fence_registers },
-	{ "wc", wc_set, wc_get, always_valid },
-	{ "gpu", gpu_set, NULL, needs_mi_store_dword },
-	{ },
-};
+अटल स्थिर काष्ठा igt_coherency_mode अणु
+	स्थिर अक्षर *name;
+	पूर्णांक (*set)(काष्ठा context *ctx, अचिन्हित दीर्घ offset, u32 v);
+	पूर्णांक (*get)(काष्ठा context *ctx, अचिन्हित दीर्घ offset, u32 *v);
+	bool (*valid)(काष्ठा context *ctx);
+पूर्ण igt_coherency_mode[] = अणु
+	अणु "cpu", cpu_set, cpu_get, always_valid पूर्ण,
+	अणु "gtt", gtt_set, gtt_get, needs_fence_रेजिस्टरs पूर्ण,
+	अणु "wc", wc_set, wc_get, always_valid पूर्ण,
+	अणु "gpu", gpu_set, शून्य, needs_mi_store_dword पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct intel_engine_cs *
-random_engine(struct drm_i915_private *i915, struct rnd_state *prng)
-{
-	struct intel_engine_cs *engine;
-	unsigned int count;
+अटल काष्ठा पूर्णांकel_engine_cs *
+अक्रमom_engine(काष्ठा drm_i915_निजी *i915, काष्ठा rnd_state *prng)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	अचिन्हित पूर्णांक count;
 
 	count = 0;
-	for_each_uabi_engine(engine, i915)
+	क्रम_each_uabi_engine(engine, i915)
 		count++;
 
-	count = i915_prandom_u32_max_state(count, prng);
-	for_each_uabi_engine(engine, i915)
-		if (count-- == 0)
-			return engine;
+	count = i915_pअक्रमom_u32_max_state(count, prng);
+	क्रम_each_uabi_engine(engine, i915)
+		अगर (count-- == 0)
+			वापस engine;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int igt_gem_coherency(void *arg)
-{
-	const unsigned int ncachelines = PAGE_SIZE/64;
-	struct drm_i915_private *i915 = arg;
-	const struct igt_coherency_mode *read, *write, *over;
-	unsigned long count, n;
+अटल पूर्णांक igt_gem_coherency(व्योम *arg)
+अणु
+	स्थिर अचिन्हित पूर्णांक ncachelines = PAGE_SIZE/64;
+	काष्ठा drm_i915_निजी *i915 = arg;
+	स्थिर काष्ठा igt_coherency_mode *पढ़ो, *ग_लिखो, *over;
+	अचिन्हित दीर्घ count, n;
 	u32 *offsets, *values;
 	I915_RND_STATE(prng);
-	struct context ctx;
-	int err = 0;
+	काष्ठा context ctx;
+	पूर्णांक err = 0;
 
 	/*
-	 * We repeatedly write, overwrite and read from a sequence of
-	 * cachelines in order to try and detect incoherency (unflushed writes
+	 * We repeatedly ग_लिखो, overग_लिखो and पढ़ो from a sequence of
+	 * cachelines in order to try and detect incoherency (unflushed ग_लिखोs
 	 * from either the CPU or GPU). Each setter/getter uses our cache
-	 * domain API which should prevent incoherency.
+	 * करोमुख्य API which should prevent incoherency.
 	 */
 
-	offsets = kmalloc_array(ncachelines, 2*sizeof(u32), GFP_KERNEL);
-	if (!offsets)
-		return -ENOMEM;
-	for (count = 0; count < ncachelines; count++)
+	offsets = kदो_स्मृति_array(ncachelines, 2*माप(u32), GFP_KERNEL);
+	अगर (!offsets)
+		वापस -ENOMEM;
+	क्रम (count = 0; count < ncachelines; count++)
 		offsets[count] = count * 64 + 4 * (count % 16);
 
 	values = offsets + ncachelines;
 
-	ctx.engine = random_engine(i915, &prng);
-	if (!ctx.engine) {
+	ctx.engine = अक्रमom_engine(i915, &prng);
+	अगर (!ctx.engine) अणु
 		err = -ENODEV;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 	pr_info("%s: using %s\n", __func__, ctx.engine->name);
-	intel_engine_pm_get(ctx.engine);
+	पूर्णांकel_engine_pm_get(ctx.engine);
 
-	for (over = igt_coherency_mode; over->name; over++) {
-		if (!over->set)
-			continue;
+	क्रम (over = igt_coherency_mode; over->name; over++) अणु
+		अगर (!over->set)
+			जारी;
 
-		if (!over->valid(&ctx))
-			continue;
+		अगर (!over->valid(&ctx))
+			जारी;
 
-		for (write = igt_coherency_mode; write->name; write++) {
-			if (!write->set)
-				continue;
+		क्रम (ग_लिखो = igt_coherency_mode; ग_लिखो->name; ग_लिखो++) अणु
+			अगर (!ग_लिखो->set)
+				जारी;
 
-			if (!write->valid(&ctx))
-				continue;
+			अगर (!ग_लिखो->valid(&ctx))
+				जारी;
 
-			for (read = igt_coherency_mode; read->name; read++) {
-				if (!read->get)
-					continue;
+			क्रम (पढ़ो = igt_coherency_mode; पढ़ो->name; पढ़ो++) अणु
+				अगर (!पढ़ो->get)
+					जारी;
 
-				if (!read->valid(&ctx))
-					continue;
+				अगर (!पढ़ो->valid(&ctx))
+					जारी;
 
-				for_each_prime_number_from(count, 1, ncachelines) {
-					ctx.obj = i915_gem_object_create_internal(i915, PAGE_SIZE);
-					if (IS_ERR(ctx.obj)) {
+				क्रम_each_prime_number_from(count, 1, ncachelines) अणु
+					ctx.obj = i915_gem_object_create_पूर्णांकernal(i915, PAGE_SIZE);
+					अगर (IS_ERR(ctx.obj)) अणु
 						err = PTR_ERR(ctx.obj);
-						goto out_pm;
-					}
+						जाओ out_pm;
+					पूर्ण
 
-					i915_random_reorder(offsets, ncachelines, &prng);
-					for (n = 0; n < count; n++)
-						values[n] = prandom_u32_state(&prng);
+					i915_अक्रमom_reorder(offsets, ncachelines, &prng);
+					क्रम (n = 0; n < count; n++)
+						values[n] = pअक्रमom_u32_state(&prng);
 
-					for (n = 0; n < count; n++) {
+					क्रम (n = 0; n < count; n++) अणु
 						err = over->set(&ctx, offsets[n], ~values[n]);
-						if (err) {
+						अगर (err) अणु
 							pr_err("Failed to set stale value[%ld/%ld] in object using %s, err=%d\n",
 							       n, count, over->name, err);
-							goto put_object;
-						}
-					}
+							जाओ put_object;
+						पूर्ण
+					पूर्ण
 
-					for (n = 0; n < count; n++) {
-						err = write->set(&ctx, offsets[n], values[n]);
-						if (err) {
+					क्रम (n = 0; n < count; n++) अणु
+						err = ग_लिखो->set(&ctx, offsets[n], values[n]);
+						अगर (err) अणु
 							pr_err("Failed to set value[%ld/%ld] in object using %s, err=%d\n",
-							       n, count, write->name, err);
-							goto put_object;
-						}
-					}
+							       n, count, ग_लिखो->name, err);
+							जाओ put_object;
+						पूर्ण
+					पूर्ण
 
-					for (n = 0; n < count; n++) {
+					क्रम (n = 0; n < count; n++) अणु
 						u32 found;
 
-						err = read->get(&ctx, offsets[n], &found);
-						if (err) {
+						err = पढ़ो->get(&ctx, offsets[n], &found);
+						अगर (err) अणु
 							pr_err("Failed to get value[%ld/%ld] in object using %s, err=%d\n",
-							       n, count, read->name, err);
-							goto put_object;
-						}
+							       n, count, पढ़ो->name, err);
+							जाओ put_object;
+						पूर्ण
 
-						if (found != values[n]) {
+						अगर (found != values[n]) अणु
 							pr_err("Value[%ld/%ld] mismatch, (overwrite with %s) wrote [%s] %x read [%s] %x (inverse %x), at offset %x\n",
 							       n, count, over->name,
-							       write->name, values[n],
-							       read->name, found,
+							       ग_लिखो->name, values[n],
+							       पढ़ो->name, found,
 							       ~values[n], offsets[n]);
 							err = -EINVAL;
-							goto put_object;
-						}
-					}
+							जाओ put_object;
+						पूर्ण
+					पूर्ण
 
 					i915_gem_object_put(ctx.obj);
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 out_pm:
-	intel_engine_pm_put(ctx.engine);
-out_free:
-	kfree(offsets);
-	return err;
+	पूर्णांकel_engine_pm_put(ctx.engine);
+out_मुक्त:
+	kमुक्त(offsets);
+	वापस err;
 
 put_object:
 	i915_gem_object_put(ctx.obj);
-	goto out_pm;
-}
+	जाओ out_pm;
+पूर्ण
 
-int i915_gem_coherency_live_selftests(struct drm_i915_private *i915)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक i915_gem_coherency_live_selftests(काष्ठा drm_i915_निजी *i915)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		SUBTEST(igt_gem_coherency),
-	};
+	पूर्ण;
 
-	return i915_subtests(tests, i915);
-}
+	वापस i915_subtests(tests, i915);
+पूर्ण

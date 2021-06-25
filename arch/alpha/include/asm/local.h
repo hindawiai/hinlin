@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ALPHA_LOCAL_H
-#define _ALPHA_LOCAL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ALPHA_LOCAL_H
+#घोषणा _ALPHA_LOCAL_H
 
-#include <linux/percpu.h>
-#include <linux/atomic.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/atomic.h>
 
-typedef struct
-{
-	atomic_long_t a;
-} local_t;
+प्रकार काष्ठा
+अणु
+	atomic_दीर्घ_t a;
+पूर्ण local_t;
 
-#define LOCAL_INIT(i)	{ ATOMIC_LONG_INIT(i) }
-#define local_read(l)	atomic_long_read(&(l)->a)
-#define local_set(l,i)	atomic_long_set(&(l)->a, (i))
-#define local_inc(l)	atomic_long_inc(&(l)->a)
-#define local_dec(l)	atomic_long_dec(&(l)->a)
-#define local_add(i,l)	atomic_long_add((i),(&(l)->a))
-#define local_sub(i,l)	atomic_long_sub((i),(&(l)->a))
+#घोषणा LOCAL_INIT(i)	अणु ATOMIC_LONG_INIT(i) पूर्ण
+#घोषणा local_पढ़ो(l)	atomic_दीर्घ_पढ़ो(&(l)->a)
+#घोषणा local_set(l,i)	atomic_दीर्घ_set(&(l)->a, (i))
+#घोषणा local_inc(l)	atomic_दीर्घ_inc(&(l)->a)
+#घोषणा local_dec(l)	atomic_दीर्घ_dec(&(l)->a)
+#घोषणा local_add(i,l)	atomic_दीर्घ_add((i),(&(l)->a))
+#घोषणा local_sub(i,l)	atomic_दीर्घ_sub((i),(&(l)->a))
 
-static __inline__ long local_add_return(long i, local_t * l)
-{
-	long temp, result;
-	__asm__ __volatile__(
+अटल __अंतरभूत__ दीर्घ local_add_वापस(दीर्घ i, local_t * l)
+अणु
+	दीर्घ temp, result;
+	__यंत्र__ __अस्थिर__(
 	"1:	ldq_l %0,%1\n"
 	"	addq %0,%3,%2\n"
 	"	addq %0,%3,%0\n"
@@ -32,13 +33,13 @@ static __inline__ long local_add_return(long i, local_t * l)
 	".previous"
 	:"=&r" (temp), "=m" (l->a.counter), "=&r" (result)
 	:"Ir" (i), "m" (l->a.counter) : "memory");
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static __inline__ long local_sub_return(long i, local_t * l)
-{
-	long temp, result;
-	__asm__ __volatile__(
+अटल __अंतरभूत__ दीर्घ local_sub_वापस(दीर्घ i, local_t * l)
+अणु
+	दीर्घ temp, result;
+	__यंत्र__ __अस्थिर__(
 	"1:	ldq_l %0,%1\n"
 	"	subq %0,%3,%2\n"
 	"	subq %0,%3,%0\n"
@@ -49,54 +50,54 @@ static __inline__ long local_sub_return(long i, local_t * l)
 	".previous"
 	:"=&r" (temp), "=m" (l->a.counter), "=&r" (result)
 	:"Ir" (i), "m" (l->a.counter) : "memory");
-	return result;
-}
+	वापस result;
+पूर्ण
 
-#define local_cmpxchg(l, o, n) \
+#घोषणा local_cmpxchg(l, o, n) \
 	(cmpxchg_local(&((l)->a.counter), (o), (n)))
-#define local_xchg(l, n) (xchg_local(&((l)->a.counter), (n)))
+#घोषणा local_xchg(l, n) (xchg_local(&((l)->a.counter), (n)))
 
 /**
  * local_add_unless - add unless the number is a given value
- * @l: pointer of type local_t
+ * @l: poपूर्णांकer of type local_t
  * @a: the amount to add to l...
  * @u: ...unless l is equal to u.
  *
- * Atomically adds @a to @l, so long as it was not @u.
- * Returns non-zero if @l was not @u, and zero otherwise.
+ * Atomically adds @a to @l, so दीर्घ as it was not @u.
+ * Returns non-zero अगर @l was not @u, and zero otherwise.
  */
-#define local_add_unless(l, a, u)				\
-({								\
-	long c, old;						\
-	c = local_read(l);					\
-	for (;;) {						\
-		if (unlikely(c == (u)))				\
-			break;					\
+#घोषणा local_add_unless(l, a, u)				\
+(अणु								\
+	दीर्घ c, old;						\
+	c = local_पढ़ो(l);					\
+	क्रम (;;) अणु						\
+		अगर (unlikely(c == (u)))				\
+			अवरोध;					\
 		old = local_cmpxchg((l), c, c + (a));	\
-		if (likely(old == c))				\
-			break;					\
+		अगर (likely(old == c))				\
+			अवरोध;					\
 		c = old;					\
-	}							\
+	पूर्ण							\
 	c != (u);						\
-})
-#define local_inc_not_zero(l) local_add_unless((l), 1, 0)
+पूर्ण)
+#घोषणा local_inc_not_zero(l) local_add_unless((l), 1, 0)
 
-#define local_add_negative(a, l) (local_add_return((a), (l)) < 0)
+#घोषणा local_add_negative(a, l) (local_add_वापस((a), (l)) < 0)
 
-#define local_dec_return(l) local_sub_return(1,(l))
+#घोषणा local_dec_वापस(l) local_sub_वापस(1,(l))
 
-#define local_inc_return(l) local_add_return(1,(l))
+#घोषणा local_inc_वापस(l) local_add_वापस(1,(l))
 
-#define local_sub_and_test(i,l) (local_sub_return((i), (l)) == 0)
+#घोषणा local_sub_and_test(i,l) (local_sub_वापस((i), (l)) == 0)
 
-#define local_inc_and_test(l) (local_add_return(1, (l)) == 0)
+#घोषणा local_inc_and_test(l) (local_add_वापस(1, (l)) == 0)
 
-#define local_dec_and_test(l) (local_sub_return(1, (l)) == 0)
+#घोषणा local_dec_and_test(l) (local_sub_वापस(1, (l)) == 0)
 
-/* Verify if faster than atomic ops */
-#define __local_inc(l)		((l)->a.counter++)
-#define __local_dec(l)		((l)->a.counter++)
-#define __local_add(i,l)	((l)->a.counter+=(i))
-#define __local_sub(i,l)	((l)->a.counter-=(i))
+/* Verअगरy अगर faster than atomic ops */
+#घोषणा __local_inc(l)		((l)->a.counter++)
+#घोषणा __local_dec(l)		((l)->a.counter++)
+#घोषणा __local_add(i,l)	((l)->a.counter+=(i))
+#घोषणा __local_sub(i,l)	((l)->a.counter-=(i))
 
-#endif /* _ALPHA_LOCAL_H */
+#पूर्ण_अगर /* _ALPHA_LOCAL_H */

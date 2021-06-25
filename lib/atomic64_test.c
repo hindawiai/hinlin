@@ -1,115 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Testsuite for atomic64_t functions
+ * Testsuite क्रम atomic64_t functions
  *
- * Copyright © 2010  Luca Barbieri
+ * Copyright तऊ 2010  Luca Barbieri
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/bug.h>
-#include <linux/kernel.h>
-#include <linux/atomic.h>
-#include <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/module.h>
 
-#ifdef CONFIG_X86
-#include <asm/cpufeature.h>	/* for boot_cpu_has below */
-#endif
+#अगर_घोषित CONFIG_X86
+#समावेश <यंत्र/cpufeature.h>	/* क्रम boot_cpu_has below */
+#पूर्ण_अगर
 
-#define TEST(bit, op, c_op, val)				\
-do {								\
+#घोषणा TEST(bit, op, c_op, val)				\
+करो अणु								\
 	atomic##bit##_set(&v, v0);				\
 	r = v0;							\
 	atomic##bit##_##op(val, &v);				\
 	r c_op val;						\
-	WARN(atomic##bit##_read(&v) != r, "%Lx != %Lx\n",	\
-		(unsigned long long)atomic##bit##_read(&v),	\
-		(unsigned long long)r);				\
-} while (0)
+	WARN(atomic##bit##_पढ़ो(&v) != r, "%Lx != %Lx\n",	\
+		(अचिन्हित दीर्घ दीर्घ)atomic##bit##_पढ़ो(&v),	\
+		(अचिन्हित दीर्घ दीर्घ)r);				\
+पूर्ण जबतक (0)
 
 /*
- * Test for a atomic operation family,
+ * Test क्रम a atomic operation family,
  * @test should be a macro accepting parameters (bit, op, ...)
  */
 
-#define FAMILY_TEST(test, bit, op, args...)	\
-do {						\
+#घोषणा FAMILY_TEST(test, bit, op, args...)	\
+करो अणु						\
 	test(bit, op, ##args);		\
 	test(bit, op##_acquire, ##args);	\
 	test(bit, op##_release, ##args);	\
 	test(bit, op##_relaxed, ##args);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define TEST_RETURN(bit, op, c_op, val)				\
-do {								\
+#घोषणा TEST_RETURN(bit, op, c_op, val)				\
+करो अणु								\
 	atomic##bit##_set(&v, v0);				\
 	r = v0;							\
 	r c_op val;						\
 	BUG_ON(atomic##bit##_##op(val, &v) != r);		\
-	BUG_ON(atomic##bit##_read(&v) != r);			\
-} while (0)
+	BUG_ON(atomic##bit##_पढ़ो(&v) != r);			\
+पूर्ण जबतक (0)
 
-#define TEST_FETCH(bit, op, c_op, val)				\
-do {								\
+#घोषणा TEST_FETCH(bit, op, c_op, val)				\
+करो अणु								\
 	atomic##bit##_set(&v, v0);				\
 	r = v0;							\
 	r c_op val;						\
 	BUG_ON(atomic##bit##_##op(val, &v) != v0);		\
-	BUG_ON(atomic##bit##_read(&v) != r);			\
-} while (0)
+	BUG_ON(atomic##bit##_पढ़ो(&v) != r);			\
+पूर्ण जबतक (0)
 
-#define RETURN_FAMILY_TEST(bit, op, c_op, val)			\
-do {								\
+#घोषणा RETURN_FAMILY_TEST(bit, op, c_op, val)			\
+करो अणु								\
 	FAMILY_TEST(TEST_RETURN, bit, op, c_op, val);		\
-} while (0)
+पूर्ण जबतक (0)
 
-#define FETCH_FAMILY_TEST(bit, op, c_op, val)			\
-do {								\
+#घोषणा FETCH_FAMILY_TEST(bit, op, c_op, val)			\
+करो अणु								\
 	FAMILY_TEST(TEST_FETCH, bit, op, c_op, val);		\
-} while (0)
+पूर्ण जबतक (0)
 
-#define TEST_ARGS(bit, op, init, ret, expect, args...)		\
-do {								\
+#घोषणा TEST_ARGS(bit, op, init, ret, expect, args...)		\
+करो अणु								\
 	atomic##bit##_set(&v, init);				\
 	BUG_ON(atomic##bit##_##op(&v, ##args) != ret);		\
-	BUG_ON(atomic##bit##_read(&v) != expect);		\
-} while (0)
+	BUG_ON(atomic##bit##_पढ़ो(&v) != expect);		\
+पूर्ण जबतक (0)
 
-#define XCHG_FAMILY_TEST(bit, init, new)				\
-do {									\
+#घोषणा XCHG_FAMILY_TEST(bit, init, new)				\
+करो अणु									\
 	FAMILY_TEST(TEST_ARGS, bit, xchg, init, init, new, new);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define CMPXCHG_FAMILY_TEST(bit, init, new, wrong)			\
-do {									\
+#घोषणा CMPXCHG_FAMILY_TEST(bit, init, new, wrong)			\
+करो अणु									\
 	FAMILY_TEST(TEST_ARGS, bit, cmpxchg, 				\
 			init, init, new, init, new);			\
 	FAMILY_TEST(TEST_ARGS, bit, cmpxchg,				\
 			init, init, init, wrong, new);			\
-} while (0)
+पूर्ण जबतक (0)
 
-#define INC_RETURN_FAMILY_TEST(bit, i)			\
-do {							\
-	FAMILY_TEST(TEST_ARGS, bit, inc_return,		\
+#घोषणा INC_RETURN_FAMILY_TEST(bit, i)			\
+करो अणु							\
+	FAMILY_TEST(TEST_ARGS, bit, inc_वापस,		\
 			i, (i) + one, (i) + one);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define DEC_RETURN_FAMILY_TEST(bit, i)			\
-do {							\
-	FAMILY_TEST(TEST_ARGS, bit, dec_return,		\
+#घोषणा DEC_RETURN_FAMILY_TEST(bit, i)			\
+करो अणु							\
+	FAMILY_TEST(TEST_ARGS, bit, dec_वापस,		\
 			i, (i) - one, (i) - one);	\
-} while (0)
+पूर्ण जबतक (0)
 
-static __init void test_atomic(void)
-{
-	int v0 = 0xaaa31337;
-	int v1 = 0xdeadbeef;
-	int onestwos = 0x11112222;
-	int one = 1;
+अटल __init व्योम test_atomic(व्योम)
+अणु
+	पूर्णांक v0 = 0xaaa31337;
+	पूर्णांक v1 = 0xdeadbeef;
+	पूर्णांक onestwos = 0x11112222;
+	पूर्णांक one = 1;
 
 	atomic_t v;
-	int r;
+	पूर्णांक r;
 
 	TEST(, add, +=, onestwos);
 	TEST(, add, +=, -one);
@@ -120,10 +121,10 @@ static __init void test_atomic(void)
 	TEST(, xor, ^=, v1);
 	TEST(, andnot, &= ~, v1);
 
-	RETURN_FAMILY_TEST(, add_return, +=, onestwos);
-	RETURN_FAMILY_TEST(, add_return, +=, -one);
-	RETURN_FAMILY_TEST(, sub_return, -=, onestwos);
-	RETURN_FAMILY_TEST(, sub_return, -=, -one);
+	RETURN_FAMILY_TEST(, add_वापस, +=, onestwos);
+	RETURN_FAMILY_TEST(, add_वापस, +=, -one);
+	RETURN_FAMILY_TEST(, sub_वापस, -=, onestwos);
+	RETURN_FAMILY_TEST(, sub_वापस, -=, -one);
 
 	FETCH_FAMILY_TEST(, fetch_add, +=, onestwos);
 	FETCH_FAMILY_TEST(, fetch_add, +=, -one);
@@ -141,27 +142,27 @@ static __init void test_atomic(void)
 	XCHG_FAMILY_TEST(, v0, v1);
 	CMPXCHG_FAMILY_TEST(, v0, v1, onestwos);
 
-}
+पूर्ण
 
-#define INIT(c) do { atomic64_set(&v, c); r = c; } while (0)
-static __init void test_atomic64(void)
-{
-	long long v0 = 0xaaa31337c001d00dLL;
-	long long v1 = 0xdeadbeefdeafcafeLL;
-	long long v2 = 0xfaceabadf00df001LL;
-	long long v3 = 0x8000000000000000LL;
-	long long onestwos = 0x1111111122222222LL;
-	long long one = 1LL;
-	int r_int;
+#घोषणा INIT(c) करो अणु atomic64_set(&v, c); r = c; पूर्ण जबतक (0)
+अटल __init व्योम test_atomic64(व्योम)
+अणु
+	दीर्घ दीर्घ v0 = 0xaaa31337c001d00dLL;
+	दीर्घ दीर्घ v1 = 0xdeadbeefdeafcafeLL;
+	दीर्घ दीर्घ v2 = 0xfaceabadf00df001LL;
+	दीर्घ दीर्घ v3 = 0x8000000000000000LL;
+	दीर्घ दीर्घ onestwos = 0x1111111122222222LL;
+	दीर्घ दीर्घ one = 1LL;
+	पूर्णांक r_पूर्णांक;
 
 	atomic64_t v = ATOMIC64_INIT(v0);
-	long long r = v0;
+	दीर्घ दीर्घ r = v0;
 	BUG_ON(v.counter != r);
 
 	atomic64_set(&v, v1);
 	r = v1;
 	BUG_ON(v.counter != r);
-	BUG_ON(atomic64_read(&v) != r);
+	BUG_ON(atomic64_पढ़ो(&v) != r);
 
 	TEST(64, add, +=, onestwos);
 	TEST(64, add, +=, -one);
@@ -172,10 +173,10 @@ static __init void test_atomic64(void)
 	TEST(64, xor, ^=, v1);
 	TEST(64, andnot, &= ~, v1);
 
-	RETURN_FAMILY_TEST(64, add_return, +=, onestwos);
-	RETURN_FAMILY_TEST(64, add_return, +=, -one);
-	RETURN_FAMILY_TEST(64, sub_return, -=, onestwos);
-	RETURN_FAMILY_TEST(64, sub_return, -=, -one);
+	RETURN_FAMILY_TEST(64, add_वापस, +=, onestwos);
+	RETURN_FAMILY_TEST(64, add_वापस, +=, -one);
+	RETURN_FAMILY_TEST(64, sub_वापस, -=, onestwos);
+	RETURN_FAMILY_TEST(64, sub_वापस, -=, -one);
 
 	FETCH_FAMILY_TEST(64, fetch_add, +=, onestwos);
 	FETCH_FAMILY_TEST(64, fetch_add, +=, -one);
@@ -213,16 +214,16 @@ static __init void test_atomic64(void)
 	BUG_ON(v.counter != r);
 
 	INIT(onestwos);
-	BUG_ON(atomic64_dec_if_positive(&v) != (onestwos - 1));
+	BUG_ON(atomic64_dec_अगर_positive(&v) != (onestwos - 1));
 	r -= one;
 	BUG_ON(v.counter != r);
 
 	INIT(0);
-	BUG_ON(atomic64_dec_if_positive(&v) != -one);
+	BUG_ON(atomic64_dec_अगर_positive(&v) != -one);
 	BUG_ON(v.counter != r);
 
 	INIT(-one);
-	BUG_ON(atomic64_dec_if_positive(&v) != (-one - one));
+	BUG_ON(atomic64_dec_अगर_positive(&v) != (-one - one));
 	BUG_ON(v.counter != r);
 
 	INIT(onestwos);
@@ -239,38 +240,38 @@ static __init void test_atomic64(void)
 	r += one;
 	BUG_ON(v.counter != r);
 
-	/* Confirm the return value fits in an int, even if the value doesn't */
+	/* Confirm the वापस value fits in an पूर्णांक, even अगर the value करोesn't */
 	INIT(v3);
-	r_int = atomic64_inc_not_zero(&v);
-	BUG_ON(!r_int);
-}
+	r_पूर्णांक = atomic64_inc_not_zero(&v);
+	BUG_ON(!r_पूर्णांक);
+पूर्ण
 
-static __init int test_atomics_init(void)
-{
+अटल __init पूर्णांक test_atomics_init(व्योम)
+अणु
 	test_atomic();
 	test_atomic64();
 
-#ifdef CONFIG_X86
+#अगर_घोषित CONFIG_X86
 	pr_info("passed for %s platform %s CX8 and %s SSE\n",
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 		"x86-64",
-#elif defined(CONFIG_X86_CMPXCHG64)
+#या_अगर defined(CONFIG_X86_CMPXCHG64)
 		"i586+",
-#else
+#अन्यथा
 		"i386+",
-#endif
+#पूर्ण_अगर
 	       boot_cpu_has(X86_FEATURE_CX8) ? "with" : "without",
 	       boot_cpu_has(X86_FEATURE_XMM) ? "with" : "without");
-#else
+#अन्यथा
 	pr_info("passed\n");
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __exit void test_atomics_exit(void) {}
+अटल __निकास व्योम test_atomics_निकास(व्योम) अणुपूर्ण
 
 module_init(test_atomics_init);
-module_exit(test_atomics_exit);
+module_निकास(test_atomics_निकास);
 
 MODULE_LICENSE("GPL");

@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Marvell XOR platform device data definition file.
+ * Marvell XOR platक्रमm device data definition file.
  */
 
-#ifndef __DMA_MV_XOR_H
-#define __DMA_MV_XOR_H
+#अगर_अघोषित __DMA_MV_XOR_H
+#घोषणा __DMA_MV_XOR_H
 
-#include <linux/dmaengine.h>
-#include <linux/mbus.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/mbus.h>
 
-#define MV_XOR_NAME	"mv_xor"
+#घोषणा MV_XOR_NAME	"mv_xor"
 
-struct mv_xor_channel_data {
+काष्ठा mv_xor_channel_data अणु
 	dma_cap_mask_t			cap_mask;
-};
+पूर्ण;
 
-struct mv_xor_platform_data {
-	struct mv_xor_channel_data    *channels;
-};
+काष्ठा mv_xor_platक्रमm_data अणु
+	काष्ठा mv_xor_channel_data    *channels;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,88 +1,89 @@
-#ifndef _PERF_BRANCH_H
-#define _PERF_BRANCH_H 1
+<शैली गुरु>
+#अगर_अघोषित _PERF_BRANCH_H
+#घोषणा _PERF_BRANCH_H 1
 /*
- * The linux/stddef.h isn't need here, but is needed for __always_inline used
+ * The linux/मानकघोष.स isn't need here, but is needed क्रम __always_अंतरभूत used
  * in files included from uapi/linux/perf_event.h such as
  * /usr/include/linux/swab.h and /usr/include/linux/byteorder/little_endian.h,
  * detected in at least musl libc, used in Alpine Linux. -acme
  */
-#include <stdio.h>
-#include <stdint.h>
-#include <linux/compiler.h>
-#include <linux/stddef.h>
-#include <linux/perf_event.h>
-#include <linux/types.h>
-#include "event.h"
+#समावेश <मानकपन.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/types.h>
+#समावेश "event.h"
 
-struct branch_flags {
-	union {
+काष्ठा branch_flags अणु
+	जोड़ अणु
 		u64 value;
-		struct {
+		काष्ठा अणु
 			u64 mispred:1;
 			u64 predicted:1;
 			u64 in_tx:1;
-			u64 abort:1;
+			u64 पात:1;
 			u64 cycles:16;
 			u64 type:4;
 			u64 reserved:40;
-		};
-	};
-};
+		पूर्ण;
+	पूर्ण;
+पूर्ण;
 
-struct branch_info {
-	struct addr_map_symbol from;
-	struct addr_map_symbol to;
-	struct branch_flags    flags;
-	char		       *srcline_from;
-	char		       *srcline_to;
-};
+काष्ठा branch_info अणु
+	काष्ठा addr_map_symbol from;
+	काष्ठा addr_map_symbol to;
+	काष्ठा branch_flags    flags;
+	अक्षर		       *srcline_from;
+	अक्षर		       *srcline_to;
+पूर्ण;
 
-struct branch_entry {
+काष्ठा branch_entry अणु
 	u64			from;
 	u64			to;
-	struct branch_flags	flags;
-};
+	काष्ठा branch_flags	flags;
+पूर्ण;
 
-struct branch_stack {
+काष्ठा branch_stack अणु
 	u64			nr;
 	u64			hw_idx;
-	struct branch_entry	entries[];
-};
+	काष्ठा branch_entry	entries[];
+पूर्ण;
 
 /*
  * The hw_idx is only available when PERF_SAMPLE_BRANCH_HW_INDEX is applied.
- * Otherwise, the output format of a sample with branch stack is
- * struct branch_stack {
+ * Otherwise, the output क्रमmat of a sample with branch stack is
+ * काष्ठा branch_stack अणु
  *	u64			nr;
- *	struct branch_entry	entries[0];
- * }
+ *	काष्ठा branch_entry	entries[0];
+ * पूर्ण
  * Check whether the hw_idx is available,
- * and return the corresponding pointer of entries[0].
+ * and वापस the corresponding poपूर्णांकer of entries[0].
  */
-static inline struct branch_entry *perf_sample__branch_entries(struct perf_sample *sample)
-{
+अटल अंतरभूत काष्ठा branch_entry *perf_sample__branch_entries(काष्ठा perf_sample *sample)
+अणु
 	u64 *entry = (u64 *)sample->branch_stack;
 
 	entry++;
-	if (sample->no_hw_idx)
-		return (struct branch_entry *)entry;
-	return (struct branch_entry *)(++entry);
-}
+	अगर (sample->no_hw_idx)
+		वापस (काष्ठा branch_entry *)entry;
+	वापस (काष्ठा branch_entry *)(++entry);
+पूर्ण
 
-struct branch_type_stat {
+काष्ठा branch_type_stat अणु
 	bool	branch_to;
 	u64	counts[PERF_BR_MAX];
 	u64	cond_fwd;
 	u64	cond_bwd;
 	u64	cross_4k;
 	u64	cross_2m;
-};
+पूर्ण;
 
-void branch_type_count(struct branch_type_stat *st, struct branch_flags *flags,
+व्योम branch_type_count(काष्ठा branch_type_stat *st, काष्ठा branch_flags *flags,
 		       u64 from, u64 to);
 
-const char *branch_type_name(int type);
-void branch_type_stat_display(FILE *fp, struct branch_type_stat *st);
-int branch_type_str(struct branch_type_stat *st, char *bf, int bfsize);
+स्थिर अक्षर *branch_type_name(पूर्णांक type);
+व्योम branch_type_stat_display(खाता *fp, काष्ठा branch_type_stat *st);
+पूर्णांक branch_type_str(काष्ठा branch_type_stat *st, अक्षर *bf, पूर्णांक bfsize);
 
-#endif /* _PERF_BRANCH_H */
+#पूर्ण_अगर /* _PERF_BRANCH_H */

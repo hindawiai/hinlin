@@ -1,101 +1,102 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Simple file system for zoned block devices exposing zones as files.
+ * Simple file प्रणाली क्रम zoned block devices exposing zones as files.
  *
  * Copyright (C) 2019 Western Digital Corporation or its affiliates.
  */
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/magic.h>
-#include <linux/iomap.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/blkdev.h>
-#include <linux/statfs.h>
-#include <linux/writeback.h>
-#include <linux/quotaops.h>
-#include <linux/seq_file.h>
-#include <linux/parser.h>
-#include <linux/uio.h>
-#include <linux/mman.h>
-#include <linux/sched/mm.h>
-#include <linux/crc32.h>
-#include <linux/task_io_accounting_ops.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/iomap.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/statfs.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/quotaops.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/parser.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/mman.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/task_io_accounting_ops.h>
 
-#include "zonefs.h"
+#समावेश "zonefs.h"
 
-#define CREATE_TRACE_POINTS
-#include "trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "trace.h"
 
-static inline int zonefs_zone_mgmt(struct inode *inode,
-				   enum req_opf op)
-{
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
-	int ret;
+अटल अंतरभूत पूर्णांक zonefs_zone_mgmt(काष्ठा inode *inode,
+				   क्रमागत req_opf op)
+अणु
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
+	पूर्णांक ret;
 
-	lockdep_assert_held(&zi->i_truncate_mutex);
+	lockdep_निश्चित_held(&zi->i_truncate_mutex);
 
 	trace_zonefs_zone_mgmt(inode, op);
 	ret = blkdev_zone_mgmt(inode->i_sb->s_bdev, op, zi->i_zsector,
 			       zi->i_zone_size >> SECTOR_SHIFT, GFP_NOFS);
-	if (ret) {
+	अगर (ret) अणु
 		zonefs_err(inode->i_sb,
 			   "Zone management operation %s at %llu failed %d\n",
 			   blk_op_str(op), zi->i_zsector, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void zonefs_i_size_write(struct inode *inode, loff_t isize)
-{
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
+अटल अंतरभूत व्योम zonefs_i_size_ग_लिखो(काष्ठा inode *inode, loff_t isize)
+अणु
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
 
-	i_size_write(inode, isize);
+	i_size_ग_लिखो(inode, isize);
 	/*
-	 * A full zone is no longer open/active and does not need
+	 * A full zone is no दीर्घer खोलो/active and करोes not need
 	 * explicit closing.
 	 */
-	if (isize >= zi->i_max_size)
+	अगर (isize >= zi->i_max_size)
 		zi->i_flags &= ~ZONEFS_ZONE_OPEN;
-}
+पूर्ण
 
-static int zonefs_iomap_begin(struct inode *inode, loff_t offset, loff_t length,
-			      unsigned int flags, struct iomap *iomap,
-			      struct iomap *srcmap)
-{
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
-	struct super_block *sb = inode->i_sb;
+अटल पूर्णांक zonefs_iomap_begin(काष्ठा inode *inode, loff_t offset, loff_t length,
+			      अचिन्हित पूर्णांक flags, काष्ठा iomap *iomap,
+			      काष्ठा iomap *srcmap)
+अणु
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
+	काष्ठा super_block *sb = inode->i_sb;
 	loff_t isize;
 
 	/* All I/Os should always be within the file maximum size */
-	if (WARN_ON_ONCE(offset + length > zi->i_max_size))
-		return -EIO;
+	अगर (WARN_ON_ONCE(offset + length > zi->i_max_size))
+		वापस -EIO;
 
 	/*
-	 * Sequential zones can only accept direct writes. This is already
-	 * checked when writes are issued, so warn if we see a page writeback
+	 * Sequential zones can only accept direct ग_लिखोs. This is alपढ़ोy
+	 * checked when ग_लिखोs are issued, so warn अगर we see a page ग_लिखोback
 	 * operation.
 	 */
-	if (WARN_ON_ONCE(zi->i_ztype == ZONEFS_ZTYPE_SEQ &&
-			 (flags & IOMAP_WRITE) && !(flags & IOMAP_DIRECT)))
-		return -EIO;
+	अगर (WARN_ON_ONCE(zi->i_ztype == ZONEFS_ZTYPE_SEQ &&
+			 (flags & IOMAP_WRITE) && !(flags & IOMAP_सूचीECT)))
+		वापस -EIO;
 
 	/*
 	 * For conventional zones, all blocks are always mapped. For sequential
 	 * zones, all blocks after always mapped below the inode size (zone
-	 * write pointer) and unwriten beyond.
+	 * ग_लिखो poपूर्णांकer) and unग_लिखोn beyond.
 	 */
 	mutex_lock(&zi->i_truncate_mutex);
-	isize = i_size_read(inode);
-	if (offset >= isize)
+	isize = i_size_पढ़ो(inode);
+	अगर (offset >= isize)
 		iomap->type = IOMAP_UNWRITTEN;
-	else
+	अन्यथा
 		iomap->type = IOMAP_MAPPED;
-	if (flags & IOMAP_WRITE)
+	अगर (flags & IOMAP_WRITE)
 		length = zi->i_max_size - offset;
-	else
+	अन्यथा
 		length = min(length, isize - offset);
 	mutex_unlock(&zi->i_truncate_mutex);
 
@@ -106,393 +107,393 @@ static int zonefs_iomap_begin(struct inode *inode, loff_t offset, loff_t length,
 
 	trace_zonefs_iomap_begin(inode, iomap);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct iomap_ops zonefs_iomap_ops = {
+अटल स्थिर काष्ठा iomap_ops zonefs_iomap_ops = अणु
 	.iomap_begin	= zonefs_iomap_begin,
-};
+पूर्ण;
 
-static int zonefs_readpage(struct file *unused, struct page *page)
-{
-	return iomap_readpage(page, &zonefs_iomap_ops);
-}
+अटल पूर्णांक zonefs_पढ़ोpage(काष्ठा file *unused, काष्ठा page *page)
+अणु
+	वापस iomap_पढ़ोpage(page, &zonefs_iomap_ops);
+पूर्ण
 
-static void zonefs_readahead(struct readahead_control *rac)
-{
-	iomap_readahead(rac, &zonefs_iomap_ops);
-}
+अटल व्योम zonefs_पढ़ोahead(काष्ठा पढ़ोahead_control *rac)
+अणु
+	iomap_पढ़ोahead(rac, &zonefs_iomap_ops);
+पूर्ण
 
 /*
- * Map blocks for page writeback. This is used only on conventional zone files,
+ * Map blocks क्रम page ग_लिखोback. This is used only on conventional zone files,
  * which implies that the page range can only be within the fixed inode size.
  */
-static int zonefs_map_blocks(struct iomap_writepage_ctx *wpc,
-			     struct inode *inode, loff_t offset)
-{
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
+अटल पूर्णांक zonefs_map_blocks(काष्ठा iomap_ग_लिखोpage_ctx *wpc,
+			     काष्ठा inode *inode, loff_t offset)
+अणु
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
 
-	if (WARN_ON_ONCE(zi->i_ztype != ZONEFS_ZTYPE_CNV))
-		return -EIO;
-	if (WARN_ON_ONCE(offset >= i_size_read(inode)))
-		return -EIO;
+	अगर (WARN_ON_ONCE(zi->i_ztype != ZONEFS_ZTYPE_CNV))
+		वापस -EIO;
+	अगर (WARN_ON_ONCE(offset >= i_size_पढ़ो(inode)))
+		वापस -EIO;
 
-	/* If the mapping is already OK, nothing needs to be done */
-	if (offset >= wpc->iomap.offset &&
+	/* If the mapping is alपढ़ोy OK, nothing needs to be करोne */
+	अगर (offset >= wpc->iomap.offset &&
 	    offset < wpc->iomap.offset + wpc->iomap.length)
-		return 0;
+		वापस 0;
 
-	return zonefs_iomap_begin(inode, offset, zi->i_max_size - offset,
-				  IOMAP_WRITE, &wpc->iomap, NULL);
-}
+	वापस zonefs_iomap_begin(inode, offset, zi->i_max_size - offset,
+				  IOMAP_WRITE, &wpc->iomap, शून्य);
+पूर्ण
 
-static const struct iomap_writeback_ops zonefs_writeback_ops = {
+अटल स्थिर काष्ठा iomap_ग_लिखोback_ops zonefs_ग_लिखोback_ops = अणु
 	.map_blocks		= zonefs_map_blocks,
-};
+पूर्ण;
 
-static int zonefs_writepage(struct page *page, struct writeback_control *wbc)
-{
-	struct iomap_writepage_ctx wpc = { };
+अटल पूर्णांक zonefs_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	काष्ठा iomap_ग_लिखोpage_ctx wpc = अणु पूर्ण;
 
-	return iomap_writepage(page, wbc, &wpc, &zonefs_writeback_ops);
-}
+	वापस iomap_ग_लिखोpage(page, wbc, &wpc, &zonefs_ग_लिखोback_ops);
+पूर्ण
 
-static int zonefs_writepages(struct address_space *mapping,
-			     struct writeback_control *wbc)
-{
-	struct iomap_writepage_ctx wpc = { };
+अटल पूर्णांक zonefs_ग_लिखोpages(काष्ठा address_space *mapping,
+			     काष्ठा ग_लिखोback_control *wbc)
+अणु
+	काष्ठा iomap_ग_लिखोpage_ctx wpc = अणु पूर्ण;
 
-	return iomap_writepages(mapping, wbc, &wpc, &zonefs_writeback_ops);
-}
+	वापस iomap_ग_लिखोpages(mapping, wbc, &wpc, &zonefs_ग_लिखोback_ops);
+पूर्ण
 
-static int zonefs_swap_activate(struct swap_info_struct *sis,
-				struct file *swap_file, sector_t *span)
-{
-	struct inode *inode = file_inode(swap_file);
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
+अटल पूर्णांक zonefs_swap_activate(काष्ठा swap_info_काष्ठा *sis,
+				काष्ठा file *swap_file, sector_t *span)
+अणु
+	काष्ठा inode *inode = file_inode(swap_file);
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
 
-	if (zi->i_ztype != ZONEFS_ZTYPE_CNV) {
+	अगर (zi->i_ztype != ZONEFS_ZTYPE_CNV) अणु
 		zonefs_err(inode->i_sb,
 			   "swap file: not a conventional zone file\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return iomap_swapfile_activate(sis, swap_file, span, &zonefs_iomap_ops);
-}
+	वापस iomap_swapfile_activate(sis, swap_file, span, &zonefs_iomap_ops);
+पूर्ण
 
-static const struct address_space_operations zonefs_file_aops = {
-	.readpage		= zonefs_readpage,
-	.readahead		= zonefs_readahead,
-	.writepage		= zonefs_writepage,
-	.writepages		= zonefs_writepages,
+अटल स्थिर काष्ठा address_space_operations zonefs_file_aops = अणु
+	.पढ़ोpage		= zonefs_पढ़ोpage,
+	.पढ़ोahead		= zonefs_पढ़ोahead,
+	.ग_लिखोpage		= zonefs_ग_लिखोpage,
+	.ग_लिखोpages		= zonefs_ग_लिखोpages,
 	.set_page_dirty		= iomap_set_page_dirty,
 	.releasepage		= iomap_releasepage,
 	.invalidatepage		= iomap_invalidatepage,
 	.migratepage		= iomap_migrate_page,
 	.is_partially_uptodate	= iomap_is_partially_uptodate,
-	.error_remove_page	= generic_error_remove_page,
+	.error_हटाओ_page	= generic_error_हटाओ_page,
 	.direct_IO		= noop_direct_IO,
 	.swap_activate		= zonefs_swap_activate,
-};
+पूर्ण;
 
-static void zonefs_update_stats(struct inode *inode, loff_t new_isize)
-{
-	struct super_block *sb = inode->i_sb;
-	struct zonefs_sb_info *sbi = ZONEFS_SB(sb);
-	loff_t old_isize = i_size_read(inode);
+अटल व्योम zonefs_update_stats(काष्ठा inode *inode, loff_t new_isize)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा zonefs_sb_info *sbi = ZONEFS_SB(sb);
+	loff_t old_isize = i_size_पढ़ो(inode);
 	loff_t nr_blocks;
 
-	if (new_isize == old_isize)
-		return;
+	अगर (new_isize == old_isize)
+		वापस;
 
 	spin_lock(&sbi->s_lock);
 
 	/*
-	 * This may be called for an update after an IO error.
+	 * This may be called क्रम an update after an IO error.
 	 * So beware of the values seen.
 	 */
-	if (new_isize < old_isize) {
+	अगर (new_isize < old_isize) अणु
 		nr_blocks = (old_isize - new_isize) >> sb->s_blocksize_bits;
-		if (sbi->s_used_blocks > nr_blocks)
+		अगर (sbi->s_used_blocks > nr_blocks)
 			sbi->s_used_blocks -= nr_blocks;
-		else
+		अन्यथा
 			sbi->s_used_blocks = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		sbi->s_used_blocks +=
 			(new_isize - old_isize) >> sb->s_blocksize_bits;
-		if (sbi->s_used_blocks > sbi->s_blocks)
+		अगर (sbi->s_used_blocks > sbi->s_blocks)
 			sbi->s_used_blocks = sbi->s_blocks;
-	}
+	पूर्ण
 
 	spin_unlock(&sbi->s_lock);
-}
+पूर्ण
 
 /*
- * Check a zone condition and adjust its file inode access permissions for
- * offline and readonly zones. Return the inode size corresponding to the
- * amount of readable data in the zone.
+ * Check a zone condition and adjust its file inode access permissions क्रम
+ * offline and पढ़ोonly zones. Return the inode size corresponding to the
+ * amount of पढ़ोable data in the zone.
  */
-static loff_t zonefs_check_zone_condition(struct inode *inode,
-					  struct blk_zone *zone, bool warn,
+अटल loff_t zonefs_check_zone_condition(काष्ठा inode *inode,
+					  काष्ठा blk_zone *zone, bool warn,
 					  bool mount)
-{
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
+अणु
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
 
-	switch (zone->cond) {
-	case BLK_ZONE_COND_OFFLINE:
+	चयन (zone->cond) अणु
+	हाल BLK_ZONE_COND_OFFLINE:
 		/*
 		 * Dead zone: make the inode immutable, disable all accesses
 		 * and set the file size to 0 (zone wp set to zone start).
 		 */
-		if (warn)
+		अगर (warn)
 			zonefs_warn(inode->i_sb, "inode %lu: offline zone\n",
 				    inode->i_ino);
 		inode->i_flags |= S_IMMUTABLE;
 		inode->i_mode &= ~0777;
 		zone->wp = zone->start;
-		return 0;
-	case BLK_ZONE_COND_READONLY:
+		वापस 0;
+	हाल BLK_ZONE_COND_READONLY:
 		/*
-		 * The write pointer of read-only zones is invalid. If such a
+		 * The ग_लिखो poपूर्णांकer of पढ़ो-only zones is invalid. If such a
 		 * zone is found during mount, the file size cannot be retrieved
-		 * so we treat the zone as offline (mount == true case).
+		 * so we treat the zone as offline (mount == true हाल).
 		 * Otherwise, keep the file size as it was when last updated
-		 * so that the user can recover data. In both cases, writes are
-		 * always disabled for the zone.
+		 * so that the user can recover data. In both हालs, ग_लिखोs are
+		 * always disabled क्रम the zone.
 		 */
-		if (warn)
+		अगर (warn)
 			zonefs_warn(inode->i_sb, "inode %lu: read-only zone\n",
 				    inode->i_ino);
 		inode->i_flags |= S_IMMUTABLE;
-		if (mount) {
+		अगर (mount) अणु
 			zone->cond = BLK_ZONE_COND_OFFLINE;
 			inode->i_mode &= ~0777;
 			zone->wp = zone->start;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		inode->i_mode &= ~0222;
-		return i_size_read(inode);
-	case BLK_ZONE_COND_FULL:
-		/* The write pointer of full zones is invalid. */
-		return zi->i_max_size;
-	default:
-		if (zi->i_ztype == ZONEFS_ZTYPE_CNV)
-			return zi->i_max_size;
-		return (zone->wp - zone->start) << SECTOR_SHIFT;
-	}
-}
+		वापस i_size_पढ़ो(inode);
+	हाल BLK_ZONE_COND_FULL:
+		/* The ग_लिखो poपूर्णांकer of full zones is invalid. */
+		वापस zi->i_max_size;
+	शेष:
+		अगर (zi->i_ztype == ZONEFS_ZTYPE_CNV)
+			वापस zi->i_max_size;
+		वापस (zone->wp - zone->start) << SECTOR_SHIFT;
+	पूर्ण
+पूर्ण
 
-struct zonefs_ioerr_data {
-	struct inode	*inode;
-	bool		write;
-};
+काष्ठा zonefs_ioerr_data अणु
+	काष्ठा inode	*inode;
+	bool		ग_लिखो;
+पूर्ण;
 
-static int zonefs_io_error_cb(struct blk_zone *zone, unsigned int idx,
-			      void *data)
-{
-	struct zonefs_ioerr_data *err = data;
-	struct inode *inode = err->inode;
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
-	struct super_block *sb = inode->i_sb;
-	struct zonefs_sb_info *sbi = ZONEFS_SB(sb);
+अटल पूर्णांक zonefs_io_error_cb(काष्ठा blk_zone *zone, अचिन्हित पूर्णांक idx,
+			      व्योम *data)
+अणु
+	काष्ठा zonefs_ioerr_data *err = data;
+	काष्ठा inode *inode = err->inode;
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा zonefs_sb_info *sbi = ZONEFS_SB(sb);
 	loff_t isize, data_size;
 
 	/*
-	 * Check the zone condition: if the zone is not "bad" (offline or
-	 * read-only), read errors are simply signaled to the IO issuer as long
+	 * Check the zone condition: अगर the zone is not "bad" (offline or
+	 * पढ़ो-only), पढ़ो errors are simply संकेतed to the IO issuer as दीर्घ
 	 * as there is no inconsistency between the inode size and the amount of
-	 * data writen in the zone (data_size).
+	 * data ग_लिखोn in the zone (data_size).
 	 */
 	data_size = zonefs_check_zone_condition(inode, zone, true, false);
-	isize = i_size_read(inode);
-	if (zone->cond != BLK_ZONE_COND_OFFLINE &&
+	isize = i_size_पढ़ो(inode);
+	अगर (zone->cond != BLK_ZONE_COND_OFFLINE &&
 	    zone->cond != BLK_ZONE_COND_READONLY &&
-	    !err->write && isize == data_size)
-		return 0;
+	    !err->ग_लिखो && isize == data_size)
+		वापस 0;
 
 	/*
-	 * At this point, we detected either a bad zone or an inconsistency
+	 * At this poपूर्णांक, we detected either a bad zone or an inconsistency
 	 * between the inode size and the amount of data written in the zone.
-	 * For the latter case, the cause may be a write IO error or an external
+	 * For the latter हाल, the cause may be a ग_लिखो IO error or an बाह्यal
 	 * action on the device. Two error patterns exist:
 	 * 1) The inode size is lower than the amount of data in the zone:
-	 *    a write operation partially failed and data was writen at the end
-	 *    of the file. This can happen in the case of a large direct IO
-	 *    needing several BIOs and/or write requests to be processed.
+	 *    a ग_लिखो operation partially failed and data was ग_लिखोn at the end
+	 *    of the file. This can happen in the हाल of a large direct IO
+	 *    needing several BIOs and/or ग_लिखो requests to be processed.
 	 * 2) The inode size is larger than the amount of data in the zone:
-	 *    this can happen with a deferred write error with the use of the
-	 *    device side write cache after getting successful write IO
-	 *    completions. Other possibilities are (a) an external corruption,
+	 *    this can happen with a deferred ग_लिखो error with the use of the
+	 *    device side ग_लिखो cache after getting successful ग_लिखो IO
+	 *    completions. Other possibilities are (a) an बाह्यal corruption,
 	 *    e.g. an application reset the zone directly, or (b) the device
 	 *    has a serious problem (e.g. firmware bug).
 	 *
-	 * In all cases, warn about inode size inconsistency and handle the
+	 * In all हालs, warn about inode size inconsistency and handle the
 	 * IO error according to the zone condition and to the mount options.
 	 */
-	if (zi->i_ztype == ZONEFS_ZTYPE_SEQ && isize != data_size)
+	अगर (zi->i_ztype == ZONEFS_ZTYPE_SEQ && isize != data_size)
 		zonefs_warn(sb, "inode %lu: invalid size %lld (should be %lld)\n",
 			    inode->i_ino, isize, data_size);
 
 	/*
-	 * First handle bad zones signaled by hardware. The mount options
+	 * First handle bad zones संकेतed by hardware. The mount options
 	 * errors=zone-ro and errors=zone-offline result in changing the
-	 * zone condition to read-only and offline respectively, as if the
-	 * condition was signaled by the hardware.
+	 * zone condition to पढ़ो-only and offline respectively, as अगर the
+	 * condition was संकेतed by the hardware.
 	 */
-	if (zone->cond == BLK_ZONE_COND_OFFLINE ||
-	    sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_ZOL) {
+	अगर (zone->cond == BLK_ZONE_COND_OFFLINE ||
+	    sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_ZOL) अणु
 		zonefs_warn(sb, "inode %lu: read/write access disabled\n",
 			    inode->i_ino);
-		if (zone->cond != BLK_ZONE_COND_OFFLINE) {
+		अगर (zone->cond != BLK_ZONE_COND_OFFLINE) अणु
 			zone->cond = BLK_ZONE_COND_OFFLINE;
 			data_size = zonefs_check_zone_condition(inode, zone,
 								false, false);
-		}
-	} else if (zone->cond == BLK_ZONE_COND_READONLY ||
-		   sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_ZRO) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (zone->cond == BLK_ZONE_COND_READONLY ||
+		   sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_ZRO) अणु
 		zonefs_warn(sb, "inode %lu: write access disabled\n",
 			    inode->i_ino);
-		if (zone->cond != BLK_ZONE_COND_READONLY) {
+		अगर (zone->cond != BLK_ZONE_COND_READONLY) अणु
 			zone->cond = BLK_ZONE_COND_READONLY;
 			data_size = zonefs_check_zone_condition(inode, zone,
 								false, false);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * If the filesystem is mounted with the explicit-open mount option, we
-	 * need to clear the ZONEFS_ZONE_OPEN flag if the zone transitioned to
-	 * the read-only or offline condition, to avoid attempting an explicit
-	 * close of the zone when the inode file is closed.
+	 * If the fileप्रणाली is mounted with the explicit-खोलो mount option, we
+	 * need to clear the ZONEFS_ZONE_OPEN flag अगर the zone transitioned to
+	 * the पढ़ो-only or offline condition, to aव्योम attempting an explicit
+	 * बंद of the zone when the inode file is बंदd.
 	 */
-	if ((sbi->s_mount_opts & ZONEFS_MNTOPT_EXPLICIT_OPEN) &&
+	अगर ((sbi->s_mount_opts & ZONEFS_MNTOPT_EXPLICIT_OPEN) &&
 	    (zone->cond == BLK_ZONE_COND_OFFLINE ||
 	     zone->cond == BLK_ZONE_COND_READONLY))
 		zi->i_flags &= ~ZONEFS_ZONE_OPEN;
 
 	/*
-	 * If error=remount-ro was specified, any error result in remounting
-	 * the volume as read-only.
+	 * If error=remount-ro was specअगरied, any error result in remounting
+	 * the volume as पढ़ो-only.
 	 */
-	if ((sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_RO) && !sb_rdonly(sb)) {
+	अगर ((sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_RO) && !sb_rकरोnly(sb)) अणु
 		zonefs_warn(sb, "remounting filesystem read-only\n");
 		sb->s_flags |= SB_RDONLY;
-	}
+	पूर्ण
 
 	/*
 	 * Update block usage stats and the inode size  to prevent access to
 	 * invalid data.
 	 */
 	zonefs_update_stats(inode, data_size);
-	zonefs_i_size_write(inode, data_size);
+	zonefs_i_size_ग_लिखो(inode, data_size);
 	zi->i_wpoffset = data_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * When an file IO error occurs, check the file zone to see if there is a change
- * in the zone condition (e.g. offline or read-only). For a failed write to a
- * sequential zone, the zone write pointer position must also be checked to
- * eventually correct the file size and zonefs inode write pointer offset
- * (which can be out of sync with the drive due to partial write failures).
+ * When an file IO error occurs, check the file zone to see अगर there is a change
+ * in the zone condition (e.g. offline or पढ़ो-only). For a failed ग_लिखो to a
+ * sequential zone, the zone ग_लिखो poपूर्णांकer position must also be checked to
+ * eventually correct the file size and zonefs inode ग_लिखो poपूर्णांकer offset
+ * (which can be out of sync with the drive due to partial ग_लिखो failures).
  */
-static void __zonefs_io_error(struct inode *inode, bool write)
-{
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
-	struct super_block *sb = inode->i_sb;
-	struct zonefs_sb_info *sbi = ZONEFS_SB(sb);
-	unsigned int noio_flag;
-	unsigned int nr_zones =
-		zi->i_zone_size >> (sbi->s_zone_sectors_shift + SECTOR_SHIFT);
-	struct zonefs_ioerr_data err = {
+अटल व्योम __zonefs_io_error(काष्ठा inode *inode, bool ग_लिखो)
+अणु
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा zonefs_sb_info *sbi = ZONEFS_SB(sb);
+	अचिन्हित पूर्णांक noio_flag;
+	अचिन्हित पूर्णांक nr_zones =
+		zi->i_zone_size >> (sbi->s_zone_sectors_shअगरt + SECTOR_SHIFT);
+	काष्ठा zonefs_ioerr_data err = अणु
 		.inode = inode,
-		.write = write,
-	};
-	int ret;
+		.ग_लिखो = ग_लिखो,
+	पूर्ण;
+	पूर्णांक ret;
 
 	/*
 	 * Memory allocations in blkdev_report_zones() can trigger a memory
-	 * reclaim which may in turn cause a recursion into zonefs as well as
-	 * struct request allocations for the same device. The former case may
-	 * end up in a deadlock on the inode truncate mutex, while the latter
-	 * may prevent IO forward progress. Executing the report zones under
-	 * the GFP_NOIO context avoids both problems.
+	 * reclaim which may in turn cause a recursion पूर्णांकo zonefs as well as
+	 * काष्ठा request allocations क्रम the same device. The क्रमmer हाल may
+	 * end up in a deadlock on the inode truncate mutex, जबतक the latter
+	 * may prevent IO क्रमward progress. Executing the report zones under
+	 * the GFP_NOIO context aव्योमs both problems.
 	 */
-	noio_flag = memalloc_noio_save();
+	noio_flag = meदो_स्मृति_noio_save();
 	ret = blkdev_report_zones(sb->s_bdev, zi->i_zsector, nr_zones,
 				  zonefs_io_error_cb, &err);
-	if (ret != nr_zones)
+	अगर (ret != nr_zones)
 		zonefs_err(sb, "Get inode %lu zone information failed %d\n",
 			   inode->i_ino, ret);
-	memalloc_noio_restore(noio_flag);
-}
+	meदो_स्मृति_noio_restore(noio_flag);
+पूर्ण
 
-static void zonefs_io_error(struct inode *inode, bool write)
-{
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
+अटल व्योम zonefs_io_error(काष्ठा inode *inode, bool ग_लिखो)
+अणु
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
 
 	mutex_lock(&zi->i_truncate_mutex);
-	__zonefs_io_error(inode, write);
+	__zonefs_io_error(inode, ग_लिखो);
 	mutex_unlock(&zi->i_truncate_mutex);
-}
+पूर्ण
 
-static int zonefs_file_truncate(struct inode *inode, loff_t isize)
-{
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
+अटल पूर्णांक zonefs_file_truncate(काष्ठा inode *inode, loff_t isize)
+अणु
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
 	loff_t old_isize;
-	enum req_opf op;
-	int ret = 0;
+	क्रमागत req_opf op;
+	पूर्णांक ret = 0;
 
 	/*
 	 * Only sequential zone files can be truncated and truncation is allowed
-	 * only down to a 0 size, which is equivalent to a zone reset, and to
+	 * only करोwn to a 0 size, which is equivalent to a zone reset, and to
 	 * the maximum file size, which is equivalent to a zone finish.
 	 */
-	if (zi->i_ztype != ZONEFS_ZTYPE_SEQ)
-		return -EPERM;
+	अगर (zi->i_ztype != ZONEFS_ZTYPE_SEQ)
+		वापस -EPERM;
 
-	if (!isize)
+	अगर (!isize)
 		op = REQ_OP_ZONE_RESET;
-	else if (isize == zi->i_max_size)
+	अन्यथा अगर (isize == zi->i_max_size)
 		op = REQ_OP_ZONE_FINISH;
-	else
-		return -EPERM;
+	अन्यथा
+		वापस -EPERM;
 
-	inode_dio_wait(inode);
+	inode_dio_रुको(inode);
 
 	/* Serialize against page faults */
-	down_write(&zi->i_mmap_sem);
+	करोwn_ग_लिखो(&zi->i_mmap_sem);
 
 	/* Serialize against zonefs_iomap_begin() */
 	mutex_lock(&zi->i_truncate_mutex);
 
-	old_isize = i_size_read(inode);
-	if (isize == old_isize)
-		goto unlock;
+	old_isize = i_size_पढ़ो(inode);
+	अगर (isize == old_isize)
+		जाओ unlock;
 
 	ret = zonefs_zone_mgmt(inode, op);
-	if (ret)
-		goto unlock;
+	अगर (ret)
+		जाओ unlock;
 
 	/*
 	 * If the mount option ZONEFS_MNTOPT_EXPLICIT_OPEN is set,
-	 * take care of open zones.
+	 * take care of खोलो zones.
 	 */
-	if (zi->i_flags & ZONEFS_ZONE_OPEN) {
+	अगर (zi->i_flags & ZONEFS_ZONE_OPEN) अणु
 		/*
 		 * Truncating a zone to EMPTY or FULL is the equivalent of
 		 * closing the zone. For a truncation to 0, we need to
-		 * re-open the zone to ensure new writes can be processed.
+		 * re-खोलो the zone to ensure new ग_लिखोs can be processed.
 		 * For a truncation to the maximum file size, the zone is
-		 * closed and writes cannot be accepted anymore, so clear
-		 * the open flag.
+		 * बंदd and ग_लिखोs cannot be accepted anymore, so clear
+		 * the खोलो flag.
 		 */
-		if (!isize)
+		अगर (!isize)
 			ret = zonefs_zone_mgmt(inode, REQ_OP_ZONE_OPEN);
-		else
+		अन्यथा
 			zi->i_flags &= ~ZONEFS_ZONE_OPEN;
-	}
+	पूर्ण
 
 	zonefs_update_stats(inode, isize);
 	truncate_setsize(inode, isize);
@@ -500,683 +501,683 @@ static int zonefs_file_truncate(struct inode *inode, loff_t isize)
 
 unlock:
 	mutex_unlock(&zi->i_truncate_mutex);
-	up_write(&zi->i_mmap_sem);
+	up_ग_लिखो(&zi->i_mmap_sem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int zonefs_inode_setattr(struct user_namespace *mnt_userns,
-				struct dentry *dentry, struct iattr *iattr)
-{
-	struct inode *inode = d_inode(dentry);
-	int ret;
+अटल पूर्णांक zonefs_inode_setattr(काष्ठा user_namespace *mnt_userns,
+				काष्ठा dentry *dentry, काष्ठा iattr *iattr)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	पूर्णांक ret;
 
-	if (unlikely(IS_IMMUTABLE(inode)))
-		return -EPERM;
+	अगर (unlikely(IS_IMMUTABLE(inode)))
+		वापस -EPERM;
 
 	ret = setattr_prepare(&init_user_ns, dentry, iattr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Since files and directories cannot be created nor deleted, do not
-	 * allow setting any write attributes on the sub-directories grouping
+	 * Since files and directories cannot be created nor deleted, करो not
+	 * allow setting any ग_लिखो attributes on the sub-directories grouping
 	 * files by zone type.
 	 */
-	if ((iattr->ia_valid & ATTR_MODE) && S_ISDIR(inode->i_mode) &&
+	अगर ((iattr->ia_valid & ATTR_MODE) && S_ISसूची(inode->i_mode) &&
 	    (iattr->ia_mode & 0222))
-		return -EPERM;
+		वापस -EPERM;
 
-	if (((iattr->ia_valid & ATTR_UID) &&
+	अगर (((iattr->ia_valid & ATTR_UID) &&
 	     !uid_eq(iattr->ia_uid, inode->i_uid)) ||
 	    ((iattr->ia_valid & ATTR_GID) &&
-	     !gid_eq(iattr->ia_gid, inode->i_gid))) {
+	     !gid_eq(iattr->ia_gid, inode->i_gid))) अणु
 		ret = dquot_transfer(inode, iattr);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (iattr->ia_valid & ATTR_SIZE) {
+	अगर (iattr->ia_valid & ATTR_SIZE) अणु
 		ret = zonefs_file_truncate(inode, iattr->ia_size);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	setattr_copy(&init_user_ns, inode, iattr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct inode_operations zonefs_file_inode_operations = {
+अटल स्थिर काष्ठा inode_operations zonefs_file_inode_operations = अणु
 	.setattr	= zonefs_inode_setattr,
-};
+पूर्ण;
 
-static int zonefs_file_fsync(struct file *file, loff_t start, loff_t end,
-			     int datasync)
-{
-	struct inode *inode = file_inode(file);
-	int ret = 0;
+अटल पूर्णांक zonefs_file_fsync(काष्ठा file *file, loff_t start, loff_t end,
+			     पूर्णांक datasync)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	पूर्णांक ret = 0;
 
-	if (unlikely(IS_IMMUTABLE(inode)))
-		return -EPERM;
+	अगर (unlikely(IS_IMMUTABLE(inode)))
+		वापस -EPERM;
 
 	/*
-	 * Since only direct writes are allowed in sequential files, page cache
-	 * flush is needed only for conventional zone files.
+	 * Since only direct ग_लिखोs are allowed in sequential files, page cache
+	 * flush is needed only क्रम conventional zone files.
 	 */
-	if (ZONEFS_I(inode)->i_ztype == ZONEFS_ZTYPE_CNV)
-		ret = file_write_and_wait_range(file, start, end);
-	if (!ret)
+	अगर (ZONEFS_I(inode)->i_ztype == ZONEFS_ZTYPE_CNV)
+		ret = file_ग_लिखो_and_रुको_range(file, start, end);
+	अगर (!ret)
 		ret = blkdev_issue_flush(inode->i_sb->s_bdev);
 
-	if (ret)
+	अगर (ret)
 		zonefs_io_error(inode, true);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static vm_fault_t zonefs_filemap_fault(struct vm_fault *vmf)
-{
-	struct zonefs_inode_info *zi = ZONEFS_I(file_inode(vmf->vma->vm_file));
+अटल vm_fault_t zonefs_filemap_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(file_inode(vmf->vma->vm_file));
 	vm_fault_t ret;
 
-	down_read(&zi->i_mmap_sem);
+	करोwn_पढ़ो(&zi->i_mmap_sem);
 	ret = filemap_fault(vmf);
-	up_read(&zi->i_mmap_sem);
+	up_पढ़ो(&zi->i_mmap_sem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static vm_fault_t zonefs_filemap_page_mkwrite(struct vm_fault *vmf)
-{
-	struct inode *inode = file_inode(vmf->vma->vm_file);
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
+अटल vm_fault_t zonefs_filemap_page_mkग_लिखो(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा inode *inode = file_inode(vmf->vma->vm_file);
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
 	vm_fault_t ret;
 
-	if (unlikely(IS_IMMUTABLE(inode)))
-		return VM_FAULT_SIGBUS;
+	अगर (unlikely(IS_IMMUTABLE(inode)))
+		वापस VM_FAULT_SIGBUS;
 
 	/*
 	 * Sanity check: only conventional zone files can have shared
-	 * writeable mappings.
+	 * ग_लिखोable mappings.
 	 */
-	if (WARN_ON_ONCE(zi->i_ztype != ZONEFS_ZTYPE_CNV))
-		return VM_FAULT_NOPAGE;
+	अगर (WARN_ON_ONCE(zi->i_ztype != ZONEFS_ZTYPE_CNV))
+		वापस VM_FAULT_NOPAGE;
 
 	sb_start_pagefault(inode->i_sb);
-	file_update_time(vmf->vma->vm_file);
+	file_update_समय(vmf->vma->vm_file);
 
 	/* Serialize against truncates */
-	down_read(&zi->i_mmap_sem);
-	ret = iomap_page_mkwrite(vmf, &zonefs_iomap_ops);
-	up_read(&zi->i_mmap_sem);
+	करोwn_पढ़ो(&zi->i_mmap_sem);
+	ret = iomap_page_mkग_लिखो(vmf, &zonefs_iomap_ops);
+	up_पढ़ो(&zi->i_mmap_sem);
 
 	sb_end_pagefault(inode->i_sb);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct vm_operations_struct zonefs_file_vm_ops = {
+अटल स्थिर काष्ठा vm_operations_काष्ठा zonefs_file_vm_ops = अणु
 	.fault		= zonefs_filemap_fault,
 	.map_pages	= filemap_map_pages,
-	.page_mkwrite	= zonefs_filemap_page_mkwrite,
-};
+	.page_mkग_लिखो	= zonefs_filemap_page_mkग_लिखो,
+पूर्ण;
 
-static int zonefs_file_mmap(struct file *file, struct vm_area_struct *vma)
-{
+अटल पूर्णांक zonefs_file_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
 	/*
-	 * Conventional zones accept random writes, so their files can support
-	 * shared writable mappings. For sequential zone files, only read
-	 * mappings are possible since there are no guarantees for write
-	 * ordering between msync() and page cache writeback.
+	 * Conventional zones accept अक्रमom ग_लिखोs, so their files can support
+	 * shared writable mappings. For sequential zone files, only पढ़ो
+	 * mappings are possible since there are no guarantees क्रम ग_लिखो
+	 * ordering between msync() and page cache ग_लिखोback.
 	 */
-	if (ZONEFS_I(file_inode(file))->i_ztype == ZONEFS_ZTYPE_SEQ &&
+	अगर (ZONEFS_I(file_inode(file))->i_ztype == ZONEFS_ZTYPE_SEQ &&
 	    (vma->vm_flags & VM_SHARED) && (vma->vm_flags & VM_MAYWRITE))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	file_accessed(file);
 	vma->vm_ops = &zonefs_file_vm_ops;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static loff_t zonefs_file_llseek(struct file *file, loff_t offset, int whence)
-{
-	loff_t isize = i_size_read(file_inode(file));
+अटल loff_t zonefs_file_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
+अणु
+	loff_t isize = i_size_पढ़ो(file_inode(file));
 
 	/*
-	 * Seeks are limited to below the zone size for conventional zones
-	 * and below the zone write pointer for sequential zones. In both
-	 * cases, this limit is the inode size.
+	 * Seeks are limited to below the zone size क्रम conventional zones
+	 * and below the zone ग_लिखो poपूर्णांकer क्रम sequential zones. In both
+	 * हालs, this limit is the inode size.
 	 */
-	return generic_file_llseek_size(file, offset, whence, isize, isize);
-}
+	वापस generic_file_llseek_size(file, offset, whence, isize, isize);
+पूर्ण
 
-static int zonefs_file_write_dio_end_io(struct kiocb *iocb, ssize_t size,
-					int error, unsigned int flags)
-{
-	struct inode *inode = file_inode(iocb->ki_filp);
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
+अटल पूर्णांक zonefs_file_ग_लिखो_dio_end_io(काष्ठा kiocb *iocb, sमाप_प्रकार size,
+					पूर्णांक error, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
 
-	if (error) {
+	अगर (error) अणु
 		zonefs_io_error(inode, true);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	if (size && zi->i_ztype != ZONEFS_ZTYPE_CNV) {
+	अगर (size && zi->i_ztype != ZONEFS_ZTYPE_CNV) अणु
 		/*
 		 * Note that we may be seeing completions out of order,
-		 * but that is not a problem since a write completed
-		 * successfully necessarily means that all preceding writes
+		 * but that is not a problem since a ग_लिखो completed
+		 * successfully necessarily means that all preceding ग_लिखोs
 		 * were also successful. So we can safely increase the inode
-		 * size to the write end location.
+		 * size to the ग_लिखो end location.
 		 */
 		mutex_lock(&zi->i_truncate_mutex);
-		if (i_size_read(inode) < iocb->ki_pos + size) {
+		अगर (i_size_पढ़ो(inode) < iocb->ki_pos + size) अणु
 			zonefs_update_stats(inode, iocb->ki_pos + size);
-			zonefs_i_size_write(inode, iocb->ki_pos + size);
-		}
+			zonefs_i_size_ग_लिखो(inode, iocb->ki_pos + size);
+		पूर्ण
 		mutex_unlock(&zi->i_truncate_mutex);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct iomap_dio_ops zonefs_write_dio_ops = {
-	.end_io			= zonefs_file_write_dio_end_io,
-};
+अटल स्थिर काष्ठा iomap_dio_ops zonefs_ग_लिखो_dio_ops = अणु
+	.end_io			= zonefs_file_ग_लिखो_dio_end_io,
+पूर्ण;
 
-static ssize_t zonefs_file_dio_append(struct kiocb *iocb, struct iov_iter *from)
-{
-	struct inode *inode = file_inode(iocb->ki_filp);
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
-	struct block_device *bdev = inode->i_sb->s_bdev;
-	unsigned int max;
-	struct bio *bio;
-	ssize_t size;
-	int nr_pages;
-	ssize_t ret;
+अटल sमाप_प्रकार zonefs_file_dio_append(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
+अणु
+	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
+	काष्ठा block_device *bdev = inode->i_sb->s_bdev;
+	अचिन्हित पूर्णांक max;
+	काष्ठा bio *bio;
+	sमाप_प्रकार size;
+	पूर्णांक nr_pages;
+	sमाप_प्रकार ret;
 
 	max = queue_max_zone_append_sectors(bdev_get_queue(bdev));
 	max = ALIGN_DOWN(max << SECTOR_SHIFT, inode->i_sb->s_blocksize);
 	iov_iter_truncate(from, max);
 
 	nr_pages = iov_iter_npages(from, BIO_MAX_VECS);
-	if (!nr_pages)
-		return 0;
+	अगर (!nr_pages)
+		वापस 0;
 
 	bio = bio_alloc(GFP_NOFS, nr_pages);
-	if (!bio)
-		return -ENOMEM;
+	अगर (!bio)
+		वापस -ENOMEM;
 
 	bio_set_dev(bio, bdev);
 	bio->bi_iter.bi_sector = zi->i_zsector;
-	bio->bi_write_hint = iocb->ki_hint;
+	bio->bi_ग_लिखो_hपूर्णांक = iocb->ki_hपूर्णांक;
 	bio->bi_ioprio = iocb->ki_ioprio;
 	bio->bi_opf = REQ_OP_ZONE_APPEND | REQ_SYNC | REQ_IDLE;
-	if (iocb->ki_flags & IOCB_DSYNC)
+	अगर (iocb->ki_flags & IOCB_DSYNC)
 		bio->bi_opf |= REQ_FUA;
 
 	ret = bio_iov_iter_get_pages(bio, from);
-	if (unlikely(ret))
-		goto out_release;
+	अगर (unlikely(ret))
+		जाओ out_release;
 
 	size = bio->bi_iter.bi_size;
-	task_io_account_write(size);
+	task_io_account_ग_लिखो(size);
 
-	if (iocb->ki_flags & IOCB_HIPRI)
+	अगर (iocb->ki_flags & IOCB_HIPRI)
 		bio_set_polled(bio, iocb);
 
-	ret = submit_bio_wait(bio);
+	ret = submit_bio_रुको(bio);
 
-	zonefs_file_write_dio_end_io(iocb, size, ret, 0);
+	zonefs_file_ग_लिखो_dio_end_io(iocb, size, ret, 0);
 	trace_zonefs_file_dio_append(inode, size, ret);
 
 out_release:
 	bio_release_pages(bio, false);
 	bio_put(bio);
 
-	if (ret >= 0) {
+	अगर (ret >= 0) अणु
 		iocb->ki_pos += size;
-		return size;
-	}
+		वापस size;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Do not exceed the LFS limits nor the file zone size. If pos is under the
- * limit it becomes a short access. If it exceeds the limit, return -EFBIG.
+ * limit it becomes a लघु access. If it exceeds the limit, वापस -EFBIG.
  */
-static loff_t zonefs_write_check_limits(struct file *file, loff_t pos,
+अटल loff_t zonefs_ग_लिखो_check_limits(काष्ठा file *file, loff_t pos,
 					loff_t count)
-{
-	struct inode *inode = file_inode(file);
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
 	loff_t limit = rlimit(RLIMIT_FSIZE);
 	loff_t max_size = zi->i_max_size;
 
-	if (limit != RLIM_INFINITY) {
-		if (pos >= limit) {
+	अगर (limit != RLIM_अनन्त) अणु
+		अगर (pos >= limit) अणु
 			send_sig(SIGXFSZ, current, 0);
-			return -EFBIG;
-		}
+			वापस -EFBIG;
+		पूर्ण
 		count = min(count, limit - pos);
-	}
+	पूर्ण
 
-	if (!(file->f_flags & O_LARGEFILE))
+	अगर (!(file->f_flags & O_LARGEखाता))
 		max_size = min_t(loff_t, MAX_NON_LFS, max_size);
 
-	if (unlikely(pos >= max_size))
-		return -EFBIG;
+	अगर (unlikely(pos >= max_size))
+		वापस -EFBIG;
 
-	return min(count, max_size - pos);
-}
+	वापस min(count, max_size - pos);
+पूर्ण
 
-static ssize_t zonefs_write_checks(struct kiocb *iocb, struct iov_iter *from)
-{
-	struct file *file = iocb->ki_filp;
-	struct inode *inode = file_inode(file);
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
+अटल sमाप_प्रकार zonefs_ग_लिखो_checks(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
 	loff_t count;
 
-	if (IS_SWAPFILE(inode))
-		return -ETXTBSY;
+	अगर (IS_SWAPखाता(inode))
+		वापस -ETXTBSY;
 
-	if (!iov_iter_count(from))
-		return 0;
+	अगर (!iov_iter_count(from))
+		वापस 0;
 
-	if ((iocb->ki_flags & IOCB_NOWAIT) && !(iocb->ki_flags & IOCB_DIRECT))
-		return -EINVAL;
+	अगर ((iocb->ki_flags & IOCB_NOWAIT) && !(iocb->ki_flags & IOCB_सूचीECT))
+		वापस -EINVAL;
 
-	if (iocb->ki_flags & IOCB_APPEND) {
-		if (zi->i_ztype != ZONEFS_ZTYPE_SEQ)
-			return -EINVAL;
+	अगर (iocb->ki_flags & IOCB_APPEND) अणु
+		अगर (zi->i_ztype != ZONEFS_ZTYPE_SEQ)
+			वापस -EINVAL;
 		mutex_lock(&zi->i_truncate_mutex);
 		iocb->ki_pos = zi->i_wpoffset;
 		mutex_unlock(&zi->i_truncate_mutex);
-	}
+	पूर्ण
 
-	count = zonefs_write_check_limits(file, iocb->ki_pos,
+	count = zonefs_ग_लिखो_check_limits(file, iocb->ki_pos,
 					  iov_iter_count(from));
-	if (count < 0)
-		return count;
+	अगर (count < 0)
+		वापस count;
 
 	iov_iter_truncate(from, count);
-	return iov_iter_count(from);
-}
+	वापस iov_iter_count(from);
+पूर्ण
 
 /*
- * Handle direct writes. For sequential zone files, this is the only possible
- * write path. For these files, check that the user is issuing writes
+ * Handle direct ग_लिखोs. For sequential zone files, this is the only possible
+ * ग_लिखो path. For these files, check that the user is issuing ग_लिखोs
  * sequentially from the end of the file. This code assumes that the block layer
- * delivers write requests to the device in sequential order. This is always the
- * case if a block IO scheduler implementing the ELEVATOR_F_ZBD_SEQ_WRITE
+ * delivers ग_लिखो requests to the device in sequential order. This is always the
+ * हाल अगर a block IO scheduler implementing the ELEVATOR_F_ZBD_SEQ_WRITE
  * elevator feature is being used (e.g. mq-deadline). The block layer always
- * automatically select such an elevator for zoned block devices during the
+ * स्वतःmatically select such an elevator क्रम zoned block devices during the
  * device initialization.
  */
-static ssize_t zonefs_file_dio_write(struct kiocb *iocb, struct iov_iter *from)
-{
-	struct inode *inode = file_inode(iocb->ki_filp);
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
-	struct super_block *sb = inode->i_sb;
+अटल sमाप_प्रकार zonefs_file_dio_ग_लिखो(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
+अणु
+	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
+	काष्ठा super_block *sb = inode->i_sb;
 	bool sync = is_sync_kiocb(iocb);
 	bool append = false;
-	ssize_t ret, count;
+	sमाप_प्रकार ret, count;
 
 	/*
 	 * For async direct IOs to sequential zone files, refuse IOCB_NOWAIT
-	 * as this can cause write reordering (e.g. the first aio gets EAGAIN
+	 * as this can cause ग_लिखो reordering (e.g. the first aio माला_लो EAGAIN
 	 * on the inode lock but the second goes through but is now unaligned).
 	 */
-	if (zi->i_ztype == ZONEFS_ZTYPE_SEQ && !sync &&
+	अगर (zi->i_ztype == ZONEFS_ZTYPE_SEQ && !sync &&
 	    (iocb->ki_flags & IOCB_NOWAIT))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if (iocb->ki_flags & IOCB_NOWAIT) {
-		if (!inode_trylock(inode))
-			return -EAGAIN;
-	} else {
+	अगर (iocb->ki_flags & IOCB_NOWAIT) अणु
+		अगर (!inode_trylock(inode))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
 		inode_lock(inode);
-	}
+	पूर्ण
 
-	count = zonefs_write_checks(iocb, from);
-	if (count <= 0) {
+	count = zonefs_ग_लिखो_checks(iocb, from);
+	अगर (count <= 0) अणु
 		ret = count;
-		goto inode_unlock;
-	}
+		जाओ inode_unlock;
+	पूर्ण
 
-	if ((iocb->ki_pos | count) & (sb->s_blocksize - 1)) {
+	अगर ((iocb->ki_pos | count) & (sb->s_blocksize - 1)) अणु
 		ret = -EINVAL;
-		goto inode_unlock;
-	}
+		जाओ inode_unlock;
+	पूर्ण
 
-	/* Enforce sequential writes (append only) in sequential zones */
-	if (zi->i_ztype == ZONEFS_ZTYPE_SEQ) {
+	/* Enक्रमce sequential ग_लिखोs (append only) in sequential zones */
+	अगर (zi->i_ztype == ZONEFS_ZTYPE_SEQ) अणु
 		mutex_lock(&zi->i_truncate_mutex);
-		if (iocb->ki_pos != zi->i_wpoffset) {
+		अगर (iocb->ki_pos != zi->i_wpoffset) अणु
 			mutex_unlock(&zi->i_truncate_mutex);
 			ret = -EINVAL;
-			goto inode_unlock;
-		}
+			जाओ inode_unlock;
+		पूर्ण
 		mutex_unlock(&zi->i_truncate_mutex);
 		append = sync;
-	}
+	पूर्ण
 
-	if (append)
+	अगर (append)
 		ret = zonefs_file_dio_append(iocb, from);
-	else
+	अन्यथा
 		ret = iomap_dio_rw(iocb, from, &zonefs_iomap_ops,
-				   &zonefs_write_dio_ops, 0);
-	if (zi->i_ztype == ZONEFS_ZTYPE_SEQ &&
-	    (ret > 0 || ret == -EIOCBQUEUED)) {
-		if (ret > 0)
+				   &zonefs_ग_लिखो_dio_ops, 0);
+	अगर (zi->i_ztype == ZONEFS_ZTYPE_SEQ &&
+	    (ret > 0 || ret == -EIOCBQUEUED)) अणु
+		अगर (ret > 0)
 			count = ret;
 		mutex_lock(&zi->i_truncate_mutex);
 		zi->i_wpoffset += count;
 		mutex_unlock(&zi->i_truncate_mutex);
-	}
+	पूर्ण
 
 inode_unlock:
 	inode_unlock(inode);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t zonefs_file_buffered_write(struct kiocb *iocb,
-					  struct iov_iter *from)
-{
-	struct inode *inode = file_inode(iocb->ki_filp);
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
-	ssize_t ret;
+अटल sमाप_प्रकार zonefs_file_buffered_ग_लिखो(काष्ठा kiocb *iocb,
+					  काष्ठा iov_iter *from)
+अणु
+	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
+	sमाप_प्रकार ret;
 
 	/*
-	 * Direct IO writes are mandatory for sequential zone files so that the
-	 * write IO issuing order is preserved.
+	 * Direct IO ग_लिखोs are mandatory क्रम sequential zone files so that the
+	 * ग_लिखो IO issuing order is preserved.
 	 */
-	if (zi->i_ztype != ZONEFS_ZTYPE_CNV)
-		return -EIO;
+	अगर (zi->i_ztype != ZONEFS_ZTYPE_CNV)
+		वापस -EIO;
 
-	if (iocb->ki_flags & IOCB_NOWAIT) {
-		if (!inode_trylock(inode))
-			return -EAGAIN;
-	} else {
+	अगर (iocb->ki_flags & IOCB_NOWAIT) अणु
+		अगर (!inode_trylock(inode))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
 		inode_lock(inode);
-	}
+	पूर्ण
 
-	ret = zonefs_write_checks(iocb, from);
-	if (ret <= 0)
-		goto inode_unlock;
+	ret = zonefs_ग_लिखो_checks(iocb, from);
+	अगर (ret <= 0)
+		जाओ inode_unlock;
 
-	ret = iomap_file_buffered_write(iocb, from, &zonefs_iomap_ops);
-	if (ret > 0)
+	ret = iomap_file_buffered_ग_लिखो(iocb, from, &zonefs_iomap_ops);
+	अगर (ret > 0)
 		iocb->ki_pos += ret;
-	else if (ret == -EIO)
+	अन्यथा अगर (ret == -EIO)
 		zonefs_io_error(inode, true);
 
 inode_unlock:
 	inode_unlock(inode);
-	if (ret > 0)
-		ret = generic_write_sync(iocb, ret);
+	अगर (ret > 0)
+		ret = generic_ग_लिखो_sync(iocb, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t zonefs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
-{
-	struct inode *inode = file_inode(iocb->ki_filp);
+अटल sमाप_प्रकार zonefs_file_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
+अणु
+	काष्ठा inode *inode = file_inode(iocb->ki_filp);
 
-	if (unlikely(IS_IMMUTABLE(inode)))
-		return -EPERM;
+	अगर (unlikely(IS_IMMUTABLE(inode)))
+		वापस -EPERM;
 
-	if (sb_rdonly(inode->i_sb))
-		return -EROFS;
+	अगर (sb_rकरोnly(inode->i_sb))
+		वापस -EROFS;
 
 	/* Write operations beyond the zone size are not allowed */
-	if (iocb->ki_pos >= ZONEFS_I(inode)->i_max_size)
-		return -EFBIG;
+	अगर (iocb->ki_pos >= ZONEFS_I(inode)->i_max_size)
+		वापस -EFBIG;
 
-	if (iocb->ki_flags & IOCB_DIRECT) {
-		ssize_t ret = zonefs_file_dio_write(iocb, from);
-		if (ret != -ENOTBLK)
-			return ret;
-	}
+	अगर (iocb->ki_flags & IOCB_सूचीECT) अणु
+		sमाप_प्रकार ret = zonefs_file_dio_ग_लिखो(iocb, from);
+		अगर (ret != -ENOTBLK)
+			वापस ret;
+	पूर्ण
 
-	return zonefs_file_buffered_write(iocb, from);
-}
+	वापस zonefs_file_buffered_ग_लिखो(iocb, from);
+पूर्ण
 
-static int zonefs_file_read_dio_end_io(struct kiocb *iocb, ssize_t size,
-				       int error, unsigned int flags)
-{
-	if (error) {
+अटल पूर्णांक zonefs_file_पढ़ो_dio_end_io(काष्ठा kiocb *iocb, sमाप_प्रकार size,
+				       पूर्णांक error, अचिन्हित पूर्णांक flags)
+अणु
+	अगर (error) अणु
 		zonefs_io_error(file_inode(iocb->ki_filp), false);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct iomap_dio_ops zonefs_read_dio_ops = {
-	.end_io			= zonefs_file_read_dio_end_io,
-};
+अटल स्थिर काष्ठा iomap_dio_ops zonefs_पढ़ो_dio_ops = अणु
+	.end_io			= zonefs_file_पढ़ो_dio_end_io,
+पूर्ण;
 
-static ssize_t zonefs_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
-{
-	struct inode *inode = file_inode(iocb->ki_filp);
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
-	struct super_block *sb = inode->i_sb;
+अटल sमाप_प्रकार zonefs_file_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
+अणु
+	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
+	काष्ठा super_block *sb = inode->i_sb;
 	loff_t isize;
-	ssize_t ret;
+	sमाप_प्रकार ret;
 
-	/* Offline zones cannot be read */
-	if (unlikely(IS_IMMUTABLE(inode) && !(inode->i_mode & 0777)))
-		return -EPERM;
+	/* Offline zones cannot be पढ़ो */
+	अगर (unlikely(IS_IMMUTABLE(inode) && !(inode->i_mode & 0777)))
+		वापस -EPERM;
 
-	if (iocb->ki_pos >= zi->i_max_size)
-		return 0;
+	अगर (iocb->ki_pos >= zi->i_max_size)
+		वापस 0;
 
-	if (iocb->ki_flags & IOCB_NOWAIT) {
-		if (!inode_trylock_shared(inode))
-			return -EAGAIN;
-	} else {
+	अगर (iocb->ki_flags & IOCB_NOWAIT) अणु
+		अगर (!inode_trylock_shared(inode))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
 		inode_lock_shared(inode);
-	}
+	पूर्ण
 
-	/* Limit read operations to written data */
+	/* Limit पढ़ो operations to written data */
 	mutex_lock(&zi->i_truncate_mutex);
-	isize = i_size_read(inode);
-	if (iocb->ki_pos >= isize) {
+	isize = i_size_पढ़ो(inode);
+	अगर (iocb->ki_pos >= isize) अणु
 		mutex_unlock(&zi->i_truncate_mutex);
 		ret = 0;
-		goto inode_unlock;
-	}
+		जाओ inode_unlock;
+	पूर्ण
 	iov_iter_truncate(to, isize - iocb->ki_pos);
 	mutex_unlock(&zi->i_truncate_mutex);
 
-	if (iocb->ki_flags & IOCB_DIRECT) {
-		size_t count = iov_iter_count(to);
+	अगर (iocb->ki_flags & IOCB_सूचीECT) अणु
+		माप_प्रकार count = iov_iter_count(to);
 
-		if ((iocb->ki_pos | count) & (sb->s_blocksize - 1)) {
+		अगर ((iocb->ki_pos | count) & (sb->s_blocksize - 1)) अणु
 			ret = -EINVAL;
-			goto inode_unlock;
-		}
+			जाओ inode_unlock;
+		पूर्ण
 		file_accessed(iocb->ki_filp);
 		ret = iomap_dio_rw(iocb, to, &zonefs_iomap_ops,
-				   &zonefs_read_dio_ops, 0);
-	} else {
-		ret = generic_file_read_iter(iocb, to);
-		if (ret == -EIO)
+				   &zonefs_पढ़ो_dio_ops, 0);
+	पूर्ण अन्यथा अणु
+		ret = generic_file_पढ़ो_iter(iocb, to);
+		अगर (ret == -EIO)
 			zonefs_io_error(inode, false);
-	}
+	पूर्ण
 
 inode_unlock:
 	inode_unlock_shared(inode);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline bool zonefs_file_use_exp_open(struct inode *inode, struct file *file)
-{
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
-	struct zonefs_sb_info *sbi = ZONEFS_SB(inode->i_sb);
+अटल अंतरभूत bool zonefs_file_use_exp_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
+	काष्ठा zonefs_sb_info *sbi = ZONEFS_SB(inode->i_sb);
 
-	if (!(sbi->s_mount_opts & ZONEFS_MNTOPT_EXPLICIT_OPEN))
-		return false;
+	अगर (!(sbi->s_mount_opts & ZONEFS_MNTOPT_EXPLICIT_OPEN))
+		वापस false;
 
-	if (zi->i_ztype != ZONEFS_ZTYPE_SEQ)
-		return false;
+	अगर (zi->i_ztype != ZONEFS_ZTYPE_SEQ)
+		वापस false;
 
-	if (!(file->f_mode & FMODE_WRITE))
-		return false;
+	अगर (!(file->f_mode & FMODE_WRITE))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int zonefs_open_zone(struct inode *inode)
-{
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
-	struct zonefs_sb_info *sbi = ZONEFS_SB(inode->i_sb);
-	int ret = 0;
+अटल पूर्णांक zonefs_खोलो_zone(काष्ठा inode *inode)
+अणु
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
+	काष्ठा zonefs_sb_info *sbi = ZONEFS_SB(inode->i_sb);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&zi->i_truncate_mutex);
 
-	if (!zi->i_wr_refcnt) {
-		if (atomic_inc_return(&sbi->s_open_zones) > sbi->s_max_open_zones) {
-			atomic_dec(&sbi->s_open_zones);
+	अगर (!zi->i_wr_refcnt) अणु
+		अगर (atomic_inc_वापस(&sbi->s_खोलो_zones) > sbi->s_max_खोलो_zones) अणु
+			atomic_dec(&sbi->s_खोलो_zones);
 			ret = -EBUSY;
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 
-		if (i_size_read(inode) < zi->i_max_size) {
+		अगर (i_size_पढ़ो(inode) < zi->i_max_size) अणु
 			ret = zonefs_zone_mgmt(inode, REQ_OP_ZONE_OPEN);
-			if (ret) {
-				atomic_dec(&sbi->s_open_zones);
-				goto unlock;
-			}
+			अगर (ret) अणु
+				atomic_dec(&sbi->s_खोलो_zones);
+				जाओ unlock;
+			पूर्ण
 			zi->i_flags |= ZONEFS_ZONE_OPEN;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	zi->i_wr_refcnt++;
 
 unlock:
 	mutex_unlock(&zi->i_truncate_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int zonefs_file_open(struct inode *inode, struct file *file)
-{
-	int ret;
+अटल पूर्णांक zonefs_file_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक ret;
 
-	ret = generic_file_open(inode, file);
-	if (ret)
-		return ret;
+	ret = generic_file_खोलो(inode, file);
+	अगर (ret)
+		वापस ret;
 
-	if (zonefs_file_use_exp_open(inode, file))
-		return zonefs_open_zone(inode);
+	अगर (zonefs_file_use_exp_खोलो(inode, file))
+		वापस zonefs_खोलो_zone(inode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void zonefs_close_zone(struct inode *inode)
-{
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
-	int ret = 0;
+अटल व्योम zonefs_बंद_zone(काष्ठा inode *inode)
+अणु
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&zi->i_truncate_mutex);
 	zi->i_wr_refcnt--;
-	if (!zi->i_wr_refcnt) {
-		struct zonefs_sb_info *sbi = ZONEFS_SB(inode->i_sb);
-		struct super_block *sb = inode->i_sb;
+	अगर (!zi->i_wr_refcnt) अणु
+		काष्ठा zonefs_sb_info *sbi = ZONEFS_SB(inode->i_sb);
+		काष्ठा super_block *sb = inode->i_sb;
 
 		/*
-		 * If the file zone is full, it is not open anymore and we only
-		 * need to decrement the open count.
+		 * If the file zone is full, it is not खोलो anymore and we only
+		 * need to decrement the खोलो count.
 		 */
-		if (!(zi->i_flags & ZONEFS_ZONE_OPEN))
-			goto dec;
+		अगर (!(zi->i_flags & ZONEFS_ZONE_OPEN))
+			जाओ dec;
 
 		ret = zonefs_zone_mgmt(inode, REQ_OP_ZONE_CLOSE);
-		if (ret) {
+		अगर (ret) अणु
 			__zonefs_io_error(inode, false);
 			/*
-			 * Leaving zones explicitly open may lead to a state
+			 * Leaving zones explicitly खोलो may lead to a state
 			 * where most zones cannot be written (zone resources
 			 * exhausted). So take preventive action by remounting
-			 * read-only.
+			 * पढ़ो-only.
 			 */
-			if (zi->i_flags & ZONEFS_ZONE_OPEN &&
-			    !(sb->s_flags & SB_RDONLY)) {
+			अगर (zi->i_flags & ZONEFS_ZONE_OPEN &&
+			    !(sb->s_flags & SB_RDONLY)) अणु
 				zonefs_warn(sb, "closing zone failed, remounting filesystem read-only\n");
 				sb->s_flags |= SB_RDONLY;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		zi->i_flags &= ~ZONEFS_ZONE_OPEN;
 dec:
-		atomic_dec(&sbi->s_open_zones);
-	}
+		atomic_dec(&sbi->s_खोलो_zones);
+	पूर्ण
 	mutex_unlock(&zi->i_truncate_mutex);
-}
+पूर्ण
 
-static int zonefs_file_release(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक zonefs_file_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	/*
-	 * If we explicitly open a zone we must close it again as well, but the
+	 * If we explicitly खोलो a zone we must बंद it again as well, but the
 	 * zone management operation can fail (either due to an IO error or as
-	 * the zone has gone offline or read-only). Make sure we don't fail the
-	 * close(2) for user-space.
+	 * the zone has gone offline or पढ़ो-only). Make sure we करोn't fail the
+	 * बंद(2) क्रम user-space.
 	 */
-	if (zonefs_file_use_exp_open(inode, file))
-		zonefs_close_zone(inode);
+	अगर (zonefs_file_use_exp_खोलो(inode, file))
+		zonefs_बंद_zone(inode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations zonefs_file_operations = {
-	.open		= zonefs_file_open,
+अटल स्थिर काष्ठा file_operations zonefs_file_operations = अणु
+	.खोलो		= zonefs_file_खोलो,
 	.release	= zonefs_file_release,
 	.fsync		= zonefs_file_fsync,
 	.mmap		= zonefs_file_mmap,
 	.llseek		= zonefs_file_llseek,
-	.read_iter	= zonefs_file_read_iter,
-	.write_iter	= zonefs_file_write_iter,
-	.splice_read	= generic_file_splice_read,
-	.splice_write	= iter_file_splice_write,
+	.पढ़ो_iter	= zonefs_file_पढ़ो_iter,
+	.ग_लिखो_iter	= zonefs_file_ग_लिखो_iter,
+	.splice_पढ़ो	= generic_file_splice_पढ़ो,
+	.splice_ग_लिखो	= iter_file_splice_ग_लिखो,
 	.iopoll		= iomap_dio_iopoll,
-};
+पूर्ण;
 
-static struct kmem_cache *zonefs_inode_cachep;
+अटल काष्ठा kmem_cache *zonefs_inode_cachep;
 
-static struct inode *zonefs_alloc_inode(struct super_block *sb)
-{
-	struct zonefs_inode_info *zi;
+अटल काष्ठा inode *zonefs_alloc_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा zonefs_inode_info *zi;
 
 	zi = kmem_cache_alloc(zonefs_inode_cachep, GFP_KERNEL);
-	if (!zi)
-		return NULL;
+	अगर (!zi)
+		वापस शून्य;
 
 	inode_init_once(&zi->i_vnode);
 	mutex_init(&zi->i_truncate_mutex);
 	init_rwsem(&zi->i_mmap_sem);
 	zi->i_wr_refcnt = 0;
 
-	return &zi->i_vnode;
-}
+	वापस &zi->i_vnode;
+पूर्ण
 
-static void zonefs_free_inode(struct inode *inode)
-{
-	kmem_cache_free(zonefs_inode_cachep, ZONEFS_I(inode));
-}
+अटल व्योम zonefs_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	kmem_cache_मुक्त(zonefs_inode_cachep, ZONEFS_I(inode));
+पूर्ण
 
 /*
- * File system stat.
+ * File प्रणाली stat.
  */
-static int zonefs_statfs(struct dentry *dentry, struct kstatfs *buf)
-{
-	struct super_block *sb = dentry->d_sb;
-	struct zonefs_sb_info *sbi = ZONEFS_SB(sb);
-	enum zonefs_ztype t;
+अटल पूर्णांक zonefs_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf)
+अणु
+	काष्ठा super_block *sb = dentry->d_sb;
+	काष्ठा zonefs_sb_info *sbi = ZONEFS_SB(sb);
+	क्रमागत zonefs_ztype t;
 
 	buf->f_type = ZONEFS_MAGIC;
 	buf->f_bsize = sb->s_blocksize;
@@ -1185,147 +1186,147 @@ static int zonefs_statfs(struct dentry *dentry, struct kstatfs *buf)
 	spin_lock(&sbi->s_lock);
 
 	buf->f_blocks = sbi->s_blocks;
-	if (WARN_ON(sbi->s_used_blocks > sbi->s_blocks))
-		buf->f_bfree = 0;
-	else
-		buf->f_bfree = buf->f_blocks - sbi->s_used_blocks;
-	buf->f_bavail = buf->f_bfree;
+	अगर (WARN_ON(sbi->s_used_blocks > sbi->s_blocks))
+		buf->f_bमुक्त = 0;
+	अन्यथा
+		buf->f_bमुक्त = buf->f_blocks - sbi->s_used_blocks;
+	buf->f_bavail = buf->f_bमुक्त;
 
-	for (t = 0; t < ZONEFS_ZTYPE_MAX; t++) {
-		if (sbi->s_nr_files[t])
+	क्रम (t = 0; t < ZONEFS_ZTYPE_MAX; t++) अणु
+		अगर (sbi->s_nr_files[t])
 			buf->f_files += sbi->s_nr_files[t] + 1;
-	}
-	buf->f_ffree = 0;
+	पूर्ण
+	buf->f_fमुक्त = 0;
 
 	spin_unlock(&sbi->s_lock);
 
 	buf->f_fsid = uuid_to_fsid(sbi->s_uuid.b);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-enum {
+क्रमागत अणु
 	Opt_errors_ro, Opt_errors_zro, Opt_errors_zol, Opt_errors_repair,
-	Opt_explicit_open, Opt_err,
-};
+	Opt_explicit_खोलो, Opt_err,
+पूर्ण;
 
-static const match_table_t tokens = {
-	{ Opt_errors_ro,	"errors=remount-ro"},
-	{ Opt_errors_zro,	"errors=zone-ro"},
-	{ Opt_errors_zol,	"errors=zone-offline"},
-	{ Opt_errors_repair,	"errors=repair"},
-	{ Opt_explicit_open,	"explicit-open" },
-	{ Opt_err,		NULL}
-};
+अटल स्थिर match_table_t tokens = अणु
+	अणु Opt_errors_ro,	"errors=remount-ro"पूर्ण,
+	अणु Opt_errors_zro,	"errors=zone-ro"पूर्ण,
+	अणु Opt_errors_zol,	"errors=zone-offline"पूर्ण,
+	अणु Opt_errors_repair,	"errors=repair"पूर्ण,
+	अणु Opt_explicit_खोलो,	"explicit-open" पूर्ण,
+	अणु Opt_err,		शून्यपूर्ण
+पूर्ण;
 
-static int zonefs_parse_options(struct super_block *sb, char *options)
-{
-	struct zonefs_sb_info *sbi = ZONEFS_SB(sb);
+अटल पूर्णांक zonefs_parse_options(काष्ठा super_block *sb, अक्षर *options)
+अणु
+	काष्ठा zonefs_sb_info *sbi = ZONEFS_SB(sb);
 	substring_t args[MAX_OPT_ARGS];
-	char *p;
+	अक्षर *p;
 
-	if (!options)
-		return 0;
+	अगर (!options)
+		वापस 0;
 
-	while ((p = strsep(&options, ",")) != NULL) {
-		int token;
+	जबतक ((p = strsep(&options, ",")) != शून्य) अणु
+		पूर्णांक token;
 
-		if (!*p)
-			continue;
+		अगर (!*p)
+			जारी;
 
 		token = match_token(p, tokens, args);
-		switch (token) {
-		case Opt_errors_ro:
+		चयन (token) अणु
+		हाल Opt_errors_ro:
 			sbi->s_mount_opts &= ~ZONEFS_MNTOPT_ERRORS_MASK;
 			sbi->s_mount_opts |= ZONEFS_MNTOPT_ERRORS_RO;
-			break;
-		case Opt_errors_zro:
+			अवरोध;
+		हाल Opt_errors_zro:
 			sbi->s_mount_opts &= ~ZONEFS_MNTOPT_ERRORS_MASK;
 			sbi->s_mount_opts |= ZONEFS_MNTOPT_ERRORS_ZRO;
-			break;
-		case Opt_errors_zol:
+			अवरोध;
+		हाल Opt_errors_zol:
 			sbi->s_mount_opts &= ~ZONEFS_MNTOPT_ERRORS_MASK;
 			sbi->s_mount_opts |= ZONEFS_MNTOPT_ERRORS_ZOL;
-			break;
-		case Opt_errors_repair:
+			अवरोध;
+		हाल Opt_errors_repair:
 			sbi->s_mount_opts &= ~ZONEFS_MNTOPT_ERRORS_MASK;
 			sbi->s_mount_opts |= ZONEFS_MNTOPT_ERRORS_REPAIR;
-			break;
-		case Opt_explicit_open:
+			अवरोध;
+		हाल Opt_explicit_खोलो:
 			sbi->s_mount_opts |= ZONEFS_MNTOPT_EXPLICIT_OPEN;
-			break;
-		default:
-			return -EINVAL;
-		}
-	}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zonefs_show_options(struct seq_file *seq, struct dentry *root)
-{
-	struct zonefs_sb_info *sbi = ZONEFS_SB(root->d_sb);
+अटल पूर्णांक zonefs_show_options(काष्ठा seq_file *seq, काष्ठा dentry *root)
+अणु
+	काष्ठा zonefs_sb_info *sbi = ZONEFS_SB(root->d_sb);
 
-	if (sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_RO)
-		seq_puts(seq, ",errors=remount-ro");
-	if (sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_ZRO)
-		seq_puts(seq, ",errors=zone-ro");
-	if (sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_ZOL)
-		seq_puts(seq, ",errors=zone-offline");
-	if (sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_REPAIR)
-		seq_puts(seq, ",errors=repair");
+	अगर (sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_RO)
+		seq_माला_दो(seq, ",errors=remount-ro");
+	अगर (sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_ZRO)
+		seq_माला_दो(seq, ",errors=zone-ro");
+	अगर (sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_ZOL)
+		seq_माला_दो(seq, ",errors=zone-offline");
+	अगर (sbi->s_mount_opts & ZONEFS_MNTOPT_ERRORS_REPAIR)
+		seq_माला_दो(seq, ",errors=repair");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zonefs_remount(struct super_block *sb, int *flags, char *data)
-{
-	sync_filesystem(sb);
+अटल पूर्णांक zonefs_remount(काष्ठा super_block *sb, पूर्णांक *flags, अक्षर *data)
+अणु
+	sync_fileप्रणाली(sb);
 
-	return zonefs_parse_options(sb, data);
-}
+	वापस zonefs_parse_options(sb, data);
+पूर्ण
 
-static const struct super_operations zonefs_sops = {
+अटल स्थिर काष्ठा super_operations zonefs_sops = अणु
 	.alloc_inode	= zonefs_alloc_inode,
-	.free_inode	= zonefs_free_inode,
+	.मुक्त_inode	= zonefs_मुक्त_inode,
 	.statfs		= zonefs_statfs,
 	.remount_fs	= zonefs_remount,
 	.show_options	= zonefs_show_options,
-};
+पूर्ण;
 
-static const struct inode_operations zonefs_dir_inode_operations = {
+अटल स्थिर काष्ठा inode_operations zonefs_dir_inode_operations = अणु
 	.lookup		= simple_lookup,
 	.setattr	= zonefs_inode_setattr,
-};
+पूर्ण;
 
-static void zonefs_init_dir_inode(struct inode *parent, struct inode *inode,
-				  enum zonefs_ztype type)
-{
-	struct super_block *sb = parent->i_sb;
+अटल व्योम zonefs_init_dir_inode(काष्ठा inode *parent, काष्ठा inode *inode,
+				  क्रमागत zonefs_ztype type)
+अणु
+	काष्ठा super_block *sb = parent->i_sb;
 
 	inode->i_ino = blkdev_nr_zones(sb->s_bdev->bd_disk) + type + 1;
-	inode_init_owner(&init_user_ns, inode, parent, S_IFDIR | 0555);
+	inode_init_owner(&init_user_ns, inode, parent, S_IFसूची | 0555);
 	inode->i_op = &zonefs_dir_inode_operations;
 	inode->i_fop = &simple_dir_operations;
 	set_nlink(inode, 2);
 	inc_nlink(parent);
-}
+पूर्ण
 
-static void zonefs_init_file_inode(struct inode *inode, struct blk_zone *zone,
-				   enum zonefs_ztype type)
-{
-	struct super_block *sb = inode->i_sb;
-	struct zonefs_sb_info *sbi = ZONEFS_SB(sb);
-	struct zonefs_inode_info *zi = ZONEFS_I(inode);
+अटल व्योम zonefs_init_file_inode(काष्ठा inode *inode, काष्ठा blk_zone *zone,
+				   क्रमागत zonefs_ztype type)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा zonefs_sb_info *sbi = ZONEFS_SB(sb);
+	काष्ठा zonefs_inode_info *zi = ZONEFS_I(inode);
 
-	inode->i_ino = zone->start >> sbi->s_zone_sectors_shift;
+	inode->i_ino = zone->start >> sbi->s_zone_sectors_shअगरt;
 	inode->i_mode = S_IFREG | sbi->s_perm;
 
 	zi->i_ztype = type;
 	zi->i_zsector = zone->start;
 	zi->i_zone_size = zone->len << SECTOR_SHIFT;
 
-	zi->i_max_size = min_t(loff_t, MAX_LFS_FILESIZE,
+	zi->i_max_size = min_t(loff_t, MAX_LFS_खाताSIZE,
 			       zone->capacity << SECTOR_SHIFT);
 	zi->i_wpoffset = zonefs_check_zone_condition(inode, zone, true, true);
 
@@ -1341,129 +1342,129 @@ static void zonefs_init_file_inode(struct inode *inode, struct blk_zone *zone,
 	sb->s_maxbytes = max(zi->i_max_size, sb->s_maxbytes);
 	sbi->s_blocks += zi->i_max_size >> sb->s_blocksize_bits;
 	sbi->s_used_blocks += zi->i_wpoffset >> sb->s_blocksize_bits;
-}
+पूर्ण
 
-static struct dentry *zonefs_create_inode(struct dentry *parent,
-					const char *name, struct blk_zone *zone,
-					enum zonefs_ztype type)
-{
-	struct inode *dir = d_inode(parent);
-	struct dentry *dentry;
-	struct inode *inode;
+अटल काष्ठा dentry *zonefs_create_inode(काष्ठा dentry *parent,
+					स्थिर अक्षर *name, काष्ठा blk_zone *zone,
+					क्रमागत zonefs_ztype type)
+अणु
+	काष्ठा inode *dir = d_inode(parent);
+	काष्ठा dentry *dentry;
+	काष्ठा inode *inode;
 
 	dentry = d_alloc_name(parent, name);
-	if (!dentry)
-		return NULL;
+	अगर (!dentry)
+		वापस शून्य;
 
 	inode = new_inode(parent->d_sb);
-	if (!inode)
-		goto dput;
+	अगर (!inode)
+		जाओ dput;
 
-	inode->i_ctime = inode->i_mtime = inode->i_atime = dir->i_ctime;
-	if (zone)
+	inode->i_स_समय = inode->i_mसमय = inode->i_aसमय = dir->i_स_समय;
+	अगर (zone)
 		zonefs_init_file_inode(inode, zone, type);
-	else
+	अन्यथा
 		zonefs_init_dir_inode(dir, inode, type);
 	d_add(dentry, inode);
 	dir->i_size++;
 
-	return dentry;
+	वापस dentry;
 
 dput:
 	dput(dentry);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct zonefs_zone_data {
-	struct super_block	*sb;
-	unsigned int		nr_zones[ZONEFS_ZTYPE_MAX];
-	struct blk_zone		*zones;
-};
+काष्ठा zonefs_zone_data अणु
+	काष्ठा super_block	*sb;
+	अचिन्हित पूर्णांक		nr_zones[ZONEFS_ZTYPE_MAX];
+	काष्ठा blk_zone		*zones;
+पूर्ण;
 
 /*
  * Create a zone group and populate it with zone files.
  */
-static int zonefs_create_zgroup(struct zonefs_zone_data *zd,
-				enum zonefs_ztype type)
-{
-	struct super_block *sb = zd->sb;
-	struct zonefs_sb_info *sbi = ZONEFS_SB(sb);
-	struct blk_zone *zone, *next, *end;
-	const char *zgroup_name;
-	char *file_name;
-	struct dentry *dir;
-	unsigned int n = 0;
-	int ret;
+अटल पूर्णांक zonefs_create_zgroup(काष्ठा zonefs_zone_data *zd,
+				क्रमागत zonefs_ztype type)
+अणु
+	काष्ठा super_block *sb = zd->sb;
+	काष्ठा zonefs_sb_info *sbi = ZONEFS_SB(sb);
+	काष्ठा blk_zone *zone, *next, *end;
+	स्थिर अक्षर *zgroup_name;
+	अक्षर *file_name;
+	काष्ठा dentry *dir;
+	अचिन्हित पूर्णांक n = 0;
+	पूर्णांक ret;
 
-	/* If the group is empty, there is nothing to do */
-	if (!zd->nr_zones[type])
-		return 0;
+	/* If the group is empty, there is nothing to करो */
+	अगर (!zd->nr_zones[type])
+		वापस 0;
 
-	file_name = kmalloc(ZONEFS_NAME_MAX, GFP_KERNEL);
-	if (!file_name)
-		return -ENOMEM;
+	file_name = kदो_स्मृति(ZONEFS_NAME_MAX, GFP_KERNEL);
+	अगर (!file_name)
+		वापस -ENOMEM;
 
-	if (type == ZONEFS_ZTYPE_CNV)
+	अगर (type == ZONEFS_ZTYPE_CNV)
 		zgroup_name = "cnv";
-	else
+	अन्यथा
 		zgroup_name = "seq";
 
-	dir = zonefs_create_inode(sb->s_root, zgroup_name, NULL, type);
-	if (!dir) {
+	dir = zonefs_create_inode(sb->s_root, zgroup_name, शून्य, type);
+	अगर (!dir) अणु
 		ret = -ENOMEM;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
 	/*
 	 * The first zone contains the super block: skip it.
 	 */
 	end = zd->zones + blkdev_nr_zones(sb->s_bdev->bd_disk);
-	for (zone = &zd->zones[1]; zone < end; zone = next) {
+	क्रम (zone = &zd->zones[1]; zone < end; zone = next) अणु
 
 		next = zone + 1;
-		if (zonefs_zone_type(zone) != type)
-			continue;
+		अगर (zonefs_zone_type(zone) != type)
+			जारी;
 
 		/*
 		 * For conventional zones, contiguous zones can be aggregated
-		 * together to form larger files. Note that this overwrites the
+		 * together to क्रमm larger files. Note that this overग_लिखोs the
 		 * length of the first zone of the set of contiguous zones
-		 * aggregated together. If one offline or read-only zone is
+		 * aggregated together. If one offline or पढ़ो-only zone is
 		 * found, assume that all zones aggregated have the same
 		 * condition.
 		 */
-		if (type == ZONEFS_ZTYPE_CNV &&
-		    (sbi->s_features & ZONEFS_F_AGGRCNV)) {
-			for (; next < end; next++) {
-				if (zonefs_zone_type(next) != type)
-					break;
+		अगर (type == ZONEFS_ZTYPE_CNV &&
+		    (sbi->s_features & ZONEFS_F_AGGRCNV)) अणु
+			क्रम (; next < end; next++) अणु
+				अगर (zonefs_zone_type(next) != type)
+					अवरोध;
 				zone->len += next->len;
 				zone->capacity += next->capacity;
-				if (next->cond == BLK_ZONE_COND_READONLY &&
+				अगर (next->cond == BLK_ZONE_COND_READONLY &&
 				    zone->cond != BLK_ZONE_COND_OFFLINE)
 					zone->cond = BLK_ZONE_COND_READONLY;
-				else if (next->cond == BLK_ZONE_COND_OFFLINE)
+				अन्यथा अगर (next->cond == BLK_ZONE_COND_OFFLINE)
 					zone->cond = BLK_ZONE_COND_OFFLINE;
-			}
-			if (zone->capacity != zone->len) {
+			पूर्ण
+			अगर (zone->capacity != zone->len) अणु
 				zonefs_err(sb, "Invalid conventional zone capacity\n");
 				ret = -EINVAL;
-				goto free;
-			}
-		}
+				जाओ मुक्त;
+			पूर्ण
+		पूर्ण
 
 		/*
 		 * Use the file number within its group as file name.
 		 */
-		snprintf(file_name, ZONEFS_NAME_MAX - 1, "%u", n);
-		if (!zonefs_create_inode(dir, file_name, zone, type)) {
+		snम_लिखो(file_name, ZONEFS_NAME_MAX - 1, "%u", n);
+		अगर (!zonefs_create_inode(dir, file_name, zone, type)) अणु
 			ret = -ENOMEM;
-			goto free;
-		}
+			जाओ मुक्त;
+		पूर्ण
 
 		n++;
-	}
+	पूर्ण
 
 	zonefs_info(sb, "Zone group \"%s\" has %u file%s\n",
 		    zgroup_name, n, n > 1 ? "s" : "");
@@ -1471,91 +1472,91 @@ static int zonefs_create_zgroup(struct zonefs_zone_data *zd,
 	sbi->s_nr_files[type] = n;
 	ret = 0;
 
-free:
-	kfree(file_name);
+मुक्त:
+	kमुक्त(file_name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int zonefs_get_zone_info_cb(struct blk_zone *zone, unsigned int idx,
-				   void *data)
-{
-	struct zonefs_zone_data *zd = data;
+अटल पूर्णांक zonefs_get_zone_info_cb(काष्ठा blk_zone *zone, अचिन्हित पूर्णांक idx,
+				   व्योम *data)
+अणु
+	काष्ठा zonefs_zone_data *zd = data;
 
 	/*
 	 * Count the number of usable zones: the first zone at index 0 contains
 	 * the super block and is ignored.
 	 */
-	switch (zone->type) {
-	case BLK_ZONE_TYPE_CONVENTIONAL:
+	चयन (zone->type) अणु
+	हाल BLK_ZONE_TYPE_CONVENTIONAL:
 		zone->wp = zone->start + zone->len;
-		if (idx)
+		अगर (idx)
 			zd->nr_zones[ZONEFS_ZTYPE_CNV]++;
-		break;
-	case BLK_ZONE_TYPE_SEQWRITE_REQ:
-	case BLK_ZONE_TYPE_SEQWRITE_PREF:
-		if (idx)
+		अवरोध;
+	हाल BLK_ZONE_TYPE_SEQWRITE_REQ:
+	हाल BLK_ZONE_TYPE_SEQWRITE_PREF:
+		अगर (idx)
 			zd->nr_zones[ZONEFS_ZTYPE_SEQ]++;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		zonefs_err(zd->sb, "Unsupported zone type 0x%x\n",
 			   zone->type);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	memcpy(&zd->zones[idx], zone, sizeof(struct blk_zone));
+	स_नकल(&zd->zones[idx], zone, माप(काष्ठा blk_zone));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zonefs_get_zone_info(struct zonefs_zone_data *zd)
-{
-	struct block_device *bdev = zd->sb->s_bdev;
-	int ret;
+अटल पूर्णांक zonefs_get_zone_info(काष्ठा zonefs_zone_data *zd)
+अणु
+	काष्ठा block_device *bdev = zd->sb->s_bdev;
+	पूर्णांक ret;
 
-	zd->zones = kvcalloc(blkdev_nr_zones(bdev->bd_disk),
-			     sizeof(struct blk_zone), GFP_KERNEL);
-	if (!zd->zones)
-		return -ENOMEM;
+	zd->zones = kvसुस्मृति(blkdev_nr_zones(bdev->bd_disk),
+			     माप(काष्ठा blk_zone), GFP_KERNEL);
+	अगर (!zd->zones)
+		वापस -ENOMEM;
 
-	/* Get zones information from the device */
+	/* Get zones inक्रमmation from the device */
 	ret = blkdev_report_zones(bdev, 0, BLK_ALL_ZONES,
 				  zonefs_get_zone_info_cb, zd);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		zonefs_err(zd->sb, "Zone report failed %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (ret != blkdev_nr_zones(bdev->bd_disk)) {
+	अगर (ret != blkdev_nr_zones(bdev->bd_disk)) अणु
 		zonefs_err(zd->sb, "Invalid zone report (%d/%u zones)\n",
 			   ret, blkdev_nr_zones(bdev->bd_disk));
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void zonefs_cleanup_zone_info(struct zonefs_zone_data *zd)
-{
-	kvfree(zd->zones);
-}
+अटल अंतरभूत व्योम zonefs_cleanup_zone_info(काष्ठा zonefs_zone_data *zd)
+अणु
+	kvमुक्त(zd->zones);
+पूर्ण
 
 /*
- * Read super block information from the device.
+ * Read super block inक्रमmation from the device.
  */
-static int zonefs_read_super(struct super_block *sb)
-{
-	struct zonefs_sb_info *sbi = ZONEFS_SB(sb);
-	struct zonefs_super *super;
+अटल पूर्णांक zonefs_पढ़ो_super(काष्ठा super_block *sb)
+अणु
+	काष्ठा zonefs_sb_info *sbi = ZONEFS_SB(sb);
+	काष्ठा zonefs_super *super;
 	u32 crc, stored_crc;
-	struct page *page;
-	struct bio_vec bio_vec;
-	struct bio bio;
-	int ret;
+	काष्ठा page *page;
+	काष्ठा bio_vec bio_vec;
+	काष्ठा bio bio;
+	पूर्णांक ret;
 
 	page = alloc_page(GFP_KERNEL);
-	if (!page)
-		return -ENOMEM;
+	अगर (!page)
+		वापस -ENOMEM;
 
 	bio_init(&bio, &bio_vec, 1);
 	bio.bi_iter.bi_sector = 0;
@@ -1563,136 +1564,136 @@ static int zonefs_read_super(struct super_block *sb)
 	bio_set_dev(&bio, sb->s_bdev);
 	bio_add_page(&bio, page, PAGE_SIZE, 0);
 
-	ret = submit_bio_wait(&bio);
-	if (ret)
-		goto free_page;
+	ret = submit_bio_रुको(&bio);
+	अगर (ret)
+		जाओ मुक्त_page;
 
 	super = kmap(page);
 
 	ret = -EINVAL;
-	if (le32_to_cpu(super->s_magic) != ZONEFS_MAGIC)
-		goto unmap;
+	अगर (le32_to_cpu(super->s_magic) != ZONEFS_MAGIC)
+		जाओ unmap;
 
 	stored_crc = le32_to_cpu(super->s_crc);
 	super->s_crc = 0;
-	crc = crc32(~0U, (unsigned char *)super, sizeof(struct zonefs_super));
-	if (crc != stored_crc) {
+	crc = crc32(~0U, (अचिन्हित अक्षर *)super, माप(काष्ठा zonefs_super));
+	अगर (crc != stored_crc) अणु
 		zonefs_err(sb, "Invalid checksum (Expected 0x%08x, got 0x%08x)",
 			   crc, stored_crc);
-		goto unmap;
-	}
+		जाओ unmap;
+	पूर्ण
 
 	sbi->s_features = le64_to_cpu(super->s_features);
-	if (sbi->s_features & ~ZONEFS_F_DEFINED_FEATURES) {
+	अगर (sbi->s_features & ~ZONEFS_F_DEFINED_FEATURES) अणु
 		zonefs_err(sb, "Unknown features set 0x%llx\n",
 			   sbi->s_features);
-		goto unmap;
-	}
+		जाओ unmap;
+	पूर्ण
 
-	if (sbi->s_features & ZONEFS_F_UID) {
+	अगर (sbi->s_features & ZONEFS_F_UID) अणु
 		sbi->s_uid = make_kuid(current_user_ns(),
 				       le32_to_cpu(super->s_uid));
-		if (!uid_valid(sbi->s_uid)) {
+		अगर (!uid_valid(sbi->s_uid)) अणु
 			zonefs_err(sb, "Invalid UID feature\n");
-			goto unmap;
-		}
-	}
+			जाओ unmap;
+		पूर्ण
+	पूर्ण
 
-	if (sbi->s_features & ZONEFS_F_GID) {
+	अगर (sbi->s_features & ZONEFS_F_GID) अणु
 		sbi->s_gid = make_kgid(current_user_ns(),
 				       le32_to_cpu(super->s_gid));
-		if (!gid_valid(sbi->s_gid)) {
+		अगर (!gid_valid(sbi->s_gid)) अणु
 			zonefs_err(sb, "Invalid GID feature\n");
-			goto unmap;
-		}
-	}
+			जाओ unmap;
+		पूर्ण
+	पूर्ण
 
-	if (sbi->s_features & ZONEFS_F_PERM)
+	अगर (sbi->s_features & ZONEFS_F_PERM)
 		sbi->s_perm = le32_to_cpu(super->s_perm);
 
-	if (memchr_inv(super->s_reserved, 0, sizeof(super->s_reserved))) {
+	अगर (स_प्रथम_inv(super->s_reserved, 0, माप(super->s_reserved))) अणु
 		zonefs_err(sb, "Reserved area is being used\n");
-		goto unmap;
-	}
+		जाओ unmap;
+	पूर्ण
 
 	import_uuid(&sbi->s_uuid, super->s_uuid);
 	ret = 0;
 
 unmap:
 	kunmap(page);
-free_page:
-	__free_page(page);
+मुक्त_page:
+	__मुक्त_page(page);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Check that the device is zoned. If it is, get the list of zones and create
  * sub-directories and files according to the device zone configuration and
- * format options.
+ * क्रमmat options.
  */
-static int zonefs_fill_super(struct super_block *sb, void *data, int silent)
-{
-	struct zonefs_zone_data zd;
-	struct zonefs_sb_info *sbi;
-	struct inode *inode;
-	enum zonefs_ztype t;
-	int ret;
+अटल पूर्णांक zonefs_fill_super(काष्ठा super_block *sb, व्योम *data, पूर्णांक silent)
+अणु
+	काष्ठा zonefs_zone_data zd;
+	काष्ठा zonefs_sb_info *sbi;
+	काष्ठा inode *inode;
+	क्रमागत zonefs_ztype t;
+	पूर्णांक ret;
 
-	if (!bdev_is_zoned(sb->s_bdev)) {
+	अगर (!bdev_is_zoned(sb->s_bdev)) अणु
 		zonefs_err(sb, "Not a zoned block device\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Initialize super block information: the maximum file size is updated
-	 * when the zone files are created so that the format option
+	 * Initialize super block inक्रमmation: the maximum file size is updated
+	 * when the zone files are created so that the क्रमmat option
 	 * ZONEFS_F_AGGRCNV which increases the maximum file size of a file
-	 * beyond the zone size is taken into account.
+	 * beyond the zone size is taken पूर्णांकo account.
 	 */
-	sbi = kzalloc(sizeof(*sbi), GFP_KERNEL);
-	if (!sbi)
-		return -ENOMEM;
+	sbi = kzalloc(माप(*sbi), GFP_KERNEL);
+	अगर (!sbi)
+		वापस -ENOMEM;
 
 	spin_lock_init(&sbi->s_lock);
 	sb->s_fs_info = sbi;
 	sb->s_magic = ZONEFS_MAGIC;
 	sb->s_maxbytes = 0;
 	sb->s_op = &zonefs_sops;
-	sb->s_time_gran	= 1;
+	sb->s_समय_gran	= 1;
 
 	/*
-	 * The block size is set to the device zone write granularity to ensure
-	 * that write operations are always aligned according to the device
-	 * interface constraints.
+	 * The block size is set to the device zone ग_लिखो granularity to ensure
+	 * that ग_लिखो operations are always aligned according to the device
+	 * पूर्णांकerface स्थिरraपूर्णांकs.
 	 */
-	sb_set_blocksize(sb, bdev_zone_write_granularity(sb->s_bdev));
-	sbi->s_zone_sectors_shift = ilog2(bdev_zone_sectors(sb->s_bdev));
+	sb_set_blocksize(sb, bdev_zone_ग_लिखो_granularity(sb->s_bdev));
+	sbi->s_zone_sectors_shअगरt = ilog2(bdev_zone_sectors(sb->s_bdev));
 	sbi->s_uid = GLOBAL_ROOT_UID;
 	sbi->s_gid = GLOBAL_ROOT_GID;
 	sbi->s_perm = 0640;
 	sbi->s_mount_opts = ZONEFS_MNTOPT_ERRORS_RO;
-	sbi->s_max_open_zones = bdev_max_open_zones(sb->s_bdev);
-	atomic_set(&sbi->s_open_zones, 0);
-	if (!sbi->s_max_open_zones &&
-	    sbi->s_mount_opts & ZONEFS_MNTOPT_EXPLICIT_OPEN) {
+	sbi->s_max_खोलो_zones = bdev_max_खोलो_zones(sb->s_bdev);
+	atomic_set(&sbi->s_खोलो_zones, 0);
+	अगर (!sbi->s_max_खोलो_zones &&
+	    sbi->s_mount_opts & ZONEFS_MNTOPT_EXPLICIT_OPEN) अणु
 		zonefs_info(sb, "No open zones limit. Ignoring explicit_open mount option\n");
 		sbi->s_mount_opts &= ~ZONEFS_MNTOPT_EXPLICIT_OPEN;
-	}
+	पूर्ण
 
-	ret = zonefs_read_super(sb);
-	if (ret)
-		return ret;
+	ret = zonefs_पढ़ो_super(sb);
+	अगर (ret)
+		वापस ret;
 
 	ret = zonefs_parse_options(sb, data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memset(&zd, 0, sizeof(struct zonefs_zone_data));
+	स_रखो(&zd, 0, माप(काष्ठा zonefs_zone_data));
 	zd.sb = sb;
 	ret = zonefs_get_zone_info(&zd);
-	if (ret)
-		goto cleanup;
+	अगर (ret)
+		जाओ cleanup;
 
 	zonefs_info(sb, "Mounting %u zones",
 		    blkdev_nr_zones(sb->s_bdev->bd_disk));
@@ -1700,108 +1701,108 @@ static int zonefs_fill_super(struct super_block *sb, void *data, int silent)
 	/* Create root directory inode */
 	ret = -ENOMEM;
 	inode = new_inode(sb);
-	if (!inode)
-		goto cleanup;
+	अगर (!inode)
+		जाओ cleanup;
 
 	inode->i_ino = blkdev_nr_zones(sb->s_bdev->bd_disk);
-	inode->i_mode = S_IFDIR | 0555;
-	inode->i_ctime = inode->i_mtime = inode->i_atime = current_time(inode);
+	inode->i_mode = S_IFसूची | 0555;
+	inode->i_स_समय = inode->i_mसमय = inode->i_aसमय = current_समय(inode);
 	inode->i_op = &zonefs_dir_inode_operations;
 	inode->i_fop = &simple_dir_operations;
 	set_nlink(inode, 2);
 
 	sb->s_root = d_make_root(inode);
-	if (!sb->s_root)
-		goto cleanup;
+	अगर (!sb->s_root)
+		जाओ cleanup;
 
 	/* Create and populate files in zone groups directories */
-	for (t = 0; t < ZONEFS_ZTYPE_MAX; t++) {
+	क्रम (t = 0; t < ZONEFS_ZTYPE_MAX; t++) अणु
 		ret = zonefs_create_zgroup(&zd, t);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
 cleanup:
 	zonefs_cleanup_zone_info(&zd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct dentry *zonefs_mount(struct file_system_type *fs_type,
-				   int flags, const char *dev_name, void *data)
-{
-	return mount_bdev(fs_type, flags, dev_name, data, zonefs_fill_super);
-}
+अटल काष्ठा dentry *zonefs_mount(काष्ठा file_प्रणाली_type *fs_type,
+				   पूर्णांक flags, स्थिर अक्षर *dev_name, व्योम *data)
+अणु
+	वापस mount_bdev(fs_type, flags, dev_name, data, zonefs_fill_super);
+पूर्ण
 
-static void zonefs_kill_super(struct super_block *sb)
-{
-	struct zonefs_sb_info *sbi = ZONEFS_SB(sb);
+अटल व्योम zonefs_समाप्त_super(काष्ठा super_block *sb)
+अणु
+	काष्ठा zonefs_sb_info *sbi = ZONEFS_SB(sb);
 
-	if (sb->s_root)
+	अगर (sb->s_root)
 		d_genocide(sb->s_root);
-	kill_block_super(sb);
-	kfree(sbi);
-}
+	समाप्त_block_super(sb);
+	kमुक्त(sbi);
+पूर्ण
 
 /*
- * File system definition and registration.
+ * File प्रणाली definition and registration.
  */
-static struct file_system_type zonefs_type = {
+अटल काष्ठा file_प्रणाली_type zonefs_type = अणु
 	.owner		= THIS_MODULE,
 	.name		= "zonefs",
 	.mount		= zonefs_mount,
-	.kill_sb	= zonefs_kill_super,
+	.समाप्त_sb	= zonefs_समाप्त_super,
 	.fs_flags	= FS_REQUIRES_DEV,
-};
+पूर्ण;
 
-static int __init zonefs_init_inodecache(void)
-{
+अटल पूर्णांक __init zonefs_init_inodecache(व्योम)
+अणु
 	zonefs_inode_cachep = kmem_cache_create("zonefs_inode_cache",
-			sizeof(struct zonefs_inode_info), 0,
+			माप(काष्ठा zonefs_inode_info), 0,
 			(SLAB_RECLAIM_ACCOUNT | SLAB_MEM_SPREAD | SLAB_ACCOUNT),
-			NULL);
-	if (zonefs_inode_cachep == NULL)
-		return -ENOMEM;
-	return 0;
-}
+			शून्य);
+	अगर (zonefs_inode_cachep == शून्य)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static void zonefs_destroy_inodecache(void)
-{
+अटल व्योम zonefs_destroy_inodecache(व्योम)
+अणु
 	/*
-	 * Make sure all delayed rcu free inodes are flushed before we
+	 * Make sure all delayed rcu मुक्त inodes are flushed beक्रमe we
 	 * destroy the inode cache.
 	 */
 	rcu_barrier();
 	kmem_cache_destroy(zonefs_inode_cachep);
-}
+पूर्ण
 
-static int __init zonefs_init(void)
-{
-	int ret;
+अटल पूर्णांक __init zonefs_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	BUILD_BUG_ON(sizeof(struct zonefs_super) != ZONEFS_SUPER_SIZE);
+	BUILD_BUG_ON(माप(काष्ठा zonefs_super) != ZONEFS_SUPER_SIZE);
 
 	ret = zonefs_init_inodecache();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = register_filesystem(&zonefs_type);
-	if (ret) {
+	ret = रेजिस्टर_fileप्रणाली(&zonefs_type);
+	अगर (ret) अणु
 		zonefs_destroy_inodecache();
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit zonefs_exit(void)
-{
+अटल व्योम __निकास zonefs_निकास(व्योम)
+अणु
 	zonefs_destroy_inodecache();
-	unregister_filesystem(&zonefs_type);
-}
+	unरेजिस्टर_fileप्रणाली(&zonefs_type);
+पूर्ण
 
 MODULE_AUTHOR("Damien Le Moal");
 MODULE_DESCRIPTION("Zone file system for zoned block devices");
 MODULE_LICENSE("GPL");
 module_init(zonefs_init);
-module_exit(zonefs_exit);
+module_निकास(zonefs_निकास);

@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Copyright (c) 2001,2002 Christer Weinigel <wingel@nano-system.com>
+ *  Copyright (c) 2001,2002 Christer Weinigel <wingel@nano-प्रणाली.com>
  *
  *  National Semiconductor SCx200 support.
  */
 
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/mutex.h>
-#include <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/pci.h>
 
-#include <linux/scx200.h>
-#include <linux/scx200_gpio.h>
+#समावेश <linux/scx200.h>
+#समावेश <linux/scx200_gpपन.स>
 
-/* Verify that the configuration block really is there */
-#define scx200_cb_probe(base) (inw((base) + SCx200_CBA) == (base))
+/* Verअगरy that the configuration block really is there */
+#घोषणा scx200_cb_probe(base) (inw((base) + SCx200_CBA) == (base))
 
 MODULE_AUTHOR("Christer Weinigel <wingel@nano-system.com>");
 MODULE_DESCRIPTION("NatSemi SCx200 Driver");
 MODULE_LICENSE("GPL");
 
-unsigned scx200_gpio_base = 0;
-unsigned long scx200_gpio_shadow[2];
+अचिन्हित scx200_gpio_base = 0;
+अचिन्हित दीर्घ scx200_gpio_shaकरोw[2];
 
-unsigned scx200_cb_base = 0;
+अचिन्हित scx200_cb_base = 0;
 
-static struct pci_device_id scx200_tbl[] = {
-	{ PCI_VDEVICE(NS, PCI_DEVICE_ID_NS_SCx200_BRIDGE) },
-	{ PCI_VDEVICE(NS, PCI_DEVICE_ID_NS_SC1100_BRIDGE) },
-	{ PCI_VDEVICE(NS, PCI_DEVICE_ID_NS_SCx200_XBUS)   },
-	{ PCI_VDEVICE(NS, PCI_DEVICE_ID_NS_SC1100_XBUS)   },
-	{ },
-};
+अटल काष्ठा pci_device_id scx200_tbl[] = अणु
+	अणु PCI_VDEVICE(NS, PCI_DEVICE_ID_NS_SCx200_BRIDGE) पूर्ण,
+	अणु PCI_VDEVICE(NS, PCI_DEVICE_ID_NS_SC1100_BRIDGE) पूर्ण,
+	अणु PCI_VDEVICE(NS, PCI_DEVICE_ID_NS_SCx200_XBUS)   पूर्ण,
+	अणु PCI_VDEVICE(NS, PCI_DEVICE_ID_NS_SC1100_XBUS)   पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(pci,scx200_tbl);
 
-static int scx200_probe(struct pci_dev *, const struct pci_device_id *);
+अटल पूर्णांक scx200_probe(काष्ठा pci_dev *, स्थिर काष्ठा pci_device_id *);
 
-static struct pci_driver scx200_pci_driver = {
+अटल काष्ठा pci_driver scx200_pci_driver = अणु
 	.name = "scx200",
 	.id_table = scx200_tbl,
 	.probe = scx200_probe,
-};
+पूर्ण;
 
-static DEFINE_MUTEX(scx200_gpio_config_lock);
+अटल DEFINE_MUTEX(scx200_gpio_config_lock);
 
-static void scx200_init_shadow(void)
-{
-	int bank;
+अटल व्योम scx200_init_shaकरोw(व्योम)
+अणु
+	पूर्णांक bank;
 
-	/* read the current values driven on the GPIO signals */
-	for (bank = 0; bank < 2; ++bank)
-		scx200_gpio_shadow[bank] = inl(scx200_gpio_base + 0x10 * bank);
-}
+	/* पढ़ो the current values driven on the GPIO संकेतs */
+	क्रम (bank = 0; bank < 2; ++bank)
+		scx200_gpio_shaकरोw[bank] = inl(scx200_gpio_base + 0x10 * bank);
+पूर्ण
 
-static int scx200_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	unsigned base;
+अटल पूर्णांक scx200_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	अचिन्हित base;
 
-	if (pdev->device == PCI_DEVICE_ID_NS_SCx200_BRIDGE ||
-	    pdev->device == PCI_DEVICE_ID_NS_SC1100_BRIDGE) {
+	अगर (pdev->device == PCI_DEVICE_ID_NS_SCx200_BRIDGE ||
+	    pdev->device == PCI_DEVICE_ID_NS_SC1100_BRIDGE) अणु
 		base = pci_resource_start(pdev, 0);
 		pr_info("GPIO base 0x%x\n", base);
 
-		if (!request_region(base, SCx200_GPIO_SIZE,
-				    "NatSemi SCx200 GPIO")) {
+		अगर (!request_region(base, SCx200_GPIO_SIZE,
+				    "NatSemi SCx200 GPIO")) अणु
 			pr_err("can't allocate I/O for GPIOs\n");
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 
 		scx200_gpio_base = base;
-		scx200_init_shadow();
+		scx200_init_shaकरोw();
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/* find the base of the Configuration Block */
-		if (scx200_cb_probe(SCx200_CB_BASE_FIXED)) {
+		अगर (scx200_cb_probe(SCx200_CB_BASE_FIXED)) अणु
 			scx200_cb_base = SCx200_CB_BASE_FIXED;
-		} else {
-			pci_read_config_dword(pdev, SCx200_CBA_SCRATCH, &base);
-			if (scx200_cb_probe(base)) {
+		पूर्ण अन्यथा अणु
+			pci_पढ़ो_config_dword(pdev, SCx200_CBA_SCRATCH, &base);
+			अगर (scx200_cb_probe(base)) अणु
 				scx200_cb_base = base;
-			} else {
+			पूर्ण अन्यथा अणु
 				pr_warn("Configuration Block not found\n");
-				return -ENODEV;
-			}
-		}
+				वापस -ENODEV;
+			पूर्ण
+		पूर्ण
 		pr_info("Configuration Block base 0x%x\n", scx200_cb_base);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u32 scx200_gpio_configure(unsigned index, u32 mask, u32 bits)
-{
+u32 scx200_gpio_configure(अचिन्हित index, u32 mask, u32 bits)
+अणु
 	u32 config, new_config;
 
 	mutex_lock(&scx200_gpio_config_lock);
@@ -106,25 +107,25 @@ u32 scx200_gpio_configure(unsigned index, u32 mask, u32 bits)
 
 	mutex_unlock(&scx200_gpio_config_lock);
 
-	return config;
-}
+	वापस config;
+पूर्ण
 
-static int __init scx200_init(void)
-{
+अटल पूर्णांक __init scx200_init(व्योम)
+अणु
 	pr_info("NatSemi SCx200 Driver\n");
-	return pci_register_driver(&scx200_pci_driver);
-}
+	वापस pci_रेजिस्टर_driver(&scx200_pci_driver);
+पूर्ण
 
-static void __exit scx200_cleanup(void)
-{
-	pci_unregister_driver(&scx200_pci_driver);
+अटल व्योम __निकास scx200_cleanup(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&scx200_pci_driver);
 	release_region(scx200_gpio_base, SCx200_GPIO_SIZE);
-}
+पूर्ण
 
 module_init(scx200_init);
-module_exit(scx200_cleanup);
+module_निकास(scx200_cleanup);
 
 EXPORT_SYMBOL(scx200_gpio_base);
-EXPORT_SYMBOL(scx200_gpio_shadow);
+EXPORT_SYMBOL(scx200_gpio_shaकरोw);
 EXPORT_SYMBOL(scx200_gpio_configure);
 EXPORT_SYMBOL(scx200_cb_base);

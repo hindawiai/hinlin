@@ -1,441 +1,442 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/netfilter.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/percpu.h>
-#include <linux/netdevice.h>
-#include <linux/security.h>
-#include <net/net_namespace.h>
-#ifdef CONFIG_SYSCTL
-#include <linux/sysctl.h>
-#endif
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/security.h>
+#समावेश <net/net_namespace.h>
+#अगर_घोषित CONFIG_SYSCTL
+#समावेश <linux/sysctl.h>
+#पूर्ण_अगर
 
-#include <net/netfilter/nf_conntrack.h>
-#include <net/netfilter/nf_conntrack_core.h>
-#include <net/netfilter/nf_conntrack_l4proto.h>
-#include <net/netfilter/nf_conntrack_expect.h>
-#include <net/netfilter/nf_conntrack_helper.h>
-#include <net/netfilter/nf_conntrack_acct.h>
-#include <net/netfilter/nf_conntrack_zones.h>
-#include <net/netfilter/nf_conntrack_timestamp.h>
-#include <linux/rculist_nulls.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_core.h>
+#समावेश <net/netfilter/nf_conntrack_l4proto.h>
+#समावेश <net/netfilter/nf_conntrack_expect.h>
+#समावेश <net/netfilter/nf_conntrack_helper.h>
+#समावेश <net/netfilter/nf_conntrack_acct.h>
+#समावेश <net/netfilter/nf_conntrack_zones.h>
+#समावेश <net/netfilter/nf_conntrack_बारtamp.h>
+#समावेश <linux/rculist_nulls.h>
 
-static bool enable_hooks __read_mostly;
+अटल bool enable_hooks __पढ़ो_mostly;
 MODULE_PARM_DESC(enable_hooks, "Always enable conntrack hooks");
 module_param(enable_hooks, bool, 0000);
 
-unsigned int nf_conntrack_net_id __read_mostly;
+अचिन्हित पूर्णांक nf_conntrack_net_id __पढ़ो_mostly;
 
-#ifdef CONFIG_NF_CONNTRACK_PROCFS
-void
-print_tuple(struct seq_file *s, const struct nf_conntrack_tuple *tuple,
-            const struct nf_conntrack_l4proto *l4proto)
-{
-	switch (tuple->src.l3num) {
-	case NFPROTO_IPV4:
-		seq_printf(s, "src=%pI4 dst=%pI4 ",
+#अगर_घोषित CONFIG_NF_CONNTRACK_PROCFS
+व्योम
+prपूर्णांक_tuple(काष्ठा seq_file *s, स्थिर काष्ठा nf_conntrack_tuple *tuple,
+            स्थिर काष्ठा nf_conntrack_l4proto *l4proto)
+अणु
+	चयन (tuple->src.l3num) अणु
+	हाल NFPROTO_IPV4:
+		seq_म_लिखो(s, "src=%pI4 dst=%pI4 ",
 			   &tuple->src.u3.ip, &tuple->dst.u3.ip);
-		break;
-	case NFPROTO_IPV6:
-		seq_printf(s, "src=%pI6 dst=%pI6 ",
+		अवरोध;
+	हाल NFPROTO_IPV6:
+		seq_म_लिखो(s, "src=%pI6 dst=%pI6 ",
 			   tuple->src.u3.ip6, tuple->dst.u3.ip6);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	switch (l4proto->l4proto) {
-	case IPPROTO_ICMP:
-		seq_printf(s, "type=%u code=%u id=%u ",
+	चयन (l4proto->l4proto) अणु
+	हाल IPPROTO_ICMP:
+		seq_म_लिखो(s, "type=%u code=%u id=%u ",
 			   tuple->dst.u.icmp.type,
 			   tuple->dst.u.icmp.code,
 			   ntohs(tuple->src.u.icmp.id));
-		break;
-	case IPPROTO_TCP:
-		seq_printf(s, "sport=%hu dport=%hu ",
+		अवरोध;
+	हाल IPPROTO_TCP:
+		seq_म_लिखो(s, "sport=%hu dport=%hu ",
 			   ntohs(tuple->src.u.tcp.port),
 			   ntohs(tuple->dst.u.tcp.port));
-		break;
-	case IPPROTO_UDPLITE:
-	case IPPROTO_UDP:
-		seq_printf(s, "sport=%hu dport=%hu ",
+		अवरोध;
+	हाल IPPROTO_UDPLITE:
+	हाल IPPROTO_UDP:
+		seq_म_लिखो(s, "sport=%hu dport=%hu ",
 			   ntohs(tuple->src.u.udp.port),
 			   ntohs(tuple->dst.u.udp.port));
 
-		break;
-	case IPPROTO_DCCP:
-		seq_printf(s, "sport=%hu dport=%hu ",
+		अवरोध;
+	हाल IPPROTO_DCCP:
+		seq_म_लिखो(s, "sport=%hu dport=%hu ",
 			   ntohs(tuple->src.u.dccp.port),
 			   ntohs(tuple->dst.u.dccp.port));
-		break;
-	case IPPROTO_SCTP:
-		seq_printf(s, "sport=%hu dport=%hu ",
+		अवरोध;
+	हाल IPPROTO_SCTP:
+		seq_म_लिखो(s, "sport=%hu dport=%hu ",
 			   ntohs(tuple->src.u.sctp.port),
 			   ntohs(tuple->dst.u.sctp.port));
-		break;
-	case IPPROTO_ICMPV6:
-		seq_printf(s, "type=%u code=%u id=%u ",
+		अवरोध;
+	हाल IPPROTO_ICMPV6:
+		seq_म_लिखो(s, "type=%u code=%u id=%u ",
 			   tuple->dst.u.icmp.type,
 			   tuple->dst.u.icmp.code,
 			   ntohs(tuple->src.u.icmp.id));
-		break;
-	case IPPROTO_GRE:
-		seq_printf(s, "srckey=0x%x dstkey=0x%x ",
+		अवरोध;
+	हाल IPPROTO_GRE:
+		seq_म_लिखो(s, "srckey=0x%x dstkey=0x%x ",
 			   ntohs(tuple->src.u.gre.key),
 			   ntohs(tuple->dst.u.gre.key));
-		break;
-	default:
-		break;
-	}
-}
-EXPORT_SYMBOL_GPL(print_tuple);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(prपूर्णांक_tuple);
 
-struct ct_iter_state {
-	struct seq_net_private p;
-	struct hlist_nulls_head *hash;
-	unsigned int htable_size;
-	unsigned int bucket;
-	u_int64_t time_now;
-};
+काष्ठा ct_iter_state अणु
+	काष्ठा seq_net_निजी p;
+	काष्ठा hlist_nulls_head *hash;
+	अचिन्हित पूर्णांक htable_size;
+	अचिन्हित पूर्णांक bucket;
+	u_पूर्णांक64_t समय_now;
+पूर्ण;
 
-static struct hlist_nulls_node *ct_get_first(struct seq_file *seq)
-{
-	struct ct_iter_state *st = seq->private;
-	struct hlist_nulls_node *n;
+अटल काष्ठा hlist_nulls_node *ct_get_first(काष्ठा seq_file *seq)
+अणु
+	काष्ठा ct_iter_state *st = seq->निजी;
+	काष्ठा hlist_nulls_node *n;
 
-	for (st->bucket = 0;
+	क्रम (st->bucket = 0;
 	     st->bucket < st->htable_size;
-	     st->bucket++) {
+	     st->bucket++) अणु
 		n = rcu_dereference(
 			hlist_nulls_first_rcu(&st->hash[st->bucket]));
-		if (!is_a_nulls(n))
-			return n;
-	}
-	return NULL;
-}
+		अगर (!is_a_nulls(n))
+			वापस n;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct hlist_nulls_node *ct_get_next(struct seq_file *seq,
-				      struct hlist_nulls_node *head)
-{
-	struct ct_iter_state *st = seq->private;
+अटल काष्ठा hlist_nulls_node *ct_get_next(काष्ठा seq_file *seq,
+				      काष्ठा hlist_nulls_node *head)
+अणु
+	काष्ठा ct_iter_state *st = seq->निजी;
 
 	head = rcu_dereference(hlist_nulls_next_rcu(head));
-	while (is_a_nulls(head)) {
-		if (likely(get_nulls_value(head) == st->bucket)) {
-			if (++st->bucket >= st->htable_size)
-				return NULL;
-		}
+	जबतक (is_a_nulls(head)) अणु
+		अगर (likely(get_nulls_value(head) == st->bucket)) अणु
+			अगर (++st->bucket >= st->htable_size)
+				वापस शून्य;
+		पूर्ण
 		head = rcu_dereference(
 			hlist_nulls_first_rcu(&st->hash[st->bucket]));
-	}
-	return head;
-}
+	पूर्ण
+	वापस head;
+पूर्ण
 
-static struct hlist_nulls_node *ct_get_idx(struct seq_file *seq, loff_t pos)
-{
-	struct hlist_nulls_node *head = ct_get_first(seq);
+अटल काष्ठा hlist_nulls_node *ct_get_idx(काष्ठा seq_file *seq, loff_t pos)
+अणु
+	काष्ठा hlist_nulls_node *head = ct_get_first(seq);
 
-	if (head)
-		while (pos && (head = ct_get_next(seq, head)))
+	अगर (head)
+		जबतक (pos && (head = ct_get_next(seq, head)))
 			pos--;
-	return pos ? NULL : head;
-}
+	वापस pos ? शून्य : head;
+पूर्ण
 
-static void *ct_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *ct_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(RCU)
-{
-	struct ct_iter_state *st = seq->private;
+अणु
+	काष्ठा ct_iter_state *st = seq->निजी;
 
-	st->time_now = ktime_get_real_ns();
-	rcu_read_lock();
+	st->समय_now = kसमय_get_real_ns();
+	rcu_पढ़ो_lock();
 
 	nf_conntrack_get_ht(&st->hash, &st->htable_size);
-	return ct_get_idx(seq, *pos);
-}
+	वापस ct_get_idx(seq, *pos);
+पूर्ण
 
-static void *ct_seq_next(struct seq_file *s, void *v, loff_t *pos)
-{
+अटल व्योम *ct_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
+अणु
 	(*pos)++;
-	return ct_get_next(s, v);
-}
+	वापस ct_get_next(s, v);
+पूर्ण
 
-static void ct_seq_stop(struct seq_file *s, void *v)
+अटल व्योम ct_seq_stop(काष्ठा seq_file *s, व्योम *v)
 	__releases(RCU)
-{
-	rcu_read_unlock();
-}
+अणु
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-#ifdef CONFIG_NF_CONNTRACK_SECMARK
-static void ct_show_secctx(struct seq_file *s, const struct nf_conn *ct)
-{
-	int ret;
+#अगर_घोषित CONFIG_NF_CONNTRACK_SECMARK
+अटल व्योम ct_show_secctx(काष्ठा seq_file *s, स्थिर काष्ठा nf_conn *ct)
+अणु
+	पूर्णांक ret;
 	u32 len;
-	char *secctx;
+	अक्षर *secctx;
 
 	ret = security_secid_to_secctx(ct->secmark, &secctx, &len);
-	if (ret)
-		return;
+	अगर (ret)
+		वापस;
 
-	seq_printf(s, "secctx=%s ", secctx);
+	seq_म_लिखो(s, "secctx=%s ", secctx);
 
 	security_release_secctx(secctx, len);
-}
-#else
-static inline void ct_show_secctx(struct seq_file *s, const struct nf_conn *ct)
-{
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम ct_show_secctx(काष्ठा seq_file *s, स्थिर काष्ठा nf_conn *ct)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_NF_CONNTRACK_ZONES
-static void ct_show_zone(struct seq_file *s, const struct nf_conn *ct,
-			 int dir)
-{
-	const struct nf_conntrack_zone *zone = nf_ct_zone(ct);
+#अगर_घोषित CONFIG_NF_CONNTRACK_ZONES
+अटल व्योम ct_show_zone(काष्ठा seq_file *s, स्थिर काष्ठा nf_conn *ct,
+			 पूर्णांक dir)
+अणु
+	स्थिर काष्ठा nf_conntrack_zone *zone = nf_ct_zone(ct);
 
-	if (zone->dir != dir)
-		return;
-	switch (zone->dir) {
-	case NF_CT_DEFAULT_ZONE_DIR:
-		seq_printf(s, "zone=%u ", zone->id);
-		break;
-	case NF_CT_ZONE_DIR_ORIG:
-		seq_printf(s, "zone-orig=%u ", zone->id);
-		break;
-	case NF_CT_ZONE_DIR_REPL:
-		seq_printf(s, "zone-reply=%u ", zone->id);
-		break;
-	default:
-		break;
-	}
-}
-#else
-static inline void ct_show_zone(struct seq_file *s, const struct nf_conn *ct,
-				int dir)
-{
-}
-#endif
+	अगर (zone->dir != dir)
+		वापस;
+	चयन (zone->dir) अणु
+	हाल NF_CT_DEFAULT_ZONE_सूची:
+		seq_म_लिखो(s, "zone=%u ", zone->id);
+		अवरोध;
+	हाल NF_CT_ZONE_सूची_ORIG:
+		seq_म_लिखो(s, "zone-orig=%u ", zone->id);
+		अवरोध;
+	हाल NF_CT_ZONE_सूची_REPL:
+		seq_म_लिखो(s, "zone-reply=%u ", zone->id);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम ct_show_zone(काष्ठा seq_file *s, स्थिर काष्ठा nf_conn *ct,
+				पूर्णांक dir)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_NF_CONNTRACK_TIMESTAMP
-static void ct_show_delta_time(struct seq_file *s, const struct nf_conn *ct)
-{
-	struct ct_iter_state *st = s->private;
-	struct nf_conn_tstamp *tstamp;
-	s64 delta_time;
+#अगर_घोषित CONFIG_NF_CONNTRACK_TIMESTAMP
+अटल व्योम ct_show_delta_समय(काष्ठा seq_file *s, स्थिर काष्ठा nf_conn *ct)
+अणु
+	काष्ठा ct_iter_state *st = s->निजी;
+	काष्ठा nf_conn_tstamp *tstamp;
+	s64 delta_समय;
 
 	tstamp = nf_conn_tstamp_find(ct);
-	if (tstamp) {
-		delta_time = st->time_now - tstamp->start;
-		if (delta_time > 0)
-			delta_time = div_s64(delta_time, NSEC_PER_SEC);
-		else
-			delta_time = 0;
+	अगर (tstamp) अणु
+		delta_समय = st->समय_now - tstamp->start;
+		अगर (delta_समय > 0)
+			delta_समय = भाग_s64(delta_समय, NSEC_PER_SEC);
+		अन्यथा
+			delta_समय = 0;
 
-		seq_printf(s, "delta-time=%llu ",
-			   (unsigned long long)delta_time);
-	}
-	return;
-}
-#else
-static inline void
-ct_show_delta_time(struct seq_file *s, const struct nf_conn *ct)
-{
-}
-#endif
+		seq_म_लिखो(s, "delta-time=%llu ",
+			   (अचिन्हित दीर्घ दीर्घ)delta_समय);
+	पूर्ण
+	वापस;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम
+ct_show_delta_समय(काष्ठा seq_file *s, स्थिर काष्ठा nf_conn *ct)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static const char* l3proto_name(u16 proto)
-{
-	switch (proto) {
-	case AF_INET: return "ipv4";
-	case AF_INET6: return "ipv6";
-	}
+अटल स्थिर अक्षर* l3proto_name(u16 proto)
+अणु
+	चयन (proto) अणु
+	हाल AF_INET: वापस "ipv4";
+	हाल AF_INET6: वापस "ipv6";
+	पूर्ण
 
-	return "unknown";
-}
+	वापस "unknown";
+पूर्ण
 
-static const char* l4proto_name(u16 proto)
-{
-	switch (proto) {
-	case IPPROTO_ICMP: return "icmp";
-	case IPPROTO_TCP: return "tcp";
-	case IPPROTO_UDP: return "udp";
-	case IPPROTO_DCCP: return "dccp";
-	case IPPROTO_GRE: return "gre";
-	case IPPROTO_SCTP: return "sctp";
-	case IPPROTO_UDPLITE: return "udplite";
-	case IPPROTO_ICMPV6: return "icmpv6";
-	}
+अटल स्थिर अक्षर* l4proto_name(u16 proto)
+अणु
+	चयन (proto) अणु
+	हाल IPPROTO_ICMP: वापस "icmp";
+	हाल IPPROTO_TCP: वापस "tcp";
+	हाल IPPROTO_UDP: वापस "udp";
+	हाल IPPROTO_DCCP: वापस "dccp";
+	हाल IPPROTO_GRE: वापस "gre";
+	हाल IPPROTO_SCTP: वापस "sctp";
+	हाल IPPROTO_UDPLITE: वापस "udplite";
+	हाल IPPROTO_ICMPV6: वापस "icmpv6";
+	पूर्ण
 
-	return "unknown";
-}
+	वापस "unknown";
+पूर्ण
 
-static unsigned int
-seq_print_acct(struct seq_file *s, const struct nf_conn *ct, int dir)
-{
-	struct nf_conn_acct *acct;
-	struct nf_conn_counter *counter;
+अटल अचिन्हित पूर्णांक
+seq_prपूर्णांक_acct(काष्ठा seq_file *s, स्थिर काष्ठा nf_conn *ct, पूर्णांक dir)
+अणु
+	काष्ठा nf_conn_acct *acct;
+	काष्ठा nf_conn_counter *counter;
 
 	acct = nf_conn_acct_find(ct);
-	if (!acct)
-		return 0;
+	अगर (!acct)
+		वापस 0;
 
 	counter = acct->counter;
-	seq_printf(s, "packets=%llu bytes=%llu ",
-		   (unsigned long long)atomic64_read(&counter[dir].packets),
-		   (unsigned long long)atomic64_read(&counter[dir].bytes));
+	seq_म_लिखो(s, "packets=%llu bytes=%llu ",
+		   (अचिन्हित दीर्घ दीर्घ)atomic64_पढ़ो(&counter[dir].packets),
+		   (अचिन्हित दीर्घ दीर्घ)atomic64_पढ़ो(&counter[dir].bytes));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* return 0 on success, 1 in case of error */
-static int ct_seq_show(struct seq_file *s, void *v)
-{
-	struct nf_conntrack_tuple_hash *hash = v;
-	struct nf_conn *ct = nf_ct_tuplehash_to_ctrack(hash);
-	const struct nf_conntrack_l4proto *l4proto;
-	struct net *net = seq_file_net(s);
-	int ret = 0;
+/* वापस 0 on success, 1 in हाल of error */
+अटल पूर्णांक ct_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
+	काष्ठा nf_conntrack_tuple_hash *hash = v;
+	काष्ठा nf_conn *ct = nf_ct_tuplehash_to_ctrack(hash);
+	स्थिर काष्ठा nf_conntrack_l4proto *l4proto;
+	काष्ठा net *net = seq_file_net(s);
+	पूर्णांक ret = 0;
 
 	WARN_ON(!ct);
-	if (unlikely(!atomic_inc_not_zero(&ct->ct_general.use)))
-		return 0;
+	अगर (unlikely(!atomic_inc_not_zero(&ct->ct_general.use)))
+		वापस 0;
 
-	if (nf_ct_should_gc(ct)) {
-		nf_ct_kill(ct);
-		goto release;
-	}
+	अगर (nf_ct_should_gc(ct)) अणु
+		nf_ct_समाप्त(ct);
+		जाओ release;
+	पूर्ण
 
-	/* we only want to print DIR_ORIGINAL */
-	if (NF_CT_DIRECTION(hash))
-		goto release;
+	/* we only want to prपूर्णांक सूची_ORIGINAL */
+	अगर (NF_CT_सूचीECTION(hash))
+		जाओ release;
 
-	if (!net_eq(nf_ct_net(ct), net))
-		goto release;
+	अगर (!net_eq(nf_ct_net(ct), net))
+		जाओ release;
 
 	l4proto = nf_ct_l4proto_find(nf_ct_protonum(ct));
 
 	ret = -ENOSPC;
-	seq_printf(s, "%-8s %u %-8s %u ",
+	seq_म_लिखो(s, "%-8s %u %-8s %u ",
 		   l3proto_name(nf_ct_l3num(ct)), nf_ct_l3num(ct),
 		   l4proto_name(l4proto->l4proto), nf_ct_protonum(ct));
 
-	if (!test_bit(IPS_OFFLOAD_BIT, &ct->status))
-		seq_printf(s, "%ld ", nf_ct_expires(ct)  / HZ);
+	अगर (!test_bit(IPS_OFFLOAD_BIT, &ct->status))
+		seq_म_लिखो(s, "%ld ", nf_ct_expires(ct)  / HZ);
 
-	if (l4proto->print_conntrack)
-		l4proto->print_conntrack(s, ct);
+	अगर (l4proto->prपूर्णांक_conntrack)
+		l4proto->prपूर्णांक_conntrack(s, ct);
 
-	print_tuple(s, &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple,
+	prपूर्णांक_tuple(s, &ct->tuplehash[IP_CT_सूची_ORIGINAL].tuple,
 		    l4proto);
 
-	ct_show_zone(s, ct, NF_CT_ZONE_DIR_ORIG);
+	ct_show_zone(s, ct, NF_CT_ZONE_सूची_ORIG);
 
-	if (seq_has_overflowed(s))
-		goto release;
+	अगर (seq_has_overflowed(s))
+		जाओ release;
 
-	if (seq_print_acct(s, ct, IP_CT_DIR_ORIGINAL))
-		goto release;
+	अगर (seq_prपूर्णांक_acct(s, ct, IP_CT_सूची_ORIGINAL))
+		जाओ release;
 
-	if (!(test_bit(IPS_SEEN_REPLY_BIT, &ct->status)))
-		seq_puts(s, "[UNREPLIED] ");
+	अगर (!(test_bit(IPS_SEEN_REPLY_BIT, &ct->status)))
+		seq_माला_दो(s, "[UNREPLIED] ");
 
-	print_tuple(s, &ct->tuplehash[IP_CT_DIR_REPLY].tuple, l4proto);
+	prपूर्णांक_tuple(s, &ct->tuplehash[IP_CT_सूची_REPLY].tuple, l4proto);
 
-	ct_show_zone(s, ct, NF_CT_ZONE_DIR_REPL);
+	ct_show_zone(s, ct, NF_CT_ZONE_सूची_REPL);
 
-	if (seq_print_acct(s, ct, IP_CT_DIR_REPLY))
-		goto release;
+	अगर (seq_prपूर्णांक_acct(s, ct, IP_CT_सूची_REPLY))
+		जाओ release;
 
-	if (test_bit(IPS_HW_OFFLOAD_BIT, &ct->status))
-		seq_puts(s, "[HW_OFFLOAD] ");
-	else if (test_bit(IPS_OFFLOAD_BIT, &ct->status))
-		seq_puts(s, "[OFFLOAD] ");
-	else if (test_bit(IPS_ASSURED_BIT, &ct->status))
-		seq_puts(s, "[ASSURED] ");
+	अगर (test_bit(IPS_HW_OFFLOAD_BIT, &ct->status))
+		seq_माला_दो(s, "[HW_OFFLOAD] ");
+	अन्यथा अगर (test_bit(IPS_OFFLOAD_BIT, &ct->status))
+		seq_माला_दो(s, "[OFFLOAD] ");
+	अन्यथा अगर (test_bit(IPS_ASSURED_BIT, &ct->status))
+		seq_माला_दो(s, "[ASSURED] ");
 
-	if (seq_has_overflowed(s))
-		goto release;
+	अगर (seq_has_overflowed(s))
+		जाओ release;
 
-#if defined(CONFIG_NF_CONNTRACK_MARK)
-	seq_printf(s, "mark=%u ", ct->mark);
-#endif
+#अगर defined(CONFIG_NF_CONNTRACK_MARK)
+	seq_म_लिखो(s, "mark=%u ", ct->mark);
+#पूर्ण_अगर
 
 	ct_show_secctx(s, ct);
-	ct_show_zone(s, ct, NF_CT_DEFAULT_ZONE_DIR);
-	ct_show_delta_time(s, ct);
+	ct_show_zone(s, ct, NF_CT_DEFAULT_ZONE_सूची);
+	ct_show_delta_समय(s, ct);
 
-	seq_printf(s, "use=%u\n", atomic_read(&ct->ct_general.use));
+	seq_म_लिखो(s, "use=%u\n", atomic_पढ़ो(&ct->ct_general.use));
 
-	if (seq_has_overflowed(s))
-		goto release;
+	अगर (seq_has_overflowed(s))
+		जाओ release;
 
 	ret = 0;
 release:
 	nf_ct_put(ct);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct seq_operations ct_seq_ops = {
+अटल स्थिर काष्ठा seq_operations ct_seq_ops = अणु
 	.start = ct_seq_start,
 	.next  = ct_seq_next,
 	.stop  = ct_seq_stop,
 	.show  = ct_seq_show
-};
+पूर्ण;
 
-static void *ct_cpu_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	struct net *net = seq_file_net(seq);
-	int cpu;
+अटल व्योम *ct_cpu_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
+	पूर्णांक cpu;
 
-	if (*pos == 0)
-		return SEQ_START_TOKEN;
+	अगर (*pos == 0)
+		वापस SEQ_START_TOKEN;
 
-	for (cpu = *pos-1; cpu < nr_cpu_ids; ++cpu) {
-		if (!cpu_possible(cpu))
-			continue;
+	क्रम (cpu = *pos-1; cpu < nr_cpu_ids; ++cpu) अणु
+		अगर (!cpu_possible(cpu))
+			जारी;
 		*pos = cpu + 1;
-		return per_cpu_ptr(net->ct.stat, cpu);
-	}
+		वापस per_cpu_ptr(net->ct.stat, cpu);
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void *ct_cpu_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct net *net = seq_file_net(seq);
-	int cpu;
+अटल व्योम *ct_cpu_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
+	पूर्णांक cpu;
 
-	for (cpu = *pos; cpu < nr_cpu_ids; ++cpu) {
-		if (!cpu_possible(cpu))
-			continue;
+	क्रम (cpu = *pos; cpu < nr_cpu_ids; ++cpu) अणु
+		अगर (!cpu_possible(cpu))
+			जारी;
 		*pos = cpu + 1;
-		return per_cpu_ptr(net->ct.stat, cpu);
-	}
+		वापस per_cpu_ptr(net->ct.stat, cpu);
+	पूर्ण
 	(*pos)++;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void ct_cpu_seq_stop(struct seq_file *seq, void *v)
-{
-}
+अटल व्योम ct_cpu_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+अणु
+पूर्ण
 
-static int ct_cpu_seq_show(struct seq_file *seq, void *v)
-{
-	struct net *net = seq_file_net(seq);
-	const struct ip_conntrack_stat *st = v;
-	unsigned int nr_conntracks;
+अटल पूर्णांक ct_cpu_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
+	स्थिर काष्ठा ip_conntrack_stat *st = v;
+	अचिन्हित पूर्णांक nr_conntracks;
 
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(seq, "entries  clashres found new invalid ignore delete delete_list insert insert_failed drop early_drop icmp_error  expect_new expect_create expect_delete search_restart\n");
-		return 0;
-	}
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(seq, "entries  clashres found new invalid ignore delete delete_list insert insert_failed drop early_drop icmp_error  expect_new expect_create expect_delete search_restart\n");
+		वापस 0;
+	पूर्ण
 
 	nr_conntracks = nf_conntrack_count(net);
 
-	seq_printf(seq, "%08x  %08x %08x %08x %08x %08x %08x %08x "
+	seq_म_लिखो(seq, "%08x  %08x %08x %08x %08x %08x %08x %08x "
 			"%08x %08x %08x %08x %08x  %08x %08x %08x %08x\n",
 		   nr_conntracks,
 		   st->clash_resolve,
@@ -456,100 +457,100 @@ static int ct_cpu_seq_show(struct seq_file *seq, void *v)
 		   st->expect_delete,
 		   st->search_restart
 		);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations ct_cpu_seq_ops = {
+अटल स्थिर काष्ठा seq_operations ct_cpu_seq_ops = अणु
 	.start	= ct_cpu_seq_start,
 	.next	= ct_cpu_seq_next,
 	.stop	= ct_cpu_seq_stop,
 	.show	= ct_cpu_seq_show,
-};
+पूर्ण;
 
-static int nf_conntrack_standalone_init_proc(struct net *net)
-{
-	struct proc_dir_entry *pde;
+अटल पूर्णांक nf_conntrack_standalone_init_proc(काष्ठा net *net)
+अणु
+	काष्ठा proc_dir_entry *pde;
 	kuid_t root_uid;
 	kgid_t root_gid;
 
 	pde = proc_create_net("nf_conntrack", 0440, net->proc_net, &ct_seq_ops,
-			sizeof(struct ct_iter_state));
-	if (!pde)
-		goto out_nf_conntrack;
+			माप(काष्ठा ct_iter_state));
+	अगर (!pde)
+		जाओ out_nf_conntrack;
 
 	root_uid = make_kuid(net->user_ns, 0);
 	root_gid = make_kgid(net->user_ns, 0);
-	if (uid_valid(root_uid) && gid_valid(root_gid))
+	अगर (uid_valid(root_uid) && gid_valid(root_gid))
 		proc_set_user(pde, root_uid, root_gid);
 
 	pde = proc_create_net("nf_conntrack", 0444, net->proc_net_stat,
-			&ct_cpu_seq_ops, sizeof(struct seq_net_private));
-	if (!pde)
-		goto out_stat_nf_conntrack;
-	return 0;
+			&ct_cpu_seq_ops, माप(काष्ठा seq_net_निजी));
+	अगर (!pde)
+		जाओ out_stat_nf_conntrack;
+	वापस 0;
 
 out_stat_nf_conntrack:
-	remove_proc_entry("nf_conntrack", net->proc_net);
+	हटाओ_proc_entry("nf_conntrack", net->proc_net);
 out_nf_conntrack:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void nf_conntrack_standalone_fini_proc(struct net *net)
-{
-	remove_proc_entry("nf_conntrack", net->proc_net_stat);
-	remove_proc_entry("nf_conntrack", net->proc_net);
-}
-#else
-static int nf_conntrack_standalone_init_proc(struct net *net)
-{
-	return 0;
-}
+अटल व्योम nf_conntrack_standalone_fini_proc(काष्ठा net *net)
+अणु
+	हटाओ_proc_entry("nf_conntrack", net->proc_net_stat);
+	हटाओ_proc_entry("nf_conntrack", net->proc_net);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक nf_conntrack_standalone_init_proc(काष्ठा net *net)
+अणु
+	वापस 0;
+पूर्ण
 
-static void nf_conntrack_standalone_fini_proc(struct net *net)
-{
-}
-#endif /* CONFIG_NF_CONNTRACK_PROCFS */
+अटल व्योम nf_conntrack_standalone_fini_proc(काष्ठा net *net)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_PROCFS */
 
-u32 nf_conntrack_count(const struct net *net)
-{
-	const struct nf_conntrack_net *cnet;
+u32 nf_conntrack_count(स्थिर काष्ठा net *net)
+अणु
+	स्थिर काष्ठा nf_conntrack_net *cnet;
 
 	cnet = net_generic(net, nf_conntrack_net_id);
 
-	return atomic_read(&cnet->count);
-}
+	वापस atomic_पढ़ो(&cnet->count);
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_conntrack_count);
 
 /* Sysctl support */
 
-#ifdef CONFIG_SYSCTL
+#अगर_घोषित CONFIG_SYSCTL
 /* size the user *wants to set */
-static unsigned int nf_conntrack_htable_size_user __read_mostly;
+अटल अचिन्हित पूर्णांक nf_conntrack_htable_size_user __पढ़ो_mostly;
 
-static int
-nf_conntrack_hash_sysctl(struct ctl_table *table, int write,
-			 void *buffer, size_t *lenp, loff_t *ppos)
-{
-	int ret;
+अटल पूर्णांक
+nf_conntrack_hash_sysctl(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+			 व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक ret;
 
 	/* module_param hashsize could have changed value */
 	nf_conntrack_htable_size_user = nf_conntrack_htable_size;
 
-	ret = proc_dointvec(table, write, buffer, lenp, ppos);
-	if (ret < 0 || !write)
-		return ret;
+	ret = proc_करोपूर्णांकvec(table, ग_लिखो, buffer, lenp, ppos);
+	अगर (ret < 0 || !ग_लिखो)
+		वापस ret;
 
 	/* update ret, we might not be able to satisfy request */
 	ret = nf_conntrack_hash_resize(nf_conntrack_htable_size_user);
 
 	/* update it to the actual value used by conntrack */
 	nf_conntrack_htable_size_user = nf_conntrack_htable_size;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct ctl_table_header *nf_ct_netfilter_header;
+अटल काष्ठा ctl_table_header *nf_ct_netfilter_header;
 
-enum nf_ct_sysctl_index {
+क्रमागत nf_ct_sysctl_index अणु
 	NF_SYSCTL_CT_MAX,
 	NF_SYSCTL_CT_COUNT,
 	NF_SYSCTL_CT_BUCKETS,
@@ -558,12 +559,12 @@ enum nf_ct_sysctl_index {
 	NF_SYSCTL_CT_EXPECT_MAX,
 	NF_SYSCTL_CT_ACCT,
 	NF_SYSCTL_CT_HELPER,
-#ifdef CONFIG_NF_CONNTRACK_EVENTS
+#अगर_घोषित CONFIG_NF_CONNTRACK_EVENTS
 	NF_SYSCTL_CT_EVENTS,
-#endif
-#ifdef CONFIG_NF_CONNTRACK_TIMESTAMP
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CONNTRACK_TIMESTAMP
 	NF_SYSCTL_CT_TIMESTAMP,
-#endif
+#पूर्ण_अगर
 	NF_SYSCTL_CT_PROTO_TIMEOUT_GENERIC,
 	NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_SYN_SENT,
 	NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_SYN_RECV,
@@ -582,7 +583,7 @@ enum nf_ct_sysctl_index {
 	NF_SYSCTL_CT_PROTO_TIMEOUT_UDP_STREAM,
 	NF_SYSCTL_CT_PROTO_TIMEOUT_ICMP,
 	NF_SYSCTL_CT_PROTO_TIMEOUT_ICMPV6,
-#ifdef CONFIG_NF_CT_PROTO_SCTP
+#अगर_घोषित CONFIG_NF_CT_PROTO_SCTP
 	NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_CLOSED,
 	NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_COOKIE_WAIT,
 	NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_COOKIE_ECHOED,
@@ -592,8 +593,8 @@ enum nf_ct_sysctl_index {
 	NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_SHUTDOWN_ACK_SENT,
 	NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_HEARTBEAT_SENT,
 	NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_HEARTBEAT_ACKED,
-#endif
-#ifdef CONFIG_NF_CT_PROTO_DCCP
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CT_PROTO_DCCP
 	NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_REQUEST,
 	NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_RESPOND,
 	NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_PARTOPEN,
@@ -602,356 +603,356 @@ enum nf_ct_sysctl_index {
 	NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_CLOSING,
 	NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_TIMEWAIT,
 	NF_SYSCTL_CT_PROTO_DCCP_LOOSE,
-#endif
-#ifdef CONFIG_NF_CT_PROTO_GRE
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CT_PROTO_GRE
 	NF_SYSCTL_CT_PROTO_TIMEOUT_GRE,
 	NF_SYSCTL_CT_PROTO_TIMEOUT_GRE_STREAM,
-#endif
+#पूर्ण_अगर
 
 	__NF_SYSCTL_CT_LAST_SYSCTL,
-};
+पूर्ण;
 
-#define NF_SYSCTL_CT_LAST_SYSCTL (__NF_SYSCTL_CT_LAST_SYSCTL + 1)
+#घोषणा NF_SYSCTL_CT_LAST_SYSCTL (__NF_SYSCTL_CT_LAST_SYSCTL + 1)
 
-static struct ctl_table nf_ct_sysctl_table[] = {
-	[NF_SYSCTL_CT_MAX] = {
+अटल काष्ठा ctl_table nf_ct_sysctl_table[] = अणु
+	[NF_SYSCTL_CT_MAX] = अणु
 		.procname	= "nf_conntrack_max",
 		.data		= &nf_conntrack_max,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec,
-	},
-	[NF_SYSCTL_CT_COUNT] = {
+		.proc_handler	= proc_करोपूर्णांकvec,
+	पूर्ण,
+	[NF_SYSCTL_CT_COUNT] = अणु
 		.procname	= "nf_conntrack_count",
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0444,
-		.proc_handler	= proc_dointvec,
-	},
-	[NF_SYSCTL_CT_BUCKETS] = {
+		.proc_handler	= proc_करोपूर्णांकvec,
+	पूर्ण,
+	[NF_SYSCTL_CT_BUCKETS] = अणु
 		.procname       = "nf_conntrack_buckets",
 		.data           = &nf_conntrack_htable_size_user,
-		.maxlen         = sizeof(unsigned int),
+		.maxlen         = माप(अचिन्हित पूर्णांक),
 		.mode           = 0644,
 		.proc_handler   = nf_conntrack_hash_sysctl,
-	},
-	[NF_SYSCTL_CT_CHECKSUM] = {
+	पूर्ण,
+	[NF_SYSCTL_CT_CHECKSUM] = अणु
 		.procname	= "nf_conntrack_checksum",
 		.data		= &init_net.ct.sysctl_checksum,
-		.maxlen		= sizeof(u8),
+		.maxlen		= माप(u8),
 		.mode		= 0644,
-		.proc_handler	= proc_dou8vec_minmax,
+		.proc_handler	= proc_करोu8vec_minmax,
 		.extra1 	= SYSCTL_ZERO,
 		.extra2 	= SYSCTL_ONE,
-	},
-	[NF_SYSCTL_CT_LOG_INVALID] = {
+	पूर्ण,
+	[NF_SYSCTL_CT_LOG_INVALID] = अणु
 		.procname	= "nf_conntrack_log_invalid",
 		.data		= &init_net.ct.sysctl_log_invalid,
-		.maxlen		= sizeof(u8),
+		.maxlen		= माप(u8),
 		.mode		= 0644,
-		.proc_handler	= proc_dou8vec_minmax,
-	},
-	[NF_SYSCTL_CT_EXPECT_MAX] = {
+		.proc_handler	= proc_करोu8vec_minmax,
+	पूर्ण,
+	[NF_SYSCTL_CT_EXPECT_MAX] = अणु
 		.procname	= "nf_conntrack_expect_max",
 		.data		= &nf_ct_expect_max,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec,
-	},
-	[NF_SYSCTL_CT_ACCT] = {
+		.proc_handler	= proc_करोपूर्णांकvec,
+	पूर्ण,
+	[NF_SYSCTL_CT_ACCT] = अणु
 		.procname	= "nf_conntrack_acct",
 		.data		= &init_net.ct.sysctl_acct,
-		.maxlen		= sizeof(u8),
+		.maxlen		= माप(u8),
 		.mode		= 0644,
-		.proc_handler	= proc_dou8vec_minmax,
+		.proc_handler	= proc_करोu8vec_minmax,
 		.extra1 	= SYSCTL_ZERO,
 		.extra2 	= SYSCTL_ONE,
-	},
-	[NF_SYSCTL_CT_HELPER] = {
+	पूर्ण,
+	[NF_SYSCTL_CT_HELPER] = अणु
 		.procname	= "nf_conntrack_helper",
-		.maxlen		= sizeof(u8),
+		.maxlen		= माप(u8),
 		.mode		= 0644,
-		.proc_handler	= proc_dou8vec_minmax,
+		.proc_handler	= proc_करोu8vec_minmax,
 		.extra1 	= SYSCTL_ZERO,
 		.extra2 	= SYSCTL_ONE,
-	},
-#ifdef CONFIG_NF_CONNTRACK_EVENTS
-	[NF_SYSCTL_CT_EVENTS] = {
+	पूर्ण,
+#अगर_घोषित CONFIG_NF_CONNTRACK_EVENTS
+	[NF_SYSCTL_CT_EVENTS] = अणु
 		.procname	= "nf_conntrack_events",
 		.data		= &init_net.ct.sysctl_events,
-		.maxlen		= sizeof(u8),
+		.maxlen		= माप(u8),
 		.mode		= 0644,
-		.proc_handler	= proc_dou8vec_minmax,
+		.proc_handler	= proc_करोu8vec_minmax,
 		.extra1 	= SYSCTL_ZERO,
 		.extra2 	= SYSCTL_ONE,
-	},
-#endif
-#ifdef CONFIG_NF_CONNTRACK_TIMESTAMP
-	[NF_SYSCTL_CT_TIMESTAMP] = {
+	पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CONNTRACK_TIMESTAMP
+	[NF_SYSCTL_CT_TIMESTAMP] = अणु
 		.procname	= "nf_conntrack_timestamp",
 		.data		= &init_net.ct.sysctl_tstamp,
-		.maxlen		= sizeof(u8),
+		.maxlen		= माप(u8),
 		.mode		= 0644,
-		.proc_handler	= proc_dou8vec_minmax,
+		.proc_handler	= proc_करोu8vec_minmax,
 		.extra1 	= SYSCTL_ZERO,
 		.extra2 	= SYSCTL_ONE,
-	},
-#endif
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_GENERIC] = {
+	पूर्ण,
+#पूर्ण_अगर
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_GENERIC] = अणु
 		.procname	= "nf_conntrack_generic_timeout",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_SYN_SENT] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_SYN_SENT] = अणु
 		.procname	= "nf_conntrack_tcp_timeout_syn_sent",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_SYN_RECV] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_SYN_RECV] = अणु
 		.procname	= "nf_conntrack_tcp_timeout_syn_recv",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_ESTABLISHED] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_ESTABLISHED] = अणु
 		.procname	= "nf_conntrack_tcp_timeout_established",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_FIN_WAIT] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_FIN_WAIT] = अणु
 		.procname	= "nf_conntrack_tcp_timeout_fin_wait",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_CLOSE_WAIT] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_CLOSE_WAIT] = अणु
 		.procname	= "nf_conntrack_tcp_timeout_close_wait",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_LAST_ACK] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_LAST_ACK] = अणु
 		.procname	= "nf_conntrack_tcp_timeout_last_ack",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_TIME_WAIT] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_TIME_WAIT] = अणु
 		.procname	= "nf_conntrack_tcp_timeout_time_wait",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_CLOSE] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_CLOSE] = अणु
 		.procname	= "nf_conntrack_tcp_timeout_close",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_RETRANS] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_RETRANS] = अणु
 		.procname	= "nf_conntrack_tcp_timeout_max_retrans",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_UNACK] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_UNACK] = अणु
 		.procname	= "nf_conntrack_tcp_timeout_unacknowledged",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TCP_LOOSE] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TCP_LOOSE] = अणु
 		.procname	= "nf_conntrack_tcp_loose",
-		.maxlen		= sizeof(u8),
+		.maxlen		= माप(u8),
 		.mode		= 0644,
-		.proc_handler	= proc_dou8vec_minmax,
+		.proc_handler	= proc_करोu8vec_minmax,
 		.extra1 	= SYSCTL_ZERO,
 		.extra2 	= SYSCTL_ONE,
-	},
-	[NF_SYSCTL_CT_PROTO_TCP_LIBERAL] = {
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TCP_LIBERAL] = अणु
 		.procname       = "nf_conntrack_tcp_be_liberal",
-		.maxlen		= sizeof(u8),
+		.maxlen		= माप(u8),
 		.mode           = 0644,
-		.proc_handler	= proc_dou8vec_minmax,
+		.proc_handler	= proc_करोu8vec_minmax,
 		.extra1 	= SYSCTL_ZERO,
 		.extra2 	= SYSCTL_ONE,
-	},
-	[NF_SYSCTL_CT_PROTO_TCP_MAX_RETRANS] = {
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TCP_MAX_RETRANS] = अणु
 		.procname	= "nf_conntrack_tcp_max_retrans",
-		.maxlen		= sizeof(u8),
+		.maxlen		= माप(u8),
 		.mode		= 0644,
-		.proc_handler	= proc_dou8vec_minmax,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_UDP] = {
+		.proc_handler	= proc_करोu8vec_minmax,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_UDP] = अणु
 		.procname	= "nf_conntrack_udp_timeout",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_UDP_STREAM] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_UDP_STREAM] = अणु
 		.procname	= "nf_conntrack_udp_timeout_stream",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_ICMP] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_ICMP] = अणु
 		.procname	= "nf_conntrack_icmp_timeout",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_ICMPV6] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_ICMPV6] = अणु
 		.procname	= "nf_conntrack_icmpv6_timeout",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-#ifdef CONFIG_NF_CT_PROTO_SCTP
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_CLOSED] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+#अगर_घोषित CONFIG_NF_CT_PROTO_SCTP
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_CLOSED] = अणु
 		.procname	= "nf_conntrack_sctp_timeout_closed",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_COOKIE_WAIT] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_COOKIE_WAIT] = अणु
 		.procname	= "nf_conntrack_sctp_timeout_cookie_wait",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_COOKIE_ECHOED] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_COOKIE_ECHOED] = अणु
 		.procname	= "nf_conntrack_sctp_timeout_cookie_echoed",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_ESTABLISHED] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_ESTABLISHED] = अणु
 		.procname	= "nf_conntrack_sctp_timeout_established",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_SHUTDOWN_SENT] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_SHUTDOWN_SENT] = अणु
 		.procname	= "nf_conntrack_sctp_timeout_shutdown_sent",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_SHUTDOWN_RECD] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_SHUTDOWN_RECD] = अणु
 		.procname	= "nf_conntrack_sctp_timeout_shutdown_recd",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_SHUTDOWN_ACK_SENT] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_SHUTDOWN_ACK_SENT] = अणु
 		.procname	= "nf_conntrack_sctp_timeout_shutdown_ack_sent",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_HEARTBEAT_SENT] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_HEARTBEAT_SENT] = अणु
 		.procname	= "nf_conntrack_sctp_timeout_heartbeat_sent",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_HEARTBEAT_ACKED] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_HEARTBEAT_ACKED] = अणु
 		.procname       = "nf_conntrack_sctp_timeout_heartbeat_acked",
-		.maxlen         = sizeof(unsigned int),
+		.maxlen         = माप(अचिन्हित पूर्णांक),
 		.mode           = 0644,
-		.proc_handler   = proc_dointvec_jiffies,
-	},
-#endif
-#ifdef CONFIG_NF_CT_PROTO_DCCP
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_REQUEST] = {
+		.proc_handler   = proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CT_PROTO_DCCP
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_REQUEST] = अणु
 		.procname	= "nf_conntrack_dccp_timeout_request",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_RESPOND] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_RESPOND] = अणु
 		.procname	= "nf_conntrack_dccp_timeout_respond",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_PARTOPEN] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_PARTOPEN] = अणु
 		.procname	= "nf_conntrack_dccp_timeout_partopen",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_OPEN] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_OPEN] = अणु
 		.procname	= "nf_conntrack_dccp_timeout_open",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_CLOSEREQ] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_CLOSEREQ] = अणु
 		.procname	= "nf_conntrack_dccp_timeout_closereq",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_CLOSING] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_CLOSING] = अणु
 		.procname	= "nf_conntrack_dccp_timeout_closing",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_TIMEWAIT] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_TIMEWAIT] = अणु
 		.procname	= "nf_conntrack_dccp_timeout_timewait",
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_DCCP_LOOSE] = {
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_DCCP_LOOSE] = अणु
 		.procname	= "nf_conntrack_dccp_loose",
-		.maxlen		= sizeof(u8),
+		.maxlen		= माप(u8),
 		.mode		= 0644,
-		.proc_handler	= proc_dou8vec_minmax,
+		.proc_handler	= proc_करोu8vec_minmax,
 		.extra1 	= SYSCTL_ZERO,
 		.extra2 	= SYSCTL_ONE,
-	},
-#endif
-#ifdef CONFIG_NF_CT_PROTO_GRE
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_GRE] = {
+	पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CT_PROTO_GRE
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_GRE] = अणु
 		.procname       = "nf_conntrack_gre_timeout",
-		.maxlen         = sizeof(unsigned int),
+		.maxlen         = माप(अचिन्हित पूर्णांक),
 		.mode           = 0644,
-		.proc_handler   = proc_dointvec_jiffies,
-	},
-	[NF_SYSCTL_CT_PROTO_TIMEOUT_GRE_STREAM] = {
+		.proc_handler   = proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	[NF_SYSCTL_CT_PROTO_TIMEOUT_GRE_STREAM] = अणु
 		.procname       = "nf_conntrack_gre_timeout_stream",
-		.maxlen         = sizeof(unsigned int),
+		.maxlen         = माप(अचिन्हित पूर्णांक),
 		.mode           = 0644,
-		.proc_handler   = proc_dointvec_jiffies,
-	},
-#endif
-	{}
-};
+		.proc_handler   = proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+#पूर्ण_अगर
+	अणुपूर्ण
+पूर्ण;
 
-static struct ctl_table nf_ct_netfilter_table[] = {
-	{
+अटल काष्ठा ctl_table nf_ct_netfilter_table[] = अणु
+	अणु
 		.procname	= "nf_conntrack_max",
 		.data		= &nf_conntrack_max,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec,
-	},
-	{ }
-};
+		.proc_handler	= proc_करोपूर्णांकvec,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static void nf_conntrack_standalone_init_tcp_sysctl(struct net *net,
-						    struct ctl_table *table)
-{
-	struct nf_tcp_net *tn = nf_tcp_pernet(net);
+अटल व्योम nf_conntrack_standalone_init_tcp_sysctl(काष्ठा net *net,
+						    काष्ठा ctl_table *table)
+अणु
+	काष्ठा nf_tcp_net *tn = nf_tcp_pernet(net);
 
-#define XASSIGN(XNAME, tn) \
+#घोषणा XASSIGN(XNAME, tn) \
 	table[NF_SYSCTL_CT_PROTO_TIMEOUT_TCP_ ## XNAME].data = \
-			&(tn)->timeouts[TCP_CONNTRACK_ ## XNAME]
+			&(tn)->समयouts[TCP_CONNTRACK_ ## XNAME]
 
 	XASSIGN(SYN_SENT, tn);
 	XASSIGN(SYN_RECV, tn);
@@ -963,25 +964,25 @@ static void nf_conntrack_standalone_init_tcp_sysctl(struct net *net,
 	XASSIGN(CLOSE, tn);
 	XASSIGN(RETRANS, tn);
 	XASSIGN(UNACK, tn);
-#undef XASSIGN
-#define XASSIGN(XNAME, rval) \
+#अघोषित XASSIGN
+#घोषणा XASSIGN(XNAME, rval) \
 	table[NF_SYSCTL_CT_PROTO_TCP_ ## XNAME].data = (rval)
 
 	XASSIGN(LOOSE, &tn->tcp_loose);
 	XASSIGN(LIBERAL, &tn->tcp_be_liberal);
 	XASSIGN(MAX_RETRANS, &tn->tcp_max_retrans);
-#undef XASSIGN
-}
+#अघोषित XASSIGN
+पूर्ण
 
-static void nf_conntrack_standalone_init_sctp_sysctl(struct net *net,
-						     struct ctl_table *table)
-{
-#ifdef CONFIG_NF_CT_PROTO_SCTP
-	struct nf_sctp_net *sn = nf_sctp_pernet(net);
+अटल व्योम nf_conntrack_standalone_init_sctp_sysctl(काष्ठा net *net,
+						     काष्ठा ctl_table *table)
+अणु
+#अगर_घोषित CONFIG_NF_CT_PROTO_SCTP
+	काष्ठा nf_sctp_net *sn = nf_sctp_pernet(net);
 
-#define XASSIGN(XNAME, sn) \
+#घोषणा XASSIGN(XNAME, sn) \
 	table[NF_SYSCTL_CT_PROTO_TIMEOUT_SCTP_ ## XNAME].data = \
-			&(sn)->timeouts[SCTP_CONNTRACK_ ## XNAME]
+			&(sn)->समयouts[SCTP_CONNTRACK_ ## XNAME]
 
 	XASSIGN(CLOSED, sn);
 	XASSIGN(COOKIE_WAIT, sn);
@@ -992,19 +993,19 @@ static void nf_conntrack_standalone_init_sctp_sysctl(struct net *net,
 	XASSIGN(SHUTDOWN_ACK_SENT, sn);
 	XASSIGN(HEARTBEAT_SENT, sn);
 	XASSIGN(HEARTBEAT_ACKED, sn);
-#undef XASSIGN
-#endif
-}
+#अघोषित XASSIGN
+#पूर्ण_अगर
+पूर्ण
 
-static void nf_conntrack_standalone_init_dccp_sysctl(struct net *net,
-						     struct ctl_table *table)
-{
-#ifdef CONFIG_NF_CT_PROTO_DCCP
-	struct nf_dccp_net *dn = nf_dccp_pernet(net);
+अटल व्योम nf_conntrack_standalone_init_dccp_sysctl(काष्ठा net *net,
+						     काष्ठा ctl_table *table)
+अणु
+#अगर_घोषित CONFIG_NF_CT_PROTO_DCCP
+	काष्ठा nf_dccp_net *dn = nf_dccp_pernet(net);
 
-#define XASSIGN(XNAME, dn) \
+#घोषणा XASSIGN(XNAME, dn) \
 	table[NF_SYSCTL_CT_PROTO_TIMEOUT_DCCP_ ## XNAME].data = \
-			&(dn)->dccp_timeout[CT_DCCP_ ## XNAME]
+			&(dn)->dccp_समयout[CT_DCCP_ ## XNAME]
 
 	XASSIGN(REQUEST, dn);
 	XASSIGN(RESPOND, dn);
@@ -1013,52 +1014,52 @@ static void nf_conntrack_standalone_init_dccp_sysctl(struct net *net,
 	XASSIGN(CLOSEREQ, dn);
 	XASSIGN(CLOSING, dn);
 	XASSIGN(TIMEWAIT, dn);
-#undef XASSIGN
+#अघोषित XASSIGN
 
 	table[NF_SYSCTL_CT_PROTO_DCCP_LOOSE].data = &dn->dccp_loose;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void nf_conntrack_standalone_init_gre_sysctl(struct net *net,
-						    struct ctl_table *table)
-{
-#ifdef CONFIG_NF_CT_PROTO_GRE
-	struct nf_gre_net *gn = nf_gre_pernet(net);
+अटल व्योम nf_conntrack_standalone_init_gre_sysctl(काष्ठा net *net,
+						    काष्ठा ctl_table *table)
+अणु
+#अगर_घोषित CONFIG_NF_CT_PROTO_GRE
+	काष्ठा nf_gre_net *gn = nf_gre_pernet(net);
 
-	table[NF_SYSCTL_CT_PROTO_TIMEOUT_GRE].data = &gn->timeouts[GRE_CT_UNREPLIED];
-	table[NF_SYSCTL_CT_PROTO_TIMEOUT_GRE_STREAM].data = &gn->timeouts[GRE_CT_REPLIED];
-#endif
-}
+	table[NF_SYSCTL_CT_PROTO_TIMEOUT_GRE].data = &gn->समयouts[GRE_CT_UNREPLIED];
+	table[NF_SYSCTL_CT_PROTO_TIMEOUT_GRE_STREAM].data = &gn->समयouts[GRE_CT_REPLIED];
+#पूर्ण_अगर
+पूर्ण
 
-static int nf_conntrack_standalone_init_sysctl(struct net *net)
-{
-	struct nf_conntrack_net *cnet = net_generic(net, nf_conntrack_net_id);
-	struct nf_udp_net *un = nf_udp_pernet(net);
-	struct ctl_table *table;
+अटल पूर्णांक nf_conntrack_standalone_init_sysctl(काष्ठा net *net)
+अणु
+	काष्ठा nf_conntrack_net *cnet = net_generic(net, nf_conntrack_net_id);
+	काष्ठा nf_udp_net *un = nf_udp_pernet(net);
+	काष्ठा ctl_table *table;
 
 	BUILD_BUG_ON(ARRAY_SIZE(nf_ct_sysctl_table) != NF_SYSCTL_CT_LAST_SYSCTL);
 
-	table = kmemdup(nf_ct_sysctl_table, sizeof(nf_ct_sysctl_table),
+	table = kmemdup(nf_ct_sysctl_table, माप(nf_ct_sysctl_table),
 			GFP_KERNEL);
-	if (!table)
-		return -ENOMEM;
+	अगर (!table)
+		वापस -ENOMEM;
 
 	table[NF_SYSCTL_CT_COUNT].data = &cnet->count;
 	table[NF_SYSCTL_CT_CHECKSUM].data = &net->ct.sysctl_checksum;
 	table[NF_SYSCTL_CT_LOG_INVALID].data = &net->ct.sysctl_log_invalid;
 	table[NF_SYSCTL_CT_ACCT].data = &net->ct.sysctl_acct;
-	table[NF_SYSCTL_CT_HELPER].data = &cnet->sysctl_auto_assign_helper;
-#ifdef CONFIG_NF_CONNTRACK_EVENTS
+	table[NF_SYSCTL_CT_HELPER].data = &cnet->sysctl_स्वतः_assign_helper;
+#अगर_घोषित CONFIG_NF_CONNTRACK_EVENTS
 	table[NF_SYSCTL_CT_EVENTS].data = &net->ct.sysctl_events;
-#endif
-#ifdef CONFIG_NF_CONNTRACK_TIMESTAMP
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CONNTRACK_TIMESTAMP
 	table[NF_SYSCTL_CT_TIMESTAMP].data = &net->ct.sysctl_tstamp;
-#endif
-	table[NF_SYSCTL_CT_PROTO_TIMEOUT_GENERIC].data = &nf_generic_pernet(net)->timeout;
-	table[NF_SYSCTL_CT_PROTO_TIMEOUT_ICMP].data = &nf_icmp_pernet(net)->timeout;
-	table[NF_SYSCTL_CT_PROTO_TIMEOUT_ICMPV6].data = &nf_icmpv6_pernet(net)->timeout;
-	table[NF_SYSCTL_CT_PROTO_TIMEOUT_UDP].data = &un->timeouts[UDP_CT_UNREPLIED];
-	table[NF_SYSCTL_CT_PROTO_TIMEOUT_UDP_STREAM].data = &un->timeouts[UDP_CT_REPLIED];
+#पूर्ण_अगर
+	table[NF_SYSCTL_CT_PROTO_TIMEOUT_GENERIC].data = &nf_generic_pernet(net)->समयout;
+	table[NF_SYSCTL_CT_PROTO_TIMEOUT_ICMP].data = &nf_icmp_pernet(net)->समयout;
+	table[NF_SYSCTL_CT_PROTO_TIMEOUT_ICMPV6].data = &nf_icmpv6_pernet(net)->समयout;
+	table[NF_SYSCTL_CT_PROTO_TIMEOUT_UDP].data = &un->समयouts[UDP_CT_UNREPLIED];
+	table[NF_SYSCTL_CT_PROTO_TIMEOUT_UDP_STREAM].data = &un->समयouts[UDP_CT_REPLIED];
 
 	nf_conntrack_standalone_init_tcp_sysctl(net, table);
 	nf_conntrack_standalone_init_sctp_sysctl(net, table);
@@ -1066,77 +1067,77 @@ static int nf_conntrack_standalone_init_sysctl(struct net *net)
 	nf_conntrack_standalone_init_gre_sysctl(net, table);
 
 	/* Don't allow non-init_net ns to alter global sysctls */
-	if (!net_eq(&init_net, net)) {
+	अगर (!net_eq(&init_net, net)) अणु
 		table[NF_SYSCTL_CT_MAX].mode = 0444;
 		table[NF_SYSCTL_CT_EXPECT_MAX].mode = 0444;
 		table[NF_SYSCTL_CT_BUCKETS].mode = 0444;
-	}
+	पूर्ण
 
-	cnet->sysctl_header = register_net_sysctl(net, "net/netfilter", table);
-	if (!cnet->sysctl_header)
-		goto out_unregister_netfilter;
+	cnet->sysctl_header = रेजिस्टर_net_sysctl(net, "net/netfilter", table);
+	अगर (!cnet->sysctl_header)
+		जाओ out_unरेजिस्टर_netfilter;
 
-	return 0;
+	वापस 0;
 
-out_unregister_netfilter:
-	kfree(table);
-	return -ENOMEM;
-}
+out_unरेजिस्टर_netfilter:
+	kमुक्त(table);
+	वापस -ENOMEM;
+पूर्ण
 
-static void nf_conntrack_standalone_fini_sysctl(struct net *net)
-{
-	struct nf_conntrack_net *cnet = net_generic(net, nf_conntrack_net_id);
-	struct ctl_table *table;
+अटल व्योम nf_conntrack_standalone_fini_sysctl(काष्ठा net *net)
+अणु
+	काष्ठा nf_conntrack_net *cnet = net_generic(net, nf_conntrack_net_id);
+	काष्ठा ctl_table *table;
 
 	table = cnet->sysctl_header->ctl_table_arg;
-	unregister_net_sysctl_table(cnet->sysctl_header);
-	kfree(table);
-}
-#else
-static int nf_conntrack_standalone_init_sysctl(struct net *net)
-{
-	return 0;
-}
+	unरेजिस्टर_net_sysctl_table(cnet->sysctl_header);
+	kमुक्त(table);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक nf_conntrack_standalone_init_sysctl(काष्ठा net *net)
+अणु
+	वापस 0;
+पूर्ण
 
-static void nf_conntrack_standalone_fini_sysctl(struct net *net)
-{
-}
-#endif /* CONFIG_SYSCTL */
+अटल व्योम nf_conntrack_standalone_fini_sysctl(काष्ठा net *net)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SYSCTL */
 
-static void nf_conntrack_fini_net(struct net *net)
-{
-	if (enable_hooks)
+अटल व्योम nf_conntrack_fini_net(काष्ठा net *net)
+अणु
+	अगर (enable_hooks)
 		nf_ct_netns_put(net, NFPROTO_INET);
 
 	nf_conntrack_standalone_fini_proc(net);
 	nf_conntrack_standalone_fini_sysctl(net);
-}
+पूर्ण
 
-static int nf_conntrack_pernet_init(struct net *net)
-{
-	int ret;
+अटल पूर्णांक nf_conntrack_pernet_init(काष्ठा net *net)
+अणु
+	पूर्णांक ret;
 
 	net->ct.sysctl_checksum = 1;
 
 	ret = nf_conntrack_standalone_init_sysctl(net);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = nf_conntrack_standalone_init_proc(net);
-	if (ret < 0)
-		goto out_proc;
+	अगर (ret < 0)
+		जाओ out_proc;
 
 	ret = nf_conntrack_init_net(net);
-	if (ret < 0)
-		goto out_init_net;
+	अगर (ret < 0)
+		जाओ out_init_net;
 
-	if (enable_hooks) {
+	अगर (enable_hooks) अणु
 		ret = nf_ct_netns_get(net, NFPROTO_INET);
-		if (ret < 0)
-			goto out_hooks;
-	}
+		अगर (ret < 0)
+			जाओ out_hooks;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_hooks:
 	nf_conntrack_cleanup_net(net);
@@ -1144,72 +1145,72 @@ out_init_net:
 	nf_conntrack_standalone_fini_proc(net);
 out_proc:
 	nf_conntrack_standalone_fini_sysctl(net);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void nf_conntrack_pernet_exit(struct list_head *net_exit_list)
-{
-	struct net *net;
+अटल व्योम nf_conntrack_pernet_निकास(काष्ठा list_head *net_निकास_list)
+अणु
+	काष्ठा net *net;
 
-	list_for_each_entry(net, net_exit_list, exit_list)
+	list_क्रम_each_entry(net, net_निकास_list, निकास_list)
 		nf_conntrack_fini_net(net);
 
-	nf_conntrack_cleanup_net_list(net_exit_list);
-}
+	nf_conntrack_cleanup_net_list(net_निकास_list);
+पूर्ण
 
-static struct pernet_operations nf_conntrack_net_ops = {
+अटल काष्ठा pernet_operations nf_conntrack_net_ops = अणु
 	.init		= nf_conntrack_pernet_init,
-	.exit_batch	= nf_conntrack_pernet_exit,
+	.निकास_batch	= nf_conntrack_pernet_निकास,
 	.id		= &nf_conntrack_net_id,
-	.size = sizeof(struct nf_conntrack_net),
-};
+	.size = माप(काष्ठा nf_conntrack_net),
+पूर्ण;
 
-static int __init nf_conntrack_standalone_init(void)
-{
-	int ret = nf_conntrack_init_start();
-	if (ret < 0)
-		goto out_start;
+अटल पूर्णांक __init nf_conntrack_standalone_init(व्योम)
+अणु
+	पूर्णांक ret = nf_conntrack_init_start();
+	अगर (ret < 0)
+		जाओ out_start;
 
 	BUILD_BUG_ON(NFCT_INFOMASK <= IP_CT_NUMBER);
 
-#ifdef CONFIG_SYSCTL
+#अगर_घोषित CONFIG_SYSCTL
 	nf_ct_netfilter_header =
-		register_net_sysctl(&init_net, "net", nf_ct_netfilter_table);
-	if (!nf_ct_netfilter_header) {
+		रेजिस्टर_net_sysctl(&init_net, "net", nf_ct_netfilter_table);
+	अगर (!nf_ct_netfilter_header) अणु
 		pr_err("nf_conntrack: can't register to sysctl.\n");
 		ret = -ENOMEM;
-		goto out_sysctl;
-	}
+		जाओ out_sysctl;
+	पूर्ण
 
 	nf_conntrack_htable_size_user = nf_conntrack_htable_size;
-#endif
+#पूर्ण_अगर
 
-	ret = register_pernet_subsys(&nf_conntrack_net_ops);
-	if (ret < 0)
-		goto out_pernet;
+	ret = रेजिस्टर_pernet_subsys(&nf_conntrack_net_ops);
+	अगर (ret < 0)
+		जाओ out_pernet;
 
 	nf_conntrack_init_end();
-	return 0;
+	वापस 0;
 
 out_pernet:
-#ifdef CONFIG_SYSCTL
-	unregister_net_sysctl_table(nf_ct_netfilter_header);
+#अगर_घोषित CONFIG_SYSCTL
+	unरेजिस्टर_net_sysctl_table(nf_ct_netfilter_header);
 out_sysctl:
-#endif
+#पूर्ण_अगर
 	nf_conntrack_cleanup_end();
 out_start:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit nf_conntrack_standalone_fini(void)
-{
+अटल व्योम __निकास nf_conntrack_standalone_fini(व्योम)
+अणु
 	nf_conntrack_cleanup_start();
-	unregister_pernet_subsys(&nf_conntrack_net_ops);
-#ifdef CONFIG_SYSCTL
-	unregister_net_sysctl_table(nf_ct_netfilter_header);
-#endif
+	unरेजिस्टर_pernet_subsys(&nf_conntrack_net_ops);
+#अगर_घोषित CONFIG_SYSCTL
+	unरेजिस्टर_net_sysctl_table(nf_ct_netfilter_header);
+#पूर्ण_अगर
 	nf_conntrack_cleanup_end();
-}
+पूर्ण
 
 module_init(nf_conntrack_standalone_init);
-module_exit(nf_conntrack_standalone_fini);
+module_निकास(nf_conntrack_standalone_fini);

@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * processor_perflib.c - ACPI Processor P-States Library ($Revision: 71 $)
  *
- *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@intel.com>
- *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
- *  Copyright (C) 2004       Dominik Brodowski <linux@brodo.de>
- *  Copyright (C) 2004  Anil S Keshavamurthy <anil.s.keshavamurthy@intel.com>
+ *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@पूर्णांकel.com>
+ *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
+ *  Copyright (C) 2004       Dominik Broकरोwski <linux@broकरो.de>
+ *  Copyright (C) 2004  Anil S Keshavamurthy <anil.s.keshavamurthy@पूर्णांकel.com>
  *  			- Added processor hotplug support
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/cpufreq.h>
-#include <linux/slab.h>
-#include <linux/acpi.h>
-#include <acpi/processor.h>
-#ifdef CONFIG_X86
-#include <asm/cpufeature.h>
-#endif
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/acpi.h>
+#समावेश <acpi/processor.h>
+#अगर_घोषित CONFIG_X86
+#समावेश <यंत्र/cpufeature.h>
+#पूर्ण_अगर
 
-#define PREFIX "ACPI: "
+#घोषणा PREFIX "ACPI: "
 
-#define ACPI_PROCESSOR_FILE_PERFORMANCE	"performance"
+#घोषणा ACPI_PROCESSOR_खाता_PERFORMANCE	"performance"
 
-static DEFINE_MUTEX(performance_mutex);
+अटल DEFINE_MUTEX(perक्रमmance_mutex);
 
 /*
- * _PPC support is implemented as a CPUfreq policy notifier:
- * This means each time a CPUfreq driver registered also with
+ * _PPC support is implemented as a CPUfreq policy notअगरier:
+ * This means each समय a CPUfreq driver रेजिस्टरed also with
  * the ACPI core is asked to change the speed policy, the maximum
- * value is adjusted so that it is within the platform limit.
+ * value is adjusted so that it is within the platक्रमm limit.
  *
- * Also, when a new platform limit value is detected, the CPUfreq
+ * Also, when a new platक्रमm limit value is detected, the CPUfreq
  * policy is adjusted accordingly.
  */
 
@@ -40,305 +41,305 @@ static DEFINE_MUTEX(performance_mutex);
  * -1 -> cpufreq low level drivers not initialized -> _PSS, etc. not called yet
  *       ignore _PPC
  *  0 -> cpufreq low level drivers initialized -> consider _PPC values
- *  1 -> ignore _PPC totally -> forced by user through boot param
+ *  1 -> ignore _PPC totally -> क्रमced by user through boot param
  */
-static int ignore_ppc = -1;
-module_param(ignore_ppc, int, 0644);
+अटल पूर्णांक ignore_ppc = -1;
+module_param(ignore_ppc, पूर्णांक, 0644);
 MODULE_PARM_DESC(ignore_ppc, "If the frequency of your machine gets wrongly" \
 		 "limited by BIOS, this should help");
 
-static bool acpi_processor_ppc_in_use;
+अटल bool acpi_processor_ppc_in_use;
 
-static int acpi_processor_get_platform_limit(struct acpi_processor *pr)
-{
+अटल पूर्णांक acpi_processor_get_platक्रमm_limit(काष्ठा acpi_processor *pr)
+अणु
 	acpi_status status = 0;
-	unsigned long long ppc = 0;
-	int ret;
+	अचिन्हित दीर्घ दीर्घ ppc = 0;
+	पूर्णांक ret;
 
-	if (!pr)
-		return -EINVAL;
+	अगर (!pr)
+		वापस -EINVAL;
 
 	/*
-	 * _PPC indicates the maximum state currently supported by the platform
+	 * _PPC indicates the maximum state currently supported by the platक्रमm
 	 * (e.g. 0 = states 0..n; 1 = states 1..n; etc.
 	 */
-	status = acpi_evaluate_integer(pr->handle, "_PPC", NULL, &ppc);
-	if (status != AE_NOT_FOUND) {
+	status = acpi_evaluate_पूर्णांकeger(pr->handle, "_PPC", शून्य, &ppc);
+	अगर (status != AE_NOT_FOUND) अणु
 		acpi_processor_ppc_in_use = true;
 
-		if (ACPI_FAILURE(status)) {
+		अगर (ACPI_FAILURE(status)) अणु
 			acpi_evaluation_failure_warn(pr->handle, "_PPC", status);
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
 	pr_debug("CPU %d: _PPC is %d - frequency %s limited\n", pr->id,
-		       (int)ppc, ppc ? "" : "not");
+		       (पूर्णांक)ppc, ppc ? "" : "not");
 
-	pr->performance_platform_limit = (int)ppc;
+	pr->perक्रमmance_platक्रमm_limit = (पूर्णांक)ppc;
 
-	if (ppc >= pr->performance->state_count ||
+	अगर (ppc >= pr->perक्रमmance->state_count ||
 	    unlikely(!freq_qos_request_active(&pr->perflib_req)))
-		return 0;
+		वापस 0;
 
 	ret = freq_qos_update_request(&pr->perflib_req,
-			pr->performance->states[ppc].core_frequency * 1000);
-	if (ret < 0) {
+			pr->perक्रमmance->states[ppc].core_frequency * 1000);
+	अगर (ret < 0) अणु
 		pr_warn("Failed to update perflib freq constraint: CPU%d (%d)\n",
 			pr->id, ret);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define ACPI_PROCESSOR_NOTIFY_PERFORMANCE	0x80
+#घोषणा ACPI_PROCESSOR_NOTIFY_PERFORMANCE	0x80
 /*
- * acpi_processor_ppc_ost: Notify firmware the _PPC evaluation status
+ * acpi_processor_ppc_ost: Notअगरy firmware the _PPC evaluation status
  * @handle: ACPI processor handle
  * @status: the status code of _PPC evaluation
- *	0: success. OSPM is now using the performance state specified.
+ *	0: success. OSPM is now using the perक्रमmance state specअगरied.
  *	1: failure. OSPM has not changed the number of P-states in use
  */
-static void acpi_processor_ppc_ost(acpi_handle handle, int status)
-{
-	if (acpi_has_method(handle, "_OST"))
+अटल व्योम acpi_processor_ppc_ost(acpi_handle handle, पूर्णांक status)
+अणु
+	अगर (acpi_has_method(handle, "_OST"))
 		acpi_evaluate_ost(handle, ACPI_PROCESSOR_NOTIFY_PERFORMANCE,
-				  status, NULL);
-}
+				  status, शून्य);
+पूर्ण
 
-void acpi_processor_ppc_has_changed(struct acpi_processor *pr, int event_flag)
-{
-	int ret;
+व्योम acpi_processor_ppc_has_changed(काष्ठा acpi_processor *pr, पूर्णांक event_flag)
+अणु
+	पूर्णांक ret;
 
-	if (ignore_ppc || !pr->performance) {
+	अगर (ignore_ppc || !pr->perक्रमmance) अणु
 		/*
-		 * Only when it is notification event, the _OST object
+		 * Only when it is notअगरication event, the _OST object
 		 * will be evaluated. Otherwise it is skipped.
 		 */
-		if (event_flag)
+		अगर (event_flag)
 			acpi_processor_ppc_ost(pr->handle, 1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ret = acpi_processor_get_platform_limit(pr);
+	ret = acpi_processor_get_platक्रमm_limit(pr);
 	/*
-	 * Only when it is notification event, the _OST object
+	 * Only when it is notअगरication event, the _OST object
 	 * will be evaluated. Otherwise it is skipped.
 	 */
-	if (event_flag) {
-		if (ret < 0)
+	अगर (event_flag) अणु
+		अगर (ret < 0)
 			acpi_processor_ppc_ost(pr->handle, 1);
-		else
+		अन्यथा
 			acpi_processor_ppc_ost(pr->handle, 0);
-	}
-	if (ret >= 0)
+	पूर्ण
+	अगर (ret >= 0)
 		cpufreq_update_limits(pr->id);
-}
+पूर्ण
 
-int acpi_processor_get_bios_limit(int cpu, unsigned int *limit)
-{
-	struct acpi_processor *pr;
+पूर्णांक acpi_processor_get_bios_limit(पूर्णांक cpu, अचिन्हित पूर्णांक *limit)
+अणु
+	काष्ठा acpi_processor *pr;
 
 	pr = per_cpu(processors, cpu);
-	if (!pr || !pr->performance || !pr->performance->state_count)
-		return -ENODEV;
-	*limit = pr->performance->states[pr->performance_platform_limit].
+	अगर (!pr || !pr->perक्रमmance || !pr->perक्रमmance->state_count)
+		वापस -ENODEV;
+	*limit = pr->perक्रमmance->states[pr->perक्रमmance_platक्रमm_limit].
 		core_frequency * 1000;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(acpi_processor_get_bios_limit);
 
-void acpi_processor_ignore_ppc_init(void)
-{
-	if (ignore_ppc < 0)
+व्योम acpi_processor_ignore_ppc_init(व्योम)
+अणु
+	अगर (ignore_ppc < 0)
 		ignore_ppc = 0;
-}
+पूर्ण
 
-void acpi_processor_ppc_init(struct cpufreq_policy *policy)
-{
-	unsigned int cpu;
+व्योम acpi_processor_ppc_init(काष्ठा cpufreq_policy *policy)
+अणु
+	अचिन्हित पूर्णांक cpu;
 
-	for_each_cpu(cpu, policy->related_cpus) {
-		struct acpi_processor *pr = per_cpu(processors, cpu);
-		int ret;
+	क्रम_each_cpu(cpu, policy->related_cpus) अणु
+		काष्ठा acpi_processor *pr = per_cpu(processors, cpu);
+		पूर्णांक ret;
 
-		if (!pr)
-			continue;
+		अगर (!pr)
+			जारी;
 
-		ret = freq_qos_add_request(&policy->constraints,
+		ret = freq_qos_add_request(&policy->स्थिरraपूर्णांकs,
 					   &pr->perflib_req,
-					   FREQ_QOS_MAX, INT_MAX);
-		if (ret < 0)
+					   FREQ_QOS_MAX, पूर्णांक_उच्च);
+		अगर (ret < 0)
 			pr_err("Failed to add freq constraint for CPU%d (%d)\n",
 			       cpu, ret);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void acpi_processor_ppc_exit(struct cpufreq_policy *policy)
-{
-	unsigned int cpu;
+व्योम acpi_processor_ppc_निकास(काष्ठा cpufreq_policy *policy)
+अणु
+	अचिन्हित पूर्णांक cpu;
 
-	for_each_cpu(cpu, policy->related_cpus) {
-		struct acpi_processor *pr = per_cpu(processors, cpu);
+	क्रम_each_cpu(cpu, policy->related_cpus) अणु
+		काष्ठा acpi_processor *pr = per_cpu(processors, cpu);
 
-		if (pr)
-			freq_qos_remove_request(&pr->perflib_req);
-	}
-}
+		अगर (pr)
+			freq_qos_हटाओ_request(&pr->perflib_req);
+	पूर्ण
+पूर्ण
 
-static int acpi_processor_get_performance_control(struct acpi_processor *pr)
-{
-	int result = 0;
+अटल पूर्णांक acpi_processor_get_perक्रमmance_control(काष्ठा acpi_processor *pr)
+अणु
+	पूर्णांक result = 0;
 	acpi_status status = 0;
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *pct = NULL;
-	union acpi_object obj = { 0 };
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *pct = शून्य;
+	जोड़ acpi_object obj = अणु 0 पूर्ण;
 
 
-	status = acpi_evaluate_object(pr->handle, "_PCT", NULL, &buffer);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_evaluate_object(pr->handle, "_PCT", शून्य, &buffer);
+	अगर (ACPI_FAILURE(status)) अणु
 		acpi_evaluation_failure_warn(pr->handle, "_PCT", status);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	pct = (union acpi_object *)buffer.pointer;
-	if (!pct || (pct->type != ACPI_TYPE_PACKAGE)
-	    || (pct->package.count != 2)) {
-		printk(KERN_ERR PREFIX "Invalid _PCT data\n");
+	pct = (जोड़ acpi_object *)buffer.poपूर्णांकer;
+	अगर (!pct || (pct->type != ACPI_TYPE_PACKAGE)
+	    || (pct->package.count != 2)) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Invalid _PCT data\n");
 		result = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	/*
-	 * control_register
+	 * control_रेजिस्टर
 	 */
 
 	obj = pct->package.elements[0];
 
-	if ((obj.type != ACPI_TYPE_BUFFER)
-	    || (obj.buffer.length < sizeof(struct acpi_pct_register))
-	    || (obj.buffer.pointer == NULL)) {
-		printk(KERN_ERR PREFIX "Invalid _PCT data (control_register)\n");
+	अगर ((obj.type != ACPI_TYPE_BUFFER)
+	    || (obj.buffer.length < माप(काष्ठा acpi_pct_रेजिस्टर))
+	    || (obj.buffer.poपूर्णांकer == शून्य)) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Invalid _PCT data (control_register)\n");
 		result = -EFAULT;
-		goto end;
-	}
-	memcpy(&pr->performance->control_register, obj.buffer.pointer,
-	       sizeof(struct acpi_pct_register));
+		जाओ end;
+	पूर्ण
+	स_नकल(&pr->perक्रमmance->control_रेजिस्टर, obj.buffer.poपूर्णांकer,
+	       माप(काष्ठा acpi_pct_रेजिस्टर));
 
 	/*
-	 * status_register
+	 * status_रेजिस्टर
 	 */
 
 	obj = pct->package.elements[1];
 
-	if ((obj.type != ACPI_TYPE_BUFFER)
-	    || (obj.buffer.length < sizeof(struct acpi_pct_register))
-	    || (obj.buffer.pointer == NULL)) {
-		printk(KERN_ERR PREFIX "Invalid _PCT data (status_register)\n");
+	अगर ((obj.type != ACPI_TYPE_BUFFER)
+	    || (obj.buffer.length < माप(काष्ठा acpi_pct_रेजिस्टर))
+	    || (obj.buffer.poपूर्णांकer == शून्य)) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Invalid _PCT data (status_register)\n");
 		result = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	memcpy(&pr->performance->status_register, obj.buffer.pointer,
-	       sizeof(struct acpi_pct_register));
+	स_नकल(&pr->perक्रमmance->status_रेजिस्टर, obj.buffer.poपूर्णांकer,
+	       माप(काष्ठा acpi_pct_रेजिस्टर));
 
       end:
-	kfree(buffer.pointer);
+	kमुक्त(buffer.poपूर्णांकer);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-#ifdef CONFIG_X86
+#अगर_घोषित CONFIG_X86
 /*
  * Some AMDs have 50MHz frequency multiples, but only provide 100MHz rounding
  * in their ACPI data. Calculate the real values and fix up the _PSS data.
  */
-static void amd_fixup_frequency(struct acpi_processor_px *px, int i)
-{
+अटल व्योम amd_fixup_frequency(काष्ठा acpi_processor_px *px, पूर्णांक i)
+अणु
 	u32 hi, lo, fid, did;
-	int index = px->control & 0x00000007;
+	पूर्णांक index = px->control & 0x00000007;
 
-	if (boot_cpu_data.x86_vendor != X86_VENDOR_AMD)
-		return;
+	अगर (boot_cpu_data.x86_venकरोr != X86_VENDOR_AMD)
+		वापस;
 
-	if ((boot_cpu_data.x86 == 0x10 && boot_cpu_data.x86_model < 10)
-	    || boot_cpu_data.x86 == 0x11) {
+	अगर ((boot_cpu_data.x86 == 0x10 && boot_cpu_data.x86_model < 10)
+	    || boot_cpu_data.x86 == 0x11) अणु
 		rdmsr(MSR_AMD_PSTATE_DEF_BASE + index, lo, hi);
 		/*
 		 * MSR C001_0064+:
-		 * Bit 63: PstateEn. Read-write. If set, the P-state is valid.
+		 * Bit 63: PstateEn. Read-ग_लिखो. If set, the P-state is valid.
 		 */
-		if (!(hi & BIT(31)))
-			return;
+		अगर (!(hi & BIT(31)))
+			वापस;
 
 		fid = lo & 0x3f;
 		did = (lo >> 6) & 7;
-		if (boot_cpu_data.x86 == 0x10)
+		अगर (boot_cpu_data.x86 == 0x10)
 			px->core_frequency = (100 * (fid + 0x10)) >> did;
-		else
+		अन्यथा
 			px->core_frequency = (100 * (fid + 8)) >> did;
-	}
-}
-#else
-static void amd_fixup_frequency(struct acpi_processor_px *px, int i) {};
-#endif
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल व्योम amd_fixup_frequency(काष्ठा acpi_processor_px *px, पूर्णांक i) अणुपूर्ण;
+#पूर्ण_अगर
 
-static int acpi_processor_get_performance_states(struct acpi_processor *pr)
-{
-	int result = 0;
+अटल पूर्णांक acpi_processor_get_perक्रमmance_states(काष्ठा acpi_processor *pr)
+अणु
+	पूर्णांक result = 0;
 	acpi_status status = AE_OK;
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
-	struct acpi_buffer format = { sizeof("NNNNNN"), "NNNNNN" };
-	struct acpi_buffer state = { 0, NULL };
-	union acpi_object *pss = NULL;
-	int i;
-	int last_invalid = -1;
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	काष्ठा acpi_buffer क्रमmat = अणु माप("NNNNNN"), "NNNNNN" पूर्ण;
+	काष्ठा acpi_buffer state = अणु 0, शून्य पूर्ण;
+	जोड़ acpi_object *pss = शून्य;
+	पूर्णांक i;
+	पूर्णांक last_invalid = -1;
 
 
-	status = acpi_evaluate_object(pr->handle, "_PSS", NULL, &buffer);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_evaluate_object(pr->handle, "_PSS", शून्य, &buffer);
+	अगर (ACPI_FAILURE(status)) अणु
 		acpi_evaluation_failure_warn(pr->handle, "_PSS", status);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	pss = buffer.pointer;
-	if (!pss || (pss->type != ACPI_TYPE_PACKAGE)) {
-		printk(KERN_ERR PREFIX "Invalid _PSS data\n");
+	pss = buffer.poपूर्णांकer;
+	अगर (!pss || (pss->type != ACPI_TYPE_PACKAGE)) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Invalid _PSS data\n");
 		result = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	acpi_handle_debug(pr->handle, "Found %d performance states\n",
 			  pss->package.count);
 
-	pr->performance->state_count = pss->package.count;
-	pr->performance->states =
-	    kmalloc_array(pss->package.count,
-			  sizeof(struct acpi_processor_px),
+	pr->perक्रमmance->state_count = pss->package.count;
+	pr->perक्रमmance->states =
+	    kदो_स्मृति_array(pss->package.count,
+			  माप(काष्ठा acpi_processor_px),
 			  GFP_KERNEL);
-	if (!pr->performance->states) {
+	अगर (!pr->perक्रमmance->states) अणु
 		result = -ENOMEM;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	for (i = 0; i < pr->performance->state_count; i++) {
+	क्रम (i = 0; i < pr->perक्रमmance->state_count; i++) अणु
 
-		struct acpi_processor_px *px = &(pr->performance->states[i]);
+		काष्ठा acpi_processor_px *px = &(pr->perक्रमmance->states[i]);
 
-		state.length = sizeof(struct acpi_processor_px);
-		state.pointer = px;
+		state.length = माप(काष्ठा acpi_processor_px);
+		state.poपूर्णांकer = px;
 
 		acpi_handle_debug(pr->handle, "Extracting state %d\n", i);
 
 		status = acpi_extract_package(&(pss->package.elements[i]),
-					      &format, &state);
-		if (ACPI_FAILURE(status)) {
+					      &क्रमmat, &state);
+		अगर (ACPI_FAILURE(status)) अणु
 			acpi_handle_warn(pr->handle, "Invalid _PSS data: %s\n",
-					 acpi_format_exception(status));
+					 acpi_क्रमmat_exception(status));
 			result = -EFAULT;
-			kfree(pr->performance->states);
-			goto end;
-		}
+			kमुक्त(pr->perक्रमmance->states);
+			जाओ end;
+		पूर्ण
 
 		amd_fixup_frequency(px, i);
 
@@ -346,7 +347,7 @@ static int acpi_processor_get_performance_states(struct acpi_processor *pr)
 				  "State [%d]: core_frequency[%d] power[%d] transition_latency[%d] bus_master_latency[%d] control[0x%x] status[0x%x]\n",
 				  i,
 				  (u32) px->core_frequency,
-				  (u32) px->power,
+				  (u32) px->घातer,
 				  (u32) px->transition_latency,
 				  (u32) px->bus_master_latency,
 				  (u32) px->control, (u32) px->status);
@@ -354,427 +355,427 @@ static int acpi_processor_get_performance_states(struct acpi_processor *pr)
 		/*
 		 * Check that ACPI's u64 MHz will be valid as u32 KHz in cpufreq
 		 */
-		if (!px->core_frequency ||
+		अगर (!px->core_frequency ||
 		    ((u32)(px->core_frequency * 1000) !=
-		     (px->core_frequency * 1000))) {
-			printk(KERN_ERR FW_BUG PREFIX
+		     (px->core_frequency * 1000))) अणु
+			prपूर्णांकk(KERN_ERR FW_BUG PREFIX
 			       "Invalid BIOS _PSS frequency found for processor %d: 0x%llx MHz\n",
 			       pr->id, px->core_frequency);
-			if (last_invalid == -1)
+			अगर (last_invalid == -1)
 				last_invalid = i;
-		} else {
-			if (last_invalid != -1) {
+		पूर्ण अन्यथा अणु
+			अगर (last_invalid != -1) अणु
 				/*
 				 * Copy this valid entry over last_invalid entry
 				 */
-				memcpy(&(pr->performance->states[last_invalid]),
-				       px, sizeof(struct acpi_processor_px));
+				स_नकल(&(pr->perक्रमmance->states[last_invalid]),
+				       px, माप(काष्ठा acpi_processor_px));
 				++last_invalid;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (last_invalid == 0) {
-		printk(KERN_ERR FW_BUG PREFIX
+	अगर (last_invalid == 0) अणु
+		prपूर्णांकk(KERN_ERR FW_BUG PREFIX
 		       "No valid BIOS _PSS frequency found for processor %d\n", pr->id);
 		result = -EFAULT;
-		kfree(pr->performance->states);
-		pr->performance->states = NULL;
-	}
+		kमुक्त(pr->perक्रमmance->states);
+		pr->perक्रमmance->states = शून्य;
+	पूर्ण
 
-	if (last_invalid > 0)
-		pr->performance->state_count = last_invalid;
+	अगर (last_invalid > 0)
+		pr->perक्रमmance->state_count = last_invalid;
 
       end:
-	kfree(buffer.pointer);
+	kमुक्त(buffer.poपूर्णांकer);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-int acpi_processor_get_performance_info(struct acpi_processor *pr)
-{
-	int result = 0;
+पूर्णांक acpi_processor_get_perक्रमmance_info(काष्ठा acpi_processor *pr)
+अणु
+	पूर्णांक result = 0;
 
-	if (!pr || !pr->performance || !pr->handle)
-		return -EINVAL;
+	अगर (!pr || !pr->perक्रमmance || !pr->handle)
+		वापस -EINVAL;
 
-	if (!acpi_has_method(pr->handle, "_PCT")) {
+	अगर (!acpi_has_method(pr->handle, "_PCT")) अणु
 		acpi_handle_debug(pr->handle,
 				  "ACPI-based processor performance control unavailable\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	result = acpi_processor_get_performance_control(pr);
-	if (result)
-		goto update_bios;
+	result = acpi_processor_get_perक्रमmance_control(pr);
+	अगर (result)
+		जाओ update_bios;
 
-	result = acpi_processor_get_performance_states(pr);
-	if (result)
-		goto update_bios;
+	result = acpi_processor_get_perक्रमmance_states(pr);
+	अगर (result)
+		जाओ update_bios;
 
 	/* We need to call _PPC once when cpufreq starts */
-	if (ignore_ppc != 1)
-		result = acpi_processor_get_platform_limit(pr);
+	अगर (ignore_ppc != 1)
+		result = acpi_processor_get_platक्रमm_limit(pr);
 
-	return result;
+	वापस result;
 
 	/*
-	 * Having _PPC but missing frequencies (_PSS, _PCT) is a very good hint that
-	 * the BIOS is older than the CPU and does not know its frequencies
+	 * Having _PPC but missing frequencies (_PSS, _PCT) is a very good hपूर्णांक that
+	 * the BIOS is older than the CPU and करोes not know its frequencies
 	 */
  update_bios:
-#ifdef CONFIG_X86
-	if (acpi_has_method(pr->handle, "_PPC")) {
-		if(boot_cpu_has(X86_FEATURE_EST))
-			printk(KERN_WARNING FW_BUG "BIOS needs update for CPU "
+#अगर_घोषित CONFIG_X86
+	अगर (acpi_has_method(pr->handle, "_PPC")) अणु
+		अगर(boot_cpu_has(X86_FEATURE_EST))
+			prपूर्णांकk(KERN_WARNING FW_BUG "BIOS needs update for CPU "
 			       "frequency support\n");
-	}
-#endif
-	return result;
-}
-EXPORT_SYMBOL_GPL(acpi_processor_get_performance_info);
+	पूर्ण
+#पूर्ण_अगर
+	वापस result;
+पूर्ण
+EXPORT_SYMBOL_GPL(acpi_processor_get_perक्रमmance_info);
 
-int acpi_processor_pstate_control(void)
-{
+पूर्णांक acpi_processor_pstate_control(व्योम)
+अणु
 	acpi_status status;
 
-	if (!acpi_gbl_FADT.smi_command || !acpi_gbl_FADT.pstate_control)
-		return 0;
+	अगर (!acpi_gbl_FADT.smi_command || !acpi_gbl_FADT.pstate_control)
+		वापस 0;
 
 	pr_debug("Writing pstate_control [0x%x] to smi_command [0x%x]\n",
 		 acpi_gbl_FADT.pstate_control, acpi_gbl_FADT.smi_command);
 
-	status = acpi_os_write_port(acpi_gbl_FADT.smi_command,
+	status = acpi_os_ग_लिखो_port(acpi_gbl_FADT.smi_command,
 				    (u32)acpi_gbl_FADT.pstate_control, 8);
-	if (ACPI_SUCCESS(status))
-		return 1;
+	अगर (ACPI_SUCCESS(status))
+		वापस 1;
 
 	pr_warn("Failed to write pstate_control [0x%x] to smi_command [0x%x]: %s\n",
 		acpi_gbl_FADT.pstate_control, acpi_gbl_FADT.smi_command,
-		acpi_format_exception(status));
-	return -EIO;
-}
+		acpi_क्रमmat_exception(status));
+	वापस -EIO;
+पूर्ण
 
-int acpi_processor_notify_smm(struct module *calling_module)
-{
-	static int is_done;
-	int result;
+पूर्णांक acpi_processor_notअगरy_smm(काष्ठा module *calling_module)
+अणु
+	अटल पूर्णांक is_करोne;
+	पूर्णांक result;
 
-	if (!acpi_processor_cpufreq_init)
-		return -EBUSY;
+	अगर (!acpi_processor_cpufreq_init)
+		वापस -EBUSY;
 
-	if (!try_module_get(calling_module))
-		return -EINVAL;
+	अगर (!try_module_get(calling_module))
+		वापस -EINVAL;
 
-	/* is_done is set to negative if an error occurred,
-	 * and to postitive if _no_ error occurred, but SMM
-	 * was already notified. This avoids double notification
+	/* is_करोne is set to negative अगर an error occurred,
+	 * and to postitive अगर _no_ error occurred, but SMM
+	 * was alपढ़ोy notअगरied. This aव्योमs द्विगुन notअगरication
 	 * which might lead to unexpected results...
 	 */
-	if (is_done > 0) {
+	अगर (is_करोne > 0) अणु
 		module_put(calling_module);
-		return 0;
-	} else if (is_done < 0) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (is_करोne < 0) अणु
 		module_put(calling_module);
-		return is_done;
-	}
+		वापस is_करोne;
+	पूर्ण
 
-	is_done = -EIO;
+	is_करोne = -EIO;
 
 	result = acpi_processor_pstate_control();
-	if (!result) {
+	अगर (!result) अणु
 		pr_debug("No SMI port or pstate_control\n");
 		module_put(calling_module);
-		return 0;
-	}
-	if (result < 0) {
+		वापस 0;
+	पूर्ण
+	अगर (result < 0) अणु
 		module_put(calling_module);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	/* Success. If there's no _PPC, we need to fear nothing, so
 	 * we can allow the cpufreq driver to be rmmod'ed. */
-	is_done = 1;
+	is_करोne = 1;
 
-	if (!acpi_processor_ppc_in_use)
+	अगर (!acpi_processor_ppc_in_use)
 		module_put(calling_module);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-EXPORT_SYMBOL(acpi_processor_notify_smm);
+EXPORT_SYMBOL(acpi_processor_notअगरy_smm);
 
-int acpi_processor_get_psd(acpi_handle handle, struct acpi_psd_package *pdomain)
-{
-	int result = 0;
+पूर्णांक acpi_processor_get_psd(acpi_handle handle, काष्ठा acpi_psd_package *pकरोमुख्य)
+अणु
+	पूर्णांक result = 0;
 	acpi_status status = AE_OK;
-	struct acpi_buffer buffer = {ACPI_ALLOCATE_BUFFER, NULL};
-	struct acpi_buffer format = {sizeof("NNNNN"), "NNNNN"};
-	struct acpi_buffer state = {0, NULL};
-	union acpi_object  *psd = NULL;
+	काष्ठा acpi_buffer buffer = अणुACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
+	काष्ठा acpi_buffer क्रमmat = अणुमाप("NNNNN"), "NNNNN"पूर्ण;
+	काष्ठा acpi_buffer state = अणु0, शून्यपूर्ण;
+	जोड़ acpi_object  *psd = शून्य;
 
-	status = acpi_evaluate_object(handle, "_PSD", NULL, &buffer);
-	if (ACPI_FAILURE(status)) {
-		return -ENODEV;
-	}
+	status = acpi_evaluate_object(handle, "_PSD", शून्य, &buffer);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस -ENODEV;
+	पूर्ण
 
-	psd = buffer.pointer;
-	if (!psd || (psd->type != ACPI_TYPE_PACKAGE)) {
-		printk(KERN_ERR PREFIX "Invalid _PSD data\n");
+	psd = buffer.poपूर्णांकer;
+	अगर (!psd || (psd->type != ACPI_TYPE_PACKAGE)) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Invalid _PSD data\n");
 		result = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (psd->package.count != 1) {
-		printk(KERN_ERR PREFIX "Invalid _PSD data\n");
+	अगर (psd->package.count != 1) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Invalid _PSD data\n");
 		result = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	state.length = sizeof(struct acpi_psd_package);
-	state.pointer = pdomain;
+	state.length = माप(काष्ठा acpi_psd_package);
+	state.poपूर्णांकer = pकरोमुख्य;
 
 	status = acpi_extract_package(&(psd->package.elements[0]),
-		&format, &state);
-	if (ACPI_FAILURE(status)) {
-		printk(KERN_ERR PREFIX "Invalid _PSD data\n");
+		&क्रमmat, &state);
+	अगर (ACPI_FAILURE(status)) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Invalid _PSD data\n");
 		result = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (pdomain->num_entries != ACPI_PSD_REV0_ENTRIES) {
-		printk(KERN_ERR PREFIX "Unknown _PSD:num_entries\n");
+	अगर (pकरोमुख्य->num_entries != ACPI_PSD_REV0_ENTRIES) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Unknown _PSD:num_entries\n");
 		result = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (pdomain->revision != ACPI_PSD_REV0_REVISION) {
-		printk(KERN_ERR PREFIX "Unknown _PSD:revision\n");
+	अगर (pकरोमुख्य->revision != ACPI_PSD_REV0_REVISION) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Unknown _PSD:revision\n");
 		result = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (pdomain->coord_type != DOMAIN_COORD_TYPE_SW_ALL &&
-	    pdomain->coord_type != DOMAIN_COORD_TYPE_SW_ANY &&
-	    pdomain->coord_type != DOMAIN_COORD_TYPE_HW_ALL) {
-		printk(KERN_ERR PREFIX "Invalid _PSD:coord_type\n");
+	अगर (pकरोमुख्य->coord_type != DOMAIN_COORD_TYPE_SW_ALL &&
+	    pकरोमुख्य->coord_type != DOMAIN_COORD_TYPE_SW_ANY &&
+	    pकरोमुख्य->coord_type != DOMAIN_COORD_TYPE_HW_ALL) अणु
+		prपूर्णांकk(KERN_ERR PREFIX "Invalid _PSD:coord_type\n");
 		result = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 end:
-	kfree(buffer.pointer);
-	return result;
-}
+	kमुक्त(buffer.poपूर्णांकer);
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(acpi_processor_get_psd);
 
-int acpi_processor_preregister_performance(
-		struct acpi_processor_performance __percpu *performance)
-{
-	int count_target;
-	int retval = 0;
-	unsigned int i, j;
+पूर्णांक acpi_processor_preरेजिस्टर_perक्रमmance(
+		काष्ठा acpi_processor_perक्रमmance __percpu *perक्रमmance)
+अणु
+	पूर्णांक count_target;
+	पूर्णांक retval = 0;
+	अचिन्हित पूर्णांक i, j;
 	cpumask_var_t covered_cpus;
-	struct acpi_processor *pr;
-	struct acpi_psd_package *pdomain;
-	struct acpi_processor *match_pr;
-	struct acpi_psd_package *match_pdomain;
+	काष्ठा acpi_processor *pr;
+	काष्ठा acpi_psd_package *pकरोमुख्य;
+	काष्ठा acpi_processor *match_pr;
+	काष्ठा acpi_psd_package *match_pकरोमुख्य;
 
-	if (!zalloc_cpumask_var(&covered_cpus, GFP_KERNEL))
-		return -ENOMEM;
+	अगर (!zalloc_cpumask_var(&covered_cpus, GFP_KERNEL))
+		वापस -ENOMEM;
 
-	mutex_lock(&performance_mutex);
+	mutex_lock(&perक्रमmance_mutex);
 
 	/*
-	 * Check if another driver has already registered, and abort before
-	 * changing pr->performance if it has. Check input data as well.
+	 * Check अगर another driver has alपढ़ोy रेजिस्टरed, and पात beक्रमe
+	 * changing pr->perक्रमmance अगर it has. Check input data as well.
 	 */
-	for_each_possible_cpu(i) {
+	क्रम_each_possible_cpu(i) अणु
 		pr = per_cpu(processors, i);
-		if (!pr) {
+		अगर (!pr) अणु
 			/* Look only at processors in ACPI namespace */
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (pr->performance) {
+		अगर (pr->perक्रमmance) अणु
 			retval = -EBUSY;
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 
-		if (!performance || !per_cpu_ptr(performance, i)) {
+		अगर (!perक्रमmance || !per_cpu_ptr(perक्रमmance, i)) अणु
 			retval = -EINVAL;
-			goto err_out;
-		}
-	}
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
-	/* Call _PSD for all CPUs */
-	for_each_possible_cpu(i) {
+	/* Call _PSD क्रम all CPUs */
+	क्रम_each_possible_cpu(i) अणु
 		pr = per_cpu(processors, i);
-		if (!pr)
-			continue;
+		अगर (!pr)
+			जारी;
 
-		pr->performance = per_cpu_ptr(performance, i);
-		pdomain = &(pr->performance->domain_info);
-		if (acpi_processor_get_psd(pr->handle, pdomain)) {
+		pr->perक्रमmance = per_cpu_ptr(perक्रमmance, i);
+		pकरोमुख्य = &(pr->perक्रमmance->करोमुख्य_info);
+		अगर (acpi_processor_get_psd(pr->handle, pकरोमुख्य)) अणु
 			retval = -EINVAL;
-			continue;
-		}
-	}
-	if (retval)
-		goto err_ret;
+			जारी;
+		पूर्ण
+	पूर्ण
+	अगर (retval)
+		जाओ err_ret;
 
 	/*
 	 * Now that we have _PSD data from all CPUs, lets setup P-state
-	 * domain info.
+	 * करोमुख्य info.
 	 */
-	for_each_possible_cpu(i) {
+	क्रम_each_possible_cpu(i) अणु
 		pr = per_cpu(processors, i);
-		if (!pr)
-			continue;
+		अगर (!pr)
+			जारी;
 
-		if (cpumask_test_cpu(i, covered_cpus))
-			continue;
+		अगर (cpumask_test_cpu(i, covered_cpus))
+			जारी;
 
-		pdomain = &(pr->performance->domain_info);
-		cpumask_set_cpu(i, pr->performance->shared_cpu_map);
+		pकरोमुख्य = &(pr->perक्रमmance->करोमुख्य_info);
+		cpumask_set_cpu(i, pr->perक्रमmance->shared_cpu_map);
 		cpumask_set_cpu(i, covered_cpus);
-		if (pdomain->num_processors <= 1)
-			continue;
+		अगर (pकरोमुख्य->num_processors <= 1)
+			जारी;
 
-		/* Validate the Domain info */
-		count_target = pdomain->num_processors;
-		if (pdomain->coord_type == DOMAIN_COORD_TYPE_SW_ALL)
-			pr->performance->shared_type = CPUFREQ_SHARED_TYPE_ALL;
-		else if (pdomain->coord_type == DOMAIN_COORD_TYPE_HW_ALL)
-			pr->performance->shared_type = CPUFREQ_SHARED_TYPE_HW;
-		else if (pdomain->coord_type == DOMAIN_COORD_TYPE_SW_ANY)
-			pr->performance->shared_type = CPUFREQ_SHARED_TYPE_ANY;
+		/* Validate the Doमुख्य info */
+		count_target = pकरोमुख्य->num_processors;
+		अगर (pकरोमुख्य->coord_type == DOMAIN_COORD_TYPE_SW_ALL)
+			pr->perक्रमmance->shared_type = CPUFREQ_SHARED_TYPE_ALL;
+		अन्यथा अगर (pकरोमुख्य->coord_type == DOMAIN_COORD_TYPE_HW_ALL)
+			pr->perक्रमmance->shared_type = CPUFREQ_SHARED_TYPE_HW;
+		अन्यथा अगर (pकरोमुख्य->coord_type == DOMAIN_COORD_TYPE_SW_ANY)
+			pr->perक्रमmance->shared_type = CPUFREQ_SHARED_TYPE_ANY;
 
-		for_each_possible_cpu(j) {
-			if (i == j)
-				continue;
+		क्रम_each_possible_cpu(j) अणु
+			अगर (i == j)
+				जारी;
 
 			match_pr = per_cpu(processors, j);
-			if (!match_pr)
-				continue;
+			अगर (!match_pr)
+				जारी;
 
-			match_pdomain = &(match_pr->performance->domain_info);
-			if (match_pdomain->domain != pdomain->domain)
-				continue;
+			match_pकरोमुख्य = &(match_pr->perक्रमmance->करोमुख्य_info);
+			अगर (match_pकरोमुख्य->करोमुख्य != pकरोमुख्य->करोमुख्य)
+				जारी;
 
-			/* Here i and j are in the same domain */
+			/* Here i and j are in the same करोमुख्य */
 
-			if (match_pdomain->num_processors != count_target) {
+			अगर (match_pकरोमुख्य->num_processors != count_target) अणु
 				retval = -EINVAL;
-				goto err_ret;
-			}
+				जाओ err_ret;
+			पूर्ण
 
-			if (pdomain->coord_type != match_pdomain->coord_type) {
+			अगर (pकरोमुख्य->coord_type != match_pकरोमुख्य->coord_type) अणु
 				retval = -EINVAL;
-				goto err_ret;
-			}
+				जाओ err_ret;
+			पूर्ण
 
 			cpumask_set_cpu(j, covered_cpus);
-			cpumask_set_cpu(j, pr->performance->shared_cpu_map);
-		}
+			cpumask_set_cpu(j, pr->perक्रमmance->shared_cpu_map);
+		पूर्ण
 
-		for_each_possible_cpu(j) {
-			if (i == j)
-				continue;
+		क्रम_each_possible_cpu(j) अणु
+			अगर (i == j)
+				जारी;
 
 			match_pr = per_cpu(processors, j);
-			if (!match_pr)
-				continue;
+			अगर (!match_pr)
+				जारी;
 
-			match_pdomain = &(match_pr->performance->domain_info);
-			if (match_pdomain->domain != pdomain->domain)
-				continue;
+			match_pकरोमुख्य = &(match_pr->perक्रमmance->करोमुख्य_info);
+			अगर (match_pकरोमुख्य->करोमुख्य != pकरोमुख्य->करोमुख्य)
+				जारी;
 
-			match_pr->performance->shared_type =
-					pr->performance->shared_type;
-			cpumask_copy(match_pr->performance->shared_cpu_map,
-				     pr->performance->shared_cpu_map);
-		}
-	}
+			match_pr->perक्रमmance->shared_type =
+					pr->perक्रमmance->shared_type;
+			cpumask_copy(match_pr->perक्रमmance->shared_cpu_map,
+				     pr->perक्रमmance->shared_cpu_map);
+		पूर्ण
+	पूर्ण
 
 err_ret:
-	for_each_possible_cpu(i) {
+	क्रम_each_possible_cpu(i) अणु
 		pr = per_cpu(processors, i);
-		if (!pr || !pr->performance)
-			continue;
+		अगर (!pr || !pr->perक्रमmance)
+			जारी;
 
-		/* Assume no coordination on any error parsing domain info */
-		if (retval) {
-			cpumask_clear(pr->performance->shared_cpu_map);
-			cpumask_set_cpu(i, pr->performance->shared_cpu_map);
-			pr->performance->shared_type = CPUFREQ_SHARED_TYPE_NONE;
-		}
-		pr->performance = NULL; /* Will be set for real in register */
-	}
+		/* Assume no coordination on any error parsing करोमुख्य info */
+		अगर (retval) अणु
+			cpumask_clear(pr->perक्रमmance->shared_cpu_map);
+			cpumask_set_cpu(i, pr->perक्रमmance->shared_cpu_map);
+			pr->perक्रमmance->shared_type = CPUFREQ_SHARED_TYPE_NONE;
+		पूर्ण
+		pr->perक्रमmance = शून्य; /* Will be set क्रम real in रेजिस्टर */
+	पूर्ण
 
 err_out:
-	mutex_unlock(&performance_mutex);
-	free_cpumask_var(covered_cpus);
-	return retval;
-}
-EXPORT_SYMBOL(acpi_processor_preregister_performance);
+	mutex_unlock(&perक्रमmance_mutex);
+	मुक्त_cpumask_var(covered_cpus);
+	वापस retval;
+पूर्ण
+EXPORT_SYMBOL(acpi_processor_preरेजिस्टर_perक्रमmance);
 
-int
-acpi_processor_register_performance(struct acpi_processor_performance
-				    *performance, unsigned int cpu)
-{
-	struct acpi_processor *pr;
+पूर्णांक
+acpi_processor_रेजिस्टर_perक्रमmance(काष्ठा acpi_processor_perक्रमmance
+				    *perक्रमmance, अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा acpi_processor *pr;
 
-	if (!acpi_processor_cpufreq_init)
-		return -EINVAL;
+	अगर (!acpi_processor_cpufreq_init)
+		वापस -EINVAL;
 
-	mutex_lock(&performance_mutex);
-
-	pr = per_cpu(processors, cpu);
-	if (!pr) {
-		mutex_unlock(&performance_mutex);
-		return -ENODEV;
-	}
-
-	if (pr->performance) {
-		mutex_unlock(&performance_mutex);
-		return -EBUSY;
-	}
-
-	WARN_ON(!performance);
-
-	pr->performance = performance;
-
-	if (acpi_processor_get_performance_info(pr)) {
-		pr->performance = NULL;
-		mutex_unlock(&performance_mutex);
-		return -EIO;
-	}
-
-	mutex_unlock(&performance_mutex);
-	return 0;
-}
-
-EXPORT_SYMBOL(acpi_processor_register_performance);
-
-void acpi_processor_unregister_performance(unsigned int cpu)
-{
-	struct acpi_processor *pr;
-
-	mutex_lock(&performance_mutex);
+	mutex_lock(&perक्रमmance_mutex);
 
 	pr = per_cpu(processors, cpu);
-	if (!pr) {
-		mutex_unlock(&performance_mutex);
-		return;
-	}
+	अगर (!pr) अणु
+		mutex_unlock(&perक्रमmance_mutex);
+		वापस -ENODEV;
+	पूर्ण
 
-	if (pr->performance)
-		kfree(pr->performance->states);
-	pr->performance = NULL;
+	अगर (pr->perक्रमmance) अणु
+		mutex_unlock(&perक्रमmance_mutex);
+		वापस -EBUSY;
+	पूर्ण
 
-	mutex_unlock(&performance_mutex);
+	WARN_ON(!perक्रमmance);
 
-	return;
-}
+	pr->perक्रमmance = perक्रमmance;
 
-EXPORT_SYMBOL(acpi_processor_unregister_performance);
+	अगर (acpi_processor_get_perक्रमmance_info(pr)) अणु
+		pr->perक्रमmance = शून्य;
+		mutex_unlock(&perक्रमmance_mutex);
+		वापस -EIO;
+	पूर्ण
+
+	mutex_unlock(&perक्रमmance_mutex);
+	वापस 0;
+पूर्ण
+
+EXPORT_SYMBOL(acpi_processor_रेजिस्टर_perक्रमmance);
+
+व्योम acpi_processor_unरेजिस्टर_perक्रमmance(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा acpi_processor *pr;
+
+	mutex_lock(&perक्रमmance_mutex);
+
+	pr = per_cpu(processors, cpu);
+	अगर (!pr) अणु
+		mutex_unlock(&perक्रमmance_mutex);
+		वापस;
+	पूर्ण
+
+	अगर (pr->perक्रमmance)
+		kमुक्त(pr->perक्रमmance->states);
+	pr->perक्रमmance = शून्य;
+
+	mutex_unlock(&perक्रमmance_mutex);
+
+	वापस;
+पूर्ण
+
+EXPORT_SYMBOL(acpi_processor_unरेजिस्टर_perक्रमmance);

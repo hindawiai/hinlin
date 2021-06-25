@@ -1,72 +1,73 @@
-// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
 /* Copyright 2019 NXP */
-#include <linux/fsl/enetc_mdio.h>
-#include <linux/of_mdio.h>
-#include "enetc_pf.h"
+#समावेश <linux/fsl/enetc_mdपन.स>
+#समावेश <linux/of_mdपन.स>
+#समावेश "enetc_pf.h"
 
-#define ENETC_MDIO_DEV_ID	0xee01
-#define ENETC_MDIO_DEV_NAME	"FSL PCIe IE Central MDIO"
-#define ENETC_MDIO_BUS_NAME	ENETC_MDIO_DEV_NAME " Bus"
-#define ENETC_MDIO_DRV_NAME	ENETC_MDIO_DEV_NAME " driver"
+#घोषणा ENETC_MDIO_DEV_ID	0xee01
+#घोषणा ENETC_MDIO_DEV_NAME	"FSL PCIe IE Central MDIO"
+#घोषणा ENETC_MDIO_BUS_NAME	ENETC_MDIO_DEV_NAME " Bus"
+#घोषणा ENETC_MDIO_DRV_NAME	ENETC_MDIO_DEV_NAME " driver"
 
-static int enetc_pci_mdio_probe(struct pci_dev *pdev,
-				const struct pci_device_id *ent)
-{
-	struct enetc_mdio_priv *mdio_priv;
-	struct device *dev = &pdev->dev;
-	void __iomem *port_regs;
-	struct enetc_hw *hw;
-	struct mii_bus *bus;
-	int err;
+अटल पूर्णांक enetc_pci_mdio_probe(काष्ठा pci_dev *pdev,
+				स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा enetc_mdio_priv *mdio_priv;
+	काष्ठा device *dev = &pdev->dev;
+	व्योम __iomem *port_regs;
+	काष्ठा enetc_hw *hw;
+	काष्ठा mii_bus *bus;
+	पूर्णांक err;
 
 	port_regs = pci_iomap(pdev, 0, 0);
-	if (!port_regs) {
+	अगर (!port_regs) अणु
 		dev_err(dev, "iomap failed\n");
 		err = -ENXIO;
-		goto err_ioremap;
-	}
+		जाओ err_ioremap;
+	पूर्ण
 
 	hw = enetc_hw_alloc(dev, port_regs);
-	if (IS_ERR(hw)) {
+	अगर (IS_ERR(hw)) अणु
 		err = PTR_ERR(hw);
-		goto err_hw_alloc;
-	}
+		जाओ err_hw_alloc;
+	पूर्ण
 
-	bus = devm_mdiobus_alloc_size(dev, sizeof(*mdio_priv));
-	if (!bus) {
+	bus = devm_mdiobus_alloc_size(dev, माप(*mdio_priv));
+	अगर (!bus) अणु
 		err = -ENOMEM;
-		goto err_mdiobus_alloc;
-	}
+		जाओ err_mdiobus_alloc;
+	पूर्ण
 
 	bus->name = ENETC_MDIO_BUS_NAME;
-	bus->read = enetc_mdio_read;
-	bus->write = enetc_mdio_write;
+	bus->पढ़ो = enetc_mdio_पढ़ो;
+	bus->ग_लिखो = enetc_mdio_ग_लिखो;
 	bus->parent = dev;
 	mdio_priv = bus->priv;
 	mdio_priv->hw = hw;
 	mdio_priv->mdio_base = ENETC_EMDIO_BASE;
-	snprintf(bus->id, MII_BUS_ID_SIZE, "%s", dev_name(dev));
+	snम_लिखो(bus->id, MII_BUS_ID_SIZE, "%s", dev_name(dev));
 
 	pcie_flr(pdev);
 	err = pci_enable_device_mem(pdev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "device enable failed\n");
-		goto err_pci_enable;
-	}
+		जाओ err_pci_enable;
+	पूर्ण
 
 	err = pci_request_region(pdev, 0, KBUILD_MODNAME);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "pci_request_region failed\n");
-		goto err_pci_mem_reg;
-	}
+		जाओ err_pci_mem_reg;
+	पूर्ण
 
-	err = of_mdiobus_register(bus, dev->of_node);
-	if (err)
-		goto err_mdiobus_reg;
+	err = of_mdiobus_रेजिस्टर(bus, dev->of_node);
+	अगर (err)
+		जाओ err_mdiobus_reg;
 
 	pci_set_drvdata(pdev, bus);
 
-	return 0;
+	वापस 0;
 
 err_mdiobus_reg:
 	pci_release_mem_regions(pdev);
@@ -77,33 +78,33 @@ err_mdiobus_alloc:
 err_hw_alloc:
 	iounmap(port_regs);
 err_ioremap:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void enetc_pci_mdio_remove(struct pci_dev *pdev)
-{
-	struct mii_bus *bus = pci_get_drvdata(pdev);
-	struct enetc_mdio_priv *mdio_priv;
+अटल व्योम enetc_pci_mdio_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा mii_bus *bus = pci_get_drvdata(pdev);
+	काष्ठा enetc_mdio_priv *mdio_priv;
 
-	mdiobus_unregister(bus);
+	mdiobus_unरेजिस्टर(bus);
 	mdio_priv = bus->priv;
 	iounmap(mdio_priv->hw->port);
 	pci_release_mem_regions(pdev);
 	pci_disable_device(pdev);
-}
+पूर्ण
 
-static const struct pci_device_id enetc_pci_mdio_id_table[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_FREESCALE, ENETC_MDIO_DEV_ID) },
-	{ 0, } /* End of table. */
-};
+अटल स्थिर काष्ठा pci_device_id enetc_pci_mdio_id_table[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_FREESCALE, ENETC_MDIO_DEV_ID) पूर्ण,
+	अणु 0, पूर्ण /* End of table. */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, enetc_pci_mdio_id_table);
 
-static struct pci_driver enetc_pci_mdio_driver = {
+अटल काष्ठा pci_driver enetc_pci_mdio_driver = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = enetc_pci_mdio_id_table,
 	.probe = enetc_pci_mdio_probe,
-	.remove = enetc_pci_mdio_remove,
-};
+	.हटाओ = enetc_pci_mdio_हटाओ,
+पूर्ण;
 module_pci_driver(enetc_pci_mdio_driver);
 
 MODULE_DESCRIPTION(ENETC_MDIO_DRV_NAME);

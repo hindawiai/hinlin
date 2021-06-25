@@ -1,211 +1,212 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * KVM/MIPS: MIPS specific KVM APIs
+ * KVM/MIPS: MIPS specअगरic KVM APIs
  *
  * Copyright (C) 2012  MIPS Technologies, Inc.  All rights reserved.
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
-#include <linux/bitops.h>
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/kdebug.h>
-#include <linux/module.h>
-#include <linux/uaccess.h>
-#include <linux/vmalloc.h>
-#include <linux/sched/signal.h>
-#include <linux/fs.h>
-#include <linux/memblock.h>
-#include <linux/pgtable.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/module.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/fpu.h>
-#include <asm/page.h>
-#include <asm/cacheflush.h>
-#include <asm/mmu_context.h>
-#include <asm/pgalloc.h>
+#समावेश <यंत्र/fpu.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/pgभाग.स>
 
-#include <linux/kvm_host.h>
+#समावेश <linux/kvm_host.h>
 
-#include "interrupt.h"
+#समावेश "interrupt.h"
 
-#define CREATE_TRACE_POINTS
-#include "trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "trace.h"
 
-#ifndef VECTORSPACING
-#define VECTORSPACING 0x100	/* for EI/VI mode */
-#endif
+#अगर_अघोषित VECTORSPACING
+#घोषणा VECTORSPACING 0x100	/* क्रम EI/VI mode */
+#पूर्ण_अगर
 
-struct kvm_stats_debugfs_item debugfs_entries[] = {
-	VCPU_STAT("wait", wait_exits),
-	VCPU_STAT("cache", cache_exits),
-	VCPU_STAT("signal", signal_exits),
-	VCPU_STAT("interrupt", int_exits),
-	VCPU_STAT("cop_unusable", cop_unusable_exits),
-	VCPU_STAT("tlbmod", tlbmod_exits),
-	VCPU_STAT("tlbmiss_ld", tlbmiss_ld_exits),
-	VCPU_STAT("tlbmiss_st", tlbmiss_st_exits),
-	VCPU_STAT("addrerr_st", addrerr_st_exits),
-	VCPU_STAT("addrerr_ld", addrerr_ld_exits),
-	VCPU_STAT("syscall", syscall_exits),
-	VCPU_STAT("resvd_inst", resvd_inst_exits),
-	VCPU_STAT("break_inst", break_inst_exits),
-	VCPU_STAT("trap_inst", trap_inst_exits),
-	VCPU_STAT("msa_fpe", msa_fpe_exits),
-	VCPU_STAT("fpe", fpe_exits),
-	VCPU_STAT("msa_disabled", msa_disabled_exits),
-	VCPU_STAT("flush_dcache", flush_dcache_exits),
-	VCPU_STAT("vz_gpsi", vz_gpsi_exits),
-	VCPU_STAT("vz_gsfc", vz_gsfc_exits),
-	VCPU_STAT("vz_hc", vz_hc_exits),
-	VCPU_STAT("vz_grr", vz_grr_exits),
-	VCPU_STAT("vz_gva", vz_gva_exits),
-	VCPU_STAT("vz_ghfc", vz_ghfc_exits),
-	VCPU_STAT("vz_gpa", vz_gpa_exits),
-	VCPU_STAT("vz_resvd", vz_resvd_exits),
-#ifdef CONFIG_CPU_LOONGSON64
-	VCPU_STAT("vz_cpucfg", vz_cpucfg_exits),
-#endif
+काष्ठा kvm_stats_debugfs_item debugfs_entries[] = अणु
+	VCPU_STAT("wait", रुको_निकासs),
+	VCPU_STAT("cache", cache_निकासs),
+	VCPU_STAT("signal", संकेत_निकासs),
+	VCPU_STAT("interrupt", पूर्णांक_निकासs),
+	VCPU_STAT("cop_unusable", cop_unusable_निकासs),
+	VCPU_STAT("tlbmod", tlbmod_निकासs),
+	VCPU_STAT("tlbmiss_ld", tlbmiss_ld_निकासs),
+	VCPU_STAT("tlbmiss_st", tlbmiss_st_निकासs),
+	VCPU_STAT("addrerr_st", addrerr_st_निकासs),
+	VCPU_STAT("addrerr_ld", addrerr_ld_निकासs),
+	VCPU_STAT("syscall", syscall_निकासs),
+	VCPU_STAT("resvd_inst", resvd_inst_निकासs),
+	VCPU_STAT("break_inst", अवरोध_inst_निकासs),
+	VCPU_STAT("trap_inst", trap_inst_निकासs),
+	VCPU_STAT("msa_fpe", msa_fpe_निकासs),
+	VCPU_STAT("fpe", fpe_निकासs),
+	VCPU_STAT("msa_disabled", msa_disabled_निकासs),
+	VCPU_STAT("flush_dcache", flush_dcache_निकासs),
+	VCPU_STAT("vz_gpsi", vz_gpsi_निकासs),
+	VCPU_STAT("vz_gsfc", vz_gsfc_निकासs),
+	VCPU_STAT("vz_hc", vz_hc_निकासs),
+	VCPU_STAT("vz_grr", vz_grr_निकासs),
+	VCPU_STAT("vz_gva", vz_gva_निकासs),
+	VCPU_STAT("vz_ghfc", vz_ghfc_निकासs),
+	VCPU_STAT("vz_gpa", vz_gpa_निकासs),
+	VCPU_STAT("vz_resvd", vz_resvd_निकासs),
+#अगर_घोषित CONFIG_CPU_LOONGSON64
+	VCPU_STAT("vz_cpucfg", vz_cpucfg_निकासs),
+#पूर्ण_अगर
 	VCPU_STAT("halt_successful_poll", halt_successful_poll),
 	VCPU_STAT("halt_attempted_poll", halt_attempted_poll),
 	VCPU_STAT("halt_poll_invalid", halt_poll_invalid),
 	VCPU_STAT("halt_wakeup", halt_wakeup),
 	VCPU_STAT("halt_poll_success_ns", halt_poll_success_ns),
 	VCPU_STAT("halt_poll_fail_ns", halt_poll_fail_ns),
-	{NULL}
-};
+	अणुशून्यपूर्ण
+पूर्ण;
 
 bool kvm_trace_guest_mode_change;
 
-int kvm_guest_mode_change_trace_reg(void)
-{
+पूर्णांक kvm_guest_mode_change_trace_reg(व्योम)
+अणु
 	kvm_trace_guest_mode_change = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void kvm_guest_mode_change_trace_unreg(void)
-{
+व्योम kvm_guest_mode_change_trace_unreg(व्योम)
+अणु
 	kvm_trace_guest_mode_change = false;
-}
+पूर्ण
 
 /*
  * XXXKYMA: We are simulatoring a processor that has the WII bit set in
- * Config7, so we are "runnable" if interrupts are pending
+ * Config7, so we are "runnable" अगर पूर्णांकerrupts are pending
  */
-int kvm_arch_vcpu_runnable(struct kvm_vcpu *vcpu)
-{
-	return !!(vcpu->arch.pending_exceptions);
-}
+पूर्णांक kvm_arch_vcpu_runnable(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस !!(vcpu->arch.pending_exceptions);
+पूर्ण
 
-bool kvm_arch_vcpu_in_kernel(struct kvm_vcpu *vcpu)
-{
-	return false;
-}
+bool kvm_arch_vcpu_in_kernel(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस false;
+पूर्ण
 
-int kvm_arch_vcpu_should_kick(struct kvm_vcpu *vcpu)
-{
-	return 1;
-}
+पूर्णांक kvm_arch_vcpu_should_kick(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस 1;
+पूर्ण
 
-int kvm_arch_hardware_enable(void)
-{
-	return kvm_mips_callbacks->hardware_enable();
-}
+पूर्णांक kvm_arch_hardware_enable(व्योम)
+अणु
+	वापस kvm_mips_callbacks->hardware_enable();
+पूर्ण
 
-void kvm_arch_hardware_disable(void)
-{
+व्योम kvm_arch_hardware_disable(व्योम)
+अणु
 	kvm_mips_callbacks->hardware_disable();
-}
+पूर्ण
 
-int kvm_arch_hardware_setup(void *opaque)
-{
-	return 0;
-}
+पूर्णांक kvm_arch_hardware_setup(व्योम *opaque)
+अणु
+	वापस 0;
+पूर्ण
 
-int kvm_arch_check_processor_compat(void *opaque)
-{
-	return 0;
-}
+पूर्णांक kvm_arch_check_processor_compat(व्योम *opaque)
+अणु
+	वापस 0;
+पूर्ण
 
-extern void kvm_init_loongson_ipi(struct kvm *kvm);
+बाह्य व्योम kvm_init_loongson_ipi(काष्ठा kvm *kvm);
 
-int kvm_arch_init_vm(struct kvm *kvm, unsigned long type)
-{
-	switch (type) {
-	case KVM_VM_MIPS_AUTO:
-		break;
-	case KVM_VM_MIPS_VZ:
-		break;
-	default:
+पूर्णांक kvm_arch_init_vm(काष्ठा kvm *kvm, अचिन्हित दीर्घ type)
+अणु
+	चयन (type) अणु
+	हाल KVM_VM_MIPS_AUTO:
+		अवरोध;
+	हाल KVM_VM_MIPS_VZ:
+		अवरोध;
+	शेष:
 		/* Unsupported KVM type */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Allocate page table to map GPA -> RPA */
 	kvm->arch.gpa_mm.pgd = kvm_pgd_alloc();
-	if (!kvm->arch.gpa_mm.pgd)
-		return -ENOMEM;
+	अगर (!kvm->arch.gpa_mm.pgd)
+		वापस -ENOMEM;
 
-#ifdef CONFIG_CPU_LOONGSON64
+#अगर_घोषित CONFIG_CPU_LOONGSON64
 	kvm_init_loongson_ipi(kvm);
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void kvm_mips_free_vcpus(struct kvm *kvm)
-{
-	unsigned int i;
-	struct kvm_vcpu *vcpu;
+व्योम kvm_mips_मुक्त_vcpus(काष्ठा kvm *kvm)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा kvm_vcpu *vcpu;
 
-	kvm_for_each_vcpu(i, vcpu, kvm) {
+	kvm_क्रम_each_vcpu(i, vcpu, kvm) अणु
 		kvm_vcpu_destroy(vcpu);
-	}
+	पूर्ण
 
 	mutex_lock(&kvm->lock);
 
-	for (i = 0; i < atomic_read(&kvm->online_vcpus); i++)
-		kvm->vcpus[i] = NULL;
+	क्रम (i = 0; i < atomic_पढ़ो(&kvm->online_vcpus); i++)
+		kvm->vcpus[i] = शून्य;
 
 	atomic_set(&kvm->online_vcpus, 0);
 
 	mutex_unlock(&kvm->lock);
-}
+पूर्ण
 
-static void kvm_mips_free_gpa_pt(struct kvm *kvm)
-{
-	/* It should always be safe to remove after flushing the whole range */
+अटल व्योम kvm_mips_मुक्त_gpa_pt(काष्ठा kvm *kvm)
+अणु
+	/* It should always be safe to हटाओ after flushing the whole range */
 	WARN_ON(!kvm_mips_flush_gpa_pt(kvm, 0, ~0));
-	pgd_free(NULL, kvm->arch.gpa_mm.pgd);
-}
+	pgd_मुक्त(शून्य, kvm->arch.gpa_mm.pgd);
+पूर्ण
 
-void kvm_arch_destroy_vm(struct kvm *kvm)
-{
-	kvm_mips_free_vcpus(kvm);
-	kvm_mips_free_gpa_pt(kvm);
-}
+व्योम kvm_arch_destroy_vm(काष्ठा kvm *kvm)
+अणु
+	kvm_mips_मुक्त_vcpus(kvm);
+	kvm_mips_मुक्त_gpa_pt(kvm);
+पूर्ण
 
-long kvm_arch_dev_ioctl(struct file *filp, unsigned int ioctl,
-			unsigned long arg)
-{
-	return -ENOIOCTLCMD;
-}
+दीर्घ kvm_arch_dev_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक ioctl,
+			अचिन्हित दीर्घ arg)
+अणु
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-void kvm_arch_flush_shadow_all(struct kvm *kvm)
-{
+व्योम kvm_arch_flush_shaकरोw_all(काष्ठा kvm *kvm)
+अणु
 	/* Flush whole GPA */
 	kvm_mips_flush_gpa_pt(kvm, 0, ~0);
 	kvm_flush_remote_tlbs(kvm);
-}
+पूर्ण
 
-void kvm_arch_flush_shadow_memslot(struct kvm *kvm,
-				   struct kvm_memory_slot *slot)
-{
+व्योम kvm_arch_flush_shaकरोw_memslot(काष्ठा kvm *kvm,
+				   काष्ठा kvm_memory_slot *slot)
+अणु
 	/*
-	 * The slot has been made invalid (ready for moving or deletion), so we
-	 * need to ensure that it can no longer be accessed by any guest VCPUs.
+	 * The slot has been made invalid (पढ़ोy क्रम moving or deletion), so we
+	 * need to ensure that it can no दीर्घer be accessed by any guest VCPUs.
 	 */
 
 	spin_lock(&kvm->mmu_lock);
@@ -214,52 +215,52 @@ void kvm_arch_flush_shadow_memslot(struct kvm *kvm,
 			      slot->base_gfn + slot->npages - 1);
 	kvm_arch_flush_remote_tlbs_memslot(kvm, slot);
 	spin_unlock(&kvm->mmu_lock);
-}
+पूर्ण
 
-int kvm_arch_prepare_memory_region(struct kvm *kvm,
-				   struct kvm_memory_slot *memslot,
-				   const struct kvm_userspace_memory_region *mem,
-				   enum kvm_mr_change change)
-{
-	return 0;
-}
+पूर्णांक kvm_arch_prepare_memory_region(काष्ठा kvm *kvm,
+				   काष्ठा kvm_memory_slot *memslot,
+				   स्थिर काष्ठा kvm_userspace_memory_region *mem,
+				   क्रमागत kvm_mr_change change)
+अणु
+	वापस 0;
+पूर्ण
 
-void kvm_arch_commit_memory_region(struct kvm *kvm,
-				   const struct kvm_userspace_memory_region *mem,
-				   struct kvm_memory_slot *old,
-				   const struct kvm_memory_slot *new,
-				   enum kvm_mr_change change)
-{
-	int needs_flush;
+व्योम kvm_arch_commit_memory_region(काष्ठा kvm *kvm,
+				   स्थिर काष्ठा kvm_userspace_memory_region *mem,
+				   काष्ठा kvm_memory_slot *old,
+				   स्थिर काष्ठा kvm_memory_slot *new,
+				   क्रमागत kvm_mr_change change)
+अणु
+	पूर्णांक needs_flush;
 
 	kvm_debug("%s: kvm: %p slot: %d, GPA: %llx, size: %llx, QVA: %llx\n",
 		  __func__, kvm, mem->slot, mem->guest_phys_addr,
 		  mem->memory_size, mem->userspace_addr);
 
 	/*
-	 * If dirty page logging is enabled, write protect all pages in the slot
-	 * ready for dirty logging.
+	 * If dirty page logging is enabled, ग_लिखो protect all pages in the slot
+	 * पढ़ोy क्रम dirty logging.
 	 *
-	 * There is no need to do this in any of the following cases:
-	 * CREATE:	No dirty mappings will already exist.
-	 * MOVE/DELETE:	The old mappings will already have been cleaned up by
-	 *		kvm_arch_flush_shadow_memslot()
+	 * There is no need to करो this in any of the following हालs:
+	 * CREATE:	No dirty mappings will alपढ़ोy exist.
+	 * MOVE/DELETE:	The old mappings will alपढ़ोy have been cleaned up by
+	 *		kvm_arch_flush_shaकरोw_memslot()
 	 */
-	if (change == KVM_MR_FLAGS_ONLY &&
-	    (!(old->flags & KVM_MEM_LOG_DIRTY_PAGES) &&
-	     new->flags & KVM_MEM_LOG_DIRTY_PAGES)) {
+	अगर (change == KVM_MR_FLAGS_ONLY &&
+	    (!(old->flags & KVM_MEM_LOG_सूचीTY_PAGES) &&
+	     new->flags & KVM_MEM_LOG_सूचीTY_PAGES)) अणु
 		spin_lock(&kvm->mmu_lock);
 		/* Write protect GPA page table entries */
 		needs_flush = kvm_mips_mkclean_gpa_pt(kvm, new->base_gfn,
 					new->base_gfn + new->npages - 1);
-		if (needs_flush)
+		अगर (needs_flush)
 			kvm_arch_flush_remote_tlbs_memslot(kvm, new);
 		spin_unlock(&kvm->mmu_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void dump_handler(const char *symbol, void *start, void *end)
-{
+अटल अंतरभूत व्योम dump_handler(स्थिर अक्षर *symbol, व्योम *start, व्योम *end)
+अणु
 	u32 *p;
 
 	pr_debug("LEAF(%s)\n", symbol);
@@ -267,80 +268,80 @@ static inline void dump_handler(const char *symbol, void *start, void *end)
 	pr_debug("\t.set push\n");
 	pr_debug("\t.set noreorder\n");
 
-	for (p = start; p < (u32 *)end; ++p)
+	क्रम (p = start; p < (u32 *)end; ++p)
 		pr_debug("\t.word\t0x%08x\t\t# %p\n", *p, p);
 
 	pr_debug("\t.set\tpop\n");
 
 	pr_debug("\tEND(%s)\n", symbol);
-}
+पूर्ण
 
-/* low level hrtimer wake routine */
-static enum hrtimer_restart kvm_mips_comparecount_wakeup(struct hrtimer *timer)
-{
-	struct kvm_vcpu *vcpu;
+/* low level hrसमयr wake routine */
+अटल क्रमागत hrसमयr_restart kvm_mips_comparecount_wakeup(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा kvm_vcpu *vcpu;
 
-	vcpu = container_of(timer, struct kvm_vcpu, arch.comparecount_timer);
+	vcpu = container_of(समयr, काष्ठा kvm_vcpu, arch.comparecount_समयr);
 
-	kvm_mips_callbacks->queue_timer_int(vcpu);
+	kvm_mips_callbacks->queue_समयr_पूर्णांक(vcpu);
 
-	vcpu->arch.wait = 0;
-	rcuwait_wake_up(&vcpu->wait);
+	vcpu->arch.रुको = 0;
+	rcuरुको_wake_up(&vcpu->रुको);
 
-	return kvm_mips_count_timeout(vcpu);
-}
+	वापस kvm_mips_count_समयout(vcpu);
+पूर्ण
 
-int kvm_arch_vcpu_precreate(struct kvm *kvm, unsigned int id)
-{
-	return 0;
-}
+पूर्णांक kvm_arch_vcpu_precreate(काष्ठा kvm *kvm, अचिन्हित पूर्णांक id)
+अणु
+	वापस 0;
+पूर्ण
 
-int kvm_arch_vcpu_create(struct kvm_vcpu *vcpu)
-{
-	int err, size;
-	void *gebase, *p, *handler, *refill_start, *refill_end;
-	int i;
+पूर्णांक kvm_arch_vcpu_create(काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक err, size;
+	व्योम *gebase, *p, *handler, *refill_start, *refill_end;
+	पूर्णांक i;
 
 	kvm_debug("kvm @ %p: create cpu %d at %p\n",
 		  vcpu->kvm, vcpu->vcpu_id, vcpu);
 
 	err = kvm_mips_callbacks->vcpu_init(vcpu);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	hrtimer_init(&vcpu->arch.comparecount_timer, CLOCK_MONOTONIC,
+	hrसमयr_init(&vcpu->arch.comparecount_समयr, CLOCK_MONOTONIC,
 		     HRTIMER_MODE_REL);
-	vcpu->arch.comparecount_timer.function = kvm_mips_comparecount_wakeup;
+	vcpu->arch.comparecount_समयr.function = kvm_mips_comparecount_wakeup;
 
 	/*
-	 * Allocate space for host mode exception handlers that handle
-	 * guest mode exits
+	 * Allocate space क्रम host mode exception handlers that handle
+	 * guest mode निकासs
 	 */
-	if (cpu_has_veic || cpu_has_vint)
+	अगर (cpu_has_veic || cpu_has_vपूर्णांक)
 		size = 0x200 + VECTORSPACING * 64;
-	else
+	अन्यथा
 		size = 0x4000;
 
 	gebase = kzalloc(ALIGN(size, PAGE_SIZE), GFP_KERNEL);
 
-	if (!gebase) {
+	अगर (!gebase) अणु
 		err = -ENOMEM;
-		goto out_uninit_vcpu;
-	}
+		जाओ out_uninit_vcpu;
+	पूर्ण
 	kvm_debug("Allocated %d bytes for KVM Exception Handlers @ %p\n",
 		  ALIGN(size, PAGE_SIZE), gebase);
 
 	/*
-	 * Check new ebase actually fits in CP0_EBase. The lack of a write gate
+	 * Check new ebase actually fits in CP0_EBase. The lack of a ग_लिखो gate
 	 * limits us to the low 512MB of physical address space. If the memory
 	 * we allocate is out of range, just give up now.
 	 */
-	if (!cpu_has_ebase_wg && virt_to_phys(gebase) >= 0x20000000) {
+	अगर (!cpu_has_ebase_wg && virt_to_phys(gebase) >= 0x20000000) अणु
 		kvm_err("CP0_EBase.WG required for guest exception base %pK\n",
 			gebase);
 		err = -ENOMEM;
-		goto out_free_gebase;
-	}
+		जाओ out_मुक्त_gebase;
+	पूर्ण
 
 	/* Save new ebase */
 	vcpu->arch.guest_ebase = gebase;
@@ -350,24 +351,24 @@ int kvm_arch_vcpu_create(struct kvm_vcpu *vcpu)
 
 	/* TLB refill (or XTLB refill on 64-bit VZ where KX=1) */
 	refill_start = gebase;
-	if (IS_ENABLED(CONFIG_64BIT))
+	अगर (IS_ENABLED(CONFIG_64BIT))
 		refill_start += 0x080;
 	refill_end = kvm_mips_build_tlb_refill_exception(refill_start, handler);
 
-	/* General Exception Entry point */
+	/* General Exception Entry poपूर्णांक */
 	kvm_mips_build_exception(gebase + 0x180, handler);
 
-	/* For vectored interrupts poke the exception code @ all offsets 0-7 */
-	for (i = 0; i < 8; i++) {
+	/* For vectored पूर्णांकerrupts poke the exception code @ all offsets 0-7 */
+	क्रम (i = 0; i < 8; i++) अणु
 		kvm_debug("L1 Vectored handler @ %p\n",
 			  gebase + 0x200 + (i * VECTORSPACING));
 		kvm_mips_build_exception(gebase + 0x200 + i * VECTORSPACING,
 					 handler);
-	}
+	पूर्ण
 
-	/* General exit handler */
+	/* General निकास handler */
 	p = handler;
-	p = kvm_mips_build_exit(p);
+	p = kvm_mips_build_निकास(p);
 
 	/* Guest entry routine */
 	vcpu->arch.vcpu_run = p;
@@ -382,9 +383,9 @@ int kvm_arch_vcpu_create(struct kvm_vcpu *vcpu)
 	dump_handler("kvm_gen_exc", gebase + 0x180, gebase + 0x200);
 	dump_handler("kvm_exit", gebase + 0x2000, vcpu->arch.vcpu_run);
 
-	/* Invalidate the icache for these ranges */
-	flush_icache_range((unsigned long)gebase,
-			   (unsigned long)gebase + ALIGN(size, PAGE_SIZE));
+	/* Invalidate the icache क्रम these ranges */
+	flush_icache_range((अचिन्हित दीर्घ)gebase,
+			   (अचिन्हित दीर्घ)gebase + ALIGN(size, PAGE_SIZE));
 
 	/* Init */
 	vcpu->arch.last_sched_cpu = -1;
@@ -392,52 +393,52 @@ int kvm_arch_vcpu_create(struct kvm_vcpu *vcpu)
 
 	/* Initial guest state */
 	err = kvm_mips_callbacks->vcpu_setup(vcpu);
-	if (err)
-		goto out_free_gebase;
+	अगर (err)
+		जाओ out_मुक्त_gebase;
 
-	return 0;
+	वापस 0;
 
-out_free_gebase:
-	kfree(gebase);
+out_मुक्त_gebase:
+	kमुक्त(gebase);
 out_uninit_vcpu:
 	kvm_mips_callbacks->vcpu_uninit(vcpu);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void kvm_arch_vcpu_destroy(struct kvm_vcpu *vcpu)
-{
-	hrtimer_cancel(&vcpu->arch.comparecount_timer);
+व्योम kvm_arch_vcpu_destroy(काष्ठा kvm_vcpu *vcpu)
+अणु
+	hrसमयr_cancel(&vcpu->arch.comparecount_समयr);
 
 	kvm_mips_dump_stats(vcpu);
 
-	kvm_mmu_free_memory_caches(vcpu);
-	kfree(vcpu->arch.guest_ebase);
+	kvm_mmu_मुक्त_memory_caches(vcpu);
+	kमुक्त(vcpu->arch.guest_ebase);
 
 	kvm_mips_callbacks->vcpu_uninit(vcpu);
-}
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_set_guest_debug(struct kvm_vcpu *vcpu,
-					struct kvm_guest_debug *dbg)
-{
-	return -ENOIOCTLCMD;
-}
+पूर्णांक kvm_arch_vcpu_ioctl_set_guest_debug(काष्ठा kvm_vcpu *vcpu,
+					काष्ठा kvm_guest_debug *dbg)
+अणु
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_run(struct kvm_vcpu *vcpu)
-{
-	int r = -EINTR;
+पूर्णांक kvm_arch_vcpu_ioctl_run(काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक r = -EINTR;
 
 	vcpu_load(vcpu);
 
 	kvm_sigset_activate(vcpu);
 
-	if (vcpu->mmio_needed) {
-		if (!vcpu->mmio_is_write)
+	अगर (vcpu->mmio_needed) अणु
+		अगर (!vcpu->mmio_is_ग_लिखो)
 			kvm_mips_complete_mmio_load(vcpu);
 		vcpu->mmio_needed = 0;
-	}
+	पूर्ण
 
-	if (vcpu->run->immediate_exit)
-		goto out;
+	अगर (vcpu->run->immediate_निकास)
+		जाओ out;
 
 	lose_fpu(1);
 
@@ -446,9 +447,9 @@ int kvm_arch_vcpu_ioctl_run(struct kvm_vcpu *vcpu)
 	trace_kvm_enter(vcpu);
 
 	/*
-	 * Make sure the read of VCPU requests in vcpu_run() callback is not
-	 * reordered ahead of the write to vcpu->mode, or we could miss a TLB
-	 * flush request while the requester sees the VCPU as outside of guest
+	 * Make sure the पढ़ो of VCPU requests in vcpu_run() callback is not
+	 * reordered ahead of the ग_लिखो to vcpu->mode, or we could miss a TLB
+	 * flush request जबतक the requester sees the VCPU as outside of guest
 	 * mode and not needing an IPI.
 	 */
 	smp_store_mb(vcpu->mode, IN_GUEST_MODE);
@@ -456,65 +457,65 @@ int kvm_arch_vcpu_ioctl_run(struct kvm_vcpu *vcpu)
 	r = kvm_mips_callbacks->vcpu_run(vcpu);
 
 	trace_kvm_out(vcpu);
-	guest_exit_irqoff();
+	guest_निकास_irqoff();
 	local_irq_enable();
 
 out:
 	kvm_sigset_deactivate(vcpu);
 
 	vcpu_put(vcpu);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int kvm_vcpu_ioctl_interrupt(struct kvm_vcpu *vcpu,
-			     struct kvm_mips_interrupt *irq)
-{
-	int intr = (int)irq->irq;
-	struct kvm_vcpu *dvcpu = NULL;
+पूर्णांक kvm_vcpu_ioctl_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu,
+			     काष्ठा kvm_mips_पूर्णांकerrupt *irq)
+अणु
+	पूर्णांक पूर्णांकr = (पूर्णांक)irq->irq;
+	काष्ठा kvm_vcpu *dvcpu = शून्य;
 
-	if (intr == kvm_priority_to_irq[MIPS_EXC_INT_IPI_1] ||
-	    intr == kvm_priority_to_irq[MIPS_EXC_INT_IPI_2] ||
-	    intr == (-kvm_priority_to_irq[MIPS_EXC_INT_IPI_1]) ||
-	    intr == (-kvm_priority_to_irq[MIPS_EXC_INT_IPI_2]))
+	अगर (पूर्णांकr == kvm_priority_to_irq[MIPS_EXC_INT_IPI_1] ||
+	    पूर्णांकr == kvm_priority_to_irq[MIPS_EXC_INT_IPI_2] ||
+	    पूर्णांकr == (-kvm_priority_to_irq[MIPS_EXC_INT_IPI_1]) ||
+	    पूर्णांकr == (-kvm_priority_to_irq[MIPS_EXC_INT_IPI_2]))
 		kvm_debug("%s: CPU: %d, INTR: %d\n", __func__, irq->cpu,
-			  (int)intr);
+			  (पूर्णांक)पूर्णांकr);
 
-	if (irq->cpu == -1)
+	अगर (irq->cpu == -1)
 		dvcpu = vcpu;
-	else
+	अन्यथा
 		dvcpu = vcpu->kvm->vcpus[irq->cpu];
 
-	if (intr == 2 || intr == 3 || intr == 4 || intr == 6) {
-		kvm_mips_callbacks->queue_io_int(dvcpu, irq);
+	अगर (पूर्णांकr == 2 || पूर्णांकr == 3 || पूर्णांकr == 4 || पूर्णांकr == 6) अणु
+		kvm_mips_callbacks->queue_io_पूर्णांक(dvcpu, irq);
 
-	} else if (intr == -2 || intr == -3 || intr == -4 || intr == -6) {
-		kvm_mips_callbacks->dequeue_io_int(dvcpu, irq);
-	} else {
+	पूर्ण अन्यथा अगर (पूर्णांकr == -2 || पूर्णांकr == -3 || पूर्णांकr == -4 || पूर्णांकr == -6) अणु
+		kvm_mips_callbacks->dequeue_io_पूर्णांक(dvcpu, irq);
+	पूर्ण अन्यथा अणु
 		kvm_err("%s: invalid interrupt ioctl (%d:%d)\n", __func__,
 			irq->cpu, irq->irq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	dvcpu->arch.wait = 0;
+	dvcpu->arch.रुको = 0;
 
-	rcuwait_wake_up(&dvcpu->wait);
+	rcuरुको_wake_up(&dvcpu->रुको);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_get_mpstate(struct kvm_vcpu *vcpu,
-				    struct kvm_mp_state *mp_state)
-{
-	return -ENOIOCTLCMD;
-}
+पूर्णांक kvm_arch_vcpu_ioctl_get_mpstate(काष्ठा kvm_vcpu *vcpu,
+				    काष्ठा kvm_mp_state *mp_state)
+अणु
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_set_mpstate(struct kvm_vcpu *vcpu,
-				    struct kvm_mp_state *mp_state)
-{
-	return -ENOIOCTLCMD;
-}
+पूर्णांक kvm_arch_vcpu_ioctl_set_mpstate(काष्ठा kvm_vcpu *vcpu,
+				    काष्ठा kvm_mp_state *mp_state)
+अणु
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-static u64 kvm_mips_get_one_regs[] = {
+अटल u64 kvm_mips_get_one_regs[] = अणु
 	KVM_REG_MIPS_R0,
 	KVM_REG_MIPS_R1,
 	KVM_REG_MIPS_R2,
@@ -548,528 +549,528 @@ static u64 kvm_mips_get_one_regs[] = {
 	KVM_REG_MIPS_R30,
 	KVM_REG_MIPS_R31,
 
-#ifndef CONFIG_CPU_MIPSR6
+#अगर_अघोषित CONFIG_CPU_MIPSR6
 	KVM_REG_MIPS_HI,
 	KVM_REG_MIPS_LO,
-#endif
+#पूर्ण_अगर
 	KVM_REG_MIPS_PC,
-};
+पूर्ण;
 
-static u64 kvm_mips_get_one_regs_fpu[] = {
+अटल u64 kvm_mips_get_one_regs_fpu[] = अणु
 	KVM_REG_MIPS_FCR_IR,
 	KVM_REG_MIPS_FCR_CSR,
-};
+पूर्ण;
 
-static u64 kvm_mips_get_one_regs_msa[] = {
+अटल u64 kvm_mips_get_one_regs_msa[] = अणु
 	KVM_REG_MIPS_MSA_IR,
 	KVM_REG_MIPS_MSA_CSR,
-};
+पूर्ण;
 
-static unsigned long kvm_mips_num_regs(struct kvm_vcpu *vcpu)
-{
-	unsigned long ret;
+अटल अचिन्हित दीर्घ kvm_mips_num_regs(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अचिन्हित दीर्घ ret;
 
 	ret = ARRAY_SIZE(kvm_mips_get_one_regs);
-	if (kvm_mips_guest_can_have_fpu(&vcpu->arch)) {
+	अगर (kvm_mips_guest_can_have_fpu(&vcpu->arch)) अणु
 		ret += ARRAY_SIZE(kvm_mips_get_one_regs_fpu) + 48;
-		/* odd doubles */
-		if (boot_cpu_data.fpu_id & MIPS_FPIR_F64)
+		/* odd द्विगुनs */
+		अगर (boot_cpu_data.fpu_id & MIPS_FPIR_F64)
 			ret += 16;
-	}
-	if (kvm_mips_guest_can_have_msa(&vcpu->arch))
+	पूर्ण
+	अगर (kvm_mips_guest_can_have_msa(&vcpu->arch))
 		ret += ARRAY_SIZE(kvm_mips_get_one_regs_msa) + 32;
 	ret += kvm_mips_callbacks->num_regs(vcpu);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kvm_mips_copy_reg_indices(struct kvm_vcpu *vcpu, u64 __user *indices)
-{
+अटल पूर्णांक kvm_mips_copy_reg_indices(काष्ठा kvm_vcpu *vcpu, u64 __user *indices)
+अणु
 	u64 index;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	if (copy_to_user(indices, kvm_mips_get_one_regs,
-			 sizeof(kvm_mips_get_one_regs)))
-		return -EFAULT;
+	अगर (copy_to_user(indices, kvm_mips_get_one_regs,
+			 माप(kvm_mips_get_one_regs)))
+		वापस -EFAULT;
 	indices += ARRAY_SIZE(kvm_mips_get_one_regs);
 
-	if (kvm_mips_guest_can_have_fpu(&vcpu->arch)) {
-		if (copy_to_user(indices, kvm_mips_get_one_regs_fpu,
-				 sizeof(kvm_mips_get_one_regs_fpu)))
-			return -EFAULT;
+	अगर (kvm_mips_guest_can_have_fpu(&vcpu->arch)) अणु
+		अगर (copy_to_user(indices, kvm_mips_get_one_regs_fpu,
+				 माप(kvm_mips_get_one_regs_fpu)))
+			वापस -EFAULT;
 		indices += ARRAY_SIZE(kvm_mips_get_one_regs_fpu);
 
-		for (i = 0; i < 32; ++i) {
+		क्रम (i = 0; i < 32; ++i) अणु
 			index = KVM_REG_MIPS_FPR_32(i);
-			if (copy_to_user(indices, &index, sizeof(index)))
-				return -EFAULT;
+			अगर (copy_to_user(indices, &index, माप(index)))
+				वापस -EFAULT;
 			++indices;
 
-			/* skip odd doubles if no F64 */
-			if (i & 1 && !(boot_cpu_data.fpu_id & MIPS_FPIR_F64))
-				continue;
+			/* skip odd द्विगुनs अगर no F64 */
+			अगर (i & 1 && !(boot_cpu_data.fpu_id & MIPS_FPIR_F64))
+				जारी;
 
 			index = KVM_REG_MIPS_FPR_64(i);
-			if (copy_to_user(indices, &index, sizeof(index)))
-				return -EFAULT;
+			अगर (copy_to_user(indices, &index, माप(index)))
+				वापस -EFAULT;
 			++indices;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (kvm_mips_guest_can_have_msa(&vcpu->arch)) {
-		if (copy_to_user(indices, kvm_mips_get_one_regs_msa,
-				 sizeof(kvm_mips_get_one_regs_msa)))
-			return -EFAULT;
+	अगर (kvm_mips_guest_can_have_msa(&vcpu->arch)) अणु
+		अगर (copy_to_user(indices, kvm_mips_get_one_regs_msa,
+				 माप(kvm_mips_get_one_regs_msa)))
+			वापस -EFAULT;
 		indices += ARRAY_SIZE(kvm_mips_get_one_regs_msa);
 
-		for (i = 0; i < 32; ++i) {
+		क्रम (i = 0; i < 32; ++i) अणु
 			index = KVM_REG_MIPS_VEC_128(i);
-			if (copy_to_user(indices, &index, sizeof(index)))
-				return -EFAULT;
+			अगर (copy_to_user(indices, &index, माप(index)))
+				वापस -EFAULT;
 			++indices;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return kvm_mips_callbacks->copy_reg_indices(vcpu, indices);
-}
+	वापस kvm_mips_callbacks->copy_reg_indices(vcpu, indices);
+पूर्ण
 
-static int kvm_mips_get_reg(struct kvm_vcpu *vcpu,
-			    const struct kvm_one_reg *reg)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
-	struct mips_fpu_struct *fpu = &vcpu->arch.fpu;
-	int ret;
+अटल पूर्णांक kvm_mips_get_reg(काष्ठा kvm_vcpu *vcpu,
+			    स्थिर काष्ठा kvm_one_reg *reg)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
+	काष्ठा mips_fpu_काष्ठा *fpu = &vcpu->arch.fpu;
+	पूर्णांक ret;
 	s64 v;
 	s64 vs[2];
-	unsigned int idx;
+	अचिन्हित पूर्णांक idx;
 
-	switch (reg->id) {
-	/* General purpose registers */
-	case KVM_REG_MIPS_R0 ... KVM_REG_MIPS_R31:
-		v = (long)vcpu->arch.gprs[reg->id - KVM_REG_MIPS_R0];
-		break;
-#ifndef CONFIG_CPU_MIPSR6
-	case KVM_REG_MIPS_HI:
-		v = (long)vcpu->arch.hi;
-		break;
-	case KVM_REG_MIPS_LO:
-		v = (long)vcpu->arch.lo;
-		break;
-#endif
-	case KVM_REG_MIPS_PC:
-		v = (long)vcpu->arch.pc;
-		break;
+	चयन (reg->id) अणु
+	/* General purpose रेजिस्टरs */
+	हाल KVM_REG_MIPS_R0 ... KVM_REG_MIPS_R31:
+		v = (दीर्घ)vcpu->arch.gprs[reg->id - KVM_REG_MIPS_R0];
+		अवरोध;
+#अगर_अघोषित CONFIG_CPU_MIPSR6
+	हाल KVM_REG_MIPS_HI:
+		v = (दीर्घ)vcpu->arch.hi;
+		अवरोध;
+	हाल KVM_REG_MIPS_LO:
+		v = (दीर्घ)vcpu->arch.lo;
+		अवरोध;
+#पूर्ण_अगर
+	हाल KVM_REG_MIPS_PC:
+		v = (दीर्घ)vcpu->arch.pc;
+		अवरोध;
 
-	/* Floating point registers */
-	case KVM_REG_MIPS_FPR_32(0) ... KVM_REG_MIPS_FPR_32(31):
-		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
-			return -EINVAL;
+	/* Floating poपूर्णांक रेजिस्टरs */
+	हाल KVM_REG_MIPS_FPR_32(0) ... KVM_REG_MIPS_FPR_32(31):
+		अगर (!kvm_mips_guest_has_fpu(&vcpu->arch))
+			वापस -EINVAL;
 		idx = reg->id - KVM_REG_MIPS_FPR_32(0);
-		/* Odd singles in top of even double when FR=0 */
-		if (kvm_read_c0_guest_status(cop0) & ST0_FR)
+		/* Odd singles in top of even द्विगुन when FR=0 */
+		अगर (kvm_पढ़ो_c0_guest_status(cop0) & ST0_FR)
 			v = get_fpr32(&fpu->fpr[idx], 0);
-		else
+		अन्यथा
 			v = get_fpr32(&fpu->fpr[idx & ~1], idx & 1);
-		break;
-	case KVM_REG_MIPS_FPR_64(0) ... KVM_REG_MIPS_FPR_64(31):
-		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
-			return -EINVAL;
+		अवरोध;
+	हाल KVM_REG_MIPS_FPR_64(0) ... KVM_REG_MIPS_FPR_64(31):
+		अगर (!kvm_mips_guest_has_fpu(&vcpu->arch))
+			वापस -EINVAL;
 		idx = reg->id - KVM_REG_MIPS_FPR_64(0);
-		/* Can't access odd doubles in FR=0 mode */
-		if (idx & 1 && !(kvm_read_c0_guest_status(cop0) & ST0_FR))
-			return -EINVAL;
+		/* Can't access odd द्विगुनs in FR=0 mode */
+		अगर (idx & 1 && !(kvm_पढ़ो_c0_guest_status(cop0) & ST0_FR))
+			वापस -EINVAL;
 		v = get_fpr64(&fpu->fpr[idx], 0);
-		break;
-	case KVM_REG_MIPS_FCR_IR:
-		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
-			return -EINVAL;
+		अवरोध;
+	हाल KVM_REG_MIPS_FCR_IR:
+		अगर (!kvm_mips_guest_has_fpu(&vcpu->arch))
+			वापस -EINVAL;
 		v = boot_cpu_data.fpu_id;
-		break;
-	case KVM_REG_MIPS_FCR_CSR:
-		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
-			return -EINVAL;
+		अवरोध;
+	हाल KVM_REG_MIPS_FCR_CSR:
+		अगर (!kvm_mips_guest_has_fpu(&vcpu->arch))
+			वापस -EINVAL;
 		v = fpu->fcr31;
-		break;
+		अवरोध;
 
-	/* MIPS SIMD Architecture (MSA) registers */
-	case KVM_REG_MIPS_VEC_128(0) ... KVM_REG_MIPS_VEC_128(31):
-		if (!kvm_mips_guest_has_msa(&vcpu->arch))
-			return -EINVAL;
-		/* Can't access MSA registers in FR=0 mode */
-		if (!(kvm_read_c0_guest_status(cop0) & ST0_FR))
-			return -EINVAL;
+	/* MIPS SIMD Architecture (MSA) रेजिस्टरs */
+	हाल KVM_REG_MIPS_VEC_128(0) ... KVM_REG_MIPS_VEC_128(31):
+		अगर (!kvm_mips_guest_has_msa(&vcpu->arch))
+			वापस -EINVAL;
+		/* Can't access MSA रेजिस्टरs in FR=0 mode */
+		अगर (!(kvm_पढ़ो_c0_guest_status(cop0) & ST0_FR))
+			वापस -EINVAL;
 		idx = reg->id - KVM_REG_MIPS_VEC_128(0);
-#ifdef CONFIG_CPU_LITTLE_ENDIAN
-		/* least significant byte first */
+#अगर_घोषित CONFIG_CPU_LITTLE_ENDIAN
+		/* least signअगरicant byte first */
 		vs[0] = get_fpr64(&fpu->fpr[idx], 0);
 		vs[1] = get_fpr64(&fpu->fpr[idx], 1);
-#else
-		/* most significant byte first */
+#अन्यथा
+		/* most signअगरicant byte first */
 		vs[0] = get_fpr64(&fpu->fpr[idx], 1);
 		vs[1] = get_fpr64(&fpu->fpr[idx], 0);
-#endif
-		break;
-	case KVM_REG_MIPS_MSA_IR:
-		if (!kvm_mips_guest_has_msa(&vcpu->arch))
-			return -EINVAL;
+#पूर्ण_अगर
+		अवरोध;
+	हाल KVM_REG_MIPS_MSA_IR:
+		अगर (!kvm_mips_guest_has_msa(&vcpu->arch))
+			वापस -EINVAL;
 		v = boot_cpu_data.msa_id;
-		break;
-	case KVM_REG_MIPS_MSA_CSR:
-		if (!kvm_mips_guest_has_msa(&vcpu->arch))
-			return -EINVAL;
+		अवरोध;
+	हाल KVM_REG_MIPS_MSA_CSR:
+		अगर (!kvm_mips_guest_has_msa(&vcpu->arch))
+			वापस -EINVAL;
 		v = fpu->msacsr;
-		break;
+		अवरोध;
 
-	/* registers to be handled specially */
-	default:
+	/* रेजिस्टरs to be handled specially */
+	शेष:
 		ret = kvm_mips_callbacks->get_one_reg(vcpu, reg, &v);
-		if (ret)
-			return ret;
-		break;
-	}
-	if ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U64) {
-		u64 __user *uaddr64 = (u64 __user *)(long)reg->addr;
+		अगर (ret)
+			वापस ret;
+		अवरोध;
+	पूर्ण
+	अगर ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U64) अणु
+		u64 __user *uaddr64 = (u64 __user *)(दीर्घ)reg->addr;
 
-		return put_user(v, uaddr64);
-	} else if ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U32) {
-		u32 __user *uaddr32 = (u32 __user *)(long)reg->addr;
+		वापस put_user(v, uaddr64);
+	पूर्ण अन्यथा अगर ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U32) अणु
+		u32 __user *uaddr32 = (u32 __user *)(दीर्घ)reg->addr;
 		u32 v32 = (u32)v;
 
-		return put_user(v32, uaddr32);
-	} else if ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U128) {
-		void __user *uaddr = (void __user *)(long)reg->addr;
+		वापस put_user(v32, uaddr32);
+	पूर्ण अन्यथा अगर ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U128) अणु
+		व्योम __user *uaddr = (व्योम __user *)(दीर्घ)reg->addr;
 
-		return copy_to_user(uaddr, vs, 16) ? -EFAULT : 0;
-	} else {
-		return -EINVAL;
-	}
-}
+		वापस copy_to_user(uaddr, vs, 16) ? -EFAULT : 0;
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int kvm_mips_set_reg(struct kvm_vcpu *vcpu,
-			    const struct kvm_one_reg *reg)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
-	struct mips_fpu_struct *fpu = &vcpu->arch.fpu;
+अटल पूर्णांक kvm_mips_set_reg(काष्ठा kvm_vcpu *vcpu,
+			    स्थिर काष्ठा kvm_one_reg *reg)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
+	काष्ठा mips_fpu_काष्ठा *fpu = &vcpu->arch.fpu;
 	s64 v;
 	s64 vs[2];
-	unsigned int idx;
+	अचिन्हित पूर्णांक idx;
 
-	if ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U64) {
-		u64 __user *uaddr64 = (u64 __user *)(long)reg->addr;
+	अगर ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U64) अणु
+		u64 __user *uaddr64 = (u64 __user *)(दीर्घ)reg->addr;
 
-		if (get_user(v, uaddr64) != 0)
-			return -EFAULT;
-	} else if ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U32) {
-		u32 __user *uaddr32 = (u32 __user *)(long)reg->addr;
+		अगर (get_user(v, uaddr64) != 0)
+			वापस -EFAULT;
+	पूर्ण अन्यथा अगर ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U32) अणु
+		u32 __user *uaddr32 = (u32 __user *)(दीर्घ)reg->addr;
 		s32 v32;
 
-		if (get_user(v32, uaddr32) != 0)
-			return -EFAULT;
+		अगर (get_user(v32, uaddr32) != 0)
+			वापस -EFAULT;
 		v = (s64)v32;
-	} else if ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U128) {
-		void __user *uaddr = (void __user *)(long)reg->addr;
+	पूर्ण अन्यथा अगर ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U128) अणु
+		व्योम __user *uaddr = (व्योम __user *)(दीर्घ)reg->addr;
 
-		return copy_from_user(vs, uaddr, 16) ? -EFAULT : 0;
-	} else {
-		return -EINVAL;
-	}
+		वापस copy_from_user(vs, uaddr, 16) ? -EFAULT : 0;
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (reg->id) {
-	/* General purpose registers */
-	case KVM_REG_MIPS_R0:
+	चयन (reg->id) अणु
+	/* General purpose रेजिस्टरs */
+	हाल KVM_REG_MIPS_R0:
 		/* Silently ignore requests to set $0 */
-		break;
-	case KVM_REG_MIPS_R1 ... KVM_REG_MIPS_R31:
+		अवरोध;
+	हाल KVM_REG_MIPS_R1 ... KVM_REG_MIPS_R31:
 		vcpu->arch.gprs[reg->id - KVM_REG_MIPS_R0] = v;
-		break;
-#ifndef CONFIG_CPU_MIPSR6
-	case KVM_REG_MIPS_HI:
+		अवरोध;
+#अगर_अघोषित CONFIG_CPU_MIPSR6
+	हाल KVM_REG_MIPS_HI:
 		vcpu->arch.hi = v;
-		break;
-	case KVM_REG_MIPS_LO:
+		अवरोध;
+	हाल KVM_REG_MIPS_LO:
 		vcpu->arch.lo = v;
-		break;
-#endif
-	case KVM_REG_MIPS_PC:
+		अवरोध;
+#पूर्ण_अगर
+	हाल KVM_REG_MIPS_PC:
 		vcpu->arch.pc = v;
-		break;
+		अवरोध;
 
-	/* Floating point registers */
-	case KVM_REG_MIPS_FPR_32(0) ... KVM_REG_MIPS_FPR_32(31):
-		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
-			return -EINVAL;
+	/* Floating poपूर्णांक रेजिस्टरs */
+	हाल KVM_REG_MIPS_FPR_32(0) ... KVM_REG_MIPS_FPR_32(31):
+		अगर (!kvm_mips_guest_has_fpu(&vcpu->arch))
+			वापस -EINVAL;
 		idx = reg->id - KVM_REG_MIPS_FPR_32(0);
-		/* Odd singles in top of even double when FR=0 */
-		if (kvm_read_c0_guest_status(cop0) & ST0_FR)
+		/* Odd singles in top of even द्विगुन when FR=0 */
+		अगर (kvm_पढ़ो_c0_guest_status(cop0) & ST0_FR)
 			set_fpr32(&fpu->fpr[idx], 0, v);
-		else
+		अन्यथा
 			set_fpr32(&fpu->fpr[idx & ~1], idx & 1, v);
-		break;
-	case KVM_REG_MIPS_FPR_64(0) ... KVM_REG_MIPS_FPR_64(31):
-		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
-			return -EINVAL;
+		अवरोध;
+	हाल KVM_REG_MIPS_FPR_64(0) ... KVM_REG_MIPS_FPR_64(31):
+		अगर (!kvm_mips_guest_has_fpu(&vcpu->arch))
+			वापस -EINVAL;
 		idx = reg->id - KVM_REG_MIPS_FPR_64(0);
-		/* Can't access odd doubles in FR=0 mode */
-		if (idx & 1 && !(kvm_read_c0_guest_status(cop0) & ST0_FR))
-			return -EINVAL;
+		/* Can't access odd द्विगुनs in FR=0 mode */
+		अगर (idx & 1 && !(kvm_पढ़ो_c0_guest_status(cop0) & ST0_FR))
+			वापस -EINVAL;
 		set_fpr64(&fpu->fpr[idx], 0, v);
-		break;
-	case KVM_REG_MIPS_FCR_IR:
-		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
-			return -EINVAL;
+		अवरोध;
+	हाल KVM_REG_MIPS_FCR_IR:
+		अगर (!kvm_mips_guest_has_fpu(&vcpu->arch))
+			वापस -EINVAL;
 		/* Read-only */
-		break;
-	case KVM_REG_MIPS_FCR_CSR:
-		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
-			return -EINVAL;
+		अवरोध;
+	हाल KVM_REG_MIPS_FCR_CSR:
+		अगर (!kvm_mips_guest_has_fpu(&vcpu->arch))
+			वापस -EINVAL;
 		fpu->fcr31 = v;
-		break;
+		अवरोध;
 
-	/* MIPS SIMD Architecture (MSA) registers */
-	case KVM_REG_MIPS_VEC_128(0) ... KVM_REG_MIPS_VEC_128(31):
-		if (!kvm_mips_guest_has_msa(&vcpu->arch))
-			return -EINVAL;
+	/* MIPS SIMD Architecture (MSA) रेजिस्टरs */
+	हाल KVM_REG_MIPS_VEC_128(0) ... KVM_REG_MIPS_VEC_128(31):
+		अगर (!kvm_mips_guest_has_msa(&vcpu->arch))
+			वापस -EINVAL;
 		idx = reg->id - KVM_REG_MIPS_VEC_128(0);
-#ifdef CONFIG_CPU_LITTLE_ENDIAN
-		/* least significant byte first */
+#अगर_घोषित CONFIG_CPU_LITTLE_ENDIAN
+		/* least signअगरicant byte first */
 		set_fpr64(&fpu->fpr[idx], 0, vs[0]);
 		set_fpr64(&fpu->fpr[idx], 1, vs[1]);
-#else
-		/* most significant byte first */
+#अन्यथा
+		/* most signअगरicant byte first */
 		set_fpr64(&fpu->fpr[idx], 1, vs[0]);
 		set_fpr64(&fpu->fpr[idx], 0, vs[1]);
-#endif
-		break;
-	case KVM_REG_MIPS_MSA_IR:
-		if (!kvm_mips_guest_has_msa(&vcpu->arch))
-			return -EINVAL;
+#पूर्ण_अगर
+		अवरोध;
+	हाल KVM_REG_MIPS_MSA_IR:
+		अगर (!kvm_mips_guest_has_msa(&vcpu->arch))
+			वापस -EINVAL;
 		/* Read-only */
-		break;
-	case KVM_REG_MIPS_MSA_CSR:
-		if (!kvm_mips_guest_has_msa(&vcpu->arch))
-			return -EINVAL;
+		अवरोध;
+	हाल KVM_REG_MIPS_MSA_CSR:
+		अगर (!kvm_mips_guest_has_msa(&vcpu->arch))
+			वापस -EINVAL;
 		fpu->msacsr = v;
-		break;
+		अवरोध;
 
-	/* registers to be handled specially */
-	default:
-		return kvm_mips_callbacks->set_one_reg(vcpu, reg, v);
-	}
-	return 0;
-}
+	/* रेजिस्टरs to be handled specially */
+	शेष:
+		वापस kvm_mips_callbacks->set_one_reg(vcpu, reg, v);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int kvm_vcpu_ioctl_enable_cap(struct kvm_vcpu *vcpu,
-				     struct kvm_enable_cap *cap)
-{
-	int r = 0;
+अटल पूर्णांक kvm_vcpu_ioctl_enable_cap(काष्ठा kvm_vcpu *vcpu,
+				     काष्ठा kvm_enable_cap *cap)
+अणु
+	पूर्णांक r = 0;
 
-	if (!kvm_vm_ioctl_check_extension(vcpu->kvm, cap->cap))
-		return -EINVAL;
-	if (cap->flags)
-		return -EINVAL;
-	if (cap->args[0])
-		return -EINVAL;
+	अगर (!kvm_vm_ioctl_check_extension(vcpu->kvm, cap->cap))
+		वापस -EINVAL;
+	अगर (cap->flags)
+		वापस -EINVAL;
+	अगर (cap->args[0])
+		वापस -EINVAL;
 
-	switch (cap->cap) {
-	case KVM_CAP_MIPS_FPU:
+	चयन (cap->cap) अणु
+	हाल KVM_CAP_MIPS_FPU:
 		vcpu->arch.fpu_enabled = true;
-		break;
-	case KVM_CAP_MIPS_MSA:
+		अवरोध;
+	हाल KVM_CAP_MIPS_MSA:
 		vcpu->arch.msa_enabled = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		r = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-long kvm_arch_vcpu_async_ioctl(struct file *filp, unsigned int ioctl,
-			       unsigned long arg)
-{
-	struct kvm_vcpu *vcpu = filp->private_data;
-	void __user *argp = (void __user *)arg;
+दीर्घ kvm_arch_vcpu_async_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक ioctl,
+			       अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा kvm_vcpu *vcpu = filp->निजी_data;
+	व्योम __user *argp = (व्योम __user *)arg;
 
-	if (ioctl == KVM_INTERRUPT) {
-		struct kvm_mips_interrupt irq;
+	अगर (ioctl == KVM_INTERRUPT) अणु
+		काष्ठा kvm_mips_पूर्णांकerrupt irq;
 
-		if (copy_from_user(&irq, argp, sizeof(irq)))
-			return -EFAULT;
+		अगर (copy_from_user(&irq, argp, माप(irq)))
+			वापस -EFAULT;
 		kvm_debug("[%d] %s: irq: %d\n", vcpu->vcpu_id, __func__,
 			  irq.irq);
 
-		return kvm_vcpu_ioctl_interrupt(vcpu, &irq);
-	}
+		वापस kvm_vcpu_ioctl_पूर्णांकerrupt(vcpu, &irq);
+	पूर्ण
 
-	return -ENOIOCTLCMD;
-}
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-long kvm_arch_vcpu_ioctl(struct file *filp, unsigned int ioctl,
-			 unsigned long arg)
-{
-	struct kvm_vcpu *vcpu = filp->private_data;
-	void __user *argp = (void __user *)arg;
-	long r;
+दीर्घ kvm_arch_vcpu_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक ioctl,
+			 अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा kvm_vcpu *vcpu = filp->निजी_data;
+	व्योम __user *argp = (व्योम __user *)arg;
+	दीर्घ r;
 
 	vcpu_load(vcpu);
 
-	switch (ioctl) {
-	case KVM_SET_ONE_REG:
-	case KVM_GET_ONE_REG: {
-		struct kvm_one_reg reg;
+	चयन (ioctl) अणु
+	हाल KVM_SET_ONE_REG:
+	हाल KVM_GET_ONE_REG: अणु
+		काष्ठा kvm_one_reg reg;
 
 		r = -EFAULT;
-		if (copy_from_user(&reg, argp, sizeof(reg)))
-			break;
-		if (ioctl == KVM_SET_ONE_REG)
+		अगर (copy_from_user(&reg, argp, माप(reg)))
+			अवरोध;
+		अगर (ioctl == KVM_SET_ONE_REG)
 			r = kvm_mips_set_reg(vcpu, &reg);
-		else
+		अन्यथा
 			r = kvm_mips_get_reg(vcpu, &reg);
-		break;
-	}
-	case KVM_GET_REG_LIST: {
-		struct kvm_reg_list __user *user_list = argp;
-		struct kvm_reg_list reg_list;
-		unsigned n;
+		अवरोध;
+	पूर्ण
+	हाल KVM_GET_REG_LIST: अणु
+		काष्ठा kvm_reg_list __user *user_list = argp;
+		काष्ठा kvm_reg_list reg_list;
+		अचिन्हित n;
 
 		r = -EFAULT;
-		if (copy_from_user(&reg_list, user_list, sizeof(reg_list)))
-			break;
+		अगर (copy_from_user(&reg_list, user_list, माप(reg_list)))
+			अवरोध;
 		n = reg_list.n;
 		reg_list.n = kvm_mips_num_regs(vcpu);
-		if (copy_to_user(user_list, &reg_list, sizeof(reg_list)))
-			break;
+		अगर (copy_to_user(user_list, &reg_list, माप(reg_list)))
+			अवरोध;
 		r = -E2BIG;
-		if (n < reg_list.n)
-			break;
+		अगर (n < reg_list.n)
+			अवरोध;
 		r = kvm_mips_copy_reg_indices(vcpu, user_list->reg);
-		break;
-	}
-	case KVM_ENABLE_CAP: {
-		struct kvm_enable_cap cap;
+		अवरोध;
+	पूर्ण
+	हाल KVM_ENABLE_CAP: अणु
+		काष्ठा kvm_enable_cap cap;
 
 		r = -EFAULT;
-		if (copy_from_user(&cap, argp, sizeof(cap)))
-			break;
+		अगर (copy_from_user(&cap, argp, माप(cap)))
+			अवरोध;
 		r = kvm_vcpu_ioctl_enable_cap(vcpu, &cap);
-		break;
-	}
-	default:
+		अवरोध;
+	पूर्ण
+	शेष:
 		r = -ENOIOCTLCMD;
-	}
+	पूर्ण
 
 	vcpu_put(vcpu);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-void kvm_arch_sync_dirty_log(struct kvm *kvm, struct kvm_memory_slot *memslot)
-{
+व्योम kvm_arch_sync_dirty_log(काष्ठा kvm *kvm, काष्ठा kvm_memory_slot *memslot)
+अणु
 
-}
+पूर्ण
 
-int kvm_arch_flush_remote_tlb(struct kvm *kvm)
-{
-	kvm_mips_callbacks->prepare_flush_shadow(kvm);
-	return 1;
-}
+पूर्णांक kvm_arch_flush_remote_tlb(काष्ठा kvm *kvm)
+अणु
+	kvm_mips_callbacks->prepare_flush_shaकरोw(kvm);
+	वापस 1;
+पूर्ण
 
-void kvm_arch_flush_remote_tlbs_memslot(struct kvm *kvm,
-					const struct kvm_memory_slot *memslot)
-{
+व्योम kvm_arch_flush_remote_tlbs_memslot(काष्ठा kvm *kvm,
+					स्थिर काष्ठा kvm_memory_slot *memslot)
+अणु
 	kvm_flush_remote_tlbs(kvm);
-}
+पूर्ण
 
-long kvm_arch_vm_ioctl(struct file *filp, unsigned int ioctl, unsigned long arg)
-{
-	long r;
+दीर्घ kvm_arch_vm_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक ioctl, अचिन्हित दीर्घ arg)
+अणु
+	दीर्घ r;
 
-	switch (ioctl) {
-	default:
+	चयन (ioctl) अणु
+	शेष:
 		r = -ENOIOCTLCMD;
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int kvm_arch_init(void *opaque)
-{
-	if (kvm_mips_callbacks) {
+पूर्णांक kvm_arch_init(व्योम *opaque)
+अणु
+	अगर (kvm_mips_callbacks) अणु
 		kvm_err("kvm: module already exists\n");
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 
-	return kvm_mips_emulation_init(&kvm_mips_callbacks);
-}
+	वापस kvm_mips_emulation_init(&kvm_mips_callbacks);
+पूर्ण
 
-void kvm_arch_exit(void)
-{
-	kvm_mips_callbacks = NULL;
-}
+व्योम kvm_arch_निकास(व्योम)
+अणु
+	kvm_mips_callbacks = शून्य;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_get_sregs(struct kvm_vcpu *vcpu,
-				  struct kvm_sregs *sregs)
-{
-	return -ENOIOCTLCMD;
-}
+पूर्णांक kvm_arch_vcpu_ioctl_get_sregs(काष्ठा kvm_vcpu *vcpu,
+				  काष्ठा kvm_sregs *sregs)
+अणु
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_set_sregs(struct kvm_vcpu *vcpu,
-				  struct kvm_sregs *sregs)
-{
-	return -ENOIOCTLCMD;
-}
+पूर्णांक kvm_arch_vcpu_ioctl_set_sregs(काष्ठा kvm_vcpu *vcpu,
+				  काष्ठा kvm_sregs *sregs)
+अणु
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-void kvm_arch_vcpu_postcreate(struct kvm_vcpu *vcpu)
-{
-}
+व्योम kvm_arch_vcpu_postcreate(काष्ठा kvm_vcpu *vcpu)
+अणु
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_get_fpu(struct kvm_vcpu *vcpu, struct kvm_fpu *fpu)
-{
-	return -ENOIOCTLCMD;
-}
+पूर्णांक kvm_arch_vcpu_ioctl_get_fpu(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_fpu *fpu)
+अणु
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_set_fpu(struct kvm_vcpu *vcpu, struct kvm_fpu *fpu)
-{
-	return -ENOIOCTLCMD;
-}
+पूर्णांक kvm_arch_vcpu_ioctl_set_fpu(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_fpu *fpu)
+अणु
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-vm_fault_t kvm_arch_vcpu_fault(struct kvm_vcpu *vcpu, struct vm_fault *vmf)
-{
-	return VM_FAULT_SIGBUS;
-}
+vm_fault_t kvm_arch_vcpu_fault(काष्ठा kvm_vcpu *vcpu, काष्ठा vm_fault *vmf)
+अणु
+	वापस VM_FAULT_SIGBUS;
+पूर्ण
 
-int kvm_vm_ioctl_check_extension(struct kvm *kvm, long ext)
-{
-	int r;
+पूर्णांक kvm_vm_ioctl_check_extension(काष्ठा kvm *kvm, दीर्घ ext)
+अणु
+	पूर्णांक r;
 
-	switch (ext) {
-	case KVM_CAP_ONE_REG:
-	case KVM_CAP_ENABLE_CAP:
-	case KVM_CAP_READONLY_MEM:
-	case KVM_CAP_SYNC_MMU:
-	case KVM_CAP_IMMEDIATE_EXIT:
+	चयन (ext) अणु
+	हाल KVM_CAP_ONE_REG:
+	हाल KVM_CAP_ENABLE_CAP:
+	हाल KVM_CAP_READONLY_MEM:
+	हाल KVM_CAP_SYNC_MMU:
+	हाल KVM_CAP_IMMEDIATE_EXIT:
 		r = 1;
-		break;
-	case KVM_CAP_NR_VCPUS:
+		अवरोध;
+	हाल KVM_CAP_NR_VCPUS:
 		r = num_online_cpus();
-		break;
-	case KVM_CAP_MAX_VCPUS:
+		अवरोध;
+	हाल KVM_CAP_MAX_VCPUS:
 		r = KVM_MAX_VCPUS;
-		break;
-	case KVM_CAP_MAX_VCPU_ID:
+		अवरोध;
+	हाल KVM_CAP_MAX_VCPU_ID:
 		r = KVM_MAX_VCPU_ID;
-		break;
-	case KVM_CAP_MIPS_FPU:
-		/* We don't handle systems with inconsistent cpu_has_fpu */
+		अवरोध;
+	हाल KVM_CAP_MIPS_FPU:
+		/* We करोn't handle प्रणालीs with inconsistent cpu_has_fpu */
 		r = !!raw_cpu_has_fpu;
-		break;
-	case KVM_CAP_MIPS_MSA:
+		अवरोध;
+	हाल KVM_CAP_MIPS_MSA:
 		/*
-		 * We don't support MSA vector partitioning yet:
+		 * We करोn't support MSA vector partitioning yet:
 		 * 1) It would require explicit support which can't be tested
 		 *    yet due to lack of support in current hardware.
 		 * 2) It extends the state that would need to be saved/restored
-		 *    by e.g. QEMU for migration.
+		 *    by e.g. QEMU क्रम migration.
 		 *
 		 * When vector partitioning hardware becomes available, support
 		 * could be added by requiring a flag when enabling
@@ -1077,58 +1078,58 @@ int kvm_vm_ioctl_check_extension(struct kvm *kvm, long ext)
 		 * to save/restore the appropriate extra state.
 		 */
 		r = cpu_has_msa && !(boot_cpu_data.msa_id & MSA_IR_WRPF);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		r = kvm_mips_callbacks->check_extension(kvm, ext);
-		break;
-	}
-	return r;
-}
+		अवरोध;
+	पूर्ण
+	वापस r;
+पूर्ण
 
-int kvm_cpu_has_pending_timer(struct kvm_vcpu *vcpu)
-{
-	return kvm_mips_pending_timer(vcpu) ||
-		kvm_read_c0_guest_cause(vcpu->arch.cop0) & C_TI;
-}
+पूर्णांक kvm_cpu_has_pending_समयr(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस kvm_mips_pending_समयr(vcpu) ||
+		kvm_पढ़ो_c0_guest_cause(vcpu->arch.cop0) & C_TI;
+पूर्ण
 
-int kvm_arch_vcpu_dump_regs(struct kvm_vcpu *vcpu)
-{
-	int i;
-	struct mips_coproc *cop0;
+पूर्णांक kvm_arch_vcpu_dump_regs(काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक i;
+	काष्ठा mips_coproc *cop0;
 
-	if (!vcpu)
-		return -1;
+	अगर (!vcpu)
+		वापस -1;
 
 	kvm_debug("VCPU Register Dump:\n");
 	kvm_debug("\tpc = 0x%08lx\n", vcpu->arch.pc);
 	kvm_debug("\texceptions: %08lx\n", vcpu->arch.pending_exceptions);
 
-	for (i = 0; i < 32; i += 4) {
+	क्रम (i = 0; i < 32; i += 4) अणु
 		kvm_debug("\tgpr%02d: %08lx %08lx %08lx %08lx\n", i,
 		       vcpu->arch.gprs[i],
 		       vcpu->arch.gprs[i + 1],
 		       vcpu->arch.gprs[i + 2], vcpu->arch.gprs[i + 3]);
-	}
+	पूर्ण
 	kvm_debug("\thi: 0x%08lx\n", vcpu->arch.hi);
 	kvm_debug("\tlo: 0x%08lx\n", vcpu->arch.lo);
 
 	cop0 = vcpu->arch.cop0;
 	kvm_debug("\tStatus: 0x%08x, Cause: 0x%08x\n",
-		  kvm_read_c0_guest_status(cop0),
-		  kvm_read_c0_guest_cause(cop0));
+		  kvm_पढ़ो_c0_guest_status(cop0),
+		  kvm_पढ़ो_c0_guest_cause(cop0));
 
-	kvm_debug("\tEPC: 0x%08lx\n", kvm_read_c0_guest_epc(cop0));
+	kvm_debug("\tEPC: 0x%08lx\n", kvm_पढ़ो_c0_guest_epc(cop0));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_set_regs(struct kvm_vcpu *vcpu, struct kvm_regs *regs)
-{
-	int i;
+पूर्णांक kvm_arch_vcpu_ioctl_set_regs(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_regs *regs)
+अणु
+	पूर्णांक i;
 
 	vcpu_load(vcpu);
 
-	for (i = 1; i < ARRAY_SIZE(vcpu->arch.gprs); i++)
+	क्रम (i = 1; i < ARRAY_SIZE(vcpu->arch.gprs); i++)
 		vcpu->arch.gprs[i] = regs->gpr[i];
 	vcpu->arch.gprs[0] = 0; /* zero is special, and cannot be set. */
 	vcpu->arch.hi = regs->hi;
@@ -1136,16 +1137,16 @@ int kvm_arch_vcpu_ioctl_set_regs(struct kvm_vcpu *vcpu, struct kvm_regs *regs)
 	vcpu->arch.pc = regs->pc;
 
 	vcpu_put(vcpu);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_get_regs(struct kvm_vcpu *vcpu, struct kvm_regs *regs)
-{
-	int i;
+पूर्णांक kvm_arch_vcpu_ioctl_get_regs(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_regs *regs)
+अणु
+	पूर्णांक i;
 
 	vcpu_load(vcpu);
 
-	for (i = 0; i < ARRAY_SIZE(vcpu->arch.gprs); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(vcpu->arch.gprs); i++)
 		regs->gpr[i] = vcpu->arch.gprs[i];
 
 	regs->hi = vcpu->arch.hi;
@@ -1153,49 +1154,49 @@ int kvm_arch_vcpu_ioctl_get_regs(struct kvm_vcpu *vcpu, struct kvm_regs *regs)
 	regs->pc = vcpu->arch.pc;
 
 	vcpu_put(vcpu);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_translate(struct kvm_vcpu *vcpu,
-				  struct kvm_translation *tr)
-{
-	return 0;
-}
+पूर्णांक kvm_arch_vcpu_ioctl_translate(काष्ठा kvm_vcpu *vcpu,
+				  काष्ठा kvm_translation *tr)
+अणु
+	वापस 0;
+पूर्ण
 
-static void kvm_mips_set_c0_status(void)
-{
-	u32 status = read_c0_status();
+अटल व्योम kvm_mips_set_c0_status(व्योम)
+अणु
+	u32 status = पढ़ो_c0_status();
 
-	if (cpu_has_dsp)
+	अगर (cpu_has_dsp)
 		status |= (ST0_MX);
 
-	write_c0_status(status);
+	ग_लिखो_c0_status(status);
 	ehb();
-}
+पूर्ण
 
 /*
- * Return value is in the form (errcode<<2 | RESUME_FLAG_HOST | RESUME_FLAG_NV)
+ * Return value is in the क्रमm (errcode<<2 | RESUME_FLAG_HOST | RESUME_FLAG_NV)
  */
-int kvm_mips_handle_exit(struct kvm_vcpu *vcpu)
-{
-	struct kvm_run *run = vcpu->run;
+पूर्णांक kvm_mips_handle_निकास(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm_run *run = vcpu->run;
 	u32 cause = vcpu->arch.host_cp0_cause;
 	u32 exccode = (cause >> CAUSEB_EXCCODE) & 0x1f;
 	u32 __user *opc = (u32 __user *) vcpu->arch.pc;
-	unsigned long badvaddr = vcpu->arch.host_cp0_badvaddr;
-	enum emulation_result er = EMULATE_DONE;
+	अचिन्हित दीर्घ badvaddr = vcpu->arch.host_cp0_badvaddr;
+	क्रमागत emulation_result er = EMULATE_DONE;
 	u32 inst;
-	int ret = RESUME_GUEST;
+	पूर्णांक ret = RESUME_GUEST;
 
 	vcpu->mode = OUTSIDE_GUEST_MODE;
 
-	/* Set a default exit reason */
-	run->exit_reason = KVM_EXIT_UNKNOWN;
-	run->ready_for_interrupt_injection = 1;
+	/* Set a शेष निकास reason */
+	run->निकास_reason = KVM_EXIT_UNKNOWN;
+	run->पढ़ोy_क्रम_पूर्णांकerrupt_injection = 1;
 
 	/*
 	 * Set the appropriate status bits based on host CPU features,
-	 * before we hit the scheduler
+	 * beक्रमe we hit the scheduler
 	 */
 	kvm_mips_set_c0_status();
 
@@ -1203,142 +1204,142 @@ int kvm_mips_handle_exit(struct kvm_vcpu *vcpu)
 
 	kvm_debug("kvm_mips_handle_exit: cause: %#x, PC: %p, kvm_run: %p, kvm_vcpu: %p\n",
 			cause, opc, run, vcpu);
-	trace_kvm_exit(vcpu, exccode);
+	trace_kvm_निकास(vcpu, exccode);
 
-	switch (exccode) {
-	case EXCCODE_INT:
+	चयन (exccode) अणु
+	हाल EXCCODE_INT:
 		kvm_debug("[%d]EXCCODE_INT @ %p\n", vcpu->vcpu_id, opc);
 
-		++vcpu->stat.int_exits;
+		++vcpu->stat.पूर्णांक_निकासs;
 
-		if (need_resched())
+		अगर (need_resched())
 			cond_resched();
 
 		ret = RESUME_GUEST;
-		break;
+		अवरोध;
 
-	case EXCCODE_CPU:
+	हाल EXCCODE_CPU:
 		kvm_debug("EXCCODE_CPU: @ PC: %p\n", opc);
 
-		++vcpu->stat.cop_unusable_exits;
+		++vcpu->stat.cop_unusable_निकासs;
 		ret = kvm_mips_callbacks->handle_cop_unusable(vcpu);
-		/* XXXKYMA: Might need to return to user space */
-		if (run->exit_reason == KVM_EXIT_IRQ_WINDOW_OPEN)
+		/* XXXKYMA: Might need to वापस to user space */
+		अगर (run->निकास_reason == KVM_EXIT_IRQ_WINDOW_OPEN)
 			ret = RESUME_HOST;
-		break;
+		अवरोध;
 
-	case EXCCODE_MOD:
-		++vcpu->stat.tlbmod_exits;
+	हाल EXCCODE_MOD:
+		++vcpu->stat.tlbmod_निकासs;
 		ret = kvm_mips_callbacks->handle_tlb_mod(vcpu);
-		break;
+		अवरोध;
 
-	case EXCCODE_TLBS:
+	हाल EXCCODE_TLBS:
 		kvm_debug("TLB ST fault:  cause %#x, status %#x, PC: %p, BadVaddr: %#lx\n",
-			  cause, kvm_read_c0_guest_status(vcpu->arch.cop0), opc,
+			  cause, kvm_पढ़ो_c0_guest_status(vcpu->arch.cop0), opc,
 			  badvaddr);
 
-		++vcpu->stat.tlbmiss_st_exits;
+		++vcpu->stat.tlbmiss_st_निकासs;
 		ret = kvm_mips_callbacks->handle_tlb_st_miss(vcpu);
-		break;
+		अवरोध;
 
-	case EXCCODE_TLBL:
+	हाल EXCCODE_TLBL:
 		kvm_debug("TLB LD fault: cause %#x, PC: %p, BadVaddr: %#lx\n",
 			  cause, opc, badvaddr);
 
-		++vcpu->stat.tlbmiss_ld_exits;
+		++vcpu->stat.tlbmiss_ld_निकासs;
 		ret = kvm_mips_callbacks->handle_tlb_ld_miss(vcpu);
-		break;
+		अवरोध;
 
-	case EXCCODE_ADES:
-		++vcpu->stat.addrerr_st_exits;
+	हाल EXCCODE_ADES:
+		++vcpu->stat.addrerr_st_निकासs;
 		ret = kvm_mips_callbacks->handle_addr_err_st(vcpu);
-		break;
+		अवरोध;
 
-	case EXCCODE_ADEL:
-		++vcpu->stat.addrerr_ld_exits;
+	हाल EXCCODE_ADEL:
+		++vcpu->stat.addrerr_ld_निकासs;
 		ret = kvm_mips_callbacks->handle_addr_err_ld(vcpu);
-		break;
+		अवरोध;
 
-	case EXCCODE_SYS:
-		++vcpu->stat.syscall_exits;
+	हाल EXCCODE_SYS:
+		++vcpu->stat.syscall_निकासs;
 		ret = kvm_mips_callbacks->handle_syscall(vcpu);
-		break;
+		अवरोध;
 
-	case EXCCODE_RI:
-		++vcpu->stat.resvd_inst_exits;
+	हाल EXCCODE_RI:
+		++vcpu->stat.resvd_inst_निकासs;
 		ret = kvm_mips_callbacks->handle_res_inst(vcpu);
-		break;
+		अवरोध;
 
-	case EXCCODE_BP:
-		++vcpu->stat.break_inst_exits;
-		ret = kvm_mips_callbacks->handle_break(vcpu);
-		break;
+	हाल EXCCODE_BP:
+		++vcpu->stat.अवरोध_inst_निकासs;
+		ret = kvm_mips_callbacks->handle_अवरोध(vcpu);
+		अवरोध;
 
-	case EXCCODE_TR:
-		++vcpu->stat.trap_inst_exits;
+	हाल EXCCODE_TR:
+		++vcpu->stat.trap_inst_निकासs;
 		ret = kvm_mips_callbacks->handle_trap(vcpu);
-		break;
+		अवरोध;
 
-	case EXCCODE_MSAFPE:
-		++vcpu->stat.msa_fpe_exits;
+	हाल EXCCODE_MSAFPE:
+		++vcpu->stat.msa_fpe_निकासs;
 		ret = kvm_mips_callbacks->handle_msa_fpe(vcpu);
-		break;
+		अवरोध;
 
-	case EXCCODE_FPE:
-		++vcpu->stat.fpe_exits;
+	हाल EXCCODE_FPE:
+		++vcpu->stat.fpe_निकासs;
 		ret = kvm_mips_callbacks->handle_fpe(vcpu);
-		break;
+		अवरोध;
 
-	case EXCCODE_MSADIS:
-		++vcpu->stat.msa_disabled_exits;
+	हाल EXCCODE_MSADIS:
+		++vcpu->stat.msa_disabled_निकासs;
 		ret = kvm_mips_callbacks->handle_msa_disabled(vcpu);
-		break;
+		अवरोध;
 
-	case EXCCODE_GE:
-		/* defer exit accounting to handler */
-		ret = kvm_mips_callbacks->handle_guest_exit(vcpu);
-		break;
+	हाल EXCCODE_GE:
+		/* defer निकास accounting to handler */
+		ret = kvm_mips_callbacks->handle_guest_निकास(vcpu);
+		अवरोध;
 
-	default:
-		if (cause & CAUSEF_BD)
+	शेष:
+		अगर (cause & CAUSEF_BD)
 			opc += 1;
 		inst = 0;
 		kvm_get_badinstr(opc, vcpu, &inst);
 		kvm_err("Exception Code: %d, not yet handled, @ PC: %p, inst: 0x%08x  BadVaddr: %#lx Status: %#x\n",
 			exccode, opc, inst, badvaddr,
-			kvm_read_c0_guest_status(vcpu->arch.cop0));
+			kvm_पढ़ो_c0_guest_status(vcpu->arch.cop0));
 		kvm_arch_vcpu_dump_regs(vcpu);
-		run->exit_reason = KVM_EXIT_INTERNAL_ERROR;
+		run->निकास_reason = KVM_EXIT_INTERNAL_ERROR;
 		ret = RESUME_HOST;
-		break;
+		अवरोध;
 
-	}
+	पूर्ण
 
 	local_irq_disable();
 
-	if (ret == RESUME_GUEST)
-		kvm_vz_acquire_htimer(vcpu);
+	अगर (ret == RESUME_GUEST)
+		kvm_vz_acquire_hसमयr(vcpu);
 
-	if (er == EMULATE_DONE && !(ret & RESUME_HOST))
-		kvm_mips_deliver_interrupts(vcpu, cause);
+	अगर (er == EMULATE_DONE && !(ret & RESUME_HOST))
+		kvm_mips_deliver_पूर्णांकerrupts(vcpu, cause);
 
-	if (!(ret & RESUME_HOST)) {
-		/* Only check for signals if not already exiting to userspace */
-		if (signal_pending(current)) {
-			run->exit_reason = KVM_EXIT_INTR;
+	अगर (!(ret & RESUME_HOST)) अणु
+		/* Only check क्रम संकेतs अगर not alपढ़ोy निकासing to userspace */
+		अगर (संकेत_pending(current)) अणु
+			run->निकास_reason = KVM_EXIT_INTR;
 			ret = (-EINTR << 2) | RESUME_HOST;
-			++vcpu->stat.signal_exits;
-			trace_kvm_exit(vcpu, KVM_TRACE_EXIT_SIGNAL);
-		}
-	}
+			++vcpu->stat.संकेत_निकासs;
+			trace_kvm_निकास(vcpu, KVM_TRACE_EXIT_SIGNAL);
+		पूर्ण
+	पूर्ण
 
-	if (ret == RESUME_GUEST) {
+	अगर (ret == RESUME_GUEST) अणु
 		trace_kvm_reenter(vcpu);
 
 		/*
-		 * Make sure the read of VCPU requests in vcpu_reenter()
-		 * callback is not reordered ahead of the write to vcpu->mode,
-		 * or we could miss a TLB flush request while the requester sees
+		 * Make sure the पढ़ो of VCPU requests in vcpu_reenter()
+		 * callback is not reordered ahead of the ग_लिखो to vcpu->mode,
+		 * or we could miss a TLB flush request जबतक the requester sees
 		 * the VCPU as outside of guest mode and not needing an IPI.
 		 */
 		smp_store_mb(vcpu->mode, IN_GUEST_MODE);
@@ -1349,168 +1350,168 @@ int kvm_mips_handle_exit(struct kvm_vcpu *vcpu)
 		 * If FPU / MSA are enabled (i.e. the guest's FPU / MSA context
 		 * is live), restore FCR31 / MSACSR.
 		 *
-		 * This should be before returning to the guest exception
-		 * vector, as it may well cause an [MSA] FP exception if there
+		 * This should be beक्रमe वापसing to the guest exception
+		 * vector, as it may well cause an [MSA] FP exception अगर there
 		 * are pending exception bits unmasked. (see
-		 * kvm_mips_csr_die_notifier() for how that is handled).
+		 * kvm_mips_csr_die_notअगरier() क्रम how that is handled).
 		 */
-		if (kvm_mips_guest_has_fpu(&vcpu->arch) &&
-		    read_c0_status() & ST0_CU1)
+		अगर (kvm_mips_guest_has_fpu(&vcpu->arch) &&
+		    पढ़ो_c0_status() & ST0_CU1)
 			__kvm_restore_fcsr(&vcpu->arch);
 
-		if (kvm_mips_guest_has_msa(&vcpu->arch) &&
-		    read_c0_config5() & MIPS_CONF5_MSAEN)
+		अगर (kvm_mips_guest_has_msa(&vcpu->arch) &&
+		    पढ़ो_c0_config5() & MIPS_CONF5_MSAEN)
 			__kvm_restore_msacsr(&vcpu->arch);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-/* Enable FPU for guest and restore context */
-void kvm_own_fpu(struct kvm_vcpu *vcpu)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
-	unsigned int sr, cfg5;
+/* Enable FPU क्रम guest and restore context */
+व्योम kvm_own_fpu(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
+	अचिन्हित पूर्णांक sr, cfg5;
 
 	preempt_disable();
 
-	sr = kvm_read_c0_guest_status(cop0);
+	sr = kvm_पढ़ो_c0_guest_status(cop0);
 
 	/*
-	 * If MSA state is already live, it is undefined how it interacts with
-	 * FR=0 FPU state, and we don't want to hit reserved instruction
+	 * If MSA state is alपढ़ोy live, it is undefined how it पूर्णांकeracts with
+	 * FR=0 FPU state, and we करोn't want to hit reserved inकाष्ठाion
 	 * exceptions trying to save the MSA state later when CU=1 && FR=1, so
 	 * play it safe and save it first.
 	 */
-	if (cpu_has_msa && sr & ST0_CU1 && !(sr & ST0_FR) &&
+	अगर (cpu_has_msa && sr & ST0_CU1 && !(sr & ST0_FR) &&
 	    vcpu->arch.aux_inuse & KVM_MIPS_AUX_MSA)
 		kvm_lose_fpu(vcpu);
 
 	/*
-	 * Enable FPU for guest
+	 * Enable FPU क्रम guest
 	 * We set FR and FRE according to guest context
 	 */
 	change_c0_status(ST0_CU1 | ST0_FR, sr);
-	if (cpu_has_fre) {
-		cfg5 = kvm_read_c0_guest_config5(cop0);
+	अगर (cpu_has_fre) अणु
+		cfg5 = kvm_पढ़ो_c0_guest_config5(cop0);
 		change_c0_config5(MIPS_CONF5_FRE, cfg5);
-	}
+	पूर्ण
 	enable_fpu_hazard();
 
 	/* If guest FPU state not active, restore it now */
-	if (!(vcpu->arch.aux_inuse & KVM_MIPS_AUX_FPU)) {
+	अगर (!(vcpu->arch.aux_inuse & KVM_MIPS_AUX_FPU)) अणु
 		__kvm_restore_fpu(&vcpu->arch);
 		vcpu->arch.aux_inuse |= KVM_MIPS_AUX_FPU;
 		trace_kvm_aux(vcpu, KVM_TRACE_AUX_RESTORE, KVM_TRACE_AUX_FPU);
-	} else {
+	पूर्ण अन्यथा अणु
 		trace_kvm_aux(vcpu, KVM_TRACE_AUX_ENABLE, KVM_TRACE_AUX_FPU);
-	}
+	पूर्ण
 
 	preempt_enable();
-}
+पूर्ण
 
-#ifdef CONFIG_CPU_HAS_MSA
-/* Enable MSA for guest and restore context */
-void kvm_own_msa(struct kvm_vcpu *vcpu)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
-	unsigned int sr, cfg5;
+#अगर_घोषित CONFIG_CPU_HAS_MSA
+/* Enable MSA क्रम guest and restore context */
+व्योम kvm_own_msa(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
+	अचिन्हित पूर्णांक sr, cfg5;
 
 	preempt_disable();
 
 	/*
-	 * Enable FPU if enabled in guest, since we're restoring FPU context
+	 * Enable FPU अगर enabled in guest, since we're restoring FPU context
 	 * anyway. We set FR and FRE according to guest context.
 	 */
-	if (kvm_mips_guest_has_fpu(&vcpu->arch)) {
-		sr = kvm_read_c0_guest_status(cop0);
+	अगर (kvm_mips_guest_has_fpu(&vcpu->arch)) अणु
+		sr = kvm_पढ़ो_c0_guest_status(cop0);
 
 		/*
-		 * If FR=0 FPU state is already live, it is undefined how it
-		 * interacts with MSA state, so play it safe and save it first.
+		 * If FR=0 FPU state is alपढ़ोy live, it is undefined how it
+		 * पूर्णांकeracts with MSA state, so play it safe and save it first.
 		 */
-		if (!(sr & ST0_FR) &&
+		अगर (!(sr & ST0_FR) &&
 		    (vcpu->arch.aux_inuse & (KVM_MIPS_AUX_FPU |
 				KVM_MIPS_AUX_MSA)) == KVM_MIPS_AUX_FPU)
 			kvm_lose_fpu(vcpu);
 
 		change_c0_status(ST0_CU1 | ST0_FR, sr);
-		if (sr & ST0_CU1 && cpu_has_fre) {
-			cfg5 = kvm_read_c0_guest_config5(cop0);
+		अगर (sr & ST0_CU1 && cpu_has_fre) अणु
+			cfg5 = kvm_पढ़ो_c0_guest_config5(cop0);
 			change_c0_config5(MIPS_CONF5_FRE, cfg5);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Enable MSA for guest */
+	/* Enable MSA क्रम guest */
 	set_c0_config5(MIPS_CONF5_MSAEN);
 	enable_fpu_hazard();
 
-	switch (vcpu->arch.aux_inuse & (KVM_MIPS_AUX_FPU | KVM_MIPS_AUX_MSA)) {
-	case KVM_MIPS_AUX_FPU:
+	चयन (vcpu->arch.aux_inuse & (KVM_MIPS_AUX_FPU | KVM_MIPS_AUX_MSA)) अणु
+	हाल KVM_MIPS_AUX_FPU:
 		/*
-		 * Guest FPU state already loaded, only restore upper MSA state
+		 * Guest FPU state alपढ़ोy loaded, only restore upper MSA state
 		 */
 		__kvm_restore_msa_upper(&vcpu->arch);
 		vcpu->arch.aux_inuse |= KVM_MIPS_AUX_MSA;
 		trace_kvm_aux(vcpu, KVM_TRACE_AUX_RESTORE, KVM_TRACE_AUX_MSA);
-		break;
-	case 0:
-		/* Neither FPU or MSA already active, restore full MSA state */
+		अवरोध;
+	हाल 0:
+		/* Neither FPU or MSA alपढ़ोy active, restore full MSA state */
 		__kvm_restore_msa(&vcpu->arch);
 		vcpu->arch.aux_inuse |= KVM_MIPS_AUX_MSA;
-		if (kvm_mips_guest_has_fpu(&vcpu->arch))
+		अगर (kvm_mips_guest_has_fpu(&vcpu->arch))
 			vcpu->arch.aux_inuse |= KVM_MIPS_AUX_FPU;
 		trace_kvm_aux(vcpu, KVM_TRACE_AUX_RESTORE,
 			      KVM_TRACE_AUX_FPU_MSA);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		trace_kvm_aux(vcpu, KVM_TRACE_AUX_ENABLE, KVM_TRACE_AUX_MSA);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	preempt_enable();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /* Drop FPU & MSA without saving it */
-void kvm_drop_fpu(struct kvm_vcpu *vcpu)
-{
+व्योम kvm_drop_fpu(काष्ठा kvm_vcpu *vcpu)
+अणु
 	preempt_disable();
-	if (cpu_has_msa && vcpu->arch.aux_inuse & KVM_MIPS_AUX_MSA) {
+	अगर (cpu_has_msa && vcpu->arch.aux_inuse & KVM_MIPS_AUX_MSA) अणु
 		disable_msa();
 		trace_kvm_aux(vcpu, KVM_TRACE_AUX_DISCARD, KVM_TRACE_AUX_MSA);
 		vcpu->arch.aux_inuse &= ~KVM_MIPS_AUX_MSA;
-	}
-	if (vcpu->arch.aux_inuse & KVM_MIPS_AUX_FPU) {
+	पूर्ण
+	अगर (vcpu->arch.aux_inuse & KVM_MIPS_AUX_FPU) अणु
 		clear_c0_status(ST0_CU1 | ST0_FR);
 		trace_kvm_aux(vcpu, KVM_TRACE_AUX_DISCARD, KVM_TRACE_AUX_FPU);
 		vcpu->arch.aux_inuse &= ~KVM_MIPS_AUX_FPU;
-	}
+	पूर्ण
 	preempt_enable();
-}
+पूर्ण
 
 /* Save and disable FPU & MSA */
-void kvm_lose_fpu(struct kvm_vcpu *vcpu)
-{
+व्योम kvm_lose_fpu(काष्ठा kvm_vcpu *vcpu)
+अणु
 	/*
 	 * With T&E, FPU & MSA get disabled in root context (hardware) when it
-	 * is disabled in guest context (software), but the register state in
+	 * is disabled in guest context (software), but the रेजिस्टर state in
 	 * the hardware may still be in use.
-	 * This is why we explicitly re-enable the hardware before saving.
+	 * This is why we explicitly re-enable the hardware beक्रमe saving.
 	 */
 
 	preempt_disable();
-	if (cpu_has_msa && vcpu->arch.aux_inuse & KVM_MIPS_AUX_MSA) {
+	अगर (cpu_has_msa && vcpu->arch.aux_inuse & KVM_MIPS_AUX_MSA) अणु
 		__kvm_save_msa(&vcpu->arch);
 		trace_kvm_aux(vcpu, KVM_TRACE_AUX_SAVE, KVM_TRACE_AUX_FPU_MSA);
 
 		/* Disable MSA & FPU */
 		disable_msa();
-		if (vcpu->arch.aux_inuse & KVM_MIPS_AUX_FPU) {
+		अगर (vcpu->arch.aux_inuse & KVM_MIPS_AUX_FPU) अणु
 			clear_c0_status(ST0_CU1 | ST0_FR);
 			disable_fpu_hazard();
-		}
+		पूर्ण
 		vcpu->arch.aux_inuse &= ~(KVM_MIPS_AUX_FPU | KVM_MIPS_AUX_MSA);
-	} else if (vcpu->arch.aux_inuse & KVM_MIPS_AUX_FPU) {
+	पूर्ण अन्यथा अगर (vcpu->arch.aux_inuse & KVM_MIPS_AUX_FPU) अणु
 		__kvm_save_fpu(&vcpu->arch);
 		vcpu->arch.aux_inuse &= ~KVM_MIPS_AUX_FPU;
 		trace_kvm_aux(vcpu, KVM_TRACE_AUX_SAVE, KVM_TRACE_AUX_FPU);
@@ -1518,121 +1519,121 @@ void kvm_lose_fpu(struct kvm_vcpu *vcpu)
 		/* Disable FPU */
 		clear_c0_status(ST0_CU1 | ST0_FR);
 		disable_fpu_hazard();
-	}
+	पूर्ण
 	preempt_enable();
-}
+पूर्ण
 
 /*
- * Step over a specific ctc1 to FCSR and a specific ctcmsa to MSACSR which are
+ * Step over a specअगरic ctc1 to FCSR and a specअगरic ctcmsa to MSACSR which are
  * used to restore guest FCSR/MSACSR state and may trigger a "harmless" FP/MSAFP
- * exception if cause bits are set in the value being written.
+ * exception अगर cause bits are set in the value being written.
  */
-static int kvm_mips_csr_die_notify(struct notifier_block *self,
-				   unsigned long cmd, void *ptr)
-{
-	struct die_args *args = (struct die_args *)ptr;
-	struct pt_regs *regs = args->regs;
-	unsigned long pc;
+अटल पूर्णांक kvm_mips_csr_die_notअगरy(काष्ठा notअगरier_block *self,
+				   अचिन्हित दीर्घ cmd, व्योम *ptr)
+अणु
+	काष्ठा die_args *args = (काष्ठा die_args *)ptr;
+	काष्ठा pt_regs *regs = args->regs;
+	अचिन्हित दीर्घ pc;
 
-	/* Only interested in FPE and MSAFPE */
-	if (cmd != DIE_FP && cmd != DIE_MSAFP)
-		return NOTIFY_DONE;
+	/* Only पूर्णांकerested in FPE and MSAFPE */
+	अगर (cmd != DIE_FP && cmd != DIE_MSAFP)
+		वापस NOTIFY_DONE;
 
-	/* Return immediately if guest context isn't active */
-	if (!(current->flags & PF_VCPU))
-		return NOTIFY_DONE;
+	/* Return immediately अगर guest context isn't active */
+	अगर (!(current->flags & PF_VCPU))
+		वापस NOTIFY_DONE;
 
 	/* Should never get here from user mode */
 	BUG_ON(user_mode(regs));
 
-	pc = instruction_pointer(regs);
-	switch (cmd) {
-	case DIE_FP:
-		/* match 2nd instruction in __kvm_restore_fcsr */
-		if (pc != (unsigned long)&__kvm_restore_fcsr + 4)
-			return NOTIFY_DONE;
-		break;
-	case DIE_MSAFP:
-		/* match 2nd/3rd instruction in __kvm_restore_msacsr */
-		if (!cpu_has_msa ||
-		    pc < (unsigned long)&__kvm_restore_msacsr + 4 ||
-		    pc > (unsigned long)&__kvm_restore_msacsr + 8)
-			return NOTIFY_DONE;
-		break;
-	}
+	pc = inकाष्ठाion_poपूर्णांकer(regs);
+	चयन (cmd) अणु
+	हाल DIE_FP:
+		/* match 2nd inकाष्ठाion in __kvm_restore_fcsr */
+		अगर (pc != (अचिन्हित दीर्घ)&__kvm_restore_fcsr + 4)
+			वापस NOTIFY_DONE;
+		अवरोध;
+	हाल DIE_MSAFP:
+		/* match 2nd/3rd inकाष्ठाion in __kvm_restore_msacsr */
+		अगर (!cpu_has_msa ||
+		    pc < (अचिन्हित दीर्घ)&__kvm_restore_msacsr + 4 ||
+		    pc > (अचिन्हित दीर्घ)&__kvm_restore_msacsr + 8)
+			वापस NOTIFY_DONE;
+		अवरोध;
+	पूर्ण
 
-	/* Move PC forward a little and continue executing */
-	instruction_pointer(regs) += 4;
+	/* Move PC क्रमward a little and जारी executing */
+	inकाष्ठाion_poपूर्णांकer(regs) += 4;
 
-	return NOTIFY_STOP;
-}
+	वापस NOTIFY_STOP;
+पूर्ण
 
-static struct notifier_block kvm_mips_csr_die_notifier = {
-	.notifier_call = kvm_mips_csr_die_notify,
-};
+अटल काष्ठा notअगरier_block kvm_mips_csr_die_notअगरier = अणु
+	.notअगरier_call = kvm_mips_csr_die_notअगरy,
+पूर्ण;
 
-static u32 kvm_default_priority_to_irq[MIPS_EXC_MAX] = {
+अटल u32 kvm_शेष_priority_to_irq[MIPS_EXC_MAX] = अणु
 	[MIPS_EXC_INT_TIMER] = C_IRQ5,
 	[MIPS_EXC_INT_IO_1]  = C_IRQ0,
 	[MIPS_EXC_INT_IPI_1] = C_IRQ1,
 	[MIPS_EXC_INT_IPI_2] = C_IRQ2,
-};
+पूर्ण;
 
-static u32 kvm_loongson3_priority_to_irq[MIPS_EXC_MAX] = {
+अटल u32 kvm_loongson3_priority_to_irq[MIPS_EXC_MAX] = अणु
 	[MIPS_EXC_INT_TIMER] = C_IRQ5,
 	[MIPS_EXC_INT_IO_1]  = C_IRQ0,
 	[MIPS_EXC_INT_IO_2]  = C_IRQ1,
 	[MIPS_EXC_INT_IPI_1] = C_IRQ4,
-};
+पूर्ण;
 
-u32 *kvm_priority_to_irq = kvm_default_priority_to_irq;
+u32 *kvm_priority_to_irq = kvm_शेष_priority_to_irq;
 
 u32 kvm_irq_to_priority(u32 irq)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	for (i = MIPS_EXC_INT_TIMER; i < MIPS_EXC_MAX; i++) {
-		if (kvm_priority_to_irq[i] == (1 << (irq + 8)))
-			return i;
-	}
+	क्रम (i = MIPS_EXC_INT_TIMER; i < MIPS_EXC_MAX; i++) अणु
+		अगर (kvm_priority_to_irq[i] == (1 << (irq + 8)))
+			वापस i;
+	पूर्ण
 
-	return MIPS_EXC_MAX;
-}
+	वापस MIPS_EXC_MAX;
+पूर्ण
 
-static int __init kvm_mips_init(void)
-{
-	int ret;
+अटल पूर्णांक __init kvm_mips_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (cpu_has_mmid) {
+	अगर (cpu_has_mmid) अणु
 		pr_warn("KVM does not yet support MMIDs. KVM Disabled\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	ret = kvm_mips_entry_setup();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = kvm_init(NULL, sizeof(struct kvm_vcpu), 0, THIS_MODULE);
+	ret = kvm_init(शून्य, माप(काष्ठा kvm_vcpu), 0, THIS_MODULE);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (boot_cpu_type() == CPU_LOONGSON64)
+	अगर (boot_cpu_type() == CPU_LOONGSON64)
 		kvm_priority_to_irq = kvm_loongson3_priority_to_irq;
 
-	register_die_notifier(&kvm_mips_csr_die_notifier);
+	रेजिस्टर_die_notअगरier(&kvm_mips_csr_die_notअगरier);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit kvm_mips_exit(void)
-{
-	kvm_exit();
+अटल व्योम __निकास kvm_mips_निकास(व्योम)
+अणु
+	kvm_निकास();
 
-	unregister_die_notifier(&kvm_mips_csr_die_notifier);
-}
+	unरेजिस्टर_die_notअगरier(&kvm_mips_csr_die_notअगरier);
+पूर्ण
 
 module_init(kvm_mips_init);
-module_exit(kvm_mips_exit);
+module_निकास(kvm_mips_निकास);
 
-EXPORT_TRACEPOINT_SYMBOL(kvm_exit);
+EXPORT_TRACEPOINT_SYMBOL(kvm_निकास);

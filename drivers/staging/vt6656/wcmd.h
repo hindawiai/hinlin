@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
  *
  * File: wcmd.h
  *
- * Purpose: Handles the management command interface functions
+ * Purpose: Handles the management command पूर्णांकerface functions
  *
- * Author: Lyndon Chen
+ * Author: Lynकरोn Chen
  *
  * Date: May 8, 2002
  *
  */
 
-#ifndef __WCMD_H__
-#define __WCMD_H__
+#अगर_अघोषित __WCMD_H__
+#घोषणा __WCMD_H__
 
-#include "device.h"
+#समावेश "device.h"
 
 /* Command code */
-enum vnt_cmd {
+क्रमागत vnt_cmd अणु
 	WLAN_CMD_INIT_MAC80211,
 	WLAN_CMD_SETPOWER,
 	WLAN_CMD_TBTT_WAKEUP,
 	WLAN_CMD_BECON_SEND,
 	WLAN_CMD_CHANGE_ANTENNA
-};
+पूर्ण;
 
-#define CMD_Q_SIZE              32
+#घोषणा CMD_Q_SIZE              32
 
 /* Command state */
-enum vnt_cmd_state {
+क्रमागत vnt_cmd_state अणु
 	WLAN_CMD_INIT_MAC80211_START,
 	WLAN_CMD_SETPOWER_START,
 	WLAN_CMD_TBTT_WAKEUP_START,
 	WLAN_CMD_BECON_SEND_START,
 	WLAN_CMD_CHANGE_ANTENNA_START,
 	WLAN_CMD_IDLE
-};
+पूर्ण;
 
-struct vnt_private;
+काष्ठा vnt_निजी;
 
-void vnt_reset_command_timer(struct vnt_private *priv);
+व्योम vnt_reset_command_समयr(काष्ठा vnt_निजी *priv);
 
-int vnt_schedule_command(struct vnt_private *priv, enum vnt_cmd);
+पूर्णांक vnt_schedule_command(काष्ठा vnt_निजी *priv, क्रमागत vnt_cmd);
 
-void vnt_run_command(struct work_struct *work);
+व्योम vnt_run_command(काष्ठा work_काष्ठा *work);
 
-#endif /* __WCMD_H__ */
+#पूर्ण_अगर /* __WCMD_H__ */

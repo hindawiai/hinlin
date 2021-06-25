@@ -1,33 +1,34 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013 Eugene Krasnikov <k.eugene.e@gmail.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _WCN36XX_PMC_H_
-#define _WCN36XX_PMC_H_
+#अगर_अघोषित _WCN36XX_PMC_H_
+#घोषणा _WCN36XX_PMC_H_
 
-struct wcn36xx;
+काष्ठा wcn36xx;
 
-enum wcn36xx_power_state {
+क्रमागत wcn36xx_घातer_state अणु
 	WCN36XX_FULL_POWER,
 	WCN36XX_BMPS
-};
+पूर्ण;
 
-int wcn36xx_pmc_enter_bmps_state(struct wcn36xx *wcn,
-				 struct ieee80211_vif *vif);
-int wcn36xx_pmc_exit_bmps_state(struct wcn36xx *wcn,
-				struct ieee80211_vif *vif);
-int wcn36xx_enable_keep_alive_null_packet(struct wcn36xx *wcn,
-					  struct ieee80211_vif *vif);
-#endif	/* _WCN36XX_PMC_H_ */
+पूर्णांक wcn36xx_pmc_enter_bmps_state(काष्ठा wcn36xx *wcn,
+				 काष्ठा ieee80211_vअगर *vअगर);
+पूर्णांक wcn36xx_pmc_निकास_bmps_state(काष्ठा wcn36xx *wcn,
+				काष्ठा ieee80211_vअगर *vअगर);
+पूर्णांक wcn36xx_enable_keep_alive_null_packet(काष्ठा wcn36xx *wcn,
+					  काष्ठा ieee80211_vअगर *vअगर);
+#पूर्ण_अगर	/* _WCN36XX_PMC_H_ */

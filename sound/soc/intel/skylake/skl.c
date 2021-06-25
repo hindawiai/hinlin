@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  skl.c - Implementation of ASoC Intel SKL HD Audio driver
  *
  *  Copyright (C) 2014-2015 Intel Corp
- *  Author: Jeeja KP <jeeja.kp@intel.com>
+ *  Author: Jeeja KP <jeeja.kp@पूर्णांकel.com>
  *
  *  Derived mostly from Intel HDA driver with following copyrights:
  *  Copyright (c) 2004 Takashi Iwai <tiwai@suse.de>
@@ -13,291 +14,291 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/pm_runtime.h>
-#include <linux/platform_device.h>
-#include <linux/firmware.h>
-#include <linux/delay.h>
-#include <sound/pcm.h>
-#include <sound/soc-acpi.h>
-#include <sound/soc-acpi-intel-match.h>
-#include <sound/hda_register.h>
-#include <sound/hdaudio.h>
-#include <sound/hda_i915.h>
-#include <sound/hda_codec.h>
-#include <sound/intel-nhlt.h>
-#include <sound/intel-dsp-config.h>
-#include "skl.h"
-#include "skl-sst-dsp.h"
-#include "skl-sst-ipc.h"
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/delay.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/soc-acpi.h>
+#समावेश <sound/soc-acpi-पूर्णांकel-match.h>
+#समावेश <sound/hda_रेजिस्टर.h>
+#समावेश <sound/hdaudपन.स>
+#समावेश <sound/hda_i915.h>
+#समावेश <sound/hda_codec.h>
+#समावेश <sound/पूर्णांकel-nhlt.h>
+#समावेश <sound/पूर्णांकel-dsp-config.h>
+#समावेश "skl.h"
+#समावेश "skl-sst-dsp.h"
+#समावेश "skl-sst-ipc.h"
 
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
-#include "../../../soc/codecs/hdac_hda.h"
-#endif
-static int skl_pci_binding;
-module_param_named(pci_binding, skl_pci_binding, int, 0444);
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
+#समावेश "../../../soc/codecs/hdac_hda.h"
+#पूर्ण_अगर
+अटल पूर्णांक skl_pci_binding;
+module_param_named(pci_binding, skl_pci_binding, पूर्णांक, 0444);
 MODULE_PARM_DESC(pci_binding, "PCI binding (0=auto, 1=only legacy, 2=only asoc");
 
 /*
- * initialize the PCI registers
+ * initialize the PCI रेजिस्टरs
  */
-static void skl_update_pci_byte(struct pci_dev *pci, unsigned int reg,
-			    unsigned char mask, unsigned char val)
-{
-	unsigned char data;
+अटल व्योम skl_update_pci_byte(काष्ठा pci_dev *pci, अचिन्हित पूर्णांक reg,
+			    अचिन्हित अक्षर mask, अचिन्हित अक्षर val)
+अणु
+	अचिन्हित अक्षर data;
 
-	pci_read_config_byte(pci, reg, &data);
+	pci_पढ़ो_config_byte(pci, reg, &data);
 	data &= ~mask;
 	data |= (val & mask);
-	pci_write_config_byte(pci, reg, data);
-}
+	pci_ग_लिखो_config_byte(pci, reg, data);
+पूर्ण
 
-static void skl_init_pci(struct skl_dev *skl)
-{
-	struct hdac_bus *bus = skl_to_bus(skl);
+अटल व्योम skl_init_pci(काष्ठा skl_dev *skl)
+अणु
+	काष्ठा hdac_bus *bus = skl_to_bus(skl);
 
 	/*
-	 * Clear bits 0-2 of PCI register TCSEL (at offset 0x44)
+	 * Clear bits 0-2 of PCI रेजिस्टर TCSEL (at offset 0x44)
 	 * TCSEL == Traffic Class Select Register, which sets PCI express QOS
-	 * Ensuring these bits are 0 clears playback static on some HD Audio
+	 * Ensuring these bits are 0 clears playback अटल on some HD Audio
 	 * codecs.
-	 * The PCI register TCSEL is defined in the Intel manuals.
+	 * The PCI रेजिस्टर TCSEL is defined in the Intel manuals.
 	 */
 	dev_dbg(bus->dev, "Clearing TCSEL\n");
 	skl_update_pci_byte(skl->pci, AZX_PCIREG_TCSEL, 0x07, 0);
-}
+पूर्ण
 
-static void update_pci_dword(struct pci_dev *pci,
-			unsigned int reg, u32 mask, u32 val)
-{
+अटल व्योम update_pci_dword(काष्ठा pci_dev *pci,
+			अचिन्हित पूर्णांक reg, u32 mask, u32 val)
+अणु
 	u32 data = 0;
 
-	pci_read_config_dword(pci, reg, &data);
+	pci_पढ़ो_config_dword(pci, reg, &data);
 	data &= ~mask;
 	data |= (val & mask);
-	pci_write_config_dword(pci, reg, data);
-}
+	pci_ग_लिखो_config_dword(pci, reg, data);
+पूर्ण
 
 /*
  * skl_enable_miscbdcge - enable/dsiable CGCTL.MISCBDCGE bits
  *
- * @dev: device pointer
+ * @dev: device poपूर्णांकer
  * @enable: enable/disable flag
  */
-static void skl_enable_miscbdcge(struct device *dev, bool enable)
-{
-	struct pci_dev *pci = to_pci_dev(dev);
+अटल व्योम skl_enable_miscbdcge(काष्ठा device *dev, bool enable)
+अणु
+	काष्ठा pci_dev *pci = to_pci_dev(dev);
 	u32 val;
 
 	val = enable ? AZX_CGCTL_MISCBDCGE_MASK : 0;
 
 	update_pci_dword(pci, AZX_PCIREG_CGCTL, AZX_CGCTL_MISCBDCGE_MASK, val);
-}
+पूर्ण
 
 /**
- * skl_clock_power_gating: Enable/Disable clock and power gating
+ * skl_घड़ी_घातer_gating: Enable/Disable घड़ी and घातer gating
  *
- * @dev: Device pointer
+ * @dev: Device poपूर्णांकer
  * @enable: Enable/Disable flag
  */
-static void skl_clock_power_gating(struct device *dev, bool enable)
-{
-	struct pci_dev *pci = to_pci_dev(dev);
-	struct hdac_bus *bus = pci_get_drvdata(pci);
+अटल व्योम skl_घड़ी_घातer_gating(काष्ठा device *dev, bool enable)
+अणु
+	काष्ठा pci_dev *pci = to_pci_dev(dev);
+	काष्ठा hdac_bus *bus = pci_get_drvdata(pci);
 	u32 val;
 
-	/* Update PDCGE bit of CGCTL register */
+	/* Update PDCGE bit of CGCTL रेजिस्टर */
 	val = enable ? AZX_CGCTL_ADSPDCGE : 0;
 	update_pci_dword(pci, AZX_PCIREG_CGCTL, AZX_CGCTL_ADSPDCGE, val);
 
-	/* Update L1SEN bit of EM2 register */
+	/* Update L1SEN bit of EM2 रेजिस्टर */
 	val = enable ? AZX_REG_VS_EM2_L1SEN : 0;
 	snd_hdac_chip_updatel(bus, VS_EM2, AZX_REG_VS_EM2_L1SEN, val);
 
-	/* Update ADSPPGD bit of PGCTL register */
+	/* Update ADSPPGD bit of PGCTL रेजिस्टर */
 	val = enable ? 0 : AZX_PGCTL_ADSPPGD;
 	update_pci_dword(pci, AZX_PCIREG_PGCTL, AZX_PGCTL_ADSPPGD, val);
-}
+पूर्ण
 
 /*
- * While performing reset, controller may not come back properly causing
- * issues, so recommendation is to set CGCTL.MISCBDCGE to 0 then do reset
+ * While perक्रमming reset, controller may not come back properly causing
+ * issues, so recommendation is to set CGCTL.MISCBDCGE to 0 then करो reset
  * (init chip) and then again set CGCTL.MISCBDCGE to 1
  */
-static int skl_init_chip(struct hdac_bus *bus, bool full_reset)
-{
-	struct hdac_ext_link *hlink;
-	int ret;
+अटल पूर्णांक skl_init_chip(काष्ठा hdac_bus *bus, bool full_reset)
+अणु
+	काष्ठा hdac_ext_link *hlink;
+	पूर्णांक ret;
 
 	snd_hdac_set_codec_wakeup(bus, true);
 	skl_enable_miscbdcge(bus->dev, false);
 	ret = snd_hdac_bus_init_chip(bus, full_reset);
 
 	/* Reset stream-to-link mapping */
-	list_for_each_entry(hlink, &bus->hlink_list, list)
-		writel(0, hlink->ml_addr + AZX_REG_ML_LOSIDV);
+	list_क्रम_each_entry(hlink, &bus->hlink_list, list)
+		ग_लिखोl(0, hlink->ml_addr + AZX_REG_ML_LOSIDV);
 
 	skl_enable_miscbdcge(bus->dev, true);
 	snd_hdac_set_codec_wakeup(bus, false);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void skl_update_d0i3c(struct device *dev, bool enable)
-{
-	struct pci_dev *pci = to_pci_dev(dev);
-	struct hdac_bus *bus = pci_get_drvdata(pci);
+व्योम skl_update_d0i3c(काष्ठा device *dev, bool enable)
+अणु
+	काष्ठा pci_dev *pci = to_pci_dev(dev);
+	काष्ठा hdac_bus *bus = pci_get_drvdata(pci);
 	u8 reg;
-	int timeout = 50;
+	पूर्णांक समयout = 50;
 
-	reg = snd_hdac_chip_readb(bus, VS_D0I3C);
-	/* Do not write to D0I3C until command in progress bit is cleared */
-	while ((reg & AZX_REG_VS_D0I3C_CIP) && --timeout) {
+	reg = snd_hdac_chip_पढ़ोb(bus, VS_D0I3C);
+	/* Do not ग_लिखो to D0I3C until command in progress bit is cleared */
+	जबतक ((reg & AZX_REG_VS_D0I3C_CIP) && --समयout) अणु
 		udelay(10);
-		reg = snd_hdac_chip_readb(bus, VS_D0I3C);
-	}
+		reg = snd_hdac_chip_पढ़ोb(bus, VS_D0I3C);
+	पूर्ण
 
-	/* Highly unlikely. But if it happens, flag error explicitly */
-	if (!timeout) {
+	/* Highly unlikely. But अगर it happens, flag error explicitly */
+	अगर (!समयout) अणु
 		dev_err(bus->dev, "Before D0I3C update: D0I3C CIP timeout\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (enable)
+	अगर (enable)
 		reg = reg | AZX_REG_VS_D0I3C_I3;
-	else
+	अन्यथा
 		reg = reg & (~AZX_REG_VS_D0I3C_I3);
 
-	snd_hdac_chip_writeb(bus, VS_D0I3C, reg);
+	snd_hdac_chip_ग_लिखोb(bus, VS_D0I3C, reg);
 
-	timeout = 50;
-	/* Wait for cmd in progress to be cleared before exiting the function */
-	reg = snd_hdac_chip_readb(bus, VS_D0I3C);
-	while ((reg & AZX_REG_VS_D0I3C_CIP) && --timeout) {
+	समयout = 50;
+	/* Wait क्रम cmd in progress to be cleared beक्रमe निकासing the function */
+	reg = snd_hdac_chip_पढ़ोb(bus, VS_D0I3C);
+	जबतक ((reg & AZX_REG_VS_D0I3C_CIP) && --समयout) अणु
 		udelay(10);
-		reg = snd_hdac_chip_readb(bus, VS_D0I3C);
-	}
+		reg = snd_hdac_chip_पढ़ोb(bus, VS_D0I3C);
+	पूर्ण
 
-	/* Highly unlikely. But if it happens, flag error explicitly */
-	if (!timeout) {
+	/* Highly unlikely. But अगर it happens, flag error explicitly */
+	अगर (!समयout) अणु
 		dev_err(bus->dev, "After D0I3C update: D0I3C CIP timeout\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dev_dbg(bus->dev, "D0I3C register = 0x%x\n",
-			snd_hdac_chip_readb(bus, VS_D0I3C));
-}
+			snd_hdac_chip_पढ़ोb(bus, VS_D0I3C));
+पूर्ण
 
 /**
- * skl_dum_set - set DUM bit in EM2 register
+ * skl_dum_set - set DUM bit in EM2 रेजिस्टर
  * @bus: HD-audio core bus
  *
- * Addresses incorrect position reporting for capture streams.
- * Used on device power up.
+ * Addresses incorrect position reporting क्रम capture streams.
+ * Used on device घातer up.
  */
-static void skl_dum_set(struct hdac_bus *bus)
-{
+अटल व्योम skl_dum_set(काष्ठा hdac_bus *bus)
+अणु
 	/* For the DUM bit to be set, CRST needs to be out of reset state */
-	if (!(snd_hdac_chip_readb(bus, GCTL) & AZX_GCTL_RESET)) {
+	अगर (!(snd_hdac_chip_पढ़ोb(bus, GCTL) & AZX_GCTL_RESET)) अणु
 		skl_enable_miscbdcge(bus->dev, false);
-		snd_hdac_bus_exit_link_reset(bus);
+		snd_hdac_bus_निकास_link_reset(bus);
 		skl_enable_miscbdcge(bus->dev, true);
-	}
+	पूर्ण
 
 	snd_hdac_chip_updatel(bus, VS_EM2, AZX_VS_EM2_DUM, AZX_VS_EM2_DUM);
-}
+पूर्ण
 
 /* called from IRQ */
-static void skl_stream_update(struct hdac_bus *bus, struct hdac_stream *hstr)
-{
+अटल व्योम skl_stream_update(काष्ठा hdac_bus *bus, काष्ठा hdac_stream *hstr)
+अणु
 	snd_pcm_period_elapsed(hstr->substream);
-}
+पूर्ण
 
-static irqreturn_t skl_interrupt(int irq, void *dev_id)
-{
-	struct hdac_bus *bus = dev_id;
+अटल irqवापस_t skl_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा hdac_bus *bus = dev_id;
 	u32 status;
 
-	if (!pm_runtime_active(bus->dev))
-		return IRQ_NONE;
+	अगर (!pm_runसमय_active(bus->dev))
+		वापस IRQ_NONE;
 
 	spin_lock(&bus->reg_lock);
 
-	status = snd_hdac_chip_readl(bus, INTSTS);
-	if (status == 0 || status == 0xffffffff) {
+	status = snd_hdac_chip_पढ़ोl(bus, INTSTS);
+	अगर (status == 0 || status == 0xffffffff) अणु
 		spin_unlock(&bus->reg_lock);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	/* clear rirb int */
-	status = snd_hdac_chip_readb(bus, RIRBSTS);
-	if (status & RIRB_INT_MASK) {
-		if (status & RIRB_INT_RESPONSE)
+	/* clear rirb पूर्णांक */
+	status = snd_hdac_chip_पढ़ोb(bus, RIRBSTS);
+	अगर (status & RIRB_INT_MASK) अणु
+		अगर (status & RIRB_INT_RESPONSE)
 			snd_hdac_bus_update_rirb(bus);
-		snd_hdac_chip_writeb(bus, RIRBSTS, RIRB_INT_MASK);
-	}
+		snd_hdac_chip_ग_लिखोb(bus, RIRBSTS, RIRB_INT_MASK);
+	पूर्ण
 
 	spin_unlock(&bus->reg_lock);
 
-	return snd_hdac_chip_readl(bus, INTSTS) ? IRQ_WAKE_THREAD : IRQ_HANDLED;
-}
+	वापस snd_hdac_chip_पढ़ोl(bus, INTSTS) ? IRQ_WAKE_THREAD : IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t skl_threaded_handler(int irq, void *dev_id)
-{
-	struct hdac_bus *bus = dev_id;
+अटल irqवापस_t skl_thपढ़ोed_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा hdac_bus *bus = dev_id;
 	u32 status;
 
-	status = snd_hdac_chip_readl(bus, INTSTS);
+	status = snd_hdac_chip_पढ़ोl(bus, INTSTS);
 
 	snd_hdac_bus_handle_stream_irq(bus, status, skl_stream_update);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int skl_acquire_irq(struct hdac_bus *bus, int do_disconnect)
-{
-	struct skl_dev *skl = bus_to_skl(bus);
-	int ret;
+अटल पूर्णांक skl_acquire_irq(काष्ठा hdac_bus *bus, पूर्णांक करो_disconnect)
+अणु
+	काष्ठा skl_dev *skl = bus_to_skl(bus);
+	पूर्णांक ret;
 
-	ret = request_threaded_irq(skl->pci->irq, skl_interrupt,
-			skl_threaded_handler,
+	ret = request_thपढ़ोed_irq(skl->pci->irq, skl_पूर्णांकerrupt,
+			skl_thपढ़ोed_handler,
 			IRQF_SHARED,
 			KBUILD_MODNAME, bus);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(bus->dev,
 			"unable to grab IRQ %d, disabling device\n",
 			skl->pci->irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	bus->irq = skl->pci->irq;
-	pci_intx(skl->pci, 1);
+	pci_पूर्णांकx(skl->pci, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_suspend_late(struct device *dev)
-{
-	struct pci_dev *pci = to_pci_dev(dev);
-	struct hdac_bus *bus = pci_get_drvdata(pci);
-	struct skl_dev *skl = bus_to_skl(bus);
+अटल पूर्णांक skl_suspend_late(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pci = to_pci_dev(dev);
+	काष्ठा hdac_bus *bus = pci_get_drvdata(pci);
+	काष्ठा skl_dev *skl = bus_to_skl(bus);
 
-	return skl_suspend_late_dsp(skl);
-}
+	वापस skl_suspend_late_dsp(skl);
+पूर्ण
 
-#ifdef CONFIG_PM
-static int _skl_suspend(struct hdac_bus *bus)
-{
-	struct skl_dev *skl = bus_to_skl(bus);
-	struct pci_dev *pci = to_pci_dev(bus->dev);
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक _skl_suspend(काष्ठा hdac_bus *bus)
+अणु
+	काष्ठा skl_dev *skl = bus_to_skl(bus);
+	काष्ठा pci_dev *pci = to_pci_dev(bus->dev);
+	पूर्णांक ret;
 
-	snd_hdac_ext_bus_link_power_down_all(bus);
+	snd_hdac_ext_bus_link_घातer_करोwn_all(bus);
 
 	ret = skl_suspend_dsp(skl);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	snd_hdac_bus_stop_chip(bus);
 	update_pci_dword(pci, AZX_PCIREG_PGCTL,
@@ -307,339 +308,339 @@ static int _skl_suspend(struct hdac_bus *bus)
 	skl_enable_miscbdcge(bus->dev, true);
 	skl_cleanup_resources(skl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _skl_resume(struct hdac_bus *bus)
-{
-	struct skl_dev *skl = bus_to_skl(bus);
+अटल पूर्णांक _skl_resume(काष्ठा hdac_bus *bus)
+अणु
+	काष्ठा skl_dev *skl = bus_to_skl(bus);
 
 	skl_init_pci(skl);
 	skl_dum_set(bus);
 	skl_init_chip(bus, true);
 
-	return skl_resume_dsp(skl);
-}
-#endif
+	वापस skl_resume_dsp(skl);
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 /*
- * power management
+ * घातer management
  */
-static int skl_suspend(struct device *dev)
-{
-	struct pci_dev *pci = to_pci_dev(dev);
-	struct hdac_bus *bus = pci_get_drvdata(pci);
-	struct skl_dev *skl  = bus_to_skl(bus);
-	int ret;
+अटल पूर्णांक skl_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pci = to_pci_dev(dev);
+	काष्ठा hdac_bus *bus = pci_get_drvdata(pci);
+	काष्ठा skl_dev *skl  = bus_to_skl(bus);
+	पूर्णांक ret;
 
 	/*
-	 * Do not suspend if streams which are marked ignore suspend are
-	 * running, we need to save the state for these and continue
+	 * Do not suspend अगर streams which are marked ignore suspend are
+	 * running, we need to save the state क्रम these and जारी
 	 */
-	if (skl->supend_active) {
-		/* turn off the links and stop the CORB/RIRB DMA if it is On */
-		snd_hdac_ext_bus_link_power_down_all(bus);
+	अगर (skl->supend_active) अणु
+		/* turn off the links and stop the CORB/RIRB DMA अगर it is On */
+		snd_hdac_ext_bus_link_घातer_करोwn_all(bus);
 
-		if (bus->cmd_dma_state)
+		अगर (bus->cmd_dma_state)
 			snd_hdac_bus_stop_cmd_io(bus);
 
 		enable_irq_wake(bus->irq);
 		pci_save_state(pci);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = _skl_suspend(bus);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		skl->fw_loaded = false;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_resume(struct device *dev)
-{
-	struct pci_dev *pci = to_pci_dev(dev);
-	struct hdac_bus *bus = pci_get_drvdata(pci);
-	struct skl_dev *skl  = bus_to_skl(bus);
-	struct hdac_ext_link *hlink;
-	int ret;
+अटल पूर्णांक skl_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pci = to_pci_dev(dev);
+	काष्ठा hdac_bus *bus = pci_get_drvdata(pci);
+	काष्ठा skl_dev *skl  = bus_to_skl(bus);
+	काष्ठा hdac_ext_link *hlink;
+	पूर्णांक ret;
 
 	/*
 	 * resume only when we are not in suspend active, otherwise need to
 	 * restore the device
 	 */
-	if (skl->supend_active) {
+	अगर (skl->supend_active) अणु
 		pci_restore_state(pci);
-		snd_hdac_ext_bus_link_power_up_all(bus);
+		snd_hdac_ext_bus_link_घातer_up_all(bus);
 		disable_irq_wake(bus->irq);
 		/*
-		 * turn On the links which are On before active suspend
-		 * and start the CORB/RIRB DMA if On before
+		 * turn On the links which are On beक्रमe active suspend
+		 * and start the CORB/RIRB DMA अगर On beक्रमe
 		 * active suspend.
 		 */
-		list_for_each_entry(hlink, &bus->hlink_list, list) {
-			if (hlink->ref_count)
-				snd_hdac_ext_bus_link_power_up(hlink);
-		}
+		list_क्रम_each_entry(hlink, &bus->hlink_list, list) अणु
+			अगर (hlink->ref_count)
+				snd_hdac_ext_bus_link_घातer_up(hlink);
+		पूर्ण
 
 		ret = 0;
-		if (bus->cmd_dma_state)
+		अगर (bus->cmd_dma_state)
 			snd_hdac_bus_init_cmd_io(bus);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = _skl_resume(bus);
 
-		/* turn off the links which are off before suspend */
-		list_for_each_entry(hlink, &bus->hlink_list, list) {
-			if (!hlink->ref_count)
-				snd_hdac_ext_bus_link_power_down(hlink);
-		}
+		/* turn off the links which are off beक्रमe suspend */
+		list_क्रम_each_entry(hlink, &bus->hlink_list, list) अणु
+			अगर (!hlink->ref_count)
+				snd_hdac_ext_bus_link_घातer_करोwn(hlink);
+		पूर्ण
 
-		if (!bus->cmd_dma_state)
+		अगर (!bus->cmd_dma_state)
 			snd_hdac_bus_stop_cmd_io(bus);
-	}
+	पूर्ण
 
-	return ret;
-}
-#endif /* CONFIG_PM_SLEEP */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-#ifdef CONFIG_PM
-static int skl_runtime_suspend(struct device *dev)
-{
-	struct pci_dev *pci = to_pci_dev(dev);
-	struct hdac_bus *bus = pci_get_drvdata(pci);
-
-	dev_dbg(bus->dev, "in %s\n", __func__);
-
-	return _skl_suspend(bus);
-}
-
-static int skl_runtime_resume(struct device *dev)
-{
-	struct pci_dev *pci = to_pci_dev(dev);
-	struct hdac_bus *bus = pci_get_drvdata(pci);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक skl_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pci = to_pci_dev(dev);
+	काष्ठा hdac_bus *bus = pci_get_drvdata(pci);
 
 	dev_dbg(bus->dev, "in %s\n", __func__);
 
-	return _skl_resume(bus);
-}
-#endif /* CONFIG_PM */
+	वापस _skl_suspend(bus);
+पूर्ण
 
-static const struct dev_pm_ops skl_pm = {
+अटल पूर्णांक skl_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pci = to_pci_dev(dev);
+	काष्ठा hdac_bus *bus = pci_get_drvdata(pci);
+
+	dev_dbg(bus->dev, "in %s\n", __func__);
+
+	वापस _skl_resume(bus);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
+
+अटल स्थिर काष्ठा dev_pm_ops skl_pm = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(skl_suspend, skl_resume)
-	SET_RUNTIME_PM_OPS(skl_runtime_suspend, skl_runtime_resume, NULL)
+	SET_RUNTIME_PM_OPS(skl_runसमय_suspend, skl_runसमय_resume, शून्य)
 	.suspend_late = skl_suspend_late,
-};
+पूर्ण;
 
 /*
- * destructor
+ * deकाष्ठाor
  */
-static int skl_free(struct hdac_bus *bus)
-{
-	struct skl_dev *skl  = bus_to_skl(bus);
+अटल पूर्णांक skl_मुक्त(काष्ठा hdac_bus *bus)
+अणु
+	काष्ठा skl_dev *skl  = bus_to_skl(bus);
 
-	skl->init_done = 0; /* to be sure */
+	skl->init_करोne = 0; /* to be sure */
 
 	snd_hdac_ext_stop_streams(bus);
 
-	if (bus->irq >= 0)
-		free_irq(bus->irq, (void *)bus);
-	snd_hdac_bus_free_stream_pages(bus);
-	snd_hdac_stream_free_all(bus);
-	snd_hdac_link_free_all(bus);
+	अगर (bus->irq >= 0)
+		मुक्त_irq(bus->irq, (व्योम *)bus);
+	snd_hdac_bus_मुक्त_stream_pages(bus);
+	snd_hdac_stream_मुक्त_all(bus);
+	snd_hdac_link_मुक्त_all(bus);
 
-	if (bus->remap_addr)
+	अगर (bus->remap_addr)
 		iounmap(bus->remap_addr);
 
 	pci_release_regions(skl->pci);
 	pci_disable_device(skl->pci);
 
-	snd_hdac_ext_bus_exit(bus);
+	snd_hdac_ext_bus_निकास(bus);
 
-	if (IS_ENABLED(CONFIG_SND_SOC_HDAC_HDMI)) {
-		snd_hdac_display_power(bus, HDA_CODEC_IDX_CONTROLLER, false);
-		snd_hdac_i915_exit(bus);
-	}
+	अगर (IS_ENABLED(CONFIG_SND_SOC_HDAC_HDMI)) अणु
+		snd_hdac_display_घातer(bus, HDA_CODEC_IDX_CONTROLLER, false);
+		snd_hdac_i915_निकास(bus);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * For each ssp there are 3 clocks (mclk/sclk/sclkfs).
- * e.g. for ssp0, clocks will be named as
+ * For each ssp there are 3 घड़ीs (mclk/sclk/sclkfs).
+ * e.g. क्रम ssp0, घड़ीs will be named as
  *      "ssp0_mclk", "ssp0_sclk", "ssp0_sclkfs"
- * So for skl+, there are 6 ssps, so 18 clocks will be created.
+ * So क्रम skl+, there are 6 ssps, so 18 घड़ीs will be created.
  */
-static struct skl_ssp_clk skl_ssp_clks[] = {
-	{.name = "ssp0_mclk"}, {.name = "ssp1_mclk"}, {.name = "ssp2_mclk"},
-	{.name = "ssp3_mclk"}, {.name = "ssp4_mclk"}, {.name = "ssp5_mclk"},
-	{.name = "ssp0_sclk"}, {.name = "ssp1_sclk"}, {.name = "ssp2_sclk"},
-	{.name = "ssp3_sclk"}, {.name = "ssp4_sclk"}, {.name = "ssp5_sclk"},
-	{.name = "ssp0_sclkfs"}, {.name = "ssp1_sclkfs"},
-						{.name = "ssp2_sclkfs"},
-	{.name = "ssp3_sclkfs"}, {.name = "ssp4_sclkfs"},
-						{.name = "ssp5_sclkfs"},
-};
+अटल काष्ठा skl_ssp_clk skl_ssp_clks[] = अणु
+	अणु.name = "ssp0_mclk"पूर्ण, अणु.name = "ssp1_mclk"पूर्ण, अणु.name = "ssp2_mclk"पूर्ण,
+	अणु.name = "ssp3_mclk"पूर्ण, अणु.name = "ssp4_mclk"पूर्ण, अणु.name = "ssp5_mclk"पूर्ण,
+	अणु.name = "ssp0_sclk"पूर्ण, अणु.name = "ssp1_sclk"पूर्ण, अणु.name = "ssp2_sclk"पूर्ण,
+	अणु.name = "ssp3_sclk"पूर्ण, अणु.name = "ssp4_sclk"पूर्ण, अणु.name = "ssp5_sclk"पूर्ण,
+	अणु.name = "ssp0_sclkfs"पूर्ण, अणु.name = "ssp1_sclkfs"पूर्ण,
+						अणु.name = "ssp2_sclkfs"पूर्ण,
+	अणु.name = "ssp3_sclkfs"पूर्ण, अणु.name = "ssp4_sclkfs"पूर्ण,
+						अणु.name = "ssp5_sclkfs"पूर्ण,
+पूर्ण;
 
-static struct snd_soc_acpi_mach *skl_find_hda_machine(struct skl_dev *skl,
-					struct snd_soc_acpi_mach *machines)
-{
-	struct snd_soc_acpi_mach *mach;
+अटल काष्ठा snd_soc_acpi_mach *skl_find_hda_machine(काष्ठा skl_dev *skl,
+					काष्ठा snd_soc_acpi_mach *machines)
+अणु
+	काष्ठा snd_soc_acpi_mach *mach;
 
-	/* point to common table */
-	mach = snd_soc_acpi_intel_hda_machines;
+	/* poपूर्णांक to common table */
+	mach = snd_soc_acpi_पूर्णांकel_hda_machines;
 
 	/* all entries in the machine table use the same firmware */
 	mach->fw_filename = machines->fw_filename;
 
-	return mach;
-}
+	वापस mach;
+पूर्ण
 
-static int skl_find_machine(struct skl_dev *skl, void *driver_data)
-{
-	struct hdac_bus *bus = skl_to_bus(skl);
-	struct snd_soc_acpi_mach *mach = driver_data;
-	struct skl_machine_pdata *pdata;
+अटल पूर्णांक skl_find_machine(काष्ठा skl_dev *skl, व्योम *driver_data)
+अणु
+	काष्ठा hdac_bus *bus = skl_to_bus(skl);
+	काष्ठा snd_soc_acpi_mach *mach = driver_data;
+	काष्ठा skl_machine_pdata *pdata;
 
 	mach = snd_soc_acpi_find_machine(mach);
-	if (!mach) {
+	अगर (!mach) अणु
 		dev_dbg(bus->dev, "No matching I2S machine driver found\n");
 		mach = skl_find_hda_machine(skl, driver_data);
-		if (!mach) {
+		अगर (!mach) अणु
 			dev_err(bus->dev, "No matching machine driver found\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
 	skl->mach = mach;
 	skl->fw_name = mach->fw_filename;
 	pdata = mach->pdata;
 
-	if (pdata) {
+	अगर (pdata) अणु
 		skl->use_tplg_pcm = pdata->use_tplg_pcm;
 		mach->mach_params.dmic_num =
-			intel_nhlt_get_dmic_geo(&skl->pci->dev,
+			पूर्णांकel_nhlt_get_dmic_geo(&skl->pci->dev,
 						skl->nhlt);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_machine_device_register(struct skl_dev *skl)
-{
-	struct snd_soc_acpi_mach *mach = skl->mach;
-	struct hdac_bus *bus = skl_to_bus(skl);
-	struct platform_device *pdev;
-	int ret;
+अटल पूर्णांक skl_machine_device_रेजिस्टर(काष्ठा skl_dev *skl)
+अणु
+	काष्ठा snd_soc_acpi_mach *mach = skl->mach;
+	काष्ठा hdac_bus *bus = skl_to_bus(skl);
+	काष्ठा platक्रमm_device *pdev;
+	पूर्णांक ret;
 
-	pdev = platform_device_alloc(mach->drv_name, -1);
-	if (pdev == NULL) {
+	pdev = platक्रमm_device_alloc(mach->drv_name, -1);
+	अगर (pdev == शून्य) अणु
 		dev_err(bus->dev, "platform device alloc failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	mach->mach_params.platform = dev_name(bus->dev);
+	mach->mach_params.platक्रमm = dev_name(bus->dev);
 	mach->mach_params.codec_mask = bus->codec_mask;
 
-	ret = platform_device_add_data(pdev, (const void *)mach, sizeof(*mach));
-	if (ret) {
+	ret = platक्रमm_device_add_data(pdev, (स्थिर व्योम *)mach, माप(*mach));
+	अगर (ret) अणु
 		dev_err(bus->dev, "failed to add machine device platform data\n");
-		platform_device_put(pdev);
-		return ret;
-	}
+		platक्रमm_device_put(pdev);
+		वापस ret;
+	पूर्ण
 
-	ret = platform_device_add(pdev);
-	if (ret) {
+	ret = platक्रमm_device_add(pdev);
+	अगर (ret) अणु
 		dev_err(bus->dev, "failed to add machine device\n");
-		platform_device_put(pdev);
-		return -EIO;
-	}
+		platक्रमm_device_put(pdev);
+		वापस -EIO;
+	पूर्ण
 
 
 	skl->i2s_dev = pdev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void skl_machine_device_unregister(struct skl_dev *skl)
-{
-	if (skl->i2s_dev)
-		platform_device_unregister(skl->i2s_dev);
-}
+अटल व्योम skl_machine_device_unरेजिस्टर(काष्ठा skl_dev *skl)
+अणु
+	अगर (skl->i2s_dev)
+		platक्रमm_device_unरेजिस्टर(skl->i2s_dev);
+पूर्ण
 
-static int skl_dmic_device_register(struct skl_dev *skl)
-{
-	struct hdac_bus *bus = skl_to_bus(skl);
-	struct platform_device *pdev;
-	int ret;
+अटल पूर्णांक skl_dmic_device_रेजिस्टर(काष्ठा skl_dev *skl)
+अणु
+	काष्ठा hdac_bus *bus = skl_to_bus(skl);
+	काष्ठा platक्रमm_device *pdev;
+	पूर्णांक ret;
 
-	/* SKL has one dmic port, so allocate dmic device for this */
-	pdev = platform_device_alloc("dmic-codec", -1);
-	if (!pdev) {
+	/* SKL has one dmic port, so allocate dmic device क्रम this */
+	pdev = platक्रमm_device_alloc("dmic-codec", -1);
+	अगर (!pdev) अणु
 		dev_err(bus->dev, "failed to allocate dmic device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	ret = platform_device_add(pdev);
-	if (ret) {
+	ret = platक्रमm_device_add(pdev);
+	अगर (ret) अणु
 		dev_err(bus->dev, "failed to add dmic device: %d\n", ret);
-		platform_device_put(pdev);
-		return ret;
-	}
+		platक्रमm_device_put(pdev);
+		वापस ret;
+	पूर्ण
 	skl->dmic_dev = pdev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void skl_dmic_device_unregister(struct skl_dev *skl)
-{
-	if (skl->dmic_dev)
-		platform_device_unregister(skl->dmic_dev);
-}
+अटल व्योम skl_dmic_device_unरेजिस्टर(काष्ठा skl_dev *skl)
+अणु
+	अगर (skl->dmic_dev)
+		platक्रमm_device_unरेजिस्टर(skl->dmic_dev);
+पूर्ण
 
-static struct skl_clk_parent_src skl_clk_src[] = {
-	{ .clk_id = SKL_XTAL, .name = "xtal" },
-	{ .clk_id = SKL_CARDINAL, .name = "cardinal", .rate = 24576000 },
-	{ .clk_id = SKL_PLL, .name = "pll", .rate = 96000000 },
-};
+अटल काष्ठा skl_clk_parent_src skl_clk_src[] = अणु
+	अणु .clk_id = SKL_XTAL, .name = "xtal" पूर्ण,
+	अणु .clk_id = SKL_CARDINAL, .name = "cardinal", .rate = 24576000 पूर्ण,
+	अणु .clk_id = SKL_PLL, .name = "pll", .rate = 96000000 पूर्ण,
+पूर्ण;
 
-struct skl_clk_parent_src *skl_get_parent_clk(u8 clk_id)
-{
-	unsigned int i;
+काष्ठा skl_clk_parent_src *skl_get_parent_clk(u8 clk_id)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(skl_clk_src); i++) {
-		if (skl_clk_src[i].clk_id == clk_id)
-			return &skl_clk_src[i];
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(skl_clk_src); i++) अणु
+		अगर (skl_clk_src[i].clk_id == clk_id)
+			वापस &skl_clk_src[i];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void init_skl_xtal_rate(int pci_id)
-{
-	switch (pci_id) {
-	case 0x9d70:
-	case 0x9d71:
+अटल व्योम init_skl_xtal_rate(पूर्णांक pci_id)
+अणु
+	चयन (pci_id) अणु
+	हाल 0x9d70:
+	हाल 0x9d71:
 		skl_clk_src[0].rate = 24000000;
-		return;
+		वापस;
 
-	default:
+	शेष:
 		skl_clk_src[0].rate = 19200000;
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static int skl_clock_device_register(struct skl_dev *skl)
-{
-	struct platform_device_info pdevinfo = {NULL};
-	struct skl_clk_pdata *clk_pdata;
+अटल पूर्णांक skl_घड़ी_device_रेजिस्टर(काष्ठा skl_dev *skl)
+अणु
+	काष्ठा platक्रमm_device_info pdevinfo = अणुशून्यपूर्ण;
+	काष्ठा skl_clk_pdata *clk_pdata;
 
-	if (!skl->nhlt)
-		return 0;
+	अगर (!skl->nhlt)
+		वापस 0;
 
-	clk_pdata = devm_kzalloc(&skl->pci->dev, sizeof(*clk_pdata),
+	clk_pdata = devm_kzalloc(&skl->pci->dev, माप(*clk_pdata),
 							GFP_KERNEL);
-	if (!clk_pdata)
-		return -ENOMEM;
+	अगर (!clk_pdata)
+		वापस -ENOMEM;
 
 	init_skl_xtal_rate(skl->pci->device);
 
@@ -651,109 +652,109 @@ static int skl_clock_device_register(struct skl_dev *skl)
 	skl_get_clks(skl, clk_pdata->ssp_clks);
 	clk_pdata->pvt_data = skl;
 
-	/* Register Platform device */
+	/* Register Platक्रमm device */
 	pdevinfo.parent = &skl->pci->dev;
 	pdevinfo.id = -1;
 	pdevinfo.name = "skl-ssp-clk";
 	pdevinfo.data = clk_pdata;
-	pdevinfo.size_data = sizeof(*clk_pdata);
-	skl->clk_dev = platform_device_register_full(&pdevinfo);
-	return PTR_ERR_OR_ZERO(skl->clk_dev);
-}
+	pdevinfo.size_data = माप(*clk_pdata);
+	skl->clk_dev = platक्रमm_device_रेजिस्टर_full(&pdevinfo);
+	वापस PTR_ERR_OR_ZERO(skl->clk_dev);
+पूर्ण
 
-static void skl_clock_device_unregister(struct skl_dev *skl)
-{
-	if (skl->clk_dev)
-		platform_device_unregister(skl->clk_dev);
-}
+अटल व्योम skl_घड़ी_device_unरेजिस्टर(काष्ठा skl_dev *skl)
+अणु
+	अगर (skl->clk_dev)
+		platक्रमm_device_unरेजिस्टर(skl->clk_dev);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
 
-#define IDISP_INTEL_VENDOR_ID	0x80860000
+#घोषणा IDISP_INTEL_VENDOR_ID	0x80860000
 
 /*
  * load the legacy codec driver
  */
-static void load_codec_module(struct hda_codec *codec)
-{
-#ifdef MODULE
-	char modalias[MODULE_NAME_LEN];
-	const char *mod = NULL;
+अटल व्योम load_codec_module(काष्ठा hda_codec *codec)
+अणु
+#अगर_घोषित MODULE
+	अक्षर modalias[MODULE_NAME_LEN];
+	स्थिर अक्षर *mod = शून्य;
 
-	snd_hdac_codec_modalias(&codec->core, modalias, sizeof(modalias));
+	snd_hdac_codec_modalias(&codec->core, modalias, माप(modalias));
 	mod = modalias;
 	dev_dbg(&codec->core.dev, "loading %s codec module\n", mod);
 	request_module(mod);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#endif /* CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC */
+#पूर्ण_अगर /* CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC */
 
 /*
  * Probe the given codec address
  */
-static int probe_codec(struct hdac_bus *bus, int addr)
-{
-	unsigned int cmd = (addr << 28) | (AC_NODE_ROOT << 20) |
+अटल पूर्णांक probe_codec(काष्ठा hdac_bus *bus, पूर्णांक addr)
+अणु
+	अचिन्हित पूर्णांक cmd = (addr << 28) | (AC_NODE_ROOT << 20) |
 		(AC_VERB_PARAMETERS << 8) | AC_PAR_VENDOR_ID;
-	unsigned int res = -1;
-	struct skl_dev *skl = bus_to_skl(bus);
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
-	struct hdac_hda_priv *hda_codec;
-	int err;
-#endif
-	struct hdac_device *hdev;
+	अचिन्हित पूर्णांक res = -1;
+	काष्ठा skl_dev *skl = bus_to_skl(bus);
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
+	काष्ठा hdac_hda_priv *hda_codec;
+	पूर्णांक err;
+#पूर्ण_अगर
+	काष्ठा hdac_device *hdev;
 
 	mutex_lock(&bus->cmd_mutex);
 	snd_hdac_bus_send_cmd(bus, cmd);
 	snd_hdac_bus_get_response(bus, addr, &res);
 	mutex_unlock(&bus->cmd_mutex);
-	if (res == -1)
-		return -EIO;
+	अगर (res == -1)
+		वापस -EIO;
 	dev_dbg(bus->dev, "codec #%d probed OK: %x\n", addr, res);
 
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
-	hda_codec = devm_kzalloc(&skl->pci->dev, sizeof(*hda_codec),
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
+	hda_codec = devm_kzalloc(&skl->pci->dev, माप(*hda_codec),
 				 GFP_KERNEL);
-	if (!hda_codec)
-		return -ENOMEM;
+	अगर (!hda_codec)
+		वापस -ENOMEM;
 
 	hda_codec->codec.bus = skl_to_hbus(skl);
 	hdev = &hda_codec->codec.core;
 
 	err = snd_hdac_ext_bus_device_init(bus, addr, hdev, HDA_DEV_ASOC);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* use legacy bus only for HDA codecs, idisp uses ext bus */
-	if ((res & 0xFFFF0000) != IDISP_INTEL_VENDOR_ID) {
+	/* use legacy bus only क्रम HDA codecs, idisp uses ext bus */
+	अगर ((res & 0xFFFF0000) != IDISP_INTEL_VENDOR_ID) अणु
 		hdev->type = HDA_DEV_LEGACY;
 		load_codec_module(&hda_codec->codec);
-	}
-	return 0;
-#else
-	hdev = devm_kzalloc(&skl->pci->dev, sizeof(*hdev), GFP_KERNEL);
-	if (!hdev)
-		return -ENOMEM;
+	पूर्ण
+	वापस 0;
+#अन्यथा
+	hdev = devm_kzalloc(&skl->pci->dev, माप(*hdev), GFP_KERNEL);
+	अगर (!hdev)
+		वापस -ENOMEM;
 
-	return snd_hdac_ext_bus_device_init(bus, addr, hdev, HDA_DEV_ASOC);
-#endif /* CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC */
-}
+	वापस snd_hdac_ext_bus_device_init(bus, addr, hdev, HDA_DEV_ASOC);
+#पूर्ण_अगर /* CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC */
+पूर्ण
 
 /* Codec initialization */
-static void skl_codec_create(struct hdac_bus *bus)
-{
-	int c, max_slots;
+अटल व्योम skl_codec_create(काष्ठा hdac_bus *bus)
+अणु
+	पूर्णांक c, max_slots;
 
 	max_slots = HDA_MAX_CODECS;
 
 	/* First try to probe all given codec slots */
-	for (c = 0; c < max_slots; c++) {
-		if ((bus->codec_mask & (1 << c))) {
-			if (probe_codec(bus, c) < 0) {
+	क्रम (c = 0; c < max_slots; c++) अणु
+		अगर ((bus->codec_mask & (1 << c))) अणु
+			अगर (probe_codec(bus, c) < 0) अणु
 				/*
 				 * Some BIOSen give you wrong codec addresses
-				 * that don't exist
+				 * that करोn't exist
 				 */
 				dev_warn(bus->dev,
 					 "Codec #%d probe error; disabling it...\n", c);
@@ -762,120 +763,120 @@ static void skl_codec_create(struct hdac_bus *bus)
 				 * More badly, accessing to a non-existing
 				 * codec often screws up the controller bus,
 				 * and disturbs the further communications.
-				 * Thus if an error occurs during probing,
+				 * Thus अगर an error occurs during probing,
 				 * better to reset the controller bus to get
 				 * back to the sanity state.
 				 */
 				snd_hdac_bus_stop_chip(bus);
 				skl_init_chip(bus, true);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int skl_i915_init(struct hdac_bus *bus)
-{
-	int err;
+अटल पूर्णांक skl_i915_init(काष्ठा hdac_bus *bus)
+अणु
+	पूर्णांक err;
 
 	/*
-	 * The HDMI codec is in GPU so we need to ensure that it is powered
-	 * up and ready for probe
+	 * The HDMI codec is in GPU so we need to ensure that it is घातered
+	 * up and पढ़ोy क्रम probe
 	 */
 	err = snd_hdac_i915_init(bus);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	snd_hdac_display_power(bus, HDA_CODEC_IDX_CONTROLLER, true);
+	snd_hdac_display_घातer(bus, HDA_CODEC_IDX_CONTROLLER, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void skl_probe_work(struct work_struct *work)
-{
-	struct skl_dev *skl = container_of(work, struct skl_dev, probe_work);
-	struct hdac_bus *bus = skl_to_bus(skl);
-	struct hdac_ext_link *hlink;
-	int err;
+अटल व्योम skl_probe_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा skl_dev *skl = container_of(work, काष्ठा skl_dev, probe_work);
+	काष्ठा hdac_bus *bus = skl_to_bus(skl);
+	काष्ठा hdac_ext_link *hlink;
+	पूर्णांक err;
 
-	if (IS_ENABLED(CONFIG_SND_SOC_HDAC_HDMI)) {
+	अगर (IS_ENABLED(CONFIG_SND_SOC_HDAC_HDMI)) अणु
 		err = skl_i915_init(bus);
-		if (err < 0)
-			return;
-	}
+		अगर (err < 0)
+			वापस;
+	पूर्ण
 
 	skl_init_pci(skl);
 	skl_dum_set(bus);
 
 	err = skl_init_chip(bus, true);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(bus->dev, "Init chip failed with err: %d\n", err);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	/* codec detection */
-	if (!bus->codec_mask)
+	अगर (!bus->codec_mask)
 		dev_info(bus->dev, "no hda codecs found!\n");
 
 	/* create codec instances */
 	skl_codec_create(bus);
 
-	/* register platform dai and controls */
-	err = skl_platform_register(bus->dev);
-	if (err < 0) {
+	/* रेजिस्टर platक्रमm dai and controls */
+	err = skl_platक्रमm_रेजिस्टर(bus->dev);
+	अगर (err < 0) अणु
 		dev_err(bus->dev, "platform register failed: %d\n", err);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	err = skl_machine_device_register(skl);
-	if (err < 0) {
+	err = skl_machine_device_रेजिस्टर(skl);
+	अगर (err < 0) अणु
 		dev_err(bus->dev, "machine register failed: %d\n", err);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	/*
-	 * we are done probing so decrement link counts
+	 * we are करोne probing so decrement link counts
 	 */
-	list_for_each_entry(hlink, &bus->hlink_list, list)
+	list_क्रम_each_entry(hlink, &bus->hlink_list, list)
 		snd_hdac_ext_bus_link_put(bus, hlink);
 
-	if (IS_ENABLED(CONFIG_SND_SOC_HDAC_HDMI))
-		snd_hdac_display_power(bus, HDA_CODEC_IDX_CONTROLLER, false);
+	अगर (IS_ENABLED(CONFIG_SND_SOC_HDAC_HDMI))
+		snd_hdac_display_घातer(bus, HDA_CODEC_IDX_CONTROLLER, false);
 
 	/* configure PM */
-	pm_runtime_put_noidle(bus->dev);
-	pm_runtime_allow(bus->dev);
-	skl->init_done = 1;
+	pm_runसमय_put_noidle(bus->dev);
+	pm_runसमय_allow(bus->dev);
+	skl->init_करोne = 1;
 
-	return;
+	वापस;
 
 out_err:
-	if (IS_ENABLED(CONFIG_SND_SOC_HDAC_HDMI))
-		snd_hdac_display_power(bus, HDA_CODEC_IDX_CONTROLLER, false);
-}
+	अगर (IS_ENABLED(CONFIG_SND_SOC_HDAC_HDMI))
+		snd_hdac_display_घातer(bus, HDA_CODEC_IDX_CONTROLLER, false);
+पूर्ण
 
 /*
- * constructor
+ * स्थिरructor
  */
-static int skl_create(struct pci_dev *pci,
-		      struct skl_dev **rskl)
-{
-	struct hdac_ext_bus_ops *ext_ops = NULL;
-	struct skl_dev *skl;
-	struct hdac_bus *bus;
-	struct hda_bus *hbus;
-	int err;
+अटल पूर्णांक skl_create(काष्ठा pci_dev *pci,
+		      काष्ठा skl_dev **rskl)
+अणु
+	काष्ठा hdac_ext_bus_ops *ext_ops = शून्य;
+	काष्ठा skl_dev *skl;
+	काष्ठा hdac_bus *bus;
+	काष्ठा hda_bus *hbus;
+	पूर्णांक err;
 
-	*rskl = NULL;
+	*rskl = शून्य;
 
 	err = pci_enable_device(pci);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	skl = devm_kzalloc(&pci->dev, sizeof(*skl), GFP_KERNEL);
-	if (!skl) {
+	skl = devm_kzalloc(&pci->dev, माप(*skl), GFP_KERNEL);
+	अगर (!skl) अणु
 		pci_disable_device(pci);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	hbus = skl_to_hbus(skl);
 	bus = skl_to_bus(skl);
@@ -883,10 +884,10 @@ static int skl_create(struct pci_dev *pci,
 	INIT_LIST_HEAD(&skl->ppl_list);
 	INIT_LIST_HEAD(&skl->bind_list);
 
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
 	ext_ops = snd_soc_hdac_hda_get_ops();
-#endif
-	snd_hdac_ext_bus_init(bus, &pci->dev, NULL, ext_ops);
+#पूर्ण_अगर
+	snd_hdac_ext_bus_init(bus, &pci->dev, शून्य, ext_ops);
 	bus->use_posbuf = 1;
 	skl->pci = pci;
 	INIT_WORK(&skl->probe_work, skl_probe_work);
@@ -894,63 +895,63 @@ static int skl_create(struct pci_dev *pci,
 
 	mutex_init(&hbus->prepare_mutex);
 	hbus->pci = pci;
-	hbus->mixer_assigned = -1;
+	hbus->mixer_asचिन्हित = -1;
 	hbus->modelname = "sklbus";
 
 	*rskl = skl;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_first_init(struct hdac_bus *bus)
-{
-	struct skl_dev *skl = bus_to_skl(bus);
-	struct pci_dev *pci = skl->pci;
-	int err;
-	unsigned short gcap;
-	int cp_streams, pb_streams, start_idx;
+अटल पूर्णांक skl_first_init(काष्ठा hdac_bus *bus)
+अणु
+	काष्ठा skl_dev *skl = bus_to_skl(bus);
+	काष्ठा pci_dev *pci = skl->pci;
+	पूर्णांक err;
+	अचिन्हित लघु gcap;
+	पूर्णांक cp_streams, pb_streams, start_idx;
 
 	err = pci_request_regions(pci, "Skylake HD audio");
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	bus->addr = pci_resource_start(pci, 0);
 	bus->remap_addr = pci_ioremap_bar(pci, 0);
-	if (bus->remap_addr == NULL) {
+	अगर (bus->remap_addr == शून्य) अणु
 		dev_err(bus->dev, "ioremap error\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	snd_hdac_bus_parse_capabilities(bus);
 
-	/* check if PPCAP exists */
-	if (!bus->ppcap) {
+	/* check अगर PPCAP exists */
+	अगर (!bus->ppcap) अणु
 		dev_err(bus->dev, "bus ppcap not set, HDAudio or DSP not present?\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (skl_acquire_irq(bus, 0) < 0)
-		return -EBUSY;
+	अगर (skl_acquire_irq(bus, 0) < 0)
+		वापस -EBUSY;
 
 	pci_set_master(pci);
 	synchronize_irq(bus->irq);
 
-	gcap = snd_hdac_chip_readw(bus, GCAP);
+	gcap = snd_hdac_chip_पढ़ोw(bus, GCAP);
 	dev_dbg(bus->dev, "chipset global capabilities = 0x%x\n", gcap);
 
-	/* read number of streams from GCAP register */
+	/* पढ़ो number of streams from GCAP रेजिस्टर */
 	cp_streams = (gcap >> 8) & 0x0f;
 	pb_streams = (gcap >> 12) & 0x0f;
 
-	if (!pb_streams && !cp_streams) {
+	अगर (!pb_streams && !cp_streams) अणु
 		dev_err(bus->dev, "no streams found in GCAP definitions?\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	bus->num_streams = cp_streams + pb_streams;
 
-	/* allow 64bit DMA address if supported by H/W */
-	if (dma_set_mask_and_coherent(bus->dev, DMA_BIT_MASK(64)))
+	/* allow 64bit DMA address अगर supported by H/W */
+	अगर (dma_set_mask_and_coherent(bus->dev, DMA_BIT_MASK(64)))
 		dma_set_mask_and_coherent(bus->dev, DMA_BIT_MASK(32));
 
 	/* initialize streams */
@@ -961,231 +962,231 @@ static int skl_first_init(struct hdac_bus *bus)
 		(bus, start_idx, pb_streams, SNDRV_PCM_STREAM_PLAYBACK);
 
 	err = snd_hdac_bus_alloc_stream_pages(bus);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_probe(struct pci_dev *pci,
-		     const struct pci_device_id *pci_id)
-{
-	struct skl_dev *skl;
-	struct hdac_bus *bus = NULL;
-	int err;
+अटल पूर्णांक skl_probe(काष्ठा pci_dev *pci,
+		     स्थिर काष्ठा pci_device_id *pci_id)
+अणु
+	काष्ठा skl_dev *skl;
+	काष्ठा hdac_bus *bus = शून्य;
+	पूर्णांक err;
 
-	switch (skl_pci_binding) {
-	case SND_SKL_PCI_BIND_AUTO:
-		err = snd_intel_dsp_driver_probe(pci);
-		if (err != SND_INTEL_DSP_DRIVER_ANY &&
+	चयन (skl_pci_binding) अणु
+	हाल SND_SKL_PCI_BIND_AUTO:
+		err = snd_पूर्णांकel_dsp_driver_probe(pci);
+		अगर (err != SND_INTEL_DSP_DRIVER_ANY &&
 		    err != SND_INTEL_DSP_DRIVER_SST)
-			return -ENODEV;
-		break;
-	case SND_SKL_PCI_BIND_LEGACY:
+			वापस -ENODEV;
+		अवरोध;
+	हाल SND_SKL_PCI_BIND_LEGACY:
 		dev_info(&pci->dev, "Module parameter forced binding with HDAudio legacy, aborting probe\n");
-		return -ENODEV;
-	case SND_SKL_PCI_BIND_ASOC:
+		वापस -ENODEV;
+	हाल SND_SKL_PCI_BIND_ASOC:
 		dev_info(&pci->dev, "Module parameter forced binding with SKL driver, bypassed detection logic\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&pci->dev, "invalid value for skl_pci_binding module parameter, ignored\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* we use ext core ops, so provide NULL for ops here */
+	/* we use ext core ops, so provide शून्य क्रम ops here */
 	err = skl_create(pci, &skl);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	bus = skl_to_bus(skl);
 
 	err = skl_first_init(bus);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(bus->dev, "skl_first_init failed with err: %d\n", err);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	skl->pci_id = pci->device;
 
 	device_disable_async_suspend(bus->dev);
 
-	skl->nhlt = intel_nhlt_init(bus->dev);
+	skl->nhlt = पूर्णांकel_nhlt_init(bus->dev);
 
-	if (skl->nhlt == NULL) {
-#if !IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
+	अगर (skl->nhlt == शून्य) अणु
+#अगर !IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
 		dev_err(bus->dev, "no nhlt info found\n");
 		err = -ENODEV;
-		goto out_free;
-#else
+		जाओ out_मुक्त;
+#अन्यथा
 		dev_warn(bus->dev, "no nhlt info found, continuing to try to enable HDAudio codec\n");
-#endif
-	} else {
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
 
 		err = skl_nhlt_create_sysfs(skl);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(bus->dev, "skl_nhlt_create_sysfs failed with err: %d\n", err);
-			goto out_nhlt_free;
-		}
+			जाओ out_nhlt_मुक्त;
+		पूर्ण
 
 		skl_nhlt_update_topology_bin(skl);
 
-		/* create device for dsp clk */
-		err = skl_clock_device_register(skl);
-		if (err < 0) {
+		/* create device क्रम dsp clk */
+		err = skl_घड़ी_device_रेजिस्टर(skl);
+		अगर (err < 0) अणु
 			dev_err(bus->dev, "skl_clock_device_register failed with err: %d\n", err);
-			goto out_clk_free;
-		}
-	}
+			जाओ out_clk_मुक्त;
+		पूर्ण
+	पूर्ण
 
 	pci_set_drvdata(skl->pci, bus);
 
 
-	err = skl_find_machine(skl, (void *)pci_id->driver_data);
-	if (err < 0) {
+	err = skl_find_machine(skl, (व्योम *)pci_id->driver_data);
+	अगर (err < 0) अणु
 		dev_err(bus->dev, "skl_find_machine failed with err: %d\n", err);
-		goto out_nhlt_free;
-	}
+		जाओ out_nhlt_मुक्त;
+	पूर्ण
 
 	err = skl_init_dsp(skl);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_dbg(bus->dev, "error failed to register dsp\n");
-		goto out_nhlt_free;
-	}
+		जाओ out_nhlt_मुक्त;
+	पूर्ण
 	skl->enable_miscbdcge = skl_enable_miscbdcge;
-	skl->clock_power_gating = skl_clock_power_gating;
+	skl->घड़ी_घातer_gating = skl_घड़ी_घातer_gating;
 
-	if (bus->mlcap)
+	अगर (bus->mlcap)
 		snd_hdac_ext_bus_get_ml_capabilities(bus);
 
-	/* create device for soc dmic */
-	err = skl_dmic_device_register(skl);
-	if (err < 0) {
+	/* create device क्रम soc dmic */
+	err = skl_dmic_device_रेजिस्टर(skl);
+	अगर (err < 0) अणु
 		dev_err(bus->dev, "skl_dmic_device_register failed with err: %d\n", err);
-		goto out_dsp_free;
-	}
+		जाओ out_dsp_मुक्त;
+	पूर्ण
 
 	schedule_work(&skl->probe_work);
 
-	return 0;
+	वापस 0;
 
-out_dsp_free:
-	skl_free_dsp(skl);
-out_clk_free:
-	skl_clock_device_unregister(skl);
-out_nhlt_free:
-	if (skl->nhlt)
-		intel_nhlt_free(skl->nhlt);
-out_free:
-	skl_free(bus);
+out_dsp_मुक्त:
+	skl_मुक्त_dsp(skl);
+out_clk_मुक्त:
+	skl_घड़ी_device_unरेजिस्टर(skl);
+out_nhlt_मुक्त:
+	अगर (skl->nhlt)
+		पूर्णांकel_nhlt_मुक्त(skl->nhlt);
+out_मुक्त:
+	skl_मुक्त(bus);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void skl_shutdown(struct pci_dev *pci)
-{
-	struct hdac_bus *bus = pci_get_drvdata(pci);
-	struct hdac_stream *s;
-	struct hdac_ext_stream *stream;
-	struct skl_dev *skl;
+अटल व्योम skl_shutकरोwn(काष्ठा pci_dev *pci)
+अणु
+	काष्ठा hdac_bus *bus = pci_get_drvdata(pci);
+	काष्ठा hdac_stream *s;
+	काष्ठा hdac_ext_stream *stream;
+	काष्ठा skl_dev *skl;
 
-	if (!bus)
-		return;
+	अगर (!bus)
+		वापस;
 
 	skl = bus_to_skl(bus);
 
-	if (!skl->init_done)
-		return;
+	अगर (!skl->init_करोne)
+		वापस;
 
 	snd_hdac_ext_stop_streams(bus);
-	list_for_each_entry(s, &bus->stream_list, list) {
+	list_क्रम_each_entry(s, &bus->stream_list, list) अणु
 		stream = stream_to_hdac_ext_stream(s);
 		snd_hdac_ext_stream_decouple(bus, stream, false);
-	}
+	पूर्ण
 
 	snd_hdac_bus_stop_chip(bus);
-}
+पूर्ण
 
-static void skl_remove(struct pci_dev *pci)
-{
-	struct hdac_bus *bus = pci_get_drvdata(pci);
-	struct skl_dev *skl = bus_to_skl(bus);
+अटल व्योम skl_हटाओ(काष्ठा pci_dev *pci)
+अणु
+	काष्ठा hdac_bus *bus = pci_get_drvdata(pci);
+	काष्ठा skl_dev *skl = bus_to_skl(bus);
 
 	cancel_work_sync(&skl->probe_work);
 
-	pm_runtime_get_noresume(&pci->dev);
+	pm_runसमय_get_noresume(&pci->dev);
 
-	/* codec removal, invoke bus_device_remove */
-	snd_hdac_ext_bus_device_remove(bus);
+	/* codec removal, invoke bus_device_हटाओ */
+	snd_hdac_ext_bus_device_हटाओ(bus);
 
-	skl_platform_unregister(&pci->dev);
-	skl_free_dsp(skl);
-	skl_machine_device_unregister(skl);
-	skl_dmic_device_unregister(skl);
-	skl_clock_device_unregister(skl);
-	skl_nhlt_remove_sysfs(skl);
-	if (skl->nhlt)
-		intel_nhlt_free(skl->nhlt);
-	skl_free(bus);
-	dev_set_drvdata(&pci->dev, NULL);
-}
+	skl_platक्रमm_unरेजिस्टर(&pci->dev);
+	skl_मुक्त_dsp(skl);
+	skl_machine_device_unरेजिस्टर(skl);
+	skl_dmic_device_unरेजिस्टर(skl);
+	skl_घड़ी_device_unरेजिस्टर(skl);
+	skl_nhlt_हटाओ_sysfs(skl);
+	अगर (skl->nhlt)
+		पूर्णांकel_nhlt_मुक्त(skl->nhlt);
+	skl_मुक्त(bus);
+	dev_set_drvdata(&pci->dev, शून्य);
+पूर्ण
 
 /* PCI IDs */
-static const struct pci_device_id skl_ids[] = {
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_SKL)
-	/* Sunrise Point-LP */
-	{ PCI_DEVICE(0x8086, 0x9d70),
-		.driver_data = (unsigned long)&snd_soc_acpi_intel_skl_machines},
-#endif
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_APL)
+अटल स्थिर काष्ठा pci_device_id skl_ids[] = अणु
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_SKL)
+	/* Sunrise Poपूर्णांक-LP */
+	अणु PCI_DEVICE(0x8086, 0x9d70),
+		.driver_data = (अचिन्हित दीर्घ)&snd_soc_acpi_पूर्णांकel_skl_machinesपूर्ण,
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_APL)
 	/* BXT-P */
-	{ PCI_DEVICE(0x8086, 0x5a98),
-		.driver_data = (unsigned long)&snd_soc_acpi_intel_bxt_machines},
-#endif
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_KBL)
+	अणु PCI_DEVICE(0x8086, 0x5a98),
+		.driver_data = (अचिन्हित दीर्घ)&snd_soc_acpi_पूर्णांकel_bxt_machinesपूर्ण,
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_KBL)
 	/* KBL */
-	{ PCI_DEVICE(0x8086, 0x9D71),
-		.driver_data = (unsigned long)&snd_soc_acpi_intel_kbl_machines},
-#endif
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_GLK)
+	अणु PCI_DEVICE(0x8086, 0x9D71),
+		.driver_data = (अचिन्हित दीर्घ)&snd_soc_acpi_पूर्णांकel_kbl_machinesपूर्ण,
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_GLK)
 	/* GLK */
-	{ PCI_DEVICE(0x8086, 0x3198),
-		.driver_data = (unsigned long)&snd_soc_acpi_intel_glk_machines},
-#endif
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_CNL)
+	अणु PCI_DEVICE(0x8086, 0x3198),
+		.driver_data = (अचिन्हित दीर्घ)&snd_soc_acpi_पूर्णांकel_glk_machinesपूर्ण,
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_CNL)
 	/* CNL */
-	{ PCI_DEVICE(0x8086, 0x9dc8),
-		.driver_data = (unsigned long)&snd_soc_acpi_intel_cnl_machines},
-#endif
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_CFL)
+	अणु PCI_DEVICE(0x8086, 0x9dc8),
+		.driver_data = (अचिन्हित दीर्घ)&snd_soc_acpi_पूर्णांकel_cnl_machinesपूर्ण,
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_CFL)
 	/* CFL */
-	{ PCI_DEVICE(0x8086, 0xa348),
-		.driver_data = (unsigned long)&snd_soc_acpi_intel_cnl_machines},
-#endif
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_CML_LP)
+	अणु PCI_DEVICE(0x8086, 0xa348),
+		.driver_data = (अचिन्हित दीर्घ)&snd_soc_acpi_पूर्णांकel_cnl_machinesपूर्ण,
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_CML_LP)
 	/* CML-LP */
-	{ PCI_DEVICE(0x8086, 0x02c8),
-		.driver_data = (unsigned long)&snd_soc_acpi_intel_cnl_machines},
-#endif
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_CML_H)
+	अणु PCI_DEVICE(0x8086, 0x02c8),
+		.driver_data = (अचिन्हित दीर्घ)&snd_soc_acpi_पूर्णांकel_cnl_machinesपूर्ण,
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_CML_H)
 	/* CML-H */
-	{ PCI_DEVICE(0x8086, 0x06c8),
-		.driver_data = (unsigned long)&snd_soc_acpi_intel_cnl_machines},
-#endif
-	{ 0, }
-};
+	अणु PCI_DEVICE(0x8086, 0x06c8),
+		.driver_data = (अचिन्हित दीर्घ)&snd_soc_acpi_पूर्णांकel_cnl_machinesपूर्ण,
+#पूर्ण_अगर
+	अणु 0, पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, skl_ids);
 
 /* pci_driver definition */
-static struct pci_driver skl_driver = {
+अटल काष्ठा pci_driver skl_driver = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = skl_ids,
 	.probe = skl_probe,
-	.remove = skl_remove,
-	.shutdown = skl_shutdown,
-	.driver = {
+	.हटाओ = skl_हटाओ,
+	.shutकरोwn = skl_shutकरोwn,
+	.driver = अणु
 		.pm = &skl_pm,
-	},
-};
+	पूर्ण,
+पूर्ण;
 module_pci_driver(skl_driver);
 
 MODULE_LICENSE("GPL v2");

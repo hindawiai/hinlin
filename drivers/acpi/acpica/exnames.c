@@ -1,101 +1,102 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: exnames - interpreter/scanner name load/execute
+ * Module Name: exnames - पूर्णांकerpreter/scanner name load/execute
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acinterp.h"
-#include "amlcode.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acinterp.h"
+#समावेश "amlcode.h"
 
-#define _COMPONENT          ACPI_EXECUTER
+#घोषणा _COMPONENT          ACPI_EXECUTER
 ACPI_MODULE_NAME("exnames")
 
 /* Local prototypes */
-static char *acpi_ex_allocate_name_string(u32 prefix_count, u32 num_name_segs);
+अटल अक्षर *acpi_ex_allocate_name_string(u32 prefix_count, u32 num_name_segs);
 
-static acpi_status acpi_ex_name_segment(u8 **in_aml_address, char *name_string);
+अटल acpi_status acpi_ex_name_segment(u8 **in_aml_address, अक्षर *name_string);
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_allocate_name_string
  *
- * PARAMETERS:  prefix_count        - Count of parent levels. Special cases:
+ * PARAMETERS:  prefix_count        - Count of parent levels. Special हालs:
  *                                    (-1)==root,  0==none
- *              num_name_segs       - count of 4-character name segments
+ *              num_name_segs       - count of 4-अक्षरacter name segments
  *
- * RETURN:      A pointer to the allocated string segment. This segment must
+ * RETURN:      A poपूर्णांकer to the allocated string segment. This segment must
  *              be deleted by the caller.
  *
- * DESCRIPTION: Allocate a buffer for a name string. Ensure allocated name
- *              string is long enough, and set up prefix if any.
+ * DESCRIPTION: Allocate a buffer क्रम a name string. Ensure allocated name
+ *              string is दीर्घ enough, and set up prefix अगर any.
  *
  ******************************************************************************/
 
-static char *acpi_ex_allocate_name_string(u32 prefix_count, u32 num_name_segs)
-{
-	char *temp_ptr;
-	char *name_string;
+अटल अक्षर *acpi_ex_allocate_name_string(u32 prefix_count, u32 num_name_segs)
+अणु
+	अक्षर *temp_ptr;
+	अक्षर *name_string;
 	u32 size_needed;
 
 	ACPI_FUNCTION_TRACE(ex_allocate_name_string);
 
 	/*
-	 * Allow room for all \ and ^ prefixes, all segments and a multi_name_prefix.
-	 * Also, one byte for the null terminator.
-	 * This may actually be somewhat longer than needed.
+	 * Allow room क्रम all \ and ^ prefixes, all segments and a multi_name_prefix.
+	 * Also, one byte क्रम the null terminator.
+	 * This may actually be somewhat दीर्घer than needed.
 	 */
-	if (prefix_count == ACPI_UINT32_MAX) {
+	अगर (prefix_count == ACPI_UINT32_MAX) अणु
 
-		/* Special case for root */
+		/* Special हाल क्रम root */
 
 		size_needed = 1 + (ACPI_NAMESEG_SIZE * num_name_segs) + 2 + 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		size_needed =
 		    prefix_count + (ACPI_NAMESEG_SIZE * num_name_segs) + 2 + 1;
-	}
+	पूर्ण
 
 	/*
-	 * Allocate a buffer for the name.
+	 * Allocate a buffer क्रम the name.
 	 * This buffer must be deleted by the caller!
 	 */
 	name_string = ACPI_ALLOCATE(size_needed);
-	if (!name_string) {
+	अगर (!name_string) अणु
 		ACPI_ERROR((AE_INFO,
 			    "Could not allocate size %u", size_needed));
-		return_PTR(NULL);
-	}
+		वापस_PTR(शून्य);
+	पूर्ण
 
 	temp_ptr = name_string;
 
-	/* Set up Root or Parent prefixes if needed */
+	/* Set up Root or Parent prefixes अगर needed */
 
-	if (prefix_count == ACPI_UINT32_MAX) {
+	अगर (prefix_count == ACPI_UINT32_MAX) अणु
 		*temp_ptr++ = AML_ROOT_PREFIX;
-	} else {
-		while (prefix_count--) {
+	पूर्ण अन्यथा अणु
+		जबतक (prefix_count--) अणु
 			*temp_ptr++ = AML_PARENT_PREFIX;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Set up Dual or Multi prefixes if needed */
+	/* Set up Dual or Multi prefixes अगर needed */
 
-	if (num_name_segs > 2) {
+	अगर (num_name_segs > 2) अणु
 
 		/* Set up multi prefixes   */
 
 		*temp_ptr++ = AML_MULTI_NAME_PREFIX;
-		*temp_ptr++ = (char)num_name_segs;
-	} else if (2 == num_name_segs) {
+		*temp_ptr++ = (अक्षर)num_name_segs;
+	पूर्ण अन्यथा अगर (2 == num_name_segs) अणु
 
 		/* Set up dual prefixes */
 
 		*temp_ptr++ = AML_DUAL_NAME_PREFIX;
-	}
+	पूर्ण
 
 	/*
 	 * Terminate string following prefixes. acpi_ex_name_segment() will
@@ -103,16 +104,16 @@ static char *acpi_ex_allocate_name_string(u32 prefix_count, u32 num_name_segs)
 	 */
 	*temp_ptr = 0;
 
-	return_PTR(name_string);
-}
+	वापस_PTR(name_string);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_name_segment
  *
- * PARAMETERS:  in_aml_address  - Pointer to the name in the AML code
- *              name_string     - Where to return the name. The name is appended
- *                                to any existing string to form a namepath
+ * PARAMETERS:  in_aml_address  - Poपूर्णांकer to the name in the AML code
+ *              name_string     - Where to वापस the name. The name is appended
+ *                                to any existing string to क्रमm a namepath
  *
  * RETURN:      Status
  *
@@ -120,71 +121,71 @@ static char *acpi_ex_allocate_name_string(u32 prefix_count, u32 num_name_segs)
  *
  ******************************************************************************/
 
-static acpi_status acpi_ex_name_segment(u8 ** in_aml_address, char *name_string)
-{
-	char *aml_address = (void *)*in_aml_address;
+अटल acpi_status acpi_ex_name_segment(u8 ** in_aml_address, अक्षर *name_string)
+अणु
+	अक्षर *aml_address = (व्योम *)*in_aml_address;
 	acpi_status status = AE_OK;
 	u32 index;
-	char char_buf[5];
+	अक्षर अक्षर_buf[5];
 
 	ACPI_FUNCTION_TRACE(ex_name_segment);
 
 	/*
-	 * If first character is a digit, then we know that we aren't looking
+	 * If first अक्षरacter is a digit, then we know that we aren't looking
 	 * at a valid name segment
 	 */
-	char_buf[0] = *aml_address;
+	अक्षर_buf[0] = *aml_address;
 
-	if ('0' <= char_buf[0] && char_buf[0] <= '9') {
-		ACPI_ERROR((AE_INFO, "Invalid leading digit: %c", char_buf[0]));
-		return_ACPI_STATUS(AE_CTRL_PENDING);
-	}
+	अगर ('0' <= char_buf[0] && char_buf[0] <= '9') अणु
+		ACPI_ERROR((AE_INFO, "Invalid leading digit: %c", अक्षर_buf[0]));
+		वापस_ACPI_STATUS(AE_CTRL_PENDING);
+	पूर्ण
 
-	for (index = 0;
+	क्रम (index = 0;
 	     (index < ACPI_NAMESEG_SIZE)
-	     && (acpi_ut_valid_name_char(*aml_address, 0)); index++) {
-		char_buf[index] = *aml_address++;
-	}
+	     && (acpi_ut_valid_name_अक्षर(*aml_address, 0)); index++) अणु
+		अक्षर_buf[index] = *aml_address++;
+	पूर्ण
 
 	/* Valid name segment  */
 
-	if (index == 4) {
+	अगर (index == 4) अणु
 
-		/* Found 4 valid characters */
+		/* Found 4 valid अक्षरacters */
 
-		char_buf[4] = '\0';
+		अक्षर_buf[4] = '\0';
 
-		if (name_string) {
+		अगर (name_string) अणु
 			ACPI_DEBUG_PRINT((ACPI_DB_NAMES,
-					  "Appending NameSeg %s\n", char_buf));
-			strcat(name_string, char_buf);
-		} else {
+					  "Appending NameSeg %s\n", अक्षर_buf));
+			म_जोड़ो(name_string, अक्षर_buf);
+		पूर्ण अन्यथा अणु
 			ACPI_DEBUG_PRINT((ACPI_DB_NAMES,
-					  "No Name string - %s\n", char_buf));
-		}
-	} else if (index == 0) {
+					  "No Name string - %s\n", अक्षर_buf));
+		पूर्ण
+	पूर्ण अन्यथा अगर (index == 0) अणु
 		/*
-		 * First character was not a valid name character,
+		 * First अक्षरacter was not a valid name अक्षरacter,
 		 * so we are looking at something other than a name.
 		 */
 		ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 				  "Leading character is not alpha: %02Xh (not a name)\n",
-				  char_buf[0]));
+				  अक्षर_buf[0]));
 		status = AE_CTRL_PENDING;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Segment started with one or more valid characters, but fewer than
+		 * Segment started with one or more valid अक्षरacters, but fewer than
 		 * the required 4
 		 */
 		status = AE_AML_BAD_NAME;
 		ACPI_ERROR((AE_INFO,
 			    "Bad character 0x%02x in name, at %p",
 			    *aml_address, aml_address));
-	}
+	पूर्ण
 
 	*in_aml_address = ACPI_CAST_PTR(u8, aml_address);
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -192,9 +193,9 @@ static acpi_status acpi_ex_name_segment(u8 ** in_aml_address, char *name_string)
  *
  * PARAMETERS:  data_type           - Object type to be associated with this
  *                                    name
- *              in_aml_address      - Pointer to the namestring in the AML code
- *              out_name_string     - Where the namestring is returned
- *              out_name_length     - Length of the returned string
+ *              in_aml_address      - Poपूर्णांकer to the namestring in the AML code
+ *              out_name_string     - Where the namestring is वापसed
+ *              out_name_length     - Length of the वापसed string
  *
  * RETURN:      Status, namestring and length
  *
@@ -206,37 +207,37 @@ static acpi_status acpi_ex_name_segment(u8 ** in_aml_address, char *name_string)
 acpi_status
 acpi_ex_get_name_string(acpi_object_type data_type,
 			u8 * in_aml_address,
-			char **out_name_string, u32 * out_name_length)
-{
+			अक्षर **out_name_string, u32 * out_name_length)
+अणु
 	acpi_status status = AE_OK;
 	u8 *aml_address = in_aml_address;
-	char *name_string = NULL;
+	अक्षर *name_string = शून्य;
 	u32 num_segments;
 	u32 prefix_count = 0;
 	u8 has_prefix = FALSE;
 
 	ACPI_FUNCTION_TRACE_PTR(ex_get_name_string, aml_address);
 
-	if (ACPI_TYPE_LOCAL_REGION_FIELD == data_type ||
+	अगर (ACPI_TYPE_LOCAL_REGION_FIELD == data_type ||
 	    ACPI_TYPE_LOCAL_BANK_FIELD == data_type ||
-	    ACPI_TYPE_LOCAL_INDEX_FIELD == data_type) {
+	    ACPI_TYPE_LOCAL_INDEX_FIELD == data_type) अणु
 
-		/* Disallow prefixes for types associated with field_unit names */
+		/* Disallow prefixes क्रम types associated with field_unit names */
 
 		name_string = acpi_ex_allocate_name_string(0, 1);
-		if (!name_string) {
+		अगर (!name_string) अणु
 			status = AE_NO_MEMORY;
-		} else {
+		पूर्ण अन्यथा अणु
 			status =
 			    acpi_ex_name_segment(&aml_address, name_string);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * data_type is not a field name.
-		 * Examine first character of name for root or parent prefix operators
+		 * Examine first अक्षरacter of name क्रम root or parent prefix चालकs
 		 */
-		switch (*aml_address) {
-		case AML_ROOT_PREFIX:
+		चयन (*aml_address) अणु
+		हाल AML_ROOT_PREFIX:
 
 			ACPI_DEBUG_PRINT((ACPI_DB_LOAD,
 					  "RootPrefix(\\) at %p\n",
@@ -249,36 +250,36 @@ acpi_ex_get_name_string(acpi_object_type data_type,
 			aml_address++;
 			prefix_count = ACPI_UINT32_MAX;
 			has_prefix = TRUE;
-			break;
+			अवरोध;
 
-		case AML_PARENT_PREFIX:
+		हाल AML_PARENT_PREFIX:
 
 			/* Increment past possibly multiple parent prefixes */
 
-			do {
+			करो अणु
 				ACPI_DEBUG_PRINT((ACPI_DB_LOAD,
-						  "ParentPrefix (^) at %p\n",
+						  "ParentPrefix (^) at %p\न",
 						  aml_address));
 
 				aml_address++;
 				prefix_count++;
 
-			} while (*aml_address == AML_PARENT_PREFIX);
+			पूर्ण जबतक (*aml_address == AML_PARENT_PREFIX);
 
 			has_prefix = TRUE;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 
-			/* Not a prefix character */
+			/* Not a prefix अक्षरacter */
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Examine first character of name for name segment prefix operator */
+		/* Examine first अक्षरacter of name क्रम name segment prefix चालक */
 
-		switch (*aml_address) {
-		case AML_DUAL_NAME_PREFIX:
+		चयन (*aml_address) अणु
+		हाल AML_DUAL_NAME_PREFIX:
 
 			ACPI_DEBUG_PRINT((ACPI_DB_LOAD,
 					  "DualNamePrefix at %p\n",
@@ -287,10 +288,10 @@ acpi_ex_get_name_string(acpi_object_type data_type,
 			aml_address++;
 			name_string =
 			    acpi_ex_allocate_name_string(prefix_count, 2);
-			if (!name_string) {
+			अगर (!name_string) अणु
 				status = AE_NO_MEMORY;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* Indicate that we processed a prefix */
 
@@ -298,20 +299,20 @@ acpi_ex_get_name_string(acpi_object_type data_type,
 
 			status =
 			    acpi_ex_name_segment(&aml_address, name_string);
-			if (ACPI_SUCCESS(status)) {
+			अगर (ACPI_SUCCESS(status)) अणु
 				status =
 				    acpi_ex_name_segment(&aml_address,
 							 name_string);
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case AML_MULTI_NAME_PREFIX:
+		हाल AML_MULTI_NAME_PREFIX:
 
 			ACPI_DEBUG_PRINT((ACPI_DB_LOAD,
 					  "MultiNamePrefix at %p\n",
 					  aml_address));
 
-			/* Fetch count of segments remaining in name path */
+			/* Fetch count of segments reमुख्यing in name path */
 
 			aml_address++;
 			num_segments = *aml_address;
@@ -319,80 +320,80 @@ acpi_ex_get_name_string(acpi_object_type data_type,
 			name_string =
 			    acpi_ex_allocate_name_string(prefix_count,
 							 num_segments);
-			if (!name_string) {
+			अगर (!name_string) अणु
 				status = AE_NO_MEMORY;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* Indicate that we processed a prefix */
 
 			aml_address++;
 			has_prefix = TRUE;
 
-			while (num_segments &&
+			जबतक (num_segments &&
 			       (status =
 				acpi_ex_name_segment(&aml_address,
-						     name_string)) == AE_OK) {
+						     name_string)) == AE_OK) अणु
 				num_segments--;
-			}
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case 0:
+		हाल 0:
 
 			/* null_name valid as of 8-12-98 ASL/AML Grammar Update */
 
-			if (prefix_count == ACPI_UINT32_MAX) {
+			अगर (prefix_count == ACPI_UINT32_MAX) अणु
 				ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 						  "NameSeg is \"\\\" followed by NULL\n"));
-			}
+			पूर्ण
 
-			/* Consume the NULL byte */
+			/* Consume the शून्य byte */
 
 			aml_address++;
 			name_string =
 			    acpi_ex_allocate_name_string(prefix_count, 0);
-			if (!name_string) {
+			अगर (!name_string) अणु
 				status = AE_NO_MEMORY;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 
 			/* Name segment string */
 
 			name_string =
 			    acpi_ex_allocate_name_string(prefix_count, 1);
-			if (!name_string) {
+			अगर (!name_string) अणु
 				status = AE_NO_MEMORY;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			status =
 			    acpi_ex_name_segment(&aml_address, name_string);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (AE_CTRL_PENDING == status && has_prefix) {
+	अगर (AE_CTRL_PENDING == status && has_prefix) अणु
 
 		/* Ran out of segments after processing a prefix */
 
 		ACPI_ERROR((AE_INFO, "Malformed Name at %p", name_string));
 		status = AE_AML_BAD_NAME;
-	}
+	पूर्ण
 
-	if (ACPI_FAILURE(status)) {
-		if (name_string) {
+	अगर (ACPI_FAILURE(status)) अणु
+		अगर (name_string) अणु
 			ACPI_FREE(name_string);
-		}
-		return_ACPI_STATUS(status);
-	}
+		पूर्ण
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	*out_name_string = name_string;
 	*out_name_length = (u32) (aml_address - in_aml_address);
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण

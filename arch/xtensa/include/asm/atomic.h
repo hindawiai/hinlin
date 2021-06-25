@@ -1,191 +1,192 @@
+<शैली गुरु>
 /*
- * include/asm-xtensa/atomic.h
+ * include/यंत्र-xtensa/atomic.h
  *
- * Atomic operations that C can't guarantee us.  Useful for resource counting..
+ * Atomic operations that C can't guarantee us.  Useful क्रम resource counting..
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001 - 2008 Tensilica Inc.
  */
 
-#ifndef _XTENSA_ATOMIC_H
-#define _XTENSA_ATOMIC_H
+#अगर_अघोषित _XTENSA_ATOMIC_H
+#घोषणा _XTENSA_ATOMIC_H
 
-#include <linux/stringify.h>
-#include <linux/types.h>
-#include <asm/processor.h>
-#include <asm/cmpxchg.h>
-#include <asm/barrier.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/cmpxchg.h>
+#समावेश <यंत्र/barrier.h>
 
 /*
  * This Xtensa implementation assumes that the right mechanism
- * for exclusion is for locking interrupts to level EXCM_LEVEL.
+ * क्रम exclusion is क्रम locking पूर्णांकerrupts to level EXCM_LEVEL.
  *
- * Locking interrupts looks like this:
+ * Locking पूर्णांकerrupts looks like this:
  *
  *    rsil a15, TOPLEVEL
  *    <code>
  *    wsr  a15, PS
  *    rsync
  *
- * Note that a15 is used here because the register allocation
- * done by the compiler is not guaranteed and a window overflow
- * may not occur between the rsil and wsr instructions. By using
+ * Note that a15 is used here because the रेजिस्टर allocation
+ * करोne by the compiler is not guaranteed and a winकरोw overflow
+ * may not occur between the rsil and wsr inकाष्ठाions. By using
  * a15 in the rsil, the machine is guaranteed to be in a state
- * where no register reference will cause an overflow.
+ * where no रेजिस्टर reference will cause an overflow.
  */
 
 /**
- * atomic_read - read atomic variable
- * @v: pointer of type atomic_t
+ * atomic_पढ़ो - पढ़ो atomic variable
+ * @v: poपूर्णांकer of type atomic_t
  *
- * Atomically reads the value of @v.
+ * Atomically पढ़ोs the value of @v.
  */
-#define atomic_read(v)		READ_ONCE((v)->counter)
+#घोषणा atomic_पढ़ो(v)		READ_ONCE((v)->counter)
 
 /**
  * atomic_set - set atomic variable
- * @v: pointer of type atomic_t
+ * @v: poपूर्णांकer of type atomic_t
  * @i: required value
  *
  * Atomically sets the value of @v to @i.
  */
-#define atomic_set(v,i)		WRITE_ONCE((v)->counter, (i))
+#घोषणा atomic_set(v,i)		WRITE_ONCE((v)->counter, (i))
 
-#if XCHAL_HAVE_EXCLUSIVE
-#define ATOMIC_OP(op)							\
-static inline void atomic_##op(int i, atomic_t *v)			\
-{									\
-	unsigned long tmp;						\
-	int result;							\
+#अगर XCHAL_HAVE_EXCLUSIVE
+#घोषणा ATOMIC_OP(op)							\
+अटल अंतरभूत व्योम atomic_##op(पूर्णांक i, atomic_t *v)			\
+अणु									\
+	अचिन्हित दीर्घ पंचांगp;						\
+	पूर्णांक result;							\
 									\
-	__asm__ __volatile__(						\
+	__यंत्र__ __अस्थिर__(						\
 			"1:     l32ex   %[tmp], %[addr]\n"		\
 			"       " #op " %[result], %[tmp], %[i]\n"	\
 			"       s32ex   %[result], %[addr]\n"		\
 			"       getex   %[result]\n"			\
 			"       beqz    %[result], 1b\n"		\
-			: [result] "=&a" (result), [tmp] "=&a" (tmp)	\
+			: [result] "=&a" (result), [पंचांगp] "=&a" (पंचांगp)	\
 			: [i] "a" (i), [addr] "a" (v)			\
 			: "memory"					\
 			);						\
-}									\
+पूर्ण									\
 
-#define ATOMIC_OP_RETURN(op)						\
-static inline int atomic_##op##_return(int i, atomic_t *v)		\
-{									\
-	unsigned long tmp;						\
-	int result;							\
+#घोषणा ATOMIC_OP_RETURN(op)						\
+अटल अंतरभूत पूर्णांक atomic_##op##_वापस(पूर्णांक i, atomic_t *v)		\
+अणु									\
+	अचिन्हित दीर्घ पंचांगp;						\
+	पूर्णांक result;							\
 									\
-	__asm__ __volatile__(						\
+	__यंत्र__ __अस्थिर__(						\
 			"1:     l32ex   %[tmp], %[addr]\n"		\
 			"       " #op " %[result], %[tmp], %[i]\n"	\
 			"       s32ex   %[result], %[addr]\n"		\
 			"       getex   %[result]\n"			\
 			"       beqz    %[result], 1b\n"		\
 			"       " #op " %[result], %[tmp], %[i]\n"	\
-			: [result] "=&a" (result), [tmp] "=&a" (tmp)	\
+			: [result] "=&a" (result), [पंचांगp] "=&a" (पंचांगp)	\
 			: [i] "a" (i), [addr] "a" (v)			\
 			: "memory"					\
 			);						\
 									\
-	return result;							\
-}
+	वापस result;							\
+पूर्ण
 
-#define ATOMIC_FETCH_OP(op)						\
-static inline int atomic_fetch_##op(int i, atomic_t *v)			\
-{									\
-	unsigned long tmp;						\
-	int result;							\
+#घोषणा ATOMIC_FETCH_OP(op)						\
+अटल अंतरभूत पूर्णांक atomic_fetch_##op(पूर्णांक i, atomic_t *v)			\
+अणु									\
+	अचिन्हित दीर्घ पंचांगp;						\
+	पूर्णांक result;							\
 									\
-	__asm__ __volatile__(						\
+	__यंत्र__ __अस्थिर__(						\
 			"1:     l32ex   %[tmp], %[addr]\n"		\
 			"       " #op " %[result], %[tmp], %[i]\n"	\
 			"       s32ex   %[result], %[addr]\n"		\
 			"       getex   %[result]\n"			\
 			"       beqz    %[result], 1b\n"		\
-			: [result] "=&a" (result), [tmp] "=&a" (tmp)	\
+			: [result] "=&a" (result), [पंचांगp] "=&a" (पंचांगp)	\
 			: [i] "a" (i), [addr] "a" (v)			\
 			: "memory"					\
 			);						\
 									\
-	return tmp;							\
-}
+	वापस पंचांगp;							\
+पूर्ण
 
-#elif XCHAL_HAVE_S32C1I
-#define ATOMIC_OP(op)							\
-static inline void atomic_##op(int i, atomic_t * v)			\
-{									\
-	unsigned long tmp;						\
-	int result;							\
+#या_अगर XCHAL_HAVE_S32C1I
+#घोषणा ATOMIC_OP(op)							\
+अटल अंतरभूत व्योम atomic_##op(पूर्णांक i, atomic_t * v)			\
+अणु									\
+	अचिन्हित दीर्घ पंचांगp;						\
+	पूर्णांक result;							\
 									\
-	__asm__ __volatile__(						\
+	__यंत्र__ __अस्थिर__(						\
 			"1:     l32i    %[tmp], %[mem]\n"		\
 			"       wsr     %[tmp], scompare1\n"		\
 			"       " #op " %[result], %[tmp], %[i]\n"	\
 			"       s32c1i  %[result], %[mem]\n"		\
 			"       bne     %[result], %[tmp], 1b\n"	\
-			: [result] "=&a" (result), [tmp] "=&a" (tmp),	\
+			: [result] "=&a" (result), [पंचांगp] "=&a" (पंचांगp),	\
 			  [mem] "+m" (*v)				\
 			: [i] "a" (i)					\
 			: "memory"					\
 			);						\
-}									\
+पूर्ण									\
 
-#define ATOMIC_OP_RETURN(op)						\
-static inline int atomic_##op##_return(int i, atomic_t * v)		\
-{									\
-	unsigned long tmp;						\
-	int result;							\
+#घोषणा ATOMIC_OP_RETURN(op)						\
+अटल अंतरभूत पूर्णांक atomic_##op##_वापस(पूर्णांक i, atomic_t * v)		\
+अणु									\
+	अचिन्हित दीर्घ पंचांगp;						\
+	पूर्णांक result;							\
 									\
-	__asm__ __volatile__(						\
+	__यंत्र__ __अस्थिर__(						\
 			"1:     l32i    %[tmp], %[mem]\n"		\
 			"       wsr     %[tmp], scompare1\n"		\
 			"       " #op " %[result], %[tmp], %[i]\n"	\
 			"       s32c1i  %[result], %[mem]\n"		\
 			"       bne     %[result], %[tmp], 1b\n"	\
 			"       " #op " %[result], %[result], %[i]\n"	\
-			: [result] "=&a" (result), [tmp] "=&a" (tmp),	\
+			: [result] "=&a" (result), [पंचांगp] "=&a" (पंचांगp),	\
 			  [mem] "+m" (*v)				\
 			: [i] "a" (i)					\
 			: "memory"					\
 			);						\
 									\
-	return result;							\
-}
+	वापस result;							\
+पूर्ण
 
-#define ATOMIC_FETCH_OP(op)						\
-static inline int atomic_fetch_##op(int i, atomic_t * v)		\
-{									\
-	unsigned long tmp;						\
-	int result;							\
+#घोषणा ATOMIC_FETCH_OP(op)						\
+अटल अंतरभूत पूर्णांक atomic_fetch_##op(पूर्णांक i, atomic_t * v)		\
+अणु									\
+	अचिन्हित दीर्घ पंचांगp;						\
+	पूर्णांक result;							\
 									\
-	__asm__ __volatile__(						\
+	__यंत्र__ __अस्थिर__(						\
 			"1:     l32i    %[tmp], %[mem]\n"		\
 			"       wsr     %[tmp], scompare1\n"		\
 			"       " #op " %[result], %[tmp], %[i]\n"	\
 			"       s32c1i  %[result], %[mem]\n"		\
 			"       bne     %[result], %[tmp], 1b\n"	\
-			: [result] "=&a" (result), [tmp] "=&a" (tmp),	\
+			: [result] "=&a" (result), [पंचांगp] "=&a" (पंचांगp),	\
 			  [mem] "+m" (*v)				\
 			: [i] "a" (i)					\
 			: "memory"					\
 			);						\
 									\
-	return result;							\
-}
+	वापस result;							\
+पूर्ण
 
-#else /* XCHAL_HAVE_S32C1I */
+#अन्यथा /* XCHAL_HAVE_S32C1I */
 
-#define ATOMIC_OP(op)							\
-static inline void atomic_##op(int i, atomic_t * v)			\
-{									\
-	unsigned int vval;						\
+#घोषणा ATOMIC_OP(op)							\
+अटल अंतरभूत व्योम atomic_##op(पूर्णांक i, atomic_t * v)			\
+अणु									\
+	अचिन्हित पूर्णांक vval;						\
 									\
-	__asm__ __volatile__(						\
-			"       rsil    a15, "__stringify(TOPLEVEL)"\n"	\
+	__यंत्र__ __अस्थिर__(						\
+			"       rsil    a15, "__stringअगरy(TOPLEVEL)"\n"	\
 			"       l32i    %[result], %[mem]\n"		\
 			"       " #op " %[result], %[result], %[i]\n"	\
 			"       s32i    %[result], %[mem]\n"		\
@@ -195,15 +196,15 @@ static inline void atomic_##op(int i, atomic_t * v)			\
 			: [i] "a" (i)					\
 			: "a15", "memory"				\
 			);						\
-}									\
+पूर्ण									\
 
-#define ATOMIC_OP_RETURN(op)						\
-static inline int atomic_##op##_return(int i, atomic_t * v)		\
-{									\
-	unsigned int vval;						\
+#घोषणा ATOMIC_OP_RETURN(op)						\
+अटल अंतरभूत पूर्णांक atomic_##op##_वापस(पूर्णांक i, atomic_t * v)		\
+अणु									\
+	अचिन्हित पूर्णांक vval;						\
 									\
-	__asm__ __volatile__(						\
-			"       rsil    a15,"__stringify(TOPLEVEL)"\n"	\
+	__यंत्र__ __अस्थिर__(						\
+			"       rsil    a15,"__stringअगरy(TOPLEVEL)"\n"	\
 			"       l32i    %[result], %[mem]\n"		\
 			"       " #op " %[result], %[result], %[i]\n"	\
 			"       s32i    %[result], %[mem]\n"		\
@@ -214,50 +215,50 @@ static inline int atomic_##op##_return(int i, atomic_t * v)		\
 			: "a15", "memory"				\
 			);						\
 									\
-	return vval;							\
-}
+	वापस vval;							\
+पूर्ण
 
-#define ATOMIC_FETCH_OP(op)						\
-static inline int atomic_fetch_##op(int i, atomic_t * v)		\
-{									\
-	unsigned int tmp, vval;						\
+#घोषणा ATOMIC_FETCH_OP(op)						\
+अटल अंतरभूत पूर्णांक atomic_fetch_##op(पूर्णांक i, atomic_t * v)		\
+अणु									\
+	अचिन्हित पूर्णांक पंचांगp, vval;						\
 									\
-	__asm__ __volatile__(						\
-			"       rsil    a15,"__stringify(TOPLEVEL)"\n"	\
+	__यंत्र__ __अस्थिर__(						\
+			"       rsil    a15,"__stringअगरy(TOPLEVEL)"\n"	\
 			"       l32i    %[result], %[mem]\n"		\
 			"       " #op " %[tmp], %[result], %[i]\n"	\
 			"       s32i    %[tmp], %[mem]\n"		\
 			"       wsr     a15, ps\n"			\
 			"       rsync\n"				\
-			: [result] "=&a" (vval), [tmp] "=&a" (tmp),	\
+			: [result] "=&a" (vval), [पंचांगp] "=&a" (पंचांगp),	\
 			  [mem] "+m" (*v)				\
 			: [i] "a" (i)					\
 			: "a15", "memory"				\
 			);						\
 									\
-	return vval;							\
-}
+	वापस vval;							\
+पूर्ण
 
-#endif /* XCHAL_HAVE_S32C1I */
+#पूर्ण_अगर /* XCHAL_HAVE_S32C1I */
 
-#define ATOMIC_OPS(op) ATOMIC_OP(op) ATOMIC_FETCH_OP(op) ATOMIC_OP_RETURN(op)
+#घोषणा ATOMIC_OPS(op) ATOMIC_OP(op) ATOMIC_FETCH_OP(op) ATOMIC_OP_RETURN(op)
 
 ATOMIC_OPS(add)
 ATOMIC_OPS(sub)
 
-#undef ATOMIC_OPS
-#define ATOMIC_OPS(op) ATOMIC_OP(op) ATOMIC_FETCH_OP(op)
+#अघोषित ATOMIC_OPS
+#घोषणा ATOMIC_OPS(op) ATOMIC_OP(op) ATOMIC_FETCH_OP(op)
 
 ATOMIC_OPS(and)
 ATOMIC_OPS(or)
 ATOMIC_OPS(xor)
 
-#undef ATOMIC_OPS
-#undef ATOMIC_FETCH_OP
-#undef ATOMIC_OP_RETURN
-#undef ATOMIC_OP
+#अघोषित ATOMIC_OPS
+#अघोषित ATOMIC_FETCH_OP
+#अघोषित ATOMIC_OP_RETURN
+#अघोषित ATOMIC_OP
 
-#define atomic_cmpxchg(v, o, n) ((int)cmpxchg(&((v)->counter), (o), (n)))
-#define atomic_xchg(v, new) (xchg(&((v)->counter), new))
+#घोषणा atomic_cmpxchg(v, o, n) ((पूर्णांक)cmpxchg(&((v)->counter), (o), (n)))
+#घोषणा atomic_xchg(v, new) (xchg(&((v)->counter), new))
 
-#endif /* _XTENSA_ATOMIC_H */
+#पूर्ण_अगर /* _XTENSA_ATOMIC_H */

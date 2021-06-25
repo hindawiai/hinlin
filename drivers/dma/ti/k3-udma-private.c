@@ -1,183 +1,184 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 2019 Texas Instruments Incorporated - http://www.ti.com
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
-int xudma_navss_psil_pair(struct udma_dev *ud, u32 src_thread, u32 dst_thread)
-{
-	return navss_psil_pair(ud, src_thread, dst_thread);
-}
+पूर्णांक xudma_navss_psil_pair(काष्ठा udma_dev *ud, u32 src_thपढ़ो, u32 dst_thपढ़ो)
+अणु
+	वापस navss_psil_pair(ud, src_thपढ़ो, dst_thपढ़ो);
+पूर्ण
 EXPORT_SYMBOL(xudma_navss_psil_pair);
 
-int xudma_navss_psil_unpair(struct udma_dev *ud, u32 src_thread, u32 dst_thread)
-{
-	return navss_psil_unpair(ud, src_thread, dst_thread);
-}
+पूर्णांक xudma_navss_psil_unpair(काष्ठा udma_dev *ud, u32 src_thपढ़ो, u32 dst_thपढ़ो)
+अणु
+	वापस navss_psil_unpair(ud, src_thपढ़ो, dst_thपढ़ो);
+पूर्ण
 EXPORT_SYMBOL(xudma_navss_psil_unpair);
 
-struct udma_dev *of_xudma_dev_get(struct device_node *np, const char *property)
-{
-	struct device_node *udma_node = np;
-	struct platform_device *pdev;
-	struct udma_dev *ud;
+काष्ठा udma_dev *of_xudma_dev_get(काष्ठा device_node *np, स्थिर अक्षर *property)
+अणु
+	काष्ठा device_node *udma_node = np;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा udma_dev *ud;
 
-	if (property) {
+	अगर (property) अणु
 		udma_node = of_parse_phandle(np, property, 0);
-		if (!udma_node) {
+		अगर (!udma_node) अणु
 			pr_err("UDMA node is not found\n");
-			return ERR_PTR(-ENODEV);
-		}
-	}
+			वापस ERR_PTR(-ENODEV);
+		पूर्ण
+	पूर्ण
 
 	pdev = of_find_device_by_node(udma_node);
-	if (!pdev) {
+	अगर (!pdev) अणु
 		pr_debug("UDMA device not found\n");
-		return ERR_PTR(-EPROBE_DEFER);
-	}
+		वापस ERR_PTR(-EPROBE_DEFER);
+	पूर्ण
 
-	if (np != udma_node)
+	अगर (np != udma_node)
 		of_node_put(udma_node);
 
-	ud = platform_get_drvdata(pdev);
-	if (!ud) {
+	ud = platक्रमm_get_drvdata(pdev);
+	अगर (!ud) अणु
 		pr_debug("UDMA has not been probed\n");
 		put_device(&pdev->dev);
-		return ERR_PTR(-EPROBE_DEFER);
-	}
+		वापस ERR_PTR(-EPROBE_DEFER);
+	पूर्ण
 
-	return ud;
-}
+	वापस ud;
+पूर्ण
 EXPORT_SYMBOL(of_xudma_dev_get);
 
-struct device *xudma_get_device(struct udma_dev *ud)
-{
-	return ud->dev;
-}
+काष्ठा device *xudma_get_device(काष्ठा udma_dev *ud)
+अणु
+	वापस ud->dev;
+पूर्ण
 EXPORT_SYMBOL(xudma_get_device);
 
-struct k3_ringacc *xudma_get_ringacc(struct udma_dev *ud)
-{
-	return ud->ringacc;
-}
+काष्ठा k3_ringacc *xudma_get_ringacc(काष्ठा udma_dev *ud)
+अणु
+	वापस ud->ringacc;
+पूर्ण
 EXPORT_SYMBOL(xudma_get_ringacc);
 
-u32 xudma_dev_get_psil_base(struct udma_dev *ud)
-{
-	return ud->psil_base;
-}
+u32 xudma_dev_get_psil_base(काष्ठा udma_dev *ud)
+अणु
+	वापस ud->psil_base;
+पूर्ण
 EXPORT_SYMBOL(xudma_dev_get_psil_base);
 
-struct udma_tisci_rm *xudma_dev_get_tisci_rm(struct udma_dev *ud)
-{
-	return &ud->tisci_rm;
-}
+काष्ठा udma_tisci_rm *xudma_dev_get_tisci_rm(काष्ठा udma_dev *ud)
+अणु
+	वापस &ud->tisci_rm;
+पूर्ण
 EXPORT_SYMBOL(xudma_dev_get_tisci_rm);
 
-int xudma_alloc_gp_rflow_range(struct udma_dev *ud, int from, int cnt)
-{
-	return __udma_alloc_gp_rflow_range(ud, from, cnt);
-}
+पूर्णांक xudma_alloc_gp_rflow_range(काष्ठा udma_dev *ud, पूर्णांक from, पूर्णांक cnt)
+अणु
+	वापस __udma_alloc_gp_rflow_range(ud, from, cnt);
+पूर्ण
 EXPORT_SYMBOL(xudma_alloc_gp_rflow_range);
 
-int xudma_free_gp_rflow_range(struct udma_dev *ud, int from, int cnt)
-{
-	return __udma_free_gp_rflow_range(ud, from, cnt);
-}
-EXPORT_SYMBOL(xudma_free_gp_rflow_range);
+पूर्णांक xudma_मुक्त_gp_rflow_range(काष्ठा udma_dev *ud, पूर्णांक from, पूर्णांक cnt)
+अणु
+	वापस __udma_मुक्त_gp_rflow_range(ud, from, cnt);
+पूर्ण
+EXPORT_SYMBOL(xudma_मुक्त_gp_rflow_range);
 
-bool xudma_rflow_is_gp(struct udma_dev *ud, int id)
-{
-	if (!ud->rflow_gp_map)
-		return false;
+bool xudma_rflow_is_gp(काष्ठा udma_dev *ud, पूर्णांक id)
+अणु
+	अगर (!ud->rflow_gp_map)
+		वापस false;
 
-	return !test_bit(id, ud->rflow_gp_map);
-}
+	वापस !test_bit(id, ud->rflow_gp_map);
+पूर्ण
 EXPORT_SYMBOL(xudma_rflow_is_gp);
 
-#define XUDMA_GET_PUT_RESOURCE(res)					\
-struct udma_##res *xudma_##res##_get(struct udma_dev *ud, int id)	\
-{									\
-	return __udma_reserve_##res(ud, UDMA_TP_NORMAL, id);		\
-}									\
+#घोषणा XUDMA_GET_PUT_RESOURCE(res)					\
+काष्ठा udma_##res *xudma_##res##_get(काष्ठा udma_dev *ud, पूर्णांक id)	\
+अणु									\
+	वापस __udma_reserve_##res(ud, UDMA_TP_NORMAL, id);		\
+पूर्ण									\
 EXPORT_SYMBOL(xudma_##res##_get);					\
 									\
-void xudma_##res##_put(struct udma_dev *ud, struct udma_##res *p)	\
-{									\
+व्योम xudma_##res##_put(काष्ठा udma_dev *ud, काष्ठा udma_##res *p)	\
+अणु									\
 	clear_bit(p->id, ud->res##_map);				\
-}									\
+पूर्ण									\
 EXPORT_SYMBOL(xudma_##res##_put)
 XUDMA_GET_PUT_RESOURCE(tchan);
 XUDMA_GET_PUT_RESOURCE(rchan);
 
-struct udma_rflow *xudma_rflow_get(struct udma_dev *ud, int id)
-{
-	return __udma_get_rflow(ud, id);
-}
+काष्ठा udma_rflow *xudma_rflow_get(काष्ठा udma_dev *ud, पूर्णांक id)
+अणु
+	वापस __udma_get_rflow(ud, id);
+पूर्ण
 EXPORT_SYMBOL(xudma_rflow_get);
 
-void xudma_rflow_put(struct udma_dev *ud, struct udma_rflow *p)
-{
+व्योम xudma_rflow_put(काष्ठा udma_dev *ud, काष्ठा udma_rflow *p)
+अणु
 	__udma_put_rflow(ud, p);
-}
+पूर्ण
 EXPORT_SYMBOL(xudma_rflow_put);
 
-int xudma_get_rflow_ring_offset(struct udma_dev *ud)
-{
-	return ud->tflow_cnt;
-}
+पूर्णांक xudma_get_rflow_ring_offset(काष्ठा udma_dev *ud)
+अणु
+	वापस ud->tflow_cnt;
+पूर्ण
 EXPORT_SYMBOL(xudma_get_rflow_ring_offset);
 
-#define XUDMA_GET_RESOURCE_ID(res)					\
-int xudma_##res##_get_id(struct udma_##res *p)				\
-{									\
-	return p->id;							\
-}									\
+#घोषणा XUDMA_GET_RESOURCE_ID(res)					\
+पूर्णांक xudma_##res##_get_id(काष्ठा udma_##res *p)				\
+अणु									\
+	वापस p->id;							\
+पूर्ण									\
 EXPORT_SYMBOL(xudma_##res##_get_id)
 XUDMA_GET_RESOURCE_ID(tchan);
 XUDMA_GET_RESOURCE_ID(rchan);
 XUDMA_GET_RESOURCE_ID(rflow);
 
-/* Exported register access functions */
-#define XUDMA_RT_IO_FUNCTIONS(res)					\
-u32 xudma_##res##rt_read(struct udma_##res *p, int reg)			\
-{									\
-	if (!p)								\
-		return 0;						\
-	return udma_read(p->reg_rt, reg);				\
-}									\
-EXPORT_SYMBOL(xudma_##res##rt_read);					\
+/* Exported रेजिस्टर access functions */
+#घोषणा XUDMA_RT_IO_FUNCTIONS(res)					\
+u32 xudma_##res##rt_पढ़ो(काष्ठा udma_##res *p, पूर्णांक reg)			\
+अणु									\
+	अगर (!p)								\
+		वापस 0;						\
+	वापस udma_पढ़ो(p->reg_rt, reg);				\
+पूर्ण									\
+EXPORT_SYMBOL(xudma_##res##rt_पढ़ो);					\
 									\
-void xudma_##res##rt_write(struct udma_##res *p, int reg, u32 val)	\
-{									\
-	if (!p)								\
-		return;							\
-	udma_write(p->reg_rt, reg, val);				\
-}									\
-EXPORT_SYMBOL(xudma_##res##rt_write)
+व्योम xudma_##res##rt_ग_लिखो(काष्ठा udma_##res *p, पूर्णांक reg, u32 val)	\
+अणु									\
+	अगर (!p)								\
+		वापस;							\
+	udma_ग_लिखो(p->reg_rt, reg, val);				\
+पूर्ण									\
+EXPORT_SYMBOL(xudma_##res##rt_ग_लिखो)
 XUDMA_RT_IO_FUNCTIONS(tchan);
 XUDMA_RT_IO_FUNCTIONS(rchan);
 
-int xudma_is_pktdma(struct udma_dev *ud)
-{
-	return ud->match_data->type == DMA_TYPE_PKTDMA;
-}
+पूर्णांक xudma_is_pktdma(काष्ठा udma_dev *ud)
+अणु
+	वापस ud->match_data->type == DMA_TYPE_PKTDMA;
+पूर्ण
 EXPORT_SYMBOL(xudma_is_pktdma);
 
-int xudma_pktdma_tflow_get_irq(struct udma_dev *ud, int udma_tflow_id)
-{
-	const struct udma_oes_offsets *oes = &ud->soc_data->oes;
+पूर्णांक xudma_pktdma_tflow_get_irq(काष्ठा udma_dev *ud, पूर्णांक udma_tflow_id)
+अणु
+	स्थिर काष्ठा udma_oes_offsets *oes = &ud->soc_data->oes;
 
-	return ti_sci_inta_msi_get_virq(ud->dev, udma_tflow_id +
+	वापस ti_sci_पूर्णांकa_msi_get_virq(ud->dev, udma_tflow_id +
 					oes->pktdma_tchan_flow);
-}
+पूर्ण
 EXPORT_SYMBOL(xudma_pktdma_tflow_get_irq);
 
-int xudma_pktdma_rflow_get_irq(struct udma_dev *ud, int udma_rflow_id)
-{
-	const struct udma_oes_offsets *oes = &ud->soc_data->oes;
+पूर्णांक xudma_pktdma_rflow_get_irq(काष्ठा udma_dev *ud, पूर्णांक udma_rflow_id)
+अणु
+	स्थिर काष्ठा udma_oes_offsets *oes = &ud->soc_data->oes;
 
-	return ti_sci_inta_msi_get_virq(ud->dev, udma_rflow_id +
+	वापस ti_sci_पूर्णांकa_msi_get_virq(ud->dev, udma_rflow_id +
 					oes->pktdma_rchan_flow);
-}
+पूर्ण
 EXPORT_SYMBOL(xudma_pktdma_rflow_get_irq);

@@ -1,13 +1,14 @@
+<शैली गुरु>
 /* Wireless extensions support.
  *
- * See copyright notice in main.c
+ * See copyright notice in मुख्य.c
  */
-#ifndef _ORINOCO_WEXT_H_
-#define _ORINOCO_WEXT_H_
+#अगर_अघोषित _ORINOCO_WEXT_H_
+#घोषणा _ORINOCO_WEXT_H_
 
-#include <net/iw_handler.h>
+#समावेश <net/iw_handler.h>
 
 /* Structure defining all our WEXT handlers */
-extern const struct iw_handler_def orinoco_handler_def;
+बाह्य स्थिर काष्ठा iw_handler_def orinoco_handler_def;
 
-#endif /* _ORINOCO_WEXT_H_ */
+#पूर्ण_अगर /* _ORINOCO_WEXT_H_ */

@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* Copyright (C) 2016 National Instruments Corp.
  */
-#ifndef __PHY_LED_TRIGGERS
-#define __PHY_LED_TRIGGERS
+#अगर_अघोषित __PHY_LED_TRIGGERS
+#घोषणा __PHY_LED_TRIGGERS
 
-struct phy_device;
+काष्ठा phy_device;
 
-#ifdef CONFIG_LED_TRIGGER_PHY
+#अगर_घोषित CONFIG_LED_TRIGGER_PHY
 
-#include <linux/leds.h>
-#include <linux/phy.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/phy.h>
 
-#define PHY_LED_TRIGGER_SPEED_SUFFIX_SIZE	11
+#घोषणा PHY_LED_TRIGGER_SPEED_SUFFIX_SIZE	11
 
-#define PHY_LINK_LED_TRIGGER_NAME_SIZE (MII_BUS_ID_SIZE + \
-				       sizeof_field(struct mdio_device, addr)+\
+#घोषणा PHY_LINK_LED_TRIGGER_NAME_SIZE (MII_BUS_ID_SIZE + \
+				       माप_field(काष्ठा mdio_device, addr)+\
 				       PHY_LED_TRIGGER_SPEED_SUFFIX_SIZE)
 
-struct phy_led_trigger {
-	struct led_trigger trigger;
-	char name[PHY_LINK_LED_TRIGGER_NAME_SIZE];
-	unsigned int speed;
-};
+काष्ठा phy_led_trigger अणु
+	काष्ठा led_trigger trigger;
+	अक्षर name[PHY_LINK_LED_TRIGGER_NAME_SIZE];
+	अचिन्हित पूर्णांक speed;
+पूर्ण;
 
 
-extern int phy_led_triggers_register(struct phy_device *phy);
-extern void phy_led_triggers_unregister(struct phy_device *phy);
-extern void phy_led_trigger_change_speed(struct phy_device *phy);
+बाह्य पूर्णांक phy_led_triggers_रेजिस्टर(काष्ठा phy_device *phy);
+बाह्य व्योम phy_led_triggers_unरेजिस्टर(काष्ठा phy_device *phy);
+बाह्य व्योम phy_led_trigger_change_speed(काष्ठा phy_device *phy);
 
-#else
+#अन्यथा
 
-static inline int phy_led_triggers_register(struct phy_device *phy)
-{
-	return 0;
-}
-static inline void phy_led_triggers_unregister(struct phy_device *phy) { }
-static inline void phy_led_trigger_change_speed(struct phy_device *phy) { }
+अटल अंतरभूत पूर्णांक phy_led_triggers_रेजिस्टर(काष्ठा phy_device *phy)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम phy_led_triggers_unरेजिस्टर(काष्ठा phy_device *phy) अणु पूर्ण
+अटल अंतरभूत व्योम phy_led_trigger_change_speed(काष्ठा phy_device *phy) अणु पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef	__SPI_BITBANG_H
-#define	__SPI_BITBANG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित	__SPI_BITBANG_H
+#घोषणा	__SPI_BITBANG_H
 
-#include <linux/workqueue.h>
+#समावेश <linux/workqueue.h>
 
-struct spi_bitbang {
-	struct mutex		lock;
+काष्ठा spi_bitbang अणु
+	काष्ठा mutex		lock;
 	u8			busy;
 	u8			use_dma;
 	u16			flags;		/* extra spi->mode support */
 
-	struct spi_master	*master;
+	काष्ठा spi_master	*master;
 
-	/* setup_transfer() changes clock and/or wordsize to match settings
-	 * for this transfer; zeroes restore defaults from spi_device.
+	/* setup_transfer() changes घड़ी and/or wordsize to match settings
+	 * क्रम this transfer; zeroes restore शेषs from spi_device.
 	 */
-	int	(*setup_transfer)(struct spi_device *spi,
-			struct spi_transfer *t);
+	पूर्णांक	(*setup_transfer)(काष्ठा spi_device *spi,
+			काष्ठा spi_transfer *t);
 
-	void	(*chipselect)(struct spi_device *spi, int is_on);
-#define	BITBANG_CS_ACTIVE	1	/* normally nCS, active low */
-#define	BITBANG_CS_INACTIVE	0
+	व्योम	(*chipselect)(काष्ठा spi_device *spi, पूर्णांक is_on);
+#घोषणा	BITBANG_CS_ACTIVE	1	/* normally nCS, active low */
+#घोषणा	BITBANG_CS_INACTIVE	0
 
-	/* txrx_bufs() may handle dma mapping for transfers that don't
-	 * already have one (transfer.{tx,rx}_dma is zero), or use PIO
+	/* txrx_bufs() may handle dma mapping क्रम transfers that करोn't
+	 * alपढ़ोy have one (transfer.अणुtx,rxपूर्ण_dma is zero), or use PIO
 	 */
-	int	(*txrx_bufs)(struct spi_device *spi, struct spi_transfer *t);
+	पूर्णांक	(*txrx_bufs)(काष्ठा spi_device *spi, काष्ठा spi_transfer *t);
 
-	/* txrx_word[SPI_MODE_*]() just looks like a shift register */
-	u32	(*txrx_word[4])(struct spi_device *spi,
-			unsigned nsecs,
-			u32 word, u8 bits, unsigned flags);
-	int	(*set_line_direction)(struct spi_device *spi, bool output);
-};
+	/* txrx_word[SPI_MODE_*]() just looks like a shअगरt रेजिस्टर */
+	u32	(*txrx_word[4])(काष्ठा spi_device *spi,
+			अचिन्हित nsecs,
+			u32 word, u8 bits, अचिन्हित flags);
+	पूर्णांक	(*set_line_direction)(काष्ठा spi_device *spi, bool output);
+पूर्ण;
 
-/* you can call these default bitbang->master methods from your custom
- * methods, if you like.
+/* you can call these शेष bitbang->master methods from your custom
+ * methods, अगर you like.
  */
-extern int spi_bitbang_setup(struct spi_device *spi);
-extern void spi_bitbang_cleanup(struct spi_device *spi);
-extern int spi_bitbang_setup_transfer(struct spi_device *spi,
-				      struct spi_transfer *t);
+बाह्य पूर्णांक spi_bitbang_setup(काष्ठा spi_device *spi);
+बाह्य व्योम spi_bitbang_cleanup(काष्ठा spi_device *spi);
+बाह्य पूर्णांक spi_bitbang_setup_transfer(काष्ठा spi_device *spi,
+				      काष्ठा spi_transfer *t);
 
 /* start or stop queue processing */
-extern int spi_bitbang_start(struct spi_bitbang *spi);
-extern int spi_bitbang_init(struct spi_bitbang *spi);
-extern void spi_bitbang_stop(struct spi_bitbang *spi);
+बाह्य पूर्णांक spi_bitbang_start(काष्ठा spi_bitbang *spi);
+बाह्य पूर्णांक spi_bitbang_init(काष्ठा spi_bitbang *spi);
+बाह्य व्योम spi_bitbang_stop(काष्ठा spi_bitbang *spi);
 
-#endif	/* __SPI_BITBANG_H */
+#पूर्ण_अगर	/* __SPI_BITBANG_H */

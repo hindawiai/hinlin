@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Renesas R-Car CMD support
 //
 // Copyright (C) 2015 Renesas Solutions Corp.
 // Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
 
-#include "rsnd.h"
+#समावेश "rsnd.h"
 
-struct rsnd_cmd {
-	struct rsnd_mod mod;
-};
+काष्ठा rsnd_cmd अणु
+	काष्ठा rsnd_mod mod;
+पूर्ण;
 
-#define CMD_NAME "cmd"
+#घोषणा CMD_NAME "cmd"
 
-#define rsnd_cmd_nr(priv) ((priv)->cmd_nr)
-#define for_each_rsnd_cmd(pos, priv, i)					\
-	for ((i) = 0;							\
+#घोषणा rsnd_cmd_nr(priv) ((priv)->cmd_nr)
+#घोषणा क्रम_each_rsnd_cmd(pos, priv, i)					\
+	क्रम ((i) = 0;							\
 	     ((i) < rsnd_cmd_nr(priv)) &&				\
-		     ((pos) = (struct rsnd_cmd *)(priv)->cmd + i);	\
+		     ((pos) = (काष्ठा rsnd_cmd *)(priv)->cmd + i);	\
 	     i++)
 
-static int rsnd_cmd_init(struct rsnd_mod *mod,
-			 struct rsnd_dai_stream *io,
-			 struct rsnd_priv *priv)
-{
-	struct rsnd_mod *dvc = rsnd_io_to_mod_dvc(io);
-	struct rsnd_mod *mix = rsnd_io_to_mod_mix(io);
-	struct device *dev = rsnd_priv_to_dev(priv);
+अटल पूर्णांक rsnd_cmd_init(काष्ठा rsnd_mod *mod,
+			 काष्ठा rsnd_dai_stream *io,
+			 काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा rsnd_mod *dvc = rsnd_io_to_mod_dvc(io);
+	काष्ठा rsnd_mod *mix = rsnd_io_to_mod_mix(io);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
 	u32 data;
-	static const u32 path[] = {
+	अटल स्थिर u32 path[] = अणु
 		[1] = 1 << 0,
 		[5] = 1 << 8,
 		[6] = 1 << 12,
 		[9] = 1 << 15,
-	};
+	पूर्ण;
 
-	if (!mix && !dvc)
-		return 0;
+	अगर (!mix && !dvc)
+		वापस 0;
 
-	if (ARRAY_SIZE(path) < rsnd_mod_id(mod) + 1)
-		return -ENXIO;
+	अगर (ARRAY_SIZE(path) < rsnd_mod_id(mod) + 1)
+		वापस -ENXIO;
 
-	if (mix) {
-		struct rsnd_dai *rdai;
-		int i;
+	अगर (mix) अणु
+		काष्ठा rsnd_dai *rdai;
+		पूर्णांक i;
 
 		/*
-		 * it is assuming that integrater is well understanding about
-		 * data path. Here doesn't check impossible connection,
+		 * it is assuming that पूर्णांकegrater is well understanding about
+		 * data path. Here करोesn't check impossible connection,
 		 * like src2 + src5
 		 */
 		data = 0;
-		for_each_rsnd_dai(rdai, priv, i) {
-			struct rsnd_dai_stream *tio = &rdai->playback;
-			struct rsnd_mod *src = rsnd_io_to_mod_src(tio);
+		क्रम_each_rsnd_dai(rdai, priv, i) अणु
+			काष्ठा rsnd_dai_stream *tio = &rdai->playback;
+			काष्ठा rsnd_mod *src = rsnd_io_to_mod_src(tio);
 
-			if (mix == rsnd_io_to_mod_mix(tio))
+			अगर (mix == rsnd_io_to_mod_mix(tio))
 				data |= path[rsnd_mod_id(src)];
 
 			tio = &rdai->capture;
 			src = rsnd_io_to_mod_src(tio);
-			if (mix == rsnd_io_to_mod_mix(tio))
+			अगर (mix == rsnd_io_to_mod_mix(tio))
 				data |= path[rsnd_mod_id(src)];
-		}
+		पूर्ण
 
-	} else {
-		struct rsnd_mod *src = rsnd_io_to_mod_src(io);
+	पूर्ण अन्यथा अणु
+		काष्ठा rsnd_mod *src = rsnd_io_to_mod_src(io);
 
-		static const u8 cmd_case[] = {
+		अटल स्थिर u8 cmd_हाल[] = अणु
 			[0] = 0x3,
 			[1] = 0x3,
 			[2] = 0x4,
@@ -76,106 +77,106 @@ static int rsnd_cmd_init(struct rsnd_mod *mod,
 			[5] = 0x4,
 			[6] = 0x1,
 			[9] = 0x2,
-		};
+		पूर्ण;
 
-		if (unlikely(!src))
-			return -EIO;
+		अगर (unlikely(!src))
+			वापस -EIO;
 
 		data = path[rsnd_mod_id(src)] |
-			cmd_case[rsnd_mod_id(src)] << 16;
-	}
+			cmd_हाल[rsnd_mod_id(src)] << 16;
+	पूर्ण
 
 	dev_dbg(dev, "ctu/mix path = 0x%08x\n", data);
 
-	rsnd_mod_write(mod, CMD_ROUTE_SLCT, data);
-	rsnd_mod_write(mod, CMD_BUSIF_MODE, rsnd_get_busif_shift(io, mod) | 1);
-	rsnd_mod_write(mod, CMD_BUSIF_DALIGN, rsnd_get_dalign(mod, io));
+	rsnd_mod_ग_लिखो(mod, CMD_ROUTE_SLCT, data);
+	rsnd_mod_ग_लिखो(mod, CMD_BUSIF_MODE, rsnd_get_busअगर_shअगरt(io, mod) | 1);
+	rsnd_mod_ग_लिखो(mod, CMD_BUSIF_DALIGN, rsnd_get_dalign(mod, io));
 
 	rsnd_adg_set_cmd_timsel_gen2(mod, io);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_cmd_start(struct rsnd_mod *mod,
-			  struct rsnd_dai_stream *io,
-			  struct rsnd_priv *priv)
-{
-	rsnd_mod_write(mod, CMD_CTRL, 0x10);
+अटल पूर्णांक rsnd_cmd_start(काष्ठा rsnd_mod *mod,
+			  काष्ठा rsnd_dai_stream *io,
+			  काष्ठा rsnd_priv *priv)
+अणु
+	rsnd_mod_ग_लिखो(mod, CMD_CTRL, 0x10);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_cmd_stop(struct rsnd_mod *mod,
-			 struct rsnd_dai_stream *io,
-			 struct rsnd_priv *priv)
-{
-	rsnd_mod_write(mod, CMD_CTRL, 0);
+अटल पूर्णांक rsnd_cmd_stop(काष्ठा rsnd_mod *mod,
+			 काष्ठा rsnd_dai_stream *io,
+			 काष्ठा rsnd_priv *priv)
+अणु
+	rsnd_mod_ग_लिखो(mod, CMD_CTRL, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct rsnd_mod_ops rsnd_cmd_ops = {
+अटल काष्ठा rsnd_mod_ops rsnd_cmd_ops = अणु
 	.name		= CMD_NAME,
 	.init		= rsnd_cmd_init,
 	.start		= rsnd_cmd_start,
 	.stop		= rsnd_cmd_stop,
 	.get_status	= rsnd_mod_get_status,
-};
+पूर्ण;
 
-static struct rsnd_mod *rsnd_cmd_mod_get(struct rsnd_priv *priv, int id)
-{
-	if (WARN_ON(id < 0 || id >= rsnd_cmd_nr(priv)))
+अटल काष्ठा rsnd_mod *rsnd_cmd_mod_get(काष्ठा rsnd_priv *priv, पूर्णांक id)
+अणु
+	अगर (WARN_ON(id < 0 || id >= rsnd_cmd_nr(priv)))
 		id = 0;
 
-	return rsnd_mod_get((struct rsnd_cmd *)(priv->cmd) + id);
-}
-int rsnd_cmd_attach(struct rsnd_dai_stream *io, int id)
-{
-	struct rsnd_priv *priv = rsnd_io_to_priv(io);
-	struct rsnd_mod *mod = rsnd_cmd_mod_get(priv, id);
+	वापस rsnd_mod_get((काष्ठा rsnd_cmd *)(priv->cmd) + id);
+पूर्ण
+पूर्णांक rsnd_cmd_attach(काष्ठा rsnd_dai_stream *io, पूर्णांक id)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_io_to_priv(io);
+	काष्ठा rsnd_mod *mod = rsnd_cmd_mod_get(priv, id);
 
-	return rsnd_dai_connect(mod, io, mod->type);
-}
+	वापस rsnd_dai_connect(mod, io, mod->type);
+पूर्ण
 
-int rsnd_cmd_probe(struct rsnd_priv *priv)
-{
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct rsnd_cmd *cmd;
-	int i, nr;
+पूर्णांक rsnd_cmd_probe(काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा rsnd_cmd *cmd;
+	पूर्णांक i, nr;
 
-	/* This driver doesn't support Gen1 at this point */
-	if (rsnd_is_gen1(priv))
-		return 0;
+	/* This driver करोesn't support Gen1 at this poपूर्णांक */
+	अगर (rsnd_is_gen1(priv))
+		वापस 0;
 
 	/* same number as DVC */
 	nr = priv->dvc_nr;
-	if (!nr)
-		return 0;
+	अगर (!nr)
+		वापस 0;
 
-	cmd = devm_kcalloc(dev, nr, sizeof(*cmd), GFP_KERNEL);
-	if (!cmd)
-		return -ENOMEM;
+	cmd = devm_kसुस्मृति(dev, nr, माप(*cmd), GFP_KERNEL);
+	अगर (!cmd)
+		वापस -ENOMEM;
 
 	priv->cmd_nr	= nr;
 	priv->cmd	= cmd;
 
-	for_each_rsnd_cmd(cmd, priv, i) {
-		int ret = rsnd_mod_init(priv, rsnd_mod_get(cmd),
-					&rsnd_cmd_ops, NULL,
+	क्रम_each_rsnd_cmd(cmd, priv, i) अणु
+		पूर्णांक ret = rsnd_mod_init(priv, rsnd_mod_get(cmd),
+					&rsnd_cmd_ops, शून्य,
 					RSND_MOD_CMD, i);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void rsnd_cmd_remove(struct rsnd_priv *priv)
-{
-	struct rsnd_cmd *cmd;
-	int i;
+व्योम rsnd_cmd_हटाओ(काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा rsnd_cmd *cmd;
+	पूर्णांक i;
 
-	for_each_rsnd_cmd(cmd, priv, i) {
+	क्रम_each_rsnd_cmd(cmd, priv, i) अणु
 		rsnd_mod_quit(rsnd_mod_get(cmd));
-	}
-}
+	पूर्ण
+पूर्ण

@@ -1,63 +1,64 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2016 Maxime Ripard. All rights reserved.
  */
 
-#ifndef _CCU_NK_H_
-#define _CCU_NK_H_
+#अगर_अघोषित _CCU_NK_H_
+#घोषणा _CCU_NK_H_
 
-#include <linux/clk-provider.h>
+#समावेश <linux/clk-provider.h>
 
-#include "ccu_common.h"
-#include "ccu_div.h"
-#include "ccu_mult.h"
+#समावेश "ccu_common.h"
+#समावेश "ccu_div.h"
+#समावेश "ccu_mult.h"
 
 /*
- * struct ccu_nk - Definition of an N-K clock
+ * काष्ठा ccu_nk - Definition of an N-K घड़ी
  *
- * Clocks based on the formula parent * N * K
+ * Clocks based on the क्रमmula parent * N * K
  */
-struct ccu_nk {
+काष्ठा ccu_nk अणु
 	u16			reg;
 	u32			enable;
 	u32			lock;
 
-	struct ccu_mult_internal	n;
-	struct ccu_mult_internal	k;
+	काष्ठा ccu_mult_पूर्णांकernal	n;
+	काष्ठा ccu_mult_पूर्णांकernal	k;
 
-	unsigned int		fixed_post_div;
+	अचिन्हित पूर्णांक		fixed_post_भाग;
 
-	struct ccu_common	common;
-};
+	काष्ठा ccu_common	common;
+पूर्ण;
 
-#define SUNXI_CCU_NK_WITH_GATE_LOCK_POSTDIV(_struct, _name, _parent, _reg, \
-					    _nshift, _nwidth,		\
-					    _kshift, _kwidth,		\
-					    _gate, _lock, _postdiv,	\
+#घोषणा SUNXI_CCU_NK_WITH_GATE_LOCK_POSTDIV(_काष्ठा, _name, _parent, _reg, \
+					    _nshअगरt, _nwidth,		\
+					    _kshअगरt, _kwidth,		\
+					    _gate, _lock, _postभाग,	\
 					    _flags)			\
-	struct ccu_nk _struct = {					\
+	काष्ठा ccu_nk _काष्ठा = अणु					\
 		.enable		= _gate,				\
 		.lock		= _lock,				\
-		.k		= _SUNXI_CCU_MULT(_kshift, _kwidth),	\
-		.n		= _SUNXI_CCU_MULT(_nshift, _nwidth),	\
-		.fixed_post_div	= _postdiv,				\
-		.common		= {					\
+		.k		= _SUNXI_CCU_MULT(_kshअगरt, _kwidth),	\
+		.n		= _SUNXI_CCU_MULT(_nshअगरt, _nwidth),	\
+		.fixed_post_भाग	= _postभाग,				\
+		.common		= अणु					\
 			.reg		= _reg,				\
 			.features	= CCU_FEATURE_FIXED_POSTDIV,	\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						      _parent,		\
 						      &ccu_nk_ops,	\
 						      _flags),		\
-		},							\
-	}
+		पूर्ण,							\
+	पूर्ण
 
-static inline struct ccu_nk *hw_to_ccu_nk(struct clk_hw *hw)
-{
-	struct ccu_common *common = hw_to_ccu_common(hw);
+अटल अंतरभूत काष्ठा ccu_nk *hw_to_ccu_nk(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ccu_common *common = hw_to_ccu_common(hw);
 
-	return container_of(common, struct ccu_nk, common);
-}
+	वापस container_of(common, काष्ठा ccu_nk, common);
+पूर्ण
 
-extern const struct clk_ops ccu_nk_ops;
+बाह्य स्थिर काष्ठा clk_ops ccu_nk_ops;
 
-#endif /* _CCU_NK_H_ */
+#पूर्ण_अगर /* _CCU_NK_H_ */

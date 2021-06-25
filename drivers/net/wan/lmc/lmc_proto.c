@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
  /*
   * Copyright (c) 1997-2000 LAN Media Corporation (LMC)
   * All rights reserved.  www.lanmedia.com
@@ -14,100 +15,100 @@
   * Ron Crane
   * Allan Cox
   *
-  * Driver for the LanMedia LMC5200, LMC5245, LMC1000, LMC1200 cards.
+  * Driver क्रम the LanMedia LMC5200, LMC5245, LMC1000, LMC1200 cards.
   */
 
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/timer.h>
-#include <linux/ptrace.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/interrupt.h>
-#include <linux/in.h>
-#include <linux/if_arp.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/inet.h>
-#include <linux/workqueue.h>
-#include <linux/proc_fs.h>
-#include <linux/bitops.h>
-#include <asm/processor.h>             /* Processor type for cache alignment. */
-#include <asm/io.h>
-#include <asm/dma.h>
-#include <linux/smp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/in.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/bitops.h>
+#समावेश <यंत्र/processor.h>             /* Processor type क्रम cache alignment. */
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/dma.h>
+#समावेश <linux/smp.h>
 
-#include "lmc.h"
-#include "lmc_var.h"
-#include "lmc_debug.h"
-#include "lmc_ioctl.h"
-#include "lmc_proto.h"
+#समावेश "lmc.h"
+#समावेश "lmc_var.h"
+#समावेश "lmc_debug.h"
+#समावेश "lmc_ioctl.h"
+#समावेश "lmc_proto.h"
 
 // attach
-void lmc_proto_attach(lmc_softc_t *sc) /*FOLD00*/
-{
-    if (sc->if_type == LMC_NET) {
-            struct net_device *dev = sc->lmc_device;
+व्योम lmc_proto_attach(lmc_softc_t *sc) /*FOLD00*/
+अणु
+    अगर (sc->अगर_type == LMC_NET) अणु
+            काष्ठा net_device *dev = sc->lmc_device;
             /*
-	     * They set a few basics because they don't use HDLC
+	     * They set a few basics because they करोn't use HDLC
              */
             dev->flags |= IFF_POINTOPOINT;
             dev->hard_header_len = 0;
             dev->addr_len = 0;
-        }
-}
+        पूर्ण
+पूर्ण
 
-int lmc_proto_ioctl(lmc_softc_t *sc, struct ifreq *ifr, int cmd)
-{
-	if (sc->if_type == LMC_PPP)
-		return hdlc_ioctl(sc->lmc_device, ifr, cmd);
-	return -EOPNOTSUPP;
-}
+पूर्णांक lmc_proto_ioctl(lmc_softc_t *sc, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	अगर (sc->अगर_type == LMC_PPP)
+		वापस hdlc_ioctl(sc->lmc_device, अगरr, cmd);
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-int lmc_proto_open(lmc_softc_t *sc)
-{
-	int ret = 0;
+पूर्णांक lmc_proto_खोलो(lmc_softc_t *sc)
+अणु
+	पूर्णांक ret = 0;
 
-	if (sc->if_type == LMC_PPP) {
-		ret = hdlc_open(sc->lmc_device);
-		if (ret < 0)
-			printk(KERN_WARNING "%s: HDLC open failed: %d\n",
+	अगर (sc->अगर_type == LMC_PPP) अणु
+		ret = hdlc_खोलो(sc->lmc_device);
+		अगर (ret < 0)
+			prपूर्णांकk(KERN_WARNING "%s: HDLC open failed: %d\n",
 			       sc->name, ret);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-void lmc_proto_close(lmc_softc_t *sc)
-{
-	if (sc->if_type == LMC_PPP)
-		hdlc_close(sc->lmc_device);
-}
+व्योम lmc_proto_बंद(lmc_softc_t *sc)
+अणु
+	अगर (sc->अगर_type == LMC_PPP)
+		hdlc_बंद(sc->lmc_device);
+पूर्ण
 
-__be16 lmc_proto_type(lmc_softc_t *sc, struct sk_buff *skb) /*FOLD00*/
-{
-    switch(sc->if_type){
-    case LMC_PPP:
-	    return hdlc_type_trans(skb, sc->lmc_device);
-    case LMC_NET:
-        return htons(ETH_P_802_2);
-    case LMC_RAW: /* Packet type for skbuff kind of useless */
-        return htons(ETH_P_802_2);
-    default:
-        printk(KERN_WARNING "%s: No protocol set for this interface, assuming 802.2 (which is wrong!!)\n", sc->name);
-        return htons(ETH_P_802_2);
-    }
-}
+__be16 lmc_proto_type(lmc_softc_t *sc, काष्ठा sk_buff *skb) /*FOLD00*/
+अणु
+    चयन(sc->अगर_type)अणु
+    हाल LMC_PPP:
+	    वापस hdlc_type_trans(skb, sc->lmc_device);
+    हाल LMC_NET:
+        वापस htons(ETH_P_802_2);
+    हाल LMC_RAW: /* Packet type क्रम skbuff kind of useless */
+        वापस htons(ETH_P_802_2);
+    शेष:
+        prपूर्णांकk(KERN_WARNING "%s: No protocol set for this interface, assuming 802.2 (which is wrong!!)\n", sc->name);
+        वापस htons(ETH_P_802_2);
+    पूर्ण
+पूर्ण
 
-void lmc_proto_netif(lmc_softc_t *sc, struct sk_buff *skb) /*FOLD00*/
-{
-    switch(sc->if_type){
-    case LMC_PPP:
-    case LMC_NET:
-    default:
-        netif_rx(skb);
-        break;
-    case LMC_RAW:
-        break;
-    }
-}
+व्योम lmc_proto_netअगर(lmc_softc_t *sc, काष्ठा sk_buff *skb) /*FOLD00*/
+अणु
+    चयन(sc->अगर_type)अणु
+    हाल LMC_PPP:
+    हाल LMC_NET:
+    शेष:
+        netअगर_rx(skb);
+        अवरोध;
+    हाल LMC_RAW:
+        अवरोध;
+    पूर्ण
+पूर्ण

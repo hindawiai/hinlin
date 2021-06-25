@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * ZynqMP DisplayPort Driver
  *
@@ -6,22 +7,22 @@
  *
  * Authors:
  * - Hyun Woo Kwon <hyun.kwon@xilinx.com>
- * - Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * - Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  */
 
-#ifndef _ZYNQMP_DP_H_
-#define _ZYNQMP_DP_H_
+#अगर_अघोषित _ZYNQMP_DP_H_
+#घोषणा _ZYNQMP_DP_H_
 
-struct drm_device;
-struct platform_device;
-struct zynqmp_dp;
-struct zynqmp_dpsub;
+काष्ठा drm_device;
+काष्ठा platक्रमm_device;
+काष्ठा zynqmp_dp;
+काष्ठा zynqmp_dpsub;
 
-void zynqmp_dp_enable_vblank(struct zynqmp_dp *dp);
-void zynqmp_dp_disable_vblank(struct zynqmp_dp *dp);
+व्योम zynqmp_dp_enable_vblank(काष्ठा zynqmp_dp *dp);
+व्योम zynqmp_dp_disable_vblank(काष्ठा zynqmp_dp *dp);
 
-int zynqmp_dp_drm_init(struct zynqmp_dpsub *dpsub);
-int zynqmp_dp_probe(struct zynqmp_dpsub *dpsub, struct drm_device *drm);
-void zynqmp_dp_remove(struct zynqmp_dpsub *dpsub);
+पूर्णांक zynqmp_dp_drm_init(काष्ठा zynqmp_dpsub *dpsub);
+पूर्णांक zynqmp_dp_probe(काष्ठा zynqmp_dpsub *dpsub, काष्ठा drm_device *drm);
+व्योम zynqmp_dp_हटाओ(काष्ठा zynqmp_dpsub *dpsub);
 
-#endif /* _ZYNQMP_DP_H_ */
+#पूर्ण_अगर /* _ZYNQMP_DP_H_ */

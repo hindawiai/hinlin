@@ -1,545 +1,546 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * tascam-stream.c - a part of driver for TASCAM FireWire series
+ * tascam-stream.c - a part of driver क्रम TASCAM FireWire series
  *
  * Copyright (c) 2015 Takashi Sakamoto
  */
 
-#include <linux/delay.h>
-#include "tascam.h"
+#समावेश <linux/delay.h>
+#समावेश "tascam.h"
 
-#define CLOCK_STATUS_MASK      0xffff0000
-#define CLOCK_CONFIG_MASK      0x0000ffff
+#घोषणा CLOCK_STATUS_MASK      0xffff0000
+#घोषणा CLOCK_CONFIG_MASK      0x0000ffff
 
-#define CALLBACK_TIMEOUT 500
+#घोषणा CALLBACK_TIMEOUT 500
 
-static int get_clock(struct snd_tscm *tscm, u32 *data)
-{
-	int trial = 0;
+अटल पूर्णांक get_घड़ी(काष्ठा snd_tscm *tscm, u32 *data)
+अणु
+	पूर्णांक trial = 0;
 	__be32 reg;
-	int err;
+	पूर्णांक err;
 
-	while (trial++ < 5) {
+	जबतक (trial++ < 5) अणु
 		err = snd_fw_transaction(tscm->unit, TCODE_READ_QUADLET_REQUEST,
 				TSCM_ADDR_BASE + TSCM_OFFSET_CLOCK_STATUS,
-				&reg, sizeof(reg), 0);
-		if (err < 0)
-			return err;
+				&reg, माप(reg), 0);
+		अगर (err < 0)
+			वापस err;
 
 		*data = be32_to_cpu(reg);
-		if (*data & CLOCK_STATUS_MASK)
-			break;
+		अगर (*data & CLOCK_STATUS_MASK)
+			अवरोध;
 
-		// In intermediate state after changing clock status.
+		// In पूर्णांकermediate state after changing घड़ी status.
 		msleep(50);
-	}
+	पूर्ण
 
-	// Still in the intermediate state.
-	if (trial >= 5)
-		return -EAGAIN;
+	// Still in the पूर्णांकermediate state.
+	अगर (trial >= 5)
+		वापस -EAGAIN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_clock(struct snd_tscm *tscm, unsigned int rate,
-		     enum snd_tscm_clock clock)
-{
+अटल पूर्णांक set_घड़ी(काष्ठा snd_tscm *tscm, अचिन्हित पूर्णांक rate,
+		     क्रमागत snd_tscm_घड़ी घड़ी)
+अणु
 	u32 data;
 	__be32 reg;
-	int err;
+	पूर्णांक err;
 
-	err = get_clock(tscm, &data);
-	if (err < 0)
-		return err;
+	err = get_घड़ी(tscm, &data);
+	अगर (err < 0)
+		वापस err;
 	data &= CLOCK_CONFIG_MASK;
 
-	if (rate > 0) {
+	अगर (rate > 0) अणु
 		data &= 0x000000ff;
 		/* Base rate. */
-		if ((rate % 44100) == 0) {
+		अगर ((rate % 44100) == 0) अणु
 			data |= 0x00000100;
 			/* Multiplier. */
-			if (rate / 44100 == 2)
+			अगर (rate / 44100 == 2)
 				data |= 0x00008000;
-		} else if ((rate % 48000) == 0) {
+		पूर्ण अन्यथा अगर ((rate % 48000) == 0) अणु
 			data |= 0x00000200;
 			/* Multiplier. */
-			if (rate / 48000 == 2)
+			अगर (rate / 48000 == 2)
 				data |= 0x00008000;
-		} else {
-			return -EAGAIN;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			वापस -EAGAIN;
+		पूर्ण
+	पूर्ण
 
-	if (clock != INT_MAX) {
+	अगर (घड़ी != पूर्णांक_उच्च) अणु
 		data &= 0x0000ff00;
-		data |= clock + 1;
-	}
+		data |= घड़ी + 1;
+	पूर्ण
 
 	reg = cpu_to_be32(data);
 
 	err = snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 				 TSCM_ADDR_BASE + TSCM_OFFSET_CLOCK_STATUS,
-				 &reg, sizeof(reg), 0);
-	if (err < 0)
-		return err;
+				 &reg, माप(reg), 0);
+	अगर (err < 0)
+		वापस err;
 
-	if (data & 0x00008000)
+	अगर (data & 0x00008000)
 		reg = cpu_to_be32(0x0000001a);
-	else
+	अन्यथा
 		reg = cpu_to_be32(0x0000000d);
 
-	return snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
+	वापस snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 				  TSCM_ADDR_BASE + TSCM_OFFSET_MULTIPLEX_MODE,
-				  &reg, sizeof(reg), 0);
-}
+				  &reg, माप(reg), 0);
+पूर्ण
 
-int snd_tscm_stream_get_rate(struct snd_tscm *tscm, unsigned int *rate)
-{
+पूर्णांक snd_tscm_stream_get_rate(काष्ठा snd_tscm *tscm, अचिन्हित पूर्णांक *rate)
+अणु
 	u32 data;
-	int err;
+	पूर्णांक err;
 
-	err = get_clock(tscm, &data);
-	if (err < 0)
-		return err;
+	err = get_घड़ी(tscm, &data);
+	अगर (err < 0)
+		वापस err;
 
 	data = (data & 0xff000000) >> 24;
 
 	/* Check base rate. */
-	if ((data & 0x0f) == 0x01)
+	अगर ((data & 0x0f) == 0x01)
 		*rate = 44100;
-	else if ((data & 0x0f) == 0x02)
+	अन्यथा अगर ((data & 0x0f) == 0x02)
 		*rate = 48000;
-	else
-		return -EAGAIN;
+	अन्यथा
+		वापस -EAGAIN;
 
 	/* Check multiplier. */
-	if ((data & 0xf0) == 0x80)
+	अगर ((data & 0xf0) == 0x80)
 		*rate *= 2;
-	else if ((data & 0xf0) != 0x00)
-		return -EAGAIN;
+	अन्यथा अगर ((data & 0xf0) != 0x00)
+		वापस -EAGAIN;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int snd_tscm_stream_get_clock(struct snd_tscm *tscm, enum snd_tscm_clock *clock)
-{
+पूर्णांक snd_tscm_stream_get_घड़ी(काष्ठा snd_tscm *tscm, क्रमागत snd_tscm_घड़ी *घड़ी)
+अणु
 	u32 data;
-	int err;
+	पूर्णांक err;
 
-	err = get_clock(tscm, &data);
-	if (err < 0)
-		return err;
+	err = get_घड़ी(tscm, &data);
+	अगर (err < 0)
+		वापस err;
 
-	*clock = ((data & 0x00ff0000) >> 16) - 1;
-	if (*clock < 0 || *clock > SND_TSCM_CLOCK_ADAT)
-		return -EIO;
+	*घड़ी = ((data & 0x00ff0000) >> 16) - 1;
+	अगर (*घड़ी < 0 || *घड़ी > SND_TSCM_CLOCK_ADAT)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enable_data_channels(struct snd_tscm *tscm)
-{
+अटल पूर्णांक enable_data_channels(काष्ठा snd_tscm *tscm)
+अणु
 	__be32 reg;
 	u32 data;
-	unsigned int i;
-	int err;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
 	data = 0;
-	for (i = 0; i < tscm->spec->pcm_capture_analog_channels; ++i)
+	क्रम (i = 0; i < tscm->spec->pcm_capture_analog_channels; ++i)
 		data |= BIT(i);
-	if (tscm->spec->has_adat)
+	अगर (tscm->spec->has_adat)
 		data |= 0x0000ff00;
-	if (tscm->spec->has_spdif)
+	अगर (tscm->spec->has_spdअगर)
 		data |= 0x00030000;
 
 	reg = cpu_to_be32(data);
 	err = snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 				 TSCM_ADDR_BASE + TSCM_OFFSET_TX_PCM_CHANNELS,
-				 &reg, sizeof(reg), 0);
-	if (err < 0)
-		return err;
+				 &reg, माप(reg), 0);
+	अगर (err < 0)
+		वापस err;
 
 	data = 0;
-	for (i = 0; i < tscm->spec->pcm_playback_analog_channels; ++i)
+	क्रम (i = 0; i < tscm->spec->pcm_playback_analog_channels; ++i)
 		data |= BIT(i);
-	if (tscm->spec->has_adat)
+	अगर (tscm->spec->has_adat)
 		data |= 0x0000ff00;
-	if (tscm->spec->has_spdif)
+	अगर (tscm->spec->has_spdअगर)
 		data |= 0x00030000;
 
 	reg = cpu_to_be32(data);
-	return snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
+	वापस snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 				  TSCM_ADDR_BASE + TSCM_OFFSET_RX_PCM_CHANNELS,
-				  &reg, sizeof(reg), 0);
-}
+				  &reg, माप(reg), 0);
+पूर्ण
 
-static int set_stream_formats(struct snd_tscm *tscm, unsigned int rate)
-{
+अटल पूर्णांक set_stream_क्रमmats(काष्ठा snd_tscm *tscm, अचिन्हित पूर्णांक rate)
+अणु
 	__be32 reg;
-	int err;
+	पूर्णांक err;
 
-	// Set an option for unknown purpose.
+	// Set an option क्रम unknown purpose.
 	reg = cpu_to_be32(0x00200000);
 	err = snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 				 TSCM_ADDR_BASE + TSCM_OFFSET_SET_OPTION,
-				 &reg, sizeof(reg), 0);
-	if (err < 0)
-		return err;
+				 &reg, माप(reg), 0);
+	अगर (err < 0)
+		वापस err;
 
-	return enable_data_channels(tscm);
-}
+	वापस enable_data_channels(tscm);
+पूर्ण
 
-static void finish_session(struct snd_tscm *tscm)
-{
+अटल व्योम finish_session(काष्ठा snd_tscm *tscm)
+अणु
 	__be32 reg;
 
 	reg = 0;
 	snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 			   TSCM_ADDR_BASE + TSCM_OFFSET_START_STREAMING,
-			   &reg, sizeof(reg), 0);
+			   &reg, माप(reg), 0);
 
 	reg = 0;
 	snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 			   TSCM_ADDR_BASE + TSCM_OFFSET_ISOC_RX_ON,
-			   &reg, sizeof(reg), 0);
+			   &reg, माप(reg), 0);
 
-	// Unregister channels.
+	// Unरेजिस्टर channels.
 	reg = cpu_to_be32(0x00000000);
 	snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 			   TSCM_ADDR_BASE + TSCM_OFFSET_ISOC_TX_CH,
-			   &reg, sizeof(reg), 0);
+			   &reg, माप(reg), 0);
 	reg = cpu_to_be32(0x00000000);
 	snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 			   TSCM_ADDR_BASE + TSCM_OFFSET_UNKNOWN,
-			   &reg, sizeof(reg), 0);
+			   &reg, माप(reg), 0);
 	reg = cpu_to_be32(0x00000000);
 	snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 			   TSCM_ADDR_BASE + TSCM_OFFSET_ISOC_RX_CH,
-			   &reg, sizeof(reg), 0);
-}
+			   &reg, माप(reg), 0);
+पूर्ण
 
-static int begin_session(struct snd_tscm *tscm)
-{
+अटल पूर्णांक begin_session(काष्ठा snd_tscm *tscm)
+अणु
 	__be32 reg;
-	int err;
+	पूर्णांक err;
 
-	// Register the isochronous channel for transmitting stream.
+	// Register the isochronous channel क्रम transmitting stream.
 	reg = cpu_to_be32(tscm->tx_resources.channel);
 	err = snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 				 TSCM_ADDR_BASE + TSCM_OFFSET_ISOC_TX_CH,
-				 &reg, sizeof(reg), 0);
-	if (err < 0)
-		return err;
+				 &reg, माप(reg), 0);
+	अगर (err < 0)
+		वापस err;
 
 	// Unknown.
 	reg = cpu_to_be32(0x00000002);
 	err = snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 				 TSCM_ADDR_BASE + TSCM_OFFSET_UNKNOWN,
-				 &reg, sizeof(reg), 0);
-	if (err < 0)
-		return err;
+				 &reg, माप(reg), 0);
+	अगर (err < 0)
+		वापस err;
 
-	// Register the isochronous channel for receiving stream.
+	// Register the isochronous channel क्रम receiving stream.
 	reg = cpu_to_be32(tscm->rx_resources.channel);
 	err = snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 				 TSCM_ADDR_BASE + TSCM_OFFSET_ISOC_RX_CH,
-				 &reg, sizeof(reg), 0);
-	if (err < 0)
-		return err;
+				 &reg, माप(reg), 0);
+	अगर (err < 0)
+		वापस err;
 
 	reg = cpu_to_be32(0x00000001);
 	err = snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 				 TSCM_ADDR_BASE + TSCM_OFFSET_START_STREAMING,
-				 &reg, sizeof(reg), 0);
-	if (err < 0)
-		return err;
+				 &reg, माप(reg), 0);
+	अगर (err < 0)
+		वापस err;
 
 	reg = cpu_to_be32(0x00000001);
 	err = snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 				 TSCM_ADDR_BASE + TSCM_OFFSET_ISOC_RX_ON,
-				 &reg, sizeof(reg), 0);
-	if (err < 0)
-		return err;
+				 &reg, माप(reg), 0);
+	अगर (err < 0)
+		वापस err;
 
-	// Set an option for unknown purpose.
+	// Set an option क्रम unknown purpose.
 	reg = cpu_to_be32(0x00002000);
 	err = snd_fw_transaction(tscm->unit, TCODE_WRITE_QUADLET_REQUEST,
 				 TSCM_ADDR_BASE + TSCM_OFFSET_SET_OPTION,
-				 &reg, sizeof(reg), 0);
-	if (err < 0)
-		return err;
+				 &reg, माप(reg), 0);
+	अगर (err < 0)
+		वापस err;
 
 	// Start multiplexing PCM samples on packets.
 	reg = cpu_to_be32(0x00000001);
-	return snd_fw_transaction(tscm->unit,
+	वापस snd_fw_transaction(tscm->unit,
 				  TCODE_WRITE_QUADLET_REQUEST,
 				  TSCM_ADDR_BASE + TSCM_OFFSET_ISOC_TX_ON,
-				  &reg, sizeof(reg), 0);
-}
+				  &reg, माप(reg), 0);
+पूर्ण
 
-static int keep_resources(struct snd_tscm *tscm, unsigned int rate,
-			  struct amdtp_stream *stream)
-{
-	struct fw_iso_resources *resources;
-	int err;
+अटल पूर्णांक keep_resources(काष्ठा snd_tscm *tscm, अचिन्हित पूर्णांक rate,
+			  काष्ठा amdtp_stream *stream)
+अणु
+	काष्ठा fw_iso_resources *resources;
+	पूर्णांक err;
 
-	if (stream == &tscm->tx_stream)
+	अगर (stream == &tscm->tx_stream)
 		resources = &tscm->tx_resources;
-	else
+	अन्यथा
 		resources = &tscm->rx_resources;
 
 	err = amdtp_tscm_set_parameters(stream, rate);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return fw_iso_resources_allocate(resources,
+	वापस fw_iso_resources_allocate(resources,
 				amdtp_stream_get_max_payload(stream),
 				fw_parent_device(tscm->unit)->max_speed);
-}
+पूर्ण
 
-static int init_stream(struct snd_tscm *tscm, struct amdtp_stream *s)
-{
-	struct fw_iso_resources *resources;
-	enum amdtp_stream_direction dir;
-	unsigned int pcm_channels;
-	int err;
+अटल पूर्णांक init_stream(काष्ठा snd_tscm *tscm, काष्ठा amdtp_stream *s)
+अणु
+	काष्ठा fw_iso_resources *resources;
+	क्रमागत amdtp_stream_direction dir;
+	अचिन्हित पूर्णांक pcm_channels;
+	पूर्णांक err;
 
-	if (s == &tscm->tx_stream) {
+	अगर (s == &tscm->tx_stream) अणु
 		resources = &tscm->tx_resources;
 		dir = AMDTP_IN_STREAM;
 		pcm_channels = tscm->spec->pcm_capture_analog_channels;
-	} else {
+	पूर्ण अन्यथा अणु
 		resources = &tscm->rx_resources;
 		dir = AMDTP_OUT_STREAM;
 		pcm_channels = tscm->spec->pcm_playback_analog_channels;
-	}
+	पूर्ण
 
-	if (tscm->spec->has_adat)
+	अगर (tscm->spec->has_adat)
 		pcm_channels += 8;
-	if (tscm->spec->has_spdif)
+	अगर (tscm->spec->has_spdअगर)
 		pcm_channels += 2;
 
 	err = fw_iso_resources_init(resources, tscm->unit);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = amdtp_tscm_init(s, tscm->unit, dir, pcm_channels);
-	if (err < 0)
-		fw_iso_resources_free(resources);
+	अगर (err < 0)
+		fw_iso_resources_मुक्त(resources);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void destroy_stream(struct snd_tscm *tscm, struct amdtp_stream *s)
-{
+अटल व्योम destroy_stream(काष्ठा snd_tscm *tscm, काष्ठा amdtp_stream *s)
+अणु
 	amdtp_stream_destroy(s);
 
-	if (s == &tscm->tx_stream)
+	अगर (s == &tscm->tx_stream)
 		fw_iso_resources_destroy(&tscm->tx_resources);
-	else
+	अन्यथा
 		fw_iso_resources_destroy(&tscm->rx_resources);
-}
+पूर्ण
 
-int snd_tscm_stream_init_duplex(struct snd_tscm *tscm)
-{
-	int err;
+पूर्णांक snd_tscm_stream_init_duplex(काष्ठा snd_tscm *tscm)
+अणु
+	पूर्णांक err;
 
 	err = init_stream(tscm, &tscm->tx_stream);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = init_stream(tscm, &tscm->rx_stream);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		destroy_stream(tscm, &tscm->tx_stream);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = amdtp_domain_init(&tscm->domain);
-	if (err < 0) {
+	err = amdtp_करोमुख्य_init(&tscm->करोमुख्य);
+	अगर (err < 0) अणु
 		destroy_stream(tscm, &tscm->tx_stream);
 		destroy_stream(tscm, &tscm->rx_stream);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-// At bus reset, streaming is stopped and some registers are clear.
-void snd_tscm_stream_update_duplex(struct snd_tscm *tscm)
-{
-	amdtp_domain_stop(&tscm->domain);
+// At bus reset, streaming is stopped and some रेजिस्टरs are clear.
+व्योम snd_tscm_stream_update_duplex(काष्ठा snd_tscm *tscm)
+अणु
+	amdtp_करोमुख्य_stop(&tscm->करोमुख्य);
 
-	amdtp_stream_pcm_abort(&tscm->tx_stream);
-	amdtp_stream_pcm_abort(&tscm->rx_stream);
-}
+	amdtp_stream_pcm_पात(&tscm->tx_stream);
+	amdtp_stream_pcm_पात(&tscm->rx_stream);
+पूर्ण
 
-// This function should be called before starting streams or after stopping
+// This function should be called beक्रमe starting streams or after stopping
 // streams.
-void snd_tscm_stream_destroy_duplex(struct snd_tscm *tscm)
-{
-	amdtp_domain_destroy(&tscm->domain);
+व्योम snd_tscm_stream_destroy_duplex(काष्ठा snd_tscm *tscm)
+अणु
+	amdtp_करोमुख्य_destroy(&tscm->करोमुख्य);
 
 	destroy_stream(tscm, &tscm->rx_stream);
 	destroy_stream(tscm, &tscm->tx_stream);
-}
+पूर्ण
 
-int snd_tscm_stream_reserve_duplex(struct snd_tscm *tscm, unsigned int rate,
-				   unsigned int frames_per_period,
-				   unsigned int frames_per_buffer)
-{
-	unsigned int curr_rate;
-	int err;
+पूर्णांक snd_tscm_stream_reserve_duplex(काष्ठा snd_tscm *tscm, अचिन्हित पूर्णांक rate,
+				   अचिन्हित पूर्णांक frames_per_period,
+				   अचिन्हित पूर्णांक frames_per_buffer)
+अणु
+	अचिन्हित पूर्णांक curr_rate;
+	पूर्णांक err;
 
 	err = snd_tscm_stream_get_rate(tscm, &curr_rate);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (tscm->substreams_counter == 0 || rate != curr_rate) {
-		amdtp_domain_stop(&tscm->domain);
+	अगर (tscm->substreams_counter == 0 || rate != curr_rate) अणु
+		amdtp_करोमुख्य_stop(&tscm->करोमुख्य);
 
 		finish_session(tscm);
 
-		fw_iso_resources_free(&tscm->tx_resources);
-		fw_iso_resources_free(&tscm->rx_resources);
+		fw_iso_resources_मुक्त(&tscm->tx_resources);
+		fw_iso_resources_मुक्त(&tscm->rx_resources);
 
-		err = set_clock(tscm, rate, INT_MAX);
-		if (err < 0)
-			return err;
+		err = set_घड़ी(tscm, rate, पूर्णांक_उच्च);
+		अगर (err < 0)
+			वापस err;
 
 		err = keep_resources(tscm, rate, &tscm->tx_stream);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		err = keep_resources(tscm, rate, &tscm->rx_stream);
-		if (err < 0) {
-			fw_iso_resources_free(&tscm->tx_resources);
-			return err;
-		}
+		अगर (err < 0) अणु
+			fw_iso_resources_मुक्त(&tscm->tx_resources);
+			वापस err;
+		पूर्ण
 
-		err = amdtp_domain_set_events_per_period(&tscm->domain,
+		err = amdtp_करोमुख्य_set_events_per_period(&tscm->करोमुख्य,
 					frames_per_period, frames_per_buffer);
-		if (err < 0) {
-			fw_iso_resources_free(&tscm->tx_resources);
-			fw_iso_resources_free(&tscm->rx_resources);
-			return err;
-		}
-	}
+		अगर (err < 0) अणु
+			fw_iso_resources_मुक्त(&tscm->tx_resources);
+			fw_iso_resources_मुक्त(&tscm->rx_resources);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_tscm_stream_start_duplex(struct snd_tscm *tscm, unsigned int rate)
-{
-	unsigned int generation = tscm->rx_resources.generation;
-	int err;
+पूर्णांक snd_tscm_stream_start_duplex(काष्ठा snd_tscm *tscm, अचिन्हित पूर्णांक rate)
+अणु
+	अचिन्हित पूर्णांक generation = tscm->rx_resources.generation;
+	पूर्णांक err;
 
-	if (tscm->substreams_counter == 0)
-		return 0;
+	अगर (tscm->substreams_counter == 0)
+		वापस 0;
 
-	if (amdtp_streaming_error(&tscm->rx_stream) ||
-	    amdtp_streaming_error(&tscm->tx_stream)) {
-		amdtp_domain_stop(&tscm->domain);
+	अगर (amdtp_streaming_error(&tscm->rx_stream) ||
+	    amdtp_streaming_error(&tscm->tx_stream)) अणु
+		amdtp_करोमुख्य_stop(&tscm->करोमुख्य);
 		finish_session(tscm);
-	}
+	पूर्ण
 
-	if (generation != fw_parent_device(tscm->unit)->card->generation) {
+	अगर (generation != fw_parent_device(tscm->unit)->card->generation) अणु
 		err = fw_iso_resources_update(&tscm->tx_resources);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
 		err = fw_iso_resources_update(&tscm->rx_resources);
-		if (err < 0)
-			goto error;
-	}
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
 
-	if (!amdtp_stream_running(&tscm->rx_stream)) {
-		int spd = fw_parent_device(tscm->unit)->max_speed;
+	अगर (!amdtp_stream_running(&tscm->rx_stream)) अणु
+		पूर्णांक spd = fw_parent_device(tscm->unit)->max_speed;
 
-		err = set_stream_formats(tscm, rate);
-		if (err < 0)
-			goto error;
+		err = set_stream_क्रमmats(tscm, rate);
+		अगर (err < 0)
+			जाओ error;
 
 		err = begin_session(tscm);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
-		err = amdtp_domain_add_stream(&tscm->domain, &tscm->rx_stream,
+		err = amdtp_करोमुख्य_add_stream(&tscm->करोमुख्य, &tscm->rx_stream,
 					      tscm->rx_resources.channel, spd);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
-		err = amdtp_domain_add_stream(&tscm->domain, &tscm->tx_stream,
+		err = amdtp_करोमुख्य_add_stream(&tscm->करोमुख्य, &tscm->tx_stream,
 					      tscm->tx_resources.channel, spd);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
-		err = amdtp_domain_start(&tscm->domain, 0);
-		if (err < 0)
-			return err;
+		err = amdtp_करोमुख्य_start(&tscm->करोमुख्य, 0);
+		अगर (err < 0)
+			वापस err;
 
-		if (!amdtp_stream_wait_callback(&tscm->rx_stream,
+		अगर (!amdtp_stream_रुको_callback(&tscm->rx_stream,
 						CALLBACK_TIMEOUT) ||
-		    !amdtp_stream_wait_callback(&tscm->tx_stream,
-						CALLBACK_TIMEOUT)) {
+		    !amdtp_stream_रुको_callback(&tscm->tx_stream,
+						CALLBACK_TIMEOUT)) अणु
 			err = -ETIMEDOUT;
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 error:
-	amdtp_domain_stop(&tscm->domain);
+	amdtp_करोमुख्य_stop(&tscm->करोमुख्य);
 	finish_session(tscm);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void snd_tscm_stream_stop_duplex(struct snd_tscm *tscm)
-{
-	if (tscm->substreams_counter == 0) {
-		amdtp_domain_stop(&tscm->domain);
+व्योम snd_tscm_stream_stop_duplex(काष्ठा snd_tscm *tscm)
+अणु
+	अगर (tscm->substreams_counter == 0) अणु
+		amdtp_करोमुख्य_stop(&tscm->करोमुख्य);
 		finish_session(tscm);
 
-		fw_iso_resources_free(&tscm->tx_resources);
-		fw_iso_resources_free(&tscm->rx_resources);
-	}
-}
+		fw_iso_resources_मुक्त(&tscm->tx_resources);
+		fw_iso_resources_मुक्त(&tscm->rx_resources);
+	पूर्ण
+पूर्ण
 
-void snd_tscm_stream_lock_changed(struct snd_tscm *tscm)
-{
+व्योम snd_tscm_stream_lock_changed(काष्ठा snd_tscm *tscm)
+अणु
 	tscm->dev_lock_changed = true;
-	wake_up(&tscm->hwdep_wait);
-}
+	wake_up(&tscm->hwdep_रुको);
+पूर्ण
 
-int snd_tscm_stream_lock_try(struct snd_tscm *tscm)
-{
-	int err;
+पूर्णांक snd_tscm_stream_lock_try(काष्ठा snd_tscm *tscm)
+अणु
+	पूर्णांक err;
 
 	spin_lock_irq(&tscm->lock);
 
 	/* user land lock this */
-	if (tscm->dev_lock_count < 0) {
+	अगर (tscm->dev_lock_count < 0) अणु
 		err = -EBUSY;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	/* this is the first time */
-	if (tscm->dev_lock_count++ == 0)
+	/* this is the first समय */
+	अगर (tscm->dev_lock_count++ == 0)
 		snd_tscm_stream_lock_changed(tscm);
 	err = 0;
 end:
 	spin_unlock_irq(&tscm->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void snd_tscm_stream_lock_release(struct snd_tscm *tscm)
-{
+व्योम snd_tscm_stream_lock_release(काष्ठा snd_tscm *tscm)
+अणु
 	spin_lock_irq(&tscm->lock);
 
-	if (WARN_ON(tscm->dev_lock_count <= 0))
-		goto end;
-	if (--tscm->dev_lock_count == 0)
+	अगर (WARN_ON(tscm->dev_lock_count <= 0))
+		जाओ end;
+	अगर (--tscm->dev_lock_count == 0)
 		snd_tscm_stream_lock_changed(tscm);
 end:
 	spin_unlock_irq(&tscm->lock);
-}
+पूर्ण

@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2009 Chen Liqin <liqin.chen@sunplusct.com>
- * Copyright (C) 2012 Regents of the University of California
+ * Copyright (C) 2012 Regents of the University of Calअगरornia
  */
 
-#ifndef _ASM_RISCV_TLBFLUSH_H
-#define _ASM_RISCV_TLBFLUSH_H
+#अगर_अघोषित _ASM_RISCV_TLBFLUSH_H
+#घोषणा _ASM_RISCV_TLBFLUSH_H
 
-#include <linux/mm_types.h>
-#include <asm/smp.h>
-#include <asm/errata_list.h>
+#समावेश <linux/mm_types.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/errata_list.h>
 
-#ifdef CONFIG_MMU
-static inline void local_flush_tlb_all(void)
-{
-	__asm__ __volatile__ ("sfence.vma" : : : "memory");
-}
+#अगर_घोषित CONFIG_MMU
+अटल अंतरभूत व्योम local_flush_tlb_all(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__ ("sfence.vma" : : : "memory");
+पूर्ण
 
 /* Flush one page from local TLB */
-static inline void local_flush_tlb_page(unsigned long addr)
-{
-	ALT_FLUSH_TLB_PAGE(__asm__ __volatile__ ("sfence.vma %0" : : "r" (addr) : "memory"));
-}
-#else /* CONFIG_MMU */
-#define local_flush_tlb_all()			do { } while (0)
-#define local_flush_tlb_page(addr)		do { } while (0)
-#endif /* CONFIG_MMU */
+अटल अंतरभूत व्योम local_flush_tlb_page(अचिन्हित दीर्घ addr)
+अणु
+	ALT_FLUSH_TLB_PAGE(__यंत्र__ __अस्थिर__ ("sfence.vma %0" : : "r" (addr) : "memory"));
+पूर्ण
+#अन्यथा /* CONFIG_MMU */
+#घोषणा local_flush_tlb_all()			करो अणु पूर्ण जबतक (0)
+#घोषणा local_flush_tlb_page(addr)		करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर /* CONFIG_MMU */
 
-#if defined(CONFIG_SMP) && defined(CONFIG_MMU)
-void flush_tlb_all(void);
-void flush_tlb_mm(struct mm_struct *mm);
-void flush_tlb_page(struct vm_area_struct *vma, unsigned long addr);
-void flush_tlb_range(struct vm_area_struct *vma, unsigned long start,
-		     unsigned long end);
-#else /* CONFIG_SMP && CONFIG_MMU */
+#अगर defined(CONFIG_SMP) && defined(CONFIG_MMU)
+व्योम flush_tlb_all(व्योम);
+व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm);
+व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr);
+व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
+		     अचिन्हित दीर्घ end);
+#अन्यथा /* CONFIG_SMP && CONFIG_MMU */
 
-#define flush_tlb_all() local_flush_tlb_all()
-#define flush_tlb_page(vma, addr) local_flush_tlb_page(addr)
+#घोषणा flush_tlb_all() local_flush_tlb_all()
+#घोषणा flush_tlb_page(vma, addr) local_flush_tlb_page(addr)
 
-static inline void flush_tlb_range(struct vm_area_struct *vma,
-		unsigned long start, unsigned long end)
-{
+अटल अंतरभूत व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	local_flush_tlb_all();
-}
+पूर्ण
 
-#define flush_tlb_mm(mm) flush_tlb_all()
-#endif /* !CONFIG_SMP || !CONFIG_MMU */
+#घोषणा flush_tlb_mm(mm) flush_tlb_all()
+#पूर्ण_अगर /* !CONFIG_SMP || !CONFIG_MMU */
 
 /* Flush a range of kernel pages */
-static inline void flush_tlb_kernel_range(unsigned long start,
-	unsigned long end)
-{
+अटल अंतरभूत व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start,
+	अचिन्हित दीर्घ end)
+अणु
 	flush_tlb_all();
-}
+पूर्ण
 
-#endif /* _ASM_RISCV_TLBFLUSH_H */
+#पूर्ण_अगर /* _ASM_RISCV_TLBFLUSH_H */

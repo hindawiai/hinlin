@@ -1,111 +1,112 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Xen Event Channels (internal header)
+ * Xen Event Channels (पूर्णांकernal header)
  *
  * Copyright (C) 2013 Citrix Systems R&D Ltd.
  */
-#ifndef __EVENTS_INTERNAL_H__
-#define __EVENTS_INTERNAL_H__
+#अगर_अघोषित __EVENTS_INTERNAL_H__
+#घोषणा __EVENTS_INTERNAL_H__
 
-struct evtchn_loop_ctrl;
+काष्ठा evtchn_loop_ctrl;
 
-struct evtchn_ops {
-	unsigned (*max_channels)(void);
-	unsigned (*nr_channels)(void);
+काष्ठा evtchn_ops अणु
+	अचिन्हित (*max_channels)(व्योम);
+	अचिन्हित (*nr_channels)(व्योम);
 
-	int (*setup)(evtchn_port_t port);
-	void (*remove)(evtchn_port_t port, unsigned int cpu);
-	void (*bind_to_cpu)(evtchn_port_t evtchn, unsigned int cpu,
-			    unsigned int old_cpu);
+	पूर्णांक (*setup)(evtchn_port_t port);
+	व्योम (*हटाओ)(evtchn_port_t port, अचिन्हित पूर्णांक cpu);
+	व्योम (*bind_to_cpu)(evtchn_port_t evtchn, अचिन्हित पूर्णांक cpu,
+			    अचिन्हित पूर्णांक old_cpu);
 
-	void (*clear_pending)(evtchn_port_t port);
-	void (*set_pending)(evtchn_port_t port);
+	व्योम (*clear_pending)(evtchn_port_t port);
+	व्योम (*set_pending)(evtchn_port_t port);
 	bool (*is_pending)(evtchn_port_t port);
-	void (*mask)(evtchn_port_t port);
-	void (*unmask)(evtchn_port_t port);
+	व्योम (*mask)(evtchn_port_t port);
+	व्योम (*unmask)(evtchn_port_t port);
 
-	void (*handle_events)(unsigned cpu, struct evtchn_loop_ctrl *ctrl);
-	void (*resume)(void);
+	व्योम (*handle_events)(अचिन्हित cpu, काष्ठा evtchn_loop_ctrl *ctrl);
+	व्योम (*resume)(व्योम);
 
-	int (*percpu_init)(unsigned int cpu);
-	int (*percpu_deinit)(unsigned int cpu);
-};
+	पूर्णांक (*percpu_init)(अचिन्हित पूर्णांक cpu);
+	पूर्णांक (*percpu_deinit)(अचिन्हित पूर्णांक cpu);
+पूर्ण;
 
-extern const struct evtchn_ops *evtchn_ops;
+बाह्य स्थिर काष्ठा evtchn_ops *evtchn_ops;
 
-int get_evtchn_to_irq(evtchn_port_t evtchn);
-void handle_irq_for_port(evtchn_port_t port, struct evtchn_loop_ctrl *ctrl);
+पूर्णांक get_evtchn_to_irq(evtchn_port_t evtchn);
+व्योम handle_irq_क्रम_port(evtchn_port_t port, काष्ठा evtchn_loop_ctrl *ctrl);
 
-unsigned int cpu_from_evtchn(evtchn_port_t evtchn);
+अचिन्हित पूर्णांक cpu_from_evtchn(evtchn_port_t evtchn);
 
-static inline unsigned xen_evtchn_max_channels(void)
-{
-	return evtchn_ops->max_channels();
-}
+अटल अंतरभूत अचिन्हित xen_evtchn_max_channels(व्योम)
+अणु
+	वापस evtchn_ops->max_channels();
+पूर्ण
 
 /*
- * Do any ABI specific setup for a bound event channel before it can
+ * Do any ABI specअगरic setup क्रम a bound event channel beक्रमe it can
  * be unmasked and used.
  */
-static inline int xen_evtchn_port_setup(evtchn_port_t evtchn)
-{
-	if (evtchn_ops->setup)
-		return evtchn_ops->setup(evtchn);
-	return 0;
-}
+अटल अंतरभूत पूर्णांक xen_evtchn_port_setup(evtchn_port_t evtchn)
+अणु
+	अगर (evtchn_ops->setup)
+		वापस evtchn_ops->setup(evtchn);
+	वापस 0;
+पूर्ण
 
-static inline void xen_evtchn_port_remove(evtchn_port_t evtchn,
-					  unsigned int cpu)
-{
-	if (evtchn_ops->remove)
-		evtchn_ops->remove(evtchn, cpu);
-}
+अटल अंतरभूत व्योम xen_evtchn_port_हटाओ(evtchn_port_t evtchn,
+					  अचिन्हित पूर्णांक cpu)
+अणु
+	अगर (evtchn_ops->हटाओ)
+		evtchn_ops->हटाओ(evtchn, cpu);
+पूर्ण
 
-static inline void xen_evtchn_port_bind_to_cpu(evtchn_port_t evtchn,
-					       unsigned int cpu,
-					       unsigned int old_cpu)
-{
+अटल अंतरभूत व्योम xen_evtchn_port_bind_to_cpu(evtchn_port_t evtchn,
+					       अचिन्हित पूर्णांक cpu,
+					       अचिन्हित पूर्णांक old_cpu)
+अणु
 	evtchn_ops->bind_to_cpu(evtchn, cpu, old_cpu);
-}
+पूर्ण
 
-static inline void clear_evtchn(evtchn_port_t port)
-{
+अटल अंतरभूत व्योम clear_evtchn(evtchn_port_t port)
+अणु
 	evtchn_ops->clear_pending(port);
-}
+पूर्ण
 
-static inline void set_evtchn(evtchn_port_t port)
-{
+अटल अंतरभूत व्योम set_evtchn(evtchn_port_t port)
+अणु
 	evtchn_ops->set_pending(port);
-}
+पूर्ण
 
-static inline bool test_evtchn(evtchn_port_t port)
-{
-	return evtchn_ops->is_pending(port);
-}
+अटल अंतरभूत bool test_evtchn(evtchn_port_t port)
+अणु
+	वापस evtchn_ops->is_pending(port);
+पूर्ण
 
-static inline void mask_evtchn(evtchn_port_t port)
-{
-	return evtchn_ops->mask(port);
-}
+अटल अंतरभूत व्योम mask_evtchn(evtchn_port_t port)
+अणु
+	वापस evtchn_ops->mask(port);
+पूर्ण
 
-static inline void unmask_evtchn(evtchn_port_t port)
-{
-	return evtchn_ops->unmask(port);
-}
+अटल अंतरभूत व्योम unmask_evtchn(evtchn_port_t port)
+अणु
+	वापस evtchn_ops->unmask(port);
+पूर्ण
 
-static inline void xen_evtchn_handle_events(unsigned cpu,
-					    struct evtchn_loop_ctrl *ctrl)
-{
-	return evtchn_ops->handle_events(cpu, ctrl);
-}
+अटल अंतरभूत व्योम xen_evtchn_handle_events(अचिन्हित cpu,
+					    काष्ठा evtchn_loop_ctrl *ctrl)
+अणु
+	वापस evtchn_ops->handle_events(cpu, ctrl);
+पूर्ण
 
-static inline void xen_evtchn_resume(void)
-{
-	if (evtchn_ops->resume)
+अटल अंतरभूत व्योम xen_evtchn_resume(व्योम)
+अणु
+	अगर (evtchn_ops->resume)
 		evtchn_ops->resume();
-}
+पूर्ण
 
-void xen_evtchn_2l_init(void);
-int xen_evtchn_fifo_init(void);
+व्योम xen_evtchn_2l_init(व्योम);
+पूर्णांक xen_evtchn_fअगरo_init(व्योम);
 
-#endif /* #ifndef __EVENTS_INTERNAL_H__ */
+#पूर्ण_अगर /* #अगर_अघोषित __EVENTS_INTERNAL_H__ */

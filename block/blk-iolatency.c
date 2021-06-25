@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Block rq-qos base io controller
  *
@@ -6,19 +7,19 @@
  *
  * - It's bio based, so the latency covers the whole block layer in addition to
  *   the actual io.
- * - We will throttle all IO that comes in here if we need to.
- * - We use the mean latency over the 100ms window.  This is because writes can
+ * - We will throttle all IO that comes in here अगर we need to.
+ * - We use the mean latency over the 100ms winकरोw.  This is because ग_लिखोs can
  *   be particularly fast, which could give us a false sense of the impact of
- *   other workloads on our protected workload.
- * - By default there's no throttling, we set the queue_depth to UINT_MAX so
+ *   other workloads on our रक्षित workload.
+ * - By शेष there's no throttling, we set the queue_depth to अच_पूर्णांक_उच्च so
  *   that we can have as many outstanding bio's as we're allowed to.  Only at
- *   throttle time do we pay attention to the actual queue depth.
+ *   throttle समय करो we pay attention to the actual queue depth.
  *
- * The hierarchy works like the cpu controller does, we track the latency at
+ * The hierarchy works like the cpu controller करोes, we track the latency at
  * every configured node, and each configured node has it's own independent
- * queue depth.  This means that we only care about our latency targets at the
+ * queue depth.  This means that we only care about our latency tarमाला_लो at the
  * peer level.  Some group at the bottom of the hierarchy isn't going to affect
- * a group at the end of some other path if we're only configred at leaf level.
+ * a group at the end of some other path अगर we're only configred at leaf level.
  *
  * Consider the following
  *
@@ -29,115 +30,115 @@
  *       a        b          normal(15ms)   unloved
  *
  * "a" and "b" have no target, but their combined io under "fast" cannot exceed
- * an average latency of 5ms.  If it does then we will throttle the "slow"
- * group.  In the case of "normal", if it exceeds its 15ms target, we will
- * throttle "unloved", but nobody else.
+ * an average latency of 5ms.  If it करोes then we will throttle the "slow"
+ * group.  In the हाल of "normal", अगर it exceeds its 15ms target, we will
+ * throttle "unloved", but nobody अन्यथा.
  *
  * In this example "fast", "slow", and "normal" will be the only groups actually
  * accounting their io latencies.  We have to walk up the heirarchy to the root
- * on every submit and complete so we can do the appropriate stat recording and
- * adjust the queue depth of ourselves if needed.
+ * on every submit and complete so we can करो the appropriate stat recording and
+ * adjust the queue depth of ourselves अगर needed.
  *
  * There are 2 ways we throttle IO.
  *
- * 1) Queue depth throttling.  As we throttle down we will adjust the maximum
- * number of IO's we're allowed to have in flight.  This starts at (u64)-1 down
- * to 1.  If the group is only ever submitting IO for itself then this is the
+ * 1) Queue depth throttling.  As we throttle करोwn we will adjust the maximum
+ * number of IO's we're allowed to have in flight.  This starts at (u64)-1 करोwn
+ * to 1.  If the group is only ever submitting IO क्रम itself then this is the
  * only way we throttle.
  *
- * 2) Induced delay throttling.  This is for the case that a group is generating
- * IO that has to be issued by the root cg to avoid priority inversion. So think
- * REQ_META or REQ_SWAP.  If we are already at qd == 1 and we're getting a lot
- * of work done for us on behalf of the root cg and are being asked to scale
- * down more then we induce a latency at userspace return.  We accumulate the
- * total amount of time we need to be punished by doing
+ * 2) Induced delay throttling.  This is क्रम the हाल that a group is generating
+ * IO that has to be issued by the root cg to aव्योम priority inversion. So think
+ * REQ_META or REQ_SWAP.  If we are alपढ़ोy at qd == 1 and we're getting a lot
+ * of work करोne क्रम us on behalf of the root cg and are being asked to scale
+ * करोwn more then we induce a latency at userspace वापस.  We accumulate the
+ * total amount of समय we need to be punished by करोing
  *
- * total_time += min_lat_nsec - actual_io_completion
+ * total_समय += min_lat_nsec - actual_io_completion
  *
- * and then at throttle time will do
+ * and then at throttle समय will करो
  *
- * throttle_time = min(total_time, NSEC_PER_SEC)
+ * throttle_समय = min(total_समय, NSEC_PER_SEC)
  *
  * This induced delay will throttle back the activity that is generating the
- * root cg issued io's, wethere that's some metadata intensive operation or the
- * group is using so much memory that it is pushing us into swap.
+ * root cg issued io's, wethere that's some metadata पूर्णांकensive operation or the
+ * group is using so much memory that it is pushing us पूर्णांकo swap.
  *
  * Copyright (C) 2018 Josef Bacik
  */
-#include <linux/kernel.h>
-#include <linux/blk_types.h>
-#include <linux/backing-dev.h>
-#include <linux/module.h>
-#include <linux/timer.h>
-#include <linux/memcontrol.h>
-#include <linux/sched/loadavg.h>
-#include <linux/sched/signal.h>
-#include <trace/events/block.h>
-#include <linux/blk-mq.h>
-#include "blk-rq-qos.h"
-#include "blk-stat.h"
-#include "blk.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/blk_types.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/module.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/memcontrol.h>
+#समावेश <linux/sched/loadavg.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <trace/events/block.h>
+#समावेश <linux/blk-mq.h>
+#समावेश "blk-rq-qos.h"
+#समावेश "blk-stat.h"
+#समावेश "blk.h"
 
-#define DEFAULT_SCALE_COOKIE 1000000U
+#घोषणा DEFAULT_SCALE_COOKIE 1000000U
 
-static struct blkcg_policy blkcg_policy_iolatency;
-struct iolatency_grp;
+अटल काष्ठा blkcg_policy blkcg_policy_iolatency;
+काष्ठा iolatency_grp;
 
-struct blk_iolatency {
-	struct rq_qos rqos;
-	struct timer_list timer;
+काष्ठा blk_iolatency अणु
+	काष्ठा rq_qos rqos;
+	काष्ठा समयr_list समयr;
 	atomic_t enabled;
-};
+पूर्ण;
 
-static inline struct blk_iolatency *BLKIOLATENCY(struct rq_qos *rqos)
-{
-	return container_of(rqos, struct blk_iolatency, rqos);
-}
+अटल अंतरभूत काष्ठा blk_iolatency *BLKIOLATENCY(काष्ठा rq_qos *rqos)
+अणु
+	वापस container_of(rqos, काष्ठा blk_iolatency, rqos);
+पूर्ण
 
-static inline bool blk_iolatency_enabled(struct blk_iolatency *blkiolat)
-{
-	return atomic_read(&blkiolat->enabled) > 0;
-}
+अटल अंतरभूत bool blk_iolatency_enabled(काष्ठा blk_iolatency *blkiolat)
+अणु
+	वापस atomic_पढ़ो(&blkiolat->enabled) > 0;
+पूर्ण
 
-struct child_latency_info {
+काष्ठा child_latency_info अणु
 	spinlock_t lock;
 
-	/* Last time we adjusted the scale of everybody. */
+	/* Last समय we adjusted the scale of everybody. */
 	u64 last_scale_event;
 
 	/* The latency that we missed. */
 	u64 scale_lat;
 
-	/* Total io's from all of our children for the last summation. */
+	/* Total io's from all of our children क्रम the last summation. */
 	u64 nr_samples;
 
 	/* The guy who actually changed the latency numbers. */
-	struct iolatency_grp *scale_grp;
+	काष्ठा iolatency_grp *scale_grp;
 
-	/* Cookie to tell if we need to scale up or down. */
+	/* Cookie to tell अगर we need to scale up or करोwn. */
 	atomic_t scale_cookie;
-};
+पूर्ण;
 
-struct percentile_stats {
+काष्ठा percentile_stats अणु
 	u64 total;
 	u64 missed;
-};
+पूर्ण;
 
-struct latency_stat {
-	union {
-		struct percentile_stats ps;
-		struct blk_rq_stat rqs;
-	};
-};
+काष्ठा latency_stat अणु
+	जोड़ अणु
+		काष्ठा percentile_stats ps;
+		काष्ठा blk_rq_stat rqs;
+	पूर्ण;
+पूर्ण;
 
-struct iolatency_grp {
-	struct blkg_policy_data pd;
-	struct latency_stat __percpu *stats;
-	struct latency_stat cur_stat;
-	struct blk_iolatency *blkiolat;
-	struct rq_depth rq_depth;
-	struct rq_wait rq_wait;
-	atomic64_t window_start;
+काष्ठा iolatency_grp अणु
+	काष्ठा blkg_policy_data pd;
+	काष्ठा latency_stat __percpu *stats;
+	काष्ठा latency_stat cur_stat;
+	काष्ठा blk_iolatency *blkiolat;
+	काष्ठा rq_depth rq_depth;
+	काष्ठा rq_रुको rq_रुको;
+	atomic64_t winकरोw_start;
 	atomic_t scale_cookie;
 	u64 min_lat_nsec;
 	u64 cur_win_nsec;
@@ -145,409 +146,409 @@ struct iolatency_grp {
 	/* total running average of our io latency. */
 	u64 lat_avg;
 
-	/* Our current number of IO's for the last summation. */
+	/* Our current number of IO's क्रम the last summation. */
 	u64 nr_samples;
 
 	bool ssd;
-	struct child_latency_info child_lat;
-};
+	काष्ठा child_latency_info child_lat;
+पूर्ण;
 
-#define BLKIOLATENCY_MIN_WIN_SIZE (100 * NSEC_PER_MSEC)
-#define BLKIOLATENCY_MAX_WIN_SIZE NSEC_PER_SEC
+#घोषणा BLKIOLATENCY_MIN_WIN_SIZE (100 * NSEC_PER_MSEC)
+#घोषणा BLKIOLATENCY_MAX_WIN_SIZE NSEC_PER_SEC
 /*
- * These are the constants used to fake the fixed-point moving average
+ * These are the स्थिरants used to fake the fixed-poपूर्णांक moving average
  * calculation just like load average.  The call to calc_load() folds
- * (FIXED_1 (2048) - exp_factor) * new_sample into lat_avg.  The sampling
- * window size is bucketed to try to approximately calculate average
- * latency such that 1/exp (decay rate) is [1 min, 2.5 min) when windows
- * elapse immediately.  Note, windows only elapse with IO activity.  Idle
- * periods extend the most recent window.
+ * (FIXED_1 (2048) - exp_factor) * new_sample पूर्णांकo lat_avg.  The sampling
+ * winकरोw size is bucketed to try to approximately calculate average
+ * latency such that 1/exp (decay rate) is [1 min, 2.5 min) when winकरोws
+ * elapse immediately.  Note, winकरोws only elapse with IO activity.  Idle
+ * periods extend the most recent winकरोw.
  */
-#define BLKIOLATENCY_NR_EXP_FACTORS 5
-#define BLKIOLATENCY_EXP_BUCKET_SIZE (BLKIOLATENCY_MAX_WIN_SIZE / \
+#घोषणा BLKIOLATENCY_NR_EXP_FACTORS 5
+#घोषणा BLKIOLATENCY_EXP_BUCKET_SIZE (BLKIOLATENCY_MAX_WIN_SIZE / \
 				      (BLKIOLATENCY_NR_EXP_FACTORS - 1))
-static const u64 iolatency_exp_factors[BLKIOLATENCY_NR_EXP_FACTORS] = {
+अटल स्थिर u64 iolatency_exp_factors[BLKIOLATENCY_NR_EXP_FACTORS] = अणु
 	2045, // exp(1/600) - 600 samples
 	2039, // exp(1/240) - 240 samples
 	2031, // exp(1/120) - 120 samples
 	2023, // exp(1/80)  - 80 samples
 	2014, // exp(1/60)  - 60 samples
-};
+पूर्ण;
 
-static inline struct iolatency_grp *pd_to_lat(struct blkg_policy_data *pd)
-{
-	return pd ? container_of(pd, struct iolatency_grp, pd) : NULL;
-}
+अटल अंतरभूत काष्ठा iolatency_grp *pd_to_lat(काष्ठा blkg_policy_data *pd)
+अणु
+	वापस pd ? container_of(pd, काष्ठा iolatency_grp, pd) : शून्य;
+पूर्ण
 
-static inline struct iolatency_grp *blkg_to_lat(struct blkcg_gq *blkg)
-{
-	return pd_to_lat(blkg_to_pd(blkg, &blkcg_policy_iolatency));
-}
+अटल अंतरभूत काष्ठा iolatency_grp *blkg_to_lat(काष्ठा blkcg_gq *blkg)
+अणु
+	वापस pd_to_lat(blkg_to_pd(blkg, &blkcg_policy_iolatency));
+पूर्ण
 
-static inline struct blkcg_gq *lat_to_blkg(struct iolatency_grp *iolat)
-{
-	return pd_to_blkg(&iolat->pd);
-}
+अटल अंतरभूत काष्ठा blkcg_gq *lat_to_blkg(काष्ठा iolatency_grp *iolat)
+अणु
+	वापस pd_to_blkg(&iolat->pd);
+पूर्ण
 
-static inline void latency_stat_init(struct iolatency_grp *iolat,
-				     struct latency_stat *stat)
-{
-	if (iolat->ssd) {
+अटल अंतरभूत व्योम latency_stat_init(काष्ठा iolatency_grp *iolat,
+				     काष्ठा latency_stat *stat)
+अणु
+	अगर (iolat->ssd) अणु
 		stat->ps.total = 0;
 		stat->ps.missed = 0;
-	} else
+	पूर्ण अन्यथा
 		blk_rq_stat_init(&stat->rqs);
-}
+पूर्ण
 
-static inline void latency_stat_sum(struct iolatency_grp *iolat,
-				    struct latency_stat *sum,
-				    struct latency_stat *stat)
-{
-	if (iolat->ssd) {
+अटल अंतरभूत व्योम latency_stat_sum(काष्ठा iolatency_grp *iolat,
+				    काष्ठा latency_stat *sum,
+				    काष्ठा latency_stat *stat)
+अणु
+	अगर (iolat->ssd) अणु
 		sum->ps.total += stat->ps.total;
 		sum->ps.missed += stat->ps.missed;
-	} else
+	पूर्ण अन्यथा
 		blk_rq_stat_sum(&sum->rqs, &stat->rqs);
-}
+पूर्ण
 
-static inline void latency_stat_record_time(struct iolatency_grp *iolat,
-					    u64 req_time)
-{
-	struct latency_stat *stat = get_cpu_ptr(iolat->stats);
-	if (iolat->ssd) {
-		if (req_time >= iolat->min_lat_nsec)
+अटल अंतरभूत व्योम latency_stat_record_समय(काष्ठा iolatency_grp *iolat,
+					    u64 req_समय)
+अणु
+	काष्ठा latency_stat *stat = get_cpu_ptr(iolat->stats);
+	अगर (iolat->ssd) अणु
+		अगर (req_समय >= iolat->min_lat_nsec)
 			stat->ps.missed++;
 		stat->ps.total++;
-	} else
-		blk_rq_stat_add(&stat->rqs, req_time);
+	पूर्ण अन्यथा
+		blk_rq_stat_add(&stat->rqs, req_समय);
 	put_cpu_ptr(stat);
-}
+पूर्ण
 
-static inline bool latency_sum_ok(struct iolatency_grp *iolat,
-				  struct latency_stat *stat)
-{
-	if (iolat->ssd) {
-		u64 thresh = div64_u64(stat->ps.total, 10);
+अटल अंतरभूत bool latency_sum_ok(काष्ठा iolatency_grp *iolat,
+				  काष्ठा latency_stat *stat)
+अणु
+	अगर (iolat->ssd) अणु
+		u64 thresh = भाग64_u64(stat->ps.total, 10);
 		thresh = max(thresh, 1ULL);
-		return stat->ps.missed < thresh;
-	}
-	return stat->rqs.mean <= iolat->min_lat_nsec;
-}
+		वापस stat->ps.missed < thresh;
+	पूर्ण
+	वापस stat->rqs.mean <= iolat->min_lat_nsec;
+पूर्ण
 
-static inline u64 latency_stat_samples(struct iolatency_grp *iolat,
-				       struct latency_stat *stat)
-{
-	if (iolat->ssd)
-		return stat->ps.total;
-	return stat->rqs.nr_samples;
-}
+अटल अंतरभूत u64 latency_stat_samples(काष्ठा iolatency_grp *iolat,
+				       काष्ठा latency_stat *stat)
+अणु
+	अगर (iolat->ssd)
+		वापस stat->ps.total;
+	वापस stat->rqs.nr_samples;
+पूर्ण
 
-static inline void iolat_update_total_lat_avg(struct iolatency_grp *iolat,
-					      struct latency_stat *stat)
-{
-	int exp_idx;
+अटल अंतरभूत व्योम iolat_update_total_lat_avg(काष्ठा iolatency_grp *iolat,
+					      काष्ठा latency_stat *stat)
+अणु
+	पूर्णांक exp_idx;
 
-	if (iolat->ssd)
-		return;
+	अगर (iolat->ssd)
+		वापस;
 
 	/*
-	 * calc_load() takes in a number stored in fixed point representation.
-	 * Because we are using this for IO time in ns, the values stored
-	 * are significantly larger than the FIXED_1 denominator (2048).
-	 * Therefore, rounding errors in the calculation are negligible and
+	 * calc_load() takes in a number stored in fixed poपूर्णांक representation.
+	 * Because we are using this क्रम IO समय in ns, the values stored
+	 * are signअगरicantly larger than the FIXED_1 denominator (2048).
+	 * Thereक्रमe, rounding errors in the calculation are negligible and
 	 * can be ignored.
 	 */
-	exp_idx = min_t(int, BLKIOLATENCY_NR_EXP_FACTORS - 1,
-			div64_u64(iolat->cur_win_nsec,
+	exp_idx = min_t(पूर्णांक, BLKIOLATENCY_NR_EXP_FACTORS - 1,
+			भाग64_u64(iolat->cur_win_nsec,
 				  BLKIOLATENCY_EXP_BUCKET_SIZE));
 	iolat->lat_avg = calc_load(iolat->lat_avg,
 				   iolatency_exp_factors[exp_idx],
 				   stat->rqs.mean);
-}
+पूर्ण
 
-static void iolat_cleanup_cb(struct rq_wait *rqw, void *private_data)
-{
+अटल व्योम iolat_cleanup_cb(काष्ठा rq_रुको *rqw, व्योम *निजी_data)
+अणु
 	atomic_dec(&rqw->inflight);
-	wake_up(&rqw->wait);
-}
+	wake_up(&rqw->रुको);
+पूर्ण
 
-static bool iolat_acquire_inflight(struct rq_wait *rqw, void *private_data)
-{
-	struct iolatency_grp *iolat = private_data;
-	return rq_wait_inc_below(rqw, iolat->rq_depth.max_depth);
-}
+अटल bool iolat_acquire_inflight(काष्ठा rq_रुको *rqw, व्योम *निजी_data)
+अणु
+	काष्ठा iolatency_grp *iolat = निजी_data;
+	वापस rq_रुको_inc_below(rqw, iolat->rq_depth.max_depth);
+पूर्ण
 
-static void __blkcg_iolatency_throttle(struct rq_qos *rqos,
-				       struct iolatency_grp *iolat,
+अटल व्योम __blkcg_iolatency_throttle(काष्ठा rq_qos *rqos,
+				       काष्ठा iolatency_grp *iolat,
 				       bool issue_as_root,
 				       bool use_memdelay)
-{
-	struct rq_wait *rqw = &iolat->rq_wait;
-	unsigned use_delay = atomic_read(&lat_to_blkg(iolat)->use_delay);
+अणु
+	काष्ठा rq_रुको *rqw = &iolat->rq_रुको;
+	अचिन्हित use_delay = atomic_पढ़ो(&lat_to_blkg(iolat)->use_delay);
 
-	if (use_delay)
+	अगर (use_delay)
 		blkcg_schedule_throttle(rqos->q, use_memdelay);
 
 	/*
-	 * To avoid priority inversions we want to just take a slot if we are
-	 * issuing as root.  If we're being killed off there's no point in
-	 * delaying things, we may have been killed by OOM so throttling may
-	 * make recovery take even longer, so just let the IO's through so the
+	 * To aव्योम priority inversions we want to just take a slot अगर we are
+	 * issuing as root.  If we're being killed off there's no poपूर्णांक in
+	 * delaying things, we may have been समाप्तed by OOM so throttling may
+	 * make recovery take even दीर्घer, so just let the IO's through so the
 	 * task can go away.
 	 */
-	if (issue_as_root || fatal_signal_pending(current)) {
+	अगर (issue_as_root || fatal_संकेत_pending(current)) अणु
 		atomic_inc(&rqw->inflight);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	rq_qos_wait(rqw, iolat, iolat_acquire_inflight, iolat_cleanup_cb);
-}
+	rq_qos_रुको(rqw, iolat, iolat_acquire_inflight, iolat_cleanup_cb);
+पूर्ण
 
-#define SCALE_DOWN_FACTOR 2
-#define SCALE_UP_FACTOR 4
+#घोषणा SCALE_DOWN_FACTOR 2
+#घोषणा SCALE_UP_FACTOR 4
 
-static inline unsigned long scale_amount(unsigned long qd, bool up)
-{
-	return max(up ? qd >> SCALE_UP_FACTOR : qd >> SCALE_DOWN_FACTOR, 1UL);
-}
+अटल अंतरभूत अचिन्हित दीर्घ scale_amount(अचिन्हित दीर्घ qd, bool up)
+अणु
+	वापस max(up ? qd >> SCALE_UP_FACTOR : qd >> SCALE_DOWN_FACTOR, 1UL);
+पूर्ण
 
 /*
- * We scale the qd down faster than we scale up, so we need to use this helper
- * to adjust the scale_cookie accordingly so we don't prematurely get
+ * We scale the qd करोwn faster than we scale up, so we need to use this helper
+ * to adjust the scale_cookie accordingly so we करोn't prematurely get
  * scale_cookie at DEFAULT_SCALE_COOKIE and unthrottle too much.
  *
- * Each group has their own local copy of the last scale cookie they saw, so if
- * the global scale cookie goes up or down they know which way they need to go
+ * Each group has their own local copy of the last scale cookie they saw, so अगर
+ * the global scale cookie goes up or करोwn they know which way they need to go
  * based on their last knowledge of it.
  */
-static void scale_cookie_change(struct blk_iolatency *blkiolat,
-				struct child_latency_info *lat_info,
+अटल व्योम scale_cookie_change(काष्ठा blk_iolatency *blkiolat,
+				काष्ठा child_latency_info *lat_info,
 				bool up)
-{
-	unsigned long qd = blkiolat->rqos.q->nr_requests;
-	unsigned long scale = scale_amount(qd, up);
-	unsigned long old = atomic_read(&lat_info->scale_cookie);
-	unsigned long max_scale = qd << 1;
-	unsigned long diff = 0;
+अणु
+	अचिन्हित दीर्घ qd = blkiolat->rqos.q->nr_requests;
+	अचिन्हित दीर्घ scale = scale_amount(qd, up);
+	अचिन्हित दीर्घ old = atomic_पढ़ो(&lat_info->scale_cookie);
+	अचिन्हित दीर्घ max_scale = qd << 1;
+	अचिन्हित दीर्घ dअगरf = 0;
 
-	if (old < DEFAULT_SCALE_COOKIE)
-		diff = DEFAULT_SCALE_COOKIE - old;
+	अगर (old < DEFAULT_SCALE_COOKIE)
+		dअगरf = DEFAULT_SCALE_COOKIE - old;
 
-	if (up) {
-		if (scale + old > DEFAULT_SCALE_COOKIE)
+	अगर (up) अणु
+		अगर (scale + old > DEFAULT_SCALE_COOKIE)
 			atomic_set(&lat_info->scale_cookie,
 				   DEFAULT_SCALE_COOKIE);
-		else if (diff > qd)
+		अन्यथा अगर (dअगरf > qd)
 			atomic_inc(&lat_info->scale_cookie);
-		else
+		अन्यथा
 			atomic_add(scale, &lat_info->scale_cookie);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * We don't want to dig a hole so deep that it takes us hours to
-		 * dig out of it.  Just enough that we don't throttle/unthrottle
+		 * We करोn't want to dig a hole so deep that it takes us hours to
+		 * dig out of it.  Just enough that we करोn't throttle/unthrottle
 		 * with jagged workloads but can still unthrottle once pressure
 		 * has sufficiently dissipated.
 		 */
-		if (diff > qd) {
-			if (diff < max_scale)
+		अगर (dअगरf > qd) अणु
+			अगर (dअगरf < max_scale)
 				atomic_dec(&lat_info->scale_cookie);
-		} else {
+		पूर्ण अन्यथा अणु
 			atomic_sub(scale, &lat_info->scale_cookie);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Change the queue depth of the iolatency_grp.  We add/subtract 1/16th of the
- * queue depth at a time so we don't get wild swings and hopefully dial in to
+ * queue depth at a समय so we करोn't get wild swings and hopefully dial in to
  * fairer distribution of the overall queue depth.
  */
-static void scale_change(struct iolatency_grp *iolat, bool up)
-{
-	unsigned long qd = iolat->blkiolat->rqos.q->nr_requests;
-	unsigned long scale = scale_amount(qd, up);
-	unsigned long old = iolat->rq_depth.max_depth;
+अटल व्योम scale_change(काष्ठा iolatency_grp *iolat, bool up)
+अणु
+	अचिन्हित दीर्घ qd = iolat->blkiolat->rqos.q->nr_requests;
+	अचिन्हित दीर्घ scale = scale_amount(qd, up);
+	अचिन्हित दीर्घ old = iolat->rq_depth.max_depth;
 
-	if (old > qd)
+	अगर (old > qd)
 		old = qd;
 
-	if (up) {
-		if (old == 1 && blkcg_unuse_delay(lat_to_blkg(iolat)))
-			return;
+	अगर (up) अणु
+		अगर (old == 1 && blkcg_unuse_delay(lat_to_blkg(iolat)))
+			वापस;
 
-		if (old < qd) {
+		अगर (old < qd) अणु
 			old += scale;
 			old = min(old, qd);
 			iolat->rq_depth.max_depth = old;
-			wake_up_all(&iolat->rq_wait.wait);
-		}
-	} else {
+			wake_up_all(&iolat->rq_रुको.रुको);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		old >>= 1;
 		iolat->rq_depth.max_depth = max(old, 1UL);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Check our parent and see if the scale cookie has changed. */
-static void check_scale_change(struct iolatency_grp *iolat)
-{
-	struct iolatency_grp *parent;
-	struct child_latency_info *lat_info;
-	unsigned int cur_cookie;
-	unsigned int our_cookie = atomic_read(&iolat->scale_cookie);
+/* Check our parent and see अगर the scale cookie has changed. */
+अटल व्योम check_scale_change(काष्ठा iolatency_grp *iolat)
+अणु
+	काष्ठा iolatency_grp *parent;
+	काष्ठा child_latency_info *lat_info;
+	अचिन्हित पूर्णांक cur_cookie;
+	अचिन्हित पूर्णांक our_cookie = atomic_पढ़ो(&iolat->scale_cookie);
 	u64 scale_lat;
-	unsigned int old;
-	int direction = 0;
+	अचिन्हित पूर्णांक old;
+	पूर्णांक direction = 0;
 
-	if (lat_to_blkg(iolat)->parent == NULL)
-		return;
+	अगर (lat_to_blkg(iolat)->parent == शून्य)
+		वापस;
 
 	parent = blkg_to_lat(lat_to_blkg(iolat)->parent);
-	if (!parent)
-		return;
+	अगर (!parent)
+		वापस;
 
 	lat_info = &parent->child_lat;
-	cur_cookie = atomic_read(&lat_info->scale_cookie);
+	cur_cookie = atomic_पढ़ो(&lat_info->scale_cookie);
 	scale_lat = READ_ONCE(lat_info->scale_lat);
 
-	if (cur_cookie < our_cookie)
+	अगर (cur_cookie < our_cookie)
 		direction = -1;
-	else if (cur_cookie > our_cookie)
+	अन्यथा अगर (cur_cookie > our_cookie)
 		direction = 1;
-	else
-		return;
+	अन्यथा
+		वापस;
 
 	old = atomic_cmpxchg(&iolat->scale_cookie, our_cookie, cur_cookie);
 
 	/* Somebody beat us to the punch, just bail. */
-	if (old != our_cookie)
-		return;
+	अगर (old != our_cookie)
+		वापस;
 
-	if (direction < 0 && iolat->min_lat_nsec) {
+	अगर (direction < 0 && iolat->min_lat_nsec) अणु
 		u64 samples_thresh;
 
-		if (!scale_lat || iolat->min_lat_nsec <= scale_lat)
-			return;
+		अगर (!scale_lat || iolat->min_lat_nsec <= scale_lat)
+			वापस;
 
 		/*
-		 * Sometimes high priority groups are their own worst enemy, so
+		 * Someबार high priority groups are their own worst enemy, so
 		 * instead of taking it out on some poor other group that did 5%
-		 * or less of the IO's for the last summation just skip this
-		 * scale down event.
+		 * or less of the IO's क्रम the last summation just skip this
+		 * scale करोwn event.
 		 */
 		samples_thresh = lat_info->nr_samples * 5;
-		samples_thresh = max(1ULL, div64_u64(samples_thresh, 100));
-		if (iolat->nr_samples <= samples_thresh)
-			return;
-	}
+		samples_thresh = max(1ULL, भाग64_u64(samples_thresh, 100));
+		अगर (iolat->nr_samples <= samples_thresh)
+			वापस;
+	पूर्ण
 
 	/* We're as low as we can go. */
-	if (iolat->rq_depth.max_depth == 1 && direction < 0) {
+	अगर (iolat->rq_depth.max_depth == 1 && direction < 0) अणु
 		blkcg_use_delay(lat_to_blkg(iolat));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* We're back to the default cookie, unthrottle all the things. */
-	if (cur_cookie == DEFAULT_SCALE_COOKIE) {
+	/* We're back to the शेष cookie, unthrottle all the things. */
+	अगर (cur_cookie == DEFAULT_SCALE_COOKIE) अणु
 		blkcg_clear_delay(lat_to_blkg(iolat));
-		iolat->rq_depth.max_depth = UINT_MAX;
-		wake_up_all(&iolat->rq_wait.wait);
-		return;
-	}
+		iolat->rq_depth.max_depth = अच_पूर्णांक_उच्च;
+		wake_up_all(&iolat->rq_रुको.रुको);
+		वापस;
+	पूर्ण
 
 	scale_change(iolat, direction > 0);
-}
+पूर्ण
 
-static void blkcg_iolatency_throttle(struct rq_qos *rqos, struct bio *bio)
-{
-	struct blk_iolatency *blkiolat = BLKIOLATENCY(rqos);
-	struct blkcg_gq *blkg = bio->bi_blkg;
+अटल व्योम blkcg_iolatency_throttle(काष्ठा rq_qos *rqos, काष्ठा bio *bio)
+अणु
+	काष्ठा blk_iolatency *blkiolat = BLKIOLATENCY(rqos);
+	काष्ठा blkcg_gq *blkg = bio->bi_blkg;
 	bool issue_as_root = bio_issue_as_root_blkg(bio);
 
-	if (!blk_iolatency_enabled(blkiolat))
-		return;
+	अगर (!blk_iolatency_enabled(blkiolat))
+		वापस;
 
-	while (blkg && blkg->parent) {
-		struct iolatency_grp *iolat = blkg_to_lat(blkg);
-		if (!iolat) {
+	जबतक (blkg && blkg->parent) अणु
+		काष्ठा iolatency_grp *iolat = blkg_to_lat(blkg);
+		अगर (!iolat) अणु
 			blkg = blkg->parent;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		check_scale_change(iolat);
 		__blkcg_iolatency_throttle(rqos, iolat, issue_as_root,
 				     (bio->bi_opf & REQ_SWAP) == REQ_SWAP);
 		blkg = blkg->parent;
-	}
-	if (!timer_pending(&blkiolat->timer))
-		mod_timer(&blkiolat->timer, jiffies + HZ);
-}
+	पूर्ण
+	अगर (!समयr_pending(&blkiolat->समयr))
+		mod_समयr(&blkiolat->समयr, jअगरfies + HZ);
+पूर्ण
 
-static void iolatency_record_time(struct iolatency_grp *iolat,
-				  struct bio_issue *issue, u64 now,
+अटल व्योम iolatency_record_समय(काष्ठा iolatency_grp *iolat,
+				  काष्ठा bio_issue *issue, u64 now,
 				  bool issue_as_root)
-{
-	u64 start = bio_issue_time(issue);
-	u64 req_time;
+अणु
+	u64 start = bio_issue_समय(issue);
+	u64 req_समय;
 
 	/*
-	 * Have to do this so we are truncated to the correct time that our
+	 * Have to करो this so we are truncated to the correct समय that our
 	 * issue is truncated to.
 	 */
-	now = __bio_issue_time(now);
+	now = __bio_issue_समय(now);
 
-	if (now <= start)
-		return;
+	अगर (now <= start)
+		वापस;
 
-	req_time = now - start;
+	req_समय = now - start;
 
 	/*
-	 * We don't want to count issue_as_root bio's in the cgroups latency
-	 * statistics as it could skew the numbers downwards.
+	 * We करोn't want to count issue_as_root bio's in the cgroups latency
+	 * statistics as it could skew the numbers करोwnwards.
 	 */
-	if (unlikely(issue_as_root && iolat->rq_depth.max_depth != UINT_MAX)) {
+	अगर (unlikely(issue_as_root && iolat->rq_depth.max_depth != अच_पूर्णांक_उच्च)) अणु
 		u64 sub = iolat->min_lat_nsec;
-		if (req_time < sub)
-			blkcg_add_delay(lat_to_blkg(iolat), now, sub - req_time);
-		return;
-	}
+		अगर (req_समय < sub)
+			blkcg_add_delay(lat_to_blkg(iolat), now, sub - req_समय);
+		वापस;
+	पूर्ण
 
-	latency_stat_record_time(iolat, req_time);
-}
+	latency_stat_record_समय(iolat, req_समय);
+पूर्ण
 
-#define BLKIOLATENCY_MIN_ADJUST_TIME (500 * NSEC_PER_MSEC)
-#define BLKIOLATENCY_MIN_GOOD_SAMPLES 5
+#घोषणा BLKIOLATENCY_MIN_ADJUST_TIME (500 * NSEC_PER_MSEC)
+#घोषणा BLKIOLATENCY_MIN_GOOD_SAMPLES 5
 
-static void iolatency_check_latencies(struct iolatency_grp *iolat, u64 now)
-{
-	struct blkcg_gq *blkg = lat_to_blkg(iolat);
-	struct iolatency_grp *parent;
-	struct child_latency_info *lat_info;
-	struct latency_stat stat;
-	unsigned long flags;
-	int cpu;
+अटल व्योम iolatency_check_latencies(काष्ठा iolatency_grp *iolat, u64 now)
+अणु
+	काष्ठा blkcg_gq *blkg = lat_to_blkg(iolat);
+	काष्ठा iolatency_grp *parent;
+	काष्ठा child_latency_info *lat_info;
+	काष्ठा latency_stat stat;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक cpu;
 
 	latency_stat_init(iolat, &stat);
 	preempt_disable();
-	for_each_online_cpu(cpu) {
-		struct latency_stat *s;
+	क्रम_each_online_cpu(cpu) अणु
+		काष्ठा latency_stat *s;
 		s = per_cpu_ptr(iolat->stats, cpu);
 		latency_stat_sum(iolat, &stat, s);
 		latency_stat_init(iolat, s);
-	}
+	पूर्ण
 	preempt_enable();
 
 	parent = blkg_to_lat(blkg->parent);
-	if (!parent)
-		return;
+	अगर (!parent)
+		वापस;
 
 	lat_info = &parent->child_lat;
 
 	iolat_update_total_lat_avg(iolat, &stat);
 
-	/* Everything is ok and we don't need to adjust the scale. */
-	if (latency_sum_ok(iolat, &stat) &&
-	    atomic_read(&lat_info->scale_cookie) == DEFAULT_SCALE_COOKIE)
-		return;
+	/* Everything is ok and we करोn't need to adjust the scale. */
+	अगर (latency_sum_ok(iolat, &stat) &&
+	    atomic_पढ़ो(&lat_info->scale_cookie) == DEFAULT_SCALE_COOKIE)
+		वापस;
 
 	/* Somebody beat us to the punch, just bail. */
 	spin_lock_irqsave(&lat_info->lock, flags);
@@ -557,173 +558,173 @@ static void iolatency_check_latencies(struct iolatency_grp *iolat, u64 now)
 	lat_info->nr_samples += latency_stat_samples(iolat, &iolat->cur_stat);
 	iolat->nr_samples = latency_stat_samples(iolat, &iolat->cur_stat);
 
-	if ((lat_info->last_scale_event >= now ||
+	अगर ((lat_info->last_scale_event >= now ||
 	    now - lat_info->last_scale_event < BLKIOLATENCY_MIN_ADJUST_TIME))
-		goto out;
+		जाओ out;
 
-	if (latency_sum_ok(iolat, &iolat->cur_stat) &&
-	    latency_sum_ok(iolat, &stat)) {
-		if (latency_stat_samples(iolat, &iolat->cur_stat) <
+	अगर (latency_sum_ok(iolat, &iolat->cur_stat) &&
+	    latency_sum_ok(iolat, &stat)) अणु
+		अगर (latency_stat_samples(iolat, &iolat->cur_stat) <
 		    BLKIOLATENCY_MIN_GOOD_SAMPLES)
-			goto out;
-		if (lat_info->scale_grp == iolat) {
+			जाओ out;
+		अगर (lat_info->scale_grp == iolat) अणु
 			lat_info->last_scale_event = now;
 			scale_cookie_change(iolat->blkiolat, lat_info, true);
-		}
-	} else if (lat_info->scale_lat == 0 ||
-		   lat_info->scale_lat >= iolat->min_lat_nsec) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (lat_info->scale_lat == 0 ||
+		   lat_info->scale_lat >= iolat->min_lat_nsec) अणु
 		lat_info->last_scale_event = now;
-		if (!lat_info->scale_grp ||
-		    lat_info->scale_lat > iolat->min_lat_nsec) {
+		अगर (!lat_info->scale_grp ||
+		    lat_info->scale_lat > iolat->min_lat_nsec) अणु
 			WRITE_ONCE(lat_info->scale_lat, iolat->min_lat_nsec);
 			lat_info->scale_grp = iolat;
-		}
+		पूर्ण
 		scale_cookie_change(iolat->blkiolat, lat_info, false);
-	}
+	पूर्ण
 	latency_stat_init(iolat, &iolat->cur_stat);
 out:
 	spin_unlock_irqrestore(&lat_info->lock, flags);
-}
+पूर्ण
 
-static void blkcg_iolatency_done_bio(struct rq_qos *rqos, struct bio *bio)
-{
-	struct blkcg_gq *blkg;
-	struct rq_wait *rqw;
-	struct iolatency_grp *iolat;
-	u64 window_start;
+अटल व्योम blkcg_iolatency_करोne_bio(काष्ठा rq_qos *rqos, काष्ठा bio *bio)
+अणु
+	काष्ठा blkcg_gq *blkg;
+	काष्ठा rq_रुको *rqw;
+	काष्ठा iolatency_grp *iolat;
+	u64 winकरोw_start;
 	u64 now;
 	bool issue_as_root = bio_issue_as_root_blkg(bio);
 	bool enabled = false;
-	int inflight = 0;
+	पूर्णांक inflight = 0;
 
 	blkg = bio->bi_blkg;
-	if (!blkg || !bio_flagged(bio, BIO_TRACKED))
-		return;
+	अगर (!blkg || !bio_flagged(bio, BIO_TRACKED))
+		वापस;
 
 	iolat = blkg_to_lat(bio->bi_blkg);
-	if (!iolat)
-		return;
+	अगर (!iolat)
+		वापस;
 
 	enabled = blk_iolatency_enabled(iolat->blkiolat);
-	if (!enabled)
-		return;
+	अगर (!enabled)
+		वापस;
 
-	now = ktime_to_ns(ktime_get());
-	while (blkg && blkg->parent) {
+	now = kसमय_प्रकारo_ns(kसमय_get());
+	जबतक (blkg && blkg->parent) अणु
 		iolat = blkg_to_lat(blkg);
-		if (!iolat) {
+		अगर (!iolat) अणु
 			blkg = blkg->parent;
-			continue;
-		}
-		rqw = &iolat->rq_wait;
+			जारी;
+		पूर्ण
+		rqw = &iolat->rq_रुको;
 
-		inflight = atomic_dec_return(&rqw->inflight);
+		inflight = atomic_dec_वापस(&rqw->inflight);
 		WARN_ON_ONCE(inflight < 0);
 		/*
 		 * If bi_status is BLK_STS_AGAIN, the bio wasn't actually
-		 * submitted, so do not account for it.
+		 * submitted, so करो not account क्रम it.
 		 */
-		if (iolat->min_lat_nsec && bio->bi_status != BLK_STS_AGAIN) {
-			iolatency_record_time(iolat, &bio->bi_issue, now,
+		अगर (iolat->min_lat_nsec && bio->bi_status != BLK_STS_AGAIN) अणु
+			iolatency_record_समय(iolat, &bio->bi_issue, now,
 					      issue_as_root);
-			window_start = atomic64_read(&iolat->window_start);
-			if (now > window_start &&
-			    (now - window_start) >= iolat->cur_win_nsec) {
-				if (atomic64_cmpxchg(&iolat->window_start,
-					     window_start, now) == window_start)
+			winकरोw_start = atomic64_पढ़ो(&iolat->winकरोw_start);
+			अगर (now > winकरोw_start &&
+			    (now - winकरोw_start) >= iolat->cur_win_nsec) अणु
+				अगर (atomic64_cmpxchg(&iolat->winकरोw_start,
+					     winकरोw_start, now) == winकरोw_start)
 					iolatency_check_latencies(iolat, now);
-			}
-		}
-		wake_up(&rqw->wait);
+			पूर्ण
+		पूर्ण
+		wake_up(&rqw->रुको);
 		blkg = blkg->parent;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void blkcg_iolatency_exit(struct rq_qos *rqos)
-{
-	struct blk_iolatency *blkiolat = BLKIOLATENCY(rqos);
+अटल व्योम blkcg_iolatency_निकास(काष्ठा rq_qos *rqos)
+अणु
+	काष्ठा blk_iolatency *blkiolat = BLKIOLATENCY(rqos);
 
-	del_timer_sync(&blkiolat->timer);
+	del_समयr_sync(&blkiolat->समयr);
 	blkcg_deactivate_policy(rqos->q, &blkcg_policy_iolatency);
-	kfree(blkiolat);
-}
+	kमुक्त(blkiolat);
+पूर्ण
 
-static struct rq_qos_ops blkcg_iolatency_ops = {
+अटल काष्ठा rq_qos_ops blkcg_iolatency_ops = अणु
 	.throttle = blkcg_iolatency_throttle,
-	.done_bio = blkcg_iolatency_done_bio,
-	.exit = blkcg_iolatency_exit,
-};
+	.करोne_bio = blkcg_iolatency_करोne_bio,
+	.निकास = blkcg_iolatency_निकास,
+पूर्ण;
 
-static void blkiolatency_timer_fn(struct timer_list *t)
-{
-	struct blk_iolatency *blkiolat = from_timer(blkiolat, t, timer);
-	struct blkcg_gq *blkg;
-	struct cgroup_subsys_state *pos_css;
-	u64 now = ktime_to_ns(ktime_get());
+अटल व्योम blkiolatency_समयr_fn(काष्ठा समयr_list *t)
+अणु
+	काष्ठा blk_iolatency *blkiolat = from_समयr(blkiolat, t, समयr);
+	काष्ठा blkcg_gq *blkg;
+	काष्ठा cgroup_subsys_state *pos_css;
+	u64 now = kसमय_प्रकारo_ns(kसमय_get());
 
-	rcu_read_lock();
-	blkg_for_each_descendant_pre(blkg, pos_css,
-				     blkiolat->rqos.q->root_blkg) {
-		struct iolatency_grp *iolat;
-		struct child_latency_info *lat_info;
-		unsigned long flags;
+	rcu_पढ़ो_lock();
+	blkg_क्रम_each_descendant_pre(blkg, pos_css,
+				     blkiolat->rqos.q->root_blkg) अणु
+		काष्ठा iolatency_grp *iolat;
+		काष्ठा child_latency_info *lat_info;
+		अचिन्हित दीर्घ flags;
 		u64 cookie;
 
 		/*
-		 * We could be exiting, don't access the pd unless we have a
+		 * We could be निकासing, करोn't access the pd unless we have a
 		 * ref on the blkg.
 		 */
-		if (!blkg_tryget(blkg))
-			continue;
+		अगर (!blkg_tryget(blkg))
+			जारी;
 
 		iolat = blkg_to_lat(blkg);
-		if (!iolat)
-			goto next;
+		अगर (!iolat)
+			जाओ next;
 
 		lat_info = &iolat->child_lat;
-		cookie = atomic_read(&lat_info->scale_cookie);
+		cookie = atomic_पढ़ो(&lat_info->scale_cookie);
 
-		if (cookie >= DEFAULT_SCALE_COOKIE)
-			goto next;
+		अगर (cookie >= DEFAULT_SCALE_COOKIE)
+			जाओ next;
 
 		spin_lock_irqsave(&lat_info->lock, flags);
-		if (lat_info->last_scale_event >= now)
-			goto next_lock;
+		अगर (lat_info->last_scale_event >= now)
+			जाओ next_lock;
 
 		/*
-		 * We scaled down but don't have a scale_grp, scale up and carry
+		 * We scaled करोwn but करोn't have a scale_grp, scale up and carry
 		 * on.
 		 */
-		if (lat_info->scale_grp == NULL) {
+		अगर (lat_info->scale_grp == शून्य) अणु
 			scale_cookie_change(iolat->blkiolat, lat_info, true);
-			goto next_lock;
-		}
+			जाओ next_lock;
+		पूर्ण
 
 		/*
 		 * It's been 5 seconds since our last scale event, clear the
-		 * scale grp in case the group that needed the scale down isn't
-		 * doing any IO currently.
+		 * scale grp in हाल the group that needed the scale करोwn isn't
+		 * करोing any IO currently.
 		 */
-		if (now - lat_info->last_scale_event >=
+		अगर (now - lat_info->last_scale_event >=
 		    ((u64)NSEC_PER_SEC * 5))
-			lat_info->scale_grp = NULL;
+			lat_info->scale_grp = शून्य;
 next_lock:
 		spin_unlock_irqrestore(&lat_info->lock, flags);
 next:
 		blkg_put(blkg);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-int blk_iolatency_init(struct request_queue *q)
-{
-	struct blk_iolatency *blkiolat;
-	struct rq_qos *rqos;
-	int ret;
+पूर्णांक blk_iolatency_init(काष्ठा request_queue *q)
+अणु
+	काष्ठा blk_iolatency *blkiolat;
+	काष्ठा rq_qos *rqos;
+	पूर्णांक ret;
 
-	blkiolat = kzalloc(sizeof(*blkiolat), GFP_KERNEL);
-	if (!blkiolat)
-		return -ENOMEM;
+	blkiolat = kzalloc(माप(*blkiolat), GFP_KERNEL);
+	अगर (!blkiolat)
+		वापस -ENOMEM;
 
 	rqos = &blkiolat->rqos;
 	rqos->id = RQ_QOS_LATENCY;
@@ -733,24 +734,24 @@ int blk_iolatency_init(struct request_queue *q)
 	rq_qos_add(q, rqos);
 
 	ret = blkcg_activate_policy(q, &blkcg_policy_iolatency);
-	if (ret) {
+	अगर (ret) अणु
 		rq_qos_del(q, rqos);
-		kfree(blkiolat);
-		return ret;
-	}
+		kमुक्त(blkiolat);
+		वापस ret;
+	पूर्ण
 
-	timer_setup(&blkiolat->timer, blkiolatency_timer_fn, 0);
+	समयr_setup(&blkiolat->समयr, blkiolatency_समयr_fn, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * return 1 for enabling iolatency, return -1 for disabling iolatency, otherwise
- * return 0.
+ * वापस 1 क्रम enabling iolatency, वापस -1 क्रम disabling iolatency, otherwise
+ * वापस 0.
  */
-static int iolatency_set_min_lat_nsec(struct blkcg_gq *blkg, u64 val)
-{
-	struct iolatency_grp *iolat = blkg_to_lat(blkg);
+अटल पूर्णांक iolatency_set_min_lat_nsec(काष्ठा blkcg_gq *blkg, u64 val)
+अणु
+	काष्ठा iolatency_grp *iolat = blkg_to_lat(blkg);
 	u64 oldval = iolat->min_lat_nsec;
 
 	iolat->min_lat_nsec = val;
@@ -758,296 +759,296 @@ static int iolatency_set_min_lat_nsec(struct blkcg_gq *blkg, u64 val)
 	iolat->cur_win_nsec = min_t(u64, iolat->cur_win_nsec,
 				    BLKIOLATENCY_MAX_WIN_SIZE);
 
-	if (!oldval && val)
-		return 1;
-	if (oldval && !val) {
+	अगर (!oldval && val)
+		वापस 1;
+	अगर (oldval && !val) अणु
 		blkcg_clear_delay(blkg);
-		return -1;
-	}
-	return 0;
-}
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void iolatency_clear_scaling(struct blkcg_gq *blkg)
-{
-	if (blkg->parent) {
-		struct iolatency_grp *iolat = blkg_to_lat(blkg->parent);
-		struct child_latency_info *lat_info;
-		if (!iolat)
-			return;
+अटल व्योम iolatency_clear_scaling(काष्ठा blkcg_gq *blkg)
+अणु
+	अगर (blkg->parent) अणु
+		काष्ठा iolatency_grp *iolat = blkg_to_lat(blkg->parent);
+		काष्ठा child_latency_info *lat_info;
+		अगर (!iolat)
+			वापस;
 
 		lat_info = &iolat->child_lat;
 		spin_lock(&lat_info->lock);
 		atomic_set(&lat_info->scale_cookie, DEFAULT_SCALE_COOKIE);
 		lat_info->last_scale_event = 0;
-		lat_info->scale_grp = NULL;
+		lat_info->scale_grp = शून्य;
 		lat_info->scale_lat = 0;
 		spin_unlock(&lat_info->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static ssize_t iolatency_set_limit(struct kernfs_open_file *of, char *buf,
-			     size_t nbytes, loff_t off)
-{
-	struct blkcg *blkcg = css_to_blkcg(of_css(of));
-	struct blkcg_gq *blkg;
-	struct blkg_conf_ctx ctx;
-	struct iolatency_grp *iolat;
-	char *p, *tok;
+अटल sमाप_प्रकार iolatency_set_limit(काष्ठा kernfs_खोलो_file *of, अक्षर *buf,
+			     माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा blkcg *blkcg = css_to_blkcg(of_css(of));
+	काष्ठा blkcg_gq *blkg;
+	काष्ठा blkg_conf_ctx ctx;
+	काष्ठा iolatency_grp *iolat;
+	अक्षर *p, *tok;
 	u64 lat_val = 0;
 	u64 oldval;
-	int ret;
-	int enable = 0;
+	पूर्णांक ret;
+	पूर्णांक enable = 0;
 
 	ret = blkg_conf_prep(blkcg, &blkcg_policy_iolatency, buf, &ctx);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	iolat = blkg_to_lat(ctx.blkg);
 	p = ctx.body;
 
 	ret = -EINVAL;
-	while ((tok = strsep(&p, " "))) {
-		char key[16];
-		char val[21];	/* 18446744073709551616 */
+	जबतक ((tok = strsep(&p, " "))) अणु
+		अक्षर key[16];
+		अक्षर val[21];	/* 18446744073709551616 */
 
-		if (sscanf(tok, "%15[^=]=%20s", key, val) != 2)
-			goto out;
+		अगर (माला_पूछो(tok, "%15[^=]=%20s", key, val) != 2)
+			जाओ out;
 
-		if (!strcmp(key, "target")) {
+		अगर (!म_भेद(key, "target")) अणु
 			u64 v;
 
-			if (!strcmp(val, "max"))
+			अगर (!म_भेद(val, "max"))
 				lat_val = 0;
-			else if (sscanf(val, "%llu", &v) == 1)
+			अन्यथा अगर (माला_पूछो(val, "%llu", &v) == 1)
 				lat_val = v * NSEC_PER_USEC;
-			else
-				goto out;
-		} else {
-			goto out;
-		}
-	}
+			अन्यथा
+				जाओ out;
+		पूर्ण अन्यथा अणु
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	/* Walk up the tree to see if our new val is lower than it should be. */
+	/* Walk up the tree to see अगर our new val is lower than it should be. */
 	blkg = ctx.blkg;
 	oldval = iolat->min_lat_nsec;
 
 	enable = iolatency_set_min_lat_nsec(blkg, lat_val);
-	if (enable) {
+	अगर (enable) अणु
 		WARN_ON_ONCE(!blk_get_queue(blkg->q));
 		blkg_get(blkg);
-	}
+	पूर्ण
 
-	if (oldval != iolat->min_lat_nsec) {
+	अगर (oldval != iolat->min_lat_nsec) अणु
 		iolatency_clear_scaling(blkg);
-	}
+	पूर्ण
 
 	ret = 0;
 out:
 	blkg_conf_finish(&ctx);
-	if (ret == 0 && enable) {
-		struct iolatency_grp *tmp = blkg_to_lat(blkg);
-		struct blk_iolatency *blkiolat = tmp->blkiolat;
+	अगर (ret == 0 && enable) अणु
+		काष्ठा iolatency_grp *पंचांगp = blkg_to_lat(blkg);
+		काष्ठा blk_iolatency *blkiolat = पंचांगp->blkiolat;
 
-		blk_mq_freeze_queue(blkg->q);
+		blk_mq_मुक्तze_queue(blkg->q);
 
-		if (enable == 1)
+		अगर (enable == 1)
 			atomic_inc(&blkiolat->enabled);
-		else if (enable == -1)
+		अन्यथा अगर (enable == -1)
 			atomic_dec(&blkiolat->enabled);
-		else
+		अन्यथा
 			WARN_ON_ONCE(1);
 
-		blk_mq_unfreeze_queue(blkg->q);
+		blk_mq_unमुक्तze_queue(blkg->q);
 
 		blkg_put(blkg);
 		blk_put_queue(blkg->q);
-	}
-	return ret ?: nbytes;
-}
+	पूर्ण
+	वापस ret ?: nbytes;
+पूर्ण
 
-static u64 iolatency_prfill_limit(struct seq_file *sf,
-				  struct blkg_policy_data *pd, int off)
-{
-	struct iolatency_grp *iolat = pd_to_lat(pd);
-	const char *dname = blkg_dev_name(pd->blkg);
+अटल u64 iolatency_prfill_limit(काष्ठा seq_file *sf,
+				  काष्ठा blkg_policy_data *pd, पूर्णांक off)
+अणु
+	काष्ठा iolatency_grp *iolat = pd_to_lat(pd);
+	स्थिर अक्षर *dname = blkg_dev_name(pd->blkg);
 
-	if (!dname || !iolat->min_lat_nsec)
-		return 0;
-	seq_printf(sf, "%s target=%llu\n",
-		   dname, div_u64(iolat->min_lat_nsec, NSEC_PER_USEC));
-	return 0;
-}
+	अगर (!dname || !iolat->min_lat_nsec)
+		वापस 0;
+	seq_म_लिखो(sf, "%s target=%llu\n",
+		   dname, भाग_u64(iolat->min_lat_nsec, NSEC_PER_USEC));
+	वापस 0;
+पूर्ण
 
-static int iolatency_print_limit(struct seq_file *sf, void *v)
-{
-	blkcg_print_blkgs(sf, css_to_blkcg(seq_css(sf)),
+अटल पूर्णांक iolatency_prपूर्णांक_limit(काष्ठा seq_file *sf, व्योम *v)
+अणु
+	blkcg_prपूर्णांक_blkgs(sf, css_to_blkcg(seq_css(sf)),
 			  iolatency_prfill_limit,
-			  &blkcg_policy_iolatency, seq_cft(sf)->private, false);
-	return 0;
-}
+			  &blkcg_policy_iolatency, seq_cft(sf)->निजी, false);
+	वापस 0;
+पूर्ण
 
-static size_t iolatency_ssd_stat(struct iolatency_grp *iolat, char *buf,
-				 size_t size)
-{
-	struct latency_stat stat;
-	int cpu;
+अटल माप_प्रकार iolatency_ssd_stat(काष्ठा iolatency_grp *iolat, अक्षर *buf,
+				 माप_प्रकार size)
+अणु
+	काष्ठा latency_stat stat;
+	पूर्णांक cpu;
 
 	latency_stat_init(iolat, &stat);
 	preempt_disable();
-	for_each_online_cpu(cpu) {
-		struct latency_stat *s;
+	क्रम_each_online_cpu(cpu) अणु
+		काष्ठा latency_stat *s;
 		s = per_cpu_ptr(iolat->stats, cpu);
 		latency_stat_sum(iolat, &stat, s);
-	}
+	पूर्ण
 	preempt_enable();
 
-	if (iolat->rq_depth.max_depth == UINT_MAX)
-		return scnprintf(buf, size, " missed=%llu total=%llu depth=max",
-				 (unsigned long long)stat.ps.missed,
-				 (unsigned long long)stat.ps.total);
-	return scnprintf(buf, size, " missed=%llu total=%llu depth=%u",
-			 (unsigned long long)stat.ps.missed,
-			 (unsigned long long)stat.ps.total,
+	अगर (iolat->rq_depth.max_depth == अच_पूर्णांक_उच्च)
+		वापस scnम_लिखो(buf, size, " missed=%llu total=%llu depth=max",
+				 (अचिन्हित दीर्घ दीर्घ)stat.ps.missed,
+				 (अचिन्हित दीर्घ दीर्घ)stat.ps.total);
+	वापस scnम_लिखो(buf, size, " missed=%llu total=%llu depth=%u",
+			 (अचिन्हित दीर्घ दीर्घ)stat.ps.missed,
+			 (अचिन्हित दीर्घ दीर्घ)stat.ps.total,
 			 iolat->rq_depth.max_depth);
-}
+पूर्ण
 
-static size_t iolatency_pd_stat(struct blkg_policy_data *pd, char *buf,
-				size_t size)
-{
-	struct iolatency_grp *iolat = pd_to_lat(pd);
-	unsigned long long avg_lat;
-	unsigned long long cur_win;
+अटल माप_प्रकार iolatency_pd_stat(काष्ठा blkg_policy_data *pd, अक्षर *buf,
+				माप_प्रकार size)
+अणु
+	काष्ठा iolatency_grp *iolat = pd_to_lat(pd);
+	अचिन्हित दीर्घ दीर्घ avg_lat;
+	अचिन्हित दीर्घ दीर्घ cur_win;
 
-	if (!blkcg_debug_stats)
-		return 0;
+	अगर (!blkcg_debug_stats)
+		वापस 0;
 
-	if (iolat->ssd)
-		return iolatency_ssd_stat(iolat, buf, size);
+	अगर (iolat->ssd)
+		वापस iolatency_ssd_stat(iolat, buf, size);
 
-	avg_lat = div64_u64(iolat->lat_avg, NSEC_PER_USEC);
-	cur_win = div64_u64(iolat->cur_win_nsec, NSEC_PER_MSEC);
-	if (iolat->rq_depth.max_depth == UINT_MAX)
-		return scnprintf(buf, size, " depth=max avg_lat=%llu win=%llu",
+	avg_lat = भाग64_u64(iolat->lat_avg, NSEC_PER_USEC);
+	cur_win = भाग64_u64(iolat->cur_win_nsec, NSEC_PER_MSEC);
+	अगर (iolat->rq_depth.max_depth == अच_पूर्णांक_उच्च)
+		वापस scnम_लिखो(buf, size, " depth=max avg_lat=%llu win=%llu",
 				 avg_lat, cur_win);
 
-	return scnprintf(buf, size, " depth=%u avg_lat=%llu win=%llu",
+	वापस scnम_लिखो(buf, size, " depth=%u avg_lat=%llu win=%llu",
 			 iolat->rq_depth.max_depth, avg_lat, cur_win);
-}
+पूर्ण
 
 
-static struct blkg_policy_data *iolatency_pd_alloc(gfp_t gfp,
-						   struct request_queue *q,
-						   struct blkcg *blkcg)
-{
-	struct iolatency_grp *iolat;
+अटल काष्ठा blkg_policy_data *iolatency_pd_alloc(gfp_t gfp,
+						   काष्ठा request_queue *q,
+						   काष्ठा blkcg *blkcg)
+अणु
+	काष्ठा iolatency_grp *iolat;
 
-	iolat = kzalloc_node(sizeof(*iolat), gfp, q->node);
-	if (!iolat)
-		return NULL;
-	iolat->stats = __alloc_percpu_gfp(sizeof(struct latency_stat),
-				       __alignof__(struct latency_stat), gfp);
-	if (!iolat->stats) {
-		kfree(iolat);
-		return NULL;
-	}
-	return &iolat->pd;
-}
+	iolat = kzalloc_node(माप(*iolat), gfp, q->node);
+	अगर (!iolat)
+		वापस शून्य;
+	iolat->stats = __alloc_percpu_gfp(माप(काष्ठा latency_stat),
+				       __alignof__(काष्ठा latency_stat), gfp);
+	अगर (!iolat->stats) अणु
+		kमुक्त(iolat);
+		वापस शून्य;
+	पूर्ण
+	वापस &iolat->pd;
+पूर्ण
 
-static void iolatency_pd_init(struct blkg_policy_data *pd)
-{
-	struct iolatency_grp *iolat = pd_to_lat(pd);
-	struct blkcg_gq *blkg = lat_to_blkg(iolat);
-	struct rq_qos *rqos = blkcg_rq_qos(blkg->q);
-	struct blk_iolatency *blkiolat = BLKIOLATENCY(rqos);
-	u64 now = ktime_to_ns(ktime_get());
-	int cpu;
+अटल व्योम iolatency_pd_init(काष्ठा blkg_policy_data *pd)
+अणु
+	काष्ठा iolatency_grp *iolat = pd_to_lat(pd);
+	काष्ठा blkcg_gq *blkg = lat_to_blkg(iolat);
+	काष्ठा rq_qos *rqos = blkcg_rq_qos(blkg->q);
+	काष्ठा blk_iolatency *blkiolat = BLKIOLATENCY(rqos);
+	u64 now = kसमय_प्रकारo_ns(kसमय_get());
+	पूर्णांक cpu;
 
-	if (blk_queue_nonrot(blkg->q))
+	अगर (blk_queue_nonrot(blkg->q))
 		iolat->ssd = true;
-	else
+	अन्यथा
 		iolat->ssd = false;
 
-	for_each_possible_cpu(cpu) {
-		struct latency_stat *stat;
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा latency_stat *stat;
 		stat = per_cpu_ptr(iolat->stats, cpu);
 		latency_stat_init(iolat, stat);
-	}
+	पूर्ण
 
 	latency_stat_init(iolat, &iolat->cur_stat);
-	rq_wait_init(&iolat->rq_wait);
+	rq_रुको_init(&iolat->rq_रुको);
 	spin_lock_init(&iolat->child_lat.lock);
 	iolat->rq_depth.queue_depth = blkg->q->nr_requests;
-	iolat->rq_depth.max_depth = UINT_MAX;
-	iolat->rq_depth.default_depth = iolat->rq_depth.queue_depth;
+	iolat->rq_depth.max_depth = अच_पूर्णांक_उच्च;
+	iolat->rq_depth.शेष_depth = iolat->rq_depth.queue_depth;
 	iolat->blkiolat = blkiolat;
 	iolat->cur_win_nsec = 100 * NSEC_PER_MSEC;
-	atomic64_set(&iolat->window_start, now);
+	atomic64_set(&iolat->winकरोw_start, now);
 
 	/*
-	 * We init things in list order, so the pd for the parent may not be
-	 * init'ed yet for whatever reason.
+	 * We init things in list order, so the pd क्रम the parent may not be
+	 * init'ed yet क्रम whatever reason.
 	 */
-	if (blkg->parent && blkg_to_pd(blkg->parent, &blkcg_policy_iolatency)) {
-		struct iolatency_grp *parent = blkg_to_lat(blkg->parent);
+	अगर (blkg->parent && blkg_to_pd(blkg->parent, &blkcg_policy_iolatency)) अणु
+		काष्ठा iolatency_grp *parent = blkg_to_lat(blkg->parent);
 		atomic_set(&iolat->scale_cookie,
-			   atomic_read(&parent->child_lat.scale_cookie));
-	} else {
+			   atomic_पढ़ो(&parent->child_lat.scale_cookie));
+	पूर्ण अन्यथा अणु
 		atomic_set(&iolat->scale_cookie, DEFAULT_SCALE_COOKIE);
-	}
+	पूर्ण
 
 	atomic_set(&iolat->child_lat.scale_cookie, DEFAULT_SCALE_COOKIE);
-}
+पूर्ण
 
-static void iolatency_pd_offline(struct blkg_policy_data *pd)
-{
-	struct iolatency_grp *iolat = pd_to_lat(pd);
-	struct blkcg_gq *blkg = lat_to_blkg(iolat);
-	struct blk_iolatency *blkiolat = iolat->blkiolat;
-	int ret;
+अटल व्योम iolatency_pd_offline(काष्ठा blkg_policy_data *pd)
+अणु
+	काष्ठा iolatency_grp *iolat = pd_to_lat(pd);
+	काष्ठा blkcg_gq *blkg = lat_to_blkg(iolat);
+	काष्ठा blk_iolatency *blkiolat = iolat->blkiolat;
+	पूर्णांक ret;
 
 	ret = iolatency_set_min_lat_nsec(blkg, 0);
-	if (ret == 1)
+	अगर (ret == 1)
 		atomic_inc(&blkiolat->enabled);
-	if (ret == -1)
+	अगर (ret == -1)
 		atomic_dec(&blkiolat->enabled);
 	iolatency_clear_scaling(blkg);
-}
+पूर्ण
 
-static void iolatency_pd_free(struct blkg_policy_data *pd)
-{
-	struct iolatency_grp *iolat = pd_to_lat(pd);
-	free_percpu(iolat->stats);
-	kfree(iolat);
-}
+अटल व्योम iolatency_pd_मुक्त(काष्ठा blkg_policy_data *pd)
+अणु
+	काष्ठा iolatency_grp *iolat = pd_to_lat(pd);
+	मुक्त_percpu(iolat->stats);
+	kमुक्त(iolat);
+पूर्ण
 
-static struct cftype iolatency_files[] = {
-	{
+अटल काष्ठा cftype iolatency_files[] = अणु
+	अणु
 		.name = "latency",
 		.flags = CFTYPE_NOT_ON_ROOT,
-		.seq_show = iolatency_print_limit,
-		.write = iolatency_set_limit,
-	},
-	{}
-};
+		.seq_show = iolatency_prपूर्णांक_limit,
+		.ग_लिखो = iolatency_set_limit,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct blkcg_policy blkcg_policy_iolatency = {
+अटल काष्ठा blkcg_policy blkcg_policy_iolatency = अणु
 	.dfl_cftypes	= iolatency_files,
 	.pd_alloc_fn	= iolatency_pd_alloc,
 	.pd_init_fn	= iolatency_pd_init,
 	.pd_offline_fn	= iolatency_pd_offline,
-	.pd_free_fn	= iolatency_pd_free,
+	.pd_मुक्त_fn	= iolatency_pd_मुक्त,
 	.pd_stat_fn	= iolatency_pd_stat,
-};
+पूर्ण;
 
-static int __init iolatency_init(void)
-{
-	return blkcg_policy_register(&blkcg_policy_iolatency);
-}
+अटल पूर्णांक __init iolatency_init(व्योम)
+अणु
+	वापस blkcg_policy_रेजिस्टर(&blkcg_policy_iolatency);
+पूर्ण
 
-static void __exit iolatency_exit(void)
-{
-	blkcg_policy_unregister(&blkcg_policy_iolatency);
-}
+अटल व्योम __निकास iolatency_निकास(व्योम)
+अणु
+	blkcg_policy_unरेजिस्टर(&blkcg_policy_iolatency);
+पूर्ण
 
 module_init(iolatency_init);
-module_exit(iolatency_exit);
+module_निकास(iolatency_निकास);

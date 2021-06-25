@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __QCOM_Q6V5_H__
-#define __QCOM_Q6V5_H__
+#अगर_अघोषित __QCOM_Q6V5_H__
+#घोषणा __QCOM_Q6V5_H__
 
-#include <linux/kernel.h>
-#include <linux/completion.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/completion.h>
 
-struct rproc;
-struct qcom_smem_state;
-struct qcom_sysmon;
+काष्ठा rproc;
+काष्ठा qcom_smem_state;
+काष्ठा qcom_sysmon;
 
-struct qcom_q6v5 {
-	struct device *dev;
-	struct rproc *rproc;
+काष्ठा qcom_q6v5 अणु
+	काष्ठा device *dev;
+	काष्ठा rproc *rproc;
 
-	struct qcom_smem_state *state;
-	unsigned stop_bit;
+	काष्ठा qcom_smem_state *state;
+	अचिन्हित stop_bit;
 
-	int wdog_irq;
-	int fatal_irq;
-	int ready_irq;
-	int handover_irq;
-	int stop_irq;
+	पूर्णांक wकरोg_irq;
+	पूर्णांक fatal_irq;
+	पूर्णांक पढ़ोy_irq;
+	पूर्णांक hanकरोver_irq;
+	पूर्णांक stop_irq;
 
-	bool handover_issued;
+	bool hanकरोver_issued;
 
-	struct completion start_done;
-	struct completion stop_done;
+	काष्ठा completion start_करोne;
+	काष्ठा completion stop_करोne;
 
-	int crash_reason;
+	पूर्णांक crash_reason;
 
 	bool running;
 
-	void (*handover)(struct qcom_q6v5 *q6v5);
-};
+	व्योम (*hanकरोver)(काष्ठा qcom_q6v5 *q6v5);
+पूर्ण;
 
-int qcom_q6v5_init(struct qcom_q6v5 *q6v5, struct platform_device *pdev,
-		   struct rproc *rproc, int crash_reason,
-		   void (*handover)(struct qcom_q6v5 *q6v5));
+पूर्णांक qcom_q6v5_init(काष्ठा qcom_q6v5 *q6v5, काष्ठा platक्रमm_device *pdev,
+		   काष्ठा rproc *rproc, पूर्णांक crash_reason,
+		   व्योम (*hanकरोver)(काष्ठा qcom_q6v5 *q6v5));
 
-int qcom_q6v5_prepare(struct qcom_q6v5 *q6v5);
-int qcom_q6v5_unprepare(struct qcom_q6v5 *q6v5);
-int qcom_q6v5_request_stop(struct qcom_q6v5 *q6v5, struct qcom_sysmon *sysmon);
-int qcom_q6v5_wait_for_start(struct qcom_q6v5 *q6v5, int timeout);
-unsigned long qcom_q6v5_panic(struct qcom_q6v5 *q6v5);
+पूर्णांक qcom_q6v5_prepare(काष्ठा qcom_q6v5 *q6v5);
+पूर्णांक qcom_q6v5_unprepare(काष्ठा qcom_q6v5 *q6v5);
+पूर्णांक qcom_q6v5_request_stop(काष्ठा qcom_q6v5 *q6v5, काष्ठा qcom_sysmon *sysmon);
+पूर्णांक qcom_q6v5_रुको_क्रम_start(काष्ठा qcom_q6v5 *q6v5, पूर्णांक समयout);
+अचिन्हित दीर्घ qcom_q6v5_panic(काष्ठा qcom_q6v5 *q6v5);
 
-#endif
+#पूर्ण_अगर

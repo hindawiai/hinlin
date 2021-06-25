@@ -1,131 +1,132 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2014 Freescale Semiconductor, Inc.
  */
 
-#include <dt-bindings/clock/imx6sx-clock.h>
-#include <linux/bits.h>
-#include <linux/clk.h>
-#include <linux/clkdev.h>
-#include <linux/clk-provider.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/types.h>
+#समावेश <dt-bindings/घड़ी/imx6sx-घड़ी.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/types.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 
-static const char *step_sels[]		= { "osc", "pll2_pfd2_396m", };
-static const char *pll1_sw_sels[]	= { "pll1_sys", "step", };
-static const char *periph_pre_sels[]	= { "pll2_bus", "pll2_pfd2_396m", "pll2_pfd0_352m", "pll2_198m", };
-static const char *periph2_pre_sels[]	= { "pll2_bus", "pll2_pfd2_396m", "pll2_pfd0_352m", "pll4_audio_div", };
-static const char *periph_clk2_sels[]	= { "pll3_usb_otg", "osc", "osc", };
-static const char *periph2_clk2_sels[]	= { "pll3_usb_otg", "osc", };
-static const char *periph_sels[]	= { "periph_pre", "periph_clk2", };
-static const char *periph2_sels[]	= { "periph2_pre", "periph2_clk2", };
-static const char *ocram_sels[]		= { "periph", "pll2_pfd2_396m", "periph", "pll3_pfd1_540m", };
-static const char *audio_sels[]		= { "pll4_audio_div", "pll3_pfd2_508m", "pll5_video_div", "pll3_usb_otg", };
-static const char *gpu_axi_sels[]	= { "pll2_pfd2_396m", "pll3_pfd0_720m", "pll3_pfd1_540m", "pll2_bus", };
-static const char *gpu_core_sels[]	= { "pll3_pfd1_540m", "pll3_pfd0_720m", "pll2_bus", "pll2_pfd2_396m", };
-static const char *ldb_di0_div_sels[]	= { "ldb_di0_div_3_5", "ldb_di0_div_7", };
-static const char *ldb_di1_div_sels[]	= { "ldb_di1_div_3_5", "ldb_di1_div_7", };
-static const char *ldb_di0_sels[]	= { "pll5_video_div", "pll2_pfd0_352m", "pll2_pfd2_396m", "pll2_pfd3_594m", "pll2_pfd1_594m", "pll3_pfd3_454m", };
-static const char *ldb_di1_sels[]	= { "pll3_usb_otg", "pll2_pfd0_352m", "pll2_pfd2_396m", "pll2_bus", "pll3_pfd3_454m", "pll3_pfd2_508m", };
-static const char *pcie_axi_sels[]	= { "axi", "ahb", };
-static const char *ssi_sels[]		= { "pll3_pfd2_508m", "pll5_video_div", "pll4_audio_div", };
-static const char *qspi1_sels[]		= { "pll3_usb_otg", "pll2_pfd0_352m", "pll2_pfd2_396m", "pll2_bus", "pll3_pfd3_454m", "pll3_pfd2_508m", };
-static const char *perclk_sels[]	= { "ipg", "osc", };
-static const char *usdhc_sels[]		= { "pll2_pfd2_396m", "pll2_pfd0_352m", };
-static const char *vid_sels[]		= { "pll3_pfd1_540m", "pll3_usb_otg", "pll3_pfd3_454m", "pll4_audio_div", "pll5_video_div", };
-static const char *can_sels[]		= { "pll3_60m", "osc", "pll3_80m", "dummy", };
-static const char *uart_sels[]		= { "pll3_80m", "osc", };
-static const char *qspi2_sels[]		= { "pll2_pfd0_352m", "pll2_bus", "pll3_usb_otg", "pll2_pfd2_396m", "pll3_pfd3_454m", "dummy", "dummy", "dummy", };
-static const char *enet_pre_sels[]	= { "pll2_bus", "pll3_usb_otg", "pll5_video_div", "pll2_pfd0_352m", "pll2_pfd2_396m", "pll3_pfd2_508m", };
-static const char *enet_sels[]		= { "enet_podf", "ipp_di0", "ipp_di1", "ldb_di0", "ldb_di1", };
-static const char *m4_pre_sels[]	= { "pll2_bus", "pll3_usb_otg", "osc", "pll2_pfd0_352m", "pll2_pfd2_396m", "pll3_pfd3_454m", };
-static const char *m4_sels[]		= { "m4_pre_sel", "ipp_di0", "ipp_di1", "ldb_di0", "ldb_di1", };
-static const char *eim_slow_sels[]	= { "ocram", "pll3_usb_otg", "pll2_pfd2_396m", "pll2_pfd0_352m", };
-static const char *ecspi_sels[]		= { "pll3_60m", "osc", };
-static const char *lcdif1_pre_sels[]	= { "pll2_bus", "pll3_pfd3_454m", "pll5_video_div", "pll2_pfd0_352m", "pll2_pfd1_594m", "pll3_pfd1_540m", };
-static const char *lcdif1_sels[]	= { "lcdif1_podf", "ipp_di0", "ipp_di1", "ldb_di0", "ldb_di1", };
-static const char *lcdif2_pre_sels[]	= { "pll2_bus", "pll3_pfd3_454m", "pll5_video_div", "pll2_pfd0_352m", "pll2_pfd3_594m", "pll3_pfd1_540m", };
-static const char *lcdif2_sels[]	= { "lcdif2_podf", "ipp_di0", "ipp_di1", "ldb_di0", "ldb_di1", };
-static const char *display_sels[]	= { "pll2_bus", "pll2_pfd2_396m", "pll3_usb_otg", "pll3_pfd1_540m", };
-static const char *csi_sels[]		= { "osc", "pll2_pfd2_396m", "pll3_120m", "pll3_pfd1_540m", };
-static const char *cko1_sels[]		= {
+अटल स्थिर अक्षर *step_sels[]		= अणु "osc", "pll2_pfd2_396m", पूर्ण;
+अटल स्थिर अक्षर *pll1_sw_sels[]	= अणु "pll1_sys", "step", पूर्ण;
+अटल स्थिर अक्षर *periph_pre_sels[]	= अणु "pll2_bus", "pll2_pfd2_396m", "pll2_pfd0_352m", "pll2_198m", पूर्ण;
+अटल स्थिर अक्षर *periph2_pre_sels[]	= अणु "pll2_bus", "pll2_pfd2_396m", "pll2_pfd0_352m", "pll4_audio_div", पूर्ण;
+अटल स्थिर अक्षर *periph_clk2_sels[]	= अणु "pll3_usb_otg", "osc", "osc", पूर्ण;
+अटल स्थिर अक्षर *periph2_clk2_sels[]	= अणु "pll3_usb_otg", "osc", पूर्ण;
+अटल स्थिर अक्षर *periph_sels[]	= अणु "periph_pre", "periph_clk2", पूर्ण;
+अटल स्थिर अक्षर *periph2_sels[]	= अणु "periph2_pre", "periph2_clk2", पूर्ण;
+अटल स्थिर अक्षर *ocram_sels[]		= अणु "periph", "pll2_pfd2_396m", "periph", "pll3_pfd1_540m", पूर्ण;
+अटल स्थिर अक्षर *audio_sels[]		= अणु "pll4_audio_div", "pll3_pfd2_508m", "pll5_video_div", "pll3_usb_otg", पूर्ण;
+अटल स्थिर अक्षर *gpu_axi_sels[]	= अणु "pll2_pfd2_396m", "pll3_pfd0_720m", "pll3_pfd1_540m", "pll2_bus", पूर्ण;
+अटल स्थिर अक्षर *gpu_core_sels[]	= अणु "pll3_pfd1_540m", "pll3_pfd0_720m", "pll2_bus", "pll2_pfd2_396m", पूर्ण;
+अटल स्थिर अक्षर *ldb_di0_भाग_sels[]	= अणु "ldb_di0_div_3_5", "ldb_di0_div_7", पूर्ण;
+अटल स्थिर अक्षर *ldb_di1_भाग_sels[]	= अणु "ldb_di1_div_3_5", "ldb_di1_div_7", पूर्ण;
+अटल स्थिर अक्षर *ldb_di0_sels[]	= अणु "pll5_video_div", "pll2_pfd0_352m", "pll2_pfd2_396m", "pll2_pfd3_594m", "pll2_pfd1_594m", "pll3_pfd3_454m", पूर्ण;
+अटल स्थिर अक्षर *ldb_di1_sels[]	= अणु "pll3_usb_otg", "pll2_pfd0_352m", "pll2_pfd2_396m", "pll2_bus", "pll3_pfd3_454m", "pll3_pfd2_508m", पूर्ण;
+अटल स्थिर अक्षर *pcie_axi_sels[]	= अणु "axi", "ahb", पूर्ण;
+अटल स्थिर अक्षर *ssi_sels[]		= अणु "pll3_pfd2_508m", "pll5_video_div", "pll4_audio_div", पूर्ण;
+अटल स्थिर अक्षर *qspi1_sels[]		= अणु "pll3_usb_otg", "pll2_pfd0_352m", "pll2_pfd2_396m", "pll2_bus", "pll3_pfd3_454m", "pll3_pfd2_508m", पूर्ण;
+अटल स्थिर अक्षर *perclk_sels[]	= अणु "ipg", "osc", पूर्ण;
+अटल स्थिर अक्षर *usdhc_sels[]		= अणु "pll2_pfd2_396m", "pll2_pfd0_352m", पूर्ण;
+अटल स्थिर अक्षर *vid_sels[]		= अणु "pll3_pfd1_540m", "pll3_usb_otg", "pll3_pfd3_454m", "pll4_audio_div", "pll5_video_div", पूर्ण;
+अटल स्थिर अक्षर *can_sels[]		= अणु "pll3_60m", "osc", "pll3_80m", "dummy", पूर्ण;
+अटल स्थिर अक्षर *uart_sels[]		= अणु "pll3_80m", "osc", पूर्ण;
+अटल स्थिर अक्षर *qspi2_sels[]		= अणु "pll2_pfd0_352m", "pll2_bus", "pll3_usb_otg", "pll2_pfd2_396m", "pll3_pfd3_454m", "dummy", "dummy", "dummy", पूर्ण;
+अटल स्थिर अक्षर *enet_pre_sels[]	= अणु "pll2_bus", "pll3_usb_otg", "pll5_video_div", "pll2_pfd0_352m", "pll2_pfd2_396m", "pll3_pfd2_508m", पूर्ण;
+अटल स्थिर अक्षर *enet_sels[]		= अणु "enet_podf", "ipp_di0", "ipp_di1", "ldb_di0", "ldb_di1", पूर्ण;
+अटल स्थिर अक्षर *m4_pre_sels[]	= अणु "pll2_bus", "pll3_usb_otg", "osc", "pll2_pfd0_352m", "pll2_pfd2_396m", "pll3_pfd3_454m", पूर्ण;
+अटल स्थिर अक्षर *m4_sels[]		= अणु "m4_pre_sel", "ipp_di0", "ipp_di1", "ldb_di0", "ldb_di1", पूर्ण;
+अटल स्थिर अक्षर *eim_slow_sels[]	= अणु "ocram", "pll3_usb_otg", "pll2_pfd2_396m", "pll2_pfd0_352m", पूर्ण;
+अटल स्थिर अक्षर *ecspi_sels[]		= अणु "pll3_60m", "osc", पूर्ण;
+अटल स्थिर अक्षर *lcdअगर1_pre_sels[]	= अणु "pll2_bus", "pll3_pfd3_454m", "pll5_video_div", "pll2_pfd0_352m", "pll2_pfd1_594m", "pll3_pfd1_540m", पूर्ण;
+अटल स्थिर अक्षर *lcdअगर1_sels[]	= अणु "lcdif1_podf", "ipp_di0", "ipp_di1", "ldb_di0", "ldb_di1", पूर्ण;
+अटल स्थिर अक्षर *lcdअगर2_pre_sels[]	= अणु "pll2_bus", "pll3_pfd3_454m", "pll5_video_div", "pll2_pfd0_352m", "pll2_pfd3_594m", "pll3_pfd1_540m", पूर्ण;
+अटल स्थिर अक्षर *lcdअगर2_sels[]	= अणु "lcdif2_podf", "ipp_di0", "ipp_di1", "ldb_di0", "ldb_di1", पूर्ण;
+अटल स्थिर अक्षर *display_sels[]	= अणु "pll2_bus", "pll2_pfd2_396m", "pll3_usb_otg", "pll3_pfd1_540m", पूर्ण;
+अटल स्थिर अक्षर *csi_sels[]		= अणु "osc", "pll2_pfd2_396m", "pll3_120m", "pll3_pfd1_540m", पूर्ण;
+अटल स्थिर अक्षर *cko1_sels[]		= अणु
 	"dummy", "dummy", "dummy", "dummy",
 	"vadc", "ocram", "qspi2", "m4", "enet_ahb", "lcdif2_pix",
 	"lcdif1_pix", "ahb", "ipg", "perclk", "ckil", "pll4_audio_div",
-};
-static const char *cko2_sels[]		= {
+पूर्ण;
+अटल स्थिर अक्षर *cko2_sels[]		= अणु
 	"dummy", "mmdc_p0_fast", "usdhc4", "usdhc1", "dummy", "wrck",
 	"ecspi_root", "dummy", "usdhc3", "pcie", "arm", "csi_core",
 	"display_axi", "dummy", "osc", "dummy", "dummy",
 	"usdhc2", "ssi1", "ssi2", "ssi3", "gpu_axi_podf", "dummy",
 	"can_podf", "lvds1_out", "qspi1", "esai_extal", "eim_slow",
 	"uart_serial", "spdif", "audio", "dummy",
-};
-static const char *cko_sels[] = { "cko1", "cko2", };
-static const char *lvds_sels[]	= {
+पूर्ण;
+अटल स्थिर अक्षर *cko_sels[] = अणु "cko1", "cko2", पूर्ण;
+अटल स्थिर अक्षर *lvds_sels[]	= अणु
 	"arm", "pll1_sys", "dummy", "dummy", "dummy", "dummy", "dummy", "pll5_video_div",
 	"dummy", "dummy", "pcie_ref_125m", "dummy", "usbphy1", "usbphy2",
-};
-static const char *pll_bypass_src_sels[] = { "osc", "lvds1_in", "lvds2_in", "dummy", };
-static const char *pll1_bypass_sels[] = { "pll1", "pll1_bypass_src", };
-static const char *pll2_bypass_sels[] = { "pll2", "pll2_bypass_src", };
-static const char *pll3_bypass_sels[] = { "pll3", "pll3_bypass_src", };
-static const char *pll4_bypass_sels[] = { "pll4", "pll4_bypass_src", };
-static const char *pll5_bypass_sels[] = { "pll5", "pll5_bypass_src", };
-static const char *pll6_bypass_sels[] = { "pll6", "pll6_bypass_src", };
-static const char *pll7_bypass_sels[] = { "pll7", "pll7_bypass_src", };
+पूर्ण;
+अटल स्थिर अक्षर *pll_bypass_src_sels[] = अणु "osc", "lvds1_in", "lvds2_in", "dummy", पूर्ण;
+अटल स्थिर अक्षर *pll1_bypass_sels[] = अणु "pll1", "pll1_bypass_src", पूर्ण;
+अटल स्थिर अक्षर *pll2_bypass_sels[] = अणु "pll2", "pll2_bypass_src", पूर्ण;
+अटल स्थिर अक्षर *pll3_bypass_sels[] = अणु "pll3", "pll3_bypass_src", पूर्ण;
+अटल स्थिर अक्षर *pll4_bypass_sels[] = अणु "pll4", "pll4_bypass_src", पूर्ण;
+अटल स्थिर अक्षर *pll5_bypass_sels[] = अणु "pll5", "pll5_bypass_src", पूर्ण;
+अटल स्थिर अक्षर *pll6_bypass_sels[] = अणु "pll6", "pll6_bypass_src", पूर्ण;
+अटल स्थिर अक्षर *pll7_bypass_sels[] = अणु "pll7", "pll7_bypass_src", पूर्ण;
 
-static struct clk_hw **hws;
-static struct clk_hw_onecell_data *clk_hw_data;
+अटल काष्ठा clk_hw **hws;
+अटल काष्ठा clk_hw_onecell_data *clk_hw_data;
 
-static const struct clk_div_table clk_enet_ref_table[] = {
-	{ .val = 0, .div = 20, },
-	{ .val = 1, .div = 10, },
-	{ .val = 2, .div = 5, },
-	{ .val = 3, .div = 4, },
-	{ }
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable clk_enet_ref_table[] = अणु
+	अणु .val = 0, .भाग = 20, पूर्ण,
+	अणु .val = 1, .भाग = 10, पूर्ण,
+	अणु .val = 2, .भाग = 5, पूर्ण,
+	अणु .val = 3, .भाग = 4, पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static const struct clk_div_table post_div_table[] = {
-	{ .val = 2, .div = 1, },
-	{ .val = 1, .div = 2, },
-	{ .val = 0, .div = 4, },
-	{ }
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable post_भाग_प्रकारable[] = अणु
+	अणु .val = 2, .भाग = 1, पूर्ण,
+	अणु .val = 1, .भाग = 2, पूर्ण,
+	अणु .val = 0, .भाग = 4, पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static const struct clk_div_table video_div_table[] = {
-	{ .val = 0, .div = 1, },
-	{ .val = 1, .div = 2, },
-	{ .val = 2, .div = 1, },
-	{ .val = 3, .div = 4, },
-	{ }
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable video_भाग_प्रकारable[] = अणु
+	अणु .val = 0, .भाग = 1, पूर्ण,
+	अणु .val = 1, .भाग = 2, पूर्ण,
+	अणु .val = 2, .भाग = 1, पूर्ण,
+	अणु .val = 3, .भाग = 4, पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static u32 share_count_asrc;
-static u32 share_count_audio;
-static u32 share_count_esai;
-static u32 share_count_ssi1;
-static u32 share_count_ssi2;
-static u32 share_count_ssi3;
-static u32 share_count_sai1;
-static u32 share_count_sai2;
+अटल u32 share_count_asrc;
+अटल u32 share_count_audio;
+अटल u32 share_count_esai;
+अटल u32 share_count_ssi1;
+अटल u32 share_count_ssi2;
+अटल u32 share_count_ssi3;
+अटल u32 share_count_sai1;
+अटल u32 share_count_sai2;
 
-static void __init imx6sx_clocks_init(struct device_node *ccm_node)
-{
-	struct device_node *np;
-	void __iomem *base;
+अटल व्योम __init imx6sx_घड़ीs_init(काष्ठा device_node *ccm_node)
+अणु
+	काष्ठा device_node *np;
+	व्योम __iomem *base;
 
-	clk_hw_data = kzalloc(struct_size(clk_hw_data, hws,
+	clk_hw_data = kzalloc(काष्ठा_size(clk_hw_data, hws,
 					  IMX6SX_CLK_CLK_END), GFP_KERNEL);
-	if (WARN_ON(!clk_hw_data))
-		return;
+	अगर (WARN_ON(!clk_hw_data))
+		वापस;
 
 	clk_hw_data->num = IMX6SX_CLK_CLK_END;
 	hws = clk_hw_data->hws;
@@ -135,15 +136,15 @@ static void __init imx6sx_clocks_init(struct device_node *ccm_node)
 	hws[IMX6SX_CLK_CKIL] = imx_obtain_fixed_clk_hw(ccm_node, "ckil");
 	hws[IMX6SX_CLK_OSC] = imx_obtain_fixed_clk_hw(ccm_node, "osc");
 
-	/* ipp_di clock is external input */
+	/* ipp_di घड़ी is बाह्यal input */
 	hws[IMX6SX_CLK_IPP_DI0] = imx_obtain_fixed_clk_hw(ccm_node, "ipp_di0");
 	hws[IMX6SX_CLK_IPP_DI1] = imx_obtain_fixed_clk_hw(ccm_node, "ipp_di1");
 
-	/* Clock source from external clock via CLK1/2 PAD */
+	/* Clock source from बाह्यal घड़ी via CLK1/2 PAD */
 	hws[IMX6SX_CLK_ANACLK1] = imx_obtain_fixed_clk_hw(ccm_node, "anaclk1");
 	hws[IMX6SX_CLK_ANACLK2] = imx_obtain_fixed_clk_hw(ccm_node, "anaclk2");
 
-	np = of_find_compatible_node(NULL, NULL, "fsl,imx6sx-anatop");
+	np = of_find_compatible_node(शून्य, शून्य, "fsl,imx6sx-anatop");
 	base = of_iomap(np, 0);
 	WARN_ON(!base);
 	of_node_put(np);
@@ -156,7 +157,7 @@ static void __init imx6sx_clocks_init(struct device_node *ccm_node)
 	hws[IMX6SX_PLL6_BYPASS_SRC] = imx_clk_hw_mux("pll6_bypass_src", base + 0xe0, 14, 1, pll_bypass_src_sels, ARRAY_SIZE(pll_bypass_src_sels));
 	hws[IMX6SX_PLL7_BYPASS_SRC] = imx_clk_hw_mux("pll7_bypass_src", base + 0x20, 14, 1, pll_bypass_src_sels, ARRAY_SIZE(pll_bypass_src_sels));
 
-	/*                                    type               name    parent_name        base         div_mask */
+	/*                                    type               name    parent_name        base         भाग_mask */
 	hws[IMX6SX_CLK_PLL1] = imx_clk_hw_pllv3(IMX_PLLV3_SYS,     "pll1", "osc", base + 0x00, 0x7f);
 	hws[IMX6SX_CLK_PLL2] = imx_clk_hw_pllv3(IMX_PLLV3_GENERIC, "pll2", "osc", base + 0x30, 0x1);
 	hws[IMX6SX_CLK_PLL3] = imx_clk_hw_pllv3(IMX_PLLV3_USB,     "pll3", "osc", base + 0x10, 0x3);
@@ -191,22 +192,22 @@ static void __init imx6sx_clocks_init(struct device_node *ccm_node)
 	hws[IMX6SX_CLK_PLL7_USB_HOST] = imx_clk_hw_gate("pll7_usb_host", "pll7_bypass", base + 0x20, 13);
 
 	/*
-	 * Bit 20 is the reserved and read-only bit, we do this only for:
-	 * - Do nothing for usbphy clk_enable/disable
-	 * - Keep refcount when do usbphy clk_enable/disable, in that case,
+	 * Bit 20 is the reserved and पढ़ो-only bit, we करो this only क्रम:
+	 * - Do nothing क्रम usbphy clk_enable/disable
+	 * - Keep refcount when करो usbphy clk_enable/disable, in that हाल,
 	 * the clk framework may need to enable/disable usbphy's parent
 	 */
 	hws[IMX6SX_CLK_USBPHY1] = imx_clk_hw_gate("usbphy1", "pll3_usb_otg",  base + 0x10, 20);
 	hws[IMX6SX_CLK_USBPHY2] = imx_clk_hw_gate("usbphy2", "pll7_usb_host", base + 0x20, 20);
 
 	/*
-	 * usbphy*_gate needs to be on after system boots up, and software
+	 * usbphy*_gate needs to be on after प्रणाली boots up, and software
 	 * never needs to control it anymore.
 	 */
 	hws[IMX6SX_CLK_USBPHY1_GATE] = imx_clk_hw_gate("usbphy1_gate", "dummy", base + 0x10, 6);
 	hws[IMX6SX_CLK_USBPHY2_GATE] = imx_clk_hw_gate("usbphy2_gate", "dummy", base + 0x20, 6);
 
-	/* FIXME 100MHz is used for pcie ref for all imx6 pcie, excepted imx6q */
+	/* FIXME 100MHz is used क्रम pcie ref क्रम all imx6 pcie, excepted imx6q */
 	hws[IMX6SX_CLK_PCIE_REF] = imx_clk_hw_fixed_factor("pcie_ref", "pll6_enet", 1, 5);
 	hws[IMX6SX_CLK_PCIE_REF_125M] = imx_clk_hw_gate("pcie_ref_125m", "pcie_ref", base + 0xe0, 19);
 
@@ -215,10 +216,10 @@ static void __init imx6sx_clocks_init(struct device_node *ccm_node)
 	hws[IMX6SX_CLK_LVDS1_IN]  = imx_clk_hw_gate_exclusive("lvds1_in",  "anaclk1",   base + 0x160, 12, BIT(10));
 	hws[IMX6SX_CLK_LVDS2_IN]  = imx_clk_hw_gate_exclusive("lvds2_in",  "anaclk2",   base + 0x160, 13, BIT(11));
 
-	hws[IMX6SX_CLK_ENET_REF] = clk_hw_register_divider_table(NULL, "enet_ref", "pll6_enet", 0,
+	hws[IMX6SX_CLK_ENET_REF] = clk_hw_रेजिस्टर_भागider_table(शून्य, "enet_ref", "pll6_enet", 0,
 			base + 0xe0, 0, 2, 0, clk_enet_ref_table,
 			&imx_ccm_lock);
-	hws[IMX6SX_CLK_ENET2_REF] = clk_hw_register_divider_table(NULL, "enet2_ref", "pll6_enet", 0,
+	hws[IMX6SX_CLK_ENET2_REF] = clk_hw_रेजिस्टर_भागider_table(शून्य, "enet2_ref", "pll6_enet", 0,
 			base + 0xe0, 2, 2, 0, clk_enet_ref_table,
 			&imx_ccm_lock);
 	hws[IMX6SX_CLK_ENET2_REF_125M] = imx_clk_hw_gate("enet2_ref_125m", "enet2_ref", base + 0xe0, 20);
@@ -236,7 +237,7 @@ static void __init imx6sx_clocks_init(struct device_node *ccm_node)
 	hws[IMX6SX_CLK_PLL3_PFD2] = imx_clk_hw_pfd("pll3_pfd2_508m", "pll3_usb_otg", base + 0xf0,  2);
 	hws[IMX6SX_CLK_PLL3_PFD3] = imx_clk_hw_pfd("pll3_pfd3_454m", "pll3_usb_otg", base + 0xf0,  3);
 
-	/*                                                name         parent_name       mult div */
+	/*                                                name         parent_name       mult भाग */
 	hws[IMX6SX_CLK_PLL2_198M] = imx_clk_hw_fixed_factor("pll2_198m", "pll2_pfd2_396m", 1,   2);
 	hws[IMX6SX_CLK_PLL3_120M] = imx_clk_hw_fixed_factor("pll3_120m", "pll3_usb_otg",   1,   4);
 	hws[IMX6SX_CLK_PLL3_80M]  = imx_clk_hw_fixed_factor("pll3_80m",  "pll3_usb_otg",   1,   6);
@@ -244,16 +245,16 @@ static void __init imx6sx_clocks_init(struct device_node *ccm_node)
 	hws[IMX6SX_CLK_TWD]       = imx_clk_hw_fixed_factor("twd",       "arm",            1,   2);
 	hws[IMX6SX_CLK_GPT_3M]    = imx_clk_hw_fixed_factor("gpt_3m",    "osc",            1,   8);
 
-	hws[IMX6SX_CLK_PLL4_POST_DIV]  = clk_hw_register_divider_table(NULL, "pll4_post_div", "pll4_audio",
-				CLK_SET_RATE_PARENT, base + 0x70, 19, 2, 0, post_div_table, &imx_ccm_lock);
-	hws[IMX6SX_CLK_PLL4_AUDIO_DIV] = clk_hw_register_divider(NULL, "pll4_audio_div", "pll4_post_div",
+	hws[IMX6SX_CLK_PLL4_POST_DIV]  = clk_hw_रेजिस्टर_भागider_table(शून्य, "pll4_post_div", "pll4_audio",
+				CLK_SET_RATE_PARENT, base + 0x70, 19, 2, 0, post_भाग_प्रकारable, &imx_ccm_lock);
+	hws[IMX6SX_CLK_PLL4_AUDIO_DIV] = clk_hw_रेजिस्टर_भागider(शून्य, "pll4_audio_div", "pll4_post_div",
 				CLK_SET_RATE_PARENT, base + 0x170, 15, 1, 0, &imx_ccm_lock);
-	hws[IMX6SX_CLK_PLL5_POST_DIV]  = clk_hw_register_divider_table(NULL, "pll5_post_div", "pll5_video",
-				CLK_SET_RATE_PARENT, base + 0xa0, 19, 2, 0, post_div_table, &imx_ccm_lock);
-	hws[IMX6SX_CLK_PLL5_VIDEO_DIV] = clk_hw_register_divider_table(NULL, "pll5_video_div", "pll5_post_div",
-				CLK_SET_RATE_PARENT, base + 0x170, 30, 2, 0, video_div_table, &imx_ccm_lock);
+	hws[IMX6SX_CLK_PLL5_POST_DIV]  = clk_hw_रेजिस्टर_भागider_table(शून्य, "pll5_post_div", "pll5_video",
+				CLK_SET_RATE_PARENT, base + 0xa0, 19, 2, 0, post_भाग_प्रकारable, &imx_ccm_lock);
+	hws[IMX6SX_CLK_PLL5_VIDEO_DIV] = clk_hw_रेजिस्टर_भागider_table(शून्य, "pll5_video_div", "pll5_post_div",
+				CLK_SET_RATE_PARENT, base + 0x170, 30, 2, 0, video_भाग_प्रकारable, &imx_ccm_lock);
 
-	/*                                                name                reg           shift   width   parent_names       num_parents */
+	/*                                                name                reg           shअगरt   width   parent_names       num_parents */
 	hws[IMX6SX_CLK_LVDS1_SEL]          = imx_clk_hw_mux("lvds1_sel",        base + 0x160, 0,      5,      lvds_sels,         ARRAY_SIZE(lvds_sels));
 	hws[IMX6SX_CLK_LVDS2_SEL]          = imx_clk_hw_mux("lvds2_sel",        base + 0x160, 5,      5,      lvds_sels,         ARRAY_SIZE(lvds_sels));
 
@@ -261,7 +262,7 @@ static void __init imx6sx_clocks_init(struct device_node *ccm_node)
 	base = of_iomap(np, 0);
 	WARN_ON(!base);
 
-	/*                                                name                reg           shift   width   parent_names       num_parents */
+	/*                                                name                reg           shअगरt   width   parent_names       num_parents */
 	hws[IMX6SX_CLK_STEP]               = imx_clk_hw_mux("step",             base + 0xc,   8,      1,      step_sels,         ARRAY_SIZE(step_sels));
 	hws[IMX6SX_CLK_PLL1_SW]            = imx_clk_hw_mux("pll1_sw",          base + 0xc,   2,      1,      pll1_sw_sels,      ARRAY_SIZE(pll1_sw_sels));
 	hws[IMX6SX_CLK_OCRAM_SEL]          = imx_clk_hw_mux("ocram_sel",        base + 0x14,  6,      2,      ocram_sels,        ARRAY_SIZE(ocram_sels));
@@ -294,78 +295,78 @@ static void __init imx6sx_clocks_init(struct device_node *ccm_node)
 	hws[IMX6SX_CLK_M4_PRE_SEL]         = imx_clk_hw_mux("m4_pre_sel",       base + 0x34,  6,      3,      m4_pre_sels,       ARRAY_SIZE(m4_pre_sels));
 	hws[IMX6SX_CLK_M4_SEL]             = imx_clk_hw_mux("m4_sel",           base + 0x34,  0,      3,      m4_sels,           ARRAY_SIZE(m4_sels));
 	hws[IMX6SX_CLK_ECSPI_SEL]          = imx_clk_hw_mux("ecspi_sel",        base + 0x38,  18,     1,      ecspi_sels,        ARRAY_SIZE(ecspi_sels));
-	hws[IMX6SX_CLK_LCDIF2_PRE_SEL]     = imx_clk_hw_mux("lcdif2_pre_sel",   base + 0x38,  6,      3,      lcdif2_pre_sels,   ARRAY_SIZE(lcdif2_pre_sels));
-	hws[IMX6SX_CLK_LCDIF2_SEL]         = imx_clk_hw_mux("lcdif2_sel",       base + 0x38,  0,      3,      lcdif2_sels,       ARRAY_SIZE(lcdif2_sels));
+	hws[IMX6SX_CLK_LCDIF2_PRE_SEL]     = imx_clk_hw_mux("lcdif2_pre_sel",   base + 0x38,  6,      3,      lcdअगर2_pre_sels,   ARRAY_SIZE(lcdअगर2_pre_sels));
+	hws[IMX6SX_CLK_LCDIF2_SEL]         = imx_clk_hw_mux("lcdif2_sel",       base + 0x38,  0,      3,      lcdअगर2_sels,       ARRAY_SIZE(lcdअगर2_sels));
 	hws[IMX6SX_CLK_DISPLAY_SEL]        = imx_clk_hw_mux("display_sel",      base + 0x3c,  14,     2,      display_sels,      ARRAY_SIZE(display_sels));
 	hws[IMX6SX_CLK_CSI_SEL]            = imx_clk_hw_mux("csi_sel",          base + 0x3c,  9,      2,      csi_sels,          ARRAY_SIZE(csi_sels));
 	hws[IMX6SX_CLK_CKO1_SEL]           = imx_clk_hw_mux("cko1_sel",         base + 0x60,  0,      4,      cko1_sels,         ARRAY_SIZE(cko1_sels));
 	hws[IMX6SX_CLK_CKO2_SEL]           = imx_clk_hw_mux("cko2_sel",         base + 0x60,  16,     5,      cko2_sels,         ARRAY_SIZE(cko2_sels));
 	hws[IMX6SX_CLK_CKO]                = imx_clk_hw_mux("cko",              base + 0x60,  8,      1,      cko_sels,          ARRAY_SIZE(cko_sels));
 
-	hws[IMX6SX_CLK_LDB_DI1_DIV_SEL]    = imx_clk_hw_mux_flags("ldb_di1_div_sel", base + 0x20, 11, 1, ldb_di1_div_sels, ARRAY_SIZE(ldb_di1_div_sels), CLK_SET_RATE_PARENT);
-	hws[IMX6SX_CLK_LDB_DI0_DIV_SEL]    = imx_clk_hw_mux_flags("ldb_di0_div_sel", base + 0x20, 10, 1, ldb_di0_div_sels, ARRAY_SIZE(ldb_di0_div_sels), CLK_SET_RATE_PARENT);
+	hws[IMX6SX_CLK_LDB_DI1_DIV_SEL]    = imx_clk_hw_mux_flags("ldb_di1_div_sel", base + 0x20, 11, 1, ldb_di1_भाग_sels, ARRAY_SIZE(ldb_di1_भाग_sels), CLK_SET_RATE_PARENT);
+	hws[IMX6SX_CLK_LDB_DI0_DIV_SEL]    = imx_clk_hw_mux_flags("ldb_di0_div_sel", base + 0x20, 10, 1, ldb_di0_भाग_sels, ARRAY_SIZE(ldb_di0_भाग_sels), CLK_SET_RATE_PARENT);
 	hws[IMX6SX_CLK_LDB_DI1_SEL]        = imx_clk_hw_mux_flags("ldb_di1_sel",     base + 0x2c, 12, 3, ldb_di1_sels,      ARRAY_SIZE(ldb_di1_sels),    CLK_SET_RATE_PARENT);
 	hws[IMX6SX_CLK_LDB_DI0_SEL]        = imx_clk_hw_mux_flags("ldb_di0_sel",     base + 0x2c, 9,  3, ldb_di0_sels,      ARRAY_SIZE(ldb_di0_sels),    CLK_SET_RATE_PARENT);
-	hws[IMX6SX_CLK_LCDIF1_PRE_SEL]     = imx_clk_hw_mux_flags("lcdif1_pre_sel",  base + 0x38, 15, 3, lcdif1_pre_sels,   ARRAY_SIZE(lcdif1_pre_sels), CLK_SET_RATE_PARENT);
-	hws[IMX6SX_CLK_LCDIF1_SEL]         = imx_clk_hw_mux_flags("lcdif1_sel",      base + 0x38, 9,  3, lcdif1_sels,       ARRAY_SIZE(lcdif1_sels),     CLK_SET_RATE_PARENT);
+	hws[IMX6SX_CLK_LCDIF1_PRE_SEL]     = imx_clk_hw_mux_flags("lcdif1_pre_sel",  base + 0x38, 15, 3, lcdअगर1_pre_sels,   ARRAY_SIZE(lcdअगर1_pre_sels), CLK_SET_RATE_PARENT);
+	hws[IMX6SX_CLK_LCDIF1_SEL]         = imx_clk_hw_mux_flags("lcdif1_sel",      base + 0x38, 9,  3, lcdअगर1_sels,       ARRAY_SIZE(lcdअगर1_sels),     CLK_SET_RATE_PARENT);
 
-	/*                                                    name              parent_name          reg          shift width */
-	hws[IMX6SX_CLK_PERIPH_CLK2]        = imx_clk_hw_divider("periph_clk2",    "periph_clk2_sel",   base + 0x14, 27,   3);
-	hws[IMX6SX_CLK_PERIPH2_CLK2]       = imx_clk_hw_divider("periph2_clk2",   "periph2_clk2_sel",  base + 0x14, 0,    3);
-	hws[IMX6SX_CLK_IPG]                = imx_clk_hw_divider("ipg",            "ahb",               base + 0x14, 8,    2);
-	hws[IMX6SX_CLK_GPU_CORE_PODF]      = imx_clk_hw_divider("gpu_core_podf",  "gpu_core_sel",      base + 0x18, 29,   3);
-	hws[IMX6SX_CLK_GPU_AXI_PODF]       = imx_clk_hw_divider("gpu_axi_podf",   "gpu_axi_sel",       base + 0x18, 26,   3);
-	hws[IMX6SX_CLK_LCDIF1_PODF]        = imx_clk_hw_divider("lcdif1_podf",    "lcdif1_pred",       base + 0x18, 23,   3);
-	hws[IMX6SX_CLK_QSPI1_PODF]         = imx_clk_hw_divider("qspi1_podf",     "qspi1_sel",         base + 0x1c, 26,   3);
-	hws[IMX6SX_CLK_EIM_SLOW_PODF]      = imx_clk_hw_divider("eim_slow_podf",  "eim_slow_sel",      base + 0x1c, 23,   3);
-	hws[IMX6SX_CLK_LCDIF2_PODF]        = imx_clk_hw_divider("lcdif2_podf",    "lcdif2_pred",       base + 0x1c, 20,   3);
-	hws[IMX6SX_CLK_PERCLK]             = imx_clk_hw_divider_flags("perclk", "perclk_sel", base + 0x1c, 0, 6, CLK_IS_CRITICAL);
-	hws[IMX6SX_CLK_VID_PODF]           = imx_clk_hw_divider("vid_podf",       "vid_sel",           base + 0x20, 24,   2);
-	hws[IMX6SX_CLK_CAN_PODF]           = imx_clk_hw_divider("can_podf",       "can_sel",           base + 0x20, 2,    6);
-	hws[IMX6SX_CLK_USDHC4_PODF]        = imx_clk_hw_divider("usdhc4_podf",    "usdhc4_sel",        base + 0x24, 22,   3);
-	hws[IMX6SX_CLK_USDHC3_PODF]        = imx_clk_hw_divider("usdhc3_podf",    "usdhc3_sel",        base + 0x24, 19,   3);
-	hws[IMX6SX_CLK_USDHC2_PODF]        = imx_clk_hw_divider("usdhc2_podf",    "usdhc2_sel",        base + 0x24, 16,   3);
-	hws[IMX6SX_CLK_USDHC1_PODF]        = imx_clk_hw_divider("usdhc1_podf",    "usdhc1_sel",        base + 0x24, 11,   3);
-	hws[IMX6SX_CLK_UART_PODF]          = imx_clk_hw_divider("uart_podf",      "uart_sel",          base + 0x24, 0,    6);
-	hws[IMX6SX_CLK_ESAI_PRED]          = imx_clk_hw_divider("esai_pred",      "esai_sel",          base + 0x28, 9,    3);
-	hws[IMX6SX_CLK_ESAI_PODF]          = imx_clk_hw_divider("esai_podf",      "esai_pred",         base + 0x28, 25,   3);
-	hws[IMX6SX_CLK_SSI3_PRED]          = imx_clk_hw_divider("ssi3_pred",      "ssi3_sel",          base + 0x28, 22,   3);
-	hws[IMX6SX_CLK_SSI3_PODF]          = imx_clk_hw_divider("ssi3_podf",      "ssi3_pred",         base + 0x28, 16,   6);
-	hws[IMX6SX_CLK_SSI1_PRED]          = imx_clk_hw_divider("ssi1_pred",      "ssi1_sel",          base + 0x28, 6,    3);
-	hws[IMX6SX_CLK_SSI1_PODF]          = imx_clk_hw_divider("ssi1_podf",      "ssi1_pred",         base + 0x28, 0,    6);
-	hws[IMX6SX_CLK_QSPI2_PRED]         = imx_clk_hw_divider("qspi2_pred",     "qspi2_sel",         base + 0x2c, 18,   3);
-	hws[IMX6SX_CLK_QSPI2_PODF]         = imx_clk_hw_divider("qspi2_podf",     "qspi2_pred",        base + 0x2c, 21,   6);
-	hws[IMX6SX_CLK_SSI2_PRED]          = imx_clk_hw_divider("ssi2_pred",      "ssi2_sel",          base + 0x2c, 6,    3);
-	hws[IMX6SX_CLK_SSI2_PODF]          = imx_clk_hw_divider("ssi2_podf",      "ssi2_pred",         base + 0x2c, 0,    6);
-	hws[IMX6SX_CLK_SPDIF_PRED]         = imx_clk_hw_divider("spdif_pred",     "spdif_sel",         base + 0x30, 25,   3);
-	hws[IMX6SX_CLK_SPDIF_PODF]         = imx_clk_hw_divider("spdif_podf",     "spdif_pred",        base + 0x30, 22,   3);
-	hws[IMX6SX_CLK_AUDIO_PRED]         = imx_clk_hw_divider("audio_pred",     "audio_sel",         base + 0x30, 12,   3);
-	hws[IMX6SX_CLK_AUDIO_PODF]         = imx_clk_hw_divider("audio_podf",     "audio_pred",        base + 0x30, 9,    3);
-	hws[IMX6SX_CLK_ENET_PODF]          = imx_clk_hw_divider("enet_podf",      "enet_pre_sel",      base + 0x34, 12,   3);
-	hws[IMX6SX_CLK_M4_PODF]            = imx_clk_hw_divider("m4_podf",        "m4_sel",            base + 0x34, 3,    3);
-	hws[IMX6SX_CLK_ECSPI_PODF]         = imx_clk_hw_divider("ecspi_podf",     "ecspi_sel",         base + 0x38, 19,   6);
-	hws[IMX6SX_CLK_LCDIF1_PRED]        = imx_clk_hw_divider("lcdif1_pred",    "lcdif1_pre_sel",    base + 0x38, 12,   3);
-	hws[IMX6SX_CLK_LCDIF2_PRED]        = imx_clk_hw_divider("lcdif2_pred",    "lcdif2_pre_sel",    base + 0x38, 3,    3);
-	hws[IMX6SX_CLK_DISPLAY_PODF]       = imx_clk_hw_divider("display_podf",   "display_sel",       base + 0x3c, 16,   3);
-	hws[IMX6SX_CLK_CSI_PODF]           = imx_clk_hw_divider("csi_podf",       "csi_sel",           base + 0x3c, 11,   3);
-	hws[IMX6SX_CLK_CKO1_PODF]          = imx_clk_hw_divider("cko1_podf",      "cko1_sel",          base + 0x60, 4,    3);
-	hws[IMX6SX_CLK_CKO2_PODF]          = imx_clk_hw_divider("cko2_podf",      "cko2_sel",          base + 0x60, 21,   3);
+	/*                                                    name              parent_name          reg          shअगरt width */
+	hws[IMX6SX_CLK_PERIPH_CLK2]        = imx_clk_hw_भागider("periph_clk2",    "periph_clk2_sel",   base + 0x14, 27,   3);
+	hws[IMX6SX_CLK_PERIPH2_CLK2]       = imx_clk_hw_भागider("periph2_clk2",   "periph2_clk2_sel",  base + 0x14, 0,    3);
+	hws[IMX6SX_CLK_IPG]                = imx_clk_hw_भागider("ipg",            "ahb",               base + 0x14, 8,    2);
+	hws[IMX6SX_CLK_GPU_CORE_PODF]      = imx_clk_hw_भागider("gpu_core_podf",  "gpu_core_sel",      base + 0x18, 29,   3);
+	hws[IMX6SX_CLK_GPU_AXI_PODF]       = imx_clk_hw_भागider("gpu_axi_podf",   "gpu_axi_sel",       base + 0x18, 26,   3);
+	hws[IMX6SX_CLK_LCDIF1_PODF]        = imx_clk_hw_भागider("lcdif1_podf",    "lcdif1_pred",       base + 0x18, 23,   3);
+	hws[IMX6SX_CLK_QSPI1_PODF]         = imx_clk_hw_भागider("qspi1_podf",     "qspi1_sel",         base + 0x1c, 26,   3);
+	hws[IMX6SX_CLK_EIM_SLOW_PODF]      = imx_clk_hw_भागider("eim_slow_podf",  "eim_slow_sel",      base + 0x1c, 23,   3);
+	hws[IMX6SX_CLK_LCDIF2_PODF]        = imx_clk_hw_भागider("lcdif2_podf",    "lcdif2_pred",       base + 0x1c, 20,   3);
+	hws[IMX6SX_CLK_PERCLK]             = imx_clk_hw_भागider_flags("perclk", "perclk_sel", base + 0x1c, 0, 6, CLK_IS_CRITICAL);
+	hws[IMX6SX_CLK_VID_PODF]           = imx_clk_hw_भागider("vid_podf",       "vid_sel",           base + 0x20, 24,   2);
+	hws[IMX6SX_CLK_CAN_PODF]           = imx_clk_hw_भागider("can_podf",       "can_sel",           base + 0x20, 2,    6);
+	hws[IMX6SX_CLK_USDHC4_PODF]        = imx_clk_hw_भागider("usdhc4_podf",    "usdhc4_sel",        base + 0x24, 22,   3);
+	hws[IMX6SX_CLK_USDHC3_PODF]        = imx_clk_hw_भागider("usdhc3_podf",    "usdhc3_sel",        base + 0x24, 19,   3);
+	hws[IMX6SX_CLK_USDHC2_PODF]        = imx_clk_hw_भागider("usdhc2_podf",    "usdhc2_sel",        base + 0x24, 16,   3);
+	hws[IMX6SX_CLK_USDHC1_PODF]        = imx_clk_hw_भागider("usdhc1_podf",    "usdhc1_sel",        base + 0x24, 11,   3);
+	hws[IMX6SX_CLK_UART_PODF]          = imx_clk_hw_भागider("uart_podf",      "uart_sel",          base + 0x24, 0,    6);
+	hws[IMX6SX_CLK_ESAI_PRED]          = imx_clk_hw_भागider("esai_pred",      "esai_sel",          base + 0x28, 9,    3);
+	hws[IMX6SX_CLK_ESAI_PODF]          = imx_clk_hw_भागider("esai_podf",      "esai_pred",         base + 0x28, 25,   3);
+	hws[IMX6SX_CLK_SSI3_PRED]          = imx_clk_hw_भागider("ssi3_pred",      "ssi3_sel",          base + 0x28, 22,   3);
+	hws[IMX6SX_CLK_SSI3_PODF]          = imx_clk_hw_भागider("ssi3_podf",      "ssi3_pred",         base + 0x28, 16,   6);
+	hws[IMX6SX_CLK_SSI1_PRED]          = imx_clk_hw_भागider("ssi1_pred",      "ssi1_sel",          base + 0x28, 6,    3);
+	hws[IMX6SX_CLK_SSI1_PODF]          = imx_clk_hw_भागider("ssi1_podf",      "ssi1_pred",         base + 0x28, 0,    6);
+	hws[IMX6SX_CLK_QSPI2_PRED]         = imx_clk_hw_भागider("qspi2_pred",     "qspi2_sel",         base + 0x2c, 18,   3);
+	hws[IMX6SX_CLK_QSPI2_PODF]         = imx_clk_hw_भागider("qspi2_podf",     "qspi2_pred",        base + 0x2c, 21,   6);
+	hws[IMX6SX_CLK_SSI2_PRED]          = imx_clk_hw_भागider("ssi2_pred",      "ssi2_sel",          base + 0x2c, 6,    3);
+	hws[IMX6SX_CLK_SSI2_PODF]          = imx_clk_hw_भागider("ssi2_podf",      "ssi2_pred",         base + 0x2c, 0,    6);
+	hws[IMX6SX_CLK_SPDIF_PRED]         = imx_clk_hw_भागider("spdif_pred",     "spdif_sel",         base + 0x30, 25,   3);
+	hws[IMX6SX_CLK_SPDIF_PODF]         = imx_clk_hw_भागider("spdif_podf",     "spdif_pred",        base + 0x30, 22,   3);
+	hws[IMX6SX_CLK_AUDIO_PRED]         = imx_clk_hw_भागider("audio_pred",     "audio_sel",         base + 0x30, 12,   3);
+	hws[IMX6SX_CLK_AUDIO_PODF]         = imx_clk_hw_भागider("audio_podf",     "audio_pred",        base + 0x30, 9,    3);
+	hws[IMX6SX_CLK_ENET_PODF]          = imx_clk_hw_भागider("enet_podf",      "enet_pre_sel",      base + 0x34, 12,   3);
+	hws[IMX6SX_CLK_M4_PODF]            = imx_clk_hw_भागider("m4_podf",        "m4_sel",            base + 0x34, 3,    3);
+	hws[IMX6SX_CLK_ECSPI_PODF]         = imx_clk_hw_भागider("ecspi_podf",     "ecspi_sel",         base + 0x38, 19,   6);
+	hws[IMX6SX_CLK_LCDIF1_PRED]        = imx_clk_hw_भागider("lcdif1_pred",    "lcdif1_pre_sel",    base + 0x38, 12,   3);
+	hws[IMX6SX_CLK_LCDIF2_PRED]        = imx_clk_hw_भागider("lcdif2_pred",    "lcdif2_pre_sel",    base + 0x38, 3,    3);
+	hws[IMX6SX_CLK_DISPLAY_PODF]       = imx_clk_hw_भागider("display_podf",   "display_sel",       base + 0x3c, 16,   3);
+	hws[IMX6SX_CLK_CSI_PODF]           = imx_clk_hw_भागider("csi_podf",       "csi_sel",           base + 0x3c, 11,   3);
+	hws[IMX6SX_CLK_CKO1_PODF]          = imx_clk_hw_भागider("cko1_podf",      "cko1_sel",          base + 0x60, 4,    3);
+	hws[IMX6SX_CLK_CKO2_PODF]          = imx_clk_hw_भागider("cko2_podf",      "cko2_sel",          base + 0x60, 21,   3);
 
 	hws[IMX6SX_CLK_LDB_DI0_DIV_3_5]    = imx_clk_hw_fixed_factor("ldb_di0_div_3_5", "ldb_di0_sel", 2, 7);
 	hws[IMX6SX_CLK_LDB_DI0_DIV_7]      = imx_clk_hw_fixed_factor("ldb_di0_div_7",   "ldb_di0_sel", 1, 7);
 	hws[IMX6SX_CLK_LDB_DI1_DIV_3_5]    = imx_clk_hw_fixed_factor("ldb_di1_div_3_5", "ldb_di1_sel", 2, 7);
 	hws[IMX6SX_CLK_LDB_DI1_DIV_7]      = imx_clk_hw_fixed_factor("ldb_di1_div_7",   "ldb_di1_sel", 1, 7);
 
-	/*                                               name        reg          shift width busy: reg,   shift parent_names       num_parents */
+	/*                                               name        reg          shअगरt width busy: reg,   shअगरt parent_names       num_parents */
 	hws[IMX6SX_CLK_PERIPH]       = imx_clk_hw_busy_mux("periph",   base + 0x14, 25,   1,    base + 0x48, 5,    periph_sels,       ARRAY_SIZE(periph_sels));
 	hws[IMX6SX_CLK_PERIPH2]      = imx_clk_hw_busy_mux("periph2",  base + 0x14, 26,   1,    base + 0x48, 3,    periph2_sels,      ARRAY_SIZE(periph2_sels));
-	/*                                                   name             parent_name    reg          shift width busy: reg,   shift */
-	hws[IMX6SX_CLK_OCRAM_PODF]   = imx_clk_hw_busy_divider("ocram_podf",    "ocram_sel",   base + 0x14, 16,   3,    base + 0x48, 0);
-	hws[IMX6SX_CLK_AHB]          = imx_clk_hw_busy_divider("ahb",           "periph",      base + 0x14, 10,   3,    base + 0x48, 1);
-	hws[IMX6SX_CLK_MMDC_PODF]    = imx_clk_hw_busy_divider("mmdc_podf",     "periph2",     base + 0x14, 3,    3,    base + 0x48, 2);
-	hws[IMX6SX_CLK_ARM]          = imx_clk_hw_busy_divider("arm",           "pll1_sw",     base + 0x10, 0,    3,    base + 0x48, 16);
+	/*                                                   name             parent_name    reg          shअगरt width busy: reg,   shअगरt */
+	hws[IMX6SX_CLK_OCRAM_PODF]   = imx_clk_hw_busy_भागider("ocram_podf",    "ocram_sel",   base + 0x14, 16,   3,    base + 0x48, 0);
+	hws[IMX6SX_CLK_AHB]          = imx_clk_hw_busy_भागider("ahb",           "periph",      base + 0x14, 10,   3,    base + 0x48, 1);
+	hws[IMX6SX_CLK_MMDC_PODF]    = imx_clk_hw_busy_भागider("mmdc_podf",     "periph2",     base + 0x14, 3,    3,    base + 0x48, 2);
+	hws[IMX6SX_CLK_ARM]          = imx_clk_hw_busy_भागider("arm",           "pll1_sw",     base + 0x10, 0,    3,    base + 0x48, 16);
 
-	/*                                            name             parent_name          reg         shift */
+	/*                                            name             parent_name          reg         shअगरt */
 	/* CCGR0 */
 	hws[IMX6SX_CLK_AIPS_TZ1]     = imx_clk_hw_gate2_flags("aips_tz1", "ahb", base + 0x68, 0, CLK_IS_CRITICAL);
 	hws[IMX6SX_CLK_AIPS_TZ2]     = imx_clk_hw_gate2_flags("aips_tz2", "ahb", base + 0x68, 2, CLK_IS_CRITICAL);
@@ -489,25 +490,25 @@ static void __init imx6sx_clocks_init(struct device_node *ccm_node)
 
 	of_clk_add_hw_provider(np, of_clk_hw_onecell_get, clk_hw_data);
 
-	if (IS_ENABLED(CONFIG_USB_MXS_PHY)) {
+	अगर (IS_ENABLED(CONFIG_USB_MXS_PHY)) अणु
 		clk_prepare_enable(hws[IMX6SX_CLK_USBPHY1_GATE]->clk);
 		clk_prepare_enable(hws[IMX6SX_CLK_USBPHY2_GATE]->clk);
-	}
+	पूर्ण
 
-	/* Set the default 132MHz for EIM module */
+	/* Set the शेष 132MHz क्रम EIM module */
 	clk_set_parent(hws[IMX6SX_CLK_EIM_SLOW_SEL]->clk, hws[IMX6SX_CLK_PLL2_PFD2]->clk);
 	clk_set_rate(hws[IMX6SX_CLK_EIM_SLOW]->clk, 132000000);
 
-	/* set parent clock for LCDIF1 pixel clock */
+	/* set parent घड़ी क्रम LCDIF1 pixel घड़ी */
 	clk_set_parent(hws[IMX6SX_CLK_LCDIF1_PRE_SEL]->clk, hws[IMX6SX_CLK_PLL5_VIDEO_DIV]->clk);
 	clk_set_parent(hws[IMX6SX_CLK_LCDIF1_SEL]->clk, hws[IMX6SX_CLK_LCDIF1_PODF]->clk);
 
 	/* Set the parent clks of PCIe lvds1 and pcie_axi to be pcie ref, axi */
-	if (clk_set_parent(hws[IMX6SX_CLK_LVDS1_SEL]->clk, hws[IMX6SX_CLK_PCIE_REF_125M]->clk))
+	अगर (clk_set_parent(hws[IMX6SX_CLK_LVDS1_SEL]->clk, hws[IMX6SX_CLK_PCIE_REF_125M]->clk))
 		pr_err("Failed to set pcie bus parent clk.\n");
 
 	/*
-	 * Init enet system AHB clock, set to 200MHz
+	 * Init enet प्रणाली AHB घड़ी, set to 200MHz
 	 * pll2_pfd2_396m-> ENET_PODF-> ENET_AHB
 	 */
 	clk_set_parent(hws[IMX6SX_CLK_ENET_PRE_SEL]->clk, hws[IMX6SX_CLK_PLL2_PFD2]->clk);
@@ -516,7 +517,7 @@ static void __init imx6sx_clocks_init(struct device_node *ccm_node)
 	clk_set_rate(hws[IMX6SX_CLK_ENET_REF]->clk, 125000000);
 	clk_set_rate(hws[IMX6SX_CLK_ENET2_REF]->clk, 125000000);
 
-	/* Audio clocks */
+	/* Audio घड़ीs */
 	clk_set_rate(hws[IMX6SX_CLK_PLL4_AUDIO_DIV]->clk, 393216000);
 
 	clk_set_parent(hws[IMX6SX_CLK_SPDIF_SEL]->clk, hws[IMX6SX_CLK_PLL4_AUDIO_DIV]->clk);
@@ -535,19 +536,19 @@ static void __init imx6sx_clocks_init(struct device_node *ccm_node)
 	clk_set_parent(hws[IMX6SX_CLK_ESAI_SEL]->clk, hws[IMX6SX_CLK_PLL4_AUDIO_DIV]->clk);
 	clk_set_rate(hws[IMX6SX_CLK_ESAI_PODF]->clk, 24576000);
 
-	/* Set parent clock for vadc */
+	/* Set parent घड़ी क्रम vadc */
 	clk_set_parent(hws[IMX6SX_CLK_VID_SEL]->clk, hws[IMX6SX_CLK_PLL3_USB_OTG]->clk);
 
-	/* default parent of can_sel clock is invalid, manually set it here */
+	/* शेष parent of can_sel घड़ी is invalid, manually set it here */
 	clk_set_parent(hws[IMX6SX_CLK_CAN_SEL]->clk, hws[IMX6SX_CLK_PLL3_60M]->clk);
 
-	/* Update gpu clock from default 528M to 720M */
+	/* Update gpu घड़ी from शेष 528M to 720M */
 	clk_set_parent(hws[IMX6SX_CLK_GPU_CORE_SEL]->clk, hws[IMX6SX_CLK_PLL3_PFD0]->clk);
 	clk_set_parent(hws[IMX6SX_CLK_GPU_AXI_SEL]->clk, hws[IMX6SX_CLK_PLL3_PFD0]->clk);
 
 	clk_set_parent(hws[IMX6SX_CLK_QSPI1_SEL]->clk, hws[IMX6SX_CLK_PLL2_BUS]->clk);
 	clk_set_parent(hws[IMX6SX_CLK_QSPI2_SEL]->clk, hws[IMX6SX_CLK_PLL2_BUS]->clk);
 
-	imx_register_uart_clocks(2);
-}
-CLK_OF_DECLARE(imx6sx, "fsl,imx6sx-ccm", imx6sx_clocks_init);
+	imx_रेजिस्टर_uart_घड़ीs(2);
+पूर्ण
+CLK_OF_DECLARE(imx6sx, "fsl,imx6sx-ccm", imx6sx_घड़ीs_init);

@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * dir.c
  *
  * PURPOSE
- *  Directory handling routines for the OSTA-UDF(tm) filesystem.
+ *  Directory handling routines क्रम the OSTA-UDF(पंचांग) fileप्रणाली.
  *
  * COPYRIGHT
  *	This file is distributed under the terms of the GNU General Public
@@ -14,196 +15,196 @@
  *
  * HISTORY
  *
- *  10/05/98 dgb  Split directory operations into its own file
- *                Implemented directory reads via do_udf_readdir
+ *  10/05/98 dgb  Split directory operations पूर्णांकo its own file
+ *                Implemented directory पढ़ोs via करो_udf_सूची_पढ़ो
  *  10/06/98      Made directory operations work!
  *  11/17/98      Rewrote directory to support ICBTAG_FLAG_AD_LONG
- *  11/25/98 blf  Rewrote directory handling (readdir+lookup) to support reading
+ *  11/25/98 blf  Rewrote directory handling (सूची_पढ़ो+lookup) to support पढ़ोing
  *                across blocks.
  *  12/12/98      Split out the lookup code to namei.c. bulk of directory
- *                code now in directory.c:udf_fileident_read.
+ *                code now in directory.c:udf_fileident_पढ़ो.
  */
 
-#include "udfdecl.h"
+#समावेश "udfdecl.h"
 
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/bio.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/bपन.स>
 
-#include "udf_i.h"
-#include "udf_sb.h"
+#समावेश "udf_i.h"
+#समावेश "udf_sb.h"
 
 
-static int udf_readdir(struct file *file, struct dir_context *ctx)
-{
-	struct inode *dir = file_inode(file);
-	struct udf_inode_info *iinfo = UDF_I(dir);
-	struct udf_fileident_bh fibh = { .sbh = NULL, .ebh = NULL};
-	struct fileIdentDesc *fi = NULL;
-	struct fileIdentDesc cfi;
+अटल पूर्णांक udf_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा inode *dir = file_inode(file);
+	काष्ठा udf_inode_info *iinfo = UDF_I(dir);
+	काष्ठा udf_fileident_bh fibh = अणु .sbh = शून्य, .ebh = शून्यपूर्ण;
+	काष्ठा fileIdentDesc *fi = शून्य;
+	काष्ठा fileIdentDesc cfi;
 	udf_pblk_t block, iblock;
 	loff_t nf_pos;
-	int flen;
-	unsigned char *fname = NULL, *copy_name = NULL;
-	unsigned char *nameptr;
-	uint16_t liu;
-	uint8_t lfi;
+	पूर्णांक flen;
+	अचिन्हित अक्षर *fname = शून्य, *copy_name = शून्य;
+	अचिन्हित अक्षर *nameptr;
+	uपूर्णांक16_t liu;
+	uपूर्णांक8_t lfi;
 	loff_t size = udf_ext0_offset(dir) + dir->i_size;
-	struct buffer_head *tmp, *bha[16];
-	struct kernel_lb_addr eloc;
-	uint32_t elen;
+	काष्ठा buffer_head *पंचांगp, *bha[16];
+	काष्ठा kernel_lb_addr eloc;
+	uपूर्णांक32_t elen;
 	sector_t offset;
-	int i, num, ret = 0;
-	struct extent_position epos = { NULL, 0, {0, 0} };
-	struct super_block *sb = dir->i_sb;
+	पूर्णांक i, num, ret = 0;
+	काष्ठा extent_position epos = अणु शून्य, 0, अणु0, 0पूर्ण पूर्ण;
+	काष्ठा super_block *sb = dir->i_sb;
 
-	if (ctx->pos == 0) {
-		if (!dir_emit_dot(file, ctx))
-			return 0;
+	अगर (ctx->pos == 0) अणु
+		अगर (!dir_emit_करोt(file, ctx))
+			वापस 0;
 		ctx->pos = 1;
-	}
+	पूर्ण
 	nf_pos = (ctx->pos - 1) << 2;
-	if (nf_pos >= size)
-		goto out;
+	अगर (nf_pos >= size)
+		जाओ out;
 
-	fname = kmalloc(UDF_NAME_LEN, GFP_NOFS);
-	if (!fname) {
+	fname = kदो_स्मृति(UDF_NAME_LEN, GFP_NOFS);
+	अगर (!fname) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (nf_pos == 0)
+	अगर (nf_pos == 0)
 		nf_pos = udf_ext0_offset(dir);
 
 	fibh.soffset = fibh.eoffset = nf_pos & (sb->s_blocksize - 1);
-	if (iinfo->i_alloc_type != ICBTAG_FLAG_AD_IN_ICB) {
-		if (inode_bmap(dir, nf_pos >> sb->s_blocksize_bits,
+	अगर (iinfo->i_alloc_type != ICBTAG_FLAG_AD_IN_ICB) अणु
+		अगर (inode_bmap(dir, nf_pos >> sb->s_blocksize_bits,
 		    &epos, &eloc, &elen, &offset)
-		    != (EXT_RECORDED_ALLOCATED >> 30)) {
+		    != (EXT_RECORDED_ALLOCATED >> 30)) अणु
 			ret = -ENOENT;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		block = udf_get_lb_pblock(sb, &eloc, offset);
-		if ((++offset << sb->s_blocksize_bits) < elen) {
-			if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
-				epos.offset -= sizeof(struct short_ad);
-			else if (iinfo->i_alloc_type ==
+		अगर ((++offset << sb->s_blocksize_bits) < elen) अणु
+			अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
+				epos.offset -= माप(काष्ठा लघु_ad);
+			अन्यथा अगर (iinfo->i_alloc_type ==
 					ICBTAG_FLAG_AD_LONG)
-				epos.offset -= sizeof(struct long_ad);
-		} else {
+				epos.offset -= माप(काष्ठा दीर्घ_ad);
+		पूर्ण अन्यथा अणु
 			offset = 0;
-		}
+		पूर्ण
 
-		if (!(fibh.sbh = fibh.ebh = udf_tread(sb, block))) {
+		अगर (!(fibh.sbh = fibh.ebh = udf_tपढ़ो(sb, block))) अणु
 			ret = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!(offset & ((16 >> (sb->s_blocksize_bits - 9)) - 1))) {
+		अगर (!(offset & ((16 >> (sb->s_blocksize_bits - 9)) - 1))) अणु
 			i = 16 >> (sb->s_blocksize_bits - 9);
-			if (i + offset > (elen >> sb->s_blocksize_bits))
+			अगर (i + offset > (elen >> sb->s_blocksize_bits))
 				i = (elen >> sb->s_blocksize_bits) - offset;
-			for (num = 0; i > 0; i--) {
+			क्रम (num = 0; i > 0; i--) अणु
 				block = udf_get_lb_pblock(sb, &eloc, offset + i);
-				tmp = udf_tgetblk(sb, block);
-				if (tmp && !buffer_uptodate(tmp) && !buffer_locked(tmp))
-					bha[num++] = tmp;
-				else
-					brelse(tmp);
-			}
-			if (num) {
+				पंचांगp = udf_tgetblk(sb, block);
+				अगर (पंचांगp && !buffer_uptodate(पंचांगp) && !buffer_locked(पंचांगp))
+					bha[num++] = पंचांगp;
+				अन्यथा
+					brअन्यथा(पंचांगp);
+			पूर्ण
+			अगर (num) अणु
 				ll_rw_block(REQ_OP_READ, REQ_RAHEAD, num, bha);
-				for (i = 0; i < num; i++)
-					brelse(bha[i]);
-			}
-		}
-	}
+				क्रम (i = 0; i < num; i++)
+					brअन्यथा(bha[i]);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	while (nf_pos < size) {
-		struct kernel_lb_addr tloc;
+	जबतक (nf_pos < size) अणु
+		काष्ठा kernel_lb_addr tloc;
 
 		ctx->pos = (nf_pos >> 2) + 1;
 
-		fi = udf_fileident_read(dir, &nf_pos, &fibh, &cfi, &epos, &eloc,
+		fi = udf_fileident_पढ़ो(dir, &nf_pos, &fibh, &cfi, &epos, &eloc,
 					&elen, &offset);
-		if (!fi)
-			goto out;
+		अगर (!fi)
+			जाओ out;
 
 		liu = le16_to_cpu(cfi.lengthOfImpUse);
 		lfi = cfi.lengthFileIdent;
 
-		if (fibh.sbh == fibh.ebh) {
+		अगर (fibh.sbh == fibh.ebh) अणु
 			nameptr = fi->fileIdent + liu;
-		} else {
-			int poffset;	/* Unpaded ending offset */
+		पूर्ण अन्यथा अणु
+			पूर्णांक poffset;	/* Unpaded ending offset */
 
-			poffset = fibh.soffset + sizeof(struct fileIdentDesc) + liu + lfi;
+			poffset = fibh.soffset + माप(काष्ठा fileIdentDesc) + liu + lfi;
 
-			if (poffset >= lfi) {
-				nameptr = (char *)(fibh.ebh->b_data + poffset - lfi);
-			} else {
-				if (!copy_name) {
-					copy_name = kmalloc(UDF_NAME_LEN,
+			अगर (poffset >= lfi) अणु
+				nameptr = (अक्षर *)(fibh.ebh->b_data + poffset - lfi);
+			पूर्ण अन्यथा अणु
+				अगर (!copy_name) अणु
+					copy_name = kदो_स्मृति(UDF_NAME_LEN,
 							    GFP_NOFS);
-					if (!copy_name) {
+					अगर (!copy_name) अणु
 						ret = -ENOMEM;
-						goto out;
-					}
-				}
+						जाओ out;
+					पूर्ण
+				पूर्ण
 				nameptr = copy_name;
-				memcpy(nameptr, fi->fileIdent + liu,
+				स_नकल(nameptr, fi->fileIdent + liu,
 				       lfi - poffset);
-				memcpy(nameptr + lfi - poffset,
+				स_नकल(nameptr + lfi - poffset,
 				       fibh.ebh->b_data, poffset);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if ((cfi.fileCharacteristics & FID_FILE_CHAR_DELETED) != 0) {
-			if (!UDF_QUERY_FLAG(sb, UDF_FLAG_UNDELETE))
-				continue;
-		}
+		अगर ((cfi.fileCharacteristics & FID_खाता_CHAR_DELETED) != 0) अणु
+			अगर (!UDF_QUERY_FLAG(sb, UDF_FLAG_UNDELETE))
+				जारी;
+		पूर्ण
 
-		if ((cfi.fileCharacteristics & FID_FILE_CHAR_HIDDEN) != 0) {
-			if (!UDF_QUERY_FLAG(sb, UDF_FLAG_UNHIDE))
-				continue;
-		}
+		अगर ((cfi.fileCharacteristics & FID_खाता_CHAR_HIDDEN) != 0) अणु
+			अगर (!UDF_QUERY_FLAG(sb, UDF_FLAG_UNHIDE))
+				जारी;
+		पूर्ण
 
-		if (cfi.fileCharacteristics & FID_FILE_CHAR_PARENT) {
-			if (!dir_emit_dotdot(file, ctx))
-				goto out;
-			continue;
-		}
+		अगर (cfi.fileCharacteristics & FID_खाता_CHAR_PARENT) अणु
+			अगर (!dir_emit_करोtकरोt(file, ctx))
+				जाओ out;
+			जारी;
+		पूर्ण
 
 		flen = udf_get_filename(sb, nameptr, lfi, fname, UDF_NAME_LEN);
-		if (flen < 0)
-			continue;
+		अगर (flen < 0)
+			जारी;
 
 		tloc = lelb_to_cpu(cfi.icb.extLocation);
 		iblock = udf_get_lb_pblock(sb, &tloc, 0);
-		if (!dir_emit(ctx, fname, flen, iblock, DT_UNKNOWN))
-			goto out;
-	} /* end while */
+		अगर (!dir_emit(ctx, fname, flen, iblock, DT_UNKNOWN))
+			जाओ out;
+	पूर्ण /* end जबतक */
 
 	ctx->pos = (nf_pos >> 2) + 1;
 
 out:
-	if (fibh.sbh != fibh.ebh)
-		brelse(fibh.ebh);
-	brelse(fibh.sbh);
-	brelse(epos.bh);
-	kfree(fname);
-	kfree(copy_name);
+	अगर (fibh.sbh != fibh.ebh)
+		brअन्यथा(fibh.ebh);
+	brअन्यथा(fibh.sbh);
+	brअन्यथा(epos.bh);
+	kमुक्त(fname);
+	kमुक्त(copy_name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* readdir and lookup functions */
-const struct file_operations udf_dir_operations = {
+/* सूची_पढ़ो and lookup functions */
+स्थिर काष्ठा file_operations udf_dir_operations = अणु
 	.llseek			= generic_file_llseek,
-	.read			= generic_read_dir,
-	.iterate_shared		= udf_readdir,
+	.पढ़ो			= generic_पढ़ो_dir,
+	.iterate_shared		= udf_सूची_पढ़ो,
 	.unlocked_ioctl		= udf_ioctl,
 	.fsync			= generic_file_fsync,
-};
+पूर्ण;

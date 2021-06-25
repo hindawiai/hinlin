@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _IPV6_H
-#define _IPV6_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _IPV6_H
+#घोषणा _IPV6_H
 
-#include <uapi/linux/ipv6.h>
+#समावेश <uapi/linux/ipv6.h>
 
-#define ipv6_optlen(p)  (((p)->hdrlen+1) << 3)
-#define ipv6_authlen(p) (((p)->hdrlen+2) << 2)
+#घोषणा ipv6_optlen(p)  (((p)->hdrlen+1) << 3)
+#घोषणा ipv6_authlen(p) (((p)->hdrlen+2) << 2)
 /*
- * This structure contains configuration options per IPv6 link.
+ * This काष्ठाure contains configuration options per IPv6 link.
  */
-struct ipv6_devconf {
-	__s32		forwarding;
+काष्ठा ipv6_devconf अणु
+	__s32		क्रमwarding;
 	__s32		hop_limit;
 	__s32		mtu6;
 	__s32		accept_ra;
 	__s32		accept_redirects;
-	__s32		autoconf;
+	__s32		स्वतःconf;
 	__s32		dad_transmits;
 	__s32		rtr_solicits;
-	__s32		rtr_solicit_interval;
-	__s32		rtr_solicit_max_interval;
+	__s32		rtr_solicit_पूर्णांकerval;
+	__s32		rtr_solicit_max_पूर्णांकerval;
 	__s32		rtr_solicit_delay;
-	__s32		force_mld_version;
-	__s32		mldv1_unsolicited_report_interval;
-	__s32		mldv2_unsolicited_report_interval;
+	__s32		क्रमce_mld_version;
+	__s32		mldv1_unsolicited_report_पूर्णांकerval;
+	__s32		mldv2_unsolicited_report_पूर्णांकerval;
 	__s32		use_tempaddr;
 	__s32		temp_valid_lft;
 	__s32		temp_prefered_lft;
@@ -34,90 +35,90 @@ struct ipv6_devconf {
 	__u32		ra_defrtr_metric;
 	__s32		accept_ra_min_hop_limit;
 	__s32		accept_ra_pinfo;
-	__s32		ignore_routes_with_linkdown;
-#ifdef CONFIG_IPV6_ROUTER_PREF
+	__s32		ignore_routes_with_linkकरोwn;
+#अगर_घोषित CONFIG_IPV6_ROUTER_PREF
 	__s32		accept_ra_rtr_pref;
-	__s32		rtr_probe_interval;
-#ifdef CONFIG_IPV6_ROUTE_INFO
+	__s32		rtr_probe_पूर्णांकerval;
+#अगर_घोषित CONFIG_IPV6_ROUTE_INFO
 	__s32		accept_ra_rt_info_min_plen;
 	__s32		accept_ra_rt_info_max_plen;
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर
 	__s32		proxy_ndp;
 	__s32		accept_source_route;
 	__s32		accept_ra_from_local;
-#ifdef CONFIG_IPV6_OPTIMISTIC_DAD
+#अगर_घोषित CONFIG_IPV6_OPTIMISTIC_DAD
 	__s32		optimistic_dad;
 	__s32		use_optimistic;
-#endif
-#ifdef CONFIG_IPV6_MROUTE
-	__s32		mc_forwarding;
-#endif
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IPV6_MROUTE
+	__s32		mc_क्रमwarding;
+#पूर्ण_अगर
 	__s32		disable_ipv6;
 	__s32		drop_unicast_in_l2_multicast;
 	__s32		accept_dad;
-	__s32		force_tllao;
-	__s32           ndisc_notify;
+	__s32		क्रमce_tllao;
+	__s32           ndisc_notअगरy;
 	__s32		suppress_frag_ndisc;
 	__s32		accept_ra_mtu;
 	__s32		drop_unsolicited_na;
-	struct ipv6_stable_secret {
+	काष्ठा ipv6_stable_secret अणु
 		bool initialized;
-		struct in6_addr secret;
-	} stable_secret;
-	__s32		use_oif_addrs_only;
-	__s32		keep_addr_on_down;
+		काष्ठा in6_addr secret;
+	पूर्ण stable_secret;
+	__s32		use_oअगर_addrs_only;
+	__s32		keep_addr_on_करोwn;
 	__s32		seg6_enabled;
-#ifdef CONFIG_IPV6_SEG6_HMAC
+#अगर_घोषित CONFIG_IPV6_SEG6_HMAC
 	__s32		seg6_require_hmac;
-#endif
+#पूर्ण_अगर
 	__u32		enhanced_dad;
 	__u32		addr_gen_mode;
 	__s32		disable_policy;
 	__s32           ndisc_tclass;
 	__s32		rpl_seg_enabled;
 
-	struct ctl_table_header *sysctl_header;
-};
+	काष्ठा ctl_table_header *sysctl_header;
+पूर्ण;
 
-struct ipv6_params {
+काष्ठा ipv6_params अणु
 	__s32 disable_ipv6;
-	__s32 autoconf;
-};
-extern struct ipv6_params ipv6_defaults;
-#include <linux/tcp.h>
-#include <linux/udp.h>
+	__s32 स्वतःconf;
+पूर्ण;
+बाह्य काष्ठा ipv6_params ipv6_शेषs;
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
 
-#include <net/inet_sock.h>
+#समावेश <net/inet_sock.h>
 
-static inline struct ipv6hdr *ipv6_hdr(const struct sk_buff *skb)
-{
-	return (struct ipv6hdr *)skb_network_header(skb);
-}
+अटल अंतरभूत काष्ठा ipv6hdr *ipv6_hdr(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस (काष्ठा ipv6hdr *)skb_network_header(skb);
+पूर्ण
 
-static inline struct ipv6hdr *inner_ipv6_hdr(const struct sk_buff *skb)
-{
-	return (struct ipv6hdr *)skb_inner_network_header(skb);
-}
+अटल अंतरभूत काष्ठा ipv6hdr *inner_ipv6_hdr(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस (काष्ठा ipv6hdr *)skb_inner_network_header(skb);
+पूर्ण
 
-static inline struct ipv6hdr *ipipv6_hdr(const struct sk_buff *skb)
-{
-	return (struct ipv6hdr *)skb_transport_header(skb);
-}
+अटल अंतरभूत काष्ठा ipv6hdr *ipipv6_hdr(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस (काष्ठा ipv6hdr *)skb_transport_header(skb);
+पूर्ण
 
-static inline unsigned int ipv6_transport_len(const struct sk_buff *skb)
-{
-	return ntohs(ipv6_hdr(skb)->payload_len) + sizeof(struct ipv6hdr) -
+अटल अंतरभूत अचिन्हित पूर्णांक ipv6_transport_len(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस ntohs(ipv6_hdr(skb)->payload_len) + माप(काष्ठा ipv6hdr) -
 	       skb_network_header_len(skb);
-}
+पूर्ण
 
 /* 
-   This structure contains results of exthdrs parsing
+   This काष्ठाure contains results of exthdrs parsing
    as offsets from skb->nh.
  */
 
-struct inet6_skb_parm {
-	int			iif;
+काष्ठा inet6_skb_parm अणु
+	पूर्णांक			iअगर;
 	__be16			ra;
 	__u16			dst0;
 	__u16			srcrt;
@@ -125,119 +126,119 @@ struct inet6_skb_parm {
 	__u16			lastopt;
 	__u16			nhoff;
 	__u16			flags;
-#if defined(CONFIG_IPV6_MIP6) || defined(CONFIG_IPV6_MIP6_MODULE)
+#अगर defined(CONFIG_IPV6_MIP6) || defined(CONFIG_IPV6_MIP6_MODULE)
 	__u16			dsthao;
-#endif
+#पूर्ण_अगर
 	__u16			frag_max_size;
 
-#define IP6SKB_XFRM_TRANSFORMED	1
-#define IP6SKB_FORWARDED	2
-#define IP6SKB_REROUTED		4
-#define IP6SKB_ROUTERALERT	8
-#define IP6SKB_FRAGMENTED      16
-#define IP6SKB_HOPBYHOP        32
-#define IP6SKB_L3SLAVE         64
-#define IP6SKB_JUMBOGRAM      128
-};
+#घोषणा IP6SKB_XFRM_TRANSFORMED	1
+#घोषणा IP6SKB_FORWARDED	2
+#घोषणा IP6SKB_REROUTED		4
+#घोषणा IP6SKB_ROUTERALERT	8
+#घोषणा IP6SKB_FRAGMENTED      16
+#घोषणा IP6SKB_HOPBYHOP        32
+#घोषणा IP6SKB_L3SLAVE         64
+#घोषणा IP6SKB_JUMBOGRAM      128
+पूर्ण;
 
-#if defined(CONFIG_NET_L3_MASTER_DEV)
-static inline bool ipv6_l3mdev_skb(__u16 flags)
-{
-	return flags & IP6SKB_L3SLAVE;
-}
-#else
-static inline bool ipv6_l3mdev_skb(__u16 flags)
-{
-	return false;
-}
-#endif
+#अगर defined(CONFIG_NET_L3_MASTER_DEV)
+अटल अंतरभूत bool ipv6_l3mdev_skb(__u16 flags)
+अणु
+	वापस flags & IP6SKB_L3SLAVE;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool ipv6_l3mdev_skb(__u16 flags)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-#define IP6CB(skb)	((struct inet6_skb_parm*)((skb)->cb))
-#define IP6CBMTU(skb)	((struct ip6_mtuinfo *)((skb)->cb))
+#घोषणा IP6CB(skb)	((काष्ठा inet6_skb_parm*)((skb)->cb))
+#घोषणा IP6CBMTU(skb)	((काष्ठा ip6_mtuinfo *)((skb)->cb))
 
-static inline int inet6_iif(const struct sk_buff *skb)
-{
+अटल अंतरभूत पूर्णांक inet6_iअगर(स्थिर काष्ठा sk_buff *skb)
+अणु
 	bool l3_slave = ipv6_l3mdev_skb(IP6CB(skb)->flags);
 
-	return l3_slave ? skb->skb_iif : IP6CB(skb)->iif;
-}
+	वापस l3_slave ? skb->skb_iअगर : IP6CB(skb)->iअगर;
+पूर्ण
 
-static inline bool inet6_is_jumbogram(const struct sk_buff *skb)
-{
-	return !!(IP6CB(skb)->flags & IP6SKB_JUMBOGRAM);
-}
+अटल अंतरभूत bool inet6_is_jumbogram(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस !!(IP6CB(skb)->flags & IP6SKB_JUMBOGRAM);
+पूर्ण
 
 /* can not be used in TCP layer after tcp_v6_fill_cb */
-static inline int inet6_sdif(const struct sk_buff *skb)
-{
-#if IS_ENABLED(CONFIG_NET_L3_MASTER_DEV)
-	if (skb && ipv6_l3mdev_skb(IP6CB(skb)->flags))
-		return IP6CB(skb)->iif;
-#endif
-	return 0;
-}
+अटल अंतरभूत पूर्णांक inet6_sdअगर(स्थिर काष्ठा sk_buff *skb)
+अणु
+#अगर IS_ENABLED(CONFIG_NET_L3_MASTER_DEV)
+	अगर (skb && ipv6_l3mdev_skb(IP6CB(skb)->flags))
+		वापस IP6CB(skb)->iअगर;
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-struct tcp6_request_sock {
-	struct tcp_request_sock	  tcp6rsk_tcp;
-};
+काष्ठा tcp6_request_sock अणु
+	काष्ठा tcp_request_sock	  tcp6rsk_tcp;
+पूर्ण;
 
-struct ipv6_mc_socklist;
-struct ipv6_ac_socklist;
-struct ipv6_fl_socklist;
+काष्ठा ipv6_mc_socklist;
+काष्ठा ipv6_ac_socklist;
+काष्ठा ipv6_fl_socklist;
 
-struct inet6_cork {
-	struct ipv6_txoptions *opt;
+काष्ठा inet6_cork अणु
+	काष्ठा ipv6_txoptions *opt;
 	u8 hop_limit;
 	u8 tclass;
-};
+पूर्ण;
 
 /**
- * struct ipv6_pinfo - ipv6 private area
+ * काष्ठा ipv6_pinfo - ipv6 निजी area
  *
- * In the struct sock hierarchy (tcp6_sock, upd6_sock, etc)
+ * In the काष्ठा sock hierarchy (tcp6_sock, upd6_sock, etc)
  * this _must_ be the last member, so that inet6_sk_generic
- * is able to calculate its offset from the base struct sock
- * by using the struct proto->slab_obj_size member. -acme
+ * is able to calculate its offset from the base काष्ठा sock
+ * by using the काष्ठा proto->slab_obj_size member. -acme
  */
-struct ipv6_pinfo {
-	struct in6_addr 	saddr;
-	struct in6_pktinfo	sticky_pktinfo;
-	const struct in6_addr		*daddr_cache;
-#ifdef CONFIG_IPV6_SUBTREES
-	const struct in6_addr		*saddr_cache;
-#endif
+काष्ठा ipv6_pinfo अणु
+	काष्ठा in6_addr 	saddr;
+	काष्ठा in6_pktinfo	sticky_pktinfo;
+	स्थिर काष्ठा in6_addr		*daddr_cache;
+#अगर_घोषित CONFIG_IPV6_SUBTREES
+	स्थिर काष्ठा in6_addr		*saddr_cache;
+#पूर्ण_अगर
 
 	__be32			flow_label;
 	__u32			frag_size;
 
 	/*
 	 * Packed in 16bits.
-	 * Omit one shift by putting the signed field at MSB.
+	 * Omit one shअगरt by putting the चिन्हित field at MSB.
 	 */
-#if defined(__BIG_ENDIAN_BITFIELD)
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	__s16			hop_limit:9;
 	__u16			__unused_1:7;
-#else
+#अन्यथा
 	__u16			__unused_1:7;
 	__s16			hop_limit:9;
-#endif
+#पूर्ण_अगर
 
-#if defined(__BIG_ENDIAN_BITFIELD)
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	/* Packed in 16bits. */
 	__s16			mcast_hops:9;
 	__u16			__unused_2:6,
 				mc_loop:1;
-#else
+#अन्यथा
 	__u16			mc_loop:1,
 				__unused_2:6;
 	__s16			mcast_hops:9;
-#endif
-	int			ucast_oif;
-	int			mcast_oif;
+#पूर्ण_अगर
+	पूर्णांक			ucast_oअगर;
+	पूर्णांक			mcast_oअगर;
 
 	/* pktoption flags */
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			__u16	srcrt:1,
 				osrcrt:1,
 			        rxinfo:1,
@@ -254,9 +255,9 @@ struct ipv6_pinfo {
 				rxorigdstaddr:1,
 				recvfragsize:1;
 				/* 1 bits hole */
-		} bits;
+		पूर्ण bits;
 		__u16		all;
-	} rxopt;
+	पूर्ण rxopt;
 
 	/* sockopt flags */
 	__u16			recverr:1,
@@ -265,12 +266,12 @@ struct ipv6_pinfo {
 				pmtudisc:3,
 				padding:1,	/* 1 bit hole */
 				srcprefs:3,	/* 001: prefer temporary address
-						 * 010: prefer public address
+						 * 010: prefer खुला address
 						 * 100: prefer care-of address
 						 */
-				dontfrag:1,
-				autoflowlabel:1,
-				autoflowlabel_set:1,
+				करोntfrag:1,
+				स्वतःflowlabel:1,
+				स्वतःflowlabel_set:1,
 				mc_all:1,
 				recverr_rfc4884:1,
 				rtalert_isolate:1;
@@ -281,104 +282,104 @@ struct ipv6_pinfo {
 	__u32			dst_cookie;
 	__u32			rx_dst_cookie;
 
-	struct ipv6_mc_socklist	__rcu *ipv6_mc_list;
-	struct ipv6_ac_socklist	*ipv6_ac_list;
-	struct ipv6_fl_socklist __rcu *ipv6_fl_list;
+	काष्ठा ipv6_mc_socklist	__rcu *ipv6_mc_list;
+	काष्ठा ipv6_ac_socklist	*ipv6_ac_list;
+	काष्ठा ipv6_fl_socklist __rcu *ipv6_fl_list;
 
-	struct ipv6_txoptions __rcu	*opt;
-	struct sk_buff		*pktoptions;
-	struct sk_buff		*rxpmtu;
-	struct inet6_cork	cork;
-};
+	काष्ठा ipv6_txoptions __rcu	*opt;
+	काष्ठा sk_buff		*pktoptions;
+	काष्ठा sk_buff		*rxpmtu;
+	काष्ठा inet6_cork	cork;
+पूर्ण;
 
-/* WARNING: don't change the layout of the members in {raw,udp,tcp}6_sock! */
-struct raw6_sock {
+/* WARNING: करोn't change the layout of the members in अणुraw,udp,tcpपूर्ण6_sock! */
+काष्ठा raw6_sock अणु
 	/* inet_sock has to be the first member of raw6_sock */
-	struct inet_sock	inet;
-	__u32			checksum;	/* perform checksum */
+	काष्ठा inet_sock	inet;
+	__u32			checksum;	/* perक्रमm checksum */
 	__u32			offset;		/* checksum offset  */
-	struct icmp6_filter	filter;
+	काष्ठा icmp6_filter	filter;
 	__u32			ip6mr_table;
 	/* ipv6_pinfo has to be the last member of raw6_sock, see inet6_sk_generic */
-	struct ipv6_pinfo	inet6;
-};
+	काष्ठा ipv6_pinfo	inet6;
+पूर्ण;
 
-struct udp6_sock {
-	struct udp_sock	  udp;
+काष्ठा udp6_sock अणु
+	काष्ठा udp_sock	  udp;
 	/* ipv6_pinfo has to be the last member of udp6_sock, see inet6_sk_generic */
-	struct ipv6_pinfo inet6;
-};
+	काष्ठा ipv6_pinfo inet6;
+पूर्ण;
 
-struct tcp6_sock {
-	struct tcp_sock	  tcp;
+काष्ठा tcp6_sock अणु
+	काष्ठा tcp_sock	  tcp;
 	/* ipv6_pinfo has to be the last member of tcp6_sock, see inet6_sk_generic */
-	struct ipv6_pinfo inet6;
-};
+	काष्ठा ipv6_pinfo inet6;
+पूर्ण;
 
-extern int inet6_sk_rebuild_header(struct sock *sk);
+बाह्य पूर्णांक inet6_sk_rebuild_header(काष्ठा sock *sk);
 
-struct tcp6_timewait_sock {
-	struct tcp_timewait_sock   tcp6tw_tcp;
-};
+काष्ठा tcp6_समयरुको_sock अणु
+	काष्ठा tcp_समयरुको_sock   tcp6tw_tcp;
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_IPV6)
-bool ipv6_mod_enabled(void);
+#अगर IS_ENABLED(CONFIG_IPV6)
+bool ipv6_mod_enabled(व्योम);
 
-static inline struct ipv6_pinfo *inet6_sk(const struct sock *__sk)
-{
-	return sk_fullsock(__sk) ? inet_sk(__sk)->pinet6 : NULL;
-}
+अटल अंतरभूत काष्ठा ipv6_pinfo *inet6_sk(स्थिर काष्ठा sock *__sk)
+अणु
+	वापस sk_fullsock(__sk) ? inet_sk(__sk)->pinet6 : शून्य;
+पूर्ण
 
-static inline struct raw6_sock *raw6_sk(const struct sock *sk)
-{
-	return (struct raw6_sock *)sk;
-}
+अटल अंतरभूत काष्ठा raw6_sock *raw6_sk(स्थिर काष्ठा sock *sk)
+अणु
+	वापस (काष्ठा raw6_sock *)sk;
+पूर्ण
 
-#define __ipv6_only_sock(sk)	(sk->sk_ipv6only)
-#define ipv6_only_sock(sk)	(__ipv6_only_sock(sk))
-#define ipv6_sk_rxinfo(sk)	((sk)->sk_family == PF_INET6 && \
+#घोषणा __ipv6_only_sock(sk)	(sk->sk_ipv6only)
+#घोषणा ipv6_only_sock(sk)	(__ipv6_only_sock(sk))
+#घोषणा ipv6_sk_rxinfo(sk)	((sk)->sk_family == PF_INET6 && \
 				 inet6_sk(sk)->rxopt.bits.rxinfo)
 
-static inline const struct in6_addr *inet6_rcv_saddr(const struct sock *sk)
-{
-	if (sk->sk_family == AF_INET6)
-		return &sk->sk_v6_rcv_saddr;
-	return NULL;
-}
+अटल अंतरभूत स्थिर काष्ठा in6_addr *inet6_rcv_saddr(स्थिर काष्ठा sock *sk)
+अणु
+	अगर (sk->sk_family == AF_INET6)
+		वापस &sk->sk_v6_rcv_saddr;
+	वापस शून्य;
+पूर्ण
 
-static inline int inet_v6_ipv6only(const struct sock *sk)
-{
-	/* ipv6only field is at same position for timewait and other sockets */
-	return ipv6_only_sock(sk);
-}
-#else
-#define __ipv6_only_sock(sk)	0
-#define ipv6_only_sock(sk)	0
-#define ipv6_sk_rxinfo(sk)	0
+अटल अंतरभूत पूर्णांक inet_v6_ipv6only(स्थिर काष्ठा sock *sk)
+अणु
+	/* ipv6only field is at same position क्रम समयरुको and other sockets */
+	वापस ipv6_only_sock(sk);
+पूर्ण
+#अन्यथा
+#घोषणा __ipv6_only_sock(sk)	0
+#घोषणा ipv6_only_sock(sk)	0
+#घोषणा ipv6_sk_rxinfo(sk)	0
 
-static inline bool ipv6_mod_enabled(void)
-{
-	return false;
-}
+अटल अंतरभूत bool ipv6_mod_enabled(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-static inline struct ipv6_pinfo * inet6_sk(const struct sock *__sk)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा ipv6_pinfo * inet6_sk(स्थिर काष्ठा sock *__sk)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct inet6_request_sock *
-			inet6_rsk(const struct request_sock *rsk)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा inet6_request_sock *
+			inet6_rsk(स्थिर काष्ठा request_sock *rsk)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct raw6_sock *raw6_sk(const struct sock *sk)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा raw6_sock *raw6_sk(स्थिर काष्ठा sock *sk)
+अणु
+	वापस शून्य;
+पूर्ण
 
-#define inet6_rcv_saddr(__sk)	NULL
-#define tcp_twsk_ipv6only(__sk)		0
-#define inet_v6_ipv6only(__sk)		0
-#endif /* IS_ENABLED(CONFIG_IPV6) */
-#endif /* _IPV6_H */
+#घोषणा inet6_rcv_saddr(__sk)	शून्य
+#घोषणा tcp_twsk_ipv6only(__sk)		0
+#घोषणा inet_v6_ipv6only(__sk)		0
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_IPV6) */
+#पूर्ण_अगर /* _IPV6_H */

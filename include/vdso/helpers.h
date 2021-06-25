@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __VDSO_HELPERS_H
-#define __VDSO_HELPERS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __VDSO_HELPERS_H
+#घोषणा __VDSO_HELPERS_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <vdso/datapage.h>
+#समावेश <vdso/datapage.h>
 
-static __always_inline u32 vdso_read_begin(const struct vdso_data *vd)
-{
+अटल __always_अंतरभूत u32 vdso_पढ़ो_begin(स्थिर काष्ठा vdso_data *vd)
+अणु
 	u32 seq;
 
-	while (unlikely((seq = READ_ONCE(vd->seq)) & 1))
+	जबतक (unlikely((seq = READ_ONCE(vd->seq)) & 1))
 		cpu_relax();
 
 	smp_rmb();
-	return seq;
-}
+	वापस seq;
+पूर्ण
 
-static __always_inline u32 vdso_read_retry(const struct vdso_data *vd,
+अटल __always_अंतरभूत u32 vdso_पढ़ो_retry(स्थिर काष्ठा vdso_data *vd,
 					   u32 start)
-{
+अणु
 	u32 seq;
 
 	smp_rmb();
 	seq = READ_ONCE(vd->seq);
-	return seq != start;
-}
+	वापस seq != start;
+पूर्ण
 
-static __always_inline void vdso_write_begin(struct vdso_data *vd)
-{
+अटल __always_अंतरभूत व्योम vdso_ग_लिखो_begin(काष्ठा vdso_data *vd)
+अणु
 	/*
 	 * WRITE_ONCE it is required otherwise the compiler can validly tear
 	 * updates to vd[x].seq and it is possible that the value seen by the
-	 * reader it is inconsistent.
+	 * पढ़ोer it is inconsistent.
 	 */
 	WRITE_ONCE(vd[CS_HRES_COARSE].seq, vd[CS_HRES_COARSE].seq + 1);
 	WRITE_ONCE(vd[CS_RAW].seq, vd[CS_RAW].seq + 1);
 	smp_wmb();
-}
+पूर्ण
 
-static __always_inline void vdso_write_end(struct vdso_data *vd)
-{
+अटल __always_अंतरभूत व्योम vdso_ग_लिखो_end(काष्ठा vdso_data *vd)
+अणु
 	smp_wmb();
 	/*
 	 * WRITE_ONCE it is required otherwise the compiler can validly tear
 	 * updates to vd[x].seq and it is possible that the value seen by the
-	 * reader it is inconsistent.
+	 * पढ़ोer it is inconsistent.
 	 */
 	WRITE_ONCE(vd[CS_HRES_COARSE].seq, vd[CS_HRES_COARSE].seq + 1);
 	WRITE_ONCE(vd[CS_RAW].seq, vd[CS_RAW].seq + 1);
-}
+पूर्ण
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#endif /* __VDSO_HELPERS_H */
+#पूर्ण_अगर /* __VDSO_HELPERS_H */

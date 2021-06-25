@@ -1,104 +1,105 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * EEH functionality support for VFIO devices. The feature is only
- * available on sPAPR compatible platforms.
+ * EEH functionality support क्रम VFIO devices. The feature is only
+ * available on sPAPR compatible platक्रमms.
  *
  * Copyright Gavin Shan, IBM Corporation 2014.
  */
 
-#include <linux/module.h>
-#include <linux/uaccess.h>
-#include <linux/vfio.h>
-#include <asm/eeh.h>
+#समावेश <linux/module.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/vfपन.स>
+#समावेश <यंत्र/eeh.h>
 
-#define DRIVER_VERSION	"0.1"
-#define DRIVER_AUTHOR	"Gavin Shan, IBM Corporation"
-#define DRIVER_DESC	"VFIO IOMMU SPAPR EEH"
+#घोषणा DRIVER_VERSION	"0.1"
+#घोषणा DRIVER_AUTHOR	"Gavin Shan, IBM Corporation"
+#घोषणा DRIVER_DESC	"VFIO IOMMU SPAPR EEH"
 
-/* We might build address mapping here for "fast" path later */
-void vfio_spapr_pci_eeh_open(struct pci_dev *pdev)
-{
-	eeh_dev_open(pdev);
-}
-EXPORT_SYMBOL_GPL(vfio_spapr_pci_eeh_open);
+/* We might build address mapping here क्रम "fast" path later */
+व्योम vfio_spapr_pci_eeh_खोलो(काष्ठा pci_dev *pdev)
+अणु
+	eeh_dev_खोलो(pdev);
+पूर्ण
+EXPORT_SYMBOL_GPL(vfio_spapr_pci_eeh_खोलो);
 
-void vfio_spapr_pci_eeh_release(struct pci_dev *pdev)
-{
+व्योम vfio_spapr_pci_eeh_release(काष्ठा pci_dev *pdev)
+अणु
 	eeh_dev_release(pdev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vfio_spapr_pci_eeh_release);
 
-long vfio_spapr_iommu_eeh_ioctl(struct iommu_group *group,
-				unsigned int cmd, unsigned long arg)
-{
-	struct eeh_pe *pe;
-	struct vfio_eeh_pe_op op;
-	unsigned long minsz;
-	long ret = -EINVAL;
+दीर्घ vfio_spapr_iommu_eeh_ioctl(काष्ठा iommu_group *group,
+				अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा eeh_pe *pe;
+	काष्ठा vfio_eeh_pe_op op;
+	अचिन्हित दीर्घ minsz;
+	दीर्घ ret = -EINVAL;
 
-	switch (cmd) {
-	case VFIO_CHECK_EXTENSION:
-		if (arg == VFIO_EEH)
+	चयन (cmd) अणु
+	हाल VFIO_CHECK_EXTENSION:
+		अगर (arg == VFIO_EEH)
 			ret = eeh_enabled() ? 1 : 0;
-		else
+		अन्यथा
 			ret = 0;
-		break;
-	case VFIO_EEH_PE_OP:
+		अवरोध;
+	हाल VFIO_EEH_PE_OP:
 		pe = eeh_iommu_group_to_pe(group);
-		if (!pe)
-			return -ENODEV;
+		अगर (!pe)
+			वापस -ENODEV;
 
-		minsz = offsetofend(struct vfio_eeh_pe_op, op);
-		if (copy_from_user(&op, (void __user *)arg, minsz))
-			return -EFAULT;
-		if (op.argsz < minsz || op.flags)
-			return -EINVAL;
+		minsz = दुरत्वend(काष्ठा vfio_eeh_pe_op, op);
+		अगर (copy_from_user(&op, (व्योम __user *)arg, minsz))
+			वापस -EFAULT;
+		अगर (op.argsz < minsz || op.flags)
+			वापस -EINVAL;
 
-		switch (op.op) {
-		case VFIO_EEH_PE_DISABLE:
+		चयन (op.op) अणु
+		हाल VFIO_EEH_PE_DISABLE:
 			ret = eeh_pe_set_option(pe, EEH_OPT_DISABLE);
-			break;
-		case VFIO_EEH_PE_ENABLE:
+			अवरोध;
+		हाल VFIO_EEH_PE_ENABLE:
 			ret = eeh_pe_set_option(pe, EEH_OPT_ENABLE);
-			break;
-		case VFIO_EEH_PE_UNFREEZE_IO:
+			अवरोध;
+		हाल VFIO_EEH_PE_UNFREEZE_IO:
 			ret = eeh_pe_set_option(pe, EEH_OPT_THAW_MMIO);
-			break;
-		case VFIO_EEH_PE_UNFREEZE_DMA:
+			अवरोध;
+		हाल VFIO_EEH_PE_UNFREEZE_DMA:
 			ret = eeh_pe_set_option(pe, EEH_OPT_THAW_DMA);
-			break;
-		case VFIO_EEH_PE_GET_STATE:
+			अवरोध;
+		हाल VFIO_EEH_PE_GET_STATE:
 			ret = eeh_pe_get_state(pe);
-			break;
-		case VFIO_EEH_PE_RESET_DEACTIVATE:
+			अवरोध;
+		हाल VFIO_EEH_PE_RESET_DEACTIVATE:
 			ret = eeh_pe_reset(pe, EEH_RESET_DEACTIVATE, true);
-			break;
-		case VFIO_EEH_PE_RESET_HOT:
+			अवरोध;
+		हाल VFIO_EEH_PE_RESET_HOT:
 			ret = eeh_pe_reset(pe, EEH_RESET_HOT, true);
-			break;
-		case VFIO_EEH_PE_RESET_FUNDAMENTAL:
+			अवरोध;
+		हाल VFIO_EEH_PE_RESET_FUNDAMENTAL:
 			ret = eeh_pe_reset(pe, EEH_RESET_FUNDAMENTAL, true);
-			break;
-		case VFIO_EEH_PE_CONFIGURE:
+			अवरोध;
+		हाल VFIO_EEH_PE_CONFIGURE:
 			ret = eeh_pe_configure(pe);
-			break;
-		case VFIO_EEH_PE_INJECT_ERR:
-			minsz = offsetofend(struct vfio_eeh_pe_op, err.mask);
-			if (op.argsz < minsz)
-				return -EINVAL;
-			if (copy_from_user(&op, (void __user *)arg, minsz))
-				return -EFAULT;
+			अवरोध;
+		हाल VFIO_EEH_PE_INJECT_ERR:
+			minsz = दुरत्वend(काष्ठा vfio_eeh_pe_op, err.mask);
+			अगर (op.argsz < minsz)
+				वापस -EINVAL;
+			अगर (copy_from_user(&op, (व्योम __user *)arg, minsz))
+				वापस -EFAULT;
 
 			ret = eeh_pe_inject_err(pe, op.err.type, op.err.func,
 						op.err.addr, op.err.mask);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(vfio_spapr_iommu_eeh_ioctl);
 
 MODULE_VERSION(DRIVER_VERSION);

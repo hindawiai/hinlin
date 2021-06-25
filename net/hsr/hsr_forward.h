@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright 2011-2014 Autronica Fire and Security AS
  *
  * Author(s):
  *	2011-2014 Arvid Brodin, arvid.brodin@alten.se
  *
- * include file for HSR and PRP.
+ * include file क्रम HSR and PRP.
  */
 
-#ifndef __HSR_FORWARD_H
-#define __HSR_FORWARD_H
+#अगर_अघोषित __HSR_FORWARD_H
+#घोषणा __HSR_FORWARD_H
 
-#include <linux/netdevice.h>
-#include "hsr_main.h"
+#समावेश <linux/netdevice.h>
+#समावेश "hsr_main.h"
 
-void hsr_forward_skb(struct sk_buff *skb, struct hsr_port *port);
-struct sk_buff *prp_create_tagged_frame(struct hsr_frame_info *frame,
-					struct hsr_port *port);
-struct sk_buff *hsr_create_tagged_frame(struct hsr_frame_info *frame,
-					struct hsr_port *port);
-struct sk_buff *hsr_get_untagged_frame(struct hsr_frame_info *frame,
-				       struct hsr_port *port);
-struct sk_buff *prp_get_untagged_frame(struct hsr_frame_info *frame,
-				       struct hsr_port *port);
-bool prp_drop_frame(struct hsr_frame_info *frame, struct hsr_port *port);
-bool hsr_drop_frame(struct hsr_frame_info *frame, struct hsr_port *port);
-int prp_fill_frame_info(__be16 proto, struct sk_buff *skb,
-			struct hsr_frame_info *frame);
-int hsr_fill_frame_info(__be16 proto, struct sk_buff *skb,
-			struct hsr_frame_info *frame);
-#endif /* __HSR_FORWARD_H */
+व्योम hsr_क्रमward_skb(काष्ठा sk_buff *skb, काष्ठा hsr_port *port);
+काष्ठा sk_buff *prp_create_tagged_frame(काष्ठा hsr_frame_info *frame,
+					काष्ठा hsr_port *port);
+काष्ठा sk_buff *hsr_create_tagged_frame(काष्ठा hsr_frame_info *frame,
+					काष्ठा hsr_port *port);
+काष्ठा sk_buff *hsr_get_untagged_frame(काष्ठा hsr_frame_info *frame,
+				       काष्ठा hsr_port *port);
+काष्ठा sk_buff *prp_get_untagged_frame(काष्ठा hsr_frame_info *frame,
+				       काष्ठा hsr_port *port);
+bool prp_drop_frame(काष्ठा hsr_frame_info *frame, काष्ठा hsr_port *port);
+bool hsr_drop_frame(काष्ठा hsr_frame_info *frame, काष्ठा hsr_port *port);
+पूर्णांक prp_fill_frame_info(__be16 proto, काष्ठा sk_buff *skb,
+			काष्ठा hsr_frame_info *frame);
+पूर्णांक hsr_fill_frame_info(__be16 proto, काष्ठा sk_buff *skb,
+			काष्ठा hsr_frame_info *frame);
+#पूर्ण_अगर /* __HSR_FORWARD_H */

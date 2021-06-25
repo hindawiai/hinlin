@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright 2021 Jonathan Neuschäfer
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright 2021 Jonathan Neuschथअfer
 
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach/arch.h>
 
-static const char *const wpcm450_dt_match[] = {
+अटल स्थिर अक्षर *स्थिर wpcm450_dt_match[] = अणु
 	"nuvoton,wpcm450",
-	NULL
-};
+	शून्य
+पूर्ण;
 
 DT_MACHINE_START(WPCM450_DT, "WPCM450 chip")
 	.dt_compat	= wpcm450_dt_match,

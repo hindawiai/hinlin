@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI__SOCK_DIAG_H__
-#define _UAPI__SOCK_DIAG_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI__SOCK_DIAG_H__
+#घोषणा _UAPI__SOCK_DIAG_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define SOCK_DIAG_BY_FAMILY 20
-#define SOCK_DESTROY 21
+#घोषणा SOCK_DIAG_BY_FAMILY 20
+#घोषणा SOCK_DESTROY 21
 
-struct sock_diag_req {
+काष्ठा sock_diag_req अणु
 	__u8	sdiag_family;
 	__u8	sdiag_protocol;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SK_MEMINFO_RMEM_ALLOC,
 	SK_MEMINFO_RCVBUF,
 	SK_MEMINFO_WMEM_ALLOC,
@@ -24,42 +25,42 @@ enum {
 	SK_MEMINFO_DROPS,
 
 	SK_MEMINFO_VARS,
-};
+पूर्ण;
 
-enum sknetlink_groups {
+क्रमागत sknetlink_groups अणु
 	SKNLGRP_NONE,
 	SKNLGRP_INET_TCP_DESTROY,
 	SKNLGRP_INET_UDP_DESTROY,
 	SKNLGRP_INET6_TCP_DESTROY,
 	SKNLGRP_INET6_UDP_DESTROY,
 	__SKNLGRP_MAX,
-};
-#define SKNLGRP_MAX	(__SKNLGRP_MAX - 1)
+पूर्ण;
+#घोषणा SKNLGRP_MAX	(__SKNLGRP_MAX - 1)
 
-enum {
+क्रमागत अणु
 	SK_DIAG_BPF_STORAGE_REQ_NONE,
 	SK_DIAG_BPF_STORAGE_REQ_MAP_FD,
 	__SK_DIAG_BPF_STORAGE_REQ_MAX,
-};
+पूर्ण;
 
-#define SK_DIAG_BPF_STORAGE_REQ_MAX	(__SK_DIAG_BPF_STORAGE_REQ_MAX - 1)
+#घोषणा SK_DIAG_BPF_STORAGE_REQ_MAX	(__SK_DIAG_BPF_STORAGE_REQ_MAX - 1)
 
-enum {
+क्रमागत अणु
 	SK_DIAG_BPF_STORAGE_REP_NONE,
 	SK_DIAG_BPF_STORAGE,
 	__SK_DIAG_BPF_STORAGE_REP_MAX,
-};
+पूर्ण;
 
-#define SK_DIAB_BPF_STORAGE_REP_MAX	(__SK_DIAG_BPF_STORAGE_REP_MAX - 1)
+#घोषणा SK_DIAB_BPF_STORAGE_REP_MAX	(__SK_DIAG_BPF_STORAGE_REP_MAX - 1)
 
-enum {
+क्रमागत अणु
 	SK_DIAG_BPF_STORAGE_NONE,
 	SK_DIAG_BPF_STORAGE_PAD,
 	SK_DIAG_BPF_STORAGE_MAP_ID,
 	SK_DIAG_BPF_STORAGE_MAP_VALUE,
 	__SK_DIAG_BPF_STORAGE_MAX,
-};
+पूर्ण;
 
-#define SK_DIAG_BPF_STORAGE_MAX        (__SK_DIAG_BPF_STORAGE_MAX - 1)
+#घोषणा SK_DIAG_BPF_STORAGE_MAX        (__SK_DIAG_BPF_STORAGE_MAX - 1)
 
-#endif /* _UAPI__SOCK_DIAG_H__ */
+#पूर्ण_अगर /* _UAPI__SOCK_DIAG_H__ */

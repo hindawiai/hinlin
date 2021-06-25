@@ -1,183 +1,184 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Implementation of the hash table type.
  *
  * Author : Stephen Smalley, <sds@tycho.nsa.gov>
  */
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include "hashtab.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश "hashtab.h"
 
-static struct kmem_cache *hashtab_node_cachep __ro_after_init;
+अटल काष्ठा kmem_cache *hashtab_node_cachep __ro_after_init;
 
 /*
- * Here we simply round the number of elements up to the nearest power of two.
- * I tried also other options like rounding down or rounding to the closest
- * power of two (up or down based on which is closer), but I was unable to
- * find any significant difference in lookup/insert performance that would
- * justify switching to a different (less intuitive) formula. It could be that
- * a different formula is actually more optimal, but any future changes here
- * should be supported with performance/memory usage data.
+ * Here we simply round the number of elements up to the nearest घातer of two.
+ * I tried also other options like rounding करोwn or rounding to the बंदst
+ * घातer of two (up or करोwn based on which is बंदr), but I was unable to
+ * find any signअगरicant dअगरference in lookup/insert perक्रमmance that would
+ * justअगरy चयनing to a dअगरferent (less पूर्णांकuitive) क्रमmula. It could be that
+ * a dअगरferent क्रमmula is actually more optimal, but any future changes here
+ * should be supported with perक्रमmance/memory usage data.
  *
- * The total memory used by the htable arrays (only) with Fedora policy loaded
- * is approximately 163 KB at the time of writing.
+ * The total memory used by the htable arrays (only) with Feकरोra policy loaded
+ * is approximately 163 KB at the समय of writing.
  */
-static u32 hashtab_compute_size(u32 nel)
-{
-	return nel == 0 ? 0 : roundup_pow_of_two(nel);
-}
+अटल u32 hashtab_compute_size(u32 nel)
+अणु
+	वापस nel == 0 ? 0 : roundup_घात_of_two(nel);
+पूर्ण
 
-int hashtab_init(struct hashtab *h, u32 nel_hint)
-{
-	h->size = hashtab_compute_size(nel_hint);
+पूर्णांक hashtab_init(काष्ठा hashtab *h, u32 nel_hपूर्णांक)
+अणु
+	h->size = hashtab_compute_size(nel_hपूर्णांक);
 	h->nel = 0;
-	if (!h->size)
-		return 0;
+	अगर (!h->size)
+		वापस 0;
 
-	h->htable = kcalloc(h->size, sizeof(*h->htable), GFP_KERNEL);
-	return h->htable ? 0 : -ENOMEM;
-}
+	h->htable = kसुस्मृति(h->size, माप(*h->htable), GFP_KERNEL);
+	वापस h->htable ? 0 : -ENOMEM;
+पूर्ण
 
-int __hashtab_insert(struct hashtab *h, struct hashtab_node **dst,
-		     void *key, void *datum)
-{
-	struct hashtab_node *newnode;
+पूर्णांक __hashtab_insert(काष्ठा hashtab *h, काष्ठा hashtab_node **dst,
+		     व्योम *key, व्योम *datum)
+अणु
+	काष्ठा hashtab_node *newnode;
 
 	newnode = kmem_cache_zalloc(hashtab_node_cachep, GFP_KERNEL);
-	if (!newnode)
-		return -ENOMEM;
+	अगर (!newnode)
+		वापस -ENOMEM;
 	newnode->key = key;
 	newnode->datum = datum;
 	newnode->next = *dst;
 	*dst = newnode;
 
 	h->nel++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void hashtab_destroy(struct hashtab *h)
-{
+व्योम hashtab_destroy(काष्ठा hashtab *h)
+अणु
 	u32 i;
-	struct hashtab_node *cur, *temp;
+	काष्ठा hashtab_node *cur, *temp;
 
-	for (i = 0; i < h->size; i++) {
+	क्रम (i = 0; i < h->size; i++) अणु
 		cur = h->htable[i];
-		while (cur) {
+		जबतक (cur) अणु
 			temp = cur;
 			cur = cur->next;
-			kmem_cache_free(hashtab_node_cachep, temp);
-		}
-		h->htable[i] = NULL;
-	}
+			kmem_cache_मुक्त(hashtab_node_cachep, temp);
+		पूर्ण
+		h->htable[i] = शून्य;
+	पूर्ण
 
-	kfree(h->htable);
-	h->htable = NULL;
-}
+	kमुक्त(h->htable);
+	h->htable = शून्य;
+पूर्ण
 
-int hashtab_map(struct hashtab *h,
-		int (*apply)(void *k, void *d, void *args),
-		void *args)
-{
+पूर्णांक hashtab_map(काष्ठा hashtab *h,
+		पूर्णांक (*apply)(व्योम *k, व्योम *d, व्योम *args),
+		व्योम *args)
+अणु
 	u32 i;
-	int ret;
-	struct hashtab_node *cur;
+	पूर्णांक ret;
+	काष्ठा hashtab_node *cur;
 
-	for (i = 0; i < h->size; i++) {
+	क्रम (i = 0; i < h->size; i++) अणु
 		cur = h->htable[i];
-		while (cur) {
+		जबतक (cur) अणु
 			ret = apply(cur->key, cur->datum, args);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 			cur = cur->next;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-void hashtab_stat(struct hashtab *h, struct hashtab_info *info)
-{
+व्योम hashtab_stat(काष्ठा hashtab *h, काष्ठा hashtab_info *info)
+अणु
 	u32 i, chain_len, slots_used, max_chain_len;
-	struct hashtab_node *cur;
+	काष्ठा hashtab_node *cur;
 
 	slots_used = 0;
 	max_chain_len = 0;
-	for (i = 0; i < h->size; i++) {
+	क्रम (i = 0; i < h->size; i++) अणु
 		cur = h->htable[i];
-		if (cur) {
+		अगर (cur) अणु
 			slots_used++;
 			chain_len = 0;
-			while (cur) {
+			जबतक (cur) अणु
 				chain_len++;
 				cur = cur->next;
-			}
+			पूर्ण
 
-			if (chain_len > max_chain_len)
+			अगर (chain_len > max_chain_len)
 				max_chain_len = chain_len;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	info->slots_used = slots_used;
 	info->max_chain_len = max_chain_len;
-}
+पूर्ण
 
-int hashtab_duplicate(struct hashtab *new, struct hashtab *orig,
-		int (*copy)(struct hashtab_node *new,
-			struct hashtab_node *orig, void *args),
-		int (*destroy)(void *k, void *d, void *args),
-		void *args)
-{
-	struct hashtab_node *cur, *tmp, *tail;
-	int i, rc;
+पूर्णांक hashtab_duplicate(काष्ठा hashtab *new, काष्ठा hashtab *orig,
+		पूर्णांक (*copy)(काष्ठा hashtab_node *new,
+			काष्ठा hashtab_node *orig, व्योम *args),
+		पूर्णांक (*destroy)(व्योम *k, व्योम *d, व्योम *args),
+		व्योम *args)
+अणु
+	काष्ठा hashtab_node *cur, *पंचांगp, *tail;
+	पूर्णांक i, rc;
 
-	memset(new, 0, sizeof(*new));
+	स_रखो(new, 0, माप(*new));
 
-	new->htable = kcalloc(orig->size, sizeof(*new->htable), GFP_KERNEL);
-	if (!new->htable)
-		return -ENOMEM;
+	new->htable = kसुस्मृति(orig->size, माप(*new->htable), GFP_KERNEL);
+	अगर (!new->htable)
+		वापस -ENOMEM;
 
 	new->size = orig->size;
 
-	for (i = 0; i < orig->size; i++) {
-		tail = NULL;
-		for (cur = orig->htable[i]; cur; cur = cur->next) {
-			tmp = kmem_cache_zalloc(hashtab_node_cachep,
+	क्रम (i = 0; i < orig->size; i++) अणु
+		tail = शून्य;
+		क्रम (cur = orig->htable[i]; cur; cur = cur->next) अणु
+			पंचांगp = kmem_cache_zalloc(hashtab_node_cachep,
 						GFP_KERNEL);
-			if (!tmp)
-				goto error;
-			rc = copy(tmp, cur, args);
-			if (rc) {
-				kmem_cache_free(hashtab_node_cachep, tmp);
-				goto error;
-			}
-			tmp->next = NULL;
-			if (!tail)
-				new->htable[i] = tmp;
-			else
-				tail->next = tmp;
-			tail = tmp;
+			अगर (!पंचांगp)
+				जाओ error;
+			rc = copy(पंचांगp, cur, args);
+			अगर (rc) अणु
+				kmem_cache_मुक्त(hashtab_node_cachep, पंचांगp);
+				जाओ error;
+			पूर्ण
+			पंचांगp->next = शून्य;
+			अगर (!tail)
+				new->htable[i] = पंचांगp;
+			अन्यथा
+				tail->next = पंचांगp;
+			tail = पंचांगp;
 			new->nel++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
  error:
-	for (i = 0; i < new->size; i++) {
-		for (cur = new->htable[i]; cur; cur = tmp) {
-			tmp = cur->next;
+	क्रम (i = 0; i < new->size; i++) अणु
+		क्रम (cur = new->htable[i]; cur; cur = पंचांगp) अणु
+			पंचांगp = cur->next;
 			destroy(cur->key, cur->datum, args);
-			kmem_cache_free(hashtab_node_cachep, cur);
-		}
-	}
-	kmem_cache_free(hashtab_node_cachep, new);
-	return -ENOMEM;
-}
+			kmem_cache_मुक्त(hashtab_node_cachep, cur);
+		पूर्ण
+	पूर्ण
+	kmem_cache_मुक्त(hashtab_node_cachep, new);
+	वापस -ENOMEM;
+पूर्ण
 
-void __init hashtab_cache_init(void)
-{
+व्योम __init hashtab_cache_init(व्योम)
+अणु
 		hashtab_node_cachep = kmem_cache_create("hashtab_node",
-			sizeof(struct hashtab_node),
-			0, SLAB_PANIC, NULL);
-}
+			माप(काष्ठा hashtab_node),
+			0, SLAB_PANIC, शून्य);
+पूर्ण

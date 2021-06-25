@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * trace task wakeup timings
  *
@@ -10,214 +11,214 @@
  *  Copyright (C) 2004-2006 Ingo Molnar
  *  Copyright (C) 2004 Nadia Yvette Chambers
  */
-#include <linux/module.h>
-#include <linux/kallsyms.h>
-#include <linux/uaccess.h>
-#include <linux/ftrace.h>
-#include <linux/sched/rt.h>
-#include <linux/sched/deadline.h>
-#include <trace/events/sched.h>
-#include "trace.h"
+#समावेश <linux/module.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/sched/rt.h>
+#समावेश <linux/sched/deadline.h>
+#समावेश <trace/events/sched.h>
+#समावेश "trace.h"
 
-static struct trace_array	*wakeup_trace;
-static int __read_mostly	tracer_enabled;
+अटल काष्ठा trace_array	*wakeup_trace;
+अटल पूर्णांक __पढ़ो_mostly	tracer_enabled;
 
-static struct task_struct	*wakeup_task;
-static int			wakeup_cpu;
-static int			wakeup_current_cpu;
-static unsigned			wakeup_prio = -1;
-static int			wakeup_rt;
-static int			wakeup_dl;
-static int			tracing_dl = 0;
+अटल काष्ठा task_काष्ठा	*wakeup_task;
+अटल पूर्णांक			wakeup_cpu;
+अटल पूर्णांक			wakeup_current_cpu;
+अटल अचिन्हित			wakeup_prio = -1;
+अटल पूर्णांक			wakeup_rt;
+अटल पूर्णांक			wakeup_dl;
+अटल पूर्णांक			tracing_dl = 0;
 
-static arch_spinlock_t wakeup_lock =
+अटल arch_spinlock_t wakeup_lock =
 	(arch_spinlock_t)__ARCH_SPIN_LOCK_UNLOCKED;
 
-static void wakeup_reset(struct trace_array *tr);
-static void __wakeup_reset(struct trace_array *tr);
-static int start_func_tracer(struct trace_array *tr, int graph);
-static void stop_func_tracer(struct trace_array *tr, int graph);
+अटल व्योम wakeup_reset(काष्ठा trace_array *tr);
+अटल व्योम __wakeup_reset(काष्ठा trace_array *tr);
+अटल पूर्णांक start_func_tracer(काष्ठा trace_array *tr, पूर्णांक graph);
+अटल व्योम stop_func_tracer(काष्ठा trace_array *tr, पूर्णांक graph);
 
-static int save_flags;
+अटल पूर्णांक save_flags;
 
-#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
 # define is_graph(tr) ((tr)->trace_flags & TRACE_ITER_DISPLAY_GRAPH)
-#else
+#अन्यथा
 # define is_graph(tr) false
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_FUNCTION_TRACER
+#अगर_घोषित CONFIG_FUNCTION_TRACER
 
-static bool function_enabled;
+अटल bool function_enabled;
 
 /*
- * Prologue for the wakeup function tracers.
+ * Prologue क्रम the wakeup function tracers.
  *
- * Returns 1 if it is OK to continue, and preemption
+ * Returns 1 अगर it is OK to जारी, and preemption
  *            is disabled and data->disabled is incremented.
- *         0 if the trace is to be ignored, and preemption
+ *         0 अगर the trace is to be ignored, and preemption
  *            is not disabled and data->disabled is
  *            kept the same.
  *
- * Note, this function is also used outside this ifdef but
- *  inside the #ifdef of the function graph tracer below.
+ * Note, this function is also used outside this अगरdef but
+ *  inside the #अगर_घोषित of the function graph tracer below.
  *  This is OK, since the function graph tracer is
  *  dependent on the function tracer.
  */
-static int
-func_prolog_preempt_disable(struct trace_array *tr,
-			    struct trace_array_cpu **data,
-			    unsigned int *trace_ctx)
-{
-	long disabled;
-	int cpu;
+अटल पूर्णांक
+func_prolog_preempt_disable(काष्ठा trace_array *tr,
+			    काष्ठा trace_array_cpu **data,
+			    अचिन्हित पूर्णांक *trace_ctx)
+अणु
+	दीर्घ disabled;
+	पूर्णांक cpu;
 
-	if (likely(!wakeup_task))
-		return 0;
+	अगर (likely(!wakeup_task))
+		वापस 0;
 
 	*trace_ctx = tracing_gen_ctx();
 	preempt_disable_notrace();
 
 	cpu = raw_smp_processor_id();
-	if (cpu != wakeup_current_cpu)
-		goto out_enable;
+	अगर (cpu != wakeup_current_cpu)
+		जाओ out_enable;
 
 	*data = per_cpu_ptr(tr->array_buffer.data, cpu);
-	disabled = atomic_inc_return(&(*data)->disabled);
-	if (unlikely(disabled != 1))
-		goto out;
+	disabled = atomic_inc_वापस(&(*data)->disabled);
+	अगर (unlikely(disabled != 1))
+		जाओ out;
 
-	return 1;
+	वापस 1;
 
 out:
 	atomic_dec(&(*data)->disabled);
 
 out_enable:
 	preempt_enable_notrace();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
 
-static int wakeup_display_graph(struct trace_array *tr, int set)
-{
-	if (!(is_graph(tr) ^ set))
-		return 0;
+अटल पूर्णांक wakeup_display_graph(काष्ठा trace_array *tr, पूर्णांक set)
+अणु
+	अगर (!(is_graph(tr) ^ set))
+		वापस 0;
 
 	stop_func_tracer(tr, !set);
 
 	wakeup_reset(wakeup_trace);
 	tr->max_latency = 0;
 
-	return start_func_tracer(tr, set);
-}
+	वापस start_func_tracer(tr, set);
+पूर्ण
 
-static int wakeup_graph_entry(struct ftrace_graph_ent *trace)
-{
-	struct trace_array *tr = wakeup_trace;
-	struct trace_array_cpu *data;
-	unsigned int trace_ctx;
-	int ret = 0;
+अटल पूर्णांक wakeup_graph_entry(काष्ठा ftrace_graph_ent *trace)
+अणु
+	काष्ठा trace_array *tr = wakeup_trace;
+	काष्ठा trace_array_cpu *data;
+	अचिन्हित पूर्णांक trace_ctx;
+	पूर्णांक ret = 0;
 
-	if (ftrace_graph_ignore_func(trace))
-		return 0;
+	अगर (ftrace_graph_ignore_func(trace))
+		वापस 0;
 	/*
-	 * Do not trace a function if it's filtered by set_graph_notrace.
+	 * Do not trace a function अगर it's filtered by set_graph_notrace.
 	 * Make the index of ret stack negative to indicate that it should
 	 * ignore further functions.  But it needs its own ret stack entry
-	 * to recover the original index in order to continue tracing after
-	 * returning from the function.
+	 * to recover the original index in order to जारी tracing after
+	 * वापसing from the function.
 	 */
-	if (ftrace_graph_notrace_addr(trace->func))
-		return 1;
+	अगर (ftrace_graph_notrace_addr(trace->func))
+		वापस 1;
 
-	if (!func_prolog_preempt_disable(tr, &data, &trace_ctx))
-		return 0;
+	अगर (!func_prolog_preempt_disable(tr, &data, &trace_ctx))
+		वापस 0;
 
 	ret = __trace_graph_entry(tr, trace, trace_ctx);
 	atomic_dec(&data->disabled);
 	preempt_enable_notrace();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void wakeup_graph_return(struct ftrace_graph_ret *trace)
-{
-	struct trace_array *tr = wakeup_trace;
-	struct trace_array_cpu *data;
-	unsigned int trace_ctx;
+अटल व्योम wakeup_graph_वापस(काष्ठा ftrace_graph_ret *trace)
+अणु
+	काष्ठा trace_array *tr = wakeup_trace;
+	काष्ठा trace_array_cpu *data;
+	अचिन्हित पूर्णांक trace_ctx;
 
 	ftrace_graph_addr_finish(trace);
 
-	if (!func_prolog_preempt_disable(tr, &data, &trace_ctx))
-		return;
+	अगर (!func_prolog_preempt_disable(tr, &data, &trace_ctx))
+		वापस;
 
-	__trace_graph_return(tr, trace, trace_ctx);
+	__trace_graph_वापस(tr, trace, trace_ctx);
 	atomic_dec(&data->disabled);
 
 	preempt_enable_notrace();
-	return;
-}
+	वापस;
+पूर्ण
 
-static struct fgraph_ops fgraph_wakeup_ops = {
+अटल काष्ठा fgraph_ops fgraph_wakeup_ops = अणु
 	.entryfunc = &wakeup_graph_entry,
-	.retfunc = &wakeup_graph_return,
-};
+	.retfunc = &wakeup_graph_वापस,
+पूर्ण;
 
-static void wakeup_trace_open(struct trace_iterator *iter)
-{
-	if (is_graph(iter->tr))
-		graph_trace_open(iter);
-}
+अटल व्योम wakeup_trace_खोलो(काष्ठा trace_iterator *iter)
+अणु
+	अगर (is_graph(iter->tr))
+		graph_trace_खोलो(iter);
+पूर्ण
 
-static void wakeup_trace_close(struct trace_iterator *iter)
-{
-	if (iter->private)
-		graph_trace_close(iter);
-}
+अटल व्योम wakeup_trace_बंद(काष्ठा trace_iterator *iter)
+अणु
+	अगर (iter->निजी)
+		graph_trace_बंद(iter);
+पूर्ण
 
-#define GRAPH_TRACER_FLAGS (TRACE_GRAPH_PRINT_PROC | \
+#घोषणा GRAPH_TRACER_FLAGS (TRACE_GRAPH_PRINT_PROC | \
 			    TRACE_GRAPH_PRINT_CPU |  \
 			    TRACE_GRAPH_PRINT_REL_TIME | \
 			    TRACE_GRAPH_PRINT_DURATION | \
 			    TRACE_GRAPH_PRINT_OVERHEAD | \
 			    TRACE_GRAPH_PRINT_IRQS)
 
-static enum print_line_t wakeup_print_line(struct trace_iterator *iter)
-{
+अटल क्रमागत prपूर्णांक_line_t wakeup_prपूर्णांक_line(काष्ठा trace_iterator *iter)
+अणु
 	/*
 	 * In graph mode call the graph tracer output function,
 	 * otherwise go with the TRACE_FN event handler
 	 */
-	if (is_graph(iter->tr))
-		return print_graph_function_flags(iter, GRAPH_TRACER_FLAGS);
+	अगर (is_graph(iter->tr))
+		वापस prपूर्णांक_graph_function_flags(iter, GRAPH_TRACER_FLAGS);
 
-	return TRACE_TYPE_UNHANDLED;
-}
+	वापस TRACE_TYPE_UNHANDLED;
+पूर्ण
 
-static void wakeup_print_header(struct seq_file *s)
-{
-	if (is_graph(wakeup_trace))
-		print_graph_headers_flags(s, GRAPH_TRACER_FLAGS);
-	else
-		trace_default_header(s);
-}
-#endif /* else CONFIG_FUNCTION_GRAPH_TRACER */
+अटल व्योम wakeup_prपूर्णांक_header(काष्ठा seq_file *s)
+अणु
+	अगर (is_graph(wakeup_trace))
+		prपूर्णांक_graph_headers_flags(s, GRAPH_TRACER_FLAGS);
+	अन्यथा
+		trace_शेष_header(s);
+पूर्ण
+#पूर्ण_अगर /* अन्यथा CONFIG_FUNCTION_GRAPH_TRACER */
 
 /*
- * wakeup uses its own tracer function to keep the overhead down:
+ * wakeup uses its own tracer function to keep the overhead करोwn:
  */
-static void
-wakeup_tracer_call(unsigned long ip, unsigned long parent_ip,
-		   struct ftrace_ops *op, struct ftrace_regs *fregs)
-{
-	struct trace_array *tr = wakeup_trace;
-	struct trace_array_cpu *data;
-	unsigned long flags;
-	unsigned int trace_ctx;
+अटल व्योम
+wakeup_tracer_call(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+		   काष्ठा ftrace_ops *op, काष्ठा ftrace_regs *fregs)
+अणु
+	काष्ठा trace_array *tr = wakeup_trace;
+	काष्ठा trace_array_cpu *data;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक trace_ctx;
 
-	if (!func_prolog_preempt_disable(tr, &data, &trace_ctx))
-		return;
+	अगर (!func_prolog_preempt_disable(tr, &data, &trace_ctx))
+		वापस;
 
 	local_irq_save(flags);
 	trace_function(tr, ip, parent_ip, trace_ctx);
@@ -225,164 +226,164 @@ wakeup_tracer_call(unsigned long ip, unsigned long parent_ip,
 
 	atomic_dec(&data->disabled);
 	preempt_enable_notrace();
-}
+पूर्ण
 
-static int register_wakeup_function(struct trace_array *tr, int graph, int set)
-{
-	int ret;
+अटल पूर्णांक रेजिस्टर_wakeup_function(काष्ठा trace_array *tr, पूर्णांक graph, पूर्णांक set)
+अणु
+	पूर्णांक ret;
 
-	/* 'set' is set if TRACE_ITER_FUNCTION is about to be set */
-	if (function_enabled || (!set && !(tr->trace_flags & TRACE_ITER_FUNCTION)))
-		return 0;
+	/* 'set' is set अगर TRACE_ITER_FUNCTION is about to be set */
+	अगर (function_enabled || (!set && !(tr->trace_flags & TRACE_ITER_FUNCTION)))
+		वापस 0;
 
-	if (graph)
-		ret = register_ftrace_graph(&fgraph_wakeup_ops);
-	else
-		ret = register_ftrace_function(tr->ops);
+	अगर (graph)
+		ret = रेजिस्टर_ftrace_graph(&fgraph_wakeup_ops);
+	अन्यथा
+		ret = रेजिस्टर_ftrace_function(tr->ops);
 
-	if (!ret)
+	अगर (!ret)
 		function_enabled = true;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void unregister_wakeup_function(struct trace_array *tr, int graph)
-{
-	if (!function_enabled)
-		return;
+अटल व्योम unरेजिस्टर_wakeup_function(काष्ठा trace_array *tr, पूर्णांक graph)
+अणु
+	अगर (!function_enabled)
+		वापस;
 
-	if (graph)
-		unregister_ftrace_graph(&fgraph_wakeup_ops);
-	else
-		unregister_ftrace_function(tr->ops);
+	अगर (graph)
+		unरेजिस्टर_ftrace_graph(&fgraph_wakeup_ops);
+	अन्यथा
+		unरेजिस्टर_ftrace_function(tr->ops);
 
 	function_enabled = false;
-}
+पूर्ण
 
-static int wakeup_function_set(struct trace_array *tr, u32 mask, int set)
-{
-	if (!(mask & TRACE_ITER_FUNCTION))
-		return 0;
+अटल पूर्णांक wakeup_function_set(काष्ठा trace_array *tr, u32 mask, पूर्णांक set)
+अणु
+	अगर (!(mask & TRACE_ITER_FUNCTION))
+		वापस 0;
 
-	if (set)
-		register_wakeup_function(tr, is_graph(tr), 1);
-	else
-		unregister_wakeup_function(tr, is_graph(tr));
-	return 1;
-}
-#else /* CONFIG_FUNCTION_TRACER */
-static int register_wakeup_function(struct trace_array *tr, int graph, int set)
-{
-	return 0;
-}
-static void unregister_wakeup_function(struct trace_array *tr, int graph) { }
-static int wakeup_function_set(struct trace_array *tr, u32 mask, int set)
-{
-	return 0;
-}
-#endif /* else CONFIG_FUNCTION_TRACER */
+	अगर (set)
+		रेजिस्टर_wakeup_function(tr, is_graph(tr), 1);
+	अन्यथा
+		unरेजिस्टर_wakeup_function(tr, is_graph(tr));
+	वापस 1;
+पूर्ण
+#अन्यथा /* CONFIG_FUNCTION_TRACER */
+अटल पूर्णांक रेजिस्टर_wakeup_function(काष्ठा trace_array *tr, पूर्णांक graph, पूर्णांक set)
+अणु
+	वापस 0;
+पूर्ण
+अटल व्योम unरेजिस्टर_wakeup_function(काष्ठा trace_array *tr, पूर्णांक graph) अणु पूर्ण
+अटल पूर्णांक wakeup_function_set(काष्ठा trace_array *tr, u32 mask, पूर्णांक set)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* अन्यथा CONFIG_FUNCTION_TRACER */
 
-#ifndef CONFIG_FUNCTION_GRAPH_TRACER
-static enum print_line_t wakeup_print_line(struct trace_iterator *iter)
-{
-	return TRACE_TYPE_UNHANDLED;
-}
+#अगर_अघोषित CONFIG_FUNCTION_GRAPH_TRACER
+अटल क्रमागत prपूर्णांक_line_t wakeup_prपूर्णांक_line(काष्ठा trace_iterator *iter)
+अणु
+	वापस TRACE_TYPE_UNHANDLED;
+पूर्ण
 
-static void wakeup_trace_open(struct trace_iterator *iter) { }
-static void wakeup_trace_close(struct trace_iterator *iter) { }
+अटल व्योम wakeup_trace_खोलो(काष्ठा trace_iterator *iter) अणु पूर्ण
+अटल व्योम wakeup_trace_बंद(काष्ठा trace_iterator *iter) अणु पूर्ण
 
-static void wakeup_print_header(struct seq_file *s)
-{
-	trace_default_header(s);
-}
-#endif /* !CONFIG_FUNCTION_GRAPH_TRACER */
+अटल व्योम wakeup_prपूर्णांक_header(काष्ठा seq_file *s)
+अणु
+	trace_शेष_header(s);
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_FUNCTION_GRAPH_TRACER */
 
-static void
-__trace_function(struct trace_array *tr,
-		 unsigned long ip, unsigned long parent_ip,
-		 unsigned int trace_ctx)
-{
-	if (is_graph(tr))
+अटल व्योम
+__trace_function(काष्ठा trace_array *tr,
+		 अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+		 अचिन्हित पूर्णांक trace_ctx)
+अणु
+	अगर (is_graph(tr))
 		trace_graph_function(tr, ip, parent_ip, trace_ctx);
-	else
+	अन्यथा
 		trace_function(tr, ip, parent_ip, trace_ctx);
-}
+पूर्ण
 
-static int wakeup_flag_changed(struct trace_array *tr, u32 mask, int set)
-{
-	struct tracer *tracer = tr->current_trace;
+अटल पूर्णांक wakeup_flag_changed(काष्ठा trace_array *tr, u32 mask, पूर्णांक set)
+अणु
+	काष्ठा tracer *tracer = tr->current_trace;
 
-	if (wakeup_function_set(tr, mask, set))
-		return 0;
+	अगर (wakeup_function_set(tr, mask, set))
+		वापस 0;
 
-#ifdef CONFIG_FUNCTION_GRAPH_TRACER
-	if (mask & TRACE_ITER_DISPLAY_GRAPH)
-		return wakeup_display_graph(tr, set);
-#endif
+#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
+	अगर (mask & TRACE_ITER_DISPLAY_GRAPH)
+		वापस wakeup_display_graph(tr, set);
+#पूर्ण_अगर
 
-	return trace_keep_overwrite(tracer, mask, set);
-}
+	वापस trace_keep_overग_लिखो(tracer, mask, set);
+पूर्ण
 
-static int start_func_tracer(struct trace_array *tr, int graph)
-{
-	int ret;
+अटल पूर्णांक start_func_tracer(काष्ठा trace_array *tr, पूर्णांक graph)
+अणु
+	पूर्णांक ret;
 
-	ret = register_wakeup_function(tr, graph, 0);
+	ret = रेजिस्टर_wakeup_function(tr, graph, 0);
 
-	if (!ret && tracing_is_enabled())
+	अगर (!ret && tracing_is_enabled())
 		tracer_enabled = 1;
-	else
+	अन्यथा
 		tracer_enabled = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void stop_func_tracer(struct trace_array *tr, int graph)
-{
+अटल व्योम stop_func_tracer(काष्ठा trace_array *tr, पूर्णांक graph)
+अणु
 	tracer_enabled = 0;
 
-	unregister_wakeup_function(tr, graph);
-}
+	unरेजिस्टर_wakeup_function(tr, graph);
+पूर्ण
 
 /*
  * Should this new latency be reported/recorded?
  */
-static bool report_latency(struct trace_array *tr, u64 delta)
-{
-	if (tracing_thresh) {
-		if (delta < tracing_thresh)
-			return false;
-	} else {
-		if (delta <= tr->max_latency)
-			return false;
-	}
-	return true;
-}
+अटल bool report_latency(काष्ठा trace_array *tr, u64 delta)
+अणु
+	अगर (tracing_thresh) अणु
+		अगर (delta < tracing_thresh)
+			वापस false;
+	पूर्ण अन्यथा अणु
+		अगर (delta <= tr->max_latency)
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static void
-probe_wakeup_migrate_task(void *ignore, struct task_struct *task, int cpu)
-{
-	if (task != wakeup_task)
-		return;
+अटल व्योम
+probe_wakeup_migrate_task(व्योम *ignore, काष्ठा task_काष्ठा *task, पूर्णांक cpu)
+अणु
+	अगर (task != wakeup_task)
+		वापस;
 
 	wakeup_current_cpu = cpu;
-}
+पूर्ण
 
-static void
-tracing_sched_switch_trace(struct trace_array *tr,
-			   struct task_struct *prev,
-			   struct task_struct *next,
-			   unsigned int trace_ctx)
-{
-	struct trace_event_call *call = &event_context_switch;
-	struct trace_buffer *buffer = tr->array_buffer.buffer;
-	struct ring_buffer_event *event;
-	struct ctx_switch_entry *entry;
+अटल व्योम
+tracing_sched_चयन_trace(काष्ठा trace_array *tr,
+			   काष्ठा task_काष्ठा *prev,
+			   काष्ठा task_काष्ठा *next,
+			   अचिन्हित पूर्णांक trace_ctx)
+अणु
+	काष्ठा trace_event_call *call = &event_context_चयन;
+	काष्ठा trace_buffer *buffer = tr->array_buffer.buffer;
+	काष्ठा ring_buffer_event *event;
+	काष्ठा ctx_चयन_entry *entry;
 
 	event = trace_buffer_lock_reserve(buffer, TRACE_CTX,
-					  sizeof(*entry), trace_ctx);
-	if (!event)
-		return;
+					  माप(*entry), trace_ctx);
+	अगर (!event)
+		वापस;
 	entry	= ring_buffer_event_data(event);
 	entry->prev_pid			= prev->pid;
 	entry->prev_prio		= prev->prio;
@@ -392,25 +393,25 @@ tracing_sched_switch_trace(struct trace_array *tr,
 	entry->next_state		= task_state_index(next);
 	entry->next_cpu	= task_cpu(next);
 
-	if (!call_filter_check_discard(call, entry, buffer, event))
+	अगर (!call_filter_check_discard(call, entry, buffer, event))
 		trace_buffer_unlock_commit(tr, buffer, event, trace_ctx);
-}
+पूर्ण
 
-static void
-tracing_sched_wakeup_trace(struct trace_array *tr,
-			   struct task_struct *wakee,
-			   struct task_struct *curr,
-			   unsigned int trace_ctx)
-{
-	struct trace_event_call *call = &event_wakeup;
-	struct ring_buffer_event *event;
-	struct ctx_switch_entry *entry;
-	struct trace_buffer *buffer = tr->array_buffer.buffer;
+अटल व्योम
+tracing_sched_wakeup_trace(काष्ठा trace_array *tr,
+			   काष्ठा task_काष्ठा *wakee,
+			   काष्ठा task_काष्ठा *curr,
+			   अचिन्हित पूर्णांक trace_ctx)
+अणु
+	काष्ठा trace_event_call *call = &event_wakeup;
+	काष्ठा ring_buffer_event *event;
+	काष्ठा ctx_चयन_entry *entry;
+	काष्ठा trace_buffer *buffer = tr->array_buffer.buffer;
 
 	event = trace_buffer_lock_reserve(buffer, TRACE_WAKE,
-					  sizeof(*entry), trace_ctx);
-	if (!event)
-		return;
+					  माप(*entry), trace_ctx);
+	अगर (!event)
+		वापस;
 	entry	= ring_buffer_event_data(event);
 	entry->prev_pid			= curr->pid;
 	entry->prev_prio		= curr->prio;
@@ -420,43 +421,43 @@ tracing_sched_wakeup_trace(struct trace_array *tr,
 	entry->next_state		= task_state_index(wakee);
 	entry->next_cpu			= task_cpu(wakee);
 
-	if (!call_filter_check_discard(call, entry, buffer, event))
+	अगर (!call_filter_check_discard(call, entry, buffer, event))
 		trace_buffer_unlock_commit(tr, buffer, event, trace_ctx);
-}
+पूर्ण
 
-static void notrace
-probe_wakeup_sched_switch(void *ignore, bool preempt,
-			  struct task_struct *prev, struct task_struct *next)
-{
-	struct trace_array_cpu *data;
+अटल व्योम notrace
+probe_wakeup_sched_चयन(व्योम *ignore, bool preempt,
+			  काष्ठा task_काष्ठा *prev, काष्ठा task_काष्ठा *next)
+अणु
+	काष्ठा trace_array_cpu *data;
 	u64 T0, T1, delta;
-	unsigned long flags;
-	long disabled;
-	int cpu;
-	unsigned int trace_ctx;
+	अचिन्हित दीर्घ flags;
+	दीर्घ disabled;
+	पूर्णांक cpu;
+	अचिन्हित पूर्णांक trace_ctx;
 
 	tracing_record_cmdline(prev);
 
-	if (unlikely(!tracer_enabled))
-		return;
+	अगर (unlikely(!tracer_enabled))
+		वापस;
 
 	/*
-	 * When we start a new trace, we set wakeup_task to NULL
+	 * When we start a new trace, we set wakeup_task to शून्य
 	 * and then set tracer_enabled = 1. We want to make sure
-	 * that another CPU does not see the tracer_enabled = 1
+	 * that another CPU करोes not see the tracer_enabled = 1
 	 * and the wakeup_task with an older task, that might
 	 * actually be the same as next.
 	 */
 	smp_rmb();
 
-	if (next != wakeup_task)
-		return;
+	अगर (next != wakeup_task)
+		वापस;
 
 	/* disable local data, not wakeup_cpu data */
 	cpu = raw_smp_processor_id();
-	disabled = atomic_inc_return(&per_cpu_ptr(wakeup_trace->array_buffer.data, cpu)->disabled);
-	if (likely(disabled != 1))
-		goto out;
+	disabled = atomic_inc_वापस(&per_cpu_ptr(wakeup_trace->array_buffer.data, cpu)->disabled);
+	अगर (likely(disabled != 1))
+		जाओ out;
 
 	local_irq_save(flags);
 	trace_ctx = tracing_gen_ctx_flags(flags);
@@ -464,27 +465,27 @@ probe_wakeup_sched_switch(void *ignore, bool preempt,
 	arch_spin_lock(&wakeup_lock);
 
 	/* We could race with grabbing wakeup_lock */
-	if (unlikely(!tracer_enabled || next != wakeup_task))
-		goto out_unlock;
+	अगर (unlikely(!tracer_enabled || next != wakeup_task))
+		जाओ out_unlock;
 
-	/* The task we are waiting for is waking up */
+	/* The task we are रुकोing क्रम is waking up */
 	data = per_cpu_ptr(wakeup_trace->array_buffer.data, wakeup_cpu);
 
 	__trace_function(wakeup_trace, CALLER_ADDR0, CALLER_ADDR1, trace_ctx);
-	tracing_sched_switch_trace(wakeup_trace, prev, next, trace_ctx);
+	tracing_sched_चयन_trace(wakeup_trace, prev, next, trace_ctx);
 	__trace_stack(wakeup_trace, trace_ctx, 0);
 
-	T0 = data->preempt_timestamp;
+	T0 = data->preempt_बारtamp;
 	T1 = ftrace_now(cpu);
 	delta = T1-T0;
 
-	if (!report_latency(wakeup_trace, delta))
-		goto out_unlock;
+	अगर (!report_latency(wakeup_trace, delta))
+		जाओ out_unlock;
 
-	if (likely(!is_tracing_stopped())) {
+	अगर (likely(!is_tracing_stopped())) अणु
 		wakeup_trace->max_latency = delta;
-		update_max_tr(wakeup_trace, wakeup_task, wakeup_cpu, NULL);
-	}
+		update_max_tr(wakeup_trace, wakeup_task, wakeup_cpu, शून्य);
+	पूर्ण
 
 out_unlock:
 	__wakeup_reset(wakeup_trace);
@@ -492,23 +493,23 @@ out_unlock:
 	local_irq_restore(flags);
 out:
 	atomic_dec(&per_cpu_ptr(wakeup_trace->array_buffer.data, cpu)->disabled);
-}
+पूर्ण
 
-static void __wakeup_reset(struct trace_array *tr)
-{
+अटल व्योम __wakeup_reset(काष्ठा trace_array *tr)
+अणु
 	wakeup_cpu = -1;
 	wakeup_prio = -1;
 	tracing_dl = 0;
 
-	if (wakeup_task)
-		put_task_struct(wakeup_task);
+	अगर (wakeup_task)
+		put_task_काष्ठा(wakeup_task);
 
-	wakeup_task = NULL;
-}
+	wakeup_task = शून्य;
+पूर्ण
 
-static void wakeup_reset(struct trace_array *tr)
-{
-	unsigned long flags;
+अटल व्योम wakeup_reset(काष्ठा trace_array *tr)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	tracing_reset_online_cpus(&tr->array_buffer);
 
@@ -517,48 +518,48 @@ static void wakeup_reset(struct trace_array *tr)
 	__wakeup_reset(tr);
 	arch_spin_unlock(&wakeup_lock);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static void
-probe_wakeup(void *ignore, struct task_struct *p)
-{
-	struct trace_array_cpu *data;
-	int cpu = smp_processor_id();
-	long disabled;
-	unsigned int trace_ctx;
+अटल व्योम
+probe_wakeup(व्योम *ignore, काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा trace_array_cpu *data;
+	पूर्णांक cpu = smp_processor_id();
+	दीर्घ disabled;
+	अचिन्हित पूर्णांक trace_ctx;
 
-	if (likely(!tracer_enabled))
-		return;
+	अगर (likely(!tracer_enabled))
+		वापस;
 
 	tracing_record_cmdline(p);
 	tracing_record_cmdline(current);
 
 	/*
 	 * Semantic is like this:
-	 *  - wakeup tracer handles all tasks in the system, independently
+	 *  - wakeup tracer handles all tasks in the प्रणाली, independently
 	 *    from their scheduling class;
-	 *  - wakeup_rt tracer handles tasks belonging to sched_dl and
+	 *  - wakeup_rt tracer handles tasks beदीर्घing to sched_dl and
 	 *    sched_rt class;
-	 *  - wakeup_dl handles tasks belonging to sched_dl class only.
+	 *  - wakeup_dl handles tasks beदीर्घing to sched_dl class only.
 	 */
-	if (tracing_dl || (wakeup_dl && !dl_task(p)) ||
+	अगर (tracing_dl || (wakeup_dl && !dl_task(p)) ||
 	    (wakeup_rt && !dl_task(p) && !rt_task(p)) ||
 	    (!dl_task(p) && (p->prio >= wakeup_prio || p->prio >= current->prio)))
-		return;
+		वापस;
 
-	disabled = atomic_inc_return(&per_cpu_ptr(wakeup_trace->array_buffer.data, cpu)->disabled);
-	if (unlikely(disabled != 1))
-		goto out;
+	disabled = atomic_inc_वापस(&per_cpu_ptr(wakeup_trace->array_buffer.data, cpu)->disabled);
+	अगर (unlikely(disabled != 1))
+		जाओ out;
 
 	trace_ctx = tracing_gen_ctx();
 
-	/* interrupts should be off from try_to_wake_up */
+	/* पूर्णांकerrupts should be off from try_to_wake_up */
 	arch_spin_lock(&wakeup_lock);
 
-	/* check for races. */
-	if (!tracer_enabled || tracing_dl ||
+	/* check क्रम races. */
+	अगर (!tracer_enabled || tracing_dl ||
 	    (!dl_task(p) && p->prio >= wakeup_prio))
-		goto out_locked;
+		जाओ out_locked;
 
 	/* reset the trace */
 	__wakeup_reset(wakeup_trace);
@@ -568,18 +569,18 @@ probe_wakeup(void *ignore, struct task_struct *p)
 	wakeup_prio = p->prio;
 
 	/*
-	 * Once you start tracing a -deadline task, don't bother tracing
+	 * Once you start tracing a -deadline task, करोn't bother tracing
 	 * another task until the first one wakes up.
 	 */
-	if (dl_task(p))
+	अगर (dl_task(p))
 		tracing_dl = 1;
-	else
+	अन्यथा
 		tracing_dl = 0;
 
-	wakeup_task = get_task_struct(p);
+	wakeup_task = get_task_काष्ठा(p);
 
 	data = per_cpu_ptr(wakeup_trace->array_buffer.data, wakeup_cpu);
-	data->preempt_timestamp = ftrace_now(cpu);
+	data->preempt_बारtamp = ftrace_now(cpu);
 	tracing_sched_wakeup_trace(wakeup_trace, p, current, trace_ctx);
 	__trace_stack(wakeup_trace, trace_ctx, 0);
 
@@ -594,80 +595,80 @@ out_locked:
 	arch_spin_unlock(&wakeup_lock);
 out:
 	atomic_dec(&per_cpu_ptr(wakeup_trace->array_buffer.data, cpu)->disabled);
-}
+पूर्ण
 
-static void start_wakeup_tracer(struct trace_array *tr)
-{
-	int ret;
+अटल व्योम start_wakeup_tracer(काष्ठा trace_array *tr)
+अणु
+	पूर्णांक ret;
 
-	ret = register_trace_sched_wakeup(probe_wakeup, NULL);
-	if (ret) {
+	ret = रेजिस्टर_trace_sched_wakeup(probe_wakeup, शून्य);
+	अगर (ret) अणु
 		pr_info("wakeup trace: Couldn't activate tracepoint"
 			" probe to kernel_sched_wakeup\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ret = register_trace_sched_wakeup_new(probe_wakeup, NULL);
-	if (ret) {
+	ret = रेजिस्टर_trace_sched_wakeup_new(probe_wakeup, शून्य);
+	अगर (ret) अणु
 		pr_info("wakeup trace: Couldn't activate tracepoint"
 			" probe to kernel_sched_wakeup_new\n");
-		goto fail_deprobe;
-	}
+		जाओ fail_deprobe;
+	पूर्ण
 
-	ret = register_trace_sched_switch(probe_wakeup_sched_switch, NULL);
-	if (ret) {
+	ret = रेजिस्टर_trace_sched_चयन(probe_wakeup_sched_चयन, शून्य);
+	अगर (ret) अणु
 		pr_info("sched trace: Couldn't activate tracepoint"
 			" probe to kernel_sched_switch\n");
-		goto fail_deprobe_wake_new;
-	}
+		जाओ fail_deprobe_wake_new;
+	पूर्ण
 
-	ret = register_trace_sched_migrate_task(probe_wakeup_migrate_task, NULL);
-	if (ret) {
+	ret = रेजिस्टर_trace_sched_migrate_task(probe_wakeup_migrate_task, शून्य);
+	अगर (ret) अणु
 		pr_info("wakeup trace: Couldn't activate tracepoint"
 			" probe to kernel_sched_migrate_task\n");
-		goto fail_deprobe_sched_switch;
-	}
+		जाओ fail_deprobe_sched_चयन;
+	पूर्ण
 
 	wakeup_reset(tr);
 
 	/*
-	 * Don't let the tracer_enabled = 1 show up before
-	 * the wakeup_task is reset. This may be overkill since
-	 * wakeup_reset does a spin_unlock after setting the
-	 * wakeup_task to NULL, but I want to be safe.
+	 * Don't let the tracer_enabled = 1 show up beक्रमe
+	 * the wakeup_task is reset. This may be overसमाप्त since
+	 * wakeup_reset करोes a spin_unlock after setting the
+	 * wakeup_task to शून्य, but I want to be safe.
 	 * This is a slow path anyway.
 	 */
 	smp_wmb();
 
-	if (start_func_tracer(tr, is_graph(tr)))
-		printk(KERN_ERR "failed to start wakeup tracer\n");
+	अगर (start_func_tracer(tr, is_graph(tr)))
+		prपूर्णांकk(KERN_ERR "failed to start wakeup tracer\n");
 
-	return;
-fail_deprobe_sched_switch:
-	unregister_trace_sched_switch(probe_wakeup_sched_switch, NULL);
+	वापस;
+fail_deprobe_sched_चयन:
+	unरेजिस्टर_trace_sched_चयन(probe_wakeup_sched_चयन, शून्य);
 fail_deprobe_wake_new:
-	unregister_trace_sched_wakeup_new(probe_wakeup, NULL);
+	unरेजिस्टर_trace_sched_wakeup_new(probe_wakeup, शून्य);
 fail_deprobe:
-	unregister_trace_sched_wakeup(probe_wakeup, NULL);
-}
+	unरेजिस्टर_trace_sched_wakeup(probe_wakeup, शून्य);
+पूर्ण
 
-static void stop_wakeup_tracer(struct trace_array *tr)
-{
+अटल व्योम stop_wakeup_tracer(काष्ठा trace_array *tr)
+अणु
 	tracer_enabled = 0;
 	stop_func_tracer(tr, is_graph(tr));
-	unregister_trace_sched_switch(probe_wakeup_sched_switch, NULL);
-	unregister_trace_sched_wakeup_new(probe_wakeup, NULL);
-	unregister_trace_sched_wakeup(probe_wakeup, NULL);
-	unregister_trace_sched_migrate_task(probe_wakeup_migrate_task, NULL);
-}
+	unरेजिस्टर_trace_sched_चयन(probe_wakeup_sched_चयन, शून्य);
+	unरेजिस्टर_trace_sched_wakeup_new(probe_wakeup, शून्य);
+	unरेजिस्टर_trace_sched_wakeup(probe_wakeup, शून्य);
+	unरेजिस्टर_trace_sched_migrate_task(probe_wakeup_migrate_task, शून्य);
+पूर्ण
 
-static bool wakeup_busy;
+अटल bool wakeup_busy;
 
-static int __wakeup_tracer_init(struct trace_array *tr)
-{
+अटल पूर्णांक __wakeup_tracer_init(काष्ठा trace_array *tr)
+अणु
 	save_flags = tr->trace_flags;
 
-	/* non overwrite screws up the latency tracers */
+	/* non overग_लिखो screws up the latency tracers */
 	set_tracer_flag(tr, TRACE_ITER_OVERWRITE, 1);
 	set_tracer_flag(tr, TRACE_ITER_LATENCY_FMT, 1);
 
@@ -677,141 +678,141 @@ static int __wakeup_tracer_init(struct trace_array *tr)
 	start_wakeup_tracer(tr);
 
 	wakeup_busy = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wakeup_tracer_init(struct trace_array *tr)
-{
-	if (wakeup_busy)
-		return -EBUSY;
+अटल पूर्णांक wakeup_tracer_init(काष्ठा trace_array *tr)
+अणु
+	अगर (wakeup_busy)
+		वापस -EBUSY;
 
 	wakeup_dl = 0;
 	wakeup_rt = 0;
-	return __wakeup_tracer_init(tr);
-}
+	वापस __wakeup_tracer_init(tr);
+पूर्ण
 
-static int wakeup_rt_tracer_init(struct trace_array *tr)
-{
-	if (wakeup_busy)
-		return -EBUSY;
+अटल पूर्णांक wakeup_rt_tracer_init(काष्ठा trace_array *tr)
+अणु
+	अगर (wakeup_busy)
+		वापस -EBUSY;
 
 	wakeup_dl = 0;
 	wakeup_rt = 1;
-	return __wakeup_tracer_init(tr);
-}
+	वापस __wakeup_tracer_init(tr);
+पूर्ण
 
-static int wakeup_dl_tracer_init(struct trace_array *tr)
-{
-	if (wakeup_busy)
-		return -EBUSY;
+अटल पूर्णांक wakeup_dl_tracer_init(काष्ठा trace_array *tr)
+अणु
+	अगर (wakeup_busy)
+		वापस -EBUSY;
 
 	wakeup_dl = 1;
 	wakeup_rt = 0;
-	return __wakeup_tracer_init(tr);
-}
+	वापस __wakeup_tracer_init(tr);
+पूर्ण
 
-static void wakeup_tracer_reset(struct trace_array *tr)
-{
-	int lat_flag = save_flags & TRACE_ITER_LATENCY_FMT;
-	int overwrite_flag = save_flags & TRACE_ITER_OVERWRITE;
+अटल व्योम wakeup_tracer_reset(काष्ठा trace_array *tr)
+अणु
+	पूर्णांक lat_flag = save_flags & TRACE_ITER_LATENCY_FMT;
+	पूर्णांक overग_लिखो_flag = save_flags & TRACE_ITER_OVERWRITE;
 
 	stop_wakeup_tracer(tr);
 	/* make sure we put back any tasks we are tracing */
 	wakeup_reset(tr);
 
 	set_tracer_flag(tr, TRACE_ITER_LATENCY_FMT, lat_flag);
-	set_tracer_flag(tr, TRACE_ITER_OVERWRITE, overwrite_flag);
+	set_tracer_flag(tr, TRACE_ITER_OVERWRITE, overग_लिखो_flag);
 	ftrace_reset_array_ops(tr);
 	wakeup_busy = false;
-}
+पूर्ण
 
-static void wakeup_tracer_start(struct trace_array *tr)
-{
+अटल व्योम wakeup_tracer_start(काष्ठा trace_array *tr)
+अणु
 	wakeup_reset(tr);
 	tracer_enabled = 1;
-}
+पूर्ण
 
-static void wakeup_tracer_stop(struct trace_array *tr)
-{
+अटल व्योम wakeup_tracer_stop(काष्ठा trace_array *tr)
+अणु
 	tracer_enabled = 0;
-}
+पूर्ण
 
-static struct tracer wakeup_tracer __read_mostly =
-{
+अटल काष्ठा tracer wakeup_tracer __पढ़ो_mostly =
+अणु
 	.name		= "wakeup",
 	.init		= wakeup_tracer_init,
 	.reset		= wakeup_tracer_reset,
 	.start		= wakeup_tracer_start,
 	.stop		= wakeup_tracer_stop,
-	.print_max	= true,
-	.print_header	= wakeup_print_header,
-	.print_line	= wakeup_print_line,
+	.prपूर्णांक_max	= true,
+	.prपूर्णांक_header	= wakeup_prपूर्णांक_header,
+	.prपूर्णांक_line	= wakeup_prपूर्णांक_line,
 	.flag_changed	= wakeup_flag_changed,
-#ifdef CONFIG_FTRACE_SELFTEST
+#अगर_घोषित CONFIG_FTRACE_SELFTEST
 	.selftest    = trace_selftest_startup_wakeup,
-#endif
-	.open		= wakeup_trace_open,
-	.close		= wakeup_trace_close,
+#पूर्ण_अगर
+	.खोलो		= wakeup_trace_खोलो,
+	.बंद		= wakeup_trace_बंद,
 	.allow_instances = true,
 	.use_max_tr	= true,
-};
+पूर्ण;
 
-static struct tracer wakeup_rt_tracer __read_mostly =
-{
+अटल काष्ठा tracer wakeup_rt_tracer __पढ़ो_mostly =
+अणु
 	.name		= "wakeup_rt",
 	.init		= wakeup_rt_tracer_init,
 	.reset		= wakeup_tracer_reset,
 	.start		= wakeup_tracer_start,
 	.stop		= wakeup_tracer_stop,
-	.print_max	= true,
-	.print_header	= wakeup_print_header,
-	.print_line	= wakeup_print_line,
+	.prपूर्णांक_max	= true,
+	.prपूर्णांक_header	= wakeup_prपूर्णांक_header,
+	.prपूर्णांक_line	= wakeup_prपूर्णांक_line,
 	.flag_changed	= wakeup_flag_changed,
-#ifdef CONFIG_FTRACE_SELFTEST
+#अगर_घोषित CONFIG_FTRACE_SELFTEST
 	.selftest    = trace_selftest_startup_wakeup,
-#endif
-	.open		= wakeup_trace_open,
-	.close		= wakeup_trace_close,
+#पूर्ण_अगर
+	.खोलो		= wakeup_trace_खोलो,
+	.बंद		= wakeup_trace_बंद,
 	.allow_instances = true,
 	.use_max_tr	= true,
-};
+पूर्ण;
 
-static struct tracer wakeup_dl_tracer __read_mostly =
-{
+अटल काष्ठा tracer wakeup_dl_tracer __पढ़ो_mostly =
+अणु
 	.name		= "wakeup_dl",
 	.init		= wakeup_dl_tracer_init,
 	.reset		= wakeup_tracer_reset,
 	.start		= wakeup_tracer_start,
 	.stop		= wakeup_tracer_stop,
-	.print_max	= true,
-	.print_header	= wakeup_print_header,
-	.print_line	= wakeup_print_line,
+	.prपूर्णांक_max	= true,
+	.prपूर्णांक_header	= wakeup_prपूर्णांक_header,
+	.prपूर्णांक_line	= wakeup_prपूर्णांक_line,
 	.flag_changed	= wakeup_flag_changed,
-#ifdef CONFIG_FTRACE_SELFTEST
+#अगर_घोषित CONFIG_FTRACE_SELFTEST
 	.selftest    = trace_selftest_startup_wakeup,
-#endif
-	.open		= wakeup_trace_open,
-	.close		= wakeup_trace_close,
+#पूर्ण_अगर
+	.खोलो		= wakeup_trace_खोलो,
+	.बंद		= wakeup_trace_बंद,
 	.allow_instances = true,
 	.use_max_tr	= true,
-};
+पूर्ण;
 
-__init static int init_wakeup_tracer(void)
-{
-	int ret;
+__init अटल पूर्णांक init_wakeup_tracer(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_tracer(&wakeup_tracer);
-	if (ret)
-		return ret;
+	ret = रेजिस्टर_tracer(&wakeup_tracer);
+	अगर (ret)
+		वापस ret;
 
-	ret = register_tracer(&wakeup_rt_tracer);
-	if (ret)
-		return ret;
+	ret = रेजिस्टर_tracer(&wakeup_rt_tracer);
+	अगर (ret)
+		वापस ret;
 
-	ret = register_tracer(&wakeup_dl_tracer);
-	if (ret)
-		return ret;
+	ret = रेजिस्टर_tracer(&wakeup_dl_tracer);
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 core_initcall(init_wakeup_tracer);

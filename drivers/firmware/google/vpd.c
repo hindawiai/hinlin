@@ -1,319 +1,320 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * vpd.c
  *
- * Driver for exporting VPD content to sysfs.
+ * Driver क्रम exporting VPD content to sysfs.
  *
  * Copyright 2017 Google Inc.
  */
 
-#include <linux/ctype.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/kobject.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/sysfs.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysfs.h>
 
-#include "coreboot_table.h"
-#include "vpd_decode.h"
+#समावेश "coreboot_table.h"
+#समावेश "vpd_decode.h"
 
-#define CB_TAG_VPD      0x2c
-#define VPD_CBMEM_MAGIC 0x43524f53
+#घोषणा CB_TAG_VPD      0x2c
+#घोषणा VPD_CBMEM_MAGIC 0x43524f53
 
-static struct kobject *vpd_kobj;
+अटल काष्ठा kobject *vpd_kobj;
 
-struct vpd_cbmem {
+काष्ठा vpd_cbmem अणु
 	u32 magic;
 	u32 version;
 	u32 ro_size;
 	u32 rw_size;
 	u8  blob[];
-};
+पूर्ण;
 
-struct vpd_section {
+काष्ठा vpd_section अणु
 	bool enabled;
-	const char *name;
-	char *raw_name;                /* the string name_raw */
-	struct kobject *kobj;          /* vpd/name directory */
-	char *baseaddr;
-	struct bin_attribute bin_attr; /* vpd/name_raw bin_attribute */
-	struct list_head attribs;      /* key/value in vpd_attrib_info list */
-};
+	स्थिर अक्षर *name;
+	अक्षर *raw_name;                /* the string name_raw */
+	काष्ठा kobject *kobj;          /* vpd/name directory */
+	अक्षर *baseaddr;
+	काष्ठा bin_attribute bin_attr; /* vpd/name_raw bin_attribute */
+	काष्ठा list_head attribs;      /* key/value in vpd_attrib_info list */
+पूर्ण;
 
-struct vpd_attrib_info {
-	char *key;
-	const char *value;
-	struct bin_attribute bin_attr;
-	struct list_head list;
-};
+काष्ठा vpd_attrib_info अणु
+	अक्षर *key;
+	स्थिर अक्षर *value;
+	काष्ठा bin_attribute bin_attr;
+	काष्ठा list_head list;
+पूर्ण;
 
-static struct vpd_section ro_vpd;
-static struct vpd_section rw_vpd;
+अटल काष्ठा vpd_section ro_vpd;
+अटल काष्ठा vpd_section rw_vpd;
 
-static ssize_t vpd_attrib_read(struct file *filp, struct kobject *kobp,
-			       struct bin_attribute *bin_attr, char *buf,
-			       loff_t pos, size_t count)
-{
-	struct vpd_attrib_info *info = bin_attr->private;
+अटल sमाप_प्रकार vpd_attrib_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobp,
+			       काष्ठा bin_attribute *bin_attr, अक्षर *buf,
+			       loff_t pos, माप_प्रकार count)
+अणु
+	काष्ठा vpd_attrib_info *info = bin_attr->निजी;
 
-	return memory_read_from_buffer(buf, count, &pos, info->value,
+	वापस memory_पढ़ो_from_buffer(buf, count, &pos, info->value,
 				       info->bin_attr.size);
-}
+पूर्ण
 
 /*
  * vpd_section_check_key_name()
  *
- * The VPD specification supports only [a-zA-Z0-9_]+ characters in key names but
+ * The VPD specअगरication supports only [a-zA-Z0-9_]+ अक्षरacters in key names but
  * old firmware versions may have entries like "S/N" which are problematic when
  * exporting them as sysfs attributes. These keys present in old firmwares are
  * ignored.
  *
- * Returns VPD_OK for a valid key name, VPD_FAIL otherwise.
+ * Returns VPD_OK क्रम a valid key name, VPD_FAIL otherwise.
  *
  * @key: The key name to check
  * @key_len: key name length
  */
-static int vpd_section_check_key_name(const u8 *key, s32 key_len)
-{
-	int c;
+अटल पूर्णांक vpd_section_check_key_name(स्थिर u8 *key, s32 key_len)
+अणु
+	पूर्णांक c;
 
-	while (key_len-- > 0) {
+	जबतक (key_len-- > 0) अणु
 		c = *key++;
 
-		if (!isalnum(c) && c != '_')
-			return VPD_FAIL;
-	}
+		अगर (!है_अक्षर_अंक(c) && c != '_')
+			वापस VPD_FAIL;
+	पूर्ण
 
-	return VPD_OK;
-}
+	वापस VPD_OK;
+पूर्ण
 
-static int vpd_section_attrib_add(const u8 *key, u32 key_len,
-				  const u8 *value, u32 value_len,
-				  void *arg)
-{
-	int ret;
-	struct vpd_section *sec = arg;
-	struct vpd_attrib_info *info;
+अटल पूर्णांक vpd_section_attrib_add(स्थिर u8 *key, u32 key_len,
+				  स्थिर u8 *value, u32 value_len,
+				  व्योम *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा vpd_section *sec = arg;
+	काष्ठा vpd_attrib_info *info;
 
 	/*
-	 * Return VPD_OK immediately to decode next entry if the current key
-	 * name contains invalid characters.
+	 * Return VPD_OK immediately to decode next entry अगर the current key
+	 * name contains invalid अक्षरacters.
 	 */
-	if (vpd_section_check_key_name(key, key_len) != VPD_OK)
-		return VPD_OK;
+	अगर (vpd_section_check_key_name(key, key_len) != VPD_OK)
+		वापस VPD_OK;
 
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = kzalloc(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	info->key = kstrndup(key, key_len, GFP_KERNEL);
-	if (!info->key) {
+	अगर (!info->key) अणु
 		ret = -ENOMEM;
-		goto free_info;
-	}
+		जाओ मुक्त_info;
+	पूर्ण
 
 	sysfs_bin_attr_init(&info->bin_attr);
 	info->bin_attr.attr.name = info->key;
 	info->bin_attr.attr.mode = 0444;
 	info->bin_attr.size = value_len;
-	info->bin_attr.read = vpd_attrib_read;
-	info->bin_attr.private = info;
+	info->bin_attr.पढ़ो = vpd_attrib_पढ़ो;
+	info->bin_attr.निजी = info;
 
 	info->value = value;
 
 	INIT_LIST_HEAD(&info->list);
 
 	ret = sysfs_create_bin_file(sec->kobj, &info->bin_attr);
-	if (ret)
-		goto free_info_key;
+	अगर (ret)
+		जाओ मुक्त_info_key;
 
 	list_add_tail(&info->list, &sec->attribs);
-	return 0;
+	वापस 0;
 
-free_info_key:
-	kfree(info->key);
-free_info:
-	kfree(info);
+मुक्त_info_key:
+	kमुक्त(info->key);
+मुक्त_info:
+	kमुक्त(info);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vpd_section_attrib_destroy(struct vpd_section *sec)
-{
-	struct vpd_attrib_info *info;
-	struct vpd_attrib_info *temp;
+अटल व्योम vpd_section_attrib_destroy(काष्ठा vpd_section *sec)
+अणु
+	काष्ठा vpd_attrib_info *info;
+	काष्ठा vpd_attrib_info *temp;
 
-	list_for_each_entry_safe(info, temp, &sec->attribs, list) {
-		sysfs_remove_bin_file(sec->kobj, &info->bin_attr);
-		kfree(info->key);
-		kfree(info);
-	}
-}
+	list_क्रम_each_entry_safe(info, temp, &sec->attribs, list) अणु
+		sysfs_हटाओ_bin_file(sec->kobj, &info->bin_attr);
+		kमुक्त(info->key);
+		kमुक्त(info);
+	पूर्ण
+पूर्ण
 
-static ssize_t vpd_section_read(struct file *filp, struct kobject *kobp,
-				struct bin_attribute *bin_attr, char *buf,
-				loff_t pos, size_t count)
-{
-	struct vpd_section *sec = bin_attr->private;
+अटल sमाप_प्रकार vpd_section_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobp,
+				काष्ठा bin_attribute *bin_attr, अक्षर *buf,
+				loff_t pos, माप_प्रकार count)
+अणु
+	काष्ठा vpd_section *sec = bin_attr->निजी;
 
-	return memory_read_from_buffer(buf, count, &pos, sec->baseaddr,
+	वापस memory_पढ़ो_from_buffer(buf, count, &pos, sec->baseaddr,
 				       sec->bin_attr.size);
-}
+पूर्ण
 
-static int vpd_section_create_attribs(struct vpd_section *sec)
-{
+अटल पूर्णांक vpd_section_create_attribs(काष्ठा vpd_section *sec)
+अणु
 	s32 consumed;
-	int ret;
+	पूर्णांक ret;
 
 	consumed = 0;
-	do {
+	करो अणु
 		ret = vpd_decode_string(sec->bin_attr.size, sec->baseaddr,
 					&consumed, vpd_section_attrib_add, sec);
-	} while (ret == VPD_OK);
+	पूर्ण जबतक (ret == VPD_OK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vpd_section_init(const char *name, struct vpd_section *sec,
-			    phys_addr_t physaddr, size_t size)
-{
-	int err;
+अटल पूर्णांक vpd_section_init(स्थिर अक्षर *name, काष्ठा vpd_section *sec,
+			    phys_addr_t physaddr, माप_प्रकार size)
+अणु
+	पूर्णांक err;
 
 	sec->baseaddr = memremap(physaddr, size, MEMREMAP_WB);
-	if (!sec->baseaddr)
-		return -ENOMEM;
+	अगर (!sec->baseaddr)
+		वापस -ENOMEM;
 
 	sec->name = name;
 
-	/* We want to export the raw partition with name ${name}_raw */
-	sec->raw_name = kasprintf(GFP_KERNEL, "%s_raw", name);
-	if (!sec->raw_name) {
+	/* We want to export the raw partition with name $अणुnameपूर्ण_raw */
+	sec->raw_name = kaप्र_लिखो(GFP_KERNEL, "%s_raw", name);
+	अगर (!sec->raw_name) अणु
 		err = -ENOMEM;
-		goto err_memunmap;
-	}
+		जाओ err_memunmap;
+	पूर्ण
 
 	sysfs_bin_attr_init(&sec->bin_attr);
 	sec->bin_attr.attr.name = sec->raw_name;
 	sec->bin_attr.attr.mode = 0444;
 	sec->bin_attr.size = size;
-	sec->bin_attr.read = vpd_section_read;
-	sec->bin_attr.private = sec;
+	sec->bin_attr.पढ़ो = vpd_section_पढ़ो;
+	sec->bin_attr.निजी = sec;
 
 	err = sysfs_create_bin_file(vpd_kobj, &sec->bin_attr);
-	if (err)
-		goto err_free_raw_name;
+	अगर (err)
+		जाओ err_मुक्त_raw_name;
 
 	sec->kobj = kobject_create_and_add(name, vpd_kobj);
-	if (!sec->kobj) {
+	अगर (!sec->kobj) अणु
 		err = -EINVAL;
-		goto err_sysfs_remove;
-	}
+		जाओ err_sysfs_हटाओ;
+	पूर्ण
 
 	INIT_LIST_HEAD(&sec->attribs);
 	vpd_section_create_attribs(sec);
 
 	sec->enabled = true;
 
-	return 0;
+	वापस 0;
 
-err_sysfs_remove:
-	sysfs_remove_bin_file(vpd_kobj, &sec->bin_attr);
-err_free_raw_name:
-	kfree(sec->raw_name);
+err_sysfs_हटाओ:
+	sysfs_हटाओ_bin_file(vpd_kobj, &sec->bin_attr);
+err_मुक्त_raw_name:
+	kमुक्त(sec->raw_name);
 err_memunmap:
 	memunmap(sec->baseaddr);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int vpd_section_destroy(struct vpd_section *sec)
-{
-	if (sec->enabled) {
+अटल पूर्णांक vpd_section_destroy(काष्ठा vpd_section *sec)
+अणु
+	अगर (sec->enabled) अणु
 		vpd_section_attrib_destroy(sec);
 		kobject_put(sec->kobj);
-		sysfs_remove_bin_file(vpd_kobj, &sec->bin_attr);
-		kfree(sec->raw_name);
+		sysfs_हटाओ_bin_file(vpd_kobj, &sec->bin_attr);
+		kमुक्त(sec->raw_name);
 		memunmap(sec->baseaddr);
 		sec->enabled = false;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vpd_sections_init(phys_addr_t physaddr)
-{
-	struct vpd_cbmem *temp;
-	struct vpd_cbmem header;
-	int ret = 0;
+अटल पूर्णांक vpd_sections_init(phys_addr_t physaddr)
+अणु
+	काष्ठा vpd_cbmem *temp;
+	काष्ठा vpd_cbmem header;
+	पूर्णांक ret = 0;
 
-	temp = memremap(physaddr, sizeof(struct vpd_cbmem), MEMREMAP_WB);
-	if (!temp)
-		return -ENOMEM;
+	temp = memremap(physaddr, माप(काष्ठा vpd_cbmem), MEMREMAP_WB);
+	अगर (!temp)
+		वापस -ENOMEM;
 
-	memcpy(&header, temp, sizeof(struct vpd_cbmem));
+	स_नकल(&header, temp, माप(काष्ठा vpd_cbmem));
 	memunmap(temp);
 
-	if (header.magic != VPD_CBMEM_MAGIC)
-		return -ENODEV;
+	अगर (header.magic != VPD_CBMEM_MAGIC)
+		वापस -ENODEV;
 
-	if (header.ro_size) {
+	अगर (header.ro_size) अणु
 		ret = vpd_section_init("ro", &ro_vpd,
-				       physaddr + sizeof(struct vpd_cbmem),
+				       physaddr + माप(काष्ठा vpd_cbmem),
 				       header.ro_size);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (header.rw_size) {
+	अगर (header.rw_size) अणु
 		ret = vpd_section_init("rw", &rw_vpd,
-				       physaddr + sizeof(struct vpd_cbmem) +
+				       physaddr + माप(काष्ठा vpd_cbmem) +
 				       header.ro_size, header.rw_size);
-		if (ret) {
+		अगर (ret) अणु
 			vpd_section_destroy(&ro_vpd);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vpd_probe(struct coreboot_device *dev)
-{
-	int ret;
+अटल पूर्णांक vpd_probe(काष्ठा coreboot_device *dev)
+अणु
+	पूर्णांक ret;
 
 	vpd_kobj = kobject_create_and_add("vpd", firmware_kobj);
-	if (!vpd_kobj)
-		return -ENOMEM;
+	अगर (!vpd_kobj)
+		वापस -ENOMEM;
 
 	ret = vpd_sections_init(dev->cbmem_ref.cbmem_addr);
-	if (ret) {
+	अगर (ret) अणु
 		kobject_put(vpd_kobj);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vpd_remove(struct coreboot_device *dev)
-{
+अटल व्योम vpd_हटाओ(काष्ठा coreboot_device *dev)
+अणु
 	vpd_section_destroy(&ro_vpd);
 	vpd_section_destroy(&rw_vpd);
 
 	kobject_put(vpd_kobj);
-}
+पूर्ण
 
-static struct coreboot_driver vpd_driver = {
+अटल काष्ठा coreboot_driver vpd_driver = अणु
 	.probe = vpd_probe,
-	.remove = vpd_remove,
-	.drv = {
+	.हटाओ = vpd_हटाओ,
+	.drv = अणु
 		.name = "vpd",
-	},
+	पूर्ण,
 	.tag = CB_TAG_VPD,
-};
+पूर्ण;
 module_coreboot_driver(vpd_driver);
 
 MODULE_AUTHOR("Google, Inc.");

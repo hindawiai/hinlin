@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2017, HiSilicon. All rights reserved.
  */
 
-#ifndef UFS_HISI_H_
-#define UFS_HISI_H_
+#अगर_अघोषित UFS_HISI_H_
+#घोषणा UFS_HISI_H_
 
-#define HBRN8_POLL_TOUT_MS	1000
-
-/*
- * ufs sysctrl specific define
- */
-#define PSW_POWER_CTRL	(0x04)
-#define PHY_ISO_EN	(0x08)
-#define HC_LP_CTRL	(0x0C)
-#define PHY_CLK_CTRL	(0x10)
-#define PSW_CLK_CTRL	(0x14)
-#define CLOCK_GATE_BYPASS	(0x18)
-#define RESET_CTRL_EN	(0x1C)
-#define UFS_SYSCTRL	(0x5C)
-#define UFS_DEVICE_RESET_CTRL	(0x60)
-
-#define BIT_UFS_PSW_ISO_CTRL		(1 << 16)
-#define BIT_UFS_PSW_MTCMOS_EN		(1 << 0)
-#define BIT_UFS_REFCLK_ISO_EN		(1 << 16)
-#define BIT_UFS_PHY_ISO_CTRL		(1 << 0)
-#define BIT_SYSCTRL_LP_ISOL_EN		(1 << 16)
-#define BIT_SYSCTRL_PWR_READY		(1 << 8)
-#define BIT_SYSCTRL_REF_CLOCK_EN	(1 << 24)
-#define MASK_SYSCTRL_REF_CLOCK_SEL	(0x3 << 8)
-#define MASK_SYSCTRL_CFG_CLOCK_FREQ	(0xFF)
-#define UFS_FREQ_CFG_CLK                (0x39)
-#define BIT_SYSCTRL_PSW_CLK_EN		(1 << 4)
-#define MASK_UFS_CLK_GATE_BYPASS	(0x3F)
-#define BIT_SYSCTRL_LP_RESET_N		(1 << 0)
-#define BIT_UFS_REFCLK_SRC_SEl		(1 << 0)
-#define MASK_UFS_SYSCRTL_BYPASS		(0x3F << 16)
-#define MASK_UFS_DEVICE_RESET		(0x1 << 16)
-#define BIT_UFS_DEVICE_RESET		(0x1)
+#घोषणा HBRN8_POLL_TOUT_MS	1000
 
 /*
- * M-TX Configuration Attributes for Hixxxx
+ * ufs sysctrl specअगरic define
  */
-#define MPHY_TX_FSM_STATE	0x41
-#define TX_FSM_HIBERN8	0x1
+#घोषणा PSW_POWER_CTRL	(0x04)
+#घोषणा PHY_ISO_EN	(0x08)
+#घोषणा HC_LP_CTRL	(0x0C)
+#घोषणा PHY_CLK_CTRL	(0x10)
+#घोषणा PSW_CLK_CTRL	(0x14)
+#घोषणा CLOCK_GATE_BYPASS	(0x18)
+#घोषणा RESET_CTRL_EN	(0x1C)
+#घोषणा UFS_SYSCTRL	(0x5C)
+#घोषणा UFS_DEVICE_RESET_CTRL	(0x60)
+
+#घोषणा BIT_UFS_PSW_ISO_CTRL		(1 << 16)
+#घोषणा BIT_UFS_PSW_MTCMOS_EN		(1 << 0)
+#घोषणा BIT_UFS_REFCLK_ISO_EN		(1 << 16)
+#घोषणा BIT_UFS_PHY_ISO_CTRL		(1 << 0)
+#घोषणा BIT_SYSCTRL_LP_ISOL_EN		(1 << 16)
+#घोषणा BIT_SYSCTRL_PWR_READY		(1 << 8)
+#घोषणा BIT_SYSCTRL_REF_CLOCK_EN	(1 << 24)
+#घोषणा MASK_SYSCTRL_REF_CLOCK_SEL	(0x3 << 8)
+#घोषणा MASK_SYSCTRL_CFG_CLOCK_FREQ	(0xFF)
+#घोषणा UFS_FREQ_CFG_CLK                (0x39)
+#घोषणा BIT_SYSCTRL_PSW_CLK_EN		(1 << 4)
+#घोषणा MASK_UFS_CLK_GATE_BYPASS	(0x3F)
+#घोषणा BIT_SYSCTRL_LP_RESET_N		(1 << 0)
+#घोषणा BIT_UFS_REFCLK_SRC_SEl		(1 << 0)
+#घोषणा MASK_UFS_SYSCRTL_BYPASS		(0x3F << 16)
+#घोषणा MASK_UFS_DEVICE_RESET		(0x1 << 16)
+#घोषणा BIT_UFS_DEVICE_RESET		(0x1)
 
 /*
- * Hixxxx UFS HC specific Registers
+ * M-TX Configuration Attributes क्रम Hixxxx
  */
-enum {
+#घोषणा MPHY_TX_FSM_STATE	0x41
+#घोषणा TX_FSM_HIBERN8	0x1
+
+/*
+ * Hixxxx UFS HC specअगरic Registers
+ */
+क्रमागत अणु
 	UFS_REG_OCPTHRTL = 0xc0,
 	UFS_REG_OOCPR    = 0xc4,
 
@@ -64,41 +65,41 @@ enum {
 	UFS_REG_UFSMODE  = 0xf8,
 
 	UFS_REG_HCLKDIV  = 0xfc,
-};
+पूर्ण;
 
 /* AHIT - Auto-Hibernate Idle Timer */
-#define UFS_AHIT_AH8ITV_MASK	0x3FF
+#घोषणा UFS_AHIT_AH8ITV_MASK	0x3FF
 
 /* REG UFS_REG_OCPTHRTL definition */
-#define UFS_HCLKDIV_NORMAL_VALUE	0xE4
+#घोषणा UFS_HCLKDIV_NORMAL_VALUE	0xE4
 
-/* vendor specific pre-defined parameters */
-#define SLOW	1
-#define FAST	2
+/* venकरोr specअगरic pre-defined parameters */
+#घोषणा SLOW	1
+#घोषणा FAST	2
 
-#define UFS_HISI_CAP_RESERVED		BIT(0)
-#define UFS_HISI_CAP_PHY10nm		BIT(1)
+#घोषणा UFS_HISI_CAP_RESERVED		BIT(0)
+#घोषणा UFS_HISI_CAP_PHY10nm		BIT(1)
 
-struct ufs_hisi_host {
-	struct ufs_hba *hba;
-	void __iomem *ufs_sys_ctrl;
+काष्ठा ufs_hisi_host अणु
+	काष्ठा ufs_hba *hba;
+	व्योम __iomem *ufs_sys_ctrl;
 
-	struct reset_control	*rst;
+	काष्ठा reset_control	*rst;
 
-	uint64_t caps;
+	uपूर्णांक64_t caps;
 
 	bool in_suspend;
-};
+पूर्ण;
 
-#define ufs_sys_ctrl_writel(host, val, reg)                                    \
-	writel((val), (host)->ufs_sys_ctrl + (reg))
-#define ufs_sys_ctrl_readl(host, reg) readl((host)->ufs_sys_ctrl + (reg))
-#define ufs_sys_ctrl_set_bits(host, mask, reg)                                 \
-	ufs_sys_ctrl_writel(                                                   \
-		(host), ((mask) | (ufs_sys_ctrl_readl((host), (reg)))), (reg))
-#define ufs_sys_ctrl_clr_bits(host, mask, reg)                                 \
-	ufs_sys_ctrl_writel((host),                                            \
-			    ((~(mask)) & (ufs_sys_ctrl_readl((host), (reg)))), \
+#घोषणा ufs_sys_ctrl_ग_लिखोl(host, val, reg)                                    \
+	ग_लिखोl((val), (host)->ufs_sys_ctrl + (reg))
+#घोषणा ufs_sys_ctrl_पढ़ोl(host, reg) पढ़ोl((host)->ufs_sys_ctrl + (reg))
+#घोषणा ufs_sys_ctrl_set_bits(host, mask, reg)                                 \
+	ufs_sys_ctrl_ग_लिखोl(                                                   \
+		(host), ((mask) | (ufs_sys_ctrl_पढ़ोl((host), (reg)))), (reg))
+#घोषणा ufs_sys_ctrl_clr_bits(host, mask, reg)                                 \
+	ufs_sys_ctrl_ग_लिखोl((host),                                            \
+			    ((~(mask)) & (ufs_sys_ctrl_पढ़ोl((host), (reg)))), \
 			    (reg))
 
-#endif /* UFS_HISI_H_ */
+#पूर्ण_अगर /* UFS_HISI_H_ */

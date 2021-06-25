@@ -1,209 +1,210 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * security/tomoyo/group.c
  *
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
-#include <linux/slab.h>
-#include <linux/rculist.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/rculist.h>
 
-#include "common.h"
-
-/**
- * tomoyo_same_path_group - Check for duplicated "struct tomoyo_path_group" entry.
- *
- * @a: Pointer to "struct tomoyo_acl_head".
- * @b: Pointer to "struct tomoyo_acl_head".
- *
- * Returns true if @a == @b, false otherwise.
- */
-static bool tomoyo_same_path_group(const struct tomoyo_acl_head *a,
-				   const struct tomoyo_acl_head *b)
-{
-	return container_of(a, struct tomoyo_path_group, head)->member_name ==
-		container_of(b, struct tomoyo_path_group, head)->member_name;
-}
+#समावेश "common.h"
 
 /**
- * tomoyo_same_number_group - Check for duplicated "struct tomoyo_number_group" entry.
+ * tomoyo_same_path_group - Check क्रम duplicated "struct tomoyo_path_group" entry.
  *
- * @a: Pointer to "struct tomoyo_acl_head".
- * @b: Pointer to "struct tomoyo_acl_head".
+ * @a: Poपूर्णांकer to "struct tomoyo_acl_head".
+ * @b: Poपूर्णांकer to "struct tomoyo_acl_head".
  *
- * Returns true if @a == @b, false otherwise.
+ * Returns true अगर @a == @b, false otherwise.
  */
-static bool tomoyo_same_number_group(const struct tomoyo_acl_head *a,
-				     const struct tomoyo_acl_head *b)
-{
-	return !memcmp(&container_of(a, struct tomoyo_number_group, head)
+अटल bool tomoyo_same_path_group(स्थिर काष्ठा tomoyo_acl_head *a,
+				   स्थिर काष्ठा tomoyo_acl_head *b)
+अणु
+	वापस container_of(a, काष्ठा tomoyo_path_group, head)->member_name ==
+		container_of(b, काष्ठा tomoyo_path_group, head)->member_name;
+पूर्ण
+
+/**
+ * tomoyo_same_number_group - Check क्रम duplicated "struct tomoyo_number_group" entry.
+ *
+ * @a: Poपूर्णांकer to "struct tomoyo_acl_head".
+ * @b: Poपूर्णांकer to "struct tomoyo_acl_head".
+ *
+ * Returns true अगर @a == @b, false otherwise.
+ */
+अटल bool tomoyo_same_number_group(स्थिर काष्ठा tomoyo_acl_head *a,
+				     स्थिर काष्ठा tomoyo_acl_head *b)
+अणु
+	वापस !स_भेद(&container_of(a, काष्ठा tomoyo_number_group, head)
 		       ->number,
-		       &container_of(b, struct tomoyo_number_group, head)
+		       &container_of(b, काष्ठा tomoyo_number_group, head)
 		       ->number,
-		       sizeof(container_of(a, struct tomoyo_number_group, head)
+		       माप(container_of(a, काष्ठा tomoyo_number_group, head)
 			      ->number));
-}
+पूर्ण
 
 /**
- * tomoyo_same_address_group - Check for duplicated "struct tomoyo_address_group" entry.
+ * tomoyo_same_address_group - Check क्रम duplicated "struct tomoyo_address_group" entry.
  *
- * @a: Pointer to "struct tomoyo_acl_head".
- * @b: Pointer to "struct tomoyo_acl_head".
+ * @a: Poपूर्णांकer to "struct tomoyo_acl_head".
+ * @b: Poपूर्णांकer to "struct tomoyo_acl_head".
  *
- * Returns true if @a == @b, false otherwise.
+ * Returns true अगर @a == @b, false otherwise.
  */
-static bool tomoyo_same_address_group(const struct tomoyo_acl_head *a,
-				      const struct tomoyo_acl_head *b)
-{
-	const struct tomoyo_address_group *p1 = container_of(a, typeof(*p1),
+अटल bool tomoyo_same_address_group(स्थिर काष्ठा tomoyo_acl_head *a,
+				      स्थिर काष्ठा tomoyo_acl_head *b)
+अणु
+	स्थिर काष्ठा tomoyo_address_group *p1 = container_of(a, typeof(*p1),
 							     head);
-	const struct tomoyo_address_group *p2 = container_of(b, typeof(*p2),
+	स्थिर काष्ठा tomoyo_address_group *p2 = container_of(b, typeof(*p2),
 							     head);
 
-	return tomoyo_same_ipaddr_union(&p1->address, &p2->address);
-}
+	वापस tomoyo_same_ipaddr_जोड़(&p1->address, &p2->address);
+पूर्ण
 
 /**
- * tomoyo_write_group - Write "struct tomoyo_path_group"/"struct tomoyo_number_group"/"struct tomoyo_address_group" list.
+ * tomoyo_ग_लिखो_group - Write "struct tomoyo_path_group"/"struct tomoyo_number_group"/"struct tomoyo_address_group" list.
  *
- * @param: Pointer to "struct tomoyo_acl_param".
+ * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
  * @type:  Type of this group.
  *
  * Returns 0 on success, negative value otherwise.
  */
-int tomoyo_write_group(struct tomoyo_acl_param *param, const u8 type)
-{
-	struct tomoyo_group *group = tomoyo_get_group(param, type);
-	int error = -EINVAL;
+पूर्णांक tomoyo_ग_लिखो_group(काष्ठा tomoyo_acl_param *param, स्थिर u8 type)
+अणु
+	काष्ठा tomoyo_group *group = tomoyo_get_group(param, type);
+	पूर्णांक error = -EINVAL;
 
-	if (!group)
-		return -ENOMEM;
+	अगर (!group)
+		वापस -ENOMEM;
 	param->list = &group->member_list;
-	if (type == TOMOYO_PATH_GROUP) {
-		struct tomoyo_path_group e = { };
+	अगर (type == TOMOYO_PATH_GROUP) अणु
+		काष्ठा tomoyo_path_group e = अणु पूर्ण;
 
-		e.member_name = tomoyo_get_name(tomoyo_read_token(param));
-		if (!e.member_name) {
+		e.member_name = tomoyo_get_name(tomoyo_पढ़ो_token(param));
+		अगर (!e.member_name) अणु
 			error = -ENOMEM;
-			goto out;
-		}
-		error = tomoyo_update_policy(&e.head, sizeof(e), param,
+			जाओ out;
+		पूर्ण
+		error = tomoyo_update_policy(&e.head, माप(e), param,
 					  tomoyo_same_path_group);
 		tomoyo_put_name(e.member_name);
-	} else if (type == TOMOYO_NUMBER_GROUP) {
-		struct tomoyo_number_group e = { };
+	पूर्ण अन्यथा अगर (type == TOMOYO_NUMBER_GROUP) अणु
+		काष्ठा tomoyo_number_group e = अणु पूर्ण;
 
-		if (param->data[0] == '@' ||
-		    !tomoyo_parse_number_union(param, &e.number))
-			goto out;
-		error = tomoyo_update_policy(&e.head, sizeof(e), param,
+		अगर (param->data[0] == '@' ||
+		    !tomoyo_parse_number_जोड़(param, &e.number))
+			जाओ out;
+		error = tomoyo_update_policy(&e.head, माप(e), param,
 					  tomoyo_same_number_group);
 		/*
-		 * tomoyo_put_number_union() is not needed because
+		 * tomoyo_put_number_जोड़() is not needed because
 		 * param->data[0] != '@'.
 		 */
-	} else {
-		struct tomoyo_address_group e = { };
+	पूर्ण अन्यथा अणु
+		काष्ठा tomoyo_address_group e = अणु पूर्ण;
 
-		if (param->data[0] == '@' ||
-		    !tomoyo_parse_ipaddr_union(param, &e.address))
-			goto out;
-		error = tomoyo_update_policy(&e.head, sizeof(e), param,
+		अगर (param->data[0] == '@' ||
+		    !tomoyo_parse_ipaddr_जोड़(param, &e.address))
+			जाओ out;
+		error = tomoyo_update_policy(&e.head, माप(e), param,
 					     tomoyo_same_address_group);
-	}
+	पूर्ण
 out:
 	tomoyo_put_group(group);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * tomoyo_path_matches_group - Check whether the given pathname matches members of the given pathname group.
  *
  * @pathname: The name of pathname.
- * @group:    Pointer to "struct tomoyo_path_group".
+ * @group:    Poपूर्णांकer to "struct tomoyo_path_group".
  *
- * Returns matched member's pathname if @pathname matches pathnames in @group,
- * NULL otherwise.
+ * Returns matched member's pathname अगर @pathname matches pathnames in @group,
+ * शून्य otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-const struct tomoyo_path_info *
-tomoyo_path_matches_group(const struct tomoyo_path_info *pathname,
-			  const struct tomoyo_group *group)
-{
-	struct tomoyo_path_group *member;
+स्थिर काष्ठा tomoyo_path_info *
+tomoyo_path_matches_group(स्थिर काष्ठा tomoyo_path_info *pathname,
+			  स्थिर काष्ठा tomoyo_group *group)
+अणु
+	काष्ठा tomoyo_path_group *member;
 
-	list_for_each_entry_rcu(member, &group->member_list, head.list,
-				srcu_read_lock_held(&tomoyo_ss)) {
-		if (member->head.is_deleted)
-			continue;
-		if (!tomoyo_path_matches_pattern(pathname, member->member_name))
-			continue;
-		return member->member_name;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry_rcu(member, &group->member_list, head.list,
+				srcu_पढ़ो_lock_held(&tomoyo_ss)) अणु
+		अगर (member->head.is_deleted)
+			जारी;
+		अगर (!tomoyo_path_matches_pattern(pathname, member->member_name))
+			जारी;
+		वापस member->member_name;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
  * tomoyo_number_matches_group - Check whether the given number matches members of the given number group.
  *
  * @min:   Min number.
  * @max:   Max number.
- * @group: Pointer to "struct tomoyo_number_group".
+ * @group: Poपूर्णांकer to "struct tomoyo_number_group".
  *
- * Returns true if @min and @max partially overlaps @group, false otherwise.
+ * Returns true अगर @min and @max partially overlaps @group, false otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-bool tomoyo_number_matches_group(const unsigned long min,
-				 const unsigned long max,
-				 const struct tomoyo_group *group)
-{
-	struct tomoyo_number_group *member;
+bool tomoyo_number_matches_group(स्थिर अचिन्हित दीर्घ min,
+				 स्थिर अचिन्हित दीर्घ max,
+				 स्थिर काष्ठा tomoyo_group *group)
+अणु
+	काष्ठा tomoyo_number_group *member;
 	bool matched = false;
 
-	list_for_each_entry_rcu(member, &group->member_list, head.list,
-				srcu_read_lock_held(&tomoyo_ss)) {
-		if (member->head.is_deleted)
-			continue;
-		if (min > member->number.values[1] ||
+	list_क्रम_each_entry_rcu(member, &group->member_list, head.list,
+				srcu_पढ़ो_lock_held(&tomoyo_ss)) अणु
+		अगर (member->head.is_deleted)
+			जारी;
+		अगर (min > member->number.values[1] ||
 		    max < member->number.values[0])
-			continue;
+			जारी;
 		matched = true;
-		break;
-	}
-	return matched;
-}
+		अवरोध;
+	पूर्ण
+	वापस matched;
+पूर्ण
 
 /**
  * tomoyo_address_matches_group - Check whether the given address matches members of the given address group.
  *
- * @is_ipv6: True if @address is an IPv6 address.
+ * @is_ipv6: True अगर @address is an IPv6 address.
  * @address: An IPv4 or IPv6 address.
- * @group:   Pointer to "struct tomoyo_address_group".
+ * @group:   Poपूर्णांकer to "struct tomoyo_address_group".
  *
- * Returns true if @address matches addresses in @group group, false otherwise.
+ * Returns true अगर @address matches addresses in @group group, false otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-bool tomoyo_address_matches_group(const bool is_ipv6, const __be32 *address,
-				  const struct tomoyo_group *group)
-{
-	struct tomoyo_address_group *member;
+bool tomoyo_address_matches_group(स्थिर bool is_ipv6, स्थिर __be32 *address,
+				  स्थिर काष्ठा tomoyo_group *group)
+अणु
+	काष्ठा tomoyo_address_group *member;
 	bool matched = false;
-	const u8 size = is_ipv6 ? 16 : 4;
+	स्थिर u8 size = is_ipv6 ? 16 : 4;
 
-	list_for_each_entry_rcu(member, &group->member_list, head.list,
-				srcu_read_lock_held(&tomoyo_ss)) {
-		if (member->head.is_deleted)
-			continue;
-		if (member->address.is_ipv6 != is_ipv6)
-			continue;
-		if (memcmp(&member->address.ip[0], address, size) > 0 ||
-		    memcmp(address, &member->address.ip[1], size) > 0)
-			continue;
+	list_क्रम_each_entry_rcu(member, &group->member_list, head.list,
+				srcu_पढ़ो_lock_held(&tomoyo_ss)) अणु
+		अगर (member->head.is_deleted)
+			जारी;
+		अगर (member->address.is_ipv6 != is_ipv6)
+			जारी;
+		अगर (स_भेद(&member->address.ip[0], address, size) > 0 ||
+		    स_भेद(address, &member->address.ip[1], size) > 0)
+			जारी;
 		matched = true;
-		break;
-	}
-	return matched;
-}
+		अवरोध;
+	पूर्ण
+	वापस matched;
+पूर्ण

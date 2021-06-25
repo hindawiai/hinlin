@@ -1,111 +1,112 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2020, Mellanox Technologies inc.  All rights reserved.
  */
-#ifndef _IBA_DEFS_H_
-#define _IBA_DEFS_H_
+#अगर_अघोषित _IBA_DEFS_H_
+#घोषणा _IBA_DEFS_H_
 
-#include <linux/kernel.h>
-#include <linux/bitfield.h>
-#include <asm/unaligned.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/bitfield.h>
+#समावेश <यंत्र/unaligned.h>
 
-static inline u32 _iba_get8(const u8 *ptr)
-{
-	return *ptr;
-}
+अटल अंतरभूत u32 _iba_get8(स्थिर u8 *ptr)
+अणु
+	वापस *ptr;
+पूर्ण
 
-static inline void _iba_set8(u8 *ptr, u32 mask, u32 prep_value)
-{
+अटल अंतरभूत व्योम _iba_set8(u8 *ptr, u32 mask, u32 prep_value)
+अणु
 	*ptr = (*ptr & ~mask) | prep_value;
-}
+पूर्ण
 
-static inline u16 _iba_get16(const __be16 *ptr)
-{
-	return be16_to_cpu(*ptr);
-}
+अटल अंतरभूत u16 _iba_get16(स्थिर __be16 *ptr)
+अणु
+	वापस be16_to_cpu(*ptr);
+पूर्ण
 
-static inline void _iba_set16(__be16 *ptr, u16 mask, u16 prep_value)
-{
+अटल अंतरभूत व्योम _iba_set16(__be16 *ptr, u16 mask, u16 prep_value)
+अणु
 	*ptr = cpu_to_be16((be16_to_cpu(*ptr) & ~mask) | prep_value);
-}
+पूर्ण
 
-static inline u32 _iba_get32(const __be32 *ptr)
-{
-	return be32_to_cpu(*ptr);
-}
+अटल अंतरभूत u32 _iba_get32(स्थिर __be32 *ptr)
+अणु
+	वापस be32_to_cpu(*ptr);
+पूर्ण
 
-static inline void _iba_set32(__be32 *ptr, u32 mask, u32 prep_value)
-{
+अटल अंतरभूत व्योम _iba_set32(__be32 *ptr, u32 mask, u32 prep_value)
+अणु
 	*ptr = cpu_to_be32((be32_to_cpu(*ptr) & ~mask) | prep_value);
-}
+पूर्ण
 
-static inline u64 _iba_get64(const __be64 *ptr)
-{
+अटल अंतरभूत u64 _iba_get64(स्थिर __be64 *ptr)
+अणु
 	/*
-	 * The mads are constructed so that 32 bit and smaller are naturally
+	 * The mads are स्थिरructed so that 32 bit and smaller are naturally
 	 * aligned, everything larger has a max alignment of 4 bytes.
 	 */
-	return be64_to_cpu(get_unaligned(ptr));
-}
+	वापस be64_to_cpu(get_unaligned(ptr));
+पूर्ण
 
-static inline void _iba_set64(__be64 *ptr, u64 mask, u64 prep_value)
-{
+अटल अंतरभूत व्योम _iba_set64(__be64 *ptr, u64 mask, u64 prep_value)
+अणु
 	put_unaligned(cpu_to_be64((_iba_get64(ptr) & ~mask) | prep_value), ptr);
-}
+पूर्ण
 
-#define _IBA_SET(field_struct, field_offset, field_mask, num_bits, ptr, value) \
-	({                                                                     \
-		field_struct *_ptr = ptr;                                      \
-		_iba_set##num_bits((void *)_ptr + (field_offset), field_mask,  \
+#घोषणा _IBA_SET(field_काष्ठा, field_offset, field_mask, num_bits, ptr, value) \
+	(अणु                                                                     \
+		field_काष्ठा *_ptr = ptr;                                      \
+		_iba_set##num_bits((व्योम *)_ptr + (field_offset), field_mask,  \
 				   FIELD_PREP(field_mask, value));             \
-	})
-#define IBA_SET(field, ptr, value) _IBA_SET(field, ptr, value)
+	पूर्ण)
+#घोषणा IBA_SET(field, ptr, value) _IBA_SET(field, ptr, value)
 
-#define _IBA_GET_MEM_PTR(field_struct, field_offset, type, num_bits, ptr)      \
-	({                                                                     \
-		field_struct *_ptr = ptr;                                      \
-		(type *)((void *)_ptr + (field_offset));                       \
-	})
-#define IBA_GET_MEM_PTR(field, ptr) _IBA_GET_MEM_PTR(field, ptr)
+#घोषणा _IBA_GET_MEM_PTR(field_काष्ठा, field_offset, type, num_bits, ptr)      \
+	(अणु                                                                     \
+		field_काष्ठा *_ptr = ptr;                                      \
+		(type *)((व्योम *)_ptr + (field_offset));                       \
+	पूर्ण)
+#घोषणा IBA_GET_MEM_PTR(field, ptr) _IBA_GET_MEM_PTR(field, ptr)
 
 /* FIXME: A set should always set the entire field, meaning we should zero the trailing bytes */
-#define _IBA_SET_MEM(field_struct, field_offset, type, num_bits, ptr, in,      \
+#घोषणा _IBA_SET_MEM(field_काष्ठा, field_offset, type, num_bits, ptr, in,      \
 		     bytes)                                                    \
-	({                                                                     \
-		const type *_in_ptr = in;                                      \
+	(अणु                                                                     \
+		स्थिर type *_in_ptr = in;                                      \
 		WARN_ON(bytes * 8 > num_bits);                                 \
-		if (in && bytes)                                               \
-			memcpy(_IBA_GET_MEM_PTR(field_struct, field_offset,    \
+		अगर (in && bytes)                                               \
+			स_नकल(_IBA_GET_MEM_PTR(field_काष्ठा, field_offset,    \
 						type, num_bits, ptr),          \
 			       _in_ptr, bytes);                                \
-	})
-#define IBA_SET_MEM(field, ptr, in, bytes) _IBA_SET_MEM(field, ptr, in, bytes)
+	पूर्ण)
+#घोषणा IBA_SET_MEM(field, ptr, in, bytes) _IBA_SET_MEM(field, ptr, in, bytes)
 
-#define _IBA_GET(field_struct, field_offset, field_mask, num_bits, ptr)        \
-	({                                                                     \
-		const field_struct *_ptr = ptr;                                \
+#घोषणा _IBA_GET(field_काष्ठा, field_offset, field_mask, num_bits, ptr)        \
+	(अणु                                                                     \
+		स्थिर field_काष्ठा *_ptr = ptr;                                \
 		(u##num_bits) FIELD_GET(                                       \
-			field_mask, _iba_get##num_bits((const void *)_ptr +    \
+			field_mask, _iba_get##num_bits((स्थिर व्योम *)_ptr +    \
 						       (field_offset)));       \
-	})
-#define IBA_GET(field, ptr) _IBA_GET(field, ptr)
+	पूर्ण)
+#घोषणा IBA_GET(field, ptr) _IBA_GET(field, ptr)
 
-#define _IBA_GET_MEM(field_struct, field_offset, type, num_bits, ptr, out,     \
+#घोषणा _IBA_GET_MEM(field_काष्ठा, field_offset, type, num_bits, ptr, out,     \
 		     bytes)                                                    \
-	({                                                                     \
+	(अणु                                                                     \
 		type *_out_ptr = out;                                          \
 		WARN_ON(bytes * 8 > num_bits);                                 \
-		if (out && bytes)                                              \
-			memcpy(_out_ptr,                                       \
-			       _IBA_GET_MEM_PTR(field_struct, field_offset,    \
+		अगर (out && bytes)                                              \
+			स_नकल(_out_ptr,                                       \
+			       _IBA_GET_MEM_PTR(field_काष्ठा, field_offset,    \
 						type, num_bits, ptr),          \
 			       bytes);                                         \
-	})
-#define IBA_GET_MEM(field, ptr, out, bytes) _IBA_GET_MEM(field, ptr, out, bytes)
+	पूर्ण)
+#घोषणा IBA_GET_MEM(field, ptr, out, bytes) _IBA_GET_MEM(field, ptr, out, bytes)
 
 /*
  * The generated list becomes the parameters to the macros, the order is:
- *  - struct this applies to
+ *  - काष्ठा this applies to
  *  - starting offset of the max
  *  - GENMASK or GENMASK_ULL in CPU order
  *  - The width of data the mask operations should work on, in bits
@@ -115,32 +116,32 @@ static inline void _iba_set64(__be64 *ptr, u64 mask, u64 prep_value)
  * Extraction using a tabular description like table 106. bit_offset is from
  * the Byte[Bit] notation.
  */
-#define IBA_FIELD_BLOC(field_struct, byte_offset, bit_offset, num_bits)        \
-	field_struct, byte_offset,                                             \
+#घोषणा IBA_FIELD_BLOC(field_काष्ठा, byte_offset, bit_offset, num_bits)        \
+	field_काष्ठा, byte_offset,                                             \
 		GENMASK(7 - (bit_offset), 7 - (bit_offset) - (num_bits - 1)),  \
 		8
-#define IBA_FIELD8_LOC(field_struct, byte_offset, num_bits)                    \
-	IBA_FIELD_BLOC(field_struct, byte_offset, 0, num_bits)
+#घोषणा IBA_FIELD8_LOC(field_काष्ठा, byte_offset, num_bits)                    \
+	IBA_FIELD_BLOC(field_काष्ठा, byte_offset, 0, num_bits)
 
-#define IBA_FIELD16_LOC(field_struct, byte_offset, num_bits)                   \
-	field_struct, (byte_offset)&0xFFFE,                                    \
+#घोषणा IBA_FIELD16_LOC(field_काष्ठा, byte_offset, num_bits)                   \
+	field_काष्ठा, (byte_offset)&0xFFFE,                                    \
 		GENMASK(15 - (((byte_offset) % 2) * 8),                        \
 			15 - (((byte_offset) % 2) * 8) - (num_bits - 1)),      \
 		16
 
-#define IBA_FIELD32_LOC(field_struct, byte_offset, num_bits)                   \
-	field_struct, (byte_offset)&0xFFFC,                                    \
+#घोषणा IBA_FIELD32_LOC(field_काष्ठा, byte_offset, num_bits)                   \
+	field_काष्ठा, (byte_offset)&0xFFFC,                                    \
 		GENMASK(31 - (((byte_offset) % 4) * 8),                        \
 			31 - (((byte_offset) % 4) * 8) - (num_bits - 1)),      \
 		32
 
-#define IBA_FIELD64_LOC(field_struct, byte_offset)                             \
-	field_struct, byte_offset, GENMASK_ULL(63, 0), 64
+#घोषणा IBA_FIELD64_LOC(field_काष्ठा, byte_offset)                             \
+	field_काष्ठा, byte_offset, GENMASK_ULL(63, 0), 64
 /*
  * In IBTA spec, everything that is more than 64bits is multiple
  * of bytes without leftover bits.
  */
-#define IBA_FIELD_MLOC(field_struct, byte_offset, num_bits, type)              \
-	field_struct, byte_offset, type, num_bits
+#घोषणा IBA_FIELD_MLOC(field_काष्ठा, byte_offset, num_bits, type)              \
+	field_काष्ठा, byte_offset, type, num_bits
 
-#endif /* _IBA_DEFS_H_ */
+#पूर्ण_अगर /* _IBA_DEFS_H_ */

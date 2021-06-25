@@ -1,13 +1,14 @@
-/* ni.h -- Private header for radeon driver -*- linux-c -*-
+<शैली गुरु>
+/* ni.h -- Private header क्रम radeon driver -*- linux-c -*-
  *
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,15 +24,15 @@
  *
  */
 
-#ifndef __NI_H__
-#define __NI_H__
+#अगर_अघोषित __NI_H__
+#घोषणा __NI_H__
 
-struct radeon_device;
+काष्ठा radeon_device;
 
-void cayman_cp_int_cntl_setup(struct radeon_device *rdev,
-			      int ring, u32 cp_int_cntl);
-void cayman_vm_decode_fault(struct radeon_device *rdev,
+व्योम cayman_cp_पूर्णांक_cntl_setup(काष्ठा radeon_device *rdev,
+			      पूर्णांक ring, u32 cp_पूर्णांक_cntl);
+व्योम cayman_vm_decode_fault(काष्ठा radeon_device *rdev,
 			    u32 status, u32 addr);
-u32 cayman_gpu_check_soft_reset(struct radeon_device *rdev);
+u32 cayman_gpu_check_soft_reset(काष्ठा radeon_device *rdev);
 
-#endif				/* __NI_H__ */
+#पूर्ण_अगर				/* __NI_H__ */

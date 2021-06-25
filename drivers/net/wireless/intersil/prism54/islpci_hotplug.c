@@ -1,153 +1,154 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 2002 Intersil Americas Inc.
  *  Copyright (C) 2003 Herbert Valerio Riedel <hvr@gnu.org>
  */
 
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <linux/init.h> /* For __init, __exit */
-#include <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h> /* For __init, __निकास */
+#समावेश <linux/dma-mapping.h>
 
-#include "prismcompat.h"
-#include "islpci_dev.h"
-#include "islpci_mgt.h"		/* for pc_debug */
-#include "isl_oid.h"
+#समावेश "prismcompat.h"
+#समावेश "islpci_dev.h"
+#समावेश "islpci_mgt.h"		/* क्रम pc_debug */
+#समावेश "isl_oid.h"
 
 MODULE_AUTHOR("[Intersil] R.Bastings and W.Termorshuizen, The prism54.org Development Team <prism54-devel@prism54.org>");
 MODULE_DESCRIPTION("The Prism54 802.11 Wireless LAN adapter");
 MODULE_LICENSE("GPL");
 
-static int	init_pcitm = 0;
-module_param(init_pcitm, int, 0);
+अटल पूर्णांक	init_pciपंचांग = 0;
+module_param(init_pciपंचांग, पूर्णांक, 0);
 
-/* In this order: vendor, device, subvendor, subdevice, class, class_mask,
+/* In this order: venकरोr, device, subvenकरोr, subdevice, class, class_mask,
  * driver_data
- * If you have an update for this please contact prism54-devel@prism54.org
+ * If you have an update क्रम this please contact prism54-devel@prism54.org
  * The latest list can be found at http://wireless.wiki.kernel.org/en/users/Drivers/p54
  */
-static const struct pci_device_id prism54_id_tbl[] = {
+अटल स्थिर काष्ठा pci_device_id prism54_id_tbl[] = अणु
 	/* Intersil PRISM Duette/Prism GT Wireless LAN adapter */
-	{
+	अणु
 	 0x1260, 0x3890,
 	 PCI_ANY_ID, PCI_ANY_ID,
 	 0, 0, 0
-	},
+	पूर्ण,
 
 	/* 3COM 3CRWE154G72 Wireless LAN adapter */
-	{
+	अणु
 	 PCI_VDEVICE(3COM, 0x6001), 0
-	},
+	पूर्ण,
 
 	/* Intersil PRISM Indigo Wireless LAN adapter */
-	{
+	अणु
 	 0x1260, 0x3877,
 	 PCI_ANY_ID, PCI_ANY_ID,
 	 0, 0, 0
-	},
+	पूर्ण,
 
 	/* Intersil PRISM Javelin/Xbow Wireless LAN adapter */
-	{
+	अणु
 	 0x1260, 0x3886,
 	 PCI_ANY_ID, PCI_ANY_ID,
 	 0, 0, 0
-	},
+	पूर्ण,
 
 	/* End of list */
-	{0,0,0,0,0,0,0}
-};
+	अणु0,0,0,0,0,0,0पूर्ण
+पूर्ण;
 
-/* register the device with the Hotplug facilities of the kernel */
+/* रेजिस्टर the device with the Hotplug facilities of the kernel */
 MODULE_DEVICE_TABLE(pci, prism54_id_tbl);
 
-static int prism54_probe(struct pci_dev *, const struct pci_device_id *);
-static void prism54_remove(struct pci_dev *);
-static int __maybe_unused prism54_suspend(struct device *);
-static int __maybe_unused prism54_resume(struct device *);
+अटल पूर्णांक prism54_probe(काष्ठा pci_dev *, स्थिर काष्ठा pci_device_id *);
+अटल व्योम prism54_हटाओ(काष्ठा pci_dev *);
+अटल पूर्णांक __maybe_unused prism54_suspend(काष्ठा device *);
+अटल पूर्णांक __maybe_unused prism54_resume(काष्ठा device *);
 
-static SIMPLE_DEV_PM_OPS(prism54_pm_ops, prism54_suspend, prism54_resume);
+अटल SIMPLE_DEV_PM_OPS(prism54_pm_ops, prism54_suspend, prism54_resume);
 
-static struct pci_driver prism54_driver = {
+अटल काष्ठा pci_driver prism54_driver = अणु
 	.name = DRV_NAME,
 	.id_table = prism54_id_tbl,
 	.probe = prism54_probe,
-	.remove = prism54_remove,
+	.हटाओ = prism54_हटाओ,
 	.driver.pm = &prism54_pm_ops,
-};
+पूर्ण;
 
 /******************************************************************************
     Module initialization functions
 ******************************************************************************/
 
-static int
-prism54_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	struct net_device *ndev;
-	u8 latency_tmr;
+अटल पूर्णांक
+prism54_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा net_device *ndev;
+	u8 latency_पंचांगr;
 	u32 mem_addr;
-	islpci_private *priv;
-	int rvalue;
+	islpci_निजी *priv;
+	पूर्णांक rvalue;
 
 	/* Enable the pci device */
-	if (pci_enable_device(pdev)) {
-		printk(KERN_ERR "%s: pci_enable_device() failed.\n", DRV_NAME);
-		return -ENODEV;
-	}
+	अगर (pci_enable_device(pdev)) अणु
+		prपूर्णांकk(KERN_ERR "%s: pci_enable_device() failed.\n", DRV_NAME);
+		वापस -ENODEV;
+	पूर्ण
 
-	/* check whether the latency timer is set correctly */
-	pci_read_config_byte(pdev, PCI_LATENCY_TIMER, &latency_tmr);
-#if VERBOSE > SHOW_ERROR_MESSAGES
-	DEBUG(SHOW_TRACING, "latency timer: %x\n", latency_tmr);
-#endif
-	if (latency_tmr < PCIDEVICE_LATENCY_TIMER_MIN) {
-		/* set the latency timer */
-		pci_write_config_byte(pdev, PCI_LATENCY_TIMER,
+	/* check whether the latency समयr is set correctly */
+	pci_पढ़ो_config_byte(pdev, PCI_LATENCY_TIMER, &latency_पंचांगr);
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
+	DEBUG(SHOW_TRACING, "latency timer: %x\n", latency_पंचांगr);
+#पूर्ण_अगर
+	अगर (latency_पंचांगr < PCIDEVICE_LATENCY_TIMER_MIN) अणु
+		/* set the latency समयr */
+		pci_ग_लिखो_config_byte(pdev, PCI_LATENCY_TIMER,
 				      PCIDEVICE_LATENCY_TIMER_VAL);
-	}
+	पूर्ण
 
 	/* enable PCI DMA */
-	if (dma_set_mask(&pdev->dev, DMA_BIT_MASK(32))) {
-		printk(KERN_ERR "%s: 32-bit PCI DMA not supported", DRV_NAME);
-		goto do_pci_disable_device;
-        }
+	अगर (dma_set_mask(&pdev->dev, DMA_BIT_MASK(32))) अणु
+		prपूर्णांकk(KERN_ERR "%s: 32-bit PCI DMA not supported", DRV_NAME);
+		जाओ करो_pci_disable_device;
+        पूर्ण
 
-	/* 0x40 is the programmable timer to configure the response timeout (TRDY_TIMEOUT)
-	 * 0x41 is the programmable timer to configure the retry timeout (RETRY_TIMEOUT)
+	/* 0x40 is the programmable समयr to configure the response समयout (TRDY_TIMEOUT)
+	 * 0x41 is the programmable समयr to configure the retry समयout (RETRY_TIMEOUT)
 	 *	The RETRY_TIMEOUT is used to set the number of retries that the core, as a
-	 *	Master, will perform before abandoning a cycle. The default value for
-	 *	RETRY_TIMEOUT is 0x80, which far exceeds the PCI 2.1 requirement for new
-	 *	devices. A write of zero to the RETRY_TIMEOUT register disables this
+	 *	Master, will perक्रमm beक्रमe abanकरोning a cycle. The शेष value क्रम
+	 *	RETRY_TIMEOUT is 0x80, which far exceeds the PCI 2.1 requirement क्रम new
+	 *	devices. A ग_लिखो of zero to the RETRY_TIMEOUT रेजिस्टर disables this
 	 *	function to allow use with any non-compliant legacy devices that may
 	 *	execute more retries.
 	 *
-	 *	Writing zero to both these two registers will disable both timeouts and
+	 *	Writing zero to both these two रेजिस्टरs will disable both समयouts and
 	 *	*can* solve problems caused by devices that are slow to respond.
 	 *	Make this configurable - MSW
 	 */
-	if ( init_pcitm >= 0 ) {
-		pci_write_config_byte(pdev, 0x40, (u8)init_pcitm);
-		pci_write_config_byte(pdev, 0x41, (u8)init_pcitm);
-	} else {
-		printk(KERN_INFO "PCI TRDY/RETRY unchanged\n");
-	}
+	अगर ( init_pciपंचांग >= 0 ) अणु
+		pci_ग_लिखो_config_byte(pdev, 0x40, (u8)init_pciपंचांग);
+		pci_ग_लिखो_config_byte(pdev, 0x41, (u8)init_pciपंचांग);
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_INFO "PCI TRDY/RETRY unchanged\n");
+	पूर्ण
 
 	/* request the pci device I/O regions */
 	rvalue = pci_request_regions(pdev, DRV_NAME);
-	if (rvalue) {
-		printk(KERN_ERR "%s: pci_request_regions failure (rc=%d)\n",
+	अगर (rvalue) अणु
+		prपूर्णांकk(KERN_ERR "%s: pci_request_regions failure (rc=%d)\n",
 		       DRV_NAME, rvalue);
-		goto do_pci_disable_device;
-	}
+		जाओ करो_pci_disable_device;
+	पूर्ण
 
-	/* check if the memory window is indeed set */
-	rvalue = pci_read_config_dword(pdev, PCI_BASE_ADDRESS_0, &mem_addr);
-	if (rvalue || !mem_addr) {
-		printk(KERN_ERR "%s: PCI device memory region not configured; fix your BIOS or CardBus bridge/drivers\n",
+	/* check अगर the memory winकरोw is indeed set */
+	rvalue = pci_पढ़ो_config_dword(pdev, PCI_BASE_ADDRESS_0, &mem_addr);
+	अगर (rvalue || !mem_addr) अणु
+		prपूर्णांकk(KERN_ERR "%s: PCI device memory region not configured; fix your BIOS or CardBus bridge/drivers\n",
 		       DRV_NAME);
-		goto do_pci_release_regions;
-	}
+		जाओ करो_pci_release_regions;
+	पूर्ण
 
 	/* enable PCI bus-mastering */
 	DEBUG(SHOW_TRACING, "%s: pci_set_master(pdev)\n", DRV_NAME);
@@ -156,161 +157,161 @@ prism54_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	/* enable MWI */
 	pci_try_set_mwi(pdev);
 
-	/* setup the network device interface and its structure */
-	if (!(ndev = islpci_setup(pdev))) {
+	/* setup the network device पूर्णांकerface and its काष्ठाure */
+	अगर (!(ndev = islpci_setup(pdev))) अणु
 		/* error configuring the driver as a network device */
-		printk(KERN_ERR "%s: could not configure network device\n",
+		prपूर्णांकk(KERN_ERR "%s: could not configure network device\n",
 		       DRV_NAME);
-		goto do_pci_clear_mwi;
-	}
+		जाओ करो_pci_clear_mwi;
+	पूर्ण
 
 	priv = netdev_priv(ndev);
 	islpci_set_state(priv, PRV_STATE_PREBOOT); /* we are attempting to boot */
 
-	/* card is in unknown state yet, might have some interrupts pending */
-	isl38xx_disable_interrupts(priv->device_base);
+	/* card is in unknown state yet, might have some पूर्णांकerrupts pending */
+	isl38xx_disable_पूर्णांकerrupts(priv->device_base);
 
-	/* request for the interrupt before uploading the firmware */
-	rvalue = request_irq(pdev->irq, islpci_interrupt,
+	/* request क्रम the पूर्णांकerrupt beक्रमe uploading the firmware */
+	rvalue = request_irq(pdev->irq, islpci_पूर्णांकerrupt,
 			     IRQF_SHARED, ndev->name, priv);
 
-	if (rvalue) {
+	अगर (rvalue) अणु
 		/* error, could not hook the handler to the irq */
-		printk(KERN_ERR "%s: could not install IRQ handler\n",
+		prपूर्णांकk(KERN_ERR "%s: could not install IRQ handler\n",
 		       ndev->name);
-		goto do_unregister_netdev;
-	}
+		जाओ करो_unरेजिस्टर_netdev;
+	पूर्ण
 
-	/* firmware upload is triggered in islpci_open */
+	/* firmware upload is triggered in islpci_खोलो */
 
-	return 0;
+	वापस 0;
 
-      do_unregister_netdev:
-	unregister_netdev(ndev);
-	islpci_free_memory(priv);
-	free_netdev(ndev);
-	priv = NULL;
-      do_pci_clear_mwi:
+      करो_unरेजिस्टर_netdev:
+	unरेजिस्टर_netdev(ndev);
+	islpci_मुक्त_memory(priv);
+	मुक्त_netdev(ndev);
+	priv = शून्य;
+      करो_pci_clear_mwi:
 	pci_clear_mwi(pdev);
-      do_pci_release_regions:
+      करो_pci_release_regions:
 	pci_release_regions(pdev);
-      do_pci_disable_device:
+      करो_pci_disable_device:
 	pci_disable_device(pdev);
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /* set by cleanup_module */
-static volatile int __in_cleanup_module = 0;
+अटल अस्थिर पूर्णांक __in_cleanup_module = 0;
 
-/* this one removes one(!!) instance only */
-static void
-prism54_remove(struct pci_dev *pdev)
-{
-	struct net_device *ndev = pci_get_drvdata(pdev);
-	islpci_private *priv = ndev ? netdev_priv(ndev) : NULL;
+/* this one हटाओs one(!!) instance only */
+अटल व्योम
+prism54_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *ndev = pci_get_drvdata(pdev);
+	islpci_निजी *priv = ndev ? netdev_priv(ndev) : शून्य;
 	BUG_ON(!priv);
 
-	if (!__in_cleanup_module) {
-		printk(KERN_DEBUG "%s: hot unplug detected\n", ndev->name);
+	अगर (!__in_cleanup_module) अणु
+		prपूर्णांकk(KERN_DEBUG "%s: hot unplug detected\n", ndev->name);
 		islpci_set_state(priv, PRV_STATE_OFF);
-	}
+	पूर्ण
 
-	printk(KERN_DEBUG "%s: removing device\n", ndev->name);
+	prपूर्णांकk(KERN_DEBUG "%s: removing device\n", ndev->name);
 
-	unregister_netdev(ndev);
+	unरेजिस्टर_netdev(ndev);
 
-	/* free the interrupt request */
+	/* मुक्त the पूर्णांकerrupt request */
 
-	if (islpci_get_state(priv) != PRV_STATE_OFF) {
-		isl38xx_disable_interrupts(priv->device_base);
+	अगर (islpci_get_state(priv) != PRV_STATE_OFF) अणु
+		isl38xx_disable_पूर्णांकerrupts(priv->device_base);
 		islpci_set_state(priv, PRV_STATE_OFF);
-		/* This bellow causes a lockup at rmmod time. It might be
-		 * because some interrupts still linger after rmmod time,
+		/* This bellow causes a lockup at rmmod समय. It might be
+		 * because some पूर्णांकerrupts still linger after rmmod समय,
 		 * see bug #17 */
-		/* pci_set_power_state(pdev, 3);*/	/* try to power-off */
-	}
+		/* pci_set_घातer_state(pdev, 3);*/	/* try to घातer-off */
+	पूर्ण
 
-	free_irq(pdev->irq, priv);
+	मुक्त_irq(pdev->irq, priv);
 
-	/* free the PCI memory and unmap the remapped page */
-	islpci_free_memory(priv);
+	/* मुक्त the PCI memory and unmap the remapped page */
+	islpci_मुक्त_memory(priv);
 
-	free_netdev(ndev);
-	priv = NULL;
+	मुक्त_netdev(ndev);
+	priv = शून्य;
 
 	pci_clear_mwi(pdev);
 
 	pci_release_regions(pdev);
 
 	pci_disable_device(pdev);
-}
+पूर्ण
 
-static int __maybe_unused
-prism54_suspend(struct device *dev)
-{
-	struct net_device *ndev = dev_get_drvdata(dev);
-	islpci_private *priv = ndev ? netdev_priv(ndev) : NULL;
+अटल पूर्णांक __maybe_unused
+prism54_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	islpci_निजी *priv = ndev ? netdev_priv(ndev) : शून्य;
 	BUG_ON(!priv);
 
-	/* tell the device not to trigger interrupts for now... */
-	isl38xx_disable_interrupts(priv->device_base);
+	/* tell the device not to trigger पूर्णांकerrupts क्रम now... */
+	isl38xx_disable_पूर्णांकerrupts(priv->device_base);
 
-	/* from now on assume the hardware was already powered down
-	   and don't touch it anymore */
+	/* from now on assume the hardware was alपढ़ोy घातered करोwn
+	   and करोn't touch it anymore */
 	islpci_set_state(priv, PRV_STATE_OFF);
 
-	netif_stop_queue(ndev);
-	netif_device_detach(ndev);
+	netअगर_stop_queue(ndev);
+	netअगर_device_detach(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused
-prism54_resume(struct device *dev)
-{
-	struct net_device *ndev = dev_get_drvdata(dev);
-	islpci_private *priv = ndev ? netdev_priv(ndev) : NULL;
+अटल पूर्णांक __maybe_unused
+prism54_resume(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	islpci_निजी *priv = ndev ? netdev_priv(ndev) : शून्य;
 
 	BUG_ON(!priv);
 
-	printk(KERN_NOTICE "%s: got resume request\n", ndev->name);
+	prपूर्णांकk(KERN_NOTICE "%s: got resume request\n", ndev->name);
 
-	/* alright let's go into the PREBOOT state */
+	/* alright let's go पूर्णांकo the PREBOOT state */
 	islpci_reset(priv, 1);
 
-	netif_device_attach(ndev);
-	netif_start_queue(ndev);
+	netअगर_device_attach(ndev);
+	netअगर_start_queue(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init
-prism54_module_init(void)
-{
-	printk(KERN_INFO "Loaded %s driver, version %s\n",
+अटल पूर्णांक __init
+prism54_module_init(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO "Loaded %s driver, version %s\n",
 	       DRV_NAME, DRV_VERSION);
 
-	__bug_on_wrong_struct_sizes ();
+	__bug_on_wrong_काष्ठा_sizes ();
 
-	return pci_register_driver(&prism54_driver);
-}
+	वापस pci_रेजिस्टर_driver(&prism54_driver);
+पूर्ण
 
-/* by the time prism54_module_exit() terminates, as a postcondition
+/* by the समय prism54_module_निकास() terminates, as a postcondition
  * all instances will have been destroyed by calls to
- * prism54_remove() */
-static void __exit
-prism54_module_exit(void)
-{
+ * prism54_हटाओ() */
+अटल व्योम __निकास
+prism54_module_निकास(व्योम)
+अणु
 	__in_cleanup_module = 1;
 
-	pci_unregister_driver(&prism54_driver);
+	pci_unरेजिस्टर_driver(&prism54_driver);
 
-	printk(KERN_INFO "Unloaded %s driver\n", DRV_NAME);
+	prपूर्णांकk(KERN_INFO "Unloaded %s driver\n", DRV_NAME);
 
 	__in_cleanup_module = 0;
-}
+पूर्ण
 
-/* register entry points */
+/* रेजिस्टर entry poपूर्णांकs */
 module_init(prism54_module_init);
-module_exit(prism54_module_exit);
-/* EOF */
+module_निकास(prism54_module_निकास);
+/* खातापूर्ण */

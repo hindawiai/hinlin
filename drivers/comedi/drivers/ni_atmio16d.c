@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Comedi driver for National Instruments AT-MIO16D board
+ * Comedi driver क्रम National Instruments AT-MIO16D board
  * Copyright (C) 2000 Chris R. Baugher <baugher@enteract.com>
  */
 
 /*
- * Driver: ni_atmio16d
+ * Driver: ni_aपंचांगio16d
  * Description: National Instruments AT-MIO-16D
  * Author: Chris R. Baugher <baugher@enteract.com>
  * Status: unknown
- * Devices: [National Instruments] AT-MIO-16 (atmio16), AT-MIO-16D (atmio16d)
+ * Devices: [National Instruments] AT-MIO-16 (aपंचांगio16), AT-MIO-16D (aपंचांगio16d)
  *
  * Configuration options:
  *   [0] - I/O port
@@ -17,10 +18,10 @@
  *   [2] - DIO irq (0 == no irq; or 3,4,5,6,7,9)
  *   [3] - DMA1 channel (0 == no DMA; or 5,6,7)
  *   [4] - DMA2 channel (0 == no DMA; or 5,6,7)
- *   [5] - a/d mux (0=differential; 1=single)
+ *   [5] - a/d mux (0=dअगरferential; 1=single)
  *   [6] - a/d range (0=bipolar10; 1=bipolar5; 2=unipolar10)
  *   [7] - dac0 range (0=bipolar; 1=unipolar)
- *   [8] - dac0 reference (0=internal; 1=external)
+ *   [8] - dac0 reference (0=पूर्णांकernal; 1=बाह्यal)
  *   [9] - dac0 coding (0=2's comp; 1=straight binary)
  *   [10] - dac1 range (same as dac0 options)
  *   [11] - dac1 reference (same as dac0 options)
@@ -28,127 +29,127 @@
  */
 
 /*
- * I must give credit here to Michal Dobes <dobes@tesnet.cz> who
- * wrote the driver for Advantec's pcl812 boards. I used the interrupt
- * handling code from his driver as an example for this one.
+ * I must give credit here to Michal Dobes <करोbes@tesnet.cz> who
+ * wrote the driver क्रम Advantec's pcl812 boards. I used the पूर्णांकerrupt
+ * handling code from his driver as an example क्रम this one.
  *
  * Chris Baugher
  * 5/1/2000
  *
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include "../comedidev.h"
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश "../comedidev.h"
 
-#include "8255.h"
+#समावेश "8255.h"
 
 /* Configuration and Status Registers */
-#define COM_REG_1	0x00	/* wo 16 */
-#define STAT_REG	0x00	/* ro 16 */
-#define COM_REG_2	0x02	/* wo 16 */
+#घोषणा COM_REG_1	0x00	/* wo 16 */
+#घोषणा STAT_REG	0x00	/* ro 16 */
+#घोषणा COM_REG_2	0x02	/* wo 16 */
 /* Event Strobe Registers */
-#define START_CONVERT_REG	0x08	/* wo 16 */
-#define START_DAQ_REG		0x0A	/* wo 16 */
-#define AD_CLEAR_REG		0x0C	/* wo 16 */
-#define EXT_STROBE_REG		0x0E	/* wo 16 */
+#घोषणा START_CONVERT_REG	0x08	/* wo 16 */
+#घोषणा START_DAQ_REG		0x0A	/* wo 16 */
+#घोषणा AD_CLEAR_REG		0x0C	/* wo 16 */
+#घोषणा EXT_STROBE_REG		0x0E	/* wo 16 */
 /* Analog Output Registers */
-#define DAC0_REG		0x10	/* wo 16 */
-#define DAC1_REG		0x12	/* wo 16 */
-#define INT2CLR_REG		0x14	/* wo 16 */
+#घोषणा DAC0_REG		0x10	/* wo 16 */
+#घोषणा DAC1_REG		0x12	/* wo 16 */
+#घोषणा INT2CLR_REG		0x14	/* wo 16 */
 /* Analog Input Registers */
-#define MUX_CNTR_REG		0x04	/* wo 16 */
-#define MUX_GAIN_REG		0x06	/* wo 16 */
-#define AD_FIFO_REG		0x16	/* ro 16 */
-#define DMA_TC_INT_CLR_REG	0x16	/* wo 16 */
+#घोषणा MUX_CNTR_REG		0x04	/* wo 16 */
+#घोषणा MUX_GAIN_REG		0x06	/* wo 16 */
+#घोषणा AD_FIFO_REG		0x16	/* ro 16 */
+#घोषणा DMA_TC_INT_CLR_REG	0x16	/* wo 16 */
 /* AM9513A Counter/Timer Registers */
-#define AM9513A_DATA_REG	0x18	/* rw 16 */
-#define AM9513A_COM_REG		0x1A	/* wo 16 */
-#define AM9513A_STAT_REG	0x1A	/* ro 16 */
+#घोषणा AM9513A_DATA_REG	0x18	/* rw 16 */
+#घोषणा AM9513A_COM_REG		0x1A	/* wo 16 */
+#घोषणा AM9513A_STAT_REG	0x1A	/* ro 16 */
 /* MIO-16 Digital I/O Registers */
-#define MIO_16_DIG_IN_REG	0x1C	/* ro 16 */
-#define MIO_16_DIG_OUT_REG	0x1C	/* wo 16 */
+#घोषणा MIO_16_DIG_IN_REG	0x1C	/* ro 16 */
+#घोषणा MIO_16_DIG_OUT_REG	0x1C	/* wo 16 */
 /* RTSI Switch Registers */
-#define RTSI_SW_SHIFT_REG	0x1E	/* wo 8 */
-#define RTSI_SW_STROBE_REG	0x1F	/* wo 8 */
+#घोषणा RTSI_SW_SHIFT_REG	0x1E	/* wo 8 */
+#घोषणा RTSI_SW_STROBE_REG	0x1F	/* wo 8 */
 /* DIO-24 Registers */
-#define DIO_24_PORTA_REG	0x00	/* rw 8 */
-#define DIO_24_PORTB_REG	0x01	/* rw 8 */
-#define DIO_24_PORTC_REG	0x02	/* rw 8 */
-#define DIO_24_CNFG_REG		0x03	/* wo 8 */
+#घोषणा DIO_24_PORTA_REG	0x00	/* rw 8 */
+#घोषणा DIO_24_PORTB_REG	0x01	/* rw 8 */
+#घोषणा DIO_24_PORTC_REG	0x02	/* rw 8 */
+#घोषणा DIO_24_CNFG_REG		0x03	/* wo 8 */
 
 /* Command Register bits */
-#define COMREG1_2SCADC		0x0001
-#define COMREG1_1632CNT		0x0002
-#define COMREG1_SCANEN		0x0008
-#define COMREG1_DAQEN		0x0010
-#define COMREG1_DMAEN		0x0020
-#define COMREG1_CONVINTEN	0x0080
-#define COMREG2_SCN2		0x0010
-#define COMREG2_INTEN		0x0080
-#define COMREG2_DOUTEN0		0x0100
-#define COMREG2_DOUTEN1		0x0200
+#घोषणा COMREG1_2SCADC		0x0001
+#घोषणा COMREG1_1632CNT		0x0002
+#घोषणा COMREG1_SCANEN		0x0008
+#घोषणा COMREG1_DAQEN		0x0010
+#घोषणा COMREG1_DMAEN		0x0020
+#घोषणा COMREG1_CONVINTEN	0x0080
+#घोषणा COMREG2_SCN2		0x0010
+#घोषणा COMREG2_INTEN		0x0080
+#घोषणा COMREG2_DOUTEN0		0x0100
+#घोषणा COMREG2_DOUTEN1		0x0200
 /* Status Register bits */
-#define STAT_AD_OVERRUN		0x0100
-#define STAT_AD_OVERFLOW	0x0200
-#define STAT_AD_DAQPROG		0x0800
-#define STAT_AD_CONVAVAIL	0x2000
-#define STAT_AD_DAQSTOPINT	0x4000
+#घोषणा STAT_AD_OVERRUN		0x0100
+#घोषणा STAT_AD_OVERFLOW	0x0200
+#घोषणा STAT_AD_DAQPROG		0x0800
+#घोषणा STAT_AD_CONVAVAIL	0x2000
+#घोषणा STAT_AD_DAQSTOPINT	0x4000
 /* AM9513A Counter/Timer defines */
-#define CLOCK_1_MHZ		0x8B25
-#define CLOCK_100_KHZ	0x8C25
-#define CLOCK_10_KHZ	0x8D25
-#define CLOCK_1_KHZ		0x8E25
-#define CLOCK_100_HZ	0x8F25
+#घोषणा CLOCK_1_MHZ		0x8B25
+#घोषणा CLOCK_100_KHZ	0x8C25
+#घोषणा CLOCK_10_KHZ	0x8D25
+#घोषणा CLOCK_1_KHZ		0x8E25
+#घोषणा CLOCK_100_HZ	0x8F25
 
-struct atmio16_board_t {
-	const char *name;
-	int has_8255;
-};
+काष्ठा aपंचांगio16_board_t अणु
+	स्थिर अक्षर *name;
+	पूर्णांक has_8255;
+पूर्ण;
 
-/* range structs */
-static const struct comedi_lrange range_atmio16d_ai_10_bipolar = {
-	4, {
+/* range काष्ठाs */
+अटल स्थिर काष्ठा comedi_lrange range_aपंचांगio16d_ai_10_bipolar = अणु
+	4, अणु
 		BIP_RANGE(10),
 		BIP_RANGE(1),
 		BIP_RANGE(0.1),
 		BIP_RANGE(0.02)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_atmio16d_ai_5_bipolar = {
-	4, {
+अटल स्थिर काष्ठा comedi_lrange range_aपंचांगio16d_ai_5_bipolar = अणु
+	4, अणु
 		BIP_RANGE(5),
 		BIP_RANGE(0.5),
 		BIP_RANGE(0.05),
 		BIP_RANGE(0.01)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_atmio16d_ai_unipolar = {
-	4, {
+अटल स्थिर काष्ठा comedi_lrange range_aपंचांगio16d_ai_unipolar = अणु
+	4, अणु
 		UNI_RANGE(10),
 		UNI_RANGE(1),
 		UNI_RANGE(0.1),
 		UNI_RANGE(0.02)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-/* private data struct */
-struct atmio16d_private {
-	enum { adc_diff, adc_singleended } adc_mux;
-	enum { adc_bipolar10, adc_bipolar5, adc_unipolar10 } adc_range;
-	enum { adc_2comp, adc_straight } adc_coding;
-	enum { dac_bipolar, dac_unipolar } dac0_range, dac1_range;
-	enum { dac_internal, dac_external } dac0_reference, dac1_reference;
-	enum { dac_2comp, dac_straight } dac0_coding, dac1_coding;
-	const struct comedi_lrange *ao_range_type_list[2];
-	unsigned int com_reg_1_state; /* current state of command register 1 */
-	unsigned int com_reg_2_state; /* current state of command register 2 */
-};
+/* निजी data काष्ठा */
+काष्ठा aपंचांगio16d_निजी अणु
+	क्रमागत अणु adc_dअगरf, adc_singleended पूर्ण adc_mux;
+	क्रमागत अणु adc_bipolar10, adc_bipolar5, adc_unipolar10 पूर्ण adc_range;
+	क्रमागत अणु adc_2comp, adc_straight पूर्ण adc_coding;
+	क्रमागत अणु dac_bipolar, dac_unipolar पूर्ण dac0_range, dac1_range;
+	क्रमागत अणु dac_पूर्णांकernal, dac_बाह्यal पूर्ण dac0_reference, dac1_reference;
+	क्रमागत अणु dac_2comp, dac_straight पूर्ण dac0_coding, dac1_coding;
+	स्थिर काष्ठा comedi_lrange *ao_range_type_list[2];
+	अचिन्हित पूर्णांक com_reg_1_state; /* current state of command रेजिस्टर 1 */
+	अचिन्हित पूर्णांक com_reg_2_state; /* current state of command रेजिस्टर 2 */
+पूर्ण;
 
-static void reset_counters(struct comedi_device *dev)
-{
+अटल व्योम reset_counters(काष्ठा comedi_device *dev)
+अणु
 	/* Counter 2 */
 	outw(0xFFC2, dev->iobase + AM9513A_COM_REG);
 	outw(0xFF02, dev->iobase + AM9513A_COM_REG);
@@ -183,61 +184,61 @@ static void reset_counters(struct comedi_device *dev)
 	outw(0xFF50, dev->iobase + AM9513A_COM_REG);
 
 	outw(0, dev->iobase + AD_CLEAR_REG);
-}
+पूर्ण
 
-static void reset_atmio16d(struct comedi_device *dev)
-{
-	struct atmio16d_private *devpriv = dev->private;
-	int i;
+अटल व्योम reset_aपंचांगio16d(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा aपंचांगio16d_निजी *devpriv = dev->निजी;
+	पूर्णांक i;
 
 	/* now we need to initialize the board */
 	outw(0, dev->iobase + COM_REG_1);
 	outw(0, dev->iobase + COM_REG_2);
 	outw(0, dev->iobase + MUX_GAIN_REG);
-	/* init AM9513A timer */
+	/* init AM9513A समयr */
 	outw(0xFFFF, dev->iobase + AM9513A_COM_REG);
 	outw(0xFFEF, dev->iobase + AM9513A_COM_REG);
 	outw(0xFF17, dev->iobase + AM9513A_COM_REG);
 	outw(0xF000, dev->iobase + AM9513A_DATA_REG);
-	for (i = 1; i <= 5; ++i) {
+	क्रम (i = 1; i <= 5; ++i) अणु
 		outw(0xFF00 + i, dev->iobase + AM9513A_COM_REG);
 		outw(0x0004, dev->iobase + AM9513A_DATA_REG);
 		outw(0xFF08 + i, dev->iobase + AM9513A_COM_REG);
 		outw(0x3, dev->iobase + AM9513A_DATA_REG);
-	}
+	पूर्ण
 	outw(0xFF5F, dev->iobase + AM9513A_COM_REG);
-	/* timer init done */
+	/* समयr init करोne */
 	outw(0, dev->iobase + AD_CLEAR_REG);
 	outw(0, dev->iobase + INT2CLR_REG);
-	/* select straight binary mode for Analog Input */
+	/* select straight binary mode क्रम Analog Input */
 	devpriv->com_reg_1_state |= 1;
 	outw(devpriv->com_reg_1_state, dev->iobase + COM_REG_1);
 	devpriv->adc_coding = adc_straight;
-	/* zero the analog outputs */
+	/* zero the analog outमाला_दो */
 	outw(2048, dev->iobase + DAC0_REG);
 	outw(2048, dev->iobase + DAC1_REG);
-}
+पूर्ण
 
-static irqreturn_t atmio16d_interrupt(int irq, void *d)
-{
-	struct comedi_device *dev = d;
-	struct comedi_subdevice *s = dev->read_subdev;
-	unsigned short val;
+अटल irqवापस_t aपंचांगio16d_पूर्णांकerrupt(पूर्णांक irq, व्योम *d)
+अणु
+	काष्ठा comedi_device *dev = d;
+	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
+	अचिन्हित लघु val;
 
 	val = inw(dev->iobase + AD_FIFO_REG);
-	comedi_buf_write_samples(s, &val, 1);
+	comedi_buf_ग_लिखो_samples(s, &val, 1);
 	comedi_handle_events(dev, s);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int atmio16d_ai_cmdtest(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_cmd *cmd)
-{
-	int err = 0;
+अटल पूर्णांक aपंचांगio16d_ai_cmdtest(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_cmd *cmd)
+अणु
+	पूर्णांक err = 0;
 
-	/* Step 1 : check if triggers are trivially valid */
+	/* Step 1 : check अगर triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src,
@@ -246,8 +247,8 @@ static int atmio16d_ai_cmdtest(struct comedi_device *dev,
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_COUNT | TRIG_NONE);
 
-	if (err)
-		return 1;
+	अगर (err)
+		वापस 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 
@@ -256,92 +257,92 @@ static int atmio16d_ai_cmdtest(struct comedi_device *dev,
 
 	/* Step 2b : and mutually compatible */
 
-	if (err)
-		return 2;
+	अगर (err)
+		वापस 2;
 
-	/* Step 3: check if arguments are trivially valid */
+	/* Step 3: check अगर arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 
-	if (cmd->scan_begin_src == TRIG_FOLLOW) {
-		/* internal trigger */
+	अगर (cmd->scan_begin_src == TRIG_FOLLOW) अणु
+		/* पूर्णांकernal trigger */
 		err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, 0);
-	}
+	पूर्ण
 
 	err |= comedi_check_trigger_arg_min(&cmd->convert_arg, 10000);
 	err |= comedi_check_trigger_arg_is(&cmd->scan_end_arg,
 					   cmd->chanlist_len);
 
-	if (cmd->stop_src == TRIG_COUNT)
+	अगर (cmd->stop_src == TRIG_COUNT)
 		err |= comedi_check_trigger_arg_min(&cmd->stop_arg, 1);
-	else	/* TRIG_NONE */
+	अन्यथा	/* TRIG_NONE */
 		err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	if (err)
-		return 3;
+	अगर (err)
+		वापस 3;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmio16d_ai_cmd(struct comedi_device *dev,
-			   struct comedi_subdevice *s)
-{
-	struct atmio16d_private *devpriv = dev->private;
-	struct comedi_cmd *cmd = &s->async->cmd;
-	unsigned int timer, base_clock;
-	unsigned int sample_count, tmp, chan, gain;
-	int i;
+अटल पूर्णांक aपंचांगio16d_ai_cmd(काष्ठा comedi_device *dev,
+			   काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा aपंचांगio16d_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_cmd *cmd = &s->async->cmd;
+	अचिन्हित पूर्णांक समयr, base_घड़ी;
+	अचिन्हित पूर्णांक sample_count, पंचांगp, chan, gain;
+	पूर्णांक i;
 
 	/*
-	 * This is slowly becoming a working command interface.
+	 * This is slowly becoming a working command पूर्णांकerface.
 	 * It is still uber-experimental
 	 */
 
 	reset_counters(dev);
 
-	/* check if scanning multiple channels */
-	if (cmd->chanlist_len < 2) {
+	/* check अगर scanning multiple channels */
+	अगर (cmd->chanlist_len < 2) अणु
 		devpriv->com_reg_1_state &= ~COMREG1_SCANEN;
 		outw(devpriv->com_reg_1_state, dev->iobase + COM_REG_1);
-	} else {
+	पूर्ण अन्यथा अणु
 		devpriv->com_reg_1_state |= COMREG1_SCANEN;
 		devpriv->com_reg_2_state |= COMREG2_SCN2;
 		outw(devpriv->com_reg_1_state, dev->iobase + COM_REG_1);
 		outw(devpriv->com_reg_2_state, dev->iobase + COM_REG_2);
-	}
+	पूर्ण
 
 	/* Setup the Mux-Gain Counter */
-	for (i = 0; i < cmd->chanlist_len; ++i) {
+	क्रम (i = 0; i < cmd->chanlist_len; ++i) अणु
 		chan = CR_CHAN(cmd->chanlist[i]);
 		gain = CR_RANGE(cmd->chanlist[i]);
 		outw(i, dev->iobase + MUX_CNTR_REG);
-		tmp = chan | (gain << 6);
-		if (i == cmd->scan_end_arg - 1)
-			tmp |= 0x0010;	/* set LASTONE bit */
-		outw(tmp, dev->iobase + MUX_GAIN_REG);
-	}
+		पंचांगp = chan | (gain << 6);
+		अगर (i == cmd->scan_end_arg - 1)
+			पंचांगp |= 0x0010;	/* set LASTONE bit */
+		outw(पंचांगp, dev->iobase + MUX_GAIN_REG);
+	पूर्ण
 
 	/*
-	 * Now program the sample interval timer.
-	 * Figure out which clock to use then get an appropriate timer value.
+	 * Now program the sample पूर्णांकerval समयr.
+	 * Figure out which घड़ी to use then get an appropriate समयr value.
 	 */
-	if (cmd->convert_arg < 65536000) {
-		base_clock = CLOCK_1_MHZ;
-		timer = cmd->convert_arg / 1000;
-	} else if (cmd->convert_arg < 655360000) {
-		base_clock = CLOCK_100_KHZ;
-		timer = cmd->convert_arg / 10000;
-	} else /* cmd->convert_arg < 6553600000 */ {
-		base_clock = CLOCK_10_KHZ;
-		timer = cmd->convert_arg / 100000;
-	}
+	अगर (cmd->convert_arg < 65536000) अणु
+		base_घड़ी = CLOCK_1_MHZ;
+		समयr = cmd->convert_arg / 1000;
+	पूर्ण अन्यथा अगर (cmd->convert_arg < 655360000) अणु
+		base_घड़ी = CLOCK_100_KHZ;
+		समयr = cmd->convert_arg / 10000;
+	पूर्ण अन्यथा /* cmd->convert_arg < 6553600000 */ अणु
+		base_घड़ी = CLOCK_10_KHZ;
+		समयr = cmd->convert_arg / 100000;
+	पूर्ण
 	outw(0xFF03, dev->iobase + AM9513A_COM_REG);
-	outw(base_clock, dev->iobase + AM9513A_DATA_REG);
+	outw(base_घड़ी, dev->iobase + AM9513A_DATA_REG);
 	outw(0xFF0B, dev->iobase + AM9513A_COM_REG);
 	outw(0x2, dev->iobase + AM9513A_DATA_REG);
 	outw(0xFF44, dev->iobase + AM9513A_COM_REG);
 	outw(0xFFF3, dev->iobase + AM9513A_COM_REG);
-	outw(timer, dev->iobase + AM9513A_DATA_REG);
+	outw(समयr, dev->iobase + AM9513A_DATA_REG);
 	outw(0xFF24, dev->iobase + AM9513A_COM_REG);
 
 	/* Now figure out how many samples to get */
@@ -350,7 +351,7 @@ static int atmio16d_ai_cmd(struct comedi_device *dev,
 	outw(0xFF04, dev->iobase + AM9513A_COM_REG);
 	outw(0x1025, dev->iobase + AM9513A_DATA_REG);
 	outw(0xFF0C, dev->iobase + AM9513A_COM_REG);
-	if (sample_count < 65536) {
+	अगर (sample_count < 65536) अणु
 		/* use only Counter 4 */
 		outw(sample_count, dev->iobase + AM9513A_DATA_REG);
 		outw(0xFF48, dev->iobase + AM9513A_COM_REG);
@@ -358,13 +359,13 @@ static int atmio16d_ai_cmd(struct comedi_device *dev,
 		outw(0xFF28, dev->iobase + AM9513A_COM_REG);
 		devpriv->com_reg_1_state &= ~COMREG1_1632CNT;
 		outw(devpriv->com_reg_1_state, dev->iobase + COM_REG_1);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Counter 4 and 5 are needed */
 
-		tmp = sample_count & 0xFFFF;
-		if (tmp)
-			outw(tmp - 1, dev->iobase + AM9513A_DATA_REG);
-		else
+		पंचांगp = sample_count & 0xFFFF;
+		अगर (पंचांगp)
+			outw(पंचांगp - 1, dev->iobase + AM9513A_DATA_REG);
+		अन्यथा
 			outw(0xFFFF, dev->iobase + AM9513A_DATA_REG);
 
 		outw(0xFF48, dev->iobase + AM9513A_COM_REG);
@@ -373,43 +374,43 @@ static int atmio16d_ai_cmd(struct comedi_device *dev,
 		outw(0xFF05, dev->iobase + AM9513A_COM_REG);
 		outw(0x25, dev->iobase + AM9513A_DATA_REG);
 		outw(0xFF0D, dev->iobase + AM9513A_COM_REG);
-		tmp = sample_count & 0xFFFF;
-		if ((tmp == 0) || (tmp == 1)) {
+		पंचांगp = sample_count & 0xFFFF;
+		अगर ((पंचांगp == 0) || (पंचांगp == 1)) अणु
 			outw((sample_count >> 16) & 0xFFFF,
 			     dev->iobase + AM9513A_DATA_REG);
-		} else {
+		पूर्ण अन्यथा अणु
 			outw(((sample_count >> 16) & 0xFFFF) + 1,
 			     dev->iobase + AM9513A_DATA_REG);
-		}
+		पूर्ण
 		outw(0xFF70, dev->iobase + AM9513A_COM_REG);
 		devpriv->com_reg_1_state |= COMREG1_1632CNT;
 		outw(devpriv->com_reg_1_state, dev->iobase + COM_REG_1);
-	}
+	पूर्ण
 
 	/*
-	 * Program the scan interval timer ONLY IF SCANNING IS ENABLED.
-	 * Figure out which clock to use then get an appropriate timer value.
+	 * Program the scan पूर्णांकerval समयr ONLY IF SCANNING IS ENABLED.
+	 * Figure out which घड़ी to use then get an appropriate समयr value.
 	 */
-	if (cmd->chanlist_len > 1) {
-		if (cmd->scan_begin_arg < 65536000) {
-			base_clock = CLOCK_1_MHZ;
-			timer = cmd->scan_begin_arg / 1000;
-		} else if (cmd->scan_begin_arg < 655360000) {
-			base_clock = CLOCK_100_KHZ;
-			timer = cmd->scan_begin_arg / 10000;
-		} else /* cmd->scan_begin_arg < 6553600000 */ {
-			base_clock = CLOCK_10_KHZ;
-			timer = cmd->scan_begin_arg / 100000;
-		}
+	अगर (cmd->chanlist_len > 1) अणु
+		अगर (cmd->scan_begin_arg < 65536000) अणु
+			base_घड़ी = CLOCK_1_MHZ;
+			समयr = cmd->scan_begin_arg / 1000;
+		पूर्ण अन्यथा अगर (cmd->scan_begin_arg < 655360000) अणु
+			base_घड़ी = CLOCK_100_KHZ;
+			समयr = cmd->scan_begin_arg / 10000;
+		पूर्ण अन्यथा /* cmd->scan_begin_arg < 6553600000 */ अणु
+			base_घड़ी = CLOCK_10_KHZ;
+			समयr = cmd->scan_begin_arg / 100000;
+		पूर्ण
 		outw(0xFF02, dev->iobase + AM9513A_COM_REG);
-		outw(base_clock, dev->iobase + AM9513A_DATA_REG);
+		outw(base_घड़ी, dev->iobase + AM9513A_DATA_REG);
 		outw(0xFF0A, dev->iobase + AM9513A_COM_REG);
 		outw(0x2, dev->iobase + AM9513A_DATA_REG);
 		outw(0xFF42, dev->iobase + AM9513A_COM_REG);
 		outw(0xFFF2, dev->iobase + AM9513A_COM_REG);
-		outw(timer, dev->iobase + AM9513A_DATA_REG);
+		outw(समयr, dev->iobase + AM9513A_DATA_REG);
 		outw(0xFF22, dev->iobase + AM9513A_COM_REG);
-	}
+	पूर्ण
 
 	/* Clear the A/D FIFO and reset the MUX counter */
 	outw(0, dev->iobase + AD_CLEAR_REG);
@@ -418,7 +419,7 @@ static int atmio16d_ai_cmd(struct comedi_device *dev,
 	/* enable this acquisition operation */
 	devpriv->com_reg_1_state |= COMREG1_DAQEN;
 	outw(devpriv->com_reg_1_state, dev->iobase + COM_REG_1);
-	/* enable interrupts for conversion completion */
+	/* enable पूर्णांकerrupts क्रम conversion completion */
 	devpriv->com_reg_1_state |= COMREG1_CONVINTEN;
 	devpriv->com_reg_2_state |= COMREG2_INTEN;
 	outw(devpriv->com_reg_1_state, dev->iobase + COM_REG_1);
@@ -426,44 +427,44 @@ static int atmio16d_ai_cmd(struct comedi_device *dev,
 	/* apply a trigger. this starts the counters! */
 	outw(0, dev->iobase + START_DAQ_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* This will cancel a running acquisition operation */
-static int atmio16d_ai_cancel(struct comedi_device *dev,
-			      struct comedi_subdevice *s)
-{
-	reset_atmio16d(dev);
+अटल पूर्णांक aपंचांगio16d_ai_cancel(काष्ठा comedi_device *dev,
+			      काष्ठा comedi_subdevice *s)
+अणु
+	reset_aपंचांगio16d(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmio16d_ai_eoc(struct comedi_device *dev,
-			   struct comedi_subdevice *s,
-			   struct comedi_insn *insn,
-			   unsigned long context)
-{
-	unsigned int status;
+अटल पूर्णांक aपंचांगio16d_ai_eoc(काष्ठा comedi_device *dev,
+			   काष्ठा comedi_subdevice *s,
+			   काष्ठा comedi_insn *insn,
+			   अचिन्हित दीर्घ context)
+अणु
+	अचिन्हित पूर्णांक status;
 
 	status = inw(dev->iobase + STAT_REG);
-	if (status & STAT_AD_CONVAVAIL)
-		return 0;
-	if (status & STAT_AD_OVERFLOW) {
+	अगर (status & STAT_AD_CONVAVAIL)
+		वापस 0;
+	अगर (status & STAT_AD_OVERFLOW) अणु
 		outw(0, dev->iobase + AD_CLEAR_REG);
-		return -EOVERFLOW;
-	}
-	return -EBUSY;
-}
+		वापस -EOVERFLOW;
+	पूर्ण
+	वापस -EBUSY;
+पूर्ण
 
-static int atmio16d_ai_insn_read(struct comedi_device *dev,
-				 struct comedi_subdevice *s,
-				 struct comedi_insn *insn, unsigned int *data)
-{
-	struct atmio16d_private *devpriv = dev->private;
-	int i;
-	int chan;
-	int gain;
-	int ret;
+अटल पूर्णांक aपंचांगio16d_ai_insn_पढ़ो(काष्ठा comedi_device *dev,
+				 काष्ठा comedi_subdevice *s,
+				 काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा aपंचांगio16d_निजी *devpriv = dev->निजी;
+	पूर्णांक i;
+	पूर्णांक chan;
+	पूर्णांक gain;
+	पूर्णांक ret;
 
 	chan = CR_CHAN(insn->chanspec);
 	gain = CR_RANGE(insn->chanspec);
@@ -476,126 +477,126 @@ static int atmio16d_ai_insn_read(struct comedi_device *dev,
 	/* set the Input MUX gain */
 	outw(chan | (gain << 6), dev->iobase + MUX_GAIN_REG);
 
-	for (i = 0; i < insn->n; i++) {
+	क्रम (i = 0; i < insn->n; i++) अणु
 		/* start the conversion */
 		outw(0, dev->iobase + START_CONVERT_REG);
 
-		/* wait for it to finish */
-		ret = comedi_timeout(dev, s, insn, atmio16d_ai_eoc, 0);
-		if (ret)
-			return ret;
+		/* रुको क्रम it to finish */
+		ret = comedi_समयout(dev, s, insn, aपंचांगio16d_ai_eoc, 0);
+		अगर (ret)
+			वापस ret;
 
-		/* read the data now */
+		/* पढ़ो the data now */
 		data[i] = inw(dev->iobase + AD_FIFO_REG);
-		/* change to two's complement if need be */
-		if (devpriv->adc_coding == adc_2comp)
+		/* change to two's complement अगर need be */
+		अगर (devpriv->adc_coding == adc_2comp)
 			data[i] ^= 0x800;
-	}
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int atmio16d_ao_insn_write(struct comedi_device *dev,
-				  struct comedi_subdevice *s,
-				  struct comedi_insn *insn,
-				  unsigned int *data)
-{
-	struct atmio16d_private *devpriv = dev->private;
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int reg = (chan) ? DAC1_REG : DAC0_REG;
+अटल पूर्णांक aपंचांगio16d_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
+				  काष्ठा comedi_subdevice *s,
+				  काष्ठा comedi_insn *insn,
+				  अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा aपंचांगio16d_निजी *devpriv = dev->निजी;
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक reg = (chan) ? DAC1_REG : DAC0_REG;
 	bool munge = false;
-	int i;
+	पूर्णांक i;
 
-	if (chan == 0 && devpriv->dac0_coding == dac_2comp)
+	अगर (chan == 0 && devpriv->dac0_coding == dac_2comp)
 		munge = true;
-	if (chan == 1 && devpriv->dac1_coding == dac_2comp)
+	अगर (chan == 1 && devpriv->dac1_coding == dac_2comp)
 		munge = true;
 
-	for (i = 0; i < insn->n; i++) {
-		unsigned int val = data[i];
+	क्रम (i = 0; i < insn->n; i++) अणु
+		अचिन्हित पूर्णांक val = data[i];
 
-		s->readback[chan] = val;
+		s->पढ़ोback[chan] = val;
 
-		if (munge)
+		अगर (munge)
 			val ^= 0x800;
 
 		outw(val, dev->iobase + reg);
-	}
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int atmio16d_dio_insn_bits(struct comedi_device *dev,
-				  struct comedi_subdevice *s,
-				  struct comedi_insn *insn,
-				  unsigned int *data)
-{
-	if (comedi_dio_update_state(s, data))
+अटल पूर्णांक aपंचांगio16d_dio_insn_bits(काष्ठा comedi_device *dev,
+				  काष्ठा comedi_subdevice *s,
+				  काष्ठा comedi_insn *insn,
+				  अचिन्हित पूर्णांक *data)
+अणु
+	अगर (comedi_dio_update_state(s, data))
 		outw(s->state, dev->iobase + MIO_16_DIG_OUT_REG);
 
 	data[1] = inw(dev->iobase + MIO_16_DIG_IN_REG);
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int atmio16d_dio_insn_config(struct comedi_device *dev,
-				    struct comedi_subdevice *s,
-				    struct comedi_insn *insn,
-				    unsigned int *data)
-{
-	struct atmio16d_private *devpriv = dev->private;
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int mask;
-	int ret;
+अटल पूर्णांक aपंचांगio16d_dio_insn_config(काष्ठा comedi_device *dev,
+				    काष्ठा comedi_subdevice *s,
+				    काष्ठा comedi_insn *insn,
+				    अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा aपंचांगio16d_निजी *devpriv = dev->निजी;
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक mask;
+	पूर्णांक ret;
 
-	if (chan < 4)
+	अगर (chan < 4)
 		mask = 0x0f;
-	else
+	अन्यथा
 		mask = 0xf0;
 
 	ret = comedi_dio_insn_config(dev, s, insn, data, mask);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	devpriv->com_reg_2_state &= ~(COMREG2_DOUTEN0 | COMREG2_DOUTEN1);
-	if (s->io_bits & 0x0f)
+	अगर (s->io_bits & 0x0f)
 		devpriv->com_reg_2_state |= COMREG2_DOUTEN0;
-	if (s->io_bits & 0xf0)
+	अगर (s->io_bits & 0xf0)
 		devpriv->com_reg_2_state |= COMREG2_DOUTEN1;
 	outw(devpriv->com_reg_2_state, dev->iobase + COM_REG_2);
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int atmio16d_attach(struct comedi_device *dev,
-			   struct comedi_devconfig *it)
-{
-	const struct atmio16_board_t *board = dev->board_ptr;
-	struct atmio16d_private *devpriv;
-	struct comedi_subdevice *s;
-	int ret;
+अटल पूर्णांक aपंचांगio16d_attach(काष्ठा comedi_device *dev,
+			   काष्ठा comedi_devconfig *it)
+अणु
+	स्थिर काष्ठा aपंचांगio16_board_t *board = dev->board_ptr;
+	काष्ठा aपंचांगio16d_निजी *devpriv;
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक ret;
 
 	ret = comedi_request_region(dev, it->options[0], 0x20);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = comedi_alloc_subdevices(dev, 4);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 
-	/* reset the atmio16d hardware */
-	reset_atmio16d(dev);
+	/* reset the aपंचांगio16d hardware */
+	reset_aपंचांगio16d(dev);
 
-	if (it->options[1]) {
-		ret = request_irq(it->options[1], atmio16d_interrupt, 0,
+	अगर (it->options[1]) अणु
+		ret = request_irq(it->options[1], aपंचांगio16d_पूर्णांकerrupt, 0,
 				  dev->board_name, dev);
-		if (ret == 0)
+		अगर (ret == 0)
 			dev->irq = it->options[1];
-	}
+	पूर्ण
 
 	/* set device options */
 	devpriv->adc_mux = it->options[5];
@@ -614,27 +615,27 @@ static int atmio16d_attach(struct comedi_device *dev,
 	s->type = COMEDI_SUBD_AI;
 	s->subdev_flags = SDF_READABLE | SDF_GROUND;
 	s->n_chan = (devpriv->adc_mux ? 16 : 8);
-	s->insn_read = atmio16d_ai_insn_read;
+	s->insn_पढ़ो = aपंचांगio16d_ai_insn_पढ़ो;
 	s->maxdata = 0xfff;	/* 4095 decimal */
-	switch (devpriv->adc_range) {
-	case adc_bipolar10:
-		s->range_table = &range_atmio16d_ai_10_bipolar;
-		break;
-	case adc_bipolar5:
-		s->range_table = &range_atmio16d_ai_5_bipolar;
-		break;
-	case adc_unipolar10:
-		s->range_table = &range_atmio16d_ai_unipolar;
-		break;
-	}
-	if (dev->irq) {
-		dev->read_subdev = s;
+	चयन (devpriv->adc_range) अणु
+	हाल adc_bipolar10:
+		s->range_table = &range_aपंचांगio16d_ai_10_bipolar;
+		अवरोध;
+	हाल adc_bipolar5:
+		s->range_table = &range_aपंचांगio16d_ai_5_bipolar;
+		अवरोध;
+	हाल adc_unipolar10:
+		s->range_table = &range_aपंचांगio16d_ai_unipolar;
+		अवरोध;
+	पूर्ण
+	अगर (dev->irq) अणु
+		dev->पढ़ो_subdev = s;
 		s->subdev_flags |= SDF_CMD_READ;
 		s->len_chanlist = 16;
-		s->do_cmdtest = atmio16d_ai_cmdtest;
-		s->do_cmd = atmio16d_ai_cmd;
-		s->cancel = atmio16d_ai_cancel;
-	}
+		s->करो_cmdtest = aपंचांगio16d_ai_cmdtest;
+		s->करो_cmd = aपंचांगio16d_ai_cmd;
+		s->cancel = aपंचांगio16d_ai_cancel;
+	पूर्ण
 
 	/* ao subdevice */
 	s = &dev->subdevices[1];
@@ -643,86 +644,86 @@ static int atmio16d_attach(struct comedi_device *dev,
 	s->n_chan = 2;
 	s->maxdata = 0xfff;	/* 4095 decimal */
 	s->range_table_list = devpriv->ao_range_type_list;
-	switch (devpriv->dac0_range) {
-	case dac_bipolar:
+	चयन (devpriv->dac0_range) अणु
+	हाल dac_bipolar:
 		devpriv->ao_range_type_list[0] = &range_bipolar10;
-		break;
-	case dac_unipolar:
+		अवरोध;
+	हाल dac_unipolar:
 		devpriv->ao_range_type_list[0] = &range_unipolar10;
-		break;
-	}
-	switch (devpriv->dac1_range) {
-	case dac_bipolar:
+		अवरोध;
+	पूर्ण
+	चयन (devpriv->dac1_range) अणु
+	हाल dac_bipolar:
 		devpriv->ao_range_type_list[1] = &range_bipolar10;
-		break;
-	case dac_unipolar:
+		अवरोध;
+	हाल dac_unipolar:
 		devpriv->ao_range_type_list[1] = &range_unipolar10;
-		break;
-	}
-	s->insn_write = atmio16d_ao_insn_write;
+		अवरोध;
+	पूर्ण
+	s->insn_ग_लिखो = aपंचांगio16d_ao_insn_ग_लिखो;
 
-	ret = comedi_alloc_subdev_readback(s);
-	if (ret)
-		return ret;
+	ret = comedi_alloc_subdev_पढ़ोback(s);
+	अगर (ret)
+		वापस ret;
 
 	/* Digital I/O */
 	s = &dev->subdevices[2];
 	s->type = COMEDI_SUBD_DIO;
 	s->subdev_flags = SDF_WRITABLE | SDF_READABLE;
 	s->n_chan = 8;
-	s->insn_bits = atmio16d_dio_insn_bits;
-	s->insn_config = atmio16d_dio_insn_config;
+	s->insn_bits = aपंचांगio16d_dio_insn_bits;
+	s->insn_config = aपंचांगio16d_dio_insn_config;
 	s->maxdata = 1;
 	s->range_table = &range_digital;
 
 	/* 8255 subdevice */
 	s = &dev->subdevices[3];
-	if (board->has_8255) {
-		ret = subdev_8255_init(dev, s, NULL, 0x00);
-		if (ret)
-			return ret;
-	} else {
+	अगर (board->has_8255) अणु
+		ret = subdev_8255_init(dev, s, शून्य, 0x00);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		s->type = COMEDI_SUBD_UNUSED;
-	}
+	पूर्ण
 
-/* don't yet know how to deal with counter/timers */
-#if 0
+/* करोn't yet know how to deal with counter/समयrs */
+#अगर 0
 	s = &dev->subdevices[4];
-	/* do */
+	/* करो */
 	s->type = COMEDI_SUBD_TIMER;
 	s->n_chan = 0;
 	s->maxdata = 0
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void atmio16d_detach(struct comedi_device *dev)
-{
-	reset_atmio16d(dev);
+अटल व्योम aपंचांगio16d_detach(काष्ठा comedi_device *dev)
+अणु
+	reset_aपंचांगio16d(dev);
 	comedi_legacy_detach(dev);
-}
+पूर्ण
 
-static const struct atmio16_board_t atmio16_boards[] = {
-	{
+अटल स्थिर काष्ठा aपंचांगio16_board_t aपंचांगio16_boards[] = अणु
+	अणु
 		.name		= "atmio16",
 		.has_8255	= 0,
-	}, {
+	पूर्ण, अणु
 		.name		= "atmio16d",
 		.has_8255	= 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct comedi_driver atmio16d_driver = {
+अटल काष्ठा comedi_driver aपंचांगio16d_driver = अणु
 	.driver_name	= "atmio16",
 	.module		= THIS_MODULE,
-	.attach		= atmio16d_attach,
-	.detach		= atmio16d_detach,
-	.board_name	= &atmio16_boards[0].name,
-	.num_names	= ARRAY_SIZE(atmio16_boards),
-	.offset		= sizeof(struct atmio16_board_t),
-};
-module_comedi_driver(atmio16d_driver);
+	.attach		= aपंचांगio16d_attach,
+	.detach		= aपंचांगio16d_detach,
+	.board_name	= &aपंचांगio16_boards[0].name,
+	.num_names	= ARRAY_SIZE(aपंचांगio16_boards),
+	.offset		= माप(काष्ठा aपंचांगio16_board_t),
+पूर्ण;
+module_comedi_driver(aपंचांगio16d_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");
 MODULE_DESCRIPTION("Comedi low-level driver");

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 1999 Eric Youngdale
  * Copyright (C) 2014 Christoph Hellwig
@@ -9,184 +10,184 @@
  *                        of people at Linux Expo.
  */
 
-#include <linux/bio.h>
-#include <linux/bitops.h>
-#include <linux/blkdev.h>
-#include <linux/completion.h>
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <linux/hardirq.h>
-#include <linux/scatterlist.h>
-#include <linux/blk-mq.h>
-#include <linux/ratelimit.h>
-#include <asm/unaligned.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/bitops.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/blk-mq.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_dbg.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_driver.h>
-#include <scsi/scsi_eh.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_transport.h> /* __scsi_init_queue() */
-#include <scsi/scsi_dh.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_dbg.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_driver.h>
+#समावेश <scsi/scsi_eh.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_transport.h> /* __scsi_init_queue() */
+#समावेश <scsi/scsi_dh.h>
 
-#include <trace/events/scsi.h>
+#समावेश <trace/events/scsi.h>
 
-#include "scsi_debugfs.h"
-#include "scsi_priv.h"
-#include "scsi_logging.h"
+#समावेश "scsi_debugfs.h"
+#समावेश "scsi_priv.h"
+#समावेश "scsi_logging.h"
 
 /*
- * Size of integrity metadata is usually small, 1 inline sg should
- * cover normal cases.
+ * Size of पूर्णांकegrity metadata is usually small, 1 अंतरभूत sg should
+ * cover normal हालs.
  */
-#ifdef CONFIG_ARCH_NO_SG_CHAIN
-#define  SCSI_INLINE_PROT_SG_CNT  0
-#define  SCSI_INLINE_SG_CNT  0
-#else
-#define  SCSI_INLINE_PROT_SG_CNT  1
-#define  SCSI_INLINE_SG_CNT  2
-#endif
+#अगर_घोषित CONFIG_ARCH_NO_SG_CHAIN
+#घोषणा  SCSI_INLINE_PROT_SG_CNT  0
+#घोषणा  SCSI_INLINE_SG_CNT  0
+#अन्यथा
+#घोषणा  SCSI_INLINE_PROT_SG_CNT  1
+#घोषणा  SCSI_INLINE_SG_CNT  2
+#पूर्ण_अगर
 
-static struct kmem_cache *scsi_sense_cache;
-static DEFINE_MUTEX(scsi_sense_cache_mutex);
+अटल काष्ठा kmem_cache *scsi_sense_cache;
+अटल DEFINE_MUTEX(scsi_sense_cache_mutex);
 
-static void scsi_mq_uninit_cmd(struct scsi_cmnd *cmd);
+अटल व्योम scsi_mq_uninit_cmd(काष्ठा scsi_cmnd *cmd);
 
-int scsi_init_sense_cache(struct Scsi_Host *shost)
-{
-	int ret = 0;
+पूर्णांक scsi_init_sense_cache(काष्ठा Scsi_Host *shost)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&scsi_sense_cache_mutex);
-	if (!scsi_sense_cache) {
+	अगर (!scsi_sense_cache) अणु
 		scsi_sense_cache =
 			kmem_cache_create_usercopy("scsi_sense_cache",
 				SCSI_SENSE_BUFFERSIZE, 0, SLAB_HWCACHE_ALIGN,
-				0, SCSI_SENSE_BUFFERSIZE, NULL);
-		if (!scsi_sense_cache)
+				0, SCSI_SENSE_BUFFERSIZE, शून्य);
+		अगर (!scsi_sense_cache)
 			ret = -ENOMEM;
-	}
+	पूर्ण
 	mutex_unlock(&scsi_sense_cache_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * When to reinvoke queueing after a resource shortage. It's 3 msecs to
+ * When to reinvoke queueing after a resource लघुage. It's 3 msecs to
  * not change behaviour from the previous unplug mechanism, experimentation
  * may prove this needs changing.
  */
-#define SCSI_QUEUE_DELAY	3
+#घोषणा SCSI_QUEUE_DELAY	3
 
-static void
-scsi_set_blocked(struct scsi_cmnd *cmd, int reason)
-{
-	struct Scsi_Host *host = cmd->device->host;
-	struct scsi_device *device = cmd->device;
-	struct scsi_target *starget = scsi_target(device);
+अटल व्योम
+scsi_set_blocked(काष्ठा scsi_cmnd *cmd, पूर्णांक reason)
+अणु
+	काष्ठा Scsi_Host *host = cmd->device->host;
+	काष्ठा scsi_device *device = cmd->device;
+	काष्ठा scsi_target *starget = scsi_target(device);
 
 	/*
-	 * Set the appropriate busy bit for the device/host.
+	 * Set the appropriate busy bit क्रम the device/host.
 	 *
 	 * If the host/device isn't busy, assume that something actually
 	 * completed, and that we should be able to queue a command now.
 	 *
 	 * Note that the prior mid-layer assumption that any host could
 	 * always queue at least one command is now broken.  The mid-layer
-	 * will implement a user specifiable stall (see
+	 * will implement a user specअगरiable stall (see
 	 * scsi_host.max_host_blocked and scsi_device.max_device_blocked)
-	 * if a command is requeued with no other commands outstanding
-	 * either for the device or for the host.
+	 * अगर a command is requeued with no other commands outstanding
+	 * either क्रम the device or क्रम the host.
 	 */
-	switch (reason) {
-	case SCSI_MLQUEUE_HOST_BUSY:
+	चयन (reason) अणु
+	हाल SCSI_MLQUEUE_HOST_BUSY:
 		atomic_set(&host->host_blocked, host->max_host_blocked);
-		break;
-	case SCSI_MLQUEUE_DEVICE_BUSY:
-	case SCSI_MLQUEUE_EH_RETRY:
+		अवरोध;
+	हाल SCSI_MLQUEUE_DEVICE_BUSY:
+	हाल SCSI_MLQUEUE_EH_RETRY:
 		atomic_set(&device->device_blocked,
 			   device->max_device_blocked);
-		break;
-	case SCSI_MLQUEUE_TARGET_BUSY:
+		अवरोध;
+	हाल SCSI_MLQUEUE_TARGET_BUSY:
 		atomic_set(&starget->target_blocked,
 			   starget->max_target_blocked);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void scsi_mq_requeue_cmd(struct scsi_cmnd *cmd)
-{
-	if (cmd->request->rq_flags & RQF_DONTPREP) {
+अटल व्योम scsi_mq_requeue_cmd(काष्ठा scsi_cmnd *cmd)
+अणु
+	अगर (cmd->request->rq_flags & RQF_DONTPREP) अणु
 		cmd->request->rq_flags &= ~RQF_DONTPREP;
 		scsi_mq_uninit_cmd(cmd);
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ON_ONCE(true);
-	}
+	पूर्ण
 	blk_mq_requeue_request(cmd->request, true);
-}
+पूर्ण
 
 /**
- * __scsi_queue_insert - private queue insertion
+ * __scsi_queue_insert - निजी queue insertion
  * @cmd: The SCSI command being requeued
- * @reason:  The reason for the requeue
+ * @reason:  The reason क्रम the requeue
  * @unbusy: Whether the queue should be unbusied
  *
- * This is a private queue insertion.  The public interface
+ * This is a निजी queue insertion.  The खुला पूर्णांकerface
  * scsi_queue_insert() always assumes the queue should be unbusied
- * because it's always called before the completion.  This function is
- * for a requeue after completion, which should only occur in this
+ * because it's always called beक्रमe the completion.  This function is
+ * क्रम a requeue after completion, which should only occur in this
  * file.
  */
-static void __scsi_queue_insert(struct scsi_cmnd *cmd, int reason, bool unbusy)
-{
-	struct scsi_device *device = cmd->device;
+अटल व्योम __scsi_queue_insert(काष्ठा scsi_cmnd *cmd, पूर्णांक reason, bool unbusy)
+अणु
+	काष्ठा scsi_device *device = cmd->device;
 
-	SCSI_LOG_MLQUEUE(1, scmd_printk(KERN_INFO, cmd,
+	SCSI_LOG_MLQUEUE(1, scmd_prपूर्णांकk(KERN_INFO, cmd,
 		"Inserting command %p into mlqueue\n", cmd));
 
 	scsi_set_blocked(cmd, reason);
 
 	/*
-	 * Decrement the counters, since these commands are no longer
+	 * Decrement the counters, since these commands are no दीर्घer
 	 * active on the host/device.
 	 */
-	if (unbusy)
+	अगर (unbusy)
 		scsi_device_unbusy(device, cmd);
 
 	/*
-	 * Requeue this command.  It will go before all other commands
-	 * that are already in the queue. Schedule requeue work under
+	 * Requeue this command.  It will go beक्रमe all other commands
+	 * that are alपढ़ोy in the queue. Schedule requeue work under
 	 * lock such that the kblockd_schedule_work() call happens
-	 * before blk_cleanup_queue() finishes.
+	 * beक्रमe blk_cleanup_queue() finishes.
 	 */
 	cmd->result = 0;
 
 	blk_mq_requeue_request(cmd->request, true);
-}
+पूर्ण
 
 /**
  * scsi_queue_insert - Reinsert a command in the queue.
  * @cmd:    command that we are adding to queue.
  * @reason: why we are inserting command to queue.
  *
- * We do this for one of two cases. Either the host is busy and it cannot accept
- * any more commands for the time being, or the device returned QUEUE_FULL and
+ * We करो this क्रम one of two हालs. Either the host is busy and it cannot accept
+ * any more commands क्रम the समय being, or the device वापसed QUEUE_FULL and
  * can accept no more commands.
  *
- * Context: This could be called either from an interrupt context or a normal
+ * Context: This could be called either from an पूर्णांकerrupt context or a normal
  * process context.
  */
-void scsi_queue_insert(struct scsi_cmnd *cmd, int reason)
-{
+व्योम scsi_queue_insert(काष्ठा scsi_cmnd *cmd, पूर्णांक reason)
+अणु
 	__scsi_queue_insert(cmd, reason, true);
-}
+पूर्ण
 
 
 /**
- * __scsi_execute - insert request and wait for the result
+ * __scsi_execute - insert request and रुको क्रम the result
  * @sdev:	scsi device
  * @cmd:	scsi command
  * @data_direction: data direction
@@ -194,368 +195,368 @@ void scsi_queue_insert(struct scsi_cmnd *cmd, int reason)
  * @bufflen:	len of buffer
  * @sense:	optional sense buffer
  * @sshdr:	optional decoded sense header
- * @timeout:	request timeout in seconds
- * @retries:	number of times to retry request
- * @flags:	flags for ->cmd_flags
- * @rq_flags:	flags for ->rq_flags
+ * @समयout:	request समयout in seconds
+ * @retries:	number of बार to retry request
+ * @flags:	flags क्रम ->cmd_flags
+ * @rq_flags:	flags क्रम ->rq_flags
  * @resid:	optional residual length
  *
- * Returns the scsi_cmnd result field if a command was executed, or a negative
- * Linux error code if we didn't get that far.
+ * Returns the scsi_cmnd result field अगर a command was executed, or a negative
+ * Linux error code अगर we didn't get that far.
  */
-int __scsi_execute(struct scsi_device *sdev, const unsigned char *cmd,
-		 int data_direction, void *buffer, unsigned bufflen,
-		 unsigned char *sense, struct scsi_sense_hdr *sshdr,
-		 int timeout, int retries, u64 flags, req_flags_t rq_flags,
-		 int *resid)
-{
-	struct request *req;
-	struct scsi_request *rq;
-	int ret = DRIVER_ERROR << 24;
+पूर्णांक __scsi_execute(काष्ठा scsi_device *sdev, स्थिर अचिन्हित अक्षर *cmd,
+		 पूर्णांक data_direction, व्योम *buffer, अचिन्हित bufflen,
+		 अचिन्हित अक्षर *sense, काष्ठा scsi_sense_hdr *sshdr,
+		 पूर्णांक समयout, पूर्णांक retries, u64 flags, req_flags_t rq_flags,
+		 पूर्णांक *resid)
+अणु
+	काष्ठा request *req;
+	काष्ठा scsi_request *rq;
+	पूर्णांक ret = DRIVER_ERROR << 24;
 
 	req = blk_get_request(sdev->request_queue,
 			data_direction == DMA_TO_DEVICE ?
 			REQ_OP_SCSI_OUT : REQ_OP_SCSI_IN,
 			rq_flags & RQF_PM ? BLK_MQ_REQ_PM : 0);
-	if (IS_ERR(req))
-		return ret;
+	अगर (IS_ERR(req))
+		वापस ret;
 	rq = scsi_req(req);
 
-	if (bufflen &&	blk_rq_map_kern(sdev->request_queue, req,
+	अगर (bufflen &&	blk_rq_map_kern(sdev->request_queue, req,
 					buffer, bufflen, GFP_NOIO))
-		goto out;
+		जाओ out;
 
 	rq->cmd_len = COMMAND_SIZE(cmd[0]);
-	memcpy(rq->cmd, cmd, rq->cmd_len);
+	स_नकल(rq->cmd, cmd, rq->cmd_len);
 	rq->retries = retries;
-	req->timeout = timeout;
+	req->समयout = समयout;
 	req->cmd_flags |= flags;
 	req->rq_flags |= rq_flags | RQF_QUIET;
 
 	/*
 	 * head injection *required* here otherwise quiesce won't work
 	 */
-	blk_execute_rq(NULL, req, 1);
+	blk_execute_rq(शून्य, req, 1);
 
 	/*
 	 * Some devices (USB mass-storage in particular) may transfer
 	 * garbage data together with a residue indicating that the data
-	 * is invalid.  Prevent the garbage from being misinterpreted
+	 * is invalid.  Prevent the garbage from being misपूर्णांकerpreted
 	 * and prevent security leaks by zeroing out the excess data.
 	 */
-	if (unlikely(rq->resid_len > 0 && rq->resid_len <= bufflen))
-		memset(buffer + (bufflen - rq->resid_len), 0, rq->resid_len);
+	अगर (unlikely(rq->resid_len > 0 && rq->resid_len <= bufflen))
+		स_रखो(buffer + (bufflen - rq->resid_len), 0, rq->resid_len);
 
-	if (resid)
+	अगर (resid)
 		*resid = rq->resid_len;
-	if (sense && rq->sense_len)
-		memcpy(sense, rq->sense, SCSI_SENSE_BUFFERSIZE);
-	if (sshdr)
+	अगर (sense && rq->sense_len)
+		स_नकल(sense, rq->sense, SCSI_SENSE_BUFFERSIZE);
+	अगर (sshdr)
 		scsi_normalize_sense(rq->sense, rq->sense_len, sshdr);
 	ret = rq->result;
  out:
 	blk_put_request(req);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(__scsi_execute);
 
 /*
- * Wake up the error handler if necessary. Avoid as follows that the error
- * handler is not woken up if host in-flight requests number ==
+ * Wake up the error handler अगर necessary. Aव्योम as follows that the error
+ * handler is not woken up अगर host in-flight requests number ==
  * shost->host_failed: use call_rcu() in scsi_eh_scmd_add() in combination
- * with an RCU read lock in this function to ensure that this function in
- * its entirety either finishes before scsi_eh_scmd_add() increases the
+ * with an RCU पढ़ो lock in this function to ensure that this function in
+ * its entirety either finishes beक्रमe scsi_eh_scmd_add() increases the
  * host_failed counter or that it notices the shost state change made by
  * scsi_eh_scmd_add().
  */
-static void scsi_dec_host_busy(struct Scsi_Host *shost, struct scsi_cmnd *cmd)
-{
-	unsigned long flags;
+अटल व्योम scsi_dec_host_busy(काष्ठा Scsi_Host *shost, काष्ठा scsi_cmnd *cmd)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	__clear_bit(SCMD_STATE_INFLIGHT, &cmd->state);
-	if (unlikely(scsi_host_in_recovery(shost))) {
+	अगर (unlikely(scsi_host_in_recovery(shost))) अणु
 		spin_lock_irqsave(shost->host_lock, flags);
-		if (shost->host_failed || shost->host_eh_scheduled)
+		अगर (shost->host_failed || shost->host_eh_scheduled)
 			scsi_eh_wakeup(shost);
 		spin_unlock_irqrestore(shost->host_lock, flags);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-void scsi_device_unbusy(struct scsi_device *sdev, struct scsi_cmnd *cmd)
-{
-	struct Scsi_Host *shost = sdev->host;
-	struct scsi_target *starget = scsi_target(sdev);
+व्योम scsi_device_unbusy(काष्ठा scsi_device *sdev, काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा Scsi_Host *shost = sdev->host;
+	काष्ठा scsi_target *starget = scsi_target(sdev);
 
 	scsi_dec_host_busy(shost, cmd);
 
-	if (starget->can_queue > 0)
+	अगर (starget->can_queue > 0)
 		atomic_dec(&starget->target_busy);
 
-	sbitmap_put(&sdev->budget_map, cmd->budget_token);
+	sbiपंचांगap_put(&sdev->budget_map, cmd->budget_token);
 	cmd->budget_token = -1;
-}
+पूर्ण
 
-static void scsi_kick_queue(struct request_queue *q)
-{
+अटल व्योम scsi_kick_queue(काष्ठा request_queue *q)
+अणु
 	blk_mq_run_hw_queues(q, false);
-}
+पूर्ण
 
 /*
- * Called for single_lun devices on IO completion. Clear starget_sdev_user,
- * and call blk_run_queue for all the scsi_devices on the target -
+ * Called क्रम single_lun devices on IO completion. Clear starget_sdev_user,
+ * and call blk_run_queue क्रम all the scsi_devices on the target -
  * including current_sdev first.
  *
  * Called with *no* scsi locks held.
  */
-static void scsi_single_lun_run(struct scsi_device *current_sdev)
-{
-	struct Scsi_Host *shost = current_sdev->host;
-	struct scsi_device *sdev, *tmp;
-	struct scsi_target *starget = scsi_target(current_sdev);
-	unsigned long flags;
+अटल व्योम scsi_single_lun_run(काष्ठा scsi_device *current_sdev)
+अणु
+	काष्ठा Scsi_Host *shost = current_sdev->host;
+	काष्ठा scsi_device *sdev, *पंचांगp;
+	काष्ठा scsi_target *starget = scsi_target(current_sdev);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(shost->host_lock, flags);
-	starget->starget_sdev_user = NULL;
+	starget->starget_sdev_user = शून्य;
 	spin_unlock_irqrestore(shost->host_lock, flags);
 
 	/*
-	 * Call blk_run_queue for all LUNs on the target, starting with
+	 * Call blk_run_queue क्रम all LUNs on the target, starting with
 	 * current_sdev. We race with others (to set starget_sdev_user),
-	 * but in most cases, we will be first. Ideally, each LU on the
-	 * target would get some limited time or requests on the target.
+	 * but in most हालs, we will be first. Ideally, each LU on the
+	 * target would get some limited समय or requests on the target.
 	 */
 	scsi_kick_queue(current_sdev->request_queue);
 
 	spin_lock_irqsave(shost->host_lock, flags);
-	if (starget->starget_sdev_user)
-		goto out;
-	list_for_each_entry_safe(sdev, tmp, &starget->devices,
-			same_target_siblings) {
-		if (sdev == current_sdev)
-			continue;
-		if (scsi_device_get(sdev))
-			continue;
+	अगर (starget->starget_sdev_user)
+		जाओ out;
+	list_क्रम_each_entry_safe(sdev, पंचांगp, &starget->devices,
+			same_target_siblings) अणु
+		अगर (sdev == current_sdev)
+			जारी;
+		अगर (scsi_device_get(sdev))
+			जारी;
 
 		spin_unlock_irqrestore(shost->host_lock, flags);
 		scsi_kick_queue(sdev->request_queue);
 		spin_lock_irqsave(shost->host_lock, flags);
 
 		scsi_device_put(sdev);
-	}
+	पूर्ण
  out:
 	spin_unlock_irqrestore(shost->host_lock, flags);
-}
+पूर्ण
 
-static inline bool scsi_device_is_busy(struct scsi_device *sdev)
-{
-	if (scsi_device_busy(sdev) >= sdev->queue_depth)
-		return true;
-	if (atomic_read(&sdev->device_blocked) > 0)
-		return true;
-	return false;
-}
+अटल अंतरभूत bool scsi_device_is_busy(काष्ठा scsi_device *sdev)
+अणु
+	अगर (scsi_device_busy(sdev) >= sdev->queue_depth)
+		वापस true;
+	अगर (atomic_पढ़ो(&sdev->device_blocked) > 0)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static inline bool scsi_target_is_busy(struct scsi_target *starget)
-{
-	if (starget->can_queue > 0) {
-		if (atomic_read(&starget->target_busy) >= starget->can_queue)
-			return true;
-		if (atomic_read(&starget->target_blocked) > 0)
-			return true;
-	}
-	return false;
-}
+अटल अंतरभूत bool scsi_target_is_busy(काष्ठा scsi_target *starget)
+अणु
+	अगर (starget->can_queue > 0) अणु
+		अगर (atomic_पढ़ो(&starget->target_busy) >= starget->can_queue)
+			वापस true;
+		अगर (atomic_पढ़ो(&starget->target_blocked) > 0)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static inline bool scsi_host_is_busy(struct Scsi_Host *shost)
-{
-	if (atomic_read(&shost->host_blocked) > 0)
-		return true;
-	if (shost->host_self_blocked)
-		return true;
-	return false;
-}
+अटल अंतरभूत bool scsi_host_is_busy(काष्ठा Scsi_Host *shost)
+अणु
+	अगर (atomic_पढ़ो(&shost->host_blocked) > 0)
+		वापस true;
+	अगर (shost->host_self_blocked)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static void scsi_starved_list_run(struct Scsi_Host *shost)
-{
+अटल व्योम scsi_starved_list_run(काष्ठा Scsi_Host *shost)
+अणु
 	LIST_HEAD(starved_list);
-	struct scsi_device *sdev;
-	unsigned long flags;
+	काष्ठा scsi_device *sdev;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(shost->host_lock, flags);
 	list_splice_init(&shost->starved_list, &starved_list);
 
-	while (!list_empty(&starved_list)) {
-		struct request_queue *slq;
+	जबतक (!list_empty(&starved_list)) अणु
+		काष्ठा request_queue *slq;
 
 		/*
-		 * As long as shost is accepting commands and we have
+		 * As दीर्घ as shost is accepting commands and we have
 		 * starved queues, call blk_run_queue. scsi_request_fn
 		 * drops the queue_lock and can add us back to the
 		 * starved_list.
 		 *
 		 * host_lock protects the starved_list and starved_entry.
-		 * scsi_request_fn must get the host_lock before checking
-		 * or modifying starved_list or starved_entry.
+		 * scsi_request_fn must get the host_lock beक्रमe checking
+		 * or modअगरying starved_list or starved_entry.
 		 */
-		if (scsi_host_is_busy(shost))
-			break;
+		अगर (scsi_host_is_busy(shost))
+			अवरोध;
 
 		sdev = list_entry(starved_list.next,
-				  struct scsi_device, starved_entry);
+				  काष्ठा scsi_device, starved_entry);
 		list_del_init(&sdev->starved_entry);
-		if (scsi_target_is_busy(scsi_target(sdev))) {
+		अगर (scsi_target_is_busy(scsi_target(sdev))) अणु
 			list_move_tail(&sdev->starved_entry,
 				       &shost->starved_list);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
-		 * Once we drop the host lock, a racing scsi_remove_device()
-		 * call may remove the sdev from the starved list and destroy
+		 * Once we drop the host lock, a racing scsi_हटाओ_device()
+		 * call may हटाओ the sdev from the starved list and destroy
 		 * it and the queue.  Mitigate by taking a reference to the
 		 * queue and never touching the sdev again after we drop the
-		 * host lock.  Note: if __scsi_remove_device() invokes
-		 * blk_cleanup_queue() before the queue is run from this
-		 * function then blk_run_queue() will return immediately since
+		 * host lock.  Note: अगर __scsi_हटाओ_device() invokes
+		 * blk_cleanup_queue() beक्रमe the queue is run from this
+		 * function then blk_run_queue() will वापस immediately since
 		 * blk_cleanup_queue() marks the queue with QUEUE_FLAG_DYING.
 		 */
 		slq = sdev->request_queue;
-		if (!blk_get_queue(slq))
-			continue;
+		अगर (!blk_get_queue(slq))
+			जारी;
 		spin_unlock_irqrestore(shost->host_lock, flags);
 
 		scsi_kick_queue(slq);
 		blk_put_queue(slq);
 
 		spin_lock_irqsave(shost->host_lock, flags);
-	}
+	पूर्ण
 	/* put any unprocessed entries back */
 	list_splice(&starved_list, &shost->starved_list);
 	spin_unlock_irqrestore(shost->host_lock, flags);
-}
+पूर्ण
 
 /**
  * scsi_run_queue - Select a proper request queue to serve next.
  * @q:  last request's queue
  *
- * The previous command was completely finished, start a new one if possible.
+ * The previous command was completely finished, start a new one अगर possible.
  */
-static void scsi_run_queue(struct request_queue *q)
-{
-	struct scsi_device *sdev = q->queuedata;
+अटल व्योम scsi_run_queue(काष्ठा request_queue *q)
+अणु
+	काष्ठा scsi_device *sdev = q->queuedata;
 
-	if (scsi_target(sdev)->single_lun)
+	अगर (scsi_target(sdev)->single_lun)
 		scsi_single_lun_run(sdev);
-	if (!list_empty(&sdev->host->starved_list))
+	अगर (!list_empty(&sdev->host->starved_list))
 		scsi_starved_list_run(sdev->host);
 
 	blk_mq_run_hw_queues(q, false);
-}
+पूर्ण
 
-void scsi_requeue_run_queue(struct work_struct *work)
-{
-	struct scsi_device *sdev;
-	struct request_queue *q;
+व्योम scsi_requeue_run_queue(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा scsi_device *sdev;
+	काष्ठा request_queue *q;
 
-	sdev = container_of(work, struct scsi_device, requeue_work);
+	sdev = container_of(work, काष्ठा scsi_device, requeue_work);
 	q = sdev->request_queue;
 	scsi_run_queue(q);
-}
+पूर्ण
 
-void scsi_run_host_queues(struct Scsi_Host *shost)
-{
-	struct scsi_device *sdev;
+व्योम scsi_run_host_queues(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा scsi_device *sdev;
 
-	shost_for_each_device(sdev, shost)
+	shost_क्रम_each_device(sdev, shost)
 		scsi_run_queue(sdev->request_queue);
-}
+पूर्ण
 
-static void scsi_uninit_cmd(struct scsi_cmnd *cmd)
-{
-	if (!blk_rq_is_passthrough(cmd->request)) {
-		struct scsi_driver *drv = scsi_cmd_to_driver(cmd);
+अटल व्योम scsi_uninit_cmd(काष्ठा scsi_cmnd *cmd)
+अणु
+	अगर (!blk_rq_is_passthrough(cmd->request)) अणु
+		काष्ठा scsi_driver *drv = scsi_cmd_to_driver(cmd);
 
-		if (drv->uninit_command)
+		अगर (drv->uninit_command)
 			drv->uninit_command(cmd);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void scsi_free_sgtables(struct scsi_cmnd *cmd)
-{
-	if (cmd->sdb.table.nents)
-		sg_free_table_chained(&cmd->sdb.table,
+व्योम scsi_मुक्त_sgtables(काष्ठा scsi_cmnd *cmd)
+अणु
+	अगर (cmd->sdb.table.nents)
+		sg_मुक्त_table_chained(&cmd->sdb.table,
 				SCSI_INLINE_SG_CNT);
-	if (scsi_prot_sg_count(cmd))
-		sg_free_table_chained(&cmd->prot_sdb->table,
+	अगर (scsi_prot_sg_count(cmd))
+		sg_मुक्त_table_chained(&cmd->prot_sdb->table,
 				SCSI_INLINE_PROT_SG_CNT);
-}
-EXPORT_SYMBOL_GPL(scsi_free_sgtables);
+पूर्ण
+EXPORT_SYMBOL_GPL(scsi_मुक्त_sgtables);
 
-static void scsi_mq_uninit_cmd(struct scsi_cmnd *cmd)
-{
-	scsi_free_sgtables(cmd);
+अटल व्योम scsi_mq_uninit_cmd(काष्ठा scsi_cmnd *cmd)
+अणु
+	scsi_मुक्त_sgtables(cmd);
 	scsi_uninit_cmd(cmd);
-}
+पूर्ण
 
-static void scsi_run_queue_async(struct scsi_device *sdev)
-{
-	if (scsi_target(sdev)->single_lun ||
-	    !list_empty(&sdev->host->starved_list)) {
+अटल व्योम scsi_run_queue_async(काष्ठा scsi_device *sdev)
+अणु
+	अगर (scsi_target(sdev)->single_lun ||
+	    !list_empty(&sdev->host->starved_list)) अणु
 		kblockd_schedule_work(&sdev->requeue_work);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * smp_mb() present in sbitmap_queue_clear() or implied in
-		 * .end_io is for ordering writing .device_busy in
-		 * scsi_device_unbusy() and reading sdev->restarts.
+		 * smp_mb() present in sbiपंचांगap_queue_clear() or implied in
+		 * .end_io is क्रम ordering writing .device_busy in
+		 * scsi_device_unbusy() and पढ़ोing sdev->restarts.
 		 */
-		int old = atomic_read(&sdev->restarts);
+		पूर्णांक old = atomic_पढ़ो(&sdev->restarts);
 
 		/*
-		 * ->restarts has to be kept as non-zero if new budget
+		 * ->restarts has to be kept as non-zero अगर new budget
 		 *  contention occurs.
 		 *
 		 *  No need to run queue when either another re-run
 		 *  queue wins in updating ->restarts or a new budget
 		 *  contention occurs.
 		 */
-		if (old && atomic_cmpxchg(&sdev->restarts, old, 0) == old)
+		अगर (old && atomic_cmpxchg(&sdev->restarts, old, 0) == old)
 			blk_mq_run_hw_queues(sdev->request_queue, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Returns false when no more bytes to process, true if there are more */
-static bool scsi_end_request(struct request *req, blk_status_t error,
-		unsigned int bytes)
-{
-	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(req);
-	struct scsi_device *sdev = cmd->device;
-	struct request_queue *q = sdev->request_queue;
+/* Returns false when no more bytes to process, true अगर there are more */
+अटल bool scsi_end_request(काष्ठा request *req, blk_status_t error,
+		अचिन्हित पूर्णांक bytes)
+अणु
+	काष्ठा scsi_cmnd *cmd = blk_mq_rq_to_pdu(req);
+	काष्ठा scsi_device *sdev = cmd->device;
+	काष्ठा request_queue *q = sdev->request_queue;
 
-	if (blk_update_request(req, error, bytes))
-		return true;
+	अगर (blk_update_request(req, error, bytes))
+		वापस true;
 
-	if (blk_queue_add_random(q))
-		add_disk_randomness(req->rq_disk);
+	अगर (blk_queue_add_अक्रमom(q))
+		add_disk_अक्रमomness(req->rq_disk);
 
-	if (!blk_rq_is_scsi(req)) {
+	अगर (!blk_rq_is_scsi(req)) अणु
 		WARN_ON_ONCE(!(cmd->flags & SCMD_INITIALIZED));
 		cmd->flags &= ~SCMD_INITIALIZED;
-	}
+	पूर्ण
 
 	/*
 	 * Calling rcu_barrier() is not necessary here because the
 	 * SCSI error handler guarantees that the function called by
-	 * call_rcu() has been called before scsi_end_request() is
+	 * call_rcu() has been called beक्रमe scsi_end_request() is
 	 * called.
 	 */
 	destroy_rcu_head(&cmd->rcu);
 
 	/*
-	 * In the MQ case the command gets freed by __blk_mq_end_request,
-	 * so we have to do all cleanup that depends on it earlier.
+	 * In the MQ हाल the command माला_लो मुक्तd by __blk_mq_end_request,
+	 * so we have to करो all cleanup that depends on it earlier.
 	 *
 	 * We also can't kick the queues from irq context, so we
 	 * will have to defer it to a workqueue.
@@ -563,7 +564,7 @@ static bool scsi_end_request(struct request *req, blk_status_t error,
 	scsi_mq_uninit_cmd(cmd);
 
 	/*
-	 * queue is still alive, so grab the ref for preventing it
+	 * queue is still alive, so grab the ref क्रम preventing it
 	 * from being cleaned up during running queue.
 	 */
 	percpu_ref_get(&q->q_usage_counter);
@@ -573,435 +574,435 @@ static bool scsi_end_request(struct request *req, blk_status_t error,
 	scsi_run_queue_async(sdev);
 
 	percpu_ref_put(&q->q_usage_counter);
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * scsi_result_to_blk_status - translate a SCSI result code into blk_status_t
+ * scsi_result_to_blk_status - translate a SCSI result code पूर्णांकo blk_status_t
  * @cmd:	SCSI command
  * @result:	scsi error code
  *
- * Translate a SCSI result code into a blk_status_t value. May reset the host
+ * Translate a SCSI result code पूर्णांकo a blk_status_t value. May reset the host
  * byte of @cmd->result.
  */
-static blk_status_t scsi_result_to_blk_status(struct scsi_cmnd *cmd, int result)
-{
-	switch (host_byte(result)) {
-	case DID_OK:
+अटल blk_status_t scsi_result_to_blk_status(काष्ठा scsi_cmnd *cmd, पूर्णांक result)
+अणु
+	चयन (host_byte(result)) अणु
+	हाल DID_OK:
 		/*
 		 * Also check the other bytes than the status byte in result
-		 * to handle the case when a SCSI LLD sets result to
+		 * to handle the हाल when a SCSI LLD sets result to
 		 * DRIVER_SENSE << 24 without setting SAM_STAT_CHECK_CONDITION.
 		 */
-		if (scsi_status_is_good(result) && (result & ~0xff) == 0)
-			return BLK_STS_OK;
-		return BLK_STS_IOERR;
-	case DID_TRANSPORT_FAILFAST:
-	case DID_TRANSPORT_MARGINAL:
-		return BLK_STS_TRANSPORT;
-	case DID_TARGET_FAILURE:
+		अगर (scsi_status_is_good(result) && (result & ~0xff) == 0)
+			वापस BLK_STS_OK;
+		वापस BLK_STS_IOERR;
+	हाल DID_TRANSPORT_FAILFAST:
+	हाल DID_TRANSPORT_MARGINAL:
+		वापस BLK_STS_TRANSPORT;
+	हाल DID_TARGET_FAILURE:
 		set_host_byte(cmd, DID_OK);
-		return BLK_STS_TARGET;
-	case DID_NEXUS_FAILURE:
+		वापस BLK_STS_TARGET;
+	हाल DID_NEXUS_FAILURE:
 		set_host_byte(cmd, DID_OK);
-		return BLK_STS_NEXUS;
-	case DID_ALLOC_FAILURE:
+		वापस BLK_STS_NEXUS;
+	हाल DID_ALLOC_FAILURE:
 		set_host_byte(cmd, DID_OK);
-		return BLK_STS_NOSPC;
-	case DID_MEDIUM_ERROR:
+		वापस BLK_STS_NOSPC;
+	हाल DID_MEDIUM_ERROR:
 		set_host_byte(cmd, DID_OK);
-		return BLK_STS_MEDIUM;
-	default:
-		return BLK_STS_IOERR;
-	}
-}
+		वापस BLK_STS_MEDIUM;
+	शेष:
+		वापस BLK_STS_IOERR;
+	पूर्ण
+पूर्ण
 
-/* Helper for scsi_io_completion() when "reprep" action required. */
-static void scsi_io_completion_reprep(struct scsi_cmnd *cmd,
-				      struct request_queue *q)
-{
+/* Helper क्रम scsi_io_completion() when "reprep" action required. */
+अटल व्योम scsi_io_completion_reprep(काष्ठा scsi_cmnd *cmd,
+				      काष्ठा request_queue *q)
+अणु
 	/* A new command will be prepared and issued. */
 	scsi_mq_requeue_cmd(cmd);
-}
+पूर्ण
 
-static bool scsi_cmd_runtime_exceeced(struct scsi_cmnd *cmd)
-{
-	struct request *req = cmd->request;
-	unsigned long wait_for;
+अटल bool scsi_cmd_runसमय_exceeced(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा request *req = cmd->request;
+	अचिन्हित दीर्घ रुको_क्रम;
 
-	if (cmd->allowed == SCSI_CMD_RETRIES_NO_LIMIT)
-		return false;
+	अगर (cmd->allowed == SCSI_CMD_RETRIES_NO_LIMIT)
+		वापस false;
 
-	wait_for = (cmd->allowed + 1) * req->timeout;
-	if (time_before(cmd->jiffies_at_alloc + wait_for, jiffies)) {
-		scmd_printk(KERN_ERR, cmd, "timing out command, waited %lus\n",
-			    wait_for/HZ);
-		return true;
-	}
-	return false;
-}
+	रुको_क्रम = (cmd->allowed + 1) * req->समयout;
+	अगर (समय_beक्रमe(cmd->jअगरfies_at_alloc + रुको_क्रम, jअगरfies)) अणु
+		scmd_prपूर्णांकk(KERN_ERR, cmd, "timing out command, waited %lus\n",
+			    रुको_क्रम/HZ);
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-/* Helper for scsi_io_completion() when special action required. */
-static void scsi_io_completion_action(struct scsi_cmnd *cmd, int result)
-{
-	struct request_queue *q = cmd->device->request_queue;
-	struct request *req = cmd->request;
-	int level = 0;
-	enum {ACTION_FAIL, ACTION_REPREP, ACTION_RETRY,
-	      ACTION_DELAYED_RETRY} action;
-	struct scsi_sense_hdr sshdr;
+/* Helper क्रम scsi_io_completion() when special action required. */
+अटल व्योम scsi_io_completion_action(काष्ठा scsi_cmnd *cmd, पूर्णांक result)
+अणु
+	काष्ठा request_queue *q = cmd->device->request_queue;
+	काष्ठा request *req = cmd->request;
+	पूर्णांक level = 0;
+	क्रमागत अणुACTION_FAIL, ACTION_REPREP, ACTION_RETRY,
+	      ACTION_DELAYED_RETRYपूर्ण action;
+	काष्ठा scsi_sense_hdr sshdr;
 	bool sense_valid;
 	bool sense_current = true;      /* false implies "deferred sense" */
 	blk_status_t blk_stat;
 
 	sense_valid = scsi_command_normalize_sense(cmd, &sshdr);
-	if (sense_valid)
+	अगर (sense_valid)
 		sense_current = !scsi_sense_is_deferred(&sshdr);
 
 	blk_stat = scsi_result_to_blk_status(cmd, result);
 
-	if (host_byte(result) == DID_RESET) {
-		/* Third party bus reset or reset for error recovery
+	अगर (host_byte(result) == DID_RESET) अणु
+		/* Third party bus reset or reset क्रम error recovery
 		 * reasons.  Just retry the command and see what
 		 * happens.
 		 */
 		action = ACTION_RETRY;
-	} else if (sense_valid && sense_current) {
-		switch (sshdr.sense_key) {
-		case UNIT_ATTENTION:
-			if (cmd->device->removable) {
+	पूर्ण अन्यथा अगर (sense_valid && sense_current) अणु
+		चयन (sshdr.sense_key) अणु
+		हाल UNIT_ATTENTION:
+			अगर (cmd->device->removable) अणु
 				/* Detected disc change.  Set a bit
 				 * and quietly refuse further access.
 				 */
 				cmd->device->changed = 1;
 				action = ACTION_FAIL;
-			} else {
-				/* Must have been a power glitch, or a
+			पूर्ण अन्यथा अणु
+				/* Must have been a घातer glitch, or a
 				 * bus reset.  Could not have been a
 				 * media change, so we just retry the
 				 * command and see what happens.
 				 */
 				action = ACTION_RETRY;
-			}
-			break;
-		case ILLEGAL_REQUEST:
-			/* If we had an ILLEGAL REQUEST returned, then
-			 * we may have performed an unsupported
+			पूर्ण
+			अवरोध;
+		हाल ILLEGAL_REQUEST:
+			/* If we had an ILLEGAL REQUEST वापसed, then
+			 * we may have perक्रमmed an unsupported
 			 * command.  The only thing this should be
-			 * would be a ten byte read where only a six
-			 * byte read was supported.  Also, on a system
+			 * would be a ten byte पढ़ो where only a six
+			 * byte पढ़ो was supported.  Also, on a प्रणाली
 			 * where READ CAPACITY failed, we may have
-			 * read past the end of the disk.
+			 * पढ़ो past the end of the disk.
 			 */
-			if ((cmd->device->use_10_for_rw &&
+			अगर ((cmd->device->use_10_क्रम_rw &&
 			    sshdr.asc == 0x20 && sshdr.ascq == 0x00) &&
 			    (cmd->cmnd[0] == READ_10 ||
-			     cmd->cmnd[0] == WRITE_10)) {
+			     cmd->cmnd[0] == WRITE_10)) अणु
 				/* This will issue a new 6-byte command. */
-				cmd->device->use_10_for_rw = 0;
+				cmd->device->use_10_क्रम_rw = 0;
 				action = ACTION_REPREP;
-			} else if (sshdr.asc == 0x10) /* DIX */ {
+			पूर्ण अन्यथा अगर (sshdr.asc == 0x10) /* DIX */ अणु
 				action = ACTION_FAIL;
 				blk_stat = BLK_STS_PROTECTION;
 			/* INVALID COMMAND OPCODE or INVALID FIELD IN CDB */
-			} else if (sshdr.asc == 0x20 || sshdr.asc == 0x24) {
+			पूर्ण अन्यथा अगर (sshdr.asc == 0x20 || sshdr.asc == 0x24) अणु
 				action = ACTION_FAIL;
 				blk_stat = BLK_STS_TARGET;
-			} else
+			पूर्ण अन्यथा
 				action = ACTION_FAIL;
-			break;
-		case ABORTED_COMMAND:
+			अवरोध;
+		हाल ABORTED_COMMAND:
 			action = ACTION_FAIL;
-			if (sshdr.asc == 0x10) /* DIF */
+			अगर (sshdr.asc == 0x10) /* DIF */
 				blk_stat = BLK_STS_PROTECTION;
-			break;
-		case NOT_READY:
+			अवरोध;
+		हाल NOT_READY:
 			/* If the device is in the process of becoming
-			 * ready, or has a temporary blockage, retry.
+			 * पढ़ोy, or has a temporary blockage, retry.
 			 */
-			if (sshdr.asc == 0x04) {
-				switch (sshdr.ascq) {
-				case 0x01: /* becoming ready */
-				case 0x04: /* format in progress */
-				case 0x05: /* rebuild in progress */
-				case 0x06: /* recalculation in progress */
-				case 0x07: /* operation in progress */
-				case 0x08: /* Long write in progress */
-				case 0x09: /* self test in progress */
-				case 0x14: /* space allocation in progress */
-				case 0x1a: /* start stop unit in progress */
-				case 0x1b: /* sanitize in progress */
-				case 0x1d: /* configuration in progress */
-				case 0x24: /* depopulation in progress */
+			अगर (sshdr.asc == 0x04) अणु
+				चयन (sshdr.ascq) अणु
+				हाल 0x01: /* becoming पढ़ोy */
+				हाल 0x04: /* क्रमmat in progress */
+				हाल 0x05: /* rebuild in progress */
+				हाल 0x06: /* recalculation in progress */
+				हाल 0x07: /* operation in progress */
+				हाल 0x08: /* Long ग_लिखो in progress */
+				हाल 0x09: /* self test in progress */
+				हाल 0x14: /* space allocation in progress */
+				हाल 0x1a: /* start stop unit in progress */
+				हाल 0x1b: /* sanitize in progress */
+				हाल 0x1d: /* configuration in progress */
+				हाल 0x24: /* depopulation in progress */
 					action = ACTION_DELAYED_RETRY;
-					break;
-				case 0x0a: /* ALUA state transition */
+					अवरोध;
+				हाल 0x0a: /* ALUA state transition */
 					blk_stat = BLK_STS_AGAIN;
 					fallthrough;
-				default:
+				शेष:
 					action = ACTION_FAIL;
-					break;
-				}
-			} else
+					अवरोध;
+				पूर्ण
+			पूर्ण अन्यथा
 				action = ACTION_FAIL;
-			break;
-		case VOLUME_OVERFLOW:
+			अवरोध;
+		हाल VOLUME_OVERFLOW:
 			/* See SSC3rXX or current. */
 			action = ACTION_FAIL;
-			break;
-		case DATA_PROTECT:
+			अवरोध;
+		हाल DATA_PROTECT:
 			action = ACTION_FAIL;
-			if ((sshdr.asc == 0x0C && sshdr.ascq == 0x12) ||
+			अगर ((sshdr.asc == 0x0C && sshdr.ascq == 0x12) ||
 			    (sshdr.asc == 0x55 &&
-			     (sshdr.ascq == 0x0E || sshdr.ascq == 0x0F))) {
+			     (sshdr.ascq == 0x0E || sshdr.ascq == 0x0F))) अणु
 				/* Insufficient zone resources */
 				blk_stat = BLK_STS_ZONE_OPEN_RESOURCE;
-			}
-			break;
-		default:
+			पूर्ण
+			अवरोध;
+		शेष:
 			action = ACTION_FAIL;
-			break;
-		}
-	} else
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा
 		action = ACTION_FAIL;
 
-	if (action != ACTION_FAIL && scsi_cmd_runtime_exceeced(cmd))
+	अगर (action != ACTION_FAIL && scsi_cmd_runसमय_exceeced(cmd))
 		action = ACTION_FAIL;
 
-	switch (action) {
-	case ACTION_FAIL:
-		/* Give up and fail the remainder of the request */
-		if (!(req->rq_flags & RQF_QUIET)) {
-			static DEFINE_RATELIMIT_STATE(_rs,
+	चयन (action) अणु
+	हाल ACTION_FAIL:
+		/* Give up and fail the reमुख्यder of the request */
+		अगर (!(req->rq_flags & RQF_QUIET)) अणु
+			अटल DEFINE_RATELIMIT_STATE(_rs,
 					DEFAULT_RATELIMIT_INTERVAL,
 					DEFAULT_RATELIMIT_BURST);
 
-			if (unlikely(scsi_logging_level))
+			अगर (unlikely(scsi_logging_level))
 				level =
 				     SCSI_LOG_LEVEL(SCSI_LOG_MLCOMPLETE_SHIFT,
 						    SCSI_LOG_MLCOMPLETE_BITS);
 
 			/*
-			 * if logging is enabled the failure will be printed
-			 * in scsi_log_completion(), so avoid duplicate messages
+			 * अगर logging is enabled the failure will be prपूर्णांकed
+			 * in scsi_log_completion(), so aव्योम duplicate messages
 			 */
-			if (!level && __ratelimit(&_rs)) {
-				scsi_print_result(cmd, NULL, FAILED);
-				if (driver_byte(result) == DRIVER_SENSE)
-					scsi_print_sense(cmd);
-				scsi_print_command(cmd);
-			}
-		}
-		if (!scsi_end_request(req, blk_stat, blk_rq_err_bytes(req)))
-			return;
+			अगर (!level && __ratelimit(&_rs)) अणु
+				scsi_prपूर्णांक_result(cmd, शून्य, FAILED);
+				अगर (driver_byte(result) == DRIVER_SENSE)
+					scsi_prपूर्णांक_sense(cmd);
+				scsi_prपूर्णांक_command(cmd);
+			पूर्ण
+		पूर्ण
+		अगर (!scsi_end_request(req, blk_stat, blk_rq_err_bytes(req)))
+			वापस;
 		fallthrough;
-	case ACTION_REPREP:
+	हाल ACTION_REPREP:
 		scsi_io_completion_reprep(cmd, q);
-		break;
-	case ACTION_RETRY:
+		अवरोध;
+	हाल ACTION_RETRY:
 		/* Retry the same command immediately */
 		__scsi_queue_insert(cmd, SCSI_MLQUEUE_EH_RETRY, false);
-		break;
-	case ACTION_DELAYED_RETRY:
+		अवरोध;
+	हाल ACTION_DELAYED_RETRY:
 		/* Retry the same command after a delay */
 		__scsi_queue_insert(cmd, SCSI_MLQUEUE_DEVICE_BUSY, false);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * Helper for scsi_io_completion() when cmd->result is non-zero. Returns a
- * new result that may suppress further error checking. Also modifies
- * *blk_statp in some cases.
+ * Helper क्रम scsi_io_completion() when cmd->result is non-zero. Returns a
+ * new result that may suppress further error checking. Also modअगरies
+ * *blk_statp in some हालs.
  */
-static int scsi_io_completion_nz_result(struct scsi_cmnd *cmd, int result,
+अटल पूर्णांक scsi_io_completion_nz_result(काष्ठा scsi_cmnd *cmd, पूर्णांक result,
 					blk_status_t *blk_statp)
-{
+अणु
 	bool sense_valid;
 	bool sense_current = true;	/* false implies "deferred sense" */
-	struct request *req = cmd->request;
-	struct scsi_sense_hdr sshdr;
+	काष्ठा request *req = cmd->request;
+	काष्ठा scsi_sense_hdr sshdr;
 
 	sense_valid = scsi_command_normalize_sense(cmd, &sshdr);
-	if (sense_valid)
+	अगर (sense_valid)
 		sense_current = !scsi_sense_is_deferred(&sshdr);
 
-	if (blk_rq_is_passthrough(req)) {
-		if (sense_valid) {
+	अगर (blk_rq_is_passthrough(req)) अणु
+		अगर (sense_valid) अणु
 			/*
 			 * SG_IO wants current and deferred errors
 			 */
 			scsi_req(req)->sense_len =
 				min(8 + cmd->sense_buffer[7],
 				    SCSI_SENSE_BUFFERSIZE);
-		}
-		if (sense_current)
+		पूर्ण
+		अगर (sense_current)
 			*blk_statp = scsi_result_to_blk_status(cmd, result);
-	} else if (blk_rq_bytes(req) == 0 && sense_current) {
+	पूर्ण अन्यथा अगर (blk_rq_bytes(req) == 0 && sense_current) अणु
 		/*
-		 * Flush commands do not transfers any data, and thus cannot use
-		 * good_bytes != blk_rq_bytes(req) as the signal for an error.
-		 * This sets *blk_statp explicitly for the problem case.
+		 * Flush commands करो not transfers any data, and thus cannot use
+		 * good_bytes != blk_rq_bytes(req) as the संकेत क्रम an error.
+		 * This sets *blk_statp explicitly क्रम the problem हाल.
 		 */
 		*blk_statp = scsi_result_to_blk_status(cmd, result);
-	}
+	पूर्ण
 	/*
 	 * Recovered errors need reporting, but they're always treated as
 	 * success, so fiddle the result code here.  For passthrough requests
-	 * we already took a copy of the original into sreq->result which
-	 * is what gets returned to the user
+	 * we alपढ़ोy took a copy of the original पूर्णांकo sreq->result which
+	 * is what माला_लो वापसed to the user
 	 */
-	if (sense_valid && (sshdr.sense_key == RECOVERED_ERROR)) {
-		bool do_print = true;
+	अगर (sense_valid && (sshdr.sense_key == RECOVERED_ERROR)) अणु
+		bool करो_prपूर्णांक = true;
 		/*
-		 * if ATA PASS-THROUGH INFORMATION AVAILABLE [0x0, 0x1d]
-		 * skip print since caller wants ATA registers. Only occurs
+		 * अगर ATA PASS-THROUGH INFORMATION AVAILABLE [0x0, 0x1d]
+		 * skip prपूर्णांक since caller wants ATA रेजिस्टरs. Only occurs
 		 * on SCSI ATA PASS_THROUGH commands when CK_COND=1
 		 */
-		if ((sshdr.asc == 0x0) && (sshdr.ascq == 0x1d))
-			do_print = false;
-		else if (req->rq_flags & RQF_QUIET)
-			do_print = false;
-		if (do_print)
-			scsi_print_sense(cmd);
+		अगर ((sshdr.asc == 0x0) && (sshdr.ascq == 0x1d))
+			करो_prपूर्णांक = false;
+		अन्यथा अगर (req->rq_flags & RQF_QUIET)
+			करो_prपूर्णांक = false;
+		अगर (करो_prपूर्णांक)
+			scsi_prपूर्णांक_sense(cmd);
 		result = 0;
-		/* for passthrough, *blk_statp may be set */
+		/* क्रम passthrough, *blk_statp may be set */
 		*blk_statp = BLK_STS_OK;
-	}
+	पूर्ण
 	/*
-	 * Another corner case: the SCSI status byte is non-zero but 'good'.
-	 * Example: PRE-FETCH command returns SAM_STAT_CONDITION_MET when
+	 * Another corner हाल: the SCSI status byte is non-zero but 'good'.
+	 * Example: PRE-FETCH command वापसs SAM_STAT_CONDITION_MET when
 	 * it is able to fit nominated LBs in its cache (and SAM_STAT_GOOD
-	 * if it can't fit). Treat SAM_STAT_CONDITION_MET and the related
-	 * intermediate statuses (both obsolete in SAM-4) as good.
+	 * अगर it can't fit). Treat SAM_STAT_CONDITION_MET and the related
+	 * पूर्णांकermediate statuses (both obsolete in SAM-4) as good.
 	 */
-	if (status_byte(result) && scsi_status_is_good(result)) {
+	अगर (status_byte(result) && scsi_status_is_good(result)) अणु
 		result = 0;
 		*blk_statp = BLK_STS_OK;
-	}
-	return result;
-}
+	पूर्ण
+	वापस result;
+पूर्ण
 
 /**
- * scsi_io_completion - Completion processing for SCSI commands.
+ * scsi_io_completion - Completion processing क्रम SCSI commands.
  * @cmd:	command that is finished.
  * @good_bytes:	number of processed bytes.
  *
- * We will finish off the specified number of sectors. If we are done, the
+ * We will finish off the specअगरied number of sectors. If we are करोne, the
  * command block will be released and the queue function will be goosed. If we
- * are not done then we have to figure out what to do next:
+ * are not करोne then we have to figure out what to करो next:
  *
  *   a) We can call scsi_io_completion_reprep().  The request will be
  *	unprepared and put back on the queue.  Then a new command will
- *	be created for it.  This should be used if we made forward
- *	progress, or if we want to switch from READ(10) to READ(6) for
+ *	be created क्रम it.  This should be used अगर we made क्रमward
+ *	progress, or अगर we want to चयन from READ(10) to READ(6) क्रम
  *	example.
  *
  *   b) We can call scsi_io_completion_action().  The request will be
  *	put back on the queue and retried using the same command as
- *	before, possibly after a delay.
+ *	beक्रमe, possibly after a delay.
  *
  *   c) We can call scsi_end_request() with blk_stat other than
- *	BLK_STS_OK, to fail the remainder of the request.
+ *	BLK_STS_OK, to fail the reमुख्यder of the request.
  */
-void scsi_io_completion(struct scsi_cmnd *cmd, unsigned int good_bytes)
-{
-	int result = cmd->result;
-	struct request_queue *q = cmd->device->request_queue;
-	struct request *req = cmd->request;
+व्योम scsi_io_completion(काष्ठा scsi_cmnd *cmd, अचिन्हित पूर्णांक good_bytes)
+अणु
+	पूर्णांक result = cmd->result;
+	काष्ठा request_queue *q = cmd->device->request_queue;
+	काष्ठा request *req = cmd->request;
 	blk_status_t blk_stat = BLK_STS_OK;
 
-	if (unlikely(result))	/* a nz result may or may not be an error */
+	अगर (unlikely(result))	/* a nz result may or may not be an error */
 		result = scsi_io_completion_nz_result(cmd, result, &blk_stat);
 
-	if (unlikely(blk_rq_is_passthrough(req))) {
+	अगर (unlikely(blk_rq_is_passthrough(req))) अणु
 		/*
 		 * scsi_result_to_blk_status may have reset the host_byte
 		 */
 		scsi_req(req)->result = cmd->result;
-	}
+	पूर्ण
 
 	/*
 	 * Next deal with any sectors which we were able to correctly
 	 * handle.
 	 */
-	SCSI_LOG_HLCOMPLETE(1, scmd_printk(KERN_INFO, cmd,
+	SCSI_LOG_HLCOMPLETE(1, scmd_prपूर्णांकk(KERN_INFO, cmd,
 		"%u sectors total, %d bytes done.\n",
 		blk_rq_sectors(req), good_bytes));
 
 	/*
-	 * Failed, zero length commands always need to drop down
-	 * to retry code. Fast path should return in this block.
+	 * Failed, zero length commands always need to drop करोwn
+	 * to retry code. Fast path should वापस in this block.
 	 */
-	if (likely(blk_rq_bytes(req) > 0 || blk_stat == BLK_STS_OK)) {
-		if (likely(!scsi_end_request(req, blk_stat, good_bytes)))
-			return; /* no bytes remaining */
-	}
+	अगर (likely(blk_rq_bytes(req) > 0 || blk_stat == BLK_STS_OK)) अणु
+		अगर (likely(!scsi_end_request(req, blk_stat, good_bytes)))
+			वापस; /* no bytes reमुख्यing */
+	पूर्ण
 
-	/* Kill remainder if no retries. */
-	if (unlikely(blk_stat && scsi_noretry_cmd(cmd))) {
-		if (scsi_end_request(req, blk_stat, blk_rq_bytes(req)))
+	/* Kill reमुख्यder अगर no retries. */
+	अगर (unlikely(blk_stat && scsi_noretry_cmd(cmd))) अणु
+		अगर (scsi_end_request(req, blk_stat, blk_rq_bytes(req)))
 			WARN_ONCE(true,
 			    "Bytes remaining after failed, no-retry command");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * If there had been no error, but we have leftover bytes in the
 	 * requeues just queue the command up again.
 	 */
-	if (likely(result == 0))
+	अगर (likely(result == 0))
 		scsi_io_completion_reprep(cmd, q);
-	else
+	अन्यथा
 		scsi_io_completion_action(cmd, result);
-}
+पूर्ण
 
-static inline bool scsi_cmd_needs_dma_drain(struct scsi_device *sdev,
-		struct request *rq)
-{
-	return sdev->dma_drain_len && blk_rq_is_passthrough(rq) &&
-	       !op_is_write(req_op(rq)) &&
+अटल अंतरभूत bool scsi_cmd_needs_dma_drain(काष्ठा scsi_device *sdev,
+		काष्ठा request *rq)
+अणु
+	वापस sdev->dma_drain_len && blk_rq_is_passthrough(rq) &&
+	       !op_is_ग_लिखो(req_op(rq)) &&
 	       sdev->host->hostt->dma_need_drain(rq);
-}
+पूर्ण
 
 /**
- * scsi_alloc_sgtables - Allocate and initialize data and integrity scatterlists
- * @cmd: SCSI command data structure to initialize.
+ * scsi_alloc_sgtables - Allocate and initialize data and पूर्णांकegrity scatterlists
+ * @cmd: SCSI command data काष्ठाure to initialize.
  *
- * Initializes @cmd->sdb and also @cmd->prot_sdb if data integrity is enabled
- * for @cmd.
+ * Initializes @cmd->sdb and also @cmd->prot_sdb अगर data पूर्णांकegrity is enabled
+ * क्रम @cmd.
  *
  * Returns:
  * * BLK_STS_OK       - on success
- * * BLK_STS_RESOURCE - if the failure is retryable
- * * BLK_STS_IOERR    - if the failure is fatal
+ * * BLK_STS_RESOURCE - अगर the failure is retryable
+ * * BLK_STS_IOERR    - अगर the failure is fatal
  */
-blk_status_t scsi_alloc_sgtables(struct scsi_cmnd *cmd)
-{
-	struct scsi_device *sdev = cmd->device;
-	struct request *rq = cmd->request;
-	unsigned short nr_segs = blk_rq_nr_phys_segments(rq);
-	struct scatterlist *last_sg = NULL;
+blk_status_t scsi_alloc_sgtables(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा scsi_device *sdev = cmd->device;
+	काष्ठा request *rq = cmd->request;
+	अचिन्हित लघु nr_segs = blk_rq_nr_phys_segments(rq);
+	काष्ठा scatterlist *last_sg = शून्य;
 	blk_status_t ret;
 	bool need_drain = scsi_cmd_needs_dma_drain(sdev, rq);
-	int count;
+	पूर्णांक count;
 
-	if (WARN_ON_ONCE(!nr_segs))
-		return BLK_STS_IOERR;
+	अगर (WARN_ON_ONCE(!nr_segs))
+		वापस BLK_STS_IOERR;
 
 	/*
-	 * Make sure there is space for the drain.  The driver must adjust
-	 * max_hw_segments to be prepared for this.
+	 * Make sure there is space क्रम the drain.  The driver must adjust
+	 * max_hw_segments to be prepared क्रम this.
 	 */
-	if (need_drain)
+	अगर (need_drain)
 		nr_segs++;
 
 	/*
 	 * If sg table allocation fails, requeue request later.
 	 */
-	if (unlikely(sg_alloc_table_chained(&cmd->sdb.table, nr_segs,
+	अगर (unlikely(sg_alloc_table_chained(&cmd->sdb.table, nr_segs,
 			cmd->sdb.table.sgl, SCSI_INLINE_SG_CNT)))
-		return BLK_STS_RESOURCE;
+		वापस BLK_STS_RESOURCE;
 
 	/*
 	 * Next, walk the list, and fill in the addresses and sizes of
@@ -1009,15 +1010,15 @@ blk_status_t scsi_alloc_sgtables(struct scsi_cmnd *cmd)
 	 */
 	count = __blk_rq_map_sg(rq->q, rq, cmd->sdb.table.sgl, &last_sg);
 
-	if (blk_rq_bytes(rq) & rq->q->dma_pad_mask) {
-		unsigned int pad_len =
+	अगर (blk_rq_bytes(rq) & rq->q->dma_pad_mask) अणु
+		अचिन्हित पूर्णांक pad_len =
 			(rq->q->dma_pad_mask & ~blk_rq_bytes(rq)) + 1;
 
 		last_sg->length += pad_len;
 		cmd->extra_len += pad_len;
-	}
+	पूर्ण
 
-	if (need_drain) {
+	अगर (need_drain) अणु
 		sg_unmark_end(last_sg);
 		last_sg = sg_next(last_sg);
 		sg_set_buf(last_sg, sdev->dma_drain_buf, sdev->dma_drain_len);
@@ -1025,624 +1026,624 @@ blk_status_t scsi_alloc_sgtables(struct scsi_cmnd *cmd)
 
 		cmd->extra_len += sdev->dma_drain_len;
 		count++;
-	}
+	पूर्ण
 
 	BUG_ON(count > cmd->sdb.table.nents);
 	cmd->sdb.table.nents = count;
 	cmd->sdb.length = blk_rq_payload_bytes(rq);
 
-	if (blk_integrity_rq(rq)) {
-		struct scsi_data_buffer *prot_sdb = cmd->prot_sdb;
-		int ivecs;
+	अगर (blk_पूर्णांकegrity_rq(rq)) अणु
+		काष्ठा scsi_data_buffer *prot_sdb = cmd->prot_sdb;
+		पूर्णांक ivecs;
 
-		if (WARN_ON_ONCE(!prot_sdb)) {
+		अगर (WARN_ON_ONCE(!prot_sdb)) अणु
 			/*
-			 * This can happen if someone (e.g. multipath)
+			 * This can happen अगर someone (e.g. multipath)
 			 * queues a command to a device on an adapter
-			 * that does not support DIX.
+			 * that करोes not support DIX.
 			 */
 			ret = BLK_STS_IOERR;
-			goto out_free_sgtables;
-		}
+			जाओ out_मुक्त_sgtables;
+		पूर्ण
 
-		ivecs = blk_rq_count_integrity_sg(rq->q, rq->bio);
+		ivecs = blk_rq_count_पूर्णांकegrity_sg(rq->q, rq->bio);
 
-		if (sg_alloc_table_chained(&prot_sdb->table, ivecs,
+		अगर (sg_alloc_table_chained(&prot_sdb->table, ivecs,
 				prot_sdb->table.sgl,
-				SCSI_INLINE_PROT_SG_CNT)) {
+				SCSI_INLINE_PROT_SG_CNT)) अणु
 			ret = BLK_STS_RESOURCE;
-			goto out_free_sgtables;
-		}
+			जाओ out_मुक्त_sgtables;
+		पूर्ण
 
-		count = blk_rq_map_integrity_sg(rq->q, rq->bio,
+		count = blk_rq_map_पूर्णांकegrity_sg(rq->q, rq->bio,
 						prot_sdb->table.sgl);
 		BUG_ON(count > ivecs);
-		BUG_ON(count > queue_max_integrity_segments(rq->q));
+		BUG_ON(count > queue_max_पूर्णांकegrity_segments(rq->q));
 
 		cmd->prot_sdb = prot_sdb;
 		cmd->prot_sdb->table.nents = count;
-	}
+	पूर्ण
 
-	return BLK_STS_OK;
-out_free_sgtables:
-	scsi_free_sgtables(cmd);
-	return ret;
-}
+	वापस BLK_STS_OK;
+out_मुक्त_sgtables:
+	scsi_मुक्त_sgtables(cmd);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(scsi_alloc_sgtables);
 
 /**
- * scsi_initialize_rq - initialize struct scsi_cmnd partially
+ * scsi_initialize_rq - initialize काष्ठा scsi_cmnd partially
  * @rq: Request associated with the SCSI command to be initialized.
  *
- * This function initializes the members of struct scsi_cmnd that must be
- * initialized before request processing starts and that won't be
- * reinitialized if a SCSI command is requeued.
+ * This function initializes the members of काष्ठा scsi_cmnd that must be
+ * initialized beक्रमe request processing starts and that won't be
+ * reinitialized अगर a SCSI command is requeued.
  *
- * Called from inside blk_get_request() for pass-through requests and from
- * inside scsi_init_command() for filesystem requests.
+ * Called from inside blk_get_request() क्रम pass-through requests and from
+ * inside scsi_init_command() क्रम fileप्रणाली requests.
  */
-static void scsi_initialize_rq(struct request *rq)
-{
-	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
+अटल व्योम scsi_initialize_rq(काष्ठा request *rq)
+अणु
+	काष्ठा scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
 
 	scsi_req_init(&cmd->req);
 	init_rcu_head(&cmd->rcu);
-	cmd->jiffies_at_alloc = jiffies;
+	cmd->jअगरfies_at_alloc = jअगरfies;
 	cmd->retries = 0;
-}
+पूर्ण
 
 /*
- * Only called when the request isn't completed by SCSI, and not freed by
+ * Only called when the request isn't completed by SCSI, and not मुक्तd by
  * SCSI
  */
-static void scsi_cleanup_rq(struct request *rq)
-{
-	if (rq->rq_flags & RQF_DONTPREP) {
+अटल व्योम scsi_cleanup_rq(काष्ठा request *rq)
+अणु
+	अगर (rq->rq_flags & RQF_DONTPREP) अणु
 		scsi_mq_uninit_cmd(blk_mq_rq_to_pdu(rq));
 		rq->rq_flags &= ~RQF_DONTPREP;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Called before a request is prepared. See also scsi_mq_prep_fn(). */
-void scsi_init_command(struct scsi_device *dev, struct scsi_cmnd *cmd)
-{
-	void *buf = cmd->sense_buffer;
-	void *prot = cmd->prot_sdb;
-	struct request *rq = blk_mq_rq_from_pdu(cmd);
-	unsigned int flags = cmd->flags & SCMD_PRESERVED_FLAGS;
-	unsigned long jiffies_at_alloc;
-	int retries, to_clear;
+/* Called beक्रमe a request is prepared. See also scsi_mq_prep_fn(). */
+व्योम scsi_init_command(काष्ठा scsi_device *dev, काष्ठा scsi_cmnd *cmd)
+अणु
+	व्योम *buf = cmd->sense_buffer;
+	व्योम *prot = cmd->prot_sdb;
+	काष्ठा request *rq = blk_mq_rq_from_pdu(cmd);
+	अचिन्हित पूर्णांक flags = cmd->flags & SCMD_PRESERVED_FLAGS;
+	अचिन्हित दीर्घ jअगरfies_at_alloc;
+	पूर्णांक retries, to_clear;
 	bool in_flight;
-	int budget_token = cmd->budget_token;
+	पूर्णांक budget_token = cmd->budget_token;
 
-	if (!blk_rq_is_scsi(rq) && !(flags & SCMD_INITIALIZED)) {
+	अगर (!blk_rq_is_scsi(rq) && !(flags & SCMD_INITIALIZED)) अणु
 		flags |= SCMD_INITIALIZED;
 		scsi_initialize_rq(rq);
-	}
+	पूर्ण
 
-	jiffies_at_alloc = cmd->jiffies_at_alloc;
+	jअगरfies_at_alloc = cmd->jअगरfies_at_alloc;
 	retries = cmd->retries;
 	in_flight = test_bit(SCMD_STATE_INFLIGHT, &cmd->state);
 	/*
-	 * Zero out the cmd, except for the embedded scsi_request. Only clear
-	 * the driver-private command data if the LLD does not supply a
+	 * Zero out the cmd, except क्रम the embedded scsi_request. Only clear
+	 * the driver-निजी command data अगर the LLD करोes not supply a
 	 * function to initialize that data.
 	 */
-	to_clear = sizeof(*cmd) - sizeof(cmd->req);
-	if (!dev->host->hostt->init_cmd_priv)
+	to_clear = माप(*cmd) - माप(cmd->req);
+	अगर (!dev->host->hostt->init_cmd_priv)
 		to_clear += dev->host->hostt->cmd_size;
-	memset((char *)cmd + sizeof(cmd->req), 0, to_clear);
+	स_रखो((अक्षर *)cmd + माप(cmd->req), 0, to_clear);
 
 	cmd->device = dev;
 	cmd->sense_buffer = buf;
 	cmd->prot_sdb = prot;
 	cmd->flags = flags;
-	INIT_DELAYED_WORK(&cmd->abort_work, scmd_eh_abort_handler);
-	cmd->jiffies_at_alloc = jiffies_at_alloc;
+	INIT_DELAYED_WORK(&cmd->पात_work, scmd_eh_पात_handler);
+	cmd->jअगरfies_at_alloc = jअगरfies_at_alloc;
 	cmd->retries = retries;
-	if (in_flight)
+	अगर (in_flight)
 		__set_bit(SCMD_STATE_INFLIGHT, &cmd->state);
 	cmd->budget_token = budget_token;
 
-}
+पूर्ण
 
-static blk_status_t scsi_setup_scsi_cmnd(struct scsi_device *sdev,
-		struct request *req)
-{
-	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(req);
+अटल blk_status_t scsi_setup_scsi_cmnd(काष्ठा scsi_device *sdev,
+		काष्ठा request *req)
+अणु
+	काष्ठा scsi_cmnd *cmd = blk_mq_rq_to_pdu(req);
 
 	/*
-	 * Passthrough requests may transfer data, in which case they must
+	 * Passthrough requests may transfer data, in which हाल they must
 	 * a bio attached to them.  Or they might contain a SCSI command
-	 * that does not transfer data, in which case they may optionally
+	 * that करोes not transfer data, in which हाल they may optionally
 	 * submit a request without an attached bio.
 	 */
-	if (req->bio) {
+	अगर (req->bio) अणु
 		blk_status_t ret = scsi_alloc_sgtables(cmd);
-		if (unlikely(ret != BLK_STS_OK))
-			return ret;
-	} else {
+		अगर (unlikely(ret != BLK_STS_OK))
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		BUG_ON(blk_rq_bytes(req));
 
-		memset(&cmd->sdb, 0, sizeof(cmd->sdb));
-	}
+		स_रखो(&cmd->sdb, 0, माप(cmd->sdb));
+	पूर्ण
 
 	cmd->cmd_len = scsi_req(req)->cmd_len;
-	if (cmd->cmd_len == 0)
+	अगर (cmd->cmd_len == 0)
 		cmd->cmd_len = scsi_command_size(cmd->cmnd);
 	cmd->cmnd = scsi_req(req)->cmd;
 	cmd->transfersize = blk_rq_bytes(req);
 	cmd->allowed = scsi_req(req)->retries;
-	return BLK_STS_OK;
-}
+	वापस BLK_STS_OK;
+पूर्ण
 
-static blk_status_t
-scsi_device_state_check(struct scsi_device *sdev, struct request *req)
-{
-	switch (sdev->sdev_state) {
-	case SDEV_CREATED:
-		return BLK_STS_OK;
-	case SDEV_OFFLINE:
-	case SDEV_TRANSPORT_OFFLINE:
+अटल blk_status_t
+scsi_device_state_check(काष्ठा scsi_device *sdev, काष्ठा request *req)
+अणु
+	चयन (sdev->sdev_state) अणु
+	हाल SDEV_CREATED:
+		वापस BLK_STS_OK;
+	हाल SDEV_OFFLINE:
+	हाल SDEV_TRANSPORT_OFFLINE:
 		/*
 		 * If the device is offline we refuse to process any
 		 * commands.  The device must be brought online
-		 * before trying any recovery commands.
+		 * beक्रमe trying any recovery commands.
 		 */
-		if (!sdev->offline_already) {
-			sdev->offline_already = true;
-			sdev_printk(KERN_ERR, sdev,
+		अगर (!sdev->offline_alपढ़ोy) अणु
+			sdev->offline_alपढ़ोy = true;
+			sdev_prपूर्णांकk(KERN_ERR, sdev,
 				    "rejecting I/O to offline device\n");
-		}
-		return BLK_STS_IOERR;
-	case SDEV_DEL:
+		पूर्ण
+		वापस BLK_STS_IOERR;
+	हाल SDEV_DEL:
 		/*
 		 * If the device is fully deleted, we refuse to
 		 * process any commands as well.
 		 */
-		sdev_printk(KERN_ERR, sdev,
+		sdev_prपूर्णांकk(KERN_ERR, sdev,
 			    "rejecting I/O to dead device\n");
-		return BLK_STS_IOERR;
-	case SDEV_BLOCK:
-	case SDEV_CREATED_BLOCK:
-		return BLK_STS_RESOURCE;
-	case SDEV_QUIESCE:
+		वापस BLK_STS_IOERR;
+	हाल SDEV_BLOCK:
+	हाल SDEV_CREATED_BLOCK:
+		वापस BLK_STS_RESOURCE;
+	हाल SDEV_QUIESCE:
 		/*
-		 * If the device is blocked we only accept power management
+		 * If the device is blocked we only accept घातer management
 		 * commands.
 		 */
-		if (req && WARN_ON_ONCE(!(req->rq_flags & RQF_PM)))
-			return BLK_STS_RESOURCE;
-		return BLK_STS_OK;
-	default:
+		अगर (req && WARN_ON_ONCE(!(req->rq_flags & RQF_PM)))
+			वापस BLK_STS_RESOURCE;
+		वापस BLK_STS_OK;
+	शेष:
 		/*
 		 * For any other not fully online state we only allow
-		 * power management commands.
+		 * घातer management commands.
 		 */
-		if (req && !(req->rq_flags & RQF_PM))
-			return BLK_STS_IOERR;
-		return BLK_STS_OK;
-	}
-}
+		अगर (req && !(req->rq_flags & RQF_PM))
+			वापस BLK_STS_IOERR;
+		वापस BLK_STS_OK;
+	पूर्ण
+पूर्ण
 
 /*
- * scsi_dev_queue_ready: if we can send requests to sdev, assign one token
- * and return the token else return -1.
+ * scsi_dev_queue_पढ़ोy: अगर we can send requests to sdev, assign one token
+ * and वापस the token अन्यथा वापस -1.
  */
-static inline int scsi_dev_queue_ready(struct request_queue *q,
-				  struct scsi_device *sdev)
-{
-	int token;
+अटल अंतरभूत पूर्णांक scsi_dev_queue_पढ़ोy(काष्ठा request_queue *q,
+				  काष्ठा scsi_device *sdev)
+अणु
+	पूर्णांक token;
 
-	token = sbitmap_get(&sdev->budget_map);
-	if (atomic_read(&sdev->device_blocked)) {
-		if (token < 0)
-			goto out;
+	token = sbiपंचांगap_get(&sdev->budget_map);
+	अगर (atomic_पढ़ो(&sdev->device_blocked)) अणु
+		अगर (token < 0)
+			जाओ out;
 
-		if (scsi_device_busy(sdev) > 1)
-			goto out_dec;
+		अगर (scsi_device_busy(sdev) > 1)
+			जाओ out_dec;
 
 		/*
 		 * unblock after device_blocked iterates to zero
 		 */
-		if (atomic_dec_return(&sdev->device_blocked) > 0)
-			goto out_dec;
-		SCSI_LOG_MLQUEUE(3, sdev_printk(KERN_INFO, sdev,
+		अगर (atomic_dec_वापस(&sdev->device_blocked) > 0)
+			जाओ out_dec;
+		SCSI_LOG_MLQUEUE(3, sdev_prपूर्णांकk(KERN_INFO, sdev,
 				   "unblocking device at zero depth\n"));
-	}
+	पूर्ण
 
-	return token;
+	वापस token;
 out_dec:
-	if (token >= 0)
-		sbitmap_put(&sdev->budget_map, token);
+	अगर (token >= 0)
+		sbiपंचांगap_put(&sdev->budget_map, token);
 out:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /*
- * scsi_target_queue_ready: checks if there we can send commands to target
+ * scsi_target_queue_पढ़ोy: checks अगर there we can send commands to target
  * @sdev: scsi device on starget to check.
  */
-static inline int scsi_target_queue_ready(struct Scsi_Host *shost,
-					   struct scsi_device *sdev)
-{
-	struct scsi_target *starget = scsi_target(sdev);
-	unsigned int busy;
+अटल अंतरभूत पूर्णांक scsi_target_queue_पढ़ोy(काष्ठा Scsi_Host *shost,
+					   काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा scsi_target *starget = scsi_target(sdev);
+	अचिन्हित पूर्णांक busy;
 
-	if (starget->single_lun) {
+	अगर (starget->single_lun) अणु
 		spin_lock_irq(shost->host_lock);
-		if (starget->starget_sdev_user &&
-		    starget->starget_sdev_user != sdev) {
+		अगर (starget->starget_sdev_user &&
+		    starget->starget_sdev_user != sdev) अणु
 			spin_unlock_irq(shost->host_lock);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		starget->starget_sdev_user = sdev;
 		spin_unlock_irq(shost->host_lock);
-	}
+	पूर्ण
 
-	if (starget->can_queue <= 0)
-		return 1;
+	अगर (starget->can_queue <= 0)
+		वापस 1;
 
-	busy = atomic_inc_return(&starget->target_busy) - 1;
-	if (atomic_read(&starget->target_blocked) > 0) {
-		if (busy)
-			goto starved;
+	busy = atomic_inc_वापस(&starget->target_busy) - 1;
+	अगर (atomic_पढ़ो(&starget->target_blocked) > 0) अणु
+		अगर (busy)
+			जाओ starved;
 
 		/*
 		 * unblock after target_blocked iterates to zero
 		 */
-		if (atomic_dec_return(&starget->target_blocked) > 0)
-			goto out_dec;
+		अगर (atomic_dec_वापस(&starget->target_blocked) > 0)
+			जाओ out_dec;
 
-		SCSI_LOG_MLQUEUE(3, starget_printk(KERN_INFO, starget,
+		SCSI_LOG_MLQUEUE(3, starget_prपूर्णांकk(KERN_INFO, starget,
 				 "unblocking target at zero depth\n"));
-	}
+	पूर्ण
 
-	if (busy >= starget->can_queue)
-		goto starved;
+	अगर (busy >= starget->can_queue)
+		जाओ starved;
 
-	return 1;
+	वापस 1;
 
 starved:
 	spin_lock_irq(shost->host_lock);
 	list_move_tail(&sdev->starved_entry, &shost->starved_list);
 	spin_unlock_irq(shost->host_lock);
 out_dec:
-	if (starget->can_queue > 0)
+	अगर (starget->can_queue > 0)
 		atomic_dec(&starget->target_busy);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * scsi_host_queue_ready: if we can send requests to shost, return 1 else
- * return 0. We must end up running the queue again whenever 0 is
- * returned, else IO can hang.
+ * scsi_host_queue_पढ़ोy: अगर we can send requests to shost, वापस 1 अन्यथा
+ * वापस 0. We must end up running the queue again whenever 0 is
+ * वापसed, अन्यथा IO can hang.
  */
-static inline int scsi_host_queue_ready(struct request_queue *q,
-				   struct Scsi_Host *shost,
-				   struct scsi_device *sdev,
-				   struct scsi_cmnd *cmd)
-{
-	if (scsi_host_in_recovery(shost))
-		return 0;
+अटल अंतरभूत पूर्णांक scsi_host_queue_पढ़ोy(काष्ठा request_queue *q,
+				   काष्ठा Scsi_Host *shost,
+				   काष्ठा scsi_device *sdev,
+				   काष्ठा scsi_cmnd *cmd)
+अणु
+	अगर (scsi_host_in_recovery(shost))
+		वापस 0;
 
-	if (atomic_read(&shost->host_blocked) > 0) {
-		if (scsi_host_busy(shost) > 0)
-			goto starved;
+	अगर (atomic_पढ़ो(&shost->host_blocked) > 0) अणु
+		अगर (scsi_host_busy(shost) > 0)
+			जाओ starved;
 
 		/*
 		 * unblock after host_blocked iterates to zero
 		 */
-		if (atomic_dec_return(&shost->host_blocked) > 0)
-			goto out_dec;
+		अगर (atomic_dec_वापस(&shost->host_blocked) > 0)
+			जाओ out_dec;
 
 		SCSI_LOG_MLQUEUE(3,
-			shost_printk(KERN_INFO, shost,
+			shost_prपूर्णांकk(KERN_INFO, shost,
 				     "unblocking host at zero depth\n"));
-	}
+	पूर्ण
 
-	if (shost->host_self_blocked)
-		goto starved;
+	अगर (shost->host_self_blocked)
+		जाओ starved;
 
 	/* We're OK to process the command, so we can't be starved */
-	if (!list_empty(&sdev->starved_entry)) {
+	अगर (!list_empty(&sdev->starved_entry)) अणु
 		spin_lock_irq(shost->host_lock);
-		if (!list_empty(&sdev->starved_entry))
+		अगर (!list_empty(&sdev->starved_entry))
 			list_del_init(&sdev->starved_entry);
 		spin_unlock_irq(shost->host_lock);
-	}
+	पूर्ण
 
 	__set_bit(SCMD_STATE_INFLIGHT, &cmd->state);
 
-	return 1;
+	वापस 1;
 
 starved:
 	spin_lock_irq(shost->host_lock);
-	if (list_empty(&sdev->starved_entry))
+	अगर (list_empty(&sdev->starved_entry))
 		list_add_tail(&sdev->starved_entry, &shost->starved_list);
 	spin_unlock_irq(shost->host_lock);
 out_dec:
 	scsi_dec_host_busy(shost, cmd);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Busy state exporting function for request stacking drivers.
+ * Busy state exporting function क्रम request stacking drivers.
  *
  * For efficiency, no lock is taken to check the busy state of
- * shost/starget/sdev, since the returned value is not guaranteed and
+ * shost/starget/sdev, since the वापसed value is not guaranteed and
  * may be changed after request stacking drivers call the function,
  * regardless of taking lock or not.
  *
- * When scsi can't dispatch I/Os anymore and needs to kill I/Os scsi
- * needs to return 'not busy'. Otherwise, request stacking drivers
- * may hold requests forever.
+ * When scsi can't dispatch I/Os anymore and needs to समाप्त I/Os scsi
+ * needs to वापस 'not busy'. Otherwise, request stacking drivers
+ * may hold requests क्रमever.
  */
-static bool scsi_mq_lld_busy(struct request_queue *q)
-{
-	struct scsi_device *sdev = q->queuedata;
-	struct Scsi_Host *shost;
+अटल bool scsi_mq_lld_busy(काष्ठा request_queue *q)
+अणु
+	काष्ठा scsi_device *sdev = q->queuedata;
+	काष्ठा Scsi_Host *shost;
 
-	if (blk_queue_dying(q))
-		return false;
+	अगर (blk_queue_dying(q))
+		वापस false;
 
 	shost = sdev->host;
 
 	/*
 	 * Ignore host/starget busy state.
-	 * Since block layer does not have a concept of fairness across
+	 * Since block layer करोes not have a concept of fairness across
 	 * multiple queues, congestion of host/starget needs to be handled
 	 * in SCSI layer.
 	 */
-	if (scsi_host_in_recovery(shost) || scsi_device_is_busy(sdev))
-		return true;
+	अगर (scsi_host_in_recovery(shost) || scsi_device_is_busy(sdev))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Block layer request completion callback. May be called from interrupt
+ * Block layer request completion callback. May be called from पूर्णांकerrupt
  * context.
  */
-static void scsi_complete(struct request *rq)
-{
-	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
-	enum scsi_disposition disposition;
+अटल व्योम scsi_complete(काष्ठा request *rq)
+अणु
+	काष्ठा scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
+	क्रमागत scsi_disposition disposition;
 
 	INIT_LIST_HEAD(&cmd->eh_entry);
 
-	atomic_inc(&cmd->device->iodone_cnt);
-	if (cmd->result)
+	atomic_inc(&cmd->device->ioकरोne_cnt);
+	अगर (cmd->result)
 		atomic_inc(&cmd->device->ioerr_cnt);
 
 	disposition = scsi_decide_disposition(cmd);
-	if (disposition != SUCCESS && scsi_cmd_runtime_exceeced(cmd))
+	अगर (disposition != SUCCESS && scsi_cmd_runसमय_exceeced(cmd))
 		disposition = SUCCESS;
 
 	scsi_log_completion(cmd, disposition);
 
-	switch (disposition) {
-	case SUCCESS:
+	चयन (disposition) अणु
+	हाल SUCCESS:
 		scsi_finish_command(cmd);
-		break;
-	case NEEDS_RETRY:
+		अवरोध;
+	हाल NEEDS_RETRY:
 		scsi_queue_insert(cmd, SCSI_MLQUEUE_EH_RETRY);
-		break;
-	case ADD_TO_MLQUEUE:
+		अवरोध;
+	हाल ADD_TO_MLQUEUE:
 		scsi_queue_insert(cmd, SCSI_MLQUEUE_DEVICE_BUSY);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		scsi_eh_scmd_add(cmd);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * scsi_dispatch_cmd - Dispatch a command to the low-level driver.
  * @cmd: command block we are dispatching.
  *
- * Return: nonzero return request was rejected and device's queue needs to be
+ * Return: nonzero वापस request was rejected and device's queue needs to be
  * plugged.
  */
-static int scsi_dispatch_cmd(struct scsi_cmnd *cmd)
-{
-	struct Scsi_Host *host = cmd->device->host;
-	int rtn = 0;
+अटल पूर्णांक scsi_dispatch_cmd(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा Scsi_Host *host = cmd->device->host;
+	पूर्णांक rtn = 0;
 
 	atomic_inc(&cmd->device->iorequest_cnt);
 
-	/* check if the device is still usable */
-	if (unlikely(cmd->device->sdev_state == SDEV_DEL)) {
+	/* check अगर the device is still usable */
+	अगर (unlikely(cmd->device->sdev_state == SDEV_DEL)) अणु
 		/* in SDEV_DEL we error all commands. DID_NO_CONNECT
-		 * returns an immediate error upwards, and signals
-		 * that the device is no longer present */
+		 * वापसs an immediate error upwards, and संकेतs
+		 * that the device is no दीर्घer present */
 		cmd->result = DID_NO_CONNECT << 16;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* Check to see if the scsi lld made this device blocked. */
-	if (unlikely(scsi_device_blocked(cmd->device))) {
+	/* Check to see अगर the scsi lld made this device blocked. */
+	अगर (unlikely(scsi_device_blocked(cmd->device))) अणु
 		/*
 		 * in blocked state, the command is just put back on
-		 * the device queue.  The suspend state has already
+		 * the device queue.  The suspend state has alपढ़ोy
 		 * blocked the queue so future requests should not
 		 * occur until the device transitions out of the
 		 * suspend state.
 		 */
-		SCSI_LOG_MLQUEUE(3, scmd_printk(KERN_INFO, cmd,
+		SCSI_LOG_MLQUEUE(3, scmd_prपूर्णांकk(KERN_INFO, cmd,
 			"queuecommand : device blocked\n"));
-		return SCSI_MLQUEUE_DEVICE_BUSY;
-	}
+		वापस SCSI_MLQUEUE_DEVICE_BUSY;
+	पूर्ण
 
-	/* Store the LUN value in cmnd, if needed. */
-	if (cmd->device->lun_in_cdb)
+	/* Store the LUN value in cmnd, अगर needed. */
+	अगर (cmd->device->lun_in_cdb)
 		cmd->cmnd[1] = (cmd->cmnd[1] & 0x1f) |
 			       (cmd->device->lun << 5 & 0xe0);
 
 	scsi_log_send(cmd);
 
 	/*
-	 * Before we queue this command, check if the command
+	 * Beक्रमe we queue this command, check अगर the command
 	 * length exceeds what the host adapter can handle.
 	 */
-	if (cmd->cmd_len > cmd->device->host->max_cmd_len) {
-		SCSI_LOG_MLQUEUE(3, scmd_printk(KERN_INFO, cmd,
+	अगर (cmd->cmd_len > cmd->device->host->max_cmd_len) अणु
+		SCSI_LOG_MLQUEUE(3, scmd_prपूर्णांकk(KERN_INFO, cmd,
 			       "queuecommand : command too long. "
 			       "cdb_size=%d host->max_cmd_len=%d\n",
 			       cmd->cmd_len, cmd->device->host->max_cmd_len));
 		cmd->result = (DID_ABORT << 16);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (unlikely(host->shost_state == SHOST_DEL)) {
+	अगर (unlikely(host->shost_state == SHOST_DEL)) अणु
 		cmd->result = (DID_NO_CONNECT << 16);
-		goto done;
+		जाओ करोne;
 
-	}
+	पूर्ण
 
 	trace_scsi_dispatch_cmd_start(cmd);
 	rtn = host->hostt->queuecommand(host, cmd);
-	if (rtn) {
+	अगर (rtn) अणु
 		trace_scsi_dispatch_cmd_error(cmd, rtn);
-		if (rtn != SCSI_MLQUEUE_DEVICE_BUSY &&
+		अगर (rtn != SCSI_MLQUEUE_DEVICE_BUSY &&
 		    rtn != SCSI_MLQUEUE_TARGET_BUSY)
 			rtn = SCSI_MLQUEUE_HOST_BUSY;
 
-		SCSI_LOG_MLQUEUE(3, scmd_printk(KERN_INFO, cmd,
+		SCSI_LOG_MLQUEUE(3, scmd_prपूर्णांकk(KERN_INFO, cmd,
 			"queuecommand : request rejected\n"));
-	}
+	पूर्ण
 
-	return rtn;
- done:
-	cmd->scsi_done(cmd);
-	return 0;
-}
+	वापस rtn;
+ करोne:
+	cmd->scsi_करोne(cmd);
+	वापस 0;
+पूर्ण
 
-/* Size in bytes of the sg-list stored in the scsi-mq command-private data. */
-static unsigned int scsi_mq_inline_sgl_size(struct Scsi_Host *shost)
-{
-	return min_t(unsigned int, shost->sg_tablesize, SCSI_INLINE_SG_CNT) *
-		sizeof(struct scatterlist);
-}
+/* Size in bytes of the sg-list stored in the scsi-mq command-निजी data. */
+अटल अचिन्हित पूर्णांक scsi_mq_अंतरभूत_sgl_size(काष्ठा Scsi_Host *shost)
+अणु
+	वापस min_t(अचिन्हित पूर्णांक, shost->sg_tablesize, SCSI_INLINE_SG_CNT) *
+		माप(काष्ठा scatterlist);
+पूर्ण
 
-static blk_status_t scsi_prepare_cmd(struct request *req)
-{
-	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(req);
-	struct scsi_device *sdev = req->q->queuedata;
-	struct Scsi_Host *shost = sdev->host;
-	struct scatterlist *sg;
+अटल blk_status_t scsi_prepare_cmd(काष्ठा request *req)
+अणु
+	काष्ठा scsi_cmnd *cmd = blk_mq_rq_to_pdu(req);
+	काष्ठा scsi_device *sdev = req->q->queuedata;
+	काष्ठा Scsi_Host *shost = sdev->host;
+	काष्ठा scatterlist *sg;
 
 	scsi_init_command(sdev, cmd);
 
 	cmd->request = req;
 	cmd->tag = req->tag;
 	cmd->prot_op = SCSI_PROT_NORMAL;
-	if (blk_rq_bytes(req))
+	अगर (blk_rq_bytes(req))
 		cmd->sc_data_direction = rq_dma_dir(req);
-	else
+	अन्यथा
 		cmd->sc_data_direction = DMA_NONE;
 
-	sg = (void *)cmd + sizeof(struct scsi_cmnd) + shost->hostt->cmd_size;
+	sg = (व्योम *)cmd + माप(काष्ठा scsi_cmnd) + shost->hostt->cmd_size;
 	cmd->sdb.table.sgl = sg;
 
-	if (scsi_host_get_prot(shost)) {
-		memset(cmd->prot_sdb, 0, sizeof(struct scsi_data_buffer));
+	अगर (scsi_host_get_prot(shost)) अणु
+		स_रखो(cmd->prot_sdb, 0, माप(काष्ठा scsi_data_buffer));
 
 		cmd->prot_sdb->table.sgl =
-			(struct scatterlist *)(cmd->prot_sdb + 1);
-	}
+			(काष्ठा scatterlist *)(cmd->prot_sdb + 1);
+	पूर्ण
 
 	/*
-	 * Special handling for passthrough commands, which don't go to the ULP
+	 * Special handling क्रम passthrough commands, which करोn't go to the ULP
 	 * at all:
 	 */
-	if (blk_rq_is_scsi(req))
-		return scsi_setup_scsi_cmnd(sdev, req);
+	अगर (blk_rq_is_scsi(req))
+		वापस scsi_setup_scsi_cmnd(sdev, req);
 
-	if (sdev->handler && sdev->handler->prep_fn) {
+	अगर (sdev->handler && sdev->handler->prep_fn) अणु
 		blk_status_t ret = sdev->handler->prep_fn(sdev, req);
 
-		if (ret != BLK_STS_OK)
-			return ret;
-	}
+		अगर (ret != BLK_STS_OK)
+			वापस ret;
+	पूर्ण
 
 	cmd->cmnd = scsi_req(req)->cmd = scsi_req(req)->__cmd;
-	memset(cmd->cmnd, 0, BLK_MAX_CDB);
-	return scsi_cmd_to_driver(cmd)->init_command(cmd);
-}
+	स_रखो(cmd->cmnd, 0, BLK_MAX_CDB);
+	वापस scsi_cmd_to_driver(cmd)->init_command(cmd);
+पूर्ण
 
-static void scsi_mq_done(struct scsi_cmnd *cmd)
-{
-	if (unlikely(blk_should_fake_timeout(cmd->request->q)))
-		return;
-	if (unlikely(test_and_set_bit(SCMD_STATE_COMPLETE, &cmd->state)))
-		return;
-	trace_scsi_dispatch_cmd_done(cmd);
+अटल व्योम scsi_mq_करोne(काष्ठा scsi_cmnd *cmd)
+अणु
+	अगर (unlikely(blk_should_fake_समयout(cmd->request->q)))
+		वापस;
+	अगर (unlikely(test_and_set_bit(SCMD_STATE_COMPLETE, &cmd->state)))
+		वापस;
+	trace_scsi_dispatch_cmd_करोne(cmd);
 	blk_mq_complete_request(cmd->request);
-}
+पूर्ण
 
-static void scsi_mq_put_budget(struct request_queue *q, int budget_token)
-{
-	struct scsi_device *sdev = q->queuedata;
+अटल व्योम scsi_mq_put_budget(काष्ठा request_queue *q, पूर्णांक budget_token)
+अणु
+	काष्ठा scsi_device *sdev = q->queuedata;
 
-	sbitmap_put(&sdev->budget_map, budget_token);
-}
+	sbiपंचांगap_put(&sdev->budget_map, budget_token);
+पूर्ण
 
-static int scsi_mq_get_budget(struct request_queue *q)
-{
-	struct scsi_device *sdev = q->queuedata;
-	int token = scsi_dev_queue_ready(q, sdev);
+अटल पूर्णांक scsi_mq_get_budget(काष्ठा request_queue *q)
+अणु
+	काष्ठा scsi_device *sdev = q->queuedata;
+	पूर्णांक token = scsi_dev_queue_पढ़ोy(q, sdev);
 
-	if (token >= 0)
-		return token;
+	अगर (token >= 0)
+		वापस token;
 
 	atomic_inc(&sdev->restarts);
 
 	/*
-	 * Orders atomic_inc(&sdev->restarts) and atomic_read(&sdev->device_busy).
-	 * .restarts must be incremented before .device_busy is read because the
+	 * Orders atomic_inc(&sdev->restarts) and atomic_पढ़ो(&sdev->device_busy).
+	 * .restarts must be incremented beक्रमe .device_busy is पढ़ो because the
 	 * code in scsi_run_queue_async() depends on the order of these operations.
 	 */
 	smp_mb__after_atomic();
 
 	/*
 	 * If all in-flight requests originated from this LUN are completed
-	 * before reading .device_busy, sdev->device_busy will be observed as
+	 * beक्रमe पढ़ोing .device_busy, sdev->device_busy will be observed as
 	 * zero, then blk_mq_delay_run_hw_queues() will dispatch this request
 	 * soon. Otherwise, completion of one of these requests will observe
-	 * the .restarts flag, and the request queue will be run for handling
+	 * the .restarts flag, and the request queue will be run क्रम handling
 	 * this request, see scsi_end_request().
 	 */
-	if (unlikely(scsi_device_busy(sdev) == 0 &&
+	अगर (unlikely(scsi_device_busy(sdev) == 0 &&
 				!scsi_device_blocked(sdev)))
 		blk_mq_delay_run_hw_queues(sdev->request_queue, SCSI_QUEUE_DELAY);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void scsi_mq_set_rq_budget_token(struct request *req, int token)
-{
-	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(req);
+अटल व्योम scsi_mq_set_rq_budget_token(काष्ठा request *req, पूर्णांक token)
+अणु
+	काष्ठा scsi_cmnd *cmd = blk_mq_rq_to_pdu(req);
 
 	cmd->budget_token = token;
-}
+पूर्ण
 
-static int scsi_mq_get_rq_budget_token(struct request *req)
-{
-	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(req);
+अटल पूर्णांक scsi_mq_get_rq_budget_token(काष्ठा request *req)
+अणु
+	काष्ठा scsi_cmnd *cmd = blk_mq_rq_to_pdu(req);
 
-	return cmd->budget_token;
-}
+	वापस cmd->budget_token;
+पूर्ण
 
-static blk_status_t scsi_queue_rq(struct blk_mq_hw_ctx *hctx,
-			 const struct blk_mq_queue_data *bd)
-{
-	struct request *req = bd->rq;
-	struct request_queue *q = req->q;
-	struct scsi_device *sdev = q->queuedata;
-	struct Scsi_Host *shost = sdev->host;
-	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(req);
+अटल blk_status_t scsi_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
+			 स्थिर काष्ठा blk_mq_queue_data *bd)
+अणु
+	काष्ठा request *req = bd->rq;
+	काष्ठा request_queue *q = req->q;
+	काष्ठा scsi_device *sdev = q->queuedata;
+	काष्ठा Scsi_Host *shost = sdev->host;
+	काष्ठा scsi_cmnd *cmd = blk_mq_rq_to_pdu(req);
 	blk_status_t ret;
-	int reason;
+	पूर्णांक reason;
 
 	WARN_ON_ONCE(cmd->budget_token < 0);
 
@@ -1650,185 +1651,185 @@ static blk_status_t scsi_queue_rq(struct blk_mq_hw_ctx *hctx,
 	 * If the device is not in running state we will reject some or all
 	 * commands.
 	 */
-	if (unlikely(sdev->sdev_state != SDEV_RUNNING)) {
+	अगर (unlikely(sdev->sdev_state != SDEV_RUNNING)) अणु
 		ret = scsi_device_state_check(sdev, req);
-		if (ret != BLK_STS_OK)
-			goto out_put_budget;
-	}
+		अगर (ret != BLK_STS_OK)
+			जाओ out_put_budget;
+	पूर्ण
 
 	ret = BLK_STS_RESOURCE;
-	if (!scsi_target_queue_ready(shost, sdev))
-		goto out_put_budget;
-	if (!scsi_host_queue_ready(q, shost, sdev, cmd))
-		goto out_dec_target_busy;
+	अगर (!scsi_target_queue_पढ़ोy(shost, sdev))
+		जाओ out_put_budget;
+	अगर (!scsi_host_queue_पढ़ोy(q, shost, sdev, cmd))
+		जाओ out_dec_target_busy;
 
-	if (!(req->rq_flags & RQF_DONTPREP)) {
+	अगर (!(req->rq_flags & RQF_DONTPREP)) अणु
 		ret = scsi_prepare_cmd(req);
-		if (ret != BLK_STS_OK)
-			goto out_dec_host_busy;
+		अगर (ret != BLK_STS_OK)
+			जाओ out_dec_host_busy;
 		req->rq_flags |= RQF_DONTPREP;
-	} else {
+	पूर्ण अन्यथा अणु
 		clear_bit(SCMD_STATE_COMPLETE, &cmd->state);
-	}
+	पूर्ण
 
 	cmd->flags &= SCMD_PRESERVED_FLAGS;
-	if (sdev->simple_tags)
+	अगर (sdev->simple_tags)
 		cmd->flags |= SCMD_TAGGED;
-	if (bd->last)
+	अगर (bd->last)
 		cmd->flags |= SCMD_LAST;
 
 	scsi_set_resid(cmd, 0);
-	memset(cmd->sense_buffer, 0, SCSI_SENSE_BUFFERSIZE);
-	cmd->scsi_done = scsi_mq_done;
+	स_रखो(cmd->sense_buffer, 0, SCSI_SENSE_BUFFERSIZE);
+	cmd->scsi_करोne = scsi_mq_करोne;
 
 	blk_mq_start_request(req);
 	reason = scsi_dispatch_cmd(cmd);
-	if (reason) {
+	अगर (reason) अणु
 		scsi_set_blocked(cmd, reason);
 		ret = BLK_STS_RESOURCE;
-		goto out_dec_host_busy;
-	}
+		जाओ out_dec_host_busy;
+	पूर्ण
 
-	return BLK_STS_OK;
+	वापस BLK_STS_OK;
 
 out_dec_host_busy:
 	scsi_dec_host_busy(shost, cmd);
 out_dec_target_busy:
-	if (scsi_target(sdev)->can_queue > 0)
+	अगर (scsi_target(sdev)->can_queue > 0)
 		atomic_dec(&scsi_target(sdev)->target_busy);
 out_put_budget:
 	scsi_mq_put_budget(q, cmd->budget_token);
 	cmd->budget_token = -1;
-	switch (ret) {
-	case BLK_STS_OK:
-		break;
-	case BLK_STS_RESOURCE:
-	case BLK_STS_ZONE_RESOURCE:
-		if (scsi_device_blocked(sdev))
+	चयन (ret) अणु
+	हाल BLK_STS_OK:
+		अवरोध;
+	हाल BLK_STS_RESOURCE:
+	हाल BLK_STS_ZONE_RESOURCE:
+		अगर (scsi_device_blocked(sdev))
 			ret = BLK_STS_DEV_RESOURCE;
-		break;
-	case BLK_STS_AGAIN:
+		अवरोध;
+	हाल BLK_STS_AGAIN:
 		scsi_req(req)->result = DID_BUS_BUSY << 16;
-		if (req->rq_flags & RQF_DONTPREP)
+		अगर (req->rq_flags & RQF_DONTPREP)
 			scsi_mq_uninit_cmd(cmd);
-		break;
-	default:
-		if (unlikely(!scsi_device_online(sdev)))
+		अवरोध;
+	शेष:
+		अगर (unlikely(!scsi_device_online(sdev)))
 			scsi_req(req)->result = DID_NO_CONNECT << 16;
-		else
+		अन्यथा
 			scsi_req(req)->result = DID_ERROR << 16;
 		/*
 		 * Make sure to release all allocated resources when
 		 * we hit an error, as we will never see this command
 		 * again.
 		 */
-		if (req->rq_flags & RQF_DONTPREP)
+		अगर (req->rq_flags & RQF_DONTPREP)
 			scsi_mq_uninit_cmd(cmd);
 		scsi_run_queue_async(sdev);
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static enum blk_eh_timer_return scsi_timeout(struct request *req,
+अटल क्रमागत blk_eh_समयr_वापस scsi_समयout(काष्ठा request *req,
 		bool reserved)
-{
-	if (reserved)
-		return BLK_EH_RESET_TIMER;
-	return scsi_times_out(req);
-}
+अणु
+	अगर (reserved)
+		वापस BLK_EH_RESET_TIMER;
+	वापस scsi_बार_out(req);
+पूर्ण
 
-static int scsi_mq_init_request(struct blk_mq_tag_set *set, struct request *rq,
-				unsigned int hctx_idx, unsigned int numa_node)
-{
-	struct Scsi_Host *shost = set->driver_data;
-	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
-	struct scatterlist *sg;
-	int ret = 0;
+अटल पूर्णांक scsi_mq_init_request(काष्ठा blk_mq_tag_set *set, काष्ठा request *rq,
+				अचिन्हित पूर्णांक hctx_idx, अचिन्हित पूर्णांक numa_node)
+अणु
+	काष्ठा Scsi_Host *shost = set->driver_data;
+	काष्ठा scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
+	काष्ठा scatterlist *sg;
+	पूर्णांक ret = 0;
 
 	cmd->sense_buffer =
 		kmem_cache_alloc_node(scsi_sense_cache, GFP_KERNEL, numa_node);
-	if (!cmd->sense_buffer)
-		return -ENOMEM;
+	अगर (!cmd->sense_buffer)
+		वापस -ENOMEM;
 	cmd->req.sense = cmd->sense_buffer;
 
-	if (scsi_host_get_prot(shost)) {
-		sg = (void *)cmd + sizeof(struct scsi_cmnd) +
+	अगर (scsi_host_get_prot(shost)) अणु
+		sg = (व्योम *)cmd + माप(काष्ठा scsi_cmnd) +
 			shost->hostt->cmd_size;
-		cmd->prot_sdb = (void *)sg + scsi_mq_inline_sgl_size(shost);
-	}
+		cmd->prot_sdb = (व्योम *)sg + scsi_mq_अंतरभूत_sgl_size(shost);
+	पूर्ण
 
-	if (shost->hostt->init_cmd_priv) {
+	अगर (shost->hostt->init_cmd_priv) अणु
 		ret = shost->hostt->init_cmd_priv(shost, cmd);
-		if (ret < 0)
-			kmem_cache_free(scsi_sense_cache, cmd->sense_buffer);
-	}
+		अगर (ret < 0)
+			kmem_cache_मुक्त(scsi_sense_cache, cmd->sense_buffer);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void scsi_mq_exit_request(struct blk_mq_tag_set *set, struct request *rq,
-				 unsigned int hctx_idx)
-{
-	struct Scsi_Host *shost = set->driver_data;
-	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
+अटल व्योम scsi_mq_निकास_request(काष्ठा blk_mq_tag_set *set, काष्ठा request *rq,
+				 अचिन्हित पूर्णांक hctx_idx)
+अणु
+	काष्ठा Scsi_Host *shost = set->driver_data;
+	काष्ठा scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
 
-	if (shost->hostt->exit_cmd_priv)
-		shost->hostt->exit_cmd_priv(shost, cmd);
-	kmem_cache_free(scsi_sense_cache, cmd->sense_buffer);
-}
+	अगर (shost->hostt->निकास_cmd_priv)
+		shost->hostt->निकास_cmd_priv(shost, cmd);
+	kmem_cache_मुक्त(scsi_sense_cache, cmd->sense_buffer);
+पूर्ण
 
 
-static int scsi_mq_poll(struct blk_mq_hw_ctx *hctx)
-{
-	struct Scsi_Host *shost = hctx->driver_data;
+अटल पूर्णांक scsi_mq_poll(काष्ठा blk_mq_hw_ctx *hctx)
+अणु
+	काष्ठा Scsi_Host *shost = hctx->driver_data;
 
-	if (shost->hostt->mq_poll)
-		return shost->hostt->mq_poll(shost, hctx->queue_num);
+	अगर (shost->hostt->mq_poll)
+		वापस shost->hostt->mq_poll(shost, hctx->queue_num);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int scsi_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
-			  unsigned int hctx_idx)
-{
-	struct Scsi_Host *shost = data;
+अटल पूर्णांक scsi_init_hctx(काष्ठा blk_mq_hw_ctx *hctx, व्योम *data,
+			  अचिन्हित पूर्णांक hctx_idx)
+अणु
+	काष्ठा Scsi_Host *shost = data;
 
 	hctx->driver_data = shost;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int scsi_map_queues(struct blk_mq_tag_set *set)
-{
-	struct Scsi_Host *shost = container_of(set, struct Scsi_Host, tag_set);
+अटल पूर्णांक scsi_map_queues(काष्ठा blk_mq_tag_set *set)
+अणु
+	काष्ठा Scsi_Host *shost = container_of(set, काष्ठा Scsi_Host, tag_set);
 
-	if (shost->hostt->map_queues)
-		return shost->hostt->map_queues(shost);
-	return blk_mq_map_queues(&set->map[HCTX_TYPE_DEFAULT]);
-}
+	अगर (shost->hostt->map_queues)
+		वापस shost->hostt->map_queues(shost);
+	वापस blk_mq_map_queues(&set->map[HCTX_TYPE_DEFAULT]);
+पूर्ण
 
-void __scsi_init_queue(struct Scsi_Host *shost, struct request_queue *q)
-{
-	struct device *dev = shost->dma_dev;
+व्योम __scsi_init_queue(काष्ठा Scsi_Host *shost, काष्ठा request_queue *q)
+अणु
+	काष्ठा device *dev = shost->dma_dev;
 
 	/*
 	 * this limit is imposed by hardware restrictions
 	 */
-	blk_queue_max_segments(q, min_t(unsigned short, shost->sg_tablesize,
+	blk_queue_max_segments(q, min_t(अचिन्हित लघु, shost->sg_tablesize,
 					SG_MAX_SEGMENTS));
 
-	if (scsi_host_prot_dma(shost)) {
+	अगर (scsi_host_prot_dma(shost)) अणु
 		shost->sg_prot_tablesize =
 			min_not_zero(shost->sg_prot_tablesize,
-				     (unsigned short)SCSI_MAX_PROT_SG_SEGMENTS);
+				     (अचिन्हित लघु)SCSI_MAX_PROT_SG_SEGMENTS);
 		BUG_ON(shost->sg_prot_tablesize < shost->sg_tablesize);
-		blk_queue_max_integrity_segments(q, shost->sg_prot_tablesize);
-	}
+		blk_queue_max_पूर्णांकegrity_segments(q, shost->sg_prot_tablesize);
+	पूर्ण
 
-	if (dev->dma_mask) {
-		shost->max_sectors = min_t(unsigned int, shost->max_sectors,
+	अगर (dev->dma_mask) अणु
+		shost->max_sectors = min_t(अचिन्हित पूर्णांक, shost->max_sectors,
 				dma_max_mapping_size(dev) >> SECTOR_SHIFT);
-	}
+	पूर्ण
 	blk_queue_max_hw_sectors(q, shost->max_sectors);
 	blk_queue_segment_boundary(q, shost->dma_boundary);
 	dma_set_seg_boundary(dev, shost->dma_boundary);
@@ -1838,27 +1839,27 @@ void __scsi_init_queue(struct Scsi_Host *shost, struct request_queue *q)
 	dma_set_max_seg_size(dev, queue_max_segment_size(q));
 
 	/*
-	 * Set a reasonable default alignment:  The larger of 32-byte (dword),
-	 * which is a common minimum for HBAs, and the minimum DMA alignment,
-	 * which is set by the platform.
+	 * Set a reasonable शेष alignment:  The larger of 32-byte (dword),
+	 * which is a common minimum क्रम HBAs, and the minimum DMA alignment,
+	 * which is set by the platक्रमm.
 	 *
 	 * Devices that require a bigger alignment can increase it later.
 	 */
 	blk_queue_dma_alignment(q, max(4, dma_get_cache_alignment()) - 1);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__scsi_init_queue);
 
-static const struct blk_mq_ops scsi_mq_ops_no_commit = {
+अटल स्थिर काष्ठा blk_mq_ops scsi_mq_ops_no_commit = अणु
 	.get_budget	= scsi_mq_get_budget,
 	.put_budget	= scsi_mq_put_budget,
 	.queue_rq	= scsi_queue_rq,
 	.complete	= scsi_complete,
-	.timeout	= scsi_timeout,
-#ifdef CONFIG_BLK_DEBUG_FS
+	.समयout	= scsi_समयout,
+#अगर_घोषित CONFIG_BLK_DEBUG_FS
 	.show_rq	= scsi_show_rq,
-#endif
+#पूर्ण_अगर
 	.init_request	= scsi_mq_init_request,
-	.exit_request	= scsi_mq_exit_request,
+	.निकास_request	= scsi_mq_निकास_request,
 	.initialize_rq_fn = scsi_initialize_rq,
 	.cleanup_rq	= scsi_cleanup_rq,
 	.busy		= scsi_mq_lld_busy,
@@ -1867,28 +1868,28 @@ static const struct blk_mq_ops scsi_mq_ops_no_commit = {
 	.poll		= scsi_mq_poll,
 	.set_rq_budget_token = scsi_mq_set_rq_budget_token,
 	.get_rq_budget_token = scsi_mq_get_rq_budget_token,
-};
+पूर्ण;
 
 
-static void scsi_commit_rqs(struct blk_mq_hw_ctx *hctx)
-{
-	struct Scsi_Host *shost = hctx->driver_data;
+अटल व्योम scsi_commit_rqs(काष्ठा blk_mq_hw_ctx *hctx)
+अणु
+	काष्ठा Scsi_Host *shost = hctx->driver_data;
 
 	shost->hostt->commit_rqs(shost, hctx->queue_num);
-}
+पूर्ण
 
-static const struct blk_mq_ops scsi_mq_ops = {
+अटल स्थिर काष्ठा blk_mq_ops scsi_mq_ops = अणु
 	.get_budget	= scsi_mq_get_budget,
 	.put_budget	= scsi_mq_put_budget,
 	.queue_rq	= scsi_queue_rq,
 	.commit_rqs	= scsi_commit_rqs,
 	.complete	= scsi_complete,
-	.timeout	= scsi_timeout,
-#ifdef CONFIG_BLK_DEBUG_FS
+	.समयout	= scsi_समयout,
+#अगर_घोषित CONFIG_BLK_DEBUG_FS
 	.show_rq	= scsi_show_rq,
-#endif
+#पूर्ण_अगर
 	.init_request	= scsi_mq_init_request,
-	.exit_request	= scsi_mq_exit_request,
+	.निकास_request	= scsi_mq_निकास_request,
 	.initialize_rq_fn = scsi_initialize_rq,
 	.cleanup_rq	= scsi_cleanup_rq,
 	.busy		= scsi_mq_lld_busy,
@@ -1897,36 +1898,36 @@ static const struct blk_mq_ops scsi_mq_ops = {
 	.poll		= scsi_mq_poll,
 	.set_rq_budget_token = scsi_mq_set_rq_budget_token,
 	.get_rq_budget_token = scsi_mq_get_rq_budget_token,
-};
+पूर्ण;
 
-struct request_queue *scsi_mq_alloc_queue(struct scsi_device *sdev)
-{
+काष्ठा request_queue *scsi_mq_alloc_queue(काष्ठा scsi_device *sdev)
+अणु
 	sdev->request_queue = blk_mq_init_queue(&sdev->host->tag_set);
-	if (IS_ERR(sdev->request_queue))
-		return NULL;
+	अगर (IS_ERR(sdev->request_queue))
+		वापस शून्य;
 
 	sdev->request_queue->queuedata = sdev;
 	__scsi_init_queue(sdev->host, sdev->request_queue);
 	blk_queue_flag_set(QUEUE_FLAG_SCSI_PASSTHROUGH, sdev->request_queue);
-	return sdev->request_queue;
-}
+	वापस sdev->request_queue;
+पूर्ण
 
-int scsi_mq_setup_tags(struct Scsi_Host *shost)
-{
-	unsigned int cmd_size, sgl_size;
-	struct blk_mq_tag_set *tag_set = &shost->tag_set;
+पूर्णांक scsi_mq_setup_tags(काष्ठा Scsi_Host *shost)
+अणु
+	अचिन्हित पूर्णांक cmd_size, sgl_size;
+	काष्ठा blk_mq_tag_set *tag_set = &shost->tag_set;
 
-	sgl_size = max_t(unsigned int, sizeof(struct scatterlist),
-				scsi_mq_inline_sgl_size(shost));
-	cmd_size = sizeof(struct scsi_cmnd) + shost->hostt->cmd_size + sgl_size;
-	if (scsi_host_get_prot(shost))
-		cmd_size += sizeof(struct scsi_data_buffer) +
-			sizeof(struct scatterlist) * SCSI_INLINE_PROT_SG_CNT;
+	sgl_size = max_t(अचिन्हित पूर्णांक, माप(काष्ठा scatterlist),
+				scsi_mq_अंतरभूत_sgl_size(shost));
+	cmd_size = माप(काष्ठा scsi_cmnd) + shost->hostt->cmd_size + sgl_size;
+	अगर (scsi_host_get_prot(shost))
+		cmd_size += माप(काष्ठा scsi_data_buffer) +
+			माप(काष्ठा scatterlist) * SCSI_INLINE_PROT_SG_CNT;
 
-	memset(tag_set, 0, sizeof(*tag_set));
-	if (shost->hostt->commit_rqs)
+	स_रखो(tag_set, 0, माप(*tag_set));
+	अगर (shost->hostt->commit_rqs)
 		tag_set->ops = &scsi_mq_ops;
-	else
+	अन्यथा
 		tag_set->ops = &scsi_mq_ops_no_commit;
 	tag_set->nr_hw_queues = shost->nr_hw_queues ? : 1;
 	tag_set->nr_maps = shost->nr_maps ? : 1;
@@ -1937,49 +1938,49 @@ int scsi_mq_setup_tags(struct Scsi_Host *shost)
 	tag_set->flags |=
 		BLK_ALLOC_POLICY_TO_MQ_FLAG(shost->hostt->tag_alloc_policy);
 	tag_set->driver_data = shost;
-	if (shost->host_tagset)
+	अगर (shost->host_tagset)
 		tag_set->flags |= BLK_MQ_F_TAG_HCTX_SHARED;
 
-	return blk_mq_alloc_tag_set(tag_set);
-}
+	वापस blk_mq_alloc_tag_set(tag_set);
+पूर्ण
 
-void scsi_mq_destroy_tags(struct Scsi_Host *shost)
-{
-	blk_mq_free_tag_set(&shost->tag_set);
-}
+व्योम scsi_mq_destroy_tags(काष्ठा Scsi_Host *shost)
+अणु
+	blk_mq_मुक्त_tag_set(&shost->tag_set);
+पूर्ण
 
 /**
- * scsi_device_from_queue - return sdev associated with a request_queue
- * @q: The request queue to return the sdev from
+ * scsi_device_from_queue - वापस sdev associated with a request_queue
+ * @q: The request queue to वापस the sdev from
  *
- * Return the sdev associated with a request queue or NULL if the
- * request_queue does not reference a SCSI device.
+ * Return the sdev associated with a request queue or शून्य अगर the
+ * request_queue करोes not reference a SCSI device.
  */
-struct scsi_device *scsi_device_from_queue(struct request_queue *q)
-{
-	struct scsi_device *sdev = NULL;
+काष्ठा scsi_device *scsi_device_from_queue(काष्ठा request_queue *q)
+अणु
+	काष्ठा scsi_device *sdev = शून्य;
 
-	if (q->mq_ops == &scsi_mq_ops_no_commit ||
+	अगर (q->mq_ops == &scsi_mq_ops_no_commit ||
 	    q->mq_ops == &scsi_mq_ops)
 		sdev = q->queuedata;
-	if (!sdev || !get_device(&sdev->sdev_gendev))
-		sdev = NULL;
+	अगर (!sdev || !get_device(&sdev->sdev_gendev))
+		sdev = शून्य;
 
-	return sdev;
-}
+	वापस sdev;
+पूर्ण
 
 /**
  * scsi_block_requests - Utility function used by low-level drivers to prevent
  * further commands from being queued to the device.
  * @shost:  host in question
  *
- * There is no timer nor any other means by which the requests get unblocked
+ * There is no समयr nor any other means by which the requests get unblocked
  * other than the low-level driver calling scsi_unblock_requests().
  */
-void scsi_block_requests(struct Scsi_Host *shost)
-{
+व्योम scsi_block_requests(काष्ठा Scsi_Host *shost)
+अणु
 	shost->host_self_blocked = 1;
-}
+पूर्ण
 EXPORT_SYMBOL(scsi_block_requests);
 
 /**
@@ -1987,66 +1988,66 @@ EXPORT_SYMBOL(scsi_block_requests);
  * further commands to be queued to the device.
  * @shost:  host in question
  *
- * There is no timer nor any other means by which the requests get unblocked
- * other than the low-level driver calling scsi_unblock_requests(). This is done
- * as an API function so that changes to the internals of the scsi mid-layer
+ * There is no समयr nor any other means by which the requests get unblocked
+ * other than the low-level driver calling scsi_unblock_requests(). This is करोne
+ * as an API function so that changes to the पूर्णांकernals of the scsi mid-layer
  * won't require wholesale changes to drivers that use this feature.
  */
-void scsi_unblock_requests(struct Scsi_Host *shost)
-{
+व्योम scsi_unblock_requests(काष्ठा Scsi_Host *shost)
+अणु
 	shost->host_self_blocked = 0;
 	scsi_run_host_queues(shost);
-}
+पूर्ण
 EXPORT_SYMBOL(scsi_unblock_requests);
 
-void scsi_exit_queue(void)
-{
+व्योम scsi_निकास_queue(व्योम)
+अणु
 	kmem_cache_destroy(scsi_sense_cache);
-}
+पूर्ण
 
 /**
  *	scsi_mode_select - issue a mode select
  *	@sdev:	SCSI device to be queried
- *	@pf:	Page format bit (1 == standard, 0 == vendor specific)
- *	@sp:	Save page bit (0 == don't save, 1 == save)
+ *	@pf:	Page क्रमmat bit (1 == standard, 0 == venकरोr specअगरic)
+ *	@sp:	Save page bit (0 == करोn't save, 1 == save)
  *	@modepage: mode page being requested
  *	@buffer: request buffer (may not be smaller than eight bytes)
  *	@len:	length of request buffer.
- *	@timeout: command timeout
- *	@retries: number of retries before failing
- *	@data: returns a structure abstracting the mode header data
- *	@sshdr: place to put sense data (or NULL if no sense to be collected).
+ *	@समयout: command समयout
+ *	@retries: number of retries beक्रमe failing
+ *	@data: वापसs a काष्ठाure असलtracting the mode header data
+ *	@sshdr: place to put sense data (or शून्य अगर no sense to be collected).
  *		must be SCSI_SENSE_BUFFERSIZE big.
  *
- *	Returns zero if successful; negative error number or scsi
+ *	Returns zero अगर successful; negative error number or scsi
  *	status on error
  *
  */
-int
-scsi_mode_select(struct scsi_device *sdev, int pf, int sp, int modepage,
-		 unsigned char *buffer, int len, int timeout, int retries,
-		 struct scsi_mode_data *data, struct scsi_sense_hdr *sshdr)
-{
-	unsigned char cmd[10];
-	unsigned char *real_buffer;
-	int ret;
+पूर्णांक
+scsi_mode_select(काष्ठा scsi_device *sdev, पूर्णांक pf, पूर्णांक sp, पूर्णांक modepage,
+		 अचिन्हित अक्षर *buffer, पूर्णांक len, पूर्णांक समयout, पूर्णांक retries,
+		 काष्ठा scsi_mode_data *data, काष्ठा scsi_sense_hdr *sshdr)
+अणु
+	अचिन्हित अक्षर cmd[10];
+	अचिन्हित अक्षर *real_buffer;
+	पूर्णांक ret;
 
-	memset(cmd, 0, sizeof(cmd));
+	स_रखो(cmd, 0, माप(cmd));
 	cmd[1] = (pf ? 0x10 : 0) | (sp ? 0x01 : 0);
 
-	if (sdev->use_10_for_ms) {
-		if (len > 65535)
-			return -EINVAL;
-		real_buffer = kmalloc(8 + len, GFP_KERNEL);
-		if (!real_buffer)
-			return -ENOMEM;
-		memcpy(real_buffer + 8, buffer, len);
+	अगर (sdev->use_10_क्रम_ms) अणु
+		अगर (len > 65535)
+			वापस -EINVAL;
+		real_buffer = kदो_स्मृति(8 + len, GFP_KERNEL);
+		अगर (!real_buffer)
+			वापस -ENOMEM;
+		स_नकल(real_buffer + 8, buffer, len);
 		len += 8;
 		real_buffer[0] = 0;
 		real_buffer[1] = 0;
 		real_buffer[2] = data->medium_type;
-		real_buffer[3] = data->device_specific;
-		real_buffer[4] = data->longlba ? 0x01 : 0;
+		real_buffer[3] = data->device_specअगरic;
+		real_buffer[4] = data->दीर्घlba ? 0x01 : 0;
 		real_buffer[5] = 0;
 		real_buffer[6] = data->block_descriptor_length >> 8;
 		real_buffer[7] = data->block_descriptor_length;
@@ -2054,308 +2055,308 @@ scsi_mode_select(struct scsi_device *sdev, int pf, int sp, int modepage,
 		cmd[0] = MODE_SELECT_10;
 		cmd[7] = len >> 8;
 		cmd[8] = len;
-	} else {
-		if (len > 255 || data->block_descriptor_length > 255 ||
-		    data->longlba)
-			return -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (len > 255 || data->block_descriptor_length > 255 ||
+		    data->दीर्घlba)
+			वापस -EINVAL;
 
-		real_buffer = kmalloc(4 + len, GFP_KERNEL);
-		if (!real_buffer)
-			return -ENOMEM;
-		memcpy(real_buffer + 4, buffer, len);
+		real_buffer = kदो_स्मृति(4 + len, GFP_KERNEL);
+		अगर (!real_buffer)
+			वापस -ENOMEM;
+		स_नकल(real_buffer + 4, buffer, len);
 		len += 4;
 		real_buffer[0] = 0;
 		real_buffer[1] = data->medium_type;
-		real_buffer[2] = data->device_specific;
+		real_buffer[2] = data->device_specअगरic;
 		real_buffer[3] = data->block_descriptor_length;
 
 		cmd[0] = MODE_SELECT;
 		cmd[4] = len;
-	}
+	पूर्ण
 
 	ret = scsi_execute_req(sdev, cmd, DMA_TO_DEVICE, real_buffer, len,
-			       sshdr, timeout, retries, NULL);
-	kfree(real_buffer);
-	return ret;
-}
+			       sshdr, समयout, retries, शून्य);
+	kमुक्त(real_buffer);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(scsi_mode_select);
 
 /**
- *	scsi_mode_sense - issue a mode sense, falling back from 10 to six bytes if necessary.
+ *	scsi_mode_sense - issue a mode sense, falling back from 10 to six bytes अगर necessary.
  *	@sdev:	SCSI device to be queried
- *	@dbd:	set if mode sense will allow block descriptors to be returned
+ *	@dbd:	set अगर mode sense will allow block descriptors to be वापसed
  *	@modepage: mode page being requested
  *	@buffer: request buffer (may not be smaller than eight bytes)
  *	@len:	length of request buffer.
- *	@timeout: command timeout
- *	@retries: number of retries before failing
- *	@data: returns a structure abstracting the mode header data
- *	@sshdr: place to put sense data (or NULL if no sense to be collected).
+ *	@समयout: command समयout
+ *	@retries: number of retries beक्रमe failing
+ *	@data: वापसs a काष्ठाure असलtracting the mode header data
+ *	@sshdr: place to put sense data (or शून्य अगर no sense to be collected).
  *		must be SCSI_SENSE_BUFFERSIZE big.
  *
- *	Returns zero if unsuccessful, or the header offset (either 4
+ *	Returns zero अगर unsuccessful, or the header offset (either 4
  *	or 8 depending on whether a six or ten byte command was
- *	issued) if successful.
+ *	issued) अगर successful.
  */
-int
-scsi_mode_sense(struct scsi_device *sdev, int dbd, int modepage,
-		  unsigned char *buffer, int len, int timeout, int retries,
-		  struct scsi_mode_data *data, struct scsi_sense_hdr *sshdr)
-{
-	unsigned char cmd[12];
-	int use_10_for_ms;
-	int header_length;
-	int result, retry_count = retries;
-	struct scsi_sense_hdr my_sshdr;
+पूर्णांक
+scsi_mode_sense(काष्ठा scsi_device *sdev, पूर्णांक dbd, पूर्णांक modepage,
+		  अचिन्हित अक्षर *buffer, पूर्णांक len, पूर्णांक समयout, पूर्णांक retries,
+		  काष्ठा scsi_mode_data *data, काष्ठा scsi_sense_hdr *sshdr)
+अणु
+	अचिन्हित अक्षर cmd[12];
+	पूर्णांक use_10_क्रम_ms;
+	पूर्णांक header_length;
+	पूर्णांक result, retry_count = retries;
+	काष्ठा scsi_sense_hdr my_sshdr;
 
-	memset(data, 0, sizeof(*data));
-	memset(&cmd[0], 0, 12);
+	स_रखो(data, 0, माप(*data));
+	स_रखो(&cmd[0], 0, 12);
 
-	dbd = sdev->set_dbd_for_ms ? 8 : dbd;
+	dbd = sdev->set_dbd_क्रम_ms ? 8 : dbd;
 	cmd[1] = dbd & 0x18;	/* allows DBD and LLBA bits */
 	cmd[2] = modepage;
 
-	/* caller might not be interested in sense, but we need it */
-	if (!sshdr)
+	/* caller might not be पूर्णांकerested in sense, but we need it */
+	अगर (!sshdr)
 		sshdr = &my_sshdr;
 
  retry:
-	use_10_for_ms = sdev->use_10_for_ms;
+	use_10_क्रम_ms = sdev->use_10_क्रम_ms;
 
-	if (use_10_for_ms) {
-		if (len < 8)
+	अगर (use_10_क्रम_ms) अणु
+		अगर (len < 8)
 			len = 8;
 
 		cmd[0] = MODE_SENSE_10;
 		cmd[8] = len;
 		header_length = 8;
-	} else {
-		if (len < 4)
+	पूर्ण अन्यथा अणु
+		अगर (len < 4)
 			len = 4;
 
 		cmd[0] = MODE_SENSE;
 		cmd[4] = len;
 		header_length = 4;
-	}
+	पूर्ण
 
-	memset(buffer, 0, len);
+	स_रखो(buffer, 0, len);
 
 	result = scsi_execute_req(sdev, cmd, DMA_FROM_DEVICE, buffer, len,
-				  sshdr, timeout, retries, NULL);
+				  sshdr, समयout, retries, शून्य);
 
-	/* This code looks awful: what it's doing is making sure an
-	 * ILLEGAL REQUEST sense return identifies the actual command
-	 * byte as the problem.  MODE_SENSE commands can return
-	 * ILLEGAL REQUEST if the code page isn't supported */
+	/* This code looks awful: what it's करोing is making sure an
+	 * ILLEGAL REQUEST sense वापस identअगरies the actual command
+	 * byte as the problem.  MODE_SENSE commands can वापस
+	 * ILLEGAL REQUEST अगर the code page isn't supported */
 
-	if (use_10_for_ms && !scsi_status_is_good(result) &&
-	    driver_byte(result) == DRIVER_SENSE) {
-		if (scsi_sense_valid(sshdr)) {
-			if ((sshdr->sense_key == ILLEGAL_REQUEST) &&
-			    (sshdr->asc == 0x20) && (sshdr->ascq == 0)) {
+	अगर (use_10_क्रम_ms && !scsi_status_is_good(result) &&
+	    driver_byte(result) == DRIVER_SENSE) अणु
+		अगर (scsi_sense_valid(sshdr)) अणु
+			अगर ((sshdr->sense_key == ILLEGAL_REQUEST) &&
+			    (sshdr->asc == 0x20) && (sshdr->ascq == 0)) अणु
 				/*
 				 * Invalid command operation code
 				 */
-				sdev->use_10_for_ms = 0;
-				goto retry;
-			}
-		}
-	}
+				sdev->use_10_क्रम_ms = 0;
+				जाओ retry;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (scsi_status_is_good(result)) {
-		if (unlikely(buffer[0] == 0x86 && buffer[1] == 0x0b &&
-			     (modepage == 6 || modepage == 8))) {
-			/* Initio breakage? */
+	अगर (scsi_status_is_good(result)) अणु
+		अगर (unlikely(buffer[0] == 0x86 && buffer[1] == 0x0b &&
+			     (modepage == 6 || modepage == 8))) अणु
+			/* Initio अवरोधage? */
 			header_length = 0;
 			data->length = 13;
 			data->medium_type = 0;
-			data->device_specific = 0;
-			data->longlba = 0;
+			data->device_specअगरic = 0;
+			data->दीर्घlba = 0;
 			data->block_descriptor_length = 0;
-		} else if (use_10_for_ms) {
+		पूर्ण अन्यथा अगर (use_10_क्रम_ms) अणु
 			data->length = buffer[0]*256 + buffer[1] + 2;
 			data->medium_type = buffer[2];
-			data->device_specific = buffer[3];
-			data->longlba = buffer[4] & 0x01;
+			data->device_specअगरic = buffer[3];
+			data->दीर्घlba = buffer[4] & 0x01;
 			data->block_descriptor_length = buffer[6]*256
 				+ buffer[7];
-		} else {
+		पूर्ण अन्यथा अणु
 			data->length = buffer[0] + 1;
 			data->medium_type = buffer[1];
-			data->device_specific = buffer[2];
+			data->device_specअगरic = buffer[2];
 			data->block_descriptor_length = buffer[3];
-		}
+		पूर्ण
 		data->header_length = header_length;
-	} else if ((status_byte(result) == CHECK_CONDITION) &&
+	पूर्ण अन्यथा अगर ((status_byte(result) == CHECK_CONDITION) &&
 		   scsi_sense_valid(sshdr) &&
-		   sshdr->sense_key == UNIT_ATTENTION && retry_count) {
+		   sshdr->sense_key == UNIT_ATTENTION && retry_count) अणु
 		retry_count--;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(scsi_mode_sense);
 
 /**
- *	scsi_test_unit_ready - test if unit is ready
+ *	scsi_test_unit_पढ़ोy - test अगर unit is पढ़ोy
  *	@sdev:	scsi device to change the state of.
- *	@timeout: command timeout
- *	@retries: number of retries before failing
- *	@sshdr: outpout pointer for decoded sense information.
+ *	@समयout: command समयout
+ *	@retries: number of retries beक्रमe failing
+ *	@sshdr: outpout poपूर्णांकer क्रम decoded sense inक्रमmation.
  *
- *	Returns zero if unsuccessful or an error if TUR failed.  For
+ *	Returns zero अगर unsuccessful or an error अगर TUR failed.  For
  *	removable media, UNIT_ATTENTION sets ->changed flag.
  **/
-int
-scsi_test_unit_ready(struct scsi_device *sdev, int timeout, int retries,
-		     struct scsi_sense_hdr *sshdr)
-{
-	char cmd[] = {
+पूर्णांक
+scsi_test_unit_पढ़ोy(काष्ठा scsi_device *sdev, पूर्णांक समयout, पूर्णांक retries,
+		     काष्ठा scsi_sense_hdr *sshdr)
+अणु
+	अक्षर cmd[] = अणु
 		TEST_UNIT_READY, 0, 0, 0, 0, 0,
-	};
-	int result;
+	पूर्ण;
+	पूर्णांक result;
 
-	/* try to eat the UNIT_ATTENTION if there are enough retries */
-	do {
-		result = scsi_execute_req(sdev, cmd, DMA_NONE, NULL, 0, sshdr,
-					  timeout, 1, NULL);
-		if (sdev->removable && scsi_sense_valid(sshdr) &&
+	/* try to eat the UNIT_ATTENTION अगर there are enough retries */
+	करो अणु
+		result = scsi_execute_req(sdev, cmd, DMA_NONE, शून्य, 0, sshdr,
+					  समयout, 1, शून्य);
+		अगर (sdev->removable && scsi_sense_valid(sshdr) &&
 		    sshdr->sense_key == UNIT_ATTENTION)
 			sdev->changed = 1;
-	} while (scsi_sense_valid(sshdr) &&
+	पूर्ण जबतक (scsi_sense_valid(sshdr) &&
 		 sshdr->sense_key == UNIT_ATTENTION && --retries);
 
-	return result;
-}
-EXPORT_SYMBOL(scsi_test_unit_ready);
+	वापस result;
+पूर्ण
+EXPORT_SYMBOL(scsi_test_unit_पढ़ोy);
 
 /**
  *	scsi_device_set_state - Take the given device through the device state model.
  *	@sdev:	scsi device to change the state of.
  *	@state:	state to change to.
  *
- *	Returns zero if successful or an error if the requested
+ *	Returns zero अगर successful or an error अगर the requested
  *	transition is illegal.
  */
-int
-scsi_device_set_state(struct scsi_device *sdev, enum scsi_device_state state)
-{
-	enum scsi_device_state oldstate = sdev->sdev_state;
+पूर्णांक
+scsi_device_set_state(काष्ठा scsi_device *sdev, क्रमागत scsi_device_state state)
+अणु
+	क्रमागत scsi_device_state oldstate = sdev->sdev_state;
 
-	if (state == oldstate)
-		return 0;
+	अगर (state == oldstate)
+		वापस 0;
 
-	switch (state) {
-	case SDEV_CREATED:
-		switch (oldstate) {
-		case SDEV_CREATED_BLOCK:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
+	चयन (state) अणु
+	हाल SDEV_CREATED:
+		चयन (oldstate) अणु
+		हाल SDEV_CREATED_BLOCK:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case SDEV_RUNNING:
-		switch (oldstate) {
-		case SDEV_CREATED:
-		case SDEV_OFFLINE:
-		case SDEV_TRANSPORT_OFFLINE:
-		case SDEV_QUIESCE:
-		case SDEV_BLOCK:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल SDEV_RUNNING:
+		चयन (oldstate) अणु
+		हाल SDEV_CREATED:
+		हाल SDEV_OFFLINE:
+		हाल SDEV_TRANSPORT_OFFLINE:
+		हाल SDEV_QUIESCE:
+		हाल SDEV_BLOCK:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case SDEV_QUIESCE:
-		switch (oldstate) {
-		case SDEV_RUNNING:
-		case SDEV_OFFLINE:
-		case SDEV_TRANSPORT_OFFLINE:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल SDEV_QUIESCE:
+		चयन (oldstate) अणु
+		हाल SDEV_RUNNING:
+		हाल SDEV_OFFLINE:
+		हाल SDEV_TRANSPORT_OFFLINE:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case SDEV_OFFLINE:
-	case SDEV_TRANSPORT_OFFLINE:
-		switch (oldstate) {
-		case SDEV_CREATED:
-		case SDEV_RUNNING:
-		case SDEV_QUIESCE:
-		case SDEV_BLOCK:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल SDEV_OFFLINE:
+	हाल SDEV_TRANSPORT_OFFLINE:
+		चयन (oldstate) अणु
+		हाल SDEV_CREATED:
+		हाल SDEV_RUNNING:
+		हाल SDEV_QUIESCE:
+		हाल SDEV_BLOCK:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case SDEV_BLOCK:
-		switch (oldstate) {
-		case SDEV_RUNNING:
-		case SDEV_CREATED_BLOCK:
-		case SDEV_QUIESCE:
-		case SDEV_OFFLINE:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल SDEV_BLOCK:
+		चयन (oldstate) अणु
+		हाल SDEV_RUNNING:
+		हाल SDEV_CREATED_BLOCK:
+		हाल SDEV_QUIESCE:
+		हाल SDEV_OFFLINE:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case SDEV_CREATED_BLOCK:
-		switch (oldstate) {
-		case SDEV_CREATED:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल SDEV_CREATED_BLOCK:
+		चयन (oldstate) अणु
+		हाल SDEV_CREATED:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case SDEV_CANCEL:
-		switch (oldstate) {
-		case SDEV_CREATED:
-		case SDEV_RUNNING:
-		case SDEV_QUIESCE:
-		case SDEV_OFFLINE:
-		case SDEV_TRANSPORT_OFFLINE:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल SDEV_CANCEL:
+		चयन (oldstate) अणु
+		हाल SDEV_CREATED:
+		हाल SDEV_RUNNING:
+		हाल SDEV_QUIESCE:
+		हाल SDEV_OFFLINE:
+		हाल SDEV_TRANSPORT_OFFLINE:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case SDEV_DEL:
-		switch (oldstate) {
-		case SDEV_CREATED:
-		case SDEV_RUNNING:
-		case SDEV_OFFLINE:
-		case SDEV_TRANSPORT_OFFLINE:
-		case SDEV_CANCEL:
-		case SDEV_BLOCK:
-		case SDEV_CREATED_BLOCK:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल SDEV_DEL:
+		चयन (oldstate) अणु
+		हाल SDEV_CREATED:
+		हाल SDEV_RUNNING:
+		हाल SDEV_OFFLINE:
+		हाल SDEV_TRANSPORT_OFFLINE:
+		हाल SDEV_CANCEL:
+		हाल SDEV_BLOCK:
+		हाल SDEV_CREATED_BLOCK:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	}
-	sdev->offline_already = false;
+	पूर्ण
+	sdev->offline_alपढ़ोy = false;
 	sdev->sdev_state = state;
-	return 0;
+	वापस 0;
 
  illegal:
 	SCSI_LOG_ERROR_RECOVERY(1,
-				sdev_printk(KERN_ERR, sdev,
+				sdev_prपूर्णांकk(KERN_ERR, sdev,
 					    "Illegal state transition %s->%s",
 					    scsi_device_state_name(oldstate),
 					    scsi_device_state_name(state))
 				);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL(scsi_device_set_state);
 
 /**
@@ -2365,224 +2366,224 @@ EXPORT_SYMBOL(scsi_device_set_state);
  *
  *	Send a single uevent (scsi_event) to the associated scsi_device.
  */
-static void scsi_evt_emit(struct scsi_device *sdev, struct scsi_event *evt)
-{
-	int idx = 0;
-	char *envp[3];
+अटल व्योम scsi_evt_emit(काष्ठा scsi_device *sdev, काष्ठा scsi_event *evt)
+अणु
+	पूर्णांक idx = 0;
+	अक्षर *envp[3];
 
-	switch (evt->evt_type) {
-	case SDEV_EVT_MEDIA_CHANGE:
+	चयन (evt->evt_type) अणु
+	हाल SDEV_EVT_MEDIA_CHANGE:
 		envp[idx++] = "SDEV_MEDIA_CHANGE=1";
-		break;
-	case SDEV_EVT_INQUIRY_CHANGE_REPORTED:
+		अवरोध;
+	हाल SDEV_EVT_INQUIRY_CHANGE_REPORTED:
 		scsi_rescan_device(&sdev->sdev_gendev);
 		envp[idx++] = "SDEV_UA=INQUIRY_DATA_HAS_CHANGED";
-		break;
-	case SDEV_EVT_CAPACITY_CHANGE_REPORTED:
+		अवरोध;
+	हाल SDEV_EVT_CAPACITY_CHANGE_REPORTED:
 		envp[idx++] = "SDEV_UA=CAPACITY_DATA_HAS_CHANGED";
-		break;
-	case SDEV_EVT_SOFT_THRESHOLD_REACHED_REPORTED:
+		अवरोध;
+	हाल SDEV_EVT_SOFT_THRESHOLD_REACHED_REPORTED:
 	       envp[idx++] = "SDEV_UA=THIN_PROVISIONING_SOFT_THRESHOLD_REACHED";
-		break;
-	case SDEV_EVT_MODE_PARAMETER_CHANGE_REPORTED:
+		अवरोध;
+	हाल SDEV_EVT_MODE_PARAMETER_CHANGE_REPORTED:
 		envp[idx++] = "SDEV_UA=MODE_PARAMETERS_CHANGED";
-		break;
-	case SDEV_EVT_LUN_CHANGE_REPORTED:
+		अवरोध;
+	हाल SDEV_EVT_LUN_CHANGE_REPORTED:
 		envp[idx++] = "SDEV_UA=REPORTED_LUNS_DATA_HAS_CHANGED";
-		break;
-	case SDEV_EVT_ALUA_STATE_CHANGE_REPORTED:
+		अवरोध;
+	हाल SDEV_EVT_ALUA_STATE_CHANGE_REPORTED:
 		envp[idx++] = "SDEV_UA=ASYMMETRIC_ACCESS_STATE_CHANGED";
-		break;
-	case SDEV_EVT_POWER_ON_RESET_OCCURRED:
+		अवरोध;
+	हाल SDEV_EVT_POWER_ON_RESET_OCCURRED:
 		envp[idx++] = "SDEV_UA=POWER_ON_RESET_OCCURRED";
-		break;
-	default:
-		/* do nothing */
-		break;
-	}
+		अवरोध;
+	शेष:
+		/* करो nothing */
+		अवरोध;
+	पूर्ण
 
-	envp[idx++] = NULL;
+	envp[idx++] = शून्य;
 
 	kobject_uevent_env(&sdev->sdev_gendev.kobj, KOBJ_CHANGE, envp);
-}
+पूर्ण
 
 /**
- *	scsi_evt_thread - send a uevent for each scsi event
- *	@work: work struct for scsi_device
+ *	scsi_evt_thपढ़ो - send a uevent क्रम each scsi event
+ *	@work: work काष्ठा क्रम scsi_device
  *
  *	Dispatch queued events to their associated scsi_device kobjects
  *	as uevents.
  */
-void scsi_evt_thread(struct work_struct *work)
-{
-	struct scsi_device *sdev;
-	enum scsi_device_event evt_type;
+व्योम scsi_evt_thपढ़ो(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा scsi_device *sdev;
+	क्रमागत scsi_device_event evt_type;
 	LIST_HEAD(event_list);
 
-	sdev = container_of(work, struct scsi_device, event_work);
+	sdev = container_of(work, काष्ठा scsi_device, event_work);
 
-	for (evt_type = SDEV_EVT_FIRST; evt_type <= SDEV_EVT_LAST; evt_type++)
-		if (test_and_clear_bit(evt_type, sdev->pending_events))
+	क्रम (evt_type = SDEV_EVT_FIRST; evt_type <= SDEV_EVT_LAST; evt_type++)
+		अगर (test_and_clear_bit(evt_type, sdev->pending_events))
 			sdev_evt_send_simple(sdev, evt_type, GFP_KERNEL);
 
-	while (1) {
-		struct scsi_event *evt;
-		struct list_head *this, *tmp;
-		unsigned long flags;
+	जबतक (1) अणु
+		काष्ठा scsi_event *evt;
+		काष्ठा list_head *this, *पंचांगp;
+		अचिन्हित दीर्घ flags;
 
 		spin_lock_irqsave(&sdev->list_lock, flags);
 		list_splice_init(&sdev->event_list, &event_list);
 		spin_unlock_irqrestore(&sdev->list_lock, flags);
 
-		if (list_empty(&event_list))
-			break;
+		अगर (list_empty(&event_list))
+			अवरोध;
 
-		list_for_each_safe(this, tmp, &event_list) {
-			evt = list_entry(this, struct scsi_event, node);
+		list_क्रम_each_safe(this, पंचांगp, &event_list) अणु
+			evt = list_entry(this, काष्ठा scsi_event, node);
 			list_del(&evt->node);
 			scsi_evt_emit(sdev, evt);
-			kfree(evt);
-		}
-	}
-}
+			kमुक्त(evt);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * 	sdev_evt_send - send asserted event to uevent thread
+ * 	sdev_evt_send - send निश्चितed event to uevent thपढ़ो
  *	@sdev: scsi_device event occurred on
  *	@evt: event to send
  *
  *	Assert scsi device event asynchronously.
  */
-void sdev_evt_send(struct scsi_device *sdev, struct scsi_event *evt)
-{
-	unsigned long flags;
+व्योम sdev_evt_send(काष्ठा scsi_device *sdev, काष्ठा scsi_event *evt)
+अणु
+	अचिन्हित दीर्घ flags;
 
-#if 0
+#अगर 0
 	/* FIXME: currently this check eliminates all media change events
-	 * for polled devices.  Need to update to discriminate between AN
+	 * क्रम polled devices.  Need to update to discriminate between AN
 	 * and polled events */
-	if (!test_bit(evt->evt_type, sdev->supported_events)) {
-		kfree(evt);
-		return;
-	}
-#endif
+	अगर (!test_bit(evt->evt_type, sdev->supported_events)) अणु
+		kमुक्त(evt);
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
 
 	spin_lock_irqsave(&sdev->list_lock, flags);
 	list_add_tail(&evt->node, &sdev->event_list);
 	schedule_work(&sdev->event_work);
 	spin_unlock_irqrestore(&sdev->list_lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sdev_evt_send);
 
 /**
  * 	sdev_evt_alloc - allocate a new scsi event
  *	@evt_type: type of event to allocate
- *	@gfpflags: GFP flags for allocation
+ *	@gfpflags: GFP flags क्रम allocation
  *
- *	Allocates and returns a new scsi_event.
+ *	Allocates and वापसs a new scsi_event.
  */
-struct scsi_event *sdev_evt_alloc(enum scsi_device_event evt_type,
+काष्ठा scsi_event *sdev_evt_alloc(क्रमागत scsi_device_event evt_type,
 				  gfp_t gfpflags)
-{
-	struct scsi_event *evt = kzalloc(sizeof(struct scsi_event), gfpflags);
-	if (!evt)
-		return NULL;
+अणु
+	काष्ठा scsi_event *evt = kzalloc(माप(काष्ठा scsi_event), gfpflags);
+	अगर (!evt)
+		वापस शून्य;
 
 	evt->evt_type = evt_type;
 	INIT_LIST_HEAD(&evt->node);
 
-	/* evt_type-specific initialization, if any */
-	switch (evt_type) {
-	case SDEV_EVT_MEDIA_CHANGE:
-	case SDEV_EVT_INQUIRY_CHANGE_REPORTED:
-	case SDEV_EVT_CAPACITY_CHANGE_REPORTED:
-	case SDEV_EVT_SOFT_THRESHOLD_REACHED_REPORTED:
-	case SDEV_EVT_MODE_PARAMETER_CHANGE_REPORTED:
-	case SDEV_EVT_LUN_CHANGE_REPORTED:
-	case SDEV_EVT_ALUA_STATE_CHANGE_REPORTED:
-	case SDEV_EVT_POWER_ON_RESET_OCCURRED:
-	default:
-		/* do nothing */
-		break;
-	}
+	/* evt_type-specअगरic initialization, अगर any */
+	चयन (evt_type) अणु
+	हाल SDEV_EVT_MEDIA_CHANGE:
+	हाल SDEV_EVT_INQUIRY_CHANGE_REPORTED:
+	हाल SDEV_EVT_CAPACITY_CHANGE_REPORTED:
+	हाल SDEV_EVT_SOFT_THRESHOLD_REACHED_REPORTED:
+	हाल SDEV_EVT_MODE_PARAMETER_CHANGE_REPORTED:
+	हाल SDEV_EVT_LUN_CHANGE_REPORTED:
+	हाल SDEV_EVT_ALUA_STATE_CHANGE_REPORTED:
+	हाल SDEV_EVT_POWER_ON_RESET_OCCURRED:
+	शेष:
+		/* करो nothing */
+		अवरोध;
+	पूर्ण
 
-	return evt;
-}
+	वापस evt;
+पूर्ण
 EXPORT_SYMBOL_GPL(sdev_evt_alloc);
 
 /**
- * 	sdev_evt_send_simple - send asserted event to uevent thread
+ * 	sdev_evt_send_simple - send निश्चितed event to uevent thपढ़ो
  *	@sdev: scsi_device event occurred on
  *	@evt_type: type of event to send
- *	@gfpflags: GFP flags for allocation
+ *	@gfpflags: GFP flags क्रम allocation
  *
  *	Assert scsi device event asynchronously, given an event type.
  */
-void sdev_evt_send_simple(struct scsi_device *sdev,
-			  enum scsi_device_event evt_type, gfp_t gfpflags)
-{
-	struct scsi_event *evt = sdev_evt_alloc(evt_type, gfpflags);
-	if (!evt) {
-		sdev_printk(KERN_ERR, sdev, "event %d eaten due to OOM\n",
+व्योम sdev_evt_send_simple(काष्ठा scsi_device *sdev,
+			  क्रमागत scsi_device_event evt_type, gfp_t gfpflags)
+अणु
+	काष्ठा scsi_event *evt = sdev_evt_alloc(evt_type, gfpflags);
+	अगर (!evt) अणु
+		sdev_prपूर्णांकk(KERN_ERR, sdev, "event %d eaten due to OOM\n",
 			    evt_type);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sdev_evt_send(sdev, evt);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sdev_evt_send_simple);
 
 /**
- *	scsi_device_quiesce - Block all commands except power management.
+ *	scsi_device_quiesce - Block all commands except घातer management.
  *	@sdev:	scsi device to quiesce.
  *
  *	This works by trying to transition to the SDEV_QUIESCE state
  *	(which must be a legal transition).  When the device is in this
- *	state, only power management requests will be accepted, all others will
+ *	state, only घातer management requests will be accepted, all others will
  *	be deferred.
  *
  *	Must be called with user context, may sleep.
  *
- *	Returns zero if unsuccessful or an error if not.
+ *	Returns zero अगर unsuccessful or an error अगर not.
  */
-int
-scsi_device_quiesce(struct scsi_device *sdev)
-{
-	struct request_queue *q = sdev->request_queue;
-	int err;
+पूर्णांक
+scsi_device_quiesce(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा request_queue *q = sdev->request_queue;
+	पूर्णांक err;
 
 	/*
-	 * It is allowed to call scsi_device_quiesce() multiple times from
+	 * It is allowed to call scsi_device_quiesce() multiple बार from
 	 * the same context but concurrent scsi_device_quiesce() calls are
 	 * not allowed.
 	 */
 	WARN_ON_ONCE(sdev->quiesced_by && sdev->quiesced_by != current);
 
-	if (sdev->quiesced_by == current)
-		return 0;
+	अगर (sdev->quiesced_by == current)
+		वापस 0;
 
 	blk_set_pm_only(q);
 
-	blk_mq_freeze_queue(q);
+	blk_mq_मुक्तze_queue(q);
 	/*
 	 * Ensure that the effect of blk_set_pm_only() will be visible
-	 * for percpu_ref_tryget() callers that occur after the queue
-	 * unfreeze even if the queue was already frozen before this function
+	 * क्रम percpu_ref_tryget() callers that occur after the queue
+	 * unमुक्तze even अगर the queue was alपढ़ोy frozen beक्रमe this function
 	 * was called. See also https://lwn.net/Articles/573497/.
 	 */
 	synchronize_rcu();
-	blk_mq_unfreeze_queue(q);
+	blk_mq_unमुक्तze_queue(q);
 
 	mutex_lock(&sdev->state_mutex);
 	err = scsi_device_set_state(sdev, SDEV_QUIESCE);
-	if (err == 0)
+	अगर (err == 0)
 		sdev->quiesced_by = current;
-	else
+	अन्यथा
 		blk_clear_pm_only(q);
 	mutex_unlock(&sdev->state_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(scsi_device_quiesce);
 
 /**
@@ -2594,278 +2595,278 @@ EXPORT_SYMBOL(scsi_device_quiesce);
  *
  *	Must be called with user context, may sleep.
  */
-void scsi_device_resume(struct scsi_device *sdev)
-{
-	/* check if the device state was mutated prior to resume, and if
-	 * so assume the state is being managed elsewhere (for example
+व्योम scsi_device_resume(काष्ठा scsi_device *sdev)
+अणु
+	/* check अगर the device state was mutated prior to resume, and अगर
+	 * so assume the state is being managed अन्यथाwhere (क्रम example
 	 * device deleted during suspend)
 	 */
 	mutex_lock(&sdev->state_mutex);
-	if (sdev->sdev_state == SDEV_QUIESCE)
+	अगर (sdev->sdev_state == SDEV_QUIESCE)
 		scsi_device_set_state(sdev, SDEV_RUNNING);
-	if (sdev->quiesced_by) {
-		sdev->quiesced_by = NULL;
+	अगर (sdev->quiesced_by) अणु
+		sdev->quiesced_by = शून्य;
 		blk_clear_pm_only(sdev->request_queue);
-	}
+	पूर्ण
 	mutex_unlock(&sdev->state_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL(scsi_device_resume);
 
-static void
-device_quiesce_fn(struct scsi_device *sdev, void *data)
-{
+अटल व्योम
+device_quiesce_fn(काष्ठा scsi_device *sdev, व्योम *data)
+अणु
 	scsi_device_quiesce(sdev);
-}
+पूर्ण
 
-void
-scsi_target_quiesce(struct scsi_target *starget)
-{
-	starget_for_each_device(starget, NULL, device_quiesce_fn);
-}
+व्योम
+scsi_target_quiesce(काष्ठा scsi_target *starget)
+अणु
+	starget_क्रम_each_device(starget, शून्य, device_quiesce_fn);
+पूर्ण
 EXPORT_SYMBOL(scsi_target_quiesce);
 
-static void
-device_resume_fn(struct scsi_device *sdev, void *data)
-{
+अटल व्योम
+device_resume_fn(काष्ठा scsi_device *sdev, व्योम *data)
+अणु
 	scsi_device_resume(sdev);
-}
+पूर्ण
 
-void
-scsi_target_resume(struct scsi_target *starget)
-{
-	starget_for_each_device(starget, NULL, device_resume_fn);
-}
+व्योम
+scsi_target_resume(काष्ठा scsi_target *starget)
+अणु
+	starget_क्रम_each_device(starget, शून्य, device_resume_fn);
+पूर्ण
 EXPORT_SYMBOL(scsi_target_resume);
 
 /**
- * scsi_internal_device_block_nowait - try to transition to the SDEV_BLOCK state
+ * scsi_पूर्णांकernal_device_block_noरुको - try to transition to the SDEV_BLOCK state
  * @sdev: device to block
  *
- * Pause SCSI command processing on the specified device. Does not sleep.
+ * Pause SCSI command processing on the specअगरied device. Does not sleep.
  *
- * Returns zero if successful or a negative error code upon failure.
+ * Returns zero अगर successful or a negative error code upon failure.
  *
  * Notes:
  * This routine transitions the device to the SDEV_BLOCK state (which must be
  * a legal transition). When the device is in this state, command processing
- * is paused until the device leaves the SDEV_BLOCK state. See also
- * scsi_internal_device_unblock_nowait().
+ * is छोड़ोd until the device leaves the SDEV_BLOCK state. See also
+ * scsi_पूर्णांकernal_device_unblock_noरुको().
  */
-int scsi_internal_device_block_nowait(struct scsi_device *sdev)
-{
-	struct request_queue *q = sdev->request_queue;
-	int err = 0;
+पूर्णांक scsi_पूर्णांकernal_device_block_noरुको(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा request_queue *q = sdev->request_queue;
+	पूर्णांक err = 0;
 
 	err = scsi_device_set_state(sdev, SDEV_BLOCK);
-	if (err) {
+	अगर (err) अणु
 		err = scsi_device_set_state(sdev, SDEV_CREATED_BLOCK);
 
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	/*
 	 * The device has transitioned to SDEV_BLOCK.  Stop the
 	 * block layer from calling the midlayer with this device's
 	 * request queue.
 	 */
-	blk_mq_quiesce_queue_nowait(q);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(scsi_internal_device_block_nowait);
+	blk_mq_quiesce_queue_noरुको(q);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(scsi_पूर्णांकernal_device_block_noरुको);
 
 /**
- * scsi_internal_device_block - try to transition to the SDEV_BLOCK state
+ * scsi_पूर्णांकernal_device_block - try to transition to the SDEV_BLOCK state
  * @sdev: device to block
  *
- * Pause SCSI command processing on the specified device and wait until all
+ * Pause SCSI command processing on the specअगरied device and रुको until all
  * ongoing scsi_request_fn() / scsi_queue_rq() calls have finished. May sleep.
  *
- * Returns zero if successful or a negative error code upon failure.
+ * Returns zero अगर successful or a negative error code upon failure.
  *
  * Note:
  * This routine transitions the device to the SDEV_BLOCK state (which must be
  * a legal transition). When the device is in this state, command processing
- * is paused until the device leaves the SDEV_BLOCK state. See also
- * scsi_internal_device_unblock().
+ * is छोड़ोd until the device leaves the SDEV_BLOCK state. See also
+ * scsi_पूर्णांकernal_device_unblock().
  */
-static int scsi_internal_device_block(struct scsi_device *sdev)
-{
-	struct request_queue *q = sdev->request_queue;
-	int err;
+अटल पूर्णांक scsi_पूर्णांकernal_device_block(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा request_queue *q = sdev->request_queue;
+	पूर्णांक err;
 
 	mutex_lock(&sdev->state_mutex);
-	err = scsi_internal_device_block_nowait(sdev);
-	if (err == 0)
+	err = scsi_पूर्णांकernal_device_block_noरुको(sdev);
+	अगर (err == 0)
 		blk_mq_quiesce_queue(q);
 	mutex_unlock(&sdev->state_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void scsi_start_queue(struct scsi_device *sdev)
-{
-	struct request_queue *q = sdev->request_queue;
+व्योम scsi_start_queue(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा request_queue *q = sdev->request_queue;
 
 	blk_mq_unquiesce_queue(q);
-}
+पूर्ण
 
 /**
- * scsi_internal_device_unblock_nowait - resume a device after a block request
+ * scsi_पूर्णांकernal_device_unblock_noरुको - resume a device after a block request
  * @sdev:	device to resume
  * @new_state:	state to set the device to after unblocking
  *
- * Restart the device queue for a previously suspended SCSI device. Does not
+ * Restart the device queue क्रम a previously suspended SCSI device. Does not
  * sleep.
  *
- * Returns zero if successful or a negative error code upon failure.
+ * Returns zero अगर successful or a negative error code upon failure.
  *
  * Notes:
  * This routine transitions the device to the SDEV_RUNNING state or to one of
  * the offline states (which must be a legal transition) allowing the midlayer
- * to goose the queue for this device.
+ * to goose the queue क्रम this device.
  */
-int scsi_internal_device_unblock_nowait(struct scsi_device *sdev,
-					enum scsi_device_state new_state)
-{
-	switch (new_state) {
-	case SDEV_RUNNING:
-	case SDEV_TRANSPORT_OFFLINE:
-		break;
-	default:
-		return -EINVAL;
-	}
+पूर्णांक scsi_पूर्णांकernal_device_unblock_noरुको(काष्ठा scsi_device *sdev,
+					क्रमागत scsi_device_state new_state)
+अणु
+	चयन (new_state) अणु
+	हाल SDEV_RUNNING:
+	हाल SDEV_TRANSPORT_OFFLINE:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Try to transition the scsi device to SDEV_RUNNING or one of the
-	 * offlined states and goose the device queue if successful.
+	 * offlined states and goose the device queue अगर successful.
 	 */
-	switch (sdev->sdev_state) {
-	case SDEV_BLOCK:
-	case SDEV_TRANSPORT_OFFLINE:
+	चयन (sdev->sdev_state) अणु
+	हाल SDEV_BLOCK:
+	हाल SDEV_TRANSPORT_OFFLINE:
 		sdev->sdev_state = new_state;
-		break;
-	case SDEV_CREATED_BLOCK:
-		if (new_state == SDEV_TRANSPORT_OFFLINE ||
+		अवरोध;
+	हाल SDEV_CREATED_BLOCK:
+		अगर (new_state == SDEV_TRANSPORT_OFFLINE ||
 		    new_state == SDEV_OFFLINE)
 			sdev->sdev_state = new_state;
-		else
+		अन्यथा
 			sdev->sdev_state = SDEV_CREATED;
-		break;
-	case SDEV_CANCEL:
-	case SDEV_OFFLINE:
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SDEV_CANCEL:
+	हाल SDEV_OFFLINE:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 	scsi_start_queue(sdev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(scsi_internal_device_unblock_nowait);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(scsi_पूर्णांकernal_device_unblock_noरुको);
 
 /**
- * scsi_internal_device_unblock - resume a device after a block request
+ * scsi_पूर्णांकernal_device_unblock - resume a device after a block request
  * @sdev:	device to resume
  * @new_state:	state to set the device to after unblocking
  *
- * Restart the device queue for a previously suspended SCSI device. May sleep.
+ * Restart the device queue क्रम a previously suspended SCSI device. May sleep.
  *
- * Returns zero if successful or a negative error code upon failure.
+ * Returns zero अगर successful or a negative error code upon failure.
  *
  * Notes:
  * This routine transitions the device to the SDEV_RUNNING state or to one of
  * the offline states (which must be a legal transition) allowing the midlayer
- * to goose the queue for this device.
+ * to goose the queue क्रम this device.
  */
-static int scsi_internal_device_unblock(struct scsi_device *sdev,
-					enum scsi_device_state new_state)
-{
-	int ret;
+अटल पूर्णांक scsi_पूर्णांकernal_device_unblock(काष्ठा scsi_device *sdev,
+					क्रमागत scsi_device_state new_state)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&sdev->state_mutex);
-	ret = scsi_internal_device_unblock_nowait(sdev, new_state);
+	ret = scsi_पूर्णांकernal_device_unblock_noरुको(sdev, new_state);
 	mutex_unlock(&sdev->state_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-device_block(struct scsi_device *sdev, void *data)
-{
-	int ret;
+अटल व्योम
+device_block(काष्ठा scsi_device *sdev, व्योम *data)
+अणु
+	पूर्णांक ret;
 
-	ret = scsi_internal_device_block(sdev);
+	ret = scsi_पूर्णांकernal_device_block(sdev);
 
 	WARN_ONCE(ret, "scsi_internal_device_block(%s) failed: ret = %d\n",
 		  dev_name(&sdev->sdev_gendev), ret);
-}
+पूर्ण
 
-static int
-target_block(struct device *dev, void *data)
-{
-	if (scsi_is_target_device(dev))
-		starget_for_each_device(to_scsi_target(dev), NULL,
+अटल पूर्णांक
+target_block(काष्ठा device *dev, व्योम *data)
+अणु
+	अगर (scsi_is_target_device(dev))
+		starget_क्रम_each_device(to_scsi_target(dev), शून्य,
 					device_block);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-scsi_target_block(struct device *dev)
-{
-	if (scsi_is_target_device(dev))
-		starget_for_each_device(to_scsi_target(dev), NULL,
+व्योम
+scsi_target_block(काष्ठा device *dev)
+अणु
+	अगर (scsi_is_target_device(dev))
+		starget_क्रम_each_device(to_scsi_target(dev), शून्य,
 					device_block);
-	else
-		device_for_each_child(dev, NULL, target_block);
-}
+	अन्यथा
+		device_क्रम_each_child(dev, शून्य, target_block);
+पूर्ण
 EXPORT_SYMBOL_GPL(scsi_target_block);
 
-static void
-device_unblock(struct scsi_device *sdev, void *data)
-{
-	scsi_internal_device_unblock(sdev, *(enum scsi_device_state *)data);
-}
+अटल व्योम
+device_unblock(काष्ठा scsi_device *sdev, व्योम *data)
+अणु
+	scsi_पूर्णांकernal_device_unblock(sdev, *(क्रमागत scsi_device_state *)data);
+पूर्ण
 
-static int
-target_unblock(struct device *dev, void *data)
-{
-	if (scsi_is_target_device(dev))
-		starget_for_each_device(to_scsi_target(dev), data,
+अटल पूर्णांक
+target_unblock(काष्ठा device *dev, व्योम *data)
+अणु
+	अगर (scsi_is_target_device(dev))
+		starget_क्रम_each_device(to_scsi_target(dev), data,
 					device_unblock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-scsi_target_unblock(struct device *dev, enum scsi_device_state new_state)
-{
-	if (scsi_is_target_device(dev))
-		starget_for_each_device(to_scsi_target(dev), &new_state,
+व्योम
+scsi_target_unblock(काष्ठा device *dev, क्रमागत scsi_device_state new_state)
+अणु
+	अगर (scsi_is_target_device(dev))
+		starget_क्रम_each_device(to_scsi_target(dev), &new_state,
 					device_unblock);
-	else
-		device_for_each_child(dev, &new_state, target_unblock);
-}
+	अन्यथा
+		device_क्रम_each_child(dev, &new_state, target_unblock);
+पूर्ण
 EXPORT_SYMBOL_GPL(scsi_target_unblock);
 
-int
-scsi_host_block(struct Scsi_Host *shost)
-{
-	struct scsi_device *sdev;
-	int ret = 0;
+पूर्णांक
+scsi_host_block(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा scsi_device *sdev;
+	पूर्णांक ret = 0;
 
 	/*
-	 * Call scsi_internal_device_block_nowait so we can avoid
-	 * calling synchronize_rcu() for each LUN.
+	 * Call scsi_पूर्णांकernal_device_block_noरुको so we can aव्योम
+	 * calling synchronize_rcu() क्रम each LUN.
 	 */
-	shost_for_each_device(sdev, shost) {
+	shost_क्रम_each_device(sdev, shost) अणु
 		mutex_lock(&sdev->state_mutex);
-		ret = scsi_internal_device_block_nowait(sdev);
+		ret = scsi_पूर्णांकernal_device_block_noरुको(sdev);
 		mutex_unlock(&sdev->state_mutex);
-		if (ret) {
+		अगर (ret) अणु
 			scsi_device_put(sdev);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * SCSI never enables blk-mq's BLK_MQ_F_BLOCKING flag so
@@ -2873,63 +2874,63 @@ scsi_host_block(struct Scsi_Host *shost)
 	 */
 	WARN_ON_ONCE(shost->tag_set.flags & BLK_MQ_F_BLOCKING);
 
-	if (!ret)
+	अगर (!ret)
 		synchronize_rcu();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(scsi_host_block);
 
-int
-scsi_host_unblock(struct Scsi_Host *shost, int new_state)
-{
-	struct scsi_device *sdev;
-	int ret = 0;
+पूर्णांक
+scsi_host_unblock(काष्ठा Scsi_Host *shost, पूर्णांक new_state)
+अणु
+	काष्ठा scsi_device *sdev;
+	पूर्णांक ret = 0;
 
-	shost_for_each_device(sdev, shost) {
-		ret = scsi_internal_device_unblock(sdev, new_state);
-		if (ret) {
+	shost_क्रम_each_device(sdev, shost) अणु
+		ret = scsi_पूर्णांकernal_device_unblock(sdev, new_state);
+		अगर (ret) अणु
 			scsi_device_put(sdev);
-			break;
-		}
-	}
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(scsi_host_unblock);
 
 /**
  * scsi_kmap_atomic_sg - find and atomically map an sg-elemnt
  * @sgl:	scatter-gather list
  * @sg_count:	number of segments in sg
- * @offset:	offset in bytes into sg, on return offset into the mapped area
- * @len:	bytes to map, on return number of bytes mapped
+ * @offset:	offset in bytes पूर्णांकo sg, on वापस offset पूर्णांकo the mapped area
+ * @len:	bytes to map, on वापस number of bytes mapped
  *
- * Returns virtual address of the start of the mapped page
+ * Returns भव address of the start of the mapped page
  */
-void *scsi_kmap_atomic_sg(struct scatterlist *sgl, int sg_count,
-			  size_t *offset, size_t *len)
-{
-	int i;
-	size_t sg_len = 0, len_complete = 0;
-	struct scatterlist *sg;
-	struct page *page;
+व्योम *scsi_kmap_atomic_sg(काष्ठा scatterlist *sgl, पूर्णांक sg_count,
+			  माप_प्रकार *offset, माप_प्रकार *len)
+अणु
+	पूर्णांक i;
+	माप_प्रकार sg_len = 0, len_complete = 0;
+	काष्ठा scatterlist *sg;
+	काष्ठा page *page;
 
 	WARN_ON(!irqs_disabled());
 
-	for_each_sg(sgl, sg, sg_count, i) {
+	क्रम_each_sg(sgl, sg, sg_count, i) अणु
 		len_complete = sg_len; /* Complete sg-entries */
 		sg_len += sg->length;
-		if (sg_len > *offset)
-			break;
-	}
+		अगर (sg_len > *offset)
+			अवरोध;
+	पूर्ण
 
-	if (unlikely(i == sg_count)) {
-		printk(KERN_ERR "%s: Bytes in sg: %zu, requested offset %zu, "
+	अगर (unlikely(i == sg_count)) अणु
+		prपूर्णांकk(KERN_ERR "%s: Bytes in sg: %zu, requested offset %zu, "
 			"elements %d\n",
 		       __func__, sg_len, *offset, sg_count);
 		WARN_ON(1);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* Offset starting from the beginning of first page in this sg-entry */
 	*offset = *offset - len_complete + sg->offset;
@@ -2940,49 +2941,49 @@ void *scsi_kmap_atomic_sg(struct scatterlist *sgl, int sg_count,
 
 	/* Bytes in this sg-entry from *offset to the end of the page */
 	sg_len = PAGE_SIZE - *offset;
-	if (*len > sg_len)
+	अगर (*len > sg_len)
 		*len = sg_len;
 
-	return kmap_atomic(page);
-}
+	वापस kmap_atomic(page);
+पूर्ण
 EXPORT_SYMBOL(scsi_kmap_atomic_sg);
 
 /**
- * scsi_kunmap_atomic_sg - atomically unmap a virtual address, previously mapped with scsi_kmap_atomic_sg
- * @virt:	virtual address to be unmapped
+ * scsi_kunmap_atomic_sg - atomically unmap a भव address, previously mapped with scsi_kmap_atomic_sg
+ * @virt:	भव address to be unmapped
  */
-void scsi_kunmap_atomic_sg(void *virt)
-{
+व्योम scsi_kunmap_atomic_sg(व्योम *virt)
+अणु
 	kunmap_atomic(virt);
-}
+पूर्ण
 EXPORT_SYMBOL(scsi_kunmap_atomic_sg);
 
-void sdev_disable_disk_events(struct scsi_device *sdev)
-{
+व्योम sdev_disable_disk_events(काष्ठा scsi_device *sdev)
+अणु
 	atomic_inc(&sdev->disk_events_disable_depth);
-}
+पूर्ण
 EXPORT_SYMBOL(sdev_disable_disk_events);
 
-void sdev_enable_disk_events(struct scsi_device *sdev)
-{
-	if (WARN_ON_ONCE(atomic_read(&sdev->disk_events_disable_depth) <= 0))
-		return;
+व्योम sdev_enable_disk_events(काष्ठा scsi_device *sdev)
+अणु
+	अगर (WARN_ON_ONCE(atomic_पढ़ो(&sdev->disk_events_disable_depth) <= 0))
+		वापस;
 	atomic_dec(&sdev->disk_events_disable_depth);
-}
+पूर्ण
 EXPORT_SYMBOL(sdev_enable_disk_events);
 
-static unsigned char designator_prio(const unsigned char *d)
-{
-	if (d[1] & 0x30)
+अटल अचिन्हित अक्षर designator_prio(स्थिर अचिन्हित अक्षर *d)
+अणु
+	अगर (d[1] & 0x30)
 		/* not associated with LUN */
-		return 0;
+		वापस 0;
 
-	if (d[3] == 0)
+	अगर (d[3] == 0)
 		/* invalid length */
-		return 0;
+		वापस 0;
 
 	/*
-	 * Order of preference for lun descriptor:
+	 * Order of preference क्रम lun descriptor:
 	 * - SCSI name string
 	 * - NAA IEEE Registered Extended
 	 * - EUI-64 based 16-byte
@@ -2991,230 +2992,230 @@ static unsigned char designator_prio(const unsigned char *d)
 	 * - NAA IEEE Extended
 	 * - EUI-64 based 8-byte
 	 * - SCSI name string (truncated)
-	 * - T10 Vendor ID
-	 * as longer descriptors reduce the likelyhood
-	 * of identification clashes.
+	 * - T10 Venकरोr ID
+	 * as दीर्घer descriptors reduce the likelyhood
+	 * of identअगरication clashes.
 	 */
 
-	switch (d[1] & 0xf) {
-	case 8:
+	चयन (d[1] & 0xf) अणु
+	हाल 8:
 		/* SCSI name string, variable-length UTF-8 */
-		return 9;
-	case 3:
-		switch (d[4] >> 4) {
-		case 6:
-			/* NAA registered extended */
-			return 8;
-		case 5:
-			/* NAA registered */
-			return 5;
-		case 4:
+		वापस 9;
+	हाल 3:
+		चयन (d[4] >> 4) अणु
+		हाल 6:
+			/* NAA रेजिस्टरed extended */
+			वापस 8;
+		हाल 5:
+			/* NAA रेजिस्टरed */
+			वापस 5;
+		हाल 4:
 			/* NAA extended */
-			return 4;
-		case 3:
-			/* NAA locally assigned */
-			return 1;
-		default:
-			break;
-		}
-		break;
-	case 2:
-		switch (d[3]) {
-		case 16:
+			वापस 4;
+		हाल 3:
+			/* NAA locally asचिन्हित */
+			वापस 1;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 2:
+		चयन (d[3]) अणु
+		हाल 16:
 			/* EUI64-based, 16 byte */
-			return 7;
-		case 12:
+			वापस 7;
+		हाल 12:
 			/* EUI64-based, 12 byte */
-			return 6;
-		case 8:
+			वापस 6;
+		हाल 8:
 			/* EUI64-based, 8 byte */
-			return 3;
-		default:
-			break;
-		}
-		break;
-	case 1:
-		/* T10 vendor ID */
-		return 1;
-	default:
-		break;
-	}
+			वापस 3;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 1:
+		/* T10 venकरोr ID */
+		वापस 1;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * scsi_vpd_lun_id - return a unique device identification
+ * scsi_vpd_lun_id - वापस a unique device identअगरication
  * @sdev: SCSI device
- * @id:   buffer for the identification
+ * @id:   buffer क्रम the identअगरication
  * @id_len:  length of the buffer
  *
- * Copies a unique device identification into @id based
- * on the information in the VPD page 0x83 of the device.
- * The string will be formatted as a SCSI name string.
+ * Copies a unique device identअगरication पूर्णांकo @id based
+ * on the inक्रमmation in the VPD page 0x83 of the device.
+ * The string will be क्रमmatted as a SCSI name string.
  *
- * Returns the length of the identification or error on failure.
- * If the identifier is longer than the supplied buffer the actual
- * identifier length is returned and the buffer is not zero-padded.
+ * Returns the length of the identअगरication or error on failure.
+ * If the identअगरier is दीर्घer than the supplied buffer the actual
+ * identअगरier length is वापसed and the buffer is not zero-padded.
  */
-int scsi_vpd_lun_id(struct scsi_device *sdev, char *id, size_t id_len)
-{
+पूर्णांक scsi_vpd_lun_id(काष्ठा scsi_device *sdev, अक्षर *id, माप_प्रकार id_len)
+अणु
 	u8 cur_id_prio = 0;
 	u8 cur_id_size = 0;
-	const unsigned char *d, *cur_id_str;
-	const struct scsi_vpd *vpd_pg83;
-	int id_size = -EINVAL;
+	स्थिर अचिन्हित अक्षर *d, *cur_id_str;
+	स्थिर काष्ठा scsi_vpd *vpd_pg83;
+	पूर्णांक id_size = -EINVAL;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	vpd_pg83 = rcu_dereference(sdev->vpd_pg83);
-	if (!vpd_pg83) {
-		rcu_read_unlock();
-		return -ENXIO;
-	}
+	अगर (!vpd_pg83) अणु
+		rcu_पढ़ो_unlock();
+		वापस -ENXIO;
+	पूर्ण
 
-	/* The id string must be at least 20 bytes + terminating NULL byte */
-	if (id_len < 21) {
-		rcu_read_unlock();
-		return -EINVAL;
-	}
+	/* The id string must be at least 20 bytes + terminating शून्य byte */
+	अगर (id_len < 21) अणु
+		rcu_पढ़ो_unlock();
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(id, 0, id_len);
-	for (d = vpd_pg83->data + 4;
+	स_रखो(id, 0, id_len);
+	क्रम (d = vpd_pg83->data + 4;
 	     d < vpd_pg83->data + vpd_pg83->len;
-	     d += d[3] + 4) {
+	     d += d[3] + 4) अणु
 		u8 prio = designator_prio(d);
 
-		if (prio == 0 || cur_id_prio > prio)
-			continue;
+		अगर (prio == 0 || cur_id_prio > prio)
+			जारी;
 
-		switch (d[1] & 0xf) {
-		case 0x1:
-			/* T10 Vendor ID */
-			if (cur_id_size > d[3])
-				break;
+		चयन (d[1] & 0xf) अणु
+		हाल 0x1:
+			/* T10 Venकरोr ID */
+			अगर (cur_id_size > d[3])
+				अवरोध;
 			cur_id_prio = prio;
 			cur_id_size = d[3];
-			if (cur_id_size + 4 > id_len)
+			अगर (cur_id_size + 4 > id_len)
 				cur_id_size = id_len - 4;
 			cur_id_str = d + 4;
-			id_size = snprintf(id, id_len, "t10.%*pE",
+			id_size = snम_लिखो(id, id_len, "t10.%*pE",
 					   cur_id_size, cur_id_str);
-			break;
-		case 0x2:
+			अवरोध;
+		हाल 0x2:
 			/* EUI-64 */
 			cur_id_prio = prio;
 			cur_id_size = d[3];
 			cur_id_str = d + 4;
-			switch (cur_id_size) {
-			case 8:
-				id_size = snprintf(id, id_len,
+			चयन (cur_id_size) अणु
+			हाल 8:
+				id_size = snम_लिखो(id, id_len,
 						   "eui.%8phN",
 						   cur_id_str);
-				break;
-			case 12:
-				id_size = snprintf(id, id_len,
+				अवरोध;
+			हाल 12:
+				id_size = snम_लिखो(id, id_len,
 						   "eui.%12phN",
 						   cur_id_str);
-				break;
-			case 16:
-				id_size = snprintf(id, id_len,
+				अवरोध;
+			हाल 16:
+				id_size = snम_लिखो(id, id_len,
 						   "eui.%16phN",
 						   cur_id_str);
-				break;
-			default:
-				break;
-			}
-			break;
-		case 0x3:
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 0x3:
 			/* NAA */
 			cur_id_prio = prio;
 			cur_id_size = d[3];
 			cur_id_str = d + 4;
-			switch (cur_id_size) {
-			case 8:
-				id_size = snprintf(id, id_len,
+			चयन (cur_id_size) अणु
+			हाल 8:
+				id_size = snम_लिखो(id, id_len,
 						   "naa.%8phN",
 						   cur_id_str);
-				break;
-			case 16:
-				id_size = snprintf(id, id_len,
+				अवरोध;
+			हाल 16:
+				id_size = snम_लिखो(id, id_len,
 						   "naa.%16phN",
 						   cur_id_str);
-				break;
-			default:
-				break;
-			}
-			break;
-		case 0x8:
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 0x8:
 			/* SCSI name string */
-			if (cur_id_size > d[3])
-				break;
-			/* Prefer others for truncated descriptor */
-			if (d[3] > id_len) {
+			अगर (cur_id_size > d[3])
+				अवरोध;
+			/* Prefer others क्रम truncated descriptor */
+			अगर (d[3] > id_len) अणु
 				prio = 2;
-				if (cur_id_prio > prio)
-					break;
-			}
+				अगर (cur_id_prio > prio)
+					अवरोध;
+			पूर्ण
 			cur_id_prio = prio;
 			cur_id_size = id_size = d[3];
 			cur_id_str = d + 4;
-			if (cur_id_size >= id_len)
+			अगर (cur_id_size >= id_len)
 				cur_id_size = id_len - 1;
-			memcpy(id, cur_id_str, cur_id_size);
-			break;
-		default:
-			break;
-		}
-	}
-	rcu_read_unlock();
+			स_नकल(id, cur_id_str, cur_id_size);
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return id_size;
-}
+	वापस id_size;
+पूर्ण
 EXPORT_SYMBOL(scsi_vpd_lun_id);
 
 /*
- * scsi_vpd_tpg_id - return a target port group identifier
+ * scsi_vpd_tpg_id - वापस a target port group identअगरier
  * @sdev: SCSI device
  *
- * Returns the Target Port Group identifier from the information
+ * Returns the Target Port Group identअगरier from the inक्रमmation
  * froom VPD page 0x83 of the device.
  *
- * Returns the identifier or error on failure.
+ * Returns the identअगरier or error on failure.
  */
-int scsi_vpd_tpg_id(struct scsi_device *sdev, int *rel_id)
-{
-	const unsigned char *d;
-	const struct scsi_vpd *vpd_pg83;
-	int group_id = -EAGAIN, rel_port = -1;
+पूर्णांक scsi_vpd_tpg_id(काष्ठा scsi_device *sdev, पूर्णांक *rel_id)
+अणु
+	स्थिर अचिन्हित अक्षर *d;
+	स्थिर काष्ठा scsi_vpd *vpd_pg83;
+	पूर्णांक group_id = -EAGAIN, rel_port = -1;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	vpd_pg83 = rcu_dereference(sdev->vpd_pg83);
-	if (!vpd_pg83) {
-		rcu_read_unlock();
-		return -ENXIO;
-	}
+	अगर (!vpd_pg83) अणु
+		rcu_पढ़ो_unlock();
+		वापस -ENXIO;
+	पूर्ण
 
 	d = vpd_pg83->data + 4;
-	while (d < vpd_pg83->data + vpd_pg83->len) {
-		switch (d[1] & 0xf) {
-		case 0x4:
+	जबतक (d < vpd_pg83->data + vpd_pg83->len) अणु
+		चयन (d[1] & 0xf) अणु
+		हाल 0x4:
 			/* Relative target port */
 			rel_port = get_unaligned_be16(&d[6]);
-			break;
-		case 0x5:
+			अवरोध;
+		हाल 0x5:
 			/* Target port group */
 			group_id = get_unaligned_be16(&d[6]);
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 		d += d[3] + 4;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (group_id >= 0 && rel_id && rel_port != -1)
+	अगर (group_id >= 0 && rel_id && rel_port != -1)
 		*rel_id = rel_port;
 
-	return group_id;
-}
+	वापस group_id;
+पूर्ण
 EXPORT_SYMBOL(scsi_vpd_tpg_id);

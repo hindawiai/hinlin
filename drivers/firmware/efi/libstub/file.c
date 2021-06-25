@@ -1,250 +1,251 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Helper functions used by the EFI stub on multiple
- * architectures. This should be #included by the EFI stub
+ * architectures. This should be #समावेशd by the EFI stub
  * implementation files.
  *
  * Copyright 2011 Intel Corporation; author Matt Fleming
  */
 
-#include <linux/efi.h>
-#include <asm/efi.h>
+#समावेश <linux/efi.h>
+#समावेश <यंत्र/efi.h>
 
-#include "efistub.h"
+#समावेश "efistub.h"
 
-#define MAX_FILENAME_SIZE	256
+#घोषणा MAX_खाताNAME_SIZE	256
 
 /*
- * Some firmware implementations have problems reading files in one go.
- * A read chunk size of 1MB seems to work for most platforms.
+ * Some firmware implementations have problems पढ़ोing files in one go.
+ * A पढ़ो chunk size of 1MB seems to work क्रम most platक्रमms.
  *
- * Unfortunately, reading files in chunks triggers *other* bugs on some
- * platforms, so we provide a way to disable this workaround, which can
- * be done by passing "efi=nochunk" on the EFI boot stub command line.
+ * Unक्रमtunately, पढ़ोing files in chunks triggers *other* bugs on some
+ * platक्रमms, so we provide a way to disable this workaround, which can
+ * be करोne by passing "efi=nochunk" on the EFI boot stub command line.
  *
  * If you experience issues with initrd images being corrupt it's worth
- * trying efi=nochunk, but chunking is enabled by default on x86 because
+ * trying efi=nochunk, but chunking is enabled by शेष on x86 because
  * there are far more machines that require the workaround than those that
- * break with it enabled.
+ * अवरोध with it enabled.
  */
-#define EFI_READ_CHUNK_SIZE	SZ_1M
+#घोषणा EFI_READ_CHUNK_SIZE	SZ_1M
 
-struct finfo {
+काष्ठा finfo अणु
 	efi_file_info_t info;
-	efi_char16_t	filename[MAX_FILENAME_SIZE];
-};
+	efi_अक्षर16_t	filename[MAX_खाताNAME_SIZE];
+पूर्ण;
 
-static efi_status_t efi_open_file(efi_file_protocol_t *volume,
-				  struct finfo *fi,
+अटल efi_status_t efi_खोलो_file(efi_file_protocol_t *volume,
+				  काष्ठा finfo *fi,
 				  efi_file_protocol_t **handle,
-				  unsigned long *file_size)
-{
-	efi_guid_t info_guid = EFI_FILE_INFO_ID;
+				  अचिन्हित दीर्घ *file_size)
+अणु
+	efi_guid_t info_guid = EFI_खाता_INFO_ID;
 	efi_file_protocol_t *fh;
-	unsigned long info_sz;
+	अचिन्हित दीर्घ info_sz;
 	efi_status_t status;
 
-	status = volume->open(volume, &fh, fi->filename, EFI_FILE_MODE_READ, 0);
-	if (status != EFI_SUCCESS) {
+	status = volume->खोलो(volume, &fh, fi->filename, EFI_खाता_MODE_READ, 0);
+	अगर (status != EFI_SUCCESS) अणु
 		efi_err("Failed to open file: %ls\n", fi->filename);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	info_sz = sizeof(struct finfo);
+	info_sz = माप(काष्ठा finfo);
 	status = fh->get_info(fh, &info_guid, &info_sz, fi);
-	if (status != EFI_SUCCESS) {
+	अगर (status != EFI_SUCCESS) अणु
 		efi_err("Failed to get file info\n");
-		fh->close(fh);
-		return status;
-	}
+		fh->बंद(fh);
+		वापस status;
+	पूर्ण
 
 	*handle = fh;
 	*file_size = fi->info.file_size;
-	return EFI_SUCCESS;
-}
+	वापस EFI_SUCCESS;
+पूर्ण
 
-static efi_status_t efi_open_volume(efi_loaded_image_t *image,
+अटल efi_status_t efi_खोलो_volume(efi_loaded_image_t *image,
 				    efi_file_protocol_t **fh)
-{
-	efi_guid_t fs_proto = EFI_FILE_SYSTEM_GUID;
-	efi_simple_file_system_protocol_t *io;
+अणु
+	efi_guid_t fs_proto = EFI_खाता_SYSTEM_GUID;
+	efi_simple_file_प्रणाली_protocol_t *io;
 	efi_status_t status;
 
 	status = efi_bs_call(handle_protocol, image->device_handle, &fs_proto,
-			     (void **)&io);
-	if (status != EFI_SUCCESS) {
+			     (व्योम **)&io);
+	अगर (status != EFI_SUCCESS) अणु
 		efi_err("Failed to handle fs_proto\n");
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	status = io->open_volume(io, fh);
-	if (status != EFI_SUCCESS)
+	status = io->खोलो_volume(io, fh);
+	अगर (status != EFI_SUCCESS)
 		efi_err("Failed to open volume\n");
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int find_file_option(const efi_char16_t *cmdline, int cmdline_len,
-			    const efi_char16_t *prefix, int prefix_size,
-			    efi_char16_t *result, int result_len)
-{
-	int prefix_len = prefix_size / 2;
+अटल पूर्णांक find_file_option(स्थिर efi_अक्षर16_t *cmdline, पूर्णांक cmdline_len,
+			    स्थिर efi_अक्षर16_t *prefix, पूर्णांक prefix_size,
+			    efi_अक्षर16_t *result, पूर्णांक result_len)
+अणु
+	पूर्णांक prefix_len = prefix_size / 2;
 	bool found = false;
-	int i;
+	पूर्णांक i;
 
-	for (i = prefix_len; i < cmdline_len; i++) {
-		if (!memcmp(&cmdline[i - prefix_len], prefix, prefix_size)) {
+	क्रम (i = prefix_len; i < cmdline_len; i++) अणु
+		अगर (!स_भेद(&cmdline[i - prefix_len], prefix, prefix_size)) अणु
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found)
-		return 0;
+	अगर (!found)
+		वापस 0;
 
 	/* Skip any leading slashes */
-	while (i < cmdline_len && (cmdline[i] == L'/' || cmdline[i] == L'\\'))
+	जबतक (i < cmdline_len && (cmdline[i] == L'/' || cmdline[i] == L'\\'))
 		i++;
 
-	while (--result_len > 0 && i < cmdline_len) {
-		efi_char16_t c = cmdline[i++];
+	जबतक (--result_len > 0 && i < cmdline_len) अणु
+		efi_अक्षर16_t c = cmdline[i++];
 
-		if (c == L'\0' || c == L'\n' || c == L' ')
-			break;
-		else if (c == L'/')
+		अगर (c == L'\0' || c == L'\n' || c == L' ')
+			अवरोध;
+		अन्यथा अगर (c == L'/')
 			/* Replace UNIX dir separators with EFI standard ones */
 			*result++ = L'\\';
-		else
+		अन्यथा
 			*result++ = c;
-	}
+	पूर्ण
 	*result = L'\0';
-	return i;
-}
+	वापस i;
+पूर्ण
 
 /*
- * Check the cmdline for a LILO-style file= arguments.
+ * Check the cmdline क्रम a LILO-style file= arguments.
  *
- * We only support loading a file from the same filesystem as
+ * We only support loading a file from the same fileप्रणाली as
  * the kernel image.
  */
 efi_status_t handle_cmdline_files(efi_loaded_image_t *image,
-				  const efi_char16_t *optstr,
-				  int optstr_size,
-				  unsigned long soft_limit,
-				  unsigned long hard_limit,
-				  unsigned long *load_addr,
-				  unsigned long *load_size)
-{
-	const efi_char16_t *cmdline = image->load_options;
-	int cmdline_len = image->load_options_size;
-	unsigned long efi_chunk_size = ULONG_MAX;
-	efi_file_protocol_t *volume = NULL;
+				  स्थिर efi_अक्षर16_t *optstr,
+				  पूर्णांक optstr_size,
+				  अचिन्हित दीर्घ soft_limit,
+				  अचिन्हित दीर्घ hard_limit,
+				  अचिन्हित दीर्घ *load_addr,
+				  अचिन्हित दीर्घ *load_size)
+अणु
+	स्थिर efi_अक्षर16_t *cmdline = image->load_options;
+	पूर्णांक cmdline_len = image->load_options_size;
+	अचिन्हित दीर्घ efi_chunk_size = अच_दीर्घ_उच्च;
+	efi_file_protocol_t *volume = शून्य;
 	efi_file_protocol_t *file;
-	unsigned long alloc_addr;
-	unsigned long alloc_size;
+	अचिन्हित दीर्घ alloc_addr;
+	अचिन्हित दीर्घ alloc_size;
 	efi_status_t status;
-	int offset;
+	पूर्णांक offset;
 
-	if (!load_addr || !load_size)
-		return EFI_INVALID_PARAMETER;
+	अगर (!load_addr || !load_size)
+		वापस EFI_INVALID_PARAMETER;
 
-	efi_apply_loadoptions_quirk((const void **)&cmdline, &cmdline_len);
-	cmdline_len /= sizeof(*cmdline);
+	efi_apply_loaकरोptions_quirk((स्थिर व्योम **)&cmdline, &cmdline_len);
+	cmdline_len /= माप(*cmdline);
 
-	if (IS_ENABLED(CONFIG_X86) && !efi_nochunk)
+	अगर (IS_ENABLED(CONFIG_X86) && !efi_nochunk)
 		efi_chunk_size = EFI_READ_CHUNK_SIZE;
 
 	alloc_addr = alloc_size = 0;
-	do {
-		struct finfo fi;
-		unsigned long size;
-		void *addr;
+	करो अणु
+		काष्ठा finfo fi;
+		अचिन्हित दीर्घ size;
+		व्योम *addr;
 
 		offset = find_file_option(cmdline, cmdline_len,
 					  optstr, optstr_size,
 					  fi.filename, ARRAY_SIZE(fi.filename));
 
-		if (!offset)
-			break;
+		अगर (!offset)
+			अवरोध;
 
 		cmdline += offset;
 		cmdline_len -= offset;
 
-		if (!volume) {
-			status = efi_open_volume(image, &volume);
-			if (status != EFI_SUCCESS)
-				return status;
-		}
+		अगर (!volume) अणु
+			status = efi_खोलो_volume(image, &volume);
+			अगर (status != EFI_SUCCESS)
+				वापस status;
+		पूर्ण
 
-		status = efi_open_file(volume, &fi, &file, &size);
-		if (status != EFI_SUCCESS)
-			goto err_close_volume;
+		status = efi_खोलो_file(volume, &fi, &file, &size);
+		अगर (status != EFI_SUCCESS)
+			जाओ err_बंद_volume;
 
 		/*
 		 * Check whether the existing allocation can contain the next
 		 * file. This condition will also trigger naturally during the
 		 * first (and typically only) iteration of the loop, given that
-		 * alloc_size == 0 in that case.
+		 * alloc_size == 0 in that हाल.
 		 */
-		if (round_up(alloc_size + size, EFI_ALLOC_ALIGN) >
-		    round_up(alloc_size, EFI_ALLOC_ALIGN)) {
-			unsigned long old_addr = alloc_addr;
+		अगर (round_up(alloc_size + size, EFI_ALLOC_ALIGN) >
+		    round_up(alloc_size, EFI_ALLOC_ALIGN)) अणु
+			अचिन्हित दीर्घ old_addr = alloc_addr;
 
 			status = EFI_OUT_OF_RESOURCES;
-			if (soft_limit < hard_limit)
+			अगर (soft_limit < hard_limit)
 				status = efi_allocate_pages(alloc_size + size,
 							    &alloc_addr,
 							    soft_limit);
-			if (status == EFI_OUT_OF_RESOURCES)
+			अगर (status == EFI_OUT_OF_RESOURCES)
 				status = efi_allocate_pages(alloc_size + size,
 							    &alloc_addr,
 							    hard_limit);
-			if (status != EFI_SUCCESS) {
+			अगर (status != EFI_SUCCESS) अणु
 				efi_err("Failed to allocate memory for files\n");
-				goto err_close_file;
-			}
+				जाओ err_बंद_file;
+			पूर्ण
 
-			if (old_addr != 0) {
+			अगर (old_addr != 0) अणु
 				/*
-				 * This is not the first time we've gone
+				 * This is not the first समय we've gone
 				 * around this loop, and so we are loading
 				 * multiple files that need to be concatenated
-				 * and returned in a single buffer.
+				 * and वापसed in a single buffer.
 				 */
-				memcpy((void *)alloc_addr, (void *)old_addr, alloc_size);
-				efi_free(alloc_size, old_addr);
-			}
-		}
+				स_नकल((व्योम *)alloc_addr, (व्योम *)old_addr, alloc_size);
+				efi_मुक्त(alloc_size, old_addr);
+			पूर्ण
+		पूर्ण
 
-		addr = (void *)alloc_addr + alloc_size;
+		addr = (व्योम *)alloc_addr + alloc_size;
 		alloc_size += size;
 
-		while (size) {
-			unsigned long chunksize = min(size, efi_chunk_size);
+		जबतक (size) अणु
+			अचिन्हित दीर्घ chunksize = min(size, efi_chunk_size);
 
-			status = file->read(file, &chunksize, addr);
-			if (status != EFI_SUCCESS) {
+			status = file->पढ़ो(file, &chunksize, addr);
+			अगर (status != EFI_SUCCESS) अणु
 				efi_err("Failed to read file\n");
-				goto err_close_file;
-			}
+				जाओ err_बंद_file;
+			पूर्ण
 			addr += chunksize;
 			size -= chunksize;
-		}
-		file->close(file);
-	} while (offset > 0);
+		पूर्ण
+		file->बंद(file);
+	पूर्ण जबतक (offset > 0);
 
 	*load_addr = alloc_addr;
 	*load_size = alloc_size;
 
-	if (volume)
-		volume->close(volume);
-	return EFI_SUCCESS;
+	अगर (volume)
+		volume->बंद(volume);
+	वापस EFI_SUCCESS;
 
-err_close_file:
-	file->close(file);
+err_बंद_file:
+	file->बंद(file);
 
-err_close_volume:
-	volume->close(volume);
-	efi_free(alloc_size, alloc_addr);
-	return status;
-}
+err_बंद_volume:
+	volume->बंद(volume);
+	efi_मुक्त(alloc_size, alloc_addr);
+	वापस status;
+पूर्ण

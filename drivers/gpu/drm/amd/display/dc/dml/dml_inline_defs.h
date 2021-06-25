@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,135 +24,135 @@
  *
  */
 
-#ifndef __DML_INLINE_DEFS_H__
-#define __DML_INLINE_DEFS_H__
+#अगर_अघोषित __DML_INLINE_DEFS_H__
+#घोषणा __DML_INLINE_DEFS_H__
 
-#include "dcn_calc_math.h"
-#include "dml_logger.h"
+#समावेश "dcn_calc_math.h"
+#समावेश "dml_logger.h"
 
-static inline double dml_min(double a, double b)
-{
-	return (double) dcn_bw_min2(a, b);
-}
+अटल अंतरभूत द्विगुन dml_min(द्विगुन a, द्विगुन b)
+अणु
+	वापस (द्विगुन) dcn_bw_min2(a, b);
+पूर्ण
 
-static inline double dml_min3(double a, double b, double c)
-{
-	return dml_min(dml_min(a, b), c);
-}
+अटल अंतरभूत द्विगुन dml_min3(द्विगुन a, द्विगुन b, द्विगुन c)
+अणु
+	वापस dml_min(dml_min(a, b), c);
+पूर्ण
 
-static inline double dml_min4(double a, double b, double c, double d)
-{
-	return dml_min(dml_min(a, b), dml_min(c, d));
-}
+अटल अंतरभूत द्विगुन dml_min4(द्विगुन a, द्विगुन b, द्विगुन c, द्विगुन d)
+अणु
+	वापस dml_min(dml_min(a, b), dml_min(c, d));
+पूर्ण
 
-static inline double dml_max(double a, double b)
-{
-	return (double) dcn_bw_max2(a, b);
-}
+अटल अंतरभूत द्विगुन dml_max(द्विगुन a, द्विगुन b)
+अणु
+	वापस (द्विगुन) dcn_bw_max2(a, b);
+पूर्ण
 
-static inline double dml_max3(double a, double b, double c)
-{
-	return dml_max(dml_max(a, b), c);
-}
+अटल अंतरभूत द्विगुन dml_max3(द्विगुन a, द्विगुन b, द्विगुन c)
+अणु
+	वापस dml_max(dml_max(a, b), c);
+पूर्ण
 
-static inline double dml_max4(double a, double b, double c, double d)
-{
-	return dml_max(dml_max(a, b), dml_max(c, d));
-}
+अटल अंतरभूत द्विगुन dml_max4(द्विगुन a, द्विगुन b, द्विगुन c, द्विगुन d)
+अणु
+	वापस dml_max(dml_max(a, b), dml_max(c, d));
+पूर्ण
 
-static inline double dml_max5(double a, double b, double c, double d, double e)
-{
-	return dml_max(dml_max4(a, b, c, d), e);
-}
+अटल अंतरभूत द्विगुन dml_max5(द्विगुन a, द्विगुन b, द्विगुन c, द्विगुन d, द्विगुन e)
+अणु
+	वापस dml_max(dml_max4(a, b, c, d), e);
+पूर्ण
 
-static inline double dml_ceil(double a, double granularity)
-{
-	return (double) dcn_bw_ceil2(a, granularity);
-}
+अटल अंतरभूत द्विगुन dml_उच्चमान(द्विगुन a, द्विगुन granularity)
+अणु
+	वापस (द्विगुन) dcn_bw_उच्चमान2(a, granularity);
+पूर्ण
 
-static inline double dml_floor(double a, double granularity)
-{
-	return (double) dcn_bw_floor2(a, granularity);
-}
+अटल अंतरभूत द्विगुन dml_न्यूनमान(द्विगुन a, द्विगुन granularity)
+अणु
+	वापस (द्विगुन) dcn_bw_न्यूनमान2(a, granularity);
+पूर्ण
 
-static inline double dml_round(double a)
-{
-	double round_pt = 0.5;
-	double ceil = dml_ceil(a, 1);
-	double floor = dml_floor(a, 1);
+अटल अंतरभूत द्विगुन dml_round(द्विगुन a)
+अणु
+	द्विगुन round_pt = 0.5;
+	द्विगुन उच्चमान = dml_उच्चमान(a, 1);
+	द्विगुन न्यूनमान = dml_न्यूनमान(a, 1);
 
-	if (a - floor >= round_pt)
-		return ceil;
-	else
-		return floor;
-}
+	अगर (a - न्यूनमान >= round_pt)
+		वापस उच्चमान;
+	अन्यथा
+		वापस न्यूनमान;
+पूर्ण
 
-/* float
-static inline int dml_log2(float x)
-{
-	unsigned int ix = *((unsigned int *)&x);
+/* भग्न
+अटल अंतरभूत पूर्णांक dml_log2(भग्न x)
+अणु
+	अचिन्हित पूर्णांक ix = *((अचिन्हित पूर्णांक *)&x);
 
-	return (int)((ix >> 23) & 0xff) - 127;
-}*/
+	वापस (पूर्णांक)((ix >> 23) & 0xff) - 127;
+पूर्ण*/
 
-/* double */
-static inline int dml_log2(double x)
-{
-	unsigned long long ix = *((unsigned long long *)&x);
+/* द्विगुन */
+अटल अंतरभूत पूर्णांक dml_log2(द्विगुन x)
+अणु
+	अचिन्हित दीर्घ दीर्घ ix = *((अचिन्हित दीर्घ दीर्घ *)&x);
 
-	return (int)((ix >> 52) & 0x7ff) - 1023;
-}
+	वापस (पूर्णांक)((ix >> 52) & 0x7ff) - 1023;
+पूर्ण
 
-static inline double dml_pow(double a, int exp)
-{
-	return (double) dcn_bw_pow(a, exp);
-}
+अटल अंतरभूत द्विगुन dml_घात(द्विगुन a, पूर्णांक exp)
+अणु
+	वापस (द्विगुन) dcn_bw_घात(a, exp);
+पूर्ण
 
-static inline double dml_fmod(double f, int val)
-{
-	return (double) dcn_bw_mod(f, val);
-}
+अटल अंतरभूत द्विगुन dml_भ_शेष(द्विगुन f, पूर्णांक val)
+अणु
+	वापस (द्विगुन) dcn_bw_mod(f, val);
+पूर्ण
 
-static inline double dml_ceil_2(double f)
-{
-	return (double) dcn_bw_ceil2(f, 2);
-}
+अटल अंतरभूत द्विगुन dml_उच्चमान_2(द्विगुन f)
+अणु
+	वापस (द्विगुन) dcn_bw_उच्चमान2(f, 2);
+पूर्ण
 
-static inline double dml_ceil_ex(double x, double granularity)
-{
-	return (double) dcn_bw_ceil2(x, granularity);
-}
+अटल अंतरभूत द्विगुन dml_उच्चमान_ex(द्विगुन x, द्विगुन granularity)
+अणु
+	वापस (द्विगुन) dcn_bw_उच्चमान2(x, granularity);
+पूर्ण
 
-static inline double dml_floor_ex(double x, double granularity)
-{
-	return (double) dcn_bw_floor2(x, granularity);
-}
+अटल अंतरभूत द्विगुन dml_न्यूनमान_ex(द्विगुन x, द्विगुन granularity)
+अणु
+	वापस (द्विगुन) dcn_bw_न्यूनमान2(x, granularity);
+पूर्ण
 
-static inline unsigned int dml_round_to_multiple(unsigned int num,
-						 unsigned int multiple,
-						 unsigned char up)
-{
-	unsigned int remainder;
+अटल अंतरभूत अचिन्हित पूर्णांक dml_round_to_multiple(अचिन्हित पूर्णांक num,
+						 अचिन्हित पूर्णांक multiple,
+						 अचिन्हित अक्षर up)
+अणु
+	अचिन्हित पूर्णांक reमुख्यder;
 
-	if (multiple == 0)
-		return num;
+	अगर (multiple == 0)
+		वापस num;
 
-	remainder = num % multiple;
+	reमुख्यder = num % multiple;
 
-	if (remainder == 0)
-		return num;
+	अगर (reमुख्यder == 0)
+		वापस num;
 
-	if (up)
-		return (num + multiple - remainder);
-	else
-		return (num - remainder);
-}
-static inline double dml_abs(double a)
-{
-	if (a > 0)
-		return a;
-	else
-		return (a*(-1));
-}
+	अगर (up)
+		वापस (num + multiple - reमुख्यder);
+	अन्यथा
+		वापस (num - reमुख्यder);
+पूर्ण
+अटल अंतरभूत द्विगुन dml_असल(द्विगुन a)
+अणु
+	अगर (a > 0)
+		वापस a;
+	अन्यथा
+		वापस (a*(-1));
+पूर्ण
 
-#endif
+#पूर्ण_अगर

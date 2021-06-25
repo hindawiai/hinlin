@@ -1,167 +1,168 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
  * Copyright (c) 2017, Linaro Ltd.
  */
 
-#include <linux/completion.h>
-#include <linux/module.h>
-#include <linux/notifier.h>
-#include <linux/rpmsg.h>
-#include <linux/rpmsg/qcom_glink.h>
-#include <linux/remoteproc/qcom_rproc.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/module.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/rpmsg.h>
+#समावेश <linux/rpmsg/qcom_glink.h>
+#समावेश <linux/remoteproc/qcom_rproc.h>
 
 /**
- * struct do_cleanup_msg - The data structure for an SSR do_cleanup message
+ * काष्ठा करो_cleanup_msg - The data काष्ठाure क्रम an SSR करो_cleanup message
  * @version:	The G-Link SSR protocol version
- * @command:	The G-Link SSR command - do_cleanup
+ * @command:	The G-Link SSR command - करो_cleanup
  * @seq_num:	Sequence number
- * @name_len:	Length of the name of the subsystem being restarted
- * @name:	G-Link edge name of the subsystem being restarted
+ * @name_len:	Length of the name of the subप्रणाली being restarted
+ * @name:	G-Link edge name of the subप्रणाली being restarted
  */
-struct do_cleanup_msg {
+काष्ठा करो_cleanup_msg अणु
 	__le32 version;
 	__le32 command;
 	__le32 seq_num;
 	__le32 name_len;
-	char name[32];
-};
+	अक्षर name[32];
+पूर्ण;
 
 /**
- * struct cleanup_done_msg - The data structure for an SSR cleanup_done message
+ * काष्ठा cleanup_करोne_msg - The data काष्ठाure क्रम an SSR cleanup_करोne message
  * @version:	The G-Link SSR protocol version
- * @response:	The G-Link SSR response to a do_cleanup command, cleanup_done
+ * @response:	The G-Link SSR response to a करो_cleanup command, cleanup_करोne
  * @seq_num:	Sequence number
  */
-struct cleanup_done_msg {
+काष्ठा cleanup_करोne_msg अणु
 	__le32 version;
 	__le32 response;
 	__le32 seq_num;
-};
+पूर्ण;
 
 /**
  * G-Link SSR protocol commands
  */
-#define GLINK_SSR_DO_CLEANUP	0
-#define GLINK_SSR_CLEANUP_DONE	1
+#घोषणा GLINK_SSR_DO_CLEANUP	0
+#घोषणा GLINK_SSR_CLEANUP_DONE	1
 
-struct glink_ssr {
-	struct device *dev;
-	struct rpmsg_endpoint *ept;
+काष्ठा glink_ssr अणु
+	काष्ठा device *dev;
+	काष्ठा rpmsg_endpoपूर्णांक *ept;
 
-	struct notifier_block nb;
+	काष्ठा notअगरier_block nb;
 
 	u32 seq_num;
-	struct completion completion;
-};
+	काष्ठा completion completion;
+पूर्ण;
 
-/* Notifier list for all registered glink_ssr instances */
-static BLOCKING_NOTIFIER_HEAD(ssr_notifiers);
+/* Notअगरier list क्रम all रेजिस्टरed glink_ssr instances */
+अटल BLOCKING_NOTIFIER_HEAD(ssr_notअगरiers);
 
 /**
- * qcom_glink_ssr_notify() - notify GLINK SSR about stopped remoteproc
+ * qcom_glink_ssr_notअगरy() - notअगरy GLINK SSR about stopped remoteproc
  * @ssr_name:	name of the remoteproc that has been stopped
  */
-void qcom_glink_ssr_notify(const char *ssr_name)
-{
-	blocking_notifier_call_chain(&ssr_notifiers, 0, (void *)ssr_name);
-}
-EXPORT_SYMBOL_GPL(qcom_glink_ssr_notify);
+व्योम qcom_glink_ssr_notअगरy(स्थिर अक्षर *ssr_name)
+अणु
+	blocking_notअगरier_call_chain(&ssr_notअगरiers, 0, (व्योम *)ssr_name);
+पूर्ण
+EXPORT_SYMBOL_GPL(qcom_glink_ssr_notअगरy);
 
-static int qcom_glink_ssr_callback(struct rpmsg_device *rpdev,
-				   void *data, int len, void *priv, u32 addr)
-{
-	struct cleanup_done_msg *msg = data;
-	struct glink_ssr *ssr = dev_get_drvdata(&rpdev->dev);
+अटल पूर्णांक qcom_glink_ssr_callback(काष्ठा rpmsg_device *rpdev,
+				   व्योम *data, पूर्णांक len, व्योम *priv, u32 addr)
+अणु
+	काष्ठा cleanup_करोne_msg *msg = data;
+	काष्ठा glink_ssr *ssr = dev_get_drvdata(&rpdev->dev);
 
-	if (len < sizeof(*msg)) {
+	अगर (len < माप(*msg)) अणु
 		dev_err(ssr->dev, "message too short\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (le32_to_cpu(msg->version) != 0)
-		return -EINVAL;
+	अगर (le32_to_cpu(msg->version) != 0)
+		वापस -EINVAL;
 
-	if (le32_to_cpu(msg->response) != GLINK_SSR_CLEANUP_DONE)
-		return 0;
+	अगर (le32_to_cpu(msg->response) != GLINK_SSR_CLEANUP_DONE)
+		वापस 0;
 
-	if (le32_to_cpu(msg->seq_num) != ssr->seq_num) {
+	अगर (le32_to_cpu(msg->seq_num) != ssr->seq_num) अणु
 		dev_err(ssr->dev, "invalid sequence number of response\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	complete(&ssr->completion);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qcom_glink_ssr_notifier_call(struct notifier_block *nb,
-					unsigned long event,
-					void *data)
-{
-	struct glink_ssr *ssr = container_of(nb, struct glink_ssr, nb);
-	struct do_cleanup_msg msg;
-	char *ssr_name = data;
-	int ret;
+अटल पूर्णांक qcom_glink_ssr_notअगरier_call(काष्ठा notअगरier_block *nb,
+					अचिन्हित दीर्घ event,
+					व्योम *data)
+अणु
+	काष्ठा glink_ssr *ssr = container_of(nb, काष्ठा glink_ssr, nb);
+	काष्ठा करो_cleanup_msg msg;
+	अक्षर *ssr_name = data;
+	पूर्णांक ret;
 
 	ssr->seq_num++;
 	reinit_completion(&ssr->completion);
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.command = cpu_to_le32(GLINK_SSR_DO_CLEANUP);
 	msg.seq_num = cpu_to_le32(ssr->seq_num);
-	msg.name_len = cpu_to_le32(strlen(ssr_name));
-	strlcpy(msg.name, ssr_name, sizeof(msg.name));
+	msg.name_len = cpu_to_le32(म_माप(ssr_name));
+	strlcpy(msg.name, ssr_name, माप(msg.name));
 
-	ret = rpmsg_send(ssr->ept, &msg, sizeof(msg));
-	if (ret < 0)
+	ret = rpmsg_send(ssr->ept, &msg, माप(msg));
+	अगर (ret < 0)
 		dev_err(ssr->dev, "failed to send cleanup message\n");
 
-	ret = wait_for_completion_timeout(&ssr->completion, HZ);
-	if (!ret)
+	ret = रुको_क्रम_completion_समयout(&ssr->completion, HZ);
+	अगर (!ret)
 		dev_err(ssr->dev, "timeout waiting for cleanup done message\n");
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int qcom_glink_ssr_probe(struct rpmsg_device *rpdev)
-{
-	struct glink_ssr *ssr;
+अटल पूर्णांक qcom_glink_ssr_probe(काष्ठा rpmsg_device *rpdev)
+अणु
+	काष्ठा glink_ssr *ssr;
 
-	ssr = devm_kzalloc(&rpdev->dev, sizeof(*ssr), GFP_KERNEL);
-	if (!ssr)
-		return -ENOMEM;
+	ssr = devm_kzalloc(&rpdev->dev, माप(*ssr), GFP_KERNEL);
+	अगर (!ssr)
+		वापस -ENOMEM;
 
 	init_completion(&ssr->completion);
 
 	ssr->dev = &rpdev->dev;
 	ssr->ept = rpdev->ept;
-	ssr->nb.notifier_call = qcom_glink_ssr_notifier_call;
+	ssr->nb.notअगरier_call = qcom_glink_ssr_notअगरier_call;
 
 	dev_set_drvdata(&rpdev->dev, ssr);
 
-	return blocking_notifier_chain_register(&ssr_notifiers, &ssr->nb);
-}
+	वापस blocking_notअगरier_chain_रेजिस्टर(&ssr_notअगरiers, &ssr->nb);
+पूर्ण
 
-static void qcom_glink_ssr_remove(struct rpmsg_device *rpdev)
-{
-	struct glink_ssr *ssr = dev_get_drvdata(&rpdev->dev);
+अटल व्योम qcom_glink_ssr_हटाओ(काष्ठा rpmsg_device *rpdev)
+अणु
+	काष्ठा glink_ssr *ssr = dev_get_drvdata(&rpdev->dev);
 
-	blocking_notifier_chain_unregister(&ssr_notifiers, &ssr->nb);
-}
+	blocking_notअगरier_chain_unरेजिस्टर(&ssr_notअगरiers, &ssr->nb);
+पूर्ण
 
-static const struct rpmsg_device_id qcom_glink_ssr_match[] = {
-	{ "glink_ssr" },
-	{}
-};
+अटल स्थिर काष्ठा rpmsg_device_id qcom_glink_ssr_match[] = अणु
+	अणु "glink_ssr" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct rpmsg_driver qcom_glink_ssr_driver = {
+अटल काष्ठा rpmsg_driver qcom_glink_ssr_driver = अणु
 	.probe = qcom_glink_ssr_probe,
-	.remove = qcom_glink_ssr_remove,
+	.हटाओ = qcom_glink_ssr_हटाओ,
 	.callback = qcom_glink_ssr_callback,
 	.id_table = qcom_glink_ssr_match,
-	.drv = {
+	.drv = अणु
 		.name = "qcom_glink_ssr",
-	},
-};
+	पूर्ण,
+पूर्ण;
 module_rpmsg_driver(qcom_glink_ssr_driver);

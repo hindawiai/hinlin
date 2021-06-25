@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* 
  * arch/alpha/lib/fls.c
  */
 
-#include <linux/module.h>
-#include <linux/bitops.h>
+#समावेश <linux/module.h>
+#समावेश <linux/bitops.h>
 
 /* This is fls(x)-1, except zero is held to zero.  This allows most
-   efficient input into extbl, plus it allows easy handling of fls(0)=0.  */
+   efficient input पूर्णांकo extbl, plus it allows easy handling of fls(0)=0.  */
 
-const unsigned char __flsm1_tab[256] = 
-{
+स्थिर अचिन्हित अक्षर __flsm1_tab[256] = 
+अणु
   0,
   0,
   1, 1,
@@ -34,6 +35,6 @@ const unsigned char __flsm1_tab[256] =
   7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
   7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
   7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-};
+पूर्ण;
 
 EXPORT_SYMBOL(__flsm1_tab);

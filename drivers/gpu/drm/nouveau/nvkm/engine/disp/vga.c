@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,185 +22,185 @@
  *
  * Authors: Ben Skeggs
  */
-#include <subdev/vga.h>
+#समावेश <subdev/vga.h>
 
 u8
-nvkm_rdport(struct nvkm_device *device, int head, u16 port)
-{
-	if (device->card_type >= NV_50)
-		return nvkm_rd08(device, 0x601000 + port);
+nvkm_rdport(काष्ठा nvkm_device *device, पूर्णांक head, u16 port)
+अणु
+	अगर (device->card_type >= NV_50)
+		वापस nvkm_rd08(device, 0x601000 + port);
 
-	if (port == 0x03c0 || port == 0x03c1 ||	/* AR */
+	अगर (port == 0x03c0 || port == 0x03c1 ||	/* AR */
 	    port == 0x03c2 || port == 0x03da ||	/* INP0 */
 	    port == 0x03d4 || port == 0x03d5)	/* CR */
-		return nvkm_rd08(device, 0x601000 + (head * 0x2000) + port);
+		वापस nvkm_rd08(device, 0x601000 + (head * 0x2000) + port);
 
-	if (port == 0x03c2 || port == 0x03cc ||	/* MISC */
+	अगर (port == 0x03c2 || port == 0x03cc ||	/* MISC */
 	    port == 0x03c4 || port == 0x03c5 ||	/* SR */
-	    port == 0x03ce || port == 0x03cf) {	/* GR */
-		if (device->card_type < NV_40)
+	    port == 0x03ce || port == 0x03cf) अणु	/* GR */
+		अगर (device->card_type < NV_40)
 			head = 0; /* CR44 selects head */
-		return nvkm_rd08(device, 0x0c0000 + (head * 0x2000) + port);
-	}
+		वापस nvkm_rd08(device, 0x0c0000 + (head * 0x2000) + port);
+	पूर्ण
 
-	return 0x00;
-}
+	वापस 0x00;
+पूर्ण
 
-void
-nvkm_wrport(struct nvkm_device *device, int head, u16 port, u8 data)
-{
-	if (device->card_type >= NV_50)
+व्योम
+nvkm_wrport(काष्ठा nvkm_device *device, पूर्णांक head, u16 port, u8 data)
+अणु
+	अगर (device->card_type >= NV_50)
 		nvkm_wr08(device, 0x601000 + port, data);
-	else
-	if (port == 0x03c0 || port == 0x03c1 ||	/* AR */
+	अन्यथा
+	अगर (port == 0x03c0 || port == 0x03c1 ||	/* AR */
 	    port == 0x03c2 || port == 0x03da ||	/* INP0 */
 	    port == 0x03d4 || port == 0x03d5)	/* CR */
 		nvkm_wr08(device, 0x601000 + (head * 0x2000) + port, data);
-	else
-	if (port == 0x03c2 || port == 0x03cc ||	/* MISC */
+	अन्यथा
+	अगर (port == 0x03c2 || port == 0x03cc ||	/* MISC */
 	    port == 0x03c4 || port == 0x03c5 ||	/* SR */
-	    port == 0x03ce || port == 0x03cf) {	/* GR */
-		if (device->card_type < NV_40)
+	    port == 0x03ce || port == 0x03cf) अणु	/* GR */
+		अगर (device->card_type < NV_40)
 			head = 0; /* CR44 selects head */
 		nvkm_wr08(device, 0x0c0000 + (head * 0x2000) + port, data);
-	}
-}
+	पूर्ण
+पूर्ण
 
 u8
-nvkm_rdvgas(struct nvkm_device *device, int head, u8 index)
-{
+nvkm_rdvgas(काष्ठा nvkm_device *device, पूर्णांक head, u8 index)
+अणु
 	nvkm_wrport(device, head, 0x03c4, index);
-	return nvkm_rdport(device, head, 0x03c5);
-}
+	वापस nvkm_rdport(device, head, 0x03c5);
+पूर्ण
 
-void
-nvkm_wrvgas(struct nvkm_device *device, int head, u8 index, u8 value)
-{
+व्योम
+nvkm_wrvgas(काष्ठा nvkm_device *device, पूर्णांक head, u8 index, u8 value)
+अणु
 	nvkm_wrport(device, head, 0x03c4, index);
 	nvkm_wrport(device, head, 0x03c5, value);
-}
+पूर्ण
 
 u8
-nvkm_rdvgag(struct nvkm_device *device, int head, u8 index)
-{
+nvkm_rdvgag(काष्ठा nvkm_device *device, पूर्णांक head, u8 index)
+अणु
 	nvkm_wrport(device, head, 0x03ce, index);
-	return nvkm_rdport(device, head, 0x03cf);
-}
+	वापस nvkm_rdport(device, head, 0x03cf);
+पूर्ण
 
-void
-nvkm_wrvgag(struct nvkm_device *device, int head, u8 index, u8 value)
-{
+व्योम
+nvkm_wrvgag(काष्ठा nvkm_device *device, पूर्णांक head, u8 index, u8 value)
+अणु
 	nvkm_wrport(device, head, 0x03ce, index);
 	nvkm_wrport(device, head, 0x03cf, value);
-}
+पूर्ण
 
 u8
-nvkm_rdvgac(struct nvkm_device *device, int head, u8 index)
-{
+nvkm_rdvgac(काष्ठा nvkm_device *device, पूर्णांक head, u8 index)
+अणु
 	nvkm_wrport(device, head, 0x03d4, index);
-	return nvkm_rdport(device, head, 0x03d5);
-}
+	वापस nvkm_rdport(device, head, 0x03d5);
+पूर्ण
 
-void
-nvkm_wrvgac(struct nvkm_device *device, int head, u8 index, u8 value)
-{
+व्योम
+nvkm_wrvgac(काष्ठा nvkm_device *device, पूर्णांक head, u8 index, u8 value)
+अणु
 	nvkm_wrport(device, head, 0x03d4, index);
 	nvkm_wrport(device, head, 0x03d5, value);
-}
+पूर्ण
 
 u8
-nvkm_rdvgai(struct nvkm_device *device, int head, u16 port, u8 index)
-{
-	if (port == 0x03c4) return nvkm_rdvgas(device, head, index);
-	if (port == 0x03ce) return nvkm_rdvgag(device, head, index);
-	if (port == 0x03d4) return nvkm_rdvgac(device, head, index);
-	return 0x00;
-}
+nvkm_rdvgai(काष्ठा nvkm_device *device, पूर्णांक head, u16 port, u8 index)
+अणु
+	अगर (port == 0x03c4) वापस nvkm_rdvgas(device, head, index);
+	अगर (port == 0x03ce) वापस nvkm_rdvgag(device, head, index);
+	अगर (port == 0x03d4) वापस nvkm_rdvgac(device, head, index);
+	वापस 0x00;
+पूर्ण
 
-void
-nvkm_wrvgai(struct nvkm_device *device, int head, u16 port, u8 index, u8 value)
-{
-	if      (port == 0x03c4) nvkm_wrvgas(device, head, index, value);
-	else if (port == 0x03ce) nvkm_wrvgag(device, head, index, value);
-	else if (port == 0x03d4) nvkm_wrvgac(device, head, index, value);
-}
+व्योम
+nvkm_wrvgai(काष्ठा nvkm_device *device, पूर्णांक head, u16 port, u8 index, u8 value)
+अणु
+	अगर      (port == 0x03c4) nvkm_wrvgas(device, head, index, value);
+	अन्यथा अगर (port == 0x03ce) nvkm_wrvgag(device, head, index, value);
+	अन्यथा अगर (port == 0x03d4) nvkm_wrvgac(device, head, index, value);
+पूर्ण
 
 bool
-nvkm_lockvgac(struct nvkm_device *device, bool lock)
-{
+nvkm_lockvgac(काष्ठा nvkm_device *device, bool lock)
+अणु
 	bool locked = !nvkm_rdvgac(device, 0, 0x1f);
 	u8 data = lock ? 0x99 : 0x57;
-	if (device->card_type < NV_50)
+	अगर (device->card_type < NV_50)
 		nvkm_wrvgac(device, 0, 0x1f, data);
-	else
+	अन्यथा
 		nvkm_wrvgac(device, 0, 0x3f, data);
-	if (device->chipset == 0x11) {
-		if (!(nvkm_rd32(device, 0x001084) & 0x10000000))
+	अगर (device->chipset == 0x11) अणु
+		अगर (!(nvkm_rd32(device, 0x001084) & 0x10000000))
 			nvkm_wrvgac(device, 1, 0x1f, data);
-	}
-	return locked;
-}
+	पूर्ण
+	वापस locked;
+पूर्ण
 
 /* CR44 takes values 0 (head A), 3 (head B) and 4 (heads tied)
  * it affects only the 8 bit vga io regs, which we access using mmio at
- * 0xc{0,2}3c*, 0x60{1,3}3*, and 0x68{1,3}3d*
- * in general, the set value of cr44 does not matter: reg access works as
- * expected and values can be set for the appropriate head by using a 0x2000
+ * 0xcअणु0,2पूर्ण3c*, 0x60अणु1,3पूर्ण3*, and 0x68अणु1,3पूर्ण3d*
+ * in general, the set value of cr44 करोes not matter: reg access works as
+ * expected and values can be set क्रम the appropriate head by using a 0x2000
  * offset as required
  * however:
  * a) pre nv40, the head B range of PRMVIO regs at 0xc23c* was not exposed and
- *    cr44 must be set to 0 or 3 for accessing values on the correct head
+ *    cr44 must be set to 0 or 3 क्रम accessing values on the correct head
  *    through the common 0xc03c* addresses
  * b) in tied mode (4) head B is programmed to the values set on head A, and
  *    access using the head B addresses can have strange results, ergo we leave
- *    tied mode in init once we know to what cr44 should be restored on exit
+ *    tied mode in init once we know to what cr44 should be restored on निकास
  *
  * the owner parameter is slightly abused:
  * 0 and 1 are treated as head values and so the set value is (owner * 3)
  * other values are treated as literal values to set
  */
 u8
-nvkm_rdvgaowner(struct nvkm_device *device)
-{
-	if (device->card_type < NV_50) {
-		if (device->chipset == 0x11) {
+nvkm_rdvgaowner(काष्ठा nvkm_device *device)
+अणु
+	अगर (device->card_type < NV_50) अणु
+		अगर (device->chipset == 0x11) अणु
 			u32 tied = nvkm_rd32(device, 0x001084) & 0x10000000;
-			if (tied == 0) {
+			अगर (tied == 0) अणु
 				u8 slA = nvkm_rdvgac(device, 0, 0x28) & 0x80;
 				u8 tvA = nvkm_rdvgac(device, 0, 0x33) & 0x01;
 				u8 slB = nvkm_rdvgac(device, 1, 0x28) & 0x80;
 				u8 tvB = nvkm_rdvgac(device, 1, 0x33) & 0x01;
-				if (slA && !tvA) return 0x00;
-				if (slB && !tvB) return 0x03;
-				if (slA) return 0x00;
-				if (slB) return 0x03;
-				return 0x00;
-			}
-			return 0x04;
-		}
+				अगर (slA && !tvA) वापस 0x00;
+				अगर (slB && !tvB) वापस 0x03;
+				अगर (slA) वापस 0x00;
+				अगर (slB) वापस 0x03;
+				वापस 0x00;
+			पूर्ण
+			वापस 0x04;
+		पूर्ण
 
-		return nvkm_rdvgac(device, 0, 0x44);
-	}
+		वापस nvkm_rdvgac(device, 0, 0x44);
+	पूर्ण
 
-	return 0x00;
-}
+	वापस 0x00;
+पूर्ण
 
-void
-nvkm_wrvgaowner(struct nvkm_device *device, u8 select)
-{
-	if (device->card_type < NV_50) {
+व्योम
+nvkm_wrvgaowner(काष्ठा nvkm_device *device, u8 select)
+अणु
+	अगर (device->card_type < NV_50) अणु
 		u8 owner = (select == 1) ? 3 : select;
-		if (device->chipset == 0x11) {
+		अगर (device->chipset == 0x11) अणु
 			/* workaround hw lockup bug */
 			nvkm_rdvgac(device, 0, 0x1f);
 			nvkm_rdvgac(device, 1, 0x1f);
-		}
+		पूर्ण
 
 		nvkm_wrvgac(device, 0, 0x44, owner);
 
-		if (device->chipset == 0x11) {
+		अगर (device->chipset == 0x11) अणु
 			nvkm_wrvgac(device, 0, 0x2e, owner);
 			nvkm_wrvgac(device, 0, 0x2e, owner);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण

@@ -1,190 +1,191 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:  Daniel Martensson / daniel.martensson@stericsson.com
  *	    Dmitry.Tarnyagin  / dmitry.tarnyagin@stericsson.com
  */
 
-#ifndef CAIF_HSI_H_
-#define CAIF_HSI_H_
+#अगर_अघोषित CAIF_HSI_H_
+#घोषणा CAIF_HSI_H_
 
-#include <net/caif/caif_layer.h>
-#include <net/caif/caif_device.h>
-#include <linux/atomic.h>
+#समावेश <net/caअगर/caअगर_layer.h>
+#समावेश <net/caअगर/caअगर_device.h>
+#समावेश <linux/atomic.h>
 
 /*
  * Maximum number of CAIF frames that can reside in the same HSI frame.
  */
-#define CFHSI_MAX_PKTS 15
+#घोषणा CFHSI_MAX_PKTS 15
 
 /*
- * Maximum number of bytes used for the frame that can be embedded in the
+ * Maximum number of bytes used क्रम the frame that can be embedded in the
  * HSI descriptor.
  */
-#define CFHSI_MAX_EMB_FRM_SZ 96
+#घोषणा CFHSI_MAX_EMB_FRM_SZ 96
 
 /*
- * Decides if HSI buffers should be prefilled with 0xFF pattern for easier
- * debugging. Both TX and RX buffers will be filled before the transfer.
+ * Decides अगर HSI buffers should be prefilled with 0xFF pattern क्रम easier
+ * debugging. Both TX and RX buffers will be filled beक्रमe the transfer.
  */
-#define CFHSI_DBG_PREFILL		0
+#घोषणा CFHSI_DBG_PREFILL		0
 
 /* Structure describing a HSI packet descriptor. */
-#pragma pack(1) /* Byte alignment. */
-struct cfhsi_desc {
+#आशय pack(1) /* Byte alignment. */
+काष्ठा cfhsi_desc अणु
 	u8 header;
 	u8 offset;
 	u16 cffrm_len[CFHSI_MAX_PKTS];
 	u8 emb_frm[CFHSI_MAX_EMB_FRM_SZ];
-};
-#pragma pack() /* Default alignment. */
+पूर्ण;
+#आशय pack() /* Default alignment. */
 
 /* Size of the complete HSI packet descriptor. */
-#define CFHSI_DESC_SZ (sizeof(struct cfhsi_desc))
+#घोषणा CFHSI_DESC_SZ (माप(काष्ठा cfhsi_desc))
 
 /*
  * Size of the complete HSI packet descriptor excluding the optional embedded
  * CAIF frame.
  */
-#define CFHSI_DESC_SHORT_SZ (CFHSI_DESC_SZ - CFHSI_MAX_EMB_FRM_SZ)
+#घोषणा CFHSI_DESC_SHORT_SZ (CFHSI_DESC_SZ - CFHSI_MAX_EMB_FRM_SZ)
 
 /*
  * Maximum bytes transferred in one transfer.
  */
-#define CFHSI_MAX_CAIF_FRAME_SZ 4096
+#घोषणा CFHSI_MAX_CAIF_FRAME_SZ 4096
 
-#define CFHSI_MAX_PAYLOAD_SZ (CFHSI_MAX_PKTS * CFHSI_MAX_CAIF_FRAME_SZ)
+#घोषणा CFHSI_MAX_PAYLOAD_SZ (CFHSI_MAX_PKTS * CFHSI_MAX_CAIF_FRAME_SZ)
 
 /* Size of the complete HSI TX buffer. */
-#define CFHSI_BUF_SZ_TX (CFHSI_DESC_SZ + CFHSI_MAX_PAYLOAD_SZ)
+#घोषणा CFHSI_BUF_SZ_TX (CFHSI_DESC_SZ + CFHSI_MAX_PAYLOAD_SZ)
 
 /* Size of the complete HSI RX buffer. */
-#define CFHSI_BUF_SZ_RX ((2 * CFHSI_DESC_SZ) + CFHSI_MAX_PAYLOAD_SZ)
+#घोषणा CFHSI_BUF_SZ_RX ((2 * CFHSI_DESC_SZ) + CFHSI_MAX_PAYLOAD_SZ)
 
-/* Bitmasks for the HSI descriptor. */
-#define CFHSI_PIGGY_DESC		(0x01 << 7)
+/* Biपंचांगasks क्रम the HSI descriptor. */
+#घोषणा CFHSI_PIGGY_DESC		(0x01 << 7)
 
-#define CFHSI_TX_STATE_IDLE			0
-#define CFHSI_TX_STATE_XFER			1
+#घोषणा CFHSI_TX_STATE_IDLE			0
+#घोषणा CFHSI_TX_STATE_XFER			1
 
-#define CFHSI_RX_STATE_DESC			0
-#define CFHSI_RX_STATE_PAYLOAD			1
+#घोषणा CFHSI_RX_STATE_DESC			0
+#घोषणा CFHSI_RX_STATE_PAYLOAD			1
 
-/* Bitmasks for power management. */
-#define CFHSI_WAKE_UP				0
-#define CFHSI_WAKE_UP_ACK			1
-#define CFHSI_WAKE_DOWN_ACK			2
-#define CFHSI_AWAKE				3
-#define CFHSI_WAKELOCK_HELD			4
-#define CFHSI_SHUTDOWN				5
-#define CFHSI_FLUSH_FIFO			6
+/* Biपंचांगasks क्रम घातer management. */
+#घोषणा CFHSI_WAKE_UP				0
+#घोषणा CFHSI_WAKE_UP_ACK			1
+#घोषणा CFHSI_WAKE_DOWN_ACK			2
+#घोषणा CFHSI_AWAKE				3
+#घोषणा CFHSI_WAKELOCK_HELD			4
+#घोषणा CFHSI_SHUTDOWN				5
+#घोषणा CFHSI_FLUSH_FIFO			6
 
-#ifndef CFHSI_INACTIVITY_TOUT
-#define CFHSI_INACTIVITY_TOUT			(1 * HZ)
-#endif /* CFHSI_INACTIVITY_TOUT */
+#अगर_अघोषित CFHSI_INACTIVITY_TOUT
+#घोषणा CFHSI_INACTIVITY_TOUT			(1 * HZ)
+#पूर्ण_अगर /* CFHSI_INACTIVITY_TOUT */
 
-#ifndef CFHSI_WAKE_TOUT
-#define CFHSI_WAKE_TOUT			(3 * HZ)
-#endif /* CFHSI_WAKE_TOUT */
+#अगर_अघोषित CFHSI_WAKE_TOUT
+#घोषणा CFHSI_WAKE_TOUT			(3 * HZ)
+#पूर्ण_अगर /* CFHSI_WAKE_TOUT */
 
-#ifndef CFHSI_MAX_RX_RETRIES
-#define CFHSI_MAX_RX_RETRIES		(10 * HZ)
-#endif
+#अगर_अघोषित CFHSI_MAX_RX_RETRIES
+#घोषणा CFHSI_MAX_RX_RETRIES		(10 * HZ)
+#पूर्ण_अगर
 
 /* Structure implemented by the CAIF HSI driver. */
-struct cfhsi_cb_ops {
-	void (*tx_done_cb) (struct cfhsi_cb_ops *drv);
-	void (*rx_done_cb) (struct cfhsi_cb_ops *drv);
-	void (*wake_up_cb) (struct cfhsi_cb_ops *drv);
-	void (*wake_down_cb) (struct cfhsi_cb_ops *drv);
-};
+काष्ठा cfhsi_cb_ops अणु
+	व्योम (*tx_करोne_cb) (काष्ठा cfhsi_cb_ops *drv);
+	व्योम (*rx_करोne_cb) (काष्ठा cfhsi_cb_ops *drv);
+	व्योम (*wake_up_cb) (काष्ठा cfhsi_cb_ops *drv);
+	व्योम (*wake_करोwn_cb) (काष्ठा cfhsi_cb_ops *drv);
+पूर्ण;
 
 /* Structure implemented by HSI device. */
-struct cfhsi_ops {
-	int (*cfhsi_up) (struct cfhsi_ops *dev);
-	int (*cfhsi_down) (struct cfhsi_ops *dev);
-	int (*cfhsi_tx) (u8 *ptr, int len, struct cfhsi_ops *dev);
-	int (*cfhsi_rx) (u8 *ptr, int len, struct cfhsi_ops *dev);
-	int (*cfhsi_wake_up) (struct cfhsi_ops *dev);
-	int (*cfhsi_wake_down) (struct cfhsi_ops *dev);
-	int (*cfhsi_get_peer_wake) (struct cfhsi_ops *dev, bool *status);
-	int (*cfhsi_fifo_occupancy) (struct cfhsi_ops *dev, size_t *occupancy);
-	int (*cfhsi_rx_cancel)(struct cfhsi_ops *dev);
-	struct cfhsi_cb_ops *cb_ops;
-};
+काष्ठा cfhsi_ops अणु
+	पूर्णांक (*cfhsi_up) (काष्ठा cfhsi_ops *dev);
+	पूर्णांक (*cfhsi_करोwn) (काष्ठा cfhsi_ops *dev);
+	पूर्णांक (*cfhsi_tx) (u8 *ptr, पूर्णांक len, काष्ठा cfhsi_ops *dev);
+	पूर्णांक (*cfhsi_rx) (u8 *ptr, पूर्णांक len, काष्ठा cfhsi_ops *dev);
+	पूर्णांक (*cfhsi_wake_up) (काष्ठा cfhsi_ops *dev);
+	पूर्णांक (*cfhsi_wake_करोwn) (काष्ठा cfhsi_ops *dev);
+	पूर्णांक (*cfhsi_get_peer_wake) (काष्ठा cfhsi_ops *dev, bool *status);
+	पूर्णांक (*cfhsi_fअगरo_occupancy) (काष्ठा cfhsi_ops *dev, माप_प्रकार *occupancy);
+	पूर्णांक (*cfhsi_rx_cancel)(काष्ठा cfhsi_ops *dev);
+	काष्ठा cfhsi_cb_ops *cb_ops;
+पूर्ण;
 
 /* Structure holds status of received CAIF frames processing */
-struct cfhsi_rx_state {
-	int state;
-	int nfrms;
-	int pld_len;
-	int retries;
+काष्ठा cfhsi_rx_state अणु
+	पूर्णांक state;
+	पूर्णांक nfrms;
+	पूर्णांक pld_len;
+	पूर्णांक retries;
 	bool piggy_desc;
-};
+पूर्ण;
 
 /* Priority mapping */
-enum {
+क्रमागत अणु
 	CFHSI_PRIO_CTL = 0,
 	CFHSI_PRIO_VI,
 	CFHSI_PRIO_VO,
 	CFHSI_PRIO_BEBK,
 	CFHSI_PRIO_LAST,
-};
+पूर्ण;
 
-struct cfhsi_config {
-	u32 inactivity_timeout;
-	u32 aggregation_timeout;
+काष्ठा cfhsi_config अणु
+	u32 inactivity_समयout;
+	u32 aggregation_समयout;
 	u32 head_align;
 	u32 tail_align;
 	u32 q_high_mark;
 	u32 q_low_mark;
-};
+पूर्ण;
 
 /* Structure implemented by CAIF HSI drivers. */
-struct cfhsi {
-	struct caif_dev_common cfdev;
-	struct net_device *ndev;
-	struct platform_device *pdev;
-	struct sk_buff_head qhead[CFHSI_PRIO_LAST];
-	struct cfhsi_cb_ops cb_ops;
-	struct cfhsi_ops *ops;
-	int tx_state;
-	struct cfhsi_rx_state rx_state;
-	struct cfhsi_config cfg;
-	int rx_len;
+काष्ठा cfhsi अणु
+	काष्ठा caअगर_dev_common cfdev;
+	काष्ठा net_device *ndev;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा sk_buff_head qhead[CFHSI_PRIO_LAST];
+	काष्ठा cfhsi_cb_ops cb_ops;
+	काष्ठा cfhsi_ops *ops;
+	पूर्णांक tx_state;
+	काष्ठा cfhsi_rx_state rx_state;
+	काष्ठा cfhsi_config cfg;
+	पूर्णांक rx_len;
 	u8 *rx_ptr;
 	u8 *tx_buf;
 	u8 *rx_buf;
 	u8 *rx_flip_buf;
 	spinlock_t lock;
-	int flow_off_sent;
-	struct list_head list;
-	struct work_struct wake_up_work;
-	struct work_struct wake_down_work;
-	struct work_struct out_of_sync_work;
-	struct workqueue_struct *wq;
-	wait_queue_head_t wake_up_wait;
-	wait_queue_head_t wake_down_wait;
-	wait_queue_head_t flush_fifo_wait;
-	struct timer_list inactivity_timer;
-	struct timer_list rx_slowpath_timer;
+	पूर्णांक flow_off_sent;
+	काष्ठा list_head list;
+	काष्ठा work_काष्ठा wake_up_work;
+	काष्ठा work_काष्ठा wake_करोwn_work;
+	काष्ठा work_काष्ठा out_of_sync_work;
+	काष्ठा workqueue_काष्ठा *wq;
+	रुको_queue_head_t wake_up_रुको;
+	रुको_queue_head_t wake_करोwn_रुको;
+	रुको_queue_head_t flush_fअगरo_रुको;
+	काष्ठा समयr_list inactivity_समयr;
+	काष्ठा समयr_list rx_slowpath_समयr;
 
 	/* TX aggregation */
-	int aggregation_len;
-	struct timer_list aggregation_timer;
+	पूर्णांक aggregation_len;
+	काष्ठा समयr_list aggregation_समयr;
 
-	unsigned long bits;
-};
-extern struct platform_driver cfhsi_driver;
+	अचिन्हित दीर्घ bits;
+पूर्ण;
+बाह्य काष्ठा platक्रमm_driver cfhsi_driver;
 
 /**
- * enum ifla_caif_hsi - CAIF HSI NetlinkRT parameters.
- * @IFLA_CAIF_HSI_INACTIVITY_TOUT: Inactivity timeout before
- *			taking the HSI wakeline down, in milliseconds.
- * When using RT Netlink to create, destroy or configure a CAIF HSI interface,
- * enum ifla_caif_hsi is used to specify the configuration attributes.
+ * क्रमागत अगरla_caअगर_hsi - CAIF HSI NetlinkRT parameters.
+ * @IFLA_CAIF_HSI_INACTIVITY_TOUT: Inactivity समयout beक्रमe
+ *			taking the HSI wakeline करोwn, in milliseconds.
+ * When using RT Netlink to create, destroy or configure a CAIF HSI पूर्णांकerface,
+ * क्रमागत अगरla_caअगर_hsi is used to specअगरy the configuration attributes.
  */
-enum ifla_caif_hsi {
+क्रमागत अगरla_caअगर_hsi अणु
 	__IFLA_CAIF_HSI_UNSPEC,
 	__IFLA_CAIF_HSI_INACTIVITY_TOUT,
 	__IFLA_CAIF_HSI_AGGREGATION_TOUT,
@@ -193,8 +194,8 @@ enum ifla_caif_hsi {
 	__IFLA_CAIF_HSI_QHIGH_WATERMARK,
 	__IFLA_CAIF_HSI_QLOW_WATERMARK,
 	__IFLA_CAIF_HSI_MAX
-};
+पूर्ण;
 
-struct cfhsi_ops *cfhsi_get_ops(void);
+काष्ठा cfhsi_ops *cfhsi_get_ops(व्योम);
 
-#endif		/* CAIF_HSI_H_ */
+#पूर्ण_अगर		/* CAIF_HSI_H_ */

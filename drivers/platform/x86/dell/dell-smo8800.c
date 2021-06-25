@@ -1,232 +1,233 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  dell-smo8800.c - Dell Latitude ACPI SMO88XX freefall sensor driver
+ *  dell-smo8800.c - Dell Latitude ACPI SMO88XX मुक्तfall sensor driver
  *
  *  Copyright (C) 2012 Sonal Santan <sonal.santan@gmail.com>
- *  Copyright (C) 2014 Pali Rohár <pali@kernel.org>
+ *  Copyright (C) 2014 Pali Rohथँr <pali@kernel.org>
  *
  *  This is loosely based on lis3lv02d driver.
  */
 
-#define DRIVER_NAME "smo8800"
+#घोषणा DRIVER_NAME "smo8800"
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/acpi.h>
-#include <linux/interrupt.h>
-#include <linux/miscdevice.h>
-#include <linux/uaccess.h>
-#include <linux/fs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/fs.h>
 
-struct smo8800_device {
+काष्ठा smo8800_device अणु
 	u32 irq;                     /* acpi device irq */
-	atomic_t counter;            /* count after last read */
-	struct miscdevice miscdev;   /* for /dev/freefall */
-	unsigned long misc_opened;   /* whether the device is open */
-	wait_queue_head_t misc_wait; /* Wait queue for the misc dev */
-	struct device *dev;          /* acpi device */
-};
+	atomic_t counter;            /* count after last पढ़ो */
+	काष्ठा miscdevice miscdev;   /* क्रम /dev/मुक्तfall */
+	अचिन्हित दीर्घ misc_खोलोed;   /* whether the device is खोलो */
+	रुको_queue_head_t misc_रुको; /* Wait queue क्रम the misc dev */
+	काष्ठा device *dev;          /* acpi device */
+पूर्ण;
 
-static irqreturn_t smo8800_interrupt_quick(int irq, void *data)
-{
-	struct smo8800_device *smo8800 = data;
+अटल irqवापस_t smo8800_पूर्णांकerrupt_quick(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा smo8800_device *smo8800 = data;
 
 	atomic_inc(&smo8800->counter);
-	wake_up_interruptible(&smo8800->misc_wait);
-	return IRQ_WAKE_THREAD;
-}
+	wake_up_पूर्णांकerruptible(&smo8800->misc_रुको);
+	वापस IRQ_WAKE_THREAD;
+पूर्ण
 
-static irqreturn_t smo8800_interrupt_thread(int irq, void *data)
-{
-	struct smo8800_device *smo8800 = data;
+अटल irqवापस_t smo8800_पूर्णांकerrupt_thपढ़ो(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा smo8800_device *smo8800 = data;
 
 	dev_info(smo8800->dev, "detected free fall\n");
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static acpi_status smo8800_get_resource(struct acpi_resource *resource,
-					void *context)
-{
-	struct acpi_resource_extended_irq *irq;
+अटल acpi_status smo8800_get_resource(काष्ठा acpi_resource *resource,
+					व्योम *context)
+अणु
+	काष्ठा acpi_resource_extended_irq *irq;
 
-	if (resource->type != ACPI_RESOURCE_TYPE_EXTENDED_IRQ)
-		return AE_OK;
+	अगर (resource->type != ACPI_RESOURCE_TYPE_EXTENDED_IRQ)
+		वापस AE_OK;
 
 	irq = &resource->data.extended_irq;
-	if (!irq || !irq->interrupt_count)
-		return AE_OK;
+	अगर (!irq || !irq->पूर्णांकerrupt_count)
+		वापस AE_OK;
 
-	*((u32 *)context) = irq->interrupts[0];
-	return AE_CTRL_TERMINATE;
-}
+	*((u32 *)context) = irq->पूर्णांकerrupts[0];
+	वापस AE_CTRL_TERMINATE;
+पूर्ण
 
-static u32 smo8800_get_irq(struct acpi_device *device)
-{
+अटल u32 smo8800_get_irq(काष्ठा acpi_device *device)
+अणु
 	u32 irq = 0;
 	acpi_status status;
 
 	status = acpi_walk_resources(device->handle, METHOD_NAME__CRS,
 				     smo8800_get_resource, &irq);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		dev_err(&device->dev, "acpi_walk_resources failed\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static ssize_t smo8800_misc_read(struct file *file, char __user *buf,
-				 size_t count, loff_t *pos)
-{
-	struct smo8800_device *smo8800 = container_of(file->private_data,
-					 struct smo8800_device, miscdev);
+अटल sमाप_प्रकार smo8800_misc_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				 माप_प्रकार count, loff_t *pos)
+अणु
+	काष्ठा smo8800_device *smo8800 = container_of(file->निजी_data,
+					 काष्ठा smo8800_device, miscdev);
 
 	u32 data = 0;
-	unsigned char byte_data;
-	ssize_t retval = 1;
+	अचिन्हित अक्षर byte_data;
+	sमाप_प्रकार retval = 1;
 
-	if (count < 1)
-		return -EINVAL;
+	अगर (count < 1)
+		वापस -EINVAL;
 
 	atomic_set(&smo8800->counter, 0);
-	retval = wait_event_interruptible(smo8800->misc_wait,
+	retval = रुको_event_पूर्णांकerruptible(smo8800->misc_रुको,
 				(data = atomic_xchg(&smo8800->counter, 0)));
 
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	retval = 1;
 
-	if (data < 255)
+	अगर (data < 255)
 		byte_data = data;
-	else
+	अन्यथा
 		byte_data = 255;
 
-	if (put_user(byte_data, buf))
+	अगर (put_user(byte_data, buf))
 		retval = -EFAULT;
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int smo8800_misc_open(struct inode *inode, struct file *file)
-{
-	struct smo8800_device *smo8800 = container_of(file->private_data,
-					 struct smo8800_device, miscdev);
+अटल पूर्णांक smo8800_misc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा smo8800_device *smo8800 = container_of(file->निजी_data,
+					 काष्ठा smo8800_device, miscdev);
 
-	if (test_and_set_bit(0, &smo8800->misc_opened))
-		return -EBUSY; /* already open */
+	अगर (test_and_set_bit(0, &smo8800->misc_खोलोed))
+		वापस -EBUSY; /* alपढ़ोy खोलो */
 
 	atomic_set(&smo8800->counter, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smo8800_misc_release(struct inode *inode, struct file *file)
-{
-	struct smo8800_device *smo8800 = container_of(file->private_data,
-					 struct smo8800_device, miscdev);
+अटल पूर्णांक smo8800_misc_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा smo8800_device *smo8800 = container_of(file->निजी_data,
+					 काष्ठा smo8800_device, miscdev);
 
-	clear_bit(0, &smo8800->misc_opened); /* release the device */
-	return 0;
-}
+	clear_bit(0, &smo8800->misc_खोलोed); /* release the device */
+	वापस 0;
+पूर्ण
 
-static const struct file_operations smo8800_misc_fops = {
+अटल स्थिर काष्ठा file_operations smo8800_misc_fops = अणु
 	.owner = THIS_MODULE,
-	.read = smo8800_misc_read,
-	.open = smo8800_misc_open,
+	.पढ़ो = smo8800_misc_पढ़ो,
+	.खोलो = smo8800_misc_खोलो,
 	.release = smo8800_misc_release,
-};
+पूर्ण;
 
-static int smo8800_add(struct acpi_device *device)
-{
-	int err;
-	struct smo8800_device *smo8800;
+अटल पूर्णांक smo8800_add(काष्ठा acpi_device *device)
+अणु
+	पूर्णांक err;
+	काष्ठा smo8800_device *smo8800;
 
-	smo8800 = devm_kzalloc(&device->dev, sizeof(*smo8800), GFP_KERNEL);
-	if (!smo8800) {
+	smo8800 = devm_kzalloc(&device->dev, माप(*smo8800), GFP_KERNEL);
+	अगर (!smo8800) अणु
 		dev_err(&device->dev, "failed to allocate device data\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	smo8800->dev = &device->dev;
 	smo8800->miscdev.minor = MISC_DYNAMIC_MINOR;
 	smo8800->miscdev.name = "freefall";
 	smo8800->miscdev.fops = &smo8800_misc_fops;
 
-	init_waitqueue_head(&smo8800->misc_wait);
+	init_रुकोqueue_head(&smo8800->misc_रुको);
 
-	err = misc_register(&smo8800->miscdev);
-	if (err) {
+	err = misc_रेजिस्टर(&smo8800->miscdev);
+	अगर (err) अणु
 		dev_err(&device->dev, "failed to register misc dev: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	device->driver_data = smo8800;
 
 	smo8800->irq = smo8800_get_irq(device);
-	if (!smo8800->irq) {
+	अगर (!smo8800->irq) अणु
 		dev_err(&device->dev, "failed to obtain IRQ\n");
 		err = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	err = request_threaded_irq(smo8800->irq, smo8800_interrupt_quick,
-				   smo8800_interrupt_thread,
+	err = request_thपढ़ोed_irq(smo8800->irq, smo8800_पूर्णांकerrupt_quick,
+				   smo8800_पूर्णांकerrupt_thपढ़ो,
 				   IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 				   DRIVER_NAME, smo8800);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&device->dev,
 			"failed to request thread for IRQ %d: %d\n",
 			smo8800->irq, err);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	dev_dbg(&device->dev, "device /dev/freefall registered with IRQ %d\n",
 		 smo8800->irq);
-	return 0;
+	वापस 0;
 
 error:
-	misc_deregister(&smo8800->miscdev);
-	return err;
-}
+	misc_deरेजिस्टर(&smo8800->miscdev);
+	वापस err;
+पूर्ण
 
-static int smo8800_remove(struct acpi_device *device)
-{
-	struct smo8800_device *smo8800 = device->driver_data;
+अटल पूर्णांक smo8800_हटाओ(काष्ठा acpi_device *device)
+अणु
+	काष्ठा smo8800_device *smo8800 = device->driver_data;
 
-	free_irq(smo8800->irq, smo8800);
-	misc_deregister(&smo8800->miscdev);
+	मुक्त_irq(smo8800->irq, smo8800);
+	misc_deरेजिस्टर(&smo8800->miscdev);
 	dev_dbg(&device->dev, "device /dev/freefall unregistered\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* NOTE: Keep this list in sync with drivers/i2c/busses/i2c-i801.c */
-static const struct acpi_device_id smo8800_ids[] = {
-	{ "SMO8800", 0 },
-	{ "SMO8801", 0 },
-	{ "SMO8810", 0 },
-	{ "SMO8811", 0 },
-	{ "SMO8820", 0 },
-	{ "SMO8821", 0 },
-	{ "SMO8830", 0 },
-	{ "SMO8831", 0 },
-	{ "", 0 },
-};
+अटल स्थिर काष्ठा acpi_device_id smo8800_ids[] = अणु
+	अणु "SMO8800", 0 पूर्ण,
+	अणु "SMO8801", 0 पूर्ण,
+	अणु "SMO8810", 0 पूर्ण,
+	अणु "SMO8811", 0 पूर्ण,
+	अणु "SMO8820", 0 पूर्ण,
+	अणु "SMO8821", 0 पूर्ण,
+	अणु "SMO8830", 0 पूर्ण,
+	अणु "SMO8831", 0 पूर्ण,
+	अणु "", 0 पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(acpi, smo8800_ids);
 
-static struct acpi_driver smo8800_driver = {
+अटल काष्ठा acpi_driver smo8800_driver = अणु
 	.name = DRIVER_NAME,
 	.class = "Latitude",
 	.ids = smo8800_ids,
-	.ops = {
+	.ops = अणु
 		.add = smo8800_add,
-		.remove = smo8800_remove,
-	},
+		.हटाओ = smo8800_हटाओ,
+	पूर्ण,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
 module_acpi_driver(smo8800_driver);
 
 MODULE_DESCRIPTION("Dell Latitude freefall driver (ACPI SMO88XX)");
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Sonal Santan, Pali Rohár");
+MODULE_AUTHOR("Sonal Santan, Pali Rohथँr");

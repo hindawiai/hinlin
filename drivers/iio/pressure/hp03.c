@@ -1,147 +1,148 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016 Marek Vasut <marex@denx.de>
  *
- * Driver for Hope RF HP03 digital temperature and pressure sensor.
+ * Driver क्रम Hope RF HP03 digital temperature and pressure sensor.
  */
 
-#define pr_fmt(fmt) "hp03: " fmt
+#घोषणा pr_fmt(fmt) "hp03: " fmt
 
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
 
 /*
  * The HP03 sensor occupies two fixed I2C addresses:
- *  0x50 ... read-only EEPROM with calibration data
- *  0x77 ... read-write ADC for pressure and temperature
+ *  0x50 ... पढ़ो-only EEPROM with calibration data
+ *  0x77 ... पढ़ो-ग_लिखो ADC क्रम pressure and temperature
  */
-#define HP03_EEPROM_ADDR		0x50
-#define HP03_ADC_ADDR			0x77
+#घोषणा HP03_EEPROM_ADDR		0x50
+#घोषणा HP03_ADC_ADDR			0x77
 
-#define HP03_EEPROM_CX_OFFSET		0x10
-#define HP03_EEPROM_AB_OFFSET		0x1e
-#define HP03_EEPROM_CD_OFFSET		0x20
+#घोषणा HP03_EEPROM_CX_OFFSET		0x10
+#घोषणा HP03_EEPROM_AB_OFFSET		0x1e
+#घोषणा HP03_EEPROM_CD_OFFSET		0x20
 
-#define HP03_ADC_WRITE_REG		0xff
-#define HP03_ADC_READ_REG		0xfd
-#define HP03_ADC_READ_PRESSURE		0xf0	/* D1 in datasheet */
-#define HP03_ADC_READ_TEMP		0xe8	/* D2 in datasheet */
+#घोषणा HP03_ADC_WRITE_REG		0xff
+#घोषणा HP03_ADC_READ_REG		0xfd
+#घोषणा HP03_ADC_READ_PRESSURE		0xf0	/* D1 in datasheet */
+#घोषणा HP03_ADC_READ_TEMP		0xe8	/* D2 in datasheet */
 
-struct hp03_priv {
-	struct i2c_client	*client;
-	struct mutex		lock;
-	struct gpio_desc	*xclr_gpio;
+काष्ठा hp03_priv अणु
+	काष्ठा i2c_client	*client;
+	काष्ठा mutex		lock;
+	काष्ठा gpio_desc	*xclr_gpio;
 
-	struct i2c_client	*eeprom_client;
-	struct regmap		*eeprom_regmap;
+	काष्ठा i2c_client	*eeprom_client;
+	काष्ठा regmap		*eeprom_regmap;
 
 	s32			pressure;	/* kPa */
 	s32			temp;		/* Deg. C */
-};
+पूर्ण;
 
-static const struct iio_chan_spec hp03_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec hp03_channels[] = अणु
+	अणु
 		.type = IIO_PRESSURE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_TEMP,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static bool hp03_is_writeable_reg(struct device *dev, unsigned int reg)
-{
-	return false;
-}
+अटल bool hp03_is_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	वापस false;
+पूर्ण
 
-static bool hp03_is_volatile_reg(struct device *dev, unsigned int reg)
-{
-	return false;
-}
+अटल bool hp03_is_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	वापस false;
+पूर्ण
 
-static const struct regmap_config hp03_regmap_config = {
+अटल स्थिर काष्ठा regmap_config hp03_regmap_config = अणु
 	.reg_bits	= 8,
 	.val_bits	= 8,
 
-	.max_register	= HP03_EEPROM_CD_OFFSET + 1,
+	.max_रेजिस्टर	= HP03_EEPROM_CD_OFFSET + 1,
 	.cache_type	= REGCACHE_RBTREE,
 
-	.writeable_reg	= hp03_is_writeable_reg,
-	.volatile_reg	= hp03_is_volatile_reg,
-};
+	.ग_लिखोable_reg	= hp03_is_ग_लिखोable_reg,
+	.अस्थिर_reg	= hp03_is_अस्थिर_reg,
+पूर्ण;
 
-static int hp03_get_temp_pressure(struct hp03_priv *priv, const u8 reg)
-{
-	int ret;
+अटल पूर्णांक hp03_get_temp_pressure(काष्ठा hp03_priv *priv, स्थिर u8 reg)
+अणु
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte_data(priv->client, HP03_ADC_WRITE_REG, reg);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_ग_लिखो_byte_data(priv->client, HP03_ADC_WRITE_REG, reg);
+	अगर (ret < 0)
+		वापस ret;
 
-	msleep(50);	/* Wait for conversion to finish */
+	msleep(50);	/* Wait क्रम conversion to finish */
 
-	return i2c_smbus_read_word_data(priv->client, HP03_ADC_READ_REG);
-}
+	वापस i2c_smbus_पढ़ो_word_data(priv->client, HP03_ADC_READ_REG);
+पूर्ण
 
-static int hp03_update_temp_pressure(struct hp03_priv *priv)
-{
-	struct device *dev = &priv->client->dev;
+अटल पूर्णांक hp03_update_temp_pressure(काष्ठा hp03_priv *priv)
+अणु
+	काष्ठा device *dev = &priv->client->dev;
 	u8 coefs[18];
 	u16 cx_val[7];
-	int ab_val, d1_val, d2_val, diff_val, dut, off, sens, x;
-	int i, ret;
+	पूर्णांक ab_val, d1_val, d2_val, dअगरf_val, dut, off, sens, x;
+	पूर्णांक i, ret;
 
 	/* Sample coefficients from EEPROM */
-	ret = regmap_bulk_read(priv->eeprom_regmap, HP03_EEPROM_CX_OFFSET,
-			       coefs, sizeof(coefs));
-	if (ret < 0) {
+	ret = regmap_bulk_पढ़ो(priv->eeprom_regmap, HP03_EEPROM_CX_OFFSET,
+			       coefs, माप(coefs));
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to read EEPROM (reg=%02x)\n",
 			HP03_EEPROM_CX_OFFSET);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Sample Temperature and Pressure */
 	gpiod_set_value_cansleep(priv->xclr_gpio, 1);
 
 	ret = hp03_get_temp_pressure(priv, HP03_ADC_READ_PRESSURE);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to read pressure\n");
-		goto err_adc;
-	}
+		जाओ err_adc;
+	पूर्ण
 	d1_val = ret;
 
 	ret = hp03_get_temp_pressure(priv, HP03_ADC_READ_TEMP);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to read temperature\n");
-		goto err_adc;
-	}
+		जाओ err_adc;
+	पूर्ण
 	d2_val = ret;
 
 	gpiod_set_value_cansleep(priv->xclr_gpio, 0);
 
 	/* The Cx coefficients and Temp/Pressure values are MSB first. */
-	for (i = 0; i < 7; i++)
+	क्रम (i = 0; i < 7; i++)
 		cx_val[i] = (coefs[2 * i] << 8) | (coefs[(2 * i) + 1] << 0);
 	d1_val = ((d1_val >> 8) & 0xff) | ((d1_val & 0xff) << 8);
 	d2_val = ((d2_val >> 8) & 0xff) | ((d2_val & 0xff) << 8);
 
-	/* Coefficient voodoo from the HP03 datasheet. */
-	if (d2_val >= cx_val[4])
+	/* Coefficient vooकरोo from the HP03 datasheet. */
+	अगर (d2_val >= cx_val[4])
 		ab_val = coefs[14];	/* A-value */
-	else
+	अन्यथा
 		ab_val = coefs[15];	/* B-value */
 
-	diff_val = d2_val - cx_val[4];
-	dut = (ab_val * (diff_val >> 7) * (diff_val >> 7)) >> coefs[16];
-	dut = diff_val - dut;
+	dअगरf_val = d2_val - cx_val[4];
+	dut = (ab_val * (dअगरf_val >> 7) * (dअगरf_val >> 7)) >> coefs[16];
+	dut = dअगरf_val - dut;
 
 	off = (cx_val[1] + (((cx_val[3] - 1024) * dut) >> 14)) * 4;
 	sens = cx_val[0] + ((cx_val[2] * dut) >> 10);
@@ -150,75 +151,75 @@ static int hp03_update_temp_pressure(struct hp03_priv *priv)
 	priv->pressure = ((x * 100) >> 5) + (cx_val[6] * 10);
 	priv->temp = 250 + ((dut * cx_val[5]) >> 16) - (dut >> coefs[17]);
 
-	return 0;
+	वापस 0;
 
 err_adc:
 	gpiod_set_value_cansleep(priv->xclr_gpio, 0);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hp03_read_raw(struct iio_dev *indio_dev,
-			 struct iio_chan_spec const *chan,
-			 int *val, int *val2, long mask)
-{
-	struct hp03_priv *priv = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक hp03_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			 काष्ठा iio_chan_spec स्थिर *chan,
+			 पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा hp03_priv *priv = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	mutex_lock(&priv->lock);
 	ret = hp03_update_temp_pressure(priv);
 	mutex_unlock(&priv->lock);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		switch (chan->type) {
-		case IIO_PRESSURE:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		चयन (chan->type) अणु
+		हाल IIO_PRESSURE:
 			*val = priv->pressure;
-			return IIO_VAL_INT;
-		case IIO_TEMP:
+			वापस IIO_VAL_INT;
+		हाल IIO_TEMP:
 			*val = priv->temp;
-			return IIO_VAL_INT;
-		default:
-			return -EINVAL;
-		}
-		break;
-	case IIO_CHAN_INFO_SCALE:
-		switch (chan->type) {
-		case IIO_PRESSURE:
+			वापस IIO_VAL_INT;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल IIO_CHAN_INFO_SCALE:
+		चयन (chan->type) अणु
+		हाल IIO_PRESSURE:
 			*val = 0;
 			*val2 = 1000;
-			return IIO_VAL_INT_PLUS_MICRO;
-		case IIO_TEMP:
+			वापस IIO_VAL_INT_PLUS_MICRO;
+		हाल IIO_TEMP:
 			*val = 10;
-			return IIO_VAL_INT;
-		default:
-			return -EINVAL;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+			वापस IIO_VAL_INT;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct iio_info hp03_info = {
-	.read_raw	= &hp03_read_raw,
-};
+अटल स्थिर काष्ठा iio_info hp03_info = अणु
+	.पढ़ो_raw	= &hp03_पढ़ो_raw,
+पूर्ण;
 
-static int hp03_probe(struct i2c_client *client,
-		      const struct i2c_device_id *id)
-{
-	struct device *dev = &client->dev;
-	struct iio_dev *indio_dev;
-	struct hp03_priv *priv;
-	int ret;
+अटल पूर्णांक hp03_probe(काष्ठा i2c_client *client,
+		      स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा hp03_priv *priv;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(dev, sizeof(*priv));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, माप(*priv));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	priv = iio_priv(indio_dev);
 	priv->client = client;
@@ -228,85 +229,85 @@ static int hp03_probe(struct i2c_client *client,
 	indio_dev->channels = hp03_channels;
 	indio_dev->num_channels = ARRAY_SIZE(hp03_channels);
 	indio_dev->info = &hp03_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 
 	priv->xclr_gpio = devm_gpiod_get_index(dev, "xclr", 0, GPIOD_OUT_HIGH);
-	if (IS_ERR(priv->xclr_gpio)) {
+	अगर (IS_ERR(priv->xclr_gpio)) अणु
 		dev_err(dev, "Failed to claim XCLR GPIO\n");
 		ret = PTR_ERR(priv->xclr_gpio);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Allocate another device for the on-sensor EEPROM,
+	 * Allocate another device क्रम the on-sensor EEPROM,
 	 * which has it's dedicated I2C address and contains
-	 * the calibration constants for the sensor.
+	 * the calibration स्थिरants क्रम the sensor.
 	 */
 	priv->eeprom_client = i2c_new_dummy_device(client->adapter, HP03_EEPROM_ADDR);
-	if (IS_ERR(priv->eeprom_client)) {
+	अगर (IS_ERR(priv->eeprom_client)) अणु
 		dev_err(dev, "New EEPROM I2C device failed\n");
-		return PTR_ERR(priv->eeprom_client);
-	}
+		वापस PTR_ERR(priv->eeprom_client);
+	पूर्ण
 
 	priv->eeprom_regmap = regmap_init_i2c(priv->eeprom_client,
 					      &hp03_regmap_config);
-	if (IS_ERR(priv->eeprom_regmap)) {
+	अगर (IS_ERR(priv->eeprom_regmap)) अणु
 		dev_err(dev, "Failed to allocate EEPROM regmap\n");
 		ret = PTR_ERR(priv->eeprom_regmap);
-		goto err_cleanup_eeprom_client;
-	}
+		जाओ err_cleanup_eeprom_client;
+	पूर्ण
 
-	ret = iio_device_register(indio_dev);
-	if (ret) {
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret) अणु
 		dev_err(dev, "Failed to register IIO device\n");
-		goto err_cleanup_eeprom_regmap;
-	}
+		जाओ err_cleanup_eeprom_regmap;
+	पूर्ण
 
 	i2c_set_clientdata(client, indio_dev);
 
-	return 0;
+	वापस 0;
 
 err_cleanup_eeprom_regmap:
-	regmap_exit(priv->eeprom_regmap);
+	regmap_निकास(priv->eeprom_regmap);
 
 err_cleanup_eeprom_client:
-	i2c_unregister_device(priv->eeprom_client);
-	return ret;
-}
+	i2c_unरेजिस्टर_device(priv->eeprom_client);
+	वापस ret;
+पूर्ण
 
-static int hp03_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
-	struct hp03_priv *priv = iio_priv(indio_dev);
+अटल पूर्णांक hp03_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+	काष्ठा hp03_priv *priv = iio_priv(indio_dev);
 
-	iio_device_unregister(indio_dev);
-	regmap_exit(priv->eeprom_regmap);
-	i2c_unregister_device(priv->eeprom_client);
+	iio_device_unरेजिस्टर(indio_dev);
+	regmap_निकास(priv->eeprom_regmap);
+	i2c_unरेजिस्टर_device(priv->eeprom_client);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id hp03_id[] = {
-	{ "hp03", 0 },
-	{ },
-};
+अटल स्थिर काष्ठा i2c_device_id hp03_id[] = अणु
+	अणु "hp03", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, hp03_id);
 
-static const struct of_device_id hp03_of_match[] = {
-	{ .compatible = "hoperf,hp03" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id hp03_of_match[] = अणु
+	अणु .compatible = "hoperf,hp03" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, hp03_of_match);
 
-static struct i2c_driver hp03_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver hp03_driver = अणु
+	.driver = अणु
 		.name	= "hp03",
 		.of_match_table = hp03_of_match,
-	},
+	पूर्ण,
 	.probe		= hp03_probe,
-	.remove		= hp03_remove,
+	.हटाओ		= hp03_हटाओ,
 	.id_table	= hp03_id,
-};
+पूर्ण;
 module_i2c_driver(hp03_driver);
 
 MODULE_AUTHOR("Marek Vasut <marex@denx.de>");

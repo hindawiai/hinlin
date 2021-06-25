@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Synquacer HSSPI controller driver
 //
@@ -6,309 +7,309 @@
 // Copyright (c) 2018-2019 Linaro Ltd.
 //
 
-#include <linux/acpi.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/scatterlist.h>
-#include <linux/slab.h>
-#include <linux/spi/spi.h>
-#include <linux/spinlock.h>
-#include <linux/clk.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/clk.h>
 
-/* HSSPI register address definitions */
-#define SYNQUACER_HSSPI_REG_MCTRL	0x00
-#define SYNQUACER_HSSPI_REG_PCC0	0x04
-#define SYNQUACER_HSSPI_REG_PCC(n)	(SYNQUACER_HSSPI_REG_PCC0 + (n) * 4)
-#define SYNQUACER_HSSPI_REG_TXF		0x14
-#define SYNQUACER_HSSPI_REG_TXE		0x18
-#define SYNQUACER_HSSPI_REG_TXC		0x1C
-#define SYNQUACER_HSSPI_REG_RXF		0x20
-#define SYNQUACER_HSSPI_REG_RXE		0x24
-#define SYNQUACER_HSSPI_REG_RXC		0x28
-#define SYNQUACER_HSSPI_REG_FAULTF	0x2C
-#define SYNQUACER_HSSPI_REG_FAULTC	0x30
-#define SYNQUACER_HSSPI_REG_DMCFG	0x34
-#define SYNQUACER_HSSPI_REG_DMSTART	0x38
-#define SYNQUACER_HSSPI_REG_DMBCC	0x3C
-#define SYNQUACER_HSSPI_REG_DMSTATUS	0x40
-#define SYNQUACER_HSSPI_REG_FIFOCFG	0x4C
-#define SYNQUACER_HSSPI_REG_TX_FIFO	0x50
-#define SYNQUACER_HSSPI_REG_RX_FIFO	0x90
-#define SYNQUACER_HSSPI_REG_MID		0xFC
+/* HSSPI रेजिस्टर address definitions */
+#घोषणा SYNQUACER_HSSPI_REG_MCTRL	0x00
+#घोषणा SYNQUACER_HSSPI_REG_PCC0	0x04
+#घोषणा SYNQUACER_HSSPI_REG_PCC(n)	(SYNQUACER_HSSPI_REG_PCC0 + (n) * 4)
+#घोषणा SYNQUACER_HSSPI_REG_TXF		0x14
+#घोषणा SYNQUACER_HSSPI_REG_TXE		0x18
+#घोषणा SYNQUACER_HSSPI_REG_TXC		0x1C
+#घोषणा SYNQUACER_HSSPI_REG_RXF		0x20
+#घोषणा SYNQUACER_HSSPI_REG_RXE		0x24
+#घोषणा SYNQUACER_HSSPI_REG_RXC		0x28
+#घोषणा SYNQUACER_HSSPI_REG_FAULTF	0x2C
+#घोषणा SYNQUACER_HSSPI_REG_FAULTC	0x30
+#घोषणा SYNQUACER_HSSPI_REG_DMCFG	0x34
+#घोषणा SYNQUACER_HSSPI_REG_DMSTART	0x38
+#घोषणा SYNQUACER_HSSPI_REG_DMBCC	0x3C
+#घोषणा SYNQUACER_HSSPI_REG_DMSTATUS	0x40
+#घोषणा SYNQUACER_HSSPI_REG_FIFOCFG	0x4C
+#घोषणा SYNQUACER_HSSPI_REG_TX_FIFO	0x50
+#घोषणा SYNQUACER_HSSPI_REG_RX_FIFO	0x90
+#घोषणा SYNQUACER_HSSPI_REG_MID		0xFC
 
-/* HSSPI register bit definitions */
-#define SYNQUACER_HSSPI_MCTRL_MEN			BIT(0)
-#define SYNQUACER_HSSPI_MCTRL_COMMAND_SEQUENCE_EN	BIT(1)
-#define SYNQUACER_HSSPI_MCTRL_CDSS			BIT(3)
-#define SYNQUACER_HSSPI_MCTRL_MES			BIT(4)
-#define SYNQUACER_HSSPI_MCTRL_SYNCON			BIT(5)
+/* HSSPI रेजिस्टर bit definitions */
+#घोषणा SYNQUACER_HSSPI_MCTRL_MEN			BIT(0)
+#घोषणा SYNQUACER_HSSPI_MCTRL_COMMAND_SEQUENCE_EN	BIT(1)
+#घोषणा SYNQUACER_HSSPI_MCTRL_CDSS			BIT(3)
+#घोषणा SYNQUACER_HSSPI_MCTRL_MES			BIT(4)
+#घोषणा SYNQUACER_HSSPI_MCTRL_SYNCON			BIT(5)
 
-#define SYNQUACER_HSSPI_PCC_CPHA		BIT(0)
-#define SYNQUACER_HSSPI_PCC_CPOL		BIT(1)
-#define SYNQUACER_HSSPI_PCC_ACES		BIT(2)
-#define SYNQUACER_HSSPI_PCC_RTM			BIT(3)
-#define SYNQUACER_HSSPI_PCC_SSPOL		BIT(4)
-#define SYNQUACER_HSSPI_PCC_SDIR		BIT(7)
-#define SYNQUACER_HSSPI_PCC_SENDIAN		BIT(8)
-#define SYNQUACER_HSSPI_PCC_SAFESYNC		BIT(16)
-#define SYNQUACER_HSSPI_PCC_SS2CD_SHIFT		5U
-#define SYNQUACER_HSSPI_PCC_CDRS_MASK		0x7f
-#define SYNQUACER_HSSPI_PCC_CDRS_SHIFT		9U
+#घोषणा SYNQUACER_HSSPI_PCC_CPHA		BIT(0)
+#घोषणा SYNQUACER_HSSPI_PCC_CPOL		BIT(1)
+#घोषणा SYNQUACER_HSSPI_PCC_ACES		BIT(2)
+#घोषणा SYNQUACER_HSSPI_PCC_RTM			BIT(3)
+#घोषणा SYNQUACER_HSSPI_PCC_SSPOL		BIT(4)
+#घोषणा SYNQUACER_HSSPI_PCC_Sसूची		BIT(7)
+#घोषणा SYNQUACER_HSSPI_PCC_SENDIAN		BIT(8)
+#घोषणा SYNQUACER_HSSPI_PCC_SAFESYNC		BIT(16)
+#घोषणा SYNQUACER_HSSPI_PCC_SS2CD_SHIFT		5U
+#घोषणा SYNQUACER_HSSPI_PCC_CDRS_MASK		0x7f
+#घोषणा SYNQUACER_HSSPI_PCC_CDRS_SHIFT		9U
 
-#define SYNQUACER_HSSPI_TXF_FIFO_FULL		BIT(0)
-#define SYNQUACER_HSSPI_TXF_FIFO_EMPTY		BIT(1)
-#define SYNQUACER_HSSPI_TXF_SLAVE_RELEASED	BIT(6)
+#घोषणा SYNQUACER_HSSPI_TXF_FIFO_FULL		BIT(0)
+#घोषणा SYNQUACER_HSSPI_TXF_FIFO_EMPTY		BIT(1)
+#घोषणा SYNQUACER_HSSPI_TXF_SLAVE_RELEASED	BIT(6)
 
-#define SYNQUACER_HSSPI_TXE_FIFO_FULL		BIT(0)
-#define SYNQUACER_HSSPI_TXE_FIFO_EMPTY		BIT(1)
-#define SYNQUACER_HSSPI_TXE_SLAVE_RELEASED	BIT(6)
+#घोषणा SYNQUACER_HSSPI_TXE_FIFO_FULL		BIT(0)
+#घोषणा SYNQUACER_HSSPI_TXE_FIFO_EMPTY		BIT(1)
+#घोषणा SYNQUACER_HSSPI_TXE_SLAVE_RELEASED	BIT(6)
 
-#define SYNQUACER_HSSPI_RXF_FIFO_MORE_THAN_THRESHOLD		BIT(5)
-#define SYNQUACER_HSSPI_RXF_SLAVE_RELEASED			BIT(6)
+#घोषणा SYNQUACER_HSSPI_RXF_FIFO_MORE_THAN_THRESHOLD		BIT(5)
+#घोषणा SYNQUACER_HSSPI_RXF_SLAVE_RELEASED			BIT(6)
 
-#define SYNQUACER_HSSPI_RXE_FIFO_MORE_THAN_THRESHOLD		BIT(5)
-#define SYNQUACER_HSSPI_RXE_SLAVE_RELEASED			BIT(6)
+#घोषणा SYNQUACER_HSSPI_RXE_FIFO_MORE_THAN_THRESHOLD		BIT(5)
+#घोषणा SYNQUACER_HSSPI_RXE_SLAVE_RELEASED			BIT(6)
 
-#define SYNQUACER_HSSPI_DMCFG_SSDC		BIT(1)
-#define SYNQUACER_HSSPI_DMCFG_MSTARTEN		BIT(2)
+#घोषणा SYNQUACER_HSSPI_DMCFG_SSDC		BIT(1)
+#घोषणा SYNQUACER_HSSPI_DMCFG_MSTARTEN		BIT(2)
 
-#define SYNQUACER_HSSPI_DMSTART_START		BIT(0)
-#define SYNQUACER_HSSPI_DMSTOP_STOP		BIT(8)
-#define SYNQUACER_HSSPI_DMPSEL_CS_MASK		0x3
-#define SYNQUACER_HSSPI_DMPSEL_CS_SHIFT		16U
-#define SYNQUACER_HSSPI_DMTRP_BUS_WIDTH_SHIFT	24U
-#define SYNQUACER_HSSPI_DMTRP_DATA_MASK		0x3
-#define SYNQUACER_HSSPI_DMTRP_DATA_SHIFT	26U
-#define SYNQUACER_HSSPI_DMTRP_DATA_TXRX		0
-#define SYNQUACER_HSSPI_DMTRP_DATA_RX		1
-#define SYNQUACER_HSSPI_DMTRP_DATA_TX		2
+#घोषणा SYNQUACER_HSSPI_DMSTART_START		BIT(0)
+#घोषणा SYNQUACER_HSSPI_DMSTOP_STOP		BIT(8)
+#घोषणा SYNQUACER_HSSPI_DMPSEL_CS_MASK		0x3
+#घोषणा SYNQUACER_HSSPI_DMPSEL_CS_SHIFT		16U
+#घोषणा SYNQUACER_HSSPI_DMTRP_BUS_WIDTH_SHIFT	24U
+#घोषणा SYNQUACER_HSSPI_DMTRP_DATA_MASK		0x3
+#घोषणा SYNQUACER_HSSPI_DMTRP_DATA_SHIFT	26U
+#घोषणा SYNQUACER_HSSPI_DMTRP_DATA_TXRX		0
+#घोषणा SYNQUACER_HSSPI_DMTRP_DATA_RX		1
+#घोषणा SYNQUACER_HSSPI_DMTRP_DATA_TX		2
 
-#define SYNQUACER_HSSPI_DMSTATUS_RX_DATA_MASK	0x1f
-#define SYNQUACER_HSSPI_DMSTATUS_RX_DATA_SHIFT	8U
-#define SYNQUACER_HSSPI_DMSTATUS_TX_DATA_MASK	0x1f
-#define SYNQUACER_HSSPI_DMSTATUS_TX_DATA_SHIFT	16U
+#घोषणा SYNQUACER_HSSPI_DMSTATUS_RX_DATA_MASK	0x1f
+#घोषणा SYNQUACER_HSSPI_DMSTATUS_RX_DATA_SHIFT	8U
+#घोषणा SYNQUACER_HSSPI_DMSTATUS_TX_DATA_MASK	0x1f
+#घोषणा SYNQUACER_HSSPI_DMSTATUS_TX_DATA_SHIFT	16U
 
-#define SYNQUACER_HSSPI_FIFOCFG_RX_THRESHOLD_MASK	0xf
-#define SYNQUACER_HSSPI_FIFOCFG_RX_THRESHOLD_SHIFT	0U
-#define SYNQUACER_HSSPI_FIFOCFG_TX_THRESHOLD_MASK	0xf
-#define SYNQUACER_HSSPI_FIFOCFG_TX_THRESHOLD_SHIFT	4U
-#define SYNQUACER_HSSPI_FIFOCFG_FIFO_WIDTH_MASK		0x3
-#define SYNQUACER_HSSPI_FIFOCFG_FIFO_WIDTH_SHIFT	8U
-#define SYNQUACER_HSSPI_FIFOCFG_RX_FLUSH		BIT(11)
-#define SYNQUACER_HSSPI_FIFOCFG_TX_FLUSH		BIT(12)
+#घोषणा SYNQUACER_HSSPI_FIFOCFG_RX_THRESHOLD_MASK	0xf
+#घोषणा SYNQUACER_HSSPI_FIFOCFG_RX_THRESHOLD_SHIFT	0U
+#घोषणा SYNQUACER_HSSPI_FIFOCFG_TX_THRESHOLD_MASK	0xf
+#घोषणा SYNQUACER_HSSPI_FIFOCFG_TX_THRESHOLD_SHIFT	4U
+#घोषणा SYNQUACER_HSSPI_FIFOCFG_FIFO_WIDTH_MASK		0x3
+#घोषणा SYNQUACER_HSSPI_FIFOCFG_FIFO_WIDTH_SHIFT	8U
+#घोषणा SYNQUACER_HSSPI_FIFOCFG_RX_FLUSH		BIT(11)
+#घोषणा SYNQUACER_HSSPI_FIFOCFG_TX_FLUSH		BIT(12)
 
-#define SYNQUACER_HSSPI_FIFO_DEPTH		16U
-#define SYNQUACER_HSSPI_FIFO_TX_THRESHOLD	4U
-#define SYNQUACER_HSSPI_FIFO_RX_THRESHOLD \
+#घोषणा SYNQUACER_HSSPI_FIFO_DEPTH		16U
+#घोषणा SYNQUACER_HSSPI_FIFO_TX_THRESHOLD	4U
+#घोषणा SYNQUACER_HSSPI_FIFO_RX_THRESHOLD \
 	(SYNQUACER_HSSPI_FIFO_DEPTH - SYNQUACER_HSSPI_FIFO_TX_THRESHOLD)
 
-#define SYNQUACER_HSSPI_TRANSFER_MODE_TX	BIT(1)
-#define SYNQUACER_HSSPI_TRANSFER_MODE_RX	BIT(2)
-#define SYNQUACER_HSSPI_TRANSFER_TMOUT_MSEC	2000U
-#define SYNQUACER_HSSPI_ENABLE_TMOUT_MSEC	1000U
+#घोषणा SYNQUACER_HSSPI_TRANSFER_MODE_TX	BIT(1)
+#घोषणा SYNQUACER_HSSPI_TRANSFER_MODE_RX	BIT(2)
+#घोषणा SYNQUACER_HSSPI_TRANSFER_TMOUT_MSEC	2000U
+#घोषणा SYNQUACER_HSSPI_ENABLE_TMOUT_MSEC	1000U
 
-#define SYNQUACER_HSSPI_CLOCK_SRC_IHCLK		0
-#define SYNQUACER_HSSPI_CLOCK_SRC_IPCLK		1
+#घोषणा SYNQUACER_HSSPI_CLOCK_SRC_IHCLK		0
+#घोषणा SYNQUACER_HSSPI_CLOCK_SRC_IPCLK		1
 
-#define SYNQUACER_HSSPI_NUM_CHIP_SELECT		4U
-#define SYNQUACER_HSSPI_IRQ_NAME_MAX		32U
+#घोषणा SYNQUACER_HSSPI_NUM_CHIP_SELECT		4U
+#घोषणा SYNQUACER_HSSPI_IRQ_NAME_MAX		32U
 
-struct synquacer_spi {
-	struct device *dev;
-	struct completion transfer_done;
-	unsigned int cs;
-	unsigned int bpw;
-	unsigned int mode;
-	unsigned int speed;
-	bool aces, rtm;
-	void *rx_buf;
-	const void *tx_buf;
-	struct clk *clk;
-	int clk_src_type;
-	void __iomem *regs;
+काष्ठा synquacer_spi अणु
+	काष्ठा device *dev;
+	काष्ठा completion transfer_करोne;
+	अचिन्हित पूर्णांक cs;
+	अचिन्हित पूर्णांक bpw;
+	अचिन्हित पूर्णांक mode;
+	अचिन्हित पूर्णांक speed;
+	bool aces, rपंचांग;
+	व्योम *rx_buf;
+	स्थिर व्योम *tx_buf;
+	काष्ठा clk *clk;
+	पूर्णांक clk_src_type;
+	व्योम __iomem *regs;
 	u32 tx_words, rx_words;
-	unsigned int bus_width;
-	unsigned int transfer_mode;
-	char rx_irq_name[SYNQUACER_HSSPI_IRQ_NAME_MAX];
-	char tx_irq_name[SYNQUACER_HSSPI_IRQ_NAME_MAX];
-};
+	अचिन्हित पूर्णांक bus_width;
+	अचिन्हित पूर्णांक transfer_mode;
+	अक्षर rx_irq_name[SYNQUACER_HSSPI_IRQ_NAME_MAX];
+	अक्षर tx_irq_name[SYNQUACER_HSSPI_IRQ_NAME_MAX];
+पूर्ण;
 
-static int read_fifo(struct synquacer_spi *sspi)
-{
-	u32 len = readl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTATUS);
+अटल पूर्णांक पढ़ो_fअगरo(काष्ठा synquacer_spi *sspi)
+अणु
+	u32 len = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTATUS);
 
 	len = (len >> SYNQUACER_HSSPI_DMSTATUS_RX_DATA_SHIFT) &
 	       SYNQUACER_HSSPI_DMSTATUS_RX_DATA_MASK;
 	len = min(len, sspi->rx_words);
 
-	switch (sspi->bpw) {
-	case 8: {
+	चयन (sspi->bpw) अणु
+	हाल 8: अणु
 		u8 *buf = sspi->rx_buf;
 
-		ioread8_rep(sspi->regs + SYNQUACER_HSSPI_REG_RX_FIFO,
+		ioपढ़ो8_rep(sspi->regs + SYNQUACER_HSSPI_REG_RX_FIFO,
 			    buf, len);
 		sspi->rx_buf = buf + len;
-		break;
-	}
-	case 16: {
+		अवरोध;
+	पूर्ण
+	हाल 16: अणु
 		u16 *buf = sspi->rx_buf;
 
-		ioread16_rep(sspi->regs + SYNQUACER_HSSPI_REG_RX_FIFO,
+		ioपढ़ो16_rep(sspi->regs + SYNQUACER_HSSPI_REG_RX_FIFO,
 			     buf, len);
 		sspi->rx_buf = buf + len;
-		break;
-	}
-	case 24:
+		अवरोध;
+	पूर्ण
+	हाल 24:
 		/* fallthrough, should use 32-bits access */
-	case 32: {
+	हाल 32: अणु
 		u32 *buf = sspi->rx_buf;
 
-		ioread32_rep(sspi->regs + SYNQUACER_HSSPI_REG_RX_FIFO,
+		ioपढ़ो32_rep(sspi->regs + SYNQUACER_HSSPI_REG_RX_FIFO,
 			     buf, len);
 		sspi->rx_buf = buf + len;
-		break;
-	}
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	sspi->rx_words -= len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int write_fifo(struct synquacer_spi *sspi)
-{
-	u32 len = readl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTATUS);
+अटल पूर्णांक ग_लिखो_fअगरo(काष्ठा synquacer_spi *sspi)
+अणु
+	u32 len = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTATUS);
 
 	len = (len >> SYNQUACER_HSSPI_DMSTATUS_TX_DATA_SHIFT) &
 	       SYNQUACER_HSSPI_DMSTATUS_TX_DATA_MASK;
 	len = min(SYNQUACER_HSSPI_FIFO_DEPTH - len,
 		    sspi->tx_words);
 
-	switch (sspi->bpw) {
-	case 8: {
-		const u8 *buf = sspi->tx_buf;
+	चयन (sspi->bpw) अणु
+	हाल 8: अणु
+		स्थिर u8 *buf = sspi->tx_buf;
 
-		iowrite8_rep(sspi->regs + SYNQUACER_HSSPI_REG_TX_FIFO,
+		ioग_लिखो8_rep(sspi->regs + SYNQUACER_HSSPI_REG_TX_FIFO,
 			     buf, len);
 		sspi->tx_buf = buf + len;
-		break;
-	}
-	case 16: {
-		const u16 *buf = sspi->tx_buf;
+		अवरोध;
+	पूर्ण
+	हाल 16: अणु
+		स्थिर u16 *buf = sspi->tx_buf;
 
-		iowrite16_rep(sspi->regs + SYNQUACER_HSSPI_REG_TX_FIFO,
+		ioग_लिखो16_rep(sspi->regs + SYNQUACER_HSSPI_REG_TX_FIFO,
 			      buf, len);
 		sspi->tx_buf = buf + len;
-		break;
-	}
-	case 24:
+		अवरोध;
+	पूर्ण
+	हाल 24:
 		/* fallthrough, should use 32-bits access */
-	case 32: {
-		const u32 *buf = sspi->tx_buf;
+	हाल 32: अणु
+		स्थिर u32 *buf = sspi->tx_buf;
 
-		iowrite32_rep(sspi->regs + SYNQUACER_HSSPI_REG_TX_FIFO,
+		ioग_लिखो32_rep(sspi->regs + SYNQUACER_HSSPI_REG_TX_FIFO,
 			      buf, len);
 		sspi->tx_buf = buf + len;
-		break;
-	}
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	sspi->tx_words -= len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int synquacer_spi_config(struct spi_master *master,
-				struct spi_device *spi,
-				struct spi_transfer *xfer)
-{
-	struct synquacer_spi *sspi = spi_master_get_devdata(master);
-	unsigned int speed, mode, bpw, cs, bus_width, transfer_mode;
-	u32 rate, val, div;
+अटल पूर्णांक synquacer_spi_config(काष्ठा spi_master *master,
+				काष्ठा spi_device *spi,
+				काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा synquacer_spi *sspi = spi_master_get_devdata(master);
+	अचिन्हित पूर्णांक speed, mode, bpw, cs, bus_width, transfer_mode;
+	u32 rate, val, भाग;
 
 	/* Full Duplex only on 1-bit wide bus */
-	if (xfer->rx_buf && xfer->tx_buf &&
-	    (xfer->rx_nbits != 1 || xfer->tx_nbits != 1)) {
+	अगर (xfer->rx_buf && xfer->tx_buf &&
+	    (xfer->rx_nbits != 1 || xfer->tx_nbits != 1)) अणु
 		dev_err(sspi->dev,
 			"RX and TX bus widths must be 1-bit for Full-Duplex!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (xfer->tx_buf) {
+	अगर (xfer->tx_buf) अणु
 		bus_width = xfer->tx_nbits;
 		transfer_mode = SYNQUACER_HSSPI_TRANSFER_MODE_TX;
-	} else {
+	पूर्ण अन्यथा अणु
 		bus_width = xfer->rx_nbits;
 		transfer_mode = SYNQUACER_HSSPI_TRANSFER_MODE_RX;
-	}
+	पूर्ण
 
 	mode = spi->mode;
 	cs = spi->chip_select;
 	speed = xfer->speed_hz;
 	bpw = xfer->bits_per_word;
 
-	/* return if nothing to change */
-	if (speed == sspi->speed &&
+	/* वापस अगर nothing to change */
+	अगर (speed == sspi->speed &&
 		bus_width == sspi->bus_width && bpw == sspi->bpw &&
 		mode == sspi->mode && cs == sspi->cs &&
-		transfer_mode == sspi->transfer_mode) {
-		return 0;
-	}
+		transfer_mode == sspi->transfer_mode) अणु
+		वापस 0;
+	पूर्ण
 
 	sspi->transfer_mode = transfer_mode;
 	rate = master->max_speed_hz;
 
-	div = DIV_ROUND_UP(rate, speed);
-	if (div > 254) {
+	भाग = DIV_ROUND_UP(rate, speed);
+	अगर (भाग > 254) अणु
 		dev_err(sspi->dev, "Requested rate too low (%u)\n",
 			sspi->speed);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	val = readl(sspi->regs + SYNQUACER_HSSPI_REG_PCC(cs));
+	val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_PCC(cs));
 	val &= ~SYNQUACER_HSSPI_PCC_SAFESYNC;
-	if (bpw == 8 &&	(mode & (SPI_TX_DUAL | SPI_RX_DUAL)) && div < 3)
+	अगर (bpw == 8 &&	(mode & (SPI_TX_DUAL | SPI_RX_DUAL)) && भाग < 3)
 		val |= SYNQUACER_HSSPI_PCC_SAFESYNC;
-	if (bpw == 8 &&	(mode & (SPI_TX_QUAD | SPI_RX_QUAD)) && div < 6)
+	अगर (bpw == 8 &&	(mode & (SPI_TX_QUAD | SPI_RX_QUAD)) && भाग < 6)
 		val |= SYNQUACER_HSSPI_PCC_SAFESYNC;
-	if (bpw == 16 && (mode & (SPI_TX_QUAD | SPI_RX_QUAD)) && div < 3)
+	अगर (bpw == 16 && (mode & (SPI_TX_QUAD | SPI_RX_QUAD)) && भाग < 3)
 		val |= SYNQUACER_HSSPI_PCC_SAFESYNC;
 
-	if (mode & SPI_CPHA)
+	अगर (mode & SPI_CPHA)
 		val |= SYNQUACER_HSSPI_PCC_CPHA;
-	else
+	अन्यथा
 		val &= ~SYNQUACER_HSSPI_PCC_CPHA;
 
-	if (mode & SPI_CPOL)
+	अगर (mode & SPI_CPOL)
 		val |= SYNQUACER_HSSPI_PCC_CPOL;
-	else
+	अन्यथा
 		val &= ~SYNQUACER_HSSPI_PCC_CPOL;
 
-	if (mode & SPI_CS_HIGH)
+	अगर (mode & SPI_CS_HIGH)
 		val |= SYNQUACER_HSSPI_PCC_SSPOL;
-	else
+	अन्यथा
 		val &= ~SYNQUACER_HSSPI_PCC_SSPOL;
 
-	if (mode & SPI_LSB_FIRST)
-		val |= SYNQUACER_HSSPI_PCC_SDIR;
-	else
-		val &= ~SYNQUACER_HSSPI_PCC_SDIR;
+	अगर (mode & SPI_LSB_FIRST)
+		val |= SYNQUACER_HSSPI_PCC_Sसूची;
+	अन्यथा
+		val &= ~SYNQUACER_HSSPI_PCC_Sसूची;
 
-	if (sspi->aces)
+	अगर (sspi->aces)
 		val |= SYNQUACER_HSSPI_PCC_ACES;
-	else
+	अन्यथा
 		val &= ~SYNQUACER_HSSPI_PCC_ACES;
 
-	if (sspi->rtm)
+	अगर (sspi->rपंचांग)
 		val |= SYNQUACER_HSSPI_PCC_RTM;
-	else
+	अन्यथा
 		val &= ~SYNQUACER_HSSPI_PCC_RTM;
 
 	val |= (3 << SYNQUACER_HSSPI_PCC_SS2CD_SHIFT);
@@ -316,30 +317,30 @@ static int synquacer_spi_config(struct spi_master *master,
 
 	val &= ~(SYNQUACER_HSSPI_PCC_CDRS_MASK <<
 		 SYNQUACER_HSSPI_PCC_CDRS_SHIFT);
-	val |= ((div >> 1) << SYNQUACER_HSSPI_PCC_CDRS_SHIFT);
+	val |= ((भाग >> 1) << SYNQUACER_HSSPI_PCC_CDRS_SHIFT);
 
-	writel(val, sspi->regs + SYNQUACER_HSSPI_REG_PCC(cs));
+	ग_लिखोl(val, sspi->regs + SYNQUACER_HSSPI_REG_PCC(cs));
 
-	val = readl(sspi->regs + SYNQUACER_HSSPI_REG_FIFOCFG);
+	val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_FIFOCFG);
 	val &= ~(SYNQUACER_HSSPI_FIFOCFG_FIFO_WIDTH_MASK <<
 		 SYNQUACER_HSSPI_FIFOCFG_FIFO_WIDTH_SHIFT);
 	val |= ((bpw / 8 - 1) << SYNQUACER_HSSPI_FIFOCFG_FIFO_WIDTH_SHIFT);
-	writel(val, sspi->regs + SYNQUACER_HSSPI_REG_FIFOCFG);
+	ग_लिखोl(val, sspi->regs + SYNQUACER_HSSPI_REG_FIFOCFG);
 
-	val = readl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
+	val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
 	val &= ~(SYNQUACER_HSSPI_DMTRP_DATA_MASK <<
 		 SYNQUACER_HSSPI_DMTRP_DATA_SHIFT);
 
-	if (xfer->rx_buf)
+	अगर (xfer->rx_buf)
 		val |= (SYNQUACER_HSSPI_DMTRP_DATA_RX <<
 			SYNQUACER_HSSPI_DMTRP_DATA_SHIFT);
-	else
+	अन्यथा
 		val |= (SYNQUACER_HSSPI_DMTRP_DATA_TX <<
 			SYNQUACER_HSSPI_DMTRP_DATA_SHIFT);
 
 	val &= ~(3 << SYNQUACER_HSSPI_DMTRP_BUS_WIDTH_SHIFT);
 	val |= ((bus_width >> 1) << SYNQUACER_HSSPI_DMTRP_BUS_WIDTH_SHIFT);
-	writel(val, sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
+	ग_लिखोl(val, sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
 
 	sspi->bpw = bpw;
 	sspi->mode = mode;
@@ -347,35 +348,35 @@ static int synquacer_spi_config(struct spi_master *master,
 	sspi->cs = spi->chip_select;
 	sspi->bus_width = bus_width;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int synquacer_spi_transfer_one(struct spi_master *master,
-				      struct spi_device *spi,
-				      struct spi_transfer *xfer)
-{
-	struct synquacer_spi *sspi = spi_master_get_devdata(master);
-	int ret;
-	int status = 0;
+अटल पूर्णांक synquacer_spi_transfer_one(काष्ठा spi_master *master,
+				      काष्ठा spi_device *spi,
+				      काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा synquacer_spi *sspi = spi_master_get_devdata(master);
+	पूर्णांक ret;
+	पूर्णांक status = 0;
 	u32 words;
 	u8 bpw;
 	u32 val;
 
-	val = readl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
+	val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
 	val &= ~SYNQUACER_HSSPI_DMSTOP_STOP;
-	writel(val, sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
+	ग_लिखोl(val, sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
 
-	val = readl(sspi->regs + SYNQUACER_HSSPI_REG_FIFOCFG);
+	val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_FIFOCFG);
 	val |= SYNQUACER_HSSPI_FIFOCFG_RX_FLUSH;
 	val |= SYNQUACER_HSSPI_FIFOCFG_TX_FLUSH;
-	writel(val, sspi->regs + SYNQUACER_HSSPI_REG_FIFOCFG);
+	ग_लिखोl(val, sspi->regs + SYNQUACER_HSSPI_REG_FIFOCFG);
 
 	/*
-	 * See if we can transfer 4-bytes as 1 word
+	 * See अगर we can transfer 4-bytes as 1 word
 	 * to maximize the FIFO buffer efficiency.
 	 */
 	bpw = xfer->bits_per_word;
-	if (bpw == 8 && !(xfer->len % 4) && !(spi->mode & SPI_LSB_FIRST))
+	अगर (bpw == 8 && !(xfer->len % 4) && !(spi->mode & SPI_LSB_FIRST))
 		xfer->bits_per_word = 32;
 
 	ret = synquacer_spi_config(master, spi, xfer);
@@ -383,168 +384,168 @@ static int synquacer_spi_transfer_one(struct spi_master *master,
 	/* restore */
 	xfer->bits_per_word = bpw;
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	reinit_completion(&sspi->transfer_done);
+	reinit_completion(&sspi->transfer_करोne);
 
 	sspi->tx_buf = xfer->tx_buf;
 	sspi->rx_buf = xfer->rx_buf;
 
-	switch (sspi->bpw) {
-	case 8:
+	चयन (sspi->bpw) अणु
+	हाल 8:
 		words = xfer->len;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		words = xfer->len / 2;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		/* fallthrough, should use 32-bits access */
-	case 32:
+	हाल 32:
 		words = xfer->len / 4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(sspi->dev, "unsupported bpw: %d\n", sspi->bpw);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (xfer->tx_buf)
+	अगर (xfer->tx_buf)
 		sspi->tx_words = words;
-	else
+	अन्यथा
 		sspi->tx_words = 0;
 
-	if (xfer->rx_buf)
+	अगर (xfer->rx_buf)
 		sspi->rx_words = words;
-	else
+	अन्यथा
 		sspi->rx_words = 0;
 
-	if (xfer->tx_buf) {
-		status = write_fifo(sspi);
-		if (status < 0) {
+	अगर (xfer->tx_buf) अणु
+		status = ग_लिखो_fअगरo(sspi);
+		अगर (status < 0) अणु
 			dev_err(sspi->dev, "failed write_fifo. status: 0x%x\n",
 				status);
-			return status;
-		}
-	}
+			वापस status;
+		पूर्ण
+	पूर्ण
 
-	if (xfer->rx_buf) {
-		val = readl(sspi->regs + SYNQUACER_HSSPI_REG_FIFOCFG);
+	अगर (xfer->rx_buf) अणु
+		val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_FIFOCFG);
 		val &= ~(SYNQUACER_HSSPI_FIFOCFG_RX_THRESHOLD_MASK <<
 			 SYNQUACER_HSSPI_FIFOCFG_RX_THRESHOLD_SHIFT);
 		val |= ((sspi->rx_words > SYNQUACER_HSSPI_FIFO_DEPTH ?
 			SYNQUACER_HSSPI_FIFO_RX_THRESHOLD : sspi->rx_words) <<
 			SYNQUACER_HSSPI_FIFOCFG_RX_THRESHOLD_SHIFT);
-		writel(val, sspi->regs + SYNQUACER_HSSPI_REG_FIFOCFG);
-	}
+		ग_लिखोl(val, sspi->regs + SYNQUACER_HSSPI_REG_FIFOCFG);
+	पूर्ण
 
-	writel(~0, sspi->regs + SYNQUACER_HSSPI_REG_TXC);
-	writel(~0, sspi->regs + SYNQUACER_HSSPI_REG_RXC);
+	ग_लिखोl(~0, sspi->regs + SYNQUACER_HSSPI_REG_TXC);
+	ग_लिखोl(~0, sspi->regs + SYNQUACER_HSSPI_REG_RXC);
 
 	/* Trigger */
-	val = readl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
+	val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
 	val |= SYNQUACER_HSSPI_DMSTART_START;
-	writel(val, sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
+	ग_लिखोl(val, sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
 
-	if (xfer->tx_buf) {
+	अगर (xfer->tx_buf) अणु
 		val = SYNQUACER_HSSPI_TXE_FIFO_EMPTY;
-		writel(val, sspi->regs + SYNQUACER_HSSPI_REG_TXE);
-		status = wait_for_completion_timeout(&sspi->transfer_done,
-			msecs_to_jiffies(SYNQUACER_HSSPI_TRANSFER_TMOUT_MSEC));
-		writel(0, sspi->regs + SYNQUACER_HSSPI_REG_TXE);
-	}
+		ग_लिखोl(val, sspi->regs + SYNQUACER_HSSPI_REG_TXE);
+		status = रुको_क्रम_completion_समयout(&sspi->transfer_करोne,
+			msecs_to_jअगरfies(SYNQUACER_HSSPI_TRANSFER_TMOUT_MSEC));
+		ग_लिखोl(0, sspi->regs + SYNQUACER_HSSPI_REG_TXE);
+	पूर्ण
 
-	if (xfer->rx_buf) {
+	अगर (xfer->rx_buf) अणु
 		u32 buf[SYNQUACER_HSSPI_FIFO_DEPTH];
 
 		val = SYNQUACER_HSSPI_RXE_FIFO_MORE_THAN_THRESHOLD |
 		      SYNQUACER_HSSPI_RXE_SLAVE_RELEASED;
-		writel(val, sspi->regs + SYNQUACER_HSSPI_REG_RXE);
-		status = wait_for_completion_timeout(&sspi->transfer_done,
-			msecs_to_jiffies(SYNQUACER_HSSPI_TRANSFER_TMOUT_MSEC));
-		writel(0, sspi->regs + SYNQUACER_HSSPI_REG_RXE);
+		ग_लिखोl(val, sspi->regs + SYNQUACER_HSSPI_REG_RXE);
+		status = रुको_क्रम_completion_समयout(&sspi->transfer_करोne,
+			msecs_to_jअगरfies(SYNQUACER_HSSPI_TRANSFER_TMOUT_MSEC));
+		ग_लिखोl(0, sspi->regs + SYNQUACER_HSSPI_REG_RXE);
 
 		/* stop RX and clean RXFIFO */
-		val = readl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
+		val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
 		val |= SYNQUACER_HSSPI_DMSTOP_STOP;
-		writel(val, sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
+		ग_लिखोl(val, sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
 		sspi->rx_buf = buf;
 		sspi->rx_words = SYNQUACER_HSSPI_FIFO_DEPTH;
-		read_fifo(sspi);
-	}
+		पढ़ो_fअगरo(sspi);
+	पूर्ण
 
-	if (status < 0) {
+	अगर (status < 0) अणु
 		dev_err(sspi->dev, "failed to transfer. status: 0x%x\n",
 			status);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void synquacer_spi_set_cs(struct spi_device *spi, bool enable)
-{
-	struct synquacer_spi *sspi = spi_master_get_devdata(spi->master);
+अटल व्योम synquacer_spi_set_cs(काष्ठा spi_device *spi, bool enable)
+अणु
+	काष्ठा synquacer_spi *sspi = spi_master_get_devdata(spi->master);
 	u32 val;
 
-	val = readl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
+	val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
 	val &= ~(SYNQUACER_HSSPI_DMPSEL_CS_MASK <<
 		 SYNQUACER_HSSPI_DMPSEL_CS_SHIFT);
 	val |= spi->chip_select << SYNQUACER_HSSPI_DMPSEL_CS_SHIFT;
 
-	if (!enable)
+	अगर (!enable)
 		val |= SYNQUACER_HSSPI_DMSTOP_STOP;
 
-	writel(val, sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
-}
+	ग_लिखोl(val, sspi->regs + SYNQUACER_HSSPI_REG_DMSTART);
+पूर्ण
 
-static int synquacer_spi_wait_status_update(struct synquacer_spi *sspi,
+अटल पूर्णांक synquacer_spi_रुको_status_update(काष्ठा synquacer_spi *sspi,
 					    bool enable)
-{
+अणु
 	u32 val;
-	unsigned long timeout = jiffies +
-		msecs_to_jiffies(SYNQUACER_HSSPI_ENABLE_TMOUT_MSEC);
+	अचिन्हित दीर्घ समयout = jअगरfies +
+		msecs_to_jअगरfies(SYNQUACER_HSSPI_ENABLE_TMOUT_MSEC);
 
-	/* wait MES(Module Enable Status) is updated */
-	do {
-		val = readl(sspi->regs + SYNQUACER_HSSPI_REG_MCTRL) &
+	/* रुको MES(Module Enable Status) is updated */
+	करो अणु
+		val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_MCTRL) &
 		      SYNQUACER_HSSPI_MCTRL_MES;
-		if (enable && val)
-			return 0;
-		if (!enable && !val)
-			return 0;
-	} while (time_before(jiffies, timeout));
+		अगर (enable && val)
+			वापस 0;
+		अगर (!enable && !val)
+			वापस 0;
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
 
 	dev_err(sspi->dev, "timeout occurs in updating Module Enable Status\n");
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static int synquacer_spi_enable(struct spi_master *master)
-{
+अटल पूर्णांक synquacer_spi_enable(काष्ठा spi_master *master)
+अणु
 	u32 val;
-	int status;
-	struct synquacer_spi *sspi = spi_master_get_devdata(master);
+	पूर्णांक status;
+	काष्ठा synquacer_spi *sspi = spi_master_get_devdata(master);
 
 	/* Disable module */
-	writel(0, sspi->regs + SYNQUACER_HSSPI_REG_MCTRL);
-	status = synquacer_spi_wait_status_update(sspi, false);
-	if (status < 0)
-		return status;
+	ग_लिखोl(0, sspi->regs + SYNQUACER_HSSPI_REG_MCTRL);
+	status = synquacer_spi_रुको_status_update(sspi, false);
+	अगर (status < 0)
+		वापस status;
 
-	writel(0, sspi->regs + SYNQUACER_HSSPI_REG_TXE);
-	writel(0, sspi->regs + SYNQUACER_HSSPI_REG_RXE);
-	writel(~0, sspi->regs + SYNQUACER_HSSPI_REG_TXC);
-	writel(~0, sspi->regs + SYNQUACER_HSSPI_REG_RXC);
-	writel(~0, sspi->regs + SYNQUACER_HSSPI_REG_FAULTC);
+	ग_लिखोl(0, sspi->regs + SYNQUACER_HSSPI_REG_TXE);
+	ग_लिखोl(0, sspi->regs + SYNQUACER_HSSPI_REG_RXE);
+	ग_लिखोl(~0, sspi->regs + SYNQUACER_HSSPI_REG_TXC);
+	ग_लिखोl(~0, sspi->regs + SYNQUACER_HSSPI_REG_RXC);
+	ग_लिखोl(~0, sspi->regs + SYNQUACER_HSSPI_REG_FAULTC);
 
-	val = readl(sspi->regs + SYNQUACER_HSSPI_REG_DMCFG);
+	val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_DMCFG);
 	val &= ~SYNQUACER_HSSPI_DMCFG_SSDC;
 	val &= ~SYNQUACER_HSSPI_DMCFG_MSTARTEN;
-	writel(val, sspi->regs + SYNQUACER_HSSPI_REG_DMCFG);
+	ग_लिखोl(val, sspi->regs + SYNQUACER_HSSPI_REG_DMCFG);
 
-	val = readl(sspi->regs + SYNQUACER_HSSPI_REG_MCTRL);
-	if (sspi->clk_src_type == SYNQUACER_HSSPI_CLOCK_SRC_IPCLK)
+	val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_MCTRL);
+	अगर (sspi->clk_src_type == SYNQUACER_HSSPI_CLOCK_SRC_IPCLK)
 		val |= SYNQUACER_HSSPI_MCTRL_CDSS;
-	else
+	अन्यथा
 		val &= ~SYNQUACER_HSSPI_MCTRL_CDSS;
 
 	val &= ~SYNQUACER_HSSPI_MCTRL_COMMAND_SEQUENCE_EN;
@@ -552,157 +553,157 @@ static int synquacer_spi_enable(struct spi_master *master)
 	val |= SYNQUACER_HSSPI_MCTRL_SYNCON;
 
 	/* Enable module */
-	writel(val, sspi->regs + SYNQUACER_HSSPI_REG_MCTRL);
-	status = synquacer_spi_wait_status_update(sspi, true);
-	if (status < 0)
-		return status;
+	ग_लिखोl(val, sspi->regs + SYNQUACER_HSSPI_REG_MCTRL);
+	status = synquacer_spi_रुको_status_update(sspi, true);
+	अगर (status < 0)
+		वापस status;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t sq_spi_rx_handler(int irq, void *priv)
-{
-	uint32_t val;
-	struct synquacer_spi *sspi = priv;
+अटल irqवापस_t sq_spi_rx_handler(पूर्णांक irq, व्योम *priv)
+अणु
+	uपूर्णांक32_t val;
+	काष्ठा synquacer_spi *sspi = priv;
 
-	val = readl(sspi->regs + SYNQUACER_HSSPI_REG_RXF);
-	if ((val & SYNQUACER_HSSPI_RXF_SLAVE_RELEASED) ||
-	    (val & SYNQUACER_HSSPI_RXF_FIFO_MORE_THAN_THRESHOLD)) {
-		read_fifo(sspi);
+	val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_RXF);
+	अगर ((val & SYNQUACER_HSSPI_RXF_SLAVE_RELEASED) ||
+	    (val & SYNQUACER_HSSPI_RXF_FIFO_MORE_THAN_THRESHOLD)) अणु
+		पढ़ो_fअगरo(sspi);
 
-		if (sspi->rx_words == 0) {
-			writel(0, sspi->regs + SYNQUACER_HSSPI_REG_RXE);
-			complete(&sspi->transfer_done);
-		}
-		return IRQ_HANDLED;
-	}
+		अगर (sspi->rx_words == 0) अणु
+			ग_लिखोl(0, sspi->regs + SYNQUACER_HSSPI_REG_RXE);
+			complete(&sspi->transfer_करोne);
+		पूर्ण
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static irqreturn_t sq_spi_tx_handler(int irq, void *priv)
-{
-	uint32_t val;
-	struct synquacer_spi *sspi = priv;
+अटल irqवापस_t sq_spi_tx_handler(पूर्णांक irq, व्योम *priv)
+अणु
+	uपूर्णांक32_t val;
+	काष्ठा synquacer_spi *sspi = priv;
 
-	val = readl(sspi->regs + SYNQUACER_HSSPI_REG_TXF);
-	if (val & SYNQUACER_HSSPI_TXF_FIFO_EMPTY) {
-		if (sspi->tx_words == 0) {
-			writel(0, sspi->regs + SYNQUACER_HSSPI_REG_TXE);
-			complete(&sspi->transfer_done);
-		} else {
-			write_fifo(sspi);
-		}
-		return IRQ_HANDLED;
-	}
+	val = पढ़ोl(sspi->regs + SYNQUACER_HSSPI_REG_TXF);
+	अगर (val & SYNQUACER_HSSPI_TXF_FIFO_EMPTY) अणु
+		अगर (sspi->tx_words == 0) अणु
+			ग_लिखोl(0, sspi->regs + SYNQUACER_HSSPI_REG_TXE);
+			complete(&sspi->transfer_करोne);
+		पूर्ण अन्यथा अणु
+			ग_लिखो_fअगरo(sspi);
+		पूर्ण
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static int synquacer_spi_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct spi_master *master;
-	struct synquacer_spi *sspi;
-	int ret;
-	int rx_irq, tx_irq;
+अटल पूर्णांक synquacer_spi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा spi_master *master;
+	काष्ठा synquacer_spi *sspi;
+	पूर्णांक ret;
+	पूर्णांक rx_irq, tx_irq;
 
-	master = spi_alloc_master(&pdev->dev, sizeof(*sspi));
-	if (!master)
-		return -ENOMEM;
+	master = spi_alloc_master(&pdev->dev, माप(*sspi));
+	अगर (!master)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, master);
+	platक्रमm_set_drvdata(pdev, master);
 
 	sspi = spi_master_get_devdata(master);
 	sspi->dev = &pdev->dev;
 
-	init_completion(&sspi->transfer_done);
+	init_completion(&sspi->transfer_करोne);
 
-	sspi->regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(sspi->regs)) {
+	sspi->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(sspi->regs)) अणु
 		ret = PTR_ERR(sspi->regs);
-		goto put_spi;
-	}
+		जाओ put_spi;
+	पूर्ण
 
 	sspi->clk_src_type = SYNQUACER_HSSPI_CLOCK_SRC_IHCLK; /* Default */
-	device_property_read_u32(&pdev->dev, "socionext,ihclk-rate",
-				 &master->max_speed_hz); /* for ACPI */
+	device_property_पढ़ो_u32(&pdev->dev, "socionext,ihclk-rate",
+				 &master->max_speed_hz); /* क्रम ACPI */
 
-	if (dev_of_node(&pdev->dev)) {
-		if (device_property_match_string(&pdev->dev,
-					 "clock-names", "iHCLK") >= 0) {
+	अगर (dev_of_node(&pdev->dev)) अणु
+		अगर (device_property_match_string(&pdev->dev,
+					 "clock-names", "iHCLK") >= 0) अणु
 			sspi->clk_src_type = SYNQUACER_HSSPI_CLOCK_SRC_IHCLK;
 			sspi->clk = devm_clk_get(sspi->dev, "iHCLK");
-		} else if (device_property_match_string(&pdev->dev,
-						"clock-names", "iPCLK") >= 0) {
+		पूर्ण अन्यथा अगर (device_property_match_string(&pdev->dev,
+						"clock-names", "iPCLK") >= 0) अणु
 			sspi->clk_src_type = SYNQUACER_HSSPI_CLOCK_SRC_IPCLK;
 			sspi->clk = devm_clk_get(sspi->dev, "iPCLK");
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(&pdev->dev, "specified wrong clock source\n");
 			ret = -EINVAL;
-			goto put_spi;
-		}
+			जाओ put_spi;
+		पूर्ण
 
-		if (IS_ERR(sspi->clk)) {
+		अगर (IS_ERR(sspi->clk)) अणु
 			ret = dev_err_probe(&pdev->dev, PTR_ERR(sspi->clk),
 					    "clock not found\n");
-			goto put_spi;
-		}
+			जाओ put_spi;
+		पूर्ण
 
 		ret = clk_prepare_enable(sspi->clk);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to enable clock (%d)\n",
 				ret);
-			goto put_spi;
-		}
+			जाओ put_spi;
+		पूर्ण
 
 		master->max_speed_hz = clk_get_rate(sspi->clk);
-	}
+	पूर्ण
 
-	if (!master->max_speed_hz) {
+	अगर (!master->max_speed_hz) अणु
 		dev_err(&pdev->dev, "missing clock source\n");
 		ret = -EINVAL;
-		goto disable_clk;
-	}
+		जाओ disable_clk;
+	पूर्ण
 	master->min_speed_hz = master->max_speed_hz / 254;
 
-	sspi->aces = device_property_read_bool(&pdev->dev,
+	sspi->aces = device_property_पढ़ो_bool(&pdev->dev,
 					       "socionext,set-aces");
-	sspi->rtm = device_property_read_bool(&pdev->dev, "socionext,use-rtm");
+	sspi->rपंचांग = device_property_पढ़ो_bool(&pdev->dev, "socionext,use-rtm");
 
 	master->num_chipselect = SYNQUACER_HSSPI_NUM_CHIP_SELECT;
 
-	rx_irq = platform_get_irq(pdev, 0);
-	if (rx_irq <= 0) {
+	rx_irq = platक्रमm_get_irq(pdev, 0);
+	अगर (rx_irq <= 0) अणु
 		ret = rx_irq;
-		goto disable_clk;
-	}
-	snprintf(sspi->rx_irq_name, SYNQUACER_HSSPI_IRQ_NAME_MAX, "%s-rx",
+		जाओ disable_clk;
+	पूर्ण
+	snम_लिखो(sspi->rx_irq_name, SYNQUACER_HSSPI_IRQ_NAME_MAX, "%s-rx",
 		 dev_name(&pdev->dev));
 	ret = devm_request_irq(&pdev->dev, rx_irq, sq_spi_rx_handler,
 				0, sspi->rx_irq_name, sspi);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "request rx_irq failed (%d)\n", ret);
-		goto disable_clk;
-	}
+		जाओ disable_clk;
+	पूर्ण
 
-	tx_irq = platform_get_irq(pdev, 1);
-	if (tx_irq <= 0) {
+	tx_irq = platक्रमm_get_irq(pdev, 1);
+	अगर (tx_irq <= 0) अणु
 		ret = tx_irq;
-		goto disable_clk;
-	}
-	snprintf(sspi->tx_irq_name, SYNQUACER_HSSPI_IRQ_NAME_MAX, "%s-tx",
+		जाओ disable_clk;
+	पूर्ण
+	snम_लिखो(sspi->tx_irq_name, SYNQUACER_HSSPI_IRQ_NAME_MAX, "%s-tx",
 		 dev_name(&pdev->dev));
 	ret = devm_request_irq(&pdev->dev, tx_irq, sq_spi_tx_handler,
 				0, sspi->tx_irq_name, sspi);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "request tx_irq failed (%d)\n", ret);
-		goto disable_clk;
-	}
+		जाओ disable_clk;
+	पूर्ण
 
 	master->dev.of_node = np;
 	master->dev.fwnode = pdev->dev.fwnode;
-	master->auto_runtime_pm = true;
+	master->स्वतः_runसमय_pm = true;
 	master->bus_num = pdev->id;
 
 	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_TX_DUAL | SPI_RX_DUAL |
@@ -714,115 +715,115 @@ static int synquacer_spi_probe(struct platform_device *pdev)
 	master->transfer_one = synquacer_spi_transfer_one;
 
 	ret = synquacer_spi_enable(master);
-	if (ret)
-		goto disable_clk;
+	अगर (ret)
+		जाओ disable_clk;
 
-	pm_runtime_set_active(sspi->dev);
-	pm_runtime_enable(sspi->dev);
+	pm_runसमय_set_active(sspi->dev);
+	pm_runसमय_enable(sspi->dev);
 
-	ret = devm_spi_register_master(sspi->dev, master);
-	if (ret)
-		goto disable_pm;
+	ret = devm_spi_रेजिस्टर_master(sspi->dev, master);
+	अगर (ret)
+		जाओ disable_pm;
 
-	return 0;
+	वापस 0;
 
 disable_pm:
-	pm_runtime_disable(sspi->dev);
+	pm_runसमय_disable(sspi->dev);
 disable_clk:
 	clk_disable_unprepare(sspi->clk);
 put_spi:
 	spi_master_put(master);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int synquacer_spi_remove(struct platform_device *pdev)
-{
-	struct spi_master *master = platform_get_drvdata(pdev);
-	struct synquacer_spi *sspi = spi_master_get_devdata(master);
+अटल पूर्णांक synquacer_spi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_master *master = platक्रमm_get_drvdata(pdev);
+	काष्ठा synquacer_spi *sspi = spi_master_get_devdata(master);
 
-	pm_runtime_disable(sspi->dev);
+	pm_runसमय_disable(sspi->dev);
 
 	clk_disable_unprepare(sspi->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused synquacer_spi_suspend(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct synquacer_spi *sspi = spi_master_get_devdata(master);
-	int ret;
+अटल पूर्णांक __maybe_unused synquacer_spi_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा synquacer_spi *sspi = spi_master_get_devdata(master);
+	पूर्णांक ret;
 
 	ret = spi_master_suspend(master);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!pm_runtime_suspended(dev))
+	अगर (!pm_runसमय_suspended(dev))
 		clk_disable_unprepare(sspi->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused synquacer_spi_resume(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct synquacer_spi *sspi = spi_master_get_devdata(master);
-	int ret;
+अटल पूर्णांक __maybe_unused synquacer_spi_resume(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा synquacer_spi *sspi = spi_master_get_devdata(master);
+	पूर्णांक ret;
 
-	if (!pm_runtime_suspended(dev)) {
+	अगर (!pm_runसमय_suspended(dev)) अणु
 		/* Ensure reconfigure during next xfer */
 		sspi->speed = 0;
 
 		ret = clk_prepare_enable(sspi->clk);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "failed to enable clk (%d)\n",
 				ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		ret = synquacer_spi_enable(master);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "failed to enable spi (%d)\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = spi_master_resume(master);
-	if (ret < 0)
+	अगर (ret < 0)
 		clk_disable_unprepare(sspi->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(synquacer_spi_pm_ops, synquacer_spi_suspend,
+अटल SIMPLE_DEV_PM_OPS(synquacer_spi_pm_ops, synquacer_spi_suspend,
 			 synquacer_spi_resume);
 
-static const struct of_device_id synquacer_spi_of_match[] = {
-	{.compatible = "socionext,synquacer-spi"},
-	{}
-};
+अटल स्थिर काष्ठा of_device_id synquacer_spi_of_match[] = अणु
+	अणु.compatible = "socionext,synquacer-spi"पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, synquacer_spi_of_match);
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id synquacer_hsspi_acpi_ids[] = {
-	{ "SCX0004" },
-	{ /* sentinel */ }
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id synquacer_hsspi_acpi_ids[] = अणु
+	अणु "SCX0004" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, synquacer_hsspi_acpi_ids);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver synquacer_spi_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver synquacer_spi_driver = अणु
+	.driver = अणु
 		.name = "synquacer-spi",
 		.pm = &synquacer_spi_pm_ops,
 		.of_match_table = synquacer_spi_of_match,
 		.acpi_match_table = ACPI_PTR(synquacer_hsspi_acpi_ids),
-	},
+	पूर्ण,
 	.probe = synquacer_spi_probe,
-	.remove = synquacer_spi_remove,
-};
-module_platform_driver(synquacer_spi_driver);
+	.हटाओ = synquacer_spi_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(synquacer_spi_driver);
 
 MODULE_DESCRIPTION("Socionext Synquacer HS-SPI controller driver");
 MODULE_AUTHOR("Masahisa Kojima <masahisa.kojima@linaro.org>");

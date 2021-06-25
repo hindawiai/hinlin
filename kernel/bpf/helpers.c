@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  */
-#include <linux/bpf.h>
-#include <linux/rcupdate.h>
-#include <linux/random.h>
-#include <linux/smp.h>
-#include <linux/topology.h>
-#include <linux/ktime.h>
-#include <linux/sched.h>
-#include <linux/uidgid.h>
-#include <linux/filter.h>
-#include <linux/ctype.h>
-#include <linux/jiffies.h>
-#include <linux/pid_namespace.h>
-#include <linux/proc_ns.h>
-#include <linux/security.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/topology.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/uidgid.h>
+#समावेश <linux/filter.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/pid_namespace.h>
+#समावेश <linux/proc_ns.h>
+#समावेश <linux/security.h>
 
-#include "../../lib/kstrtox.h"
+#समावेश "../../lib/kstrtox.h"
 
-/* If kernel subsystem is allowing eBPF programs to call this function,
- * inside its own verifier_ops->get_func_proto() callback it should return
- * bpf_map_lookup_elem_proto, so that verifier can properly check the arguments
+/* If kernel subप्रणाली is allowing eBPF programs to call this function,
+ * inside its own verअगरier_ops->get_func_proto() callback it should वापस
+ * bpf_map_lookup_elem_proto, so that verअगरier can properly check the arguments
  *
- * Different map implementations will rely on rcu in map methods
- * lookup/update/delete, therefore eBPF programs must run under rcu lock
- * if program is allowed to access maps, so check rcu_read_lock_held in
+ * Dअगरferent map implementations will rely on rcu in map methods
+ * lookup/update/delete, thereक्रमe eBPF programs must run under rcu lock
+ * अगर program is allowed to access maps, so check rcu_पढ़ो_lock_held in
  * all three functions.
  */
-BPF_CALL_2(bpf_map_lookup_elem, struct bpf_map *, map, void *, key)
-{
-	WARN_ON_ONCE(!rcu_read_lock_held());
-	return (unsigned long) map->ops->map_lookup_elem(map, key);
-}
+BPF_CALL_2(bpf_map_lookup_elem, काष्ठा bpf_map *, map, व्योम *, key)
+अणु
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
+	वापस (अचिन्हित दीर्घ) map->ops->map_lookup_elem(map, key);
+पूर्ण
 
-const struct bpf_func_proto bpf_map_lookup_elem_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_map_lookup_elem_proto = अणु
 	.func		= bpf_map_lookup_elem,
 	.gpl_only	= false,
 	.pkt_access	= true,
-	.ret_type	= RET_PTR_TO_MAP_VALUE_OR_NULL,
+	.ret_type	= RET_PTR_TO_MAP_VALUE_OR_शून्य,
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_PTR_TO_MAP_KEY,
-};
+पूर्ण;
 
-BPF_CALL_4(bpf_map_update_elem, struct bpf_map *, map, void *, key,
-	   void *, value, u64, flags)
-{
-	WARN_ON_ONCE(!rcu_read_lock_held());
-	return map->ops->map_update_elem(map, key, value, flags);
-}
+BPF_CALL_4(bpf_map_update_elem, काष्ठा bpf_map *, map, व्योम *, key,
+	   व्योम *, value, u64, flags)
+अणु
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
+	वापस map->ops->map_update_elem(map, key, value, flags);
+पूर्ण
 
-const struct bpf_func_proto bpf_map_update_elem_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_map_update_elem_proto = अणु
 	.func		= bpf_map_update_elem,
 	.gpl_only	= false,
 	.pkt_access	= true,
@@ -58,29 +59,29 @@ const struct bpf_func_proto bpf_map_update_elem_proto = {
 	.arg2_type	= ARG_PTR_TO_MAP_KEY,
 	.arg3_type	= ARG_PTR_TO_MAP_VALUE,
 	.arg4_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_2(bpf_map_delete_elem, struct bpf_map *, map, void *, key)
-{
-	WARN_ON_ONCE(!rcu_read_lock_held());
-	return map->ops->map_delete_elem(map, key);
-}
+BPF_CALL_2(bpf_map_delete_elem, काष्ठा bpf_map *, map, व्योम *, key)
+अणु
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
+	वापस map->ops->map_delete_elem(map, key);
+पूर्ण
 
-const struct bpf_func_proto bpf_map_delete_elem_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_map_delete_elem_proto = अणु
 	.func		= bpf_map_delete_elem,
 	.gpl_only	= false,
 	.pkt_access	= true,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_PTR_TO_MAP_KEY,
-};
+पूर्ण;
 
-BPF_CALL_3(bpf_map_push_elem, struct bpf_map *, map, void *, value, u64, flags)
-{
-	return map->ops->map_push_elem(map, value, flags);
-}
+BPF_CALL_3(bpf_map_push_elem, काष्ठा bpf_map *, map, व्योम *, value, u64, flags)
+अणु
+	वापस map->ops->map_push_elem(map, value, flags);
+पूर्ण
 
-const struct bpf_func_proto bpf_map_push_elem_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_map_push_elem_proto = अणु
 	.func		= bpf_map_push_elem,
 	.gpl_only	= false,
 	.pkt_access	= true,
@@ -88,503 +89,503 @@ const struct bpf_func_proto bpf_map_push_elem_proto = {
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_PTR_TO_MAP_VALUE,
 	.arg3_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_2(bpf_map_pop_elem, struct bpf_map *, map, void *, value)
-{
-	return map->ops->map_pop_elem(map, value);
-}
+BPF_CALL_2(bpf_map_pop_elem, काष्ठा bpf_map *, map, व्योम *, value)
+अणु
+	वापस map->ops->map_pop_elem(map, value);
+पूर्ण
 
-const struct bpf_func_proto bpf_map_pop_elem_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_map_pop_elem_proto = अणु
 	.func		= bpf_map_pop_elem,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_PTR_TO_UNINIT_MAP_VALUE,
-};
+पूर्ण;
 
-BPF_CALL_2(bpf_map_peek_elem, struct bpf_map *, map, void *, value)
-{
-	return map->ops->map_peek_elem(map, value);
-}
+BPF_CALL_2(bpf_map_peek_elem, काष्ठा bpf_map *, map, व्योम *, value)
+अणु
+	वापस map->ops->map_peek_elem(map, value);
+पूर्ण
 
-const struct bpf_func_proto bpf_map_peek_elem_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_map_peek_elem_proto = अणु
 	.func		= bpf_map_peek_elem,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_PTR_TO_UNINIT_MAP_VALUE,
-};
+पूर्ण;
 
-const struct bpf_func_proto bpf_get_prandom_u32_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_get_pअक्रमom_u32_proto = अणु
 	.func		= bpf_user_rnd_u32,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
-};
+पूर्ण;
 
 BPF_CALL_0(bpf_get_smp_processor_id)
-{
-	return smp_processor_id();
-}
+अणु
+	वापस smp_processor_id();
+पूर्ण
 
-const struct bpf_func_proto bpf_get_smp_processor_id_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_get_smp_processor_id_proto = अणु
 	.func		= bpf_get_smp_processor_id,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
-};
+पूर्ण;
 
 BPF_CALL_0(bpf_get_numa_node_id)
-{
-	return numa_node_id();
-}
+अणु
+	वापस numa_node_id();
+पूर्ण
 
-const struct bpf_func_proto bpf_get_numa_node_id_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_get_numa_node_id_proto = अणु
 	.func		= bpf_get_numa_node_id,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
-};
+पूर्ण;
 
-BPF_CALL_0(bpf_ktime_get_ns)
-{
-	/* NMI safe access to clock monotonic */
-	return ktime_get_mono_fast_ns();
-}
+BPF_CALL_0(bpf_kसमय_get_ns)
+अणु
+	/* NMI safe access to घड़ी monotonic */
+	वापस kसमय_get_mono_fast_ns();
+पूर्ण
 
-const struct bpf_func_proto bpf_ktime_get_ns_proto = {
-	.func		= bpf_ktime_get_ns,
+स्थिर काष्ठा bpf_func_proto bpf_kसमय_get_ns_proto = अणु
+	.func		= bpf_kसमय_get_ns,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
-};
+पूर्ण;
 
-BPF_CALL_0(bpf_ktime_get_boot_ns)
-{
-	/* NMI safe access to clock boottime */
-	return ktime_get_boot_fast_ns();
-}
+BPF_CALL_0(bpf_kसमय_get_boot_ns)
+अणु
+	/* NMI safe access to घड़ी bootसमय */
+	वापस kसमय_get_boot_fast_ns();
+पूर्ण
 
-const struct bpf_func_proto bpf_ktime_get_boot_ns_proto = {
-	.func		= bpf_ktime_get_boot_ns,
+स्थिर काष्ठा bpf_func_proto bpf_kसमय_get_boot_ns_proto = अणु
+	.func		= bpf_kसमय_get_boot_ns,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
-};
+पूर्ण;
 
-BPF_CALL_0(bpf_ktime_get_coarse_ns)
-{
-	return ktime_get_coarse_ns();
-}
+BPF_CALL_0(bpf_kसमय_get_coarse_ns)
+अणु
+	वापस kसमय_get_coarse_ns();
+पूर्ण
 
-const struct bpf_func_proto bpf_ktime_get_coarse_ns_proto = {
-	.func		= bpf_ktime_get_coarse_ns,
+स्थिर काष्ठा bpf_func_proto bpf_kसमय_get_coarse_ns_proto = अणु
+	.func		= bpf_kसमय_get_coarse_ns,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
-};
+पूर्ण;
 
 BPF_CALL_0(bpf_get_current_pid_tgid)
-{
-	struct task_struct *task = current;
+अणु
+	काष्ठा task_काष्ठा *task = current;
 
-	if (unlikely(!task))
-		return -EINVAL;
+	अगर (unlikely(!task))
+		वापस -EINVAL;
 
-	return (u64) task->tgid << 32 | task->pid;
-}
+	वापस (u64) task->tgid << 32 | task->pid;
+पूर्ण
 
-const struct bpf_func_proto bpf_get_current_pid_tgid_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_get_current_pid_tgid_proto = अणु
 	.func		= bpf_get_current_pid_tgid,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
-};
+पूर्ण;
 
 BPF_CALL_0(bpf_get_current_uid_gid)
-{
-	struct task_struct *task = current;
+अणु
+	काष्ठा task_काष्ठा *task = current;
 	kuid_t uid;
 	kgid_t gid;
 
-	if (unlikely(!task))
-		return -EINVAL;
+	अगर (unlikely(!task))
+		वापस -EINVAL;
 
 	current_uid_gid(&uid, &gid);
-	return (u64) from_kgid(&init_user_ns, gid) << 32 |
+	वापस (u64) from_kgid(&init_user_ns, gid) << 32 |
 		     from_kuid(&init_user_ns, uid);
-}
+पूर्ण
 
-const struct bpf_func_proto bpf_get_current_uid_gid_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_get_current_uid_gid_proto = अणु
 	.func		= bpf_get_current_uid_gid,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
-};
+पूर्ण;
 
-BPF_CALL_2(bpf_get_current_comm, char *, buf, u32, size)
-{
-	struct task_struct *task = current;
+BPF_CALL_2(bpf_get_current_comm, अक्षर *, buf, u32, size)
+अणु
+	काष्ठा task_काष्ठा *task = current;
 
-	if (unlikely(!task))
-		goto err_clear;
+	अगर (unlikely(!task))
+		जाओ err_clear;
 
-	strncpy(buf, task->comm, size);
+	म_नकलन(buf, task->comm, size);
 
-	/* Verifier guarantees that size > 0. For task->comm exceeding
+	/* Verअगरier guarantees that size > 0. For task->comm exceeding
 	 * size, guarantee that buf is %NUL-terminated. Unconditionally
-	 * done here to save the size test.
+	 * करोne here to save the size test.
 	 */
 	buf[size - 1] = 0;
-	return 0;
+	वापस 0;
 err_clear:
-	memset(buf, 0, size);
-	return -EINVAL;
-}
+	स_रखो(buf, 0, size);
+	वापस -EINVAL;
+पूर्ण
 
-const struct bpf_func_proto bpf_get_current_comm_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_get_current_comm_proto = अणु
 	.func		= bpf_get_current_comm,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_PTR_TO_UNINIT_MEM,
 	.arg2_type	= ARG_CONST_SIZE,
-};
+पूर्ण;
 
-#if defined(CONFIG_QUEUED_SPINLOCKS) || defined(CONFIG_BPF_ARCH_SPINLOCK)
+#अगर defined(CONFIG_QUEUED_SPINLOCKS) || defined(CONFIG_BPF_ARCH_SPINLOCK)
 
-static inline void __bpf_spin_lock(struct bpf_spin_lock *lock)
-{
-	arch_spinlock_t *l = (void *)lock;
-	union {
+अटल अंतरभूत व्योम __bpf_spin_lock(काष्ठा bpf_spin_lock *lock)
+अणु
+	arch_spinlock_t *l = (व्योम *)lock;
+	जोड़ अणु
 		__u32 val;
 		arch_spinlock_t lock;
-	} u = { .lock = __ARCH_SPIN_LOCK_UNLOCKED };
+	पूर्ण u = अणु .lock = __ARCH_SPIN_LOCK_UNLOCKED पूर्ण;
 
-	compiletime_assert(u.val == 0, "__ARCH_SPIN_LOCK_UNLOCKED not 0");
-	BUILD_BUG_ON(sizeof(*l) != sizeof(__u32));
-	BUILD_BUG_ON(sizeof(*lock) != sizeof(__u32));
+	compileसमय_निश्चित(u.val == 0, "__ARCH_SPIN_LOCK_UNLOCKED not 0");
+	BUILD_BUG_ON(माप(*l) != माप(__u32));
+	BUILD_BUG_ON(माप(*lock) != माप(__u32));
 	arch_spin_lock(l);
-}
+पूर्ण
 
-static inline void __bpf_spin_unlock(struct bpf_spin_lock *lock)
-{
-	arch_spinlock_t *l = (void *)lock;
+अटल अंतरभूत व्योम __bpf_spin_unlock(काष्ठा bpf_spin_lock *lock)
+अणु
+	arch_spinlock_t *l = (व्योम *)lock;
 
 	arch_spin_unlock(l);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline void __bpf_spin_lock(struct bpf_spin_lock *lock)
-{
-	atomic_t *l = (void *)lock;
+अटल अंतरभूत व्योम __bpf_spin_lock(काष्ठा bpf_spin_lock *lock)
+अणु
+	atomic_t *l = (व्योम *)lock;
 
-	BUILD_BUG_ON(sizeof(*l) != sizeof(*lock));
-	do {
-		atomic_cond_read_relaxed(l, !VAL);
-	} while (atomic_xchg(l, 1));
-}
+	BUILD_BUG_ON(माप(*l) != माप(*lock));
+	करो अणु
+		atomic_cond_पढ़ो_relaxed(l, !VAL);
+	पूर्ण जबतक (atomic_xchg(l, 1));
+पूर्ण
 
-static inline void __bpf_spin_unlock(struct bpf_spin_lock *lock)
-{
-	atomic_t *l = (void *)lock;
+अटल अंतरभूत व्योम __bpf_spin_unlock(काष्ठा bpf_spin_lock *lock)
+अणु
+	atomic_t *l = (व्योम *)lock;
 
 	atomic_set_release(l, 0);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static DEFINE_PER_CPU(unsigned long, irqsave_flags);
+अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, irqsave_flags);
 
-notrace BPF_CALL_1(bpf_spin_lock, struct bpf_spin_lock *, lock)
-{
-	unsigned long flags;
+notrace BPF_CALL_1(bpf_spin_lock, काष्ठा bpf_spin_lock *, lock)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	__bpf_spin_lock(lock);
-	__this_cpu_write(irqsave_flags, flags);
-	return 0;
-}
+	__this_cpu_ग_लिखो(irqsave_flags, flags);
+	वापस 0;
+पूर्ण
 
-const struct bpf_func_proto bpf_spin_lock_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_spin_lock_proto = अणु
 	.func		= bpf_spin_lock,
 	.gpl_only	= false,
 	.ret_type	= RET_VOID,
 	.arg1_type	= ARG_PTR_TO_SPIN_LOCK,
-};
+पूर्ण;
 
-notrace BPF_CALL_1(bpf_spin_unlock, struct bpf_spin_lock *, lock)
-{
-	unsigned long flags;
+notrace BPF_CALL_1(bpf_spin_unlock, काष्ठा bpf_spin_lock *, lock)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	flags = __this_cpu_read(irqsave_flags);
+	flags = __this_cpu_पढ़ो(irqsave_flags);
 	__bpf_spin_unlock(lock);
 	local_irq_restore(flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct bpf_func_proto bpf_spin_unlock_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_spin_unlock_proto = अणु
 	.func		= bpf_spin_unlock,
 	.gpl_only	= false,
 	.ret_type	= RET_VOID,
 	.arg1_type	= ARG_PTR_TO_SPIN_LOCK,
-};
+पूर्ण;
 
-void copy_map_value_locked(struct bpf_map *map, void *dst, void *src,
+व्योम copy_map_value_locked(काष्ठा bpf_map *map, व्योम *dst, व्योम *src,
 			   bool lock_src)
-{
-	struct bpf_spin_lock *lock;
+अणु
+	काष्ठा bpf_spin_lock *lock;
 
-	if (lock_src)
+	अगर (lock_src)
 		lock = src + map->spin_lock_off;
-	else
+	अन्यथा
 		lock = dst + map->spin_lock_off;
 	preempt_disable();
 	____bpf_spin_lock(lock);
 	copy_map_value(map, dst, src);
 	____bpf_spin_unlock(lock);
 	preempt_enable();
-}
+पूर्ण
 
-BPF_CALL_0(bpf_jiffies64)
-{
-	return get_jiffies_64();
-}
+BPF_CALL_0(bpf_jअगरfies64)
+अणु
+	वापस get_jअगरfies_64();
+पूर्ण
 
-const struct bpf_func_proto bpf_jiffies64_proto = {
-	.func		= bpf_jiffies64,
+स्थिर काष्ठा bpf_func_proto bpf_jअगरfies64_proto = अणु
+	.func		= bpf_jअगरfies64,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
-};
+पूर्ण;
 
-#ifdef CONFIG_CGROUPS
+#अगर_घोषित CONFIG_CGROUPS
 BPF_CALL_0(bpf_get_current_cgroup_id)
-{
-	struct cgroup *cgrp = task_dfl_cgroup(current);
+अणु
+	काष्ठा cgroup *cgrp = task_dfl_cgroup(current);
 
-	return cgroup_id(cgrp);
-}
+	वापस cgroup_id(cgrp);
+पूर्ण
 
-const struct bpf_func_proto bpf_get_current_cgroup_id_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_get_current_cgroup_id_proto = अणु
 	.func		= bpf_get_current_cgroup_id,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
-};
+पूर्ण;
 
-BPF_CALL_1(bpf_get_current_ancestor_cgroup_id, int, ancestor_level)
-{
-	struct cgroup *cgrp = task_dfl_cgroup(current);
-	struct cgroup *ancestor;
+BPF_CALL_1(bpf_get_current_ancestor_cgroup_id, पूर्णांक, ancestor_level)
+अणु
+	काष्ठा cgroup *cgrp = task_dfl_cgroup(current);
+	काष्ठा cgroup *ancestor;
 
 	ancestor = cgroup_ancestor(cgrp, ancestor_level);
-	if (!ancestor)
-		return 0;
-	return cgroup_id(ancestor);
-}
+	अगर (!ancestor)
+		वापस 0;
+	वापस cgroup_id(ancestor);
+पूर्ण
 
-const struct bpf_func_proto bpf_get_current_ancestor_cgroup_id_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_get_current_ancestor_cgroup_id_proto = अणु
 	.func		= bpf_get_current_ancestor_cgroup_id,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-#ifdef CONFIG_CGROUP_BPF
-DECLARE_PER_CPU(struct bpf_cgroup_storage_info,
+#अगर_घोषित CONFIG_CGROUP_BPF
+DECLARE_PER_CPU(काष्ठा bpf_cgroup_storage_info,
 		bpf_cgroup_storage_info[BPF_CGROUP_STORAGE_NEST_MAX]);
 
-BPF_CALL_2(bpf_get_local_storage, struct bpf_map *, map, u64, flags)
-{
+BPF_CALL_2(bpf_get_local_storage, काष्ठा bpf_map *, map, u64, flags)
+अणु
 	/* flags argument is not used now,
 	 * but provides an ability to extend the API.
-	 * verifier checks that its value is correct.
+	 * verअगरier checks that its value is correct.
 	 */
-	enum bpf_cgroup_storage_type stype = cgroup_storage_type(map);
-	struct bpf_cgroup_storage *storage = NULL;
-	void *ptr;
-	int i;
+	क्रमागत bpf_cgroup_storage_type stype = cgroup_storage_type(map);
+	काष्ठा bpf_cgroup_storage *storage = शून्य;
+	व्योम *ptr;
+	पूर्णांक i;
 
-	for (i = 0; i < BPF_CGROUP_STORAGE_NEST_MAX; i++) {
-		if (unlikely(this_cpu_read(bpf_cgroup_storage_info[i].task) != current))
-			continue;
+	क्रम (i = 0; i < BPF_CGROUP_STORAGE_NEST_MAX; i++) अणु
+		अगर (unlikely(this_cpu_पढ़ो(bpf_cgroup_storage_info[i].task) != current))
+			जारी;
 
-		storage = this_cpu_read(bpf_cgroup_storage_info[i].storage[stype]);
-		break;
-	}
+		storage = this_cpu_पढ़ो(bpf_cgroup_storage_info[i].storage[stype]);
+		अवरोध;
+	पूर्ण
 
-	if (stype == BPF_CGROUP_STORAGE_SHARED)
+	अगर (stype == BPF_CGROUP_STORAGE_SHARED)
 		ptr = &READ_ONCE(storage->buf)->data[0];
-	else
+	अन्यथा
 		ptr = this_cpu_ptr(storage->percpu_buf);
 
-	return (unsigned long)ptr;
-}
+	वापस (अचिन्हित दीर्घ)ptr;
+पूर्ण
 
-const struct bpf_func_proto bpf_get_local_storage_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_get_local_storage_proto = अणु
 	.func		= bpf_get_local_storage,
 	.gpl_only	= false,
 	.ret_type	= RET_PTR_TO_MAP_VALUE,
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_ANYTHING,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#define BPF_STRTOX_BASE_MASK 0x1F
+#घोषणा BPF_STRTOX_BASE_MASK 0x1F
 
-static int __bpf_strtoull(const char *buf, size_t buf_len, u64 flags,
-			  unsigned long long *res, bool *is_negative)
-{
-	unsigned int base = flags & BPF_STRTOX_BASE_MASK;
-	const char *cur_buf = buf;
-	size_t cur_len = buf_len;
-	unsigned int consumed;
-	size_t val_len;
-	char str[64];
+अटल पूर्णांक __bpf_म_से_अदीर्घl(स्थिर अक्षर *buf, माप_प्रकार buf_len, u64 flags,
+			  अचिन्हित दीर्घ दीर्घ *res, bool *is_negative)
+अणु
+	अचिन्हित पूर्णांक base = flags & BPF_STRTOX_BASE_MASK;
+	स्थिर अक्षर *cur_buf = buf;
+	माप_प्रकार cur_len = buf_len;
+	अचिन्हित पूर्णांक consumed;
+	माप_प्रकार val_len;
+	अक्षर str[64];
 
-	if (!buf || !buf_len || !res || !is_negative)
-		return -EINVAL;
+	अगर (!buf || !buf_len || !res || !is_negative)
+		वापस -EINVAL;
 
-	if (base != 0 && base != 8 && base != 10 && base != 16)
-		return -EINVAL;
+	अगर (base != 0 && base != 8 && base != 10 && base != 16)
+		वापस -EINVAL;
 
-	if (flags & ~BPF_STRTOX_BASE_MASK)
-		return -EINVAL;
+	अगर (flags & ~BPF_STRTOX_BASE_MASK)
+		वापस -EINVAL;
 
-	while (cur_buf < buf + buf_len && isspace(*cur_buf))
+	जबतक (cur_buf < buf + buf_len && है_खाली(*cur_buf))
 		++cur_buf;
 
 	*is_negative = (cur_buf < buf + buf_len && *cur_buf == '-');
-	if (*is_negative)
+	अगर (*is_negative)
 		++cur_buf;
 
 	consumed = cur_buf - buf;
 	cur_len -= consumed;
-	if (!cur_len)
-		return -EINVAL;
+	अगर (!cur_len)
+		वापस -EINVAL;
 
-	cur_len = min(cur_len, sizeof(str) - 1);
-	memcpy(str, cur_buf, cur_len);
+	cur_len = min(cur_len, माप(str) - 1);
+	स_नकल(str, cur_buf, cur_len);
 	str[cur_len] = '\0';
 	cur_buf = str;
 
-	cur_buf = _parse_integer_fixup_radix(cur_buf, &base);
-	val_len = _parse_integer(cur_buf, base, res);
+	cur_buf = _parse_पूर्णांकeger_fixup_radix(cur_buf, &base);
+	val_len = _parse_पूर्णांकeger(cur_buf, base, res);
 
-	if (val_len & KSTRTOX_OVERFLOW)
-		return -ERANGE;
+	अगर (val_len & KSTRTOX_OVERFLOW)
+		वापस -दुस्फल;
 
-	if (val_len == 0)
-		return -EINVAL;
+	अगर (val_len == 0)
+		वापस -EINVAL;
 
 	cur_buf += val_len;
 	consumed += cur_buf - str;
 
-	return consumed;
-}
+	वापस consumed;
+पूर्ण
 
-static int __bpf_strtoll(const char *buf, size_t buf_len, u64 flags,
-			 long long *res)
-{
-	unsigned long long _res;
+अटल पूर्णांक __bpf_म_से_दीर्घl(स्थिर अक्षर *buf, माप_प्रकार buf_len, u64 flags,
+			 दीर्घ दीर्घ *res)
+अणु
+	अचिन्हित दीर्घ दीर्घ _res;
 	bool is_negative;
-	int err;
+	पूर्णांक err;
 
-	err = __bpf_strtoull(buf, buf_len, flags, &_res, &is_negative);
-	if (err < 0)
-		return err;
-	if (is_negative) {
-		if ((long long)-_res > 0)
-			return -ERANGE;
+	err = __bpf_म_से_अदीर्घl(buf, buf_len, flags, &_res, &is_negative);
+	अगर (err < 0)
+		वापस err;
+	अगर (is_negative) अणु
+		अगर ((दीर्घ दीर्घ)-_res > 0)
+			वापस -दुस्फल;
 		*res = -_res;
-	} else {
-		if ((long long)_res < 0)
-			return -ERANGE;
+	पूर्ण अन्यथा अणु
+		अगर ((दीर्घ दीर्घ)_res < 0)
+			वापस -दुस्फल;
 		*res = _res;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-BPF_CALL_4(bpf_strtol, const char *, buf, size_t, buf_len, u64, flags,
-	   long *, res)
-{
-	long long _res;
-	int err;
+BPF_CALL_4(bpf_म_से_दीर्घ, स्थिर अक्षर *, buf, माप_प्रकार, buf_len, u64, flags,
+	   दीर्घ *, res)
+अणु
+	दीर्घ दीर्घ _res;
+	पूर्णांक err;
 
-	err = __bpf_strtoll(buf, buf_len, flags, &_res);
-	if (err < 0)
-		return err;
-	if (_res != (long)_res)
-		return -ERANGE;
+	err = __bpf_म_से_दीर्घl(buf, buf_len, flags, &_res);
+	अगर (err < 0)
+		वापस err;
+	अगर (_res != (दीर्घ)_res)
+		वापस -दुस्फल;
 	*res = _res;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct bpf_func_proto bpf_strtol_proto = {
-	.func		= bpf_strtol,
+स्थिर काष्ठा bpf_func_proto bpf_म_से_दीर्घ_proto = अणु
+	.func		= bpf_म_से_दीर्घ,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_PTR_TO_MEM,
 	.arg2_type	= ARG_CONST_SIZE,
 	.arg3_type	= ARG_ANYTHING,
 	.arg4_type	= ARG_PTR_TO_LONG,
-};
+पूर्ण;
 
-BPF_CALL_4(bpf_strtoul, const char *, buf, size_t, buf_len, u64, flags,
-	   unsigned long *, res)
-{
-	unsigned long long _res;
+BPF_CALL_4(bpf_म_से_अदीर्घ, स्थिर अक्षर *, buf, माप_प्रकार, buf_len, u64, flags,
+	   अचिन्हित दीर्घ *, res)
+अणु
+	अचिन्हित दीर्घ दीर्घ _res;
 	bool is_negative;
-	int err;
+	पूर्णांक err;
 
-	err = __bpf_strtoull(buf, buf_len, flags, &_res, &is_negative);
-	if (err < 0)
-		return err;
-	if (is_negative)
-		return -EINVAL;
-	if (_res != (unsigned long)_res)
-		return -ERANGE;
+	err = __bpf_म_से_अदीर्घl(buf, buf_len, flags, &_res, &is_negative);
+	अगर (err < 0)
+		वापस err;
+	अगर (is_negative)
+		वापस -EINVAL;
+	अगर (_res != (अचिन्हित दीर्घ)_res)
+		वापस -दुस्फल;
 	*res = _res;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct bpf_func_proto bpf_strtoul_proto = {
-	.func		= bpf_strtoul,
+स्थिर काष्ठा bpf_func_proto bpf_म_से_अदीर्घ_proto = अणु
+	.func		= bpf_म_से_अदीर्घ,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_PTR_TO_MEM,
 	.arg2_type	= ARG_CONST_SIZE,
 	.arg3_type	= ARG_ANYTHING,
 	.arg4_type	= ARG_PTR_TO_LONG,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
 BPF_CALL_4(bpf_get_ns_current_pid_tgid, u64, dev, u64, ino,
-	   struct bpf_pidns_info *, nsdata, u32, size)
-{
-	struct task_struct *task = current;
-	struct pid_namespace *pidns;
-	int err = -EINVAL;
+	   काष्ठा bpf_pidns_info *, nsdata, u32, size)
+अणु
+	काष्ठा task_काष्ठा *task = current;
+	काष्ठा pid_namespace *pidns;
+	पूर्णांक err = -EINVAL;
 
-	if (unlikely(size != sizeof(struct bpf_pidns_info)))
-		goto clear;
+	अगर (unlikely(size != माप(काष्ठा bpf_pidns_info)))
+		जाओ clear;
 
-	if (unlikely((u64)(dev_t)dev != dev))
-		goto clear;
+	अगर (unlikely((u64)(dev_t)dev != dev))
+		जाओ clear;
 
-	if (unlikely(!task))
-		goto clear;
+	अगर (unlikely(!task))
+		जाओ clear;
 
 	pidns = task_active_pid_ns(task);
-	if (unlikely(!pidns)) {
+	अगर (unlikely(!pidns)) अणु
 		err = -ENOENT;
-		goto clear;
-	}
+		जाओ clear;
+	पूर्ण
 
-	if (!ns_match(&pidns->ns, (dev_t)dev, ino))
-		goto clear;
+	अगर (!ns_match(&pidns->ns, (dev_t)dev, ino))
+		जाओ clear;
 
 	nsdata->pid = task_pid_nr_ns(task, pidns);
 	nsdata->tgid = task_tgid_nr_ns(task, pidns);
-	return 0;
+	वापस 0;
 clear:
-	memset((void *)nsdata, 0, (size_t) size);
-	return err;
-}
+	स_रखो((व्योम *)nsdata, 0, (माप_प्रकार) size);
+	वापस err;
+पूर्ण
 
-const struct bpf_func_proto bpf_get_ns_current_pid_tgid_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_get_ns_current_pid_tgid_proto = अणु
 	.func		= bpf_get_ns_current_pid_tgid,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
@@ -592,24 +593,24 @@ const struct bpf_func_proto bpf_get_ns_current_pid_tgid_proto = {
 	.arg2_type	= ARG_ANYTHING,
 	.arg3_type      = ARG_PTR_TO_UNINIT_MEM,
 	.arg4_type      = ARG_CONST_SIZE,
-};
+पूर्ण;
 
-static const struct bpf_func_proto bpf_get_raw_smp_processor_id_proto = {
+अटल स्थिर काष्ठा bpf_func_proto bpf_get_raw_smp_processor_id_proto = अणु
 	.func		= bpf_get_raw_cpu_id,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
-};
+पूर्ण;
 
-BPF_CALL_5(bpf_event_output_data, void *, ctx, struct bpf_map *, map,
-	   u64, flags, void *, data, u64, size)
-{
-	if (unlikely(flags & ~(BPF_F_INDEX_MASK)))
-		return -EINVAL;
+BPF_CALL_5(bpf_event_output_data, व्योम *, ctx, काष्ठा bpf_map *, map,
+	   u64, flags, व्योम *, data, u64, size)
+अणु
+	अगर (unlikely(flags & ~(BPF_F_INDEX_MASK)))
+		वापस -EINVAL;
 
-	return bpf_event_output(map, flags, data, size, NULL, 0, NULL);
-}
+	वापस bpf_event_output(map, flags, data, size, शून्य, 0, शून्य);
+पूर्ण
 
-const struct bpf_func_proto bpf_event_output_data_proto =  {
+स्थिर काष्ठा bpf_func_proto bpf_event_output_data_proto =  अणु
 	.func		= bpf_event_output_data,
 	.gpl_only       = true,
 	.ret_type       = RET_INTEGER,
@@ -618,470 +619,470 @@ const struct bpf_func_proto bpf_event_output_data_proto =  {
 	.arg3_type      = ARG_ANYTHING,
 	.arg4_type      = ARG_PTR_TO_MEM,
 	.arg5_type      = ARG_CONST_SIZE_OR_ZERO,
-};
+पूर्ण;
 
-BPF_CALL_3(bpf_copy_from_user, void *, dst, u32, size,
-	   const void __user *, user_ptr)
-{
-	int ret = copy_from_user(dst, user_ptr, size);
+BPF_CALL_3(bpf_copy_from_user, व्योम *, dst, u32, size,
+	   स्थिर व्योम __user *, user_ptr)
+अणु
+	पूर्णांक ret = copy_from_user(dst, user_ptr, size);
 
-	if (unlikely(ret)) {
-		memset(dst, 0, size);
+	अगर (unlikely(ret)) अणु
+		स_रखो(dst, 0, size);
 		ret = -EFAULT;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct bpf_func_proto bpf_copy_from_user_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_copy_from_user_proto = अणु
 	.func		= bpf_copy_from_user,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_PTR_TO_UNINIT_MEM,
 	.arg2_type	= ARG_CONST_SIZE_OR_ZERO,
 	.arg3_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_2(bpf_per_cpu_ptr, const void *, ptr, u32, cpu)
-{
-	if (cpu >= nr_cpu_ids)
-		return (unsigned long)NULL;
+BPF_CALL_2(bpf_per_cpu_ptr, स्थिर व्योम *, ptr, u32, cpu)
+अणु
+	अगर (cpu >= nr_cpu_ids)
+		वापस (अचिन्हित दीर्घ)शून्य;
 
-	return (unsigned long)per_cpu_ptr((const void __percpu *)ptr, cpu);
-}
+	वापस (अचिन्हित दीर्घ)per_cpu_ptr((स्थिर व्योम __percpu *)ptr, cpu);
+पूर्ण
 
-const struct bpf_func_proto bpf_per_cpu_ptr_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_per_cpu_ptr_proto = अणु
 	.func		= bpf_per_cpu_ptr,
 	.gpl_only	= false,
-	.ret_type	= RET_PTR_TO_MEM_OR_BTF_ID_OR_NULL,
+	.ret_type	= RET_PTR_TO_MEM_OR_BTF_ID_OR_शून्य,
 	.arg1_type	= ARG_PTR_TO_PERCPU_BTF_ID,
 	.arg2_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_1(bpf_this_cpu_ptr, const void *, percpu_ptr)
-{
-	return (unsigned long)this_cpu_ptr((const void __percpu *)percpu_ptr);
-}
+BPF_CALL_1(bpf_this_cpu_ptr, स्थिर व्योम *, percpu_ptr)
+अणु
+	वापस (अचिन्हित दीर्घ)this_cpu_ptr((स्थिर व्योम __percpu *)percpu_ptr);
+पूर्ण
 
-const struct bpf_func_proto bpf_this_cpu_ptr_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_this_cpu_ptr_proto = अणु
 	.func		= bpf_this_cpu_ptr,
 	.gpl_only	= false,
 	.ret_type	= RET_PTR_TO_MEM_OR_BTF_ID,
 	.arg1_type	= ARG_PTR_TO_PERCPU_BTF_ID,
-};
+पूर्ण;
 
-static int bpf_trace_copy_string(char *buf, void *unsafe_ptr, char fmt_ptype,
-		size_t bufsz)
-{
-	void __user *user_ptr = (__force void __user *)unsafe_ptr;
+अटल पूर्णांक bpf_trace_copy_string(अक्षर *buf, व्योम *unsafe_ptr, अक्षर fmt_ptype,
+		माप_प्रकार bufsz)
+अणु
+	व्योम __user *user_ptr = (__क्रमce व्योम __user *)unsafe_ptr;
 
 	buf[0] = 0;
 
-	switch (fmt_ptype) {
-	case 's':
-#ifdef CONFIG_ARCH_HAS_NON_OVERLAPPING_ADDRESS_SPACE
-		if ((unsigned long)unsafe_ptr < TASK_SIZE)
-			return strncpy_from_user_nofault(buf, user_ptr, bufsz);
+	चयन (fmt_ptype) अणु
+	हाल 's':
+#अगर_घोषित CONFIG_ARCH_HAS_NON_OVERLAPPING_ADDRESS_SPACE
+		अगर ((अचिन्हित दीर्घ)unsafe_ptr < TASK_SIZE)
+			वापस म_नकलन_from_user_nofault(buf, user_ptr, bufsz);
 		fallthrough;
-#endif
-	case 'k':
-		return strncpy_from_kernel_nofault(buf, unsafe_ptr, bufsz);
-	case 'u':
-		return strncpy_from_user_nofault(buf, user_ptr, bufsz);
-	}
+#पूर्ण_अगर
+	हाल 'k':
+		वापस म_नकलन_from_kernel_nofault(buf, unsafe_ptr, bufsz);
+	हाल 'u':
+		वापस म_नकलन_from_user_nofault(buf, user_ptr, bufsz);
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-/* Per-cpu temp buffers used by printf-like helpers to store the bprintf binary
+/* Per-cpu temp buffers used by म_लिखो-like helpers to store the bम_लिखो binary
  * arguments representation.
  */
-#define MAX_BPRINTF_BUF_LEN	512
+#घोषणा MAX_BPRINTF_BUF_LEN	512
 
-/* Support executing three nested bprintf helper calls on a given CPU */
-#define MAX_BPRINTF_NEST_LEVEL	3
-struct bpf_bprintf_buffers {
-	char tmp_bufs[MAX_BPRINTF_NEST_LEVEL][MAX_BPRINTF_BUF_LEN];
-};
-static DEFINE_PER_CPU(struct bpf_bprintf_buffers, bpf_bprintf_bufs);
-static DEFINE_PER_CPU(int, bpf_bprintf_nest_level);
+/* Support executing three nested bम_लिखो helper calls on a given CPU */
+#घोषणा MAX_BPRINTF_NEST_LEVEL	3
+काष्ठा bpf_bम_लिखो_buffers अणु
+	अक्षर पंचांगp_bufs[MAX_BPRINTF_NEST_LEVEL][MAX_BPRINTF_BUF_LEN];
+पूर्ण;
+अटल DEFINE_PER_CPU(काष्ठा bpf_bम_लिखो_buffers, bpf_bम_लिखो_bufs);
+अटल DEFINE_PER_CPU(पूर्णांक, bpf_bम_लिखो_nest_level);
 
-static int try_get_fmt_tmp_buf(char **tmp_buf)
-{
-	struct bpf_bprintf_buffers *bufs;
-	int nest_level;
+अटल पूर्णांक try_get_fmt_पंचांगp_buf(अक्षर **पंचांगp_buf)
+अणु
+	काष्ठा bpf_bम_लिखो_buffers *bufs;
+	पूर्णांक nest_level;
 
 	preempt_disable();
-	nest_level = this_cpu_inc_return(bpf_bprintf_nest_level);
-	if (WARN_ON_ONCE(nest_level > MAX_BPRINTF_NEST_LEVEL)) {
-		this_cpu_dec(bpf_bprintf_nest_level);
+	nest_level = this_cpu_inc_वापस(bpf_bम_लिखो_nest_level);
+	अगर (WARN_ON_ONCE(nest_level > MAX_BPRINTF_NEST_LEVEL)) अणु
+		this_cpu_dec(bpf_bम_लिखो_nest_level);
 		preempt_enable();
-		return -EBUSY;
-	}
-	bufs = this_cpu_ptr(&bpf_bprintf_bufs);
-	*tmp_buf = bufs->tmp_bufs[nest_level - 1];
+		वापस -EBUSY;
+	पूर्ण
+	bufs = this_cpu_ptr(&bpf_bम_लिखो_bufs);
+	*पंचांगp_buf = bufs->पंचांगp_bufs[nest_level - 1];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void bpf_bprintf_cleanup(void)
-{
-	if (this_cpu_read(bpf_bprintf_nest_level)) {
-		this_cpu_dec(bpf_bprintf_nest_level);
+व्योम bpf_bम_लिखो_cleanup(व्योम)
+अणु
+	अगर (this_cpu_पढ़ो(bpf_bम_लिखो_nest_level)) अणु
+		this_cpu_dec(bpf_bम_लिखो_nest_level);
 		preempt_enable();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * bpf_bprintf_prepare - Generic pass on format strings for bprintf-like helpers
+ * bpf_bम_लिखो_prepare - Generic pass on क्रमmat strings क्रम bम_लिखो-like helpers
  *
- * Returns a negative value if fmt is an invalid format string or 0 otherwise.
+ * Returns a negative value अगर fmt is an invalid क्रमmat string or 0 otherwise.
  *
  * This can be used in two ways:
- * - Format string verification only: when bin_args is NULL
- * - Arguments preparation: in addition to the above verification, it writes in
- *   bin_args a binary representation of arguments usable by bstr_printf where
- *   pointers from BPF have been sanitized.
+ * - Format string verअगरication only: when bin_args is शून्य
+ * - Arguments preparation: in addition to the above verअगरication, it ग_लिखोs in
+ *   bin_args a binary representation of arguments usable by bstr_म_लिखो where
+ *   poपूर्णांकers from BPF have been sanitized.
  *
- * In argument preparation mode, if 0 is returned, safe temporary buffers are
- * allocated and bpf_bprintf_cleanup should be called to free them after use.
+ * In argument preparation mode, अगर 0 is वापसed, safe temporary buffers are
+ * allocated and bpf_bम_लिखो_cleanup should be called to मुक्त them after use.
  */
-int bpf_bprintf_prepare(char *fmt, u32 fmt_size, const u64 *raw_args,
+पूर्णांक bpf_bम_लिखो_prepare(अक्षर *fmt, u32 fmt_size, स्थिर u64 *raw_args,
 			u32 **bin_args, u32 num_args)
-{
-	char *unsafe_ptr = NULL, *tmp_buf = NULL, *tmp_buf_end, *fmt_end;
-	size_t sizeof_cur_arg, sizeof_cur_ip;
-	int err, i, num_spec = 0;
+अणु
+	अक्षर *unsafe_ptr = शून्य, *पंचांगp_buf = शून्य, *पंचांगp_buf_end, *fmt_end;
+	माप_प्रकार माप_cur_arg, माप_cur_ip;
+	पूर्णांक err, i, num_spec = 0;
 	u64 cur_arg;
-	char fmt_ptype, cur_ip[16], ip_spec[] = "%pXX";
+	अक्षर fmt_ptype, cur_ip[16], ip_spec[] = "%pXX";
 
 	fmt_end = strnchr(fmt, fmt_size, 0);
-	if (!fmt_end)
-		return -EINVAL;
+	अगर (!fmt_end)
+		वापस -EINVAL;
 	fmt_size = fmt_end - fmt;
 
-	if (bin_args) {
-		if (num_args && try_get_fmt_tmp_buf(&tmp_buf))
-			return -EBUSY;
+	अगर (bin_args) अणु
+		अगर (num_args && try_get_fmt_पंचांगp_buf(&पंचांगp_buf))
+			वापस -EBUSY;
 
-		tmp_buf_end = tmp_buf + MAX_BPRINTF_BUF_LEN;
-		*bin_args = (u32 *)tmp_buf;
-	}
+		पंचांगp_buf_end = पंचांगp_buf + MAX_BPRINTF_BUF_LEN;
+		*bin_args = (u32 *)पंचांगp_buf;
+	पूर्ण
 
-	for (i = 0; i < fmt_size; i++) {
-		if ((!isprint(fmt[i]) && !isspace(fmt[i])) || !isascii(fmt[i])) {
+	क्रम (i = 0; i < fmt_size; i++) अणु
+		अगर ((!है_छाप(fmt[i]) && !है_खाली(fmt[i])) || !isascii(fmt[i])) अणु
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (fmt[i] != '%')
-			continue;
+		अगर (fmt[i] != '%')
+			जारी;
 
-		if (fmt[i + 1] == '%') {
+		अगर (fmt[i + 1] == '%') अणु
 			i++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (num_spec >= num_args) {
+		अगर (num_spec >= num_args) अणु
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* The string is zero-terminated so if fmt[i] != 0, we can
-		 * always access fmt[i + 1], in the worst case it will be a 0
+		/* The string is zero-terminated so अगर fmt[i] != 0, we can
+		 * always access fmt[i + 1], in the worst हाल it will be a 0
 		 */
 		i++;
 
-		/* skip optional "[0 +-][num]" width formatting field */
-		while (fmt[i] == '0' || fmt[i] == '+'  || fmt[i] == '-' ||
+		/* skip optional "[0 +-][num]" width क्रमmatting field */
+		जबतक (fmt[i] == '0' || fmt[i] == '+'  || fmt[i] == '-' ||
 		       fmt[i] == ' ')
 			i++;
-		if (fmt[i] >= '1' && fmt[i] <= '9') {
+		अगर (fmt[i] >= '1' && fmt[i] <= '9') अणु
 			i++;
-			while (fmt[i] >= '0' && fmt[i] <= '9')
+			जबतक (fmt[i] >= '0' && fmt[i] <= '9')
 				i++;
-		}
+		पूर्ण
 
-		if (fmt[i] == 'p') {
-			sizeof_cur_arg = sizeof(long);
+		अगर (fmt[i] == 'p') अणु
+			माप_cur_arg = माप(दीर्घ);
 
-			if ((fmt[i + 1] == 'k' || fmt[i + 1] == 'u') &&
-			    fmt[i + 2] == 's') {
+			अगर ((fmt[i + 1] == 'k' || fmt[i + 1] == 'u') &&
+			    fmt[i + 2] == 's') अणु
 				fmt_ptype = fmt[i + 1];
 				i += 2;
-				goto fmt_str;
-			}
+				जाओ fmt_str;
+			पूर्ण
 
-			if (fmt[i + 1] == 0 || isspace(fmt[i + 1]) ||
-			    ispunct(fmt[i + 1]) || fmt[i + 1] == 'K' ||
+			अगर (fmt[i + 1] == 0 || है_खाली(fmt[i + 1]) ||
+			    है_विराम(fmt[i + 1]) || fmt[i + 1] == 'K' ||
 			    fmt[i + 1] == 'x' || fmt[i + 1] == 's' ||
-			    fmt[i + 1] == 'S') {
-				/* just kernel pointers */
-				if (tmp_buf)
+			    fmt[i + 1] == 'S') अणु
+				/* just kernel poपूर्णांकers */
+				अगर (पंचांगp_buf)
 					cur_arg = raw_args[num_spec];
 				i++;
-				goto nocopy_fmt;
-			}
+				जाओ nocopy_fmt;
+			पूर्ण
 
-			if (fmt[i + 1] == 'B') {
-				if (tmp_buf)  {
-					err = snprintf(tmp_buf,
-						       (tmp_buf_end - tmp_buf),
+			अगर (fmt[i + 1] == 'B') अणु
+				अगर (पंचांगp_buf)  अणु
+					err = snम_लिखो(पंचांगp_buf,
+						       (पंचांगp_buf_end - पंचांगp_buf),
 						       "%pB",
-						       (void *)(long)raw_args[num_spec]);
-					tmp_buf += (err + 1);
-				}
+						       (व्योम *)(दीर्घ)raw_args[num_spec]);
+					पंचांगp_buf += (err + 1);
+				पूर्ण
 
 				i++;
 				num_spec++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			/* only support "%pI4", "%pi4", "%pI6" and "%pi6". */
-			if ((fmt[i + 1] != 'i' && fmt[i + 1] != 'I') ||
-			    (fmt[i + 2] != '4' && fmt[i + 2] != '6')) {
+			अगर ((fmt[i + 1] != 'i' && fmt[i + 1] != 'I') ||
+			    (fmt[i + 2] != '4' && fmt[i + 2] != '6')) अणु
 				err = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			i += 2;
-			if (!tmp_buf)
-				goto nocopy_fmt;
+			अगर (!पंचांगp_buf)
+				जाओ nocopy_fmt;
 
-			sizeof_cur_ip = (fmt[i] == '4') ? 4 : 16;
-			if (tmp_buf_end - tmp_buf < sizeof_cur_ip) {
+			माप_cur_ip = (fmt[i] == '4') ? 4 : 16;
+			अगर (पंचांगp_buf_end - पंचांगp_buf < माप_cur_ip) अणु
 				err = -ENOSPC;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			unsafe_ptr = (char *)(long)raw_args[num_spec];
+			unsafe_ptr = (अक्षर *)(दीर्घ)raw_args[num_spec];
 			err = copy_from_kernel_nofault(cur_ip, unsafe_ptr,
-						       sizeof_cur_ip);
-			if (err < 0)
-				memset(cur_ip, 0, sizeof_cur_ip);
+						       माप_cur_ip);
+			अगर (err < 0)
+				स_रखो(cur_ip, 0, माप_cur_ip);
 
-			/* hack: bstr_printf expects IP addresses to be
-			 * pre-formatted as strings, ironically, the easiest way
-			 * to do that is to call snprintf.
+			/* hack: bstr_म_लिखो expects IP addresses to be
+			 * pre-क्रमmatted as strings, ironically, the easiest way
+			 * to करो that is to call snम_लिखो.
 			 */
 			ip_spec[2] = fmt[i - 1];
 			ip_spec[3] = fmt[i];
-			err = snprintf(tmp_buf, tmp_buf_end - tmp_buf,
+			err = snम_लिखो(पंचांगp_buf, पंचांगp_buf_end - पंचांगp_buf,
 				       ip_spec, &cur_ip);
 
-			tmp_buf += err + 1;
+			पंचांगp_buf += err + 1;
 			num_spec++;
 
-			continue;
-		} else if (fmt[i] == 's') {
+			जारी;
+		पूर्ण अन्यथा अगर (fmt[i] == 's') अणु
 			fmt_ptype = fmt[i];
 fmt_str:
-			if (fmt[i + 1] != 0 &&
-			    !isspace(fmt[i + 1]) &&
-			    !ispunct(fmt[i + 1])) {
+			अगर (fmt[i + 1] != 0 &&
+			    !है_खाली(fmt[i + 1]) &&
+			    !है_विराम(fmt[i + 1])) अणु
 				err = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (!tmp_buf)
-				goto nocopy_fmt;
+			अगर (!पंचांगp_buf)
+				जाओ nocopy_fmt;
 
-			if (tmp_buf_end == tmp_buf) {
+			अगर (पंचांगp_buf_end == पंचांगp_buf) अणु
 				err = -ENOSPC;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			unsafe_ptr = (char *)(long)raw_args[num_spec];
-			err = bpf_trace_copy_string(tmp_buf, unsafe_ptr,
+			unsafe_ptr = (अक्षर *)(दीर्घ)raw_args[num_spec];
+			err = bpf_trace_copy_string(पंचांगp_buf, unsafe_ptr,
 						    fmt_ptype,
-						    tmp_buf_end - tmp_buf);
-			if (err < 0) {
-				tmp_buf[0] = '\0';
+						    पंचांगp_buf_end - पंचांगp_buf);
+			अगर (err < 0) अणु
+				पंचांगp_buf[0] = '\0';
 				err = 1;
-			}
+			पूर्ण
 
-			tmp_buf += err;
+			पंचांगp_buf += err;
 			num_spec++;
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		sizeof_cur_arg = sizeof(int);
+		माप_cur_arg = माप(पूर्णांक);
 
-		if (fmt[i] == 'l') {
-			sizeof_cur_arg = sizeof(long);
+		अगर (fmt[i] == 'l') अणु
+			माप_cur_arg = माप(दीर्घ);
 			i++;
-		}
-		if (fmt[i] == 'l') {
-			sizeof_cur_arg = sizeof(long long);
+		पूर्ण
+		अगर (fmt[i] == 'l') अणु
+			माप_cur_arg = माप(दीर्घ दीर्घ);
 			i++;
-		}
+		पूर्ण
 
-		if (fmt[i] != 'i' && fmt[i] != 'd' && fmt[i] != 'u' &&
-		    fmt[i] != 'x' && fmt[i] != 'X') {
+		अगर (fmt[i] != 'i' && fmt[i] != 'd' && fmt[i] != 'u' &&
+		    fmt[i] != 'x' && fmt[i] != 'X') अणु
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (tmp_buf)
+		अगर (पंचांगp_buf)
 			cur_arg = raw_args[num_spec];
 nocopy_fmt:
-		if (tmp_buf) {
-			tmp_buf = PTR_ALIGN(tmp_buf, sizeof(u32));
-			if (tmp_buf_end - tmp_buf < sizeof_cur_arg) {
+		अगर (पंचांगp_buf) अणु
+			पंचांगp_buf = PTR_ALIGN(पंचांगp_buf, माप(u32));
+			अगर (पंचांगp_buf_end - पंचांगp_buf < माप_cur_arg) अणु
 				err = -ENOSPC;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (sizeof_cur_arg == 8) {
-				*(u32 *)tmp_buf = *(u32 *)&cur_arg;
-				*(u32 *)(tmp_buf + 4) = *((u32 *)&cur_arg + 1);
-			} else {
-				*(u32 *)tmp_buf = (u32)(long)cur_arg;
-			}
-			tmp_buf += sizeof_cur_arg;
-		}
+			अगर (माप_cur_arg == 8) अणु
+				*(u32 *)पंचांगp_buf = *(u32 *)&cur_arg;
+				*(u32 *)(पंचांगp_buf + 4) = *((u32 *)&cur_arg + 1);
+			पूर्ण अन्यथा अणु
+				*(u32 *)पंचांगp_buf = (u32)(दीर्घ)cur_arg;
+			पूर्ण
+			पंचांगp_buf += माप_cur_arg;
+		पूर्ण
 		num_spec++;
-	}
+	पूर्ण
 
 	err = 0;
 out:
-	if (err)
-		bpf_bprintf_cleanup();
-	return err;
-}
+	अगर (err)
+		bpf_bम_लिखो_cleanup();
+	वापस err;
+पूर्ण
 
-#define MAX_SNPRINTF_VARARGS		12
+#घोषणा MAX_SNPRINTF_VARARGS		12
 
-BPF_CALL_5(bpf_snprintf, char *, str, u32, str_size, char *, fmt,
-	   const void *, data, u32, data_len)
-{
-	int err, num_args;
+BPF_CALL_5(bpf_snम_लिखो, अक्षर *, str, u32, str_size, अक्षर *, fmt,
+	   स्थिर व्योम *, data, u32, data_len)
+अणु
+	पूर्णांक err, num_args;
 	u32 *bin_args;
 
-	if (data_len % 8 || data_len > MAX_SNPRINTF_VARARGS * 8 ||
+	अगर (data_len % 8 || data_len > MAX_SNPRINTF_VARARGS * 8 ||
 	    (data_len && !data))
-		return -EINVAL;
+		वापस -EINVAL;
 	num_args = data_len / 8;
 
 	/* ARG_PTR_TO_CONST_STR guarantees that fmt is zero-terminated so we
 	 * can safely give an unbounded size.
 	 */
-	err = bpf_bprintf_prepare(fmt, UINT_MAX, data, &bin_args, num_args);
-	if (err < 0)
-		return err;
+	err = bpf_bम_लिखो_prepare(fmt, अच_पूर्णांक_उच्च, data, &bin_args, num_args);
+	अगर (err < 0)
+		वापस err;
 
-	err = bstr_printf(str, str_size, fmt, bin_args);
+	err = bstr_म_लिखो(str, str_size, fmt, bin_args);
 
-	bpf_bprintf_cleanup();
+	bpf_bम_लिखो_cleanup();
 
-	return err + 1;
-}
+	वापस err + 1;
+पूर्ण
 
-const struct bpf_func_proto bpf_snprintf_proto = {
-	.func		= bpf_snprintf,
+स्थिर काष्ठा bpf_func_proto bpf_snम_लिखो_proto = अणु
+	.func		= bpf_snम_लिखो,
 	.gpl_only	= true,
 	.ret_type	= RET_INTEGER,
-	.arg1_type	= ARG_PTR_TO_MEM_OR_NULL,
+	.arg1_type	= ARG_PTR_TO_MEM_OR_शून्य,
 	.arg2_type	= ARG_CONST_SIZE_OR_ZERO,
 	.arg3_type	= ARG_PTR_TO_CONST_STR,
-	.arg4_type	= ARG_PTR_TO_MEM_OR_NULL,
+	.arg4_type	= ARG_PTR_TO_MEM_OR_शून्य,
 	.arg5_type	= ARG_CONST_SIZE_OR_ZERO,
-};
+पूर्ण;
 
-const struct bpf_func_proto bpf_get_current_task_proto __weak;
-const struct bpf_func_proto bpf_probe_read_user_proto __weak;
-const struct bpf_func_proto bpf_probe_read_user_str_proto __weak;
-const struct bpf_func_proto bpf_probe_read_kernel_proto __weak;
-const struct bpf_func_proto bpf_probe_read_kernel_str_proto __weak;
+स्थिर काष्ठा bpf_func_proto bpf_get_current_task_proto __weak;
+स्थिर काष्ठा bpf_func_proto bpf_probe_पढ़ो_user_proto __weak;
+स्थिर काष्ठा bpf_func_proto bpf_probe_पढ़ो_user_str_proto __weak;
+स्थिर काष्ठा bpf_func_proto bpf_probe_पढ़ो_kernel_proto __weak;
+स्थिर काष्ठा bpf_func_proto bpf_probe_पढ़ो_kernel_str_proto __weak;
 
-const struct bpf_func_proto *
-bpf_base_func_proto(enum bpf_func_id func_id)
-{
-	switch (func_id) {
-	case BPF_FUNC_map_lookup_elem:
-		return &bpf_map_lookup_elem_proto;
-	case BPF_FUNC_map_update_elem:
-		return &bpf_map_update_elem_proto;
-	case BPF_FUNC_map_delete_elem:
-		return &bpf_map_delete_elem_proto;
-	case BPF_FUNC_map_push_elem:
-		return &bpf_map_push_elem_proto;
-	case BPF_FUNC_map_pop_elem:
-		return &bpf_map_pop_elem_proto;
-	case BPF_FUNC_map_peek_elem:
-		return &bpf_map_peek_elem_proto;
-	case BPF_FUNC_get_prandom_u32:
-		return &bpf_get_prandom_u32_proto;
-	case BPF_FUNC_get_smp_processor_id:
-		return &bpf_get_raw_smp_processor_id_proto;
-	case BPF_FUNC_get_numa_node_id:
-		return &bpf_get_numa_node_id_proto;
-	case BPF_FUNC_tail_call:
-		return &bpf_tail_call_proto;
-	case BPF_FUNC_ktime_get_ns:
-		return &bpf_ktime_get_ns_proto;
-	case BPF_FUNC_ktime_get_boot_ns:
-		return &bpf_ktime_get_boot_ns_proto;
-	case BPF_FUNC_ktime_get_coarse_ns:
-		return &bpf_ktime_get_coarse_ns_proto;
-	case BPF_FUNC_ringbuf_output:
-		return &bpf_ringbuf_output_proto;
-	case BPF_FUNC_ringbuf_reserve:
-		return &bpf_ringbuf_reserve_proto;
-	case BPF_FUNC_ringbuf_submit:
-		return &bpf_ringbuf_submit_proto;
-	case BPF_FUNC_ringbuf_discard:
-		return &bpf_ringbuf_discard_proto;
-	case BPF_FUNC_ringbuf_query:
-		return &bpf_ringbuf_query_proto;
-	case BPF_FUNC_for_each_map_elem:
-		return &bpf_for_each_map_elem_proto;
-	default:
-		break;
-	}
+स्थिर काष्ठा bpf_func_proto *
+bpf_base_func_proto(क्रमागत bpf_func_id func_id)
+अणु
+	चयन (func_id) अणु
+	हाल BPF_FUNC_map_lookup_elem:
+		वापस &bpf_map_lookup_elem_proto;
+	हाल BPF_FUNC_map_update_elem:
+		वापस &bpf_map_update_elem_proto;
+	हाल BPF_FUNC_map_delete_elem:
+		वापस &bpf_map_delete_elem_proto;
+	हाल BPF_FUNC_map_push_elem:
+		वापस &bpf_map_push_elem_proto;
+	हाल BPF_FUNC_map_pop_elem:
+		वापस &bpf_map_pop_elem_proto;
+	हाल BPF_FUNC_map_peek_elem:
+		वापस &bpf_map_peek_elem_proto;
+	हाल BPF_FUNC_get_pअक्रमom_u32:
+		वापस &bpf_get_pअक्रमom_u32_proto;
+	हाल BPF_FUNC_get_smp_processor_id:
+		वापस &bpf_get_raw_smp_processor_id_proto;
+	हाल BPF_FUNC_get_numa_node_id:
+		वापस &bpf_get_numa_node_id_proto;
+	हाल BPF_FUNC_tail_call:
+		वापस &bpf_tail_call_proto;
+	हाल BPF_FUNC_kसमय_get_ns:
+		वापस &bpf_kसमय_get_ns_proto;
+	हाल BPF_FUNC_kसमय_get_boot_ns:
+		वापस &bpf_kसमय_get_boot_ns_proto;
+	हाल BPF_FUNC_kसमय_get_coarse_ns:
+		वापस &bpf_kसमय_get_coarse_ns_proto;
+	हाल BPF_FUNC_ringbuf_output:
+		वापस &bpf_ringbuf_output_proto;
+	हाल BPF_FUNC_ringbuf_reserve:
+		वापस &bpf_ringbuf_reserve_proto;
+	हाल BPF_FUNC_ringbuf_submit:
+		वापस &bpf_ringbuf_submit_proto;
+	हाल BPF_FUNC_ringbuf_discard:
+		वापस &bpf_ringbuf_discard_proto;
+	हाल BPF_FUNC_ringbuf_query:
+		वापस &bpf_ringbuf_query_proto;
+	हाल BPF_FUNC_क्रम_each_map_elem:
+		वापस &bpf_क्रम_each_map_elem_proto;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (!bpf_capable())
-		return NULL;
+	अगर (!bpf_capable())
+		वापस शून्य;
 
-	switch (func_id) {
-	case BPF_FUNC_spin_lock:
-		return &bpf_spin_lock_proto;
-	case BPF_FUNC_spin_unlock:
-		return &bpf_spin_unlock_proto;
-	case BPF_FUNC_jiffies64:
-		return &bpf_jiffies64_proto;
-	case BPF_FUNC_per_cpu_ptr:
-		return &bpf_per_cpu_ptr_proto;
-	case BPF_FUNC_this_cpu_ptr:
-		return &bpf_this_cpu_ptr_proto;
-	default:
-		break;
-	}
+	चयन (func_id) अणु
+	हाल BPF_FUNC_spin_lock:
+		वापस &bpf_spin_lock_proto;
+	हाल BPF_FUNC_spin_unlock:
+		वापस &bpf_spin_unlock_proto;
+	हाल BPF_FUNC_jअगरfies64:
+		वापस &bpf_jअगरfies64_proto;
+	हाल BPF_FUNC_per_cpu_ptr:
+		वापस &bpf_per_cpu_ptr_proto;
+	हाल BPF_FUNC_this_cpu_ptr:
+		वापस &bpf_this_cpu_ptr_proto;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (!perfmon_capable())
-		return NULL;
+	अगर (!perfmon_capable())
+		वापस शून्य;
 
-	switch (func_id) {
-	case BPF_FUNC_trace_printk:
-		return bpf_get_trace_printk_proto();
-	case BPF_FUNC_get_current_task:
-		return &bpf_get_current_task_proto;
-	case BPF_FUNC_probe_read_user:
-		return &bpf_probe_read_user_proto;
-	case BPF_FUNC_probe_read_kernel:
-		return security_locked_down(LOCKDOWN_BPF_READ) < 0 ?
-		       NULL : &bpf_probe_read_kernel_proto;
-	case BPF_FUNC_probe_read_user_str:
-		return &bpf_probe_read_user_str_proto;
-	case BPF_FUNC_probe_read_kernel_str:
-		return security_locked_down(LOCKDOWN_BPF_READ) < 0 ?
-		       NULL : &bpf_probe_read_kernel_str_proto;
-	case BPF_FUNC_snprintf_btf:
-		return &bpf_snprintf_btf_proto;
-	case BPF_FUNC_snprintf:
-		return &bpf_snprintf_proto;
-	default:
-		return NULL;
-	}
-}
+	चयन (func_id) अणु
+	हाल BPF_FUNC_trace_prपूर्णांकk:
+		वापस bpf_get_trace_prपूर्णांकk_proto();
+	हाल BPF_FUNC_get_current_task:
+		वापस &bpf_get_current_task_proto;
+	हाल BPF_FUNC_probe_पढ़ो_user:
+		वापस &bpf_probe_पढ़ो_user_proto;
+	हाल BPF_FUNC_probe_पढ़ो_kernel:
+		वापस security_locked_करोwn(LOCKDOWN_BPF_READ) < 0 ?
+		       शून्य : &bpf_probe_पढ़ो_kernel_proto;
+	हाल BPF_FUNC_probe_पढ़ो_user_str:
+		वापस &bpf_probe_पढ़ो_user_str_proto;
+	हाल BPF_FUNC_probe_पढ़ो_kernel_str:
+		वापस security_locked_करोwn(LOCKDOWN_BPF_READ) < 0 ?
+		       शून्य : &bpf_probe_पढ़ो_kernel_str_proto;
+	हाल BPF_FUNC_snम_लिखो_btf:
+		वापस &bpf_snम_लिखो_btf_proto;
+	हाल BPF_FUNC_snम_लिखो:
+		वापस &bpf_snम_लिखो_proto;
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण

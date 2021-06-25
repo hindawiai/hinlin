@@ -1,414 +1,415 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * dax: direct host memory access
  * Copyright (C) 2020 Red Hat, Inc.
  */
 
-#include "fuse_i.h"
+#समावेश "fuse_i.h"
 
-#include <linux/delay.h>
-#include <linux/dax.h>
-#include <linux/uio.h>
-#include <linux/pfn_t.h>
-#include <linux/iomap.h>
-#include <linux/interval_tree.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dax.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/pfn_t.h>
+#समावेश <linux/iomap.h>
+#समावेश <linux/पूर्णांकerval_tree.h>
 
 /*
- * Default memory range size.  A power of 2 so it agrees with common FUSE_INIT
+ * Default memory range size.  A घातer of 2 so it agrees with common FUSE_INIT
  * map_alignment values 4KB and 64KB.
  */
-#define FUSE_DAX_SHIFT	21
-#define FUSE_DAX_SZ	(1 << FUSE_DAX_SHIFT)
-#define FUSE_DAX_PAGES	(FUSE_DAX_SZ / PAGE_SIZE)
+#घोषणा FUSE_DAX_SHIFT	21
+#घोषणा FUSE_DAX_SZ	(1 << FUSE_DAX_SHIFT)
+#घोषणा FUSE_DAX_PAGES	(FUSE_DAX_SZ / PAGE_SIZE)
 
-/* Number of ranges reclaimer will try to free in one invocation */
-#define FUSE_DAX_RECLAIM_CHUNK		(10)
+/* Number of ranges reclaimer will try to मुक्त in one invocation */
+#घोषणा FUSE_DAX_RECLAIM_CHUNK		(10)
 
 /*
- * Dax memory reclaim threshold in percetage of total ranges. When free
- * number of free ranges drops below this threshold, reclaim can trigger
+ * Dax memory reclaim threshold in percetage of total ranges. When मुक्त
+ * number of मुक्त ranges drops below this threshold, reclaim can trigger
  * Default is 20%
  */
-#define FUSE_DAX_RECLAIM_THRESHOLD	(20)
+#घोषणा FUSE_DAX_RECLAIM_THRESHOLD	(20)
 
-/** Translation information for file offsets to DAX window offsets */
-struct fuse_dax_mapping {
-	/* Pointer to inode where this memory range is mapped */
-	struct inode *inode;
+/** Translation inक्रमmation क्रम file offsets to DAX winकरोw offsets */
+काष्ठा fuse_dax_mapping अणु
+	/* Poपूर्णांकer to inode where this memory range is mapped */
+	काष्ठा inode *inode;
 
-	/* Will connect in fcd->free_ranges to keep track of free memory */
-	struct list_head list;
+	/* Will connect in fcd->मुक्त_ranges to keep track of मुक्त memory */
+	काष्ठा list_head list;
 
-	/* For interval tree in file/inode */
-	struct interval_tree_node itn;
+	/* For पूर्णांकerval tree in file/inode */
+	काष्ठा पूर्णांकerval_tree_node itn;
 
 	/* Will connect in fc->busy_ranges to keep track busy memory */
-	struct list_head busy_list;
+	काष्ठा list_head busy_list;
 
-	/** Position in DAX window */
-	u64 window_offset;
+	/** Position in DAX winकरोw */
+	u64 winकरोw_offset;
 
 	/** Length of mapping, in bytes */
 	loff_t length;
 
-	/* Is this mapping read-only or read-write */
+	/* Is this mapping पढ़ो-only or पढ़ो-ग_लिखो */
 	bool writable;
 
 	/* reference count when the mapping is used by dax iomap. */
 	refcount_t refcnt;
-};
+पूर्ण;
 
 /* Per-inode dax map */
-struct fuse_inode_dax {
-	/* Semaphore to protect modifications to the dmap tree */
-	struct rw_semaphore sem;
+काष्ठा fuse_inode_dax अणु
+	/* Semaphore to protect modअगरications to the dmap tree */
+	काष्ठा rw_semaphore sem;
 
-	/* Sorted rb tree of struct fuse_dax_mapping elements */
-	struct rb_root_cached tree;
-	unsigned long nr;
-};
+	/* Sorted rb tree of काष्ठा fuse_dax_mapping elements */
+	काष्ठा rb_root_cached tree;
+	अचिन्हित दीर्घ nr;
+पूर्ण;
 
-struct fuse_conn_dax {
+काष्ठा fuse_conn_dax अणु
 	/* DAX device */
-	struct dax_device *dev;
+	काष्ठा dax_device *dev;
 
-	/* Lock protecting accessess to  members of this structure */
+	/* Lock protecting accessess to  members of this काष्ठाure */
 	spinlock_t lock;
 
 	/* List of memory ranges which are busy */
-	unsigned long nr_busy_ranges;
-	struct list_head busy_ranges;
+	अचिन्हित दीर्घ nr_busy_ranges;
+	काष्ठा list_head busy_ranges;
 
-	/* Worker to free up memory ranges */
-	struct delayed_work free_work;
+	/* Worker to मुक्त up memory ranges */
+	काष्ठा delayed_work मुक्त_work;
 
-	/* Wait queue for a dax range to become free */
-	wait_queue_head_t range_waitq;
+	/* Wait queue क्रम a dax range to become मुक्त */
+	रुको_queue_head_t range_रुकोq;
 
-	/* DAX Window Free Ranges */
-	long nr_free_ranges;
-	struct list_head free_ranges;
+	/* DAX Winकरोw Free Ranges */
+	दीर्घ nr_मुक्त_ranges;
+	काष्ठा list_head मुक्त_ranges;
 
-	unsigned long nr_ranges;
-};
+	अचिन्हित दीर्घ nr_ranges;
+पूर्ण;
 
-static inline struct fuse_dax_mapping *
-node_to_dmap(struct interval_tree_node *node)
-{
-	if (!node)
-		return NULL;
+अटल अंतरभूत काष्ठा fuse_dax_mapping *
+node_to_dmap(काष्ठा पूर्णांकerval_tree_node *node)
+अणु
+	अगर (!node)
+		वापस शून्य;
 
-	return container_of(node, struct fuse_dax_mapping, itn);
-}
+	वापस container_of(node, काष्ठा fuse_dax_mapping, itn);
+पूर्ण
 
-static struct fuse_dax_mapping *
-alloc_dax_mapping_reclaim(struct fuse_conn_dax *fcd, struct inode *inode);
+अटल काष्ठा fuse_dax_mapping *
+alloc_dax_mapping_reclaim(काष्ठा fuse_conn_dax *fcd, काष्ठा inode *inode);
 
-static void
-__kick_dmap_free_worker(struct fuse_conn_dax *fcd, unsigned long delay_ms)
-{
-	unsigned long free_threshold;
+अटल व्योम
+__kick_dmap_मुक्त_worker(काष्ठा fuse_conn_dax *fcd, अचिन्हित दीर्घ delay_ms)
+अणु
+	अचिन्हित दीर्घ मुक्त_threshold;
 
-	/* If number of free ranges are below threshold, start reclaim */
-	free_threshold = max_t(unsigned long, fcd->nr_ranges * FUSE_DAX_RECLAIM_THRESHOLD / 100,
+	/* If number of मुक्त ranges are below threshold, start reclaim */
+	मुक्त_threshold = max_t(अचिन्हित दीर्घ, fcd->nr_ranges * FUSE_DAX_RECLAIM_THRESHOLD / 100,
 			     1);
-	if (fcd->nr_free_ranges < free_threshold)
-		queue_delayed_work(system_long_wq, &fcd->free_work,
-				   msecs_to_jiffies(delay_ms));
-}
+	अगर (fcd->nr_मुक्त_ranges < मुक्त_threshold)
+		queue_delayed_work(प्रणाली_दीर्घ_wq, &fcd->मुक्त_work,
+				   msecs_to_jअगरfies(delay_ms));
+पूर्ण
 
-static void kick_dmap_free_worker(struct fuse_conn_dax *fcd,
-				  unsigned long delay_ms)
-{
+अटल व्योम kick_dmap_मुक्त_worker(काष्ठा fuse_conn_dax *fcd,
+				  अचिन्हित दीर्घ delay_ms)
+अणु
 	spin_lock(&fcd->lock);
-	__kick_dmap_free_worker(fcd, delay_ms);
+	__kick_dmap_मुक्त_worker(fcd, delay_ms);
 	spin_unlock(&fcd->lock);
-}
+पूर्ण
 
-static struct fuse_dax_mapping *alloc_dax_mapping(struct fuse_conn_dax *fcd)
-{
-	struct fuse_dax_mapping *dmap;
+अटल काष्ठा fuse_dax_mapping *alloc_dax_mapping(काष्ठा fuse_conn_dax *fcd)
+अणु
+	काष्ठा fuse_dax_mapping *dmap;
 
 	spin_lock(&fcd->lock);
-	dmap = list_first_entry_or_null(&fcd->free_ranges,
-					struct fuse_dax_mapping, list);
-	if (dmap) {
+	dmap = list_first_entry_or_null(&fcd->मुक्त_ranges,
+					काष्ठा fuse_dax_mapping, list);
+	अगर (dmap) अणु
 		list_del_init(&dmap->list);
-		WARN_ON(fcd->nr_free_ranges <= 0);
-		fcd->nr_free_ranges--;
-	}
+		WARN_ON(fcd->nr_मुक्त_ranges <= 0);
+		fcd->nr_मुक्त_ranges--;
+	पूर्ण
 	spin_unlock(&fcd->lock);
 
-	kick_dmap_free_worker(fcd, 0);
-	return dmap;
-}
+	kick_dmap_मुक्त_worker(fcd, 0);
+	वापस dmap;
+पूर्ण
 
 /* This assumes fcd->lock is held */
-static void __dmap_remove_busy_list(struct fuse_conn_dax *fcd,
-				    struct fuse_dax_mapping *dmap)
-{
+अटल व्योम __dmap_हटाओ_busy_list(काष्ठा fuse_conn_dax *fcd,
+				    काष्ठा fuse_dax_mapping *dmap)
+अणु
 	list_del_init(&dmap->busy_list);
 	WARN_ON(fcd->nr_busy_ranges == 0);
 	fcd->nr_busy_ranges--;
-}
+पूर्ण
 
-static void dmap_remove_busy_list(struct fuse_conn_dax *fcd,
-				  struct fuse_dax_mapping *dmap)
-{
+अटल व्योम dmap_हटाओ_busy_list(काष्ठा fuse_conn_dax *fcd,
+				  काष्ठा fuse_dax_mapping *dmap)
+अणु
 	spin_lock(&fcd->lock);
-	__dmap_remove_busy_list(fcd, dmap);
+	__dmap_हटाओ_busy_list(fcd, dmap);
 	spin_unlock(&fcd->lock);
-}
+पूर्ण
 
 /* This assumes fcd->lock is held */
-static void __dmap_add_to_free_pool(struct fuse_conn_dax *fcd,
-				struct fuse_dax_mapping *dmap)
-{
-	list_add_tail(&dmap->list, &fcd->free_ranges);
-	fcd->nr_free_ranges++;
-	wake_up(&fcd->range_waitq);
-}
+अटल व्योम __dmap_add_to_मुक्त_pool(काष्ठा fuse_conn_dax *fcd,
+				काष्ठा fuse_dax_mapping *dmap)
+अणु
+	list_add_tail(&dmap->list, &fcd->मुक्त_ranges);
+	fcd->nr_मुक्त_ranges++;
+	wake_up(&fcd->range_रुकोq);
+पूर्ण
 
-static void dmap_add_to_free_pool(struct fuse_conn_dax *fcd,
-				struct fuse_dax_mapping *dmap)
-{
-	/* Return fuse_dax_mapping to free list */
+अटल व्योम dmap_add_to_मुक्त_pool(काष्ठा fuse_conn_dax *fcd,
+				काष्ठा fuse_dax_mapping *dmap)
+अणु
+	/* Return fuse_dax_mapping to मुक्त list */
 	spin_lock(&fcd->lock);
-	__dmap_add_to_free_pool(fcd, dmap);
+	__dmap_add_to_मुक्त_pool(fcd, dmap);
 	spin_unlock(&fcd->lock);
-}
+पूर्ण
 
-static int fuse_setup_one_mapping(struct inode *inode, unsigned long start_idx,
-				  struct fuse_dax_mapping *dmap, bool writable,
+अटल पूर्णांक fuse_setup_one_mapping(काष्ठा inode *inode, अचिन्हित दीर्घ start_idx,
+				  काष्ठा fuse_dax_mapping *dmap, bool writable,
 				  bool upgrade)
-{
-	struct fuse_mount *fm = get_fuse_mount(inode);
-	struct fuse_conn_dax *fcd = fm->fc->dax;
-	struct fuse_inode *fi = get_fuse_inode(inode);
-	struct fuse_setupmapping_in inarg;
+अणु
+	काष्ठा fuse_mount *fm = get_fuse_mount(inode);
+	काष्ठा fuse_conn_dax *fcd = fm->fc->dax;
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+	काष्ठा fuse_setupmapping_in inarg;
 	loff_t offset = start_idx << FUSE_DAX_SHIFT;
 	FUSE_ARGS(args);
-	ssize_t err;
+	sमाप_प्रकार err;
 
-	WARN_ON(fcd->nr_free_ranges < 0);
+	WARN_ON(fcd->nr_मुक्त_ranges < 0);
 
 	/* Ask fuse daemon to setup mapping */
-	memset(&inarg, 0, sizeof(inarg));
+	स_रखो(&inarg, 0, माप(inarg));
 	inarg.foffset = offset;
 	inarg.fh = -1;
-	inarg.moffset = dmap->window_offset;
+	inarg.moffset = dmap->winकरोw_offset;
 	inarg.len = FUSE_DAX_SZ;
 	inarg.flags |= FUSE_SETUPMAPPING_FLAG_READ;
-	if (writable)
+	अगर (writable)
 		inarg.flags |= FUSE_SETUPMAPPING_FLAG_WRITE;
 	args.opcode = FUSE_SETUPMAPPING;
 	args.nodeid = fi->nodeid;
 	args.in_numargs = 1;
-	args.in_args[0].size = sizeof(inarg);
+	args.in_args[0].size = माप(inarg);
 	args.in_args[0].value = &inarg;
 	err = fuse_simple_request(fm, &args);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	dmap->writable = writable;
-	if (!upgrade) {
+	अगर (!upgrade) अणु
 		/*
-		 * We don't take a refernce on inode. inode is valid right now
+		 * We करोn't take a refernce on inode. inode is valid right now
 		 * and when inode is going away, cleanup logic should first
 		 * cleanup dmap entries.
 		 */
 		dmap->inode = inode;
 		dmap->itn.start = dmap->itn.last = start_idx;
 		/* Protected by fi->dax->sem */
-		interval_tree_insert(&dmap->itn, &fi->dax->tree);
+		पूर्णांकerval_tree_insert(&dmap->itn, &fi->dax->tree);
 		fi->dax->nr++;
 		spin_lock(&fcd->lock);
 		list_add_tail(&dmap->busy_list, &fcd->busy_ranges);
 		fcd->nr_busy_ranges++;
 		spin_unlock(&fcd->lock);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int fuse_send_removemapping(struct inode *inode,
-				   struct fuse_removemapping_in *inargp,
-				   struct fuse_removemapping_one *remove_one)
-{
-	struct fuse_inode *fi = get_fuse_inode(inode);
-	struct fuse_mount *fm = get_fuse_mount(inode);
+अटल पूर्णांक fuse_send_हटाओmapping(काष्ठा inode *inode,
+				   काष्ठा fuse_हटाओmapping_in *inargp,
+				   काष्ठा fuse_हटाओmapping_one *हटाओ_one)
+अणु
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+	काष्ठा fuse_mount *fm = get_fuse_mount(inode);
 	FUSE_ARGS(args);
 
 	args.opcode = FUSE_REMOVEMAPPING;
 	args.nodeid = fi->nodeid;
 	args.in_numargs = 2;
-	args.in_args[0].size = sizeof(*inargp);
+	args.in_args[0].size = माप(*inargp);
 	args.in_args[0].value = inargp;
-	args.in_args[1].size = inargp->count * sizeof(*remove_one);
-	args.in_args[1].value = remove_one;
-	return fuse_simple_request(fm, &args);
-}
+	args.in_args[1].size = inargp->count * माप(*हटाओ_one);
+	args.in_args[1].value = हटाओ_one;
+	वापस fuse_simple_request(fm, &args);
+पूर्ण
 
-static int dmap_removemapping_list(struct inode *inode, unsigned int num,
-				   struct list_head *to_remove)
-{
-	struct fuse_removemapping_one *remove_one, *ptr;
-	struct fuse_removemapping_in inarg;
-	struct fuse_dax_mapping *dmap;
-	int ret, i = 0, nr_alloc;
+अटल पूर्णांक dmap_हटाओmapping_list(काष्ठा inode *inode, अचिन्हित पूर्णांक num,
+				   काष्ठा list_head *to_हटाओ)
+अणु
+	काष्ठा fuse_हटाओmapping_one *हटाओ_one, *ptr;
+	काष्ठा fuse_हटाओmapping_in inarg;
+	काष्ठा fuse_dax_mapping *dmap;
+	पूर्णांक ret, i = 0, nr_alloc;
 
-	nr_alloc = min_t(unsigned int, num, FUSE_REMOVEMAPPING_MAX_ENTRY);
-	remove_one = kmalloc_array(nr_alloc, sizeof(*remove_one), GFP_NOFS);
-	if (!remove_one)
-		return -ENOMEM;
+	nr_alloc = min_t(अचिन्हित पूर्णांक, num, FUSE_REMOVEMAPPING_MAX_ENTRY);
+	हटाओ_one = kदो_स्मृति_array(nr_alloc, माप(*हटाओ_one), GFP_NOFS);
+	अगर (!हटाओ_one)
+		वापस -ENOMEM;
 
-	ptr = remove_one;
-	list_for_each_entry(dmap, to_remove, list) {
-		ptr->moffset = dmap->window_offset;
+	ptr = हटाओ_one;
+	list_क्रम_each_entry(dmap, to_हटाओ, list) अणु
+		ptr->moffset = dmap->winकरोw_offset;
 		ptr->len = dmap->length;
 		ptr++;
 		i++;
 		num--;
-		if (i >= nr_alloc || num == 0) {
-			memset(&inarg, 0, sizeof(inarg));
+		अगर (i >= nr_alloc || num == 0) अणु
+			स_रखो(&inarg, 0, माप(inarg));
 			inarg.count = i;
-			ret = fuse_send_removemapping(inode, &inarg,
-						      remove_one);
-			if (ret)
-				goto out;
-			ptr = remove_one;
+			ret = fuse_send_हटाओmapping(inode, &inarg,
+						      हटाओ_one);
+			अगर (ret)
+				जाओ out;
+			ptr = हटाओ_one;
 			i = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	kfree(remove_one);
-	return ret;
-}
+	kमुक्त(हटाओ_one);
+	वापस ret;
+पूर्ण
 
 /*
- * Cleanup dmap entry and add back to free list. This should be called with
+ * Cleanup dmap entry and add back to मुक्त list. This should be called with
  * fcd->lock held.
  */
-static void dmap_reinit_add_to_free_pool(struct fuse_conn_dax *fcd,
-					    struct fuse_dax_mapping *dmap)
-{
+अटल व्योम dmap_reinit_add_to_मुक्त_pool(काष्ठा fuse_conn_dax *fcd,
+					    काष्ठा fuse_dax_mapping *dmap)
+अणु
 	pr_debug("fuse: freeing memory range start_idx=0x%lx end_idx=0x%lx window_offset=0x%llx length=0x%llx\n",
-		 dmap->itn.start, dmap->itn.last, dmap->window_offset,
+		 dmap->itn.start, dmap->itn.last, dmap->winकरोw_offset,
 		 dmap->length);
-	__dmap_remove_busy_list(fcd, dmap);
-	dmap->inode = NULL;
+	__dmap_हटाओ_busy_list(fcd, dmap);
+	dmap->inode = शून्य;
 	dmap->itn.start = dmap->itn.last = 0;
-	__dmap_add_to_free_pool(fcd, dmap);
-}
+	__dmap_add_to_मुक्त_pool(fcd, dmap);
+पूर्ण
 
 /*
  * Free inode dmap entries whose range falls inside [start, end].
- * Does not take any locks. At this point of time it should only be
+ * Does not take any locks. At this poपूर्णांक of समय it should only be
  * called from evict_inode() path where we know all dmap entries can be
  * reclaimed.
  */
-static void inode_reclaim_dmap_range(struct fuse_conn_dax *fcd,
-				     struct inode *inode,
+अटल व्योम inode_reclaim_dmap_range(काष्ठा fuse_conn_dax *fcd,
+				     काष्ठा inode *inode,
 				     loff_t start, loff_t end)
-{
-	struct fuse_inode *fi = get_fuse_inode(inode);
-	struct fuse_dax_mapping *dmap, *n;
-	int err, num = 0;
-	LIST_HEAD(to_remove);
-	unsigned long start_idx = start >> FUSE_DAX_SHIFT;
-	unsigned long end_idx = end >> FUSE_DAX_SHIFT;
-	struct interval_tree_node *node;
+अणु
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+	काष्ठा fuse_dax_mapping *dmap, *n;
+	पूर्णांक err, num = 0;
+	LIST_HEAD(to_हटाओ);
+	अचिन्हित दीर्घ start_idx = start >> FUSE_DAX_SHIFT;
+	अचिन्हित दीर्घ end_idx = end >> FUSE_DAX_SHIFT;
+	काष्ठा पूर्णांकerval_tree_node *node;
 
-	while (1) {
-		node = interval_tree_iter_first(&fi->dax->tree, start_idx,
+	जबतक (1) अणु
+		node = पूर्णांकerval_tree_iter_first(&fi->dax->tree, start_idx,
 						end_idx);
-		if (!node)
-			break;
+		अगर (!node)
+			अवरोध;
 		dmap = node_to_dmap(node);
 		/* inode is going away. There should not be any users of dmap */
-		WARN_ON(refcount_read(&dmap->refcnt) > 1);
-		interval_tree_remove(&dmap->itn, &fi->dax->tree);
+		WARN_ON(refcount_पढ़ो(&dmap->refcnt) > 1);
+		पूर्णांकerval_tree_हटाओ(&dmap->itn, &fi->dax->tree);
 		num++;
-		list_add(&dmap->list, &to_remove);
-	}
+		list_add(&dmap->list, &to_हटाओ);
+	पूर्ण
 
-	/* Nothing to remove */
-	if (list_empty(&to_remove))
-		return;
+	/* Nothing to हटाओ */
+	अगर (list_empty(&to_हटाओ))
+		वापस;
 
 	WARN_ON(fi->dax->nr < num);
 	fi->dax->nr -= num;
-	err = dmap_removemapping_list(inode, num, &to_remove);
-	if (err && err != -ENOTCONN) {
+	err = dmap_हटाओmapping_list(inode, num, &to_हटाओ);
+	अगर (err && err != -ENOTCONN) अणु
 		pr_warn("Failed to removemappings. start=0x%llx end=0x%llx\n",
 			start, end);
-	}
+	पूर्ण
 	spin_lock(&fcd->lock);
-	list_for_each_entry_safe(dmap, n, &to_remove, list) {
+	list_क्रम_each_entry_safe(dmap, n, &to_हटाओ, list) अणु
 		list_del_init(&dmap->list);
-		dmap_reinit_add_to_free_pool(fcd, dmap);
-	}
+		dmap_reinit_add_to_मुक्त_pool(fcd, dmap);
+	पूर्ण
 	spin_unlock(&fcd->lock);
-}
+पूर्ण
 
-static int dmap_removemapping_one(struct inode *inode,
-				  struct fuse_dax_mapping *dmap)
-{
-	struct fuse_removemapping_one forget_one;
-	struct fuse_removemapping_in inarg;
+अटल पूर्णांक dmap_हटाओmapping_one(काष्ठा inode *inode,
+				  काष्ठा fuse_dax_mapping *dmap)
+अणु
+	काष्ठा fuse_हटाओmapping_one क्रमget_one;
+	काष्ठा fuse_हटाओmapping_in inarg;
 
-	memset(&inarg, 0, sizeof(inarg));
+	स_रखो(&inarg, 0, माप(inarg));
 	inarg.count = 1;
-	memset(&forget_one, 0, sizeof(forget_one));
-	forget_one.moffset = dmap->window_offset;
-	forget_one.len = dmap->length;
+	स_रखो(&क्रमget_one, 0, माप(क्रमget_one));
+	क्रमget_one.moffset = dmap->winकरोw_offset;
+	क्रमget_one.len = dmap->length;
 
-	return fuse_send_removemapping(inode, &inarg, &forget_one);
-}
+	वापस fuse_send_हटाओmapping(inode, &inarg, &क्रमget_one);
+पूर्ण
 
 /*
- * It is called from evict_inode() and by that time inode is going away. So
- * this function does not take any locks like fi->dax->sem for traversing
- * that fuse inode interval tree. If that lock is taken then lock validator
+ * It is called from evict_inode() and by that समय inode is going away. So
+ * this function करोes not take any locks like fi->dax->sem क्रम traversing
+ * that fuse inode पूर्णांकerval tree. If that lock is taken then lock validator
  * complains of deadlock situation w.r.t fs_reclaim lock.
  */
-void fuse_dax_inode_cleanup(struct inode *inode)
-{
-	struct fuse_conn *fc = get_fuse_conn(inode);
-	struct fuse_inode *fi = get_fuse_inode(inode);
+व्योम fuse_dax_inode_cleanup(काष्ठा inode *inode)
+अणु
+	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
 
 	/*
-	 * fuse_evict_inode() has already called truncate_inode_pages_final()
-	 * before we arrive here. So we should not have to worry about any
+	 * fuse_evict_inode() has alपढ़ोy called truncate_inode_pages_final()
+	 * beक्रमe we arrive here. So we should not have to worry about any
 	 * pages/exception entries still associated with inode.
 	 */
 	inode_reclaim_dmap_range(fc->dax, inode, 0, -1);
 	WARN_ON(fi->dax->nr);
-}
+पूर्ण
 
-static void fuse_fill_iomap_hole(struct iomap *iomap, loff_t length)
-{
-	iomap->addr = IOMAP_NULL_ADDR;
+अटल व्योम fuse_fill_iomap_hole(काष्ठा iomap *iomap, loff_t length)
+अणु
+	iomap->addr = IOMAP_शून्य_ADDR;
 	iomap->length = length;
 	iomap->type = IOMAP_HOLE;
-}
+पूर्ण
 
-static void fuse_fill_iomap(struct inode *inode, loff_t pos, loff_t length,
-			    struct iomap *iomap, struct fuse_dax_mapping *dmap,
-			    unsigned int flags)
-{
+अटल व्योम fuse_fill_iomap(काष्ठा inode *inode, loff_t pos, loff_t length,
+			    काष्ठा iomap *iomap, काष्ठा fuse_dax_mapping *dmap,
+			    अचिन्हित पूर्णांक flags)
+अणु
 	loff_t offset, len;
-	loff_t i_size = i_size_read(inode);
+	loff_t i_size = i_size_पढ़ो(inode);
 
 	offset = pos - (dmap->itn.start << FUSE_DAX_SHIFT);
 	len = min(length, dmap->length - offset);
 
 	/* If length is beyond end of file, truncate further */
-	if (pos + len > i_size)
+	अगर (pos + len > i_size)
 		len = i_size - pos;
 
-	if (len > 0) {
-		iomap->addr = dmap->window_offset + offset;
+	अगर (len > 0) अणु
+		iomap->addr = dmap->winकरोw_offset + offset;
 		iomap->length = len;
-		if (flags & IOMAP_FAULT)
+		अगर (flags & IOMAP_FAULT)
 			iomap->length = ALIGN(len, PAGE_SIZE);
 		iomap->type = IOMAP_MAPPED;
 		/*
@@ -418,99 +419,99 @@ static void fuse_fill_iomap(struct inode *inode, loff_t pos, loff_t length,
 		 */
 		refcount_inc(&dmap->refcnt);
 
-		/* iomap->private should be NULL */
-		WARN_ON_ONCE(iomap->private);
-		iomap->private = dmap;
-	} else {
+		/* iomap->निजी should be शून्य */
+		WARN_ON_ONCE(iomap->निजी);
+		iomap->निजी = dmap;
+	पूर्ण अन्यथा अणु
 		/* Mapping beyond end of file is hole */
 		fuse_fill_iomap_hole(iomap, length);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int fuse_setup_new_dax_mapping(struct inode *inode, loff_t pos,
-				      loff_t length, unsigned int flags,
-				      struct iomap *iomap)
-{
-	struct fuse_inode *fi = get_fuse_inode(inode);
-	struct fuse_conn *fc = get_fuse_conn(inode);
-	struct fuse_conn_dax *fcd = fc->dax;
-	struct fuse_dax_mapping *dmap, *alloc_dmap = NULL;
-	int ret;
+अटल पूर्णांक fuse_setup_new_dax_mapping(काष्ठा inode *inode, loff_t pos,
+				      loff_t length, अचिन्हित पूर्णांक flags,
+				      काष्ठा iomap *iomap)
+अणु
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
+	काष्ठा fuse_conn_dax *fcd = fc->dax;
+	काष्ठा fuse_dax_mapping *dmap, *alloc_dmap = शून्य;
+	पूर्णांक ret;
 	bool writable = flags & IOMAP_WRITE;
-	unsigned long start_idx = pos >> FUSE_DAX_SHIFT;
-	struct interval_tree_node *node;
+	अचिन्हित दीर्घ start_idx = pos >> FUSE_DAX_SHIFT;
+	काष्ठा पूर्णांकerval_tree_node *node;
 
 	/*
-	 * Can't do inline reclaim in fault path. We call
-	 * dax_layout_busy_page() before we free a range. And
-	 * fuse_wait_dax_page() drops fi->i_mmap_sem lock and requires it.
+	 * Can't करो अंतरभूत reclaim in fault path. We call
+	 * dax_layout_busy_page() beक्रमe we मुक्त a range. And
+	 * fuse_रुको_dax_page() drops fi->i_mmap_sem lock and requires it.
 	 * In fault path we enter with fi->i_mmap_sem held and can't drop
 	 * it. Also in fault path we hold fi->i_mmap_sem shared and not
-	 * exclusive, so that creates further issues with fuse_wait_dax_page().
-	 * Hence return -EAGAIN and fuse_dax_fault() will wait for a memory
-	 * range to become free and retry.
+	 * exclusive, so that creates further issues with fuse_रुको_dax_page().
+	 * Hence वापस -EAGAIN and fuse_dax_fault() will रुको क्रम a memory
+	 * range to become मुक्त and retry.
 	 */
-	if (flags & IOMAP_FAULT) {
+	अगर (flags & IOMAP_FAULT) अणु
 		alloc_dmap = alloc_dax_mapping(fcd);
-		if (!alloc_dmap)
-			return -EAGAIN;
-	} else {
+		अगर (!alloc_dmap)
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
 		alloc_dmap = alloc_dax_mapping_reclaim(fcd, inode);
-		if (IS_ERR(alloc_dmap))
-			return PTR_ERR(alloc_dmap);
-	}
+		अगर (IS_ERR(alloc_dmap))
+			वापस PTR_ERR(alloc_dmap);
+	पूर्ण
 
 	/* If we are here, we should have memory allocated */
-	if (WARN_ON(!alloc_dmap))
-		return -EIO;
+	अगर (WARN_ON(!alloc_dmap))
+		वापस -EIO;
 
 	/*
-	 * Take write lock so that only one caller can try to setup mapping
-	 * and other waits.
+	 * Take ग_लिखो lock so that only one caller can try to setup mapping
+	 * and other रुकोs.
 	 */
-	down_write(&fi->dax->sem);
+	करोwn_ग_लिखो(&fi->dax->sem);
 	/*
-	 * We dropped lock. Check again if somebody else setup
-	 * mapping already.
+	 * We dropped lock. Check again अगर somebody अन्यथा setup
+	 * mapping alपढ़ोy.
 	 */
-	node = interval_tree_iter_first(&fi->dax->tree, start_idx, start_idx);
-	if (node) {
+	node = पूर्णांकerval_tree_iter_first(&fi->dax->tree, start_idx, start_idx);
+	अगर (node) अणु
 		dmap = node_to_dmap(node);
 		fuse_fill_iomap(inode, pos, length, iomap, dmap, flags);
-		dmap_add_to_free_pool(fcd, alloc_dmap);
-		up_write(&fi->dax->sem);
-		return 0;
-	}
+		dmap_add_to_मुक्त_pool(fcd, alloc_dmap);
+		up_ग_लिखो(&fi->dax->sem);
+		वापस 0;
+	पूर्ण
 
 	/* Setup one mapping */
 	ret = fuse_setup_one_mapping(inode, pos >> FUSE_DAX_SHIFT, alloc_dmap,
 				     writable, false);
-	if (ret < 0) {
-		dmap_add_to_free_pool(fcd, alloc_dmap);
-		up_write(&fi->dax->sem);
-		return ret;
-	}
+	अगर (ret < 0) अणु
+		dmap_add_to_मुक्त_pool(fcd, alloc_dmap);
+		up_ग_लिखो(&fi->dax->sem);
+		वापस ret;
+	पूर्ण
 	fuse_fill_iomap(inode, pos, length, iomap, alloc_dmap, flags);
-	up_write(&fi->dax->sem);
-	return 0;
-}
+	up_ग_लिखो(&fi->dax->sem);
+	वापस 0;
+पूर्ण
 
-static int fuse_upgrade_dax_mapping(struct inode *inode, loff_t pos,
-				    loff_t length, unsigned int flags,
-				    struct iomap *iomap)
-{
-	struct fuse_inode *fi = get_fuse_inode(inode);
-	struct fuse_dax_mapping *dmap;
-	int ret;
-	unsigned long idx = pos >> FUSE_DAX_SHIFT;
-	struct interval_tree_node *node;
+अटल पूर्णांक fuse_upgrade_dax_mapping(काष्ठा inode *inode, loff_t pos,
+				    loff_t length, अचिन्हित पूर्णांक flags,
+				    काष्ठा iomap *iomap)
+अणु
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+	काष्ठा fuse_dax_mapping *dmap;
+	पूर्णांक ret;
+	अचिन्हित दीर्घ idx = pos >> FUSE_DAX_SHIFT;
+	काष्ठा पूर्णांकerval_tree_node *node;
 
 	/*
 	 * Take exclusive lock so that only one caller can try to setup
-	 * mapping and others wait.
+	 * mapping and others रुको.
 	 */
-	down_write(&fi->dax->sem);
-	node = interval_tree_iter_first(&fi->dax->tree, idx, idx);
+	करोwn_ग_लिखो(&fi->dax->sem);
+	node = पूर्णांकerval_tree_iter_first(&fi->dax->tree, idx, idx);
 
 	/* We are holding either inode lock or i_mmap_sem, and that should
 	 * ensure that dmap can't be truncated. We are holding a reference
@@ -519,8 +520,8 @@ static int fuse_upgrade_dax_mapping(struct inode *inode, loff_t pos,
 	 * re-acquired the fi->dax->sem lock.
 	 */
 	ret = -EIO;
-	if (WARN_ON(!node))
-		goto out_err;
+	अगर (WARN_ON(!node))
+		जाओ out_err;
 
 	dmap = node_to_dmap(node);
 
@@ -528,838 +529,838 @@ static int fuse_upgrade_dax_mapping(struct inode *inode, loff_t pos,
 	 * Now we hold fi->dax->sem lock and that reference is not needed
 	 * anymore. Drop it.
 	 */
-	if (refcount_dec_and_test(&dmap->refcnt)) {
+	अगर (refcount_dec_and_test(&dmap->refcnt)) अणु
 		/* refcount should not hit 0. This object only goes
 		 * away when fuse connection goes away
 		 */
 		WARN_ON_ONCE(1);
-	}
+	पूर्ण
 
-	/* Maybe another thread already upgraded mapping while we were not
+	/* Maybe another thपढ़ो alपढ़ोy upgraded mapping जबतक we were not
 	 * holding lock.
 	 */
-	if (dmap->writable) {
+	अगर (dmap->writable) अणु
 		ret = 0;
-		goto out_fill_iomap;
-	}
+		जाओ out_fill_iomap;
+	पूर्ण
 
 	ret = fuse_setup_one_mapping(inode, pos >> FUSE_DAX_SHIFT, dmap, true,
 				     true);
-	if (ret < 0)
-		goto out_err;
+	अगर (ret < 0)
+		जाओ out_err;
 out_fill_iomap:
 	fuse_fill_iomap(inode, pos, length, iomap, dmap, flags);
 out_err:
-	up_write(&fi->dax->sem);
-	return ret;
-}
+	up_ग_लिखो(&fi->dax->sem);
+	वापस ret;
+पूर्ण
 
-/* This is just for DAX and the mapping is ephemeral, do not use it for other
+/* This is just क्रम DAX and the mapping is ephemeral, करो not use it क्रम other
  * purposes since there is no block device with a permanent mapping.
  */
-static int fuse_iomap_begin(struct inode *inode, loff_t pos, loff_t length,
-			    unsigned int flags, struct iomap *iomap,
-			    struct iomap *srcmap)
-{
-	struct fuse_inode *fi = get_fuse_inode(inode);
-	struct fuse_conn *fc = get_fuse_conn(inode);
-	struct fuse_dax_mapping *dmap;
+अटल पूर्णांक fuse_iomap_begin(काष्ठा inode *inode, loff_t pos, loff_t length,
+			    अचिन्हित पूर्णांक flags, काष्ठा iomap *iomap,
+			    काष्ठा iomap *srcmap)
+अणु
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
+	काष्ठा fuse_dax_mapping *dmap;
 	bool writable = flags & IOMAP_WRITE;
-	unsigned long start_idx = pos >> FUSE_DAX_SHIFT;
-	struct interval_tree_node *node;
+	अचिन्हित दीर्घ start_idx = pos >> FUSE_DAX_SHIFT;
+	काष्ठा पूर्णांकerval_tree_node *node;
 
-	/* We don't support FIEMAP */
-	if (WARN_ON(flags & IOMAP_REPORT))
-		return -EIO;
+	/* We करोn't support FIEMAP */
+	अगर (WARN_ON(flags & IOMAP_REPORT))
+		वापस -EIO;
 
 	iomap->offset = pos;
 	iomap->flags = 0;
-	iomap->bdev = NULL;
+	iomap->bdev = शून्य;
 	iomap->dax_dev = fc->dax->dev;
 
 	/*
-	 * Both read/write and mmap path can race here. So we need something
-	 * to make sure if we are setting up mapping, then other path waits
+	 * Both पढ़ो/ग_लिखो and mmap path can race here. So we need something
+	 * to make sure अगर we are setting up mapping, then other path रुकोs
 	 *
-	 * For now, use a semaphore for this. It probably needs to be
+	 * For now, use a semaphore क्रम this. It probably needs to be
 	 * optimized later.
 	 */
-	down_read(&fi->dax->sem);
-	node = interval_tree_iter_first(&fi->dax->tree, start_idx, start_idx);
-	if (node) {
+	करोwn_पढ़ो(&fi->dax->sem);
+	node = पूर्णांकerval_tree_iter_first(&fi->dax->tree, start_idx, start_idx);
+	अगर (node) अणु
 		dmap = node_to_dmap(node);
-		if (writable && !dmap->writable) {
-			/* Upgrade read-only mapping to read-write. This will
-			 * require exclusive fi->dax->sem lock as we don't want
-			 * two threads to be trying to this simultaneously
-			 * for same dmap. So drop shared lock and acquire
+		अगर (writable && !dmap->writable) अणु
+			/* Upgrade पढ़ो-only mapping to पढ़ो-ग_लिखो. This will
+			 * require exclusive fi->dax->sem lock as we करोn't want
+			 * two thपढ़ोs to be trying to this simultaneously
+			 * क्रम same dmap. So drop shared lock and acquire
 			 * exclusive lock.
 			 *
-			 * Before dropping fi->dax->sem lock, take reference
-			 * on dmap so that its not freed by range reclaim.
+			 * Beक्रमe dropping fi->dax->sem lock, take reference
+			 * on dmap so that its not मुक्तd by range reclaim.
 			 */
 			refcount_inc(&dmap->refcnt);
-			up_read(&fi->dax->sem);
+			up_पढ़ो(&fi->dax->sem);
 			pr_debug("%s: Upgrading mapping at offset 0x%llx length 0x%llx\n",
 				 __func__, pos, length);
-			return fuse_upgrade_dax_mapping(inode, pos, length,
+			वापस fuse_upgrade_dax_mapping(inode, pos, length,
 							flags, iomap);
-		} else {
+		पूर्ण अन्यथा अणु
 			fuse_fill_iomap(inode, pos, length, iomap, dmap, flags);
-			up_read(&fi->dax->sem);
-			return 0;
-		}
-	} else {
-		up_read(&fi->dax->sem);
+			up_पढ़ो(&fi->dax->sem);
+			वापस 0;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		up_पढ़ो(&fi->dax->sem);
 		pr_debug("%s: no mapping at offset 0x%llx length 0x%llx\n",
 				__func__, pos, length);
-		if (pos >= i_size_read(inode))
-			goto iomap_hole;
+		अगर (pos >= i_size_पढ़ो(inode))
+			जाओ iomap_hole;
 
-		return fuse_setup_new_dax_mapping(inode, pos, length, flags,
+		वापस fuse_setup_new_dax_mapping(inode, pos, length, flags,
 						  iomap);
-	}
+	पूर्ण
 
 	/*
-	 * If read beyond end of file happnes, fs code seems to return
+	 * If पढ़ो beyond end of file happnes, fs code seems to वापस
 	 * it as hole
 	 */
 iomap_hole:
 	fuse_fill_iomap_hole(iomap, length);
 	pr_debug("%s returning hole mapping. pos=0x%llx length_asked=0x%llx length_returned=0x%llx\n",
 		 __func__, pos, length, iomap->length);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fuse_iomap_end(struct inode *inode, loff_t pos, loff_t length,
-			  ssize_t written, unsigned int flags,
-			  struct iomap *iomap)
-{
-	struct fuse_dax_mapping *dmap = iomap->private;
+अटल पूर्णांक fuse_iomap_end(काष्ठा inode *inode, loff_t pos, loff_t length,
+			  sमाप_प्रकार written, अचिन्हित पूर्णांक flags,
+			  काष्ठा iomap *iomap)
+अणु
+	काष्ठा fuse_dax_mapping *dmap = iomap->निजी;
 
-	if (dmap) {
-		if (refcount_dec_and_test(&dmap->refcnt)) {
+	अगर (dmap) अणु
+		अगर (refcount_dec_and_test(&dmap->refcnt)) अणु
 			/* refcount should not hit 0. This object only goes
 			 * away when fuse connection goes away
 			 */
 			WARN_ON_ONCE(1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* DAX writes beyond end-of-file aren't handled using iomap, so the
-	 * file size is unchanged and there is nothing to do here.
+	/* DAX ग_लिखोs beyond end-of-file aren't handled using iomap, so the
+	 * file size is unchanged and there is nothing to करो here.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct iomap_ops fuse_iomap_ops = {
+अटल स्थिर काष्ठा iomap_ops fuse_iomap_ops = अणु
 	.iomap_begin = fuse_iomap_begin,
 	.iomap_end = fuse_iomap_end,
-};
+पूर्ण;
 
-static void fuse_wait_dax_page(struct inode *inode)
-{
-	struct fuse_inode *fi = get_fuse_inode(inode);
+अटल व्योम fuse_रुको_dax_page(काष्ठा inode *inode)
+अणु
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
 
-	up_write(&fi->i_mmap_sem);
+	up_ग_लिखो(&fi->i_mmap_sem);
 	schedule();
-	down_write(&fi->i_mmap_sem);
-}
+	करोwn_ग_लिखो(&fi->i_mmap_sem);
+पूर्ण
 
 /* Should be called with fi->i_mmap_sem lock held exclusively */
-static int __fuse_dax_break_layouts(struct inode *inode, bool *retry,
+अटल पूर्णांक __fuse_dax_अवरोध_layouts(काष्ठा inode *inode, bool *retry,
 				    loff_t start, loff_t end)
-{
-	struct page *page;
+अणु
+	काष्ठा page *page;
 
 	page = dax_layout_busy_page_range(inode->i_mapping, start, end);
-	if (!page)
-		return 0;
+	अगर (!page)
+		वापस 0;
 
 	*retry = true;
-	return ___wait_var_event(&page->_refcount,
-			atomic_read(&page->_refcount) == 1, TASK_INTERRUPTIBLE,
-			0, 0, fuse_wait_dax_page(inode));
-}
+	वापस ___रुको_var_event(&page->_refcount,
+			atomic_पढ़ो(&page->_refcount) == 1, TASK_INTERRUPTIBLE,
+			0, 0, fuse_रुको_dax_page(inode));
+पूर्ण
 
 /* dmap_end == 0 leads to unmapping of whole file */
-int fuse_dax_break_layouts(struct inode *inode, u64 dmap_start,
+पूर्णांक fuse_dax_अवरोध_layouts(काष्ठा inode *inode, u64 dmap_start,
 				  u64 dmap_end)
-{
+अणु
 	bool	retry;
-	int	ret;
+	पूर्णांक	ret;
 
-	do {
+	करो अणु
 		retry = false;
-		ret = __fuse_dax_break_layouts(inode, &retry, dmap_start,
+		ret = __fuse_dax_अवरोध_layouts(inode, &retry, dmap_start,
 					       dmap_end);
-	} while (ret == 0 && retry);
+	पूर्ण जबतक (ret == 0 && retry);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-ssize_t fuse_dax_read_iter(struct kiocb *iocb, struct iov_iter *to)
-{
-	struct inode *inode = file_inode(iocb->ki_filp);
-	ssize_t ret;
+sमाप_प्रकार fuse_dax_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
+अणु
+	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+	sमाप_प्रकार ret;
 
-	if (iocb->ki_flags & IOCB_NOWAIT) {
-		if (!inode_trylock_shared(inode))
-			return -EAGAIN;
-	} else {
+	अगर (iocb->ki_flags & IOCB_NOWAIT) अणु
+		अगर (!inode_trylock_shared(inode))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
 		inode_lock_shared(inode);
-	}
+	पूर्ण
 
 	ret = dax_iomap_rw(iocb, to, &fuse_iomap_ops);
 	inode_unlock_shared(inode);
 
 	/* TODO file_accessed(iocb->f_filp) */
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool file_extending_write(struct kiocb *iocb, struct iov_iter *from)
-{
-	struct inode *inode = file_inode(iocb->ki_filp);
+अटल bool file_extending_ग_लिखो(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
+अणु
+	काष्ठा inode *inode = file_inode(iocb->ki_filp);
 
-	return (iov_iter_rw(from) == WRITE &&
-		((iocb->ki_pos) >= i_size_read(inode) ||
-		  (iocb->ki_pos + iov_iter_count(from) > i_size_read(inode))));
-}
+	वापस (iov_iter_rw(from) == WRITE &&
+		((iocb->ki_pos) >= i_size_पढ़ो(inode) ||
+		  (iocb->ki_pos + iov_iter_count(from) > i_size_पढ़ो(inode))));
+पूर्ण
 
-static ssize_t fuse_dax_direct_write(struct kiocb *iocb, struct iov_iter *from)
-{
-	struct inode *inode = file_inode(iocb->ki_filp);
-	struct fuse_io_priv io = FUSE_IO_PRIV_SYNC(iocb);
-	ssize_t ret;
+अटल sमाप_प्रकार fuse_dax_direct_ग_लिखो(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
+अणु
+	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+	काष्ठा fuse_io_priv io = FUSE_IO_PRIV_SYNC(iocb);
+	sमाप_प्रकार ret;
 
 	ret = fuse_direct_io(&io, from, &iocb->ki_pos, FUSE_DIO_WRITE);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	fuse_invalidate_attr(inode);
-	fuse_write_update_size(inode, iocb->ki_pos);
-	return ret;
-}
+	fuse_ग_लिखो_update_size(inode, iocb->ki_pos);
+	वापस ret;
+पूर्ण
 
-ssize_t fuse_dax_write_iter(struct kiocb *iocb, struct iov_iter *from)
-{
-	struct inode *inode = file_inode(iocb->ki_filp);
-	ssize_t ret;
+sमाप_प्रकार fuse_dax_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
+अणु
+	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+	sमाप_प्रकार ret;
 
-	if (iocb->ki_flags & IOCB_NOWAIT) {
-		if (!inode_trylock(inode))
-			return -EAGAIN;
-	} else {
+	अगर (iocb->ki_flags & IOCB_NOWAIT) अणु
+		अगर (!inode_trylock(inode))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
 		inode_lock(inode);
-	}
+	पूर्ण
 
-	ret = generic_write_checks(iocb, from);
-	if (ret <= 0)
-		goto out;
+	ret = generic_ग_लिखो_checks(iocb, from);
+	अगर (ret <= 0)
+		जाओ out;
 
-	ret = file_remove_privs(iocb->ki_filp);
-	if (ret)
-		goto out;
-	/* TODO file_update_time() but we don't want metadata I/O */
+	ret = file_हटाओ_privs(iocb->ki_filp);
+	अगर (ret)
+		जाओ out;
+	/* TODO file_update_समय() but we करोn't want metadata I/O */
 
-	/* Do not use dax for file extending writes as write and on
+	/* Do not use dax क्रम file extending ग_लिखोs as ग_लिखो and on
 	 * disk i_size increase are not atomic otherwise.
 	 */
-	if (file_extending_write(iocb, from))
-		ret = fuse_dax_direct_write(iocb, from);
-	else
+	अगर (file_extending_ग_लिखो(iocb, from))
+		ret = fuse_dax_direct_ग_लिखो(iocb, from);
+	अन्यथा
 		ret = dax_iomap_rw(iocb, from, &fuse_iomap_ops);
 
 out:
 	inode_unlock(inode);
 
-	if (ret > 0)
-		ret = generic_write_sync(iocb, ret);
-	return ret;
-}
+	अगर (ret > 0)
+		ret = generic_ग_लिखो_sync(iocb, ret);
+	वापस ret;
+पूर्ण
 
-static int fuse_dax_writepages(struct address_space *mapping,
-			       struct writeback_control *wbc)
-{
+अटल पूर्णांक fuse_dax_ग_लिखोpages(काष्ठा address_space *mapping,
+			       काष्ठा ग_लिखोback_control *wbc)
+अणु
 
-	struct inode *inode = mapping->host;
-	struct fuse_conn *fc = get_fuse_conn(inode);
+	काष्ठा inode *inode = mapping->host;
+	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
 
-	return dax_writeback_mapping_range(mapping, fc->dax->dev, wbc);
-}
+	वापस dax_ग_लिखोback_mapping_range(mapping, fc->dax->dev, wbc);
+पूर्ण
 
-static vm_fault_t __fuse_dax_fault(struct vm_fault *vmf,
-				   enum page_entry_size pe_size, bool write)
-{
+अटल vm_fault_t __fuse_dax_fault(काष्ठा vm_fault *vmf,
+				   क्रमागत page_entry_size pe_size, bool ग_लिखो)
+अणु
 	vm_fault_t ret;
-	struct inode *inode = file_inode(vmf->vma->vm_file);
-	struct super_block *sb = inode->i_sb;
+	काष्ठा inode *inode = file_inode(vmf->vma->vm_file);
+	काष्ठा super_block *sb = inode->i_sb;
 	pfn_t pfn;
-	int error = 0;
-	struct fuse_conn *fc = get_fuse_conn(inode);
-	struct fuse_conn_dax *fcd = fc->dax;
+	पूर्णांक error = 0;
+	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
+	काष्ठा fuse_conn_dax *fcd = fc->dax;
 	bool retry = false;
 
-	if (write)
+	अगर (ग_लिखो)
 		sb_start_pagefault(sb);
 retry:
-	if (retry && !(fcd->nr_free_ranges > 0))
-		wait_event(fcd->range_waitq, (fcd->nr_free_ranges > 0));
+	अगर (retry && !(fcd->nr_मुक्त_ranges > 0))
+		रुको_event(fcd->range_रुकोq, (fcd->nr_मुक्त_ranges > 0));
 
 	/*
 	 * We need to serialize against not only truncate but also against
 	 * fuse dax memory range reclaim. While a range is being reclaimed,
-	 * we do not want any read/write/mmap to make progress and try
-	 * to populate page cache or access memory we are trying to free.
+	 * we करो not want any पढ़ो/ग_लिखो/mmap to make progress and try
+	 * to populate page cache or access memory we are trying to मुक्त.
 	 */
-	down_read(&get_fuse_inode(inode)->i_mmap_sem);
+	करोwn_पढ़ो(&get_fuse_inode(inode)->i_mmap_sem);
 	ret = dax_iomap_fault(vmf, pe_size, &pfn, &error, &fuse_iomap_ops);
-	if ((ret & VM_FAULT_ERROR) && error == -EAGAIN) {
+	अगर ((ret & VM_FAULT_ERROR) && error == -EAGAIN) अणु
 		error = 0;
 		retry = true;
-		up_read(&get_fuse_inode(inode)->i_mmap_sem);
-		goto retry;
-	}
+		up_पढ़ो(&get_fuse_inode(inode)->i_mmap_sem);
+		जाओ retry;
+	पूर्ण
 
-	if (ret & VM_FAULT_NEEDDSYNC)
+	अगर (ret & VM_FAULT_NEEDDSYNC)
 		ret = dax_finish_sync_fault(vmf, pe_size, pfn);
-	up_read(&get_fuse_inode(inode)->i_mmap_sem);
+	up_पढ़ो(&get_fuse_inode(inode)->i_mmap_sem);
 
-	if (write)
+	अगर (ग_लिखो)
 		sb_end_pagefault(sb);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static vm_fault_t fuse_dax_fault(struct vm_fault *vmf)
-{
-	return __fuse_dax_fault(vmf, PE_SIZE_PTE,
+अटल vm_fault_t fuse_dax_fault(काष्ठा vm_fault *vmf)
+अणु
+	वापस __fuse_dax_fault(vmf, PE_SIZE_PTE,
 				vmf->flags & FAULT_FLAG_WRITE);
-}
+पूर्ण
 
-static vm_fault_t fuse_dax_huge_fault(struct vm_fault *vmf,
-			       enum page_entry_size pe_size)
-{
-	return __fuse_dax_fault(vmf, pe_size, vmf->flags & FAULT_FLAG_WRITE);
-}
+अटल vm_fault_t fuse_dax_huge_fault(काष्ठा vm_fault *vmf,
+			       क्रमागत page_entry_size pe_size)
+अणु
+	वापस __fuse_dax_fault(vmf, pe_size, vmf->flags & FAULT_FLAG_WRITE);
+पूर्ण
 
-static vm_fault_t fuse_dax_page_mkwrite(struct vm_fault *vmf)
-{
-	return __fuse_dax_fault(vmf, PE_SIZE_PTE, true);
-}
+अटल vm_fault_t fuse_dax_page_mkग_लिखो(काष्ठा vm_fault *vmf)
+अणु
+	वापस __fuse_dax_fault(vmf, PE_SIZE_PTE, true);
+पूर्ण
 
-static vm_fault_t fuse_dax_pfn_mkwrite(struct vm_fault *vmf)
-{
-	return __fuse_dax_fault(vmf, PE_SIZE_PTE, true);
-}
+अटल vm_fault_t fuse_dax_pfn_mkग_लिखो(काष्ठा vm_fault *vmf)
+अणु
+	वापस __fuse_dax_fault(vmf, PE_SIZE_PTE, true);
+पूर्ण
 
-static const struct vm_operations_struct fuse_dax_vm_ops = {
+अटल स्थिर काष्ठा vm_operations_काष्ठा fuse_dax_vm_ops = अणु
 	.fault		= fuse_dax_fault,
 	.huge_fault	= fuse_dax_huge_fault,
-	.page_mkwrite	= fuse_dax_page_mkwrite,
-	.pfn_mkwrite	= fuse_dax_pfn_mkwrite,
-};
+	.page_mkग_लिखो	= fuse_dax_page_mkग_लिखो,
+	.pfn_mkग_लिखो	= fuse_dax_pfn_mkग_लिखो,
+पूर्ण;
 
-int fuse_dax_mmap(struct file *file, struct vm_area_struct *vma)
-{
+पूर्णांक fuse_dax_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
 	file_accessed(file);
 	vma->vm_ops = &fuse_dax_vm_ops;
 	vma->vm_flags |= VM_MIXEDMAP | VM_HUGEPAGE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dmap_writeback_invalidate(struct inode *inode,
-				     struct fuse_dax_mapping *dmap)
-{
-	int ret;
+अटल पूर्णांक dmap_ग_लिखोback_invalidate(काष्ठा inode *inode,
+				     काष्ठा fuse_dax_mapping *dmap)
+अणु
+	पूर्णांक ret;
 	loff_t start_pos = dmap->itn.start << FUSE_DAX_SHIFT;
 	loff_t end_pos = (start_pos + FUSE_DAX_SZ - 1);
 
-	ret = filemap_fdatawrite_range(inode->i_mapping, start_pos, end_pos);
-	if (ret) {
+	ret = filemap_fdataग_लिखो_range(inode->i_mapping, start_pos, end_pos);
+	अगर (ret) अणु
 		pr_debug("fuse: filemap_fdatawrite_range() failed. err=%d start_pos=0x%llx, end_pos=0x%llx\n",
 			 ret, start_pos, end_pos);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = invalidate_inode_pages2_range(inode->i_mapping,
 					    start_pos >> PAGE_SHIFT,
 					    end_pos >> PAGE_SHIFT);
-	if (ret)
+	अगर (ret)
 		pr_debug("fuse: invalidate_inode_pages2_range() failed err=%d\n",
 			 ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int reclaim_one_dmap_locked(struct inode *inode,
-				   struct fuse_dax_mapping *dmap)
-{
-	int ret;
-	struct fuse_inode *fi = get_fuse_inode(inode);
+अटल पूर्णांक reclaim_one_dmap_locked(काष्ठा inode *inode,
+				   काष्ठा fuse_dax_mapping *dmap)
+अणु
+	पूर्णांक ret;
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
 
 	/*
-	 * igrab() was done to make sure inode won't go under us, and this
-	 * further avoids the race with evict().
+	 * igrab() was करोne to make sure inode won't go under us, and this
+	 * further aव्योमs the race with evict().
 	 */
-	ret = dmap_writeback_invalidate(inode, dmap);
-	if (ret)
-		return ret;
+	ret = dmap_ग_लिखोback_invalidate(inode, dmap);
+	अगर (ret)
+		वापस ret;
 
-	/* Remove dax mapping from inode interval tree now */
-	interval_tree_remove(&dmap->itn, &fi->dax->tree);
+	/* Remove dax mapping from inode पूर्णांकerval tree now */
+	पूर्णांकerval_tree_हटाओ(&dmap->itn, &fi->dax->tree);
 	fi->dax->nr--;
 
-	/* It is possible that umount/shutdown has killed the fuse connection
-	 * and worker thread is trying to reclaim memory in parallel.  Don't
-	 * warn in that case.
+	/* It is possible that umount/shutकरोwn has समाप्तed the fuse connection
+	 * and worker thपढ़ो is trying to reclaim memory in parallel.  Don't
+	 * warn in that हाल.
 	 */
-	ret = dmap_removemapping_one(inode, dmap);
-	if (ret && ret != -ENOTCONN) {
+	ret = dmap_हटाओmapping_one(inode, dmap);
+	अगर (ret && ret != -ENOTCONN) अणु
 		pr_warn("Failed to remove mapping. offset=0x%llx len=0x%llx ret=%d\n",
-			dmap->window_offset, dmap->length, ret);
-	}
-	return 0;
-}
+			dmap->winकरोw_offset, dmap->length, ret);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Find first mapped dmap for an inode and return file offset. Caller needs
+/* Find first mapped dmap क्रम an inode and वापस file offset. Caller needs
  * to hold fi->dax->sem lock either shared or exclusive.
  */
-static struct fuse_dax_mapping *inode_lookup_first_dmap(struct inode *inode)
-{
-	struct fuse_inode *fi = get_fuse_inode(inode);
-	struct fuse_dax_mapping *dmap;
-	struct interval_tree_node *node;
+अटल काष्ठा fuse_dax_mapping *inode_lookup_first_dmap(काष्ठा inode *inode)
+अणु
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+	काष्ठा fuse_dax_mapping *dmap;
+	काष्ठा पूर्णांकerval_tree_node *node;
 
-	for (node = interval_tree_iter_first(&fi->dax->tree, 0, -1); node;
-	     node = interval_tree_iter_next(node, 0, -1)) {
+	क्रम (node = पूर्णांकerval_tree_iter_first(&fi->dax->tree, 0, -1); node;
+	     node = पूर्णांकerval_tree_iter_next(node, 0, -1)) अणु
 		dmap = node_to_dmap(node);
 		/* still in use. */
-		if (refcount_read(&dmap->refcnt) > 1)
-			continue;
+		अगर (refcount_पढ़ो(&dmap->refcnt) > 1)
+			जारी;
 
-		return dmap;
-	}
+		वापस dmap;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Find first mapping in the tree and free it and return it. Do not add
- * it back to free pool.
+ * Find first mapping in the tree and मुक्त it and वापस it. Do not add
+ * it back to मुक्त pool.
  */
-static struct fuse_dax_mapping *
-inode_inline_reclaim_one_dmap(struct fuse_conn_dax *fcd, struct inode *inode,
+अटल काष्ठा fuse_dax_mapping *
+inode_अंतरभूत_reclaim_one_dmap(काष्ठा fuse_conn_dax *fcd, काष्ठा inode *inode,
 			      bool *retry)
-{
-	struct fuse_inode *fi = get_fuse_inode(inode);
-	struct fuse_dax_mapping *dmap;
+अणु
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+	काष्ठा fuse_dax_mapping *dmap;
 	u64 dmap_start, dmap_end;
-	unsigned long start_idx;
-	int ret;
-	struct interval_tree_node *node;
+	अचिन्हित दीर्घ start_idx;
+	पूर्णांक ret;
+	काष्ठा पूर्णांकerval_tree_node *node;
 
-	down_write(&fi->i_mmap_sem);
+	करोwn_ग_लिखो(&fi->i_mmap_sem);
 
 	/* Lookup a dmap and corresponding file offset to reclaim. */
-	down_read(&fi->dax->sem);
+	करोwn_पढ़ो(&fi->dax->sem);
 	dmap = inode_lookup_first_dmap(inode);
-	if (dmap) {
+	अगर (dmap) अणु
 		start_idx = dmap->itn.start;
 		dmap_start = start_idx << FUSE_DAX_SHIFT;
 		dmap_end = dmap_start + FUSE_DAX_SZ - 1;
-	}
-	up_read(&fi->dax->sem);
+	पूर्ण
+	up_पढ़ो(&fi->dax->sem);
 
-	if (!dmap)
-		goto out_mmap_sem;
+	अगर (!dmap)
+		जाओ out_mmap_sem;
 	/*
 	 * Make sure there are no references to inode pages using
 	 * get_user_pages()
 	 */
-	ret = fuse_dax_break_layouts(inode, dmap_start, dmap_end);
-	if (ret) {
+	ret = fuse_dax_अवरोध_layouts(inode, dmap_start, dmap_end);
+	अगर (ret) अणु
 		pr_debug("fuse: fuse_dax_break_layouts() failed. err=%d\n",
 			 ret);
 		dmap = ERR_PTR(ret);
-		goto out_mmap_sem;
-	}
+		जाओ out_mmap_sem;
+	पूर्ण
 
-	down_write(&fi->dax->sem);
-	node = interval_tree_iter_first(&fi->dax->tree, start_idx, start_idx);
-	/* Range already got reclaimed by somebody else */
-	if (!node) {
-		if (retry)
+	करोwn_ग_लिखो(&fi->dax->sem);
+	node = पूर्णांकerval_tree_iter_first(&fi->dax->tree, start_idx, start_idx);
+	/* Range alपढ़ोy got reclaimed by somebody अन्यथा */
+	अगर (!node) अणु
+		अगर (retry)
 			*retry = true;
-		goto out_write_dmap_sem;
-	}
+		जाओ out_ग_लिखो_dmap_sem;
+	पूर्ण
 
 	dmap = node_to_dmap(node);
 	/* still in use. */
-	if (refcount_read(&dmap->refcnt) > 1) {
-		dmap = NULL;
-		if (retry)
+	अगर (refcount_पढ़ो(&dmap->refcnt) > 1) अणु
+		dmap = शून्य;
+		अगर (retry)
 			*retry = true;
-		goto out_write_dmap_sem;
-	}
+		जाओ out_ग_लिखो_dmap_sem;
+	पूर्ण
 
 	ret = reclaim_one_dmap_locked(inode, dmap);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dmap = ERR_PTR(ret);
-		goto out_write_dmap_sem;
-	}
+		जाओ out_ग_लिखो_dmap_sem;
+	पूर्ण
 
-	/* Clean up dmap. Do not add back to free list */
-	dmap_remove_busy_list(fcd, dmap);
-	dmap->inode = NULL;
+	/* Clean up dmap. Do not add back to मुक्त list */
+	dmap_हटाओ_busy_list(fcd, dmap);
+	dmap->inode = शून्य;
 	dmap->itn.start = dmap->itn.last = 0;
 
 	pr_debug("fuse: %s: inline reclaimed memory range. inode=%p, window_offset=0x%llx, length=0x%llx\n",
-		 __func__, inode, dmap->window_offset, dmap->length);
+		 __func__, inode, dmap->winकरोw_offset, dmap->length);
 
-out_write_dmap_sem:
-	up_write(&fi->dax->sem);
+out_ग_लिखो_dmap_sem:
+	up_ग_लिखो(&fi->dax->sem);
 out_mmap_sem:
-	up_write(&fi->i_mmap_sem);
-	return dmap;
-}
+	up_ग_लिखो(&fi->i_mmap_sem);
+	वापस dmap;
+पूर्ण
 
-static struct fuse_dax_mapping *
-alloc_dax_mapping_reclaim(struct fuse_conn_dax *fcd, struct inode *inode)
-{
-	struct fuse_dax_mapping *dmap;
-	struct fuse_inode *fi = get_fuse_inode(inode);
+अटल काष्ठा fuse_dax_mapping *
+alloc_dax_mapping_reclaim(काष्ठा fuse_conn_dax *fcd, काष्ठा inode *inode)
+अणु
+	काष्ठा fuse_dax_mapping *dmap;
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
 
-	while (1) {
+	जबतक (1) अणु
 		bool retry = false;
 
 		dmap = alloc_dax_mapping(fcd);
-		if (dmap)
-			return dmap;
+		अगर (dmap)
+			वापस dmap;
 
-		dmap = inode_inline_reclaim_one_dmap(fcd, inode, &retry);
+		dmap = inode_अंतरभूत_reclaim_one_dmap(fcd, inode, &retry);
 		/*
-		 * Either we got a mapping or it is an error, return in both
-		 * the cases.
+		 * Either we got a mapping or it is an error, वापस in both
+		 * the हालs.
 		 */
-		if (dmap)
-			return dmap;
+		अगर (dmap)
+			वापस dmap;
 
 		/* If we could not reclaim a mapping because it
 		 * had a reference or some other temporary failure,
-		 * Try again. We want to give up inline reclaim only
-		 * if there is no range assigned to this node. Otherwise
-		 * if a deadlock is possible if we sleep with fi->i_mmap_sem
-		 * held and worker to free memory can't make progress due
+		 * Try again. We want to give up अंतरभूत reclaim only
+		 * अगर there is no range asचिन्हित to this node. Otherwise
+		 * अगर a deadlock is possible अगर we sleep with fi->i_mmap_sem
+		 * held and worker to मुक्त memory can't make progress due
 		 * to unavailability of fi->i_mmap_sem lock. So sleep
-		 * only if fi->dax->nr=0
+		 * only अगर fi->dax->nr=0
 		 */
-		if (retry)
-			continue;
+		अगर (retry)
+			जारी;
 		/*
-		 * There are no mappings which can be reclaimed. Wait for one.
+		 * There are no mappings which can be reclaimed. Wait क्रम one.
 		 * We are not holding fi->dax->sem. So it is possible
-		 * that range gets added now. But as we are not holding
-		 * fi->i_mmap_sem, worker should still be able to free up
+		 * that range माला_लो added now. But as we are not holding
+		 * fi->i_mmap_sem, worker should still be able to मुक्त up
 		 * a range and wake us up.
 		 */
-		if (!fi->dax->nr && !(fcd->nr_free_ranges > 0)) {
-			if (wait_event_killable_exclusive(fcd->range_waitq,
-					(fcd->nr_free_ranges > 0))) {
-				return ERR_PTR(-EINTR);
-			}
-		}
-	}
-}
+		अगर (!fi->dax->nr && !(fcd->nr_मुक्त_ranges > 0)) अणु
+			अगर (रुको_event_समाप्तable_exclusive(fcd->range_रुकोq,
+					(fcd->nr_मुक्त_ranges > 0))) अणु
+				वापस ERR_PTR(-EINTR);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int lookup_and_reclaim_dmap_locked(struct fuse_conn_dax *fcd,
-					  struct inode *inode,
-					  unsigned long start_idx)
-{
-	int ret;
-	struct fuse_inode *fi = get_fuse_inode(inode);
-	struct fuse_dax_mapping *dmap;
-	struct interval_tree_node *node;
+अटल पूर्णांक lookup_and_reclaim_dmap_locked(काष्ठा fuse_conn_dax *fcd,
+					  काष्ठा inode *inode,
+					  अचिन्हित दीर्घ start_idx)
+अणु
+	पूर्णांक ret;
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+	काष्ठा fuse_dax_mapping *dmap;
+	काष्ठा पूर्णांकerval_tree_node *node;
 
 	/* Find fuse dax mapping at file offset inode. */
-	node = interval_tree_iter_first(&fi->dax->tree, start_idx, start_idx);
+	node = पूर्णांकerval_tree_iter_first(&fi->dax->tree, start_idx, start_idx);
 
-	/* Range already got cleaned up by somebody else */
-	if (!node)
-		return 0;
+	/* Range alपढ़ोy got cleaned up by somebody अन्यथा */
+	अगर (!node)
+		वापस 0;
 	dmap = node_to_dmap(node);
 
 	/* still in use. */
-	if (refcount_read(&dmap->refcnt) > 1)
-		return 0;
+	अगर (refcount_पढ़ो(&dmap->refcnt) > 1)
+		वापस 0;
 
 	ret = reclaim_one_dmap_locked(inode, dmap);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Cleanup dmap entry and add back to free list */
+	/* Cleanup dmap entry and add back to मुक्त list */
 	spin_lock(&fcd->lock);
-	dmap_reinit_add_to_free_pool(fcd, dmap);
+	dmap_reinit_add_to_मुक्त_pool(fcd, dmap);
 	spin_unlock(&fcd->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Free a range of memory.
  * Locking:
  * 1. Take fi->i_mmap_sem to block dax faults.
- * 2. Take fi->dax->sem to protect interval tree and also to make sure
- *    read/write can not reuse a dmap which we might be freeing.
+ * 2. Take fi->dax->sem to protect पूर्णांकerval tree and also to make sure
+ *    पढ़ो/ग_लिखो can not reuse a dmap which we might be मुक्तing.
  */
-static int lookup_and_reclaim_dmap(struct fuse_conn_dax *fcd,
-				   struct inode *inode,
-				   unsigned long start_idx,
-				   unsigned long end_idx)
-{
-	int ret;
-	struct fuse_inode *fi = get_fuse_inode(inode);
+अटल पूर्णांक lookup_and_reclaim_dmap(काष्ठा fuse_conn_dax *fcd,
+				   काष्ठा inode *inode,
+				   अचिन्हित दीर्घ start_idx,
+				   अचिन्हित दीर्घ end_idx)
+अणु
+	पूर्णांक ret;
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
 	loff_t dmap_start = start_idx << FUSE_DAX_SHIFT;
 	loff_t dmap_end = (dmap_start + FUSE_DAX_SZ) - 1;
 
-	down_write(&fi->i_mmap_sem);
-	ret = fuse_dax_break_layouts(inode, dmap_start, dmap_end);
-	if (ret) {
+	करोwn_ग_लिखो(&fi->i_mmap_sem);
+	ret = fuse_dax_अवरोध_layouts(inode, dmap_start, dmap_end);
+	अगर (ret) अणु
 		pr_debug("virtio_fs: fuse_dax_break_layouts() failed. err=%d\n",
 			 ret);
-		goto out_mmap_sem;
-	}
+		जाओ out_mmap_sem;
+	पूर्ण
 
-	down_write(&fi->dax->sem);
+	करोwn_ग_लिखो(&fi->dax->sem);
 	ret = lookup_and_reclaim_dmap_locked(fcd, inode, start_idx);
-	up_write(&fi->dax->sem);
+	up_ग_लिखो(&fi->dax->sem);
 out_mmap_sem:
-	up_write(&fi->i_mmap_sem);
-	return ret;
-}
+	up_ग_लिखो(&fi->i_mmap_sem);
+	वापस ret;
+पूर्ण
 
-static int try_to_free_dmap_chunks(struct fuse_conn_dax *fcd,
-				   unsigned long nr_to_free)
-{
-	struct fuse_dax_mapping *dmap, *pos, *temp;
-	int ret, nr_freed = 0;
-	unsigned long start_idx = 0, end_idx = 0;
-	struct inode *inode = NULL;
+अटल पूर्णांक try_to_मुक्त_dmap_chunks(काष्ठा fuse_conn_dax *fcd,
+				   अचिन्हित दीर्घ nr_to_मुक्त)
+अणु
+	काष्ठा fuse_dax_mapping *dmap, *pos, *temp;
+	पूर्णांक ret, nr_मुक्तd = 0;
+	अचिन्हित दीर्घ start_idx = 0, end_idx = 0;
+	काष्ठा inode *inode = शून्य;
 
-	/* Pick first busy range and free it for now*/
-	while (1) {
-		if (nr_freed >= nr_to_free)
-			break;
+	/* Pick first busy range and मुक्त it क्रम now*/
+	जबतक (1) अणु
+		अगर (nr_मुक्तd >= nr_to_मुक्त)
+			अवरोध;
 
-		dmap = NULL;
+		dmap = शून्य;
 		spin_lock(&fcd->lock);
 
-		if (!fcd->nr_busy_ranges) {
+		अगर (!fcd->nr_busy_ranges) अणु
 			spin_unlock(&fcd->lock);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		list_for_each_entry_safe(pos, temp, &fcd->busy_ranges,
-						busy_list) {
-			/* skip this range if it's in use. */
-			if (refcount_read(&pos->refcnt) > 1)
-				continue;
+		list_क्रम_each_entry_safe(pos, temp, &fcd->busy_ranges,
+						busy_list) अणु
+			/* skip this range अगर it's in use. */
+			अगर (refcount_पढ़ो(&pos->refcnt) > 1)
+				जारी;
 
 			inode = igrab(pos->inode);
 			/*
-			 * This inode is going away. That will free
-			 * up all the ranges anyway, continue to
+			 * This inode is going away. That will मुक्त
+			 * up all the ranges anyway, जारी to
 			 * next range.
 			 */
-			if (!inode)
-				continue;
+			अगर (!inode)
+				जारी;
 			/*
 			 * Take this element off list and add it tail. If
-			 * this element can't be freed, it will help with
+			 * this element can't be मुक्तd, it will help with
 			 * selecting new element in next iteration of loop.
 			 */
 			dmap = pos;
 			list_move_tail(&dmap->busy_list, &fcd->busy_ranges);
 			start_idx = end_idx = dmap->itn.start;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		spin_unlock(&fcd->lock);
-		if (!dmap)
-			return 0;
+		अगर (!dmap)
+			वापस 0;
 
 		ret = lookup_and_reclaim_dmap(fcd, inode, start_idx, end_idx);
 		iput(inode);
-		if (ret)
-			return ret;
-		nr_freed++;
-	}
-	return 0;
-}
+		अगर (ret)
+			वापस ret;
+		nr_मुक्तd++;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void fuse_dax_free_mem_worker(struct work_struct *work)
-{
-	int ret;
-	struct fuse_conn_dax *fcd = container_of(work, struct fuse_conn_dax,
-						 free_work.work);
-	ret = try_to_free_dmap_chunks(fcd, FUSE_DAX_RECLAIM_CHUNK);
-	if (ret) {
+अटल व्योम fuse_dax_मुक्त_mem_worker(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक ret;
+	काष्ठा fuse_conn_dax *fcd = container_of(work, काष्ठा fuse_conn_dax,
+						 मुक्त_work.work);
+	ret = try_to_मुक्त_dmap_chunks(fcd, FUSE_DAX_RECLAIM_CHUNK);
+	अगर (ret) अणु
 		pr_debug("fuse: try_to_free_dmap_chunks() failed with err=%d\n",
 			 ret);
-	}
+	पूर्ण
 
-	/* If number of free ranges are still below threhold, requeue */
-	kick_dmap_free_worker(fcd, 1);
-}
+	/* If number of मुक्त ranges are still below threhold, requeue */
+	kick_dmap_मुक्त_worker(fcd, 1);
+पूर्ण
 
-static void fuse_free_dax_mem_ranges(struct list_head *mem_list)
-{
-	struct fuse_dax_mapping *range, *temp;
+अटल व्योम fuse_मुक्त_dax_mem_ranges(काष्ठा list_head *mem_list)
+अणु
+	काष्ठा fuse_dax_mapping *range, *temp;
 
 	/* Free All allocated elements */
-	list_for_each_entry_safe(range, temp, mem_list, list) {
+	list_क्रम_each_entry_safe(range, temp, mem_list, list) अणु
 		list_del(&range->list);
-		if (!list_empty(&range->busy_list))
+		अगर (!list_empty(&range->busy_list))
 			list_del(&range->busy_list);
-		kfree(range);
-	}
-}
+		kमुक्त(range);
+	पूर्ण
+पूर्ण
 
-void fuse_dax_conn_free(struct fuse_conn *fc)
-{
-	if (fc->dax) {
-		fuse_free_dax_mem_ranges(&fc->dax->free_ranges);
-		kfree(fc->dax);
-	}
-}
+व्योम fuse_dax_conn_मुक्त(काष्ठा fuse_conn *fc)
+अणु
+	अगर (fc->dax) अणु
+		fuse_मुक्त_dax_mem_ranges(&fc->dax->मुक्त_ranges);
+		kमुक्त(fc->dax);
+	पूर्ण
+पूर्ण
 
-static int fuse_dax_mem_range_init(struct fuse_conn_dax *fcd)
-{
-	long nr_pages, nr_ranges;
-	void *kaddr;
+अटल पूर्णांक fuse_dax_mem_range_init(काष्ठा fuse_conn_dax *fcd)
+अणु
+	दीर्घ nr_pages, nr_ranges;
+	व्योम *kaddr;
 	pfn_t pfn;
-	struct fuse_dax_mapping *range;
-	int ret, id;
-	size_t dax_size = -1;
-	unsigned long i;
+	काष्ठा fuse_dax_mapping *range;
+	पूर्णांक ret, id;
+	माप_प्रकार dax_size = -1;
+	अचिन्हित दीर्घ i;
 
-	init_waitqueue_head(&fcd->range_waitq);
-	INIT_LIST_HEAD(&fcd->free_ranges);
+	init_रुकोqueue_head(&fcd->range_रुकोq);
+	INIT_LIST_HEAD(&fcd->मुक्त_ranges);
 	INIT_LIST_HEAD(&fcd->busy_ranges);
-	INIT_DELAYED_WORK(&fcd->free_work, fuse_dax_free_mem_worker);
+	INIT_DELAYED_WORK(&fcd->मुक्त_work, fuse_dax_मुक्त_mem_worker);
 
-	id = dax_read_lock();
+	id = dax_पढ़ो_lock();
 	nr_pages = dax_direct_access(fcd->dev, 0, PHYS_PFN(dax_size), &kaddr,
 				     &pfn);
-	dax_read_unlock(id);
-	if (nr_pages < 0) {
+	dax_पढ़ो_unlock(id);
+	अगर (nr_pages < 0) अणु
 		pr_debug("dax_direct_access() returned %ld\n", nr_pages);
-		return nr_pages;
-	}
+		वापस nr_pages;
+	पूर्ण
 
 	nr_ranges = nr_pages/FUSE_DAX_PAGES;
 	pr_debug("%s: dax mapped %ld pages. nr_ranges=%ld\n",
 		__func__, nr_pages, nr_ranges);
 
-	for (i = 0; i < nr_ranges; i++) {
-		range = kzalloc(sizeof(struct fuse_dax_mapping), GFP_KERNEL);
+	क्रम (i = 0; i < nr_ranges; i++) अणु
+		range = kzalloc(माप(काष्ठा fuse_dax_mapping), GFP_KERNEL);
 		ret = -ENOMEM;
-		if (!range)
-			goto out_err;
+		अगर (!range)
+			जाओ out_err;
 
-		/* TODO: This offset only works if virtio-fs driver is not
+		/* TODO: This offset only works अगर virtio-fs driver is not
 		 * having some memory hidden at the beginning. This needs
 		 * better handling
 		 */
-		range->window_offset = i * FUSE_DAX_SZ;
+		range->winकरोw_offset = i * FUSE_DAX_SZ;
 		range->length = FUSE_DAX_SZ;
 		INIT_LIST_HEAD(&range->busy_list);
 		refcount_set(&range->refcnt, 1);
-		list_add_tail(&range->list, &fcd->free_ranges);
-	}
+		list_add_tail(&range->list, &fcd->मुक्त_ranges);
+	पूर्ण
 
-	fcd->nr_free_ranges = nr_ranges;
+	fcd->nr_मुक्त_ranges = nr_ranges;
 	fcd->nr_ranges = nr_ranges;
-	return 0;
+	वापस 0;
 out_err:
 	/* Free All allocated elements */
-	fuse_free_dax_mem_ranges(&fcd->free_ranges);
-	return ret;
-}
+	fuse_मुक्त_dax_mem_ranges(&fcd->मुक्त_ranges);
+	वापस ret;
+पूर्ण
 
-int fuse_dax_conn_alloc(struct fuse_conn *fc, struct dax_device *dax_dev)
-{
-	struct fuse_conn_dax *fcd;
-	int err;
+पूर्णांक fuse_dax_conn_alloc(काष्ठा fuse_conn *fc, काष्ठा dax_device *dax_dev)
+अणु
+	काष्ठा fuse_conn_dax *fcd;
+	पूर्णांक err;
 
-	if (!dax_dev)
-		return 0;
+	अगर (!dax_dev)
+		वापस 0;
 
-	fcd = kzalloc(sizeof(*fcd), GFP_KERNEL);
-	if (!fcd)
-		return -ENOMEM;
+	fcd = kzalloc(माप(*fcd), GFP_KERNEL);
+	अगर (!fcd)
+		वापस -ENOMEM;
 
 	spin_lock_init(&fcd->lock);
 	fcd->dev = dax_dev;
 	err = fuse_dax_mem_range_init(fcd);
-	if (err) {
-		kfree(fcd);
-		return err;
-	}
+	अगर (err) अणु
+		kमुक्त(fcd);
+		वापस err;
+	पूर्ण
 
 	fc->dax = fcd;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool fuse_dax_inode_alloc(struct super_block *sb, struct fuse_inode *fi)
-{
-	struct fuse_conn *fc = get_fuse_conn_super(sb);
+bool fuse_dax_inode_alloc(काष्ठा super_block *sb, काष्ठा fuse_inode *fi)
+अणु
+	काष्ठा fuse_conn *fc = get_fuse_conn_super(sb);
 
-	fi->dax = NULL;
-	if (fc->dax) {
-		fi->dax = kzalloc(sizeof(*fi->dax), GFP_KERNEL_ACCOUNT);
-		if (!fi->dax)
-			return false;
+	fi->dax = शून्य;
+	अगर (fc->dax) अणु
+		fi->dax = kzalloc(माप(*fi->dax), GFP_KERNEL_ACCOUNT);
+		अगर (!fi->dax)
+			वापस false;
 
 		init_rwsem(&fi->dax->sem);
 		fi->dax->tree = RB_ROOT_CACHED;
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static const struct address_space_operations fuse_dax_file_aops  = {
-	.writepages	= fuse_dax_writepages,
+अटल स्थिर काष्ठा address_space_operations fuse_dax_file_aops  = अणु
+	.ग_लिखोpages	= fuse_dax_ग_लिखोpages,
 	.direct_IO	= noop_direct_IO,
 	.set_page_dirty	= noop_set_page_dirty,
 	.invalidatepage	= noop_invalidatepage,
-};
+पूर्ण;
 
-void fuse_dax_inode_init(struct inode *inode)
-{
-	struct fuse_conn *fc = get_fuse_conn(inode);
+व्योम fuse_dax_inode_init(काष्ठा inode *inode)
+अणु
+	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
 
-	if (!fc->dax)
-		return;
+	अगर (!fc->dax)
+		वापस;
 
 	inode->i_flags |= S_DAX;
 	inode->i_data.a_ops = &fuse_dax_file_aops;
-}
+पूर्ण
 
-bool fuse_dax_check_alignment(struct fuse_conn *fc, unsigned int map_alignment)
-{
-	if (fc->dax && (map_alignment > FUSE_DAX_SHIFT)) {
+bool fuse_dax_check_alignment(काष्ठा fuse_conn *fc, अचिन्हित पूर्णांक map_alignment)
+अणु
+	अगर (fc->dax && (map_alignment > FUSE_DAX_SHIFT)) अणु
 		pr_warn("FUSE: map_alignment %u incompatible with dax mem range size %u\n",
 			map_alignment, FUSE_DAX_SZ);
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-void fuse_dax_cancel_work(struct fuse_conn *fc)
-{
-	struct fuse_conn_dax *fcd = fc->dax;
+व्योम fuse_dax_cancel_work(काष्ठा fuse_conn *fc)
+अणु
+	काष्ठा fuse_conn_dax *fcd = fc->dax;
 
-	if (fcd)
-		cancel_delayed_work_sync(&fcd->free_work);
+	अगर (fcd)
+		cancel_delayed_work_sync(&fcd->मुक्त_work);
 
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(fuse_dax_cancel_work);

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * ALSA SoC I2S (McBSP) Audio Layer for TI DAVINCI processor
+ * ALSA SoC I2S (McBSP) Audio Layer क्रम TI DAVINCI processor
  *
  * Author:      Vladimir Barinov, <vbarinov@embeddedalley.com>
  * Copyright:   (C) 2007 MontaVista Software, Inc., <source@mvista.com>
  */
 
-#ifndef _DAVINCI_I2S_H
-#define _DAVINCI_I2S_H
+#अगर_अघोषित _DAVINCI_I2S_H
+#घोषणा _DAVINCI_I2S_H
 
-/* McBSP dividers */
-enum davinci_mcbsp_div {
-	DAVINCI_MCBSP_CLKGDV,              /* Sample rate generator divider */
-};
+/* McBSP भागiders */
+क्रमागत davinci_mcbsp_भाग अणु
+	DAVINCI_MCBSP_CLKGDV,              /* Sample rate generator भागider */
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

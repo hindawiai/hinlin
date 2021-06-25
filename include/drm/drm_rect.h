@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2011-2013 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,51 +22,51 @@
  * SOFTWARE.
  */
 
-#ifndef DRM_RECT_H
-#define DRM_RECT_H
+#अगर_अघोषित DRM_RECT_H
+#घोषणा DRM_RECT_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /**
  * DOC: rect utils
  *
- * Utility functions to help manage rectangular areas for
+ * Utility functions to help manage rectangular areas क्रम
  * clipping, scaling, etc. calculations.
  */
 
 /**
- * struct drm_rect - two dimensional rectangle
+ * काष्ठा drm_rect - two dimensional rectangle
  * @x1: horizontal starting coordinate (inclusive)
  * @x2: horizontal ending coordinate (exclusive)
  * @y1: vertical starting coordinate (inclusive)
  * @y2: vertical ending coordinate (exclusive)
  */
-struct drm_rect {
-	int x1, y1, x2, y2;
-};
+काष्ठा drm_rect अणु
+	पूर्णांक x1, y1, x2, y2;
+पूर्ण;
 
 /**
- * DRM_RECT_FMT - printf string for &struct drm_rect
+ * DRM_RECT_FMT - म_लिखो string क्रम &काष्ठा drm_rect
  */
-#define DRM_RECT_FMT    "%dx%d%+d%+d"
+#घोषणा DRM_RECT_FMT    "%dx%d%+d%+d"
 /**
- * DRM_RECT_ARG - printf arguments for &struct drm_rect
- * @r: rectangle struct
+ * DRM_RECT_ARG - म_लिखो arguments क्रम &काष्ठा drm_rect
+ * @r: rectangle काष्ठा
  */
-#define DRM_RECT_ARG(r) drm_rect_width(r), drm_rect_height(r), (r)->x1, (r)->y1
+#घोषणा DRM_RECT_ARG(r) drm_rect_width(r), drm_rect_height(r), (r)->x1, (r)->y1
 
 /**
- * DRM_RECT_FP_FMT - printf string for &struct drm_rect in 16.16 fixed point
+ * DRM_RECT_FP_FMT - म_लिखो string क्रम &काष्ठा drm_rect in 16.16 fixed poपूर्णांक
  */
-#define DRM_RECT_FP_FMT "%d.%06ux%d.%06u%+d.%06u%+d.%06u"
+#घोषणा DRM_RECT_FP_FMT "%d.%06ux%d.%06u%+d.%06u%+d.%06u"
 /**
- * DRM_RECT_FP_ARG - printf arguments for &struct drm_rect in 16.16 fixed point
- * @r: rectangle struct
+ * DRM_RECT_FP_ARG - म_लिखो arguments क्रम &काष्ठा drm_rect in 16.16 fixed poपूर्णांक
+ * @r: rectangle काष्ठा
  *
- * This is useful for e.g. printing plane source rectangles, which are in 16.16
- * fixed point.
+ * This is useful क्रम e.g. prपूर्णांकing plane source rectangles, which are in 16.16
+ * fixed poपूर्णांक.
  */
-#define DRM_RECT_FP_ARG(r) \
+#घोषणा DRM_RECT_FP_ARG(r) \
 		drm_rect_width(r) >> 16, ((drm_rect_width(r) & 0xffff) * 15625) >> 10, \
 		drm_rect_height(r) >> 16, ((drm_rect_height(r) & 0xffff) * 15625) >> 10, \
 		(r)->x1 >> 16, (((r)->x1 & 0xffff) * 15625) >> 10, \
@@ -79,34 +80,34 @@ struct drm_rect {
  * @width: width
  * @height: height
  */
-static inline void drm_rect_init(struct drm_rect *r, int x, int y,
-				 int width, int height)
-{
+अटल अंतरभूत व्योम drm_rect_init(काष्ठा drm_rect *r, पूर्णांक x, पूर्णांक y,
+				 पूर्णांक width, पूर्णांक height)
+अणु
 	r->x1 = x;
 	r->y1 = y;
 	r->x2 = x + width;
 	r->y2 = y + height;
-}
+पूर्ण
 
 /**
  * drm_rect_adjust_size - adjust the size of the rectangle
  * @r: rectangle to be adjusted
- * @dw: horizontal adjustment
- * @dh: vertical adjustment
+ * @dw: horizontal adjusपंचांगent
+ * @dh: vertical adjusपंचांगent
  *
  * Change the size of rectangle @r by @dw in the horizontal direction,
- * and by @dh in the vertical direction, while keeping the center
+ * and by @dh in the vertical direction, जबतक keeping the center
  * of @r stationary.
  *
  * Positive @dw and @dh increase the size, negative values decrease it.
  */
-static inline void drm_rect_adjust_size(struct drm_rect *r, int dw, int dh)
-{
+अटल अंतरभूत व्योम drm_rect_adjust_size(काष्ठा drm_rect *r, पूर्णांक dw, पूर्णांक dh)
+अणु
 	r->x1 -= dw >> 1;
 	r->y1 -= dh >> 1;
 	r->x2 += (dw + 1) >> 1;
 	r->y2 += (dh + 1) >> 1;
-}
+पूर्ण
 
 /**
  * drm_rect_translate - translate the rectangle
@@ -117,16 +118,16 @@ static inline void drm_rect_adjust_size(struct drm_rect *r, int dw, int dh)
  * Move rectangle @r by @dx in the horizontal direction,
  * and by @dy in the vertical direction.
  */
-static inline void drm_rect_translate(struct drm_rect *r, int dx, int dy)
-{
+अटल अंतरभूत व्योम drm_rect_translate(काष्ठा drm_rect *r, पूर्णांक dx, पूर्णांक dy)
+अणु
 	r->x1 += dx;
 	r->y1 += dy;
 	r->x2 += dx;
 	r->y2 += dy;
-}
+पूर्ण
 
 /**
- * drm_rect_translate_to - translate the rectangle to an absolute position
+ * drm_rect_translate_to - translate the rectangle to an असलolute position
  * @r: rectangle to be tranlated
  * @x: horizontal position
  * @y: vertical position
@@ -134,107 +135,107 @@ static inline void drm_rect_translate(struct drm_rect *r, int dx, int dy)
  * Move rectangle @r to @x in the horizontal direction,
  * and to @y in the vertical direction.
  */
-static inline void drm_rect_translate_to(struct drm_rect *r, int x, int y)
-{
+अटल अंतरभूत व्योम drm_rect_translate_to(काष्ठा drm_rect *r, पूर्णांक x, पूर्णांक y)
+अणु
 	drm_rect_translate(r, x - r->x1, y - r->y1);
-}
+पूर्ण
 
 /**
- * drm_rect_downscale - downscale a rectangle
- * @r: rectangle to be downscaled
- * @horz: horizontal downscale factor
- * @vert: vertical downscale factor
+ * drm_rect_करोwnscale - करोwnscale a rectangle
+ * @r: rectangle to be करोwnscaled
+ * @horz: horizontal करोwnscale factor
+ * @vert: vertical करोwnscale factor
  *
  * Divide the coordinates of rectangle @r by @horz and @vert.
  */
-static inline void drm_rect_downscale(struct drm_rect *r, int horz, int vert)
-{
+अटल अंतरभूत व्योम drm_rect_करोwnscale(काष्ठा drm_rect *r, पूर्णांक horz, पूर्णांक vert)
+अणु
 	r->x1 /= horz;
 	r->y1 /= vert;
 	r->x2 /= horz;
 	r->y2 /= vert;
-}
+पूर्ण
 
 /**
  * drm_rect_width - determine the rectangle width
- * @r: rectangle whose width is returned
+ * @r: rectangle whose width is वापसed
  *
  * RETURNS:
  * The width of the rectangle.
  */
-static inline int drm_rect_width(const struct drm_rect *r)
-{
-	return r->x2 - r->x1;
-}
+अटल अंतरभूत पूर्णांक drm_rect_width(स्थिर काष्ठा drm_rect *r)
+अणु
+	वापस r->x2 - r->x1;
+पूर्ण
 
 /**
  * drm_rect_height - determine the rectangle height
- * @r: rectangle whose height is returned
+ * @r: rectangle whose height is वापसed
  *
  * RETURNS:
  * The height of the rectangle.
  */
-static inline int drm_rect_height(const struct drm_rect *r)
-{
-	return r->y2 - r->y1;
-}
+अटल अंतरभूत पूर्णांक drm_rect_height(स्थिर काष्ठा drm_rect *r)
+अणु
+	वापस r->y2 - r->y1;
+पूर्ण
 
 /**
- * drm_rect_visible - determine if the rectangle is visible
- * @r: rectangle whose visibility is returned
+ * drm_rect_visible - determine अगर the rectangle is visible
+ * @r: rectangle whose visibility is वापसed
  *
  * RETURNS:
- * %true if the rectangle is visible, %false otherwise.
+ * %true अगर the rectangle is visible, %false otherwise.
  */
-static inline bool drm_rect_visible(const struct drm_rect *r)
-{
-	return drm_rect_width(r) > 0 && drm_rect_height(r) > 0;
-}
+अटल अंतरभूत bool drm_rect_visible(स्थिर काष्ठा drm_rect *r)
+अणु
+	वापस drm_rect_width(r) > 0 && drm_rect_height(r) > 0;
+पूर्ण
 
 /**
- * drm_rect_equals - determine if two rectangles are equal
+ * drm_rect_equals - determine अगर two rectangles are equal
  * @r1: first rectangle
  * @r2: second rectangle
  *
  * RETURNS:
- * %true if the rectangles are equal, %false otherwise.
+ * %true अगर the rectangles are equal, %false otherwise.
  */
-static inline bool drm_rect_equals(const struct drm_rect *r1,
-				   const struct drm_rect *r2)
-{
-	return r1->x1 == r2->x1 && r1->x2 == r2->x2 &&
+अटल अंतरभूत bool drm_rect_equals(स्थिर काष्ठा drm_rect *r1,
+				   स्थिर काष्ठा drm_rect *r2)
+अणु
+	वापस r1->x1 == r2->x1 && r1->x2 == r2->x2 &&
 		r1->y1 == r2->y1 && r1->y2 == r2->y2;
-}
+पूर्ण
 
 /**
- * drm_rect_fp_to_int - Convert a rect in 16.16 fixed point form to int form.
+ * drm_rect_fp_to_पूर्णांक - Convert a rect in 16.16 fixed poपूर्णांक क्रमm to पूर्णांक क्रमm.
  * @dst: rect to be stored the converted value
- * @src: rect in 16.16 fixed point form
+ * @src: rect in 16.16 fixed poपूर्णांक क्रमm
  */
-static inline void drm_rect_fp_to_int(struct drm_rect *dst,
-				      const struct drm_rect *src)
-{
+अटल अंतरभूत व्योम drm_rect_fp_to_पूर्णांक(काष्ठा drm_rect *dst,
+				      स्थिर काष्ठा drm_rect *src)
+अणु
 	drm_rect_init(dst, src->x1 >> 16, src->y1 >> 16,
 		      drm_rect_width(src) >> 16,
 		      drm_rect_height(src) >> 16);
-}
+पूर्ण
 
-bool drm_rect_intersect(struct drm_rect *r, const struct drm_rect *clip);
-bool drm_rect_clip_scaled(struct drm_rect *src, struct drm_rect *dst,
-			  const struct drm_rect *clip);
-int drm_rect_calc_hscale(const struct drm_rect *src,
-			 const struct drm_rect *dst,
-			 int min_hscale, int max_hscale);
-int drm_rect_calc_vscale(const struct drm_rect *src,
-			 const struct drm_rect *dst,
-			 int min_vscale, int max_vscale);
-void drm_rect_debug_print(const char *prefix,
-			  const struct drm_rect *r, bool fixed_point);
-void drm_rect_rotate(struct drm_rect *r,
-		     int width, int height,
-		     unsigned int rotation);
-void drm_rect_rotate_inv(struct drm_rect *r,
-			 int width, int height,
-			 unsigned int rotation);
+bool drm_rect_पूर्णांकersect(काष्ठा drm_rect *r, स्थिर काष्ठा drm_rect *clip);
+bool drm_rect_clip_scaled(काष्ठा drm_rect *src, काष्ठा drm_rect *dst,
+			  स्थिर काष्ठा drm_rect *clip);
+पूर्णांक drm_rect_calc_hscale(स्थिर काष्ठा drm_rect *src,
+			 स्थिर काष्ठा drm_rect *dst,
+			 पूर्णांक min_hscale, पूर्णांक max_hscale);
+पूर्णांक drm_rect_calc_vscale(स्थिर काष्ठा drm_rect *src,
+			 स्थिर काष्ठा drm_rect *dst,
+			 पूर्णांक min_vscale, पूर्णांक max_vscale);
+व्योम drm_rect_debug_prपूर्णांक(स्थिर अक्षर *prefix,
+			  स्थिर काष्ठा drm_rect *r, bool fixed_poपूर्णांक);
+व्योम drm_rect_rotate(काष्ठा drm_rect *r,
+		     पूर्णांक width, पूर्णांक height,
+		     अचिन्हित पूर्णांक rotation);
+व्योम drm_rect_rotate_inv(काष्ठा drm_rect *r,
+			 पूर्णांक width, पूर्णांक height,
+			 अचिन्हित पूर्णांक rotation);
 
-#endif
+#पूर्ण_अगर

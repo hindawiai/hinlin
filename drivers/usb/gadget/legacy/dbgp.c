@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * dbgp.c -- EHCI Debug Port device gadget
  *
@@ -8,193 +9,193 @@
  */
 
 /* verbose messages */
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/gadget.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/gadget.h>
 
-#include "u_serial.h"
+#समावेश "u_serial.h"
 
-#define DRIVER_VENDOR_ID	0x0525 /* NetChip */
-#define DRIVER_PRODUCT_ID	0xc0de /* undefined */
+#घोषणा DRIVER_VENDOR_ID	0x0525 /* NetChip */
+#घोषणा DRIVER_PRODUCT_ID	0xc0de /* undefined */
 
-#define USB_DEBUG_MAX_PACKET_SIZE     8
-#define DBGP_REQ_EP0_LEN              128
-#define DBGP_REQ_LEN                  512
+#घोषणा USB_DEBUG_MAX_PACKET_SIZE     8
+#घोषणा DBGP_REQ_EP0_LEN              128
+#घोषणा DBGP_REQ_LEN                  512
 
-static struct dbgp {
-	struct usb_gadget  *gadget;
-	struct usb_request *req;
-	struct usb_ep      *i_ep;
-	struct usb_ep      *o_ep;
-#ifdef CONFIG_USB_G_DBGP_SERIAL
-	struct gserial     *serial;
-#endif
-} dbgp;
+अटल काष्ठा dbgp अणु
+	काष्ठा usb_gadget  *gadget;
+	काष्ठा usb_request *req;
+	काष्ठा usb_ep      *i_ep;
+	काष्ठा usb_ep      *o_ep;
+#अगर_घोषित CONFIG_USB_G_DBGP_SERIAL
+	काष्ठा gserial     *serial;
+#पूर्ण_अगर
+पूर्ण dbgp;
 
-static struct usb_device_descriptor device_desc = {
-	.bLength = sizeof device_desc,
+अटल काष्ठा usb_device_descriptor device_desc = अणु
+	.bLength = माप device_desc,
 	.bDescriptorType = USB_DT_DEVICE,
 	.bcdUSB = cpu_to_le16(0x0200),
 	.bDeviceClass =	USB_CLASS_VENDOR_SPEC,
-	.idVendor = cpu_to_le16(DRIVER_VENDOR_ID),
+	.idVenकरोr = cpu_to_le16(DRIVER_VENDOR_ID),
 	.idProduct = cpu_to_le16(DRIVER_PRODUCT_ID),
 	.bNumConfigurations = 1,
-};
+पूर्ण;
 
-static struct usb_debug_descriptor dbg_desc = {
-	.bLength = sizeof dbg_desc,
+अटल काष्ठा usb_debug_descriptor dbg_desc = अणु
+	.bLength = माप dbg_desc,
 	.bDescriptorType = USB_DT_DEBUG,
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor i_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor i_desc = अणु
 	.bLength = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType = USB_DT_ENDPOINT,
 	.bmAttributes = USB_ENDPOINT_XFER_BULK,
-	.bEndpointAddress = USB_DIR_IN,
-};
+	.bEndpoपूर्णांकAddress = USB_सूची_IN,
+पूर्ण;
 
-static struct usb_endpoint_descriptor o_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor o_desc = अणु
 	.bLength = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType = USB_DT_ENDPOINT,
 	.bmAttributes = USB_ENDPOINT_XFER_BULK,
-	.bEndpointAddress = USB_DIR_OUT,
-};
+	.bEndpoपूर्णांकAddress = USB_सूची_OUT,
+पूर्ण;
 
-#ifdef CONFIG_USB_G_DBGP_PRINTK
-static int dbgp_consume(char *buf, unsigned len)
-{
-	char c;
+#अगर_घोषित CONFIG_USB_G_DBGP_PRINTK
+अटल पूर्णांक dbgp_consume(अक्षर *buf, अचिन्हित len)
+अणु
+	अक्षर c;
 
-	if (!len)
-		return 0;
+	अगर (!len)
+		वापस 0;
 
 	c = buf[len-1];
-	if (c != 0)
+	अगर (c != 0)
 		buf[len-1] = 0;
 
-	printk(KERN_NOTICE "%s%c", buf, c);
-	return 0;
-}
+	prपूर्णांकk(KERN_NOTICE "%s%c", buf, c);
+	वापस 0;
+पूर्ण
 
-static void __disable_ep(struct usb_ep *ep)
-{
+अटल व्योम __disable_ep(काष्ठा usb_ep *ep)
+अणु
 	usb_ep_disable(ep);
-}
+पूर्ण
 
-static void dbgp_disable_ep(void)
-{
+अटल व्योम dbgp_disable_ep(व्योम)
+अणु
 	__disable_ep(dbgp.i_ep);
 	__disable_ep(dbgp.o_ep);
-}
+पूर्ण
 
-static void dbgp_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	int stp;
-	int err = 0;
-	int status = req->status;
+अटल व्योम dbgp_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	पूर्णांक stp;
+	पूर्णांक err = 0;
+	पूर्णांक status = req->status;
 
-	if (ep == dbgp.i_ep) {
+	अगर (ep == dbgp.i_ep) अणु
 		stp = 1;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (status != 0) {
+	अगर (status != 0) अणु
 		stp = 2;
-		goto release_req;
-	}
+		जाओ release_req;
+	पूर्ण
 
 	dbgp_consume(req->buf, req->actual);
 
 	req->length = DBGP_REQ_LEN;
 	err = usb_ep_queue(ep, req, GFP_ATOMIC);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		stp = 3;
-		goto release_req;
-	}
+		जाओ release_req;
+	पूर्ण
 
-	return;
+	वापस;
 
 release_req:
-	kfree(req->buf);
-	usb_ep_free_request(dbgp.o_ep, req);
+	kमुक्त(req->buf);
+	usb_ep_मुक्त_request(dbgp.o_ep, req);
 	dbgp_disable_ep();
 fail:
 	dev_dbg(&dbgp.gadget->dev,
 		"complete: failure (%d:%d) ==> %d\n", stp, err, status);
-}
+पूर्ण
 
-static int dbgp_enable_ep_req(struct usb_ep *ep)
-{
-	int err, stp;
-	struct usb_request *req;
+अटल पूर्णांक dbgp_enable_ep_req(काष्ठा usb_ep *ep)
+अणु
+	पूर्णांक err, stp;
+	काष्ठा usb_request *req;
 
 	req = usb_ep_alloc_request(ep, GFP_KERNEL);
-	if (!req) {
+	अगर (!req) अणु
 		err = -ENOMEM;
 		stp = 1;
-		goto fail_1;
-	}
+		जाओ fail_1;
+	पूर्ण
 
-	req->buf = kmalloc(DBGP_REQ_LEN, GFP_KERNEL);
-	if (!req->buf) {
+	req->buf = kदो_स्मृति(DBGP_REQ_LEN, GFP_KERNEL);
+	अगर (!req->buf) अणु
 		err = -ENOMEM;
 		stp = 2;
-		goto fail_2;
-	}
+		जाओ fail_2;
+	पूर्ण
 
 	req->complete = dbgp_complete;
 	req->length = DBGP_REQ_LEN;
 	err = usb_ep_queue(ep, req, GFP_ATOMIC);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		stp = 3;
-		goto fail_3;
-	}
+		जाओ fail_3;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail_3:
-	kfree(req->buf);
+	kमुक्त(req->buf);
 fail_2:
-	usb_ep_free_request(dbgp.o_ep, req);
+	usb_ep_मुक्त_request(dbgp.o_ep, req);
 fail_1:
 	dev_dbg(&dbgp.gadget->dev,
 		"enable ep req: failure (%d:%d)\n", stp, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __enable_ep(struct usb_ep *ep, struct usb_endpoint_descriptor *desc)
-{
-	int err;
+अटल पूर्णांक __enable_ep(काष्ठा usb_ep *ep, काष्ठा usb_endpoपूर्णांक_descriptor *desc)
+अणु
+	पूर्णांक err;
 	ep->desc = desc;
 	err = usb_ep_enable(ep);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dbgp_enable_ep(void)
-{
-	int err, stp;
+अटल पूर्णांक dbgp_enable_ep(व्योम)
+अणु
+	पूर्णांक err, stp;
 
 	err = __enable_ep(dbgp.i_ep, &i_desc);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		stp = 1;
-		goto fail_1;
-	}
+		जाओ fail_1;
+	पूर्ण
 
 	err = __enable_ep(dbgp.o_ep, &o_desc);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		stp = 2;
-		goto fail_2;
-	}
+		जाओ fail_2;
+	पूर्ण
 
 	err = dbgp_enable_ep_req(dbgp.o_ep);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		stp = 3;
-		goto fail_3;
-	}
+		जाओ fail_3;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail_3:
 	__disable_ep(dbgp.o_ep);
@@ -202,198 +203,198 @@ fail_2:
 	__disable_ep(dbgp.i_ep);
 fail_1:
 	dev_dbg(&dbgp.gadget->dev, "enable ep: failure (%d:%d)\n", stp, err);
-	return err;
-}
-#endif
+	वापस err;
+पूर्ण
+#पूर्ण_अगर
 
-static void dbgp_disconnect(struct usb_gadget *gadget)
-{
-#ifdef CONFIG_USB_G_DBGP_PRINTK
+अटल व्योम dbgp_disconnect(काष्ठा usb_gadget *gadget)
+अणु
+#अगर_घोषित CONFIG_USB_G_DBGP_PRINTK
 	dbgp_disable_ep();
-#else
+#अन्यथा
 	gserial_disconnect(dbgp.serial);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void dbgp_unbind(struct usb_gadget *gadget)
-{
-#ifdef CONFIG_USB_G_DBGP_SERIAL
-	kfree(dbgp.serial);
-	dbgp.serial = NULL;
-#endif
-	if (dbgp.req) {
-		kfree(dbgp.req->buf);
-		usb_ep_free_request(gadget->ep0, dbgp.req);
-		dbgp.req = NULL;
-	}
-}
+अटल व्योम dbgp_unbind(काष्ठा usb_gadget *gadget)
+अणु
+#अगर_घोषित CONFIG_USB_G_DBGP_SERIAL
+	kमुक्त(dbgp.serial);
+	dbgp.serial = शून्य;
+#पूर्ण_अगर
+	अगर (dbgp.req) अणु
+		kमुक्त(dbgp.req->buf);
+		usb_ep_मुक्त_request(gadget->ep0, dbgp.req);
+		dbgp.req = शून्य;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_USB_G_DBGP_SERIAL
-static unsigned char tty_line;
-#endif
+#अगर_घोषित CONFIG_USB_G_DBGP_SERIAL
+अटल अचिन्हित अक्षर tty_line;
+#पूर्ण_अगर
 
-static int dbgp_configure_endpoints(struct usb_gadget *gadget)
-{
-	int stp;
+अटल पूर्णांक dbgp_configure_endpoपूर्णांकs(काष्ठा usb_gadget *gadget)
+अणु
+	पूर्णांक stp;
 
-	usb_ep_autoconfig_reset(gadget);
+	usb_ep_स्वतःconfig_reset(gadget);
 
-	dbgp.i_ep = usb_ep_autoconfig(gadget, &i_desc);
-	if (!dbgp.i_ep) {
+	dbgp.i_ep = usb_ep_स्वतःconfig(gadget, &i_desc);
+	अगर (!dbgp.i_ep) अणु
 		stp = 1;
-		goto fail_1;
-	}
+		जाओ fail_1;
+	पूर्ण
 
 	i_desc.wMaxPacketSize =
 		cpu_to_le16(USB_DEBUG_MAX_PACKET_SIZE);
 
-	dbgp.o_ep = usb_ep_autoconfig(gadget, &o_desc);
-	if (!dbgp.o_ep) {
+	dbgp.o_ep = usb_ep_स्वतःconfig(gadget, &o_desc);
+	अगर (!dbgp.o_ep) अणु
 		stp = 2;
-		goto fail_1;
-	}
+		जाओ fail_1;
+	पूर्ण
 
 	o_desc.wMaxPacketSize =
 		cpu_to_le16(USB_DEBUG_MAX_PACKET_SIZE);
 
-	dbg_desc.bDebugInEndpoint = i_desc.bEndpointAddress;
-	dbg_desc.bDebugOutEndpoint = o_desc.bEndpointAddress;
+	dbg_desc.bDebugInEndpoपूर्णांक = i_desc.bEndpoपूर्णांकAddress;
+	dbg_desc.bDebugOutEndpoपूर्णांक = o_desc.bEndpoपूर्णांकAddress;
 
-#ifdef CONFIG_USB_G_DBGP_SERIAL
+#अगर_घोषित CONFIG_USB_G_DBGP_SERIAL
 	dbgp.serial->in = dbgp.i_ep;
 	dbgp.serial->out = dbgp.o_ep;
 
 	dbgp.serial->in->desc = &i_desc;
 	dbgp.serial->out->desc = &o_desc;
-#endif
+#पूर्ण_अगर
 
-	return 0;
+	वापस 0;
 
 fail_1:
 	dev_dbg(&dbgp.gadget->dev, "ep config: failure (%d)\n", stp);
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int dbgp_bind(struct usb_gadget *gadget,
-		struct usb_gadget_driver *driver)
-{
-	int err, stp;
+अटल पूर्णांक dbgp_bind(काष्ठा usb_gadget *gadget,
+		काष्ठा usb_gadget_driver *driver)
+अणु
+	पूर्णांक err, stp;
 
 	dbgp.gadget = gadget;
 
 	dbgp.req = usb_ep_alloc_request(gadget->ep0, GFP_KERNEL);
-	if (!dbgp.req) {
+	अगर (!dbgp.req) अणु
 		err = -ENOMEM;
 		stp = 1;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	dbgp.req->buf = kmalloc(DBGP_REQ_EP0_LEN, GFP_KERNEL);
-	if (!dbgp.req->buf) {
+	dbgp.req->buf = kदो_स्मृति(DBGP_REQ_EP0_LEN, GFP_KERNEL);
+	अगर (!dbgp.req->buf) अणु
 		err = -ENOMEM;
 		stp = 2;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	dbgp.req->length = DBGP_REQ_EP0_LEN;
 
-#ifdef CONFIG_USB_G_DBGP_SERIAL
-	dbgp.serial = kzalloc(sizeof(struct gserial), GFP_KERNEL);
-	if (!dbgp.serial) {
+#अगर_घोषित CONFIG_USB_G_DBGP_SERIAL
+	dbgp.serial = kzalloc(माप(काष्ठा gserial), GFP_KERNEL);
+	अगर (!dbgp.serial) अणु
 		stp = 3;
 		err = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (gserial_alloc_line(&tty_line)) {
+	अगर (gserial_alloc_line(&tty_line)) अणु
 		stp = 4;
 		err = -ENODEV;
-		goto fail;
-	}
-#endif
+		जाओ fail;
+	पूर्ण
+#पूर्ण_अगर
 
-	err = dbgp_configure_endpoints(gadget);
-	if (err < 0) {
+	err = dbgp_configure_endpoपूर्णांकs(gadget);
+	अगर (err < 0) अणु
 		stp = 5;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	dev_dbg(&dbgp.gadget->dev, "bind: success\n");
-	return 0;
+	वापस 0;
 
 fail:
 	dev_dbg(&gadget->dev, "bind: failure (%d:%d)\n", stp, err);
 	dbgp_unbind(gadget);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void dbgp_setup_complete(struct usb_ep *ep,
-				struct usb_request *req)
-{
+अटल व्योम dbgp_setup_complete(काष्ठा usb_ep *ep,
+				काष्ठा usb_request *req)
+अणु
 	dev_dbg(&dbgp.gadget->dev, "setup complete: %d, %d/%d\n",
 		req->status, req->actual, req->length);
-}
+पूर्ण
 
-static int dbgp_setup(struct usb_gadget *gadget,
-		      const struct usb_ctrlrequest *ctrl)
-{
-	struct usb_request *req = dbgp.req;
+अटल पूर्णांक dbgp_setup(काष्ठा usb_gadget *gadget,
+		      स्थिर काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा usb_request *req = dbgp.req;
 	u8 request = ctrl->bRequest;
 	u16 value = le16_to_cpu(ctrl->wValue);
 	u16 length = le16_to_cpu(ctrl->wLength);
-	int err = -EOPNOTSUPP;
-	void *data = NULL;
+	पूर्णांक err = -EOPNOTSUPP;
+	व्योम *data = शून्य;
 	u16 len = 0;
 
-	if (request == USB_REQ_GET_DESCRIPTOR) {
-		switch (value>>8) {
-		case USB_DT_DEVICE:
+	अगर (request == USB_REQ_GET_DESCRIPTOR) अणु
+		चयन (value>>8) अणु
+		हाल USB_DT_DEVICE:
 			dev_dbg(&dbgp.gadget->dev, "setup: desc device\n");
-			len = sizeof device_desc;
+			len = माप device_desc;
 			data = &device_desc;
 			device_desc.bMaxPacketSize0 = gadget->ep0->maxpacket;
-			break;
-		case USB_DT_DEBUG:
+			अवरोध;
+		हाल USB_DT_DEBUG:
 			dev_dbg(&dbgp.gadget->dev, "setup: desc debug\n");
-			len = sizeof dbg_desc;
+			len = माप dbg_desc;
 			data = &dbg_desc;
-			break;
-		default:
-			goto fail;
-		}
+			अवरोध;
+		शेष:
+			जाओ fail;
+		पूर्ण
 		err = 0;
-	} else if (request == USB_REQ_SET_FEATURE &&
-		   value == USB_DEVICE_DEBUG_MODE) {
+	पूर्ण अन्यथा अगर (request == USB_REQ_SET_FEATURE &&
+		   value == USB_DEVICE_DEBUG_MODE) अणु
 		dev_dbg(&dbgp.gadget->dev, "setup: feat debug\n");
-#ifdef CONFIG_USB_G_DBGP_PRINTK
+#अगर_घोषित CONFIG_USB_G_DBGP_PRINTK
 		err = dbgp_enable_ep();
-#else
-		err = dbgp_configure_endpoints(gadget);
-		if (err < 0) {
-			goto fail;
-		}
+#अन्यथा
+		err = dbgp_configure_endpoपूर्णांकs(gadget);
+		अगर (err < 0) अणु
+			जाओ fail;
+		पूर्ण
 		err = gserial_connect(dbgp.serial, tty_line);
-#endif
-		if (err < 0)
-			goto fail;
-	} else
-		goto fail;
+#पूर्ण_अगर
+		अगर (err < 0)
+			जाओ fail;
+	पूर्ण अन्यथा
+		जाओ fail;
 
 	req->length = min(length, len);
 	req->zero = len < req->length;
-	if (data && req->length)
-		memcpy(req->buf, data, req->length);
+	अगर (data && req->length)
+		स_नकल(req->buf, data, req->length);
 
 	req->complete = dbgp_setup_complete;
-	return usb_ep_queue(gadget->ep0, req, GFP_ATOMIC);
+	वापस usb_ep_queue(gadget->ep0, req, GFP_ATOMIC);
 
 fail:
 	dev_dbg(&dbgp.gadget->dev,
 		"setup: failure req %x v %x\n", request, value);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct usb_gadget_driver dbgp_driver = {
+अटल काष्ठा usb_gadget_driver dbgp_driver = अणु
 	.function = "dbgp",
 	.max_speed = USB_SPEED_HIGH,
 	.bind = dbgp_bind,
@@ -401,26 +402,26 @@ static struct usb_gadget_driver dbgp_driver = {
 	.setup = dbgp_setup,
 	.reset = dbgp_disconnect,
 	.disconnect = dbgp_disconnect,
-	.driver	= {
+	.driver	= अणु
 		.owner = THIS_MODULE,
 		.name = "dbgp"
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init dbgp_init(void)
-{
-	return usb_gadget_probe_driver(&dbgp_driver);
-}
+अटल पूर्णांक __init dbgp_init(व्योम)
+अणु
+	वापस usb_gadget_probe_driver(&dbgp_driver);
+पूर्ण
 
-static void __exit dbgp_exit(void)
-{
-	usb_gadget_unregister_driver(&dbgp_driver);
-#ifdef CONFIG_USB_G_DBGP_SERIAL
-	gserial_free_line(tty_line);
-#endif
-}
+अटल व्योम __निकास dbgp_निकास(व्योम)
+अणु
+	usb_gadget_unरेजिस्टर_driver(&dbgp_driver);
+#अगर_घोषित CONFIG_USB_G_DBGP_SERIAL
+	gserial_मुक्त_line(tty_line);
+#पूर्ण_अगर
+पूर्ण
 
 MODULE_AUTHOR("Stephane Duverger");
 MODULE_LICENSE("GPL");
 module_init(dbgp_init);
-module_exit(dbgp_exit);
+module_निकास(dbgp_निकास);

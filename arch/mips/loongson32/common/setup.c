@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2011 Zhang, Keguang <keguang.zhang@gmail.com>
  */
 
-#include <linux/io.h>
-#include <linux/init.h>
-#include <linux/smp.h>
-#include <asm/cpu-info.h>
-#include <asm/bootinfo.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/smp.h>
+#समावेश <यंत्र/cpu-info.h>
+#समावेश <यंत्र/bootinfo.h>
 
-const char *get_system_type(void)
-{
-	unsigned int processor_id = (&current_cpu_data)->processor_id;
+स्थिर अक्षर *get_प्रणाली_type(व्योम)
+अणु
+	अचिन्हित पूर्णांक processor_id = (&current_cpu_data)->processor_id;
 
-	switch (processor_id & PRID_REV_MASK) {
-	case PRID_REV_LOONGSON1B:
-#if defined(CONFIG_LOONGSON1_LS1B)
-		return "LOONGSON LS1B";
-#elif defined(CONFIG_LOONGSON1_LS1C)
-		return "LOONGSON LS1C";
-#endif
-	default:
-		return "LOONGSON (unknown)";
-	}
-}
+	चयन (processor_id & PRID_REV_MASK) अणु
+	हाल PRID_REV_LOONGSON1B:
+#अगर defined(CONFIG_LOONGSON1_LS1B)
+		वापस "LOONGSON LS1B";
+#या_अगर defined(CONFIG_LOONGSON1_LS1C)
+		वापस "LOONGSON LS1C";
+#पूर्ण_अगर
+	शेष:
+		वापस "LOONGSON (unknown)";
+	पूर्ण
+पूर्ण

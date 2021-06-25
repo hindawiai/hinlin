@@ -1,121 +1,122 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Copyright 2016-2018 HabanaLabs, Ltd.
+ * Copyright 2016-2018 HabanaLअसल, Ltd.
  * All Rights Reserved.
  */
 
-#include "gaudiP.h"
-#include "../include/gaudi/gaudi_fw_if.h"
+#समावेश "gaudiP.h"
+#समावेश "../include/gaudi/gaudi_fw_if.h"
 
-void gaudi_set_pll_profile(struct hl_device *hdev, enum hl_pll_frequency freq)
-{
-	struct gaudi_device *gaudi = hdev->asic_specific;
+व्योम gaudi_set_pll_profile(काष्ठा hl_device *hdev, क्रमागत hl_pll_frequency freq)
+अणु
+	काष्ठा gaudi_device *gaudi = hdev->asic_specअगरic;
 
-	if (freq == PLL_LAST)
+	अगर (freq == PLL_LAST)
 		hl_set_frequency(hdev, HL_GAUDI_MME_PLL, gaudi->max_freq_value);
-}
+पूर्ण
 
-int gaudi_get_clk_rate(struct hl_device *hdev, u32 *cur_clk, u32 *max_clk)
-{
-	long value;
+पूर्णांक gaudi_get_clk_rate(काष्ठा hl_device *hdev, u32 *cur_clk, u32 *max_clk)
+अणु
+	दीर्घ value;
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
 	value = hl_get_frequency(hdev, HL_GAUDI_MME_PLL, false);
 
-	if (value < 0) {
+	अगर (value < 0) अणु
 		dev_err(hdev->dev, "Failed to retrieve device max clock %ld\n",
 			value);
-		return value;
-	}
+		वापस value;
+	पूर्ण
 
 	*max_clk = (value / 1000 / 1000);
 
 	value = hl_get_frequency(hdev, HL_GAUDI_MME_PLL, true);
 
-	if (value < 0) {
+	अगर (value < 0) अणु
 		dev_err(hdev->dev,
 			"Failed to retrieve device current clock %ld\n",
 			value);
-		return value;
-	}
+		वापस value;
+	पूर्ण
 
 	*cur_clk = (value / 1000 / 1000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t clk_max_freq_mhz_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	struct gaudi_device *gaudi = hdev->asic_specific;
-	long value;
+अटल sमाप_प्रकार clk_max_freq_mhz_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	काष्ठा gaudi_device *gaudi = hdev->asic_specअगरic;
+	दीर्घ value;
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
 	value = hl_get_frequency(hdev, HL_GAUDI_MME_PLL, false);
 
 	gaudi->max_freq_value = value;
 
-	return sprintf(buf, "%lu\n", (value / 1000 / 1000));
-}
+	वापस प्र_लिखो(buf, "%lu\n", (value / 1000 / 1000));
+पूर्ण
 
-static ssize_t clk_max_freq_mhz_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	struct gaudi_device *gaudi = hdev->asic_specific;
-	int rc;
+अटल sमाप_प्रकार clk_max_freq_mhz_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	काष्ठा gaudi_device *gaudi = hdev->asic_specअगरic;
+	पूर्णांक rc;
 	u64 value;
 
-	if (!hl_device_operational(hdev, NULL)) {
+	अगर (!hl_device_operational(hdev, शून्य)) अणु
 		count = -ENODEV;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	rc = kstrtoull(buf, 0, &value);
-	if (rc) {
+	rc = kम_से_अदीर्घl(buf, 0, &value);
+	अगर (rc) अणु
 		count = -EINVAL;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	gaudi->max_freq_value = value * 1000 * 1000;
 
 	hl_set_frequency(hdev, HL_GAUDI_MME_PLL, gaudi->max_freq_value);
 
 fail:
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t clk_cur_freq_mhz_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	long value;
+अटल sमाप_प्रकार clk_cur_freq_mhz_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	दीर्घ value;
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
 	value = hl_get_frequency(hdev, HL_GAUDI_MME_PLL, true);
 
-	return sprintf(buf, "%lu\n", (value / 1000 / 1000));
-}
+	वापस प्र_लिखो(buf, "%lu\n", (value / 1000 / 1000));
+पूर्ण
 
-static DEVICE_ATTR_RW(clk_max_freq_mhz);
-static DEVICE_ATTR_RO(clk_cur_freq_mhz);
+अटल DEVICE_ATTR_RW(clk_max_freq_mhz);
+अटल DEVICE_ATTR_RO(clk_cur_freq_mhz);
 
-static struct attribute *gaudi_dev_attrs[] = {
+अटल काष्ठा attribute *gaudi_dev_attrs[] = अणु
 	&dev_attr_clk_max_freq_mhz.attr,
 	&dev_attr_clk_cur_freq_mhz.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-void gaudi_add_device_attr(struct hl_device *hdev,
-			struct attribute_group *dev_attr_grp)
-{
+व्योम gaudi_add_device_attr(काष्ठा hl_device *hdev,
+			काष्ठा attribute_group *dev_attr_grp)
+अणु
 	dev_attr_grp->attrs = gaudi_dev_attrs;
-}
+पूर्ण

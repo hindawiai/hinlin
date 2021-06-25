@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * SPEAr thermal driver.
  *
@@ -6,186 +7,186 @@
  * Author: Vincenzo Frascino <vincenzo.frascino@st.com>
  */
 
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/thermal.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/thermal.h>
 
-#define MD_FACTOR	1000
+#घोषणा MD_FACTOR	1000
 
 /* SPEAr Thermal Sensor Dev Structure */
-struct spear_thermal_dev {
-	/* pointer to base address of the thermal sensor */
-	void __iomem *thermal_base;
-	/* clk structure */
-	struct clk *clk;
-	/* pointer to thermal flags */
-	unsigned int flags;
-};
+काष्ठा spear_thermal_dev अणु
+	/* poपूर्णांकer to base address of the thermal sensor */
+	व्योम __iomem *thermal_base;
+	/* clk काष्ठाure */
+	काष्ठा clk *clk;
+	/* poपूर्णांकer to thermal flags */
+	अचिन्हित पूर्णांक flags;
+पूर्ण;
 
-static inline int thermal_get_temp(struct thermal_zone_device *thermal,
-				int *temp)
-{
-	struct spear_thermal_dev *stdev = thermal->devdata;
+अटल अंतरभूत पूर्णांक thermal_get_temp(काष्ठा thermal_zone_device *thermal,
+				पूर्णांक *temp)
+अणु
+	काष्ठा spear_thermal_dev *stdev = thermal->devdata;
 
 	/*
-	 * Data are ready to be read after 628 usec from POWERDOWN signal
+	 * Data are पढ़ोy to be पढ़ो after 628 usec from POWERDOWN संकेत
 	 * (PDN) = 1
 	 */
-	*temp = (readl_relaxed(stdev->thermal_base) & 0x7F) * MD_FACTOR;
-	return 0;
-}
+	*temp = (पढ़ोl_relaxed(stdev->thermal_base) & 0x7F) * MD_FACTOR;
+	वापस 0;
+पूर्ण
 
-static struct thermal_zone_device_ops ops = {
+अटल काष्ठा thermal_zone_device_ops ops = अणु
 	.get_temp = thermal_get_temp,
-};
+पूर्ण;
 
-static int __maybe_unused spear_thermal_suspend(struct device *dev)
-{
-	struct thermal_zone_device *spear_thermal = dev_get_drvdata(dev);
-	struct spear_thermal_dev *stdev = spear_thermal->devdata;
-	unsigned int actual_mask = 0;
+अटल पूर्णांक __maybe_unused spear_thermal_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा thermal_zone_device *spear_thermal = dev_get_drvdata(dev);
+	काष्ठा spear_thermal_dev *stdev = spear_thermal->devdata;
+	अचिन्हित पूर्णांक actual_mask = 0;
 
 	/* Disable SPEAr Thermal Sensor */
-	actual_mask = readl_relaxed(stdev->thermal_base);
-	writel_relaxed(actual_mask & ~stdev->flags, stdev->thermal_base);
+	actual_mask = पढ़ोl_relaxed(stdev->thermal_base);
+	ग_लिखोl_relaxed(actual_mask & ~stdev->flags, stdev->thermal_base);
 
 	clk_disable(stdev->clk);
 	dev_info(dev, "Suspended.\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused spear_thermal_resume(struct device *dev)
-{
-	struct thermal_zone_device *spear_thermal = dev_get_drvdata(dev);
-	struct spear_thermal_dev *stdev = spear_thermal->devdata;
-	unsigned int actual_mask = 0;
-	int ret = 0;
+अटल पूर्णांक __maybe_unused spear_thermal_resume(काष्ठा device *dev)
+अणु
+	काष्ठा thermal_zone_device *spear_thermal = dev_get_drvdata(dev);
+	काष्ठा spear_thermal_dev *stdev = spear_thermal->devdata;
+	अचिन्हित पूर्णांक actual_mask = 0;
+	पूर्णांक ret = 0;
 
 	ret = clk_enable(stdev->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Can't enable clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Enable SPEAr Thermal Sensor */
-	actual_mask = readl_relaxed(stdev->thermal_base);
-	writel_relaxed(actual_mask | stdev->flags, stdev->thermal_base);
+	actual_mask = पढ़ोl_relaxed(stdev->thermal_base);
+	ग_लिखोl_relaxed(actual_mask | stdev->flags, stdev->thermal_base);
 
 	dev_info(dev, "Resumed.\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(spear_thermal_pm_ops, spear_thermal_suspend,
+अटल SIMPLE_DEV_PM_OPS(spear_thermal_pm_ops, spear_thermal_suspend,
 		spear_thermal_resume);
 
-static int spear_thermal_probe(struct platform_device *pdev)
-{
-	struct thermal_zone_device *spear_thermal = NULL;
-	struct spear_thermal_dev *stdev;
-	struct device_node *np = pdev->dev.of_node;
-	struct resource *res;
-	int ret = 0, val;
+अटल पूर्णांक spear_thermal_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा thermal_zone_device *spear_thermal = शून्य;
+	काष्ठा spear_thermal_dev *stdev;
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा resource *res;
+	पूर्णांक ret = 0, val;
 
-	if (!np || !of_property_read_u32(np, "st,thermal-flags", &val)) {
+	अगर (!np || !of_property_पढ़ो_u32(np, "st,thermal-flags", &val)) अणु
 		dev_err(&pdev->dev, "Failed: DT Pdata not passed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	stdev = devm_kzalloc(&pdev->dev, sizeof(*stdev), GFP_KERNEL);
-	if (!stdev)
-		return -ENOMEM;
+	stdev = devm_kzalloc(&pdev->dev, माप(*stdev), GFP_KERNEL);
+	अगर (!stdev)
+		वापस -ENOMEM;
 
 	/* Enable thermal sensor */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	stdev->thermal_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(stdev->thermal_base))
-		return PTR_ERR(stdev->thermal_base);
+	अगर (IS_ERR(stdev->thermal_base))
+		वापस PTR_ERR(stdev->thermal_base);
 
-	stdev->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(stdev->clk)) {
+	stdev->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(stdev->clk)) अणु
 		dev_err(&pdev->dev, "Can't get clock\n");
-		return PTR_ERR(stdev->clk);
-	}
+		वापस PTR_ERR(stdev->clk);
+	पूर्ण
 
 	ret = clk_enable(stdev->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Can't enable clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	stdev->flags = val;
-	writel_relaxed(stdev->flags, stdev->thermal_base);
+	ग_लिखोl_relaxed(stdev->flags, stdev->thermal_base);
 
-	spear_thermal = thermal_zone_device_register("spear_thermal", 0, 0,
-				stdev, &ops, NULL, 0, 0);
-	if (IS_ERR(spear_thermal)) {
+	spear_thermal = thermal_zone_device_रेजिस्टर("spear_thermal", 0, 0,
+				stdev, &ops, शून्य, 0, 0);
+	अगर (IS_ERR(spear_thermal)) अणु
 		dev_err(&pdev->dev, "thermal zone device is NULL\n");
 		ret = PTR_ERR(spear_thermal);
-		goto disable_clk;
-	}
+		जाओ disable_clk;
+	पूर्ण
 	ret = thermal_zone_device_enable(spear_thermal);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Cannot enable thermal zone\n");
-		goto unregister_tzd;
-	}
+		जाओ unरेजिस्टर_tzd;
+	पूर्ण
 
-	platform_set_drvdata(pdev, spear_thermal);
+	platक्रमm_set_drvdata(pdev, spear_thermal);
 
 	dev_info(&spear_thermal->device, "Thermal Sensor Loaded at: 0x%p.\n",
 			stdev->thermal_base);
 
-	return 0;
+	वापस 0;
 
-unregister_tzd:
-	thermal_zone_device_unregister(spear_thermal);
+unरेजिस्टर_tzd:
+	thermal_zone_device_unरेजिस्टर(spear_thermal);
 disable_clk:
 	clk_disable(stdev->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int spear_thermal_exit(struct platform_device *pdev)
-{
-	unsigned int actual_mask = 0;
-	struct thermal_zone_device *spear_thermal = platform_get_drvdata(pdev);
-	struct spear_thermal_dev *stdev = spear_thermal->devdata;
+अटल पूर्णांक spear_thermal_निकास(काष्ठा platक्रमm_device *pdev)
+अणु
+	अचिन्हित पूर्णांक actual_mask = 0;
+	काष्ठा thermal_zone_device *spear_thermal = platक्रमm_get_drvdata(pdev);
+	काष्ठा spear_thermal_dev *stdev = spear_thermal->devdata;
 
-	thermal_zone_device_unregister(spear_thermal);
+	thermal_zone_device_unरेजिस्टर(spear_thermal);
 
 	/* Disable SPEAr Thermal Sensor */
-	actual_mask = readl_relaxed(stdev->thermal_base);
-	writel_relaxed(actual_mask & ~stdev->flags, stdev->thermal_base);
+	actual_mask = पढ़ोl_relaxed(stdev->thermal_base);
+	ग_लिखोl_relaxed(actual_mask & ~stdev->flags, stdev->thermal_base);
 
 	clk_disable(stdev->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id spear_thermal_id_table[] = {
-	{ .compatible = "st,thermal-spear1340" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id spear_thermal_id_table[] = अणु
+	अणु .compatible = "st,thermal-spear1340" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, spear_thermal_id_table);
 
-static struct platform_driver spear_thermal_driver = {
+अटल काष्ठा platक्रमm_driver spear_thermal_driver = अणु
 	.probe = spear_thermal_probe,
-	.remove = spear_thermal_exit,
-	.driver = {
+	.हटाओ = spear_thermal_निकास,
+	.driver = अणु
 		.name = "spear_thermal",
 		.pm = &spear_thermal_pm_ops,
 		.of_match_table = spear_thermal_id_table,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(spear_thermal_driver);
+module_platक्रमm_driver(spear_thermal_driver);
 
 MODULE_AUTHOR("Vincenzo Frascino <vincenzo.frascino@st.com>");
 MODULE_DESCRIPTION("SPEAr thermal driver");

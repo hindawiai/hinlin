@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2018 Mellanox Technologies. */
 
-#ifndef __MLX5_MONITOR_H__
-#define __MLX5_MONITOR_H__
+#अगर_अघोषित __MLX5_MONITOR_H__
+#घोषणा __MLX5_MONITOR_H__
 
-int  mlx5e_monitor_counter_supported(struct mlx5e_priv *priv);
-void mlx5e_monitor_counter_init(struct mlx5e_priv *priv);
-void mlx5e_monitor_counter_cleanup(struct mlx5e_priv *priv);
-void mlx5e_monitor_counter_arm(struct mlx5e_priv *priv);
+पूर्णांक  mlx5e_monitor_counter_supported(काष्ठा mlx5e_priv *priv);
+व्योम mlx5e_monitor_counter_init(काष्ठा mlx5e_priv *priv);
+व्योम mlx5e_monitor_counter_cleanup(काष्ठा mlx5e_priv *priv);
+व्योम mlx5e_monitor_counter_arm(काष्ठा mlx5e_priv *priv);
 
-#endif /* __MLX5_MONITOR_H__ */
+#पूर्ण_अगर /* __MLX5_MONITOR_H__ */

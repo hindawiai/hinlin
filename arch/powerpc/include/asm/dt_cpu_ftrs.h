@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_POWERPC_DT_CPU_FTRS_H
-#define __ASM_POWERPC_DT_CPU_FTRS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_POWERPC_DT_CPU_FTRS_H
+#घोषणा __ASM_POWERPC_DT_CPU_FTRS_H
 
 /*
  *  Copyright 2017, IBM Corporation
@@ -9,17 +10,17 @@
  *  device tree feature advertisement.
  */
 
-#include <linux/types.h>
-#include <uapi/asm/cputable.h>
+#समावेश <linux/types.h>
+#समावेश <uapi/यंत्र/cputable.h>
 
-#ifdef CONFIG_PPC_DT_CPU_FTRS
-bool dt_cpu_ftrs_init(void *fdt);
-void dt_cpu_ftrs_scan(void);
-bool dt_cpu_ftrs_in_use(void);
-#else
-static inline bool dt_cpu_ftrs_init(void *fdt) { return false; }
-static inline void dt_cpu_ftrs_scan(void) { }
-static inline bool dt_cpu_ftrs_in_use(void) { return false; }
-#endif
+#अगर_घोषित CONFIG_PPC_DT_CPU_FTRS
+bool dt_cpu_ftrs_init(व्योम *fdt);
+व्योम dt_cpu_ftrs_scan(व्योम);
+bool dt_cpu_ftrs_in_use(व्योम);
+#अन्यथा
+अटल अंतरभूत bool dt_cpu_ftrs_init(व्योम *fdt) अणु वापस false; पूर्ण
+अटल अंतरभूत व्योम dt_cpu_ftrs_scan(व्योम) अणु पूर्ण
+अटल अंतरभूत bool dt_cpu_ftrs_in_use(व्योम) अणु वापस false; पूर्ण
+#पूर्ण_अगर
 
-#endif /* __ASM_POWERPC_DT_CPU_FTRS_H */
+#पूर्ण_अगर /* __ASM_POWERPC_DT_CPU_FTRS_H */

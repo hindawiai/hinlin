@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,39 +23,39 @@
  * Authors: AMD
  */
 
-#include "dmub_outbox.h"
-#include "dc_dmub_srv.h"
-#include "dmub/inc/dmub_cmd.h"
+#समावेश "dmub_outbox.h"
+#समावेश "dc_dmub_srv.h"
+#समावेश "dmub/inc/dmub_cmd.h"
 
 /**
  *****************************************************************************
- *  Function: dmub_enable_outbox_notification
+ *  Function: dmub_enable_outbox_notअगरication
  *
  *  @brief
- *		Sends inbox cmd to dmub to enable outbox1 messages with interrupt.
- *		Dmub sends outbox1 message and triggers outbox1 interrupt.
+ *		Sends inbox cmd to dmub to enable outbox1 messages with पूर्णांकerrupt.
+ *		Dmub sends outbox1 message and triggers outbox1 पूर्णांकerrupt.
  *
  *  @param
- *		[in] dc: dc structure
+ *		[in] dc: dc काष्ठाure
  *
- *  @return
+ *  @वापस
  *     None
  *****************************************************************************
  */
-void dmub_enable_outbox_notification(struct dc *dc)
-{
-	union dmub_rb_cmd cmd;
-	struct dc_context *dc_ctx = dc->ctx;
+व्योम dmub_enable_outbox_notअगरication(काष्ठा dc *dc)
+अणु
+	जोड़ dmub_rb_cmd cmd;
+	काष्ठा dc_context *dc_ctx = dc->ctx;
 
-	memset(&cmd, 0x0, sizeof(cmd));
+	स_रखो(&cmd, 0x0, माप(cmd));
 	cmd.outbox1_enable.header.type = DMUB_CMD__OUTBOX1_ENABLE;
 	cmd.outbox1_enable.header.sub_type = 0;
 	cmd.outbox1_enable.header.payload_bytes =
-		sizeof(cmd.outbox1_enable) -
-		sizeof(cmd.outbox1_enable.header);
+		माप(cmd.outbox1_enable) -
+		माप(cmd.outbox1_enable.header);
 	cmd.outbox1_enable.enable = true;
 
 	dc_dmub_srv_cmd_queue(dc_ctx->dmub_srv, &cmd);
 	dc_dmub_srv_cmd_execute(dc_ctx->dmub_srv);
-	dc_dmub_srv_wait_idle(dc_ctx->dmub_srv);
-}
+	dc_dmub_srv_रुको_idle(dc_ctx->dmub_srv);
+पूर्ण

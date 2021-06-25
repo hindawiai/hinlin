@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2005 Paolo 'Blaisorblade' Giarrusso <blaisorblade@yahoo.it>
  */
 
-#ifndef __UM_MALLOC_H__
-#define __UM_MALLOC_H__
+#अगर_अघोषित __UM_MALLOC_H__
+#घोषणा __UM_MALLOC_H__
 
-#include <generated/asm-offsets.h>
+#समावेश <generated/यंत्र-offsets.h>
 
-extern void *uml_kmalloc(int size, int flags);
-extern void kfree(const void *ptr);
+बाह्य व्योम *uml_kदो_स्मृति(पूर्णांक size, पूर्णांक flags);
+बाह्य व्योम kमुक्त(स्थिर व्योम *ptr);
 
-extern void *vmalloc(unsigned long size);
-extern void vfree(void *ptr);
+बाह्य व्योम *vदो_स्मृति(अचिन्हित दीर्घ size);
+बाह्य व्योम vमुक्त(व्योम *ptr);
 
-#endif /* __UM_MALLOC_H__ */
+#पूर्ण_अगर /* __UM_MALLOC_H__ */
 
 

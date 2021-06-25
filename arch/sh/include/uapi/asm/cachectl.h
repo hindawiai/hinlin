@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _SH_CACHECTL_H
-#define _SH_CACHECTL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _SH_CACHECTL_H
+#घोषणा _SH_CACHECTL_H
 
-/* Definitions for the cacheflush system call.  */
+/* Definitions क्रम the cacheflush प्रणाली call.  */
 
-#define CACHEFLUSH_D_INVAL	0x1	/* invalidate (without write back) */
-#define CACHEFLUSH_D_WB		0x2	/* write back (without invalidate) */
-#define CACHEFLUSH_D_PURGE	0x3	/* writeback and invalidate */
+#घोषणा CACHEFLUSH_D_INVAL	0x1	/* invalidate (without ग_लिखो back) */
+#घोषणा CACHEFLUSH_D_WB		0x2	/* ग_लिखो back (without invalidate) */
+#घोषणा CACHEFLUSH_D_PURGE	0x3	/* ग_लिखोback and invalidate */
 
-#define CACHEFLUSH_I		0x4
+#घोषणा CACHEFLUSH_I		0x4
 
 /*
- * Options for cacheflush system call
+ * Options क्रम cacheflush प्रणाली call
  */
-#define ICACHE	CACHEFLUSH_I		/* flush instruction cache */
-#define DCACHE	CACHEFLUSH_D_PURGE	/* writeback and flush data cache */
-#define BCACHE	(ICACHE|DCACHE)		/* flush both caches */
+#घोषणा ICACHE	CACHEFLUSH_I		/* flush inकाष्ठाion cache */
+#घोषणा DCACHE	CACHEFLUSH_D_PURGE	/* ग_लिखोback and flush data cache */
+#घोषणा BCACHE	(ICACHE|DCACHE)		/* flush both caches */
 
-#endif /* _SH_CACHECTL_H */
+#पूर्ण_अगर /* _SH_CACHECTL_H */

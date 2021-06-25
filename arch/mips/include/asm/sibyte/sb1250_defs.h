@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*  *********************************************************************
     *  SB1250 Board Support Package
     *
-    *  Global constants and macros		File: sb1250_defs.h
+    *  Global स्थिरants and macros		File: sb1250_defs.h
     *
     *  This file contains macros and definitions used by the other
     *  include files.
     *
-    *  SB1250 specification level:  User's manual 1/02/02
+    *  SB1250 specअगरication level:  User's manual 1/02/02
     *
     *********************************************************************
     *
@@ -16,231 +17,231 @@
     *
     ********************************************************************* */
 
-#ifndef _SB1250_DEFS_H
-#define _SB1250_DEFS_H
+#अगर_अघोषित _SB1250_DEFS_H
+#घोषणा _SB1250_DEFS_H
 
 /*
  * These headers require ANSI C89 string concatenation, and GCC or other
- * 'long long' (64-bit integer) support.
+ * 'long long' (64-bit पूर्णांकeger) support.
  */
-#if !defined(__STDC__) && !defined(_MSC_VER)
-#error SiByte headers require ANSI C89 support
-#endif
+#अगर !defined(__STDC__) && !defined(_MSC_VER)
+#त्रुटि SiByte headers require ANSI C89 support
+#पूर्ण_अगर
 
 
 /*  *********************************************************************
-    *  Macros for feature tests, used to enable include file features
-    *  for chip features only present in certain chip revisions.
+    *  Macros क्रम feature tests, used to enable include file features
+    *  क्रम chip features only present in certain chip revisions.
     *
     *  SIBYTE_HDR_FEATURES may be defined to be the mask value chip/revision
-    *  which is to be exposed by the headers.  If undefined, it defaults to
+    *  which is to be exposed by the headers.  If undefined, it शेषs to
     *  "all features."
     *
     *  Use like:
     *
-    *	 #define SIBYTE_HDR_FEATURES	SIBYTE_HDR_FMASK_112x_PASS1
+    *	 #घोषणा SIBYTE_HDR_FEATURES	SIBYTE_HDR_FMASK_112x_PASS1
     *
-    *		Generate defines only for that revision of chip.
+    *		Generate defines only क्रम that revision of chip.
     *
-    *	 #if SIBYTE_HDR_FEATURE(chip,pass)
+    *	 #अगर SIBYTE_HDR_FEATURE(chip,pass)
     *
-    *		True if header features for that revision or later of
+    *		True अगर header features क्रम that revision or later of
     *		that particular chip type are enabled in SIBYTE_HDR_FEATURES.
-    *		(Use this to bracket #defines for features present in a given
+    *		(Use this to bracket #घोषणाs क्रम features present in a given
     *		revision and later.)
     *
     *		Note that there is no implied ordering between chip types.
     *
     *		Note also that 'chip' and 'pass' must textually exactly
-    *		match the defines below.  So, for example,
+    *		match the defines below.  So, क्रम example,
     *		SIBYTE_HDR_FEATURE(112x, PASS1) is OK, but
-    *		SIBYTE_HDR_FEATURE(1120, pass1) is not (for two reasons).
+    *		SIBYTE_HDR_FEATURE(1120, pass1) is not (क्रम two reasons).
     *
-    *	 #if SIBYTE_HDR_FEATURE_UP_TO(chip,pass)
+    *	 #अगर SIBYTE_HDR_FEATURE_UP_TO(chip,pass)
     *
-    *		Same as SIBYTE_HDR_FEATURE, but true for the named revision
+    *		Same as SIBYTE_HDR_FEATURE, but true क्रम the named revision
     *		and earlier revisions of the named chip type.
     *
-    *	 #if SIBYTE_HDR_FEATURE_EXACT(chip,pass)
+    *	 #अगर SIBYTE_HDR_FEATURE_EXACT(chip,pass)
     *
-    *		Same as SIBYTE_HDR_FEATURE, but only true for the named
+    *		Same as SIBYTE_HDR_FEATURE, but only true क्रम the named
     *		revision of the named chip type.  (Note that this CANNOT
-    *		be used to verify that you're compiling only for that
-    *		particular chip/revision.  It will be true any time this
+    *		be used to verअगरy that you're compiling only क्रम that
+    *		particular chip/revision.  It will be true any समय this
     *		chip/revision is included in SIBYTE_HDR_FEATURES.)
     *
-    *	 #if SIBYTE_HDR_FEATURE_CHIP(chip)
+    *	 #अगर SIBYTE_HDR_FEATURE_CHIP(chip)
     *
-    *		True if header features for (any revision of) that chip type
+    *		True अगर header features क्रम (any revision of) that chip type
     *		are enabled in SIBYTE_HDR_FEATURES.  (Use this to bracket
-    *		#defines for features specific to a given chip type.)
+    *		#घोषणाs क्रम features specअगरic to a given chip type.)
     *
-    *  Mask values currently include room for additional revisions of each
-    *  chip type, but can be renumbered at will.  Note that they MUST fit
-    *  into 31 bits and may not include C type constructs, for safe use in
+    *  Mask values currently include room क्रम additional revisions of each
+    *  chip type, but can be rक्रमागतbered at will.  Note that they MUST fit
+    *  पूर्णांकo 31 bits and may not include C type स्थिरructs, क्रम safe use in
     *  CPP conditionals.  Bit positions within chip types DO indicate
-    *  ordering, so be careful when adding support for new minor revs.
+    *  ordering, so be careful when adding support क्रम new minor revs.
     ********************************************************************* */
 
-#define SIBYTE_HDR_FMASK_1250_ALL		0x000000ff
-#define SIBYTE_HDR_FMASK_1250_PASS1		0x00000001
-#define SIBYTE_HDR_FMASK_1250_PASS2		0x00000002
-#define SIBYTE_HDR_FMASK_1250_PASS3		0x00000004
+#घोषणा SIBYTE_HDR_FMASK_1250_ALL		0x000000ff
+#घोषणा SIBYTE_HDR_FMASK_1250_PASS1		0x00000001
+#घोषणा SIBYTE_HDR_FMASK_1250_PASS2		0x00000002
+#घोषणा SIBYTE_HDR_FMASK_1250_PASS3		0x00000004
 
-#define SIBYTE_HDR_FMASK_112x_ALL		0x00000f00
-#define SIBYTE_HDR_FMASK_112x_PASS1		0x00000100
+#घोषणा SIBYTE_HDR_FMASK_112x_ALL		0x00000f00
+#घोषणा SIBYTE_HDR_FMASK_112x_PASS1		0x00000100
 
-#define SIBYTE_HDR_FMASK_1480_ALL		0x0000f000
-#define SIBYTE_HDR_FMASK_1480_PASS1		0x00001000
-#define SIBYTE_HDR_FMASK_1480_PASS2		0x00002000
+#घोषणा SIBYTE_HDR_FMASK_1480_ALL		0x0000f000
+#घोषणा SIBYTE_HDR_FMASK_1480_PASS1		0x00001000
+#घोषणा SIBYTE_HDR_FMASK_1480_PASS2		0x00002000
 
-/* Bit mask for chip/revision.	(use _ALL for all revisions of a chip).	 */
-#define SIBYTE_HDR_FMASK(chip, pass)					\
+/* Bit mask क्रम chip/revision.	(use _ALL क्रम all revisions of a chip).	 */
+#घोषणा SIBYTE_HDR_FMASK(chip, pass)					\
     (SIBYTE_HDR_FMASK_ ## chip ## _ ## pass)
-#define SIBYTE_HDR_FMASK_ALLREVS(chip)					\
+#घोषणा SIBYTE_HDR_FMASK_ALLREVS(chip)					\
     (SIBYTE_HDR_FMASK_ ## chip ## _ALL)
 
-/* Default constant value for all chips, all revisions */
-#define SIBYTE_HDR_FMASK_ALL						\
+/* Default स्थिरant value क्रम all chips, all revisions */
+#घोषणा SIBYTE_HDR_FMASK_ALL						\
     (SIBYTE_HDR_FMASK_1250_ALL | SIBYTE_HDR_FMASK_112x_ALL		\
      | SIBYTE_HDR_FMASK_1480_ALL)
 
-/* This one is used for the "original" BCM1250/BCM112x chips.  We use this
-   to weed out constants and macros that do not exist on later chips like
+/* This one is used क्रम the "original" BCM1250/BCM112x chips.  We use this
+   to weed out स्थिरants and macros that करो not exist on later chips like
    the BCM1480	*/
-#define SIBYTE_HDR_FMASK_1250_112x_ALL					\
+#घोषणा SIBYTE_HDR_FMASK_1250_112x_ALL					\
     (SIBYTE_HDR_FMASK_1250_ALL | SIBYTE_HDR_FMASK_112x_ALL)
-#define SIBYTE_HDR_FMASK_1250_112x SIBYTE_HDR_FMASK_1250_112x_ALL
+#घोषणा SIBYTE_HDR_FMASK_1250_112x SIBYTE_HDR_FMASK_1250_112x_ALL
 
-#ifndef SIBYTE_HDR_FEATURES
-#define SIBYTE_HDR_FEATURES			SIBYTE_HDR_FMASK_ALL
-#endif
+#अगर_अघोषित SIBYTE_HDR_FEATURES
+#घोषणा SIBYTE_HDR_FEATURES			SIBYTE_HDR_FMASK_ALL
+#पूर्ण_अगर
 
 
-/* Bit mask for revisions of chip exclusively before the named revision.  */
-#define SIBYTE_HDR_FMASK_BEFORE(chip, pass)				\
+/* Bit mask क्रम revisions of chip exclusively beक्रमe the named revision.  */
+#घोषणा SIBYTE_HDR_FMASK_BEFORE(chip, pass)				\
     ((SIBYTE_HDR_FMASK(chip, pass) - 1) & SIBYTE_HDR_FMASK_ALLREVS(chip))
 
-/* Bit mask for revisions of chip exclusively after the named revision.	 */
-#define SIBYTE_HDR_FMASK_AFTER(chip, pass)				\
+/* Bit mask क्रम revisions of chip exclusively after the named revision.	 */
+#घोषणा SIBYTE_HDR_FMASK_AFTER(chip, pass)				\
     (~(SIBYTE_HDR_FMASK(chip, pass)					\
      | (SIBYTE_HDR_FMASK(chip, pass) - 1)) & SIBYTE_HDR_FMASK_ALLREVS(chip))
 
 
-/* True if header features enabled for (any revision of) that chip type.  */
-#define SIBYTE_HDR_FEATURE_CHIP(chip)					\
+/* True अगर header features enabled क्रम (any revision of) that chip type.  */
+#घोषणा SIBYTE_HDR_FEATURE_CHIP(chip)					\
     (!! (SIBYTE_HDR_FMASK_ALLREVS(chip) & SIBYTE_HDR_FEATURES))
 
-/* True for all versions of the BCM1250 and BCM1125, but not true for
-   anything else */
-#define SIBYTE_HDR_FEATURE_1250_112x \
+/* True क्रम all versions of the BCM1250 and BCM1125, but not true क्रम
+   anything अन्यथा */
+#घोषणा SIBYTE_HDR_FEATURE_1250_112x \
       (SIBYTE_HDR_FEATURE_CHIP(1250) || SIBYTE_HDR_FEATURE_CHIP(112x))
 /*    (!!  (SIBYTE_HDR_FEATURES & SIBYHTE_HDR_FMASK_1250_112x)) */
 
-/* True if header features enabled for that rev or later, inclusive.  */
-#define SIBYTE_HDR_FEATURE(chip, pass)					\
+/* True अगर header features enabled क्रम that rev or later, inclusive.  */
+#घोषणा SIBYTE_HDR_FEATURE(chip, pass)					\
     (!! ((SIBYTE_HDR_FMASK(chip, pass)					\
 	  | SIBYTE_HDR_FMASK_AFTER(chip, pass)) & SIBYTE_HDR_FEATURES))
 
-/* True if header features enabled for exactly that rev.  */
-#define SIBYTE_HDR_FEATURE_EXACT(chip, pass)				\
+/* True अगर header features enabled क्रम exactly that rev.  */
+#घोषणा SIBYTE_HDR_FEATURE_EXACT(chip, pass)				\
     (!! (SIBYTE_HDR_FMASK(chip, pass) & SIBYTE_HDR_FEATURES))
 
-/* True if header features enabled for that rev or before, inclusive.  */
-#define SIBYTE_HDR_FEATURE_UP_TO(chip, pass)				\
+/* True अगर header features enabled क्रम that rev or beक्रमe, inclusive.  */
+#घोषणा SIBYTE_HDR_FEATURE_UP_TO(chip, pass)				\
     (!! ((SIBYTE_HDR_FMASK(chip, pass)					\
 	 | SIBYTE_HDR_FMASK_BEFORE(chip, pass)) & SIBYTE_HDR_FEATURES))
 
 
 /*  *********************************************************************
-    *  Naming schemes for constants in these files:
+    *  Naming schemes क्रम स्थिरants in these files:
     *
-    *  M_xxx	       MASK constant (identifies bits in a register).
+    *  M_xxx	       MASK स्थिरant (identअगरies bits in a रेजिस्टर).
     *		       For multi-bit fields, all bits in the field will
     *		       be set.
     *
-    *  K_xxx	       "Code" constant (value for data in a multi-bit
-    *		       field).	The value is right justified.
+    *  K_xxx	       "Code" स्थिरant (value क्रम data in a multi-bit
+    *		       field).	The value is right justअगरied.
     *
-    *  V_xxx	       "Value" constant.  This is the same as the
-    *		       corresponding "K_xxx" constant, except it is
-    *		       shifted to the correct position in the register.
+    *  V_xxx	       "Value" स्थिरant.  This is the same as the
+    *		       corresponding "K_xxx" स्थिरant, except it is
+    *		       shअगरted to the correct position in the रेजिस्टर.
     *
-    *  S_xxx	       SHIFT constant.	This is the number of bits that
-    *		       a field value (code) needs to be shifted
+    *  S_xxx	       SHIFT स्थिरant.	This is the number of bits that
+    *		       a field value (code) needs to be shअगरted
     *		       (towards the left) to put the value in the right
-    *		       position for the register.
+    *		       position क्रम the रेजिस्टर.
     *
-    *  A_xxx	       ADDRESS constant.  This will be a physical
+    *  A_xxx	       ADDRESS स्थिरant.  This will be a physical
     *		       address.	 Use the PHYS_TO_K1 macro to generate
     *		       a K1SEG address.
     *
-    *  R_xxx	       RELATIVE offset constant.  This is an offset from
-    *		       an A_xxx constant (usually the first register in
+    *  R_xxx	       RELATIVE offset स्थिरant.  This is an offset from
+    *		       an A_xxx स्थिरant (usually the first रेजिस्टर in
     *		       a group).
     *
     *  G_xxx(X)	       GET value.  This macro obtains a multi-bit field
-    *		       from a register, masks it, and shifts it to
-    *		       the bottom of the register (retrieving a K_xxx
-    *		       value, for example).
+    *		       from a रेजिस्टर, masks it, and shअगरts it to
+    *		       the bottom of the रेजिस्टर (retrieving a K_xxx
+    *		       value, क्रम example).
     *
     *  V_xxx(X)	       VALUE.  This macro computes the value of a
-    *		       K_xxx constant shifted to the correct position
-    *		       in the register.
+    *		       K_xxx स्थिरant shअगरted to the correct position
+    *		       in the रेजिस्टर.
     ********************************************************************* */
 
 
 
 
 /*
- * Cast to 64-bit number.  Presumably the syntax is different in
+ * Cast to 64-bit number.  Presumably the syntax is dअगरferent in
  * assembly language.
  *
- * Note: you'll need to define uint32_t and uint64_t in your headers.
+ * Note: you'll need to define uपूर्णांक32_t and uपूर्णांक64_t in your headers.
  */
 
-#if !defined(__ASSEMBLY__)
-#define _SB_MAKE64(x) ((uint64_t)(x))
-#define _SB_MAKE32(x) ((uint32_t)(x))
-#else
-#define _SB_MAKE64(x) (x)
-#define _SB_MAKE32(x) (x)
-#endif
+#अगर !defined(__ASSEMBLY__)
+#घोषणा _SB_MAKE64(x) ((uपूर्णांक64_t)(x))
+#घोषणा _SB_MAKE32(x) ((uपूर्णांक32_t)(x))
+#अन्यथा
+#घोषणा _SB_MAKE64(x) (x)
+#घोषणा _SB_MAKE32(x) (x)
+#पूर्ण_अगर
 
 
 /*
- * Make a mask for 1 bit at position 'n'
+ * Make a mask क्रम 1 bit at position 'n'
  */
 
-#define _SB_MAKEMASK1(n) (_SB_MAKE64(1) << _SB_MAKE64(n))
-#define _SB_MAKEMASK1_32(n) (_SB_MAKE32(1) << _SB_MAKE32(n))
+#घोषणा _SB_MAKEMASK1(n) (_SB_MAKE64(1) << _SB_MAKE64(n))
+#घोषणा _SB_MAKEMASK1_32(n) (_SB_MAKE32(1) << _SB_MAKE32(n))
 
 /*
- * Make a mask for 'v' bits at position 'n'
+ * Make a mask क्रम 'v' bits at position 'n'
  */
 
-#define _SB_MAKEMASK(v, n) (_SB_MAKE64((_SB_MAKE64(1)<<(v))-1) << _SB_MAKE64(n))
-#define _SB_MAKEMASK_32(v, n) (_SB_MAKE32((_SB_MAKE32(1)<<(v))-1) << _SB_MAKE32(n))
+#घोषणा _SB_MAKEMASK(v, n) (_SB_MAKE64((_SB_MAKE64(1)<<(v))-1) << _SB_MAKE64(n))
+#घोषणा _SB_MAKEMASK_32(v, n) (_SB_MAKE32((_SB_MAKE32(1)<<(v))-1) << _SB_MAKE32(n))
 
 /*
  * Make a value at 'v' at bit position 'n'
  */
 
-#define _SB_MAKEVALUE(v, n) (_SB_MAKE64(v) << _SB_MAKE64(n))
-#define _SB_MAKEVALUE_32(v, n) (_SB_MAKE32(v) << _SB_MAKE32(n))
+#घोषणा _SB_MAKEVALUE(v, n) (_SB_MAKE64(v) << _SB_MAKE64(n))
+#घोषणा _SB_MAKEVALUE_32(v, n) (_SB_MAKE32(v) << _SB_MAKE32(n))
 
-#define _SB_GETVALUE(v, n, m) ((_SB_MAKE64(v) & _SB_MAKE64(m)) >> _SB_MAKE64(n))
-#define _SB_GETVALUE_32(v, n, m) ((_SB_MAKE32(v) & _SB_MAKE32(m)) >> _SB_MAKE32(n))
+#घोषणा _SB_GETVALUE(v, n, m) ((_SB_MAKE64(v) & _SB_MAKE64(m)) >> _SB_MAKE64(n))
+#घोषणा _SB_GETVALUE_32(v, n, m) ((_SB_MAKE32(v) & _SB_MAKE32(m)) >> _SB_MAKE32(n))
 
 /*
- * Macros to read/write on-chip registers
- * XXX should we do the PHYS_TO_K1 here?
+ * Macros to पढ़ो/ग_लिखो on-chip रेजिस्टरs
+ * XXX should we करो the PHYS_TO_K1 here?
  */
 
 
-#if defined(__mips64) && !defined(__ASSEMBLY__)
-#define SBWRITECSR(csr, val) *((volatile uint64_t *) PHYS_TO_K1(csr)) = (val)
-#define SBREADCSR(csr) (*((volatile uint64_t *) PHYS_TO_K1(csr)))
-#endif /* __ASSEMBLY__ */
+#अगर defined(__mips64) && !defined(__ASSEMBLY__)
+#घोषणा SBWRITECSR(csr, val) *((अस्थिर uपूर्णांक64_t *) PHYS_TO_K1(csr)) = (val)
+#घोषणा SBREADCSR(csr) (*((अस्थिर uपूर्णांक64_t *) PHYS_TO_K1(csr)))
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif
+#पूर्ण_अगर

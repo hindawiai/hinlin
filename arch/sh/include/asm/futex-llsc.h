@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_FUTEX_LLSC_H
-#define __ASM_SH_FUTEX_LLSC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_FUTEX_LLSC_H
+#घोषणा __ASM_SH_FUTEX_LLSC_H
 
-static inline int atomic_futex_op_cmpxchg_inatomic(u32 *uval,
+अटल अंतरभूत पूर्णांक atomic_futex_op_cmpxchg_inatomic(u32 *uval,
 						   u32 __user *uaddr,
 						   u32 oldval, u32 newval)
-{
-	int err = 0;
-	__asm__ __volatile__(
+अणु
+	पूर्णांक err = 0;
+	__यंत्र__ __अस्थिर__(
 		"synco\n"
 		"1:\n\t"
 		"movli.l	@%2, r0\n\t"
@@ -19,7 +20,7 @@ static inline int atomic_futex_op_cmpxchg_inatomic(u32 *uval,
 		"bf	1b\n"
 		"2:\n\t"
 		"synco\n\t"
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 		".section	.fixup,\"ax\"\n"
 		"3:\n\t"
 		"mov.l	4f, %0\n\t"
@@ -31,12 +32,12 @@ static inline int atomic_futex_op_cmpxchg_inatomic(u32 *uval,
 		".section	__ex_table,\"a\"\n\t"
 		".long	1b, 3b\n\t"
 		".previous"
-#endif
+#पूर्ण_अगर
 		:"+r" (err), "=&r" (*uval)
 		:"r" (uaddr), "i" (-EFAULT), "r" (oldval), "r" (newval)
 		:"t", "memory", "r0");
-	if (err) return err;
-	return 0;
-}
+	अगर (err) वापस err;
+	वापस 0;
+पूर्ण
 
-#endif /* __ASM_SH_FUTEX_LLSC_H */
+#पूर्ण_अगर /* __ASM_SH_FUTEX_LLSC_H */

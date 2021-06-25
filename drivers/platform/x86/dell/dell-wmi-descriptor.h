@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  Dell WMI descriptor driver
  *
  *  Copyright (c) 2017 Dell Inc.
  */
 
-#ifndef _DELL_WMI_DESCRIPTOR_H_
-#define _DELL_WMI_DESCRIPTOR_H_
+#अगर_अघोषित _DELL_WMI_DESCRIPTOR_H_
+#घोषणा _DELL_WMI_DESCRIPTOR_H_
 
-#include <linux/wmi.h>
+#समावेश <linux/wmi.h>
 
-/* possible return values:
+/* possible वापस values:
  *  -ENODEV: Descriptor GUID missing from WMI bus
- *  -EPROBE_DEFER: probing for dell-wmi-descriptor not yet run
+ *  -EPROBE_DEFER: probing क्रम dell-wmi-descriptor not yet run
  *  0: valid descriptor, successfully probed
- *  < 0: invalid descriptor, don't probe dependent devices
+ *  < 0: invalid descriptor, करोn't probe dependent devices
  */
-int dell_wmi_get_descriptor_valid(void);
+पूर्णांक dell_wmi_get_descriptor_valid(व्योम);
 
-bool dell_wmi_get_interface_version(u32 *version);
+bool dell_wmi_get_पूर्णांकerface_version(u32 *version);
 bool dell_wmi_get_size(u32 *size);
 bool dell_wmi_get_hotfix(u32 *hotfix);
 
-#endif
+#पूर्ण_अगर

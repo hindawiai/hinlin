@@ -1,92 +1,93 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_RESET_CONTROLLER_H_
-#define _LINUX_RESET_CONTROLLER_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_RESET_CONTROLLER_H_
+#घोषणा _LINUX_RESET_CONTROLLER_H_
 
-#include <linux/list.h>
+#समावेश <linux/list.h>
 
-struct reset_controller_dev;
+काष्ठा reset_controller_dev;
 
 /**
- * struct reset_control_ops - reset controller driver callbacks
+ * काष्ठा reset_control_ops - reset controller driver callbacks
  *
- * @reset: for self-deasserting resets, does all necessary
+ * @reset: क्रम self-deनिश्चितing resets, करोes all necessary
  *         things to reset the device
- * @assert: manually assert the reset line, if supported
- * @deassert: manually deassert the reset line, if supported
- * @status: return the status of the reset line, if supported
+ * @निश्चित: manually निश्चित the reset line, अगर supported
+ * @deनिश्चित: manually deनिश्चित the reset line, अगर supported
+ * @status: वापस the status of the reset line, अगर supported
  */
-struct reset_control_ops {
-	int (*reset)(struct reset_controller_dev *rcdev, unsigned long id);
-	int (*assert)(struct reset_controller_dev *rcdev, unsigned long id);
-	int (*deassert)(struct reset_controller_dev *rcdev, unsigned long id);
-	int (*status)(struct reset_controller_dev *rcdev, unsigned long id);
-};
+काष्ठा reset_control_ops अणु
+	पूर्णांक (*reset)(काष्ठा reset_controller_dev *rcdev, अचिन्हित दीर्घ id);
+	पूर्णांक (*निश्चित)(काष्ठा reset_controller_dev *rcdev, अचिन्हित दीर्घ id);
+	पूर्णांक (*deनिश्चित)(काष्ठा reset_controller_dev *rcdev, अचिन्हित दीर्घ id);
+	पूर्णांक (*status)(काष्ठा reset_controller_dev *rcdev, अचिन्हित दीर्घ id);
+पूर्ण;
 
-struct module;
-struct device_node;
-struct of_phandle_args;
+काष्ठा module;
+काष्ठा device_node;
+काष्ठा of_phandle_args;
 
 /**
- * struct reset_control_lookup - represents a single lookup entry
+ * काष्ठा reset_control_lookup - represents a single lookup entry
  *
- * @list: internal list of all reset lookup entries
+ * @list: पूर्णांकernal list of all reset lookup entries
  * @provider: name of the reset controller device controlling this reset line
  * @index: ID of the reset controller in the reset controller device
  * @dev_id: name of the device associated with this reset line
- * @con_id: name of the reset line (can be NULL)
+ * @con_id: name of the reset line (can be शून्य)
  */
-struct reset_control_lookup {
-	struct list_head list;
-	const char *provider;
-	unsigned int index;
-	const char *dev_id;
-	const char *con_id;
-};
+काष्ठा reset_control_lookup अणु
+	काष्ठा list_head list;
+	स्थिर अक्षर *provider;
+	अचिन्हित पूर्णांक index;
+	स्थिर अक्षर *dev_id;
+	स्थिर अक्षर *con_id;
+पूर्ण;
 
-#define RESET_LOOKUP(_provider, _index, _dev_id, _con_id)		\
-	{								\
+#घोषणा RESET_LOOKUP(_provider, _index, _dev_id, _con_id)		\
+	अणु								\
 		.provider = _provider,					\
 		.index = _index,					\
 		.dev_id = _dev_id,					\
 		.con_id = _con_id,					\
-	}
+	पूर्ण
 
 /**
- * struct reset_controller_dev - reset controller entity that might
+ * काष्ठा reset_controller_dev - reset controller entity that might
  *                               provide multiple reset controls
- * @ops: a pointer to device specific struct reset_control_ops
+ * @ops: a poपूर्णांकer to device specअगरic काष्ठा reset_control_ops
  * @owner: kernel module of the reset controller driver
- * @list: internal list of reset controller devices
- * @reset_control_head: head of internal list of requested reset controls
- * @dev: corresponding driver model device struct
+ * @list: पूर्णांकernal list of reset controller devices
+ * @reset_control_head: head of पूर्णांकernal list of requested reset controls
+ * @dev: corresponding driver model device काष्ठा
  * @of_node: corresponding device tree node as phandle target
- * @of_reset_n_cells: number of cells in reset line specifiers
- * @of_xlate: translation function to translate from specifier as found in the
- *            device tree to id as given to the reset control ops, defaults
+ * @of_reset_n_cells: number of cells in reset line specअगरiers
+ * @of_xlate: translation function to translate from specअगरier as found in the
+ *            device tree to id as given to the reset control ops, शेषs
  *            to :c:func:`of_reset_simple_xlate`.
  * @nr_resets: number of reset controls in this reset controller device
  */
-struct reset_controller_dev {
-	const struct reset_control_ops *ops;
-	struct module *owner;
-	struct list_head list;
-	struct list_head reset_control_head;
-	struct device *dev;
-	struct device_node *of_node;
-	int of_reset_n_cells;
-	int (*of_xlate)(struct reset_controller_dev *rcdev,
-			const struct of_phandle_args *reset_spec);
-	unsigned int nr_resets;
-};
+काष्ठा reset_controller_dev अणु
+	स्थिर काष्ठा reset_control_ops *ops;
+	काष्ठा module *owner;
+	काष्ठा list_head list;
+	काष्ठा list_head reset_control_head;
+	काष्ठा device *dev;
+	काष्ठा device_node *of_node;
+	पूर्णांक of_reset_n_cells;
+	पूर्णांक (*of_xlate)(काष्ठा reset_controller_dev *rcdev,
+			स्थिर काष्ठा of_phandle_args *reset_spec);
+	अचिन्हित पूर्णांक nr_resets;
+पूर्ण;
 
-int reset_controller_register(struct reset_controller_dev *rcdev);
-void reset_controller_unregister(struct reset_controller_dev *rcdev);
+पूर्णांक reset_controller_रेजिस्टर(काष्ठा reset_controller_dev *rcdev);
+व्योम reset_controller_unरेजिस्टर(काष्ठा reset_controller_dev *rcdev);
 
-struct device;
-int devm_reset_controller_register(struct device *dev,
-				   struct reset_controller_dev *rcdev);
+काष्ठा device;
+पूर्णांक devm_reset_controller_रेजिस्टर(काष्ठा device *dev,
+				   काष्ठा reset_controller_dev *rcdev);
 
-void reset_controller_add_lookup(struct reset_control_lookup *lookup,
-				 unsigned int num_entries);
+व्योम reset_controller_add_lookup(काष्ठा reset_control_lookup *lookup,
+				 अचिन्हित पूर्णांक num_entries);
 
-#endif
+#पूर्ण_अगर

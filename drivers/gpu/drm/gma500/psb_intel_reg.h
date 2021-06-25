@@ -1,153 +1,154 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2009, Intel Corporation.
  */
-#ifndef __PSB_INTEL_REG_H__
-#define __PSB_INTEL_REG_H__
+#अगर_अघोषित __PSB_INTEL_REG_H__
+#घोषणा __PSB_INTEL_REG_H__
 
 /*
  * GPIO regs
  */
-#define GPIOA			0x5010
-#define GPIOB			0x5014
-#define GPIOC			0x5018
-#define GPIOD			0x501c
-#define GPIOE			0x5020
-#define GPIOF			0x5024
-#define GPIOG			0x5028
-#define GPIOH			0x502c
-# define GPIO_CLOCK_DIR_MASK		(1 << 0)
-# define GPIO_CLOCK_DIR_IN		(0 << 1)
-# define GPIO_CLOCK_DIR_OUT		(1 << 1)
+#घोषणा GPIOA			0x5010
+#घोषणा GPIOB			0x5014
+#घोषणा GPIOC			0x5018
+#घोषणा GPIOD			0x501c
+#घोषणा GPIOE			0x5020
+#घोषणा GPIOF			0x5024
+#घोषणा GPIOG			0x5028
+#घोषणा GPIOH			0x502c
+# define GPIO_CLOCK_सूची_MASK		(1 << 0)
+# define GPIO_CLOCK_सूची_IN		(0 << 1)
+# define GPIO_CLOCK_सूची_OUT		(1 << 1)
 # define GPIO_CLOCK_VAL_MASK		(1 << 2)
 # define GPIO_CLOCK_VAL_OUT		(1 << 3)
 # define GPIO_CLOCK_VAL_IN		(1 << 4)
 # define GPIO_CLOCK_PULLUP_DISABLE	(1 << 5)
-# define GPIO_DATA_DIR_MASK		(1 << 8)
-# define GPIO_DATA_DIR_IN		(0 << 9)
-# define GPIO_DATA_DIR_OUT		(1 << 9)
+# define GPIO_DATA_सूची_MASK		(1 << 8)
+# define GPIO_DATA_सूची_IN		(0 << 9)
+# define GPIO_DATA_सूची_OUT		(1 << 9)
 # define GPIO_DATA_VAL_MASK		(1 << 10)
 # define GPIO_DATA_VAL_OUT		(1 << 11)
 # define GPIO_DATA_VAL_IN		(1 << 12)
 # define GPIO_DATA_PULLUP_DISABLE	(1 << 13)
 
-#define GMBUS0			0x5100 /* clock/port select */
-#define   GMBUS_RATE_100KHZ	(0<<8)
-#define   GMBUS_RATE_50KHZ	(1<<8)
-#define   GMBUS_RATE_400KHZ	(2<<8) /* reserved on Pineview */
-#define   GMBUS_RATE_1MHZ	(3<<8) /* reserved on Pineview */
-#define   GMBUS_HOLD_EXT	(1<<7) /* 300ns hold time, rsvd on Pineview */
-#define   GMBUS_PORT_DISABLED	0
-#define   GMBUS_PORT_SSC	1
-#define   GMBUS_PORT_VGADDC	2
-#define   GMBUS_PORT_PANEL	3
-#define   GMBUS_PORT_DPC	4 /* HDMIC */
-#define   GMBUS_PORT_DPB	5 /* SDVO, HDMIB */
+#घोषणा GMBUS0			0x5100 /* घड़ी/port select */
+#घोषणा   GMBUS_RATE_100KHZ	(0<<8)
+#घोषणा   GMBUS_RATE_50KHZ	(1<<8)
+#घोषणा   GMBUS_RATE_400KHZ	(2<<8) /* reserved on Pineview */
+#घोषणा   GMBUS_RATE_1MHZ	(3<<8) /* reserved on Pineview */
+#घोषणा   GMBUS_HOLD_EXT	(1<<7) /* 300ns hold समय, rsvd on Pineview */
+#घोषणा   GMBUS_PORT_DISABLED	0
+#घोषणा   GMBUS_PORT_SSC	1
+#घोषणा   GMBUS_PORT_VGADDC	2
+#घोषणा   GMBUS_PORT_PANEL	3
+#घोषणा   GMBUS_PORT_DPC	4 /* HDMIC */
+#घोषणा   GMBUS_PORT_DPB	5 /* SDVO, HDMIB */
 				  /* 6 reserved */
-#define   GMBUS_PORT_DPD	7 /* HDMID */
-#define   GMBUS_NUM_PORTS       8
-#define GMBUS1			0x5104 /* command/status */
-#define   GMBUS_SW_CLR_INT	(1<<31)
-#define   GMBUS_SW_RDY		(1<<30)
-#define   GMBUS_ENT		(1<<29) /* enable timeout */
-#define   GMBUS_CYCLE_NONE	(0<<25)
-#define   GMBUS_CYCLE_WAIT	(1<<25)
-#define   GMBUS_CYCLE_INDEX	(2<<25)
-#define   GMBUS_CYCLE_STOP	(4<<25)
-#define   GMBUS_BYTE_COUNT_SHIFT 16
-#define   GMBUS_SLAVE_INDEX_SHIFT 8
-#define   GMBUS_SLAVE_ADDR_SHIFT 1
-#define   GMBUS_SLAVE_READ	(1<<0)
-#define   GMBUS_SLAVE_WRITE	(0<<0)
-#define GMBUS2			0x5108 /* status */
-#define   GMBUS_INUSE		(1<<15)
-#define   GMBUS_HW_WAIT_PHASE	(1<<14)
-#define   GMBUS_STALL_TIMEOUT	(1<<13)
-#define   GMBUS_INT		(1<<12)
-#define   GMBUS_HW_RDY		(1<<11)
-#define   GMBUS_SATOER		(1<<10)
-#define   GMBUS_ACTIVE		(1<<9)
-#define GMBUS3			0x510c /* data buffer bytes 3-0 */
-#define GMBUS4			0x5110 /* interrupt mask (Pineview+) */
-#define   GMBUS_SLAVE_TIMEOUT_EN (1<<4)
-#define   GMBUS_NAK_EN		(1<<3)
-#define   GMBUS_IDLE_EN		(1<<2)
-#define   GMBUS_HW_WAIT_EN	(1<<1)
-#define   GMBUS_HW_RDY_EN	(1<<0)
-#define GMBUS5			0x5120 /* byte index */
-#define   GMBUS_2BYTE_INDEX_EN	(1<<31)
+#घोषणा   GMBUS_PORT_DPD	7 /* HDMID */
+#घोषणा   GMBUS_NUM_PORTS       8
+#घोषणा GMBUS1			0x5104 /* command/status */
+#घोषणा   GMBUS_SW_CLR_INT	(1<<31)
+#घोषणा   GMBUS_SW_RDY		(1<<30)
+#घोषणा   GMBUS_ENT		(1<<29) /* enable समयout */
+#घोषणा   GMBUS_CYCLE_NONE	(0<<25)
+#घोषणा   GMBUS_CYCLE_WAIT	(1<<25)
+#घोषणा   GMBUS_CYCLE_INDEX	(2<<25)
+#घोषणा   GMBUS_CYCLE_STOP	(4<<25)
+#घोषणा   GMBUS_BYTE_COUNT_SHIFT 16
+#घोषणा   GMBUS_SLAVE_INDEX_SHIFT 8
+#घोषणा   GMBUS_SLAVE_ADDR_SHIFT 1
+#घोषणा   GMBUS_SLAVE_READ	(1<<0)
+#घोषणा   GMBUS_SLAVE_WRITE	(0<<0)
+#घोषणा GMBUS2			0x5108 /* status */
+#घोषणा   GMBUS_INUSE		(1<<15)
+#घोषणा   GMBUS_HW_WAIT_PHASE	(1<<14)
+#घोषणा   GMBUS_STALL_TIMEOUT	(1<<13)
+#घोषणा   GMBUS_INT		(1<<12)
+#घोषणा   GMBUS_HW_RDY		(1<<11)
+#घोषणा   GMBUS_SATOER		(1<<10)
+#घोषणा   GMBUS_ACTIVE		(1<<9)
+#घोषणा GMBUS3			0x510c /* data buffer bytes 3-0 */
+#घोषणा GMBUS4			0x5110 /* पूर्णांकerrupt mask (Pineview+) */
+#घोषणा   GMBUS_SLAVE_TIMEOUT_EN (1<<4)
+#घोषणा   GMBUS_NAK_EN		(1<<3)
+#घोषणा   GMBUS_IDLE_EN		(1<<2)
+#घोषणा   GMBUS_HW_WAIT_EN	(1<<1)
+#घोषणा   GMBUS_HW_RDY_EN	(1<<0)
+#घोषणा GMBUS5			0x5120 /* byte index */
+#घोषणा   GMBUS_2BYTE_INDEX_EN	(1<<31)
 
-#define BLC_PWM_CTL		0x61254
-#define BLC_PWM_CTL2		0x61250
-#define  PWM_ENABLE		(1 << 31)
-#define  PWM_LEGACY_MODE	(1 << 30)
-#define  PWM_PIPE_B		(1 << 29)
-#define BLC_PWM_CTL_C		0x62254
-#define BLC_PWM_CTL2_C		0x62250
-#define BACKLIGHT_MODULATION_FREQ_SHIFT		(17)
+#घोषणा BLC_PWM_CTL		0x61254
+#घोषणा BLC_PWM_CTL2		0x61250
+#घोषणा  PWM_ENABLE		(1 << 31)
+#घोषणा  PWM_LEGACY_MODE	(1 << 30)
+#घोषणा  PWM_PIPE_B		(1 << 29)
+#घोषणा BLC_PWM_CTL_C		0x62254
+#घोषणा BLC_PWM_CTL2_C		0x62250
+#घोषणा BACKLIGHT_MODULATION_FREQ_SHIFT		(17)
 /*
- * This is the most significant 15 bits of the number of backlight cycles in a
+ * This is the most signअगरicant 15 bits of the number of backlight cycles in a
  * complete cycle of the modulated backlight control.
  *
  * The actual value is this field multiplied by two.
  */
-#define BACKLIGHT_MODULATION_FREQ_MASK	(0x7fff << 17)
-#define BLM_LEGACY_MODE			(1 << 16)
+#घोषणा BACKLIGHT_MODULATION_FREQ_MASK	(0x7fff << 17)
+#घोषणा BLM_LEGACY_MODE			(1 << 16)
 /*
- * This is the number of cycles out of the backlight modulation cycle for which
+ * This is the number of cycles out of the backlight modulation cycle क्रम which
  * the backlight is on.
  *
  * This field must be no greater than the number of cycles in the complete
  * backlight modulation cycle.
  */
-#define BACKLIGHT_DUTY_CYCLE_SHIFT	(0)
-#define BACKLIGHT_DUTY_CYCLE_MASK	(0xffff)
+#घोषणा BACKLIGHT_DUTY_CYCLE_SHIFT	(0)
+#घोषणा BACKLIGHT_DUTY_CYCLE_MASK	(0xffff)
 
-#define I915_GCFGC			0xf0
-#define I915_LOW_FREQUENCY_ENABLE	(1 << 7)
-#define I915_DISPLAY_CLOCK_190_200_MHZ	(0 << 4)
-#define I915_DISPLAY_CLOCK_333_MHZ	(4 << 4)
-#define I915_DISPLAY_CLOCK_MASK		(7 << 4)
+#घोषणा I915_GCFGC			0xf0
+#घोषणा I915_LOW_FREQUENCY_ENABLE	(1 << 7)
+#घोषणा I915_DISPLAY_CLOCK_190_200_MHZ	(0 << 4)
+#घोषणा I915_DISPLAY_CLOCK_333_MHZ	(4 << 4)
+#घोषणा I915_DISPLAY_CLOCK_MASK		(7 << 4)
 
-#define I855_HPLLCC			0xc0
-#define I855_CLOCK_CONTROL_MASK		(3 << 0)
-#define I855_CLOCK_133_200		(0 << 0)
-#define I855_CLOCK_100_200		(1 << 0)
-#define I855_CLOCK_100_133		(2 << 0)
-#define I855_CLOCK_166_250		(3 << 0)
+#घोषणा I855_HPLLCC			0xc0
+#घोषणा I855_CLOCK_CONTROL_MASK		(3 << 0)
+#घोषणा I855_CLOCK_133_200		(0 << 0)
+#घोषणा I855_CLOCK_100_200		(1 << 0)
+#घोषणा I855_CLOCK_100_133		(2 << 0)
+#घोषणा I855_CLOCK_166_250		(3 << 0)
 
-/* I830 CRTC registers */
-#define HTOTAL_A		0x60000
-#define HBLANK_A		0x60004
-#define HSYNC_A			0x60008
-#define VTOTAL_A		0x6000c
-#define VBLANK_A		0x60010
-#define VSYNC_A			0x60014
-#define PIPEASRC		0x6001c
-#define BCLRPAT_A		0x60020
-#define VSYNCSHIFT_A		0x60028
+/* I830 CRTC रेजिस्टरs */
+#घोषणा HTOTAL_A		0x60000
+#घोषणा HBLANK_A		0x60004
+#घोषणा HSYNC_A			0x60008
+#घोषणा VTOTAL_A		0x6000c
+#घोषणा VBLANK_A		0x60010
+#घोषणा VSYNC_A			0x60014
+#घोषणा PIPEASRC		0x6001c
+#घोषणा BCLRPAT_A		0x60020
+#घोषणा VSYNCSHIFT_A		0x60028
 
-#define HTOTAL_B		0x61000
-#define HBLANK_B		0x61004
-#define HSYNC_B			0x61008
-#define VTOTAL_B		0x6100c
-#define VBLANK_B		0x61010
-#define VSYNC_B			0x61014
-#define PIPEBSRC		0x6101c
-#define BCLRPAT_B		0x61020
-#define VSYNCSHIFT_B		0x61028
+#घोषणा HTOTAL_B		0x61000
+#घोषणा HBLANK_B		0x61004
+#घोषणा HSYNC_B			0x61008
+#घोषणा VTOTAL_B		0x6100c
+#घोषणा VBLANK_B		0x61010
+#घोषणा VSYNC_B			0x61014
+#घोषणा PIPEBSRC		0x6101c
+#घोषणा BCLRPAT_B		0x61020
+#घोषणा VSYNCSHIFT_B		0x61028
 
-#define HTOTAL_C		0x62000
-#define HBLANK_C		0x62004
-#define HSYNC_C			0x62008
-#define VTOTAL_C		0x6200c
-#define VBLANK_C		0x62010
-#define VSYNC_C			0x62014
-#define PIPECSRC		0x6201c
-#define BCLRPAT_C		0x62020
-#define VSYNCSHIFT_C		0x62028
+#घोषणा HTOTAL_C		0x62000
+#घोषणा HBLANK_C		0x62004
+#घोषणा HSYNC_C			0x62008
+#घोषणा VTOTAL_C		0x6200c
+#घोषणा VBLANK_C		0x62010
+#घोषणा VSYNC_C			0x62014
+#घोषणा PIPECSRC		0x6201c
+#घोषणा BCLRPAT_C		0x62020
+#घोषणा VSYNCSHIFT_C		0x62028
 
-#define PP_STATUS		0x61200
+#घोषणा PP_STATUS		0x61200
 # define PP_ON				(1 << 31)
 /*
  * Indicates that all dependencies of the panel are on:
@@ -156,256 +157,256 @@
  * - pipe enabled
  * - LVDS/DVOB/DVOC on
  */
-#define PP_READY			(1 << 30)
-#define PP_SEQUENCE_NONE		(0 << 28)
-#define PP_SEQUENCE_ON			(1 << 28)
-#define PP_SEQUENCE_OFF			(2 << 28)
-#define PP_SEQUENCE_MASK		0x30000000
-#define	PP_CYCLE_DELAY_ACTIVE		(1 << 27)
-#define	PP_SEQUENCE_STATE_ON_IDLE	(1 << 3)
-#define	PP_SEQUENCE_STATE_MASK		0x0000000f
+#घोषणा PP_READY			(1 << 30)
+#घोषणा PP_SEQUENCE_NONE		(0 << 28)
+#घोषणा PP_SEQUENCE_ON			(1 << 28)
+#घोषणा PP_SEQUENCE_OFF			(2 << 28)
+#घोषणा PP_SEQUENCE_MASK		0x30000000
+#घोषणा	PP_CYCLE_DELAY_ACTIVE		(1 << 27)
+#घोषणा	PP_SEQUENCE_STATE_ON_IDLE	(1 << 3)
+#घोषणा	PP_SEQUENCE_STATE_MASK		0x0000000f
 
-#define PP_CONTROL		0x61204
-#define POWER_TARGET_ON			(1 << 0)
-#define	PANEL_UNLOCK_REGS		(0xabcd << 16)
-#define	PANEL_UNLOCK_MASK		(0xffff << 16)
-#define	EDP_FORCE_VDD			(1 << 3)
-#define	EDP_BLC_ENABLE			(1 << 2)
-#define	PANEL_POWER_RESET		(1 << 1)
-#define	PANEL_POWER_OFF			(0 << 0)
-#define	PANEL_POWER_ON			(1 << 0)
+#घोषणा PP_CONTROL		0x61204
+#घोषणा POWER_TARGET_ON			(1 << 0)
+#घोषणा	PANEL_UNLOCK_REGS		(0xabcd << 16)
+#घोषणा	PANEL_UNLOCK_MASK		(0xffff << 16)
+#घोषणा	EDP_FORCE_VDD			(1 << 3)
+#घोषणा	EDP_BLC_ENABLE			(1 << 2)
+#घोषणा	PANEL_POWER_RESET		(1 << 1)
+#घोषणा	PANEL_POWER_OFF			(0 << 0)
+#घोषणा	PANEL_POWER_ON			(1 << 0)
 
 /* Poulsbo/Oaktrail */
-#define LVDSPP_ON		0x61208
-#define LVDSPP_OFF		0x6120c
-#define PP_CYCLE		0x61210
+#घोषणा LVDSPP_ON		0x61208
+#घोषणा LVDSPP_OFF		0x6120c
+#घोषणा PP_CYCLE		0x61210
 
 /* Cedartrail */
-#define PP_ON_DELAYS		0x61208		/* Cedartrail */
-#define PANEL_PORT_SELECT_MASK 		(3 << 30)
-#define PANEL_PORT_SELECT_LVDS 		(0 << 30)
-#define PANEL_PORT_SELECT_EDP		(1 << 30)
-#define PANEL_POWER_UP_DELAY_MASK	(0x1fff0000)
-#define PANEL_POWER_UP_DELAY_SHIFT	16
-#define PANEL_LIGHT_ON_DELAY_MASK	(0x1fff)
-#define PANEL_LIGHT_ON_DELAY_SHIFT	0
+#घोषणा PP_ON_DELAYS		0x61208		/* Cedartrail */
+#घोषणा PANEL_PORT_SELECT_MASK 		(3 << 30)
+#घोषणा PANEL_PORT_SELECT_LVDS 		(0 << 30)
+#घोषणा PANEL_PORT_SELECT_EDP		(1 << 30)
+#घोषणा PANEL_POWER_UP_DELAY_MASK	(0x1fff0000)
+#घोषणा PANEL_POWER_UP_DELAY_SHIFT	16
+#घोषणा PANEL_LIGHT_ON_DELAY_MASK	(0x1fff)
+#घोषणा PANEL_LIGHT_ON_DELAY_SHIFT	0
 
-#define PP_OFF_DELAYS		0x6120c		/* Cedartrail */
-#define PANEL_POWER_DOWN_DELAY_MASK	(0x1fff0000)
-#define PANEL_POWER_DOWN_DELAY_SHIFT	16
-#define PANEL_LIGHT_OFF_DELAY_MASK	(0x1fff)
-#define PANEL_LIGHT_OFF_DELAY_SHIFT	0
+#घोषणा PP_OFF_DELAYS		0x6120c		/* Cedartrail */
+#घोषणा PANEL_POWER_DOWN_DELAY_MASK	(0x1fff0000)
+#घोषणा PANEL_POWER_DOWN_DELAY_SHIFT	16
+#घोषणा PANEL_LIGHT_OFF_DELAY_MASK	(0x1fff)
+#घोषणा PANEL_LIGHT_OFF_DELAY_SHIFT	0
 
-#define PP_DIVISOR		0x61210		/* Cedartrail */
-#define  PP_REFERENCE_DIVIDER_MASK	(0xffffff00)
-#define  PP_REFERENCE_DIVIDER_SHIFT	8
-#define  PANEL_POWER_CYCLE_DELAY_MASK	(0x1f)
-#define  PANEL_POWER_CYCLE_DELAY_SHIFT	0
+#घोषणा PP_DIVISOR		0x61210		/* Cedartrail */
+#घोषणा  PP_REFERENCE_DIVIDER_MASK	(0xffffff00)
+#घोषणा  PP_REFERENCE_DIVIDER_SHIFT	8
+#घोषणा  PANEL_POWER_CYCLE_DELAY_MASK	(0x1f)
+#घोषणा  PANEL_POWER_CYCLE_DELAY_SHIFT	0
 
-#define PFIT_CONTROL		0x61230
-#define PFIT_ENABLE			(1 << 31)
-#define PFIT_PIPE_MASK			(3 << 29)
-#define PFIT_PIPE_SHIFT			29
-#define PFIT_SCALING_MODE_PILLARBOX	(1 << 27)
-#define PFIT_SCALING_MODE_LETTERBOX	(3 << 26)
-#define VERT_INTERP_DISABLE		(0 << 10)
-#define VERT_INTERP_BILINEAR		(1 << 10)
-#define VERT_INTERP_MASK		(3 << 10)
-#define VERT_AUTO_SCALE			(1 << 9)
-#define HORIZ_INTERP_DISABLE		(0 << 6)
-#define HORIZ_INTERP_BILINEAR		(1 << 6)
-#define HORIZ_INTERP_MASK		(3 << 6)
-#define HORIZ_AUTO_SCALE		(1 << 5)
-#define PANEL_8TO6_DITHER_ENABLE	(1 << 3)
+#घोषणा PFIT_CONTROL		0x61230
+#घोषणा PFIT_ENABLE			(1 << 31)
+#घोषणा PFIT_PIPE_MASK			(3 << 29)
+#घोषणा PFIT_PIPE_SHIFT			29
+#घोषणा PFIT_SCALING_MODE_PILLARBOX	(1 << 27)
+#घोषणा PFIT_SCALING_MODE_LETTERBOX	(3 << 26)
+#घोषणा VERT_INTERP_DISABLE		(0 << 10)
+#घोषणा VERT_INTERP_BILINEAR		(1 << 10)
+#घोषणा VERT_INTERP_MASK		(3 << 10)
+#घोषणा VERT_AUTO_SCALE			(1 << 9)
+#घोषणा HORIZ_INTERP_DISABLE		(0 << 6)
+#घोषणा HORIZ_INTERP_BILINEAR		(1 << 6)
+#घोषणा HORIZ_INTERP_MASK		(3 << 6)
+#घोषणा HORIZ_AUTO_SCALE		(1 << 5)
+#घोषणा PANEL_8TO6_DITHER_ENABLE	(1 << 3)
 
-#define PFIT_PGM_RATIOS		0x61234
-#define PFIT_VERT_SCALE_MASK			0xfff00000
-#define PFIT_HORIZ_SCALE_MASK			0x0000fff0
+#घोषणा PFIT_PGM_RATIOS		0x61234
+#घोषणा PFIT_VERT_SCALE_MASK			0xfff00000
+#घोषणा PFIT_HORIZ_SCALE_MASK			0x0000fff0
 
-#define PFIT_AUTO_RATIOS	0x61238
+#घोषणा PFIT_AUTO_RATIOS	0x61238
 
-#define DPLL_A			0x06014
-#define DPLL_B			0x06018
-#define DPLL_VCO_ENABLE			(1 << 31)
-#define DPLL_DVO_HIGH_SPEED		(1 << 30)
-#define DPLL_SYNCLOCK_ENABLE		(1 << 29)
-#define DPLL_VGA_MODE_DIS		(1 << 28)
-#define DPLLB_MODE_DAC_SERIAL		(1 << 26)	/* i915 */
-#define DPLLB_MODE_LVDS			(2 << 26)	/* i915 */
-#define DPLL_MODE_MASK			(3 << 26)
-#define DPLL_DAC_SERIAL_P2_CLOCK_DIV_10	(0 << 24)	/* i915 */
-#define DPLL_DAC_SERIAL_P2_CLOCK_DIV_5	(1 << 24)	/* i915 */
-#define DPLLB_LVDS_P2_CLOCK_DIV_14	(0 << 24)	/* i915 */
-#define DPLLB_LVDS_P2_CLOCK_DIV_7	(1 << 24)	/* i915 */
-#define DPLL_P2_CLOCK_DIV_MASK		0x03000000	/* i915 */
-#define DPLL_FPA0h1_P1_POST_DIV_MASK	0x00ff0000	/* i915 */
-#define DPLL_LOCK			(1 << 15)	/* CDV */
+#घोषणा DPLL_A			0x06014
+#घोषणा DPLL_B			0x06018
+#घोषणा DPLL_VCO_ENABLE			(1 << 31)
+#घोषणा DPLL_DVO_HIGH_SPEED		(1 << 30)
+#घोषणा DPLL_SYNCLOCK_ENABLE		(1 << 29)
+#घोषणा DPLL_VGA_MODE_DIS		(1 << 28)
+#घोषणा DPLLB_MODE_DAC_SERIAL		(1 << 26)	/* i915 */
+#घोषणा DPLLB_MODE_LVDS			(2 << 26)	/* i915 */
+#घोषणा DPLL_MODE_MASK			(3 << 26)
+#घोषणा DPLL_DAC_SERIAL_P2_CLOCK_DIV_10	(0 << 24)	/* i915 */
+#घोषणा DPLL_DAC_SERIAL_P2_CLOCK_DIV_5	(1 << 24)	/* i915 */
+#घोषणा DPLLB_LVDS_P2_CLOCK_DIV_14	(0 << 24)	/* i915 */
+#घोषणा DPLLB_LVDS_P2_CLOCK_DIV_7	(1 << 24)	/* i915 */
+#घोषणा DPLL_P2_CLOCK_DIV_MASK		0x03000000	/* i915 */
+#घोषणा DPLL_FPA0h1_P1_POST_DIV_MASK	0x00ff0000	/* i915 */
+#घोषणा DPLL_LOCK			(1 << 15)	/* CDV */
 
 /*
  *  The i830 generation, in DAC/serial mode, defines p1 as two plus this
- * bitfield, or just 2 if PLL_P1_DIVIDE_BY_TWO is set.
+ * bitfield, or just 2 अगर PLL_P1_DIVIDE_BY_TWO is set.
  */
 # define DPLL_FPA01_P1_POST_DIV_MASK_I830	0x001f0000
 /*
  * The i830 generation, in LVDS mode, defines P1 as the bit number set within
  * this field (only one bit may be set).
  */
-#define DPLL_FPA01_P1_POST_DIV_MASK_I830_LVDS	0x003f0000
-#define DPLL_FPA01_P1_POST_DIV_SHIFT	16
-#define PLL_P2_DIVIDE_BY_4		(1 << 23)	/* i830, required
+#घोषणा DPLL_FPA01_P1_POST_DIV_MASK_I830_LVDS	0x003f0000
+#घोषणा DPLL_FPA01_P1_POST_DIV_SHIFT	16
+#घोषणा PLL_P2_DIVIDE_BY_4		(1 << 23)	/* i830, required
 							 * in DVO non-gang */
 # define PLL_P1_DIVIDE_BY_TWO		(1 << 21)	/* i830 */
-#define PLL_REF_INPUT_DREFCLK		(0 << 13)
-#define PLL_REF_INPUT_TVCLKINA		(1 << 13)	/* i830 */
-#define PLL_REF_INPUT_TVCLKINBC		(2 << 13)	/* SDVO
+#घोषणा PLL_REF_INPUT_DREFCLK		(0 << 13)
+#घोषणा PLL_REF_INPUT_TVCLKINA		(1 << 13)	/* i830 */
+#घोषणा PLL_REF_INPUT_TVCLKINBC		(2 << 13)	/* SDVO
 								 * TVCLKIN */
-#define PLLB_REF_INPUT_SPREADSPECTRUMIN	(3 << 13)
-#define PLL_REF_INPUT_MASK		(3 << 13)
-#define PLL_LOAD_PULSE_PHASE_SHIFT	9
+#घोषणा PLLB_REF_INPUT_SPREADSPECTRUMIN	(3 << 13)
+#घोषणा PLL_REF_INPUT_MASK		(3 << 13)
+#घोषणा PLL_LOAD_PULSE_PHASE_SHIFT	9
 /*
  * Parallel to Serial Load Pulse phase selection.
- * Selects the phase for the 10X DPLL clock for the PCIe
+ * Selects the phase क्रम the 10X DPLL घड़ी क्रम the PCIe
  * digital display port. The range is 4 to 13; 10 or more
- * is just a flip delay. The default is 6
+ * is just a flip delay. The शेष is 6
  */
-#define PLL_LOAD_PULSE_PHASE_MASK	(0xf << PLL_LOAD_PULSE_PHASE_SHIFT)
-#define DISPLAY_RATE_SELECT_FPA1	(1 << 8)
+#घोषणा PLL_LOAD_PULSE_PHASE_MASK	(0xf << PLL_LOAD_PULSE_PHASE_SHIFT)
+#घोषणा DISPLAY_RATE_SELECT_FPA1	(1 << 8)
 
 /*
- * SDVO multiplier for 945G/GM. Not used on 965.
+ * SDVO multiplier क्रम 945G/GM. Not used on 965.
  *
  * DPLL_MD_UDI_MULTIPLIER_MASK
  */
-#define SDVO_MULTIPLIER_MASK		0x000000ff
-#define SDVO_MULTIPLIER_SHIFT_HIRES	4
-#define SDVO_MULTIPLIER_SHIFT_VGA	0
+#घोषणा SDVO_MULTIPLIER_MASK		0x000000ff
+#घोषणा SDVO_MULTIPLIER_SHIFT_HIRES	4
+#घोषणा SDVO_MULTIPLIER_SHIFT_VGA	0
 
 /*
  * PLL_MD
  */
-/* Pipe A SDVO/UDI clock multiplier/divider register for G965. */
-#define DPLL_A_MD		0x0601c
-/* Pipe B SDVO/UDI clock multiplier/divider register for G965. */
-#define DPLL_B_MD		0x06020
+/* Pipe A SDVO/UDI घड़ी multiplier/भागider रेजिस्टर क्रम G965. */
+#घोषणा DPLL_A_MD		0x0601c
+/* Pipe B SDVO/UDI घड़ी multiplier/भागider रेजिस्टर क्रम G965. */
+#घोषणा DPLL_B_MD		0x06020
 /*
- * UDI pixel divider, controlling how many pixels are stuffed into a packet.
+ * UDI pixel भागider, controlling how many pixels are stuffed पूर्णांकo a packet.
  *
- * Value is pixels minus 1.  Must be set to 1 pixel for SDVO.
+ * Value is pixels minus 1.  Must be set to 1 pixel क्रम SDVO.
  */
-#define DPLL_MD_UDI_DIVIDER_MASK	0x3f000000
-#define DPLL_MD_UDI_DIVIDER_SHIFT	24
-/* UDI pixel divider for VGA, same as DPLL_MD_UDI_DIVIDER_MASK. */
-#define DPLL_MD_VGA_UDI_DIVIDER_MASK	0x003f0000
-#define DPLL_MD_VGA_UDI_DIVIDER_SHIFT	16
+#घोषणा DPLL_MD_UDI_DIVIDER_MASK	0x3f000000
+#घोषणा DPLL_MD_UDI_DIVIDER_SHIFT	24
+/* UDI pixel भागider क्रम VGA, same as DPLL_MD_UDI_DIVIDER_MASK. */
+#घोषणा DPLL_MD_VGA_UDI_DIVIDER_MASK	0x003f0000
+#घोषणा DPLL_MD_VGA_UDI_DIVIDER_SHIFT	16
 /*
  * SDVO/UDI pixel multiplier.
  *
- * SDVO requires that the bus clock rate be between 1 and 2 Ghz, and the bus
- * clock rate is 10 times the DPLL clock.  At low resolution/refresh rate
- * modes, the bus rate would be below the limits, so SDVO allows for stuffing
- * dummy bytes in the datastream at an increased clock rate, with both sides of
+ * SDVO requires that the bus घड़ी rate be between 1 and 2 Ghz, and the bus
+ * घड़ी rate is 10 बार the DPLL घड़ी.  At low resolution/refresh rate
+ * modes, the bus rate would be below the limits, so SDVO allows क्रम stuffing
+ * dummy bytes in the datastream at an increased घड़ी rate, with both sides of
  * the link knowing how many bytes are fill.
  *
- * So, for a mode with a dotclock of 65Mhz, we would want to double the clock
- * rate to 130Mhz to get a bus rate of 1.30Ghz.  The DPLL clock rate would be
- * set to 130Mhz, and the SDVO multiplier set to 2x in this register and
+ * So, क्रम a mode with a करोtघड़ी of 65Mhz, we would want to द्विगुन the घड़ी
+ * rate to 130Mhz to get a bus rate of 1.30Ghz.  The DPLL घड़ी rate would be
+ * set to 130Mhz, and the SDVO multiplier set to 2x in this रेजिस्टर and
  * through an SDVO command.
  *
- * This register field has values of multiplication factor minus 1, with
- * a maximum multiplier of 5 for SDVO.
+ * This रेजिस्टर field has values of multiplication factor minus 1, with
+ * a maximum multiplier of 5 क्रम SDVO.
  */
-#define DPLL_MD_UDI_MULTIPLIER_MASK	0x00003f00
-#define DPLL_MD_UDI_MULTIPLIER_SHIFT	8
+#घोषणा DPLL_MD_UDI_MULTIPLIER_MASK	0x00003f00
+#घोषणा DPLL_MD_UDI_MULTIPLIER_SHIFT	8
 /*
- * SDVO/UDI pixel multiplier for VGA, same as DPLL_MD_UDI_MULTIPLIER_MASK.
- * This best be set to the default value (3) or the CRT won't work. No,
- * I don't entirely understand what this does...
+ * SDVO/UDI pixel multiplier क्रम VGA, same as DPLL_MD_UDI_MULTIPLIER_MASK.
+ * This best be set to the शेष value (3) or the CRT won't work. No,
+ * I करोn't entirely understand what this करोes...
  */
-#define DPLL_MD_VGA_UDI_MULTIPLIER_MASK	0x0000003f
-#define DPLL_MD_VGA_UDI_MULTIPLIER_SHIFT 0
+#घोषणा DPLL_MD_VGA_UDI_MULTIPLIER_MASK	0x0000003f
+#घोषणा DPLL_MD_VGA_UDI_MULTIPLIER_SHIFT 0
 
-#define DPLL_TEST		0x606c
-#define DPLLB_TEST_SDVO_DIV_1		(0 << 22)
-#define DPLLB_TEST_SDVO_DIV_2		(1 << 22)
-#define DPLLB_TEST_SDVO_DIV_4		(2 << 22)
-#define DPLLB_TEST_SDVO_DIV_MASK	(3 << 22)
-#define DPLLB_TEST_N_BYPASS		(1 << 19)
-#define DPLLB_TEST_M_BYPASS		(1 << 18)
-#define DPLLB_INPUT_BUFFER_ENABLE	(1 << 16)
-#define DPLLA_TEST_N_BYPASS		(1 << 3)
-#define DPLLA_TEST_M_BYPASS		(1 << 2)
-#define DPLLA_INPUT_BUFFER_ENABLE	(1 << 0)
+#घोषणा DPLL_TEST		0x606c
+#घोषणा DPLLB_TEST_SDVO_DIV_1		(0 << 22)
+#घोषणा DPLLB_TEST_SDVO_DIV_2		(1 << 22)
+#घोषणा DPLLB_TEST_SDVO_DIV_4		(2 << 22)
+#घोषणा DPLLB_TEST_SDVO_DIV_MASK	(3 << 22)
+#घोषणा DPLLB_TEST_N_BYPASS		(1 << 19)
+#घोषणा DPLLB_TEST_M_BYPASS		(1 << 18)
+#घोषणा DPLLB_INPUT_BUFFER_ENABLE	(1 << 16)
+#घोषणा DPLLA_TEST_N_BYPASS		(1 << 3)
+#घोषणा DPLLA_TEST_M_BYPASS		(1 << 2)
+#घोषणा DPLLA_INPUT_BUFFER_ENABLE	(1 << 0)
 
-#define ADPA			0x61100
-#define ADPA_DAC_ENABLE			(1 << 31)
-#define ADPA_DAC_DISABLE		0
-#define ADPA_PIPE_SELECT_MASK		(1 << 30)
-#define ADPA_PIPE_A_SELECT		0
-#define ADPA_PIPE_B_SELECT		(1 << 30)
-#define ADPA_USE_VGA_HVPOLARITY		(1 << 15)
-#define ADPA_SETS_HVPOLARITY		0
-#define ADPA_VSYNC_CNTL_DISABLE		(1 << 11)
-#define ADPA_VSYNC_CNTL_ENABLE		0
-#define ADPA_HSYNC_CNTL_DISABLE		(1 << 10)
-#define ADPA_HSYNC_CNTL_ENABLE		0
-#define ADPA_VSYNC_ACTIVE_HIGH		(1 << 4)
-#define ADPA_VSYNC_ACTIVE_LOW		0
-#define ADPA_HSYNC_ACTIVE_HIGH		(1 << 3)
-#define ADPA_HSYNC_ACTIVE_LOW		0
+#घोषणा ADPA			0x61100
+#घोषणा ADPA_DAC_ENABLE			(1 << 31)
+#घोषणा ADPA_DAC_DISABLE		0
+#घोषणा ADPA_PIPE_SELECT_MASK		(1 << 30)
+#घोषणा ADPA_PIPE_A_SELECT		0
+#घोषणा ADPA_PIPE_B_SELECT		(1 << 30)
+#घोषणा ADPA_USE_VGA_HVPOLARITY		(1 << 15)
+#घोषणा ADPA_SETS_HVPOLARITY		0
+#घोषणा ADPA_VSYNC_CNTL_DISABLE		(1 << 11)
+#घोषणा ADPA_VSYNC_CNTL_ENABLE		0
+#घोषणा ADPA_HSYNC_CNTL_DISABLE		(1 << 10)
+#घोषणा ADPA_HSYNC_CNTL_ENABLE		0
+#घोषणा ADPA_VSYNC_ACTIVE_HIGH		(1 << 4)
+#घोषणा ADPA_VSYNC_ACTIVE_LOW		0
+#घोषणा ADPA_HSYNC_ACTIVE_HIGH		(1 << 3)
+#घोषणा ADPA_HSYNC_ACTIVE_LOW		0
 
-#define FPA0			0x06040
-#define FPA1			0x06044
-#define FPB0			0x06048
-#define FPB1			0x0604c
-#define FP_N_DIV_MASK			0x003f0000
-#define FP_N_DIV_SHIFT			16
-#define FP_M1_DIV_MASK			0x00003f00
-#define FP_M1_DIV_SHIFT			8
-#define FP_M2_DIV_MASK			0x0000003f
-#define FP_M2_DIV_SHIFT			0
+#घोषणा FPA0			0x06040
+#घोषणा FPA1			0x06044
+#घोषणा FPB0			0x06048
+#घोषणा FPB1			0x0604c
+#घोषणा FP_N_DIV_MASK			0x003f0000
+#घोषणा FP_N_DIV_SHIFT			16
+#घोषणा FP_M1_DIV_MASK			0x00003f00
+#घोषणा FP_M1_DIV_SHIFT			8
+#घोषणा FP_M2_DIV_MASK			0x0000003f
+#घोषणा FP_M2_DIV_SHIFT			0
 
-#define PORT_HOTPLUG_EN		0x61110
-#define HDMIB_HOTPLUG_INT_EN		(1 << 29)
-#define HDMIC_HOTPLUG_INT_EN		(1 << 28)
-#define HDMID_HOTPLUG_INT_EN		(1 << 27)
-#define SDVOB_HOTPLUG_INT_EN		(1 << 26)
-#define SDVOC_HOTPLUG_INT_EN		(1 << 25)
-#define TV_HOTPLUG_INT_EN		(1 << 18)
-#define CRT_HOTPLUG_INT_EN		(1 << 9)
-#define CRT_HOTPLUG_FORCE_DETECT	(1 << 3)
+#घोषणा PORT_HOTPLUG_EN		0x61110
+#घोषणा HDMIB_HOTPLUG_INT_EN		(1 << 29)
+#घोषणा HDMIC_HOTPLUG_INT_EN		(1 << 28)
+#घोषणा HDMID_HOTPLUG_INT_EN		(1 << 27)
+#घोषणा SDVOB_HOTPLUG_INT_EN		(1 << 26)
+#घोषणा SDVOC_HOTPLUG_INT_EN		(1 << 25)
+#घोषणा TV_HOTPLUG_INT_EN		(1 << 18)
+#घोषणा CRT_HOTPLUG_INT_EN		(1 << 9)
+#घोषणा CRT_HOTPLUG_FORCE_DETECT	(1 << 3)
 /* CDV.. */
-#define CRT_HOTPLUG_ACTIVATION_PERIOD_64	(1 << 8)
-#define CRT_HOTPLUG_DAC_ON_TIME_2M		(0 << 7)
-#define CRT_HOTPLUG_DAC_ON_TIME_4M		(1 << 7)
-#define CRT_HOTPLUG_VOLTAGE_COMPARE_40		(0 << 5)
-#define CRT_HOTPLUG_VOLTAGE_COMPARE_50		(1 << 5)
-#define CRT_HOTPLUG_VOLTAGE_COMPARE_60		(2 << 5)
-#define CRT_HOTPLUG_VOLTAGE_COMPARE_70		(3 << 5)
-#define CRT_HOTPLUG_VOLTAGE_COMPARE_MASK	(3 << 5)
-#define CRT_HOTPLUG_DETECT_DELAY_1G		(0 << 4)
-#define CRT_HOTPLUG_DETECT_DELAY_2G		(1 << 4)
-#define CRT_HOTPLUG_DETECT_VOLTAGE_325MV	(0 << 2)
-#define CRT_HOTPLUG_DETECT_VOLTAGE_475MV	(1 << 2)
-#define CRT_HOTPLUG_DETECT_MASK			0x000000F8
+#घोषणा CRT_HOTPLUG_ACTIVATION_PERIOD_64	(1 << 8)
+#घोषणा CRT_HOTPLUG_DAC_ON_TIME_2M		(0 << 7)
+#घोषणा CRT_HOTPLUG_DAC_ON_TIME_4M		(1 << 7)
+#घोषणा CRT_HOTPLUG_VOLTAGE_COMPARE_40		(0 << 5)
+#घोषणा CRT_HOTPLUG_VOLTAGE_COMPARE_50		(1 << 5)
+#घोषणा CRT_HOTPLUG_VOLTAGE_COMPARE_60		(2 << 5)
+#घोषणा CRT_HOTPLUG_VOLTAGE_COMPARE_70		(3 << 5)
+#घोषणा CRT_HOTPLUG_VOLTAGE_COMPARE_MASK	(3 << 5)
+#घोषणा CRT_HOTPLUG_DETECT_DELAY_1G		(0 << 4)
+#घोषणा CRT_HOTPLUG_DETECT_DELAY_2G		(1 << 4)
+#घोषणा CRT_HOTPLUG_DETECT_VOLTAGE_325MV	(0 << 2)
+#घोषणा CRT_HOTPLUG_DETECT_VOLTAGE_475MV	(1 << 2)
+#घोषणा CRT_HOTPLUG_DETECT_MASK			0x000000F8
 
-#define PORT_HOTPLUG_STAT	0x61114
-#define CRT_HOTPLUG_INT_STATUS		(1 << 11)
-#define TV_HOTPLUG_INT_STATUS		(1 << 10)
-#define CRT_HOTPLUG_MONITOR_MASK	(3 << 8)
-#define CRT_HOTPLUG_MONITOR_COLOR	(3 << 8)
-#define CRT_HOTPLUG_MONITOR_MONO	(2 << 8)
-#define CRT_HOTPLUG_MONITOR_NONE	(0 << 8)
-#define SDVOC_HOTPLUG_INT_STATUS	(1 << 7)
-#define SDVOB_HOTPLUG_INT_STATUS	(1 << 6)
+#घोषणा PORT_HOTPLUG_STAT	0x61114
+#घोषणा CRT_HOTPLUG_INT_STATUS		(1 << 11)
+#घोषणा TV_HOTPLUG_INT_STATUS		(1 << 10)
+#घोषणा CRT_HOTPLUG_MONITOR_MASK	(3 << 8)
+#घोषणा CRT_HOTPLUG_MONITOR_COLOR	(3 << 8)
+#घोषणा CRT_HOTPLUG_MONITOR_MONO	(2 << 8)
+#घोषणा CRT_HOTPLUG_MONITOR_NONE	(0 << 8)
+#घोषणा SDVOC_HOTPLUG_INT_STATUS	(1 << 7)
+#घोषणा SDVOB_HOTPLUG_INT_STATUS	(1 << 6)
 
-#define SDVOB			0x61140
-#define SDVOC			0x61160
-#define SDVO_ENABLE			(1 << 31)
-#define SDVO_PIPE_B_SELECT		(1 << 30)
-#define SDVO_STALL_SELECT		(1 << 29)
-#define SDVO_INTERRUPT_ENABLE		(1 << 26)
-#define SDVO_COLOR_RANGE_16_235		(1 << 8)
-#define SDVO_AUDIO_ENABLE		(1 << 6)
+#घोषणा SDVOB			0x61140
+#घोषणा SDVOC			0x61160
+#घोषणा SDVO_ENABLE			(1 << 31)
+#घोषणा SDVO_PIPE_B_SELECT		(1 << 30)
+#घोषणा SDVO_STALL_SELECT		(1 << 29)
+#घोषणा SDVO_INTERRUPT_ENABLE		(1 << 26)
+#घोषणा SDVO_COLOR_RANGE_16_235		(1 << 8)
+#घोषणा SDVO_AUDIO_ENABLE		(1 << 6)
 
 /**
  * 915G/GM SDVO pixel multiplier.
@@ -414,835 +415,835 @@
  *
  * DPLL_MD_UDI_MULTIPLIER_MASK
  */
-#define SDVO_PORT_MULTIPLY_MASK		(7 << 23)
-#define SDVO_PORT_MULTIPLY_SHIFT	23
-#define SDVO_PHASE_SELECT_MASK		(15 << 19)
-#define SDVO_PHASE_SELECT_DEFAULT	(6 << 19)
-#define SDVO_CLOCK_OUTPUT_INVERT	(1 << 18)
-#define SDVOC_GANG_MODE			(1 << 16)
-#define SDVO_BORDER_ENABLE		(1 << 7)
-#define SDVOB_PCIE_CONCURRENCY		(1 << 3)
-#define SDVO_DETECTED			(1 << 2)
+#घोषणा SDVO_PORT_MULTIPLY_MASK		(7 << 23)
+#घोषणा SDVO_PORT_MULTIPLY_SHIFT	23
+#घोषणा SDVO_PHASE_SELECT_MASK		(15 << 19)
+#घोषणा SDVO_PHASE_SELECT_DEFAULT	(6 << 19)
+#घोषणा SDVO_CLOCK_OUTPUT_INVERT	(1 << 18)
+#घोषणा SDVOC_GANG_MODE			(1 << 16)
+#घोषणा SDVO_BORDER_ENABLE		(1 << 7)
+#घोषणा SDVOB_PCIE_CONCURRENCY		(1 << 3)
+#घोषणा SDVO_DETECTED			(1 << 2)
 /* Bits to be preserved when writing */
-#define SDVOB_PRESERVE_MASK		((1 << 17) | (1 << 16) | (1 << 14))
-#define SDVOC_PRESERVE_MASK		(1 << 17)
+#घोषणा SDVOB_PRESERVE_MASK		((1 << 17) | (1 << 16) | (1 << 14))
+#घोषणा SDVOC_PRESERVE_MASK		(1 << 17)
 
 /*
- * This register controls the LVDS output enable, pipe selection, and data
- * format selection.
+ * This रेजिस्टर controls the LVDS output enable, pipe selection, and data
+ * क्रमmat selection.
  *
- * All of the clock/data pairs are force powered down by power sequencing.
+ * All of the घड़ी/data pairs are क्रमce घातered करोwn by घातer sequencing.
  */
-#define LVDS			0x61180
+#घोषणा LVDS			0x61180
 /*
- * Enables the LVDS port.  This bit must be set before DPLLs are enabled, as
- * the DPLL semantics change when the LVDS is assigned to that pipe.
+ * Enables the LVDS port.  This bit must be set beक्रमe DPLLs are enabled, as
+ * the DPLL semantics change when the LVDS is asचिन्हित to that pipe.
  */
-#define LVDS_PORT_EN			(1 << 31)
-/* Selects pipe B for LVDS data.  Must be set on pre-965. */
-#define LVDS_PIPEB_SELECT		(1 << 30)
+#घोषणा LVDS_PORT_EN			(1 << 31)
+/* Selects pipe B क्रम LVDS data.  Must be set on pre-965. */
+#घोषणा LVDS_PIPEB_SELECT		(1 << 30)
 
 /* Turns on border drawing to allow centered display. */
-#define LVDS_BORDER_EN			(1 << 15)
+#घोषणा LVDS_BORDER_EN			(1 << 15)
 
 /*
  * Enables the A0-A2 data pairs and CLKA, containing 18 bits of color data per
  * pixel.
  */
-#define LVDS_A0A2_CLKA_POWER_MASK	(3 << 8)
-#define LVDS_A0A2_CLKA_POWER_DOWN	(0 << 8)
-#define LVDS_A0A2_CLKA_POWER_UP		(3 << 8)
+#घोषणा LVDS_A0A2_CLKA_POWER_MASK	(3 << 8)
+#घोषणा LVDS_A0A2_CLKA_POWER_DOWN	(0 << 8)
+#घोषणा LVDS_A0A2_CLKA_POWER_UP		(3 << 8)
 /*
- * Controls the A3 data pair, which contains the additional LSBs for 24 bit
- * mode.  Only enabled if LVDS_A0A2_CLKA_POWER_UP also indicates it should be
+ * Controls the A3 data pair, which contains the additional LSBs क्रम 24 bit
+ * mode.  Only enabled अगर LVDS_A0A2_CLKA_POWER_UP also indicates it should be
  * on.
  */
-#define LVDS_A3_POWER_MASK		(3 << 6)
-#define LVDS_A3_POWER_DOWN		(0 << 6)
-#define LVDS_A3_POWER_UP		(3 << 6)
+#घोषणा LVDS_A3_POWER_MASK		(3 << 6)
+#घोषणा LVDS_A3_POWER_DOWN		(0 << 6)
+#घोषणा LVDS_A3_POWER_UP		(3 << 6)
 /*
  * Controls the CLKB pair.  This should only be set when LVDS_B0B3_POWER_UP
  * is set.
  */
-#define LVDS_CLKB_POWER_MASK		(3 << 4)
-#define LVDS_CLKB_POWER_DOWN		(0 << 4)
-#define LVDS_CLKB_POWER_UP		(3 << 4)
+#घोषणा LVDS_CLKB_POWER_MASK		(3 << 4)
+#घोषणा LVDS_CLKB_POWER_DOWN		(0 << 4)
+#घोषणा LVDS_CLKB_POWER_UP		(3 << 4)
 /*
  * Controls the B0-B3 data pairs.  This must be set to match the DPLL p2
- * setting for whether we are in dual-channel mode.  The B3 pair will
- * additionally only be powered up when LVDS_A3_POWER_UP is set.
+ * setting क्रम whether we are in dual-channel mode.  The B3 pair will
+ * additionally only be घातered up when LVDS_A3_POWER_UP is set.
  */
-#define LVDS_B0B3_POWER_MASK		(3 << 2)
-#define LVDS_B0B3_POWER_DOWN		(0 << 2)
-#define LVDS_B0B3_POWER_UP		(3 << 2)
+#घोषणा LVDS_B0B3_POWER_MASK		(3 << 2)
+#घोषणा LVDS_B0B3_POWER_DOWN		(0 << 2)
+#घोषणा LVDS_B0B3_POWER_UP		(3 << 2)
 
-#define PIPEACONF		0x70008
-#define PIPEACONF_ENABLE		(1 << 31)
-#define PIPEACONF_DISABLE		0
-#define PIPEACONF_DOUBLE_WIDE		(1 << 30)
-#define PIPECONF_ACTIVE			(1 << 30)
-#define PIPECONF_DSIPLL_LOCK		(1 << 29)
-#define PIPEACONF_SINGLE_WIDE		0
-#define PIPEACONF_PIPE_UNLOCKED		0
-#define PIPEACONF_DSR			(1 << 26)
-#define PIPEACONF_PIPE_LOCKED		(1 << 25)
-#define PIPEACONF_PALETTE		0
-#define PIPECONF_FORCE_BORDER		(1 << 25)
-#define PIPEACONF_GAMMA			(1 << 24)
-#define PIPECONF_PROGRESSIVE		(0 << 21)
-#define PIPECONF_INTERLACE_W_FIELD_INDICATION	(6 << 21)
-#define PIPECONF_INTERLACE_FIELD_0_ONLY		(7 << 21)
-#define PIPECONF_PLANE_OFF		(1 << 19)
-#define PIPECONF_CURSOR_OFF		(1 << 18)
+#घोषणा PIPEACONF		0x70008
+#घोषणा PIPEACONF_ENABLE		(1 << 31)
+#घोषणा PIPEACONF_DISABLE		0
+#घोषणा PIPEACONF_DOUBLE_WIDE		(1 << 30)
+#घोषणा PIPECONF_ACTIVE			(1 << 30)
+#घोषणा PIPECONF_DSIPLL_LOCK		(1 << 29)
+#घोषणा PIPEACONF_SINGLE_WIDE		0
+#घोषणा PIPEACONF_PIPE_UNLOCKED		0
+#घोषणा PIPEACONF_DSR			(1 << 26)
+#घोषणा PIPEACONF_PIPE_LOCKED		(1 << 25)
+#घोषणा PIPEACONF_PALETTE		0
+#घोषणा PIPECONF_FORCE_BORDER		(1 << 25)
+#घोषणा PIPEACONF_GAMMA			(1 << 24)
+#घोषणा PIPECONF_PROGRESSIVE		(0 << 21)
+#घोषणा PIPECONF_INTERLACE_W_FIELD_INDICATION	(6 << 21)
+#घोषणा PIPECONF_INTERLACE_FIELD_0_ONLY		(7 << 21)
+#घोषणा PIPECONF_PLANE_OFF		(1 << 19)
+#घोषणा PIPECONF_CURSOR_OFF		(1 << 18)
 
-#define PIPEBCONF		0x71008
-#define PIPEBCONF_ENABLE		(1 << 31)
-#define PIPEBCONF_DISABLE		0
-#define PIPEBCONF_DOUBLE_WIDE		(1 << 30)
-#define PIPEBCONF_DISABLE		0
-#define PIPEBCONF_GAMMA			(1 << 24)
-#define PIPEBCONF_PALETTE		0
+#घोषणा PIPEBCONF		0x71008
+#घोषणा PIPEBCONF_ENABLE		(1 << 31)
+#घोषणा PIPEBCONF_DISABLE		0
+#घोषणा PIPEBCONF_DOUBLE_WIDE		(1 << 30)
+#घोषणा PIPEBCONF_DISABLE		0
+#घोषणा PIPEBCONF_GAMMA			(1 << 24)
+#घोषणा PIPEBCONF_PALETTE		0
 
-#define PIPECCONF		0x72008
+#घोषणा PIPECCONF		0x72008
 
-#define PIPEBGCMAXRED		0x71010
-#define PIPEBGCMAXGREEN		0x71014
-#define PIPEBGCMAXBLUE		0x71018
+#घोषणा PIPEBGCMAXRED		0x71010
+#घोषणा PIPEBGCMAXGREEN		0x71014
+#घोषणा PIPEBGCMAXBLUE		0x71018
 
-#define PIPEASTAT		0x70024
-#define PIPEBSTAT		0x71024
-#define PIPECSTAT		0x72024
-#define PIPE_VBLANK_INTERRUPT_STATUS		(1UL << 1)
-#define PIPE_START_VBLANK_INTERRUPT_STATUS	(1UL << 2)
-#define PIPE_VBLANK_CLEAR			(1 << 1)
-#define PIPE_VBLANK_STATUS			(1 << 1)
-#define PIPE_TE_STATUS				(1UL << 6)
-#define PIPE_DPST_EVENT_STATUS			(1UL << 7)
-#define PIPE_VSYNC_CLEAR			(1UL << 9)
-#define PIPE_VSYNC_STATUS			(1UL << 9)
-#define PIPE_HDMI_AUDIO_UNDERRUN_STATUS		(1UL << 10)
-#define PIPE_HDMI_AUDIO_BUFFER_DONE_STATUS	(1UL << 11)
-#define PIPE_VBLANK_INTERRUPT_ENABLE		(1UL << 17)
-#define PIPE_START_VBLANK_INTERRUPT_ENABLE	(1UL << 18)
-#define PIPE_TE_ENABLE				(1UL << 22)
-#define PIPE_LEGACY_BLC_EVENT_ENABLE		(1UL << 22)
-#define PIPE_DPST_EVENT_ENABLE			(1UL << 23)
-#define PIPE_VSYNC_ENABL			(1UL << 25)
-#define PIPE_HDMI_AUDIO_UNDERRUN		(1UL << 26)
-#define PIPE_HDMI_AUDIO_BUFFER_DONE		(1UL << 27)
-#define PIPE_FIFO_UNDERRUN			(1UL << 31)
-#define PIPE_HDMI_AUDIO_INT_MASK		(PIPE_HDMI_AUDIO_UNDERRUN | \
+#घोषणा PIPEASTAT		0x70024
+#घोषणा PIPEBSTAT		0x71024
+#घोषणा PIPECSTAT		0x72024
+#घोषणा PIPE_VBLANK_INTERRUPT_STATUS		(1UL << 1)
+#घोषणा PIPE_START_VBLANK_INTERRUPT_STATUS	(1UL << 2)
+#घोषणा PIPE_VBLANK_CLEAR			(1 << 1)
+#घोषणा PIPE_VBLANK_STATUS			(1 << 1)
+#घोषणा PIPE_TE_STATUS				(1UL << 6)
+#घोषणा PIPE_DPST_EVENT_STATUS			(1UL << 7)
+#घोषणा PIPE_VSYNC_CLEAR			(1UL << 9)
+#घोषणा PIPE_VSYNC_STATUS			(1UL << 9)
+#घोषणा PIPE_HDMI_AUDIO_UNDERRUN_STATUS		(1UL << 10)
+#घोषणा PIPE_HDMI_AUDIO_BUFFER_DONE_STATUS	(1UL << 11)
+#घोषणा PIPE_VBLANK_INTERRUPT_ENABLE		(1UL << 17)
+#घोषणा PIPE_START_VBLANK_INTERRUPT_ENABLE	(1UL << 18)
+#घोषणा PIPE_TE_ENABLE				(1UL << 22)
+#घोषणा PIPE_LEGACY_BLC_EVENT_ENABLE		(1UL << 22)
+#घोषणा PIPE_DPST_EVENT_ENABLE			(1UL << 23)
+#घोषणा PIPE_VSYNC_ENABL			(1UL << 25)
+#घोषणा PIPE_HDMI_AUDIO_UNDERRUN		(1UL << 26)
+#घोषणा PIPE_HDMI_AUDIO_BUFFER_DONE		(1UL << 27)
+#घोषणा PIPE_FIFO_UNDERRUN			(1UL << 31)
+#घोषणा PIPE_HDMI_AUDIO_INT_MASK		(PIPE_HDMI_AUDIO_UNDERRUN | \
 						PIPE_HDMI_AUDIO_BUFFER_DONE)
-#define PIPE_EVENT_MASK ((1 << 29)|(1 << 28)|(1 << 27)|(1 << 26)|(1 << 24)|(1 << 23)|(1 << 22)|(1 << 21)|(1 << 20)|(1 << 16))
-#define PIPE_VBLANK_MASK ((1 << 25)|(1 << 24)|(1 << 18)|(1 << 17))
-#define HISTOGRAM_INT_CONTROL		0x61268
-#define HISTOGRAM_BIN_DATA		0X61264
-#define HISTOGRAM_LOGIC_CONTROL		0x61260
-#define PWM_CONTROL_LOGIC		0x61250
-#define PIPE_HOTPLUG_INTERRUPT_STATUS		(1UL << 10)
-#define HISTOGRAM_INTERRUPT_ENABLE		(1UL << 31)
-#define HISTOGRAM_LOGIC_ENABLE			(1UL << 31)
-#define PWM_LOGIC_ENABLE			(1UL << 31)
-#define PWM_PHASEIN_ENABLE			(1UL << 25)
-#define PWM_PHASEIN_INT_ENABLE			(1UL << 24)
-#define PWM_PHASEIN_VB_COUNT			0x00001f00
-#define PWM_PHASEIN_INC				0x0000001f
-#define HISTOGRAM_INT_CTRL_CLEAR		(1UL << 30)
-#define DPST_YUV_LUMA_MODE			0
+#घोषणा PIPE_EVENT_MASK ((1 << 29)|(1 << 28)|(1 << 27)|(1 << 26)|(1 << 24)|(1 << 23)|(1 << 22)|(1 << 21)|(1 << 20)|(1 << 16))
+#घोषणा PIPE_VBLANK_MASK ((1 << 25)|(1 << 24)|(1 << 18)|(1 << 17))
+#घोषणा HISTOGRAM_INT_CONTROL		0x61268
+#घोषणा HISTOGRAM_BIN_DATA		0X61264
+#घोषणा HISTOGRAM_LOGIC_CONTROL		0x61260
+#घोषणा PWM_CONTROL_LOGIC		0x61250
+#घोषणा PIPE_HOTPLUG_INTERRUPT_STATUS		(1UL << 10)
+#घोषणा HISTOGRAM_INTERRUPT_ENABLE		(1UL << 31)
+#घोषणा HISTOGRAM_LOGIC_ENABLE			(1UL << 31)
+#घोषणा PWM_LOGIC_ENABLE			(1UL << 31)
+#घोषणा PWM_PHASEIN_ENABLE			(1UL << 25)
+#घोषणा PWM_PHASEIN_INT_ENABLE			(1UL << 24)
+#घोषणा PWM_PHASEIN_VB_COUNT			0x00001f00
+#घोषणा PWM_PHASEIN_INC				0x0000001f
+#घोषणा HISTOGRAM_INT_CTRL_CLEAR		(1UL << 30)
+#घोषणा DPST_YUV_LUMA_MODE			0
 
-#define PIPEAFRAMEHIGH		0x70040
-#define PIPEAFRAMEPIXEL		0x70044
-#define PIPEBFRAMEHIGH		0x71040
-#define PIPEBFRAMEPIXEL		0x71044
-#define PIPECFRAMEHIGH		0x72040
-#define PIPECFRAMEPIXEL		0x72044
-#define PIPE_FRAME_HIGH_MASK	0x0000ffff
-#define PIPE_FRAME_HIGH_SHIFT	0
-#define PIPE_FRAME_LOW_MASK	0xff000000
-#define PIPE_FRAME_LOW_SHIFT	24
-#define PIPE_PIXEL_MASK		0x00ffffff
-#define PIPE_PIXEL_SHIFT	0
+#घोषणा PIPEAFRAMEHIGH		0x70040
+#घोषणा PIPEAFRAMEPIXEL		0x70044
+#घोषणा PIPEBFRAMEHIGH		0x71040
+#घोषणा PIPEBFRAMEPIXEL		0x71044
+#घोषणा PIPECFRAMEHIGH		0x72040
+#घोषणा PIPECFRAMEPIXEL		0x72044
+#घोषणा PIPE_FRAME_HIGH_MASK	0x0000ffff
+#घोषणा PIPE_FRAME_HIGH_SHIFT	0
+#घोषणा PIPE_FRAME_LOW_MASK	0xff000000
+#घोषणा PIPE_FRAME_LOW_SHIFT	24
+#घोषणा PIPE_PIXEL_MASK		0x00ffffff
+#घोषणा PIPE_PIXEL_SHIFT	0
 
-#define FW_BLC_SELF		0x20e0
-#define FW_BLC_SELF_EN          (1<<15)
+#घोषणा FW_BLC_SELF		0x20e0
+#घोषणा FW_BLC_SELF_EN          (1<<15)
 
-#define DSPARB			0x70030
-#define DSPFW1			0x70034
-#define DSP_FIFO_SR_WM_MASK		0xFF800000
-#define DSP_FIFO_SR_WM_SHIFT		23
-#define CURSOR_B_FIFO_WM_MASK		0x003F0000
-#define CURSOR_B_FIFO_WM_SHIFT		16
-#define DSPFW2			0x70038
-#define CURSOR_A_FIFO_WM_MASK		0x3F00
-#define CURSOR_A_FIFO_WM_SHIFT		8
-#define DSP_PLANE_C_FIFO_WM_MASK	0x7F
-#define DSP_PLANE_C_FIFO_WM_SHIFT	0
-#define DSPFW3			0x7003c
-#define DSPFW4			0x70050
-#define DSPFW5			0x70054
-#define DSP_PLANE_B_FIFO_WM1_SHIFT	24
-#define DSP_PLANE_A_FIFO_WM1_SHIFT	16
-#define CURSOR_B_FIFO_WM1_SHIFT		8
-#define CURSOR_FIFO_SR_WM1_SHIFT	0
-#define DSPFW6			0x70058
-#define DSPCHICKENBIT		0x70400
-#define DSPACNTR		0x70180
-#define DSPBCNTR		0x71180
-#define DSPCCNTR		0x72180
-#define DISPLAY_PLANE_ENABLE			(1 << 31)
-#define DISPLAY_PLANE_DISABLE			0
-#define DISPPLANE_GAMMA_ENABLE			(1 << 30)
-#define DISPPLANE_GAMMA_DISABLE			0
-#define DISPPLANE_PIXFORMAT_MASK		(0xf << 26)
-#define DISPPLANE_8BPP				(0x2 << 26)
-#define DISPPLANE_15_16BPP			(0x4 << 26)
-#define DISPPLANE_16BPP				(0x5 << 26)
-#define DISPPLANE_32BPP_NO_ALPHA		(0x6 << 26)
-#define DISPPLANE_32BPP				(0x7 << 26)
-#define DISPPLANE_STEREO_ENABLE			(1 << 25)
-#define DISPPLANE_STEREO_DISABLE		0
-#define DISPPLANE_SEL_PIPE_MASK			(1 << 24)
-#define DISPPLANE_SEL_PIPE_POS			24
-#define DISPPLANE_SEL_PIPE_A			0
-#define DISPPLANE_SEL_PIPE_B			(1 << 24)
-#define DISPPLANE_SRC_KEY_ENABLE		(1 << 22)
-#define DISPPLANE_SRC_KEY_DISABLE		0
-#define DISPPLANE_LINE_DOUBLE			(1 << 20)
-#define DISPPLANE_NO_LINE_DOUBLE		0
-#define DISPPLANE_STEREO_POLARITY_FIRST		0
-#define DISPPLANE_STEREO_POLARITY_SECOND	(1 << 18)
+#घोषणा DSPARB			0x70030
+#घोषणा DSPFW1			0x70034
+#घोषणा DSP_FIFO_SR_WM_MASK		0xFF800000
+#घोषणा DSP_FIFO_SR_WM_SHIFT		23
+#घोषणा CURSOR_B_FIFO_WM_MASK		0x003F0000
+#घोषणा CURSOR_B_FIFO_WM_SHIFT		16
+#घोषणा DSPFW2			0x70038
+#घोषणा CURSOR_A_FIFO_WM_MASK		0x3F00
+#घोषणा CURSOR_A_FIFO_WM_SHIFT		8
+#घोषणा DSP_PLANE_C_FIFO_WM_MASK	0x7F
+#घोषणा DSP_PLANE_C_FIFO_WM_SHIFT	0
+#घोषणा DSPFW3			0x7003c
+#घोषणा DSPFW4			0x70050
+#घोषणा DSPFW5			0x70054
+#घोषणा DSP_PLANE_B_FIFO_WM1_SHIFT	24
+#घोषणा DSP_PLANE_A_FIFO_WM1_SHIFT	16
+#घोषणा CURSOR_B_FIFO_WM1_SHIFT		8
+#घोषणा CURSOR_FIFO_SR_WM1_SHIFT	0
+#घोषणा DSPFW6			0x70058
+#घोषणा DSPCHICKENBIT		0x70400
+#घोषणा DSPACNTR		0x70180
+#घोषणा DSPBCNTR		0x71180
+#घोषणा DSPCCNTR		0x72180
+#घोषणा DISPLAY_PLANE_ENABLE			(1 << 31)
+#घोषणा DISPLAY_PLANE_DISABLE			0
+#घोषणा DISPPLANE_GAMMA_ENABLE			(1 << 30)
+#घोषणा DISPPLANE_GAMMA_DISABLE			0
+#घोषणा DISPPLANE_PIXFORMAT_MASK		(0xf << 26)
+#घोषणा DISPPLANE_8BPP				(0x2 << 26)
+#घोषणा DISPPLANE_15_16BPP			(0x4 << 26)
+#घोषणा DISPPLANE_16BPP				(0x5 << 26)
+#घोषणा DISPPLANE_32BPP_NO_ALPHA		(0x6 << 26)
+#घोषणा DISPPLANE_32BPP				(0x7 << 26)
+#घोषणा DISPPLANE_STEREO_ENABLE			(1 << 25)
+#घोषणा DISPPLANE_STEREO_DISABLE		0
+#घोषणा DISPPLANE_SEL_PIPE_MASK			(1 << 24)
+#घोषणा DISPPLANE_SEL_PIPE_POS			24
+#घोषणा DISPPLANE_SEL_PIPE_A			0
+#घोषणा DISPPLANE_SEL_PIPE_B			(1 << 24)
+#घोषणा DISPPLANE_SRC_KEY_ENABLE		(1 << 22)
+#घोषणा DISPPLANE_SRC_KEY_DISABLE		0
+#घोषणा DISPPLANE_LINE_DOUBLE			(1 << 20)
+#घोषणा DISPPLANE_NO_LINE_DOUBLE		0
+#घोषणा DISPPLANE_STEREO_POLARITY_FIRST		0
+#घोषणा DISPPLANE_STEREO_POLARITY_SECOND	(1 << 18)
 /* plane B only */
-#define DISPPLANE_ALPHA_TRANS_ENABLE		(1 << 15)
-#define DISPPLANE_ALPHA_TRANS_DISABLE		0
-#define DISPPLANE_SPRITE_ABOVE_DISPLAYA		0
-#define DISPPLANE_SPRITE_ABOVE_OVERLAY		(1)
-#define DISPPLANE_BOTTOM			(4)
+#घोषणा DISPPLANE_ALPHA_TRANS_ENABLE		(1 << 15)
+#घोषणा DISPPLANE_ALPHA_TRANS_DISABLE		0
+#घोषणा DISPPLANE_SPRITE_ABOVE_DISPLAYA		0
+#घोषणा DISPPLANE_SPRITE_ABOVE_OVERLAY		(1)
+#घोषणा DISPPLANE_BOTTOM			(4)
 
-#define DSPABASE		0x70184
-#define DSPALINOFF		0x70184
-#define DSPASTRIDE		0x70188
+#घोषणा DSPABASE		0x70184
+#घोषणा DSPALINOFF		0x70184
+#घोषणा DSPASTRIDE		0x70188
 
-#define DSPBBASE		0x71184
-#define DSPBLINOFF		0X71184
-#define DSPBADDR		DSPBBASE
-#define DSPBSTRIDE		0x71188
+#घोषणा DSPBBASE		0x71184
+#घोषणा DSPBLINOFF		0X71184
+#घोषणा DSPBADDR		DSPBBASE
+#घोषणा DSPBSTRIDE		0x71188
 
-#define DSPCBASE		0x72184
-#define DSPCLINOFF		0x72184
-#define DSPCSTRIDE		0x72188
+#घोषणा DSPCBASE		0x72184
+#घोषणा DSPCLINOFF		0x72184
+#घोषणा DSPCSTRIDE		0x72188
 
-#define DSPAKEYVAL		0x70194
-#define DSPAKEYMASK		0x70198
+#घोषणा DSPAKEYVAL		0x70194
+#घोषणा DSPAKEYMASK		0x70198
 
-#define DSPAPOS			0x7018C	/* reserved */
-#define DSPASIZE		0x70190
-#define DSPBPOS			0x7118C
-#define DSPBSIZE		0x71190
-#define DSPCPOS			0x7218C
-#define DSPCSIZE		0x72190
+#घोषणा DSPAPOS			0x7018C	/* reserved */
+#घोषणा DSPASIZE		0x70190
+#घोषणा DSPBPOS			0x7118C
+#घोषणा DSPBSIZE		0x71190
+#घोषणा DSPCPOS			0x7218C
+#घोषणा DSPCSIZE		0x72190
 
-#define DSPASURF		0x7019C
-#define DSPATILEOFF		0x701A4
+#घोषणा DSPASURF		0x7019C
+#घोषणा DSPATILखातापूर्णF		0x701A4
 
-#define DSPBSURF		0x7119C
-#define DSPBTILEOFF		0x711A4
+#घोषणा DSPBSURF		0x7119C
+#घोषणा DSPBTILखातापूर्णF		0x711A4
 
-#define DSPCSURF		0x7219C
-#define DSPCTILEOFF		0x721A4
-#define DSPCKEYMAXVAL		0x721A0
-#define DSPCKEYMINVAL		0x72194
-#define DSPCKEYMSK		0x72198
+#घोषणा DSPCSURF		0x7219C
+#घोषणा DSPCTILखातापूर्णF		0x721A4
+#घोषणा DSPCKEYMAXVAL		0x721A0
+#घोषणा DSPCKEYMINVAL		0x72194
+#घोषणा DSPCKEYMSK		0x72198
 
-#define VGACNTRL		0x71400
-#define VGA_DISP_DISABLE		(1 << 31)
-#define VGA_2X_MODE			(1 << 30)
-#define VGA_PIPE_B_SELECT		(1 << 29)
+#घोषणा VGACNTRL		0x71400
+#घोषणा VGA_DISP_DISABLE		(1 << 31)
+#घोषणा VGA_2X_MODE			(1 << 30)
+#घोषणा VGA_PIPE_B_SELECT		(1 << 29)
 
 /*
- * Overlay registers
+ * Overlay रेजिस्टरs
  */
-#define OV_C_OFFSET		0x08000
-#define OV_OVADD		0x30000
-#define OV_DOVASTA		0x30008
+#घोषणा OV_C_OFFSET		0x08000
+#घोषणा OV_OVADD		0x30000
+#घोषणा OV_DOVASTA		0x30008
 # define OV_PIPE_SELECT			((1 << 6)|(1 << 7))
 # define OV_PIPE_SELECT_POS		6
 # define OV_PIPE_A			0
 # define OV_PIPE_C			1
-#define OV_OGAMC5		0x30010
-#define OV_OGAMC4		0x30014
-#define OV_OGAMC3		0x30018
-#define OV_OGAMC2		0x3001C
-#define OV_OGAMC1		0x30020
-#define OV_OGAMC0		0x30024
-#define OVC_OVADD		0x38000
-#define OVC_DOVCSTA		0x38008
-#define OVC_OGAMC5		0x38010
-#define OVC_OGAMC4		0x38014
-#define OVC_OGAMC3		0x38018
-#define OVC_OGAMC2		0x3801C
-#define OVC_OGAMC1		0x38020
-#define OVC_OGAMC0		0x38024
+#घोषणा OV_OGAMC5		0x30010
+#घोषणा OV_OGAMC4		0x30014
+#घोषणा OV_OGAMC3		0x30018
+#घोषणा OV_OGAMC2		0x3001C
+#घोषणा OV_OGAMC1		0x30020
+#घोषणा OV_OGAMC0		0x30024
+#घोषणा OVC_OVADD		0x38000
+#घोषणा OVC_DOVCSTA		0x38008
+#घोषणा OVC_OGAMC5		0x38010
+#घोषणा OVC_OGAMC4		0x38014
+#घोषणा OVC_OGAMC3		0x38018
+#घोषणा OVC_OGAMC2		0x3801C
+#घोषणा OVC_OGAMC1		0x38020
+#घोषणा OVC_OGAMC0		0x38024
 
 /*
- * Some BIOS scratch area registers.  The 845 (and 830?) store the amount
+ * Some BIOS scratch area रेजिस्टरs.  The 845 (and 830?) store the amount
  * of video memory available to the BIOS in SWF1.
  */
-#define SWF0			0x71410
-#define SWF1			0x71414
-#define SWF2			0x71418
-#define SWF3			0x7141c
-#define SWF4			0x71420
-#define SWF5			0x71424
-#define SWF6			0x71428
+#घोषणा SWF0			0x71410
+#घोषणा SWF1			0x71414
+#घोषणा SWF2			0x71418
+#घोषणा SWF3			0x7141c
+#घोषणा SWF4			0x71420
+#घोषणा SWF5			0x71424
+#घोषणा SWF6			0x71428
 
 /*
- * 855 scratch registers.
+ * 855 scratch रेजिस्टरs.
  */
-#define SWF00			0x70410
-#define SWF01			0x70414
-#define SWF02			0x70418
-#define SWF03			0x7041c
-#define SWF04			0x70420
-#define SWF05			0x70424
-#define SWF06			0x70428
+#घोषणा SWF00			0x70410
+#घोषणा SWF01			0x70414
+#घोषणा SWF02			0x70418
+#घोषणा SWF03			0x7041c
+#घोषणा SWF04			0x70420
+#घोषणा SWF05			0x70424
+#घोषणा SWF06			0x70428
 
-#define SWF10			SWF0
-#define SWF11			SWF1
-#define SWF12			SWF2
-#define SWF13			SWF3
-#define SWF14			SWF4
-#define SWF15			SWF5
-#define SWF16			SWF6
+#घोषणा SWF10			SWF0
+#घोषणा SWF11			SWF1
+#घोषणा SWF12			SWF2
+#घोषणा SWF13			SWF3
+#घोषणा SWF14			SWF4
+#घोषणा SWF15			SWF5
+#घोषणा SWF16			SWF6
 
-#define SWF30			0x72414
-#define SWF31			0x72418
-#define SWF32			0x7241c
+#घोषणा SWF30			0x72414
+#घोषणा SWF31			0x72418
+#घोषणा SWF32			0x7241c
 
 
 /*
- * Palette registers
+ * Palette रेजिस्टरs
  */
-#define PALETTE_A		0x0a000
-#define PALETTE_B		0x0a800
-#define PALETTE_C		0x0ac00
+#घोषणा PALETTE_A		0x0a000
+#घोषणा PALETTE_B		0x0a800
+#घोषणा PALETTE_C		0x0ac00
 
 /* Cursor A & B regs */
-#define CURACNTR		0x70080
-#define CURSOR_MODE_DISABLE		0x00
-#define CURSOR_MODE_64_32B_AX		0x07
-#define CURSOR_MODE_64_ARGB_AX		((1 << 5) | CURSOR_MODE_64_32B_AX)
-#define MCURSOR_GAMMA_ENABLE		(1 << 26)
-#define CURABASE		0x70084
-#define CURAPOS			0x70088
-#define CURSOR_POS_MASK			0x007FF
-#define CURSOR_POS_SIGN			0x8000
-#define CURSOR_X_SHIFT			0
-#define CURSOR_Y_SHIFT			16
-#define CURBCNTR		0x700c0
-#define CURBBASE		0x700c4
-#define CURBPOS			0x700c8
-#define CURCCNTR		0x700e0
-#define CURCBASE		0x700e4
-#define CURCPOS			0x700e8
+#घोषणा CURACNTR		0x70080
+#घोषणा CURSOR_MODE_DISABLE		0x00
+#घोषणा CURSOR_MODE_64_32B_AX		0x07
+#घोषणा CURSOR_MODE_64_ARGB_AX		((1 << 5) | CURSOR_MODE_64_32B_AX)
+#घोषणा MCURSOR_GAMMA_ENABLE		(1 << 26)
+#घोषणा CURABASE		0x70084
+#घोषणा CURAPOS			0x70088
+#घोषणा CURSOR_POS_MASK			0x007FF
+#घोषणा CURSOR_POS_SIGN			0x8000
+#घोषणा CURSOR_X_SHIFT			0
+#घोषणा CURSOR_Y_SHIFT			16
+#घोषणा CURBCNTR		0x700c0
+#घोषणा CURBBASE		0x700c4
+#घोषणा CURBPOS			0x700c8
+#घोषणा CURCCNTR		0x700e0
+#घोषणा CURCBASE		0x700e4
+#घोषणा CURCPOS			0x700e8
 
 /*
  * Interrupt Registers
  */
-#define IER			0x020a0
-#define IIR			0x020a4
-#define IMR			0x020a8
-#define ISR			0x020ac
+#घोषणा IER			0x020a0
+#घोषणा IIR			0x020a4
+#घोषणा IMR			0x020a8
+#घोषणा ISR			0x020ac
 
 /*
- * MOORESTOWN delta registers
+ * MOORESTOWN delta रेजिस्टरs
  */
-#define MRST_DPLL_A		0x0f014
-#define DPLLA_MODE_LVDS			(2 << 26)	/* mrst */
-#define MRST_FPA0		0x0f040
-#define MRST_FPA1		0x0f044
-#define MRST_PERF_MODE		0x020f4
+#घोषणा MRST_DPLL_A		0x0f014
+#घोषणा DPLLA_MODE_LVDS			(2 << 26)	/* mrst */
+#घोषणा MRST_FPA0		0x0f040
+#घोषणा MRST_FPA1		0x0f044
+#घोषणा MRST_PERF_MODE		0x020f4
 
 /*
- * MEDFIELD HDMI registers
+ * MEDFIELD HDMI रेजिस्टरs
  */
-#define HDMIPHYMISCCTL		0x61134
-#define HDMI_PHY_POWER_DOWN		0x7f
-#define HDMIB_CONTROL		0x61140
-#define HDMIB_PORT_EN			(1 << 31)
-#define HDMIB_PIPE_B_SELECT		(1 << 30)
-#define HDMIB_NULL_PACKET		(1 << 9)
-#define HDMIB_HDCP_PORT			(1 << 5)
+#घोषणा HDMIPHYMISCCTL		0x61134
+#घोषणा HDMI_PHY_POWER_DOWN		0x7f
+#घोषणा HDMIB_CONTROL		0x61140
+#घोषणा HDMIB_PORT_EN			(1 << 31)
+#घोषणा HDMIB_PIPE_B_SELECT		(1 << 30)
+#घोषणा HDMIB_शून्य_PACKET		(1 << 9)
+#घोषणा HDMIB_HDCP_PORT			(1 << 5)
 
-/* #define LVDS			0x61180 */
-#define MRST_PANEL_8TO6_DITHER_ENABLE	(1 << 25)
-#define MRST_PANEL_24_DOT_1_FORMAT	(1 << 24)
-#define LVDS_A3_POWER_UP_0_OUTPUT	(1 << 6)
+/* #घोषणा LVDS			0x61180 */
+#घोषणा MRST_PANEL_8TO6_DITHER_ENABLE	(1 << 25)
+#घोषणा MRST_PANEL_24_DOT_1_FORMAT	(1 << 24)
+#घोषणा LVDS_A3_POWER_UP_0_OUTPUT	(1 << 6)
 
-#define MIPI			0x61190
-#define MIPI_C			0x62190
-#define MIPI_PORT_EN			(1 << 31)
+#घोषणा MIPI			0x61190
+#घोषणा MIPI_C			0x62190
+#घोषणा MIPI_PORT_EN			(1 << 31)
 /* Turns on border drawing to allow centered display. */
-#define SEL_FLOPPED_HSTX		(1 << 23)
-#define PASS_FROM_SPHY_TO_AFE		(1 << 16)
-#define MIPI_BORDER_EN			(1 << 15)
-#define MIPIA_3LANE_MIPIC_1LANE		0x1
-#define MIPIA_2LANE_MIPIC_2LANE		0x2
-#define TE_TRIGGER_DSI_PROTOCOL		(1 << 2)
-#define TE_TRIGGER_GPIO_PIN		(1 << 3)
-#define MIPI_TE_COUNT		0x61194
+#घोषणा SEL_FLOPPED_HSTX		(1 << 23)
+#घोषणा PASS_FROM_SPHY_TO_AFE		(1 << 16)
+#घोषणा MIPI_BORDER_EN			(1 << 15)
+#घोषणा MIPIA_3LANE_MIPIC_1LANE		0x1
+#घोषणा MIPIA_2LANE_MIPIC_2LANE		0x2
+#घोषणा TE_TRIGGER_DSI_PROTOCOL		(1 << 2)
+#घोषणा TE_TRIGGER_GPIO_PIN		(1 << 3)
+#घोषणा MIPI_TE_COUNT		0x61194
 
-/* #define PP_CONTROL	0x61204 */
-#define POWER_DOWN_ON_RESET		(1 << 1)
+/* #घोषणा PP_CONTROL	0x61204 */
+#घोषणा POWER_DOWN_ON_RESET		(1 << 1)
 
-/* #define PFIT_CONTROL	0x61230 */
-#define PFIT_PIPE_SELECT		(3 << 29)
-#define PFIT_PIPE_SELECT_SHIFT		(29)
+/* #घोषणा PFIT_CONTROL	0x61230 */
+#घोषणा PFIT_PIPE_SELECT		(3 << 29)
+#घोषणा PFIT_PIPE_SELECT_SHIFT		(29)
 
-/* #define BLC_PWM_CTL		0x61254 */
-#define MRST_BACKLIGHT_MODULATION_FREQ_SHIFT	(16)
-#define MRST_BACKLIGHT_MODULATION_FREQ_MASK	(0xffff << 16)
+/* #घोषणा BLC_PWM_CTL		0x61254 */
+#घोषणा MRST_BACKLIGHT_MODULATION_FREQ_SHIFT	(16)
+#घोषणा MRST_BACKLIGHT_MODULATION_FREQ_MASK	(0xffff << 16)
 
-/* #define PIPEACONF 0x70008 */
-#define PIPEACONF_PIPE_STATE		(1 << 30)
-/* #define DSPACNTR		0x70180 */
+/* #घोषणा PIPEACONF 0x70008 */
+#घोषणा PIPEACONF_PIPE_STATE		(1 << 30)
+/* #घोषणा DSPACNTR		0x70180 */
 
-#define MRST_DSPABASE		0x7019c
-#define MRST_DSPBBASE		0x7119c
+#घोषणा MRST_DSPABASE		0x7019c
+#घोषणा MRST_DSPBBASE		0x7119c
 
 /*
- * Moorestown registers.
+ * Moorestown रेजिस्टरs.
  */
 
 /*
- *	MIPI IP registers
+ *	MIPI IP रेजिस्टरs
  */
-#define MIPIC_REG_OFFSET		0x800
+#घोषणा MIPIC_REG_OFFSET		0x800
 
-#define DEVICE_READY_REG		0xb000
-#define LP_OUTPUT_HOLD				(1 << 16)
-#define EXIT_ULPS_DEV_READY			0x3
-#define LP_OUTPUT_HOLD_RELEASE			0x810000
+#घोषणा DEVICE_READY_REG		0xb000
+#घोषणा LP_OUTPUT_HOLD				(1 << 16)
+#घोषणा EXIT_ULPS_DEV_READY			0x3
+#घोषणा LP_OUTPUT_HOLD_RELEASE			0x810000
 # define ENTERING_ULPS				(2 << 1)
 # define EXITING_ULPS				(1 << 1)
 # define ULPS_MASK				(3 << 1)
 # define BUS_POSSESSION				(1 << 3)
-#define INTR_STAT_REG			0xb004
-#define RX_SOT_ERROR				(1 << 0)
-#define RX_SOT_SYNC_ERROR			(1 << 1)
-#define RX_ESCAPE_MODE_ENTRY_ERROR		(1 << 3)
-#define RX_LP_TX_SYNC_ERROR			(1 << 4)
-#define RX_HS_RECEIVE_TIMEOUT_ERROR		(1 << 5)
-#define RX_FALSE_CONTROL_ERROR			(1 << 6)
-#define RX_ECC_SINGLE_BIT_ERROR			(1 << 7)
-#define RX_ECC_MULTI_BIT_ERROR			(1 << 8)
-#define RX_CHECKSUM_ERROR			(1 << 9)
-#define RX_DSI_DATA_TYPE_NOT_RECOGNIZED		(1 << 10)
-#define RX_DSI_VC_ID_INVALID			(1 << 11)
-#define TX_FALSE_CONTROL_ERROR			(1 << 12)
-#define TX_ECC_SINGLE_BIT_ERROR			(1 << 13)
-#define TX_ECC_MULTI_BIT_ERROR			(1 << 14)
-#define TX_CHECKSUM_ERROR			(1 << 15)
-#define TX_DSI_DATA_TYPE_NOT_RECOGNIZED		(1 << 16)
-#define TX_DSI_VC_ID_INVALID			(1 << 17)
-#define HIGH_CONTENTION				(1 << 18)
-#define LOW_CONTENTION				(1 << 19)
-#define DPI_FIFO_UNDER_RUN			(1 << 20)
-#define HS_TX_TIMEOUT				(1 << 21)
-#define LP_RX_TIMEOUT				(1 << 22)
-#define TURN_AROUND_ACK_TIMEOUT			(1 << 23)
-#define ACK_WITH_NO_ERROR			(1 << 24)
-#define HS_GENERIC_WR_FIFO_FULL			(1 << 27)
-#define LP_GENERIC_WR_FIFO_FULL			(1 << 28)
-#define SPL_PKT_SENT				(1 << 30)
-#define INTR_EN_REG			0xb008
-#define DSI_FUNC_PRG_REG		0xb00c
-#define DPI_CHANNEL_NUMBER_POS			0x03
-#define DBI_CHANNEL_NUMBER_POS			0x05
-#define FMT_DPI_POS				0x07
-#define FMT_DBI_POS				0x0A
-#define DBI_DATA_WIDTH_POS			0x0D
+#घोषणा INTR_STAT_REG			0xb004
+#घोषणा RX_SOT_ERROR				(1 << 0)
+#घोषणा RX_SOT_SYNC_ERROR			(1 << 1)
+#घोषणा RX_ESCAPE_MODE_ENTRY_ERROR		(1 << 3)
+#घोषणा RX_LP_TX_SYNC_ERROR			(1 << 4)
+#घोषणा RX_HS_RECEIVE_TIMEOUT_ERROR		(1 << 5)
+#घोषणा RX_FALSE_CONTROL_ERROR			(1 << 6)
+#घोषणा RX_ECC_SINGLE_BIT_ERROR			(1 << 7)
+#घोषणा RX_ECC_MULTI_BIT_ERROR			(1 << 8)
+#घोषणा RX_CHECKSUM_ERROR			(1 << 9)
+#घोषणा RX_DSI_DATA_TYPE_NOT_RECOGNIZED		(1 << 10)
+#घोषणा RX_DSI_VC_ID_INVALID			(1 << 11)
+#घोषणा TX_FALSE_CONTROL_ERROR			(1 << 12)
+#घोषणा TX_ECC_SINGLE_BIT_ERROR			(1 << 13)
+#घोषणा TX_ECC_MULTI_BIT_ERROR			(1 << 14)
+#घोषणा TX_CHECKSUM_ERROR			(1 << 15)
+#घोषणा TX_DSI_DATA_TYPE_NOT_RECOGNIZED		(1 << 16)
+#घोषणा TX_DSI_VC_ID_INVALID			(1 << 17)
+#घोषणा HIGH_CONTENTION				(1 << 18)
+#घोषणा LOW_CONTENTION				(1 << 19)
+#घोषणा DPI_FIFO_UNDER_RUN			(1 << 20)
+#घोषणा HS_TX_TIMEOUT				(1 << 21)
+#घोषणा LP_RX_TIMEOUT				(1 << 22)
+#घोषणा TURN_AROUND_ACK_TIMEOUT			(1 << 23)
+#घोषणा ACK_WITH_NO_ERROR			(1 << 24)
+#घोषणा HS_GENERIC_WR_FIFO_FULL			(1 << 27)
+#घोषणा LP_GENERIC_WR_FIFO_FULL			(1 << 28)
+#घोषणा SPL_PKT_SENT				(1 << 30)
+#घोषणा INTR_EN_REG			0xb008
+#घोषणा DSI_FUNC_PRG_REG		0xb00c
+#घोषणा DPI_CHANNEL_NUMBER_POS			0x03
+#घोषणा DBI_CHANNEL_NUMBER_POS			0x05
+#घोषणा FMT_DPI_POS				0x07
+#घोषणा FMT_DBI_POS				0x0A
+#घोषणा DBI_DATA_WIDTH_POS			0x0D
 
 /* DPI PIXEL FORMATS */
-#define RGB_565_FMT				0x01	/* RGB 565 FORMAT */
-#define RGB_666_FMT				0x02	/* RGB 666 FORMAT */
-#define LRGB_666_FMT				0x03	/* RGB LOOSELY PACKED
+#घोषणा RGB_565_FMT				0x01	/* RGB 565 FORMAT */
+#घोषणा RGB_666_FMT				0x02	/* RGB 666 FORMAT */
+#घोषणा LRGB_666_FMT				0x03	/* RGB LOOSELY PACKED
 							 * 666 FORMAT
 							 */
-#define RGB_888_FMT				0x04	/* RGB 888 FORMAT */
-#define VIRTUAL_CHANNEL_NUMBER_0		0x00	/* Virtual channel 0 */
-#define VIRTUAL_CHANNEL_NUMBER_1		0x01	/* Virtual channel 1 */
-#define VIRTUAL_CHANNEL_NUMBER_2		0x02	/* Virtual channel 2 */
-#define VIRTUAL_CHANNEL_NUMBER_3		0x03	/* Virtual channel 3 */
+#घोषणा RGB_888_FMT				0x04	/* RGB 888 FORMAT */
+#घोषणा VIRTUAL_CHANNEL_NUMBER_0		0x00	/* Virtual channel 0 */
+#घोषणा VIRTUAL_CHANNEL_NUMBER_1		0x01	/* Virtual channel 1 */
+#घोषणा VIRTUAL_CHANNEL_NUMBER_2		0x02	/* Virtual channel 2 */
+#घोषणा VIRTUAL_CHANNEL_NUMBER_3		0x03	/* Virtual channel 3 */
 
-#define DBI_NOT_SUPPORTED			0x00	/* command mode
+#घोषणा DBI_NOT_SUPPORTED			0x00	/* command mode
 							 * is not supported
 							 */
-#define DBI_DATA_WIDTH_16BIT			0x01	/* 16 bit data */
-#define DBI_DATA_WIDTH_9BIT			0x02	/* 9 bit data */
-#define DBI_DATA_WIDTH_8BIT			0x03	/* 8 bit data */
-#define DBI_DATA_WIDTH_OPT1			0x04	/* option 1 */
-#define DBI_DATA_WIDTH_OPT2			0x05	/* option 2 */
+#घोषणा DBI_DATA_WIDTH_16BIT			0x01	/* 16 bit data */
+#घोषणा DBI_DATA_WIDTH_9BIT			0x02	/* 9 bit data */
+#घोषणा DBI_DATA_WIDTH_8BIT			0x03	/* 8 bit data */
+#घोषणा DBI_DATA_WIDTH_OPT1			0x04	/* option 1 */
+#घोषणा DBI_DATA_WIDTH_OPT2			0x05	/* option 2 */
 
-#define HS_TX_TIMEOUT_REG		0xb010
-#define LP_RX_TIMEOUT_REG		0xb014
-#define TURN_AROUND_TIMEOUT_REG		0xb018
-#define DEVICE_RESET_REG		0xb01C
-#define DPI_RESOLUTION_REG		0xb020
-#define RES_V_POS				0x10
-#define HORIZ_SYNC_PAD_COUNT_REG	0xb028
-#define HORIZ_BACK_PORCH_COUNT_REG	0xb02C
-#define HORIZ_FRONT_PORCH_COUNT_REG	0xb030
-#define HORIZ_ACTIVE_AREA_COUNT_REG	0xb034
-#define VERT_SYNC_PAD_COUNT_REG		0xb038
-#define VERT_BACK_PORCH_COUNT_REG	0xb03c
-#define VERT_FRONT_PORCH_COUNT_REG	0xb040
-#define HIGH_LOW_SWITCH_COUNT_REG	0xb044
-#define DPI_CONTROL_REG			0xb048
-#define DPI_SHUT_DOWN				(1 << 0)
-#define DPI_TURN_ON				(1 << 1)
-#define DPI_COLOR_MODE_ON			(1 << 2)
-#define DPI_COLOR_MODE_OFF			(1 << 3)
-#define DPI_BACK_LIGHT_ON			(1 << 4)
-#define DPI_BACK_LIGHT_OFF			(1 << 5)
-#define DPI_LP					(1 << 6)
-#define DPI_DATA_REG			0xb04c
-#define DPI_BACK_LIGHT_ON_DATA			0x07
-#define DPI_BACK_LIGHT_OFF_DATA			0x17
-#define INIT_COUNT_REG			0xb050
-#define MAX_RET_PAK_REG			0xb054
-#define VIDEO_FMT_REG			0xb058
-#define COMPLETE_LAST_PCKT			(1 << 2)
-#define EOT_DISABLE_REG			0xb05c
-#define ENABLE_CLOCK_STOPPING			(1 << 1)
-#define LP_BYTECLK_REG			0xb060
-#define LP_GEN_DATA_REG			0xb064
-#define HS_GEN_DATA_REG			0xb068
-#define LP_GEN_CTRL_REG			0xb06C
-#define HS_GEN_CTRL_REG			0xb070
-#define DCS_CHANNEL_NUMBER_POS		0x6
-#define MCS_COMMANDS_POS		0x8
-#define WORD_COUNTS_POS			0x8
-#define MCS_PARAMETER_POS			0x10
-#define GEN_FIFO_STAT_REG		0xb074
-#define HS_DATA_FIFO_FULL			(1 << 0)
-#define HS_DATA_FIFO_HALF_EMPTY			(1 << 1)
-#define HS_DATA_FIFO_EMPTY			(1 << 2)
-#define LP_DATA_FIFO_FULL			(1 << 8)
-#define LP_DATA_FIFO_HALF_EMPTY			(1 << 9)
-#define LP_DATA_FIFO_EMPTY			(1 << 10)
-#define HS_CTRL_FIFO_FULL			(1 << 16)
-#define HS_CTRL_FIFO_HALF_EMPTY			(1 << 17)
-#define HS_CTRL_FIFO_EMPTY			(1 << 18)
-#define LP_CTRL_FIFO_FULL			(1 << 24)
-#define LP_CTRL_FIFO_HALF_EMPTY			(1 << 25)
-#define LP_CTRL_FIFO_EMPTY			(1 << 26)
-#define DBI_FIFO_EMPTY				(1 << 27)
-#define DPI_FIFO_EMPTY				(1 << 28)
-#define HS_LS_DBI_ENABLE_REG		0xb078
-#define TXCLKESC_REG			0xb07c
-#define DPHY_PARAM_REG			0xb080
-#define DBI_BW_CTRL_REG			0xb084
-#define CLK_LANE_SWT_REG		0xb088
+#घोषणा HS_TX_TIMEOUT_REG		0xb010
+#घोषणा LP_RX_TIMEOUT_REG		0xb014
+#घोषणा TURN_AROUND_TIMEOUT_REG		0xb018
+#घोषणा DEVICE_RESET_REG		0xb01C
+#घोषणा DPI_RESOLUTION_REG		0xb020
+#घोषणा RES_V_POS				0x10
+#घोषणा HORIZ_SYNC_PAD_COUNT_REG	0xb028
+#घोषणा HORIZ_BACK_PORCH_COUNT_REG	0xb02C
+#घोषणा HORIZ_FRONT_PORCH_COUNT_REG	0xb030
+#घोषणा HORIZ_ACTIVE_AREA_COUNT_REG	0xb034
+#घोषणा VERT_SYNC_PAD_COUNT_REG		0xb038
+#घोषणा VERT_BACK_PORCH_COUNT_REG	0xb03c
+#घोषणा VERT_FRONT_PORCH_COUNT_REG	0xb040
+#घोषणा HIGH_LOW_SWITCH_COUNT_REG	0xb044
+#घोषणा DPI_CONTROL_REG			0xb048
+#घोषणा DPI_SHUT_DOWN				(1 << 0)
+#घोषणा DPI_TURN_ON				(1 << 1)
+#घोषणा DPI_COLOR_MODE_ON			(1 << 2)
+#घोषणा DPI_COLOR_MODE_OFF			(1 << 3)
+#घोषणा DPI_BACK_LIGHT_ON			(1 << 4)
+#घोषणा DPI_BACK_LIGHT_OFF			(1 << 5)
+#घोषणा DPI_LP					(1 << 6)
+#घोषणा DPI_DATA_REG			0xb04c
+#घोषणा DPI_BACK_LIGHT_ON_DATA			0x07
+#घोषणा DPI_BACK_LIGHT_OFF_DATA			0x17
+#घोषणा INIT_COUNT_REG			0xb050
+#घोषणा MAX_RET_PAK_REG			0xb054
+#घोषणा VIDEO_FMT_REG			0xb058
+#घोषणा COMPLETE_LAST_PCKT			(1 << 2)
+#घोषणा EOT_DISABLE_REG			0xb05c
+#घोषणा ENABLE_CLOCK_STOPPING			(1 << 1)
+#घोषणा LP_BYTECLK_REG			0xb060
+#घोषणा LP_GEN_DATA_REG			0xb064
+#घोषणा HS_GEN_DATA_REG			0xb068
+#घोषणा LP_GEN_CTRL_REG			0xb06C
+#घोषणा HS_GEN_CTRL_REG			0xb070
+#घोषणा DCS_CHANNEL_NUMBER_POS		0x6
+#घोषणा MCS_COMMANDS_POS		0x8
+#घोषणा WORD_COUNTS_POS			0x8
+#घोषणा MCS_PARAMETER_POS			0x10
+#घोषणा GEN_FIFO_STAT_REG		0xb074
+#घोषणा HS_DATA_FIFO_FULL			(1 << 0)
+#घोषणा HS_DATA_FIFO_HALF_EMPTY			(1 << 1)
+#घोषणा HS_DATA_FIFO_EMPTY			(1 << 2)
+#घोषणा LP_DATA_FIFO_FULL			(1 << 8)
+#घोषणा LP_DATA_FIFO_HALF_EMPTY			(1 << 9)
+#घोषणा LP_DATA_FIFO_EMPTY			(1 << 10)
+#घोषणा HS_CTRL_FIFO_FULL			(1 << 16)
+#घोषणा HS_CTRL_FIFO_HALF_EMPTY			(1 << 17)
+#घोषणा HS_CTRL_FIFO_EMPTY			(1 << 18)
+#घोषणा LP_CTRL_FIFO_FULL			(1 << 24)
+#घोषणा LP_CTRL_FIFO_HALF_EMPTY			(1 << 25)
+#घोषणा LP_CTRL_FIFO_EMPTY			(1 << 26)
+#घोषणा DBI_FIFO_EMPTY				(1 << 27)
+#घोषणा DPI_FIFO_EMPTY				(1 << 28)
+#घोषणा HS_LS_DBI_ENABLE_REG		0xb078
+#घोषणा TXCLKESC_REG			0xb07c
+#घोषणा DPHY_PARAM_REG			0xb080
+#घोषणा DBI_BW_CTRL_REG			0xb084
+#घोषणा CLK_LANE_SWT_REG		0xb088
 
 /*
- * MIPI Adapter registers
+ * MIPI Adapter रेजिस्टरs
  */
-#define MIPI_CONTROL_REG		0xb104
-#define MIPI_2X_CLOCK_BITS			((1 << 0) | (1 << 1))
-#define MIPI_DATA_ADDRESS_REG		0xb108
-#define MIPI_DATA_LENGTH_REG		0xb10C
-#define MIPI_COMMAND_ADDRESS_REG	0xb110
-#define MIPI_COMMAND_LENGTH_REG		0xb114
-#define MIPI_READ_DATA_RETURN_REG0	0xb118
-#define MIPI_READ_DATA_RETURN_REG1	0xb11C
-#define MIPI_READ_DATA_RETURN_REG2	0xb120
-#define MIPI_READ_DATA_RETURN_REG3	0xb124
-#define MIPI_READ_DATA_RETURN_REG4	0xb128
-#define MIPI_READ_DATA_RETURN_REG5	0xb12C
-#define MIPI_READ_DATA_RETURN_REG6	0xb130
-#define MIPI_READ_DATA_RETURN_REG7	0xb134
-#define MIPI_READ_DATA_VALID_REG	0xb138
+#घोषणा MIPI_CONTROL_REG		0xb104
+#घोषणा MIPI_2X_CLOCK_BITS			((1 << 0) | (1 << 1))
+#घोषणा MIPI_DATA_ADDRESS_REG		0xb108
+#घोषणा MIPI_DATA_LENGTH_REG		0xb10C
+#घोषणा MIPI_COMMAND_ADDRESS_REG	0xb110
+#घोषणा MIPI_COMMAND_LENGTH_REG		0xb114
+#घोषणा MIPI_READ_DATA_RETURN_REG0	0xb118
+#घोषणा MIPI_READ_DATA_RETURN_REG1	0xb11C
+#घोषणा MIPI_READ_DATA_RETURN_REG2	0xb120
+#घोषणा MIPI_READ_DATA_RETURN_REG3	0xb124
+#घोषणा MIPI_READ_DATA_RETURN_REG4	0xb128
+#घोषणा MIPI_READ_DATA_RETURN_REG5	0xb12C
+#घोषणा MIPI_READ_DATA_RETURN_REG6	0xb130
+#घोषणा MIPI_READ_DATA_RETURN_REG7	0xb134
+#घोषणा MIPI_READ_DATA_VALID_REG	0xb138
 
 /* DBI COMMANDS */
-#define soft_reset			0x01
+#घोषणा soft_reset			0x01
 /*
- *	The display module performs a software reset.
- *	Registers are written with their SW Reset default values.
+ *	The display module perक्रमms a software reset.
+ *	Registers are written with their SW Reset शेष values.
  */
-#define get_power_mode			0x0a
+#घोषणा get_घातer_mode			0x0a
 /*
- *	The display module returns the current power mode
+ *	The display module वापसs the current घातer mode
  */
-#define get_address_mode		0x0b
+#घोषणा get_address_mode		0x0b
 /*
- *	The display module returns the current status.
+ *	The display module वापसs the current status.
  */
-#define get_pixel_format		0x0c
+#घोषणा get_pixel_क्रमmat		0x0c
 /*
- *	This command gets the pixel format for the RGB image data
- *	used by the interface.
+ *	This command माला_लो the pixel क्रमmat क्रम the RGB image data
+ *	used by the पूर्णांकerface.
  */
-#define get_display_mode		0x0d
+#घोषणा get_display_mode		0x0d
 /*
- *	The display module returns the Display Image Mode status.
+ *	The display module वापसs the Display Image Mode status.
  */
-#define get_signal_mode			0x0e
+#घोषणा get_संकेत_mode			0x0e
 /*
- *	The display module returns the Display Signal Mode.
+ *	The display module वापसs the Display Signal Mode.
  */
-#define get_diagnostic_result		0x0f
+#घोषणा get_diagnostic_result		0x0f
 /*
- *	The display module returns the self-diagnostic results following
+ *	The display module वापसs the self-diagnostic results following
  *	a Sleep Out command.
  */
-#define enter_sleep_mode		0x10
+#घोषणा enter_sleep_mode		0x10
 /*
  *	This command causes the display module to enter the Sleep mode.
  *	In this mode, all unnecessary blocks inside the display module are
- *	disabled except interface communication. This is the lowest power
+ *	disabled except पूर्णांकerface communication. This is the lowest घातer
  *	mode the display module supports.
  */
-#define exit_sleep_mode			0x11
+#घोषणा निकास_sleep_mode			0x11
 /*
- *	This command causes the display module to exit Sleep mode.
+ *	This command causes the display module to निकास Sleep mode.
  *	All blocks inside the display module are enabled.
  */
-#define enter_partial_mode		0x12
+#घोषणा enter_partial_mode		0x12
 /*
  *	This command causes the display module to enter the Partial Display
- *	Mode. The Partial Display Mode window is described by the
+ *	Mode. The Partial Display Mode winकरोw is described by the
  *	set_partial_area command.
  */
-#define enter_normal_mode		0x13
+#घोषणा enter_normal_mode		0x13
 /*
  *	This command causes the display module to enter the Normal mode.
  *	Normal Mode is defined as Partial Display mode and Scroll mode are off
  */
-#define exit_invert_mode		0x20
+#घोषणा निकास_invert_mode		0x20
 /*
  *	This command causes the display module to stop inverting the image
- *	data on the display device. The frame memory contents remain unchanged.
+ *	data on the display device. The frame memory contents reमुख्य unchanged.
  *	No status bits are changed.
  */
-#define enter_invert_mode		0x21
+#घोषणा enter_invert_mode		0x21
 /*
  *	This command causes the display module to invert the image data only on
- *	the display device. The frame memory contents remain unchanged.
+ *	the display device. The frame memory contents reमुख्य unchanged.
  *	No status bits are changed.
  */
-#define set_gamma_curve			0x26
+#घोषणा set_gamma_curve			0x26
 /*
- *	This command selects the desired gamma curve for the display device.
+ *	This command selects the desired gamma curve क्रम the display device.
  *	Four fixed gamma curves are defined in section DCS spec.
  */
-#define set_display_off			0x28
+#घोषणा set_display_off			0x28
 /* ************************************************************************* *\
 This command causes the display module to stop displaying the image data
-on the display device. The frame memory contents remain unchanged.
+on the display device. The frame memory contents reमुख्य unchanged.
 No status bits are changed.
 \* ************************************************************************* */
-#define set_display_on			0x29
+#घोषणा set_display_on			0x29
 /* ************************************************************************* *\
 This command causes the display module to start displaying the image data
-on the display device. The frame memory contents remain unchanged.
+on the display device. The frame memory contents reमुख्य unchanged.
 No status bits are changed.
 \* ************************************************************************* */
-#define set_column_address		0x2a
+#घोषणा set_column_address		0x2a
 /*
  *	This command defines the column extent of the frame memory accessed by
- *	the hostprocessor with the read_memory_continue and
- *	write_memory_continue commands.
+ *	the hostprocessor with the पढ़ो_memory_जारी and
+ *	ग_लिखो_memory_जारी commands.
  *	No status bits are changed.
  */
-#define set_page_addr			0x2b
+#घोषणा set_page_addr			0x2b
 /*
  *	This command defines the page extent of the frame memory accessed by
- *	the host processor with the write_memory_continue and
- *	read_memory_continue command.
+ *	the host processor with the ग_लिखो_memory_जारी and
+ *	पढ़ो_memory_जारी command.
  *	No status bits are changed.
  */
-#define write_mem_start			0x2c
+#घोषणा ग_लिखो_mem_start			0x2c
 /*
  *	This command transfers image data from the host processor to the
- *	display modules frame memory starting at the pixel location specified
+ *	display modules frame memory starting at the pixel location specअगरied
  *	by preceding set_column_address and set_page_address commands.
  */
-#define set_partial_area		0x30
+#घोषणा set_partial_area		0x30
 /*
  *	This command defines the Partial Display mode s display area.
  *	There are two parameters associated with this command, the first
  *	defines the Start Row (SR) and the second the End Row (ER). SR and ER
- *	refer to the Frame Memory Line Pointer.
+ *	refer to the Frame Memory Line Poपूर्णांकer.
  */
-#define set_scroll_area			0x33
+#घोषणा set_scroll_area			0x33
 /*
  *	This command defines the display modules Vertical Scrolling Area.
  */
-#define set_tear_off			0x34
+#घोषणा set_tear_off			0x34
 /*
  *	This command turns off the display modules Tearing Effect output
- *	signal on the TE signal line.
+ *	संकेत on the TE संकेत line.
  */
-#define set_tear_on			0x35
+#घोषणा set_tear_on			0x35
 /*
- *	This command turns on the display modules Tearing Effect output signal
- *	on the TE signal line.
+ *	This command turns on the display modules Tearing Effect output संकेत
+ *	on the TE संकेत line.
  */
-#define set_address_mode		0x36
+#घोषणा set_address_mode		0x36
 /*
- *	This command sets the data order for transfers from the host processor
+ *	This command sets the data order क्रम transfers from the host processor
  *	to display modules frame memory,bits B[7:5] and B3, and from the
  *	display modules frame memory to the display device, bits B[2:0] and B4.
  */
-#define set_scroll_start		0x37
+#घोषणा set_scroll_start		0x37
 /*
  *	This command sets the start of the vertical scrolling area in the frame
  *	memory. The vertical scrolling area is fully defined when this command
  *	is used with the set_scroll_area command The set_scroll_start command
- *	has one parameter, the Vertical Scroll Pointer. The VSP defines the
+ *	has one parameter, the Vertical Scroll Poपूर्णांकer. The VSP defines the
  *	line in the frame memory that is written to the display device as the
  *	first line of the vertical scroll area.
  */
-#define exit_idle_mode			0x38
+#घोषणा निकास_idle_mode			0x38
 /*
- *	This command causes the display module to exit Idle mode.
+ *	This command causes the display module to निकास Idle mode.
  */
-#define enter_idle_mode			0x39
+#घोषणा enter_idle_mode			0x39
 /*
  *	This command causes the display module to enter Idle Mode.
  *	In Idle Mode, color expression is reduced. Colors are shown on the
  *	display device using the MSB of each of the R, G and B color
  *	components in the frame memory
  */
-#define set_pixel_format		0x3a
+#घोषणा set_pixel_क्रमmat		0x3a
 /*
- *	This command sets the pixel format for the RGB image data used by the
- *	interface.
+ *	This command sets the pixel क्रमmat क्रम the RGB image data used by the
+ *	पूर्णांकerface.
  *	Bits D[6:4]  DPI Pixel Format Definition
  *	Bits D[2:0]  DBI Pixel Format Definition
  *	Bits D7 and D3 are not used.
  */
-#define DCS_PIXEL_FORMAT_3bpp		0x1
-#define DCS_PIXEL_FORMAT_8bpp		0x2
-#define DCS_PIXEL_FORMAT_12bpp		0x3
-#define DCS_PIXEL_FORMAT_16bpp		0x5
-#define DCS_PIXEL_FORMAT_18bpp		0x6
-#define DCS_PIXEL_FORMAT_24bpp		0x7
+#घोषणा DCS_PIXEL_FORMAT_3bpp		0x1
+#घोषणा DCS_PIXEL_FORMAT_8bpp		0x2
+#घोषणा DCS_PIXEL_FORMAT_12bpp		0x3
+#घोषणा DCS_PIXEL_FORMAT_16bpp		0x5
+#घोषणा DCS_PIXEL_FORMAT_18bpp		0x6
+#घोषणा DCS_PIXEL_FORMAT_24bpp		0x7
 
-#define write_mem_cont			0x3c
+#घोषणा ग_लिखो_mem_cont			0x3c
 
 /*
  *	This command transfers image data from the host processor to the
  *	display module's frame memory continuing from the pixel location
- *	following the previous write_memory_continue or write_memory_start
+ *	following the previous ग_लिखो_memory_जारी or ग_लिखो_memory_start
  *	command.
  */
-#define set_tear_scanline		0x44
+#घोषणा set_tear_scanline		0x44
 /*
- *	This command turns on the display modules Tearing Effect output signal
- *	on the TE signal line when the display module reaches line N.
+ *	This command turns on the display modules Tearing Effect output संकेत
+ *	on the TE संकेत line when the display module reaches line N.
  */
-#define get_scanline			0x45
+#घोषणा get_scanline			0x45
 /*
- *	The display module returns the current scanline, N, used to update the
+ *	The display module वापसs the current scanline, N, used to update the
  *	 display device. The total number of scanlines on a display device is
  *	defined as VSYNC + VBP + VACT + VFP.The first scanline is defined as
  *	the first line of V Sync and is denoted as Line 0.
- *	When in Sleep Mode, the value returned by get_scanline is undefined.
+ *	When in Sleep Mode, the value वापसed by get_scanline is undefined.
  */
 
 /* MCS or Generic COMMANDS */
 /* MCS/generic data type */
-#define GEN_SHORT_WRITE_0	0x03  /* generic short write, no parameters */
-#define GEN_SHORT_WRITE_1	0x13  /* generic short write, 1 parameters */
-#define GEN_SHORT_WRITE_2	0x23  /* generic short write, 2 parameters */
-#define GEN_READ_0		0x04  /* generic read, no parameters */
-#define GEN_READ_1		0x14  /* generic read, 1 parameters */
-#define GEN_READ_2		0x24  /* generic read, 2 parameters */
-#define GEN_LONG_WRITE		0x29  /* generic long write */
-#define MCS_SHORT_WRITE_0	0x05  /* MCS short write, no parameters */
-#define MCS_SHORT_WRITE_1	0x15  /* MCS short write, 1 parameters */
-#define MCS_READ		0x06  /* MCS read, no parameters */
-#define MCS_LONG_WRITE		0x39  /* MCS long write */
+#घोषणा GEN_SHORT_WRITE_0	0x03  /* generic लघु ग_लिखो, no parameters */
+#घोषणा GEN_SHORT_WRITE_1	0x13  /* generic लघु ग_लिखो, 1 parameters */
+#घोषणा GEN_SHORT_WRITE_2	0x23  /* generic लघु ग_लिखो, 2 parameters */
+#घोषणा GEN_READ_0		0x04  /* generic पढ़ो, no parameters */
+#घोषणा GEN_READ_1		0x14  /* generic पढ़ो, 1 parameters */
+#घोषणा GEN_READ_2		0x24  /* generic पढ़ो, 2 parameters */
+#घोषणा GEN_LONG_WRITE		0x29  /* generic दीर्घ ग_लिखो */
+#घोषणा MCS_SHORT_WRITE_0	0x05  /* MCS लघु ग_लिखो, no parameters */
+#घोषणा MCS_SHORT_WRITE_1	0x15  /* MCS लघु ग_लिखो, 1 parameters */
+#घोषणा MCS_READ		0x06  /* MCS पढ़ो, no parameters */
+#घोषणा MCS_LONG_WRITE		0x39  /* MCS दीर्घ ग_लिखो */
 /* MCS/generic commands */
 /* TPO MCS */
-#define write_display_profile		0x50
-#define write_display_brightness	0x51
-#define write_ctrl_display		0x53
-#define write_ctrl_cabc			0x55
-  #define UI_IMAGE		0x01
-  #define STILL_IMAGE		0x02
-  #define MOVING_IMAGE		0x03
-#define write_hysteresis		0x57
-#define write_gamma_setting		0x58
-#define write_cabc_min_bright		0x5e
-#define write_kbbc_profile		0x60
+#घोषणा ग_लिखो_display_profile		0x50
+#घोषणा ग_लिखो_display_brightness	0x51
+#घोषणा ग_लिखो_ctrl_display		0x53
+#घोषणा ग_लिखो_ctrl_cabc			0x55
+  #घोषणा UI_IMAGE		0x01
+  #घोषणा STILL_IMAGE		0x02
+  #घोषणा MOVING_IMAGE		0x03
+#घोषणा ग_लिखो_hysteresis		0x57
+#घोषणा ग_लिखो_gamma_setting		0x58
+#घोषणा ग_लिखो_cabc_min_bright		0x5e
+#घोषणा ग_लिखो_kbbc_profile		0x60
 /* TMD MCS */
-#define tmd_write_display_brightness 0x8c
+#घोषणा पंचांगd_ग_लिखो_display_brightness 0x8c
 
 /*
  *	This command is used to control ambient light, panel backlight
  *	brightness and gamma settings.
  */
-#define BRIGHT_CNTL_BLOCK_ON	(1 << 5)
-#define AMBIENT_LIGHT_SENSE_ON	(1 << 4)
-#define DISPLAY_DIMMING_ON	(1 << 3)
-#define BACKLIGHT_ON		(1 << 2)
-#define DISPLAY_BRIGHTNESS_AUTO	(1 << 1)
-#define GAMMA_AUTO		(1 << 0)
+#घोषणा BRIGHT_CNTL_BLOCK_ON	(1 << 5)
+#घोषणा AMBIENT_LIGHT_SENSE_ON	(1 << 4)
+#घोषणा DISPLAY_DIMMING_ON	(1 << 3)
+#घोषणा BACKLIGHT_ON		(1 << 2)
+#घोषणा DISPLAY_BRIGHTNESS_AUTO	(1 << 1)
+#घोषणा GAMMA_AUTO		(1 << 0)
 
 /* DCS Interface Pixel Formats */
-#define DCS_PIXEL_FORMAT_3BPP	0x1
-#define DCS_PIXEL_FORMAT_8BPP	0x2
-#define DCS_PIXEL_FORMAT_12BPP	0x3
-#define DCS_PIXEL_FORMAT_16BPP	0x5
-#define DCS_PIXEL_FORMAT_18BPP	0x6
-#define DCS_PIXEL_FORMAT_24BPP	0x7
+#घोषणा DCS_PIXEL_FORMAT_3BPP	0x1
+#घोषणा DCS_PIXEL_FORMAT_8BPP	0x2
+#घोषणा DCS_PIXEL_FORMAT_12BPP	0x3
+#घोषणा DCS_PIXEL_FORMAT_16BPP	0x5
+#घोषणा DCS_PIXEL_FORMAT_18BPP	0x6
+#घोषणा DCS_PIXEL_FORMAT_24BPP	0x7
 /* ONE PARAMETER READ DATA */
-#define addr_mode_data		0xfc
-#define diag_res_data		0x00
-#define disp_mode_data		0x23
-#define pxl_fmt_data		0x77
-#define pwr_mode_data		0x74
-#define sig_mode_data		0x00
+#घोषणा addr_mode_data		0xfc
+#घोषणा diag_res_data		0x00
+#घोषणा disp_mode_data		0x23
+#घोषणा pxl_fmt_data		0x77
+#घोषणा pwr_mode_data		0x74
+#घोषणा sig_mode_data		0x00
 /* TWO PARAMETERS READ DATA */
-#define scanline_data1		0xff
-#define scanline_data2		0xff
-#define NON_BURST_MODE_SYNC_PULSE	0x01	/* Non Burst Mode
+#घोषणा scanline_data1		0xff
+#घोषणा scanline_data2		0xff
+#घोषणा NON_BURST_MODE_SYNC_PULSE	0x01	/* Non Burst Mode
 						 * with Sync Pulse
 						 */
-#define NON_BURST_MODE_SYNC_EVENTS	0x02	/* Non Burst Mode
+#घोषणा NON_BURST_MODE_SYNC_EVENTS	0x02	/* Non Burst Mode
 						 * with Sync events
 						 */
-#define BURST_MODE			0x03	/* Burst Mode */
-#define DBI_COMMAND_BUFFER_SIZE		0x240   /* 0x32 */    /* 0x120 */
+#घोषणा BURST_MODE			0x03	/* Burst Mode */
+#घोषणा DBI_COMMAND_BUFFER_SIZE		0x240   /* 0x32 */    /* 0x120 */
 						/* Allocate at least
 						 * 0x100 Byte with 32
 						 * byte alignment
 						 */
-#define DBI_DATA_BUFFER_SIZE		0x120	/* Allocate at least
+#घोषणा DBI_DATA_BUFFER_SIZE		0x120	/* Allocate at least
 						 * 0x100 Byte with 32
 						 * byte alignment
 						 */
-#define DBI_CB_TIME_OUT			0xFFFF
+#घोषणा DBI_CB_TIME_OUT			0xFFFF
 
-#define GEN_FB_TIME_OUT			2000
+#घोषणा GEN_FB_TIME_OUT			2000
 
-#define SKU_83				0x01
-#define SKU_100				0x02
-#define SKU_100L			0x04
-#define SKU_BYPASS			0x08
+#घोषणा SKU_83				0x01
+#घोषणा SKU_100				0x02
+#घोषणा SKU_100L			0x04
+#घोषणा SKU_BYPASS			0x08
 
-/* Some handy macros for playing with bitfields. */
-#define PSB_MASK(high, low) (((1<<((high)-(low)+1))-1)<<(low))
-#define SET_FIELD(value, field) (((value) << field ## _SHIFT) & field ## _MASK)
-#define GET_FIELD(word, field) (((word)  & field ## _MASK) >> field ## _SHIFT)
+/* Some handy macros क्रम playing with bitfields. */
+#घोषणा PSB_MASK(high, low) (((1<<((high)-(low)+1))-1)<<(low))
+#घोषणा SET_FIELD(value, field) (((value) << field ## _SHIFT) & field ## _MASK)
+#घोषणा GET_FIELD(word, field) (((word)  & field ## _MASK) >> field ## _SHIFT)
 
-#define _PIPE(pipe, a, b) ((a) + (pipe)*((b)-(a)))
+#घोषणा _PIPE(pipe, a, b) ((a) + (pipe)*((b)-(a)))
 
 /* PCI config space */
 
-#define SB_PCKT         0x02100 /* cedarview */
+#घोषणा SB_PCKT         0x02100 /* cedarview */
 # define SB_OPCODE_MASK                         PSB_MASK(31, 16)
 # define SB_OPCODE_SHIFT                        16
 # define SB_OPCODE_READ                         0
@@ -1254,7 +1255,7 @@ No status bits are changed.
 # define SB_BYTE_ENABLE_SHIFT                   4
 # define SB_BUSY                                (1 << 0)
 
-#define DSPCLK_GATE_D		0x6200
+#घोषणा DSPCLK_GATE_D		0x6200
 # define VRHUNIT_CLOCK_GATE_DISABLE		(1 << 28) /* Fixed value on CDV */
 # define DPOUNIT_CLOCK_GATE_DISABLE		(1 << 11)
 # define DPIOUNIT_CLOCK_GATE_DISABLE		(1 << 6)
@@ -1263,229 +1264,229 @@ No status bits are changed.
 # define DPCUNIT_CLOCK_GATE_DISABLE		(1 << 24)
 # define DPLSUNIT_CLOCK_GATE_DISABLE		(1 << 13)
 
-#define RAMCLK_GATE_D		0x6210
+#घोषणा RAMCLK_GATE_D		0x6210
 
-/* 32-bit value read/written from the DPIO reg. */
-#define SB_DATA		0x02104 /* cedarview */
-/* 32-bit address of the DPIO reg to be read/written. */
-#define SB_ADDR		0x02108 /* cedarview */
-#define DPIO_CFG	0x02110 /* cedarview */
+/* 32-bit value पढ़ो/written from the DPIO reg. */
+#घोषणा SB_DATA		0x02104 /* cedarview */
+/* 32-bit address of the DPIO reg to be पढ़ो/written. */
+#घोषणा SB_ADDR		0x02108 /* cedarview */
+#घोषणा DPIO_CFG	0x02110 /* cedarview */
 # define DPIO_MODE_SELECT_1			(1 << 3)
 # define DPIO_MODE_SELECT_0			(1 << 2)
 # define DPIO_SFR_BYPASS			(1 << 1)
 /* reset is active low */
 # define DPIO_CMN_RESET_N			(1 << 0)
 
-/* Cedarview sideband registers */
-#define _SB_M_A			0x8008
-#define _SB_M_B			0x8028
-#define SB_M(pipe) _PIPE(pipe, _SB_M_A, _SB_M_B)
+/* Cedarview sideband रेजिस्टरs */
+#घोषणा _SB_M_A			0x8008
+#घोषणा _SB_M_B			0x8028
+#घोषणा SB_M(pipe) _PIPE(pipe, _SB_M_A, _SB_M_B)
 # define SB_M_DIVIDER_MASK			(0xFF << 24)
 # define SB_M_DIVIDER_SHIFT			24
 
-#define _SB_N_VCO_A		0x8014
-#define _SB_N_VCO_B		0x8034
-#define SB_N_VCO(pipe) _PIPE(pipe, _SB_N_VCO_A, _SB_N_VCO_B)
-#define SB_N_VCO_SEL_MASK			PSB_MASK(31, 30)
-#define SB_N_VCO_SEL_SHIFT			30
-#define SB_N_DIVIDER_MASK			PSB_MASK(29, 26)
-#define SB_N_DIVIDER_SHIFT			26
-#define SB_N_CB_TUNE_MASK			PSB_MASK(25, 24)
-#define SB_N_CB_TUNE_SHIFT			24
+#घोषणा _SB_N_VCO_A		0x8014
+#घोषणा _SB_N_VCO_B		0x8034
+#घोषणा SB_N_VCO(pipe) _PIPE(pipe, _SB_N_VCO_A, _SB_N_VCO_B)
+#घोषणा SB_N_VCO_SEL_MASK			PSB_MASK(31, 30)
+#घोषणा SB_N_VCO_SEL_SHIFT			30
+#घोषणा SB_N_DIVIDER_MASK			PSB_MASK(29, 26)
+#घोषणा SB_N_DIVIDER_SHIFT			26
+#घोषणा SB_N_CB_TUNE_MASK			PSB_MASK(25, 24)
+#घोषणा SB_N_CB_TUNE_SHIFT			24
 
-/* the bit 14:13 is used to select between the different reference clock for Pipe A/B */
-#define SB_REF_DPLLA		0x8010
-#define SB_REF_DPLLB		0x8030
-#define	REF_CLK_MASK		(0x3 << 13)
-#define REF_CLK_CORE		(0 << 13)
-#define REF_CLK_DPLL		(1 << 13)
-#define REF_CLK_DPLLA		(2 << 13)
+/* the bit 14:13 is used to select between the dअगरferent reference घड़ी क्रम Pipe A/B */
+#घोषणा SB_REF_DPLLA		0x8010
+#घोषणा SB_REF_DPLLB		0x8030
+#घोषणा	REF_CLK_MASK		(0x3 << 13)
+#घोषणा REF_CLK_CORE		(0 << 13)
+#घोषणा REF_CLK_DPLL		(1 << 13)
+#घोषणा REF_CLK_DPLLA		(2 << 13)
 /* For the DPLL B, it will use the reference clk from DPLL A when using (2 << 13) */
 
-#define _SB_REF_A		0x8018
-#define _SB_REF_B		0x8038
-#define SB_REF_SFR(pipe)	_PIPE(pipe, _SB_REF_A, _SB_REF_B)
+#घोषणा _SB_REF_A		0x8018
+#घोषणा _SB_REF_B		0x8038
+#घोषणा SB_REF_SFR(pipe)	_PIPE(pipe, _SB_REF_A, _SB_REF_B)
 
-#define _SB_P_A			0x801c
-#define _SB_P_B			0x803c
-#define SB_P(pipe) _PIPE(pipe, _SB_P_A, _SB_P_B)
-#define SB_P2_DIVIDER_MASK			PSB_MASK(31, 30)
-#define SB_P2_DIVIDER_SHIFT			30
-#define SB_P2_10				0 /* HDMI, DP, DAC */
-#define SB_P2_5				1 /* DAC */
-#define SB_P2_14				2 /* LVDS single */
-#define SB_P2_7				3 /* LVDS double */
-#define SB_P1_DIVIDER_MASK			PSB_MASK(15, 12)
-#define SB_P1_DIVIDER_SHIFT			12
+#घोषणा _SB_P_A			0x801c
+#घोषणा _SB_P_B			0x803c
+#घोषणा SB_P(pipe) _PIPE(pipe, _SB_P_A, _SB_P_B)
+#घोषणा SB_P2_DIVIDER_MASK			PSB_MASK(31, 30)
+#घोषणा SB_P2_DIVIDER_SHIFT			30
+#घोषणा SB_P2_10				0 /* HDMI, DP, DAC */
+#घोषणा SB_P2_5				1 /* DAC */
+#घोषणा SB_P2_14				2 /* LVDS single */
+#घोषणा SB_P2_7				3 /* LVDS द्विगुन */
+#घोषणा SB_P1_DIVIDER_MASK			PSB_MASK(15, 12)
+#घोषणा SB_P1_DIVIDER_SHIFT			12
 
-#define PSB_LANE0		0x120
-#define PSB_LANE1		0x220
-#define PSB_LANE2		0x2320
-#define PSB_LANE3		0x2420
+#घोषणा PSB_LANE0		0x120
+#घोषणा PSB_LANE1		0x220
+#घोषणा PSB_LANE2		0x2320
+#घोषणा PSB_LANE3		0x2420
 
-#define LANE_PLL_MASK		(0x7 << 20)
-#define LANE_PLL_ENABLE		(0x3 << 20)
-#define LANE_PLL_PIPE(p)	(((p) == 0) ? (1 << 21) : (0 << 21))
+#घोषणा LANE_PLL_MASK		(0x7 << 20)
+#घोषणा LANE_PLL_ENABLE		(0x3 << 20)
+#घोषणा LANE_PLL_PIPE(p)	(((p) == 0) ? (1 << 21) : (0 << 21))
 
-#define DP_B				0x64100
-#define DP_C				0x64200
+#घोषणा DP_B				0x64100
+#घोषणा DP_C				0x64200
 
-#define   DP_PORT_EN			(1 << 31)
-#define   DP_PIPEB_SELECT		(1 << 30)
-#define   DP_PIPE_MASK			(1 << 30)
+#घोषणा   DP_PORT_EN			(1 << 31)
+#घोषणा   DP_PIPEB_SELECT		(1 << 30)
+#घोषणा   DP_PIPE_MASK			(1 << 30)
 
-/* Link training mode - select a suitable mode for each stage */
-#define   DP_LINK_TRAIN_PAT_1		(0 << 28)
-#define   DP_LINK_TRAIN_PAT_2		(1 << 28)
-#define   DP_LINK_TRAIN_PAT_IDLE	(2 << 28)
-#define   DP_LINK_TRAIN_OFF		(3 << 28)
-#define   DP_LINK_TRAIN_MASK		(3 << 28)
-#define   DP_LINK_TRAIN_SHIFT		28
+/* Link training mode - select a suitable mode क्रम each stage */
+#घोषणा   DP_LINK_TRAIN_PAT_1		(0 << 28)
+#घोषणा   DP_LINK_TRAIN_PAT_2		(1 << 28)
+#घोषणा   DP_LINK_TRAIN_PAT_IDLE	(2 << 28)
+#घोषणा   DP_LINK_TRAIN_OFF		(3 << 28)
+#घोषणा   DP_LINK_TRAIN_MASK		(3 << 28)
+#घोषणा   DP_LINK_TRAIN_SHIFT		28
 
 /* Signal voltages. These are mostly controlled by the other end */
-#define   DP_VOLTAGE_0_4		(0 << 25)
-#define   DP_VOLTAGE_0_6		(1 << 25)
-#define   DP_VOLTAGE_0_8		(2 << 25)
-#define   DP_VOLTAGE_1_2		(3 << 25)
-#define   DP_VOLTAGE_MASK		(7 << 25)
-#define   DP_VOLTAGE_SHIFT		25
+#घोषणा   DP_VOLTAGE_0_4		(0 << 25)
+#घोषणा   DP_VOLTAGE_0_6		(1 << 25)
+#घोषणा   DP_VOLTAGE_0_8		(2 << 25)
+#घोषणा   DP_VOLTAGE_1_2		(3 << 25)
+#घोषणा   DP_VOLTAGE_MASK		(7 << 25)
+#घोषणा   DP_VOLTAGE_SHIFT		25
 
 /* Signal pre-emphasis levels, like voltages, the other end tells us what
  * they want
  */
-#define   DP_PRE_EMPHASIS_0		(0 << 22)
-#define   DP_PRE_EMPHASIS_3_5		(1 << 22)
-#define   DP_PRE_EMPHASIS_6		(2 << 22)
-#define   DP_PRE_EMPHASIS_9_5		(3 << 22)
-#define   DP_PRE_EMPHASIS_MASK		(7 << 22)
-#define   DP_PRE_EMPHASIS_SHIFT		22
+#घोषणा   DP_PRE_EMPHASIS_0		(0 << 22)
+#घोषणा   DP_PRE_EMPHASIS_3_5		(1 << 22)
+#घोषणा   DP_PRE_EMPHASIS_6		(2 << 22)
+#घोषणा   DP_PRE_EMPHASIS_9_5		(3 << 22)
+#घोषणा   DP_PRE_EMPHASIS_MASK		(7 << 22)
+#घोषणा   DP_PRE_EMPHASIS_SHIFT		22
 
 /* How many wires to use. I guess 3 was too hard */
-#define   DP_PORT_WIDTH_1		(0 << 19)
-#define   DP_PORT_WIDTH_2		(1 << 19)
-#define   DP_PORT_WIDTH_4		(3 << 19)
-#define   DP_PORT_WIDTH_MASK		(7 << 19)
+#घोषणा   DP_PORT_WIDTH_1		(0 << 19)
+#घोषणा   DP_PORT_WIDTH_2		(1 << 19)
+#घोषणा   DP_PORT_WIDTH_4		(3 << 19)
+#घोषणा   DP_PORT_WIDTH_MASK		(7 << 19)
 
 /* Mystic DPCD version 1.1 special mode */
-#define   DP_ENHANCED_FRAMING		(1 << 18)
+#घोषणा   DP_ENHANCED_FRAMING		(1 << 18)
 
 /** locked once port is enabled */
-#define   DP_PORT_REVERSAL		(1 << 15)
+#घोषणा   DP_PORT_REVERSAL		(1 << 15)
 
-/** sends the clock on lane 15 of the PEG for debug */
-#define   DP_CLOCK_OUTPUT_ENABLE	(1 << 13)
+/** sends the घड़ी on lane 15 of the PEG क्रम debug */
+#घोषणा   DP_CLOCK_OUTPUT_ENABLE	(1 << 13)
 
-#define   DP_SCRAMBLING_DISABLE		(1 << 12)
-#define   DP_SCRAMBLING_DISABLE_IRONLAKE	(1 << 7)
+#घोषणा   DP_SCRAMBLING_DISABLE		(1 << 12)
+#घोषणा   DP_SCRAMBLING_DISABLE_IRONLAKE	(1 << 7)
 
-/** limit RGB values to avoid confusing TVs */
-#define   DP_COLOR_RANGE_16_235		(1 << 8)
+/** limit RGB values to aव्योम confusing TVs */
+#घोषणा   DP_COLOR_RANGE_16_235		(1 << 8)
 
 /** Turn on the audio link */
-#define   DP_AUDIO_OUTPUT_ENABLE	(1 << 6)
+#घोषणा   DP_AUDIO_OUTPUT_ENABLE	(1 << 6)
 
 /** vs and hs sync polarity */
-#define   DP_SYNC_VS_HIGH		(1 << 4)
-#define   DP_SYNC_HS_HIGH		(1 << 3)
+#घोषणा   DP_SYNC_VS_HIGH		(1 << 4)
+#घोषणा   DP_SYNC_HS_HIGH		(1 << 3)
 
 /** A fantasy */
-#define   DP_DETECTED			(1 << 2)
+#घोषणा   DP_DETECTED			(1 << 2)
 
 /** The aux channel provides a way to talk to the
- * signal sink for DDC etc. Max packet size supported
+ * संकेत sink क्रम DDC etc. Max packet size supported
  * is 20 bytes in each direction, hence the 5 fixed
- * data registers
+ * data रेजिस्टरs
  */
-#define DPB_AUX_CH_CTL			0x64110
-#define DPB_AUX_CH_DATA1		0x64114
-#define DPB_AUX_CH_DATA2		0x64118
-#define DPB_AUX_CH_DATA3		0x6411c
-#define DPB_AUX_CH_DATA4		0x64120
-#define DPB_AUX_CH_DATA5		0x64124
+#घोषणा DPB_AUX_CH_CTL			0x64110
+#घोषणा DPB_AUX_CH_DATA1		0x64114
+#घोषणा DPB_AUX_CH_DATA2		0x64118
+#घोषणा DPB_AUX_CH_DATA3		0x6411c
+#घोषणा DPB_AUX_CH_DATA4		0x64120
+#घोषणा DPB_AUX_CH_DATA5		0x64124
 
-#define DPC_AUX_CH_CTL			0x64210
-#define DPC_AUX_CH_DATA1		0x64214
-#define DPC_AUX_CH_DATA2		0x64218
-#define DPC_AUX_CH_DATA3		0x6421c
-#define DPC_AUX_CH_DATA4		0x64220
-#define DPC_AUX_CH_DATA5		0x64224
+#घोषणा DPC_AUX_CH_CTL			0x64210
+#घोषणा DPC_AUX_CH_DATA1		0x64214
+#घोषणा DPC_AUX_CH_DATA2		0x64218
+#घोषणा DPC_AUX_CH_DATA3		0x6421c
+#घोषणा DPC_AUX_CH_DATA4		0x64220
+#घोषणा DPC_AUX_CH_DATA5		0x64224
 
-#define   DP_AUX_CH_CTL_SEND_BUSY	    (1 << 31)
-#define   DP_AUX_CH_CTL_DONE		    (1 << 30)
-#define   DP_AUX_CH_CTL_INTERRUPT	    (1 << 29)
-#define   DP_AUX_CH_CTL_TIME_OUT_ERROR	    (1 << 28)
-#define   DP_AUX_CH_CTL_TIME_OUT_400us	    (0 << 26)
-#define   DP_AUX_CH_CTL_TIME_OUT_600us	    (1 << 26)
-#define   DP_AUX_CH_CTL_TIME_OUT_800us	    (2 << 26)
-#define   DP_AUX_CH_CTL_TIME_OUT_1600us	    (3 << 26)
-#define   DP_AUX_CH_CTL_TIME_OUT_MASK	    (3 << 26)
-#define   DP_AUX_CH_CTL_RECEIVE_ERROR	    (1 << 25)
-#define   DP_AUX_CH_CTL_MESSAGE_SIZE_MASK    (0x1f << 20)
-#define   DP_AUX_CH_CTL_MESSAGE_SIZE_SHIFT   20
-#define   DP_AUX_CH_CTL_PRECHARGE_2US_MASK   (0xf << 16)
-#define   DP_AUX_CH_CTL_PRECHARGE_2US_SHIFT  16
-#define   DP_AUX_CH_CTL_AUX_AKSV_SELECT	    (1 << 15)
-#define   DP_AUX_CH_CTL_MANCHESTER_TEST	    (1 << 14)
-#define   DP_AUX_CH_CTL_SYNC_TEST	    (1 << 13)
-#define   DP_AUX_CH_CTL_DEGLITCH_TEST	    (1 << 12)
-#define   DP_AUX_CH_CTL_PRECHARGE_TEST	    (1 << 11)
-#define   DP_AUX_CH_CTL_BIT_CLOCK_2X_MASK    (0x7ff)
-#define   DP_AUX_CH_CTL_BIT_CLOCK_2X_SHIFT   0
+#घोषणा   DP_AUX_CH_CTL_SEND_BUSY	    (1 << 31)
+#घोषणा   DP_AUX_CH_CTL_DONE		    (1 << 30)
+#घोषणा   DP_AUX_CH_CTL_INTERRUPT	    (1 << 29)
+#घोषणा   DP_AUX_CH_CTL_TIME_OUT_ERROR	    (1 << 28)
+#घोषणा   DP_AUX_CH_CTL_TIME_OUT_400us	    (0 << 26)
+#घोषणा   DP_AUX_CH_CTL_TIME_OUT_600us	    (1 << 26)
+#घोषणा   DP_AUX_CH_CTL_TIME_OUT_800us	    (2 << 26)
+#घोषणा   DP_AUX_CH_CTL_TIME_OUT_1600us	    (3 << 26)
+#घोषणा   DP_AUX_CH_CTL_TIME_OUT_MASK	    (3 << 26)
+#घोषणा   DP_AUX_CH_CTL_RECEIVE_ERROR	    (1 << 25)
+#घोषणा   DP_AUX_CH_CTL_MESSAGE_SIZE_MASK    (0x1f << 20)
+#घोषणा   DP_AUX_CH_CTL_MESSAGE_SIZE_SHIFT   20
+#घोषणा   DP_AUX_CH_CTL_PRECHARGE_2US_MASK   (0xf << 16)
+#घोषणा   DP_AUX_CH_CTL_PRECHARGE_2US_SHIFT  16
+#घोषणा   DP_AUX_CH_CTL_AUX_AKSV_SELECT	    (1 << 15)
+#घोषणा   DP_AUX_CH_CTL_MANCHESTER_TEST	    (1 << 14)
+#घोषणा   DP_AUX_CH_CTL_SYNC_TEST	    (1 << 13)
+#घोषणा   DP_AUX_CH_CTL_DEGLITCH_TEST	    (1 << 12)
+#घोषणा   DP_AUX_CH_CTL_PRECHARGE_TEST	    (1 << 11)
+#घोषणा   DP_AUX_CH_CTL_BIT_CLOCK_2X_MASK    (0x7ff)
+#घोषणा   DP_AUX_CH_CTL_BIT_CLOCK_2X_SHIFT   0
 
 /*
- * Computing GMCH M and N values for the Display Port link
+ * Computing GMCH M and N values क्रम the Display Port link
  *
- * GMCH M/N = dot clock * bytes per pixel / ls_clk * # of lanes
+ * GMCH M/N = करोt घड़ी * bytes per pixel / ls_clk * # of lanes
  *
- * ls_clk (we assume) is the DP link clock (1.62 or 2.7 GHz)
+ * ls_clk (we assume) is the DP link घड़ी (1.62 or 2.7 GHz)
  *
- * The GMCH value is used internally
+ * The GMCH value is used पूर्णांकernally
  *
  * bytes_per_pixel is the number of bytes coming out of the plane,
- * which is after the LUTs, so we want the bytes for our color format.
- * For our current usage, this is always 3, one byte for R, G and B.
+ * which is after the LUTs, so we want the bytes क्रम our color क्रमmat.
+ * For our current usage, this is always 3, one byte क्रम R, G and B.
  */
 
-#define _PIPEA_GMCH_DATA_M			0x70050
-#define _PIPEB_GMCH_DATA_M			0x71050
+#घोषणा _PIPEA_GMCH_DATA_M			0x70050
+#घोषणा _PIPEB_GMCH_DATA_M			0x71050
 
-/* Transfer unit size for display port - 1, default is 0x3f (for TU size 64) */
-#define   PIPE_GMCH_DATA_M_TU_SIZE_MASK		(0x3f << 25)
-#define   PIPE_GMCH_DATA_M_TU_SIZE_SHIFT	25
+/* Transfer unit size क्रम display port - 1, शेष is 0x3f (क्रम TU size 64) */
+#घोषणा   PIPE_GMCH_DATA_M_TU_SIZE_MASK		(0x3f << 25)
+#घोषणा   PIPE_GMCH_DATA_M_TU_SIZE_SHIFT	25
 
-#define   PIPE_GMCH_DATA_M_MASK			(0xffffff)
+#घोषणा   PIPE_GMCH_DATA_M_MASK			(0xffffff)
 
-#define _PIPEA_GMCH_DATA_N			0x70054
-#define _PIPEB_GMCH_DATA_N			0x71054
-#define   PIPE_GMCH_DATA_N_MASK			(0xffffff)
+#घोषणा _PIPEA_GMCH_DATA_N			0x70054
+#घोषणा _PIPEB_GMCH_DATA_N			0x71054
+#घोषणा   PIPE_GMCH_DATA_N_MASK			(0xffffff)
 
 /*
- * Computing Link M and N values for the Display Port link
+ * Computing Link M and N values क्रम the Display Port link
  *
- * Link M / N = pixel_clock / ls_clk
+ * Link M / N = pixel_घड़ी / ls_clk
  *
- * (the DP spec calls pixel_clock the 'strm_clk')
+ * (the DP spec calls pixel_घड़ी the 'strm_clk')
  *
  * The Link value is transmitted in the Main Stream
  * Attributes and VB-ID.
  */
 
-#define _PIPEA_DP_LINK_M				0x70060
-#define _PIPEB_DP_LINK_M				0x71060
-#define   PIPEA_DP_LINK_M_MASK			(0xffffff)
+#घोषणा _PIPEA_DP_LINK_M				0x70060
+#घोषणा _PIPEB_DP_LINK_M				0x71060
+#घोषणा   PIPEA_DP_LINK_M_MASK			(0xffffff)
 
-#define _PIPEA_DP_LINK_N				0x70064
-#define _PIPEB_DP_LINK_N				0x71064
-#define   PIPEA_DP_LINK_N_MASK			(0xffffff)
+#घोषणा _PIPEA_DP_LINK_N				0x70064
+#घोषणा _PIPEB_DP_LINK_N				0x71064
+#घोषणा   PIPEA_DP_LINK_N_MASK			(0xffffff)
 
-#define PIPE_GMCH_DATA_M(pipe) _PIPE(pipe, _PIPEA_GMCH_DATA_M, _PIPEB_GMCH_DATA_M)
-#define PIPE_GMCH_DATA_N(pipe) _PIPE(pipe, _PIPEA_GMCH_DATA_N, _PIPEB_GMCH_DATA_N)
-#define PIPE_DP_LINK_M(pipe) _PIPE(pipe, _PIPEA_DP_LINK_M, _PIPEB_DP_LINK_M)
-#define PIPE_DP_LINK_N(pipe) _PIPE(pipe, _PIPEA_DP_LINK_N, _PIPEB_DP_LINK_N)
+#घोषणा PIPE_GMCH_DATA_M(pipe) _PIPE(pipe, _PIPEA_GMCH_DATA_M, _PIPEB_GMCH_DATA_M)
+#घोषणा PIPE_GMCH_DATA_N(pipe) _PIPE(pipe, _PIPEA_GMCH_DATA_N, _PIPEB_GMCH_DATA_N)
+#घोषणा PIPE_DP_LINK_M(pipe) _PIPE(pipe, _PIPEA_DP_LINK_M, _PIPEB_DP_LINK_M)
+#घोषणा PIPE_DP_LINK_N(pipe) _PIPE(pipe, _PIPEA_DP_LINK_N, _PIPEB_DP_LINK_N)
 
-#define   PIPE_BPC_MASK				(7 << 5)
-#define   PIPE_8BPC				(0 << 5)
-#define   PIPE_10BPC				(1 << 5)
-#define   PIPE_6BPC				(2 << 5)
+#घोषणा   PIPE_BPC_MASK				(7 << 5)
+#घोषणा   PIPE_8BPC				(0 << 5)
+#घोषणा   PIPE_10BPC				(1 << 5)
+#घोषणा   PIPE_6BPC				(2 << 5)
 
-#endif
+#पूर्ण_अगर

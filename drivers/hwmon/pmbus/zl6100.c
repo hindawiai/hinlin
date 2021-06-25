@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Hardware monitoring driver for ZL6100 and compatibles
+ * Hardware monitoring driver क्रम ZL6100 and compatibles
  *
  * Copyright (c) 2011 Ericsson AB.
  * Copyright (c) 2012 Guenter Roeck
  */
 
-#include <linux/bitops.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/ktime.h>
-#include <linux/delay.h>
-#include "pmbus.h"
+#समावेश <linux/bitops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/delay.h>
+#समावेश "pmbus.h"
 
-enum chips { zl2004, zl2005, zl2006, zl2008, zl2105, zl2106, zl6100, zl6105,
-	     zl9101, zl9117 };
+क्रमागत chips अणु zl2004, zl2005, zl2006, zl2008, zl2105, zl2106, zl6100, zl6105,
+	     zl9101, zl9117 पूर्ण;
 
-struct zl6100_data {
-	int id;
-	ktime_t access;		/* chip access time */
-	int delay;		/* Delay between chip accesses in uS */
-	struct pmbus_driver_info info;
-};
+काष्ठा zl6100_data अणु
+	पूर्णांक id;
+	kसमय_प्रकार access;		/* chip access समय */
+	पूर्णांक delay;		/* Delay between chip accesses in uS */
+	काष्ठा pmbus_driver_info info;
+पूर्ण;
 
-#define to_zl6100_data(x)  container_of(x, struct zl6100_data, info)
+#घोषणा to_zl6100_data(x)  container_of(x, काष्ठा zl6100_data, info)
 
-#define ZL6100_MFR_CONFIG		0xd0
-#define ZL6100_DEVICE_ID		0xe4
+#घोषणा ZL6100_MFR_CONFIG		0xd0
+#घोषणा ZL6100_DEVICE_ID		0xe4
 
-#define ZL6100_MFR_XTEMP_ENABLE		BIT(7)
+#घोषणा ZL6100_MFR_XTEMP_ENABLE		BIT(7)
 
-#define MFR_VMON_OV_FAULT_LIMIT		0xf5
-#define MFR_VMON_UV_FAULT_LIMIT		0xf6
-#define MFR_READ_VMON			0xf7
+#घोषणा MFR_VMON_OV_FAULT_LIMIT		0xf5
+#घोषणा MFR_VMON_UV_FAULT_LIMIT		0xf6
+#घोषणा MFR_READ_VMON			0xf7
 
-#define VMON_UV_WARNING			BIT(5)
-#define VMON_OV_WARNING			BIT(4)
-#define VMON_UV_FAULT			BIT(1)
-#define VMON_OV_FAULT			BIT(0)
+#घोषणा VMON_UV_WARNING			BIT(5)
+#घोषणा VMON_OV_WARNING			BIT(4)
+#घोषणा VMON_UV_FAULT			BIT(1)
+#घोषणा VMON_OV_FAULT			BIT(0)
 
-#define ZL6100_WAIT_TIME		1000	/* uS	*/
+#घोषणा ZL6100_WAIT_TIME		1000	/* uS	*/
 
-static ushort delay = ZL6100_WAIT_TIME;
-module_param(delay, ushort, 0644);
+अटल uलघु delay = ZL6100_WAIT_TIME;
+module_param(delay, uलघु, 0644);
 MODULE_PARM_DESC(delay, "Delay between chip accesses in uS");
 
 /* Convert linear sensor value to milli-units */
-static long zl6100_l2d(s16 l)
-{
+अटल दीर्घ zl6100_l2d(s16 l)
+अणु
 	s16 exponent;
 	s32 mantissa;
-	long val;
+	दीर्घ val;
 
 	exponent = l >> 11;
 	mantissa = ((s16)((l & 0x7ff) << 5)) >> 5;
@@ -64,299 +65,299 @@ static long zl6100_l2d(s16 l)
 	/* scale result to milli-units */
 	val = val * 1000L;
 
-	if (exponent >= 0)
+	अगर (exponent >= 0)
 		val <<= exponent;
-	else
+	अन्यथा
 		val >>= -exponent;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-#define MAX_MANTISSA	(1023 * 1000)
-#define MIN_MANTISSA	(511 * 1000)
+#घोषणा MAX_MANTISSA	(1023 * 1000)
+#घोषणा MIN_MANTISSA	(511 * 1000)
 
-static u16 zl6100_d2l(long val)
-{
+अटल u16 zl6100_d2l(दीर्घ val)
+अणु
 	s16 exponent = 0, mantissa;
 	bool negative = false;
 
-	/* simple case */
-	if (val == 0)
-		return 0;
+	/* simple हाल */
+	अगर (val == 0)
+		वापस 0;
 
-	if (val < 0) {
+	अगर (val < 0) अणु
 		negative = true;
 		val = -val;
-	}
+	पूर्ण
 
-	/* Reduce large mantissa until it fits into 10 bit */
-	while (val >= MAX_MANTISSA && exponent < 15) {
+	/* Reduce large mantissa until it fits पूर्णांकo 10 bit */
+	जबतक (val >= MAX_MANTISSA && exponent < 15) अणु
 		exponent++;
 		val >>= 1;
-	}
+	पूर्ण
 	/* Increase small mantissa to improve precision */
-	while (val < MIN_MANTISSA && exponent > -15) {
+	जबतक (val < MIN_MANTISSA && exponent > -15) अणु
 		exponent--;
 		val <<= 1;
-	}
+	पूर्ण
 
 	/* Convert mantissa from milli-units to units */
 	mantissa = DIV_ROUND_CLOSEST(val, 1000);
 
 	/* Ensure that resulting number is within range */
-	if (mantissa > 0x3ff)
+	अगर (mantissa > 0x3ff)
 		mantissa = 0x3ff;
 
 	/* restore sign */
-	if (negative)
+	अगर (negative)
 		mantissa = -mantissa;
 
 	/* Convert to 5 bit exponent, 11 bit mantissa */
-	return (mantissa & 0x7ff) | ((exponent << 11) & 0xf800);
-}
+	वापस (mantissa & 0x7ff) | ((exponent << 11) & 0xf800);
+पूर्ण
 
 /* Some chips need a delay between accesses */
-static inline void zl6100_wait(const struct zl6100_data *data)
-{
-	if (data->delay) {
-		s64 delta = ktime_us_delta(ktime_get(), data->access);
-		if (delta < data->delay)
+अटल अंतरभूत व्योम zl6100_रुको(स्थिर काष्ठा zl6100_data *data)
+अणु
+	अगर (data->delay) अणु
+		s64 delta = kसमय_us_delta(kसमय_get(), data->access);
+		अगर (delta < data->delay)
 			udelay(data->delay - delta);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int zl6100_read_word_data(struct i2c_client *client, int page,
-				 int phase, int reg)
-{
-	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
-	struct zl6100_data *data = to_zl6100_data(info);
-	int ret, vreg;
+अटल पूर्णांक zl6100_पढ़ो_word_data(काष्ठा i2c_client *client, पूर्णांक page,
+				 पूर्णांक phase, पूर्णांक reg)
+अणु
+	स्थिर काष्ठा pmbus_driver_info *info = pmbus_get_driver_info(client);
+	काष्ठा zl6100_data *data = to_zl6100_data(info);
+	पूर्णांक ret, vreg;
 
-	if (page > 0)
-		return -ENXIO;
+	अगर (page > 0)
+		वापस -ENXIO;
 
-	if (data->id == zl2005) {
+	अगर (data->id == zl2005) अणु
 		/*
-		 * Limit register detection is not reliable on ZL2005.
-		 * Make sure registers are not erroneously detected.
+		 * Limit रेजिस्टर detection is not reliable on ZL2005.
+		 * Make sure रेजिस्टरs are not erroneously detected.
 		 */
-		switch (reg) {
-		case PMBUS_VOUT_OV_WARN_LIMIT:
-		case PMBUS_VOUT_UV_WARN_LIMIT:
-		case PMBUS_IOUT_OC_WARN_LIMIT:
-			return -ENXIO;
-		}
-	}
+		चयन (reg) अणु
+		हाल PMBUS_VOUT_OV_WARN_LIMIT:
+		हाल PMBUS_VOUT_UV_WARN_LIMIT:
+		हाल PMBUS_IOUT_OC_WARN_LIMIT:
+			वापस -ENXIO;
+		पूर्ण
+	पूर्ण
 
-	switch (reg) {
-	case PMBUS_VIRT_READ_VMON:
+	चयन (reg) अणु
+	हाल PMBUS_VIRT_READ_VMON:
 		vreg = MFR_READ_VMON;
-		break;
-	case PMBUS_VIRT_VMON_OV_WARN_LIMIT:
-	case PMBUS_VIRT_VMON_OV_FAULT_LIMIT:
+		अवरोध;
+	हाल PMBUS_VIRT_VMON_OV_WARN_LIMIT:
+	हाल PMBUS_VIRT_VMON_OV_FAULT_LIMIT:
 		vreg = MFR_VMON_OV_FAULT_LIMIT;
-		break;
-	case PMBUS_VIRT_VMON_UV_WARN_LIMIT:
-	case PMBUS_VIRT_VMON_UV_FAULT_LIMIT:
+		अवरोध;
+	हाल PMBUS_VIRT_VMON_UV_WARN_LIMIT:
+	हाल PMBUS_VIRT_VMON_UV_FAULT_LIMIT:
 		vreg = MFR_VMON_UV_FAULT_LIMIT;
-		break;
-	default:
-		if (reg >= PMBUS_VIRT_BASE)
-			return -ENXIO;
+		अवरोध;
+	शेष:
+		अगर (reg >= PMBUS_VIRT_BASE)
+			वापस -ENXIO;
 		vreg = reg;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	zl6100_wait(data);
-	ret = pmbus_read_word_data(client, page, phase, vreg);
-	data->access = ktime_get();
-	if (ret < 0)
-		return ret;
+	zl6100_रुको(data);
+	ret = pmbus_पढ़ो_word_data(client, page, phase, vreg);
+	data->access = kसमय_get();
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (reg) {
-	case PMBUS_VIRT_VMON_OV_WARN_LIMIT:
+	चयन (reg) अणु
+	हाल PMBUS_VIRT_VMON_OV_WARN_LIMIT:
 		ret = zl6100_d2l(DIV_ROUND_CLOSEST(zl6100_l2d(ret) * 9, 10));
-		break;
-	case PMBUS_VIRT_VMON_UV_WARN_LIMIT:
+		अवरोध;
+	हाल PMBUS_VIRT_VMON_UV_WARN_LIMIT:
 		ret = zl6100_d2l(DIV_ROUND_CLOSEST(zl6100_l2d(ret) * 11, 10));
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int zl6100_read_byte_data(struct i2c_client *client, int page, int reg)
-{
-	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
-	struct zl6100_data *data = to_zl6100_data(info);
-	int ret, status;
+अटल पूर्णांक zl6100_पढ़ो_byte_data(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक reg)
+अणु
+	स्थिर काष्ठा pmbus_driver_info *info = pmbus_get_driver_info(client);
+	काष्ठा zl6100_data *data = to_zl6100_data(info);
+	पूर्णांक ret, status;
 
-	if (page > 0)
-		return -ENXIO;
+	अगर (page > 0)
+		वापस -ENXIO;
 
-	zl6100_wait(data);
+	zl6100_रुको(data);
 
-	switch (reg) {
-	case PMBUS_VIRT_STATUS_VMON:
-		ret = pmbus_read_byte_data(client, 0,
+	चयन (reg) अणु
+	हाल PMBUS_VIRT_STATUS_VMON:
+		ret = pmbus_पढ़ो_byte_data(client, 0,
 					   PMBUS_STATUS_MFR_SPECIFIC);
-		if (ret < 0)
-			break;
+		अगर (ret < 0)
+			अवरोध;
 
 		status = 0;
-		if (ret & VMON_UV_WARNING)
+		अगर (ret & VMON_UV_WARNING)
 			status |= PB_VOLTAGE_UV_WARNING;
-		if (ret & VMON_OV_WARNING)
+		अगर (ret & VMON_OV_WARNING)
 			status |= PB_VOLTAGE_OV_WARNING;
-		if (ret & VMON_UV_FAULT)
+		अगर (ret & VMON_UV_FAULT)
 			status |= PB_VOLTAGE_UV_FAULT;
-		if (ret & VMON_OV_FAULT)
+		अगर (ret & VMON_OV_FAULT)
 			status |= PB_VOLTAGE_OV_FAULT;
 		ret = status;
-		break;
-	default:
-		ret = pmbus_read_byte_data(client, page, reg);
-		break;
-	}
-	data->access = ktime_get();
+		अवरोध;
+	शेष:
+		ret = pmbus_पढ़ो_byte_data(client, page, reg);
+		अवरोध;
+	पूर्ण
+	data->access = kसमय_get();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int zl6100_write_word_data(struct i2c_client *client, int page, int reg,
+अटल पूर्णांक zl6100_ग_लिखो_word_data(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक reg,
 				  u16 word)
-{
-	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
-	struct zl6100_data *data = to_zl6100_data(info);
-	int ret, vreg;
+अणु
+	स्थिर काष्ठा pmbus_driver_info *info = pmbus_get_driver_info(client);
+	काष्ठा zl6100_data *data = to_zl6100_data(info);
+	पूर्णांक ret, vreg;
 
-	if (page > 0)
-		return -ENXIO;
+	अगर (page > 0)
+		वापस -ENXIO;
 
-	switch (reg) {
-	case PMBUS_VIRT_VMON_OV_WARN_LIMIT:
+	चयन (reg) अणु
+	हाल PMBUS_VIRT_VMON_OV_WARN_LIMIT:
 		word = zl6100_d2l(DIV_ROUND_CLOSEST(zl6100_l2d(word) * 10, 9));
 		vreg = MFR_VMON_OV_FAULT_LIMIT;
 		pmbus_clear_cache(client);
-		break;
-	case PMBUS_VIRT_VMON_OV_FAULT_LIMIT:
+		अवरोध;
+	हाल PMBUS_VIRT_VMON_OV_FAULT_LIMIT:
 		vreg = MFR_VMON_OV_FAULT_LIMIT;
 		pmbus_clear_cache(client);
-		break;
-	case PMBUS_VIRT_VMON_UV_WARN_LIMIT:
+		अवरोध;
+	हाल PMBUS_VIRT_VMON_UV_WARN_LIMIT:
 		word = zl6100_d2l(DIV_ROUND_CLOSEST(zl6100_l2d(word) * 10, 11));
 		vreg = MFR_VMON_UV_FAULT_LIMIT;
 		pmbus_clear_cache(client);
-		break;
-	case PMBUS_VIRT_VMON_UV_FAULT_LIMIT:
+		अवरोध;
+	हाल PMBUS_VIRT_VMON_UV_FAULT_LIMIT:
 		vreg = MFR_VMON_UV_FAULT_LIMIT;
 		pmbus_clear_cache(client);
-		break;
-	default:
-		if (reg >= PMBUS_VIRT_BASE)
-			return -ENXIO;
+		अवरोध;
+	शेष:
+		अगर (reg >= PMBUS_VIRT_BASE)
+			वापस -ENXIO;
 		vreg = reg;
-	}
+	पूर्ण
 
-	zl6100_wait(data);
-	ret = pmbus_write_word_data(client, page, vreg, word);
-	data->access = ktime_get();
+	zl6100_रुको(data);
+	ret = pmbus_ग_लिखो_word_data(client, page, vreg, word);
+	data->access = kसमय_get();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int zl6100_write_byte(struct i2c_client *client, int page, u8 value)
-{
-	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
-	struct zl6100_data *data = to_zl6100_data(info);
-	int ret;
+अटल पूर्णांक zl6100_ग_लिखो_byte(काष्ठा i2c_client *client, पूर्णांक page, u8 value)
+अणु
+	स्थिर काष्ठा pmbus_driver_info *info = pmbus_get_driver_info(client);
+	काष्ठा zl6100_data *data = to_zl6100_data(info);
+	पूर्णांक ret;
 
-	if (page > 0)
-		return -ENXIO;
+	अगर (page > 0)
+		वापस -ENXIO;
 
-	zl6100_wait(data);
-	ret = pmbus_write_byte(client, page, value);
-	data->access = ktime_get();
+	zl6100_रुको(data);
+	ret = pmbus_ग_लिखो_byte(client, page, value);
+	data->access = kसमय_get();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct i2c_device_id zl6100_id[] = {
-	{"bmr450", zl2005},
-	{"bmr451", zl2005},
-	{"bmr462", zl2008},
-	{"bmr463", zl2008},
-	{"bmr464", zl2008},
-	{"zl2004", zl2004},
-	{"zl2005", zl2005},
-	{"zl2006", zl2006},
-	{"zl2008", zl2008},
-	{"zl2105", zl2105},
-	{"zl2106", zl2106},
-	{"zl6100", zl6100},
-	{"zl6105", zl6105},
-	{"zl9101", zl9101},
-	{"zl9117", zl9117},
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id zl6100_id[] = अणु
+	अणु"bmr450", zl2005पूर्ण,
+	अणु"bmr451", zl2005पूर्ण,
+	अणु"bmr462", zl2008पूर्ण,
+	अणु"bmr463", zl2008पूर्ण,
+	अणु"bmr464", zl2008पूर्ण,
+	अणु"zl2004", zl2004पूर्ण,
+	अणु"zl2005", zl2005पूर्ण,
+	अणु"zl2006", zl2006पूर्ण,
+	अणु"zl2008", zl2008पूर्ण,
+	अणु"zl2105", zl2105पूर्ण,
+	अणु"zl2106", zl2106पूर्ण,
+	अणु"zl6100", zl6100पूर्ण,
+	अणु"zl6105", zl6105पूर्ण,
+	अणु"zl9101", zl9101पूर्ण,
+	अणु"zl9117", zl9117पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, zl6100_id);
 
-static int zl6100_probe(struct i2c_client *client)
-{
-	int ret;
-	struct zl6100_data *data;
-	struct pmbus_driver_info *info;
+अटल पूर्णांक zl6100_probe(काष्ठा i2c_client *client)
+अणु
+	पूर्णांक ret;
+	काष्ठा zl6100_data *data;
+	काष्ठा pmbus_driver_info *info;
 	u8 device_id[I2C_SMBUS_BLOCK_MAX + 1];
-	const struct i2c_device_id *mid;
+	स्थिर काष्ठा i2c_device_id *mid;
 
-	if (!i2c_check_functionality(client->adapter,
+	अगर (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_READ_WORD_DATA
 				     | I2C_FUNC_SMBUS_READ_BLOCK_DATA))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	ret = i2c_smbus_read_block_data(client, ZL6100_DEVICE_ID,
+	ret = i2c_smbus_पढ़ो_block_data(client, ZL6100_DEVICE_ID,
 					device_id);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Failed to read device ID\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	device_id[ret] = '\0';
 	dev_info(&client->dev, "Device ID %s\n", device_id);
 
-	mid = NULL;
-	for (mid = zl6100_id; mid->name[0]; mid++) {
-		if (!strncasecmp(mid->name, device_id, strlen(mid->name)))
-			break;
-	}
-	if (!mid->name[0]) {
+	mid = शून्य;
+	क्रम (mid = zl6100_id; mid->name[0]; mid++) अणु
+		अगर (!strnहालcmp(mid->name, device_id, म_माप(mid->name)))
+			अवरोध;
+	पूर्ण
+	अगर (!mid->name[0]) अणु
 		dev_err(&client->dev, "Unsupported device\n");
-		return -ENODEV;
-	}
-	if (strcmp(client->name, mid->name) != 0)
+		वापस -ENODEV;
+	पूर्ण
+	अगर (म_भेद(client->name, mid->name) != 0)
 		dev_notice(&client->dev,
 			   "Device mismatch: Configured %s, detected %s\n",
 			   client->name, mid->name);
 
-	data = devm_kzalloc(&client->dev, sizeof(struct zl6100_data),
+	data = devm_kzalloc(&client->dev, माप(काष्ठा zl6100_data),
 			    GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->id = mid->driver_data;
 
 	/*
-	 * According to information from the chip vendor, all currently
-	 * supported chips are known to require a wait time between I2C
+	 * According to inक्रमmation from the chip venकरोr, all currently
+	 * supported chips are known to require a रुको समय between I2C
 	 * accesses.
 	 */
 	data->delay = delay;
 
 	/*
-	 * Since there was a direct I2C device access above, wait before
+	 * Since there was a direct I2C device access above, रुको beक्रमe
 	 * accessing the chip again.
 	 */
-	data->access = ktime_get();
-	zl6100_wait(data);
+	data->access = kसमय_get();
+	zl6100_रुको(data);
 
 	info = &data->info;
 
@@ -368,36 +369,36 @@ static int zl6100_probe(struct i2c_client *client)
 
 	/*
 	 * ZL2004, ZL9101M, and ZL9117M support monitoring an extra voltage
-	 * (VMON for ZL2004, VDRV for ZL9101M and ZL9117M). Report it as vmon.
+	 * (VMON क्रम ZL2004, VDRV क्रम ZL9101M and ZL9117M). Report it as vmon.
 	 */
-	if (data->id == zl2004 || data->id == zl9101 || data->id == zl9117)
+	अगर (data->id == zl2004 || data->id == zl9101 || data->id == zl9117)
 		info->func[0] |= PMBUS_HAVE_VMON | PMBUS_HAVE_STATUS_VMON;
 
-	ret = i2c_smbus_read_word_data(client, ZL6100_MFR_CONFIG);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_पढ़ो_word_data(client, ZL6100_MFR_CONFIG);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret & ZL6100_MFR_XTEMP_ENABLE)
+	अगर (ret & ZL6100_MFR_XTEMP_ENABLE)
 		info->func[0] |= PMBUS_HAVE_TEMP2;
 
-	data->access = ktime_get();
-	zl6100_wait(data);
+	data->access = kसमय_get();
+	zl6100_रुको(data);
 
-	info->read_word_data = zl6100_read_word_data;
-	info->read_byte_data = zl6100_read_byte_data;
-	info->write_word_data = zl6100_write_word_data;
-	info->write_byte = zl6100_write_byte;
+	info->पढ़ो_word_data = zl6100_पढ़ो_word_data;
+	info->पढ़ो_byte_data = zl6100_पढ़ो_byte_data;
+	info->ग_लिखो_word_data = zl6100_ग_लिखो_word_data;
+	info->ग_लिखो_byte = zl6100_ग_लिखो_byte;
 
-	return pmbus_do_probe(client, info);
-}
+	वापस pmbus_करो_probe(client, info);
+पूर्ण
 
-static struct i2c_driver zl6100_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver zl6100_driver = अणु
+	.driver = अणु
 		   .name = "zl6100",
-		   },
+		   पूर्ण,
 	.probe_new = zl6100_probe,
 	.id_table = zl6100_id,
-};
+पूर्ण;
 
 module_i2c_driver(zl6100_driver);
 

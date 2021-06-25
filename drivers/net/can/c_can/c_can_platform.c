@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Platform CAN bus driver for Bosch C_CAN controller
+ * Platक्रमm CAN bus driver क्रम Bosch C_CAN controller
  *
  * Copyright (C) 2010 ST Microelectronics
  * Bhupesh Sharma <bhupesh.sharma@st.com>
@@ -7,7 +8,7 @@
  * Borrowed heavily from the C_CAN driver originally written by:
  * Copyright (C) 2007
  * - Sascha Hauer, Marc Kleine-Budde, Pengutronix <s.hauer@pengutronix.de>
- * - Simon Kallweit, intefo AG <simon.kallweit@intefo.ch>
+ * - Simon Kallweit, पूर्णांकefo AG <simon.kallweit@पूर्णांकefo.ch>
  *
  * Bosch C_CAN controller is compliant to CAN protocol version 2.0 part A and B.
  * Bosch C_CAN user manual can be obtained from:
@@ -19,483 +20,483 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/if_ether.h>
-#include <linux/list.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/clk.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/mfd/syscon.h>
-#include <linux/regmap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/list.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/regmap.h>
 
-#include <linux/can/dev.h>
+#समावेश <linux/can/dev.h>
 
-#include "c_can.h"
+#समावेश "c_can.h"
 
-#define DCAN_RAM_INIT_BIT BIT(3)
+#घोषणा DCAN_RAM_INIT_BIT BIT(3)
 
-static DEFINE_SPINLOCK(raminit_lock);
+अटल DEFINE_SPINLOCK(raminit_lock);
 
-/* 16-bit c_can registers can be arranged differently in the memory
- * architecture of different implementations. For example: 16-bit
- * registers can be aligned to a 16-bit boundary or 32-bit boundary etc.
- * Handle the same by providing a common read/write interface.
+/* 16-bit c_can रेजिस्टरs can be arranged dअगरferently in the memory
+ * architecture of dअगरferent implementations. For example: 16-bit
+ * रेजिस्टरs can be aligned to a 16-bit boundary or 32-bit boundary etc.
+ * Handle the same by providing a common पढ़ो/ग_लिखो पूर्णांकerface.
  */
-static u16 c_can_plat_read_reg_aligned_to_16bit(const struct c_can_priv *priv,
-						enum reg index)
-{
-	return readw(priv->base + priv->regs[index]);
-}
+अटल u16 c_can_plat_पढ़ो_reg_aligned_to_16bit(स्थिर काष्ठा c_can_priv *priv,
+						क्रमागत reg index)
+अणु
+	वापस पढ़ोw(priv->base + priv->regs[index]);
+पूर्ण
 
-static void c_can_plat_write_reg_aligned_to_16bit(const struct c_can_priv *priv,
-						  enum reg index, u16 val)
-{
-	writew(val, priv->base + priv->regs[index]);
-}
+अटल व्योम c_can_plat_ग_लिखो_reg_aligned_to_16bit(स्थिर काष्ठा c_can_priv *priv,
+						  क्रमागत reg index, u16 val)
+अणु
+	ग_लिखोw(val, priv->base + priv->regs[index]);
+पूर्ण
 
-static u16 c_can_plat_read_reg_aligned_to_32bit(const struct c_can_priv *priv,
-						enum reg index)
-{
-	return readw(priv->base + 2 * priv->regs[index]);
-}
+अटल u16 c_can_plat_पढ़ो_reg_aligned_to_32bit(स्थिर काष्ठा c_can_priv *priv,
+						क्रमागत reg index)
+अणु
+	वापस पढ़ोw(priv->base + 2 * priv->regs[index]);
+पूर्ण
 
-static void c_can_plat_write_reg_aligned_to_32bit(const struct c_can_priv *priv,
-						  enum reg index, u16 val)
-{
-	writew(val, priv->base + 2 * priv->regs[index]);
-}
+अटल व्योम c_can_plat_ग_लिखो_reg_aligned_to_32bit(स्थिर काष्ठा c_can_priv *priv,
+						  क्रमागत reg index, u16 val)
+अणु
+	ग_लिखोw(val, priv->base + 2 * priv->regs[index]);
+पूर्ण
 
-static void c_can_hw_raminit_wait_syscon(const struct c_can_priv *priv,
+अटल व्योम c_can_hw_raminit_रुको_syscon(स्थिर काष्ठा c_can_priv *priv,
 					 u32 mask, u32 val)
-{
-	const struct c_can_raminit *raminit = &priv->raminit_sys;
-	int timeout = 0;
+अणु
+	स्थिर काष्ठा c_can_raminit *raminit = &priv->raminit_sys;
+	पूर्णांक समयout = 0;
 	u32 ctrl = 0;
 
 	/* We look only at the bits of our instance. */
 	val &= mask;
-	do {
+	करो अणु
 		udelay(1);
-		timeout++;
+		समयout++;
 
-		regmap_read(raminit->syscon, raminit->reg, &ctrl);
-		if (timeout == 1000) {
+		regmap_पढ़ो(raminit->syscon, raminit->reg, &ctrl);
+		अगर (समयout == 1000) अणु
 			dev_err(&priv->dev->dev, "%s: time out\n", __func__);
-			break;
-		}
-	} while ((ctrl & mask) != val);
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक ((ctrl & mask) != val);
+पूर्ण
 
-static void c_can_hw_raminit_syscon(const struct c_can_priv *priv, bool enable)
-{
-	const struct c_can_raminit *raminit = &priv->raminit_sys;
+अटल व्योम c_can_hw_raminit_syscon(स्थिर काष्ठा c_can_priv *priv, bool enable)
+अणु
+	स्थिर काष्ठा c_can_raminit *raminit = &priv->raminit_sys;
 	u32 ctrl = 0;
 	u32 mask;
 
 	spin_lock(&raminit_lock);
 
-	mask = 1 << raminit->bits.start | 1 << raminit->bits.done;
-	regmap_read(raminit->syscon, raminit->reg, &ctrl);
+	mask = 1 << raminit->bits.start | 1 << raminit->bits.करोne;
+	regmap_पढ़ो(raminit->syscon, raminit->reg, &ctrl);
 
 	/* We clear the start bit first. The start bit is
 	 * looking at the 0 -> transition, but is not self clearing;
 	 * NOTE: DONE must be written with 1 to clear it.
 	 * We can't clear the DONE bit here using regmap_update_bits()
-	 * as it will bypass the write if initial condition is START:0 DONE:1
+	 * as it will bypass the ग_लिखो अगर initial condition is START:0 DONE:1
 	 * e.g. on DRA7 which needs START pulse.
 	 */
 	ctrl &= ~mask;	/* START = 0, DONE = 0 */
 	regmap_update_bits(raminit->syscon, raminit->reg, mask, ctrl);
 
-	/* check if START bit is 0. Ignore DONE bit for now
+	/* check अगर START bit is 0. Ignore DONE bit क्रम now
 	 * as it can be either 0 or 1.
 	 */
-	c_can_hw_raminit_wait_syscon(priv, 1 << raminit->bits.start, ctrl);
+	c_can_hw_raminit_रुको_syscon(priv, 1 << raminit->bits.start, ctrl);
 
-	if (enable) {
+	अगर (enable) अणु
 		/* Clear DONE bit & set START bit. */
 		ctrl |= 1 << raminit->bits.start;
 		/* DONE must be written with 1 to clear it */
-		ctrl |= 1 << raminit->bits.done;
+		ctrl |= 1 << raminit->bits.करोne;
 		regmap_update_bits(raminit->syscon, raminit->reg, mask, ctrl);
 		/* prevent further clearing of DONE bit */
-		ctrl &= ~(1 << raminit->bits.done);
-		/* clear START bit if start pulse is needed */
-		if (raminit->needs_pulse) {
+		ctrl &= ~(1 << raminit->bits.करोne);
+		/* clear START bit अगर start pulse is needed */
+		अगर (raminit->needs_pulse) अणु
 			ctrl &= ~(1 << raminit->bits.start);
 			regmap_update_bits(raminit->syscon, raminit->reg,
 					   mask, ctrl);
-		}
+		पूर्ण
 
-		ctrl |= 1 << raminit->bits.done;
-		c_can_hw_raminit_wait_syscon(priv, mask, ctrl);
-	}
+		ctrl |= 1 << raminit->bits.करोne;
+		c_can_hw_raminit_रुको_syscon(priv, mask, ctrl);
+	पूर्ण
 	spin_unlock(&raminit_lock);
-}
+पूर्ण
 
-static u32 c_can_plat_read_reg32(const struct c_can_priv *priv, enum reg index)
-{
+अटल u32 c_can_plat_पढ़ो_reg32(स्थिर काष्ठा c_can_priv *priv, क्रमागत reg index)
+अणु
 	u32 val;
 
-	val = priv->read_reg(priv, index);
-	val |= ((u32)priv->read_reg(priv, index + 1)) << 16;
+	val = priv->पढ़ो_reg(priv, index);
+	val |= ((u32)priv->पढ़ो_reg(priv, index + 1)) << 16;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void c_can_plat_write_reg32(const struct c_can_priv *priv,
-				   enum reg index, u32 val)
-{
-	priv->write_reg(priv, index + 1, val >> 16);
-	priv->write_reg(priv, index, val);
-}
+अटल व्योम c_can_plat_ग_लिखो_reg32(स्थिर काष्ठा c_can_priv *priv,
+				   क्रमागत reg index, u32 val)
+अणु
+	priv->ग_लिखो_reg(priv, index + 1, val >> 16);
+	priv->ग_लिखो_reg(priv, index, val);
+पूर्ण
 
-static u32 d_can_plat_read_reg32(const struct c_can_priv *priv, enum reg index)
-{
-	return readl(priv->base + priv->regs[index]);
-}
+अटल u32 d_can_plat_पढ़ो_reg32(स्थिर काष्ठा c_can_priv *priv, क्रमागत reg index)
+अणु
+	वापस पढ़ोl(priv->base + priv->regs[index]);
+पूर्ण
 
-static void d_can_plat_write_reg32(const struct c_can_priv *priv,
-				   enum reg index, u32 val)
-{
-	writel(val, priv->base + priv->regs[index]);
-}
+अटल व्योम d_can_plat_ग_लिखो_reg32(स्थिर काष्ठा c_can_priv *priv,
+				   क्रमागत reg index, u32 val)
+अणु
+	ग_लिखोl(val, priv->base + priv->regs[index]);
+पूर्ण
 
-static void c_can_hw_raminit_wait(const struct c_can_priv *priv, u32 mask)
-{
-	while (priv->read_reg32(priv, C_CAN_FUNCTION_REG) & mask)
+अटल व्योम c_can_hw_raminit_रुको(स्थिर काष्ठा c_can_priv *priv, u32 mask)
+अणु
+	जबतक (priv->पढ़ो_reg32(priv, C_CAN_FUNCTION_REG) & mask)
 		udelay(1);
-}
+पूर्ण
 
-static void c_can_hw_raminit(const struct c_can_priv *priv, bool enable)
-{
+अटल व्योम c_can_hw_raminit(स्थिर काष्ठा c_can_priv *priv, bool enable)
+अणु
 	u32 ctrl;
 
-	ctrl = priv->read_reg32(priv, C_CAN_FUNCTION_REG);
+	ctrl = priv->पढ़ो_reg32(priv, C_CAN_FUNCTION_REG);
 	ctrl &= ~DCAN_RAM_INIT_BIT;
-	priv->write_reg32(priv, C_CAN_FUNCTION_REG, ctrl);
-	c_can_hw_raminit_wait(priv, ctrl);
+	priv->ग_लिखो_reg32(priv, C_CAN_FUNCTION_REG, ctrl);
+	c_can_hw_raminit_रुको(priv, ctrl);
 
-	if (enable) {
+	अगर (enable) अणु
 		ctrl |= DCAN_RAM_INIT_BIT;
-		priv->write_reg32(priv, C_CAN_FUNCTION_REG, ctrl);
-		c_can_hw_raminit_wait(priv, ctrl);
-	}
-}
+		priv->ग_लिखो_reg32(priv, C_CAN_FUNCTION_REG, ctrl);
+		c_can_hw_raminit_रुको(priv, ctrl);
+	पूर्ण
+पूर्ण
 
-static const struct c_can_driver_data c_can_drvdata = {
+अटल स्थिर काष्ठा c_can_driver_data c_can_drvdata = अणु
 	.id = BOSCH_C_CAN,
 	.msg_obj_num = 32,
-};
+पूर्ण;
 
-static const struct c_can_driver_data d_can_drvdata = {
+अटल स्थिर काष्ठा c_can_driver_data d_can_drvdata = अणु
 	.id = BOSCH_D_CAN,
 	.msg_obj_num = 32,
-};
+पूर्ण;
 
-static const struct raminit_bits dra7_raminit_bits[] = {
-	[0] = { .start = 3, .done = 1, },
-	[1] = { .start = 5, .done = 2, },
-};
+अटल स्थिर काष्ठा raminit_bits dra7_raminit_bits[] = अणु
+	[0] = अणु .start = 3, .करोne = 1, पूर्ण,
+	[1] = अणु .start = 5, .करोne = 2, पूर्ण,
+पूर्ण;
 
-static const struct c_can_driver_data dra7_dcan_drvdata = {
+अटल स्थिर काष्ठा c_can_driver_data dra7_dcan_drvdata = अणु
 	.id = BOSCH_D_CAN,
 	.msg_obj_num = 64,
 	.raminit_num = ARRAY_SIZE(dra7_raminit_bits),
 	.raminit_bits = dra7_raminit_bits,
 	.raminit_pulse = true,
-};
+पूर्ण;
 
-static const struct raminit_bits am3352_raminit_bits[] = {
-	[0] = { .start = 0, .done = 8, },
-	[1] = { .start = 1, .done = 9, },
-};
+अटल स्थिर काष्ठा raminit_bits am3352_raminit_bits[] = अणु
+	[0] = अणु .start = 0, .करोne = 8, पूर्ण,
+	[1] = अणु .start = 1, .करोne = 9, पूर्ण,
+पूर्ण;
 
-static const struct c_can_driver_data am3352_dcan_drvdata = {
+अटल स्थिर काष्ठा c_can_driver_data am3352_dcan_drvdata = अणु
 	.id = BOSCH_D_CAN,
 	.msg_obj_num = 64,
 	.raminit_num = ARRAY_SIZE(am3352_raminit_bits),
 	.raminit_bits = am3352_raminit_bits,
-};
+पूर्ण;
 
-static const struct platform_device_id c_can_id_table[] = {
-	{
+अटल स्थिर काष्ठा platक्रमm_device_id c_can_id_table[] = अणु
+	अणु
 		.name = KBUILD_MODNAME,
-		.driver_data = (kernel_ulong_t)&c_can_drvdata,
-	},
-	{
+		.driver_data = (kernel_uदीर्घ_t)&c_can_drvdata,
+	पूर्ण,
+	अणु
 		.name = "c_can",
-		.driver_data = (kernel_ulong_t)&c_can_drvdata,
-	},
-	{
+		.driver_data = (kernel_uदीर्घ_t)&c_can_drvdata,
+	पूर्ण,
+	अणु
 		.name = "d_can",
-		.driver_data = (kernel_ulong_t)&d_can_drvdata,
-	},
-	{ /* sentinel */ },
-};
-MODULE_DEVICE_TABLE(platform, c_can_id_table);
+		.driver_data = (kernel_uदीर्घ_t)&d_can_drvdata,
+	पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, c_can_id_table);
 
-static const struct of_device_id c_can_of_table[] = {
-	{ .compatible = "bosch,c_can", .data = &c_can_drvdata },
-	{ .compatible = "bosch,d_can", .data = &d_can_drvdata },
-	{ .compatible = "ti,dra7-d_can", .data = &dra7_dcan_drvdata },
-	{ .compatible = "ti,am3352-d_can", .data = &am3352_dcan_drvdata },
-	{ .compatible = "ti,am4372-d_can", .data = &am3352_dcan_drvdata },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id c_can_of_table[] = अणु
+	अणु .compatible = "bosch,c_can", .data = &c_can_drvdata पूर्ण,
+	अणु .compatible = "bosch,d_can", .data = &d_can_drvdata पूर्ण,
+	अणु .compatible = "ti,dra7-d_can", .data = &dra7_dcan_drvdata पूर्ण,
+	अणु .compatible = "ti,am3352-d_can", .data = &am3352_dcan_drvdata पूर्ण,
+	अणु .compatible = "ti,am4372-d_can", .data = &am3352_dcan_drvdata पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, c_can_of_table);
 
-static int c_can_plat_probe(struct platform_device *pdev)
-{
-	int ret;
-	void __iomem *addr;
-	struct net_device *dev;
-	struct c_can_priv *priv;
-	const struct of_device_id *match;
-	struct resource *mem;
-	int irq;
-	struct clk *clk;
-	const struct c_can_driver_data *drvdata;
-	struct device_node *np = pdev->dev.of_node;
+अटल पूर्णांक c_can_plat_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	व्योम __iomem *addr;
+	काष्ठा net_device *dev;
+	काष्ठा c_can_priv *priv;
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा resource *mem;
+	पूर्णांक irq;
+	काष्ठा clk *clk;
+	स्थिर काष्ठा c_can_driver_data *drvdata;
+	काष्ठा device_node *np = pdev->dev.of_node;
 
 	match = of_match_device(c_can_of_table, &pdev->dev);
-	if (match) {
+	अगर (match) अणु
 		drvdata = match->data;
-	} else if (pdev->id_entry->driver_data) {
-		drvdata = (struct c_can_driver_data *)
-			platform_get_device_id(pdev)->driver_data;
-	} else {
-		return -ENODEV;
-	}
+	पूर्ण अन्यथा अगर (pdev->id_entry->driver_data) अणु
+		drvdata = (काष्ठा c_can_driver_data *)
+			platक्रमm_get_device_id(pdev)->driver_data;
+	पूर्ण अन्यथा अणु
+		वापस -ENODEV;
+	पूर्ण
 
 	/* get the appropriate clk */
-	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
+	clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(clk)) अणु
 		ret = PTR_ERR(clk);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* get the platform data */
-	irq = platform_get_irq(pdev, 0);
-	if (irq <= 0) {
+	/* get the platक्रमm data */
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq <= 0) अणु
 		ret = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	addr = devm_ioremap_resource(&pdev->dev, mem);
-	if (IS_ERR(addr)) {
+	अगर (IS_ERR(addr)) अणु
 		ret =  PTR_ERR(addr);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/* allocate the c_can device */
 	dev = alloc_c_can_dev(drvdata->msg_obj_num);
-	if (!dev) {
+	अगर (!dev) अणु
 		ret = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	priv = netdev_priv(dev);
-	switch (drvdata->id) {
-	case BOSCH_C_CAN:
+	चयन (drvdata->id) अणु
+	हाल BOSCH_C_CAN:
 		priv->regs = reg_map_c_can;
-		switch (mem->flags & IORESOURCE_MEM_TYPE_MASK) {
-		case IORESOURCE_MEM_32BIT:
-			priv->read_reg = c_can_plat_read_reg_aligned_to_32bit;
-			priv->write_reg = c_can_plat_write_reg_aligned_to_32bit;
-			priv->read_reg32 = c_can_plat_read_reg32;
-			priv->write_reg32 = c_can_plat_write_reg32;
-			break;
-		case IORESOURCE_MEM_16BIT:
-		default:
-			priv->read_reg = c_can_plat_read_reg_aligned_to_16bit;
-			priv->write_reg = c_can_plat_write_reg_aligned_to_16bit;
-			priv->read_reg32 = c_can_plat_read_reg32;
-			priv->write_reg32 = c_can_plat_write_reg32;
-			break;
-		}
-		break;
-	case BOSCH_D_CAN:
+		चयन (mem->flags & IORESOURCE_MEM_TYPE_MASK) अणु
+		हाल IORESOURCE_MEM_32BIT:
+			priv->पढ़ो_reg = c_can_plat_पढ़ो_reg_aligned_to_32bit;
+			priv->ग_लिखो_reg = c_can_plat_ग_लिखो_reg_aligned_to_32bit;
+			priv->पढ़ो_reg32 = c_can_plat_पढ़ो_reg32;
+			priv->ग_लिखो_reg32 = c_can_plat_ग_लिखो_reg32;
+			अवरोध;
+		हाल IORESOURCE_MEM_16BIT:
+		शेष:
+			priv->पढ़ो_reg = c_can_plat_पढ़ो_reg_aligned_to_16bit;
+			priv->ग_लिखो_reg = c_can_plat_ग_लिखो_reg_aligned_to_16bit;
+			priv->पढ़ो_reg32 = c_can_plat_पढ़ो_reg32;
+			priv->ग_लिखो_reg32 = c_can_plat_ग_लिखो_reg32;
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल BOSCH_D_CAN:
 		priv->regs = reg_map_d_can;
-		priv->read_reg = c_can_plat_read_reg_aligned_to_16bit;
-		priv->write_reg = c_can_plat_write_reg_aligned_to_16bit;
-		priv->read_reg32 = d_can_plat_read_reg32;
-		priv->write_reg32 = d_can_plat_write_reg32;
+		priv->पढ़ो_reg = c_can_plat_पढ़ो_reg_aligned_to_16bit;
+		priv->ग_लिखो_reg = c_can_plat_ग_लिखो_reg_aligned_to_16bit;
+		priv->पढ़ो_reg32 = d_can_plat_पढ़ो_reg32;
+		priv->ग_लिखो_reg32 = d_can_plat_ग_लिखो_reg32;
 
-		/* Check if we need custom RAMINIT via syscon. Mostly for TI
-		 * platforms. Only supported with DT boot.
+		/* Check अगर we need custom RAMINIT via syscon. Mostly क्रम TI
+		 * platक्रमms. Only supported with DT boot.
 		 */
-		if (np && of_property_read_bool(np, "syscon-raminit")) {
+		अगर (np && of_property_पढ़ो_bool(np, "syscon-raminit")) अणु
 			u32 id;
-			struct c_can_raminit *raminit = &priv->raminit_sys;
+			काष्ठा c_can_raminit *raminit = &priv->raminit_sys;
 
 			ret = -EINVAL;
 			raminit->syscon = syscon_regmap_lookup_by_phandle(np,
 									  "syscon-raminit");
-			if (IS_ERR(raminit->syscon)) {
+			अगर (IS_ERR(raminit->syscon)) अणु
 				/* can fail with -EPROBE_DEFER */
 				ret = PTR_ERR(raminit->syscon);
-				free_c_can_dev(dev);
-				return ret;
-			}
+				मुक्त_c_can_dev(dev);
+				वापस ret;
+			पूर्ण
 
-			if (of_property_read_u32_index(np, "syscon-raminit", 1,
-						       &raminit->reg)) {
+			अगर (of_property_पढ़ो_u32_index(np, "syscon-raminit", 1,
+						       &raminit->reg)) अणु
 				dev_err(&pdev->dev,
 					"couldn't get the RAMINIT reg. offset!\n");
-				goto exit_free_device;
-			}
+				जाओ निकास_मुक्त_device;
+			पूर्ण
 
-			if (of_property_read_u32_index(np, "syscon-raminit", 2,
-						       &id)) {
+			अगर (of_property_पढ़ो_u32_index(np, "syscon-raminit", 2,
+						       &id)) अणु
 				dev_err(&pdev->dev,
 					"couldn't get the CAN instance ID\n");
-				goto exit_free_device;
-			}
+				जाओ निकास_मुक्त_device;
+			पूर्ण
 
-			if (id >= drvdata->raminit_num) {
+			अगर (id >= drvdata->raminit_num) अणु
 				dev_err(&pdev->dev,
 					"Invalid CAN instance ID\n");
-				goto exit_free_device;
-			}
+				जाओ निकास_मुक्त_device;
+			पूर्ण
 
 			raminit->bits = drvdata->raminit_bits[id];
 			raminit->needs_pulse = drvdata->raminit_pulse;
 
 			priv->raminit = c_can_hw_raminit_syscon;
-		} else {
+		पूर्ण अन्यथा अणु
 			priv->raminit = c_can_hw_raminit;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto exit_free_device;
-	}
+		जाओ निकास_मुक्त_device;
+	पूर्ण
 
 	dev->irq = irq;
 	priv->base = addr;
 	priv->device = &pdev->dev;
-	priv->can.clock.freq = clk_get_rate(clk);
+	priv->can.घड़ी.freq = clk_get_rate(clk);
 	priv->priv = clk;
 	priv->type = drvdata->id;
 
-	platform_set_drvdata(pdev, dev);
+	platक्रमm_set_drvdata(pdev, dev);
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
-	pm_runtime_enable(priv->device);
-	ret = register_c_can_dev(dev);
-	if (ret) {
+	pm_runसमय_enable(priv->device);
+	ret = रेजिस्टर_c_can_dev(dev);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "registering %s failed (err=%d)\n",
 			KBUILD_MODNAME, ret);
-		goto exit_free_device;
-	}
+		जाओ निकास_मुक्त_device;
+	पूर्ण
 
 	dev_info(&pdev->dev, "%s device registered (regs=%p, irq=%d)\n",
 		 KBUILD_MODNAME, priv->base, dev->irq);
-	return 0;
+	वापस 0;
 
-exit_free_device:
-	pm_runtime_disable(priv->device);
-	free_c_can_dev(dev);
-exit:
+निकास_मुक्त_device:
+	pm_runसमय_disable(priv->device);
+	मुक्त_c_can_dev(dev);
+निकास:
 	dev_err(&pdev->dev, "probe failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int c_can_plat_remove(struct platform_device *pdev)
-{
-	struct net_device *dev = platform_get_drvdata(pdev);
-	struct c_can_priv *priv = netdev_priv(dev);
+अटल पूर्णांक c_can_plat_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा c_can_priv *priv = netdev_priv(dev);
 
-	unregister_c_can_dev(dev);
-	pm_runtime_disable(priv->device);
-	free_c_can_dev(dev);
+	unरेजिस्टर_c_can_dev(dev);
+	pm_runसमय_disable(priv->device);
+	मुक्त_c_can_dev(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int c_can_suspend(struct platform_device *pdev, pm_message_t state)
-{
-	int ret;
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct c_can_priv *priv = netdev_priv(ndev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक c_can_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
+अणु
+	पूर्णांक ret;
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
+	काष्ठा c_can_priv *priv = netdev_priv(ndev);
 
-	if (priv->type != BOSCH_D_CAN) {
+	अगर (priv->type != BOSCH_D_CAN) अणु
 		dev_warn(&pdev->dev, "Not supported\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (netif_running(ndev)) {
-		netif_stop_queue(ndev);
-		netif_device_detach(ndev);
-	}
+	अगर (netअगर_running(ndev)) अणु
+		netअगर_stop_queue(ndev);
+		netअगर_device_detach(ndev);
+	पूर्ण
 
-	ret = c_can_power_down(ndev);
-	if (ret) {
+	ret = c_can_घातer_करोwn(ndev);
+	अगर (ret) अणु
 		netdev_err(ndev, "failed to enter power down mode\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	priv->can.state = CAN_STATE_SLEEPING;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int c_can_resume(struct platform_device *pdev)
-{
-	int ret;
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct c_can_priv *priv = netdev_priv(ndev);
+अटल पूर्णांक c_can_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
+	काष्ठा c_can_priv *priv = netdev_priv(ndev);
 
-	if (priv->type != BOSCH_D_CAN) {
+	अगर (priv->type != BOSCH_D_CAN) अणु
 		dev_warn(&pdev->dev, "Not supported\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ret = c_can_power_up(ndev);
-	if (ret) {
+	ret = c_can_घातer_up(ndev);
+	अगर (ret) अणु
 		netdev_err(ndev, "Still in power down mode\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	priv->can.state = CAN_STATE_ERROR_ACTIVE;
 
-	if (netif_running(ndev)) {
-		netif_device_attach(ndev);
-		netif_start_queue(ndev);
-	}
+	अगर (netअगर_running(ndev)) अणु
+		netअगर_device_attach(ndev);
+		netअगर_start_queue(ndev);
+	पूर्ण
 
-	return 0;
-}
-#else
-#define c_can_suspend NULL
-#define c_can_resume NULL
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा c_can_suspend शून्य
+#घोषणा c_can_resume शून्य
+#पूर्ण_अगर
 
-static struct platform_driver c_can_plat_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver c_can_plat_driver = अणु
+	.driver = अणु
 		.name = KBUILD_MODNAME,
 		.of_match_table = c_can_of_table,
-	},
+	पूर्ण,
 	.probe = c_can_plat_probe,
-	.remove = c_can_plat_remove,
+	.हटाओ = c_can_plat_हटाओ,
 	.suspend = c_can_suspend,
 	.resume = c_can_resume,
 	.id_table = c_can_id_table,
-};
+पूर्ण;
 
-module_platform_driver(c_can_plat_driver);
+module_platक्रमm_driver(c_can_plat_driver);
 
 MODULE_AUTHOR("Bhupesh Sharma <bhupesh.sharma@st.com>");
 MODULE_LICENSE("GPL v2");

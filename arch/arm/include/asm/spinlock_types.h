@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SPINLOCK_TYPES_H
-#define __ASM_SPINLOCK_TYPES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SPINLOCK_TYPES_H
+#घोषणा __ASM_SPINLOCK_TYPES_H
 
-#ifndef __LINUX_SPINLOCK_TYPES_H
+#अगर_अघोषित __LINUX_SPINLOCK_TYPES_H
 # error "please don't include this file directly"
-#endif
+#पूर्ण_अगर
 
-#define TICKET_SHIFT	16
+#घोषणा TICKET_SHIFT	16
 
-typedef struct {
-	union {
+प्रकार काष्ठा अणु
+	जोड़ अणु
 		u32 slock;
-		struct __raw_tickets {
-#ifdef __ARMEB__
+		काष्ठा __raw_tickets अणु
+#अगर_घोषित __ARMEB__
 			u16 next;
 			u16 owner;
-#else
+#अन्यथा
 			u16 owner;
 			u16 next;
-#endif
-		} tickets;
-	};
-} arch_spinlock_t;
+#पूर्ण_अगर
+		पूर्ण tickets;
+	पूर्ण;
+पूर्ण arch_spinlock_t;
 
-#define __ARCH_SPIN_LOCK_UNLOCKED	{ { 0 } }
+#घोषणा __ARCH_SPIN_LOCK_UNLOCKED	अणु अणु 0 पूर्ण पूर्ण
 
-typedef struct {
+प्रकार काष्ठा अणु
 	u32 lock;
-} arch_rwlock_t;
+पूर्ण arch_rwlock_t;
 
-#define __ARCH_RW_LOCK_UNLOCKED		{ 0 }
+#घोषणा __ARCH_RW_LOCK_UNLOCKED		अणु 0 पूर्ण
 
-#endif
+#पूर्ण_अगर

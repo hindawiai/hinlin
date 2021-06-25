@@ -1,20 +1,21 @@
+<शैली गुरु>
 /*
- * Private include for xenbus communications.
+ * Private include क्रम xenbus communications.
  *
  * Copyright (C) 2005 Rusty Russell, IBM Corporation
  * Copyright (C) 2005 XenSource Ltd.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -29,111 +30,111 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef _XENBUS_XENBUS_H
-#define _XENBUS_XENBUS_H
+#अगर_अघोषित _XENBUS_XENBUS_H
+#घोषणा _XENBUS_XENBUS_H
 
-#include <linux/mutex.h>
-#include <linux/uio.h>
-#include <xen/xenbus.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/uपन.स>
+#समावेश <xen/xenbus.h>
 
-#define XEN_BUS_ID_SIZE			20
+#घोषणा XEN_BUS_ID_SIZE			20
 
-struct xen_bus_type {
-	char *root;
-	unsigned int levels;
-	int (*get_bus_id)(char bus_id[XEN_BUS_ID_SIZE], const char *nodename);
-	int (*probe)(struct xen_bus_type *bus, const char *type,
-		     const char *dir);
-	bool (*otherend_will_handle)(struct xenbus_watch *watch,
-				     const char *path, const char *token);
-	void (*otherend_changed)(struct xenbus_watch *watch, const char *path,
-				 const char *token);
-	struct bus_type bus;
-};
+काष्ठा xen_bus_type अणु
+	अक्षर *root;
+	अचिन्हित पूर्णांक levels;
+	पूर्णांक (*get_bus_id)(अक्षर bus_id[XEN_BUS_ID_SIZE], स्थिर अक्षर *nodename);
+	पूर्णांक (*probe)(काष्ठा xen_bus_type *bus, स्थिर अक्षर *type,
+		     स्थिर अक्षर *dir);
+	bool (*otherend_will_handle)(काष्ठा xenbus_watch *watch,
+				     स्थिर अक्षर *path, स्थिर अक्षर *token);
+	व्योम (*otherend_changed)(काष्ठा xenbus_watch *watch, स्थिर अक्षर *path,
+				 स्थिर अक्षर *token);
+	काष्ठा bus_type bus;
+पूर्ण;
 
-enum xenstore_init {
+क्रमागत xenstore_init अणु
 	XS_UNKNOWN,
 	XS_PV,
 	XS_HVM,
 	XS_LOCAL,
-};
+पूर्ण;
 
-struct xs_watch_event {
-	struct list_head list;
-	unsigned int len;
-	struct xenbus_watch *handle;
-	const char *path;
-	const char *token;
-	char body[];
-};
+काष्ठा xs_watch_event अणु
+	काष्ठा list_head list;
+	अचिन्हित पूर्णांक len;
+	काष्ठा xenbus_watch *handle;
+	स्थिर अक्षर *path;
+	स्थिर अक्षर *token;
+	अक्षर body[];
+पूर्ण;
 
-enum xb_req_state {
+क्रमागत xb_req_state अणु
 	xb_req_state_queued,
-	xb_req_state_wait_reply,
+	xb_req_state_रुको_reply,
 	xb_req_state_got_reply,
-	xb_req_state_aborted
-};
+	xb_req_state_पातed
+पूर्ण;
 
-struct xb_req_data {
-	struct list_head list;
-	wait_queue_head_t wq;
-	struct xsd_sockmsg msg;
-	uint32_t caller_req_id;
-	enum xsd_sockmsg_type type;
-	char *body;
-	const struct kvec *vec;
-	int num_vecs;
-	int err;
-	enum xb_req_state state;
+काष्ठा xb_req_data अणु
+	काष्ठा list_head list;
+	रुको_queue_head_t wq;
+	काष्ठा xsd_sockmsg msg;
+	uपूर्णांक32_t caller_req_id;
+	क्रमागत xsd_sockmsg_type type;
+	अक्षर *body;
+	स्थिर काष्ठा kvec *vec;
+	पूर्णांक num_vecs;
+	पूर्णांक err;
+	क्रमागत xb_req_state state;
 	bool user_req;
-	void (*cb)(struct xb_req_data *);
-	void *par;
-};
+	व्योम (*cb)(काष्ठा xb_req_data *);
+	व्योम *par;
+पूर्ण;
 
-extern enum xenstore_init xen_store_domain_type;
-extern const struct attribute_group *xenbus_dev_groups[];
-extern struct mutex xs_response_mutex;
-extern struct list_head xs_reply_list;
-extern struct list_head xb_write_list;
-extern wait_queue_head_t xb_waitq;
-extern struct mutex xb_write_mutex;
+बाह्य क्रमागत xenstore_init xen_store_करोमुख्य_type;
+बाह्य स्थिर काष्ठा attribute_group *xenbus_dev_groups[];
+बाह्य काष्ठा mutex xs_response_mutex;
+बाह्य काष्ठा list_head xs_reply_list;
+बाह्य काष्ठा list_head xb_ग_लिखो_list;
+बाह्य रुको_queue_head_t xb_रुकोq;
+बाह्य काष्ठा mutex xb_ग_लिखो_mutex;
 
-int xs_init(void);
-int xb_init_comms(void);
-void xb_deinit_comms(void);
-int xs_watch_msg(struct xs_watch_event *event);
-void xs_request_exit(struct xb_req_data *req);
+पूर्णांक xs_init(व्योम);
+पूर्णांक xb_init_comms(व्योम);
+व्योम xb_deinit_comms(व्योम);
+पूर्णांक xs_watch_msg(काष्ठा xs_watch_event *event);
+व्योम xs_request_निकास(काष्ठा xb_req_data *req);
 
-int xenbus_match(struct device *_dev, struct device_driver *_drv);
-int xenbus_dev_probe(struct device *_dev);
-int xenbus_dev_remove(struct device *_dev);
-int xenbus_register_driver_common(struct xenbus_driver *drv,
-				  struct xen_bus_type *bus,
-				  struct module *owner,
-				  const char *mod_name);
-int xenbus_probe_node(struct xen_bus_type *bus,
-		      const char *type,
-		      const char *nodename);
-int xenbus_probe_devices(struct xen_bus_type *bus);
+पूर्णांक xenbus_match(काष्ठा device *_dev, काष्ठा device_driver *_drv);
+पूर्णांक xenbus_dev_probe(काष्ठा device *_dev);
+पूर्णांक xenbus_dev_हटाओ(काष्ठा device *_dev);
+पूर्णांक xenbus_रेजिस्टर_driver_common(काष्ठा xenbus_driver *drv,
+				  काष्ठा xen_bus_type *bus,
+				  काष्ठा module *owner,
+				  स्थिर अक्षर *mod_name);
+पूर्णांक xenbus_probe_node(काष्ठा xen_bus_type *bus,
+		      स्थिर अक्षर *type,
+		      स्थिर अक्षर *nodename);
+पूर्णांक xenbus_probe_devices(काष्ठा xen_bus_type *bus);
 
-void xenbus_dev_changed(const char *node, struct xen_bus_type *bus);
+व्योम xenbus_dev_changed(स्थिर अक्षर *node, काष्ठा xen_bus_type *bus);
 
-int xenbus_dev_suspend(struct device *dev);
-int xenbus_dev_resume(struct device *dev);
-int xenbus_dev_cancel(struct device *dev);
+पूर्णांक xenbus_dev_suspend(काष्ठा device *dev);
+पूर्णांक xenbus_dev_resume(काष्ठा device *dev);
+पूर्णांक xenbus_dev_cancel(काष्ठा device *dev);
 
-void xenbus_otherend_changed(struct xenbus_watch *watch,
-			     const char *path, const char *token,
-			     int ignore_on_shutdown);
+व्योम xenbus_otherend_changed(काष्ठा xenbus_watch *watch,
+			     स्थिर अक्षर *path, स्थिर अक्षर *token,
+			     पूर्णांक ignore_on_shutकरोwn);
 
-int xenbus_read_otherend_details(struct xenbus_device *xendev,
-				 char *id_node, char *path_node);
+पूर्णांक xenbus_पढ़ो_otherend_details(काष्ठा xenbus_device *xendev,
+				 अक्षर *id_node, अक्षर *path_node);
 
-void xenbus_ring_ops_init(void);
+व्योम xenbus_ring_ops_init(व्योम);
 
-int xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void *par);
-void xenbus_dev_queue_reply(struct xb_req_data *req);
+पूर्णांक xenbus_dev_request_and_reply(काष्ठा xsd_sockmsg *msg, व्योम *par);
+व्योम xenbus_dev_queue_reply(काष्ठा xb_req_data *req);
 
-extern unsigned int xb_dev_generation_id;
+बाह्य अचिन्हित पूर्णांक xb_dev_generation_id;
 
-#endif
+#पूर्ण_अगर

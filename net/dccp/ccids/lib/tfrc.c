@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * TFRC library initialisation
  *
  * Copyright (c) 2007 The University of Aberdeen, Scotland, UK
- * Copyright (c) 2007 Arnaldo Carvalho de Melo <acme@redhat.com>
+ * Copyright (c) 2007 Arnalकरो Carvalho de Melo <acme@redhat.com>
  */
-#include <linux/moduleparam.h>
-#include "tfrc.h"
+#समावेश <linux/moduleparam.h>
+#समावेश "tfrc.h"
 
-#ifdef CONFIG_IP_DCCP_TFRC_DEBUG
+#अगर_घोषित CONFIG_IP_DCCP_TFRC_DEBUG
 bool tfrc_debug;
 module_param(tfrc_debug, bool, 0644);
 MODULE_PARM_DESC(tfrc_debug, "Enable TFRC debug messages");
-#endif
+#पूर्ण_अगर
 
-int __init tfrc_lib_init(void)
-{
-	int rc = tfrc_li_init();
+पूर्णांक __init tfrc_lib_init(व्योम)
+अणु
+	पूर्णांक rc = tfrc_li_init();
 
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	rc = tfrc_tx_packet_history_init();
-	if (rc)
-		goto out_free_loss_intervals;
+	अगर (rc)
+		जाओ out_मुक्त_loss_पूर्णांकervals;
 
 	rc = tfrc_rx_packet_history_init();
-	if (rc)
-		goto out_free_tx_history;
-	return 0;
+	अगर (rc)
+		जाओ out_मुक्त_tx_history;
+	वापस 0;
 
-out_free_tx_history:
-	tfrc_tx_packet_history_exit();
-out_free_loss_intervals:
-	tfrc_li_exit();
+out_मुक्त_tx_history:
+	tfrc_tx_packet_history_निकास();
+out_मुक्त_loss_पूर्णांकervals:
+	tfrc_li_निकास();
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void tfrc_lib_exit(void)
-{
-	tfrc_rx_packet_history_exit();
-	tfrc_tx_packet_history_exit();
-	tfrc_li_exit();
-}
+व्योम tfrc_lib_निकास(व्योम)
+अणु
+	tfrc_rx_packet_history_निकास();
+	tfrc_tx_packet_history_निकास();
+	tfrc_li_निकास();
+पूर्ण

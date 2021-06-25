@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,63 +24,63 @@
  *
  */
 
-#ifndef __DAL_IRQ_SERVICE_H__
-#define __DAL_IRQ_SERVICE_H__
+#अगर_अघोषित __DAL_IRQ_SERVICE_H__
+#घोषणा __DAL_IRQ_SERVICE_H__
 
-#include "include/irq_service_interface.h"
+#समावेश "include/irq_service_interface.h"
 
-#include "irq_types.h"
+#समावेश "irq_types.h"
 
-struct irq_service;
-struct irq_source_info;
+काष्ठा irq_service;
+काष्ठा irq_source_info;
 
-struct irq_source_info_funcs {
+काष्ठा irq_source_info_funcs अणु
 	bool (*set)(
-		struct irq_service *irq_service,
-		const struct irq_source_info *info,
+		काष्ठा irq_service *irq_service,
+		स्थिर काष्ठा irq_source_info *info,
 		bool enable);
 	bool (*ack)(
-		struct irq_service *irq_service,
-		const struct irq_source_info *info);
-};
+		काष्ठा irq_service *irq_service,
+		स्थिर काष्ठा irq_source_info *info);
+पूर्ण;
 
-struct irq_source_info {
-	uint32_t src_id;
-	uint32_t ext_id;
-	uint32_t enable_reg;
-	uint32_t enable_mask;
-	uint32_t enable_value[2];
-	uint32_t ack_reg;
-	uint32_t ack_mask;
-	uint32_t ack_value;
-	uint32_t status_reg;
-	const struct irq_source_info_funcs *funcs;
-};
+काष्ठा irq_source_info अणु
+	uपूर्णांक32_t src_id;
+	uपूर्णांक32_t ext_id;
+	uपूर्णांक32_t enable_reg;
+	uपूर्णांक32_t enable_mask;
+	uपूर्णांक32_t enable_value[2];
+	uपूर्णांक32_t ack_reg;
+	uपूर्णांक32_t ack_mask;
+	uपूर्णांक32_t ack_value;
+	uपूर्णांक32_t status_reg;
+	स्थिर काष्ठा irq_source_info_funcs *funcs;
+पूर्ण;
 
-struct irq_service_funcs {
-	enum dc_irq_source (*to_dal_irq_source)(
-			struct irq_service *irq_service,
-			uint32_t src_id,
-			uint32_t ext_id);
-};
+काष्ठा irq_service_funcs अणु
+	क्रमागत dc_irq_source (*to_dal_irq_source)(
+			काष्ठा irq_service *irq_service,
+			uपूर्णांक32_t src_id,
+			uपूर्णांक32_t ext_id);
+पूर्ण;
 
-struct irq_service {
-	struct dc_context *ctx;
-	const struct irq_source_info *info;
-	const struct irq_service_funcs *funcs;
-};
+काष्ठा irq_service अणु
+	काष्ठा dc_context *ctx;
+	स्थिर काष्ठा irq_source_info *info;
+	स्थिर काष्ठा irq_service_funcs *funcs;
+पूर्ण;
 
-void dal_irq_service_construct(
-	struct irq_service *irq_service,
-	struct irq_service_init_data *init_data);
+व्योम dal_irq_service_स्थिरruct(
+	काष्ठा irq_service *irq_service,
+	काष्ठा irq_service_init_data *init_data);
 
-void dal_irq_service_ack_generic(
-	struct irq_service *irq_service,
-	const struct irq_source_info *info);
+व्योम dal_irq_service_ack_generic(
+	काष्ठा irq_service *irq_service,
+	स्थिर काष्ठा irq_source_info *info);
 
-void dal_irq_service_set_generic(
-	struct irq_service *irq_service,
-	const struct irq_source_info *info,
+व्योम dal_irq_service_set_generic(
+	काष्ठा irq_service *irq_service,
+	स्थिर काष्ठा irq_source_info *info,
 	bool enable);
 
-#endif
+#पूर्ण_अगर

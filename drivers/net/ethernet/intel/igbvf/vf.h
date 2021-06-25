@@ -1,120 +1,121 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 2009 - 2018 Intel Corporation. */
 
-#ifndef _E1000_VF_H_
-#define _E1000_VF_H_
+#अगर_अघोषित _E1000_VF_H_
+#घोषणा _E1000_VF_H_
 
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/if_ether.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/अगर_ether.h>
 
-#include "regs.h"
-#include "defines.h"
+#समावेश "regs.h"
+#समावेश "defines.h"
 
-struct e1000_hw;
+काष्ठा e1000_hw;
 
-#define E1000_DEV_ID_82576_VF		0x10CA
-#define E1000_DEV_ID_I350_VF		0x1520
-#define E1000_REVISION_0	0
-#define E1000_REVISION_1	1
-#define E1000_REVISION_2	2
-#define E1000_REVISION_3	3
-#define E1000_REVISION_4	4
+#घोषणा E1000_DEV_ID_82576_VF		0x10CA
+#घोषणा E1000_DEV_ID_I350_VF		0x1520
+#घोषणा E1000_REVISION_0	0
+#घोषणा E1000_REVISION_1	1
+#घोषणा E1000_REVISION_2	2
+#घोषणा E1000_REVISION_3	3
+#घोषणा E1000_REVISION_4	4
 
-#define E1000_FUNC_0	0
-#define E1000_FUNC_1	1
+#घोषणा E1000_FUNC_0	0
+#घोषणा E1000_FUNC_1	1
 
 /* Receive Address Register Count
- * Number of high/low register pairs in the RAR.  The RAR (Receive Address
+ * Number of high/low रेजिस्टर pairs in the RAR.  The RAR (Receive Address
  * Registers) holds the directed and multicast addresses that we monitor.
- * These entries are also used for MAC-based filtering.
+ * These entries are also used क्रम MAC-based filtering.
  */
-#define E1000_RAR_ENTRIES_VF	1
+#घोषणा E1000_RAR_ENTRIES_VF	1
 
 /* Receive Descriptor - Advanced */
-union e1000_adv_rx_desc {
-	struct {
+जोड़ e1000_adv_rx_desc अणु
+	काष्ठा अणु
 		u64 pkt_addr; /* Packet buffer address */
 		u64 hdr_addr; /* Header buffer address */
-	} read;
-	struct {
-		struct {
-			union {
+	पूर्ण पढ़ो;
+	काष्ठा अणु
+		काष्ठा अणु
+			जोड़ अणु
 				u32 data;
-				struct {
+				काष्ठा अणु
 					u16 pkt_info; /* RSS/Packet type */
 					/* Split Header, hdr buffer length */
 					u16 hdr_info;
-				} hs_rss;
-			} lo_dword;
-			union {
+				पूर्ण hs_rss;
+			पूर्ण lo_dword;
+			जोड़ अणु
 				u32 rss; /* RSS Hash */
-				struct {
+				काष्ठा अणु
 					u16 ip_id; /* IP id */
 					u16 csum;  /* Packet Checksum */
-				} csum_ip;
-			} hi_dword;
-		} lower;
-		struct {
+				पूर्ण csum_ip;
+			पूर्ण hi_dword;
+		पूर्ण lower;
+		काष्ठा अणु
 			u32 status_error; /* ext status/error */
 			u16 length; /* Packet length */
 			u16 vlan;   /* VLAN tag */
-		} upper;
-	} wb;  /* writeback */
-};
+		पूर्ण upper;
+	पूर्ण wb;  /* ग_लिखोback */
+पूर्ण;
 
-#define E1000_RXDADV_HDRBUFLEN_MASK	0x7FE0
-#define E1000_RXDADV_HDRBUFLEN_SHIFT	5
+#घोषणा E1000_RXDADV_HDRBUFLEN_MASK	0x7FE0
+#घोषणा E1000_RXDADV_HDRBUFLEN_SHIFT	5
 
 /* Transmit Descriptor - Advanced */
-union e1000_adv_tx_desc {
-	struct {
+जोड़ e1000_adv_tx_desc अणु
+	काष्ठा अणु
 		u64 buffer_addr; /* Address of descriptor's data buf */
 		u32 cmd_type_len;
 		u32 olinfo_status;
-	} read;
-	struct {
+	पूर्ण पढ़ो;
+	काष्ठा अणु
 		u64 rsvd; /* Reserved */
 		u32 nxtseq_seed;
 		u32 status;
-	} wb;
-};
+	पूर्ण wb;
+पूर्ण;
 
 /* Adv Transmit Descriptor Config Masks */
-#define E1000_ADVTXD_DTYP_CTXT	0x00200000 /* Advanced Context Descriptor */
-#define E1000_ADVTXD_DTYP_DATA	0x00300000 /* Advanced Data Descriptor */
-#define E1000_ADVTXD_DCMD_EOP	0x01000000 /* End of Packet */
-#define E1000_ADVTXD_DCMD_IFCS	0x02000000 /* Insert FCS (Ethernet CRC) */
-#define E1000_ADVTXD_DCMD_RS	0x08000000 /* Report Status */
-#define E1000_ADVTXD_DCMD_DEXT	0x20000000 /* Descriptor extension (1=Adv) */
-#define E1000_ADVTXD_DCMD_VLE	0x40000000 /* VLAN pkt enable */
-#define E1000_ADVTXD_DCMD_TSE	0x80000000 /* TCP Seg enable */
-#define E1000_ADVTXD_PAYLEN_SHIFT	14 /* Adv desc PAYLEN shift */
+#घोषणा E1000_ADVTXD_DTYP_CTXT	0x00200000 /* Advanced Context Descriptor */
+#घोषणा E1000_ADVTXD_DTYP_DATA	0x00300000 /* Advanced Data Descriptor */
+#घोषणा E1000_ADVTXD_DCMD_EOP	0x01000000 /* End of Packet */
+#घोषणा E1000_ADVTXD_DCMD_IFCS	0x02000000 /* Insert FCS (Ethernet CRC) */
+#घोषणा E1000_ADVTXD_DCMD_RS	0x08000000 /* Report Status */
+#घोषणा E1000_ADVTXD_DCMD_DEXT	0x20000000 /* Descriptor extension (1=Adv) */
+#घोषणा E1000_ADVTXD_DCMD_VLE	0x40000000 /* VLAN pkt enable */
+#घोषणा E1000_ADVTXD_DCMD_TSE	0x80000000 /* TCP Seg enable */
+#घोषणा E1000_ADVTXD_PAYLEN_SHIFT	14 /* Adv desc PAYLEN shअगरt */
 
 /* Context descriptors */
-struct e1000_adv_tx_context_desc {
+काष्ठा e1000_adv_tx_context_desc अणु
 	u32 vlan_macip_lens;
 	u32 seqnum_seed;
 	u32 type_tucmd_mlhl;
 	u32 mss_l4len_idx;
-};
+पूर्ण;
 
-#define E1000_ADVTXD_MACLEN_SHIFT	9  /* Adv ctxt desc mac len shift */
-#define E1000_ADVTXD_TUCMD_IPV4		0x00000400 /* IP Packet Type: 1=IPv4 */
-#define E1000_ADVTXD_TUCMD_L4T_TCP	0x00000800 /* L4 Packet TYPE of TCP */
-#define E1000_ADVTXD_TUCMD_L4T_SCTP	0x00001000 /* L4 packet TYPE of SCTP */
-#define E1000_ADVTXD_L4LEN_SHIFT	8  /* Adv ctxt L4LEN shift */
-#define E1000_ADVTXD_MSS_SHIFT		16 /* Adv ctxt MSS shift */
+#घोषणा E1000_ADVTXD_MACLEN_SHIFT	9  /* Adv ctxt desc mac len shअगरt */
+#घोषणा E1000_ADVTXD_TUCMD_IPV4		0x00000400 /* IP Packet Type: 1=IPv4 */
+#घोषणा E1000_ADVTXD_TUCMD_L4T_TCP	0x00000800 /* L4 Packet TYPE of TCP */
+#घोषणा E1000_ADVTXD_TUCMD_L4T_SCTP	0x00001000 /* L4 packet TYPE of SCTP */
+#घोषणा E1000_ADVTXD_L4LEN_SHIFT	8  /* Adv ctxt L4LEN shअगरt */
+#घोषणा E1000_ADVTXD_MSS_SHIFT		16 /* Adv ctxt MSS shअगरt */
 
-enum e1000_mac_type {
+क्रमागत e1000_mac_type अणु
 	e1000_undefined = 0,
 	e1000_vfadapt,
 	e1000_vfadapt_i350,
-	e1000_num_macs  /* List is 1-based, so subtract 1 for true count. */
-};
+	e1000_num_macs  /* List is 1-based, so subtract 1 क्रम true count. */
+पूर्ण;
 
-struct e1000_vf_stats {
+काष्ठा e1000_vf_stats अणु
 	u64 base_gprc;
 	u64 base_gptc;
 	u64 base_gorc;
@@ -144,100 +145,100 @@ struct e1000_vf_stats {
 	u64 gptlbc;
 	u64 gorlbc;
 	u64 gprlbc;
-};
+पूर्ण;
 
-#include "mbx.h"
+#समावेश "mbx.h"
 
-struct e1000_mac_operations {
-	/* Function pointers for the MAC. */
-	s32  (*init_params)(struct e1000_hw *);
-	s32  (*check_for_link)(struct e1000_hw *);
-	void (*clear_vfta)(struct e1000_hw *);
-	s32  (*get_bus_info)(struct e1000_hw *);
-	s32  (*get_link_up_info)(struct e1000_hw *, u16 *, u16 *);
-	void (*update_mc_addr_list)(struct e1000_hw *, u8 *, u32, u32, u32);
-	s32  (*set_uc_addr)(struct e1000_hw *, u32, u8 *);
-	s32  (*reset_hw)(struct e1000_hw *);
-	s32  (*init_hw)(struct e1000_hw *);
-	s32  (*setup_link)(struct e1000_hw *);
-	void (*write_vfta)(struct e1000_hw *, u32, u32);
-	void (*mta_set)(struct e1000_hw *, u32);
-	void (*rar_set)(struct e1000_hw *, u8*, u32);
-	s32  (*read_mac_addr)(struct e1000_hw *);
-	s32  (*set_vfta)(struct e1000_hw *, u16, bool);
-};
+काष्ठा e1000_mac_operations अणु
+	/* Function poपूर्णांकers क्रम the MAC. */
+	s32  (*init_params)(काष्ठा e1000_hw *);
+	s32  (*check_क्रम_link)(काष्ठा e1000_hw *);
+	व्योम (*clear_vfta)(काष्ठा e1000_hw *);
+	s32  (*get_bus_info)(काष्ठा e1000_hw *);
+	s32  (*get_link_up_info)(काष्ठा e1000_hw *, u16 *, u16 *);
+	व्योम (*update_mc_addr_list)(काष्ठा e1000_hw *, u8 *, u32, u32, u32);
+	s32  (*set_uc_addr)(काष्ठा e1000_hw *, u32, u8 *);
+	s32  (*reset_hw)(काष्ठा e1000_hw *);
+	s32  (*init_hw)(काष्ठा e1000_hw *);
+	s32  (*setup_link)(काष्ठा e1000_hw *);
+	व्योम (*ग_लिखो_vfta)(काष्ठा e1000_hw *, u32, u32);
+	व्योम (*mta_set)(काष्ठा e1000_hw *, u32);
+	व्योम (*rar_set)(काष्ठा e1000_hw *, u8*, u32);
+	s32  (*पढ़ो_mac_addr)(काष्ठा e1000_hw *);
+	s32  (*set_vfta)(काष्ठा e1000_hw *, u16, bool);
+पूर्ण;
 
-struct e1000_mac_info {
-	struct e1000_mac_operations ops;
+काष्ठा e1000_mac_info अणु
+	काष्ठा e1000_mac_operations ops;
 	u8 addr[6];
 	u8 perm_addr[6];
 
-	enum e1000_mac_type type;
+	क्रमागत e1000_mac_type type;
 
 	u16 mta_reg_count;
 	u16 rar_entry_count;
 
 	bool get_link_status;
-};
+पूर्ण;
 
-struct e1000_mbx_operations {
-	s32 (*init_params)(struct e1000_hw *hw);
-	s32 (*read)(struct e1000_hw *, u32 *, u16);
-	s32 (*write)(struct e1000_hw *, u32 *, u16);
-	s32 (*read_posted)(struct e1000_hw *, u32 *, u16);
-	s32 (*write_posted)(struct e1000_hw *, u32 *, u16);
-	s32 (*check_for_msg)(struct e1000_hw *);
-	s32 (*check_for_ack)(struct e1000_hw *);
-	s32 (*check_for_rst)(struct e1000_hw *);
-};
+काष्ठा e1000_mbx_operations अणु
+	s32 (*init_params)(काष्ठा e1000_hw *hw);
+	s32 (*पढ़ो)(काष्ठा e1000_hw *, u32 *, u16);
+	s32 (*ग_लिखो)(काष्ठा e1000_hw *, u32 *, u16);
+	s32 (*पढ़ो_posted)(काष्ठा e1000_hw *, u32 *, u16);
+	s32 (*ग_लिखो_posted)(काष्ठा e1000_hw *, u32 *, u16);
+	s32 (*check_क्रम_msg)(काष्ठा e1000_hw *);
+	s32 (*check_क्रम_ack)(काष्ठा e1000_hw *);
+	s32 (*check_क्रम_rst)(काष्ठा e1000_hw *);
+पूर्ण;
 
-struct e1000_mbx_stats {
+काष्ठा e1000_mbx_stats अणु
 	u32 msgs_tx;
 	u32 msgs_rx;
 
 	u32 acks;
 	u32 reqs;
 	u32 rsts;
-};
+पूर्ण;
 
-struct e1000_mbx_info {
-	struct e1000_mbx_operations ops;
-	struct e1000_mbx_stats stats;
-	u32 timeout;
+काष्ठा e1000_mbx_info अणु
+	काष्ठा e1000_mbx_operations ops;
+	काष्ठा e1000_mbx_stats stats;
+	u32 समयout;
 	u32 usec_delay;
 	u16 size;
-};
+पूर्ण;
 
-struct e1000_dev_spec_vf {
+काष्ठा e1000_dev_spec_vf अणु
 	u32 vf_number;
 	u32 v2p_mailbox;
-};
+पूर्ण;
 
-struct e1000_hw {
-	void *back;
+काष्ठा e1000_hw अणु
+	व्योम *back;
 
 	u8 __iomem *hw_addr;
 	u8 __iomem *flash_address;
-	unsigned long io_base;
+	अचिन्हित दीर्घ io_base;
 
-	struct e1000_mac_info  mac;
-	struct e1000_mbx_info mbx;
+	काष्ठा e1000_mac_info  mac;
+	काष्ठा e1000_mbx_info mbx;
 	spinlock_t mbx_lock;		/* serializes mailbox ops */
 
-	union {
-		struct e1000_dev_spec_vf vf;
-	} dev_spec;
+	जोड़ अणु
+		काष्ठा e1000_dev_spec_vf vf;
+	पूर्ण dev_spec;
 
 	u16 device_id;
-	u16 subsystem_vendor_id;
-	u16 subsystem_device_id;
-	u16 vendor_id;
+	u16 subप्रणाली_venकरोr_id;
+	u16 subप्रणाली_device_id;
+	u16 venकरोr_id;
 
 	u8  revision_id;
-};
+पूर्ण;
 
 /* These functions must be implemented by drivers */
-void e1000_rlpml_set_vf(struct e1000_hw *, u16);
-void e1000_init_function_pointers_vf(struct e1000_hw *hw);
+व्योम e1000_rlpml_set_vf(काष्ठा e1000_hw *, u16);
+व्योम e1000_init_function_poपूर्णांकers_vf(काष्ठा e1000_hw *hw);
 
-#endif /* _E1000_VF_H_ */
+#पूर्ण_अगर /* _E1000_VF_H_ */

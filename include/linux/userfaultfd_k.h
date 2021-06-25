@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  include/linux/userfaultfd_k.h
  *
@@ -6,229 +7,229 @@
  *
  */
 
-#ifndef _LINUX_USERFAULTFD_K_H
-#define _LINUX_USERFAULTFD_K_H
+#अगर_अघोषित _LINUX_USERFAULTFD_K_H
+#घोषणा _LINUX_USERFAULTFD_K_H
 
-#ifdef CONFIG_USERFAULTFD
+#अगर_घोषित CONFIG_USERFAULTFD
 
-#include <linux/userfaultfd.h> /* linux/include/uapi/linux/userfaultfd.h */
+#समावेश <linux/userfaultfd.h> /* linux/include/uapi/linux/userfaultfd.h */
 
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <asm-generic/pgtable_uffd.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र-generic/pgtable_uffd.h>
 
 /* The set of all possible UFFD-related VM flags. */
-#define __VM_UFFD_FLAGS (VM_UFFD_MISSING | VM_UFFD_WP | VM_UFFD_MINOR)
+#घोषणा __VM_UFFD_FLAGS (VM_UFFD_MISSING | VM_UFFD_WP | VM_UFFD_MINOR)
 
 /*
- * CAREFUL: Check include/uapi/asm-generic/fcntl.h when defining
+ * CAREFUL: Check include/uapi/यंत्र-generic/fcntl.h when defining
  * new flags, since they might collide with O_* ones. We want
  * to re-use O_* flags that couldn't possibly have a meaning
- * from userfaultfd, in order to leave a free define-space for
+ * from userfaultfd, in order to leave a मुक्त define-space क्रम
  * shared O_* flags.
  */
-#define UFFD_CLOEXEC O_CLOEXEC
-#define UFFD_NONBLOCK O_NONBLOCK
+#घोषणा UFFD_CLOEXEC O_CLOEXEC
+#घोषणा UFFD_NONBLOCK O_NONBLOCK
 
-#define UFFD_SHARED_FCNTL_FLAGS (O_CLOEXEC | O_NONBLOCK)
-#define UFFD_FLAGS_SET (EFD_SHARED_FCNTL_FLAGS)
+#घोषणा UFFD_SHARED_FCNTL_FLAGS (O_CLOEXEC | O_NONBLOCK)
+#घोषणा UFFD_FLAGS_SET (EFD_SHARED_FCNTL_FLAGS)
 
-extern int sysctl_unprivileged_userfaultfd;
+बाह्य पूर्णांक sysctl_unprivileged_userfaultfd;
 
-extern vm_fault_t handle_userfault(struct vm_fault *vmf, unsigned long reason);
+बाह्य vm_fault_t handle_userfault(काष्ठा vm_fault *vmf, अचिन्हित दीर्घ reason);
 
 /*
- * The mode of operation for __mcopy_atomic and its helpers.
+ * The mode of operation क्रम __mcopy_atomic and its helpers.
  *
- * This is almost an implementation detail (mcopy_atomic below doesn't take this
- * as a parameter), but it's exposed here because memory-kind-specific
+ * This is almost an implementation detail (mcopy_atomic below करोesn't take this
+ * as a parameter), but it's exposed here because memory-kind-specअगरic
  * implementations (e.g. hugetlbfs) need to know the mode of operation.
  */
-enum mcopy_atomic_mode {
-	/* A normal copy_from_user into the destination range. */
+क्रमागत mcopy_atomic_mode अणु
+	/* A normal copy_from_user पूर्णांकo the destination range. */
 	MCOPY_ATOMIC_NORMAL,
 	/* Don't copy; map the destination range to the zero page. */
 	MCOPY_ATOMIC_ZEROPAGE,
 	/* Just install pte(s) with the existing page(s) in the page cache. */
 	MCOPY_ATOMIC_CONTINUE,
-};
+पूर्ण;
 
-extern ssize_t mcopy_atomic(struct mm_struct *dst_mm, unsigned long dst_start,
-			    unsigned long src_start, unsigned long len,
+बाह्य sमाप_प्रकार mcopy_atomic(काष्ठा mm_काष्ठा *dst_mm, अचिन्हित दीर्घ dst_start,
+			    अचिन्हित दीर्घ src_start, अचिन्हित दीर्घ len,
 			    bool *mmap_changing, __u64 mode);
-extern ssize_t mfill_zeropage(struct mm_struct *dst_mm,
-			      unsigned long dst_start,
-			      unsigned long len,
+बाह्य sमाप_प्रकार mfill_zeropage(काष्ठा mm_काष्ठा *dst_mm,
+			      अचिन्हित दीर्घ dst_start,
+			      अचिन्हित दीर्घ len,
 			      bool *mmap_changing);
-extern ssize_t mcopy_continue(struct mm_struct *dst_mm, unsigned long dst_start,
-			      unsigned long len, bool *mmap_changing);
-extern int mwriteprotect_range(struct mm_struct *dst_mm,
-			       unsigned long start, unsigned long len,
+बाह्य sमाप_प्रकार mcopy_जारी(काष्ठा mm_काष्ठा *dst_mm, अचिन्हित दीर्घ dst_start,
+			      अचिन्हित दीर्घ len, bool *mmap_changing);
+बाह्य पूर्णांक mग_लिखोprotect_range(काष्ठा mm_काष्ठा *dst_mm,
+			       अचिन्हित दीर्घ start, अचिन्हित दीर्घ len,
 			       bool enable_wp, bool *mmap_changing);
 
 /* mm helpers */
-static inline bool is_mergeable_vm_userfaultfd_ctx(struct vm_area_struct *vma,
-					struct vm_userfaultfd_ctx vm_ctx)
-{
-	return vma->vm_userfaultfd_ctx.ctx == vm_ctx.ctx;
-}
+अटल अंतरभूत bool is_mergeable_vm_userfaultfd_ctx(काष्ठा vm_area_काष्ठा *vma,
+					काष्ठा vm_userfaultfd_ctx vm_ctx)
+अणु
+	वापस vma->vm_userfaultfd_ctx.ctx == vm_ctx.ctx;
+पूर्ण
 
 /*
- * Never enable huge pmd sharing on some uffd registered vmas:
+ * Never enable huge pmd sharing on some uffd रेजिस्टरed vmas:
  *
- * - VM_UFFD_WP VMAs, because write protect information is per pgtable entry.
+ * - VM_UFFD_WP VMAs, because ग_लिखो protect inक्रमmation is per pgtable entry.
  *
- * - VM_UFFD_MINOR VMAs, because otherwise we would never get minor faults for
+ * - VM_UFFD_MINOR VMAs, because otherwise we would never get minor faults क्रम
  *   VMAs which share huge pmds. (If you have two mappings to the same
- *   underlying pages, and fault in the non-UFFD-registered one with a write,
- *   with huge pmd sharing this would *also* setup the second UFFD-registered
+ *   underlying pages, and fault in the non-UFFD-रेजिस्टरed one with a ग_लिखो,
+ *   with huge pmd sharing this would *also* setup the second UFFD-रेजिस्टरed
  *   mapping, and we'd not get minor faults.)
  */
-static inline bool uffd_disable_huge_pmd_share(struct vm_area_struct *vma)
-{
-	return vma->vm_flags & (VM_UFFD_WP | VM_UFFD_MINOR);
-}
+अटल अंतरभूत bool uffd_disable_huge_pmd_share(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस vma->vm_flags & (VM_UFFD_WP | VM_UFFD_MINOR);
+पूर्ण
 
-static inline bool userfaultfd_missing(struct vm_area_struct *vma)
-{
-	return vma->vm_flags & VM_UFFD_MISSING;
-}
+अटल अंतरभूत bool userfaultfd_missing(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस vma->vm_flags & VM_UFFD_MISSING;
+पूर्ण
 
-static inline bool userfaultfd_wp(struct vm_area_struct *vma)
-{
-	return vma->vm_flags & VM_UFFD_WP;
-}
+अटल अंतरभूत bool userfaultfd_wp(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस vma->vm_flags & VM_UFFD_WP;
+पूर्ण
 
-static inline bool userfaultfd_minor(struct vm_area_struct *vma)
-{
-	return vma->vm_flags & VM_UFFD_MINOR;
-}
+अटल अंतरभूत bool userfaultfd_minor(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस vma->vm_flags & VM_UFFD_MINOR;
+पूर्ण
 
-static inline bool userfaultfd_pte_wp(struct vm_area_struct *vma,
+अटल अंतरभूत bool userfaultfd_pte_wp(काष्ठा vm_area_काष्ठा *vma,
 				      pte_t pte)
-{
-	return userfaultfd_wp(vma) && pte_uffd_wp(pte);
-}
+अणु
+	वापस userfaultfd_wp(vma) && pte_uffd_wp(pte);
+पूर्ण
 
-static inline bool userfaultfd_huge_pmd_wp(struct vm_area_struct *vma,
+अटल अंतरभूत bool userfaultfd_huge_pmd_wp(काष्ठा vm_area_काष्ठा *vma,
 					   pmd_t pmd)
-{
-	return userfaultfd_wp(vma) && pmd_uffd_wp(pmd);
-}
+अणु
+	वापस userfaultfd_wp(vma) && pmd_uffd_wp(pmd);
+पूर्ण
 
-static inline bool userfaultfd_armed(struct vm_area_struct *vma)
-{
-	return vma->vm_flags & __VM_UFFD_FLAGS;
-}
+अटल अंतरभूत bool userfaultfd_armed(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस vma->vm_flags & __VM_UFFD_FLAGS;
+पूर्ण
 
-extern int dup_userfaultfd(struct vm_area_struct *, struct list_head *);
-extern void dup_userfaultfd_complete(struct list_head *);
+बाह्य पूर्णांक dup_userfaultfd(काष्ठा vm_area_काष्ठा *, काष्ठा list_head *);
+बाह्य व्योम dup_userfaultfd_complete(काष्ठा list_head *);
 
-extern void mremap_userfaultfd_prep(struct vm_area_struct *,
-				    struct vm_userfaultfd_ctx *);
-extern void mremap_userfaultfd_complete(struct vm_userfaultfd_ctx *,
-					unsigned long from, unsigned long to,
-					unsigned long len);
+बाह्य व्योम mremap_userfaultfd_prep(काष्ठा vm_area_काष्ठा *,
+				    काष्ठा vm_userfaultfd_ctx *);
+बाह्य व्योम mremap_userfaultfd_complete(काष्ठा vm_userfaultfd_ctx *,
+					अचिन्हित दीर्घ from, अचिन्हित दीर्घ to,
+					अचिन्हित दीर्घ len);
 
-extern bool userfaultfd_remove(struct vm_area_struct *vma,
-			       unsigned long start,
-			       unsigned long end);
+बाह्य bool userfaultfd_हटाओ(काष्ठा vm_area_काष्ठा *vma,
+			       अचिन्हित दीर्घ start,
+			       अचिन्हित दीर्घ end);
 
-extern int userfaultfd_unmap_prep(struct vm_area_struct *vma,
-				  unsigned long start, unsigned long end,
-				  struct list_head *uf);
-extern void userfaultfd_unmap_complete(struct mm_struct *mm,
-				       struct list_head *uf);
+बाह्य पूर्णांक userfaultfd_unmap_prep(काष्ठा vm_area_काष्ठा *vma,
+				  अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
+				  काष्ठा list_head *uf);
+बाह्य व्योम userfaultfd_unmap_complete(काष्ठा mm_काष्ठा *mm,
+				       काष्ठा list_head *uf);
 
-#else /* CONFIG_USERFAULTFD */
+#अन्यथा /* CONFIG_USERFAULTFD */
 
 /* mm helpers */
-static inline vm_fault_t handle_userfault(struct vm_fault *vmf,
-				unsigned long reason)
-{
-	return VM_FAULT_SIGBUS;
-}
+अटल अंतरभूत vm_fault_t handle_userfault(काष्ठा vm_fault *vmf,
+				अचिन्हित दीर्घ reason)
+अणु
+	वापस VM_FAULT_SIGBUS;
+पूर्ण
 
-static inline bool is_mergeable_vm_userfaultfd_ctx(struct vm_area_struct *vma,
-					struct vm_userfaultfd_ctx vm_ctx)
-{
-	return true;
-}
+अटल अंतरभूत bool is_mergeable_vm_userfaultfd_ctx(काष्ठा vm_area_काष्ठा *vma,
+					काष्ठा vm_userfaultfd_ctx vm_ctx)
+अणु
+	वापस true;
+पूर्ण
 
-static inline bool userfaultfd_missing(struct vm_area_struct *vma)
-{
-	return false;
-}
+अटल अंतरभूत bool userfaultfd_missing(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool userfaultfd_wp(struct vm_area_struct *vma)
-{
-	return false;
-}
+अटल अंतरभूत bool userfaultfd_wp(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool userfaultfd_minor(struct vm_area_struct *vma)
-{
-	return false;
-}
+अटल अंतरभूत bool userfaultfd_minor(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool userfaultfd_pte_wp(struct vm_area_struct *vma,
+अटल अंतरभूत bool userfaultfd_pte_wp(काष्ठा vm_area_काष्ठा *vma,
 				      pte_t pte)
-{
-	return false;
-}
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool userfaultfd_huge_pmd_wp(struct vm_area_struct *vma,
+अटल अंतरभूत bool userfaultfd_huge_pmd_wp(काष्ठा vm_area_काष्ठा *vma,
 					   pmd_t pmd)
-{
-	return false;
-}
+अणु
+	वापस false;
+पूर्ण
 
 
-static inline bool userfaultfd_armed(struct vm_area_struct *vma)
-{
-	return false;
-}
+अटल अंतरभूत bool userfaultfd_armed(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस false;
+पूर्ण
 
-static inline int dup_userfaultfd(struct vm_area_struct *vma,
-				  struct list_head *l)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक dup_userfaultfd(काष्ठा vm_area_काष्ठा *vma,
+				  काष्ठा list_head *l)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void dup_userfaultfd_complete(struct list_head *l)
-{
-}
+अटल अंतरभूत व्योम dup_userfaultfd_complete(काष्ठा list_head *l)
+अणु
+पूर्ण
 
-static inline void mremap_userfaultfd_prep(struct vm_area_struct *vma,
-					   struct vm_userfaultfd_ctx *ctx)
-{
-}
+अटल अंतरभूत व्योम mremap_userfaultfd_prep(काष्ठा vm_area_काष्ठा *vma,
+					   काष्ठा vm_userfaultfd_ctx *ctx)
+अणु
+पूर्ण
 
-static inline void mremap_userfaultfd_complete(struct vm_userfaultfd_ctx *ctx,
-					       unsigned long from,
-					       unsigned long to,
-					       unsigned long len)
-{
-}
+अटल अंतरभूत व्योम mremap_userfaultfd_complete(काष्ठा vm_userfaultfd_ctx *ctx,
+					       अचिन्हित दीर्घ from,
+					       अचिन्हित दीर्घ to,
+					       अचिन्हित दीर्घ len)
+अणु
+पूर्ण
 
-static inline bool userfaultfd_remove(struct vm_area_struct *vma,
-				      unsigned long start,
-				      unsigned long end)
-{
-	return true;
-}
+अटल अंतरभूत bool userfaultfd_हटाओ(काष्ठा vm_area_काष्ठा *vma,
+				      अचिन्हित दीर्घ start,
+				      अचिन्हित दीर्घ end)
+अणु
+	वापस true;
+पूर्ण
 
-static inline int userfaultfd_unmap_prep(struct vm_area_struct *vma,
-					 unsigned long start, unsigned long end,
-					 struct list_head *uf)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक userfaultfd_unmap_prep(काष्ठा vm_area_काष्ठा *vma,
+					 अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
+					 काष्ठा list_head *uf)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void userfaultfd_unmap_complete(struct mm_struct *mm,
-					      struct list_head *uf)
-{
-}
+अटल अंतरभूत व्योम userfaultfd_unmap_complete(काष्ठा mm_काष्ठा *mm,
+					      काष्ठा list_head *uf)
+अणु
+पूर्ण
 
-#endif /* CONFIG_USERFAULTFD */
+#पूर्ण_अगर /* CONFIG_USERFAULTFD */
 
-#endif /* _LINUX_USERFAULTFD_K_H */
+#पूर्ण_अगर /* _LINUX_USERFAULTFD_K_H */

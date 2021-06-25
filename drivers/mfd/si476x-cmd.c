@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * drivers/mfd/si476x-cmd.c -- Subroutines implementing command
  * protocol of si476x series of chips
@@ -9,133 +10,133 @@
  * Author: Andrey Smirnov <andrew.smirnov@gmail.com>
  */
 
-#include <linux/module.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/atomic.h>
-#include <linux/i2c.h>
-#include <linux/device.h>
-#include <linux/gpio.h>
-#include <linux/videodev2.h>
+#समावेश <linux/module.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/videodev2.h>
 
-#include <linux/mfd/si476x-core.h>
+#समावेश <linux/mfd/si476x-core.h>
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
-#define msb(x)                  ((u8)((u16) x >> 8))
-#define lsb(x)                  ((u8)((u16) x &  0x00FF))
-
-
-
-#define CMD_POWER_UP				0x01
-#define CMD_POWER_UP_A10_NRESP			1
-#define CMD_POWER_UP_A10_NARGS			5
-
-#define CMD_POWER_UP_A20_NRESP			1
-#define CMD_POWER_UP_A20_NARGS			5
-
-#define POWER_UP_DELAY_MS			110
-
-#define CMD_POWER_DOWN				0x11
-#define CMD_POWER_DOWN_A10_NRESP		1
-
-#define CMD_POWER_DOWN_A20_NRESP		1
-#define CMD_POWER_DOWN_A20_NARGS		1
-
-#define CMD_FUNC_INFO				0x12
-#define CMD_FUNC_INFO_NRESP			7
-
-#define CMD_SET_PROPERTY			0x13
-#define CMD_SET_PROPERTY_NARGS			5
-#define CMD_SET_PROPERTY_NRESP			1
-
-#define CMD_GET_PROPERTY			0x14
-#define CMD_GET_PROPERTY_NARGS			3
-#define CMD_GET_PROPERTY_NRESP			4
-
-#define CMD_AGC_STATUS				0x17
-#define CMD_AGC_STATUS_NRESP_A10		2
-#define CMD_AGC_STATUS_NRESP_A20                6
-
-#define PIN_CFG_BYTE(x) (0x7F & (x))
-#define CMD_DIG_AUDIO_PIN_CFG			0x18
-#define CMD_DIG_AUDIO_PIN_CFG_NARGS		4
-#define CMD_DIG_AUDIO_PIN_CFG_NRESP		5
-
-#define CMD_ZIF_PIN_CFG				0x19
-#define CMD_ZIF_PIN_CFG_NARGS			4
-#define CMD_ZIF_PIN_CFG_NRESP			5
-
-#define CMD_IC_LINK_GPO_CTL_PIN_CFG		0x1A
-#define CMD_IC_LINK_GPO_CTL_PIN_CFG_NARGS	4
-#define CMD_IC_LINK_GPO_CTL_PIN_CFG_NRESP	5
-
-#define CMD_ANA_AUDIO_PIN_CFG			0x1B
-#define CMD_ANA_AUDIO_PIN_CFG_NARGS		1
-#define CMD_ANA_AUDIO_PIN_CFG_NRESP		2
-
-#define CMD_INTB_PIN_CFG			0x1C
-#define CMD_INTB_PIN_CFG_NARGS			2
-#define CMD_INTB_PIN_CFG_A10_NRESP		6
-#define CMD_INTB_PIN_CFG_A20_NRESP		3
-
-#define CMD_FM_TUNE_FREQ			0x30
-#define CMD_FM_TUNE_FREQ_A10_NARGS		5
-#define CMD_FM_TUNE_FREQ_A20_NARGS		3
-#define CMD_FM_TUNE_FREQ_NRESP			1
-
-#define CMD_FM_RSQ_STATUS			0x32
-
-#define CMD_FM_RSQ_STATUS_A10_NARGS		1
-#define CMD_FM_RSQ_STATUS_A10_NRESP		17
-#define CMD_FM_RSQ_STATUS_A30_NARGS		1
-#define CMD_FM_RSQ_STATUS_A30_NRESP		23
+#घोषणा msb(x)                  ((u8)((u16) x >> 8))
+#घोषणा lsb(x)                  ((u8)((u16) x &  0x00FF))
 
 
-#define CMD_FM_SEEK_START			0x31
-#define CMD_FM_SEEK_START_NARGS			1
-#define CMD_FM_SEEK_START_NRESP			1
 
-#define CMD_FM_RDS_STATUS			0x36
-#define CMD_FM_RDS_STATUS_NARGS			1
-#define CMD_FM_RDS_STATUS_NRESP			16
+#घोषणा CMD_POWER_UP				0x01
+#घोषणा CMD_POWER_UP_A10_NRESP			1
+#घोषणा CMD_POWER_UP_A10_NARGS			5
 
-#define CMD_FM_RDS_BLOCKCOUNT			0x37
-#define CMD_FM_RDS_BLOCKCOUNT_NARGS		1
-#define CMD_FM_RDS_BLOCKCOUNT_NRESP		8
+#घोषणा CMD_POWER_UP_A20_NRESP			1
+#घोषणा CMD_POWER_UP_A20_NARGS			5
 
-#define CMD_FM_PHASE_DIVERSITY			0x38
-#define CMD_FM_PHASE_DIVERSITY_NARGS		1
-#define CMD_FM_PHASE_DIVERSITY_NRESP		1
+#घोषणा POWER_UP_DELAY_MS			110
 
-#define CMD_FM_PHASE_DIV_STATUS			0x39
-#define CMD_FM_PHASE_DIV_STATUS_NRESP		2
+#घोषणा CMD_POWER_DOWN				0x11
+#घोषणा CMD_POWER_DOWN_A10_NRESP		1
 
-#define CMD_AM_TUNE_FREQ			0x40
-#define CMD_AM_TUNE_FREQ_NARGS			3
-#define CMD_AM_TUNE_FREQ_NRESP			1
+#घोषणा CMD_POWER_DOWN_A20_NRESP		1
+#घोषणा CMD_POWER_DOWN_A20_NARGS		1
 
-#define CMD_AM_RSQ_STATUS			0x42
-#define CMD_AM_RSQ_STATUS_NARGS			1
-#define CMD_AM_RSQ_STATUS_NRESP			13
+#घोषणा CMD_FUNC_INFO				0x12
+#घोषणा CMD_FUNC_INFO_NRESP			7
 
-#define CMD_AM_SEEK_START			0x41
-#define CMD_AM_SEEK_START_NARGS			1
-#define CMD_AM_SEEK_START_NRESP			1
+#घोषणा CMD_SET_PROPERTY			0x13
+#घोषणा CMD_SET_PROPERTY_NARGS			5
+#घोषणा CMD_SET_PROPERTY_NRESP			1
+
+#घोषणा CMD_GET_PROPERTY			0x14
+#घोषणा CMD_GET_PROPERTY_NARGS			3
+#घोषणा CMD_GET_PROPERTY_NRESP			4
+
+#घोषणा CMD_AGC_STATUS				0x17
+#घोषणा CMD_AGC_STATUS_NRESP_A10		2
+#घोषणा CMD_AGC_STATUS_NRESP_A20                6
+
+#घोषणा PIN_CFG_BYTE(x) (0x7F & (x))
+#घोषणा CMD_DIG_AUDIO_PIN_CFG			0x18
+#घोषणा CMD_DIG_AUDIO_PIN_CFG_NARGS		4
+#घोषणा CMD_DIG_AUDIO_PIN_CFG_NRESP		5
+
+#घोषणा CMD_ZIF_PIN_CFG				0x19
+#घोषणा CMD_ZIF_PIN_CFG_NARGS			4
+#घोषणा CMD_ZIF_PIN_CFG_NRESP			5
+
+#घोषणा CMD_IC_LINK_GPO_CTL_PIN_CFG		0x1A
+#घोषणा CMD_IC_LINK_GPO_CTL_PIN_CFG_NARGS	4
+#घोषणा CMD_IC_LINK_GPO_CTL_PIN_CFG_NRESP	5
+
+#घोषणा CMD_ANA_AUDIO_PIN_CFG			0x1B
+#घोषणा CMD_ANA_AUDIO_PIN_CFG_NARGS		1
+#घोषणा CMD_ANA_AUDIO_PIN_CFG_NRESP		2
+
+#घोषणा CMD_INTB_PIN_CFG			0x1C
+#घोषणा CMD_INTB_PIN_CFG_NARGS			2
+#घोषणा CMD_INTB_PIN_CFG_A10_NRESP		6
+#घोषणा CMD_INTB_PIN_CFG_A20_NRESP		3
+
+#घोषणा CMD_FM_TUNE_FREQ			0x30
+#घोषणा CMD_FM_TUNE_FREQ_A10_NARGS		5
+#घोषणा CMD_FM_TUNE_FREQ_A20_NARGS		3
+#घोषणा CMD_FM_TUNE_FREQ_NRESP			1
+
+#घोषणा CMD_FM_RSQ_STATUS			0x32
+
+#घोषणा CMD_FM_RSQ_STATUS_A10_NARGS		1
+#घोषणा CMD_FM_RSQ_STATUS_A10_NRESP		17
+#घोषणा CMD_FM_RSQ_STATUS_A30_NARGS		1
+#घोषणा CMD_FM_RSQ_STATUS_A30_NRESP		23
 
 
-#define CMD_AM_ACF_STATUS			0x45
-#define CMD_AM_ACF_STATUS_NRESP			6
-#define CMD_AM_ACF_STATUS_NARGS			1
+#घोषणा CMD_FM_SEEK_START			0x31
+#घोषणा CMD_FM_SEEK_START_NARGS			1
+#घोषणा CMD_FM_SEEK_START_NRESP			1
 
-#define CMD_FM_ACF_STATUS			0x35
-#define CMD_FM_ACF_STATUS_NRESP			8
-#define CMD_FM_ACF_STATUS_NARGS			1
+#घोषणा CMD_FM_RDS_STATUS			0x36
+#घोषणा CMD_FM_RDS_STATUS_NARGS			1
+#घोषणा CMD_FM_RDS_STATUS_NRESP			16
 
-#define CMD_MAX_ARGS_COUNT			(10)
+#घोषणा CMD_FM_RDS_BLOCKCOUNT			0x37
+#घोषणा CMD_FM_RDS_BLOCKCOUNT_NARGS		1
+#घोषणा CMD_FM_RDS_BLOCKCOUNT_NRESP		8
+
+#घोषणा CMD_FM_PHASE_DIVERSITY			0x38
+#घोषणा CMD_FM_PHASE_DIVERSITY_NARGS		1
+#घोषणा CMD_FM_PHASE_DIVERSITY_NRESP		1
+
+#घोषणा CMD_FM_PHASE_DIV_STATUS			0x39
+#घोषणा CMD_FM_PHASE_DIV_STATUS_NRESP		2
+
+#घोषणा CMD_AM_TUNE_FREQ			0x40
+#घोषणा CMD_AM_TUNE_FREQ_NARGS			3
+#घोषणा CMD_AM_TUNE_FREQ_NRESP			1
+
+#घोषणा CMD_AM_RSQ_STATUS			0x42
+#घोषणा CMD_AM_RSQ_STATUS_NARGS			1
+#घोषणा CMD_AM_RSQ_STATUS_NRESP			13
+
+#घोषणा CMD_AM_SEEK_START			0x41
+#घोषणा CMD_AM_SEEK_START_NARGS			1
+#घोषणा CMD_AM_SEEK_START_NRESP			1
 
 
-enum si476x_acf_status_report_bits {
+#घोषणा CMD_AM_ACF_STATUS			0x45
+#घोषणा CMD_AM_ACF_STATUS_NRESP			6
+#घोषणा CMD_AM_ACF_STATUS_NARGS			1
+
+#घोषणा CMD_FM_ACF_STATUS			0x35
+#घोषणा CMD_FM_ACF_STATUS_NRESP			8
+#घोषणा CMD_FM_ACF_STATUS_NARGS			1
+
+#घोषणा CMD_MAX_ARGS_COUNT			(10)
+
+
+क्रमागत si476x_acf_status_report_bits अणु
 	SI476X_ACF_BLEND_INT	= (1 << 4),
 	SI476X_ACF_HIBLEND_INT	= (1 << 3),
 	SI476X_ACF_HICUT_INT	= (1 << 2),
@@ -146,16 +147,16 @@ enum si476x_acf_status_report_bits {
 	SI476X_ACF_SMATTN	= 0x1f,
 	SI476X_ACF_PILOT	= (1 << 7),
 	SI476X_ACF_STBLEND	= ~SI476X_ACF_PILOT,
-};
+पूर्ण;
 
-enum si476x_agc_status_report_bits {
+क्रमागत si476x_agc_status_report_bits अणु
 	SI476X_AGC_MXHI		= (1 << 5),
 	SI476X_AGC_MXLO		= (1 << 4),
 	SI476X_AGC_LNAHI	= (1 << 3),
 	SI476X_AGC_LNALO	= (1 << 2),
-};
+पूर्ण;
 
-enum si476x_errors {
+क्रमागत si476x_errors अणु
 	SI476X_ERR_BAD_COMMAND		= 0x10,
 	SI476X_ERR_BAD_ARG1		= 0x11,
 	SI476X_ERR_BAD_ARG2		= 0x12,
@@ -166,249 +167,249 @@ enum si476x_errors {
 	SI476X_ERR_BAD_PATCH		= 0x30,
 	SI476X_ERR_BAD_BOOT_MODE	= 0x31,
 	SI476X_ERR_BAD_PROPERTY		= 0x40,
-};
+पूर्ण;
 
-static int si476x_core_parse_and_nag_about_error(struct si476x_core *core)
-{
-	int err;
-	char *cause;
+अटल पूर्णांक si476x_core_parse_and_nag_about_error(काष्ठा si476x_core *core)
+अणु
+	पूर्णांक err;
+	अक्षर *cause;
 	u8 buffer[2];
 
-	if (core->revision != SI476X_REVISION_A10) {
+	अगर (core->revision != SI476X_REVISION_A10) अणु
 		err = si476x_core_i2c_xfer(core, SI476X_I2C_RECV,
-					   buffer, sizeof(buffer));
-		if (err == sizeof(buffer)) {
-			switch (buffer[1]) {
-			case SI476X_ERR_BAD_COMMAND:
+					   buffer, माप(buffer));
+		अगर (err == माप(buffer)) अणु
+			चयन (buffer[1]) अणु
+			हाल SI476X_ERR_BAD_COMMAND:
 				cause = "Bad command";
 				err = -EINVAL;
-				break;
-			case SI476X_ERR_BAD_ARG1:
+				अवरोध;
+			हाल SI476X_ERR_BAD_ARG1:
 				cause = "Bad argument #1";
 				err = -EINVAL;
-				break;
-			case SI476X_ERR_BAD_ARG2:
+				अवरोध;
+			हाल SI476X_ERR_BAD_ARG2:
 				cause = "Bad argument #2";
 				err = -EINVAL;
-				break;
-			case SI476X_ERR_BAD_ARG3:
+				अवरोध;
+			हाल SI476X_ERR_BAD_ARG3:
 				cause = "Bad argument #3";
 				err = -EINVAL;
-				break;
-			case SI476X_ERR_BAD_ARG4:
+				अवरोध;
+			हाल SI476X_ERR_BAD_ARG4:
 				cause = "Bad argument #4";
 				err = -EINVAL;
-				break;
-			case SI476X_ERR_BUSY:
+				अवरोध;
+			हाल SI476X_ERR_BUSY:
 				cause = "Chip is busy";
 				err = -EBUSY;
-				break;
-			case SI476X_ERR_BAD_INTERNAL_MEMORY:
+				अवरोध;
+			हाल SI476X_ERR_BAD_INTERNAL_MEMORY:
 				cause = "Bad internal memory";
 				err = -EIO;
-				break;
-			case SI476X_ERR_BAD_PATCH:
+				अवरोध;
+			हाल SI476X_ERR_BAD_PATCH:
 				cause = "Bad patch";
 				err = -EINVAL;
-				break;
-			case SI476X_ERR_BAD_BOOT_MODE:
+				अवरोध;
+			हाल SI476X_ERR_BAD_BOOT_MODE:
 				cause = "Bad boot mode";
 				err = -EINVAL;
-				break;
-			case SI476X_ERR_BAD_PROPERTY:
+				अवरोध;
+			हाल SI476X_ERR_BAD_PROPERTY:
 				cause = "Bad property";
 				err = -EINVAL;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				cause = "Unknown";
 				err = -EIO;
-			}
+			पूर्ण
 
 			dev_err(&core->client->dev,
 				"[Chip error status]: %s\n", cause);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(&core->client->dev,
 				"Failed to fetch error code\n");
 			err = (err >= 0) ? -EIO : err;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		err = -EIO;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * si476x_core_send_command() - sends a command to si476x and waits its
+ * si476x_core_send_command() - sends a command to si476x and रुकोs its
  * response
- * @core:     si476x_device structure for the device we are
+ * @core:     si476x_device काष्ठाure क्रम the device we are
  *            communicating with
  * @command:  command id
  * @args:     command arguments we are sending
  * @argn:     actual size of @args
  * @resp:     buffer to place the expected response from the device
  * @respn:    actual size of @resp
- * @usecs:    amount of time to wait before reading the response (in
+ * @usecs:    amount of समय to रुको beक्रमe पढ़ोing the response (in
  *            usecs)
  *
- * Function returns 0 on succsess and negative error code on
+ * Function वापसs 0 on succsess and negative error code on
  * failure
  */
-static int si476x_core_send_command(struct si476x_core *core,
-				    const u8 command,
-				    const u8 args[],
-				    const int argn,
+अटल पूर्णांक si476x_core_send_command(काष्ठा si476x_core *core,
+				    स्थिर u8 command,
+				    स्थिर u8 args[],
+				    स्थिर पूर्णांक argn,
 				    u8 resp[],
-				    const int respn,
-				    const int usecs)
-{
-	struct i2c_client *client = core->client;
-	int err;
+				    स्थिर पूर्णांक respn,
+				    स्थिर पूर्णांक usecs)
+अणु
+	काष्ठा i2c_client *client = core->client;
+	पूर्णांक err;
 	u8  data[CMD_MAX_ARGS_COUNT + 1];
 
-	if (argn > CMD_MAX_ARGS_COUNT) {
+	अगर (argn > CMD_MAX_ARGS_COUNT) अणु
 		err = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (!client->adapter) {
+	अगर (!client->adapter) अणु
 		err = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/* First send the command and its arguments */
 	data[0] = command;
-	memcpy(&data[1], args, argn);
+	स_नकल(&data[1], args, argn);
 	dev_dbg(&client->dev, "Command:\n %*ph\n", argn + 1, data);
 
 	err = si476x_core_i2c_xfer(core, SI476X_I2C_SEND,
-				   (char *) data, argn + 1);
-	if (err != argn + 1) {
+				   (अक्षर *) data, argn + 1);
+	अगर (err != argn + 1) अणु
 		dev_err(&core->client->dev,
 			"Error while sending command 0x%02x\n",
 			command);
 		err = (err >= 0) ? -EIO : err;
-		goto exit;
-	}
-	/* Set CTS to zero only after the command is send to avoid
+		जाओ निकास;
+	पूर्ण
+	/* Set CTS to zero only after the command is send to aव्योम
 	 * possible racing conditions when working in polling mode */
 	atomic_set(&core->cts, 0);
 
-	/* if (unlikely(command == CMD_POWER_DOWN) */
-	if (!wait_event_timeout(core->command,
-				atomic_read(&core->cts),
-				usecs_to_jiffies(usecs) + 1))
+	/* अगर (unlikely(command == CMD_POWER_DOWN) */
+	अगर (!रुको_event_समयout(core->command,
+				atomic_पढ़ो(&core->cts),
+				usecs_to_jअगरfies(usecs) + 1))
 		dev_warn(&core->client->dev,
 			 "(%s) [CMD 0x%02x] Answer timeout.\n",
 			 __func__, command);
 
 	/*
-	  When working in polling mode, for some reason the tuner will
-	  report CTS bit as being set in the first status byte read,
-	  but all the consequtive ones will return zeros until the
+	  When working in polling mode, क्रम some reason the tuner will
+	  report CTS bit as being set in the first status byte पढ़ो,
+	  but all the consequtive ones will वापस zeros until the
 	  tuner is actually completed the POWER_UP command. To
-	  workaround that we wait for second CTS to be reported
+	  workaround that we रुको क्रम second CTS to be reported
 	 */
-	if (unlikely(!core->client->irq && command == CMD_POWER_UP)) {
-		if (!wait_event_timeout(core->command,
-					atomic_read(&core->cts),
-					usecs_to_jiffies(usecs) + 1))
+	अगर (unlikely(!core->client->irq && command == CMD_POWER_UP)) अणु
+		अगर (!रुको_event_समयout(core->command,
+					atomic_पढ़ो(&core->cts),
+					usecs_to_jअगरfies(usecs) + 1))
 			dev_warn(&core->client->dev,
 				 "(%s) Power up took too much time.\n",
 				 __func__);
-	}
+	पूर्ण
 
 	/* Then get the response */
 	err = si476x_core_i2c_xfer(core, SI476X_I2C_RECV, resp, respn);
-	if (err != respn) {
+	अगर (err != respn) अणु
 		dev_err(&core->client->dev,
 			"Error while reading response for command 0x%02x\n",
 			command);
 		err = (err >= 0) ? -EIO : err;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	dev_dbg(&client->dev, "Response:\n %*ph\n", respn, resp);
 
 	err = 0;
 
-	if (resp[0] & SI476X_ERR) {
+	अगर (resp[0] & SI476X_ERR) अणु
 		dev_err(&core->client->dev,
 			"[CMD 0x%02x] Chip set error flag\n", command);
 		err = si476x_core_parse_and_nag_about_error(core);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (!(resp[0] & SI476X_CTS))
+	अगर (!(resp[0] & SI476X_CTS))
 		err = -EBUSY;
-exit:
-	return err;
-}
+निकास:
+	वापस err;
+पूर्ण
 
-static int si476x_cmd_clear_stc(struct si476x_core *core)
-{
-	int err;
-	struct si476x_rsq_status_args args = {
+अटल पूर्णांक si476x_cmd_clear_stc(काष्ठा si476x_core *core)
+अणु
+	पूर्णांक err;
+	काष्ठा si476x_rsq_status_args args = अणु
 		.primary	= false,
 		.rsqack		= false,
 		.attune		= false,
 		.cancel		= false,
 		.stcack		= true,
-	};
+	पूर्ण;
 
-	switch (core->power_up_parameters.func) {
-	case SI476X_FUNC_FM_RECEIVER:
-		err = si476x_core_cmd_fm_rsq_status(core, &args, NULL);
-		break;
-	case SI476X_FUNC_AM_RECEIVER:
-		err = si476x_core_cmd_am_rsq_status(core, &args, NULL);
-		break;
-	default:
+	चयन (core->घातer_up_parameters.func) अणु
+	हाल SI476X_FUNC_FM_RECEIVER:
+		err = si476x_core_cmd_fm_rsq_status(core, &args, शून्य);
+		अवरोध;
+	हाल SI476X_FUNC_AM_RECEIVER:
+		err = si476x_core_cmd_am_rsq_status(core, &args, शून्य);
+		अवरोध;
+	शेष:
 		err = -EINVAL;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int si476x_cmd_tune_seek_freq(struct si476x_core *core,
-				     uint8_t cmd,
-				     const uint8_t args[], size_t argn,
-				     uint8_t *resp, size_t respn)
-{
-	int err;
+अटल पूर्णांक si476x_cmd_tune_seek_freq(काष्ठा si476x_core *core,
+				     uपूर्णांक8_t cmd,
+				     स्थिर uपूर्णांक8_t args[], माप_प्रकार argn,
+				     uपूर्णांक8_t *resp, माप_प्रकार respn)
+अणु
+	पूर्णांक err;
 
 
 	atomic_set(&core->stc, 0);
 	err = si476x_core_send_command(core, cmd, args, argn, resp, respn,
 				       SI476X_TIMEOUT_TUNE);
-	if (!err) {
-		wait_event_killable(core->tuning,
-				    atomic_read(&core->stc));
+	अगर (!err) अणु
+		रुको_event_समाप्तable(core->tuning,
+				    atomic_पढ़ो(&core->stc));
 		si476x_cmd_clear_stc(core);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * si476x_cmd_func_info() - send 'FUNC_INFO' command to the device
  * @core: device to send the command to
- * @info:  struct si476x_func_info to fill all the information
- *         returned by the command
+ * @info:  काष्ठा si476x_func_info to fill all the inक्रमmation
+ *         वापसed by the command
  *
- * The command requests the firmware and patch version for currently
+ * The command requests the firmware and patch version क्रम currently
  * loaded firmware (dependent on the function of the device FM/AM/WB)
  *
- * Function returns 0 on succsess and negative error code on
+ * Function वापसs 0 on succsess and negative error code on
  * failure
  */
-int si476x_core_cmd_func_info(struct si476x_core *core,
-			      struct si476x_func_info *info)
-{
-	int err;
+पूर्णांक si476x_core_cmd_func_info(काष्ठा si476x_core *core,
+			      काष्ठा si476x_func_info *info)
+अणु
+	पूर्णांक err;
 	u8  resp[CMD_FUNC_INFO_NRESP];
 
 	err = si476x_core_send_command(core, CMD_FUNC_INFO,
-				       NULL, 0,
+				       शून्य, 0,
 				       resp, ARRAY_SIZE(resp),
 				       SI476X_DEFAULT_TIMEOUT);
 
@@ -419,8 +420,8 @@ int si476x_core_cmd_func_info(struct si476x_core *core,
 	info->patch_id = ((u16) resp[4] << 8) | resp[5];
 	info->func     = resp[6];
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_func_info);
 
 /**
@@ -429,26 +430,26 @@ EXPORT_SYMBOL_GPL(si476x_core_cmd_func_info);
  * @property: property address
  * @value:    property value
  *
- * Function returns 0 on succsess and negative error code on
+ * Function वापसs 0 on succsess and negative error code on
  * failure
  */
-int si476x_core_cmd_set_property(struct si476x_core *core,
+पूर्णांक si476x_core_cmd_set_property(काष्ठा si476x_core *core,
 				 u16 property, u16 value)
-{
+अणु
 	u8       resp[CMD_SET_PROPERTY_NRESP];
-	const u8 args[CMD_SET_PROPERTY_NARGS] = {
+	स्थिर u8 args[CMD_SET_PROPERTY_NARGS] = अणु
 		0x00,
 		msb(property),
 		lsb(property),
 		msb(value),
 		lsb(value),
-	};
+	पूर्ण;
 
-	return si476x_core_send_command(core, CMD_SET_PROPERTY,
+	वापस si476x_core_send_command(core, CMD_SET_PROPERTY,
 					args, ARRAY_SIZE(args),
 					resp, ARRAY_SIZE(resp),
 					SI476X_DEFAULT_TIMEOUT);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_set_property);
 
 /**
@@ -456,28 +457,28 @@ EXPORT_SYMBOL_GPL(si476x_core_cmd_set_property);
  * @core:    device to send the command to
  * @property: property address
  *
- * Function return the value of property as u16 on success or a
+ * Function वापस the value of property as u16 on success or a
  * negative error on failure
  */
-int si476x_core_cmd_get_property(struct si476x_core *core, u16 property)
-{
-	int err;
+पूर्णांक si476x_core_cmd_get_property(काष्ठा si476x_core *core, u16 property)
+अणु
+	पूर्णांक err;
 	u8       resp[CMD_GET_PROPERTY_NRESP];
-	const u8 args[CMD_GET_PROPERTY_NARGS] = {
+	स्थिर u8 args[CMD_GET_PROPERTY_NARGS] = अणु
 		0x00,
 		msb(property),
 		lsb(property),
-	};
+	पूर्ण;
 
 	err = si476x_core_send_command(core, CMD_GET_PROPERTY,
 				       args, ARRAY_SIZE(args),
 				       resp, ARRAY_SIZE(resp),
 				       SI476X_DEFAULT_TIMEOUT);
-	if (err < 0)
-		return err;
-	else
-		return get_unaligned_be16(resp + 2);
-}
+	अगर (err < 0)
+		वापस err;
+	अन्यथा
+		वापस get_unaligned_be16(resp + 2);
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_get_property);
 
 /**
@@ -485,29 +486,29 @@ EXPORT_SYMBOL_GPL(si476x_core_cmd_get_property);
  * the device
  * @core: device to send the command to
  * @dclk:  DCLK pin function configuration:
- *	   #SI476X_DCLK_NOOP     - do not modify the behaviour
+ *	   #SI476X_DCLK_NOOP     - करो not modअगरy the behaviour
  *         #SI476X_DCLK_TRISTATE - put the pin in tristate condition,
- *                                 enable 1MOhm pulldown
+ *                                 enable 1MOhm pullकरोwn
  *         #SI476X_DCLK_DAUDIO   - set the pin to be a part of digital
- *                                 audio interface
+ *                                 audio पूर्णांकerface
  * @dfs:   DFS pin function configuration:
- *         #SI476X_DFS_NOOP      - do not modify the behaviour
+ *         #SI476X_DFS_NOOP      - करो not modअगरy the behaviour
  *         #SI476X_DFS_TRISTATE  - put the pin in tristate condition,
- *                             enable 1MOhm pulldown
+ *                             enable 1MOhm pullकरोwn
  *      SI476X_DFS_DAUDIO    - set the pin to be a part of digital
- *                             audio interface
- * @dout: - DOUT pin function configuration:
- *      SI476X_DOUT_NOOP       - do not modify the behaviour
+ *                             audio पूर्णांकerface
+ * @करोut: - DOUT pin function configuration:
+ *      SI476X_DOUT_NOOP       - करो not modअगरy the behaviour
  *      SI476X_DOUT_TRISTATE   - put the pin in tristate condition,
- *                               enable 1MOhm pulldown
+ *                               enable 1MOhm pullकरोwn
  *      SI476X_DOUT_I2S_OUTPUT - set this pin to be digital out on I2S
  *                               port 1
  *      SI476X_DOUT_I2S_INPUT  - set this pin to be digital in on I2S
  *                               port 1
  * @xout: - XOUT pin function configuration:
- *	SI476X_XOUT_NOOP        - do not modify the behaviour
+ *	SI476X_XOUT_NOOP        - करो not modअगरy the behaviour
  *      SI476X_XOUT_TRISTATE    - put the pin in tristate condition,
- *                                enable 1MOhm pulldown
+ *                                enable 1MOhm pullकरोwn
  *      SI476X_XOUT_I2S_INPUT   - set this pin to be digital in on I2S
  *                                port 1
  *      SI476X_XOUT_MODE_SELECT - set this pin to be the input that
@@ -515,133 +516,133 @@ EXPORT_SYMBOL_GPL(si476x_core_cmd_get_property);
  *                                combiner (analog or HD)
  *                                [SI4761/63/65/67 Only]
  *
- * Function returns 0 on success and negative error code on failure
+ * Function वापसs 0 on success and negative error code on failure
  */
-int si476x_core_cmd_dig_audio_pin_cfg(struct  si476x_core *core,
-				      enum si476x_dclk_config dclk,
-				      enum si476x_dfs_config  dfs,
-				      enum si476x_dout_config dout,
-				      enum si476x_xout_config xout)
-{
+पूर्णांक si476x_core_cmd_dig_audio_pin_cfg(काष्ठा  si476x_core *core,
+				      क्रमागत si476x_dclk_config dclk,
+				      क्रमागत si476x_dfs_config  dfs,
+				      क्रमागत si476x_करोut_config करोut,
+				      क्रमागत si476x_xout_config xout)
+अणु
 	u8       resp[CMD_DIG_AUDIO_PIN_CFG_NRESP];
-	const u8 args[CMD_DIG_AUDIO_PIN_CFG_NARGS] = {
+	स्थिर u8 args[CMD_DIG_AUDIO_PIN_CFG_NARGS] = अणु
 		PIN_CFG_BYTE(dclk),
 		PIN_CFG_BYTE(dfs),
-		PIN_CFG_BYTE(dout),
+		PIN_CFG_BYTE(करोut),
 		PIN_CFG_BYTE(xout),
-	};
+	पूर्ण;
 
-	return si476x_core_send_command(core, CMD_DIG_AUDIO_PIN_CFG,
+	वापस si476x_core_send_command(core, CMD_DIG_AUDIO_PIN_CFG,
 					args, ARRAY_SIZE(args),
 					resp, ARRAY_SIZE(resp),
 					SI476X_DEFAULT_TIMEOUT);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_dig_audio_pin_cfg);
 
 /**
- * si476x_cmd_zif_pin_cfg - send 'ZIF_PIN_CFG_COMMAND'
+ * si476x_cmd_zअगर_pin_cfg - send 'ZIF_PIN_CFG_COMMAND'
  * @core: - device to send the command to
  * @iqclk: - IQCL pin function configuration:
- *       SI476X_IQCLK_NOOP     - do not modify the behaviour
+ *       SI476X_IQCLK_NOOP     - करो not modअगरy the behaviour
  *       SI476X_IQCLK_TRISTATE - put the pin in tristate condition,
- *                               enable 1MOhm pulldown
- *       SI476X_IQCLK_IQ       - set pin to be a part of I/Q interace
+ *                               enable 1MOhm pullकरोwn
+ *       SI476X_IQCLK_IQ       - set pin to be a part of I/Q पूर्णांकerace
  *                               in master mode
  * @iqfs: - IQFS pin function configuration:
- *       SI476X_IQFS_NOOP     - do not modify the behaviour
+ *       SI476X_IQFS_NOOP     - करो not modअगरy the behaviour
  *       SI476X_IQFS_TRISTATE - put the pin in tristate condition,
- *                              enable 1MOhm pulldown
- *       SI476X_IQFS_IQ       - set pin to be a part of I/Q interace
+ *                              enable 1MOhm pullकरोwn
+ *       SI476X_IQFS_IQ       - set pin to be a part of I/Q पूर्णांकerace
  *                              in master mode
  * @iout: - IOUT pin function configuration:
- *       SI476X_IOUT_NOOP     - do not modify the behaviour
+ *       SI476X_IOUT_NOOP     - करो not modअगरy the behaviour
  *       SI476X_IOUT_TRISTATE - put the pin in tristate condition,
- *                              enable 1MOhm pulldown
+ *                              enable 1MOhm pullकरोwn
  *       SI476X_IOUT_OUTPUT   - set pin to be I out
  * @qout: - QOUT pin function configuration:
- *       SI476X_QOUT_NOOP     - do not modify the behaviour
+ *       SI476X_QOUT_NOOP     - करो not modअगरy the behaviour
  *       SI476X_QOUT_TRISTATE - put the pin in tristate condition,
- *                              enable 1MOhm pulldown
+ *                              enable 1MOhm pullकरोwn
  *       SI476X_QOUT_OUTPUT   - set pin to be Q out
  *
- * Function returns 0 on success and negative error code on failure
+ * Function वापसs 0 on success and negative error code on failure
  */
-int si476x_core_cmd_zif_pin_cfg(struct si476x_core *core,
-				enum si476x_iqclk_config iqclk,
-				enum si476x_iqfs_config iqfs,
-				enum si476x_iout_config iout,
-				enum si476x_qout_config qout)
-{
+पूर्णांक si476x_core_cmd_zअगर_pin_cfg(काष्ठा si476x_core *core,
+				क्रमागत si476x_iqclk_config iqclk,
+				क्रमागत si476x_iqfs_config iqfs,
+				क्रमागत si476x_iout_config iout,
+				क्रमागत si476x_qout_config qout)
+अणु
 	u8       resp[CMD_ZIF_PIN_CFG_NRESP];
-	const u8 args[CMD_ZIF_PIN_CFG_NARGS] = {
+	स्थिर u8 args[CMD_ZIF_PIN_CFG_NARGS] = अणु
 		PIN_CFG_BYTE(iqclk),
 		PIN_CFG_BYTE(iqfs),
 		PIN_CFG_BYTE(iout),
 		PIN_CFG_BYTE(qout),
-	};
+	पूर्ण;
 
-	return si476x_core_send_command(core, CMD_ZIF_PIN_CFG,
+	वापस si476x_core_send_command(core, CMD_ZIF_PIN_CFG,
 					args, ARRAY_SIZE(args),
 					resp, ARRAY_SIZE(resp),
 					SI476X_DEFAULT_TIMEOUT);
-}
-EXPORT_SYMBOL_GPL(si476x_core_cmd_zif_pin_cfg);
+पूर्ण
+EXPORT_SYMBOL_GPL(si476x_core_cmd_zअगर_pin_cfg);
 
 /**
  * si476x_cmd_ic_link_gpo_ctl_pin_cfg - send
  * 'IC_LINK_GPIO_CTL_PIN_CFG' comand to the device
  * @core: - device to send the command to
  * @icin: - ICIN pin function configuration:
- *      SI476X_ICIN_NOOP      - do not modify the behaviour
+ *      SI476X_ICIN_NOOP      - करो not modअगरy the behaviour
  *      SI476X_ICIN_TRISTATE  - put the pin in tristate condition,
- *                              enable 1MOhm pulldown
+ *                              enable 1MOhm pullकरोwn
  *      SI476X_ICIN_GPO1_HIGH - set pin to be an output, drive it high
  *      SI476X_ICIN_GPO1_LOW  - set pin to be an output, drive it low
  *      SI476X_ICIN_IC_LINK   - set the pin to be a part of Inter-Chip link
  * @icip: - ICIP pin function configuration:
- *      SI476X_ICIP_NOOP      - do not modify the behaviour
+ *      SI476X_ICIP_NOOP      - करो not modअगरy the behaviour
  *      SI476X_ICIP_TRISTATE  - put the pin in tristate condition,
- *                              enable 1MOhm pulldown
+ *                              enable 1MOhm pullकरोwn
  *      SI476X_ICIP_GPO1_HIGH - set pin to be an output, drive it high
  *      SI476X_ICIP_GPO1_LOW  - set pin to be an output, drive it low
  *      SI476X_ICIP_IC_LINK   - set the pin to be a part of Inter-Chip link
  * @icon: - ICON pin function configuration:
- *      SI476X_ICON_NOOP     - do not modify the behaviour
+ *      SI476X_ICON_NOOP     - करो not modअगरy the behaviour
  *      SI476X_ICON_TRISTATE - put the pin in tristate condition,
- *                             enable 1MOhm pulldown
+ *                             enable 1MOhm pullकरोwn
  *      SI476X_ICON_I2S      - set the pin to be a part of audio
- *                             interface in slave mode (DCLK)
+ *                             पूर्णांकerface in slave mode (DCLK)
  *      SI476X_ICON_IC_LINK  - set the pin to be a part of Inter-Chip link
  * @icop: - ICOP pin function configuration:
- *      SI476X_ICOP_NOOP     - do not modify the behaviour
+ *      SI476X_ICOP_NOOP     - करो not modअगरy the behaviour
  *      SI476X_ICOP_TRISTATE - put the pin in tristate condition,
- *                             enable 1MOhm pulldown
+ *                             enable 1MOhm pullकरोwn
  *      SI476X_ICOP_I2S      - set the pin to be a part of audio
- *                             interface in slave mode (DOUT)
+ *                             पूर्णांकerface in slave mode (DOUT)
  *                             [Si4761/63/65/67 Only]
  *      SI476X_ICOP_IC_LINK  - set the pin to be a part of Inter-Chip link
  *
- * Function returns 0 on success and negative error code on failure
+ * Function वापसs 0 on success and negative error code on failure
  */
-int si476x_core_cmd_ic_link_gpo_ctl_pin_cfg(struct si476x_core *core,
-					    enum si476x_icin_config icin,
-					    enum si476x_icip_config icip,
-					    enum si476x_icon_config icon,
-					    enum si476x_icop_config icop)
-{
+पूर्णांक si476x_core_cmd_ic_link_gpo_ctl_pin_cfg(काष्ठा si476x_core *core,
+					    क्रमागत si476x_icin_config icin,
+					    क्रमागत si476x_icip_config icip,
+					    क्रमागत si476x_icon_config icon,
+					    क्रमागत si476x_icop_config icop)
+अणु
 	u8       resp[CMD_IC_LINK_GPO_CTL_PIN_CFG_NRESP];
-	const u8 args[CMD_IC_LINK_GPO_CTL_PIN_CFG_NARGS] = {
+	स्थिर u8 args[CMD_IC_LINK_GPO_CTL_PIN_CFG_NARGS] = अणु
 		PIN_CFG_BYTE(icin),
 		PIN_CFG_BYTE(icip),
 		PIN_CFG_BYTE(icon),
 		PIN_CFG_BYTE(icop),
-	};
+	पूर्ण;
 
-	return si476x_core_send_command(core, CMD_IC_LINK_GPO_CTL_PIN_CFG,
+	वापस si476x_core_send_command(core, CMD_IC_LINK_GPO_CTL_PIN_CFG,
 					args, ARRAY_SIZE(args),
 					resp, ARRAY_SIZE(resp),
 					SI476X_DEFAULT_TIMEOUT);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_ic_link_gpo_ctl_pin_cfg);
 
 /**
@@ -649,79 +650,79 @@ EXPORT_SYMBOL_GPL(si476x_core_cmd_ic_link_gpo_ctl_pin_cfg);
  * device
  * @core: - device to send the command to
  * @lrout: - LROUT pin function configuration:
- *       SI476X_LROUT_NOOP     - do not modify the behaviour
+ *       SI476X_LROUT_NOOP     - करो not modअगरy the behaviour
  *       SI476X_LROUT_TRISTATE - put the pin in tristate condition,
- *                               enable 1MOhm pulldown
+ *                               enable 1MOhm pullकरोwn
  *       SI476X_LROUT_AUDIO    - set pin to be audio output
  *       SI476X_LROUT_MPX      - set pin to be MPX output
  *
- * Function returns 0 on success and negative error code on failure
+ * Function वापसs 0 on success and negative error code on failure
  */
-int si476x_core_cmd_ana_audio_pin_cfg(struct si476x_core *core,
-				      enum si476x_lrout_config lrout)
-{
+पूर्णांक si476x_core_cmd_ana_audio_pin_cfg(काष्ठा si476x_core *core,
+				      क्रमागत si476x_lrout_config lrout)
+अणु
 	u8       resp[CMD_ANA_AUDIO_PIN_CFG_NRESP];
-	const u8 args[CMD_ANA_AUDIO_PIN_CFG_NARGS] = {
+	स्थिर u8 args[CMD_ANA_AUDIO_PIN_CFG_NARGS] = अणु
 		PIN_CFG_BYTE(lrout),
-	};
+	पूर्ण;
 
-	return si476x_core_send_command(core, CMD_ANA_AUDIO_PIN_CFG,
+	वापस si476x_core_send_command(core, CMD_ANA_AUDIO_PIN_CFG,
 					args, ARRAY_SIZE(args),
 					resp, ARRAY_SIZE(resp),
 					SI476X_DEFAULT_TIMEOUT);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_ana_audio_pin_cfg);
 
 
 /**
- * si476x_cmd_intb_pin_cfg - send 'INTB_PIN_CFG' command to the device
+ * si476x_cmd_पूर्णांकb_pin_cfg - send 'INTB_PIN_CFG' command to the device
  * @core: - device to send the command to
- * @intb: - INTB pin function configuration:
- *      SI476X_INTB_NOOP     - do not modify the behaviour
+ * @पूर्णांकb: - INTB pin function configuration:
+ *      SI476X_INTB_NOOP     - करो not modअगरy the behaviour
  *      SI476X_INTB_TRISTATE - put the pin in tristate condition,
- *                             enable 1MOhm pulldown
+ *                             enable 1MOhm pullकरोwn
  *      SI476X_INTB_DAUDIO   - set pin to be a part of digital
- *                             audio interface in slave mode
- *      SI476X_INTB_IRQ      - set pin to be an interrupt request line
+ *                             audio पूर्णांकerface in slave mode
+ *      SI476X_INTB_IRQ      - set pin to be an पूर्णांकerrupt request line
  * @a1: - A1 pin function configuration:
- *      SI476X_A1_NOOP     - do not modify the behaviour
+ *      SI476X_A1_NOOP     - करो not modअगरy the behaviour
  *      SI476X_A1_TRISTATE - put the pin in tristate condition,
- *                           enable 1MOhm pulldown
- *      SI476X_A1_IRQ      - set pin to be an interrupt request line
+ *                           enable 1MOhm pullकरोwn
+ *      SI476X_A1_IRQ      - set pin to be an पूर्णांकerrupt request line
  *
- * Function returns 0 on success and negative error code on failure
+ * Function वापसs 0 on success and negative error code on failure
  */
-static int si476x_core_cmd_intb_pin_cfg_a10(struct si476x_core *core,
-					    enum si476x_intb_config intb,
-					    enum si476x_a1_config a1)
-{
+अटल पूर्णांक si476x_core_cmd_पूर्णांकb_pin_cfg_a10(काष्ठा si476x_core *core,
+					    क्रमागत si476x_पूर्णांकb_config पूर्णांकb,
+					    क्रमागत si476x_a1_config a1)
+अणु
 	u8       resp[CMD_INTB_PIN_CFG_A10_NRESP];
-	const u8 args[CMD_INTB_PIN_CFG_NARGS] = {
-		PIN_CFG_BYTE(intb),
+	स्थिर u8 args[CMD_INTB_PIN_CFG_NARGS] = अणु
+		PIN_CFG_BYTE(पूर्णांकb),
 		PIN_CFG_BYTE(a1),
-	};
+	पूर्ण;
 
-	return si476x_core_send_command(core, CMD_INTB_PIN_CFG,
+	वापस si476x_core_send_command(core, CMD_INTB_PIN_CFG,
 					args, ARRAY_SIZE(args),
 					resp, ARRAY_SIZE(resp),
 					SI476X_DEFAULT_TIMEOUT);
-}
+पूर्ण
 
-static int si476x_core_cmd_intb_pin_cfg_a20(struct si476x_core *core,
-					    enum si476x_intb_config intb,
-					    enum si476x_a1_config a1)
-{
+अटल पूर्णांक si476x_core_cmd_पूर्णांकb_pin_cfg_a20(काष्ठा si476x_core *core,
+					    क्रमागत si476x_पूर्णांकb_config पूर्णांकb,
+					    क्रमागत si476x_a1_config a1)
+अणु
 	u8       resp[CMD_INTB_PIN_CFG_A20_NRESP];
-	const u8 args[CMD_INTB_PIN_CFG_NARGS] = {
-		PIN_CFG_BYTE(intb),
+	स्थिर u8 args[CMD_INTB_PIN_CFG_NARGS] = अणु
+		PIN_CFG_BYTE(पूर्णांकb),
 		PIN_CFG_BYTE(a1),
-	};
+	पूर्ण;
 
-	return si476x_core_send_command(core, CMD_INTB_PIN_CFG,
+	वापस si476x_core_send_command(core, CMD_INTB_PIN_CFG,
 					args, ARRAY_SIZE(args),
 					resp, ARRAY_SIZE(resp),
 					SI476X_DEFAULT_TIMEOUT);
-}
+पूर्ण
 
 
 
@@ -729,50 +730,50 @@ static int si476x_core_cmd_intb_pin_cfg_a20(struct si476x_core *core,
  * si476x_cmd_am_rsq_status - send 'AM_RSQ_STATUS' command to the
  * device
  * @core:  - device to send the command to
- * @rsqargs: - pointer to a structure containing a group of sub-args
+ * @rsqargs: - poपूर्णांकer to a काष्ठाure containing a group of sub-args
  *             relevant to sending the RSQ status command
- * @report: - all signal quality information retured by the command
- *           (if NULL then the output of the command is ignored)
+ * @report: - all संकेत quality inक्रमmation retured by the command
+ *           (अगर शून्य then the output of the command is ignored)
  *
- * Function returns 0 on success and negative error code on failure
+ * Function वापसs 0 on success and negative error code on failure
  */
-int si476x_core_cmd_am_rsq_status(struct si476x_core *core,
-				  struct si476x_rsq_status_args *rsqargs,
-				  struct si476x_rsq_status_report *report)
-{
-	int err;
+पूर्णांक si476x_core_cmd_am_rsq_status(काष्ठा si476x_core *core,
+				  काष्ठा si476x_rsq_status_args *rsqargs,
+				  काष्ठा si476x_rsq_status_report *report)
+अणु
+	पूर्णांक err;
 	u8       resp[CMD_AM_RSQ_STATUS_NRESP];
-	const u8 args[CMD_AM_RSQ_STATUS_NARGS] = {
+	स्थिर u8 args[CMD_AM_RSQ_STATUS_NARGS] = अणु
 		rsqargs->rsqack << 3 | rsqargs->attune << 2 |
 		rsqargs->cancel << 1 | rsqargs->stcack,
-	};
+	पूर्ण;
 
 	err = si476x_core_send_command(core, CMD_AM_RSQ_STATUS,
 				       args, ARRAY_SIZE(args),
 				       resp, ARRAY_SIZE(resp),
 				       SI476X_DEFAULT_TIMEOUT);
 	/*
-	 * Besides getting received signal quality information this
-	 * command can be used to just acknowledge different interrupt
-	 * flags in those cases it is useless to copy and parse
-	 * received data so user can pass NULL, and thus avoid
+	 * Besides getting received संकेत quality inक्रमmation this
+	 * command can be used to just acknowledge dअगरferent पूर्णांकerrupt
+	 * flags in those हालs it is useless to copy and parse
+	 * received data so user can pass शून्य, and thus aव्योम
 	 * unnecessary copying.
 	 */
-	if (!report)
-		return err;
+	अगर (!report)
+		वापस err;
 
-	report->snrhint		= 0x08 & resp[1];
-	report->snrlint		= 0x04 & resp[1];
-	report->rssihint	= 0x02 & resp[1];
-	report->rssilint	= 0x01 & resp[1];
+	report->snrhपूर्णांक		= 0x08 & resp[1];
+	report->snrlपूर्णांक		= 0x04 & resp[1];
+	report->rssihपूर्णांक	= 0x02 & resp[1];
+	report->rssilपूर्णांक	= 0x01 & resp[1];
 
 	report->bltf		= 0x80 & resp[2];
-	report->snr_ready	= 0x20 & resp[2];
-	report->rssiready	= 0x08 & resp[2];
+	report->snr_पढ़ोy	= 0x20 & resp[2];
+	report->rssiपढ़ोy	= 0x08 & resp[2];
 	report->afcrl		= 0x02 & resp[2];
 	report->valid		= 0x01 & resp[2];
 
-	report->readfreq	= get_unaligned_be16(resp + 3);
+	report->पढ़ोfreq	= get_unaligned_be16(resp + 3);
 	report->freqoff		= resp[5];
 	report->rssi		= resp[6];
 	report->snr		= resp[7];
@@ -781,34 +782,34 @@ int si476x_core_cmd_am_rsq_status(struct si476x_core *core,
 	report->mult		= resp[11];
 	report->dev		= resp[12];
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_am_rsq_status);
 
-int si476x_core_cmd_fm_acf_status(struct si476x_core *core,
-			     struct si476x_acf_status_report *report)
-{
-	int err;
+पूर्णांक si476x_core_cmd_fm_acf_status(काष्ठा si476x_core *core,
+			     काष्ठा si476x_acf_status_report *report)
+अणु
+	पूर्णांक err;
 	u8       resp[CMD_FM_ACF_STATUS_NRESP];
-	const u8 args[CMD_FM_ACF_STATUS_NARGS] = {
+	स्थिर u8 args[CMD_FM_ACF_STATUS_NARGS] = अणु
 		0x0,
-	};
+	पूर्ण;
 
-	if (!report)
-		return -EINVAL;
+	अगर (!report)
+		वापस -EINVAL;
 
 	err = si476x_core_send_command(core, CMD_FM_ACF_STATUS,
 				       args, ARRAY_SIZE(args),
 				       resp, ARRAY_SIZE(resp),
 				       SI476X_DEFAULT_TIMEOUT);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	report->blend_int	= resp[1] & SI476X_ACF_BLEND_INT;
-	report->hblend_int	= resp[1] & SI476X_ACF_HIBLEND_INT;
-	report->hicut_int	= resp[1] & SI476X_ACF_HICUT_INT;
-	report->chbw_int	= resp[1] & SI476X_ACF_CHBW_INT;
-	report->softmute_int	= resp[1] & SI476X_ACF_SOFTMUTE_INT;
+	report->blend_पूर्णांक	= resp[1] & SI476X_ACF_BLEND_INT;
+	report->hblend_पूर्णांक	= resp[1] & SI476X_ACF_HIBLEND_INT;
+	report->hicut_पूर्णांक	= resp[1] & SI476X_ACF_HICUT_INT;
+	report->chbw_पूर्णांक	= resp[1] & SI476X_ACF_CHBW_INT;
+	report->sofपंचांगute_पूर्णांक	= resp[1] & SI476X_ACF_SOFTMUTE_INT;
 	report->smute		= resp[2] & SI476X_ACF_SMUTE;
 	report->smattn		= resp[3] & SI476X_ACF_SMATTN;
 	report->chbw		= resp[4];
@@ -817,41 +818,41 @@ int si476x_core_cmd_fm_acf_status(struct si476x_core *core,
 	report->pilot		= resp[7] & SI476X_ACF_PILOT;
 	report->stblend		= resp[7] & SI476X_ACF_STBLEND;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_fm_acf_status);
 
-int si476x_core_cmd_am_acf_status(struct si476x_core *core,
-				  struct si476x_acf_status_report *report)
-{
-	int err;
+पूर्णांक si476x_core_cmd_am_acf_status(काष्ठा si476x_core *core,
+				  काष्ठा si476x_acf_status_report *report)
+अणु
+	पूर्णांक err;
 	u8       resp[CMD_AM_ACF_STATUS_NRESP];
-	const u8 args[CMD_AM_ACF_STATUS_NARGS] = {
+	स्थिर u8 args[CMD_AM_ACF_STATUS_NARGS] = अणु
 		0x0,
-	};
+	पूर्ण;
 
-	if (!report)
-		return -EINVAL;
+	अगर (!report)
+		वापस -EINVAL;
 
 	err = si476x_core_send_command(core, CMD_AM_ACF_STATUS,
 				       args, ARRAY_SIZE(args),
 				       resp, ARRAY_SIZE(resp),
 				       SI476X_DEFAULT_TIMEOUT);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	report->blend_int	= resp[1] & SI476X_ACF_BLEND_INT;
-	report->hblend_int	= resp[1] & SI476X_ACF_HIBLEND_INT;
-	report->hicut_int	= resp[1] & SI476X_ACF_HICUT_INT;
-	report->chbw_int	= resp[1] & SI476X_ACF_CHBW_INT;
-	report->softmute_int	= resp[1] & SI476X_ACF_SOFTMUTE_INT;
+	report->blend_पूर्णांक	= resp[1] & SI476X_ACF_BLEND_INT;
+	report->hblend_पूर्णांक	= resp[1] & SI476X_ACF_HIBLEND_INT;
+	report->hicut_पूर्णांक	= resp[1] & SI476X_ACF_HICUT_INT;
+	report->chbw_पूर्णांक	= resp[1] & SI476X_ACF_CHBW_INT;
+	report->sofपंचांगute_पूर्णांक	= resp[1] & SI476X_ACF_SOFTMUTE_INT;
 	report->smute		= resp[2] & SI476X_ACF_SMUTE;
 	report->smattn		= resp[3] & SI476X_ACF_SMATTN;
 	report->chbw		= resp[4];
 	report->hicut		= resp[5];
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_am_acf_status);
 
 
@@ -859,84 +860,84 @@ EXPORT_SYMBOL_GPL(si476x_core_cmd_am_acf_status);
  * si476x_cmd_fm_seek_start - send 'FM_SEEK_START' command to the
  * device
  * @core:  - device to send the command to
- * @seekup: - if set the direction of the search is 'up'
- * @wrap:   - if set seek wraps when hitting band limit
+ * @seekup: - अगर set the direction of the search is 'up'
+ * @wrap:   - अगर set seek wraps when hitting band limit
  *
- * This function begins search for a valid station. The station is
+ * This function begins search क्रम a valid station. The station is
  * considered valid when 'FM_VALID_SNR_THRESHOLD' and
  * 'FM_VALID_RSSI_THRESHOLD' and 'FM_VALID_MAX_TUNE_ERROR' criteria
  * are met.
-} *
- * Function returns 0 on success and negative error code on failure
+पूर्ण *
+ * Function वापसs 0 on success and negative error code on failure
  */
-int si476x_core_cmd_fm_seek_start(struct si476x_core *core,
+पूर्णांक si476x_core_cmd_fm_seek_start(काष्ठा si476x_core *core,
 				  bool seekup, bool wrap)
-{
+अणु
 	u8       resp[CMD_FM_SEEK_START_NRESP];
-	const u8 args[CMD_FM_SEEK_START_NARGS] = {
+	स्थिर u8 args[CMD_FM_SEEK_START_NARGS] = अणु
 		seekup << 3 | wrap << 2,
-	};
+	पूर्ण;
 
-	return si476x_cmd_tune_seek_freq(core, CMD_FM_SEEK_START,
-					 args, sizeof(args),
-					 resp, sizeof(resp));
-}
+	वापस si476x_cmd_tune_seek_freq(core, CMD_FM_SEEK_START,
+					 args, माप(args),
+					 resp, माप(resp));
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_fm_seek_start);
 
 /**
  * si476x_cmd_fm_rds_status - send 'FM_RDS_STATUS' command to the
  * device
  * @core: - device to send the command to
- * @status_only: - if set the data is not removed from RDSFIFO,
+ * @status_only: - अगर set the data is not हटाओd from RDSFIFO,
  *                RDSFIFOUSED is not decremented and data in all the
  *                rest RDS data contains the last valid info received
- * @mtfifo: if set the command clears RDS receive FIFO
- * @intack: if set the command clards the RDSINT bit.
- * @report: - all signal quality information retured by the command
- *           (if NULL then the output of the command is ignored)
+ * @mtfअगरo: अगर set the command clears RDS receive FIFO
+ * @पूर्णांकack: अगर set the command clards the RDSINT bit.
+ * @report: - all संकेत quality inक्रमmation retured by the command
+ *           (अगर शून्य then the output of the command is ignored)
  *
- * Function returns 0 on success and negative error code on failure
+ * Function वापसs 0 on success and negative error code on failure
  */
-int si476x_core_cmd_fm_rds_status(struct si476x_core *core,
+पूर्णांक si476x_core_cmd_fm_rds_status(काष्ठा si476x_core *core,
 				  bool status_only,
-				  bool mtfifo,
-				  bool intack,
-				  struct si476x_rds_status_report *report)
-{
-	int err;
+				  bool mtfअगरo,
+				  bool पूर्णांकack,
+				  काष्ठा si476x_rds_status_report *report)
+अणु
+	पूर्णांक err;
 	u8       resp[CMD_FM_RDS_STATUS_NRESP];
-	const u8 args[CMD_FM_RDS_STATUS_NARGS] = {
-		status_only << 2 | mtfifo << 1 | intack,
-	};
+	स्थिर u8 args[CMD_FM_RDS_STATUS_NARGS] = अणु
+		status_only << 2 | mtfअगरo << 1 | पूर्णांकack,
+	पूर्ण;
 
 	err = si476x_core_send_command(core, CMD_FM_RDS_STATUS,
 				       args, ARRAY_SIZE(args),
 				       resp, ARRAY_SIZE(resp),
 				       SI476X_DEFAULT_TIMEOUT);
 	/*
-	 * Besides getting RDS status information this command can be
-	 * used to just acknowledge different interrupt flags in those
-	 * cases it is useless to copy and parse received data so user
-	 * can pass NULL, and thus avoid unnecessary copying.
+	 * Besides getting RDS status inक्रमmation this command can be
+	 * used to just acknowledge dअगरferent पूर्णांकerrupt flags in those
+	 * हालs it is useless to copy and parse received data so user
+	 * can pass शून्य, and thus aव्योम unnecessary copying.
 	 */
-	if (err < 0 || report == NULL)
-		return err;
+	अगर (err < 0 || report == शून्य)
+		वापस err;
 
-	report->rdstpptyint	= 0x10 & resp[1];
-	report->rdspiint	= 0x08 & resp[1];
-	report->rdssyncint	= 0x02 & resp[1];
-	report->rdsfifoint	= 0x01 & resp[1];
+	report->rdstpptyपूर्णांक	= 0x10 & resp[1];
+	report->rdspiपूर्णांक	= 0x08 & resp[1];
+	report->rdssyncपूर्णांक	= 0x02 & resp[1];
+	report->rdsfअगरoपूर्णांक	= 0x01 & resp[1];
 
 	report->tpptyvalid	= 0x10 & resp[2];
 	report->pivalid		= 0x08 & resp[2];
 	report->rdssync		= 0x02 & resp[2];
-	report->rdsfifolost	= 0x01 & resp[2];
+	report->rdsfअगरolost	= 0x01 & resp[2];
 
 	report->tp		= 0x20 & resp[3];
 	report->pty		= 0x1f & resp[3];
 
 	report->pi		= get_unaligned_be16(resp + 4);
-	report->rdsfifoused	= resp[6];
+	report->rdsfअगरoused	= resp[6];
 
 	report->ble[V4L2_RDS_BLOCK_A]	= 0xc0 & resp[7];
 	report->ble[V4L2_RDS_BLOCK_B]	= 0x30 & resp[7];
@@ -959,249 +960,249 @@ int si476x_core_cmd_fm_rds_status(struct si476x_core *core,
 	report->rds[V4L2_RDS_BLOCK_D].msb = resp[14];
 	report->rds[V4L2_RDS_BLOCK_D].lsb = resp[15];
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_fm_rds_status);
 
-int si476x_core_cmd_fm_rds_blockcount(struct si476x_core *core,
+पूर्णांक si476x_core_cmd_fm_rds_blockcount(काष्ठा si476x_core *core,
 				bool clear,
-				struct si476x_rds_blockcount_report *report)
-{
-	int err;
+				काष्ठा si476x_rds_blockcount_report *report)
+अणु
+	पूर्णांक err;
 	u8       resp[CMD_FM_RDS_BLOCKCOUNT_NRESP];
-	const u8 args[CMD_FM_RDS_BLOCKCOUNT_NARGS] = {
+	स्थिर u8 args[CMD_FM_RDS_BLOCKCOUNT_NARGS] = अणु
 		clear,
-	};
+	पूर्ण;
 
-	if (!report)
-		return -EINVAL;
+	अगर (!report)
+		वापस -EINVAL;
 
 	err = si476x_core_send_command(core, CMD_FM_RDS_BLOCKCOUNT,
 				       args, ARRAY_SIZE(args),
 				       resp, ARRAY_SIZE(resp),
 				       SI476X_DEFAULT_TIMEOUT);
 
-	if (!err) {
+	अगर (!err) अणु
 		report->expected	= get_unaligned_be16(resp + 2);
 		report->received	= get_unaligned_be16(resp + 4);
 		report->uncorrectable	= get_unaligned_be16(resp + 6);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_fm_rds_blockcount);
 
-int si476x_core_cmd_fm_phase_diversity(struct si476x_core *core,
-				       enum si476x_phase_diversity_mode mode)
-{
+पूर्णांक si476x_core_cmd_fm_phase_भागersity(काष्ठा si476x_core *core,
+				       क्रमागत si476x_phase_भागersity_mode mode)
+अणु
 	u8       resp[CMD_FM_PHASE_DIVERSITY_NRESP];
-	const u8 args[CMD_FM_PHASE_DIVERSITY_NARGS] = {
+	स्थिर u8 args[CMD_FM_PHASE_DIVERSITY_NARGS] = अणु
 		mode & 0x07,
-	};
+	पूर्ण;
 
-	return si476x_core_send_command(core, CMD_FM_PHASE_DIVERSITY,
+	वापस si476x_core_send_command(core, CMD_FM_PHASE_DIVERSITY,
 					args, ARRAY_SIZE(args),
 					resp, ARRAY_SIZE(resp),
 					SI476X_DEFAULT_TIMEOUT);
-}
-EXPORT_SYMBOL_GPL(si476x_core_cmd_fm_phase_diversity);
+पूर्ण
+EXPORT_SYMBOL_GPL(si476x_core_cmd_fm_phase_भागersity);
 /**
- * si476x_core_cmd_fm_phase_div_status() - get the phase diversity
+ * si476x_core_cmd_fm_phase_भाग_status() - get the phase भागersity
  * status
  *
  * @core: si476x device
  *
  * NOTE caller must hold core lock
  *
- * Function returns the value of the status bit in case of success and
- * negative error code in case of failre.
+ * Function वापसs the value of the status bit in हाल of success and
+ * negative error code in हाल of failre.
  */
-int si476x_core_cmd_fm_phase_div_status(struct si476x_core *core)
-{
-	int err;
+पूर्णांक si476x_core_cmd_fm_phase_भाग_status(काष्ठा si476x_core *core)
+अणु
+	पूर्णांक err;
 	u8 resp[CMD_FM_PHASE_DIV_STATUS_NRESP];
 
 	err = si476x_core_send_command(core, CMD_FM_PHASE_DIV_STATUS,
-				       NULL, 0,
+				       शून्य, 0,
 				       resp, ARRAY_SIZE(resp),
 				       SI476X_DEFAULT_TIMEOUT);
 
-	return (err < 0) ? err : resp[1];
-}
-EXPORT_SYMBOL_GPL(si476x_core_cmd_fm_phase_div_status);
+	वापस (err < 0) ? err : resp[1];
+पूर्ण
+EXPORT_SYMBOL_GPL(si476x_core_cmd_fm_phase_भाग_status);
 
 
 /**
  * si476x_cmd_am_seek_start - send 'FM_SEEK_START' command to the
  * device
  * @core:  - device to send the command to
- * @seekup: - if set the direction of the search is 'up'
- * @wrap:   - if set seek wraps when hitting band limit
+ * @seekup: - अगर set the direction of the search is 'up'
+ * @wrap:   - अगर set seek wraps when hitting band limit
  *
- * This function begins search for a valid station. The station is
+ * This function begins search क्रम a valid station. The station is
  * considered valid when 'FM_VALID_SNR_THRESHOLD' and
  * 'FM_VALID_RSSI_THRESHOLD' and 'FM_VALID_MAX_TUNE_ERROR' criteria
  * are met.
  *
- * Function returns 0 on success and negative error code on failure
+ * Function वापसs 0 on success and negative error code on failure
  */
-int si476x_core_cmd_am_seek_start(struct si476x_core *core,
+पूर्णांक si476x_core_cmd_am_seek_start(काष्ठा si476x_core *core,
 				  bool seekup, bool wrap)
-{
+अणु
 	u8       resp[CMD_AM_SEEK_START_NRESP];
-	const u8 args[CMD_AM_SEEK_START_NARGS] = {
+	स्थिर u8 args[CMD_AM_SEEK_START_NARGS] = अणु
 		seekup << 3 | wrap << 2,
-	};
+	पूर्ण;
 
-	return si476x_cmd_tune_seek_freq(core,  CMD_AM_SEEK_START,
-					 args, sizeof(args),
-					 resp, sizeof(resp));
-}
+	वापस si476x_cmd_tune_seek_freq(core,  CMD_AM_SEEK_START,
+					 args, माप(args),
+					 resp, माप(resp));
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_am_seek_start);
 
 
 
-static int si476x_core_cmd_power_up_a10(struct si476x_core *core,
-					struct si476x_power_up_args *puargs)
-{
+अटल पूर्णांक si476x_core_cmd_घातer_up_a10(काष्ठा si476x_core *core,
+					काष्ठा si476x_घातer_up_args *puargs)
+अणु
 	u8       resp[CMD_POWER_UP_A10_NRESP];
-	const bool intsel = (core->pinmux.a1 == SI476X_A1_IRQ);
-	const bool ctsen  = (core->client->irq != 0);
-	const u8 args[CMD_POWER_UP_A10_NARGS] = {
+	स्थिर bool पूर्णांकsel = (core->pinmux.a1 == SI476X_A1_IRQ);
+	स्थिर bool ctsen  = (core->client->irq != 0);
+	स्थिर u8 args[CMD_POWER_UP_A10_NARGS] = अणु
 		0xF7,		/* Reserved, always 0xF7 */
 		0x3F & puargs->xcload,	/* First two bits are reserved to be
 				 * zeros */
-		ctsen << 7 | intsel << 6 | 0x07, /* Last five bits
+		ctsen << 7 | पूर्णांकsel << 6 | 0x07, /* Last five bits
 						   * are reserved to
 						   * be written as 0x7 */
 		puargs->func << 4 | puargs->freq,
 		0x11,		/* Reserved, always 0x11 */
-	};
+	पूर्ण;
 
-	return si476x_core_send_command(core, CMD_POWER_UP,
+	वापस si476x_core_send_command(core, CMD_POWER_UP,
 					args, ARRAY_SIZE(args),
 					resp, ARRAY_SIZE(resp),
 					SI476X_TIMEOUT_POWER_UP);
-}
+पूर्ण
 
-static int si476x_core_cmd_power_up_a20(struct si476x_core *core,
-				 struct si476x_power_up_args *puargs)
-{
+अटल पूर्णांक si476x_core_cmd_घातer_up_a20(काष्ठा si476x_core *core,
+				 काष्ठा si476x_घातer_up_args *puargs)
+अणु
 	u8       resp[CMD_POWER_UP_A20_NRESP];
-	const bool intsel = (core->pinmux.a1 == SI476X_A1_IRQ);
-	const bool ctsen  = (core->client->irq != 0);
-	const u8 args[CMD_POWER_UP_A20_NARGS] = {
+	स्थिर bool पूर्णांकsel = (core->pinmux.a1 == SI476X_A1_IRQ);
+	स्थिर bool ctsen  = (core->client->irq != 0);
+	स्थिर u8 args[CMD_POWER_UP_A20_NARGS] = अणु
 		puargs->ibias6x << 7 | puargs->xstart,
 		0x3F & puargs->xcload,	/* First two bits are reserved to be
 					 * zeros */
-		ctsen << 7 | intsel << 6 | puargs->fastboot << 5 |
+		ctsen << 7 | पूर्णांकsel << 6 | puargs->fastboot << 5 |
 		puargs->xbiashc << 3 | puargs->xbias,
 		puargs->func << 4 | puargs->freq,
 		0x10 | puargs->xmode,
-	};
+	पूर्ण;
 
-	return si476x_core_send_command(core, CMD_POWER_UP,
+	वापस si476x_core_send_command(core, CMD_POWER_UP,
 					args, ARRAY_SIZE(args),
 					resp, ARRAY_SIZE(resp),
 					SI476X_TIMEOUT_POWER_UP);
-}
+पूर्ण
 
-static int si476x_core_cmd_power_down_a10(struct si476x_core *core,
-					  struct si476x_power_down_args *pdargs)
-{
+अटल पूर्णांक si476x_core_cmd_घातer_करोwn_a10(काष्ठा si476x_core *core,
+					  काष्ठा si476x_घातer_करोwn_args *pdargs)
+अणु
 	u8 resp[CMD_POWER_DOWN_A10_NRESP];
 
-	return si476x_core_send_command(core, CMD_POWER_DOWN,
-					NULL, 0,
+	वापस si476x_core_send_command(core, CMD_POWER_DOWN,
+					शून्य, 0,
 					resp, ARRAY_SIZE(resp),
 					SI476X_DEFAULT_TIMEOUT);
-}
+पूर्ण
 
-static int si476x_core_cmd_power_down_a20(struct si476x_core *core,
-					  struct si476x_power_down_args *pdargs)
-{
+अटल पूर्णांक si476x_core_cmd_घातer_करोwn_a20(काष्ठा si476x_core *core,
+					  काष्ठा si476x_घातer_करोwn_args *pdargs)
+अणु
 	u8 resp[CMD_POWER_DOWN_A20_NRESP];
-	const u8 args[CMD_POWER_DOWN_A20_NARGS] = {
+	स्थिर u8 args[CMD_POWER_DOWN_A20_NARGS] = अणु
 		pdargs->xosc,
-	};
-	return si476x_core_send_command(core, CMD_POWER_DOWN,
+	पूर्ण;
+	वापस si476x_core_send_command(core, CMD_POWER_DOWN,
 					args, ARRAY_SIZE(args),
 					resp, ARRAY_SIZE(resp),
 					SI476X_DEFAULT_TIMEOUT);
-}
+पूर्ण
 
-static int si476x_core_cmd_am_tune_freq_a10(struct si476x_core *core,
-					struct si476x_tune_freq_args *tuneargs)
-{
+अटल पूर्णांक si476x_core_cmd_am_tune_freq_a10(काष्ठा si476x_core *core,
+					काष्ठा si476x_tune_freq_args *tuneargs)
+अणु
 
-	const int am_freq = tuneargs->freq;
+	स्थिर पूर्णांक am_freq = tuneargs->freq;
 	u8       resp[CMD_AM_TUNE_FREQ_NRESP];
-	const u8 args[CMD_AM_TUNE_FREQ_NARGS] = {
+	स्थिर u8 args[CMD_AM_TUNE_FREQ_NARGS] = अणु
 		(tuneargs->hd << 6),
 		msb(am_freq),
 		lsb(am_freq),
-	};
+	पूर्ण;
 
-	return si476x_cmd_tune_seek_freq(core, CMD_AM_TUNE_FREQ, args,
-					 sizeof(args),
-					 resp, sizeof(resp));
-}
+	वापस si476x_cmd_tune_seek_freq(core, CMD_AM_TUNE_FREQ, args,
+					 माप(args),
+					 resp, माप(resp));
+पूर्ण
 
-static int si476x_core_cmd_am_tune_freq_a20(struct si476x_core *core,
-					struct si476x_tune_freq_args *tuneargs)
-{
-	const int am_freq = tuneargs->freq;
+अटल पूर्णांक si476x_core_cmd_am_tune_freq_a20(काष्ठा si476x_core *core,
+					काष्ठा si476x_tune_freq_args *tuneargs)
+अणु
+	स्थिर पूर्णांक am_freq = tuneargs->freq;
 	u8       resp[CMD_AM_TUNE_FREQ_NRESP];
-	const u8 args[CMD_AM_TUNE_FREQ_NARGS] = {
-		(tuneargs->zifsr << 6) | (tuneargs->injside & 0x03),
+	स्थिर u8 args[CMD_AM_TUNE_FREQ_NARGS] = अणु
+		(tuneargs->zअगरsr << 6) | (tuneargs->injside & 0x03),
 		msb(am_freq),
 		lsb(am_freq),
-	};
+	पूर्ण;
 
-	return si476x_cmd_tune_seek_freq(core, CMD_AM_TUNE_FREQ,
-					 args, sizeof(args),
-					 resp, sizeof(resp));
-}
+	वापस si476x_cmd_tune_seek_freq(core, CMD_AM_TUNE_FREQ,
+					 args, माप(args),
+					 resp, माप(resp));
+पूर्ण
 
-static int si476x_core_cmd_fm_rsq_status_a10(struct si476x_core *core,
-					struct si476x_rsq_status_args *rsqargs,
-					struct si476x_rsq_status_report *report)
-{
-	int err;
+अटल पूर्णांक si476x_core_cmd_fm_rsq_status_a10(काष्ठा si476x_core *core,
+					काष्ठा si476x_rsq_status_args *rsqargs,
+					काष्ठा si476x_rsq_status_report *report)
+अणु
+	पूर्णांक err;
 	u8       resp[CMD_FM_RSQ_STATUS_A10_NRESP];
-	const u8 args[CMD_FM_RSQ_STATUS_A10_NARGS] = {
+	स्थिर u8 args[CMD_FM_RSQ_STATUS_A10_NARGS] = अणु
 		rsqargs->rsqack << 3 | rsqargs->attune << 2 |
 		rsqargs->cancel << 1 | rsqargs->stcack,
-	};
+	पूर्ण;
 
 	err = si476x_core_send_command(core, CMD_FM_RSQ_STATUS,
 				       args, ARRAY_SIZE(args),
 				       resp, ARRAY_SIZE(resp),
 				       SI476X_DEFAULT_TIMEOUT);
 	/*
-	 * Besides getting received signal quality information this
-	 * command can be used to just acknowledge different interrupt
-	 * flags in those cases it is useless to copy and parse
-	 * received data so user can pass NULL, and thus avoid
+	 * Besides getting received संकेत quality inक्रमmation this
+	 * command can be used to just acknowledge dअगरferent पूर्णांकerrupt
+	 * flags in those हालs it is useless to copy and parse
+	 * received data so user can pass शून्य, and thus aव्योम
 	 * unnecessary copying.
 	 */
-	if (err < 0 || report == NULL)
-		return err;
+	अगर (err < 0 || report == शून्य)
+		वापस err;
 
-	report->multhint	= 0x80 & resp[1];
-	report->multlint	= 0x40 & resp[1];
-	report->snrhint		= 0x08 & resp[1];
-	report->snrlint		= 0x04 & resp[1];
-	report->rssihint	= 0x02 & resp[1];
-	report->rssilint	= 0x01 & resp[1];
+	report->multhपूर्णांक	= 0x80 & resp[1];
+	report->multlपूर्णांक	= 0x40 & resp[1];
+	report->snrhपूर्णांक		= 0x08 & resp[1];
+	report->snrlपूर्णांक		= 0x04 & resp[1];
+	report->rssihपूर्णांक	= 0x02 & resp[1];
+	report->rssilपूर्णांक	= 0x01 & resp[1];
 
 	report->bltf		= 0x80 & resp[2];
-	report->snr_ready	= 0x20 & resp[2];
-	report->rssiready	= 0x08 & resp[2];
+	report->snr_पढ़ोy	= 0x20 & resp[2];
+	report->rssiपढ़ोy	= 0x08 & resp[2];
 	report->afcrl		= 0x02 & resp[2];
 	report->valid		= 0x01 & resp[2];
 
-	report->readfreq	= get_unaligned_be16(resp + 3);
+	report->पढ़ोfreq	= get_unaligned_be16(resp + 3);
 	report->freqoff		= resp[5];
 	report->rssi		= resp[6];
 	report->snr		= resp[7];
@@ -1209,53 +1210,53 @@ static int si476x_core_cmd_fm_rsq_status_a10(struct si476x_core *core,
 	report->hassi		= resp[10];
 	report->mult		= resp[11];
 	report->dev		= resp[12];
-	report->readantcap	= get_unaligned_be16(resp + 13);
+	report->पढ़ोantcap	= get_unaligned_be16(resp + 13);
 	report->assi		= resp[15];
 	report->usn		= resp[16];
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int si476x_core_cmd_fm_rsq_status_a20(struct si476x_core *core,
-				     struct si476x_rsq_status_args *rsqargs,
-				     struct si476x_rsq_status_report *report)
-{
-	int err;
+अटल पूर्णांक si476x_core_cmd_fm_rsq_status_a20(काष्ठा si476x_core *core,
+				     काष्ठा si476x_rsq_status_args *rsqargs,
+				     काष्ठा si476x_rsq_status_report *report)
+अणु
+	पूर्णांक err;
 	u8       resp[CMD_FM_RSQ_STATUS_A10_NRESP];
-	const u8 args[CMD_FM_RSQ_STATUS_A30_NARGS] = {
+	स्थिर u8 args[CMD_FM_RSQ_STATUS_A30_NARGS] = अणु
 		rsqargs->primary << 4 | rsqargs->rsqack << 3 |
 		rsqargs->attune  << 2 | rsqargs->cancel << 1 |
 		rsqargs->stcack,
-	};
+	पूर्ण;
 
 	err = si476x_core_send_command(core, CMD_FM_RSQ_STATUS,
 				       args, ARRAY_SIZE(args),
 				       resp, ARRAY_SIZE(resp),
 				       SI476X_DEFAULT_TIMEOUT);
 	/*
-	 * Besides getting received signal quality information this
-	 * command can be used to just acknowledge different interrupt
-	 * flags in those cases it is useless to copy and parse
-	 * received data so user can pass NULL, and thus avoid
+	 * Besides getting received संकेत quality inक्रमmation this
+	 * command can be used to just acknowledge dअगरferent पूर्णांकerrupt
+	 * flags in those हालs it is useless to copy and parse
+	 * received data so user can pass शून्य, and thus aव्योम
 	 * unnecessary copying.
 	 */
-	if (err < 0 || report == NULL)
-		return err;
+	अगर (err < 0 || report == शून्य)
+		वापस err;
 
-	report->multhint	= 0x80 & resp[1];
-	report->multlint	= 0x40 & resp[1];
-	report->snrhint		= 0x08 & resp[1];
-	report->snrlint		= 0x04 & resp[1];
-	report->rssihint	= 0x02 & resp[1];
-	report->rssilint	= 0x01 & resp[1];
+	report->multhपूर्णांक	= 0x80 & resp[1];
+	report->multlपूर्णांक	= 0x40 & resp[1];
+	report->snrhपूर्णांक		= 0x08 & resp[1];
+	report->snrlपूर्णांक		= 0x04 & resp[1];
+	report->rssihपूर्णांक	= 0x02 & resp[1];
+	report->rssilपूर्णांक	= 0x01 & resp[1];
 
 	report->bltf		= 0x80 & resp[2];
-	report->snr_ready	= 0x20 & resp[2];
-	report->rssiready	= 0x08 & resp[2];
+	report->snr_पढ़ोy	= 0x20 & resp[2];
+	report->rssiपढ़ोy	= 0x08 & resp[2];
 	report->afcrl		= 0x02 & resp[2];
 	report->valid		= 0x01 & resp[2];
 
-	report->readfreq	= get_unaligned_be16(resp + 3);
+	report->पढ़ोfreq	= get_unaligned_be16(resp + 3);
 	report->freqoff		= resp[5];
 	report->rssi		= resp[6];
 	report->snr		= resp[7];
@@ -1263,55 +1264,55 @@ static int si476x_core_cmd_fm_rsq_status_a20(struct si476x_core *core,
 	report->hassi		= resp[10];
 	report->mult		= resp[11];
 	report->dev		= resp[12];
-	report->readantcap	= get_unaligned_be16(resp + 13);
+	report->पढ़ोantcap	= get_unaligned_be16(resp + 13);
 	report->assi		= resp[15];
 	report->usn		= resp[16];
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
-static int si476x_core_cmd_fm_rsq_status_a30(struct si476x_core *core,
-					struct si476x_rsq_status_args *rsqargs,
-					struct si476x_rsq_status_report *report)
-{
-	int err;
+अटल पूर्णांक si476x_core_cmd_fm_rsq_status_a30(काष्ठा si476x_core *core,
+					काष्ठा si476x_rsq_status_args *rsqargs,
+					काष्ठा si476x_rsq_status_report *report)
+अणु
+	पूर्णांक err;
 	u8       resp[CMD_FM_RSQ_STATUS_A30_NRESP];
-	const u8 args[CMD_FM_RSQ_STATUS_A30_NARGS] = {
+	स्थिर u8 args[CMD_FM_RSQ_STATUS_A30_NARGS] = अणु
 		rsqargs->primary << 4 | rsqargs->rsqack << 3 |
 		rsqargs->attune << 2 | rsqargs->cancel << 1 |
 		rsqargs->stcack,
-	};
+	पूर्ण;
 
 	err = si476x_core_send_command(core, CMD_FM_RSQ_STATUS,
 				       args, ARRAY_SIZE(args),
 				       resp, ARRAY_SIZE(resp),
 				       SI476X_DEFAULT_TIMEOUT);
 	/*
-	 * Besides getting received signal quality information this
-	 * command can be used to just acknowledge different interrupt
-	 * flags in those cases it is useless to copy and parse
-	 * received data so user can pass NULL, and thus avoid
+	 * Besides getting received संकेत quality inक्रमmation this
+	 * command can be used to just acknowledge dअगरferent पूर्णांकerrupt
+	 * flags in those हालs it is useless to copy and parse
+	 * received data so user can pass शून्य, and thus aव्योम
 	 * unnecessary copying.
 	 */
-	if (err < 0 || report == NULL)
-		return err;
+	अगर (err < 0 || report == शून्य)
+		वापस err;
 
-	report->multhint	= 0x80 & resp[1];
-	report->multlint	= 0x40 & resp[1];
-	report->snrhint		= 0x08 & resp[1];
-	report->snrlint		= 0x04 & resp[1];
-	report->rssihint	= 0x02 & resp[1];
-	report->rssilint	= 0x01 & resp[1];
+	report->multhपूर्णांक	= 0x80 & resp[1];
+	report->multlपूर्णांक	= 0x40 & resp[1];
+	report->snrhपूर्णांक		= 0x08 & resp[1];
+	report->snrlपूर्णांक		= 0x04 & resp[1];
+	report->rssihपूर्णांक	= 0x02 & resp[1];
+	report->rssilपूर्णांक	= 0x01 & resp[1];
 
 	report->bltf		= 0x80 & resp[2];
-	report->snr_ready	= 0x20 & resp[2];
-	report->rssiready	= 0x08 & resp[2];
+	report->snr_पढ़ोy	= 0x20 & resp[2];
+	report->rssiपढ़ोy	= 0x08 & resp[2];
 	report->injside         = 0x04 & resp[2];
 	report->afcrl		= 0x02 & resp[2];
 	report->valid		= 0x01 & resp[2];
 
-	report->readfreq	= get_unaligned_be16(resp + 3);
+	report->पढ़ोfreq	= get_unaligned_be16(resp + 3);
 	report->freqoff		= resp[5];
 	report->rssi		= resp[6];
 	report->snr		= resp[7];
@@ -1320,7 +1321,7 @@ static int si476x_core_cmd_fm_rsq_status_a30(struct si476x_core *core,
 	report->hassi		= resp[10];
 	report->mult		= resp[11];
 	report->dev		= resp[12];
-	report->readantcap	= get_unaligned_be16(resp + 13);
+	report->पढ़ोantcap	= get_unaligned_be16(resp + 13);
 	report->assi		= resp[15];
 	report->usn		= resp[16];
 
@@ -1330,58 +1331,58 @@ static int si476x_core_cmd_fm_rsq_status_a30(struct si476x_core *core,
 	report->strongdev	= resp[20];
 	report->rdspi		= get_unaligned_be16(resp + 21);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int si476x_core_cmd_fm_tune_freq_a10(struct si476x_core *core,
-					struct si476x_tune_freq_args *tuneargs)
-{
+अटल पूर्णांक si476x_core_cmd_fm_tune_freq_a10(काष्ठा si476x_core *core,
+					काष्ठा si476x_tune_freq_args *tuneargs)
+अणु
 	u8       resp[CMD_FM_TUNE_FREQ_NRESP];
-	const u8 args[CMD_FM_TUNE_FREQ_A10_NARGS] = {
+	स्थिर u8 args[CMD_FM_TUNE_FREQ_A10_NARGS] = अणु
 		(tuneargs->hd << 6) | (tuneargs->tunemode << 4)
 		| (tuneargs->smoothmetrics << 2),
 		msb(tuneargs->freq),
 		lsb(tuneargs->freq),
 		msb(tuneargs->antcap),
 		lsb(tuneargs->antcap)
-	};
+	पूर्ण;
 
-	return si476x_cmd_tune_seek_freq(core, CMD_FM_TUNE_FREQ,
-					 args, sizeof(args),
-					 resp, sizeof(resp));
-}
+	वापस si476x_cmd_tune_seek_freq(core, CMD_FM_TUNE_FREQ,
+					 args, माप(args),
+					 resp, माप(resp));
+पूर्ण
 
-static int si476x_core_cmd_fm_tune_freq_a20(struct si476x_core *core,
-					struct si476x_tune_freq_args *tuneargs)
-{
+अटल पूर्णांक si476x_core_cmd_fm_tune_freq_a20(काष्ठा si476x_core *core,
+					काष्ठा si476x_tune_freq_args *tuneargs)
+अणु
 	u8       resp[CMD_FM_TUNE_FREQ_NRESP];
-	const u8 args[CMD_FM_TUNE_FREQ_A20_NARGS] = {
+	स्थिर u8 args[CMD_FM_TUNE_FREQ_A20_NARGS] = अणु
 		(tuneargs->hd << 6) | (tuneargs->tunemode << 4)
 		|  (tuneargs->smoothmetrics << 2) | (tuneargs->injside),
 		msb(tuneargs->freq),
 		lsb(tuneargs->freq),
-	};
+	पूर्ण;
 
-	return si476x_cmd_tune_seek_freq(core, CMD_FM_TUNE_FREQ,
-					 args, sizeof(args),
-					 resp, sizeof(resp));
-}
+	वापस si476x_cmd_tune_seek_freq(core, CMD_FM_TUNE_FREQ,
+					 args, माप(args),
+					 resp, माप(resp));
+पूर्ण
 
-static int si476x_core_cmd_agc_status_a20(struct si476x_core *core,
-					struct si476x_agc_status_report *report)
-{
-	int err;
+अटल पूर्णांक si476x_core_cmd_agc_status_a20(काष्ठा si476x_core *core,
+					काष्ठा si476x_agc_status_report *report)
+अणु
+	पूर्णांक err;
 	u8 resp[CMD_AGC_STATUS_NRESP_A20];
 
-	if (!report)
-		return -EINVAL;
+	अगर (!report)
+		वापस -EINVAL;
 
 	err = si476x_core_send_command(core, CMD_AGC_STATUS,
-				       NULL, 0,
+				       शून्य, 0,
 				       resp, ARRAY_SIZE(resp),
 				       SI476X_DEFAULT_TIMEOUT);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	report->mxhi		= resp[1] & SI476X_AGC_MXHI;
 	report->mxlo		= resp[1] & SI476X_AGC_MXLO;
@@ -1392,152 +1393,152 @@ static int si476x_core_cmd_agc_status_a20(struct si476x_core *core,
 	report->pgagain		= resp[4];
 	report->fmwblang	= resp[5];
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int si476x_core_cmd_agc_status_a10(struct si476x_core *core,
-					struct si476x_agc_status_report *report)
-{
-	int err;
+अटल पूर्णांक si476x_core_cmd_agc_status_a10(काष्ठा si476x_core *core,
+					काष्ठा si476x_agc_status_report *report)
+अणु
+	पूर्णांक err;
 	u8 resp[CMD_AGC_STATUS_NRESP_A10];
 
-	if (!report)
-		return -EINVAL;
+	अगर (!report)
+		वापस -EINVAL;
 
 	err = si476x_core_send_command(core, CMD_AGC_STATUS,
-				       NULL, 0,
+				       शून्य, 0,
 				       resp, ARRAY_SIZE(resp),
 				       SI476X_DEFAULT_TIMEOUT);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	report->mxhi	= resp[1] & SI476X_AGC_MXHI;
 	report->mxlo	= resp[1] & SI476X_AGC_MXLO;
 	report->lnahi	= resp[1] & SI476X_AGC_LNAHI;
 	report->lnalo	= resp[1] & SI476X_AGC_LNALO;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-typedef int (*tune_freq_func_t) (struct si476x_core *core,
-				 struct si476x_tune_freq_args *tuneargs);
+प्रकार पूर्णांक (*tune_freq_func_t) (काष्ठा si476x_core *core,
+				 काष्ठा si476x_tune_freq_args *tuneargs);
 
-static struct {
-	int (*power_up)(struct si476x_core *,
-			struct si476x_power_up_args *);
-	int (*power_down)(struct si476x_core *,
-			  struct si476x_power_down_args *);
+अटल काष्ठा अणु
+	पूर्णांक (*घातer_up)(काष्ठा si476x_core *,
+			काष्ठा si476x_घातer_up_args *);
+	पूर्णांक (*घातer_करोwn)(काष्ठा si476x_core *,
+			  काष्ठा si476x_घातer_करोwn_args *);
 
 	tune_freq_func_t fm_tune_freq;
 	tune_freq_func_t am_tune_freq;
 
-	int (*fm_rsq_status)(struct si476x_core *,
-			     struct si476x_rsq_status_args *,
-			     struct si476x_rsq_status_report *);
+	पूर्णांक (*fm_rsq_status)(काष्ठा si476x_core *,
+			     काष्ठा si476x_rsq_status_args *,
+			     काष्ठा si476x_rsq_status_report *);
 
-	int (*agc_status)(struct si476x_core *,
-			  struct si476x_agc_status_report *);
-	int (*intb_pin_cfg)(struct si476x_core *core,
-			    enum si476x_intb_config intb,
-			    enum si476x_a1_config a1);
-} si476x_cmds_vtable[] = {
-	[SI476X_REVISION_A10] = {
-		.power_up	= si476x_core_cmd_power_up_a10,
-		.power_down	= si476x_core_cmd_power_down_a10,
+	पूर्णांक (*agc_status)(काष्ठा si476x_core *,
+			  काष्ठा si476x_agc_status_report *);
+	पूर्णांक (*पूर्णांकb_pin_cfg)(काष्ठा si476x_core *core,
+			    क्रमागत si476x_पूर्णांकb_config पूर्णांकb,
+			    क्रमागत si476x_a1_config a1);
+पूर्ण si476x_cmds_vtable[] = अणु
+	[SI476X_REVISION_A10] = अणु
+		.घातer_up	= si476x_core_cmd_घातer_up_a10,
+		.घातer_करोwn	= si476x_core_cmd_घातer_करोwn_a10,
 		.fm_tune_freq	= si476x_core_cmd_fm_tune_freq_a10,
 		.am_tune_freq	= si476x_core_cmd_am_tune_freq_a10,
 		.fm_rsq_status	= si476x_core_cmd_fm_rsq_status_a10,
 		.agc_status	= si476x_core_cmd_agc_status_a10,
-		.intb_pin_cfg   = si476x_core_cmd_intb_pin_cfg_a10,
-	},
-	[SI476X_REVISION_A20] = {
-		.power_up	= si476x_core_cmd_power_up_a20,
-		.power_down	= si476x_core_cmd_power_down_a20,
+		.पूर्णांकb_pin_cfg   = si476x_core_cmd_पूर्णांकb_pin_cfg_a10,
+	पूर्ण,
+	[SI476X_REVISION_A20] = अणु
+		.घातer_up	= si476x_core_cmd_घातer_up_a20,
+		.घातer_करोwn	= si476x_core_cmd_घातer_करोwn_a20,
 		.fm_tune_freq	= si476x_core_cmd_fm_tune_freq_a20,
 		.am_tune_freq	= si476x_core_cmd_am_tune_freq_a20,
 		.fm_rsq_status	= si476x_core_cmd_fm_rsq_status_a20,
 		.agc_status	= si476x_core_cmd_agc_status_a20,
-		.intb_pin_cfg   = si476x_core_cmd_intb_pin_cfg_a20,
-	},
-	[SI476X_REVISION_A30] = {
-		.power_up	= si476x_core_cmd_power_up_a20,
-		.power_down	= si476x_core_cmd_power_down_a20,
+		.पूर्णांकb_pin_cfg   = si476x_core_cmd_पूर्णांकb_pin_cfg_a20,
+	पूर्ण,
+	[SI476X_REVISION_A30] = अणु
+		.घातer_up	= si476x_core_cmd_घातer_up_a20,
+		.घातer_करोwn	= si476x_core_cmd_घातer_करोwn_a20,
 		.fm_tune_freq	= si476x_core_cmd_fm_tune_freq_a20,
 		.am_tune_freq	= si476x_core_cmd_am_tune_freq_a20,
 		.fm_rsq_status	= si476x_core_cmd_fm_rsq_status_a30,
 		.agc_status	= si476x_core_cmd_agc_status_a20,
-		.intb_pin_cfg   = si476x_core_cmd_intb_pin_cfg_a20,
-	},
-};
+		.पूर्णांकb_pin_cfg   = si476x_core_cmd_पूर्णांकb_pin_cfg_a20,
+	पूर्ण,
+पूर्ण;
 
-int si476x_core_cmd_power_up(struct si476x_core *core,
-			     struct si476x_power_up_args *args)
-{
+पूर्णांक si476x_core_cmd_घातer_up(काष्ठा si476x_core *core,
+			     काष्ठा si476x_घातer_up_args *args)
+अणु
 	BUG_ON(core->revision > SI476X_REVISION_A30 ||
 	       core->revision == -1);
-	return si476x_cmds_vtable[core->revision].power_up(core, args);
-}
-EXPORT_SYMBOL_GPL(si476x_core_cmd_power_up);
+	वापस si476x_cmds_vtable[core->revision].घातer_up(core, args);
+पूर्ण
+EXPORT_SYMBOL_GPL(si476x_core_cmd_घातer_up);
 
-int si476x_core_cmd_power_down(struct si476x_core *core,
-			       struct si476x_power_down_args *args)
-{
+पूर्णांक si476x_core_cmd_घातer_करोwn(काष्ठा si476x_core *core,
+			       काष्ठा si476x_घातer_करोwn_args *args)
+अणु
 	BUG_ON(core->revision > SI476X_REVISION_A30 ||
 	       core->revision == -1);
-	return si476x_cmds_vtable[core->revision].power_down(core, args);
-}
-EXPORT_SYMBOL_GPL(si476x_core_cmd_power_down);
+	वापस si476x_cmds_vtable[core->revision].घातer_करोwn(core, args);
+पूर्ण
+EXPORT_SYMBOL_GPL(si476x_core_cmd_घातer_करोwn);
 
-int si476x_core_cmd_fm_tune_freq(struct si476x_core *core,
-				 struct si476x_tune_freq_args *args)
-{
+पूर्णांक si476x_core_cmd_fm_tune_freq(काष्ठा si476x_core *core,
+				 काष्ठा si476x_tune_freq_args *args)
+अणु
 	BUG_ON(core->revision > SI476X_REVISION_A30 ||
 	       core->revision == -1);
-	return si476x_cmds_vtable[core->revision].fm_tune_freq(core, args);
-}
+	वापस si476x_cmds_vtable[core->revision].fm_tune_freq(core, args);
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_fm_tune_freq);
 
-int si476x_core_cmd_am_tune_freq(struct si476x_core *core,
-				 struct si476x_tune_freq_args *args)
-{
+पूर्णांक si476x_core_cmd_am_tune_freq(काष्ठा si476x_core *core,
+				 काष्ठा si476x_tune_freq_args *args)
+अणु
 	BUG_ON(core->revision > SI476X_REVISION_A30 ||
 	       core->revision == -1);
-	return si476x_cmds_vtable[core->revision].am_tune_freq(core, args);
-}
+	वापस si476x_cmds_vtable[core->revision].am_tune_freq(core, args);
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_am_tune_freq);
 
-int si476x_core_cmd_fm_rsq_status(struct si476x_core *core,
-				  struct si476x_rsq_status_args *args,
-				  struct si476x_rsq_status_report *report)
+पूर्णांक si476x_core_cmd_fm_rsq_status(काष्ठा si476x_core *core,
+				  काष्ठा si476x_rsq_status_args *args,
+				  काष्ठा si476x_rsq_status_report *report)
 
-{
+अणु
 	BUG_ON(core->revision > SI476X_REVISION_A30 ||
 	       core->revision == -1);
-	return si476x_cmds_vtable[core->revision].fm_rsq_status(core, args,
+	वापस si476x_cmds_vtable[core->revision].fm_rsq_status(core, args,
 								report);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_fm_rsq_status);
 
-int si476x_core_cmd_agc_status(struct si476x_core *core,
-				  struct si476x_agc_status_report *report)
+पूर्णांक si476x_core_cmd_agc_status(काष्ठा si476x_core *core,
+				  काष्ठा si476x_agc_status_report *report)
 
-{
+अणु
 	BUG_ON(core->revision > SI476X_REVISION_A30 ||
 	       core->revision == -1);
-	return si476x_cmds_vtable[core->revision].agc_status(core, report);
-}
+	वापस si476x_cmds_vtable[core->revision].agc_status(core, report);
+पूर्ण
 EXPORT_SYMBOL_GPL(si476x_core_cmd_agc_status);
 
-int si476x_core_cmd_intb_pin_cfg(struct si476x_core *core,
-			    enum si476x_intb_config intb,
-			    enum si476x_a1_config a1)
-{
+पूर्णांक si476x_core_cmd_पूर्णांकb_pin_cfg(काष्ठा si476x_core *core,
+			    क्रमागत si476x_पूर्णांकb_config पूर्णांकb,
+			    क्रमागत si476x_a1_config a1)
+अणु
 	BUG_ON(core->revision > SI476X_REVISION_A30 ||
 	       core->revision == -1);
 
-	return si476x_cmds_vtable[core->revision].intb_pin_cfg(core, intb, a1);
-}
-EXPORT_SYMBOL_GPL(si476x_core_cmd_intb_pin_cfg);
+	वापस si476x_cmds_vtable[core->revision].पूर्णांकb_pin_cfg(core, पूर्णांकb, a1);
+पूर्ण
+EXPORT_SYMBOL_GPL(si476x_core_cmd_पूर्णांकb_pin_cfg);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Andrey Smirnov <andrew.smirnov@gmail.com>");

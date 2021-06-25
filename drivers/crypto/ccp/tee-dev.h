@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
  * Copyright (C) 2019,2021 Advanced Micro Devices, Inc.
  *
@@ -7,107 +8,107 @@
  *
  */
 
-/* This file describes the TEE communication interface between host and AMD
+/* This file describes the TEE communication पूर्णांकerface between host and AMD
  * Secure Processor
  */
 
-#ifndef __TEE_DEV_H__
-#define __TEE_DEV_H__
+#अगर_अघोषित __TEE_DEV_H__
+#घोषणा __TEE_DEV_H__
 
-#include <linux/device.h>
-#include <linux/mutex.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mutex.h>
 
-#define TEE_DEFAULT_TIMEOUT		10
-#define MAX_BUFFER_SIZE			988
+#घोषणा TEE_DEFAULT_TIMEOUT		10
+#घोषणा MAX_BUFFER_SIZE			988
 
 /**
- * enum tee_ring_cmd_id - TEE interface commands for ring buffer configuration
+ * क्रमागत tee_ring_cmd_id - TEE पूर्णांकerface commands क्रम ring buffer configuration
  * @TEE_RING_INIT_CMD:		Initialize ring buffer
  * @TEE_RING_DESTROY_CMD:	Destroy ring buffer
  * @TEE_RING_MAX_CMD:		Maximum command id
  */
-enum tee_ring_cmd_id {
+क्रमागत tee_ring_cmd_id अणु
 	TEE_RING_INIT_CMD		= 0x00010000,
 	TEE_RING_DESTROY_CMD		= 0x00020000,
 	TEE_RING_MAX_CMD		= 0x000F0000,
-};
+पूर्ण;
 
 /**
- * struct tee_init_ring_cmd - Command to init TEE ring buffer
+ * काष्ठा tee_init_ring_cmd - Command to init TEE ring buffer
  * @low_addr:  bits [31:0] of the physical address of ring buffer
  * @hi_addr:   bits [63:32] of the physical address of ring buffer
  * @size:      size of ring buffer in bytes
  */
-struct tee_init_ring_cmd {
+काष्ठा tee_init_ring_cmd अणु
 	u32 low_addr;
 	u32 hi_addr;
 	u32 size;
-};
+पूर्ण;
 
-#define MAX_RING_BUFFER_ENTRIES		32
+#घोषणा MAX_RING_BUFFER_ENTRIES		32
 
 /**
- * struct ring_buf_manager - Helper structure to manage ring buffer.
+ * काष्ठा ring_buf_manager - Helper काष्ठाure to manage ring buffer.
  * @ring_start:  starting address of ring buffer
  * @ring_size:   size of ring buffer in bytes
  * @ring_pa:     physical address of ring buffer
  * @wptr:        index to the last written entry in ring buffer
  */
-struct ring_buf_manager {
-	struct mutex mutex;	/* synchronizes access to ring buffer */
-	void *ring_start;
+काष्ठा ring_buf_manager अणु
+	काष्ठा mutex mutex;	/* synchronizes access to ring buffer */
+	व्योम *ring_start;
 	u32 ring_size;
 	phys_addr_t ring_pa;
 	u32 wptr;
-};
+पूर्ण;
 
-struct psp_tee_device {
-	struct device *dev;
-	struct psp_device *psp;
-	void __iomem *io_regs;
-	struct tee_vdata *vdata;
-	struct ring_buf_manager rb_mgr;
-};
+काष्ठा psp_tee_device अणु
+	काष्ठा device *dev;
+	काष्ठा psp_device *psp;
+	व्योम __iomem *io_regs;
+	काष्ठा tee_vdata *vdata;
+	काष्ठा ring_buf_manager rb_mgr;
+पूर्ण;
 
 /**
- * enum tee_cmd_state - TEE command states for the ring buffer interface
+ * क्रमागत tee_cmd_state - TEE command states क्रम the ring buffer पूर्णांकerface
  * @TEE_CMD_STATE_INIT:      initial state of command when sent from host
  * @TEE_CMD_STATE_PROCESS:   command being processed by TEE environment
  * @TEE_CMD_STATE_COMPLETED: command processing completed
  */
-enum tee_cmd_state {
+क्रमागत tee_cmd_state अणु
 	TEE_CMD_STATE_INIT,
 	TEE_CMD_STATE_PROCESS,
 	TEE_CMD_STATE_COMPLETED,
-};
+पूर्ण;
 
 /**
- * enum cmd_resp_state - TEE command's response status maintained by driver
+ * क्रमागत cmd_resp_state - TEE command's response status मुख्यtained by driver
  * @CMD_RESPONSE_INVALID:      initial state when no command is written to ring
- * @CMD_WAITING_FOR_RESPONSE:  driver waiting for response from TEE
+ * @CMD_WAITING_FOR_RESPONSE:  driver रुकोing क्रम response from TEE
  * @CMD_RESPONSE_TIMEDOUT:     failed to get response from TEE
  * @CMD_RESPONSE_COPIED:       driver has copied response from TEE
  */
-enum cmd_resp_state {
+क्रमागत cmd_resp_state अणु
 	CMD_RESPONSE_INVALID,
 	CMD_WAITING_FOR_RESPONSE,
 	CMD_RESPONSE_TIMEDOUT,
 	CMD_RESPONSE_COPIED,
-};
+पूर्ण;
 
 /**
- * struct tee_ring_cmd - Structure of the command buffer in TEE ring
- * @cmd_id:      refers to &enum tee_cmd_id. Command id for the ring buffer
- *               interface
- * @cmd_state:   refers to &enum tee_cmd_state
+ * काष्ठा tee_ring_cmd - Structure of the command buffer in TEE ring
+ * @cmd_id:      refers to &क्रमागत tee_cmd_id. Command id क्रम the ring buffer
+ *               पूर्णांकerface
+ * @cmd_state:   refers to &क्रमागत tee_cmd_state
  * @status:      status of TEE command execution
  * @res0:        reserved region
- * @pdata:       private data (currently unused)
+ * @pdata:       निजी data (currently unused)
  * @res1:        reserved region
- * @buf:         TEE command specific buffer
- * @flag:	 refers to &enum cmd_resp_state
+ * @buf:         TEE command specअगरic buffer
+ * @flag:	 refers to &क्रमागत cmd_resp_state
  */
-struct tee_ring_cmd {
+काष्ठा tee_ring_cmd अणु
 	u32 cmd_id;
 	u32 cmd_state;
 	u32 status;
@@ -118,9 +119,9 @@ struct tee_ring_cmd {
 	u32 flag;
 
 	/* Total size: 1024 bytes */
-} __packed;
+पूर्ण __packed;
 
-int tee_dev_init(struct psp_device *psp);
-void tee_dev_destroy(struct psp_device *psp);
+पूर्णांक tee_dev_init(काष्ठा psp_device *psp);
+व्योम tee_dev_destroy(काष्ठा psp_device *psp);
 
-#endif /* __TEE_DEV_H__ */
+#पूर्ण_अगर /* __TEE_DEV_H__ */

@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Header containing platform_data structs for omap panels
+ * Header containing platक्रमm_data काष्ठाs क्रम omap panels
  *
  * Copyright (C) 2013 Texas Instruments
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
@@ -13,59 +14,59 @@
  * Author: Bryan Wu <bryan.wu@canonical.com>
  */
 
-#ifndef __OMAP_PANEL_DATA_H
-#define __OMAP_PANEL_DATA_H
+#अगर_अघोषित __OMAP_PANEL_DATA_H
+#घोषणा __OMAP_PANEL_DATA_H
 
-#include <video/display_timing.h>
+#समावेश <video/display_timing.h>
 
 /**
- * connector_atv platform data
- * @name: name for this display entity
+ * connector_atv platक्रमm data
+ * @name: name क्रम this display entity
  * @source: name of the display entity used as a video source
- * @invert_polarity: invert signal polarity
+ * @invert_polarity: invert संकेत polarity
  */
-struct connector_atv_platform_data {
-	const char *name;
-	const char *source;
+काष्ठा connector_atv_platक्रमm_data अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *source;
 
 	bool invert_polarity;
-};
+पूर्ण;
 
 /**
- * panel_dpi platform data
- * @name: name for this display entity
+ * panel_dpi platक्रमm data
+ * @name: name क्रम this display entity
  * @source: name of the display entity used as a video source
  * @data_lines: number of DPI datalines
- * @display_timing: timings for this panel
+ * @display_timing: timings क्रम this panel
  * @backlight_gpio: gpio to enable/disable the backlight (or -1)
  * @enable_gpio: gpio to enable/disable the panel (or -1)
  */
-struct panel_dpi_platform_data {
-	const char *name;
-	const char *source;
+काष्ठा panel_dpi_platक्रमm_data अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *source;
 
-	int data_lines;
+	पूर्णांक data_lines;
 
-	const struct display_timing *display_timing;
+	स्थिर काष्ठा display_timing *display_timing;
 
-	int backlight_gpio;
-	int enable_gpio;
-};
+	पूर्णांक backlight_gpio;
+	पूर्णांक enable_gpio;
+पूर्ण;
 
 /**
- * panel_acx565akm platform data
- * @name: name for this display entity
+ * panel_acx565akm platक्रमm data
+ * @name: name क्रम this display entity
  * @source: name of the display entity used as a video source
  * @reset_gpio: gpio to reset the panel (or -1)
  * @datapairs: number of SDI datapairs
  */
-struct panel_acx565akm_platform_data {
-	const char *name;
-	const char *source;
+काष्ठा panel_acx565akm_platक्रमm_data अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *source;
 
-	int reset_gpio;
+	पूर्णांक reset_gpio;
 
-	int datapairs;
-};
+	पूर्णांक datapairs;
+पूर्ण;
 
-#endif /* __OMAP_PANEL_DATA_H */
+#पूर्ण_अगर /* __OMAP_PANEL_DATA_H */

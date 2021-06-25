@@ -1,201 +1,202 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* MTD-based superblock management
  *
- * Copyright © 2001-2007 Red Hat, Inc. All Rights Reserved.
- * Copyright © 2001-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright तऊ 2001-2007 Red Hat, Inc. All Rights Reserved.
+ * Copyright तऊ 2001-2010 David Woodhouse <dwmw2@infradead.org>
  *
  * Written by:  David Howells <dhowells@redhat.com>
  *              David Woodhouse <dwmw2@infradead.org>
  */
 
-#include <linux/mtd/super.h>
-#include <linux/namei.h>
-#include <linux/export.h>
-#include <linux/ctype.h>
-#include <linux/slab.h>
-#include <linux/major.h>
-#include <linux/backing-dev.h>
-#include <linux/fs_context.h>
-#include "mtdcore.h"
+#समावेश <linux/mtd/super.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/export.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/major.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/fs_context.h>
+#समावेश "mtdcore.h"
 
 /*
- * compare superblocks to see if they're equivalent
- * - they are if the underlying MTD device is the same
+ * compare superblocks to see अगर they're equivalent
+ * - they are अगर the underlying MTD device is the same
  */
-static int mtd_test_super(struct super_block *sb, struct fs_context *fc)
-{
-	struct mtd_info *mtd = fc->sget_key;
+अटल पूर्णांक mtd_test_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	काष्ठा mtd_info *mtd = fc->sget_key;
 
-	if (sb->s_mtd == fc->sget_key) {
+	अगर (sb->s_mtd == fc->sget_key) अणु
 		pr_debug("MTDSB: Match on device %d (\"%s\")\n",
 			 mtd->index, mtd->name);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	pr_debug("MTDSB: No match, device %d (\"%s\"), device %d (\"%s\")\n",
 		 sb->s_mtd->index, sb->s_mtd->name, mtd->index, mtd->name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * mark the superblock by the MTD device it is using
- * - set the device number to be the correct MTD block device for pesuperstence
+ * - set the device number to be the correct MTD block device क्रम pesuperstence
  *   of NFS exports
  */
-static int mtd_set_super(struct super_block *sb, struct fs_context *fc)
-{
+अटल पूर्णांक mtd_set_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
 	sb->s_mtd = fc->sget_key;
 	sb->s_dev = MKDEV(MTD_BLOCK_MAJOR, sb->s_mtd->index);
 	sb->s_bdi = bdi_get(mtd_bdi);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * get a superblock on an MTD-backed filesystem
+ * get a superblock on an MTD-backed fileप्रणाली
  */
-static int mtd_get_sb(struct fs_context *fc,
-		      struct mtd_info *mtd,
-		      int (*fill_super)(struct super_block *,
-					struct fs_context *))
-{
-	struct super_block *sb;
-	int ret;
+अटल पूर्णांक mtd_get_sb(काष्ठा fs_context *fc,
+		      काष्ठा mtd_info *mtd,
+		      पूर्णांक (*fill_super)(काष्ठा super_block *,
+					काष्ठा fs_context *))
+अणु
+	काष्ठा super_block *sb;
+	पूर्णांक ret;
 
 	fc->sget_key = mtd;
 	sb = sget_fc(fc, mtd_test_super, mtd_set_super);
-	if (IS_ERR(sb))
-		return PTR_ERR(sb);
+	अगर (IS_ERR(sb))
+		वापस PTR_ERR(sb);
 
-	if (sb->s_root) {
-		/* new mountpoint for an already mounted superblock */
+	अगर (sb->s_root) अणु
+		/* new mountpoपूर्णांक क्रम an alपढ़ोy mounted superblock */
 		pr_debug("MTDSB: Device %d (\"%s\") is already mounted\n",
 			 mtd->index, mtd->name);
 		put_mtd_device(mtd);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* fresh new superblock */
 		pr_debug("MTDSB: New superblock for device %d (\"%s\")\n",
 			 mtd->index, mtd->name);
 
 		ret = fill_super(sb, fc);
-		if (ret < 0)
-			goto error_sb;
+		अगर (ret < 0)
+			जाओ error_sb;
 
 		sb->s_flags |= SB_ACTIVE;
-	}
+	पूर्ण
 
 	BUG_ON(fc->root);
 	fc->root = dget(sb->s_root);
-	return 0;
+	वापस 0;
 
 error_sb:
 	deactivate_locked_super(sb);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * get a superblock on an MTD-backed filesystem by MTD device number
+ * get a superblock on an MTD-backed fileप्रणाली by MTD device number
  */
-static int mtd_get_sb_by_nr(struct fs_context *fc, int mtdnr,
-			    int (*fill_super)(struct super_block *,
-					      struct fs_context *))
-{
-	struct mtd_info *mtd;
+अटल पूर्णांक mtd_get_sb_by_nr(काष्ठा fs_context *fc, पूर्णांक mtdnr,
+			    पूर्णांक (*fill_super)(काष्ठा super_block *,
+					      काष्ठा fs_context *))
+अणु
+	काष्ठा mtd_info *mtd;
 
-	mtd = get_mtd_device(NULL, mtdnr);
-	if (IS_ERR(mtd)) {
+	mtd = get_mtd_device(शून्य, mtdnr);
+	अगर (IS_ERR(mtd)) अणु
 		errorf(fc, "MTDSB: Device #%u doesn't appear to exist\n", mtdnr);
-		return PTR_ERR(mtd);
-	}
+		वापस PTR_ERR(mtd);
+	पूर्ण
 
-	return mtd_get_sb(fc, mtd, fill_super);
-}
+	वापस mtd_get_sb(fc, mtd, fill_super);
+पूर्ण
 
 /**
  * get_tree_mtd - Get a superblock based on a single MTD device
- * @fc: The filesystem context holding the parameters
+ * @fc: The fileप्रणाली context holding the parameters
  * @fill_super: Helper to initialise a new superblock
  */
-int get_tree_mtd(struct fs_context *fc,
-	      int (*fill_super)(struct super_block *sb,
-				struct fs_context *fc))
-{
-#ifdef CONFIG_BLOCK
+पूर्णांक get_tree_mtd(काष्ठा fs_context *fc,
+	      पूर्णांक (*fill_super)(काष्ठा super_block *sb,
+				काष्ठा fs_context *fc))
+अणु
+#अगर_घोषित CONFIG_BLOCK
 	dev_t dev;
-	int ret;
-#endif
-	int mtdnr;
+	पूर्णांक ret;
+#पूर्ण_अगर
+	पूर्णांक mtdnr;
 
-	if (!fc->source)
-		return invalf(fc, "No source specified");
+	अगर (!fc->source)
+		वापस invalf(fc, "No source specified");
 
 	pr_debug("MTDSB: dev_name \"%s\"\n", fc->source);
 
 	/* the preferred way of mounting in future; especially when
-	 * CONFIG_BLOCK=n - we specify the underlying MTD device by number or
-	 * by name, so that we don't require block device support to be present
+	 * CONFIG_BLOCK=n - we specअगरy the underlying MTD device by number or
+	 * by name, so that we करोn't require block device support to be present
 	 * in the kernel.
 	 */
-	if (fc->source[0] == 'm' &&
+	अगर (fc->source[0] == 'm' &&
 	    fc->source[1] == 't' &&
-	    fc->source[2] == 'd') {
-		if (fc->source[3] == ':') {
-			struct mtd_info *mtd;
+	    fc->source[2] == 'd') अणु
+		अगर (fc->source[3] == ':') अणु
+			काष्ठा mtd_info *mtd;
 
 			/* mount by MTD device name */
 			pr_debug("MTDSB: mtd:%%s, name \"%s\"\n",
 				 fc->source + 4);
 
 			mtd = get_mtd_device_nm(fc->source + 4);
-			if (!IS_ERR(mtd))
-				return mtd_get_sb(fc, mtd, fill_super);
+			अगर (!IS_ERR(mtd))
+				वापस mtd_get_sb(fc, mtd, fill_super);
 
 			errorf(fc, "MTD: MTD device with name \"%s\" not found",
 			       fc->source + 4);
 
-		} else if (isdigit(fc->source[3])) {
+		पूर्ण अन्यथा अगर (है_अंक(fc->source[3])) अणु
 			/* mount by MTD device number name */
-			char *endptr;
+			अक्षर *endptr;
 
-			mtdnr = simple_strtoul(fc->source + 3, &endptr, 0);
-			if (!*endptr) {
+			mtdnr = simple_म_से_अदीर्घ(fc->source + 3, &endptr, 0);
+			अगर (!*endptr) अणु
 				/* It was a valid number */
 				pr_debug("MTDSB: mtd%%d, mtdnr %d\n", mtdnr);
-				return mtd_get_sb_by_nr(fc, mtdnr, fill_super);
-			}
-		}
-	}
+				वापस mtd_get_sb_by_nr(fc, mtdnr, fill_super);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-#ifdef CONFIG_BLOCK
+#अगर_घोषित CONFIG_BLOCK
 	/* try the old way - the hack where we allowed users to mount
 	 * /dev/mtdblock$(n) but didn't actually _use_ the blockdev
 	 */
 	ret = lookup_bdev(fc->source, &dev);
-	if (ret) {
+	अगर (ret) अणु
 		errorf(fc, "MTD: Couldn't look up '%s': %d", fc->source, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	pr_debug("MTDSB: lookup_bdev() returned 0\n");
 
-	if (MAJOR(dev) == MTD_BLOCK_MAJOR)
-		return mtd_get_sb_by_nr(fc, MINOR(dev), fill_super);
+	अगर (MAJOR(dev) == MTD_BLOCK_MAJOR)
+		वापस mtd_get_sb_by_nr(fc, MINOR(dev), fill_super);
 
-#endif /* CONFIG_BLOCK */
+#पूर्ण_अगर /* CONFIG_BLOCK */
 
-	if (!(fc->sb_flags & SB_SILENT))
+	अगर (!(fc->sb_flags & SB_SILENT))
 		errorf(fc, "MTD: Attempt to mount non-MTD device \"%s\"",
 		       fc->source);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(get_tree_mtd);
 
 /*
  * destroy an MTD-based superblock
  */
-void kill_mtd_super(struct super_block *sb)
-{
-	generic_shutdown_super(sb);
+व्योम समाप्त_mtd_super(काष्ठा super_block *sb)
+अणु
+	generic_shutकरोwn_super(sb);
 	put_mtd_device(sb->s_mtd);
-	sb->s_mtd = NULL;
-}
+	sb->s_mtd = शून्य;
+पूर्ण
 
-EXPORT_SYMBOL_GPL(kill_mtd_super);
+EXPORT_SYMBOL_GPL(समाप्त_mtd_super);

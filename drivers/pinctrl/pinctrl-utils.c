@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Utils functions to implement the pincontrol driver.
  *
@@ -5,86 +6,86 @@
  *
  * Author: Laxman Dewangan <ldewangan@nvidia.com>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any kind,
  * whether express or implied; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307, USA
  */
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/of.h>
-#include <linux/slab.h>
-#include "core.h"
-#include "pinctrl-utils.h"
+#समावेश <linux/device.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
+#समावेश "core.h"
+#समावेश "pinctrl-utils.h"
 
-int pinctrl_utils_reserve_map(struct pinctrl_dev *pctldev,
-		struct pinctrl_map **map, unsigned *reserved_maps,
-		unsigned *num_maps, unsigned reserve)
-{
-	unsigned old_num = *reserved_maps;
-	unsigned new_num = *num_maps + reserve;
-	struct pinctrl_map *new_map;
+पूर्णांक pinctrl_utils_reserve_map(काष्ठा pinctrl_dev *pctldev,
+		काष्ठा pinctrl_map **map, अचिन्हित *reserved_maps,
+		अचिन्हित *num_maps, अचिन्हित reserve)
+अणु
+	अचिन्हित old_num = *reserved_maps;
+	अचिन्हित new_num = *num_maps + reserve;
+	काष्ठा pinctrl_map *new_map;
 
-	if (old_num >= new_num)
-		return 0;
+	अगर (old_num >= new_num)
+		वापस 0;
 
-	new_map = krealloc_array(*map, new_num, sizeof(*new_map), GFP_KERNEL);
-	if (!new_map) {
+	new_map = kपुनः_स्मृति_array(*map, new_num, माप(*new_map), GFP_KERNEL);
+	अगर (!new_map) अणु
 		dev_err(pctldev->dev, "krealloc(map) failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	memset(new_map + old_num, 0, (new_num - old_num) * sizeof(*new_map));
+	स_रखो(new_map + old_num, 0, (new_num - old_num) * माप(*new_map));
 
 	*map = new_map;
 	*reserved_maps = new_num;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(pinctrl_utils_reserve_map);
 
-int pinctrl_utils_add_map_mux(struct pinctrl_dev *pctldev,
-		struct pinctrl_map **map, unsigned *reserved_maps,
-		unsigned *num_maps, const char *group,
-		const char *function)
-{
-	if (WARN_ON(*num_maps == *reserved_maps))
-		return -ENOSPC;
+पूर्णांक pinctrl_utils_add_map_mux(काष्ठा pinctrl_dev *pctldev,
+		काष्ठा pinctrl_map **map, अचिन्हित *reserved_maps,
+		अचिन्हित *num_maps, स्थिर अक्षर *group,
+		स्थिर अक्षर *function)
+अणु
+	अगर (WARN_ON(*num_maps == *reserved_maps))
+		वापस -ENOSPC;
 
 	(*map)[*num_maps].type = PIN_MAP_TYPE_MUX_GROUP;
 	(*map)[*num_maps].data.mux.group = group;
 	(*map)[*num_maps].data.mux.function = function;
 	(*num_maps)++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(pinctrl_utils_add_map_mux);
 
-int pinctrl_utils_add_map_configs(struct pinctrl_dev *pctldev,
-		struct pinctrl_map **map, unsigned *reserved_maps,
-		unsigned *num_maps, const char *group,
-		unsigned long *configs, unsigned num_configs,
-		enum pinctrl_map_type type)
-{
-	unsigned long *dup_configs;
+पूर्णांक pinctrl_utils_add_map_configs(काष्ठा pinctrl_dev *pctldev,
+		काष्ठा pinctrl_map **map, अचिन्हित *reserved_maps,
+		अचिन्हित *num_maps, स्थिर अक्षर *group,
+		अचिन्हित दीर्घ *configs, अचिन्हित num_configs,
+		क्रमागत pinctrl_map_type type)
+अणु
+	अचिन्हित दीर्घ *dup_configs;
 
-	if (WARN_ON(*num_maps == *reserved_maps))
-		return -ENOSPC;
+	अगर (WARN_ON(*num_maps == *reserved_maps))
+		वापस -ENOSPC;
 
-	dup_configs = kmemdup(configs, num_configs * sizeof(*dup_configs),
+	dup_configs = kmemdup(configs, num_configs * माप(*dup_configs),
 			      GFP_KERNEL);
-	if (!dup_configs)
-		return -ENOMEM;
+	अगर (!dup_configs)
+		वापस -ENOMEM;
 
 	(*map)[*num_maps].type = type;
 	(*map)[*num_maps].data.configs.group_or_pin = group;
@@ -92,49 +93,49 @@ int pinctrl_utils_add_map_configs(struct pinctrl_dev *pctldev,
 	(*map)[*num_maps].data.configs.num_configs = num_configs;
 	(*num_maps)++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(pinctrl_utils_add_map_configs);
 
-int pinctrl_utils_add_config(struct pinctrl_dev *pctldev,
-		unsigned long **configs, unsigned *num_configs,
-		unsigned long config)
-{
-	unsigned old_num = *num_configs;
-	unsigned new_num = old_num + 1;
-	unsigned long *new_configs;
+पूर्णांक pinctrl_utils_add_config(काष्ठा pinctrl_dev *pctldev,
+		अचिन्हित दीर्घ **configs, अचिन्हित *num_configs,
+		अचिन्हित दीर्घ config)
+अणु
+	अचिन्हित old_num = *num_configs;
+	अचिन्हित new_num = old_num + 1;
+	अचिन्हित दीर्घ *new_configs;
 
-	new_configs = krealloc(*configs, sizeof(*new_configs) * new_num,
+	new_configs = kपुनः_स्मृति(*configs, माप(*new_configs) * new_num,
 			       GFP_KERNEL);
-	if (!new_configs) {
+	अगर (!new_configs) अणु
 		dev_err(pctldev->dev, "krealloc(configs) failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	new_configs[old_num] = config;
 
 	*configs = new_configs;
 	*num_configs = new_num;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(pinctrl_utils_add_config);
 
-void pinctrl_utils_free_map(struct pinctrl_dev *pctldev,
-	      struct pinctrl_map *map, unsigned num_maps)
-{
-	int i;
+व्योम pinctrl_utils_मुक्त_map(काष्ठा pinctrl_dev *pctldev,
+	      काष्ठा pinctrl_map *map, अचिन्हित num_maps)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num_maps; i++) {
-		switch (map[i].type) {
-		case PIN_MAP_TYPE_CONFIGS_GROUP:
-		case PIN_MAP_TYPE_CONFIGS_PIN:
-			kfree(map[i].data.configs.configs);
-			break;
-		default:
-			break;
-		}
-	}
-	kfree(map);
-}
-EXPORT_SYMBOL_GPL(pinctrl_utils_free_map);
+	क्रम (i = 0; i < num_maps; i++) अणु
+		चयन (map[i].type) अणु
+		हाल PIN_MAP_TYPE_CONFIGS_GROUP:
+		हाल PIN_MAP_TYPE_CONFIGS_PIN:
+			kमुक्त(map[i].data.configs.configs);
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	kमुक्त(map);
+पूर्ण
+EXPORT_SYMBOL_GPL(pinctrl_utils_मुक्त_map);

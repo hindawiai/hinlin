@@ -1,174 +1,175 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2017 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#ifndef __XFS_SCRUB_SCRUB_H__
-#define __XFS_SCRUB_SCRUB_H__
+#अगर_अघोषित __XFS_SCRUB_SCRUB_H__
+#घोषणा __XFS_SCRUB_SCRUB_H__
 
-struct xfs_scrub;
+काष्ठा xfs_scrub;
 
-/* Type info and names for the scrub types. */
-enum xchk_type {
+/* Type info and names क्रम the scrub types. */
+क्रमागत xchk_type अणु
 	ST_NONE = 1,	/* disabled */
 	ST_PERAG,	/* per-AG metadata */
 	ST_FS,		/* per-FS metadata */
 	ST_INODE,	/* per-inode metadata */
-};
+पूर्ण;
 
-struct xchk_meta_ops {
-	/* Acquire whatever resources are needed for the operation. */
-	int		(*setup)(struct xfs_scrub *sc);
+काष्ठा xchk_meta_ops अणु
+	/* Acquire whatever resources are needed क्रम the operation. */
+	पूर्णांक		(*setup)(काष्ठा xfs_scrub *sc);
 
-	/* Examine metadata for errors. */
-	int		(*scrub)(struct xfs_scrub *);
+	/* Examine metadata क्रम errors. */
+	पूर्णांक		(*scrub)(काष्ठा xfs_scrub *);
 
 	/* Repair or optimize the metadata. */
-	int		(*repair)(struct xfs_scrub *);
+	पूर्णांक		(*repair)(काष्ठा xfs_scrub *);
 
-	/* Decide if we even have this piece of metadata. */
-	bool		(*has)(struct xfs_sb *);
+	/* Decide अगर we even have this piece of metadata. */
+	bool		(*has)(काष्ठा xfs_sb *);
 
-	/* type describing required/allowed inputs */
-	enum xchk_type	type;
-};
+	/* type describing required/allowed inमाला_दो */
+	क्रमागत xchk_type	type;
+पूर्ण;
 
-/* Buffer pointers and btree cursors for an entire AG. */
-struct xchk_ag {
+/* Buffer poपूर्णांकers and btree cursors क्रम an entire AG. */
+काष्ठा xchk_ag अणु
 	xfs_agnumber_t		agno;
-	struct xfs_perag	*pag;
+	काष्ठा xfs_perag	*pag;
 
 	/* AG btree roots */
-	struct xfs_buf		*agf_bp;
-	struct xfs_buf		*agfl_bp;
-	struct xfs_buf		*agi_bp;
+	काष्ठा xfs_buf		*agf_bp;
+	काष्ठा xfs_buf		*agfl_bp;
+	काष्ठा xfs_buf		*agi_bp;
 
 	/* AG btrees */
-	struct xfs_btree_cur	*bno_cur;
-	struct xfs_btree_cur	*cnt_cur;
-	struct xfs_btree_cur	*ino_cur;
-	struct xfs_btree_cur	*fino_cur;
-	struct xfs_btree_cur	*rmap_cur;
-	struct xfs_btree_cur	*refc_cur;
-};
+	काष्ठा xfs_btree_cur	*bno_cur;
+	काष्ठा xfs_btree_cur	*cnt_cur;
+	काष्ठा xfs_btree_cur	*ino_cur;
+	काष्ठा xfs_btree_cur	*fino_cur;
+	काष्ठा xfs_btree_cur	*rmap_cur;
+	काष्ठा xfs_btree_cur	*refc_cur;
+पूर्ण;
 
-struct xfs_scrub {
+काष्ठा xfs_scrub अणु
 	/* General scrub state. */
-	struct xfs_mount		*mp;
-	struct xfs_scrub_metadata	*sm;
-	const struct xchk_meta_ops	*ops;
-	struct xfs_trans		*tp;
+	काष्ठा xfs_mount		*mp;
+	काष्ठा xfs_scrub_metadata	*sm;
+	स्थिर काष्ठा xchk_meta_ops	*ops;
+	काष्ठा xfs_trans		*tp;
 
 	/* File that scrub was called with. */
-	struct file			*file;
+	काष्ठा file			*file;
 
 	/*
-	 * File that is undergoing the scrub operation.  This can differ from
-	 * the file that scrub was called with if we're checking file-based fs
-	 * metadata (e.g. rt bitmaps) or if we're doing a scrub-by-handle for
-	 * something that can't be opened directly (e.g. symlinks).
+	 * File that is undergoing the scrub operation.  This can dअगरfer from
+	 * the file that scrub was called with अगर we're checking file-based fs
+	 * metadata (e.g. rt biपंचांगaps) or अगर we're करोing a scrub-by-handle क्रम
+	 * something that can't be खोलोed directly (e.g. symlinks).
 	 */
-	struct xfs_inode		*ip;
+	काष्ठा xfs_inode		*ip;
 
-	void				*buf;
-	uint				ilock_flags;
+	व्योम				*buf;
+	uपूर्णांक				ilock_flags;
 
 	/* See the XCHK/XREP state flags below. */
-	unsigned int			flags;
+	अचिन्हित पूर्णांक			flags;
 
 	/*
 	 * The XFS_SICK_* flags that correspond to the metadata being scrubbed
 	 * or repaired.  We will use this mask to update the in-core fs health
 	 * status with whatever we find.
 	 */
-	unsigned int			sick_mask;
+	अचिन्हित पूर्णांक			sick_mask;
 
-	/* State tracking for single-AG operations. */
-	struct xchk_ag			sa;
-};
+	/* State tracking क्रम single-AG operations. */
+	काष्ठा xchk_ag			sa;
+पूर्ण;
 
-/* XCHK state flags grow up from zero, XREP state flags grown down from 2^31 */
-#define XCHK_TRY_HARDER		(1 << 0)  /* can't get resources, try again */
-#define XCHK_HAS_QUOTAOFFLOCK	(1 << 1)  /* we hold the quotaoff lock */
-#define XCHK_REAPING_DISABLED	(1 << 2)  /* background block reaping paused */
-#define XREP_ALREADY_FIXED	(1 << 31) /* checking our repair work */
+/* XCHK state flags grow up from zero, XREP state flags grown करोwn from 2^31 */
+#घोषणा XCHK_TRY_HARDER		(1 << 0)  /* can't get resources, try again */
+#घोषणा XCHK_HAS_QUOTAOFFLOCK	(1 << 1)  /* we hold the quotaoff lock */
+#घोषणा XCHK_REAPING_DISABLED	(1 << 2)  /* background block reaping छोड़ोd */
+#घोषणा XREP_ALREADY_FIXED	(1 << 31) /* checking our repair work */
 
 /* Metadata scrubbers */
-int xchk_tester(struct xfs_scrub *sc);
-int xchk_superblock(struct xfs_scrub *sc);
-int xchk_agf(struct xfs_scrub *sc);
-int xchk_agfl(struct xfs_scrub *sc);
-int xchk_agi(struct xfs_scrub *sc);
-int xchk_bnobt(struct xfs_scrub *sc);
-int xchk_cntbt(struct xfs_scrub *sc);
-int xchk_inobt(struct xfs_scrub *sc);
-int xchk_finobt(struct xfs_scrub *sc);
-int xchk_rmapbt(struct xfs_scrub *sc);
-int xchk_refcountbt(struct xfs_scrub *sc);
-int xchk_inode(struct xfs_scrub *sc);
-int xchk_bmap_data(struct xfs_scrub *sc);
-int xchk_bmap_attr(struct xfs_scrub *sc);
-int xchk_bmap_cow(struct xfs_scrub *sc);
-int xchk_directory(struct xfs_scrub *sc);
-int xchk_xattr(struct xfs_scrub *sc);
-int xchk_symlink(struct xfs_scrub *sc);
-int xchk_parent(struct xfs_scrub *sc);
-#ifdef CONFIG_XFS_RT
-int xchk_rtbitmap(struct xfs_scrub *sc);
-int xchk_rtsummary(struct xfs_scrub *sc);
-#else
-static inline int
-xchk_rtbitmap(struct xfs_scrub *sc)
-{
-	return -ENOENT;
-}
-static inline int
-xchk_rtsummary(struct xfs_scrub *sc)
-{
-	return -ENOENT;
-}
-#endif
-#ifdef CONFIG_XFS_QUOTA
-int xchk_quota(struct xfs_scrub *sc);
-#else
-static inline int
-xchk_quota(struct xfs_scrub *sc)
-{
-	return -ENOENT;
-}
-#endif
-int xchk_fscounters(struct xfs_scrub *sc);
+पूर्णांक xchk_tester(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_superblock(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_agf(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_agfl(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_agi(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_bnobt(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_cntbt(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_inobt(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_finobt(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_rmapbt(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_refcountbt(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_inode(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_bmap_data(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_bmap_attr(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_bmap_cow(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_directory(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_xattr(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_symlink(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_parent(काष्ठा xfs_scrub *sc);
+#अगर_घोषित CONFIG_XFS_RT
+पूर्णांक xchk_rtbiपंचांगap(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_rtsummary(काष्ठा xfs_scrub *sc);
+#अन्यथा
+अटल अंतरभूत पूर्णांक
+xchk_rtbiपंचांगap(काष्ठा xfs_scrub *sc)
+अणु
+	वापस -ENOENT;
+पूर्ण
+अटल अंतरभूत पूर्णांक
+xchk_rtsummary(काष्ठा xfs_scrub *sc)
+अणु
+	वापस -ENOENT;
+पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_XFS_QUOTA
+पूर्णांक xchk_quota(काष्ठा xfs_scrub *sc);
+#अन्यथा
+अटल अंतरभूत पूर्णांक
+xchk_quota(काष्ठा xfs_scrub *sc)
+अणु
+	वापस -ENOENT;
+पूर्ण
+#पूर्ण_अगर
+पूर्णांक xchk_fscounters(काष्ठा xfs_scrub *sc);
 
 /* cross-referencing helpers */
-void xchk_xref_is_used_space(struct xfs_scrub *sc, xfs_agblock_t agbno,
+व्योम xchk_xref_is_used_space(काष्ठा xfs_scrub *sc, xfs_agblock_t agbno,
 		xfs_extlen_t len);
-void xchk_xref_is_not_inode_chunk(struct xfs_scrub *sc, xfs_agblock_t agbno,
+व्योम xchk_xref_is_not_inode_chunk(काष्ठा xfs_scrub *sc, xfs_agblock_t agbno,
 		xfs_extlen_t len);
-void xchk_xref_is_inode_chunk(struct xfs_scrub *sc, xfs_agblock_t agbno,
+व्योम xchk_xref_is_inode_chunk(काष्ठा xfs_scrub *sc, xfs_agblock_t agbno,
 		xfs_extlen_t len);
-void xchk_xref_is_owned_by(struct xfs_scrub *sc, xfs_agblock_t agbno,
-		xfs_extlen_t len, const struct xfs_owner_info *oinfo);
-void xchk_xref_is_not_owned_by(struct xfs_scrub *sc, xfs_agblock_t agbno,
-		xfs_extlen_t len, const struct xfs_owner_info *oinfo);
-void xchk_xref_has_no_owner(struct xfs_scrub *sc, xfs_agblock_t agbno,
+व्योम xchk_xref_is_owned_by(काष्ठा xfs_scrub *sc, xfs_agblock_t agbno,
+		xfs_extlen_t len, स्थिर काष्ठा xfs_owner_info *oinfo);
+व्योम xchk_xref_is_not_owned_by(काष्ठा xfs_scrub *sc, xfs_agblock_t agbno,
+		xfs_extlen_t len, स्थिर काष्ठा xfs_owner_info *oinfo);
+व्योम xchk_xref_has_no_owner(काष्ठा xfs_scrub *sc, xfs_agblock_t agbno,
 		xfs_extlen_t len);
-void xchk_xref_is_cow_staging(struct xfs_scrub *sc, xfs_agblock_t bno,
+व्योम xchk_xref_is_cow_staging(काष्ठा xfs_scrub *sc, xfs_agblock_t bno,
 		xfs_extlen_t len);
-void xchk_xref_is_not_shared(struct xfs_scrub *sc, xfs_agblock_t bno,
+व्योम xchk_xref_is_not_shared(काष्ठा xfs_scrub *sc, xfs_agblock_t bno,
 		xfs_extlen_t len);
-#ifdef CONFIG_XFS_RT
-void xchk_xref_is_used_rt_space(struct xfs_scrub *sc, xfs_rtblock_t rtbno,
+#अगर_घोषित CONFIG_XFS_RT
+व्योम xchk_xref_is_used_rt_space(काष्ठा xfs_scrub *sc, xfs_rtblock_t rtbno,
 		xfs_extlen_t len);
-#else
-# define xchk_xref_is_used_rt_space(sc, rtbno, len) do { } while (0)
-#endif
+#अन्यथा
+# define xchk_xref_is_used_rt_space(sc, rtbno, len) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-struct xchk_fscounters {
-	uint64_t		icount;
-	uint64_t		ifree;
-	uint64_t		fdblocks;
-	unsigned long long	icount_min;
-	unsigned long long	icount_max;
-};
+काष्ठा xchk_fscounters अणु
+	uपूर्णांक64_t		icount;
+	uपूर्णांक64_t		अगरree;
+	uपूर्णांक64_t		fdblocks;
+	अचिन्हित दीर्घ दीर्घ	icount_min;
+	अचिन्हित दीर्घ दीर्घ	icount_max;
+पूर्ण;
 
-#endif	/* __XFS_SCRUB_SCRUB_H__ */
+#पूर्ण_अगर	/* __XFS_SCRUB_SCRUB_H__ */

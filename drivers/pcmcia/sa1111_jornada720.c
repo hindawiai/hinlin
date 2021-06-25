@@ -1,138 +1,139 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * drivers/pcmcia/sa1100_jornada720.c
  *
- * Jornada720 PCMCIA specific routines
+ * Jornada720 PCMCIA specअगरic routines
  *
  */
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/gpio/consumer.h>
-#include <linux/init.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
 
-#include <mach/hardware.h>
-#include <asm/mach-types.h>
+#समावेश <mach/hardware.h>
+#समावेश <यंत्र/mach-types.h>
 
-#include "sa1111_generic.h"
+#समावेश "sa1111_generic.h"
 
 /*
- * Socket 0 power: GPIO A0
+ * Socket 0 घातer: GPIO A0
  * Socket 0 3V: GPIO A2
- * Socket 1 power: GPIO A1 & GPIO A3
+ * Socket 1 घातer: GPIO A1 & GPIO A3
  * Socket 1 3V: GPIO A3
- * Does Socket 1 3V actually do anything?
+ * Does Socket 1 3V actually करो anything?
  */
-enum {
+क्रमागत अणु
 	J720_GPIO_PWR,
 	J720_GPIO_3V,
 	J720_GPIO_MAX,
-};
-struct jornada720_data {
-	struct gpio_desc *gpio[J720_GPIO_MAX];
-};
+पूर्ण;
+काष्ठा jornada720_data अणु
+	काष्ठा gpio_desc *gpio[J720_GPIO_MAX];
+पूर्ण;
 
-static int jornada720_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
-{
-	struct device *dev = skt->socket.dev.parent;
-	struct jornada720_data *j;
+अटल पूर्णांक jornada720_pcmcia_hw_init(काष्ठा soc_pcmcia_socket *skt)
+अणु
+	काष्ठा device *dev = skt->socket.dev.parent;
+	काष्ठा jornada720_data *j;
 
-	j = devm_kzalloc(dev, sizeof(*j), GFP_KERNEL);
-	if (!j)
-		return -ENOMEM;
+	j = devm_kzalloc(dev, माप(*j), GFP_KERNEL);
+	अगर (!j)
+		वापस -ENOMEM;
 
 	j->gpio[J720_GPIO_PWR] = devm_gpiod_get(dev, skt->nr ? "s1-power" :
 						"s0-power", GPIOD_OUT_LOW);
-	if (IS_ERR(j->gpio[J720_GPIO_PWR]))
-		return PTR_ERR(j->gpio[J720_GPIO_PWR]);
+	अगर (IS_ERR(j->gpio[J720_GPIO_PWR]))
+		वापस PTR_ERR(j->gpio[J720_GPIO_PWR]);
 
 	j->gpio[J720_GPIO_3V] = devm_gpiod_get(dev, skt->nr ? "s1-3v" :
 					       "s0-3v", GPIOD_OUT_LOW);
-	if (IS_ERR(j->gpio[J720_GPIO_3V]))
-		return PTR_ERR(j->gpio[J720_GPIO_3V]);
+	अगर (IS_ERR(j->gpio[J720_GPIO_3V]))
+		वापस PTR_ERR(j->gpio[J720_GPIO_3V]);
 
 	skt->driver_data = j;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-jornada720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const socket_state_t *state)
-{
-	struct jornada720_data *j = skt->driver_data;
-	DECLARE_BITMAP(values, J720_GPIO_MAX) = { 0, };
-	int ret;
+अटल पूर्णांक
+jornada720_pcmcia_configure_socket(काष्ठा soc_pcmcia_socket *skt, स्थिर socket_state_t *state)
+अणु
+	काष्ठा jornada720_data *j = skt->driver_data;
+	DECLARE_BITMAP(values, J720_GPIO_MAX) = अणु 0, पूर्ण;
+	पूर्णांक ret;
 
-	printk(KERN_INFO "%s(): config socket %d vcc %d vpp %d\n", __func__,
+	prपूर्णांकk(KERN_INFO "%s(): config socket %d vcc %d vpp %d\n", __func__,
 		skt->nr, state->Vcc, state->Vpp);
 
-	switch (skt->nr) {
-	case 0:
-		switch (state->Vcc) {
-		default:
-		case  0:
+	चयन (skt->nr) अणु
+	हाल 0:
+		चयन (state->Vcc) अणु
+		शेष:
+		हाल  0:
 			__assign_bit(J720_GPIO_PWR, values, 0);
 			__assign_bit(J720_GPIO_3V, values, 0);
-			break;
-		case 33:
+			अवरोध;
+		हाल 33:
 			__assign_bit(J720_GPIO_PWR, values, 1);
 			__assign_bit(J720_GPIO_3V, values, 1);
-			break;
-		case 50:
+			अवरोध;
+		हाल 50:
 			__assign_bit(J720_GPIO_PWR, values, 1);
 			__assign_bit(J720_GPIO_3V, values, 0);
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case 1:
-		switch (state->Vcc) {
-		default:
-		case 0:
+	हाल 1:
+		चयन (state->Vcc) अणु
+		शेष:
+		हाल 0:
 			__assign_bit(J720_GPIO_PWR, values, 0);
 			__assign_bit(J720_GPIO_3V, values, 0);
-			break;
-		case 33:
-		case 50:
+			अवरोध;
+		हाल 33:
+		हाल 50:
 			__assign_bit(J720_GPIO_PWR, values, 1);
 			__assign_bit(J720_GPIO_3V, values, 1);
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	default:
-		return -1;
-	}
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	if (state->Vpp != state->Vcc && state->Vpp != 0) {
-		printk(KERN_ERR "%s(): slot cannot support VPP %u\n",
+	अगर (state->Vpp != state->Vcc && state->Vpp != 0) अणु
+		prपूर्णांकk(KERN_ERR "%s(): slot cannot support VPP %u\n",
 			__func__, state->Vpp);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	ret = sa1111_pcmcia_configure_socket(skt, state);
-	if (ret == 0)
+	अगर (ret == 0)
 		ret = gpiod_set_array_value_cansleep(J720_GPIO_MAX, j->gpio,
-						     NULL, values);
+						     शून्य, values);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct pcmcia_low_level jornada720_pcmcia_ops = {
+अटल काष्ठा pcmcia_low_level jornada720_pcmcia_ops = अणु
 	.owner			= THIS_MODULE,
 	.hw_init		= jornada720_pcmcia_hw_init,
 	.configure_socket	= jornada720_pcmcia_configure_socket,
 	.first			= 0,
 	.nr			= 2,
-};
+पूर्ण;
 
-int pcmcia_jornada720_init(struct sa1111_dev *sadev)
-{
+पूर्णांक pcmcia_jornada720_init(काष्ठा sa1111_dev *sadev)
+अणु
 	/* Fixme: why messing around with SA11x0's GPIO1? */
 	GRER |= 0x00000002;
 
 	sa11xx_drv_pcmcia_ops(&jornada720_pcmcia_ops);
-	return sa1111_pcmcia_add(sadev, &jornada720_pcmcia_ops,
+	वापस sa1111_pcmcia_add(sadev, &jornada720_pcmcia_ops,
 				 sa11xx_drv_pcmcia_add_one);
-}
+पूर्ण

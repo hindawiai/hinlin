@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
 
-#include <stdbool.h>
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <stdbool.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-int in = 0;
-int out = 0;
+पूर्णांक in = 0;
+पूर्णांक out = 0;
 
 SEC("raw_tp/sys_enter")
-int raw_tp_prog(const void *ctx)
-{
+पूर्णांक raw_tp_prog(स्थिर व्योम *ctx)
+अणु
 	out = in;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEC("tp_btf/sys_enter")
-int tp_btf_prog(const void *ctx)
-{
+पूर्णांक tp_btf_prog(स्थिर व्योम *ctx)
+अणु
 	out = in;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

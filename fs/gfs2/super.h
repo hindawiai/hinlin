@@ -1,66 +1,67 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
-#ifndef __SUPER_DOT_H__
-#define __SUPER_DOT_H__
+#अगर_अघोषित __SUPER_DOT_H__
+#घोषणा __SUPER_DOT_H__
 
-#include <linux/fs.h>
-#include <linux/dcache.h>
-#include "incore.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/dcache.h>
+#समावेश "incore.h"
 
-/* Supported fs format version range */
-#define GFS2_FS_FORMAT_MIN (1801)
-#define GFS2_FS_FORMAT_MAX (1802)
+/* Supported fs क्रमmat version range */
+#घोषणा GFS2_FS_FORMAT_MIN (1801)
+#घोषणा GFS2_FS_FORMAT_MAX (1802)
 
-extern void gfs2_lm_unmount(struct gfs2_sbd *sdp);
+बाह्य व्योम gfs2_lm_unmount(काष्ठा gfs2_sbd *sdp);
 
-static inline unsigned int gfs2_jindex_size(struct gfs2_sbd *sdp)
-{
-	unsigned int x;
+अटल अंतरभूत अचिन्हित पूर्णांक gfs2_jindex_size(काष्ठा gfs2_sbd *sdp)
+अणु
+	अचिन्हित पूर्णांक x;
 	spin_lock(&sdp->sd_jindex_spin);
 	x = sdp->sd_journals;
 	spin_unlock(&sdp->sd_jindex_spin);
-	return x;
-}
+	वापस x;
+पूर्ण
 
-extern void gfs2_jindex_free(struct gfs2_sbd *sdp);
+बाह्य व्योम gfs2_jindex_मुक्त(काष्ठा gfs2_sbd *sdp);
 
-extern struct gfs2_jdesc *gfs2_jdesc_find(struct gfs2_sbd *sdp, unsigned int jid);
-extern int gfs2_jdesc_check(struct gfs2_jdesc *jd);
-extern int gfs2_lookup_in_master_dir(struct gfs2_sbd *sdp, char *filename,
-				     struct gfs2_inode **ipp);
+बाह्य काष्ठा gfs2_jdesc *gfs2_jdesc_find(काष्ठा gfs2_sbd *sdp, अचिन्हित पूर्णांक jid);
+बाह्य पूर्णांक gfs2_jdesc_check(काष्ठा gfs2_jdesc *jd);
+बाह्य पूर्णांक gfs2_lookup_in_master_dir(काष्ठा gfs2_sbd *sdp, अक्षर *filename,
+				     काष्ठा gfs2_inode **ipp);
 
-extern int gfs2_make_fs_rw(struct gfs2_sbd *sdp);
-extern void gfs2_make_fs_ro(struct gfs2_sbd *sdp);
-extern void gfs2_online_uevent(struct gfs2_sbd *sdp);
-extern int gfs2_statfs_init(struct gfs2_sbd *sdp);
-extern void gfs2_statfs_change(struct gfs2_sbd *sdp, s64 total, s64 free,
+बाह्य पूर्णांक gfs2_make_fs_rw(काष्ठा gfs2_sbd *sdp);
+बाह्य व्योम gfs2_make_fs_ro(काष्ठा gfs2_sbd *sdp);
+बाह्य व्योम gfs2_online_uevent(काष्ठा gfs2_sbd *sdp);
+बाह्य पूर्णांक gfs2_statfs_init(काष्ठा gfs2_sbd *sdp);
+बाह्य व्योम gfs2_statfs_change(काष्ठा gfs2_sbd *sdp, s64 total, s64 मुक्त,
 			       s64 dinodes);
-extern void gfs2_statfs_change_in(struct gfs2_statfs_change_host *sc,
-				  const void *buf);
-extern void gfs2_statfs_change_out(const struct gfs2_statfs_change_host *sc,
-				   void *buf);
-extern void update_statfs(struct gfs2_sbd *sdp, struct buffer_head *m_bh,
-			  struct buffer_head *l_bh);
-extern int gfs2_statfs_sync(struct super_block *sb, int type);
-extern void gfs2_freeze_func(struct work_struct *work);
+बाह्य व्योम gfs2_statfs_change_in(काष्ठा gfs2_statfs_change_host *sc,
+				  स्थिर व्योम *buf);
+बाह्य व्योम gfs2_statfs_change_out(स्थिर काष्ठा gfs2_statfs_change_host *sc,
+				   व्योम *buf);
+बाह्य व्योम update_statfs(काष्ठा gfs2_sbd *sdp, काष्ठा buffer_head *m_bh,
+			  काष्ठा buffer_head *l_bh);
+बाह्य पूर्णांक gfs2_statfs_sync(काष्ठा super_block *sb, पूर्णांक type);
+बाह्य व्योम gfs2_मुक्तze_func(काष्ठा work_काष्ठा *work);
 
-extern void free_local_statfs_inodes(struct gfs2_sbd *sdp);
-extern struct inode *find_local_statfs_inode(struct gfs2_sbd *sdp,
-					     unsigned int index);
-extern void free_sbd(struct gfs2_sbd *sdp);
+बाह्य व्योम मुक्त_local_statfs_inodes(काष्ठा gfs2_sbd *sdp);
+बाह्य काष्ठा inode *find_local_statfs_inode(काष्ठा gfs2_sbd *sdp,
+					     अचिन्हित पूर्णांक index);
+बाह्य व्योम मुक्त_sbd(काष्ठा gfs2_sbd *sdp);
 
-extern struct file_system_type gfs2_fs_type;
-extern struct file_system_type gfs2meta_fs_type;
-extern const struct export_operations gfs2_export_ops;
-extern const struct super_operations gfs2_super_ops;
-extern const struct dentry_operations gfs2_dops;
+बाह्य काष्ठा file_प्रणाली_type gfs2_fs_type;
+बाह्य काष्ठा file_प्रणाली_type gfs2meta_fs_type;
+बाह्य स्थिर काष्ठा export_operations gfs2_export_ops;
+बाह्य स्थिर काष्ठा super_operations gfs2_super_ops;
+बाह्य स्थिर काष्ठा dentry_operations gfs2_करोps;
 
-extern const struct xattr_handler *gfs2_xattr_handlers_max[];
-extern const struct xattr_handler **gfs2_xattr_handlers_min;
+बाह्य स्थिर काष्ठा xattr_handler *gfs2_xattr_handlers_max[];
+बाह्य स्थिर काष्ठा xattr_handler **gfs2_xattr_handlers_min;
 
-#endif /* __SUPER_DOT_H__ */
+#पूर्ण_अगर /* __SUPER_DOT_H__ */
 

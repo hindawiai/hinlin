@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2004 Topspin Communications.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,93 +31,93 @@
  * SOFTWARE.
  */
 
-#include <linux/module.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <linux/init.h>
-#include <linux/seq_file.h>
+#समावेश <linux/init.h>
+#समावेश <linux/seq_file.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include "ipoib.h"
+#समावेश "ipoib.h"
 
-static ssize_t show_parent(struct device *d, struct device_attribute *attr,
-			   char *buf)
-{
-	struct net_device *dev = to_net_dev(d);
-	struct ipoib_dev_priv *priv = ipoib_priv(dev);
+अटल sमाप_प्रकार show_parent(काष्ठा device *d, काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
+	काष्ठा net_device *dev = to_net_dev(d);
+	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
 
-	return sysfs_emit(buf, "%s\n", priv->parent->name);
-}
-static DEVICE_ATTR(parent, S_IRUGO, show_parent, NULL);
+	वापस sysfs_emit(buf, "%s\n", priv->parent->name);
+पूर्ण
+अटल DEVICE_ATTR(parent, S_IRUGO, show_parent, शून्य);
 
-static bool is_child_unique(struct ipoib_dev_priv *ppriv,
-			    struct ipoib_dev_priv *priv)
-{
-	struct ipoib_dev_priv *tpriv;
+अटल bool is_child_unique(काष्ठा ipoib_dev_priv *ppriv,
+			    काष्ठा ipoib_dev_priv *priv)
+अणु
+	काष्ठा ipoib_dev_priv *tpriv;
 
 	ASSERT_RTNL();
 
 	/*
-	 * Since the legacy sysfs interface uses pkey for deletion it cannot
-	 * support more than one interface with the same pkey, it creates
-	 * ambiguity.  The RTNL interface deletes using the netdev so it does
+	 * Since the legacy sysfs पूर्णांकerface uses pkey क्रम deletion it cannot
+	 * support more than one पूर्णांकerface with the same pkey, it creates
+	 * ambiguity.  The RTNL पूर्णांकerface deletes using the netdev so it करोes
 	 * not have a problem to support duplicated pkeys.
 	 */
-	if (priv->child_type != IPOIB_LEGACY_CHILD)
-		return true;
+	अगर (priv->child_type != IPOIB_LEGACY_CHILD)
+		वापस true;
 
 	/*
 	 * First ensure this isn't a duplicate. We check the parent device and
-	 * then all of the legacy child interfaces to make sure the Pkey
-	 * doesn't match.
+	 * then all of the legacy child पूर्णांकerfaces to make sure the Pkey
+	 * करोesn't match.
 	 */
-	if (ppriv->pkey == priv->pkey)
-		return false;
+	अगर (ppriv->pkey == priv->pkey)
+		वापस false;
 
-	list_for_each_entry(tpriv, &ppriv->child_intfs, list) {
-		if (tpriv->pkey == priv->pkey &&
+	list_क्रम_each_entry(tpriv, &ppriv->child_पूर्णांकfs, list) अणु
+		अगर (tpriv->pkey == priv->pkey &&
 		    tpriv->child_type == IPOIB_LEGACY_CHILD)
-			return false;
-	}
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * NOTE: If this function fails then the priv->dev will remain valid, however
- * priv will have been freed and must not be touched by caller in the error
- * case.
+ * NOTE: If this function fails then the priv->dev will reमुख्य valid, however
+ * priv will have been मुक्तd and must not be touched by caller in the error
+ * हाल.
  *
  * If (ndev->reg_state == NETREG_UNINITIALIZED) then it is up to the caller to
- * free the net_device (just as rtnl_newlink does) otherwise the net_device
- * will be freed when the rtnl is unlocked.
+ * मुक्त the net_device (just as rtnl_newlink करोes) otherwise the net_device
+ * will be मुक्तd when the rtnl is unlocked.
  */
-int __ipoib_vlan_add(struct ipoib_dev_priv *ppriv, struct ipoib_dev_priv *priv,
-		     u16 pkey, int type)
-{
-	struct net_device *ndev = priv->dev;
-	int result;
-	struct rdma_netdev *rn = netdev_priv(ndev);
+पूर्णांक __ipoib_vlan_add(काष्ठा ipoib_dev_priv *ppriv, काष्ठा ipoib_dev_priv *priv,
+		     u16 pkey, पूर्णांक type)
+अणु
+	काष्ठा net_device *ndev = priv->dev;
+	पूर्णांक result;
+	काष्ठा rdma_netdev *rn = netdev_priv(ndev);
 
 	ASSERT_RTNL();
 
 	/*
-	 * We do not need to touch priv if register_netdevice fails, so just
+	 * We करो not need to touch priv अगर रेजिस्टर_netdevice fails, so just
 	 * always use this flow.
 	 */
-	ndev->priv_destructor = ipoib_intf_free;
+	ndev->priv_deकाष्ठाor = ipoib_पूर्णांकf_मुक्त;
 
 	/*
-	 * Racing with unregister of the parent must be prevented by the
+	 * Racing with unरेजिस्टर of the parent must be prevented by the
 	 * caller.
 	 */
 	WARN_ON(ppriv->dev->reg_state != NETREG_REGISTERED);
 
-	if (pkey == 0 || pkey == 0x8000) {
+	अगर (pkey == 0 || pkey == 0x8000) अणु
 		result = -EINVAL;
-		goto out_early;
-	}
+		जाओ out_early;
+	पूर्ण
 
 	rn->mtu = priv->mcast_mtu;
 
@@ -124,171 +125,171 @@ int __ipoib_vlan_add(struct ipoib_dev_priv *ppriv, struct ipoib_dev_priv *priv,
 	priv->pkey = pkey;
 	priv->child_type = type;
 
-	if (!is_child_unique(ppriv, priv)) {
+	अगर (!is_child_unique(ppriv, priv)) अणु
 		result = -ENOTUNIQ;
-		goto out_early;
-	}
+		जाओ out_early;
+	पूर्ण
 
-	result = register_netdevice(ndev);
-	if (result) {
+	result = रेजिस्टर_netdevice(ndev);
+	अगर (result) अणु
 		ipoib_warn(priv, "failed to initialize; error %i", result);
 
 		/*
-		 * register_netdevice sometimes calls priv_destructor,
-		 * sometimes not. Make sure it was done.
+		 * रेजिस्टर_netdevice someबार calls priv_deकाष्ठाor,
+		 * someबार not. Make sure it was करोne.
 		 */
-		goto out_early;
-	}
+		जाओ out_early;
+	पूर्ण
 
-	/* RTNL childs don't need proprietary sysfs entries */
-	if (type == IPOIB_LEGACY_CHILD) {
-		if (ipoib_cm_add_mode_attr(ndev))
-			goto sysfs_failed;
-		if (ipoib_add_pkey_attr(ndev))
-			goto sysfs_failed;
-		if (ipoib_add_umcast_attr(ndev))
-			goto sysfs_failed;
+	/* RTNL childs करोn't need proprietary sysfs entries */
+	अगर (type == IPOIB_LEGACY_CHILD) अणु
+		अगर (ipoib_cm_add_mode_attr(ndev))
+			जाओ sysfs_failed;
+		अगर (ipoib_add_pkey_attr(ndev))
+			जाओ sysfs_failed;
+		अगर (ipoib_add_umcast_attr(ndev))
+			जाओ sysfs_failed;
 
-		if (device_create_file(&ndev->dev, &dev_attr_parent))
-			goto sysfs_failed;
-	}
+		अगर (device_create_file(&ndev->dev, &dev_attr_parent))
+			जाओ sysfs_failed;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 sysfs_failed:
-	unregister_netdevice(priv->dev);
-	return -ENOMEM;
+	unरेजिस्टर_netdevice(priv->dev);
+	वापस -ENOMEM;
 
 out_early:
-	if (ndev->priv_destructor)
-		ndev->priv_destructor(ndev);
-	return result;
-}
+	अगर (ndev->priv_deकाष्ठाor)
+		ndev->priv_deकाष्ठाor(ndev);
+	वापस result;
+पूर्ण
 
-int ipoib_vlan_add(struct net_device *pdev, unsigned short pkey)
-{
-	struct ipoib_dev_priv *ppriv, *priv;
-	char intf_name[IFNAMSIZ];
-	struct net_device *ndev;
-	int result;
+पूर्णांक ipoib_vlan_add(काष्ठा net_device *pdev, अचिन्हित लघु pkey)
+अणु
+	काष्ठा ipoib_dev_priv *ppriv, *priv;
+	अक्षर पूर्णांकf_name[IFNAMSIZ];
+	काष्ठा net_device *ndev;
+	पूर्णांक result;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
-	if (pdev->reg_state != NETREG_REGISTERED) {
+	अगर (pdev->reg_state != NETREG_REGISTERED) अणु
 		rtnl_unlock();
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	ppriv = ipoib_priv(pdev);
 
-	snprintf(intf_name, sizeof(intf_name), "%s.%04x",
+	snम_लिखो(पूर्णांकf_name, माप(पूर्णांकf_name), "%s.%04x",
 		 ppriv->dev->name, pkey);
 
-	ndev = ipoib_intf_alloc(ppriv->ca, ppriv->port, intf_name);
-	if (IS_ERR(ndev)) {
+	ndev = ipoib_पूर्णांकf_alloc(ppriv->ca, ppriv->port, पूर्णांकf_name);
+	अगर (IS_ERR(ndev)) अणु
 		result = PTR_ERR(ndev);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	priv = ipoib_priv(ndev);
 
 	ndev->rtnl_link_ops = ipoib_get_link_ops();
 
 	result = __ipoib_vlan_add(ppriv, priv, pkey, IPOIB_LEGACY_CHILD);
 
-	if (result && ndev->reg_state == NETREG_UNINITIALIZED)
-		free_netdev(ndev);
+	अगर (result && ndev->reg_state == NETREG_UNINITIALIZED)
+		मुक्त_netdev(ndev);
 
 out:
 	rtnl_unlock();
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-struct ipoib_vlan_delete_work {
-	struct work_struct work;
-	struct net_device *dev;
-};
+काष्ठा ipoib_vlan_delete_work अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा net_device *dev;
+पूर्ण;
 
 /*
  * sysfs callbacks of a netdevice cannot obtain the rtnl lock as
- * unregister_netdev ultimately deletes the sysfs files while holding the rtnl
- * lock. This deadlocks the system.
+ * unरेजिस्टर_netdev ultimately deletes the sysfs files जबतक holding the rtnl
+ * lock. This deadlocks the प्रणाली.
  *
- * A callback can use rtnl_trylock to avoid the deadlock but it cannot call
- * unregister_netdev as that internally takes and releases the rtnl_lock.  So
- * instead we find the netdev to unregister and then do the actual unregister
+ * A callback can use rtnl_trylock to aव्योम the deadlock but it cannot call
+ * unरेजिस्टर_netdev as that पूर्णांकernally takes and releases the rtnl_lock.  So
+ * instead we find the netdev to unरेजिस्टर and then करो the actual unरेजिस्टर
  * from the global work queue where we can obtain the rtnl_lock safely.
  */
-static void ipoib_vlan_delete_task(struct work_struct *work)
-{
-	struct ipoib_vlan_delete_work *pwork =
-		container_of(work, struct ipoib_vlan_delete_work, work);
-	struct net_device *dev = pwork->dev;
+अटल व्योम ipoib_vlan_delete_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ipoib_vlan_delete_work *pwork =
+		container_of(work, काष्ठा ipoib_vlan_delete_work, work);
+	काष्ठा net_device *dev = pwork->dev;
 
 	rtnl_lock();
 
-	/* Unregistering tasks can race with another task or parent removal */
-	if (dev->reg_state == NETREG_REGISTERED) {
-		struct ipoib_dev_priv *priv = ipoib_priv(dev);
-		struct ipoib_dev_priv *ppriv = ipoib_priv(priv->parent);
+	/* Unरेजिस्टरing tasks can race with another task or parent removal */
+	अगर (dev->reg_state == NETREG_REGISTERED) अणु
+		काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
+		काष्ठा ipoib_dev_priv *ppriv = ipoib_priv(priv->parent);
 
 		ipoib_dbg(ppriv, "delete child vlan %s\n", dev->name);
-		unregister_netdevice(dev);
-	}
+		unरेजिस्टर_netdevice(dev);
+	पूर्ण
 
 	rtnl_unlock();
 
-	kfree(pwork);
-}
+	kमुक्त(pwork);
+पूर्ण
 
-int ipoib_vlan_delete(struct net_device *pdev, unsigned short pkey)
-{
-	struct ipoib_dev_priv *ppriv, *priv, *tpriv;
-	int rc;
+पूर्णांक ipoib_vlan_delete(काष्ठा net_device *pdev, अचिन्हित लघु pkey)
+अणु
+	काष्ठा ipoib_dev_priv *ppriv, *priv, *tpriv;
+	पूर्णांक rc;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
-	if (pdev->reg_state != NETREG_REGISTERED) {
+	अगर (pdev->reg_state != NETREG_REGISTERED) अणु
 		rtnl_unlock();
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	ppriv = ipoib_priv(pdev);
 
 	rc = -ENODEV;
-	list_for_each_entry_safe(priv, tpriv, &ppriv->child_intfs, list) {
-		if (priv->pkey == pkey &&
-		    priv->child_type == IPOIB_LEGACY_CHILD) {
-			struct ipoib_vlan_delete_work *work;
+	list_क्रम_each_entry_safe(priv, tpriv, &ppriv->child_पूर्णांकfs, list) अणु
+		अगर (priv->pkey == pkey &&
+		    priv->child_type == IPOIB_LEGACY_CHILD) अणु
+			काष्ठा ipoib_vlan_delete_work *work;
 
-			work = kmalloc(sizeof(*work), GFP_KERNEL);
-			if (!work) {
+			work = kदो_स्मृति(माप(*work), GFP_KERNEL);
+			अगर (!work) अणु
 				rc = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			down_write(&ppriv->vlan_rwsem);
+			करोwn_ग_लिखो(&ppriv->vlan_rwsem);
 			list_del_init(&priv->list);
-			up_write(&ppriv->vlan_rwsem);
+			up_ग_लिखो(&ppriv->vlan_rwsem);
 			work->dev = priv->dev;
 			INIT_WORK(&work->work, ipoib_vlan_delete_task);
 			queue_work(ipoib_workqueue, &work->work);
 
 			rc = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 out:
 	rtnl_unlock();
 
-	return rc;
-}
+	वापस rc;
+पूर्ण

@@ -1,129 +1,130 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Multipath TCP
  *
  * Copyright (c) 2019, Intel Corporation.
  */
-#define pr_fmt(fmt) "MPTCP: " fmt
+#घोषणा pr_fmt(fmt) "MPTCP: " fmt
 
-#include <linux/kernel.h>
-#include <net/tcp.h>
-#include <net/mptcp.h>
-#include "protocol.h"
+#समावेश <linux/kernel.h>
+#समावेश <net/tcp.h>
+#समावेश <net/mptcp.h>
+#समावेश "protocol.h"
 
 /* path manager command handlers */
 
-int mptcp_pm_announce_addr(struct mptcp_sock *msk,
-			   const struct mptcp_addr_info *addr,
+पूर्णांक mptcp_pm_announce_addr(काष्ठा mptcp_sock *msk,
+			   स्थिर काष्ठा mptcp_addr_info *addr,
 			   bool echo)
-{
-	u8 add_addr = READ_ONCE(msk->pm.addr_signal);
+अणु
+	u8 add_addr = READ_ONCE(msk->pm.addr_संकेत);
 
 	pr_debug("msk=%p, local_id=%d", msk, addr->id);
 
-	lockdep_assert_held(&msk->pm.lock);
+	lockdep_निश्चित_held(&msk->pm.lock);
 
-	if (add_addr) {
+	अगर (add_addr) अणु
 		pr_warn("addr_signal error, add_addr=%d", add_addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	msk->pm.local = *addr;
 	add_addr |= BIT(MPTCP_ADD_ADDR_SIGNAL);
-	if (echo)
+	अगर (echo)
 		add_addr |= BIT(MPTCP_ADD_ADDR_ECHO);
-	if (addr->family == AF_INET6)
+	अगर (addr->family == AF_INET6)
 		add_addr |= BIT(MPTCP_ADD_ADDR_IPV6);
-	if (addr->port)
+	अगर (addr->port)
 		add_addr |= BIT(MPTCP_ADD_ADDR_PORT);
-	WRITE_ONCE(msk->pm.addr_signal, add_addr);
-	return 0;
-}
+	WRITE_ONCE(msk->pm.addr_संकेत, add_addr);
+	वापस 0;
+पूर्ण
 
-int mptcp_pm_remove_addr(struct mptcp_sock *msk, const struct mptcp_rm_list *rm_list)
-{
-	u8 rm_addr = READ_ONCE(msk->pm.addr_signal);
+पूर्णांक mptcp_pm_हटाओ_addr(काष्ठा mptcp_sock *msk, स्थिर काष्ठा mptcp_rm_list *rm_list)
+अणु
+	u8 rm_addr = READ_ONCE(msk->pm.addr_संकेत);
 
 	pr_debug("msk=%p, rm_list_nr=%d", msk, rm_list->nr);
 
-	if (rm_addr) {
+	अगर (rm_addr) अणु
 		pr_warn("addr_signal error, rm_addr=%d", rm_addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	msk->pm.rm_list_tx = *rm_list;
 	rm_addr |= BIT(MPTCP_RM_ADDR_SIGNAL);
-	WRITE_ONCE(msk->pm.addr_signal, rm_addr);
+	WRITE_ONCE(msk->pm.addr_संकेत, rm_addr);
 	mptcp_pm_nl_addr_send_ack(msk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mptcp_pm_remove_subflow(struct mptcp_sock *msk, const struct mptcp_rm_list *rm_list)
-{
+पूर्णांक mptcp_pm_हटाओ_subflow(काष्ठा mptcp_sock *msk, स्थिर काष्ठा mptcp_rm_list *rm_list)
+अणु
 	pr_debug("msk=%p, rm_list_nr=%d", msk, rm_list->nr);
 
 	spin_lock_bh(&msk->pm.lock);
 	mptcp_pm_nl_rm_subflow_received(msk, rm_list);
 	spin_unlock_bh(&msk->pm.lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* path manager event handlers */
 
-void mptcp_pm_new_connection(struct mptcp_sock *msk, const struct sock *ssk, int server_side)
-{
-	struct mptcp_pm_data *pm = &msk->pm;
+व्योम mptcp_pm_new_connection(काष्ठा mptcp_sock *msk, स्थिर काष्ठा sock *ssk, पूर्णांक server_side)
+अणु
+	काष्ठा mptcp_pm_data *pm = &msk->pm;
 
 	pr_debug("msk=%p, token=%u side=%d", msk, msk->token, server_side);
 
 	WRITE_ONCE(pm->server_side, server_side);
 	mptcp_event(MPTCP_EVENT_CREATED, msk, ssk, GFP_ATOMIC);
-}
+पूर्ण
 
-bool mptcp_pm_allow_new_subflow(struct mptcp_sock *msk)
-{
-	struct mptcp_pm_data *pm = &msk->pm;
-	unsigned int subflows_max;
-	int ret = 0;
+bool mptcp_pm_allow_new_subflow(काष्ठा mptcp_sock *msk)
+अणु
+	काष्ठा mptcp_pm_data *pm = &msk->pm;
+	अचिन्हित पूर्णांक subflows_max;
+	पूर्णांक ret = 0;
 
 	subflows_max = mptcp_pm_get_subflows_max(msk);
 
 	pr_debug("msk=%p subflows=%d max=%d allow=%d", msk, pm->subflows,
 		 subflows_max, READ_ONCE(pm->accept_subflow));
 
-	/* try to avoid acquiring the lock below */
-	if (!READ_ONCE(pm->accept_subflow))
-		return false;
+	/* try to aव्योम acquiring the lock below */
+	अगर (!READ_ONCE(pm->accept_subflow))
+		वापस false;
 
 	spin_lock_bh(&pm->lock);
-	if (READ_ONCE(pm->accept_subflow)) {
+	अगर (READ_ONCE(pm->accept_subflow)) अणु
 		ret = pm->subflows < subflows_max;
-		if (ret && ++pm->subflows == subflows_max)
+		अगर (ret && ++pm->subflows == subflows_max)
 			WRITE_ONCE(pm->accept_subflow, false);
-	}
+	पूर्ण
 	spin_unlock_bh(&pm->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* return true if the new status bit is currently cleared, that is, this event
- * can be server, eventually by an already scheduled work
+/* वापस true अगर the new status bit is currently cleared, that is, this event
+ * can be server, eventually by an alपढ़ोy scheduled work
  */
-static bool mptcp_pm_schedule_work(struct mptcp_sock *msk,
-				   enum mptcp_pm_status new_status)
-{
+अटल bool mptcp_pm_schedule_work(काष्ठा mptcp_sock *msk,
+				   क्रमागत mptcp_pm_status new_status)
+अणु
 	pr_debug("msk=%p status=%x new=%lx", msk, msk->pm.status,
 		 BIT(new_status));
-	if (msk->pm.status & BIT(new_status))
-		return false;
+	अगर (msk->pm.status & BIT(new_status))
+		वापस false;
 
 	msk->pm.status |= BIT(new_status);
-	mptcp_schedule_work((struct sock *)msk);
-	return true;
-}
+	mptcp_schedule_work((काष्ठा sock *)msk);
+	वापस true;
+पूर्ण
 
-void mptcp_pm_fully_established(struct mptcp_sock *msk, const struct sock *ssk, gfp_t gfp)
-{
-	struct mptcp_pm_data *pm = &msk->pm;
+व्योम mptcp_pm_fully_established(काष्ठा mptcp_sock *msk, स्थिर काष्ठा sock *ssk, gfp_t gfp)
+अणु
+	काष्ठा mptcp_pm_data *pm = &msk->pm;
 	bool announce = false;
 
 	pr_debug("msk=%p", msk);
@@ -134,51 +135,51 @@ void mptcp_pm_fully_established(struct mptcp_sock *msk, const struct sock *ssk, 
 	 * racing paths - accept() and check_fully_established()
 	 * be sure to serve this event only once.
 	 */
-	if (READ_ONCE(pm->work_pending) &&
+	अगर (READ_ONCE(pm->work_pending) &&
 	    !(msk->pm.status & BIT(MPTCP_PM_ALREADY_ESTABLISHED)))
 		mptcp_pm_schedule_work(msk, MPTCP_PM_ESTABLISHED);
 
-	if ((msk->pm.status & BIT(MPTCP_PM_ALREADY_ESTABLISHED)) == 0)
+	अगर ((msk->pm.status & BIT(MPTCP_PM_ALREADY_ESTABLISHED)) == 0)
 		announce = true;
 
 	msk->pm.status |= BIT(MPTCP_PM_ALREADY_ESTABLISHED);
 	spin_unlock_bh(&pm->lock);
 
-	if (announce)
+	अगर (announce)
 		mptcp_event(MPTCP_EVENT_ESTABLISHED, msk, ssk, gfp);
-}
+पूर्ण
 
-void mptcp_pm_connection_closed(struct mptcp_sock *msk)
-{
+व्योम mptcp_pm_connection_बंदd(काष्ठा mptcp_sock *msk)
+अणु
 	pr_debug("msk=%p", msk);
-}
+पूर्ण
 
-void mptcp_pm_subflow_established(struct mptcp_sock *msk)
-{
-	struct mptcp_pm_data *pm = &msk->pm;
+व्योम mptcp_pm_subflow_established(काष्ठा mptcp_sock *msk)
+अणु
+	काष्ठा mptcp_pm_data *pm = &msk->pm;
 
 	pr_debug("msk=%p", msk);
 
-	if (!READ_ONCE(pm->work_pending))
-		return;
+	अगर (!READ_ONCE(pm->work_pending))
+		वापस;
 
 	spin_lock_bh(&pm->lock);
 
-	if (READ_ONCE(pm->work_pending))
+	अगर (READ_ONCE(pm->work_pending))
 		mptcp_pm_schedule_work(msk, MPTCP_PM_SUBFLOW_ESTABLISHED);
 
 	spin_unlock_bh(&pm->lock);
-}
+पूर्ण
 
-void mptcp_pm_subflow_closed(struct mptcp_sock *msk, u8 id)
-{
+व्योम mptcp_pm_subflow_बंदd(काष्ठा mptcp_sock *msk, u8 id)
+अणु
 	pr_debug("msk=%p", msk);
-}
+पूर्ण
 
-void mptcp_pm_add_addr_received(struct mptcp_sock *msk,
-				const struct mptcp_addr_info *addr)
-{
-	struct mptcp_pm_data *pm = &msk->pm;
+व्योम mptcp_pm_add_addr_received(काष्ठा mptcp_sock *msk,
+				स्थिर काष्ठा mptcp_addr_info *addr)
+अणु
+	काष्ठा mptcp_pm_data *pm = &msk->pm;
 
 	pr_debug("msk=%p remote_id=%d accept=%d", msk, addr->id,
 		 READ_ONCE(pm->accept_addr));
@@ -187,137 +188,137 @@ void mptcp_pm_add_addr_received(struct mptcp_sock *msk,
 
 	spin_lock_bh(&pm->lock);
 
-	if (!READ_ONCE(pm->accept_addr)) {
+	अगर (!READ_ONCE(pm->accept_addr)) अणु
 		mptcp_pm_announce_addr(msk, addr, true);
 		mptcp_pm_add_addr_send_ack(msk);
-	} else if (mptcp_pm_schedule_work(msk, MPTCP_PM_ADD_ADDR_RECEIVED)) {
+	पूर्ण अन्यथा अगर (mptcp_pm_schedule_work(msk, MPTCP_PM_ADD_ADDR_RECEIVED)) अणु
 		pm->remote = *addr;
-	}
+	पूर्ण
 
 	spin_unlock_bh(&pm->lock);
-}
+पूर्ण
 
-void mptcp_pm_add_addr_echoed(struct mptcp_sock *msk,
-			      struct mptcp_addr_info *addr)
-{
-	struct mptcp_pm_data *pm = &msk->pm;
+व्योम mptcp_pm_add_addr_echoed(काष्ठा mptcp_sock *msk,
+			      काष्ठा mptcp_addr_info *addr)
+अणु
+	काष्ठा mptcp_pm_data *pm = &msk->pm;
 
 	pr_debug("msk=%p", msk);
 
 	spin_lock_bh(&pm->lock);
 
-	if (mptcp_lookup_anno_list_by_saddr(msk, addr) && READ_ONCE(pm->work_pending))
+	अगर (mptcp_lookup_anno_list_by_saddr(msk, addr) && READ_ONCE(pm->work_pending))
 		mptcp_pm_schedule_work(msk, MPTCP_PM_SUBFLOW_ESTABLISHED);
 
 	spin_unlock_bh(&pm->lock);
-}
+पूर्ण
 
-void mptcp_pm_add_addr_send_ack(struct mptcp_sock *msk)
-{
-	if (!mptcp_pm_should_add_signal(msk))
-		return;
+व्योम mptcp_pm_add_addr_send_ack(काष्ठा mptcp_sock *msk)
+अणु
+	अगर (!mptcp_pm_should_add_संकेत(msk))
+		वापस;
 
 	mptcp_pm_schedule_work(msk, MPTCP_PM_ADD_ADDR_SEND_ACK);
-}
+पूर्ण
 
-void mptcp_pm_rm_addr_received(struct mptcp_sock *msk,
-			       const struct mptcp_rm_list *rm_list)
-{
-	struct mptcp_pm_data *pm = &msk->pm;
+व्योम mptcp_pm_rm_addr_received(काष्ठा mptcp_sock *msk,
+			       स्थिर काष्ठा mptcp_rm_list *rm_list)
+अणु
+	काष्ठा mptcp_pm_data *pm = &msk->pm;
 	u8 i;
 
 	pr_debug("msk=%p remote_ids_nr=%d", msk, rm_list->nr);
 
-	for (i = 0; i < rm_list->nr; i++)
-		mptcp_event_addr_removed(msk, rm_list->ids[i]);
+	क्रम (i = 0; i < rm_list->nr; i++)
+		mptcp_event_addr_हटाओd(msk, rm_list->ids[i]);
 
 	spin_lock_bh(&pm->lock);
 	mptcp_pm_schedule_work(msk, MPTCP_PM_RM_ADDR_RECEIVED);
 	pm->rm_list_rx = *rm_list;
 	spin_unlock_bh(&pm->lock);
-}
+पूर्ण
 
-void mptcp_pm_mp_prio_received(struct sock *sk, u8 bkup)
-{
-	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
+व्योम mptcp_pm_mp_prio_received(काष्ठा sock *sk, u8 bkup)
+अणु
+	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
 
 	pr_debug("subflow->backup=%d, bkup=%d\n", subflow->backup, bkup);
 	subflow->backup = bkup;
 
 	mptcp_event(MPTCP_EVENT_SUB_PRIORITY, mptcp_sk(subflow->conn), sk, GFP_ATOMIC);
-}
+पूर्ण
 
 /* path manager helpers */
 
-bool mptcp_pm_add_addr_signal(struct mptcp_sock *msk, unsigned int remaining,
-			      struct mptcp_addr_info *saddr, bool *echo, bool *port)
-{
-	int ret = false;
+bool mptcp_pm_add_addr_संकेत(काष्ठा mptcp_sock *msk, अचिन्हित पूर्णांक reमुख्यing,
+			      काष्ठा mptcp_addr_info *saddr, bool *echo, bool *port)
+अणु
+	पूर्णांक ret = false;
 
 	spin_lock_bh(&msk->pm.lock);
 
-	/* double check after the lock is acquired */
-	if (!mptcp_pm_should_add_signal(msk))
-		goto out_unlock;
+	/* द्विगुन check after the lock is acquired */
+	अगर (!mptcp_pm_should_add_संकेत(msk))
+		जाओ out_unlock;
 
-	*echo = mptcp_pm_should_add_signal_echo(msk);
-	*port = mptcp_pm_should_add_signal_port(msk);
+	*echo = mptcp_pm_should_add_संकेत_echo(msk);
+	*port = mptcp_pm_should_add_संकेत_port(msk);
 
-	if (remaining < mptcp_add_addr_len(msk->pm.local.family, *echo, *port))
-		goto out_unlock;
+	अगर (reमुख्यing < mptcp_add_addr_len(msk->pm.local.family, *echo, *port))
+		जाओ out_unlock;
 
 	*saddr = msk->pm.local;
-	WRITE_ONCE(msk->pm.addr_signal, 0);
+	WRITE_ONCE(msk->pm.addr_संकेत, 0);
 	ret = true;
 
 out_unlock:
 	spin_unlock_bh(&msk->pm.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool mptcp_pm_rm_addr_signal(struct mptcp_sock *msk, unsigned int remaining,
-			     struct mptcp_rm_list *rm_list)
-{
-	int ret = false, len;
+bool mptcp_pm_rm_addr_संकेत(काष्ठा mptcp_sock *msk, अचिन्हित पूर्णांक reमुख्यing,
+			     काष्ठा mptcp_rm_list *rm_list)
+अणु
+	पूर्णांक ret = false, len;
 
 	spin_lock_bh(&msk->pm.lock);
 
-	/* double check after the lock is acquired */
-	if (!mptcp_pm_should_rm_signal(msk))
-		goto out_unlock;
+	/* द्विगुन check after the lock is acquired */
+	अगर (!mptcp_pm_should_rm_संकेत(msk))
+		जाओ out_unlock;
 
 	len = mptcp_rm_addr_len(&msk->pm.rm_list_tx);
-	if (len < 0) {
-		WRITE_ONCE(msk->pm.addr_signal, 0);
-		goto out_unlock;
-	}
-	if (remaining < len)
-		goto out_unlock;
+	अगर (len < 0) अणु
+		WRITE_ONCE(msk->pm.addr_संकेत, 0);
+		जाओ out_unlock;
+	पूर्ण
+	अगर (reमुख्यing < len)
+		जाओ out_unlock;
 
 	*rm_list = msk->pm.rm_list_tx;
-	WRITE_ONCE(msk->pm.addr_signal, 0);
+	WRITE_ONCE(msk->pm.addr_संकेत, 0);
 	ret = true;
 
 out_unlock:
 	spin_unlock_bh(&msk->pm.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int mptcp_pm_get_local_id(struct mptcp_sock *msk, struct sock_common *skc)
-{
-	return mptcp_pm_nl_get_local_id(msk, skc);
-}
+पूर्णांक mptcp_pm_get_local_id(काष्ठा mptcp_sock *msk, काष्ठा sock_common *skc)
+अणु
+	वापस mptcp_pm_nl_get_local_id(msk, skc);
+पूर्ण
 
-void mptcp_pm_data_init(struct mptcp_sock *msk)
-{
-	msk->pm.add_addr_signaled = 0;
+व्योम mptcp_pm_data_init(काष्ठा mptcp_sock *msk)
+अणु
+	msk->pm.add_addr_संकेतed = 0;
 	msk->pm.add_addr_accepted = 0;
 	msk->pm.local_addr_used = 0;
 	msk->pm.subflows = 0;
 	msk->pm.rm_list_tx.nr = 0;
 	msk->pm.rm_list_rx.nr = 0;
 	WRITE_ONCE(msk->pm.work_pending, false);
-	WRITE_ONCE(msk->pm.addr_signal, 0);
+	WRITE_ONCE(msk->pm.addr_संकेत, 0);
 	WRITE_ONCE(msk->pm.accept_addr, false);
 	WRITE_ONCE(msk->pm.accept_subflow, false);
 	msk->pm.status = 0;
@@ -326,9 +327,9 @@ void mptcp_pm_data_init(struct mptcp_sock *msk)
 	INIT_LIST_HEAD(&msk->pm.anno_list);
 
 	mptcp_pm_nl_data_init(msk);
-}
+पूर्ण
 
-void __init mptcp_pm_init(void)
-{
+व्योम __init mptcp_pm_init(व्योम)
+अणु
 	mptcp_pm_nl_init();
-}
+पूर्ण

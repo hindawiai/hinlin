@@ -1,477 +1,478 @@
+<शैली गुरु>
 /*
- * Helper routines for SuperH Clock Pulse Generator blocks (CPG).
+ * Helper routines क्रम SuperH Clock Pulse Generator blocks (CPG).
  *
  *  Copyright (C) 2010  Magnus Damm
  *  Copyright (C) 2010 - 2012  Paul Mundt
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/clk.h>
-#include <linux/compiler.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/sh_clk.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/sh_clk.h>
 
-#define CPG_CKSTP_BIT	BIT(8)
+#घोषणा CPG_CKSTP_BIT	BIT(8)
 
-static unsigned int sh_clk_read(struct clk *clk)
-{
-	if (clk->flags & CLK_ENABLE_REG_8BIT)
-		return ioread8(clk->mapped_reg);
-	else if (clk->flags & CLK_ENABLE_REG_16BIT)
-		return ioread16(clk->mapped_reg);
+अटल अचिन्हित पूर्णांक sh_clk_पढ़ो(काष्ठा clk *clk)
+अणु
+	अगर (clk->flags & CLK_ENABLE_REG_8BIT)
+		वापस ioपढ़ो8(clk->mapped_reg);
+	अन्यथा अगर (clk->flags & CLK_ENABLE_REG_16BIT)
+		वापस ioपढ़ो16(clk->mapped_reg);
 
-	return ioread32(clk->mapped_reg);
-}
+	वापस ioपढ़ो32(clk->mapped_reg);
+पूर्ण
 
-static void sh_clk_write(int value, struct clk *clk)
-{
-	if (clk->flags & CLK_ENABLE_REG_8BIT)
-		iowrite8(value, clk->mapped_reg);
-	else if (clk->flags & CLK_ENABLE_REG_16BIT)
-		iowrite16(value, clk->mapped_reg);
-	else
-		iowrite32(value, clk->mapped_reg);
-}
+अटल व्योम sh_clk_ग_लिखो(पूर्णांक value, काष्ठा clk *clk)
+अणु
+	अगर (clk->flags & CLK_ENABLE_REG_8BIT)
+		ioग_लिखो8(value, clk->mapped_reg);
+	अन्यथा अगर (clk->flags & CLK_ENABLE_REG_16BIT)
+		ioग_लिखो16(value, clk->mapped_reg);
+	अन्यथा
+		ioग_लिखो32(value, clk->mapped_reg);
+पूर्ण
 
-static int sh_clk_mstp_enable(struct clk *clk)
-{
-	sh_clk_write(sh_clk_read(clk) & ~(1 << clk->enable_bit), clk);
-	if (clk->status_reg) {
-		unsigned int (*read)(const void __iomem *addr);
-		int i;
-		void __iomem *mapped_status = (phys_addr_t)clk->status_reg -
+अटल पूर्णांक sh_clk_mstp_enable(काष्ठा clk *clk)
+अणु
+	sh_clk_ग_लिखो(sh_clk_पढ़ो(clk) & ~(1 << clk->enable_bit), clk);
+	अगर (clk->status_reg) अणु
+		अचिन्हित पूर्णांक (*पढ़ो)(स्थिर व्योम __iomem *addr);
+		पूर्णांक i;
+		व्योम __iomem *mapped_status = (phys_addr_t)clk->status_reg -
 			(phys_addr_t)clk->enable_reg + clk->mapped_reg;
 
-		if (clk->flags & CLK_ENABLE_REG_8BIT)
-			read = ioread8;
-		else if (clk->flags & CLK_ENABLE_REG_16BIT)
-			read = ioread16;
-		else
-			read = ioread32;
+		अगर (clk->flags & CLK_ENABLE_REG_8BIT)
+			पढ़ो = ioपढ़ो8;
+		अन्यथा अगर (clk->flags & CLK_ENABLE_REG_16BIT)
+			पढ़ो = ioपढ़ो16;
+		अन्यथा
+			पढ़ो = ioपढ़ो32;
 
-		for (i = 1000;
-		     (read(mapped_status) & (1 << clk->enable_bit)) && i;
+		क्रम (i = 1000;
+		     (पढ़ो(mapped_status) & (1 << clk->enable_bit)) && i;
 		     i--)
 			cpu_relax();
-		if (!i) {
+		अगर (!i) अणु
 			pr_err("cpg: failed to enable %p[%d]\n",
 			       clk->enable_reg, clk->enable_bit);
-			return -ETIMEDOUT;
-		}
-	}
-	return 0;
-}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void sh_clk_mstp_disable(struct clk *clk)
-{
-	sh_clk_write(sh_clk_read(clk) | (1 << clk->enable_bit), clk);
-}
+अटल व्योम sh_clk_mstp_disable(काष्ठा clk *clk)
+अणु
+	sh_clk_ग_लिखो(sh_clk_पढ़ो(clk) | (1 << clk->enable_bit), clk);
+पूर्ण
 
-static struct sh_clk_ops sh_clk_mstp_clk_ops = {
+अटल काष्ठा sh_clk_ops sh_clk_mstp_clk_ops = अणु
 	.enable		= sh_clk_mstp_enable,
 	.disable	= sh_clk_mstp_disable,
 	.recalc		= followparent_recalc,
-};
+पूर्ण;
 
-int __init sh_clk_mstp_register(struct clk *clks, int nr)
-{
-	struct clk *clkp;
-	int ret = 0;
-	int k;
+पूर्णांक __init sh_clk_mstp_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr)
+अणु
+	काष्ठा clk *clkp;
+	पूर्णांक ret = 0;
+	पूर्णांक k;
 
-	for (k = 0; !ret && (k < nr); k++) {
+	क्रम (k = 0; !ret && (k < nr); k++) अणु
 		clkp = clks + k;
 		clkp->ops = &sh_clk_mstp_clk_ops;
-		ret |= clk_register(clkp);
-	}
+		ret |= clk_रेजिस्टर(clkp);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Div/mult table lookup helpers
  */
-static inline struct clk_div_table *clk_to_div_table(struct clk *clk)
-{
-	return clk->priv;
-}
+अटल अंतरभूत काष्ठा clk_भाग_प्रकारable *clk_to_भाग_प्रकारable(काष्ठा clk *clk)
+अणु
+	वापस clk->priv;
+पूर्ण
 
-static inline struct clk_div_mult_table *clk_to_div_mult_table(struct clk *clk)
-{
-	return clk_to_div_table(clk)->div_mult_table;
-}
+अटल अंतरभूत काष्ठा clk_भाग_mult_table *clk_to_भाग_mult_table(काष्ठा clk *clk)
+अणु
+	वापस clk_to_भाग_प्रकारable(clk)->भाग_mult_table;
+पूर्ण
 
 /*
- * Common div ops
+ * Common भाग ops
  */
-static long sh_clk_div_round_rate(struct clk *clk, unsigned long rate)
-{
-	return clk_rate_table_round(clk, clk->freq_table, rate);
-}
+अटल दीर्घ sh_clk_भाग_round_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	वापस clk_rate_table_round(clk, clk->freq_table, rate);
+पूर्ण
 
-static unsigned long sh_clk_div_recalc(struct clk *clk)
-{
-	struct clk_div_mult_table *table = clk_to_div_mult_table(clk);
-	unsigned int idx;
+अटल अचिन्हित दीर्घ sh_clk_भाग_recalc(काष्ठा clk *clk)
+अणु
+	काष्ठा clk_भाग_mult_table *table = clk_to_भाग_mult_table(clk);
+	अचिन्हित पूर्णांक idx;
 
-	clk_rate_table_build(clk, clk->freq_table, table->nr_divisors,
-			     table, clk->arch_flags ? &clk->arch_flags : NULL);
+	clk_rate_table_build(clk, clk->freq_table, table->nr_भागisors,
+			     table, clk->arch_flags ? &clk->arch_flags : शून्य);
 
-	idx = (sh_clk_read(clk) >> clk->enable_bit) & clk->div_mask;
+	idx = (sh_clk_पढ़ो(clk) >> clk->enable_bit) & clk->भाग_mask;
 
-	return clk->freq_table[idx].frequency;
-}
+	वापस clk->freq_table[idx].frequency;
+पूर्ण
 
-static int sh_clk_div_set_rate(struct clk *clk, unsigned long rate)
-{
-	struct clk_div_table *dt = clk_to_div_table(clk);
-	unsigned long value;
-	int idx;
+अटल पूर्णांक sh_clk_भाग_set_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा clk_भाग_प्रकारable *dt = clk_to_भाग_प्रकारable(clk);
+	अचिन्हित दीर्घ value;
+	पूर्णांक idx;
 
 	idx = clk_rate_table_find(clk, clk->freq_table, rate);
-	if (idx < 0)
-		return idx;
+	अगर (idx < 0)
+		वापस idx;
 
-	value = sh_clk_read(clk);
-	value &= ~(clk->div_mask << clk->enable_bit);
+	value = sh_clk_पढ़ो(clk);
+	value &= ~(clk->भाग_mask << clk->enable_bit);
 	value |= (idx << clk->enable_bit);
-	sh_clk_write(value, clk);
+	sh_clk_ग_लिखो(value, clk);
 
-	/* XXX: Should use a post-change notifier */
-	if (dt->kick)
+	/* XXX: Should use a post-change notअगरier */
+	अगर (dt->kick)
 		dt->kick(clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_clk_div_enable(struct clk *clk)
-{
-	if (clk->div_mask == SH_CLK_DIV6_MSK) {
-		int ret = sh_clk_div_set_rate(clk, clk->rate);
-		if (ret < 0)
-			return ret;
-	}
+अटल पूर्णांक sh_clk_भाग_enable(काष्ठा clk *clk)
+अणु
+	अगर (clk->भाग_mask == SH_CLK_DIV6_MSK) अणु
+		पूर्णांक ret = sh_clk_भाग_set_rate(clk, clk->rate);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	sh_clk_write(sh_clk_read(clk) & ~CPG_CKSTP_BIT, clk);
-	return 0;
-}
+	sh_clk_ग_लिखो(sh_clk_पढ़ो(clk) & ~CPG_CKSTP_BIT, clk);
+	वापस 0;
+पूर्ण
 
-static void sh_clk_div_disable(struct clk *clk)
-{
-	unsigned int val;
+अटल व्योम sh_clk_भाग_disable(काष्ठा clk *clk)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	val = sh_clk_read(clk);
+	val = sh_clk_पढ़ो(clk);
 	val |= CPG_CKSTP_BIT;
 
 	/*
-	 * div6 clocks require the divisor field to be non-zero or the
-	 * above CKSTP toggle silently fails. Ensure that the divisor
+	 * भाग6 घड़ीs require the भागisor field to be non-zero or the
+	 * above CKSTP toggle silently fails. Ensure that the भागisor
 	 * array is reset to its initial state on disable.
 	 */
-	if (clk->flags & CLK_MASK_DIV_ON_DISABLE)
-		val |= clk->div_mask;
+	अगर (clk->flags & CLK_MASK_DIV_ON_DISABLE)
+		val |= clk->भाग_mask;
 
-	sh_clk_write(val, clk);
-}
+	sh_clk_ग_लिखो(val, clk);
+पूर्ण
 
-static struct sh_clk_ops sh_clk_div_clk_ops = {
-	.recalc		= sh_clk_div_recalc,
-	.set_rate	= sh_clk_div_set_rate,
-	.round_rate	= sh_clk_div_round_rate,
-};
+अटल काष्ठा sh_clk_ops sh_clk_भाग_clk_ops = अणु
+	.recalc		= sh_clk_भाग_recalc,
+	.set_rate	= sh_clk_भाग_set_rate,
+	.round_rate	= sh_clk_भाग_round_rate,
+पूर्ण;
 
-static struct sh_clk_ops sh_clk_div_enable_clk_ops = {
-	.recalc		= sh_clk_div_recalc,
-	.set_rate	= sh_clk_div_set_rate,
-	.round_rate	= sh_clk_div_round_rate,
-	.enable		= sh_clk_div_enable,
-	.disable	= sh_clk_div_disable,
-};
+अटल काष्ठा sh_clk_ops sh_clk_भाग_enable_clk_ops = अणु
+	.recalc		= sh_clk_भाग_recalc,
+	.set_rate	= sh_clk_भाग_set_rate,
+	.round_rate	= sh_clk_भाग_round_rate,
+	.enable		= sh_clk_भाग_enable,
+	.disable	= sh_clk_भाग_disable,
+पूर्ण;
 
-static int __init sh_clk_init_parent(struct clk *clk)
-{
+अटल पूर्णांक __init sh_clk_init_parent(काष्ठा clk *clk)
+अणु
 	u32 val;
 
-	if (clk->parent)
-		return 0;
+	अगर (clk->parent)
+		वापस 0;
 
-	if (!clk->parent_table || !clk->parent_num)
-		return 0;
+	अगर (!clk->parent_table || !clk->parent_num)
+		वापस 0;
 
-	if (!clk->src_width) {
+	अगर (!clk->src_width) अणु
 		pr_err("sh_clk_init_parent: cannot select parent clock\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	val  = (sh_clk_read(clk) >> clk->src_shift);
+	val  = (sh_clk_पढ़ो(clk) >> clk->src_shअगरt);
 	val &= (1 << clk->src_width) - 1;
 
-	if (val >= clk->parent_num) {
+	अगर (val >= clk->parent_num) अणु
 		pr_err("sh_clk_init_parent: parent table size failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	clk_reparent(clk, clk->parent_table[val]);
-	if (!clk->parent) {
+	अगर (!clk->parent) अणु
 		pr_err("sh_clk_init_parent: unable to set parent");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init sh_clk_div_register_ops(struct clk *clks, int nr,
-			struct clk_div_table *table, struct sh_clk_ops *ops)
-{
-	struct clk *clkp;
-	void *freq_table;
-	int nr_divs = table->div_mult_table->nr_divisors;
-	int freq_table_size = sizeof(struct cpufreq_frequency_table);
-	int ret = 0;
-	int k;
+अटल पूर्णांक __init sh_clk_भाग_रेजिस्टर_ops(काष्ठा clk *clks, पूर्णांक nr,
+			काष्ठा clk_भाग_प्रकारable *table, काष्ठा sh_clk_ops *ops)
+अणु
+	काष्ठा clk *clkp;
+	व्योम *freq_table;
+	पूर्णांक nr_भागs = table->भाग_mult_table->nr_भागisors;
+	पूर्णांक freq_table_size = माप(काष्ठा cpufreq_frequency_table);
+	पूर्णांक ret = 0;
+	पूर्णांक k;
 
-	freq_table_size *= (nr_divs + 1);
-	freq_table = kcalloc(nr, freq_table_size, GFP_KERNEL);
-	if (!freq_table) {
+	freq_table_size *= (nr_भागs + 1);
+	freq_table = kसुस्मृति(nr, freq_table_size, GFP_KERNEL);
+	अगर (!freq_table) अणु
 		pr_err("%s: unable to alloc memory\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (k = 0; !ret && (k < nr); k++) {
+	क्रम (k = 0; !ret && (k < nr); k++) अणु
 		clkp = clks + k;
 
 		clkp->ops = ops;
 		clkp->priv = table;
 
 		clkp->freq_table = freq_table + (k * freq_table_size);
-		clkp->freq_table[nr_divs].frequency = CPUFREQ_TABLE_END;
+		clkp->freq_table[nr_भागs].frequency = CPUFREQ_TABLE_END;
 
-		ret = clk_register(clkp);
-		if (ret == 0)
+		ret = clk_रेजिस्टर(clkp);
+		अगर (ret == 0)
 			ret = sh_clk_init_parent(clkp);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * div6 support
+ * भाग6 support
  */
-static int sh_clk_div6_divisors[64] = {
+अटल पूर्णांक sh_clk_भाग6_भागisors[64] = अणु
 	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 	17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
 	33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
 	49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64
-};
+पूर्ण;
 
-static struct clk_div_mult_table div6_div_mult_table = {
-	.divisors = sh_clk_div6_divisors,
-	.nr_divisors = ARRAY_SIZE(sh_clk_div6_divisors),
-};
+अटल काष्ठा clk_भाग_mult_table भाग6_भाग_mult_table = अणु
+	.भागisors = sh_clk_भाग6_भागisors,
+	.nr_भागisors = ARRAY_SIZE(sh_clk_भाग6_भागisors),
+पूर्ण;
 
-static struct clk_div_table sh_clk_div6_table = {
-	.div_mult_table	= &div6_div_mult_table,
-};
+अटल काष्ठा clk_भाग_प्रकारable sh_clk_भाग6_table = अणु
+	.भाग_mult_table	= &भाग6_भाग_mult_table,
+पूर्ण;
 
-static int sh_clk_div6_set_parent(struct clk *clk, struct clk *parent)
-{
-	struct clk_div_mult_table *table = clk_to_div_mult_table(clk);
+अटल पूर्णांक sh_clk_भाग6_set_parent(काष्ठा clk *clk, काष्ठा clk *parent)
+अणु
+	काष्ठा clk_भाग_mult_table *table = clk_to_भाग_mult_table(clk);
 	u32 value;
-	int ret, i;
+	पूर्णांक ret, i;
 
-	if (!clk->parent_table || !clk->parent_num)
-		return -EINVAL;
+	अगर (!clk->parent_table || !clk->parent_num)
+		वापस -EINVAL;
 
 	/* Search the parent */
-	for (i = 0; i < clk->parent_num; i++)
-		if (clk->parent_table[i] == parent)
-			break;
+	क्रम (i = 0; i < clk->parent_num; i++)
+		अगर (clk->parent_table[i] == parent)
+			अवरोध;
 
-	if (i == clk->parent_num)
-		return -ENODEV;
+	अगर (i == clk->parent_num)
+		वापस -ENODEV;
 
 	ret = clk_reparent(clk, parent);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	value = sh_clk_read(clk) &
-		~(((1 << clk->src_width) - 1) << clk->src_shift);
+	value = sh_clk_पढ़ो(clk) &
+		~(((1 << clk->src_width) - 1) << clk->src_shअगरt);
 
-	sh_clk_write(value | (i << clk->src_shift), clk);
+	sh_clk_ग_लिखो(value | (i << clk->src_shअगरt), clk);
 
 	/* Rebuild the frequency table */
-	clk_rate_table_build(clk, clk->freq_table, table->nr_divisors,
-			     table, NULL);
+	clk_rate_table_build(clk, clk->freq_table, table->nr_भागisors,
+			     table, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sh_clk_ops sh_clk_div6_reparent_clk_ops = {
-	.recalc		= sh_clk_div_recalc,
-	.round_rate	= sh_clk_div_round_rate,
-	.set_rate	= sh_clk_div_set_rate,
-	.enable		= sh_clk_div_enable,
-	.disable	= sh_clk_div_disable,
-	.set_parent	= sh_clk_div6_set_parent,
-};
+अटल काष्ठा sh_clk_ops sh_clk_भाग6_reparent_clk_ops = अणु
+	.recalc		= sh_clk_भाग_recalc,
+	.round_rate	= sh_clk_भाग_round_rate,
+	.set_rate	= sh_clk_भाग_set_rate,
+	.enable		= sh_clk_भाग_enable,
+	.disable	= sh_clk_भाग_disable,
+	.set_parent	= sh_clk_भाग6_set_parent,
+पूर्ण;
 
-int __init sh_clk_div6_register(struct clk *clks, int nr)
-{
-	return sh_clk_div_register_ops(clks, nr, &sh_clk_div6_table,
-				       &sh_clk_div_enable_clk_ops);
-}
+पूर्णांक __init sh_clk_भाग6_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr)
+अणु
+	वापस sh_clk_भाग_रेजिस्टर_ops(clks, nr, &sh_clk_भाग6_table,
+				       &sh_clk_भाग_enable_clk_ops);
+पूर्ण
 
-int __init sh_clk_div6_reparent_register(struct clk *clks, int nr)
-{
-	return sh_clk_div_register_ops(clks, nr, &sh_clk_div6_table,
-				       &sh_clk_div6_reparent_clk_ops);
-}
+पूर्णांक __init sh_clk_भाग6_reparent_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr)
+अणु
+	वापस sh_clk_भाग_रेजिस्टर_ops(clks, nr, &sh_clk_भाग6_table,
+				       &sh_clk_भाग6_reparent_clk_ops);
+पूर्ण
 
 /*
- * div4 support
+ * भाग4 support
  */
-static int sh_clk_div4_set_parent(struct clk *clk, struct clk *parent)
-{
-	struct clk_div_mult_table *table = clk_to_div_mult_table(clk);
+अटल पूर्णांक sh_clk_भाग4_set_parent(काष्ठा clk *clk, काष्ठा clk *parent)
+अणु
+	काष्ठा clk_भाग_mult_table *table = clk_to_भाग_mult_table(clk);
 	u32 value;
-	int ret;
+	पूर्णांक ret;
 
-	/* we really need a better way to determine parent index, but for
-	 * now assume internal parent comes with CLK_ENABLE_ON_INIT set,
-	 * no CLK_ENABLE_ON_INIT means external clock...
+	/* we really need a better way to determine parent index, but क्रम
+	 * now assume पूर्णांकernal parent comes with CLK_ENABLE_ON_INIT set,
+	 * no CLK_ENABLE_ON_INIT means बाह्यal घड़ी...
 	 */
 
-	if (parent->flags & CLK_ENABLE_ON_INIT)
-		value = sh_clk_read(clk) & ~(1 << 7);
-	else
-		value = sh_clk_read(clk) | (1 << 7);
+	अगर (parent->flags & CLK_ENABLE_ON_INIT)
+		value = sh_clk_पढ़ो(clk) & ~(1 << 7);
+	अन्यथा
+		value = sh_clk_पढ़ो(clk) | (1 << 7);
 
 	ret = clk_reparent(clk, parent);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	sh_clk_write(value, clk);
+	sh_clk_ग_लिखो(value, clk);
 
 	/* Rebiuld the frequency table */
-	clk_rate_table_build(clk, clk->freq_table, table->nr_divisors,
+	clk_rate_table_build(clk, clk->freq_table, table->nr_भागisors,
 			     table, &clk->arch_flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sh_clk_ops sh_clk_div4_reparent_clk_ops = {
-	.recalc		= sh_clk_div_recalc,
-	.set_rate	= sh_clk_div_set_rate,
-	.round_rate	= sh_clk_div_round_rate,
-	.enable		= sh_clk_div_enable,
-	.disable	= sh_clk_div_disable,
-	.set_parent	= sh_clk_div4_set_parent,
-};
+अटल काष्ठा sh_clk_ops sh_clk_भाग4_reparent_clk_ops = अणु
+	.recalc		= sh_clk_भाग_recalc,
+	.set_rate	= sh_clk_भाग_set_rate,
+	.round_rate	= sh_clk_भाग_round_rate,
+	.enable		= sh_clk_भाग_enable,
+	.disable	= sh_clk_भाग_disable,
+	.set_parent	= sh_clk_भाग4_set_parent,
+पूर्ण;
 
-int __init sh_clk_div4_register(struct clk *clks, int nr,
-				struct clk_div4_table *table)
-{
-	return sh_clk_div_register_ops(clks, nr, table, &sh_clk_div_clk_ops);
-}
+पूर्णांक __init sh_clk_भाग4_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr,
+				काष्ठा clk_भाग4_table *table)
+अणु
+	वापस sh_clk_भाग_रेजिस्टर_ops(clks, nr, table, &sh_clk_भाग_clk_ops);
+पूर्ण
 
-int __init sh_clk_div4_enable_register(struct clk *clks, int nr,
-				struct clk_div4_table *table)
-{
-	return sh_clk_div_register_ops(clks, nr, table,
-				       &sh_clk_div_enable_clk_ops);
-}
+पूर्णांक __init sh_clk_भाग4_enable_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr,
+				काष्ठा clk_भाग4_table *table)
+अणु
+	वापस sh_clk_भाग_रेजिस्टर_ops(clks, nr, table,
+				       &sh_clk_भाग_enable_clk_ops);
+पूर्ण
 
-int __init sh_clk_div4_reparent_register(struct clk *clks, int nr,
-				struct clk_div4_table *table)
-{
-	return sh_clk_div_register_ops(clks, nr, table,
-				       &sh_clk_div4_reparent_clk_ops);
-}
+पूर्णांक __init sh_clk_भाग4_reparent_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr,
+				काष्ठा clk_भाग4_table *table)
+अणु
+	वापस sh_clk_भाग_रेजिस्टर_ops(clks, nr, table,
+				       &sh_clk_भाग4_reparent_clk_ops);
+पूर्ण
 
 /* FSI-DIV */
-static unsigned long fsidiv_recalc(struct clk *clk)
-{
+अटल अचिन्हित दीर्घ fsiभाग_recalc(काष्ठा clk *clk)
+अणु
 	u32 value;
 
-	value = __raw_readl(clk->mapping->base);
+	value = __raw_पढ़ोl(clk->mapping->base);
 
 	value >>= 16;
-	if (value < 2)
-		return clk->parent->rate;
+	अगर (value < 2)
+		वापस clk->parent->rate;
 
-	return clk->parent->rate / value;
-}
+	वापस clk->parent->rate / value;
+पूर्ण
 
-static long fsidiv_round_rate(struct clk *clk, unsigned long rate)
-{
-	return clk_rate_div_range_round(clk, 1, 0xffff, rate);
-}
+अटल दीर्घ fsiभाग_round_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	वापस clk_rate_भाग_range_round(clk, 1, 0xffff, rate);
+पूर्ण
 
-static void fsidiv_disable(struct clk *clk)
-{
-	__raw_writel(0, clk->mapping->base);
-}
+अटल व्योम fsiभाग_disable(काष्ठा clk *clk)
+अणु
+	__raw_ग_लिखोl(0, clk->mapping->base);
+पूर्ण
 
-static int fsidiv_enable(struct clk *clk)
-{
+अटल पूर्णांक fsiभाग_enable(काष्ठा clk *clk)
+अणु
 	u32 value;
 
-	value  = __raw_readl(clk->mapping->base) >> 16;
-	if (value < 2)
-		return 0;
+	value  = __raw_पढ़ोl(clk->mapping->base) >> 16;
+	अगर (value < 2)
+		वापस 0;
 
-	__raw_writel((value << 16) | 0x3, clk->mapping->base);
+	__raw_ग_लिखोl((value << 16) | 0x3, clk->mapping->base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsidiv_set_rate(struct clk *clk, unsigned long rate)
-{
-	int idx;
+अटल पूर्णांक fsiभाग_set_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	पूर्णांक idx;
 
 	idx = (clk->parent->rate / rate) & 0xffff;
-	if (idx < 2)
-		__raw_writel(0, clk->mapping->base);
-	else
-		__raw_writel(idx << 16, clk->mapping->base);
+	अगर (idx < 2)
+		__raw_ग_लिखोl(0, clk->mapping->base);
+	अन्यथा
+		__raw_ग_लिखोl(idx << 16, clk->mapping->base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sh_clk_ops fsidiv_clk_ops = {
-	.recalc		= fsidiv_recalc,
-	.round_rate	= fsidiv_round_rate,
-	.set_rate	= fsidiv_set_rate,
-	.enable		= fsidiv_enable,
-	.disable	= fsidiv_disable,
-};
+अटल काष्ठा sh_clk_ops fsiभाग_clk_ops = अणु
+	.recalc		= fsiभाग_recalc,
+	.round_rate	= fsiभाग_round_rate,
+	.set_rate	= fsiभाग_set_rate,
+	.enable		= fsiभाग_enable,
+	.disable	= fsiभाग_disable,
+पूर्ण;
 
-int __init sh_clk_fsidiv_register(struct clk *clks, int nr)
-{
-	struct clk_mapping *map;
-	int i;
+पूर्णांक __init sh_clk_fsiभाग_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr)
+अणु
+	काष्ठा clk_mapping *map;
+	पूर्णांक i;
 
-	for (i = 0; i < nr; i++) {
+	क्रम (i = 0; i < nr; i++) अणु
 
-		map = kzalloc(sizeof(struct clk_mapping), GFP_KERNEL);
-		if (!map) {
+		map = kzalloc(माप(काष्ठा clk_mapping), GFP_KERNEL);
+		अगर (!map) अणु
 			pr_err("%s: unable to alloc memory\n", __func__);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		/* clks[i].enable_reg came from SH_CLK_FSIDIV() */
 		map->phys		= (phys_addr_t)clks[i].enable_reg;
 		map->len		= 8;
 
-		clks[i].enable_reg	= 0; /* remove .enable_reg */
-		clks[i].ops		= &fsidiv_clk_ops;
+		clks[i].enable_reg	= 0; /* हटाओ .enable_reg */
+		clks[i].ops		= &fsiभाग_clk_ops;
 		clks[i].mapping		= map;
 
-		clk_register(&clks[i]);
-	}
+		clk_रेजिस्टर(&clks[i]);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

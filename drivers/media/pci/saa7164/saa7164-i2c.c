@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Driver for the NXP SAA7164 PCIe bridge
+ *  Driver क्रम the NXP SAA7164 PCIe bridge
  *
- *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
+ *  Copyright (c) 2010-2015 Steven Toth <stoth@kernelद_असल.com>
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
 
-#include "saa7164.h"
+#समावेश "saa7164.h"
 
-static int i2c_xfer(struct i2c_adapter *i2c_adap, struct i2c_msg *msgs, int num)
-{
-	struct saa7164_i2c *bus = i2c_adap->algo_data;
-	struct saa7164_dev *dev = bus->dev;
-	int i, retval = 0;
+अटल पूर्णांक i2c_xfer(काष्ठा i2c_adapter *i2c_adap, काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	काष्ठा saa7164_i2c *bus = i2c_adap->algo_data;
+	काष्ठा saa7164_dev *dev = bus->dev;
+	पूर्णांक i, retval = 0;
 
-	dprintk(DBGLVL_I2C, "%s(num = %d)\n", __func__, num);
+	dprपूर्णांकk(DBGLVL_I2C, "%s(num = %d)\n", __func__, num);
 
-	for (i = 0 ; i < num; i++) {
-		dprintk(DBGLVL_I2C, "%s(num = %d) addr = 0x%02x  len = 0x%x\n",
+	क्रम (i = 0 ; i < num; i++) अणु
+		dprपूर्णांकk(DBGLVL_I2C, "%s(num = %d) addr = 0x%02x  len = 0x%x\n",
 			__func__, num, msgs[i].addr, msgs[i].len);
-		if (msgs[i].flags & I2C_M_RD) {
-			retval = saa7164_api_i2c_read(bus,
+		अगर (msgs[i].flags & I2C_M_RD) अणु
+			retval = saa7164_api_i2c_पढ़ो(bus,
 				msgs[i].addr,
 				0 /* reglen */,
-				NULL /* reg */, msgs[i].len, msgs[i].buf);
-		} else if (i + 1 < num && (msgs[i + 1].flags & I2C_M_RD) &&
-			   msgs[i].addr == msgs[i + 1].addr) {
-			/* write then read from same address */
+				शून्य /* reg */, msgs[i].len, msgs[i].buf);
+		पूर्ण अन्यथा अगर (i + 1 < num && (msgs[i + 1].flags & I2C_M_RD) &&
+			   msgs[i].addr == msgs[i + 1].addr) अणु
+			/* ग_लिखो then पढ़ो from same address */
 
-			retval = saa7164_api_i2c_read(bus, msgs[i].addr,
+			retval = saa7164_api_i2c_पढ़ो(bus, msgs[i].addr,
 				msgs[i].len, msgs[i].buf,
 				msgs[i+1].len, msgs[i+1].buf
 				);
 
 			i++;
 
-			if (retval < 0)
-				goto err;
-		} else {
-			/* write */
-			retval = saa7164_api_i2c_write(bus, msgs[i].addr,
+			अगर (retval < 0)
+				जाओ err;
+		पूर्ण अन्यथा अणु
+			/* ग_लिखो */
+			retval = saa7164_api_i2c_ग_लिखो(bus, msgs[i].addr,
 				msgs[i].len, msgs[i].buf);
-		}
-		if (retval < 0)
-			goto err;
-	}
-	return num;
+		पूर्ण
+		अगर (retval < 0)
+			जाओ err;
+	पूर्ण
+	वापस num;
 
 err:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static u32 saa7164_functionality(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C;
-}
+अटल u32 saa7164_functionality(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C;
+पूर्ण
 
-static const struct i2c_algorithm saa7164_i2c_algo_template = {
+अटल स्थिर काष्ठा i2c_algorithm saa7164_i2c_algo_ढाँचा = अणु
 	.master_xfer	= i2c_xfer,
 	.functionality	= saa7164_functionality,
-};
+पूर्ण;
 
 /* ----------------------------------------------------------------------- */
 
-static const struct i2c_adapter saa7164_i2c_adap_template = {
+अटल स्थिर काष्ठा i2c_adapter saa7164_i2c_adap_ढाँचा = अणु
 	.name              = "saa7164",
 	.owner             = THIS_MODULE,
-	.algo              = &saa7164_i2c_algo_template,
-};
+	.algo              = &saa7164_i2c_algo_ढाँचा,
+पूर्ण;
 
-static const struct i2c_client saa7164_i2c_client_template = {
+अटल स्थिर काष्ठा i2c_client saa7164_i2c_client_ढाँचा = अणु
 	.name	= "saa7164 internal",
-};
+पूर्ण;
 
-int saa7164_i2c_register(struct saa7164_i2c *bus)
-{
-	struct saa7164_dev *dev = bus->dev;
+पूर्णांक saa7164_i2c_रेजिस्टर(काष्ठा saa7164_i2c *bus)
+अणु
+	काष्ठा saa7164_dev *dev = bus->dev;
 
-	dprintk(DBGLVL_I2C, "%s(bus = %d)\n", __func__, bus->nr);
+	dprपूर्णांकk(DBGLVL_I2C, "%s(bus = %d)\n", __func__, bus->nr);
 
-	bus->i2c_adap = saa7164_i2c_adap_template;
-	bus->i2c_client = saa7164_i2c_client_template;
+	bus->i2c_adap = saa7164_i2c_adap_ढाँचा;
+	bus->i2c_client = saa7164_i2c_client_ढाँचा;
 
 	bus->i2c_adap.dev.parent = &dev->pci->dev;
 
 	strscpy(bus->i2c_adap.name, bus->dev->name,
-		sizeof(bus->i2c_adap.name));
+		माप(bus->i2c_adap.name));
 
 	bus->i2c_adap.algo_data = bus;
 	i2c_set_adapdata(&bus->i2c_adap, bus);
@@ -98,15 +99,15 @@ int saa7164_i2c_register(struct saa7164_i2c *bus)
 
 	bus->i2c_client.adapter = &bus->i2c_adap;
 
-	if (0 != bus->i2c_rc)
-		printk(KERN_ERR "%s: i2c bus %d register FAILED\n",
+	अगर (0 != bus->i2c_rc)
+		prपूर्णांकk(KERN_ERR "%s: i2c bus %d register FAILED\n",
 			dev->name, bus->nr);
 
-	return bus->i2c_rc;
-}
+	वापस bus->i2c_rc;
+पूर्ण
 
-int saa7164_i2c_unregister(struct saa7164_i2c *bus)
-{
+पूर्णांक saa7164_i2c_unरेजिस्टर(काष्ठा saa7164_i2c *bus)
+अणु
 	i2c_del_adapter(&bus->i2c_adap);
-	return 0;
-}
+	वापस 0;
+पूर्ण

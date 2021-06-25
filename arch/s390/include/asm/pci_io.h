@@ -1,201 +1,202 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_S390_PCI_IO_H
-#define _ASM_S390_PCI_IO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_S390_PCI_IO_H
+#घोषणा _ASM_S390_PCI_IO_H
 
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <asm/pci_insn.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/pci_insn.h>
 
-/* I/O size constraints */
-#define ZPCI_MAX_READ_SIZE	8
-#define ZPCI_MAX_WRITE_SIZE	128
+/* I/O size स्थिरraपूर्णांकs */
+#घोषणा ZPCI_MAX_READ_SIZE	8
+#घोषणा ZPCI_MAX_WRITE_SIZE	128
 
 /* I/O Map */
-#define ZPCI_IOMAP_SHIFT		48
-#define ZPCI_IOMAP_ADDR_BASE		0x8000000000000000UL
-#define ZPCI_IOMAP_ADDR_OFF_MASK	((1UL << ZPCI_IOMAP_SHIFT) - 1)
-#define ZPCI_IOMAP_MAX_ENTRIES							\
-	((ULONG_MAX - ZPCI_IOMAP_ADDR_BASE + 1) / (1UL << ZPCI_IOMAP_SHIFT))
-#define ZPCI_IOMAP_ADDR_IDX_MASK						\
+#घोषणा ZPCI_IOMAP_SHIFT		48
+#घोषणा ZPCI_IOMAP_ADDR_BASE		0x8000000000000000UL
+#घोषणा ZPCI_IOMAP_ADDR_OFF_MASK	((1UL << ZPCI_IOMAP_SHIFT) - 1)
+#घोषणा ZPCI_IOMAP_MAX_ENTRIES							\
+	((अच_दीर्घ_उच्च - ZPCI_IOMAP_ADDR_BASE + 1) / (1UL << ZPCI_IOMAP_SHIFT))
+#घोषणा ZPCI_IOMAP_ADDR_IDX_MASK						\
 	(~ZPCI_IOMAP_ADDR_OFF_MASK - ZPCI_IOMAP_ADDR_BASE)
 
-struct zpci_iomap_entry {
+काष्ठा zpci_iomap_entry अणु
 	u32 fh;
 	u8 bar;
 	u16 count;
-};
+पूर्ण;
 
-extern struct zpci_iomap_entry *zpci_iomap_start;
+बाह्य काष्ठा zpci_iomap_entry *zpci_iomap_start;
 
-#define ZPCI_ADDR(idx) (ZPCI_IOMAP_ADDR_BASE | ((u64) idx << ZPCI_IOMAP_SHIFT))
-#define ZPCI_IDX(addr)								\
-	(((__force u64) addr & ZPCI_IOMAP_ADDR_IDX_MASK) >> ZPCI_IOMAP_SHIFT)
-#define ZPCI_OFFSET(addr)							\
-	((__force u64) addr & ZPCI_IOMAP_ADDR_OFF_MASK)
+#घोषणा ZPCI_ADDR(idx) (ZPCI_IOMAP_ADDR_BASE | ((u64) idx << ZPCI_IOMAP_SHIFT))
+#घोषणा ZPCI_IDX(addr)								\
+	(((__क्रमce u64) addr & ZPCI_IOMAP_ADDR_IDX_MASK) >> ZPCI_IOMAP_SHIFT)
+#घोषणा ZPCI_OFFSET(addr)							\
+	((__क्रमce u64) addr & ZPCI_IOMAP_ADDR_OFF_MASK)
 
-#define ZPCI_CREATE_REQ(handle, space, len)					\
+#घोषणा ZPCI_CREATE_REQ(handle, space, len)					\
 	((u64) handle << 32 | space << 16 | len)
 
-#define zpci_read(LENGTH, RETTYPE)						\
-static inline RETTYPE zpci_read_##RETTYPE(const volatile void __iomem *addr)	\
-{										\
+#घोषणा zpci_पढ़ो(LENGTH, RETTYPE)						\
+अटल अंतरभूत RETTYPE zpci_पढ़ो_##RETTYPE(स्थिर अस्थिर व्योम __iomem *addr)	\
+अणु										\
 	u64 data;								\
-	int rc;									\
+	पूर्णांक rc;									\
 										\
 	rc = zpci_load(&data, addr, LENGTH);					\
-	if (rc)									\
+	अगर (rc)									\
 		data = -1ULL;							\
-	return (RETTYPE) data;							\
-}
+	वापस (RETTYPE) data;							\
+पूर्ण
 
-#define zpci_write(LENGTH, VALTYPE)						\
-static inline void zpci_write_##VALTYPE(VALTYPE val,				\
-					const volatile void __iomem *addr)	\
-{										\
+#घोषणा zpci_ग_लिखो(LENGTH, VALTYPE)						\
+अटल अंतरभूत व्योम zpci_ग_लिखो_##VALTYPE(VALTYPE val,				\
+					स्थिर अस्थिर व्योम __iomem *addr)	\
+अणु										\
 	u64 data = (VALTYPE) val;						\
 										\
 	zpci_store(addr, data, LENGTH);						\
-}
+पूर्ण
 
-zpci_read(8, u64)
-zpci_read(4, u32)
-zpci_read(2, u16)
-zpci_read(1, u8)
-zpci_write(8, u64)
-zpci_write(4, u32)
-zpci_write(2, u16)
-zpci_write(1, u8)
+zpci_पढ़ो(8, u64)
+zpci_पढ़ो(4, u32)
+zpci_पढ़ो(2, u16)
+zpci_पढ़ो(1, u8)
+zpci_ग_लिखो(8, u64)
+zpci_ग_लिखो(4, u32)
+zpci_ग_लिखो(2, u16)
+zpci_ग_लिखो(1, u8)
 
-static inline int zpci_write_single(volatile void __iomem *dst, const void *src,
-				    unsigned long len)
-{
+अटल अंतरभूत पूर्णांक zpci_ग_लिखो_single(अस्थिर व्योम __iomem *dst, स्थिर व्योम *src,
+				    अचिन्हित दीर्घ len)
+अणु
 	u64 val;
 
-	switch (len) {
-	case 1:
+	चयन (len) अणु
+	हाल 1:
 		val = (u64) *((u8 *) src);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		val = (u64) *((u16 *) src);
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		val = (u64) *((u32 *) src);
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		val = (u64) *((u64 *) src);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		val = 0;		/* let FW report error */
-		break;
-	}
-	return zpci_store(dst, val, len);
-}
+		अवरोध;
+	पूर्ण
+	वापस zpci_store(dst, val, len);
+पूर्ण
 
-static inline int zpci_read_single(void *dst, const volatile void __iomem *src,
-				   unsigned long len)
-{
+अटल अंतरभूत पूर्णांक zpci_पढ़ो_single(व्योम *dst, स्थिर अस्थिर व्योम __iomem *src,
+				   अचिन्हित दीर्घ len)
+अणु
 	u64 data;
-	int cc;
+	पूर्णांक cc;
 
 	cc = zpci_load(&data, src, len);
-	if (cc)
-		goto out;
+	अगर (cc)
+		जाओ out;
 
-	switch (len) {
-	case 1:
+	चयन (len) अणु
+	हाल 1:
 		*((u8 *) dst) = (u8) data;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		*((u16 *) dst) = (u16) data;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		*((u32 *) dst) = (u32) data;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		*((u64 *) dst) = (u64) data;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 out:
-	return cc;
-}
+	वापस cc;
+पूर्ण
 
-int zpci_write_block(volatile void __iomem *dst, const void *src,
-		     unsigned long len);
+पूर्णांक zpci_ग_लिखो_block(अस्थिर व्योम __iomem *dst, स्थिर व्योम *src,
+		     अचिन्हित दीर्घ len);
 
-static inline u8 zpci_get_max_write_size(u64 src, u64 dst, int len, int max)
-{
-	int count = len > max ? max : len, size = 1;
+अटल अंतरभूत u8 zpci_get_max_ग_लिखो_size(u64 src, u64 dst, पूर्णांक len, पूर्णांक max)
+अणु
+	पूर्णांक count = len > max ? max : len, size = 1;
 
-	while (!(src & 0x1) && !(dst & 0x1) && ((size << 1) <= count)) {
+	जबतक (!(src & 0x1) && !(dst & 0x1) && ((size << 1) <= count)) अणु
 		dst = dst >> 1;
 		src = src >> 1;
 		size = size << 1;
-	}
-	return size;
-}
+	पूर्ण
+	वापस size;
+पूर्ण
 
-static inline int zpci_memcpy_fromio(void *dst,
-				     const volatile void __iomem *src,
-				     unsigned long n)
-{
-	int size, rc = 0;
+अटल अंतरभूत पूर्णांक zpci_स_नकल_fromio(व्योम *dst,
+				     स्थिर अस्थिर व्योम __iomem *src,
+				     अचिन्हित दीर्घ n)
+अणु
+	पूर्णांक size, rc = 0;
 
-	while (n > 0) {
-		size = zpci_get_max_write_size((u64 __force) src,
+	जबतक (n > 0) अणु
+		size = zpci_get_max_ग_लिखो_size((u64 __क्रमce) src,
 					       (u64) dst, n,
 					       ZPCI_MAX_READ_SIZE);
-		rc = zpci_read_single(dst, src, size);
-		if (rc)
-			break;
+		rc = zpci_पढ़ो_single(dst, src, size);
+		अगर (rc)
+			अवरोध;
 		src += size;
 		dst += size;
 		n -= size;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static inline int zpci_memcpy_toio(volatile void __iomem *dst,
-				   const void *src, unsigned long n)
-{
-	int size, rc = 0;
+अटल अंतरभूत पूर्णांक zpci_स_नकल_toio(अस्थिर व्योम __iomem *dst,
+				   स्थिर व्योम *src, अचिन्हित दीर्घ n)
+अणु
+	पूर्णांक size, rc = 0;
 
-	if (!src)
-		return -EINVAL;
+	अगर (!src)
+		वापस -EINVAL;
 
-	while (n > 0) {
-		size = zpci_get_max_write_size((u64 __force) dst,
+	जबतक (n > 0) अणु
+		size = zpci_get_max_ग_लिखो_size((u64 __क्रमce) dst,
 					       (u64) src, n,
 					       ZPCI_MAX_WRITE_SIZE);
-		if (size > 8) /* main path */
-			rc = zpci_write_block(dst, src, size);
-		else
-			rc = zpci_write_single(dst, src, size);
-		if (rc)
-			break;
+		अगर (size > 8) /* मुख्य path */
+			rc = zpci_ग_लिखो_block(dst, src, size);
+		अन्यथा
+			rc = zpci_ग_लिखो_single(dst, src, size);
+		अगर (rc)
+			अवरोध;
 		src += size;
 		dst += size;
 		n -= size;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static inline int zpci_memset_io(volatile void __iomem *dst,
-				 unsigned char val, size_t count)
-{
-	u8 *src = kmalloc(count, GFP_KERNEL);
-	int rc;
+अटल अंतरभूत पूर्णांक zpci_स_रखो_io(अस्थिर व्योम __iomem *dst,
+				 अचिन्हित अक्षर val, माप_प्रकार count)
+अणु
+	u8 *src = kदो_स्मृति(count, GFP_KERNEL);
+	पूर्णांक rc;
 
-	if (src == NULL)
-		return -ENOMEM;
-	memset(src, val, count);
+	अगर (src == शून्य)
+		वापस -ENOMEM;
+	स_रखो(src, val, count);
 
-	rc = zpci_memcpy_toio(dst, src, count);
-	kfree(src);
-	return rc;
-}
+	rc = zpci_स_नकल_toio(dst, src, count);
+	kमुक्त(src);
+	वापस rc;
+पूर्ण
 
-#endif /* CONFIG_PCI */
+#पूर्ण_अगर /* CONFIG_PCI */
 
-#endif /* _ASM_S390_PCI_IO_H */
+#पूर्ण_अगर /* _ASM_S390_PCI_IO_H */

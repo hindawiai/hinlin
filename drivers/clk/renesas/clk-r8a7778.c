@@ -1,113 +1,114 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * r8a7778 Core CPG Clocks
  *
  * Copyright (C) 2014  Ulrich Hecht
  */
 
-#include <linux/clk-provider.h>
-#include <linux/clk/renesas.h>
-#include <linux/of_address.h>
-#include <linux/slab.h>
-#include <linux/soc/renesas/rcar-rst.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clk/renesas.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/soc/renesas/rcar-rst.h>
 
-struct r8a7778_cpg {
-	struct clk_onecell_data data;
+काष्ठा r8a7778_cpg अणु
+	काष्ठा clk_onecell_data data;
 	spinlock_t lock;
-	void __iomem *reg;
-};
+	व्योम __iomem *reg;
+पूर्ण;
 
 /* PLL multipliers per bits 11, 12, and 18 of MODEMR */
-static const struct {
-	unsigned long plla_mult;
-	unsigned long pllb_mult;
-} r8a7778_rates[] __initconst = {
-	[0] = { 21, 21 },
-	[1] = { 24, 24 },
-	[2] = { 28, 28 },
-	[3] = { 32, 32 },
-	[5] = { 24, 21 },
-	[6] = { 28, 21 },
-	[7] = { 32, 24 },
-};
+अटल स्थिर काष्ठा अणु
+	अचिन्हित दीर्घ plla_mult;
+	अचिन्हित दीर्घ pllb_mult;
+पूर्ण r8a7778_rates[] __initस्थिर = अणु
+	[0] = अणु 21, 21 पूर्ण,
+	[1] = अणु 24, 24 पूर्ण,
+	[2] = अणु 28, 28 पूर्ण,
+	[3] = अणु 32, 32 पूर्ण,
+	[5] = अणु 24, 21 पूर्ण,
+	[6] = अणु 28, 21 पूर्ण,
+	[7] = अणु 32, 24 पूर्ण,
+पूर्ण;
 
-/* Clock dividers per bits 1 and 2 of MODEMR */
-static const struct {
-	const char *name;
-	unsigned int div[4];
-} r8a7778_divs[6] __initconst = {
-	{ "b",   { 12, 12, 16, 18 } },
-	{ "out", { 12, 12, 16, 18 } },
-	{ "p",   { 16, 12, 16, 12 } },
-	{ "s",   { 4,  3,  4,  3  } },
-	{ "s1",  { 8,  6,  8,  6  } },
-};
+/* Clock भागiders per bits 1 and 2 of MODEMR */
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक भाग[4];
+पूर्ण r8a7778_भागs[6] __initस्थिर = अणु
+	अणु "b",   अणु 12, 12, 16, 18 पूर्ण पूर्ण,
+	अणु "out", अणु 12, 12, 16, 18 पूर्ण पूर्ण,
+	अणु "p",   अणु 16, 12, 16, 12 पूर्ण पूर्ण,
+	अणु "s",   अणु 4,  3,  4,  3  पूर्ण पूर्ण,
+	अणु "s1",  अणु 8,  6,  8,  6  पूर्ण पूर्ण,
+पूर्ण;
 
-static u32 cpg_mode_rates __initdata;
-static u32 cpg_mode_divs __initdata;
+अटल u32 cpg_mode_rates __initdata;
+अटल u32 cpg_mode_भागs __initdata;
 
-static struct clk * __init
-r8a7778_cpg_register_clock(struct device_node *np, struct r8a7778_cpg *cpg,
-			     const char *name)
-{
-	if (!strcmp(name, "plla")) {
-		return clk_register_fixed_factor(NULL, "plla",
+अटल काष्ठा clk * __init
+r8a7778_cpg_रेजिस्टर_घड़ी(काष्ठा device_node *np, काष्ठा r8a7778_cpg *cpg,
+			     स्थिर अक्षर *name)
+अणु
+	अगर (!म_भेद(name, "plla")) अणु
+		वापस clk_रेजिस्टर_fixed_factor(शून्य, "plla",
 			of_clk_get_parent_name(np, 0), 0,
 			r8a7778_rates[cpg_mode_rates].plla_mult, 1);
-	} else if (!strcmp(name, "pllb")) {
-		return clk_register_fixed_factor(NULL, "pllb",
+	पूर्ण अन्यथा अगर (!म_भेद(name, "pllb")) अणु
+		वापस clk_रेजिस्टर_fixed_factor(शून्य, "pllb",
 			of_clk_get_parent_name(np, 0), 0,
 			r8a7778_rates[cpg_mode_rates].pllb_mult, 1);
-	} else {
-		unsigned int i;
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक i;
 
-		for (i = 0; i < ARRAY_SIZE(r8a7778_divs); i++) {
-			if (!strcmp(name, r8a7778_divs[i].name)) {
-				return clk_register_fixed_factor(NULL,
-					r8a7778_divs[i].name,
+		क्रम (i = 0; i < ARRAY_SIZE(r8a7778_भागs); i++) अणु
+			अगर (!म_भेद(name, r8a7778_भागs[i].name)) अणु
+				वापस clk_रेजिस्टर_fixed_factor(शून्य,
+					r8a7778_भागs[i].name,
 					"plla", 0, 1,
-					r8a7778_divs[i].div[cpg_mode_divs]);
-			}
-		}
-	}
+					r8a7778_भागs[i].भाग[cpg_mode_भागs]);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
 
-static void __init r8a7778_cpg_clocks_init(struct device_node *np)
-{
-	struct r8a7778_cpg *cpg;
-	struct clk **clks;
-	unsigned int i;
-	int num_clks;
+अटल व्योम __init r8a7778_cpg_घड़ीs_init(काष्ठा device_node *np)
+अणु
+	काष्ठा r8a7778_cpg *cpg;
+	काष्ठा clk **clks;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक num_clks;
 	u32 mode;
 
-	if (rcar_rst_read_mode_pins(&mode))
-		return;
+	अगर (rcar_rst_पढ़ो_mode_pins(&mode))
+		वापस;
 
 	BUG_ON(!(mode & BIT(19)));
 
 	cpg_mode_rates = (!!(mode & BIT(18)) << 2) |
 			 (!!(mode & BIT(12)) << 1) |
 			 (!!(mode & BIT(11)));
-	cpg_mode_divs = (!!(mode & BIT(2)) << 1) |
+	cpg_mode_भागs = (!!(mode & BIT(2)) << 1) |
 			(!!(mode & BIT(1)));
 
 	num_clks = of_property_count_strings(np, "clock-output-names");
-	if (num_clks < 0) {
+	अगर (num_clks < 0) अणु
 		pr_err("%s: failed to count clocks\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	cpg = kzalloc(sizeof(*cpg), GFP_KERNEL);
-	clks = kcalloc(num_clks, sizeof(*clks), GFP_KERNEL);
-	if (cpg == NULL || clks == NULL) {
-		/* We're leaking memory on purpose, there's no point in cleaning
-		 * up as the system won't boot anyway.
+	cpg = kzalloc(माप(*cpg), GFP_KERNEL);
+	clks = kसुस्मृति(num_clks, माप(*clks), GFP_KERNEL);
+	अगर (cpg == शून्य || clks == शून्य) अणु
+		/* We're leaking memory on purpose, there's no poपूर्णांक in cleaning
+		 * up as the प्रणाली won't boot anyway.
 		 */
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_init(&cpg->lock);
 
@@ -115,28 +116,28 @@ static void __init r8a7778_cpg_clocks_init(struct device_node *np)
 	cpg->data.clk_num = num_clks;
 
 	cpg->reg = of_iomap(np, 0);
-	if (WARN_ON(cpg->reg == NULL))
-		return;
+	अगर (WARN_ON(cpg->reg == शून्य))
+		वापस;
 
-	for (i = 0; i < num_clks; ++i) {
-		const char *name;
-		struct clk *clk;
+	क्रम (i = 0; i < num_clks; ++i) अणु
+		स्थिर अक्षर *name;
+		काष्ठा clk *clk;
 
-		of_property_read_string_index(np, "clock-output-names", i,
+		of_property_पढ़ो_string_index(np, "clock-output-names", i,
 					      &name);
 
-		clk = r8a7778_cpg_register_clock(np, cpg, name);
-		if (IS_ERR(clk))
+		clk = r8a7778_cpg_रेजिस्टर_घड़ी(np, cpg, name);
+		अगर (IS_ERR(clk))
 			pr_err("%s: failed to register %pOFn %s clock (%ld)\n",
 			       __func__, np, name, PTR_ERR(clk));
-		else
+		अन्यथा
 			cpg->data.clks[i] = clk;
-	}
+	पूर्ण
 
 	of_clk_add_provider(np, of_clk_src_onecell_get, &cpg->data);
 
-	cpg_mstp_add_clk_domain(np);
-}
+	cpg_mstp_add_clk_करोमुख्य(np);
+पूर्ण
 
 CLK_OF_DECLARE(r8a7778_cpg_clks, "renesas,r8a7778-cpg-clocks",
-	       r8a7778_cpg_clocks_init);
+	       r8a7778_cpg_घड़ीs_init);

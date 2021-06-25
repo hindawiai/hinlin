@@ -1,219 +1,220 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * connection tracking event cache.
  */
 
-#ifndef _NF_CONNTRACK_ECACHE_H
-#define _NF_CONNTRACK_ECACHE_H
-#include <net/netfilter/nf_conntrack.h>
+#अगर_अघोषित _NF_CONNTRACK_ECACHE_H
+#घोषणा _NF_CONNTRACK_ECACHE_H
+#समावेश <net/netfilter/nf_conntrack.h>
 
-#include <net/net_namespace.h>
-#include <net/netfilter/nf_conntrack_expect.h>
-#include <linux/netfilter/nf_conntrack_common.h>
-#include <linux/netfilter/nf_conntrack_tuple_common.h>
-#include <net/netfilter/nf_conntrack_extend.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netfilter/nf_conntrack_expect.h>
+#समावेश <linux/netfilter/nf_conntrack_common.h>
+#समावेश <linux/netfilter/nf_conntrack_tuple_common.h>
+#समावेश <net/netfilter/nf_conntrack_extend.h>
 
-enum nf_ct_ecache_state {
+क्रमागत nf_ct_ecache_state अणु
 	NFCT_ECACHE_UNKNOWN,		/* destroy event not sent */
 	NFCT_ECACHE_DESTROY_FAIL,	/* tried but failed to send destroy event */
 	NFCT_ECACHE_DESTROY_SENT,	/* sent destroy event after failure */
-};
+पूर्ण;
 
-struct nf_conntrack_ecache {
-	unsigned long cache;		/* bitops want long */
+काष्ठा nf_conntrack_ecache अणु
+	अचिन्हित दीर्घ cache;		/* bitops want दीर्घ */
 	u16 missed;			/* missed events */
-	u16 ctmask;			/* bitmask of ct events to be delivered */
-	u16 expmask;			/* bitmask of expect events to be delivered */
-	enum nf_ct_ecache_state state:8;/* ecache state */
+	u16 cपंचांगask;			/* biपंचांगask of ct events to be delivered */
+	u16 expmask;			/* biपंचांगask of expect events to be delivered */
+	क्रमागत nf_ct_ecache_state state:8;/* ecache state */
 	u32 portid;			/* netlink portid of destroyer */
-};
+पूर्ण;
 
-static inline struct nf_conntrack_ecache *
-nf_ct_ecache_find(const struct nf_conn *ct)
-{
-#ifdef CONFIG_NF_CONNTRACK_EVENTS
-	return nf_ct_ext_find(ct, NF_CT_EXT_ECACHE);
-#else
-	return NULL;
-#endif
-}
+अटल अंतरभूत काष्ठा nf_conntrack_ecache *
+nf_ct_ecache_find(स्थिर काष्ठा nf_conn *ct)
+अणु
+#अगर_घोषित CONFIG_NF_CONNTRACK_EVENTS
+	वापस nf_ct_ext_find(ct, NF_CT_EXT_ECACHE);
+#अन्यथा
+	वापस शून्य;
+#पूर्ण_अगर
+पूर्ण
 
-static inline struct nf_conntrack_ecache *
-nf_ct_ecache_ext_add(struct nf_conn *ct, u16 ctmask, u16 expmask, gfp_t gfp)
-{
-#ifdef CONFIG_NF_CONNTRACK_EVENTS
-	struct net *net = nf_ct_net(ct);
-	struct nf_conntrack_ecache *e;
+अटल अंतरभूत काष्ठा nf_conntrack_ecache *
+nf_ct_ecache_ext_add(काष्ठा nf_conn *ct, u16 cपंचांगask, u16 expmask, gfp_t gfp)
+अणु
+#अगर_घोषित CONFIG_NF_CONNTRACK_EVENTS
+	काष्ठा net *net = nf_ct_net(ct);
+	काष्ठा nf_conntrack_ecache *e;
 
-	if (!ctmask && !expmask && net->ct.sysctl_events) {
-		ctmask = ~0;
+	अगर (!cपंचांगask && !expmask && net->ct.sysctl_events) अणु
+		cपंचांगask = ~0;
 		expmask = ~0;
-	}
-	if (!ctmask && !expmask)
-		return NULL;
+	पूर्ण
+	अगर (!cपंचांगask && !expmask)
+		वापस शून्य;
 
 	e = nf_ct_ext_add(ct, NF_CT_EXT_ECACHE, gfp);
-	if (e) {
-		e->ctmask  = ctmask;
+	अगर (e) अणु
+		e->cपंचांगask  = cपंचांगask;
 		e->expmask = expmask;
-	}
-	return e;
-#else
-	return NULL;
-#endif
-}
+	पूर्ण
+	वापस e;
+#अन्यथा
+	वापस शून्य;
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_NF_CONNTRACK_EVENTS
+#अगर_घोषित CONFIG_NF_CONNTRACK_EVENTS
 
-/* This structure is passed to event handler */
-struct nf_ct_event {
-	struct nf_conn *ct;
+/* This काष्ठाure is passed to event handler */
+काष्ठा nf_ct_event अणु
+	काष्ठा nf_conn *ct;
 	u32 portid;
-	int report;
-};
+	पूर्णांक report;
+पूर्ण;
 
-struct nf_ct_event_notifier {
-	int (*fcn)(unsigned int events, struct nf_ct_event *item);
-};
+काष्ठा nf_ct_event_notअगरier अणु
+	पूर्णांक (*fcn)(अचिन्हित पूर्णांक events, काष्ठा nf_ct_event *item);
+पूर्ण;
 
-int nf_conntrack_register_notifier(struct net *net,
-				   struct nf_ct_event_notifier *nb);
-void nf_conntrack_unregister_notifier(struct net *net,
-				      struct nf_ct_event_notifier *nb);
+पूर्णांक nf_conntrack_रेजिस्टर_notअगरier(काष्ठा net *net,
+				   काष्ठा nf_ct_event_notअगरier *nb);
+व्योम nf_conntrack_unरेजिस्टर_notअगरier(काष्ठा net *net,
+				      काष्ठा nf_ct_event_notअगरier *nb);
 
-void nf_ct_deliver_cached_events(struct nf_conn *ct);
-int nf_conntrack_eventmask_report(unsigned int eventmask, struct nf_conn *ct,
-				  u32 portid, int report);
+व्योम nf_ct_deliver_cached_events(काष्ठा nf_conn *ct);
+पूर्णांक nf_conntrack_evenपंचांगask_report(अचिन्हित पूर्णांक evenपंचांगask, काष्ठा nf_conn *ct,
+				  u32 portid, पूर्णांक report);
 
-#else
+#अन्यथा
 
-static inline void nf_ct_deliver_cached_events(const struct nf_conn *ct)
-{
-}
+अटल अंतरभूत व्योम nf_ct_deliver_cached_events(स्थिर काष्ठा nf_conn *ct)
+अणु
+पूर्ण
 
-static inline int nf_conntrack_eventmask_report(unsigned int eventmask,
-						struct nf_conn *ct,
+अटल अंतरभूत पूर्णांक nf_conntrack_evenपंचांगask_report(अचिन्हित पूर्णांक evenपंचांगask,
+						काष्ठा nf_conn *ct,
 						u32 portid,
-						int report)
-{
-	return 0;
-}
+						पूर्णांक report)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static inline void
-nf_conntrack_event_cache(enum ip_conntrack_events event, struct nf_conn *ct)
-{
-#ifdef CONFIG_NF_CONNTRACK_EVENTS
-	struct net *net = nf_ct_net(ct);
-	struct nf_conntrack_ecache *e;
+अटल अंतरभूत व्योम
+nf_conntrack_event_cache(क्रमागत ip_conntrack_events event, काष्ठा nf_conn *ct)
+अणु
+#अगर_घोषित CONFIG_NF_CONNTRACK_EVENTS
+	काष्ठा net *net = nf_ct_net(ct);
+	काष्ठा nf_conntrack_ecache *e;
 
-	if (!rcu_access_pointer(net->ct.nf_conntrack_event_cb))
-		return;
+	अगर (!rcu_access_poपूर्णांकer(net->ct.nf_conntrack_event_cb))
+		वापस;
 
 	e = nf_ct_ecache_find(ct);
-	if (e == NULL)
-		return;
+	अगर (e == शून्य)
+		वापस;
 
 	set_bit(event, &e->cache);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline int
-nf_conntrack_event_report(enum ip_conntrack_events event, struct nf_conn *ct,
-			  u32 portid, int report)
-{
-#ifdef CONFIG_NF_CONNTRACK_EVENTS
-	const struct net *net = nf_ct_net(ct);
+अटल अंतरभूत पूर्णांक
+nf_conntrack_event_report(क्रमागत ip_conntrack_events event, काष्ठा nf_conn *ct,
+			  u32 portid, पूर्णांक report)
+अणु
+#अगर_घोषित CONFIG_NF_CONNTRACK_EVENTS
+	स्थिर काष्ठा net *net = nf_ct_net(ct);
 
-	if (!rcu_access_pointer(net->ct.nf_conntrack_event_cb))
-		return 0;
+	अगर (!rcu_access_poपूर्णांकer(net->ct.nf_conntrack_event_cb))
+		वापस 0;
 
-	return nf_conntrack_eventmask_report(1 << event, ct, portid, report);
-#else
-	return 0;
-#endif
-}
+	वापस nf_conntrack_evenपंचांगask_report(1 << event, ct, portid, report);
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-static inline int
-nf_conntrack_event(enum ip_conntrack_events event, struct nf_conn *ct)
-{
-#ifdef CONFIG_NF_CONNTRACK_EVENTS
-	const struct net *net = nf_ct_net(ct);
+अटल अंतरभूत पूर्णांक
+nf_conntrack_event(क्रमागत ip_conntrack_events event, काष्ठा nf_conn *ct)
+अणु
+#अगर_घोषित CONFIG_NF_CONNTRACK_EVENTS
+	स्थिर काष्ठा net *net = nf_ct_net(ct);
 
-	if (!rcu_access_pointer(net->ct.nf_conntrack_event_cb))
-		return 0;
+	अगर (!rcu_access_poपूर्णांकer(net->ct.nf_conntrack_event_cb))
+		वापस 0;
 
-	return nf_conntrack_eventmask_report(1 << event, ct, 0, 0);
-#else
-	return 0;
-#endif
-}
+	वापस nf_conntrack_evenपंचांगask_report(1 << event, ct, 0, 0);
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_NF_CONNTRACK_EVENTS
+#अगर_घोषित CONFIG_NF_CONNTRACK_EVENTS
 
-struct nf_exp_event {
-	struct nf_conntrack_expect *exp;
+काष्ठा nf_exp_event अणु
+	काष्ठा nf_conntrack_expect *exp;
 	u32 portid;
-	int report;
-};
+	पूर्णांक report;
+पूर्ण;
 
-struct nf_exp_event_notifier {
-	int (*fcn)(unsigned int events, struct nf_exp_event *item);
-};
+काष्ठा nf_exp_event_notअगरier अणु
+	पूर्णांक (*fcn)(अचिन्हित पूर्णांक events, काष्ठा nf_exp_event *item);
+पूर्ण;
 
-int nf_ct_expect_register_notifier(struct net *net,
-				   struct nf_exp_event_notifier *nb);
-void nf_ct_expect_unregister_notifier(struct net *net,
-				      struct nf_exp_event_notifier *nb);
+पूर्णांक nf_ct_expect_रेजिस्टर_notअगरier(काष्ठा net *net,
+				   काष्ठा nf_exp_event_notअगरier *nb);
+व्योम nf_ct_expect_unरेजिस्टर_notअगरier(काष्ठा net *net,
+				      काष्ठा nf_exp_event_notअगरier *nb);
 
-void nf_ct_expect_event_report(enum ip_conntrack_expect_events event,
-			       struct nf_conntrack_expect *exp,
-			       u32 portid, int report);
+व्योम nf_ct_expect_event_report(क्रमागत ip_conntrack_expect_events event,
+			       काष्ठा nf_conntrack_expect *exp,
+			       u32 portid, पूर्णांक report);
 
-void nf_conntrack_ecache_work(struct net *net, enum nf_ct_ecache_state state);
+व्योम nf_conntrack_ecache_work(काष्ठा net *net, क्रमागत nf_ct_ecache_state state);
 
-void nf_conntrack_ecache_pernet_init(struct net *net);
-void nf_conntrack_ecache_pernet_fini(struct net *net);
+व्योम nf_conntrack_ecache_pernet_init(काष्ठा net *net);
+व्योम nf_conntrack_ecache_pernet_fini(काष्ठा net *net);
 
-int nf_conntrack_ecache_init(void);
-void nf_conntrack_ecache_fini(void);
+पूर्णांक nf_conntrack_ecache_init(व्योम);
+व्योम nf_conntrack_ecache_fini(व्योम);
 
-static inline bool nf_conntrack_ecache_dwork_pending(const struct net *net)
-{
-	return net->ct.ecache_dwork_pending;
-}
-#else /* CONFIG_NF_CONNTRACK_EVENTS */
+अटल अंतरभूत bool nf_conntrack_ecache_dwork_pending(स्थिर काष्ठा net *net)
+अणु
+	वापस net->ct.ecache_dwork_pending;
+पूर्ण
+#अन्यथा /* CONFIG_NF_CONNTRACK_EVENTS */
 
-static inline void nf_ct_expect_event_report(enum ip_conntrack_expect_events e,
-					     struct nf_conntrack_expect *exp,
+अटल अंतरभूत व्योम nf_ct_expect_event_report(क्रमागत ip_conntrack_expect_events e,
+					     काष्ठा nf_conntrack_expect *exp,
 					     u32 portid,
-					     int report)
-{
-}
+					     पूर्णांक report)
+अणु
+पूर्ण
 
-static inline void nf_conntrack_ecache_work(struct net *net,
-					    enum nf_ct_ecache_state s)
-{
-}
+अटल अंतरभूत व्योम nf_conntrack_ecache_work(काष्ठा net *net,
+					    क्रमागत nf_ct_ecache_state s)
+अणु
+पूर्ण
 
-static inline void nf_conntrack_ecache_pernet_init(struct net *net)
-{
-}
+अटल अंतरभूत व्योम nf_conntrack_ecache_pernet_init(काष्ठा net *net)
+अणु
+पूर्ण
 
-static inline void nf_conntrack_ecache_pernet_fini(struct net *net)
-{
-}
+अटल अंतरभूत व्योम nf_conntrack_ecache_pernet_fini(काष्ठा net *net)
+अणु
+पूर्ण
 
-static inline int nf_conntrack_ecache_init(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक nf_conntrack_ecache_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void nf_conntrack_ecache_fini(void)
-{
-}
+अटल अंतरभूत व्योम nf_conntrack_ecache_fini(व्योम)
+अणु
+पूर्ण
 
-static inline bool nf_conntrack_ecache_dwork_pending(const struct net *net) { return false; }
-#endif /* CONFIG_NF_CONNTRACK_EVENTS */
-#endif /*_NF_CONNTRACK_ECACHE_H*/
+अटल अंतरभूत bool nf_conntrack_ecache_dwork_pending(स्थिर काष्ठा net *net) अणु वापस false; पूर्ण
+#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_EVENTS */
+#पूर्ण_अगर /*_NF_CONNTRACK_ECACHE_H*/

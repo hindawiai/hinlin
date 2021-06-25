@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * NVIDIA Tegra SoC device tree board support
  *
@@ -7,108 +8,108 @@
  * Copyright (C) 2010 Google, Inc.
  */
 
-#include <linux/clk.h>
-#include <linux/clk/tegra.h>
-#include <linux/dma-mapping.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/irqchip.h>
-#include <linux/irqdomain.h>
-#include <linux/kernel.h>
-#include <linux/of_address.h>
-#include <linux/of_fdt.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/pda_power.h>
-#include <linux/platform_device.h>
-#include <linux/serial_8250.h>
-#include <linux/slab.h>
-#include <linux/sys_soc.h>
-#include <linux/usb/tegra_usb_phy.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk/tegra.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pda_घातer.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/serial_8250.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sys_soc.h>
+#समावेश <linux/usb/tegra_usb_phy.h>
 
-#include <linux/firmware/trusted_foundations.h>
+#समावेश <linux/firmware/trusted_foundations.h>
 
-#include <soc/tegra/fuse.h>
-#include <soc/tegra/pmc.h>
+#समावेश <soc/tegra/fuse.h>
+#समावेश <soc/tegra/pmc.h>
 
-#include <asm/firmware.h>
-#include <asm/hardware/cache-l2x0.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/time.h>
-#include <asm/mach-types.h>
-#include <asm/psci.h>
-#include <asm/setup.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/hardware/cache-l2x0.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/समय.स>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/psci.h>
+#समावेश <यंत्र/setup.h>
 
-#include "board.h"
-#include "common.h"
-#include "iomap.h"
-#include "pm.h"
-#include "reset.h"
-#include "sleep.h"
+#समावेश "board.h"
+#समावेश "common.h"
+#समावेश "iomap.h"
+#समावेश "pm.h"
+#समावेश "reset.h"
+#समावेश "sleep.h"
 
 /*
- * Storage for debug-macro.S's state.
+ * Storage क्रम debug-macro.S's state.
  *
- * This must be in .data not .bss so that it gets initialized each time the
+ * This must be in .data not .bss so that it माला_लो initialized each समय the
  * kernel is loaded. The data is declared here rather than debug-macro.S so
- * that multiple inclusions of debug-macro.S point at the same data.
+ * that multiple inclusions of debug-macro.S poपूर्णांक at the same data.
  */
-u32 tegra_uart_config[3] = {
+u32 tegra_uart_config[3] = अणु
 	/* Debug UART initialization required */
 	1,
 	/* Debug UART physical address */
 	0,
-	/* Debug UART virtual address */
+	/* Debug UART भव address */
 	0,
-};
+पूर्ण;
 
-static void __init tegra_init_early(void)
-{
-	of_register_trusted_foundations();
+अटल व्योम __init tegra_init_early(व्योम)
+अणु
+	of_रेजिस्टर_trusted_foundations();
 	tegra_cpu_reset_handler_init();
 	call_firmware_op(l2x0_init);
-}
+पूर्ण
 
-static void __init tegra_dt_init_irq(void)
-{
+अटल व्योम __init tegra_dt_init_irq(व्योम)
+अणु
 	tegra_init_irq();
 	irqchip_init();
-}
+पूर्ण
 
-static void __init tegra_dt_init(void)
-{
-	struct device *parent = tegra_soc_device_register();
+अटल व्योम __init tegra_dt_init(व्योम)
+अणु
+	काष्ठा device *parent = tegra_soc_device_रेजिस्टर();
 
-	of_platform_default_populate(NULL, NULL, parent);
-}
+	of_platक्रमm_शेष_populate(शून्य, शून्य, parent);
+पूर्ण
 
-static void __init tegra_dt_init_late(void)
-{
+अटल व्योम __init tegra_dt_init_late(व्योम)
+अणु
 	tegra_init_suspend();
 
-	if (IS_ENABLED(CONFIG_ARCH_TEGRA_2x_SOC) &&
+	अगर (IS_ENABLED(CONFIG_ARCH_TEGRA_2x_SOC) &&
 	    of_machine_is_compatible("compal,paz00"))
-		tegra_paz00_wifikill_init();
+		tegra_paz00_wअगरiसमाप्त_init();
 
-	if (IS_ENABLED(CONFIG_ARCH_TEGRA_2x_SOC) &&
+	अगर (IS_ENABLED(CONFIG_ARCH_TEGRA_2x_SOC) &&
 	    of_machine_is_compatible("nvidia,tegra20"))
-		platform_device_register_simple("tegra20-cpufreq", -1, NULL, 0);
+		platक्रमm_device_रेजिस्टर_simple("tegra20-cpufreq", -1, शून्य, 0);
 
-	if (IS_ENABLED(CONFIG_ARM_TEGRA_CPUIDLE) && !psci_smp_available())
-		platform_device_register_simple("tegra-cpuidle", -1, NULL, 0);
+	अगर (IS_ENABLED(CONFIG_ARM_TEGRA_CPUIDLE) && !psci_smp_available())
+		platक्रमm_device_रेजिस्टर_simple("tegra-cpuidle", -1, शून्य, 0);
 
-	if (IS_ENABLED(CONFIG_ARCH_TEGRA_3x_SOC) &&
+	अगर (IS_ENABLED(CONFIG_ARCH_TEGRA_3x_SOC) &&
 	    of_machine_is_compatible("nvidia,tegra30"))
-		platform_device_register_simple("tegra20-cpufreq", -1, NULL, 0);
-}
+		platक्रमm_device_रेजिस्टर_simple("tegra20-cpufreq", -1, शून्य, 0);
+पूर्ण
 
-static const char * const tegra_dt_board_compat[] = {
+अटल स्थिर अक्षर * स्थिर tegra_dt_board_compat[] = अणु
 	"nvidia,tegra124",
 	"nvidia,tegra114",
 	"nvidia,tegra30",
 	"nvidia,tegra20",
-	NULL
-};
+	शून्य
+पूर्ण;
 
 DT_MACHINE_START(TEGRA_DT, "NVIDIA Tegra SoC (Flattened Device Tree)")
 	.l2c_aux_val	= 0x3c400000,

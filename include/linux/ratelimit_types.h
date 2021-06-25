@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_RATELIMIT_TYPES_H
-#define _LINUX_RATELIMIT_TYPES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_RATELIMIT_TYPES_H
+#घोषणा _LINUX_RATELIMIT_TYPES_H
 
-#include <linux/bits.h>
-#include <linux/param.h>
-#include <linux/spinlock_types.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/param.h>
+#समावेश <linux/spinlock_types.h>
 
-#define DEFAULT_RATELIMIT_INTERVAL	(5 * HZ)
-#define DEFAULT_RATELIMIT_BURST		10
+#घोषणा DEFAULT_RATELIMIT_INTERVAL	(5 * HZ)
+#घोषणा DEFAULT_RATELIMIT_BURST		10
 
-/* issue num suppressed message on exit */
-#define RATELIMIT_MSG_ON_RELEASE	BIT(0)
+/* issue num suppressed message on निकास */
+#घोषणा RATELIMIT_MSG_ON_RELEASE	BIT(0)
 
-struct ratelimit_state {
+काष्ठा ratelimit_state अणु
 	raw_spinlock_t	lock;		/* protect the state */
 
-	int		interval;
-	int		burst;
-	int		printed;
-	int		missed;
-	unsigned long	begin;
-	unsigned long	flags;
-};
+	पूर्णांक		पूर्णांकerval;
+	पूर्णांक		burst;
+	पूर्णांक		prपूर्णांकed;
+	पूर्णांक		missed;
+	अचिन्हित दीर्घ	begin;
+	अचिन्हित दीर्घ	flags;
+पूर्ण;
 
-#define RATELIMIT_STATE_INIT(name, interval_init, burst_init) {		\
+#घोषणा RATELIMIT_STATE_INIT(name, पूर्णांकerval_init, burst_init) अणु		\
 		.lock		= __RAW_SPIN_LOCK_UNLOCKED(name.lock),	\
-		.interval	= interval_init,			\
+		.पूर्णांकerval	= पूर्णांकerval_init,			\
 		.burst		= burst_init,				\
-	}
+	पूर्ण
 
-#define RATELIMIT_STATE_INIT_DISABLED					\
+#घोषणा RATELIMIT_STATE_INIT_DISABLED					\
 	RATELIMIT_STATE_INIT(ratelimit_state, 0, DEFAULT_RATELIMIT_BURST)
 
-#define DEFINE_RATELIMIT_STATE(name, interval_init, burst_init)		\
+#घोषणा DEFINE_RATELIMIT_STATE(name, पूर्णांकerval_init, burst_init)		\
 									\
-	struct ratelimit_state name =					\
-		RATELIMIT_STATE_INIT(name, interval_init, burst_init)	\
+	काष्ठा ratelimit_state name =					\
+		RATELIMIT_STATE_INIT(name, पूर्णांकerval_init, burst_init)	\
 
-extern int ___ratelimit(struct ratelimit_state *rs, const char *func);
-#define __ratelimit(state) ___ratelimit(state, __func__)
+बाह्य पूर्णांक ___ratelimit(काष्ठा ratelimit_state *rs, स्थिर अक्षर *func);
+#घोषणा __ratelimit(state) ___ratelimit(state, __func__)
 
-#endif /* _LINUX_RATELIMIT_TYPES_H */
+#पूर्ण_अगर /* _LINUX_RATELIMIT_TYPES_H */

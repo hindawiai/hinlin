@@ -1,214 +1,215 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel Speed Select Interface: Mbox via MSR Interface
  * Copyright (c) 2019, Intel Corporation.
  * All rights reserved.
  *
- * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+ * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.पूर्णांकel.com>
  */
 
-#include <linux/module.h>
-#include <linux/cpuhotplug.h>
-#include <linux/pci.h>
-#include <linux/sched/signal.h>
-#include <linux/slab.h>
-#include <linux/suspend.h>
-#include <linux/topology.h>
-#include <linux/uaccess.h>
-#include <uapi/linux/isst_if.h>
-#include <asm/cpu_device_id.h>
-#include <asm/intel-family.h>
+#समावेश <linux/module.h>
+#समावेश <linux/cpuhotplug.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/topology.h>
+#समावेश <linux/uaccess.h>
+#समावेश <uapi/linux/isst_अगर.h>
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश <यंत्र/पूर्णांकel-family.h>
 
-#include "isst_if_common.h"
+#समावेश "isst_if_common.h"
 
-#define MSR_OS_MAILBOX_INTERFACE	0xB0
-#define MSR_OS_MAILBOX_DATA		0xB1
-#define MSR_OS_MAILBOX_BUSY_BIT		31
+#घोषणा MSR_OS_MAILBOX_INTERFACE	0xB0
+#घोषणा MSR_OS_MAILBOX_DATA		0xB1
+#घोषणा MSR_OS_MAILBOX_BUSY_BIT		31
 
 /*
  * Based on experiments count is never more than 1, as the MSR overhead
- * is enough to finish the command. So here this is the worst case number.
+ * is enough to finish the command. So here this is the worst हाल number.
  */
-#define OS_MAILBOX_RETRY_COUNT		3
+#घोषणा OS_MAILBOX_RETRY_COUNT		3
 
-static int isst_if_send_mbox_cmd(u8 command, u8 sub_command, u32 parameter,
+अटल पूर्णांक isst_अगर_send_mbox_cmd(u8 command, u8 sub_command, u32 parameter,
 				 u32 command_data, u32 *response_data)
-{
+अणु
 	u32 retries;
 	u64 data;
-	int ret;
+	पूर्णांक ret;
 
-	/* Poll for rb bit == 0 */
+	/* Poll क्रम rb bit == 0 */
 	retries = OS_MAILBOX_RETRY_COUNT;
-	do {
+	करो अणु
 		rdmsrl(MSR_OS_MAILBOX_INTERFACE, data);
-		if (data & BIT_ULL(MSR_OS_MAILBOX_BUSY_BIT)) {
+		अगर (data & BIT_ULL(MSR_OS_MAILBOX_BUSY_BIT)) अणु
 			ret = -EBUSY;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		ret = 0;
-		break;
-	} while (--retries);
+		अवरोध;
+	पूर्ण जबतक (--retries);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Write DATA register */
+	/* Write DATA रेजिस्टर */
 	wrmsrl(MSR_OS_MAILBOX_DATA, command_data);
 
-	/* Write command register */
+	/* Write command रेजिस्टर */
 	data = BIT_ULL(MSR_OS_MAILBOX_BUSY_BIT) |
 		      (parameter & GENMASK_ULL(13, 0)) << 16 |
 		      (sub_command << 8) |
 		      command;
 	wrmsrl(MSR_OS_MAILBOX_INTERFACE, data);
 
-	/* Poll for rb bit == 0 */
+	/* Poll क्रम rb bit == 0 */
 	retries = OS_MAILBOX_RETRY_COUNT;
-	do {
+	करो अणु
 		rdmsrl(MSR_OS_MAILBOX_INTERFACE, data);
-		if (data & BIT_ULL(MSR_OS_MAILBOX_BUSY_BIT)) {
+		अगर (data & BIT_ULL(MSR_OS_MAILBOX_BUSY_BIT)) अणु
 			ret = -EBUSY;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (data & 0xff)
-			return -ENXIO;
+		अगर (data & 0xff)
+			वापस -ENXIO;
 
-		if (response_data) {
+		अगर (response_data) अणु
 			rdmsrl(MSR_OS_MAILBOX_DATA, data);
 			*response_data = data;
-		}
+		पूर्ण
 		ret = 0;
-		break;
-	} while (--retries);
+		अवरोध;
+	पूर्ण जबतक (--retries);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct msrl_action {
-	int err;
-	struct isst_if_mbox_cmd *mbox_cmd;
-};
+काष्ठा msrl_action अणु
+	पूर्णांक err;
+	काष्ठा isst_अगर_mbox_cmd *mbox_cmd;
+पूर्ण;
 
-/* revisit, smp_call_function_single should be enough for atomic mailbox! */
-static void msrl_update_func(void *info)
-{
-	struct msrl_action *act = info;
+/* revisit, smp_call_function_single should be enough क्रम atomic mailbox! */
+अटल व्योम msrl_update_func(व्योम *info)
+अणु
+	काष्ठा msrl_action *act = info;
 
-	act->err = isst_if_send_mbox_cmd(act->mbox_cmd->command,
+	act->err = isst_अगर_send_mbox_cmd(act->mbox_cmd->command,
 					 act->mbox_cmd->sub_command,
 					 act->mbox_cmd->parameter,
 					 act->mbox_cmd->req_data,
 					 &act->mbox_cmd->resp_data);
-}
+पूर्ण
 
-static long isst_if_mbox_proc_cmd(u8 *cmd_ptr, int *write_only, int resume)
-{
-	struct msrl_action action;
-	int ret;
+अटल दीर्घ isst_अगर_mbox_proc_cmd(u8 *cmd_ptr, पूर्णांक *ग_लिखो_only, पूर्णांक resume)
+अणु
+	काष्ठा msrl_action action;
+	पूर्णांक ret;
 
-	action.mbox_cmd = (struct isst_if_mbox_cmd *)cmd_ptr;
+	action.mbox_cmd = (काष्ठा isst_अगर_mbox_cmd *)cmd_ptr;
 
-	if (isst_if_mbox_cmd_invalid(action.mbox_cmd))
-		return -EINVAL;
+	अगर (isst_अगर_mbox_cmd_invalid(action.mbox_cmd))
+		वापस -EINVAL;
 
-	if (isst_if_mbox_cmd_set_req(action.mbox_cmd) &&
+	अगर (isst_अगर_mbox_cmd_set_req(action.mbox_cmd) &&
 	    !capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		वापस -EPERM;
 
 	/*
 	 * To complete mailbox command, we need to access two MSRs.
-	 * So we don't want race to complete a mailbox transcation.
+	 * So we करोn't want race to complete a mailbox transcation.
 	 * Here smp_call ensures that msrl_update_func() has no race
-	 * and also with wait flag, wait for completion.
+	 * and also with रुको flag, रुको क्रम completion.
 	 * smp_call_function_single is using get_cpu() and put_cpu().
 	 */
 	ret = smp_call_function_single(action.mbox_cmd->logical_cpu,
 				       msrl_update_func, &action, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!action.err && !resume && isst_if_mbox_cmd_set_req(action.mbox_cmd))
+	अगर (!action.err && !resume && isst_अगर_mbox_cmd_set_req(action.mbox_cmd))
 		action.err = isst_store_cmd(action.mbox_cmd->command,
 					    action.mbox_cmd->sub_command,
 					    action.mbox_cmd->logical_cpu, 1,
 					    action.mbox_cmd->parameter,
 					    action.mbox_cmd->req_data);
-	*write_only = 0;
+	*ग_लिखो_only = 0;
 
-	return action.err;
-}
+	वापस action.err;
+पूर्ण
 
 
-static int isst_pm_notify(struct notifier_block *nb,
-			       unsigned long mode, void *_unused)
-{
-	switch (mode) {
-	case PM_POST_HIBERNATION:
-	case PM_POST_RESTORE:
-	case PM_POST_SUSPEND:
+अटल पूर्णांक isst_pm_notअगरy(काष्ठा notअगरier_block *nb,
+			       अचिन्हित दीर्घ mode, व्योम *_unused)
+अणु
+	चयन (mode) अणु
+	हाल PM_POST_HIBERNATION:
+	हाल PM_POST_RESTORE:
+	हाल PM_POST_SUSPEND:
 		isst_resume_common();
-		break;
-	default:
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct notifier_block isst_pm_nb = {
-	.notifier_call = isst_pm_notify,
-};
+अटल काष्ठा notअगरier_block isst_pm_nb = अणु
+	.notअगरier_call = isst_pm_notअगरy,
+पूर्ण;
 
-static const struct x86_cpu_id isst_if_cpu_ids[] = {
-	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE_X, NULL),
-	{}
-};
-MODULE_DEVICE_TABLE(x86cpu, isst_if_cpu_ids);
+अटल स्थिर काष्ठा x86_cpu_id isst_अगर_cpu_ids[] = अणु
+	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE_X, शून्य),
+	अणुपूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(x86cpu, isst_अगर_cpu_ids);
 
-static int __init isst_if_mbox_init(void)
-{
-	struct isst_if_cmd_cb cb;
-	const struct x86_cpu_id *id;
+अटल पूर्णांक __init isst_अगर_mbox_init(व्योम)
+अणु
+	काष्ठा isst_अगर_cmd_cb cb;
+	स्थिर काष्ठा x86_cpu_id *id;
 	u64 data;
-	int ret;
+	पूर्णांक ret;
 
-	id = x86_match_cpu(isst_if_cpu_ids);
-	if (!id)
-		return -ENODEV;
+	id = x86_match_cpu(isst_अगर_cpu_ids);
+	अगर (!id)
+		वापस -ENODEV;
 
 	/* Check presence of mailbox MSRs */
 	ret = rdmsrl_safe(MSR_OS_MAILBOX_INTERFACE, &data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = rdmsrl_safe(MSR_OS_MAILBOX_DATA, &data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memset(&cb, 0, sizeof(cb));
-	cb.cmd_size = sizeof(struct isst_if_mbox_cmd);
-	cb.offset = offsetof(struct isst_if_mbox_cmds, mbox_cmd);
-	cb.cmd_callback = isst_if_mbox_proc_cmd;
+	स_रखो(&cb, 0, माप(cb));
+	cb.cmd_size = माप(काष्ठा isst_अगर_mbox_cmd);
+	cb.offset = दुरत्व(काष्ठा isst_अगर_mbox_cmds, mbox_cmd);
+	cb.cmd_callback = isst_अगर_mbox_proc_cmd;
 	cb.owner = THIS_MODULE;
-	ret = isst_if_cdev_register(ISST_IF_DEV_MBOX, &cb);
-	if (ret)
-		return ret;
+	ret = isst_अगर_cdev_रेजिस्टर(ISST_IF_DEV_MBOX, &cb);
+	अगर (ret)
+		वापस ret;
 
-	ret = register_pm_notifier(&isst_pm_nb);
-	if (ret)
-		isst_if_cdev_unregister(ISST_IF_DEV_MBOX);
+	ret = रेजिस्टर_pm_notअगरier(&isst_pm_nb);
+	अगर (ret)
+		isst_अगर_cdev_unरेजिस्टर(ISST_IF_DEV_MBOX);
 
-	return ret;
-}
-module_init(isst_if_mbox_init)
+	वापस ret;
+पूर्ण
+module_init(isst_अगर_mbox_init)
 
-static void __exit isst_if_mbox_exit(void)
-{
-	unregister_pm_notifier(&isst_pm_nb);
-	isst_if_cdev_unregister(ISST_IF_DEV_MBOX);
-}
-module_exit(isst_if_mbox_exit)
+अटल व्योम __निकास isst_अगर_mbox_निकास(व्योम)
+अणु
+	unरेजिस्टर_pm_notअगरier(&isst_pm_nb);
+	isst_अगर_cdev_unरेजिस्टर(ISST_IF_DEV_MBOX);
+पूर्ण
+module_निकास(isst_अगर_mbox_निकास)
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Intel speed select interface mailbox driver");

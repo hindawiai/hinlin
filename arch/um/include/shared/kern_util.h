@@ -1,73 +1,74 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#ifndef __KERN_UTIL_H__
-#define __KERN_UTIL_H__
+#अगर_अघोषित __KERN_UTIL_H__
+#घोषणा __KERN_UTIL_H__
 
-#include <sysdep/ptrace.h>
-#include <sysdep/faultinfo.h>
+#समावेश <sysdep/ptrace.h>
+#समावेश <sysdep/faultinfo.h>
 
-struct siginfo;
+काष्ठा siginfo;
 
-extern int uml_exitcode;
+बाह्य पूर्णांक uml_निकासcode;
 
-extern int ncpus;
-extern int kmalloc_ok;
+बाह्य पूर्णांक ncpus;
+बाह्य पूर्णांक kदो_स्मृति_ok;
 
-#define UML_ROUND_UP(addr) \
-	((((unsigned long) addr) + PAGE_SIZE - 1) & PAGE_MASK)
+#घोषणा UML_ROUND_UP(addr) \
+	((((अचिन्हित दीर्घ) addr) + PAGE_SIZE - 1) & PAGE_MASK)
 
-extern unsigned long alloc_stack(int order, int atomic);
-extern void free_stack(unsigned long stack, int order);
+बाह्य अचिन्हित दीर्घ alloc_stack(पूर्णांक order, पूर्णांक atomic);
+बाह्य व्योम मुक्त_stack(अचिन्हित दीर्घ stack, पूर्णांक order);
 
-struct pt_regs;
-extern void do_signal(struct pt_regs *regs);
-extern void interrupt_end(void);
-extern void relay_signal(int sig, struct siginfo *si, struct uml_pt_regs *regs);
+काष्ठा pt_regs;
+बाह्य व्योम करो_संकेत(काष्ठा pt_regs *regs);
+बाह्य व्योम पूर्णांकerrupt_end(व्योम);
+बाह्य व्योम relay_संकेत(पूर्णांक sig, काष्ठा siginfo *si, काष्ठा uml_pt_regs *regs);
 
-extern unsigned long segv(struct faultinfo fi, unsigned long ip,
-			  int is_user, struct uml_pt_regs *regs);
-extern int handle_page_fault(unsigned long address, unsigned long ip,
-			     int is_write, int is_user, int *code_out);
+बाह्य अचिन्हित दीर्घ segv(काष्ठा faultinfo fi, अचिन्हित दीर्घ ip,
+			  पूर्णांक is_user, काष्ठा uml_pt_regs *regs);
+बाह्य पूर्णांक handle_page_fault(अचिन्हित दीर्घ address, अचिन्हित दीर्घ ip,
+			     पूर्णांक is_ग_लिखो, पूर्णांक is_user, पूर्णांक *code_out);
 
-extern unsigned int do_IRQ(int irq, struct uml_pt_regs *regs);
-extern int smp_sigio_handler(void);
-extern void initial_thread_cb(void (*proc)(void *), void *arg);
-extern int is_syscall(unsigned long addr);
+बाह्य अचिन्हित पूर्णांक करो_IRQ(पूर्णांक irq, काष्ठा uml_pt_regs *regs);
+बाह्य पूर्णांक smp_sigio_handler(व्योम);
+बाह्य व्योम initial_thपढ़ो_cb(व्योम (*proc)(व्योम *), व्योम *arg);
+बाह्य पूर्णांक is_syscall(अचिन्हित दीर्घ addr);
 
-extern void timer_handler(int sig, struct siginfo *unused_si, struct uml_pt_regs *regs);
+बाह्य व्योम समयr_handler(पूर्णांक sig, काष्ठा siginfo *unused_si, काष्ठा uml_pt_regs *regs);
 
-extern void uml_pm_wake(void);
+बाह्य व्योम uml_pm_wake(व्योम);
 
-extern int start_uml(void);
-extern void paging_init(void);
+बाह्य पूर्णांक start_uml(व्योम);
+बाह्य व्योम paging_init(व्योम);
 
-extern void uml_cleanup(void);
-extern void do_uml_exitcalls(void);
+बाह्य व्योम uml_cleanup(व्योम);
+बाह्य व्योम करो_uml_निकासcalls(व्योम);
 
 /*
  * Are we disallowed to sleep? Used to choose between GFP_KERNEL and
  * GFP_ATOMIC.
  */
-extern int __cant_sleep(void);
-extern int get_current_pid(void);
-extern int copy_from_user_proc(void *to, void *from, int size);
-extern int cpu(void);
-extern char *uml_strdup(const char *string);
+बाह्य पूर्णांक __cant_sleep(व्योम);
+बाह्य पूर्णांक get_current_pid(व्योम);
+बाह्य पूर्णांक copy_from_user_proc(व्योम *to, व्योम *from, पूर्णांक size);
+बाह्य पूर्णांक cpu(व्योम);
+बाह्य अक्षर *uml_strdup(स्थिर अक्षर *string);
 
-extern unsigned long to_irq_stack(unsigned long *mask_out);
-extern unsigned long from_irq_stack(int nested);
+बाह्य अचिन्हित दीर्घ to_irq_stack(अचिन्हित दीर्घ *mask_out);
+बाह्य अचिन्हित दीर्घ from_irq_stack(पूर्णांक nested);
 
-extern void syscall_trace(struct uml_pt_regs *regs, int entryexit);
-extern int singlestepping(void *t);
+बाह्य व्योम syscall_trace(काष्ठा uml_pt_regs *regs, पूर्णांक entryनिकास);
+बाह्य पूर्णांक singlestepping(व्योम *t);
 
-extern void segv_handler(int sig, struct siginfo *unused_si, struct uml_pt_regs *regs);
-extern void bus_handler(int sig, struct siginfo *si, struct uml_pt_regs *regs);
-extern void winch(int sig, struct siginfo *unused_si, struct uml_pt_regs *regs);
-extern void fatal_sigsegv(void) __attribute__ ((noreturn));
+बाह्य व्योम segv_handler(पूर्णांक sig, काष्ठा siginfo *unused_si, काष्ठा uml_pt_regs *regs);
+बाह्य व्योम bus_handler(पूर्णांक sig, काष्ठा siginfo *si, काष्ठा uml_pt_regs *regs);
+बाह्य व्योम winch(पूर्णांक sig, काष्ठा siginfo *unused_si, काष्ठा uml_pt_regs *regs);
+बाह्य व्योम fatal_sigsegv(व्योम) __attribute__ ((noवापस));
 
-void um_idle_sleep(void);
+व्योम um_idle_sleep(व्योम);
 
-#endif
+#पूर्ण_अगर

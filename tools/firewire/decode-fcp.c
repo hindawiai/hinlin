@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/firewire-constants.h>
-#include <stdio.h>
-#include <stdlib.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/firewire-स्थिरants.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
 
-#include "list.h"
-#include "nosy-dump.h"
+#समावेश "list.h"
+#समावेश "nosy-dump.h"
 
-#define CSR_FCP_COMMAND			0xfffff0000b00ull
-#define CSR_FCP_RESPONSE		0xfffff0000d00ull
+#घोषणा CSR_FCP_COMMAND			0xfffff0000b00ull
+#घोषणा CSR_FCP_RESPONSE		0xfffff0000d00ull
 
-static const char * const ctype_names[] = {
+अटल स्थिर अक्षर * स्थिर ctype_names[] = अणु
 	[0x0] = "control",		[0x8] = "not implemented",
 	[0x1] = "status",		[0x9] = "accepted",
 	[0x2] = "specific inquiry",	[0xa] = "rejected",
@@ -18,9 +19,9 @@ static const char * const ctype_names[] = {
 	[0x5] = "(reserved 0x05)",	[0xd] = "changed",
 	[0x6] = "(reserved 0x06)",	[0xe] = "(reserved 0x0e)",
 	[0x7] = "(reserved 0x07)",	[0xf] = "interim",
-};
+पूर्ण;
 
-static const char * const subunit_type_names[] = {
+अटल स्थिर अक्षर * स्थिर subunit_type_names[] = अणु
 	[0x00] = "monitor",		[0x10] = "(reserved 0x10)",
 	[0x01] = "audio",		[0x11] = "(reserved 0x11)",
 	[0x02] = "printer",		[0x12] = "(reserved 0x12)",
@@ -37,178 +38,178 @@ static const char * const subunit_type_names[] = {
 	[0x0d] = "(reserved 0x0d)",	[0x1d] = "all subunit types",
 	[0x0e] = "(reserved 0x0e)",	[0x1e] = "subunit_type extended to next byte",
 	[0x0f] = "(reserved 0x0f)",	[0x1f] = "unit",
-};
+पूर्ण;
 
-struct avc_enum {
-	int value;
-	const char *name;
-};
+काष्ठा avc_क्रमागत अणु
+	पूर्णांक value;
+	स्थिर अक्षर *name;
+पूर्ण;
 
-struct avc_field {
-	const char *name;	/* Short name for field. */
-	int offset;		/* Location of field, specified in bits; */
+काष्ठा avc_field अणु
+	स्थिर अक्षर *name;	/* Short name क्रम field. */
+	पूर्णांक offset;		/* Location of field, specअगरied in bits; */
 				/* negative means from end of packet.    */
-	int width;		/* Width of field, 0 means use data_length. */
-	struct avc_enum *names;
-};
+	पूर्णांक width;		/* Width of field, 0 means use data_length. */
+	काष्ठा avc_क्रमागत *names;
+पूर्ण;
 
-struct avc_opcode_info {
-	const char *name;
-	struct avc_field fields[8];
-};
+काष्ठा avc_opcode_info अणु
+	स्थिर अक्षर *name;
+	काष्ठा avc_field fields[8];
+पूर्ण;
 
-struct avc_enum power_field_names[] = {
-	{ 0x70, "on" },
-	{ 0x60, "off" },
-	{ }
-};
+काष्ठा avc_क्रमागत घातer_field_names[] = अणु
+	अणु 0x70, "on" पूर्ण,
+	अणु 0x60, "off" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static const struct avc_opcode_info opcode_info[256] = {
+अटल स्थिर काष्ठा avc_opcode_info opcode_info[256] = अणु
 
 	/* TA Document 1999026 */
-	/* AV/C Digital Interface Command Set General Specification 4.0 */
-	[0xb2] = { "power", {
-			{ "state", 0, 8, power_field_names }
-		}
-	},
-	[0x30] = { "unit info", {
-			{ "foo", 0, 8 },
-			{ "unit_type", 8, 5 },
-			{ "unit", 13, 3 },
-			{ "company id", 16, 24 },
-		}
-	},
-	[0x31] = { "subunit info" },
-	[0x01] = { "reserve" },
-	[0xb0] = { "version" },
-	[0x00] = { "vendor dependent" },
-	[0x02] = { "plug info" },
-	[0x12] = { "channel usage" },
-	[0x24] = { "connect" },
-	[0x20] = { "connect av" },
-	[0x22] = { "connections" },
-	[0x11] = { "digital input" },
-	[0x10] = { "digital output" },
-	[0x25] = { "disconnect" },
-	[0x21] = { "disconnect av" },
-	[0x19] = { "input plug signal format" },
-	[0x18] = { "output plug signal format" },
-	[0x1f] = { "general bus setup" },
+	/* AV/C Digital Interface Command Set General Specअगरication 4.0 */
+	[0xb2] = अणु "power", अणु
+			अणु "state", 0, 8, घातer_field_names पूर्ण
+		पूर्ण
+	पूर्ण,
+	[0x30] = अणु "unit info", अणु
+			अणु "foo", 0, 8 पूर्ण,
+			अणु "unit_type", 8, 5 पूर्ण,
+			अणु "unit", 13, 3 पूर्ण,
+			अणु "company id", 16, 24 पूर्ण,
+		पूर्ण
+	पूर्ण,
+	[0x31] = अणु "subunit info" पूर्ण,
+	[0x01] = अणु "reserve" पूर्ण,
+	[0xb0] = अणु "version" पूर्ण,
+	[0x00] = अणु "vendor dependent" पूर्ण,
+	[0x02] = अणु "plug info" पूर्ण,
+	[0x12] = अणु "channel usage" पूर्ण,
+	[0x24] = अणु "connect" पूर्ण,
+	[0x20] = अणु "connect av" पूर्ण,
+	[0x22] = अणु "connections" पूर्ण,
+	[0x11] = अणु "digital input" पूर्ण,
+	[0x10] = अणु "digital output" पूर्ण,
+	[0x25] = अणु "disconnect" पूर्ण,
+	[0x21] = अणु "disconnect av" पूर्ण,
+	[0x19] = अणु "input plug signal format" पूर्ण,
+	[0x18] = अणु "output plug signal format" पूर्ण,
+	[0x1f] = अणु "general bus setup" पूर्ण,
 
 	/* TA Document 1999025 */
-	/* AV/C Descriptor Mechanism Specification Version 1.0 */
-	[0x0c] = { "create descriptor" },
-	[0x08] = { "open descriptor" },
-	[0x09] = { "read descriptor" },
-	[0x0a] = { "write descriptor" },
-	[0x05] = { "open info block" },
-	[0x06] = { "read info block" },
-	[0x07] = { "write info block" },
-	[0x0b] = { "search descriptor" },
-	[0x0d] = { "object number select" },
+	/* AV/C Descriptor Mechanism Specअगरication Version 1.0 */
+	[0x0c] = अणु "create descriptor" पूर्ण,
+	[0x08] = अणु "open descriptor" पूर्ण,
+	[0x09] = अणु "read descriptor" पूर्ण,
+	[0x0a] = अणु "write descriptor" पूर्ण,
+	[0x05] = अणु "open info block" पूर्ण,
+	[0x06] = अणु "read info block" पूर्ण,
+	[0x07] = अणु "write info block" पूर्ण,
+	[0x0b] = अणु "search descriptor" पूर्ण,
+	[0x0d] = अणु "object number select" पूर्ण,
 
 	/* TA Document 1999015 */
-	/* AV/C Command Set for Rate Control of Isochronous Data Flow 1.0 */
-	[0xb3] = { "rate", {
-			{ "subfunction", 0, 8 },
-			{ "result", 8, 8 },
-			{ "plug_type", 16, 8 },
-			{ "plug_id", 16, 8 },
-		}
-	},
+	/* AV/C Command Set क्रम Rate Control of Isochronous Data Flow 1.0 */
+	[0xb3] = अणु "rate", अणु
+			अणु "subfunction", 0, 8 पूर्ण,
+			अणु "result", 8, 8 पूर्ण,
+			अणु "plug_type", 16, 8 पूर्ण,
+			अणु "plug_id", 16, 8 पूर्ण,
+		पूर्ण
+	पूर्ण,
 
 	/* TA Document 1999008 */
-	/* AV/C Audio Subunit Specification 1.0 */
-	[0xb8] = { "function block" },
+	/* AV/C Audio Subunit Specअगरication 1.0 */
+	[0xb8] = अणु "function block" पूर्ण,
 
 	/* TA Document 2001001 */
-	/* AV/C Panel Subunit Specification 1.1 */
-	[0x7d] = { "gui update" },
-	[0x7e] = { "push gui data" },
-	[0x7f] = { "user action" },
-	[0x7c] = { "pass through" },
+	/* AV/C Panel Subunit Specअगरication 1.1 */
+	[0x7d] = अणु "gui update" पूर्ण,
+	[0x7e] = अणु "push gui data" पूर्ण,
+	[0x7f] = अणु "user action" पूर्ण,
+	[0x7c] = अणु "pass through" पूर्ण,
 
 	/* */
-	[0x26] = { "asynchronous connection" },
-};
+	[0x26] = अणु "asynchronous connection" पूर्ण,
+पूर्ण;
 
-struct avc_frame {
-	uint32_t operand0:8;
-	uint32_t opcode:8;
-	uint32_t subunit_id:3;
-	uint32_t subunit_type:5;
-	uint32_t ctype:4;
-	uint32_t cts:4;
-};
+काष्ठा avc_frame अणु
+	uपूर्णांक32_t opeअक्रम0:8;
+	uपूर्णांक32_t opcode:8;
+	uपूर्णांक32_t subunit_id:3;
+	uपूर्णांक32_t subunit_type:5;
+	uपूर्णांक32_t ctype:4;
+	uपूर्णांक32_t cts:4;
+पूर्ण;
 
-static void
-decode_avc(struct link_transaction *t)
-{
-	struct avc_frame *frame =
-	    (struct avc_frame *) t->request->packet.write_block.data;
-	const struct avc_opcode_info *info;
-	const char *name;
-	char buffer[32];
-	int i;
+अटल व्योम
+decode_avc(काष्ठा link_transaction *t)
+अणु
+	काष्ठा avc_frame *frame =
+	    (काष्ठा avc_frame *) t->request->packet.ग_लिखो_block.data;
+	स्थिर काष्ठा avc_opcode_info *info;
+	स्थिर अक्षर *name;
+	अक्षर buffer[32];
+	पूर्णांक i;
 
 	info = &opcode_info[frame->opcode];
-	if (info->name == NULL) {
-		snprintf(buffer, sizeof(buffer),
+	अगर (info->name == शून्य) अणु
+		snम_लिखो(buffer, माप(buffer),
 			 "(unknown opcode 0x%02x)", frame->opcode);
 		name = buffer;
-	} else {
+	पूर्ण अन्यथा अणु
 		name = info->name;
-	}
+	पूर्ण
 
-	printf("av/c %s, subunit_type=%s, subunit_id=%d, opcode=%s",
+	म_लिखो("av/c %s, subunit_type=%s, subunit_id=%d, opcode=%s",
 	    ctype_names[frame->ctype], subunit_type_names[frame->subunit_type],
 	    frame->subunit_id, name);
 
-	for (i = 0; info->fields[i].name != NULL; i++)
-		printf(", %s", info->fields[i].name);
+	क्रम (i = 0; info->fields[i].name != शून्य; i++)
+		म_लिखो(", %s", info->fields[i].name);
 
-	printf("\n");
-}
+	म_लिखो("\n");
+पूर्ण
 
-int
-decode_fcp(struct link_transaction *t)
-{
-	struct avc_frame *frame =
-	    (struct avc_frame *) t->request->packet.write_block.data;
-	unsigned long long offset =
-	    ((unsigned long long) t->request->packet.common.offset_high << 32) |
+पूर्णांक
+decode_fcp(काष्ठा link_transaction *t)
+अणु
+	काष्ठा avc_frame *frame =
+	    (काष्ठा avc_frame *) t->request->packet.ग_लिखो_block.data;
+	अचिन्हित दीर्घ दीर्घ offset =
+	    ((अचिन्हित दीर्घ दीर्घ) t->request->packet.common.offset_high << 32) |
 	    t->request->packet.common.offset_low;
 
-	if (t->request->packet.common.tcode != TCODE_WRITE_BLOCK_REQUEST)
-		return 0;
+	अगर (t->request->packet.common.tcode != TCODE_WRITE_BLOCK_REQUEST)
+		वापस 0;
 
-	if (offset == CSR_FCP_COMMAND || offset == CSR_FCP_RESPONSE) {
-		switch (frame->cts) {
-		case 0x00:
+	अगर (offset == CSR_FCP_COMMAND || offset == CSR_FCP_RESPONSE) अणु
+		चयन (frame->cts) अणु
+		हाल 0x00:
 			decode_avc(t);
-			break;
-		case 0x01:
-			printf("cal fcp frame (cts=0x01)\n");
-			break;
-		case 0x02:
-			printf("ehs fcp frame (cts=0x02)\n");
-			break;
-		case 0x03:
-			printf("havi fcp frame (cts=0x03)\n");
-			break;
-		case 0x0e:
-			printf("vendor specific fcp frame (cts=0x0e)\n");
-			break;
-		case 0x0f:
-			printf("extended cts\n");
-			break;
-		default:
-			printf("reserved fcp frame (ctx=0x%02x)\n", frame->cts);
-			break;
-		}
-		return 1;
-	}
+			अवरोध;
+		हाल 0x01:
+			म_लिखो("cal fcp frame (cts=0x01)\n");
+			अवरोध;
+		हाल 0x02:
+			म_लिखो("ehs fcp frame (cts=0x02)\n");
+			अवरोध;
+		हाल 0x03:
+			म_लिखो("havi fcp frame (cts=0x03)\n");
+			अवरोध;
+		हाल 0x0e:
+			म_लिखो("vendor specific fcp frame (cts=0x0e)\n");
+			अवरोध;
+		हाल 0x0f:
+			म_लिखो("extended cts\n");
+			अवरोध;
+		शेष:
+			म_लिखो("reserved fcp frame (ctx=0x%02x)\n", frame->cts);
+			अवरोध;
+		पूर्ण
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

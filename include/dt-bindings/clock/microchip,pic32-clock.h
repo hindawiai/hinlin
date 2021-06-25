@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Purna Chandra Mandal,<purna.mandal@microchip.com>
  * Copyright (C) 2015 Microchip Technology Inc.  All rights reserved.
  */
 
-#ifndef _DT_BINDINGS_CLK_MICROCHIP_PIC32_H_
-#define _DT_BINDINGS_CLK_MICROCHIP_PIC32_H_
+#अगर_अघोषित _DT_BINDINGS_CLK_MICROCHIP_PIC32_H_
+#घोषणा _DT_BINDINGS_CLK_MICROCHIP_PIC32_H_
 
-/* clock output indices */
-#define POSCCLK		0
-#define FRCCLK		1
-#define BFRCCLK		2
-#define LPRCCLK		3
-#define SOSCCLK		4
-#define FRCDIVCLK	5
-#define PLLCLK		6
-#define SCLK		7
-#define PB1CLK		8
-#define PB2CLK		9
-#define PB3CLK		10
-#define PB4CLK		11
-#define PB5CLK		12
-#define PB6CLK		13
-#define PB7CLK		14
-#define REF1CLK		15
-#define REF2CLK		16
-#define REF3CLK		17
-#define REF4CLK		18
-#define REF5CLK		19
-#define UPLLCLK		20
-#define MAXCLKS		21
+/* घड़ी output indices */
+#घोषणा POSCCLK		0
+#घोषणा FRCCLK		1
+#घोषणा BFRCCLK		2
+#घोषणा LPRCCLK		3
+#घोषणा SOSCCLK		4
+#घोषणा FRCDIVCLK	5
+#घोषणा PLLCLK		6
+#घोषणा SCLK		7
+#घोषणा PB1CLK		8
+#घोषणा PB2CLK		9
+#घोषणा PB3CLK		10
+#घोषणा PB4CLK		11
+#घोषणा PB5CLK		12
+#घोषणा PB6CLK		13
+#घोषणा PB7CLK		14
+#घोषणा REF1CLK		15
+#घोषणा REF2CLK		16
+#घोषणा REF3CLK		17
+#घोषणा REF4CLK		18
+#घोषणा REF5CLK		19
+#घोषणा UPLLCLK		20
+#घोषणा MAXCLKS		21
 
-#endif	/* _DT_BINDINGS_CLK_MICROCHIP_PIC32_H_ */
+#पूर्ण_अगर	/* _DT_BINDINGS_CLK_MICROCHIP_PIC32_H_ */

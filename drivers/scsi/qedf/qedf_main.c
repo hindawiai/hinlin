@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  QLogic FCoE Offload Driver
  *  Copyright (c) 2016-2018 Cavium Inc.
  */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/device.h>
-#include <linux/highmem.h>
-#include <linux/crc32.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/kthread.h>
-#include <linux/phylink.h>
-#include <scsi/libfc.h>
-#include <scsi/scsi_host.h>
-#include <scsi/fc_frame.h>
-#include <linux/if_ether.h>
-#include <linux/if_vlan.h>
-#include <linux/cpu.h>
-#include "qedf.h"
-#include "qedf_dbg.h"
-#include <uapi/linux/pci_regs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/device.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/crc32.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/phylink.h>
+#समावेश <scsi/libfc.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/fc_frame.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/cpu.h>
+#समावेश "qedf.h"
+#समावेश "qedf_dbg.h"
+#समावेश <uapi/linux/pci_regs.h>
 
-const struct qed_fcoe_ops *qed_ops;
+स्थिर काष्ठा qed_fcoe_ops *qed_ops;
 
-static int qedf_probe(struct pci_dev *pdev, const struct pci_device_id *id);
-static void qedf_remove(struct pci_dev *pdev);
-static void qedf_shutdown(struct pci_dev *pdev);
-static void qedf_schedule_recovery_handler(void *dev);
-static void qedf_recovery_handler(struct work_struct *work);
+अटल पूर्णांक qedf_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id);
+अटल व्योम qedf_हटाओ(काष्ठा pci_dev *pdev);
+अटल व्योम qedf_shutकरोwn(काष्ठा pci_dev *pdev);
+अटल व्योम qedf_schedule_recovery_handler(व्योम *dev);
+अटल व्योम qedf_recovery_handler(काष्ठा work_काष्ठा *work);
 
 /*
  * Driver module parameters.
  */
-static unsigned int qedf_dev_loss_tmo = 60;
-module_param_named(dev_loss_tmo, qedf_dev_loss_tmo, int, S_IRUGO);
-MODULE_PARM_DESC(dev_loss_tmo,  " dev_loss_tmo setting for attached "
+अटल अचिन्हित पूर्णांक qedf_dev_loss_पंचांगo = 60;
+module_param_named(dev_loss_पंचांगo, qedf_dev_loss_पंचांगo, पूर्णांक, S_IRUGO);
+MODULE_PARM_DESC(dev_loss_पंचांगo,  " dev_loss_tmo setting for attached "
 	"remote ports (default 60)");
 
-uint qedf_debug = QEDF_LOG_INFO;
-module_param_named(debug, qedf_debug, uint, S_IRUGO|S_IWUSR);
+uपूर्णांक qedf_debug = QEDF_LOG_INFO;
+module_param_named(debug, qedf_debug, uपूर्णांक, S_IRUGO|S_IWUSR);
 MODULE_PARM_DESC(debug, " Debug mask. Pass '1' to enable default debugging"
 	" mask");
 
-static uint qedf_fipvlan_retries = 60;
-module_param_named(fipvlan_retries, qedf_fipvlan_retries, int, S_IRUGO);
+अटल uपूर्णांक qedf_fipvlan_retries = 60;
+module_param_named(fipvlan_retries, qedf_fipvlan_retries, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(fipvlan_retries, " Number of FIP VLAN requests to attempt "
 	"before giving up (default 60)");
 
-static uint qedf_fallback_vlan = QEDF_FALLBACK_VLAN;
-module_param_named(fallback_vlan, qedf_fallback_vlan, int, S_IRUGO);
+अटल uपूर्णांक qedf_fallback_vlan = QEDF_FALLBACK_VLAN;
+module_param_named(fallback_vlan, qedf_fallback_vlan, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(fallback_vlan, " VLAN ID to try if fip vlan request fails "
 	"(default 1002).");
 
-static int qedf_default_prio = -1;
-module_param_named(default_prio, qedf_default_prio, int, S_IRUGO);
-MODULE_PARM_DESC(default_prio, " Override 802.1q priority for FIP and FCoE"
+अटल पूर्णांक qedf_शेष_prio = -1;
+module_param_named(शेष_prio, qedf_शेष_prio, पूर्णांक, S_IRUGO);
+MODULE_PARM_DESC(शेष_prio, " Override 802.1q priority for FIP and FCoE"
 	" traffic (value between 0 and 7, default 3).");
 
-uint qedf_dump_frames;
-module_param_named(dump_frames, qedf_dump_frames, int, S_IRUGO | S_IWUSR);
+uपूर्णांक qedf_dump_frames;
+module_param_named(dump_frames, qedf_dump_frames, पूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(dump_frames, " Print the skb data of FIP and FCoE frames "
 	"(default off)");
 
-static uint qedf_queue_depth;
-module_param_named(queue_depth, qedf_queue_depth, int, S_IRUGO);
+अटल uपूर्णांक qedf_queue_depth;
+module_param_named(queue_depth, qedf_queue_depth, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(queue_depth, " Sets the queue depth for all LUNs discovered "
 	"by the qedf driver. Default is 0 (use OS default).");
 
-uint qedf_io_tracing;
-module_param_named(io_tracing, qedf_io_tracing, int, S_IRUGO | S_IWUSR);
+uपूर्णांक qedf_io_tracing;
+module_param_named(io_tracing, qedf_io_tracing, पूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(io_tracing, " Enable logging of SCSI requests/completions "
 	"into trace buffer. (default off).");
 
-static uint qedf_max_lun = MAX_FIBRE_LUNS;
-module_param_named(max_lun, qedf_max_lun, int, S_IRUGO);
+अटल uपूर्णांक qedf_max_lun = MAX_FIBRE_LUNS;
+module_param_named(max_lun, qedf_max_lun, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(max_lun, " Sets the maximum luns per target that the driver "
 	"supports. (default 0xffffffff)");
 
-uint qedf_link_down_tmo;
-module_param_named(link_down_tmo, qedf_link_down_tmo, int, S_IRUGO);
-MODULE_PARM_DESC(link_down_tmo, " Delays informing the fcoe transport that the "
+uपूर्णांक qedf_link_करोwn_पंचांगo;
+module_param_named(link_करोwn_पंचांगo, qedf_link_करोwn_पंचांगo, पूर्णांक, S_IRUGO);
+MODULE_PARM_DESC(link_करोwn_पंचांगo, " Delays informing the fcoe transport that the "
 	"link is down by N seconds.");
 
 bool qedf_retry_delay;
@@ -90,104 +91,104 @@ module_param_named(retry_delay, qedf_retry_delay, bool, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(retry_delay, " Enable/disable handling of FCP_RSP IU retry "
 	"delay handling (default off).");
 
-static bool qedf_dcbx_no_wait;
-module_param_named(dcbx_no_wait, qedf_dcbx_no_wait, bool, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(dcbx_no_wait, " Do not wait for DCBX convergence to start "
+अटल bool qedf_dcbx_no_रुको;
+module_param_named(dcbx_no_रुको, qedf_dcbx_no_रुको, bool, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(dcbx_no_रुको, " Do not wait for DCBX convergence to start "
 	"sending FIP VLAN requests on link up (Default: off).");
 
-static uint qedf_dp_module;
-module_param_named(dp_module, qedf_dp_module, uint, S_IRUGO);
+अटल uपूर्णांक qedf_dp_module;
+module_param_named(dp_module, qedf_dp_module, uपूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(dp_module, " bit flags control for verbose printk passed "
 	"qed module during probe.");
 
-static uint qedf_dp_level = QED_LEVEL_NOTICE;
-module_param_named(dp_level, qedf_dp_level, uint, S_IRUGO);
+अटल uपूर्णांक qedf_dp_level = QED_LEVEL_NOTICE;
+module_param_named(dp_level, qedf_dp_level, uपूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(dp_level, " printk verbosity control passed to qed module  "
 	"during probe (0-3: 0 more verbose).");
 
-static bool qedf_enable_recovery = true;
+अटल bool qedf_enable_recovery = true;
 module_param_named(enable_recovery, qedf_enable_recovery,
 		bool, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(enable_recovery, "Enable/disable recovery on driver/firmware "
 		"interface level errors 0 = Disabled, 1 = Enabled (Default: 1).");
 
-struct workqueue_struct *qedf_io_wq;
+काष्ठा workqueue_काष्ठा *qedf_io_wq;
 
-static struct fcoe_percpu_s qedf_global;
-static DEFINE_SPINLOCK(qedf_global_lock);
+अटल काष्ठा fcoe_percpu_s qedf_global;
+अटल DEFINE_SPINLOCK(qedf_global_lock);
 
-static struct kmem_cache *qedf_io_work_cache;
+अटल काष्ठा kmem_cache *qedf_io_work_cache;
 
-void qedf_set_vlan_id(struct qedf_ctx *qedf, int vlan_id)
-{
-	int vlan_id_tmp = 0;
+व्योम qedf_set_vlan_id(काष्ठा qedf_ctx *qedf, पूर्णांक vlan_id)
+अणु
+	पूर्णांक vlan_id_पंचांगp = 0;
 
-	vlan_id_tmp = vlan_id  | (qedf->prio << VLAN_PRIO_SHIFT);
-	qedf->vlan_id = vlan_id_tmp;
+	vlan_id_पंचांगp = vlan_id  | (qedf->prio << VLAN_PRIO_SHIFT);
+	qedf->vlan_id = vlan_id_पंचांगp;
 	QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC,
 		  "Setting vlan_id=0x%04x prio=%d.\n",
-		  vlan_id_tmp, qedf->prio);
-}
+		  vlan_id_पंचांगp, qedf->prio);
+पूर्ण
 
-/* Returns true if we have a valid vlan, false otherwise */
-static bool qedf_initiate_fipvlan_req(struct qedf_ctx *qedf)
-{
+/* Returns true अगर we have a valid vlan, false otherwise */
+अटल bool qedf_initiate_fipvlan_req(काष्ठा qedf_ctx *qedf)
+अणु
 
-	while (qedf->fipvlan_retries--) {
-		/* This is to catch if link goes down during fipvlan retries */
-		if (atomic_read(&qedf->link_state) == QEDF_LINK_DOWN) {
+	जबतक (qedf->fipvlan_retries--) अणु
+		/* This is to catch अगर link goes करोwn during fipvlan retries */
+		अगर (atomic_पढ़ो(&qedf->link_state) == QEDF_LINK_DOWN) अणु
 			QEDF_ERR(&qedf->dbg_ctx, "Link not up.\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (test_bit(QEDF_UNLOADING, &qedf->flags)) {
+		अगर (test_bit(QEDF_UNLOADING, &qedf->flags)) अणु
 			QEDF_ERR(&qedf->dbg_ctx, "Driver unloading.\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (qedf->vlan_id > 0) {
+		अगर (qedf->vlan_id > 0) अणु
 			QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC,
 				  "vlan = 0x%x already set, calling ctlr_link_up.\n",
 				  qedf->vlan_id);
-			if (atomic_read(&qedf->link_state) == QEDF_LINK_UP)
+			अगर (atomic_पढ़ो(&qedf->link_state) == QEDF_LINK_UP)
 				fcoe_ctlr_link_up(&qedf->ctlr);
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			   "Retry %d.\n", qedf->fipvlan_retries);
 		init_completion(&qedf->fipvlan_compl);
 		qedf_fcoe_send_vlan_req(qedf);
-		wait_for_completion_timeout(&qedf->fipvlan_compl, 1 * HZ);
-	}
+		रुको_क्रम_completion_समयout(&qedf->fipvlan_compl, 1 * HZ);
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void qedf_handle_link_update(struct work_struct *work)
-{
-	struct qedf_ctx *qedf =
-	    container_of(work, struct qedf_ctx, link_update.work);
-	int rc;
+अटल व्योम qedf_handle_link_update(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qedf_ctx *qedf =
+	    container_of(work, काष्ठा qedf_ctx, link_update.work);
+	पूर्णांक rc;
 
 	QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC, "Entered. link_state=%d.\n",
-		  atomic_read(&qedf->link_state));
+		  atomic_पढ़ो(&qedf->link_state));
 
-	if (atomic_read(&qedf->link_state) == QEDF_LINK_UP) {
+	अगर (atomic_पढ़ो(&qedf->link_state) == QEDF_LINK_UP) अणु
 		rc = qedf_initiate_fipvlan_req(qedf);
-		if (rc)
-			return;
+		अगर (rc)
+			वापस;
 
-		if (atomic_read(&qedf->link_state) != QEDF_LINK_UP) {
+		अगर (atomic_पढ़ो(&qedf->link_state) != QEDF_LINK_UP) अणु
 			QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC,
 				  "Link is down, resetting vlan_id.\n");
 			qedf->vlan_id = 0;
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		/*
 		 * If we get here then we never received a repsonse to our
-		 * fip vlan request so set the vlan_id to the default and
+		 * fip vlan request so set the vlan_id to the शेष and
 		 * tell FCoE that the link is up
 		 */
 		QEDF_WARN(&(qedf->dbg_ctx), "Did not receive FIP VLAN "
@@ -201,51 +202,51 @@ static void qedf_handle_link_update(struct work_struct *work)
 		 */
 		eth_zero_addr(qedf->data_src_addr);
 		fcoe_ctlr_link_up(&qedf->ctlr);
-	} else if (atomic_read(&qedf->link_state) == QEDF_LINK_DOWN) {
+	पूर्ण अन्यथा अगर (atomic_पढ़ो(&qedf->link_state) == QEDF_LINK_DOWN) अणु
 		/*
-		 * If we hit here and link_down_tmo_valid is still 1 it means
-		 * that link_down_tmo timed out so set it to 0 to make sure any
-		 * other readers have accurate state.
+		 * If we hit here and link_करोwn_पंचांगo_valid is still 1 it means
+		 * that link_करोwn_पंचांगo समयd out so set it to 0 to make sure any
+		 * other पढ़ोers have accurate state.
 		 */
-		atomic_set(&qedf->link_down_tmo_valid, 0);
+		atomic_set(&qedf->link_करोwn_पंचांगo_valid, 0);
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 		    "Calling fcoe_ctlr_link_down().\n");
-		fcoe_ctlr_link_down(&qedf->ctlr);
-		if (qedf_wait_for_upload(qedf) == false)
+		fcoe_ctlr_link_करोwn(&qedf->ctlr);
+		अगर (qedf_रुको_क्रम_upload(qedf) == false)
 			QEDF_ERR(&qedf->dbg_ctx,
 				 "Could not upload all sessions.\n");
 		/* Reset the number of FIP VLAN retries */
 		qedf->fipvlan_retries = qedf_fipvlan_retries;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define	QEDF_FCOE_MAC_METHOD_GRANGED_MAC		1
-#define QEDF_FCOE_MAC_METHOD_FCF_MAP			2
-#define QEDF_FCOE_MAC_METHOD_FCOE_SET_MAC		3
-static void qedf_set_data_src_addr(struct qedf_ctx *qedf, struct fc_frame *fp)
-{
+#घोषणा	QEDF_FCOE_MAC_METHOD_GRANGED_MAC		1
+#घोषणा QEDF_FCOE_MAC_METHOD_FCF_MAP			2
+#घोषणा QEDF_FCOE_MAC_METHOD_FCOE_SET_MAC		3
+अटल व्योम qedf_set_data_src_addr(काष्ठा qedf_ctx *qedf, काष्ठा fc_frame *fp)
+अणु
 	u8 *granted_mac;
-	struct fc_frame_header *fh = fc_frame_header_get(fp);
+	काष्ठा fc_frame_header *fh = fc_frame_header_get(fp);
 	u8 fc_map[3];
-	int method = 0;
+	पूर्णांक method = 0;
 
 	/* Get granted MAC address from FIP FLOGI payload */
 	granted_mac = fr_cb(fp)->granted_mac;
 
 	/*
-	 * We set the source MAC for FCoE traffic based on the Granted MAC
-	 * address from the switch.
+	 * We set the source MAC क्रम FCoE traffic based on the Granted MAC
+	 * address from the चयन.
 	 *
 	 * If granted_mac is non-zero, we used that.
 	 * If the granted_mac is zeroed out, created the FCoE MAC based on
 	 * the sel_fcf->fc_map and the d_id fo the FLOGI frame.
-	 * If sel_fcf->fc_map is 0 then we use the default FCF-MAC plus the
+	 * If sel_fcf->fc_map is 0 then we use the शेष FCF-MAC plus the
 	 * d_id of the FLOGI frame.
 	 */
-	if (!is_zero_ether_addr(granted_mac)) {
+	अगर (!is_zero_ether_addr(granted_mac)) अणु
 		ether_addr_copy(qedf->data_src_addr, granted_mac);
 		method = QEDF_FCOE_MAC_METHOD_GRANGED_MAC;
-	} else if (qedf->ctlr.sel_fcf->fc_map != 0) {
+	पूर्ण अन्यथा अगर (qedf->ctlr.sel_fcf->fc_map != 0) अणु
 		hton24(fc_map, qedf->ctlr.sel_fcf->fc_map);
 		qedf->data_src_addr[0] = fc_map[0];
 		qedf->data_src_addr[1] = fc_map[1];
@@ -254,45 +255,45 @@ static void qedf_set_data_src_addr(struct qedf_ctx *qedf, struct fc_frame *fp)
 		qedf->data_src_addr[4] = fh->fh_d_id[1];
 		qedf->data_src_addr[5] = fh->fh_d_id[2];
 		method = QEDF_FCOE_MAC_METHOD_FCF_MAP;
-	} else {
+	पूर्ण अन्यथा अणु
 		fc_fcoe_set_mac(qedf->data_src_addr, fh->fh_d_id);
 		method = QEDF_FCOE_MAC_METHOD_FCOE_SET_MAC;
-	}
+	पूर्ण
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 	    "QEDF data_src_mac=%pM method=%d.\n", qedf->data_src_addr, method);
-}
+पूर्ण
 
-static void qedf_flogi_resp(struct fc_seq *seq, struct fc_frame *fp,
-	void *arg)
-{
-	struct fc_exch *exch = fc_seq_exch(seq);
-	struct fc_lport *lport = exch->lp;
-	struct qedf_ctx *qedf = lport_priv(lport);
+अटल व्योम qedf_flogi_resp(काष्ठा fc_seq *seq, काष्ठा fc_frame *fp,
+	व्योम *arg)
+अणु
+	काष्ठा fc_exch *exch = fc_seq_exch(seq);
+	काष्ठा fc_lport *lport = exch->lp;
+	काष्ठा qedf_ctx *qedf = lport_priv(lport);
 
-	if (!qedf) {
-		QEDF_ERR(NULL, "qedf is NULL.\n");
-		return;
-	}
+	अगर (!qedf) अणु
+		QEDF_ERR(शून्य, "qedf is NULL.\n");
+		वापस;
+	पूर्ण
 
 	/*
-	 * If ERR_PTR is set then don't try to stat anything as it will cause
+	 * If ERR_PTR is set then करोn't try to stat anything as it will cause
 	 * a crash when we access fp.
 	 */
-	if (IS_ERR(fp)) {
+	अगर (IS_ERR(fp)) अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_ELS,
 		    "fp has IS_ERR() set.\n");
-		goto skip_stat;
-	}
+		जाओ skip_stat;
+	पूर्ण
 
-	/* Log stats for FLOGI reject */
-	if (fc_frame_payload_op(fp) == ELS_LS_RJT)
+	/* Log stats क्रम FLOGI reject */
+	अगर (fc_frame_payload_op(fp) == ELS_LS_RJT)
 		qedf->flogi_failed++;
-	else if (fc_frame_payload_op(fp) == ELS_LS_ACC) {
-		/* Set the source MAC we will use for FCoE traffic */
+	अन्यथा अगर (fc_frame_payload_op(fp) == ELS_LS_ACC) अणु
+		/* Set the source MAC we will use क्रम FCoE traffic */
 		qedf_set_data_src_addr(qedf, fp);
 		qedf->flogi_pending = 0;
-	}
+	पूर्ण
 
 	/* Complete flogi_compl so we can proceed to sending ADISCs */
 	complete(&qedf->flogi_compl);
@@ -300,52 +301,52 @@ static void qedf_flogi_resp(struct fc_seq *seq, struct fc_frame *fp,
 skip_stat:
 	/* Report response to libfc */
 	fc_lport_flogi_resp(seq, fp, lport);
-}
+पूर्ण
 
-static struct fc_seq *qedf_elsct_send(struct fc_lport *lport, u32 did,
-	struct fc_frame *fp, unsigned int op,
-	void (*resp)(struct fc_seq *,
-	struct fc_frame *,
-	void *),
-	void *arg, u32 timeout)
-{
-	struct qedf_ctx *qedf = lport_priv(lport);
+अटल काष्ठा fc_seq *qedf_elsct_send(काष्ठा fc_lport *lport, u32 did,
+	काष्ठा fc_frame *fp, अचिन्हित पूर्णांक op,
+	व्योम (*resp)(काष्ठा fc_seq *,
+	काष्ठा fc_frame *,
+	व्योम *),
+	व्योम *arg, u32 समयout)
+अणु
+	काष्ठा qedf_ctx *qedf = lport_priv(lport);
 
 	/*
-	 * Intercept FLOGI for statistic purposes. Note we use the resp
-	 * callback to tell if this is really a flogi.
+	 * Intercept FLOGI क्रम statistic purposes. Note we use the resp
+	 * callback to tell अगर this is really a flogi.
 	 */
-	if (resp == fc_lport_flogi_resp) {
+	अगर (resp == fc_lport_flogi_resp) अणु
 		qedf->flogi_cnt++;
-		if (qedf->flogi_pending >= QEDF_FLOGI_RETRY_CNT) {
+		अगर (qedf->flogi_pending >= QEDF_FLOGI_RETRY_CNT) अणु
 			schedule_delayed_work(&qedf->stag_work, 2);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 		qedf->flogi_pending++;
-		return fc_elsct_send(lport, did, fp, op, qedf_flogi_resp,
-		    arg, timeout);
-	}
+		वापस fc_elsct_send(lport, did, fp, op, qedf_flogi_resp,
+		    arg, समयout);
+	पूर्ण
 
-	return fc_elsct_send(lport, did, fp, op, resp, arg, timeout);
-}
+	वापस fc_elsct_send(lport, did, fp, op, resp, arg, समयout);
+पूर्ण
 
-int qedf_send_flogi(struct qedf_ctx *qedf)
-{
-	struct fc_lport *lport;
-	struct fc_frame *fp;
+पूर्णांक qedf_send_flogi(काष्ठा qedf_ctx *qedf)
+अणु
+	काष्ठा fc_lport *lport;
+	काष्ठा fc_frame *fp;
 
 	lport = qedf->lport;
 
-	if (!lport->tt.elsct_send) {
+	अगर (!lport->tt.elsct_send) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "tt.elsct_send not set.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	fp = fc_frame_alloc(lport, sizeof(struct fc_els_flogi));
-	if (!fp) {
+	fp = fc_frame_alloc(lport, माप(काष्ठा fc_els_flogi));
+	अगर (!fp) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "fc_frame_alloc failed.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_ELS,
 	    "Sending FLOGI to reestablish session with switch.\n");
@@ -354,24 +355,24 @@ int qedf_send_flogi(struct qedf_ctx *qedf)
 
 	init_completion(&qedf->flogi_compl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * This function is called if link_down_tmo is in use.  If we get a link up and
- * link_down_tmo has not expired then use just FLOGI/ADISC to recover our
- * sessions with targets.  Otherwise, just call fcoe_ctlr_link_up().
+ * This function is called अगर link_करोwn_पंचांगo is in use.  If we get a link up and
+ * link_करोwn_पंचांगo has not expired then use just FLOGI/ADISC to recover our
+ * sessions with tarमाला_लो.  Otherwise, just call fcoe_ctlr_link_up().
  */
-static void qedf_link_recovery(struct work_struct *work)
-{
-	struct qedf_ctx *qedf =
-	    container_of(work, struct qedf_ctx, link_recovery.work);
-	struct fc_lport *lport = qedf->lport;
-	struct fc_rport_priv *rdata;
+अटल व्योम qedf_link_recovery(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qedf_ctx *qedf =
+	    container_of(work, काष्ठा qedf_ctx, link_recovery.work);
+	काष्ठा fc_lport *lport = qedf->lport;
+	काष्ठा fc_rport_priv *rdata;
 	bool rc;
-	int retries = 30;
-	int rval, i;
-	struct list_head rdata_login_list;
+	पूर्णांक retries = 30;
+	पूर्णांक rval, i;
+	काष्ठा list_head rdata_login_list;
 
 	INIT_LIST_HEAD(&rdata_login_list);
 
@@ -380,103 +381,103 @@ static void qedf_link_recovery(struct work_struct *work)
 
 	/*
 	 * Essentially reset the fcoe_ctlr here without affecting the state
-	 * of the libfc structs.
+	 * of the libfc काष्ठाs.
 	 */
 	qedf->ctlr.state = FIP_ST_LINK_WAIT;
-	fcoe_ctlr_link_down(&qedf->ctlr);
+	fcoe_ctlr_link_करोwn(&qedf->ctlr);
 
 	/*
-	 * Bring the link up before we send the fipvlan request so libfcoe
+	 * Bring the link up beक्रमe we send the fipvlan request so libfcoe
 	 * can select a new fcf in parallel
 	 */
 	fcoe_ctlr_link_up(&qedf->ctlr);
 
-	/* Since the link when down and up to verify which vlan we're on */
+	/* Since the link when करोwn and up to verअगरy which vlan we're on */
 	qedf->fipvlan_retries = qedf_fipvlan_retries;
 	rc = qedf_initiate_fipvlan_req(qedf);
 	/* If getting the VLAN fails, set the VLAN to the fallback one */
-	if (!rc)
+	अगर (!rc)
 		qedf_set_vlan_id(qedf, qedf_fallback_vlan);
 
 	/*
-	 * We need to wait for an FCF to be selected due to the
+	 * We need to रुको क्रम an FCF to be selected due to the
 	 * fcoe_ctlr_link_up other the FLOGI will be rejected.
 	 */
-	while (retries > 0) {
-		if (qedf->ctlr.sel_fcf) {
+	जबतक (retries > 0) अणु
+		अगर (qedf->ctlr.sel_fcf) अणु
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			    "FCF reselected, proceeding with FLOGI.\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		msleep(500);
 		retries--;
-	}
+	पूर्ण
 
-	if (retries < 1) {
+	अगर (retries < 1) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Exhausted retries waiting for "
 		    "FCF selection.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rval = qedf_send_flogi(qedf);
-	if (rval)
-		return;
+	अगर (rval)
+		वापस;
 
-	/* Wait for FLOGI completion before proceeding with sending ADISCs */
-	i = wait_for_completion_timeout(&qedf->flogi_compl,
+	/* Wait क्रम FLOGI completion beक्रमe proceeding with sending ADISCs */
+	i = रुको_क्रम_completion_समयout(&qedf->flogi_compl,
 	    qedf->lport->r_a_tov);
-	if (i == 0) {
+	अगर (i == 0) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "FLOGI timed out.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * Call lport->tt.rport_login which will cause libfc to send an
-	 * ADISC since the rport is in state ready.
+	 * ADISC since the rport is in state पढ़ोy.
 	 */
 	mutex_lock(&lport->disc.disc_mutex);
-	list_for_each_entry_rcu(rdata, &lport->disc.rports, peers) {
-		if (kref_get_unless_zero(&rdata->kref)) {
+	list_क्रम_each_entry_rcu(rdata, &lport->disc.rports, peers) अणु
+		अगर (kref_get_unless_zero(&rdata->kref)) अणु
 			fc_rport_login(rdata);
 			kref_put(&rdata->kref, fc_rport_destroy);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&lport->disc.disc_mutex);
-}
+पूर्ण
 
-static void qedf_update_link_speed(struct qedf_ctx *qedf,
-	struct qed_link_output *link)
-{
+अटल व्योम qedf_update_link_speed(काष्ठा qedf_ctx *qedf,
+	काष्ठा qed_link_output *link)
+अणु
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(sup_caps);
-	struct fc_lport *lport = qedf->lport;
+	काष्ठा fc_lport *lport = qedf->lport;
 
 	lport->link_speed = FC_PORTSPEED_UNKNOWN;
 	lport->link_supported_speeds = FC_PORTSPEED_UNKNOWN;
 
 	/* Set fc_host link speed */
-	switch (link->speed) {
-	case 10000:
+	चयन (link->speed) अणु
+	हाल 10000:
 		lport->link_speed = FC_PORTSPEED_10GBIT;
-		break;
-	case 25000:
+		अवरोध;
+	हाल 25000:
 		lport->link_speed = FC_PORTSPEED_25GBIT;
-		break;
-	case 40000:
+		अवरोध;
+	हाल 40000:
 		lport->link_speed = FC_PORTSPEED_40GBIT;
-		break;
-	case 50000:
+		अवरोध;
+	हाल 50000:
 		lport->link_speed = FC_PORTSPEED_50GBIT;
-		break;
-	case 100000:
+		अवरोध;
+	हाल 100000:
 		lport->link_speed = FC_PORTSPEED_100GBIT;
-		break;
-	case 20000:
+		अवरोध;
+	हाल 20000:
 		lport->link_speed = FC_PORTSPEED_20GBIT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		lport->link_speed = FC_PORTSPEED_UNKNOWN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
 	 * Set supported link speed by querying the supported
@@ -493,7 +494,7 @@ static void qedf_update_link_speed(struct qedf_ctx *qedf,
 	phylink_set(sup_caps, 10000baseLRM_Full);
 	phylink_set(sup_caps, 10000baseKR_Full);
 
-	if (linkmode_intersects(link->supported_caps, sup_caps))
+	अगर (linkmode_पूर्णांकersects(link->supported_caps, sup_caps))
 		lport->link_supported_speeds |= FC_PORTSPEED_10GBIT;
 
 	phylink_zero(sup_caps);
@@ -501,7 +502,7 @@ static void qedf_update_link_speed(struct qedf_ctx *qedf,
 	phylink_set(sup_caps, 25000baseCR_Full);
 	phylink_set(sup_caps, 25000baseSR_Full);
 
-	if (linkmode_intersects(link->supported_caps, sup_caps))
+	अगर (linkmode_पूर्णांकersects(link->supported_caps, sup_caps))
 		lport->link_supported_speeds |= FC_PORTSPEED_25GBIT;
 
 	phylink_zero(sup_caps);
@@ -510,7 +511,7 @@ static void qedf_update_link_speed(struct qedf_ctx *qedf,
 	phylink_set(sup_caps, 40000baseCR4_Full);
 	phylink_set(sup_caps, 40000baseSR4_Full);
 
-	if (linkmode_intersects(link->supported_caps, sup_caps))
+	अगर (linkmode_पूर्णांकersects(link->supported_caps, sup_caps))
 		lport->link_supported_speeds |= FC_PORTSPEED_40GBIT;
 
 	phylink_zero(sup_caps);
@@ -518,7 +519,7 @@ static void qedf_update_link_speed(struct qedf_ctx *qedf,
 	phylink_set(sup_caps, 50000baseCR2_Full);
 	phylink_set(sup_caps, 50000baseSR2_Full);
 
-	if (linkmode_intersects(link->supported_caps, sup_caps))
+	अगर (linkmode_पूर्णांकersects(link->supported_caps, sup_caps))
 		lport->link_supported_speeds |= FC_PORTSPEED_50GBIT;
 
 	phylink_zero(sup_caps);
@@ -527,126 +528,126 @@ static void qedf_update_link_speed(struct qedf_ctx *qedf,
 	phylink_set(sup_caps, 100000baseCR4_Full);
 	phylink_set(sup_caps, 100000baseLR4_ER4_Full);
 
-	if (linkmode_intersects(link->supported_caps, sup_caps))
+	अगर (linkmode_पूर्णांकersects(link->supported_caps, sup_caps))
 		lport->link_supported_speeds |= FC_PORTSPEED_100GBIT;
 
 	phylink_zero(sup_caps);
 	phylink_set(sup_caps, 20000baseKR2_Full);
 
-	if (linkmode_intersects(link->supported_caps, sup_caps))
+	अगर (linkmode_पूर्णांकersects(link->supported_caps, sup_caps))
 		lport->link_supported_speeds |= FC_PORTSPEED_20GBIT;
 
-	if (lport->host && lport->host->shost_data)
+	अगर (lport->host && lport->host->shost_data)
 		fc_host_supported_speeds(lport->host) =
 			lport->link_supported_speeds;
-}
+पूर्ण
 
-static void qedf_bw_update(void *dev)
-{
-	struct qedf_ctx *qedf = (struct qedf_ctx *)dev;
-	struct qed_link_output link;
+अटल व्योम qedf_bw_update(व्योम *dev)
+अणु
+	काष्ठा qedf_ctx *qedf = (काष्ठा qedf_ctx *)dev;
+	काष्ठा qed_link_output link;
 
 	/* Get the latest status of the link */
 	qed_ops->common->get_link(qedf->cdev, &link);
 
-	if (test_bit(QEDF_UNLOADING, &qedf->flags)) {
+	अगर (test_bit(QEDF_UNLOADING, &qedf->flags)) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "Ignore link update, driver getting unload.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (link.link_up) {
-		if (atomic_read(&qedf->link_state) == QEDF_LINK_UP)
+	अगर (link.link_up) अणु
+		अगर (atomic_पढ़ो(&qedf->link_state) == QEDF_LINK_UP)
 			qedf_update_link_speed(qedf, &link);
-		else
+		अन्यथा
 			QEDF_ERR(&qedf->dbg_ctx,
 				 "Ignore bw update, link is down.\n");
 
-	} else {
+	पूर्ण अन्यथा अणु
 		QEDF_ERR(&qedf->dbg_ctx, "link_up is not set.\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void qedf_link_update(void *dev, struct qed_link_output *link)
-{
-	struct qedf_ctx *qedf = (struct qedf_ctx *)dev;
+अटल व्योम qedf_link_update(व्योम *dev, काष्ठा qed_link_output *link)
+अणु
+	काष्ठा qedf_ctx *qedf = (काष्ठा qedf_ctx *)dev;
 
 	/*
 	 * Prevent race where we're removing the module and we get link update
-	 * for qed.
+	 * क्रम qed.
 	 */
-	if (test_bit(QEDF_UNLOADING, &qedf->flags)) {
+	अगर (test_bit(QEDF_UNLOADING, &qedf->flags)) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "Ignore link update, driver getting unload.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (link->link_up) {
-		if (atomic_read(&qedf->link_state) == QEDF_LINK_UP) {
+	अगर (link->link_up) अणु
+		अगर (atomic_पढ़ो(&qedf->link_state) == QEDF_LINK_UP) अणु
 			QEDF_INFO((&qedf->dbg_ctx), QEDF_LOG_DISC,
 			    "Ignoring link up event as link is already up.\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		QEDF_ERR(&(qedf->dbg_ctx), "LINK UP (%d GB/s).\n",
 		    link->speed / 1000);
 
-		/* Cancel any pending link down work */
+		/* Cancel any pending link करोwn work */
 		cancel_delayed_work(&qedf->link_update);
 
 		atomic_set(&qedf->link_state, QEDF_LINK_UP);
 		qedf_update_link_speed(qedf, link);
 
-		if (atomic_read(&qedf->dcbx) == QEDF_DCBX_DONE ||
-		    qedf_dcbx_no_wait) {
+		अगर (atomic_पढ़ो(&qedf->dcbx) == QEDF_DCBX_DONE ||
+		    qedf_dcbx_no_रुको) अणु
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			     "DCBx done.\n");
-			if (atomic_read(&qedf->link_down_tmo_valid) > 0)
+			अगर (atomic_पढ़ो(&qedf->link_करोwn_पंचांगo_valid) > 0)
 				queue_delayed_work(qedf->link_update_wq,
 				    &qedf->link_recovery, 0);
-			else
+			अन्यथा
 				queue_delayed_work(qedf->link_update_wq,
 				    &qedf->link_update, 0);
-			atomic_set(&qedf->link_down_tmo_valid, 0);
-		}
+			atomic_set(&qedf->link_करोwn_पंचांगo_valid, 0);
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "LINK DOWN.\n");
 
 		atomic_set(&qedf->link_state, QEDF_LINK_DOWN);
 		atomic_set(&qedf->dcbx, QEDF_DCBX_PENDING);
 		/*
-		 * Flag that we're waiting for the link to come back up before
-		 * informing the fcoe layer of the event.
+		 * Flag that we're रुकोing क्रम the link to come back up beक्रमe
+		 * inक्रमming the fcoe layer of the event.
 		 */
-		if (qedf_link_down_tmo > 0) {
+		अगर (qedf_link_करोwn_पंचांगo > 0) अणु
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			    "Starting link down tmo.\n");
-			atomic_set(&qedf->link_down_tmo_valid, 1);
-		}
+			atomic_set(&qedf->link_करोwn_पंचांगo_valid, 1);
+		पूर्ण
 		qedf->vlan_id = 0;
 		qedf_update_link_speed(qedf, link);
 		queue_delayed_work(qedf->link_update_wq, &qedf->link_update,
-		    qedf_link_down_tmo * HZ);
-	}
-}
+		    qedf_link_करोwn_पंचांगo * HZ);
+	पूर्ण
+पूर्ण
 
 
-static void qedf_dcbx_handler(void *dev, struct qed_dcbx_get *get, u32 mib_type)
-{
-	struct qedf_ctx *qedf = (struct qedf_ctx *)dev;
-	u8 tmp_prio;
+अटल व्योम qedf_dcbx_handler(व्योम *dev, काष्ठा qed_dcbx_get *get, u32 mib_type)
+अणु
+	काष्ठा qedf_ctx *qedf = (काष्ठा qedf_ctx *)dev;
+	u8 पंचांगp_prio;
 
 	QEDF_ERR(&(qedf->dbg_ctx), "DCBx event valid=%d enabled=%d fcoe "
 	    "prio=%d.\n", get->operational.valid, get->operational.enabled,
 	    get->operational.app_prio.fcoe);
 
-	if (get->operational.enabled && get->operational.valid) {
-		/* If DCBX was already negotiated on link up then just exit */
-		if (atomic_read(&qedf->dcbx) == QEDF_DCBX_DONE) {
+	अगर (get->operational.enabled && get->operational.valid) अणु
+		/* If DCBX was alपढ़ोy negotiated on link up then just निकास */
+		अगर (atomic_पढ़ो(&qedf->dcbx) == QEDF_DCBX_DONE) अणु
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			    "DCBX already set on link up.\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		atomic_set(&qedf->dcbx, QEDF_DCBX_DONE);
 
@@ -654,44 +655,44 @@ static void qedf_dcbx_handler(void *dev, struct qed_dcbx_get *get, u32 mib_type)
 		 * Set the 8021q priority in the following manner:
 		 *
 		 * 1. If a modparam is set use that
-		 * 2. If the value is not between 0..7 use the default
+		 * 2. If the value is not between 0..7 use the शेष
 		 * 3. Use the priority we get from the DCBX app tag
 		 */
-		tmp_prio = get->operational.app_prio.fcoe;
-		if (qedf_default_prio > -1)
-			qedf->prio = qedf_default_prio;
-		else if (tmp_prio > 7) {
+		पंचांगp_prio = get->operational.app_prio.fcoe;
+		अगर (qedf_शेष_prio > -1)
+			qedf->prio = qedf_शेष_prio;
+		अन्यथा अगर (पंचांगp_prio > 7) अणु
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			    "FIP/FCoE prio %d out of range, setting to %d.\n",
-			    tmp_prio, QEDF_DEFAULT_PRIO);
+			    पंचांगp_prio, QEDF_DEFAULT_PRIO);
 			qedf->prio = QEDF_DEFAULT_PRIO;
-		} else
-			qedf->prio = tmp_prio;
+		पूर्ण अन्यथा
+			qedf->prio = पंचांगp_prio;
 
-		if (atomic_read(&qedf->link_state) == QEDF_LINK_UP &&
-		    !qedf_dcbx_no_wait) {
-			if (atomic_read(&qedf->link_down_tmo_valid) > 0)
+		अगर (atomic_पढ़ो(&qedf->link_state) == QEDF_LINK_UP &&
+		    !qedf_dcbx_no_रुको) अणु
+			अगर (atomic_पढ़ो(&qedf->link_करोwn_पंचांगo_valid) > 0)
 				queue_delayed_work(qedf->link_update_wq,
 				    &qedf->link_recovery, 0);
-			else
+			अन्यथा
 				queue_delayed_work(qedf->link_update_wq,
 				    &qedf->link_update, 0);
-			atomic_set(&qedf->link_down_tmo_valid, 0);
-		}
-	}
+			atomic_set(&qedf->link_करोwn_पंचांगo_valid, 0);
+		पूर्ण
+	पूर्ण
 
-}
+पूर्ण
 
-static u32 qedf_get_login_failures(void *cookie)
-{
-	struct qedf_ctx *qedf;
+अटल u32 qedf_get_login_failures(व्योम *cookie)
+अणु
+	काष्ठा qedf_ctx *qedf;
 
-	qedf = (struct qedf_ctx *)cookie;
-	return qedf->flogi_failed;
-}
+	qedf = (काष्ठा qedf_ctx *)cookie;
+	वापस qedf->flogi_failed;
+पूर्ण
 
-static struct qed_fcoe_cb_ops qedf_cb_ops = {
-	{
+अटल काष्ठा qed_fcoe_cb_ops qedf_cb_ops = अणु
+	अणु
 		.link_update = qedf_link_update,
 		.bw_update = qedf_bw_update,
 		.schedule_recovery_handler = qedf_schedule_recovery_handler,
@@ -699,246 +700,246 @@ static struct qed_fcoe_cb_ops qedf_cb_ops = {
 		.get_generic_tlv_data = qedf_get_generic_tlv_data,
 		.get_protocol_tlv_data = qedf_get_protocol_tlv_data,
 		.schedule_hw_err_handler = qedf_schedule_hw_err_handler,
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /*
- * Various transport templates.
+ * Various transport ढाँचाs.
  */
 
-static struct scsi_transport_template *qedf_fc_transport_template;
-static struct scsi_transport_template *qedf_fc_vport_transport_template;
+अटल काष्ठा scsi_transport_ढाँचा *qedf_fc_transport_ढाँचा;
+अटल काष्ठा scsi_transport_ढाँचा *qedf_fc_vport_transport_ढाँचा;
 
 /*
  * SCSI EH handlers
  */
-static int qedf_eh_abort(struct scsi_cmnd *sc_cmd)
-{
-	struct fc_rport *rport = starget_to_rport(scsi_target(sc_cmd->device));
-	struct fc_lport *lport;
-	struct qedf_ctx *qedf;
-	struct qedf_ioreq *io_req;
-	struct fc_rport_libfc_priv *rp = rport->dd_data;
-	struct fc_rport_priv *rdata;
-	struct qedf_rport *fcport = NULL;
-	int rc = FAILED;
-	int wait_count = 100;
-	int refcount = 0;
-	int rval;
-	int got_ref = 0;
+अटल पूर्णांक qedf_eh_पात(काष्ठा scsi_cmnd *sc_cmd)
+अणु
+	काष्ठा fc_rport *rport = starget_to_rport(scsi_target(sc_cmd->device));
+	काष्ठा fc_lport *lport;
+	काष्ठा qedf_ctx *qedf;
+	काष्ठा qedf_ioreq *io_req;
+	काष्ठा fc_rport_libfc_priv *rp = rport->dd_data;
+	काष्ठा fc_rport_priv *rdata;
+	काष्ठा qedf_rport *fcport = शून्य;
+	पूर्णांक rc = FAILED;
+	पूर्णांक रुको_count = 100;
+	पूर्णांक refcount = 0;
+	पूर्णांक rval;
+	पूर्णांक got_ref = 0;
 
 	lport = shost_priv(sc_cmd->device->host);
-	qedf = (struct qedf_ctx *)lport_priv(lport);
+	qedf = (काष्ठा qedf_ctx *)lport_priv(lport);
 
-	/* rport and tgt are allocated together, so tgt should be non-NULL */
-	fcport = (struct qedf_rport *)&rp[1];
+	/* rport and tgt are allocated together, so tgt should be non-शून्य */
+	fcport = (काष्ठा qedf_rport *)&rp[1];
 	rdata = fcport->rdata;
-	if (!rdata || !kref_get_unless_zero(&rdata->kref)) {
+	अगर (!rdata || !kref_get_unless_zero(&rdata->kref)) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "stale rport, sc_cmd=%p\n", sc_cmd);
 		rc = SUCCESS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 
-	io_req = (struct qedf_ioreq *)sc_cmd->SCp.ptr;
-	if (!io_req) {
+	io_req = (काष्ठा qedf_ioreq *)sc_cmd->SCp.ptr;
+	अगर (!io_req) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "sc_cmd not queued with lld, sc_cmd=%p op=0x%02x, port_id=%06x\n",
 			 sc_cmd, sc_cmd->cmnd[0],
 			 rdata->ids.port_id);
 		rc = SUCCESS;
-		goto drop_rdata_kref;
-	}
+		जाओ drop_rdata_kref;
+	पूर्ण
 
 	rval = kref_get_unless_zero(&io_req->refcount);	/* ID: 005 */
-	if (rval)
+	अगर (rval)
 		got_ref = 1;
 
-	/* If we got a valid io_req, confirm it belongs to this sc_cmd. */
-	if (!rval || io_req->sc_cmd != sc_cmd) {
+	/* If we got a valid io_req, confirm it beदीर्घs to this sc_cmd. */
+	अगर (!rval || io_req->sc_cmd != sc_cmd) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "Freed/Incorrect io_req, io_req->sc_cmd=%p, sc_cmd=%p, port_id=%06x, bailing out.\n",
 			 io_req->sc_cmd, sc_cmd, rdata->ids.port_id);
 
-		goto drop_rdata_kref;
-	}
+		जाओ drop_rdata_kref;
+	पूर्ण
 
-	if (fc_remote_port_chkready(rport)) {
-		refcount = kref_read(&io_req->refcount);
+	अगर (fc_remote_port_chkपढ़ोy(rport)) अणु
+		refcount = kref_पढ़ो(&io_req->refcount);
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "rport not ready, io_req=%p, xid=0x%x sc_cmd=%p op=0x%02x, refcount=%d, port_id=%06x\n",
 			 io_req, io_req->xid, sc_cmd, sc_cmd->cmnd[0],
 			 refcount, rdata->ids.port_id);
 
-		goto drop_rdata_kref;
-	}
+		जाओ drop_rdata_kref;
+	पूर्ण
 
 	rc = fc_block_scsi_eh(sc_cmd);
-	if (rc)
-		goto drop_rdata_kref;
+	अगर (rc)
+		जाओ drop_rdata_kref;
 
-	if (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) {
+	अगर (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "Connection uploading, xid=0x%x., port_id=%06x\n",
 			 io_req->xid, rdata->ids.port_id);
-		while (io_req->sc_cmd && (wait_count != 0)) {
+		जबतक (io_req->sc_cmd && (रुको_count != 0)) अणु
 			msleep(100);
-			wait_count--;
-		}
-		if (wait_count) {
+			रुको_count--;
+		पूर्ण
+		अगर (रुको_count) अणु
 			QEDF_ERR(&qedf->dbg_ctx, "ABTS succeeded\n");
 			rc = SUCCESS;
-		} else {
+		पूर्ण अन्यथा अणु
 			QEDF_ERR(&qedf->dbg_ctx, "ABTS failed\n");
 			rc = FAILED;
-		}
-		goto drop_rdata_kref;
-	}
+		पूर्ण
+		जाओ drop_rdata_kref;
+	पूर्ण
 
-	if (lport->state != LPORT_ST_READY || !(lport->link_up)) {
+	अगर (lport->state != LPORT_ST_READY || !(lport->link_up)) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "link not ready.\n");
-		goto drop_rdata_kref;
-	}
+		जाओ drop_rdata_kref;
+	पूर्ण
 
 	QEDF_ERR(&qedf->dbg_ctx,
 		 "Aborting io_req=%p sc_cmd=%p xid=0x%x fp_idx=%d, port_id=%06x.\n",
 		 io_req, sc_cmd, io_req->xid, io_req->fp_idx,
 		 rdata->ids.port_id);
 
-	if (qedf->stop_io_on_error) {
+	अगर (qedf->stop_io_on_error) अणु
 		qedf_stop_all_io(qedf);
 		rc = SUCCESS;
-		goto drop_rdata_kref;
-	}
+		जाओ drop_rdata_kref;
+	पूर्ण
 
-	init_completion(&io_req->abts_done);
+	init_completion(&io_req->abts_करोne);
 	rval = qedf_initiate_abts(io_req, true);
-	if (rval) {
+	अगर (rval) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Failed to queue ABTS.\n");
 		/*
-		 * If we fail to queue the ABTS then return this command to
-		 * the SCSI layer as it will own and free the xid
+		 * If we fail to queue the ABTS then वापस this command to
+		 * the SCSI layer as it will own and मुक्त the xid
 		 */
 		rc = SUCCESS;
-		qedf_scsi_done(qedf, io_req, DID_ERROR);
-		goto drop_rdata_kref;
-	}
+		qedf_scsi_करोne(qedf, io_req, DID_ERROR);
+		जाओ drop_rdata_kref;
+	पूर्ण
 
-	wait_for_completion(&io_req->abts_done);
+	रुको_क्रम_completion(&io_req->abts_करोne);
 
-	if (io_req->event == QEDF_IOREQ_EV_ABORT_SUCCESS ||
+	अगर (io_req->event == QEDF_IOREQ_EV_ABORT_SUCCESS ||
 	    io_req->event == QEDF_IOREQ_EV_ABORT_FAILED ||
-	    io_req->event == QEDF_IOREQ_EV_CLEANUP_SUCCESS) {
+	    io_req->event == QEDF_IOREQ_EV_CLEANUP_SUCCESS) अणु
 		/*
-		 * If we get a reponse to the abort this is success from
+		 * If we get a reponse to the पात this is success from
 		 * the perspective that all references to the command have
-		 * been removed from the driver and firmware
+		 * been हटाओd from the driver and firmware
 		 */
 		rc = SUCCESS;
-	} else {
-		/* If the abort and cleanup failed then return a failure */
+	पूर्ण अन्यथा अणु
+		/* If the पात and cleanup failed then वापस a failure */
 		rc = FAILED;
-	}
+	पूर्ण
 
-	if (rc == SUCCESS)
+	अगर (rc == SUCCESS)
 		QEDF_ERR(&(qedf->dbg_ctx), "ABTS succeeded, xid=0x%x.\n",
 			  io_req->xid);
-	else
+	अन्यथा
 		QEDF_ERR(&(qedf->dbg_ctx), "ABTS failed, xid=0x%x.\n",
 			  io_req->xid);
 
 drop_rdata_kref:
 	kref_put(&rdata->kref, fc_rport_destroy);
 out:
-	if (got_ref)
+	अगर (got_ref)
 		kref_put(&io_req->refcount, qedf_release_cmd);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qedf_eh_target_reset(struct scsi_cmnd *sc_cmd)
-{
-	QEDF_ERR(NULL, "%d:0:%d:%lld: TARGET RESET Issued...",
+अटल पूर्णांक qedf_eh_target_reset(काष्ठा scsi_cmnd *sc_cmd)
+अणु
+	QEDF_ERR(शून्य, "%d:0:%d:%lld: TARGET RESET Issued...",
 		 sc_cmd->device->host->host_no, sc_cmd->device->id,
 		 sc_cmd->device->lun);
-	return qedf_initiate_tmf(sc_cmd, FCP_TMF_TGT_RESET);
-}
+	वापस qedf_initiate_पंचांगf(sc_cmd, FCP_TMF_TGT_RESET);
+पूर्ण
 
-static int qedf_eh_device_reset(struct scsi_cmnd *sc_cmd)
-{
-	QEDF_ERR(NULL, "%d:0:%d:%lld: LUN RESET Issued... ",
+अटल पूर्णांक qedf_eh_device_reset(काष्ठा scsi_cmnd *sc_cmd)
+अणु
+	QEDF_ERR(शून्य, "%d:0:%d:%lld: LUN RESET Issued... ",
 		 sc_cmd->device->host->host_no, sc_cmd->device->id,
 		 sc_cmd->device->lun);
-	return qedf_initiate_tmf(sc_cmd, FCP_TMF_LUN_RESET);
-}
+	वापस qedf_initiate_पंचांगf(sc_cmd, FCP_TMF_LUN_RESET);
+पूर्ण
 
-bool qedf_wait_for_upload(struct qedf_ctx *qedf)
-{
-	struct qedf_rport *fcport = NULL;
-	int wait_cnt = 120;
+bool qedf_रुको_क्रम_upload(काष्ठा qedf_ctx *qedf)
+अणु
+	काष्ठा qedf_rport *fcport = शून्य;
+	पूर्णांक रुको_cnt = 120;
 
-	while (wait_cnt--) {
-		if (atomic_read(&qedf->num_offloads))
+	जबतक (रुको_cnt--) अणु
+		अगर (atomic_पढ़ो(&qedf->num_offloads))
 			QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC,
 				  "Waiting for all uploads to complete num_offloads = 0x%x.\n",
-				  atomic_read(&qedf->num_offloads));
-		else
-			return true;
+				  atomic_पढ़ो(&qedf->num_offloads));
+		अन्यथा
+			वापस true;
 		msleep(500);
-	}
+	पूर्ण
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(fcport, &qedf->fcports, peers) {
-		if (fcport && test_bit(QEDF_RPORT_SESSION_READY,
-				       &fcport->flags)) {
-			if (fcport->rdata)
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(fcport, &qedf->fcports, peers) अणु
+		अगर (fcport && test_bit(QEDF_RPORT_SESSION_READY,
+				       &fcport->flags)) अणु
+			अगर (fcport->rdata)
 				QEDF_ERR(&qedf->dbg_ctx,
 					 "Waiting for fcport %p portid=%06x.\n",
 					 fcport, fcport->rdata->ids.port_id);
-			} else {
+			पूर्ण अन्यथा अणु
 				QEDF_ERR(&qedf->dbg_ctx,
 					 "Waiting for fcport %p.\n", fcport);
-			}
-	}
-	rcu_read_unlock();
-	return false;
+			पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस false;
 
-}
+पूर्ण
 
-/* Performs soft reset of qedf_ctx by simulating a link down/up */
-void qedf_ctx_soft_reset(struct fc_lport *lport)
-{
-	struct qedf_ctx *qedf;
-	struct qed_link_output if_link;
+/* Perक्रमms soft reset of qedf_ctx by simulating a link करोwn/up */
+व्योम qedf_ctx_soft_reset(काष्ठा fc_lport *lport)
+अणु
+	काष्ठा qedf_ctx *qedf;
+	काष्ठा qed_link_output अगर_link;
 
-	if (lport->vport) {
-		QEDF_ERR(NULL, "Cannot issue host reset on NPIV port.\n");
-		return;
-	}
+	अगर (lport->vport) अणु
+		QEDF_ERR(शून्य, "Cannot issue host reset on NPIV port.\n");
+		वापस;
+	पूर्ण
 
 	qedf = lport_priv(lport);
 
 	qedf->flogi_pending = 0;
-	/* For host reset, essentially do a soft link up/down */
+	/* For host reset, essentially करो a soft link up/करोwn */
 	atomic_set(&qedf->link_state, QEDF_LINK_DOWN);
 	QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC,
 		  "Queuing link down work.\n");
 	queue_delayed_work(qedf->link_update_wq, &qedf->link_update,
 	    0);
 
-	if (qedf_wait_for_upload(qedf) == false) {
+	अगर (qedf_रुको_क्रम_upload(qedf) == false) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "Could not upload all sessions.\n");
-		WARN_ON(atomic_read(&qedf->num_offloads));
-	}
+		WARN_ON(atomic_पढ़ो(&qedf->num_offloads));
+	पूर्ण
 
-	/* Before setting link up query physical link state */
-	qed_ops->common->get_link(qedf->cdev, &if_link);
-	/* Bail if the physical link is not up */
-	if (!if_link.link_up) {
+	/* Beक्रमe setting link up query physical link state */
+	qed_ops->common->get_link(qedf->cdev, &अगर_link);
+	/* Bail अगर the physical link is not up */
+	अगर (!अगर_link.link_up) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC,
 			  "Physical link is not up.\n");
-		return;
-	}
-	/* Flush and wait to make sure link down is processed */
+		वापस;
+	पूर्ण
+	/* Flush and रुको to make sure link करोwn is processed */
 	flush_delayed_work(&qedf->link_update);
 	msleep(500);
 
@@ -948,38 +949,38 @@ void qedf_ctx_soft_reset(struct fc_lport *lport)
 		  "Queue link up work.\n");
 	queue_delayed_work(qedf->link_update_wq, &qedf->link_update,
 	    0);
-}
+पूर्ण
 
 /* Reset the host by gracefully logging out and then logging back in */
-static int qedf_eh_host_reset(struct scsi_cmnd *sc_cmd)
-{
-	struct fc_lport *lport;
-	struct qedf_ctx *qedf;
+अटल पूर्णांक qedf_eh_host_reset(काष्ठा scsi_cmnd *sc_cmd)
+अणु
+	काष्ठा fc_lport *lport;
+	काष्ठा qedf_ctx *qedf;
 
 	lport = shost_priv(sc_cmd->device->host);
 	qedf = lport_priv(lport);
 
-	if (atomic_read(&qedf->link_state) == QEDF_LINK_DOWN ||
+	अगर (atomic_पढ़ो(&qedf->link_state) == QEDF_LINK_DOWN ||
 	    test_bit(QEDF_UNLOADING, &qedf->flags))
-		return FAILED;
+		वापस FAILED;
 
 	QEDF_ERR(&(qedf->dbg_ctx), "HOST RESET Issued...");
 
 	qedf_ctx_soft_reset(lport);
 
-	return SUCCESS;
-}
+	वापस SUCCESS;
+पूर्ण
 
-static int qedf_slave_configure(struct scsi_device *sdev)
-{
-	if (qedf_queue_depth) {
+अटल पूर्णांक qedf_slave_configure(काष्ठा scsi_device *sdev)
+अणु
+	अगर (qedf_queue_depth) अणु
 		scsi_change_queue_depth(sdev, qedf_queue_depth);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct scsi_host_template qedf_host_template = {
+अटल काष्ठा scsi_host_ढाँचा qedf_host_ढाँचा = अणु
 	.module 	= THIS_MODULE,
 	.name 		= QEDF_MODULE_NAME,
 	.this_id 	= -1,
@@ -987,7 +988,7 @@ static struct scsi_host_template qedf_host_template = {
 	.max_sectors 	= 0xffff,
 	.queuecommand 	= qedf_queuecommand,
 	.shost_attrs	= qedf_host_attrs,
-	.eh_abort_handler	= qedf_eh_abort,
+	.eh_पात_handler	= qedf_eh_पात,
 	.eh_device_reset_handler = qedf_eh_device_reset, /* lun reset */
 	.eh_target_reset_handler = qedf_eh_target_reset, /* target reset */
 	.eh_host_reset_handler  = qedf_eh_host_reset,
@@ -996,190 +997,190 @@ static struct scsi_host_template qedf_host_template = {
 	.sg_tablesize = QEDF_MAX_BDS_PER_CMD,
 	.can_queue = FCOE_PARAMS_NUM_TASKS,
 	.change_queue_depth = scsi_change_queue_depth,
-};
+पूर्ण;
 
-static int qedf_get_paged_crc_eof(struct sk_buff *skb, int tlen)
-{
-	int rc;
+अटल पूर्णांक qedf_get_paged_crc_eof(काष्ठा sk_buff *skb, पूर्णांक tlen)
+अणु
+	पूर्णांक rc;
 
 	spin_lock(&qedf_global_lock);
 	rc = fcoe_get_paged_crc_eof(skb, tlen, &qedf_global);
 	spin_unlock(&qedf_global_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static struct qedf_rport *qedf_fcport_lookup(struct qedf_ctx *qedf, u32 port_id)
-{
-	struct qedf_rport *fcport;
-	struct fc_rport_priv *rdata;
+अटल काष्ठा qedf_rport *qedf_fcport_lookup(काष्ठा qedf_ctx *qedf, u32 port_id)
+अणु
+	काष्ठा qedf_rport *fcport;
+	काष्ठा fc_rport_priv *rdata;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(fcport, &qedf->fcports, peers) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(fcport, &qedf->fcports, peers) अणु
 		rdata = fcport->rdata;
-		if (rdata == NULL)
-			continue;
-		if (rdata->ids.port_id == port_id) {
-			rcu_read_unlock();
-			return fcport;
-		}
-	}
-	rcu_read_unlock();
+		अगर (rdata == शून्य)
+			जारी;
+		अगर (rdata->ids.port_id == port_id) अणु
+			rcu_पढ़ो_unlock();
+			वापस fcport;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	/* Return NULL to caller to let them know fcport was not found */
-	return NULL;
-}
+	/* Return शून्य to caller to let them know fcport was not found */
+	वापस शून्य;
+पूर्ण
 
 /* Transmits an ELS frame over an offloaded session */
-static int qedf_xmit_l2_frame(struct qedf_rport *fcport, struct fc_frame *fp)
-{
-	struct fc_frame_header *fh;
-	int rc = 0;
+अटल पूर्णांक qedf_xmit_l2_frame(काष्ठा qedf_rport *fcport, काष्ठा fc_frame *fp)
+अणु
+	काष्ठा fc_frame_header *fh;
+	पूर्णांक rc = 0;
 
 	fh = fc_frame_header_get(fp);
-	if ((fh->fh_type == FC_TYPE_ELS) &&
-	    (fh->fh_r_ctl == FC_RCTL_ELS_REQ)) {
-		switch (fc_frame_payload_op(fp)) {
-		case ELS_ADISC:
+	अगर ((fh->fh_type == FC_TYPE_ELS) &&
+	    (fh->fh_r_ctl == FC_RCTL_ELS_REQ)) अणु
+		चयन (fc_frame_payload_op(fp)) अणु
+		हाल ELS_ADISC:
 			qedf_send_adisc(fcport, fp);
 			rc = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * qedf_xmit - qedf FCoE frame transmit function
  */
-static int qedf_xmit(struct fc_lport *lport, struct fc_frame *fp)
-{
-	struct fc_lport		*base_lport;
-	struct qedf_ctx		*qedf;
-	struct ethhdr		*eh;
-	struct fcoe_crc_eof	*cp;
-	struct sk_buff		*skb;
-	struct fc_frame_header	*fh;
-	struct fcoe_hdr		*hp;
+अटल पूर्णांक qedf_xmit(काष्ठा fc_lport *lport, काष्ठा fc_frame *fp)
+अणु
+	काष्ठा fc_lport		*base_lport;
+	काष्ठा qedf_ctx		*qedf;
+	काष्ठा ethhdr		*eh;
+	काष्ठा fcoe_crc_eof	*cp;
+	काष्ठा sk_buff		*skb;
+	काष्ठा fc_frame_header	*fh;
+	काष्ठा fcoe_hdr		*hp;
 	u8			sof, eof;
 	u32			crc;
-	unsigned int		hlen, tlen, elen;
-	int			wlen;
-	struct fc_stats		*stats;
-	struct fc_lport *tmp_lport;
-	struct fc_lport *vn_port = NULL;
-	struct qedf_rport *fcport;
-	int rc;
+	अचिन्हित पूर्णांक		hlen, tlen, elen;
+	पूर्णांक			wlen;
+	काष्ठा fc_stats		*stats;
+	काष्ठा fc_lport *पंचांगp_lport;
+	काष्ठा fc_lport *vn_port = शून्य;
+	काष्ठा qedf_rport *fcport;
+	पूर्णांक rc;
 	u16 vlan_tci = 0;
 
-	qedf = (struct qedf_ctx *)lport_priv(lport);
+	qedf = (काष्ठा qedf_ctx *)lport_priv(lport);
 
 	fh = fc_frame_header_get(fp);
 	skb = fp_skb(fp);
 
 	/* Filter out traffic to other NPIV ports on the same host */
-	if (lport->vport)
+	अगर (lport->vport)
 		base_lport = shost_priv(vport_to_shost(lport->vport));
-	else
+	अन्यथा
 		base_lport = lport;
 
-	/* Flag if the destination is the base port */
-	if (base_lport->port_id == ntoh24(fh->fh_d_id)) {
+	/* Flag अगर the destination is the base port */
+	अगर (base_lport->port_id == ntoh24(fh->fh_d_id)) अणु
 		vn_port = base_lport;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Got through the list of vports attached to the base_lport
-		 * and see if we have a match with the destination address.
+		 * and see अगर we have a match with the destination address.
 		 */
-		list_for_each_entry(tmp_lport, &base_lport->vports, list) {
-			if (tmp_lport->port_id == ntoh24(fh->fh_d_id)) {
-				vn_port = tmp_lport;
-				break;
-			}
-		}
-	}
-	if (vn_port && ntoh24(fh->fh_d_id) != FC_FID_FLOGI) {
-		struct fc_rport_priv *rdata = NULL;
+		list_क्रम_each_entry(पंचांगp_lport, &base_lport->vports, list) अणु
+			अगर (पंचांगp_lport->port_id == ntoh24(fh->fh_d_id)) अणु
+				vn_port = पंचांगp_lport;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (vn_port && ntoh24(fh->fh_d_id) != FC_FID_FLOGI) अणु
+		काष्ठा fc_rport_priv *rdata = शून्य;
 
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_LL2,
 		    "Dropping FCoE frame to %06x.\n", ntoh24(fh->fh_d_id));
-		kfree_skb(skb);
+		kमुक्त_skb(skb);
 		rdata = fc_rport_lookup(lport, ntoh24(fh->fh_d_id));
-		if (rdata) {
+		अगर (rdata) अणु
 			rdata->retries = lport->max_rport_retry_count;
 			kref_put(&rdata->kref, fc_rport_destroy);
-		}
-		return -EINVAL;
-	}
+		पूर्ण
+		वापस -EINVAL;
+	पूर्ण
 	/* End NPIV filtering */
 
-	if (!qedf->ctlr.sel_fcf) {
-		kfree_skb(skb);
-		return 0;
-	}
+	अगर (!qedf->ctlr.sel_fcf) अणु
+		kमुक्त_skb(skb);
+		वापस 0;
+	पूर्ण
 
-	if (!test_bit(QEDF_LL2_STARTED, &qedf->flags)) {
+	अगर (!test_bit(QEDF_LL2_STARTED, &qedf->flags)) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "LL2 not started\n");
-		kfree_skb(skb);
-		return 0;
-	}
+		kमुक्त_skb(skb);
+		वापस 0;
+	पूर्ण
 
-	if (atomic_read(&qedf->link_state) != QEDF_LINK_UP) {
+	अगर (atomic_पढ़ो(&qedf->link_state) != QEDF_LINK_UP) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "qedf link down\n");
-		kfree_skb(skb);
-		return 0;
-	}
+		kमुक्त_skb(skb);
+		वापस 0;
+	पूर्ण
 
-	if (unlikely(fh->fh_r_ctl == FC_RCTL_ELS_REQ)) {
-		if (fcoe_ctlr_els_send(&qedf->ctlr, lport, skb))
-			return 0;
-	}
+	अगर (unlikely(fh->fh_r_ctl == FC_RCTL_ELS_REQ)) अणु
+		अगर (fcoe_ctlr_els_send(&qedf->ctlr, lport, skb))
+			वापस 0;
+	पूर्ण
 
-	/* Check to see if this needs to be sent on an offloaded session */
+	/* Check to see अगर this needs to be sent on an offloaded session */
 	fcport = qedf_fcport_lookup(qedf, ntoh24(fh->fh_d_id));
 
-	if (fcport && test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) {
+	अगर (fcport && test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) अणु
 		rc = qedf_xmit_l2_frame(fcport, fp);
 		/*
 		 * If the frame was successfully sent over the middle path
-		 * then do not try to also send it over the LL2 path
+		 * then करो not try to also send it over the LL2 path
 		 */
-		if (rc)
-			return 0;
-	}
+		अगर (rc)
+			वापस 0;
+	पूर्ण
 
 	sof = fr_sof(fp);
 	eof = fr_eof(fp);
 
-	elen = sizeof(struct ethhdr);
-	hlen = sizeof(struct fcoe_hdr);
-	tlen = sizeof(struct fcoe_crc_eof);
-	wlen = (skb->len - tlen + sizeof(crc)) / FCOE_WORD_TO_BYTE;
+	elen = माप(काष्ठा ethhdr);
+	hlen = माप(काष्ठा fcoe_hdr);
+	tlen = माप(काष्ठा fcoe_crc_eof);
+	wlen = (skb->len - tlen + माप(crc)) / FCOE_WORD_TO_BYTE;
 
 	skb->ip_summed = CHECKSUM_NONE;
 	crc = fcoe_fc_crc(fp);
 
 	/* copy port crc and eof to the skb buff */
-	if (skb_is_nonlinear(skb)) {
+	अगर (skb_is_nonlinear(skb)) अणु
 		skb_frag_t *frag;
 
-		if (qedf_get_paged_crc_eof(skb, tlen)) {
-			kfree_skb(skb);
-			return -ENOMEM;
-		}
+		अगर (qedf_get_paged_crc_eof(skb, tlen)) अणु
+			kमुक्त_skb(skb);
+			वापस -ENOMEM;
+		पूर्ण
 		frag = &skb_shinfo(skb)->frags[skb_shinfo(skb)->nr_frags - 1];
 		cp = kmap_atomic(skb_frag_page(frag)) + skb_frag_off(frag);
-	} else {
+	पूर्ण अन्यथा अणु
 		cp = skb_put(skb, tlen);
-	}
+	पूर्ण
 
-	memset(cp, 0, sizeof(*cp));
+	स_रखो(cp, 0, माप(*cp));
 	cp->fcoe_eof = eof;
 	cp->fcoe_crc32 = cpu_to_le32(~crc);
-	if (skb_is_nonlinear(skb)) {
+	अगर (skb_is_nonlinear(skb)) अणु
 		kunmap_atomic(cp);
-		cp = NULL;
-	}
+		cp = शून्य;
+	पूर्ण
 
 
 	/* adjust skb network/transport offsets to match mac/fcoe/port */
@@ -1191,25 +1192,25 @@ static int qedf_xmit(struct fc_lport *lport, struct fc_frame *fp)
 
 	/*
 	 * Add VLAN tag to non-offload FCoE frame based on current stored VLAN
-	 * for FIP/FCoE traffic.
+	 * क्रम FIP/FCoE traffic.
 	 */
 	__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), qedf->vlan_id);
 
 	/* fill up mac and fcoe headers */
 	eh = eth_hdr(skb);
 	eh->h_proto = htons(ETH_P_FCOE);
-	if (qedf->ctlr.map_dest)
+	अगर (qedf->ctlr.map_dest)
 		fc_fcoe_set_mac(eh->h_dest, fh->fh_d_id);
-	else
+	अन्यथा
 		/* insert GW address */
 		ether_addr_copy(eh->h_dest, qedf->ctlr.dest_addr);
 
 	/* Set the source MAC address */
 	ether_addr_copy(eh->h_source, qedf->data_src_addr);
 
-	hp = (struct fcoe_hdr *)(eh + 1);
-	memset(hp, 0, sizeof(*hp));
-	if (FC_FCOE_VER)
+	hp = (काष्ठा fcoe_hdr *)(eh + 1);
+	स_रखो(hp, 0, माप(*hp));
+	अगर (FC_FCOE_VER)
 		FC_FCOE_ENCAPS_VER(hp, FC_FCOE_VER);
 	hp->fcoe_sof = sof;
 
@@ -1219,115 +1220,115 @@ static int qedf_xmit(struct fc_lport *lport, struct fc_frame *fp)
 	stats->TxWords += wlen;
 	put_cpu();
 
-	/* Get VLAN ID from skb for printing purposes */
+	/* Get VLAN ID from skb क्रम prपूर्णांकing purposes */
 	__vlan_hwaccel_get_tag(skb, &vlan_tci);
 
-	/* send down to lld */
+	/* send करोwn to lld */
 	fr_dev(fp) = lport;
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_LL2, "FCoE frame send: "
 	    "src=%06x dest=%06x r_ctl=%x type=%x vlan=%04x.\n",
 	    ntoh24(fh->fh_s_id), ntoh24(fh->fh_d_id), fh->fh_r_ctl, fh->fh_type,
 	    vlan_tci);
-	if (qedf_dump_frames)
-		print_hex_dump(KERN_WARNING, "fcoe: ", DUMP_PREFIX_OFFSET, 16,
+	अगर (qedf_dump_frames)
+		prपूर्णांक_hex_dump(KERN_WARNING, "fcoe: ", DUMP_PREFIX_OFFSET, 16,
 		    1, skb->data, skb->len, false);
 	rc = qed_ops->ll2->start_xmit(qedf->cdev, skb, 0);
-	if (rc) {
+	अगर (rc) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "start_xmit failed rc = %d.\n", rc);
-		kfree_skb(skb);
-		return rc;
-	}
+		kमुक्त_skb(skb);
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qedf_alloc_sq(struct qedf_ctx *qedf, struct qedf_rport *fcport)
-{
-	int rval = 0;
+अटल पूर्णांक qedf_alloc_sq(काष्ठा qedf_ctx *qedf, काष्ठा qedf_rport *fcport)
+अणु
+	पूर्णांक rval = 0;
 	u32 *pbl;
 	dma_addr_t page;
-	int num_pages;
+	पूर्णांक num_pages;
 
 	/* Calculate appropriate queue and PBL sizes */
-	fcport->sq_mem_size = SQ_NUM_ENTRIES * sizeof(struct fcoe_wqe);
+	fcport->sq_mem_size = SQ_NUM_ENTRIES * माप(काष्ठा fcoe_wqe);
 	fcport->sq_mem_size = ALIGN(fcport->sq_mem_size, QEDF_PAGE_SIZE);
 	fcport->sq_pbl_size = (fcport->sq_mem_size / QEDF_PAGE_SIZE) *
-	    sizeof(void *);
+	    माप(व्योम *);
 	fcport->sq_pbl_size = fcport->sq_pbl_size + QEDF_PAGE_SIZE;
 
 	fcport->sq = dma_alloc_coherent(&qedf->pdev->dev, fcport->sq_mem_size,
 					&fcport->sq_dma, GFP_KERNEL);
-	if (!fcport->sq) {
+	अगर (!fcport->sq) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "Could not allocate send queue.\n");
 		rval = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	fcport->sq_pbl = dma_alloc_coherent(&qedf->pdev->dev,
 					    fcport->sq_pbl_size,
 					    &fcport->sq_pbl_dma, GFP_KERNEL);
-	if (!fcport->sq_pbl) {
+	अगर (!fcport->sq_pbl) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "Could not allocate send queue PBL.\n");
 		rval = 1;
-		goto out_free_sq;
-	}
+		जाओ out_मुक्त_sq;
+	पूर्ण
 
 	/* Create PBL */
 	num_pages = fcport->sq_mem_size / QEDF_PAGE_SIZE;
 	page = fcport->sq_dma;
 	pbl = (u32 *)fcport->sq_pbl;
 
-	while (num_pages--) {
+	जबतक (num_pages--) अणु
 		*pbl = U64_LO(page);
 		pbl++;
 		*pbl = U64_HI(page);
 		pbl++;
 		page += QEDF_PAGE_SIZE;
-	}
+	पूर्ण
 
-	return rval;
+	वापस rval;
 
-out_free_sq:
-	dma_free_coherent(&qedf->pdev->dev, fcport->sq_mem_size, fcport->sq,
+out_मुक्त_sq:
+	dma_मुक्त_coherent(&qedf->pdev->dev, fcport->sq_mem_size, fcport->sq,
 	    fcport->sq_dma);
 out:
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static void qedf_free_sq(struct qedf_ctx *qedf, struct qedf_rport *fcport)
-{
-	if (fcport->sq_pbl)
-		dma_free_coherent(&qedf->pdev->dev, fcport->sq_pbl_size,
+अटल व्योम qedf_मुक्त_sq(काष्ठा qedf_ctx *qedf, काष्ठा qedf_rport *fcport)
+अणु
+	अगर (fcport->sq_pbl)
+		dma_मुक्त_coherent(&qedf->pdev->dev, fcport->sq_pbl_size,
 		    fcport->sq_pbl, fcport->sq_pbl_dma);
-	if (fcport->sq)
-		dma_free_coherent(&qedf->pdev->dev, fcport->sq_mem_size,
+	अगर (fcport->sq)
+		dma_मुक्त_coherent(&qedf->pdev->dev, fcport->sq_mem_size,
 		    fcport->sq, fcport->sq_dma);
-}
+पूर्ण
 
-static int qedf_offload_connection(struct qedf_ctx *qedf,
-	struct qedf_rport *fcport)
-{
-	struct qed_fcoe_params_offload conn_info;
+अटल पूर्णांक qedf_offload_connection(काष्ठा qedf_ctx *qedf,
+	काष्ठा qedf_rport *fcport)
+अणु
+	काष्ठा qed_fcoe_params_offload conn_info;
 	u32 port_id;
-	int rval;
-	uint16_t total_sqe = (fcport->sq_mem_size / sizeof(struct fcoe_wqe));
+	पूर्णांक rval;
+	uपूर्णांक16_t total_sqe = (fcport->sq_mem_size / माप(काष्ठा fcoe_wqe));
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_CONN, "Offloading connection "
 		   "portid=%06x.\n", fcport->rdata->ids.port_id);
 	rval = qed_ops->acquire_conn(qedf->cdev, &fcport->handle,
-	    &fcport->fw_cid, &fcport->p_doorbell);
-	if (rval) {
+	    &fcport->fw_cid, &fcport->p_करोorbell);
+	अगर (rval) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "Could not acquire connection "
 			   "for portid=%06x.\n", fcport->rdata->ids.port_id);
-		rval = 1; /* For some reason qed returns 0 on failure here */
-		goto out;
-	}
+		rval = 1; /* For some reason qed वापसs 0 on failure here */
+		जाओ out;
+	पूर्ण
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_CONN, "portid=%06x "
 		   "fw_cid=%08x handle=%d.\n", fcport->rdata->ids.port_id,
 		   fcport->fw_cid, fcport->handle);
 
-	memset(&conn_info, 0, sizeof(struct qed_fcoe_params_offload));
+	स_रखो(&conn_info, 0, माप(काष्ठा qed_fcoe_params_offload));
 
 	/* Fill in the offload connection info */
 	conn_info.sq_pbl_addr = fcport->sq_pbl_dma;
@@ -1336,14 +1337,14 @@ static int qedf_offload_connection(struct qedf_ctx *qedf,
 	conn_info.sq_next_page_addr =
 	    (dma_addr_t)(*(u64 *)(fcport->sq_pbl + 8));
 
-	/* Need to use our FCoE MAC for the offload session */
+	/* Need to use our FCoE MAC क्रम the offload session */
 	ether_addr_copy(conn_info.src_mac, qedf->data_src_addr);
 
 	ether_addr_copy(conn_info.dst_mac, qedf->ctlr.dest_addr);
 
 	conn_info.tx_max_fc_pay_len = fcport->rdata->maxframe_size;
-	conn_info.e_d_tov_timer_val = qedf->lport->e_d_tov;
-	conn_info.rec_tov_timer_val = 3; /* I think this is what E3 was */
+	conn_info.e_d_tov_समयr_val = qedf->lport->e_d_tov;
+	conn_info.rec_tov_समयr_val = 3; /* I think this is what E3 was */
 	conn_info.rx_max_fc_pay_len = fcport->rdata->maxframe_size;
 
 	/* Set VLAN data */
@@ -1369,10 +1370,10 @@ static int qedf_offload_connection(struct qedf_ctx *qedf,
 	conn_info.d_id.addr_mid = (port_id & 0x0000FF00) >> 8;
 	conn_info.d_id.addr_lo = (port_id & 0x00FF0000) >> 16;
 
-	conn_info.def_q_idx = 0; /* Default index for send queue? */
+	conn_info.def_q_idx = 0; /* Default index क्रम send queue? */
 
-	/* Set FC-TAPE specific flags if needed */
-	if (fcport->dev_type == QEDF_RPORT_TYPE_TAPE) {
+	/* Set FC-TAPE specअगरic flags अगर needed */
+	अगर (fcport->dev_type == QEDF_RPORT_TYPE_TAPE) अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_CONN,
 		    "Enable CONF, REC for portid=%06x.\n",
 		    fcport->rdata->ids.port_id);
@@ -1381,32 +1382,32 @@ static int qedf_offload_connection(struct qedf_ctx *qedf,
 		conn_info.flags |=
 		    ((fcport->rdata->sp_features & FC_SP_FT_SEQC) ? 1 : 0) <<
 		    FCOE_CONN_OFFLOAD_RAMROD_DATA_B_REC_VALID_SHIFT;
-	}
+	पूर्ण
 
 	rval = qed_ops->offload_conn(qedf->cdev, fcport->handle, &conn_info);
-	if (rval) {
+	अगर (rval) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "Could not offload connection "
 			   "for portid=%06x.\n", fcport->rdata->ids.port_id);
-		goto out_free_conn;
-	} else
+		जाओ out_मुक्त_conn;
+	पूर्ण अन्यथा
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_CONN, "Offload "
 			   "succeeded portid=%06x total_sqe=%d.\n",
 			   fcport->rdata->ids.port_id, total_sqe);
 
 	spin_lock_init(&fcport->rport_lock);
-	atomic_set(&fcport->free_sqes, total_sqe);
-	return 0;
-out_free_conn:
+	atomic_set(&fcport->मुक्त_sqes, total_sqe);
+	वापस 0;
+out_मुक्त_conn:
 	qed_ops->release_conn(qedf->cdev, fcport->handle);
 out:
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-#define QEDF_TERM_BUFF_SIZE		10
-static void qedf_upload_connection(struct qedf_ctx *qedf,
-	struct qedf_rport *fcport)
-{
-	void *term_params;
+#घोषणा QEDF_TERM_BUFF_SIZE		10
+अटल व्योम qedf_upload_connection(काष्ठा qedf_ctx *qedf,
+	काष्ठा qedf_rport *fcport)
+अणु
+	व्योम *term_params;
 	dma_addr_t term_params_dma;
 
 	/* Term params needs to be a DMA coherent buffer as qed shared the
@@ -1422,81 +1423,81 @@ static void qedf_upload_connection(struct qedf_ctx *qedf,
 	qed_ops->destroy_conn(qedf->cdev, fcport->handle, term_params_dma);
 	qed_ops->release_conn(qedf->cdev, fcport->handle);
 
-	dma_free_coherent(&qedf->pdev->dev, QEDF_TERM_BUFF_SIZE, term_params,
+	dma_मुक्त_coherent(&qedf->pdev->dev, QEDF_TERM_BUFF_SIZE, term_params,
 	    term_params_dma);
-}
+पूर्ण
 
-static void qedf_cleanup_fcport(struct qedf_ctx *qedf,
-	struct qedf_rport *fcport)
-{
-	struct fc_rport_priv *rdata = fcport->rdata;
+अटल व्योम qedf_cleanup_fcport(काष्ठा qedf_ctx *qedf,
+	काष्ठा qedf_rport *fcport)
+अणु
+	काष्ठा fc_rport_priv *rdata = fcport->rdata;
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_CONN, "Cleaning up portid=%06x.\n",
 	    fcport->rdata->ids.port_id);
 
-	/* Flush any remaining i/o's before we upload the connection */
+	/* Flush any reमुख्यing i/o's beक्रमe we upload the connection */
 	qedf_flush_active_ios(fcport, -1);
 
-	if (test_and_clear_bit(QEDF_RPORT_SESSION_READY, &fcport->flags))
+	अगर (test_and_clear_bit(QEDF_RPORT_SESSION_READY, &fcport->flags))
 		qedf_upload_connection(qedf, fcport);
-	qedf_free_sq(qedf, fcport);
-	fcport->rdata = NULL;
-	fcport->qedf = NULL;
+	qedf_मुक्त_sq(qedf, fcport);
+	fcport->rdata = शून्य;
+	fcport->qedf = शून्य;
 	kref_put(&rdata->kref, fc_rport_destroy);
-}
+पूर्ण
 
 /*
  * This event_callback is called after successful completion of libfc
  * initiated target login. qedf can proceed with initiating the session
  * establishment.
  */
-static void qedf_rport_event_handler(struct fc_lport *lport,
-				struct fc_rport_priv *rdata,
-				enum fc_rport_event event)
-{
-	struct qedf_ctx *qedf = lport_priv(lport);
-	struct fc_rport *rport = rdata->rport;
-	struct fc_rport_libfc_priv *rp;
-	struct qedf_rport *fcport;
+अटल व्योम qedf_rport_event_handler(काष्ठा fc_lport *lport,
+				काष्ठा fc_rport_priv *rdata,
+				क्रमागत fc_rport_event event)
+अणु
+	काष्ठा qedf_ctx *qedf = lport_priv(lport);
+	काष्ठा fc_rport *rport = rdata->rport;
+	काष्ठा fc_rport_libfc_priv *rp;
+	काष्ठा qedf_rport *fcport;
 	u32 port_id;
-	int rval;
-	unsigned long flags;
+	पूर्णांक rval;
+	अचिन्हित दीर्घ flags;
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC, "event = %d, "
 		   "port_id = 0x%x\n", event, rdata->ids.port_id);
 
-	switch (event) {
-	case RPORT_EV_READY:
-		if (!rport) {
+	चयन (event) अणु
+	हाल RPORT_EV_READY:
+		अगर (!rport) अणु
 			QEDF_WARN(&(qedf->dbg_ctx), "rport is NULL.\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rp = rport->dd_data;
-		fcport = (struct qedf_rport *)&rp[1];
+		fcport = (काष्ठा qedf_rport *)&rp[1];
 		fcport->qedf = qedf;
 
-		if (atomic_read(&qedf->num_offloads) >= QEDF_MAX_SESSIONS) {
+		अगर (atomic_पढ़ो(&qedf->num_offloads) >= QEDF_MAX_SESSIONS) अणु
 			QEDF_ERR(&(qedf->dbg_ctx), "Not offloading "
 			    "portid=0x%x as max number of offloaded sessions "
 			    "reached.\n", rdata->ids.port_id);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		/*
 		 * Don't try to offload the session again. Can happen when we
 		 * get an ADISC
 		 */
-		if (test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) {
+		अगर (test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) अणु
 			QEDF_WARN(&(qedf->dbg_ctx), "Session already "
 				   "offloaded, portid=0x%x.\n",
 				   rdata->ids.port_id);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (rport->port_id == FC_FID_DIR_SERV) {
+		अगर (rport->port_id == FC_FID_सूची_SERV) अणु
 			/*
-			 * qedf_rport structure doesn't exist for
+			 * qedf_rport काष्ठाure करोesn't exist क्रम
 			 * directory server.
 			 * We should not come here, as lport will
 			 * take care of fabric login
@@ -1504,19 +1505,19 @@ static void qedf_rport_event_handler(struct fc_lport *lport,
 			QEDF_WARN(&(qedf->dbg_ctx), "rport struct does not "
 			    "exist for dir server port_id=%x\n",
 			    rdata->ids.port_id);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (rdata->spp_type != FC_TYPE_FCP) {
+		अगर (rdata->spp_type != FC_TYPE_FCP) अणु
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			    "Not offloading since spp type isn't FCP\n");
-			break;
-		}
-		if (!(rdata->ids.roles & FC_RPORT_ROLE_FCP_TARGET)) {
+			अवरोध;
+		पूर्ण
+		अगर (!(rdata->ids.roles & FC_RPORT_ROLE_FCP_TARGET)) अणु
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			    "Not FCP target so not offloading\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Initial reference held on entry, so this can't fail */
 		kref_get(&rdata->kref);
@@ -1524,28 +1525,28 @@ static void qedf_rport_event_handler(struct fc_lport *lport,
 		fcport->rport = rport;
 
 		rval = qedf_alloc_sq(qedf, fcport);
-		if (rval) {
+		अगर (rval) अणु
 			qedf_cleanup_fcport(qedf, fcport);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Set device type */
-		if (rdata->flags & FC_RP_FLAGS_RETRY &&
+		अगर (rdata->flags & FC_RP_FLAGS_RETRY &&
 		    rdata->ids.roles & FC_RPORT_ROLE_FCP_TARGET &&
-		    !(rdata->ids.roles & FC_RPORT_ROLE_FCP_INITIATOR)) {
+		    !(rdata->ids.roles & FC_RPORT_ROLE_FCP_INITIATOR)) अणु
 			fcport->dev_type = QEDF_RPORT_TYPE_TAPE;
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			    "portid=%06x is a TAPE device.\n",
 			    rdata->ids.port_id);
-		} else {
+		पूर्ण अन्यथा अणु
 			fcport->dev_type = QEDF_RPORT_TYPE_DISK;
-		}
+		पूर्ण
 
 		rval = qedf_offload_connection(qedf, fcport);
-		if (rval) {
+		अगर (rval) अणु
 			qedf_cleanup_fcport(qedf, fcport);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Add fcport to list of qedf_ctx list of offloaded ports */
 		spin_lock_irqsave(&qedf->hba_lock, flags);
@@ -1553,48 +1554,48 @@ static void qedf_rport_event_handler(struct fc_lport *lport,
 		spin_unlock_irqrestore(&qedf->hba_lock, flags);
 
 		/*
-		 * Set the session ready bit to let everyone know that this
-		 * connection is ready for I/O
+		 * Set the session पढ़ोy bit to let everyone know that this
+		 * connection is पढ़ोy क्रम I/O
 		 */
 		set_bit(QEDF_RPORT_SESSION_READY, &fcport->flags);
 		atomic_inc(&qedf->num_offloads);
 
-		break;
-	case RPORT_EV_LOGO:
-	case RPORT_EV_FAILED:
-	case RPORT_EV_STOP:
+		अवरोध;
+	हाल RPORT_EV_LOGO:
+	हाल RPORT_EV_FAILED:
+	हाल RPORT_EV_STOP:
 		port_id = rdata->ids.port_id;
-		if (port_id == FC_FID_DIR_SERV)
-			break;
+		अगर (port_id == FC_FID_सूची_SERV)
+			अवरोध;
 
-		if (rdata->spp_type != FC_TYPE_FCP) {
+		अगर (rdata->spp_type != FC_TYPE_FCP) अणु
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			    "No action since spp type isn't FCP\n");
-			break;
-		}
-		if (!(rdata->ids.roles & FC_RPORT_ROLE_FCP_TARGET)) {
+			अवरोध;
+		पूर्ण
+		अगर (!(rdata->ids.roles & FC_RPORT_ROLE_FCP_TARGET)) अणु
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			    "Not FCP target so no action\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!rport) {
+		अगर (!rport) अणु
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			    "port_id=%x - rport notcreated Yet!!\n", port_id);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		rp = rport->dd_data;
 		/*
-		 * Perform session upload. Note that rdata->peers is already
-		 * removed from disc->rports list before we get this event.
+		 * Perक्रमm session upload. Note that rdata->peers is alपढ़ोy
+		 * हटाओd from disc->rports list beक्रमe we get this event.
 		 */
-		fcport = (struct qedf_rport *)&rp[1];
+		fcport = (काष्ठा qedf_rport *)&rp[1];
 
 		spin_lock_irqsave(&fcport->rport_lock, flags);
-		/* Only free this fcport if it is offloaded already */
-		if (test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags) &&
+		/* Only मुक्त this fcport अगर it is offloaded alपढ़ोy */
+		अगर (test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags) &&
 		    !test_bit(QEDF_RPORT_UPLOADING_CONNECTION,
-		    &fcport->flags)) {
+		    &fcport->flags)) अणु
 			set_bit(QEDF_RPORT_UPLOADING_CONNECTION,
 				&fcport->flags);
 			spin_unlock_irqrestore(&fcport->rport_lock, flags);
@@ -1610,147 +1611,147 @@ static void qedf_rport_event_handler(struct fc_lport *lport,
 			clear_bit(QEDF_RPORT_UPLOADING_CONNECTION,
 			    &fcport->flags);
 			atomic_dec(&qedf->num_offloads);
-		} else {
+		पूर्ण अन्यथा अणु
 			spin_unlock_irqrestore(&fcport->rport_lock, flags);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case RPORT_EV_NONE:
-		break;
-	}
-}
+	हाल RPORT_EV_NONE:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void qedf_abort_io(struct fc_lport *lport)
-{
-	/* NO-OP but need to fill in the template */
-}
+अटल व्योम qedf_पात_io(काष्ठा fc_lport *lport)
+अणु
+	/* NO-OP but need to fill in the ढाँचा */
+पूर्ण
 
-static void qedf_fcp_cleanup(struct fc_lport *lport)
-{
+अटल व्योम qedf_fcp_cleanup(काष्ठा fc_lport *lport)
+अणु
 	/*
-	 * NO-OP but need to fill in template to prevent a NULL
-	 * function pointer dereference during link down. I/Os
+	 * NO-OP but need to fill in ढाँचा to prevent a शून्य
+	 * function poपूर्णांकer dereference during link करोwn. I/Os
 	 * will be flushed when port is uploaded.
 	 */
-}
+पूर्ण
 
-static struct libfc_function_template qedf_lport_template = {
+अटल काष्ठा libfc_function_ढाँचा qedf_lport_ढाँचा = अणु
 	.frame_send		= qedf_xmit,
-	.fcp_abort_io		= qedf_abort_io,
+	.fcp_पात_io		= qedf_पात_io,
 	.fcp_cleanup		= qedf_fcp_cleanup,
 	.rport_event_callback	= qedf_rport_event_handler,
 	.elsct_send		= qedf_elsct_send,
-};
+पूर्ण;
 
-static void qedf_fcoe_ctlr_setup(struct qedf_ctx *qedf)
-{
+अटल व्योम qedf_fcoe_ctlr_setup(काष्ठा qedf_ctx *qedf)
+अणु
 	fcoe_ctlr_init(&qedf->ctlr, FIP_MODE_AUTO);
 
 	qedf->ctlr.send = qedf_fip_send;
 	qedf->ctlr.get_src_addr = qedf_get_src_mac;
 	ether_addr_copy(qedf->ctlr.ctl_src_addr, qedf->mac);
-}
+पूर्ण
 
-static void qedf_setup_fdmi(struct qedf_ctx *qedf)
-{
-	struct fc_lport *lport = qedf->lport;
+अटल व्योम qedf_setup_fdmi(काष्ठा qedf_ctx *qedf)
+अणु
+	काष्ठा fc_lport *lport = qedf->lport;
 	u8 buf[8];
-	int pos;
-	uint32_t i;
+	पूर्णांक pos;
+	uपूर्णांक32_t i;
 
 	/*
-	 * fdmi_enabled needs to be set for libfc
+	 * fdmi_enabled needs to be set क्रम libfc
 	 * to execute FDMI registration
 	 */
 	lport->fdmi_enabled = 1;
 
 	/*
 	 * Setup the necessary fc_host attributes to that will be used to fill
-	 * in the FDMI information.
+	 * in the FDMI inक्रमmation.
 	 */
 
 	/* Get the PCI-e Device Serial Number Capability */
 	pos = pci_find_ext_capability(qedf->pdev, PCI_EXT_CAP_ID_DSN);
-	if (pos) {
+	अगर (pos) अणु
 		pos += 4;
-		for (i = 0; i < 8; i++)
-			pci_read_config_byte(qedf->pdev, pos + i, &buf[i]);
+		क्रम (i = 0; i < 8; i++)
+			pci_पढ़ो_config_byte(qedf->pdev, pos + i, &buf[i]);
 
-		snprintf(fc_host_serial_number(lport->host),
+		snम_लिखो(fc_host_serial_number(lport->host),
 		    FC_SERIAL_NUMBER_SIZE,
 		    "%02X%02X%02X%02X%02X%02X%02X%02X",
 		    buf[7], buf[6], buf[5], buf[4],
 		    buf[3], buf[2], buf[1], buf[0]);
-	} else
-		snprintf(fc_host_serial_number(lport->host),
+	पूर्ण अन्यथा
+		snम_लिखो(fc_host_serial_number(lport->host),
 		    FC_SERIAL_NUMBER_SIZE, "Unknown");
 
-	snprintf(fc_host_manufacturer(lport->host),
+	snम_लिखो(fc_host_manufacturer(lport->host),
 	    FC_SERIAL_NUMBER_SIZE, "%s", "Marvell Semiconductor Inc.");
 
-	if (qedf->pdev->device == QL45xxx) {
-		snprintf(fc_host_model(lport->host),
+	अगर (qedf->pdev->device == QL45xxx) अणु
+		snम_लिखो(fc_host_model(lport->host),
 			FC_SYMBOLIC_NAME_SIZE, "%s", "QL45xxx");
 
-		snprintf(fc_host_model_description(lport->host),
+		snम_लिखो(fc_host_model_description(lport->host),
 			FC_SYMBOLIC_NAME_SIZE, "%s",
 			"Marvell FastLinQ QL45xxx FCoE Adapter");
-	}
+	पूर्ण
 
-	if (qedf->pdev->device == QL41xxx) {
-		snprintf(fc_host_model(lport->host),
+	अगर (qedf->pdev->device == QL41xxx) अणु
+		snम_लिखो(fc_host_model(lport->host),
 			FC_SYMBOLIC_NAME_SIZE, "%s", "QL41xxx");
 
-		snprintf(fc_host_model_description(lport->host),
+		snम_लिखो(fc_host_model_description(lport->host),
 			FC_SYMBOLIC_NAME_SIZE, "%s",
 			"Marvell FastLinQ QL41xxx FCoE Adapter");
-	}
+	पूर्ण
 
-	snprintf(fc_host_hardware_version(lport->host),
+	snम_लिखो(fc_host_hardware_version(lport->host),
 	    FC_VERSION_STRING_SIZE, "Rev %d", qedf->pdev->revision);
 
-	snprintf(fc_host_driver_version(lport->host),
+	snम_लिखो(fc_host_driver_version(lport->host),
 	    FC_VERSION_STRING_SIZE, "%s", QEDF_VERSION);
 
-	snprintf(fc_host_firmware_version(lport->host),
+	snम_लिखो(fc_host_firmware_version(lport->host),
 	    FC_VERSION_STRING_SIZE, "%d.%d.%d.%d",
 	    FW_MAJOR_VERSION, FW_MINOR_VERSION, FW_REVISION_VERSION,
 	    FW_ENGINEERING_VERSION);
 
-}
+पूर्ण
 
-static int qedf_lport_setup(struct qedf_ctx *qedf)
-{
-	struct fc_lport *lport = qedf->lport;
+अटल पूर्णांक qedf_lport_setup(काष्ठा qedf_ctx *qedf)
+अणु
+	काष्ठा fc_lport *lport = qedf->lport;
 
 	lport->link_up = 0;
 	lport->max_retry_count = QEDF_FLOGI_RETRY_CNT;
 	lport->max_rport_retry_count = QEDF_RPORT_RETRY_CNT;
 	lport->service_params = (FCP_SPPF_INIT_FCN | FCP_SPPF_RD_XRDY_DIS |
 	    FCP_SPPF_RETRY | FCP_SPPF_CONF_COMPL);
-	lport->boot_time = jiffies;
+	lport->boot_समय = jअगरfies;
 	lport->e_d_tov = 2 * 1000;
 	lport->r_a_tov = 10 * 1000;
 
 	/* Set NPIV support */
-	lport->does_npiv = 1;
+	lport->करोes_npiv = 1;
 	fc_host_max_npiv_vports(lport->host) = QEDF_MAX_NPIV;
 
 	fc_set_wwnn(lport, qedf->wwnn);
 	fc_set_wwpn(lport, qedf->wwpn);
 
-	if (fcoe_libfc_config(lport, &qedf->ctlr, &qedf_lport_template, 0)) {
+	अगर (fcoe_libfc_config(lport, &qedf->ctlr, &qedf_lport_ढाँचा, 0)) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "fcoe_libfc_config failed.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Allocate the exchange manager */
 	fc_exch_mgr_alloc(lport, FC_CLASS_3, FCOE_PARAMS_NUM_TASKS,
-			  0xfffe, NULL);
+			  0xfffe, शून्य);
 
-	if (fc_lport_init_stats(lport))
-		return -ENOMEM;
+	अगर (fc_lport_init_stats(lport))
+		वापस -ENOMEM;
 
 	/* Finish lport config */
 	fc_lport_config(lport);
@@ -1759,44 +1760,44 @@ static int qedf_lport_setup(struct qedf_ctx *qedf)
 	fc_set_mfs(lport, QEDF_MFS);
 	fc_host_maxframe_size(lport->host) = lport->mfs;
 
-	/* Set default dev_loss_tmo based on module parameter */
-	fc_host_dev_loss_tmo(lport->host) = qedf_dev_loss_tmo;
+	/* Set शेष dev_loss_पंचांगo based on module parameter */
+	fc_host_dev_loss_पंचांगo(lport->host) = qedf_dev_loss_पंचांगo;
 
 	/* Set symbolic node name */
-	if (qedf->pdev->device == QL45xxx)
-		snprintf(fc_host_symbolic_name(lport->host), 256,
+	अगर (qedf->pdev->device == QL45xxx)
+		snम_लिखो(fc_host_symbolic_name(lport->host), 256,
 			"Marvell FastLinQ 45xxx FCoE v%s", QEDF_VERSION);
 
-	if (qedf->pdev->device == QL41xxx)
-		snprintf(fc_host_symbolic_name(lport->host), 256,
+	अगर (qedf->pdev->device == QL41xxx)
+		snम_लिखो(fc_host_symbolic_name(lport->host), 256,
 			"Marvell FastLinQ 41xxx FCoE v%s", QEDF_VERSION);
 
 	qedf_setup_fdmi(qedf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * NPIV functions
  */
 
-static int qedf_vport_libfc_config(struct fc_vport *vport,
-	struct fc_lport *lport)
-{
+अटल पूर्णांक qedf_vport_libfc_config(काष्ठा fc_vport *vport,
+	काष्ठा fc_lport *lport)
+अणु
 	lport->link_up = 0;
 	lport->qfull = 0;
 	lport->max_retry_count = QEDF_FLOGI_RETRY_CNT;
 	lport->max_rport_retry_count = QEDF_RPORT_RETRY_CNT;
 	lport->service_params = (FCP_SPPF_INIT_FCN | FCP_SPPF_RD_XRDY_DIS |
 	    FCP_SPPF_RETRY | FCP_SPPF_CONF_COMPL);
-	lport->boot_time = jiffies;
+	lport->boot_समय = jअगरfies;
 	lport->e_d_tov = 2 * 1000;
 	lport->r_a_tov = 10 * 1000;
-	lport->does_npiv = 1; /* Temporary until we add NPIV support */
+	lport->करोes_npiv = 1; /* Temporary until we add NPIV support */
 
-	/* Allocate stats for vport */
-	if (fc_lport_init_stats(lport))
-		return -ENOMEM;
+	/* Allocate stats क्रम vport */
+	अगर (fc_lport_init_stats(lport))
+		वापस -ENOMEM;
 
 	/* Finish lport config */
 	fc_lport_config(lport);
@@ -1808,50 +1809,50 @@ static int qedf_vport_libfc_config(struct fc_vport *vport,
 	lport->lro_xid = 0;
 	lport->lso_max = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qedf_vport_create(struct fc_vport *vport, bool disabled)
-{
-	struct Scsi_Host *shost = vport_to_shost(vport);
-	struct fc_lport *n_port = shost_priv(shost);
-	struct fc_lport *vn_port;
-	struct qedf_ctx *base_qedf = lport_priv(n_port);
-	struct qedf_ctx *vport_qedf;
+अटल पूर्णांक qedf_vport_create(काष्ठा fc_vport *vport, bool disabled)
+अणु
+	काष्ठा Scsi_Host *shost = vport_to_shost(vport);
+	काष्ठा fc_lport *n_port = shost_priv(shost);
+	काष्ठा fc_lport *vn_port;
+	काष्ठा qedf_ctx *base_qedf = lport_priv(n_port);
+	काष्ठा qedf_ctx *vport_qedf;
 
-	char buf[32];
-	int rc = 0;
+	अक्षर buf[32];
+	पूर्णांक rc = 0;
 
 	rc = fcoe_validate_vport_create(vport);
-	if (rc) {
-		fcoe_wwn_to_str(vport->port_name, buf, sizeof(buf));
+	अगर (rc) अणु
+		fcoe_wwn_to_str(vport->port_name, buf, माप(buf));
 		QEDF_WARN(&(base_qedf->dbg_ctx), "Failed to create vport, "
 			   "WWPN (0x%s) already exists.\n", buf);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	if (atomic_read(&base_qedf->link_state) != QEDF_LINK_UP) {
+	अगर (atomic_पढ़ो(&base_qedf->link_state) != QEDF_LINK_UP) अणु
 		QEDF_WARN(&(base_qedf->dbg_ctx), "Cannot create vport "
 			   "because link is not up.\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	vn_port = libfc_vport_create(vport, sizeof(struct qedf_ctx));
-	if (!vn_port) {
+	vn_port = libfc_vport_create(vport, माप(काष्ठा qedf_ctx));
+	अगर (!vn_port) अणु
 		QEDF_WARN(&(base_qedf->dbg_ctx), "Could not create lport "
 			   "for vport.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	fcoe_wwn_to_str(vport->port_name, buf, sizeof(buf));
+	fcoe_wwn_to_str(vport->port_name, buf, माप(buf));
 	QEDF_ERR(&(base_qedf->dbg_ctx), "Creating NPIV port, WWPN=%s.\n",
 	    buf);
 
 	/* Copy some fields from base_qedf */
 	vport_qedf = lport_priv(vn_port);
-	memcpy(vport_qedf, base_qedf, sizeof(struct qedf_ctx));
+	स_नकल(vport_qedf, base_qedf, माप(काष्ठा qedf_ctx));
 
-	/* Set qedf data specific to this vport */
+	/* Set qedf data specअगरic to this vport */
 	vport_qedf->lport = vn_port;
 	/* Use same hba_lock as base_qedf */
 	vport_qedf->hba_lock = base_qedf->hba_lock;
@@ -1861,36 +1862,36 @@ static int qedf_vport_create(struct fc_vport *vport, bool disabled)
 	INIT_LIST_HEAD(&vport_qedf->fcports);
 
 	rc = qedf_vport_libfc_config(vport, vn_port);
-	if (rc) {
+	अगर (rc) अणु
 		QEDF_ERR(&(base_qedf->dbg_ctx), "Could not allocate memory "
 		    "for lport stats.\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	fc_set_wwnn(vn_port, vport->node_name);
 	fc_set_wwpn(vn_port, vport->port_name);
 	vport_qedf->wwnn = vn_port->wwnn;
 	vport_qedf->wwpn = vn_port->wwpn;
 
-	vn_port->host->transportt = qedf_fc_vport_transport_template;
+	vn_port->host->transportt = qedf_fc_vport_transport_ढाँचा;
 	vn_port->host->can_queue = FCOE_PARAMS_NUM_TASKS;
 	vn_port->host->max_lun = qedf_max_lun;
 	vn_port->host->sg_tablesize = QEDF_MAX_BDS_PER_CMD;
 	vn_port->host->max_cmd_len = QEDF_MAX_CDB_LEN;
 
 	rc = scsi_add_host(vn_port->host, &vport->dev);
-	if (rc) {
+	अगर (rc) अणु
 		QEDF_WARN(&base_qedf->dbg_ctx,
 			  "Error adding Scsi_Host rc=0x%x.\n", rc);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* Set default dev_loss_tmo based on module parameter */
-	fc_host_dev_loss_tmo(vn_port->host) = qedf_dev_loss_tmo;
+	/* Set शेष dev_loss_पंचांगo based on module parameter */
+	fc_host_dev_loss_पंचांगo(vn_port->host) = qedf_dev_loss_पंचांगo;
 
 	/* Init libfc stuffs */
-	memcpy(&vn_port->tt, &qedf_lport_template,
-		sizeof(qedf_lport_template));
+	स_नकल(&vn_port->tt, &qedf_lport_ढाँचा,
+		माप(qedf_lport_ढाँचा));
 	fc_exch_init(vn_port);
 	fc_elsct_init(vn_port);
 	fc_lport_init(vn_port);
@@ -1908,39 +1909,39 @@ static int qedf_vport_create(struct fc_vport *vport, bool disabled)
 
 	fc_host_port_type(vn_port->host) = FC_PORTTYPE_UNKNOWN;
 
-	if (disabled) {
+	अगर (disabled) अणु
 		fc_vport_set_state(vport, FC_VPORT_DISABLED);
-	} else {
-		vn_port->boot_time = jiffies;
+	पूर्ण अन्यथा अणु
+		vn_port->boot_समय = jअगरfies;
 		fc_fabric_login(vn_port);
 		fc_vport_setlink(vn_port);
-	}
+	पूर्ण
 
 	QEDF_INFO(&(base_qedf->dbg_ctx), QEDF_LOG_NPIV, "vn_port=%p.\n",
 		   vn_port);
 
-	/* Set up debug context for vport */
+	/* Set up debug context क्रम vport */
 	vport_qedf->dbg_ctx.host_no = vn_port->host->host_no;
 	vport_qedf->dbg_ctx.pdev = base_qedf->pdev;
 
-	return 0;
+	वापस 0;
 
 err:
 	scsi_host_put(vn_port->host);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qedf_vport_destroy(struct fc_vport *vport)
-{
-	struct Scsi_Host *shost = vport_to_shost(vport);
-	struct fc_lport *n_port = shost_priv(shost);
-	struct fc_lport *vn_port = vport->dd_data;
-	struct qedf_ctx *qedf = lport_priv(vn_port);
+अटल पूर्णांक qedf_vport_destroy(काष्ठा fc_vport *vport)
+अणु
+	काष्ठा Scsi_Host *shost = vport_to_shost(vport);
+	काष्ठा fc_lport *n_port = shost_priv(shost);
+	काष्ठा fc_lport *vn_port = vport->dd_data;
+	काष्ठा qedf_ctx *qedf = lport_priv(vn_port);
 
-	if (!qedf) {
-		QEDF_ERR(NULL, "qedf is NULL.\n");
-		goto out;
-	}
+	अगर (!qedf) अणु
+		QEDF_ERR(शून्य, "qedf is NULL.\n");
+		जाओ out;
+	पूर्ण
 
 	/* Set unloading bit on vport qedf_ctx to prevent more I/O */
 	set_bit(QEDF_UNLOADING, &qedf->flags);
@@ -1953,59 +1954,59 @@ static int qedf_vport_destroy(struct fc_vport *vport)
 	fc_lport_destroy(vn_port);
 
 	/* Detach from scsi-ml */
-	fc_remove_host(vn_port->host);
-	scsi_remove_host(vn_port->host);
+	fc_हटाओ_host(vn_port->host);
+	scsi_हटाओ_host(vn_port->host);
 
 	/*
-	 * Only try to release the exchange manager if the vn_port
+	 * Only try to release the exchange manager अगर the vn_port
 	 * configuration is complete.
 	 */
-	if (vn_port->state == LPORT_ST_READY)
-		fc_exch_mgr_free(vn_port);
+	अगर (vn_port->state == LPORT_ST_READY)
+		fc_exch_mgr_मुक्त(vn_port);
 
 	/* Free memory used by statistical counters */
-	fc_lport_free_stats(vn_port);
+	fc_lport_मुक्त_stats(vn_port);
 
 	/* Release Scsi_Host */
 	scsi_host_put(vn_port->host);
 
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qedf_vport_disable(struct fc_vport *vport, bool disable)
-{
-	struct fc_lport *lport = vport->dd_data;
+अटल पूर्णांक qedf_vport_disable(काष्ठा fc_vport *vport, bool disable)
+अणु
+	काष्ठा fc_lport *lport = vport->dd_data;
 
-	if (disable) {
+	अगर (disable) अणु
 		fc_vport_set_state(vport, FC_VPORT_DISABLED);
 		fc_fabric_logoff(lport);
-	} else {
-		lport->boot_time = jiffies;
+	पूर्ण अन्यथा अणु
+		lport->boot_समय = jअगरfies;
 		fc_fabric_login(lport);
 		fc_vport_setlink(lport);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * During removal we need to wait for all the vports associated with a port
- * to be destroyed so we avoid a race condition where libfc is still trying
- * to reap vports while the driver remove function has already reaped the
+ * During removal we need to रुको क्रम all the vports associated with a port
+ * to be destroyed so we aव्योम a race condition where libfc is still trying
+ * to reap vports जबतक the driver हटाओ function has alपढ़ोy reaped the
  * driver contexts associated with the physical port.
  */
-static void qedf_wait_for_vport_destroy(struct qedf_ctx *qedf)
-{
-	struct fc_host_attrs *fc_host = shost_to_fc_host(qedf->lport->host);
+अटल व्योम qedf_रुको_क्रम_vport_destroy(काष्ठा qedf_ctx *qedf)
+अणु
+	काष्ठा fc_host_attrs *fc_host = shost_to_fc_host(qedf->lport->host);
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_NPIV,
 	    "Entered.\n");
-	while (fc_host->npiv_vports_inuse > 0) {
+	जबतक (fc_host->npiv_vports_inuse > 0) अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_NPIV,
 		    "Waiting for all vports to be reaped.\n");
 		msleep(1000);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * qedf_fcoe_reset - Resets the fcoe
@@ -2014,51 +2015,51 @@ static void qedf_wait_for_vport_destroy(struct qedf_ctx *qedf)
  *
  * Returns: always 0
  */
-static int qedf_fcoe_reset(struct Scsi_Host *shost)
-{
-	struct fc_lport *lport = shost_priv(shost);
+अटल पूर्णांक qedf_fcoe_reset(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा fc_lport *lport = shost_priv(shost);
 
 	qedf_ctx_soft_reset(lport);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qedf_get_host_port_id(struct Scsi_Host *shost)
-{
-	struct fc_lport *lport = shost_priv(shost);
+अटल व्योम qedf_get_host_port_id(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा fc_lport *lport = shost_priv(shost);
 
 	fc_host_port_id(shost) = lport->port_id;
-}
+पूर्ण
 
-static struct fc_host_statistics *qedf_fc_get_host_stats(struct Scsi_Host
+अटल काष्ठा fc_host_statistics *qedf_fc_get_host_stats(काष्ठा Scsi_Host
 	*shost)
-{
-	struct fc_host_statistics *qedf_stats;
-	struct fc_lport *lport = shost_priv(shost);
-	struct qedf_ctx *qedf = lport_priv(lport);
-	struct qed_fcoe_stats *fw_fcoe_stats;
+अणु
+	काष्ठा fc_host_statistics *qedf_stats;
+	काष्ठा fc_lport *lport = shost_priv(shost);
+	काष्ठा qedf_ctx *qedf = lport_priv(lport);
+	काष्ठा qed_fcoe_stats *fw_fcoe_stats;
 
 	qedf_stats = fc_get_host_stats(shost);
 
-	/* We don't collect offload stats for specific NPIV ports */
-	if (lport->vport)
-		goto out;
+	/* We करोn't collect offload stats क्रम specअगरic NPIV ports */
+	अगर (lport->vport)
+		जाओ out;
 
-	fw_fcoe_stats = kmalloc(sizeof(struct qed_fcoe_stats), GFP_KERNEL);
-	if (!fw_fcoe_stats) {
+	fw_fcoe_stats = kदो_स्मृति(माप(काष्ठा qed_fcoe_stats), GFP_KERNEL);
+	अगर (!fw_fcoe_stats) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Could not allocate memory for "
 		    "fw_fcoe_stats.\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mutex_lock(&qedf->stats_mutex);
 
-	/* Query firmware for offload stats */
+	/* Query firmware क्रम offload stats */
 	qed_ops->get_stats(qedf->cdev, fw_fcoe_stats);
 
 	/*
 	 * The expectation is that we add our offload stats to the stats
-	 * being maintained by libfc each time the fc_get_host_status callback
-	 * is invoked. The additions are not carried over for each call to
+	 * being मुख्यtained by libfc each समय the fc_get_host_status callback
+	 * is invoked. The additions are not carried over क्रम each call to
 	 * the fc_get_host_stats callback.
 	 */
 	qedf_stats->tx_frames += fw_fcoe_stats->fcoe_tx_data_pkt_cnt +
@@ -2068,9 +2069,9 @@ static struct fc_host_statistics *qedf_fc_get_host_stats(struct Scsi_Host
 	    fw_fcoe_stats->fcoe_rx_xfer_pkt_cnt +
 	    fw_fcoe_stats->fcoe_rx_other_pkt_cnt;
 	qedf_stats->fcp_input_megabytes +=
-	    do_div(fw_fcoe_stats->fcoe_rx_byte_cnt, 1000000);
+	    करो_भाग(fw_fcoe_stats->fcoe_rx_byte_cnt, 1000000);
 	qedf_stats->fcp_output_megabytes +=
-	    do_div(fw_fcoe_stats->fcoe_tx_byte_cnt, 1000000);
+	    करो_भाग(fw_fcoe_stats->fcoe_tx_byte_cnt, 1000000);
 	qedf_stats->rx_words += fw_fcoe_stats->fcoe_rx_byte_cnt / 4;
 	qedf_stats->tx_words += fw_fcoe_stats->fcoe_tx_byte_cnt / 4;
 	qedf_stats->invalid_crc_count +=
@@ -2082,16 +2083,16 @@ static struct fc_host_statistics *qedf_fc_get_host_stats(struct Scsi_Host
 	qedf_stats->fcp_input_requests += qedf->input_requests;
 	qedf_stats->fcp_output_requests += qedf->output_requests;
 	qedf_stats->fcp_control_requests += qedf->control_requests;
-	qedf_stats->fcp_packet_aborts += qedf->packet_aborts;
+	qedf_stats->fcp_packet_पातs += qedf->packet_पातs;
 	qedf_stats->fcp_frame_alloc_failures += qedf->alloc_failures;
 
 	mutex_unlock(&qedf->stats_mutex);
-	kfree(fw_fcoe_stats);
+	kमुक्त(fw_fcoe_stats);
 out:
-	return qedf_stats;
-}
+	वापस qedf_stats;
+पूर्ण
 
-static struct fc_function_template qedf_fc_transport_fn = {
+अटल काष्ठा fc_function_ढाँचा qedf_fc_transport_fn = अणु
 	.show_host_node_name = 1,
 	.show_host_port_name = 1,
 	.show_host_supported_classes = 1,
@@ -2110,28 +2111,28 @@ static struct fc_function_template qedf_fc_transport_fn = {
 	.show_host_symbolic_name = 1,
 
 	/*
-	 * Tell FC transport to allocate enough space to store the backpointer
-	 * for the associate qedf_rport struct.
+	 * Tell FC transport to allocate enough space to store the backpoपूर्णांकer
+	 * क्रम the associate qedf_rport काष्ठा.
 	 */
-	.dd_fcrport_size = (sizeof(struct fc_rport_libfc_priv) +
-				sizeof(struct qedf_rport)),
+	.dd_fcrport_size = (माप(काष्ठा fc_rport_libfc_priv) +
+				माप(काष्ठा qedf_rport)),
 	.show_rport_maxframe_size = 1,
 	.show_rport_supported_classes = 1,
 	.show_host_fabric_name = 1,
 	.show_starget_node_name = 1,
 	.show_starget_port_name = 1,
 	.show_starget_port_id = 1,
-	.set_rport_dev_loss_tmo = fc_set_rport_loss_tmo,
-	.show_rport_dev_loss_tmo = 1,
+	.set_rport_dev_loss_पंचांगo = fc_set_rport_loss_पंचांगo,
+	.show_rport_dev_loss_पंचांगo = 1,
 	.get_fc_host_stats = qedf_fc_get_host_stats,
 	.issue_fc_host_lip = qedf_fcoe_reset,
 	.vport_create = qedf_vport_create,
 	.vport_delete = qedf_vport_destroy,
 	.vport_disable = qedf_vport_disable,
 	.bsg_request = fc_lport_bsg_request,
-};
+पूर्ण;
 
-static struct fc_function_template qedf_fc_vport_transport_fn = {
+अटल काष्ठा fc_function_ढाँचा qedf_fc_vport_transport_fn = अणु
 	.show_host_node_name = 1,
 	.show_host_port_name = 1,
 	.show_host_supported_classes = 1,
@@ -2146,30 +2147,30 @@ static struct fc_function_template qedf_fc_vport_transport_fn = {
 	.get_host_port_state = fc_get_host_port_state,
 	.show_host_port_state = 1,
 	.show_host_symbolic_name = 1,
-	.dd_fcrport_size = (sizeof(struct fc_rport_libfc_priv) +
-				sizeof(struct qedf_rport)),
+	.dd_fcrport_size = (माप(काष्ठा fc_rport_libfc_priv) +
+				माप(काष्ठा qedf_rport)),
 	.show_rport_maxframe_size = 1,
 	.show_rport_supported_classes = 1,
 	.show_host_fabric_name = 1,
 	.show_starget_node_name = 1,
 	.show_starget_port_name = 1,
 	.show_starget_port_id = 1,
-	.set_rport_dev_loss_tmo = fc_set_rport_loss_tmo,
-	.show_rport_dev_loss_tmo = 1,
+	.set_rport_dev_loss_पंचांगo = fc_set_rport_loss_पंचांगo,
+	.show_rport_dev_loss_पंचांगo = 1,
 	.get_fc_host_stats = fc_get_host_stats,
 	.issue_fc_host_lip = qedf_fcoe_reset,
 	.bsg_request = fc_lport_bsg_request,
-};
+पूर्ण;
 
-static bool qedf_fp_has_work(struct qedf_fastpath *fp)
-{
-	struct qedf_ctx *qedf = fp->qedf;
-	struct global_queue *que;
-	struct qed_sb_info *sb_info = fp->sb_info;
-	struct status_block_e4 *sb = sb_info->sb_virt;
+अटल bool qedf_fp_has_work(काष्ठा qedf_fastpath *fp)
+अणु
+	काष्ठा qedf_ctx *qedf = fp->qedf;
+	काष्ठा global_queue *que;
+	काष्ठा qed_sb_info *sb_info = fp->sb_info;
+	काष्ठा status_block_e4 *sb = sb_info->sb_virt;
 	u16 prod_idx;
 
-	/* Get the pointer to the global CQ this completion is on */
+	/* Get the poपूर्णांकer to the global CQ this completion is on */
 	que = qedf->global_queues[fp->sb_id];
 
 	/* Be sure all responses have been written to PI */
@@ -2178,29 +2179,29 @@ static bool qedf_fp_has_work(struct qedf_fastpath *fp)
 	/* Get the current firmware producer index */
 	prod_idx = sb->pi_array[QEDF_FCOE_PARAMS_GL_RQ_PI];
 
-	return (que->cq_prod_idx != prod_idx);
-}
+	वापस (que->cq_prod_idx != prod_idx);
+पूर्ण
 
 /*
  * Interrupt handler code.
  */
 
-/* Process completion queue and copy CQE contents for deferred processesing
+/* Process completion queue and copy CQE contents क्रम deferred processesing
  *
- * Return true if we should wake the I/O thread, false if not.
+ * Return true अगर we should wake the I/O thपढ़ो, false अगर not.
  */
-static bool qedf_process_completions(struct qedf_fastpath *fp)
-{
-	struct qedf_ctx *qedf = fp->qedf;
-	struct qed_sb_info *sb_info = fp->sb_info;
-	struct status_block_e4 *sb = sb_info->sb_virt;
-	struct global_queue *que;
+अटल bool qedf_process_completions(काष्ठा qedf_fastpath *fp)
+अणु
+	काष्ठा qedf_ctx *qedf = fp->qedf;
+	काष्ठा qed_sb_info *sb_info = fp->sb_info;
+	काष्ठा status_block_e4 *sb = sb_info->sb_virt;
+	काष्ठा global_queue *que;
 	u16 prod_idx;
-	struct fcoe_cqe *cqe;
-	struct qedf_io_work *io_work;
-	int num_handled = 0;
-	unsigned int cpu;
-	struct qedf_ioreq *io_req = NULL;
+	काष्ठा fcoe_cqe *cqe;
+	काष्ठा qedf_io_work *io_work;
+	पूर्णांक num_handled = 0;
+	अचिन्हित पूर्णांक cpu;
+	काष्ठा qedf_ioreq *io_req = शून्य;
 	u16 xid;
 	u16 new_cqes;
 	u32 comp_type;
@@ -2208,7 +2209,7 @@ static bool qedf_process_completions(struct qedf_fastpath *fp)
 	/* Get the current firmware producer index */
 	prod_idx = sb->pi_array[QEDF_FCOE_PARAMS_GL_RQ_PI];
 
-	/* Get the pointer to the global CQ this completion is on */
+	/* Get the poपूर्णांकer to the global CQ this completion is on */
 	que = qedf->global_queues[fp->sb_id];
 
 	/* Calculate the amount of new elements since last processing */
@@ -2219,7 +2220,7 @@ static bool qedf_process_completions(struct qedf_fastpath *fp)
 	/* Save producer index */
 	que->cq_prod_idx = prod_idx;
 
-	while (new_cqes) {
+	जबतक (new_cqes) अणु
 		fp->completions++;
 		num_handled++;
 		cqe = &que->cq[que->cq_cons_idx];
@@ -2228,10 +2229,10 @@ static bool qedf_process_completions(struct qedf_fastpath *fp)
 		    FCOE_CQE_CQE_TYPE_MASK;
 
 		/*
-		 * Process unsolicited CQEs directly in the interrupt handler
+		 * Process unsolicited CQEs directly in the पूर्णांकerrupt handler
 		 * sine we need the fastpath ID
 		 */
-		if (comp_type == FCOE_UNSOLIC_CQE_TYPE) {
+		अगर (comp_type == FCOE_UNSOLIC_CQE_TYPE) अणु
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_UNSOL,
 			   "Unsolicated CQE.\n");
 			qedf_process_unsol_compl(qedf, fp->sb_id, cqe);
@@ -2239,246 +2240,246 @@ static bool qedf_process_completions(struct qedf_fastpath *fp)
 			 * Don't add a work list item.  Increment consumer
 			 * consumer index and move on.
 			 */
-			goto inc_idx;
-		}
+			जाओ inc_idx;
+		पूर्ण
 
 		xid = cqe->cqe_data & FCOE_CQE_TASK_ID_MASK;
 		io_req = &qedf->cmd_mgr->cmds[xid];
 
 		/*
-		 * Figure out which percpu thread we should queue this I/O
+		 * Figure out which percpu thपढ़ो we should queue this I/O
 		 * on.
 		 */
-		if (!io_req)
+		अगर (!io_req)
 			/* If there is not io_req assocated with this CQE
 			 * just queue it on CPU 0
 			 */
 			cpu = 0;
-		else {
+		अन्यथा अणु
 			cpu = io_req->cpu;
-			io_req->int_cpu = smp_processor_id();
-		}
+			io_req->पूर्णांक_cpu = smp_processor_id();
+		पूर्ण
 
 		io_work = mempool_alloc(qedf->io_mempool, GFP_ATOMIC);
-		if (!io_work) {
+		अगर (!io_work) अणु
 			QEDF_WARN(&(qedf->dbg_ctx), "Could not allocate "
 				   "work for I/O completion.\n");
-			continue;
-		}
-		memset(io_work, 0, sizeof(struct qedf_io_work));
+			जारी;
+		पूर्ण
+		स_रखो(io_work, 0, माप(काष्ठा qedf_io_work));
 
 		INIT_WORK(&io_work->work, qedf_fp_io_handler);
 
-		/* Copy contents of CQE for deferred processing */
-		memcpy(&io_work->cqe, cqe, sizeof(struct fcoe_cqe));
+		/* Copy contents of CQE क्रम deferred processing */
+		स_नकल(&io_work->cqe, cqe, माप(काष्ठा fcoe_cqe));
 
 		io_work->qedf = fp->qedf;
-		io_work->fp = NULL; /* Only used for unsolicited frames */
+		io_work->fp = शून्य; /* Only used क्रम unsolicited frames */
 
 		queue_work_on(cpu, qedf_io_wq, &io_work->work);
 
 inc_idx:
 		que->cq_cons_idx++;
-		if (que->cq_cons_idx == fp->cq_num_entries)
+		अगर (que->cq_cons_idx == fp->cq_num_entries)
 			que->cq_cons_idx = 0;
 		new_cqes--;
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 
 /* MSI-X fastpath handler code */
-static irqreturn_t qedf_msix_handler(int irq, void *dev_id)
-{
-	struct qedf_fastpath *fp = dev_id;
+अटल irqवापस_t qedf_msix_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा qedf_fastpath *fp = dev_id;
 
-	if (!fp) {
-		QEDF_ERR(NULL, "fp is null.\n");
-		return IRQ_HANDLED;
-	}
-	if (!fp->sb_info) {
-		QEDF_ERR(NULL, "fp->sb_info in null.");
-		return IRQ_HANDLED;
-	}
+	अगर (!fp) अणु
+		QEDF_ERR(शून्य, "fp is null.\n");
+		वापस IRQ_HANDLED;
+	पूर्ण
+	अगर (!fp->sb_info) अणु
+		QEDF_ERR(शून्य, "fp->sb_info in null.");
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	/*
-	 * Disable interrupts for this status block while we process new
+	 * Disable पूर्णांकerrupts क्रम this status block जबतक we process new
 	 * completions
 	 */
-	qed_sb_ack(fp->sb_info, IGU_INT_DISABLE, 0 /*do not update*/);
+	qed_sb_ack(fp->sb_info, IGU_INT_DISABLE, 0 /*करो not update*/);
 
-	while (1) {
+	जबतक (1) अणु
 		qedf_process_completions(fp);
 
-		if (qedf_fp_has_work(fp) == 0) {
-			/* Update the sb information */
+		अगर (qedf_fp_has_work(fp) == 0) अणु
+			/* Update the sb inक्रमmation */
 			qed_sb_update_sb_idx(fp->sb_info);
 
-			/* Check for more work */
+			/* Check क्रम more work */
 			rmb();
 
-			if (qedf_fp_has_work(fp) == 0) {
-				/* Re-enable interrupts */
+			अगर (qedf_fp_has_work(fp) == 0) अणु
+				/* Re-enable पूर्णांकerrupts */
 				qed_sb_ack(fp->sb_info, IGU_INT_ENABLE, 1);
-				return IRQ_HANDLED;
-			}
-		}
-	}
+				वापस IRQ_HANDLED;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Do we ever want to break out of above loop? */
-	return IRQ_HANDLED;
-}
+	/* Do we ever want to अवरोध out of above loop? */
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* simd handler for MSI/INTa */
-static void qedf_simd_int_handler(void *cookie)
-{
-	/* Cookie is qedf_ctx struct */
-	struct qedf_ctx *qedf = (struct qedf_ctx *)cookie;
+/* simd handler क्रम MSI/INTa */
+अटल व्योम qedf_simd_पूर्णांक_handler(व्योम *cookie)
+अणु
+	/* Cookie is qedf_ctx काष्ठा */
+	काष्ठा qedf_ctx *qedf = (काष्ठा qedf_ctx *)cookie;
 
 	QEDF_WARN(&(qedf->dbg_ctx), "qedf=%p.\n", qedf);
-}
+पूर्ण
 
-#define QEDF_SIMD_HANDLER_NUM		0
-static void qedf_sync_free_irqs(struct qedf_ctx *qedf)
-{
-	int i;
+#घोषणा QEDF_SIMD_HANDLER_NUM		0
+अटल व्योम qedf_sync_मुक्त_irqs(काष्ठा qedf_ctx *qedf)
+अणु
+	पूर्णांक i;
 	u16 vector_idx = 0;
 	u32 vector;
 
-	if (qedf->int_info.msix_cnt) {
-		for (i = 0; i < qedf->int_info.used_cnt; i++) {
+	अगर (qedf->पूर्णांक_info.msix_cnt) अणु
+		क्रम (i = 0; i < qedf->पूर्णांक_info.used_cnt; i++) अणु
 			vector_idx = i * qedf->dev_info.common.num_hwfns +
 				qed_ops->common->get_affin_hwfn_idx(qedf->cdev);
 			QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC,
 				  "Freeing IRQ #%d vector_idx=%d.\n",
 				  i, vector_idx);
-			vector = qedf->int_info.msix[vector_idx].vector;
+			vector = qedf->पूर्णांक_info.msix[vector_idx].vector;
 			synchronize_irq(vector);
-			irq_set_affinity_hint(vector, NULL);
-			irq_set_affinity_notifier(vector, NULL);
-			free_irq(vector, &qedf->fp_array[i]);
-		}
-	} else
+			irq_set_affinity_hपूर्णांक(vector, शून्य);
+			irq_set_affinity_notअगरier(vector, शून्य);
+			मुक्त_irq(vector, &qedf->fp_array[i]);
+		पूर्ण
+	पूर्ण अन्यथा
 		qed_ops->common->simd_handler_clean(qedf->cdev,
 		    QEDF_SIMD_HANDLER_NUM);
 
-	qedf->int_info.used_cnt = 0;
-	qed_ops->common->set_fp_int(qedf->cdev, 0);
-}
+	qedf->पूर्णांक_info.used_cnt = 0;
+	qed_ops->common->set_fp_पूर्णांक(qedf->cdev, 0);
+पूर्ण
 
-static int qedf_request_msix_irq(struct qedf_ctx *qedf)
-{
-	int i, rc, cpu;
+अटल पूर्णांक qedf_request_msix_irq(काष्ठा qedf_ctx *qedf)
+अणु
+	पूर्णांक i, rc, cpu;
 	u16 vector_idx = 0;
 	u32 vector;
 
 	cpu = cpumask_first(cpu_online_mask);
-	for (i = 0; i < qedf->num_queues; i++) {
+	क्रम (i = 0; i < qedf->num_queues; i++) अणु
 		vector_idx = i * qedf->dev_info.common.num_hwfns +
 			qed_ops->common->get_affin_hwfn_idx(qedf->cdev);
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC,
 			  "Requesting IRQ #%d vector_idx=%d.\n",
 			  i, vector_idx);
-		vector = qedf->int_info.msix[vector_idx].vector;
+		vector = qedf->पूर्णांक_info.msix[vector_idx].vector;
 		rc = request_irq(vector, qedf_msix_handler, 0, "qedf",
 				 &qedf->fp_array[i]);
 
-		if (rc) {
+		अगर (rc) अणु
 			QEDF_WARN(&(qedf->dbg_ctx), "request_irq failed.\n");
-			qedf_sync_free_irqs(qedf);
-			return rc;
-		}
+			qedf_sync_मुक्त_irqs(qedf);
+			वापस rc;
+		पूर्ण
 
-		qedf->int_info.used_cnt++;
-		rc = irq_set_affinity_hint(vector, get_cpu_mask(cpu));
+		qedf->पूर्णांक_info.used_cnt++;
+		rc = irq_set_affinity_hपूर्णांक(vector, get_cpu_mask(cpu));
 		cpu = cpumask_next(cpu, cpu_online_mask);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qedf_setup_int(struct qedf_ctx *qedf)
-{
-	int rc = 0;
+अटल पूर्णांक qedf_setup_पूर्णांक(काष्ठा qedf_ctx *qedf)
+अणु
+	पूर्णांक rc = 0;
 
 	/*
-	 * Learn interrupt configuration
+	 * Learn पूर्णांकerrupt configuration
 	 */
-	rc = qed_ops->common->set_fp_int(qedf->cdev, num_online_cpus());
-	if (rc <= 0)
-		return 0;
+	rc = qed_ops->common->set_fp_पूर्णांक(qedf->cdev, num_online_cpus());
+	अगर (rc <= 0)
+		वापस 0;
 
-	rc  = qed_ops->common->get_fp_int(qedf->cdev, &qedf->int_info);
-	if (rc)
-		return 0;
+	rc  = qed_ops->common->get_fp_पूर्णांक(qedf->cdev, &qedf->पूर्णांक_info);
+	अगर (rc)
+		वापस 0;
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC, "Number of msix_cnt = "
-		   "0x%x num of cpus = 0x%x\n", qedf->int_info.msix_cnt,
+		   "0x%x num of cpus = 0x%x\n", qedf->पूर्णांक_info.msix_cnt,
 		   num_online_cpus());
 
-	if (qedf->int_info.msix_cnt)
-		return qedf_request_msix_irq(qedf);
+	अगर (qedf->पूर्णांक_info.msix_cnt)
+		वापस qedf_request_msix_irq(qedf);
 
 	qed_ops->common->simd_handler_config(qedf->cdev, &qedf,
-	    QEDF_SIMD_HANDLER_NUM, qedf_simd_int_handler);
-	qedf->int_info.used_cnt = 1;
+	    QEDF_SIMD_HANDLER_NUM, qedf_simd_पूर्णांक_handler);
+	qedf->पूर्णांक_info.used_cnt = 1;
 
 	QEDF_ERR(&qedf->dbg_ctx,
 		 "Cannot load driver due to a lack of MSI-X vectors.\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-/* Main function for libfc frame reception */
-static void qedf_recv_frame(struct qedf_ctx *qedf,
-	struct sk_buff *skb)
-{
+/* Main function क्रम libfc frame reception */
+अटल व्योम qedf_recv_frame(काष्ठा qedf_ctx *qedf,
+	काष्ठा sk_buff *skb)
+अणु
 	u32 fr_len;
-	struct fc_lport *lport;
-	struct fc_frame_header *fh;
-	struct fcoe_crc_eof crc_eof;
-	struct fc_frame *fp;
-	u8 *mac = NULL;
-	u8 *dest_mac = NULL;
-	struct fcoe_hdr *hp;
-	struct qedf_rport *fcport;
-	struct fc_lport *vn_port;
+	काष्ठा fc_lport *lport;
+	काष्ठा fc_frame_header *fh;
+	काष्ठा fcoe_crc_eof crc_eof;
+	काष्ठा fc_frame *fp;
+	u8 *mac = शून्य;
+	u8 *dest_mac = शून्य;
+	काष्ठा fcoe_hdr *hp;
+	काष्ठा qedf_rport *fcport;
+	काष्ठा fc_lport *vn_port;
 	u32 f_ctl;
 
 	lport = qedf->lport;
-	if (lport == NULL || lport->state == LPORT_ST_DISABLED) {
-		QEDF_WARN(NULL, "Invalid lport struct or lport disabled.\n");
-		kfree_skb(skb);
-		return;
-	}
+	अगर (lport == शून्य || lport->state == LPORT_ST_DISABLED) अणु
+		QEDF_WARN(शून्य, "Invalid lport struct or lport disabled.\n");
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
-	if (skb_is_nonlinear(skb))
+	अगर (skb_is_nonlinear(skb))
 		skb_linearize(skb);
 	mac = eth_hdr(skb)->h_source;
 	dest_mac = eth_hdr(skb)->h_dest;
 
 	/* Pull the header */
-	hp = (struct fcoe_hdr *)skb->data;
-	fh = (struct fc_frame_header *) skb_transport_header(skb);
-	skb_pull(skb, sizeof(struct fcoe_hdr));
-	fr_len = skb->len - sizeof(struct fcoe_crc_eof);
+	hp = (काष्ठा fcoe_hdr *)skb->data;
+	fh = (काष्ठा fc_frame_header *) skb_transport_header(skb);
+	skb_pull(skb, माप(काष्ठा fcoe_hdr));
+	fr_len = skb->len - माप(काष्ठा fcoe_crc_eof);
 
-	fp = (struct fc_frame *)skb;
+	fp = (काष्ठा fc_frame *)skb;
 	fc_frame_init(fp);
 	fr_dev(fp) = lport;
 	fr_sof(fp) = hp->fcoe_sof;
-	if (skb_copy_bits(skb, fr_len, &crc_eof, sizeof(crc_eof))) {
-		QEDF_INFO(NULL, QEDF_LOG_LL2, "skb_copy_bits failed.\n");
-		kfree_skb(skb);
-		return;
-	}
+	अगर (skb_copy_bits(skb, fr_len, &crc_eof, माप(crc_eof))) अणु
+		QEDF_INFO(शून्य, QEDF_LOG_LL2, "skb_copy_bits failed.\n");
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 	fr_eof(fp) = crc_eof.fcoe_eof;
 	fr_crc(fp) = crc_eof.fcoe_crc32;
-	if (pskb_trim(skb, fr_len)) {
-		QEDF_INFO(NULL, QEDF_LOG_LL2, "pskb_trim failed.\n");
-		kfree_skb(skb);
-		return;
-	}
+	अगर (pskb_trim(skb, fr_len)) अणु
+		QEDF_INFO(शून्य, QEDF_LOG_LL2, "pskb_trim failed.\n");
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	fh = fc_frame_header_get(fp);
 
@@ -2486,183 +2487,183 @@ static void qedf_recv_frame(struct qedf_ctx *qedf,
 	 * Invalid frame filters.
 	 */
 
-	if (fh->fh_r_ctl == FC_RCTL_DD_SOL_DATA &&
-	    fh->fh_type == FC_TYPE_FCP) {
-		/* Drop FCP data. We dont this in L2 path */
-		kfree_skb(skb);
-		return;
-	}
-	if (fh->fh_r_ctl == FC_RCTL_ELS_REQ &&
-	    fh->fh_type == FC_TYPE_ELS) {
-		switch (fc_frame_payload_op(fp)) {
-		case ELS_LOGO:
-			if (ntoh24(fh->fh_s_id) == FC_FID_FLOGI) {
+	अगर (fh->fh_r_ctl == FC_RCTL_DD_SOL_DATA &&
+	    fh->fh_type == FC_TYPE_FCP) अणु
+		/* Drop FCP data. We करोnt this in L2 path */
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
+	अगर (fh->fh_r_ctl == FC_RCTL_ELS_REQ &&
+	    fh->fh_type == FC_TYPE_ELS) अणु
+		चयन (fc_frame_payload_op(fp)) अणु
+		हाल ELS_LOGO:
+			अगर (ntoh24(fh->fh_s_id) == FC_FID_FLOGI) अणु
 				/* drop non-FIP LOGO */
-				kfree_skb(skb);
-				return;
-			}
-			break;
-		}
-	}
+				kमुक्त_skb(skb);
+				वापस;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (fh->fh_r_ctl == FC_RCTL_BA_ABTS) {
+	अगर (fh->fh_r_ctl == FC_RCTL_BA_ABTS) अणु
 		/* Drop incoming ABTS */
-		kfree_skb(skb);
-		return;
-	}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
-	if (ntoh24(&dest_mac[3]) != ntoh24(fh->fh_d_id)) {
+	अगर (ntoh24(&dest_mac[3]) != ntoh24(fh->fh_d_id)) अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_LL2,
 		    "FC frame d_id mismatch with MAC %pM.\n", dest_mac);
-		kfree_skb(skb);
-		return;
-	}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
-	if (qedf->ctlr.state) {
-		if (!ether_addr_equal(mac, qedf->ctlr.dest_addr)) {
+	अगर (qedf->ctlr.state) अणु
+		अगर (!ether_addr_equal(mac, qedf->ctlr.dest_addr)) अणु
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_LL2,
 			    "Wrong source address: mac:%pM dest_addr:%pM.\n",
 			    mac, qedf->ctlr.dest_addr);
-			kfree_skb(skb);
-			return;
-		}
-	}
+			kमुक्त_skb(skb);
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	vn_port = fc_vport_id_lookup(lport, ntoh24(fh->fh_d_id));
 
 	/*
-	 * If the destination ID from the frame header does not match what we
-	 * have on record for lport and the search for a NPIV port came up
+	 * If the destination ID from the frame header करोes not match what we
+	 * have on record क्रम lport and the search क्रम a NPIV port came up
 	 * empty then this is not addressed to our port so simply drop it.
 	 */
-	if (lport->port_id != ntoh24(fh->fh_d_id) && !vn_port) {
+	अगर (lport->port_id != ntoh24(fh->fh_d_id) && !vn_port) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_LL2,
 			  "Dropping frame due to destination mismatch: lport->port_id=0x%x fh->d_id=0x%x.\n",
 			  lport->port_id, ntoh24(fh->fh_d_id));
-		kfree_skb(skb);
-		return;
-	}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	f_ctl = ntoh24(fh->fh_f_ctl);
-	if ((fh->fh_type == FC_TYPE_BLS) && (f_ctl & FC_FC_SEQ_CTX) &&
-	    (f_ctl & FC_FC_EX_CTX)) {
+	अगर ((fh->fh_type == FC_TYPE_BLS) && (f_ctl & FC_FC_SEQ_CTX) &&
+	    (f_ctl & FC_FC_EX_CTX)) अणु
 		/* Drop incoming ABTS response that has both SEQ/EX CTX set */
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_LL2,
 			  "Dropping ABTS response as both SEQ/EX CTX set.\n");
-		kfree_skb(skb);
-		return;
-	}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	/*
 	 * If a connection is uploading, drop incoming FCoE frames as there
-	 * is a small window where we could try to return a frame while libfc
+	 * is a small winकरोw where we could try to वापस a frame जबतक libfc
 	 * is trying to clean things up.
 	 */
 
-	/* Get fcport associated with d_id if it exists */
+	/* Get fcport associated with d_id अगर it exists */
 	fcport = qedf_fcport_lookup(qedf, ntoh24(fh->fh_d_id));
 
-	if (fcport && test_bit(QEDF_RPORT_UPLOADING_CONNECTION,
-	    &fcport->flags)) {
+	अगर (fcport && test_bit(QEDF_RPORT_UPLOADING_CONNECTION,
+	    &fcport->flags)) अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_LL2,
 		    "Connection uploading, dropping fp=%p.\n", fp);
-		kfree_skb(skb);
-		return;
-	}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_LL2, "FCoE frame receive: "
 	    "skb=%p fp=%p src=%06x dest=%06x r_ctl=%x fh_type=%x.\n", skb, fp,
 	    ntoh24(fh->fh_s_id), ntoh24(fh->fh_d_id), fh->fh_r_ctl,
 	    fh->fh_type);
-	if (qedf_dump_frames)
-		print_hex_dump(KERN_WARNING, "fcoe: ", DUMP_PREFIX_OFFSET, 16,
+	अगर (qedf_dump_frames)
+		prपूर्णांक_hex_dump(KERN_WARNING, "fcoe: ", DUMP_PREFIX_OFFSET, 16,
 		    1, skb->data, skb->len, false);
 	fc_exch_recv(lport, fp);
-}
+पूर्ण
 
-static void qedf_ll2_process_skb(struct work_struct *work)
-{
-	struct qedf_skb_work *skb_work =
-	    container_of(work, struct qedf_skb_work, work);
-	struct qedf_ctx *qedf = skb_work->qedf;
-	struct sk_buff *skb = skb_work->skb;
-	struct ethhdr *eh;
+अटल व्योम qedf_ll2_process_skb(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qedf_skb_work *skb_work =
+	    container_of(work, काष्ठा qedf_skb_work, work);
+	काष्ठा qedf_ctx *qedf = skb_work->qedf;
+	काष्ठा sk_buff *skb = skb_work->skb;
+	काष्ठा ethhdr *eh;
 
-	if (!qedf) {
-		QEDF_ERR(NULL, "qedf is NULL\n");
-		goto err_out;
-	}
+	अगर (!qedf) अणु
+		QEDF_ERR(शून्य, "qedf is NULL\n");
+		जाओ err_out;
+	पूर्ण
 
-	eh = (struct ethhdr *)skb->data;
+	eh = (काष्ठा ethhdr *)skb->data;
 
-	/* Undo VLAN encapsulation */
-	if (eh->h_proto == htons(ETH_P_8021Q)) {
-		memmove((u8 *)eh + VLAN_HLEN, eh, ETH_ALEN * 2);
+	/* Unकरो VLAN encapsulation */
+	अगर (eh->h_proto == htons(ETH_P_8021Q)) अणु
+		स_हटाओ((u8 *)eh + VLAN_HLEN, eh, ETH_ALEN * 2);
 		eh = skb_pull(skb, VLAN_HLEN);
 		skb_reset_mac_header(skb);
-	}
+	पूर्ण
 
 	/*
 	 * Process either a FIP frame or FCoE frame based on the
 	 * protocol value.  If it's not either just drop the
 	 * frame.
 	 */
-	if (eh->h_proto == htons(ETH_P_FIP)) {
+	अगर (eh->h_proto == htons(ETH_P_FIP)) अणु
 		qedf_fip_recv(qedf, skb);
-		goto out;
-	} else if (eh->h_proto == htons(ETH_P_FCOE)) {
+		जाओ out;
+	पूर्ण अन्यथा अगर (eh->h_proto == htons(ETH_P_FCOE)) अणु
 		__skb_pull(skb, ETH_HLEN);
 		qedf_recv_frame(qedf, skb);
-		goto out;
-	} else
-		goto err_out;
+		जाओ out;
+	पूर्ण अन्यथा
+		जाओ err_out;
 
 err_out:
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 out:
-	kfree(skb_work);
-	return;
-}
+	kमुक्त(skb_work);
+	वापस;
+पूर्ण
 
-static int qedf_ll2_rx(void *cookie, struct sk_buff *skb,
+अटल पूर्णांक qedf_ll2_rx(व्योम *cookie, काष्ठा sk_buff *skb,
 	u32 arg1, u32 arg2)
-{
-	struct qedf_ctx *qedf = (struct qedf_ctx *)cookie;
-	struct qedf_skb_work *skb_work;
+अणु
+	काष्ठा qedf_ctx *qedf = (काष्ठा qedf_ctx *)cookie;
+	काष्ठा qedf_skb_work *skb_work;
 
-	if (atomic_read(&qedf->link_state) == QEDF_LINK_DOWN) {
+	अगर (atomic_पढ़ो(&qedf->link_state) == QEDF_LINK_DOWN) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_LL2,
 			  "Dropping frame as link state is down.\n");
-		kfree_skb(skb);
-		return 0;
-	}
+		kमुक्त_skb(skb);
+		वापस 0;
+	पूर्ण
 
-	skb_work = kzalloc(sizeof(struct qedf_skb_work), GFP_ATOMIC);
-	if (!skb_work) {
+	skb_work = kzalloc(माप(काष्ठा qedf_skb_work), GFP_ATOMIC);
+	अगर (!skb_work) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "Could not allocate skb_work so "
 			   "dropping frame.\n");
-		kfree_skb(skb);
-		return 0;
-	}
+		kमुक्त_skb(skb);
+		वापस 0;
+	पूर्ण
 
 	INIT_WORK(&skb_work->work, qedf_ll2_process_skb);
 	skb_work->skb = skb;
 	skb_work->qedf = qedf;
 	queue_work(qedf->ll2_recv_wq, &skb_work->work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct qed_ll2_cb_ops qedf_ll2_cb_ops = {
+अटल काष्ठा qed_ll2_cb_ops qedf_ll2_cb_ops = अणु
 	.rx_cb = qedf_ll2_rx,
-	.tx_cb = NULL,
-};
+	.tx_cb = शून्य,
+पूर्ण;
 
-/* Main thread to process I/O completions */
-void qedf_fp_io_handler(struct work_struct *work)
-{
-	struct qedf_io_work *io_work =
-	    container_of(work, struct qedf_io_work, work);
+/* Main thपढ़ो to process I/O completions */
+व्योम qedf_fp_io_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qedf_io_work *io_work =
+	    container_of(work, काष्ठा qedf_io_work, work);
 	u32 comp_type;
 
 	/*
@@ -2672,113 +2673,113 @@ void qedf_fp_io_handler(struct work_struct *work)
 	comp_type = (io_work->cqe.cqe_data >>
 	    FCOE_CQE_CQE_TYPE_SHIFT) &
 	    FCOE_CQE_CQE_TYPE_MASK;
-	if (comp_type == FCOE_UNSOLIC_CQE_TYPE &&
+	अगर (comp_type == FCOE_UNSOLIC_CQE_TYPE &&
 	    io_work->fp)
 		fc_exch_recv(io_work->qedf->lport, io_work->fp);
-	else
+	अन्यथा
 		qedf_process_cqe(io_work->qedf, &io_work->cqe);
 
-	kfree(io_work);
-}
+	kमुक्त(io_work);
+पूर्ण
 
-static int qedf_alloc_and_init_sb(struct qedf_ctx *qedf,
-	struct qed_sb_info *sb_info, u16 sb_id)
-{
-	struct status_block_e4 *sb_virt;
+अटल पूर्णांक qedf_alloc_and_init_sb(काष्ठा qedf_ctx *qedf,
+	काष्ठा qed_sb_info *sb_info, u16 sb_id)
+अणु
+	काष्ठा status_block_e4 *sb_virt;
 	dma_addr_t sb_phys;
-	int ret;
+	पूर्णांक ret;
 
 	sb_virt = dma_alloc_coherent(&qedf->pdev->dev,
-	    sizeof(struct status_block_e4), &sb_phys, GFP_KERNEL);
+	    माप(काष्ठा status_block_e4), &sb_phys, GFP_KERNEL);
 
-	if (!sb_virt) {
+	अगर (!sb_virt) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "Status block allocation failed for id = %d.\n",
 			 sb_id);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ret = qed_ops->common->sb_init(qedf->cdev, sb_info, sb_virt, sb_phys,
 	    sb_id, QED_SB_TYPE_STORAGE);
 
-	if (ret) {
+	अगर (ret) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "Status block initialization failed (0x%x) for id = %d.\n",
 			 ret, sb_id);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qedf_free_sb(struct qedf_ctx *qedf, struct qed_sb_info *sb_info)
-{
-	if (sb_info->sb_virt)
-		dma_free_coherent(&qedf->pdev->dev, sizeof(*sb_info->sb_virt),
-		    (void *)sb_info->sb_virt, sb_info->sb_phys);
-}
+अटल व्योम qedf_मुक्त_sb(काष्ठा qedf_ctx *qedf, काष्ठा qed_sb_info *sb_info)
+अणु
+	अगर (sb_info->sb_virt)
+		dma_मुक्त_coherent(&qedf->pdev->dev, माप(*sb_info->sb_virt),
+		    (व्योम *)sb_info->sb_virt, sb_info->sb_phys);
+पूर्ण
 
-static void qedf_destroy_sb(struct qedf_ctx *qedf)
-{
-	int id;
-	struct qedf_fastpath *fp = NULL;
+अटल व्योम qedf_destroy_sb(काष्ठा qedf_ctx *qedf)
+अणु
+	पूर्णांक id;
+	काष्ठा qedf_fastpath *fp = शून्य;
 
-	for (id = 0; id < qedf->num_queues; id++) {
+	क्रम (id = 0; id < qedf->num_queues; id++) अणु
 		fp = &(qedf->fp_array[id]);
-		if (fp->sb_id == QEDF_SB_ID_NULL)
-			break;
-		qedf_free_sb(qedf, fp->sb_info);
-		kfree(fp->sb_info);
-	}
-	kfree(qedf->fp_array);
-}
+		अगर (fp->sb_id == QEDF_SB_ID_शून्य)
+			अवरोध;
+		qedf_मुक्त_sb(qedf, fp->sb_info);
+		kमुक्त(fp->sb_info);
+	पूर्ण
+	kमुक्त(qedf->fp_array);
+पूर्ण
 
-static int qedf_prepare_sb(struct qedf_ctx *qedf)
-{
-	int id;
-	struct qedf_fastpath *fp;
-	int ret;
+अटल पूर्णांक qedf_prepare_sb(काष्ठा qedf_ctx *qedf)
+अणु
+	पूर्णांक id;
+	काष्ठा qedf_fastpath *fp;
+	पूर्णांक ret;
 
 	qedf->fp_array =
-	    kcalloc(qedf->num_queues, sizeof(struct qedf_fastpath),
+	    kसुस्मृति(qedf->num_queues, माप(काष्ठा qedf_fastpath),
 		GFP_KERNEL);
 
-	if (!qedf->fp_array) {
+	अगर (!qedf->fp_array) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "fastpath array allocation "
 			  "failed.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (id = 0; id < qedf->num_queues; id++) {
+	क्रम (id = 0; id < qedf->num_queues; id++) अणु
 		fp = &(qedf->fp_array[id]);
-		fp->sb_id = QEDF_SB_ID_NULL;
-		fp->sb_info = kcalloc(1, sizeof(*fp->sb_info), GFP_KERNEL);
-		if (!fp->sb_info) {
+		fp->sb_id = QEDF_SB_ID_शून्य;
+		fp->sb_info = kसुस्मृति(1, माप(*fp->sb_info), GFP_KERNEL);
+		अगर (!fp->sb_info) अणु
 			QEDF_ERR(&(qedf->dbg_ctx), "SB info struct "
 				  "allocation failed.\n");
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		ret = qedf_alloc_and_init_sb(qedf, fp->sb_info, id);
-		if (ret) {
+		अगर (ret) अणु
 			QEDF_ERR(&(qedf->dbg_ctx), "SB allocation and "
 				  "initialization failed.\n");
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		fp->sb_id = id;
 		fp->qedf = qedf;
 		fp->cq_num_entries =
 		    qedf->global_queues[id]->cq_mem_size /
-		    sizeof(struct fcoe_cqe);
-	}
+		    माप(काष्ठा fcoe_cqe);
+	पूर्ण
 err:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void qedf_process_cqe(struct qedf_ctx *qedf, struct fcoe_cqe *cqe)
-{
+व्योम qedf_process_cqe(काष्ठा qedf_ctx *qedf, काष्ठा fcoe_cqe *cqe)
+अणु
 	u16 xid;
-	struct qedf_ioreq *io_req;
-	struct qedf_rport *fcport;
+	काष्ठा qedf_ioreq *io_req;
+	काष्ठा qedf_rport *fcport;
 	u32 comp_type;
 
 	comp_type = (cqe->cqe_data >> FCOE_CQE_CQE_TYPE_SHIFT) &
@@ -2787,280 +2788,280 @@ void qedf_process_cqe(struct qedf_ctx *qedf, struct fcoe_cqe *cqe)
 	xid = cqe->cqe_data & FCOE_CQE_TASK_ID_MASK;
 	io_req = &qedf->cmd_mgr->cmds[xid];
 
-	/* Completion not for a valid I/O anymore so just return */
-	if (!io_req) {
+	/* Completion not क्रम a valid I/O anymore so just वापस */
+	अगर (!io_req) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "io_req is NULL for xid=0x%x.\n", xid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	fcport = io_req->fcport;
 
-	if (fcport == NULL) {
+	अगर (fcport == शून्य) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "fcport is NULL for xid=0x%x io_req=%p.\n",
 			 xid, io_req);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * Check that fcport is offloaded.  If it isn't then the spinlock
-	 * isn't valid and shouldn't be taken. We should just return.
+	 * isn't valid and shouldn't be taken. We should just वापस.
 	 */
-	if (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) {
+	अगर (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "Session not offloaded yet, fcport = %p.\n", fcport);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 
-	switch (comp_type) {
-	case FCOE_GOOD_COMPLETION_CQE_TYPE:
-		atomic_inc(&fcport->free_sqes);
-		switch (io_req->cmd_type) {
-		case QEDF_SCSI_CMD:
+	चयन (comp_type) अणु
+	हाल FCOE_GOOD_COMPLETION_CQE_TYPE:
+		atomic_inc(&fcport->मुक्त_sqes);
+		चयन (io_req->cmd_type) अणु
+		हाल QEDF_SCSI_CMD:
 			qedf_scsi_completion(qedf, cqe, io_req);
-			break;
-		case QEDF_ELS:
+			अवरोध;
+		हाल QEDF_ELS:
 			qedf_process_els_compl(qedf, cqe, io_req);
-			break;
-		case QEDF_TASK_MGMT_CMD:
-			qedf_process_tmf_compl(qedf, cqe, io_req);
-			break;
-		case QEDF_SEQ_CLEANUP:
+			अवरोध;
+		हाल QEDF_TASK_MGMT_CMD:
+			qedf_process_पंचांगf_compl(qedf, cqe, io_req);
+			अवरोध;
+		हाल QEDF_SEQ_CLEANUP:
 			qedf_process_seq_cleanup_compl(qedf, cqe, io_req);
-			break;
-		}
-		break;
-	case FCOE_ERROR_DETECTION_CQE_TYPE:
-		atomic_inc(&fcport->free_sqes);
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल FCOE_ERROR_DETECTION_CQE_TYPE:
+		atomic_inc(&fcport->मुक्त_sqes);
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Error detect CQE.\n");
 		qedf_process_error_detect(qedf, cqe, io_req);
-		break;
-	case FCOE_EXCH_CLEANUP_CQE_TYPE:
-		atomic_inc(&fcport->free_sqes);
+		अवरोध;
+	हाल FCOE_EXCH_CLEANUP_CQE_TYPE:
+		atomic_inc(&fcport->मुक्त_sqes);
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Cleanup CQE.\n");
 		qedf_process_cleanup_compl(qedf, cqe, io_req);
-		break;
-	case FCOE_ABTS_CQE_TYPE:
-		atomic_inc(&fcport->free_sqes);
+		अवरोध;
+	हाल FCOE_ABTS_CQE_TYPE:
+		atomic_inc(&fcport->मुक्त_sqes);
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Abort CQE.\n");
 		qedf_process_abts_compl(qedf, cqe, io_req);
-		break;
-	case FCOE_DUMMY_CQE_TYPE:
-		atomic_inc(&fcport->free_sqes);
+		अवरोध;
+	हाल FCOE_DUMMY_CQE_TYPE:
+		atomic_inc(&fcport->मुक्त_sqes);
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Dummy CQE.\n");
-		break;
-	case FCOE_LOCAL_COMP_CQE_TYPE:
-		atomic_inc(&fcport->free_sqes);
+		अवरोध;
+	हाल FCOE_LOCAL_COMP_CQE_TYPE:
+		atomic_inc(&fcport->मुक्त_sqes);
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Local completion CQE.\n");
-		break;
-	case FCOE_WARNING_CQE_TYPE:
-		atomic_inc(&fcport->free_sqes);
+		अवरोध;
+	हाल FCOE_WARNING_CQE_TYPE:
+		atomic_inc(&fcport->मुक्त_sqes);
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Warning CQE.\n");
 		qedf_process_warning_compl(qedf, cqe, io_req);
-		break;
-	case MAX_FCOE_CQE_TYPE:
-		atomic_inc(&fcport->free_sqes);
+		अवरोध;
+	हाल MAX_FCOE_CQE_TYPE:
+		atomic_inc(&fcport->मुक्त_sqes);
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Max FCoE CQE.\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Default CQE.\n");
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void qedf_free_bdq(struct qedf_ctx *qedf)
-{
-	int i;
+अटल व्योम qedf_मुक्त_bdq(काष्ठा qedf_ctx *qedf)
+अणु
+	पूर्णांक i;
 
-	if (qedf->bdq_pbl_list)
-		dma_free_coherent(&qedf->pdev->dev, QEDF_PAGE_SIZE,
+	अगर (qedf->bdq_pbl_list)
+		dma_मुक्त_coherent(&qedf->pdev->dev, QEDF_PAGE_SIZE,
 		    qedf->bdq_pbl_list, qedf->bdq_pbl_list_dma);
 
-	if (qedf->bdq_pbl)
-		dma_free_coherent(&qedf->pdev->dev, qedf->bdq_pbl_mem_size,
+	अगर (qedf->bdq_pbl)
+		dma_मुक्त_coherent(&qedf->pdev->dev, qedf->bdq_pbl_mem_size,
 		    qedf->bdq_pbl, qedf->bdq_pbl_dma);
 
-	for (i = 0; i < QEDF_BDQ_SIZE; i++) {
-		if (qedf->bdq[i].buf_addr) {
-			dma_free_coherent(&qedf->pdev->dev, QEDF_BDQ_BUF_SIZE,
+	क्रम (i = 0; i < QEDF_BDQ_SIZE; i++) अणु
+		अगर (qedf->bdq[i].buf_addr) अणु
+			dma_मुक्त_coherent(&qedf->pdev->dev, QEDF_BDQ_BUF_SIZE,
 			    qedf->bdq[i].buf_addr, qedf->bdq[i].buf_dma);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void qedf_free_global_queues(struct qedf_ctx *qedf)
-{
-	int i;
-	struct global_queue **gl = qedf->global_queues;
+अटल व्योम qedf_मुक्त_global_queues(काष्ठा qedf_ctx *qedf)
+अणु
+	पूर्णांक i;
+	काष्ठा global_queue **gl = qedf->global_queues;
 
-	for (i = 0; i < qedf->num_queues; i++) {
-		if (!gl[i])
-			continue;
+	क्रम (i = 0; i < qedf->num_queues; i++) अणु
+		अगर (!gl[i])
+			जारी;
 
-		if (gl[i]->cq)
-			dma_free_coherent(&qedf->pdev->dev,
+		अगर (gl[i]->cq)
+			dma_मुक्त_coherent(&qedf->pdev->dev,
 			    gl[i]->cq_mem_size, gl[i]->cq, gl[i]->cq_dma);
-		if (gl[i]->cq_pbl)
-			dma_free_coherent(&qedf->pdev->dev, gl[i]->cq_pbl_size,
+		अगर (gl[i]->cq_pbl)
+			dma_मुक्त_coherent(&qedf->pdev->dev, gl[i]->cq_pbl_size,
 			    gl[i]->cq_pbl, gl[i]->cq_pbl_dma);
 
-		kfree(gl[i]);
-	}
+		kमुक्त(gl[i]);
+	पूर्ण
 
-	qedf_free_bdq(qedf);
-}
+	qedf_मुक्त_bdq(qedf);
+पूर्ण
 
-static int qedf_alloc_bdq(struct qedf_ctx *qedf)
-{
-	int i;
-	struct scsi_bd *pbl;
+अटल पूर्णांक qedf_alloc_bdq(काष्ठा qedf_ctx *qedf)
+अणु
+	पूर्णांक i;
+	काष्ठा scsi_bd *pbl;
 	u64 *list;
 	dma_addr_t page;
 
-	/* Alloc dma memory for BDQ buffers */
-	for (i = 0; i < QEDF_BDQ_SIZE; i++) {
+	/* Alloc dma memory क्रम BDQ buffers */
+	क्रम (i = 0; i < QEDF_BDQ_SIZE; i++) अणु
 		qedf->bdq[i].buf_addr = dma_alloc_coherent(&qedf->pdev->dev,
 		    QEDF_BDQ_BUF_SIZE, &qedf->bdq[i].buf_dma, GFP_KERNEL);
-		if (!qedf->bdq[i].buf_addr) {
+		अगर (!qedf->bdq[i].buf_addr) अणु
 			QEDF_ERR(&(qedf->dbg_ctx), "Could not allocate BDQ "
 			    "buffer %d.\n", i);
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	/* Alloc dma memory for BDQ page buffer list */
+	/* Alloc dma memory क्रम BDQ page buffer list */
 	qedf->bdq_pbl_mem_size =
-	    QEDF_BDQ_SIZE * sizeof(struct scsi_bd);
+	    QEDF_BDQ_SIZE * माप(काष्ठा scsi_bd);
 	qedf->bdq_pbl_mem_size =
 	    ALIGN(qedf->bdq_pbl_mem_size, QEDF_PAGE_SIZE);
 
 	qedf->bdq_pbl = dma_alloc_coherent(&qedf->pdev->dev,
 	    qedf->bdq_pbl_mem_size, &qedf->bdq_pbl_dma, GFP_KERNEL);
-	if (!qedf->bdq_pbl) {
+	अगर (!qedf->bdq_pbl) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Could not allocate BDQ PBL.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 		  "BDQ PBL addr=0x%p dma=%pad\n",
 		  qedf->bdq_pbl, &qedf->bdq_pbl_dma);
 
 	/*
-	 * Populate BDQ PBL with physical and virtual address of individual
+	 * Populate BDQ PBL with physical and भव address of inभागidual
 	 * BDQ buffers
 	 */
-	pbl = (struct scsi_bd *)qedf->bdq_pbl;
-	for (i = 0; i < QEDF_BDQ_SIZE; i++) {
+	pbl = (काष्ठा scsi_bd *)qedf->bdq_pbl;
+	क्रम (i = 0; i < QEDF_BDQ_SIZE; i++) अणु
 		pbl->address.hi = cpu_to_le32(U64_HI(qedf->bdq[i].buf_dma));
 		pbl->address.lo = cpu_to_le32(U64_LO(qedf->bdq[i].buf_dma));
 		pbl->opaque.fcoe_opaque.hi = 0;
-		/* Opaque lo data is an index into the BDQ array */
+		/* Opaque lo data is an index पूर्णांकo the BDQ array */
 		pbl->opaque.fcoe_opaque.lo = cpu_to_le32(i);
 		pbl++;
-	}
+	पूर्ण
 
 	/* Allocate list of PBL pages */
 	qedf->bdq_pbl_list = dma_alloc_coherent(&qedf->pdev->dev,
 						QEDF_PAGE_SIZE,
 						&qedf->bdq_pbl_list_dma,
 						GFP_KERNEL);
-	if (!qedf->bdq_pbl_list) {
+	अगर (!qedf->bdq_pbl_list) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Could not allocate list of PBL pages.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
-	 * Now populate PBL list with pages that contain pointers to the
-	 * individual buffers.
+	 * Now populate PBL list with pages that contain poपूर्णांकers to the
+	 * inभागidual buffers.
 	 */
 	qedf->bdq_pbl_list_num_entries = qedf->bdq_pbl_mem_size /
 	    QEDF_PAGE_SIZE;
 	list = (u64 *)qedf->bdq_pbl_list;
 	page = qedf->bdq_pbl_list_dma;
-	for (i = 0; i < qedf->bdq_pbl_list_num_entries; i++) {
+	क्रम (i = 0; i < qedf->bdq_pbl_list_num_entries; i++) अणु
 		*list = qedf->bdq_pbl_dma;
 		list++;
 		page += QEDF_PAGE_SIZE;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qedf_alloc_global_queues(struct qedf_ctx *qedf)
-{
+अटल पूर्णांक qedf_alloc_global_queues(काष्ठा qedf_ctx *qedf)
+अणु
 	u32 *list;
-	int i;
-	int status = 0, rc;
+	पूर्णांक i;
+	पूर्णांक status = 0, rc;
 	u32 *pbl;
 	dma_addr_t page;
-	int num_pages;
+	पूर्णांक num_pages;
 
 	/* Allocate and map CQs, RQs */
 	/*
 	 * Number of global queues (CQ / RQ). This should
-	 * be <= number of available MSIX vectors for the PF
+	 * be <= number of available MSIX vectors क्रम the PF
 	 */
-	if (!qedf->num_queues) {
+	अगर (!qedf->num_queues) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "No MSI-X vectors available!\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/*
 	 * Make sure we allocated the PBL that will contain the physical
 	 * addresses of our queues
 	 */
-	if (!qedf->p_cpuq) {
+	अगर (!qedf->p_cpuq) अणु
 		status = 1;
 		QEDF_ERR(&qedf->dbg_ctx, "p_cpuq is NULL.\n");
-		goto mem_alloc_failure;
-	}
+		जाओ mem_alloc_failure;
+	पूर्ण
 
-	qedf->global_queues = kzalloc((sizeof(struct global_queue *)
+	qedf->global_queues = kzalloc((माप(काष्ठा global_queue *)
 	    * qedf->num_queues), GFP_KERNEL);
-	if (!qedf->global_queues) {
+	अगर (!qedf->global_queues) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Unable to allocate global "
 			  "queues array ptr memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 		   "qedf->global_queues=%p.\n", qedf->global_queues);
 
-	/* Allocate DMA coherent buffers for BDQ */
+	/* Allocate DMA coherent buffers क्रम BDQ */
 	rc = qedf_alloc_bdq(qedf);
-	if (rc) {
+	अगर (rc) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "Unable to allocate bdq.\n");
-		goto mem_alloc_failure;
-	}
+		जाओ mem_alloc_failure;
+	पूर्ण
 
-	/* Allocate a CQ and an associated PBL for each MSI-X vector */
-	for (i = 0; i < qedf->num_queues; i++) {
-		qedf->global_queues[i] = kzalloc(sizeof(struct global_queue),
+	/* Allocate a CQ and an associated PBL क्रम each MSI-X vector */
+	क्रम (i = 0; i < qedf->num_queues; i++) अणु
+		qedf->global_queues[i] = kzalloc(माप(काष्ठा global_queue),
 		    GFP_KERNEL);
-		if (!qedf->global_queues[i]) {
+		अगर (!qedf->global_queues[i]) अणु
 			QEDF_WARN(&(qedf->dbg_ctx), "Unable to allocate "
 				   "global queue %d.\n", i);
 			status = -ENOMEM;
-			goto mem_alloc_failure;
-		}
+			जाओ mem_alloc_failure;
+		पूर्ण
 
 		qedf->global_queues[i]->cq_mem_size =
-		    FCOE_PARAMS_CQ_NUM_ENTRIES * sizeof(struct fcoe_cqe);
+		    FCOE_PARAMS_CQ_NUM_ENTRIES * माप(काष्ठा fcoe_cqe);
 		qedf->global_queues[i]->cq_mem_size =
 		    ALIGN(qedf->global_queues[i]->cq_mem_size, QEDF_PAGE_SIZE);
 
 		qedf->global_queues[i]->cq_pbl_size =
 		    (qedf->global_queues[i]->cq_mem_size /
-		    PAGE_SIZE) * sizeof(void *);
+		    PAGE_SIZE) * माप(व्योम *);
 		qedf->global_queues[i]->cq_pbl_size =
 		    ALIGN(qedf->global_queues[i]->cq_pbl_size, QEDF_PAGE_SIZE);
 
@@ -3070,11 +3071,11 @@ static int qedf_alloc_global_queues(struct qedf_ctx *qedf)
 				       &qedf->global_queues[i]->cq_dma,
 				       GFP_KERNEL);
 
-		if (!qedf->global_queues[i]->cq) {
+		अगर (!qedf->global_queues[i]->cq) अणु
 			QEDF_WARN(&(qedf->dbg_ctx), "Could not allocate cq.\n");
 			status = -ENOMEM;
-			goto mem_alloc_failure;
-		}
+			जाओ mem_alloc_failure;
+		पूर्ण
 
 		qedf->global_queues[i]->cq_pbl =
 		    dma_alloc_coherent(&qedf->pdev->dev,
@@ -3082,11 +3083,11 @@ static int qedf_alloc_global_queues(struct qedf_ctx *qedf)
 				       &qedf->global_queues[i]->cq_pbl_dma,
 				       GFP_KERNEL);
 
-		if (!qedf->global_queues[i]->cq_pbl) {
+		अगर (!qedf->global_queues[i]->cq_pbl) अणु
 			QEDF_WARN(&(qedf->dbg_ctx), "Could not allocate cq PBL.\n");
 			status = -ENOMEM;
-			goto mem_alloc_failure;
-		}
+			जाओ mem_alloc_failure;
+		पूर्ण
 
 		/* Create PBL */
 		num_pages = qedf->global_queues[i]->cq_mem_size /
@@ -3094,26 +3095,26 @@ static int qedf_alloc_global_queues(struct qedf_ctx *qedf)
 		page = qedf->global_queues[i]->cq_dma;
 		pbl = (u32 *)qedf->global_queues[i]->cq_pbl;
 
-		while (num_pages--) {
+		जबतक (num_pages--) अणु
 			*pbl = U64_LO(page);
 			pbl++;
 			*pbl = U64_HI(page);
 			pbl++;
 			page += QEDF_PAGE_SIZE;
-		}
-		/* Set the initial consumer index for cq */
+		पूर्ण
+		/* Set the initial consumer index क्रम cq */
 		qedf->global_queues[i]->cq_cons_idx = 0;
-	}
+	पूर्ण
 
 	list = (u32 *)qedf->p_cpuq;
 
 	/*
-	 * The list is built as follows: CQ#0 PBL pointer, RQ#0 PBL pointer,
-	 * CQ#1 PBL pointer, RQ#1 PBL pointer, etc.  Each PBL pointer points
-	 * to the physical address which contains an array of pointers to
-	 * the physical addresses of the specific queue pages.
+	 * The list is built as follows: CQ#0 PBL poपूर्णांकer, RQ#0 PBL poपूर्णांकer,
+	 * CQ#1 PBL poपूर्णांकer, RQ#1 PBL poपूर्णांकer, etc.  Each PBL poपूर्णांकer poपूर्णांकs
+	 * to the physical address which contains an array of poपूर्णांकers to
+	 * the physical addresses of the specअगरic queue pages.
 	 */
-	for (i = 0; i < qedf->num_queues; i++) {
+	क्रम (i = 0; i < qedf->num_queues; i++) अणु
 		*list = U64_LO(qedf->global_queues[i]->cq_pbl_dma);
 		list++;
 		*list = U64_HI(qedf->global_queues[i]->cq_pbl_dma);
@@ -3122,29 +3123,29 @@ static int qedf_alloc_global_queues(struct qedf_ctx *qedf)
 		list++;
 		*list = U64_HI(0);
 		list++;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 mem_alloc_failure:
-	qedf_free_global_queues(qedf);
-	return status;
-}
+	qedf_मुक्त_global_queues(qedf);
+	वापस status;
+पूर्ण
 
-static int qedf_set_fcoe_pf_param(struct qedf_ctx *qedf)
-{
+अटल पूर्णांक qedf_set_fcoe_pf_param(काष्ठा qedf_ctx *qedf)
+अणु
 	u8 sq_num_pbl_pages;
 	u32 sq_mem_size;
 	u32 cq_mem_size;
 	u32 cq_num_entries;
-	int rval;
+	पूर्णांक rval;
 
 	/*
-	 * The number of completion queues/fastpath interrupts/status blocks
+	 * The number of completion queues/fastpath पूर्णांकerrupts/status blocks
 	 * we allocation is the minimum off:
 	 *
 	 * Number of CPUs
-	 * Number allocated by qed for our PCI function
+	 * Number allocated by qed क्रम our PCI function
 	 */
 	qedf->num_queues = MIN_NUM_CPUS_MSIX(qedf);
 
@@ -3152,34 +3153,34 @@ static int qedf_set_fcoe_pf_param(struct qedf_ctx *qedf)
 		   qedf->num_queues);
 
 	qedf->p_cpuq = dma_alloc_coherent(&qedf->pdev->dev,
-	    qedf->num_queues * sizeof(struct qedf_glbl_q_params),
+	    qedf->num_queues * माप(काष्ठा qedf_glbl_q_params),
 	    &qedf->hw_p_cpuq, GFP_KERNEL);
 
-	if (!qedf->p_cpuq) {
+	अगर (!qedf->p_cpuq) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "dma_alloc_coherent failed.\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	rval = qedf_alloc_global_queues(qedf);
-	if (rval) {
+	अगर (rval) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Global queue allocation "
 			  "failed.\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* Calculate SQ PBL size in the same manner as in qedf_sq_alloc() */
-	sq_mem_size = SQ_NUM_ENTRIES * sizeof(struct fcoe_wqe);
+	sq_mem_size = SQ_NUM_ENTRIES * माप(काष्ठा fcoe_wqe);
 	sq_mem_size = ALIGN(sq_mem_size, QEDF_PAGE_SIZE);
 	sq_num_pbl_pages = (sq_mem_size / QEDF_PAGE_SIZE);
 
 	/* Calculate CQ num entries */
-	cq_mem_size = FCOE_PARAMS_CQ_NUM_ENTRIES * sizeof(struct fcoe_cqe);
+	cq_mem_size = FCOE_PARAMS_CQ_NUM_ENTRIES * माप(काष्ठा fcoe_cqe);
 	cq_mem_size = ALIGN(cq_mem_size, QEDF_PAGE_SIZE);
-	cq_num_entries = cq_mem_size / sizeof(struct fcoe_cqe);
+	cq_num_entries = cq_mem_size / माप(काष्ठा fcoe_cqe);
 
-	memset(&(qedf->pf_params), 0, sizeof(qedf->pf_params));
+	स_रखो(&(qedf->pf_params), 0, माप(qedf->pf_params));
 
-	/* Setup the value for fcoe PF */
+	/* Setup the value क्रम fcoe PF */
 	qedf->pf_params.fcoe_pf_params.num_cons = QEDF_MAX_SESSIONS;
 	qedf->pf_params.fcoe_pf_params.num_tasks = FCOE_PARAMS_NUM_TASKS;
 	qedf->pf_params.fcoe_pf_params.glbl_q_params_addr =
@@ -3191,7 +3192,7 @@ static int qedf_set_fcoe_pf_param(struct qedf_ctx *qedf)
 	qedf->pf_params.fcoe_pf_params.cq_num_entries = cq_num_entries;
 	qedf->pf_params.fcoe_pf_params.num_cqs = qedf->num_queues;
 
-	/* log_page_size: 12 for 4KB pages */
+	/* log_page_size: 12 क्रम 4KB pages */
 	qedf->pf_params.fcoe_pf_params.log_page_size = ilog2(QEDF_PAGE_SIZE);
 
 	qedf->pf_params.fcoe_pf_params.mtu = 9000;
@@ -3215,77 +3216,77 @@ static int qedf_set_fcoe_pf_param(struct qedf_ctx *qedf)
 	    "cq_num_entries=%d.\n",
 	    qedf->pf_params.fcoe_pf_params.cq_num_entries);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Free DMA coherent memory for array of queue pointers we pass to qed */
-static void qedf_free_fcoe_pf_param(struct qedf_ctx *qedf)
-{
-	size_t size = 0;
+/* Free DMA coherent memory क्रम array of queue poपूर्णांकers we pass to qed */
+अटल व्योम qedf_मुक्त_fcoe_pf_param(काष्ठा qedf_ctx *qedf)
+अणु
+	माप_प्रकार size = 0;
 
-	if (qedf->p_cpuq) {
-		size = qedf->num_queues * sizeof(struct qedf_glbl_q_params);
-		dma_free_coherent(&qedf->pdev->dev, size, qedf->p_cpuq,
+	अगर (qedf->p_cpuq) अणु
+		size = qedf->num_queues * माप(काष्ठा qedf_glbl_q_params);
+		dma_मुक्त_coherent(&qedf->pdev->dev, size, qedf->p_cpuq,
 		    qedf->hw_p_cpuq);
-	}
+	पूर्ण
 
-	qedf_free_global_queues(qedf);
+	qedf_मुक्त_global_queues(qedf);
 
-	kfree(qedf->global_queues);
-}
+	kमुक्त(qedf->global_queues);
+पूर्ण
 
 /*
  * PCI driver functions
  */
 
-static const struct pci_device_id qedf_pci_tbl[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_QLOGIC, 0x165c) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_QLOGIC, 0x8080) },
-	{0}
-};
+अटल स्थिर काष्ठा pci_device_id qedf_pci_tbl[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_QLOGIC, 0x165c) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_QLOGIC, 0x8080) पूर्ण,
+	अणु0पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, qedf_pci_tbl);
 
-static struct pci_driver qedf_pci_driver = {
+अटल काष्ठा pci_driver qedf_pci_driver = अणु
 	.name = QEDF_MODULE_NAME,
 	.id_table = qedf_pci_tbl,
 	.probe = qedf_probe,
-	.remove = qedf_remove,
-	.shutdown = qedf_shutdown,
-};
+	.हटाओ = qedf_हटाओ,
+	.shutकरोwn = qedf_shutकरोwn,
+पूर्ण;
 
-static int __qedf_probe(struct pci_dev *pdev, int mode)
-{
-	int rc = -EINVAL;
-	struct fc_lport *lport;
-	struct qedf_ctx *qedf = NULL;
-	struct Scsi_Host *host;
+अटल पूर्णांक __qedf_probe(काष्ठा pci_dev *pdev, पूर्णांक mode)
+अणु
+	पूर्णांक rc = -EINVAL;
+	काष्ठा fc_lport *lport;
+	काष्ठा qedf_ctx *qedf = शून्य;
+	काष्ठा Scsi_Host *host;
 	bool is_vf = false;
-	struct qed_ll2_params params;
-	char host_buf[20];
-	struct qed_link_params link_params;
-	int status;
-	void *task_start, *task_end;
-	struct qed_slowpath_params slowpath_params;
-	struct qed_probe_params qed_params;
+	काष्ठा qed_ll2_params params;
+	अक्षर host_buf[20];
+	काष्ठा qed_link_params link_params;
+	पूर्णांक status;
+	व्योम *task_start, *task_end;
+	काष्ठा qed_slowpath_params slowpath_params;
+	काष्ठा qed_probe_params qed_params;
 	u16 retry_cnt = 10;
 
 	/*
-	 * When doing error recovery we didn't reap the lport so don't try
-	 * to reallocate it.
+	 * When करोing error recovery we didn't reap the lport so don't try
+	 * to पुनः_स्मृतिate it.
 	 */
 retry_probe:
-	if (mode == QEDF_MODE_RECOVERY)
+	अगर (mode == QEDF_MODE_RECOVERY)
 		msleep(2000);
 
-	if (mode != QEDF_MODE_RECOVERY) {
-		lport = libfc_host_alloc(&qedf_host_template,
-		    sizeof(struct qedf_ctx));
+	अगर (mode != QEDF_MODE_RECOVERY) अणु
+		lport = libfc_host_alloc(&qedf_host_ढाँचा,
+		    माप(काष्ठा qedf_ctx));
 
-		if (!lport) {
-			QEDF_ERR(NULL, "Could not allocate lport.\n");
+		अगर (!lport) अणु
+			QEDF_ERR(शून्य, "Could not allocate lport.\n");
 			rc = -ENOMEM;
-			goto err0;
-		}
+			जाओ err0;
+		पूर्ण
 
 		fc_disc_init(lport);
 
@@ -3313,28 +3314,28 @@ retry_probe:
 		   "FW %d.%d.%d.%d\n", QEDF_VERSION,
 		   FW_MAJOR_VERSION, FW_MINOR_VERSION, FW_REVISION_VERSION,
 		   FW_ENGINEERING_VERSION);
-	} else {
-		/* Init pointers during recovery */
+	पूर्ण अन्यथा अणु
+		/* Init poपूर्णांकers during recovery */
 		qedf = pci_get_drvdata(pdev);
 		set_bit(QEDF_PROBING, &qedf->flags);
 		lport = qedf->lport;
-	}
+	पूर्ण
 
 	QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC, "Probe started.\n");
 
 	host = lport->host;
 
-	/* Allocate mempool for qedf_io_work structs */
+	/* Allocate mempool क्रम qedf_io_work काष्ठाs */
 	qedf->io_mempool = mempool_create_slab_pool(QEDF_IO_WORK_MIN,
 	    qedf_io_work_cache);
-	if (qedf->io_mempool == NULL) {
+	अगर (qedf->io_mempool == शून्य) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "qedf->io_mempool is NULL.\n");
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_INFO, "qedf->io_mempool=%p.\n",
 	    qedf->io_mempool);
 
-	sprintf(host_buf, "qedf_%u_link",
+	प्र_लिखो(host_buf, "qedf_%u_link",
 	    qedf->lport->host->host_no);
 	qedf->link_update_wq = create_workqueue(host_buf);
 	INIT_DELAYED_WORK(&qedf->link_update, qedf_handle_link_update);
@@ -3342,44 +3343,44 @@ retry_probe:
 	INIT_DELAYED_WORK(&qedf->grcdump_work, qedf_wq_grcdump);
 	INIT_DELAYED_WORK(&qedf->stag_work, qedf_stag_change_work);
 	qedf->fipvlan_retries = qedf_fipvlan_retries;
-	/* Set a default prio in case DCBX doesn't converge */
-	if (qedf_default_prio > -1) {
+	/* Set a शेष prio in हाल DCBX करोesn't converge */
+	अगर (qedf_शेष_prio > -1) अणु
 		/*
-		 * This is the case where we pass a modparam in so we want to
-		 * honor it even if dcbx doesn't converge.
+		 * This is the हाल where we pass a modparam in so we want to
+		 * honor it even अगर dcbx करोesn't converge.
 		 */
-		qedf->prio = qedf_default_prio;
-	} else
+		qedf->prio = qedf_शेष_prio;
+	पूर्ण अन्यथा
 		qedf->prio = QEDF_DEFAULT_PRIO;
 
 	/*
 	 * Common probe. Takes care of basic hardware init and pci_*
 	 * functions.
 	 */
-	memset(&qed_params, 0, sizeof(qed_params));
+	स_रखो(&qed_params, 0, माप(qed_params));
 	qed_params.protocol = QED_PROTOCOL_FCOE;
 	qed_params.dp_module = qedf_dp_module;
 	qed_params.dp_level = qedf_dp_level;
 	qed_params.is_vf = is_vf;
 	qedf->cdev = qed_ops->common->probe(pdev, &qed_params);
-	if (!qedf->cdev) {
-		if ((mode == QEDF_MODE_RECOVERY) && retry_cnt) {
+	अगर (!qedf->cdev) अणु
+		अगर ((mode == QEDF_MODE_RECOVERY) && retry_cnt) अणु
 			QEDF_ERR(&qedf->dbg_ctx,
 				"Retry %d initialize hardware\n", retry_cnt);
 			retry_cnt--;
-			goto retry_probe;
-		}
+			जाओ retry_probe;
+		पूर्ण
 		QEDF_ERR(&qedf->dbg_ctx, "common probe failed.\n");
 		rc = -ENODEV;
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	/* Learn information crucial for qedf to progress */
+	/* Learn inक्रमmation crucial क्रम qedf to progress */
 	rc = qed_ops->fill_dev_info(qedf->cdev, &qedf->dev_info);
-	if (rc) {
+	अगर (rc) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Failed to dev info.\n");
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
 	QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC,
 		  "dev_info: num_hwfns=%d affin_hwfn_idx=%d.\n",
@@ -3390,79 +3391,79 @@ retry_probe:
 	 * order should be
 	 * 	slowpath_start
 	 * 	status block allocation
-	 *	interrupt registration (to get min number of queues)
+	 *	पूर्णांकerrupt registration (to get min number of queues)
 	 *	set_fcoe_pf_param
 	 *	qed_sp_fcoe_func_start
 	 */
 	rc = qedf_set_fcoe_pf_param(qedf);
-	if (rc) {
+	अगर (rc) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Cannot set fcoe pf param.\n");
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 	qed_ops->common->update_pf_params(qedf->cdev, &qedf->pf_params);
 
-	/* Learn information crucial for qedf to progress */
+	/* Learn inक्रमmation crucial क्रम qedf to progress */
 	rc = qed_ops->fill_dev_info(qedf->cdev, &qedf->dev_info);
-	if (rc) {
+	अगर (rc) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "Failed to fill dev info.\n");
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
-	if (mode != QEDF_MODE_RECOVERY) {
-		qedf->devlink = qed_ops->common->devlink_register(qedf->cdev);
-		if (IS_ERR(qedf->devlink)) {
+	अगर (mode != QEDF_MODE_RECOVERY) अणु
+		qedf->devlink = qed_ops->common->devlink_रेजिस्टर(qedf->cdev);
+		अगर (IS_ERR(qedf->devlink)) अणु
 			QEDF_ERR(&qedf->dbg_ctx, "Cannot register devlink\n");
-			qedf->devlink = NULL;
-		}
-	}
+			qedf->devlink = शून्य;
+		पूर्ण
+	पूर्ण
 
-	/* Record BDQ producer doorbell addresses */
+	/* Record BDQ producer करोorbell addresses */
 	qedf->bdq_primary_prod = qedf->dev_info.primary_dbq_rq_addr;
 	qedf->bdq_secondary_prod = qedf->dev_info.secondary_bdq_rq_addr;
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 	    "BDQ primary_prod=%p secondary_prod=%p.\n", qedf->bdq_primary_prod,
 	    qedf->bdq_secondary_prod);
 
-	qed_ops->register_ops(qedf->cdev, &qedf_cb_ops, qedf);
+	qed_ops->रेजिस्टर_ops(qedf->cdev, &qedf_cb_ops, qedf);
 
 	rc = qedf_prepare_sb(qedf);
-	if (rc) {
+	अगर (rc) अणु
 
 		QEDF_ERR(&(qedf->dbg_ctx), "Cannot start slowpath.\n");
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
 	/* Start the Slowpath-process */
-	slowpath_params.int_mode = QED_INT_MODE_MSIX;
+	slowpath_params.पूर्णांक_mode = QED_INT_MODE_MSIX;
 	slowpath_params.drv_major = QEDF_DRIVER_MAJOR_VER;
 	slowpath_params.drv_minor = QEDF_DRIVER_MINOR_VER;
 	slowpath_params.drv_rev = QEDF_DRIVER_REV_VER;
 	slowpath_params.drv_eng = QEDF_DRIVER_ENG_VER;
-	strncpy(slowpath_params.name, "qedf", QED_DRV_VER_STR_SIZE);
+	म_नकलन(slowpath_params.name, "qedf", QED_DRV_VER_STR_SIZE);
 	rc = qed_ops->common->slowpath_start(qedf->cdev, &slowpath_params);
-	if (rc) {
+	अगर (rc) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Cannot start slowpath.\n");
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
 	/*
-	 * update_pf_params needs to be called before and after slowpath
+	 * update_pf_params needs to be called beक्रमe and after slowpath
 	 * start
 	 */
 	qed_ops->common->update_pf_params(qedf->cdev, &qedf->pf_params);
 
-	/* Setup interrupts */
-	rc = qedf_setup_int(qedf);
-	if (rc) {
+	/* Setup पूर्णांकerrupts */
+	rc = qedf_setup_पूर्णांक(qedf);
+	अगर (rc) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "Setup interrupts failed.\n");
-		goto err3;
-	}
+		जाओ err3;
+	पूर्ण
 
 	rc = qed_ops->start(qedf->cdev, &qedf->tasks);
-	if (rc) {
+	अगर (rc) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Cannot start FCoE function.\n");
-		goto err4;
-	}
+		जाओ err4;
+	पूर्ण
 	task_start = qedf_get_task_mem(&qedf->tasks, 0);
 	task_end = qedf_get_task_mem(&qedf->tasks, MAX_TID_BLOCKS_FCOE - 1);
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC, "Task context start=%p, "
@@ -3470,22 +3471,22 @@ retry_probe:
 		   qedf->tasks.size);
 
 	/*
-	 * We need to write the number of BDs in the BDQ we've preallocated so
-	 * the f/w will do a prefetch and we'll get an unsolicited CQE when a
+	 * We need to ग_लिखो the number of BDs in the BDQ we've pपुनः_स्मृतिated so
+	 * the f/w will करो a prefetch and we'll get an unsolicited CQE when a
 	 * packet arrives.
 	 */
 	qedf->bdq_prod_idx = QEDF_BDQ_SIZE;
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 	    "Writing %d to primary and secondary BDQ doorbell registers.\n",
 	    qedf->bdq_prod_idx);
-	writew(qedf->bdq_prod_idx, qedf->bdq_primary_prod);
-	readw(qedf->bdq_primary_prod);
-	writew(qedf->bdq_prod_idx, qedf->bdq_secondary_prod);
-	readw(qedf->bdq_secondary_prod);
+	ग_लिखोw(qedf->bdq_prod_idx, qedf->bdq_primary_prod);
+	पढ़ोw(qedf->bdq_primary_prod);
+	ग_लिखोw(qedf->bdq_prod_idx, qedf->bdq_secondary_prod);
+	पढ़ोw(qedf->bdq_secondary_prod);
 
-	qed_ops->common->set_power_state(qedf->cdev, PCI_D0);
+	qed_ops->common->set_घातer_state(qedf->cdev, PCI_D0);
 
-	/* Now that the dev_info struct has been filled in set the MAC
+	/* Now that the dev_info काष्ठा has been filled in set the MAC
 	 * address
 	 */
 	ether_addr_copy(qedf->mac, qedf->dev_info.common.hw_mac);
@@ -3499,154 +3500,154 @@ retry_probe:
 	 * WWPN and WWNN. Otherwise fall back to use fcoe_wwn_from_mac() based
 	 * on the MAC address.
 	 */
-	if (qedf->dev_info.wwnn != 0 && qedf->dev_info.wwpn != 0) {
+	अगर (qedf->dev_info.wwnn != 0 && qedf->dev_info.wwpn != 0) अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 		    "Setting WWPN and WWNN from qed dev_info.\n");
 		qedf->wwnn = qedf->dev_info.wwnn;
 		qedf->wwpn = qedf->dev_info.wwpn;
-	} else {
+	पूर्ण अन्यथा अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 		    "Setting WWPN and WWNN using fcoe_wwn_from_mac().\n");
 		qedf->wwnn = fcoe_wwn_from_mac(qedf->mac, 1, 0);
 		qedf->wwpn = fcoe_wwn_from_mac(qedf->mac, 2, 0);
-	}
+	पूर्ण
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,  "WWNN=%016llx "
 		   "WWPN=%016llx.\n", qedf->wwnn, qedf->wwpn);
 
-	sprintf(host_buf, "host_%d", host->host_no);
+	प्र_लिखो(host_buf, "host_%d", host->host_no);
 	qed_ops->common->set_name(qedf->cdev, host_buf);
 
 	/* Allocate cmd mgr */
 	qedf->cmd_mgr = qedf_cmd_mgr_alloc(qedf);
-	if (!qedf->cmd_mgr) {
+	अगर (!qedf->cmd_mgr) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Failed to allocate cmd mgr.\n");
 		rc = -ENOMEM;
-		goto err5;
-	}
+		जाओ err5;
+	पूर्ण
 
-	if (mode != QEDF_MODE_RECOVERY) {
-		host->transportt = qedf_fc_transport_template;
+	अगर (mode != QEDF_MODE_RECOVERY) अणु
+		host->transportt = qedf_fc_transport_ढाँचा;
 		host->max_lun = qedf_max_lun;
 		host->max_cmd_len = QEDF_MAX_CDB_LEN;
 		host->can_queue = FCOE_PARAMS_NUM_TASKS;
 		rc = scsi_add_host(host, &pdev->dev);
-		if (rc) {
+		अगर (rc) अणु
 			QEDF_WARN(&qedf->dbg_ctx,
 				  "Error adding Scsi_Host rc=0x%x.\n", rc);
-			goto err6;
-		}
-	}
+			जाओ err6;
+		पूर्ण
+	पूर्ण
 
-	memset(&params, 0, sizeof(params));
+	स_रखो(&params, 0, माप(params));
 	params.mtu = QEDF_LL2_BUF_SIZE;
 	ether_addr_copy(params.ll2_mac_address, qedf->mac);
 
-	/* Start LL2 processing thread */
-	snprintf(host_buf, 20, "qedf_%d_ll2", host->host_no);
+	/* Start LL2 processing thपढ़ो */
+	snम_लिखो(host_buf, 20, "qedf_%d_ll2", host->host_no);
 	qedf->ll2_recv_wq =
 		create_workqueue(host_buf);
-	if (!qedf->ll2_recv_wq) {
+	अगर (!qedf->ll2_recv_wq) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Failed to LL2 workqueue.\n");
 		rc = -ENOMEM;
-		goto err7;
-	}
+		जाओ err7;
+	पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 	qedf_dbg_host_init(&(qedf->dbg_ctx), qedf_debugfs_ops,
 			    qedf_dbg_fops);
-#endif
+#पूर्ण_अगर
 
 	/* Start LL2 */
-	qed_ops->ll2->register_cb_ops(qedf->cdev, &qedf_ll2_cb_ops, qedf);
+	qed_ops->ll2->रेजिस्टर_cb_ops(qedf->cdev, &qedf_ll2_cb_ops, qedf);
 	rc = qed_ops->ll2->start(qedf->cdev, &params);
-	if (rc) {
+	अगर (rc) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Could not start Light L2.\n");
-		goto err7;
-	}
+		जाओ err7;
+	पूर्ण
 	set_bit(QEDF_LL2_STARTED, &qedf->flags);
 
-	/* Set initial FIP/FCoE VLAN to NULL */
+	/* Set initial FIP/FCoE VLAN to शून्य */
 	qedf->vlan_id = 0;
 
 	/*
 	 * No need to setup fcoe_ctlr or fc_lport objects during recovery since
 	 * they were not reaped during the unload process.
 	 */
-	if (mode != QEDF_MODE_RECOVERY) {
+	अगर (mode != QEDF_MODE_RECOVERY) अणु
 		/* Setup imbedded fcoe controller */
 		qedf_fcoe_ctlr_setup(qedf);
 
 		/* Setup lport */
 		rc = qedf_lport_setup(qedf);
-		if (rc) {
+		अगर (rc) अणु
 			QEDF_ERR(&(qedf->dbg_ctx),
 			    "qedf_lport_setup failed.\n");
-			goto err7;
-		}
-	}
+			जाओ err7;
+		पूर्ण
+	पूर्ण
 
-	sprintf(host_buf, "qedf_%u_timer", qedf->lport->host->host_no);
-	qedf->timer_work_queue =
+	प्र_लिखो(host_buf, "qedf_%u_timer", qedf->lport->host->host_no);
+	qedf->समयr_work_queue =
 		create_workqueue(host_buf);
-	if (!qedf->timer_work_queue) {
+	अगर (!qedf->समयr_work_queue) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Failed to start timer "
 			  "workqueue.\n");
 		rc = -ENOMEM;
-		goto err7;
-	}
+		जाओ err7;
+	पूर्ण
 
 	/* DPC workqueue is not reaped during recovery unload */
-	if (mode != QEDF_MODE_RECOVERY) {
-		sprintf(host_buf, "qedf_%u_dpc",
+	अगर (mode != QEDF_MODE_RECOVERY) अणु
+		प्र_लिखो(host_buf, "qedf_%u_dpc",
 		    qedf->lport->host->host_no);
 		qedf->dpc_wq = create_workqueue(host_buf);
-	}
+	पूर्ण
 	INIT_DELAYED_WORK(&qedf->recovery_work, qedf_recovery_handler);
 
 	/*
 	 * GRC dump and sysfs parameters are not reaped during the recovery
 	 * unload process.
 	 */
-	if (mode != QEDF_MODE_RECOVERY) {
+	अगर (mode != QEDF_MODE_RECOVERY) अणु
 		qedf->grcdump_size =
 		    qed_ops->common->dbg_all_data_size(qedf->cdev);
-		if (qedf->grcdump_size) {
+		अगर (qedf->grcdump_size) अणु
 			rc = qedf_alloc_grc_dump_buf(&qedf->grcdump,
 			    qedf->grcdump_size);
-			if (rc) {
+			अगर (rc) अणु
 				QEDF_ERR(&(qedf->dbg_ctx),
 				    "GRC Dump buffer alloc failed.\n");
-				qedf->grcdump = NULL;
-			}
+				qedf->grcdump = शून्य;
+			पूर्ण
 
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			    "grcdump: addr=%p, size=%u.\n",
 			    qedf->grcdump, qedf->grcdump_size);
-		}
+		पूर्ण
 		qedf_create_sysfs_ctx_attr(qedf);
 
-		/* Initialize I/O tracing for this adapter */
+		/* Initialize I/O tracing क्रम this adapter */
 		spin_lock_init(&qedf->io_trace_lock);
 		qedf->io_trace_idx = 0;
-	}
+	पूर्ण
 
 	init_completion(&qedf->flogi_compl);
 
 	status = qed_ops->common->update_drv_state(qedf->cdev, true);
-	if (status)
+	अगर (status)
 		QEDF_ERR(&(qedf->dbg_ctx),
 			"Failed to send drv state to MFW.\n");
 
-	memset(&link_params, 0, sizeof(struct qed_link_params));
+	स_रखो(&link_params, 0, माप(काष्ठा qed_link_params));
 	link_params.link_up = true;
 	status = qed_ops->common->set_link(qedf->cdev, &link_params);
-	if (status)
+	अगर (status)
 		QEDF_WARN(&(qedf->dbg_ctx), "set_link failed.\n");
 
 	/* Start/restart discovery */
-	if (mode == QEDF_MODE_RECOVERY)
+	अगर (mode == QEDF_MODE_RECOVERY)
 		fcoe_ctlr_link_up(&qedf->ctlr);
-	else
+	अन्यथा
 		fc_fabric_login(lport);
 
 	QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC, "Probe done.\n");
@@ -3654,52 +3655,52 @@ retry_probe:
 	clear_bit(QEDF_PROBING, &qedf->flags);
 
 	/* All good */
-	return 0;
+	वापस 0;
 
 err7:
-	if (qedf->ll2_recv_wq)
+	अगर (qedf->ll2_recv_wq)
 		destroy_workqueue(qedf->ll2_recv_wq);
-	fc_remove_host(qedf->lport->host);
-	scsi_remove_host(qedf->lport->host);
-#ifdef CONFIG_DEBUG_FS
-	qedf_dbg_host_exit(&(qedf->dbg_ctx));
-#endif
+	fc_हटाओ_host(qedf->lport->host);
+	scsi_हटाओ_host(qedf->lport->host);
+#अगर_घोषित CONFIG_DEBUG_FS
+	qedf_dbg_host_निकास(&(qedf->dbg_ctx));
+#पूर्ण_अगर
 err6:
-	qedf_cmd_mgr_free(qedf->cmd_mgr);
+	qedf_cmd_mgr_मुक्त(qedf->cmd_mgr);
 err5:
 	qed_ops->stop(qedf->cdev);
 err4:
-	qedf_free_fcoe_pf_param(qedf);
-	qedf_sync_free_irqs(qedf);
+	qedf_मुक्त_fcoe_pf_param(qedf);
+	qedf_sync_मुक्त_irqs(qedf);
 err3:
 	qed_ops->common->slowpath_stop(qedf->cdev);
 err2:
-	qed_ops->common->remove(qedf->cdev);
+	qed_ops->common->हटाओ(qedf->cdev);
 err1:
 	scsi_host_put(lport->host);
 err0:
-	if (qedf) {
+	अगर (qedf) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC, "Probe done.\n");
 
 		clear_bit(QEDF_PROBING, &qedf->flags);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int qedf_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	return __qedf_probe(pdev, QEDF_MODE_NORMAL);
-}
+अटल पूर्णांक qedf_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस __qedf_probe(pdev, QEDF_MODE_NORMAL);
+पूर्ण
 
-static void __qedf_remove(struct pci_dev *pdev, int mode)
-{
-	struct qedf_ctx *qedf;
-	int rc;
+अटल व्योम __qedf_हटाओ(काष्ठा pci_dev *pdev, पूर्णांक mode)
+अणु
+	काष्ठा qedf_ctx *qedf;
+	पूर्णांक rc;
 
-	if (!pdev) {
-		QEDF_ERR(NULL, "pdev is NULL.\n");
-		return;
-	}
+	अगर (!pdev) अणु
+		QEDF_ERR(शून्य, "pdev is NULL.\n");
+		वापस;
+	पूर्ण
 
 	qedf = pci_get_drvdata(pdev);
 
@@ -3707,69 +3708,69 @@ static void __qedf_remove(struct pci_dev *pdev, int mode)
 	 * Prevent race where we're in board disable work and then try to
 	 * rmmod the module.
 	 */
-	if (test_bit(QEDF_UNLOADING, &qedf->flags)) {
+	अगर (test_bit(QEDF_UNLOADING, &qedf->flags)) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "Already removing PCI function.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (mode != QEDF_MODE_RECOVERY)
+	अगर (mode != QEDF_MODE_RECOVERY)
 		set_bit(QEDF_UNLOADING, &qedf->flags);
 
 	/* Logoff the fabric to upload all connections */
-	if (mode == QEDF_MODE_RECOVERY)
-		fcoe_ctlr_link_down(&qedf->ctlr);
-	else
+	अगर (mode == QEDF_MODE_RECOVERY)
+		fcoe_ctlr_link_करोwn(&qedf->ctlr);
+	अन्यथा
 		fc_fabric_logoff(qedf->lport);
 
-	if (!qedf_wait_for_upload(qedf))
+	अगर (!qedf_रुको_क्रम_upload(qedf))
 		QEDF_ERR(&qedf->dbg_ctx, "Could not upload all sessions.\n");
 
-#ifdef CONFIG_DEBUG_FS
-	qedf_dbg_host_exit(&(qedf->dbg_ctx));
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+	qedf_dbg_host_निकास(&(qedf->dbg_ctx));
+#पूर्ण_अगर
 
 	/* Stop any link update handling */
 	cancel_delayed_work_sync(&qedf->link_update);
 	destroy_workqueue(qedf->link_update_wq);
-	qedf->link_update_wq = NULL;
+	qedf->link_update_wq = शून्य;
 
-	if (qedf->timer_work_queue)
-		destroy_workqueue(qedf->timer_work_queue);
+	अगर (qedf->समयr_work_queue)
+		destroy_workqueue(qedf->समयr_work_queue);
 
 	/* Stop Light L2 */
 	clear_bit(QEDF_LL2_STARTED, &qedf->flags);
 	qed_ops->ll2->stop(qedf->cdev);
-	if (qedf->ll2_recv_wq)
+	अगर (qedf->ll2_recv_wq)
 		destroy_workqueue(qedf->ll2_recv_wq);
 
 	/* Stop fastpath */
-	qedf_sync_free_irqs(qedf);
+	qedf_sync_मुक्त_irqs(qedf);
 	qedf_destroy_sb(qedf);
 
 	/*
-	 * During recovery don't destroy OS constructs that represent the
+	 * During recovery करोn't destroy OS स्थिरructs that represent the
 	 * physical port.
 	 */
-	if (mode != QEDF_MODE_RECOVERY) {
-		qedf_free_grc_dump_buf(&qedf->grcdump);
-		qedf_remove_sysfs_ctx_attr(qedf);
+	अगर (mode != QEDF_MODE_RECOVERY) अणु
+		qedf_मुक्त_grc_dump_buf(&qedf->grcdump);
+		qedf_हटाओ_sysfs_ctx_attr(qedf);
 
-		/* Remove all SCSI/libfc/libfcoe structures */
+		/* Remove all SCSI/libfc/libfcoe काष्ठाures */
 		fcoe_ctlr_destroy(&qedf->ctlr);
 		fc_lport_destroy(qedf->lport);
-		fc_remove_host(qedf->lport->host);
-		scsi_remove_host(qedf->lport->host);
-	}
+		fc_हटाओ_host(qedf->lport->host);
+		scsi_हटाओ_host(qedf->lport->host);
+	पूर्ण
 
-	qedf_cmd_mgr_free(qedf->cmd_mgr);
+	qedf_cmd_mgr_मुक्त(qedf->cmd_mgr);
 
-	if (mode != QEDF_MODE_RECOVERY) {
-		fc_exch_mgr_free(qedf->lport);
-		fc_lport_free_stats(qedf->lport);
+	अगर (mode != QEDF_MODE_RECOVERY) अणु
+		fc_exch_mgr_मुक्त(qedf->lport);
+		fc_lport_मुक्त_stats(qedf->lport);
 
-		/* Wait for all vports to be reaped */
-		qedf_wait_for_vport_destroy(qedf);
-	}
+		/* Wait क्रम all vports to be reaped */
+		qedf_रुको_क्रम_vport_destroy(qedf);
+	पूर्ण
 
 	/*
 	 * Now that all connections have been uploaded we can stop the
@@ -3777,119 +3778,119 @@ static void __qedf_remove(struct pci_dev *pdev, int mode)
 	 */
 	qed_ops->stop(qedf->cdev);
 
-	if (mode != QEDF_MODE_RECOVERY) {
-		if (qedf->dpc_wq) {
+	अगर (mode != QEDF_MODE_RECOVERY) अणु
+		अगर (qedf->dpc_wq) अणु
 			/* Stop general DPC handling */
 			destroy_workqueue(qedf->dpc_wq);
-			qedf->dpc_wq = NULL;
-		}
-	}
+			qedf->dpc_wq = शून्य;
+		पूर्ण
+	पूर्ण
 
-	/* Final shutdown for the board */
-	qedf_free_fcoe_pf_param(qedf);
-	if (mode != QEDF_MODE_RECOVERY) {
-		qed_ops->common->set_power_state(qedf->cdev, PCI_D0);
-		pci_set_drvdata(pdev, NULL);
-	}
+	/* Final shutकरोwn क्रम the board */
+	qedf_मुक्त_fcoe_pf_param(qedf);
+	अगर (mode != QEDF_MODE_RECOVERY) अणु
+		qed_ops->common->set_घातer_state(qedf->cdev, PCI_D0);
+		pci_set_drvdata(pdev, शून्य);
+	पूर्ण
 
 	rc = qed_ops->common->update_drv_state(qedf->cdev, false);
-	if (rc)
+	अगर (rc)
 		QEDF_ERR(&(qedf->dbg_ctx),
 			"Failed to send drv state to MFW.\n");
 
-	if (mode != QEDF_MODE_RECOVERY && qedf->devlink) {
-		qed_ops->common->devlink_unregister(qedf->devlink);
-		qedf->devlink = NULL;
-	}
+	अगर (mode != QEDF_MODE_RECOVERY && qedf->devlink) अणु
+		qed_ops->common->devlink_unरेजिस्टर(qedf->devlink);
+		qedf->devlink = शून्य;
+	पूर्ण
 
 	qed_ops->common->slowpath_stop(qedf->cdev);
-	qed_ops->common->remove(qedf->cdev);
+	qed_ops->common->हटाओ(qedf->cdev);
 
 	mempool_destroy(qedf->io_mempool);
 
 	/* Only reap the Scsi_host on a real removal */
-	if (mode != QEDF_MODE_RECOVERY)
+	अगर (mode != QEDF_MODE_RECOVERY)
 		scsi_host_put(qedf->lport->host);
-}
+पूर्ण
 
-static void qedf_remove(struct pci_dev *pdev)
-{
-	/* Check to make sure this function wasn't already disabled */
-	if (!atomic_read(&pdev->enable_cnt))
-		return;
+अटल व्योम qedf_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	/* Check to make sure this function wasn't alपढ़ोy disabled */
+	अगर (!atomic_पढ़ो(&pdev->enable_cnt))
+		वापस;
 
-	__qedf_remove(pdev, QEDF_MODE_NORMAL);
-}
+	__qedf_हटाओ(pdev, QEDF_MODE_NORMAL);
+पूर्ण
 
-void qedf_wq_grcdump(struct work_struct *work)
-{
-	struct qedf_ctx *qedf =
-	    container_of(work, struct qedf_ctx, grcdump_work.work);
+व्योम qedf_wq_grcdump(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qedf_ctx *qedf =
+	    container_of(work, काष्ठा qedf_ctx, grcdump_work.work);
 
 	QEDF_ERR(&(qedf->dbg_ctx), "Collecting GRC dump.\n");
 	qedf_capture_grc_dump(qedf);
-}
+पूर्ण
 
-void qedf_schedule_hw_err_handler(void *dev, enum qed_hw_err_type err_type)
-{
-	struct qedf_ctx *qedf = dev;
+व्योम qedf_schedule_hw_err_handler(व्योम *dev, क्रमागत qed_hw_err_type err_type)
+अणु
+	काष्ठा qedf_ctx *qedf = dev;
 
 	QEDF_ERR(&(qedf->dbg_ctx),
 			"Hardware error handler scheduled, event=%d.\n",
 			err_type);
 
-	if (test_bit(QEDF_IN_RECOVERY, &qedf->flags)) {
+	अगर (test_bit(QEDF_IN_RECOVERY, &qedf->flags)) अणु
 		QEDF_ERR(&(qedf->dbg_ctx),
 				"Already in recovery, not scheduling board disable work.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (err_type) {
-	case QED_HW_ERR_FAN_FAIL:
+	चयन (err_type) अणु
+	हाल QED_HW_ERR_FAN_FAIL:
 		schedule_delayed_work(&qedf->board_disable_work, 0);
-		break;
-	case QED_HW_ERR_MFW_RESP_FAIL:
-	case QED_HW_ERR_HW_ATTN:
-	case QED_HW_ERR_DMAE_FAIL:
-	case QED_HW_ERR_FW_ASSERT:
-		/* Prevent HW attentions from being reasserted */
+		अवरोध;
+	हाल QED_HW_ERR_MFW_RESP_FAIL:
+	हाल QED_HW_ERR_HW_ATTN:
+	हाल QED_HW_ERR_DMAE_FAIL:
+	हाल QED_HW_ERR_FW_ASSERT:
+		/* Prevent HW attentions from being reनिश्चितed */
 		qed_ops->common->attn_clr_enable(qedf->cdev, true);
-		break;
-	case QED_HW_ERR_RAMROD_FAIL:
-		/* Prevent HW attentions from being reasserted */
+		अवरोध;
+	हाल QED_HW_ERR_RAMROD_FAIL:
+		/* Prevent HW attentions from being reनिश्चितed */
 		qed_ops->common->attn_clr_enable(qedf->cdev, true);
 
-		if (qedf_enable_recovery && qedf->devlink)
+		अगर (qedf_enable_recovery && qedf->devlink)
 			qed_ops->common->report_fatal_error(qedf->devlink,
 				err_type);
 
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * Protocol TLV handler
  */
-void qedf_get_protocol_tlv_data(void *dev, void *data)
-{
-	struct qedf_ctx *qedf = dev;
-	struct qed_mfw_tlv_fcoe *fcoe = data;
-	struct fc_lport *lport;
-	struct Scsi_Host *host;
-	struct fc_host_attrs *fc_host;
-	struct fc_host_statistics *hst;
+व्योम qedf_get_protocol_tlv_data(व्योम *dev, व्योम *data)
+अणु
+	काष्ठा qedf_ctx *qedf = dev;
+	काष्ठा qed_mfw_tlv_fcoe *fcoe = data;
+	काष्ठा fc_lport *lport;
+	काष्ठा Scsi_Host *host;
+	काष्ठा fc_host_attrs *fc_host;
+	काष्ठा fc_host_statistics *hst;
 
-	if (!qedf) {
-		QEDF_ERR(NULL, "qedf is null.\n");
-		return;
-	}
+	अगर (!qedf) अणु
+		QEDF_ERR(शून्य, "qedf is null.\n");
+		वापस;
+	पूर्ण
 
-	if (test_bit(QEDF_PROBING, &qedf->flags)) {
+	अगर (test_bit(QEDF_PROBING, &qedf->flags)) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "Function is still probing.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	lport = qedf->lport;
 	host = lport->host;
@@ -3913,17 +3914,17 @@ void qedf_get_protocol_tlv_data(void *dev, void *data)
 	fcoe->num_npiv_ids_set = true;
 	fcoe->num_npiv_ids = fc_host->npiv_vports_inuse;
 
-	/* Certain attributes we only want to set if we've selected an FCF */
-	if (qedf->ctlr.sel_fcf) {
-		fcoe->switch_name_set = true;
-		u64_to_wwn(qedf->ctlr.sel_fcf->switch_name, fcoe->switch_name);
-	}
+	/* Certain attributes we only want to set अगर we've selected an FCF */
+	अगर (qedf->ctlr.sel_fcf) अणु
+		fcoe->चयन_name_set = true;
+		u64_to_wwn(qedf->ctlr.sel_fcf->चयन_name, fcoe->चयन_name);
+	पूर्ण
 
 	fcoe->port_state_set = true;
-	/* For qedf we're either link down or fabric attach */
-	if (lport->link_up)
+	/* For qedf we're either link करोwn or fabric attach */
+	अगर (lport->link_up)
 		fcoe->port_state = QED_MFW_TLV_PORT_STATE_FABRIC;
-	else
+	अन्यथा
 		fcoe->port_state = QED_MFW_TLV_PORT_STATE_OFFLINE;
 
 	fcoe->link_failures_set = true;
@@ -3950,58 +3951,58 @@ void qedf_get_protocol_tlv_data(void *dev, void *data)
 	fcoe->crc_count = hst->invalid_crc_count;
 
 	fcoe->tx_abts_set = true;
-	fcoe->tx_abts = hst->fcp_packet_aborts;
+	fcoe->tx_abts = hst->fcp_packet_पातs;
 
 	fcoe->tx_lun_rst_set = true;
 	fcoe->tx_lun_rst = qedf->lun_resets;
 
-	fcoe->abort_task_sets_set = true;
-	fcoe->abort_task_sets = qedf->packet_aborts;
+	fcoe->पात_task_sets_set = true;
+	fcoe->पात_task_sets = qedf->packet_पातs;
 
 	fcoe->scsi_busy_set = true;
 	fcoe->scsi_busy = qedf->busy;
 
 	fcoe->scsi_tsk_full_set = true;
 	fcoe->scsi_tsk_full = qedf->task_set_fulls;
-}
+पूर्ण
 
-/* Deferred work function to perform soft context reset on STAG change */
-void qedf_stag_change_work(struct work_struct *work)
-{
-	struct qedf_ctx *qedf =
-	    container_of(work, struct qedf_ctx, stag_work.work);
+/* Deferred work function to perक्रमm soft context reset on STAG change */
+व्योम qedf_stag_change_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qedf_ctx *qedf =
+	    container_of(work, काष्ठा qedf_ctx, stag_work.work);
 
-	if (!qedf) {
-		QEDF_ERR(NULL, "qedf is NULL");
-		return;
-	}
+	अगर (!qedf) अणु
+		QEDF_ERR(शून्य, "qedf is NULL");
+		वापस;
+	पूर्ण
 	QEDF_ERR(&qedf->dbg_ctx, "Performing software context reset.\n");
 	qedf_ctx_soft_reset(qedf->lport);
-}
+पूर्ण
 
-static void qedf_shutdown(struct pci_dev *pdev)
-{
-	__qedf_remove(pdev, QEDF_MODE_NORMAL);
-}
+अटल व्योम qedf_shutकरोwn(काष्ठा pci_dev *pdev)
+अणु
+	__qedf_हटाओ(pdev, QEDF_MODE_NORMAL);
+पूर्ण
 
 /*
  * Recovery handler code
  */
-static void qedf_schedule_recovery_handler(void *dev)
-{
-	struct qedf_ctx *qedf = dev;
+अटल व्योम qedf_schedule_recovery_handler(व्योम *dev)
+अणु
+	काष्ठा qedf_ctx *qedf = dev;
 
 	QEDF_ERR(&qedf->dbg_ctx, "Recovery handler scheduled.\n");
 	schedule_delayed_work(&qedf->recovery_work, 0);
-}
+पूर्ण
 
-static void qedf_recovery_handler(struct work_struct *work)
-{
-	struct qedf_ctx *qedf =
-	    container_of(work, struct qedf_ctx, recovery_work.work);
+अटल व्योम qedf_recovery_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qedf_ctx *qedf =
+	    container_of(work, काष्ठा qedf_ctx, recovery_work.work);
 
-	if (test_and_set_bit(QEDF_IN_RECOVERY, &qedf->flags))
-		return;
+	अगर (test_and_set_bit(QEDF_IN_RECOVERY, &qedf->flags))
+		वापस;
 
 	/*
 	 * Call common_ops->recovery_prolog to allow the MFW to quiesce
@@ -4010,147 +4011,147 @@ static void qedf_recovery_handler(struct work_struct *work)
 	qed_ops->common->recovery_prolog(qedf->cdev);
 
 	QEDF_ERR(&qedf->dbg_ctx, "Recovery work start.\n");
-	__qedf_remove(qedf->pdev, QEDF_MODE_RECOVERY);
+	__qedf_हटाओ(qedf->pdev, QEDF_MODE_RECOVERY);
 	/*
-	 * Reset link and dcbx to down state since we will not get a link down
-	 * event from the MFW but calling __qedf_remove will essentially be a
-	 * link down event.
+	 * Reset link and dcbx to करोwn state since we will not get a link करोwn
+	 * event from the MFW but calling __qedf_हटाओ will essentially be a
+	 * link करोwn event.
 	 */
 	atomic_set(&qedf->link_state, QEDF_LINK_DOWN);
 	atomic_set(&qedf->dcbx, QEDF_DCBX_PENDING);
 	__qedf_probe(qedf->pdev, QEDF_MODE_RECOVERY);
 	clear_bit(QEDF_IN_RECOVERY, &qedf->flags);
 	QEDF_ERR(&qedf->dbg_ctx, "Recovery work complete.\n");
-}
+पूर्ण
 
 /* Generic TLV data callback */
-void qedf_get_generic_tlv_data(void *dev, struct qed_generic_tlvs *data)
-{
-	struct qedf_ctx *qedf;
+व्योम qedf_get_generic_tlv_data(व्योम *dev, काष्ठा qed_generic_tlvs *data)
+अणु
+	काष्ठा qedf_ctx *qedf;
 
-	if (!dev) {
-		QEDF_INFO(NULL, QEDF_LOG_EVT,
+	अगर (!dev) अणु
+		QEDF_INFO(शून्य, QEDF_LOG_EVT,
 			  "dev is NULL so ignoring get_generic_tlv_data request.\n");
-		return;
-	}
-	qedf = (struct qedf_ctx *)dev;
+		वापस;
+	पूर्ण
+	qedf = (काष्ठा qedf_ctx *)dev;
 
-	memset(data, 0, sizeof(struct qed_generic_tlvs));
+	स_रखो(data, 0, माप(काष्ठा qed_generic_tlvs));
 	ether_addr_copy(data->mac[0], qedf->mac);
-}
+पूर्ण
 
 /*
  * Module Init/Remove
  */
 
-static int __init qedf_init(void)
-{
-	int ret;
+अटल पूर्णांक __init qedf_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	/* If debug=1 passed, set the default log mask */
-	if (qedf_debug == QEDF_LOG_DEFAULT)
+	/* If debug=1 passed, set the शेष log mask */
+	अगर (qedf_debug == QEDF_LOG_DEFAULT)
 		qedf_debug = QEDF_DEFAULT_LOG_MASK;
 
 	/*
-	 * Check that default prio for FIP/FCoE traffic is between 0..7 if a
+	 * Check that शेष prio क्रम FIP/FCoE traffic is between 0..7 अगर a
 	 * value has been set
 	 */
-	if (qedf_default_prio > -1)
-		if (qedf_default_prio > 7) {
-			qedf_default_prio = QEDF_DEFAULT_PRIO;
-			QEDF_ERR(NULL, "FCoE/FIP priority out of range, resetting to %d.\n",
+	अगर (qedf_शेष_prio > -1)
+		अगर (qedf_शेष_prio > 7) अणु
+			qedf_शेष_prio = QEDF_DEFAULT_PRIO;
+			QEDF_ERR(शून्य, "FCoE/FIP priority out of range, resetting to %d.\n",
 			    QEDF_DEFAULT_PRIO);
-		}
+		पूर्ण
 
-	/* Print driver banner */
-	QEDF_INFO(NULL, QEDF_LOG_INFO, "%s v%s.\n", QEDF_DESCR,
+	/* Prपूर्णांक driver banner */
+	QEDF_INFO(शून्य, QEDF_LOG_INFO, "%s v%s.\n", QEDF_DESCR,
 		   QEDF_VERSION);
 
-	/* Create kmem_cache for qedf_io_work structs */
+	/* Create kmem_cache क्रम qedf_io_work काष्ठाs */
 	qedf_io_work_cache = kmem_cache_create("qedf_io_work_cache",
-	    sizeof(struct qedf_io_work), 0, SLAB_HWCACHE_ALIGN, NULL);
-	if (qedf_io_work_cache == NULL) {
-		QEDF_ERR(NULL, "qedf_io_work_cache is NULL.\n");
-		goto err1;
-	}
-	QEDF_INFO(NULL, QEDF_LOG_DISC, "qedf_io_work_cache=%p.\n",
+	    माप(काष्ठा qedf_io_work), 0, SLAB_HWCACHE_ALIGN, शून्य);
+	अगर (qedf_io_work_cache == शून्य) अणु
+		QEDF_ERR(शून्य, "qedf_io_work_cache is NULL.\n");
+		जाओ err1;
+	पूर्ण
+	QEDF_INFO(शून्य, QEDF_LOG_DISC, "qedf_io_work_cache=%p.\n",
 	    qedf_io_work_cache);
 
 	qed_ops = qed_get_fcoe_ops();
-	if (!qed_ops) {
-		QEDF_ERR(NULL, "Failed to get qed fcoe operations\n");
-		goto err1;
-	}
+	अगर (!qed_ops) अणु
+		QEDF_ERR(शून्य, "Failed to get qed fcoe operations\n");
+		जाओ err1;
+	पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 	qedf_dbg_init("qedf");
-#endif
+#पूर्ण_अगर
 
-	qedf_fc_transport_template =
+	qedf_fc_transport_ढाँचा =
 	    fc_attach_transport(&qedf_fc_transport_fn);
-	if (!qedf_fc_transport_template) {
-		QEDF_ERR(NULL, "Could not register with FC transport\n");
-		goto err2;
-	}
+	अगर (!qedf_fc_transport_ढाँचा) अणु
+		QEDF_ERR(शून्य, "Could not register with FC transport\n");
+		जाओ err2;
+	पूर्ण
 
-	qedf_fc_vport_transport_template =
+	qedf_fc_vport_transport_ढाँचा =
 		fc_attach_transport(&qedf_fc_vport_transport_fn);
-	if (!qedf_fc_vport_transport_template) {
-		QEDF_ERR(NULL, "Could not register vport template with FC "
+	अगर (!qedf_fc_vport_transport_ढाँचा) अणु
+		QEDF_ERR(शून्य, "Could not register vport template with FC "
 			  "transport\n");
-		goto err3;
-	}
+		जाओ err3;
+	पूर्ण
 
 	qedf_io_wq = create_workqueue("qedf_io_wq");
-	if (!qedf_io_wq) {
-		QEDF_ERR(NULL, "Could not create qedf_io_wq.\n");
-		goto err4;
-	}
+	अगर (!qedf_io_wq) अणु
+		QEDF_ERR(शून्य, "Could not create qedf_io_wq.\n");
+		जाओ err4;
+	पूर्ण
 
 	qedf_cb_ops.get_login_failures = qedf_get_login_failures;
 
-	ret = pci_register_driver(&qedf_pci_driver);
-	if (ret) {
-		QEDF_ERR(NULL, "Failed to register driver\n");
-		goto err5;
-	}
+	ret = pci_रेजिस्टर_driver(&qedf_pci_driver);
+	अगर (ret) अणु
+		QEDF_ERR(शून्य, "Failed to register driver\n");
+		जाओ err5;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err5:
 	destroy_workqueue(qedf_io_wq);
 err4:
-	fc_release_transport(qedf_fc_vport_transport_template);
+	fc_release_transport(qedf_fc_vport_transport_ढाँचा);
 err3:
-	fc_release_transport(qedf_fc_transport_template);
+	fc_release_transport(qedf_fc_transport_ढाँचा);
 err2:
-#ifdef CONFIG_DEBUG_FS
-	qedf_dbg_exit();
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+	qedf_dbg_निकास();
+#पूर्ण_अगर
 	qed_put_fcoe_ops();
 err1:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void __exit qedf_cleanup(void)
-{
-	pci_unregister_driver(&qedf_pci_driver);
+अटल व्योम __निकास qedf_cleanup(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&qedf_pci_driver);
 
 	destroy_workqueue(qedf_io_wq);
 
-	fc_release_transport(qedf_fc_vport_transport_template);
-	fc_release_transport(qedf_fc_transport_template);
-#ifdef CONFIG_DEBUG_FS
-	qedf_dbg_exit();
-#endif
+	fc_release_transport(qedf_fc_vport_transport_ढाँचा);
+	fc_release_transport(qedf_fc_transport_ढाँचा);
+#अगर_घोषित CONFIG_DEBUG_FS
+	qedf_dbg_निकास();
+#पूर्ण_अगर
 	qed_put_fcoe_ops();
 
 	kmem_cache_destroy(qedf_io_work_cache);
-}
+पूर्ण
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("QLogic FastLinQ 4xxxx FCoE Module");
 MODULE_AUTHOR("QLogic Corporation");
 MODULE_VERSION(QEDF_VERSION);
 module_init(qedf_init);
-module_exit(qedf_cleanup);
+module_निकास(qedf_cleanup);

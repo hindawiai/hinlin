@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2012, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/stringhash.h>
-#include <linux/mutex.h>
-#include <linux/clk.h>
-#include <linux/coresight.h>
-#include <linux/of_platform.h>
-#include <linux/delay.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/stringhash.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/coresight.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "coresight-etm-perf.h"
-#include "coresight-priv.h"
+#समावेश "coresight-etm-perf.h"
+#समावेश "coresight-priv.h"
 
-static DEFINE_MUTEX(coresight_mutex);
-static DEFINE_PER_CPU(struct coresight_device *, csdev_sink);
+अटल DEFINE_MUTEX(coresight_mutex);
+अटल DEFINE_PER_CPU(काष्ठा coresight_device *, csdev_sink);
 
 /**
- * struct coresight_node - elements of a path, from source to sink
+ * काष्ठा coresight_node - elements of a path, from source to sink
  * @csdev:	Address of an element.
  * @link:	hook to the list.
  */
-struct coresight_node {
-	struct coresight_device *csdev;
-	struct list_head link;
-};
+काष्ठा coresight_node अणु
+	काष्ठा coresight_device *csdev;
+	काष्ठा list_head link;
+पूर्ण;
 
 /*
- * When operating Coresight drivers from the sysFS interface, only a single
+ * When operating Coresight drivers from the sysFS पूर्णांकerface, only a single
  * path can exist from a tracer (associated to a CPU) to a sink.
  */
-static DEFINE_PER_CPU(struct list_head *, tracer_path);
+अटल DEFINE_PER_CPU(काष्ठा list_head *, tracer_path);
 
 /*
  * As of this writing only a single STM can be found in CS topologies.  Since
- * there is no way to know if we'll ever see more and what kind of
- * configuration they will enact, for the time being only define a single path
- * for STM.
+ * there is no way to know अगर we'll ever see more and what kind of
+ * configuration they will enact, क्रम the समय being only define a single path
+ * क्रम STM.
  */
-static struct list_head *stm_path;
+अटल काष्ठा list_head *sपंचांग_path;
 
 /*
  * When losing synchronisation a new barrier packet needs to be inserted at the
  * beginning of the data collected in a buffer.  That way the decoder knows that
- * it needs to look for another sync sequence.
+ * it needs to look क्रम another sync sequence.
  */
-const u32 coresight_barrier_pkt[4] = {0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff};
+स्थिर u32 coresight_barrier_pkt[4] = अणु0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffffपूर्ण;
 EXPORT_SYMBOL_GPL(coresight_barrier_pkt);
 
-static const struct cti_assoc_op *cti_assoc_ops;
+अटल स्थिर काष्ठा cti_assoc_op *cti_assoc_ops;
 
-void coresight_set_cti_ops(const struct cti_assoc_op *cti_op)
-{
+व्योम coresight_set_cti_ops(स्थिर काष्ठा cti_assoc_op *cti_op)
+अणु
 	cti_assoc_ops = cti_op;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_set_cti_ops);
 
-void coresight_remove_cti_ops(void)
-{
-	cti_assoc_ops = NULL;
-}
-EXPORT_SYMBOL_GPL(coresight_remove_cti_ops);
+व्योम coresight_हटाओ_cti_ops(व्योम)
+अणु
+	cti_assoc_ops = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(coresight_हटाओ_cti_ops);
 
-void coresight_set_percpu_sink(int cpu, struct coresight_device *csdev)
-{
+व्योम coresight_set_percpu_sink(पूर्णांक cpu, काष्ठा coresight_device *csdev)
+अणु
 	per_cpu(csdev_sink, cpu) = csdev;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_set_percpu_sink);
 
-struct coresight_device *coresight_get_percpu_sink(int cpu)
-{
-	return per_cpu(csdev_sink, cpu);
-}
+काष्ठा coresight_device *coresight_get_percpu_sink(पूर्णांक cpu)
+अणु
+	वापस per_cpu(csdev_sink, cpu);
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_get_percpu_sink);
 
-static int coresight_id_match(struct device *dev, void *data)
-{
-	int trace_id, i_trace_id;
-	struct coresight_device *csdev, *i_csdev;
+अटल पूर्णांक coresight_id_match(काष्ठा device *dev, व्योम *data)
+अणु
+	पूर्णांक trace_id, i_trace_id;
+	काष्ठा coresight_device *csdev, *i_csdev;
 
 	csdev = data;
 	i_csdev = to_coresight_device(dev);
@@ -95,400 +96,400 @@ static int coresight_id_match(struct device *dev, void *data)
 	 * No need to care about oneself and components that are not
 	 * sources or not enabled
 	 */
-	if (i_csdev == csdev || !i_csdev->enable ||
+	अगर (i_csdev == csdev || !i_csdev->enable ||
 	    i_csdev->type != CORESIGHT_DEV_TYPE_SOURCE)
-		return 0;
+		वापस 0;
 
-	/* Get the source ID for both components */
+	/* Get the source ID क्रम both components */
 	trace_id = source_ops(csdev)->trace_id(csdev);
 	i_trace_id = source_ops(i_csdev)->trace_id(i_csdev);
 
 	/* All you need is one */
-	if (trace_id == i_trace_id)
-		return 1;
+	अगर (trace_id == i_trace_id)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int coresight_source_is_unique(struct coresight_device *csdev)
-{
-	int trace_id = source_ops(csdev)->trace_id(csdev);
+अटल पूर्णांक coresight_source_is_unique(काष्ठा coresight_device *csdev)
+अणु
+	पूर्णांक trace_id = source_ops(csdev)->trace_id(csdev);
 
 	/* this shouldn't happen */
-	if (trace_id < 0)
-		return 0;
+	अगर (trace_id < 0)
+		वापस 0;
 
-	return !bus_for_each_dev(&coresight_bustype, NULL,
+	वापस !bus_क्रम_each_dev(&coresight_bustype, शून्य,
 				 csdev, coresight_id_match);
-}
+पूर्ण
 
-static int coresight_find_link_inport(struct coresight_device *csdev,
-				      struct coresight_device *parent)
-{
-	int i;
-	struct coresight_connection *conn;
+अटल पूर्णांक coresight_find_link_inport(काष्ठा coresight_device *csdev,
+				      काष्ठा coresight_device *parent)
+अणु
+	पूर्णांक i;
+	काष्ठा coresight_connection *conn;
 
-	for (i = 0; i < parent->pdata->nr_outport; i++) {
+	क्रम (i = 0; i < parent->pdata->nr_outport; i++) अणु
 		conn = &parent->pdata->conns[i];
-		if (conn->child_dev == csdev)
-			return conn->child_port;
-	}
+		अगर (conn->child_dev == csdev)
+			वापस conn->child_port;
+	पूर्ण
 
 	dev_err(&csdev->dev, "couldn't find inport, parent: %s, child: %s\n",
 		dev_name(&parent->dev), dev_name(&csdev->dev));
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int coresight_find_link_outport(struct coresight_device *csdev,
-				       struct coresight_device *child)
-{
-	int i;
-	struct coresight_connection *conn;
+अटल पूर्णांक coresight_find_link_outport(काष्ठा coresight_device *csdev,
+				       काष्ठा coresight_device *child)
+अणु
+	पूर्णांक i;
+	काष्ठा coresight_connection *conn;
 
-	for (i = 0; i < csdev->pdata->nr_outport; i++) {
+	क्रम (i = 0; i < csdev->pdata->nr_outport; i++) अणु
 		conn = &csdev->pdata->conns[i];
-		if (conn->child_dev == child)
-			return conn->outport;
-	}
+		अगर (conn->child_dev == child)
+			वापस conn->outport;
+	पूर्ण
 
 	dev_err(&csdev->dev, "couldn't find outport, parent: %s, child: %s\n",
 		dev_name(&csdev->dev), dev_name(&child->dev));
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static inline u32 coresight_read_claim_tags(struct coresight_device *csdev)
-{
-	return csdev_access_relaxed_read32(&csdev->access, CORESIGHT_CLAIMCLR);
-}
+अटल अंतरभूत u32 coresight_पढ़ो_claim_tags(काष्ठा coresight_device *csdev)
+अणु
+	वापस csdev_access_relaxed_पढ़ो32(&csdev->access, CORESIGHT_CLAIMCLR);
+पूर्ण
 
-static inline bool coresight_is_claimed_self_hosted(struct coresight_device *csdev)
-{
-	return coresight_read_claim_tags(csdev) == CORESIGHT_CLAIM_SELF_HOSTED;
-}
+अटल अंतरभूत bool coresight_is_claimed_self_hosted(काष्ठा coresight_device *csdev)
+अणु
+	वापस coresight_पढ़ो_claim_tags(csdev) == CORESIGHT_CLAIM_SELF_HOSTED;
+पूर्ण
 
-static inline bool coresight_is_claimed_any(struct coresight_device *csdev)
-{
-	return coresight_read_claim_tags(csdev) != 0;
-}
+अटल अंतरभूत bool coresight_is_claimed_any(काष्ठा coresight_device *csdev)
+अणु
+	वापस coresight_पढ़ो_claim_tags(csdev) != 0;
+पूर्ण
 
-static inline void coresight_set_claim_tags(struct coresight_device *csdev)
-{
-	csdev_access_relaxed_write32(&csdev->access, CORESIGHT_CLAIM_SELF_HOSTED,
+अटल अंतरभूत व्योम coresight_set_claim_tags(काष्ठा coresight_device *csdev)
+अणु
+	csdev_access_relaxed_ग_लिखो32(&csdev->access, CORESIGHT_CLAIM_SELF_HOSTED,
 				     CORESIGHT_CLAIMSET);
 	isb();
-}
+पूर्ण
 
-static inline void coresight_clear_claim_tags(struct coresight_device *csdev)
-{
-	csdev_access_relaxed_write32(&csdev->access, CORESIGHT_CLAIM_SELF_HOSTED,
+अटल अंतरभूत व्योम coresight_clear_claim_tags(काष्ठा coresight_device *csdev)
+अणु
+	csdev_access_relaxed_ग_लिखो32(&csdev->access, CORESIGHT_CLAIM_SELF_HOSTED,
 				     CORESIGHT_CLAIMCLR);
 	isb();
-}
+पूर्ण
 
 /*
- * coresight_claim_device_unlocked : Claim the device for self-hosted usage
- * to prevent an external tool from touching this device. As per PSCI
+ * coresight_claim_device_unlocked : Claim the device क्रम self-hosted usage
+ * to prevent an बाह्यal tool from touching this device. As per PSCI
  * standards, section "Preserving the execution context" => "Debug and Trace
- * save and Restore", DBGCLAIM[1] is reserved for Self-hosted debug/trace and
- * DBGCLAIM[0] is reserved for external tools.
+ * save and Restore", DBGCLAIM[1] is reserved क्रम Self-hosted debug/trace and
+ * DBGCLAIM[0] is reserved क्रम बाह्यal tools.
  *
- * Called with CS_UNLOCKed for the component.
+ * Called with CS_UNLOCKed क्रम the component.
  * Returns : 0 on success
  */
-int coresight_claim_device_unlocked(struct coresight_device *csdev)
-{
-	if (WARN_ON(!csdev))
-		return -EINVAL;
+पूर्णांक coresight_claim_device_unlocked(काष्ठा coresight_device *csdev)
+अणु
+	अगर (WARN_ON(!csdev))
+		वापस -EINVAL;
 
-	if (coresight_is_claimed_any(csdev))
-		return -EBUSY;
+	अगर (coresight_is_claimed_any(csdev))
+		वापस -EBUSY;
 
 	coresight_set_claim_tags(csdev);
-	if (coresight_is_claimed_self_hosted(csdev))
-		return 0;
+	अगर (coresight_is_claimed_self_hosted(csdev))
+		वापस 0;
 	/* There was a race setting the tags, clean up and fail */
 	coresight_clear_claim_tags(csdev);
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_claim_device_unlocked);
 
-int coresight_claim_device(struct coresight_device *csdev)
-{
-	int rc;
+पूर्णांक coresight_claim_device(काष्ठा coresight_device *csdev)
+अणु
+	पूर्णांक rc;
 
-	if (WARN_ON(!csdev))
-		return -EINVAL;
+	अगर (WARN_ON(!csdev))
+		वापस -EINVAL;
 
 	CS_UNLOCK(csdev->access.base);
 	rc = coresight_claim_device_unlocked(csdev);
 	CS_LOCK(csdev->access.base);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_claim_device);
 
 /*
- * coresight_disclaim_device_unlocked : Clear the claim tags for the device.
- * Called with CS_UNLOCKed for the component.
+ * coresight_disclaim_device_unlocked : Clear the claim tags क्रम the device.
+ * Called with CS_UNLOCKed क्रम the component.
  */
-void coresight_disclaim_device_unlocked(struct coresight_device *csdev)
-{
+व्योम coresight_disclaim_device_unlocked(काष्ठा coresight_device *csdev)
+अणु
 
-	if (WARN_ON(!csdev))
-		return;
+	अगर (WARN_ON(!csdev))
+		वापस;
 
-	if (coresight_is_claimed_self_hosted(csdev))
+	अगर (coresight_is_claimed_self_hosted(csdev))
 		coresight_clear_claim_tags(csdev);
-	else
+	अन्यथा
 		/*
-		 * The external agent may have not honoured our claim
-		 * and has manipulated it. Or something else has seriously
+		 * The बाह्यal agent may have not honoured our claim
+		 * and has manipulated it. Or something अन्यथा has seriously
 		 * gone wrong in our driver.
 		 */
 		WARN_ON_ONCE(1);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_disclaim_device_unlocked);
 
-void coresight_disclaim_device(struct coresight_device *csdev)
-{
-	if (WARN_ON(!csdev))
-		return;
+व्योम coresight_disclaim_device(काष्ठा coresight_device *csdev)
+अणु
+	अगर (WARN_ON(!csdev))
+		वापस;
 
 	CS_UNLOCK(csdev->access.base);
 	coresight_disclaim_device_unlocked(csdev);
 	CS_LOCK(csdev->access.base);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_disclaim_device);
 
 /* enable or disable an associated CTI device of the supplied CS device */
-static int
-coresight_control_assoc_ectdev(struct coresight_device *csdev, bool enable)
-{
-	int ect_ret = 0;
-	struct coresight_device *ect_csdev = csdev->ect_dev;
-	struct module *mod;
+अटल पूर्णांक
+coresight_control_assoc_ectdev(काष्ठा coresight_device *csdev, bool enable)
+अणु
+	पूर्णांक ect_ret = 0;
+	काष्ठा coresight_device *ect_csdev = csdev->ect_dev;
+	काष्ठा module *mod;
 
-	if (!ect_csdev)
-		return 0;
-	if ((!ect_ops(ect_csdev)->enable) || (!ect_ops(ect_csdev)->disable))
-		return 0;
+	अगर (!ect_csdev)
+		वापस 0;
+	अगर ((!ect_ops(ect_csdev)->enable) || (!ect_ops(ect_csdev)->disable))
+		वापस 0;
 
 	mod = ect_csdev->dev.parent->driver->owner;
-	if (enable) {
-		if (try_module_get(mod)) {
+	अगर (enable) अणु
+		अगर (try_module_get(mod)) अणु
 			ect_ret = ect_ops(ect_csdev)->enable(ect_csdev);
-			if (ect_ret) {
+			अगर (ect_ret) अणु
 				module_put(mod);
-			} else {
+			पूर्ण अन्यथा अणु
 				get_device(ect_csdev->dev.parent);
 				csdev->ect_enabled = true;
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			ect_ret = -ENODEV;
-	} else {
-		if (csdev->ect_enabled) {
+	पूर्ण अन्यथा अणु
+		अगर (csdev->ect_enabled) अणु
 			ect_ret = ect_ops(ect_csdev)->disable(ect_csdev);
 			put_device(ect_csdev->dev.parent);
 			module_put(mod);
 			csdev->ect_enabled = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* output warning if ECT enable is preventing trace operation */
-	if (ect_ret)
+	/* output warning अगर ECT enable is preventing trace operation */
+	अगर (ect_ret)
 		dev_info(&csdev->dev, "Associated ECT device (%s) %s failed\n",
 			 dev_name(&ect_csdev->dev),
 			 enable ? "enable" : "disable");
-	return ect_ret;
-}
+	वापस ect_ret;
+पूर्ण
 
 /*
- * Set the associated ect / cti device while holding the coresight_mutex
- * to avoid a race with coresight_enable that may try to use this value.
+ * Set the associated ect / cti device जबतक holding the coresight_mutex
+ * to aव्योम a race with coresight_enable that may try to use this value.
  */
-void coresight_set_assoc_ectdev_mutex(struct coresight_device *csdev,
-				      struct coresight_device *ect_csdev)
-{
+व्योम coresight_set_assoc_ectdev_mutex(काष्ठा coresight_device *csdev,
+				      काष्ठा coresight_device *ect_csdev)
+अणु
 	mutex_lock(&coresight_mutex);
 	csdev->ect_dev = ect_csdev;
 	mutex_unlock(&coresight_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_set_assoc_ectdev_mutex);
 
-static int coresight_enable_sink(struct coresight_device *csdev,
-				 u32 mode, void *data)
-{
-	int ret;
+अटल पूर्णांक coresight_enable_sink(काष्ठा coresight_device *csdev,
+				 u32 mode, व्योम *data)
+अणु
+	पूर्णांक ret;
 
 	/*
 	 * We need to make sure the "new" session is compatible with the
 	 * existing "mode" of operation.
 	 */
-	if (!sink_ops(csdev)->enable)
-		return -EINVAL;
+	अगर (!sink_ops(csdev)->enable)
+		वापस -EINVAL;
 
 	ret = coresight_control_assoc_ectdev(csdev, true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = sink_ops(csdev)->enable(csdev, mode, data);
-	if (ret) {
+	अगर (ret) अणु
 		coresight_control_assoc_ectdev(csdev, false);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	csdev->enable = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void coresight_disable_sink(struct coresight_device *csdev)
-{
-	int ret;
+अटल व्योम coresight_disable_sink(काष्ठा coresight_device *csdev)
+अणु
+	पूर्णांक ret;
 
-	if (!sink_ops(csdev)->disable)
-		return;
+	अगर (!sink_ops(csdev)->disable)
+		वापस;
 
 	ret = sink_ops(csdev)->disable(csdev);
-	if (ret)
-		return;
+	अगर (ret)
+		वापस;
 	coresight_control_assoc_ectdev(csdev, false);
 	csdev->enable = false;
-}
+पूर्ण
 
-static int coresight_enable_link(struct coresight_device *csdev,
-				 struct coresight_device *parent,
-				 struct coresight_device *child)
-{
-	int ret = 0;
-	int link_subtype;
-	int inport, outport;
+अटल पूर्णांक coresight_enable_link(काष्ठा coresight_device *csdev,
+				 काष्ठा coresight_device *parent,
+				 काष्ठा coresight_device *child)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक link_subtype;
+	पूर्णांक inport, outport;
 
-	if (!parent || !child)
-		return -EINVAL;
+	अगर (!parent || !child)
+		वापस -EINVAL;
 
 	inport = coresight_find_link_inport(csdev, parent);
 	outport = coresight_find_link_outport(csdev, child);
 	link_subtype = csdev->subtype.link_subtype;
 
-	if (link_subtype == CORESIGHT_DEV_SUBTYPE_LINK_MERG && inport < 0)
-		return inport;
-	if (link_subtype == CORESIGHT_DEV_SUBTYPE_LINK_SPLIT && outport < 0)
-		return outport;
+	अगर (link_subtype == CORESIGHT_DEV_SUBTYPE_LINK_MERG && inport < 0)
+		वापस inport;
+	अगर (link_subtype == CORESIGHT_DEV_SUBTYPE_LINK_SPLIT && outport < 0)
+		वापस outport;
 
-	if (link_ops(csdev)->enable) {
+	अगर (link_ops(csdev)->enable) अणु
 		ret = coresight_control_assoc_ectdev(csdev, true);
-		if (!ret) {
+		अगर (!ret) अणु
 			ret = link_ops(csdev)->enable(csdev, inport, outport);
-			if (ret)
+			अगर (ret)
 				coresight_control_assoc_ectdev(csdev, false);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		csdev->enable = true;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void coresight_disable_link(struct coresight_device *csdev,
-				   struct coresight_device *parent,
-				   struct coresight_device *child)
-{
-	int i, nr_conns;
-	int link_subtype;
-	int inport, outport;
+अटल व्योम coresight_disable_link(काष्ठा coresight_device *csdev,
+				   काष्ठा coresight_device *parent,
+				   काष्ठा coresight_device *child)
+अणु
+	पूर्णांक i, nr_conns;
+	पूर्णांक link_subtype;
+	पूर्णांक inport, outport;
 
-	if (!parent || !child)
-		return;
+	अगर (!parent || !child)
+		वापस;
 
 	inport = coresight_find_link_inport(csdev, parent);
 	outport = coresight_find_link_outport(csdev, child);
 	link_subtype = csdev->subtype.link_subtype;
 
-	if (link_subtype == CORESIGHT_DEV_SUBTYPE_LINK_MERG) {
+	अगर (link_subtype == CORESIGHT_DEV_SUBTYPE_LINK_MERG) अणु
 		nr_conns = csdev->pdata->nr_inport;
-	} else if (link_subtype == CORESIGHT_DEV_SUBTYPE_LINK_SPLIT) {
+	पूर्ण अन्यथा अगर (link_subtype == CORESIGHT_DEV_SUBTYPE_LINK_SPLIT) अणु
 		nr_conns = csdev->pdata->nr_outport;
-	} else {
+	पूर्ण अन्यथा अणु
 		nr_conns = 1;
-	}
+	पूर्ण
 
-	if (link_ops(csdev)->disable) {
+	अगर (link_ops(csdev)->disable) अणु
 		link_ops(csdev)->disable(csdev, inport, outport);
 		coresight_control_assoc_ectdev(csdev, false);
-	}
+	पूर्ण
 
-	for (i = 0; i < nr_conns; i++)
-		if (atomic_read(&csdev->refcnt[i]) != 0)
-			return;
+	क्रम (i = 0; i < nr_conns; i++)
+		अगर (atomic_पढ़ो(&csdev->refcnt[i]) != 0)
+			वापस;
 
 	csdev->enable = false;
-}
+पूर्ण
 
-static int coresight_enable_source(struct coresight_device *csdev, u32 mode)
-{
-	int ret;
+अटल पूर्णांक coresight_enable_source(काष्ठा coresight_device *csdev, u32 mode)
+अणु
+	पूर्णांक ret;
 
-	if (!coresight_source_is_unique(csdev)) {
+	अगर (!coresight_source_is_unique(csdev)) अणु
 		dev_warn(&csdev->dev, "traceID %d not unique\n",
 			 source_ops(csdev)->trace_id(csdev));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!csdev->enable) {
-		if (source_ops(csdev)->enable) {
+	अगर (!csdev->enable) अणु
+		अगर (source_ops(csdev)->enable) अणु
 			ret = coresight_control_assoc_ectdev(csdev, true);
-			if (ret)
-				return ret;
-			ret = source_ops(csdev)->enable(csdev, NULL, mode);
-			if (ret) {
+			अगर (ret)
+				वापस ret;
+			ret = source_ops(csdev)->enable(csdev, शून्य, mode);
+			अगर (ret) अणु
 				coresight_control_assoc_ectdev(csdev, false);
-				return ret;
-			}
-		}
+				वापस ret;
+			पूर्ण
+		पूर्ण
 		csdev->enable = true;
-	}
+	पूर्ण
 
 	atomic_inc(csdev->refcnt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *  coresight_disable_source - Drop the reference count by 1 and disable
- *  the device if there are no users left.
+ *  the device अगर there are no users left.
  *
  *  @csdev: The coresight device to disable
  *
- *  Returns true if the device has been disabled.
+ *  Returns true अगर the device has been disabled.
  */
-static bool coresight_disable_source(struct coresight_device *csdev)
-{
-	if (atomic_dec_return(csdev->refcnt) == 0) {
-		if (source_ops(csdev)->disable)
-			source_ops(csdev)->disable(csdev, NULL);
+अटल bool coresight_disable_source(काष्ठा coresight_device *csdev)
+अणु
+	अगर (atomic_dec_वापस(csdev->refcnt) == 0) अणु
+		अगर (source_ops(csdev)->disable)
+			source_ops(csdev)->disable(csdev, शून्य);
 		coresight_control_assoc_ectdev(csdev, false);
 		csdev->enable = false;
-	}
-	return !csdev->enable;
-}
+	पूर्ण
+	वापस !csdev->enable;
+पूर्ण
 
 /*
  * coresight_disable_path_from : Disable components in the given path beyond
- * @nd in the list. If @nd is NULL, all the components, except the SOURCE are
+ * @nd in the list. If @nd is शून्य, all the components, except the SOURCE are
  * disabled.
  */
-static void coresight_disable_path_from(struct list_head *path,
-					struct coresight_node *nd)
-{
+अटल व्योम coresight_disable_path_from(काष्ठा list_head *path,
+					काष्ठा coresight_node *nd)
+अणु
 	u32 type;
-	struct coresight_device *csdev, *parent, *child;
+	काष्ठा coresight_device *csdev, *parent, *child;
 
-	if (!nd)
-		nd = list_first_entry(path, struct coresight_node, link);
+	अगर (!nd)
+		nd = list_first_entry(path, काष्ठा coresight_node, link);
 
-	list_for_each_entry_continue(nd, path, link) {
+	list_क्रम_each_entry_जारी(nd, path, link) अणु
 		csdev = nd->csdev;
 		type = csdev->type;
 
@@ -498,49 +499,49 @@ static void coresight_disable_path_from(struct list_head *path,
 		 * "activated" it will be configured as a sink, otherwise
 		 * go ahead with the link configuration.
 		 */
-		if (type == CORESIGHT_DEV_TYPE_LINKSINK)
+		अगर (type == CORESIGHT_DEV_TYPE_LINKSINK)
 			type = (csdev == coresight_get_sink(path)) ?
 						CORESIGHT_DEV_TYPE_SINK :
 						CORESIGHT_DEV_TYPE_LINK;
 
-		switch (type) {
-		case CORESIGHT_DEV_TYPE_SINK:
+		चयन (type) अणु
+		हाल CORESIGHT_DEV_TYPE_SINK:
 			coresight_disable_sink(csdev);
-			break;
-		case CORESIGHT_DEV_TYPE_SOURCE:
+			अवरोध;
+		हाल CORESIGHT_DEV_TYPE_SOURCE:
 			/*
 			 * We skip the first node in the path assuming that it
-			 * is the source. So we don't expect a source device in
+			 * is the source. So we करोn't expect a source device in
 			 * the middle of a path.
 			 */
 			WARN_ON(1);
-			break;
-		case CORESIGHT_DEV_TYPE_LINK:
+			अवरोध;
+		हाल CORESIGHT_DEV_TYPE_LINK:
 			parent = list_prev_entry(nd, link)->csdev;
 			child = list_next_entry(nd, link)->csdev;
 			coresight_disable_link(csdev, parent, child);
-			break;
-		default:
-			break;
-		}
-	}
-}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void coresight_disable_path(struct list_head *path)
-{
-	coresight_disable_path_from(path, NULL);
-}
+व्योम coresight_disable_path(काष्ठा list_head *path)
+अणु
+	coresight_disable_path_from(path, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_disable_path);
 
-int coresight_enable_path(struct list_head *path, u32 mode, void *sink_data)
-{
+पूर्णांक coresight_enable_path(काष्ठा list_head *path, u32 mode, व्योम *sink_data)
+अणु
 
-	int ret = 0;
+	पूर्णांक ret = 0;
 	u32 type;
-	struct coresight_node *nd;
-	struct coresight_device *csdev, *parent, *child;
+	काष्ठा coresight_node *nd;
+	काष्ठा coresight_device *csdev, *parent, *child;
 
-	list_for_each_entry_reverse(nd, path, link) {
+	list_क्रम_each_entry_reverse(nd, path, link) अणु
 		csdev = nd->csdev;
 		type = csdev->type;
 
@@ -550,13 +551,13 @@ int coresight_enable_path(struct list_head *path, u32 mode, void *sink_data)
 		 * "activated" it will be configured as a sink, otherwise
 		 * go ahead with the link configuration.
 		 */
-		if (type == CORESIGHT_DEV_TYPE_LINKSINK)
+		अगर (type == CORESIGHT_DEV_TYPE_LINKSINK)
 			type = (csdev == coresight_get_sink(path)) ?
 						CORESIGHT_DEV_TYPE_SINK :
 						CORESIGHT_DEV_TYPE_LINK;
 
-		switch (type) {
-		case CORESIGHT_DEV_TYPE_SINK:
+		चयन (type) अणु
+		हाल CORESIGHT_DEV_TYPE_SINK:
 			ret = coresight_enable_sink(csdev, mode, sink_data);
 			/*
 			 * Sink is the first component turned on. If we
@@ -564,128 +565,128 @@ int coresight_enable_path(struct list_head *path, u32 mode, void *sink_data)
 			 * that need disabling. Disabling the path here
 			 * would mean we could disrupt an existing session.
 			 */
-			if (ret)
-				goto out;
-			break;
-		case CORESIGHT_DEV_TYPE_SOURCE:
+			अगर (ret)
+				जाओ out;
+			अवरोध;
+		हाल CORESIGHT_DEV_TYPE_SOURCE:
 			/* sources are enabled from either sysFS or Perf */
-			break;
-		case CORESIGHT_DEV_TYPE_LINK:
+			अवरोध;
+		हाल CORESIGHT_DEV_TYPE_LINK:
 			parent = list_prev_entry(nd, link)->csdev;
 			child = list_next_entry(nd, link)->csdev;
 			ret = coresight_enable_link(csdev, parent, child);
-			if (ret)
-				goto err;
-			break;
-		default:
-			goto err;
-		}
-	}
+			अगर (ret)
+				जाओ err;
+			अवरोध;
+		शेष:
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 out:
-	return ret;
+	वापस ret;
 err:
 	coresight_disable_path_from(path, nd);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-struct coresight_device *coresight_get_sink(struct list_head *path)
-{
-	struct coresight_device *csdev;
+काष्ठा coresight_device *coresight_get_sink(काष्ठा list_head *path)
+अणु
+	काष्ठा coresight_device *csdev;
 
-	if (!path)
-		return NULL;
+	अगर (!path)
+		वापस शून्य;
 
-	csdev = list_last_entry(path, struct coresight_node, link)->csdev;
-	if (csdev->type != CORESIGHT_DEV_TYPE_SINK &&
+	csdev = list_last_entry(path, काष्ठा coresight_node, link)->csdev;
+	अगर (csdev->type != CORESIGHT_DEV_TYPE_SINK &&
 	    csdev->type != CORESIGHT_DEV_TYPE_LINKSINK)
-		return NULL;
+		वापस शून्य;
 
-	return csdev;
-}
+	वापस csdev;
+पूर्ण
 
-static struct coresight_device *
-coresight_find_enabled_sink(struct coresight_device *csdev)
-{
-	int i;
-	struct coresight_device *sink;
+अटल काष्ठा coresight_device *
+coresight_find_enabled_sink(काष्ठा coresight_device *csdev)
+अणु
+	पूर्णांक i;
+	काष्ठा coresight_device *sink;
 
-	if ((csdev->type == CORESIGHT_DEV_TYPE_SINK ||
+	अगर ((csdev->type == CORESIGHT_DEV_TYPE_SINK ||
 	     csdev->type == CORESIGHT_DEV_TYPE_LINKSINK) &&
 	     csdev->activated)
-		return csdev;
+		वापस csdev;
 
 	/*
 	 * Recursively explore each port found on this element.
 	 */
-	for (i = 0; i < csdev->pdata->nr_outport; i++) {
-		struct coresight_device *child_dev;
+	क्रम (i = 0; i < csdev->pdata->nr_outport; i++) अणु
+		काष्ठा coresight_device *child_dev;
 
 		child_dev = csdev->pdata->conns[i].child_dev;
-		if (child_dev)
+		अगर (child_dev)
 			sink = coresight_find_enabled_sink(child_dev);
-		if (sink)
-			return sink;
-	}
+		अगर (sink)
+			वापस sink;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * coresight_get_enabled_sink - returns the first enabled sink using
+ * coresight_get_enabled_sink - वापसs the first enabled sink using
  * connection based search starting from the source reference
  *
  * @source: Coresight source device reference
  */
-struct coresight_device *
-coresight_get_enabled_sink(struct coresight_device *source)
-{
-	if (!source)
-		return NULL;
+काष्ठा coresight_device *
+coresight_get_enabled_sink(काष्ठा coresight_device *source)
+अणु
+	अगर (!source)
+		वापस शून्य;
 
-	return coresight_find_enabled_sink(source);
-}
+	वापस coresight_find_enabled_sink(source);
+पूर्ण
 
-static int coresight_sink_by_id(struct device *dev, const void *data)
-{
-	struct coresight_device *csdev = to_coresight_device(dev);
-	unsigned long hash;
+अटल पूर्णांक coresight_sink_by_id(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	काष्ठा coresight_device *csdev = to_coresight_device(dev);
+	अचिन्हित दीर्घ hash;
 
-	if (csdev->type == CORESIGHT_DEV_TYPE_SINK ||
-	     csdev->type == CORESIGHT_DEV_TYPE_LINKSINK) {
+	अगर (csdev->type == CORESIGHT_DEV_TYPE_SINK ||
+	     csdev->type == CORESIGHT_DEV_TYPE_LINKSINK) अणु
 
-		if (!csdev->ea)
-			return 0;
+		अगर (!csdev->ea)
+			वापस 0;
 		/*
-		 * See function etm_perf_add_symlink_sink() to know where
+		 * See function eपंचांग_perf_add_symlink_sink() to know where
 		 * this comes from.
 		 */
-		hash = (unsigned long)csdev->ea->var;
+		hash = (अचिन्हित दीर्घ)csdev->ea->var;
 
-		if ((u32)hash == *(u32 *)data)
-			return 1;
-	}
+		अगर ((u32)hash == *(u32 *)data)
+			वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * coresight_get_sink_by_id - returns the sink that matches the id
+ * coresight_get_sink_by_id - वापसs the sink that matches the id
  * @id: Id of the sink to match
  *
  * The name of a sink is unique, whether it is found on the AMBA bus or
- * otherwise.  As such the hash of that name can easily be used to identify
+ * otherwise.  As such the hash of that name can easily be used to identअगरy
  * a sink.
  */
-struct coresight_device *coresight_get_sink_by_id(u32 id)
-{
-	struct device *dev = NULL;
+काष्ठा coresight_device *coresight_get_sink_by_id(u32 id)
+अणु
+	काष्ठा device *dev = शून्य;
 
-	dev = bus_find_device(&coresight_bustype, NULL, &id,
+	dev = bus_find_device(&coresight_bustype, शून्य, &id,
 			      coresight_sink_by_id);
 
-	return dev ? to_coresight_device(dev) : NULL;
-}
+	वापस dev ? to_coresight_device(dev) : शून्य;
+पूर्ण
 
 /**
  * coresight_get_ref- Helper function to increase reference count to module
@@ -693,21 +694,21 @@ struct coresight_device *coresight_get_sink_by_id(u32 id)
  *
  * @csdev: The coresight device to get a reference on.
  *
- * Return true in successful case and power up the device.
+ * Return true in successful हाल and घातer up the device.
  * Return false when failed to get reference of module.
  */
-static inline bool coresight_get_ref(struct coresight_device *csdev)
-{
-	struct device *dev = csdev->dev.parent;
+अटल अंतरभूत bool coresight_get_ref(काष्ठा coresight_device *csdev)
+अणु
+	काष्ठा device *dev = csdev->dev.parent;
 
-	/* Make sure the driver can't be removed */
-	if (!try_module_get(dev->driver->owner))
-		return false;
+	/* Make sure the driver can't be हटाओd */
+	अगर (!try_module_get(dev->driver->owner))
+		वापस false;
 	/* Make sure the device can't go away */
 	get_device(dev);
-	pm_runtime_get_sync(dev);
-	return true;
-}
+	pm_runसमय_get_sync(dev);
+	वापस true;
+पूर्ण
 
 /**
  * coresight_put_ref- Helper function to decrease reference count to module
@@ -715,63 +716,63 @@ static inline bool coresight_get_ref(struct coresight_device *csdev)
  *
  * @csdev: The coresight device to decrement a reference from.
  */
-static inline void coresight_put_ref(struct coresight_device *csdev)
-{
-	struct device *dev = csdev->dev.parent;
+अटल अंतरभूत व्योम coresight_put_ref(काष्ठा coresight_device *csdev)
+अणु
+	काष्ठा device *dev = csdev->dev.parent;
 
-	pm_runtime_put(dev);
+	pm_runसमय_put(dev);
 	put_device(dev);
 	module_put(dev->driver->owner);
-}
+पूर्ण
 
 /*
  * coresight_grab_device - Power up this device and any of the helper
- * devices connected to it for trace operation. Since the helper devices
- * don't appear on the trace path, they should be handled along with the
+ * devices connected to it क्रम trace operation. Since the helper devices
+ * करोn't appear on the trace path, they should be handled aदीर्घ with the
  * the master device.
  */
-static int coresight_grab_device(struct coresight_device *csdev)
-{
-	int i;
+अटल पूर्णांक coresight_grab_device(काष्ठा coresight_device *csdev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < csdev->pdata->nr_outport; i++) {
-		struct coresight_device *child;
+	क्रम (i = 0; i < csdev->pdata->nr_outport; i++) अणु
+		काष्ठा coresight_device *child;
 
 		child  = csdev->pdata->conns[i].child_dev;
-		if (child && child->type == CORESIGHT_DEV_TYPE_HELPER)
-			if (!coresight_get_ref(child))
-				goto err;
-	}
-	if (coresight_get_ref(csdev))
-		return 0;
+		अगर (child && child->type == CORESIGHT_DEV_TYPE_HELPER)
+			अगर (!coresight_get_ref(child))
+				जाओ err;
+	पूर्ण
+	अगर (coresight_get_ref(csdev))
+		वापस 0;
 err:
-	for (i--; i >= 0; i--) {
-		struct coresight_device *child;
+	क्रम (i--; i >= 0; i--) अणु
+		काष्ठा coresight_device *child;
 
 		child  = csdev->pdata->conns[i].child_dev;
-		if (child && child->type == CORESIGHT_DEV_TYPE_HELPER)
+		अगर (child && child->type == CORESIGHT_DEV_TYPE_HELPER)
 			coresight_put_ref(child);
-	}
-	return -ENODEV;
-}
+	पूर्ण
+	वापस -ENODEV;
+पूर्ण
 
 /*
  * coresight_drop_device - Release this device and any of the helper
  * devices connected to it.
  */
-static void coresight_drop_device(struct coresight_device *csdev)
-{
-	int i;
+अटल व्योम coresight_drop_device(काष्ठा coresight_device *csdev)
+अणु
+	पूर्णांक i;
 
 	coresight_put_ref(csdev);
-	for (i = 0; i < csdev->pdata->nr_outport; i++) {
-		struct coresight_device *child;
+	क्रम (i = 0; i < csdev->pdata->nr_outport; i++) अणु
+		काष्ठा coresight_device *child;
 
 		child  = csdev->pdata->conns[i].child_dev;
-		if (child && child->type == CORESIGHT_DEV_TYPE_HELPER)
+		अगर (child && child->type == CORESIGHT_DEV_TYPE_HELPER)
 			coresight_put_ref(child);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * _coresight_build_path - recursively build a path from a @csdev to a sink.
@@ -780,580 +781,580 @@ static void coresight_drop_device(struct coresight_device *csdev)
  * @path:	The list to add devices to.
  *
  * The tree of Coresight device is traversed until an activated sink is
- * found.  From there the sink is added to the list along with all the
- * devices that led to that point - the end result is a list from source
+ * found.  From there the sink is added to the list aदीर्घ with all the
+ * devices that led to that poपूर्णांक - the end result is a list from source
  * to sink. In that list the source is the first device and the sink the
  * last one.
  */
-static int _coresight_build_path(struct coresight_device *csdev,
-				 struct coresight_device *sink,
-				 struct list_head *path)
-{
-	int i, ret;
+अटल पूर्णांक _coresight_build_path(काष्ठा coresight_device *csdev,
+				 काष्ठा coresight_device *sink,
+				 काष्ठा list_head *path)
+अणु
+	पूर्णांक i, ret;
 	bool found = false;
-	struct coresight_node *node;
+	काष्ठा coresight_node *node;
 
 	/* An activated sink has been found.  Enqueue the element */
-	if (csdev == sink)
-		goto out;
+	अगर (csdev == sink)
+		जाओ out;
 
-	if (coresight_is_percpu_source(csdev) && coresight_is_percpu_sink(sink) &&
-	    sink == per_cpu(csdev_sink, source_ops(csdev)->cpu_id(csdev))) {
-		if (_coresight_build_path(sink, sink, path) == 0) {
+	अगर (coresight_is_percpu_source(csdev) && coresight_is_percpu_sink(sink) &&
+	    sink == per_cpu(csdev_sink, source_ops(csdev)->cpu_id(csdev))) अणु
+		अगर (_coresight_build_path(sink, sink, path) == 0) अणु
 			found = true;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* Not a sink - recursively explore each port found on this element */
-	for (i = 0; i < csdev->pdata->nr_outport; i++) {
-		struct coresight_device *child_dev;
+	क्रम (i = 0; i < csdev->pdata->nr_outport; i++) अणु
+		काष्ठा coresight_device *child_dev;
 
 		child_dev = csdev->pdata->conns[i].child_dev;
-		if (child_dev &&
-		    _coresight_build_path(child_dev, sink, path) == 0) {
+		अगर (child_dev &&
+		    _coresight_build_path(child_dev, sink, path) == 0) अणु
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found)
-		return -ENODEV;
+	अगर (!found)
+		वापस -ENODEV;
 
 out:
 	/*
 	 * A path from this element to a sink has been found.  The elements
-	 * leading to the sink are already enqueued, all that is left to do
-	 * is tell the PM runtime core we need this element and add a node
-	 * for it.
+	 * leading to the sink are alपढ़ोy enqueued, all that is left to करो
+	 * is tell the PM runसमय core we need this element and add a node
+	 * क्रम it.
 	 */
 	ret = coresight_grab_device(csdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	node = kzalloc(sizeof(struct coresight_node), GFP_KERNEL);
-	if (!node)
-		return -ENOMEM;
+	node = kzalloc(माप(काष्ठा coresight_node), GFP_KERNEL);
+	अगर (!node)
+		वापस -ENOMEM;
 
 	node->csdev = csdev;
 	list_add(&node->link, path);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct list_head *coresight_build_path(struct coresight_device *source,
-				       struct coresight_device *sink)
-{
-	struct list_head *path;
-	int rc;
+काष्ठा list_head *coresight_build_path(काष्ठा coresight_device *source,
+				       काष्ठा coresight_device *sink)
+अणु
+	काष्ठा list_head *path;
+	पूर्णांक rc;
 
-	if (!sink)
-		return ERR_PTR(-EINVAL);
+	अगर (!sink)
+		वापस ERR_PTR(-EINVAL);
 
-	path = kzalloc(sizeof(struct list_head), GFP_KERNEL);
-	if (!path)
-		return ERR_PTR(-ENOMEM);
+	path = kzalloc(माप(काष्ठा list_head), GFP_KERNEL);
+	अगर (!path)
+		वापस ERR_PTR(-ENOMEM);
 
 	INIT_LIST_HEAD(path);
 
 	rc = _coresight_build_path(source, sink, path);
-	if (rc) {
-		kfree(path);
-		return ERR_PTR(rc);
-	}
+	अगर (rc) अणु
+		kमुक्त(path);
+		वापस ERR_PTR(rc);
+	पूर्ण
 
-	return path;
-}
+	वापस path;
+पूर्ण
 
 /**
  * coresight_release_path - release a previously built path.
  * @path:	the path to release.
  *
- * Go through all the elements of a path and 1) removed it from the list and
- * 2) free the memory allocated for each node.
+ * Go through all the elements of a path and 1) हटाओd it from the list and
+ * 2) मुक्त the memory allocated क्रम each node.
  */
-void coresight_release_path(struct list_head *path)
-{
-	struct coresight_device *csdev;
-	struct coresight_node *nd, *next;
+व्योम coresight_release_path(काष्ठा list_head *path)
+अणु
+	काष्ठा coresight_device *csdev;
+	काष्ठा coresight_node *nd, *next;
 
-	list_for_each_entry_safe(nd, next, path, link) {
+	list_क्रम_each_entry_safe(nd, next, path, link) अणु
 		csdev = nd->csdev;
 
 		coresight_drop_device(csdev);
 		list_del(&nd->link);
-		kfree(nd);
-	}
+		kमुक्त(nd);
+	पूर्ण
 
-	kfree(path);
-	path = NULL;
-}
+	kमुक्त(path);
+	path = शून्य;
+पूर्ण
 
-/* return true if the device is a suitable type for a default sink */
-static inline bool coresight_is_def_sink_type(struct coresight_device *csdev)
-{
+/* वापस true अगर the device is a suitable type क्रम a शेष sink */
+अटल अंतरभूत bool coresight_is_def_sink_type(काष्ठा coresight_device *csdev)
+अणु
 	/* sink & correct subtype */
-	if (((csdev->type == CORESIGHT_DEV_TYPE_SINK) ||
+	अगर (((csdev->type == CORESIGHT_DEV_TYPE_SINK) ||
 	     (csdev->type == CORESIGHT_DEV_TYPE_LINKSINK)) &&
 	    (csdev->subtype.sink_subtype >= CORESIGHT_DEV_SUBTYPE_SINK_BUFFER))
-		return true;
-	return false;
-}
+		वापस true;
+	वापस false;
+पूर्ण
 
 /**
- * coresight_select_best_sink - return the best sink for use as default from
+ * coresight_select_best_sink - वापस the best sink क्रम use as शेष from
  * the two provided.
  *
  * @sink:	current best sink.
  * @depth:      search depth where current sink was found.
- * @new_sink:	new sink for comparison with current sink.
+ * @new_sink:	new sink क्रम comparison with current sink.
  * @new_depth:  search depth where new sink was found.
  *
  * Sinks prioritised according to coresight_dev_subtype_sink, with only
  * subtypes CORESIGHT_DEV_SUBTYPE_SINK_BUFFER or higher being used.
  *
- * Where two sinks of equal priority are found, the sink closest to the
+ * Where two sinks of equal priority are found, the sink बंदst to the
  * source is used (smallest search depth).
  *
- * return @new_sink & update @depth if better than @sink, else return @sink.
+ * वापस @new_sink & update @depth अगर better than @sink, अन्यथा वापस @sink.
  */
-static struct coresight_device *
-coresight_select_best_sink(struct coresight_device *sink, int *depth,
-			   struct coresight_device *new_sink, int new_depth)
-{
+अटल काष्ठा coresight_device *
+coresight_select_best_sink(काष्ठा coresight_device *sink, पूर्णांक *depth,
+			   काष्ठा coresight_device *new_sink, पूर्णांक new_depth)
+अणु
 	bool update = false;
 
-	if (!sink) {
+	अगर (!sink) अणु
 		/* first found at this level */
 		update = true;
-	} else if (new_sink->subtype.sink_subtype >
-		   sink->subtype.sink_subtype) {
+	पूर्ण अन्यथा अगर (new_sink->subtype.sink_subtype >
+		   sink->subtype.sink_subtype) अणु
 		/* found better sink */
 		update = true;
-	} else if ((new_sink->subtype.sink_subtype ==
+	पूर्ण अन्यथा अगर ((new_sink->subtype.sink_subtype ==
 		    sink->subtype.sink_subtype) &&
-		   (*depth > new_depth)) {
-		/* found same but closer sink */
+		   (*depth > new_depth)) अणु
+		/* found same but बंदr sink */
 		update = true;
-	}
+	पूर्ण
 
-	if (update)
+	अगर (update)
 		*depth = new_depth;
-	return update ? new_sink : sink;
-}
+	वापस update ? new_sink : sink;
+पूर्ण
 
 /**
  * coresight_find_sink - recursive function to walk trace connections from
- * source to find a suitable default sink.
+ * source to find a suitable शेष sink.
  *
  * @csdev: source / current device to check.
  * @depth: [in] search depth of calling dev, [out] depth of found sink.
  *
  * This will walk the connection path from a source (ETM) till a suitable
- * sink is encountered and return that sink to the original caller.
+ * sink is encountered and वापस that sink to the original caller.
  *
- * If current device is a plain sink return that & depth, otherwise recursively
- * call child connections looking for a sink. Select best possible using
+ * If current device is a plain sink वापस that & depth, otherwise recursively
+ * call child connections looking क्रम a sink. Select best possible using
  * coresight_select_best_sink.
  *
- * return best sink found, or NULL if not found at this node or child nodes.
+ * वापस best sink found, or शून्य अगर not found at this node or child nodes.
  */
-static struct coresight_device *
-coresight_find_sink(struct coresight_device *csdev, int *depth)
-{
-	int i, curr_depth = *depth + 1, found_depth = 0;
-	struct coresight_device *found_sink = NULL;
+अटल काष्ठा coresight_device *
+coresight_find_sink(काष्ठा coresight_device *csdev, पूर्णांक *depth)
+अणु
+	पूर्णांक i, curr_depth = *depth + 1, found_depth = 0;
+	काष्ठा coresight_device *found_sink = शून्य;
 
-	if (coresight_is_def_sink_type(csdev)) {
+	अगर (coresight_is_def_sink_type(csdev)) अणु
 		found_depth = curr_depth;
 		found_sink = csdev;
-		if (csdev->type == CORESIGHT_DEV_TYPE_SINK)
-			goto return_def_sink;
-		/* look past LINKSINK for something better */
-	}
+		अगर (csdev->type == CORESIGHT_DEV_TYPE_SINK)
+			जाओ वापस_def_sink;
+		/* look past LINKSINK क्रम something better */
+	पूर्ण
 
 	/*
 	 * Not a sink we want - or possible child sink may be better.
 	 * recursively explore each port found on this element.
 	 */
-	for (i = 0; i < csdev->pdata->nr_outport; i++) {
-		struct coresight_device *child_dev, *sink = NULL;
-		int child_depth = curr_depth;
+	क्रम (i = 0; i < csdev->pdata->nr_outport; i++) अणु
+		काष्ठा coresight_device *child_dev, *sink = शून्य;
+		पूर्णांक child_depth = curr_depth;
 
 		child_dev = csdev->pdata->conns[i].child_dev;
-		if (child_dev)
+		अगर (child_dev)
 			sink = coresight_find_sink(child_dev, &child_depth);
 
-		if (sink)
+		अगर (sink)
 			found_sink = coresight_select_best_sink(found_sink,
 								&found_depth,
 								sink,
 								child_depth);
-	}
+	पूर्ण
 
-return_def_sink:
-	/* return found sink and depth */
-	if (found_sink)
+वापस_def_sink:
+	/* वापस found sink and depth */
+	अगर (found_sink)
 		*depth = found_depth;
-	return found_sink;
-}
+	वापस found_sink;
+पूर्ण
 
 /**
- * coresight_find_default_sink: Find a sink suitable for use as a
- * default sink.
+ * coresight_find_शेष_sink: Find a sink suitable क्रम use as a
+ * शेष sink.
  *
  * @csdev: starting source to find a connected sink.
  *
- * Walks connections graph looking for a suitable sink to enable for the
+ * Walks connections graph looking क्रम a suitable sink to enable क्रम the
  * supplied source. Uses CoreSight device subtypes and distance from source
  * to select the best sink.
  *
- * If a sink is found, then the default sink for this device is set and
- * will be automatically used in future.
+ * If a sink is found, then the शेष sink क्रम this device is set and
+ * will be स्वतःmatically used in future.
  *
- * Used in cases where the CoreSight user (perf / sysfs) has not selected a
+ * Used in हालs where the CoreSight user (perf / sysfs) has not selected a
  * sink.
  */
-struct coresight_device *
-coresight_find_default_sink(struct coresight_device *csdev)
-{
-	int depth = 0;
+काष्ठा coresight_device *
+coresight_find_शेष_sink(काष्ठा coresight_device *csdev)
+अणु
+	पूर्णांक depth = 0;
 
-	/* look for a default sink if we have not found for this device */
-	if (!csdev->def_sink) {
-		if (coresight_is_percpu_source(csdev))
+	/* look क्रम a शेष sink अगर we have not found क्रम this device */
+	अगर (!csdev->def_sink) अणु
+		अगर (coresight_is_percpu_source(csdev))
 			csdev->def_sink = per_cpu(csdev_sink, source_ops(csdev)->cpu_id(csdev));
-		if (!csdev->def_sink)
+		अगर (!csdev->def_sink)
 			csdev->def_sink = coresight_find_sink(csdev, &depth);
-	}
-	return csdev->def_sink;
-}
+	पूर्ण
+	वापस csdev->def_sink;
+पूर्ण
 
-static int coresight_remove_sink_ref(struct device *dev, void *data)
-{
-	struct coresight_device *sink = data;
-	struct coresight_device *source = to_coresight_device(dev);
+अटल पूर्णांक coresight_हटाओ_sink_ref(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा coresight_device *sink = data;
+	काष्ठा coresight_device *source = to_coresight_device(dev);
 
-	if (source->def_sink == sink)
-		source->def_sink = NULL;
-	return 0;
-}
+	अगर (source->def_sink == sink)
+		source->def_sink = शून्य;
+	वापस 0;
+पूर्ण
 
 /**
- * coresight_clear_default_sink: Remove all default sink references to the
+ * coresight_clear_शेष_sink: Remove all शेष sink references to the
  * supplied sink.
  *
  * If supplied device is a sink, then check all the bus devices and clear
  * out all the references to this sink from the coresight_device def_sink
  * parameter.
  *
- * @csdev: coresight sink - remove references to this from all sources.
+ * @csdev: coresight sink - हटाओ references to this from all sources.
  */
-static void coresight_clear_default_sink(struct coresight_device *csdev)
-{
-	if ((csdev->type == CORESIGHT_DEV_TYPE_SINK) ||
-	    (csdev->type == CORESIGHT_DEV_TYPE_LINKSINK)) {
-		bus_for_each_dev(&coresight_bustype, NULL, csdev,
-				 coresight_remove_sink_ref);
-	}
-}
+अटल व्योम coresight_clear_शेष_sink(काष्ठा coresight_device *csdev)
+अणु
+	अगर ((csdev->type == CORESIGHT_DEV_TYPE_SINK) ||
+	    (csdev->type == CORESIGHT_DEV_TYPE_LINKSINK)) अणु
+		bus_क्रम_each_dev(&coresight_bustype, शून्य, csdev,
+				 coresight_हटाओ_sink_ref);
+	पूर्ण
+पूर्ण
 
 /** coresight_validate_source - make sure a source has the right credentials
- *  @csdev:	the device structure for a source.
+ *  @csdev:	the device काष्ठाure क्रम a source.
  *  @function:	the function this was called from.
  *
  * Assumes the coresight_mutex is held.
  */
-static int coresight_validate_source(struct coresight_device *csdev,
-				     const char *function)
-{
+अटल पूर्णांक coresight_validate_source(काष्ठा coresight_device *csdev,
+				     स्थिर अक्षर *function)
+अणु
 	u32 type, subtype;
 
 	type = csdev->type;
 	subtype = csdev->subtype.source_subtype;
 
-	if (type != CORESIGHT_DEV_TYPE_SOURCE) {
+	अगर (type != CORESIGHT_DEV_TYPE_SOURCE) अणु
 		dev_err(&csdev->dev, "wrong device type in %s\n", function);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (subtype != CORESIGHT_DEV_SUBTYPE_SOURCE_PROC &&
-	    subtype != CORESIGHT_DEV_SUBTYPE_SOURCE_SOFTWARE) {
+	अगर (subtype != CORESIGHT_DEV_SUBTYPE_SOURCE_PROC &&
+	    subtype != CORESIGHT_DEV_SUBTYPE_SOURCE_SOFTWARE) अणु
 		dev_err(&csdev->dev, "wrong device subtype in %s\n", function);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int coresight_enable(struct coresight_device *csdev)
-{
-	int cpu, ret = 0;
-	struct coresight_device *sink;
-	struct list_head *path;
-	enum coresight_dev_subtype_source subtype;
+पूर्णांक coresight_enable(काष्ठा coresight_device *csdev)
+अणु
+	पूर्णांक cpu, ret = 0;
+	काष्ठा coresight_device *sink;
+	काष्ठा list_head *path;
+	क्रमागत coresight_dev_subtype_source subtype;
 
 	subtype = csdev->subtype.source_subtype;
 
 	mutex_lock(&coresight_mutex);
 
 	ret = coresight_validate_source(csdev, __func__);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (csdev->enable) {
+	अगर (csdev->enable) अणु
 		/*
 		 * There could be multiple applications driving the software
-		 * source. So keep the refcount for each such user when the
-		 * source is already enabled.
+		 * source. So keep the refcount क्रम each such user when the
+		 * source is alपढ़ोy enabled.
 		 */
-		if (subtype == CORESIGHT_DEV_SUBTYPE_SOURCE_SOFTWARE)
+		अगर (subtype == CORESIGHT_DEV_SUBTYPE_SOURCE_SOFTWARE)
 			atomic_inc(csdev->refcnt);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	sink = coresight_get_enabled_sink(csdev);
-	if (!sink) {
+	अगर (!sink) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	path = coresight_build_path(csdev, sink);
-	if (IS_ERR(path)) {
+	अगर (IS_ERR(path)) अणु
 		pr_err("building path(s) failed\n");
 		ret = PTR_ERR(path);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = coresight_enable_path(path, CS_MODE_SYSFS, NULL);
-	if (ret)
-		goto err_path;
+	ret = coresight_enable_path(path, CS_MODE_SYSFS, शून्य);
+	अगर (ret)
+		जाओ err_path;
 
 	ret = coresight_enable_source(csdev, CS_MODE_SYSFS);
-	if (ret)
-		goto err_source;
+	अगर (ret)
+		जाओ err_source;
 
-	switch (subtype) {
-	case CORESIGHT_DEV_SUBTYPE_SOURCE_PROC:
+	चयन (subtype) अणु
+	हाल CORESIGHT_DEV_SUBTYPE_SOURCE_PROC:
 		/*
 		 * When working from sysFS it is important to keep track
 		 * of the paths that were created so that they can be
-		 * undone in 'coresight_disable()'.  Since there can only
+		 * unकरोne in 'coresight_disable()'.  Since there can only
 		 * be a single session per tracer (when working from sysFS)
-		 * a per-cpu variable will do just fine.
+		 * a per-cpu variable will करो just fine.
 		 */
 		cpu = source_ops(csdev)->cpu_id(csdev);
 		per_cpu(tracer_path, cpu) = path;
-		break;
-	case CORESIGHT_DEV_SUBTYPE_SOURCE_SOFTWARE:
-		stm_path = path;
-		break;
-	default:
+		अवरोध;
+	हाल CORESIGHT_DEV_SUBTYPE_SOURCE_SOFTWARE:
+		sपंचांग_path = path;
+		अवरोध;
+	शेष:
 		/* We can't be here */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
 	mutex_unlock(&coresight_mutex);
-	return ret;
+	वापस ret;
 
 err_source:
 	coresight_disable_path(path);
 
 err_path:
 	coresight_release_path(path);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_enable);
 
-void coresight_disable(struct coresight_device *csdev)
-{
-	int cpu, ret;
-	struct list_head *path = NULL;
+व्योम coresight_disable(काष्ठा coresight_device *csdev)
+अणु
+	पूर्णांक cpu, ret;
+	काष्ठा list_head *path = शून्य;
 
 	mutex_lock(&coresight_mutex);
 
 	ret = coresight_validate_source(csdev, __func__);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (!csdev->enable || !coresight_disable_source(csdev))
-		goto out;
+	अगर (!csdev->enable || !coresight_disable_source(csdev))
+		जाओ out;
 
-	switch (csdev->subtype.source_subtype) {
-	case CORESIGHT_DEV_SUBTYPE_SOURCE_PROC:
+	चयन (csdev->subtype.source_subtype) अणु
+	हाल CORESIGHT_DEV_SUBTYPE_SOURCE_PROC:
 		cpu = source_ops(csdev)->cpu_id(csdev);
 		path = per_cpu(tracer_path, cpu);
-		per_cpu(tracer_path, cpu) = NULL;
-		break;
-	case CORESIGHT_DEV_SUBTYPE_SOURCE_SOFTWARE:
-		path = stm_path;
-		stm_path = NULL;
-		break;
-	default:
+		per_cpu(tracer_path, cpu) = शून्य;
+		अवरोध;
+	हाल CORESIGHT_DEV_SUBTYPE_SOURCE_SOFTWARE:
+		path = sपंचांग_path;
+		sपंचांग_path = शून्य;
+		अवरोध;
+	शेष:
 		/* We can't be here */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	coresight_disable_path(path);
 	coresight_release_path(path);
 
 out:
 	mutex_unlock(&coresight_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_disable);
 
-static ssize_t enable_sink_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct coresight_device *csdev = to_coresight_device(dev);
+अटल sमाप_प्रकार enable_sink_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा coresight_device *csdev = to_coresight_device(dev);
 
-	return scnprintf(buf, PAGE_SIZE, "%u\n", csdev->activated);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", csdev->activated);
+पूर्ण
 
-static ssize_t enable_sink_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct coresight_device *csdev = to_coresight_device(dev);
+अटल sमाप_प्रकार enable_sink_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा coresight_device *csdev = to_coresight_device(dev);
 
-	ret = kstrtoul(buf, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val)
+	अगर (val)
 		csdev->activated = true;
-	else
+	अन्यथा
 		csdev->activated = false;
 
-	return size;
+	वापस size;
 
-}
-static DEVICE_ATTR_RW(enable_sink);
+पूर्ण
+अटल DEVICE_ATTR_RW(enable_sink);
 
-static ssize_t enable_source_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct coresight_device *csdev = to_coresight_device(dev);
+अटल sमाप_प्रकार enable_source_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा coresight_device *csdev = to_coresight_device(dev);
 
-	return scnprintf(buf, PAGE_SIZE, "%u\n", csdev->enable);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", csdev->enable);
+पूर्ण
 
-static ssize_t enable_source_store(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *buf, size_t size)
-{
-	int ret = 0;
-	unsigned long val;
-	struct coresight_device *csdev = to_coresight_device(dev);
+अटल sमाप_प्रकार enable_source_store(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ val;
+	काष्ठा coresight_device *csdev = to_coresight_device(dev);
 
-	ret = kstrtoul(buf, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val) {
+	अगर (val) अणु
 		ret = coresight_enable(csdev);
-		if (ret)
-			return ret;
-	} else {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		coresight_disable(csdev);
-	}
+	पूर्ण
 
-	return size;
-}
-static DEVICE_ATTR_RW(enable_source);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(enable_source);
 
-static struct attribute *coresight_sink_attrs[] = {
+अटल काष्ठा attribute *coresight_sink_attrs[] = अणु
 	&dev_attr_enable_sink.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(coresight_sink);
 
-static struct attribute *coresight_source_attrs[] = {
+अटल काष्ठा attribute *coresight_source_attrs[] = अणु
 	&dev_attr_enable_source.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(coresight_source);
 
-static struct device_type coresight_dev_type[] = {
-	{
+अटल काष्ठा device_type coresight_dev_type[] = अणु
+	अणु
 		.name = "none",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "sink",
 		.groups = coresight_sink_groups,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "link",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "linksink",
 		.groups = coresight_sink_groups,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "source",
 		.groups = coresight_source_groups,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "helper",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "ect",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void coresight_device_release(struct device *dev)
-{
-	struct coresight_device *csdev = to_coresight_device(dev);
+अटल व्योम coresight_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा coresight_device *csdev = to_coresight_device(dev);
 
 	fwnode_handle_put(csdev->dev.fwnode);
-	kfree(csdev->refcnt);
-	kfree(csdev);
-}
+	kमुक्त(csdev->refcnt);
+	kमुक्त(csdev);
+पूर्ण
 
-static int coresight_orphan_match(struct device *dev, void *data)
-{
-	int i, ret = 0;
+अटल पूर्णांक coresight_orphan_match(काष्ठा device *dev, व्योम *data)
+अणु
+	पूर्णांक i, ret = 0;
 	bool still_orphan = false;
-	struct coresight_device *csdev, *i_csdev;
-	struct coresight_connection *conn;
+	काष्ठा coresight_device *csdev, *i_csdev;
+	काष्ठा coresight_connection *conn;
 
 	csdev = data;
 	i_csdev = to_coresight_device(dev);
 
 	/* No need to check oneself */
-	if (csdev == i_csdev)
-		return 0;
+	अगर (csdev == i_csdev)
+		वापस 0;
 
-	/* Move on to another component if no connection is orphan */
-	if (!i_csdev->orphan)
-		return 0;
+	/* Move on to another component अगर no connection is orphan */
+	अगर (!i_csdev->orphan)
+		वापस 0;
 	/*
 	 * Circle throuch all the connection of that component.  If we find
 	 * an orphan connection whose name matches @csdev, link it.
 	 */
-	for (i = 0; i < i_csdev->pdata->nr_outport; i++) {
+	क्रम (i = 0; i < i_csdev->pdata->nr_outport; i++) अणु
 		conn = &i_csdev->pdata->conns[i];
 
-		/* Skip the port if FW doesn't describe it */
-		if (!conn->child_fwnode)
-			continue;
+		/* Skip the port अगर FW करोesn't describe it */
+		अगर (!conn->child_fwnode)
+			जारी;
 		/* We have found at least one orphan connection */
-		if (conn->child_dev == NULL) {
+		अगर (conn->child_dev == शून्य) अणु
 			/* Does it match this newly added device? */
-			if (conn->child_fwnode == csdev->dev.fwnode) {
+			अगर (conn->child_fwnode == csdev->dev.fwnode) अणु
 				ret = coresight_make_links(i_csdev,
 							   conn, csdev);
-				if (ret)
-					return ret;
-			} else {
+				अगर (ret)
+					वापस ret;
+			पूर्ण अन्यथा अणु
 				/* This component still has an orphan */
 				still_orphan = true;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	i_csdev->orphan = still_orphan;
 
@@ -1361,241 +1362,241 @@ static int coresight_orphan_match(struct device *dev, void *data)
 	 * Returning '0' in case we didn't encounter any error,
 	 * ensures that all known component on the bus will be checked.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int coresight_fixup_orphan_conns(struct coresight_device *csdev)
-{
-	return bus_for_each_dev(&coresight_bustype, NULL,
+अटल पूर्णांक coresight_fixup_orphan_conns(काष्ठा coresight_device *csdev)
+अणु
+	वापस bus_क्रम_each_dev(&coresight_bustype, शून्य,
 			 csdev, coresight_orphan_match);
-}
+पूर्ण
 
 
-static int coresight_fixup_device_conns(struct coresight_device *csdev)
-{
-	int i, ret = 0;
+अटल पूर्णांक coresight_fixup_device_conns(काष्ठा coresight_device *csdev)
+अणु
+	पूर्णांक i, ret = 0;
 
-	for (i = 0; i < csdev->pdata->nr_outport; i++) {
-		struct coresight_connection *conn = &csdev->pdata->conns[i];
+	क्रम (i = 0; i < csdev->pdata->nr_outport; i++) अणु
+		काष्ठा coresight_connection *conn = &csdev->pdata->conns[i];
 
-		if (!conn->child_fwnode)
-			continue;
+		अगर (!conn->child_fwnode)
+			जारी;
 		conn->child_dev =
 			coresight_find_csdev_by_fwnode(conn->child_fwnode);
-		if (conn->child_dev) {
+		अगर (conn->child_dev) अणु
 			ret = coresight_make_links(csdev, conn,
 						   conn->child_dev);
-			if (ret)
-				break;
-		} else {
+			अगर (ret)
+				अवरोध;
+		पूर्ण अन्यथा अणु
 			csdev->orphan = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int coresight_remove_match(struct device *dev, void *data)
-{
-	int i;
-	struct coresight_device *csdev, *iterator;
-	struct coresight_connection *conn;
+अटल पूर्णांक coresight_हटाओ_match(काष्ठा device *dev, व्योम *data)
+अणु
+	पूर्णांक i;
+	काष्ठा coresight_device *csdev, *iterator;
+	काष्ठा coresight_connection *conn;
 
 	csdev = data;
 	iterator = to_coresight_device(dev);
 
 	/* No need to check oneself */
-	if (csdev == iterator)
-		return 0;
+	अगर (csdev == iterator)
+		वापस 0;
 
 	/*
 	 * Circle throuch all the connection of that component.  If we find
-	 * a connection whose name matches @csdev, remove it.
+	 * a connection whose name matches @csdev, हटाओ it.
 	 */
-	for (i = 0; i < iterator->pdata->nr_outport; i++) {
+	क्रम (i = 0; i < iterator->pdata->nr_outport; i++) अणु
 		conn = &iterator->pdata->conns[i];
 
-		if (conn->child_dev == NULL || conn->child_fwnode == NULL)
-			continue;
+		अगर (conn->child_dev == शून्य || conn->child_fwnode == शून्य)
+			जारी;
 
-		if (csdev->dev.fwnode == conn->child_fwnode) {
+		अगर (csdev->dev.fwnode == conn->child_fwnode) अणु
 			iterator->orphan = true;
-			coresight_remove_links(iterator, conn);
+			coresight_हटाओ_links(iterator, conn);
 			/*
-			 * Drop the reference to the handle for the remote
+			 * Drop the reference to the handle क्रम the remote
 			 * device acquired in parsing the connections from
-			 * platform data.
+			 * platक्रमm data.
 			 */
 			fwnode_handle_put(conn->child_fwnode);
-			/* No need to continue */
-			break;
-		}
-	}
+			/* No need to जारी */
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Returning '0' ensures that all known component on the
 	 * bus will be checked.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * coresight_remove_conns - Remove references to this given devices
+ * coresight_हटाओ_conns - Remove references to this given devices
  * from the connections of other devices.
  */
-static void coresight_remove_conns(struct coresight_device *csdev)
-{
+अटल व्योम coresight_हटाओ_conns(काष्ठा coresight_device *csdev)
+अणु
 	/*
-	 * Another device will point to this device only if there is
-	 * an output port connected to this one. i.e, if the device
-	 * doesn't have at least one input port, there is no point
+	 * Another device will poपूर्णांक to this device only अगर there is
+	 * an output port connected to this one. i.e, अगर the device
+	 * करोesn't have at least one input port, there is no poपूर्णांक
 	 * in searching all the devices.
 	 */
-	if (csdev->pdata->nr_inport)
-		bus_for_each_dev(&coresight_bustype, NULL,
-				 csdev, coresight_remove_match);
-}
+	अगर (csdev->pdata->nr_inport)
+		bus_क्रम_each_dev(&coresight_bustype, शून्य,
+				 csdev, coresight_हटाओ_match);
+पूर्ण
 
 /**
- * coresight_timeout - loop until a bit has changed to a specific register
+ * coresight_समयout - loop until a bit has changed to a specअगरic रेजिस्टर
  *			state.
- * @csa: coresight device access for the device
- * @offset: Offset of the register from the base of the device.
- * @position: the position of the bit of interest.
+ * @csa: coresight device access क्रम the device
+ * @offset: Offset of the रेजिस्टर from the base of the device.
+ * @position: the position of the bit of पूर्णांकerest.
  * @value: the value the bit should have.
  *
- * Return: 0 as soon as the bit has taken the desired state or -EAGAIN if
+ * Return: 0 as soon as the bit has taken the desired state or -EAGAIN अगर
  * TIMEOUT_US has elapsed, which ever happens first.
  */
-int coresight_timeout(struct csdev_access *csa, u32 offset,
-		      int position, int value)
-{
-	int i;
+पूर्णांक coresight_समयout(काष्ठा csdev_access *csa, u32 offset,
+		      पूर्णांक position, पूर्णांक value)
+अणु
+	पूर्णांक i;
 	u32 val;
 
-	for (i = TIMEOUT_US; i > 0; i--) {
-		val = csdev_access_read32(csa, offset);
-		/* waiting on the bit to go from 0 to 1 */
-		if (value) {
-			if (val & BIT(position))
-				return 0;
-		/* waiting on the bit to go from 1 to 0 */
-		} else {
-			if (!(val & BIT(position)))
-				return 0;
-		}
+	क्रम (i = TIMEOUT_US; i > 0; i--) अणु
+		val = csdev_access_पढ़ो32(csa, offset);
+		/* रुकोing on the bit to go from 0 to 1 */
+		अगर (value) अणु
+			अगर (val & BIT(position))
+				वापस 0;
+		/* रुकोing on the bit to go from 1 to 0 */
+		पूर्ण अन्यथा अणु
+			अगर (!(val & BIT(position)))
+				वापस 0;
+		पूर्ण
 
 		/*
-		 * Delay is arbitrary - the specification doesn't say how long
-		 * we are expected to wait.  Extra check required to make sure
-		 * we don't wait needlessly on the last iteration.
+		 * Delay is arbitrary - the specअगरication करोesn't say how दीर्घ
+		 * we are expected to रुको.  Extra check required to make sure
+		 * we करोn't रुको needlessly on the last iteration.
 		 */
-		if (i - 1)
+		अगर (i - 1)
 			udelay(1);
-	}
+	पूर्ण
 
-	return -EAGAIN;
-}
-EXPORT_SYMBOL_GPL(coresight_timeout);
+	वापस -EAGAIN;
+पूर्ण
+EXPORT_SYMBOL_GPL(coresight_समयout);
 
-u32 coresight_relaxed_read32(struct coresight_device *csdev, u32 offset)
-{
-	return csdev_access_relaxed_read32(&csdev->access, offset);
-}
+u32 coresight_relaxed_पढ़ो32(काष्ठा coresight_device *csdev, u32 offset)
+अणु
+	वापस csdev_access_relaxed_पढ़ो32(&csdev->access, offset);
+पूर्ण
 
-u32 coresight_read32(struct coresight_device *csdev, u32 offset)
-{
-	return csdev_access_read32(&csdev->access, offset);
-}
+u32 coresight_पढ़ो32(काष्ठा coresight_device *csdev, u32 offset)
+अणु
+	वापस csdev_access_पढ़ो32(&csdev->access, offset);
+पूर्ण
 
-void coresight_relaxed_write32(struct coresight_device *csdev,
+व्योम coresight_relaxed_ग_लिखो32(काष्ठा coresight_device *csdev,
 			       u32 val, u32 offset)
-{
-	csdev_access_relaxed_write32(&csdev->access, val, offset);
-}
+अणु
+	csdev_access_relaxed_ग_लिखो32(&csdev->access, val, offset);
+पूर्ण
 
-void coresight_write32(struct coresight_device *csdev, u32 val, u32 offset)
-{
-	csdev_access_write32(&csdev->access, val, offset);
-}
+व्योम coresight_ग_लिखो32(काष्ठा coresight_device *csdev, u32 val, u32 offset)
+अणु
+	csdev_access_ग_लिखो32(&csdev->access, val, offset);
+पूर्ण
 
-u64 coresight_relaxed_read64(struct coresight_device *csdev, u32 offset)
-{
-	return csdev_access_relaxed_read64(&csdev->access, offset);
-}
+u64 coresight_relaxed_पढ़ो64(काष्ठा coresight_device *csdev, u32 offset)
+अणु
+	वापस csdev_access_relaxed_पढ़ो64(&csdev->access, offset);
+पूर्ण
 
-u64 coresight_read64(struct coresight_device *csdev, u32 offset)
-{
-	return csdev_access_read64(&csdev->access, offset);
-}
+u64 coresight_पढ़ो64(काष्ठा coresight_device *csdev, u32 offset)
+अणु
+	वापस csdev_access_पढ़ो64(&csdev->access, offset);
+पूर्ण
 
-void coresight_relaxed_write64(struct coresight_device *csdev,
+व्योम coresight_relaxed_ग_लिखो64(काष्ठा coresight_device *csdev,
 			       u64 val, u32 offset)
-{
-	csdev_access_relaxed_write64(&csdev->access, val, offset);
-}
+अणु
+	csdev_access_relaxed_ग_लिखो64(&csdev->access, val, offset);
+पूर्ण
 
-void coresight_write64(struct coresight_device *csdev, u64 val, u32 offset)
-{
-	csdev_access_write64(&csdev->access, val, offset);
-}
+व्योम coresight_ग_लिखो64(काष्ठा coresight_device *csdev, u64 val, u32 offset)
+अणु
+	csdev_access_ग_लिखो64(&csdev->access, val, offset);
+पूर्ण
 
 /*
- * coresight_release_platform_data: Release references to the devices connected
+ * coresight_release_platक्रमm_data: Release references to the devices connected
  * to the output port of this device.
  */
-void coresight_release_platform_data(struct coresight_device *csdev,
-				     struct coresight_platform_data *pdata)
-{
-	int i;
-	struct coresight_connection *conns = pdata->conns;
+व्योम coresight_release_platक्रमm_data(काष्ठा coresight_device *csdev,
+				     काष्ठा coresight_platक्रमm_data *pdata)
+अणु
+	पूर्णांक i;
+	काष्ठा coresight_connection *conns = pdata->conns;
 
-	for (i = 0; i < pdata->nr_outport; i++) {
-		/* If we have made the links, remove them now */
-		if (csdev && conns[i].child_dev)
-			coresight_remove_links(csdev, &conns[i]);
+	क्रम (i = 0; i < pdata->nr_outport; i++) अणु
+		/* If we have made the links, हटाओ them now */
+		अगर (csdev && conns[i].child_dev)
+			coresight_हटाओ_links(csdev, &conns[i]);
 		/*
 		 * Drop the refcount and clear the handle as this device
 		 * is going away
 		 */
-		if (conns[i].child_fwnode) {
+		अगर (conns[i].child_fwnode) अणु
 			fwnode_handle_put(conns[i].child_fwnode);
-			pdata->conns[i].child_fwnode = NULL;
-		}
-	}
-	if (csdev)
-		coresight_remove_conns_sysfs_group(csdev);
-}
+			pdata->conns[i].child_fwnode = शून्य;
+		पूर्ण
+	पूर्ण
+	अगर (csdev)
+		coresight_हटाओ_conns_sysfs_group(csdev);
+पूर्ण
 
-struct coresight_device *coresight_register(struct coresight_desc *desc)
-{
-	int ret;
-	int link_subtype;
-	int nr_refcnts = 1;
-	atomic_t *refcnts = NULL;
-	struct coresight_device *csdev;
+काष्ठा coresight_device *coresight_रेजिस्टर(काष्ठा coresight_desc *desc)
+अणु
+	पूर्णांक ret;
+	पूर्णांक link_subtype;
+	पूर्णांक nr_refcnts = 1;
+	atomic_t *refcnts = शून्य;
+	काष्ठा coresight_device *csdev;
 
-	csdev = kzalloc(sizeof(*csdev), GFP_KERNEL);
-	if (!csdev) {
+	csdev = kzalloc(माप(*csdev), GFP_KERNEL);
+	अगर (!csdev) अणु
 		ret = -ENOMEM;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	if (desc->type == CORESIGHT_DEV_TYPE_LINK ||
-	    desc->type == CORESIGHT_DEV_TYPE_LINKSINK) {
+	अगर (desc->type == CORESIGHT_DEV_TYPE_LINK ||
+	    desc->type == CORESIGHT_DEV_TYPE_LINKSINK) अणु
 		link_subtype = desc->subtype.link_subtype;
 
-		if (link_subtype == CORESIGHT_DEV_SUBTYPE_LINK_MERG)
+		अगर (link_subtype == CORESIGHT_DEV_SUBTYPE_LINK_MERG)
 			nr_refcnts = desc->pdata->nr_inport;
-		else if (link_subtype == CORESIGHT_DEV_SUBTYPE_LINK_SPLIT)
+		अन्यथा अगर (link_subtype == CORESIGHT_DEV_SUBTYPE_LINK_SPLIT)
 			nr_refcnts = desc->pdata->nr_outport;
-	}
+	पूर्ण
 
-	refcnts = kcalloc(nr_refcnts, sizeof(*refcnts), GFP_KERNEL);
-	if (!refcnts) {
+	refcnts = kसुस्मृति(nr_refcnts, माप(*refcnts), GFP_KERNEL);
+	अगर (!refcnts) अणु
 		ret = -ENOMEM;
-		goto err_free_csdev;
-	}
+		जाओ err_मुक्त_csdev;
+	पूर्ण
 
 	csdev->refcnt = refcnts;
 
@@ -1619,71 +1620,71 @@ struct coresight_device *coresight_register(struct coresight_desc *desc)
 	csdev->dev.fwnode = fwnode_handle_get(dev_fwnode(desc->dev));
 	dev_set_name(&csdev->dev, "%s", desc->name);
 
-	ret = device_register(&csdev->dev);
-	if (ret) {
+	ret = device_रेजिस्टर(&csdev->dev);
+	अगर (ret) अणु
 		put_device(&csdev->dev);
 		/*
-		 * All resources are free'd explicitly via
+		 * All resources are मुक्त'd explicitly via
 		 * coresight_device_release(), triggered from put_device().
 		 */
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	if (csdev->type == CORESIGHT_DEV_TYPE_SINK ||
-	    csdev->type == CORESIGHT_DEV_TYPE_LINKSINK) {
-		ret = etm_perf_add_symlink_sink(csdev);
+	अगर (csdev->type == CORESIGHT_DEV_TYPE_SINK ||
+	    csdev->type == CORESIGHT_DEV_TYPE_LINKSINK) अणु
+		ret = eपंचांग_perf_add_symlink_sink(csdev);
 
-		if (ret) {
-			device_unregister(&csdev->dev);
+		अगर (ret) अणु
+			device_unरेजिस्टर(&csdev->dev);
 			/*
-			 * As with the above, all resources are free'd
+			 * As with the above, all resources are मुक्त'd
 			 * explicitly via coresight_device_release() triggered
 			 * from put_device(), which is in turn called from
-			 * function device_unregister().
+			 * function device_unरेजिस्टर().
 			 */
-			goto err_out;
-		}
-	}
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
 	mutex_lock(&coresight_mutex);
 
 	ret = coresight_create_conns_sysfs_group(csdev);
-	if (!ret)
+	अगर (!ret)
 		ret = coresight_fixup_device_conns(csdev);
-	if (!ret)
+	अगर (!ret)
 		ret = coresight_fixup_orphan_conns(csdev);
-	if (!ret && cti_assoc_ops && cti_assoc_ops->add)
+	अगर (!ret && cti_assoc_ops && cti_assoc_ops->add)
 		cti_assoc_ops->add(csdev);
 
 	mutex_unlock(&coresight_mutex);
-	if (ret) {
-		coresight_unregister(csdev);
-		return ERR_PTR(ret);
-	}
+	अगर (ret) अणु
+		coresight_unरेजिस्टर(csdev);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return csdev;
+	वापस csdev;
 
-err_free_csdev:
-	kfree(csdev);
+err_मुक्त_csdev:
+	kमुक्त(csdev);
 err_out:
-	/* Cleanup the connection information */
-	coresight_release_platform_data(NULL, desc->pdata);
-	return ERR_PTR(ret);
-}
-EXPORT_SYMBOL_GPL(coresight_register);
+	/* Cleanup the connection inक्रमmation */
+	coresight_release_platक्रमm_data(शून्य, desc->pdata);
+	वापस ERR_PTR(ret);
+पूर्ण
+EXPORT_SYMBOL_GPL(coresight_रेजिस्टर);
 
-void coresight_unregister(struct coresight_device *csdev)
-{
-	etm_perf_del_symlink_sink(csdev);
+व्योम coresight_unरेजिस्टर(काष्ठा coresight_device *csdev)
+अणु
+	eपंचांग_perf_del_symlink_sink(csdev);
 	/* Remove references of that device in the topology */
-	if (cti_assoc_ops && cti_assoc_ops->remove)
-		cti_assoc_ops->remove(csdev);
-	coresight_remove_conns(csdev);
-	coresight_clear_default_sink(csdev);
-	coresight_release_platform_data(csdev, csdev->pdata);
-	device_unregister(&csdev->dev);
-}
-EXPORT_SYMBOL_GPL(coresight_unregister);
+	अगर (cti_assoc_ops && cti_assoc_ops->हटाओ)
+		cti_assoc_ops->हटाओ(csdev);
+	coresight_हटाओ_conns(csdev);
+	coresight_clear_शेष_sink(csdev);
+	coresight_release_platक्रमm_data(csdev, csdev->pdata);
+	device_unरेजिस्टर(&csdev->dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(coresight_unरेजिस्टर);
 
 
 /*
@@ -1692,91 +1693,91 @@ EXPORT_SYMBOL_GPL(coresight_unregister);
  *
  * Returns the index of the entry, when found. Otherwise, -ENOENT.
  */
-static inline int coresight_search_device_idx(struct coresight_dev_list *dict,
-					      struct fwnode_handle *fwnode)
-{
-	int i;
+अटल अंतरभूत पूर्णांक coresight_search_device_idx(काष्ठा coresight_dev_list *dict,
+					      काष्ठा fwnode_handle *fwnode)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < dict->nr_idx; i++)
-		if (dict->fwnode_list[i] == fwnode)
-			return i;
-	return -ENOENT;
-}
+	क्रम (i = 0; i < dict->nr_idx; i++)
+		अगर (dict->fwnode_list[i] == fwnode)
+			वापस i;
+	वापस -ENOENT;
+पूर्ण
 
-bool coresight_loses_context_with_cpu(struct device *dev)
-{
-	return fwnode_property_present(dev_fwnode(dev),
+bool coresight_loses_context_with_cpu(काष्ठा device *dev)
+अणु
+	वापस fwnode_property_present(dev_fwnode(dev),
 				       "arm,coresight-loses-context-with-cpu");
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_loses_context_with_cpu);
 
 /*
- * coresight_alloc_device_name - Get an index for a given device in the
- * device index list specific to a driver. An index is allocated for a
+ * coresight_alloc_device_name - Get an index क्रम a given device in the
+ * device index list specअगरic to a driver. An index is allocated क्रम a
  * device and is tracked with the fwnode_handle to prevent allocating
- * duplicate indices for the same device (e.g, if we defer probing of
- * a device due to dependencies), in case the index is requested again.
+ * duplicate indices क्रम the same device (e.g, अगर we defer probing of
+ * a device due to dependencies), in हाल the index is requested again.
  */
-char *coresight_alloc_device_name(struct coresight_dev_list *dict,
-				  struct device *dev)
-{
-	int idx;
-	char *name = NULL;
-	struct fwnode_handle **list;
+अक्षर *coresight_alloc_device_name(काष्ठा coresight_dev_list *dict,
+				  काष्ठा device *dev)
+अणु
+	पूर्णांक idx;
+	अक्षर *name = शून्य;
+	काष्ठा fwnode_handle **list;
 
 	mutex_lock(&coresight_mutex);
 
 	idx = coresight_search_device_idx(dict, dev_fwnode(dev));
-	if (idx < 0) {
-		/* Make space for the new entry */
+	अगर (idx < 0) अणु
+		/* Make space क्रम the new entry */
 		idx = dict->nr_idx;
-		list = krealloc(dict->fwnode_list,
-				(idx + 1) * sizeof(*dict->fwnode_list),
+		list = kपुनः_स्मृति(dict->fwnode_list,
+				(idx + 1) * माप(*dict->fwnode_list),
 				GFP_KERNEL);
-		if (ZERO_OR_NULL_PTR(list)) {
+		अगर (ZERO_OR_शून्य_PTR(list)) अणु
 			idx = -ENOMEM;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		list[idx] = dev_fwnode(dev);
 		dict->fwnode_list = list;
 		dict->nr_idx = idx + 1;
-	}
+	पूर्ण
 
-	name = devm_kasprintf(dev, GFP_KERNEL, "%s%d", dict->pfx, idx);
-done:
+	name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%s%d", dict->pfx, idx);
+करोne:
 	mutex_unlock(&coresight_mutex);
-	return name;
-}
+	वापस name;
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_alloc_device_name);
 
-struct bus_type coresight_bustype = {
+काष्ठा bus_type coresight_bustype = अणु
 	.name	= "coresight",
-};
+पूर्ण;
 
-static int __init coresight_init(void)
-{
-	int ret;
+अटल पूर्णांक __init coresight_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = bus_register(&coresight_bustype);
-	if (ret)
-		return ret;
+	ret = bus_रेजिस्टर(&coresight_bustype);
+	अगर (ret)
+		वापस ret;
 
-	ret = etm_perf_init();
-	if (ret)
-		bus_unregister(&coresight_bustype);
+	ret = eपंचांग_perf_init();
+	अगर (ret)
+		bus_unरेजिस्टर(&coresight_bustype);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit coresight_exit(void)
-{
-	etm_perf_exit();
-	bus_unregister(&coresight_bustype);
-}
+अटल व्योम __निकास coresight_निकास(व्योम)
+अणु
+	eपंचांग_perf_निकास();
+	bus_unरेजिस्टर(&coresight_bustype);
+पूर्ण
 
 module_init(coresight_init);
-module_exit(coresight_exit);
+module_निकास(coresight_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Pratik Patel <pratikp@codeaurora.org>");

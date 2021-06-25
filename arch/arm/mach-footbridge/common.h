@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/reboot.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/reboot.h>
 
-extern void footbridge_timer_init(void);
-extern void isa_timer_init(void);
+बाह्य व्योम footbridge_समयr_init(व्योम);
+बाह्य व्योम isa_समयr_init(व्योम);
 
-extern void isa_rtc_init(void);
+बाह्य व्योम isa_rtc_init(व्योम);
 
-extern void footbridge_map_io(void);
-extern void footbridge_init_irq(void);
+बाह्य व्योम footbridge_map_io(व्योम);
+बाह्य व्योम footbridge_init_irq(व्योम);
 
-extern void isa_init_irq(unsigned int irq);
-extern void footbridge_restart(enum reboot_mode, const char *);
+बाह्य व्योम isa_init_irq(अचिन्हित पूर्णांक irq);
+बाह्य व्योम footbridge_restart(क्रमागत reboot_mode, स्थिर अक्षर *);
 
-extern void footbridge_sched_clock(void);
+बाह्य व्योम footbridge_sched_घड़ी(व्योम);

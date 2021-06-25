@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * display.h - OMAP2+ integration-specific DSS header
+ * display.h - OMAP2+ पूर्णांकegration-specअगरic DSS header
  *
  * Copyright (C) 2011 Texas Instruments, Inc.
  */
 
-#ifndef __ARCH_ARM_MACH_OMAP2_DISPLAY_H
-#define __ARCH_ARM_MACH_OMAP2_DISPLAY_H
+#अगर_अघोषित __ARCH_ARM_MACH_OMAP2_DISPLAY_H
+#घोषणा __ARCH_ARM_MACH_OMAP2_DISPLAY_H
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-struct omap_dss_dispc_dev_attr {
+काष्ठा omap_dss_dispc_dev_attr अणु
 	u8	manager_count;
-	bool	has_framedonetv_irq;
-};
+	bool	has_frameकरोnetv_irq;
+पूर्ण;
 
-int omap_init_vrfb(void);
-int omap_init_fb(void);
-int omap_init_vout(void);
+पूर्णांक omap_init_vrfb(व्योम);
+पूर्णांक omap_init_fb(व्योम);
+पूर्णांक omap_init_vout(व्योम);
 
-#endif
+#पूर्ण_अगर

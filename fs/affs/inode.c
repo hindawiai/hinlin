@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/affs/inode.c
  *
  *  (c) 1996  Hans-Joachim Widmaier - Rewritten
  *
- *  (C) 1993  Ray Burr - Modified for Amiga FFS filesystem.
+ *  (C) 1993  Ray Burr - Modअगरied क्रम Amiga FFS fileप्रणाली.
  *
- *  (C) 1992  Eric Youngdale Modified for ISO9660 filesystem.
+ *  (C) 1992  Eric Youngdale Modअगरied क्रम ISO9660 fileप्रणाली.
  *
- *  (C) 1991  Linus Torvalds - minix filesystem
+ *  (C) 1991  Linus Torvalds - minix fileप्रणाली
  */
-#include <linux/sched.h>
-#include <linux/cred.h>
-#include <linux/gfp.h>
-#include "affs.h"
+#समावेश <linux/sched.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/gfp.h>
+#समावेश "affs.h"
 
-struct inode *affs_iget(struct super_block *sb, unsigned long ino)
-{
-	struct affs_sb_info	*sbi = AFFS_SB(sb);
-	struct buffer_head	*bh;
-	struct affs_tail	*tail;
-	struct inode		*inode;
+काष्ठा inode *affs_iget(काष्ठा super_block *sb, अचिन्हित दीर्घ ino)
+अणु
+	काष्ठा affs_sb_info	*sbi = AFFS_SB(sb);
+	काष्ठा buffer_head	*bh;
+	काष्ठा affs_tail	*tail;
+	काष्ठा inode		*inode;
 	u32			 block;
 	u32			 size;
 	u32			 prot;
 	u16			 id;
 
 	inode = iget_locked(sb, ino);
-	if (!inode)
-		return ERR_PTR(-ENOMEM);
-	if (!(inode->i_state & I_NEW))
-		return inode;
+	अगर (!inode)
+		वापस ERR_PTR(-ENOMEM);
+	अगर (!(inode->i_state & I_NEW))
+		वापस inode;
 
 	pr_debug("affs_iget(%lu)\n", inode->i_ino);
 
 	block = inode->i_ino;
-	bh = affs_bread(sb, block);
-	if (!bh) {
+	bh = affs_bपढ़ो(sb, block);
+	अगर (!bh) अणु
 		affs_warning(sb, "read_inode", "Cannot read block %d", block);
-		goto bad_inode;
-	}
-	if (affs_checksum_block(sb, bh) || be32_to_cpu(AFFS_HEAD(bh)->ptype) != T_SHORT) {
+		जाओ bad_inode;
+	पूर्ण
+	अगर (affs_checksum_block(sb, bh) || be32_to_cpu(AFFS_HEAD(bh)->ptype) != T_SHORT) अणु
 		affs_warning(sb,"read_inode",
 			   "Checksum or type (ptype=%d) error on inode %d",
 			   AFFS_HEAD(bh)->ptype, block);
-		goto bad_inode;
-	}
+		जाओ bad_inode;
+	पूर्ण
 
 	tail = AFFS_TAIL(sb, bh);
 	prot = be32_to_cpu(tail->protect);
@@ -56,274 +57,274 @@ struct inode *affs_iget(struct super_block *sb, unsigned long ino)
 	AFFS_I(inode)->i_extcnt = 1;
 	AFFS_I(inode)->i_ext_last = ~1;
 	AFFS_I(inode)->i_protect = prot;
-	atomic_set(&AFFS_I(inode)->i_opencnt, 0);
+	atomic_set(&AFFS_I(inode)->i_खोलोcnt, 0);
 	AFFS_I(inode)->i_blkcnt = 0;
-	AFFS_I(inode)->i_lc = NULL;
+	AFFS_I(inode)->i_lc = शून्य;
 	AFFS_I(inode)->i_lc_size = 0;
-	AFFS_I(inode)->i_lc_shift = 0;
+	AFFS_I(inode)->i_lc_shअगरt = 0;
 	AFFS_I(inode)->i_lc_mask = 0;
-	AFFS_I(inode)->i_ac = NULL;
-	AFFS_I(inode)->i_ext_bh = NULL;
-	AFFS_I(inode)->mmu_private = 0;
+	AFFS_I(inode)->i_ac = शून्य;
+	AFFS_I(inode)->i_ext_bh = शून्य;
+	AFFS_I(inode)->mmu_निजी = 0;
 	AFFS_I(inode)->i_lastalloc = 0;
 	AFFS_I(inode)->i_pa_cnt = 0;
 
-	if (affs_test_opt(sbi->s_flags, SF_SETMODE))
+	अगर (affs_test_opt(sbi->s_flags, SF_SETMODE))
 		inode->i_mode = sbi->s_mode;
-	else
+	अन्यथा
 		inode->i_mode = affs_prot_to_mode(prot);
 
 	id = be16_to_cpu(tail->uid);
-	if (id == 0 || affs_test_opt(sbi->s_flags, SF_SETUID))
+	अगर (id == 0 || affs_test_opt(sbi->s_flags, SF_SETUID))
 		inode->i_uid = sbi->s_uid;
-	else if (id == 0xFFFF && affs_test_opt(sbi->s_flags, SF_MUFS))
-		i_uid_write(inode, 0);
-	else
-		i_uid_write(inode, id);
+	अन्यथा अगर (id == 0xFFFF && affs_test_opt(sbi->s_flags, SF_MUFS))
+		i_uid_ग_लिखो(inode, 0);
+	अन्यथा
+		i_uid_ग_लिखो(inode, id);
 
 	id = be16_to_cpu(tail->gid);
-	if (id == 0 || affs_test_opt(sbi->s_flags, SF_SETGID))
+	अगर (id == 0 || affs_test_opt(sbi->s_flags, SF_SETGID))
 		inode->i_gid = sbi->s_gid;
-	else if (id == 0xFFFF && affs_test_opt(sbi->s_flags, SF_MUFS))
-		i_gid_write(inode, 0);
-	else
-		i_gid_write(inode, id);
+	अन्यथा अगर (id == 0xFFFF && affs_test_opt(sbi->s_flags, SF_MUFS))
+		i_gid_ग_लिखो(inode, 0);
+	अन्यथा
+		i_gid_ग_लिखो(inode, id);
 
-	switch (be32_to_cpu(tail->stype)) {
-	case ST_ROOT:
+	चयन (be32_to_cpu(tail->stype)) अणु
+	हाल ST_ROOT:
 		inode->i_uid = sbi->s_uid;
 		inode->i_gid = sbi->s_gid;
 		fallthrough;
-	case ST_USERDIR:
-		if (be32_to_cpu(tail->stype) == ST_USERDIR ||
-		    affs_test_opt(sbi->s_flags, SF_SETMODE)) {
-			if (inode->i_mode & S_IRUSR)
+	हाल ST_USERसूची:
+		अगर (be32_to_cpu(tail->stype) == ST_USERसूची ||
+		    affs_test_opt(sbi->s_flags, SF_SETMODE)) अणु
+			अगर (inode->i_mode & S_IRUSR)
 				inode->i_mode |= S_IXUSR;
-			if (inode->i_mode & S_IRGRP)
+			अगर (inode->i_mode & S_IRGRP)
 				inode->i_mode |= S_IXGRP;
-			if (inode->i_mode & S_IROTH)
+			अगर (inode->i_mode & S_IROTH)
 				inode->i_mode |= S_IXOTH;
-			inode->i_mode |= S_IFDIR;
-		} else
-			inode->i_mode = S_IRUGO | S_IXUGO | S_IWUSR | S_IFDIR;
+			inode->i_mode |= S_IFसूची;
+		पूर्ण अन्यथा
+			inode->i_mode = S_IRUGO | S_IXUGO | S_IWUSR | S_IFसूची;
 		/* Maybe it should be controlled by mount parameter? */
 		//inode->i_mode |= S_ISVTX;
 		inode->i_op = &affs_dir_inode_operations;
 		inode->i_fop = &affs_dir_operations;
-		break;
-	case ST_LINKDIR:
-#if 0
+		अवरोध;
+	हाल ST_LINKसूची:
+#अगर 0
 		affs_warning(sb, "read_inode", "inode is LINKDIR");
-		goto bad_inode;
-#else
-		inode->i_mode |= S_IFDIR;
-		/* ... and leave ->i_op and ->i_fop pointing to empty */
-		break;
-#endif
-	case ST_LINKFILE:
+		जाओ bad_inode;
+#अन्यथा
+		inode->i_mode |= S_IFसूची;
+		/* ... and leave ->i_op and ->i_fop poपूर्णांकing to empty */
+		अवरोध;
+#पूर्ण_अगर
+	हाल ST_LINKखाता:
 		affs_warning(sb, "read_inode", "inode is LINKFILE");
-		goto bad_inode;
-	case ST_FILE:
+		जाओ bad_inode;
+	हाल ST_खाता:
 		size = be32_to_cpu(tail->size);
 		inode->i_mode |= S_IFREG;
-		AFFS_I(inode)->mmu_private = inode->i_size = size;
-		if (inode->i_size) {
+		AFFS_I(inode)->mmu_निजी = inode->i_size = size;
+		अगर (inode->i_size) अणु
 			AFFS_I(inode)->i_blkcnt = (size - 1) /
 					       sbi->s_data_blksize + 1;
 			AFFS_I(inode)->i_extcnt = (AFFS_I(inode)->i_blkcnt - 1) /
 					       sbi->s_hashsize + 1;
-		}
-		if (tail->link_chain)
+		पूर्ण
+		अगर (tail->link_chain)
 			set_nlink(inode, 2);
 		inode->i_mapping->a_ops = affs_test_opt(sbi->s_flags, SF_OFS) ?
 					  &affs_aops_ofs : &affs_aops;
 		inode->i_op = &affs_file_inode_operations;
 		inode->i_fop = &affs_file_operations;
-		break;
-	case ST_SOFTLINK:
-		inode->i_size = strlen((char *)AFFS_HEAD(bh)->table);
+		अवरोध;
+	हाल ST_SOFTLINK:
+		inode->i_size = म_माप((अक्षर *)AFFS_HEAD(bh)->table);
 		inode->i_mode |= S_IFLNK;
 		inode_nohighmem(inode);
 		inode->i_op = &affs_symlink_inode_operations;
 		inode->i_data.a_ops = &affs_symlink_aops;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	inode->i_mtime.tv_sec = inode->i_atime.tv_sec = inode->i_ctime.tv_sec
+	inode->i_mसमय.tv_sec = inode->i_aसमय.tv_sec = inode->i_स_समय.tv_sec
 		       = (be32_to_cpu(tail->change.days) * 86400LL +
 		         be32_to_cpu(tail->change.mins) * 60 +
 			 be32_to_cpu(tail->change.ticks) / 50 +
 			 AFFS_EPOCH_DELTA) +
 			 sys_tz.tz_minuteswest * 60;
-	inode->i_mtime.tv_nsec = inode->i_ctime.tv_nsec = inode->i_atime.tv_nsec = 0;
-	affs_brelse(bh);
+	inode->i_mसमय.tv_nsec = inode->i_स_समय.tv_nsec = inode->i_aसमय.tv_nsec = 0;
+	affs_brअन्यथा(bh);
 	unlock_new_inode(inode);
-	return inode;
+	वापस inode;
 
 bad_inode:
-	affs_brelse(bh);
+	affs_brअन्यथा(bh);
 	iget_failed(inode);
-	return ERR_PTR(-EIO);
-}
+	वापस ERR_PTR(-EIO);
+पूर्ण
 
-int
-affs_write_inode(struct inode *inode, struct writeback_control *wbc)
-{
-	struct super_block	*sb = inode->i_sb;
-	struct buffer_head	*bh;
-	struct affs_tail	*tail;
+पूर्णांक
+affs_ग_लिखो_inode(काष्ठा inode *inode, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	काष्ठा super_block	*sb = inode->i_sb;
+	काष्ठा buffer_head	*bh;
+	काष्ठा affs_tail	*tail;
 	uid_t			 uid;
 	gid_t			 gid;
 
 	pr_debug("write_inode(%lu)\n", inode->i_ino);
 
-	if (!inode->i_nlink)
-		// possibly free block
-		return 0;
-	bh = affs_bread(sb, inode->i_ino);
-	if (!bh) {
+	अगर (!inode->i_nlink)
+		// possibly मुक्त block
+		वापस 0;
+	bh = affs_bपढ़ो(sb, inode->i_ino);
+	अगर (!bh) अणु
 		affs_error(sb,"write_inode","Cannot read block %lu",inode->i_ino);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	tail = AFFS_TAIL(sb, bh);
-	if (tail->stype == cpu_to_be32(ST_ROOT)) {
-		affs_secs_to_datestamp(inode->i_mtime.tv_sec,
+	अगर (tail->stype == cpu_to_be32(ST_ROOT)) अणु
+		affs_secs_to_datestamp(inode->i_mसमय.tv_sec,
 				       &AFFS_ROOT_TAIL(sb, bh)->root_change);
-	} else {
+	पूर्ण अन्यथा अणु
 		tail->protect = cpu_to_be32(AFFS_I(inode)->i_protect);
 		tail->size = cpu_to_be32(inode->i_size);
-		affs_secs_to_datestamp(inode->i_mtime.tv_sec, &tail->change);
-		if (!(inode->i_ino == AFFS_SB(sb)->s_root_block)) {
-			uid = i_uid_read(inode);
-			gid = i_gid_read(inode);
-			if (affs_test_opt(AFFS_SB(sb)->s_flags, SF_MUFS)) {
-				if (uid == 0 || uid == 0xFFFF)
+		affs_secs_to_datestamp(inode->i_mसमय.tv_sec, &tail->change);
+		अगर (!(inode->i_ino == AFFS_SB(sb)->s_root_block)) अणु
+			uid = i_uid_पढ़ो(inode);
+			gid = i_gid_पढ़ो(inode);
+			अगर (affs_test_opt(AFFS_SB(sb)->s_flags, SF_MUFS)) अणु
+				अगर (uid == 0 || uid == 0xFFFF)
 					uid = uid ^ ~0;
-				if (gid == 0 || gid == 0xFFFF)
+				अगर (gid == 0 || gid == 0xFFFF)
 					gid = gid ^ ~0;
-			}
-			if (!affs_test_opt(AFFS_SB(sb)->s_flags, SF_SETUID))
+			पूर्ण
+			अगर (!affs_test_opt(AFFS_SB(sb)->s_flags, SF_SETUID))
 				tail->uid = cpu_to_be16(uid);
-			if (!affs_test_opt(AFFS_SB(sb)->s_flags, SF_SETGID))
+			अगर (!affs_test_opt(AFFS_SB(sb)->s_flags, SF_SETGID))
 				tail->gid = cpu_to_be16(gid);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	affs_fix_checksum(sb, bh);
 	mark_buffer_dirty_inode(bh, inode);
-	affs_brelse(bh);
-	affs_free_prealloc(inode);
-	return 0;
-}
+	affs_brअन्यथा(bh);
+	affs_मुक्त_pपुनः_स्मृति(inode);
+	वापस 0;
+पूर्ण
 
-int
-affs_notify_change(struct user_namespace *mnt_userns, struct dentry *dentry,
-		   struct iattr *attr)
-{
-	struct inode *inode = d_inode(dentry);
-	int error;
+पूर्णांक
+affs_notअगरy_change(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		   काष्ठा iattr *attr)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	पूर्णांक error;
 
 	pr_debug("notify_change(%lu,0x%x)\n", inode->i_ino, attr->ia_valid);
 
 	error = setattr_prepare(&init_user_ns, dentry, attr);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	if (((attr->ia_valid & ATTR_UID) &&
+	अगर (((attr->ia_valid & ATTR_UID) &&
 	      affs_test_opt(AFFS_SB(inode->i_sb)->s_flags, SF_SETUID)) ||
 	    ((attr->ia_valid & ATTR_GID) &&
 	      affs_test_opt(AFFS_SB(inode->i_sb)->s_flags, SF_SETGID)) ||
 	    ((attr->ia_valid & ATTR_MODE) &&
 	     (AFFS_SB(inode->i_sb)->s_flags &
-	      (AFFS_MOUNT_SF_SETMODE | AFFS_MOUNT_SF_IMMUTABLE)))) {
-		if (!affs_test_opt(AFFS_SB(inode->i_sb)->s_flags, SF_QUIET))
+	      (AFFS_MOUNT_SF_SETMODE | AFFS_MOUNT_SF_IMMUTABLE)))) अणु
+		अगर (!affs_test_opt(AFFS_SB(inode->i_sb)->s_flags, SF_QUIET))
 			error = -EPERM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if ((attr->ia_valid & ATTR_SIZE) &&
-	    attr->ia_size != i_size_read(inode)) {
+	अगर ((attr->ia_valid & ATTR_SIZE) &&
+	    attr->ia_size != i_size_पढ़ो(inode)) अणु
 		error = inode_newsize_ok(inode, attr->ia_size);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 
 		truncate_setsize(inode, attr->ia_size);
 		affs_truncate(inode);
-	}
+	पूर्ण
 
 	setattr_copy(&init_user_ns, inode, attr);
 	mark_inode_dirty(inode);
 
-	if (attr->ia_valid & ATTR_MODE)
+	अगर (attr->ia_valid & ATTR_MODE)
 		affs_mode_to_prot(inode);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-void
-affs_evict_inode(struct inode *inode)
-{
-	unsigned long cache_page;
+व्योम
+affs_evict_inode(काष्ठा inode *inode)
+अणु
+	अचिन्हित दीर्घ cache_page;
 	pr_debug("evict_inode(ino=%lu, nlink=%u)\n",
 		 inode->i_ino, inode->i_nlink);
 	truncate_inode_pages_final(&inode->i_data);
 
-	if (!inode->i_nlink) {
+	अगर (!inode->i_nlink) अणु
 		inode->i_size = 0;
 		affs_truncate(inode);
-	}
+	पूर्ण
 
 	invalidate_inode_buffers(inode);
 	clear_inode(inode);
-	affs_free_prealloc(inode);
-	cache_page = (unsigned long)AFFS_I(inode)->i_lc;
-	if (cache_page) {
+	affs_मुक्त_pपुनः_स्मृति(inode);
+	cache_page = (अचिन्हित दीर्घ)AFFS_I(inode)->i_lc;
+	अगर (cache_page) अणु
 		pr_debug("freeing ext cache\n");
-		AFFS_I(inode)->i_lc = NULL;
-		AFFS_I(inode)->i_ac = NULL;
-		free_page(cache_page);
-	}
-	affs_brelse(AFFS_I(inode)->i_ext_bh);
+		AFFS_I(inode)->i_lc = शून्य;
+		AFFS_I(inode)->i_ac = शून्य;
+		मुक्त_page(cache_page);
+	पूर्ण
+	affs_brअन्यथा(AFFS_I(inode)->i_ext_bh);
 	AFFS_I(inode)->i_ext_last = ~1;
-	AFFS_I(inode)->i_ext_bh = NULL;
+	AFFS_I(inode)->i_ext_bh = शून्य;
 
-	if (!inode->i_nlink)
-		affs_free_block(inode->i_sb, inode->i_ino);
-}
+	अगर (!inode->i_nlink)
+		affs_मुक्त_block(inode->i_sb, inode->i_ino);
+पूर्ण
 
-struct inode *
-affs_new_inode(struct inode *dir)
-{
-	struct super_block	*sb = dir->i_sb;
-	struct inode		*inode;
+काष्ठा inode *
+affs_new_inode(काष्ठा inode *dir)
+अणु
+	काष्ठा super_block	*sb = dir->i_sb;
+	काष्ठा inode		*inode;
 	u32			 block;
-	struct buffer_head	*bh;
+	काष्ठा buffer_head	*bh;
 
-	if (!(inode = new_inode(sb)))
-		goto err_inode;
+	अगर (!(inode = new_inode(sb)))
+		जाओ err_inode;
 
-	if (!(block = affs_alloc_block(dir, dir->i_ino)))
-		goto err_block;
+	अगर (!(block = affs_alloc_block(dir, dir->i_ino)))
+		जाओ err_block;
 
 	bh = affs_getzeroblk(sb, block);
-	if (!bh)
-		goto err_bh;
+	अगर (!bh)
+		जाओ err_bh;
 	mark_buffer_dirty_inode(bh, inode);
-	affs_brelse(bh);
+	affs_brअन्यथा(bh);
 
 	inode->i_uid     = current_fsuid();
 	inode->i_gid     = current_fsgid();
 	inode->i_ino     = block;
 	set_nlink(inode, 1);
-	inode->i_mtime   = inode->i_atime = inode->i_ctime = current_time(inode);
-	atomic_set(&AFFS_I(inode)->i_opencnt, 0);
+	inode->i_mसमय   = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
+	atomic_set(&AFFS_I(inode)->i_खोलोcnt, 0);
 	AFFS_I(inode)->i_blkcnt = 0;
-	AFFS_I(inode)->i_lc = NULL;
+	AFFS_I(inode)->i_lc = शून्य;
 	AFFS_I(inode)->i_lc_size = 0;
-	AFFS_I(inode)->i_lc_shift = 0;
+	AFFS_I(inode)->i_lc_shअगरt = 0;
 	AFFS_I(inode)->i_lc_mask = 0;
-	AFFS_I(inode)->i_ac = NULL;
-	AFFS_I(inode)->i_ext_bh = NULL;
-	AFFS_I(inode)->mmu_private = 0;
+	AFFS_I(inode)->i_ac = शून्य;
+	AFFS_I(inode)->i_ext_bh = शून्य;
+	AFFS_I(inode)->mmu_निजी = 0;
 	AFFS_I(inode)->i_protect = 0;
 	AFFS_I(inode)->i_lastalloc = 0;
 	AFFS_I(inode)->i_pa_cnt = 0;
@@ -332,55 +333,55 @@ affs_new_inode(struct inode *dir)
 
 	insert_inode_hash(inode);
 
-	return inode;
+	वापस inode;
 
 err_bh:
-	affs_free_block(sb, block);
+	affs_मुक्त_block(sb, block);
 err_block:
 	iput(inode);
 err_inode:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Add an entry to a directory. Create the header block
- * and insert it into the hash table.
+ * and insert it पूर्णांकo the hash table.
  */
 
-int
-affs_add_entry(struct inode *dir, struct inode *inode, struct dentry *dentry, s32 type)
-{
-	struct super_block *sb = dir->i_sb;
-	struct buffer_head *inode_bh = NULL;
-	struct buffer_head *bh;
+पूर्णांक
+affs_add_entry(काष्ठा inode *dir, काष्ठा inode *inode, काष्ठा dentry *dentry, s32 type)
+अणु
+	काष्ठा super_block *sb = dir->i_sb;
+	काष्ठा buffer_head *inode_bh = शून्य;
+	काष्ठा buffer_head *bh;
 	u32 block = 0;
-	int retval;
+	पूर्णांक retval;
 
 	pr_debug("%s(dir=%lu, inode=%lu, \"%pd\", type=%d)\n", __func__,
 		 dir->i_ino, inode->i_ino, dentry, type);
 
 	retval = -EIO;
-	bh = affs_bread(sb, inode->i_ino);
-	if (!bh)
-		goto done;
+	bh = affs_bपढ़ो(sb, inode->i_ino);
+	अगर (!bh)
+		जाओ करोne;
 
 	affs_lock_link(inode);
-	switch (type) {
-	case ST_LINKFILE:
-	case ST_LINKDIR:
+	चयन (type) अणु
+	हाल ST_LINKखाता:
+	हाल ST_LINKसूची:
 		retval = -ENOSPC;
 		block = affs_alloc_block(dir, dir->i_ino);
-		if (!block)
-			goto err;
+		अगर (!block)
+			जाओ err;
 		retval = -EIO;
 		inode_bh = bh;
 		bh = affs_getzeroblk(sb, block);
-		if (!bh)
-			goto err;
-		break;
-	default:
-		break;
-	}
+		अगर (!bh)
+			जाओ err;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	AFFS_HEAD(bh)->ptype = cpu_to_be32(T_SHORT);
 	AFFS_HEAD(bh)->key = cpu_to_be32(bh->b_blocknr);
@@ -388,7 +389,7 @@ affs_add_entry(struct inode *dir, struct inode *inode, struct dentry *dentry, s3
 	AFFS_TAIL(sb, bh)->stype = cpu_to_be32(type);
 	AFFS_TAIL(sb, bh)->parent = cpu_to_be32(dir->i_ino);
 
-	if (inode_bh) {
+	अगर (inode_bh) अणु
 		__be32 chain;
 	       	chain = AFFS_TAIL(sb, inode_bh)->link_chain;
 		AFFS_TAIL(sb, bh)->original = cpu_to_be32(inode->i_ino);
@@ -398,10 +399,10 @@ affs_add_entry(struct inode *dir, struct inode *inode, struct dentry *dentry, s3
 		mark_buffer_dirty_inode(inode_bh, inode);
 		set_nlink(inode, 2);
 		ihold(inode);
-	}
+	पूर्ण
 	affs_fix_checksum(sb, bh);
 	mark_buffer_dirty_inode(bh, inode);
-	dentry->d_fsdata = (void *)(long)bh->b_blocknr;
+	dentry->d_fsdata = (व्योम *)(दीर्घ)bh->b_blocknr;
 
 	affs_lock_dir(dir);
 	retval = affs_insert_hash(dir, bh);
@@ -410,13 +411,13 @@ affs_add_entry(struct inode *dir, struct inode *inode, struct dentry *dentry, s3
 	affs_unlock_link(inode);
 
 	d_instantiate(dentry, inode);
-done:
-	affs_brelse(inode_bh);
-	affs_brelse(bh);
-	return retval;
+करोne:
+	affs_brअन्यथा(inode_bh);
+	affs_brअन्यथा(bh);
+	वापस retval;
 err:
-	if (block)
-		affs_free_block(sb, block);
+	अगर (block)
+		affs_मुक्त_block(sb, block);
 	affs_unlock_link(inode);
-	goto done;
-}
+	जाओ करोne;
+पूर्ण

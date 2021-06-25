@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  linux/drivers/video/kyro/fbdev.c
  *
@@ -5,59 +6,59 @@
  *  Copyright (C) 2003, 2004 Paul Mundt
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/delay.h>
-#include <linux/fb.h>
-#include <linux/ioctl.h>
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <asm/io.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
 
-#include <video/kyro.h>
+#समावेश <video/kyro.h>
 
-#include "STG4000Reg.h"
-#include "STG4000Interface.h"
+#समावेश "STG4000Reg.h"
+#समावेश "STG4000Interface.h"
 
 /*
  * PCI Definitions
  */
-#define PCI_VENDOR_ID_ST	0x104a
-#define PCI_DEVICE_ID_STG4000	0x0010
+#घोषणा PCI_VENDOR_ID_ST	0x104a
+#घोषणा PCI_DEVICE_ID_STG4000	0x0010
 
-#define KHZ2PICOS(a) (1000000000UL/(a))
+#घोषणा KHZ2PICOS(a) (1000000000UL/(a))
 
 /****************************************************************************/
-static struct fb_fix_screeninfo kyro_fix = {
+अटल काष्ठा fb_fix_screeninfo kyro_fix = अणु
 	.id		= "ST Kyro",
 	.type		= FB_TYPE_PACKED_PIXELS,
 	.visual		= FB_VISUAL_TRUECOLOR,
 	.accel		= FB_ACCEL_NONE,
-};
+पूर्ण;
 
-static const struct fb_var_screeninfo kyro_var = {
+अटल स्थिर काष्ठा fb_var_screeninfo kyro_var = अणु
 	/* 640x480, 16bpp @ 60 Hz */
 	.xres		= 640,
 	.yres		= 480,
-	.xres_virtual	= 640,
-	.yres_virtual	= 480,
+	.xres_भव	= 640,
+	.yres_भव	= 480,
 	.bits_per_pixel	= 16,
-	.red		= { 11, 5, 0 },
-	.green		= {  5, 6, 0 },
-	.blue		= {  0, 5, 0 },
+	.red		= अणु 11, 5, 0 पूर्ण,
+	.green		= अणु  5, 6, 0 पूर्ण,
+	.blue		= अणु  0, 5, 0 पूर्ण,
 	.activate	= FB_ACTIVATE_NOW,
 	.height		= -1,
 	.width		= -1,
-	.pixclock	= KHZ2PICOS(25175),
+	.pixघड़ी	= KHZ2PICOS(25175),
 	.left_margin	= 48,
 	.right_margin	= 16,
 	.upper_margin	= 33,
@@ -65,202 +66,202 @@ static const struct fb_var_screeninfo kyro_var = {
 	.hsync_len	= 96,
 	.vsync_len	= 2,
 	.vmode		= FB_VMODE_NONINTERLACED,
-};
+पूर्ण;
 
-typedef struct {
-	STG4000REG __iomem *pSTGReg;	/* Virtual address of PCI register region */
-	u32 ulNextFreeVidMem;	/* Offset from start of vid mem to next free region */
+प्रकार काष्ठा अणु
+	STG4000REG __iomem *pSTGReg;	/* Virtual address of PCI रेजिस्टर region */
+	u32 ulNextFreeVidMem;	/* Offset from start of vid mem to next मुक्त region */
 	u32 ulOverlayOffset;	/* Offset from start of vid mem to overlay */
 	u32 ulOverlayStride;	/* Interleaved YUV and 422 mode Y stride */
 	u32 ulOverlayUVStride;	/* 422 mode U & V stride */
-} device_info_t;
+पूर्ण device_info_t;
 
-/* global graphics card info structure (one per card) */
-static device_info_t deviceInfo;
+/* global graphics card info काष्ठाure (one per card) */
+अटल device_info_t deviceInfo;
 
-static char *mode_option = NULL;
-static int nopan = 0;
-static int nowrap = 1;
-static int nomtrr = 0;
+अटल अक्षर *mode_option = शून्य;
+अटल पूर्णांक nopan = 0;
+अटल पूर्णांक nowrap = 1;
+अटल पूर्णांक nomtrr = 0;
 
 /* PCI driver prototypes */
-static int kyrofb_probe(struct pci_dev *pdev, const struct pci_device_id *ent);
-static void kyrofb_remove(struct pci_dev *pdev);
+अटल पूर्णांक kyrofb_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent);
+अटल व्योम kyrofb_हटाओ(काष्ठा pci_dev *pdev);
 
-static struct fb_videomode kyro_modedb[] = {
-	{
+अटल काष्ठा fb_videomode kyro_modedb[] = अणु
+	अणु
 		/* 640x350 @ 85Hz */
-		NULL, 85, 640, 350, KHZ2PICOS(31500),
+		शून्य, 85, 640, 350, KHZ2PICOS(31500),
 		96, 32, 60, 32, 64, 3,
 		FB_SYNC_HOR_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 640x400 @ 85Hz */
-		NULL, 85, 640, 400, KHZ2PICOS(31500),
+		शून्य, 85, 640, 400, KHZ2PICOS(31500),
 		96, 32, 41, 1, 64, 3,
 		FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 720x400 @ 85Hz */
-		NULL, 85, 720, 400, KHZ2PICOS(35500),
+		शून्य, 85, 720, 400, KHZ2PICOS(35500),
 		108, 36, 42, 1, 72, 3,
 		FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 640x480 @ 60Hz */
-		NULL, 60, 640, 480, KHZ2PICOS(25175),
+		शून्य, 60, 640, 480, KHZ2PICOS(25175),
 		48, 16, 33, 10, 96, 2,
 		0, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 640x480 @ 72Hz */
-		NULL, 72, 640, 480, KHZ2PICOS(31500),
+		शून्य, 72, 640, 480, KHZ2PICOS(31500),
 		128, 24, 28, 9, 40, 3,
 		0, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 640x480 @ 75Hz */
-		NULL, 75, 640, 480, KHZ2PICOS(31500),
+		शून्य, 75, 640, 480, KHZ2PICOS(31500),
 		120, 16, 16, 1, 64, 3,
 		0, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 640x480 @ 85Hz */
-		NULL, 85, 640, 480, KHZ2PICOS(36000),
+		शून्य, 85, 640, 480, KHZ2PICOS(36000),
 		80, 56, 25, 1, 56, 3,
 		0, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 800x600 @ 56Hz */
-		NULL, 56, 800, 600, KHZ2PICOS(36000),
+		शून्य, 56, 800, 600, KHZ2PICOS(36000),
 		128, 24, 22, 1, 72, 2,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 800x600 @ 60Hz */
-		NULL, 60, 800, 600, KHZ2PICOS(40000),
+		शून्य, 60, 800, 600, KHZ2PICOS(40000),
 		88, 40, 23, 1, 128, 4,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 800x600 @ 72Hz */
-		NULL, 72, 800, 600, KHZ2PICOS(50000),
+		शून्य, 72, 800, 600, KHZ2PICOS(50000),
 		64, 56, 23, 37, 120, 6,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 800x600 @ 75Hz */
-		NULL, 75, 800, 600, KHZ2PICOS(49500),
+		शून्य, 75, 800, 600, KHZ2PICOS(49500),
 		160, 16, 21, 1, 80, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 800x600 @ 85Hz */
-		NULL, 85, 800, 600, KHZ2PICOS(56250),
+		शून्य, 85, 800, 600, KHZ2PICOS(56250),
 		152, 32, 27, 1, 64, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1024x768 @ 60Hz */
-		NULL, 60, 1024, 768, KHZ2PICOS(65000),
+		शून्य, 60, 1024, 768, KHZ2PICOS(65000),
 		160, 24, 29, 3, 136, 6,
 		0, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1024x768 @ 70Hz */
-		NULL, 70, 1024, 768, KHZ2PICOS(75000),
+		शून्य, 70, 1024, 768, KHZ2PICOS(75000),
 		144, 24, 29, 3, 136, 6,
 		0, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1024x768 @ 75Hz */
-		NULL, 75, 1024, 768, KHZ2PICOS(78750),
+		शून्य, 75, 1024, 768, KHZ2PICOS(78750),
 		176, 16, 28, 1, 96, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1024x768 @ 85Hz */
-		NULL, 85, 1024, 768, KHZ2PICOS(94500),
+		शून्य, 85, 1024, 768, KHZ2PICOS(94500),
 		208, 48, 36, 1, 96, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1152x864 @ 75Hz */
-		NULL, 75, 1152, 864, KHZ2PICOS(108000),
+		शून्य, 75, 1152, 864, KHZ2PICOS(108000),
 		256, 64, 32, 1, 128, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1280x960 @ 60Hz */
-		NULL, 60, 1280, 960, KHZ2PICOS(108000),
+		शून्य, 60, 1280, 960, KHZ2PICOS(108000),
 		312, 96, 36, 1, 112, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1280x960 @ 85Hz */
-		NULL, 85, 1280, 960, KHZ2PICOS(148500),
+		शून्य, 85, 1280, 960, KHZ2PICOS(148500),
 		224, 64, 47, 1, 160, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1280x1024 @ 60Hz */
-		NULL, 60, 1280, 1024, KHZ2PICOS(108000),
+		शून्य, 60, 1280, 1024, KHZ2PICOS(108000),
 		248, 48, 38, 1, 112, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1280x1024 @ 75Hz */
-		NULL, 75, 1280, 1024, KHZ2PICOS(135000),
+		शून्य, 75, 1280, 1024, KHZ2PICOS(135000),
 		248, 16, 38, 1, 144, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1280x1024 @ 85Hz */
-		NULL, 85, 1280, 1024, KHZ2PICOS(157500),
+		शून्य, 85, 1280, 1024, KHZ2PICOS(157500),
 		224, 64, 44, 1, 160, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1600x1200 @ 60Hz */
-		NULL, 60, 1600, 1200, KHZ2PICOS(162000),
+		शून्य, 60, 1600, 1200, KHZ2PICOS(162000),
 		304, 64, 46, 1, 192, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1600x1200 @ 65Hz */
-		NULL, 65, 1600, 1200, KHZ2PICOS(175500),
+		शून्य, 65, 1600, 1200, KHZ2PICOS(175500),
 		304, 64, 46, 1, 192, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1600x1200 @ 70Hz */
-		NULL, 70, 1600, 1200, KHZ2PICOS(189000),
+		शून्य, 70, 1600, 1200, KHZ2PICOS(189000),
 		304, 64, 46, 1, 192, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1600x1200 @ 75Hz */
-		NULL, 75, 1600, 1200, KHZ2PICOS(202500),
+		शून्य, 75, 1600, 1200, KHZ2PICOS(202500),
 		304, 64, 46, 1, 192, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1600x1200 @ 85Hz */
-		NULL, 85, 1600, 1200, KHZ2PICOS(229500),
+		शून्य, 85, 1600, 1200, KHZ2PICOS(229500),
 		304, 64, 46, 1, 192, 3,
 		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1792x1344 @ 60Hz */
-		NULL, 60, 1792, 1344, KHZ2PICOS(204750),
+		शून्य, 60, 1792, 1344, KHZ2PICOS(204750),
 		328, 128, 46, 1, 200, 3,
 		FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1792x1344 @ 75Hz */
-		NULL, 75, 1792, 1344, KHZ2PICOS(261000),
+		शून्य, 75, 1792, 1344, KHZ2PICOS(261000),
 		352, 96, 69, 1, 216, 3,
 		FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1856x1392 @ 60Hz */
-		NULL, 60, 1856, 1392, KHZ2PICOS(218250),
+		शून्य, 60, 1856, 1392, KHZ2PICOS(218250),
 		352, 96, 43, 1, 224, 3,
 		FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1856x1392 @ 75Hz */
-		NULL, 75, 1856, 1392, KHZ2PICOS(288000),
+		शून्य, 75, 1856, 1392, KHZ2PICOS(288000),
 		352, 128, 104, 1, 224, 3,
 		FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1920x1440 @ 60Hz */
-		NULL, 60, 1920, 1440, KHZ2PICOS(234000),
+		शून्य, 60, 1920, 1440, KHZ2PICOS(234000),
 		344, 128, 56, 1, 208, 3,
 		FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	}, {
+	पूर्ण, अणु
 		/* 1920x1440 @ 75Hz */
-		NULL, 75, 1920, 1440, KHZ2PICOS(297000),
+		शून्य, 75, 1920, 1440, KHZ2PICOS(297000),
 		352, 144, 56, 1, 224, 3,
 		FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-	},
-};
-#define NUM_TOTAL_MODES	ARRAY_SIZE(kyro_modedb)
+	पूर्ण,
+पूर्ण;
+#घोषणा NUM_TOTAL_MODES	ARRAY_SIZE(kyro_modedb)
 
 /*
  * This needs to be kept ordered corresponding to kyro_modedb.
  */
-enum {
+क्रमागत अणु
 	VMODE_640_350_85,
 	VMODE_640_400_85,
 	VMODE_720_400_85,
@@ -294,25 +295,25 @@ enum {
 	VMODE_1856_1392_75,
 	VMODE_1920_1440_60,
 	VMODE_1920_1440_75,
-};
+पूर्ण;
 
 /* Accessors */
-static int kyro_dev_video_mode_set(struct fb_info *info)
-{
-	struct kyrofb_info *par = info->par;
+अटल पूर्णांक kyro_dev_video_mode_set(काष्ठा fb_info *info)
+अणु
+	काष्ठा kyrofb_info *par = info->par;
 
 	/* Turn off display */
 	StopVTG(deviceInfo.pSTGReg);
 	DisableRamdacOutput(deviceInfo.pSTGReg);
 
-	/* Bring us out of VGA and into Hi-Res mode, if not already. */
+	/* Bring us out of VGA and पूर्णांकo Hi-Res mode, अगर not alपढ़ोy. */
 	DisableVGA(deviceInfo.pSTGReg);
 
-	if (InitialiseRamdac(deviceInfo.pSTGReg,
+	अगर (InitialiseRamdac(deviceInfo.pSTGReg,
 			     info->var.bits_per_pixel,
 			     info->var.xres, info->var.yres,
 			     par->HSP, par->VSP, &par->PIXCLK) < 0)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	SetupVTG(deviceInfo.pSTGReg, par);
 
@@ -326,21 +327,21 @@ static int kyro_dev_video_mode_set(struct fb_info *info)
 				      info->var.bits_per_pixel;
 	deviceInfo.ulOverlayOffset = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kyro_dev_overlay_create(u32 ulWidth,
-				   u32 ulHeight, int bLinear)
-{
+अटल पूर्णांक kyro_dev_overlay_create(u32 ulWidth,
+				   u32 ulHeight, पूर्णांक bLinear)
+अणु
 	u32 offset;
 	u32 stride, uvStride;
 
-	if (deviceInfo.ulOverlayOffset != 0)
+	अगर (deviceInfo.ulOverlayOffset != 0)
 		/*
 		 * Can only create one overlay without resetting the card or
 		 * changing display mode
 		 */
-		return -EINVAL;
+		वापस -EINVAL;
 
 	ResetOverlayRegisters(deviceInfo.pSTGReg);
 
@@ -348,13 +349,13 @@ static int kyro_dev_overlay_create(u32 ulWidth,
 	 * sure the start offset is on an appropriate boundary.
 	 */
 	offset = deviceInfo.ulNextFreeVidMem;
-	if ((offset & 0x1f) != 0) {
+	अगर ((offset & 0x1f) != 0) अणु
 		offset = (offset + 32L) & 0xffffffE0L;
-	}
+	पूर्ण
 
-	if (CreateOverlaySurface(deviceInfo.pSTGReg, ulWidth, ulHeight,
+	अगर (CreateOverlaySurface(deviceInfo.pSTGReg, ulWidth, ulHeight,
 				 bLinear, offset, &stride, &uvStride) < 0)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	deviceInfo.ulOverlayOffset = offset;
 	deviceInfo.ulOverlayStride = stride;
@@ -363,14 +364,14 @@ static int kyro_dev_overlay_create(u32 ulWidth,
 
 	SetOverlayBlendMode(deviceInfo.pSTGReg, GLOBAL_ALPHA, 0xf, 0x0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kyro_dev_overlay_viewport_set(u32 x, u32 y, u32 ulWidth, u32 ulHeight)
-{
-	if (deviceInfo.ulOverlayOffset == 0)
+अटल पूर्णांक kyro_dev_overlay_viewport_set(u32 x, u32 y, u32 ulWidth, u32 ulHeight)
+अणु
+	अगर (deviceInfo.ulOverlayOffset == 0)
 		/* probably haven't called CreateOverlay yet */
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Stop Ramdac Output */
 	DisableRamdacOutput(deviceInfo.pSTGReg);
@@ -382,32 +383,32 @@ static int kyro_dev_overlay_viewport_set(u32 x, u32 y, u32 ulWidth, u32 ulHeight
 	/* Start Ramdac Output */
 	EnableRamdacOutput(deviceInfo.pSTGReg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline unsigned long get_line_length(int x, int bpp)
-{
-	return (unsigned long)((((x*bpp)+31)&~31) >> 3);
-}
+अटल अंतरभूत अचिन्हित दीर्घ get_line_length(पूर्णांक x, पूर्णांक bpp)
+अणु
+	वापस (अचिन्हित दीर्घ)((((x*bpp)+31)&~31) >> 3);
+पूर्ण
 
-static int kyrofb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
-{
-	struct kyrofb_info *par = info->par;
+अटल पूर्णांक kyrofb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
+	काष्ठा kyrofb_info *par = info->par;
 
-	if (var->bits_per_pixel != 16 && var->bits_per_pixel != 32) {
-		printk(KERN_WARNING "kyrofb: depth not supported: %u\n", var->bits_per_pixel);
-		return -EINVAL;
-	}
+	अगर (var->bits_per_pixel != 16 && var->bits_per_pixel != 32) अणु
+		prपूर्णांकk(KERN_WARNING "kyrofb: depth not supported: %u\n", var->bits_per_pixel);
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (var->bits_per_pixel) {
-	case 16:
+	चयन (var->bits_per_pixel) अणु
+	हाल 16:
 		var->red.offset = 11;
 		var->red.length = 5;
 		var->green.offset = 5;
 		var->green.length = 6;
 		var->blue.length = 5;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		var->transp.offset = 24;
 		var->red.offset = 16;
 		var->green.offset = 8;
@@ -417,38 +418,38 @@ static int kyrofb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 		var->green.length = 8;
 		var->blue.length = 8;
 		var->transp.length = 8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Height/Width of picture in mm */
 	var->height = var->width = -1;
 
-	/* Timing information. All values are in picoseconds */
+	/* Timing inक्रमmation. All values are in picoseconds */
 
 	/* par->PIXCLK is in 100Hz units. Convert to picoseconds -
-	 * ensuring we do not exceed 32 bit precision
+	 * ensuring we करो not exceed 32 bit precision
 	 */
 	/*
-	 * XXX: Enabling this really screws over the pixclock value when we
-	 * read it back with fbset. As such, leaving this commented out appears
-	 * to do the right thing (at least for now) .. bearing in mind that we
-	 * have infact already done the KHZ2PICOS conversion in both the modedb
+	 * XXX: Enabling this really screws over the pixघड़ी value when we
+	 * पढ़ो it back with fbset. As such, leaving this commented out appears
+	 * to करो the right thing (at least क्रम now) .. bearing in mind that we
+	 * have infact alपढ़ोy करोne the KHZ2PICOS conversion in both the modedb
 	 * and kyro_var. -- PFM.
 	 */
-//	var->pixclock = 1000000000 / (par->PIXCLK / 10);
+//	var->pixघड़ी = 1000000000 / (par->PIXCLK / 10);
 
 	/* the header file claims we should use picoseconds
-	 * - nobody else does though, the all use pixels and lines
+	 * - nobody अन्यथा करोes though, the all use pixels and lines
 	 * of h and v sizes. Both options here.
 	 */
 
 	/*
 	 * If we're being called by __fb_try_mode(), then we don't want to
-	 * override any of the var settings that we've already parsed
+	 * override any of the var settings that we've alपढ़ोy parsed
 	 * from our modedb. -- PFM.
 	 */
-	if ((var->activate & FB_ACTIVATE_MASK) == FB_ACTIVATE_TEST)
-		return 0;
+	अगर ((var->activate & FB_ACTIVATE_MASK) == FB_ACTIVATE_TEST)
+		वापस 0;
 
 	var->left_margin = par->HBP;
 	var->hsync_len = par->HST;
@@ -458,19 +459,19 @@ static int kyrofb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 	var->vsync_len = par->VST;
 	var->lower_margin = par->VFP;
 
-	if (par->HSP == 1)
+	अगर (par->HSP == 1)
 		var->sync |= FB_SYNC_HOR_HIGH_ACT;
-	if (par->VSP == 1)
+	अगर (par->VSP == 1)
 		var->sync |= FB_SYNC_VERT_HIGH_ACT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kyrofb_set_par(struct fb_info *info)
-{
-	struct kyrofb_info *par = info->par;
-	unsigned long lineclock;
-	unsigned long frameclock;
+अटल पूर्णांक kyrofb_set_par(काष्ठा fb_info *info)
+अणु
+	काष्ठा kyrofb_info *par = info->par;
+	अचिन्हित दीर्घ lineघड़ी;
+	अचिन्हित दीर्घ frameघड़ी;
 
 	/* Actual resolution */
 	par->XRES = info->var.xres;
@@ -480,24 +481,24 @@ static int kyrofb_set_par(struct fb_info *info)
 	par->PIXDEPTH = info->var.bits_per_pixel;
 
 	/* Refresh rate */
-	/* time for a line in ns */
-	lineclock = (info->var.pixclock * (info->var.xres +
+	/* समय क्रम a line in ns */
+	lineघड़ी = (info->var.pixघड़ी * (info->var.xres +
 				    info->var.right_margin +
 				    info->var.hsync_len +
 				    info->var.left_margin)) / 1000;
 
 
-	/* time for a frame in ns (precision in 32bpp) */
-	frameclock = lineclock * (info->var.yres +
+	/* समय क्रम a frame in ns (precision in 32bpp) */
+	frameघड़ी = lineघड़ी * (info->var.yres +
 				  info->var.lower_margin +
 				  info->var.vsync_len +
 				  info->var.upper_margin);
 
-	/* Calculate refresh rate and horrizontal clocks */
-	par->VFREQ = (1000000000 + (frameclock / 2)) / frameclock;
-	par->HCLK = (1000000000 + (lineclock / 2)) / lineclock;
-	par->PIXCLK = ((1000000000 + (info->var.pixclock / 2))
-					/ info->var.pixclock) * 10;
+	/* Calculate refresh rate and horrizontal घड़ीs */
+	par->VFREQ = (1000000000 + (frameघड़ी / 2)) / frameघड़ी;
+	par->HCLK = (1000000000 + (lineघड़ी / 2)) / lineघड़ी;
+	par->PIXCLK = ((1000000000 + (info->var.pixघड़ी / 2))
+					/ info->var.pixघड़ी) * 10;
 
 	/* calculate horizontal timings */
 	par->HFP = info->var.right_margin;
@@ -520,135 +521,135 @@ static int kyrofb_set_par(struct fb_info *info)
 	info->fix.line_length = get_line_length(par->XRES, par->PIXDEPTH);
 	info->fix.visual = FB_VISUAL_TRUECOLOR;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kyrofb_setcolreg(u_int regno, u_int red, u_int green,
-			    u_int blue, u_int transp, struct fb_info *info)
-{
-	struct kyrofb_info *par = info->par;
+अटल पूर्णांक kyrofb_setcolreg(u_पूर्णांक regno, u_पूर्णांक red, u_पूर्णांक green,
+			    u_पूर्णांक blue, u_पूर्णांक transp, काष्ठा fb_info *info)
+अणु
+	काष्ठा kyrofb_info *par = info->par;
 
-	if (regno > 255)
-		return 1;	/* Invalid register */
+	अगर (regno > 255)
+		वापस 1;	/* Invalid रेजिस्टर */
 
-	if (regno < 16) {
-		switch (info->var.bits_per_pixel) {
-		case 16:
+	अगर (regno < 16) अणु
+		चयन (info->var.bits_per_pixel) अणु
+		हाल 16:
 			par->palette[regno] =
 			     (red   & 0xf800) |
 			    ((green & 0xfc00) >> 5) |
 			    ((blue  & 0xf800) >> 11);
-			break;
-		case 32:
+			अवरोध;
+		हाल 32:
 			red >>= 8; green >>= 8; blue >>= 8; transp >>= 8;
 			par->palette[regno] =
 			    (transp << 24) | (red << 16) | (green << 8) | blue;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifndef MODULE
-static int __init kyrofb_setup(char *options)
-{
-	char *this_opt;
+#अगर_अघोषित MODULE
+अटल पूर्णांक __init kyrofb_setup(अक्षर *options)
+अणु
+	अक्षर *this_opt;
 
-	if (!options || !*options)
-		return 0;
+	अगर (!options || !*options)
+		वापस 0;
 
-	while ((this_opt = strsep(&options, ","))) {
-		if (!*this_opt)
-			continue;
-		if (strcmp(this_opt, "nopan") == 0) {
+	जबतक ((this_opt = strsep(&options, ","))) अणु
+		अगर (!*this_opt)
+			जारी;
+		अगर (म_भेद(this_opt, "nopan") == 0) अणु
 			nopan = 1;
-		} else if (strcmp(this_opt, "nowrap") == 0) {
+		पूर्ण अन्यथा अगर (म_भेद(this_opt, "nowrap") == 0) अणु
 			nowrap = 1;
-		} else if (strcmp(this_opt, "nomtrr") == 0) {
+		पूर्ण अन्यथा अगर (म_भेद(this_opt, "nomtrr") == 0) अणु
 			nomtrr = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			mode_option = this_opt;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int kyrofb_ioctl(struct fb_info *info,
-			unsigned int cmd, unsigned long arg)
-{
+अटल पूर्णांक kyrofb_ioctl(काष्ठा fb_info *info,
+			अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
 	overlay_create ol_create;
 	overlay_viewport_set ol_viewport_set;
-	void __user *argp = (void __user *)arg;
+	व्योम __user *argp = (व्योम __user *)arg;
 
-	switch (cmd) {
-	case KYRO_IOCTL_OVERLAY_CREATE:
-		if (copy_from_user(&ol_create, argp, sizeof(overlay_create)))
-			return -EFAULT;
+	चयन (cmd) अणु
+	हाल KYRO_IOCTL_OVERLAY_CREATE:
+		अगर (copy_from_user(&ol_create, argp, माप(overlay_create)))
+			वापस -EFAULT;
 
-		if (kyro_dev_overlay_create(ol_create.ulWidth,
-					    ol_create.ulHeight, 0) < 0) {
-			printk(KERN_ERR "Kyro FB: failed to create overlay surface.\n");
+		अगर (kyro_dev_overlay_create(ol_create.ulWidth,
+					    ol_create.ulHeight, 0) < 0) अणु
+			prपूर्णांकk(KERN_ERR "Kyro FB: failed to create overlay surface.\n");
 
-			return -EINVAL;
-		}
-		break;
-	case KYRO_IOCTL_OVERLAY_VIEWPORT_SET:
-		if (copy_from_user(&ol_viewport_set, argp,
-			       sizeof(overlay_viewport_set)))
-			return -EFAULT;
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल KYRO_IOCTL_OVERLAY_VIEWPORT_SET:
+		अगर (copy_from_user(&ol_viewport_set, argp,
+			       माप(overlay_viewport_set)))
+			वापस -EFAULT;
 
-		if (kyro_dev_overlay_viewport_set(ol_viewport_set.xOrgin,
+		अगर (kyro_dev_overlay_viewport_set(ol_viewport_set.xOrgin,
 						  ol_viewport_set.yOrgin,
 						  ol_viewport_set.xSize,
 						  ol_viewport_set.ySize) != 0)
-		{
-			printk(KERN_ERR "Kyro FB: failed to create overlay viewport.\n");
-			return -EINVAL;
-		}
-		break;
-	case KYRO_IOCTL_SET_VIDEO_MODE:
-		{
-			printk(KERN_ERR "Kyro FB: KYRO_IOCTL_SET_VIDEO_MODE is"
+		अणु
+			prपूर्णांकk(KERN_ERR "Kyro FB: failed to create overlay viewport.\n");
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल KYRO_IOCTL_SET_VIDEO_MODE:
+		अणु
+			prपूर्णांकk(KERN_ERR "Kyro FB: KYRO_IOCTL_SET_VIDEO_MODE is"
 				"obsolete, use the appropriate fb_ioctl()"
 				"command instead.\n");
-			return -EINVAL;
-		}
-	case KYRO_IOCTL_UVSTRIDE:
-		if (copy_to_user(argp, &deviceInfo.ulOverlayUVStride, sizeof(deviceInfo.ulOverlayUVStride)))
-			return -EFAULT;
-		break;
-	case KYRO_IOCTL_STRIDE:
-		if (copy_to_user(argp, &deviceInfo.ulOverlayStride, sizeof(deviceInfo.ulOverlayStride)))
-			return -EFAULT;
-		break;
-	case KYRO_IOCTL_OVERLAY_OFFSET:
-		if (copy_to_user(argp, &deviceInfo.ulOverlayOffset, sizeof(deviceInfo.ulOverlayOffset)))
-			return -EFAULT;
-		break;
-	}
+			वापस -EINVAL;
+		पूर्ण
+	हाल KYRO_IOCTL_UVSTRIDE:
+		अगर (copy_to_user(argp, &deviceInfo.ulOverlayUVStride, माप(deviceInfo.ulOverlayUVStride)))
+			वापस -EFAULT;
+		अवरोध;
+	हाल KYRO_IOCTL_STRIDE:
+		अगर (copy_to_user(argp, &deviceInfo.ulOverlayStride, माप(deviceInfo.ulOverlayStride)))
+			वापस -EFAULT;
+		अवरोध;
+	हाल KYRO_IOCTL_OVERLAY_OFFSET:
+		अगर (copy_to_user(argp, &deviceInfo.ulOverlayOffset, माप(deviceInfo.ulOverlayOffset)))
+			वापस -EFAULT;
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pci_device_id kyrofb_pci_tbl[] = {
-	{ PCI_VENDOR_ID_ST, PCI_DEVICE_ID_STG4000,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id kyrofb_pci_tbl[] = अणु
+	अणु PCI_VENDOR_ID_ST, PCI_DEVICE_ID_STG4000,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, kyrofb_pci_tbl);
 
-static struct pci_driver kyrofb_pci_driver = {
+अटल काष्ठा pci_driver kyrofb_pci_driver = अणु
 	.name		= "kyrofb",
 	.id_table	= kyrofb_pci_tbl,
 	.probe		= kyrofb_probe,
-	.remove		= kyrofb_remove,
-};
+	.हटाओ		= kyrofb_हटाओ,
+पूर्ण;
 
-static const struct fb_ops kyrofb_ops = {
+अटल स्थिर काष्ठा fb_ops kyrofb_ops = अणु
 	.owner		= THIS_MODULE,
 	.fb_check_var	= kyrofb_check_var,
 	.fb_set_par	= kyrofb_set_par,
@@ -657,23 +658,23 @@ static const struct fb_ops kyrofb_ops = {
 	.fb_fillrect	= cfb_fillrect,
 	.fb_copyarea	= cfb_copyarea,
 	.fb_imageblit	= cfb_imageblit,
-};
+पूर्ण;
 
-static int kyrofb_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	struct fb_info *info;
-	struct kyrofb_info *currentpar;
-	unsigned long size;
-	int err;
+अटल पूर्णांक kyrofb_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा fb_info *info;
+	काष्ठा kyrofb_info *currentpar;
+	अचिन्हित दीर्घ size;
+	पूर्णांक err;
 
-	if ((err = pci_enable_device(pdev))) {
-		printk(KERN_WARNING "kyrofb: Can't enable pdev: %d\n", err);
-		return err;
-	}
+	अगर ((err = pci_enable_device(pdev))) अणु
+		prपूर्णांकk(KERN_WARNING "kyrofb: Can't enable pdev: %d\n", err);
+		वापस err;
+	पूर्ण
 
-	info = framebuffer_alloc(sizeof(struct kyrofb_info), &pdev->dev);
-	if (!info)
-		return -ENOMEM;
+	info = framebuffer_alloc(माप(काष्ठा kyrofb_info), &pdev->dev);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	currentpar = info->par;
 
@@ -684,14 +685,14 @@ static int kyrofb_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	currentpar->regbase = deviceInfo.pSTGReg =
 		ioremap(kyro_fix.mmio_start, kyro_fix.mmio_len);
-	if (!currentpar->regbase)
-		goto out_free_fb;
+	अगर (!currentpar->regbase)
+		जाओ out_मुक्त_fb;
 
 	info->screen_base = pci_ioremap_wc_bar(pdev, 0);
-	if (!info->screen_base)
-		goto out_unmap_regs;
+	अगर (!info->screen_base)
+		जाओ out_unmap_regs;
 
-	if (!nomtrr)
+	अगर (!nomtrr)
 		currentpar->wc_cookie = arch_phys_wc_add(kyro_fix.smem_start,
 							 kyro_fix.smem_len);
 
@@ -700,7 +701,7 @@ static int kyrofb_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	info->fbops		= &kyrofb_ops;
 	info->fix		= kyro_fix;
-	info->pseudo_palette	= currentpar->palette;
+	info->pseuकरो_palette	= currentpar->palette;
 	info->flags		= FBINFO_DEFAULT;
 
 	SetCoreClockPLL(deviceInfo.pSTGReg, pdev);
@@ -708,8 +709,8 @@ static int kyrofb_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	deviceInfo.ulNextFreeVidMem = 0;
 	deviceInfo.ulOverlayOffset = 0;
 
-	/* This should give a reasonable default video mode */
-	if (!fb_find_mode(&info->var, info, mode_option, kyro_modedb,
+	/* This should give a reasonable शेष video mode */
+	अगर (!fb_find_mode(&info->var, info, mode_option, kyro_modedb,
 			  NUM_TOTAL_MODES, &kyro_modedb[VMODE_1024_768_75], 32))
 		info->var = kyro_var;
 
@@ -718,38 +719,38 @@ static int kyrofb_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	kyrofb_set_par(info);
 	kyrofb_check_var(&info->var, info);
 
-	size = get_line_length(info->var.xres_virtual,
+	size = get_line_length(info->var.xres_भव,
 			       info->var.bits_per_pixel);
-	size *= info->var.yres_virtual;
+	size *= info->var.yres_भव;
 
-	fb_memset(info->screen_base, 0, size);
+	fb_स_रखो(info->screen_base, 0, size);
 
-	if (register_framebuffer(info) < 0)
-		goto out_unmap;
+	अगर (रेजिस्टर_framebuffer(info) < 0)
+		जाओ out_unmap;
 
 	fb_info(info, "%s frame buffer device, at %dx%d@%d using %ldk/%ldk of VRAM\n",
 		info->fix.id,
 		info->var.xres, info->var.yres, info->var.bits_per_pixel,
-		size >> 10, (unsigned long)info->fix.smem_len >> 10);
+		size >> 10, (अचिन्हित दीर्घ)info->fix.smem_len >> 10);
 
 	pci_set_drvdata(pdev, info);
 
-	return 0;
+	वापस 0;
 
 out_unmap:
 	iounmap(info->screen_base);
 out_unmap_regs:
 	iounmap(currentpar->regbase);
-out_free_fb:
+out_मुक्त_fb:
 	framebuffer_release(info);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void kyrofb_remove(struct pci_dev *pdev)
-{
-	struct fb_info *info = pci_get_drvdata(pdev);
-	struct kyrofb_info *par = info->par;
+अटल व्योम kyrofb_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा fb_info *info = pci_get_drvdata(pdev);
+	काष्ठा kyrofb_info *par = info->par;
 
 	/* Reset the board */
 	StopVTG(deviceInfo.pSTGReg);
@@ -766,32 +767,32 @@ static void kyrofb_remove(struct pci_dev *pdev)
 
 	arch_phys_wc_del(par->wc_cookie);
 
-	unregister_framebuffer(info);
+	unरेजिस्टर_framebuffer(info);
 	framebuffer_release(info);
-}
+पूर्ण
 
-static int __init kyrofb_init(void)
-{
-#ifndef MODULE
-	char *option = NULL;
+अटल पूर्णांक __init kyrofb_init(व्योम)
+अणु
+#अगर_अघोषित MODULE
+	अक्षर *option = शून्य;
 
-	if (fb_get_options("kyrofb", &option))
-		return -ENODEV;
+	अगर (fb_get_options("kyrofb", &option))
+		वापस -ENODEV;
 	kyrofb_setup(option);
-#endif
-	return pci_register_driver(&kyrofb_pci_driver);
-}
+#पूर्ण_अगर
+	वापस pci_रेजिस्टर_driver(&kyrofb_pci_driver);
+पूर्ण
 
-static void __exit kyrofb_exit(void)
-{
-	pci_unregister_driver(&kyrofb_pci_driver);
-}
+अटल व्योम __निकास kyrofb_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&kyrofb_pci_driver);
+पूर्ण
 
 module_init(kyrofb_init);
 
-#ifdef MODULE
-module_exit(kyrofb_exit);
-#endif
+#अगर_घोषित MODULE
+module_निकास(kyrofb_निकास);
+#पूर्ण_अगर
 
 MODULE_AUTHOR("STMicroelectronics; Paul Mundt <lethal@linux-sh.org>");
 MODULE_LICENSE("GPL");

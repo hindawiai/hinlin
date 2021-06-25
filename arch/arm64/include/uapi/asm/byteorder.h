@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright (C) 2012 ARM Ltd.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * aदीर्घ with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __ASM_BYTEORDER_H
-#define __ASM_BYTEORDER_H
+#अगर_अघोषित __ASM_BYTEORDER_H
+#घोषणा __ASM_BYTEORDER_H
 
-#ifdef __AARCH64EB__
-#include <linux/byteorder/big_endian.h>
-#else
-#include <linux/byteorder/little_endian.h>
-#endif
+#अगर_घोषित __AARCH64EB__
+#समावेश <linux/byteorder/big_endian.h>
+#अन्यथा
+#समावेश <linux/byteorder/little_endian.h>
+#पूर्ण_अगर
 
-#endif	/* __ASM_BYTEORDER_H */
+#पूर्ण_अगर	/* __ASM_BYTEORDER_H */

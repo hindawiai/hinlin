@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (c) 2019, Intel Corporation. */
 
-#ifndef _ICE_PROTOCOL_TYPE_H_
-#define _ICE_PROTOCOL_TYPE_H_
-/* Decoders for ice_prot_id:
+#अगर_अघोषित _ICE_PROTOCOL_TYPE_H_
+#घोषणा _ICE_PROTOCOL_TYPE_H_
+/* Decoders क्रम ice_prot_id:
  * - F: First
  * - I: Inner
  * - L: Last
  * - O: Outer
  * - S: Single
  */
-enum ice_prot_id {
+क्रमागत ice_prot_id अणु
 	ICE_PROT_ID_INVAL	= 0,
 	ICE_PROT_MAC_OF_OR_S	= 1,
 	ICE_PROT_MAC_IL		= 4,
@@ -34,5 +35,5 @@ enum ice_prot_id {
 	ICE_PROT_ARP_OF		= 118,
 	ICE_PROT_META_ID	= 255, /* when offset == metadata */
 	ICE_PROT_INVALID	= 255  /* when offset == ICE_FV_OFFSET_INVAL */
-};
-#endif /* _ICE_PROTOCOL_TYPE_H_ */
+पूर्ण;
+#पूर्ण_अगर /* _ICE_PROTOCOL_TYPE_H_ */

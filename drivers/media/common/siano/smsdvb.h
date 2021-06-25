@@ -1,72 +1,73 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /***********************************************************************
  *
  ***********************************************************************/
 
-struct smsdvb_debugfs;
-struct smsdvb_client_t;
+काष्ठा smsdvb_debugfs;
+काष्ठा smsdvb_client_t;
 
-typedef void (*sms_prt_dvb_stats_t)(struct smsdvb_debugfs *debug_data,
-				    struct sms_stats *p);
+प्रकार व्योम (*sms_prt_dvb_stats_t)(काष्ठा smsdvb_debugfs *debug_data,
+				    काष्ठा sms_stats *p);
 
-typedef void (*sms_prt_isdb_stats_t)(struct smsdvb_debugfs *debug_data,
-				     struct sms_isdbt_stats *p);
+प्रकार व्योम (*sms_prt_isdb_stats_t)(काष्ठा smsdvb_debugfs *debug_data,
+				     काष्ठा sms_isdbt_stats *p);
 
-typedef void (*sms_prt_isdb_stats_ex_t)
-			(struct smsdvb_debugfs *debug_data,
-			 struct sms_isdbt_stats_ex *p);
+प्रकार व्योम (*sms_prt_isdb_stats_ex_t)
+			(काष्ठा smsdvb_debugfs *debug_data,
+			 काष्ठा sms_isdbt_stats_ex *p);
 
 
-struct smsdvb_client_t {
-	struct list_head entry;
+काष्ठा smsdvb_client_t अणु
+	काष्ठा list_head entry;
 
-	struct smscore_device_t *coredev;
-	struct smscore_client_t *smsclient;
+	काष्ठा smscore_device_t *coredev;
+	काष्ठा smscore_client_t *smsclient;
 
-	struct dvb_adapter      adapter;
-	struct dvb_demux        demux;
-	struct dmxdev           dmxdev;
-	struct dvb_frontend     frontend;
+	काष्ठा dvb_adapter      adapter;
+	काष्ठा dvb_demux        demux;
+	काष्ठा dmxdev           dmxdev;
+	काष्ठा dvb_frontend     frontend;
 
-	enum fe_status          fe_status;
+	क्रमागत fe_status          fe_status;
 
-	struct completion       tune_done;
-	struct completion       stats_done;
+	काष्ठा completion       tune_करोne;
+	काष्ठा completion       stats_करोne;
 
-	int last_per;
+	पूर्णांक last_per;
 
-	int legacy_ber, legacy_per;
+	पूर्णांक legacy_ber, legacy_per;
 
-	int event_fe_state;
-	int event_unc_state;
+	पूर्णांक event_fe_state;
+	पूर्णांक event_unc_state;
 
-	unsigned long		get_stats_jiffies;
+	अचिन्हित दीर्घ		get_stats_jअगरfies;
 
-	int			feed_users;
+	पूर्णांक			feed_users;
 	bool			has_tuned;
 
 	/* stats debugfs data */
-	struct dentry		*debugfs;
+	काष्ठा dentry		*debugfs;
 
-	struct smsdvb_debugfs	*debug_data;
+	काष्ठा smsdvb_debugfs	*debug_data;
 
 	sms_prt_dvb_stats_t	prt_dvb_stats;
 	sms_prt_isdb_stats_t	prt_isdb_stats;
 	sms_prt_isdb_stats_ex_t	prt_isdb_stats_ex;
-};
+पूर्ण;
 
 /*
- * This struct is a mix of struct sms_rx_stats_ex and
- * struct sms_srvm_signal_status.
+ * This काष्ठा is a mix of काष्ठा sms_rx_stats_ex and
+ * काष्ठा sms_srvm_संकेत_status.
  * It was obtained by comparing the way it was filled by the original code
  */
-struct RECEPTION_STATISTICS_PER_SLICES_S {
+काष्ठा RECEPTION_STATISTICS_PER_SLICES_S अणु
 	u32 result;
 	u32 snr;
-	s32 in_band_power;
+	s32 in_band_घातer;
 	u32 ts_packets;
 	u32 ets_packets;
-	u32 constellation;
+	u32 स्थिरellation;
 	u32 hp_code;
 	u32 tps_srv_ind_lp;
 	u32 tps_srv_ind_hp;
@@ -86,30 +87,30 @@ struct RECEPTION_STATISTICS_PER_SLICES_S {
 	u32 ber_error_count;	/* Number of erroneous SYNC bits. */
 
 	s32 MRC_SNR;		/* dB */
-	s32 mrc_in_band_pwr;	/* In band power in dBM */
+	s32 mrc_in_band_pwr;	/* In band घातer in dBM */
 	s32 MRC_RSSI;		/* dBm */
-};
+पूर्ण;
 
 /* From smsdvb-debugfs.c */
-#ifdef CONFIG_SMS_SIANO_DEBUGFS
+#अगर_घोषित CONFIG_SMS_SIANO_DEBUGFS
 
-int smsdvb_debugfs_create(struct smsdvb_client_t *client);
-void smsdvb_debugfs_release(struct smsdvb_client_t *client);
-void smsdvb_debugfs_register(void);
-void smsdvb_debugfs_unregister(void);
+पूर्णांक smsdvb_debugfs_create(काष्ठा smsdvb_client_t *client);
+व्योम smsdvb_debugfs_release(काष्ठा smsdvb_client_t *client);
+व्योम smsdvb_debugfs_रेजिस्टर(व्योम);
+व्योम smsdvb_debugfs_unरेजिस्टर(व्योम);
 
-#else
+#अन्यथा
 
-static inline int smsdvb_debugfs_create(struct smsdvb_client_t *client)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक smsdvb_debugfs_create(काष्ठा smsdvb_client_t *client)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void smsdvb_debugfs_release(struct smsdvb_client_t *client) {}
+अटल अंतरभूत व्योम smsdvb_debugfs_release(काष्ठा smsdvb_client_t *client) अणुपूर्ण
 
-static inline void smsdvb_debugfs_register(void) {}
+अटल अंतरभूत व्योम smsdvb_debugfs_रेजिस्टर(व्योम) अणुपूर्ण
 
-static inline void smsdvb_debugfs_unregister(void) {};
+अटल अंतरभूत व्योम smsdvb_debugfs_unरेजिस्टर(व्योम) अणुपूर्ण;
 
-#endif
+#पूर्ण_अगर
 

@@ -1,10 +1,11 @@
+<शैली गुरु>
 /*
-   BlueZ - Bluetooth protocol stack for Linux
+   BlueZ - Bluetooth protocol stack क्रम Linux
    Copyright (C) 2000-2001 Qualcomm Incorporated
 
    Written 2000,2001 by Maxim Krasnyansky <maxk@qualcomm.com>
 
-   This program is free software; you can redistribute it and/or modify
+   This program is मुक्त software; you can redistribute it and/or modअगरy
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -12,7 +13,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -24,226 +25,226 @@
 
 /* Bluetooth kernel library. */
 
-#define pr_fmt(fmt) "Bluetooth: " fmt
+#घोषणा pr_fmt(fmt) "Bluetooth: " fmt
 
-#include <linux/export.h>
+#समावेश <linux/export.h>
 
-#include <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/bluetooth.h>
 
-void baswap(bdaddr_t *dst, const bdaddr_t *src)
-{
-	const unsigned char *s = (const unsigned char *)src;
-	unsigned char *d = (unsigned char *)dst;
-	unsigned int i;
+व्योम baswap(bdaddr_t *dst, स्थिर bdaddr_t *src)
+अणु
+	स्थिर अचिन्हित अक्षर *s = (स्थिर अचिन्हित अक्षर *)src;
+	अचिन्हित अक्षर *d = (अचिन्हित अक्षर *)dst;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < 6; i++)
+	क्रम (i = 0; i < 6; i++)
 		d[i] = s[5 - i];
-}
+पूर्ण
 EXPORT_SYMBOL(baswap);
 
-/* Bluetooth error codes to Unix errno mapping */
-int bt_to_errno(__u16 code)
-{
-	switch (code) {
-	case 0:
-		return 0;
+/* Bluetooth error codes to Unix त्रुटि_सं mapping */
+पूर्णांक bt_to_त्रुटि_सं(__u16 code)
+अणु
+	चयन (code) अणु
+	हाल 0:
+		वापस 0;
 
-	case 0x01:
-		return EBADRQC;
+	हाल 0x01:
+		वापस EBADRQC;
 
-	case 0x02:
-		return ENOTCONN;
+	हाल 0x02:
+		वापस ENOTCONN;
 
-	case 0x03:
-		return EIO;
+	हाल 0x03:
+		वापस EIO;
 
-	case 0x04:
-	case 0x3c:
-		return EHOSTDOWN;
+	हाल 0x04:
+	हाल 0x3c:
+		वापस EHOSTDOWN;
 
-	case 0x05:
-		return EACCES;
+	हाल 0x05:
+		वापस EACCES;
 
-	case 0x06:
-		return EBADE;
+	हाल 0x06:
+		वापस EBADE;
 
-	case 0x07:
-		return ENOMEM;
+	हाल 0x07:
+		वापस ENOMEM;
 
-	case 0x08:
-		return ETIMEDOUT;
+	हाल 0x08:
+		वापस ETIMEDOUT;
 
-	case 0x09:
-		return EMLINK;
+	हाल 0x09:
+		वापस EMLINK;
 
-	case 0x0a:
-		return EMLINK;
+	हाल 0x0a:
+		वापस EMLINK;
 
-	case 0x0b:
-		return EALREADY;
+	हाल 0x0b:
+		वापस EALREADY;
 
-	case 0x0c:
-		return EBUSY;
+	हाल 0x0c:
+		वापस EBUSY;
 
-	case 0x0d:
-	case 0x0e:
-	case 0x0f:
-		return ECONNREFUSED;
+	हाल 0x0d:
+	हाल 0x0e:
+	हाल 0x0f:
+		वापस ECONNREFUSED;
 
-	case 0x10:
-		return ETIMEDOUT;
+	हाल 0x10:
+		वापस ETIMEDOUT;
 
-	case 0x11:
-	case 0x27:
-	case 0x29:
-	case 0x20:
-		return EOPNOTSUPP;
+	हाल 0x11:
+	हाल 0x27:
+	हाल 0x29:
+	हाल 0x20:
+		वापस EOPNOTSUPP;
 
-	case 0x12:
-		return EINVAL;
+	हाल 0x12:
+		वापस EINVAL;
 
-	case 0x13:
-	case 0x14:
-	case 0x15:
-		return ECONNRESET;
+	हाल 0x13:
+	हाल 0x14:
+	हाल 0x15:
+		वापस ECONNRESET;
 
-	case 0x16:
-		return ECONNABORTED;
+	हाल 0x16:
+		वापस ECONNABORTED;
 
-	case 0x17:
-		return ELOOP;
+	हाल 0x17:
+		वापस ELOOP;
 
-	case 0x18:
-		return EACCES;
+	हाल 0x18:
+		वापस EACCES;
 
-	case 0x1a:
-		return EPROTONOSUPPORT;
+	हाल 0x1a:
+		वापस EPROTONOSUPPORT;
 
-	case 0x1b:
-		return ECONNREFUSED;
+	हाल 0x1b:
+		वापस ECONNREFUSED;
 
-	case 0x19:
-	case 0x1e:
-	case 0x23:
-	case 0x24:
-	case 0x25:
-		return EPROTO;
+	हाल 0x19:
+	हाल 0x1e:
+	हाल 0x23:
+	हाल 0x24:
+	हाल 0x25:
+		वापस EPROTO;
 
-	default:
-		return ENOSYS;
-	}
-}
-EXPORT_SYMBOL(bt_to_errno);
+	शेष:
+		वापस ENOSYS;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(bt_to_त्रुटि_सं);
 
-void bt_info(const char *format, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम bt_info(स्थिर अक्षर *क्रमmat, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, format);
+	बहु_शुरू(args, क्रमmat);
 
-	vaf.fmt = format;
+	vaf.fmt = क्रमmat;
 	vaf.va = &args;
 
 	pr_info("%pV", &vaf);
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 EXPORT_SYMBOL(bt_info);
 
-void bt_warn(const char *format, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम bt_warn(स्थिर अक्षर *क्रमmat, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, format);
+	बहु_शुरू(args, क्रमmat);
 
-	vaf.fmt = format;
+	vaf.fmt = क्रमmat;
 	vaf.va = &args;
 
 	pr_warn("%pV", &vaf);
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 EXPORT_SYMBOL(bt_warn);
 
-void bt_err(const char *format, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम bt_err(स्थिर अक्षर *क्रमmat, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, format);
+	बहु_शुरू(args, क्रमmat);
 
-	vaf.fmt = format;
+	vaf.fmt = क्रमmat;
 	vaf.va = &args;
 
 	pr_err("%pV", &vaf);
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 EXPORT_SYMBOL(bt_err);
 
-#ifdef CONFIG_BT_FEATURE_DEBUG
-static bool debug_enable;
+#अगर_घोषित CONFIG_BT_FEATURE_DEBUG
+अटल bool debug_enable;
 
-void bt_dbg_set(bool enable)
-{
+व्योम bt_dbg_set(bool enable)
+अणु
 	debug_enable = enable;
-}
+पूर्ण
 
-bool bt_dbg_get(void)
-{
-	return debug_enable;
-}
+bool bt_dbg_get(व्योम)
+अणु
+	वापस debug_enable;
+पूर्ण
 
-void bt_dbg(const char *format, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम bt_dbg(स्थिर अक्षर *क्रमmat, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	if (likely(!debug_enable))
-		return;
+	अगर (likely(!debug_enable))
+		वापस;
 
-	va_start(args, format);
+	बहु_शुरू(args, क्रमmat);
 
-	vaf.fmt = format;
+	vaf.fmt = क्रमmat;
 	vaf.va = &args;
 
-	printk(KERN_DEBUG pr_fmt("%pV"), &vaf);
+	prपूर्णांकk(KERN_DEBUG pr_fmt("%pV"), &vaf);
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 EXPORT_SYMBOL(bt_dbg);
-#endif
+#पूर्ण_अगर
 
-void bt_warn_ratelimited(const char *format, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम bt_warn_ratelimited(स्थिर अक्षर *क्रमmat, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, format);
+	बहु_शुरू(args, क्रमmat);
 
-	vaf.fmt = format;
+	vaf.fmt = क्रमmat;
 	vaf.va = &args;
 
 	pr_warn_ratelimited("%pV", &vaf);
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 EXPORT_SYMBOL(bt_warn_ratelimited);
 
-void bt_err_ratelimited(const char *format, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम bt_err_ratelimited(स्थिर अक्षर *क्रमmat, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, format);
+	बहु_शुरू(args, क्रमmat);
 
-	vaf.fmt = format;
+	vaf.fmt = क्रमmat;
 	vaf.va = &args;
 
 	pr_err_ratelimited("%pV", &vaf);
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 EXPORT_SYMBOL(bt_err_ratelimited);

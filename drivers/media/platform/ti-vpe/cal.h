@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * TI Camera Access Layer (CAL)
  *
@@ -6,31 +7,31 @@
  *
  * Authors:
  *	Benoit Parrot <bparrot@ti.com>
- *	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ *	Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  */
-#ifndef __TI_CAL_H__
-#define __TI_CAL_H__
+#अगर_अघोषित __TI_CAL_H__
+#घोषणा __TI_CAL_H__
 
-#include <linux/bitfield.h>
-#include <linux/io.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/spinlock.h>
-#include <linux/videodev2.h>
-#include <linux/wait.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/रुको.h>
 
-#include <media/media-device.h>
-#include <media/v4l2-async.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-dev.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-fwnode.h>
-#include <media/v4l2-subdev.h>
-#include <media/videobuf2-v4l2.h>
+#समावेश <media/media-device.h>
+#समावेश <media/v4l2-async.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-dev.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-fwnode.h>
+#समावेश <media/v4l2-subdev.h>
+#समावेश <media/videobuf2-v4l2.h>
 
-#define CAL_MODULE_NAME			"cal"
-#define CAL_NUM_CONTEXT			2
-#define CAL_NUM_CSI2_PORTS		2
+#घोषणा CAL_MODULE_NAME			"cal"
+#घोषणा CAL_NUM_CONTEXT			2
+#घोषणा CAL_NUM_CSI2_PORTS		2
 
 /*
  * The width is limited by the size of the CAL_WR_DMA_XSIZE_j.XSIZE field,
@@ -38,272 +39,272 @@
  * CAL_CSI2_CTXi_j.CTXi_LINES and CAL_WR_DMA_CTRL_j.YSIZE fields, expressed in
  * lines.
  */
-#define CAL_MIN_WIDTH_BYTES		16
-#define CAL_MAX_WIDTH_BYTES		(8192 * 8)
-#define CAL_MIN_HEIGHT_LINES		1
-#define CAL_MAX_HEIGHT_LINES		16383
+#घोषणा CAL_MIN_WIDTH_BYTES		16
+#घोषणा CAL_MAX_WIDTH_BYTES		(8192 * 8)
+#घोषणा CAL_MIN_HEIGHT_LINES		1
+#घोषणा CAL_MAX_HEIGHT_LINES		16383
 
-#define CAL_CAMERARX_PAD_SINK		0
-#define CAL_CAMERARX_PAD_SOURCE		1
+#घोषणा CAL_CAMERARX_PAD_SINK		0
+#घोषणा CAL_CAMERARX_PAD_SOURCE		1
 
-struct device;
-struct device_node;
-struct resource;
-struct regmap;
-struct regmap_fied;
+काष्ठा device;
+काष्ठा device_node;
+काष्ठा resource;
+काष्ठा regmap;
+काष्ठा regmap_fied;
 
-/* CTRL_CORE_CAMERRX_CONTROL register field id */
-enum cal_camerarx_field {
+/* CTRL_CORE_CAMERRX_CONTROL रेजिस्टर field id */
+क्रमागत cal_camerarx_field अणु
 	F_CTRLCLKEN,
 	F_CAMMODE,
 	F_LANEENABLE,
 	F_CSI_MODE,
 	F_MAX_FIELDS,
-};
+पूर्ण;
 
-enum cal_dma_state {
+क्रमागत cal_dma_state अणु
 	CAL_DMA_RUNNING,
 	CAL_DMA_STOP_REQUESTED,
 	CAL_DMA_STOP_PENDING,
 	CAL_DMA_STOPPED,
-};
+पूर्ण;
 
-struct cal_format_info {
+काष्ठा cal_क्रमmat_info अणु
 	u32	fourcc;
 	u32	code;
 	/* Bits per pixel */
 	u8	bpp;
-};
+पूर्ण;
 
-/* buffer for one video frame */
-struct cal_buffer {
+/* buffer क्रम one video frame */
+काष्ठा cal_buffer अणु
 	/* common v4l buffer stuff -- must be first */
-	struct vb2_v4l2_buffer	vb;
-	struct list_head	list;
-};
+	काष्ठा vb2_v4l2_buffer	vb;
+	काष्ठा list_head	list;
+पूर्ण;
 
 /**
- * struct cal_dmaqueue - Queue of DMA buffers
+ * काष्ठा cal_dmaqueue - Queue of DMA buffers
  */
-struct cal_dmaqueue {
+काष्ठा cal_dmaqueue अणु
 	/**
 	 * @lock: Protects all fields in the cal_dmaqueue.
 	 */
 	spinlock_t		lock;
 
 	/**
-	 * @queue: Buffers queued to the driver and waiting for DMA processing.
+	 * @queue: Buffers queued to the driver and रुकोing क्रम DMA processing.
 	 * Buffers are added to the list by the vb2 .buffer_queue() operation,
-	 * and move to @pending when they are scheduled for the next frame.
+	 * and move to @pending when they are scheduled क्रम the next frame.
 	 */
-	struct list_head	queue;
+	काष्ठा list_head	queue;
 	/**
 	 * @pending: Buffer provided to the hardware to DMA the next frame.
 	 * Will move to @active at the end of the current frame.
 	 */
-	struct cal_buffer	*pending;
+	काष्ठा cal_buffer	*pending;
 	/**
-	 * @active: Buffer being DMA'ed to for the current frame. Will be
-	 * retired and given back to vb2 at the end of the current frame if
+	 * @active: Buffer being DMA'ed to क्रम the current frame. Will be
+	 * retired and given back to vb2 at the end of the current frame अगर
 	 * a @pending buffer has been scheduled to replace it.
 	 */
-	struct cal_buffer	*active;
+	काष्ठा cal_buffer	*active;
 
 	/** @state: State of the DMA engine. */
-	enum cal_dma_state	state;
-	/** @wait: Wait queue to signal a @state transition to CAL_DMA_STOPPED. */
-	struct wait_queue_head	wait;
-};
+	क्रमागत cal_dma_state	state;
+	/** @रुको: Wait queue to संकेत a @state transition to CAL_DMA_STOPPED. */
+	काष्ठा रुको_queue_head	रुको;
+पूर्ण;
 
-struct cal_camerarx_data {
-	struct {
-		unsigned int lsb;
-		unsigned int msb;
-	} fields[F_MAX_FIELDS];
-	unsigned int num_lanes;
-};
+काष्ठा cal_camerarx_data अणु
+	काष्ठा अणु
+		अचिन्हित पूर्णांक lsb;
+		अचिन्हित पूर्णांक msb;
+	पूर्ण fields[F_MAX_FIELDS];
+	अचिन्हित पूर्णांक num_lanes;
+पूर्ण;
 
-struct cal_data {
-	const struct cal_camerarx_data *camerarx;
-	unsigned int num_csi2_phy;
-	unsigned int flags;
-};
+काष्ठा cal_data अणु
+	स्थिर काष्ठा cal_camerarx_data *camerarx;
+	अचिन्हित पूर्णांक num_csi2_phy;
+	अचिन्हित पूर्णांक flags;
+पूर्ण;
 
 /*
  * The Camera Adaptation Layer (CAL) module is paired with one or more complex
  * I/O PHYs (CAMERARX). It contains multiple instances of CSI-2, processing and
  * DMA contexts.
  *
- * The cal_dev structure represents the whole subsystem, including the CAL and
- * the CAMERARX instances. Instances of struct cal_dev are named cal through the
+ * The cal_dev काष्ठाure represents the whole subप्रणाली, including the CAL and
+ * the CAMERARX instances. Instances of काष्ठा cal_dev are named cal through the
  * driver.
  *
- * The cal_camerarx structure represents one CAMERARX instance. Instances of
+ * The cal_camerarx काष्ठाure represents one CAMERARX instance. Instances of
  * cal_camerarx are named phy through the driver.
  *
- * The cal_ctx structure represents the combination of one CSI-2 context, one
- * processing context and one DMA context. Instance of struct cal_ctx are named
+ * The cal_ctx काष्ठाure represents the combination of one CSI-2 context, one
+ * processing context and one DMA context. Instance of काष्ठा cal_ctx are named
  * ctx through the driver.
  */
 
-struct cal_camerarx {
-	void __iomem		*base;
-	struct resource		*res;
-	struct device		*dev;
-	struct regmap_field	*fields[F_MAX_FIELDS];
+काष्ठा cal_camerarx अणु
+	व्योम __iomem		*base;
+	काष्ठा resource		*res;
+	काष्ठा device		*dev;
+	काष्ठा regmap_field	*fields[F_MAX_FIELDS];
 
-	struct cal_dev		*cal;
-	unsigned int		instance;
+	काष्ठा cal_dev		*cal;
+	अचिन्हित पूर्णांक		instance;
 
-	struct v4l2_fwnode_endpoint	endpoint;
-	struct device_node	*sensor_ep_node;
-	struct device_node	*sensor_node;
-	struct v4l2_subdev	*sensor;
-	struct media_pipeline	pipe;
+	काष्ठा v4l2_fwnode_endpoपूर्णांक	endpoपूर्णांक;
+	काष्ठा device_node	*sensor_ep_node;
+	काष्ठा device_node	*sensor_node;
+	काष्ठा v4l2_subdev	*sensor;
+	काष्ठा media_pipeline	pipe;
 
-	struct v4l2_subdev	subdev;
-	struct media_pad	pads[2];
-	struct v4l2_mbus_framefmt	formats[2];
-	const struct cal_format_info	*fmtinfo;
-};
+	काष्ठा v4l2_subdev	subdev;
+	काष्ठा media_pad	pads[2];
+	काष्ठा v4l2_mbus_framefmt	क्रमmats[2];
+	स्थिर काष्ठा cal_क्रमmat_info	*fmtinfo;
+पूर्ण;
 
-struct cal_dev {
-	struct clk		*fclk;
-	int			irq;
-	void __iomem		*base;
-	struct resource		*res;
-	struct device		*dev;
+काष्ठा cal_dev अणु
+	काष्ठा clk		*fclk;
+	पूर्णांक			irq;
+	व्योम __iomem		*base;
+	काष्ठा resource		*res;
+	काष्ठा device		*dev;
 
-	const struct cal_data	*data;
+	स्थिर काष्ठा cal_data	*data;
 	u32			revision;
 
 	/* Control Module handle */
-	struct regmap		*syscon_camerrx;
+	काष्ठा regmap		*syscon_camerrx;
 	u32			syscon_camerrx_offset;
 
 	/* Camera Core Module handle */
-	struct cal_camerarx	*phy[CAL_NUM_CSI2_PORTS];
+	काष्ठा cal_camerarx	*phy[CAL_NUM_CSI2_PORTS];
 
-	struct cal_ctx		*ctx[CAL_NUM_CONTEXT];
+	काष्ठा cal_ctx		*ctx[CAL_NUM_CONTEXT];
 
-	struct media_device	mdev;
-	struct v4l2_device	v4l2_dev;
-	struct v4l2_async_notifier notifier;
-};
+	काष्ठा media_device	mdev;
+	काष्ठा v4l2_device	v4l2_dev;
+	काष्ठा v4l2_async_notअगरier notअगरier;
+पूर्ण;
 
 /*
- * There is one cal_ctx structure for each camera core context.
+ * There is one cal_ctx काष्ठाure क्रम each camera core context.
  */
-struct cal_ctx {
-	struct v4l2_ctrl_handler ctrl_handler;
-	struct video_device	vdev;
-	struct media_pad	pad;
+काष्ठा cal_ctx अणु
+	काष्ठा v4l2_ctrl_handler ctrl_handler;
+	काष्ठा video_device	vdev;
+	काष्ठा media_pad	pad;
 
-	struct cal_dev		*cal;
-	struct cal_camerarx	*phy;
+	काष्ठा cal_dev		*cal;
+	काष्ठा cal_camerarx	*phy;
 
 	/* v4l2_ioctl mutex */
-	struct mutex		mutex;
+	काष्ठा mutex		mutex;
 
-	struct cal_dmaqueue	dma;
+	काष्ठा cal_dmaqueue	dma;
 
 	/* video capture */
-	const struct cal_format_info	*fmtinfo;
-	/* Used to store current pixel format */
-	struct v4l2_format	v_fmt;
+	स्थिर काष्ठा cal_क्रमmat_info	*fmtinfo;
+	/* Used to store current pixel क्रमmat */
+	काष्ठा v4l2_क्रमmat	v_fmt;
 
-	/* Current subdev enumerated format */
-	const struct cal_format_info	**active_fmt;
-	unsigned int		num_active_fmt;
+	/* Current subdev क्रमागतerated क्रमmat */
+	स्थिर काष्ठा cal_क्रमmat_info	**active_fmt;
+	अचिन्हित पूर्णांक		num_active_fmt;
 
-	unsigned int		sequence;
-	struct vb2_queue	vb_vidq;
-	unsigned int		index;
-	unsigned int		cport;
-};
+	अचिन्हित पूर्णांक		sequence;
+	काष्ठा vb2_queue	vb_vidq;
+	अचिन्हित पूर्णांक		index;
+	अचिन्हित पूर्णांक		cport;
+पूर्ण;
 
-extern unsigned int cal_debug;
-extern int cal_video_nr;
-extern bool cal_mc_api;
+बाह्य अचिन्हित पूर्णांक cal_debug;
+बाह्य पूर्णांक cal_video_nr;
+बाह्य bool cal_mc_api;
 
-#define cal_dbg(level, cal, fmt, arg...)				\
-	do {								\
-		if (cal_debug >= (level))				\
-			dev_printk(KERN_DEBUG, (cal)->dev, fmt, ##arg);	\
-	} while (0)
-#define cal_info(cal, fmt, arg...)					\
+#घोषणा cal_dbg(level, cal, fmt, arg...)				\
+	करो अणु								\
+		अगर (cal_debug >= (level))				\
+			dev_prपूर्णांकk(KERN_DEBUG, (cal)->dev, fmt, ##arg);	\
+	पूर्ण जबतक (0)
+#घोषणा cal_info(cal, fmt, arg...)					\
 	dev_info((cal)->dev, fmt, ##arg)
-#define cal_err(cal, fmt, arg...)					\
+#घोषणा cal_err(cal, fmt, arg...)					\
 	dev_err((cal)->dev, fmt, ##arg)
 
-#define ctx_dbg(level, ctx, fmt, arg...)				\
+#घोषणा ctx_dbg(level, ctx, fmt, arg...)				\
 	cal_dbg(level, (ctx)->cal, "ctx%u: " fmt, (ctx)->index, ##arg)
-#define ctx_info(ctx, fmt, arg...)					\
+#घोषणा ctx_info(ctx, fmt, arg...)					\
 	cal_info((ctx)->cal, "ctx%u: " fmt, (ctx)->index, ##arg)
-#define ctx_err(ctx, fmt, arg...)					\
+#घोषणा ctx_err(ctx, fmt, arg...)					\
 	cal_err((ctx)->cal, "ctx%u: " fmt, (ctx)->index, ##arg)
 
-#define phy_dbg(level, phy, fmt, arg...)				\
+#घोषणा phy_dbg(level, phy, fmt, arg...)				\
 	cal_dbg(level, (phy)->cal, "phy%u: " fmt, (phy)->instance, ##arg)
-#define phy_info(phy, fmt, arg...)					\
+#घोषणा phy_info(phy, fmt, arg...)					\
 	cal_info((phy)->cal, "phy%u: " fmt, (phy)->instance, ##arg)
-#define phy_err(phy, fmt, arg...)					\
+#घोषणा phy_err(phy, fmt, arg...)					\
 	cal_err((phy)->cal, "phy%u: " fmt, (phy)->instance, ##arg)
 
-static inline u32 cal_read(struct cal_dev *cal, u32 offset)
-{
-	return ioread32(cal->base + offset);
-}
+अटल अंतरभूत u32 cal_पढ़ो(काष्ठा cal_dev *cal, u32 offset)
+अणु
+	वापस ioपढ़ो32(cal->base + offset);
+पूर्ण
 
-static inline void cal_write(struct cal_dev *cal, u32 offset, u32 val)
-{
-	iowrite32(val, cal->base + offset);
-}
+अटल अंतरभूत व्योम cal_ग_लिखो(काष्ठा cal_dev *cal, u32 offset, u32 val)
+अणु
+	ioग_लिखो32(val, cal->base + offset);
+पूर्ण
 
-static __always_inline u32 cal_read_field(struct cal_dev *cal, u32 offset, u32 mask)
-{
-	return FIELD_GET(mask, cal_read(cal, offset));
-}
+अटल __always_अंतरभूत u32 cal_पढ़ो_field(काष्ठा cal_dev *cal, u32 offset, u32 mask)
+अणु
+	वापस FIELD_GET(mask, cal_पढ़ो(cal, offset));
+पूर्ण
 
-static inline void cal_write_field(struct cal_dev *cal, u32 offset, u32 value,
+अटल अंतरभूत व्योम cal_ग_लिखो_field(काष्ठा cal_dev *cal, u32 offset, u32 value,
 				   u32 mask)
-{
-	u32 val = cal_read(cal, offset);
+अणु
+	u32 val = cal_पढ़ो(cal, offset);
 
 	val &= ~mask;
 	val |= (value << __ffs(mask)) & mask;
-	cal_write(cal, offset, val);
-}
+	cal_ग_लिखो(cal, offset, val);
+पूर्ण
 
-static inline void cal_set_field(u32 *valp, u32 field, u32 mask)
-{
+अटल अंतरभूत व्योम cal_set_field(u32 *valp, u32 field, u32 mask)
+अणु
 	u32 val = *valp;
 
 	val &= ~mask;
 	val |= (field << __ffs(mask)) & mask;
 	*valp = val;
-}
+पूर्ण
 
-extern const struct cal_format_info cal_formats[];
-extern const unsigned int cal_num_formats;
-const struct cal_format_info *cal_format_by_fourcc(u32 fourcc);
-const struct cal_format_info *cal_format_by_code(u32 code);
+बाह्य स्थिर काष्ठा cal_क्रमmat_info cal_क्रमmats[];
+बाह्य स्थिर अचिन्हित पूर्णांक cal_num_क्रमmats;
+स्थिर काष्ठा cal_क्रमmat_info *cal_क्रमmat_by_fourcc(u32 fourcc);
+स्थिर काष्ठा cal_क्रमmat_info *cal_क्रमmat_by_code(u32 code);
 
-void cal_quickdump_regs(struct cal_dev *cal);
+व्योम cal_quickdump_regs(काष्ठा cal_dev *cal);
 
-void cal_camerarx_disable(struct cal_camerarx *phy);
-void cal_camerarx_i913_errata(struct cal_camerarx *phy);
-struct cal_camerarx *cal_camerarx_create(struct cal_dev *cal,
-					 unsigned int instance);
-void cal_camerarx_destroy(struct cal_camerarx *phy);
+व्योम cal_camerarx_disable(काष्ठा cal_camerarx *phy);
+व्योम cal_camerarx_i913_errata(काष्ठा cal_camerarx *phy);
+काष्ठा cal_camerarx *cal_camerarx_create(काष्ठा cal_dev *cal,
+					 अचिन्हित पूर्णांक instance);
+व्योम cal_camerarx_destroy(काष्ठा cal_camerarx *phy);
 
-void cal_ctx_set_dma_addr(struct cal_ctx *ctx, dma_addr_t addr);
-void cal_ctx_start(struct cal_ctx *ctx);
-void cal_ctx_stop(struct cal_ctx *ctx);
+व्योम cal_ctx_set_dma_addr(काष्ठा cal_ctx *ctx, dma_addr_t addr);
+व्योम cal_ctx_start(काष्ठा cal_ctx *ctx);
+व्योम cal_ctx_stop(काष्ठा cal_ctx *ctx);
 
-int cal_ctx_v4l2_register(struct cal_ctx *ctx);
-void cal_ctx_v4l2_unregister(struct cal_ctx *ctx);
-int cal_ctx_v4l2_init(struct cal_ctx *ctx);
-void cal_ctx_v4l2_cleanup(struct cal_ctx *ctx);
+पूर्णांक cal_ctx_v4l2_रेजिस्टर(काष्ठा cal_ctx *ctx);
+व्योम cal_ctx_v4l2_unरेजिस्टर(काष्ठा cal_ctx *ctx);
+पूर्णांक cal_ctx_v4l2_init(काष्ठा cal_ctx *ctx);
+व्योम cal_ctx_v4l2_cleanup(काष्ठा cal_ctx *ctx);
 
-#endif /* __TI_CAL_H__ */
+#पूर्ण_अगर /* __TI_CAL_H__ */

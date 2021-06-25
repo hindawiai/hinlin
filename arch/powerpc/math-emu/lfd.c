@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/uaccess.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/uaccess.h>
 
-#include <asm/sfp-machine.h>
-#include <math-emu/double.h>
+#समावेश <यंत्र/sfp-machine.h>
+#समावेश <math-emu/द्विगुन.h>
 
-int
-lfd(void *frD, void *ea)
-{
-	if (copy_from_user(frD, ea, sizeof(double)))
-		return -EFAULT;
-#ifdef DEBUG
-	printk("%s: D %p, ea %p: ", __func__, frD, ea);
-	dump_double(frD);
-	printk("\n");
-#endif
-	return 0;
-}
+पूर्णांक
+lfd(व्योम *frD, व्योम *ea)
+अणु
+	अगर (copy_from_user(frD, ea, माप(द्विगुन)))
+		वापस -EFAULT;
+#अगर_घोषित DEBUG
+	prपूर्णांकk("%s: D %p, ea %p: ", __func__, frD, ea);
+	dump_द्विगुन(frD);
+	prपूर्णांकk("\n");
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण

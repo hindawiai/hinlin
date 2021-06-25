@@ -1,252 +1,253 @@
-// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
 /*
  * Copyright (c) 2018 BayLibre, SAS.
  * Author: Jerome Brunet <jbrunet@baylibre.com>
  *
- * Sample clock generator divider:
- * This HW divider gates with value 0 but is otherwise a zero based divider:
+ * Sample घड़ी generator भागider:
+ * This HW भागider gates with value 0 but is otherwise a zero based भागider:
  *
  * val >= 1
- * divider = val + 1
+ * भागider = val + 1
  *
- * The duty cycle may also be set for the LR clock variant. The duty cycle
+ * The duty cycle may also be set क्रम the LR घड़ी variant. The duty cycle
  * ratio is:
  *
  * hi = [0 - val]
  * duty_cycle = (1 + hi) / (1 + val)
  */
 
-#include <linux/clk-provider.h>
-#include <linux/module.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/module.h>
 
-#include "clk-regmap.h"
-#include "sclk-div.h"
+#समावेश "clk-regmap.h"
+#समावेश "sclk-div.h"
 
-static inline struct meson_sclk_div_data *
-meson_sclk_div_data(struct clk_regmap *clk)
-{
-	return (struct meson_sclk_div_data *)clk->data;
-}
+अटल अंतरभूत काष्ठा meson_sclk_भाग_data *
+meson_sclk_भाग_data(काष्ठा clk_regmap *clk)
+अणु
+	वापस (काष्ठा meson_sclk_भाग_data *)clk->data;
+पूर्ण
 
-static int sclk_div_maxval(struct meson_sclk_div_data *sclk)
-{
-	return (1 << sclk->div.width) - 1;
-}
+अटल पूर्णांक sclk_भाग_maxval(काष्ठा meson_sclk_भाग_data *sclk)
+अणु
+	वापस (1 << sclk->भाग.width) - 1;
+पूर्ण
 
-static int sclk_div_maxdiv(struct meson_sclk_div_data *sclk)
-{
-	return sclk_div_maxval(sclk) + 1;
-}
+अटल पूर्णांक sclk_भाग_maxभाग(काष्ठा meson_sclk_भाग_data *sclk)
+अणु
+	वापस sclk_भाग_maxval(sclk) + 1;
+पूर्ण
 
-static int sclk_div_getdiv(struct clk_hw *hw, unsigned long rate,
-			   unsigned long prate, int maxdiv)
-{
-	int div = DIV_ROUND_CLOSEST_ULL((u64)prate, rate);
+अटल पूर्णांक sclk_भाग_getभाग(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			   अचिन्हित दीर्घ prate, पूर्णांक maxभाग)
+अणु
+	पूर्णांक भाग = DIV_ROUND_CLOSEST_ULL((u64)prate, rate);
 
-	return clamp(div, 2, maxdiv);
-}
+	वापस clamp(भाग, 2, maxभाग);
+पूर्ण
 
-static int sclk_div_bestdiv(struct clk_hw *hw, unsigned long rate,
-			    unsigned long *prate,
-			    struct meson_sclk_div_data *sclk)
-{
-	struct clk_hw *parent = clk_hw_get_parent(hw);
-	int bestdiv = 0, i;
-	unsigned long maxdiv, now, parent_now;
-	unsigned long best = 0, best_parent = 0;
+अटल पूर्णांक sclk_भाग_bestभाग(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			    अचिन्हित दीर्घ *prate,
+			    काष्ठा meson_sclk_भाग_data *sclk)
+अणु
+	काष्ठा clk_hw *parent = clk_hw_get_parent(hw);
+	पूर्णांक bestभाग = 0, i;
+	अचिन्हित दीर्घ maxभाग, now, parent_now;
+	अचिन्हित दीर्घ best = 0, best_parent = 0;
 
-	if (!rate)
+	अगर (!rate)
 		rate = 1;
 
-	maxdiv = sclk_div_maxdiv(sclk);
+	maxभाग = sclk_भाग_maxभाग(sclk);
 
-	if (!(clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT))
-		return sclk_div_getdiv(hw, rate, *prate, maxdiv);
+	अगर (!(clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT))
+		वापस sclk_भाग_getभाग(hw, rate, *prate, maxभाग);
 
 	/*
-	 * The maximum divider we can use without overflowing
-	 * unsigned long in rate * i below
+	 * The maximum भागider we can use without overflowing
+	 * अचिन्हित दीर्घ in rate * i below
 	 */
-	maxdiv = min(ULONG_MAX / rate, maxdiv);
+	maxभाग = min(अच_दीर्घ_उच्च / rate, maxभाग);
 
-	for (i = 2; i <= maxdiv; i++) {
+	क्रम (i = 2; i <= maxभाग; i++) अणु
 		/*
-		 * It's the most ideal case if the requested rate can be
-		 * divided from parent clock without needing to change
-		 * parent rate, so return the divider immediately.
+		 * It's the most ideal हाल अगर the requested rate can be
+		 * भागided from parent घड़ी without needing to change
+		 * parent rate, so वापस the भागider immediately.
 		 */
-		if (rate * i == *prate)
-			return i;
+		अगर (rate * i == *prate)
+			वापस i;
 
 		parent_now = clk_hw_round_rate(parent, rate * i);
 		now = DIV_ROUND_UP_ULL((u64)parent_now, i);
 
-		if (abs(rate - now) < abs(rate - best)) {
-			bestdiv = i;
+		अगर (असल(rate - now) < असल(rate - best)) अणु
+			bestभाग = i;
 			best = now;
 			best_parent = parent_now;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!bestdiv)
-		bestdiv = sclk_div_maxdiv(sclk);
-	else
+	अगर (!bestभाग)
+		bestभाग = sclk_भाग_maxभाग(sclk);
+	अन्यथा
 		*prate = best_parent;
 
-	return bestdiv;
-}
+	वापस bestभाग;
+पूर्ण
 
-static long sclk_div_round_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long *prate)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct meson_sclk_div_data *sclk = meson_sclk_div_data(clk);
-	int div;
+अटल दीर्घ sclk_भाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा meson_sclk_भाग_data *sclk = meson_sclk_भाग_data(clk);
+	पूर्णांक भाग;
 
-	div = sclk_div_bestdiv(hw, rate, prate, sclk);
+	भाग = sclk_भाग_bestभाग(hw, rate, prate, sclk);
 
-	return DIV_ROUND_UP_ULL((u64)*prate, div);
-}
+	वापस DIV_ROUND_UP_ULL((u64)*prate, भाग);
+पूर्ण
 
-static void sclk_apply_ratio(struct clk_regmap *clk,
-			     struct meson_sclk_div_data *sclk)
-{
-	unsigned int hi = DIV_ROUND_CLOSEST(sclk->cached_div *
+अटल व्योम sclk_apply_ratio(काष्ठा clk_regmap *clk,
+			     काष्ठा meson_sclk_भाग_data *sclk)
+अणु
+	अचिन्हित पूर्णांक hi = DIV_ROUND_CLOSEST(sclk->cached_भाग *
 					    sclk->cached_duty.num,
 					    sclk->cached_duty.den);
 
-	if (hi)
+	अगर (hi)
 		hi -= 1;
 
-	meson_parm_write(clk->map, &sclk->hi, hi);
-}
+	meson_parm_ग_लिखो(clk->map, &sclk->hi, hi);
+पूर्ण
 
-static int sclk_div_set_duty_cycle(struct clk_hw *hw,
-				   struct clk_duty *duty)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct meson_sclk_div_data *sclk = meson_sclk_div_data(clk);
+अटल पूर्णांक sclk_भाग_set_duty_cycle(काष्ठा clk_hw *hw,
+				   काष्ठा clk_duty *duty)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा meson_sclk_भाग_data *sclk = meson_sclk_भाग_data(clk);
 
-	if (MESON_PARM_APPLICABLE(&sclk->hi)) {
-		memcpy(&sclk->cached_duty, duty, sizeof(*duty));
+	अगर (MESON_PARM_APPLICABLE(&sclk->hi)) अणु
+		स_नकल(&sclk->cached_duty, duty, माप(*duty));
 		sclk_apply_ratio(clk, sclk);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sclk_div_get_duty_cycle(struct clk_hw *hw,
-				   struct clk_duty *duty)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct meson_sclk_div_data *sclk = meson_sclk_div_data(clk);
-	int hi;
+अटल पूर्णांक sclk_भाग_get_duty_cycle(काष्ठा clk_hw *hw,
+				   काष्ठा clk_duty *duty)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा meson_sclk_भाग_data *sclk = meson_sclk_भाग_data(clk);
+	पूर्णांक hi;
 
-	if (!MESON_PARM_APPLICABLE(&sclk->hi)) {
+	अगर (!MESON_PARM_APPLICABLE(&sclk->hi)) अणु
 		duty->num = 1;
 		duty->den = 2;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	hi = meson_parm_read(clk->map, &sclk->hi);
+	hi = meson_parm_पढ़ो(clk->map, &sclk->hi);
 	duty->num = hi + 1;
-	duty->den = sclk->cached_div;
-	return 0;
-}
+	duty->den = sclk->cached_भाग;
+	वापस 0;
+पूर्ण
 
-static void sclk_apply_divider(struct clk_regmap *clk,
-			       struct meson_sclk_div_data *sclk)
-{
-	if (MESON_PARM_APPLICABLE(&sclk->hi))
+अटल व्योम sclk_apply_भागider(काष्ठा clk_regmap *clk,
+			       काष्ठा meson_sclk_भाग_data *sclk)
+अणु
+	अगर (MESON_PARM_APPLICABLE(&sclk->hi))
 		sclk_apply_ratio(clk, sclk);
 
-	meson_parm_write(clk->map, &sclk->div, sclk->cached_div - 1);
-}
+	meson_parm_ग_लिखो(clk->map, &sclk->भाग, sclk->cached_भाग - 1);
+पूर्ण
 
-static int sclk_div_set_rate(struct clk_hw *hw, unsigned long rate,
-			     unsigned long prate)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct meson_sclk_div_data *sclk = meson_sclk_div_data(clk);
-	unsigned long maxdiv = sclk_div_maxdiv(sclk);
+अटल पूर्णांक sclk_भाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			     अचिन्हित दीर्घ prate)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा meson_sclk_भाग_data *sclk = meson_sclk_भाग_data(clk);
+	अचिन्हित दीर्घ maxभाग = sclk_भाग_maxभाग(sclk);
 
-	sclk->cached_div = sclk_div_getdiv(hw, rate, prate, maxdiv);
+	sclk->cached_भाग = sclk_भाग_getभाग(hw, rate, prate, maxभाग);
 
-	if (clk_hw_is_enabled(hw))
-		sclk_apply_divider(clk, sclk);
+	अगर (clk_hw_is_enabled(hw))
+		sclk_apply_भागider(clk, sclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long sclk_div_recalc_rate(struct clk_hw *hw,
-					  unsigned long prate)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct meson_sclk_div_data *sclk = meson_sclk_div_data(clk);
+अटल अचिन्हित दीर्घ sclk_भाग_recalc_rate(काष्ठा clk_hw *hw,
+					  अचिन्हित दीर्घ prate)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा meson_sclk_भाग_data *sclk = meson_sclk_भाग_data(clk);
 
-	return DIV_ROUND_UP_ULL((u64)prate, sclk->cached_div);
-}
+	वापस DIV_ROUND_UP_ULL((u64)prate, sclk->cached_भाग);
+पूर्ण
 
-static int sclk_div_enable(struct clk_hw *hw)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct meson_sclk_div_data *sclk = meson_sclk_div_data(clk);
+अटल पूर्णांक sclk_भाग_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा meson_sclk_भाग_data *sclk = meson_sclk_भाग_data(clk);
 
-	sclk_apply_divider(clk, sclk);
+	sclk_apply_भागider(clk, sclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sclk_div_disable(struct clk_hw *hw)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct meson_sclk_div_data *sclk = meson_sclk_div_data(clk);
+अटल व्योम sclk_भाग_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा meson_sclk_भाग_data *sclk = meson_sclk_भाग_data(clk);
 
-	meson_parm_write(clk->map, &sclk->div, 0);
-}
+	meson_parm_ग_लिखो(clk->map, &sclk->भाग, 0);
+पूर्ण
 
-static int sclk_div_is_enabled(struct clk_hw *hw)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct meson_sclk_div_data *sclk = meson_sclk_div_data(clk);
+अटल पूर्णांक sclk_भाग_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा meson_sclk_भाग_data *sclk = meson_sclk_भाग_data(clk);
 
-	if (meson_parm_read(clk->map, &sclk->div))
-		return 1;
+	अगर (meson_parm_पढ़ो(clk->map, &sclk->भाग))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sclk_div_init(struct clk_hw *hw)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct meson_sclk_div_data *sclk = meson_sclk_div_data(clk);
-	unsigned int val;
+अटल पूर्णांक sclk_भाग_init(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा meson_sclk_भाग_data *sclk = meson_sclk_भाग_data(clk);
+	अचिन्हित पूर्णांक val;
 
-	val = meson_parm_read(clk->map, &sclk->div);
+	val = meson_parm_पढ़ो(clk->map, &sclk->भाग);
 
-	/* if the divider is initially disabled, assume max */
-	if (!val)
-		sclk->cached_div = sclk_div_maxdiv(sclk);
-	else
-		sclk->cached_div = val + 1;
+	/* अगर the भागider is initially disabled, assume max */
+	अगर (!val)
+		sclk->cached_भाग = sclk_भाग_maxभाग(sclk);
+	अन्यथा
+		sclk->cached_भाग = val + 1;
 
-	sclk_div_get_duty_cycle(hw, &sclk->cached_duty);
+	sclk_भाग_get_duty_cycle(hw, &sclk->cached_duty);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct clk_ops meson_sclk_div_ops = {
-	.recalc_rate	= sclk_div_recalc_rate,
-	.round_rate	= sclk_div_round_rate,
-	.set_rate	= sclk_div_set_rate,
-	.enable		= sclk_div_enable,
-	.disable	= sclk_div_disable,
-	.is_enabled	= sclk_div_is_enabled,
-	.get_duty_cycle	= sclk_div_get_duty_cycle,
-	.set_duty_cycle = sclk_div_set_duty_cycle,
-	.init		= sclk_div_init,
-};
-EXPORT_SYMBOL_GPL(meson_sclk_div_ops);
+स्थिर काष्ठा clk_ops meson_sclk_भाग_ops = अणु
+	.recalc_rate	= sclk_भाग_recalc_rate,
+	.round_rate	= sclk_भाग_round_rate,
+	.set_rate	= sclk_भाग_set_rate,
+	.enable		= sclk_भाग_enable,
+	.disable	= sclk_भाग_disable,
+	.is_enabled	= sclk_भाग_is_enabled,
+	.get_duty_cycle	= sclk_भाग_get_duty_cycle,
+	.set_duty_cycle = sclk_भाग_set_duty_cycle,
+	.init		= sclk_भाग_init,
+पूर्ण;
+EXPORT_SYMBOL_GPL(meson_sclk_भाग_ops);
 
 MODULE_DESCRIPTION("Amlogic Sample divider driver");
 MODULE_AUTHOR("Jerome Brunet <jbrunet@baylibre.com>");

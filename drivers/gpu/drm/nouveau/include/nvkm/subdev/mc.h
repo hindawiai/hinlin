@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_MC_H__
-#define __NVKM_MC_H__
-#include <core/subdev.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_MC_H__
+#घोषणा __NVKM_MC_H__
+#समावेश <core/subdev.h>
 
-struct nvkm_mc {
-	const struct nvkm_mc_func *func;
-	struct nvkm_subdev subdev;
-};
+काष्ठा nvkm_mc अणु
+	स्थिर काष्ठा nvkm_mc_func *func;
+	काष्ठा nvkm_subdev subdev;
+पूर्ण;
 
-void nvkm_mc_enable(struct nvkm_device *, enum nvkm_subdev_type, int);
-void nvkm_mc_disable(struct nvkm_device *, enum nvkm_subdev_type, int);
-bool nvkm_mc_enabled(struct nvkm_device *, enum nvkm_subdev_type, int);
-void nvkm_mc_reset(struct nvkm_device *, enum nvkm_subdev_type, int);
-void nvkm_mc_intr(struct nvkm_device *, bool *handled);
-void nvkm_mc_intr_unarm(struct nvkm_device *);
-void nvkm_mc_intr_rearm(struct nvkm_device *);
-void nvkm_mc_intr_mask(struct nvkm_device *, enum nvkm_subdev_type, int, bool enable);
-void nvkm_mc_unk260(struct nvkm_device *, u32 data);
+व्योम nvkm_mc_enable(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक);
+व्योम nvkm_mc_disable(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक);
+bool nvkm_mc_enabled(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक);
+व्योम nvkm_mc_reset(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक);
+व्योम nvkm_mc_पूर्णांकr(काष्ठा nvkm_device *, bool *handled);
+व्योम nvkm_mc_पूर्णांकr_unarm(काष्ठा nvkm_device *);
+व्योम nvkm_mc_पूर्णांकr_rearm(काष्ठा nvkm_device *);
+व्योम nvkm_mc_पूर्णांकr_mask(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, bool enable);
+व्योम nvkm_mc_unk260(काष्ठा nvkm_device *, u32 data);
 
-int nv04_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int nv11_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int nv17_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int nv44_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int nv50_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int g84_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int g98_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int gt215_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int gf100_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int gk104_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int gk20a_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int gp100_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int gp10b_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int tu102_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-int ga100_mc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_mc **);
-#endif
+पूर्णांक nv04_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक nv11_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक nv17_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक nv44_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक nv50_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक g84_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक g98_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक gt215_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक gf100_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक gk104_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक gk20a_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक gp100_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक gp10b_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक tu102_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+पूर्णांक ga100_mc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_mc **);
+#पूर्ण_अगर

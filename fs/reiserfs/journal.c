@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Write ahead logging implementation copyright Chris Mason 2000
  *
- * The background commits make this code very interrelated, and
+ * The background commits make this code very पूर्णांकerrelated, and
  * overly complex.  I need to rethink things a bit....The major players:
  *
  * journal_begin -- call with the number of blocks you expect to log.
@@ -10,883 +11,883 @@
  *		    old, it will block until the current transaction is
  *		    finished, and then start a new one.
  *		    Usually, your transaction will get joined in with
- *                  previous ones for speed.
+ *                  previous ones क्रम speed.
  *
  * journal_join  -- same as journal_begin, but won't block on the current
  *                  transaction regardless of age.  Don't ever call
  *                  this.  Ever.  There are only two places it should be
  *                  called from, and they are both inside this file.
  *
- * journal_mark_dirty -- adds blocks into this transaction.  clears any flags
+ * journal_mark_dirty -- adds blocks पूर्णांकo this transaction.  clears any flags
  *                       that might make them get sent to disk
  *                       and then marks them BH_JDirty.  Puts the buffer head
- *                       into the current transaction hash.
+ *                       पूर्णांकo the current transaction hash.
  *
- * journal_end -- if the current transaction is batchable, it does nothing
- *                   otherwise, it could do an async/synchronous commit, or
+ * journal_end -- अगर the current transaction is batchable, it करोes nothing
+ *                   otherwise, it could करो an async/synchronous commit, or
  *                   a full flush of all log and real blocks in the
  *                   transaction.
  *
- * flush_old_commits -- if the current transaction is too old, it is ended and
+ * flush_old_commits -- अगर the current transaction is too old, it is ended and
  *                      commit blocks are sent to disk.  Forces commit blocks
- *                      to disk for all backgrounded commits that have been
- *                      around too long.
- *		     -- Note, if you call this as an immediate flush from
+ *                      to disk क्रम all backgrounded commits that have been
+ *                      around too दीर्घ.
+ *		     -- Note, अगर you call this as an immediate flush from
  *		        within kupdate, it will ignore the immediate flag
  */
 
-#include <linux/time.h>
-#include <linux/semaphore.h>
-#include <linux/vmalloc.h>
-#include "reiserfs.h"
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/fcntl.h>
-#include <linux/stat.h>
-#include <linux/string.h>
-#include <linux/buffer_head.h>
-#include <linux/workqueue.h>
-#include <linux/writeback.h>
-#include <linux/blkdev.h>
-#include <linux/backing-dev.h>
-#include <linux/uaccess.h>
-#include <linux/slab.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश "reiserfs.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
 
 
-/* gets a struct reiserfs_journal_list * from a list head */
-#define JOURNAL_LIST_ENTRY(h) (list_entry((h), struct reiserfs_journal_list, \
+/* माला_लो a काष्ठा reiserfs_journal_list * from a list head */
+#घोषणा JOURNAL_LIST_ENTRY(h) (list_entry((h), काष्ठा reiserfs_journal_list, \
                                j_list))
 
-/* must be correct to keep the desc and commit structs at 4k */
-#define JOURNAL_TRANS_HALF 1018
-#define BUFNR 64		/*read ahead */
+/* must be correct to keep the desc and commit काष्ठाs at 4k */
+#घोषणा JOURNAL_TRANS_HALF 1018
+#घोषणा BUFNR 64		/*पढ़ो ahead */
 
-/* cnode stat bits.  Move these into reiserfs_fs.h */
+/* cnode stat bits.  Move these पूर्णांकo reiserfs_fs.h */
 
-/* this block was freed, and can't be written.  */
-#define BLOCK_FREED 2
-/* this block was freed during this transaction, and can't be written */
-#define BLOCK_FREED_HOLDER 3
+/* this block was मुक्तd, and can't be written.  */
+#घोषणा BLOCK_FREED 2
+/* this block was मुक्तd during this transaction, and can't be written */
+#घोषणा BLOCK_FREED_HOLDER 3
 
 /* used in flush_journal_list */
-#define BLOCK_NEEDS_FLUSH 4
-#define BLOCK_DIRTIED 5
+#घोषणा BLOCK_NEEDS_FLUSH 4
+#घोषणा BLOCK_सूचीTIED 5
 
 /* journal list state bits */
-#define LIST_TOUCHED 1
-#define LIST_DIRTY   2
-#define LIST_COMMIT_PENDING  4	/* someone will commit this list */
+#घोषणा LIST_TOUCHED 1
+#घोषणा LIST_सूचीTY   2
+#घोषणा LIST_COMMIT_PENDING  4	/* someone will commit this list */
 
-/* flags for do_journal_end */
-#define FLUSH_ALL   1		/* flush commit and real blocks */
-#define COMMIT_NOW  2		/* end and commit this transaction */
-#define WAIT        4		/* wait for the log blocks to hit the disk */
+/* flags क्रम करो_journal_end */
+#घोषणा FLUSH_ALL   1		/* flush commit and real blocks */
+#घोषणा COMMIT_NOW  2		/* end and commit this transaction */
+#घोषणा WAIT        4		/* रुको क्रम the log blocks to hit the disk */
 
-static int do_journal_end(struct reiserfs_transaction_handle *, int flags);
-static int flush_journal_list(struct super_block *s,
-			      struct reiserfs_journal_list *jl, int flushall);
-static int flush_commit_list(struct super_block *s,
-			     struct reiserfs_journal_list *jl, int flushall);
-static int can_dirty(struct reiserfs_journal_cnode *cn);
-static int journal_join(struct reiserfs_transaction_handle *th,
-			struct super_block *sb);
-static void release_journal_dev(struct super_block *super,
-			       struct reiserfs_journal *journal);
-static void dirty_one_transaction(struct super_block *s,
-				 struct reiserfs_journal_list *jl);
-static void flush_async_commits(struct work_struct *work);
-static void queue_log_writer(struct super_block *s);
+अटल पूर्णांक करो_journal_end(काष्ठा reiserfs_transaction_handle *, पूर्णांक flags);
+अटल पूर्णांक flush_journal_list(काष्ठा super_block *s,
+			      काष्ठा reiserfs_journal_list *jl, पूर्णांक flushall);
+अटल पूर्णांक flush_commit_list(काष्ठा super_block *s,
+			     काष्ठा reiserfs_journal_list *jl, पूर्णांक flushall);
+अटल पूर्णांक can_dirty(काष्ठा reiserfs_journal_cnode *cn);
+अटल पूर्णांक journal_join(काष्ठा reiserfs_transaction_handle *th,
+			काष्ठा super_block *sb);
+अटल व्योम release_journal_dev(काष्ठा super_block *super,
+			       काष्ठा reiserfs_journal *journal);
+अटल व्योम dirty_one_transaction(काष्ठा super_block *s,
+				 काष्ठा reiserfs_journal_list *jl);
+अटल व्योम flush_async_commits(काष्ठा work_काष्ठा *work);
+अटल व्योम queue_log_ग_लिखोr(काष्ठा super_block *s);
 
-/* values for join in do_journal_begin_r */
-enum {
+/* values क्रम join in करो_journal_begin_r */
+क्रमागत अणु
 	JBEGIN_REG = 0,		/* regular journal begin */
-	/* join the running transaction if at all possible */
+	/* join the running transaction अगर at all possible */
 	JBEGIN_JOIN = 1,
-	/* called from cleanup code, ignores aborted flag */
+	/* called from cleanup code, ignores पातed flag */
 	JBEGIN_ABORT = 2,
-};
+पूर्ण;
 
-static int do_journal_begin_r(struct reiserfs_transaction_handle *th,
-			      struct super_block *sb,
-			      unsigned long nblocks, int join);
+अटल पूर्णांक करो_journal_begin_r(काष्ठा reiserfs_transaction_handle *th,
+			      काष्ठा super_block *sb,
+			      अचिन्हित दीर्घ nblocks, पूर्णांक join);
 
-static void init_journal_hash(struct super_block *sb)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	memset(journal->j_hash_table, 0,
-	       JOURNAL_HASH_SIZE * sizeof(struct reiserfs_journal_cnode *));
-}
+अटल व्योम init_journal_hash(काष्ठा super_block *sb)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	स_रखो(journal->j_hash_table, 0,
+	       JOURNAL_HASH_SIZE * माप(काष्ठा reiserfs_journal_cnode *));
+पूर्ण
 
 /*
  * clears BH_Dirty and sticks the buffer on the clean list.  Called because
- * I can't allow refile_buffer to make schedule happen after I've freed a
- * block.  Look at remove_from_transaction and journal_mark_freed for
+ * I can't allow refile_buffer to make schedule happen after I've मुक्तd a
+ * block.  Look at हटाओ_from_transaction and journal_mark_मुक्तd क्रम
  * more details.
  */
-static int reiserfs_clean_and_file_buffer(struct buffer_head *bh)
-{
-	if (bh) {
+अटल पूर्णांक reiserfs_clean_and_file_buffer(काष्ठा buffer_head *bh)
+अणु
+	अगर (bh) अणु
 		clear_buffer_dirty(bh);
 		clear_buffer_journal_test(bh);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct reiserfs_bitmap_node *allocate_bitmap_node(struct super_block
+अटल काष्ठा reiserfs_biपंचांगap_node *allocate_biपंचांगap_node(काष्ठा super_block
 							 *sb)
-{
-	struct reiserfs_bitmap_node *bn;
-	static int id;
+अणु
+	काष्ठा reiserfs_biपंचांगap_node *bn;
+	अटल पूर्णांक id;
 
-	bn = kmalloc(sizeof(struct reiserfs_bitmap_node), GFP_NOFS);
-	if (!bn) {
-		return NULL;
-	}
+	bn = kदो_स्मृति(माप(काष्ठा reiserfs_biपंचांगap_node), GFP_NOFS);
+	अगर (!bn) अणु
+		वापस शून्य;
+	पूर्ण
 	bn->data = kzalloc(sb->s_blocksize, GFP_NOFS);
-	if (!bn->data) {
-		kfree(bn);
-		return NULL;
-	}
+	अगर (!bn->data) अणु
+		kमुक्त(bn);
+		वापस शून्य;
+	पूर्ण
 	bn->id = id++;
 	INIT_LIST_HEAD(&bn->list);
-	return bn;
-}
+	वापस bn;
+पूर्ण
 
-static struct reiserfs_bitmap_node *get_bitmap_node(struct super_block *sb)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	struct reiserfs_bitmap_node *bn = NULL;
-	struct list_head *entry = journal->j_bitmap_nodes.next;
+अटल काष्ठा reiserfs_biपंचांगap_node *get_biपंचांगap_node(काष्ठा super_block *sb)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	काष्ठा reiserfs_biपंचांगap_node *bn = शून्य;
+	काष्ठा list_head *entry = journal->j_biपंचांगap_nodes.next;
 
-	journal->j_used_bitmap_nodes++;
+	journal->j_used_biपंचांगap_nodes++;
 repeat:
 
-	if (entry != &journal->j_bitmap_nodes) {
-		bn = list_entry(entry, struct reiserfs_bitmap_node, list);
+	अगर (entry != &journal->j_biपंचांगap_nodes) अणु
+		bn = list_entry(entry, काष्ठा reiserfs_biपंचांगap_node, list);
 		list_del(entry);
-		memset(bn->data, 0, sb->s_blocksize);
-		journal->j_free_bitmap_nodes--;
-		return bn;
-	}
-	bn = allocate_bitmap_node(sb);
-	if (!bn) {
+		स_रखो(bn->data, 0, sb->s_blocksize);
+		journal->j_मुक्त_biपंचांगap_nodes--;
+		वापस bn;
+	पूर्ण
+	bn = allocate_biपंचांगap_node(sb);
+	अगर (!bn) अणु
 		yield();
-		goto repeat;
-	}
-	return bn;
-}
-static inline void free_bitmap_node(struct super_block *sb,
-				    struct reiserfs_bitmap_node *bn)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	journal->j_used_bitmap_nodes--;
-	if (journal->j_free_bitmap_nodes > REISERFS_MAX_BITMAP_NODES) {
-		kfree(bn->data);
-		kfree(bn);
-	} else {
-		list_add(&bn->list, &journal->j_bitmap_nodes);
-		journal->j_free_bitmap_nodes++;
-	}
-}
+		जाओ repeat;
+	पूर्ण
+	वापस bn;
+पूर्ण
+अटल अंतरभूत व्योम मुक्त_biपंचांगap_node(काष्ठा super_block *sb,
+				    काष्ठा reiserfs_biपंचांगap_node *bn)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	journal->j_used_biपंचांगap_nodes--;
+	अगर (journal->j_मुक्त_biपंचांगap_nodes > REISERFS_MAX_BITMAP_NODES) अणु
+		kमुक्त(bn->data);
+		kमुक्त(bn);
+	पूर्ण अन्यथा अणु
+		list_add(&bn->list, &journal->j_biपंचांगap_nodes);
+		journal->j_मुक्त_biपंचांगap_nodes++;
+	पूर्ण
+पूर्ण
 
-static void allocate_bitmap_nodes(struct super_block *sb)
-{
-	int i;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	struct reiserfs_bitmap_node *bn = NULL;
-	for (i = 0; i < REISERFS_MIN_BITMAP_NODES; i++) {
-		bn = allocate_bitmap_node(sb);
-		if (bn) {
-			list_add(&bn->list, &journal->j_bitmap_nodes);
-			journal->j_free_bitmap_nodes++;
-		} else {
+अटल व्योम allocate_biपंचांगap_nodes(काष्ठा super_block *sb)
+अणु
+	पूर्णांक i;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	काष्ठा reiserfs_biपंचांगap_node *bn = शून्य;
+	क्रम (i = 0; i < REISERFS_MIN_BITMAP_NODES; i++) अणु
+		bn = allocate_biपंचांगap_node(sb);
+		अगर (bn) अणु
+			list_add(&bn->list, &journal->j_biपंचांगap_nodes);
+			journal->j_मुक्त_biपंचांगap_nodes++;
+		पूर्ण अन्यथा अणु
 			/* this is ok, we'll try again when more are needed */
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int set_bit_in_list_bitmap(struct super_block *sb,
+अटल पूर्णांक set_bit_in_list_biपंचांगap(काष्ठा super_block *sb,
 				  b_blocknr_t block,
-				  struct reiserfs_list_bitmap *jb)
-{
-	unsigned int bmap_nr = block / (sb->s_blocksize << 3);
-	unsigned int bit_nr = block % (sb->s_blocksize << 3);
+				  काष्ठा reiserfs_list_biपंचांगap *jb)
+अणु
+	अचिन्हित पूर्णांक bmap_nr = block / (sb->s_blocksize << 3);
+	अचिन्हित पूर्णांक bit_nr = block % (sb->s_blocksize << 3);
 
-	if (!jb->bitmaps[bmap_nr]) {
-		jb->bitmaps[bmap_nr] = get_bitmap_node(sb);
-	}
-	set_bit(bit_nr, (unsigned long *)jb->bitmaps[bmap_nr]->data);
-	return 0;
-}
+	अगर (!jb->biपंचांगaps[bmap_nr]) अणु
+		jb->biपंचांगaps[bmap_nr] = get_biपंचांगap_node(sb);
+	पूर्ण
+	set_bit(bit_nr, (अचिन्हित दीर्घ *)jb->biपंचांगaps[bmap_nr]->data);
+	वापस 0;
+पूर्ण
 
-static void cleanup_bitmap_list(struct super_block *sb,
-				struct reiserfs_list_bitmap *jb)
-{
-	int i;
-	if (jb->bitmaps == NULL)
-		return;
+अटल व्योम cleanup_biपंचांगap_list(काष्ठा super_block *sb,
+				काष्ठा reiserfs_list_biपंचांगap *jb)
+अणु
+	पूर्णांक i;
+	अगर (jb->biपंचांगaps == शून्य)
+		वापस;
 
-	for (i = 0; i < reiserfs_bmap_count(sb); i++) {
-		if (jb->bitmaps[i]) {
-			free_bitmap_node(sb, jb->bitmaps[i]);
-			jb->bitmaps[i] = NULL;
-		}
-	}
-}
+	क्रम (i = 0; i < reiserfs_bmap_count(sb); i++) अणु
+		अगर (jb->biपंचांगaps[i]) अणु
+			मुक्त_biपंचांगap_node(sb, jb->biपंचांगaps[i]);
+			jb->biपंचांगaps[i] = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * only call this on FS unmount.
  */
-static int free_list_bitmaps(struct super_block *sb,
-			     struct reiserfs_list_bitmap *jb_array)
-{
-	int i;
-	struct reiserfs_list_bitmap *jb;
-	for (i = 0; i < JOURNAL_NUM_BITMAPS; i++) {
+अटल पूर्णांक मुक्त_list_biपंचांगaps(काष्ठा super_block *sb,
+			     काष्ठा reiserfs_list_biपंचांगap *jb_array)
+अणु
+	पूर्णांक i;
+	काष्ठा reiserfs_list_biपंचांगap *jb;
+	क्रम (i = 0; i < JOURNAL_NUM_BITMAPS; i++) अणु
 		jb = jb_array + i;
-		jb->journal_list = NULL;
-		cleanup_bitmap_list(sb, jb);
-		vfree(jb->bitmaps);
-		jb->bitmaps = NULL;
-	}
-	return 0;
-}
+		jb->journal_list = शून्य;
+		cleanup_biपंचांगap_list(sb, jb);
+		vमुक्त(jb->biपंचांगaps);
+		jb->biपंचांगaps = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int free_bitmap_nodes(struct super_block *sb)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	struct list_head *next = journal->j_bitmap_nodes.next;
-	struct reiserfs_bitmap_node *bn;
+अटल पूर्णांक मुक्त_biपंचांगap_nodes(काष्ठा super_block *sb)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	काष्ठा list_head *next = journal->j_biपंचांगap_nodes.next;
+	काष्ठा reiserfs_biपंचांगap_node *bn;
 
-	while (next != &journal->j_bitmap_nodes) {
-		bn = list_entry(next, struct reiserfs_bitmap_node, list);
+	जबतक (next != &journal->j_biपंचांगap_nodes) अणु
+		bn = list_entry(next, काष्ठा reiserfs_biपंचांगap_node, list);
 		list_del(next);
-		kfree(bn->data);
-		kfree(bn);
-		next = journal->j_bitmap_nodes.next;
-		journal->j_free_bitmap_nodes--;
-	}
+		kमुक्त(bn->data);
+		kमुक्त(bn);
+		next = journal->j_biपंचांगap_nodes.next;
+		journal->j_मुक्त_biपंचांगap_nodes--;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * get memory for JOURNAL_NUM_BITMAPS worth of bitmaps.
+ * get memory क्रम JOURNAL_NUM_BITMAPS worth of biपंचांगaps.
  * jb_array is the array to be filled in.
  */
-int reiserfs_allocate_list_bitmaps(struct super_block *sb,
-				   struct reiserfs_list_bitmap *jb_array,
-				   unsigned int bmap_nr)
-{
-	int i;
-	int failed = 0;
-	struct reiserfs_list_bitmap *jb;
-	int mem = bmap_nr * sizeof(struct reiserfs_bitmap_node *);
+पूर्णांक reiserfs_allocate_list_biपंचांगaps(काष्ठा super_block *sb,
+				   काष्ठा reiserfs_list_biपंचांगap *jb_array,
+				   अचिन्हित पूर्णांक bmap_nr)
+अणु
+	पूर्णांक i;
+	पूर्णांक failed = 0;
+	काष्ठा reiserfs_list_biपंचांगap *jb;
+	पूर्णांक mem = bmap_nr * माप(काष्ठा reiserfs_biपंचांगap_node *);
 
-	for (i = 0; i < JOURNAL_NUM_BITMAPS; i++) {
+	क्रम (i = 0; i < JOURNAL_NUM_BITMAPS; i++) अणु
 		jb = jb_array + i;
-		jb->journal_list = NULL;
-		jb->bitmaps = vzalloc(mem);
-		if (!jb->bitmaps) {
+		jb->journal_list = शून्य;
+		jb->biपंचांगaps = vzalloc(mem);
+		अगर (!jb->biपंचांगaps) अणु
 			reiserfs_warning(sb, "clm-2000", "unable to "
 					 "allocate bitmaps for journal lists");
 			failed = 1;
-			break;
-		}
-	}
-	if (failed) {
-		free_list_bitmaps(sb, jb_array);
-		return -1;
-	}
-	return 0;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (failed) अणु
+		मुक्त_list_biपंचांगaps(sb, jb_array);
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * find an available list bitmap.  If you can't find one, flush a commit list
+ * find an available list biपंचांगap.  If you can't find one, flush a commit list
  * and try again
  */
-static struct reiserfs_list_bitmap *get_list_bitmap(struct super_block *sb,
-						    struct reiserfs_journal_list
+अटल काष्ठा reiserfs_list_biपंचांगap *get_list_biपंचांगap(काष्ठा super_block *sb,
+						    काष्ठा reiserfs_journal_list
 						    *jl)
-{
-	int i, j;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	struct reiserfs_list_bitmap *jb = NULL;
+अणु
+	पूर्णांक i, j;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	काष्ठा reiserfs_list_biपंचांगap *jb = शून्य;
 
-	for (j = 0; j < (JOURNAL_NUM_BITMAPS * 3); j++) {
-		i = journal->j_list_bitmap_index;
-		journal->j_list_bitmap_index = (i + 1) % JOURNAL_NUM_BITMAPS;
-		jb = journal->j_list_bitmap + i;
-		if (journal->j_list_bitmap[i].journal_list) {
+	क्रम (j = 0; j < (JOURNAL_NUM_BITMAPS * 3); j++) अणु
+		i = journal->j_list_biपंचांगap_index;
+		journal->j_list_biपंचांगap_index = (i + 1) % JOURNAL_NUM_BITMAPS;
+		jb = journal->j_list_biपंचांगap + i;
+		अगर (journal->j_list_biपंचांगap[i].journal_list) अणु
 			flush_commit_list(sb,
-					  journal->j_list_bitmap[i].
+					  journal->j_list_biपंचांगap[i].
 					  journal_list, 1);
-			if (!journal->j_list_bitmap[i].journal_list) {
-				break;
-			}
-		} else {
-			break;
-		}
-	}
-	/* double check to make sure if flushed correctly */
-	if (jb->journal_list)
-		return NULL;
+			अगर (!journal->j_list_biपंचांगap[i].journal_list) अणु
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	/* द्विगुन check to make sure अगर flushed correctly */
+	अगर (jb->journal_list)
+		वापस शून्य;
 	jb->journal_list = jl;
-	return jb;
-}
+	वापस jb;
+पूर्ण
 
 /*
  * allocates a new chunk of X nodes, and links them all together as a list.
- * Uses the cnode->next and cnode->prev pointers
- * returns NULL on failure
+ * Uses the cnode->next and cnode->prev poपूर्णांकers
+ * वापसs शून्य on failure
  */
-static struct reiserfs_journal_cnode *allocate_cnodes(int num_cnodes)
-{
-	struct reiserfs_journal_cnode *head;
-	int i;
-	if (num_cnodes <= 0) {
-		return NULL;
-	}
+अटल काष्ठा reiserfs_journal_cnode *allocate_cnodes(पूर्णांक num_cnodes)
+अणु
+	काष्ठा reiserfs_journal_cnode *head;
+	पूर्णांक i;
+	अगर (num_cnodes <= 0) अणु
+		वापस शून्य;
+	पूर्ण
 	head = vzalloc(array_size(num_cnodes,
-				  sizeof(struct reiserfs_journal_cnode)));
-	if (!head) {
-		return NULL;
-	}
-	head[0].prev = NULL;
+				  माप(काष्ठा reiserfs_journal_cnode)));
+	अगर (!head) अणु
+		वापस शून्य;
+	पूर्ण
+	head[0].prev = शून्य;
 	head[0].next = head + 1;
-	for (i = 1; i < num_cnodes; i++) {
+	क्रम (i = 1; i < num_cnodes; i++) अणु
 		head[i].prev = head + (i - 1);
-		head[i].next = head + (i + 1);	/* if last one, overwrite it after the if */
-	}
-	head[num_cnodes - 1].next = NULL;
-	return head;
-}
+		head[i].next = head + (i + 1);	/* अगर last one, overग_लिखो it after the अगर */
+	पूर्ण
+	head[num_cnodes - 1].next = शून्य;
+	वापस head;
+पूर्ण
 
-/* pulls a cnode off the free list, or returns NULL on failure */
-static struct reiserfs_journal_cnode *get_cnode(struct super_block *sb)
-{
-	struct reiserfs_journal_cnode *cn;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
+/* pulls a cnode off the मुक्त list, or वापसs शून्य on failure */
+अटल काष्ठा reiserfs_journal_cnode *get_cnode(काष्ठा super_block *sb)
+अणु
+	काष्ठा reiserfs_journal_cnode *cn;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
 
 	reiserfs_check_lock_depth(sb, "get_cnode");
 
-	if (journal->j_cnode_free <= 0) {
-		return NULL;
-	}
+	अगर (journal->j_cnode_मुक्त <= 0) अणु
+		वापस शून्य;
+	पूर्ण
 	journal->j_cnode_used++;
-	journal->j_cnode_free--;
-	cn = journal->j_cnode_free_list;
-	if (!cn) {
-		return cn;
-	}
-	if (cn->next) {
-		cn->next->prev = NULL;
-	}
-	journal->j_cnode_free_list = cn->next;
-	memset(cn, 0, sizeof(struct reiserfs_journal_cnode));
-	return cn;
-}
+	journal->j_cnode_मुक्त--;
+	cn = journal->j_cnode_मुक्त_list;
+	अगर (!cn) अणु
+		वापस cn;
+	पूर्ण
+	अगर (cn->next) अणु
+		cn->next->prev = शून्य;
+	पूर्ण
+	journal->j_cnode_मुक्त_list = cn->next;
+	स_रखो(cn, 0, माप(काष्ठा reiserfs_journal_cnode));
+	वापस cn;
+पूर्ण
 
 /*
- * returns a cnode to the free list
+ * वापसs a cnode to the मुक्त list
  */
-static void free_cnode(struct super_block *sb,
-		       struct reiserfs_journal_cnode *cn)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
+अटल व्योम मुक्त_cnode(काष्ठा super_block *sb,
+		       काष्ठा reiserfs_journal_cnode *cn)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
 
 	reiserfs_check_lock_depth(sb, "free_cnode");
 
 	journal->j_cnode_used--;
-	journal->j_cnode_free++;
-	/* memset(cn, 0, sizeof(struct reiserfs_journal_cnode)) ; */
-	cn->next = journal->j_cnode_free_list;
-	if (journal->j_cnode_free_list) {
-		journal->j_cnode_free_list->prev = cn;
-	}
-	cn->prev = NULL;	/* not needed with the memset, but I might kill the memset, and forget to do this */
-	journal->j_cnode_free_list = cn;
-}
+	journal->j_cnode_मुक्त++;
+	/* स_रखो(cn, 0, माप(काष्ठा reiserfs_journal_cnode)) ; */
+	cn->next = journal->j_cnode_मुक्त_list;
+	अगर (journal->j_cnode_मुक्त_list) अणु
+		journal->j_cnode_मुक्त_list->prev = cn;
+	पूर्ण
+	cn->prev = शून्य;	/* not needed with the स_रखो, but I might समाप्त the स_रखो, and क्रमget to करो this */
+	journal->j_cnode_मुक्त_list = cn;
+पूर्ण
 
-static void clear_prepared_bits(struct buffer_head *bh)
-{
+अटल व्योम clear_prepared_bits(काष्ठा buffer_head *bh)
+अणु
 	clear_buffer_journal_prepared(bh);
 	clear_buffer_journal_restore_dirty(bh);
-}
+पूर्ण
 
 /*
- * return a cnode with same dev, block number and size in table,
- * or null if not found
+ * वापस a cnode with same dev, block number and size in table,
+ * or null अगर not found
  */
-static inline struct reiserfs_journal_cnode *get_journal_hash_dev(struct
+अटल अंतरभूत काष्ठा reiserfs_journal_cnode *get_journal_hash_dev(काष्ठा
 								  super_block
 								  *sb,
-								  struct
+								  काष्ठा
 								  reiserfs_journal_cnode
 								  **table,
-								  long bl)
-{
-	struct reiserfs_journal_cnode *cn;
+								  दीर्घ bl)
+अणु
+	काष्ठा reiserfs_journal_cnode *cn;
 	cn = journal_hash(table, sb, bl);
-	while (cn) {
-		if (cn->blocknr == bl && cn->sb == sb)
-			return cn;
+	जबतक (cn) अणु
+		अगर (cn->blocknr == bl && cn->sb == sb)
+			वापस cn;
 		cn = cn->hnext;
-	}
-	return (struct reiserfs_journal_cnode *)0;
-}
+	पूर्ण
+	वापस (काष्ठा reiserfs_journal_cnode *)0;
+पूर्ण
 
 /*
  * this actually means 'can this block be reallocated yet?'.  If you set
- * search_all, a block can only be allocated if it is not in the current
- * transaction, was not freed by the current transaction, and has no chance
+ * search_all, a block can only be allocated अगर it is not in the current
+ * transaction, was not मुक्तd by the current transaction, and has no chance
  * of ever being overwritten by a replay after crashing.
  *
- * If you don't set search_all, a block can only be allocated if it is not
- * in the current transaction.  Since deleting a block removes it from the
- * current transaction, this case should never happen.  If you don't set
- * search_all, make sure you never write the block without logging it.
+ * If you करोn't set search_all, a block can only be allocated अगर it is not
+ * in the current transaction.  Since deleting a block हटाओs it from the
+ * current transaction, this हाल should never happen.  If you करोn't set
+ * search_all, make sure you never ग_लिखो the block without logging it.
  *
- * next_zero_bit is a suggestion about the next block to try for find_forward.
- * when bl is rejected because it is set in a journal list bitmap, we search
- * for the next zero bit in the bitmap that rejected bl.  Then, we return
- * that through next_zero_bit for find_forward to try.
+ * next_zero_bit is a suggestion about the next block to try क्रम find_क्रमward.
+ * when bl is rejected because it is set in a journal list biपंचांगap, we search
+ * क्रम the next zero bit in the biपंचांगap that rejected bl.  Then, we वापस
+ * that through next_zero_bit क्रम find_क्रमward to try.
  *
- * Just because we return something in next_zero_bit does not mean we won't
+ * Just because we वापस something in next_zero_bit करोes not mean we won't
  * reject it on the next call to reiserfs_in_journal
  */
-int reiserfs_in_journal(struct super_block *sb,
-			unsigned int bmap_nr, int bit_nr, int search_all,
+पूर्णांक reiserfs_in_journal(काष्ठा super_block *sb,
+			अचिन्हित पूर्णांक bmap_nr, पूर्णांक bit_nr, पूर्णांक search_all,
 			b_blocknr_t * next_zero_bit)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	struct reiserfs_list_bitmap *jb;
-	int i;
-	unsigned long bl;
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	काष्ठा reiserfs_list_biपंचांगap *jb;
+	पूर्णांक i;
+	अचिन्हित दीर्घ bl;
 
 	*next_zero_bit = 0;	/* always start this at zero. */
 
 	PROC_INFO_INC(sb, journal.in_journal);
 	/*
-	 * If we aren't doing a search_all, this is a metablock, and it
-	 * will be logged before use.  if we crash before the transaction
-	 * that freed it commits,  this transaction won't have committed
+	 * If we aren't करोing a search_all, this is a metablock, and it
+	 * will be logged beक्रमe use.  अगर we crash beक्रमe the transaction
+	 * that मुक्तd it commits,  this transaction won't have committed
 	 * either, and the block will never be written
 	 */
-	if (search_all) {
-		for (i = 0; i < JOURNAL_NUM_BITMAPS; i++) {
-			PROC_INFO_INC(sb, journal.in_journal_bitmap);
-			jb = journal->j_list_bitmap + i;
-			if (jb->journal_list && jb->bitmaps[bmap_nr] &&
+	अगर (search_all) अणु
+		क्रम (i = 0; i < JOURNAL_NUM_BITMAPS; i++) अणु
+			PROC_INFO_INC(sb, journal.in_journal_biपंचांगap);
+			jb = journal->j_list_biपंचांगap + i;
+			अगर (jb->journal_list && jb->biपंचांगaps[bmap_nr] &&
 			    test_bit(bit_nr,
-				     (unsigned long *)jb->bitmaps[bmap_nr]->
-				     data)) {
+				     (अचिन्हित दीर्घ *)jb->biपंचांगaps[bmap_nr]->
+				     data)) अणु
 				*next_zero_bit =
-				    find_next_zero_bit((unsigned long *)
-						       (jb->bitmaps[bmap_nr]->
+				    find_next_zero_bit((अचिन्हित दीर्घ *)
+						       (jb->biपंचांगaps[bmap_nr]->
 							data),
 						       sb->s_blocksize << 3,
 						       bit_nr + 1);
-				return 1;
-			}
-		}
-	}
+				वापस 1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	bl = bmap_nr * (sb->s_blocksize << 3) + bit_nr;
 	/* is it in any old transactions? */
-	if (search_all
-	    && (get_journal_hash_dev(sb, journal->j_list_hash_table, bl))) {
-		return 1;
-	}
+	अगर (search_all
+	    && (get_journal_hash_dev(sb, journal->j_list_hash_table, bl))) अणु
+		वापस 1;
+	पूर्ण
 
 	/* is it in the current transaction.  This should never happen */
-	if ((get_journal_hash_dev(sb, journal->j_hash_table, bl))) {
+	अगर ((get_journal_hash_dev(sb, journal->j_hash_table, bl))) अणु
 		BUG();
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	PROC_INFO_INC(sb, journal.in_journal_reusable);
-	/* safe for reuse */
-	return 0;
-}
+	/* safe क्रम reuse */
+	वापस 0;
+पूर्ण
 
-/* insert cn into table */
-static inline void insert_journal_hash(struct reiserfs_journal_cnode **table,
-				       struct reiserfs_journal_cnode *cn)
-{
-	struct reiserfs_journal_cnode *cn_orig;
+/* insert cn पूर्णांकo table */
+अटल अंतरभूत व्योम insert_journal_hash(काष्ठा reiserfs_journal_cnode **table,
+				       काष्ठा reiserfs_journal_cnode *cn)
+अणु
+	काष्ठा reiserfs_journal_cnode *cn_orig;
 
 	cn_orig = journal_hash(table, cn->sb, cn->blocknr);
 	cn->hnext = cn_orig;
-	cn->hprev = NULL;
-	if (cn_orig) {
+	cn->hprev = शून्य;
+	अगर (cn_orig) अणु
 		cn_orig->hprev = cn;
-	}
+	पूर्ण
 	journal_hash(table, cn->sb, cn->blocknr) = cn;
-}
+पूर्ण
 
 /* lock the current transaction */
-static inline void lock_journal(struct super_block *sb)
-{
+अटल अंतरभूत व्योम lock_journal(काष्ठा super_block *sb)
+अणु
 	PROC_INFO_INC(sb, journal.lock_journal);
 
 	reiserfs_mutex_lock_safe(&SB_JOURNAL(sb)->j_mutex, sb);
-}
+पूर्ण
 
 /* unlock the current transaction */
-static inline void unlock_journal(struct super_block *sb)
-{
+अटल अंतरभूत व्योम unlock_journal(काष्ठा super_block *sb)
+अणु
 	mutex_unlock(&SB_JOURNAL(sb)->j_mutex);
-}
+पूर्ण
 
-static inline void get_journal_list(struct reiserfs_journal_list *jl)
-{
+अटल अंतरभूत व्योम get_journal_list(काष्ठा reiserfs_journal_list *jl)
+अणु
 	jl->j_refcount++;
-}
+पूर्ण
 
-static inline void put_journal_list(struct super_block *s,
-				    struct reiserfs_journal_list *jl)
-{
-	if (jl->j_refcount < 1) {
+अटल अंतरभूत व्योम put_journal_list(काष्ठा super_block *s,
+				    काष्ठा reiserfs_journal_list *jl)
+अणु
+	अगर (jl->j_refcount < 1) अणु
 		reiserfs_panic(s, "journal-2", "trans id %u, refcount at %d",
 			       jl->j_trans_id, jl->j_refcount);
-	}
-	if (--jl->j_refcount == 0)
-		kfree(jl);
-}
+	पूर्ण
+	अगर (--jl->j_refcount == 0)
+		kमुक्त(jl);
+पूर्ण
 
 /*
- * this used to be much more involved, and I'm keeping it just in case
- * things get ugly again.  it gets called by flush_commit_list, and
- * cleans up any data stored about blocks freed during a transaction.
+ * this used to be much more involved, and I'm keeping it just in हाल
+ * things get ugly again.  it माला_लो called by flush_commit_list, and
+ * cleans up any data stored about blocks मुक्तd during a transaction.
  */
-static void cleanup_freed_for_journal_list(struct super_block *sb,
-					   struct reiserfs_journal_list *jl)
-{
+अटल व्योम cleanup_मुक्तd_क्रम_journal_list(काष्ठा super_block *sb,
+					   काष्ठा reiserfs_journal_list *jl)
+अणु
 
-	struct reiserfs_list_bitmap *jb = jl->j_list_bitmap;
-	if (jb) {
-		cleanup_bitmap_list(sb, jb);
-	}
-	jl->j_list_bitmap->journal_list = NULL;
-	jl->j_list_bitmap = NULL;
-}
+	काष्ठा reiserfs_list_biपंचांगap *jb = jl->j_list_biपंचांगap;
+	अगर (jb) अणु
+		cleanup_biपंचांगap_list(sb, jb);
+	पूर्ण
+	jl->j_list_biपंचांगap->journal_list = शून्य;
+	jl->j_list_biपंचांगap = शून्य;
+पूर्ण
 
-static int journal_list_still_alive(struct super_block *s,
-				    unsigned int trans_id)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(s);
-	struct list_head *entry = &journal->j_journal_list;
-	struct reiserfs_journal_list *jl;
+अटल पूर्णांक journal_list_still_alive(काष्ठा super_block *s,
+				    अचिन्हित पूर्णांक trans_id)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(s);
+	काष्ठा list_head *entry = &journal->j_journal_list;
+	काष्ठा reiserfs_journal_list *jl;
 
-	if (!list_empty(entry)) {
+	अगर (!list_empty(entry)) अणु
 		jl = JOURNAL_LIST_ENTRY(entry->next);
-		if (jl->j_trans_id <= trans_id) {
-			return 1;
-		}
-	}
-	return 0;
-}
+		अगर (jl->j_trans_id <= trans_id) अणु
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * If page->mapping was null, we failed to truncate this page for
+ * If page->mapping was null, we failed to truncate this page क्रम
  * some reason.  Most likely because it was truncated after being
  * logged via data=journal.
  *
- * This does a check to see if the buffer belongs to one of these
- * lost pages before doing the final put_bh.  If page->mapping was
- * null, it tries to free buffers on the page, which should make the
+ * This करोes a check to see अगर the buffer beदीर्घs to one of these
+ * lost pages beक्रमe करोing the final put_bh.  If page->mapping was
+ * null, it tries to मुक्त buffers on the page, which should make the
  * final put_page drop the page from the lru.
  */
-static void release_buffer_page(struct buffer_head *bh)
-{
-	struct page *page = bh->b_page;
-	if (!page->mapping && trylock_page(page)) {
+अटल व्योम release_buffer_page(काष्ठा buffer_head *bh)
+अणु
+	काष्ठा page *page = bh->b_page;
+	अगर (!page->mapping && trylock_page(page)) अणु
 		get_page(page);
 		put_bh(bh);
-		if (!page->mapping)
-			try_to_free_buffers(page);
+		अगर (!page->mapping)
+			try_to_मुक्त_buffers(page);
 		unlock_page(page);
 		put_page(page);
-	} else {
+	पूर्ण अन्यथा अणु
 		put_bh(bh);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void reiserfs_end_buffer_io_sync(struct buffer_head *bh, int uptodate)
-{
-	if (buffer_journaled(bh)) {
-		reiserfs_warning(NULL, "clm-2084",
+अटल व्योम reiserfs_end_buffer_io_sync(काष्ठा buffer_head *bh, पूर्णांक uptodate)
+अणु
+	अगर (buffer_journaled(bh)) अणु
+		reiserfs_warning(शून्य, "clm-2084",
 				 "pinned buffer %lu:%pg sent to disk",
 				 bh->b_blocknr, bh->b_bdev);
-	}
-	if (uptodate)
+	पूर्ण
+	अगर (uptodate)
 		set_buffer_uptodate(bh);
-	else
+	अन्यथा
 		clear_buffer_uptodate(bh);
 
 	unlock_buffer(bh);
 	release_buffer_page(bh);
-}
+पूर्ण
 
-static void reiserfs_end_ordered_io(struct buffer_head *bh, int uptodate)
-{
-	if (uptodate)
+अटल व्योम reiserfs_end_ordered_io(काष्ठा buffer_head *bh, पूर्णांक uptodate)
+अणु
+	अगर (uptodate)
 		set_buffer_uptodate(bh);
-	else
+	अन्यथा
 		clear_buffer_uptodate(bh);
 	unlock_buffer(bh);
 	put_bh(bh);
-}
+पूर्ण
 
-static void submit_logged_buffer(struct buffer_head *bh)
-{
+अटल व्योम submit_logged_buffer(काष्ठा buffer_head *bh)
+अणु
 	get_bh(bh);
 	bh->b_end_io = reiserfs_end_buffer_io_sync;
 	clear_buffer_journal_new(bh);
 	clear_buffer_dirty(bh);
-	if (!test_clear_buffer_journal_test(bh))
+	अगर (!test_clear_buffer_journal_test(bh))
 		BUG();
-	if (!buffer_uptodate(bh))
+	अगर (!buffer_uptodate(bh))
 		BUG();
 	submit_bh(REQ_OP_WRITE, 0, bh);
-}
+पूर्ण
 
-static void submit_ordered_buffer(struct buffer_head *bh)
-{
+अटल व्योम submit_ordered_buffer(काष्ठा buffer_head *bh)
+अणु
 	get_bh(bh);
 	bh->b_end_io = reiserfs_end_ordered_io;
 	clear_buffer_dirty(bh);
-	if (!buffer_uptodate(bh))
+	अगर (!buffer_uptodate(bh))
 		BUG();
 	submit_bh(REQ_OP_WRITE, 0, bh);
-}
+पूर्ण
 
-#define CHUNK_SIZE 32
-struct buffer_chunk {
-	struct buffer_head *bh[CHUNK_SIZE];
-	int nr;
-};
+#घोषणा CHUNK_SIZE 32
+काष्ठा buffer_chunk अणु
+	काष्ठा buffer_head *bh[CHUNK_SIZE];
+	पूर्णांक nr;
+पूर्ण;
 
-static void write_chunk(struct buffer_chunk *chunk)
-{
-	int i;
-	for (i = 0; i < chunk->nr; i++) {
+अटल व्योम ग_लिखो_chunk(काष्ठा buffer_chunk *chunk)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < chunk->nr; i++) अणु
 		submit_logged_buffer(chunk->bh[i]);
-	}
+	पूर्ण
 	chunk->nr = 0;
-}
+पूर्ण
 
-static void write_ordered_chunk(struct buffer_chunk *chunk)
-{
-	int i;
-	for (i = 0; i < chunk->nr; i++) {
+अटल व्योम ग_लिखो_ordered_chunk(काष्ठा buffer_chunk *chunk)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < chunk->nr; i++) अणु
 		submit_ordered_buffer(chunk->bh[i]);
-	}
+	पूर्ण
 	chunk->nr = 0;
-}
+पूर्ण
 
-static int add_to_chunk(struct buffer_chunk *chunk, struct buffer_head *bh,
-			spinlock_t * lock, void (fn) (struct buffer_chunk *))
-{
-	int ret = 0;
+अटल पूर्णांक add_to_chunk(काष्ठा buffer_chunk *chunk, काष्ठा buffer_head *bh,
+			spinlock_t * lock, व्योम (fn) (काष्ठा buffer_chunk *))
+अणु
+	पूर्णांक ret = 0;
 	BUG_ON(chunk->nr >= CHUNK_SIZE);
 	chunk->bh[chunk->nr++] = bh;
-	if (chunk->nr >= CHUNK_SIZE) {
+	अगर (chunk->nr >= CHUNK_SIZE) अणु
 		ret = 1;
-		if (lock) {
+		अगर (lock) अणु
 			spin_unlock(lock);
 			fn(chunk);
 			spin_lock(lock);
-		} else {
+		पूर्ण अन्यथा अणु
 			fn(chunk);
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static atomic_t nr_reiserfs_jh = ATOMIC_INIT(0);
-static struct reiserfs_jh *alloc_jh(void)
-{
-	struct reiserfs_jh *jh;
-	while (1) {
-		jh = kmalloc(sizeof(*jh), GFP_NOFS);
-		if (jh) {
+अटल atomic_t nr_reiserfs_jh = ATOMIC_INIT(0);
+अटल काष्ठा reiserfs_jh *alloc_jh(व्योम)
+अणु
+	काष्ठा reiserfs_jh *jh;
+	जबतक (1) अणु
+		jh = kदो_स्मृति(माप(*jh), GFP_NOFS);
+		अगर (jh) अणु
 			atomic_inc(&nr_reiserfs_jh);
-			return jh;
-		}
+			वापस jh;
+		पूर्ण
 		yield();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * we want to free the jh when the buffer has been written
- * and waited on
+ * we want to मुक्त the jh when the buffer has been written
+ * and रुकोed on
  */
-void reiserfs_free_jh(struct buffer_head *bh)
-{
-	struct reiserfs_jh *jh;
+व्योम reiserfs_मुक्त_jh(काष्ठा buffer_head *bh)
+अणु
+	काष्ठा reiserfs_jh *jh;
 
-	jh = bh->b_private;
-	if (jh) {
-		bh->b_private = NULL;
-		jh->bh = NULL;
+	jh = bh->b_निजी;
+	अगर (jh) अणु
+		bh->b_निजी = शून्य;
+		jh->bh = शून्य;
 		list_del_init(&jh->list);
-		kfree(jh);
-		if (atomic_read(&nr_reiserfs_jh) <= 0)
+		kमुक्त(jh);
+		अगर (atomic_पढ़ो(&nr_reiserfs_jh) <= 0)
 			BUG();
 		atomic_dec(&nr_reiserfs_jh);
 		put_bh(bh);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int __add_jh(struct reiserfs_journal *j, struct buffer_head *bh,
-			   int tail)
-{
-	struct reiserfs_jh *jh;
+अटल अंतरभूत पूर्णांक __add_jh(काष्ठा reiserfs_journal *j, काष्ठा buffer_head *bh,
+			   पूर्णांक tail)
+अणु
+	काष्ठा reiserfs_jh *jh;
 
-	if (bh->b_private) {
+	अगर (bh->b_निजी) अणु
 		spin_lock(&j->j_dirty_buffers_lock);
-		if (!bh->b_private) {
+		अगर (!bh->b_निजी) अणु
 			spin_unlock(&j->j_dirty_buffers_lock);
-			goto no_jh;
-		}
-		jh = bh->b_private;
+			जाओ no_jh;
+		पूर्ण
+		jh = bh->b_निजी;
 		list_del_init(&jh->list);
-	} else {
+	पूर्ण अन्यथा अणु
 no_jh:
 		get_bh(bh);
 		jh = alloc_jh();
 		spin_lock(&j->j_dirty_buffers_lock);
 		/*
-		 * buffer must be locked for __add_jh, should be able to have
-		 * two adds at the same time
+		 * buffer must be locked क्रम __add_jh, should be able to have
+		 * two adds at the same समय
 		 */
-		BUG_ON(bh->b_private);
+		BUG_ON(bh->b_निजी);
 		jh->bh = bh;
-		bh->b_private = jh;
-	}
+		bh->b_निजी = jh;
+	पूर्ण
 	jh->jl = j->j_current_jl;
-	if (tail)
+	अगर (tail)
 		list_add_tail(&jh->list, &jh->jl->j_tail_bh_list);
-	else {
+	अन्यथा अणु
 		list_add_tail(&jh->list, &jh->jl->j_bh_list);
-	}
+	पूर्ण
 	spin_unlock(&j->j_dirty_buffers_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int reiserfs_add_tail_list(struct inode *inode, struct buffer_head *bh)
-{
-	return __add_jh(SB_JOURNAL(inode->i_sb), bh, 1);
-}
-int reiserfs_add_ordered_list(struct inode *inode, struct buffer_head *bh)
-{
-	return __add_jh(SB_JOURNAL(inode->i_sb), bh, 0);
-}
+पूर्णांक reiserfs_add_tail_list(काष्ठा inode *inode, काष्ठा buffer_head *bh)
+अणु
+	वापस __add_jh(SB_JOURNAL(inode->i_sb), bh, 1);
+पूर्ण
+पूर्णांक reiserfs_add_ordered_list(काष्ठा inode *inode, काष्ठा buffer_head *bh)
+अणु
+	वापस __add_jh(SB_JOURNAL(inode->i_sb), bh, 0);
+पूर्ण
 
-#define JH_ENTRY(l) list_entry((l), struct reiserfs_jh, list)
-static int write_ordered_buffers(spinlock_t * lock,
-				 struct reiserfs_journal *j,
-				 struct reiserfs_journal_list *jl,
-				 struct list_head *list)
-{
-	struct buffer_head *bh;
-	struct reiserfs_jh *jh;
-	int ret = j->j_errno;
-	struct buffer_chunk chunk;
-	struct list_head tmp;
-	INIT_LIST_HEAD(&tmp);
+#घोषणा JH_ENTRY(l) list_entry((l), काष्ठा reiserfs_jh, list)
+अटल पूर्णांक ग_लिखो_ordered_buffers(spinlock_t * lock,
+				 काष्ठा reiserfs_journal *j,
+				 काष्ठा reiserfs_journal_list *jl,
+				 काष्ठा list_head *list)
+अणु
+	काष्ठा buffer_head *bh;
+	काष्ठा reiserfs_jh *jh;
+	पूर्णांक ret = j->j_त्रुटि_सं;
+	काष्ठा buffer_chunk chunk;
+	काष्ठा list_head पंचांगp;
+	INIT_LIST_HEAD(&पंचांगp);
 
 	chunk.nr = 0;
 	spin_lock(lock);
-	while (!list_empty(list)) {
+	जबतक (!list_empty(list)) अणु
 		jh = JH_ENTRY(list->next);
 		bh = jh->bh;
 		get_bh(bh);
-		if (!trylock_buffer(bh)) {
-			if (!buffer_dirty(bh)) {
-				list_move(&jh->list, &tmp);
-				goto loop_next;
-			}
+		अगर (!trylock_buffer(bh)) अणु
+			अगर (!buffer_dirty(bh)) अणु
+				list_move(&jh->list, &पंचांगp);
+				जाओ loop_next;
+			पूर्ण
 			spin_unlock(lock);
-			if (chunk.nr)
-				write_ordered_chunk(&chunk);
-			wait_on_buffer(bh);
+			अगर (chunk.nr)
+				ग_लिखो_ordered_chunk(&chunk);
+			रुको_on_buffer(bh);
 			cond_resched();
 			spin_lock(lock);
-			goto loop_next;
-		}
+			जाओ loop_next;
+		पूर्ण
 		/*
 		 * in theory, dirty non-uptodate buffers should never get here,
 		 * but the upper layer io error paths still have a few quirks.
 		 * Handle them here as gracefully as we can
 		 */
-		if (!buffer_uptodate(bh) && buffer_dirty(bh)) {
+		अगर (!buffer_uptodate(bh) && buffer_dirty(bh)) अणु
 			clear_buffer_dirty(bh);
 			ret = -EIO;
-		}
-		if (buffer_dirty(bh)) {
-			list_move(&jh->list, &tmp);
-			add_to_chunk(&chunk, bh, lock, write_ordered_chunk);
-		} else {
-			reiserfs_free_jh(bh);
+		पूर्ण
+		अगर (buffer_dirty(bh)) अणु
+			list_move(&jh->list, &पंचांगp);
+			add_to_chunk(&chunk, bh, lock, ग_लिखो_ordered_chunk);
+		पूर्ण अन्यथा अणु
+			reiserfs_मुक्त_jh(bh);
 			unlock_buffer(bh);
-		}
+		पूर्ण
 loop_next:
 		put_bh(bh);
 		cond_resched_lock(lock);
-	}
-	if (chunk.nr) {
+	पूर्ण
+	अगर (chunk.nr) अणु
 		spin_unlock(lock);
-		write_ordered_chunk(&chunk);
+		ग_लिखो_ordered_chunk(&chunk);
 		spin_lock(lock);
-	}
-	while (!list_empty(&tmp)) {
-		jh = JH_ENTRY(tmp.prev);
+	पूर्ण
+	जबतक (!list_empty(&पंचांगp)) अणु
+		jh = JH_ENTRY(पंचांगp.prev);
 		bh = jh->bh;
 		get_bh(bh);
-		reiserfs_free_jh(bh);
+		reiserfs_मुक्त_jh(bh);
 
-		if (buffer_locked(bh)) {
+		अगर (buffer_locked(bh)) अणु
 			spin_unlock(lock);
-			wait_on_buffer(bh);
+			रुको_on_buffer(bh);
 			spin_lock(lock);
-		}
-		if (!buffer_uptodate(bh)) {
+		पूर्ण
+		अगर (!buffer_uptodate(bh)) अणु
 			ret = -EIO;
-		}
+		पूर्ण
 		/*
-		 * ugly interaction with invalidatepage here.
+		 * ugly पूर्णांकeraction with invalidatepage here.
 		 * reiserfs_invalidate_page will pin any buffer that has a
 		 * valid journal head from an older transaction.  If someone
-		 * else sets our buffer dirty after we write it in the first
+		 * अन्यथा sets our buffer dirty after we ग_लिखो it in the first
 		 * loop, and then someone truncates the page away, nobody
-		 * will ever write the buffer. We're safe if we write the
-		 * page one last time after freeing the journal header.
+		 * will ever ग_लिखो the buffer. We're safe अगर we ग_लिखो the
+		 * page one last समय after मुक्तing the journal header.
 		 */
-		if (buffer_dirty(bh) && unlikely(bh->b_page->mapping == NULL)) {
+		अगर (buffer_dirty(bh) && unlikely(bh->b_page->mapping == शून्य)) अणु
 			spin_unlock(lock);
 			ll_rw_block(REQ_OP_WRITE, 0, 1, &bh);
 			spin_lock(lock);
-		}
+		पूर्ण
 		put_bh(bh);
 		cond_resched_lock(lock);
-	}
+	पूर्ण
 	spin_unlock(lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int flush_older_commits(struct super_block *s,
-			       struct reiserfs_journal_list *jl)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(s);
-	struct reiserfs_journal_list *other_jl;
-	struct reiserfs_journal_list *first_jl;
-	struct list_head *entry;
-	unsigned int trans_id = jl->j_trans_id;
-	unsigned int other_trans_id;
+अटल पूर्णांक flush_older_commits(काष्ठा super_block *s,
+			       काष्ठा reiserfs_journal_list *jl)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(s);
+	काष्ठा reiserfs_journal_list *other_jl;
+	काष्ठा reiserfs_journal_list *first_jl;
+	काष्ठा list_head *entry;
+	अचिन्हित पूर्णांक trans_id = jl->j_trans_id;
+	अचिन्हित पूर्णांक other_trans_id;
 
 find_first:
 	/*
@@ -894,410 +895,410 @@ find_first:
 	 */
 	first_jl = jl;
 	entry = jl->j_list.prev;
-	while (1) {
+	जबतक (1) अणु
 		other_jl = JOURNAL_LIST_ENTRY(entry);
-		if (entry == &journal->j_journal_list ||
-		    atomic_read(&other_jl->j_older_commits_done))
-			break;
+		अगर (entry == &journal->j_journal_list ||
+		    atomic_पढ़ो(&other_jl->j_older_commits_करोne))
+			अवरोध;
 
 		first_jl = other_jl;
 		entry = other_jl->j_list.prev;
-	}
+	पूर्ण
 
-	/* if we didn't find any older uncommitted transactions, return now */
-	if (first_jl == jl) {
-		return 0;
-	}
+	/* अगर we didn't find any older uncommitted transactions, वापस now */
+	अगर (first_jl == jl) अणु
+		वापस 0;
+	पूर्ण
 
 	entry = &first_jl->j_list;
-	while (1) {
+	जबतक (1) अणु
 		other_jl = JOURNAL_LIST_ENTRY(entry);
 		other_trans_id = other_jl->j_trans_id;
 
-		if (other_trans_id < trans_id) {
-			if (atomic_read(&other_jl->j_commit_left) != 0) {
+		अगर (other_trans_id < trans_id) अणु
+			अगर (atomic_पढ़ो(&other_jl->j_commit_left) != 0) अणु
 				flush_commit_list(s, other_jl, 0);
 
-				/* list we were called with is gone, return */
-				if (!journal_list_still_alive(s, trans_id))
-					return 1;
+				/* list we were called with is gone, वापस */
+				अगर (!journal_list_still_alive(s, trans_id))
+					वापस 1;
 
 				/*
 				 * the one we just flushed is gone, this means
 				 * all older lists are also gone, so first_jl
-				 * is no longer valid either.  Go back to the
+				 * is no दीर्घer valid either.  Go back to the
 				 * beginning.
 				 */
-				if (!journal_list_still_alive
-				    (s, other_trans_id)) {
-					goto find_first;
-				}
-			}
+				अगर (!journal_list_still_alive
+				    (s, other_trans_id)) अणु
+					जाओ find_first;
+				पूर्ण
+			पूर्ण
 			entry = entry->next;
-			if (entry == &journal->j_journal_list)
-				return 0;
-		} else {
-			return 0;
-		}
-	}
-	return 0;
-}
+			अगर (entry == &journal->j_journal_list)
+				वापस 0;
+		पूर्ण अन्यथा अणु
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int reiserfs_async_progress_wait(struct super_block *s)
-{
-	struct reiserfs_journal *j = SB_JOURNAL(s);
+अटल पूर्णांक reiserfs_async_progress_रुको(काष्ठा super_block *s)
+अणु
+	काष्ठा reiserfs_journal *j = SB_JOURNAL(s);
 
-	if (atomic_read(&j->j_async_throttle)) {
-		int depth;
+	अगर (atomic_पढ़ो(&j->j_async_throttle)) अणु
+		पूर्णांक depth;
 
-		depth = reiserfs_write_unlock_nested(s);
-		congestion_wait(BLK_RW_ASYNC, HZ / 10);
-		reiserfs_write_lock_nested(s, depth);
-	}
+		depth = reiserfs_ग_लिखो_unlock_nested(s);
+		congestion_रुको(BLK_RW_ASYNC, HZ / 10);
+		reiserfs_ग_लिखो_lock_nested(s, depth);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * if this journal list still has commit blocks unflushed, send them to disk.
+ * अगर this journal list still has commit blocks unflushed, send them to disk.
  *
- * log areas must be flushed in order (transaction 2 can't commit before
- * transaction 1) Before the commit block can by written, every other log
+ * log areas must be flushed in order (transaction 2 can't commit beक्रमe
+ * transaction 1) Beक्रमe the commit block can by written, every other log
  * block must be safely on disk
  */
-static int flush_commit_list(struct super_block *s,
-			     struct reiserfs_journal_list *jl, int flushall)
-{
-	int i;
+अटल पूर्णांक flush_commit_list(काष्ठा super_block *s,
+			     काष्ठा reiserfs_journal_list *jl, पूर्णांक flushall)
+अणु
+	पूर्णांक i;
 	b_blocknr_t bn;
-	struct buffer_head *tbh = NULL;
-	unsigned int trans_id = jl->j_trans_id;
-	struct reiserfs_journal *journal = SB_JOURNAL(s);
-	int retval = 0;
-	int write_len;
-	int depth;
+	काष्ठा buffer_head *tbh = शून्य;
+	अचिन्हित पूर्णांक trans_id = jl->j_trans_id;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(s);
+	पूर्णांक retval = 0;
+	पूर्णांक ग_लिखो_len;
+	पूर्णांक depth;
 
 	reiserfs_check_lock_depth(s, "flush_commit_list");
 
-	if (atomic_read(&jl->j_older_commits_done)) {
-		return 0;
-	}
+	अगर (atomic_पढ़ो(&jl->j_older_commits_करोne)) अणु
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * before we can put our commit blocks on disk, we have to make
+	 * beक्रमe we can put our commit blocks on disk, we have to make
 	 * sure everyone older than us is on disk too
 	 */
 	BUG_ON(jl->j_len <= 0);
 	BUG_ON(trans_id == journal->j_trans_id);
 
 	get_journal_list(jl);
-	if (flushall) {
-		if (flush_older_commits(s, jl) == 1) {
+	अगर (flushall) अणु
+		अगर (flush_older_commits(s, jl) == 1) अणु
 			/*
 			 * list disappeared during flush_older_commits.
-			 * return
+			 * वापस
 			 */
-			goto put_jl;
-		}
-	}
+			जाओ put_jl;
+		पूर्ण
+	पूर्ण
 
-	/* make sure nobody is trying to flush this one at the same time */
+	/* make sure nobody is trying to flush this one at the same समय */
 	reiserfs_mutex_lock_safe(&jl->j_commit_mutex, s);
 
-	if (!journal_list_still_alive(s, trans_id)) {
+	अगर (!journal_list_still_alive(s, trans_id)) अणु
 		mutex_unlock(&jl->j_commit_mutex);
-		goto put_jl;
-	}
+		जाओ put_jl;
+	पूर्ण
 	BUG_ON(jl->j_trans_id == 0);
 
-	/* this commit is done, exit */
-	if (atomic_read(&jl->j_commit_left) <= 0) {
-		if (flushall) {
-			atomic_set(&jl->j_older_commits_done, 1);
-		}
+	/* this commit is करोne, निकास */
+	अगर (atomic_पढ़ो(&jl->j_commit_left) <= 0) अणु
+		अगर (flushall) अणु
+			atomic_set(&jl->j_older_commits_करोne, 1);
+		पूर्ण
 		mutex_unlock(&jl->j_commit_mutex);
-		goto put_jl;
-	}
+		जाओ put_jl;
+	पूर्ण
 
-	if (!list_empty(&jl->j_bh_list)) {
-		int ret;
+	अगर (!list_empty(&jl->j_bh_list)) अणु
+		पूर्णांक ret;
 
 		/*
 		 * We might sleep in numerous places inside
-		 * write_ordered_buffers. Relax the write lock.
+		 * ग_लिखो_ordered_buffers. Relax the ग_लिखो lock.
 		 */
-		depth = reiserfs_write_unlock_nested(s);
-		ret = write_ordered_buffers(&journal->j_dirty_buffers_lock,
+		depth = reiserfs_ग_लिखो_unlock_nested(s);
+		ret = ग_लिखो_ordered_buffers(&journal->j_dirty_buffers_lock,
 					    journal, jl, &jl->j_bh_list);
-		if (ret < 0 && retval == 0)
+		अगर (ret < 0 && retval == 0)
 			retval = ret;
-		reiserfs_write_lock_nested(s, depth);
-	}
+		reiserfs_ग_लिखो_lock_nested(s, depth);
+	पूर्ण
 	BUG_ON(!list_empty(&jl->j_bh_list));
 	/*
-	 * for the description block and all the log blocks, submit any buffers
-	 * that haven't already reached the disk.  Try to write at least 256
-	 * log blocks. later on, we will only wait on blocks that correspond
-	 * to this transaction, but while we're unplugging we might as well
+	 * क्रम the description block and all the log blocks, submit any buffers
+	 * that haven't alपढ़ोy reached the disk.  Try to ग_लिखो at least 256
+	 * log blocks. later on, we will only रुको on blocks that correspond
+	 * to this transaction, but जबतक we're unplugging we might as well
 	 * get a chunk of data on there.
 	 */
 	atomic_inc(&journal->j_async_throttle);
-	write_len = jl->j_len + 1;
-	if (write_len < 256)
-		write_len = 256;
-	for (i = 0 ; i < write_len ; i++) {
+	ग_लिखो_len = jl->j_len + 1;
+	अगर (ग_लिखो_len < 256)
+		ग_लिखो_len = 256;
+	क्रम (i = 0 ; i < ग_लिखो_len ; i++) अणु
 		bn = SB_ONDISK_JOURNAL_1st_BLOCK(s) + (jl->j_start + i) %
 		    SB_ONDISK_JOURNAL_SIZE(s);
 		tbh = journal_find_get_block(s, bn);
-		if (tbh) {
-			if (buffer_dirty(tbh)) {
-		            depth = reiserfs_write_unlock_nested(s);
+		अगर (tbh) अणु
+			अगर (buffer_dirty(tbh)) अणु
+		            depth = reiserfs_ग_लिखो_unlock_nested(s);
 			    ll_rw_block(REQ_OP_WRITE, 0, 1, &tbh);
-			    reiserfs_write_lock_nested(s, depth);
-			}
+			    reiserfs_ग_लिखो_lock_nested(s, depth);
+			पूर्ण
 			put_bh(tbh) ;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	atomic_dec(&journal->j_async_throttle);
 
-	for (i = 0; i < (jl->j_len + 1); i++) {
+	क्रम (i = 0; i < (jl->j_len + 1); i++) अणु
 		bn = SB_ONDISK_JOURNAL_1st_BLOCK(s) +
 		    (jl->j_start + i) % SB_ONDISK_JOURNAL_SIZE(s);
 		tbh = journal_find_get_block(s, bn);
 
-		depth = reiserfs_write_unlock_nested(s);
-		__wait_on_buffer(tbh);
-		reiserfs_write_lock_nested(s, depth);
+		depth = reiserfs_ग_लिखो_unlock_nested(s);
+		__रुको_on_buffer(tbh);
+		reiserfs_ग_लिखो_lock_nested(s, depth);
 		/*
 		 * since we're using ll_rw_blk above, it might have skipped
 		 * over a locked buffer.  Double check here
 		 */
 		/* redundant, sync_dirty_buffer() checks */
-		if (buffer_dirty(tbh)) {
-			depth = reiserfs_write_unlock_nested(s);
+		अगर (buffer_dirty(tbh)) अणु
+			depth = reiserfs_ग_लिखो_unlock_nested(s);
 			sync_dirty_buffer(tbh);
-			reiserfs_write_lock_nested(s, depth);
-		}
-		if (unlikely(!buffer_uptodate(tbh))) {
-#ifdef CONFIG_REISERFS_CHECK
+			reiserfs_ग_लिखो_lock_nested(s, depth);
+		पूर्ण
+		अगर (unlikely(!buffer_uptodate(tbh))) अणु
+#अगर_घोषित CONFIG_REISERFS_CHECK
 			reiserfs_warning(s, "journal-601",
 					 "buffer write failed");
-#endif
+#पूर्ण_अगर
 			retval = -EIO;
-		}
-		/* once for journal_find_get_block */
+		पूर्ण
+		/* once क्रम journal_find_get_block */
 		put_bh(tbh);
-		/* once due to original getblk in do_journal_end */
+		/* once due to original getblk in करो_journal_end */
 		put_bh(tbh);
 		atomic_dec(&jl->j_commit_left);
-	}
+	पूर्ण
 
-	BUG_ON(atomic_read(&jl->j_commit_left) != 1);
+	BUG_ON(atomic_पढ़ो(&jl->j_commit_left) != 1);
 
 	/*
-	 * If there was a write error in the journal - we can't commit
-	 * this transaction - it will be invalid and, if successful,
-	 * will just end up propagating the write error out to
-	 * the file system.
+	 * If there was a ग_लिखो error in the journal - we can't commit
+	 * this transaction - it will be invalid and, अगर successful,
+	 * will just end up propagating the ग_लिखो error out to
+	 * the file प्रणाली.
 	 */
-	if (likely(!retval && !reiserfs_is_journal_aborted (journal))) {
-		if (buffer_dirty(jl->j_commit_bh))
+	अगर (likely(!retval && !reiserfs_is_journal_पातed (journal))) अणु
+		अगर (buffer_dirty(jl->j_commit_bh))
 			BUG();
 		mark_buffer_dirty(jl->j_commit_bh) ;
-		depth = reiserfs_write_unlock_nested(s);
-		if (reiserfs_barrier_flush(s))
+		depth = reiserfs_ग_लिखो_unlock_nested(s);
+		अगर (reiserfs_barrier_flush(s))
 			__sync_dirty_buffer(jl->j_commit_bh,
 					REQ_SYNC | REQ_PREFLUSH | REQ_FUA);
-		else
+		अन्यथा
 			sync_dirty_buffer(jl->j_commit_bh);
-		reiserfs_write_lock_nested(s, depth);
-	}
+		reiserfs_ग_लिखो_lock_nested(s, depth);
+	पूर्ण
 
 	/*
-	 * If there was a write error in the journal - we can't commit this
-	 * transaction - it will be invalid and, if successful, will just end
-	 * up propagating the write error out to the filesystem.
+	 * If there was a ग_लिखो error in the journal - we can't commit this
+	 * transaction - it will be invalid and, अगर successful, will just end
+	 * up propagating the ग_लिखो error out to the fileप्रणाली.
 	 */
-	if (unlikely(!buffer_uptodate(jl->j_commit_bh))) {
-#ifdef CONFIG_REISERFS_CHECK
+	अगर (unlikely(!buffer_uptodate(jl->j_commit_bh))) अणु
+#अगर_घोषित CONFIG_REISERFS_CHECK
 		reiserfs_warning(s, "journal-615", "buffer write failed");
-#endif
+#पूर्ण_अगर
 		retval = -EIO;
-	}
-	bforget(jl->j_commit_bh);
-	if (journal->j_last_commit_id != 0 &&
-	    (jl->j_trans_id - journal->j_last_commit_id) != 1) {
+	पूर्ण
+	bक्रमget(jl->j_commit_bh);
+	अगर (journal->j_last_commit_id != 0 &&
+	    (jl->j_trans_id - journal->j_last_commit_id) != 1) अणु
 		reiserfs_warning(s, "clm-2200", "last commit %lu, current %lu",
 				 journal->j_last_commit_id, jl->j_trans_id);
-	}
+	पूर्ण
 	journal->j_last_commit_id = jl->j_trans_id;
 
 	/*
 	 * now, every commit block is on the disk.  It is safe to allow
-	 * blocks freed during this transaction to be reallocated
+	 * blocks मुक्तd during this transaction to be पुनः_स्मृतिated
 	 */
-	cleanup_freed_for_journal_list(s, jl);
+	cleanup_मुक्तd_क्रम_journal_list(s, jl);
 
-	retval = retval ? retval : journal->j_errno;
+	retval = retval ? retval : journal->j_त्रुटि_सं;
 
 	/* mark the metadata dirty */
-	if (!retval)
+	अगर (!retval)
 		dirty_one_transaction(s, jl);
 	atomic_dec(&jl->j_commit_left);
 
-	if (flushall) {
-		atomic_set(&jl->j_older_commits_done, 1);
-	}
+	अगर (flushall) अणु
+		atomic_set(&jl->j_older_commits_करोne, 1);
+	पूर्ण
 	mutex_unlock(&jl->j_commit_mutex);
 put_jl:
 	put_journal_list(s, jl);
 
-	if (retval)
-		reiserfs_abort(s, retval, "Journal write error in %s",
+	अगर (retval)
+		reiserfs_पात(s, retval, "Journal write error in %s",
 			       __func__);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /*
- * flush_journal_list frequently needs to find a newer transaction for a
- * given block.  This does that, or returns NULL if it can't find anything
+ * flush_journal_list frequently needs to find a newer transaction क्रम a
+ * given block.  This करोes that, or वापसs शून्य अगर it can't find anything
  */
-static struct reiserfs_journal_list *find_newer_jl_for_cn(struct
+अटल काष्ठा reiserfs_journal_list *find_newer_jl_क्रम_cn(काष्ठा
 							  reiserfs_journal_cnode
 							  *cn)
-{
-	struct super_block *sb = cn->sb;
+अणु
+	काष्ठा super_block *sb = cn->sb;
 	b_blocknr_t blocknr = cn->blocknr;
 
 	cn = cn->hprev;
-	while (cn) {
-		if (cn->sb == sb && cn->blocknr == blocknr && cn->jlist) {
-			return cn->jlist;
-		}
+	जबतक (cn) अणु
+		अगर (cn->sb == sb && cn->blocknr == blocknr && cn->jlist) अणु
+			वापस cn->jlist;
+		पूर्ण
 		cn = cn->hprev;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void remove_journal_hash(struct super_block *,
-				struct reiserfs_journal_cnode **,
-				struct reiserfs_journal_list *, unsigned long,
-				int);
+अटल व्योम हटाओ_journal_hash(काष्ठा super_block *,
+				काष्ठा reiserfs_journal_cnode **,
+				काष्ठा reiserfs_journal_list *, अचिन्हित दीर्घ,
+				पूर्णांक);
 
 /*
- * once all the real blocks have been flushed, it is safe to remove them
- * from the journal list for this transaction.  Aside from freeing the
- * cnode, this also allows the block to be reallocated for data blocks
- * if it had been deleted.
+ * once all the real blocks have been flushed, it is safe to हटाओ them
+ * from the journal list क्रम this transaction.  Aside from मुक्तing the
+ * cnode, this also allows the block to be पुनः_स्मृतिated क्रम data blocks
+ * अगर it had been deleted.
  */
-static void remove_all_from_journal_list(struct super_block *sb,
-					 struct reiserfs_journal_list *jl,
-					 int debug)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	struct reiserfs_journal_cnode *cn, *last;
+अटल व्योम हटाओ_all_from_journal_list(काष्ठा super_block *sb,
+					 काष्ठा reiserfs_journal_list *jl,
+					 पूर्णांक debug)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	काष्ठा reiserfs_journal_cnode *cn, *last;
 	cn = jl->j_realblock;
 
 	/*
 	 * which is better, to lock once around the whole loop, or
-	 * to lock for each call to remove_journal_hash?
+	 * to lock क्रम each call to हटाओ_journal_hash?
 	 */
-	while (cn) {
-		if (cn->blocknr != 0) {
-			if (debug) {
+	जबतक (cn) अणु
+		अगर (cn->blocknr != 0) अणु
+			अगर (debug) अणु
 				reiserfs_warning(sb, "reiserfs-2201",
 						 "block %u, bh is %d, state %ld",
 						 cn->blocknr, cn->bh ? 1 : 0,
 						 cn->state);
-			}
+			पूर्ण
 			cn->state = 0;
-			remove_journal_hash(sb, journal->j_list_hash_table,
+			हटाओ_journal_hash(sb, journal->j_list_hash_table,
 					    jl, cn->blocknr, 1);
-		}
+		पूर्ण
 		last = cn;
 		cn = cn->next;
-		free_cnode(sb, last);
-	}
-	jl->j_realblock = NULL;
-}
+		मुक्त_cnode(sb, last);
+	पूर्ण
+	jl->j_realblock = शून्य;
+पूर्ण
 
 /*
- * if this timestamp is greater than the timestamp we wrote last to the
- * header block, write it to the header block.  once this is done, I can
- * safely say the log area for this transaction won't ever be replayed,
- * and I can start releasing blocks in this transaction for reuse as data
- * blocks.  called by flush_journal_list, before it calls
- * remove_all_from_journal_list
+ * अगर this बारtamp is greater than the बारtamp we wrote last to the
+ * header block, ग_लिखो it to the header block.  once this is करोne, I can
+ * safely say the log area क्रम this transaction won't ever be replayed,
+ * and I can start releasing blocks in this transaction क्रम reuse as data
+ * blocks.  called by flush_journal_list, beक्रमe it calls
+ * हटाओ_all_from_journal_list
  */
-static int _update_journal_header_block(struct super_block *sb,
-					unsigned long offset,
-					unsigned int trans_id)
-{
-	struct reiserfs_journal_header *jh;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	int depth;
+अटल पूर्णांक _update_journal_header_block(काष्ठा super_block *sb,
+					अचिन्हित दीर्घ offset,
+					अचिन्हित पूर्णांक trans_id)
+अणु
+	काष्ठा reiserfs_journal_header *jh;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	पूर्णांक depth;
 
-	if (reiserfs_is_journal_aborted(journal))
-		return -EIO;
+	अगर (reiserfs_is_journal_पातed(journal))
+		वापस -EIO;
 
-	if (trans_id >= journal->j_last_flush_trans_id) {
-		if (buffer_locked((journal->j_header_bh))) {
-			depth = reiserfs_write_unlock_nested(sb);
-			__wait_on_buffer(journal->j_header_bh);
-			reiserfs_write_lock_nested(sb, depth);
-			if (unlikely(!buffer_uptodate(journal->j_header_bh))) {
-#ifdef CONFIG_REISERFS_CHECK
+	अगर (trans_id >= journal->j_last_flush_trans_id) अणु
+		अगर (buffer_locked((journal->j_header_bh))) अणु
+			depth = reiserfs_ग_लिखो_unlock_nested(sb);
+			__रुको_on_buffer(journal->j_header_bh);
+			reiserfs_ग_लिखो_lock_nested(sb, depth);
+			अगर (unlikely(!buffer_uptodate(journal->j_header_bh))) अणु
+#अगर_घोषित CONFIG_REISERFS_CHECK
 				reiserfs_warning(sb, "journal-699",
 						 "buffer write failed");
-#endif
-				return -EIO;
-			}
-		}
+#पूर्ण_अगर
+				वापस -EIO;
+			पूर्ण
+		पूर्ण
 		journal->j_last_flush_trans_id = trans_id;
 		journal->j_first_unflushed_offset = offset;
-		jh = (struct reiserfs_journal_header *)(journal->j_header_bh->
+		jh = (काष्ठा reiserfs_journal_header *)(journal->j_header_bh->
 							b_data);
 		jh->j_last_flush_trans_id = cpu_to_le32(trans_id);
 		jh->j_first_unflushed_offset = cpu_to_le32(offset);
 		jh->j_mount_id = cpu_to_le32(journal->j_mount_id);
 
 		set_buffer_dirty(journal->j_header_bh);
-		depth = reiserfs_write_unlock_nested(sb);
+		depth = reiserfs_ग_लिखो_unlock_nested(sb);
 
-		if (reiserfs_barrier_flush(sb))
+		अगर (reiserfs_barrier_flush(sb))
 			__sync_dirty_buffer(journal->j_header_bh,
 					REQ_SYNC | REQ_PREFLUSH | REQ_FUA);
-		else
+		अन्यथा
 			sync_dirty_buffer(journal->j_header_bh);
 
-		reiserfs_write_lock_nested(sb, depth);
-		if (!buffer_uptodate(journal->j_header_bh)) {
+		reiserfs_ग_लिखो_lock_nested(sb, depth);
+		अगर (!buffer_uptodate(journal->j_header_bh)) अणु
 			reiserfs_warning(sb, "journal-837",
 					 "IO error during journal replay");
-			return -EIO;
-		}
-	}
-	return 0;
-}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int update_journal_header_block(struct super_block *sb,
-				       unsigned long offset,
-				       unsigned int trans_id)
-{
-	return _update_journal_header_block(sb, offset, trans_id);
-}
+अटल पूर्णांक update_journal_header_block(काष्ठा super_block *sb,
+				       अचिन्हित दीर्घ offset,
+				       अचिन्हित पूर्णांक trans_id)
+अणु
+	वापस _update_journal_header_block(sb, offset, trans_id);
+पूर्ण
 
 /*
 ** flush any and all journal lists older than you are
 ** can only be called from flush_journal_list
 */
-static int flush_older_journal_lists(struct super_block *sb,
-				     struct reiserfs_journal_list *jl)
-{
-	struct list_head *entry;
-	struct reiserfs_journal_list *other_jl;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	unsigned int trans_id = jl->j_trans_id;
+अटल पूर्णांक flush_older_journal_lists(काष्ठा super_block *sb,
+				     काष्ठा reiserfs_journal_list *jl)
+अणु
+	काष्ठा list_head *entry;
+	काष्ठा reiserfs_journal_list *other_jl;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	अचिन्हित पूर्णांक trans_id = jl->j_trans_id;
 
 	/*
 	 * we know we are the only ones flushing things, no extra race
@@ -1306,29 +1307,29 @@ static int flush_older_journal_lists(struct super_block *sb,
 restart:
 	entry = journal->j_journal_list.next;
 	/* Did we wrap? */
-	if (entry == &journal->j_journal_list)
-		return 0;
+	अगर (entry == &journal->j_journal_list)
+		वापस 0;
 	other_jl = JOURNAL_LIST_ENTRY(entry);
-	if (other_jl->j_trans_id < trans_id) {
+	अगर (other_jl->j_trans_id < trans_id) अणु
 		BUG_ON(other_jl->j_refcount <= 0);
-		/* do not flush all */
+		/* करो not flush all */
 		flush_journal_list(sb, other_jl, 0);
 
 		/* other_jl is now deleted from the list */
-		goto restart;
-	}
-	return 0;
-}
+		जाओ restart;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void del_from_work_list(struct super_block *s,
-			       struct reiserfs_journal_list *jl)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(s);
-	if (!list_empty(&jl->j_working_list)) {
+अटल व्योम del_from_work_list(काष्ठा super_block *s,
+			       काष्ठा reiserfs_journal_list *jl)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(s);
+	अगर (!list_empty(&jl->j_working_list)) अणु
 		list_del_init(&jl->j_working_list);
 		journal->j_num_work_lists--;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * flush a journal list, both commit and real blocks
@@ -1336,50 +1337,50 @@ static void del_from_work_list(struct super_block *s,
  * always set flushall to 1, unless you are calling from inside
  * flush_journal_list
  *
- * IMPORTANT.  This can only be called while there are no journal writers,
+ * IMPORTANT.  This can only be called जबतक there are no journal ग_लिखोrs,
  * and the journal is locked.  That means it can only be called from
- * do_journal_end, or by journal_release
+ * करो_journal_end, or by journal_release
  */
-static int flush_journal_list(struct super_block *s,
-			      struct reiserfs_journal_list *jl, int flushall)
-{
-	struct reiserfs_journal_list *pjl;
-	struct reiserfs_journal_cnode *cn;
-	int count;
-	int was_jwait = 0;
-	int was_dirty = 0;
-	struct buffer_head *saved_bh;
-	unsigned long j_len_saved = jl->j_len;
-	struct reiserfs_journal *journal = SB_JOURNAL(s);
-	int err = 0;
-	int depth;
+अटल पूर्णांक flush_journal_list(काष्ठा super_block *s,
+			      काष्ठा reiserfs_journal_list *jl, पूर्णांक flushall)
+अणु
+	काष्ठा reiserfs_journal_list *pjl;
+	काष्ठा reiserfs_journal_cnode *cn;
+	पूर्णांक count;
+	पूर्णांक was_jरुको = 0;
+	पूर्णांक was_dirty = 0;
+	काष्ठा buffer_head *saved_bh;
+	अचिन्हित दीर्घ j_len_saved = jl->j_len;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(s);
+	पूर्णांक err = 0;
+	पूर्णांक depth;
 
 	BUG_ON(j_len_saved <= 0);
 
-	if (atomic_read(&journal->j_wcount) != 0) {
+	अगर (atomic_पढ़ो(&journal->j_wcount) != 0) अणु
 		reiserfs_warning(s, "clm-2048", "called with wcount %d",
-				 atomic_read(&journal->j_wcount));
-	}
+				 atomic_पढ़ो(&journal->j_wcount));
+	पूर्ण
 
-	/* if flushall == 0, the lock is already held */
-	if (flushall) {
+	/* अगर flushall == 0, the lock is alपढ़ोy held */
+	अगर (flushall) अणु
 		reiserfs_mutex_lock_safe(&journal->j_flush_mutex, s);
-	} else if (mutex_trylock(&journal->j_flush_mutex)) {
+	पूर्ण अन्यथा अगर (mutex_trylock(&journal->j_flush_mutex)) अणु
 		BUG();
-	}
+	पूर्ण
 
 	count = 0;
-	if (j_len_saved > journal->j_trans_max) {
+	अगर (j_len_saved > journal->j_trans_max) अणु
 		reiserfs_panic(s, "journal-715", "length is %lu, trans id %lu",
 			       j_len_saved, jl->j_trans_id);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* if all the work is already done, get out of here */
-	if (atomic_read(&jl->j_nonzerolen) <= 0 &&
-	    atomic_read(&jl->j_commit_left) <= 0) {
-		goto flush_older_and_return;
-	}
+	/* अगर all the work is alपढ़ोy करोne, get out of here */
+	अगर (atomic_पढ़ो(&jl->j_nonzerolen) <= 0 &&
+	    atomic_पढ़ो(&jl->j_commit_left) <= 0) अणु
+		जाओ flush_older_and_वापस;
+	पूर्ण
 
 	/*
 	 * start by putting the commit list on disk.  This will also flush
@@ -1387,675 +1388,675 @@ static int flush_journal_list(struct super_block *s,
 	 */
 	flush_commit_list(s, jl, 1);
 
-	if (!(jl->j_state & LIST_DIRTY)
-	    && !reiserfs_is_journal_aborted(journal))
+	अगर (!(jl->j_state & LIST_सूचीTY)
+	    && !reiserfs_is_journal_पातed(journal))
 		BUG();
 
-	/* are we done now? */
-	if (atomic_read(&jl->j_nonzerolen) <= 0 &&
-	    atomic_read(&jl->j_commit_left) <= 0) {
-		goto flush_older_and_return;
-	}
+	/* are we करोne now? */
+	अगर (atomic_पढ़ो(&jl->j_nonzerolen) <= 0 &&
+	    atomic_पढ़ो(&jl->j_commit_left) <= 0) अणु
+		जाओ flush_older_and_वापस;
+	पूर्ण
 
 	/*
-	 * loop through each cnode, see if we need to write it,
-	 * or wait on a more recent transaction, or just ignore it
+	 * loop through each cnode, see अगर we need to ग_लिखो it,
+	 * or रुको on a more recent transaction, or just ignore it
 	 */
-	if (atomic_read(&journal->j_wcount) != 0) {
+	अगर (atomic_पढ़ो(&journal->j_wcount) != 0) अणु
 		reiserfs_panic(s, "journal-844", "journal list is flushing, "
 			       "wcount is not 0");
-	}
+	पूर्ण
 	cn = jl->j_realblock;
-	while (cn) {
-		was_jwait = 0;
+	जबतक (cn) अणु
+		was_jरुको = 0;
 		was_dirty = 0;
-		saved_bh = NULL;
-		/* blocknr of 0 is no longer in the hash, ignore it */
-		if (cn->blocknr == 0) {
-			goto free_cnode;
-		}
+		saved_bh = शून्य;
+		/* blocknr of 0 is no दीर्घer in the hash, ignore it */
+		अगर (cn->blocknr == 0) अणु
+			जाओ मुक्त_cnode;
+		पूर्ण
 
 		/*
 		 * This transaction failed commit.
-		 * Don't write out to the disk
+		 * Don't ग_लिखो out to the disk
 		 */
-		if (!(jl->j_state & LIST_DIRTY))
-			goto free_cnode;
+		अगर (!(jl->j_state & LIST_सूचीTY))
+			जाओ मुक्त_cnode;
 
-		pjl = find_newer_jl_for_cn(cn);
+		pjl = find_newer_jl_क्रम_cn(cn);
 		/*
 		 * the order is important here.  We check pjl to make sure we
-		 * don't clear BH_JDirty_wait if we aren't the one writing this
+		 * करोn't clear BH_JDirty_wait if we aren't the one writing this
 		 * block to disk
 		 */
-		if (!pjl && cn->bh) {
+		अगर (!pjl && cn->bh) अणु
 			saved_bh = cn->bh;
 
 			/*
-			 * we do this to make sure nobody releases the
-			 * buffer while we are working with it
+			 * we करो this to make sure nobody releases the
+			 * buffer जबतक we are working with it
 			 */
 			get_bh(saved_bh);
 
-			if (buffer_journal_dirty(saved_bh)) {
+			अगर (buffer_journal_dirty(saved_bh)) अणु
 				BUG_ON(!can_dirty(cn));
-				was_jwait = 1;
+				was_jरुको = 1;
 				was_dirty = 1;
-			} else if (can_dirty(cn)) {
+			पूर्ण अन्यथा अगर (can_dirty(cn)) अणु
 				/*
-				 * everything with !pjl && jwait
+				 * everything with !pjl && jरुको
 				 * should be writable
 				 */
 				BUG();
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * if someone has this block in a newer transaction, just make
-		 * sure they are committed, and don't try writing it to disk
+		 * अगर someone has this block in a newer transaction, just make
+		 * sure they are committed, and करोn't try writing it to disk
 		 */
-		if (pjl) {
-			if (atomic_read(&pjl->j_commit_left))
+		अगर (pjl) अणु
+			अगर (atomic_पढ़ो(&pjl->j_commit_left))
 				flush_commit_list(s, pjl, 1);
-			goto free_cnode;
-		}
+			जाओ मुक्त_cnode;
+		पूर्ण
 
 		/*
-		 * bh == NULL when the block got to disk on its own, OR,
-		 * the block got freed in a future transaction
+		 * bh == शून्य when the block got to disk on its own, OR,
+		 * the block got मुक्तd in a future transaction
 		 */
-		if (saved_bh == NULL) {
-			goto free_cnode;
-		}
+		अगर (saved_bh == शून्य) अणु
+			जाओ मुक्त_cnode;
+		पूर्ण
 
 		/*
 		 * this should never happen.  kupdate_one_transaction has
-		 * this list locked while it works, so we should never see a
-		 * buffer here that is not marked JDirty_wait
+		 * this list locked जबतक it works, so we should never see a
+		 * buffer here that is not marked JDirty_रुको
 		 */
-		if ((!was_jwait) && !buffer_locked(saved_bh)) {
+		अगर ((!was_jरुको) && !buffer_locked(saved_bh)) अणु
 			reiserfs_warning(s, "journal-813",
 					 "BAD! buffer %llu %cdirty %cjwait, "
 					 "not in a newer transaction",
-					 (unsigned long long)saved_bh->
+					 (अचिन्हित दीर्घ दीर्घ)saved_bh->
 					 b_blocknr, was_dirty ? ' ' : '!',
-					 was_jwait ? ' ' : '!');
-		}
-		if (was_dirty) {
+					 was_jरुको ? ' ' : '!');
+		पूर्ण
+		अगर (was_dirty) अणु
 			/*
-			 * we inc again because saved_bh gets decremented
-			 * at free_cnode
+			 * we inc again because saved_bh माला_लो decremented
+			 * at मुक्त_cnode
 			 */
 			get_bh(saved_bh);
 			set_bit(BLOCK_NEEDS_FLUSH, &cn->state);
 			lock_buffer(saved_bh);
 			BUG_ON(cn->blocknr != saved_bh->b_blocknr);
-			if (buffer_dirty(saved_bh))
+			अगर (buffer_dirty(saved_bh))
 				submit_logged_buffer(saved_bh);
-			else
+			अन्यथा
 				unlock_buffer(saved_bh);
 			count++;
-		} else {
+		पूर्ण अन्यथा अणु
 			reiserfs_warning(s, "clm-2082",
 					 "Unable to flush buffer %llu in %s",
-					 (unsigned long long)saved_bh->
+					 (अचिन्हित दीर्घ दीर्घ)saved_bh->
 					 b_blocknr, __func__);
-		}
-free_cnode:
+		पूर्ण
+मुक्त_cnode:
 		cn = cn->next;
-		if (saved_bh) {
+		अगर (saved_bh) अणु
 			/*
 			 * we incremented this to keep others from
 			 * taking the buffer head away
 			 */
 			put_bh(saved_bh);
-			if (atomic_read(&saved_bh->b_count) < 0) {
+			अगर (atomic_पढ़ो(&saved_bh->b_count) < 0) अणु
 				reiserfs_warning(s, "journal-945",
 						 "saved_bh->b_count < 0");
-			}
-		}
-	}
-	if (count > 0) {
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (count > 0) अणु
 		cn = jl->j_realblock;
-		while (cn) {
-			if (test_bit(BLOCK_NEEDS_FLUSH, &cn->state)) {
-				if (!cn->bh) {
+		जबतक (cn) अणु
+			अगर (test_bit(BLOCK_NEEDS_FLUSH, &cn->state)) अणु
+				अगर (!cn->bh) अणु
 					reiserfs_panic(s, "journal-1011",
 						       "cn->bh is NULL");
-				}
+				पूर्ण
 
-				depth = reiserfs_write_unlock_nested(s);
-				__wait_on_buffer(cn->bh);
-				reiserfs_write_lock_nested(s, depth);
+				depth = reiserfs_ग_लिखो_unlock_nested(s);
+				__रुको_on_buffer(cn->bh);
+				reiserfs_ग_लिखो_lock_nested(s, depth);
 
-				if (!cn->bh) {
+				अगर (!cn->bh) अणु
 					reiserfs_panic(s, "journal-1012",
 						       "cn->bh is NULL");
-				}
-				if (unlikely(!buffer_uptodate(cn->bh))) {
-#ifdef CONFIG_REISERFS_CHECK
+				पूर्ण
+				अगर (unlikely(!buffer_uptodate(cn->bh))) अणु
+#अगर_घोषित CONFIG_REISERFS_CHECK
 					reiserfs_warning(s, "journal-949",
 							 "buffer write failed");
-#endif
+#पूर्ण_अगर
 					err = -EIO;
-				}
+				पूर्ण
 				/*
-				 * note, we must clear the JDirty_wait bit
+				 * note, we must clear the JDirty_रुको bit
 				 * after the up to date check, otherwise we
 				 * race against our flushpage routine
 				 */
 				BUG_ON(!test_clear_buffer_journal_dirty
 				       (cn->bh));
 
-				/* drop one ref for us */
+				/* drop one ref क्रम us */
 				put_bh(cn->bh);
-				/* drop one ref for journal_mark_dirty */
+				/* drop one ref क्रम journal_mark_dirty */
 				release_buffer_page(cn->bh);
-			}
+			पूर्ण
 			cn = cn->next;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (err)
-		reiserfs_abort(s, -EIO,
+	अगर (err)
+		reiserfs_पात(s, -EIO,
 			       "Write error while pushing transaction to disk in %s",
 			       __func__);
-flush_older_and_return:
+flush_older_and_वापस:
 
 	/*
-	 * before we can update the journal header block, we _must_ flush all
+	 * beक्रमe we can update the journal header block, we _must_ flush all
 	 * real blocks from all older transactions to disk.  This is because
 	 * once the header block is updated, this transaction will not be
 	 * replayed after a crash
 	 */
-	if (flushall) {
+	अगर (flushall) अणु
 		flush_older_journal_lists(s, jl);
-	}
+	पूर्ण
 
-	err = journal->j_errno;
+	err = journal->j_त्रुटि_सं;
 	/*
-	 * before we can remove everything from the hash tables for this
+	 * beक्रमe we can हटाओ everything from the hash tables क्रम this
 	 * transaction, we must make sure it can never be replayed
 	 *
-	 * since we are only called from do_journal_end, we know for sure there
-	 * are no allocations going on while we are flushing journal lists.  So,
-	 * we only need to update the journal header block for the last list
+	 * since we are only called from करो_journal_end, we know क्रम sure there
+	 * are no allocations going on जबतक we are flushing journal lists.  So,
+	 * we only need to update the journal header block क्रम the last list
 	 * being flushed
 	 */
-	if (!err && flushall) {
+	अगर (!err && flushall) अणु
 		err =
 		    update_journal_header_block(s,
 						(jl->j_start + jl->j_len +
 						 2) % SB_ONDISK_JOURNAL_SIZE(s),
 						jl->j_trans_id);
-		if (err)
-			reiserfs_abort(s, -EIO,
+		अगर (err)
+			reiserfs_पात(s, -EIO,
 				       "Write error while updating journal header in %s",
 				       __func__);
-	}
-	remove_all_from_journal_list(s, jl, 0);
+	पूर्ण
+	हटाओ_all_from_journal_list(s, jl, 0);
 	list_del_init(&jl->j_list);
 	journal->j_num_lists--;
 	del_from_work_list(s, jl);
 
-	if (journal->j_last_flush_id != 0 &&
-	    (jl->j_trans_id - journal->j_last_flush_id) != 1) {
+	अगर (journal->j_last_flush_id != 0 &&
+	    (jl->j_trans_id - journal->j_last_flush_id) != 1) अणु
 		reiserfs_warning(s, "clm-2201", "last flush %lu, current %lu",
 				 journal->j_last_flush_id, jl->j_trans_id);
-	}
+	पूर्ण
 	journal->j_last_flush_id = jl->j_trans_id;
 
 	/*
-	 * not strictly required since we are freeing the list, but it should
+	 * not strictly required since we are मुक्तing the list, but it should
 	 * help find code using dead lists later on
 	 */
 	jl->j_len = 0;
 	atomic_set(&jl->j_nonzerolen, 0);
 	jl->j_start = 0;
-	jl->j_realblock = NULL;
-	jl->j_commit_bh = NULL;
+	jl->j_realblock = शून्य;
+	jl->j_commit_bh = शून्य;
 	jl->j_trans_id = 0;
 	jl->j_state = 0;
 	put_journal_list(s, jl);
-	if (flushall)
+	अगर (flushall)
 		mutex_unlock(&journal->j_flush_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int write_one_transaction(struct super_block *s,
-				 struct reiserfs_journal_list *jl,
-				 struct buffer_chunk *chunk)
-{
-	struct reiserfs_journal_cnode *cn;
-	int ret = 0;
+अटल पूर्णांक ग_लिखो_one_transaction(काष्ठा super_block *s,
+				 काष्ठा reiserfs_journal_list *jl,
+				 काष्ठा buffer_chunk *chunk)
+अणु
+	काष्ठा reiserfs_journal_cnode *cn;
+	पूर्णांक ret = 0;
 
 	jl->j_state |= LIST_TOUCHED;
 	del_from_work_list(s, jl);
-	if (jl->j_len == 0 || atomic_read(&jl->j_nonzerolen) == 0) {
-		return 0;
-	}
+	अगर (jl->j_len == 0 || atomic_पढ़ो(&jl->j_nonzerolen) == 0) अणु
+		वापस 0;
+	पूर्ण
 
 	cn = jl->j_realblock;
-	while (cn) {
+	जबतक (cn) अणु
 		/*
-		 * if the blocknr == 0, this has been cleared from the hash,
+		 * अगर the blocknr == 0, this has been cleared from the hash,
 		 * skip it
 		 */
-		if (cn->blocknr == 0) {
-			goto next;
-		}
-		if (cn->bh && can_dirty(cn) && buffer_dirty(cn->bh)) {
-			struct buffer_head *tmp_bh;
+		अगर (cn->blocknr == 0) अणु
+			जाओ next;
+		पूर्ण
+		अगर (cn->bh && can_dirty(cn) && buffer_dirty(cn->bh)) अणु
+			काष्ठा buffer_head *पंचांगp_bh;
 			/*
-			 * we can race against journal_mark_freed when we try
+			 * we can race against journal_mark_मुक्तd when we try
 			 * to lock_buffer(cn->bh), so we have to inc the buffer
 			 * count, and recheck things after locking
 			 */
-			tmp_bh = cn->bh;
-			get_bh(tmp_bh);
-			lock_buffer(tmp_bh);
-			if (cn->bh && can_dirty(cn) && buffer_dirty(tmp_bh)) {
-				if (!buffer_journal_dirty(tmp_bh) ||
-				    buffer_journal_prepared(tmp_bh))
+			पंचांगp_bh = cn->bh;
+			get_bh(पंचांगp_bh);
+			lock_buffer(पंचांगp_bh);
+			अगर (cn->bh && can_dirty(cn) && buffer_dirty(पंचांगp_bh)) अणु
+				अगर (!buffer_journal_dirty(पंचांगp_bh) ||
+				    buffer_journal_prepared(पंचांगp_bh))
 					BUG();
-				add_to_chunk(chunk, tmp_bh, NULL, write_chunk);
+				add_to_chunk(chunk, पंचांगp_bh, शून्य, ग_लिखो_chunk);
 				ret++;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* note, cn->bh might be null now */
-				unlock_buffer(tmp_bh);
-			}
-			put_bh(tmp_bh);
-		}
+				unlock_buffer(पंचांगp_bh);
+			पूर्ण
+			put_bh(पंचांगp_bh);
+		पूर्ण
 next:
 		cn = cn->next;
 		cond_resched();
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* used by flush_commit_list */
-static void dirty_one_transaction(struct super_block *s,
-				 struct reiserfs_journal_list *jl)
-{
-	struct reiserfs_journal_cnode *cn;
-	struct reiserfs_journal_list *pjl;
+अटल व्योम dirty_one_transaction(काष्ठा super_block *s,
+				 काष्ठा reiserfs_journal_list *jl)
+अणु
+	काष्ठा reiserfs_journal_cnode *cn;
+	काष्ठा reiserfs_journal_list *pjl;
 
-	jl->j_state |= LIST_DIRTY;
+	jl->j_state |= LIST_सूचीTY;
 	cn = jl->j_realblock;
-	while (cn) {
+	जबतक (cn) अणु
 		/*
-		 * look for a more recent transaction that logged this
+		 * look क्रम a more recent transaction that logged this
 		 * buffer.  Only the most recent transaction with a buffer in
 		 * it is allowed to send that buffer to disk
 		 */
-		pjl = find_newer_jl_for_cn(cn);
-		if (!pjl && cn->blocknr && cn->bh
-		    && buffer_journal_dirty(cn->bh)) {
+		pjl = find_newer_jl_क्रम_cn(cn);
+		अगर (!pjl && cn->blocknr && cn->bh
+		    && buffer_journal_dirty(cn->bh)) अणु
 			BUG_ON(!can_dirty(cn));
 			/*
-			 * if the buffer is prepared, it will either be logged
+			 * अगर the buffer is prepared, it will either be logged
 			 * or restored.  If restored, we need to make sure
-			 * it actually gets marked dirty
+			 * it actually माला_लो marked dirty
 			 */
 			clear_buffer_journal_new(cn->bh);
-			if (buffer_journal_prepared(cn->bh)) {
+			अगर (buffer_journal_prepared(cn->bh)) अणु
 				set_buffer_journal_restore_dirty(cn->bh);
-			} else {
+			पूर्ण अन्यथा अणु
 				set_buffer_journal_test(cn->bh);
 				mark_buffer_dirty(cn->bh);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		cn = cn->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int kupdate_transactions(struct super_block *s,
-				struct reiserfs_journal_list *jl,
-				struct reiserfs_journal_list **next_jl,
-				unsigned int *next_trans_id,
-				int num_blocks, int num_trans)
-{
-	int ret = 0;
-	int written = 0;
-	int transactions_flushed = 0;
-	unsigned int orig_trans_id = jl->j_trans_id;
-	struct buffer_chunk chunk;
-	struct list_head *entry;
-	struct reiserfs_journal *journal = SB_JOURNAL(s);
+अटल पूर्णांक kupdate_transactions(काष्ठा super_block *s,
+				काष्ठा reiserfs_journal_list *jl,
+				काष्ठा reiserfs_journal_list **next_jl,
+				अचिन्हित पूर्णांक *next_trans_id,
+				पूर्णांक num_blocks, पूर्णांक num_trans)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक written = 0;
+	पूर्णांक transactions_flushed = 0;
+	अचिन्हित पूर्णांक orig_trans_id = jl->j_trans_id;
+	काष्ठा buffer_chunk chunk;
+	काष्ठा list_head *entry;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(s);
 	chunk.nr = 0;
 
 	reiserfs_mutex_lock_safe(&journal->j_flush_mutex, s);
-	if (!journal_list_still_alive(s, orig_trans_id)) {
-		goto done;
-	}
+	अगर (!journal_list_still_alive(s, orig_trans_id)) अणु
+		जाओ करोne;
+	पूर्ण
 
 	/*
 	 * we've got j_flush_mutex held, nobody is going to delete any
 	 * of these lists out from underneath us
 	 */
-	while ((num_trans && transactions_flushed < num_trans) ||
-	       (!num_trans && written < num_blocks)) {
+	जबतक ((num_trans && transactions_flushed < num_trans) ||
+	       (!num_trans && written < num_blocks)) अणु
 
-		if (jl->j_len == 0 || (jl->j_state & LIST_TOUCHED) ||
-		    atomic_read(&jl->j_commit_left)
-		    || !(jl->j_state & LIST_DIRTY)) {
+		अगर (jl->j_len == 0 || (jl->j_state & LIST_TOUCHED) ||
+		    atomic_पढ़ो(&jl->j_commit_left)
+		    || !(jl->j_state & LIST_सूचीTY)) अणु
 			del_from_work_list(s, jl);
-			break;
-		}
-		ret = write_one_transaction(s, jl, &chunk);
+			अवरोध;
+		पूर्ण
+		ret = ग_लिखो_one_transaction(s, jl, &chunk);
 
-		if (ret < 0)
-			goto done;
+		अगर (ret < 0)
+			जाओ करोne;
 		transactions_flushed++;
 		written += ret;
 		entry = jl->j_list.next;
 
 		/* did we wrap? */
-		if (entry == &journal->j_journal_list) {
-			break;
-		}
+		अगर (entry == &journal->j_journal_list) अणु
+			अवरोध;
+		पूर्ण
 		jl = JOURNAL_LIST_ENTRY(entry);
 
-		/* don't bother with older transactions */
-		if (jl->j_trans_id <= orig_trans_id)
-			break;
-	}
-	if (chunk.nr) {
-		write_chunk(&chunk);
-	}
+		/* करोn't bother with older transactions */
+		अगर (jl->j_trans_id <= orig_trans_id)
+			अवरोध;
+	पूर्ण
+	अगर (chunk.nr) अणु
+		ग_लिखो_chunk(&chunk);
+	पूर्ण
 
-done:
+करोne:
 	mutex_unlock(&journal->j_flush_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * for o_sync and fsync heavy applications, they tend to use
+ * क्रम o_sync and fsync heavy applications, they tend to use
  * all the journa list slots with tiny transactions.  These
  * trigger lots and lots of calls to update the header block, which
- * adds seeks and slows things down.
+ * adds seeks and slows things करोwn.
  *
  * This function tries to clear out a large chunk of the journal lists
  * at once, which makes everything faster since only the newest journal
  * list updates the header block
  */
-static int flush_used_journal_lists(struct super_block *s,
-				    struct reiserfs_journal_list *jl)
-{
-	unsigned long len = 0;
-	unsigned long cur_len;
-	int i;
-	int limit = 256;
-	struct reiserfs_journal_list *tjl;
-	struct reiserfs_journal_list *flush_jl;
-	unsigned int trans_id;
-	struct reiserfs_journal *journal = SB_JOURNAL(s);
+अटल पूर्णांक flush_used_journal_lists(काष्ठा super_block *s,
+				    काष्ठा reiserfs_journal_list *jl)
+अणु
+	अचिन्हित दीर्घ len = 0;
+	अचिन्हित दीर्घ cur_len;
+	पूर्णांक i;
+	पूर्णांक limit = 256;
+	काष्ठा reiserfs_journal_list *tjl;
+	काष्ठा reiserfs_journal_list *flush_jl;
+	अचिन्हित पूर्णांक trans_id;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(s);
 
 	flush_jl = tjl = jl;
 
 	/* in data logging mode, try harder to flush a lot of blocks */
-	if (reiserfs_data_log(s))
+	अगर (reiserfs_data_log(s))
 		limit = 1024;
-	/* flush for 256 transactions or limit blocks, whichever comes first */
-	for (i = 0; i < 256 && len < limit; i++) {
-		if (atomic_read(&tjl->j_commit_left) ||
-		    tjl->j_trans_id < jl->j_trans_id) {
-			break;
-		}
-		cur_len = atomic_read(&tjl->j_nonzerolen);
-		if (cur_len > 0) {
+	/* flush क्रम 256 transactions or limit blocks, whichever comes first */
+	क्रम (i = 0; i < 256 && len < limit; i++) अणु
+		अगर (atomic_पढ़ो(&tjl->j_commit_left) ||
+		    tjl->j_trans_id < jl->j_trans_id) अणु
+			अवरोध;
+		पूर्ण
+		cur_len = atomic_पढ़ो(&tjl->j_nonzerolen);
+		अगर (cur_len > 0) अणु
 			tjl->j_state &= ~LIST_TOUCHED;
-		}
+		पूर्ण
 		len += cur_len;
 		flush_jl = tjl;
-		if (tjl->j_list.next == &journal->j_journal_list)
-			break;
+		अगर (tjl->j_list.next == &journal->j_journal_list)
+			अवरोध;
 		tjl = JOURNAL_LIST_ENTRY(tjl->j_list.next);
-	}
+	पूर्ण
 	get_journal_list(jl);
 	get_journal_list(flush_jl);
 
 	/*
 	 * try to find a group of blocks we can flush across all the
-	 * transactions, but only bother if we've actually spanned
+	 * transactions, but only bother अगर we've actually spanned
 	 * across multiple lists
 	 */
-	if (flush_jl != jl)
+	अगर (flush_jl != jl)
 		kupdate_transactions(s, jl, &tjl, &trans_id, len, i);
 
 	flush_journal_list(s, flush_jl, 1);
 	put_journal_list(s, flush_jl);
 	put_journal_list(s, jl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * removes any nodes in table with name block and dev as bh.
- * only touchs the hnext and hprev pointers.
+ * हटाओs any nodes in table with name block and dev as bh.
+ * only touchs the hnext and hprev poपूर्णांकers.
  */
-static void remove_journal_hash(struct super_block *sb,
-			 struct reiserfs_journal_cnode **table,
-			 struct reiserfs_journal_list *jl,
-			 unsigned long block, int remove_freed)
-{
-	struct reiserfs_journal_cnode *cur;
-	struct reiserfs_journal_cnode **head;
+अटल व्योम हटाओ_journal_hash(काष्ठा super_block *sb,
+			 काष्ठा reiserfs_journal_cnode **table,
+			 काष्ठा reiserfs_journal_list *jl,
+			 अचिन्हित दीर्घ block, पूर्णांक हटाओ_मुक्तd)
+अणु
+	काष्ठा reiserfs_journal_cnode *cur;
+	काष्ठा reiserfs_journal_cnode **head;
 
 	head = &(journal_hash(table, sb, block));
-	if (!head) {
-		return;
-	}
+	अगर (!head) अणु
+		वापस;
+	पूर्ण
 	cur = *head;
-	while (cur) {
-		if (cur->blocknr == block && cur->sb == sb
-		    && (jl == NULL || jl == cur->jlist)
-		    && (!test_bit(BLOCK_FREED, &cur->state) || remove_freed)) {
-			if (cur->hnext) {
+	जबतक (cur) अणु
+		अगर (cur->blocknr == block && cur->sb == sb
+		    && (jl == शून्य || jl == cur->jlist)
+		    && (!test_bit(BLOCK_FREED, &cur->state) || हटाओ_मुक्तd)) अणु
+			अगर (cur->hnext) अणु
 				cur->hnext->hprev = cur->hprev;
-			}
-			if (cur->hprev) {
+			पूर्ण
+			अगर (cur->hprev) अणु
 				cur->hprev->hnext = cur->hnext;
-			} else {
+			पूर्ण अन्यथा अणु
 				*head = cur->hnext;
-			}
+			पूर्ण
 			cur->blocknr = 0;
-			cur->sb = NULL;
+			cur->sb = शून्य;
 			cur->state = 0;
 			/*
 			 * anybody who clears the cur->bh will also
 			 * dec the nonzerolen
 			 */
-			if (cur->bh && cur->jlist)
+			अगर (cur->bh && cur->jlist)
 				atomic_dec(&cur->jlist->j_nonzerolen);
-			cur->bh = NULL;
-			cur->jlist = NULL;
-		}
+			cur->bh = शून्य;
+			cur->jlist = शून्य;
+		पूर्ण
 		cur = cur->hnext;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void free_journal_ram(struct super_block *sb)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	kfree(journal->j_current_jl);
+अटल व्योम मुक्त_journal_ram(काष्ठा super_block *sb)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	kमुक्त(journal->j_current_jl);
 	journal->j_num_lists--;
 
-	vfree(journal->j_cnode_free_orig);
-	free_list_bitmaps(sb, journal->j_list_bitmap);
-	free_bitmap_nodes(sb);	/* must be after free_list_bitmaps */
-	if (journal->j_header_bh) {
-		brelse(journal->j_header_bh);
-	}
+	vमुक्त(journal->j_cnode_मुक्त_orig);
+	मुक्त_list_biपंचांगaps(sb, journal->j_list_biपंचांगap);
+	मुक्त_biपंचांगap_nodes(sb);	/* must be after मुक्त_list_biपंचांगaps */
+	अगर (journal->j_header_bh) अणु
+		brअन्यथा(journal->j_header_bh);
+	पूर्ण
 	/*
 	 * j_header_bh is on the journal dev, make sure
-	 * not to release the journal dev until we brelse j_header_bh
+	 * not to release the journal dev until we brअन्यथा j_header_bh
 	 */
 	release_journal_dev(sb, journal);
-	vfree(journal);
-}
+	vमुक्त(journal);
+पूर्ण
 
 /*
- * call on unmount.  Only set error to 1 if you haven't made your way out
- * of read_super() yet.  Any other caller must keep error at 0.
+ * call on unmount.  Only set error to 1 अगर you haven't made your way out
+ * of पढ़ो_super() yet.  Any other caller must keep error at 0.
  */
-static int do_journal_release(struct reiserfs_transaction_handle *th,
-			      struct super_block *sb, int error)
-{
-	struct reiserfs_transaction_handle myth;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
+अटल पूर्णांक करो_journal_release(काष्ठा reiserfs_transaction_handle *th,
+			      काष्ठा super_block *sb, पूर्णांक error)
+अणु
+	काष्ठा reiserfs_transaction_handle myth;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
 
 	/*
-	 * we only want to flush out transactions if we were
+	 * we only want to flush out transactions अगर we were
 	 * called with error == 0
 	 */
-	if (!error && !sb_rdonly(sb)) {
+	अगर (!error && !sb_rकरोnly(sb)) अणु
 		/* end the current trans */
 		BUG_ON(!th->t_trans_id);
-		do_journal_end(th, FLUSH_ALL);
+		करो_journal_end(th, FLUSH_ALL);
 
 		/*
-		 * make sure something gets logged to force
-		 * our way into the flush code
+		 * make sure something माला_लो logged to क्रमce
+		 * our way पूर्णांकo the flush code
 		 */
-		if (!journal_join(&myth, sb)) {
-			reiserfs_prepare_for_journal(sb,
+		अगर (!journal_join(&myth, sb)) अणु
+			reiserfs_prepare_क्रम_journal(sb,
 						     SB_BUFFER_WITH_SB(sb),
 						     1);
 			journal_mark_dirty(&myth, SB_BUFFER_WITH_SB(sb));
-			do_journal_end(&myth, FLUSH_ALL);
-		}
-	}
+			करो_journal_end(&myth, FLUSH_ALL);
+		पूर्ण
+	पूर्ण
 
-	/* this also catches errors during the do_journal_end above */
-	if (!error && reiserfs_is_journal_aborted(journal)) {
-		memset(&myth, 0, sizeof(myth));
-		if (!journal_join_abort(&myth, sb)) {
-			reiserfs_prepare_for_journal(sb,
+	/* this also catches errors during the करो_journal_end above */
+	अगर (!error && reiserfs_is_journal_पातed(journal)) अणु
+		स_रखो(&myth, 0, माप(myth));
+		अगर (!journal_join_पात(&myth, sb)) अणु
+			reiserfs_prepare_क्रम_journal(sb,
 						     SB_BUFFER_WITH_SB(sb),
 						     1);
 			journal_mark_dirty(&myth, SB_BUFFER_WITH_SB(sb));
-			do_journal_end(&myth, FLUSH_ALL);
-		}
-	}
+			करो_journal_end(&myth, FLUSH_ALL);
+		पूर्ण
+	पूर्ण
 
 
 	/*
-	 * We must release the write lock here because
+	 * We must release the ग_लिखो lock here because
 	 * the workqueue job (flush_async_commit) needs this lock
 	 */
-	reiserfs_write_unlock(sb);
+	reiserfs_ग_लिखो_unlock(sb);
 
 	/*
 	 * Cancel flushing of old commits. Note that neither of these works
-	 * will be requeued because superblock is being shutdown and doesn't
+	 * will be requeued because superblock is being shutकरोwn and करोesn't
 	 * have SB_ACTIVE set.
 	 */
 	reiserfs_cancel_old_flush(sb);
-	/* wait for all commits to finish */
+	/* रुको क्रम all commits to finish */
 	cancel_delayed_work_sync(&SB_JOURNAL(sb)->j_work);
 
-	free_journal_ram(sb);
+	मुक्त_journal_ram(sb);
 
-	reiserfs_write_lock(sb);
+	reiserfs_ग_लिखो_lock(sb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* * call on unmount.  flush all journal trans, release all alloc'd ram */
-int journal_release(struct reiserfs_transaction_handle *th,
-		    struct super_block *sb)
-{
-	return do_journal_release(th, sb, 0);
-}
+पूर्णांक journal_release(काष्ठा reiserfs_transaction_handle *th,
+		    काष्ठा super_block *sb)
+अणु
+	वापस करो_journal_release(th, sb, 0);
+पूर्ण
 
-/* only call from an error condition inside reiserfs_read_super!  */
-int journal_release_error(struct reiserfs_transaction_handle *th,
-			  struct super_block *sb)
-{
-	return do_journal_release(th, sb, 1);
-}
+/* only call from an error condition inside reiserfs_पढ़ो_super!  */
+पूर्णांक journal_release_error(काष्ठा reiserfs_transaction_handle *th,
+			  काष्ठा super_block *sb)
+अणु
+	वापस करो_journal_release(th, sb, 1);
+पूर्ण
 
 /*
  * compares description block with commit block.
- * returns 1 if they differ, 0 if they are the same
+ * वापसs 1 अगर they dअगरfer, 0 अगर they are the same
  */
-static int journal_compare_desc_commit(struct super_block *sb,
-				       struct reiserfs_journal_desc *desc,
-				       struct reiserfs_journal_commit *commit)
-{
-	if (get_commit_trans_id(commit) != get_desc_trans_id(desc) ||
+अटल पूर्णांक journal_compare_desc_commit(काष्ठा super_block *sb,
+				       काष्ठा reiserfs_journal_desc *desc,
+				       काष्ठा reiserfs_journal_commit *commit)
+अणु
+	अगर (get_commit_trans_id(commit) != get_desc_trans_id(desc) ||
 	    get_commit_trans_len(commit) != get_desc_trans_len(desc) ||
 	    get_commit_trans_len(commit) > SB_JOURNAL(sb)->j_trans_max ||
-	    get_commit_trans_len(commit) <= 0) {
-		return 1;
-	}
-	return 0;
-}
+	    get_commit_trans_len(commit) <= 0) अणु
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * returns 0 if it did not find a description block
- * returns -1 if it found a corrupt commit block
- * returns 1 if both desc and commit were valid
+ * वापसs 0 अगर it did not find a description block
+ * वापसs -1 अगर it found a corrupt commit block
+ * वापसs 1 अगर both desc and commit were valid
  * NOTE: only called during fs mount
  */
-static int journal_transaction_is_valid(struct super_block *sb,
-					struct buffer_head *d_bh,
-					unsigned int *oldest_invalid_trans_id,
-					unsigned long *newest_mount_id)
-{
-	struct reiserfs_journal_desc *desc;
-	struct reiserfs_journal_commit *commit;
-	struct buffer_head *c_bh;
-	unsigned long offset;
+अटल पूर्णांक journal_transaction_is_valid(काष्ठा super_block *sb,
+					काष्ठा buffer_head *d_bh,
+					अचिन्हित पूर्णांक *oldest_invalid_trans_id,
+					अचिन्हित दीर्घ *newest_mount_id)
+अणु
+	काष्ठा reiserfs_journal_desc *desc;
+	काष्ठा reiserfs_journal_commit *commit;
+	काष्ठा buffer_head *c_bh;
+	अचिन्हित दीर्घ offset;
 
-	if (!d_bh)
-		return 0;
+	अगर (!d_bh)
+		वापस 0;
 
-	desc = (struct reiserfs_journal_desc *)d_bh->b_data;
-	if (get_desc_trans_len(desc) > 0
-	    && !memcmp(get_journal_desc_magic(d_bh), JOURNAL_DESC_MAGIC, 8)) {
-		if (oldest_invalid_trans_id && *oldest_invalid_trans_id
-		    && get_desc_trans_id(desc) > *oldest_invalid_trans_id) {
+	desc = (काष्ठा reiserfs_journal_desc *)d_bh->b_data;
+	अगर (get_desc_trans_len(desc) > 0
+	    && !स_भेद(get_journal_desc_magic(d_bh), JOURNAL_DESC_MAGIC, 8)) अणु
+		अगर (oldest_invalid_trans_id && *oldest_invalid_trans_id
+		    && get_desc_trans_id(desc) > *oldest_invalid_trans_id) अणु
 			reiserfs_debug(sb, REISERFS_DEBUG_CODE,
 				       "journal-986: transaction "
 				       "is valid returning because trans_id %d is greater than "
 				       "oldest_invalid %lu",
 				       get_desc_trans_id(desc),
 				       *oldest_invalid_trans_id);
-			return 0;
-		}
-		if (newest_mount_id
-		    && *newest_mount_id > get_desc_mount_id(desc)) {
+			वापस 0;
+		पूर्ण
+		अगर (newest_mount_id
+		    && *newest_mount_id > get_desc_mount_id(desc)) अणु
 			reiserfs_debug(sb, REISERFS_DEBUG_CODE,
 				       "journal-1087: transaction "
 				       "is valid returning because mount_id %d is less than "
 				       "newest_mount_id %lu",
 				       get_desc_mount_id(desc),
 				       *newest_mount_id);
-			return -1;
-		}
-		if (get_desc_trans_len(desc) > SB_JOURNAL(sb)->j_trans_max) {
+			वापस -1;
+		पूर्ण
+		अगर (get_desc_trans_len(desc) > SB_JOURNAL(sb)->j_trans_max) अणु
 			reiserfs_warning(sb, "journal-2018",
 					 "Bad transaction length %d "
 					 "encountered, ignoring transaction",
 					 get_desc_trans_len(desc));
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		offset = d_bh->b_blocknr - SB_ONDISK_JOURNAL_1st_BLOCK(sb);
 
 		/*
 		 * ok, we have a journal description block,
-		 * let's see if the transaction was valid
+		 * let's see अगर the transaction was valid
 		 */
 		c_bh =
-		    journal_bread(sb,
+		    journal_bपढ़ो(sb,
 				  SB_ONDISK_JOURNAL_1st_BLOCK(sb) +
 				  ((offset + get_desc_trans_len(desc) +
 				    1) % SB_ONDISK_JOURNAL_SIZE(sb)));
-		if (!c_bh)
-			return 0;
-		commit = (struct reiserfs_journal_commit *)c_bh->b_data;
-		if (journal_compare_desc_commit(sb, desc, commit)) {
+		अगर (!c_bh)
+			वापस 0;
+		commit = (काष्ठा reiserfs_journal_commit *)c_bh->b_data;
+		अगर (journal_compare_desc_commit(sb, desc, commit)) अणु
 			reiserfs_debug(sb, REISERFS_DEBUG_CODE,
 				       "journal_transaction_is_valid, commit offset %ld had bad "
 				       "time %d or length %d",
@@ -2063,8 +2064,8 @@ static int journal_transaction_is_valid(struct super_block *sb,
 				       SB_ONDISK_JOURNAL_1st_BLOCK(sb),
 				       get_commit_trans_id(commit),
 				       get_commit_trans_len(commit));
-			brelse(c_bh);
-			if (oldest_invalid_trans_id) {
+			brअन्यथा(c_bh);
+			अगर (oldest_invalid_trans_id) अणु
 				*oldest_invalid_trans_id =
 				    get_desc_trans_id(desc);
 				reiserfs_debug(sb, REISERFS_DEBUG_CODE,
@@ -2072,10 +2073,10 @@ static int journal_transaction_is_valid(struct super_block *sb,
 					       "transaction_is_valid setting oldest invalid trans_id "
 					       "to %d",
 					       get_desc_trans_id(desc));
-			}
-			return -1;
-		}
-		brelse(c_bh);
+			पूर्ण
+			वापस -1;
+		पूर्ण
+		brअन्यथा(c_bh);
 		reiserfs_debug(sb, REISERFS_DEBUG_CODE,
 			       "journal-1006: found valid "
 			       "transaction start offset %llu, len %d id %d",
@@ -2083,78 +2084,78 @@ static int journal_transaction_is_valid(struct super_block *sb,
 			       SB_ONDISK_JOURNAL_1st_BLOCK(sb),
 			       get_desc_trans_len(desc),
 			       get_desc_trans_id(desc));
-		return 1;
-	} else {
-		return 0;
-	}
-}
+		वापस 1;
+	पूर्ण अन्यथा अणु
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void brelse_array(struct buffer_head **heads, int num)
-{
-	int i;
-	for (i = 0; i < num; i++) {
-		brelse(heads[i]);
-	}
-}
+अटल व्योम brअन्यथा_array(काष्ठा buffer_head **heads, पूर्णांक num)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < num; i++) अणु
+		brअन्यथा(heads[i]);
+	पूर्ण
+पूर्ण
 
 /*
- * given the start, and values for the oldest acceptable transactions,
- * this either reads in a replays a transaction, or returns because the
+ * given the start, and values क्रम the oldest acceptable transactions,
+ * this either पढ़ोs in a replays a transaction, or वापसs because the
  * transaction is invalid, or too old.
  * NOTE: only called during fs mount
  */
-static int journal_read_transaction(struct super_block *sb,
-				    unsigned long cur_dblock,
-				    unsigned long oldest_start,
-				    unsigned int oldest_trans_id,
-				    unsigned long newest_mount_id)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	struct reiserfs_journal_desc *desc;
-	struct reiserfs_journal_commit *commit;
-	unsigned int trans_id = 0;
-	struct buffer_head *c_bh;
-	struct buffer_head *d_bh;
-	struct buffer_head **log_blocks = NULL;
-	struct buffer_head **real_blocks = NULL;
-	unsigned int trans_offset;
-	int i;
-	int trans_half;
+अटल पूर्णांक journal_पढ़ो_transaction(काष्ठा super_block *sb,
+				    अचिन्हित दीर्घ cur_dblock,
+				    अचिन्हित दीर्घ oldest_start,
+				    अचिन्हित पूर्णांक oldest_trans_id,
+				    अचिन्हित दीर्घ newest_mount_id)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	काष्ठा reiserfs_journal_desc *desc;
+	काष्ठा reiserfs_journal_commit *commit;
+	अचिन्हित पूर्णांक trans_id = 0;
+	काष्ठा buffer_head *c_bh;
+	काष्ठा buffer_head *d_bh;
+	काष्ठा buffer_head **log_blocks = शून्य;
+	काष्ठा buffer_head **real_blocks = शून्य;
+	अचिन्हित पूर्णांक trans_offset;
+	पूर्णांक i;
+	पूर्णांक trans_half;
 
-	d_bh = journal_bread(sb, cur_dblock);
-	if (!d_bh)
-		return 1;
-	desc = (struct reiserfs_journal_desc *)d_bh->b_data;
+	d_bh = journal_bपढ़ो(sb, cur_dblock);
+	अगर (!d_bh)
+		वापस 1;
+	desc = (काष्ठा reiserfs_journal_desc *)d_bh->b_data;
 	trans_offset = d_bh->b_blocknr - SB_ONDISK_JOURNAL_1st_BLOCK(sb);
 	reiserfs_debug(sb, REISERFS_DEBUG_CODE, "journal-1037: "
 		       "journal_read_transaction, offset %llu, len %d mount_id %d",
 		       d_bh->b_blocknr - SB_ONDISK_JOURNAL_1st_BLOCK(sb),
 		       get_desc_trans_len(desc), get_desc_mount_id(desc));
-	if (get_desc_trans_id(desc) < oldest_trans_id) {
+	अगर (get_desc_trans_id(desc) < oldest_trans_id) अणु
 		reiserfs_debug(sb, REISERFS_DEBUG_CODE, "journal-1039: "
 			       "journal_read_trans skipping because %lu is too old",
 			       cur_dblock -
 			       SB_ONDISK_JOURNAL_1st_BLOCK(sb));
-		brelse(d_bh);
-		return 1;
-	}
-	if (get_desc_mount_id(desc) != newest_mount_id) {
+		brअन्यथा(d_bh);
+		वापस 1;
+	पूर्ण
+	अगर (get_desc_mount_id(desc) != newest_mount_id) अणु
 		reiserfs_debug(sb, REISERFS_DEBUG_CODE, "journal-1146: "
 			       "journal_read_trans skipping because %d is != "
 			       "newest_mount_id %lu", get_desc_mount_id(desc),
 			       newest_mount_id);
-		brelse(d_bh);
-		return 1;
-	}
-	c_bh = journal_bread(sb, SB_ONDISK_JOURNAL_1st_BLOCK(sb) +
+		brअन्यथा(d_bh);
+		वापस 1;
+	पूर्ण
+	c_bh = journal_bपढ़ो(sb, SB_ONDISK_JOURNAL_1st_BLOCK(sb) +
 			     ((trans_offset + get_desc_trans_len(desc) + 1) %
 			      SB_ONDISK_JOURNAL_SIZE(sb)));
-	if (!c_bh) {
-		brelse(d_bh);
-		return 1;
-	}
-	commit = (struct reiserfs_journal_commit *)c_bh->b_data;
-	if (journal_compare_desc_commit(sb, desc, commit)) {
+	अगर (!c_bh) अणु
+		brअन्यथा(d_bh);
+		वापस 1;
+	पूर्ण
+	commit = (काष्ठा reiserfs_journal_commit *)c_bh->b_data;
+	अगर (journal_compare_desc_commit(sb, desc, commit)) अणु
 		reiserfs_debug(sb, REISERFS_DEBUG_CODE,
 			       "journal_read_transaction, "
 			       "commit offset %llu had bad time %d or length %d",
@@ -2162,124 +2163,124 @@ static int journal_read_transaction(struct super_block *sb,
 			       SB_ONDISK_JOURNAL_1st_BLOCK(sb),
 			       get_commit_trans_id(commit),
 			       get_commit_trans_len(commit));
-		brelse(c_bh);
-		brelse(d_bh);
-		return 1;
-	}
+		brअन्यथा(c_bh);
+		brअन्यथा(d_bh);
+		वापस 1;
+	पूर्ण
 
-	if (bdev_read_only(sb->s_bdev)) {
+	अगर (bdev_पढ़ो_only(sb->s_bdev)) अणु
 		reiserfs_warning(sb, "clm-2076",
 				 "device is readonly, unable to replay log");
-		brelse(c_bh);
-		brelse(d_bh);
-		return -EROFS;
-	}
+		brअन्यथा(c_bh);
+		brअन्यथा(d_bh);
+		वापस -EROFS;
+	पूर्ण
 
 	trans_id = get_desc_trans_id(desc);
 	/*
 	 * now we know we've got a good transaction, and it was
-	 * inside the valid time ranges
+	 * inside the valid समय ranges
 	 */
-	log_blocks = kmalloc_array(get_desc_trans_len(desc),
-				   sizeof(struct buffer_head *),
+	log_blocks = kदो_स्मृति_array(get_desc_trans_len(desc),
+				   माप(काष्ठा buffer_head *),
 				   GFP_NOFS);
-	real_blocks = kmalloc_array(get_desc_trans_len(desc),
-				    sizeof(struct buffer_head *),
+	real_blocks = kदो_स्मृति_array(get_desc_trans_len(desc),
+				    माप(काष्ठा buffer_head *),
 				    GFP_NOFS);
-	if (!log_blocks || !real_blocks) {
-		brelse(c_bh);
-		brelse(d_bh);
-		kfree(log_blocks);
-		kfree(real_blocks);
+	अगर (!log_blocks || !real_blocks) अणु
+		brअन्यथा(c_bh);
+		brअन्यथा(d_bh);
+		kमुक्त(log_blocks);
+		kमुक्त(real_blocks);
 		reiserfs_warning(sb, "journal-1169",
 				 "kmalloc failed, unable to mount FS");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	/* get all the buffer heads */
 	trans_half = journal_trans_half(sb->s_blocksize);
-	for (i = 0; i < get_desc_trans_len(desc); i++) {
+	क्रम (i = 0; i < get_desc_trans_len(desc); i++) अणु
 		log_blocks[i] =
 		    journal_getblk(sb,
 				   SB_ONDISK_JOURNAL_1st_BLOCK(sb) +
 				   (trans_offset + 1 +
 				    i) % SB_ONDISK_JOURNAL_SIZE(sb));
-		if (i < trans_half) {
+		अगर (i < trans_half) अणु
 			real_blocks[i] =
 			    sb_getblk(sb,
 				      le32_to_cpu(desc->j_realblock[i]));
-		} else {
+		पूर्ण अन्यथा अणु
 			real_blocks[i] =
 			    sb_getblk(sb,
 				      le32_to_cpu(commit->
 						  j_realblock[i - trans_half]));
-		}
-		if (real_blocks[i]->b_blocknr > SB_BLOCK_COUNT(sb)) {
+		पूर्ण
+		अगर (real_blocks[i]->b_blocknr > SB_BLOCK_COUNT(sb)) अणु
 			reiserfs_warning(sb, "journal-1207",
 					 "REPLAY FAILURE fsck required! "
 					 "Block to replay is outside of "
 					 "filesystem");
-			goto abort_replay;
-		}
-		/* make sure we don't try to replay onto log or reserved area */
-		if (is_block_in_log_or_reserved_area
-		    (sb, real_blocks[i]->b_blocknr)) {
+			जाओ पात_replay;
+		पूर्ण
+		/* make sure we करोn't try to replay onto log or reserved area */
+		अगर (is_block_in_log_or_reserved_area
+		    (sb, real_blocks[i]->b_blocknr)) अणु
 			reiserfs_warning(sb, "journal-1204",
 					 "REPLAY FAILURE fsck required! "
 					 "Trying to replay onto a log block");
-abort_replay:
-			brelse_array(log_blocks, i);
-			brelse_array(real_blocks, i);
-			brelse(c_bh);
-			brelse(d_bh);
-			kfree(log_blocks);
-			kfree(real_blocks);
-			return -1;
-		}
-	}
-	/* read in the log blocks, memcpy to the corresponding real block */
+पात_replay:
+			brअन्यथा_array(log_blocks, i);
+			brअन्यथा_array(real_blocks, i);
+			brअन्यथा(c_bh);
+			brअन्यथा(d_bh);
+			kमुक्त(log_blocks);
+			kमुक्त(real_blocks);
+			वापस -1;
+		पूर्ण
+	पूर्ण
+	/* पढ़ो in the log blocks, स_नकल to the corresponding real block */
 	ll_rw_block(REQ_OP_READ, 0, get_desc_trans_len(desc), log_blocks);
-	for (i = 0; i < get_desc_trans_len(desc); i++) {
+	क्रम (i = 0; i < get_desc_trans_len(desc); i++) अणु
 
-		wait_on_buffer(log_blocks[i]);
-		if (!buffer_uptodate(log_blocks[i])) {
+		रुको_on_buffer(log_blocks[i]);
+		अगर (!buffer_uptodate(log_blocks[i])) अणु
 			reiserfs_warning(sb, "journal-1212",
 					 "REPLAY FAILURE fsck required! "
 					 "buffer write failed");
-			brelse_array(log_blocks + i,
+			brअन्यथा_array(log_blocks + i,
 				     get_desc_trans_len(desc) - i);
-			brelse_array(real_blocks, get_desc_trans_len(desc));
-			brelse(c_bh);
-			brelse(d_bh);
-			kfree(log_blocks);
-			kfree(real_blocks);
-			return -1;
-		}
-		memcpy(real_blocks[i]->b_data, log_blocks[i]->b_data,
+			brअन्यथा_array(real_blocks, get_desc_trans_len(desc));
+			brअन्यथा(c_bh);
+			brअन्यथा(d_bh);
+			kमुक्त(log_blocks);
+			kमुक्त(real_blocks);
+			वापस -1;
+		पूर्ण
+		स_नकल(real_blocks[i]->b_data, log_blocks[i]->b_data,
 		       real_blocks[i]->b_size);
 		set_buffer_uptodate(real_blocks[i]);
-		brelse(log_blocks[i]);
-	}
+		brअन्यथा(log_blocks[i]);
+	पूर्ण
 	/* flush out the real blocks */
-	for (i = 0; i < get_desc_trans_len(desc); i++) {
+	क्रम (i = 0; i < get_desc_trans_len(desc); i++) अणु
 		set_buffer_dirty(real_blocks[i]);
-		write_dirty_buffer(real_blocks[i], 0);
-	}
-	for (i = 0; i < get_desc_trans_len(desc); i++) {
-		wait_on_buffer(real_blocks[i]);
-		if (!buffer_uptodate(real_blocks[i])) {
+		ग_लिखो_dirty_buffer(real_blocks[i], 0);
+	पूर्ण
+	क्रम (i = 0; i < get_desc_trans_len(desc); i++) अणु
+		रुको_on_buffer(real_blocks[i]);
+		अगर (!buffer_uptodate(real_blocks[i])) अणु
 			reiserfs_warning(sb, "journal-1226",
 					 "REPLAY FAILURE, fsck required! "
 					 "buffer write failed");
-			brelse_array(real_blocks + i,
+			brअन्यथा_array(real_blocks + i,
 				     get_desc_trans_len(desc) - i);
-			brelse(c_bh);
-			brelse(d_bh);
-			kfree(log_blocks);
-			kfree(real_blocks);
-			return -1;
-		}
-		brelse(real_blocks[i]);
-	}
+			brअन्यथा(c_bh);
+			brअन्यथा(d_bh);
+			kमुक्त(log_blocks);
+			kमुक्त(real_blocks);
+			वापस -1;
+		पूर्ण
+		brअन्यथा(real_blocks[i]);
+	पूर्ण
 	cur_dblock =
 	    SB_ONDISK_JOURNAL_1st_BLOCK(sb) +
 	    ((trans_offset + get_desc_trans_len(desc) +
@@ -2289,116 +2290,116 @@ abort_replay:
 		       cur_dblock - SB_ONDISK_JOURNAL_1st_BLOCK(sb));
 
 	/*
-	 * init starting values for the first transaction, in case
+	 * init starting values क्रम the first transaction, in हाल
 	 * this is the last transaction to be replayed.
 	 */
 	journal->j_start = cur_dblock - SB_ONDISK_JOURNAL_1st_BLOCK(sb);
 	journal->j_last_flush_trans_id = trans_id;
 	journal->j_trans_id = trans_id + 1;
-	/* check for trans_id overflow */
-	if (journal->j_trans_id == 0)
+	/* check क्रम trans_id overflow */
+	अगर (journal->j_trans_id == 0)
 		journal->j_trans_id = 10;
-	brelse(c_bh);
-	brelse(d_bh);
-	kfree(log_blocks);
-	kfree(real_blocks);
-	return 0;
-}
+	brअन्यथा(c_bh);
+	brअन्यथा(d_bh);
+	kमुक्त(log_blocks);
+	kमुक्त(real_blocks);
+	वापस 0;
+पूर्ण
 
 /*
- * This function reads blocks starting from block and to max_block of bufsize
- * size (but no more than BUFNR blocks at a time). This proved to improve
+ * This function पढ़ोs blocks starting from block and to max_block of bufsize
+ * size (but no more than BUFNR blocks at a समय). This proved to improve
  * mounting speed on self-rebuilding raid5 arrays at least.
  * Right now it is only used from journal code. But later we might use it
  * from other places.
  * Note: Do not use journal_getblk/sb_getblk functions here!
  */
-static struct buffer_head *reiserfs_breada(struct block_device *dev,
-					   b_blocknr_t block, int bufsize,
+अटल काष्ठा buffer_head *reiserfs_bपढ़ोa(काष्ठा block_device *dev,
+					   b_blocknr_t block, पूर्णांक bufsize,
 					   b_blocknr_t max_block)
-{
-	struct buffer_head *bhlist[BUFNR];
-	unsigned int blocks = BUFNR;
-	struct buffer_head *bh;
-	int i, j;
+अणु
+	काष्ठा buffer_head *bhlist[BUFNR];
+	अचिन्हित पूर्णांक blocks = BUFNR;
+	काष्ठा buffer_head *bh;
+	पूर्णांक i, j;
 
 	bh = __getblk(dev, block, bufsize);
-	if (buffer_uptodate(bh))
-		return (bh);
+	अगर (buffer_uptodate(bh))
+		वापस (bh);
 
-	if (block + BUFNR > max_block) {
+	अगर (block + BUFNR > max_block) अणु
 		blocks = max_block - block;
-	}
+	पूर्ण
 	bhlist[0] = bh;
 	j = 1;
-	for (i = 1; i < blocks; i++) {
+	क्रम (i = 1; i < blocks; i++) अणु
 		bh = __getblk(dev, block + i, bufsize);
-		if (buffer_uptodate(bh)) {
-			brelse(bh);
-			break;
-		} else
+		अगर (buffer_uptodate(bh)) अणु
+			brअन्यथा(bh);
+			अवरोध;
+		पूर्ण अन्यथा
 			bhlist[j++] = bh;
-	}
+	पूर्ण
 	ll_rw_block(REQ_OP_READ, 0, j, bhlist);
-	for (i = 1; i < j; i++)
-		brelse(bhlist[i]);
+	क्रम (i = 1; i < j; i++)
+		brअन्यथा(bhlist[i]);
 	bh = bhlist[0];
-	wait_on_buffer(bh);
-	if (buffer_uptodate(bh))
-		return bh;
-	brelse(bh);
-	return NULL;
-}
+	रुको_on_buffer(bh);
+	अगर (buffer_uptodate(bh))
+		वापस bh;
+	brअन्यथा(bh);
+	वापस शून्य;
+पूर्ण
 
 /*
- * read and replay the log
- * on a clean unmount, the journal header's next unflushed pointer will be
- * to an invalid transaction.  This tests that before finding all the
- * transactions in the log, which makes normal mount times fast.
+ * पढ़ो and replay the log
+ * on a clean unmount, the journal header's next unflushed poपूर्णांकer will be
+ * to an invalid transaction.  This tests that beक्रमe finding all the
+ * transactions in the log, which makes normal mount बार fast.
  *
  * After a crash, this starts with the next unflushed transaction, and
  * replays until it finds one too old, or invalid.
  *
- * On exit, it sets things up so the first transaction will work correctly.
+ * On निकास, it sets things up so the first transaction will work correctly.
  * NOTE: only called during fs mount
  */
-static int journal_read(struct super_block *sb)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	struct reiserfs_journal_desc *desc;
-	unsigned int oldest_trans_id = 0;
-	unsigned int oldest_invalid_trans_id = 0;
-	time64_t start;
-	unsigned long oldest_start = 0;
-	unsigned long cur_dblock = 0;
-	unsigned long newest_mount_id = 9;
-	struct buffer_head *d_bh;
-	struct reiserfs_journal_header *jh;
-	int valid_journal_header = 0;
-	int replay_count = 0;
-	int continue_replay = 1;
-	int ret;
+अटल पूर्णांक journal_पढ़ो(काष्ठा super_block *sb)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	काष्ठा reiserfs_journal_desc *desc;
+	अचिन्हित पूर्णांक oldest_trans_id = 0;
+	अचिन्हित पूर्णांक oldest_invalid_trans_id = 0;
+	समय64_t start;
+	अचिन्हित दीर्घ oldest_start = 0;
+	अचिन्हित दीर्घ cur_dblock = 0;
+	अचिन्हित दीर्घ newest_mount_id = 9;
+	काष्ठा buffer_head *d_bh;
+	काष्ठा reiserfs_journal_header *jh;
+	पूर्णांक valid_journal_header = 0;
+	पूर्णांक replay_count = 0;
+	पूर्णांक जारी_replay = 1;
+	पूर्णांक ret;
 
 	cur_dblock = SB_ONDISK_JOURNAL_1st_BLOCK(sb);
 	reiserfs_info(sb, "checking transaction log (%pg)\n",
 		      journal->j_dev_bd);
-	start = ktime_get_seconds();
+	start = kसमय_get_seconds();
 
 	/*
-	 * step 1, read in the journal header block.  Check the transaction
-	 * it says is the first unflushed, and if that transaction is not
-	 * valid, replay is done
+	 * step 1, पढ़ो in the journal header block.  Check the transaction
+	 * it says is the first unflushed, and अगर that transaction is not
+	 * valid, replay is करोne
 	 */
-	journal->j_header_bh = journal_bread(sb,
+	journal->j_header_bh = journal_bपढ़ो(sb,
 					     SB_ONDISK_JOURNAL_1st_BLOCK(sb)
 					     + SB_ONDISK_JOURNAL_SIZE(sb));
-	if (!journal->j_header_bh) {
-		return 1;
-	}
-	jh = (struct reiserfs_journal_header *)(journal->j_header_bh->b_data);
-	if (le32_to_cpu(jh->j_first_unflushed_offset) <
+	अगर (!journal->j_header_bh) अणु
+		वापस 1;
+	पूर्ण
+	jh = (काष्ठा reiserfs_journal_header *)(journal->j_header_bh->b_data);
+	अगर (le32_to_cpu(jh->j_first_unflushed_offset) <
 	    SB_ONDISK_JOURNAL_SIZE(sb)
-	    && le32_to_cpu(jh->j_last_flush_trans_id) > 0) {
+	    && le32_to_cpu(jh->j_last_flush_trans_id) > 0) अणु
 		oldest_start =
 		    SB_ONDISK_JOURNAL_1st_BLOCK(sb) +
 		    le32_to_cpu(jh->j_first_unflushed_offset);
@@ -2412,37 +2413,37 @@ static int journal_read(struct super_block *sb)
 		valid_journal_header = 1;
 
 		/*
-		 * now, we try to read the first unflushed offset.  If it
-		 * is not valid, there is nothing more we can do, and it
-		 * makes no sense to read through the whole log.
+		 * now, we try to पढ़ो the first unflushed offset.  If it
+		 * is not valid, there is nothing more we can करो, and it
+		 * makes no sense to पढ़ो through the whole log.
 		 */
 		d_bh =
-		    journal_bread(sb,
+		    journal_bपढ़ो(sb,
 				  SB_ONDISK_JOURNAL_1st_BLOCK(sb) +
 				  le32_to_cpu(jh->j_first_unflushed_offset));
-		ret = journal_transaction_is_valid(sb, d_bh, NULL, NULL);
-		if (!ret) {
-			continue_replay = 0;
-		}
-		brelse(d_bh);
-		goto start_log_replay;
-	}
+		ret = journal_transaction_is_valid(sb, d_bh, शून्य, शून्य);
+		अगर (!ret) अणु
+			जारी_replay = 0;
+		पूर्ण
+		brअन्यथा(d_bh);
+		जाओ start_log_replay;
+	पूर्ण
 
 	/*
 	 * ok, there are transactions that need to be replayed.  start
 	 * with the first log block, find all the valid transactions, and
 	 * pick out the oldest.
 	 */
-	while (continue_replay
+	जबतक (जारी_replay
 	       && cur_dblock <
 	       (SB_ONDISK_JOURNAL_1st_BLOCK(sb) +
-		SB_ONDISK_JOURNAL_SIZE(sb))) {
+		SB_ONDISK_JOURNAL_SIZE(sb))) अणु
 		/*
-		 * Note that it is required for blocksize of primary fs
+		 * Note that it is required क्रम blocksize of primary fs
 		 * device and journal device to be the same
 		 */
 		d_bh =
-		    reiserfs_breada(journal->j_dev_bd, cur_dblock,
+		    reiserfs_bपढ़ोa(journal->j_dev_bd, cur_dblock,
 				    sb->s_blocksize,
 				    SB_ONDISK_JOURNAL_1st_BLOCK(sb) +
 				    SB_ONDISK_JOURNAL_SIZE(sb));
@@ -2450,9 +2451,9 @@ static int journal_read(struct super_block *sb)
 		    journal_transaction_is_valid(sb, d_bh,
 						 &oldest_invalid_trans_id,
 						 &newest_mount_id);
-		if (ret == 1) {
-			desc = (struct reiserfs_journal_desc *)d_bh->b_data;
-			if (oldest_start == 0) {	/* init all oldest_ values */
+		अगर (ret == 1) अणु
+			desc = (काष्ठा reiserfs_journal_desc *)d_bh->b_data;
+			अगर (oldest_start == 0) अणु	/* init all oldest_ values */
 				oldest_trans_id = get_desc_trans_id(desc);
 				oldest_start = d_bh->b_blocknr;
 				newest_mount_id = get_desc_mount_id(desc);
@@ -2462,8 +2463,8 @@ static int journal_read(struct super_block *sb)
 					       oldest_start -
 					       SB_ONDISK_JOURNAL_1st_BLOCK
 					       (sb), oldest_trans_id);
-			} else if (oldest_trans_id > get_desc_trans_id(desc)) {
-				/* one we just read was older */
+			पूर्ण अन्यथा अगर (oldest_trans_id > get_desc_trans_id(desc)) अणु
+				/* one we just पढ़ो was older */
 				oldest_trans_id = get_desc_trans_id(desc);
 				oldest_start = d_bh->b_blocknr;
 				reiserfs_debug(sb, REISERFS_DEBUG_CODE,
@@ -2472,99 +2473,99 @@ static int journal_read(struct super_block *sb)
 					       oldest_start -
 					       SB_ONDISK_JOURNAL_1st_BLOCK
 					       (sb), oldest_trans_id);
-			}
-			if (newest_mount_id < get_desc_mount_id(desc)) {
+			पूर्ण
+			अगर (newest_mount_id < get_desc_mount_id(desc)) अणु
 				newest_mount_id = get_desc_mount_id(desc);
 				reiserfs_debug(sb, REISERFS_DEBUG_CODE,
 					       "journal-1299: Setting "
 					       "newest_mount_id to %d",
 					       get_desc_mount_id(desc));
-			}
+			पूर्ण
 			cur_dblock += get_desc_trans_len(desc) + 2;
-		} else {
+		पूर्ण अन्यथा अणु
 			cur_dblock++;
-		}
-		brelse(d_bh);
-	}
+		पूर्ण
+		brअन्यथा(d_bh);
+	पूर्ण
 
 start_log_replay:
 	cur_dblock = oldest_start;
-	if (oldest_trans_id) {
+	अगर (oldest_trans_id) अणु
 		reiserfs_debug(sb, REISERFS_DEBUG_CODE,
 			       "journal-1206: Starting replay "
 			       "from offset %llu, trans_id %lu",
 			       cur_dblock - SB_ONDISK_JOURNAL_1st_BLOCK(sb),
 			       oldest_trans_id);
 
-	}
+	पूर्ण
 	replay_count = 0;
-	while (continue_replay && oldest_trans_id > 0) {
+	जबतक (जारी_replay && oldest_trans_id > 0) अणु
 		ret =
-		    journal_read_transaction(sb, cur_dblock, oldest_start,
+		    journal_पढ़ो_transaction(sb, cur_dblock, oldest_start,
 					     oldest_trans_id, newest_mount_id);
-		if (ret < 0) {
-			return ret;
-		} else if (ret != 0) {
-			break;
-		}
+		अगर (ret < 0) अणु
+			वापस ret;
+		पूर्ण अन्यथा अगर (ret != 0) अणु
+			अवरोध;
+		पूर्ण
 		cur_dblock =
 		    SB_ONDISK_JOURNAL_1st_BLOCK(sb) + journal->j_start;
 		replay_count++;
-		if (cur_dblock == oldest_start)
-			break;
-	}
+		अगर (cur_dblock == oldest_start)
+			अवरोध;
+	पूर्ण
 
-	if (oldest_trans_id == 0) {
+	अगर (oldest_trans_id == 0) अणु
 		reiserfs_debug(sb, REISERFS_DEBUG_CODE,
 			       "journal-1225: No valid " "transactions found");
-	}
+	पूर्ण
 	/*
-	 * j_start does not get set correctly if we don't replay any
-	 * transactions.  if we had a valid journal_header, set j_start
+	 * j_start करोes not get set correctly अगर we करोn't replay any
+	 * transactions.  अगर we had a valid journal_header, set j_start
 	 * to the first unflushed transaction value, copy the trans_id
 	 * from the header
 	 */
-	if (valid_journal_header && replay_count == 0) {
+	अगर (valid_journal_header && replay_count == 0) अणु
 		journal->j_start = le32_to_cpu(jh->j_first_unflushed_offset);
 		journal->j_trans_id =
 		    le32_to_cpu(jh->j_last_flush_trans_id) + 1;
-		/* check for trans_id overflow */
-		if (journal->j_trans_id == 0)
+		/* check क्रम trans_id overflow */
+		अगर (journal->j_trans_id == 0)
 			journal->j_trans_id = 10;
 		journal->j_last_flush_trans_id =
 		    le32_to_cpu(jh->j_last_flush_trans_id);
 		journal->j_mount_id = le32_to_cpu(jh->j_mount_id) + 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		journal->j_mount_id = newest_mount_id + 1;
-	}
+	पूर्ण
 	reiserfs_debug(sb, REISERFS_DEBUG_CODE, "journal-1299: Setting "
 		       "newest_mount_id to %lu", journal->j_mount_id);
 	journal->j_first_unflushed_offset = journal->j_start;
-	if (replay_count > 0) {
+	अगर (replay_count > 0) अणु
 		reiserfs_info(sb,
 			      "replayed %d transactions in %lu seconds\n",
-			      replay_count, ktime_get_seconds() - start);
-	}
+			      replay_count, kसमय_get_seconds() - start);
+	पूर्ण
 	/* needed to satisfy the locking in _update_journal_header_block */
-	reiserfs_write_lock(sb);
-	if (!bdev_read_only(sb->s_bdev) &&
+	reiserfs_ग_लिखो_lock(sb);
+	अगर (!bdev_पढ़ो_only(sb->s_bdev) &&
 	    _update_journal_header_block(sb, journal->j_start,
-					 journal->j_last_flush_trans_id)) {
-		reiserfs_write_unlock(sb);
+					 journal->j_last_flush_trans_id)) अणु
+		reiserfs_ग_लिखो_unlock(sb);
 		/*
-		 * replay failed, caller must call free_journal_ram and abort
+		 * replay failed, caller must call मुक्त_journal_ram and पात
 		 * the mount
 		 */
-		return -1;
-	}
-	reiserfs_write_unlock(sb);
-	return 0;
-}
+		वापस -1;
+	पूर्ण
+	reiserfs_ग_लिखो_unlock(sb);
+	वापस 0;
+पूर्ण
 
-static struct reiserfs_journal_list *alloc_journal_list(struct super_block *s)
-{
-	struct reiserfs_journal_list *jl;
-	jl = kzalloc(sizeof(struct reiserfs_journal_list),
+अटल काष्ठा reiserfs_journal_list *alloc_journal_list(काष्ठा super_block *s)
+अणु
+	काष्ठा reiserfs_journal_list *jl;
+	jl = kzalloc(माप(काष्ठा reiserfs_journal_list),
 		     GFP_NOFS | __GFP_NOFAIL);
 	INIT_LIST_HEAD(&jl->j_list);
 	INIT_LIST_HEAD(&jl->j_working_list);
@@ -2573,80 +2574,80 @@ static struct reiserfs_journal_list *alloc_journal_list(struct super_block *s)
 	mutex_init(&jl->j_commit_mutex);
 	SB_JOURNAL(s)->j_num_lists++;
 	get_journal_list(jl);
-	return jl;
-}
+	वापस jl;
+पूर्ण
 
-static void journal_list_init(struct super_block *sb)
-{
+अटल व्योम journal_list_init(काष्ठा super_block *sb)
+अणु
 	SB_JOURNAL(sb)->j_current_jl = alloc_journal_list(sb);
-}
+पूर्ण
 
-static void release_journal_dev(struct super_block *super,
-			       struct reiserfs_journal *journal)
-{
-	if (journal->j_dev_bd != NULL) {
+अटल व्योम release_journal_dev(काष्ठा super_block *super,
+			       काष्ठा reiserfs_journal *journal)
+अणु
+	अगर (journal->j_dev_bd != शून्य) अणु
 		blkdev_put(journal->j_dev_bd, journal->j_dev_mode);
-		journal->j_dev_bd = NULL;
-	}
-}
+		journal->j_dev_bd = शून्य;
+	पूर्ण
+पूर्ण
 
-static int journal_init_dev(struct super_block *super,
-			    struct reiserfs_journal *journal,
-			    const char *jdev_name)
-{
-	int result;
+अटल पूर्णांक journal_init_dev(काष्ठा super_block *super,
+			    काष्ठा reiserfs_journal *journal,
+			    स्थिर अक्षर *jdev_name)
+अणु
+	पूर्णांक result;
 	dev_t jdev;
-	fmode_t blkdev_mode = FMODE_READ | FMODE_WRITE | FMODE_EXCL;
+	भ_शेषe_t blkdev_mode = FMODE_READ | FMODE_WRITE | FMODE_EXCL;
 
 	result = 0;
 
-	journal->j_dev_bd = NULL;
+	journal->j_dev_bd = शून्य;
 	jdev = SB_ONDISK_JOURNAL_DEVICE(super) ?
 	    new_decode_dev(SB_ONDISK_JOURNAL_DEVICE(super)) : super->s_dev;
 
-	if (bdev_read_only(super->s_bdev))
+	अगर (bdev_पढ़ो_only(super->s_bdev))
 		blkdev_mode = FMODE_READ;
 
 	/* there is no "jdev" option and journal is on separate device */
-	if ((!jdev_name || !jdev_name[0])) {
-		if (jdev == super->s_dev)
+	अगर ((!jdev_name || !jdev_name[0])) अणु
+		अगर (jdev == super->s_dev)
 			blkdev_mode &= ~FMODE_EXCL;
 		journal->j_dev_bd = blkdev_get_by_dev(jdev, blkdev_mode,
 						      journal);
 		journal->j_dev_mode = blkdev_mode;
-		if (IS_ERR(journal->j_dev_bd)) {
+		अगर (IS_ERR(journal->j_dev_bd)) अणु
 			result = PTR_ERR(journal->j_dev_bd);
-			journal->j_dev_bd = NULL;
+			journal->j_dev_bd = शून्य;
 			reiserfs_warning(super, "sh-458",
 					 "cannot init journal device unknown-block(%u,%u): %i",
 					 MAJOR(jdev), MINOR(jdev), result);
-			return result;
-		} else if (jdev != super->s_dev)
+			वापस result;
+		पूर्ण अन्यथा अगर (jdev != super->s_dev)
 			set_blocksize(journal->j_dev_bd, super->s_blocksize);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	journal->j_dev_mode = blkdev_mode;
 	journal->j_dev_bd = blkdev_get_by_path(jdev_name, blkdev_mode, journal);
-	if (IS_ERR(journal->j_dev_bd)) {
+	अगर (IS_ERR(journal->j_dev_bd)) अणु
 		result = PTR_ERR(journal->j_dev_bd);
-		journal->j_dev_bd = NULL;
+		journal->j_dev_bd = शून्य;
 		reiserfs_warning(super, "sh-457",
 				 "journal_init_dev: Cannot open '%s': %i",
 				 jdev_name, result);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	set_blocksize(journal->j_dev_bd, super->s_blocksize);
 	reiserfs_info(super,
 		      "journal_init_dev: journal device: %pg\n",
 		      journal->j_dev_bd);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * When creating/tuning a file system user can assign some
+ * When creating/tuning a file प्रणाली user can assign some
  * journal params within boundaries which depend on the ratio
  * blocksize/standard_blocksize.
  *
@@ -2657,83 +2658,83 @@ static int journal_init_dev(struct super_block *super,
  * For blocks < standard_blocksize these boundaries should be
  * decreased proportionally.
  */
-#define REISERFS_STANDARD_BLKSIZE (4096)
+#घोषणा REISERFS_STANDARD_BLKSIZE (4096)
 
-static int check_advise_trans_params(struct super_block *sb,
-				     struct reiserfs_journal *journal)
-{
-        if (journal->j_trans_max) {
-		/* Non-default journal params.  Do sanity check for them. */
-	        int ratio = 1;
-		if (sb->s_blocksize < REISERFS_STANDARD_BLKSIZE)
+अटल पूर्णांक check_advise_trans_params(काष्ठा super_block *sb,
+				     काष्ठा reiserfs_journal *journal)
+अणु
+        अगर (journal->j_trans_max) अणु
+		/* Non-शेष journal params.  Do sanity check क्रम them. */
+	        पूर्णांक ratio = 1;
+		अगर (sb->s_blocksize < REISERFS_STANDARD_BLKSIZE)
 		        ratio = REISERFS_STANDARD_BLKSIZE / sb->s_blocksize;
 
-		if (journal->j_trans_max > JOURNAL_TRANS_MAX_DEFAULT / ratio ||
+		अगर (journal->j_trans_max > JOURNAL_TRANS_MAX_DEFAULT / ratio ||
 		    journal->j_trans_max < JOURNAL_TRANS_MIN_DEFAULT / ratio ||
 		    SB_ONDISK_JOURNAL_SIZE(sb) / journal->j_trans_max <
-		    JOURNAL_MIN_RATIO) {
+		    JOURNAL_MIN_RATIO) अणु
 			reiserfs_warning(sb, "sh-462",
 					 "bad transaction max size (%u). "
 					 "FSCK?", journal->j_trans_max);
-			return 1;
-		}
-		if (journal->j_max_batch != (journal->j_trans_max) *
-		        JOURNAL_MAX_BATCH_DEFAULT/JOURNAL_TRANS_MAX_DEFAULT) {
+			वापस 1;
+		पूर्ण
+		अगर (journal->j_max_batch != (journal->j_trans_max) *
+		        JOURNAL_MAX_BATCH_DEFAULT/JOURNAL_TRANS_MAX_DEFAULT) अणु
 			reiserfs_warning(sb, "sh-463",
 					 "bad transaction max batch (%u). "
 					 "FSCK?", journal->j_max_batch);
-			return 1;
-		}
-	} else {
+			वापस 1;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * Default journal params.
-		 * The file system was created by old version
+		 * The file प्रणाली was created by old version
 		 * of mkreiserfs, so some fields contain zeros,
-		 * and we need to advise proper values for them
+		 * and we need to advise proper values क्रम them
 		 */
-		if (sb->s_blocksize != REISERFS_STANDARD_BLKSIZE) {
+		अगर (sb->s_blocksize != REISERFS_STANDARD_BLKSIZE) अणु
 			reiserfs_warning(sb, "sh-464", "bad blocksize (%u)",
 					 sb->s_blocksize);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 		journal->j_trans_max = JOURNAL_TRANS_MAX_DEFAULT;
 		journal->j_max_batch = JOURNAL_MAX_BATCH_DEFAULT;
 		journal->j_max_commit_age = JOURNAL_MAX_COMMIT_AGE;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* must be called once on fs mount.  calls journal_read for you */
-int journal_init(struct super_block *sb, const char *j_dev_name,
-		 int old_format, unsigned int commit_max_age)
-{
-	int num_cnodes = SB_ONDISK_JOURNAL_SIZE(sb) * 2;
-	struct buffer_head *bhjh;
-	struct reiserfs_super_block *rs;
-	struct reiserfs_journal_header *jh;
-	struct reiserfs_journal *journal;
-	struct reiserfs_journal_list *jl;
-	int ret;
+/* must be called once on fs mount.  calls journal_पढ़ो क्रम you */
+पूर्णांक journal_init(काष्ठा super_block *sb, स्थिर अक्षर *j_dev_name,
+		 पूर्णांक old_क्रमmat, अचिन्हित पूर्णांक commit_max_age)
+अणु
+	पूर्णांक num_cnodes = SB_ONDISK_JOURNAL_SIZE(sb) * 2;
+	काष्ठा buffer_head *bhjh;
+	काष्ठा reiserfs_super_block *rs;
+	काष्ठा reiserfs_journal_header *jh;
+	काष्ठा reiserfs_journal *journal;
+	काष्ठा reiserfs_journal_list *jl;
+	पूर्णांक ret;
 
-	journal = SB_JOURNAL(sb) = vzalloc(sizeof(struct reiserfs_journal));
-	if (!journal) {
+	journal = SB_JOURNAL(sb) = vzalloc(माप(काष्ठा reiserfs_journal));
+	अगर (!journal) अणु
 		reiserfs_warning(sb, "journal-1256",
 				 "unable to get memory for journal structure");
-		return 1;
-	}
-	INIT_LIST_HEAD(&journal->j_bitmap_nodes);
-	INIT_LIST_HEAD(&journal->j_prealloc_list);
+		वापस 1;
+	पूर्ण
+	INIT_LIST_HEAD(&journal->j_biपंचांगap_nodes);
+	INIT_LIST_HEAD(&journal->j_pपुनः_स्मृति_list);
 	INIT_LIST_HEAD(&journal->j_working_list);
 	INIT_LIST_HEAD(&journal->j_journal_list);
 	journal->j_persistent_trans = 0;
-	if (reiserfs_allocate_list_bitmaps(sb, journal->j_list_bitmap,
+	अगर (reiserfs_allocate_list_biपंचांगaps(sb, journal->j_list_biपंचांगap,
 					   reiserfs_bmap_count(sb)))
-		goto free_and_return;
+		जाओ मुक्त_and_वापस;
 
-	allocate_bitmap_nodes(sb);
+	allocate_biपंचांगap_nodes(sb);
 
-	/* reserved for journal area support */
-	SB_JOURNAL_1st_RESERVED_BLOCK(sb) = (old_format ?
+	/* reserved क्रम journal area support */
+	SB_JOURNAL_1st_RESERVED_BLOCK(sb) = (old_क्रमmat ?
 						 REISERFS_OLD_DISK_OFFSET_IN_BYTES
 						 / sb->s_blocksize +
 						 reiserfs_bmap_count(sb) +
@@ -2743,11 +2744,11 @@ int journal_init(struct super_block *sb, const char *j_dev_name,
 
 	/*
 	 * Sanity check to see is the standard journal fitting
-	 * within first bitmap (actual for small blocksizes)
+	 * within first biपंचांगap (actual क्रम small blocksizes)
 	 */
-	if (!SB_ONDISK_JOURNAL_DEVICE(sb) &&
+	अगर (!SB_ONDISK_JOURNAL_DEVICE(sb) &&
 	    (SB_JOURNAL_1st_RESERVED_BLOCK(sb) +
-	     SB_ONDISK_JOURNAL_SIZE(sb) > sb->s_blocksize * 8)) {
+	     SB_ONDISK_JOURNAL_SIZE(sb) > sb->s_blocksize * 8)) अणु
 		reiserfs_warning(sb, "journal-1393",
 				 "journal does not fit for area addressed "
 				 "by first of bitmap blocks. It starts at "
@@ -2755,41 +2756,41 @@ int journal_init(struct super_block *sb, const char *j_dev_name,
 				 SB_JOURNAL_1st_RESERVED_BLOCK(sb),
 				 SB_ONDISK_JOURNAL_SIZE(sb),
 				 sb->s_blocksize);
-		goto free_and_return;
-	}
+		जाओ मुक्त_and_वापस;
+	पूर्ण
 
-	if (journal_init_dev(sb, journal, j_dev_name) != 0) {
+	अगर (journal_init_dev(sb, journal, j_dev_name) != 0) अणु
 		reiserfs_warning(sb, "sh-462",
 				 "unable to initialize journal device");
-		goto free_and_return;
-	}
+		जाओ मुक्त_and_वापस;
+	पूर्ण
 
 	rs = SB_DISK_SUPER_BLOCK(sb);
 
-	/* read journal header */
-	bhjh = journal_bread(sb,
+	/* पढ़ो journal header */
+	bhjh = journal_bपढ़ो(sb,
 			     SB_ONDISK_JOURNAL_1st_BLOCK(sb) +
 			     SB_ONDISK_JOURNAL_SIZE(sb));
-	if (!bhjh) {
+	अगर (!bhjh) अणु
 		reiserfs_warning(sb, "sh-459",
 				 "unable to read journal header");
-		goto free_and_return;
-	}
-	jh = (struct reiserfs_journal_header *)(bhjh->b_data);
+		जाओ मुक्त_and_वापस;
+	पूर्ण
+	jh = (काष्ठा reiserfs_journal_header *)(bhjh->b_data);
 
 	/* make sure that journal matches to the super block */
-	if (is_reiserfs_jr(rs)
+	अगर (is_reiserfs_jr(rs)
 	    && (le32_to_cpu(jh->jh_journal.jp_journal_magic) !=
-		sb_jp_journal_magic(rs))) {
+		sb_jp_journal_magic(rs))) अणु
 		reiserfs_warning(sb, "sh-460",
 				 "journal header magic %x (device %pg) does "
 				 "not match to magic found in super block %x",
 				 jh->jh_journal.jp_journal_magic,
 				 journal->j_dev_bd,
 				 sb_jp_journal_magic(rs));
-		brelse(bhjh);
-		goto free_and_return;
-	}
+		brअन्यथा(bhjh);
+		जाओ मुक्त_and_वापस;
+	पूर्ण
 
 	journal->j_trans_max = le32_to_cpu(jh->jh_journal.jp_journal_trans_max);
 	journal->j_max_batch = le32_to_cpu(jh->jh_journal.jp_journal_max_batch);
@@ -2797,14 +2798,14 @@ int journal_init(struct super_block *sb, const char *j_dev_name,
 	    le32_to_cpu(jh->jh_journal.jp_journal_max_commit_age);
 	journal->j_max_trans_age = JOURNAL_MAX_TRANS_AGE;
 
-	if (check_advise_trans_params(sb, journal) != 0)
-	        goto free_and_return;
-	journal->j_default_max_commit_age = journal->j_max_commit_age;
+	अगर (check_advise_trans_params(sb, journal) != 0)
+	        जाओ मुक्त_and_वापस;
+	journal->j_शेष_max_commit_age = journal->j_max_commit_age;
 
-	if (commit_max_age != 0) {
+	अगर (commit_max_age != 0) अणु
 		journal->j_max_commit_age = commit_max_age;
 		journal->j_max_trans_age = commit_max_age;
-	}
+	पूर्ण
 
 	reiserfs_info(sb, "journal params: device %pg, size %u, "
 		      "journal first block %u, max trans len %u, max batch %u, "
@@ -2816,13 +2817,13 @@ int journal_init(struct super_block *sb, const char *j_dev_name,
 		      journal->j_max_batch,
 		      journal->j_max_commit_age, journal->j_max_trans_age);
 
-	brelse(bhjh);
+	brअन्यथा(bhjh);
 
-	journal->j_list_bitmap_index = 0;
+	journal->j_list_biपंचांगap_index = 0;
 	journal_list_init(sb);
 
-	memset(journal->j_list_hash_table, 0,
-	       JOURNAL_HASH_SIZE * sizeof(struct reiserfs_journal_cnode *));
+	स_रखो(journal->j_list_hash_table, 0,
+	       JOURNAL_HASH_SIZE * माप(काष्ठा reiserfs_journal_cnode *));
 
 	INIT_LIST_HEAD(&journal->j_dirty_buffers);
 	spin_lock_init(&journal->j_dirty_buffers_lock);
@@ -2833,10 +2834,10 @@ int journal_init(struct super_block *sb, const char *j_dev_name,
 	atomic_set(&journal->j_wcount, 0);
 	atomic_set(&journal->j_async_throttle, 0);
 	journal->j_bcount = 0;
-	journal->j_trans_start_time = 0;
-	journal->j_last = NULL;
-	journal->j_first = NULL;
-	init_waitqueue_head(&journal->j_join_wait);
+	journal->j_trans_start_समय = 0;
+	journal->j_last = शून्य;
+	journal->j_first = शून्य;
+	init_रुकोqueue_head(&journal->j_join_रुको);
 	mutex_init(&journal->j_mutex);
 	mutex_init(&journal->j_flush_mutex);
 
@@ -2844,269 +2845,269 @@ int journal_init(struct super_block *sb, const char *j_dev_name,
 	journal->j_mount_id = 10;
 	journal->j_state = 0;
 	atomic_set(&journal->j_jlock, 0);
-	journal->j_cnode_free_list = allocate_cnodes(num_cnodes);
-	journal->j_cnode_free_orig = journal->j_cnode_free_list;
-	journal->j_cnode_free = journal->j_cnode_free_list ? num_cnodes : 0;
+	journal->j_cnode_मुक्त_list = allocate_cnodes(num_cnodes);
+	journal->j_cnode_मुक्त_orig = journal->j_cnode_मुक्त_list;
+	journal->j_cnode_मुक्त = journal->j_cnode_मुक्त_list ? num_cnodes : 0;
 	journal->j_cnode_used = 0;
-	journal->j_must_wait = 0;
+	journal->j_must_रुको = 0;
 
-	if (journal->j_cnode_free == 0) {
+	अगर (journal->j_cnode_मुक्त == 0) अणु
 		reiserfs_warning(sb, "journal-2004", "Journal cnode memory "
 		                 "allocation failed (%ld bytes). Journal is "
 		                 "too large for available memory. Usually "
 		                 "this is due to a journal that is too large.",
-		                 sizeof (struct reiserfs_journal_cnode) * num_cnodes);
-        	goto free_and_return;
-	}
+		                 माप (काष्ठा reiserfs_journal_cnode) * num_cnodes);
+        	जाओ मुक्त_and_वापस;
+	पूर्ण
 
 	init_journal_hash(sb);
 	jl = journal->j_current_jl;
 
 	/*
-	 * get_list_bitmap() may call flush_commit_list() which
+	 * get_list_biपंचांगap() may call flush_commit_list() which
 	 * requires the lock. Calling flush_commit_list() shouldn't happen
 	 * this early but I like to be paranoid.
 	 */
-	reiserfs_write_lock(sb);
-	jl->j_list_bitmap = get_list_bitmap(sb, jl);
-	reiserfs_write_unlock(sb);
-	if (!jl->j_list_bitmap) {
+	reiserfs_ग_लिखो_lock(sb);
+	jl->j_list_biपंचांगap = get_list_biपंचांगap(sb, jl);
+	reiserfs_ग_लिखो_unlock(sb);
+	अगर (!jl->j_list_biपंचांगap) अणु
 		reiserfs_warning(sb, "journal-2005",
 				 "get_list_bitmap failed for journal list 0");
-		goto free_and_return;
-	}
+		जाओ मुक्त_and_वापस;
+	पूर्ण
 
-	ret = journal_read(sb);
-	if (ret < 0) {
+	ret = journal_पढ़ो(sb);
+	अगर (ret < 0) अणु
 		reiserfs_warning(sb, "reiserfs-2006",
 				 "Replay Failure, unable to mount");
-		goto free_and_return;
-	}
+		जाओ मुक्त_and_वापस;
+	पूर्ण
 
 	INIT_DELAYED_WORK(&journal->j_work, flush_async_commits);
 	journal->j_work_sb = sb;
-	return 0;
-free_and_return:
-	free_journal_ram(sb);
-	return 1;
-}
+	वापस 0;
+मुक्त_and_वापस:
+	मुक्त_journal_ram(sb);
+	वापस 1;
+पूर्ण
 
 /*
- * test for a polite end of the current transaction.  Used by file_write,
- * and should be used by delete to make sure they don't write more than
+ * test क्रम a polite end of the current transaction.  Used by file_ग_लिखो,
+ * and should be used by delete to make sure they करोn't ग_लिखो more than
  * can fit inside a single transaction
  */
-int journal_transaction_should_end(struct reiserfs_transaction_handle *th,
-				   int new_alloc)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(th->t_super);
-	time64_t now = ktime_get_seconds();
-	/* cannot restart while nested */
+पूर्णांक journal_transaction_should_end(काष्ठा reiserfs_transaction_handle *th,
+				   पूर्णांक new_alloc)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(th->t_super);
+	समय64_t now = kसमय_get_seconds();
+	/* cannot restart जबतक nested */
 	BUG_ON(!th->t_trans_id);
-	if (th->t_refcount > 1)
-		return 0;
-	if (journal->j_must_wait > 0 ||
+	अगर (th->t_refcount > 1)
+		वापस 0;
+	अगर (journal->j_must_रुको > 0 ||
 	    (journal->j_len_alloc + new_alloc) >= journal->j_max_batch ||
-	    atomic_read(&journal->j_jlock) ||
-	    (now - journal->j_trans_start_time) > journal->j_max_trans_age ||
-	    journal->j_cnode_free < (journal->j_trans_max * 3)) {
-		return 1;
-	}
+	    atomic_पढ़ो(&journal->j_jlock) ||
+	    (now - journal->j_trans_start_समय) > journal->j_max_trans_age ||
+	    journal->j_cnode_मुक्त < (journal->j_trans_max * 3)) अणु
+		वापस 1;
+	पूर्ण
 
 	journal->j_len_alloc += new_alloc;
 	th->t_blocks_allocated += new_alloc ;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* this must be called inside a transaction */
-void reiserfs_block_writes(struct reiserfs_transaction_handle *th)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(th->t_super);
+व्योम reiserfs_block_ग_लिखोs(काष्ठा reiserfs_transaction_handle *th)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(th->t_super);
 	BUG_ON(!th->t_trans_id);
-	journal->j_must_wait = 1;
+	journal->j_must_रुको = 1;
 	set_bit(J_WRITERS_BLOCKED, &journal->j_state);
-	return;
-}
+	वापस;
+पूर्ण
 
 /* this must be called without a transaction started */
-void reiserfs_allow_writes(struct super_block *s)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(s);
+व्योम reiserfs_allow_ग_लिखोs(काष्ठा super_block *s)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(s);
 	clear_bit(J_WRITERS_BLOCKED, &journal->j_state);
-	wake_up(&journal->j_join_wait);
-}
+	wake_up(&journal->j_join_रुको);
+पूर्ण
 
 /* this must be called without a transaction started */
-void reiserfs_wait_on_write_block(struct super_block *s)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(s);
-	wait_event(journal->j_join_wait,
+व्योम reiserfs_रुको_on_ग_लिखो_block(काष्ठा super_block *s)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(s);
+	रुको_event(journal->j_join_रुको,
 		   !test_bit(J_WRITERS_BLOCKED, &journal->j_state));
-}
+पूर्ण
 
-static void queue_log_writer(struct super_block *s)
-{
-	wait_queue_entry_t wait;
-	struct reiserfs_journal *journal = SB_JOURNAL(s);
+अटल व्योम queue_log_ग_लिखोr(काष्ठा super_block *s)
+अणु
+	रुको_queue_entry_t रुको;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(s);
 	set_bit(J_WRITERS_QUEUED, &journal->j_state);
 
 	/*
-	 * we don't want to use wait_event here because
-	 * we only want to wait once.
+	 * we करोn't want to use रुको_event here because
+	 * we only want to रुको once.
 	 */
-	init_waitqueue_entry(&wait, current);
-	add_wait_queue(&journal->j_join_wait, &wait);
+	init_रुकोqueue_entry(&रुको, current);
+	add_रुको_queue(&journal->j_join_रुको, &रुको);
 	set_current_state(TASK_UNINTERRUPTIBLE);
-	if (test_bit(J_WRITERS_QUEUED, &journal->j_state)) {
-		int depth = reiserfs_write_unlock_nested(s);
+	अगर (test_bit(J_WRITERS_QUEUED, &journal->j_state)) अणु
+		पूर्णांक depth = reiserfs_ग_लिखो_unlock_nested(s);
 		schedule();
-		reiserfs_write_lock_nested(s, depth);
-	}
+		reiserfs_ग_लिखो_lock_nested(s, depth);
+	पूर्ण
 	__set_current_state(TASK_RUNNING);
-	remove_wait_queue(&journal->j_join_wait, &wait);
-}
+	हटाओ_रुको_queue(&journal->j_join_रुको, &रुको);
+पूर्ण
 
-static void wake_queued_writers(struct super_block *s)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(s);
-	if (test_and_clear_bit(J_WRITERS_QUEUED, &journal->j_state))
-		wake_up(&journal->j_join_wait);
-}
+अटल व्योम wake_queued_ग_लिखोrs(काष्ठा super_block *s)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(s);
+	अगर (test_and_clear_bit(J_WRITERS_QUEUED, &journal->j_state))
+		wake_up(&journal->j_join_रुको);
+पूर्ण
 
-static void let_transaction_grow(struct super_block *sb, unsigned int trans_id)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	unsigned long bcount = journal->j_bcount;
-	while (1) {
-		int depth;
+अटल व्योम let_transaction_grow(काष्ठा super_block *sb, अचिन्हित पूर्णांक trans_id)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	अचिन्हित दीर्घ bcount = journal->j_bcount;
+	जबतक (1) अणु
+		पूर्णांक depth;
 
-		depth = reiserfs_write_unlock_nested(sb);
-		schedule_timeout_uninterruptible(1);
-		reiserfs_write_lock_nested(sb, depth);
+		depth = reiserfs_ग_लिखो_unlock_nested(sb);
+		schedule_समयout_unपूर्णांकerruptible(1);
+		reiserfs_ग_लिखो_lock_nested(sb, depth);
 
 		journal->j_current_jl->j_state |= LIST_COMMIT_PENDING;
-		while ((atomic_read(&journal->j_wcount) > 0 ||
-			atomic_read(&journal->j_jlock)) &&
-		       journal->j_trans_id == trans_id) {
-			queue_log_writer(sb);
-		}
-		if (journal->j_trans_id != trans_id)
-			break;
-		if (bcount == journal->j_bcount)
-			break;
+		जबतक ((atomic_पढ़ो(&journal->j_wcount) > 0 ||
+			atomic_पढ़ो(&journal->j_jlock)) &&
+		       journal->j_trans_id == trans_id) अणु
+			queue_log_ग_लिखोr(sb);
+		पूर्ण
+		अगर (journal->j_trans_id != trans_id)
+			अवरोध;
+		अगर (bcount == journal->j_bcount)
+			अवरोध;
 		bcount = journal->j_bcount;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * join == true if you must join an existing transaction.
- * join == false if you can deal with waiting for others to finish
+ * join == true अगर you must join an existing transaction.
+ * join == false अगर you can deal with रुकोing क्रम others to finish
  *
  * this will block until the transaction is joinable.  send the number of
  * blocks you expect to use in nblocks.
 */
-static int do_journal_begin_r(struct reiserfs_transaction_handle *th,
-			      struct super_block *sb, unsigned long nblocks,
-			      int join)
-{
-	time64_t now = ktime_get_seconds();
-	unsigned int old_trans_id;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	struct reiserfs_transaction_handle myth;
-	int sched_count = 0;
-	int retval;
-	int depth;
+अटल पूर्णांक करो_journal_begin_r(काष्ठा reiserfs_transaction_handle *th,
+			      काष्ठा super_block *sb, अचिन्हित दीर्घ nblocks,
+			      पूर्णांक join)
+अणु
+	समय64_t now = kसमय_get_seconds();
+	अचिन्हित पूर्णांक old_trans_id;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	काष्ठा reiserfs_transaction_handle myth;
+	पूर्णांक sched_count = 0;
+	पूर्णांक retval;
+	पूर्णांक depth;
 
 	reiserfs_check_lock_depth(sb, "journal_begin");
 	BUG_ON(nblocks > journal->j_trans_max);
 
 	PROC_INFO_INC(sb, journal.journal_being);
-	/* set here for journal_join */
+	/* set here क्रम journal_join */
 	th->t_refcount = 1;
 	th->t_super = sb;
 
 relock:
 	lock_journal(sb);
-	if (join != JBEGIN_ABORT && reiserfs_is_journal_aborted(journal)) {
+	अगर (join != JBEGIN_ABORT && reiserfs_is_journal_पातed(journal)) अणु
 		unlock_journal(sb);
-		retval = journal->j_errno;
-		goto out_fail;
-	}
+		retval = journal->j_त्रुटि_सं;
+		जाओ out_fail;
+	पूर्ण
 	journal->j_bcount++;
 
-	if (test_bit(J_WRITERS_BLOCKED, &journal->j_state)) {
+	अगर (test_bit(J_WRITERS_BLOCKED, &journal->j_state)) अणु
 		unlock_journal(sb);
-		depth = reiserfs_write_unlock_nested(sb);
-		reiserfs_wait_on_write_block(sb);
-		reiserfs_write_lock_nested(sb, depth);
-		PROC_INFO_INC(sb, journal.journal_relock_writers);
-		goto relock;
-	}
-	now = ktime_get_seconds();
+		depth = reiserfs_ग_लिखो_unlock_nested(sb);
+		reiserfs_रुको_on_ग_लिखो_block(sb);
+		reiserfs_ग_लिखो_lock_nested(sb, depth);
+		PROC_INFO_INC(sb, journal.journal_relock_ग_लिखोrs);
+		जाओ relock;
+	पूर्ण
+	now = kसमय_get_seconds();
 
 	/*
-	 * if there is no room in the journal OR
-	 * if this transaction is too old, and we weren't called joinable,
-	 * wait for it to finish before beginning we don't sleep if there
-	 * aren't other writers
+	 * अगर there is no room in the journal OR
+	 * अगर this transaction is too old, and we weren't called joinable,
+	 * रुको क्रम it to finish beक्रमe beginning we करोn't sleep अगर there
+	 * aren't other ग_लिखोrs
 	 */
 
-	if ((!join && journal->j_must_wait > 0) ||
+	अगर ((!join && journal->j_must_रुको > 0) ||
 	    (!join
 	     && (journal->j_len_alloc + nblocks + 2) >= journal->j_max_batch)
-	    || (!join && atomic_read(&journal->j_wcount) > 0
-		&& journal->j_trans_start_time > 0
-		&& (now - journal->j_trans_start_time) >
+	    || (!join && atomic_पढ़ो(&journal->j_wcount) > 0
+		&& journal->j_trans_start_समय > 0
+		&& (now - journal->j_trans_start_समय) >
 		journal->j_max_trans_age) || (!join
-					      && atomic_read(&journal->j_jlock))
-	    || (!join && journal->j_cnode_free < (journal->j_trans_max * 3))) {
+					      && atomic_पढ़ो(&journal->j_jlock))
+	    || (!join && journal->j_cnode_मुक्त < (journal->j_trans_max * 3))) अणु
 
 		old_trans_id = journal->j_trans_id;
 		/* allow others to finish this transaction */
 		unlock_journal(sb);
 
-		if (!join && (journal->j_len_alloc + nblocks + 2) >=
+		अगर (!join && (journal->j_len_alloc + nblocks + 2) >=
 		    journal->j_max_batch &&
 		    ((journal->j_len + nblocks + 2) * 100) <
-		    (journal->j_len_alloc * 75)) {
-			if (atomic_read(&journal->j_wcount) > 10) {
+		    (journal->j_len_alloc * 75)) अणु
+			अगर (atomic_पढ़ो(&journal->j_wcount) > 10) अणु
 				sched_count++;
-				queue_log_writer(sb);
-				goto relock;
-			}
-		}
+				queue_log_ग_लिखोr(sb);
+				जाओ relock;
+			पूर्ण
+		पूर्ण
 		/*
-		 * don't mess with joining the transaction if all we
-		 * have to do is wait for someone else to do a commit
+		 * करोn't mess with joining the transaction अगर all we
+		 * have to करो is रुको क्रम someone अन्यथा to करो a commit
 		 */
-		if (atomic_read(&journal->j_jlock)) {
-			while (journal->j_trans_id == old_trans_id &&
-			       atomic_read(&journal->j_jlock)) {
-				queue_log_writer(sb);
-			}
-			goto relock;
-		}
+		अगर (atomic_पढ़ो(&journal->j_jlock)) अणु
+			जबतक (journal->j_trans_id == old_trans_id &&
+			       atomic_पढ़ो(&journal->j_jlock)) अणु
+				queue_log_ग_लिखोr(sb);
+			पूर्ण
+			जाओ relock;
+		पूर्ण
 		retval = journal_join(&myth, sb);
-		if (retval)
-			goto out_fail;
+		अगर (retval)
+			जाओ out_fail;
 
-		/* someone might have ended the transaction while we joined */
-		if (old_trans_id != journal->j_trans_id) {
-			retval = do_journal_end(&myth, 0);
-		} else {
-			retval = do_journal_end(&myth, COMMIT_NOW);
-		}
+		/* someone might have ended the transaction जबतक we joined */
+		अगर (old_trans_id != journal->j_trans_id) अणु
+			retval = करो_journal_end(&myth, 0);
+		पूर्ण अन्यथा अणु
+			retval = करो_journal_end(&myth, COMMIT_NOW);
+		पूर्ण
 
-		if (retval)
-			goto out_fail;
+		अगर (retval)
+			जाओ out_fail;
 
 		PROC_INFO_INC(sb, journal.journal_relock_wcount);
-		goto relock;
-	}
-	/* we are the first writer, set trans_id */
-	if (journal->j_trans_start_time == 0) {
-		journal->j_trans_start_time = ktime_get_seconds();
-	}
+		जाओ relock;
+	पूर्ण
+	/* we are the first ग_लिखोr, set trans_id */
+	अगर (journal->j_trans_start_समय == 0) अणु
+		journal->j_trans_start_समय = kसमय_get_seconds();
+	पूर्ण
 	atomic_inc(&journal->j_wcount);
 	journal->j_len_alloc += nblocks;
 	th->t_blocks_logged = 0;
@@ -3114,669 +3115,669 @@ relock:
 	th->t_trans_id = journal->j_trans_id;
 	unlock_journal(sb);
 	INIT_LIST_HEAD(&th->t_list);
-	return 0;
+	वापस 0;
 
 out_fail:
-	memset(th, 0, sizeof(*th));
+	स_रखो(th, 0, माप(*th));
 	/*
 	 * Re-set th->t_super, so we can properly keep track of how many
-	 * persistent transactions there are. We need to do this so if this
-	 * call is part of a failed restart_transaction, we can free it later
+	 * persistent transactions there are. We need to करो this so अगर this
+	 * call is part of a failed restart_transaction, we can मुक्त it later
 	 */
 	th->t_super = sb;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-struct reiserfs_transaction_handle *reiserfs_persistent_transaction(struct
+काष्ठा reiserfs_transaction_handle *reiserfs_persistent_transaction(काष्ठा
 								    super_block
 								    *s,
-								    int nblocks)
-{
-	int ret;
-	struct reiserfs_transaction_handle *th;
+								    पूर्णांक nblocks)
+अणु
+	पूर्णांक ret;
+	काष्ठा reiserfs_transaction_handle *th;
 
 	/*
-	 * if we're nesting into an existing transaction.  It will be
+	 * अगर we're nesting पूर्णांकo an existing transaction.  It will be
 	 * persistent on its own
 	 */
-	if (reiserfs_transaction_running(s)) {
+	अगर (reiserfs_transaction_running(s)) अणु
 		th = current->journal_info;
 		th->t_refcount++;
 		BUG_ON(th->t_refcount < 2);
 
-		return th;
-	}
-	th = kmalloc(sizeof(struct reiserfs_transaction_handle), GFP_NOFS);
-	if (!th)
-		return NULL;
+		वापस th;
+	पूर्ण
+	th = kदो_स्मृति(माप(काष्ठा reiserfs_transaction_handle), GFP_NOFS);
+	अगर (!th)
+		वापस शून्य;
 	ret = journal_begin(th, s, nblocks);
-	if (ret) {
-		kfree(th);
-		return NULL;
-	}
+	अगर (ret) अणु
+		kमुक्त(th);
+		वापस शून्य;
+	पूर्ण
 
 	SB_JOURNAL(s)->j_persistent_trans++;
-	return th;
-}
+	वापस th;
+पूर्ण
 
-int reiserfs_end_persistent_transaction(struct reiserfs_transaction_handle *th)
-{
-	struct super_block *s = th->t_super;
-	int ret = 0;
-	if (th->t_trans_id)
+पूर्णांक reiserfs_end_persistent_transaction(काष्ठा reiserfs_transaction_handle *th)
+अणु
+	काष्ठा super_block *s = th->t_super;
+	पूर्णांक ret = 0;
+	अगर (th->t_trans_id)
 		ret = journal_end(th);
-	else
+	अन्यथा
 		ret = -EIO;
-	if (th->t_refcount == 0) {
+	अगर (th->t_refcount == 0) अणु
 		SB_JOURNAL(s)->j_persistent_trans--;
-		kfree(th);
-	}
-	return ret;
-}
+		kमुक्त(th);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int journal_join(struct reiserfs_transaction_handle *th,
-			struct super_block *sb)
-{
-	struct reiserfs_transaction_handle *cur_th = current->journal_info;
+अटल पूर्णांक journal_join(काष्ठा reiserfs_transaction_handle *th,
+			काष्ठा super_block *sb)
+अणु
+	काष्ठा reiserfs_transaction_handle *cur_th = current->journal_info;
 
 	/*
-	 * this keeps do_journal_end from NULLing out the
-	 * current->journal_info pointer
+	 * this keeps करो_journal_end from शून्यing out the
+	 * current->journal_info poपूर्णांकer
 	 */
 	th->t_handle_save = cur_th;
 	BUG_ON(cur_th && cur_th->t_refcount > 1);
-	return do_journal_begin_r(th, sb, 1, JBEGIN_JOIN);
-}
+	वापस करो_journal_begin_r(th, sb, 1, JBEGIN_JOIN);
+पूर्ण
 
-int journal_join_abort(struct reiserfs_transaction_handle *th,
-		       struct super_block *sb)
-{
-	struct reiserfs_transaction_handle *cur_th = current->journal_info;
+पूर्णांक journal_join_पात(काष्ठा reiserfs_transaction_handle *th,
+		       काष्ठा super_block *sb)
+अणु
+	काष्ठा reiserfs_transaction_handle *cur_th = current->journal_info;
 
 	/*
-	 * this keeps do_journal_end from NULLing out the
-	 * current->journal_info pointer
+	 * this keeps करो_journal_end from शून्यing out the
+	 * current->journal_info poपूर्णांकer
 	 */
 	th->t_handle_save = cur_th;
 	BUG_ON(cur_th && cur_th->t_refcount > 1);
-	return do_journal_begin_r(th, sb, 1, JBEGIN_ABORT);
-}
+	वापस करो_journal_begin_r(th, sb, 1, JBEGIN_ABORT);
+पूर्ण
 
-int journal_begin(struct reiserfs_transaction_handle *th,
-		  struct super_block *sb, unsigned long nblocks)
-{
-	struct reiserfs_transaction_handle *cur_th = current->journal_info;
-	int ret;
+पूर्णांक journal_begin(काष्ठा reiserfs_transaction_handle *th,
+		  काष्ठा super_block *sb, अचिन्हित दीर्घ nblocks)
+अणु
+	काष्ठा reiserfs_transaction_handle *cur_th = current->journal_info;
+	पूर्णांक ret;
 
-	th->t_handle_save = NULL;
-	if (cur_th) {
-		/* we are nesting into the current transaction */
-		if (cur_th->t_super == sb) {
+	th->t_handle_save = शून्य;
+	अगर (cur_th) अणु
+		/* we are nesting पूर्णांकo the current transaction */
+		अगर (cur_th->t_super == sb) अणु
 			BUG_ON(!cur_th->t_refcount);
 			cur_th->t_refcount++;
-			memcpy(th, cur_th, sizeof(*th));
-			if (th->t_refcount <= 1)
+			स_नकल(th, cur_th, माप(*th));
+			अगर (th->t_refcount <= 1)
 				reiserfs_warning(sb, "reiserfs-2005",
 						 "BAD: refcount <= 1, but "
 						 "journal_info != 0");
-			return 0;
-		} else {
+			वापस 0;
+		पूर्ण अन्यथा अणु
 			/*
-			 * we've ended up with a handle from a different
-			 * filesystem.  save it and restore on journal_end.
+			 * we've ended up with a handle from a dअगरferent
+			 * fileप्रणाली.  save it and restore on journal_end.
 			 * This should never really happen...
 			 */
 			reiserfs_warning(sb, "clm-2100",
 					 "nesting info a different FS");
 			th->t_handle_save = current->journal_info;
 			current->journal_info = th;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		current->journal_info = th;
-	}
-	ret = do_journal_begin_r(th, sb, nblocks, JBEGIN_REG);
+	पूर्ण
+	ret = करो_journal_begin_r(th, sb, nblocks, JBEGIN_REG);
 	BUG_ON(current->journal_info != th);
 
 	/*
-	 * I guess this boils down to being the reciprocal of clm-2100 above.
-	 * If do_journal_begin_r fails, we need to put it back, since
-	 * journal_end won't be called to do it. */
-	if (ret)
+	 * I guess this boils करोwn to being the reciprocal of clm-2100 above.
+	 * If करो_journal_begin_r fails, we need to put it back, since
+	 * journal_end won't be called to करो it. */
+	अगर (ret)
 		current->journal_info = th->t_handle_save;
-	else
+	अन्यथा
 		BUG_ON(!th->t_refcount);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * puts bh into the current transaction.  If it was already there, reorders
- * removes the old pointers from the hash, and puts new ones in (to make
+ * माला_दो bh पूर्णांकo the current transaction.  If it was alपढ़ोy there, reorders
+ * हटाओs the old poपूर्णांकers from the hash, and माला_दो new ones in (to make
  * sure replay happen in the right order).
  *
- * if it was dirty, cleans and files onto the clean list.  I can't let it
+ * अगर it was dirty, cleans and files onto the clean list.  I can't let it
  * be dirty again until the transaction is committed.
  *
- * if j_len, is bigger than j_len_alloc, it pushes j_len_alloc to 10 + j_len.
+ * अगर j_len, is bigger than j_len_alloc, it pushes j_len_alloc to 10 + j_len.
  */
-int journal_mark_dirty(struct reiserfs_transaction_handle *th,
-		       struct buffer_head *bh)
-{
-	struct super_block *sb = th->t_super;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	struct reiserfs_journal_cnode *cn = NULL;
-	int count_already_incd = 0;
-	int prepared = 0;
+पूर्णांक journal_mark_dirty(काष्ठा reiserfs_transaction_handle *th,
+		       काष्ठा buffer_head *bh)
+अणु
+	काष्ठा super_block *sb = th->t_super;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	काष्ठा reiserfs_journal_cnode *cn = शून्य;
+	पूर्णांक count_alपढ़ोy_incd = 0;
+	पूर्णांक prepared = 0;
 	BUG_ON(!th->t_trans_id);
 
 	PROC_INFO_INC(sb, journal.mark_dirty);
-	if (th->t_trans_id != journal->j_trans_id) {
+	अगर (th->t_trans_id != journal->j_trans_id) अणु
 		reiserfs_panic(th->t_super, "journal-1577",
 			       "handle trans id %ld != current trans id %ld",
 			       th->t_trans_id, journal->j_trans_id);
-	}
+	पूर्ण
 
 	prepared = test_clear_buffer_journal_prepared(bh);
 	clear_buffer_journal_restore_dirty(bh);
-	/* already in this transaction, we are done */
-	if (buffer_journaled(bh)) {
-		PROC_INFO_INC(sb, journal.mark_dirty_already);
-		return 0;
-	}
+	/* alपढ़ोy in this transaction, we are करोne */
+	अगर (buffer_journaled(bh)) अणु
+		PROC_INFO_INC(sb, journal.mark_dirty_alपढ़ोy);
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * this must be turned into a panic instead of a warning.  We can't
+	 * this must be turned पूर्णांकo a panic instead of a warning.  We can't
 	 * allow a dirty or journal_dirty or locked buffer to be logged, as
 	 * some changes could get to disk too early.  NOT GOOD.
 	 */
-	if (!prepared || buffer_dirty(bh)) {
+	अगर (!prepared || buffer_dirty(bh)) अणु
 		reiserfs_warning(sb, "journal-1777",
 				 "buffer %llu bad state "
 				 "%cPREPARED %cLOCKED %cDIRTY %cJDIRTY_WAIT",
-				 (unsigned long long)bh->b_blocknr,
+				 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
 				 prepared ? ' ' : '!',
 				 buffer_locked(bh) ? ' ' : '!',
 				 buffer_dirty(bh) ? ' ' : '!',
 				 buffer_journal_dirty(bh) ? ' ' : '!');
-	}
+	पूर्ण
 
-	if (atomic_read(&journal->j_wcount) <= 0) {
+	अगर (atomic_पढ़ो(&journal->j_wcount) <= 0) अणु
 		reiserfs_warning(sb, "journal-1409",
 				 "returning because j_wcount was %d",
-				 atomic_read(&journal->j_wcount));
-		return 1;
-	}
+				 atomic_पढ़ो(&journal->j_wcount));
+		वापस 1;
+	पूर्ण
 	/*
 	 * this error means I've screwed up, and we've overflowed
-	 * the transaction.  Nothing can be done here, except make the
-	 * FS readonly or panic.
+	 * the transaction.  Nothing can be करोne here, except make the
+	 * FS पढ़ोonly or panic.
 	 */
-	if (journal->j_len >= journal->j_trans_max) {
+	अगर (journal->j_len >= journal->j_trans_max) अणु
 		reiserfs_panic(th->t_super, "journal-1413",
 			       "j_len (%lu) is too big",
 			       journal->j_len);
-	}
+	पूर्ण
 
-	if (buffer_journal_dirty(bh)) {
-		count_already_incd = 1;
+	अगर (buffer_journal_dirty(bh)) अणु
+		count_alपढ़ोy_incd = 1;
 		PROC_INFO_INC(sb, journal.mark_dirty_notjournal);
 		clear_buffer_journal_dirty(bh);
-	}
+	पूर्ण
 
-	if (journal->j_len > journal->j_len_alloc) {
+	अगर (journal->j_len > journal->j_len_alloc) अणु
 		journal->j_len_alloc = journal->j_len + JOURNAL_PER_BALANCE_CNT;
-	}
+	पूर्ण
 
 	set_buffer_journaled(bh);
 
 	/* now put this guy on the end */
-	if (!cn) {
+	अगर (!cn) अणु
 		cn = get_cnode(sb);
-		if (!cn) {
+		अगर (!cn) अणु
 			reiserfs_panic(sb, "journal-4", "get_cnode failed!");
-		}
+		पूर्ण
 
-		if (th->t_blocks_logged == th->t_blocks_allocated) {
+		अगर (th->t_blocks_logged == th->t_blocks_allocated) अणु
 			th->t_blocks_allocated += JOURNAL_PER_BALANCE_CNT;
 			journal->j_len_alloc += JOURNAL_PER_BALANCE_CNT;
-		}
+		पूर्ण
 		th->t_blocks_logged++;
 		journal->j_len++;
 
 		cn->bh = bh;
 		cn->blocknr = bh->b_blocknr;
 		cn->sb = sb;
-		cn->jlist = NULL;
+		cn->jlist = शून्य;
 		insert_journal_hash(journal->j_hash_table, cn);
-		if (!count_already_incd) {
+		अगर (!count_alपढ़ोy_incd) अणु
 			get_bh(bh);
-		}
-	}
-	cn->next = NULL;
+		पूर्ण
+	पूर्ण
+	cn->next = शून्य;
 	cn->prev = journal->j_last;
 	cn->bh = bh;
-	if (journal->j_last) {
+	अगर (journal->j_last) अणु
 		journal->j_last->next = cn;
 		journal->j_last = cn;
-	} else {
+	पूर्ण अन्यथा अणु
 		journal->j_first = cn;
 		journal->j_last = cn;
-	}
+	पूर्ण
 	reiserfs_schedule_old_flush(sb);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int journal_end(struct reiserfs_transaction_handle *th)
-{
-	struct super_block *sb = th->t_super;
-	if (!current->journal_info && th->t_refcount > 1)
+पूर्णांक journal_end(काष्ठा reiserfs_transaction_handle *th)
+अणु
+	काष्ठा super_block *sb = th->t_super;
+	अगर (!current->journal_info && th->t_refcount > 1)
 		reiserfs_warning(sb, "REISER-NESTING",
 				 "th NULL, refcount %d", th->t_refcount);
 
-	if (!th->t_trans_id) {
+	अगर (!th->t_trans_id) अणु
 		WARN_ON(1);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	th->t_refcount--;
-	if (th->t_refcount > 0) {
-		struct reiserfs_transaction_handle *cur_th =
+	अगर (th->t_refcount > 0) अणु
+		काष्ठा reiserfs_transaction_handle *cur_th =
 		    current->journal_info;
 
 		/*
-		 * we aren't allowed to close a nested transaction on a
-		 * different filesystem from the one in the task struct
+		 * we aren't allowed to बंद a nested transaction on a
+		 * dअगरferent fileप्रणाली from the one in the task काष्ठा
 		 */
 		BUG_ON(cur_th->t_super != th->t_super);
 
-		if (th != cur_th) {
-			memcpy(current->journal_info, th, sizeof(*th));
+		अगर (th != cur_th) अणु
+			स_नकल(current->journal_info, th, माप(*th));
 			th->t_trans_id = 0;
-		}
-		return 0;
-	} else {
-		return do_journal_end(th, 0);
-	}
-}
+		पूर्ण
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		वापस करो_journal_end(th, 0);
+	पूर्ण
+पूर्ण
 
 /*
- * removes from the current transaction, relsing and descrementing any counters.
- * also files the removed buffer directly onto the clean list
+ * हटाओs from the current transaction, relsing and descrementing any counters.
+ * also files the हटाओd buffer directly onto the clean list
  *
- * called by journal_mark_freed when a block has been deleted
+ * called by journal_mark_मुक्तd when a block has been deleted
  *
- * returns 1 if it cleaned and relsed the buffer. 0 otherwise
+ * वापसs 1 अगर it cleaned and rअन्यथाd the buffer. 0 otherwise
  */
-static int remove_from_transaction(struct super_block *sb,
-				   b_blocknr_t blocknr, int already_cleaned)
-{
-	struct buffer_head *bh;
-	struct reiserfs_journal_cnode *cn;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	int ret = 0;
+अटल पूर्णांक हटाओ_from_transaction(काष्ठा super_block *sb,
+				   b_blocknr_t blocknr, पूर्णांक alपढ़ोy_cleaned)
+अणु
+	काष्ठा buffer_head *bh;
+	काष्ठा reiserfs_journal_cnode *cn;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	पूर्णांक ret = 0;
 
 	cn = get_journal_hash_dev(sb, journal->j_hash_table, blocknr);
-	if (!cn || !cn->bh) {
-		return ret;
-	}
+	अगर (!cn || !cn->bh) अणु
+		वापस ret;
+	पूर्ण
 	bh = cn->bh;
-	if (cn->prev) {
+	अगर (cn->prev) अणु
 		cn->prev->next = cn->next;
-	}
-	if (cn->next) {
+	पूर्ण
+	अगर (cn->next) अणु
 		cn->next->prev = cn->prev;
-	}
-	if (cn == journal->j_first) {
+	पूर्ण
+	अगर (cn == journal->j_first) अणु
 		journal->j_first = cn->next;
-	}
-	if (cn == journal->j_last) {
+	पूर्ण
+	अगर (cn == journal->j_last) अणु
 		journal->j_last = cn->prev;
-	}
-	remove_journal_hash(sb, journal->j_hash_table, NULL,
+	पूर्ण
+	हटाओ_journal_hash(sb, journal->j_hash_table, शून्य,
 			    bh->b_blocknr, 0);
-	clear_buffer_journaled(bh);	/* don't log this one */
+	clear_buffer_journaled(bh);	/* करोn't log this one */
 
-	if (!already_cleaned) {
+	अगर (!alपढ़ोy_cleaned) अणु
 		clear_buffer_journal_dirty(bh);
 		clear_buffer_dirty(bh);
 		clear_buffer_journal_test(bh);
 		put_bh(bh);
-		if (atomic_read(&bh->b_count) < 0) {
+		अगर (atomic_पढ़ो(&bh->b_count) < 0) अणु
 			reiserfs_warning(sb, "journal-1752",
 					 "b_count < 0");
-		}
+		पूर्ण
 		ret = 1;
-	}
+	पूर्ण
 	journal->j_len--;
 	journal->j_len_alloc--;
-	free_cnode(sb, cn);
-	return ret;
-}
+	मुक्त_cnode(sb, cn);
+	वापस ret;
+पूर्ण
 
 /*
- * for any cnode in a journal list, it can only be dirtied of all the
+ * क्रम any cnode in a journal list, it can only be dirtied of all the
  * transactions that include it are committed to disk.
- * this checks through each transaction, and returns 1 if you are allowed
- * to dirty, and 0 if you aren't
+ * this checks through each transaction, and वापसs 1 अगर you are allowed
+ * to dirty, and 0 अगर you aren't
  *
  * it is called by dirty_journal_list, which is called after
- * flush_commit_list has gotten all the log blocks for a given
+ * flush_commit_list has gotten all the log blocks क्रम a given
  * transaction on disk
  *
  */
-static int can_dirty(struct reiserfs_journal_cnode *cn)
-{
-	struct super_block *sb = cn->sb;
+अटल पूर्णांक can_dirty(काष्ठा reiserfs_journal_cnode *cn)
+अणु
+	काष्ठा super_block *sb = cn->sb;
 	b_blocknr_t blocknr = cn->blocknr;
-	struct reiserfs_journal_cnode *cur = cn->hprev;
-	int can_dirty = 1;
+	काष्ठा reiserfs_journal_cnode *cur = cn->hprev;
+	पूर्णांक can_dirty = 1;
 
 	/*
 	 * first test hprev.  These are all newer than cn, so any node here
 	 * with the same block number and dev means this node can't be sent
 	 * to disk right now.
 	 */
-	while (cur && can_dirty) {
-		if (cur->jlist && cur->bh && cur->blocknr && cur->sb == sb &&
-		    cur->blocknr == blocknr) {
+	जबतक (cur && can_dirty) अणु
+		अगर (cur->jlist && cur->bh && cur->blocknr && cur->sb == sb &&
+		    cur->blocknr == blocknr) अणु
 			can_dirty = 0;
-		}
+		पूर्ण
 		cur = cur->hprev;
-	}
+	पूर्ण
 	/*
-	 * then test hnext.  These are all older than cn.  As long as they
-	 * are committed to the log, it is safe to write cn to disk
+	 * then test hnext.  These are all older than cn.  As दीर्घ as they
+	 * are committed to the log, it is safe to ग_लिखो cn to disk
 	 */
 	cur = cn->hnext;
-	while (cur && can_dirty) {
-		if (cur->jlist && cur->jlist->j_len > 0 &&
-		    atomic_read(&cur->jlist->j_commit_left) > 0 && cur->bh &&
-		    cur->blocknr && cur->sb == sb && cur->blocknr == blocknr) {
+	जबतक (cur && can_dirty) अणु
+		अगर (cur->jlist && cur->jlist->j_len > 0 &&
+		    atomic_पढ़ो(&cur->jlist->j_commit_left) > 0 && cur->bh &&
+		    cur->blocknr && cur->sb == sb && cur->blocknr == blocknr) अणु
 			can_dirty = 0;
-		}
+		पूर्ण
 		cur = cur->hnext;
-	}
-	return can_dirty;
-}
+	पूर्ण
+	वापस can_dirty;
+पूर्ण
 
 /*
- * syncs the commit blocks, but does not force the real buffers to disk
- * will wait until the current transaction is done/committed before returning
+ * syncs the commit blocks, but करोes not क्रमce the real buffers to disk
+ * will रुको until the current transaction is करोne/committed beक्रमe वापसing
  */
-int journal_end_sync(struct reiserfs_transaction_handle *th)
-{
-	struct super_block *sb = th->t_super;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
+पूर्णांक journal_end_sync(काष्ठा reiserfs_transaction_handle *th)
+अणु
+	काष्ठा super_block *sb = th->t_super;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
 
 	BUG_ON(!th->t_trans_id);
-	/* you can sync while nested, very, very bad */
+	/* you can sync जबतक nested, very, very bad */
 	BUG_ON(th->t_refcount > 1);
-	if (journal->j_len == 0) {
-		reiserfs_prepare_for_journal(sb, SB_BUFFER_WITH_SB(sb),
+	अगर (journal->j_len == 0) अणु
+		reiserfs_prepare_क्रम_journal(sb, SB_BUFFER_WITH_SB(sb),
 					     1);
 		journal_mark_dirty(th, SB_BUFFER_WITH_SB(sb));
-	}
-	return do_journal_end(th, COMMIT_NOW | WAIT);
-}
+	पूर्ण
+	वापस करो_journal_end(th, COMMIT_NOW | WAIT);
+पूर्ण
 
-/* writeback the pending async commits to disk */
-static void flush_async_commits(struct work_struct *work)
-{
-	struct reiserfs_journal *journal =
-		container_of(work, struct reiserfs_journal, j_work.work);
-	struct super_block *sb = journal->j_work_sb;
-	struct reiserfs_journal_list *jl;
-	struct list_head *entry;
+/* ग_लिखोback the pending async commits to disk */
+अटल व्योम flush_async_commits(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा reiserfs_journal *journal =
+		container_of(work, काष्ठा reiserfs_journal, j_work.work);
+	काष्ठा super_block *sb = journal->j_work_sb;
+	काष्ठा reiserfs_journal_list *jl;
+	काष्ठा list_head *entry;
 
-	reiserfs_write_lock(sb);
-	if (!list_empty(&journal->j_journal_list)) {
+	reiserfs_ग_लिखो_lock(sb);
+	अगर (!list_empty(&journal->j_journal_list)) अणु
 		/* last entry is the youngest, commit it and you get everything */
 		entry = journal->j_journal_list.prev;
 		jl = JOURNAL_LIST_ENTRY(entry);
 		flush_commit_list(sb, jl, 1);
-	}
-	reiserfs_write_unlock(sb);
-}
+	पूर्ण
+	reiserfs_ग_लिखो_unlock(sb);
+पूर्ण
 
 /*
  * flushes any old transactions to disk
- * ends the current transaction if it is too old
+ * ends the current transaction अगर it is too old
  */
-void reiserfs_flush_old_commits(struct super_block *sb)
-{
-	time64_t now;
-	struct reiserfs_transaction_handle th;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
+व्योम reiserfs_flush_old_commits(काष्ठा super_block *sb)
+अणु
+	समय64_t now;
+	काष्ठा reiserfs_transaction_handle th;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
 
-	now = ktime_get_seconds();
+	now = kसमय_get_seconds();
 	/*
-	 * safety check so we don't flush while we are replaying the log during
+	 * safety check so we करोn't flush जबतक we are replaying the log during
 	 * mount
 	 */
-	if (list_empty(&journal->j_journal_list))
-		return;
+	अगर (list_empty(&journal->j_journal_list))
+		वापस;
 
 	/*
-	 * check the current transaction.  If there are no writers, and it is
-	 * too old, finish it, and force the commit blocks to disk
+	 * check the current transaction.  If there are no ग_लिखोrs, and it is
+	 * too old, finish it, and क्रमce the commit blocks to disk
 	 */
-	if (atomic_read(&journal->j_wcount) <= 0 &&
-	    journal->j_trans_start_time > 0 &&
+	अगर (atomic_पढ़ो(&journal->j_wcount) <= 0 &&
+	    journal->j_trans_start_समय > 0 &&
 	    journal->j_len > 0 &&
-	    (now - journal->j_trans_start_time) > journal->j_max_trans_age) {
-		if (!journal_join(&th, sb)) {
-			reiserfs_prepare_for_journal(sb,
+	    (now - journal->j_trans_start_समय) > journal->j_max_trans_age) अणु
+		अगर (!journal_join(&th, sb)) अणु
+			reiserfs_prepare_क्रम_journal(sb,
 						     SB_BUFFER_WITH_SB(sb),
 						     1);
 			journal_mark_dirty(&th, SB_BUFFER_WITH_SB(sb));
 
 			/*
 			 * we're only being called from kreiserfsd, it makes
-			 * no sense to do an async commit so that kreiserfsd
-			 * can do it later
+			 * no sense to करो an async commit so that kreiserfsd
+			 * can करो it later
 			 */
-			do_journal_end(&th, COMMIT_NOW | WAIT);
-		}
-	}
-}
+			करो_journal_end(&th, COMMIT_NOW | WAIT);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * returns 0 if do_journal_end should return right away, returns 1 if
- * do_journal_end should finish the commit
+ * वापसs 0 अगर करो_journal_end should वापस right away, वापसs 1 अगर
+ * करो_journal_end should finish the commit
  *
- * if the current transaction is too old, but still has writers, this will
- * wait on j_join_wait until all the writers are done.  By the time it
- * wakes up, the transaction it was called has already ended, so it just
- * flushes the commit list and returns 0.
+ * अगर the current transaction is too old, but still has ग_लिखोrs, this will
+ * रुको on j_join_रुको until all the ग_लिखोrs are करोne.  By the समय it
+ * wakes up, the transaction it was called has alपढ़ोy ended, so it just
+ * flushes the commit list and वापसs 0.
  *
  * Won't batch when flush or commit_now is set.  Also won't batch when
- * others are waiting on j_join_wait.
+ * others are रुकोing on j_join_रुको.
  *
- * Note, we can't allow the journal_end to proceed while there are still
- * writers in the log.
+ * Note, we can't allow the journal_end to proceed जबतक there are still
+ * ग_लिखोrs in the log.
  */
-static int check_journal_end(struct reiserfs_transaction_handle *th, int flags)
-{
+अटल पूर्णांक check_journal_end(काष्ठा reiserfs_transaction_handle *th, पूर्णांक flags)
+अणु
 
-	time64_t now;
-	int flush = flags & FLUSH_ALL;
-	int commit_now = flags & COMMIT_NOW;
-	int wait_on_commit = flags & WAIT;
-	struct reiserfs_journal_list *jl;
-	struct super_block *sb = th->t_super;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
+	समय64_t now;
+	पूर्णांक flush = flags & FLUSH_ALL;
+	पूर्णांक commit_now = flags & COMMIT_NOW;
+	पूर्णांक रुको_on_commit = flags & WAIT;
+	काष्ठा reiserfs_journal_list *jl;
+	काष्ठा super_block *sb = th->t_super;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
 
 	BUG_ON(!th->t_trans_id);
 
-	if (th->t_trans_id != journal->j_trans_id) {
+	अगर (th->t_trans_id != journal->j_trans_id) अणु
 		reiserfs_panic(th->t_super, "journal-1577",
 			       "handle trans id %ld != current trans id %ld",
 			       th->t_trans_id, journal->j_trans_id);
-	}
+	पूर्ण
 
 	journal->j_len_alloc -= (th->t_blocks_allocated - th->t_blocks_logged);
 	/* <= 0 is allowed.  unmounting might not call begin */
-	if (atomic_read(&journal->j_wcount) > 0)
+	अगर (atomic_पढ़ो(&journal->j_wcount) > 0)
 		atomic_dec(&journal->j_wcount);
 
 	/*
-	 * BUG, deal with case where j_len is 0, but people previously
-	 * freed blocks need to be released will be dealt with by next
-	 * transaction that actually writes something, but should be taken
+	 * BUG, deal with हाल where j_len is 0, but people previously
+	 * मुक्तd blocks need to be released will be dealt with by next
+	 * transaction that actually ग_लिखोs something, but should be taken
 	 * care of in this trans
 	 */
 	BUG_ON(journal->j_len == 0);
 
 	/*
-	 * if wcount > 0, and we are called to with flush or commit_now,
-	 * we wait on j_join_wait.  We will wake up when the last writer has
+	 * अगर wcount > 0, and we are called to with flush or commit_now,
+	 * we रुको on j_join_रुको.  We will wake up when the last ग_लिखोr has
 	 * finished the transaction, and started it on its way to the disk.
-	 * Then, we flush the commit or journal list, and just return 0
-	 * because the rest of journal end was already done for this
+	 * Then, we flush the commit or journal list, and just वापस 0
+	 * because the rest of journal end was alपढ़ोy करोne क्रम this
 	 * transaction.
 	 */
-	if (atomic_read(&journal->j_wcount) > 0) {
-		if (flush || commit_now) {
-			unsigned trans_id;
+	अगर (atomic_पढ़ो(&journal->j_wcount) > 0) अणु
+		अगर (flush || commit_now) अणु
+			अचिन्हित trans_id;
 
 			jl = journal->j_current_jl;
 			trans_id = jl->j_trans_id;
-			if (wait_on_commit)
+			अगर (रुको_on_commit)
 				jl->j_state |= LIST_COMMIT_PENDING;
 			atomic_set(&journal->j_jlock, 1);
-			if (flush) {
+			अगर (flush) अणु
 				journal->j_next_full_flush = 1;
-			}
+			पूर्ण
 			unlock_journal(sb);
 
 			/*
-			 * sleep while the current transaction is
+			 * sleep जबतक the current transaction is
 			 * still j_jlocked
 			 */
-			while (journal->j_trans_id == trans_id) {
-				if (atomic_read(&journal->j_jlock)) {
-					queue_log_writer(sb);
-				} else {
+			जबतक (journal->j_trans_id == trans_id) अणु
+				अगर (atomic_पढ़ो(&journal->j_jlock)) अणु
+					queue_log_ग_लिखोr(sb);
+				पूर्ण अन्यथा अणु
 					lock_journal(sb);
-					if (journal->j_trans_id == trans_id) {
+					अगर (journal->j_trans_id == trans_id) अणु
 						atomic_set(&journal->j_jlock,
 							   1);
-					}
+					पूर्ण
 					unlock_journal(sb);
-				}
-			}
+				पूर्ण
+			पूर्ण
 			BUG_ON(journal->j_trans_id == trans_id);
 
-			if (commit_now
+			अगर (commit_now
 			    && journal_list_still_alive(sb, trans_id)
-			    && wait_on_commit) {
+			    && रुको_on_commit) अणु
 				flush_commit_list(sb, jl, 1);
-			}
-			return 0;
-		}
+			पूर्ण
+			वापस 0;
+		पूर्ण
 		unlock_journal(sb);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* deal with old transactions where we are the last writers */
-	now = ktime_get_seconds();
-	if ((now - journal->j_trans_start_time) > journal->j_max_trans_age) {
+	/* deal with old transactions where we are the last ग_लिखोrs */
+	now = kसमय_get_seconds();
+	अगर ((now - journal->j_trans_start_समय) > journal->j_max_trans_age) अणु
 		commit_now = 1;
 		journal->j_next_async_flush = 1;
-	}
-	/* don't batch when someone is waiting on j_join_wait */
-	/* don't batch when syncing the commit or flushing the whole trans */
-	if (!(journal->j_must_wait > 0) && !(atomic_read(&journal->j_jlock))
+	पूर्ण
+	/* करोn't batch when someone is रुकोing on j_join_रुको */
+	/* करोn't batch when syncing the commit or flushing the whole trans */
+	अगर (!(journal->j_must_रुको > 0) && !(atomic_पढ़ो(&journal->j_jlock))
 	    && !flush && !commit_now && (journal->j_len < journal->j_max_batch)
 	    && journal->j_len_alloc < journal->j_max_batch
-	    && journal->j_cnode_free > (journal->j_trans_max * 3)) {
+	    && journal->j_cnode_मुक्त > (journal->j_trans_max * 3)) अणु
 		journal->j_bcount++;
 		unlock_journal(sb);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (journal->j_start > SB_ONDISK_JOURNAL_SIZE(sb)) {
+	अगर (journal->j_start > SB_ONDISK_JOURNAL_SIZE(sb)) अणु
 		reiserfs_panic(sb, "journal-003",
 			       "j_start (%ld) is too high",
 			       journal->j_start);
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /*
  * Does all the work that makes deleting blocks safe.
- * when deleting a block mark BH_JNew, just remove it from the current
+ * when deleting a block mark BH_JNew, just हटाओ it from the current
  * transaction, clean it's buffer_head and move on.
  *
  * otherwise:
- * set a bit for the block in the journal bitmap.  That will prevent it from
- * being allocated for unformatted nodes before this transaction has finished.
+ * set a bit क्रम the block in the journal biपंचांगap.  That will prevent it from
+ * being allocated क्रम unक्रमmatted nodes beक्रमe this transaction has finished.
  *
- * mark any cnodes for this block as BLOCK_FREED, and clear their bh pointers.
+ * mark any cnodes क्रम this block as BLOCK_FREED, and clear their bh poपूर्णांकers.
  * That will prevent any old transactions with this block from trying to flush
  * to the real location.  Since we aren't removing the cnode from the
- * journal_list_hash, *the block can't be reallocated yet.
+ * journal_list_hash, *the block can't be पुनः_स्मृतिated yet.
  *
- * Then remove it from the current transaction, decrementing any counters and
+ * Then हटाओ it from the current transaction, decrementing any counters and
  * filing it on the clean list.
  */
-int journal_mark_freed(struct reiserfs_transaction_handle *th,
-		       struct super_block *sb, b_blocknr_t blocknr)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	struct reiserfs_journal_cnode *cn = NULL;
-	struct buffer_head *bh = NULL;
-	struct reiserfs_list_bitmap *jb = NULL;
-	int cleaned = 0;
+पूर्णांक journal_mark_मुक्तd(काष्ठा reiserfs_transaction_handle *th,
+		       काष्ठा super_block *sb, b_blocknr_t blocknr)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	काष्ठा reiserfs_journal_cnode *cn = शून्य;
+	काष्ठा buffer_head *bh = शून्य;
+	काष्ठा reiserfs_list_biपंचांगap *jb = शून्य;
+	पूर्णांक cleaned = 0;
 	BUG_ON(!th->t_trans_id);
 
 	cn = get_journal_hash_dev(sb, journal->j_hash_table, blocknr);
-	if (cn && cn->bh) {
+	अगर (cn && cn->bh) अणु
 		bh = cn->bh;
 		get_bh(bh);
-	}
-	/* if it is journal new, we just remove it from this transaction */
-	if (bh && buffer_journal_new(bh)) {
+	पूर्ण
+	/* अगर it is journal new, we just हटाओ it from this transaction */
+	अगर (bh && buffer_journal_new(bh)) अणु
 		clear_buffer_journal_new(bh);
 		clear_prepared_bits(bh);
 		reiserfs_clean_and_file_buffer(bh);
-		cleaned = remove_from_transaction(sb, blocknr, cleaned);
-	} else {
+		cleaned = हटाओ_from_transaction(sb, blocknr, cleaned);
+	पूर्ण अन्यथा अणु
 		/*
-		 * set the bit for this block in the journal bitmap
-		 * for this transaction
+		 * set the bit क्रम this block in the journal biपंचांगap
+		 * क्रम this transaction
 		 */
-		jb = journal->j_current_jl->j_list_bitmap;
-		if (!jb) {
+		jb = journal->j_current_jl->j_list_biपंचांगap;
+		अगर (!jb) अणु
 			reiserfs_panic(sb, "journal-1702",
 				       "journal_list_bitmap is NULL");
-		}
-		set_bit_in_list_bitmap(sb, blocknr, jb);
+		पूर्ण
+		set_bit_in_list_biपंचांगap(sb, blocknr, jb);
 
-		/* Note, the entire while loop is not allowed to schedule.  */
+		/* Note, the entire जबतक loop is not allowed to schedule.  */
 
-		if (bh) {
+		अगर (bh) अणु
 			clear_prepared_bits(bh);
 			reiserfs_clean_and_file_buffer(bh);
-		}
-		cleaned = remove_from_transaction(sb, blocknr, cleaned);
+		पूर्ण
+		cleaned = हटाओ_from_transaction(sb, blocknr, cleaned);
 
 		/*
 		 * find all older transactions with this block,
-		 * make sure they don't try to write it out
+		 * make sure they करोn't try to ग_लिखो it out
 		 */
 		cn = get_journal_hash_dev(sb, journal->j_list_hash_table,
 					  blocknr);
-		while (cn) {
-			if (sb == cn->sb && blocknr == cn->blocknr) {
+		जबतक (cn) अणु
+			अगर (sb == cn->sb && blocknr == cn->blocknr) अणु
 				set_bit(BLOCK_FREED, &cn->state);
-				if (cn->bh) {
+				अगर (cn->bh) अणु
 					/*
-					 * remove_from_transaction will brelse
-					 * the buffer if it was in the current
+					 * हटाओ_from_transaction will brअन्यथा
+					 * the buffer अगर it was in the current
 					 * trans
 					 */
-					if (!cleaned) {
+					अगर (!cleaned) अणु
 						clear_buffer_journal_dirty(cn->
 									   bh);
 						clear_buffer_dirty(cn->bh);
@@ -3784,276 +3785,276 @@ int journal_mark_freed(struct reiserfs_transaction_handle *th,
 									  bh);
 						cleaned = 1;
 						put_bh(cn->bh);
-						if (atomic_read
-						    (&cn->bh->b_count) < 0) {
+						अगर (atomic_पढ़ो
+						    (&cn->bh->b_count) < 0) अणु
 							reiserfs_warning(sb,
 								 "journal-2138",
 								 "cn->bh->b_count < 0");
-						}
-					}
+						पूर्ण
+					पूर्ण
 					/*
 					 * since we are clearing the bh,
 					 * we MUST dec nonzerolen
 					 */
-					if (cn->jlist) {
+					अगर (cn->jlist) अणु
 						atomic_dec(&cn->jlist->
 							   j_nonzerolen);
-					}
-					cn->bh = NULL;
-				}
-			}
+					पूर्ण
+					cn->bh = शून्य;
+				पूर्ण
+			पूर्ण
 			cn = cn->hnext;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (bh)
-		release_buffer_page(bh); /* get_hash grabs the buffer */
-	return 0;
-}
+	अगर (bh)
+		release_buffer_page(bh); /* get_hash grअसल the buffer */
+	वापस 0;
+पूर्ण
 
-void reiserfs_update_inode_transaction(struct inode *inode)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(inode->i_sb);
+व्योम reiserfs_update_inode_transaction(काष्ठा inode *inode)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(inode->i_sb);
 	REISERFS_I(inode)->i_jl = journal->j_current_jl;
 	REISERFS_I(inode)->i_trans_id = journal->j_trans_id;
-}
+पूर्ण
 
 /*
- * returns -1 on error, 0 if no commits/barriers were done and 1
- * if a transaction was actually committed and the barrier was done
+ * वापसs -1 on error, 0 अगर no commits/barriers were करोne and 1
+ * अगर a transaction was actually committed and the barrier was करोne
  */
-static int __commit_trans_jl(struct inode *inode, unsigned long id,
-			     struct reiserfs_journal_list *jl)
-{
-	struct reiserfs_transaction_handle th;
-	struct super_block *sb = inode->i_sb;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	int ret = 0;
+अटल पूर्णांक __commit_trans_jl(काष्ठा inode *inode, अचिन्हित दीर्घ id,
+			     काष्ठा reiserfs_journal_list *jl)
+अणु
+	काष्ठा reiserfs_transaction_handle th;
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	पूर्णांक ret = 0;
 
 	/*
 	 * is it from the current transaction,
 	 * or from an unknown transaction?
 	 */
-	if (id == journal->j_trans_id) {
+	अगर (id == journal->j_trans_id) अणु
 		jl = journal->j_current_jl;
 		/*
-		 * try to let other writers come in and
+		 * try to let other ग_लिखोrs come in and
 		 * grow this transaction
 		 */
 		let_transaction_grow(sb, id);
-		if (journal->j_trans_id != id) {
-			goto flush_commit_only;
-		}
+		अगर (journal->j_trans_id != id) अणु
+			जाओ flush_commit_only;
+		पूर्ण
 
 		ret = journal_begin(&th, sb, 1);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		/* someone might have ended this transaction while we joined */
-		if (journal->j_trans_id != id) {
-			reiserfs_prepare_for_journal(sb, SB_BUFFER_WITH_SB(sb),
+		/* someone might have ended this transaction जबतक we joined */
+		अगर (journal->j_trans_id != id) अणु
+			reiserfs_prepare_क्रम_journal(sb, SB_BUFFER_WITH_SB(sb),
 						     1);
 			journal_mark_dirty(&th, SB_BUFFER_WITH_SB(sb));
 			ret = journal_end(&th);
-			goto flush_commit_only;
-		}
+			जाओ flush_commit_only;
+		पूर्ण
 
 		ret = journal_end_sync(&th);
-		if (!ret)
+		अगर (!ret)
 			ret = 1;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * this gets tricky, we have to make sure the journal list in
+		 * this माला_लो tricky, we have to make sure the journal list in
 		 * the inode still exists.  We know the list is still around
-		 * if we've got a larger transaction id than the oldest list
+		 * अगर we've got a larger transaction id than the oldest list
 		 */
 flush_commit_only:
-		if (journal_list_still_alive(inode->i_sb, id)) {
+		अगर (journal_list_still_alive(inode->i_sb, id)) अणु
 			/*
-			 * we only set ret to 1 when we know for sure
+			 * we only set ret to 1 when we know क्रम sure
 			 * the barrier hasn't been started yet on the commit
 			 * block.
 			 */
-			if (atomic_read(&jl->j_commit_left) > 1)
+			अगर (atomic_पढ़ो(&jl->j_commit_left) > 1)
 				ret = 1;
 			flush_commit_list(sb, jl, 1);
-			if (journal->j_errno)
-				ret = journal->j_errno;
-		}
-	}
-	/* otherwise the list is gone, and long since committed */
-	return ret;
-}
+			अगर (journal->j_त्रुटि_सं)
+				ret = journal->j_त्रुटि_सं;
+		पूर्ण
+	पूर्ण
+	/* otherwise the list is gone, and दीर्घ since committed */
+	वापस ret;
+पूर्ण
 
-int reiserfs_commit_for_inode(struct inode *inode)
-{
-	unsigned int id = REISERFS_I(inode)->i_trans_id;
-	struct reiserfs_journal_list *jl = REISERFS_I(inode)->i_jl;
+पूर्णांक reiserfs_commit_क्रम_inode(काष्ठा inode *inode)
+अणु
+	अचिन्हित पूर्णांक id = REISERFS_I(inode)->i_trans_id;
+	काष्ठा reiserfs_journal_list *jl = REISERFS_I(inode)->i_jl;
 
 	/*
-	 * for the whole inode, assume unset id means it was
+	 * क्रम the whole inode, assume unset id means it was
 	 * changed in the current transaction.  More conservative
 	 */
-	if (!id || !jl) {
+	अगर (!id || !jl) अणु
 		reiserfs_update_inode_transaction(inode);
 		id = REISERFS_I(inode)->i_trans_id;
 		/* jl will be updated in __commit_trans_jl */
-	}
+	पूर्ण
 
-	return __commit_trans_jl(inode, id, jl);
-}
+	वापस __commit_trans_jl(inode, id, jl);
+पूर्ण
 
-void reiserfs_restore_prepared_buffer(struct super_block *sb,
-				      struct buffer_head *bh)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
+व्योम reiserfs_restore_prepared_buffer(काष्ठा super_block *sb,
+				      काष्ठा buffer_head *bh)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
 	PROC_INFO_INC(sb, journal.restore_prepared);
-	if (!bh) {
-		return;
-	}
-	if (test_clear_buffer_journal_restore_dirty(bh) &&
-	    buffer_journal_dirty(bh)) {
-		struct reiserfs_journal_cnode *cn;
-		reiserfs_write_lock(sb);
+	अगर (!bh) अणु
+		वापस;
+	पूर्ण
+	अगर (test_clear_buffer_journal_restore_dirty(bh) &&
+	    buffer_journal_dirty(bh)) अणु
+		काष्ठा reiserfs_journal_cnode *cn;
+		reiserfs_ग_लिखो_lock(sb);
 		cn = get_journal_hash_dev(sb,
 					  journal->j_list_hash_table,
 					  bh->b_blocknr);
-		if (cn && can_dirty(cn)) {
+		अगर (cn && can_dirty(cn)) अणु
 			set_buffer_journal_test(bh);
 			mark_buffer_dirty(bh);
-		}
-		reiserfs_write_unlock(sb);
-	}
+		पूर्ण
+		reiserfs_ग_लिखो_unlock(sb);
+	पूर्ण
 	clear_buffer_journal_prepared(bh);
-}
+पूर्ण
 
-extern struct tree_balance *cur_tb;
+बाह्य काष्ठा tree_balance *cur_tb;
 /*
- * before we can change a metadata block, we have to make sure it won't
- * be written to disk while we are altering it.  So, we must:
+ * beक्रमe we can change a metadata block, we have to make sure it won't
+ * be written to disk जबतक we are altering it.  So, we must:
  * clean it
- * wait on it.
+ * रुको on it.
  */
-int reiserfs_prepare_for_journal(struct super_block *sb,
-				 struct buffer_head *bh, int wait)
-{
+पूर्णांक reiserfs_prepare_क्रम_journal(काष्ठा super_block *sb,
+				 काष्ठा buffer_head *bh, पूर्णांक रुको)
+अणु
 	PROC_INFO_INC(sb, journal.prepare);
 
-	if (!trylock_buffer(bh)) {
-		if (!wait)
-			return 0;
+	अगर (!trylock_buffer(bh)) अणु
+		अगर (!रुको)
+			वापस 0;
 		lock_buffer(bh);
-	}
+	पूर्ण
 	set_buffer_journal_prepared(bh);
-	if (test_clear_buffer_dirty(bh) && buffer_journal_dirty(bh)) {
+	अगर (test_clear_buffer_dirty(bh) && buffer_journal_dirty(bh)) अणु
 		clear_buffer_journal_test(bh);
 		set_buffer_journal_restore_dirty(bh);
-	}
+	पूर्ण
 	unlock_buffer(bh);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * long and ugly.  If flush, will not return until all commit
+ * दीर्घ and ugly.  If flush, will not वापस until all commit
  * blocks and all real buffers in the trans are on disk.
- * If no_async, won't return until all commit blocks are on disk.
+ * If no_async, won't वापस until all commit blocks are on disk.
  *
- * keep reading, there are comments as you go along
+ * keep पढ़ोing, there are comments as you go aदीर्घ
  *
- * If the journal is aborted, we just clean up. Things like flushing
+ * If the journal is पातed, we just clean up. Things like flushing
  * journal lists, etc just won't happen.
  */
-static int do_journal_end(struct reiserfs_transaction_handle *th, int flags)
-{
-	struct super_block *sb = th->t_super;
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	struct reiserfs_journal_cnode *cn, *next, *jl_cn;
-	struct reiserfs_journal_cnode *last_cn = NULL;
-	struct reiserfs_journal_desc *desc;
-	struct reiserfs_journal_commit *commit;
-	struct buffer_head *c_bh;	/* commit bh */
-	struct buffer_head *d_bh;	/* desc bh */
-	int cur_write_start = 0;	/* start index of current log write */
-	int i;
-	int flush;
-	int wait_on_commit;
-	struct reiserfs_journal_list *jl, *temp_jl;
-	struct list_head *entry, *safe;
-	unsigned long jindex;
-	unsigned int commit_trans_id;
-	int trans_half;
-	int depth;
+अटल पूर्णांक करो_journal_end(काष्ठा reiserfs_transaction_handle *th, पूर्णांक flags)
+अणु
+	काष्ठा super_block *sb = th->t_super;
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	काष्ठा reiserfs_journal_cnode *cn, *next, *jl_cn;
+	काष्ठा reiserfs_journal_cnode *last_cn = शून्य;
+	काष्ठा reiserfs_journal_desc *desc;
+	काष्ठा reiserfs_journal_commit *commit;
+	काष्ठा buffer_head *c_bh;	/* commit bh */
+	काष्ठा buffer_head *d_bh;	/* desc bh */
+	पूर्णांक cur_ग_लिखो_start = 0;	/* start index of current log ग_लिखो */
+	पूर्णांक i;
+	पूर्णांक flush;
+	पूर्णांक रुको_on_commit;
+	काष्ठा reiserfs_journal_list *jl, *temp_jl;
+	काष्ठा list_head *entry, *safe;
+	अचिन्हित दीर्घ jindex;
+	अचिन्हित पूर्णांक commit_trans_id;
+	पूर्णांक trans_half;
+	पूर्णांक depth;
 
 	BUG_ON(th->t_refcount > 1);
 	BUG_ON(!th->t_trans_id);
 	BUG_ON(!th->t_super);
 
 	/*
-	 * protect flush_older_commits from doing mistakes if the
-	 * transaction ID counter gets overflowed.
+	 * protect flush_older_commits from करोing mistakes अगर the
+	 * transaction ID counter माला_लो overflowed.
 	 */
-	if (th->t_trans_id == ~0U)
+	अगर (th->t_trans_id == ~0U)
 		flags |= FLUSH_ALL | COMMIT_NOW | WAIT;
 	flush = flags & FLUSH_ALL;
-	wait_on_commit = flags & WAIT;
+	रुको_on_commit = flags & WAIT;
 
 	current->journal_info = th->t_handle_save;
 	reiserfs_check_lock_depth(sb, "journal end");
-	if (journal->j_len == 0) {
-		reiserfs_prepare_for_journal(sb, SB_BUFFER_WITH_SB(sb),
+	अगर (journal->j_len == 0) अणु
+		reiserfs_prepare_क्रम_journal(sb, SB_BUFFER_WITH_SB(sb),
 					     1);
 		journal_mark_dirty(th, SB_BUFFER_WITH_SB(sb));
-	}
+	पूर्ण
 
 	lock_journal(sb);
-	if (journal->j_next_full_flush) {
+	अगर (journal->j_next_full_flush) अणु
 		flags |= FLUSH_ALL;
 		flush = 1;
-	}
-	if (journal->j_next_async_flush) {
+	पूर्ण
+	अगर (journal->j_next_async_flush) अणु
 		flags |= COMMIT_NOW | WAIT;
-		wait_on_commit = 1;
-	}
+		रुको_on_commit = 1;
+	पूर्ण
 
 	/*
-	 * check_journal_end locks the journal, and unlocks if it does
-	 * not return 1 it tells us if we should continue with the
-	 * journal_end, or just return
+	 * check_journal_end locks the journal, and unlocks अगर it करोes
+	 * not वापस 1 it tells us अगर we should जारी with the
+	 * journal_end, or just वापस
 	 */
-	if (!check_journal_end(th, flags)) {
+	अगर (!check_journal_end(th, flags)) अणु
 		reiserfs_schedule_old_flush(sb);
-		wake_queued_writers(sb);
-		reiserfs_async_progress_wait(sb);
-		goto out;
-	}
+		wake_queued_ग_लिखोrs(sb);
+		reiserfs_async_progress_रुको(sb);
+		जाओ out;
+	पूर्ण
 
 	/* check_journal_end might set these, check again */
-	if (journal->j_next_full_flush) {
+	अगर (journal->j_next_full_flush) अणु
 		flush = 1;
-	}
+	पूर्ण
 
 	/*
-	 * j must wait means we have to flush the log blocks, and the
-	 * real blocks for this transaction
+	 * j must रुको means we have to flush the log blocks, and the
+	 * real blocks क्रम this transaction
 	 */
-	if (journal->j_must_wait > 0) {
+	अगर (journal->j_must_रुको > 0) अणु
 		flush = 1;
-	}
-#ifdef REISERFS_PREALLOCATE
+	पूर्ण
+#अगर_घोषित REISERFS_PREALLOCATE
 	/*
-	 * quota ops might need to nest, setup the journal_info pointer
-	 * for them and raise the refcount so that it is > 0.
+	 * quota ops might need to nest, setup the journal_info poपूर्णांकer
+	 * क्रम them and उठाओ the refcount so that it is > 0.
 	 */
 	current->journal_info = th;
 	th->t_refcount++;
 
-	/* it should not involve new blocks into the transaction */
-	reiserfs_discard_all_prealloc(th);
+	/* it should not involve new blocks पूर्णांकo the transaction */
+	reiserfs_discard_all_pपुनः_स्मृति(th);
 
 	th->t_refcount--;
 	current->journal_info = th->t_handle_save;
-#endif
+#पूर्ण_अगर
 
 	/* setup description block */
 	d_bh =
@@ -4061,20 +4062,20 @@ static int do_journal_end(struct reiserfs_transaction_handle *th, int flags)
 			   SB_ONDISK_JOURNAL_1st_BLOCK(sb) +
 			   journal->j_start);
 	set_buffer_uptodate(d_bh);
-	desc = (struct reiserfs_journal_desc *)(d_bh)->b_data;
-	memset(d_bh->b_data, 0, d_bh->b_size);
-	memcpy(get_journal_desc_magic(d_bh), JOURNAL_DESC_MAGIC, 8);
+	desc = (काष्ठा reiserfs_journal_desc *)(d_bh)->b_data;
+	स_रखो(d_bh->b_data, 0, d_bh->b_size);
+	स_नकल(get_journal_desc_magic(d_bh), JOURNAL_DESC_MAGIC, 8);
 	set_desc_trans_id(desc, journal->j_trans_id);
 
 	/*
-	 * setup commit block.  Don't write (keep it clean too) this one
-	 * until after everyone else is written
+	 * setup commit block.  Don't ग_लिखो (keep it clean too) this one
+	 * until after everyone अन्यथा is written
 	 */
 	c_bh = journal_getblk(sb, SB_ONDISK_JOURNAL_1st_BLOCK(sb) +
 			      ((journal->j_start + journal->j_len +
 				1) % SB_ONDISK_JOURNAL_SIZE(sb)));
-	commit = (struct reiserfs_journal_commit *)c_bh->b_data;
-	memset(c_bh->b_data, 0, c_bh->b_size);
+	commit = (काष्ठा reiserfs_journal_commit *)c_bh->b_data;
+	स_रखो(c_bh->b_data, 0, c_bh->b_size);
 	set_commit_trans_id(commit, journal->j_trans_id);
 	set_buffer_uptodate(c_bh);
 
@@ -4082,84 +4083,84 @@ static int do_journal_end(struct reiserfs_transaction_handle *th, int flags)
 	jl = journal->j_current_jl;
 
 	/*
-	 * we lock the commit before doing anything because
+	 * we lock the commit beक्रमe करोing anything because
 	 * we want to make sure nobody tries to run flush_commit_list until
-	 * the new transaction is fully setup, and we've already flushed the
+	 * the new transaction is fully setup, and we've alपढ़ोy flushed the
 	 * ordered bh list
 	 */
 	reiserfs_mutex_lock_safe(&jl->j_commit_mutex, sb);
 
-	/* save the transaction id in case we need to commit it later */
+	/* save the transaction id in हाल we need to commit it later */
 	commit_trans_id = jl->j_trans_id;
 
-	atomic_set(&jl->j_older_commits_done, 0);
+	atomic_set(&jl->j_older_commits_करोne, 0);
 	jl->j_trans_id = journal->j_trans_id;
-	jl->j_timestamp = journal->j_trans_start_time;
+	jl->j_बारtamp = journal->j_trans_start_समय;
 	jl->j_commit_bh = c_bh;
 	jl->j_start = journal->j_start;
 	jl->j_len = journal->j_len;
 	atomic_set(&jl->j_nonzerolen, journal->j_len);
 	atomic_set(&jl->j_commit_left, journal->j_len + 2);
-	jl->j_realblock = NULL;
+	jl->j_realblock = शून्य;
 
 	/*
 	 * The ENTIRE FOR LOOP MUST not cause schedule to occur.
-	 * for each real block, add it to the journal list hash,
-	 * copy into real block index array in the commit or desc block
+	 * क्रम each real block, add it to the journal list hash,
+	 * copy पूर्णांकo real block index array in the commit or desc block
 	 */
 	trans_half = journal_trans_half(sb->s_blocksize);
-	for (i = 0, cn = journal->j_first; cn; cn = cn->next, i++) {
-		if (buffer_journaled(cn->bh)) {
+	क्रम (i = 0, cn = journal->j_first; cn; cn = cn->next, i++) अणु
+		अगर (buffer_journaled(cn->bh)) अणु
 			jl_cn = get_cnode(sb);
-			if (!jl_cn) {
+			अगर (!jl_cn) अणु
 				reiserfs_panic(sb, "journal-1676",
 					       "get_cnode returned NULL");
-			}
-			if (i == 0) {
+			पूर्ण
+			अगर (i == 0) अणु
 				jl->j_realblock = jl_cn;
-			}
+			पूर्ण
 			jl_cn->prev = last_cn;
-			jl_cn->next = NULL;
-			if (last_cn) {
+			jl_cn->next = शून्य;
+			अगर (last_cn) अणु
 				last_cn->next = jl_cn;
-			}
+			पूर्ण
 			last_cn = jl_cn;
 			/*
 			 * make sure the block we are trying to log
 			 * is not a block of journal or reserved area
 			 */
-			if (is_block_in_log_or_reserved_area
-			    (sb, cn->bh->b_blocknr)) {
+			अगर (is_block_in_log_or_reserved_area
+			    (sb, cn->bh->b_blocknr)) अणु
 				reiserfs_panic(sb, "journal-2332",
 					       "Trying to log block %lu, "
 					       "which is a log block",
 					       cn->bh->b_blocknr);
-			}
+			पूर्ण
 			jl_cn->blocknr = cn->bh->b_blocknr;
 			jl_cn->state = 0;
 			jl_cn->sb = sb;
 			jl_cn->bh = cn->bh;
 			jl_cn->jlist = jl;
 			insert_journal_hash(journal->j_list_hash_table, jl_cn);
-			if (i < trans_half) {
+			अगर (i < trans_half) अणु
 				desc->j_realblock[i] =
 				    cpu_to_le32(cn->bh->b_blocknr);
-			} else {
+			पूर्ण अन्यथा अणु
 				commit->j_realblock[i - trans_half] =
 				    cpu_to_le32(cn->bh->b_blocknr);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			i--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	set_desc_trans_len(desc, journal->j_len);
 	set_desc_mount_id(desc, journal->j_mount_id);
 	set_desc_trans_id(desc, journal->j_trans_id);
 	set_commit_trans_len(commit, journal->j_len);
 
 	/*
-	 * special check in case all buffers in the journal
-	 * were marked for not logging
+	 * special check in हाल all buffers in the journal
+	 * were marked क्रम not logging
 	 */
 	BUG_ON(journal->j_len == 0);
 
@@ -4172,217 +4173,217 @@ static int do_journal_end(struct reiserfs_transaction_handle *th, int flags)
 
 	/*
 	 * first data block is j_start + 1, so add one to
-	 * cur_write_start wherever you use it
+	 * cur_ग_लिखो_start wherever you use it
 	 */
-	cur_write_start = journal->j_start;
+	cur_ग_लिखो_start = journal->j_start;
 	cn = journal->j_first;
-	jindex = 1;	/* start at one so we don't get the desc again */
-	while (cn) {
+	jindex = 1;	/* start at one so we करोn't get the desc again */
+	जबतक (cn) अणु
 		clear_buffer_journal_new(cn->bh);
-		/* copy all the real blocks into log area.  dirty log blocks */
-		if (buffer_journaled(cn->bh)) {
-			struct buffer_head *tmp_bh;
-			char *addr;
-			struct page *page;
-			tmp_bh =
+		/* copy all the real blocks पूर्णांकo log area.  dirty log blocks */
+		अगर (buffer_journaled(cn->bh)) अणु
+			काष्ठा buffer_head *पंचांगp_bh;
+			अक्षर *addr;
+			काष्ठा page *page;
+			पंचांगp_bh =
 			    journal_getblk(sb,
 					   SB_ONDISK_JOURNAL_1st_BLOCK(sb) +
-					   ((cur_write_start +
+					   ((cur_ग_लिखो_start +
 					     jindex) %
 					    SB_ONDISK_JOURNAL_SIZE(sb)));
-			set_buffer_uptodate(tmp_bh);
+			set_buffer_uptodate(पंचांगp_bh);
 			page = cn->bh->b_page;
 			addr = kmap(page);
-			memcpy(tmp_bh->b_data,
+			स_नकल(पंचांगp_bh->b_data,
 			       addr + offset_in_page(cn->bh->b_data),
 			       cn->bh->b_size);
 			kunmap(page);
-			mark_buffer_dirty(tmp_bh);
+			mark_buffer_dirty(पंचांगp_bh);
 			jindex++;
 			set_buffer_journal_dirty(cn->bh);
 			clear_buffer_journaled(cn->bh);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * JDirty cleared sometime during transaction.
-			 * don't log this one
+			 * JDirty cleared someसमय during transaction.
+			 * करोn't log this one
 			 */
 			reiserfs_warning(sb, "journal-2048",
 					 "BAD, buffer in journal hash, "
 					 "but not JDirty!");
-			brelse(cn->bh);
-		}
+			brअन्यथा(cn->bh);
+		पूर्ण
 		next = cn->next;
-		free_cnode(sb, cn);
+		मुक्त_cnode(sb, cn);
 		cn = next;
 		reiserfs_cond_resched(sb);
-	}
+	पूर्ण
 
 	/*
-	 * we are done with both the c_bh and d_bh, but
+	 * we are करोne with both the c_bh and d_bh, but
 	 * c_bh must be written after all other commit blocks,
-	 * so we dirty/relse c_bh in flush_commit_list, with commit_left <= 1.
+	 * so we dirty/rअन्यथा c_bh in flush_commit_list, with commit_left <= 1.
 	 */
 
 	journal->j_current_jl = alloc_journal_list(sb);
 
-	/* now it is safe to insert this transaction on the main list */
+	/* now it is safe to insert this transaction on the मुख्य list */
 	list_add_tail(&jl->j_list, &journal->j_journal_list);
 	list_add_tail(&jl->j_working_list, &journal->j_working_list);
 	journal->j_num_work_lists++;
 
-	/* reset journal values for the next transaction */
+	/* reset journal values क्रम the next transaction */
 	journal->j_start =
 	    (journal->j_start + journal->j_len +
 	     2) % SB_ONDISK_JOURNAL_SIZE(sb);
 	atomic_set(&journal->j_wcount, 0);
 	journal->j_bcount = 0;
-	journal->j_last = NULL;
-	journal->j_first = NULL;
+	journal->j_last = शून्य;
+	journal->j_first = शून्य;
 	journal->j_len = 0;
-	journal->j_trans_start_time = 0;
-	/* check for trans_id overflow */
-	if (++journal->j_trans_id == 0)
+	journal->j_trans_start_समय = 0;
+	/* check क्रम trans_id overflow */
+	अगर (++journal->j_trans_id == 0)
 		journal->j_trans_id = 10;
 	journal->j_current_jl->j_trans_id = journal->j_trans_id;
-	journal->j_must_wait = 0;
+	journal->j_must_रुको = 0;
 	journal->j_len_alloc = 0;
 	journal->j_next_full_flush = 0;
 	journal->j_next_async_flush = 0;
 	init_journal_hash(sb);
 
 	/*
-	 * make sure reiserfs_add_jh sees the new current_jl before we
-	 * write out the tails
+	 * make sure reiserfs_add_jh sees the new current_jl beक्रमe we
+	 * ग_लिखो out the tails
 	 */
 	smp_mb();
 
 	/*
-	 * tail conversion targets have to hit the disk before we end the
+	 * tail conversion tarमाला_लो have to hit the disk beक्रमe we end the
 	 * transaction.  Otherwise a later transaction might repack the tail
-	 * before this transaction commits, leaving the data block unflushed
-	 * and clean, if we crash before the later transaction commits, the
+	 * beक्रमe this transaction commits, leaving the data block unflushed
+	 * and clean, अगर we crash beक्रमe the later transaction commits, the
 	 * data block is lost.
 	 */
-	if (!list_empty(&jl->j_tail_bh_list)) {
-		depth = reiserfs_write_unlock_nested(sb);
-		write_ordered_buffers(&journal->j_dirty_buffers_lock,
+	अगर (!list_empty(&jl->j_tail_bh_list)) अणु
+		depth = reiserfs_ग_लिखो_unlock_nested(sb);
+		ग_लिखो_ordered_buffers(&journal->j_dirty_buffers_lock,
 				      journal, jl, &jl->j_tail_bh_list);
-		reiserfs_write_lock_nested(sb, depth);
-	}
+		reiserfs_ग_लिखो_lock_nested(sb, depth);
+	पूर्ण
 	BUG_ON(!list_empty(&jl->j_tail_bh_list));
 	mutex_unlock(&jl->j_commit_mutex);
 
 	/*
 	 * honor the flush wishes from the caller, simple commits can
-	 * be done outside the journal lock, they are done below
+	 * be करोne outside the journal lock, they are करोne below
 	 *
-	 * if we don't flush the commit list right now, we put it into
-	 * the work queue so the people waiting on the async progress work
-	 * queue don't wait for this proc to flush journal lists and such.
+	 * अगर we करोn't flush the commit list right now, we put it पूर्णांकo
+	 * the work queue so the people रुकोing on the async progress work
+	 * queue करोn't रुको क्रम this proc to flush journal lists and such.
 	 */
-	if (flush) {
+	अगर (flush) अणु
 		flush_commit_list(sb, jl, 1);
 		flush_journal_list(sb, jl, 1);
-	} else if (!(jl->j_state & LIST_COMMIT_PENDING)) {
+	पूर्ण अन्यथा अगर (!(jl->j_state & LIST_COMMIT_PENDING)) अणु
 		/*
-		 * Avoid queueing work when sb is being shut down. Transaction
-		 * will be flushed on journal shutdown.
+		 * Aव्योम queueing work when sb is being shut करोwn. Transaction
+		 * will be flushed on journal shutकरोwn.
 		 */
-		if (sb->s_flags & SB_ACTIVE)
+		अगर (sb->s_flags & SB_ACTIVE)
 			queue_delayed_work(REISERFS_SB(sb)->commit_wq,
 					   &journal->j_work, HZ / 10);
-	}
+	पूर्ण
 
 	/*
-	 * if the next transaction has any chance of wrapping, flush
+	 * अगर the next transaction has any chance of wrapping, flush
 	 * transactions that might get overwritten.  If any journal lists
 	 * are very old flush them as well.
 	 */
 first_jl:
-	list_for_each_safe(entry, safe, &journal->j_journal_list) {
+	list_क्रम_each_safe(entry, safe, &journal->j_journal_list) अणु
 		temp_jl = JOURNAL_LIST_ENTRY(entry);
-		if (journal->j_start <= temp_jl->j_start) {
-			if ((journal->j_start + journal->j_trans_max + 1) >=
-			    temp_jl->j_start) {
+		अगर (journal->j_start <= temp_jl->j_start) अणु
+			अगर ((journal->j_start + journal->j_trans_max + 1) >=
+			    temp_jl->j_start) अणु
 				flush_used_journal_lists(sb, temp_jl);
-				goto first_jl;
-			} else if ((journal->j_start +
+				जाओ first_jl;
+			पूर्ण अन्यथा अगर ((journal->j_start +
 				    journal->j_trans_max + 1) <
-				   SB_ONDISK_JOURNAL_SIZE(sb)) {
+				   SB_ONDISK_JOURNAL_SIZE(sb)) अणु
 				/*
-				 * if we don't cross into the next
-				 * transaction and we don't wrap, there is
+				 * अगर we करोn't cross पूर्णांकo the next
+				 * transaction and we करोn't wrap, there is
 				 * no way we can overlap any later transactions
-				 * break now
+				 * अवरोध now
 				 */
-				break;
-			}
-		} else if ((journal->j_start +
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अगर ((journal->j_start +
 			    journal->j_trans_max + 1) >
-			   SB_ONDISK_JOURNAL_SIZE(sb)) {
-			if (((journal->j_start + journal->j_trans_max + 1) %
+			   SB_ONDISK_JOURNAL_SIZE(sb)) अणु
+			अगर (((journal->j_start + journal->j_trans_max + 1) %
 			     SB_ONDISK_JOURNAL_SIZE(sb)) >=
-			    temp_jl->j_start) {
+			    temp_jl->j_start) अणु
 				flush_used_journal_lists(sb, temp_jl);
-				goto first_jl;
-			} else {
+				जाओ first_jl;
+			पूर्ण अन्यथा अणु
 				/*
-				* we don't overlap anything from out start
+				* we करोn't overlap anything from out start
 				* to the end of the log, and our wrapped
-				* portion doesn't overlap anything at
-				* the start of the log.  We can break
+				* portion करोesn't overlap anything at
+				* the start of the log.  We can अवरोध
 				*/
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	journal->j_current_jl->j_list_bitmap =
-	    get_list_bitmap(sb, journal->j_current_jl);
+	journal->j_current_jl->j_list_biपंचांगap =
+	    get_list_biपंचांगap(sb, journal->j_current_jl);
 
-	if (!(journal->j_current_jl->j_list_bitmap)) {
+	अगर (!(journal->j_current_jl->j_list_biपंचांगap)) अणु
 		reiserfs_panic(sb, "journal-1996",
 			       "could not get a list bitmap");
-	}
+	पूर्ण
 
 	atomic_set(&journal->j_jlock, 0);
 	unlock_journal(sb);
-	/* wake up any body waiting to join. */
+	/* wake up any body रुकोing to join. */
 	clear_bit(J_WRITERS_QUEUED, &journal->j_state);
-	wake_up(&journal->j_join_wait);
+	wake_up(&journal->j_join_रुको);
 
-	if (!flush && wait_on_commit &&
-	    journal_list_still_alive(sb, commit_trans_id)) {
+	अगर (!flush && रुको_on_commit &&
+	    journal_list_still_alive(sb, commit_trans_id)) अणु
 		flush_commit_list(sb, jl, 1);
-	}
+	पूर्ण
 out:
 	reiserfs_check_lock_depth(sb, "journal end2");
 
-	memset(th, 0, sizeof(*th));
+	स_रखो(th, 0, माप(*th));
 	/*
 	 * Re-set th->t_super, so we can properly keep track of how many
-	 * persistent transactions there are. We need to do this so if this
-	 * call is part of a failed restart_transaction, we can free it later
+	 * persistent transactions there are. We need to करो this so अगर this
+	 * call is part of a failed restart_transaction, we can मुक्त it later
 	 */
 	th->t_super = sb;
 
-	return journal->j_errno;
-}
+	वापस journal->j_त्रुटि_सं;
+पूर्ण
 
-/* Send the file system read only and refuse new transactions */
-void reiserfs_abort_journal(struct super_block *sb, int errno)
-{
-	struct reiserfs_journal *journal = SB_JOURNAL(sb);
-	if (test_bit(J_ABORTED, &journal->j_state))
-		return;
+/* Send the file प्रणाली पढ़ो only and refuse new transactions */
+व्योम reiserfs_पात_journal(काष्ठा super_block *sb, पूर्णांक त्रुटि_सं)
+अणु
+	काष्ठा reiserfs_journal *journal = SB_JOURNAL(sb);
+	अगर (test_bit(J_ABORTED, &journal->j_state))
+		वापस;
 
-	if (!journal->j_errno)
-		journal->j_errno = errno;
+	अगर (!journal->j_त्रुटि_सं)
+		journal->j_त्रुटि_सं = त्रुटि_सं;
 
 	sb->s_flags |= SB_RDONLY;
 	set_bit(J_ABORTED, &journal->j_state);
 
-#ifdef CONFIG_REISERFS_CHECK
+#अगर_घोषित CONFIG_REISERFS_CHECK
 	dump_stack();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण

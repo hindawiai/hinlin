@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mm/proc-syms.c
  *
  *  Copyright (C) 2000-2002 Russell King
  */
-#include <linux/module.h>
-#include <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
 
-#include <asm/cacheflush.h>
-#include <asm/proc-fns.h>
-#include <asm/tlbflush.h>
-#include <asm/page.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/proc-fns.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/page.h>
 
-#ifndef MULTI_CPU
+#अगर_अघोषित MULTI_CPU
 EXPORT_SYMBOL(cpu_dcache_clean_area);
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 EXPORT_SYMBOL(cpu_set_pte_ext);
-#endif
-#else
+#पूर्ण_अगर
+#अन्यथा
 EXPORT_SYMBOL(processor);
-#endif
+#पूर्ण_अगर
 
-#ifndef MULTI_CACHE
+#अगर_अघोषित MULTI_CACHE
 EXPORT_SYMBOL(__cpuc_flush_kern_all);
 EXPORT_SYMBOL(__cpuc_flush_user_all);
 EXPORT_SYMBOL(__cpuc_flush_user_range);
 EXPORT_SYMBOL(__cpuc_coherent_kern_range);
 EXPORT_SYMBOL(__cpuc_flush_dcache_area);
-#else
+#अन्यथा
 EXPORT_SYMBOL(cpu_cache);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_MMU
-#ifndef MULTI_USER
+#अगर_घोषित CONFIG_MMU
+#अगर_अघोषित MULTI_USER
 EXPORT_SYMBOL(__cpu_clear_user_highpage);
 EXPORT_SYMBOL(__cpu_copy_user_highpage);
-#else
+#अन्यथा
 EXPORT_SYMBOL(cpu_user);
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर
 
 /*
  * No module should need to touch the TLB (and currently
- * no modules do.  We export this for "loadkernel" support
+ * no modules करो.  We export this क्रम "loadkernel" support
  * (booting a new kernel from within a running kernel.)
  */
-#ifdef MULTI_TLB
+#अगर_घोषित MULTI_TLB
 EXPORT_SYMBOL(cpu_tlb);
-#endif
+#पूर्ण_अगर

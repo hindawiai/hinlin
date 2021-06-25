@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2004 IBM Corporation
  * Authors:
  * Leendert van Doorn <leendert@watson.ibm.com>
- * Dave Safford <safford@watson.ibm.com>
+ * Dave Safक्रमd <safक्रमd@watson.ibm.com>
  * Reiner Sailer <sailer@watson.ibm.com>
  * Kylene Hall <kjhall@us.ibm.com>
  *
  * Copyright (C) 2013 Obsidian Research Corp
  * Jason Gunthorpe <jgunthorpe@obsidianresearch.com>
  *
- * Device file system interface to the TPM
+ * Device file प्रणाली पूर्णांकerface to the TPM
  */
-#include <linux/slab.h>
-#include "tpm-dev.h"
+#समावेश <linux/slab.h>
+#समावेश "tpm-dev.h"
 
-static int tpm_open(struct inode *inode, struct file *file)
-{
-	struct tpm_chip *chip;
-	struct file_priv *priv;
+अटल पूर्णांक tpm_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा tpm_chip *chip;
+	काष्ठा file_priv *priv;
 
-	chip = container_of(inode->i_cdev, struct tpm_chip, cdev);
+	chip = container_of(inode->i_cdev, काष्ठा tpm_chip, cdev);
 
-	/* It's assured that the chip will be opened just once,
-	 * by the check of is_open variable, which is protected
+	/* It's assured that the chip will be खोलोed just once,
+	 * by the check of is_खोलो variable, which is रक्षित
 	 * by driver_lock. */
-	if (test_and_set_bit(0, &chip->is_open)) {
+	अगर (test_and_set_bit(0, &chip->is_खोलो)) अणु
 		dev_dbg(&chip->dev, "Another process owns this TPM\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (priv == NULL)
-		goto out;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (priv == शून्य)
+		जाओ out;
 
-	tpm_common_open(file, chip, priv, NULL);
+	tpm_common_खोलो(file, chip, priv, शून्य);
 
-	return 0;
+	वापस 0;
 
  out:
-	clear_bit(0, &chip->is_open);
-	return -ENOMEM;
-}
+	clear_bit(0, &chip->is_खोलो);
+	वापस -ENOMEM;
+पूर्ण
 
 /*
- * Called on file close
+ * Called on file बंद
  */
-static int tpm_release(struct inode *inode, struct file *file)
-{
-	struct file_priv *priv = file->private_data;
+अटल पूर्णांक tpm_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा file_priv *priv = file->निजी_data;
 
 	tpm_common_release(file, priv);
-	clear_bit(0, &priv->chip->is_open);
-	kfree(priv);
+	clear_bit(0, &priv->chip->is_खोलो);
+	kमुक्त(priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct file_operations tpm_fops = {
+स्थिर काष्ठा file_operations tpm_fops = अणु
 	.owner = THIS_MODULE,
 	.llseek = no_llseek,
-	.open = tpm_open,
-	.read = tpm_common_read,
-	.write = tpm_common_write,
+	.खोलो = tpm_खोलो,
+	.पढ़ो = tpm_common_पढ़ो,
+	.ग_लिखो = tpm_common_ग_लिखो,
 	.poll = tpm_common_poll,
 	.release = tpm_release,
-};
+पूर्ण;

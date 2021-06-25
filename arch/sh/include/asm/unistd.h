@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <asm/unistd_32.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <यंत्र/unistd_32.h>
 
-#define NR_syscalls	__NR_syscalls
+#घोषणा NR_syscalls	__NR_syscalls
 
 # define __ARCH_WANT_NEW_STAT
-# define __ARCH_WANT_OLD_READDIR
+# define __ARCH_WANT_OLD_READसूची
 # define __ARCH_WANT_OLD_STAT
 # define __ARCH_WANT_STAT64
 # define __ARCH_WANT_SYS_ALARM
@@ -28,4 +29,4 @@
 # define __ARCH_WANT_SYS_VFORK
 # define __ARCH_WANT_SYS_CLONE
 
-#include <uapi/asm/unistd.h>
+#समावेश <uapi/यंत्र/unistd.h>

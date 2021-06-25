@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /****************************************************************
 
 Siano Mobile Silicon, Inc.
@@ -8,14 +9,14 @@ Copyright (C) 2006-2009, Uri Shkolnik
 
 ****************************************************************/
 
-#ifndef __SMS_ENDIAN_H__
-#define __SMS_ENDIAN_H__
+#अगर_अघोषित __SMS_ENDIAN_H__
+#घोषणा __SMS_ENDIAN_H__
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
-extern void smsendian_handle_tx_message(void *buffer);
-extern void smsendian_handle_rx_message(void *buffer);
-extern void smsendian_handle_message_header(void *msg);
+बाह्य व्योम smsendian_handle_tx_message(व्योम *buffer);
+बाह्य व्योम smsendian_handle_rx_message(व्योम *buffer);
+बाह्य व्योम smsendian_handle_message_header(व्योम *msg);
 
-#endif /* __SMS_ENDIAN_H__ */
+#पूर्ण_अगर /* __SMS_ENDIAN_H__ */
 

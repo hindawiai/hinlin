@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2018, Mellanox Technologies inc.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,49 +31,49 @@
  * SOFTWARE.
  */
 
-#include "rdma_core.h"
-#include "uverbs.h"
-#include <rdma/uverbs_std_types.h>
+#समावेश "rdma_core.h"
+#समावेश "uverbs.h"
+#समावेश <rdma/uverbs_std_types.h>
 
-static int uverbs_free_dm(struct ib_uobject *uobject,
-			  enum rdma_remove_reason why,
-			  struct uverbs_attr_bundle *attrs)
-{
-	struct ib_dm *dm = uobject->object;
+अटल पूर्णांक uverbs_मुक्त_dm(काष्ठा ib_uobject *uobject,
+			  क्रमागत rdma_हटाओ_reason why,
+			  काष्ठा uverbs_attr_bundle *attrs)
+अणु
+	काष्ठा ib_dm *dm = uobject->object;
 
-	if (atomic_read(&dm->usecnt))
-		return -EBUSY;
+	अगर (atomic_पढ़ो(&dm->usecnt))
+		वापस -EBUSY;
 
-	return dm->device->ops.dealloc_dm(dm, attrs);
-}
+	वापस dm->device->ops.dealloc_dm(dm, attrs);
+पूर्ण
 
-static int UVERBS_HANDLER(UVERBS_METHOD_DM_ALLOC)(
-	struct uverbs_attr_bundle *attrs)
-{
-	struct ib_dm_alloc_attr attr = {};
-	struct ib_uobject *uobj =
+अटल पूर्णांक UVERBS_HANDLER(UVERBS_METHOD_DM_ALLOC)(
+	काष्ठा uverbs_attr_bundle *attrs)
+अणु
+	काष्ठा ib_dm_alloc_attr attr = अणुपूर्ण;
+	काष्ठा ib_uobject *uobj =
 		uverbs_attr_get(attrs, UVERBS_ATTR_ALLOC_DM_HANDLE)
 			->obj_attr.uobject;
-	struct ib_device *ib_dev = attrs->context->device;
-	struct ib_dm *dm;
-	int ret;
+	काष्ठा ib_device *ib_dev = attrs->context->device;
+	काष्ठा ib_dm *dm;
+	पूर्णांक ret;
 
-	if (!ib_dev->ops.alloc_dm)
-		return -EOPNOTSUPP;
+	अगर (!ib_dev->ops.alloc_dm)
+		वापस -EOPNOTSUPP;
 
 	ret = uverbs_copy_from(&attr.length, attrs,
 			       UVERBS_ATTR_ALLOC_DM_LENGTH);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = uverbs_copy_from(&attr.alignment, attrs,
 			       UVERBS_ATTR_ALLOC_DM_ALIGNMENT);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dm = ib_dev->ops.alloc_dm(ib_dev, attrs->context, &attr, attrs);
-	if (IS_ERR(dm))
-		return PTR_ERR(dm);
+	अगर (IS_ERR(dm))
+		वापस PTR_ERR(dm);
 
 	dm->device  = ib_dev;
 	dm->length  = attr.length;
@@ -81,8 +82,8 @@ static int UVERBS_HANDLER(UVERBS_METHOD_DM_ALLOC)(
 
 	uobj->object = dm;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DECLARE_UVERBS_NAMED_METHOD(
 	UVERBS_METHOD_DM_ALLOC,
@@ -105,12 +106,12 @@ DECLARE_UVERBS_NAMED_METHOD_DESTROY(
 			UA_MANDATORY));
 
 DECLARE_UVERBS_NAMED_OBJECT(UVERBS_OBJECT_DM,
-			    UVERBS_TYPE_ALLOC_IDR(uverbs_free_dm),
+			    UVERBS_TYPE_ALLOC_IDR(uverbs_मुक्त_dm),
 			    &UVERBS_METHOD(UVERBS_METHOD_DM_ALLOC),
 			    &UVERBS_METHOD(UVERBS_METHOD_DM_FREE));
 
-const struct uapi_definition uverbs_def_obj_dm[] = {
+स्थिर काष्ठा uapi_definition uverbs_def_obj_dm[] = अणु
 	UAPI_DEF_CHAIN_OBJ_TREE_NAMED(UVERBS_OBJECT_DM,
 				      UAPI_DEF_OBJ_NEEDS_FN(dealloc_dm)),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;

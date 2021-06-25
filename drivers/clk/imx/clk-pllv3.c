@@ -1,473 +1,474 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2012 Freescale Semiconductor, Inc.
  * Copyright 2012 Linaro Ltd.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/slab.h>
-#include <linux/jiffies.h>
-#include <linux/err.h>
-#include "clk.h"
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/err.h>
+#समावेश "clk.h"
 
-#define PLL_NUM_OFFSET		0x10
-#define PLL_DENOM_OFFSET	0x20
-#define PLL_IMX7_NUM_OFFSET	0x20
-#define PLL_IMX7_DENOM_OFFSET	0x30
+#घोषणा PLL_NUM_OFFSET		0x10
+#घोषणा PLL_DENOM_OFFSET	0x20
+#घोषणा PLL_IMX7_NUM_OFFSET	0x20
+#घोषणा PLL_IMX7_DENOM_OFFSET	0x30
 
-#define PLL_VF610_NUM_OFFSET	0x20
-#define PLL_VF610_DENOM_OFFSET	0x30
+#घोषणा PLL_VF610_NUM_OFFSET	0x20
+#घोषणा PLL_VF610_DENOM_OFFSET	0x30
 
-#define BM_PLL_POWER		(0x1 << 12)
-#define BM_PLL_LOCK		(0x1 << 31)
-#define IMX7_ENET_PLL_POWER	(0x1 << 5)
-#define IMX7_DDR_PLL_POWER	(0x1 << 20)
+#घोषणा BM_PLL_POWER		(0x1 << 12)
+#घोषणा BM_PLL_LOCK		(0x1 << 31)
+#घोषणा IMX7_ENET_PLL_POWER	(0x1 << 5)
+#घोषणा IMX7_DDR_PLL_POWER	(0x1 << 20)
 
-#define PLL_LOCK_TIMEOUT	10000
+#घोषणा PLL_LOCK_TIMEOUT	10000
 
 /**
- * struct clk_pllv3 - IMX PLL clock version 3
- * @hw:		clock source
- * @base:	 base address of PLL registers
- * @power_bit:	 pll power bit mask
- * @powerup_set: set power_bit to power up the PLL
- * @div_mask:	 mask of divider bits
- * @div_shift:	 shift of divider bits
- * @ref_clock:	reference clock rate
- * @num_offset:	num register offset
- * @denom_offset: denom register offset
+ * काष्ठा clk_pllv3 - IMX PLL घड़ी version 3
+ * @hw:		घड़ी source
+ * @base:	 base address of PLL रेजिस्टरs
+ * @घातer_bit:	 pll घातer bit mask
+ * @घातerup_set: set घातer_bit to घातer up the PLL
+ * @भाग_mask:	 mask of भागider bits
+ * @भाग_shअगरt:	 shअगरt of भागider bits
+ * @ref_घड़ी:	reference घड़ी rate
+ * @num_offset:	num रेजिस्टर offset
+ * @denom_offset: denom रेजिस्टर offset
  *
- * IMX PLL clock version 3, found on i.MX6 series.  Divider for pllv3
+ * IMX PLL घड़ी version 3, found on i.MX6 series.  Divider क्रम pllv3
  * is actually a multiplier, and always sits at bit 0.
  */
-struct clk_pllv3 {
-	struct clk_hw	hw;
-	void __iomem	*base;
-	u32		power_bit;
-	bool		powerup_set;
-	u32		div_mask;
-	u32		div_shift;
-	unsigned long	ref_clock;
+काष्ठा clk_pllv3 अणु
+	काष्ठा clk_hw	hw;
+	व्योम __iomem	*base;
+	u32		घातer_bit;
+	bool		घातerup_set;
+	u32		भाग_mask;
+	u32		भाग_shअगरt;
+	अचिन्हित दीर्घ	ref_घड़ी;
 	u32		num_offset;
 	u32		denom_offset;
-};
+पूर्ण;
 
-#define to_clk_pllv3(_hw) container_of(_hw, struct clk_pllv3, hw)
+#घोषणा to_clk_pllv3(_hw) container_of(_hw, काष्ठा clk_pllv3, hw)
 
-static int clk_pllv3_wait_lock(struct clk_pllv3 *pll)
-{
-	u32 val = readl_relaxed(pll->base) & pll->power_bit;
+अटल पूर्णांक clk_pllv3_रुको_lock(काष्ठा clk_pllv3 *pll)
+अणु
+	u32 val = पढ़ोl_relaxed(pll->base) & pll->घातer_bit;
 
-	/* No need to wait for lock when pll is not powered up */
-	if ((pll->powerup_set && !val) || (!pll->powerup_set && val))
-		return 0;
+	/* No need to रुको क्रम lock when pll is not घातered up */
+	अगर ((pll->घातerup_set && !val) || (!pll->घातerup_set && val))
+		वापस 0;
 
-	return readl_relaxed_poll_timeout(pll->base, val, val & BM_PLL_LOCK,
+	वापस पढ़ोl_relaxed_poll_समयout(pll->base, val, val & BM_PLL_LOCK,
 					  500, PLL_LOCK_TIMEOUT);
-}
+पूर्ण
 
-static int clk_pllv3_prepare(struct clk_hw *hw)
-{
-	struct clk_pllv3 *pll = to_clk_pllv3(hw);
+अटल पूर्णांक clk_pllv3_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_pllv3 *pll = to_clk_pllv3(hw);
 	u32 val;
 
-	val = readl_relaxed(pll->base);
-	if (pll->powerup_set)
-		val |= pll->power_bit;
-	else
-		val &= ~pll->power_bit;
-	writel_relaxed(val, pll->base);
+	val = पढ़ोl_relaxed(pll->base);
+	अगर (pll->घातerup_set)
+		val |= pll->घातer_bit;
+	अन्यथा
+		val &= ~pll->घातer_bit;
+	ग_लिखोl_relaxed(val, pll->base);
 
-	return clk_pllv3_wait_lock(pll);
-}
+	वापस clk_pllv3_रुको_lock(pll);
+पूर्ण
 
-static void clk_pllv3_unprepare(struct clk_hw *hw)
-{
-	struct clk_pllv3 *pll = to_clk_pllv3(hw);
+अटल व्योम clk_pllv3_unprepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_pllv3 *pll = to_clk_pllv3(hw);
 	u32 val;
 
-	val = readl_relaxed(pll->base);
-	if (pll->powerup_set)
-		val &= ~pll->power_bit;
-	else
-		val |= pll->power_bit;
-	writel_relaxed(val, pll->base);
-}
+	val = पढ़ोl_relaxed(pll->base);
+	अगर (pll->घातerup_set)
+		val &= ~pll->घातer_bit;
+	अन्यथा
+		val |= pll->घातer_bit;
+	ग_लिखोl_relaxed(val, pll->base);
+पूर्ण
 
-static int clk_pllv3_is_prepared(struct clk_hw *hw)
-{
-	struct clk_pllv3 *pll = to_clk_pllv3(hw);
+अटल पूर्णांक clk_pllv3_is_prepared(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_pllv3 *pll = to_clk_pllv3(hw);
 
-	if (readl_relaxed(pll->base) & BM_PLL_LOCK)
-		return 1;
+	अगर (पढ़ोl_relaxed(pll->base) & BM_PLL_LOCK)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long clk_pllv3_recalc_rate(struct clk_hw *hw,
-					   unsigned long parent_rate)
-{
-	struct clk_pllv3 *pll = to_clk_pllv3(hw);
-	u32 div = (readl_relaxed(pll->base) >> pll->div_shift)  & pll->div_mask;
+अटल अचिन्हित दीर्घ clk_pllv3_recalc_rate(काष्ठा clk_hw *hw,
+					   अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_pllv3 *pll = to_clk_pllv3(hw);
+	u32 भाग = (पढ़ोl_relaxed(pll->base) >> pll->भाग_shअगरt)  & pll->भाग_mask;
 
-	return (div == 1) ? parent_rate * 22 : parent_rate * 20;
-}
+	वापस (भाग == 1) ? parent_rate * 22 : parent_rate * 20;
+पूर्ण
 
-static long clk_pllv3_round_rate(struct clk_hw *hw, unsigned long rate,
-				 unsigned long *prate)
-{
-	unsigned long parent_rate = *prate;
+अटल दीर्घ clk_pllv3_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				 अचिन्हित दीर्घ *prate)
+अणु
+	अचिन्हित दीर्घ parent_rate = *prate;
 
-	return (rate >= parent_rate * 22) ? parent_rate * 22 :
+	वापस (rate >= parent_rate * 22) ? parent_rate * 22 :
 					    parent_rate * 20;
-}
+पूर्ण
 
-static int clk_pllv3_set_rate(struct clk_hw *hw, unsigned long rate,
-		unsigned long parent_rate)
-{
-	struct clk_pllv3 *pll = to_clk_pllv3(hw);
-	u32 val, div;
+अटल पूर्णांक clk_pllv3_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_pllv3 *pll = to_clk_pllv3(hw);
+	u32 val, भाग;
 
-	if (rate == parent_rate * 22)
-		div = 1;
-	else if (rate == parent_rate * 20)
-		div = 0;
-	else
-		return -EINVAL;
+	अगर (rate == parent_rate * 22)
+		भाग = 1;
+	अन्यथा अगर (rate == parent_rate * 20)
+		भाग = 0;
+	अन्यथा
+		वापस -EINVAL;
 
-	val = readl_relaxed(pll->base);
-	val &= ~(pll->div_mask << pll->div_shift);
-	val |= (div << pll->div_shift);
-	writel_relaxed(val, pll->base);
+	val = पढ़ोl_relaxed(pll->base);
+	val &= ~(pll->भाग_mask << pll->भाग_shअगरt);
+	val |= (भाग << pll->भाग_shअगरt);
+	ग_लिखोl_relaxed(val, pll->base);
 
-	return clk_pllv3_wait_lock(pll);
-}
+	वापस clk_pllv3_रुको_lock(pll);
+पूर्ण
 
-static const struct clk_ops clk_pllv3_ops = {
+अटल स्थिर काष्ठा clk_ops clk_pllv3_ops = अणु
 	.prepare	= clk_pllv3_prepare,
 	.unprepare	= clk_pllv3_unprepare,
 	.is_prepared	= clk_pllv3_is_prepared,
 	.recalc_rate	= clk_pllv3_recalc_rate,
 	.round_rate	= clk_pllv3_round_rate,
 	.set_rate	= clk_pllv3_set_rate,
-};
+पूर्ण;
 
-static unsigned long clk_pllv3_sys_recalc_rate(struct clk_hw *hw,
-					       unsigned long parent_rate)
-{
-	struct clk_pllv3 *pll = to_clk_pllv3(hw);
-	u32 div = readl_relaxed(pll->base) & pll->div_mask;
+अटल अचिन्हित दीर्घ clk_pllv3_sys_recalc_rate(काष्ठा clk_hw *hw,
+					       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_pllv3 *pll = to_clk_pllv3(hw);
+	u32 भाग = पढ़ोl_relaxed(pll->base) & pll->भाग_mask;
 
-	return parent_rate * div / 2;
-}
+	वापस parent_rate * भाग / 2;
+पूर्ण
 
-static long clk_pllv3_sys_round_rate(struct clk_hw *hw, unsigned long rate,
-				     unsigned long *prate)
-{
-	unsigned long parent_rate = *prate;
-	unsigned long min_rate = parent_rate * 54 / 2;
-	unsigned long max_rate = parent_rate * 108 / 2;
-	u32 div;
+अटल दीर्घ clk_pllv3_sys_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				     अचिन्हित दीर्घ *prate)
+अणु
+	अचिन्हित दीर्घ parent_rate = *prate;
+	अचिन्हित दीर्घ min_rate = parent_rate * 54 / 2;
+	अचिन्हित दीर्घ max_rate = parent_rate * 108 / 2;
+	u32 भाग;
 
-	if (rate > max_rate)
+	अगर (rate > max_rate)
 		rate = max_rate;
-	else if (rate < min_rate)
+	अन्यथा अगर (rate < min_rate)
 		rate = min_rate;
-	div = rate * 2 / parent_rate;
+	भाग = rate * 2 / parent_rate;
 
-	return parent_rate * div / 2;
-}
+	वापस parent_rate * भाग / 2;
+पूर्ण
 
-static int clk_pllv3_sys_set_rate(struct clk_hw *hw, unsigned long rate,
-		unsigned long parent_rate)
-{
-	struct clk_pllv3 *pll = to_clk_pllv3(hw);
-	unsigned long min_rate = parent_rate * 54 / 2;
-	unsigned long max_rate = parent_rate * 108 / 2;
-	u32 val, div;
+अटल पूर्णांक clk_pllv3_sys_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_pllv3 *pll = to_clk_pllv3(hw);
+	अचिन्हित दीर्घ min_rate = parent_rate * 54 / 2;
+	अचिन्हित दीर्घ max_rate = parent_rate * 108 / 2;
+	u32 val, भाग;
 
-	if (rate < min_rate || rate > max_rate)
-		return -EINVAL;
+	अगर (rate < min_rate || rate > max_rate)
+		वापस -EINVAL;
 
-	div = rate * 2 / parent_rate;
-	val = readl_relaxed(pll->base);
-	val &= ~pll->div_mask;
-	val |= div;
-	writel_relaxed(val, pll->base);
+	भाग = rate * 2 / parent_rate;
+	val = पढ़ोl_relaxed(pll->base);
+	val &= ~pll->भाग_mask;
+	val |= भाग;
+	ग_लिखोl_relaxed(val, pll->base);
 
-	return clk_pllv3_wait_lock(pll);
-}
+	वापस clk_pllv3_रुको_lock(pll);
+पूर्ण
 
-static const struct clk_ops clk_pllv3_sys_ops = {
+अटल स्थिर काष्ठा clk_ops clk_pllv3_sys_ops = अणु
 	.prepare	= clk_pllv3_prepare,
 	.unprepare	= clk_pllv3_unprepare,
 	.is_prepared	= clk_pllv3_is_prepared,
 	.recalc_rate	= clk_pllv3_sys_recalc_rate,
 	.round_rate	= clk_pllv3_sys_round_rate,
 	.set_rate	= clk_pllv3_sys_set_rate,
-};
+पूर्ण;
 
-static unsigned long clk_pllv3_av_recalc_rate(struct clk_hw *hw,
-					      unsigned long parent_rate)
-{
-	struct clk_pllv3 *pll = to_clk_pllv3(hw);
-	u32 mfn = readl_relaxed(pll->base + pll->num_offset);
-	u32 mfd = readl_relaxed(pll->base + pll->denom_offset);
-	u32 div = readl_relaxed(pll->base) & pll->div_mask;
+अटल अचिन्हित दीर्घ clk_pllv3_av_recalc_rate(काष्ठा clk_hw *hw,
+					      अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_pllv3 *pll = to_clk_pllv3(hw);
+	u32 mfn = पढ़ोl_relaxed(pll->base + pll->num_offset);
+	u32 mfd = पढ़ोl_relaxed(pll->base + pll->denom_offset);
+	u32 भाग = पढ़ोl_relaxed(pll->base) & pll->भाग_mask;
 	u64 temp64 = (u64)parent_rate;
 
 	temp64 *= mfn;
-	do_div(temp64, mfd);
+	करो_भाग(temp64, mfd);
 
-	return parent_rate * div + (unsigned long)temp64;
-}
+	वापस parent_rate * भाग + (अचिन्हित दीर्घ)temp64;
+पूर्ण
 
-static long clk_pllv3_av_round_rate(struct clk_hw *hw, unsigned long rate,
-				    unsigned long *prate)
-{
-	unsigned long parent_rate = *prate;
-	unsigned long min_rate = parent_rate * 27;
-	unsigned long max_rate = parent_rate * 54;
-	u32 div;
+अटल दीर्घ clk_pllv3_av_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				    अचिन्हित दीर्घ *prate)
+अणु
+	अचिन्हित दीर्घ parent_rate = *prate;
+	अचिन्हित दीर्घ min_rate = parent_rate * 27;
+	अचिन्हित दीर्घ max_rate = parent_rate * 54;
+	u32 भाग;
 	u32 mfn, mfd = 1000000;
 	u32 max_mfd = 0x3FFFFFFF;
 	u64 temp64;
 
-	if (rate > max_rate)
+	अगर (rate > max_rate)
 		rate = max_rate;
-	else if (rate < min_rate)
+	अन्यथा अगर (rate < min_rate)
 		rate = min_rate;
 
-	if (parent_rate <= max_mfd)
+	अगर (parent_rate <= max_mfd)
 		mfd = parent_rate;
 
-	div = rate / parent_rate;
-	temp64 = (u64) (rate - div * parent_rate);
+	भाग = rate / parent_rate;
+	temp64 = (u64) (rate - भाग * parent_rate);
 	temp64 *= mfd;
-	do_div(temp64, parent_rate);
+	करो_भाग(temp64, parent_rate);
 	mfn = temp64;
 
 	temp64 = (u64)parent_rate;
 	temp64 *= mfn;
-	do_div(temp64, mfd);
+	करो_भाग(temp64, mfd);
 
-	return parent_rate * div + (unsigned long)temp64;
-}
+	वापस parent_rate * भाग + (अचिन्हित दीर्घ)temp64;
+पूर्ण
 
-static int clk_pllv3_av_set_rate(struct clk_hw *hw, unsigned long rate,
-		unsigned long parent_rate)
-{
-	struct clk_pllv3 *pll = to_clk_pllv3(hw);
-	unsigned long min_rate = parent_rate * 27;
-	unsigned long max_rate = parent_rate * 54;
-	u32 val, div;
+अटल पूर्णांक clk_pllv3_av_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_pllv3 *pll = to_clk_pllv3(hw);
+	अचिन्हित दीर्घ min_rate = parent_rate * 27;
+	अचिन्हित दीर्घ max_rate = parent_rate * 54;
+	u32 val, भाग;
 	u32 mfn, mfd = 1000000;
 	u32 max_mfd = 0x3FFFFFFF;
 	u64 temp64;
 
-	if (rate < min_rate || rate > max_rate)
-		return -EINVAL;
+	अगर (rate < min_rate || rate > max_rate)
+		वापस -EINVAL;
 
-	if (parent_rate <= max_mfd)
+	अगर (parent_rate <= max_mfd)
 		mfd = parent_rate;
 
-	div = rate / parent_rate;
-	temp64 = (u64) (rate - div * parent_rate);
+	भाग = rate / parent_rate;
+	temp64 = (u64) (rate - भाग * parent_rate);
 	temp64 *= mfd;
-	do_div(temp64, parent_rate);
+	करो_भाग(temp64, parent_rate);
 	mfn = temp64;
 
-	val = readl_relaxed(pll->base);
-	val &= ~pll->div_mask;
-	val |= div;
-	writel_relaxed(val, pll->base);
-	writel_relaxed(mfn, pll->base + pll->num_offset);
-	writel_relaxed(mfd, pll->base + pll->denom_offset);
+	val = पढ़ोl_relaxed(pll->base);
+	val &= ~pll->भाग_mask;
+	val |= भाग;
+	ग_लिखोl_relaxed(val, pll->base);
+	ग_लिखोl_relaxed(mfn, pll->base + pll->num_offset);
+	ग_लिखोl_relaxed(mfd, pll->base + pll->denom_offset);
 
-	return clk_pllv3_wait_lock(pll);
-}
+	वापस clk_pllv3_रुको_lock(pll);
+पूर्ण
 
-static const struct clk_ops clk_pllv3_av_ops = {
+अटल स्थिर काष्ठा clk_ops clk_pllv3_av_ops = अणु
 	.prepare	= clk_pllv3_prepare,
 	.unprepare	= clk_pllv3_unprepare,
 	.is_prepared	= clk_pllv3_is_prepared,
 	.recalc_rate	= clk_pllv3_av_recalc_rate,
 	.round_rate	= clk_pllv3_av_round_rate,
 	.set_rate	= clk_pllv3_av_set_rate,
-};
+पूर्ण;
 
-struct clk_pllv3_vf610_mf {
-	u32 mfi;	/* integer part, can be 20 or 22 */
+काष्ठा clk_pllv3_vf610_mf अणु
+	u32 mfi;	/* पूर्णांकeger part, can be 20 or 22 */
 	u32 mfn;	/* numerator, 30-bit value */
 	u32 mfd;	/* denominator, 30-bit value, must be less than mfn */
-};
+पूर्ण;
 
-static unsigned long clk_pllv3_vf610_mf_to_rate(unsigned long parent_rate,
-		struct clk_pllv3_vf610_mf mf)
-{
+अटल अचिन्हित दीर्घ clk_pllv3_vf610_mf_to_rate(अचिन्हित दीर्घ parent_rate,
+		काष्ठा clk_pllv3_vf610_mf mf)
+अणु
 	u64 temp64;
 
 	temp64 = parent_rate;
 	temp64 *= mf.mfn;
-	do_div(temp64, mf.mfd);
+	करो_भाग(temp64, mf.mfd);
 
-	return (parent_rate * mf.mfi) + temp64;
-}
+	वापस (parent_rate * mf.mfi) + temp64;
+पूर्ण
 
-static struct clk_pllv3_vf610_mf clk_pllv3_vf610_rate_to_mf(
-		unsigned long parent_rate, unsigned long rate)
-{
-	struct clk_pllv3_vf610_mf mf;
+अटल काष्ठा clk_pllv3_vf610_mf clk_pllv3_vf610_rate_to_mf(
+		अचिन्हित दीर्घ parent_rate, अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा clk_pllv3_vf610_mf mf;
 	u64 temp64;
 
 	mf.mfi = (rate >= 22 * parent_rate) ? 22 : 20;
-	mf.mfd = 0x3fffffff;	/* use max supported value for best accuracy */
+	mf.mfd = 0x3fffffff;	/* use max supported value क्रम best accuracy */
 
-	if (rate <= parent_rate * mf.mfi)
+	अगर (rate <= parent_rate * mf.mfi)
 		mf.mfn = 0;
-	else if (rate >= parent_rate * (mf.mfi + 1))
+	अन्यथा अगर (rate >= parent_rate * (mf.mfi + 1))
 		mf.mfn = mf.mfd - 1;
-	else {
+	अन्यथा अणु
 		/* rate = parent_rate * (mfi + mfn/mfd) */
 		temp64 = rate - parent_rate * mf.mfi;
 		temp64 *= mf.mfd;
-		do_div(temp64, parent_rate);
+		करो_भाग(temp64, parent_rate);
 		mf.mfn = temp64;
-	}
+	पूर्ण
 
-	return mf;
-}
+	वापस mf;
+पूर्ण
 
-static unsigned long clk_pllv3_vf610_recalc_rate(struct clk_hw *hw,
-					      unsigned long parent_rate)
-{
-	struct clk_pllv3 *pll = to_clk_pllv3(hw);
-	struct clk_pllv3_vf610_mf mf;
+अटल अचिन्हित दीर्घ clk_pllv3_vf610_recalc_rate(काष्ठा clk_hw *hw,
+					      अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_pllv3 *pll = to_clk_pllv3(hw);
+	काष्ठा clk_pllv3_vf610_mf mf;
 
-	mf.mfn = readl_relaxed(pll->base + pll->num_offset);
-	mf.mfd = readl_relaxed(pll->base + pll->denom_offset);
-	mf.mfi = (readl_relaxed(pll->base) & pll->div_mask) ? 22 : 20;
+	mf.mfn = पढ़ोl_relaxed(pll->base + pll->num_offset);
+	mf.mfd = पढ़ोl_relaxed(pll->base + pll->denom_offset);
+	mf.mfi = (पढ़ोl_relaxed(pll->base) & pll->भाग_mask) ? 22 : 20;
 
-	return clk_pllv3_vf610_mf_to_rate(parent_rate, mf);
-}
+	वापस clk_pllv3_vf610_mf_to_rate(parent_rate, mf);
+पूर्ण
 
-static long clk_pllv3_vf610_round_rate(struct clk_hw *hw, unsigned long rate,
-				    unsigned long *prate)
-{
-	struct clk_pllv3_vf610_mf mf = clk_pllv3_vf610_rate_to_mf(*prate, rate);
+अटल दीर्घ clk_pllv3_vf610_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				    अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा clk_pllv3_vf610_mf mf = clk_pllv3_vf610_rate_to_mf(*prate, rate);
 
-	return clk_pllv3_vf610_mf_to_rate(*prate, mf);
-}
+	वापस clk_pllv3_vf610_mf_to_rate(*prate, mf);
+पूर्ण
 
-static int clk_pllv3_vf610_set_rate(struct clk_hw *hw, unsigned long rate,
-		unsigned long parent_rate)
-{
-	struct clk_pllv3 *pll = to_clk_pllv3(hw);
-	struct clk_pllv3_vf610_mf mf =
+अटल पूर्णांक clk_pllv3_vf610_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_pllv3 *pll = to_clk_pllv3(hw);
+	काष्ठा clk_pllv3_vf610_mf mf =
 			clk_pllv3_vf610_rate_to_mf(parent_rate, rate);
 	u32 val;
 
-	val = readl_relaxed(pll->base);
-	if (mf.mfi == 20)
-		val &= ~pll->div_mask;	/* clear bit for mfi=20 */
-	else
-		val |= pll->div_mask;	/* set bit for mfi=22 */
-	writel_relaxed(val, pll->base);
+	val = पढ़ोl_relaxed(pll->base);
+	अगर (mf.mfi == 20)
+		val &= ~pll->भाग_mask;	/* clear bit क्रम mfi=20 */
+	अन्यथा
+		val |= pll->भाग_mask;	/* set bit क्रम mfi=22 */
+	ग_लिखोl_relaxed(val, pll->base);
 
-	writel_relaxed(mf.mfn, pll->base + pll->num_offset);
-	writel_relaxed(mf.mfd, pll->base + pll->denom_offset);
+	ग_लिखोl_relaxed(mf.mfn, pll->base + pll->num_offset);
+	ग_लिखोl_relaxed(mf.mfd, pll->base + pll->denom_offset);
 
-	return clk_pllv3_wait_lock(pll);
-}
+	वापस clk_pllv3_रुको_lock(pll);
+पूर्ण
 
-static const struct clk_ops clk_pllv3_vf610_ops = {
+अटल स्थिर काष्ठा clk_ops clk_pllv3_vf610_ops = अणु
 	.prepare	= clk_pllv3_prepare,
 	.unprepare	= clk_pllv3_unprepare,
 	.is_prepared	= clk_pllv3_is_prepared,
 	.recalc_rate	= clk_pllv3_vf610_recalc_rate,
 	.round_rate	= clk_pllv3_vf610_round_rate,
 	.set_rate	= clk_pllv3_vf610_set_rate,
-};
+पूर्ण;
 
-static unsigned long clk_pllv3_enet_recalc_rate(struct clk_hw *hw,
-						unsigned long parent_rate)
-{
-	struct clk_pllv3 *pll = to_clk_pllv3(hw);
+अटल अचिन्हित दीर्घ clk_pllv3_enet_recalc_rate(काष्ठा clk_hw *hw,
+						अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_pllv3 *pll = to_clk_pllv3(hw);
 
-	return pll->ref_clock;
-}
+	वापस pll->ref_घड़ी;
+पूर्ण
 
-static const struct clk_ops clk_pllv3_enet_ops = {
+अटल स्थिर काष्ठा clk_ops clk_pllv3_enet_ops = अणु
 	.prepare	= clk_pllv3_prepare,
 	.unprepare	= clk_pllv3_unprepare,
 	.is_prepared	= clk_pllv3_is_prepared,
 	.recalc_rate	= clk_pllv3_enet_recalc_rate,
-};
+पूर्ण;
 
-struct clk_hw *imx_clk_hw_pllv3(enum imx_pllv3_type type, const char *name,
-			  const char *parent_name, void __iomem *base,
-			  u32 div_mask)
-{
-	struct clk_pllv3 *pll;
-	const struct clk_ops *ops;
-	struct clk_hw *hw;
-	struct clk_init_data init;
-	int ret;
+काष्ठा clk_hw *imx_clk_hw_pllv3(क्रमागत imx_pllv3_type type, स्थिर अक्षर *name,
+			  स्थिर अक्षर *parent_name, व्योम __iomem *base,
+			  u32 भाग_mask)
+अणु
+	काष्ठा clk_pllv3 *pll;
+	स्थिर काष्ठा clk_ops *ops;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
-	pll = kzalloc(sizeof(*pll), GFP_KERNEL);
-	if (!pll)
-		return ERR_PTR(-ENOMEM);
+	pll = kzalloc(माप(*pll), GFP_KERNEL);
+	अगर (!pll)
+		वापस ERR_PTR(-ENOMEM);
 
-	pll->power_bit = BM_PLL_POWER;
+	pll->घातer_bit = BM_PLL_POWER;
 	pll->num_offset = PLL_NUM_OFFSET;
 	pll->denom_offset = PLL_DENOM_OFFSET;
 
-	switch (type) {
-	case IMX_PLLV3_SYS:
+	चयन (type) अणु
+	हाल IMX_PLLV3_SYS:
 		ops = &clk_pllv3_sys_ops;
-		break;
-	case IMX_PLLV3_SYS_VF610:
+		अवरोध;
+	हाल IMX_PLLV3_SYS_VF610:
 		ops = &clk_pllv3_vf610_ops;
 		pll->num_offset = PLL_VF610_NUM_OFFSET;
 		pll->denom_offset = PLL_VF610_DENOM_OFFSET;
-		break;
-	case IMX_PLLV3_USB_VF610:
-		pll->div_shift = 1;
+		अवरोध;
+	हाल IMX_PLLV3_USB_VF610:
+		pll->भाग_shअगरt = 1;
 		fallthrough;
-	case IMX_PLLV3_USB:
+	हाल IMX_PLLV3_USB:
 		ops = &clk_pllv3_ops;
-		pll->powerup_set = true;
-		break;
-	case IMX_PLLV3_AV_IMX7:
+		pll->घातerup_set = true;
+		अवरोध;
+	हाल IMX_PLLV3_AV_IMX7:
 		pll->num_offset = PLL_IMX7_NUM_OFFSET;
 		pll->denom_offset = PLL_IMX7_DENOM_OFFSET;
 		fallthrough;
-	case IMX_PLLV3_AV:
+	हाल IMX_PLLV3_AV:
 		ops = &clk_pllv3_av_ops;
-		break;
-	case IMX_PLLV3_ENET_IMX7:
-		pll->power_bit = IMX7_ENET_PLL_POWER;
-		pll->ref_clock = 1000000000;
+		अवरोध;
+	हाल IMX_PLLV3_ENET_IMX7:
+		pll->घातer_bit = IMX7_ENET_PLL_POWER;
+		pll->ref_घड़ी = 1000000000;
 		ops = &clk_pllv3_enet_ops;
-		break;
-	case IMX_PLLV3_ENET:
-		pll->ref_clock = 500000000;
+		अवरोध;
+	हाल IMX_PLLV3_ENET:
+		pll->ref_घड़ी = 500000000;
 		ops = &clk_pllv3_enet_ops;
-		break;
-	case IMX_PLLV3_DDR_IMX7:
-		pll->power_bit = IMX7_DDR_PLL_POWER;
+		अवरोध;
+	हाल IMX_PLLV3_DDR_IMX7:
+		pll->घातer_bit = IMX7_DDR_PLL_POWER;
 		pll->num_offset = PLL_IMX7_NUM_OFFSET;
 		pll->denom_offset = PLL_IMX7_DENOM_OFFSET;
 		ops = &clk_pllv3_av_ops;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ops = &clk_pllv3_ops;
-	}
+	पूर्ण
 	pll->base = base;
-	pll->div_mask = div_mask;
+	pll->भाग_mask = भाग_mask;
 
 	init.name = name;
 	init.ops = ops;
@@ -478,11 +479,11 @@ struct clk_hw *imx_clk_hw_pllv3(enum imx_pllv3_type type, const char *name,
 	pll->hw.init = &init;
 	hw = &pll->hw;
 
-	ret = clk_hw_register(NULL, hw);
-	if (ret) {
-		kfree(pll);
-		return ERR_PTR(ret);
-	}
+	ret = clk_hw_रेजिस्टर(शून्य, hw);
+	अगर (ret) अणु
+		kमुक्त(pll);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण

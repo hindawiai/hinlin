@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *  sata_promise.h - Promise SATA common definitions and inline funcs
+ *  sata_promise.h - Promise SATA common definitions and अंतरभूत funcs
  *
  *  Copyright 2003-2004 Red Hat, Inc.
  *
- *  libata documentation is available via 'make {ps|pdf}docs',
+ *  libata करोcumentation is available via 'make {ps|pdf}docs',
  *  as Documentation/driver-api/libata.rst
  */
 
-#ifndef __SATA_PROMISE_H__
-#define __SATA_PROMISE_H__
+#अगर_अघोषित __SATA_PROMISE_H__
+#घोषणा __SATA_PROMISE_H__
 
-#include <linux/ata.h>
+#समावेश <linux/ata.h>
 
-enum pdc_packet_bits {
+क्रमागत pdc_packet_bits अणु
 	PDC_PKT_READ		= (1 << 2),
 	PDC_PKT_NODATA		= (1 << 3),
 
@@ -23,74 +24,74 @@ enum pdc_packet_bits {
 	PDC_LAST_REG		= (1 << 3),
 
 	PDC_REG_DEVCTL		= (1 << 3) | (1 << 2) | (1 << 1),
-};
+पूर्ण;
 
-static inline unsigned int pdc_pkt_header(struct ata_taskfile *tf,
+अटल अंतरभूत अचिन्हित पूर्णांक pdc_pkt_header(काष्ठा ata_taskfile *tf,
 					  dma_addr_t sg_table,
-					  unsigned int devno, u8 *buf)
-{
+					  अचिन्हित पूर्णांक devno, u8 *buf)
+अणु
 	u8 dev_reg;
 	__le32 *buf32 = (__le32 *) buf;
 
 	/* set control bits (byte 0), zero delay seq id (byte 3),
 	 * and seq id (byte 2)
 	 */
-	switch (tf->protocol) {
-	case ATA_PROT_DMA:
-		if (!(tf->flags & ATA_TFLAG_WRITE))
+	चयन (tf->protocol) अणु
+	हाल ATA_PROT_DMA:
+		अगर (!(tf->flags & ATA_TFLAG_WRITE))
 			buf32[0] = cpu_to_le32(PDC_PKT_READ);
-		else
+		अन्यथा
 			buf32[0] = 0;
-		break;
+		अवरोध;
 
-	case ATA_PROT_NODATA:
+	हाल ATA_PROT_NODATA:
 		buf32[0] = cpu_to_le32(PDC_PKT_NODATA);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		BUG();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	buf32[1] = cpu_to_le32(sg_table);	/* S/G table addr */
 	buf32[2] = 0;				/* no next-packet */
 
-	if (devno == 0)
+	अगर (devno == 0)
 		dev_reg = ATA_DEVICE_OBS;
-	else
+	अन्यथा
 		dev_reg = ATA_DEVICE_OBS | ATA_DEV1;
 
 	/* select device */
 	buf[12] = (1 << 5) | PDC_PKT_CLEAR_BSY | ATA_REG_DEVICE;
 	buf[13] = dev_reg;
 
-	/* device control register */
+	/* device control रेजिस्टर */
 	buf[14] = (1 << 5) | PDC_REG_DEVCTL;
 	buf[15] = tf->ctl;
 
-	return 16; 	/* offset of next byte */
-}
+	वापस 16; 	/* offset of next byte */
+पूर्ण
 
-static inline unsigned int pdc_pkt_footer(struct ata_taskfile *tf, u8 *buf,
-				  unsigned int i)
-{
-	if (tf->flags & ATA_TFLAG_DEVICE) {
+अटल अंतरभूत अचिन्हित पूर्णांक pdc_pkt_footer(काष्ठा ata_taskfile *tf, u8 *buf,
+				  अचिन्हित पूर्णांक i)
+अणु
+	अगर (tf->flags & ATA_TFLAG_DEVICE) अणु
 		buf[i++] = (1 << 5) | ATA_REG_DEVICE;
 		buf[i++] = tf->device;
-	}
+	पूर्ण
 
 	/* and finally the command itself; also includes end-of-pkt marker */
 	buf[i++] = (1 << 5) | PDC_LAST_REG | ATA_REG_CMD;
 	buf[i++] = tf->command;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static inline unsigned int pdc_prep_lba28(struct ata_taskfile *tf, u8 *buf, unsigned int i)
-{
-	/* the "(1 << 5)" should be read "(count << 5)" */
+अटल अंतरभूत अचिन्हित पूर्णांक pdc_prep_lba28(काष्ठा ata_taskfile *tf, u8 *buf, अचिन्हित पूर्णांक i)
+अणु
+	/* the "(1 << 5)" should be पढ़ो "(count << 5)" */
 
-	/* ATA command block registers */
+	/* ATA command block रेजिस्टरs */
 	buf[i++] = (1 << 5) | ATA_REG_FEATURE;
 	buf[i++] = tf->feature;
 
@@ -106,14 +107,14 @@ static inline unsigned int pdc_prep_lba28(struct ata_taskfile *tf, u8 *buf, unsi
 	buf[i++] = (1 << 5) | ATA_REG_LBAH;
 	buf[i++] = tf->lbah;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static inline unsigned int pdc_prep_lba48(struct ata_taskfile *tf, u8 *buf, unsigned int i)
-{
-	/* the "(2 << 5)" should be read "(count << 5)" */
+अटल अंतरभूत अचिन्हित पूर्णांक pdc_prep_lba48(काष्ठा ata_taskfile *tf, u8 *buf, अचिन्हित पूर्णांक i)
+अणु
+	/* the "(2 << 5)" should be पढ़ो "(count << 5)" */
 
-	/* ATA command block registers */
+	/* ATA command block रेजिस्टरs */
 	buf[i++] = (2 << 5) | ATA_REG_FEATURE;
 	buf[i++] = tf->hob_feature;
 	buf[i++] = tf->feature;
@@ -134,8 +135,8 @@ static inline unsigned int pdc_prep_lba48(struct ata_taskfile *tf, u8 *buf, unsi
 	buf[i++] = tf->hob_lbah;
 	buf[i++] = tf->lbah;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
 
-#endif /* __SATA_PROMISE_H__ */
+#पूर्ण_अगर /* __SATA_PROMISE_H__ */

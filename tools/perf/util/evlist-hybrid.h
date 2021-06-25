@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_EVLIST_HYBRID_H
-#define __PERF_EVLIST_HYBRID_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_EVLIST_HYBRID_H
+#घोषणा __PERF_EVLIST_HYBRID_H
 
-#include <linux/compiler.h>
-#include <linux/kernel.h>
-#include "evlist.h"
-#include <unistd.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/kernel.h>
+#समावेश "evlist.h"
+#समावेश <unistd.h>
 
-int evlist__add_default_hybrid(struct evlist *evlist, bool precise);
-void evlist__warn_hybrid_group(struct evlist *evlist);
-bool evlist__has_hybrid(struct evlist *evlist);
+पूर्णांक evlist__add_शेष_hybrid(काष्ठा evlist *evlist, bool precise);
+व्योम evlist__warn_hybrid_group(काष्ठा evlist *evlist);
+bool evlist__has_hybrid(काष्ठा evlist *evlist);
 
-#endif /* __PERF_EVLIST_HYBRID_H */
+#पूर्ण_अगर /* __PERF_EVLIST_HYBRID_H */

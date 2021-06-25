@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Roccat Kone driver for Linux
+ * Roccat Kone driver क्रम Linux
  *
- * Copyright (c) 2010 Stefan Achatz <erazor_de@users.sourceforge.net>
+ * Copyright (c) 2010 Stefan Achatz <erazor_de@users.sourceक्रमge.net>
  */
 
 /*
@@ -14,569 +15,569 @@
  * key- and button-events.
  *
  * TODO implement on-the-fly polling-rate change
- *      The windows driver has the ability to change the polling rate of the
+ *      The winकरोws driver has the ability to change the polling rate of the
  *      device on the press of a mousebutton.
- *      Is it possible to remove and reinstall the urb in raw-event- or any
- *      other handler, or to defer this action to be executed somewhere else?
+ *      Is it possible to हटाओ and reinstall the urb in raw-event- or any
+ *      other handler, or to defer this action to be executed somewhere अन्यथा?
  *
- * TODO is it possible to overwrite group for sysfs attributes via udev?
+ * TODO is it possible to overग_लिखो group क्रम sysfs attributes via udev?
  */
 
-#include <linux/device.h>
-#include <linux/input.h>
-#include <linux/hid.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/hid-roccat.h>
-#include "hid-ids.h"
-#include "hid-roccat-common.h"
-#include "hid-roccat-kone.h"
+#समावेश <linux/device.h>
+#समावेश <linux/input.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/hid-roccat.h>
+#समावेश "hid-ids.h"
+#समावेश "hid-roccat-common.h"
+#समावेश "hid-roccat-kone.h"
 
-static uint profile_numbers[5] = {0, 1, 2, 3, 4};
+अटल uपूर्णांक profile_numbers[5] = अणु0, 1, 2, 3, 4पूर्ण;
 
-static void kone_profile_activated(struct kone_device *kone, uint new_profile)
-{
+अटल व्योम kone_profile_activated(काष्ठा kone_device *kone, uपूर्णांक new_profile)
+अणु
 	kone->actual_profile = new_profile;
 	kone->actual_dpi = kone->profiles[new_profile - 1].startup_dpi;
-}
+पूर्ण
 
-static void kone_profile_report(struct kone_device *kone, uint new_profile)
-{
-	struct kone_roccat_report roccat_report;
+अटल व्योम kone_profile_report(काष्ठा kone_device *kone, uपूर्णांक new_profile)
+अणु
+	काष्ठा kone_roccat_report roccat_report;
 
-	roccat_report.event = kone_mouse_event_switch_profile;
+	roccat_report.event = kone_mouse_event_चयन_profile;
 	roccat_report.value = new_profile;
 	roccat_report.key = 0;
-	roccat_report_event(kone->chrdev_minor, (uint8_t *)&roccat_report);
-}
+	roccat_report_event(kone->chrdev_minor, (uपूर्णांक8_t *)&roccat_report);
+पूर्ण
 
-static int kone_receive(struct usb_device *usb_dev, uint usb_command,
-		void *data, uint size)
-{
-	char *buf;
-	int len;
+अटल पूर्णांक kone_receive(काष्ठा usb_device *usb_dev, uपूर्णांक usb_command,
+		व्योम *data, uपूर्णांक size)
+अणु
+	अक्षर *buf;
+	पूर्णांक len;
 
-	buf = kmalloc(size, GFP_KERNEL);
-	if (buf == NULL)
-		return -ENOMEM;
+	buf = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (buf == शून्य)
+		वापस -ENOMEM;
 
 	len = usb_control_msg(usb_dev, usb_rcvctrlpipe(usb_dev, 0),
 			HID_REQ_GET_REPORT,
-			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_IN,
+			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_IN,
 			usb_command, 0, buf, size, USB_CTRL_SET_TIMEOUT);
 
-	memcpy(data, buf, size);
-	kfree(buf);
-	return ((len < 0) ? len : ((len != size) ? -EIO : 0));
-}
+	स_नकल(data, buf, size);
+	kमुक्त(buf);
+	वापस ((len < 0) ? len : ((len != size) ? -EIO : 0));
+पूर्ण
 
-static int kone_send(struct usb_device *usb_dev, uint usb_command,
-		void const *data, uint size)
-{
-	char *buf;
-	int len;
+अटल पूर्णांक kone_send(काष्ठा usb_device *usb_dev, uपूर्णांक usb_command,
+		व्योम स्थिर *data, uपूर्णांक size)
+अणु
+	अक्षर *buf;
+	पूर्णांक len;
 
 	buf = kmemdup(data, size, GFP_KERNEL);
-	if (buf == NULL)
-		return -ENOMEM;
+	अगर (buf == शून्य)
+		वापस -ENOMEM;
 
 	len = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
 			HID_REQ_SET_REPORT,
-			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_OUT,
+			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_OUT,
 			usb_command, 0, buf, size, USB_CTRL_SET_TIMEOUT);
 
-	kfree(buf);
-	return ((len < 0) ? len : ((len != size) ? -EIO : 0));
-}
+	kमुक्त(buf);
+	वापस ((len < 0) ? len : ((len != size) ? -EIO : 0));
+पूर्ण
 
-/* kone_class is used for creating sysfs attributes via roccat char device */
-static struct class *kone_class;
+/* kone_class is used क्रम creating sysfs attributes via roccat अक्षर device */
+अटल काष्ठा class *kone_class;
 
-static void kone_set_settings_checksum(struct kone_settings *settings)
-{
-	uint16_t checksum = 0;
-	unsigned char *address = (unsigned char *)settings;
-	int i;
+अटल व्योम kone_set_settings_checksum(काष्ठा kone_settings *settings)
+अणु
+	uपूर्णांक16_t checksum = 0;
+	अचिन्हित अक्षर *address = (अचिन्हित अक्षर *)settings;
+	पूर्णांक i;
 
-	for (i = 0; i < sizeof(struct kone_settings) - 2; ++i, ++address)
+	क्रम (i = 0; i < माप(काष्ठा kone_settings) - 2; ++i, ++address)
 		checksum += *address;
 	settings->checksum = cpu_to_le16(checksum);
-}
+पूर्ण
 
 /*
  * Checks success after writing data to mouse
- * On success returns 0
- * On failure returns errno
+ * On success वापसs 0
+ * On failure वापसs त्रुटि_सं
  */
-static int kone_check_write(struct usb_device *usb_dev)
-{
-	int retval;
-	uint8_t data;
+अटल पूर्णांक kone_check_ग_लिखो(काष्ठा usb_device *usb_dev)
+अणु
+	पूर्णांक retval;
+	uपूर्णांक8_t data;
 
-	do {
+	करो अणु
 		/*
 		 * Mouse needs 50 msecs until it says ok, but there are
-		 * 30 more msecs needed for next write to work.
+		 * 30 more msecs needed क्रम next ग_लिखो to work.
 		 */
 		msleep(80);
 
 		retval = kone_receive(usb_dev,
-				kone_command_confirm_write, &data, 1);
-		if (retval)
-			return retval;
+				kone_command_confirm_ग_लिखो, &data, 1);
+		अगर (retval)
+			वापस retval;
 
 		/*
 		 * value of 3 seems to mean something like
 		 * "not finished yet, but it looks good"
 		 * So check again after a moment.
 		 */
-	} while (data == 3);
+	पूर्ण जबतक (data == 3);
 
-	if (data == 1) /* everything alright */
-		return 0;
+	अगर (data == 1) /* everything alright */
+		वापस 0;
 
 	/* unknown answer */
 	dev_err(&usb_dev->dev, "got retval %d when checking write\n", data);
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /*
  * Reads settings from mouse and stores it in @buf
- * On success returns 0
- * On failure returns errno
+ * On success वापसs 0
+ * On failure वापसs त्रुटि_सं
  */
-static int kone_get_settings(struct usb_device *usb_dev,
-		struct kone_settings *buf)
-{
-	return kone_receive(usb_dev, kone_command_settings, buf,
-			sizeof(struct kone_settings));
-}
+अटल पूर्णांक kone_get_settings(काष्ठा usb_device *usb_dev,
+		काष्ठा kone_settings *buf)
+अणु
+	वापस kone_receive(usb_dev, kone_command_settings, buf,
+			माप(काष्ठा kone_settings));
+पूर्ण
 
 /*
  * Writes settings from @buf to mouse
- * On success returns 0
- * On failure returns errno
+ * On success वापसs 0
+ * On failure वापसs त्रुटि_सं
  */
-static int kone_set_settings(struct usb_device *usb_dev,
-		struct kone_settings const *settings)
-{
-	int retval;
+अटल पूर्णांक kone_set_settings(काष्ठा usb_device *usb_dev,
+		काष्ठा kone_settings स्थिर *settings)
+अणु
+	पूर्णांक retval;
 
 	retval = kone_send(usb_dev, kone_command_settings,
-			settings, sizeof(struct kone_settings));
-	if (retval)
-		return retval;
-	return kone_check_write(usb_dev);
-}
+			settings, माप(काष्ठा kone_settings));
+	अगर (retval)
+		वापस retval;
+	वापस kone_check_ग_लिखो(usb_dev);
+पूर्ण
 
 /*
  * Reads profile data from mouse and stores it in @buf
- * @number: profile number to read
- * On success returns 0
- * On failure returns errno
+ * @number: profile number to पढ़ो
+ * On success वापसs 0
+ * On failure वापसs त्रुटि_सं
  */
-static int kone_get_profile(struct usb_device *usb_dev,
-		struct kone_profile *buf, int number)
-{
-	int len;
+अटल पूर्णांक kone_get_profile(काष्ठा usb_device *usb_dev,
+		काष्ठा kone_profile *buf, पूर्णांक number)
+अणु
+	पूर्णांक len;
 
-	if (number < 1 || number > 5)
-		return -EINVAL;
+	अगर (number < 1 || number > 5)
+		वापस -EINVAL;
 
 	len = usb_control_msg(usb_dev, usb_rcvctrlpipe(usb_dev, 0),
 			USB_REQ_CLEAR_FEATURE,
-			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_IN,
+			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_IN,
 			kone_command_profile, number, buf,
-			sizeof(struct kone_profile), USB_CTRL_SET_TIMEOUT);
+			माप(काष्ठा kone_profile), USB_CTRL_SET_TIMEOUT);
 
-	if (len != sizeof(struct kone_profile))
-		return -EIO;
+	अगर (len != माप(काष्ठा kone_profile))
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Writes profile data to mouse.
- * @number: profile number to write
- * On success returns 0
- * On failure returns errno
+ * @number: profile number to ग_लिखो
+ * On success वापसs 0
+ * On failure वापसs त्रुटि_सं
  */
-static int kone_set_profile(struct usb_device *usb_dev,
-		struct kone_profile const *profile, int number)
-{
-	int len;
+अटल पूर्णांक kone_set_profile(काष्ठा usb_device *usb_dev,
+		काष्ठा kone_profile स्थिर *profile, पूर्णांक number)
+अणु
+	पूर्णांक len;
 
-	if (number < 1 || number > 5)
-		return -EINVAL;
+	अगर (number < 1 || number > 5)
+		वापस -EINVAL;
 
 	len = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
 			USB_REQ_SET_CONFIGURATION,
-			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_OUT,
-			kone_command_profile, number, (void *)profile,
-			sizeof(struct kone_profile),
+			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_OUT,
+			kone_command_profile, number, (व्योम *)profile,
+			माप(काष्ठा kone_profile),
 			USB_CTRL_SET_TIMEOUT);
 
-	if (len != sizeof(struct kone_profile))
-		return len;
+	अगर (len != माप(काष्ठा kone_profile))
+		वापस len;
 
-	if (kone_check_write(usb_dev))
-		return -EIO;
+	अगर (kone_check_ग_लिखो(usb_dev))
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Reads value of "fast-clip-weight" and stores it in @result
- * On success returns 0
- * On failure returns errno
+ * On success वापसs 0
+ * On failure वापसs त्रुटि_सं
  */
-static int kone_get_weight(struct usb_device *usb_dev, int *result)
-{
-	int retval;
-	uint8_t data;
+अटल पूर्णांक kone_get_weight(काष्ठा usb_device *usb_dev, पूर्णांक *result)
+अणु
+	पूर्णांक retval;
+	uपूर्णांक8_t data;
 
 	retval = kone_receive(usb_dev, kone_command_weight, &data, 1);
 
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	*result = (int)data;
-	return 0;
-}
+	*result = (पूर्णांक)data;
+	वापस 0;
+पूर्ण
 
 /*
  * Reads firmware_version of mouse and stores it in @result
- * On success returns 0
- * On failure returns errno
+ * On success वापसs 0
+ * On failure वापसs त्रुटि_सं
  */
-static int kone_get_firmware_version(struct usb_device *usb_dev, int *result)
-{
-	int retval;
-	uint16_t data;
+अटल पूर्णांक kone_get_firmware_version(काष्ठा usb_device *usb_dev, पूर्णांक *result)
+अणु
+	पूर्णांक retval;
+	uपूर्णांक16_t data;
 
 	retval = kone_receive(usb_dev, kone_command_firmware_version,
 			&data, 2);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	*result = le16_to_cpu(data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t kone_sysfs_read_settings(struct file *fp, struct kobject *kobj,
-		struct bin_attribute *attr, char *buf,
-		loff_t off, size_t count) {
-	struct device *dev = kobj_to_dev(kobj)->parent->parent;
-	struct kone_device *kone = hid_get_drvdata(dev_get_drvdata(dev));
+अटल sमाप_प्रकार kone_sysfs_पढ़ो_settings(काष्ठा file *fp, काष्ठा kobject *kobj,
+		काष्ठा bin_attribute *attr, अक्षर *buf,
+		loff_t off, माप_प्रकार count) अणु
+	काष्ठा device *dev = kobj_to_dev(kobj)->parent->parent;
+	काष्ठा kone_device *kone = hid_get_drvdata(dev_get_drvdata(dev));
 
-	if (off >= sizeof(struct kone_settings))
-		return 0;
+	अगर (off >= माप(काष्ठा kone_settings))
+		वापस 0;
 
-	if (off + count > sizeof(struct kone_settings))
-		count = sizeof(struct kone_settings) - off;
+	अगर (off + count > माप(काष्ठा kone_settings))
+		count = माप(काष्ठा kone_settings) - off;
 
 	mutex_lock(&kone->kone_lock);
-	memcpy(buf, ((char const *)&kone->settings) + off, count);
+	स_नकल(buf, ((अक्षर स्थिर *)&kone->settings) + off, count);
 	mutex_unlock(&kone->kone_lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * Writing settings automatically activates startup_profile.
+ * Writing settings स्वतःmatically activates startup_profile.
  * This function keeps values in kone_device up to date and assumes that in
- * case of error the old data is still valid
+ * हाल of error the old data is still valid
  */
-static ssize_t kone_sysfs_write_settings(struct file *fp, struct kobject *kobj,
-		struct bin_attribute *attr, char *buf,
-		loff_t off, size_t count) {
-	struct device *dev = kobj_to_dev(kobj)->parent->parent;
-	struct kone_device *kone = hid_get_drvdata(dev_get_drvdata(dev));
-	struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev));
-	int retval = 0, difference, old_profile;
-	struct kone_settings *settings = (struct kone_settings *)buf;
+अटल sमाप_प्रकार kone_sysfs_ग_लिखो_settings(काष्ठा file *fp, काष्ठा kobject *kobj,
+		काष्ठा bin_attribute *attr, अक्षर *buf,
+		loff_t off, माप_प्रकार count) अणु
+	काष्ठा device *dev = kobj_to_dev(kobj)->parent->parent;
+	काष्ठा kone_device *kone = hid_get_drvdata(dev_get_drvdata(dev));
+	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(to_usb_पूर्णांकerface(dev));
+	पूर्णांक retval = 0, dअगरference, old_profile;
+	काष्ठा kone_settings *settings = (काष्ठा kone_settings *)buf;
 
 	/* I need to get my data in one piece */
-	if (off != 0 || count != sizeof(struct kone_settings))
-		return -EINVAL;
+	अगर (off != 0 || count != माप(काष्ठा kone_settings))
+		वापस -EINVAL;
 
 	mutex_lock(&kone->kone_lock);
-	difference = memcmp(settings, &kone->settings,
-			    sizeof(struct kone_settings));
-	if (difference) {
-		if (settings->startup_profile < 1 ||
-		    settings->startup_profile > 5) {
+	dअगरference = स_भेद(settings, &kone->settings,
+			    माप(काष्ठा kone_settings));
+	अगर (dअगरference) अणु
+		अगर (settings->startup_profile < 1 ||
+		    settings->startup_profile > 5) अणु
 			retval = -EINVAL;
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 
 		retval = kone_set_settings(usb_dev, settings);
-		if (retval)
-			goto unlock;
+		अगर (retval)
+			जाओ unlock;
 
 		old_profile = kone->settings.startup_profile;
-		memcpy(&kone->settings, settings, sizeof(struct kone_settings));
+		स_नकल(&kone->settings, settings, माप(काष्ठा kone_settings));
 
 		kone_profile_activated(kone, kone->settings.startup_profile);
 
-		if (kone->settings.startup_profile != old_profile)
+		अगर (kone->settings.startup_profile != old_profile)
 			kone_profile_report(kone, kone->settings.startup_profile);
-	}
+	पूर्ण
 unlock:
 	mutex_unlock(&kone->kone_lock);
 
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	return sizeof(struct kone_settings);
-}
-static BIN_ATTR(settings, 0660, kone_sysfs_read_settings,
-		kone_sysfs_write_settings, sizeof(struct kone_settings));
+	वापस माप(काष्ठा kone_settings);
+पूर्ण
+अटल BIN_ATTR(settings, 0660, kone_sysfs_पढ़ो_settings,
+		kone_sysfs_ग_लिखो_settings, माप(काष्ठा kone_settings));
 
-static ssize_t kone_sysfs_read_profilex(struct file *fp,
-		struct kobject *kobj, struct bin_attribute *attr,
-		char *buf, loff_t off, size_t count) {
-	struct device *dev = kobj_to_dev(kobj)->parent->parent;
-	struct kone_device *kone = hid_get_drvdata(dev_get_drvdata(dev));
+अटल sमाप_प्रकार kone_sysfs_पढ़ो_profilex(काष्ठा file *fp,
+		काष्ठा kobject *kobj, काष्ठा bin_attribute *attr,
+		अक्षर *buf, loff_t off, माप_प्रकार count) अणु
+	काष्ठा device *dev = kobj_to_dev(kobj)->parent->parent;
+	काष्ठा kone_device *kone = hid_get_drvdata(dev_get_drvdata(dev));
 
-	if (off >= sizeof(struct kone_profile))
-		return 0;
+	अगर (off >= माप(काष्ठा kone_profile))
+		वापस 0;
 
-	if (off + count > sizeof(struct kone_profile))
-		count = sizeof(struct kone_profile) - off;
+	अगर (off + count > माप(काष्ठा kone_profile))
+		count = माप(काष्ठा kone_profile) - off;
 
 	mutex_lock(&kone->kone_lock);
-	memcpy(buf, ((char const *)&kone->profiles[*(uint *)(attr->private)]) + off, count);
+	स_नकल(buf, ((अक्षर स्थिर *)&kone->profiles[*(uपूर्णांक *)(attr->निजी)]) + off, count);
 	mutex_unlock(&kone->kone_lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-/* Writes data only if different to stored data */
-static ssize_t kone_sysfs_write_profilex(struct file *fp,
-		struct kobject *kobj, struct bin_attribute *attr,
-		char *buf, loff_t off, size_t count) {
-	struct device *dev = kobj_to_dev(kobj)->parent->parent;
-	struct kone_device *kone = hid_get_drvdata(dev_get_drvdata(dev));
-	struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev));
-	struct kone_profile *profile;
-	int retval = 0, difference;
+/* Writes data only अगर dअगरferent to stored data */
+अटल sमाप_प्रकार kone_sysfs_ग_लिखो_profilex(काष्ठा file *fp,
+		काष्ठा kobject *kobj, काष्ठा bin_attribute *attr,
+		अक्षर *buf, loff_t off, माप_प्रकार count) अणु
+	काष्ठा device *dev = kobj_to_dev(kobj)->parent->parent;
+	काष्ठा kone_device *kone = hid_get_drvdata(dev_get_drvdata(dev));
+	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(to_usb_पूर्णांकerface(dev));
+	काष्ठा kone_profile *profile;
+	पूर्णांक retval = 0, dअगरference;
 
 	/* I need to get my data in one piece */
-	if (off != 0 || count != sizeof(struct kone_profile))
-		return -EINVAL;
+	अगर (off != 0 || count != माप(काष्ठा kone_profile))
+		वापस -EINVAL;
 
-	profile = &kone->profiles[*(uint *)(attr->private)];
+	profile = &kone->profiles[*(uपूर्णांक *)(attr->निजी)];
 
 	mutex_lock(&kone->kone_lock);
-	difference = memcmp(buf, profile, sizeof(struct kone_profile));
-	if (difference) {
+	dअगरference = स_भेद(buf, profile, माप(काष्ठा kone_profile));
+	अगर (dअगरference) अणु
 		retval = kone_set_profile(usb_dev,
-				(struct kone_profile const *)buf,
-				*(uint *)(attr->private) + 1);
-		if (!retval)
-			memcpy(profile, buf, sizeof(struct kone_profile));
-	}
+				(काष्ठा kone_profile स्थिर *)buf,
+				*(uपूर्णांक *)(attr->निजी) + 1);
+		अगर (!retval)
+			स_नकल(profile, buf, माप(काष्ठा kone_profile));
+	पूर्ण
 	mutex_unlock(&kone->kone_lock);
 
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	return sizeof(struct kone_profile);
-}
-#define PROFILE_ATTR(number)					\
-static struct bin_attribute bin_attr_profile##number = {	\
-	.attr = { .name = "profile" #number, .mode = 0660 },	\
-	.size = sizeof(struct kone_profile),			\
-	.read = kone_sysfs_read_profilex,			\
-	.write = kone_sysfs_write_profilex,			\
-	.private = &profile_numbers[number-1],			\
-}
-PROFILE_ATTR(1);
-PROFILE_ATTR(2);
-PROFILE_ATTR(3);
-PROFILE_ATTR(4);
-PROFILE_ATTR(5);
+	वापस माप(काष्ठा kone_profile);
+पूर्ण
+#घोषणा PROखाता_ATTR(number)					\
+अटल काष्ठा bin_attribute bin_attr_profile##number = अणु	\
+	.attr = अणु .name = "profile" #number, .mode = 0660 पूर्ण,	\
+	.size = माप(काष्ठा kone_profile),			\
+	.पढ़ो = kone_sysfs_पढ़ो_profilex,			\
+	.ग_लिखो = kone_sysfs_ग_लिखो_profilex,			\
+	.निजी = &profile_numbers[number-1],			\
+पूर्ण
+PROखाता_ATTR(1);
+PROखाता_ATTR(2);
+PROखाता_ATTR(3);
+PROखाता_ATTR(4);
+PROखाता_ATTR(5);
 
-static ssize_t kone_sysfs_show_actual_profile(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct kone_device *kone =
+अटल sमाप_प्रकार kone_sysfs_show_actual_profile(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा kone_device *kone =
 			hid_get_drvdata(dev_get_drvdata(dev->parent->parent));
-	return snprintf(buf, PAGE_SIZE, "%d\n", kone->actual_profile);
-}
-static DEVICE_ATTR(actual_profile, 0440, kone_sysfs_show_actual_profile, NULL);
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", kone->actual_profile);
+पूर्ण
+अटल DEVICE_ATTR(actual_profile, 0440, kone_sysfs_show_actual_profile, शून्य);
 
-static ssize_t kone_sysfs_show_actual_dpi(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct kone_device *kone =
+अटल sमाप_प्रकार kone_sysfs_show_actual_dpi(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा kone_device *kone =
 			hid_get_drvdata(dev_get_drvdata(dev->parent->parent));
-	return snprintf(buf, PAGE_SIZE, "%d\n", kone->actual_dpi);
-}
-static DEVICE_ATTR(actual_dpi, 0440, kone_sysfs_show_actual_dpi, NULL);
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", kone->actual_dpi);
+पूर्ण
+अटल DEVICE_ATTR(actual_dpi, 0440, kone_sysfs_show_actual_dpi, शून्य);
 
-/* weight is read each time, since we don't get informed when it's changed */
-static ssize_t kone_sysfs_show_weight(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct kone_device *kone;
-	struct usb_device *usb_dev;
-	int weight = 0;
-	int retval;
+/* weight is पढ़ो each समय, since we करोn't get informed when it's changed */
+अटल sमाप_प्रकार kone_sysfs_show_weight(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा kone_device *kone;
+	काष्ठा usb_device *usb_dev;
+	पूर्णांक weight = 0;
+	पूर्णांक retval;
 
 	dev = dev->parent->parent;
 	kone = hid_get_drvdata(dev_get_drvdata(dev));
-	usb_dev = interface_to_usbdev(to_usb_interface(dev));
+	usb_dev = पूर्णांकerface_to_usbdev(to_usb_पूर्णांकerface(dev));
 
 	mutex_lock(&kone->kone_lock);
 	retval = kone_get_weight(usb_dev, &weight);
 	mutex_unlock(&kone->kone_lock);
 
-	if (retval)
-		return retval;
-	return snprintf(buf, PAGE_SIZE, "%d\n", weight);
-}
-static DEVICE_ATTR(weight, 0440, kone_sysfs_show_weight, NULL);
+	अगर (retval)
+		वापस retval;
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", weight);
+पूर्ण
+अटल DEVICE_ATTR(weight, 0440, kone_sysfs_show_weight, शून्य);
 
-static ssize_t kone_sysfs_show_firmware_version(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct kone_device *kone =
+अटल sमाप_प्रकार kone_sysfs_show_firmware_version(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा kone_device *kone =
 			hid_get_drvdata(dev_get_drvdata(dev->parent->parent));
-	return snprintf(buf, PAGE_SIZE, "%d\n", kone->firmware_version);
-}
-static DEVICE_ATTR(firmware_version, 0440, kone_sysfs_show_firmware_version,
-		   NULL);
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", kone->firmware_version);
+पूर्ण
+अटल DEVICE_ATTR(firmware_version, 0440, kone_sysfs_show_firmware_version,
+		   शून्य);
 
-static ssize_t kone_sysfs_show_tcu(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct kone_device *kone =
+अटल sमाप_प्रकार kone_sysfs_show_tcu(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा kone_device *kone =
 			hid_get_drvdata(dev_get_drvdata(dev->parent->parent));
-	return snprintf(buf, PAGE_SIZE, "%d\n", kone->settings.tcu);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", kone->settings.tcu);
+पूर्ण
 
-static int kone_tcu_command(struct usb_device *usb_dev, int number)
-{
-	unsigned char value;
+अटल पूर्णांक kone_tcu_command(काष्ठा usb_device *usb_dev, पूर्णांक number)
+अणु
+	अचिन्हित अक्षर value;
 
 	value = number;
-	return kone_send(usb_dev, kone_command_calibrate, &value, 1);
-}
+	वापस kone_send(usb_dev, kone_command_calibrate, &value, 1);
+पूर्ण
 
 /*
  * Calibrating the tcu is the only action that changes settings data inside the
- * mouse, so this data needs to be reread
+ * mouse, so this data needs to be reपढ़ो
  */
-static ssize_t kone_sysfs_set_tcu(struct device *dev,
-		struct device_attribute *attr, char const *buf, size_t size)
-{
-	struct kone_device *kone;
-	struct usb_device *usb_dev;
-	int retval;
-	unsigned long state;
+अटल sमाप_प्रकार kone_sysfs_set_tcu(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर स्थिर *buf, माप_प्रकार size)
+अणु
+	काष्ठा kone_device *kone;
+	काष्ठा usb_device *usb_dev;
+	पूर्णांक retval;
+	अचिन्हित दीर्घ state;
 
 	dev = dev->parent->parent;
 	kone = hid_get_drvdata(dev_get_drvdata(dev));
-	usb_dev = interface_to_usbdev(to_usb_interface(dev));
+	usb_dev = पूर्णांकerface_to_usbdev(to_usb_पूर्णांकerface(dev));
 
-	retval = kstrtoul(buf, 10, &state);
-	if (retval)
-		return retval;
+	retval = kम_से_अदीर्घ(buf, 10, &state);
+	अगर (retval)
+		वापस retval;
 
-	if (state != 0 && state != 1)
-		return -EINVAL;
+	अगर (state != 0 && state != 1)
+		वापस -EINVAL;
 
 	mutex_lock(&kone->kone_lock);
 
-	if (state == 1) { /* state activate */
+	अगर (state == 1) अणु /* state activate */
 		retval = kone_tcu_command(usb_dev, 1);
-		if (retval)
-			goto exit_unlock;
+		अगर (retval)
+			जाओ निकास_unlock;
 		retval = kone_tcu_command(usb_dev, 2);
-		if (retval)
-			goto exit_unlock;
-		ssleep(5); /* tcu needs this time for calibration */
+		अगर (retval)
+			जाओ निकास_unlock;
+		ssleep(5); /* tcu needs this समय क्रम calibration */
 		retval = kone_tcu_command(usb_dev, 3);
-		if (retval)
-			goto exit_unlock;
+		अगर (retval)
+			जाओ निकास_unlock;
 		retval = kone_tcu_command(usb_dev, 0);
-		if (retval)
-			goto exit_unlock;
+		अगर (retval)
+			जाओ निकास_unlock;
 		retval = kone_tcu_command(usb_dev, 4);
-		if (retval)
-			goto exit_unlock;
+		अगर (retval)
+			जाओ निकास_unlock;
 		/*
-		 * Kone needs this time to settle things.
+		 * Kone needs this समय to settle things.
 		 * Reading settings too early will result in invalid data.
-		 * Roccat's driver waits 1 sec, maybe this time could be
-		 * shortened.
+		 * Roccat's driver रुकोs 1 sec, maybe this समय could be
+		 * लघुened.
 		 */
 		ssleep(1);
-	}
+	पूर्ण
 
-	/* calibration changes values in settings, so reread */
+	/* calibration changes values in settings, so reपढ़ो */
 	retval = kone_get_settings(usb_dev, &kone->settings);
-	if (retval)
-		goto exit_no_settings;
+	अगर (retval)
+		जाओ निकास_no_settings;
 
-	/* only write settings back if activation state is different */
-	if (kone->settings.tcu != state) {
+	/* only ग_लिखो settings back अगर activation state is dअगरferent */
+	अगर (kone->settings.tcu != state) अणु
 		kone->settings.tcu = state;
 		kone_set_settings_checksum(&kone->settings);
 
 		retval = kone_set_settings(usb_dev, &kone->settings);
-		if (retval) {
+		अगर (retval) अणु
 			dev_err(&usb_dev->dev, "couldn't set tcu state\n");
 			/*
-			 * try to reread valid settings into buffer overwriting
+			 * try to reपढ़ो valid settings पूर्णांकo buffer overwriting
 			 * first error code
 			 */
 			retval = kone_get_settings(usb_dev, &kone->settings);
-			if (retval)
-				goto exit_no_settings;
-			goto exit_unlock;
-		}
+			अगर (retval)
+				जाओ निकास_no_settings;
+			जाओ निकास_unlock;
+		पूर्ण
 		/* calibration resets profile */
 		kone_profile_activated(kone, kone->settings.startup_profile);
-	}
+	पूर्ण
 
 	retval = size;
-exit_no_settings:
+निकास_no_settings:
 	dev_err(&usb_dev->dev, "couldn't read settings\n");
-exit_unlock:
+निकास_unlock:
 	mutex_unlock(&kone->kone_lock);
-	return retval;
-}
-static DEVICE_ATTR(tcu, 0660, kone_sysfs_show_tcu, kone_sysfs_set_tcu);
+	वापस retval;
+पूर्ण
+अटल DEVICE_ATTR(tcu, 0660, kone_sysfs_show_tcu, kone_sysfs_set_tcu);
 
-static ssize_t kone_sysfs_show_startup_profile(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct kone_device *kone =
+अटल sमाप_प्रकार kone_sysfs_show_startup_profile(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा kone_device *kone =
 			hid_get_drvdata(dev_get_drvdata(dev->parent->parent));
-	return snprintf(buf, PAGE_SIZE, "%d\n", kone->settings.startup_profile);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", kone->settings.startup_profile);
+पूर्ण
 
-static ssize_t kone_sysfs_set_startup_profile(struct device *dev,
-		struct device_attribute *attr, char const *buf, size_t size)
-{
-	struct kone_device *kone;
-	struct usb_device *usb_dev;
-	int retval;
-	unsigned long new_startup_profile;
+अटल sमाप_प्रकार kone_sysfs_set_startup_profile(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर स्थिर *buf, माप_प्रकार size)
+अणु
+	काष्ठा kone_device *kone;
+	काष्ठा usb_device *usb_dev;
+	पूर्णांक retval;
+	अचिन्हित दीर्घ new_startup_profile;
 
 	dev = dev->parent->parent;
 	kone = hid_get_drvdata(dev_get_drvdata(dev));
-	usb_dev = interface_to_usbdev(to_usb_interface(dev));
+	usb_dev = पूर्णांकerface_to_usbdev(to_usb_पूर्णांकerface(dev));
 
-	retval = kstrtoul(buf, 10, &new_startup_profile);
-	if (retval)
-		return retval;
+	retval = kम_से_अदीर्घ(buf, 10, &new_startup_profile);
+	अगर (retval)
+		वापस retval;
 
-	if (new_startup_profile  < 1 || new_startup_profile > 5)
-		return -EINVAL;
+	अगर (new_startup_profile  < 1 || new_startup_profile > 5)
+		वापस -EINVAL;
 
 	mutex_lock(&kone->kone_lock);
 
@@ -584,25 +585,25 @@ static ssize_t kone_sysfs_set_startup_profile(struct device *dev,
 	kone_set_settings_checksum(&kone->settings);
 
 	retval = kone_set_settings(usb_dev, &kone->settings);
-	if (retval) {
+	अगर (retval) अणु
 		mutex_unlock(&kone->kone_lock);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
 	/* changing the startup profile immediately activates this profile */
 	kone_profile_activated(kone, new_startup_profile);
 	kone_profile_report(kone, new_startup_profile);
 
 	mutex_unlock(&kone->kone_lock);
-	return size;
-}
-static DEVICE_ATTR(startup_profile, 0660, kone_sysfs_show_startup_profile,
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR(startup_profile, 0660, kone_sysfs_show_startup_profile,
 		   kone_sysfs_set_startup_profile);
 
-static struct attribute *kone_attrs[] = {
+अटल काष्ठा attribute *kone_attrs[] = अणु
 	/*
 	 * Read actual dpi settings.
-	 * Returns raw value for further processing. Refer to enum
+	 * Returns raw value क्रम further processing. Refer to क्रमागत
 	 * kone_polling_rates to get real value.
 	 */
 	&dev_attr_actual_dpi.attr,
@@ -610,302 +611,302 @@ static struct attribute *kone_attrs[] = {
 
 	/*
 	 * The mouse can be equipped with one of four supplied weights from 5
-	 * to 20 grams which are recognized and its value can be read out.
-	 * This returns the raw value reported by the mouse for easy evaluation
-	 * by software. Refer to enum kone_weights to get corresponding real
+	 * to 20 grams which are recognized and its value can be पढ़ो out.
+	 * This वापसs the raw value reported by the mouse क्रम easy evaluation
+	 * by software. Refer to क्रमागत kone_weights to get corresponding real
 	 * weight.
 	 */
 	&dev_attr_weight.attr,
 
 	/*
-	 * Prints firmware version stored in mouse as integer.
-	 * The raw value reported by the mouse is returned for easy evaluation,
-	 * to get the real version number the decimal point has to be shifted 2
+	 * Prपूर्णांकs firmware version stored in mouse as पूर्णांकeger.
+	 * The raw value reported by the mouse is वापसed क्रम easy evaluation,
+	 * to get the real version number the decimal poपूर्णांक has to be shअगरted 2
 	 * positions to the left. E.g. a value of 138 means 1.38.
 	 */
 	&dev_attr_firmware_version.attr,
 
 	/*
-	 * Prints state of Tracking Control Unit as number where 0 = off and
+	 * Prपूर्णांकs state of Tracking Control Unit as number where 0 = off and
 	 * 1 = on. Writing 0 deactivates tcu and writing 1 calibrates and
 	 * activates the tcu
 	 */
 	&dev_attr_tcu.attr,
 
-	/* Prints and takes the number of the profile the mouse starts with */
+	/* Prपूर्णांकs and takes the number of the profile the mouse starts with */
 	&dev_attr_startup_profile.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct bin_attribute *kone_bin_attributes[] = {
+अटल काष्ठा bin_attribute *kone_bin_attributes[] = अणु
 	&bin_attr_settings,
 	&bin_attr_profile1,
 	&bin_attr_profile2,
 	&bin_attr_profile3,
 	&bin_attr_profile4,
 	&bin_attr_profile5,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group kone_group = {
+अटल स्थिर काष्ठा attribute_group kone_group = अणु
 	.attrs = kone_attrs,
 	.bin_attrs = kone_bin_attributes,
-};
+पूर्ण;
 
-static const struct attribute_group *kone_groups[] = {
+अटल स्थिर काष्ठा attribute_group *kone_groups[] = अणु
 	&kone_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int kone_init_kone_device_struct(struct usb_device *usb_dev,
-		struct kone_device *kone)
-{
-	uint i;
-	int retval;
+अटल पूर्णांक kone_init_kone_device_काष्ठा(काष्ठा usb_device *usb_dev,
+		काष्ठा kone_device *kone)
+अणु
+	uपूर्णांक i;
+	पूर्णांक retval;
 
 	mutex_init(&kone->kone_lock);
 
-	for (i = 0; i < 5; ++i) {
+	क्रम (i = 0; i < 5; ++i) अणु
 		retval = kone_get_profile(usb_dev, &kone->profiles[i], i + 1);
-		if (retval)
-			return retval;
-	}
+		अगर (retval)
+			वापस retval;
+	पूर्ण
 
 	retval = kone_get_settings(usb_dev, &kone->settings);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	retval = kone_get_firmware_version(usb_dev, &kone->firmware_version);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	kone_profile_activated(kone, kone->settings.startup_profile);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Since IGNORE_MOUSE quirk moved to hid-apple, there is no way to bind only to
- * mousepart if usb_hid is compiled into the kernel and kone is compiled as
+ * mousepart अगर usb_hid is compiled पूर्णांकo the kernel and kone is compiled as
  * module.
  * Secial behaviour is bound only to mousepart since only mouseevents contain
- * additional notifications.
+ * additional notअगरications.
  */
-static int kone_init_specials(struct hid_device *hdev)
-{
-	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
-	struct usb_device *usb_dev = interface_to_usbdev(intf);
-	struct kone_device *kone;
-	int retval;
+अटल पूर्णांक kone_init_specials(काष्ठा hid_device *hdev)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
+	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	काष्ठा kone_device *kone;
+	पूर्णांक retval;
 
-	if (intf->cur_altsetting->desc.bInterfaceProtocol
-			== USB_INTERFACE_PROTOCOL_MOUSE) {
+	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceProtocol
+			== USB_INTERFACE_PROTOCOL_MOUSE) अणु
 
-		kone = kzalloc(sizeof(*kone), GFP_KERNEL);
-		if (!kone)
-			return -ENOMEM;
+		kone = kzalloc(माप(*kone), GFP_KERNEL);
+		अगर (!kone)
+			वापस -ENOMEM;
 		hid_set_drvdata(hdev, kone);
 
-		retval = kone_init_kone_device_struct(usb_dev, kone);
-		if (retval) {
+		retval = kone_init_kone_device_काष्ठा(usb_dev, kone);
+		अगर (retval) अणु
 			hid_err(hdev, "couldn't init struct kone_device\n");
-			goto exit_free;
-		}
+			जाओ निकास_मुक्त;
+		पूर्ण
 
 		retval = roccat_connect(kone_class, hdev,
-				sizeof(struct kone_roccat_report));
-		if (retval < 0) {
+				माप(काष्ठा kone_roccat_report));
+		अगर (retval < 0) अणु
 			hid_err(hdev, "couldn't init char dev\n");
 			/* be tolerant about not getting chrdev */
-		} else {
+		पूर्ण अन्यथा अणु
 			kone->roccat_claimed = 1;
 			kone->chrdev_minor = retval;
-		}
-	} else {
-		hid_set_drvdata(hdev, NULL);
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		hid_set_drvdata(hdev, शून्य);
+	पूर्ण
 
-	return 0;
-exit_free:
-	kfree(kone);
-	return retval;
-}
+	वापस 0;
+निकास_मुक्त:
+	kमुक्त(kone);
+	वापस retval;
+पूर्ण
 
-static void kone_remove_specials(struct hid_device *hdev)
-{
-	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
-	struct kone_device *kone;
+अटल व्योम kone_हटाओ_specials(काष्ठा hid_device *hdev)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
+	काष्ठा kone_device *kone;
 
-	if (intf->cur_altsetting->desc.bInterfaceProtocol
-			== USB_INTERFACE_PROTOCOL_MOUSE) {
+	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceProtocol
+			== USB_INTERFACE_PROTOCOL_MOUSE) अणु
 		kone = hid_get_drvdata(hdev);
-		if (kone->roccat_claimed)
+		अगर (kone->roccat_claimed)
 			roccat_disconnect(kone->chrdev_minor);
-		kfree(hid_get_drvdata(hdev));
-	}
-}
+		kमुक्त(hid_get_drvdata(hdev));
+	पूर्ण
+पूर्ण
 
-static int kone_probe(struct hid_device *hdev, const struct hid_device_id *id)
-{
-	int retval;
+अटल पूर्णांक kone_probe(काष्ठा hid_device *hdev, स्थिर काष्ठा hid_device_id *id)
+अणु
+	पूर्णांक retval;
 
 	retval = hid_parse(hdev);
-	if (retval) {
+	अगर (retval) अणु
 		hid_err(hdev, "parse failed\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	retval = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
-	if (retval) {
+	अगर (retval) अणु
 		hid_err(hdev, "hw start failed\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	retval = kone_init_specials(hdev);
-	if (retval) {
+	अगर (retval) अणु
 		hid_err(hdev, "couldn't install mouse\n");
-		goto exit_stop;
-	}
+		जाओ निकास_stop;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-exit_stop:
+निकास_stop:
 	hid_hw_stop(hdev);
-exit:
-	return retval;
-}
+निकास:
+	वापस retval;
+पूर्ण
 
-static void kone_remove(struct hid_device *hdev)
-{
-	kone_remove_specials(hdev);
+अटल व्योम kone_हटाओ(काष्ठा hid_device *hdev)
+अणु
+	kone_हटाओ_specials(hdev);
 	hid_hw_stop(hdev);
-}
+पूर्ण
 
 /* handle special events and keep actual profile and dpi values up to date */
-static void kone_keep_values_up_to_date(struct kone_device *kone,
-		struct kone_mouse_event const *event)
-{
-	switch (event->event) {
-	case kone_mouse_event_switch_profile:
+अटल व्योम kone_keep_values_up_to_date(काष्ठा kone_device *kone,
+		काष्ठा kone_mouse_event स्थिर *event)
+अणु
+	चयन (event->event) अणु
+	हाल kone_mouse_event_चयन_profile:
 		kone->actual_dpi = kone->profiles[event->value - 1].
 				startup_dpi;
 		fallthrough;
-	case kone_mouse_event_osd_profile:
+	हाल kone_mouse_event_osd_profile:
 		kone->actual_profile = event->value;
-		break;
-	case kone_mouse_event_switch_dpi:
-	case kone_mouse_event_osd_dpi:
+		अवरोध;
+	हाल kone_mouse_event_चयन_dpi:
+	हाल kone_mouse_event_osd_dpi:
 		kone->actual_dpi = event->value;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void kone_report_to_chrdev(struct kone_device const *kone,
-		struct kone_mouse_event const *event)
-{
-	struct kone_roccat_report roccat_report;
+अटल व्योम kone_report_to_chrdev(काष्ठा kone_device स्थिर *kone,
+		काष्ठा kone_mouse_event स्थिर *event)
+अणु
+	काष्ठा kone_roccat_report roccat_report;
 
-	switch (event->event) {
-	case kone_mouse_event_switch_profile:
-	case kone_mouse_event_switch_dpi:
-	case kone_mouse_event_osd_profile:
-	case kone_mouse_event_osd_dpi:
+	चयन (event->event) अणु
+	हाल kone_mouse_event_चयन_profile:
+	हाल kone_mouse_event_चयन_dpi:
+	हाल kone_mouse_event_osd_profile:
+	हाल kone_mouse_event_osd_dpi:
 		roccat_report.event = event->event;
 		roccat_report.value = event->value;
 		roccat_report.key = 0;
 		roccat_report_event(kone->chrdev_minor,
-				(uint8_t *)&roccat_report);
-		break;
-	case kone_mouse_event_call_overlong_macro:
-	case kone_mouse_event_multimedia:
-		if (event->value == kone_keystroke_action_press) {
+				(uपूर्णांक8_t *)&roccat_report);
+		अवरोध;
+	हाल kone_mouse_event_call_overदीर्घ_macro:
+	हाल kone_mouse_event_mulसमयdia:
+		अगर (event->value == kone_keystroke_action_press) अणु
 			roccat_report.event = event->event;
 			roccat_report.value = kone->actual_profile;
 			roccat_report.key = event->macro_key;
 			roccat_report_event(kone->chrdev_minor,
-					(uint8_t *)&roccat_report);
-		}
-		break;
-	}
+					(uपूर्णांक8_t *)&roccat_report);
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-}
+पूर्ण
 
 /*
- * Is called for keyboard- and mousepart.
- * Only mousepart gets informations about special events in its extended event
- * structure.
+ * Is called क्रम keyboard- and mousepart.
+ * Only mousepart माला_लो inक्रमmations about special events in its extended event
+ * काष्ठाure.
  */
-static int kone_raw_event(struct hid_device *hdev, struct hid_report *report,
-		u8 *data, int size)
-{
-	struct kone_device *kone = hid_get_drvdata(hdev);
-	struct kone_mouse_event *event = (struct kone_mouse_event *)data;
+अटल पूर्णांक kone_raw_event(काष्ठा hid_device *hdev, काष्ठा hid_report *report,
+		u8 *data, पूर्णांक size)
+अणु
+	काष्ठा kone_device *kone = hid_get_drvdata(hdev);
+	काष्ठा kone_mouse_event *event = (काष्ठा kone_mouse_event *)data;
 
-	/* keyboard events are always processed by default handler */
-	if (size != sizeof(struct kone_mouse_event))
-		return 0;
+	/* keyboard events are always processed by शेष handler */
+	अगर (size != माप(काष्ठा kone_mouse_event))
+		वापस 0;
 
-	if (kone == NULL)
-		return 0;
+	अगर (kone == शून्य)
+		वापस 0;
 
 	/*
-	 * Firmware 1.38 introduced new behaviour for tilt and special buttons.
+	 * Firmware 1.38 पूर्णांकroduced new behaviour क्रम tilt and special buttons.
 	 * Pressed button is reported in each movement event.
 	 * Workaround sends only one event per press.
 	 */
-	if (memcmp(&kone->last_mouse_event.tilt, &event->tilt, 5))
-		memcpy(&kone->last_mouse_event, event,
-				sizeof(struct kone_mouse_event));
-	else
-		memset(&event->tilt, 0, 5);
+	अगर (स_भेद(&kone->last_mouse_event.tilt, &event->tilt, 5))
+		स_नकल(&kone->last_mouse_event, event,
+				माप(काष्ठा kone_mouse_event));
+	अन्यथा
+		स_रखो(&event->tilt, 0, 5);
 
 	kone_keep_values_up_to_date(kone, event);
 
-	if (kone->roccat_claimed)
+	अगर (kone->roccat_claimed)
 		kone_report_to_chrdev(kone, event);
 
-	return 0; /* always do further processing */
-}
+	वापस 0; /* always करो further processing */
+पूर्ण
 
-static const struct hid_device_id kone_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_KONE) },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id kone_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_KONE) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(hid, kone_devices);
 
-static struct hid_driver kone_driver = {
+अटल काष्ठा hid_driver kone_driver = अणु
 		.name = "kone",
 		.id_table = kone_devices,
 		.probe = kone_probe,
-		.remove = kone_remove,
+		.हटाओ = kone_हटाओ,
 		.raw_event = kone_raw_event
-};
+पूर्ण;
 
-static int __init kone_init(void)
-{
-	int retval;
+अटल पूर्णांक __init kone_init(व्योम)
+अणु
+	पूर्णांक retval;
 
 	/* class name has to be same as driver name */
 	kone_class = class_create(THIS_MODULE, "kone");
-	if (IS_ERR(kone_class))
-		return PTR_ERR(kone_class);
+	अगर (IS_ERR(kone_class))
+		वापस PTR_ERR(kone_class);
 	kone_class->dev_groups = kone_groups;
 
-	retval = hid_register_driver(&kone_driver);
-	if (retval)
+	retval = hid_रेजिस्टर_driver(&kone_driver);
+	अगर (retval)
 		class_destroy(kone_class);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void __exit kone_exit(void)
-{
-	hid_unregister_driver(&kone_driver);
+अटल व्योम __निकास kone_निकास(व्योम)
+अणु
+	hid_unरेजिस्टर_driver(&kone_driver);
 	class_destroy(kone_class);
-}
+पूर्ण
 
 module_init(kone_init);
-module_exit(kone_exit);
+module_निकास(kone_निकास);
 
 MODULE_AUTHOR("Stefan Achatz");
 MODULE_DESCRIPTION("USB Roccat Kone driver");

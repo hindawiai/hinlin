@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Atlantic Network Driver
  *
  * Copyright (C) 2014-2019 aQuantia Corporation
@@ -7,64 +8,64 @@
 
 /* File aq_ethtool.c: Definition of ethertool related functions. */
 
-#include "aq_ethtool.h"
-#include "aq_nic.h"
-#include "aq_vec.h"
-#include "aq_ptp.h"
-#include "aq_filters.h"
-#include "aq_macsec.h"
+#समावेश "aq_ethtool.h"
+#समावेश "aq_nic.h"
+#समावेश "aq_vec.h"
+#समावेश "aq_ptp.h"
+#समावेश "aq_filters.h"
+#समावेश "aq_macsec.h"
 
-#include <linux/ptp_clock_kernel.h>
+#समावेश <linux/ptp_घड़ी_kernel.h>
 
-static void aq_ethtool_get_regs(struct net_device *ndev,
-				struct ethtool_regs *regs, void *p)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल व्योम aq_ethtool_get_regs(काष्ठा net_device *ndev,
+				काष्ठा ethtool_regs *regs, व्योम *p)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 	u32 regs_count;
 
 	regs_count = aq_nic_get_regs_count(aq_nic);
 
-	memset(p, 0, regs_count * sizeof(u32));
+	स_रखो(p, 0, regs_count * माप(u32));
 	aq_nic_get_regs(aq_nic, regs, p);
-}
+पूर्ण
 
-static int aq_ethtool_get_regs_len(struct net_device *ndev)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल पूर्णांक aq_ethtool_get_regs_len(काष्ठा net_device *ndev)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 	u32 regs_count;
 
 	regs_count = aq_nic_get_regs_count(aq_nic);
 
-	return regs_count * sizeof(u32);
-}
+	वापस regs_count * माप(u32);
+पूर्ण
 
-static u32 aq_ethtool_get_link(struct net_device *ndev)
-{
-	return ethtool_op_get_link(ndev);
-}
+अटल u32 aq_ethtool_get_link(काष्ठा net_device *ndev)
+अणु
+	वापस ethtool_op_get_link(ndev);
+पूर्ण
 
-static int aq_ethtool_get_link_ksettings(struct net_device *ndev,
-					 struct ethtool_link_ksettings *cmd)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल पूर्णांक aq_ethtool_get_link_ksettings(काष्ठा net_device *ndev,
+					 काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 
 	aq_nic_get_link_ksettings(aq_nic, cmd);
-	cmd->base.speed = netif_carrier_ok(ndev) ?
+	cmd->base.speed = netअगर_carrier_ok(ndev) ?
 				aq_nic_get_link_speed(aq_nic) : 0U;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-aq_ethtool_set_link_ksettings(struct net_device *ndev,
-			      const struct ethtool_link_ksettings *cmd)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल पूर्णांक
+aq_ethtool_set_link_ksettings(काष्ठा net_device *ndev,
+			      स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 
-	return aq_nic_set_link_ksettings(aq_nic, cmd);
-}
+	वापस aq_nic_set_link_ksettings(aq_nic, cmd);
+पूर्ण
 
-static const char aq_ethtool_stat_names[][ETH_GSTRING_LEN] = {
+अटल स्थिर अक्षर aq_ethtool_stat_names[][ETH_GSTRING_LEN] = अणु
 	"InPackets",
 	"InUCast",
 	"InMCast",
@@ -87,9 +88,9 @@ static const char aq_ethtool_stat_names[][ETH_GSTRING_LEN] = {
 	"InOctetsDma",
 	"OutOctetsDma",
 	"InDroppedDma",
-};
+पूर्ण;
 
-static const char * const aq_ethtool_queue_rx_stat_names[] = {
+अटल स्थिर अक्षर * स्थिर aq_ethtool_queue_rx_stat_names[] = अणु
 	"%sQueue[%d] InPackets",
 	"%sQueue[%d] InJumboPackets",
 	"%sQueue[%d] InLroPackets",
@@ -97,15 +98,15 @@ static const char * const aq_ethtool_queue_rx_stat_names[] = {
 	"%sQueue[%d] AllocFails",
 	"%sQueue[%d] SkbAllocFails",
 	"%sQueue[%d] Polls",
-};
+पूर्ण;
 
-static const char * const aq_ethtool_queue_tx_stat_names[] = {
+अटल स्थिर अक्षर * स्थिर aq_ethtool_queue_tx_stat_names[] = अणु
 	"%sQueue[%d] OutPackets",
 	"%sQueue[%d] Restarts",
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_MACSEC)
-static const char aq_macsec_stat_names[][ETH_GSTRING_LEN] = {
+#अगर IS_ENABLED(CONFIG_MACSEC)
+अटल स्थिर अक्षर aq_macsec_stat_names[][ETH_GSTRING_LEN] = अणु
 	"MACSec InCtlPackets",
 	"MACSec InTaggedMissPackets",
 	"MACSec InUntaggedMissPackets",
@@ -128,23 +129,23 @@ static const char aq_macsec_stat_names[][ETH_GSTRING_LEN] = {
 	"MACSec OutTooLong",
 	"MACSec OutEccErrorPackets",
 	"MACSec OutUnctrlHitDropRedir",
-};
+पूर्ण;
 
-static const char * const aq_macsec_txsc_stat_names[] = {
+अटल स्थिर अक्षर * स्थिर aq_macsec_txsc_stat_names[] = अणु
 	"MACSecTXSC%d ProtectedPkts",
 	"MACSecTXSC%d EncryptedPkts",
 	"MACSecTXSC%d ProtectedOctets",
 	"MACSecTXSC%d EncryptedOctets",
-};
+पूर्ण;
 
-static const char * const aq_macsec_txsa_stat_names[] = {
+अटल स्थिर अक्षर * स्थिर aq_macsec_txsa_stat_names[] = अणु
 	"MACSecTXSC%dSA%d HitDropRedirect",
 	"MACSecTXSC%dSA%d Protected2Pkts",
 	"MACSecTXSC%dSA%d ProtectedPkts",
 	"MACSecTXSC%dSA%d EncryptedPkts",
-};
+पूर्ण;
 
-static const char * const aq_macsec_rxsa_stat_names[] = {
+अटल स्थिर अक्षर * स्थिर aq_macsec_rxsa_stat_names[] = अणु
 	"MACSecRXSC%dSA%d UntaggedHitPkts",
 	"MACSecRXSC%dSA%d CtrlHitDrpRedir",
 	"MACSecRXSC%dSA%d NotUsingSa",
@@ -157,33 +158,33 @@ static const char * const aq_macsec_rxsa_stat_names[] = {
 	"MACSecRXSC%dSA%d UncheckedPkts",
 	"MACSecRXSC%dSA%d ValidatedOctets",
 	"MACSecRXSC%dSA%d DecryptedOctets",
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static const char aq_ethtool_priv_flag_names[][ETH_GSTRING_LEN] = {
+अटल स्थिर अक्षर aq_ethtool_priv_flag_names[][ETH_GSTRING_LEN] = अणु
 	"DMASystemLoopback",
 	"PKTSystemLoopback",
 	"DMANetworkLoopback",
 	"PHYInternalLoopback",
 	"PHYExternalLoopback",
-};
+पूर्ण;
 
-static u32 aq_ethtool_n_stats(struct net_device *ndev)
-{
-	const int rx_stat_cnt = ARRAY_SIZE(aq_ethtool_queue_rx_stat_names);
-	const int tx_stat_cnt = ARRAY_SIZE(aq_ethtool_queue_tx_stat_names);
-	struct aq_nic_s *nic = netdev_priv(ndev);
-	struct aq_nic_cfg_s *cfg = aq_nic_get_cfg(nic);
+अटल u32 aq_ethtool_n_stats(काष्ठा net_device *ndev)
+अणु
+	स्थिर पूर्णांक rx_stat_cnt = ARRAY_SIZE(aq_ethtool_queue_rx_stat_names);
+	स्थिर पूर्णांक tx_stat_cnt = ARRAY_SIZE(aq_ethtool_queue_tx_stat_names);
+	काष्ठा aq_nic_s *nic = netdev_priv(ndev);
+	काष्ठा aq_nic_cfg_s *cfg = aq_nic_get_cfg(nic);
 	u32 n_stats = ARRAY_SIZE(aq_ethtool_stat_names) +
 		      (rx_stat_cnt + tx_stat_cnt) * cfg->vecs * cfg->tcs;
 
-#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
 	n_stats += rx_stat_cnt * aq_ptp_get_ring_cnt(nic, ATL_RING_RX) +
 		   tx_stat_cnt * aq_ptp_get_ring_cnt(nic, ATL_RING_TX);
-#endif
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_MACSEC)
-	if (nic->macsec_cfg) {
+#अगर IS_ENABLED(CONFIG_MACSEC)
+	अगर (nic->macsec_cfg) अणु
 		n_stats += ARRAY_SIZE(aq_macsec_stat_names) +
 			   ARRAY_SIZE(aq_macsec_txsc_stat_names) *
 				   aq_macsec_tx_sc_cnt(nic) +
@@ -191,461 +192,461 @@ static u32 aq_ethtool_n_stats(struct net_device *ndev)
 				   aq_macsec_tx_sa_cnt(nic) +
 			   ARRAY_SIZE(aq_macsec_rxsa_stat_names) *
 				   aq_macsec_rx_sa_cnt(nic);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	return n_stats;
-}
+	वापस n_stats;
+पूर्ण
 
-static void aq_ethtool_stats(struct net_device *ndev,
-			     struct ethtool_stats *stats, u64 *data)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल व्योम aq_ethtool_stats(काष्ठा net_device *ndev,
+			     काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 
-	memset(data, 0, aq_ethtool_n_stats(ndev) * sizeof(u64));
+	स_रखो(data, 0, aq_ethtool_n_stats(ndev) * माप(u64));
 	data = aq_nic_get_stats(aq_nic, data);
-#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
 	data = aq_ptp_get_stats(aq_nic, data);
-#endif
-#if IS_ENABLED(CONFIG_MACSEC)
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_MACSEC)
 	data = aq_macsec_get_stats(aq_nic, data);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void aq_ethtool_get_drvinfo(struct net_device *ndev,
-				   struct ethtool_drvinfo *drvinfo)
-{
-	struct pci_dev *pdev = to_pci_dev(ndev->dev.parent);
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल व्योम aq_ethtool_get_drvinfo(काष्ठा net_device *ndev,
+				   काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(ndev->dev.parent);
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 	u32 firmware_version;
 	u32 regs_count;
 
 	firmware_version = aq_nic_get_fw_version(aq_nic);
 	regs_count = aq_nic_get_regs_count(aq_nic);
 
-	strlcat(drvinfo->driver, AQ_CFG_DRV_NAME, sizeof(drvinfo->driver));
+	strlcat(drvinfo->driver, AQ_CFG_DRV_NAME, माप(drvinfo->driver));
 
-	snprintf(drvinfo->fw_version, sizeof(drvinfo->fw_version),
+	snम_लिखो(drvinfo->fw_version, माप(drvinfo->fw_version),
 		 "%u.%u.%u", firmware_version >> 24,
 		 (firmware_version >> 16) & 0xFFU, firmware_version & 0xFFFFU);
 
 	strlcpy(drvinfo->bus_info, pdev ? pci_name(pdev) : "",
-		sizeof(drvinfo->bus_info));
+		माप(drvinfo->bus_info));
 	drvinfo->n_stats = aq_ethtool_n_stats(ndev);
 	drvinfo->testinfo_len = 0;
 	drvinfo->regdump_len = regs_count;
 	drvinfo->eedump_len = 0;
-}
+पूर्ण
 
-static void aq_ethtool_get_strings(struct net_device *ndev,
+अटल व्योम aq_ethtool_get_strings(काष्ठा net_device *ndev,
 				   u32 stringset, u8 *data)
-{
-	struct aq_nic_s *nic = netdev_priv(ndev);
-	struct aq_nic_cfg_s *cfg;
+अणु
+	काष्ठा aq_nic_s *nic = netdev_priv(ndev);
+	काष्ठा aq_nic_cfg_s *cfg;
 	u8 *p = data;
-	int i, si;
-#if IS_ENABLED(CONFIG_MACSEC)
-	int sa;
-#endif
+	पूर्णांक i, si;
+#अगर IS_ENABLED(CONFIG_MACSEC)
+	पूर्णांक sa;
+#पूर्ण_अगर
 
 	cfg = aq_nic_get_cfg(nic);
 
-	switch (stringset) {
-	case ETH_SS_STATS: {
-		const int rx_stat_cnt = ARRAY_SIZE(aq_ethtool_queue_rx_stat_names);
-		const int tx_stat_cnt = ARRAY_SIZE(aq_ethtool_queue_tx_stat_names);
-		char tc_string[8];
-		int tc;
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS: अणु
+		स्थिर पूर्णांक rx_stat_cnt = ARRAY_SIZE(aq_ethtool_queue_rx_stat_names);
+		स्थिर पूर्णांक tx_stat_cnt = ARRAY_SIZE(aq_ethtool_queue_tx_stat_names);
+		अक्षर tc_string[8];
+		पूर्णांक tc;
 
-		memset(tc_string, 0, sizeof(tc_string));
-		memcpy(p, aq_ethtool_stat_names,
-		       sizeof(aq_ethtool_stat_names));
-		p = p + sizeof(aq_ethtool_stat_names);
+		स_रखो(tc_string, 0, माप(tc_string));
+		स_नकल(p, aq_ethtool_stat_names,
+		       माप(aq_ethtool_stat_names));
+		p = p + माप(aq_ethtool_stat_names);
 
-		for (tc = 0; tc < cfg->tcs; tc++) {
-			if (cfg->is_qos)
-				snprintf(tc_string, 8, "TC%d ", tc);
+		क्रम (tc = 0; tc < cfg->tcs; tc++) अणु
+			अगर (cfg->is_qos)
+				snम_लिखो(tc_string, 8, "TC%d ", tc);
 
-			for (i = 0; i < cfg->vecs; i++) {
-				for (si = 0; si < rx_stat_cnt; si++) {
-					snprintf(p, ETH_GSTRING_LEN,
+			क्रम (i = 0; i < cfg->vecs; i++) अणु
+				क्रम (si = 0; si < rx_stat_cnt; si++) अणु
+					snम_लिखो(p, ETH_GSTRING_LEN,
 					     aq_ethtool_queue_rx_stat_names[si],
 					     tc_string,
 					     AQ_NIC_CFG_TCVEC2RING(cfg, tc, i));
 					p += ETH_GSTRING_LEN;
-				}
-				for (si = 0; si < tx_stat_cnt; si++) {
-					snprintf(p, ETH_GSTRING_LEN,
+				पूर्ण
+				क्रम (si = 0; si < tx_stat_cnt; si++) अणु
+					snम_लिखो(p, ETH_GSTRING_LEN,
 					     aq_ethtool_queue_tx_stat_names[si],
 					     tc_string,
 					     AQ_NIC_CFG_TCVEC2RING(cfg, tc, i));
 					p += ETH_GSTRING_LEN;
-				}
-			}
-		}
-#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
-		if (nic->aq_ptp) {
-			const int rx_ring_cnt = aq_ptp_get_ring_cnt(nic, ATL_RING_RX);
-			const int tx_ring_cnt = aq_ptp_get_ring_cnt(nic, ATL_RING_TX);
-			unsigned int ptp_ring_idx =
+				पूर्ण
+			पूर्ण
+		पूर्ण
+#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+		अगर (nic->aq_ptp) अणु
+			स्थिर पूर्णांक rx_ring_cnt = aq_ptp_get_ring_cnt(nic, ATL_RING_RX);
+			स्थिर पूर्णांक tx_ring_cnt = aq_ptp_get_ring_cnt(nic, ATL_RING_TX);
+			अचिन्हित पूर्णांक ptp_ring_idx =
 				aq_ptp_ring_idx(nic->aq_nic_cfg.tc_mode);
 
-			snprintf(tc_string, 8, "PTP ");
+			snम_लिखो(tc_string, 8, "PTP ");
 
-			for (i = 0; i < max(rx_ring_cnt, tx_ring_cnt); i++) {
-				for (si = 0; si < rx_stat_cnt; si++) {
-					snprintf(p, ETH_GSTRING_LEN,
+			क्रम (i = 0; i < max(rx_ring_cnt, tx_ring_cnt); i++) अणु
+				क्रम (si = 0; si < rx_stat_cnt; si++) अणु
+					snम_लिखो(p, ETH_GSTRING_LEN,
 						 aq_ethtool_queue_rx_stat_names[si],
 						 tc_string,
 						 i ? PTP_HWST_RING_IDX : ptp_ring_idx);
 					p += ETH_GSTRING_LEN;
-				}
-				if (i >= tx_ring_cnt)
-					continue;
-				for (si = 0; si < tx_stat_cnt; si++) {
-					snprintf(p, ETH_GSTRING_LEN,
+				पूर्ण
+				अगर (i >= tx_ring_cnt)
+					जारी;
+				क्रम (si = 0; si < tx_stat_cnt; si++) अणु
+					snम_लिखो(p, ETH_GSTRING_LEN,
 						 aq_ethtool_queue_tx_stat_names[si],
 						 tc_string,
 						 i ? PTP_HWST_RING_IDX : ptp_ring_idx);
 					p += ETH_GSTRING_LEN;
-				}
-			}
-		}
-#endif
-#if IS_ENABLED(CONFIG_MACSEC)
-		if (!nic->macsec_cfg)
-			break;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_MACSEC)
+		अगर (!nic->macsec_cfg)
+			अवरोध;
 
-		memcpy(p, aq_macsec_stat_names, sizeof(aq_macsec_stat_names));
-		p = p + sizeof(aq_macsec_stat_names);
-		for (i = 0; i < AQ_MACSEC_MAX_SC; i++) {
-			struct aq_macsec_txsc *aq_txsc;
+		स_नकल(p, aq_macsec_stat_names, माप(aq_macsec_stat_names));
+		p = p + माप(aq_macsec_stat_names);
+		क्रम (i = 0; i < AQ_MACSEC_MAX_SC; i++) अणु
+			काष्ठा aq_macsec_txsc *aq_txsc;
 
-			if (!(test_bit(i, &nic->macsec_cfg->txsc_idx_busy)))
-				continue;
+			अगर (!(test_bit(i, &nic->macsec_cfg->txsc_idx_busy)))
+				जारी;
 
-			for (si = 0;
+			क्रम (si = 0;
 				si < ARRAY_SIZE(aq_macsec_txsc_stat_names);
-				si++) {
-				snprintf(p, ETH_GSTRING_LEN,
+				si++) अणु
+				snम_लिखो(p, ETH_GSTRING_LEN,
 					 aq_macsec_txsc_stat_names[si], i);
 				p += ETH_GSTRING_LEN;
-			}
+			पूर्ण
 			aq_txsc = &nic->macsec_cfg->aq_txsc[i];
-			for (sa = 0; sa < MACSEC_NUM_AN; sa++) {
-				if (!(test_bit(sa, &aq_txsc->tx_sa_idx_busy)))
-					continue;
-				for (si = 0;
+			क्रम (sa = 0; sa < MACSEC_NUM_AN; sa++) अणु
+				अगर (!(test_bit(sa, &aq_txsc->tx_sa_idx_busy)))
+					जारी;
+				क्रम (si = 0;
 				     si < ARRAY_SIZE(aq_macsec_txsa_stat_names);
-				     si++) {
-					snprintf(p, ETH_GSTRING_LEN,
+				     si++) अणु
+					snम_लिखो(p, ETH_GSTRING_LEN,
 						 aq_macsec_txsa_stat_names[si],
 						 i, sa);
 					p += ETH_GSTRING_LEN;
-				}
-			}
-		}
-		for (i = 0; i < AQ_MACSEC_MAX_SC; i++) {
-			struct aq_macsec_rxsc *aq_rxsc;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		क्रम (i = 0; i < AQ_MACSEC_MAX_SC; i++) अणु
+			काष्ठा aq_macsec_rxsc *aq_rxsc;
 
-			if (!(test_bit(i, &nic->macsec_cfg->rxsc_idx_busy)))
-				continue;
+			अगर (!(test_bit(i, &nic->macsec_cfg->rxsc_idx_busy)))
+				जारी;
 
 			aq_rxsc = &nic->macsec_cfg->aq_rxsc[i];
-			for (sa = 0; sa < MACSEC_NUM_AN; sa++) {
-				if (!(test_bit(sa, &aq_rxsc->rx_sa_idx_busy)))
-					continue;
-				for (si = 0;
+			क्रम (sa = 0; sa < MACSEC_NUM_AN; sa++) अणु
+				अगर (!(test_bit(sa, &aq_rxsc->rx_sa_idx_busy)))
+					जारी;
+				क्रम (si = 0;
 				     si < ARRAY_SIZE(aq_macsec_rxsa_stat_names);
-				     si++) {
-					snprintf(p, ETH_GSTRING_LEN,
+				     si++) अणु
+					snम_लिखो(p, ETH_GSTRING_LEN,
 						 aq_macsec_rxsa_stat_names[si],
 						 i, sa);
 					p += ETH_GSTRING_LEN;
-				}
-			}
-		}
-#endif
-		break;
-	}
-	case ETH_SS_PRIV_FLAGS:
-		memcpy(p, aq_ethtool_priv_flag_names,
-		       sizeof(aq_ethtool_priv_flag_names));
-		break;
-	}
-}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+#पूर्ण_अगर
+		अवरोध;
+	पूर्ण
+	हाल ETH_SS_PRIV_FLAGS:
+		स_नकल(p, aq_ethtool_priv_flag_names,
+		       माप(aq_ethtool_priv_flag_names));
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int aq_ethtool_set_phys_id(struct net_device *ndev,
-				  enum ethtool_phys_id_state state)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	struct aq_hw_s *hw = aq_nic->aq_hw;
-	int ret = 0;
+अटल पूर्णांक aq_ethtool_set_phys_id(काष्ठा net_device *ndev,
+				  क्रमागत ethtool_phys_id_state state)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	काष्ठा aq_hw_s *hw = aq_nic->aq_hw;
+	पूर्णांक ret = 0;
 
-	if (!aq_nic->aq_fw_ops->led_control)
-		return -EOPNOTSUPP;
+	अगर (!aq_nic->aq_fw_ops->led_control)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&aq_nic->fwreq_mutex);
 
-	switch (state) {
-	case ETHTOOL_ID_ACTIVE:
+	चयन (state) अणु
+	हाल ETHTOOL_ID_ACTIVE:
 		ret = aq_nic->aq_fw_ops->led_control(hw, AQ_HW_LED_BLINK |
 				 AQ_HW_LED_BLINK << 2 | AQ_HW_LED_BLINK << 4);
-		break;
-	case ETHTOOL_ID_INACTIVE:
+		अवरोध;
+	हाल ETHTOOL_ID_INACTIVE:
 		ret = aq_nic->aq_fw_ops->led_control(hw, AQ_HW_LED_DEFAULT);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&aq_nic->fwreq_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int aq_ethtool_get_sset_count(struct net_device *ndev, int stringset)
-{
-	int ret = 0;
+अटल पूर्णांक aq_ethtool_get_sset_count(काष्ठा net_device *ndev, पूर्णांक stringset)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
 		ret = aq_ethtool_n_stats(ndev);
-		break;
-	case ETH_SS_PRIV_FLAGS:
+		अवरोध;
+	हाल ETH_SS_PRIV_FLAGS:
 		ret = ARRAY_SIZE(aq_ethtool_priv_flag_names);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EOPNOTSUPP;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 aq_ethtool_get_rss_indir_size(struct net_device *ndev)
-{
-	return AQ_CFG_RSS_INDIRECTION_TABLE_MAX;
-}
+अटल u32 aq_ethtool_get_rss_indir_size(काष्ठा net_device *ndev)
+अणु
+	वापस AQ_CFG_RSS_INसूचीECTION_TABLE_MAX;
+पूर्ण
 
-static u32 aq_ethtool_get_rss_key_size(struct net_device *ndev)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	struct aq_nic_cfg_s *cfg;
+अटल u32 aq_ethtool_get_rss_key_size(काष्ठा net_device *ndev)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	काष्ठा aq_nic_cfg_s *cfg;
 
 	cfg = aq_nic_get_cfg(aq_nic);
 
-	return sizeof(cfg->aq_rss.hash_secret_key);
-}
+	वापस माप(cfg->aq_rss.hash_secret_key);
+पूर्ण
 
-static int aq_ethtool_get_rss(struct net_device *ndev, u32 *indir, u8 *key,
+अटल पूर्णांक aq_ethtool_get_rss(काष्ठा net_device *ndev, u32 *indir, u8 *key,
 			      u8 *hfunc)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	struct aq_nic_cfg_s *cfg;
-	unsigned int i = 0U;
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	काष्ठा aq_nic_cfg_s *cfg;
+	अचिन्हित पूर्णांक i = 0U;
 
 	cfg = aq_nic_get_cfg(aq_nic);
 
-	if (hfunc)
+	अगर (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP; /* Toeplitz */
-	if (indir) {
-		for (i = 0; i < AQ_CFG_RSS_INDIRECTION_TABLE_MAX; i++)
+	अगर (indir) अणु
+		क्रम (i = 0; i < AQ_CFG_RSS_INसूचीECTION_TABLE_MAX; i++)
 			indir[i] = cfg->aq_rss.indirection_table[i];
-	}
-	if (key)
-		memcpy(key, cfg->aq_rss.hash_secret_key,
-		       sizeof(cfg->aq_rss.hash_secret_key));
+	पूर्ण
+	अगर (key)
+		स_नकल(key, cfg->aq_rss.hash_secret_key,
+		       माप(cfg->aq_rss.hash_secret_key));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aq_ethtool_set_rss(struct net_device *netdev, const u32 *indir,
-			      const u8 *key, const u8 hfunc)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(netdev);
-	struct aq_nic_cfg_s *cfg;
-	unsigned int i = 0U;
+अटल पूर्णांक aq_ethtool_set_rss(काष्ठा net_device *netdev, स्थिर u32 *indir,
+			      स्थिर u8 *key, स्थिर u8 hfunc)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(netdev);
+	काष्ठा aq_nic_cfg_s *cfg;
+	अचिन्हित पूर्णांक i = 0U;
 	u32 rss_entries;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	cfg = aq_nic_get_cfg(aq_nic);
 	rss_entries = cfg->aq_rss.indirection_table_size;
 
-	/* We do not allow change in unsupported parameters */
-	if (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP)
-		return -EOPNOTSUPP;
+	/* We करो not allow change in unsupported parameters */
+	अगर (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP)
+		वापस -EOPNOTSUPP;
 	/* Fill out the redirection table */
-	if (indir)
-		for (i = 0; i < rss_entries; i++)
+	अगर (indir)
+		क्रम (i = 0; i < rss_entries; i++)
 			cfg->aq_rss.indirection_table[i] = indir[i];
 
 	/* Fill out the rss hash key */
-	if (key) {
-		memcpy(cfg->aq_rss.hash_secret_key, key,
-		       sizeof(cfg->aq_rss.hash_secret_key));
+	अगर (key) अणु
+		स_नकल(cfg->aq_rss.hash_secret_key, key,
+		       माप(cfg->aq_rss.hash_secret_key));
 		err = aq_nic->aq_hw_ops->hw_rss_hash_set(aq_nic->aq_hw,
 			&cfg->aq_rss);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	err = aq_nic->aq_hw_ops->hw_rss_set(aq_nic->aq_hw, &cfg->aq_rss);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int aq_ethtool_get_rxnfc(struct net_device *ndev,
-				struct ethtool_rxnfc *cmd,
+अटल पूर्णांक aq_ethtool_get_rxnfc(काष्ठा net_device *ndev,
+				काष्ठा ethtool_rxnfc *cmd,
 				u32 *rule_locs)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	struct aq_nic_cfg_s *cfg;
-	int err = 0;
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	काष्ठा aq_nic_cfg_s *cfg;
+	पूर्णांक err = 0;
 
 	cfg = aq_nic_get_cfg(aq_nic);
 
-	switch (cmd->cmd) {
-	case ETHTOOL_GRXRINGS:
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_GRXRINGS:
 		cmd->data = cfg->vecs;
-		break;
-	case ETHTOOL_GRXCLSRLCNT:
+		अवरोध;
+	हाल ETHTOOL_GRXCLSRLCNT:
 		cmd->rule_cnt = aq_get_rxnfc_count_all_rules(aq_nic);
-		break;
-	case ETHTOOL_GRXCLSRULE:
+		अवरोध;
+	हाल ETHTOOL_GRXCLSRULE:
 		err = aq_get_rxnfc_rule(aq_nic, cmd);
-		break;
-	case ETHTOOL_GRXCLSRLALL:
+		अवरोध;
+	हाल ETHTOOL_GRXCLSRLALL:
 		err = aq_get_rxnfc_all_rules(aq_nic, cmd, rule_locs);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EOPNOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int aq_ethtool_set_rxnfc(struct net_device *ndev,
-				struct ethtool_rxnfc *cmd)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	int err = 0;
+अटल पूर्णांक aq_ethtool_set_rxnfc(काष्ठा net_device *ndev,
+				काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	पूर्णांक err = 0;
 
-	switch (cmd->cmd) {
-	case ETHTOOL_SRXCLSRLINS:
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_SRXCLSRLINS:
 		err = aq_add_rxnfc_rule(aq_nic, cmd);
-		break;
-	case ETHTOOL_SRXCLSRLDEL:
+		अवरोध;
+	हाल ETHTOOL_SRXCLSRLDEL:
 		err = aq_del_rxnfc_rule(aq_nic, cmd);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EOPNOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int aq_ethtool_get_coalesce(struct net_device *ndev,
-				   struct ethtool_coalesce *coal)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	struct aq_nic_cfg_s *cfg;
+अटल पूर्णांक aq_ethtool_get_coalesce(काष्ठा net_device *ndev,
+				   काष्ठा ethtool_coalesce *coal)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	काष्ठा aq_nic_cfg_s *cfg;
 
 	cfg = aq_nic_get_cfg(aq_nic);
 
-	if (cfg->itr == AQ_CFG_INTERRUPT_MODERATION_ON ||
-	    cfg->itr == AQ_CFG_INTERRUPT_MODERATION_AUTO) {
+	अगर (cfg->itr == AQ_CFG_INTERRUPT_MODERATION_ON ||
+	    cfg->itr == AQ_CFG_INTERRUPT_MODERATION_AUTO) अणु
 		coal->rx_coalesce_usecs = cfg->rx_itr;
 		coal->tx_coalesce_usecs = cfg->tx_itr;
 		coal->rx_max_coalesced_frames = 0;
 		coal->tx_max_coalesced_frames = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		coal->rx_coalesce_usecs = 0;
 		coal->tx_coalesce_usecs = 0;
 		coal->rx_max_coalesced_frames = 1;
 		coal->tx_max_coalesced_frames = 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aq_ethtool_set_coalesce(struct net_device *ndev,
-				   struct ethtool_coalesce *coal)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	struct aq_nic_cfg_s *cfg;
+अटल पूर्णांक aq_ethtool_set_coalesce(काष्ठा net_device *ndev,
+				   काष्ठा ethtool_coalesce *coal)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	काष्ठा aq_nic_cfg_s *cfg;
 
 	cfg = aq_nic_get_cfg(aq_nic);
 
 	/* Atlantic only supports timing based coalescing
 	 */
-	if (coal->rx_max_coalesced_frames > 1 ||
+	अगर (coal->rx_max_coalesced_frames > 1 ||
 	    coal->tx_max_coalesced_frames > 1)
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	/* We do not support frame counting. Check this
+	/* We करो not support frame counting. Check this
 	 */
-	if (!(coal->rx_max_coalesced_frames == !coal->rx_coalesce_usecs))
-		return -EOPNOTSUPP;
-	if (!(coal->tx_max_coalesced_frames == !coal->tx_coalesce_usecs))
-		return -EOPNOTSUPP;
+	अगर (!(coal->rx_max_coalesced_frames == !coal->rx_coalesce_usecs))
+		वापस -EOPNOTSUPP;
+	अगर (!(coal->tx_max_coalesced_frames == !coal->tx_coalesce_usecs))
+		वापस -EOPNOTSUPP;
 
-	if (coal->rx_coalesce_usecs > AQ_CFG_INTERRUPT_MODERATION_USEC_MAX ||
+	अगर (coal->rx_coalesce_usecs > AQ_CFG_INTERRUPT_MODERATION_USEC_MAX ||
 	    coal->tx_coalesce_usecs > AQ_CFG_INTERRUPT_MODERATION_USEC_MAX)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	cfg->itr = AQ_CFG_INTERRUPT_MODERATION_ON;
 
 	cfg->rx_itr = coal->rx_coalesce_usecs;
 	cfg->tx_itr = coal->tx_coalesce_usecs;
 
-	return aq_nic_update_interrupt_moderation_settings(aq_nic);
-}
+	वापस aq_nic_update_पूर्णांकerrupt_moderation_settings(aq_nic);
+पूर्ण
 
-static void aq_ethtool_get_wol(struct net_device *ndev,
-			       struct ethtool_wolinfo *wol)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	struct aq_nic_cfg_s *cfg;
+अटल व्योम aq_ethtool_get_wol(काष्ठा net_device *ndev,
+			       काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	काष्ठा aq_nic_cfg_s *cfg;
 
 	cfg = aq_nic_get_cfg(aq_nic);
 
 	wol->supported = AQ_NIC_WOL_MODES;
 	wol->wolopts = cfg->wol;
-}
+पूर्ण
 
-static int aq_ethtool_set_wol(struct net_device *ndev,
-			      struct ethtool_wolinfo *wol)
-{
-	struct pci_dev *pdev = to_pci_dev(ndev->dev.parent);
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	struct aq_nic_cfg_s *cfg;
-	int err = 0;
+अटल पूर्णांक aq_ethtool_set_wol(काष्ठा net_device *ndev,
+			      काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(ndev->dev.parent);
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	काष्ठा aq_nic_cfg_s *cfg;
+	पूर्णांक err = 0;
 
 	cfg = aq_nic_get_cfg(aq_nic);
 
-	if (wol->wolopts & ~AQ_NIC_WOL_MODES)
-		return -EOPNOTSUPP;
+	अगर (wol->wolopts & ~AQ_NIC_WOL_MODES)
+		वापस -EOPNOTSUPP;
 
 	cfg->wol = wol->wolopts;
 
 	err = device_set_wakeup_enable(&pdev->dev, !!cfg->wol);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int aq_ethtool_get_ts_info(struct net_device *ndev,
-				  struct ethtool_ts_info *info)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल पूर्णांक aq_ethtool_get_ts_info(काष्ठा net_device *ndev,
+				  काष्ठा ethtool_ts_info *info)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 
 	ethtool_op_get_ts_info(ndev, info);
 
-	if (!aq_nic->aq_ptp)
-		return 0;
+	अगर (!aq_nic->aq_ptp)
+		वापस 0;
 
-	info->so_timestamping |=
+	info->so_बारtamping |=
 		SOF_TIMESTAMPING_TX_HARDWARE |
 		SOF_TIMESTAMPING_RX_HARDWARE |
 		SOF_TIMESTAMPING_RAW_HARDWARE;
@@ -659,48 +660,48 @@ static int aq_ethtool_get_ts_info(struct net_device *ndev,
 			    BIT(HWTSTAMP_FILTER_PTP_V2_L2_EVENT) |
 			    BIT(HWTSTAMP_FILTER_PTP_V2_EVENT);
 
-#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
-	info->phc_index = ptp_clock_index(aq_ptp_get_ptp_clock(aq_nic->aq_ptp));
-#endif
+#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+	info->phc_index = ptp_घड़ी_index(aq_ptp_get_ptp_घड़ी(aq_nic->aq_ptp));
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 eee_mask_to_ethtool_mask(u32 speed)
-{
+अटल u32 eee_mask_to_ethtool_mask(u32 speed)
+अणु
 	u32 rate = 0;
 
-	if (speed & AQ_NIC_RATE_EEE_10G)
+	अगर (speed & AQ_NIC_RATE_EEE_10G)
 		rate |= SUPPORTED_10000baseT_Full;
 
-	if (speed & AQ_NIC_RATE_EEE_1G)
+	अगर (speed & AQ_NIC_RATE_EEE_1G)
 		rate |= SUPPORTED_1000baseT_Full;
 
-	if (speed & AQ_NIC_RATE_EEE_100M)
+	अगर (speed & AQ_NIC_RATE_EEE_100M)
 		rate |= SUPPORTED_100baseT_Full;
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static int aq_ethtool_get_eee(struct net_device *ndev, struct ethtool_eee *eee)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल पूर्णांक aq_ethtool_get_eee(काष्ठा net_device *ndev, काष्ठा ethtool_eee *eee)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 	u32 rate, supported_rates;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (!aq_nic->aq_fw_ops->get_eee_rate)
-		return -EOPNOTSUPP;
+	अगर (!aq_nic->aq_fw_ops->get_eee_rate)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&aq_nic->fwreq_mutex);
 	err = aq_nic->aq_fw_ops->get_eee_rate(aq_nic->aq_hw, &rate,
 					      &supported_rates);
 	mutex_unlock(&aq_nic->fwreq_mutex);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	eee->supported = eee_mask_to_ethtool_mask(supported_rates);
 
-	if (aq_nic->aq_nic_cfg.eee_speeds)
+	अगर (aq_nic->aq_nic_cfg.eee_speeds)
 		eee->advertised = eee->supported;
 
 	eee->lp_advertised = eee_mask_to_ethtool_mask(rate);
@@ -708,110 +709,110 @@ static int aq_ethtool_get_eee(struct net_device *ndev, struct ethtool_eee *eee)
 	eee->eee_enabled = !!eee->advertised;
 
 	eee->tx_lpi_enabled = eee->eee_enabled;
-	if ((supported_rates & rate) & AQ_NIC_RATE_EEE_MSK)
+	अगर ((supported_rates & rate) & AQ_NIC_RATE_EEE_MSK)
 		eee->eee_active = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aq_ethtool_set_eee(struct net_device *ndev, struct ethtool_eee *eee)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल पूर्णांक aq_ethtool_set_eee(काष्ठा net_device *ndev, काष्ठा ethtool_eee *eee)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 	u32 rate, supported_rates;
-	struct aq_nic_cfg_s *cfg;
-	int err = 0;
+	काष्ठा aq_nic_cfg_s *cfg;
+	पूर्णांक err = 0;
 
 	cfg = aq_nic_get_cfg(aq_nic);
 
-	if (unlikely(!aq_nic->aq_fw_ops->get_eee_rate ||
+	अगर (unlikely(!aq_nic->aq_fw_ops->get_eee_rate ||
 		     !aq_nic->aq_fw_ops->set_eee_rate))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&aq_nic->fwreq_mutex);
 	err = aq_nic->aq_fw_ops->get_eee_rate(aq_nic->aq_hw, &rate,
 					      &supported_rates);
 	mutex_unlock(&aq_nic->fwreq_mutex);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (eee->eee_enabled) {
+	अगर (eee->eee_enabled) अणु
 		rate = supported_rates;
 		cfg->eee_speeds = rate;
-	} else {
+	पूर्ण अन्यथा अणु
 		rate = 0;
 		cfg->eee_speeds = 0;
-	}
+	पूर्ण
 
 	mutex_lock(&aq_nic->fwreq_mutex);
 	err = aq_nic->aq_fw_ops->set_eee_rate(aq_nic->aq_hw, rate);
 	mutex_unlock(&aq_nic->fwreq_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int aq_ethtool_nway_reset(struct net_device *ndev)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	int err = 0;
+अटल पूर्णांक aq_ethtool_nway_reset(काष्ठा net_device *ndev)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	पूर्णांक err = 0;
 
-	if (unlikely(!aq_nic->aq_fw_ops->renegotiate))
-		return -EOPNOTSUPP;
+	अगर (unlikely(!aq_nic->aq_fw_ops->renegotiate))
+		वापस -EOPNOTSUPP;
 
-	if (netif_running(ndev)) {
+	अगर (netअगर_running(ndev)) अणु
 		mutex_lock(&aq_nic->fwreq_mutex);
 		err = aq_nic->aq_fw_ops->renegotiate(aq_nic->aq_hw);
 		mutex_unlock(&aq_nic->fwreq_mutex);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void aq_ethtool_get_pauseparam(struct net_device *ndev,
-				      struct ethtool_pauseparam *pause)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	int fc = aq_nic->aq_nic_cfg.fc.req;
+अटल व्योम aq_ethtool_get_छोड़ोparam(काष्ठा net_device *ndev,
+				      काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	पूर्णांक fc = aq_nic->aq_nic_cfg.fc.req;
 
-	pause->autoneg = 0;
+	छोड़ो->स्वतःneg = 0;
 
-	pause->rx_pause = !!(fc & AQ_NIC_FC_RX);
-	pause->tx_pause = !!(fc & AQ_NIC_FC_TX);
-}
+	छोड़ो->rx_छोड़ो = !!(fc & AQ_NIC_FC_RX);
+	छोड़ो->tx_छोड़ो = !!(fc & AQ_NIC_FC_TX);
+पूर्ण
 
-static int aq_ethtool_set_pauseparam(struct net_device *ndev,
-				     struct ethtool_pauseparam *pause)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	int err = 0;
+अटल पूर्णांक aq_ethtool_set_छोड़ोparam(काष्ठा net_device *ndev,
+				     काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	पूर्णांक err = 0;
 
-	if (!aq_nic->aq_fw_ops->set_flow_control)
-		return -EOPNOTSUPP;
+	अगर (!aq_nic->aq_fw_ops->set_flow_control)
+		वापस -EOPNOTSUPP;
 
-	if (pause->autoneg == AUTONEG_ENABLE)
-		return -EOPNOTSUPP;
+	अगर (छोड़ो->स्वतःneg == AUTONEG_ENABLE)
+		वापस -EOPNOTSUPP;
 
-	if (pause->rx_pause)
+	अगर (छोड़ो->rx_छोड़ो)
 		aq_nic->aq_hw->aq_nic_cfg->fc.req |= AQ_NIC_FC_RX;
-	else
+	अन्यथा
 		aq_nic->aq_hw->aq_nic_cfg->fc.req &= ~AQ_NIC_FC_RX;
 
-	if (pause->tx_pause)
+	अगर (छोड़ो->tx_छोड़ो)
 		aq_nic->aq_hw->aq_nic_cfg->fc.req |= AQ_NIC_FC_TX;
-	else
+	अन्यथा
 		aq_nic->aq_hw->aq_nic_cfg->fc.req &= ~AQ_NIC_FC_TX;
 
 	mutex_lock(&aq_nic->fwreq_mutex);
 	err = aq_nic->aq_fw_ops->set_flow_control(aq_nic->aq_hw);
 	mutex_unlock(&aq_nic->fwreq_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void aq_get_ringparam(struct net_device *ndev,
-			     struct ethtool_ringparam *ring)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	struct aq_nic_cfg_s *cfg;
+अटल व्योम aq_get_ringparam(काष्ठा net_device *ndev,
+			     काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	काष्ठा aq_nic_cfg_s *cfg;
 
 	cfg = aq_nic_get_cfg(aq_nic);
 
@@ -820,29 +821,29 @@ static void aq_get_ringparam(struct net_device *ndev,
 
 	ring->rx_max_pending = cfg->aq_hw_caps->rxds_max;
 	ring->tx_max_pending = cfg->aq_hw_caps->txds_max;
-}
+पूर्ण
 
-static int aq_set_ringparam(struct net_device *ndev,
-			    struct ethtool_ringparam *ring)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	const struct aq_hw_caps_s *hw_caps;
+अटल पूर्णांक aq_set_ringparam(काष्ठा net_device *ndev,
+			    काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	स्थिर काष्ठा aq_hw_caps_s *hw_caps;
 	bool ndev_running = false;
-	struct aq_nic_cfg_s *cfg;
-	int err = 0;
+	काष्ठा aq_nic_cfg_s *cfg;
+	पूर्णांक err = 0;
 
 	cfg = aq_nic_get_cfg(aq_nic);
 	hw_caps = cfg->aq_hw_caps;
 
-	if (ring->rx_mini_pending || ring->rx_jumbo_pending) {
+	अगर (ring->rx_mini_pending || ring->rx_jumbo_pending) अणु
 		err = -EOPNOTSUPP;
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 
-	if (netif_running(ndev)) {
+	अगर (netअगर_running(ndev)) अणु
 		ndev_running = true;
-		dev_close(ndev);
-	}
+		dev_बंद(ndev);
+	पूर्ण
 
 	cfg->rxds = max(ring->rx_pending, hw_caps->rxds_min);
 	cfg->rxds = min(cfg->rxds, hw_caps->rxds_max);
@@ -852,123 +853,123 @@ static int aq_set_ringparam(struct net_device *ndev,
 	cfg->txds = min(cfg->txds, hw_caps->txds_max);
 	cfg->txds = ALIGN(cfg->txds, AQ_HW_TXD_MULTIPLE);
 
-	err = aq_nic_realloc_vectors(aq_nic);
-	if (err)
-		goto err_exit;
+	err = aq_nic_पुनः_स्मृति_vectors(aq_nic);
+	अगर (err)
+		जाओ err_निकास;
 
-	if (ndev_running)
-		err = dev_open(ndev, NULL);
+	अगर (ndev_running)
+		err = dev_खोलो(ndev, शून्य);
 
-err_exit:
-	return err;
-}
+err_निकास:
+	वापस err;
+पूर्ण
 
-static u32 aq_get_msg_level(struct net_device *ndev)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल u32 aq_get_msg_level(काष्ठा net_device *ndev)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 
-	return aq_nic->msg_enable;
-}
+	वापस aq_nic->msg_enable;
+पूर्ण
 
-static void aq_set_msg_level(struct net_device *ndev, u32 data)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल व्योम aq_set_msg_level(काष्ठा net_device *ndev, u32 data)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 
 	aq_nic->msg_enable = data;
-}
+पूर्ण
 
-static u32 aq_ethtool_get_priv_flags(struct net_device *ndev)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल u32 aq_ethtool_get_priv_flags(काष्ठा net_device *ndev)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 
-	return aq_nic->aq_nic_cfg.priv_flags;
-}
+	वापस aq_nic->aq_nic_cfg.priv_flags;
+पूर्ण
 
-static int aq_ethtool_set_priv_flags(struct net_device *ndev, u32 flags)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
-	struct aq_nic_cfg_s *cfg;
+अटल पूर्णांक aq_ethtool_set_priv_flags(काष्ठा net_device *ndev, u32 flags)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	काष्ठा aq_nic_cfg_s *cfg;
 	u32 priv_flags;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	cfg = aq_nic_get_cfg(aq_nic);
 	priv_flags = cfg->priv_flags;
 
-	if (flags & ~AQ_PRIV_FLAGS_MASK)
-		return -EOPNOTSUPP;
+	अगर (flags & ~AQ_PRIV_FLAGS_MASK)
+		वापस -EOPNOTSUPP;
 
-	if (hweight32((flags | priv_flags) & AQ_HW_LOOPBACK_MASK) > 1) {
+	अगर (hweight32((flags | priv_flags) & AQ_HW_LOOPBACK_MASK) > 1) अणु
 		netdev_info(ndev, "Can't enable more than one loopback simultaneously\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	cfg->priv_flags = flags;
 
-	if ((priv_flags ^ flags) & BIT(AQ_HW_LOOPBACK_DMA_NET)) {
-		if (netif_running(ndev)) {
-			dev_close(ndev);
+	अगर ((priv_flags ^ flags) & BIT(AQ_HW_LOOPBACK_DMA_NET)) अणु
+		अगर (netअगर_running(ndev)) अणु
+			dev_बंद(ndev);
 
-			dev_open(ndev, NULL);
-		}
-	} else if ((priv_flags ^ flags) & AQ_HW_LOOPBACK_MASK) {
+			dev_खोलो(ndev, शून्य);
+		पूर्ण
+	पूर्ण अन्यथा अगर ((priv_flags ^ flags) & AQ_HW_LOOPBACK_MASK) अणु
 		ret = aq_nic_set_loopback(aq_nic);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int aq_ethtool_get_phy_tunable(struct net_device *ndev,
-				      const struct ethtool_tunable *tuna, void *data)
-{
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल पूर्णांक aq_ethtool_get_phy_tunable(काष्ठा net_device *ndev,
+				      स्थिर काष्ठा ethtool_tunable *tuna, व्योम *data)
+अणु
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 
-	switch (tuna->id) {
-	case ETHTOOL_PHY_EDPD: {
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_PHY_EDPD: अणु
 		u16 *val = data;
 
 		*val = aq_nic->aq_nic_cfg.is_media_detect ? AQ_HW_MEDIA_DETECT_CNT : 0;
-		break;
-	}
-	case ETHTOOL_PHY_DOWNSHIFT: {
+		अवरोध;
+	पूर्ण
+	हाल ETHTOOL_PHY_DOWNSHIFT: अणु
 		u8 *val = data;
 
-		*val = (u8)aq_nic->aq_nic_cfg.downshift_counter;
-		break;
-	}
-	default:
-		return -EOPNOTSUPP;
-	}
+		*val = (u8)aq_nic->aq_nic_cfg.करोwnshअगरt_counter;
+		अवरोध;
+	पूर्ण
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aq_ethtool_set_phy_tunable(struct net_device *ndev,
-				      const struct ethtool_tunable *tuna, const void *data)
-{
-	int err = -EOPNOTSUPP;
-	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+अटल पूर्णांक aq_ethtool_set_phy_tunable(काष्ठा net_device *ndev,
+				      स्थिर काष्ठा ethtool_tunable *tuna, स्थिर व्योम *data)
+अणु
+	पूर्णांक err = -EOPNOTSUPP;
+	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
 
-	switch (tuna->id) {
-	case ETHTOOL_PHY_EDPD: {
-		const u16 *val = data;
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_PHY_EDPD: अणु
+		स्थिर u16 *val = data;
 
 		err = aq_nic_set_media_detect(aq_nic, *val);
-		break;
-	}
-	case ETHTOOL_PHY_DOWNSHIFT: {
-		const u8 *val = data;
+		अवरोध;
+	पूर्ण
+	हाल ETHTOOL_PHY_DOWNSHIFT: अणु
+		स्थिर u8 *val = data;
 
-		err = aq_nic_set_downshift(aq_nic, *val);
-		break;
-	}
-	default:
-		break;
-	}
+		err = aq_nic_set_करोwnshअगरt(aq_nic, *val);
+		अवरोध;
+	पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct ethtool_ops aq_ethtool_ops = {
+स्थिर काष्ठा ethtool_ops aq_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_MAX_FRAMES,
 	.get_link            = aq_ethtool_get_link,
@@ -985,8 +986,8 @@ const struct ethtool_ops aq_ethtool_ops = {
 	.set_ringparam       = aq_set_ringparam,
 	.get_eee             = aq_ethtool_get_eee,
 	.set_eee             = aq_ethtool_set_eee,
-	.get_pauseparam      = aq_ethtool_get_pauseparam,
-	.set_pauseparam      = aq_ethtool_set_pauseparam,
+	.get_छोड़ोparam      = aq_ethtool_get_छोड़ोparam,
+	.set_छोड़ोparam      = aq_ethtool_set_छोड़ोparam,
 	.get_rxfh_key_size   = aq_ethtool_get_rss_key_size,
 	.get_rxfh            = aq_ethtool_get_rss,
 	.set_rxfh            = aq_ethtool_set_rss,
@@ -1005,4 +1006,4 @@ const struct ethtool_ops aq_ethtool_ops = {
 	.get_ts_info         = aq_ethtool_get_ts_info,
 	.get_phy_tunable     = aq_ethtool_get_phy_tunable,
 	.set_phy_tunable     = aq_ethtool_set_phy_tunable,
-};
+पूर्ण;

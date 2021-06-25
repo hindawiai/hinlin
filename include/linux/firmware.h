@@ -1,121 +1,122 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_FIRMWARE_H
-#define _LINUX_FIRMWARE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_FIRMWARE_H
+#घोषणा _LINUX_FIRMWARE_H
 
-#include <linux/types.h>
-#include <linux/compiler.h>
-#include <linux/gfp.h>
+#समावेश <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/gfp.h>
 
-#define FW_ACTION_NOHOTPLUG 0
-#define FW_ACTION_HOTPLUG 1
+#घोषणा FW_ACTION_NOHOTPLUG 0
+#घोषणा FW_ACTION_HOTPLUG 1
 
-struct firmware {
-	size_t size;
-	const u8 *data;
+काष्ठा firmware अणु
+	माप_प्रकार size;
+	स्थिर u8 *data;
 
-	/* firmware loader private fields */
-	void *priv;
-};
+	/* firmware loader निजी fields */
+	व्योम *priv;
+पूर्ण;
 
-struct module;
-struct device;
+काष्ठा module;
+काष्ठा device;
 
-struct builtin_fw {
-	char *name;
-	void *data;
-	unsigned long size;
-};
+काष्ठा builtin_fw अणु
+	अक्षर *name;
+	व्योम *data;
+	अचिन्हित दीर्घ size;
+पूर्ण;
 
-/* We have to play tricks here much like stringify() to get the
+/* We have to play tricks here much like stringअगरy() to get the
    __COUNTER__ macro to be expanded as we want it */
-#define __fw_concat1(x, y) x##y
-#define __fw_concat(x, y) __fw_concat1(x, y)
+#घोषणा __fw_concat1(x, y) x##y
+#घोषणा __fw_concat(x, y) __fw_concat1(x, y)
 
-#define DECLARE_BUILTIN_FIRMWARE(name, blob)				     \
-	DECLARE_BUILTIN_FIRMWARE_SIZE(name, &(blob), sizeof(blob))
+#घोषणा DECLARE_BUILTIN_FIRMWARE(name, blob)				     \
+	DECLARE_BUILTIN_FIRMWARE_SIZE(name, &(blob), माप(blob))
 
-#define DECLARE_BUILTIN_FIRMWARE_SIZE(name, blob, size)			     \
-	static const struct builtin_fw __fw_concat(__builtin_fw,__COUNTER__) \
-	__used __section(".builtin_fw") = { name, blob, size }
+#घोषणा DECLARE_BUILTIN_FIRMWARE_SIZE(name, blob, size)			     \
+	अटल स्थिर काष्ठा builtin_fw __fw_concat(__builtin_fw,__COUNTER__) \
+	__used __section(".builtin_fw") = अणु name, blob, size पूर्ण
 
-#if defined(CONFIG_FW_LOADER) || (defined(CONFIG_FW_LOADER_MODULE) && defined(MODULE))
-int request_firmware(const struct firmware **fw, const char *name,
-		     struct device *device);
-int firmware_request_nowarn(const struct firmware **fw, const char *name,
-			    struct device *device);
-int firmware_request_platform(const struct firmware **fw, const char *name,
-			      struct device *device);
-int request_firmware_nowait(
-	struct module *module, bool uevent,
-	const char *name, struct device *device, gfp_t gfp, void *context,
-	void (*cont)(const struct firmware *fw, void *context));
-int request_firmware_direct(const struct firmware **fw, const char *name,
-			    struct device *device);
-int request_firmware_into_buf(const struct firmware **firmware_p,
-	const char *name, struct device *device, void *buf, size_t size);
-int request_partial_firmware_into_buf(const struct firmware **firmware_p,
-				      const char *name, struct device *device,
-				      void *buf, size_t size, size_t offset);
+#अगर defined(CONFIG_FW_LOADER) || (defined(CONFIG_FW_LOADER_MODULE) && defined(MODULE))
+पूर्णांक request_firmware(स्थिर काष्ठा firmware **fw, स्थिर अक्षर *name,
+		     काष्ठा device *device);
+पूर्णांक firmware_request_nowarn(स्थिर काष्ठा firmware **fw, स्थिर अक्षर *name,
+			    काष्ठा device *device);
+पूर्णांक firmware_request_platक्रमm(स्थिर काष्ठा firmware **fw, स्थिर अक्षर *name,
+			      काष्ठा device *device);
+पूर्णांक request_firmware_noरुको(
+	काष्ठा module *module, bool uevent,
+	स्थिर अक्षर *name, काष्ठा device *device, gfp_t gfp, व्योम *context,
+	व्योम (*cont)(स्थिर काष्ठा firmware *fw, व्योम *context));
+पूर्णांक request_firmware_direct(स्थिर काष्ठा firmware **fw, स्थिर अक्षर *name,
+			    काष्ठा device *device);
+पूर्णांक request_firmware_पूर्णांकo_buf(स्थिर काष्ठा firmware **firmware_p,
+	स्थिर अक्षर *name, काष्ठा device *device, व्योम *buf, माप_प्रकार size);
+पूर्णांक request_partial_firmware_पूर्णांकo_buf(स्थिर काष्ठा firmware **firmware_p,
+				      स्थिर अक्षर *name, काष्ठा device *device,
+				      व्योम *buf, माप_प्रकार size, माप_प्रकार offset);
 
-void release_firmware(const struct firmware *fw);
-#else
-static inline int request_firmware(const struct firmware **fw,
-				   const char *name,
-				   struct device *device)
-{
-	return -EINVAL;
-}
+व्योम release_firmware(स्थिर काष्ठा firmware *fw);
+#अन्यथा
+अटल अंतरभूत पूर्णांक request_firmware(स्थिर काष्ठा firmware **fw,
+				   स्थिर अक्षर *name,
+				   काष्ठा device *device)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int firmware_request_nowarn(const struct firmware **fw,
-					  const char *name,
-					  struct device *device)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक firmware_request_nowarn(स्थिर काष्ठा firmware **fw,
+					  स्थिर अक्षर *name,
+					  काष्ठा device *device)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int firmware_request_platform(const struct firmware **fw,
-					    const char *name,
-					    struct device *device)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक firmware_request_platक्रमm(स्थिर काष्ठा firmware **fw,
+					    स्थिर अक्षर *name,
+					    काष्ठा device *device)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int request_firmware_nowait(
-	struct module *module, bool uevent,
-	const char *name, struct device *device, gfp_t gfp, void *context,
-	void (*cont)(const struct firmware *fw, void *context))
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक request_firmware_noरुको(
+	काष्ठा module *module, bool uevent,
+	स्थिर अक्षर *name, काष्ठा device *device, gfp_t gfp, व्योम *context,
+	व्योम (*cont)(स्थिर काष्ठा firmware *fw, व्योम *context))
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline void release_firmware(const struct firmware *fw)
-{
-}
+अटल अंतरभूत व्योम release_firmware(स्थिर काष्ठा firmware *fw)
+अणु
+पूर्ण
 
-static inline int request_firmware_direct(const struct firmware **fw,
-					  const char *name,
-					  struct device *device)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक request_firmware_direct(स्थिर काष्ठा firmware **fw,
+					  स्थिर अक्षर *name,
+					  काष्ठा device *device)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int request_firmware_into_buf(const struct firmware **firmware_p,
-	const char *name, struct device *device, void *buf, size_t size)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक request_firmware_पूर्णांकo_buf(स्थिर काष्ठा firmware **firmware_p,
+	स्थिर अक्षर *name, काष्ठा device *device, व्योम *buf, माप_प्रकार size)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int request_partial_firmware_into_buf
-					(const struct firmware **firmware_p,
-					 const char *name,
-					 struct device *device,
-					 void *buf, size_t size, size_t offset)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक request_partial_firmware_पूर्णांकo_buf
+					(स्थिर काष्ठा firmware **firmware_p,
+					 स्थिर अक्षर *name,
+					 काष्ठा device *device,
+					 व्योम *buf, माप_प्रकार size, माप_प्रकार offset)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-int firmware_request_cache(struct device *device, const char *name);
+पूर्णांक firmware_request_cache(काष्ठा device *device, स्थिर अक्षर *name);
 
-#endif
+#पूर्ण_अगर

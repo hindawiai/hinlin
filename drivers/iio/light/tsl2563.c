@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * drivers/iio/light/tsl2563.c
  *
@@ -11,706 +12,706 @@
  * Amit Kucheria <amit.kucheria@verdurent.com>
  */
 
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/property.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/sched.h>
-#include <linux/mutex.h>
-#include <linux/delay.h>
-#include <linux/pm.h>
-#include <linux/err.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/property.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/events.h>
-#include <linux/platform_data/tsl2563.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/events.h>
+#समावेश <linux/platक्रमm_data/tsl2563.h>
 
-/* Use this many bits for fraction part. */
-#define ADC_FRAC_BITS		14
+/* Use this many bits क्रम fraction part. */
+#घोषणा ADC_FRAC_BITS		14
 
 /* Given number of 1/10000's in ADC_FRAC_BITS precision. */
-#define FRAC10K(f)		(((f) * (1L << (ADC_FRAC_BITS))) / (10000))
+#घोषणा FRAC10K(f)		(((f) * (1L << (ADC_FRAC_BITS))) / (10000))
 
-/* Bits used for fraction in calibration coefficients.*/
-#define CALIB_FRAC_BITS		10
+/* Bits used क्रम fraction in calibration coefficients.*/
+#घोषणा CALIB_FRAC_BITS		10
 /* 0.5 in CALIB_FRAC_BITS precision */
-#define CALIB_FRAC_HALF		(1 << (CALIB_FRAC_BITS - 1))
+#घोषणा CALIB_FRAC_HALF		(1 << (CALIB_FRAC_BITS - 1))
 /* Make a fraction from a number n that was multiplied with b. */
-#define CALIB_FRAC(n, b)	(((n) << CALIB_FRAC_BITS) / (b))
+#घोषणा CALIB_FRAC(n, b)	(((n) << CALIB_FRAC_BITS) / (b))
 /* Decimal 10^(digits in sysfs presentation) */
-#define CALIB_BASE_SYSFS	1000
+#घोषणा CALIB_BASE_SYSFS	1000
 
-#define TSL2563_CMD		0x80
-#define TSL2563_CLEARINT	0x40
+#घोषणा TSL2563_CMD		0x80
+#घोषणा TSL2563_CLEARINT	0x40
 
-#define TSL2563_REG_CTRL	0x00
-#define TSL2563_REG_TIMING	0x01
-#define TSL2563_REG_LOWLOW	0x02 /* data0 low threshold, 2 bytes */
-#define TSL2563_REG_LOWHIGH	0x03
-#define TSL2563_REG_HIGHLOW	0x04 /* data0 high threshold, 2 bytes */
-#define TSL2563_REG_HIGHHIGH	0x05
-#define TSL2563_REG_INT		0x06
-#define TSL2563_REG_ID		0x0a
-#define TSL2563_REG_DATA0LOW	0x0c /* broadband sensor value, 2 bytes */
-#define TSL2563_REG_DATA0HIGH	0x0d
-#define TSL2563_REG_DATA1LOW	0x0e /* infrared sensor value, 2 bytes */
-#define TSL2563_REG_DATA1HIGH	0x0f
+#घोषणा TSL2563_REG_CTRL	0x00
+#घोषणा TSL2563_REG_TIMING	0x01
+#घोषणा TSL2563_REG_LOWLOW	0x02 /* data0 low threshold, 2 bytes */
+#घोषणा TSL2563_REG_LOWHIGH	0x03
+#घोषणा TSL2563_REG_HIGHLOW	0x04 /* data0 high threshold, 2 bytes */
+#घोषणा TSL2563_REG_HIGHHIGH	0x05
+#घोषणा TSL2563_REG_INT		0x06
+#घोषणा TSL2563_REG_ID		0x0a
+#घोषणा TSL2563_REG_DATA0LOW	0x0c /* broadband sensor value, 2 bytes */
+#घोषणा TSL2563_REG_DATA0HIGH	0x0d
+#घोषणा TSL2563_REG_DATA1LOW	0x0e /* infrared sensor value, 2 bytes */
+#घोषणा TSL2563_REG_DATA1HIGH	0x0f
 
-#define TSL2563_CMD_POWER_ON	0x03
-#define TSL2563_CMD_POWER_OFF	0x00
-#define TSL2563_CTRL_POWER_MASK	0x03
+#घोषणा TSL2563_CMD_POWER_ON	0x03
+#घोषणा TSL2563_CMD_POWER_OFF	0x00
+#घोषणा TSL2563_CTRL_POWER_MASK	0x03
 
-#define TSL2563_TIMING_13MS	0x00
-#define TSL2563_TIMING_100MS	0x01
-#define TSL2563_TIMING_400MS	0x02
-#define TSL2563_TIMING_MASK	0x03
-#define TSL2563_TIMING_GAIN16	0x10
-#define TSL2563_TIMING_GAIN1	0x00
+#घोषणा TSL2563_TIMING_13MS	0x00
+#घोषणा TSL2563_TIMING_100MS	0x01
+#घोषणा TSL2563_TIMING_400MS	0x02
+#घोषणा TSL2563_TIMING_MASK	0x03
+#घोषणा TSL2563_TIMING_GAIN16	0x10
+#घोषणा TSL2563_TIMING_GAIN1	0x00
 
-#define TSL2563_INT_DISABLED	0x00
-#define TSL2563_INT_LEVEL	0x10
-#define TSL2563_INT_PERSIST(n)	((n) & 0x0F)
+#घोषणा TSL2563_INT_DISABLED	0x00
+#घोषणा TSL2563_INT_LEVEL	0x10
+#घोषणा TSL2563_INT_PERSIST(n)	((n) & 0x0F)
 
-struct tsl2563_gainlevel_coeff {
-	u8 gaintime;
+काष्ठा tsl2563_gainlevel_coeff अणु
+	u8 gaपूर्णांकime;
 	u16 min;
 	u16 max;
-};
+पूर्ण;
 
-static const struct tsl2563_gainlevel_coeff tsl2563_gainlevel_table[] = {
-	{
-		.gaintime	= TSL2563_TIMING_400MS | TSL2563_TIMING_GAIN16,
+अटल स्थिर काष्ठा tsl2563_gainlevel_coeff tsl2563_gainlevel_table[] = अणु
+	अणु
+		.gaपूर्णांकime	= TSL2563_TIMING_400MS | TSL2563_TIMING_GAIN16,
 		.min		= 0,
 		.max		= 65534,
-	}, {
-		.gaintime	= TSL2563_TIMING_400MS | TSL2563_TIMING_GAIN1,
+	पूर्ण, अणु
+		.gaपूर्णांकime	= TSL2563_TIMING_400MS | TSL2563_TIMING_GAIN1,
 		.min		= 2048,
 		.max		= 65534,
-	}, {
-		.gaintime	= TSL2563_TIMING_100MS | TSL2563_TIMING_GAIN1,
+	पूर्ण, अणु
+		.gaपूर्णांकime	= TSL2563_TIMING_100MS | TSL2563_TIMING_GAIN1,
 		.min		= 4095,
 		.max		= 37177,
-	}, {
-		.gaintime	= TSL2563_TIMING_13MS | TSL2563_TIMING_GAIN1,
+	पूर्ण, अणु
+		.gaपूर्णांकime	= TSL2563_TIMING_13MS | TSL2563_TIMING_GAIN1,
 		.min		= 3000,
 		.max		= 65535,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct tsl2563_chip {
-	struct mutex		lock;
-	struct i2c_client	*client;
-	struct delayed_work	poweroff_work;
+काष्ठा tsl2563_chip अणु
+	काष्ठा mutex		lock;
+	काष्ठा i2c_client	*client;
+	काष्ठा delayed_work	घातeroff_work;
 
-	/* Remember state for suspend and resume functions */
+	/* Remember state क्रम suspend and resume functions */
 	bool suspended;
 
-	struct tsl2563_gainlevel_coeff const *gainlevel;
+	काष्ठा tsl2563_gainlevel_coeff स्थिर *gainlevel;
 
 	u16			low_thres;
 	u16			high_thres;
-	u8			intr;
-	bool			int_enabled;
+	u8			पूर्णांकr;
+	bool			पूर्णांक_enabled;
 
 	/* Calibration coefficients */
 	u32			calib0;
 	u32			calib1;
-	int			cover_comp_gain;
+	पूर्णांक			cover_comp_gain;
 
-	/* Cache current values, to be returned while suspended */
+	/* Cache current values, to be वापसed जबतक suspended */
 	u32			data0;
 	u32			data1;
-};
+पूर्ण;
 
-static int tsl2563_set_power(struct tsl2563_chip *chip, int on)
-{
-	struct i2c_client *client = chip->client;
+अटल पूर्णांक tsl2563_set_घातer(काष्ठा tsl2563_chip *chip, पूर्णांक on)
+अणु
+	काष्ठा i2c_client *client = chip->client;
 	u8 cmd;
 
 	cmd = on ? TSL2563_CMD_POWER_ON : TSL2563_CMD_POWER_OFF;
-	return i2c_smbus_write_byte_data(client,
+	वापस i2c_smbus_ग_लिखो_byte_data(client,
 					 TSL2563_CMD | TSL2563_REG_CTRL, cmd);
-}
+पूर्ण
 
 /*
- * Return value is 0 for off, 1 for on, or a negative error
- * code if reading failed.
+ * Return value is 0 क्रम off, 1 क्रम on, or a negative error
+ * code अगर पढ़ोing failed.
  */
-static int tsl2563_get_power(struct tsl2563_chip *chip)
-{
-	struct i2c_client *client = chip->client;
-	int ret;
+अटल पूर्णांक tsl2563_get_घातer(काष्ठा tsl2563_chip *chip)
+अणु
+	काष्ठा i2c_client *client = chip->client;
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_byte_data(client, TSL2563_CMD | TSL2563_REG_CTRL);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_पढ़ो_byte_data(client, TSL2563_CMD | TSL2563_REG_CTRL);
+	अगर (ret < 0)
+		वापस ret;
 
-	return (ret & TSL2563_CTRL_POWER_MASK) == TSL2563_CMD_POWER_ON;
-}
+	वापस (ret & TSL2563_CTRL_POWER_MASK) == TSL2563_CMD_POWER_ON;
+पूर्ण
 
-static int tsl2563_configure(struct tsl2563_chip *chip)
-{
-	int ret;
+अटल पूर्णांक tsl2563_configure(काष्ठा tsl2563_chip *chip)
+अणु
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte_data(chip->client,
+	ret = i2c_smbus_ग_लिखो_byte_data(chip->client,
 			TSL2563_CMD | TSL2563_REG_TIMING,
-			chip->gainlevel->gaintime);
-	if (ret)
-		goto error_ret;
-	ret = i2c_smbus_write_byte_data(chip->client,
+			chip->gainlevel->gaपूर्णांकime);
+	अगर (ret)
+		जाओ error_ret;
+	ret = i2c_smbus_ग_लिखो_byte_data(chip->client,
 			TSL2563_CMD | TSL2563_REG_HIGHLOW,
 			chip->high_thres & 0xFF);
-	if (ret)
-		goto error_ret;
-	ret = i2c_smbus_write_byte_data(chip->client,
+	अगर (ret)
+		जाओ error_ret;
+	ret = i2c_smbus_ग_लिखो_byte_data(chip->client,
 			TSL2563_CMD | TSL2563_REG_HIGHHIGH,
 			(chip->high_thres >> 8) & 0xFF);
-	if (ret)
-		goto error_ret;
-	ret = i2c_smbus_write_byte_data(chip->client,
+	अगर (ret)
+		जाओ error_ret;
+	ret = i2c_smbus_ग_लिखो_byte_data(chip->client,
 			TSL2563_CMD | TSL2563_REG_LOWLOW,
 			chip->low_thres & 0xFF);
-	if (ret)
-		goto error_ret;
-	ret = i2c_smbus_write_byte_data(chip->client,
+	अगर (ret)
+		जाओ error_ret;
+	ret = i2c_smbus_ग_लिखो_byte_data(chip->client,
 			TSL2563_CMD | TSL2563_REG_LOWHIGH,
 			(chip->low_thres >> 8) & 0xFF);
 /*
- * Interrupt register is automatically written anyway if it is relevant
+ * Interrupt रेजिस्टर is स्वतःmatically written anyway अगर it is relevant
  * so is not here.
  */
 error_ret:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void tsl2563_poweroff_work(struct work_struct *work)
-{
-	struct tsl2563_chip *chip =
-		container_of(work, struct tsl2563_chip, poweroff_work.work);
-	tsl2563_set_power(chip, 0);
-}
+अटल व्योम tsl2563_घातeroff_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा tsl2563_chip *chip =
+		container_of(work, काष्ठा tsl2563_chip, घातeroff_work.work);
+	tsl2563_set_घातer(chip, 0);
+पूर्ण
 
-static int tsl2563_detect(struct tsl2563_chip *chip)
-{
-	int ret;
+अटल पूर्णांक tsl2563_detect(काष्ठा tsl2563_chip *chip)
+अणु
+	पूर्णांक ret;
 
-	ret = tsl2563_set_power(chip, 1);
-	if (ret)
-		return ret;
+	ret = tsl2563_set_घातer(chip, 1);
+	अगर (ret)
+		वापस ret;
 
-	ret = tsl2563_get_power(chip);
-	if (ret < 0)
-		return ret;
+	ret = tsl2563_get_घातer(chip);
+	अगर (ret < 0)
+		वापस ret;
 
-	return ret ? 0 : -ENODEV;
-}
+	वापस ret ? 0 : -ENODEV;
+पूर्ण
 
-static int tsl2563_read_id(struct tsl2563_chip *chip, u8 *id)
-{
-	struct i2c_client *client = chip->client;
-	int ret;
+अटल पूर्णांक tsl2563_पढ़ो_id(काष्ठा tsl2563_chip *chip, u8 *id)
+अणु
+	काष्ठा i2c_client *client = chip->client;
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_byte_data(client, TSL2563_CMD | TSL2563_REG_ID);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_पढ़ो_byte_data(client, TSL2563_CMD | TSL2563_REG_ID);
+	अगर (ret < 0)
+		वापस ret;
 
 	*id = ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * "Normalized" ADC value is one obtained with 400ms of integration time and
- * 16x gain. This function returns the number of bits of shift needed to
+ * "Normalized" ADC value is one obtained with 400ms of पूर्णांकegration समय and
+ * 16x gain. This function वापसs the number of bits of shअगरt needed to
  * convert between normalized values and HW values obtained using given
  * timing and gain settings.
  */
-static int tsl2563_adc_shiftbits(u8 timing)
-{
-	int shift = 0;
+अटल पूर्णांक tsl2563_adc_shअगरtbits(u8 timing)
+अणु
+	पूर्णांक shअगरt = 0;
 
-	switch (timing & TSL2563_TIMING_MASK) {
-	case TSL2563_TIMING_13MS:
-		shift += 5;
-		break;
-	case TSL2563_TIMING_100MS:
-		shift += 2;
-		break;
-	case TSL2563_TIMING_400MS:
+	चयन (timing & TSL2563_TIMING_MASK) अणु
+	हाल TSL2563_TIMING_13MS:
+		shअगरt += 5;
+		अवरोध;
+	हाल TSL2563_TIMING_100MS:
+		shअगरt += 2;
+		अवरोध;
+	हाल TSL2563_TIMING_400MS:
 		/* no-op */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!(timing & TSL2563_TIMING_GAIN16))
-		shift += 4;
+	अगर (!(timing & TSL2563_TIMING_GAIN16))
+		shअगरt += 4;
 
-	return shift;
-}
+	वापस shअगरt;
+पूर्ण
 
 /* Convert a HW ADC value to normalized scale. */
-static u32 tsl2563_normalize_adc(u16 adc, u8 timing)
-{
-	return adc << tsl2563_adc_shiftbits(timing);
-}
+अटल u32 tsl2563_normalize_adc(u16 adc, u8 timing)
+अणु
+	वापस adc << tsl2563_adc_shअगरtbits(timing);
+पूर्ण
 
-static void tsl2563_wait_adc(struct tsl2563_chip *chip)
-{
-	unsigned int delay;
+अटल व्योम tsl2563_रुको_adc(काष्ठा tsl2563_chip *chip)
+अणु
+	अचिन्हित पूर्णांक delay;
 
-	switch (chip->gainlevel->gaintime & TSL2563_TIMING_MASK) {
-	case TSL2563_TIMING_13MS:
+	चयन (chip->gainlevel->gaपूर्णांकime & TSL2563_TIMING_MASK) अणु
+	हाल TSL2563_TIMING_13MS:
 		delay = 14;
-		break;
-	case TSL2563_TIMING_100MS:
+		अवरोध;
+	हाल TSL2563_TIMING_100MS:
 		delay = 101;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		delay = 402;
-	}
+	पूर्ण
 	/*
-	 * TODO: Make sure that we wait at least required delay but why we
+	 * TODO: Make sure that we रुको at least required delay but why we
 	 * have to extend it one tick more?
 	 */
-	schedule_timeout_interruptible(msecs_to_jiffies(delay) + 2);
-}
+	schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies(delay) + 2);
+पूर्ण
 
-static int tsl2563_adjust_gainlevel(struct tsl2563_chip *chip, u16 adc)
-{
-	struct i2c_client *client = chip->client;
+अटल पूर्णांक tsl2563_adjust_gainlevel(काष्ठा tsl2563_chip *chip, u16 adc)
+अणु
+	काष्ठा i2c_client *client = chip->client;
 
-	if (adc > chip->gainlevel->max || adc < chip->gainlevel->min) {
+	अगर (adc > chip->gainlevel->max || adc < chip->gainlevel->min) अणु
 
 		(adc > chip->gainlevel->max) ?
 			chip->gainlevel++ : chip->gainlevel--;
 
-		i2c_smbus_write_byte_data(client,
+		i2c_smbus_ग_लिखो_byte_data(client,
 					  TSL2563_CMD | TSL2563_REG_TIMING,
-					  chip->gainlevel->gaintime);
+					  chip->gainlevel->gaपूर्णांकime);
 
-		tsl2563_wait_adc(chip);
-		tsl2563_wait_adc(chip);
+		tsl2563_रुको_adc(chip);
+		tsl2563_रुको_adc(chip);
 
-		return 1;
-	} else
-		return 0;
-}
+		वापस 1;
+	पूर्ण अन्यथा
+		वापस 0;
+पूर्ण
 
-static int tsl2563_get_adc(struct tsl2563_chip *chip)
-{
-	struct i2c_client *client = chip->client;
+अटल पूर्णांक tsl2563_get_adc(काष्ठा tsl2563_chip *chip)
+अणु
+	काष्ठा i2c_client *client = chip->client;
 	u16 adc0, adc1;
-	int retry = 1;
-	int ret = 0;
+	पूर्णांक retry = 1;
+	पूर्णांक ret = 0;
 
-	if (chip->suspended)
-		goto out;
+	अगर (chip->suspended)
+		जाओ out;
 
-	if (!chip->int_enabled) {
-		cancel_delayed_work(&chip->poweroff_work);
+	अगर (!chip->पूर्णांक_enabled) अणु
+		cancel_delayed_work(&chip->घातeroff_work);
 
-		if (!tsl2563_get_power(chip)) {
-			ret = tsl2563_set_power(chip, 1);
-			if (ret)
-				goto out;
+		अगर (!tsl2563_get_घातer(chip)) अणु
+			ret = tsl2563_set_घातer(chip, 1);
+			अगर (ret)
+				जाओ out;
 			ret = tsl2563_configure(chip);
-			if (ret)
-				goto out;
-			tsl2563_wait_adc(chip);
-		}
-	}
+			अगर (ret)
+				जाओ out;
+			tsl2563_रुको_adc(chip);
+		पूर्ण
+	पूर्ण
 
-	while (retry) {
-		ret = i2c_smbus_read_word_data(client,
+	जबतक (retry) अणु
+		ret = i2c_smbus_पढ़ो_word_data(client,
 				TSL2563_CMD | TSL2563_REG_DATA0LOW);
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 		adc0 = ret;
 
-		ret = i2c_smbus_read_word_data(client,
+		ret = i2c_smbus_पढ़ो_word_data(client,
 				TSL2563_CMD | TSL2563_REG_DATA1LOW);
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 		adc1 = ret;
 
 		retry = tsl2563_adjust_gainlevel(chip, adc0);
-	}
+	पूर्ण
 
-	chip->data0 = tsl2563_normalize_adc(adc0, chip->gainlevel->gaintime);
-	chip->data1 = tsl2563_normalize_adc(adc1, chip->gainlevel->gaintime);
+	chip->data0 = tsl2563_normalize_adc(adc0, chip->gainlevel->gaपूर्णांकime);
+	chip->data1 = tsl2563_normalize_adc(adc1, chip->gainlevel->gaपूर्णांकime);
 
-	if (!chip->int_enabled)
-		schedule_delayed_work(&chip->poweroff_work, 5 * HZ);
+	अगर (!chip->पूर्णांक_enabled)
+		schedule_delayed_work(&chip->घातeroff_work, 5 * HZ);
 
 	ret = 0;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int tsl2563_calib_to_sysfs(u32 calib)
-{
-	return (int) (((calib * CALIB_BASE_SYSFS) +
+अटल अंतरभूत पूर्णांक tsl2563_calib_to_sysfs(u32 calib)
+अणु
+	वापस (पूर्णांक) (((calib * CALIB_BASE_SYSFS) +
 		       CALIB_FRAC_HALF) >> CALIB_FRAC_BITS);
-}
+पूर्ण
 
-static inline u32 tsl2563_calib_from_sysfs(int value)
-{
-	return (((u32) value) << CALIB_FRAC_BITS) / CALIB_BASE_SYSFS;
-}
+अटल अंतरभूत u32 tsl2563_calib_from_sysfs(पूर्णांक value)
+अणु
+	वापस (((u32) value) << CALIB_FRAC_BITS) / CALIB_BASE_SYSFS;
+पूर्ण
 
 /*
  * Conversions between lux and ADC values.
  *
- * The basic formula is lux = c0 * adc0 - c1 * adc1, where c0 and c1 are
- * appropriate constants. Different constants are needed for different
+ * The basic क्रमmula is lux = c0 * adc0 - c1 * adc1, where c0 and c1 are
+ * appropriate स्थिरants. Dअगरferent स्थिरants are needed क्रम dअगरferent
  * kinds of light, determined by the ratio adc1/adc0 (basically the ratio
- * of the intensities in infrared and visible wavelengths). lux_table below
+ * of the पूर्णांकensities in infrared and visible wavelengths). lux_table below
  * lists the upper threshold of the adc1/adc0 ratio and the corresponding
- * constants.
+ * स्थिरants.
  */
 
-struct tsl2563_lux_coeff {
-	unsigned long ch_ratio;
-	unsigned long ch0_coeff;
-	unsigned long ch1_coeff;
-};
+काष्ठा tsl2563_lux_coeff अणु
+	अचिन्हित दीर्घ ch_ratio;
+	अचिन्हित दीर्घ ch0_coeff;
+	अचिन्हित दीर्घ ch1_coeff;
+पूर्ण;
 
-static const struct tsl2563_lux_coeff lux_table[] = {
-	{
+अटल स्थिर काष्ठा tsl2563_lux_coeff lux_table[] = अणु
+	अणु
 		.ch_ratio	= FRAC10K(1300),
 		.ch0_coeff	= FRAC10K(315),
 		.ch1_coeff	= FRAC10K(262),
-	}, {
+	पूर्ण, अणु
 		.ch_ratio	= FRAC10K(2600),
 		.ch0_coeff	= FRAC10K(337),
 		.ch1_coeff	= FRAC10K(430),
-	}, {
+	पूर्ण, अणु
 		.ch_ratio	= FRAC10K(3900),
 		.ch0_coeff	= FRAC10K(363),
 		.ch1_coeff	= FRAC10K(529),
-	}, {
+	पूर्ण, अणु
 		.ch_ratio	= FRAC10K(5200),
 		.ch0_coeff	= FRAC10K(392),
 		.ch1_coeff	= FRAC10K(605),
-	}, {
+	पूर्ण, अणु
 		.ch_ratio	= FRAC10K(6500),
 		.ch0_coeff	= FRAC10K(229),
 		.ch1_coeff	= FRAC10K(291),
-	}, {
+	पूर्ण, अणु
 		.ch_ratio	= FRAC10K(8000),
 		.ch0_coeff	= FRAC10K(157),
 		.ch1_coeff	= FRAC10K(180),
-	}, {
+	पूर्ण, अणु
 		.ch_ratio	= FRAC10K(13000),
 		.ch0_coeff	= FRAC10K(34),
 		.ch1_coeff	= FRAC10K(26),
-	}, {
-		.ch_ratio	= ULONG_MAX,
+	पूर्ण, अणु
+		.ch_ratio	= अच_दीर्घ_उच्च,
 		.ch0_coeff	= 0,
 		.ch1_coeff	= 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* Convert normalized, scaled ADC values to lux. */
-static unsigned int tsl2563_adc_to_lux(u32 adc0, u32 adc1)
-{
-	const struct tsl2563_lux_coeff *lp = lux_table;
-	unsigned long ratio, lux, ch0 = adc0, ch1 = adc1;
+अटल अचिन्हित पूर्णांक tsl2563_adc_to_lux(u32 adc0, u32 adc1)
+अणु
+	स्थिर काष्ठा tsl2563_lux_coeff *lp = lux_table;
+	अचिन्हित दीर्घ ratio, lux, ch0 = adc0, ch1 = adc1;
 
-	ratio = ch0 ? ((ch1 << ADC_FRAC_BITS) / ch0) : ULONG_MAX;
+	ratio = ch0 ? ((ch1 << ADC_FRAC_BITS) / ch0) : अच_दीर्घ_उच्च;
 
-	while (lp->ch_ratio < ratio)
+	जबतक (lp->ch_ratio < ratio)
 		lp++;
 
 	lux = ch0 * lp->ch0_coeff - ch1 * lp->ch1_coeff;
 
-	return (unsigned int) (lux >> ADC_FRAC_BITS);
-}
+	वापस (अचिन्हित पूर्णांक) (lux >> ADC_FRAC_BITS);
+पूर्ण
 
 /* Apply calibration coefficient to ADC count. */
-static u32 tsl2563_calib_adc(u32 adc, u32 calib)
-{
-	unsigned long scaled = adc;
+अटल u32 tsl2563_calib_adc(u32 adc, u32 calib)
+अणु
+	अचिन्हित दीर्घ scaled = adc;
 
 	scaled *= calib;
 	scaled >>= CALIB_FRAC_BITS;
 
-	return (u32) scaled;
-}
+	वापस (u32) scaled;
+पूर्ण
 
-static int tsl2563_write_raw(struct iio_dev *indio_dev,
-			       struct iio_chan_spec const *chan,
-			       int val,
-			       int val2,
-			       long mask)
-{
-	struct tsl2563_chip *chip = iio_priv(indio_dev);
+अटल पूर्णांक tsl2563_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			       काष्ठा iio_chan_spec स्थिर *chan,
+			       पूर्णांक val,
+			       पूर्णांक val2,
+			       दीर्घ mask)
+अणु
+	काष्ठा tsl2563_chip *chip = iio_priv(indio_dev);
 
-	if (mask != IIO_CHAN_INFO_CALIBSCALE)
-		return -EINVAL;
-	if (chan->channel2 == IIO_MOD_LIGHT_BOTH)
+	अगर (mask != IIO_CHAN_INFO_CALIBSCALE)
+		वापस -EINVAL;
+	अगर (chan->channel2 == IIO_MOD_LIGHT_BOTH)
 		chip->calib0 = tsl2563_calib_from_sysfs(val);
-	else if (chan->channel2 == IIO_MOD_LIGHT_IR)
+	अन्यथा अगर (chan->channel2 == IIO_MOD_LIGHT_IR)
 		chip->calib1 = tsl2563_calib_from_sysfs(val);
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tsl2563_read_raw(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *chan,
-			    int *val,
-			    int *val2,
-			    long mask)
-{
-	int ret = -EINVAL;
+अटल पूर्णांक tsl2563_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			    काष्ठा iio_chan_spec स्थिर *chan,
+			    पूर्णांक *val,
+			    पूर्णांक *val2,
+			    दीर्घ mask)
+अणु
+	पूर्णांक ret = -EINVAL;
 	u32 calib0, calib1;
-	struct tsl2563_chip *chip = iio_priv(indio_dev);
+	काष्ठा tsl2563_chip *chip = iio_priv(indio_dev);
 
 	mutex_lock(&chip->lock);
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-	case IIO_CHAN_INFO_PROCESSED:
-		switch (chan->type) {
-		case IIO_LIGHT:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+	हाल IIO_CHAN_INFO_PROCESSED:
+		चयन (chan->type) अणु
+		हाल IIO_LIGHT:
 			ret = tsl2563_get_adc(chip);
-			if (ret)
-				goto error_ret;
+			अगर (ret)
+				जाओ error_ret;
 			calib0 = tsl2563_calib_adc(chip->data0, chip->calib0) *
 				chip->cover_comp_gain;
 			calib1 = tsl2563_calib_adc(chip->data1, chip->calib1) *
 				chip->cover_comp_gain;
 			*val = tsl2563_adc_to_lux(calib0, calib1);
 			ret = IIO_VAL_INT;
-			break;
-		case IIO_INTENSITY:
+			अवरोध;
+		हाल IIO_INTENSITY:
 			ret = tsl2563_get_adc(chip);
-			if (ret)
-				goto error_ret;
-			if (chan->channel2 == IIO_MOD_LIGHT_BOTH)
+			अगर (ret)
+				जाओ error_ret;
+			अगर (chan->channel2 == IIO_MOD_LIGHT_BOTH)
 				*val = chip->data0;
-			else
+			अन्यथा
 				*val = chip->data1;
 			ret = IIO_VAL_INT;
-			break;
-		default:
-			break;
-		}
-		break;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case IIO_CHAN_INFO_CALIBSCALE:
-		if (chan->channel2 == IIO_MOD_LIGHT_BOTH)
+	हाल IIO_CHAN_INFO_CALIBSCALE:
+		अगर (chan->channel2 == IIO_MOD_LIGHT_BOTH)
 			*val = tsl2563_calib_to_sysfs(chip->calib0);
-		else
+		अन्यथा
 			*val = tsl2563_calib_to_sysfs(chip->calib1);
 		ret = IIO_VAL_INT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto error_ret;
-	}
+		जाओ error_ret;
+	पूर्ण
 
 error_ret:
 	mutex_unlock(&chip->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct iio_event_spec tsl2563_events[] = {
-	{
+अटल स्थिर काष्ठा iio_event_spec tsl2563_events[] = अणु
+	अणु
 		.type = IIO_EV_TYPE_THRESH,
-		.dir = IIO_EV_DIR_RISING,
+		.dir = IIO_EV_सूची_RISING,
 		.mask_separate = BIT(IIO_EV_INFO_VALUE) |
 				BIT(IIO_EV_INFO_ENABLE),
-	}, {
+	पूर्ण, अणु
 		.type = IIO_EV_TYPE_THRESH,
-		.dir = IIO_EV_DIR_FALLING,
+		.dir = IIO_EV_सूची_FALLING,
 		.mask_separate = BIT(IIO_EV_INFO_VALUE) |
 				BIT(IIO_EV_INFO_ENABLE),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct iio_chan_spec tsl2563_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec tsl2563_channels[] = अणु
+	अणु
 		.type = IIO_LIGHT,
 		.indexed = 1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED),
 		.channel = 0,
-	}, {
+	पूर्ण, अणु
 		.type = IIO_INTENSITY,
-		.modified = 1,
+		.modअगरied = 1,
 		.channel2 = IIO_MOD_LIGHT_BOTH,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 		BIT(IIO_CHAN_INFO_CALIBSCALE),
 		.event_spec = tsl2563_events,
 		.num_event_specs = ARRAY_SIZE(tsl2563_events),
-	}, {
+	पूर्ण, अणु
 		.type = IIO_INTENSITY,
-		.modified = 1,
+		.modअगरied = 1,
 		.channel2 = IIO_MOD_LIGHT_IR,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 		BIT(IIO_CHAN_INFO_CALIBSCALE),
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int tsl2563_read_thresh(struct iio_dev *indio_dev,
-	const struct iio_chan_spec *chan, enum iio_event_type type,
-	enum iio_event_direction dir, enum iio_event_info info, int *val,
-	int *val2)
-{
-	struct tsl2563_chip *chip = iio_priv(indio_dev);
+अटल पूर्णांक tsl2563_पढ़ो_thresh(काष्ठा iio_dev *indio_dev,
+	स्थिर काष्ठा iio_chan_spec *chan, क्रमागत iio_event_type type,
+	क्रमागत iio_event_direction dir, क्रमागत iio_event_info info, पूर्णांक *val,
+	पूर्णांक *val2)
+अणु
+	काष्ठा tsl2563_chip *chip = iio_priv(indio_dev);
 
-	switch (dir) {
-	case IIO_EV_DIR_RISING:
+	चयन (dir) अणु
+	हाल IIO_EV_सूची_RISING:
 		*val = chip->high_thres;
-		break;
-	case IIO_EV_DIR_FALLING:
+		अवरोध;
+	हाल IIO_EV_सूची_FALLING:
 		*val = chip->low_thres;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return IIO_VAL_INT;
-}
+	वापस IIO_VAL_INT;
+पूर्ण
 
-static int tsl2563_write_thresh(struct iio_dev *indio_dev,
-	const struct iio_chan_spec *chan, enum iio_event_type type,
-	enum iio_event_direction dir, enum iio_event_info info, int val,
-	int val2)
-{
-	struct tsl2563_chip *chip = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक tsl2563_ग_लिखो_thresh(काष्ठा iio_dev *indio_dev,
+	स्थिर काष्ठा iio_chan_spec *chan, क्रमागत iio_event_type type,
+	क्रमागत iio_event_direction dir, क्रमागत iio_event_info info, पूर्णांक val,
+	पूर्णांक val2)
+अणु
+	काष्ठा tsl2563_chip *chip = iio_priv(indio_dev);
+	पूर्णांक ret;
 	u8 address;
 
-	if (dir == IIO_EV_DIR_RISING)
+	अगर (dir == IIO_EV_सूची_RISING)
 		address = TSL2563_REG_HIGHLOW;
-	else
+	अन्यथा
 		address = TSL2563_REG_LOWLOW;
 	mutex_lock(&chip->lock);
-	ret = i2c_smbus_write_byte_data(chip->client, TSL2563_CMD | address,
+	ret = i2c_smbus_ग_लिखो_byte_data(chip->client, TSL2563_CMD | address,
 					val & 0xFF);
-	if (ret)
-		goto error_ret;
-	ret = i2c_smbus_write_byte_data(chip->client,
+	अगर (ret)
+		जाओ error_ret;
+	ret = i2c_smbus_ग_लिखो_byte_data(chip->client,
 					TSL2563_CMD | (address + 1),
 					(val >> 8) & 0xFF);
-	if (dir == IIO_EV_DIR_RISING)
+	अगर (dir == IIO_EV_सूची_RISING)
 		chip->high_thres = val;
-	else
+	अन्यथा
 		chip->low_thres = val;
 
 error_ret:
 	mutex_unlock(&chip->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t tsl2563_event_handler(int irq, void *private)
-{
-	struct iio_dev *dev_info = private;
-	struct tsl2563_chip *chip = iio_priv(dev_info);
+अटल irqवापस_t tsl2563_event_handler(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा iio_dev *dev_info = निजी;
+	काष्ठा tsl2563_chip *chip = iio_priv(dev_info);
 
 	iio_push_event(dev_info,
 		       IIO_UNMOD_EVENT_CODE(IIO_INTENSITY,
 					    0,
 					    IIO_EV_TYPE_THRESH,
-					    IIO_EV_DIR_EITHER),
-		       iio_get_time_ns(dev_info));
+					    IIO_EV_सूची_EITHER),
+		       iio_get_समय_ns(dev_info));
 
-	/* clear the interrupt and push the event */
-	i2c_smbus_write_byte(chip->client, TSL2563_CMD | TSL2563_CLEARINT);
-	return IRQ_HANDLED;
-}
+	/* clear the पूर्णांकerrupt and push the event */
+	i2c_smbus_ग_लिखो_byte(chip->client, TSL2563_CMD | TSL2563_CLEARINT);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int tsl2563_write_interrupt_config(struct iio_dev *indio_dev,
-	const struct iio_chan_spec *chan, enum iio_event_type type,
-	enum iio_event_direction dir, int state)
-{
-	struct tsl2563_chip *chip = iio_priv(indio_dev);
-	int ret = 0;
+अटल पूर्णांक tsl2563_ग_लिखो_पूर्णांकerrupt_config(काष्ठा iio_dev *indio_dev,
+	स्थिर काष्ठा iio_chan_spec *chan, क्रमागत iio_event_type type,
+	क्रमागत iio_event_direction dir, पूर्णांक state)
+अणु
+	काष्ठा tsl2563_chip *chip = iio_priv(indio_dev);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&chip->lock);
-	if (state && !(chip->intr & 0x30)) {
-		chip->intr &= ~0x30;
-		chip->intr |= 0x10;
+	अगर (state && !(chip->पूर्णांकr & 0x30)) अणु
+		chip->पूर्णांकr &= ~0x30;
+		chip->पूर्णांकr |= 0x10;
 		/* ensure the chip is actually on */
-		cancel_delayed_work(&chip->poweroff_work);
-		if (!tsl2563_get_power(chip)) {
-			ret = tsl2563_set_power(chip, 1);
-			if (ret)
-				goto out;
+		cancel_delayed_work(&chip->घातeroff_work);
+		अगर (!tsl2563_get_घातer(chip)) अणु
+			ret = tsl2563_set_घातer(chip, 1);
+			अगर (ret)
+				जाओ out;
 			ret = tsl2563_configure(chip);
-			if (ret)
-				goto out;
-		}
-		ret = i2c_smbus_write_byte_data(chip->client,
+			अगर (ret)
+				जाओ out;
+		पूर्ण
+		ret = i2c_smbus_ग_लिखो_byte_data(chip->client,
 						TSL2563_CMD | TSL2563_REG_INT,
-						chip->intr);
-		chip->int_enabled = true;
-	}
+						chip->पूर्णांकr);
+		chip->पूर्णांक_enabled = true;
+	पूर्ण
 
-	if (!state && (chip->intr & 0x30)) {
-		chip->intr &= ~0x30;
-		ret = i2c_smbus_write_byte_data(chip->client,
+	अगर (!state && (chip->पूर्णांकr & 0x30)) अणु
+		chip->पूर्णांकr &= ~0x30;
+		ret = i2c_smbus_ग_लिखो_byte_data(chip->client,
 						TSL2563_CMD | TSL2563_REG_INT,
-						chip->intr);
-		chip->int_enabled = false;
-		/* now the interrupt is not enabled, we can go to sleep */
-		schedule_delayed_work(&chip->poweroff_work, 5 * HZ);
-	}
+						chip->पूर्णांकr);
+		chip->पूर्णांक_enabled = false;
+		/* now the पूर्णांकerrupt is not enabled, we can go to sleep */
+		schedule_delayed_work(&chip->घातeroff_work, 5 * HZ);
+	पूर्ण
 out:
 	mutex_unlock(&chip->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tsl2563_read_interrupt_config(struct iio_dev *indio_dev,
-	const struct iio_chan_spec *chan, enum iio_event_type type,
-	enum iio_event_direction dir)
-{
-	struct tsl2563_chip *chip = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक tsl2563_पढ़ो_पूर्णांकerrupt_config(काष्ठा iio_dev *indio_dev,
+	स्थिर काष्ठा iio_chan_spec *chan, क्रमागत iio_event_type type,
+	क्रमागत iio_event_direction dir)
+अणु
+	काष्ठा tsl2563_chip *chip = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	mutex_lock(&chip->lock);
-	ret = i2c_smbus_read_byte_data(chip->client,
+	ret = i2c_smbus_पढ़ो_byte_data(chip->client,
 				       TSL2563_CMD | TSL2563_REG_INT);
 	mutex_unlock(&chip->lock);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return !!(ret & 0x30);
-}
+	वापस !!(ret & 0x30);
+पूर्ण
 
-static const struct iio_info tsl2563_info_no_irq = {
-	.read_raw = &tsl2563_read_raw,
-	.write_raw = &tsl2563_write_raw,
-};
+अटल स्थिर काष्ठा iio_info tsl2563_info_no_irq = अणु
+	.पढ़ो_raw = &tsl2563_पढ़ो_raw,
+	.ग_लिखो_raw = &tsl2563_ग_लिखो_raw,
+पूर्ण;
 
-static const struct iio_info tsl2563_info = {
-	.read_raw = &tsl2563_read_raw,
-	.write_raw = &tsl2563_write_raw,
-	.read_event_value = &tsl2563_read_thresh,
-	.write_event_value = &tsl2563_write_thresh,
-	.read_event_config = &tsl2563_read_interrupt_config,
-	.write_event_config = &tsl2563_write_interrupt_config,
-};
+अटल स्थिर काष्ठा iio_info tsl2563_info = अणु
+	.पढ़ो_raw = &tsl2563_पढ़ो_raw,
+	.ग_लिखो_raw = &tsl2563_ग_लिखो_raw,
+	.पढ़ो_event_value = &tsl2563_पढ़ो_thresh,
+	.ग_लिखो_event_value = &tsl2563_ग_लिखो_thresh,
+	.पढ़ो_event_config = &tsl2563_पढ़ो_पूर्णांकerrupt_config,
+	.ग_लिखो_event_config = &tsl2563_ग_लिखो_पूर्णांकerrupt_config,
+पूर्ण;
 
-static int tsl2563_probe(struct i2c_client *client,
-				const struct i2c_device_id *device_id)
-{
-	struct iio_dev *indio_dev;
-	struct tsl2563_chip *chip;
-	struct tsl2563_platform_data *pdata = client->dev.platform_data;
-	int err = 0;
+अटल पूर्णांक tsl2563_probe(काष्ठा i2c_client *client,
+				स्थिर काष्ठा i2c_device_id *device_id)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा tsl2563_chip *chip;
+	काष्ठा tsl2563_platक्रमm_data *pdata = client->dev.platक्रमm_data;
+	पूर्णांक err = 0;
 	u8 id = 0;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*chip));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*chip));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	chip = iio_priv(indio_dev);
 
@@ -718,16 +719,16 @@ static int tsl2563_probe(struct i2c_client *client,
 	chip->client = client;
 
 	err = tsl2563_detect(chip);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&client->dev, "detect error %d\n", -err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = tsl2563_read_id(chip, &id);
-	if (err) {
+	err = tsl2563_पढ़ो_id(chip, &id);
+	अगर (err) अणु
 		dev_err(&client->dev, "read id error %d\n", -err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	mutex_init(&chip->lock);
 
@@ -735,162 +736,162 @@ static int tsl2563_probe(struct i2c_client *client,
 	chip->low_thres = 0x0;
 	chip->high_thres = 0xffff;
 	chip->gainlevel = tsl2563_gainlevel_table;
-	chip->intr = TSL2563_INT_PERSIST(4);
+	chip->पूर्णांकr = TSL2563_INT_PERSIST(4);
 	chip->calib0 = tsl2563_calib_from_sysfs(CALIB_BASE_SYSFS);
 	chip->calib1 = tsl2563_calib_from_sysfs(CALIB_BASE_SYSFS);
 
-	if (pdata) {
+	अगर (pdata) अणु
 		chip->cover_comp_gain = pdata->cover_comp_gain;
-	} else {
-		err = device_property_read_u32(&client->dev, "amstaos,cover-comp-gain",
+	पूर्ण अन्यथा अणु
+		err = device_property_पढ़ो_u32(&client->dev, "amstaos,cover-comp-gain",
 					       &chip->cover_comp_gain);
-		if (err)
+		अगर (err)
 			chip->cover_comp_gain = 1;
-	}
+	पूर्ण
 
 	dev_info(&client->dev, "model %d, rev. %d\n", id >> 4, id & 0x0f);
 	indio_dev->name = client->name;
 	indio_dev->channels = tsl2563_channels;
 	indio_dev->num_channels = ARRAY_SIZE(tsl2563_channels);
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 
-	if (client->irq)
+	अगर (client->irq)
 		indio_dev->info = &tsl2563_info;
-	else
+	अन्यथा
 		indio_dev->info = &tsl2563_info_no_irq;
 
-	if (client->irq) {
-		err = devm_request_threaded_irq(&client->dev, client->irq,
-					   NULL,
+	अगर (client->irq) अणु
+		err = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+					   शून्य,
 					   &tsl2563_event_handler,
 					   IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					   "tsl2563_event",
 					   indio_dev);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&client->dev, "irq request error %d\n", -err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	err = tsl2563_configure(chip);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&client->dev, "configure error %d\n", -err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	INIT_DELAYED_WORK(&chip->poweroff_work, tsl2563_poweroff_work);
+	INIT_DELAYED_WORK(&chip->घातeroff_work, tsl2563_घातeroff_work);
 
-	/* The interrupt cannot yet be enabled so this is fine without lock */
-	schedule_delayed_work(&chip->poweroff_work, 5 * HZ);
+	/* The पूर्णांकerrupt cannot yet be enabled so this is fine without lock */
+	schedule_delayed_work(&chip->घातeroff_work, 5 * HZ);
 
-	err = iio_device_register(indio_dev);
-	if (err) {
+	err = iio_device_रेजिस्टर(indio_dev);
+	अगर (err) अणु
 		dev_err(&client->dev, "iio registration error %d\n", -err);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail:
-	cancel_delayed_work_sync(&chip->poweroff_work);
-	return err;
-}
+	cancel_delayed_work_sync(&chip->घातeroff_work);
+	वापस err;
+पूर्ण
 
-static int tsl2563_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
-	struct tsl2563_chip *chip = iio_priv(indio_dev);
+अटल पूर्णांक tsl2563_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+	काष्ठा tsl2563_chip *chip = iio_priv(indio_dev);
 
-	iio_device_unregister(indio_dev);
-	if (!chip->int_enabled)
-		cancel_delayed_work(&chip->poweroff_work);
-	/* Ensure that interrupts are disabled - then flush any bottom halves */
-	chip->intr &= ~0x30;
-	i2c_smbus_write_byte_data(chip->client, TSL2563_CMD | TSL2563_REG_INT,
-				  chip->intr);
+	iio_device_unरेजिस्टर(indio_dev);
+	अगर (!chip->पूर्णांक_enabled)
+		cancel_delayed_work(&chip->घातeroff_work);
+	/* Ensure that पूर्णांकerrupts are disabled - then flush any bottom halves */
+	chip->पूर्णांकr &= ~0x30;
+	i2c_smbus_ग_लिखो_byte_data(chip->client, TSL2563_CMD | TSL2563_REG_INT,
+				  chip->पूर्णांकr);
 	flush_scheduled_work();
-	tsl2563_set_power(chip, 0);
+	tsl2563_set_घातer(chip, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int tsl2563_suspend(struct device *dev)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	struct tsl2563_chip *chip = iio_priv(indio_dev);
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक tsl2563_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा tsl2563_chip *chip = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	mutex_lock(&chip->lock);
 
-	ret = tsl2563_set_power(chip, 0);
-	if (ret)
-		goto out;
+	ret = tsl2563_set_घातer(chip, 0);
+	अगर (ret)
+		जाओ out;
 
 	chip->suspended = true;
 
 out:
 	mutex_unlock(&chip->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tsl2563_resume(struct device *dev)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	struct tsl2563_chip *chip = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक tsl2563_resume(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा tsl2563_chip *chip = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	mutex_lock(&chip->lock);
 
-	ret = tsl2563_set_power(chip, 1);
-	if (ret)
-		goto out;
+	ret = tsl2563_set_घातer(chip, 1);
+	अगर (ret)
+		जाओ out;
 
 	ret = tsl2563_configure(chip);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	chip->suspended = false;
 
 out:
 	mutex_unlock(&chip->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(tsl2563_pm_ops, tsl2563_suspend, tsl2563_resume);
-#define TSL2563_PM_OPS (&tsl2563_pm_ops)
-#else
-#define TSL2563_PM_OPS NULL
-#endif
+अटल SIMPLE_DEV_PM_OPS(tsl2563_pm_ops, tsl2563_suspend, tsl2563_resume);
+#घोषणा TSL2563_PM_OPS (&tsl2563_pm_ops)
+#अन्यथा
+#घोषणा TSL2563_PM_OPS शून्य
+#पूर्ण_अगर
 
-static const struct i2c_device_id tsl2563_id[] = {
-	{ "tsl2560", 0 },
-	{ "tsl2561", 1 },
-	{ "tsl2562", 2 },
-	{ "tsl2563", 3 },
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id tsl2563_id[] = अणु
+	अणु "tsl2560", 0 पूर्ण,
+	अणु "tsl2561", 1 पूर्ण,
+	अणु "tsl2562", 2 पूर्ण,
+	अणु "tsl2563", 3 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, tsl2563_id);
 
-static const struct of_device_id tsl2563_of_match[] = {
-	{ .compatible = "amstaos,tsl2560" },
-	{ .compatible = "amstaos,tsl2561" },
-	{ .compatible = "amstaos,tsl2562" },
-	{ .compatible = "amstaos,tsl2563" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id tsl2563_of_match[] = अणु
+	अणु .compatible = "amstaos,tsl2560" पूर्ण,
+	अणु .compatible = "amstaos,tsl2561" पूर्ण,
+	अणु .compatible = "amstaos,tsl2562" पूर्ण,
+	अणु .compatible = "amstaos,tsl2563" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tsl2563_of_match);
 
-static struct i2c_driver tsl2563_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver tsl2563_i2c_driver = अणु
+	.driver = अणु
 		.name	 = "tsl2563",
 		.of_match_table = tsl2563_of_match,
 		.pm	= TSL2563_PM_OPS,
-	},
+	पूर्ण,
 	.probe		= tsl2563_probe,
-	.remove		= tsl2563_remove,
+	.हटाओ		= tsl2563_हटाओ,
 	.id_table	= tsl2563_id,
-};
+पूर्ण;
 module_i2c_driver(tsl2563_i2c_driver);
 
 MODULE_AUTHOR("Nokia Corporation");

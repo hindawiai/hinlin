@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Written by Kanoj Sarcar (kanoj@sgi.com) Aug 99
- * Rewritten for Linux 2.6 by Christoph Hellwig (hch@lst.de) Jan 2004
+ * Rewritten क्रम Linux 2.6 by Christoph Hellwig (hch@lst.de) Jan 2004
  */
-#ifndef _ASM_MMZONE_H_
-#define _ASM_MMZONE_H_
+#अगर_अघोषित _ASM_MMZONE_H_
+#घोषणा _ASM_MMZONE_H_
 
-#include <asm/page.h>
+#समावेश <यंत्र/page.h>
 
-#ifdef CONFIG_NEED_MULTIPLE_NODES
+#अगर_घोषित CONFIG_NEED_MULTIPLE_NODES
 # include <mmzone.h>
-#endif
+#पूर्ण_अगर
 
-#ifndef pa_to_nid
-#define pa_to_nid(addr) 0
-#endif
+#अगर_अघोषित pa_to_nid
+#घोषणा pa_to_nid(addr) 0
+#पूर्ण_अगर
 
-#ifndef nid_to_addrbase
-#define nid_to_addrbase(nid) 0
-#endif
+#अगर_अघोषित nid_to_addrbase
+#घोषणा nid_to_addrbase(nid) 0
+#पूर्ण_अगर
 
-#ifdef CONFIG_DISCONTIGMEM
+#अगर_घोषित CONFIG_DISCONTIGMEM
 
-#define pfn_to_nid(pfn)		pa_to_nid((pfn) << PAGE_SHIFT)
+#घोषणा pfn_to_nid(pfn)		pa_to_nid((pfn) << PAGE_SHIFT)
 
-#endif /* CONFIG_DISCONTIGMEM */
+#पूर्ण_अगर /* CONFIG_DISCONTIGMEM */
 
-#endif /* _ASM_MMZONE_H_ */
+#पूर्ण_अगर /* _ASM_MMZONE_H_ */

@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  linux/drivers/net/netconsole.c
  *
  *  Copyright (C) 2001  Ingo Molnar <mingo@redhat.com>
  *
  *  This file contains the implementation of an IRQ-safe, crash-safe
- *  kernel console implementation that outputs kernel messages to the
+ *  kernel console implementation that outमाला_दो kernel messages to the
  *  network.
  *
- * Modification history:
+ * Modअगरication history:
  *
  * 2001-09-17    started by Ingo Molnar.
  * 2003-08-11    2.6 port by Matt Mackall
- *               simplified options
+ *               simplअगरied options
  *               generic card hooks
  *               works non-modular
  * 2003-09-07    rewritten with netpoll api
@@ -22,160 +23,160 @@
  *
  ****************************************************************/
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/mm.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/console.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/netpoll.h>
-#include <linux/inet.h>
-#include <linux/configfs.h>
-#include <linux/etherdevice.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/console.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/netpoll.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/configfs.h>
+#समावेश <linux/etherdevice.h>
 
 MODULE_AUTHOR("Maintainer: Matt Mackall <mpm@selenic.com>");
 MODULE_DESCRIPTION("Console driver for network interfaces");
 MODULE_LICENSE("GPL");
 
-#define MAX_PARAM_LENGTH	256
-#define MAX_PRINT_CHUNK		1000
+#घोषणा MAX_PARAM_LENGTH	256
+#घोषणा MAX_PRINT_CHUNK		1000
 
-static char config[MAX_PARAM_LENGTH];
+अटल अक्षर config[MAX_PARAM_LENGTH];
 module_param_string(netconsole, config, MAX_PARAM_LENGTH, 0);
 MODULE_PARM_DESC(netconsole, " netconsole=[src-port]@[src-ip]/[dev],[tgt-port]@<tgt-ip>/[tgt-macaddr]");
 
-static bool oops_only = false;
+अटल bool oops_only = false;
 module_param(oops_only, bool, 0600);
 MODULE_PARM_DESC(oops_only, "Only log oops messages");
 
-#ifndef	MODULE
-static int __init option_setup(char *opt)
-{
+#अगर_अघोषित	MODULE
+अटल पूर्णांक __init option_setup(अक्षर *opt)
+अणु
 	strlcpy(config, opt, MAX_PARAM_LENGTH);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("netconsole=", option_setup);
-#endif	/* MODULE */
+#पूर्ण_अगर	/* MODULE */
 
-/* Linked list of all configured targets */
-static LIST_HEAD(target_list);
+/* Linked list of all configured tarमाला_लो */
+अटल LIST_HEAD(target_list);
 
-/* This needs to be a spinlock because write_msg() cannot sleep */
-static DEFINE_SPINLOCK(target_list_lock);
+/* This needs to be a spinlock because ग_लिखो_msg() cannot sleep */
+अटल DEFINE_SPINLOCK(target_list_lock);
 
 /*
- * Console driver for extended netconsoles.  Registered on the first use to
- * avoid unnecessarily enabling ext message formatting.
+ * Console driver क्रम extended netconsoles.  Registered on the first use to
+ * aव्योम unnecessarily enabling ext message क्रमmatting.
  */
-static struct console netconsole_ext;
+अटल काष्ठा console netconsole_ext;
 
 /**
- * struct netconsole_target - Represents a configured netconsole target.
- * @list:	Links this target into the target_list.
- * @item:	Links us into the configfs subsystem hierarchy.
+ * काष्ठा netconsole_target - Represents a configured netconsole target.
+ * @list:	Links this target पूर्णांकo the target_list.
+ * @item:	Links us पूर्णांकo the configfs subप्रणाली hierarchy.
  * @enabled:	On / off knob to enable / disable target.
- *		Visible from userspace (read-write).
- *		We maintain a strict 1:1 correspondence between this and
+ *		Visible from userspace (पढ़ो-ग_लिखो).
+ *		We मुख्यtain a strict 1:1 correspondence between this and
  *		whether the corresponding netpoll is active or inactive.
- *		Also, other parameters of a target may be modified at
- *		runtime only when it is disabled (enabled == 0).
+ *		Also, other parameters of a target may be modअगरied at
+ *		runसमय only when it is disabled (enabled == 0).
  * @extended:	Denotes whether console is extended or not.
- * @np:		The netpoll structure for this target.
+ * @np:		The netpoll काष्ठाure क्रम this target.
  *		Contains the other userspace visible parameters:
- *		dev_name	(read-write)
- *		local_port	(read-write)
- *		remote_port	(read-write)
- *		local_ip	(read-write)
- *		remote_ip	(read-write)
- *		local_mac	(read-only)
- *		remote_mac	(read-write)
+ *		dev_name	(पढ़ो-ग_लिखो)
+ *		local_port	(पढ़ो-ग_लिखो)
+ *		remote_port	(पढ़ो-ग_लिखो)
+ *		local_ip	(पढ़ो-ग_लिखो)
+ *		remote_ip	(पढ़ो-ग_लिखो)
+ *		local_mac	(पढ़ो-only)
+ *		remote_mac	(पढ़ो-ग_लिखो)
  */
-struct netconsole_target {
-	struct list_head	list;
-#ifdef	CONFIG_NETCONSOLE_DYNAMIC
-	struct config_item	item;
-#endif
+काष्ठा netconsole_target अणु
+	काष्ठा list_head	list;
+#अगर_घोषित	CONFIG_NETCONSOLE_DYNAMIC
+	काष्ठा config_item	item;
+#पूर्ण_अगर
 	bool			enabled;
 	bool			extended;
-	struct netpoll		np;
-};
+	काष्ठा netpoll		np;
+पूर्ण;
 
-#ifdef	CONFIG_NETCONSOLE_DYNAMIC
+#अगर_घोषित	CONFIG_NETCONSOLE_DYNAMIC
 
-static struct configfs_subsystem netconsole_subsys;
-static DEFINE_MUTEX(dynamic_netconsole_mutex);
+अटल काष्ठा configfs_subप्रणाली netconsole_subsys;
+अटल DEFINE_MUTEX(dynamic_netconsole_mutex);
 
-static int __init dynamic_netconsole_init(void)
-{
+अटल पूर्णांक __init dynamic_netconsole_init(व्योम)
+अणु
 	config_group_init(&netconsole_subsys.su_group);
 	mutex_init(&netconsole_subsys.su_mutex);
-	return configfs_register_subsystem(&netconsole_subsys);
-}
+	वापस configfs_रेजिस्टर_subप्रणाली(&netconsole_subsys);
+पूर्ण
 
-static void __exit dynamic_netconsole_exit(void)
-{
-	configfs_unregister_subsystem(&netconsole_subsys);
-}
+अटल व्योम __निकास dynamic_netconsole_निकास(व्योम)
+अणु
+	configfs_unरेजिस्टर_subप्रणाली(&netconsole_subsys);
+पूर्ण
 
 /*
- * Targets that were created by parsing the boot/module option string
- * do not exist in the configfs hierarchy (and have NULL names) and will
- * never go away, so make these a no-op for them.
+ * Tarमाला_लो that were created by parsing the boot/module option string
+ * करो not exist in the configfs hierarchy (and have शून्य names) and will
+ * never go away, so make these a no-op क्रम them.
  */
-static void netconsole_target_get(struct netconsole_target *nt)
-{
-	if (config_item_name(&nt->item))
+अटल व्योम netconsole_target_get(काष्ठा netconsole_target *nt)
+अणु
+	अगर (config_item_name(&nt->item))
 		config_item_get(&nt->item);
-}
+पूर्ण
 
-static void netconsole_target_put(struct netconsole_target *nt)
-{
-	if (config_item_name(&nt->item))
+अटल व्योम netconsole_target_put(काष्ठा netconsole_target *nt)
+अणु
+	अगर (config_item_name(&nt->item))
 		config_item_put(&nt->item);
-}
+पूर्ण
 
-#else	/* !CONFIG_NETCONSOLE_DYNAMIC */
+#अन्यथा	/* !CONFIG_NETCONSOLE_DYNAMIC */
 
-static int __init dynamic_netconsole_init(void)
-{
-	return 0;
-}
+अटल पूर्णांक __init dynamic_netconsole_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static void __exit dynamic_netconsole_exit(void)
-{
-}
+अटल व्योम __निकास dynamic_netconsole_निकास(व्योम)
+अणु
+पूर्ण
 
 /*
- * No danger of targets going away from under us when dynamic
+ * No danger of tarमाला_लो going away from under us when dynamic
  * reconfigurability is off.
  */
-static void netconsole_target_get(struct netconsole_target *nt)
-{
-}
+अटल व्योम netconsole_target_get(काष्ठा netconsole_target *nt)
+अणु
+पूर्ण
 
-static void netconsole_target_put(struct netconsole_target *nt)
-{
-}
+अटल व्योम netconsole_target_put(काष्ठा netconsole_target *nt)
+अणु
+पूर्ण
 
-#endif	/* CONFIG_NETCONSOLE_DYNAMIC */
+#पूर्ण_अगर	/* CONFIG_NETCONSOLE_DYNAMIC */
 
-/* Allocate new target (from boot/module param) and setup netpoll for it */
-static struct netconsole_target *alloc_param_target(char *target_config)
-{
-	int err = -ENOMEM;
-	struct netconsole_target *nt;
+/* Allocate new target (from boot/module param) and setup netpoll क्रम it */
+अटल काष्ठा netconsole_target *alloc_param_target(अक्षर *target_config)
+अणु
+	पूर्णांक err = -ENOMEM;
+	काष्ठा netconsole_target *nt;
 
 	/*
-	 * Allocate and initialize with defaults.
-	 * Note that these targets get their config_item fields zeroed-out.
+	 * Allocate and initialize with शेषs.
+	 * Note that these tarमाला_लो get their config_item fields zeroed-out.
 	 */
-	nt = kzalloc(sizeof(*nt), GFP_KERNEL);
-	if (!nt)
-		goto fail;
+	nt = kzalloc(माप(*nt), GFP_KERNEL);
+	अगर (!nt)
+		जाओ fail;
 
 	nt->np.name = "netconsole";
 	strlcpy(nt->np.dev_name, "eth0", IFNAMSIZ);
@@ -183,40 +184,40 @@ static struct netconsole_target *alloc_param_target(char *target_config)
 	nt->np.remote_port = 6666;
 	eth_broadcast_addr(nt->np.remote_mac);
 
-	if (*target_config == '+') {
+	अगर (*target_config == '+') अणु
 		nt->extended = true;
 		target_config++;
-	}
+	पूर्ण
 
 	/* Parse parameters and setup netpoll */
 	err = netpoll_parse_options(&nt->np, target_config);
-	if (err)
-		goto fail;
+	अगर (err)
+		जाओ fail;
 
 	err = netpoll_setup(&nt->np);
-	if (err)
-		goto fail;
+	अगर (err)
+		जाओ fail;
 
 	nt->enabled = true;
 
-	return nt;
+	वापस nt;
 
 fail:
-	kfree(nt);
-	return ERR_PTR(err);
-}
+	kमुक्त(nt);
+	वापस ERR_PTR(err);
+पूर्ण
 
-/* Cleanup netpoll for given target (from boot/module param) and free it */
-static void free_param_target(struct netconsole_target *nt)
-{
+/* Cleanup netpoll क्रम given target (from boot/module param) and मुक्त it */
+अटल व्योम मुक्त_param_target(काष्ठा netconsole_target *nt)
+अणु
 	netpoll_cleanup(&nt->np);
-	kfree(nt);
-}
+	kमुक्त(nt);
+पूर्ण
 
-#ifdef	CONFIG_NETCONSOLE_DYNAMIC
+#अगर_घोषित	CONFIG_NETCONSOLE_DYNAMIC
 
 /*
- * Our subsystem hierarchy is:
+ * Our subप्रणाली hierarchy is:
  *
  * /sys/kernel/config/netconsole/
  *				|
@@ -233,341 +234,341 @@ static void free_param_target(struct netconsole_target *nt)
  *				<target>/...
  */
 
-static struct netconsole_target *to_target(struct config_item *item)
-{
-	return item ?
-		container_of(item, struct netconsole_target, item) :
-		NULL;
-}
+अटल काष्ठा netconsole_target *to_target(काष्ठा config_item *item)
+अणु
+	वापस item ?
+		container_of(item, काष्ठा netconsole_target, item) :
+		शून्य;
+पूर्ण
 
 /*
- * Attribute operations for netconsole_target.
+ * Attribute operations क्रम netconsole_target.
  */
 
-static ssize_t enabled_show(struct config_item *item, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%d\n", to_target(item)->enabled);
-}
+अटल sमाप_प्रकार enabled_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", to_target(item)->enabled);
+पूर्ण
 
-static ssize_t extended_show(struct config_item *item, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%d\n", to_target(item)->extended);
-}
+अटल sमाप_प्रकार extended_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", to_target(item)->extended);
+पूर्ण
 
-static ssize_t dev_name_show(struct config_item *item, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%s\n", to_target(item)->np.dev_name);
-}
+अटल sमाप_प्रकार dev_name_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", to_target(item)->np.dev_name);
+पूर्ण
 
-static ssize_t local_port_show(struct config_item *item, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%d\n", to_target(item)->np.local_port);
-}
+अटल sमाप_प्रकार local_port_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", to_target(item)->np.local_port);
+पूर्ण
 
-static ssize_t remote_port_show(struct config_item *item, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%d\n", to_target(item)->np.remote_port);
-}
+अटल sमाप_प्रकार remote_port_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", to_target(item)->np.remote_port);
+पूर्ण
 
-static ssize_t local_ip_show(struct config_item *item, char *buf)
-{
-	struct netconsole_target *nt = to_target(item);
+अटल sमाप_प्रकार local_ip_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	काष्ठा netconsole_target *nt = to_target(item);
 
-	if (nt->np.ipv6)
-		return snprintf(buf, PAGE_SIZE, "%pI6c\n", &nt->np.local_ip.in6);
-	else
-		return snprintf(buf, PAGE_SIZE, "%pI4\n", &nt->np.local_ip);
-}
+	अगर (nt->np.ipv6)
+		वापस snम_लिखो(buf, PAGE_SIZE, "%pI6c\n", &nt->np.local_ip.in6);
+	अन्यथा
+		वापस snम_लिखो(buf, PAGE_SIZE, "%pI4\n", &nt->np.local_ip);
+पूर्ण
 
-static ssize_t remote_ip_show(struct config_item *item, char *buf)
-{
-	struct netconsole_target *nt = to_target(item);
+अटल sमाप_प्रकार remote_ip_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	काष्ठा netconsole_target *nt = to_target(item);
 
-	if (nt->np.ipv6)
-		return snprintf(buf, PAGE_SIZE, "%pI6c\n", &nt->np.remote_ip.in6);
-	else
-		return snprintf(buf, PAGE_SIZE, "%pI4\n", &nt->np.remote_ip);
-}
+	अगर (nt->np.ipv6)
+		वापस snम_लिखो(buf, PAGE_SIZE, "%pI6c\n", &nt->np.remote_ip.in6);
+	अन्यथा
+		वापस snम_लिखो(buf, PAGE_SIZE, "%pI4\n", &nt->np.remote_ip);
+पूर्ण
 
-static ssize_t local_mac_show(struct config_item *item, char *buf)
-{
-	struct net_device *dev = to_target(item)->np.dev;
-	static const u8 bcast[ETH_ALEN] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+अटल sमाप_प्रकार local_mac_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	काष्ठा net_device *dev = to_target(item)->np.dev;
+	अटल स्थिर u8 bcast[ETH_ALEN] = अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण;
 
-	return snprintf(buf, PAGE_SIZE, "%pM\n", dev ? dev->dev_addr : bcast);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%pM\n", dev ? dev->dev_addr : bcast);
+पूर्ण
 
-static ssize_t remote_mac_show(struct config_item *item, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%pM\n", to_target(item)->np.remote_mac);
-}
+अटल sमाप_प्रकार remote_mac_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%pM\n", to_target(item)->np.remote_mac);
+पूर्ण
 
 /*
- * This one is special -- targets created through the configfs interface
- * are not enabled (and the corresponding netpoll activated) by default.
+ * This one is special -- tarमाला_लो created through the configfs पूर्णांकerface
+ * are not enabled (and the corresponding netpoll activated) by शेष.
  * The user is expected to set the desired parameters first (which
- * would enable him to dynamically add new netpoll targets for new
- * network interfaces as and when they come up).
+ * would enable him to dynamically add new netpoll tarमाला_लो क्रम new
+ * network पूर्णांकerfaces as and when they come up).
  */
-static ssize_t enabled_store(struct config_item *item,
-		const char *buf, size_t count)
-{
-	struct netconsole_target *nt = to_target(item);
-	unsigned long flags;
-	int enabled;
-	int err;
+अटल sमाप_प्रकार enabled_store(काष्ठा config_item *item,
+		स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा netconsole_target *nt = to_target(item);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक enabled;
+	पूर्णांक err;
 
 	mutex_lock(&dynamic_netconsole_mutex);
-	err = kstrtoint(buf, 10, &enabled);
-	if (err < 0)
-		goto out_unlock;
+	err = kstrtoपूर्णांक(buf, 10, &enabled);
+	अगर (err < 0)
+		जाओ out_unlock;
 
 	err = -EINVAL;
-	if (enabled < 0 || enabled > 1)
-		goto out_unlock;
-	if ((bool)enabled == nt->enabled) {
+	अगर (enabled < 0 || enabled > 1)
+		जाओ out_unlock;
+	अगर ((bool)enabled == nt->enabled) अणु
 		pr_info("network logging has already %s\n",
 			nt->enabled ? "started" : "stopped");
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (enabled) {	/* true */
-		if (nt->extended && !(netconsole_ext.flags & CON_ENABLED)) {
+	अगर (enabled) अणु	/* true */
+		अगर (nt->extended && !(netconsole_ext.flags & CON_ENABLED)) अणु
 			netconsole_ext.flags |= CON_ENABLED;
-			register_console(&netconsole_ext);
-		}
+			रेजिस्टर_console(&netconsole_ext);
+		पूर्ण
 
 		/*
 		 * Skip netpoll_parse_options() -- all the attributes are
-		 * already configured via configfs. Just print them out.
+		 * alपढ़ोy configured via configfs. Just prपूर्णांक them out.
 		 */
-		netpoll_print_options(&nt->np);
+		netpoll_prपूर्णांक_options(&nt->np);
 
 		err = netpoll_setup(&nt->np);
-		if (err)
-			goto out_unlock;
+		अगर (err)
+			जाओ out_unlock;
 
 		pr_info("network logging started\n");
-	} else {	/* false */
-		/* We need to disable the netconsole before cleaning it up
-		 * otherwise we might end up in write_msg() with
-		 * nt->np.dev == NULL and nt->enabled == true
+	पूर्ण अन्यथा अणु	/* false */
+		/* We need to disable the netconsole beक्रमe cleaning it up
+		 * otherwise we might end up in ग_लिखो_msg() with
+		 * nt->np.dev == शून्य and nt->enabled == true
 		 */
 		spin_lock_irqsave(&target_list_lock, flags);
 		nt->enabled = false;
 		spin_unlock_irqrestore(&target_list_lock, flags);
 		netpoll_cleanup(&nt->np);
-	}
+	पूर्ण
 
 	nt->enabled = enabled;
 
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return strnlen(buf, count);
+	वापस strnlen(buf, count);
 out_unlock:
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static ssize_t extended_store(struct config_item *item, const char *buf,
-		size_t count)
-{
-	struct netconsole_target *nt = to_target(item);
-	int extended;
-	int err;
+अटल sमाप_प्रकार extended_store(काष्ठा config_item *item, स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	काष्ठा netconsole_target *nt = to_target(item);
+	पूर्णांक extended;
+	पूर्णांक err;
 
 	mutex_lock(&dynamic_netconsole_mutex);
-	if (nt->enabled) {
+	अगर (nt->enabled) अणु
 		pr_err("target (%s) is enabled, disable to update parameters\n",
 		       config_item_name(&nt->item));
 		err = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	err = kstrtoint(buf, 10, &extended);
-	if (err < 0)
-		goto out_unlock;
-	if (extended < 0 || extended > 1) {
+	err = kstrtoपूर्णांक(buf, 10, &extended);
+	अगर (err < 0)
+		जाओ out_unlock;
+	अगर (extended < 0 || extended > 1) अणु
 		err = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	nt->extended = extended;
 
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return strnlen(buf, count);
+	वापस strnlen(buf, count);
 out_unlock:
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static ssize_t dev_name_store(struct config_item *item, const char *buf,
-		size_t count)
-{
-	struct netconsole_target *nt = to_target(item);
-	size_t len;
+अटल sमाप_प्रकार dev_name_store(काष्ठा config_item *item, स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	काष्ठा netconsole_target *nt = to_target(item);
+	माप_प्रकार len;
 
 	mutex_lock(&dynamic_netconsole_mutex);
-	if (nt->enabled) {
+	अगर (nt->enabled) अणु
 		pr_err("target (%s) is enabled, disable to update parameters\n",
 		       config_item_name(&nt->item));
 		mutex_unlock(&dynamic_netconsole_mutex);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	strlcpy(nt->np.dev_name, buf, IFNAMSIZ);
 
 	/* Get rid of possible trailing newline from echo(1) */
 	len = strnlen(nt->np.dev_name, IFNAMSIZ);
-	if (nt->np.dev_name[len - 1] == '\n')
+	अगर (nt->np.dev_name[len - 1] == '\n')
 		nt->np.dev_name[len - 1] = '\0';
 
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static ssize_t local_port_store(struct config_item *item, const char *buf,
-		size_t count)
-{
-	struct netconsole_target *nt = to_target(item);
-	int rv = -EINVAL;
+अटल sमाप_प्रकार local_port_store(काष्ठा config_item *item, स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	काष्ठा netconsole_target *nt = to_target(item);
+	पूर्णांक rv = -EINVAL;
 
 	mutex_lock(&dynamic_netconsole_mutex);
-	if (nt->enabled) {
+	अगर (nt->enabled) अणु
 		pr_err("target (%s) is enabled, disable to update parameters\n",
 		       config_item_name(&nt->item));
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	rv = kstrtou16(buf, 10, &nt->np.local_port);
-	if (rv < 0)
-		goto out_unlock;
+	अगर (rv < 0)
+		जाओ out_unlock;
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return strnlen(buf, count);
+	वापस strnlen(buf, count);
 out_unlock:
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static ssize_t remote_port_store(struct config_item *item,
-		const char *buf, size_t count)
-{
-	struct netconsole_target *nt = to_target(item);
-	int rv = -EINVAL;
+अटल sमाप_प्रकार remote_port_store(काष्ठा config_item *item,
+		स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा netconsole_target *nt = to_target(item);
+	पूर्णांक rv = -EINVAL;
 
 	mutex_lock(&dynamic_netconsole_mutex);
-	if (nt->enabled) {
+	अगर (nt->enabled) अणु
 		pr_err("target (%s) is enabled, disable to update parameters\n",
 		       config_item_name(&nt->item));
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	rv = kstrtou16(buf, 10, &nt->np.remote_port);
-	if (rv < 0)
-		goto out_unlock;
+	अगर (rv < 0)
+		जाओ out_unlock;
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return strnlen(buf, count);
+	वापस strnlen(buf, count);
 out_unlock:
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static ssize_t local_ip_store(struct config_item *item, const char *buf,
-		size_t count)
-{
-	struct netconsole_target *nt = to_target(item);
+अटल sमाप_प्रकार local_ip_store(काष्ठा config_item *item, स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	काष्ठा netconsole_target *nt = to_target(item);
 
 	mutex_lock(&dynamic_netconsole_mutex);
-	if (nt->enabled) {
+	अगर (nt->enabled) अणु
 		pr_err("target (%s) is enabled, disable to update parameters\n",
 		       config_item_name(&nt->item));
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (strnchr(buf, count, ':')) {
-		const char *end;
-		if (in6_pton(buf, count, nt->np.local_ip.in6.s6_addr, -1, &end) > 0) {
-			if (*end && *end != '\n') {
+	अगर (strnchr(buf, count, ':')) अणु
+		स्थिर अक्षर *end;
+		अगर (in6_pton(buf, count, nt->np.local_ip.in6.s6_addr, -1, &end) > 0) अणु
+			अगर (*end && *end != '\n') अणु
 				pr_err("invalid IPv6 address at: <%c>\n", *end);
-				goto out_unlock;
-			}
+				जाओ out_unlock;
+			पूर्ण
 			nt->np.ipv6 = true;
-		} else
-			goto out_unlock;
-	} else {
-		if (!nt->np.ipv6) {
+		पूर्ण अन्यथा
+			जाओ out_unlock;
+	पूर्ण अन्यथा अणु
+		अगर (!nt->np.ipv6) अणु
 			nt->np.local_ip.ip = in_aton(buf);
-		} else
-			goto out_unlock;
-	}
+		पूर्ण अन्यथा
+			जाओ out_unlock;
+	पूर्ण
 
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return strnlen(buf, count);
+	वापस strnlen(buf, count);
 out_unlock:
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t remote_ip_store(struct config_item *item, const char *buf,
-	       size_t count)
-{
-	struct netconsole_target *nt = to_target(item);
+अटल sमाप_प्रकार remote_ip_store(काष्ठा config_item *item, स्थिर अक्षर *buf,
+	       माप_प्रकार count)
+अणु
+	काष्ठा netconsole_target *nt = to_target(item);
 
 	mutex_lock(&dynamic_netconsole_mutex);
-	if (nt->enabled) {
+	अगर (nt->enabled) अणु
 		pr_err("target (%s) is enabled, disable to update parameters\n",
 		       config_item_name(&nt->item));
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (strnchr(buf, count, ':')) {
-		const char *end;
-		if (in6_pton(buf, count, nt->np.remote_ip.in6.s6_addr, -1, &end) > 0) {
-			if (*end && *end != '\n') {
+	अगर (strnchr(buf, count, ':')) अणु
+		स्थिर अक्षर *end;
+		अगर (in6_pton(buf, count, nt->np.remote_ip.in6.s6_addr, -1, &end) > 0) अणु
+			अगर (*end && *end != '\n') अणु
 				pr_err("invalid IPv6 address at: <%c>\n", *end);
-				goto out_unlock;
-			}
+				जाओ out_unlock;
+			पूर्ण
 			nt->np.ipv6 = true;
-		} else
-			goto out_unlock;
-	} else {
-		if (!nt->np.ipv6) {
+		पूर्ण अन्यथा
+			जाओ out_unlock;
+	पूर्ण अन्यथा अणु
+		अगर (!nt->np.ipv6) अणु
 			nt->np.remote_ip.ip = in_aton(buf);
-		} else
-			goto out_unlock;
-	}
+		पूर्ण अन्यथा
+			जाओ out_unlock;
+	पूर्ण
 
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return strnlen(buf, count);
+	वापस strnlen(buf, count);
 out_unlock:
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t remote_mac_store(struct config_item *item, const char *buf,
-		size_t count)
-{
-	struct netconsole_target *nt = to_target(item);
+अटल sमाप_प्रकार remote_mac_store(काष्ठा config_item *item, स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	काष्ठा netconsole_target *nt = to_target(item);
 	u8 remote_mac[ETH_ALEN];
 
 	mutex_lock(&dynamic_netconsole_mutex);
-	if (nt->enabled) {
+	अगर (nt->enabled) अणु
 		pr_err("target (%s) is enabled, disable to update parameters\n",
 		       config_item_name(&nt->item));
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (!mac_pton(buf, remote_mac))
-		goto out_unlock;
-	if (buf[3 * ETH_ALEN - 1] && buf[3 * ETH_ALEN - 1] != '\n')
-		goto out_unlock;
-	memcpy(nt->np.remote_mac, remote_mac, ETH_ALEN);
+	अगर (!mac_pton(buf, remote_mac))
+		जाओ out_unlock;
+	अगर (buf[3 * ETH_ALEN - 1] && buf[3 * ETH_ALEN - 1] != '\n')
+		जाओ out_unlock;
+	स_नकल(nt->np.remote_mac, remote_mac, ETH_ALEN);
 
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return strnlen(buf, count);
+	वापस strnlen(buf, count);
 out_unlock:
 	mutex_unlock(&dynamic_netconsole_mutex);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 CONFIGFS_ATTR(, enabled);
 CONFIGFS_ATTR(, extended);
@@ -579,7 +580,7 @@ CONFIGFS_ATTR(, remote_ip);
 CONFIGFS_ATTR_RO(, local_mac);
 CONFIGFS_ATTR(, remote_mac);
 
-static struct configfs_attribute *netconsole_target_attrs[] = {
+अटल काष्ठा configfs_attribute *netconsole_target_attrs[] = अणु
 	&attr_enabled,
 	&attr_extended,
 	&attr_dev_name,
@@ -589,45 +590,45 @@ static struct configfs_attribute *netconsole_target_attrs[] = {
 	&attr_remote_ip,
 	&attr_local_mac,
 	&attr_remote_mac,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*
- * Item operations and type for netconsole_target.
+ * Item operations and type क्रम netconsole_target.
  */
 
-static void netconsole_target_release(struct config_item *item)
-{
-	kfree(to_target(item));
-}
+अटल व्योम netconsole_target_release(काष्ठा config_item *item)
+अणु
+	kमुक्त(to_target(item));
+पूर्ण
 
-static struct configfs_item_operations netconsole_target_item_ops = {
+अटल काष्ठा configfs_item_operations netconsole_target_item_ops = अणु
 	.release		= netconsole_target_release,
-};
+पूर्ण;
 
-static const struct config_item_type netconsole_target_type = {
+अटल स्थिर काष्ठा config_item_type netconsole_target_type = अणु
 	.ct_attrs		= netconsole_target_attrs,
 	.ct_item_ops		= &netconsole_target_item_ops,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
 /*
- * Group operations and type for netconsole_subsys.
+ * Group operations and type क्रम netconsole_subsys.
  */
 
-static struct config_item *make_netconsole_target(struct config_group *group,
-						  const char *name)
-{
-	unsigned long flags;
-	struct netconsole_target *nt;
+अटल काष्ठा config_item *make_netconsole_target(काष्ठा config_group *group,
+						  स्थिर अक्षर *name)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा netconsole_target *nt;
 
 	/*
-	 * Allocate and initialize with defaults.
+	 * Allocate and initialize with शेषs.
 	 * Target is disabled at creation (!enabled).
 	 */
-	nt = kzalloc(sizeof(*nt), GFP_KERNEL);
-	if (!nt)
-		return ERR_PTR(-ENOMEM);
+	nt = kzalloc(माप(*nt), GFP_KERNEL);
+	अगर (!nt)
+		वापस ERR_PTR(-ENOMEM);
 
 	nt->np.name = "netconsole";
 	strlcpy(nt->np.dev_name, "eth0", IFNAMSIZ);
@@ -643,14 +644,14 @@ static struct config_item *make_netconsole_target(struct config_group *group,
 	list_add(&nt->list, &target_list);
 	spin_unlock_irqrestore(&target_list_lock, flags);
 
-	return &nt->item;
-}
+	वापस &nt->item;
+पूर्ण
 
-static void drop_netconsole_target(struct config_group *group,
-				   struct config_item *item)
-{
-	unsigned long flags;
-	struct netconsole_target *nt = to_target(item);
+अटल व्योम drop_netconsole_target(काष्ठा config_group *group,
+				   काष्ठा config_item *item)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा netconsole_target *nt = to_target(item);
 
 	spin_lock_irqsave(&target_list_lock, flags);
 	list_del(&nt->list);
@@ -658,62 +659,62 @@ static void drop_netconsole_target(struct config_group *group,
 
 	/*
 	 * The target may have never been enabled, or was manually disabled
-	 * before being removed so netpoll may have already been cleaned up.
+	 * beक्रमe being हटाओd so netpoll may have alपढ़ोy been cleaned up.
 	 */
-	if (nt->enabled)
+	अगर (nt->enabled)
 		netpoll_cleanup(&nt->np);
 
 	config_item_put(&nt->item);
-}
+पूर्ण
 
-static struct configfs_group_operations netconsole_subsys_group_ops = {
+अटल काष्ठा configfs_group_operations netconsole_subsys_group_ops = अणु
 	.make_item	= make_netconsole_target,
 	.drop_item	= drop_netconsole_target,
-};
+पूर्ण;
 
-static const struct config_item_type netconsole_subsys_type = {
+अटल स्थिर काष्ठा config_item_type netconsole_subsys_type = अणु
 	.ct_group_ops	= &netconsole_subsys_group_ops,
 	.ct_owner	= THIS_MODULE,
-};
+पूर्ण;
 
-/* The netconsole configfs subsystem */
-static struct configfs_subsystem netconsole_subsys = {
-	.su_group	= {
-		.cg_item	= {
+/* The netconsole configfs subप्रणाली */
+अटल काष्ठा configfs_subप्रणाली netconsole_subsys = अणु
+	.su_group	= अणु
+		.cg_item	= अणु
 			.ci_namebuf	= "netconsole",
 			.ci_type	= &netconsole_subsys_type,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-#endif	/* CONFIG_NETCONSOLE_DYNAMIC */
+#पूर्ण_अगर	/* CONFIG_NETCONSOLE_DYNAMIC */
 
-/* Handle network interface device notifications */
-static int netconsole_netdev_event(struct notifier_block *this,
-				   unsigned long event, void *ptr)
-{
-	unsigned long flags;
-	struct netconsole_target *nt;
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+/* Handle network पूर्णांकerface device notअगरications */
+अटल पूर्णांक netconsole_netdev_event(काष्ठा notअगरier_block *this,
+				   अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा netconsole_target *nt;
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
 	bool stopped = false;
 
-	if (!(event == NETDEV_CHANGENAME || event == NETDEV_UNREGISTER ||
+	अगर (!(event == NETDEV_CHANGENAME || event == NETDEV_UNREGISTER ||
 	      event == NETDEV_RELEASE || event == NETDEV_JOIN))
-		goto done;
+		जाओ करोne;
 
 	spin_lock_irqsave(&target_list_lock, flags);
 restart:
-	list_for_each_entry(nt, &target_list, list) {
+	list_क्रम_each_entry(nt, &target_list, list) अणु
 		netconsole_target_get(nt);
-		if (nt->np.dev == dev) {
-			switch (event) {
-			case NETDEV_CHANGENAME:
+		अगर (nt->np.dev == dev) अणु
+			चयन (event) अणु
+			हाल NETDEV_CHANGENAME:
 				strlcpy(nt->np.dev_name, dev->name, IFNAMSIZ);
-				break;
-			case NETDEV_RELEASE:
-			case NETDEV_JOIN:
-			case NETDEV_UNREGISTER:
-				/* rtnl_lock already held
+				अवरोध;
+			हाल NETDEV_RELEASE:
+			हाल NETDEV_JOIN:
+			हाल NETDEV_UNREGISTER:
+				/* rtnl_lock alपढ़ोy held
 				 * we might sleep in __netpoll_cleanup()
 				 */
 				spin_unlock_irqrestore(&target_list_lock, flags);
@@ -722,40 +723,40 @@ restart:
 
 				spin_lock_irqsave(&target_list_lock, flags);
 				dev_put(nt->np.dev);
-				nt->np.dev = NULL;
+				nt->np.dev = शून्य;
 				nt->enabled = false;
 				stopped = true;
 				netconsole_target_put(nt);
-				goto restart;
-			}
-		}
+				जाओ restart;
+			पूर्ण
+		पूर्ण
 		netconsole_target_put(nt);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&target_list_lock, flags);
-	if (stopped) {
-		const char *msg = "had an event";
-		switch (event) {
-		case NETDEV_UNREGISTER:
+	अगर (stopped) अणु
+		स्थिर अक्षर *msg = "had an event";
+		चयन (event) अणु
+		हाल NETDEV_UNREGISTER:
 			msg = "unregistered";
-			break;
-		case NETDEV_RELEASE:
+			अवरोध;
+		हाल NETDEV_RELEASE:
 			msg = "released slaves";
-			break;
-		case NETDEV_JOIN:
+			अवरोध;
+		हाल NETDEV_JOIN:
 			msg = "is joining a master device";
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		pr_info("network logging stopped on interface %s as it %s\n",
 			dev->name, msg);
-	}
+	पूर्ण
 
-done:
-	return NOTIFY_DONE;
-}
+करोne:
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block netconsole_netdev_notifier = {
-	.notifier_call  = netconsole_netdev_event,
-};
+अटल काष्ठा notअगरier_block netconsole_netdev_notअगरier = अणु
+	.notअगरier_call  = netconsole_netdev_event,
+पूर्ण;
 
 /**
  * send_ext_msg_udp - send extended log message to target
@@ -763,28 +764,28 @@ static struct notifier_block netconsole_netdev_notifier = {
  * @msg: extended log message to send
  * @msg_len: length of message
  *
- * Transfer extended log @msg to @nt.  If @msg is longer than
+ * Transfer extended log @msg to @nt.  If @msg is दीर्घer than
  * MAX_PRINT_CHUNK, it'll be split and transmitted in multiple chunks with
- * ncfrag header field added to identify them.
+ * ncfrag header field added to identअगरy them.
  */
-static void send_ext_msg_udp(struct netconsole_target *nt, const char *msg,
-			     int msg_len)
-{
-	static char buf[MAX_PRINT_CHUNK]; /* protected by target_list_lock */
-	const char *header, *body;
-	int offset = 0;
-	int header_len, body_len;
+अटल व्योम send_ext_msg_udp(काष्ठा netconsole_target *nt, स्थिर अक्षर *msg,
+			     पूर्णांक msg_len)
+अणु
+	अटल अक्षर buf[MAX_PRINT_CHUNK]; /* रक्षित by target_list_lock */
+	स्थिर अक्षर *header, *body;
+	पूर्णांक offset = 0;
+	पूर्णांक header_len, body_len;
 
-	if (msg_len <= MAX_PRINT_CHUNK) {
+	अगर (msg_len <= MAX_PRINT_CHUNK) अणु
 		netpoll_send_udp(&nt->np, msg, msg_len);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* need to insert extra header fields, detect header and body */
 	header = msg;
-	body = memchr(msg, ';', msg_len);
-	if (WARN_ON_ONCE(!body))
-		return;
+	body = स_प्रथम(msg, ';', msg_len);
+	अगर (WARN_ON_ONCE(!body))
+		वापस;
 
 	header_len = body - header;
 	body_len = msg_len - header_len - 1;
@@ -794,181 +795,181 @@ static void send_ext_msg_udp(struct netconsole_target *nt, const char *msg,
 	 * Transfer multiple chunks with the following extra header.
 	 * "ncfrag=<byte-offset>/<total-bytes>"
 	 */
-	memcpy(buf, header, header_len);
+	स_नकल(buf, header, header_len);
 
-	while (offset < body_len) {
-		int this_header = header_len;
-		int this_chunk;
+	जबतक (offset < body_len) अणु
+		पूर्णांक this_header = header_len;
+		पूर्णांक this_chunk;
 
-		this_header += scnprintf(buf + this_header,
-					 sizeof(buf) - this_header,
+		this_header += scnम_लिखो(buf + this_header,
+					 माप(buf) - this_header,
 					 ",ncfrag=%d/%d;", offset, body_len);
 
 		this_chunk = min(body_len - offset,
 				 MAX_PRINT_CHUNK - this_header);
-		if (WARN_ON_ONCE(this_chunk <= 0))
-			return;
+		अगर (WARN_ON_ONCE(this_chunk <= 0))
+			वापस;
 
-		memcpy(buf + this_header, body + offset, this_chunk);
+		स_नकल(buf + this_header, body + offset, this_chunk);
 
 		netpoll_send_udp(&nt->np, buf, this_header + this_chunk);
 
 		offset += this_chunk;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void write_ext_msg(struct console *con, const char *msg,
-			  unsigned int len)
-{
-	struct netconsole_target *nt;
-	unsigned long flags;
+अटल व्योम ग_लिखो_ext_msg(काष्ठा console *con, स्थिर अक्षर *msg,
+			  अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा netconsole_target *nt;
+	अचिन्हित दीर्घ flags;
 
-	if ((oops_only && !oops_in_progress) || list_empty(&target_list))
-		return;
+	अगर ((oops_only && !oops_in_progress) || list_empty(&target_list))
+		वापस;
 
 	spin_lock_irqsave(&target_list_lock, flags);
-	list_for_each_entry(nt, &target_list, list)
-		if (nt->extended && nt->enabled && netif_running(nt->np.dev))
+	list_क्रम_each_entry(nt, &target_list, list)
+		अगर (nt->extended && nt->enabled && netअगर_running(nt->np.dev))
 			send_ext_msg_udp(nt, msg, len);
 	spin_unlock_irqrestore(&target_list_lock, flags);
-}
+पूर्ण
 
-static void write_msg(struct console *con, const char *msg, unsigned int len)
-{
-	int frag, left;
-	unsigned long flags;
-	struct netconsole_target *nt;
-	const char *tmp;
+अटल व्योम ग_लिखो_msg(काष्ठा console *con, स्थिर अक्षर *msg, अचिन्हित पूर्णांक len)
+अणु
+	पूर्णांक frag, left;
+	अचिन्हित दीर्घ flags;
+	काष्ठा netconsole_target *nt;
+	स्थिर अक्षर *पंचांगp;
 
-	if (oops_only && !oops_in_progress)
-		return;
-	/* Avoid taking lock and disabling interrupts unnecessarily */
-	if (list_empty(&target_list))
-		return;
+	अगर (oops_only && !oops_in_progress)
+		वापस;
+	/* Aव्योम taking lock and disabling पूर्णांकerrupts unnecessarily */
+	अगर (list_empty(&target_list))
+		वापस;
 
 	spin_lock_irqsave(&target_list_lock, flags);
-	list_for_each_entry(nt, &target_list, list) {
-		if (!nt->extended && nt->enabled && netif_running(nt->np.dev)) {
+	list_क्रम_each_entry(nt, &target_list, list) अणु
+		अगर (!nt->extended && nt->enabled && netअगर_running(nt->np.dev)) अणु
 			/*
-			 * We nest this inside the for-each-target loop above
+			 * We nest this inside the क्रम-each-target loop above
 			 * so that we're able to get as much logging out to
-			 * at least one target if we die inside here, instead
-			 * of unnecessarily keeping all targets in lock-step.
+			 * at least one target अगर we die inside here, instead
+			 * of unnecessarily keeping all tarमाला_लो in lock-step.
 			 */
-			tmp = msg;
-			for (left = len; left;) {
+			पंचांगp = msg;
+			क्रम (left = len; left;) अणु
 				frag = min(left, MAX_PRINT_CHUNK);
-				netpoll_send_udp(&nt->np, tmp, frag);
-				tmp += frag;
+				netpoll_send_udp(&nt->np, पंचांगp, frag);
+				पंचांगp += frag;
 				left -= frag;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&target_list_lock, flags);
-}
+पूर्ण
 
-static struct console netconsole_ext = {
+अटल काष्ठा console netconsole_ext = अणु
 	.name	= "netcon_ext",
-	.flags	= CON_EXTENDED,	/* starts disabled, registered on first use */
-	.write	= write_ext_msg,
-};
+	.flags	= CON_EXTENDED,	/* starts disabled, रेजिस्टरed on first use */
+	.ग_लिखो	= ग_लिखो_ext_msg,
+पूर्ण;
 
-static struct console netconsole = {
+अटल काष्ठा console netconsole = अणु
 	.name	= "netcon",
 	.flags	= CON_ENABLED,
-	.write	= write_msg,
-};
+	.ग_लिखो	= ग_लिखो_msg,
+पूर्ण;
 
-static int __init init_netconsole(void)
-{
-	int err;
-	struct netconsole_target *nt, *tmp;
-	unsigned long flags;
-	char *target_config;
-	char *input = config;
+अटल पूर्णांक __init init_netconsole(व्योम)
+अणु
+	पूर्णांक err;
+	काष्ठा netconsole_target *nt, *पंचांगp;
+	अचिन्हित दीर्घ flags;
+	अक्षर *target_config;
+	अक्षर *input = config;
 
-	if (strnlen(input, MAX_PARAM_LENGTH)) {
-		while ((target_config = strsep(&input, ";"))) {
+	अगर (strnlen(input, MAX_PARAM_LENGTH)) अणु
+		जबतक ((target_config = strsep(&input, ";"))) अणु
 			nt = alloc_param_target(target_config);
-			if (IS_ERR(nt)) {
+			अगर (IS_ERR(nt)) अणु
 				err = PTR_ERR(nt);
-				goto fail;
-			}
-			/* Dump existing printks when we register */
-			if (nt->extended)
+				जाओ fail;
+			पूर्ण
+			/* Dump existing prपूर्णांकks when we रेजिस्टर */
+			अगर (nt->extended)
 				netconsole_ext.flags |= CON_PRINTBUFFER |
 							CON_ENABLED;
-			else
+			अन्यथा
 				netconsole.flags |= CON_PRINTBUFFER;
 
 			spin_lock_irqsave(&target_list_lock, flags);
 			list_add(&nt->list, &target_list);
 			spin_unlock_irqrestore(&target_list_lock, flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	err = register_netdevice_notifier(&netconsole_netdev_notifier);
-	if (err)
-		goto fail;
+	err = रेजिस्टर_netdevice_notअगरier(&netconsole_netdev_notअगरier);
+	अगर (err)
+		जाओ fail;
 
 	err = dynamic_netconsole_init();
-	if (err)
-		goto undonotifier;
+	अगर (err)
+		जाओ unकरोnotअगरier;
 
-	if (netconsole_ext.flags & CON_ENABLED)
-		register_console(&netconsole_ext);
-	register_console(&netconsole);
+	अगर (netconsole_ext.flags & CON_ENABLED)
+		रेजिस्टर_console(&netconsole_ext);
+	रेजिस्टर_console(&netconsole);
 	pr_info("network logging started\n");
 
-	return err;
+	वापस err;
 
-undonotifier:
-	unregister_netdevice_notifier(&netconsole_netdev_notifier);
+unकरोnotअगरier:
+	unरेजिस्टर_netdevice_notअगरier(&netconsole_netdev_notअगरier);
 
 fail:
 	pr_err("cleaning up\n");
 
 	/*
-	 * Remove all targets and destroy them (only targets created
+	 * Remove all tarमाला_लो and destroy them (only tarमाला_लो created
 	 * from the boot/module option exist here). Skipping the list
 	 * lock is safe here, and netpoll_cleanup() will sleep.
 	 */
-	list_for_each_entry_safe(nt, tmp, &target_list, list) {
+	list_क्रम_each_entry_safe(nt, पंचांगp, &target_list, list) अणु
 		list_del(&nt->list);
-		free_param_target(nt);
-	}
+		मुक्त_param_target(nt);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit cleanup_netconsole(void)
-{
-	struct netconsole_target *nt, *tmp;
+अटल व्योम __निकास cleanup_netconsole(व्योम)
+अणु
+	काष्ठा netconsole_target *nt, *पंचांगp;
 
-	unregister_console(&netconsole_ext);
-	unregister_console(&netconsole);
-	dynamic_netconsole_exit();
-	unregister_netdevice_notifier(&netconsole_netdev_notifier);
+	unरेजिस्टर_console(&netconsole_ext);
+	unरेजिस्टर_console(&netconsole);
+	dynamic_netconsole_निकास();
+	unरेजिस्टर_netdevice_notअगरier(&netconsole_netdev_notअगरier);
 
 	/*
-	 * Targets created via configfs pin references on our module
-	 * and would first be rmdir(2)'ed from userspace. We reach
-	 * here only when they are already destroyed, and only those
-	 * created from the boot/module option are left, so remove and
+	 * Tarमाला_लो created via configfs pin references on our module
+	 * and would first be सूची_हटाओ(2)'ed from userspace. We reach
+	 * here only when they are alपढ़ोy destroyed, and only those
+	 * created from the boot/module option are left, so हटाओ and
 	 * destroy them. Skipping the list lock is safe here, and
 	 * netpoll_cleanup() will sleep.
 	 */
-	list_for_each_entry_safe(nt, tmp, &target_list, list) {
+	list_क्रम_each_entry_safe(nt, पंचांगp, &target_list, list) अणु
 		list_del(&nt->list);
-		free_param_target(nt);
-	}
-}
+		मुक्त_param_target(nt);
+	पूर्ण
+पूर्ण
 
 /*
  * Use late_initcall to ensure netconsole is
- * initialized after network device driver if built-in.
+ * initialized after network device driver अगर built-in.
  *
- * late_initcall() and module_init() are identical if built as module.
+ * late_initcall() and module_init() are identical अगर built as module.
  */
 late_initcall(init_netconsole);
-module_exit(cleanup_netconsole);
+module_निकास(cleanup_netconsole);

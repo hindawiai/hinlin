@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * powerpc code to implement the kexec_file_load syscall
+ * घातerpc code to implement the kexec_file_load syscall
  *
  * Copyright (C) 2004  Adam Litke (agl@us.ibm.com)
  * Copyright (C) 2004  IBM Corp.
@@ -10,100 +11,100 @@
  * Copyright (C) 2016  IBM Corporation
  *
  * Based on kexec-tools' kexec-elf-ppc64.c, fs2dt.c.
- * Heavily modified for the kernel by
+ * Heavily modअगरied क्रम the kernel by
  * Thiago Jung Bauermann <bauerman@linux.vnet.ibm.com>.
  */
 
-#include <linux/slab.h>
-#include <linux/kexec.h>
-#include <linux/of_fdt.h>
-#include <linux/libfdt.h>
-#include <asm/setup.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kexec.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/libfdt.h>
+#समावेश <यंत्र/setup.h>
 
-#define SLAVE_CODE_SIZE		256	/* First 0x100 bytes */
+#घोषणा SLAVE_CODE_SIZE		256	/* First 0x100 bytes */
 
 /**
  * setup_kdump_cmdline - Prepend "elfcorehdr=<addr> " to command line
- *                       of kdump kernel for exporting the core.
+ *                       of kdump kernel क्रम exporting the core.
  * @image:               Kexec image
  * @cmdline:             Command line parameters to update.
  * @cmdline_len:         Length of the cmdline parameters.
  *
- * kdump segment must be setup before calling this function.
+ * kdump segment must be setup beक्रमe calling this function.
  *
- * Returns new cmdline buffer for kdump kernel on success, NULL otherwise.
+ * Returns new cmdline buffer क्रम kdump kernel on success, शून्य otherwise.
  */
-char *setup_kdump_cmdline(struct kimage *image, char *cmdline,
-			  unsigned long cmdline_len)
-{
-	int elfcorehdr_strlen;
-	char *cmdline_ptr;
+अक्षर *setup_kdump_cmdline(काष्ठा kimage *image, अक्षर *cmdline,
+			  अचिन्हित दीर्घ cmdline_len)
+अणु
+	पूर्णांक elfcorehdr_म_माप;
+	अक्षर *cmdline_ptr;
 
 	cmdline_ptr = kzalloc(COMMAND_LINE_SIZE, GFP_KERNEL);
-	if (!cmdline_ptr)
-		return NULL;
+	अगर (!cmdline_ptr)
+		वापस शून्य;
 
-	elfcorehdr_strlen = sprintf(cmdline_ptr, "elfcorehdr=0x%lx ",
+	elfcorehdr_म_माप = प्र_लिखो(cmdline_ptr, "elfcorehdr=0x%lx ",
 				    image->elf_load_addr);
 
-	if (elfcorehdr_strlen + cmdline_len > COMMAND_LINE_SIZE) {
+	अगर (elfcorehdr_म_माप + cmdline_len > COMMAND_LINE_SIZE) अणु
 		pr_err("Appending elfcorehdr=<addr> exceeds cmdline size\n");
-		kfree(cmdline_ptr);
-		return NULL;
-	}
+		kमुक्त(cmdline_ptr);
+		वापस शून्य;
+	पूर्ण
 
-	memcpy(cmdline_ptr + elfcorehdr_strlen, cmdline, cmdline_len);
+	स_नकल(cmdline_ptr + elfcorehdr_म_माप, cmdline, cmdline_len);
 	// Ensure it's nul terminated
 	cmdline_ptr[COMMAND_LINE_SIZE - 1] = '\0';
-	return cmdline_ptr;
-}
+	वापस cmdline_ptr;
+पूर्ण
 
 /**
  * setup_purgatory - initialize the purgatory's global variables
  * @image:		kexec image.
- * @slave_code:		Slave code for the purgatory.
- * @fdt:		Flattened device tree for the next kernel.
+ * @slave_code:		Slave code क्रम the purgatory.
+ * @fdt:		Flattened device tree क्रम the next kernel.
  * @kernel_load_addr:	Address where the kernel is loaded.
  * @fdt_load_addr:	Address where the flattened device tree is loaded.
  *
- * Return: 0 on success, or negative errno on error.
+ * Return: 0 on success, or negative त्रुटि_सं on error.
  */
-int setup_purgatory(struct kimage *image, const void *slave_code,
-		    const void *fdt, unsigned long kernel_load_addr,
-		    unsigned long fdt_load_addr)
-{
-	unsigned int *slave_code_buf, master_entry;
-	int ret;
+पूर्णांक setup_purgatory(काष्ठा kimage *image, स्थिर व्योम *slave_code,
+		    स्थिर व्योम *fdt, अचिन्हित दीर्घ kernel_load_addr,
+		    अचिन्हित दीर्घ fdt_load_addr)
+अणु
+	अचिन्हित पूर्णांक *slave_code_buf, master_entry;
+	पूर्णांक ret;
 
-	slave_code_buf = kmalloc(SLAVE_CODE_SIZE, GFP_KERNEL);
-	if (!slave_code_buf)
-		return -ENOMEM;
+	slave_code_buf = kदो_स्मृति(SLAVE_CODE_SIZE, GFP_KERNEL);
+	अगर (!slave_code_buf)
+		वापस -ENOMEM;
 
 	/* Get the slave code from the new kernel and put it in purgatory. */
 	ret = kexec_purgatory_get_set_symbol(image, "purgatory_start",
 					     slave_code_buf, SLAVE_CODE_SIZE,
 					     true);
-	if (ret) {
-		kfree(slave_code_buf);
-		return ret;
-	}
+	अगर (ret) अणु
+		kमुक्त(slave_code_buf);
+		वापस ret;
+	पूर्ण
 
 	master_entry = slave_code_buf[0];
-	memcpy(slave_code_buf, slave_code, SLAVE_CODE_SIZE);
+	स_नकल(slave_code_buf, slave_code, SLAVE_CODE_SIZE);
 	slave_code_buf[0] = master_entry;
 	ret = kexec_purgatory_get_set_symbol(image, "purgatory_start",
 					     slave_code_buf, SLAVE_CODE_SIZE,
 					     false);
-	kfree(slave_code_buf);
+	kमुक्त(slave_code_buf);
 
 	ret = kexec_purgatory_get_set_symbol(image, "kernel", &kernel_load_addr,
-					     sizeof(kernel_load_addr), false);
-	if (ret)
-		return ret;
+					     माप(kernel_load_addr), false);
+	अगर (ret)
+		वापस ret;
 	ret = kexec_purgatory_get_set_symbol(image, "dt_offset", &fdt_load_addr,
-					     sizeof(fdt_load_addr), false);
-	if (ret)
-		return ret;
+					     माप(fdt_load_addr), false);
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

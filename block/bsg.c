@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * bsg.c - block layer implementation of the sg v4 interface
+ * bsg.c - block layer implementation of the sg v4 पूर्णांकerface
  */
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/file.h>
-#include <linux/blkdev.h>
-#include <linux/cdev.h>
-#include <linux/jiffies.h>
-#include <linux/percpu.h>
-#include <linux/idr.h>
-#include <linux/bsg.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/file.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/bsg.h>
+#समावेश <linux/slab.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_ioctl.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_driver.h>
-#include <scsi/sg.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_ioctl.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_driver.h>
+#समावेश <scsi/sg.h>
 
-#define BSG_DESCRIPTION	"Block layer SCSI generic (bsg) driver"
-#define BSG_VERSION	"0.4"
+#घोषणा BSG_DESCRIPTION	"Block layer SCSI generic (bsg) driver"
+#घोषणा BSG_VERSION	"0.4"
 
-#define bsg_dbg(bd, fmt, ...) \
+#घोषणा bsg_dbg(bd, fmt, ...) \
 	pr_debug("%s: " fmt, (bd)->name, ##__VA_ARGS__)
 
-struct bsg_device {
-	struct request_queue *queue;
+काष्ठा bsg_device अणु
+	काष्ठा request_queue *queue;
 	spinlock_t lock;
-	struct hlist_node dev_list;
+	काष्ठा hlist_node dev_list;
 	refcount_t ref_count;
-	char name[20];
-	int max_queue;
-};
+	अक्षर name[20];
+	पूर्णांक max_queue;
+पूर्ण;
 
-#define BSG_DEFAULT_CMDS	64
-#define BSG_MAX_DEVS		32768
+#घोषणा BSG_DEFAULT_CMDS	64
+#घोषणा BSG_MAX_DEVS		32768
 
-static DEFINE_MUTEX(bsg_mutex);
-static DEFINE_IDR(bsg_minor_idr);
+अटल DEFINE_MUTEX(bsg_mutex);
+अटल DEFINE_IDR(bsg_minor_idr);
 
-#define BSG_LIST_ARRAY_SIZE	8
-static struct hlist_head bsg_device_list[BSG_LIST_ARRAY_SIZE];
+#घोषणा BSG_LIST_ARRAY_SIZE	8
+अटल काष्ठा hlist_head bsg_device_list[BSG_LIST_ARRAY_SIZE];
 
-static struct class *bsg_class;
-static int bsg_major;
+अटल काष्ठा class *bsg_class;
+अटल पूर्णांक bsg_major;
 
-static inline struct hlist_head *bsg_dev_idx_hash(int index)
-{
-	return &bsg_device_list[index & (BSG_LIST_ARRAY_SIZE - 1)];
-}
+अटल अंतरभूत काष्ठा hlist_head *bsg_dev_idx_hash(पूर्णांक index)
+अणु
+	वापस &bsg_device_list[index & (BSG_LIST_ARRAY_SIZE - 1)];
+पूर्ण
 
-#define uptr64(val) ((void __user *)(uintptr_t)(val))
+#घोषणा uptr64(val) ((व्योम __user *)(uपूर्णांकptr_t)(val))
 
-static int bsg_scsi_check_proto(struct sg_io_v4 *hdr)
-{
-	if (hdr->protocol != BSG_PROTOCOL_SCSI  ||
+अटल पूर्णांक bsg_scsi_check_proto(काष्ठा sg_io_v4 *hdr)
+अणु
+	अगर (hdr->protocol != BSG_PROTOCOL_SCSI  ||
 	    hdr->subprotocol != BSG_SUB_PROTOCOL_SCSI_CMD)
-		return -EINVAL;
-	return 0;
-}
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static int bsg_scsi_fill_hdr(struct request *rq, struct sg_io_v4 *hdr,
-		fmode_t mode)
-{
-	struct scsi_request *sreq = scsi_req(rq);
+अटल पूर्णांक bsg_scsi_fill_hdr(काष्ठा request *rq, काष्ठा sg_io_v4 *hdr,
+		भ_शेषe_t mode)
+अणु
+	काष्ठा scsi_request *sreq = scsi_req(rq);
 
-	if (hdr->dout_xfer_len && hdr->din_xfer_len) {
+	अगर (hdr->करोut_xfer_len && hdr->din_xfer_len) अणु
 		pr_warn_once("BIDI support in bsg has been removed.\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	sreq->cmd_len = hdr->request_len;
-	if (sreq->cmd_len > BLK_MAX_CDB) {
+	अगर (sreq->cmd_len > BLK_MAX_CDB) अणु
 		sreq->cmd = kzalloc(sreq->cmd_len, GFP_KERNEL);
-		if (!sreq->cmd)
-			return -ENOMEM;
-	}
+		अगर (!sreq->cmd)
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (copy_from_user(sreq->cmd, uptr64(hdr->request), sreq->cmd_len))
-		return -EFAULT;
-	if (blk_verify_command(sreq->cmd, mode))
-		return -EPERM;
-	return 0;
-}
+	अगर (copy_from_user(sreq->cmd, uptr64(hdr->request), sreq->cmd_len))
+		वापस -EFAULT;
+	अगर (blk_verअगरy_command(sreq->cmd, mode))
+		वापस -EPERM;
+	वापस 0;
+पूर्ण
 
-static int bsg_scsi_complete_rq(struct request *rq, struct sg_io_v4 *hdr)
-{
-	struct scsi_request *sreq = scsi_req(rq);
-	int ret = 0;
+अटल पूर्णांक bsg_scsi_complete_rq(काष्ठा request *rq, काष्ठा sg_io_v4 *hdr)
+अणु
+	काष्ठा scsi_request *sreq = scsi_req(rq);
+	पूर्णांक ret = 0;
 
 	/*
 	 * fill in all the output members
@@ -98,127 +99,127 @@ static int bsg_scsi_complete_rq(struct request *rq, struct sg_io_v4 *hdr)
 	hdr->transport_status = host_byte(sreq->result);
 	hdr->driver_status = driver_byte(sreq->result);
 	hdr->info = 0;
-	if (hdr->device_status || hdr->transport_status || hdr->driver_status)
+	अगर (hdr->device_status || hdr->transport_status || hdr->driver_status)
 		hdr->info |= SG_INFO_CHECK;
 	hdr->response_len = 0;
 
-	if (sreq->sense_len && hdr->response) {
-		int len = min_t(unsigned int, hdr->max_response_len,
+	अगर (sreq->sense_len && hdr->response) अणु
+		पूर्णांक len = min_t(अचिन्हित पूर्णांक, hdr->max_response_len,
 					sreq->sense_len);
 
-		if (copy_to_user(uptr64(hdr->response), sreq->sense, len))
+		अगर (copy_to_user(uptr64(hdr->response), sreq->sense, len))
 			ret = -EFAULT;
-		else
+		अन्यथा
 			hdr->response_len = len;
-	}
+	पूर्ण
 
-	if (rq_data_dir(rq) == READ)
+	अगर (rq_data_dir(rq) == READ)
 		hdr->din_resid = sreq->resid_len;
-	else
-		hdr->dout_resid = sreq->resid_len;
+	अन्यथा
+		hdr->करोut_resid = sreq->resid_len;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void bsg_scsi_free_rq(struct request *rq)
-{
-	scsi_req_free_cmd(scsi_req(rq));
-}
+अटल व्योम bsg_scsi_मुक्त_rq(काष्ठा request *rq)
+अणु
+	scsi_req_मुक्त_cmd(scsi_req(rq));
+पूर्ण
 
-static const struct bsg_ops bsg_scsi_ops = {
+अटल स्थिर काष्ठा bsg_ops bsg_scsi_ops = अणु
 	.check_proto		= bsg_scsi_check_proto,
 	.fill_hdr		= bsg_scsi_fill_hdr,
 	.complete_rq		= bsg_scsi_complete_rq,
-	.free_rq		= bsg_scsi_free_rq,
-};
+	.मुक्त_rq		= bsg_scsi_मुक्त_rq,
+पूर्ण;
 
-static int bsg_sg_io(struct request_queue *q, fmode_t mode, void __user *uarg)
-{
-	struct request *rq;
-	struct bio *bio;
-	struct sg_io_v4 hdr;
-	int ret;
+अटल पूर्णांक bsg_sg_io(काष्ठा request_queue *q, भ_शेषe_t mode, व्योम __user *uarg)
+अणु
+	काष्ठा request *rq;
+	काष्ठा bio *bio;
+	काष्ठा sg_io_v4 hdr;
+	पूर्णांक ret;
 
-	if (copy_from_user(&hdr, uarg, sizeof(hdr)))
-		return -EFAULT;
+	अगर (copy_from_user(&hdr, uarg, माप(hdr)))
+		वापस -EFAULT;
 
-	if (!q->bsg_dev.class_dev)
-		return -ENXIO;
+	अगर (!q->bsg_dev.class_dev)
+		वापस -ENXIO;
 
-	if (hdr.guard != 'Q')
-		return -EINVAL;
+	अगर (hdr.guard != 'Q')
+		वापस -EINVAL;
 	ret = q->bsg_dev.ops->check_proto(&hdr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	rq = blk_get_request(q, hdr.dout_xfer_len ?
+	rq = blk_get_request(q, hdr.करोut_xfer_len ?
 			REQ_OP_SCSI_OUT : REQ_OP_SCSI_IN, 0);
-	if (IS_ERR(rq))
-		return PTR_ERR(rq);
+	अगर (IS_ERR(rq))
+		वापस PTR_ERR(rq);
 
 	ret = q->bsg_dev.ops->fill_hdr(rq, &hdr, mode);
-	if (ret) {
+	अगर (ret) अणु
 		blk_put_request(rq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	rq->timeout = msecs_to_jiffies(hdr.timeout);
-	if (!rq->timeout)
-		rq->timeout = q->sg_timeout;
-	if (!rq->timeout)
-		rq->timeout = BLK_DEFAULT_SG_TIMEOUT;
-	if (rq->timeout < BLK_MIN_SG_TIMEOUT)
-		rq->timeout = BLK_MIN_SG_TIMEOUT;
+	rq->समयout = msecs_to_jअगरfies(hdr.समयout);
+	अगर (!rq->समयout)
+		rq->समयout = q->sg_समयout;
+	अगर (!rq->समयout)
+		rq->समयout = BLK_DEFAULT_SG_TIMEOUT;
+	अगर (rq->समयout < BLK_MIN_SG_TIMEOUT)
+		rq->समयout = BLK_MIN_SG_TIMEOUT;
 
-	if (hdr.dout_xfer_len) {
-		ret = blk_rq_map_user(q, rq, NULL, uptr64(hdr.dout_xferp),
-				hdr.dout_xfer_len, GFP_KERNEL);
-	} else if (hdr.din_xfer_len) {
-		ret = blk_rq_map_user(q, rq, NULL, uptr64(hdr.din_xferp),
+	अगर (hdr.करोut_xfer_len) अणु
+		ret = blk_rq_map_user(q, rq, शून्य, uptr64(hdr.करोut_xferp),
+				hdr.करोut_xfer_len, GFP_KERNEL);
+	पूर्ण अन्यथा अगर (hdr.din_xfer_len) अणु
+		ret = blk_rq_map_user(q, rq, शून्य, uptr64(hdr.din_xferp),
 				hdr.din_xfer_len, GFP_KERNEL);
-	}
+	पूर्ण
 
-	if (ret)
-		goto out_free_rq;
+	अगर (ret)
+		जाओ out_मुक्त_rq;
 
 	bio = rq->bio;
 
-	blk_execute_rq(NULL, rq, !(hdr.flags & BSG_FLAG_Q_AT_TAIL));
+	blk_execute_rq(शून्य, rq, !(hdr.flags & BSG_FLAG_Q_AT_TAIL));
 	ret = rq->q->bsg_dev.ops->complete_rq(rq, &hdr);
 	blk_rq_unmap_user(bio);
 
-out_free_rq:
-	rq->q->bsg_dev.ops->free_rq(rq);
+out_मुक्त_rq:
+	rq->q->bsg_dev.ops->मुक्त_rq(rq);
 	blk_put_request(rq);
-	if (!ret && copy_to_user(uarg, &hdr, sizeof(hdr)))
-		return -EFAULT;
-	return ret;
-}
+	अगर (!ret && copy_to_user(uarg, &hdr, माप(hdr)))
+		वापस -EFAULT;
+	वापस ret;
+पूर्ण
 
-static struct bsg_device *bsg_alloc_device(void)
-{
-	struct bsg_device *bd;
+अटल काष्ठा bsg_device *bsg_alloc_device(व्योम)
+अणु
+	काष्ठा bsg_device *bd;
 
-	bd = kzalloc(sizeof(struct bsg_device), GFP_KERNEL);
-	if (unlikely(!bd))
-		return NULL;
+	bd = kzalloc(माप(काष्ठा bsg_device), GFP_KERNEL);
+	अगर (unlikely(!bd))
+		वापस शून्य;
 
 	spin_lock_init(&bd->lock);
 	bd->max_queue = BSG_DEFAULT_CMDS;
 	INIT_HLIST_NODE(&bd->dev_list);
-	return bd;
-}
+	वापस bd;
+पूर्ण
 
-static int bsg_put_device(struct bsg_device *bd)
-{
-	struct request_queue *q = bd->queue;
+अटल पूर्णांक bsg_put_device(काष्ठा bsg_device *bd)
+अणु
+	काष्ठा request_queue *q = bd->queue;
 
 	mutex_lock(&bsg_mutex);
 
-	if (!refcount_dec_and_test(&bd->ref_count)) {
+	अगर (!refcount_dec_and_test(&bd->ref_count)) अणु
 		mutex_unlock(&bsg_mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	hlist_del(&bd->dev_list);
 	mutex_unlock(&bsg_mutex);
@@ -226,64 +227,64 @@ static int bsg_put_device(struct bsg_device *bd)
 	bsg_dbg(bd, "tearing down\n");
 
 	/*
-	 * close can always block
+	 * बंद can always block
 	 */
-	kfree(bd);
+	kमुक्त(bd);
 	blk_put_queue(q);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct bsg_device *bsg_add_device(struct inode *inode,
-					 struct request_queue *rq,
-					 struct file *file)
-{
-	struct bsg_device *bd;
-	unsigned char buf[32];
+अटल काष्ठा bsg_device *bsg_add_device(काष्ठा inode *inode,
+					 काष्ठा request_queue *rq,
+					 काष्ठा file *file)
+अणु
+	काष्ठा bsg_device *bd;
+	अचिन्हित अक्षर buf[32];
 
-	lockdep_assert_held(&bsg_mutex);
+	lockdep_निश्चित_held(&bsg_mutex);
 
-	if (!blk_get_queue(rq))
-		return ERR_PTR(-ENXIO);
+	अगर (!blk_get_queue(rq))
+		वापस ERR_PTR(-ENXIO);
 
 	bd = bsg_alloc_device();
-	if (!bd) {
+	अगर (!bd) अणु
 		blk_put_queue(rq);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	bd->queue = rq;
 
 	refcount_set(&bd->ref_count, 1);
 	hlist_add_head(&bd->dev_list, bsg_dev_idx_hash(iminor(inode)));
 
-	strncpy(bd->name, dev_name(rq->bsg_dev.class_dev), sizeof(bd->name) - 1);
+	म_नकलन(bd->name, dev_name(rq->bsg_dev.class_dev), माप(bd->name) - 1);
 	bsg_dbg(bd, "bound to <%s>, max queue %d\n",
-		format_dev_t(buf, inode->i_rdev), bd->max_queue);
+		क्रमmat_dev_t(buf, inode->i_rdev), bd->max_queue);
 
-	return bd;
-}
+	वापस bd;
+पूर्ण
 
-static struct bsg_device *__bsg_get_device(int minor, struct request_queue *q)
-{
-	struct bsg_device *bd;
+अटल काष्ठा bsg_device *__bsg_get_device(पूर्णांक minor, काष्ठा request_queue *q)
+अणु
+	काष्ठा bsg_device *bd;
 
-	lockdep_assert_held(&bsg_mutex);
+	lockdep_निश्चित_held(&bsg_mutex);
 
-	hlist_for_each_entry(bd, bsg_dev_idx_hash(minor), dev_list) {
-		if (bd->queue == q) {
+	hlist_क्रम_each_entry(bd, bsg_dev_idx_hash(minor), dev_list) अणु
+		अगर (bd->queue == q) अणु
 			refcount_inc(&bd->ref_count);
-			goto found;
-		}
-	}
-	bd = NULL;
+			जाओ found;
+		पूर्ण
+	पूर्ण
+	bd = शून्य;
 found:
-	return bd;
-}
+	वापस bd;
+पूर्ण
 
-static struct bsg_device *bsg_get_device(struct inode *inode, struct file *file)
-{
-	struct bsg_device *bd;
-	struct bsg_class_device *bcd;
+अटल काष्ठा bsg_device *bsg_get_device(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा bsg_device *bd;
+	काष्ठा bsg_class_device *bcd;
 
 	/*
 	 * find the class device
@@ -291,229 +292,229 @@ static struct bsg_device *bsg_get_device(struct inode *inode, struct file *file)
 	mutex_lock(&bsg_mutex);
 	bcd = idr_find(&bsg_minor_idr, iminor(inode));
 
-	if (!bcd) {
+	अगर (!bcd) अणु
 		bd = ERR_PTR(-ENODEV);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	bd = __bsg_get_device(iminor(inode), bcd->queue);
-	if (!bd)
+	अगर (!bd)
 		bd = bsg_add_device(inode, bcd->queue, file);
 
 out_unlock:
 	mutex_unlock(&bsg_mutex);
-	return bd;
-}
+	वापस bd;
+पूर्ण
 
-static int bsg_open(struct inode *inode, struct file *file)
-{
-	struct bsg_device *bd;
+अटल पूर्णांक bsg_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा bsg_device *bd;
 
 	bd = bsg_get_device(inode, file);
 
-	if (IS_ERR(bd))
-		return PTR_ERR(bd);
+	अगर (IS_ERR(bd))
+		वापस PTR_ERR(bd);
 
-	file->private_data = bd;
-	return 0;
-}
+	file->निजी_data = bd;
+	वापस 0;
+पूर्ण
 
-static int bsg_release(struct inode *inode, struct file *file)
-{
-	struct bsg_device *bd = file->private_data;
+अटल पूर्णांक bsg_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा bsg_device *bd = file->निजी_data;
 
-	file->private_data = NULL;
-	return bsg_put_device(bd);
-}
+	file->निजी_data = शून्य;
+	वापस bsg_put_device(bd);
+पूर्ण
 
-static int bsg_get_command_q(struct bsg_device *bd, int __user *uarg)
-{
-	return put_user(bd->max_queue, uarg);
-}
+अटल पूर्णांक bsg_get_command_q(काष्ठा bsg_device *bd, पूर्णांक __user *uarg)
+अणु
+	वापस put_user(bd->max_queue, uarg);
+पूर्ण
 
-static int bsg_set_command_q(struct bsg_device *bd, int __user *uarg)
-{
-	int queue;
+अटल पूर्णांक bsg_set_command_q(काष्ठा bsg_device *bd, पूर्णांक __user *uarg)
+अणु
+	पूर्णांक queue;
 
-	if (get_user(queue, uarg))
-		return -EFAULT;
-	if (queue < 1)
-		return -EINVAL;
+	अगर (get_user(queue, uarg))
+		वापस -EFAULT;
+	अगर (queue < 1)
+		वापस -EINVAL;
 
 	spin_lock_irq(&bd->lock);
 	bd->max_queue = queue;
 	spin_unlock_irq(&bd->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long bsg_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct bsg_device *bd = file->private_data;
-	void __user *uarg = (void __user *) arg;
+अटल दीर्घ bsg_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा bsg_device *bd = file->निजी_data;
+	व्योम __user *uarg = (व्योम __user *) arg;
 
-	switch (cmd) {
+	चयन (cmd) अणु
 	/*
 	 * Our own ioctls
 	 */
-	case SG_GET_COMMAND_Q:
-		return bsg_get_command_q(bd, uarg);
-	case SG_SET_COMMAND_Q:
-		return bsg_set_command_q(bd, uarg);
+	हाल SG_GET_COMMAND_Q:
+		वापस bsg_get_command_q(bd, uarg);
+	हाल SG_SET_COMMAND_Q:
+		वापस bsg_set_command_q(bd, uarg);
 
 	/*
 	 * SCSI/sg ioctls
 	 */
-	case SG_GET_VERSION_NUM:
-	case SCSI_IOCTL_GET_IDLUN:
-	case SCSI_IOCTL_GET_BUS_NUMBER:
-	case SG_SET_TIMEOUT:
-	case SG_GET_TIMEOUT:
-	case SG_GET_RESERVED_SIZE:
-	case SG_SET_RESERVED_SIZE:
-	case SG_EMULATED_HOST:
-	case SCSI_IOCTL_SEND_COMMAND:
-		return scsi_cmd_ioctl(bd->queue, NULL, file->f_mode, cmd, uarg);
-	case SG_IO:
-		return bsg_sg_io(bd->queue, file->f_mode, uarg);
-	default:
-		return -ENOTTY;
-	}
-}
+	हाल SG_GET_VERSION_NUM:
+	हाल SCSI_IOCTL_GET_IDLUN:
+	हाल SCSI_IOCTL_GET_BUS_NUMBER:
+	हाल SG_SET_TIMEOUT:
+	हाल SG_GET_TIMEOUT:
+	हाल SG_GET_RESERVED_SIZE:
+	हाल SG_SET_RESERVED_SIZE:
+	हाल SG_EMULATED_HOST:
+	हाल SCSI_IOCTL_SEND_COMMAND:
+		वापस scsi_cmd_ioctl(bd->queue, शून्य, file->f_mode, cmd, uarg);
+	हाल SG_IO:
+		वापस bsg_sg_io(bd->queue, file->f_mode, uarg);
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+पूर्ण
 
-static const struct file_operations bsg_fops = {
-	.open		=	bsg_open,
+अटल स्थिर काष्ठा file_operations bsg_fops = अणु
+	.खोलो		=	bsg_खोलो,
 	.release	=	bsg_release,
 	.unlocked_ioctl	=	bsg_ioctl,
 	.compat_ioctl	=	compat_ptr_ioctl,
 	.owner		=	THIS_MODULE,
-	.llseek		=	default_llseek,
-};
+	.llseek		=	शेष_llseek,
+पूर्ण;
 
-void bsg_unregister_queue(struct request_queue *q)
-{
-	struct bsg_class_device *bcd = &q->bsg_dev;
+व्योम bsg_unरेजिस्टर_queue(काष्ठा request_queue *q)
+अणु
+	काष्ठा bsg_class_device *bcd = &q->bsg_dev;
 
-	if (!bcd->class_dev)
-		return;
+	अगर (!bcd->class_dev)
+		वापस;
 
 	mutex_lock(&bsg_mutex);
-	idr_remove(&bsg_minor_idr, bcd->minor);
-	if (q->kobj.sd)
-		sysfs_remove_link(&q->kobj, "bsg");
-	device_unregister(bcd->class_dev);
-	bcd->class_dev = NULL;
+	idr_हटाओ(&bsg_minor_idr, bcd->minor);
+	अगर (q->kobj.sd)
+		sysfs_हटाओ_link(&q->kobj, "bsg");
+	device_unरेजिस्टर(bcd->class_dev);
+	bcd->class_dev = शून्य;
 	mutex_unlock(&bsg_mutex);
-}
-EXPORT_SYMBOL_GPL(bsg_unregister_queue);
+पूर्ण
+EXPORT_SYMBOL_GPL(bsg_unरेजिस्टर_queue);
 
-int bsg_register_queue(struct request_queue *q, struct device *parent,
-		const char *name, const struct bsg_ops *ops)
-{
-	struct bsg_class_device *bcd;
+पूर्णांक bsg_रेजिस्टर_queue(काष्ठा request_queue *q, काष्ठा device *parent,
+		स्थिर अक्षर *name, स्थिर काष्ठा bsg_ops *ops)
+अणु
+	काष्ठा bsg_class_device *bcd;
 	dev_t dev;
-	int ret;
-	struct device *class_dev = NULL;
+	पूर्णांक ret;
+	काष्ठा device *class_dev = शून्य;
 
 	/*
 	 * we need a proper transport to send commands, not a stacked device
 	 */
-	if (!queue_is_mq(q))
-		return 0;
+	अगर (!queue_is_mq(q))
+		वापस 0;
 
 	bcd = &q->bsg_dev;
-	memset(bcd, 0, sizeof(*bcd));
+	स_रखो(bcd, 0, माप(*bcd));
 
 	mutex_lock(&bsg_mutex);
 
 	ret = idr_alloc(&bsg_minor_idr, bcd, 0, BSG_MAX_DEVS, GFP_KERNEL);
-	if (ret < 0) {
-		if (ret == -ENOSPC) {
-			printk(KERN_ERR "bsg: too many bsg devices\n");
+	अगर (ret < 0) अणु
+		अगर (ret == -ENOSPC) अणु
+			prपूर्णांकk(KERN_ERR "bsg: too many bsg devices\n");
 			ret = -EINVAL;
-		}
-		goto unlock;
-	}
+		पूर्ण
+		जाओ unlock;
+	पूर्ण
 
 	bcd->minor = ret;
 	bcd->queue = q;
 	bcd->ops = ops;
 	dev = MKDEV(bsg_major, bcd->minor);
-	class_dev = device_create(bsg_class, parent, dev, NULL, "%s", name);
-	if (IS_ERR(class_dev)) {
+	class_dev = device_create(bsg_class, parent, dev, शून्य, "%s", name);
+	अगर (IS_ERR(class_dev)) अणु
 		ret = PTR_ERR(class_dev);
-		goto idr_remove;
-	}
+		जाओ idr_हटाओ;
+	पूर्ण
 	bcd->class_dev = class_dev;
 
-	if (q->kobj.sd) {
+	अगर (q->kobj.sd) अणु
 		ret = sysfs_create_link(&q->kobj, &bcd->class_dev->kobj, "bsg");
-		if (ret)
-			goto unregister_class_dev;
-	}
+		अगर (ret)
+			जाओ unरेजिस्टर_class_dev;
+	पूर्ण
 
 	mutex_unlock(&bsg_mutex);
-	return 0;
+	वापस 0;
 
-unregister_class_dev:
-	device_unregister(class_dev);
-idr_remove:
-	idr_remove(&bsg_minor_idr, bcd->minor);
+unरेजिस्टर_class_dev:
+	device_unरेजिस्टर(class_dev);
+idr_हटाओ:
+	idr_हटाओ(&bsg_minor_idr, bcd->minor);
 unlock:
 	mutex_unlock(&bsg_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int bsg_scsi_register_queue(struct request_queue *q, struct device *parent)
-{
-	if (!blk_queue_scsi_passthrough(q)) {
+पूर्णांक bsg_scsi_रेजिस्टर_queue(काष्ठा request_queue *q, काष्ठा device *parent)
+अणु
+	अगर (!blk_queue_scsi_passthrough(q)) अणु
 		WARN_ONCE(true, "Attempt to register a non-SCSI queue\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return bsg_register_queue(q, parent, dev_name(parent), &bsg_scsi_ops);
-}
-EXPORT_SYMBOL_GPL(bsg_scsi_register_queue);
+	वापस bsg_रेजिस्टर_queue(q, parent, dev_name(parent), &bsg_scsi_ops);
+पूर्ण
+EXPORT_SYMBOL_GPL(bsg_scsi_रेजिस्टर_queue);
 
-static struct cdev bsg_cdev;
+अटल काष्ठा cdev bsg_cdev;
 
-static char *bsg_devnode(struct device *dev, umode_t *mode)
-{
-	return kasprintf(GFP_KERNEL, "bsg/%s", dev_name(dev));
-}
+अटल अक्षर *bsg_devnode(काष्ठा device *dev, umode_t *mode)
+अणु
+	वापस kaप्र_लिखो(GFP_KERNEL, "bsg/%s", dev_name(dev));
+पूर्ण
 
-static int __init bsg_init(void)
-{
-	int ret, i;
+अटल पूर्णांक __init bsg_init(व्योम)
+अणु
+	पूर्णांक ret, i;
 	dev_t devid;
 
-	for (i = 0; i < BSG_LIST_ARRAY_SIZE; i++)
+	क्रम (i = 0; i < BSG_LIST_ARRAY_SIZE; i++)
 		INIT_HLIST_HEAD(&bsg_device_list[i]);
 
 	bsg_class = class_create(THIS_MODULE, "bsg");
-	if (IS_ERR(bsg_class))
-		return PTR_ERR(bsg_class);
+	अगर (IS_ERR(bsg_class))
+		वापस PTR_ERR(bsg_class);
 	bsg_class->devnode = bsg_devnode;
 
 	ret = alloc_chrdev_region(&devid, 0, BSG_MAX_DEVS, "bsg");
-	if (ret)
-		goto destroy_bsg_class;
+	अगर (ret)
+		जाओ destroy_bsg_class;
 
 	bsg_major = MAJOR(devid);
 
 	cdev_init(&bsg_cdev, &bsg_fops);
 	ret = cdev_add(&bsg_cdev, MKDEV(bsg_major, 0), BSG_MAX_DEVS);
-	if (ret)
-		goto unregister_chrdev;
+	अगर (ret)
+		जाओ unरेजिस्टर_chrdev;
 
-	printk(KERN_INFO BSG_DESCRIPTION " version " BSG_VERSION
+	prपूर्णांकk(KERN_INFO BSG_DESCRIPTION " version " BSG_VERSION
 	       " loaded (major %d)\n", bsg_major);
-	return 0;
-unregister_chrdev:
-	unregister_chrdev_region(MKDEV(bsg_major, 0), BSG_MAX_DEVS);
+	वापस 0;
+unरेजिस्टर_chrdev:
+	unरेजिस्टर_chrdev_region(MKDEV(bsg_major, 0), BSG_MAX_DEVS);
 destroy_bsg_class:
 	class_destroy(bsg_class);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 MODULE_AUTHOR("Jens Axboe");
 MODULE_DESCRIPTION(BSG_DESCRIPTION);

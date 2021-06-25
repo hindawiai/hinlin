@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/bitops.h>
-#include <linux/seq_file.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_dbg.h>
-#include "scsi_debugfs.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/bitops.h>
+#समावेश <linux/seq_file.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_dbg.h>
+#समावेश "scsi_debugfs.h"
 
-#define SCSI_CMD_FLAG_NAME(name)[const_ilog2(SCMD_##name)] = #name
-static const char *const scsi_cmd_flags[] = {
+#घोषणा SCSI_CMD_FLAG_NAME(name)[स्थिर_ilog2(SCMD_##name)] = #name
+अटल स्थिर अक्षर *स्थिर scsi_cmd_flags[] = अणु
 	SCSI_CMD_FLAG_NAME(TAGGED),
 	SCSI_CMD_FLAG_NAME(INITIALIZED),
-};
-#undef SCSI_CMD_FLAG_NAME
+पूर्ण;
+#अघोषित SCSI_CMD_FLAG_NAME
 
-static int scsi_flags_show(struct seq_file *m, const unsigned long flags,
-			   const char *const *flag_name, int flag_name_count)
-{
+अटल पूर्णांक scsi_flags_show(काष्ठा seq_file *m, स्थिर अचिन्हित दीर्घ flags,
+			   स्थिर अक्षर *स्थिर *flag_name, पूर्णांक flag_name_count)
+अणु
 	bool sep = false;
-	int i;
+	पूर्णांक i;
 
-	for_each_set_bit(i, &flags, BITS_PER_LONG) {
-		if (sep)
-			seq_puts(m, "|");
+	क्रम_each_set_bit(i, &flags, BITS_PER_LONG) अणु
+		अगर (sep)
+			seq_माला_दो(m, "|");
 		sep = true;
-		if (i < flag_name_count && flag_name[i])
-			seq_puts(m, flag_name[i]);
-		else
-			seq_printf(m, "%d", i);
-	}
-	return 0;
-}
+		अगर (i < flag_name_count && flag_name[i])
+			seq_माला_दो(m, flag_name[i]);
+		अन्यथा
+			seq_म_लिखो(m, "%d", i);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void scsi_show_rq(struct seq_file *m, struct request *rq)
-{
-	struct scsi_cmnd *cmd = container_of(scsi_req(rq), typeof(*cmd), req);
-	int alloc_ms = jiffies_to_msecs(jiffies - cmd->jiffies_at_alloc);
-	int timeout_ms = jiffies_to_msecs(rq->timeout);
-	const u8 *const cdb = READ_ONCE(cmd->cmnd);
-	char buf[80] = "(?)";
+व्योम scsi_show_rq(काष्ठा seq_file *m, काष्ठा request *rq)
+अणु
+	काष्ठा scsi_cmnd *cmd = container_of(scsi_req(rq), typeof(*cmd), req);
+	पूर्णांक alloc_ms = jअगरfies_to_msecs(jअगरfies - cmd->jअगरfies_at_alloc);
+	पूर्णांक समयout_ms = jअगरfies_to_msecs(rq->समयout);
+	स्थिर u8 *स्थिर cdb = READ_ONCE(cmd->cmnd);
+	अक्षर buf[80] = "(?)";
 
-	if (cdb)
-		__scsi_format_command(buf, sizeof(buf), cdb, cmd->cmd_len);
-	seq_printf(m, ", .cmd=%s, .retries=%d, .result = %#x, .flags=", buf,
+	अगर (cdb)
+		__scsi_क्रमmat_command(buf, माप(buf), cdb, cmd->cmd_len);
+	seq_म_लिखो(m, ", .cmd=%s, .retries=%d, .result = %#x, .flags=", buf,
 		   cmd->retries, cmd->result);
 	scsi_flags_show(m, cmd->flags, scsi_cmd_flags,
 			ARRAY_SIZE(scsi_cmd_flags));
-	seq_printf(m, ", .timeout=%d.%03d, allocated %d.%03d s ago",
-		   timeout_ms / 1000, timeout_ms % 1000,
+	seq_म_लिखो(m, ", .timeout=%d.%03d, allocated %d.%03d s ago",
+		   समयout_ms / 1000, समयout_ms % 1000,
 		   alloc_ms / 1000, alloc_ms % 1000);
-}
+पूर्ण

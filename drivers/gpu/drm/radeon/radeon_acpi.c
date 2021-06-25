@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,169 +22,169 @@
  *
  */
 
-#include <linux/acpi.h>
-#include <linux/pci.h>
-#include <linux/pm_runtime.h>
-#include <linux/power_supply.h>
-#include <linux/slab.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/slab.h>
 
-#include <acpi/acpi_bus.h>
-#include <acpi/video.h>
+#समावेश <acpi/acpi_bus.h>
+#समावेश <acpi/video.h>
 
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_probe_helper.h>
+#समावेश <drm/drm_crtc_helper.h>
+#समावेश <drm/drm_probe_helper.h>
 
-#include "atom.h"
-#include "radeon.h"
-#include "radeon_acpi.h"
-#include "radeon_pm.h"
+#समावेश "atom.h"
+#समावेश "radeon.h"
+#समावेश "radeon_acpi.h"
+#समावेश "radeon_pm.h"
 
-#if defined(CONFIG_VGA_SWITCHEROO)
-bool radeon_atpx_dgpu_req_power_for_displays(void);
-#else
-static inline bool radeon_atpx_dgpu_req_power_for_displays(void) { return false; }
-#endif
+#अगर defined(CONFIG_VGA_SWITCHEROO)
+bool radeon_atpx_dgpu_req_घातer_क्रम_displays(व्योम);
+#अन्यथा
+अटल अंतरभूत bool radeon_atpx_dgpu_req_घातer_क्रम_displays(व्योम) अणु वापस false; पूर्ण
+#पूर्ण_अगर
 
-#define ACPI_AC_CLASS           "ac_adapter"
+#घोषणा ACPI_AC_CLASS           "ac_adapter"
 
-struct atif_verify_interface {
-	u16 size;		/* structure size in bytes (includes size field) */
+काष्ठा atअगर_verअगरy_पूर्णांकerface अणु
+	u16 size;		/* काष्ठाure size in bytes (includes size field) */
 	u16 version;		/* version */
-	u32 notification_mask;	/* supported notifications mask */
+	u32 notअगरication_mask;	/* supported notअगरications mask */
 	u32 function_bits;	/* supported functions bit vector */
-} __packed;
+पूर्ण __packed;
 
-struct atif_system_params {
-	u16 size;		/* structure size in bytes (includes size field) */
+काष्ठा atअगर_प्रणाली_params अणु
+	u16 size;		/* काष्ठाure size in bytes (includes size field) */
 	u32 valid_mask;		/* valid flags mask */
 	u32 flags;		/* flags */
-	u8 command_code;	/* notify command code */
-} __packed;
+	u8 command_code;	/* notअगरy command code */
+पूर्ण __packed;
 
-struct atif_sbios_requests {
-	u16 size;		/* structure size in bytes (includes size field) */
+काष्ठा atअगर_sbios_requests अणु
+	u16 size;		/* काष्ठाure size in bytes (includes size field) */
 	u32 pending;		/* pending sbios requests */
 	u8 panel_exp_mode;	/* panel expansion mode */
 	u8 thermal_gfx;		/* thermal state: target gfx controller */
-	u8 thermal_state;	/* thermal state: state id (0: exit state, non-0: state) */
-	u8 forced_power_gfx;	/* forced power state: target gfx controller */
-	u8 forced_power_state;	/* forced power state: state id */
-	u8 system_power_src;	/* system power source */
+	u8 thermal_state;	/* thermal state: state id (0: निकास state, non-0: state) */
+	u8 क्रमced_घातer_gfx;	/* क्रमced घातer state: target gfx controller */
+	u8 क्रमced_घातer_state;	/* क्रमced घातer state: state id */
+	u8 प्रणाली_घातer_src;	/* प्रणाली घातer source */
 	u8 backlight_level;	/* panel backlight level (0-255) */
-} __packed;
+पूर्ण __packed;
 
-#define ATIF_NOTIFY_MASK	0x3
-#define ATIF_NOTIFY_NONE	0
-#define ATIF_NOTIFY_81		1
-#define ATIF_NOTIFY_N		2
+#घोषणा ATIF_NOTIFY_MASK	0x3
+#घोषणा ATIF_NOTIFY_NONE	0
+#घोषणा ATIF_NOTIFY_81		1
+#घोषणा ATIF_NOTIFY_N		2
 
-struct atcs_verify_interface {
-	u16 size;		/* structure size in bytes (includes size field) */
+काष्ठा atcs_verअगरy_पूर्णांकerface अणु
+	u16 size;		/* काष्ठाure size in bytes (includes size field) */
 	u16 version;		/* version */
 	u32 function_bits;	/* supported functions bit vector */
-} __packed;
+पूर्ण __packed;
 
-#define ATCS_VALID_FLAGS_MASK	0x3
+#घोषणा ATCS_VALID_FLAGS_MASK	0x3
 
-struct atcs_pref_req_input {
-	u16 size;		/* structure size in bytes (includes size field) */
+काष्ठा atcs_pref_req_input अणु
+	u16 size;		/* काष्ठाure size in bytes (includes size field) */
 	u16 client_id;		/* client id (bit 2-0: func num, 7-3: dev num, 15-8: bus num) */
 	u16 valid_flags_mask;	/* valid flags mask */
 	u16 flags;		/* flags */
 	u8 req_type;		/* request type */
-	u8 perf_req;		/* performance request */
-} __packed;
+	u8 perf_req;		/* perक्रमmance request */
+पूर्ण __packed;
 
-struct atcs_pref_req_output {
-	u16 size;		/* structure size in bytes (includes size field) */
-	u8 ret_val;		/* return value */
-} __packed;
+काष्ठा atcs_pref_req_output अणु
+	u16 size;		/* काष्ठाure size in bytes (includes size field) */
+	u8 ret_val;		/* वापस value */
+पूर्ण __packed;
 
 /* Call the ATIF method
  */
 /**
- * radeon_atif_call - call an ATIF method
+ * radeon_atअगर_call - call an ATIF method
  *
  * @handle: acpi handle
  * @function: the ATIF function to execute
  * @params: ATIF function params
  *
  * Executes the requested ATIF function (all asics).
- * Returns a pointer to the acpi output buffer.
+ * Returns a poपूर्णांकer to the acpi output buffer.
  */
-static union acpi_object *radeon_atif_call(acpi_handle handle, int function,
-		struct acpi_buffer *params)
-{
+अटल जोड़ acpi_object *radeon_atअगर_call(acpi_handle handle, पूर्णांक function,
+		काष्ठा acpi_buffer *params)
+अणु
 	acpi_status status;
-	union acpi_object atif_arg_elements[2];
-	struct acpi_object_list atif_arg;
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+	जोड़ acpi_object atअगर_arg_elements[2];
+	काष्ठा acpi_object_list atअगर_arg;
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
 
-	atif_arg.count = 2;
-	atif_arg.pointer = &atif_arg_elements[0];
+	atअगर_arg.count = 2;
+	atअगर_arg.poपूर्णांकer = &atअगर_arg_elements[0];
 
-	atif_arg_elements[0].type = ACPI_TYPE_INTEGER;
-	atif_arg_elements[0].integer.value = function;
+	atअगर_arg_elements[0].type = ACPI_TYPE_INTEGER;
+	atअगर_arg_elements[0].पूर्णांकeger.value = function;
 
-	if (params) {
-		atif_arg_elements[1].type = ACPI_TYPE_BUFFER;
-		atif_arg_elements[1].buffer.length = params->length;
-		atif_arg_elements[1].buffer.pointer = params->pointer;
-	} else {
+	अगर (params) अणु
+		atअगर_arg_elements[1].type = ACPI_TYPE_BUFFER;
+		atअगर_arg_elements[1].buffer.length = params->length;
+		atअगर_arg_elements[1].buffer.poपूर्णांकer = params->poपूर्णांकer;
+	पूर्ण अन्यथा अणु
 		/* We need a second fake parameter */
-		atif_arg_elements[1].type = ACPI_TYPE_INTEGER;
-		atif_arg_elements[1].integer.value = 0;
-	}
+		atअगर_arg_elements[1].type = ACPI_TYPE_INTEGER;
+		atअगर_arg_elements[1].पूर्णांकeger.value = 0;
+	पूर्ण
 
-	status = acpi_evaluate_object(handle, "ATIF", &atif_arg, &buffer);
+	status = acpi_evaluate_object(handle, "ATIF", &atअगर_arg, &buffer);
 
-	/* Fail only if calling the method fails and ATIF is supported */
-	if (ACPI_FAILURE(status) && status != AE_NOT_FOUND) {
+	/* Fail only अगर calling the method fails and ATIF is supported */
+	अगर (ACPI_FAILURE(status) && status != AE_NOT_FOUND) अणु
 		DRM_DEBUG_DRIVER("failed to evaluate ATIF got %s\n",
-				 acpi_format_exception(status));
-		kfree(buffer.pointer);
-		return NULL;
-	}
+				 acpi_क्रमmat_exception(status));
+		kमुक्त(buffer.poपूर्णांकer);
+		वापस शून्य;
+	पूर्ण
 
-	return buffer.pointer;
-}
+	वापस buffer.poपूर्णांकer;
+पूर्ण
 
 /**
- * radeon_atif_parse_notification - parse supported notifications
+ * radeon_atअगर_parse_notअगरication - parse supported notअगरications
  *
- * @n: supported notifications struct
- * @mask: supported notifications mask from ATIF
+ * @n: supported notअगरications काष्ठा
+ * @mask: supported notअगरications mask from ATIF
  *
- * Use the supported notifications mask from ATIF function
- * ATIF_FUNCTION_VERIFY_INTERFACE to determine what notifications
+ * Use the supported notअगरications mask from ATIF function
+ * ATIF_FUNCTION_VERIFY_INTERFACE to determine what notअगरications
  * are supported (all asics).
  */
-static void radeon_atif_parse_notification(struct radeon_atif_notifications *n, u32 mask)
-{
-	n->display_switch = mask & ATIF_DISPLAY_SWITCH_REQUEST_SUPPORTED;
+अटल व्योम radeon_atअगर_parse_notअगरication(काष्ठा radeon_atअगर_notअगरications *n, u32 mask)
+अणु
+	n->display_चयन = mask & ATIF_DISPLAY_SWITCH_REQUEST_SUPPORTED;
 	n->expansion_mode_change = mask & ATIF_EXPANSION_MODE_CHANGE_REQUEST_SUPPORTED;
 	n->thermal_state = mask & ATIF_THERMAL_STATE_CHANGE_REQUEST_SUPPORTED;
-	n->forced_power_state = mask & ATIF_FORCED_POWER_STATE_CHANGE_REQUEST_SUPPORTED;
-	n->system_power_state = mask & ATIF_SYSTEM_POWER_SOURCE_CHANGE_REQUEST_SUPPORTED;
+	n->क्रमced_घातer_state = mask & ATIF_FORCED_POWER_STATE_CHANGE_REQUEST_SUPPORTED;
+	n->प्रणाली_घातer_state = mask & ATIF_SYSTEM_POWER_SOURCE_CHANGE_REQUEST_SUPPORTED;
 	n->display_conf_change = mask & ATIF_DISPLAY_CONF_CHANGE_REQUEST_SUPPORTED;
-	n->px_gfx_switch = mask & ATIF_PX_GFX_SWITCH_REQUEST_SUPPORTED;
+	n->px_gfx_चयन = mask & ATIF_PX_GFX_SWITCH_REQUEST_SUPPORTED;
 	n->brightness_change = mask & ATIF_PANEL_BRIGHTNESS_CHANGE_REQUEST_SUPPORTED;
 	n->dgpu_display_event = mask & ATIF_DGPU_DISPLAY_EVENT_SUPPORTED;
-}
+पूर्ण
 
 /**
- * radeon_atif_parse_functions - parse supported functions
+ * radeon_atअगर_parse_functions - parse supported functions
  *
- * @f: supported functions struct
+ * @f: supported functions काष्ठा
  * @mask: supported functions mask from ATIF
  *
  * Use the supported functions mask from ATIF function
  * ATIF_FUNCTION_VERIFY_INTERFACE to determine what functions
  * are supported (all asics).
  */
-static void radeon_atif_parse_functions(struct radeon_atif_functions *f, u32 mask)
-{
-	f->system_params = mask & ATIF_GET_SYSTEM_PARAMETERS_SUPPORTED;
+अटल व्योम radeon_atअगर_parse_functions(काष्ठा radeon_atअगर_functions *f, u32 mask)
+अणु
+	f->प्रणाली_params = mask & ATIF_GET_SYSTEM_PARAMETERS_SUPPORTED;
 	f->sbios_requests = mask & ATIF_GET_SYSTEM_BIOS_REQUESTS_SUPPORTED;
 	f->select_active_disp = mask & ATIF_SELECT_ACTIVE_DISPLAYS_SUPPORTED;
 	f->lid_state = mask & ATIF_GET_LID_STATE_SUPPORTED;
@@ -193,236 +194,236 @@ static void radeon_atif_parse_functions(struct radeon_atif_functions *f, u32 mas
 	f->set_panel_expansion_mode = mask & ATIF_SET_PANEL_EXPANSION_MODE_IN_CMOS_SUPPORTED;
 	f->temperature_change = mask & ATIF_TEMPERATURE_CHANGE_NOTIFICATION_SUPPORTED;
 	f->graphics_device_types = mask & ATIF_GET_GRAPHICS_DEVICE_TYPES_SUPPORTED;
-}
+पूर्ण
 
 /**
- * radeon_atif_verify_interface - verify ATIF
+ * radeon_atअगर_verअगरy_पूर्णांकerface - verअगरy ATIF
  *
  * @handle: acpi handle
- * @atif: radeon atif struct
+ * @atअगर: radeon atअगर काष्ठा
  *
  * Execute the ATIF_FUNCTION_VERIFY_INTERFACE ATIF function
  * to initialize ATIF and determine what features are supported
  * (all asics).
- * returns 0 on success, error on failure.
+ * वापसs 0 on success, error on failure.
  */
-static int radeon_atif_verify_interface(acpi_handle handle,
-		struct radeon_atif *atif)
-{
-	union acpi_object *info;
-	struct atif_verify_interface output;
-	size_t size;
-	int err = 0;
+अटल पूर्णांक radeon_atअगर_verअगरy_पूर्णांकerface(acpi_handle handle,
+		काष्ठा radeon_atअगर *atअगर)
+अणु
+	जोड़ acpi_object *info;
+	काष्ठा atअगर_verअगरy_पूर्णांकerface output;
+	माप_प्रकार size;
+	पूर्णांक err = 0;
 
-	info = radeon_atif_call(handle, ATIF_FUNCTION_VERIFY_INTERFACE, NULL);
-	if (!info)
-		return -EIO;
+	info = radeon_atअगर_call(handle, ATIF_FUNCTION_VERIFY_INTERFACE, शून्य);
+	अगर (!info)
+		वापस -EIO;
 
-	memset(&output, 0, sizeof(output));
+	स_रखो(&output, 0, माप(output));
 
-	size = *(u16 *) info->buffer.pointer;
-	if (size < 12) {
+	size = *(u16 *) info->buffer.poपूर्णांकer;
+	अगर (size < 12) अणु
 		DRM_INFO("ATIF buffer is too small: %zu\n", size);
 		err = -EINVAL;
-		goto out;
-	}
-	size = min(sizeof(output), size);
+		जाओ out;
+	पूर्ण
+	size = min(माप(output), size);
 
-	memcpy(&output, info->buffer.pointer, size);
+	स_नकल(&output, info->buffer.poपूर्णांकer, size);
 
 	/* TODO: check version? */
 	DRM_DEBUG_DRIVER("ATIF version %u\n", output.version);
 
-	radeon_atif_parse_notification(&atif->notifications, output.notification_mask);
-	radeon_atif_parse_functions(&atif->functions, output.function_bits);
+	radeon_atअगर_parse_notअगरication(&atअगर->notअगरications, output.notअगरication_mask);
+	radeon_atअगर_parse_functions(&atअगर->functions, output.function_bits);
 
 out:
-	kfree(info);
-	return err;
-}
+	kमुक्त(info);
+	वापस err;
+पूर्ण
 
 /**
- * radeon_atif_get_notification_params - determine notify configuration
+ * radeon_atअगर_get_notअगरication_params - determine notअगरy configuration
  *
  * @handle: acpi handle
- * @n: atif notification configuration struct
+ * @n: atअगर notअगरication configuration काष्ठा
  *
  * Execute the ATIF_FUNCTION_GET_SYSTEM_PARAMETERS ATIF function
- * to determine if a notifier is used and if so which one
- * (all asics).  This is either Notify(VGA, 0x81) or Notify(VGA, n)
- * where n is specified in the result if a notifier is used.
+ * to determine अगर a notअगरier is used and अगर so which one
+ * (all asics).  This is either Notअगरy(VGA, 0x81) or Notअगरy(VGA, n)
+ * where n is specअगरied in the result अगर a notअगरier is used.
  * Returns 0 on success, error on failure.
  */
-static int radeon_atif_get_notification_params(acpi_handle handle,
-		struct radeon_atif_notification_cfg *n)
-{
-	union acpi_object *info;
-	struct atif_system_params params;
-	size_t size;
-	int err = 0;
+अटल पूर्णांक radeon_atअगर_get_notअगरication_params(acpi_handle handle,
+		काष्ठा radeon_atअगर_notअगरication_cfg *n)
+अणु
+	जोड़ acpi_object *info;
+	काष्ठा atअगर_प्रणाली_params params;
+	माप_प्रकार size;
+	पूर्णांक err = 0;
 
-	info = radeon_atif_call(handle, ATIF_FUNCTION_GET_SYSTEM_PARAMETERS, NULL);
-	if (!info) {
+	info = radeon_atअगर_call(handle, ATIF_FUNCTION_GET_SYSTEM_PARAMETERS, शून्य);
+	अगर (!info) अणु
 		err = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	size = *(u16 *) info->buffer.pointer;
-	if (size < 10) {
+	size = *(u16 *) info->buffer.poपूर्णांकer;
+	अगर (size < 10) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memset(&params, 0, sizeof(params));
-	size = min(sizeof(params), size);
-	memcpy(&params, info->buffer.pointer, size);
+	स_रखो(&params, 0, माप(params));
+	size = min(माप(params), size);
+	स_नकल(&params, info->buffer.poपूर्णांकer, size);
 
 	DRM_DEBUG_DRIVER("SYSTEM_PARAMS: mask = %#x, flags = %#x\n",
 			params.flags, params.valid_mask);
 	params.flags = params.flags & params.valid_mask;
 
-	if ((params.flags & ATIF_NOTIFY_MASK) == ATIF_NOTIFY_NONE) {
+	अगर ((params.flags & ATIF_NOTIFY_MASK) == ATIF_NOTIFY_NONE) अणु
 		n->enabled = false;
 		n->command_code = 0;
-	} else if ((params.flags & ATIF_NOTIFY_MASK) == ATIF_NOTIFY_81) {
+	पूर्ण अन्यथा अगर ((params.flags & ATIF_NOTIFY_MASK) == ATIF_NOTIFY_81) अणु
 		n->enabled = true;
 		n->command_code = 0x81;
-	} else {
-		if (size < 11) {
+	पूर्ण अन्यथा अणु
+		अगर (size < 11) अणु
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		n->enabled = true;
 		n->command_code = params.command_code;
-	}
+	पूर्ण
 
 out:
 	DRM_DEBUG_DRIVER("Notification %s, command code = %#x\n",
 			(n->enabled ? "enabled" : "disabled"),
 			n->command_code);
-	kfree(info);
-	return err;
-}
+	kमुक्त(info);
+	वापस err;
+पूर्ण
 
 /**
- * radeon_atif_get_sbios_requests - get requested sbios event
+ * radeon_atअगर_get_sbios_requests - get requested sbios event
  *
  * @handle: acpi handle
- * @req: atif sbios request struct
+ * @req: atअगर sbios request काष्ठा
  *
  * Execute the ATIF_FUNCTION_GET_SYSTEM_BIOS_REQUESTS ATIF function
  * to determine what requests the sbios is making to the driver
  * (all asics).
  * Returns 0 on success, error on failure.
  */
-static int radeon_atif_get_sbios_requests(acpi_handle handle,
-		struct atif_sbios_requests *req)
-{
-	union acpi_object *info;
-	size_t size;
-	int count = 0;
+अटल पूर्णांक radeon_atअगर_get_sbios_requests(acpi_handle handle,
+		काष्ठा atअगर_sbios_requests *req)
+अणु
+	जोड़ acpi_object *info;
+	माप_प्रकार size;
+	पूर्णांक count = 0;
 
-	info = radeon_atif_call(handle, ATIF_FUNCTION_GET_SYSTEM_BIOS_REQUESTS, NULL);
-	if (!info)
-		return -EIO;
+	info = radeon_atअगर_call(handle, ATIF_FUNCTION_GET_SYSTEM_BIOS_REQUESTS, शून्य);
+	अगर (!info)
+		वापस -EIO;
 
-	size = *(u16 *)info->buffer.pointer;
-	if (size < 0xd) {
+	size = *(u16 *)info->buffer.poपूर्णांकer;
+	अगर (size < 0xd) अणु
 		count = -EINVAL;
-		goto out;
-	}
-	memset(req, 0, sizeof(*req));
+		जाओ out;
+	पूर्ण
+	स_रखो(req, 0, माप(*req));
 
-	size = min(sizeof(*req), size);
-	memcpy(req, info->buffer.pointer, size);
+	size = min(माप(*req), size);
+	स_नकल(req, info->buffer.poपूर्णांकer, size);
 	DRM_DEBUG_DRIVER("SBIOS pending requests: %#x\n", req->pending);
 
 	count = hweight32(req->pending);
 
 out:
-	kfree(info);
-	return count;
-}
+	kमुक्त(info);
+	वापस count;
+पूर्ण
 
 /**
- * radeon_atif_handler - handle ATIF notify requests
+ * radeon_atअगर_handler - handle ATIF notअगरy requests
  *
- * @rdev: radeon_device pointer
- * @event: atif sbios request struct
+ * @rdev: radeon_device poपूर्णांकer
+ * @event: atअगर sbios request काष्ठा
  *
- * Checks the acpi event and if it matches an atif event,
+ * Checks the acpi event and अगर it matches an atअगर event,
  * handles it.
  * Returns NOTIFY code
  */
-static int radeon_atif_handler(struct radeon_device *rdev,
-		struct acpi_bus_event *event)
-{
-	struct radeon_atif *atif = &rdev->atif;
-	struct atif_sbios_requests req;
+अटल पूर्णांक radeon_atअगर_handler(काष्ठा radeon_device *rdev,
+		काष्ठा acpi_bus_event *event)
+अणु
+	काष्ठा radeon_atअगर *atअगर = &rdev->atअगर;
+	काष्ठा atअगर_sbios_requests req;
 	acpi_handle handle;
-	int count;
+	पूर्णांक count;
 
 	DRM_DEBUG_DRIVER("event, device_class = %s, type = %#x\n",
 			event->device_class, event->type);
 
-	if (strcmp(event->device_class, ACPI_VIDEO_CLASS) != 0)
-		return NOTIFY_DONE;
+	अगर (म_भेद(event->device_class, ACPI_VIDEO_CLASS) != 0)
+		वापस NOTIFY_DONE;
 
-	if (!atif->notification_cfg.enabled ||
-			event->type != atif->notification_cfg.command_code)
+	अगर (!atअगर->notअगरication_cfg.enabled ||
+			event->type != atअगर->notअगरication_cfg.command_code)
 		/* Not our event */
-		return NOTIFY_DONE;
+		वापस NOTIFY_DONE;
 
 	/* Check pending SBIOS requests */
 	handle = ACPI_HANDLE(&rdev->pdev->dev);
-	count = radeon_atif_get_sbios_requests(handle, &req);
+	count = radeon_atअगर_get_sbios_requests(handle, &req);
 
-	if (count <= 0)
-		return NOTIFY_DONE;
+	अगर (count <= 0)
+		वापस NOTIFY_DONE;
 
 	DRM_DEBUG_DRIVER("ATIF: %d pending SBIOS requests\n", count);
 
-	if (req.pending & ATIF_PANEL_BRIGHTNESS_CHANGE_REQUEST) {
-		struct radeon_encoder *enc = atif->encoder_for_bl;
+	अगर (req.pending & ATIF_PANEL_BRIGHTNESS_CHANGE_REQUEST) अणु
+		काष्ठा radeon_encoder *enc = atअगर->encoder_क्रम_bl;
 
-		if (enc) {
+		अगर (enc) अणु
 			DRM_DEBUG_DRIVER("Changing brightness to %d\n",
 					req.backlight_level);
 
 			radeon_set_backlight_level(rdev, enc, req.backlight_level);
 
-#if defined(CONFIG_BACKLIGHT_CLASS_DEVICE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
-			if (rdev->is_atom_bios) {
-				struct radeon_encoder_atom_dig *dig = enc->enc_priv;
-				backlight_force_update(dig->bl_dev,
+#अगर defined(CONFIG_BACKLIGHT_CLASS_DEVICE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
+			अगर (rdev->is_atom_bios) अणु
+				काष्ठा radeon_encoder_atom_dig *dig = enc->enc_priv;
+				backlight_क्रमce_update(dig->bl_dev,
 						       BACKLIGHT_UPDATE_HOTKEY);
-			} else {
-				struct radeon_encoder_lvds *dig = enc->enc_priv;
-				backlight_force_update(dig->bl_dev,
+			पूर्ण अन्यथा अणु
+				काष्ठा radeon_encoder_lvds *dig = enc->enc_priv;
+				backlight_क्रमce_update(dig->bl_dev,
 						       BACKLIGHT_UPDATE_HOTKEY);
-			}
-#endif
-		}
-	}
-	if (req.pending & ATIF_DGPU_DISPLAY_EVENT) {
-		if ((rdev->flags & RADEON_IS_PX) &&
-		    radeon_atpx_dgpu_req_power_for_displays()) {
-			pm_runtime_get_sync(rdev->ddev->dev);
-			/* Just fire off a uevent and let userspace tell us what to do */
+			पूर्ण
+#पूर्ण_अगर
+		पूर्ण
+	पूर्ण
+	अगर (req.pending & ATIF_DGPU_DISPLAY_EVENT) अणु
+		अगर ((rdev->flags & RADEON_IS_PX) &&
+		    radeon_atpx_dgpu_req_घातer_क्रम_displays()) अणु
+			pm_runसमय_get_sync(rdev->ddev->dev);
+			/* Just fire off a uevent and let userspace tell us what to करो */
 			drm_helper_hpd_irq_event(rdev->ddev);
-			pm_runtime_mark_last_busy(rdev->ddev->dev);
-			pm_runtime_put_autosuspend(rdev->ddev->dev);
-		}
-	}
+			pm_runसमय_mark_last_busy(rdev->ddev->dev);
+			pm_runसमय_put_स्वतःsuspend(rdev->ddev->dev);
+		पूर्ण
+	पूर्ण
 	/* TODO: check other events */
 
-	/* We've handled the event, stop the notifier chain. The ACPI interface
-	 * overloads ACPI_VIDEO_NOTIFY_PROBE, we don't want to send that to
-	 * userspace if the event was generated only to signal a SBIOS
+	/* We've handled the event, stop the notअगरier chain. The ACPI पूर्णांकerface
+	 * overloads ACPI_VIDEO_NOTIFY_PROBE, we करोn't want to send that to
+	 * userspace अगर the event was generated only to संकेत a SBIOS
 	 * request.
 	 */
-	return NOTIFY_BAD;
-}
+	वापस NOTIFY_BAD;
+पूर्ण
 
 /* Call the ATCS method
  */
@@ -434,97 +435,97 @@ static int radeon_atif_handler(struct radeon_device *rdev,
  * @params: ATCS function params
  *
  * Executes the requested ATCS function (all asics).
- * Returns a pointer to the acpi output buffer.
+ * Returns a poपूर्णांकer to the acpi output buffer.
  */
-static union acpi_object *radeon_atcs_call(acpi_handle handle, int function,
-					   struct acpi_buffer *params)
-{
+अटल जोड़ acpi_object *radeon_atcs_call(acpi_handle handle, पूर्णांक function,
+					   काष्ठा acpi_buffer *params)
+अणु
 	acpi_status status;
-	union acpi_object atcs_arg_elements[2];
-	struct acpi_object_list atcs_arg;
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+	जोड़ acpi_object atcs_arg_elements[2];
+	काष्ठा acpi_object_list atcs_arg;
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
 
 	atcs_arg.count = 2;
-	atcs_arg.pointer = &atcs_arg_elements[0];
+	atcs_arg.poपूर्णांकer = &atcs_arg_elements[0];
 
 	atcs_arg_elements[0].type = ACPI_TYPE_INTEGER;
-	atcs_arg_elements[0].integer.value = function;
+	atcs_arg_elements[0].पूर्णांकeger.value = function;
 
-	if (params) {
+	अगर (params) अणु
 		atcs_arg_elements[1].type = ACPI_TYPE_BUFFER;
 		atcs_arg_elements[1].buffer.length = params->length;
-		atcs_arg_elements[1].buffer.pointer = params->pointer;
-	} else {
+		atcs_arg_elements[1].buffer.poपूर्णांकer = params->poपूर्णांकer;
+	पूर्ण अन्यथा अणु
 		/* We need a second fake parameter */
 		atcs_arg_elements[1].type = ACPI_TYPE_INTEGER;
-		atcs_arg_elements[1].integer.value = 0;
-	}
+		atcs_arg_elements[1].पूर्णांकeger.value = 0;
+	पूर्ण
 
 	status = acpi_evaluate_object(handle, "ATCS", &atcs_arg, &buffer);
 
-	/* Fail only if calling the method fails and ATIF is supported */
-	if (ACPI_FAILURE(status) && status != AE_NOT_FOUND) {
+	/* Fail only अगर calling the method fails and ATIF is supported */
+	अगर (ACPI_FAILURE(status) && status != AE_NOT_FOUND) अणु
 		DRM_DEBUG_DRIVER("failed to evaluate ATCS got %s\n",
-				 acpi_format_exception(status));
-		kfree(buffer.pointer);
-		return NULL;
-	}
+				 acpi_क्रमmat_exception(status));
+		kमुक्त(buffer.poपूर्णांकer);
+		वापस शून्य;
+	पूर्ण
 
-	return buffer.pointer;
-}
+	वापस buffer.poपूर्णांकer;
+पूर्ण
 
 /**
  * radeon_atcs_parse_functions - parse supported functions
  *
- * @f: supported functions struct
+ * @f: supported functions काष्ठा
  * @mask: supported functions mask from ATCS
  *
  * Use the supported functions mask from ATCS function
  * ATCS_FUNCTION_VERIFY_INTERFACE to determine what functions
  * are supported (all asics).
  */
-static void radeon_atcs_parse_functions(struct radeon_atcs_functions *f, u32 mask)
-{
+अटल व्योम radeon_atcs_parse_functions(काष्ठा radeon_atcs_functions *f, u32 mask)
+अणु
 	f->get_ext_state = mask & ATCS_GET_EXTERNAL_STATE_SUPPORTED;
 	f->pcie_perf_req = mask & ATCS_PCIE_PERFORMANCE_REQUEST_SUPPORTED;
 	f->pcie_dev_rdy = mask & ATCS_PCIE_DEVICE_READY_NOTIFICATION_SUPPORTED;
 	f->pcie_bus_width = mask & ATCS_SET_PCIE_BUS_WIDTH_SUPPORTED;
-}
+पूर्ण
 
 /**
- * radeon_atcs_verify_interface - verify ATCS
+ * radeon_atcs_verअगरy_पूर्णांकerface - verअगरy ATCS
  *
  * @handle: acpi handle
- * @atcs: radeon atcs struct
+ * @atcs: radeon atcs काष्ठा
  *
  * Execute the ATCS_FUNCTION_VERIFY_INTERFACE ATCS function
  * to initialize ATCS and determine what features are supported
  * (all asics).
- * returns 0 on success, error on failure.
+ * वापसs 0 on success, error on failure.
  */
-static int radeon_atcs_verify_interface(acpi_handle handle,
-					struct radeon_atcs *atcs)
-{
-	union acpi_object *info;
-	struct atcs_verify_interface output;
-	size_t size;
-	int err = 0;
+अटल पूर्णांक radeon_atcs_verअगरy_पूर्णांकerface(acpi_handle handle,
+					काष्ठा radeon_atcs *atcs)
+अणु
+	जोड़ acpi_object *info;
+	काष्ठा atcs_verअगरy_पूर्णांकerface output;
+	माप_प्रकार size;
+	पूर्णांक err = 0;
 
-	info = radeon_atcs_call(handle, ATCS_FUNCTION_VERIFY_INTERFACE, NULL);
-	if (!info)
-		return -EIO;
+	info = radeon_atcs_call(handle, ATCS_FUNCTION_VERIFY_INTERFACE, शून्य);
+	अगर (!info)
+		वापस -EIO;
 
-	memset(&output, 0, sizeof(output));
+	स_रखो(&output, 0, माप(output));
 
-	size = *(u16 *) info->buffer.pointer;
-	if (size < 8) {
+	size = *(u16 *) info->buffer.poपूर्णांकer;
+	अगर (size < 8) अणु
 		DRM_INFO("ATCS buffer is too small: %zu\n", size);
 		err = -EINVAL;
-		goto out;
-	}
-	size = min(sizeof(output), size);
+		जाओ out;
+	पूर्ण
+	size = min(माप(output), size);
 
-	memcpy(&output, info->buffer.pointer, size);
+	स_नकल(&output, info->buffer.poपूर्णांकer, size);
 
 	/* TODO: check version? */
 	DRM_DEBUG_DRIVER("ATCS version %u\n", output.version);
@@ -532,143 +533,143 @@ static int radeon_atcs_verify_interface(acpi_handle handle,
 	radeon_atcs_parse_functions(&atcs->functions, output.function_bits);
 
 out:
-	kfree(info);
-	return err;
-}
+	kमुक्त(info);
+	वापस err;
+पूर्ण
 
 /**
- * radeon_acpi_is_pcie_performance_request_supported
+ * radeon_acpi_is_pcie_perक्रमmance_request_supported
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Check if the ATCS pcie_perf_req and pcie_dev_rdy methods
+ * Check अगर the ATCS pcie_perf_req and pcie_dev_rdy methods
  * are supported (all asics).
- * returns true if supported, false if not.
+ * वापसs true अगर supported, false अगर not.
  */
-bool radeon_acpi_is_pcie_performance_request_supported(struct radeon_device *rdev)
-{
-	struct radeon_atcs *atcs = &rdev->atcs;
+bool radeon_acpi_is_pcie_perक्रमmance_request_supported(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा radeon_atcs *atcs = &rdev->atcs;
 
-	if (atcs->functions.pcie_perf_req && atcs->functions.pcie_dev_rdy)
-		return true;
+	अगर (atcs->functions.pcie_perf_req && atcs->functions.pcie_dev_rdy)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * radeon_acpi_pcie_notify_device_ready
+ * radeon_acpi_pcie_notअगरy_device_पढ़ोy
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Executes the PCIE_DEVICE_READY_NOTIFICATION method
  * (all asics).
- * returns 0 on success, error on failure.
+ * वापसs 0 on success, error on failure.
  */
-int radeon_acpi_pcie_notify_device_ready(struct radeon_device *rdev)
-{
+पूर्णांक radeon_acpi_pcie_notअगरy_device_पढ़ोy(काष्ठा radeon_device *rdev)
+अणु
 	acpi_handle handle;
-	union acpi_object *info;
-	struct radeon_atcs *atcs = &rdev->atcs;
+	जोड़ acpi_object *info;
+	काष्ठा radeon_atcs *atcs = &rdev->atcs;
 
 	/* Get the device handle */
 	handle = ACPI_HANDLE(&rdev->pdev->dev);
-	if (!handle)
-		return -EINVAL;
+	अगर (!handle)
+		वापस -EINVAL;
 
-	if (!atcs->functions.pcie_dev_rdy)
-		return -EINVAL;
+	अगर (!atcs->functions.pcie_dev_rdy)
+		वापस -EINVAL;
 
-	info = radeon_atcs_call(handle, ATCS_FUNCTION_PCIE_DEVICE_READY_NOTIFICATION, NULL);
-	if (!info)
-		return -EIO;
+	info = radeon_atcs_call(handle, ATCS_FUNCTION_PCIE_DEVICE_READY_NOTIFICATION, शून्य);
+	अगर (!info)
+		वापस -EIO;
 
-	kfree(info);
+	kमुक्त(info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * radeon_acpi_pcie_performance_request
+ * radeon_acpi_pcie_perक्रमmance_request
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @perf_req: requested perf level (pcie gen speed)
- * @advertise: set advertise caps flag if set
+ * @advertise: set advertise caps flag अगर set
  *
  * Executes the PCIE_PERFORMANCE_REQUEST method to
  * change the pcie gen speed (all asics).
- * returns 0 on success, error on failure.
+ * वापसs 0 on success, error on failure.
  */
-int radeon_acpi_pcie_performance_request(struct radeon_device *rdev,
+पूर्णांक radeon_acpi_pcie_perक्रमmance_request(काष्ठा radeon_device *rdev,
 					 u8 perf_req, bool advertise)
-{
+अणु
 	acpi_handle handle;
-	union acpi_object *info;
-	struct radeon_atcs *atcs = &rdev->atcs;
-	struct atcs_pref_req_input atcs_input;
-	struct atcs_pref_req_output atcs_output;
-	struct acpi_buffer params;
-	size_t size;
+	जोड़ acpi_object *info;
+	काष्ठा radeon_atcs *atcs = &rdev->atcs;
+	काष्ठा atcs_pref_req_input atcs_input;
+	काष्ठा atcs_pref_req_output atcs_output;
+	काष्ठा acpi_buffer params;
+	माप_प्रकार size;
 	u32 retry = 3;
 
 	/* Get the device handle */
 	handle = ACPI_HANDLE(&rdev->pdev->dev);
-	if (!handle)
-		return -EINVAL;
+	अगर (!handle)
+		वापस -EINVAL;
 
-	if (!atcs->functions.pcie_perf_req)
-		return -EINVAL;
+	अगर (!atcs->functions.pcie_perf_req)
+		वापस -EINVAL;
 
-	atcs_input.size = sizeof(struct atcs_pref_req_input);
+	atcs_input.size = माप(काष्ठा atcs_pref_req_input);
 	/* client id (bit 2-0: func num, 7-3: dev num, 15-8: bus num) */
 	atcs_input.client_id = rdev->pdev->devfn | (rdev->pdev->bus->number << 8);
 	atcs_input.valid_flags_mask = ATCS_VALID_FLAGS_MASK;
 	atcs_input.flags = ATCS_WAIT_FOR_COMPLETION;
-	if (advertise)
+	अगर (advertise)
 		atcs_input.flags |= ATCS_ADVERTISE_CAPS;
 	atcs_input.req_type = ATCS_PCIE_LINK_SPEED;
 	atcs_input.perf_req = perf_req;
 
-	params.length = sizeof(struct atcs_pref_req_input);
-	params.pointer = &atcs_input;
+	params.length = माप(काष्ठा atcs_pref_req_input);
+	params.poपूर्णांकer = &atcs_input;
 
-	while (retry--) {
+	जबतक (retry--) अणु
 		info = radeon_atcs_call(handle, ATCS_FUNCTION_PCIE_PERFORMANCE_REQUEST, &params);
-		if (!info)
-			return -EIO;
+		अगर (!info)
+			वापस -EIO;
 
-		memset(&atcs_output, 0, sizeof(atcs_output));
+		स_रखो(&atcs_output, 0, माप(atcs_output));
 
-		size = *(u16 *) info->buffer.pointer;
-		if (size < 3) {
+		size = *(u16 *) info->buffer.poपूर्णांकer;
+		अगर (size < 3) अणु
 			DRM_INFO("ATCS buffer is too small: %zu\n", size);
-			kfree(info);
-			return -EINVAL;
-		}
-		size = min(sizeof(atcs_output), size);
+			kमुक्त(info);
+			वापस -EINVAL;
+		पूर्ण
+		size = min(माप(atcs_output), size);
 
-		memcpy(&atcs_output, info->buffer.pointer, size);
+		स_नकल(&atcs_output, info->buffer.poपूर्णांकer, size);
 
-		kfree(info);
+		kमुक्त(info);
 
-		switch (atcs_output.ret_val) {
-		case ATCS_REQUEST_REFUSED:
-		default:
-			return -EINVAL;
-		case ATCS_REQUEST_COMPLETE:
-			return 0;
-		case ATCS_REQUEST_IN_PROGRESS:
+		चयन (atcs_output.ret_val) अणु
+		हाल ATCS_REQUEST_REFUSED:
+		शेष:
+			वापस -EINVAL;
+		हाल ATCS_REQUEST_COMPLETE:
+			वापस 0;
+		हाल ATCS_REQUEST_IN_PROGRESS:
 			udelay(10);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * radeon_acpi_event - handle notify events
+ * radeon_acpi_event - handle notअगरy events
  *
- * @nb: notifier block
+ * @nb: notअगरier block
  * @val: val
  * @data: acpi event
  *
@@ -676,127 +677,127 @@ int radeon_acpi_pcie_performance_request(struct radeon_device *rdev,
  * acpi events.
  * Returns NOTIFY code
  */
-static int radeon_acpi_event(struct notifier_block *nb,
-			     unsigned long val,
-			     void *data)
-{
-	struct radeon_device *rdev = container_of(nb, struct radeon_device, acpi_nb);
-	struct acpi_bus_event *entry = (struct acpi_bus_event *)data;
+अटल पूर्णांक radeon_acpi_event(काष्ठा notअगरier_block *nb,
+			     अचिन्हित दीर्घ val,
+			     व्योम *data)
+अणु
+	काष्ठा radeon_device *rdev = container_of(nb, काष्ठा radeon_device, acpi_nb);
+	काष्ठा acpi_bus_event *entry = (काष्ठा acpi_bus_event *)data;
 
-	if (strcmp(entry->device_class, ACPI_AC_CLASS) == 0) {
-		if (power_supply_is_system_supplied() > 0)
+	अगर (म_भेद(entry->device_class, ACPI_AC_CLASS) == 0) अणु
+		अगर (घातer_supply_is_प्रणाली_supplied() > 0)
 			DRM_DEBUG_DRIVER("pm: AC\n");
-		else
+		अन्यथा
 			DRM_DEBUG_DRIVER("pm: DC\n");
 
 		radeon_pm_acpi_event_handler(rdev);
-	}
+	पूर्ण
 
-	/* Check for pending SBIOS requests */
-	return radeon_atif_handler(rdev, entry);
-}
+	/* Check क्रम pending SBIOS requests */
+	वापस radeon_atअगर_handler(rdev, entry);
+पूर्ण
 
 /* Call all ACPI methods here */
 /**
  * radeon_acpi_init - init driver acpi support
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Verifies the AMD ACPI interfaces and registers with the acpi
- * notifier chain (all asics).
+ * Verअगरies the AMD ACPI पूर्णांकerfaces and रेजिस्टरs with the acpi
+ * notअगरier chain (all asics).
  * Returns 0 on success, error on failure.
  */
-int radeon_acpi_init(struct radeon_device *rdev)
-{
+पूर्णांक radeon_acpi_init(काष्ठा radeon_device *rdev)
+अणु
 	acpi_handle handle;
-	struct radeon_atif *atif = &rdev->atif;
-	struct radeon_atcs *atcs = &rdev->atcs;
-	int ret;
+	काष्ठा radeon_atअगर *atअगर = &rdev->atअगर;
+	काष्ठा radeon_atcs *atcs = &rdev->atcs;
+	पूर्णांक ret;
 
 	/* Get the device handle */
 	handle = ACPI_HANDLE(&rdev->pdev->dev);
 
-	/* No need to proceed if we're sure that ATIF is not supported */
-	if (!ASIC_IS_AVIVO(rdev) || !rdev->bios || !handle)
-		return 0;
+	/* No need to proceed अगर we're sure that ATIF is not supported */
+	अगर (!ASIC_IS_AVIVO(rdev) || !rdev->bios || !handle)
+		वापस 0;
 
 	/* Call the ATCS method */
-	ret = radeon_atcs_verify_interface(handle, atcs);
-	if (ret) {
+	ret = radeon_atcs_verअगरy_पूर्णांकerface(handle, atcs);
+	अगर (ret) अणु
 		DRM_DEBUG_DRIVER("Call to ATCS verify_interface failed: %d\n", ret);
-	}
+	पूर्ण
 
 	/* Call the ATIF method */
-	ret = radeon_atif_verify_interface(handle, atif);
-	if (ret) {
+	ret = radeon_atअगर_verअगरy_पूर्णांकerface(handle, atअगर);
+	अगर (ret) अणु
 		DRM_DEBUG_DRIVER("Call to ATIF verify_interface failed: %d\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (atif->notifications.brightness_change) {
-		struct drm_encoder *tmp;
-		struct radeon_encoder *target = NULL;
+	अगर (atअगर->notअगरications.brightness_change) अणु
+		काष्ठा drm_encoder *पंचांगp;
+		काष्ठा radeon_encoder *target = शून्य;
 
 		/* Find the encoder controlling the brightness */
-		list_for_each_entry(tmp, &rdev->ddev->mode_config.encoder_list,
-				head) {
-			struct radeon_encoder *enc = to_radeon_encoder(tmp);
+		list_क्रम_each_entry(पंचांगp, &rdev->ddev->mode_config.encoder_list,
+				head) अणु
+			काष्ठा radeon_encoder *enc = to_radeon_encoder(पंचांगp);
 
-			if ((enc->devices & (ATOM_DEVICE_LCD_SUPPORT)) &&
-			    enc->enc_priv) {
-				if (rdev->is_atom_bios) {
-					struct radeon_encoder_atom_dig *dig = enc->enc_priv;
-					if (dig->bl_dev) {
+			अगर ((enc->devices & (ATOM_DEVICE_LCD_SUPPORT)) &&
+			    enc->enc_priv) अणु
+				अगर (rdev->is_atom_bios) अणु
+					काष्ठा radeon_encoder_atom_dig *dig = enc->enc_priv;
+					अगर (dig->bl_dev) अणु
 						target = enc;
-						break;
-					}
-				} else {
-					struct radeon_encoder_lvds *dig = enc->enc_priv;
-					if (dig->bl_dev) {
+						अवरोध;
+					पूर्ण
+				पूर्ण अन्यथा अणु
+					काष्ठा radeon_encoder_lvds *dig = enc->enc_priv;
+					अगर (dig->bl_dev) अणु
 						target = enc;
-						break;
-					}
-				}
-			}
-		}
+						अवरोध;
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		atif->encoder_for_bl = target;
-	}
+		atअगर->encoder_क्रम_bl = target;
+	पूर्ण
 
-	if (atif->functions.sbios_requests && !atif->functions.system_params) {
-		/* XXX check this workraround, if sbios request function is
-		 * present we have to see how it's configured in the system
+	अगर (atअगर->functions.sbios_requests && !atअगर->functions.प्रणाली_params) अणु
+		/* XXX check this workraround, अगर sbios request function is
+		 * present we have to see how it's configured in the प्रणाली
 		 * params
 		 */
-		atif->functions.system_params = true;
-	}
+		atअगर->functions.प्रणाली_params = true;
+	पूर्ण
 
-	if (atif->functions.system_params) {
-		ret = radeon_atif_get_notification_params(handle,
-				&atif->notification_cfg);
-		if (ret) {
+	अगर (atअगर->functions.प्रणाली_params) अणु
+		ret = radeon_atअगर_get_notअगरication_params(handle,
+				&atअगर->notअगरication_cfg);
+		अगर (ret) अणु
 			DRM_DEBUG_DRIVER("Call to GET_SYSTEM_PARAMS failed: %d\n",
 					ret);
-			/* Disable notification */
-			atif->notification_cfg.enabled = false;
-		}
-	}
+			/* Disable notअगरication */
+			atअगर->notअगरication_cfg.enabled = false;
+		पूर्ण
+	पूर्ण
 
 out:
-	rdev->acpi_nb.notifier_call = radeon_acpi_event;
-	register_acpi_notifier(&rdev->acpi_nb);
+	rdev->acpi_nb.notअगरier_call = radeon_acpi_event;
+	रेजिस्टर_acpi_notअगरier(&rdev->acpi_nb);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * radeon_acpi_fini - tear down driver acpi support
+ * radeon_acpi_fini - tear करोwn driver acpi support
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Unregisters with the acpi notifier chain (all asics).
+ * Unरेजिस्टरs with the acpi notअगरier chain (all asics).
  */
-void radeon_acpi_fini(struct radeon_device *rdev)
-{
-	unregister_acpi_notifier(&rdev->acpi_nb);
-}
+व्योम radeon_acpi_fini(काष्ठा radeon_device *rdev)
+अणु
+	unरेजिस्टर_acpi_notअगरier(&rdev->acpi_nb);
+पूर्ण

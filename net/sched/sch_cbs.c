@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * net/sched/sch_cbs.c	Credit Based Shaper
  *
- * Authors:	Vinicius Costa Gomes <vinicius.gomes@intel.com>
+ * Authors:	Vinicius Costa Gomes <vinicius.gomes@पूर्णांकel.com>
  */
 
 /* Credit Based Shaper (CBS)
  * =========================
  *
  * This is a simple rate-limiting shaper aimed at TSN applications on
- * systems with known traffic workloads.
+ * प्रणालीs with known traffic workloads.
  *
- * Its algorithm is defined by the IEEE 802.1Q-2014 Specification,
+ * Its algorithm is defined by the IEEE 802.1Q-2014 Specअगरication,
  * Section 8.6.8.2, and explained in more detail in the Annex L of the
- * same specification.
+ * same specअगरication.
  *
  * There are four tunables to be considered:
  *
  *	'idleslope': Idleslope is the rate of credits that is
  *	accumulated (in kilobits per second) when there is at least
- *	one packet waiting for transmission. Packets are transmitted
+ *	one packet रुकोing क्रम transmission. Packets are transmitted
  *	when the current value of credits is equal or greater than
  *	zero. When there is no packet to be transmitted the amount of
- *	credits is set to zero. This is the main tunable of the CBS
+ *	credits is set to zero. This is the मुख्य tunable of the CBS
  *	algorithm.
  *
  *	'sendslope':
@@ -35,13 +36,13 @@
  *
  *	'hicredit': Hicredit defines the maximum amount of credits (in
  *	bytes) that can be accumulated. Hicredit depends on the
- *	characteristics of interfering traffic,
+ *	अक्षरacteristics of पूर्णांकerfering traffic,
  *	'max_interference_size' is the maximum size of any burst of
  *	traffic that can delay the transmission of a frame that is
- *	available for transmission for this traffic class, (IEEE
+ *	available क्रम transmission क्रम this traffic class, (IEEE
  *	802.1Q-2014 Annex L, Equation L-3):
  *
- *	hicredit = max_interference_size * (idleslope / port_transmit_rate)
+ *	hicredit = max_पूर्णांकerference_size * (idleslope / port_transmit_rate)
  *
  *	'locredit': Locredit is the minimum amount of credits that can
  *	be reached. It is a function of the traffic flowing through
@@ -50,163 +51,163 @@
  *	locredit = max_frame_size * (sendslope / port_transmit_rate)
  */
 
-#include <linux/ethtool.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/skbuff.h>
-#include <net/netevent.h>
-#include <net/netlink.h>
-#include <net/sch_generic.h>
-#include <net/pkt_sched.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/skbuff.h>
+#समावेश <net/netevent.h>
+#समावेश <net/netlink.h>
+#समावेश <net/sch_generic.h>
+#समावेश <net/pkt_sched.h>
 
-static LIST_HEAD(cbs_list);
-static DEFINE_SPINLOCK(cbs_list_lock);
+अटल LIST_HEAD(cbs_list);
+अटल DEFINE_SPINLOCK(cbs_list_lock);
 
-#define BYTES_PER_KBIT (1000LL / 8)
+#घोषणा BYTES_PER_KBIT (1000LL / 8)
 
-struct cbs_sched_data {
+काष्ठा cbs_sched_data अणु
 	bool offload;
-	int queue;
+	पूर्णांक queue;
 	atomic64_t port_rate; /* in bytes/s */
-	s64 last; /* timestamp in ns */
+	s64 last; /* बारtamp in ns */
 	s64 credits; /* in bytes */
 	s32 locredit; /* in bytes */
 	s32 hicredit; /* in bytes */
 	s64 sendslope; /* in bytes/s */
 	s64 idleslope; /* in bytes/s */
-	struct qdisc_watchdog watchdog;
-	int (*enqueue)(struct sk_buff *skb, struct Qdisc *sch,
-		       struct sk_buff **to_free);
-	struct sk_buff *(*dequeue)(struct Qdisc *sch);
-	struct Qdisc *qdisc;
-	struct list_head cbs_list;
-};
+	काष्ठा qdisc_watchकरोg watchकरोg;
+	पूर्णांक (*enqueue)(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
+		       काष्ठा sk_buff **to_मुक्त);
+	काष्ठा sk_buff *(*dequeue)(काष्ठा Qdisc *sch);
+	काष्ठा Qdisc *qdisc;
+	काष्ठा list_head cbs_list;
+पूर्ण;
 
-static int cbs_child_enqueue(struct sk_buff *skb, struct Qdisc *sch,
-			     struct Qdisc *child,
-			     struct sk_buff **to_free)
-{
-	unsigned int len = qdisc_pkt_len(skb);
-	int err;
+अटल पूर्णांक cbs_child_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
+			     काष्ठा Qdisc *child,
+			     काष्ठा sk_buff **to_मुक्त)
+अणु
+	अचिन्हित पूर्णांक len = qdisc_pkt_len(skb);
+	पूर्णांक err;
 
-	err = child->ops->enqueue(skb, child, to_free);
-	if (err != NET_XMIT_SUCCESS)
-		return err;
+	err = child->ops->enqueue(skb, child, to_मुक्त);
+	अगर (err != NET_XMIT_SUCCESS)
+		वापस err;
 
 	sch->qstats.backlog += len;
 	sch->q.qlen++;
 
-	return NET_XMIT_SUCCESS;
-}
+	वापस NET_XMIT_SUCCESS;
+पूर्ण
 
-static int cbs_enqueue_offload(struct sk_buff *skb, struct Qdisc *sch,
-			       struct sk_buff **to_free)
-{
-	struct cbs_sched_data *q = qdisc_priv(sch);
-	struct Qdisc *qdisc = q->qdisc;
+अटल पूर्णांक cbs_enqueue_offload(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
+			       काष्ठा sk_buff **to_मुक्त)
+अणु
+	काष्ठा cbs_sched_data *q = qdisc_priv(sch);
+	काष्ठा Qdisc *qdisc = q->qdisc;
 
-	return cbs_child_enqueue(skb, sch, qdisc, to_free);
-}
+	वापस cbs_child_enqueue(skb, sch, qdisc, to_मुक्त);
+पूर्ण
 
-static int cbs_enqueue_soft(struct sk_buff *skb, struct Qdisc *sch,
-			    struct sk_buff **to_free)
-{
-	struct cbs_sched_data *q = qdisc_priv(sch);
-	struct Qdisc *qdisc = q->qdisc;
+अटल पूर्णांक cbs_enqueue_soft(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
+			    काष्ठा sk_buff **to_मुक्त)
+अणु
+	काष्ठा cbs_sched_data *q = qdisc_priv(sch);
+	काष्ठा Qdisc *qdisc = q->qdisc;
 
-	if (sch->q.qlen == 0 && q->credits > 0) {
+	अगर (sch->q.qlen == 0 && q->credits > 0) अणु
 		/* We need to stop accumulating credits when there's
 		 * no enqueued packets and q->credits is positive.
 		 */
 		q->credits = 0;
-		q->last = ktime_get_ns();
-	}
+		q->last = kसमय_get_ns();
+	पूर्ण
 
-	return cbs_child_enqueue(skb, sch, qdisc, to_free);
-}
+	वापस cbs_child_enqueue(skb, sch, qdisc, to_मुक्त);
+पूर्ण
 
-static int cbs_enqueue(struct sk_buff *skb, struct Qdisc *sch,
-		       struct sk_buff **to_free)
-{
-	struct cbs_sched_data *q = qdisc_priv(sch);
+अटल पूर्णांक cbs_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
+		       काष्ठा sk_buff **to_मुक्त)
+अणु
+	काष्ठा cbs_sched_data *q = qdisc_priv(sch);
 
-	return q->enqueue(skb, sch, to_free);
-}
+	वापस q->enqueue(skb, sch, to_मुक्त);
+पूर्ण
 
-/* timediff is in ns, slope is in bytes/s */
-static s64 timediff_to_credits(s64 timediff, s64 slope)
-{
-	return div64_s64(timediff * slope, NSEC_PER_SEC);
-}
+/* समयdअगरf is in ns, slope is in bytes/s */
+अटल s64 समयdअगरf_to_credits(s64 समयdअगरf, s64 slope)
+अणु
+	वापस भाग64_s64(समयdअगरf * slope, NSEC_PER_SEC);
+पूर्ण
 
-static s64 delay_from_credits(s64 credits, s64 slope)
-{
-	if (unlikely(slope == 0))
-		return S64_MAX;
+अटल s64 delay_from_credits(s64 credits, s64 slope)
+अणु
+	अगर (unlikely(slope == 0))
+		वापस S64_MAX;
 
-	return div64_s64(-credits * NSEC_PER_SEC, slope);
-}
+	वापस भाग64_s64(-credits * NSEC_PER_SEC, slope);
+पूर्ण
 
-static s64 credits_from_len(unsigned int len, s64 slope, s64 port_rate)
-{
-	if (unlikely(port_rate == 0))
-		return S64_MAX;
+अटल s64 credits_from_len(अचिन्हित पूर्णांक len, s64 slope, s64 port_rate)
+अणु
+	अगर (unlikely(port_rate == 0))
+		वापस S64_MAX;
 
-	return div64_s64(len * slope, port_rate);
-}
+	वापस भाग64_s64(len * slope, port_rate);
+पूर्ण
 
-static struct sk_buff *cbs_child_dequeue(struct Qdisc *sch, struct Qdisc *child)
-{
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *cbs_child_dequeue(काष्ठा Qdisc *sch, काष्ठा Qdisc *child)
+अणु
+	काष्ठा sk_buff *skb;
 
 	skb = child->ops->dequeue(child);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
 	qdisc_qstats_backlog_dec(sch, skb);
 	qdisc_bstats_update(sch, skb);
 	sch->q.qlen--;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *cbs_dequeue_soft(struct Qdisc *sch)
-{
-	struct cbs_sched_data *q = qdisc_priv(sch);
-	struct Qdisc *qdisc = q->qdisc;
-	s64 now = ktime_get_ns();
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *cbs_dequeue_soft(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा cbs_sched_data *q = qdisc_priv(sch);
+	काष्ठा Qdisc *qdisc = q->qdisc;
+	s64 now = kसमय_get_ns();
+	काष्ठा sk_buff *skb;
 	s64 credits;
-	int len;
+	पूर्णांक len;
 
 	/* The previous packet is still being sent */
-	if (now < q->last) {
-		qdisc_watchdog_schedule_ns(&q->watchdog, q->last);
-		return NULL;
-	}
-	if (q->credits < 0) {
-		credits = timediff_to_credits(now - q->last, q->idleslope);
+	अगर (now < q->last) अणु
+		qdisc_watchकरोg_schedule_ns(&q->watchकरोg, q->last);
+		वापस शून्य;
+	पूर्ण
+	अगर (q->credits < 0) अणु
+		credits = समयdअगरf_to_credits(now - q->last, q->idleslope);
 
 		credits = q->credits + credits;
 		q->credits = min_t(s64, credits, q->hicredit);
 
-		if (q->credits < 0) {
+		अगर (q->credits < 0) अणु
 			s64 delay;
 
 			delay = delay_from_credits(q->credits, q->idleslope);
-			qdisc_watchdog_schedule_ns(&q->watchdog, now + delay);
+			qdisc_watchकरोg_schedule_ns(&q->watchकरोg, now + delay);
 
 			q->last = now;
 
-			return NULL;
-		}
-	}
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 	skb = cbs_child_dequeue(sch, qdisc);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
 	len = qdisc_pkt_len(skb);
 
@@ -214,77 +215,77 @@ static struct sk_buff *cbs_dequeue_soft(struct Qdisc *sch)
 	 * amount of q->credits.
 	 */
 	credits = credits_from_len(len, q->sendslope,
-				   atomic64_read(&q->port_rate));
+				   atomic64_पढ़ो(&q->port_rate));
 	credits += q->credits;
 
 	q->credits = max_t(s64, credits, q->locredit);
 	/* Estimate of the transmission of the last byte of the packet in ns */
-	if (unlikely(atomic64_read(&q->port_rate) == 0))
+	अगर (unlikely(atomic64_पढ़ो(&q->port_rate) == 0))
 		q->last = now;
-	else
-		q->last = now + div64_s64(len * NSEC_PER_SEC,
-					  atomic64_read(&q->port_rate));
+	अन्यथा
+		q->last = now + भाग64_s64(len * NSEC_PER_SEC,
+					  atomic64_पढ़ो(&q->port_rate));
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *cbs_dequeue_offload(struct Qdisc *sch)
-{
-	struct cbs_sched_data *q = qdisc_priv(sch);
-	struct Qdisc *qdisc = q->qdisc;
+अटल काष्ठा sk_buff *cbs_dequeue_offload(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा cbs_sched_data *q = qdisc_priv(sch);
+	काष्ठा Qdisc *qdisc = q->qdisc;
 
-	return cbs_child_dequeue(sch, qdisc);
-}
+	वापस cbs_child_dequeue(sch, qdisc);
+पूर्ण
 
-static struct sk_buff *cbs_dequeue(struct Qdisc *sch)
-{
-	struct cbs_sched_data *q = qdisc_priv(sch);
+अटल काष्ठा sk_buff *cbs_dequeue(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा cbs_sched_data *q = qdisc_priv(sch);
 
-	return q->dequeue(sch);
-}
+	वापस q->dequeue(sch);
+पूर्ण
 
-static const struct nla_policy cbs_policy[TCA_CBS_MAX + 1] = {
-	[TCA_CBS_PARMS]	= { .len = sizeof(struct tc_cbs_qopt) },
-};
+अटल स्थिर काष्ठा nla_policy cbs_policy[TCA_CBS_MAX + 1] = अणु
+	[TCA_CBS_PARMS]	= अणु .len = माप(काष्ठा tc_cbs_qopt) पूर्ण,
+पूर्ण;
 
-static void cbs_disable_offload(struct net_device *dev,
-				struct cbs_sched_data *q)
-{
-	struct tc_cbs_qopt_offload cbs = { };
-	const struct net_device_ops *ops;
-	int err;
+अटल व्योम cbs_disable_offload(काष्ठा net_device *dev,
+				काष्ठा cbs_sched_data *q)
+अणु
+	काष्ठा tc_cbs_qopt_offload cbs = अणु पूर्ण;
+	स्थिर काष्ठा net_device_ops *ops;
+	पूर्णांक err;
 
-	if (!q->offload)
-		return;
+	अगर (!q->offload)
+		वापस;
 
 	q->enqueue = cbs_enqueue_soft;
 	q->dequeue = cbs_dequeue_soft;
 
 	ops = dev->netdev_ops;
-	if (!ops->ndo_setup_tc)
-		return;
+	अगर (!ops->nकरो_setup_tc)
+		वापस;
 
 	cbs.queue = q->queue;
 	cbs.enable = 0;
 
-	err = ops->ndo_setup_tc(dev, TC_SETUP_QDISC_CBS, &cbs);
-	if (err < 0)
+	err = ops->nकरो_setup_tc(dev, TC_SETUP_QDISC_CBS, &cbs);
+	अगर (err < 0)
 		pr_warn("Couldn't disable CBS offload for queue %d\n",
 			cbs.queue);
-}
+पूर्ण
 
-static int cbs_enable_offload(struct net_device *dev, struct cbs_sched_data *q,
-			      const struct tc_cbs_qopt *opt,
-			      struct netlink_ext_ack *extack)
-{
-	const struct net_device_ops *ops = dev->netdev_ops;
-	struct tc_cbs_qopt_offload cbs = { };
-	int err;
+अटल पूर्णांक cbs_enable_offload(काष्ठा net_device *dev, काष्ठा cbs_sched_data *q,
+			      स्थिर काष्ठा tc_cbs_qopt *opt,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	स्थिर काष्ठा net_device_ops *ops = dev->netdev_ops;
+	काष्ठा tc_cbs_qopt_offload cbs = अणु पूर्ण;
+	पूर्णांक err;
 
-	if (!ops->ndo_setup_tc) {
+	अगर (!ops->nकरो_setup_tc) अणु
 		NL_SET_ERR_MSG(extack, "Specified device does not support cbs offload");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	cbs.queue = q->queue;
 
@@ -294,30 +295,30 @@ static int cbs_enable_offload(struct net_device *dev, struct cbs_sched_data *q,
 	cbs.idleslope = opt->idleslope;
 	cbs.sendslope = opt->sendslope;
 
-	err = ops->ndo_setup_tc(dev, TC_SETUP_QDISC_CBS, &cbs);
-	if (err < 0) {
+	err = ops->nकरो_setup_tc(dev, TC_SETUP_QDISC_CBS, &cbs);
+	अगर (err < 0) अणु
 		NL_SET_ERR_MSG(extack, "Specified device failed to setup cbs hardware offload");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	q->enqueue = cbs_enqueue_offload;
 	q->dequeue = cbs_dequeue_offload;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cbs_set_port_rate(struct net_device *dev, struct cbs_sched_data *q)
-{
-	struct ethtool_link_ksettings ecmd;
-	int speed = SPEED_10;
-	int port_rate;
-	int err;
+अटल व्योम cbs_set_port_rate(काष्ठा net_device *dev, काष्ठा cbs_sched_data *q)
+अणु
+	काष्ठा ethtool_link_ksettings ecmd;
+	पूर्णांक speed = SPEED_10;
+	पूर्णांक port_rate;
+	पूर्णांक err;
 
 	err = __ethtool_get_link_ksettings(dev, &ecmd);
-	if (err < 0)
-		goto skip;
+	अगर (err < 0)
+		जाओ skip;
 
-	if (ecmd.base.speed && ecmd.base.speed != SPEED_UNKNOWN)
+	अगर (ecmd.base.speed && ecmd.base.speed != SPEED_UNKNOWN)
 		speed = ecmd.base.speed;
 
 skip:
@@ -325,68 +326,68 @@ skip:
 
 	atomic64_set(&q->port_rate, port_rate);
 	netdev_dbg(dev, "cbs: set %s's port_rate to: %lld, linkspeed: %d\n",
-		   dev->name, (long long)atomic64_read(&q->port_rate),
+		   dev->name, (दीर्घ दीर्घ)atomic64_पढ़ो(&q->port_rate),
 		   ecmd.base.speed);
-}
+पूर्ण
 
-static int cbs_dev_notifier(struct notifier_block *nb, unsigned long event,
-			    void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct cbs_sched_data *q;
-	struct net_device *qdev;
+अटल पूर्णांक cbs_dev_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
+			    व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा cbs_sched_data *q;
+	काष्ठा net_device *qdev;
 	bool found = false;
 
 	ASSERT_RTNL();
 
-	if (event != NETDEV_UP && event != NETDEV_CHANGE)
-		return NOTIFY_DONE;
+	अगर (event != NETDEV_UP && event != NETDEV_CHANGE)
+		वापस NOTIFY_DONE;
 
 	spin_lock(&cbs_list_lock);
-	list_for_each_entry(q, &cbs_list, cbs_list) {
+	list_क्रम_each_entry(q, &cbs_list, cbs_list) अणु
 		qdev = qdisc_dev(q->qdisc);
-		if (qdev == dev) {
+		अगर (qdev == dev) अणु
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&cbs_list_lock);
 
-	if (found)
+	अगर (found)
 		cbs_set_port_rate(dev, q);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int cbs_change(struct Qdisc *sch, struct nlattr *opt,
-		      struct netlink_ext_ack *extack)
-{
-	struct cbs_sched_data *q = qdisc_priv(sch);
-	struct net_device *dev = qdisc_dev(sch);
-	struct nlattr *tb[TCA_CBS_MAX + 1];
-	struct tc_cbs_qopt *qopt;
-	int err;
+अटल पूर्णांक cbs_change(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
+		      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा cbs_sched_data *q = qdisc_priv(sch);
+	काष्ठा net_device *dev = qdisc_dev(sch);
+	काष्ठा nlattr *tb[TCA_CBS_MAX + 1];
+	काष्ठा tc_cbs_qopt *qopt;
+	पूर्णांक err;
 
 	err = nla_parse_nested_deprecated(tb, TCA_CBS_MAX, opt, cbs_policy,
 					  extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (!tb[TCA_CBS_PARMS]) {
+	अगर (!tb[TCA_CBS_PARMS]) अणु
 		NL_SET_ERR_MSG(extack, "Missing CBS parameter which are mandatory");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	qopt = nla_data(tb[TCA_CBS_PARMS]);
 
-	if (!qopt->offload) {
+	अगर (!qopt->offload) अणु
 		cbs_set_port_rate(dev, q);
 		cbs_disable_offload(dev, q);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = cbs_enable_offload(dev, q, qopt, extack);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	/* Everything went OK, save the parameters used. */
 	q->hicredit = qopt->hicredit;
@@ -395,24 +396,24 @@ static int cbs_change(struct Qdisc *sch, struct nlattr *opt,
 	q->sendslope = qopt->sendslope * BYTES_PER_KBIT;
 	q->offload = qopt->offload;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cbs_init(struct Qdisc *sch, struct nlattr *opt,
-		    struct netlink_ext_ack *extack)
-{
-	struct cbs_sched_data *q = qdisc_priv(sch);
-	struct net_device *dev = qdisc_dev(sch);
+अटल पूर्णांक cbs_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
+		    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा cbs_sched_data *q = qdisc_priv(sch);
+	काष्ठा net_device *dev = qdisc_dev(sch);
 
-	if (!opt) {
+	अगर (!opt) अणु
 		NL_SET_ERR_MSG(extack, "Missing CBS qdisc options  which are mandatory");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	q->qdisc = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
+	q->qdisc = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops,
 				     sch->handle, extack);
-	if (!q->qdisc)
-		return -ENOMEM;
+	अगर (!q->qdisc)
+		वापस -ENOMEM;
 
 	spin_lock(&cbs_list_lock);
 	list_add(&q->cbs_list, &cbs_list);
@@ -425,21 +426,21 @@ static int cbs_init(struct Qdisc *sch, struct nlattr *opt,
 	q->enqueue = cbs_enqueue_soft;
 	q->dequeue = cbs_dequeue_soft;
 
-	qdisc_watchdog_init(&q->watchdog, sch);
+	qdisc_watchकरोg_init(&q->watchकरोg, sch);
 
-	return cbs_change(sch, opt, extack);
-}
+	वापस cbs_change(sch, opt, extack);
+पूर्ण
 
-static void cbs_destroy(struct Qdisc *sch)
-{
-	struct cbs_sched_data *q = qdisc_priv(sch);
-	struct net_device *dev = qdisc_dev(sch);
+अटल व्योम cbs_destroy(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा cbs_sched_data *q = qdisc_priv(sch);
+	काष्ठा net_device *dev = qdisc_dev(sch);
 
-	/* Nothing to do if we couldn't create the underlying qdisc */
-	if (!q->qdisc)
-		return;
+	/* Nothing to करो अगर we couldn't create the underlying qdisc */
+	अगर (!q->qdisc)
+		वापस;
 
-	qdisc_watchdog_cancel(&q->watchdog);
+	qdisc_watchकरोg_cancel(&q->watchकरोg);
 	cbs_disable_offload(dev, q);
 
 	spin_lock(&cbs_list_lock);
@@ -447,101 +448,101 @@ static void cbs_destroy(struct Qdisc *sch)
 	spin_unlock(&cbs_list_lock);
 
 	qdisc_put(q->qdisc);
-}
+पूर्ण
 
-static int cbs_dump(struct Qdisc *sch, struct sk_buff *skb)
-{
-	struct cbs_sched_data *q = qdisc_priv(sch);
-	struct tc_cbs_qopt opt = { };
-	struct nlattr *nest;
+अटल पूर्णांक cbs_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cbs_sched_data *q = qdisc_priv(sch);
+	काष्ठा tc_cbs_qopt opt = अणु पूर्ण;
+	काष्ठा nlattr *nest;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	if (!nest)
-		goto nla_put_failure;
+	अगर (!nest)
+		जाओ nla_put_failure;
 
 	opt.hicredit = q->hicredit;
 	opt.locredit = q->locredit;
-	opt.sendslope = div64_s64(q->sendslope, BYTES_PER_KBIT);
-	opt.idleslope = div64_s64(q->idleslope, BYTES_PER_KBIT);
+	opt.sendslope = भाग64_s64(q->sendslope, BYTES_PER_KBIT);
+	opt.idleslope = भाग64_s64(q->idleslope, BYTES_PER_KBIT);
 	opt.offload = q->offload;
 
-	if (nla_put(skb, TCA_CBS_PARMS, sizeof(opt), &opt))
-		goto nla_put_failure;
+	अगर (nla_put(skb, TCA_CBS_PARMS, माप(opt), &opt))
+		जाओ nla_put_failure;
 
-	return nla_nest_end(skb, nest);
+	वापस nla_nest_end(skb, nest);
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int cbs_dump_class(struct Qdisc *sch, unsigned long cl,
-			  struct sk_buff *skb, struct tcmsg *tcm)
-{
-	struct cbs_sched_data *q = qdisc_priv(sch);
+अटल पूर्णांक cbs_dump_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
+			  काष्ठा sk_buff *skb, काष्ठा tcmsg *tcm)
+अणु
+	काष्ठा cbs_sched_data *q = qdisc_priv(sch);
 
-	if (cl != 1 || !q->qdisc)	/* only one class */
-		return -ENOENT;
+	अगर (cl != 1 || !q->qdisc)	/* only one class */
+		वापस -ENOENT;
 
 	tcm->tcm_handle |= TC_H_MIN(1);
 	tcm->tcm_info = q->qdisc->handle;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cbs_graft(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
-		     struct Qdisc **old, struct netlink_ext_ack *extack)
-{
-	struct cbs_sched_data *q = qdisc_priv(sch);
+अटल पूर्णांक cbs_graft(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg, काष्ठा Qdisc *new,
+		     काष्ठा Qdisc **old, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा cbs_sched_data *q = qdisc_priv(sch);
 
-	if (!new) {
-		new = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
-					sch->handle, NULL);
-		if (!new)
+	अगर (!new) अणु
+		new = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops,
+					sch->handle, शून्य);
+		अगर (!new)
 			new = &noop_qdisc;
-	}
+	पूर्ण
 
 	*old = qdisc_replace(sch, new, &q->qdisc);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct Qdisc *cbs_leaf(struct Qdisc *sch, unsigned long arg)
-{
-	struct cbs_sched_data *q = qdisc_priv(sch);
+अटल काष्ठा Qdisc *cbs_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा cbs_sched_data *q = qdisc_priv(sch);
 
-	return q->qdisc;
-}
+	वापस q->qdisc;
+पूर्ण
 
-static unsigned long cbs_find(struct Qdisc *sch, u32 classid)
-{
-	return 1;
-}
+अटल अचिन्हित दीर्घ cbs_find(काष्ठा Qdisc *sch, u32 classid)
+अणु
+	वापस 1;
+पूर्ण
 
-static void cbs_walk(struct Qdisc *sch, struct qdisc_walker *walker)
-{
-	if (!walker->stop) {
-		if (walker->count >= walker->skip) {
-			if (walker->fn(sch, 1, walker) < 0) {
+अटल व्योम cbs_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *walker)
+अणु
+	अगर (!walker->stop) अणु
+		अगर (walker->count >= walker->skip) अणु
+			अगर (walker->fn(sch, 1, walker) < 0) अणु
 				walker->stop = 1;
-				return;
-			}
-		}
+				वापस;
+			पूर्ण
+		पूर्ण
 		walker->count++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct Qdisc_class_ops cbs_class_ops = {
+अटल स्थिर काष्ठा Qdisc_class_ops cbs_class_ops = अणु
 	.graft		=	cbs_graft,
 	.leaf		=	cbs_leaf,
 	.find		=	cbs_find,
 	.walk		=	cbs_walk,
 	.dump		=	cbs_dump_class,
-};
+पूर्ण;
 
-static struct Qdisc_ops cbs_qdisc_ops __read_mostly = {
+अटल काष्ठा Qdisc_ops cbs_qdisc_ops __पढ़ो_mostly = अणु
 	.id		=	"cbs",
 	.cl_ops		=	&cbs_class_ops,
-	.priv_size	=	sizeof(struct cbs_sched_data),
+	.priv_size	=	माप(काष्ठा cbs_sched_data),
 	.enqueue	=	cbs_enqueue,
 	.dequeue	=	cbs_dequeue,
 	.peek		=	qdisc_peek_dequeued,
@@ -551,32 +552,32 @@ static struct Qdisc_ops cbs_qdisc_ops __read_mostly = {
 	.change		=	cbs_change,
 	.dump		=	cbs_dump,
 	.owner		=	THIS_MODULE,
-};
+पूर्ण;
 
-static struct notifier_block cbs_device_notifier = {
-	.notifier_call = cbs_dev_notifier,
-};
+अटल काष्ठा notअगरier_block cbs_device_notअगरier = अणु
+	.notअगरier_call = cbs_dev_notअगरier,
+पूर्ण;
 
-static int __init cbs_module_init(void)
-{
-	int err;
+अटल पूर्णांक __init cbs_module_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = register_netdevice_notifier(&cbs_device_notifier);
-	if (err)
-		return err;
+	err = रेजिस्टर_netdevice_notअगरier(&cbs_device_notअगरier);
+	अगर (err)
+		वापस err;
 
-	err = register_qdisc(&cbs_qdisc_ops);
-	if (err)
-		unregister_netdevice_notifier(&cbs_device_notifier);
+	err = रेजिस्टर_qdisc(&cbs_qdisc_ops);
+	अगर (err)
+		unरेजिस्टर_netdevice_notअगरier(&cbs_device_notअगरier);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit cbs_module_exit(void)
-{
-	unregister_qdisc(&cbs_qdisc_ops);
-	unregister_netdevice_notifier(&cbs_device_notifier);
-}
+अटल व्योम __निकास cbs_module_निकास(व्योम)
+अणु
+	unरेजिस्टर_qdisc(&cbs_qdisc_ops);
+	unरेजिस्टर_netdevice_notअगरier(&cbs_device_notअगरier);
+पूर्ण
 module_init(cbs_module_init)
-module_exit(cbs_module_exit)
+module_निकास(cbs_module_निकास)
 MODULE_LICENSE("GPL");

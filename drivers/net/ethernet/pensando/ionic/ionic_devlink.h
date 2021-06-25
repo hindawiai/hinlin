@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* Copyright(c) 2017 - 2019 Pensando Systems, Inc */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* Copyright(c) 2017 - 2019 Pensanकरो Systems, Inc */
 
-#ifndef _IONIC_DEVLINK_H_
-#define _IONIC_DEVLINK_H_
+#अगर_अघोषित _IONIC_DEVLINK_H_
+#घोषणा _IONIC_DEVLINK_H_
 
-#include <net/devlink.h>
+#समावेश <net/devlink.h>
 
-int ionic_firmware_update(struct ionic_lif *lif, const struct firmware *fw,
-			  struct netlink_ext_ack *extack);
+पूर्णांक ionic_firmware_update(काष्ठा ionic_lअगर *lअगर, स्थिर काष्ठा firmware *fw,
+			  काष्ठा netlink_ext_ack *extack);
 
-struct ionic *ionic_devlink_alloc(struct device *dev);
-void ionic_devlink_free(struct ionic *ionic);
-int ionic_devlink_register(struct ionic *ionic);
-void ionic_devlink_unregister(struct ionic *ionic);
+काष्ठा ionic *ionic_devlink_alloc(काष्ठा device *dev);
+व्योम ionic_devlink_मुक्त(काष्ठा ionic *ionic);
+पूर्णांक ionic_devlink_रेजिस्टर(काष्ठा ionic *ionic);
+व्योम ionic_devlink_unरेजिस्टर(काष्ठा ionic *ionic);
 
-#endif /* _IONIC_DEVLINK_H_ */
+#पूर्ण_अगर /* _IONIC_DEVLINK_H_ */

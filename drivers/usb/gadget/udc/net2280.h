@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * NetChip 2280 high/full speed USB device controller.
  * Unlike many such controllers, this one talks PCI.
@@ -7,151 +8,151 @@
 /*
  * Copyright (C) 2002 NetChip Technology, Inc. (http://www.netchip.com)
  * Copyright (C) 2003 David Brownell
- * Copyright (C) 2014 Ricardo Ribalda - Qtechnology/AS
+ * Copyright (C) 2014 Ricarकरो Ribalda - Qtechnology/AS
  */
 
-#include <linux/usb/net2280.h>
-#include <linux/usb/usb338x.h>
+#समावेश <linux/usb/net2280.h>
+#समावेश <linux/usb/usb338x.h>
 
 /*-------------------------------------------------------------------------*/
 
-#ifdef	__KERNEL__
+#अगर_घोषित	__KERNEL__
 
-/* indexed registers [11.10] are accessed indirectly
+/* indexed रेजिस्टरs [11.10] are accessed indirectly
  * caller must own the device lock.
  */
 
-static inline u32 get_idx_reg(struct net2280_regs __iomem *regs, u32 index)
-{
-	writel(index, &regs->idxaddr);
+अटल अंतरभूत u32 get_idx_reg(काष्ठा net2280_regs __iomem *regs, u32 index)
+अणु
+	ग_लिखोl(index, &regs->idxaddr);
 	/* NOTE:  synchs device/cpu memory views */
-	return readl(&regs->idxdata);
-}
+	वापस पढ़ोl(&regs->idxdata);
+पूर्ण
 
-static inline void
-set_idx_reg(struct net2280_regs __iomem *regs, u32 index, u32 value)
-{
-	writel(index, &regs->idxaddr);
-	writel(value, &regs->idxdata);
+अटल अंतरभूत व्योम
+set_idx_reg(काष्ठा net2280_regs __iomem *regs, u32 index, u32 value)
+अणु
+	ग_लिखोl(index, &regs->idxaddr);
+	ग_लिखोl(value, &regs->idxdata);
 	/* posted, may not be visible yet */
-}
+पूर्ण
 
-#endif	/* __KERNEL__ */
+#पूर्ण_अगर	/* __KERNEL__ */
 
-#define PCI_VENDOR_ID_PLX_LEGACY 0x17cc
+#घोषणा PCI_VENDOR_ID_PLX_LEGACY 0x17cc
 
-#define PLX_LEGACY		BIT(0)
-#define PLX_2280		BIT(1)
-#define PLX_SUPERSPEED		BIT(2)
-#define PLX_PCIE		BIT(3)
+#घोषणा PLX_LEGACY		BIT(0)
+#घोषणा PLX_2280		BIT(1)
+#घोषणा PLX_SUPERSPEED		BIT(2)
+#घोषणा PLX_PCIE		BIT(3)
 
-#define REG_DIAG		0x0
-#define     RETRY_COUNTER                                       16
-#define     FORCE_PCI_SERR                                      11
-#define     FORCE_PCI_INTERRUPT                                 10
-#define     FORCE_USB_INTERRUPT                                 9
-#define     FORCE_CPU_INTERRUPT                                 8
-#define     ILLEGAL_BYTE_ENABLES                                5
-#define     FAST_TIMES                                          4
-#define     FORCE_RECEIVE_ERROR                                 2
-#define     FORCE_TRANSMIT_CRC_ERROR                            0
-#define REG_FRAME		0x02	/* from last sof */
-#define REG_CHIPREV		0x03	/* in bcd */
-#define	REG_HS_NAK_RATE		0x0a	/* NAK per N uframes */
+#घोषणा REG_DIAG		0x0
+#घोषणा     RETRY_COUNTER                                       16
+#घोषणा     FORCE_PCI_SERR                                      11
+#घोषणा     FORCE_PCI_INTERRUPT                                 10
+#घोषणा     FORCE_USB_INTERRUPT                                 9
+#घोषणा     FORCE_CPU_INTERRUPT                                 8
+#घोषणा     ILLEGAL_BYTE_ENABLES                                5
+#घोषणा     FAST_TIMES                                          4
+#घोषणा     FORCE_RECEIVE_ERROR                                 2
+#घोषणा     FORCE_TRANSMIT_CRC_ERROR                            0
+#घोषणा REG_FRAME		0x02	/* from last sof */
+#घोषणा REG_CHIPREV		0x03	/* in bcd */
+#घोषणा	REG_HS_NAK_RATE		0x0a	/* NAK per N uframes */
 
-#define	CHIPREV_1	0x0100
-#define	CHIPREV_1A	0x0110
+#घोषणा	CHIPREV_1	0x0100
+#घोषणा	CHIPREV_1A	0x0110
 
 /* DEFECT 7374 */
-#define DEFECT_7374_NUMBEROF_MAX_WAIT_LOOPS         200
-#define DEFECT_7374_PROCESSOR_WAIT_TIME             10
+#घोषणा DEFECT_7374_NUMBEROF_MAX_WAIT_LOOPS         200
+#घोषणा DEFECT_7374_PROCESSOR_WAIT_TIME             10
 
 /* ep0 max packet size */
-#define EP0_SS_MAX_PACKET_SIZE  0x200
-#define EP0_HS_MAX_PACKET_SIZE  0x40
-#ifdef	__KERNEL__
+#घोषणा EP0_SS_MAX_PACKET_SIZE  0x200
+#घोषणा EP0_HS_MAX_PACKET_SIZE  0x40
+#अगर_घोषित	__KERNEL__
 
 /*-------------------------------------------------------------------------*/
 
-/* [8.3] for scatter/gather i/o
- * use struct net2280_dma_regs bitfields
+/* [8.3] क्रम scatter/gather i/o
+ * use काष्ठा net2280_dma_regs bitfields
  */
-struct net2280_dma {
+काष्ठा net2280_dma अणु
 	__le32		dmacount;
 	__le32		dmaaddr;		/* the buffer */
 	__le32		dmadesc;		/* next dma descriptor */
 	__le32		_reserved;
-} __aligned(16);
+पूर्ण __aligned(16);
 
 /*-------------------------------------------------------------------------*/
 
 /* DRIVER DATA STRUCTURES and UTILITIES */
 
-struct net2280_ep {
-	struct usb_ep				ep;
-	struct net2280_ep_regs __iomem *cfg;
-	struct net2280_ep_regs			__iomem *regs;
-	struct net2280_dma_regs			__iomem *dma;
-	struct net2280_dma			*dummy;
+काष्ठा net2280_ep अणु
+	काष्ठा usb_ep				ep;
+	काष्ठा net2280_ep_regs __iomem *cfg;
+	काष्ठा net2280_ep_regs			__iomem *regs;
+	काष्ठा net2280_dma_regs			__iomem *dma;
+	काष्ठा net2280_dma			*dummy;
 	dma_addr_t				td_dma;	/* of dummy */
-	struct net2280				*dev;
-	unsigned long				irqs;
+	काष्ठा net2280				*dev;
+	अचिन्हित दीर्घ				irqs;
 
 	/* analogous to a host-side qh */
-	struct list_head			queue;
-	const struct usb_endpoint_descriptor	*desc;
-	unsigned				num : 8,
-						fifo_size : 12,
-						in_fifo_validate : 1,
+	काष्ठा list_head			queue;
+	स्थिर काष्ठा usb_endpoपूर्णांक_descriptor	*desc;
+	अचिन्हित				num : 8,
+						fअगरo_size : 12,
+						in_fअगरo_validate : 1,
 						out_overflow : 1,
 						stopped : 1,
 						wedged : 1,
 						is_in : 1,
 						is_iso : 1,
 						responded : 1;
-};
+पूर्ण;
 
-static inline void allow_status(struct net2280_ep *ep)
-{
+अटल अंतरभूत व्योम allow_status(काष्ठा net2280_ep *ep)
+अणु
 	/* ep0 only */
-	writel(BIT(CLEAR_CONTROL_STATUS_PHASE_HANDSHAKE) |
+	ग_लिखोl(BIT(CLEAR_CONTROL_STATUS_PHASE_HANDSHAKE) |
 		BIT(CLEAR_NAK_OUT_PACKETS) |
 		BIT(CLEAR_NAK_OUT_PACKETS_MODE),
 		&ep->regs->ep_rsp);
 	ep->stopped = 1;
-}
+पूर्ण
 
-static inline void allow_status_338x(struct net2280_ep *ep)
-{
+अटल अंतरभूत व्योम allow_status_338x(काष्ठा net2280_ep *ep)
+अणु
 	/*
 	 * Control Status Phase Handshake was set by the chip when the setup
-	 * packet arrived. While set, the chip automatically NAKs the host's
+	 * packet arrived. While set, the chip स्वतःmatically NAKs the host's
 	 * Status Phase tokens.
 	 */
-	writel(BIT(CLEAR_CONTROL_STATUS_PHASE_HANDSHAKE), &ep->regs->ep_rsp);
+	ग_लिखोl(BIT(CLEAR_CONTROL_STATUS_PHASE_HANDSHAKE), &ep->regs->ep_rsp);
 
 	ep->stopped = 1;
 
-	/* TD 9.9 Halt Endpoint test.  TD 9.22 set feature test. */
+	/* TD 9.9 Halt Endpoपूर्णांक test.  TD 9.22 set feature test. */
 	ep->responded = 0;
-}
+पूर्ण
 
-struct net2280_request {
-	struct usb_request		req;
-	struct net2280_dma		*td;
+काष्ठा net2280_request अणु
+	काष्ठा usb_request		req;
+	काष्ठा net2280_dma		*td;
 	dma_addr_t			td_dma;
-	struct list_head		queue;
-	unsigned			mapped : 1,
+	काष्ठा list_head		queue;
+	अचिन्हित			mapped : 1,
 					valid : 1;
-};
+पूर्ण;
 
-struct net2280 {
-	/* each pci device provides one gadget, several endpoints */
-	struct usb_gadget		gadget;
+काष्ठा net2280 अणु
+	/* each pci device provides one gadget, several endpoपूर्णांकs */
+	काष्ठा usb_gadget		gadget;
 	spinlock_t			lock;
-	struct net2280_ep		ep[9];
-	struct usb_gadget_driver	*driver;
-	unsigned			enabled : 1,
+	काष्ठा net2280_ep		ep[9];
+	काष्ठा usb_gadget_driver	*driver;
+	अचिन्हित			enabled : 1,
 					protocol_stall : 1,
 					softconnect : 1,
 					got_irq : 1,
@@ -159,231 +160,231 @@ struct net2280 {
 					added:1,
 					u1_enable:1,
 					u2_enable:1,
-					ltm_enable:1,
+					lपंचांग_enable:1,
 					wakeup_enable:1,
 					addressed_state:1,
 					bug7734_patched:1;
 	u16				chiprev;
-	int enhanced_mode;
-	int n_ep;
-	kernel_ulong_t			quirks;
+	पूर्णांक enhanced_mode;
+	पूर्णांक n_ep;
+	kernel_uदीर्घ_t			quirks;
 
 
-	/* pci state used to access those endpoints */
-	struct pci_dev			*pdev;
-	struct net2280_regs		__iomem *regs;
-	struct net2280_usb_regs		__iomem *usb;
-	struct usb338x_usb_ext_regs	__iomem *usb_ext;
-	struct net2280_pci_regs		__iomem *pci;
-	struct net2280_dma_regs		__iomem *dma;
-	struct net2280_dep_regs		__iomem *dep;
-	struct net2280_ep_regs		__iomem *epregs;
-	struct usb338x_ll_regs		__iomem *llregs;
-	struct usb338x_pl_regs		__iomem *plregs;
+	/* pci state used to access those endpoपूर्णांकs */
+	काष्ठा pci_dev			*pdev;
+	काष्ठा net2280_regs		__iomem *regs;
+	काष्ठा net2280_usb_regs		__iomem *usb;
+	काष्ठा usb338x_usb_ext_regs	__iomem *usb_ext;
+	काष्ठा net2280_pci_regs		__iomem *pci;
+	काष्ठा net2280_dma_regs		__iomem *dma;
+	काष्ठा net2280_dep_regs		__iomem *dep;
+	काष्ठा net2280_ep_regs		__iomem *epregs;
+	काष्ठा usb338x_ll_regs		__iomem *llregs;
+	काष्ठा usb338x_pl_regs		__iomem *plregs;
 
-	struct dma_pool			*requests;
+	काष्ठा dma_pool			*requests;
 	/* statistics...*/
-};
+पूर्ण;
 
-static inline void set_halt(struct net2280_ep *ep)
-{
-	/* ep0 and bulk/intr endpoints */
-	writel(BIT(CLEAR_CONTROL_STATUS_PHASE_HANDSHAKE) |
-		/* set NAK_OUT for erratum 0114 */
+अटल अंतरभूत व्योम set_halt(काष्ठा net2280_ep *ep)
+अणु
+	/* ep0 and bulk/पूर्णांकr endpoपूर्णांकs */
+	ग_लिखोl(BIT(CLEAR_CONTROL_STATUS_PHASE_HANDSHAKE) |
+		/* set NAK_OUT क्रम erratum 0114 */
 		((ep->dev->chiprev == CHIPREV_1) << SET_NAK_OUT_PACKETS) |
 		BIT(SET_ENDPOINT_HALT),
 		&ep->regs->ep_rsp);
-}
+पूर्ण
 
-static inline void clear_halt(struct net2280_ep *ep)
-{
-	/* ep0 and bulk/intr endpoints */
-	writel(BIT(CLEAR_ENDPOINT_HALT) |
+अटल अंतरभूत व्योम clear_halt(काष्ठा net2280_ep *ep)
+अणु
+	/* ep0 and bulk/पूर्णांकr endpoपूर्णांकs */
+	ग_लिखोl(BIT(CLEAR_ENDPOINT_HALT) |
 		BIT(CLEAR_ENDPOINT_TOGGLE) |
 		    /*
-		     * unless the gadget driver left a short packet in the
-		     * fifo, this reverses the erratum 0114 workaround.
+		     * unless the gadget driver left a लघु packet in the
+		     * fअगरo, this reverses the erratum 0114 workaround.
 		     */
 		((ep->dev->chiprev == CHIPREV_1) << CLEAR_NAK_OUT_PACKETS),
 		&ep->regs->ep_rsp);
-}
+पूर्ण
 
 /*
- * FSM value for Defect 7374 (U1U2 Test) is managed in
- * chip's SCRATCH register:
+ * FSM value क्रम Defect 7374 (U1U2 Test) is managed in
+ * chip's SCRATCH रेजिस्टर:
  */
-#define DEFECT7374_FSM_FIELD    28
+#घोषणा DEFECT7374_FSM_FIELD    28
 
-/* Waiting for Control Read:
+/* Waiting क्रम Control Read:
  *  - A transition to this state indicates a fresh USB connection,
- *    before the first Setup Packet. The connection speed is not
- *    known. Firmware is waiting for the first Control Read.
+ *    beक्रमe the first Setup Packet. The connection speed is not
+ *    known. Firmware is रुकोing क्रम the first Control Read.
  *  - Starting state: This state can be thought of as the FSM's typical
  *    starting state.
  *  - Tip: Upon the first SS Control Read the FSM never
- *    returns to this state.
+ *    वापसs to this state.
  */
-#define DEFECT7374_FSM_WAITING_FOR_CONTROL_READ BIT(DEFECT7374_FSM_FIELD)
+#घोषणा DEFECT7374_FSM_WAITING_FOR_CONTROL_READ BIT(DEFECT7374_FSM_FIELD)
 
 /* Non-SS Control Read:
  *  - A transition to this state indicates detection of the first HS
  *    or FS Control Read.
  *  - Tip: Upon the first SS Control Read the FSM never
- *    returns to this state.
+ *    वापसs to this state.
  */
-#define	DEFECT7374_FSM_NON_SS_CONTROL_READ (2 << DEFECT7374_FSM_FIELD)
+#घोषणा	DEFECT7374_FSM_NON_SS_CONTROL_READ (2 << DEFECT7374_FSM_FIELD)
 
 /* SS Control Read:
  *  - A transition to this state indicates detection of the
  *    first SS Control Read.
- *  - This state indicates workaround completion. Workarounds no longer
- *    need to be applied (as long as the chip remains powered up).
- *  - Tip: Once in this state the FSM state does not change (until
- *    the chip's power is lost and restored).
+ *  - This state indicates workaround completion. Workarounds no दीर्घer
+ *    need to be applied (as दीर्घ as the chip reमुख्यs घातered up).
+ *  - Tip: Once in this state the FSM state करोes not change (until
+ *    the chip's घातer is lost and restored).
  *  - This can be thought of as the final state of the FSM;
- *    the FSM 'locks-up' in this state until the chip loses power.
+ *    the FSM 'locks-up' in this state until the chip loses घातer.
  */
-#define DEFECT7374_FSM_SS_CONTROL_READ (3 << DEFECT7374_FSM_FIELD)
+#घोषणा DEFECT7374_FSM_SS_CONTROL_READ (3 << DEFECT7374_FSM_FIELD)
 
-#ifdef USE_RDK_LEDS
+#अगर_घोषित USE_RDK_LEDS
 
-static inline void net2280_led_init(struct net2280 *dev)
-{
+अटल अंतरभूत व्योम net2280_led_init(काष्ठा net2280 *dev)
+अणु
 	/* LED3 (green) is on during USB activity. note erratum 0113. */
-	writel(BIT(GPIO3_LED_SELECT) |
+	ग_लिखोl(BIT(GPIO3_LED_SELECT) |
 		BIT(GPIO3_OUTPUT_ENABLE) |
 		BIT(GPIO2_OUTPUT_ENABLE) |
 		BIT(GPIO1_OUTPUT_ENABLE) |
 		BIT(GPIO0_OUTPUT_ENABLE),
 		&dev->regs->gpioctl);
-}
+पूर्ण
 
 /* indicate speed with bi-color LED 0/1 */
-static inline
-void net2280_led_speed(struct net2280 *dev, enum usb_device_speed speed)
-{
-	u32	val = readl(&dev->regs->gpioctl);
-	switch (speed) {
-	case USB_SPEED_SUPER:		/* green + red */
+अटल अंतरभूत
+व्योम net2280_led_speed(काष्ठा net2280 *dev, क्रमागत usb_device_speed speed)
+अणु
+	u32	val = पढ़ोl(&dev->regs->gpioctl);
+	चयन (speed) अणु
+	हाल USB_SPEED_SUPER:		/* green + red */
 		val |= BIT(GPIO0_DATA) | BIT(GPIO1_DATA);
-		break;
-	case USB_SPEED_HIGH:		/* green */
+		अवरोध;
+	हाल USB_SPEED_HIGH:		/* green */
 		val &= ~BIT(GPIO0_DATA);
 		val |= BIT(GPIO1_DATA);
-		break;
-	case USB_SPEED_FULL:		/* red */
+		अवरोध;
+	हाल USB_SPEED_FULL:		/* red */
 		val &= ~BIT(GPIO1_DATA);
 		val |= BIT(GPIO0_DATA);
-		break;
-	default:			/* (off/black) */
+		अवरोध;
+	शेष:			/* (off/black) */
 		val &= ~(BIT(GPIO1_DATA) | BIT(GPIO0_DATA));
-		break;
-	}
-	writel(val, &dev->regs->gpioctl);
-}
+		अवरोध;
+	पूर्ण
+	ग_लिखोl(val, &dev->regs->gpioctl);
+पूर्ण
 
-/* indicate power with LED 2 */
-static inline void net2280_led_active(struct net2280 *dev, int is_active)
-{
-	u32	val = readl(&dev->regs->gpioctl);
+/* indicate घातer with LED 2 */
+अटल अंतरभूत व्योम net2280_led_active(काष्ठा net2280 *dev, पूर्णांक is_active)
+अणु
+	u32	val = पढ़ोl(&dev->regs->gpioctl);
 
 	/* FIXME this LED never seems to turn on.*/
-	if (is_active)
+	अगर (is_active)
 		val |= GPIO2_DATA;
-	else
+	अन्यथा
 		val &= ~GPIO2_DATA;
-	writel(val, &dev->regs->gpioctl);
-}
+	ग_लिखोl(val, &dev->regs->gpioctl);
+पूर्ण
 
-static inline void net2280_led_shutdown(struct net2280 *dev)
-{
+अटल अंतरभूत व्योम net2280_led_shutकरोwn(काष्ठा net2280 *dev)
+अणु
 	/* turn off all four GPIO*_DATA bits */
-	writel(readl(&dev->regs->gpioctl) & ~0x0f,
+	ग_लिखोl(पढ़ोl(&dev->regs->gpioctl) & ~0x0f,
 			&dev->regs->gpioctl);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-#define net2280_led_init(dev)		do { } while (0)
-#define net2280_led_speed(dev, speed)	do { } while (0)
-#define net2280_led_shutdown(dev)	do { } while (0)
+#घोषणा net2280_led_init(dev)		करो अणु पूर्ण जबतक (0)
+#घोषणा net2280_led_speed(dev, speed)	करो अणु पूर्ण जबतक (0)
+#घोषणा net2280_led_shutकरोwn(dev)	करो अणु पूर्ण जबतक (0)
 
-#endif
+#पूर्ण_अगर
 
 /*-------------------------------------------------------------------------*/
 
-#define ep_dbg(ndev, fmt, args...) \
+#घोषणा ep_dbg(ndev, fmt, args...) \
 	dev_dbg((&((ndev)->pdev->dev)), fmt, ##args)
 
-#define ep_vdbg(ndev, fmt, args...) \
+#घोषणा ep_vdbg(ndev, fmt, args...) \
 	dev_vdbg((&((ndev)->pdev->dev)), fmt, ##args)
 
-#define ep_info(ndev, fmt, args...) \
+#घोषणा ep_info(ndev, fmt, args...) \
 	dev_info((&((ndev)->pdev->dev)), fmt, ##args)
 
-#define ep_warn(ndev, fmt, args...) \
+#घोषणा ep_warn(ndev, fmt, args...) \
 	dev_warn((&((ndev)->pdev->dev)), fmt, ##args)
 
-#define ep_err(ndev, fmt, args...) \
+#घोषणा ep_err(ndev, fmt, args...) \
 	dev_err((&((ndev)->pdev->dev)), fmt, ##args)
 
 /*-------------------------------------------------------------------------*/
 
-static inline void set_fifo_bytecount(struct net2280_ep *ep, unsigned count)
-{
-	if (ep->dev->pdev->vendor == 0x17cc)
-		writeb(count, 2 + (u8 __iomem *) &ep->regs->ep_cfg);
-	else{
-		u32 tmp = readl(&ep->cfg->ep_cfg) &
+अटल अंतरभूत व्योम set_fअगरo_bytecount(काष्ठा net2280_ep *ep, अचिन्हित count)
+अणु
+	अगर (ep->dev->pdev->venकरोr == 0x17cc)
+		ग_लिखोb(count, 2 + (u8 __iomem *) &ep->regs->ep_cfg);
+	अन्यथाअणु
+		u32 पंचांगp = पढ़ोl(&ep->cfg->ep_cfg) &
 					(~(0x07 << EP_FIFO_BYTE_COUNT));
-		writel(tmp | (count << EP_FIFO_BYTE_COUNT), &ep->cfg->ep_cfg);
-	}
-}
+		ग_लिखोl(पंचांगp | (count << EP_FIFO_BYTE_COUNT), &ep->cfg->ep_cfg);
+	पूर्ण
+पूर्ण
 
-static inline void start_out_naking(struct net2280_ep *ep)
-{
+अटल अंतरभूत व्योम start_out_naking(काष्ठा net2280_ep *ep)
+अणु
 	/* NOTE:  hardware races lurk here, and PING protocol issues */
-	writel(BIT(SET_NAK_OUT_PACKETS), &ep->regs->ep_rsp);
+	ग_लिखोl(BIT(SET_NAK_OUT_PACKETS), &ep->regs->ep_rsp);
 	/* synch with device */
-	readl(&ep->regs->ep_rsp);
-}
+	पढ़ोl(&ep->regs->ep_rsp);
+पूर्ण
 
-static inline void stop_out_naking(struct net2280_ep *ep)
-{
-	u32	tmp;
+अटल अंतरभूत व्योम stop_out_naking(काष्ठा net2280_ep *ep)
+अणु
+	u32	पंचांगp;
 
-	tmp = readl(&ep->regs->ep_stat);
-	if ((tmp & BIT(NAK_OUT_PACKETS)) != 0)
-		writel(BIT(CLEAR_NAK_OUT_PACKETS), &ep->regs->ep_rsp);
-}
+	पंचांगp = पढ़ोl(&ep->regs->ep_stat);
+	अगर ((पंचांगp & BIT(NAK_OUT_PACKETS)) != 0)
+		ग_लिखोl(BIT(CLEAR_NAK_OUT_PACKETS), &ep->regs->ep_rsp);
+पूर्ण
 
 
-static inline void set_max_speed(struct net2280_ep *ep, u32 max)
-{
+अटल अंतरभूत व्योम set_max_speed(काष्ठा net2280_ep *ep, u32 max)
+अणु
 	u32 reg;
-	static const u32 ep_enhanced[9] = { 0x10, 0x60, 0x30, 0x80,
-					  0x50, 0x20, 0x70, 0x40, 0x90 };
+	अटल स्थिर u32 ep_enhanced[9] = अणु 0x10, 0x60, 0x30, 0x80,
+					  0x50, 0x20, 0x70, 0x40, 0x90 पूर्ण;
 
-	if (ep->dev->enhanced_mode) {
+	अगर (ep->dev->enhanced_mode) अणु
 		reg = ep_enhanced[ep->num];
-		switch (ep->dev->gadget.speed) {
-		case USB_SPEED_SUPER:
+		चयन (ep->dev->gadget.speed) अणु
+		हाल USB_SPEED_SUPER:
 			reg += 2;
-			break;
-		case USB_SPEED_FULL:
+			अवरोध;
+		हाल USB_SPEED_FULL:
 			reg += 1;
-			break;
-		case USB_SPEED_HIGH:
-		default:
-			break;
-		}
-	} else {
+			अवरोध;
+		हाल USB_SPEED_HIGH:
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		reg = (ep->num + 1) * 0x10;
-		if (ep->dev->gadget.speed != USB_SPEED_HIGH)
+		अगर (ep->dev->gadget.speed != USB_SPEED_HIGH)
 			reg += 1;
-	}
+	पूर्ण
 
 	set_idx_reg(ep->dev->regs, reg, max);
-}
+पूर्ण
 
-#endif	/* __KERNEL__ */
+#पूर्ण_अगर	/* __KERNEL__ */

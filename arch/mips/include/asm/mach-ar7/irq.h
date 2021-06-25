@@ -1,16 +1,17 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * Shamelessly copied from asm-mips/mach-emma2rh/
+ * Shamelessly copied from यंत्र-mips/mach-emma2rh/
  * Copyright (C) 2003 by Ralf Baechle
  */
-#ifndef __ASM_AR7_IRQ_H
-#define __ASM_AR7_IRQ_H
+#अगर_अघोषित __ASM_AR7_IRQ_H
+#घोषणा __ASM_AR7_IRQ_H
 
-#define NR_IRQS 256
+#घोषणा NR_IRQS 256
 
-#include <asm/mach-generic/irq.h>
+#समावेश <यंत्र/mach-generic/irq.h>
 
-#endif /* __ASM_AR7_IRQ_H */
+#पूर्ण_अगर /* __ASM_AR7_IRQ_H */

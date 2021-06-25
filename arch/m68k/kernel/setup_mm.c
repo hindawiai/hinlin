@@ -1,624 +1,625 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/arch/m68k/kernel/setup.c
  *
- *  Copyright (C) 1995  Hamish Macdonald
+ *  Copyright (C) 1995  Hamish Macकरोnald
  */
 
 /*
- * This file handles the architecture-dependent parts of system setup
+ * This file handles the architecture-dependent parts of प्रणाली setup
  */
 
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/sched.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/fs.h>
-#include <linux/console.h>
-#include <linux/genhd.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/init.h>
-#include <linux/memblock.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/module.h>
-#include <linux/nvram.h>
-#include <linux/initrd.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/console.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/init.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/module.h>
+#समावेश <linux/nvram.h>
+#समावेश <linux/initrd.h>
 
-#include <asm/bootinfo.h>
-#include <asm/byteorder.h>
-#include <asm/sections.h>
-#include <asm/setup.h>
-#include <asm/fpu.h>
-#include <asm/irq.h>
-#include <asm/io.h>
-#include <asm/machdep.h>
-#ifdef CONFIG_AMIGA
-#include <asm/amigahw.h>
-#endif
-#include <asm/atarihw.h>
-#ifdef CONFIG_ATARI
-#include <asm/atari_stram.h>
-#endif
-#ifdef CONFIG_SUN3X
-#include <asm/dvma.h>
-#endif
-#include <asm/macintosh.h>
-#include <asm/natfeat.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/fpu.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/machdep.h>
+#अगर_घोषित CONFIG_AMIGA
+#समावेश <यंत्र/amigahw.h>
+#पूर्ण_अगर
+#समावेश <यंत्र/atarihw.h>
+#अगर_घोषित CONFIG_ATARI
+#समावेश <यंत्र/atari_stram.h>
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SUN3X
+#समावेश <यंत्र/dvma.h>
+#पूर्ण_अगर
+#समावेश <यंत्र/macपूर्णांकosh.h>
+#समावेश <यंत्र/natfeat.h>
 
-#if !FPSTATESIZE || !NR_IRQS
-#warning No CPU/platform type selected, your kernel will not work!
+#अगर !FPSTATESIZE || !NR_IRQS
+#warning No CPU/platक्रमm type selected, your kernel will not work!
 #warning Are you building an allnoconfig kernel?
-#endif
+#पूर्ण_अगर
 
-unsigned long m68k_machtype;
+अचिन्हित दीर्घ m68k_machtype;
 EXPORT_SYMBOL(m68k_machtype);
-unsigned long m68k_cputype;
+अचिन्हित दीर्घ m68k_cputype;
 EXPORT_SYMBOL(m68k_cputype);
-unsigned long m68k_fputype;
-unsigned long m68k_mmutype;
+अचिन्हित दीर्घ m68k_fputype;
+अचिन्हित दीर्घ m68k_mmutype;
 EXPORT_SYMBOL(m68k_mmutype);
-#ifdef CONFIG_VME
-unsigned long vme_brdtype;
+#अगर_घोषित CONFIG_VME
+अचिन्हित दीर्घ vme_brdtype;
 EXPORT_SYMBOL(vme_brdtype);
-#endif
+#पूर्ण_अगर
 
-int m68k_is040or060;
+पूर्णांक m68k_is040or060;
 EXPORT_SYMBOL(m68k_is040or060);
 
-extern unsigned long availmem;
+बाह्य अचिन्हित दीर्घ availmem;
 
-int m68k_num_memory;
+पूर्णांक m68k_num_memory;
 EXPORT_SYMBOL(m68k_num_memory);
-int m68k_realnum_memory;
+पूर्णांक m68k_realnum_memory;
 EXPORT_SYMBOL(m68k_realnum_memory);
-unsigned long m68k_memoffset;
-struct m68k_mem_info m68k_memory[NUM_MEMINFO];
+अचिन्हित दीर्घ m68k_memoffset;
+काष्ठा m68k_mem_info m68k_memory[NUM_MEMINFO];
 EXPORT_SYMBOL(m68k_memory);
 
-static struct m68k_mem_info m68k_ramdisk __initdata;
+अटल काष्ठा m68k_mem_info m68k_ramdisk __initdata;
 
-static char m68k_command_line[CL_SIZE] __initdata;
+अटल अक्षर m68k_command_line[CL_SIZE] __initdata;
 
-void (*mach_sched_init) (void) __initdata = NULL;
+व्योम (*mach_sched_init) (व्योम) __initdata = शून्य;
 /* machine dependent irq functions */
-void (*mach_init_IRQ) (void) __initdata = NULL;
-void (*mach_get_model) (char *model);
-void (*mach_get_hardware_list) (struct seq_file *m);
-/* machine dependent timer functions */
-int (*mach_hwclk) (int, struct rtc_time*);
+व्योम (*mach_init_IRQ) (व्योम) __initdata = शून्य;
+व्योम (*mach_get_model) (अक्षर *model);
+व्योम (*mach_get_hardware_list) (काष्ठा seq_file *m);
+/* machine dependent समयr functions */
+पूर्णांक (*mach_hwclk) (पूर्णांक, काष्ठा rtc_समय*);
 EXPORT_SYMBOL(mach_hwclk);
-unsigned int (*mach_get_ss)(void);
-int (*mach_get_rtc_pll)(struct rtc_pll_info *);
-int (*mach_set_rtc_pll)(struct rtc_pll_info *);
+अचिन्हित पूर्णांक (*mach_get_ss)(व्योम);
+पूर्णांक (*mach_get_rtc_pll)(काष्ठा rtc_pll_info *);
+पूर्णांक (*mach_set_rtc_pll)(काष्ठा rtc_pll_info *);
 EXPORT_SYMBOL(mach_get_ss);
 EXPORT_SYMBOL(mach_get_rtc_pll);
 EXPORT_SYMBOL(mach_set_rtc_pll);
-void (*mach_reset)( void );
-void (*mach_halt)( void );
-void (*mach_power_off)( void );
-#ifdef CONFIG_HEARTBEAT
-void (*mach_heartbeat) (int);
+व्योम (*mach_reset)( व्योम );
+व्योम (*mach_halt)( व्योम );
+व्योम (*mach_घातer_off)( व्योम );
+#अगर_घोषित CONFIG_HEARTBEAT
+व्योम (*mach_heartbeat) (पूर्णांक);
 EXPORT_SYMBOL(mach_heartbeat);
-#endif
-#ifdef CONFIG_M68K_L2_CACHE
-void (*mach_l2_flush) (int);
-#endif
-#if defined(CONFIG_ISA) && defined(MULTI_ISA)
-int isa_type;
-int isa_sex;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_M68K_L2_CACHE
+व्योम (*mach_l2_flush) (पूर्णांक);
+#पूर्ण_अगर
+#अगर defined(CONFIG_ISA) && defined(MULTI_ISA)
+पूर्णांक isa_type;
+पूर्णांक isa_sex;
 EXPORT_SYMBOL(isa_type);
 EXPORT_SYMBOL(isa_sex);
-#endif
+#पूर्ण_अगर
 
-extern int amiga_parse_bootinfo(const struct bi_record *);
-extern int atari_parse_bootinfo(const struct bi_record *);
-extern int mac_parse_bootinfo(const struct bi_record *);
-extern int q40_parse_bootinfo(const struct bi_record *);
-extern int bvme6000_parse_bootinfo(const struct bi_record *);
-extern int mvme16x_parse_bootinfo(const struct bi_record *);
-extern int mvme147_parse_bootinfo(const struct bi_record *);
-extern int hp300_parse_bootinfo(const struct bi_record *);
-extern int apollo_parse_bootinfo(const struct bi_record *);
+बाह्य पूर्णांक amiga_parse_bootinfo(स्थिर काष्ठा bi_record *);
+बाह्य पूर्णांक atari_parse_bootinfo(स्थिर काष्ठा bi_record *);
+बाह्य पूर्णांक mac_parse_bootinfo(स्थिर काष्ठा bi_record *);
+बाह्य पूर्णांक q40_parse_bootinfo(स्थिर काष्ठा bi_record *);
+बाह्य पूर्णांक bvme6000_parse_bootinfo(स्थिर काष्ठा bi_record *);
+बाह्य पूर्णांक mvme16x_parse_bootinfo(स्थिर काष्ठा bi_record *);
+बाह्य पूर्णांक mvme147_parse_bootinfo(स्थिर काष्ठा bi_record *);
+बाह्य पूर्णांक hp300_parse_bootinfo(स्थिर काष्ठा bi_record *);
+बाह्य पूर्णांक apollo_parse_bootinfo(स्थिर काष्ठा bi_record *);
 
-extern void config_amiga(void);
-extern void config_atari(void);
-extern void config_mac(void);
-extern void config_sun3(void);
-extern void config_apollo(void);
-extern void config_mvme147(void);
-extern void config_mvme16x(void);
-extern void config_bvme6000(void);
-extern void config_hp300(void);
-extern void config_q40(void);
-extern void config_sun3x(void);
+बाह्य व्योम config_amiga(व्योम);
+बाह्य व्योम config_atari(व्योम);
+बाह्य व्योम config_mac(व्योम);
+बाह्य व्योम config_sun3(व्योम);
+बाह्य व्योम config_apollo(व्योम);
+बाह्य व्योम config_mvme147(व्योम);
+बाह्य व्योम config_mvme16x(व्योम);
+बाह्य व्योम config_bvme6000(व्योम);
+बाह्य व्योम config_hp300(व्योम);
+बाह्य व्योम config_q40(व्योम);
+बाह्य व्योम config_sun3x(व्योम);
 
-#define MASK_256K 0xfffc0000
+#घोषणा MASK_256K 0xfffc0000
 
-extern void paging_init(void);
+बाह्य व्योम paging_init(व्योम);
 
-static void __init m68k_parse_bootinfo(const struct bi_record *record)
-{
-	uint16_t tag;
+अटल व्योम __init m68k_parse_bootinfo(स्थिर काष्ठा bi_record *record)
+अणु
+	uपूर्णांक16_t tag;
 
 	save_bootinfo(record);
 
-	while ((tag = be16_to_cpu(record->tag)) != BI_LAST) {
-		int unknown = 0;
-		const void *data = record->data;
-		uint16_t size = be16_to_cpu(record->size);
+	जबतक ((tag = be16_to_cpu(record->tag)) != BI_LAST) अणु
+		पूर्णांक unknown = 0;
+		स्थिर व्योम *data = record->data;
+		uपूर्णांक16_t size = be16_to_cpu(record->size);
 
-		switch (tag) {
-		case BI_MACHTYPE:
-		case BI_CPUTYPE:
-		case BI_FPUTYPE:
-		case BI_MMUTYPE:
-			/* Already set up by head.S */
-			break;
+		चयन (tag) अणु
+		हाल BI_MACHTYPE:
+		हाल BI_CPUTYPE:
+		हाल BI_FPUTYPE:
+		हाल BI_MMUTYPE:
+			/* Alपढ़ोy set up by head.S */
+			अवरोध;
 
-		case BI_MEMCHUNK:
-			if (m68k_num_memory < NUM_MEMINFO) {
-				const struct mem_info *m = data;
+		हाल BI_MEMCHUNK:
+			अगर (m68k_num_memory < NUM_MEMINFO) अणु
+				स्थिर काष्ठा mem_info *m = data;
 				m68k_memory[m68k_num_memory].addr =
 					be32_to_cpu(m->addr);
 				m68k_memory[m68k_num_memory].size =
 					be32_to_cpu(m->size);
 				m68k_num_memory++;
-			} else
+			पूर्ण अन्यथा
 				pr_warn("%s: too many memory chunks\n",
 					__func__);
-			break;
+			अवरोध;
 
-		case BI_RAMDISK:
-			{
-				const struct mem_info *m = data;
+		हाल BI_RAMDISK:
+			अणु
+				स्थिर काष्ठा mem_info *m = data;
 				m68k_ramdisk.addr = be32_to_cpu(m->addr);
 				m68k_ramdisk.size = be32_to_cpu(m->size);
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case BI_COMMAND_LINE:
+		हाल BI_COMMAND_LINE:
 			strlcpy(m68k_command_line, data,
-				sizeof(m68k_command_line));
-			break;
+				माप(m68k_command_line));
+			अवरोध;
 
-		default:
-			if (MACH_IS_AMIGA)
+		शेष:
+			अगर (MACH_IS_AMIGA)
 				unknown = amiga_parse_bootinfo(record);
-			else if (MACH_IS_ATARI)
+			अन्यथा अगर (MACH_IS_ATARI)
 				unknown = atari_parse_bootinfo(record);
-			else if (MACH_IS_MAC)
+			अन्यथा अगर (MACH_IS_MAC)
 				unknown = mac_parse_bootinfo(record);
-			else if (MACH_IS_Q40)
+			अन्यथा अगर (MACH_IS_Q40)
 				unknown = q40_parse_bootinfo(record);
-			else if (MACH_IS_BVME6000)
+			अन्यथा अगर (MACH_IS_BVME6000)
 				unknown = bvme6000_parse_bootinfo(record);
-			else if (MACH_IS_MVME16x)
+			अन्यथा अगर (MACH_IS_MVME16x)
 				unknown = mvme16x_parse_bootinfo(record);
-			else if (MACH_IS_MVME147)
+			अन्यथा अगर (MACH_IS_MVME147)
 				unknown = mvme147_parse_bootinfo(record);
-			else if (MACH_IS_HP300)
+			अन्यथा अगर (MACH_IS_HP300)
 				unknown = hp300_parse_bootinfo(record);
-			else if (MACH_IS_APOLLO)
+			अन्यथा अगर (MACH_IS_APOLLO)
 				unknown = apollo_parse_bootinfo(record);
-			else
+			अन्यथा
 				unknown = 1;
-		}
-		if (unknown)
+		पूर्ण
+		अगर (unknown)
 			pr_warn("%s: unknown tag 0x%04x ignored\n", __func__,
 				tag);
-		record = (struct bi_record *)((unsigned long)record + size);
-	}
+		record = (काष्ठा bi_record *)((अचिन्हित दीर्घ)record + size);
+	पूर्ण
 
 	m68k_realnum_memory = m68k_num_memory;
-#ifdef CONFIG_SINGLE_MEMORY_CHUNK
-	if (m68k_num_memory > 1) {
+#अगर_घोषित CONFIG_SINGLE_MEMORY_CHUNK
+	अगर (m68k_num_memory > 1) अणु
 		pr_warn("%s: ignoring last %i chunks of physical memory\n",
 			__func__, (m68k_num_memory - 1));
 		m68k_num_memory = 1;
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-void __init setup_arch(char **cmdline_p)
-{
+व्योम __init setup_arch(अक्षर **cmdline_p)
+अणु
 	/* The bootinfo is located right after the kernel */
-	if (!CPU_IS_COLDFIRE)
-		m68k_parse_bootinfo((const struct bi_record *)_end);
+	अगर (!CPU_IS_COLDFIRE)
+		m68k_parse_bootinfo((स्थिर काष्ठा bi_record *)_end);
 
-	if (CPU_IS_040)
+	अगर (CPU_IS_040)
 		m68k_is040or060 = 4;
-	else if (CPU_IS_060)
+	अन्यथा अगर (CPU_IS_060)
 		m68k_is040or060 = 6;
 
 	/* FIXME: m68k_fputype is passed in by Penguin booter, which can
 	 * be confused by software FPU emulation. BEWARE.
-	 * We should really do our own FPU check at startup.
-	 * [what do we do with buggy 68LC040s? if we have problems
+	 * We should really करो our own FPU check at startup.
+	 * [what करो we करो with buggy 68LC040s? अगर we have problems
 	 *  with them, we should add a test to check_bugs() below] */
-#if defined(CONFIG_FPU) && !defined(CONFIG_M68KFPU_EMU_ONLY)
-	/* clear the fpu if we have one */
-	if (m68k_fputype & (FPU_68881|FPU_68882|FPU_68040|FPU_68060|FPU_COLDFIRE)) {
-		volatile int zero = 0;
-		asm volatile ("frestore %0" : : "m" (zero));
-	}
-#endif
+#अगर defined(CONFIG_FPU) && !defined(CONFIG_M68KFPU_EMU_ONLY)
+	/* clear the fpu अगर we have one */
+	अगर (m68k_fputype & (FPU_68881|FPU_68882|FPU_68040|FPU_68060|FPU_COLDFIRE)) अणु
+		अस्थिर पूर्णांक zero = 0;
+		यंत्र अस्थिर ("frestore %0" : : "m" (zero));
+	पूर्ण
+#पूर्ण_अगर
 
-	if (CPU_IS_060) {
+	अगर (CPU_IS_060) अणु
 		u32 pcr;
 
-		asm (".chip 68060; movec %%pcr,%0; .chip 68k"
+		यंत्र (".chip 68060; movec %%pcr,%0; .chip 68k"
 		     : "=d" (pcr));
-		if (((pcr >> 8) & 0xff) <= 5) {
+		अगर (((pcr >> 8) & 0xff) <= 5) अणु
 			pr_warn("Enabling workaround for errata I14\n");
-			asm (".chip 68060; movec %0,%%pcr; .chip 68k"
+			यंत्र (".chip 68060; movec %0,%%pcr; .chip 68k"
 			     : : "d" (pcr | 0x20));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	init_mm.start_code = PAGE_OFFSET;
-	init_mm.end_code = (unsigned long)_etext;
-	init_mm.end_data = (unsigned long)_edata;
-	init_mm.brk = (unsigned long)_end;
+	init_mm.end_code = (अचिन्हित दीर्घ)_etext;
+	init_mm.end_data = (अचिन्हित दीर्घ)_edata;
+	init_mm.brk = (अचिन्हित दीर्घ)_end;
 
-#if defined(CONFIG_BOOTPARAM)
-	strncpy(m68k_command_line, CONFIG_BOOTPARAM_STRING, CL_SIZE);
+#अगर defined(CONFIG_BOOTPARAM)
+	म_नकलन(m68k_command_line, CONFIG_BOOTPARAM_STRING, CL_SIZE);
 	m68k_command_line[CL_SIZE - 1] = 0;
-#endif /* CONFIG_BOOTPARAM */
+#पूर्ण_अगर /* CONFIG_BOOTPARAM */
 	process_uboot_commandline(&m68k_command_line[0], CL_SIZE);
 	*cmdline_p = m68k_command_line;
-	memcpy(boot_command_line, *cmdline_p, CL_SIZE);
+	स_नकल(boot_command_line, *cmdline_p, CL_SIZE);
 
 	parse_early_param();
 
-	switch (m68k_machtype) {
-#ifdef CONFIG_AMIGA
-	case MACH_AMIGA:
+	चयन (m68k_machtype) अणु
+#अगर_घोषित CONFIG_AMIGA
+	हाल MACH_AMIGA:
 		config_amiga();
-		break;
-#endif
-#ifdef CONFIG_ATARI
-	case MACH_ATARI:
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ATARI
+	हाल MACH_ATARI:
 		config_atari();
-		break;
-#endif
-#ifdef CONFIG_MAC
-	case MACH_MAC:
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MAC
+	हाल MACH_MAC:
 		config_mac();
-		break;
-#endif
-#ifdef CONFIG_SUN3
-	case MACH_SUN3:
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SUN3
+	हाल MACH_SUN3:
 		config_sun3();
-		break;
-#endif
-#ifdef CONFIG_APOLLO
-	case MACH_APOLLO:
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_APOLLO
+	हाल MACH_APOLLO:
 		config_apollo();
-		break;
-#endif
-#ifdef CONFIG_MVME147
-	case MACH_MVME147:
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MVME147
+	हाल MACH_MVME147:
 		config_mvme147();
-		break;
-#endif
-#ifdef CONFIG_MVME16x
-	case MACH_MVME16x:
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MVME16x
+	हाल MACH_MVME16x:
 		config_mvme16x();
-		break;
-#endif
-#ifdef CONFIG_BVME6000
-	case MACH_BVME6000:
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_BVME6000
+	हाल MACH_BVME6000:
 		config_bvme6000();
-		break;
-#endif
-#ifdef CONFIG_HP300
-	case MACH_HP300:
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_HP300
+	हाल MACH_HP300:
 		config_hp300();
-		break;
-#endif
-#ifdef CONFIG_Q40
-	case MACH_Q40:
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_Q40
+	हाल MACH_Q40:
 		config_q40();
-		break;
-#endif
-#ifdef CONFIG_SUN3X
-	case MACH_SUN3X:
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SUN3X
+	हाल MACH_SUN3X:
 		config_sun3x();
-		break;
-#endif
-#ifdef CONFIG_COLDFIRE
-	case MACH_M54XX:
-	case MACH_M5441X:
-		cf_bootmem_alloc();
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_COLDFIRE
+	हाल MACH_M54XX:
+	हाल MACH_M5441X:
+		cf_booपंचांगem_alloc();
 		cf_mmu_context_init();
-		config_BSP(NULL, 0);
-		break;
-#endif
-	default:
+		config_BSP(शून्य, 0);
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
 		panic("No configuration setup");
-	}
+	पूर्ण
 
 	paging_init();
 
-#ifdef CONFIG_NATFEAT
+#अगर_घोषित CONFIG_NATFEAT
 	nf_init();
-#endif
+#पूर्ण_अगर
 
-#ifndef CONFIG_SUN3
-#ifdef CONFIG_BLK_DEV_INITRD
-	if (m68k_ramdisk.size) {
+#अगर_अघोषित CONFIG_SUN3
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+	अगर (m68k_ramdisk.size) अणु
 		memblock_reserve(m68k_ramdisk.addr, m68k_ramdisk.size);
-		initrd_start = (unsigned long)phys_to_virt(m68k_ramdisk.addr);
+		initrd_start = (अचिन्हित दीर्घ)phys_to_virt(m68k_ramdisk.addr);
 		initrd_end = initrd_start + m68k_ramdisk.size;
 		pr_info("initrd: %08lx - %08lx\n", initrd_start, initrd_end);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_ATARI
-	if (MACH_IS_ATARI)
-		atari_stram_reserve_pages((void *)availmem);
-#endif
-#ifdef CONFIG_SUN3X
-	if (MACH_IS_SUN3X) {
+#अगर_घोषित CONFIG_ATARI
+	अगर (MACH_IS_ATARI)
+		atari_stram_reserve_pages((व्योम *)availmem);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SUN3X
+	अगर (MACH_IS_SUN3X) अणु
 		dvma_init();
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-#endif /* !CONFIG_SUN3 */
+#पूर्ण_अगर /* !CONFIG_SUN3 */
 
 /* set ISA defs early as possible */
-#if defined(CONFIG_ISA) && defined(MULTI_ISA)
-	if (MACH_IS_Q40) {
+#अगर defined(CONFIG_ISA) && defined(MULTI_ISA)
+	अगर (MACH_IS_Q40) अणु
 		isa_type = ISA_TYPE_Q40;
 		isa_sex = 0;
-	}
-#ifdef CONFIG_AMIGA_PCMCIA
-	if (MACH_IS_AMIGA && AMIGAHW_PRESENT(PCMCIA)) {
+	पूर्ण
+#अगर_घोषित CONFIG_AMIGA_PCMCIA
+	अगर (MACH_IS_AMIGA && AMIGAHW_PRESENT(PCMCIA)) अणु
 		isa_type = ISA_TYPE_AG;
 		isa_sex = 1;
-	}
-#endif
-#ifdef CONFIG_ATARI_ROM_ISA
-	if (MACH_IS_ATARI) {
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ATARI_ROM_ISA
+	अगर (MACH_IS_ATARI) अणु
 		isa_type = ISA_TYPE_ENEC;
 		isa_sex = 0;
-	}
-#endif
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर
+पूर्ण
 
-static int show_cpuinfo(struct seq_file *m, void *v)
-{
-	const char *cpu, *mmu, *fpu;
-	unsigned long clockfreq, clockfactor;
+अटल पूर्णांक show_cpuinfo(काष्ठा seq_file *m, व्योम *v)
+अणु
+	स्थिर अक्षर *cpu, *mmu, *fpu;
+	अचिन्हित दीर्घ घड़ीfreq, घड़ीfactor;
 
-#define LOOP_CYCLES_68020	(8)
-#define LOOP_CYCLES_68030	(8)
-#define LOOP_CYCLES_68040	(3)
-#define LOOP_CYCLES_68060	(1)
-#define LOOP_CYCLES_COLDFIRE	(2)
+#घोषणा LOOP_CYCLES_68020	(8)
+#घोषणा LOOP_CYCLES_68030	(8)
+#घोषणा LOOP_CYCLES_68040	(3)
+#घोषणा LOOP_CYCLES_68060	(1)
+#घोषणा LOOP_CYCLES_COLDFIRE	(2)
 
-	if (CPU_IS_020) {
+	अगर (CPU_IS_020) अणु
 		cpu = "68020";
-		clockfactor = LOOP_CYCLES_68020;
-	} else if (CPU_IS_030) {
+		घड़ीfactor = LOOP_CYCLES_68020;
+	पूर्ण अन्यथा अगर (CPU_IS_030) अणु
 		cpu = "68030";
-		clockfactor = LOOP_CYCLES_68030;
-	} else if (CPU_IS_040) {
+		घड़ीfactor = LOOP_CYCLES_68030;
+	पूर्ण अन्यथा अगर (CPU_IS_040) अणु
 		cpu = "68040";
-		clockfactor = LOOP_CYCLES_68040;
-	} else if (CPU_IS_060) {
+		घड़ीfactor = LOOP_CYCLES_68040;
+	पूर्ण अन्यथा अगर (CPU_IS_060) अणु
 		cpu = "68060";
-		clockfactor = LOOP_CYCLES_68060;
-	} else if (CPU_IS_COLDFIRE) {
+		घड़ीfactor = LOOP_CYCLES_68060;
+	पूर्ण अन्यथा अगर (CPU_IS_COLDFIRE) अणु
 		cpu = "ColdFire";
-		clockfactor = LOOP_CYCLES_COLDFIRE;
-	} else {
+		घड़ीfactor = LOOP_CYCLES_COLDFIRE;
+	पूर्ण अन्यथा अणु
 		cpu = "680x0";
-		clockfactor = 0;
-	}
+		घड़ीfactor = 0;
+	पूर्ण
 
-#ifdef CONFIG_M68KFPU_EMU_ONLY
+#अगर_घोषित CONFIG_M68KFPU_EMU_ONLY
 	fpu = "none(soft float)";
-#else
-	if (m68k_fputype & FPU_68881)
+#अन्यथा
+	अगर (m68k_fputype & FPU_68881)
 		fpu = "68881";
-	else if (m68k_fputype & FPU_68882)
+	अन्यथा अगर (m68k_fputype & FPU_68882)
 		fpu = "68882";
-	else if (m68k_fputype & FPU_68040)
+	अन्यथा अगर (m68k_fputype & FPU_68040)
 		fpu = "68040";
-	else if (m68k_fputype & FPU_68060)
+	अन्यथा अगर (m68k_fputype & FPU_68060)
 		fpu = "68060";
-	else if (m68k_fputype & FPU_SUNFPA)
+	अन्यथा अगर (m68k_fputype & FPU_SUNFPA)
 		fpu = "Sun FPA";
-	else if (m68k_fputype & FPU_COLDFIRE)
+	अन्यथा अगर (m68k_fputype & FPU_COLDFIRE)
 		fpu = "ColdFire";
-	else
+	अन्यथा
 		fpu = "none";
-#endif
+#पूर्ण_अगर
 
-	if (m68k_mmutype & MMU_68851)
+	अगर (m68k_mmutype & MMU_68851)
 		mmu = "68851";
-	else if (m68k_mmutype & MMU_68030)
+	अन्यथा अगर (m68k_mmutype & MMU_68030)
 		mmu = "68030";
-	else if (m68k_mmutype & MMU_68040)
+	अन्यथा अगर (m68k_mmutype & MMU_68040)
 		mmu = "68040";
-	else if (m68k_mmutype & MMU_68060)
+	अन्यथा अगर (m68k_mmutype & MMU_68060)
 		mmu = "68060";
-	else if (m68k_mmutype & MMU_SUN3)
+	अन्यथा अगर (m68k_mmutype & MMU_SUN3)
 		mmu = "Sun-3";
-	else if (m68k_mmutype & MMU_APOLLO)
+	अन्यथा अगर (m68k_mmutype & MMU_APOLLO)
 		mmu = "Apollo";
-	else if (m68k_mmutype & MMU_COLDFIRE)
+	अन्यथा अगर (m68k_mmutype & MMU_COLDFIRE)
 		mmu = "ColdFire";
-	else
+	अन्यथा
 		mmu = "unknown";
 
-	clockfreq = loops_per_jiffy * HZ * clockfactor;
+	घड़ीfreq = loops_per_jअगरfy * HZ * घड़ीfactor;
 
-	seq_printf(m, "CPU:\t\t%s\n"
+	seq_म_लिखो(m, "CPU:\t\t%s\n"
 		   "MMU:\t\t%s\n"
 		   "FPU:\t\t%s\n"
 		   "Clocking:\t%lu.%1luMHz\n"
 		   "BogoMips:\t%lu.%02lu\n"
 		   "Calibration:\t%lu loops\n",
 		   cpu, mmu, fpu,
-		   clockfreq/1000000,(clockfreq/100000)%10,
-		   loops_per_jiffy/(500000/HZ),(loops_per_jiffy/(5000/HZ))%100,
-		   loops_per_jiffy);
-	return 0;
-}
+		   घड़ीfreq/1000000,(घड़ीfreq/100000)%10,
+		   loops_per_jअगरfy/(500000/HZ),(loops_per_jअगरfy/(5000/HZ))%100,
+		   loops_per_jअगरfy);
+	वापस 0;
+पूर्ण
 
-static void *c_start(struct seq_file *m, loff_t *pos)
-{
-	return *pos < 1 ? (void *)1 : NULL;
-}
-static void *c_next(struct seq_file *m, void *v, loff_t *pos)
-{
+अटल व्योम *c_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	वापस *pos < 1 ? (व्योम *)1 : शून्य;
+पूर्ण
+अटल व्योम *c_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
 	++*pos;
-	return NULL;
-}
-static void c_stop(struct seq_file *m, void *v)
-{
-}
-const struct seq_operations cpuinfo_op = {
+	वापस शून्य;
+पूर्ण
+अटल व्योम c_stop(काष्ठा seq_file *m, व्योम *v)
+अणु
+पूर्ण
+स्थिर काष्ठा seq_operations cpuinfo_op = अणु
 	.start	= c_start,
 	.next	= c_next,
 	.stop	= c_stop,
 	.show	= show_cpuinfo,
-};
+पूर्ण;
 
-#ifdef CONFIG_PROC_HARDWARE
-static int hardware_proc_show(struct seq_file *m, void *v)
-{
-	char model[80];
-	unsigned long mem;
-	int i;
+#अगर_घोषित CONFIG_PROC_HARDWARE
+अटल पूर्णांक hardware_proc_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	अक्षर model[80];
+	अचिन्हित दीर्घ mem;
+	पूर्णांक i;
 
-	if (mach_get_model)
+	अगर (mach_get_model)
 		mach_get_model(model);
-	else
-		strcpy(model, "Unknown m68k");
+	अन्यथा
+		म_नकल(model, "Unknown m68k");
 
-	seq_printf(m, "Model:\t\t%s\n", model);
-	for (mem = 0, i = 0; i < m68k_num_memory; i++)
+	seq_म_लिखो(m, "Model:\t\t%s\n", model);
+	क्रम (mem = 0, i = 0; i < m68k_num_memory; i++)
 		mem += m68k_memory[i].size;
-	seq_printf(m, "System Memory:\t%ldK\n", mem >> 10);
+	seq_म_लिखो(m, "System Memory:\t%ldK\n", mem >> 10);
 
-	if (mach_get_hardware_list)
+	अगर (mach_get_hardware_list)
 		mach_get_hardware_list(m);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init proc_hardware_init(void)
-{
-	proc_create_single("hardware", 0, NULL, hardware_proc_show);
-	return 0;
-}
+अटल पूर्णांक __init proc_hardware_init(व्योम)
+अणु
+	proc_create_single("hardware", 0, शून्य, hardware_proc_show);
+	वापस 0;
+पूर्ण
 module_init(proc_hardware_init);
-#endif
+#पूर्ण_अगर
 
-void check_bugs(void)
-{
-#if defined(CONFIG_FPU) && !defined(CONFIG_M68KFPU_EMU)
-	if (m68k_fputype == 0) {
+व्योम check_bugs(व्योम)
+अणु
+#अगर defined(CONFIG_FPU) && !defined(CONFIG_M68KFPU_EMU)
+	अगर (m68k_fputype == 0) अणु
 		pr_emerg("*** YOU DO NOT HAVE A FLOATING POINT UNIT, "
 			"WHICH IS REQUIRED BY LINUX/M68K ***\n");
 		pr_emerg("Upgrade your hardware or join the FPU "
 			"emulation project\n");
 		panic("no FPU");
-	}
-#endif /* !CONFIG_M68KFPU_EMU */
-}
+	पूर्ण
+#पूर्ण_अगर /* !CONFIG_M68KFPU_EMU */
+पूर्ण
 
-#ifdef CONFIG_ADB
-static int __init adb_probe_sync_enable (char *str) {
-	extern int __adb_probe_sync;
+#अगर_घोषित CONFIG_ADB
+अटल पूर्णांक __init adb_probe_sync_enable (अक्षर *str) अणु
+	बाह्य पूर्णांक __adb_probe_sync;
 	__adb_probe_sync = 1;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("adb_sync", adb_probe_sync_enable);
-#endif /* CONFIG_ADB */
+#पूर्ण_अगर /* CONFIG_ADB */
 
-#if IS_ENABLED(CONFIG_NVRAM)
-#ifdef CONFIG_MAC
-static unsigned char m68k_nvram_read_byte(int addr)
-{
-	if (MACH_IS_MAC)
-		return mac_pram_read_byte(addr);
-	return 0xff;
-}
+#अगर IS_ENABLED(CONFIG_NVRAM)
+#अगर_घोषित CONFIG_MAC
+अटल अचिन्हित अक्षर m68k_nvram_पढ़ो_byte(पूर्णांक addr)
+अणु
+	अगर (MACH_IS_MAC)
+		वापस mac_pram_पढ़ो_byte(addr);
+	वापस 0xff;
+पूर्ण
 
-static void m68k_nvram_write_byte(unsigned char val, int addr)
-{
-	if (MACH_IS_MAC)
-		mac_pram_write_byte(val, addr);
-}
-#endif /* CONFIG_MAC */
+अटल व्योम m68k_nvram_ग_लिखो_byte(अचिन्हित अक्षर val, पूर्णांक addr)
+अणु
+	अगर (MACH_IS_MAC)
+		mac_pram_ग_लिखो_byte(val, addr);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MAC */
 
-#ifdef CONFIG_ATARI
-static ssize_t m68k_nvram_read(char *buf, size_t count, loff_t *ppos)
-{
-	if (MACH_IS_ATARI)
-		return atari_nvram_read(buf, count, ppos);
-	else if (MACH_IS_MAC)
-		return nvram_read_bytes(buf, count, ppos);
-	return -EINVAL;
-}
+#अगर_घोषित CONFIG_ATARI
+अटल sमाप_प्रकार m68k_nvram_पढ़ो(अक्षर *buf, माप_प्रकार count, loff_t *ppos)
+अणु
+	अगर (MACH_IS_ATARI)
+		वापस atari_nvram_पढ़ो(buf, count, ppos);
+	अन्यथा अगर (MACH_IS_MAC)
+		वापस nvram_पढ़ो_bytes(buf, count, ppos);
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t m68k_nvram_write(char *buf, size_t count, loff_t *ppos)
-{
-	if (MACH_IS_ATARI)
-		return atari_nvram_write(buf, count, ppos);
-	else if (MACH_IS_MAC)
-		return nvram_write_bytes(buf, count, ppos);
-	return -EINVAL;
-}
+अटल sमाप_प्रकार m68k_nvram_ग_लिखो(अक्षर *buf, माप_प्रकार count, loff_t *ppos)
+अणु
+	अगर (MACH_IS_ATARI)
+		वापस atari_nvram_ग_लिखो(buf, count, ppos);
+	अन्यथा अगर (MACH_IS_MAC)
+		वापस nvram_ग_लिखो_bytes(buf, count, ppos);
+	वापस -EINVAL;
+पूर्ण
 
-static long m68k_nvram_set_checksum(void)
-{
-	if (MACH_IS_ATARI)
-		return atari_nvram_set_checksum();
-	return -EINVAL;
-}
+अटल दीर्घ m68k_nvram_set_checksum(व्योम)
+अणु
+	अगर (MACH_IS_ATARI)
+		वापस atari_nvram_set_checksum();
+	वापस -EINVAL;
+पूर्ण
 
-static long m68k_nvram_initialize(void)
-{
-	if (MACH_IS_ATARI)
-		return atari_nvram_initialize();
-	return -EINVAL;
-}
-#endif /* CONFIG_ATARI */
+अटल दीर्घ m68k_nvram_initialize(व्योम)
+अणु
+	अगर (MACH_IS_ATARI)
+		वापस atari_nvram_initialize();
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ATARI */
 
-static ssize_t m68k_nvram_get_size(void)
-{
-	if (MACH_IS_ATARI)
-		return atari_nvram_get_size();
-	else if (MACH_IS_MAC)
-		return mac_pram_get_size();
-	return -ENODEV;
-}
+अटल sमाप_प्रकार m68k_nvram_get_size(व्योम)
+अणु
+	अगर (MACH_IS_ATARI)
+		वापस atari_nvram_get_size();
+	अन्यथा अगर (MACH_IS_MAC)
+		वापस mac_pram_get_size();
+	वापस -ENODEV;
+पूर्ण
 
-/* Atari device drivers call .read (to get checksum validation) whereas
- * Mac and PowerMac device drivers just use .read_byte.
+/* Atari device drivers call .पढ़ो (to get checksum validation) whereas
+ * Mac and PowerMac device drivers just use .पढ़ो_byte.
  */
-const struct nvram_ops arch_nvram_ops = {
-#ifdef CONFIG_MAC
-	.read_byte      = m68k_nvram_read_byte,
-	.write_byte     = m68k_nvram_write_byte,
-#endif
-#ifdef CONFIG_ATARI
-	.read           = m68k_nvram_read,
-	.write          = m68k_nvram_write,
+स्थिर काष्ठा nvram_ops arch_nvram_ops = अणु
+#अगर_घोषित CONFIG_MAC
+	.पढ़ो_byte      = m68k_nvram_पढ़ो_byte,
+	.ग_लिखो_byte     = m68k_nvram_ग_लिखो_byte,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ATARI
+	.पढ़ो           = m68k_nvram_पढ़ो,
+	.ग_लिखो          = m68k_nvram_ग_लिखो,
 	.set_checksum   = m68k_nvram_set_checksum,
 	.initialize     = m68k_nvram_initialize,
-#endif
+#पूर्ण_अगर
 	.get_size       = m68k_nvram_get_size,
-};
+पूर्ण;
 EXPORT_SYMBOL(arch_nvram_ops);
-#endif /* CONFIG_NVRAM */
+#पूर्ण_अगर /* CONFIG_NVRAM */

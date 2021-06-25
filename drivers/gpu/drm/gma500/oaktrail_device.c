@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /**************************************************************************
  * Copyright (c) 2011, Intel Corporation.
  * All Rights Reserved.
  *
  **************************************************************************/
 
-#include <linux/backlight.h>
-#include <linux/delay.h>
-#include <linux/dmi.h>
-#include <linux/module.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/module.h>
 
-#include <drm/drm.h>
+#समावेश <drm/drm.h>
 
-#include "intel_bios.h"
-#include "mid_bios.h"
-#include "psb_drv.h"
-#include "psb_intel_reg.h"
-#include "psb_reg.h"
+#समावेश "intel_bios.h"
+#समावेश "mid_bios.h"
+#समावेश "psb_drv.h"
+#समावेश "psb_intel_reg.h"
+#समावेश "psb_reg.h"
 
-static int oaktrail_output_init(struct drm_device *dev)
-{
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	if (dev_priv->iLVDS_enable)
+अटल पूर्णांक oaktrail_output_init(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	अगर (dev_priv->iLVDS_enable)
 		oaktrail_lvds_init(dev, &dev_priv->mode_dev);
-	else
+	अन्यथा
 		dev_err(dev->dev, "DSI is not supported\n");
-	if (dev_priv->hdmi_priv)
+	अगर (dev_priv->hdmi_priv)
 		oaktrail_hdmi_init(dev, &dev_priv->mode_dev);
 
-	psb_intel_sdvo_init(dev, SDVOB);
+	psb_पूर्णांकel_sdvo_init(dev, SDVOB);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	Provide the low level interfaces for the Moorestown backlight
+ *	Provide the low level पूर्णांकerfaces क्रम the Moorestown backlight
  */
 
-#ifdef CONFIG_BACKLIGHT_CLASS_DEVICE
+#अगर_घोषित CONFIG_BACKLIGHT_CLASS_DEVICE
 
-#define MRST_BLC_MAX_PWM_REG_FREQ	    0xFFFF
-#define BLC_PWM_PRECISION_FACTOR 100	/* 10000000 */
-#define BLC_PWM_FREQ_CALC_CONSTANT 32
-#define MHz 1000000
-#define BLC_ADJUSTMENT_MAX 100
+#घोषणा MRST_BLC_MAX_PWM_REG_FREQ	    0xFFFF
+#घोषणा BLC_PWM_PRECISION_FACTOR 100	/* 10000000 */
+#घोषणा BLC_PWM_FREQ_CALC_CONSTANT 32
+#घोषणा MHz 1000000
+#घोषणा BLC_ADJUSTMENT_MAX 100
 
-static struct backlight_device *oaktrail_backlight_device;
-static int oaktrail_brightness;
+अटल काष्ठा backlight_device *oaktrail_backlight_device;
+अटल पूर्णांक oaktrail_brightness;
 
-static int oaktrail_set_brightness(struct backlight_device *bd)
-{
-	struct drm_device *dev = bl_get_data(oaktrail_backlight_device);
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	int level = bd->props.brightness;
+अटल पूर्णांक oaktrail_set_brightness(काष्ठा backlight_device *bd)
+अणु
+	काष्ठा drm_device *dev = bl_get_data(oaktrail_backlight_device);
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	पूर्णांक level = bd->props.brightness;
 	u32 blc_pwm_ctl;
 	u32 max_pwm_blc;
 
 	/* Percentage 1-100% being valid */
-	if (level < 1)
+	अगर (level < 1)
 		level = 1;
 
-	if (gma_power_begin(dev, 0)) {
+	अगर (gma_घातer_begin(dev, 0)) अणु
 		/* Calculate and set the brightness value */
 		max_pwm_blc = REG_READ(BLC_PWM_CTL) >> 16;
 		blc_pwm_ctl = level * max_pwm_blc / 100;
@@ -77,108 +78,108 @@ static int oaktrail_set_brightness(struct backlight_device *bd)
 		blc_pwm_ctl = blc_pwm_ctl * dev_priv->blc_adj2;
 		blc_pwm_ctl = blc_pwm_ctl / 100;
 
-		/* force PWM bit on */
+		/* क्रमce PWM bit on */
 		REG_WRITE(BLC_PWM_CTL2, (0x80000000 | REG_READ(BLC_PWM_CTL2)));
 		REG_WRITE(BLC_PWM_CTL, (max_pwm_blc << 16) | blc_pwm_ctl);
-		gma_power_end(dev);
-	}
+		gma_घातer_end(dev);
+	पूर्ण
 	oaktrail_brightness = level;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int oaktrail_get_brightness(struct backlight_device *bd)
-{
-	/* return locally cached var instead of HW read (due to DPST etc.) */
-	/* FIXME: ideally return actual value in case firmware fiddled with
+अटल पूर्णांक oaktrail_get_brightness(काष्ठा backlight_device *bd)
+अणु
+	/* वापस locally cached var instead of HW पढ़ो (due to DPST etc.) */
+	/* FIXME: ideally वापस actual value in हाल firmware fiddled with
 	   it */
-	return oaktrail_brightness;
-}
+	वापस oaktrail_brightness;
+पूर्ण
 
-static int device_backlight_init(struct drm_device *dev)
-{
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	unsigned long core_clock;
+अटल पूर्णांक device_backlight_init(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	अचिन्हित दीर्घ core_घड़ी;
 	u16 bl_max_freq;
-	uint32_t value;
-	uint32_t blc_pwm_precision_factor;
+	uपूर्णांक32_t value;
+	uपूर्णांक32_t blc_pwm_precision_factor;
 
 	dev_priv->blc_adj1 = BLC_ADJUSTMENT_MAX;
 	dev_priv->blc_adj2 = BLC_ADJUSTMENT_MAX;
 	bl_max_freq = 256;
-	/* this needs to be set elsewhere */
+	/* this needs to be set अन्यथाwhere */
 	blc_pwm_precision_factor = BLC_PWM_PRECISION_FACTOR;
 
-	core_clock = dev_priv->core_freq;
+	core_घड़ी = dev_priv->core_freq;
 
-	value = (core_clock * MHz) / BLC_PWM_FREQ_CALC_CONSTANT;
+	value = (core_घड़ी * MHz) / BLC_PWM_FREQ_CALC_CONSTANT;
 	value *= blc_pwm_precision_factor;
 	value /= bl_max_freq;
 	value /= blc_pwm_precision_factor;
 
-	if (value > (unsigned long long)MRST_BLC_MAX_PWM_REG_FREQ)
-			return -ERANGE;
+	अगर (value > (अचिन्हित दीर्घ दीर्घ)MRST_BLC_MAX_PWM_REG_FREQ)
+			वापस -दुस्फल;
 
-	if (gma_power_begin(dev, false)) {
+	अगर (gma_घातer_begin(dev, false)) अणु
 		REG_WRITE(BLC_PWM_CTL2, (0x80000000 | REG_READ(BLC_PWM_CTL2)));
 		REG_WRITE(BLC_PWM_CTL, value | (value << 16));
-		gma_power_end(dev);
-	}
-	return 0;
-}
+		gma_घातer_end(dev);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct backlight_ops oaktrail_ops = {
+अटल स्थिर काष्ठा backlight_ops oaktrail_ops = अणु
 	.get_brightness = oaktrail_get_brightness,
 	.update_status  = oaktrail_set_brightness,
-};
+पूर्ण;
 
-static int oaktrail_backlight_init(struct drm_device *dev)
-{
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	int ret;
-	struct backlight_properties props;
+अटल पूर्णांक oaktrail_backlight_init(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	पूर्णांक ret;
+	काष्ठा backlight_properties props;
 
-	memset(&props, 0, sizeof(struct backlight_properties));
+	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
 	props.max_brightness = 100;
 	props.type = BACKLIGHT_PLATFORM;
 
-	oaktrail_backlight_device = backlight_device_register("oaktrail-bl",
-				NULL, (void *)dev, &oaktrail_ops, &props);
+	oaktrail_backlight_device = backlight_device_रेजिस्टर("oaktrail-bl",
+				शून्य, (व्योम *)dev, &oaktrail_ops, &props);
 
-	if (IS_ERR(oaktrail_backlight_device))
-		return PTR_ERR(oaktrail_backlight_device);
+	अगर (IS_ERR(oaktrail_backlight_device))
+		वापस PTR_ERR(oaktrail_backlight_device);
 
 	ret = device_backlight_init(dev);
-	if (ret < 0) {
-		backlight_device_unregister(oaktrail_backlight_device);
-		return ret;
-	}
+	अगर (ret < 0) अणु
+		backlight_device_unरेजिस्टर(oaktrail_backlight_device);
+		वापस ret;
+	पूर्ण
 	oaktrail_backlight_device->props.brightness = 100;
 	oaktrail_backlight_device->props.max_brightness = 100;
 	backlight_update_status(oaktrail_backlight_device);
 	dev_priv->backlight_device = oaktrail_backlight_device;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
- *	Provide the Moorestown specific chip logic and low level methods
- *	for power management
+ *	Provide the Moorestown specअगरic chip logic and low level methods
+ *	क्रम घातer management
  */
 
 /**
- *	oaktrail_save_display_registers	-	save registers lost on suspend
+ *	oaktrail_save_display_रेजिस्टरs	-	save रेजिस्टरs lost on suspend
  *	@dev: our DRM device
  *
- *	Save the state we need in order to be able to restore the interface
+ *	Save the state we need in order to be able to restore the पूर्णांकerface
  *	upon resume from suspend
  */
-static int oaktrail_save_display_registers(struct drm_device *dev)
-{
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	struct psb_save_area *regs = &dev_priv->regs;
-	struct psb_pipe *p = &regs->pipe[0];
-	int i;
+अटल पूर्णांक oaktrail_save_display_रेजिस्टरs(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	काष्ठा psb_save_area *regs = &dev_priv->regs;
+	काष्ठा psb_pipe *p = &regs->pipe[0];
+	पूर्णांक i;
 	u32 pp_stat;
 
 	/* Display arbitration control + watermarks */
@@ -209,7 +210,7 @@ static int oaktrail_save_display_registers(struct drm_device *dev)
 	p->addr = PSB_RVDC32(DSPABASE);
 	p->surf = PSB_RVDC32(DSPASURF);
 	p->linoff = PSB_RVDC32(DSPALINOFF);
-	p->tileoff = PSB_RVDC32(DSPATILEOFF);
+	p->tileoff = PSB_RVDC32(DSPATILखातापूर्णF);
 
 	/* Save cursor regs */
 	regs->psb.saveDSPACURSOR_CTRL = PSB_RVDC32(CURACNTR);
@@ -217,13 +218,13 @@ static int oaktrail_save_display_registers(struct drm_device *dev)
 	regs->psb.saveDSPACURSOR_POS = PSB_RVDC32(CURAPOS);
 
 	/* Save palette (gamma) */
-	for (i = 0; i < 256; i++)
+	क्रम (i = 0; i < 256; i++)
 		p->palette[i] = PSB_RVDC32(PALETTE_A + (i << 2));
 
-	if (dev_priv->hdmi_priv)
+	अगर (dev_priv->hdmi_priv)
 		oaktrail_hdmi_save(dev);
 
-	/* Save performance state */
+	/* Save perक्रमmance state */
 	regs->psb.savePERF_MODE = PSB_RVDC32(MRST_PERF_MODE);
 
 	/* LVDS state */
@@ -247,20 +248,20 @@ static int oaktrail_save_display_registers(struct drm_device *dev)
 	regs->psb.saveOV_OGAMC4 = PSB_RVDC32(OV_OGAMC4);
 	regs->psb.saveOV_OGAMC5 = PSB_RVDC32(OV_OGAMC5);
 
-	/* DPST registers */
+	/* DPST रेजिस्टरs */
 	regs->psb.saveHISTOGRAM_INT_CONTROL_REG =
 					PSB_RVDC32(HISTOGRAM_INT_CONTROL);
 	regs->psb.saveHISTOGRAM_LOGIC_CONTROL_REG =
 					PSB_RVDC32(HISTOGRAM_LOGIC_CONTROL);
 	regs->psb.savePWM_CONTROL_LOGIC = PSB_RVDC32(PWM_CONTROL_LOGIC);
 
-	if (dev_priv->iLVDS_enable) {
-		/* Shut down the panel */
+	अगर (dev_priv->iLVDS_enable) अणु
+		/* Shut करोwn the panel */
 		PSB_WVDC32(0, PP_CONTROL);
 
-		do {
+		करो अणु
 			pp_stat = PSB_RVDC32(PP_STATUS);
-		} while (pp_stat & 0x80000000);
+		पूर्ण जबतक (pp_stat & 0x80000000);
 
 		/* Turn off the plane */
 		PSB_WVDC32(0x58000000, DSPACNTR);
@@ -277,23 +278,23 @@ static int oaktrail_save_display_registers(struct drm_device *dev)
 
 		/* Turn off PLLs */
 		PSB_WVDC32(0, MRST_DPLL_A);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- *	oaktrail_restore_display_registers	-	restore lost register state
+ *	oaktrail_restore_display_रेजिस्टरs	-	restore lost रेजिस्टर state
  *	@dev: our DRM device
  *
- *	Restore register state that was lost during suspend and resume.
+ *	Restore रेजिस्टर state that was lost during suspend and resume.
  */
-static int oaktrail_restore_display_registers(struct drm_device *dev)
-{
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	struct psb_save_area *regs = &dev_priv->regs;
-	struct psb_pipe *p = &regs->pipe[0];
+अटल पूर्णांक oaktrail_restore_display_रेजिस्टरs(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	काष्ठा psb_save_area *regs = &dev_priv->regs;
+	काष्ठा psb_pipe *p = &regs->pipe[0];
 	u32 pp_stat;
-	int i;
+	पूर्णांक i;
 
 	/* Display arbitration + watermarks */
 	PSB_WVDC32(regs->psb.saveDSPARB, DSPARB);
@@ -326,17 +327,17 @@ static int oaktrail_restore_display_registers(struct drm_device *dev)
 	PSB_WVDC32(p->src, PIPEASRC);
 	PSB_WVDC32(regs->psb.saveBCLRPAT_A, BCLRPAT_A);
 
-	/* Restore performance mode*/
+	/* Restore perक्रमmance mode*/
 	PSB_WVDC32(regs->psb.savePERF_MODE, MRST_PERF_MODE);
 
 	/* Enable the pipe*/
-	if (dev_priv->iLVDS_enable)
+	अगर (dev_priv->iLVDS_enable)
 		PSB_WVDC32(p->conf, PIPEACONF);
 
 	/* Set up the plane*/
 	PSB_WVDC32(p->linoff, DSPALINOFF);
 	PSB_WVDC32(p->stride, DSPASTRIDE);
-	PSB_WVDC32(p->tileoff, DSPATILEOFF);
+	PSB_WVDC32(p->tileoff, DSPATILखातापूर्णF);
 
 	/* Enable the plane */
 	PSB_WVDC32(p->cntr, DSPACNTR);
@@ -348,13 +349,13 @@ static int oaktrail_restore_display_registers(struct drm_device *dev)
 	PSB_WVDC32(regs->psb.saveDSPACURSOR_BASE, CURABASE);
 
 	/* Restore palette (gamma) */
-	for (i = 0; i < 256; i++)
+	क्रम (i = 0; i < 256; i++)
 		PSB_WVDC32(p->palette[i], PALETTE_A + (i << 2));
 
-	if (dev_priv->hdmi_priv)
+	अगर (dev_priv->hdmi_priv)
 		oaktrail_hdmi_restore(dev);
 
-	if (dev_priv->iLVDS_enable) {
+	अगर (dev_priv->iLVDS_enable) अणु
 		PSB_WVDC32(regs->saveBLC_PWM_CTL2, BLC_PWM_CTL2);
 		PSB_WVDC32(regs->psb.saveLVDS, LVDS); /*port 61180h*/
 		PSB_WVDC32(regs->psb.savePFIT_CONTROL, PFIT_CONTROL);
@@ -365,17 +366,17 @@ static int oaktrail_restore_display_registers(struct drm_device *dev)
 		PSB_WVDC32(regs->psb.savePP_OFF_DELAYS, LVDSPP_OFF);
 		PSB_WVDC32(regs->psb.savePP_DIVISOR, PP_CYCLE);
 		PSB_WVDC32(regs->psb.savePP_CONTROL, PP_CONTROL);
-	}
+	पूर्ण
 
-	/* Wait for cycle delay */
-	do {
+	/* Wait क्रम cycle delay */
+	करो अणु
 		pp_stat = PSB_RVDC32(PP_STATUS);
-	} while (pp_stat & 0x08000000);
+	पूर्ण जबतक (pp_stat & 0x08000000);
 
-	/* Wait for panel power up */
-	do {
+	/* Wait क्रम panel घातer up */
+	करो अणु
 		pp_stat = PSB_RVDC32(PP_STATUS);
-	} while (pp_stat & 0x10000000);
+	पूर्ण जबतक (pp_stat & 0x10000000);
 
 	/* Restore HW overlay */
 	PSB_WVDC32(regs->psb.saveOV_OVADD, OV_OVADD);
@@ -386,49 +387,49 @@ static int oaktrail_restore_display_registers(struct drm_device *dev)
 	PSB_WVDC32(regs->psb.saveOV_OGAMC4, OV_OGAMC4);
 	PSB_WVDC32(regs->psb.saveOV_OGAMC5, OV_OGAMC5);
 
-	/* DPST registers */
+	/* DPST रेजिस्टरs */
 	PSB_WVDC32(regs->psb.saveHISTOGRAM_INT_CONTROL_REG,
 						HISTOGRAM_INT_CONTROL);
 	PSB_WVDC32(regs->psb.saveHISTOGRAM_LOGIC_CONTROL_REG,
 						HISTOGRAM_LOGIC_CONTROL);
 	PSB_WVDC32(regs->psb.savePWM_CONTROL_LOGIC, PWM_CONTROL_LOGIC);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	oaktrail_power_down	-	power down the display island
+ *	oaktrail_घातer_करोwn	-	घातer करोwn the display island
  *	@dev: our DRM device
  *
- *	Power down the display interface of our device
+ *	Power करोwn the display पूर्णांकerface of our device
  */
-static int oaktrail_power_down(struct drm_device *dev)
-{
-	struct drm_psb_private *dev_priv = dev->dev_private;
+अटल पूर्णांक oaktrail_घातer_करोwn(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
 	u32 pwr_mask ;
 	u32 pwr_sts;
 
 	pwr_mask = PSB_PWRGT_DISPLAY_MASK;
 	outl(pwr_mask, dev_priv->ospm_base + PSB_PM_SSC);
 
-	while (true) {
+	जबतक (true) अणु
 		pwr_sts = inl(dev_priv->ospm_base + PSB_PM_SSS);
-		if ((pwr_sts & pwr_mask) == pwr_mask)
-			break;
-		else
+		अगर ((pwr_sts & pwr_mask) == pwr_mask)
+			अवरोध;
+		अन्यथा
 			udelay(10);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * oaktrail_power_up
+ * oaktrail_घातer_up
  *
- * Restore power to the specified island(s) (powergating)
+ * Restore घातer to the specअगरied island(s) (घातergating)
  */
-static int oaktrail_power_up(struct drm_device *dev)
-{
-	struct drm_psb_private *dev_priv = dev->dev_private;
+अटल पूर्णांक oaktrail_घातer_up(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
 	u32 pwr_mask = PSB_PWRGT_DISPLAY_MASK;
 	u32 pwr_sts, pwr_cnt;
 
@@ -436,19 +437,19 @@ static int oaktrail_power_up(struct drm_device *dev)
 	pwr_cnt &= ~pwr_mask;
 	outl(pwr_cnt, (dev_priv->ospm_base + PSB_PM_SSC));
 
-	while (true) {
+	जबतक (true) अणु
 		pwr_sts = inl(dev_priv->ospm_base + PSB_PM_SSS);
-		if ((pwr_sts & pwr_mask) == 0)
-			break;
-		else
+		अगर ((pwr_sts & pwr_mask) == 0)
+			अवरोध;
+		अन्यथा
 			udelay(10);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Oaktrail */
-static const struct psb_offset oaktrail_regmap[2] = {
-	{
+अटल स्थिर काष्ठा psb_offset oaktrail_regmap[2] = अणु
+	अणु
 		.fp0 = MRST_FPA0,
 		.fp1 = MRST_FPA1,
 		.cntr = DSPACNTR,
@@ -469,10 +470,10 @@ static const struct psb_offset oaktrail_regmap[2] = {
 		.base = MRST_DSPABASE,
 		.status = PIPEASTAT,
 		.linoff = DSPALINOFF,
-		.tileoff = DSPATILEOFF,
+		.tileoff = DSPATILखातापूर्णF,
 		.palette = PALETTE_A,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fp0 = FPB0,
 		.fp1 = FPB1,
 		.cntr = DSPBCNTR,
@@ -493,46 +494,46 @@ static const struct psb_offset oaktrail_regmap[2] = {
 		.base = DSPBBASE,
 		.status = PIPEBSTAT,
 		.linoff = DSPBLINOFF,
-		.tileoff = DSPBTILEOFF,
+		.tileoff = DSPBTILखातापूर्णF,
 		.palette = PALETTE_B,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int oaktrail_chip_setup(struct drm_device *dev)
-{
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
-	int ret;
+अटल पूर्णांक oaktrail_chip_setup(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
+	पूर्णांक ret;
 
-	if (pci_enable_msi(pdev))
+	अगर (pci_enable_msi(pdev))
 		dev_warn(dev->dev, "Enabling MSI failed!\n");
 
 	dev_priv->regmap = oaktrail_regmap;
 
 	ret = mid_chip_setup(dev);
-	if (ret < 0)
-		return ret;
-	if (!dev_priv->has_gct) {
+	अगर (ret < 0)
+		वापस ret;
+	अगर (!dev_priv->has_gct) अणु
 		/* Now pull the BIOS data */
-		psb_intel_opregion_init(dev);
-		psb_intel_init_bios(dev);
-	}
-	gma_intel_setup_gmbus(dev);
+		psb_पूर्णांकel_opregion_init(dev);
+		psb_पूर्णांकel_init_bios(dev);
+	पूर्ण
+	gma_पूर्णांकel_setup_gmbus(dev);
 	oaktrail_hdmi_setup(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void oaktrail_teardown(struct drm_device *dev)
-{
-	struct drm_psb_private *dev_priv = dev->dev_private;
+अटल व्योम oaktrail_tearकरोwn(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
 
-	gma_intel_teardown_gmbus(dev);
-	oaktrail_hdmi_teardown(dev);
-	if (!dev_priv->has_gct)
-		psb_intel_destroy_bios(dev);
-}
+	gma_पूर्णांकel_tearकरोwn_gmbus(dev);
+	oaktrail_hdmi_tearकरोwn(dev);
+	अगर (!dev_priv->has_gct)
+		psb_पूर्णांकel_destroy_bios(dev);
+पूर्ण
 
-const struct psb_ops oaktrail_chip_ops = {
+स्थिर काष्ठा psb_ops oaktrail_chip_ops = अणु
 	.name = "Oaktrail",
 	.pipes = 2,
 	.crtcs = 2,
@@ -543,22 +544,22 @@ const struct psb_ops oaktrail_chip_ops = {
 	.sgx_offset = MRST_SGX_OFFSET,
 
 	.chip_setup = oaktrail_chip_setup,
-	.chip_teardown = oaktrail_teardown,
+	.chip_tearकरोwn = oaktrail_tearकरोwn,
 	.crtc_helper = &oaktrail_helper_funcs,
-	.crtc_funcs = &gma_intel_crtc_funcs,
+	.crtc_funcs = &gma_पूर्णांकel_crtc_funcs,
 
 	.output_init = oaktrail_output_init,
 
-#ifdef CONFIG_BACKLIGHT_CLASS_DEVICE
+#अगर_घोषित CONFIG_BACKLIGHT_CLASS_DEVICE
 	.backlight_init = oaktrail_backlight_init,
-#endif
+#पूर्ण_अगर
 
-	.save_regs = oaktrail_save_display_registers,
-	.restore_regs = oaktrail_restore_display_registers,
+	.save_regs = oaktrail_save_display_रेजिस्टरs,
+	.restore_regs = oaktrail_restore_display_रेजिस्टरs,
 	.save_crtc = gma_crtc_save,
 	.restore_crtc = gma_crtc_restore,
-	.power_down = oaktrail_power_down,
-	.power_up = oaktrail_power_up,
+	.घातer_करोwn = oaktrail_घातer_करोwn,
+	.घातer_up = oaktrail_घातer_up,
 
 	.i2c_bus = 1,
-};
+पूर्ण;

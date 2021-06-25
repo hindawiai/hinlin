@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * CBE Pervasive Monitor and Debug
  *
@@ -8,118 +9,118 @@
  *          Michael N. Day (mnday@us.ibm.com)
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/percpu.h>
-#include <linux/types.h>
-#include <linux/kallsyms.h>
-#include <linux/pgtable.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/io.h>
-#include <asm/machdep.h>
-#include <asm/prom.h>
-#include <asm/reg.h>
-#include <asm/cell-regs.h>
-#include <asm/cpu_has_feature.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/reg.h>
+#समावेश <यंत्र/cell-regs.h>
+#समावेश <यंत्र/cpu_has_feature.h>
 
-#include "pervasive.h"
-#include "ras.h"
+#समावेश "pervasive.h"
+#समावेश "ras.h"
 
-static void cbe_power_save(void)
-{
-	unsigned long ctrl, thread_switch_control;
+अटल व्योम cbe_घातer_save(व्योम)
+अणु
+	अचिन्हित दीर्घ ctrl, thपढ़ो_चयन_control;
 
-	/* Ensure our interrupt state is properly tracked */
-	if (!prep_irq_for_idle())
-		return;
+	/* Ensure our पूर्णांकerrupt state is properly tracked */
+	अगर (!prep_irq_क्रम_idle())
+		वापस;
 
 	ctrl = mfspr(SPRN_CTRLF);
 
-	/* Enable DEC and EE interrupt request */
-	thread_switch_control  = mfspr(SPRN_TSC_CELL);
-	thread_switch_control |= TSC_CELL_EE_ENABLE | TSC_CELL_EE_BOOST;
+	/* Enable DEC and EE पूर्णांकerrupt request */
+	thपढ़ो_चयन_control  = mfspr(SPRN_TSC_CELL);
+	thपढ़ो_चयन_control |= TSC_CELL_EE_ENABLE | TSC_CELL_EE_BOOST;
 
-	switch (ctrl & CTRL_CT) {
-	case CTRL_CT0:
-		thread_switch_control |= TSC_CELL_DEC_ENABLE_0;
-		break;
-	case CTRL_CT1:
-		thread_switch_control |= TSC_CELL_DEC_ENABLE_1;
-		break;
-	default:
-		printk(KERN_WARNING "%s: unknown configuration\n",
+	चयन (ctrl & CTRL_CT) अणु
+	हाल CTRL_CT0:
+		thपढ़ो_चयन_control |= TSC_CELL_DEC_ENABLE_0;
+		अवरोध;
+	हाल CTRL_CT1:
+		thपढ़ो_चयन_control |= TSC_CELL_DEC_ENABLE_1;
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_WARNING "%s: unknown configuration\n",
 			__func__);
-		break;
-	}
-	mtspr(SPRN_TSC_CELL, thread_switch_control);
+		अवरोध;
+	पूर्ण
+	mtspr(SPRN_TSC_CELL, thपढ़ो_चयन_control);
 
 	/*
-	 * go into low thread priority, medium priority will be
-	 * restored for us after wake-up.
+	 * go पूर्णांकo low thपढ़ो priority, medium priority will be
+	 * restored क्रम us after wake-up.
 	 */
 	HMT_low();
 
 	/*
-	 * atomically disable thread execution and runlatch.
+	 * atomically disable thपढ़ो execution and runlatch.
 	 * External and Decrementer exceptions are still handled when the
-	 * thread is disabled but now enter in cbe_system_reset_exception()
+	 * thपढ़ो is disabled but now enter in cbe_प्रणाली_reset_exception()
 	 */
 	ctrl &= ~(CTRL_RUNLATCH | CTRL_TE);
 	mtspr(SPRN_CTRLT, ctrl);
 
-	/* Re-enable interrupts in MSR */
+	/* Re-enable पूर्णांकerrupts in MSR */
 	__hard_irq_enable();
-}
+पूर्ण
 
-static int cbe_system_reset_exception(struct pt_regs *regs)
-{
-	switch (regs->msr & SRR1_WAKEMASK) {
-	case SRR1_WAKEDEC:
+अटल पूर्णांक cbe_प्रणाली_reset_exception(काष्ठा pt_regs *regs)
+अणु
+	चयन (regs->msr & SRR1_WAKEMASK) अणु
+	हाल SRR1_WAKEDEC:
 		set_dec(1);
-	case SRR1_WAKEEE:
+	हाल SRR1_WAKEEE:
 		/*
-		 * Handle these when interrupts get re-enabled and we take
+		 * Handle these when पूर्णांकerrupts get re-enabled and we take
 		 * them as regular exceptions. We are in an NMI context
 		 * and can't handle these here.
 		 */
-		break;
-	case SRR1_WAKEMT:
-		return cbe_sysreset_hack();
-#ifdef CONFIG_CBE_RAS
-	case SRR1_WAKESYSERR:
-		cbe_system_error_exception(regs);
-		break;
-	case SRR1_WAKETHERM:
+		अवरोध;
+	हाल SRR1_WAKEMT:
+		वापस cbe_sysreset_hack();
+#अगर_घोषित CONFIG_CBE_RAS
+	हाल SRR1_WAKESYSERR:
+		cbe_प्रणाली_error_exception(regs);
+		अवरोध;
+	हाल SRR1_WAKETHERM:
 		cbe_thermal_exception(regs);
-		break;
-#endif /* CONFIG_CBE_RAS */
-	default:
-		/* do system reset */
-		return 0;
-	}
+		अवरोध;
+#पूर्ण_अगर /* CONFIG_CBE_RAS */
+	शेष:
+		/* करो प्रणाली reset */
+		वापस 0;
+	पूर्ण
 	/* everything handled */
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void __init cbe_pervasive_init(void)
-{
-	int cpu;
+व्योम __init cbe_pervasive_init(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	if (!cpu_has_feature(CPU_FTR_PAUSE_ZERO))
-		return;
+	अगर (!cpu_has_feature(CPU_FTR_PAUSE_ZERO))
+		वापस;
 
-	for_each_possible_cpu(cpu) {
-		struct cbe_pmd_regs __iomem *regs = cbe_get_cpu_pmd_regs(cpu);
-		if (!regs)
-			continue;
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा cbe_pmd_regs __iomem *regs = cbe_get_cpu_pmd_regs(cpu);
+		अगर (!regs)
+			जारी;
 
 		 /* Enable Pause(0) control bit */
 		out_be64(&regs->pmcr, in_be64(&regs->pmcr) |
 					    CBE_PMD_PAUSE_ZERO_CONTROL);
-	}
+	पूर्ण
 
-	ppc_md.power_save = cbe_power_save;
-	ppc_md.system_reset_exception = cbe_system_reset_exception;
-}
+	ppc_md.घातer_save = cbe_घातer_save;
+	ppc_md.प्रणाली_reset_exception = cbe_प्रणाली_reset_exception;
+पूर्ण

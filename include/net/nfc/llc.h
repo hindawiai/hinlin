@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Link Layer Control manager public interface
+ * Link Layer Control manager खुला पूर्णांकerface
  *
  * Copyright (C) 2012  Intel Corporation. All rights reserved.
  */
 
-#ifndef __NFC_LLC_H_
-#define __NFC_LLC_H_
+#अगर_अघोषित __NFC_LLC_H_
+#घोषणा __NFC_LLC_H_
 
-#include <net/nfc/hci.h>
-#include <linux/skbuff.h>
+#समावेश <net/nfc/hci.h>
+#समावेश <linux/skbuff.h>
 
-#define LLC_NOP_NAME "nop"
-#define LLC_SHDLC_NAME "shdlc"
+#घोषणा LLC_NOP_NAME "nop"
+#घोषणा LLC_SHDLC_NAME "shdlc"
 
-typedef void (*rcv_to_hci_t) (struct nfc_hci_dev *hdev, struct sk_buff *skb);
-typedef int (*xmit_to_drv_t) (struct nfc_hci_dev *hdev, struct sk_buff *skb);
-typedef void (*llc_failure_t) (struct nfc_hci_dev *hdev, int err);
+प्रकार व्योम (*rcv_to_hci_t) (काष्ठा nfc_hci_dev *hdev, काष्ठा sk_buff *skb);
+प्रकार पूर्णांक (*xmit_to_drv_t) (काष्ठा nfc_hci_dev *hdev, काष्ठा sk_buff *skb);
+प्रकार व्योम (*llc_failure_t) (काष्ठा nfc_hci_dev *hdev, पूर्णांक err);
 
-struct nfc_llc;
+काष्ठा nfc_llc;
 
-struct nfc_llc *nfc_llc_allocate(const char *name, struct nfc_hci_dev *hdev,
+काष्ठा nfc_llc *nfc_llc_allocate(स्थिर अक्षर *name, काष्ठा nfc_hci_dev *hdev,
 				 xmit_to_drv_t xmit_to_drv,
-				 rcv_to_hci_t rcv_to_hci, int tx_headroom,
-				 int tx_tailroom, llc_failure_t llc_failure);
-void nfc_llc_free(struct nfc_llc *llc);
+				 rcv_to_hci_t rcv_to_hci, पूर्णांक tx_headroom,
+				 पूर्णांक tx_tailroom, llc_failure_t llc_failure);
+व्योम nfc_llc_मुक्त(काष्ठा nfc_llc *llc);
 
-int nfc_llc_start(struct nfc_llc *llc);
-int nfc_llc_stop(struct nfc_llc *llc);
-void nfc_llc_rcv_from_drv(struct nfc_llc *llc, struct sk_buff *skb);
-int nfc_llc_xmit_from_hci(struct nfc_llc *llc, struct sk_buff *skb);
+पूर्णांक nfc_llc_start(काष्ठा nfc_llc *llc);
+पूर्णांक nfc_llc_stop(काष्ठा nfc_llc *llc);
+व्योम nfc_llc_rcv_from_drv(काष्ठा nfc_llc *llc, काष्ठा sk_buff *skb);
+पूर्णांक nfc_llc_xmit_from_hci(काष्ठा nfc_llc *llc, काष्ठा sk_buff *skb);
 
-int nfc_llc_init(void);
-void nfc_llc_exit(void);
+पूर्णांक nfc_llc_init(व्योम);
+व्योम nfc_llc_निकास(व्योम);
 
-#endif /* __NFC_LLC_H_ */
+#पूर्ण_अगर /* __NFC_LLC_H_ */

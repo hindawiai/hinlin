@@ -1,15 +1,16 @@
+<शैली गुरु>
 /**************************************************************************
  *
- * Copyright © 2007 David Airlie
- * Copyright © 2009-2015 VMware, Inc., Palo Alto, CA., USA
+ * Copyright तऊ 2007 David Airlie
+ * Copyright तऊ 2009-2015 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,96 +27,96 @@
  *
  **************************************************************************/
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
-#include <drm/drm_fourcc.h>
-#include <drm/ttm/ttm_placement.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश <drm/tपंचांग/tपंचांग_placement.h>
 
-#include "vmwgfx_drv.h"
-#include "vmwgfx_kms.h"
+#समावेश "vmwgfx_drv.h"
+#समावेश "vmwgfx_kms.h"
 
-#define VMW_DIRTY_DELAY (HZ / 30)
+#घोषणा VMW_सूचीTY_DELAY (HZ / 30)
 
-struct vmw_fb_par {
-	struct vmw_private *vmw_priv;
+काष्ठा vmw_fb_par अणु
+	काष्ठा vmw_निजी *vmw_priv;
 
-	void *vmalloc;
+	व्योम *vदो_स्मृति;
 
-	struct mutex bo_mutex;
-	struct vmw_buffer_object *vmw_bo;
-	unsigned bo_size;
-	struct drm_framebuffer *set_fb;
-	struct drm_display_mode *set_mode;
+	काष्ठा mutex bo_mutex;
+	काष्ठा vmw_buffer_object *vmw_bo;
+	अचिन्हित bo_size;
+	काष्ठा drm_framebuffer *set_fb;
+	काष्ठा drm_display_mode *set_mode;
 	u32 fb_x;
 	u32 fb_y;
-	bool bo_iowrite;
+	bool bo_ioग_लिखो;
 
-	u32 pseudo_palette[17];
+	u32 pseuकरो_palette[17];
 
-	unsigned max_width;
-	unsigned max_height;
+	अचिन्हित max_width;
+	अचिन्हित max_height;
 
-	struct {
+	काष्ठा अणु
 		spinlock_t lock;
 		bool active;
-		unsigned x1;
-		unsigned y1;
-		unsigned x2;
-		unsigned y2;
-	} dirty;
+		अचिन्हित x1;
+		अचिन्हित y1;
+		अचिन्हित x2;
+		अचिन्हित y2;
+	पूर्ण dirty;
 
-	struct drm_crtc *crtc;
-	struct drm_connector *con;
-	struct delayed_work local_work;
-};
+	काष्ठा drm_crtc *crtc;
+	काष्ठा drm_connector *con;
+	काष्ठा delayed_work local_work;
+पूर्ण;
 
-static int vmw_fb_setcolreg(unsigned regno, unsigned red, unsigned green,
-			    unsigned blue, unsigned transp,
-			    struct fb_info *info)
-{
-	struct vmw_fb_par *par = info->par;
-	u32 *pal = par->pseudo_palette;
+अटल पूर्णांक vmw_fb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
+			    अचिन्हित blue, अचिन्हित transp,
+			    काष्ठा fb_info *info)
+अणु
+	काष्ठा vmw_fb_par *par = info->par;
+	u32 *pal = par->pseuकरो_palette;
 
-	if (regno > 15) {
+	अगर (regno > 15) अणु
 		DRM_ERROR("Bad regno %u.\n", regno);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	switch (par->set_fb->format->depth) {
-	case 24:
-	case 32:
+	चयन (par->set_fb->क्रमmat->depth) अणु
+	हाल 24:
+	हाल 32:
 		pal[regno] = ((red & 0xff00) << 8) |
 			      (green & 0xff00) |
 			     ((blue  & 0xff00) >> 8);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DRM_ERROR("Bad depth %u, bpp %u.\n",
-			  par->set_fb->format->depth,
-			  par->set_fb->format->cpp[0] * 8);
-		return 1;
-	}
+			  par->set_fb->क्रमmat->depth,
+			  par->set_fb->क्रमmat->cpp[0] * 8);
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vmw_fb_check_var(struct fb_var_screeninfo *var,
-			    struct fb_info *info)
-{
-	int depth = var->bits_per_pixel;
-	struct vmw_fb_par *par = info->par;
-	struct vmw_private *vmw_priv = par->vmw_priv;
+अटल पूर्णांक vmw_fb_check_var(काष्ठा fb_var_screeninfo *var,
+			    काष्ठा fb_info *info)
+अणु
+	पूर्णांक depth = var->bits_per_pixel;
+	काष्ठा vmw_fb_par *par = info->par;
+	काष्ठा vmw_निजी *vmw_priv = par->vmw_priv;
 
-	switch (var->bits_per_pixel) {
-	case 32:
+	चयन (var->bits_per_pixel) अणु
+	हाल 32:
 		depth = (var->transp.length > 0) ? 32 : 24;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DRM_ERROR("Bad bpp %u.\n", var->bits_per_pixel);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (depth) {
-	case 24:
+	चयन (depth) अणु
+	हाल 24:
 		var->red.offset = 16;
 		var->green.offset = 8;
 		var->blue.offset = 0;
@@ -124,8 +125,8 @@ static int vmw_fb_check_var(struct fb_var_screeninfo *var,
 		var->blue.length = 8;
 		var->transp.length = 0;
 		var->transp.offset = 0;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		var->red.offset = 16;
 		var->green.offset = 8;
 		var->blue.offset = 0;
@@ -134,84 +135,84 @@ static int vmw_fb_check_var(struct fb_var_screeninfo *var,
 		var->blue.length = 8;
 		var->transp.length = 8;
 		var->transp.offset = 24;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DRM_ERROR("Bad depth %u.\n", depth);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((var->xoffset + var->xres) > par->max_width ||
-	    (var->yoffset + var->yres) > par->max_height) {
+	अगर ((var->xoffset + var->xres) > par->max_width ||
+	    (var->yoffset + var->yres) > par->max_height) अणु
 		DRM_ERROR("Requested geom can not fit in framebuffer\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!vmw_kms_validate_mode_vram(vmw_priv,
+	अगर (!vmw_kms_validate_mode_vram(vmw_priv,
 					var->xres * var->bits_per_pixel/8,
-					var->yoffset + var->yres)) {
+					var->yoffset + var->yres)) अणु
 		DRM_ERROR("Requested geom can not fit in framebuffer\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vmw_fb_blank(int blank, struct fb_info *info)
-{
-	return 0;
-}
+अटल पूर्णांक vmw_fb_blank(पूर्णांक blank, काष्ठा fb_info *info)
+अणु
+	वापस 0;
+पूर्ण
 
 /**
  * vmw_fb_dirty_flush - flush dirty regions to the kms framebuffer
  *
- * @work: The struct work_struct associated with this task.
+ * @work: The काष्ठा work_काष्ठा associated with this task.
  *
- * This function flushes the dirty regions of the vmalloc framebuffer to the
- * kms framebuffer, and if the kms framebuffer is visible, also updated the
- * corresponding displays. Note that this function runs even if the kms
+ * This function flushes the dirty regions of the vदो_स्मृति framebuffer to the
+ * kms framebuffer, and अगर the kms framebuffer is visible, also updated the
+ * corresponding displays. Note that this function runs even अगर the kms
  * framebuffer is not bound to a crtc and thus not visible, but it's turned
  * off during hibernation using the par->dirty.active bool.
  */
-static void vmw_fb_dirty_flush(struct work_struct *work)
-{
-	struct vmw_fb_par *par = container_of(work, struct vmw_fb_par,
+अटल व्योम vmw_fb_dirty_flush(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा vmw_fb_par *par = container_of(work, काष्ठा vmw_fb_par,
 					      local_work.work);
-	struct vmw_private *vmw_priv = par->vmw_priv;
-	struct fb_info *info = vmw_priv->fb_info;
-	unsigned long irq_flags;
+	काष्ठा vmw_निजी *vmw_priv = par->vmw_priv;
+	काष्ठा fb_info *info = vmw_priv->fb_info;
+	अचिन्हित दीर्घ irq_flags;
 	s32 dst_x1, dst_x2, dst_y1, dst_y2, w = 0, h = 0;
 	u32 cpp, max_x, max_y;
-	struct drm_clip_rect clip;
-	struct drm_framebuffer *cur_fb;
+	काष्ठा drm_clip_rect clip;
+	काष्ठा drm_framebuffer *cur_fb;
 	u8 *src_ptr, *dst_ptr;
-	struct vmw_buffer_object *vbo = par->vmw_bo;
-	void *virtual;
+	काष्ठा vmw_buffer_object *vbo = par->vmw_bo;
+	व्योम *भव;
 
-	if (!READ_ONCE(par->dirty.active))
-		return;
+	अगर (!READ_ONCE(par->dirty.active))
+		वापस;
 
 	mutex_lock(&par->bo_mutex);
 	cur_fb = par->set_fb;
-	if (!cur_fb)
-		goto out_unlock;
+	अगर (!cur_fb)
+		जाओ out_unlock;
 
-	(void) ttm_read_lock(&vmw_priv->reservation_sem, false);
-	(void) ttm_bo_reserve(&vbo->base, false, false, NULL);
-	virtual = vmw_bo_map_and_cache(vbo);
-	if (!virtual)
-		goto out_unreserve;
+	(व्योम) tपंचांग_पढ़ो_lock(&vmw_priv->reservation_sem, false);
+	(व्योम) tपंचांग_bo_reserve(&vbo->base, false, false, शून्य);
+	भव = vmw_bo_map_and_cache(vbo);
+	अगर (!भव)
+		जाओ out_unreserve;
 
 	spin_lock_irqsave(&par->dirty.lock, irq_flags);
-	if (!par->dirty.active) {
+	अगर (!par->dirty.active) अणु
 		spin_unlock_irqrestore(&par->dirty.lock, irq_flags);
-		goto out_unreserve;
-	}
+		जाओ out_unreserve;
+	पूर्ण
 
 	/*
-	 * Handle panning when copying from vmalloc to framebuffer.
+	 * Handle panning when copying from vदो_स्मृति to framebuffer.
 	 * Clip dirty area to framebuffer.
 	 */
-	cpp = cur_fb->format->cpp[0];
+	cpp = cur_fb->क्रमmat->cpp[0];
 	max_x = par->fb_x + cur_fb->width;
 	max_y = par->fb_y + cur_fb->height;
 
@@ -233,110 +234,110 @@ static void vmw_fb_dirty_flush(struct work_struct *work)
 	par->dirty.y1 = par->dirty.y2 = 0;
 	spin_unlock_irqrestore(&par->dirty.lock, irq_flags);
 
-	if (w && h) {
-		dst_ptr = (u8 *)virtual  +
+	अगर (w && h) अणु
+		dst_ptr = (u8 *)भव  +
 			(dst_y1 * par->set_fb->pitches[0] + dst_x1 * cpp);
-		src_ptr = (u8 *)par->vmalloc +
+		src_ptr = (u8 *)par->vदो_स्मृति +
 			((dst_y1 + par->fb_y) * info->fix.line_length +
 			 (dst_x1 + par->fb_x) * cpp);
 
-		while (h-- > 0) {
-			memcpy(dst_ptr, src_ptr, w*cpp);
+		जबतक (h-- > 0) अणु
+			स_नकल(dst_ptr, src_ptr, w*cpp);
 			dst_ptr += par->set_fb->pitches[0];
 			src_ptr += info->fix.line_length;
-		}
+		पूर्ण
 
 		clip.x1 = dst_x1;
 		clip.x2 = dst_x2;
 		clip.y1 = dst_y1;
 		clip.y2 = dst_y2;
-	}
+	पूर्ण
 
 out_unreserve:
-	ttm_bo_unreserve(&vbo->base);
-	ttm_read_unlock(&vmw_priv->reservation_sem);
-	if (w && h) {
-		WARN_ON_ONCE(par->set_fb->funcs->dirty(cur_fb, NULL, 0, 0,
+	tपंचांग_bo_unreserve(&vbo->base);
+	tपंचांग_पढ़ो_unlock(&vmw_priv->reservation_sem);
+	अगर (w && h) अणु
+		WARN_ON_ONCE(par->set_fb->funcs->dirty(cur_fb, शून्य, 0, 0,
 						       &clip, 1));
 		vmw_cmd_flush(vmw_priv, false);
-	}
+	पूर्ण
 out_unlock:
 	mutex_unlock(&par->bo_mutex);
-}
+पूर्ण
 
-static void vmw_fb_dirty_mark(struct vmw_fb_par *par,
-			      unsigned x1, unsigned y1,
-			      unsigned width, unsigned height)
-{
-	unsigned long flags;
-	unsigned x2 = x1 + width;
-	unsigned y2 = y1 + height;
+अटल व्योम vmw_fb_dirty_mark(काष्ठा vmw_fb_par *par,
+			      अचिन्हित x1, अचिन्हित y1,
+			      अचिन्हित width, अचिन्हित height)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित x2 = x1 + width;
+	अचिन्हित y2 = y1 + height;
 
 	spin_lock_irqsave(&par->dirty.lock, flags);
-	if (par->dirty.x1 == par->dirty.x2) {
+	अगर (par->dirty.x1 == par->dirty.x2) अणु
 		par->dirty.x1 = x1;
 		par->dirty.y1 = y1;
 		par->dirty.x2 = x2;
 		par->dirty.y2 = y2;
-		/* if we are active start the dirty work
-		 * we share the work with the defio system */
-		if (par->dirty.active)
+		/* अगर we are active start the dirty work
+		 * we share the work with the defio प्रणाली */
+		अगर (par->dirty.active)
 			schedule_delayed_work(&par->local_work,
-					      VMW_DIRTY_DELAY);
-	} else {
-		if (x1 < par->dirty.x1)
+					      VMW_सूचीTY_DELAY);
+	पूर्ण अन्यथा अणु
+		अगर (x1 < par->dirty.x1)
 			par->dirty.x1 = x1;
-		if (y1 < par->dirty.y1)
+		अगर (y1 < par->dirty.y1)
 			par->dirty.y1 = y1;
-		if (x2 > par->dirty.x2)
+		अगर (x2 > par->dirty.x2)
 			par->dirty.x2 = x2;
-		if (y2 > par->dirty.y2)
+		अगर (y2 > par->dirty.y2)
 			par->dirty.y2 = y2;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&par->dirty.lock, flags);
-}
+पूर्ण
 
-static int vmw_fb_pan_display(struct fb_var_screeninfo *var,
-			      struct fb_info *info)
-{
-	struct vmw_fb_par *par = info->par;
+अटल पूर्णांक vmw_fb_pan_display(काष्ठा fb_var_screeninfo *var,
+			      काष्ठा fb_info *info)
+अणु
+	काष्ठा vmw_fb_par *par = info->par;
 
-	if ((var->xoffset + var->xres) > var->xres_virtual ||
-	    (var->yoffset + var->yres) > var->yres_virtual) {
+	अगर ((var->xoffset + var->xres) > var->xres_भव ||
+	    (var->yoffset + var->yres) > var->yres_भव) अणु
 		DRM_ERROR("Requested panning can not fit in framebuffer\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&par->bo_mutex);
 	par->fb_x = var->xoffset;
 	par->fb_y = var->yoffset;
-	if (par->set_fb)
+	अगर (par->set_fb)
 		vmw_fb_dirty_mark(par, par->fb_x, par->fb_y, par->set_fb->width,
 				  par->set_fb->height);
 	mutex_unlock(&par->bo_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vmw_deferred_io(struct fb_info *info,
-			    struct list_head *pagelist)
-{
-	struct vmw_fb_par *par = info->par;
-	unsigned long start, end, min, max;
-	unsigned long flags;
-	struct page *page;
-	int y1, y2;
+अटल व्योम vmw_deferred_io(काष्ठा fb_info *info,
+			    काष्ठा list_head *pagelist)
+अणु
+	काष्ठा vmw_fb_par *par = info->par;
+	अचिन्हित दीर्घ start, end, min, max;
+	अचिन्हित दीर्घ flags;
+	काष्ठा page *page;
+	पूर्णांक y1, y2;
 
-	min = ULONG_MAX;
+	min = अच_दीर्घ_उच्च;
 	max = 0;
-	list_for_each_entry(page, pagelist, lru) {
+	list_क्रम_each_entry(page, pagelist, lru) अणु
 		start = page->index << PAGE_SHIFT;
 		end = start + PAGE_SIZE - 1;
 		min = min(min, start);
 		max = max(max, end);
-	}
+	पूर्ण
 
-	if (min < max) {
+	अगर (min < max) अणु
 		y1 = min / info->fix.line_length;
 		y2 = (max / info->fix.line_length) + 1;
 
@@ -348,247 +349,247 @@ static void vmw_deferred_io(struct fb_info *info,
 		spin_unlock_irqrestore(&par->dirty.lock, flags);
 
 		/*
-		 * Since we've already waited on this work once, try to
+		 * Since we've alपढ़ोy रुकोed on this work once, try to
 		 * execute asap.
 		 */
 		cancel_delayed_work(&par->local_work);
 		schedule_delayed_work(&par->local_work, 0);
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct fb_deferred_io vmw_defio = {
-	.delay		= VMW_DIRTY_DELAY,
+अटल काष्ठा fb_deferred_io vmw_defio = अणु
+	.delay		= VMW_सूचीTY_DELAY,
 	.deferred_io	= vmw_deferred_io,
-};
+पूर्ण;
 
 /*
  * Draw code
  */
 
-static void vmw_fb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
-{
+अटल व्योम vmw_fb_fillrect(काष्ठा fb_info *info, स्थिर काष्ठा fb_fillrect *rect)
+अणु
 	cfb_fillrect(info, rect);
 	vmw_fb_dirty_mark(info->par, rect->dx, rect->dy,
 			  rect->width, rect->height);
-}
+पूर्ण
 
-static void vmw_fb_copyarea(struct fb_info *info, const struct fb_copyarea *region)
-{
+अटल व्योम vmw_fb_copyarea(काष्ठा fb_info *info, स्थिर काष्ठा fb_copyarea *region)
+अणु
 	cfb_copyarea(info, region);
 	vmw_fb_dirty_mark(info->par, region->dx, region->dy,
 			  region->width, region->height);
-}
+पूर्ण
 
-static void vmw_fb_imageblit(struct fb_info *info, const struct fb_image *image)
-{
+अटल व्योम vmw_fb_imageblit(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
+अणु
 	cfb_imageblit(info, image);
 	vmw_fb_dirty_mark(info->par, image->dx, image->dy,
 			  image->width, image->height);
-}
+पूर्ण
 
 /*
  * Bring up code
  */
 
-static int vmw_fb_create_bo(struct vmw_private *vmw_priv,
-			    size_t size, struct vmw_buffer_object **out)
-{
-	struct vmw_buffer_object *vmw_bo;
-	int ret;
+अटल पूर्णांक vmw_fb_create_bo(काष्ठा vmw_निजी *vmw_priv,
+			    माप_प्रकार size, काष्ठा vmw_buffer_object **out)
+अणु
+	काष्ठा vmw_buffer_object *vmw_bo;
+	पूर्णांक ret;
 
-	(void) ttm_write_lock(&vmw_priv->reservation_sem, false);
+	(व्योम) tपंचांग_ग_लिखो_lock(&vmw_priv->reservation_sem, false);
 
-	vmw_bo = kmalloc(sizeof(*vmw_bo), GFP_KERNEL);
-	if (!vmw_bo) {
+	vmw_bo = kदो_स्मृति(माप(*vmw_bo), GFP_KERNEL);
+	अगर (!vmw_bo) अणु
 		ret = -ENOMEM;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
 	ret = vmw_bo_init(vmw_priv, vmw_bo, size,
 			      &vmw_sys_placement,
 			      false, false,
-			      &vmw_bo_bo_free);
-	if (unlikely(ret != 0))
-		goto err_unlock; /* init frees the buffer on failure */
+			      &vmw_bo_bo_मुक्त);
+	अगर (unlikely(ret != 0))
+		जाओ err_unlock; /* init मुक्तs the buffer on failure */
 
 	*out = vmw_bo;
-	ttm_write_unlock(&vmw_priv->reservation_sem);
+	tपंचांग_ग_लिखो_unlock(&vmw_priv->reservation_sem);
 
-	return 0;
+	वापस 0;
 
 err_unlock:
-	ttm_write_unlock(&vmw_priv->reservation_sem);
-	return ret;
-}
+	tपंचांग_ग_लिखो_unlock(&vmw_priv->reservation_sem);
+	वापस ret;
+पूर्ण
 
-static int vmw_fb_compute_depth(struct fb_var_screeninfo *var,
-				int *depth)
-{
-	switch (var->bits_per_pixel) {
-	case 32:
+अटल पूर्णांक vmw_fb_compute_depth(काष्ठा fb_var_screeninfo *var,
+				पूर्णांक *depth)
+अणु
+	चयन (var->bits_per_pixel) अणु
+	हाल 32:
 		*depth = (var->transp.length > 0) ? 32 : 24;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DRM_ERROR("Bad bpp %u.\n", var->bits_per_pixel);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vmwgfx_set_config_internal(struct drm_mode_set *set)
-{
-	struct drm_crtc *crtc = set->crtc;
-	struct drm_modeset_acquire_ctx ctx;
-	int ret;
+अटल पूर्णांक vmwgfx_set_config_पूर्णांकernal(काष्ठा drm_mode_set *set)
+अणु
+	काष्ठा drm_crtc *crtc = set->crtc;
+	काष्ठा drm_modeset_acquire_ctx ctx;
+	पूर्णांक ret;
 
 	drm_modeset_acquire_init(&ctx, 0);
 
 restart:
 	ret = crtc->funcs->set_config(set, &ctx);
 
-	if (ret == -EDEADLK) {
+	अगर (ret == -EDEADLK) अणु
 		drm_modeset_backoff(&ctx);
-		goto restart;
-	}
+		जाओ restart;
+	पूर्ण
 
 	drm_modeset_drop_locks(&ctx);
 	drm_modeset_acquire_fini(&ctx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vmw_fb_kms_detach(struct vmw_fb_par *par,
+अटल पूर्णांक vmw_fb_kms_detach(काष्ठा vmw_fb_par *par,
 			     bool detach_bo,
 			     bool unref_bo)
-{
-	struct drm_framebuffer *cur_fb = par->set_fb;
-	int ret;
+अणु
+	काष्ठा drm_framebuffer *cur_fb = par->set_fb;
+	पूर्णांक ret;
 
 	/* Detach the KMS framebuffer from crtcs */
-	if (par->set_mode) {
-		struct drm_mode_set set;
+	अगर (par->set_mode) अणु
+		काष्ठा drm_mode_set set;
 
 		set.crtc = par->crtc;
 		set.x = 0;
 		set.y = 0;
-		set.mode = NULL;
-		set.fb = NULL;
+		set.mode = शून्य;
+		set.fb = शून्य;
 		set.num_connectors = 0;
 		set.connectors = &par->con;
-		ret = vmwgfx_set_config_internal(&set);
-		if (ret) {
+		ret = vmwgfx_set_config_पूर्णांकernal(&set);
+		अगर (ret) अणु
 			DRM_ERROR("Could not unset a mode.\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		drm_mode_destroy(&par->vmw_priv->drm, par->set_mode);
-		par->set_mode = NULL;
-	}
+		par->set_mode = शून्य;
+	पूर्ण
 
-	if (cur_fb) {
+	अगर (cur_fb) अणु
 		drm_framebuffer_put(cur_fb);
-		par->set_fb = NULL;
-	}
+		par->set_fb = शून्य;
+	पूर्ण
 
-	if (par->vmw_bo && detach_bo && unref_bo)
+	अगर (par->vmw_bo && detach_bo && unref_bo)
 		vmw_bo_unreference(&par->vmw_bo);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vmw_fb_kms_framebuffer(struct fb_info *info)
-{
-	struct drm_mode_fb_cmd2 mode_cmd;
-	struct vmw_fb_par *par = info->par;
-	struct fb_var_screeninfo *var = &info->var;
-	struct drm_framebuffer *cur_fb;
-	struct vmw_framebuffer *vfb;
-	int ret = 0, depth;
-	size_t new_bo_size;
+अटल पूर्णांक vmw_fb_kms_framebuffer(काष्ठा fb_info *info)
+अणु
+	काष्ठा drm_mode_fb_cmd2 mode_cmd;
+	काष्ठा vmw_fb_par *par = info->par;
+	काष्ठा fb_var_screeninfo *var = &info->var;
+	काष्ठा drm_framebuffer *cur_fb;
+	काष्ठा vmw_framebuffer *vfb;
+	पूर्णांक ret = 0, depth;
+	माप_प्रकार new_bo_size;
 
 	ret = vmw_fb_compute_depth(var, &depth);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mode_cmd.width = var->xres;
 	mode_cmd.height = var->yres;
 	mode_cmd.pitches[0] = ((var->bits_per_pixel + 7) / 8) * mode_cmd.width;
-	mode_cmd.pixel_format =
-		drm_mode_legacy_fb_format(var->bits_per_pixel, depth);
+	mode_cmd.pixel_क्रमmat =
+		drm_mode_legacy_fb_क्रमmat(var->bits_per_pixel, depth);
 
 	cur_fb = par->set_fb;
-	if (cur_fb && cur_fb->width == mode_cmd.width &&
+	अगर (cur_fb && cur_fb->width == mode_cmd.width &&
 	    cur_fb->height == mode_cmd.height &&
-	    cur_fb->format->format == mode_cmd.pixel_format &&
+	    cur_fb->क्रमmat->क्रमmat == mode_cmd.pixel_क्रमmat &&
 	    cur_fb->pitches[0] == mode_cmd.pitches[0])
-		return 0;
+		वापस 0;
 
 	/* Need new buffer object ? */
-	new_bo_size = (size_t) mode_cmd.pitches[0] * (size_t) mode_cmd.height;
+	new_bo_size = (माप_प्रकार) mode_cmd.pitches[0] * (माप_प्रकार) mode_cmd.height;
 	ret = vmw_fb_kms_detach(par,
 				par->bo_size < new_bo_size ||
 				par->bo_size > 2*new_bo_size,
 				true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!par->vmw_bo) {
+	अगर (!par->vmw_bo) अणु
 		ret = vmw_fb_create_bo(par->vmw_priv, new_bo_size,
 				       &par->vmw_bo);
-		if (ret) {
+		अगर (ret) अणु
 			DRM_ERROR("Failed creating a buffer object for "
 				  "fbdev.\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		par->bo_size = new_bo_size;
-	}
+	पूर्ण
 
-	vfb = vmw_kms_new_framebuffer(par->vmw_priv, par->vmw_bo, NULL,
+	vfb = vmw_kms_new_framebuffer(par->vmw_priv, par->vmw_bo, शून्य,
 				      true, &mode_cmd);
-	if (IS_ERR(vfb))
-		return PTR_ERR(vfb);
+	अगर (IS_ERR(vfb))
+		वापस PTR_ERR(vfb);
 
 	par->set_fb = &vfb->base;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vmw_fb_set_par(struct fb_info *info)
-{
-	struct vmw_fb_par *par = info->par;
-	struct vmw_private *vmw_priv = par->vmw_priv;
-	struct drm_mode_set set;
-	struct fb_var_screeninfo *var = &info->var;
-	struct drm_display_mode new_mode = { DRM_MODE("fb_mode",
+अटल पूर्णांक vmw_fb_set_par(काष्ठा fb_info *info)
+अणु
+	काष्ठा vmw_fb_par *par = info->par;
+	काष्ठा vmw_निजी *vmw_priv = par->vmw_priv;
+	काष्ठा drm_mode_set set;
+	काष्ठा fb_var_screeninfo *var = &info->var;
+	काष्ठा drm_display_mode new_mode = अणु DRM_MODE("fb_mode",
 		DRM_MODE_TYPE_DRIVER,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC)
-	};
-	struct drm_display_mode *mode;
-	int ret;
+	पूर्ण;
+	काष्ठा drm_display_mode *mode;
+	पूर्णांक ret;
 
 	mode = drm_mode_duplicate(&vmw_priv->drm, &new_mode);
-	if (!mode) {
+	अगर (!mode) अणु
 		DRM_ERROR("Could not create new fb mode.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	mode->hdisplay = var->xres;
 	mode->vdisplay = var->yres;
 	vmw_guess_mode_timing(mode);
 
-	if (!vmw_kms_validate_mode_vram(vmw_priv,
+	अगर (!vmw_kms_validate_mode_vram(vmw_priv,
 					mode->hdisplay *
 					DIV_ROUND_UP(var->bits_per_pixel, 8),
-					mode->vdisplay)) {
+					mode->vdisplay)) अणु
 		drm_mode_destroy(&vmw_priv->drm, mode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&par->bo_mutex);
 	ret = vmw_fb_kms_framebuffer(info);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 
 	par->fb_x = var->xoffset;
 	par->fb_y = var->yoffset;
@@ -601,30 +602,30 @@ static int vmw_fb_set_par(struct fb_info *info)
 	set.num_connectors = 1;
 	set.connectors = &par->con;
 
-	ret = vmwgfx_set_config_internal(&set);
-	if (ret)
-		goto out_unlock;
+	ret = vmwgfx_set_config_पूर्णांकernal(&set);
+	अगर (ret)
+		जाओ out_unlock;
 
 	vmw_fb_dirty_mark(par, par->fb_x, par->fb_y,
 			  par->set_fb->width, par->set_fb->height);
 
-	/* If there already was stuff dirty we wont
-	 * schedule a new work, so lets do it now */
+	/* If there alपढ़ोy was stuff dirty we wont
+	 * schedule a new work, so lets करो it now */
 
 	schedule_delayed_work(&par->local_work, 0);
 
 out_unlock:
-	if (par->set_mode)
+	अगर (par->set_mode)
 		drm_mode_destroy(&vmw_priv->drm, par->set_mode);
 	par->set_mode = mode;
 
 	mutex_unlock(&par->bo_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static const struct fb_ops vmw_fb_ops = {
+अटल स्थिर काष्ठा fb_ops vmw_fb_ops = अणु
 	.owner = THIS_MODULE,
 	.fb_check_var = vmw_fb_check_var,
 	.fb_set_par = vmw_fb_set_par,
@@ -634,48 +635,48 @@ static const struct fb_ops vmw_fb_ops = {
 	.fb_imageblit = vmw_fb_imageblit,
 	.fb_pan_display = vmw_fb_pan_display,
 	.fb_blank = vmw_fb_blank,
-};
+पूर्ण;
 
-int vmw_fb_init(struct vmw_private *vmw_priv)
-{
-	struct device *device = vmw_priv->drm.dev;
-	struct vmw_fb_par *par;
-	struct fb_info *info;
-	unsigned fb_width, fb_height;
-	unsigned int fb_bpp, fb_pitch, fb_size;
-	struct drm_display_mode *init_mode;
-	int ret;
+पूर्णांक vmw_fb_init(काष्ठा vmw_निजी *vmw_priv)
+अणु
+	काष्ठा device *device = vmw_priv->drm.dev;
+	काष्ठा vmw_fb_par *par;
+	काष्ठा fb_info *info;
+	अचिन्हित fb_width, fb_height;
+	अचिन्हित पूर्णांक fb_bpp, fb_pitch, fb_size;
+	काष्ठा drm_display_mode *init_mode;
+	पूर्णांक ret;
 
 	fb_bpp = 32;
 
 	/* XXX As shouldn't these be as well. */
-	fb_width = min(vmw_priv->fb_max_width, (unsigned)2048);
-	fb_height = min(vmw_priv->fb_max_height, (unsigned)2048);
+	fb_width = min(vmw_priv->fb_max_width, (अचिन्हित)2048);
+	fb_height = min(vmw_priv->fb_max_height, (अचिन्हित)2048);
 
 	fb_pitch = fb_width * fb_bpp / 8;
 	fb_size = fb_pitch * fb_height;
 
-	info = framebuffer_alloc(sizeof(*par), device);
-	if (!info)
-		return -ENOMEM;
+	info = framebuffer_alloc(माप(*par), device);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	/*
 	 * Par
 	 */
 	vmw_priv->fb_info = info;
 	par = info->par;
-	memset(par, 0, sizeof(*par));
+	स_रखो(par, 0, माप(*par));
 	INIT_DELAYED_WORK(&par->local_work, &vmw_fb_dirty_flush);
 	par->vmw_priv = vmw_priv;
-	par->vmalloc = NULL;
+	par->vदो_स्मृति = शून्य;
 	par->max_width = fb_width;
 	par->max_height = fb_height;
 
 	ret = vmw_kms_fbdev_init_data(vmw_priv, 0, par->max_width,
 				      par->max_height, &par->con,
 				      &par->crtc, &init_mode);
-	if (ret)
-		goto err_kms;
+	अगर (ret)
+		जाओ err_kms;
 
 	info->var.xres = init_mode->hdisplay;
 	info->var.yres = init_mode->vdisplay;
@@ -683,21 +684,21 @@ int vmw_fb_init(struct vmw_private *vmw_priv)
 	/*
 	 * Create buffers and alloc memory
 	 */
-	par->vmalloc = vzalloc(fb_size);
-	if (unlikely(par->vmalloc == NULL)) {
+	par->vदो_स्मृति = vzalloc(fb_size);
+	अगर (unlikely(par->vदो_स्मृति == शून्य)) अणु
 		ret = -ENOMEM;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	/*
 	 * Fixed and var
 	 */
-	strcpy(info->fix.id, "svgadrmfb");
+	म_नकल(info->fix.id, "svgadrmfb");
 	info->fix.type = FB_TYPE_PACKED_PIXELS;
 	info->fix.visual = FB_VISUAL_TRUECOLOR;
 	info->fix.type_aux = 0;
-	info->fix.xpanstep = 1; /* doing it in hw */
-	info->fix.ypanstep = 1; /* doing it in hw */
+	info->fix.xpanstep = 1; /* करोing it in hw */
+	info->fix.ypanstep = 1; /* करोing it in hw */
 	info->fix.ywrapstep = 0;
 	info->fix.accel = FB_ACCEL_NONE;
 	info->fix.line_length = fb_pitch;
@@ -705,13 +706,13 @@ int vmw_fb_init(struct vmw_private *vmw_priv)
 	info->fix.smem_start = 0;
 	info->fix.smem_len = fb_size;
 
-	info->pseudo_palette = par->pseudo_palette;
-	info->screen_base = (char __iomem *)par->vmalloc;
+	info->pseuकरो_palette = par->pseuकरो_palette;
+	info->screen_base = (अक्षर __iomem *)par->vदो_स्मृति;
 	info->screen_size = fb_size;
 
 	info->fbops = &vmw_fb_ops;
 
-	/* 24 depth per default */
+	/* 24 depth per शेष */
 	info->var.red.offset = 16;
 	info->var.green.offset = 8;
 	info->var.blue.offset = 0;
@@ -721,8 +722,8 @@ int vmw_fb_init(struct vmw_private *vmw_priv)
 	info->var.transp.offset = 0;
 	info->var.transp.length = 0;
 
-	info->var.xres_virtual = fb_width;
-	info->var.yres_virtual = fb_height;
+	info->var.xres_भव = fb_width;
+	info->var.yres_भव = fb_height;
 	info->var.bits_per_pixel = fb_bpp;
 	info->var.xoffset = 0;
 	info->var.yoffset = 0;
@@ -730,12 +731,12 @@ int vmw_fb_init(struct vmw_private *vmw_priv)
 	info->var.height = -1;
 	info->var.width = -1;
 
-	/* Use default scratch pixmap (info->pixmap.flags = FB_PIXMAP_SYSTEM) */
+	/* Use शेष scratch pixmap (info->pixmap.flags = FB_PIXMAP_SYSTEM) */
 	info->apertures = alloc_apertures(1);
-	if (!info->apertures) {
+	अगर (!info->apertures) अणु
 		ret = -ENOMEM;
-		goto err_aper;
-	}
+		जाओ err_aper;
+	पूर्ण
 	info->apertures->ranges[0].base = vmw_priv->vram_start;
 	info->apertures->ranges[0].size = vmw_priv->vram_size;
 
@@ -750,33 +751,33 @@ int vmw_fb_init(struct vmw_private *vmw_priv)
 	info->fbdefio = &vmw_defio;
 	fb_deferred_io_init(info);
 
-	ret = register_framebuffer(info);
-	if (unlikely(ret != 0))
-		goto err_defio;
+	ret = रेजिस्टर_framebuffer(info);
+	अगर (unlikely(ret != 0))
+		जाओ err_defio;
 
 	vmw_fb_set_par(info);
 
-	return 0;
+	वापस 0;
 
 err_defio:
 	fb_deferred_io_cleanup(info);
 err_aper:
-err_free:
-	vfree(par->vmalloc);
+err_मुक्त:
+	vमुक्त(par->vदो_स्मृति);
 err_kms:
 	framebuffer_release(info);
-	vmw_priv->fb_info = NULL;
+	vmw_priv->fb_info = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int vmw_fb_close(struct vmw_private *vmw_priv)
-{
-	struct fb_info *info;
-	struct vmw_fb_par *par;
+पूर्णांक vmw_fb_बंद(काष्ठा vmw_निजी *vmw_priv)
+अणु
+	काष्ठा fb_info *info;
+	काष्ठा vmw_fb_par *par;
 
-	if (!vmw_priv->fb_info)
-		return 0;
+	अगर (!vmw_priv->fb_info)
+		वापस 0;
 
 	info = vmw_priv->fb_info;
 	par = info->par;
@@ -784,26 +785,26 @@ int vmw_fb_close(struct vmw_private *vmw_priv)
 	/* ??? order */
 	fb_deferred_io_cleanup(info);
 	cancel_delayed_work_sync(&par->local_work);
-	unregister_framebuffer(info);
+	unरेजिस्टर_framebuffer(info);
 
 	mutex_lock(&par->bo_mutex);
-	(void) vmw_fb_kms_detach(par, true, true);
+	(व्योम) vmw_fb_kms_detach(par, true, true);
 	mutex_unlock(&par->bo_mutex);
 
-	vfree(par->vmalloc);
+	vमुक्त(par->vदो_स्मृति);
 	framebuffer_release(info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vmw_fb_off(struct vmw_private *vmw_priv)
-{
-	struct fb_info *info;
-	struct vmw_fb_par *par;
-	unsigned long flags;
+पूर्णांक vmw_fb_off(काष्ठा vmw_निजी *vmw_priv)
+अणु
+	काष्ठा fb_info *info;
+	काष्ठा vmw_fb_par *par;
+	अचिन्हित दीर्घ flags;
 
-	if (!vmw_priv->fb_info)
-		return -EINVAL;
+	अगर (!vmw_priv->fb_info)
+		वापस -EINVAL;
 
 	info = vmw_priv->fb_info;
 	par = info->par;
@@ -815,17 +816,17 @@ int vmw_fb_off(struct vmw_private *vmw_priv)
 	flush_delayed_work(&info->deferred_work);
 	flush_delayed_work(&par->local_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vmw_fb_on(struct vmw_private *vmw_priv)
-{
-	struct fb_info *info;
-	struct vmw_fb_par *par;
-	unsigned long flags;
+पूर्णांक vmw_fb_on(काष्ठा vmw_निजी *vmw_priv)
+अणु
+	काष्ठा fb_info *info;
+	काष्ठा vmw_fb_par *par;
+	अचिन्हित दीर्घ flags;
 
-	if (!vmw_priv->fb_info)
-		return -EINVAL;
+	अगर (!vmw_priv->fb_info)
+		वापस -EINVAL;
 
 	info = vmw_priv->fb_info;
 	par = info->par;
@@ -836,10 +837,10 @@ int vmw_fb_on(struct vmw_private *vmw_priv)
 
 	/*
 	 * Need to reschedule a dirty update, because otherwise that's
-	 * only done in dirty_mark() if the previous coalesced
+	 * only करोne in dirty_mark() अगर the previous coalesced
 	 * dirty region was empty.
 	 */
 	schedule_delayed_work(&par->local_work, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

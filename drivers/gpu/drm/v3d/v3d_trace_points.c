@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* Copyright (C) 2015 Broadcom */
 
-#include "v3d_drv.h"
+#समावेश "v3d_drv.h"
 
-#ifndef __CHECKER__
-#define CREATE_TRACE_POINTS
-#include "v3d_trace.h"
-#endif
+#अगर_अघोषित __CHECKER__
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "v3d_trace.h"
+#पूर्ण_अगर

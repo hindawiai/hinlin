@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Based on arch/arm/include/asm/exception.h
+ * Based on arch/arm/include/यंत्र/exception.h
  *
  * Copyright (C) 2012 ARM Ltd.
  */
-#ifndef __ASM_EXCEPTION_H
-#define __ASM_EXCEPTION_H
+#अगर_अघोषित __ASM_EXCEPTION_H
+#घोषणा __ASM_EXCEPTION_H
 
-#include <asm/esr.h>
-#include <asm/kprobes.h>
-#include <asm/ptrace.h>
+#समावेश <यंत्र/esr.h>
+#समावेश <यंत्र/kprobes.h>
+#समावेश <यंत्र/ptrace.h>
 
-#include <linux/interrupt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#ifdef CONFIG_FUNCTION_GRAPH_TRACER
-#define __exception_irq_entry	__irq_entry
-#else
-#define __exception_irq_entry	__kprobes
-#endif
+#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
+#घोषणा __exception_irq_entry	__irq_entry
+#अन्यथा
+#घोषणा __exception_irq_entry	__kprobes
+#पूर्ण_अगर
 
-static inline u32 disr_to_esr(u64 disr)
-{
-	unsigned int esr = ESR_ELx_EC_SERROR << ESR_ELx_EC_SHIFT;
+अटल अंतरभूत u32 disr_to_esr(u64 disr)
+अणु
+	अचिन्हित पूर्णांक esr = ESR_ELx_EC_SERROR << ESR_ELx_EC_SHIFT;
 
-	if ((disr & DISR_EL1_IDS) == 0)
+	अगर ((disr & DISR_EL1_IDS) == 0)
 		esr |= (disr & DISR_EL1_ESR_MASK);
-	else
+	अन्यथा
 		esr |= (disr & ESR_ELx_ISS_MASK);
 
-	return esr;
-}
+	वापस esr;
+पूर्ण
 
-asmlinkage void el1_sync_handler(struct pt_regs *regs);
-asmlinkage void el0_sync_handler(struct pt_regs *regs);
-asmlinkage void el0_sync_compat_handler(struct pt_regs *regs);
+यंत्रlinkage व्योम el1_sync_handler(काष्ठा pt_regs *regs);
+यंत्रlinkage व्योम el0_sync_handler(काष्ठा pt_regs *regs);
+यंत्रlinkage व्योम el0_sync_compat_handler(काष्ठा pt_regs *regs);
 
-asmlinkage void noinstr enter_el1_irq_or_nmi(struct pt_regs *regs);
-asmlinkage void noinstr exit_el1_irq_or_nmi(struct pt_regs *regs);
-asmlinkage void enter_from_user_mode(void);
-asmlinkage void exit_to_user_mode(void);
-void arm64_enter_nmi(struct pt_regs *regs);
-void arm64_exit_nmi(struct pt_regs *regs);
-void do_mem_abort(unsigned long far, unsigned int esr, struct pt_regs *regs);
-void do_undefinstr(struct pt_regs *regs);
-void do_bti(struct pt_regs *regs);
-asmlinkage void bad_mode(struct pt_regs *regs, int reason, unsigned int esr);
-void do_debug_exception(unsigned long addr_if_watchpoint, unsigned int esr,
-			struct pt_regs *regs);
-void do_fpsimd_acc(unsigned int esr, struct pt_regs *regs);
-void do_sve_acc(unsigned int esr, struct pt_regs *regs);
-void do_fpsimd_exc(unsigned int esr, struct pt_regs *regs);
-void do_sysinstr(unsigned int esr, struct pt_regs *regs);
-void do_sp_pc_abort(unsigned long addr, unsigned int esr, struct pt_regs *regs);
-void bad_el0_sync(struct pt_regs *regs, int reason, unsigned int esr);
-void do_cp15instr(unsigned int esr, struct pt_regs *regs);
-void do_el0_svc(struct pt_regs *regs);
-void do_el0_svc_compat(struct pt_regs *regs);
-void do_ptrauth_fault(struct pt_regs *regs, unsigned int esr);
-#endif	/* __ASM_EXCEPTION_H */
+यंत्रlinkage व्योम noinstr enter_el1_irq_or_nmi(काष्ठा pt_regs *regs);
+यंत्रlinkage व्योम noinstr निकास_el1_irq_or_nmi(काष्ठा pt_regs *regs);
+यंत्रlinkage व्योम enter_from_user_mode(व्योम);
+यंत्रlinkage व्योम निकास_to_user_mode(व्योम);
+व्योम arm64_enter_nmi(काष्ठा pt_regs *regs);
+व्योम arm64_निकास_nmi(काष्ठा pt_regs *regs);
+व्योम करो_mem_पात(अचिन्हित दीर्घ far, अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs);
+व्योम करो_undefinstr(काष्ठा pt_regs *regs);
+व्योम करो_bti(काष्ठा pt_regs *regs);
+यंत्रlinkage व्योम bad_mode(काष्ठा pt_regs *regs, पूर्णांक reason, अचिन्हित पूर्णांक esr);
+व्योम करो_debug_exception(अचिन्हित दीर्घ addr_अगर_watchpoपूर्णांक, अचिन्हित पूर्णांक esr,
+			काष्ठा pt_regs *regs);
+व्योम करो_fpsimd_acc(अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs);
+व्योम करो_sve_acc(अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs);
+व्योम करो_fpsimd_exc(अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs);
+व्योम करो_sysinstr(अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs);
+व्योम करो_sp_pc_पात(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs);
+व्योम bad_el0_sync(काष्ठा pt_regs *regs, पूर्णांक reason, अचिन्हित पूर्णांक esr);
+व्योम करो_cp15instr(अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs);
+व्योम करो_el0_svc(काष्ठा pt_regs *regs);
+व्योम करो_el0_svc_compat(काष्ठा pt_regs *regs);
+व्योम करो_ptrauth_fault(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक esr);
+#पूर्ण_अगर	/* __ASM_EXCEPTION_H */

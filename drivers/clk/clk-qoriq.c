@@ -1,951 +1,952 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2013 Freescale Semiconductor, Inc.
  * Copyright 2021 NXP
  *
- * clock driver for Freescale QorIQ SoCs.
+ * घड़ी driver क्रम Freescale QorIQ SoCs.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <dt-bindings/clock/fsl,qoriq-clockgen.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/clkdev.h>
-#include <linux/fsl/guts.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/of.h>
-#include <linux/slab.h>
+#समावेश <dt-bindings/घड़ी/fsl,qoriq-घड़ीgen.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/fsl/guts.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
 
-#define PLL_DIV1	0
-#define PLL_DIV2	1
-#define PLL_DIV3	2
-#define PLL_DIV4	3
+#घोषणा PLL_DIV1	0
+#घोषणा PLL_DIV2	1
+#घोषणा PLL_DIV3	2
+#घोषणा PLL_DIV4	3
 
-#define PLATFORM_PLL	0
-#define CGA_PLL1	1
-#define CGA_PLL2	2
-#define CGA_PLL3	3
-#define CGA_PLL4	4	/* only on clockgen-1.0, which lacks CGB */
-#define CGB_PLL1	4
-#define CGB_PLL2	5
-#define MAX_PLL_DIV	32
+#घोषणा PLATFORM_PLL	0
+#घोषणा CGA_PLL1	1
+#घोषणा CGA_PLL2	2
+#घोषणा CGA_PLL3	3
+#घोषणा CGA_PLL4	4	/* only on घड़ीgen-1.0, which lacks CGB */
+#घोषणा CGB_PLL1	4
+#घोषणा CGB_PLL2	5
+#घोषणा MAX_PLL_DIV	32
 
-struct clockgen_pll_div {
-	struct clk *clk;
-	char name[32];
-};
+काष्ठा घड़ीgen_pll_भाग अणु
+	काष्ठा clk *clk;
+	अक्षर name[32];
+पूर्ण;
 
-struct clockgen_pll {
-	struct clockgen_pll_div div[MAX_PLL_DIV];
-};
+काष्ठा घड़ीgen_pll अणु
+	काष्ठा घड़ीgen_pll_भाग भाग[MAX_PLL_DIV];
+पूर्ण;
 
-#define CLKSEL_VALID	1
-#define CLKSEL_80PCT	2	/* Only allowed if PLL <= 80% of max cpu freq */
+#घोषणा CLKSEL_VALID	1
+#घोषणा CLKSEL_80PCT	2	/* Only allowed अगर PLL <= 80% of max cpu freq */
 
-struct clockgen_sourceinfo {
+काष्ठा घड़ीgen_sourceinfo अणु
 	u32 flags;	/* CLKSEL_xxx */
-	int pll;	/* CGx_PLLn */
-	int div;	/* PLL_DIVn */
-};
+	पूर्णांक pll;	/* CGx_PLLn */
+	पूर्णांक भाग;	/* PLL_DIVn */
+पूर्ण;
 
-#define NUM_MUX_PARENTS	16
+#घोषणा NUM_MUX_PARENTS	16
 
-struct clockgen_muxinfo {
-	struct clockgen_sourceinfo clksel[NUM_MUX_PARENTS];
-};
+काष्ठा घड़ीgen_muxinfo अणु
+	काष्ठा घड़ीgen_sourceinfo clksel[NUM_MUX_PARENTS];
+पूर्ण;
 
-#define NUM_HWACCEL	5
-#define NUM_CMUX	8
+#घोषणा NUM_HWACCEL	5
+#घोषणा NUM_CMUX	8
 
-struct clockgen;
+काष्ठा घड़ीgen;
 
 /*
- * cmux freq must be >= platform pll.
- * If not set, cmux freq must be >= platform pll/2
+ * cmux freq must be >= platक्रमm pll.
+ * If not set, cmux freq must be >= platक्रमm pll/2
  */
-#define CG_CMUX_GE_PLAT		1
+#घोषणा CG_CMUX_GE_PLAT		1
 
-#define CG_PLL_8BIT		2	/* PLLCnGSR[CFG] is 8 bits, not 6 */
-#define CG_VER3			4	/* version 3 cg: reg layout different */
-#define CG_LITTLE_ENDIAN	8
+#घोषणा CG_PLL_8BIT		2	/* PLLCnGSR[CFG] is 8 bits, not 6 */
+#घोषणा CG_VER3			4	/* version 3 cg: reg layout dअगरferent */
+#घोषणा CG_LITTLE_ENDIAN	8
 
-struct clockgen_chipinfo {
-	const char *compat, *guts_compat;
-	const struct clockgen_muxinfo *cmux_groups[2];
-	const struct clockgen_muxinfo *hwaccel[NUM_HWACCEL];
-	void (*init_periph)(struct clockgen *cg);
-	int cmux_to_group[NUM_CMUX + 1]; /* array should be -1 terminated */
-	u32 pll_mask;	/* 1 << n bit set if PLL n is valid */
+काष्ठा घड़ीgen_chipinfo अणु
+	स्थिर अक्षर *compat, *guts_compat;
+	स्थिर काष्ठा घड़ीgen_muxinfo *cmux_groups[2];
+	स्थिर काष्ठा घड़ीgen_muxinfo *hwaccel[NUM_HWACCEL];
+	व्योम (*init_periph)(काष्ठा घड़ीgen *cg);
+	पूर्णांक cmux_to_group[NUM_CMUX + 1]; /* array should be -1 terminated */
+	u32 pll_mask;	/* 1 << n bit set अगर PLL n is valid */
 	u32 flags;	/* CG_xxx */
-};
+पूर्ण;
 
-struct clockgen {
-	struct device_node *node;
-	void __iomem *regs;
-	struct clockgen_chipinfo info; /* mutable copy */
-	struct clk *sysclk, *coreclk;
-	struct clockgen_pll pll[6];
-	struct clk *cmux[NUM_CMUX];
-	struct clk *hwaccel[NUM_HWACCEL];
-	struct clk *fman[2];
-	struct ccsr_guts __iomem *guts;
-};
+काष्ठा घड़ीgen अणु
+	काष्ठा device_node *node;
+	व्योम __iomem *regs;
+	काष्ठा घड़ीgen_chipinfo info; /* mutable copy */
+	काष्ठा clk *sysclk, *coreclk;
+	काष्ठा घड़ीgen_pll pll[6];
+	काष्ठा clk *cmux[NUM_CMUX];
+	काष्ठा clk *hwaccel[NUM_HWACCEL];
+	काष्ठा clk *fman[2];
+	काष्ठा ccsr_guts __iomem *guts;
+पूर्ण;
 
-static struct clockgen clockgen;
-static bool add_cpufreq_dev __initdata;
+अटल काष्ठा घड़ीgen घड़ीgen;
+अटल bool add_cpufreq_dev __initdata;
 
-static void cg_out(struct clockgen *cg, u32 val, u32 __iomem *reg)
-{
-	if (cg->info.flags & CG_LITTLE_ENDIAN)
-		iowrite32(val, reg);
-	else
-		iowrite32be(val, reg);
-}
+अटल व्योम cg_out(काष्ठा घड़ीgen *cg, u32 val, u32 __iomem *reg)
+अणु
+	अगर (cg->info.flags & CG_LITTLE_ENDIAN)
+		ioग_लिखो32(val, reg);
+	अन्यथा
+		ioग_लिखो32be(val, reg);
+पूर्ण
 
-static u32 cg_in(struct clockgen *cg, u32 __iomem *reg)
-{
+अटल u32 cg_in(काष्ठा घड़ीgen *cg, u32 __iomem *reg)
+अणु
 	u32 val;
 
-	if (cg->info.flags & CG_LITTLE_ENDIAN)
-		val = ioread32(reg);
-	else
-		val = ioread32be(reg);
+	अगर (cg->info.flags & CG_LITTLE_ENDIAN)
+		val = ioपढ़ो32(reg);
+	अन्यथा
+		val = ioपढ़ो32be(reg);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static const struct clockgen_muxinfo p2041_cmux_grp1 = {
-	{
-		[0] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		[1] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		[4] = { CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-	}
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo p2041_cmux_grp1 = अणु
+	अणु
+		[0] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		[1] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		[4] = अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+	पूर्ण
+पूर्ण;
 
-static const struct clockgen_muxinfo p2041_cmux_grp2 = {
-	{
-		[0] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		[4] = { CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-		[5] = { CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-	}
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo p2041_cmux_grp2 = अणु
+	अणु
+		[0] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		[4] = अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+		[5] = अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+	पूर्ण
+पूर्ण;
 
-static const struct clockgen_muxinfo p5020_cmux_grp1 = {
-	{
-		[0] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		[1] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		[4] = { CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL2, PLL_DIV1 },
-	}
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo p5020_cmux_grp1 = अणु
+	अणु
+		[0] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		[1] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		[4] = अणु CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL2, PLL_DIV1 पूर्ण,
+	पूर्ण
+पूर्ण;
 
-static const struct clockgen_muxinfo p5020_cmux_grp2 = {
-	{
-		[0] = { CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL1, PLL_DIV1 },
-		[4] = { CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-		[5] = { CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-	}
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo p5020_cmux_grp2 = अणु
+	अणु
+		[0] = अणु CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL1, PLL_DIV1 पूर्ण,
+		[4] = अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+		[5] = अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+	पूर्ण
+पूर्ण;
 
-static const struct clockgen_muxinfo p5040_cmux_grp1 = {
-	{
-		[0] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		[1] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		[4] = { CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL2, PLL_DIV1 },
-		[5] = { CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL2, PLL_DIV2 },
-	}
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo p5040_cmux_grp1 = अणु
+	अणु
+		[0] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		[1] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		[4] = अणु CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL2, PLL_DIV1 पूर्ण,
+		[5] = अणु CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL2, PLL_DIV2 पूर्ण,
+	पूर्ण
+पूर्ण;
 
-static const struct clockgen_muxinfo p5040_cmux_grp2 = {
-	{
-		[0] = { CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL1, PLL_DIV1 },
-		[1] = { CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL1, PLL_DIV2 },
-		[4] = { CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-		[5] = { CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-	}
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo p5040_cmux_grp2 = अणु
+	अणु
+		[0] = अणु CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL1, PLL_DIV1 पूर्ण,
+		[1] = अणु CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL1, PLL_DIV2 पूर्ण,
+		[4] = अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+		[5] = अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+	पूर्ण
+पूर्ण;
 
-static const struct clockgen_muxinfo p4080_cmux_grp1 = {
-	{
-		[0] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		[1] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		[4] = { CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-		[5] = { CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		[8] = { CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL3, PLL_DIV1 },
-	}
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo p4080_cmux_grp1 = अणु
+	अणु
+		[0] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		[1] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		[4] = अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+		[5] = अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		[8] = अणु CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL3, PLL_DIV1 पूर्ण,
+	पूर्ण
+पूर्ण;
 
-static const struct clockgen_muxinfo p4080_cmux_grp2 = {
-	{
-		[0] = { CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL1, PLL_DIV1 },
-		[8] = { CLKSEL_VALID, CGA_PLL3, PLL_DIV1 },
-		[9] = { CLKSEL_VALID, CGA_PLL3, PLL_DIV2 },
-		[12] = { CLKSEL_VALID, CGA_PLL4, PLL_DIV1 },
-		[13] = { CLKSEL_VALID, CGA_PLL4, PLL_DIV2 },
-	}
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo p4080_cmux_grp2 = अणु
+	अणु
+		[0] = अणु CLKSEL_VALID | CLKSEL_80PCT, CGA_PLL1, PLL_DIV1 पूर्ण,
+		[8] = अणु CLKSEL_VALID, CGA_PLL3, PLL_DIV1 पूर्ण,
+		[9] = अणु CLKSEL_VALID, CGA_PLL3, PLL_DIV2 पूर्ण,
+		[12] = अणु CLKSEL_VALID, CGA_PLL4, PLL_DIV1 पूर्ण,
+		[13] = अणु CLKSEL_VALID, CGA_PLL4, PLL_DIV2 पूर्ण,
+	पूर्ण
+पूर्ण;
 
-static const struct clockgen_muxinfo t1023_cmux = {
-	{
-		[0] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		[1] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-	}
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo t1023_cmux = अणु
+	अणु
+		[0] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		[1] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+	पूर्ण
+पूर्ण;
 
-static const struct clockgen_muxinfo t1040_cmux = {
-	{
-		[0] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		[1] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		[4] = { CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-		[5] = { CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-	}
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo t1040_cmux = अणु
+	अणु
+		[0] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		[1] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		[4] = अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+		[5] = अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+	पूर्ण
+पूर्ण;
 
 
-static const struct clockgen_muxinfo clockgen2_cmux_cga = {
-	{
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV4 },
-		{},
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV4 },
-		{},
-		{ CLKSEL_VALID, CGA_PLL3, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL3, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL3, PLL_DIV4 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo घड़ीgen2_cmux_cga = अणु
+	अणु
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV4 पूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV4 पूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL3, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL3, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL3, PLL_DIV4 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo clockgen2_cmux_cga12 = {
-	{
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV4 },
-		{},
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV4 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo घड़ीgen2_cmux_cga12 = अणु
+	अणु
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV4 पूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV4 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo clockgen2_cmux_cgb = {
-	{
-		{ CLKSEL_VALID, CGB_PLL1, PLL_DIV1 },
-		{ CLKSEL_VALID, CGB_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGB_PLL1, PLL_DIV4 },
-		{},
-		{ CLKSEL_VALID, CGB_PLL2, PLL_DIV1 },
-		{ CLKSEL_VALID, CGB_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGB_PLL2, PLL_DIV4 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo घड़ीgen2_cmux_cgb = अणु
+	अणु
+		अणु CLKSEL_VALID, CGB_PLL1, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGB_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGB_PLL1, PLL_DIV4 पूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGB_PLL2, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGB_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGB_PLL2, PLL_DIV4 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo ls1021a_cmux = {
-	{
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV4 },
-	}
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo ls1021a_cmux = अणु
+	अणु
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV4 पूर्ण,
+	पूर्ण
+पूर्ण;
 
-static const struct clockgen_muxinfo ls1028a_hwa1 = {
-	{
-		{ CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV3 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV4 },
-		{},
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo ls1028a_hwa1 = अणु
+	अणु
+		अणु CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV3 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV4 पूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo ls1028a_hwa2 = {
-	{
-		{ CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV3 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV4 },
-		{},
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo ls1028a_hwa2 = अणु
+	अणु
+		अणु CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV3 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV4 पूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo ls1028a_hwa3 = {
-	{
-		{ CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV3 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV4 },
-		{},
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo ls1028a_hwa3 = अणु
+	अणु
+		अणु CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV3 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV4 पूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo ls1028a_hwa4 = {
-	{
-		{ CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV3 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV4 },
-		{},
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo ls1028a_hwa4 = अणु
+	अणु
+		अणु CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV3 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV4 पूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo ls1043a_hwa1 = {
-	{
-		{},
-		{},
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV3 },
-		{},
-		{},
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo ls1043a_hwa1 = अणु
+	अणु
+		अणुपूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV3 पूर्ण,
+		अणुपूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo ls1043a_hwa2 = {
-	{
-		{},
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-		{},
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo ls1043a_hwa2 = अणु
+	अणु
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo ls1046a_hwa1 = {
-	{
-		{},
-		{},
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV3 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV4 },
-		{ CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo ls1046a_hwa1 = अणु
+	अणु
+		अणुपूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV3 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV4 पूर्ण,
+		अणु CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo ls1046a_hwa2 = {
-	{
-		{},
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV3 },
-		{},
-		{},
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo ls1046a_hwa2 = अणु
+	अणु
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV3 पूर्ण,
+		अणुपूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo ls1088a_hwa1 = {
-	{
-		{},
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV3 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV4 },
-		{},
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo ls1088a_hwa1 = अणु
+	अणु
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV3 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV4 पूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo ls1088a_hwa2 = {
-	{
-		{},
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV3 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV4 },
-		{},
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo ls1088a_hwa2 = अणु
+	अणु
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV3 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV4 पूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo ls1012a_cmux = {
-	{
-		[0] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		{},
-		[2] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-	}
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo ls1012a_cmux = अणु
+	अणु
+		[0] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		अणुपूर्ण,
+		[2] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+	पूर्ण
+पूर्ण;
 
-static const struct clockgen_muxinfo t1023_hwa1 = {
-	{
-		{},
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo t1023_hwa1 = अणु
+	अणु
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo t1023_hwa2 = {
-	{
-		[6] = { CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo t1023_hwa2 = अणु
+	अणु
+		[6] = अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo t2080_hwa1 = {
-	{
-		{},
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV3 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV4 },
-		{ CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo t2080_hwa1 = अणु
+	अणु
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV3 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV4 पूर्ण,
+		अणु CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo t2080_hwa2 = {
-	{
-		{},
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV3 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV4 },
-		{ CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo t2080_hwa2 = अणु
+	अणु
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV3 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV4 पूर्ण,
+		अणु CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo t4240_hwa1 = {
-	{
-		{ CLKSEL_VALID, PLATFORM_PLL, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV1 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV3 },
-		{ CLKSEL_VALID, CGA_PLL1, PLL_DIV4 },
-		{},
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV2 },
-		{ CLKSEL_VALID, CGA_PLL2, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo t4240_hwa1 = अणु
+	अणु
+		अणु CLKSEL_VALID, PLATFORM_PLL, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV1 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV3 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL1, PLL_DIV4 पूर्ण,
+		अणुपूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV2 पूर्ण,
+		अणु CLKSEL_VALID, CGA_PLL2, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo t4240_hwa4 = {
-	{
-		[2] = { CLKSEL_VALID, CGB_PLL1, PLL_DIV2 },
-		[3] = { CLKSEL_VALID, CGB_PLL1, PLL_DIV3 },
-		[4] = { CLKSEL_VALID, CGB_PLL1, PLL_DIV4 },
-		[5] = { CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 },
-		[6] = { CLKSEL_VALID, CGB_PLL2, PLL_DIV2 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo t4240_hwa4 = अणु
+	अणु
+		[2] = अणु CLKSEL_VALID, CGB_PLL1, PLL_DIV2 पूर्ण,
+		[3] = अणु CLKSEL_VALID, CGB_PLL1, PLL_DIV3 पूर्ण,
+		[4] = अणु CLKSEL_VALID, CGB_PLL1, PLL_DIV4 पूर्ण,
+		[5] = अणु CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 पूर्ण,
+		[6] = अणु CLKSEL_VALID, CGB_PLL2, PLL_DIV2 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct clockgen_muxinfo t4240_hwa5 = {
-	{
-		[2] = { CLKSEL_VALID, CGB_PLL2, PLL_DIV2 },
-		[3] = { CLKSEL_VALID, CGB_PLL2, PLL_DIV3 },
-		[4] = { CLKSEL_VALID, CGB_PLL2, PLL_DIV4 },
-		[5] = { CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 },
-		[6] = { CLKSEL_VALID, CGB_PLL1, PLL_DIV2 },
-		[7] = { CLKSEL_VALID, CGB_PLL1, PLL_DIV3 },
-	},
-};
+अटल स्थिर काष्ठा घड़ीgen_muxinfo t4240_hwa5 = अणु
+	अणु
+		[2] = अणु CLKSEL_VALID, CGB_PLL2, PLL_DIV2 पूर्ण,
+		[3] = अणु CLKSEL_VALID, CGB_PLL2, PLL_DIV3 पूर्ण,
+		[4] = अणु CLKSEL_VALID, CGB_PLL2, PLL_DIV4 पूर्ण,
+		[5] = अणु CLKSEL_VALID, PLATFORM_PLL, PLL_DIV1 पूर्ण,
+		[6] = अणु CLKSEL_VALID, CGB_PLL1, PLL_DIV2 पूर्ण,
+		[7] = अणु CLKSEL_VALID, CGB_PLL1, PLL_DIV3 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-#define RCWSR7_FM1_CLK_SEL	0x40000000
-#define RCWSR7_FM2_CLK_SEL	0x20000000
-#define RCWSR7_HWA_ASYNC_DIV	0x04000000
+#घोषणा RCWSR7_FM1_CLK_SEL	0x40000000
+#घोषणा RCWSR7_FM2_CLK_SEL	0x20000000
+#घोषणा RCWSR7_HWA_ASYNC_DIV	0x04000000
 
-static void __init p2041_init_periph(struct clockgen *cg)
-{
+अटल व्योम __init p2041_init_periph(काष्ठा घड़ीgen *cg)
+अणु
 	u32 reg;
 
-	reg = ioread32be(&cg->guts->rcwsr[7]);
+	reg = ioपढ़ो32be(&cg->guts->rcwsr[7]);
 
-	if (reg & RCWSR7_FM1_CLK_SEL)
-		cg->fman[0] = cg->pll[CGA_PLL2].div[PLL_DIV2].clk;
-	else
-		cg->fman[0] = cg->pll[PLATFORM_PLL].div[PLL_DIV2].clk;
-}
+	अगर (reg & RCWSR7_FM1_CLK_SEL)
+		cg->fman[0] = cg->pll[CGA_PLL2].भाग[PLL_DIV2].clk;
+	अन्यथा
+		cg->fman[0] = cg->pll[PLATFORM_PLL].भाग[PLL_DIV2].clk;
+पूर्ण
 
-static void __init p4080_init_periph(struct clockgen *cg)
-{
+अटल व्योम __init p4080_init_periph(काष्ठा घड़ीgen *cg)
+अणु
 	u32 reg;
 
-	reg = ioread32be(&cg->guts->rcwsr[7]);
+	reg = ioपढ़ो32be(&cg->guts->rcwsr[7]);
 
-	if (reg & RCWSR7_FM1_CLK_SEL)
-		cg->fman[0] = cg->pll[CGA_PLL3].div[PLL_DIV2].clk;
-	else
-		cg->fman[0] = cg->pll[PLATFORM_PLL].div[PLL_DIV2].clk;
+	अगर (reg & RCWSR7_FM1_CLK_SEL)
+		cg->fman[0] = cg->pll[CGA_PLL3].भाग[PLL_DIV2].clk;
+	अन्यथा
+		cg->fman[0] = cg->pll[PLATFORM_PLL].भाग[PLL_DIV2].clk;
 
-	if (reg & RCWSR7_FM2_CLK_SEL)
-		cg->fman[1] = cg->pll[CGA_PLL3].div[PLL_DIV2].clk;
-	else
-		cg->fman[1] = cg->pll[PLATFORM_PLL].div[PLL_DIV2].clk;
-}
+	अगर (reg & RCWSR7_FM2_CLK_SEL)
+		cg->fman[1] = cg->pll[CGA_PLL3].भाग[PLL_DIV2].clk;
+	अन्यथा
+		cg->fman[1] = cg->pll[PLATFORM_PLL].भाग[PLL_DIV2].clk;
+पूर्ण
 
-static void __init p5020_init_periph(struct clockgen *cg)
-{
+अटल व्योम __init p5020_init_periph(काष्ठा घड़ीgen *cg)
+अणु
 	u32 reg;
-	int div = PLL_DIV2;
+	पूर्णांक भाग = PLL_DIV2;
 
-	reg = ioread32be(&cg->guts->rcwsr[7]);
-	if (reg & RCWSR7_HWA_ASYNC_DIV)
-		div = PLL_DIV4;
+	reg = ioपढ़ो32be(&cg->guts->rcwsr[7]);
+	अगर (reg & RCWSR7_HWA_ASYNC_DIV)
+		भाग = PLL_DIV4;
 
-	if (reg & RCWSR7_FM1_CLK_SEL)
-		cg->fman[0] = cg->pll[CGA_PLL2].div[div].clk;
-	else
-		cg->fman[0] = cg->pll[PLATFORM_PLL].div[PLL_DIV2].clk;
-}
+	अगर (reg & RCWSR7_FM1_CLK_SEL)
+		cg->fman[0] = cg->pll[CGA_PLL2].भाग[भाग].clk;
+	अन्यथा
+		cg->fman[0] = cg->pll[PLATFORM_PLL].भाग[PLL_DIV2].clk;
+पूर्ण
 
-static void __init p5040_init_periph(struct clockgen *cg)
-{
+अटल व्योम __init p5040_init_periph(काष्ठा घड़ीgen *cg)
+अणु
 	u32 reg;
-	int div = PLL_DIV2;
+	पूर्णांक भाग = PLL_DIV2;
 
-	reg = ioread32be(&cg->guts->rcwsr[7]);
-	if (reg & RCWSR7_HWA_ASYNC_DIV)
-		div = PLL_DIV4;
+	reg = ioपढ़ो32be(&cg->guts->rcwsr[7]);
+	अगर (reg & RCWSR7_HWA_ASYNC_DIV)
+		भाग = PLL_DIV4;
 
-	if (reg & RCWSR7_FM1_CLK_SEL)
-		cg->fman[0] = cg->pll[CGA_PLL3].div[div].clk;
-	else
-		cg->fman[0] = cg->pll[PLATFORM_PLL].div[PLL_DIV2].clk;
+	अगर (reg & RCWSR7_FM1_CLK_SEL)
+		cg->fman[0] = cg->pll[CGA_PLL3].भाग[भाग].clk;
+	अन्यथा
+		cg->fman[0] = cg->pll[PLATFORM_PLL].भाग[PLL_DIV2].clk;
 
-	if (reg & RCWSR7_FM2_CLK_SEL)
-		cg->fman[1] = cg->pll[CGA_PLL3].div[div].clk;
-	else
-		cg->fman[1] = cg->pll[PLATFORM_PLL].div[PLL_DIV2].clk;
-}
+	अगर (reg & RCWSR7_FM2_CLK_SEL)
+		cg->fman[1] = cg->pll[CGA_PLL3].भाग[भाग].clk;
+	अन्यथा
+		cg->fman[1] = cg->pll[PLATFORM_PLL].भाग[PLL_DIV2].clk;
+पूर्ण
 
-static void __init t1023_init_periph(struct clockgen *cg)
-{
+अटल व्योम __init t1023_init_periph(काष्ठा घड़ीgen *cg)
+अणु
 	cg->fman[0] = cg->hwaccel[1];
-}
+पूर्ण
 
-static void __init t1040_init_periph(struct clockgen *cg)
-{
-	cg->fman[0] = cg->pll[PLATFORM_PLL].div[PLL_DIV1].clk;
-}
+अटल व्योम __init t1040_init_periph(काष्ठा घड़ीgen *cg)
+अणु
+	cg->fman[0] = cg->pll[PLATFORM_PLL].भाग[PLL_DIV1].clk;
+पूर्ण
 
-static void __init t2080_init_periph(struct clockgen *cg)
-{
+अटल व्योम __init t2080_init_periph(काष्ठा घड़ीgen *cg)
+अणु
 	cg->fman[0] = cg->hwaccel[0];
-}
+पूर्ण
 
-static void __init t4240_init_periph(struct clockgen *cg)
-{
+अटल व्योम __init t4240_init_periph(काष्ठा घड़ीgen *cg)
+अणु
 	cg->fman[0] = cg->hwaccel[3];
 	cg->fman[1] = cg->hwaccel[4];
-}
+पूर्ण
 
-static const struct clockgen_chipinfo chipinfo[] = {
-	{
+अटल स्थिर काष्ठा घड़ीgen_chipinfo chipinfo[] = अणु
+	अणु
 		.compat = "fsl,b4420-clockgen",
 		.guts_compat = "fsl,b4860-device-config",
 		.init_periph = t2080_init_periph,
-		.cmux_groups = {
-			&clockgen2_cmux_cga12, &clockgen2_cmux_cgb
-		},
-		.hwaccel = {
+		.cmux_groups = अणु
+			&घड़ीgen2_cmux_cga12, &घड़ीgen2_cmux_cgb
+		पूर्ण,
+		.hwaccel = अणु
 			&t2080_hwa1
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 1, 1, 1, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2) | BIT(CGA_PLL3) |
 			    BIT(CGB_PLL1) | BIT(CGB_PLL2),
 		.flags = CG_PLL_8BIT,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,b4860-clockgen",
 		.guts_compat = "fsl,b4860-device-config",
 		.init_periph = t2080_init_periph,
-		.cmux_groups = {
-			&clockgen2_cmux_cga12, &clockgen2_cmux_cgb
-		},
-		.hwaccel = {
+		.cmux_groups = अणु
+			&घड़ीgen2_cmux_cga12, &घड़ीgen2_cmux_cgb
+		पूर्ण,
+		.hwaccel = अणु
 			&t2080_hwa1
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 1, 1, 1, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2) | BIT(CGA_PLL3) |
 			    BIT(CGB_PLL1) | BIT(CGB_PLL2),
 		.flags = CG_PLL_8BIT,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,ls1021a-clockgen",
-		.cmux_groups = {
+		.cmux_groups = अणु
 			&ls1021a_cmux
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2),
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,ls1028a-clockgen",
-		.cmux_groups = {
-			&clockgen2_cmux_cga12
-		},
-		.hwaccel = {
+		.cmux_groups = अणु
+			&घड़ीgen2_cmux_cga12
+		पूर्ण,
+		.hwaccel = अणु
 			&ls1028a_hwa1, &ls1028a_hwa2,
 			&ls1028a_hwa3, &ls1028a_hwa4
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 0, 0, 0, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2),
 		.flags = CG_VER3 | CG_LITTLE_ENDIAN,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,ls1043a-clockgen",
 		.init_periph = t2080_init_periph,
-		.cmux_groups = {
+		.cmux_groups = अणु
 			&t1040_cmux
-		},
-		.hwaccel = {
+		पूर्ण,
+		.hwaccel = अणु
 			&ls1043a_hwa1, &ls1043a_hwa2
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2),
 		.flags = CG_PLL_8BIT,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,ls1046a-clockgen",
 		.init_periph = t2080_init_periph,
-		.cmux_groups = {
+		.cmux_groups = अणु
 			&t1040_cmux
-		},
-		.hwaccel = {
+		पूर्ण,
+		.hwaccel = अणु
 			&ls1046a_hwa1, &ls1046a_hwa2
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2),
 		.flags = CG_PLL_8BIT,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,ls1088a-clockgen",
-		.cmux_groups = {
-			&clockgen2_cmux_cga12
-		},
-		.hwaccel = {
+		.cmux_groups = अणु
+			&घड़ीgen2_cmux_cga12
+		पूर्ण,
+		.hwaccel = अणु
 			&ls1088a_hwa1, &ls1088a_hwa2
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 0, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2),
 		.flags = CG_VER3 | CG_LITTLE_ENDIAN,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,ls1012a-clockgen",
-		.cmux_groups = {
+		.cmux_groups = अणु
 			&ls1012a_cmux
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) | BIT(CGA_PLL1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,ls2080a-clockgen",
-		.cmux_groups = {
-			&clockgen2_cmux_cga12, &clockgen2_cmux_cgb
-		},
-		.cmux_to_group = {
+		.cmux_groups = अणु
+			&घड़ीgen2_cmux_cga12, &घड़ीgen2_cmux_cgb
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 0, 1, 1, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2) |
 			    BIT(CGB_PLL1) | BIT(CGB_PLL2),
 		.flags = CG_VER3 | CG_LITTLE_ENDIAN,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,lx2160a-clockgen",
-		.cmux_groups = {
-			&clockgen2_cmux_cga12, &clockgen2_cmux_cgb
-		},
-		.cmux_to_group = {
+		.cmux_groups = अणु
+			&घड़ीgen2_cmux_cga12, &घड़ीgen2_cmux_cgb
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 0, 0, 0, 1, 1, 1, 1, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2) |
 			    BIT(CGB_PLL1) | BIT(CGB_PLL2),
 		.flags = CG_VER3 | CG_LITTLE_ENDIAN,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,p2041-clockgen",
 		.guts_compat = "fsl,qoriq-device-config-1.0",
 		.init_periph = p2041_init_periph,
-		.cmux_groups = {
+		.cmux_groups = अणु
 			&p2041_cmux_grp1, &p2041_cmux_grp2
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 0, 1, 1, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2),
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,p3041-clockgen",
 		.guts_compat = "fsl,qoriq-device-config-1.0",
 		.init_periph = p2041_init_periph,
-		.cmux_groups = {
+		.cmux_groups = अणु
 			&p2041_cmux_grp1, &p2041_cmux_grp2
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 0, 1, 1, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2),
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,p4080-clockgen",
 		.guts_compat = "fsl,qoriq-device-config-1.0",
 		.init_periph = p4080_init_periph,
-		.cmux_groups = {
+		.cmux_groups = अणु
 			&p4080_cmux_grp1, &p4080_cmux_grp2
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 0, 0, 0, 1, 1, 1, 1, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2) |
 			    BIT(CGA_PLL3) | BIT(CGA_PLL4),
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,p5020-clockgen",
 		.guts_compat = "fsl,qoriq-device-config-1.0",
 		.init_periph = p5020_init_periph,
-		.cmux_groups = {
+		.cmux_groups = अणु
 			&p5020_cmux_grp1, &p5020_cmux_grp2
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 1, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2),
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,p5040-clockgen",
 		.guts_compat = "fsl,p5040-device-config",
 		.init_periph = p5040_init_periph,
-		.cmux_groups = {
+		.cmux_groups = अणु
 			&p5040_cmux_grp1, &p5040_cmux_grp2
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 0, 1, 1, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2) | BIT(CGA_PLL3),
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,t1023-clockgen",
 		.guts_compat = "fsl,t1023-device-config",
 		.init_periph = t1023_init_periph,
-		.cmux_groups = {
+		.cmux_groups = अणु
 			&t1023_cmux
-		},
-		.hwaccel = {
+		पूर्ण,
+		.hwaccel = अणु
 			&t1023_hwa1, &t1023_hwa2
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 0, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) | BIT(CGA_PLL1),
 		.flags = CG_PLL_8BIT,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,t1040-clockgen",
 		.guts_compat = "fsl,t1040-device-config",
 		.init_periph = t1040_init_periph,
-		.cmux_groups = {
+		.cmux_groups = अणु
 			&t1040_cmux
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 0, 0, 0, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2),
 		.flags = CG_PLL_8BIT,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,t2080-clockgen",
 		.guts_compat = "fsl,t2080-device-config",
 		.init_periph = t2080_init_periph,
-		.cmux_groups = {
-			&clockgen2_cmux_cga12
-		},
-		.hwaccel = {
+		.cmux_groups = अणु
+			&घड़ीgen2_cmux_cga12
+		पूर्ण,
+		.hwaccel = अणु
 			&t2080_hwa1, &t2080_hwa2
-		},
-		.cmux_to_group = {
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2),
 		.flags = CG_PLL_8BIT,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compat = "fsl,t4240-clockgen",
 		.guts_compat = "fsl,t4240-device-config",
 		.init_periph = t4240_init_periph,
-		.cmux_groups = {
-			&clockgen2_cmux_cga, &clockgen2_cmux_cgb
-		},
-		.hwaccel = {
-			&t4240_hwa1, NULL, NULL, &t4240_hwa4, &t4240_hwa5
-		},
-		.cmux_to_group = {
+		.cmux_groups = अणु
+			&घड़ीgen2_cmux_cga, &घड़ीgen2_cmux_cgb
+		पूर्ण,
+		.hwaccel = अणु
+			&t4240_hwa1, शून्य, शून्य, &t4240_hwa4, &t4240_hwa5
+		पूर्ण,
+		.cmux_to_group = अणु
 			0, 0, 1, -1
-		},
+		पूर्ण,
 		.pll_mask = BIT(PLATFORM_PLL) |
 			    BIT(CGA_PLL1) | BIT(CGA_PLL2) | BIT(CGA_PLL3) |
 			    BIT(CGB_PLL1) | BIT(CGB_PLL2),
 		.flags = CG_PLL_8BIT,
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-struct mux_hwclock {
-	struct clk_hw hw;
-	struct clockgen *cg;
-	const struct clockgen_muxinfo *info;
+काष्ठा mux_hwघड़ी अणु
+	काष्ठा clk_hw hw;
+	काष्ठा घड़ीgen *cg;
+	स्थिर काष्ठा घड़ीgen_muxinfo *info;
 	u32 __iomem *reg;
 	u8 parent_to_clksel[NUM_MUX_PARENTS];
 	s8 clksel_to_parent[NUM_MUX_PARENTS];
-	int num_parents;
-};
+	पूर्णांक num_parents;
+पूर्ण;
 
-#define to_mux_hwclock(p)	container_of(p, struct mux_hwclock, hw)
-#define CLKSEL_MASK		0x78000000
-#define	CLKSEL_SHIFT		27
+#घोषणा to_mux_hwघड़ी(p)	container_of(p, काष्ठा mux_hwघड़ी, hw)
+#घोषणा CLKSEL_MASK		0x78000000
+#घोषणा	CLKSEL_SHIFT		27
 
-static int mux_set_parent(struct clk_hw *hw, u8 idx)
-{
-	struct mux_hwclock *hwc = to_mux_hwclock(hw);
+अटल पूर्णांक mux_set_parent(काष्ठा clk_hw *hw, u8 idx)
+अणु
+	काष्ठा mux_hwघड़ी *hwc = to_mux_hwघड़ी(hw);
 	u32 clksel;
 
-	if (idx >= hwc->num_parents)
-		return -EINVAL;
+	अगर (idx >= hwc->num_parents)
+		वापस -EINVAL;
 
 	clksel = hwc->parent_to_clksel[idx];
 	cg_out(hwc->cg, (clksel << CLKSEL_SHIFT) & CLKSEL_MASK, hwc->reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 mux_get_parent(struct clk_hw *hw)
-{
-	struct mux_hwclock *hwc = to_mux_hwclock(hw);
+अटल u8 mux_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा mux_hwघड़ी *hwc = to_mux_hwघड़ी(hw);
 	u32 clksel;
 	s8 ret;
 
 	clksel = (cg_in(hwc->cg, hwc->reg) & CLKSEL_MASK) >> CLKSEL_SHIFT;
 
 	ret = hwc->clksel_to_parent[clksel];
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("%s: mux at %p has bad clksel\n", __func__, hwc->reg);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct clk_ops cmux_ops = {
+अटल स्थिर काष्ठा clk_ops cmux_ops = अणु
 	.get_parent = mux_get_parent,
 	.set_parent = mux_set_parent,
-};
+पूर्ण;
 
 /*
  * Don't allow setting for now, as the clock options haven't been
- * sanitized for additional restrictions.
+ * sanitized क्रम additional restrictions.
  */
-static const struct clk_ops hwaccel_ops = {
+अटल स्थिर काष्ठा clk_ops hwaccel_ops = अणु
 	.get_parent = mux_get_parent,
-};
+पूर्ण;
 
-static const struct clockgen_pll_div *get_pll_div(struct clockgen *cg,
-						  struct mux_hwclock *hwc,
-						  int idx)
-{
-	int pll, div;
+अटल स्थिर काष्ठा घड़ीgen_pll_भाग *get_pll_भाग(काष्ठा घड़ीgen *cg,
+						  काष्ठा mux_hwघड़ी *hwc,
+						  पूर्णांक idx)
+अणु
+	पूर्णांक pll, भाग;
 
-	if (!(hwc->info->clksel[idx].flags & CLKSEL_VALID))
-		return NULL;
+	अगर (!(hwc->info->clksel[idx].flags & CLKSEL_VALID))
+		वापस शून्य;
 
 	pll = hwc->info->clksel[idx].pll;
-	div = hwc->info->clksel[idx].div;
+	भाग = hwc->info->clksel[idx].भाग;
 
-	return &cg->pll[pll].div[div];
-}
+	वापस &cg->pll[pll].भाग[भाग];
+पूर्ण
 
-static struct clk * __init create_mux_common(struct clockgen *cg,
-					     struct mux_hwclock *hwc,
-					     const struct clk_ops *ops,
-					     unsigned long min_rate,
-					     unsigned long max_rate,
-					     unsigned long pct80_rate,
-					     const char *fmt, int idx)
-{
-	struct clk_init_data init = {};
-	struct clk *clk;
-	const struct clockgen_pll_div *div;
-	const char *parent_names[NUM_MUX_PARENTS];
-	char name[32];
-	int i, j;
+अटल काष्ठा clk * __init create_mux_common(काष्ठा घड़ीgen *cg,
+					     काष्ठा mux_hwघड़ी *hwc,
+					     स्थिर काष्ठा clk_ops *ops,
+					     अचिन्हित दीर्घ min_rate,
+					     अचिन्हित दीर्घ max_rate,
+					     अचिन्हित दीर्घ pct80_rate,
+					     स्थिर अक्षर *fmt, पूर्णांक idx)
+अणु
+	काष्ठा clk_init_data init = अणुपूर्ण;
+	काष्ठा clk *clk;
+	स्थिर काष्ठा घड़ीgen_pll_भाग *भाग;
+	स्थिर अक्षर *parent_names[NUM_MUX_PARENTS];
+	अक्षर name[32];
+	पूर्णांक i, j;
 
-	snprintf(name, sizeof(name), fmt, idx);
+	snम_लिखो(name, माप(name), fmt, idx);
 
-	for (i = 0, j = 0; i < NUM_MUX_PARENTS; i++) {
-		unsigned long rate;
+	क्रम (i = 0, j = 0; i < NUM_MUX_PARENTS; i++) अणु
+		अचिन्हित दीर्घ rate;
 
 		hwc->clksel_to_parent[i] = -1;
 
-		div = get_pll_div(cg, hwc, i);
-		if (!div)
-			continue;
+		भाग = get_pll_भाग(cg, hwc, i);
+		अगर (!भाग)
+			जारी;
 
-		rate = clk_get_rate(div->clk);
+		rate = clk_get_rate(भाग->clk);
 
-		if (hwc->info->clksel[i].flags & CLKSEL_80PCT &&
+		अगर (hwc->info->clksel[i].flags & CLKSEL_80PCT &&
 		    rate > pct80_rate)
-			continue;
-		if (rate < min_rate)
-			continue;
-		if (rate > max_rate)
-			continue;
+			जारी;
+		अगर (rate < min_rate)
+			जारी;
+		अगर (rate > max_rate)
+			जारी;
 
-		parent_names[j] = div->name;
+		parent_names[j] = भाग->name;
 		hwc->parent_to_clksel[j] = i;
 		hwc->clksel_to_parent[i] = j;
 		j++;
-	}
+	पूर्ण
 
 	init.name = name;
 	init.ops = ops;
@@ -955,494 +956,494 @@ static struct clk * __init create_mux_common(struct clockgen *cg,
 	hwc->hw.init = &init;
 	hwc->cg = cg;
 
-	clk = clk_register(NULL, &hwc->hw);
-	if (IS_ERR(clk)) {
+	clk = clk_रेजिस्टर(शून्य, &hwc->hw);
+	अगर (IS_ERR(clk)) अणु
 		pr_err("%s: Couldn't register %s: %ld\n", __func__, name,
 		       PTR_ERR(clk));
-		kfree(hwc);
-		return NULL;
-	}
+		kमुक्त(hwc);
+		वापस शून्य;
+	पूर्ण
 
-	return clk;
-}
+	वापस clk;
+पूर्ण
 
-static struct clk * __init create_one_cmux(struct clockgen *cg, int idx)
-{
-	struct mux_hwclock *hwc;
-	const struct clockgen_pll_div *div;
-	unsigned long plat_rate, min_rate;
+अटल काष्ठा clk * __init create_one_cmux(काष्ठा घड़ीgen *cg, पूर्णांक idx)
+अणु
+	काष्ठा mux_hwघड़ी *hwc;
+	स्थिर काष्ठा घड़ीgen_pll_भाग *भाग;
+	अचिन्हित दीर्घ plat_rate, min_rate;
 	u64 max_rate, pct80_rate;
 	u32 clksel;
 
-	hwc = kzalloc(sizeof(*hwc), GFP_KERNEL);
-	if (!hwc)
-		return NULL;
+	hwc = kzalloc(माप(*hwc), GFP_KERNEL);
+	अगर (!hwc)
+		वापस शून्य;
 
-	if (cg->info.flags & CG_VER3)
+	अगर (cg->info.flags & CG_VER3)
 		hwc->reg = cg->regs + 0x70000 + 0x20 * idx;
-	else
+	अन्यथा
 		hwc->reg = cg->regs + 0x20 * idx;
 
 	hwc->info = cg->info.cmux_groups[cg->info.cmux_to_group[idx]];
 
 	/*
-	 * Find the rate for the default clksel, and treat it as the
+	 * Find the rate क्रम the शेष clksel, and treat it as the
 	 * maximum rated core frequency.  If this is an incorrect
-	 * assumption, certain clock options (possibly including the
-	 * default clksel) may be inappropriately excluded on certain
+	 * assumption, certain घड़ी options (possibly including the
+	 * शेष clksel) may be inappropriately excluded on certain
 	 * chips.
 	 */
 	clksel = (cg_in(cg, hwc->reg) & CLKSEL_MASK) >> CLKSEL_SHIFT;
-	div = get_pll_div(cg, hwc, clksel);
-	if (!div) {
-		kfree(hwc);
-		return NULL;
-	}
+	भाग = get_pll_भाग(cg, hwc, clksel);
+	अगर (!भाग) अणु
+		kमुक्त(hwc);
+		वापस शून्य;
+	पूर्ण
 
-	max_rate = clk_get_rate(div->clk);
+	max_rate = clk_get_rate(भाग->clk);
 	pct80_rate = max_rate * 8;
-	do_div(pct80_rate, 10);
+	करो_भाग(pct80_rate, 10);
 
-	plat_rate = clk_get_rate(cg->pll[PLATFORM_PLL].div[PLL_DIV1].clk);
+	plat_rate = clk_get_rate(cg->pll[PLATFORM_PLL].भाग[PLL_DIV1].clk);
 
-	if (cg->info.flags & CG_CMUX_GE_PLAT)
+	अगर (cg->info.flags & CG_CMUX_GE_PLAT)
 		min_rate = plat_rate;
-	else
+	अन्यथा
 		min_rate = plat_rate / 2;
 
-	return create_mux_common(cg, hwc, &cmux_ops, min_rate, max_rate,
+	वापस create_mux_common(cg, hwc, &cmux_ops, min_rate, max_rate,
 				 pct80_rate, "cg-cmux%d", idx);
-}
+पूर्ण
 
-static struct clk * __init create_one_hwaccel(struct clockgen *cg, int idx)
-{
-	struct mux_hwclock *hwc;
+अटल काष्ठा clk * __init create_one_hwaccel(काष्ठा घड़ीgen *cg, पूर्णांक idx)
+अणु
+	काष्ठा mux_hwघड़ी *hwc;
 
-	hwc = kzalloc(sizeof(*hwc), GFP_KERNEL);
-	if (!hwc)
-		return NULL;
+	hwc = kzalloc(माप(*hwc), GFP_KERNEL);
+	अगर (!hwc)
+		वापस शून्य;
 
 	hwc->reg = cg->regs + 0x20 * idx + 0x10;
 	hwc->info = cg->info.hwaccel[idx];
 
-	return create_mux_common(cg, hwc, &hwaccel_ops, 0, ULONG_MAX, 0,
+	वापस create_mux_common(cg, hwc, &hwaccel_ops, 0, अच_दीर्घ_उच्च, 0,
 				 "cg-hwaccel%d", idx);
-}
+पूर्ण
 
-static void __init create_muxes(struct clockgen *cg)
-{
-	int i;
+अटल व्योम __init create_muxes(काष्ठा घड़ीgen *cg)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(cg->cmux); i++) {
-		if (cg->info.cmux_to_group[i] < 0)
-			break;
-		if (cg->info.cmux_to_group[i] >=
-		    ARRAY_SIZE(cg->info.cmux_groups)) {
+	क्रम (i = 0; i < ARRAY_SIZE(cg->cmux); i++) अणु
+		अगर (cg->info.cmux_to_group[i] < 0)
+			अवरोध;
+		अगर (cg->info.cmux_to_group[i] >=
+		    ARRAY_SIZE(cg->info.cmux_groups)) अणु
 			WARN_ON_ONCE(1);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		cg->cmux[i] = create_one_cmux(cg, i);
-	}
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(cg->hwaccel); i++) {
-		if (!cg->info.hwaccel[i])
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(cg->hwaccel); i++) अणु
+		अगर (!cg->info.hwaccel[i])
+			जारी;
 
 		cg->hwaccel[i] = create_one_hwaccel(cg, i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init _clockgen_init(struct device_node *np, bool legacy);
+अटल व्योम __init _घड़ीgen_init(काष्ठा device_node *np, bool legacy);
 
 /*
- * Legacy nodes may get probed before the parent clockgen node.
+ * Legacy nodes may get probed beक्रमe the parent घड़ीgen node.
  * It is assumed that device trees with legacy nodes will not
- * contain a "clocks" property -- otherwise the input clocks may
- * not be initialized at this point.
+ * contain a "clocks" property -- otherwise the input घड़ीs may
+ * not be initialized at this poपूर्णांक.
  */
-static void __init legacy_init_clockgen(struct device_node *np)
-{
-	if (!clockgen.node)
-		_clockgen_init(of_get_parent(np), true);
-}
+अटल व्योम __init legacy_init_घड़ीgen(काष्ठा device_node *np)
+अणु
+	अगर (!घड़ीgen.node)
+		_घड़ीgen_init(of_get_parent(np), true);
+पूर्ण
 
 /* Legacy node */
-static void __init core_mux_init(struct device_node *np)
-{
-	struct clk *clk;
-	struct resource res;
-	int idx, rc;
+अटल व्योम __init core_mux_init(काष्ठा device_node *np)
+अणु
+	काष्ठा clk *clk;
+	काष्ठा resource res;
+	पूर्णांक idx, rc;
 
-	legacy_init_clockgen(np);
+	legacy_init_घड़ीgen(np);
 
-	if (of_address_to_resource(np, 0, &res))
-		return;
+	अगर (of_address_to_resource(np, 0, &res))
+		वापस;
 
 	idx = (res.start & 0xf0) >> 5;
-	clk = clockgen.cmux[idx];
+	clk = घड़ीgen.cmux[idx];
 
 	rc = of_clk_add_provider(np, of_clk_src_simple_get, clk);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("%s: Couldn't register clk provider for node %pOFn: %d\n",
 		       __func__, np, rc);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static struct clk __init
-*sysclk_from_fixed(struct device_node *node, const char *name)
-{
+अटल काष्ठा clk __init
+*sysclk_from_fixed(काष्ठा device_node *node, स्थिर अक्षर *name)
+अणु
 	u32 rate;
 
-	if (of_property_read_u32(node, "clock-frequency", &rate))
-		return ERR_PTR(-ENODEV);
+	अगर (of_property_पढ़ो_u32(node, "clock-frequency", &rate))
+		वापस ERR_PTR(-ENODEV);
 
-	return clk_register_fixed_rate(NULL, name, NULL, 0, rate);
-}
+	वापस clk_रेजिस्टर_fixed_rate(शून्य, name, शून्य, 0, rate);
+पूर्ण
 
-static struct clk __init *input_clock(const char *name, struct clk *clk)
-{
-	const char *input_name;
+अटल काष्ठा clk __init *input_घड़ी(स्थिर अक्षर *name, काष्ठा clk *clk)
+अणु
+	स्थिर अक्षर *input_name;
 
-	/* Register the input clock under the desired name. */
+	/* Register the input घड़ी under the desired name. */
 	input_name = __clk_get_name(clk);
-	clk = clk_register_fixed_factor(NULL, name, input_name,
+	clk = clk_रेजिस्टर_fixed_factor(शून्य, name, input_name,
 					0, 1, 1);
-	if (IS_ERR(clk))
+	अगर (IS_ERR(clk))
 		pr_err("%s: Couldn't register %s: %ld\n", __func__, name,
 		       PTR_ERR(clk));
 
-	return clk;
-}
+	वापस clk;
+पूर्ण
 
-static struct clk __init *input_clock_by_name(const char *name,
-					      const char *dtname)
-{
-	struct clk *clk;
+अटल काष्ठा clk __init *input_घड़ी_by_name(स्थिर अक्षर *name,
+					      स्थिर अक्षर *dtname)
+अणु
+	काष्ठा clk *clk;
 
-	clk = of_clk_get_by_name(clockgen.node, dtname);
-	if (IS_ERR(clk))
-		return clk;
+	clk = of_clk_get_by_name(घड़ीgen.node, dtname);
+	अगर (IS_ERR(clk))
+		वापस clk;
 
-	return input_clock(name, clk);
-}
+	वापस input_घड़ी(name, clk);
+पूर्ण
 
-static struct clk __init *input_clock_by_index(const char *name, int idx)
-{
-	struct clk *clk;
+अटल काष्ठा clk __init *input_घड़ी_by_index(स्थिर अक्षर *name, पूर्णांक idx)
+अणु
+	काष्ठा clk *clk;
 
-	clk = of_clk_get(clockgen.node, 0);
-	if (IS_ERR(clk))
-		return clk;
+	clk = of_clk_get(घड़ीgen.node, 0);
+	अगर (IS_ERR(clk))
+		वापस clk;
 
-	return input_clock(name, clk);
-}
+	वापस input_घड़ी(name, clk);
+पूर्ण
 
-static struct clk * __init create_sysclk(const char *name)
-{
-	struct device_node *sysclk;
-	struct clk *clk;
+अटल काष्ठा clk * __init create_sysclk(स्थिर अक्षर *name)
+अणु
+	काष्ठा device_node *sysclk;
+	काष्ठा clk *clk;
 
-	clk = sysclk_from_fixed(clockgen.node, name);
-	if (!IS_ERR(clk))
-		return clk;
+	clk = sysclk_from_fixed(घड़ीgen.node, name);
+	अगर (!IS_ERR(clk))
+		वापस clk;
 
-	clk = input_clock_by_name(name, "sysclk");
-	if (!IS_ERR(clk))
-		return clk;
+	clk = input_घड़ी_by_name(name, "sysclk");
+	अगर (!IS_ERR(clk))
+		वापस clk;
 
-	clk = input_clock_by_index(name, 0);
-	if (!IS_ERR(clk))
-		return clk;
+	clk = input_घड़ी_by_index(name, 0);
+	अगर (!IS_ERR(clk))
+		वापस clk;
 
-	sysclk = of_get_child_by_name(clockgen.node, "sysclk");
-	if (sysclk) {
+	sysclk = of_get_child_by_name(घड़ीgen.node, "sysclk");
+	अगर (sysclk) अणु
 		clk = sysclk_from_fixed(sysclk, name);
-		if (!IS_ERR(clk))
-			return clk;
-	}
+		अगर (!IS_ERR(clk))
+			वापस clk;
+	पूर्ण
 
 	pr_err("%s: No input sysclk\n", __func__);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct clk * __init create_coreclk(const char *name)
-{
-	struct clk *clk;
+अटल काष्ठा clk * __init create_coreclk(स्थिर अक्षर *name)
+अणु
+	काष्ठा clk *clk;
 
-	clk = input_clock_by_name(name, "coreclk");
-	if (!IS_ERR(clk))
-		return clk;
+	clk = input_घड़ी_by_name(name, "coreclk");
+	अगर (!IS_ERR(clk))
+		वापस clk;
 
 	/*
 	 * This indicates a mix of legacy nodes with the new coreclk
 	 * mechanism, which should never happen.  If this error occurs,
-	 * don't use the wrong input clock just because coreclk isn't
-	 * ready yet.
+	 * करोn't use the wrong input clock just because coreclk isn't
+	 * पढ़ोy yet.
 	 */
-	if (WARN_ON(PTR_ERR(clk) == -EPROBE_DEFER))
-		return clk;
+	अगर (WARN_ON(PTR_ERR(clk) == -EPROBE_DEFER))
+		वापस clk;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* Legacy node */
-static void __init sysclk_init(struct device_node *node)
-{
-	struct clk *clk;
+अटल व्योम __init sysclk_init(काष्ठा device_node *node)
+अणु
+	काष्ठा clk *clk;
 
-	legacy_init_clockgen(node);
+	legacy_init_घड़ीgen(node);
 
-	clk = clockgen.sysclk;
-	if (clk)
+	clk = घड़ीgen.sysclk;
+	अगर (clk)
 		of_clk_add_provider(node, of_clk_src_simple_get, clk);
-}
+पूर्ण
 
-#define PLL_KILL BIT(31)
+#घोषणा PLL_KILL BIT(31)
 
-static void __init create_one_pll(struct clockgen *cg, int idx)
-{
+अटल व्योम __init create_one_pll(काष्ठा घड़ीgen *cg, पूर्णांक idx)
+अणु
 	u32 __iomem *reg;
 	u32 mult;
-	struct clockgen_pll *pll = &cg->pll[idx];
-	const char *input = "cg-sysclk";
-	int i;
+	काष्ठा घड़ीgen_pll *pll = &cg->pll[idx];
+	स्थिर अक्षर *input = "cg-sysclk";
+	पूर्णांक i;
 
-	if (!(cg->info.pll_mask & (1 << idx)))
-		return;
+	अगर (!(cg->info.pll_mask & (1 << idx)))
+		वापस;
 
-	if (cg->coreclk && idx != PLATFORM_PLL) {
-		if (IS_ERR(cg->coreclk))
-			return;
+	अगर (cg->coreclk && idx != PLATFORM_PLL) अणु
+		अगर (IS_ERR(cg->coreclk))
+			वापस;
 
 		input = "cg-coreclk";
-	}
+	पूर्ण
 
-	if (cg->info.flags & CG_VER3) {
-		switch (idx) {
-		case PLATFORM_PLL:
+	अगर (cg->info.flags & CG_VER3) अणु
+		चयन (idx) अणु
+		हाल PLATFORM_PLL:
 			reg = cg->regs + 0x60080;
-			break;
-		case CGA_PLL1:
+			अवरोध;
+		हाल CGA_PLL1:
 			reg = cg->regs + 0x80;
-			break;
-		case CGA_PLL2:
+			अवरोध;
+		हाल CGA_PLL2:
 			reg = cg->regs + 0xa0;
-			break;
-		case CGB_PLL1:
+			अवरोध;
+		हाल CGB_PLL1:
 			reg = cg->regs + 0x10080;
-			break;
-		case CGB_PLL2:
+			अवरोध;
+		हाल CGB_PLL2:
 			reg = cg->regs + 0x100a0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			WARN_ONCE(1, "index %d\n", idx);
-			return;
-		}
-	} else {
-		if (idx == PLATFORM_PLL)
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (idx == PLATFORM_PLL)
 			reg = cg->regs + 0xc00;
-		else
+		अन्यथा
 			reg = cg->regs + 0x800 + 0x20 * (idx - 1);
-	}
+	पूर्ण
 
 	/* Get the multiple of PLL */
 	mult = cg_in(cg, reg);
 
-	/* Check if this PLL is disabled */
-	if (mult & PLL_KILL) {
+	/* Check अगर this PLL is disabled */
+	अगर (mult & PLL_KILL) अणु
 		pr_debug("%s(): pll %p disabled\n", __func__, reg);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if ((cg->info.flags & CG_VER3) ||
+	अगर ((cg->info.flags & CG_VER3) ||
 	    ((cg->info.flags & CG_PLL_8BIT) && idx != PLATFORM_PLL))
 		mult = (mult & GENMASK(8, 1)) >> 1;
-	else
+	अन्यथा
 		mult = (mult & GENMASK(6, 1)) >> 1;
 
-	for (i = 0; i < ARRAY_SIZE(pll->div); i++) {
-		struct clk *clk;
-		int ret;
+	क्रम (i = 0; i < ARRAY_SIZE(pll->भाग); i++) अणु
+		काष्ठा clk *clk;
+		पूर्णांक ret;
 
 		/*
-		 * For platform PLL, there are MAX_PLL_DIV divider clocks.
-		 * For core PLL, there are 4 divider clocks at most.
+		 * For platक्रमm PLL, there are MAX_PLL_DIV भागider घड़ीs.
+		 * For core PLL, there are 4 भागider घड़ीs at most.
 		 */
-		if (idx != PLATFORM_PLL && i >= 4)
-			break;
+		अगर (idx != PLATFORM_PLL && i >= 4)
+			अवरोध;
 
-		snprintf(pll->div[i].name, sizeof(pll->div[i].name),
+		snम_लिखो(pll->भाग[i].name, माप(pll->भाग[i].name),
 			 "cg-pll%d-div%d", idx, i + 1);
 
-		clk = clk_register_fixed_factor(NULL,
-				pll->div[i].name, input, 0, mult, i + 1);
-		if (IS_ERR(clk)) {
+		clk = clk_रेजिस्टर_fixed_factor(शून्य,
+				pll->भाग[i].name, input, 0, mult, i + 1);
+		अगर (IS_ERR(clk)) अणु
 			pr_err("%s: %s: register failed %ld\n",
-			       __func__, pll->div[i].name, PTR_ERR(clk));
-			continue;
-		}
+			       __func__, pll->भाग[i].name, PTR_ERR(clk));
+			जारी;
+		पूर्ण
 
-		pll->div[i].clk = clk;
-		ret = clk_register_clkdev(clk, pll->div[i].name, NULL);
-		if (ret != 0)
+		pll->भाग[i].clk = clk;
+		ret = clk_रेजिस्टर_clkdev(clk, pll->भाग[i].name, शून्य);
+		अगर (ret != 0)
 			pr_err("%s: %s: register to lookup table failed %d\n",
-			       __func__, pll->div[i].name, ret);
+			       __func__, pll->भाग[i].name, ret);
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init create_plls(struct clockgen *cg)
-{
-	int i;
+अटल व्योम __init create_plls(काष्ठा घड़ीgen *cg)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(cg->pll); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(cg->pll); i++)
 		create_one_pll(cg, i);
-}
+पूर्ण
 
-static void __init legacy_pll_init(struct device_node *np, int idx)
-{
-	struct clockgen_pll *pll;
-	struct clk_onecell_data *onecell_data;
-	struct clk **subclks;
-	int count, rc;
+अटल व्योम __init legacy_pll_init(काष्ठा device_node *np, पूर्णांक idx)
+अणु
+	काष्ठा घड़ीgen_pll *pll;
+	काष्ठा clk_onecell_data *onecell_data;
+	काष्ठा clk **subclks;
+	पूर्णांक count, rc;
 
-	legacy_init_clockgen(np);
+	legacy_init_घड़ीgen(np);
 
-	pll = &clockgen.pll[idx];
+	pll = &घड़ीgen.pll[idx];
 	count = of_property_count_strings(np, "clock-output-names");
 
-	BUILD_BUG_ON(ARRAY_SIZE(pll->div) < 4);
-	subclks = kcalloc(4, sizeof(struct clk *), GFP_KERNEL);
-	if (!subclks)
-		return;
+	BUILD_BUG_ON(ARRAY_SIZE(pll->भाग) < 4);
+	subclks = kसुस्मृति(4, माप(काष्ठा clk *), GFP_KERNEL);
+	अगर (!subclks)
+		वापस;
 
-	onecell_data = kmalloc(sizeof(*onecell_data), GFP_KERNEL);
-	if (!onecell_data)
-		goto err_clks;
+	onecell_data = kदो_स्मृति(माप(*onecell_data), GFP_KERNEL);
+	अगर (!onecell_data)
+		जाओ err_clks;
 
-	if (count <= 3) {
-		subclks[0] = pll->div[0].clk;
-		subclks[1] = pll->div[1].clk;
-		subclks[2] = pll->div[3].clk;
-	} else {
-		subclks[0] = pll->div[0].clk;
-		subclks[1] = pll->div[1].clk;
-		subclks[2] = pll->div[2].clk;
-		subclks[3] = pll->div[3].clk;
-	}
+	अगर (count <= 3) अणु
+		subclks[0] = pll->भाग[0].clk;
+		subclks[1] = pll->भाग[1].clk;
+		subclks[2] = pll->भाग[3].clk;
+	पूर्ण अन्यथा अणु
+		subclks[0] = pll->भाग[0].clk;
+		subclks[1] = pll->भाग[1].clk;
+		subclks[2] = pll->भाग[2].clk;
+		subclks[3] = pll->भाग[3].clk;
+	पूर्ण
 
 	onecell_data->clks = subclks;
 	onecell_data->clk_num = count;
 
 	rc = of_clk_add_provider(np, of_clk_src_onecell_get, onecell_data);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("%s: Couldn't register clk provider for node %pOFn: %d\n",
 		       __func__, np, rc);
-		goto err_cell;
-	}
+		जाओ err_cell;
+	पूर्ण
 
-	return;
+	वापस;
 err_cell:
-	kfree(onecell_data);
+	kमुक्त(onecell_data);
 err_clks:
-	kfree(subclks);
-}
+	kमुक्त(subclks);
+पूर्ण
 
 /* Legacy node */
-static void __init pltfrm_pll_init(struct device_node *np)
-{
+अटल व्योम __init pltfrm_pll_init(काष्ठा device_node *np)
+अणु
 	legacy_pll_init(np, PLATFORM_PLL);
-}
+पूर्ण
 
 /* Legacy node */
-static void __init core_pll_init(struct device_node *np)
-{
-	struct resource res;
-	int idx;
+अटल व्योम __init core_pll_init(काष्ठा device_node *np)
+अणु
+	काष्ठा resource res;
+	पूर्णांक idx;
 
-	if (of_address_to_resource(np, 0, &res))
-		return;
+	अगर (of_address_to_resource(np, 0, &res))
+		वापस;
 
-	if ((res.start & 0xfff) == 0xc00) {
+	अगर ((res.start & 0xfff) == 0xc00) अणु
 		/*
-		 * ls1021a devtree labels the platform PLL
+		 * ls1021a devtree labels the platक्रमm PLL
 		 * with the core PLL compatible
 		 */
 		pltfrm_pll_init(np);
-	} else {
+	पूर्ण अन्यथा अणु
 		idx = (res.start & 0xf0) >> 5;
 		legacy_pll_init(np, CGA_PLL1 + idx);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct clk *clockgen_clk_get(struct of_phandle_args *clkspec, void *data)
-{
-	struct clockgen *cg = data;
-	struct clk *clk;
-	struct clockgen_pll *pll;
+अटल काष्ठा clk *घड़ीgen_clk_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
+अणु
+	काष्ठा घड़ीgen *cg = data;
+	काष्ठा clk *clk;
+	काष्ठा घड़ीgen_pll *pll;
 	u32 type, idx;
 
-	if (clkspec->args_count < 2) {
+	अगर (clkspec->args_count < 2) अणु
 		pr_err("%s: insufficient phandle args\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	type = clkspec->args[0];
 	idx = clkspec->args[1];
 
-	switch (type) {
-	case QORIQ_CLK_SYSCLK:
-		if (idx != 0)
-			goto bad_args;
+	चयन (type) अणु
+	हाल QORIQ_CLK_SYSCLK:
+		अगर (idx != 0)
+			जाओ bad_args;
 		clk = cg->sysclk;
-		break;
-	case QORIQ_CLK_CMUX:
-		if (idx >= ARRAY_SIZE(cg->cmux))
-			goto bad_args;
+		अवरोध;
+	हाल QORIQ_CLK_CMUX:
+		अगर (idx >= ARRAY_SIZE(cg->cmux))
+			जाओ bad_args;
 		clk = cg->cmux[idx];
-		break;
-	case QORIQ_CLK_HWACCEL:
-		if (idx >= ARRAY_SIZE(cg->hwaccel))
-			goto bad_args;
+		अवरोध;
+	हाल QORIQ_CLK_HWACCEL:
+		अगर (idx >= ARRAY_SIZE(cg->hwaccel))
+			जाओ bad_args;
 		clk = cg->hwaccel[idx];
-		break;
-	case QORIQ_CLK_FMAN:
-		if (idx >= ARRAY_SIZE(cg->fman))
-			goto bad_args;
+		अवरोध;
+	हाल QORIQ_CLK_FMAN:
+		अगर (idx >= ARRAY_SIZE(cg->fman))
+			जाओ bad_args;
 		clk = cg->fman[idx];
-		break;
-	case QORIQ_CLK_PLATFORM_PLL:
+		अवरोध;
+	हाल QORIQ_CLK_PLATFORM_PLL:
 		pll = &cg->pll[PLATFORM_PLL];
-		if (idx >= ARRAY_SIZE(pll->div))
-			goto bad_args;
-		clk = pll->div[idx].clk;
-		break;
-	case QORIQ_CLK_CORECLK:
-		if (idx != 0)
-			goto bad_args;
+		अगर (idx >= ARRAY_SIZE(pll->भाग))
+			जाओ bad_args;
+		clk = pll->भाग[idx].clk;
+		अवरोध;
+	हाल QORIQ_CLK_CORECLK:
+		अगर (idx != 0)
+			जाओ bad_args;
 		clk = cg->coreclk;
-		if (IS_ERR(clk))
-			clk = NULL;
-		break;
-	default:
-		goto bad_args;
-	}
+		अगर (IS_ERR(clk))
+			clk = शून्य;
+		अवरोध;
+	शेष:
+		जाओ bad_args;
+	पूर्ण
 
-	if (!clk)
-		return ERR_PTR(-ENOENT);
-	return clk;
+	अगर (!clk)
+		वापस ERR_PTR(-ENOENT);
+	वापस clk;
 
 bad_args:
 	pr_err("%s: Bad phandle args %u %u\n", __func__, type, idx);
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-#ifdef CONFIG_PPC
-#include <asm/mpc85xx.h>
+#अगर_घोषित CONFIG_PPC
+#समावेश <यंत्र/mpc85xx.h>
 
-static const u32 a4510_svrs[] __initconst = {
+अटल स्थिर u32 a4510_svrs[] __initस्थिर = अणु
 	(SVR_P2040 << 8) | 0x10,	/* P2040 1.0 */
 	(SVR_P2040 << 8) | 0x11,	/* P2040 1.1 */
 	(SVR_P2041 << 8) | 0x10,	/* P2041 1.0 */
@@ -1456,150 +1457,150 @@ static const u32 a4510_svrs[] __initconst = {
 	(SVR_P5020 << 8) | 0x10,	/* P5020 1.0 */
 	(SVR_P5021 << 8) | 0x10,	/* P5021 1.0 */
 	(SVR_P5040 << 8) | 0x10,	/* P5040 1.0 */
-};
+पूर्ण;
 
-#define SVR_SECURITY	0x80000	/* The Security (E) bit */
+#घोषणा SVR_SECURITY	0x80000	/* The Security (E) bit */
 
-static bool __init has_erratum_a4510(void)
-{
+अटल bool __init has_erratum_a4510(व्योम)
+अणु
 	u32 svr = mfspr(SPRN_SVR);
-	int i;
+	पूर्णांक i;
 
 	svr &= ~SVR_SECURITY;
 
-	for (i = 0; i < ARRAY_SIZE(a4510_svrs); i++) {
-		if (svr == a4510_svrs[i])
-			return true;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(a4510_svrs); i++) अणु
+		अगर (svr == a4510_svrs[i])
+			वापस true;
+	पूर्ण
 
-	return false;
-}
-#else
-static bool __init has_erratum_a4510(void)
-{
-	return false;
-}
-#endif
+	वापस false;
+पूर्ण
+#अन्यथा
+अटल bool __init has_erratum_a4510(व्योम)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-static void __init _clockgen_init(struct device_node *np, bool legacy)
-{
-	int i, ret;
+अटल व्योम __init _घड़ीgen_init(काष्ठा device_node *np, bool legacy)
+अणु
+	पूर्णांक i, ret;
 	bool is_old_ls1021a = false;
 
-	/* May have already been called by a legacy probe */
-	if (clockgen.node)
-		return;
+	/* May have alपढ़ोy been called by a legacy probe */
+	अगर (घड़ीgen.node)
+		वापस;
 
-	clockgen.node = np;
-	clockgen.regs = of_iomap(np, 0);
-	if (!clockgen.regs &&
-	    of_device_is_compatible(of_root, "fsl,ls1021a")) {
-		/* Compatibility hack for old, broken device trees */
-		clockgen.regs = ioremap(0x1ee1000, 0x1000);
+	घड़ीgen.node = np;
+	घड़ीgen.regs = of_iomap(np, 0);
+	अगर (!घड़ीgen.regs &&
+	    of_device_is_compatible(of_root, "fsl,ls1021a")) अणु
+		/* Compatibility hack क्रम old, broken device trees */
+		घड़ीgen.regs = ioremap(0x1ee1000, 0x1000);
 		is_old_ls1021a = true;
-	}
-	if (!clockgen.regs) {
+	पूर्ण
+	अगर (!घड़ीgen.regs) अणु
 		pr_err("%s(): %pOFn: of_iomap() failed\n", __func__, np);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(chipinfo); i++) {
-		if (of_device_is_compatible(np, chipinfo[i].compat))
-			break;
-		if (is_old_ls1021a &&
-		    !strcmp(chipinfo[i].compat, "fsl,ls1021a-clockgen"))
-			break;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(chipinfo); i++) अणु
+		अगर (of_device_is_compatible(np, chipinfo[i].compat))
+			अवरोध;
+		अगर (is_old_ls1021a &&
+		    !म_भेद(chipinfo[i].compat, "fsl,ls1021a-clockgen"))
+			अवरोध;
+	पूर्ण
 
-	if (i == ARRAY_SIZE(chipinfo)) {
+	अगर (i == ARRAY_SIZE(chipinfo)) अणु
 		pr_err("%s: unknown clockgen node %pOF\n", __func__, np);
-		goto err;
-	}
-	clockgen.info = chipinfo[i];
+		जाओ err;
+	पूर्ण
+	घड़ीgen.info = chipinfo[i];
 
-	if (clockgen.info.guts_compat) {
-		struct device_node *guts;
+	अगर (घड़ीgen.info.guts_compat) अणु
+		काष्ठा device_node *guts;
 
-		guts = of_find_compatible_node(NULL, NULL,
-					       clockgen.info.guts_compat);
-		if (guts) {
-			clockgen.guts = of_iomap(guts, 0);
-			if (!clockgen.guts) {
+		guts = of_find_compatible_node(शून्य, शून्य,
+					       घड़ीgen.info.guts_compat);
+		अगर (guts) अणु
+			घड़ीgen.guts = of_iomap(guts, 0);
+			अगर (!घड़ीgen.guts) अणु
 				pr_err("%s: Couldn't map %pOF regs\n", __func__,
 				       guts);
-			}
+			पूर्ण
 			of_node_put(guts);
-		}
+		पूर्ण
 
-	}
+	पूर्ण
 
-	if (has_erratum_a4510())
-		clockgen.info.flags |= CG_CMUX_GE_PLAT;
+	अगर (has_erratum_a4510())
+		घड़ीgen.info.flags |= CG_CMUX_GE_PLAT;
 
-	clockgen.sysclk = create_sysclk("cg-sysclk");
-	clockgen.coreclk = create_coreclk("cg-coreclk");
-	create_plls(&clockgen);
-	create_muxes(&clockgen);
+	घड़ीgen.sysclk = create_sysclk("cg-sysclk");
+	घड़ीgen.coreclk = create_coreclk("cg-coreclk");
+	create_plls(&घड़ीgen);
+	create_muxes(&घड़ीgen);
 
-	if (clockgen.info.init_periph)
-		clockgen.info.init_periph(&clockgen);
+	अगर (घड़ीgen.info.init_periph)
+		घड़ीgen.info.init_periph(&घड़ीgen);
 
-	ret = of_clk_add_provider(np, clockgen_clk_get, &clockgen);
-	if (ret) {
+	ret = of_clk_add_provider(np, घड़ीgen_clk_get, &घड़ीgen);
+	अगर (ret) अणु
 		pr_err("%s: Couldn't register clk provider for node %pOFn: %d\n",
 		       __func__, np, ret);
-	}
+	पूर्ण
 
-	/* Don't create cpufreq device for legacy clockgen blocks */
+	/* Don't create cpufreq device क्रम legacy घड़ीgen blocks */
 	add_cpufreq_dev = !legacy;
 
-	return;
+	वापस;
 err:
-	iounmap(clockgen.regs);
-	clockgen.regs = NULL;
-}
+	iounmap(घड़ीgen.regs);
+	घड़ीgen.regs = शून्य;
+पूर्ण
 
-static void __init clockgen_init(struct device_node *np)
-{
-	_clockgen_init(np, false);
-}
+अटल व्योम __init घड़ीgen_init(काष्ठा device_node *np)
+अणु
+	_घड़ीgen_init(np, false);
+पूर्ण
 
-static int __init clockgen_cpufreq_init(void)
-{
-	struct platform_device *pdev;
+अटल पूर्णांक __init घड़ीgen_cpufreq_init(व्योम)
+अणु
+	काष्ठा platक्रमm_device *pdev;
 
-	if (add_cpufreq_dev) {
-		pdev = platform_device_register_simple("qoriq-cpufreq", -1,
-				NULL, 0);
-		if (IS_ERR(pdev))
+	अगर (add_cpufreq_dev) अणु
+		pdev = platक्रमm_device_रेजिस्टर_simple("qoriq-cpufreq", -1,
+				शून्य, 0);
+		अगर (IS_ERR(pdev))
 			pr_err("Couldn't register qoriq-cpufreq err=%ld\n",
 				PTR_ERR(pdev));
-	}
-	return 0;
-}
-device_initcall(clockgen_cpufreq_init);
+	पूर्ण
+	वापस 0;
+पूर्ण
+device_initcall(घड़ीgen_cpufreq_init);
 
-CLK_OF_DECLARE(qoriq_clockgen_1, "fsl,qoriq-clockgen-1.0", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_2, "fsl,qoriq-clockgen-2.0", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_b4420, "fsl,b4420-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_b4860, "fsl,b4860-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_ls1012a, "fsl,ls1012a-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_ls1021a, "fsl,ls1021a-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_ls1028a, "fsl,ls1028a-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_ls1043a, "fsl,ls1043a-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_ls1046a, "fsl,ls1046a-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_ls1088a, "fsl,ls1088a-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_ls2080a, "fsl,ls2080a-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_lx2160a, "fsl,lx2160a-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_p2041, "fsl,p2041-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_p3041, "fsl,p3041-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_p4080, "fsl,p4080-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_p5020, "fsl,p5020-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_p5040, "fsl,p5040-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_t1023, "fsl,t1023-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_t1040, "fsl,t1040-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_t2080, "fsl,t2080-clockgen", clockgen_init);
-CLK_OF_DECLARE(qoriq_clockgen_t4240, "fsl,t4240-clockgen", clockgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_1, "fsl,qoriq-clockgen-1.0", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_2, "fsl,qoriq-clockgen-2.0", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_b4420, "fsl,b4420-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_b4860, "fsl,b4860-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_ls1012a, "fsl,ls1012a-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_ls1021a, "fsl,ls1021a-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_ls1028a, "fsl,ls1028a-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_ls1043a, "fsl,ls1043a-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_ls1046a, "fsl,ls1046a-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_ls1088a, "fsl,ls1088a-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_ls2080a, "fsl,ls2080a-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_lx2160a, "fsl,lx2160a-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_p2041, "fsl,p2041-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_p3041, "fsl,p3041-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_p4080, "fsl,p4080-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_p5020, "fsl,p5020-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_p5040, "fsl,p5040-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_t1023, "fsl,t1023-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_t1040, "fsl,t1040-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_t2080, "fsl,t2080-clockgen", घड़ीgen_init);
+CLK_OF_DECLARE(qoriq_घड़ीgen_t4240, "fsl,t4240-clockgen", घड़ीgen_init);
 
 /* Legacy nodes */
 CLK_OF_DECLARE(qoriq_sysclk_1, "fsl,qoriq-sysclk-1.0", sysclk_init);

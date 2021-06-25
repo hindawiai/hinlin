@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
 * Copyright (C) 2012 Invensense, Inc.
 */
 
-#include <linux/acpi.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/iio/iio.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/property.h>
-#include "inv_mpu_iio.h"
+#समावेश <linux/acpi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/property.h>
+#समावेश "inv_mpu_iio.h"
 
-static const struct regmap_config inv_mpu_regmap_config = {
+अटल स्थिर काष्ठा regmap_config inv_mpu_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-};
+पूर्ण;
 
-static int inv_mpu6050_select_bypass(struct i2c_mux_core *muxc, u32 chan_id)
-{
-	return 0;
-}
+अटल पूर्णांक inv_mpu6050_select_bypass(काष्ठा i2c_mux_core *muxc, u32 chan_id)
+अणु
+	वापस 0;
+पूर्ण
 
-static bool inv_mpu_i2c_aux_bus(struct device *dev)
-{
-	struct inv_mpu6050_state *st = iio_priv(dev_get_drvdata(dev));
+अटल bool inv_mpu_i2c_aux_bus(काष्ठा device *dev)
+अणु
+	काष्ठा inv_mpu6050_state *st = iio_priv(dev_get_drvdata(dev));
 
-	switch (st->chip_type) {
-	case INV_ICM20608:
-	case INV_ICM20609:
-	case INV_ICM20689:
-	case INV_ICM20602:
-	case INV_IAM20680:
+	चयन (st->chip_type) अणु
+	हाल INV_ICM20608:
+	हाल INV_ICM20609:
+	हाल INV_ICM20689:
+	हाल INV_ICM20602:
+	हाल INV_IAM20680:
 		/* no i2c auxiliary bus on the chip */
-		return false;
-	case INV_MPU9150:
-	case INV_MPU9250:
-	case INV_MPU9255:
-		if (st->magn_disabled)
-			return true;
-		else
-			return false;
-	default:
-		return true;
-	}
-}
+		वापस false;
+	हाल INV_MPU9150:
+	हाल INV_MPU9250:
+	हाल INV_MPU9255:
+		अगर (st->magn_disabled)
+			वापस true;
+		अन्यथा
+			वापस false;
+	शेष:
+		वापस true;
+	पूर्ण
+पूर्ण
 
-static int inv_mpu_i2c_aux_setup(struct iio_dev *indio_dev)
-{
-	struct inv_mpu6050_state *st = iio_priv(indio_dev);
-	struct device *dev = indio_dev->dev.parent;
-	struct device_node *mux_node;
-	int ret;
+अटल पूर्णांक inv_mpu_i2c_aux_setup(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा inv_mpu6050_state *st = iio_priv(indio_dev);
+	काष्ठा device *dev = indio_dev->dev.parent;
+	काष्ठा device_node *mux_node;
+	पूर्णांक ret;
 
 	/*
 	 * MPU9xxx magnetometer support requires to disable i2c auxiliary bus.
-	 * To ensure backward compatibility with existing setups, do not disable
-	 * i2c auxiliary bus if it used.
-	 * Check for i2c-gate node in devicetree and set magnetometer disabled.
+	 * To ensure backward compatibility with existing setups, करो not disable
+	 * i2c auxiliary bus अगर it used.
+	 * Check क्रम i2c-gate node in devicetree and set magnetometer disabled.
 	 * Only MPU6500 is supported by ACPI, no need to check.
 	 */
-	switch (st->chip_type) {
-	case INV_MPU9150:
-	case INV_MPU9250:
-	case INV_MPU9255:
+	चयन (st->chip_type) अणु
+	हाल INV_MPU9150:
+	हाल INV_MPU9250:
+	हाल INV_MPU9255:
 		mux_node = of_get_child_by_name(dev->of_node, "i2c-gate");
-		if (mux_node != NULL) {
+		अगर (mux_node != शून्य) अणु
 			st->magn_disabled = true;
 			dev_warn(dev, "disable internal use of magnetometer\n");
-		}
+		पूर्ण
 		of_node_put(mux_node);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* enable i2c bypass when using i2c auxiliary bus */
-	if (inv_mpu_i2c_aux_bus(dev)) {
-		ret = regmap_write(st->map, st->reg->int_pin_cfg,
+	अगर (inv_mpu_i2c_aux_bus(dev)) अणु
+		ret = regmap_ग_लिखो(st->map, st->reg->पूर्णांक_pin_cfg,
 				   st->irq_mask | INV_MPU6050_BIT_BYPASS_EN);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *  inv_mpu_probe() - probe function.
@@ -94,179 +95,179 @@ static int inv_mpu_i2c_aux_setup(struct iio_dev *indio_dev)
  *
  *  Returns 0 on success, a negative error code otherwise.
  */
-static int inv_mpu_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	const void *match;
-	struct inv_mpu6050_state *st;
-	int result;
-	enum inv_devices chip_type;
-	struct regmap *regmap;
-	const char *name;
+अटल पूर्णांक inv_mpu_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	स्थिर व्योम *match;
+	काष्ठा inv_mpu6050_state *st;
+	पूर्णांक result;
+	क्रमागत inv_devices chip_type;
+	काष्ठा regmap *regmap;
+	स्थिर अक्षर *name;
 
-	if (!i2c_check_functionality(client->adapter,
+	अगर (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_I2C_BLOCK))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
 	match = device_get_match_data(&client->dev);
-	if (match) {
-		chip_type = (enum inv_devices)match;
+	अगर (match) अणु
+		chip_type = (क्रमागत inv_devices)match;
 		name = client->name;
-	} else if (id) {
-		chip_type = (enum inv_devices)
+	पूर्ण अन्यथा अगर (id) अणु
+		chip_type = (क्रमागत inv_devices)
 			id->driver_data;
 		name = id->name;
-	} else {
-		return -ENOSYS;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -ENOSYS;
+	पूर्ण
 
 	regmap = devm_regmap_init_i2c(client, &inv_mpu_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&client->dev, "Failed to register i2c regmap: %pe\n",
 			regmap);
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
 	result = inv_mpu_core_probe(regmap, client->irq, name,
 				    inv_mpu_i2c_aux_setup, chip_type);
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 
 	st = iio_priv(dev_get_drvdata(&client->dev));
-	if (inv_mpu_i2c_aux_bus(&client->dev)) {
+	अगर (inv_mpu_i2c_aux_bus(&client->dev)) अणु
 		/* declare i2c auxiliary bus */
 		st->muxc = i2c_mux_alloc(client->adapter, &client->dev,
 					 1, 0, I2C_MUX_LOCKED | I2C_MUX_GATE,
-					 inv_mpu6050_select_bypass, NULL);
-		if (!st->muxc)
-			return -ENOMEM;
+					 inv_mpu6050_select_bypass, शून्य);
+		अगर (!st->muxc)
+			वापस -ENOMEM;
 		st->muxc->priv = dev_get_drvdata(&client->dev);
 		result = i2c_mux_add_adapter(st->muxc, 0, 0, 0);
-		if (result)
-			return result;
+		अगर (result)
+			वापस result;
 		result = inv_mpu_acpi_create_mux_client(client);
-		if (result)
-			goto out_del_mux;
-	}
+		अगर (result)
+			जाओ out_del_mux;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_del_mux:
 	i2c_mux_del_adapters(st->muxc);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int inv_mpu_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
-	struct inv_mpu6050_state *st = iio_priv(indio_dev);
+अटल पूर्णांक inv_mpu_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+	काष्ठा inv_mpu6050_state *st = iio_priv(indio_dev);
 
-	if (st->muxc) {
+	अगर (st->muxc) अणु
 		inv_mpu_acpi_delete_mux_client(client);
 		i2c_mux_del_adapters(st->muxc);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * device id table is used to identify what device can be
+ * device id table is used to identअगरy what device can be
  * supported by this driver
  */
-static const struct i2c_device_id inv_mpu_id[] = {
-	{"mpu6050", INV_MPU6050},
-	{"mpu6500", INV_MPU6500},
-	{"mpu6515", INV_MPU6515},
-	{"mpu6880", INV_MPU6880},
-	{"mpu9150", INV_MPU9150},
-	{"mpu9250", INV_MPU9250},
-	{"mpu9255", INV_MPU9255},
-	{"icm20608", INV_ICM20608},
-	{"icm20609", INV_ICM20609},
-	{"icm20689", INV_ICM20689},
-	{"icm20602", INV_ICM20602},
-	{"icm20690", INV_ICM20690},
-	{"iam20680", INV_IAM20680},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id inv_mpu_id[] = अणु
+	अणु"mpu6050", INV_MPU6050पूर्ण,
+	अणु"mpu6500", INV_MPU6500पूर्ण,
+	अणु"mpu6515", INV_MPU6515पूर्ण,
+	अणु"mpu6880", INV_MPU6880पूर्ण,
+	अणु"mpu9150", INV_MPU9150पूर्ण,
+	अणु"mpu9250", INV_MPU9250पूर्ण,
+	अणु"mpu9255", INV_MPU9255पूर्ण,
+	अणु"icm20608", INV_ICM20608पूर्ण,
+	अणु"icm20609", INV_ICM20609पूर्ण,
+	अणु"icm20689", INV_ICM20689पूर्ण,
+	अणु"icm20602", INV_ICM20602पूर्ण,
+	अणु"icm20690", INV_ICM20690पूर्ण,
+	अणु"iam20680", INV_IAM20680पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, inv_mpu_id);
 
-static const struct of_device_id inv_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id inv_of_match[] = अणु
+	अणु
 		.compatible = "invensense,mpu6050",
-		.data = (void *)INV_MPU6050
-	},
-	{
+		.data = (व्योम *)INV_MPU6050
+	पूर्ण,
+	अणु
 		.compatible = "invensense,mpu6500",
-		.data = (void *)INV_MPU6500
-	},
-	{
+		.data = (व्योम *)INV_MPU6500
+	पूर्ण,
+	अणु
 		.compatible = "invensense,mpu6515",
-		.data = (void *)INV_MPU6515
-	},
-	{
+		.data = (व्योम *)INV_MPU6515
+	पूर्ण,
+	अणु
 		.compatible = "invensense,mpu6880",
-		.data = (void *)INV_MPU6880
-	},
-	{
+		.data = (व्योम *)INV_MPU6880
+	पूर्ण,
+	अणु
 		.compatible = "invensense,mpu9150",
-		.data = (void *)INV_MPU9150
-	},
-	{
+		.data = (व्योम *)INV_MPU9150
+	पूर्ण,
+	अणु
 		.compatible = "invensense,mpu9250",
-		.data = (void *)INV_MPU9250
-	},
-	{
+		.data = (व्योम *)INV_MPU9250
+	पूर्ण,
+	अणु
 		.compatible = "invensense,mpu9255",
-		.data = (void *)INV_MPU9255
-	},
-	{
+		.data = (व्योम *)INV_MPU9255
+	पूर्ण,
+	अणु
 		.compatible = "invensense,icm20608",
-		.data = (void *)INV_ICM20608
-	},
-	{
+		.data = (व्योम *)INV_ICM20608
+	पूर्ण,
+	अणु
 		.compatible = "invensense,icm20609",
-		.data = (void *)INV_ICM20609
-	},
-	{
+		.data = (व्योम *)INV_ICM20609
+	पूर्ण,
+	अणु
 		.compatible = "invensense,icm20689",
-		.data = (void *)INV_ICM20689
-	},
-	{
+		.data = (व्योम *)INV_ICM20689
+	पूर्ण,
+	अणु
 		.compatible = "invensense,icm20602",
-		.data = (void *)INV_ICM20602
-	},
-	{
+		.data = (व्योम *)INV_ICM20602
+	पूर्ण,
+	अणु
 		.compatible = "invensense,icm20690",
-		.data = (void *)INV_ICM20690
-	},
-	{
+		.data = (व्योम *)INV_ICM20690
+	पूर्ण,
+	अणु
 		.compatible = "invensense,iam20680",
-		.data = (void *)INV_IAM20680
-	},
-	{ }
-};
+		.data = (व्योम *)INV_IAM20680
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, inv_of_match);
 
-static const struct acpi_device_id inv_acpi_match[] = {
-	{"INVN6500", INV_MPU6500},
-	{ },
-};
+अटल स्थिर काष्ठा acpi_device_id inv_acpi_match[] = अणु
+	अणु"INVN6500", INV_MPU6500पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(acpi, inv_acpi_match);
 
-static struct i2c_driver inv_mpu_driver = {
+अटल काष्ठा i2c_driver inv_mpu_driver = अणु
 	.probe		=	inv_mpu_probe,
-	.remove		=	inv_mpu_remove,
+	.हटाओ		=	inv_mpu_हटाओ,
 	.id_table	=	inv_mpu_id,
-	.driver = {
+	.driver = अणु
 		.of_match_table = inv_of_match,
 		.acpi_match_table = ACPI_PTR(inv_acpi_match),
 		.name	=	"inv-mpu6050-i2c",
 		.pm     =       &inv_mpu_pmops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 module_i2c_driver(inv_mpu_driver);
 

@@ -1,80 +1,81 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * iPAQ microcontroller backlight support
  * Author : Linus Walleij <linus.walleij@linaro.org>
  */
 
-#include <linux/backlight.h>
-#include <linux/err.h>
-#include <linux/fb.h>
-#include <linux/init.h>
-#include <linux/mfd/ipaq-micro.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/err.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mfd/ipaq-micro.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-static int micro_bl_update_status(struct backlight_device *bd)
-{
-	struct ipaq_micro *micro = dev_get_drvdata(&bd->dev);
-	int intensity = bd->props.brightness;
-	struct ipaq_micro_msg msg = {
+अटल पूर्णांक micro_bl_update_status(काष्ठा backlight_device *bd)
+अणु
+	काष्ठा ipaq_micro *micro = dev_get_drvdata(&bd->dev);
+	पूर्णांक पूर्णांकensity = bd->props.brightness;
+	काष्ठा ipaq_micro_msg msg = अणु
 		.id = MSG_BACKLIGHT,
 		.tx_len = 3,
-	};
+	पूर्ण;
 
-	if (bd->props.power != FB_BLANK_UNBLANK)
-		intensity = 0;
-	if (bd->props.state & (BL_CORE_FBBLANK | BL_CORE_SUSPENDED))
-		intensity = 0;
+	अगर (bd->props.घातer != FB_BLANK_UNBLANK)
+		पूर्णांकensity = 0;
+	अगर (bd->props.state & (BL_CORE_FBBLANK | BL_CORE_SUSPENDED))
+		पूर्णांकensity = 0;
 
 	/*
-	 * Message format:
+	 * Message क्रमmat:
 	 * Byte 0: backlight instance (usually 1)
 	 * Byte 1: on/off
-	 * Byte 2: intensity, 0-255
+	 * Byte 2: पूर्णांकensity, 0-255
 	 */
 	msg.tx_data[0] = 0x01;
-	msg.tx_data[1] = intensity > 0 ? 1 : 0;
-	msg.tx_data[2] = intensity;
-	return ipaq_micro_tx_msg_sync(micro, &msg);
-}
+	msg.tx_data[1] = पूर्णांकensity > 0 ? 1 : 0;
+	msg.tx_data[2] = पूर्णांकensity;
+	वापस ipaq_micro_tx_msg_sync(micro, &msg);
+पूर्ण
 
-static const struct backlight_ops micro_bl_ops = {
+अटल स्थिर काष्ठा backlight_ops micro_bl_ops = अणु
 	.options = BL_CORE_SUSPENDRESUME,
 	.update_status  = micro_bl_update_status,
-};
+पूर्ण;
 
-static const struct backlight_properties micro_bl_props = {
+अटल स्थिर काष्ठा backlight_properties micro_bl_props = अणु
 	.type = BACKLIGHT_RAW,
 	.max_brightness = 255,
-	.power = FB_BLANK_UNBLANK,
+	.घातer = FB_BLANK_UNBLANK,
 	.brightness = 64,
-};
+पूर्ण;
 
-static int micro_backlight_probe(struct platform_device *pdev)
-{
-	struct backlight_device *bd;
-	struct ipaq_micro *micro = dev_get_drvdata(pdev->dev.parent);
+अटल पूर्णांक micro_backlight_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा backlight_device *bd;
+	काष्ठा ipaq_micro *micro = dev_get_drvdata(pdev->dev.parent);
 
-	bd = devm_backlight_device_register(&pdev->dev, "ipaq-micro-backlight",
+	bd = devm_backlight_device_रेजिस्टर(&pdev->dev, "ipaq-micro-backlight",
 					    &pdev->dev, micro, &micro_bl_ops,
 					    &micro_bl_props);
-	if (IS_ERR(bd))
-		return PTR_ERR(bd);
+	अगर (IS_ERR(bd))
+		वापस PTR_ERR(bd);
 
-	platform_set_drvdata(pdev, bd);
+	platक्रमm_set_drvdata(pdev, bd);
 	backlight_update_status(bd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver micro_backlight_device_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver micro_backlight_device_driver = अणु
+	.driver = अणु
 		.name    = "ipaq-micro-backlight",
-	},
+	पूर्ण,
 	.probe   = micro_backlight_probe,
-};
-module_platform_driver(micro_backlight_device_driver);
+पूर्ण;
+module_platक्रमm_driver(micro_backlight_device_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("driver for iPAQ Atmel micro backlight");

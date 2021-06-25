@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Aspeed 24XX/25XX I2C Controller.
  *
@@ -7,35 +8,35 @@
  *  Copyright 2017 Google, Inc.
  */
 
-#include <linux/clk.h>
-#include <linux/completion.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/irqchip/chained_irq.h>
-#include <linux/irqdomain.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/reset.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip/chained_irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/slab.h>
 
 /* I2C Register */
-#define ASPEED_I2C_FUN_CTRL_REG				0x00
-#define ASPEED_I2C_AC_TIMING_REG1			0x04
-#define ASPEED_I2C_AC_TIMING_REG2			0x08
-#define ASPEED_I2C_INTR_CTRL_REG			0x0c
-#define ASPEED_I2C_INTR_STS_REG				0x10
-#define ASPEED_I2C_CMD_REG				0x14
-#define ASPEED_I2C_DEV_ADDR_REG				0x18
-#define ASPEED_I2C_BYTE_BUF_REG				0x20
+#घोषणा ASPEED_I2C_FUN_CTRL_REG				0x00
+#घोषणा ASPEED_I2C_AC_TIMING_REG1			0x04
+#घोषणा ASPEED_I2C_AC_TIMING_REG2			0x08
+#घोषणा ASPEED_I2C_INTR_CTRL_REG			0x0c
+#घोषणा ASPEED_I2C_INTR_STS_REG				0x10
+#घोषणा ASPEED_I2C_CMD_REG				0x14
+#घोषणा ASPEED_I2C_DEV_ADDR_REG				0x18
+#घोषणा ASPEED_I2C_BYTE_BUF_REG				0x20
 
 /* Global Register Definition */
 /* 0x00 : I2C Interrupt Status Register  */
@@ -43,49 +44,49 @@
 
 /* Device Register Definition */
 /* 0x00 : I2CD Function Control Register  */
-#define ASPEED_I2CD_MULTI_MASTER_DIS			BIT(15)
-#define ASPEED_I2CD_SDA_DRIVE_1T_EN			BIT(8)
-#define ASPEED_I2CD_M_SDA_DRIVE_1T_EN			BIT(7)
-#define ASPEED_I2CD_M_HIGH_SPEED_EN			BIT(6)
-#define ASPEED_I2CD_SLAVE_EN				BIT(1)
-#define ASPEED_I2CD_MASTER_EN				BIT(0)
+#घोषणा ASPEED_I2CD_MULTI_MASTER_DIS			BIT(15)
+#घोषणा ASPEED_I2CD_SDA_DRIVE_1T_EN			BIT(8)
+#घोषणा ASPEED_I2CD_M_SDA_DRIVE_1T_EN			BIT(7)
+#घोषणा ASPEED_I2CD_M_HIGH_SPEED_EN			BIT(6)
+#घोषणा ASPEED_I2CD_SLAVE_EN				BIT(1)
+#घोषणा ASPEED_I2CD_MASTER_EN				BIT(0)
 
 /* 0x04 : I2CD Clock and AC Timing Control Register #1 */
-#define ASPEED_I2CD_TIME_TBUF_MASK			GENMASK(31, 28)
-#define ASPEED_I2CD_TIME_THDSTA_MASK			GENMASK(27, 24)
-#define ASPEED_I2CD_TIME_TACST_MASK			GENMASK(23, 20)
-#define ASPEED_I2CD_TIME_SCL_HIGH_SHIFT			16
-#define ASPEED_I2CD_TIME_SCL_HIGH_MASK			GENMASK(19, 16)
-#define ASPEED_I2CD_TIME_SCL_LOW_SHIFT			12
-#define ASPEED_I2CD_TIME_SCL_LOW_MASK			GENMASK(15, 12)
-#define ASPEED_I2CD_TIME_BASE_DIVISOR_MASK		GENMASK(3, 0)
-#define ASPEED_I2CD_TIME_SCL_REG_MAX			GENMASK(3, 0)
+#घोषणा ASPEED_I2CD_TIME_TBUF_MASK			GENMASK(31, 28)
+#घोषणा ASPEED_I2CD_TIME_THDSTA_MASK			GENMASK(27, 24)
+#घोषणा ASPEED_I2CD_TIME_TACST_MASK			GENMASK(23, 20)
+#घोषणा ASPEED_I2CD_TIME_SCL_HIGH_SHIFT			16
+#घोषणा ASPEED_I2CD_TIME_SCL_HIGH_MASK			GENMASK(19, 16)
+#घोषणा ASPEED_I2CD_TIME_SCL_LOW_SHIFT			12
+#घोषणा ASPEED_I2CD_TIME_SCL_LOW_MASK			GENMASK(15, 12)
+#घोषणा ASPEED_I2CD_TIME_BASE_DIVISOR_MASK		GENMASK(3, 0)
+#घोषणा ASPEED_I2CD_TIME_SCL_REG_MAX			GENMASK(3, 0)
 /* 0x08 : I2CD Clock and AC Timing Control Register #2 */
-#define ASPEED_NO_TIMEOUT_CTRL				0
+#घोषणा ASPEED_NO_TIMEOUT_CTRL				0
 
 /* 0x0c : I2CD Interrupt Control Register &
  * 0x10 : I2CD Interrupt Status Register
  *
- * These share bit definitions, so use the same values for the enable &
+ * These share bit definitions, so use the same values क्रम the enable &
  * status bits.
  */
-#define ASPEED_I2CD_INTR_RECV_MASK			0xf000ffff
-#define ASPEED_I2CD_INTR_SDA_DL_TIMEOUT			BIT(14)
-#define ASPEED_I2CD_INTR_BUS_RECOVER_DONE		BIT(13)
-#define ASPEED_I2CD_INTR_SLAVE_MATCH			BIT(7)
-#define ASPEED_I2CD_INTR_SCL_TIMEOUT			BIT(6)
-#define ASPEED_I2CD_INTR_ABNORMAL			BIT(5)
-#define ASPEED_I2CD_INTR_NORMAL_STOP			BIT(4)
-#define ASPEED_I2CD_INTR_ARBIT_LOSS			BIT(3)
-#define ASPEED_I2CD_INTR_RX_DONE			BIT(2)
-#define ASPEED_I2CD_INTR_TX_NAK				BIT(1)
-#define ASPEED_I2CD_INTR_TX_ACK				BIT(0)
-#define ASPEED_I2CD_INTR_MASTER_ERRORS					       \
+#घोषणा ASPEED_I2CD_INTR_RECV_MASK			0xf000ffff
+#घोषणा ASPEED_I2CD_INTR_SDA_DL_TIMEOUT			BIT(14)
+#घोषणा ASPEED_I2CD_INTR_BUS_RECOVER_DONE		BIT(13)
+#घोषणा ASPEED_I2CD_INTR_SLAVE_MATCH			BIT(7)
+#घोषणा ASPEED_I2CD_INTR_SCL_TIMEOUT			BIT(6)
+#घोषणा ASPEED_I2CD_INTR_ABNORMAL			BIT(5)
+#घोषणा ASPEED_I2CD_INTR_NORMAL_STOP			BIT(4)
+#घोषणा ASPEED_I2CD_INTR_ARBIT_LOSS			BIT(3)
+#घोषणा ASPEED_I2CD_INTR_RX_DONE			BIT(2)
+#घोषणा ASPEED_I2CD_INTR_TX_NAK				BIT(1)
+#घोषणा ASPEED_I2CD_INTR_TX_ACK				BIT(0)
+#घोषणा ASPEED_I2CD_INTR_MASTER_ERRORS					       \
 		(ASPEED_I2CD_INTR_SDA_DL_TIMEOUT |			       \
 		 ASPEED_I2CD_INTR_SCL_TIMEOUT |				       \
 		 ASPEED_I2CD_INTR_ABNORMAL |				       \
 		 ASPEED_I2CD_INTR_ARBIT_LOSS)
-#define ASPEED_I2CD_INTR_ALL						       \
+#घोषणा ASPEED_I2CD_INTR_ALL						       \
 		(ASPEED_I2CD_INTR_SDA_DL_TIMEOUT |			       \
 		 ASPEED_I2CD_INTR_BUS_RECOVER_DONE |			       \
 		 ASPEED_I2CD_INTR_SCL_TIMEOUT |				       \
@@ -97,19 +98,19 @@
 		 ASPEED_I2CD_INTR_TX_ACK)
 
 /* 0x14 : I2CD Command/Status Register   */
-#define ASPEED_I2CD_SCL_LINE_STS			BIT(18)
-#define ASPEED_I2CD_SDA_LINE_STS			BIT(17)
-#define ASPEED_I2CD_BUS_BUSY_STS			BIT(16)
-#define ASPEED_I2CD_BUS_RECOVER_CMD			BIT(11)
+#घोषणा ASPEED_I2CD_SCL_LINE_STS			BIT(18)
+#घोषणा ASPEED_I2CD_SDA_LINE_STS			BIT(17)
+#घोषणा ASPEED_I2CD_BUS_BUSY_STS			BIT(16)
+#घोषणा ASPEED_I2CD_BUS_RECOVER_CMD			BIT(11)
 
 /* Command Bit */
-#define ASPEED_I2CD_M_STOP_CMD				BIT(5)
-#define ASPEED_I2CD_M_S_RX_CMD_LAST			BIT(4)
-#define ASPEED_I2CD_M_RX_CMD				BIT(3)
-#define ASPEED_I2CD_S_TX_CMD				BIT(2)
-#define ASPEED_I2CD_M_TX_CMD				BIT(1)
-#define ASPEED_I2CD_M_START_CMD				BIT(0)
-#define ASPEED_I2CD_MASTER_CMDS_MASK					       \
+#घोषणा ASPEED_I2CD_M_STOP_CMD				BIT(5)
+#घोषणा ASPEED_I2CD_M_S_RX_CMD_LAST			BIT(4)
+#घोषणा ASPEED_I2CD_M_RX_CMD				BIT(3)
+#घोषणा ASPEED_I2CD_S_TX_CMD				BIT(2)
+#घोषणा ASPEED_I2CD_M_TX_CMD				BIT(1)
+#घोषणा ASPEED_I2CD_M_START_CMD				BIT(0)
+#घोषणा ASPEED_I2CD_MASTER_CMDS_MASK					       \
 		(ASPEED_I2CD_M_STOP_CMD |				       \
 		 ASPEED_I2CD_M_S_RX_CMD_LAST |				       \
 		 ASPEED_I2CD_M_RX_CMD |					       \
@@ -117,9 +118,9 @@
 		 ASPEED_I2CD_M_START_CMD)
 
 /* 0x18 : I2CD Slave Device Address Register   */
-#define ASPEED_I2CD_DEV_ADDR_MASK			GENMASK(6, 0)
+#घोषणा ASPEED_I2CD_DEV_ADDR_MASK			GENMASK(6, 0)
 
-enum aspeed_i2c_master_state {
+क्रमागत aspeed_i2c_master_state अणु
 	ASPEED_I2C_MASTER_INACTIVE,
 	ASPEED_I2C_MASTER_PENDING,
 	ASPEED_I2C_MASTER_START,
@@ -128,9 +129,9 @@ enum aspeed_i2c_master_state {
 	ASPEED_I2C_MASTER_RX_FIRST,
 	ASPEED_I2C_MASTER_RX,
 	ASPEED_I2C_MASTER_STOP,
-};
+पूर्ण;
 
-enum aspeed_i2c_slave_state {
+क्रमागत aspeed_i2c_slave_state अणु
 	ASPEED_I2C_SLAVE_INACTIVE,
 	ASPEED_I2C_SLAVE_START,
 	ASPEED_I2C_SLAVE_READ_REQUESTED,
@@ -138,546 +139,546 @@ enum aspeed_i2c_slave_state {
 	ASPEED_I2C_SLAVE_WRITE_REQUESTED,
 	ASPEED_I2C_SLAVE_WRITE_RECEIVED,
 	ASPEED_I2C_SLAVE_STOP,
-};
+पूर्ण;
 
-struct aspeed_i2c_bus {
-	struct i2c_adapter		adap;
-	struct device			*dev;
-	void __iomem			*base;
-	struct reset_control		*rst;
+काष्ठा aspeed_i2c_bus अणु
+	काष्ठा i2c_adapter		adap;
+	काष्ठा device			*dev;
+	व्योम __iomem			*base;
+	काष्ठा reset_control		*rst;
 	/* Synchronizes I/O mem access to base. */
 	spinlock_t			lock;
-	struct completion		cmd_complete;
-	u32				(*get_clk_reg_val)(struct device *dev,
-							   u32 divisor);
-	unsigned long			parent_clk_frequency;
+	काष्ठा completion		cmd_complete;
+	u32				(*get_clk_reg_val)(काष्ठा device *dev,
+							   u32 भागisor);
+	अचिन्हित दीर्घ			parent_clk_frequency;
 	u32				bus_frequency;
 	/* Transaction state. */
-	enum aspeed_i2c_master_state	master_state;
-	struct i2c_msg			*msgs;
-	size_t				buf_index;
-	size_t				msgs_index;
-	size_t				msgs_count;
+	क्रमागत aspeed_i2c_master_state	master_state;
+	काष्ठा i2c_msg			*msgs;
+	माप_प्रकार				buf_index;
+	माप_प्रकार				msgs_index;
+	माप_प्रकार				msgs_count;
 	bool				send_stop;
-	int				cmd_err;
+	पूर्णांक				cmd_err;
 	/* Protected only by i2c_lock_bus */
-	int				master_xfer_result;
+	पूर्णांक				master_xfer_result;
 	/* Multi-master */
 	bool				multi_master;
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
-	struct i2c_client		*slave;
-	enum aspeed_i2c_slave_state	slave_state;
-#endif /* CONFIG_I2C_SLAVE */
-};
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
+	काष्ठा i2c_client		*slave;
+	क्रमागत aspeed_i2c_slave_state	slave_state;
+#पूर्ण_अगर /* CONFIG_I2C_SLAVE */
+पूर्ण;
 
-static int aspeed_i2c_reset(struct aspeed_i2c_bus *bus);
+अटल पूर्णांक aspeed_i2c_reset(काष्ठा aspeed_i2c_bus *bus);
 
-static int aspeed_i2c_recover_bus(struct aspeed_i2c_bus *bus)
-{
-	unsigned long time_left, flags;
-	int ret = 0;
+अटल पूर्णांक aspeed_i2c_recover_bus(काष्ठा aspeed_i2c_bus *bus)
+अणु
+	अचिन्हित दीर्घ समय_left, flags;
+	पूर्णांक ret = 0;
 	u32 command;
 
 	spin_lock_irqsave(&bus->lock, flags);
-	command = readl(bus->base + ASPEED_I2C_CMD_REG);
+	command = पढ़ोl(bus->base + ASPEED_I2C_CMD_REG);
 
-	if (command & ASPEED_I2CD_SDA_LINE_STS) {
+	अगर (command & ASPEED_I2CD_SDA_LINE_STS) अणु
 		/* Bus is idle: no recovery needed. */
-		if (command & ASPEED_I2CD_SCL_LINE_STS)
-			goto out;
+		अगर (command & ASPEED_I2CD_SCL_LINE_STS)
+			जाओ out;
 		dev_dbg(bus->dev, "SCL hung (state %x), attempting recovery\n",
 			command);
 
 		reinit_completion(&bus->cmd_complete);
-		writel(ASPEED_I2CD_M_STOP_CMD, bus->base + ASPEED_I2C_CMD_REG);
+		ग_लिखोl(ASPEED_I2CD_M_STOP_CMD, bus->base + ASPEED_I2C_CMD_REG);
 		spin_unlock_irqrestore(&bus->lock, flags);
 
-		time_left = wait_for_completion_timeout(
-				&bus->cmd_complete, bus->adap.timeout);
+		समय_left = रुको_क्रम_completion_समयout(
+				&bus->cmd_complete, bus->adap.समयout);
 
 		spin_lock_irqsave(&bus->lock, flags);
-		if (time_left == 0)
-			goto reset_out;
-		else if (bus->cmd_err)
-			goto reset_out;
+		अगर (समय_left == 0)
+			जाओ reset_out;
+		अन्यथा अगर (bus->cmd_err)
+			जाओ reset_out;
 		/* Recovery failed. */
-		else if (!(readl(bus->base + ASPEED_I2C_CMD_REG) &
+		अन्यथा अगर (!(पढ़ोl(bus->base + ASPEED_I2C_CMD_REG) &
 			   ASPEED_I2CD_SCL_LINE_STS))
-			goto reset_out;
+			जाओ reset_out;
 	/* Bus error. */
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(bus->dev, "SDA hung (state %x), attempting recovery\n",
 			command);
 
 		reinit_completion(&bus->cmd_complete);
-		/* Writes 1 to 8 SCL clock cycles until SDA is released. */
-		writel(ASPEED_I2CD_BUS_RECOVER_CMD,
+		/* Writes 1 to 8 SCL घड़ी cycles until SDA is released. */
+		ग_लिखोl(ASPEED_I2CD_BUS_RECOVER_CMD,
 		       bus->base + ASPEED_I2C_CMD_REG);
 		spin_unlock_irqrestore(&bus->lock, flags);
 
-		time_left = wait_for_completion_timeout(
-				&bus->cmd_complete, bus->adap.timeout);
+		समय_left = रुको_क्रम_completion_समयout(
+				&bus->cmd_complete, bus->adap.समयout);
 
 		spin_lock_irqsave(&bus->lock, flags);
-		if (time_left == 0)
-			goto reset_out;
-		else if (bus->cmd_err)
-			goto reset_out;
+		अगर (समय_left == 0)
+			जाओ reset_out;
+		अन्यथा अगर (bus->cmd_err)
+			जाओ reset_out;
 		/* Recovery failed. */
-		else if (!(readl(bus->base + ASPEED_I2C_CMD_REG) &
+		अन्यथा अगर (!(पढ़ोl(bus->base + ASPEED_I2C_CMD_REG) &
 			   ASPEED_I2CD_SDA_LINE_STS))
-			goto reset_out;
-	}
+			जाओ reset_out;
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(&bus->lock, flags);
 
-	return ret;
+	वापस ret;
 
 reset_out:
 	spin_unlock_irqrestore(&bus->lock, flags);
 
-	return aspeed_i2c_reset(bus);
-}
+	वापस aspeed_i2c_reset(bus);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
-static u32 aspeed_i2c_slave_irq(struct aspeed_i2c_bus *bus, u32 irq_status)
-{
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
+अटल u32 aspeed_i2c_slave_irq(काष्ठा aspeed_i2c_bus *bus, u32 irq_status)
+अणु
 	u32 command, irq_handled = 0;
-	struct i2c_client *slave = bus->slave;
+	काष्ठा i2c_client *slave = bus->slave;
 	u8 value;
 
-	if (!slave)
-		return 0;
+	अगर (!slave)
+		वापस 0;
 
-	command = readl(bus->base + ASPEED_I2C_CMD_REG);
+	command = पढ़ोl(bus->base + ASPEED_I2C_CMD_REG);
 
 	/* Slave was requested, restart state machine. */
-	if (irq_status & ASPEED_I2CD_INTR_SLAVE_MATCH) {
+	अगर (irq_status & ASPEED_I2CD_INTR_SLAVE_MATCH) अणु
 		irq_handled |= ASPEED_I2CD_INTR_SLAVE_MATCH;
 		bus->slave_state = ASPEED_I2C_SLAVE_START;
-	}
+	पूर्ण
 
-	/* Slave is not currently active, irq was for someone else. */
-	if (bus->slave_state == ASPEED_I2C_SLAVE_INACTIVE)
-		return irq_handled;
+	/* Slave is not currently active, irq was क्रम someone अन्यथा. */
+	अगर (bus->slave_state == ASPEED_I2C_SLAVE_INACTIVE)
+		वापस irq_handled;
 
 	dev_dbg(bus->dev, "slave irq status 0x%08x, cmd 0x%08x\n",
 		irq_status, command);
 
 	/* Slave was sent something. */
-	if (irq_status & ASPEED_I2CD_INTR_RX_DONE) {
-		value = readl(bus->base + ASPEED_I2C_BYTE_BUF_REG) >> 8;
+	अगर (irq_status & ASPEED_I2CD_INTR_RX_DONE) अणु
+		value = पढ़ोl(bus->base + ASPEED_I2C_BYTE_BUF_REG) >> 8;
 		/* Handle address frame. */
-		if (bus->slave_state == ASPEED_I2C_SLAVE_START) {
-			if (value & 0x1)
+		अगर (bus->slave_state == ASPEED_I2C_SLAVE_START) अणु
+			अगर (value & 0x1)
 				bus->slave_state =
 						ASPEED_I2C_SLAVE_READ_REQUESTED;
-			else
+			अन्यथा
 				bus->slave_state =
 						ASPEED_I2C_SLAVE_WRITE_REQUESTED;
-		}
+		पूर्ण
 		irq_handled |= ASPEED_I2CD_INTR_RX_DONE;
-	}
+	पूर्ण
 
 	/* Slave was asked to stop. */
-	if (irq_status & ASPEED_I2CD_INTR_NORMAL_STOP) {
+	अगर (irq_status & ASPEED_I2CD_INTR_NORMAL_STOP) अणु
 		irq_handled |= ASPEED_I2CD_INTR_NORMAL_STOP;
 		bus->slave_state = ASPEED_I2C_SLAVE_STOP;
-	}
-	if (irq_status & ASPEED_I2CD_INTR_TX_NAK &&
-	    bus->slave_state == ASPEED_I2C_SLAVE_READ_PROCESSED) {
+	पूर्ण
+	अगर (irq_status & ASPEED_I2CD_INTR_TX_NAK &&
+	    bus->slave_state == ASPEED_I2C_SLAVE_READ_PROCESSED) अणु
 		irq_handled |= ASPEED_I2CD_INTR_TX_NAK;
 		bus->slave_state = ASPEED_I2C_SLAVE_STOP;
-	}
+	पूर्ण
 
-	switch (bus->slave_state) {
-	case ASPEED_I2C_SLAVE_READ_REQUESTED:
-		if (unlikely(irq_status & ASPEED_I2CD_INTR_TX_ACK))
+	चयन (bus->slave_state) अणु
+	हाल ASPEED_I2C_SLAVE_READ_REQUESTED:
+		अगर (unlikely(irq_status & ASPEED_I2CD_INTR_TX_ACK))
 			dev_err(bus->dev, "Unexpected ACK on read request.\n");
 		bus->slave_state = ASPEED_I2C_SLAVE_READ_PROCESSED;
 		i2c_slave_event(slave, I2C_SLAVE_READ_REQUESTED, &value);
-		writel(value, bus->base + ASPEED_I2C_BYTE_BUF_REG);
-		writel(ASPEED_I2CD_S_TX_CMD, bus->base + ASPEED_I2C_CMD_REG);
-		break;
-	case ASPEED_I2C_SLAVE_READ_PROCESSED:
-		if (unlikely(!(irq_status & ASPEED_I2CD_INTR_TX_ACK))) {
+		ग_लिखोl(value, bus->base + ASPEED_I2C_BYTE_BUF_REG);
+		ग_लिखोl(ASPEED_I2CD_S_TX_CMD, bus->base + ASPEED_I2C_CMD_REG);
+		अवरोध;
+	हाल ASPEED_I2C_SLAVE_READ_PROCESSED:
+		अगर (unlikely(!(irq_status & ASPEED_I2CD_INTR_TX_ACK))) अणु
 			dev_err(bus->dev,
 				"Expected ACK after processed read.\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		irq_handled |= ASPEED_I2CD_INTR_TX_ACK;
 		i2c_slave_event(slave, I2C_SLAVE_READ_PROCESSED, &value);
-		writel(value, bus->base + ASPEED_I2C_BYTE_BUF_REG);
-		writel(ASPEED_I2CD_S_TX_CMD, bus->base + ASPEED_I2C_CMD_REG);
-		break;
-	case ASPEED_I2C_SLAVE_WRITE_REQUESTED:
+		ग_लिखोl(value, bus->base + ASPEED_I2C_BYTE_BUF_REG);
+		ग_लिखोl(ASPEED_I2CD_S_TX_CMD, bus->base + ASPEED_I2C_CMD_REG);
+		अवरोध;
+	हाल ASPEED_I2C_SLAVE_WRITE_REQUESTED:
 		bus->slave_state = ASPEED_I2C_SLAVE_WRITE_RECEIVED;
 		i2c_slave_event(slave, I2C_SLAVE_WRITE_REQUESTED, &value);
-		break;
-	case ASPEED_I2C_SLAVE_WRITE_RECEIVED:
+		अवरोध;
+	हाल ASPEED_I2C_SLAVE_WRITE_RECEIVED:
 		i2c_slave_event(slave, I2C_SLAVE_WRITE_RECEIVED, &value);
-		break;
-	case ASPEED_I2C_SLAVE_STOP:
+		अवरोध;
+	हाल ASPEED_I2C_SLAVE_STOP:
 		i2c_slave_event(slave, I2C_SLAVE_STOP, &value);
 		bus->slave_state = ASPEED_I2C_SLAVE_INACTIVE;
-		break;
-	case ASPEED_I2C_SLAVE_START:
-		/* Slave was just started. Waiting for the next event. */;
-		break;
-	default:
+		अवरोध;
+	हाल ASPEED_I2C_SLAVE_START:
+		/* Slave was just started. Waiting क्रम the next event. */;
+		अवरोध;
+	शेष:
 		dev_err(bus->dev, "unknown slave_state: %d\n",
 			bus->slave_state);
 		bus->slave_state = ASPEED_I2C_SLAVE_INACTIVE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return irq_handled;
-}
-#endif /* CONFIG_I2C_SLAVE */
+	वापस irq_handled;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_I2C_SLAVE */
 
 /* precondition: bus.lock has been acquired. */
-static void aspeed_i2c_do_start(struct aspeed_i2c_bus *bus)
-{
+अटल व्योम aspeed_i2c_करो_start(काष्ठा aspeed_i2c_bus *bus)
+अणु
 	u32 command = ASPEED_I2CD_M_START_CMD | ASPEED_I2CD_M_TX_CMD;
-	struct i2c_msg *msg = &bus->msgs[bus->msgs_index];
+	काष्ठा i2c_msg *msg = &bus->msgs[bus->msgs_index];
 	u8 slave_addr = i2c_8bit_addr_from_msg(msg);
 
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
 	/*
 	 * If it's requested in the middle of a slave session, set the master
-	 * state to 'pending' then H/W will continue handling this master
+	 * state to 'pending' then H/W will जारी handling this master
 	 * command when the bus comes back to the idle state.
 	 */
-	if (bus->slave_state != ASPEED_I2C_SLAVE_INACTIVE) {
+	अगर (bus->slave_state != ASPEED_I2C_SLAVE_INACTIVE) अणु
 		bus->master_state = ASPEED_I2C_MASTER_PENDING;
-		return;
-	}
-#endif /* CONFIG_I2C_SLAVE */
+		वापस;
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_I2C_SLAVE */
 
 	bus->master_state = ASPEED_I2C_MASTER_START;
 	bus->buf_index = 0;
 
-	if (msg->flags & I2C_M_RD) {
+	अगर (msg->flags & I2C_M_RD) अणु
 		command |= ASPEED_I2CD_M_RX_CMD;
 		/* Need to let the hardware know to NACK after RX. */
-		if (msg->len == 1 && !(msg->flags & I2C_M_RECV_LEN))
+		अगर (msg->len == 1 && !(msg->flags & I2C_M_RECV_LEN))
 			command |= ASPEED_I2CD_M_S_RX_CMD_LAST;
-	}
+	पूर्ण
 
-	writel(slave_addr, bus->base + ASPEED_I2C_BYTE_BUF_REG);
-	writel(command, bus->base + ASPEED_I2C_CMD_REG);
-}
+	ग_लिखोl(slave_addr, bus->base + ASPEED_I2C_BYTE_BUF_REG);
+	ग_लिखोl(command, bus->base + ASPEED_I2C_CMD_REG);
+पूर्ण
 
 /* precondition: bus.lock has been acquired. */
-static void aspeed_i2c_do_stop(struct aspeed_i2c_bus *bus)
-{
+अटल व्योम aspeed_i2c_करो_stop(काष्ठा aspeed_i2c_bus *bus)
+अणु
 	bus->master_state = ASPEED_I2C_MASTER_STOP;
-	writel(ASPEED_I2CD_M_STOP_CMD, bus->base + ASPEED_I2C_CMD_REG);
-}
+	ग_लिखोl(ASPEED_I2CD_M_STOP_CMD, bus->base + ASPEED_I2C_CMD_REG);
+पूर्ण
 
 /* precondition: bus.lock has been acquired. */
-static void aspeed_i2c_next_msg_or_stop(struct aspeed_i2c_bus *bus)
-{
-	if (bus->msgs_index + 1 < bus->msgs_count) {
+अटल व्योम aspeed_i2c_next_msg_or_stop(काष्ठा aspeed_i2c_bus *bus)
+अणु
+	अगर (bus->msgs_index + 1 < bus->msgs_count) अणु
 		bus->msgs_index++;
-		aspeed_i2c_do_start(bus);
-	} else {
-		aspeed_i2c_do_stop(bus);
-	}
-}
+		aspeed_i2c_करो_start(bus);
+	पूर्ण अन्यथा अणु
+		aspeed_i2c_करो_stop(bus);
+	पूर्ण
+पूर्ण
 
-static int aspeed_i2c_is_irq_error(u32 irq_status)
-{
-	if (irq_status & ASPEED_I2CD_INTR_ARBIT_LOSS)
-		return -EAGAIN;
-	if (irq_status & (ASPEED_I2CD_INTR_SDA_DL_TIMEOUT |
+अटल पूर्णांक aspeed_i2c_is_irq_error(u32 irq_status)
+अणु
+	अगर (irq_status & ASPEED_I2CD_INTR_ARBIT_LOSS)
+		वापस -EAGAIN;
+	अगर (irq_status & (ASPEED_I2CD_INTR_SDA_DL_TIMEOUT |
 			  ASPEED_I2CD_INTR_SCL_TIMEOUT))
-		return -EBUSY;
-	if (irq_status & (ASPEED_I2CD_INTR_ABNORMAL))
-		return -EPROTO;
+		वापस -EBUSY;
+	अगर (irq_status & (ASPEED_I2CD_INTR_ABNORMAL))
+		वापस -EPROTO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 aspeed_i2c_master_irq(struct aspeed_i2c_bus *bus, u32 irq_status)
-{
+अटल u32 aspeed_i2c_master_irq(काष्ठा aspeed_i2c_bus *bus, u32 irq_status)
+अणु
 	u32 irq_handled = 0, command = 0;
-	struct i2c_msg *msg;
+	काष्ठा i2c_msg *msg;
 	u8 recv_byte;
-	int ret;
+	पूर्णांक ret;
 
-	if (irq_status & ASPEED_I2CD_INTR_BUS_RECOVER_DONE) {
+	अगर (irq_status & ASPEED_I2CD_INTR_BUS_RECOVER_DONE) अणु
 		bus->master_state = ASPEED_I2C_MASTER_INACTIVE;
 		irq_handled |= ASPEED_I2CD_INTR_BUS_RECOVER_DONE;
-		goto out_complete;
-	}
+		जाओ out_complete;
+	पूर्ण
 
 	/*
-	 * We encountered an interrupt that reports an error: the hardware
+	 * We encountered an पूर्णांकerrupt that reports an error: the hardware
 	 * should clear the command queue effectively taking us back to the
 	 * INACTIVE state.
 	 */
 	ret = aspeed_i2c_is_irq_error(irq_status);
-	if (ret) {
+	अगर (ret) अणु
 		dev_dbg(bus->dev, "received error interrupt: 0x%08x\n",
 			irq_status);
 		irq_handled |= (irq_status & ASPEED_I2CD_INTR_MASTER_ERRORS);
-		if (bus->master_state != ASPEED_I2C_MASTER_INACTIVE) {
+		अगर (bus->master_state != ASPEED_I2C_MASTER_INACTIVE) अणु
 			bus->cmd_err = ret;
 			bus->master_state = ASPEED_I2C_MASTER_INACTIVE;
-			goto out_complete;
-		}
-	}
+			जाओ out_complete;
+		पूर्ण
+	पूर्ण
 
-	/* Master is not currently active, irq was for someone else. */
-	if (bus->master_state == ASPEED_I2C_MASTER_INACTIVE ||
+	/* Master is not currently active, irq was क्रम someone अन्यथा. */
+	अगर (bus->master_state == ASPEED_I2C_MASTER_INACTIVE ||
 	    bus->master_state == ASPEED_I2C_MASTER_PENDING)
-		goto out_no_complete;
+		जाओ out_no_complete;
 
 	/* We are in an invalid state; reset bus to a known state. */
-	if (!bus->msgs) {
+	अगर (!bus->msgs) अणु
 		dev_err(bus->dev, "bus in unknown state. irq_status: 0x%x\n",
 			irq_status);
 		bus->cmd_err = -EIO;
-		if (bus->master_state != ASPEED_I2C_MASTER_STOP &&
+		अगर (bus->master_state != ASPEED_I2C_MASTER_STOP &&
 		    bus->master_state != ASPEED_I2C_MASTER_INACTIVE)
-			aspeed_i2c_do_stop(bus);
-		goto out_no_complete;
-	}
+			aspeed_i2c_करो_stop(bus);
+		जाओ out_no_complete;
+	पूर्ण
 	msg = &bus->msgs[bus->msgs_index];
 
 	/*
-	 * START is a special case because we still have to handle a subsequent
+	 * START is a special हाल because we still have to handle a subsequent
 	 * TX or RX immediately after we handle it, so we handle it here and
 	 * then update the state and handle the new state below.
 	 */
-	if (bus->master_state == ASPEED_I2C_MASTER_START) {
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
+	अगर (bus->master_state == ASPEED_I2C_MASTER_START) अणु
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
 		/*
 		 * If a peer master starts a xfer immediately after it queues a
 		 * master command, clear the queued master command and change
-		 * its state to 'pending'. To simplify handling of pending
-		 * cases, it uses S/W solution instead of H/W command queue
+		 * its state to 'pending'. To simplअगरy handling of pending
+		 * हालs, it uses S/W solution instead of H/W command queue
 		 * handling.
 		 */
-		if (unlikely(irq_status & ASPEED_I2CD_INTR_SLAVE_MATCH)) {
-			writel(readl(bus->base + ASPEED_I2C_CMD_REG) &
+		अगर (unlikely(irq_status & ASPEED_I2CD_INTR_SLAVE_MATCH)) अणु
+			ग_लिखोl(पढ़ोl(bus->base + ASPEED_I2C_CMD_REG) &
 				~ASPEED_I2CD_MASTER_CMDS_MASK,
 			       bus->base + ASPEED_I2C_CMD_REG);
 			bus->master_state = ASPEED_I2C_MASTER_PENDING;
 			dev_dbg(bus->dev,
 				"master goes pending due to a slave start\n");
-			goto out_no_complete;
-		}
-#endif /* CONFIG_I2C_SLAVE */
-		if (unlikely(!(irq_status & ASPEED_I2CD_INTR_TX_ACK))) {
-			if (unlikely(!(irq_status & ASPEED_I2CD_INTR_TX_NAK))) {
+			जाओ out_no_complete;
+		पूर्ण
+#पूर्ण_अगर /* CONFIG_I2C_SLAVE */
+		अगर (unlikely(!(irq_status & ASPEED_I2CD_INTR_TX_ACK))) अणु
+			अगर (unlikely(!(irq_status & ASPEED_I2CD_INTR_TX_NAK))) अणु
 				bus->cmd_err = -ENXIO;
 				bus->master_state = ASPEED_I2C_MASTER_INACTIVE;
-				goto out_complete;
-			}
+				जाओ out_complete;
+			पूर्ण
 			pr_devel("no slave present at %02x\n", msg->addr);
 			irq_handled |= ASPEED_I2CD_INTR_TX_NAK;
 			bus->cmd_err = -ENXIO;
-			aspeed_i2c_do_stop(bus);
-			goto out_no_complete;
-		}
+			aspeed_i2c_करो_stop(bus);
+			जाओ out_no_complete;
+		पूर्ण
 		irq_handled |= ASPEED_I2CD_INTR_TX_ACK;
-		if (msg->len == 0) { /* SMBUS_QUICK */
-			aspeed_i2c_do_stop(bus);
-			goto out_no_complete;
-		}
-		if (msg->flags & I2C_M_RD)
+		अगर (msg->len == 0) अणु /* SMBUS_QUICK */
+			aspeed_i2c_करो_stop(bus);
+			जाओ out_no_complete;
+		पूर्ण
+		अगर (msg->flags & I2C_M_RD)
 			bus->master_state = ASPEED_I2C_MASTER_RX_FIRST;
-		else
+		अन्यथा
 			bus->master_state = ASPEED_I2C_MASTER_TX_FIRST;
-	}
+	पूर्ण
 
-	switch (bus->master_state) {
-	case ASPEED_I2C_MASTER_TX:
-		if (unlikely(irq_status & ASPEED_I2CD_INTR_TX_NAK)) {
+	चयन (bus->master_state) अणु
+	हाल ASPEED_I2C_MASTER_TX:
+		अगर (unlikely(irq_status & ASPEED_I2CD_INTR_TX_NAK)) अणु
 			dev_dbg(bus->dev, "slave NACKed TX\n");
 			irq_handled |= ASPEED_I2CD_INTR_TX_NAK;
-			goto error_and_stop;
-		} else if (unlikely(!(irq_status & ASPEED_I2CD_INTR_TX_ACK))) {
+			जाओ error_and_stop;
+		पूर्ण अन्यथा अगर (unlikely(!(irq_status & ASPEED_I2CD_INTR_TX_ACK))) अणु
 			dev_err(bus->dev, "slave failed to ACK TX\n");
-			goto error_and_stop;
-		}
+			जाओ error_and_stop;
+		पूर्ण
 		irq_handled |= ASPEED_I2CD_INTR_TX_ACK;
 		fallthrough;
-	case ASPEED_I2C_MASTER_TX_FIRST:
-		if (bus->buf_index < msg->len) {
+	हाल ASPEED_I2C_MASTER_TX_FIRST:
+		अगर (bus->buf_index < msg->len) अणु
 			bus->master_state = ASPEED_I2C_MASTER_TX;
-			writel(msg->buf[bus->buf_index++],
+			ग_लिखोl(msg->buf[bus->buf_index++],
 			       bus->base + ASPEED_I2C_BYTE_BUF_REG);
-			writel(ASPEED_I2CD_M_TX_CMD,
+			ग_लिखोl(ASPEED_I2CD_M_TX_CMD,
 			       bus->base + ASPEED_I2C_CMD_REG);
-		} else {
+		पूर्ण अन्यथा अणु
 			aspeed_i2c_next_msg_or_stop(bus);
-		}
-		goto out_no_complete;
-	case ASPEED_I2C_MASTER_RX_FIRST:
+		पूर्ण
+		जाओ out_no_complete;
+	हाल ASPEED_I2C_MASTER_RX_FIRST:
 		/* RX may not have completed yet (only address cycle) */
-		if (!(irq_status & ASPEED_I2CD_INTR_RX_DONE))
-			goto out_no_complete;
+		अगर (!(irq_status & ASPEED_I2CD_INTR_RX_DONE))
+			जाओ out_no_complete;
 		fallthrough;
-	case ASPEED_I2C_MASTER_RX:
-		if (unlikely(!(irq_status & ASPEED_I2CD_INTR_RX_DONE))) {
+	हाल ASPEED_I2C_MASTER_RX:
+		अगर (unlikely(!(irq_status & ASPEED_I2CD_INTR_RX_DONE))) अणु
 			dev_err(bus->dev, "master failed to RX\n");
-			goto error_and_stop;
-		}
+			जाओ error_and_stop;
+		पूर्ण
 		irq_handled |= ASPEED_I2CD_INTR_RX_DONE;
 
-		recv_byte = readl(bus->base + ASPEED_I2C_BYTE_BUF_REG) >> 8;
+		recv_byte = पढ़ोl(bus->base + ASPEED_I2C_BYTE_BUF_REG) >> 8;
 		msg->buf[bus->buf_index++] = recv_byte;
 
-		if (msg->flags & I2C_M_RECV_LEN) {
-			if (unlikely(recv_byte > I2C_SMBUS_BLOCK_MAX)) {
+		अगर (msg->flags & I2C_M_RECV_LEN) अणु
+			अगर (unlikely(recv_byte > I2C_SMBUS_BLOCK_MAX)) अणु
 				bus->cmd_err = -EPROTO;
-				aspeed_i2c_do_stop(bus);
-				goto out_no_complete;
-			}
+				aspeed_i2c_करो_stop(bus);
+				जाओ out_no_complete;
+			पूर्ण
 			msg->len = recv_byte +
 					((msg->flags & I2C_CLIENT_PEC) ? 2 : 1);
 			msg->flags &= ~I2C_M_RECV_LEN;
-		}
+		पूर्ण
 
-		if (bus->buf_index < msg->len) {
+		अगर (bus->buf_index < msg->len) अणु
 			bus->master_state = ASPEED_I2C_MASTER_RX;
 			command = ASPEED_I2CD_M_RX_CMD;
-			if (bus->buf_index + 1 == msg->len)
+			अगर (bus->buf_index + 1 == msg->len)
 				command |= ASPEED_I2CD_M_S_RX_CMD_LAST;
-			writel(command, bus->base + ASPEED_I2C_CMD_REG);
-		} else {
+			ग_लिखोl(command, bus->base + ASPEED_I2C_CMD_REG);
+		पूर्ण अन्यथा अणु
 			aspeed_i2c_next_msg_or_stop(bus);
-		}
-		goto out_no_complete;
-	case ASPEED_I2C_MASTER_STOP:
-		if (unlikely(!(irq_status & ASPEED_I2CD_INTR_NORMAL_STOP))) {
+		पूर्ण
+		जाओ out_no_complete;
+	हाल ASPEED_I2C_MASTER_STOP:
+		अगर (unlikely(!(irq_status & ASPEED_I2CD_INTR_NORMAL_STOP))) अणु
 			dev_err(bus->dev,
 				"master failed to STOP. irq_status:0x%x\n",
 				irq_status);
 			bus->cmd_err = -EIO;
-			/* Do not STOP as we have already tried. */
-		} else {
+			/* Do not STOP as we have alपढ़ोy tried. */
+		पूर्ण अन्यथा अणु
 			irq_handled |= ASPEED_I2CD_INTR_NORMAL_STOP;
-		}
+		पूर्ण
 
 		bus->master_state = ASPEED_I2C_MASTER_INACTIVE;
-		goto out_complete;
-	case ASPEED_I2C_MASTER_INACTIVE:
+		जाओ out_complete;
+	हाल ASPEED_I2C_MASTER_INACTIVE:
 		dev_err(bus->dev,
 			"master received interrupt 0x%08x, but is inactive\n",
 			irq_status);
 		bus->cmd_err = -EIO;
 		/* Do not STOP as we should be inactive. */
-		goto out_complete;
-	default:
+		जाओ out_complete;
+	शेष:
 		WARN(1, "unknown master state\n");
 		bus->master_state = ASPEED_I2C_MASTER_INACTIVE;
 		bus->cmd_err = -EINVAL;
-		goto out_complete;
-	}
+		जाओ out_complete;
+	पूर्ण
 error_and_stop:
 	bus->cmd_err = -EIO;
-	aspeed_i2c_do_stop(bus);
-	goto out_no_complete;
+	aspeed_i2c_करो_stop(bus);
+	जाओ out_no_complete;
 out_complete:
-	bus->msgs = NULL;
-	if (bus->cmd_err)
+	bus->msgs = शून्य;
+	अगर (bus->cmd_err)
 		bus->master_xfer_result = bus->cmd_err;
-	else
+	अन्यथा
 		bus->master_xfer_result = bus->msgs_index + 1;
 	complete(&bus->cmd_complete);
 out_no_complete:
-	return irq_handled;
-}
+	वापस irq_handled;
+पूर्ण
 
-static irqreturn_t aspeed_i2c_bus_irq(int irq, void *dev_id)
-{
-	struct aspeed_i2c_bus *bus = dev_id;
-	u32 irq_received, irq_remaining, irq_handled;
+अटल irqवापस_t aspeed_i2c_bus_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा aspeed_i2c_bus *bus = dev_id;
+	u32 irq_received, irq_reमुख्यing, irq_handled;
 
 	spin_lock(&bus->lock);
-	irq_received = readl(bus->base + ASPEED_I2C_INTR_STS_REG);
-	/* Ack all interrupts except for Rx done */
-	writel(irq_received & ~ASPEED_I2CD_INTR_RX_DONE,
+	irq_received = पढ़ोl(bus->base + ASPEED_I2C_INTR_STS_REG);
+	/* Ack all पूर्णांकerrupts except क्रम Rx करोne */
+	ग_लिखोl(irq_received & ~ASPEED_I2CD_INTR_RX_DONE,
 	       bus->base + ASPEED_I2C_INTR_STS_REG);
-	readl(bus->base + ASPEED_I2C_INTR_STS_REG);
+	पढ़ोl(bus->base + ASPEED_I2C_INTR_STS_REG);
 	irq_received &= ASPEED_I2CD_INTR_RECV_MASK;
-	irq_remaining = irq_received;
+	irq_reमुख्यing = irq_received;
 
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
 	/*
-	 * In most cases, interrupt bits will be set one by one, although
-	 * multiple interrupt bits could be set at the same time. It's also
-	 * possible that master interrupt bits could be set along with slave
-	 * interrupt bits. Each case needs to be handled using corresponding
+	 * In most हालs, पूर्णांकerrupt bits will be set one by one, although
+	 * multiple पूर्णांकerrupt bits could be set at the same समय. It's also
+	 * possible that master पूर्णांकerrupt bits could be set aदीर्घ with slave
+	 * पूर्णांकerrupt bits. Each हाल needs to be handled using corresponding
 	 * handlers depending on the current state.
 	 */
-	if (bus->master_state != ASPEED_I2C_MASTER_INACTIVE &&
-	    bus->master_state != ASPEED_I2C_MASTER_PENDING) {
-		irq_handled = aspeed_i2c_master_irq(bus, irq_remaining);
-		irq_remaining &= ~irq_handled;
-		if (irq_remaining)
-			irq_handled |= aspeed_i2c_slave_irq(bus, irq_remaining);
-	} else {
-		irq_handled = aspeed_i2c_slave_irq(bus, irq_remaining);
-		irq_remaining &= ~irq_handled;
-		if (irq_remaining)
+	अगर (bus->master_state != ASPEED_I2C_MASTER_INACTIVE &&
+	    bus->master_state != ASPEED_I2C_MASTER_PENDING) अणु
+		irq_handled = aspeed_i2c_master_irq(bus, irq_reमुख्यing);
+		irq_reमुख्यing &= ~irq_handled;
+		अगर (irq_reमुख्यing)
+			irq_handled |= aspeed_i2c_slave_irq(bus, irq_reमुख्यing);
+	पूर्ण अन्यथा अणु
+		irq_handled = aspeed_i2c_slave_irq(bus, irq_reमुख्यing);
+		irq_reमुख्यing &= ~irq_handled;
+		अगर (irq_reमुख्यing)
 			irq_handled |= aspeed_i2c_master_irq(bus,
-							     irq_remaining);
-	}
+							     irq_reमुख्यing);
+	पूर्ण
 
 	/*
-	 * Start a pending master command at here if a slave operation is
+	 * Start a pending master command at here अगर a slave operation is
 	 * completed.
 	 */
-	if (bus->master_state == ASPEED_I2C_MASTER_PENDING &&
+	अगर (bus->master_state == ASPEED_I2C_MASTER_PENDING &&
 	    bus->slave_state == ASPEED_I2C_SLAVE_INACTIVE)
-		aspeed_i2c_do_start(bus);
-#else
-	irq_handled = aspeed_i2c_master_irq(bus, irq_remaining);
-#endif /* CONFIG_I2C_SLAVE */
+		aspeed_i2c_करो_start(bus);
+#अन्यथा
+	irq_handled = aspeed_i2c_master_irq(bus, irq_reमुख्यing);
+#पूर्ण_अगर /* CONFIG_I2C_SLAVE */
 
-	irq_remaining &= ~irq_handled;
-	if (irq_remaining)
+	irq_reमुख्यing &= ~irq_handled;
+	अगर (irq_reमुख्यing)
 		dev_err(bus->dev,
 			"irq handled != irq. expected 0x%08x, but was 0x%08x\n",
 			irq_received, irq_handled);
 
-	/* Ack Rx done */
-	if (irq_received & ASPEED_I2CD_INTR_RX_DONE) {
-		writel(ASPEED_I2CD_INTR_RX_DONE,
+	/* Ack Rx करोne */
+	अगर (irq_received & ASPEED_I2CD_INTR_RX_DONE) अणु
+		ग_लिखोl(ASPEED_I2CD_INTR_RX_DONE,
 		       bus->base + ASPEED_I2C_INTR_STS_REG);
-		readl(bus->base + ASPEED_I2C_INTR_STS_REG);
-	}
+		पढ़ोl(bus->base + ASPEED_I2C_INTR_STS_REG);
+	पूर्ण
 	spin_unlock(&bus->lock);
-	return irq_remaining ? IRQ_NONE : IRQ_HANDLED;
-}
+	वापस irq_reमुख्यing ? IRQ_NONE : IRQ_HANDLED;
+पूर्ण
 
-static int aspeed_i2c_master_xfer(struct i2c_adapter *adap,
-				  struct i2c_msg *msgs, int num)
-{
-	struct aspeed_i2c_bus *bus = i2c_get_adapdata(adap);
-	unsigned long time_left, flags;
+अटल पूर्णांक aspeed_i2c_master_xfer(काष्ठा i2c_adapter *adap,
+				  काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	काष्ठा aspeed_i2c_bus *bus = i2c_get_adapdata(adap);
+	अचिन्हित दीर्घ समय_left, flags;
 
 	spin_lock_irqsave(&bus->lock, flags);
 	bus->cmd_err = 0;
 
 	/* If bus is busy in a single master environment, attempt recovery. */
-	if (!bus->multi_master &&
-	    (readl(bus->base + ASPEED_I2C_CMD_REG) &
-	     ASPEED_I2CD_BUS_BUSY_STS)) {
-		int ret;
+	अगर (!bus->multi_master &&
+	    (पढ़ोl(bus->base + ASPEED_I2C_CMD_REG) &
+	     ASPEED_I2CD_BUS_BUSY_STS)) अणु
+		पूर्णांक ret;
 
 		spin_unlock_irqrestore(&bus->lock, flags);
 		ret = aspeed_i2c_recover_bus(bus);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		spin_lock_irqsave(&bus->lock, flags);
-	}
+	पूर्ण
 
 	bus->cmd_err = 0;
 	bus->msgs = msgs;
@@ -685,70 +686,70 @@ static int aspeed_i2c_master_xfer(struct i2c_adapter *adap,
 	bus->msgs_count = num;
 
 	reinit_completion(&bus->cmd_complete);
-	aspeed_i2c_do_start(bus);
+	aspeed_i2c_करो_start(bus);
 	spin_unlock_irqrestore(&bus->lock, flags);
 
-	time_left = wait_for_completion_timeout(&bus->cmd_complete,
-						bus->adap.timeout);
+	समय_left = रुको_क्रम_completion_समयout(&bus->cmd_complete,
+						bus->adap.समयout);
 
-	if (time_left == 0) {
+	अगर (समय_left == 0) अणु
 		/*
-		 * If timed out and bus is still busy in a multi master
+		 * If समयd out and bus is still busy in a multi master
 		 * environment, attempt recovery at here.
 		 */
-		if (bus->multi_master &&
-		    (readl(bus->base + ASPEED_I2C_CMD_REG) &
+		अगर (bus->multi_master &&
+		    (पढ़ोl(bus->base + ASPEED_I2C_CMD_REG) &
 		     ASPEED_I2CD_BUS_BUSY_STS))
 			aspeed_i2c_recover_bus(bus);
 
 		/*
-		 * If timed out and the state is still pending, drop the pending
+		 * If समयd out and the state is still pending, drop the pending
 		 * master command.
 		 */
 		spin_lock_irqsave(&bus->lock, flags);
-		if (bus->master_state == ASPEED_I2C_MASTER_PENDING)
+		अगर (bus->master_state == ASPEED_I2C_MASTER_PENDING)
 			bus->master_state = ASPEED_I2C_MASTER_INACTIVE;
 		spin_unlock_irqrestore(&bus->lock, flags);
 
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return bus->master_xfer_result;
-}
+	वापस bus->master_xfer_result;
+पूर्ण
 
-static u32 aspeed_i2c_functionality(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_SMBUS_BLOCK_DATA;
-}
+अटल u32 aspeed_i2c_functionality(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_SMBUS_BLOCK_DATA;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
 /* precondition: bus.lock has been acquired. */
-static void __aspeed_i2c_reg_slave(struct aspeed_i2c_bus *bus, u16 slave_addr)
-{
+अटल व्योम __aspeed_i2c_reg_slave(काष्ठा aspeed_i2c_bus *bus, u16 slave_addr)
+अणु
 	u32 addr_reg_val, func_ctrl_reg_val;
 
 	/* Set slave addr. */
-	addr_reg_val = readl(bus->base + ASPEED_I2C_DEV_ADDR_REG);
+	addr_reg_val = पढ़ोl(bus->base + ASPEED_I2C_DEV_ADDR_REG);
 	addr_reg_val &= ~ASPEED_I2CD_DEV_ADDR_MASK;
 	addr_reg_val |= slave_addr & ASPEED_I2CD_DEV_ADDR_MASK;
-	writel(addr_reg_val, bus->base + ASPEED_I2C_DEV_ADDR_REG);
+	ग_लिखोl(addr_reg_val, bus->base + ASPEED_I2C_DEV_ADDR_REG);
 
 	/* Turn on slave mode. */
-	func_ctrl_reg_val = readl(bus->base + ASPEED_I2C_FUN_CTRL_REG);
+	func_ctrl_reg_val = पढ़ोl(bus->base + ASPEED_I2C_FUN_CTRL_REG);
 	func_ctrl_reg_val |= ASPEED_I2CD_SLAVE_EN;
-	writel(func_ctrl_reg_val, bus->base + ASPEED_I2C_FUN_CTRL_REG);
-}
+	ग_लिखोl(func_ctrl_reg_val, bus->base + ASPEED_I2C_FUN_CTRL_REG);
+पूर्ण
 
-static int aspeed_i2c_reg_slave(struct i2c_client *client)
-{
-	struct aspeed_i2c_bus *bus = i2c_get_adapdata(client->adapter);
-	unsigned long flags;
+अटल पूर्णांक aspeed_i2c_reg_slave(काष्ठा i2c_client *client)
+अणु
+	काष्ठा aspeed_i2c_bus *bus = i2c_get_adapdata(client->adapter);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&bus->lock, flags);
-	if (bus->slave) {
+	अगर (bus->slave) अणु
 		spin_unlock_irqrestore(&bus->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	__aspeed_i2c_reg_slave(bus, client->addr);
 
@@ -756,260 +757,260 @@ static int aspeed_i2c_reg_slave(struct i2c_client *client)
 	bus->slave_state = ASPEED_I2C_SLAVE_INACTIVE;
 	spin_unlock_irqrestore(&bus->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aspeed_i2c_unreg_slave(struct i2c_client *client)
-{
-	struct aspeed_i2c_bus *bus = i2c_get_adapdata(client->adapter);
+अटल पूर्णांक aspeed_i2c_unreg_slave(काष्ठा i2c_client *client)
+अणु
+	काष्ठा aspeed_i2c_bus *bus = i2c_get_adapdata(client->adapter);
 	u32 func_ctrl_reg_val;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&bus->lock, flags);
-	if (!bus->slave) {
+	अगर (!bus->slave) अणु
 		spin_unlock_irqrestore(&bus->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Turn off slave mode. */
-	func_ctrl_reg_val = readl(bus->base + ASPEED_I2C_FUN_CTRL_REG);
+	func_ctrl_reg_val = पढ़ोl(bus->base + ASPEED_I2C_FUN_CTRL_REG);
 	func_ctrl_reg_val &= ~ASPEED_I2CD_SLAVE_EN;
-	writel(func_ctrl_reg_val, bus->base + ASPEED_I2C_FUN_CTRL_REG);
+	ग_लिखोl(func_ctrl_reg_val, bus->base + ASPEED_I2C_FUN_CTRL_REG);
 
-	bus->slave = NULL;
+	bus->slave = शून्य;
 	spin_unlock_irqrestore(&bus->lock, flags);
 
-	return 0;
-}
-#endif /* CONFIG_I2C_SLAVE */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_I2C_SLAVE */
 
-static const struct i2c_algorithm aspeed_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm aspeed_i2c_algo = अणु
 	.master_xfer	= aspeed_i2c_master_xfer,
 	.functionality	= aspeed_i2c_functionality,
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
 	.reg_slave	= aspeed_i2c_reg_slave,
 	.unreg_slave	= aspeed_i2c_unreg_slave,
-#endif /* CONFIG_I2C_SLAVE */
-};
+#पूर्ण_अगर /* CONFIG_I2C_SLAVE */
+पूर्ण;
 
-static u32 aspeed_i2c_get_clk_reg_val(struct device *dev,
+अटल u32 aspeed_i2c_get_clk_reg_val(काष्ठा device *dev,
 				      u32 clk_high_low_mask,
-				      u32 divisor)
-{
-	u32 base_clk_divisor, clk_high_low_max, clk_high, clk_low, tmp;
+				      u32 भागisor)
+अणु
+	u32 base_clk_भागisor, clk_high_low_max, clk_high, clk_low, पंचांगp;
 
 	/*
 	 * SCL_high and SCL_low represent a value 1 greater than what is stored
-	 * since a zero divider is meaningless. Thus, the max value each can
+	 * since a zero भागider is meaningless. Thus, the max value each can
 	 * store is every bit set + 1. Since SCL_high and SCL_low are added
 	 * together (see below), the max value of both is the max value of one
-	 * them times two.
+	 * them बार two.
 	 */
 	clk_high_low_max = (clk_high_low_mask + 1) * 2;
 
 	/*
-	 * The actual clock frequency of SCL is:
+	 * The actual घड़ी frequency of SCL is:
 	 *	SCL_freq = APB_freq / (base_freq * (SCL_high + SCL_low))
-	 *		 = APB_freq / divisor
-	 * where base_freq is a programmable clock divider; its value is
-	 *	base_freq = 1 << base_clk_divisor
-	 * SCL_high is the number of base_freq clock cycles that SCL stays high
-	 * and SCL_low is the number of base_freq clock cycles that SCL stays
-	 * low for a period of SCL.
-	 * The actual register has a minimum SCL_high and SCL_low minimum of 1;
+	 *		 = APB_freq / भागisor
+	 * where base_freq is a programmable घड़ी भागider; its value is
+	 *	base_freq = 1 << base_clk_भागisor
+	 * SCL_high is the number of base_freq घड़ी cycles that SCL stays high
+	 * and SCL_low is the number of base_freq घड़ी cycles that SCL stays
+	 * low क्रम a period of SCL.
+	 * The actual रेजिस्टर has a minimum SCL_high and SCL_low minimum of 1;
 	 * thus, they start counting at zero. So
 	 *	SCL_high = clk_high + 1
 	 *	SCL_low	 = clk_low + 1
 	 * Thus,
 	 *	SCL_freq = APB_freq /
-	 *		((1 << base_clk_divisor) * (clk_high + 1 + clk_low + 1))
-	 * The documentation recommends clk_high >= clk_high_max / 2 and
-	 * clk_low >= clk_low_max / 2 - 1 when possible; this last constraint
+	 *		((1 << base_clk_भागisor) * (clk_high + 1 + clk_low + 1))
+	 * The करोcumentation recommends clk_high >= clk_high_max / 2 and
+	 * clk_low >= clk_low_max / 2 - 1 when possible; this last स्थिरraपूर्णांक
 	 * gives us the following solution:
 	 */
-	base_clk_divisor = divisor > clk_high_low_max ?
-			ilog2((divisor - 1) / clk_high_low_max) + 1 : 0;
+	base_clk_भागisor = भागisor > clk_high_low_max ?
+			ilog2((भागisor - 1) / clk_high_low_max) + 1 : 0;
 
-	if (base_clk_divisor > ASPEED_I2CD_TIME_BASE_DIVISOR_MASK) {
-		base_clk_divisor = ASPEED_I2CD_TIME_BASE_DIVISOR_MASK;
+	अगर (base_clk_भागisor > ASPEED_I2CD_TIME_BASE_DIVISOR_MASK) अणु
+		base_clk_भागisor = ASPEED_I2CD_TIME_BASE_DIVISOR_MASK;
 		clk_low = clk_high_low_mask;
 		clk_high = clk_high_low_mask;
 		dev_err(dev,
 			"clamping clock divider: divider requested, %u, is greater than largest possible divider, %u.\n",
-			divisor, (1 << base_clk_divisor) * clk_high_low_max);
-	} else {
-		tmp = (divisor + (1 << base_clk_divisor) - 1)
-				>> base_clk_divisor;
-		clk_low = tmp / 2;
-		clk_high = tmp - clk_low;
+			भागisor, (1 << base_clk_भागisor) * clk_high_low_max);
+	पूर्ण अन्यथा अणु
+		पंचांगp = (भागisor + (1 << base_clk_भागisor) - 1)
+				>> base_clk_भागisor;
+		clk_low = पंचांगp / 2;
+		clk_high = पंचांगp - clk_low;
 
-		if (clk_high)
+		अगर (clk_high)
 			clk_high--;
 
-		if (clk_low)
+		अगर (clk_low)
 			clk_low--;
-	}
+	पूर्ण
 
 
-	return ((clk_high << ASPEED_I2CD_TIME_SCL_HIGH_SHIFT)
+	वापस ((clk_high << ASPEED_I2CD_TIME_SCL_HIGH_SHIFT)
 		& ASPEED_I2CD_TIME_SCL_HIGH_MASK)
 			| ((clk_low << ASPEED_I2CD_TIME_SCL_LOW_SHIFT)
 			   & ASPEED_I2CD_TIME_SCL_LOW_MASK)
-			| (base_clk_divisor
+			| (base_clk_भागisor
 			   & ASPEED_I2CD_TIME_BASE_DIVISOR_MASK);
-}
+पूर्ण
 
-static u32 aspeed_i2c_24xx_get_clk_reg_val(struct device *dev, u32 divisor)
-{
+अटल u32 aspeed_i2c_24xx_get_clk_reg_val(काष्ठा device *dev, u32 भागisor)
+अणु
 	/*
 	 * clk_high and clk_low are each 3 bits wide, so each can hold a max
 	 * value of 8 giving a clk_high_low_max of 16.
 	 */
-	return aspeed_i2c_get_clk_reg_val(dev, GENMASK(2, 0), divisor);
-}
+	वापस aspeed_i2c_get_clk_reg_val(dev, GENMASK(2, 0), भागisor);
+पूर्ण
 
-static u32 aspeed_i2c_25xx_get_clk_reg_val(struct device *dev, u32 divisor)
-{
+अटल u32 aspeed_i2c_25xx_get_clk_reg_val(काष्ठा device *dev, u32 भागisor)
+अणु
 	/*
 	 * clk_high and clk_low are each 4 bits wide, so each can hold a max
 	 * value of 16 giving a clk_high_low_max of 32.
 	 */
-	return aspeed_i2c_get_clk_reg_val(dev, GENMASK(3, 0), divisor);
-}
+	वापस aspeed_i2c_get_clk_reg_val(dev, GENMASK(3, 0), भागisor);
+पूर्ण
 
 /* precondition: bus.lock has been acquired. */
-static int aspeed_i2c_init_clk(struct aspeed_i2c_bus *bus)
-{
-	u32 divisor, clk_reg_val;
+अटल पूर्णांक aspeed_i2c_init_clk(काष्ठा aspeed_i2c_bus *bus)
+अणु
+	u32 भागisor, clk_reg_val;
 
-	divisor = DIV_ROUND_UP(bus->parent_clk_frequency, bus->bus_frequency);
-	clk_reg_val = readl(bus->base + ASPEED_I2C_AC_TIMING_REG1);
+	भागisor = DIV_ROUND_UP(bus->parent_clk_frequency, bus->bus_frequency);
+	clk_reg_val = पढ़ोl(bus->base + ASPEED_I2C_AC_TIMING_REG1);
 	clk_reg_val &= (ASPEED_I2CD_TIME_TBUF_MASK |
 			ASPEED_I2CD_TIME_THDSTA_MASK |
 			ASPEED_I2CD_TIME_TACST_MASK);
-	clk_reg_val |= bus->get_clk_reg_val(bus->dev, divisor);
-	writel(clk_reg_val, bus->base + ASPEED_I2C_AC_TIMING_REG1);
-	writel(ASPEED_NO_TIMEOUT_CTRL, bus->base + ASPEED_I2C_AC_TIMING_REG2);
+	clk_reg_val |= bus->get_clk_reg_val(bus->dev, भागisor);
+	ग_लिखोl(clk_reg_val, bus->base + ASPEED_I2C_AC_TIMING_REG1);
+	ग_लिखोl(ASPEED_NO_TIMEOUT_CTRL, bus->base + ASPEED_I2C_AC_TIMING_REG2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* precondition: bus.lock has been acquired. */
-static int aspeed_i2c_init(struct aspeed_i2c_bus *bus,
-			     struct platform_device *pdev)
-{
+अटल पूर्णांक aspeed_i2c_init(काष्ठा aspeed_i2c_bus *bus,
+			     काष्ठा platक्रमm_device *pdev)
+अणु
 	u32 fun_ctrl_reg = ASPEED_I2CD_MASTER_EN;
-	int ret;
+	पूर्णांक ret;
 
 	/* Disable everything. */
-	writel(0, bus->base + ASPEED_I2C_FUN_CTRL_REG);
+	ग_लिखोl(0, bus->base + ASPEED_I2C_FUN_CTRL_REG);
 
 	ret = aspeed_i2c_init_clk(bus);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (of_property_read_bool(pdev->dev.of_node, "multi-master"))
+	अगर (of_property_पढ़ो_bool(pdev->dev.of_node, "multi-master"))
 		bus->multi_master = true;
-	else
+	अन्यथा
 		fun_ctrl_reg |= ASPEED_I2CD_MULTI_MASTER_DIS;
 
 	/* Enable Master Mode */
-	writel(readl(bus->base + ASPEED_I2C_FUN_CTRL_REG) | fun_ctrl_reg,
+	ग_लिखोl(पढ़ोl(bus->base + ASPEED_I2C_FUN_CTRL_REG) | fun_ctrl_reg,
 	       bus->base + ASPEED_I2C_FUN_CTRL_REG);
 
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
-	/* If slave has already been registered, re-enable it. */
-	if (bus->slave)
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
+	/* If slave has alपढ़ोy been रेजिस्टरed, re-enable it. */
+	अगर (bus->slave)
 		__aspeed_i2c_reg_slave(bus, bus->slave->addr);
-#endif /* CONFIG_I2C_SLAVE */
+#पूर्ण_अगर /* CONFIG_I2C_SLAVE */
 
-	/* Set interrupt generation of I2C controller */
-	writel(ASPEED_I2CD_INTR_ALL, bus->base + ASPEED_I2C_INTR_CTRL_REG);
+	/* Set पूर्णांकerrupt generation of I2C controller */
+	ग_लिखोl(ASPEED_I2CD_INTR_ALL, bus->base + ASPEED_I2C_INTR_CTRL_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aspeed_i2c_reset(struct aspeed_i2c_bus *bus)
-{
-	struct platform_device *pdev = to_platform_device(bus->dev);
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक aspeed_i2c_reset(काष्ठा aspeed_i2c_bus *bus)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(bus->dev);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&bus->lock, flags);
 
-	/* Disable and ack all interrupts. */
-	writel(0, bus->base + ASPEED_I2C_INTR_CTRL_REG);
-	writel(0xffffffff, bus->base + ASPEED_I2C_INTR_STS_REG);
+	/* Disable and ack all पूर्णांकerrupts. */
+	ग_लिखोl(0, bus->base + ASPEED_I2C_INTR_CTRL_REG);
+	ग_लिखोl(0xffffffff, bus->base + ASPEED_I2C_INTR_STS_REG);
 
 	ret = aspeed_i2c_init(bus, pdev);
 
 	spin_unlock_irqrestore(&bus->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id aspeed_i2c_bus_of_table[] = {
-	{
+अटल स्थिर काष्ठा of_device_id aspeed_i2c_bus_of_table[] = अणु
+	अणु
 		.compatible = "aspeed,ast2400-i2c-bus",
 		.data = aspeed_i2c_24xx_get_clk_reg_val,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "aspeed,ast2500-i2c-bus",
 		.data = aspeed_i2c_25xx_get_clk_reg_val,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "aspeed,ast2600-i2c-bus",
 		.data = aspeed_i2c_25xx_get_clk_reg_val,
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, aspeed_i2c_bus_of_table);
 
-static int aspeed_i2c_probe_bus(struct platform_device *pdev)
-{
-	const struct of_device_id *match;
-	struct aspeed_i2c_bus *bus;
-	struct clk *parent_clk;
-	struct resource *res;
-	int irq, ret;
+अटल पूर्णांक aspeed_i2c_probe_bus(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा aspeed_i2c_bus *bus;
+	काष्ठा clk *parent_clk;
+	काष्ठा resource *res;
+	पूर्णांक irq, ret;
 
-	bus = devm_kzalloc(&pdev->dev, sizeof(*bus), GFP_KERNEL);
-	if (!bus)
-		return -ENOMEM;
+	bus = devm_kzalloc(&pdev->dev, माप(*bus), GFP_KERNEL);
+	अगर (!bus)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	bus->base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(bus->base))
-		return PTR_ERR(bus->base);
+	अगर (IS_ERR(bus->base))
+		वापस PTR_ERR(bus->base);
 
-	parent_clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(parent_clk))
-		return PTR_ERR(parent_clk);
+	parent_clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(parent_clk))
+		वापस PTR_ERR(parent_clk);
 	bus->parent_clk_frequency = clk_get_rate(parent_clk);
-	/* We just need the clock rate, we don't actually use the clk object. */
+	/* We just need the घड़ी rate, we करोn't actually use the clk object. */
 	devm_clk_put(&pdev->dev, parent_clk);
 
-	bus->rst = devm_reset_control_get_shared(&pdev->dev, NULL);
-	if (IS_ERR(bus->rst)) {
+	bus->rst = devm_reset_control_get_shared(&pdev->dev, शून्य);
+	अगर (IS_ERR(bus->rst)) अणु
 		dev_err(&pdev->dev,
 			"missing or invalid reset controller device tree entry\n");
-		return PTR_ERR(bus->rst);
-	}
-	reset_control_deassert(bus->rst);
+		वापस PTR_ERR(bus->rst);
+	पूर्ण
+	reset_control_deनिश्चित(bus->rst);
 
-	ret = of_property_read_u32(pdev->dev.of_node,
+	ret = of_property_पढ़ो_u32(pdev->dev.of_node,
 				   "bus-frequency", &bus->bus_frequency);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev,
 			"Could not read bus-frequency property\n");
 		bus->bus_frequency = I2C_MAX_STANDARD_MODE_FREQ;
-	}
+	पूर्ण
 
 	match = of_match_node(aspeed_i2c_bus_of_table, pdev->dev.of_node);
-	if (!match)
+	अगर (!match)
 		bus->get_clk_reg_val = aspeed_i2c_24xx_get_clk_reg_val;
-	else
-		bus->get_clk_reg_val = (u32 (*)(struct device *, u32))
+	अन्यथा
+		bus->get_clk_reg_val = (u32 (*)(काष्ठा device *, u32))
 				match->data;
 
 	/* Initialize the I2C adapter */
@@ -1020,69 +1021,69 @@ static int aspeed_i2c_probe_bus(struct platform_device *pdev)
 	bus->adap.algo = &aspeed_i2c_algo;
 	bus->adap.dev.parent = &pdev->dev;
 	bus->adap.dev.of_node = pdev->dev.of_node;
-	strlcpy(bus->adap.name, pdev->name, sizeof(bus->adap.name));
+	strlcpy(bus->adap.name, pdev->name, माप(bus->adap.name));
 	i2c_set_adapdata(&bus->adap, bus);
 
 	bus->dev = &pdev->dev;
 
-	/* Clean up any left over interrupt state. */
-	writel(0, bus->base + ASPEED_I2C_INTR_CTRL_REG);
-	writel(0xffffffff, bus->base + ASPEED_I2C_INTR_STS_REG);
+	/* Clean up any left over पूर्णांकerrupt state. */
+	ग_लिखोl(0, bus->base + ASPEED_I2C_INTR_CTRL_REG);
+	ग_लिखोl(0xffffffff, bus->base + ASPEED_I2C_INTR_STS_REG);
 	/*
-	 * bus.lock does not need to be held because the interrupt handler has
+	 * bus.lock करोes not need to be held because the पूर्णांकerrupt handler has
 	 * not been enabled yet.
 	 */
 	ret = aspeed_i2c_init(bus, pdev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	irq = irq_of_parse_and_map(pdev->dev.of_node, 0);
 	ret = devm_request_irq(&pdev->dev, irq, aspeed_i2c_bus_irq,
 			       0, dev_name(&pdev->dev), bus);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = i2c_add_adapter(&bus->adap);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	platform_set_drvdata(pdev, bus);
+	platक्रमm_set_drvdata(pdev, bus);
 
 	dev_info(bus->dev, "i2c bus %d registered, irq %d\n",
 		 bus->adap.nr, irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aspeed_i2c_remove_bus(struct platform_device *pdev)
-{
-	struct aspeed_i2c_bus *bus = platform_get_drvdata(pdev);
-	unsigned long flags;
+अटल पूर्णांक aspeed_i2c_हटाओ_bus(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aspeed_i2c_bus *bus = platक्रमm_get_drvdata(pdev);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&bus->lock, flags);
 
 	/* Disable everything. */
-	writel(0, bus->base + ASPEED_I2C_FUN_CTRL_REG);
-	writel(0, bus->base + ASPEED_I2C_INTR_CTRL_REG);
+	ग_लिखोl(0, bus->base + ASPEED_I2C_FUN_CTRL_REG);
+	ग_लिखोl(0, bus->base + ASPEED_I2C_INTR_CTRL_REG);
 
 	spin_unlock_irqrestore(&bus->lock, flags);
 
-	reset_control_assert(bus->rst);
+	reset_control_निश्चित(bus->rst);
 
 	i2c_del_adapter(&bus->adap);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver aspeed_i2c_bus_driver = {
+अटल काष्ठा platक्रमm_driver aspeed_i2c_bus_driver = अणु
 	.probe		= aspeed_i2c_probe_bus,
-	.remove		= aspeed_i2c_remove_bus,
-	.driver		= {
+	.हटाओ		= aspeed_i2c_हटाओ_bus,
+	.driver		= अणु
 		.name		= "aspeed-i2c-bus",
 		.of_match_table	= aspeed_i2c_bus_of_table,
-	},
-};
-module_platform_driver(aspeed_i2c_bus_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(aspeed_i2c_bus_driver);
 
 MODULE_AUTHOR("Brendan Higgins <brendanhiggins@google.com>");
 MODULE_DESCRIPTION("Aspeed I2C Bus Driver");

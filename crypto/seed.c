@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cryptographic API.
  *
  * SEED Cipher Algorithm.
  *
  * Documentation of SEED can be found in RFC 4269.
- * Copyright (C) 2007 Korea Information Security Agency (KISA).
+ * Copyright (C) 2007 Korea Inक्रमmation Security Agency (KISA).
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/crypto.h>
-#include <asm/byteorder.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/crypto.h>
+#समावेश <यंत्र/byteorder.h>
 
-#define SEED_NUM_KCONSTANTS	16
-#define SEED_KEY_SIZE		16
-#define SEED_BLOCK_SIZE		16
-#define SEED_KEYSCHED_LEN	32
+#घोषणा SEED_NUM_KCONSTANTS	16
+#घोषणा SEED_KEY_SIZE		16
+#घोषणा SEED_BLOCK_SIZE		16
+#घोषणा SEED_KEYSCHED_LEN	32
 
 /*
- * #define byte(x, nr) ((unsigned char)((x) >> (nr*8)))
+ * #घोषणा byte(x, nr) ((अचिन्हित अक्षर)((x) >> (nr*8)))
  */
-static inline u8
-byte(const u32 x, const unsigned n)
-{
-	return x >> (n << 3);
-}
+अटल अंतरभूत u8
+byte(स्थिर u32 x, स्थिर अचिन्हित n)
+अणु
+	वापस x >> (n << 3);
+पूर्ण
 
-struct seed_ctx {
+काष्ठा seed_ctx अणु
 	u32 keysched[SEED_KEYSCHED_LEN];
-};
+पूर्ण;
 
-static const u32 SS0[256] = {
+अटल स्थिर u32 SS0[256] = अणु
 	0x2989a1a8, 0x05858184, 0x16c6d2d4, 0x13c3d3d0,
 	0x14445054, 0x1d0d111c, 0x2c8ca0ac, 0x25052124,
 	0x1d4d515c, 0x03434340, 0x18081018, 0x1e0e121c,
@@ -98,9 +99,9 @@ static const u32 SS0[256] = {
 	0x22426260, 0x29092128, 0x07070304, 0x33033330,
 	0x28c8e0e8, 0x1b0b1318, 0x05050104, 0x39497178,
 	0x10809090, 0x2a4a6268, 0x2a0a2228, 0x1a8a9298,
-};
+पूर्ण;
 
-static const u32 SS1[256] = {
+अटल स्थिर u32 SS1[256] = अणु
 	0x38380830, 0xe828c8e0, 0x2c2d0d21, 0xa42686a2,
 	0xcc0fcfc3, 0xdc1eced2, 0xb03383b3, 0xb83888b0,
 	0xac2f8fa3, 0x60204060, 0x54154551, 0xc407c7c3,
@@ -165,9 +166,9 @@ static const u32 SS1[256] = {
 	0xc80bcbc3, 0x50134353, 0x080a0a02, 0x84078783,
 	0xd819c9d1, 0x4c0c4c40, 0x80038383, 0x8c0f8f83,
 	0xcc0ecec2, 0x383b0b33, 0x480a4a42, 0xb43787b3,
-};
+पूर्ण;
 
-static const u32 SS2[256] = {
+अटल स्थिर u32 SS2[256] = अणु
 	0xa1a82989, 0x81840585, 0xd2d416c6, 0xd3d013c3,
 	0x50541444, 0x111c1d0d, 0xa0ac2c8c, 0x21242505,
 	0x515c1d4d, 0x43400343, 0x10181808, 0x121c1e0e,
@@ -232,9 +233,9 @@ static const u32 SS2[256] = {
 	0x62602242, 0x21282909, 0x03040707, 0x33303303,
 	0xe0e828c8, 0x13181b0b, 0x01040505, 0x71783949,
 	0x90901080, 0x62682a4a, 0x22282a0a, 0x92981a8a,
-};
+पूर्ण;
 
-static const u32 SS3[256] = {
+अटल स्थिर u32 SS3[256] = अणु
 	0x08303838, 0xc8e0e828, 0x0d212c2d, 0x86a2a426,
 	0xcfc3cc0f, 0xced2dc1e, 0x83b3b033, 0x88b0b838,
 	0x8fa3ac2f, 0x40606020, 0x45515415, 0xc7c3c407,
@@ -299,16 +300,16 @@ static const u32 SS3[256] = {
 	0xcbc3c80b, 0x43535013, 0x0a02080a, 0x87838407,
 	0xc9d1d819, 0x4c404c0c, 0x83838003, 0x8f838c0f,
 	0xcec2cc0e, 0x0b33383b, 0x4a42480a, 0x87b3b437,
-};
+पूर्ण;
 
-static const u32 KC[SEED_NUM_KCONSTANTS] = {
+अटल स्थिर u32 KC[SEED_NUM_KCONSTANTS] = अणु
 	0x9e3779b9, 0x3c6ef373, 0x78dde6e6, 0xf1bbcdcc,
 	0xe3779b99, 0xc6ef3733, 0x8dde6e67, 0x1bbcdccf,
 	0x3779b99e, 0x6ef3733c, 0xdde6e678, 0xbbcdccf1,
 	0x779b99e3, 0xef3733c6, 0xde6e678d, 0xbcdccf1b,
-};
+पूर्ण;
 
-#define OP(X1, X2, X3, X4, rbase)			\
+#घोषणा OP(X1, X2, X3, X4, rbase)			\
 	t0 = X3 ^ ks[rbase];				\
 	t1 = X4 ^ ks[rbase+1];				\
 	t1 ^= t0;					\
@@ -324,12 +325,12 @@ static const u32 KC[SEED_NUM_KCONSTANTS] = {
 	X1 ^= t0;					\
 	X2 ^= t1
 
-static int seed_set_key(struct crypto_tfm *tfm, const u8 *in_key,
-		        unsigned int key_len)
-{
-	struct seed_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल पूर्णांक seed_set_key(काष्ठा crypto_tfm *tfm, स्थिर u8 *in_key,
+		        अचिन्हित पूर्णांक key_len)
+अणु
+	काष्ठा seed_ctx *ctx = crypto_tfm_ctx(tfm);
 	u32 *keyout = ctx->keysched;
-	const __be32 *key = (const __be32 *)in_key;
+	स्थिर __be32 *key = (स्थिर __be32 *)in_key;
 	u32 i, t0, t1, x1, x2, x3, x4;
 
 	x1 = be32_to_cpu(key[0]);
@@ -337,7 +338,7 @@ static int seed_set_key(struct crypto_tfm *tfm, const u8 *in_key,
 	x3 = be32_to_cpu(key[2]);
 	x4 = be32_to_cpu(key[3]);
 
-	for (i = 0; i < SEED_NUM_KCONSTANTS; i++) {
+	क्रम (i = 0; i < SEED_NUM_KCONSTANTS; i++) अणु
 		t0 = x1 + x3 - KC[i];
 		t1 = x2 + KC[i] - x4;
 		*(keyout++) = SS0[byte(t0, 0)] ^ SS1[byte(t0, 1)] ^
@@ -345,29 +346,29 @@ static int seed_set_key(struct crypto_tfm *tfm, const u8 *in_key,
 		*(keyout++) = SS0[byte(t1, 0)] ^ SS1[byte(t1, 1)] ^
 				SS2[byte(t1, 2)] ^ SS3[byte(t1, 3)];
 
-		if (i % 2 == 0) {
+		अगर (i % 2 == 0) अणु
 			t0 = x1;
 			x1 = (x1 >> 8) ^ (x2 << 24);
 			x2 = (x2 >> 8) ^ (t0 << 24);
-		} else {
+		पूर्ण अन्यथा अणु
 			t0 = x3;
 			x3 = (x3 << 8) ^ (x4 >> 24);
 			x4 = (x4 << 8) ^ (t0 >> 24);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* encrypt a block of text */
 
-static void seed_encrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
-{
-	const struct seed_ctx *ctx = crypto_tfm_ctx(tfm);
-	const __be32 *src = (const __be32 *)in;
+अटल व्योम seed_encrypt(काष्ठा crypto_tfm *tfm, u8 *out, स्थिर u8 *in)
+अणु
+	स्थिर काष्ठा seed_ctx *ctx = crypto_tfm_ctx(tfm);
+	स्थिर __be32 *src = (स्थिर __be32 *)in;
 	__be32 *dst = (__be32 *)out;
 	u32 x1, x2, x3, x4, t0, t1;
-	const u32 *ks = ctx->keysched;
+	स्थिर u32 *ks = ctx->keysched;
 
 	x1 = be32_to_cpu(src[0]);
 	x2 = be32_to_cpu(src[1]);
@@ -395,17 +396,17 @@ static void seed_encrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
 	dst[1] = cpu_to_be32(x4);
 	dst[2] = cpu_to_be32(x1);
 	dst[3] = cpu_to_be32(x2);
-}
+पूर्ण
 
 /* decrypt a block of text */
 
-static void seed_decrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
-{
-	const struct seed_ctx *ctx = crypto_tfm_ctx(tfm);
-	const __be32 *src = (const __be32 *)in;
+अटल व्योम seed_decrypt(काष्ठा crypto_tfm *tfm, u8 *out, स्थिर u8 *in)
+अणु
+	स्थिर काष्ठा seed_ctx *ctx = crypto_tfm_ctx(tfm);
+	स्थिर __be32 *src = (स्थिर __be32 *)in;
 	__be32 *dst = (__be32 *)out;
 	u32 x1, x2, x3, x4, t0, t1;
-	const u32 *ks = ctx->keysched;
+	स्थिर u32 *ks = ctx->keysched;
 
 	x1 = be32_to_cpu(src[0]);
 	x2 = be32_to_cpu(src[1]);
@@ -433,41 +434,41 @@ static void seed_decrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
 	dst[1] = cpu_to_be32(x4);
 	dst[2] = cpu_to_be32(x1);
 	dst[3] = cpu_to_be32(x2);
-}
+पूर्ण
 
 
-static struct crypto_alg seed_alg = {
+अटल काष्ठा crypto_alg seed_alg = अणु
 	.cra_name		=	"seed",
 	.cra_driver_name	=	"seed-generic",
 	.cra_priority		=	100,
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	SEED_BLOCK_SIZE,
-	.cra_ctxsize		=	sizeof(struct seed_ctx),
+	.cra_ctxsize		=	माप(काष्ठा seed_ctx),
 	.cra_alignmask		=	3,
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	{
-		.cipher = {
+	.cra_u			=	अणु
+		.cipher = अणु
 			.cia_min_keysize	=	SEED_KEY_SIZE,
 			.cia_max_keysize	=	SEED_KEY_SIZE,
 			.cia_setkey		=	seed_set_key,
 			.cia_encrypt		=	seed_encrypt,
 			.cia_decrypt		=	seed_decrypt
-		}
-	}
-};
+		पूर्ण
+	पूर्ण
+पूर्ण;
 
-static int __init seed_init(void)
-{
-	return crypto_register_alg(&seed_alg);
-}
+अटल पूर्णांक __init seed_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_alg(&seed_alg);
+पूर्ण
 
-static void __exit seed_fini(void)
-{
-	crypto_unregister_alg(&seed_alg);
-}
+अटल व्योम __निकास seed_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_alg(&seed_alg);
+पूर्ण
 
 subsys_initcall(seed_init);
-module_exit(seed_fini);
+module_निकास(seed_fini);
 
 MODULE_DESCRIPTION("SEED Cipher Algorithm");
 MODULE_LICENSE("GPL");

@@ -1,233 +1,234 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright(c) 2015-17 Intel Corporation.
 
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/pm_domain.h>
-#include <linux/soundwire/sdw.h>
-#include <linux/soundwire/sdw_type.h>
-#include "bus.h"
-#include "sysfs_local.h"
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/soundwire/sdw.h>
+#समावेश <linux/soundwire/sdw_type.h>
+#समावेश "bus.h"
+#समावेश "sysfs_local.h"
 
 /**
  * sdw_get_device_id - find the matching SoundWire device id
  * @slave: SoundWire Slave Device
  * @drv: SoundWire Slave Driver
  *
- * The match is done by comparing the mfg_id and part_id from the
- * struct sdw_device_id.
+ * The match is करोne by comparing the mfg_id and part_id from the
+ * काष्ठा sdw_device_id.
  */
-static const struct sdw_device_id *
-sdw_get_device_id(struct sdw_slave *slave, struct sdw_driver *drv)
-{
-	const struct sdw_device_id *id;
+अटल स्थिर काष्ठा sdw_device_id *
+sdw_get_device_id(काष्ठा sdw_slave *slave, काष्ठा sdw_driver *drv)
+अणु
+	स्थिर काष्ठा sdw_device_id *id;
 
-	for (id = drv->id_table; id && id->mfg_id; id++)
-		if (slave->id.mfg_id == id->mfg_id &&
+	क्रम (id = drv->id_table; id && id->mfg_id; id++)
+		अगर (slave->id.mfg_id == id->mfg_id &&
 		    slave->id.part_id == id->part_id  &&
 		    (!id->sdw_version ||
 		     slave->id.sdw_version == id->sdw_version) &&
 		    (!id->class_id ||
 		     slave->id.class_id == id->class_id))
-			return id;
+			वापस id;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int sdw_bus_match(struct device *dev, struct device_driver *ddrv)
-{
-	struct sdw_slave *slave;
-	struct sdw_driver *drv;
-	int ret = 0;
+अटल पूर्णांक sdw_bus_match(काष्ठा device *dev, काष्ठा device_driver *ddrv)
+अणु
+	काष्ठा sdw_slave *slave;
+	काष्ठा sdw_driver *drv;
+	पूर्णांक ret = 0;
 
-	if (is_sdw_slave(dev)) {
+	अगर (is_sdw_slave(dev)) अणु
 		slave = dev_to_sdw_dev(dev);
 		drv = drv_to_sdw_driver(ddrv);
 
 		ret = !!sdw_get_device_id(slave, drv);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int sdw_slave_modalias(const struct sdw_slave *slave, char *buf, size_t size)
-{
+पूर्णांक sdw_slave_modalias(स्थिर काष्ठा sdw_slave *slave, अक्षर *buf, माप_प्रकार size)
+अणु
 	/* modalias is sdw:m<mfg_id>p<part_id>v<version>c<class_id> */
 
-	return snprintf(buf, size, "sdw:m%04Xp%04Xv%02Xc%02X\n",
+	वापस snम_लिखो(buf, size, "sdw:m%04Xp%04Xv%02Xc%02X\n",
 			slave->id.mfg_id, slave->id.part_id,
 			slave->id.sdw_version, slave->id.class_id);
-}
+पूर्ण
 
-int sdw_slave_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct sdw_slave *slave = dev_to_sdw_dev(dev);
-	char modalias[32];
+पूर्णांक sdw_slave_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा sdw_slave *slave = dev_to_sdw_dev(dev);
+	अक्षर modalias[32];
 
-	sdw_slave_modalias(slave, modalias, sizeof(modalias));
+	sdw_slave_modalias(slave, modalias, माप(modalias));
 
-	if (add_uevent_var(env, "MODALIAS=%s", modalias))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "MODALIAS=%s", modalias))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct bus_type sdw_bus_type = {
+काष्ठा bus_type sdw_bus_type = अणु
 	.name = "soundwire",
 	.match = sdw_bus_match,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(sdw_bus_type);
 
-static int sdw_drv_probe(struct device *dev)
-{
-	struct sdw_slave *slave = dev_to_sdw_dev(dev);
-	struct sdw_driver *drv = drv_to_sdw_driver(dev->driver);
-	const struct sdw_device_id *id;
-	const char *name;
-	int ret;
+अटल पूर्णांक sdw_drv_probe(काष्ठा device *dev)
+अणु
+	काष्ठा sdw_slave *slave = dev_to_sdw_dev(dev);
+	काष्ठा sdw_driver *drv = drv_to_sdw_driver(dev->driver);
+	स्थिर काष्ठा sdw_device_id *id;
+	स्थिर अक्षर *name;
+	पूर्णांक ret;
 
 	/*
 	 * fw description is mandatory to bind
 	 */
-	if (!dev->fwnode)
-		return -ENODEV;
+	अगर (!dev->fwnode)
+		वापस -ENODEV;
 
-	if (!IS_ENABLED(CONFIG_ACPI) && !dev->of_node)
-		return -ENODEV;
+	अगर (!IS_ENABLED(CONFIG_ACPI) && !dev->of_node)
+		वापस -ENODEV;
 
 	id = sdw_get_device_id(slave, drv);
-	if (!id)
-		return -ENODEV;
+	अगर (!id)
+		वापस -ENODEV;
 
 	slave->ops = drv->ops;
 
 	/*
-	 * attach to power domain but don't turn on (last arg)
+	 * attach to घातer करोमुख्य but करोn't turn on (last arg)
 	 */
-	ret = dev_pm_domain_attach(dev, false);
-	if (ret)
-		return ret;
+	ret = dev_pm_करोमुख्य_attach(dev, false);
+	अगर (ret)
+		वापस ret;
 
 	ret = drv->probe(slave, id);
-	if (ret) {
+	अगर (ret) अणु
 		name = drv->name;
-		if (!name)
+		अगर (!name)
 			name = drv->driver.name;
 		dev_err(dev, "Probe of %s failed: %d\n", name, ret);
-		dev_pm_domain_detach(dev, false);
-		return ret;
-	}
+		dev_pm_करोमुख्य_detach(dev, false);
+		वापस ret;
+	पूर्ण
 
-	/* device is probed so let's read the properties now */
-	if (slave->ops && slave->ops->read_prop)
-		slave->ops->read_prop(slave);
+	/* device is probed so let's पढ़ो the properties now */
+	अगर (slave->ops && slave->ops->पढ़ो_prop)
+		slave->ops->पढ़ो_prop(slave);
 
 	/* init the sysfs as we have properties now */
 	ret = sdw_slave_sysfs_init(slave);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_warn(dev, "Slave sysfs init failed:%d\n", ret);
 
 	/*
-	 * Check for valid clk_stop_timeout, use DisCo worst case value of
+	 * Check क्रम valid clk_stop_समयout, use DisCo worst हाल value of
 	 * 300ms
 	 *
-	 * TODO: check the timeouts and driver removal case
+	 * TODO: check the समयouts and driver removal हाल
 	 */
-	if (slave->prop.clk_stop_timeout == 0)
-		slave->prop.clk_stop_timeout = 300;
+	अगर (slave->prop.clk_stop_समयout == 0)
+		slave->prop.clk_stop_समयout = 300;
 
-	slave->bus->clk_stop_timeout = max_t(u32, slave->bus->clk_stop_timeout,
-					     slave->prop.clk_stop_timeout);
+	slave->bus->clk_stop_समयout = max_t(u32, slave->bus->clk_stop_समयout,
+					     slave->prop.clk_stop_समयout);
 
 	slave->probed = true;
 	complete(&slave->probe_complete);
 
 	dev_dbg(dev, "probe complete\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdw_drv_remove(struct device *dev)
-{
-	struct sdw_slave *slave = dev_to_sdw_dev(dev);
-	struct sdw_driver *drv = drv_to_sdw_driver(dev->driver);
-	int ret = 0;
+अटल पूर्णांक sdw_drv_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा sdw_slave *slave = dev_to_sdw_dev(dev);
+	काष्ठा sdw_driver *drv = drv_to_sdw_driver(dev->driver);
+	पूर्णांक ret = 0;
 
-	if (drv->remove)
-		ret = drv->remove(slave);
+	अगर (drv->हटाओ)
+		ret = drv->हटाओ(slave);
 
-	dev_pm_domain_detach(dev, false);
+	dev_pm_करोमुख्य_detach(dev, false);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sdw_drv_shutdown(struct device *dev)
-{
-	struct sdw_slave *slave = dev_to_sdw_dev(dev);
-	struct sdw_driver *drv = drv_to_sdw_driver(dev->driver);
+अटल व्योम sdw_drv_shutकरोwn(काष्ठा device *dev)
+अणु
+	काष्ठा sdw_slave *slave = dev_to_sdw_dev(dev);
+	काष्ठा sdw_driver *drv = drv_to_sdw_driver(dev->driver);
 
-	if (drv->shutdown)
-		drv->shutdown(slave);
-}
+	अगर (drv->shutकरोwn)
+		drv->shutकरोwn(slave);
+पूर्ण
 
 /**
- * __sdw_register_driver() - register a SoundWire Slave driver
- * @drv: driver to register
+ * __sdw_रेजिस्टर_driver() - रेजिस्टर a SoundWire Slave driver
+ * @drv: driver to रेजिस्टर
  * @owner: owning module/driver
  *
- * Return: zero on success, else a negative error code.
+ * Return: zero on success, अन्यथा a negative error code.
  */
-int __sdw_register_driver(struct sdw_driver *drv, struct module *owner)
-{
-	const char *name;
+पूर्णांक __sdw_रेजिस्टर_driver(काष्ठा sdw_driver *drv, काष्ठा module *owner)
+अणु
+	स्थिर अक्षर *name;
 
 	drv->driver.bus = &sdw_bus_type;
 
-	if (!drv->probe) {
+	अगर (!drv->probe) अणु
 		name = drv->name;
-		if (!name)
+		अगर (!name)
 			name = drv->driver.name;
 
 		pr_err("driver %s didn't provide SDW probe routine\n", name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	drv->driver.owner = owner;
 	drv->driver.probe = sdw_drv_probe;
 
-	if (drv->remove)
-		drv->driver.remove = sdw_drv_remove;
+	अगर (drv->हटाओ)
+		drv->driver.हटाओ = sdw_drv_हटाओ;
 
-	if (drv->shutdown)
-		drv->driver.shutdown = sdw_drv_shutdown;
+	अगर (drv->shutकरोwn)
+		drv->driver.shutकरोwn = sdw_drv_shutकरोwn;
 
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(__sdw_register_driver);
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(__sdw_रेजिस्टर_driver);
 
 /**
- * sdw_unregister_driver() - unregisters the SoundWire Slave driver
- * @drv: driver to unregister
+ * sdw_unरेजिस्टर_driver() - unरेजिस्टरs the SoundWire Slave driver
+ * @drv: driver to unरेजिस्टर
  */
-void sdw_unregister_driver(struct sdw_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(sdw_unregister_driver);
+व्योम sdw_unरेजिस्टर_driver(काष्ठा sdw_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(sdw_unरेजिस्टर_driver);
 
-static int __init sdw_bus_init(void)
-{
+अटल पूर्णांक __init sdw_bus_init(व्योम)
+अणु
 	sdw_debugfs_init();
-	return bus_register(&sdw_bus_type);
-}
+	वापस bus_रेजिस्टर(&sdw_bus_type);
+पूर्ण
 
-static void __exit sdw_bus_exit(void)
-{
-	sdw_debugfs_exit();
-	bus_unregister(&sdw_bus_type);
-}
+अटल व्योम __निकास sdw_bus_निकास(व्योम)
+अणु
+	sdw_debugfs_निकास();
+	bus_unरेजिस्टर(&sdw_bus_type);
+पूर्ण
 
 postcore_initcall(sdw_bus_init);
-module_exit(sdw_bus_exit);
+module_निकास(sdw_bus_निकास);
 
 MODULE_DESCRIPTION("SoundWire bus");
 MODULE_LICENSE("GPL v2");

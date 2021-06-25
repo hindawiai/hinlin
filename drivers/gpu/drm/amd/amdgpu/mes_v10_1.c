@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,57 +22,57 @@
  *
  */
 
-#include <linux/firmware.h>
-#include <linux/module.h>
-#include "amdgpu.h"
-#include "soc15_common.h"
-#include "nv.h"
-#include "gc/gc_10_1_0_offset.h"
-#include "gc/gc_10_1_0_sh_mask.h"
-#include "v10_structs.h"
-#include "mes_api_def.h"
+#समावेश <linux/firmware.h>
+#समावेश <linux/module.h>
+#समावेश "amdgpu.h"
+#समावेश "soc15_common.h"
+#समावेश "nv.h"
+#समावेश "gc/gc_10_1_0_offset.h"
+#समावेश "gc/gc_10_1_0_sh_mask.h"
+#समावेश "v10_structs.h"
+#समावेश "mes_api_def.h"
 
-#define mmCP_MES_IC_OP_CNTL_Sienna_Cichlid               0x2820
-#define mmCP_MES_IC_OP_CNTL_Sienna_Cichlid_BASE_IDX      1
+#घोषणा mmCP_MES_IC_OP_CNTL_Sienna_Cichlid               0x2820
+#घोषणा mmCP_MES_IC_OP_CNTL_Sienna_Cichlid_BASE_IDX      1
 
 MODULE_FIRMWARE("amdgpu/navi10_mes.bin");
 MODULE_FIRMWARE("amdgpu/sienna_cichlid_mes.bin");
 
-static int mes_v10_1_hw_fini(void *handle);
+अटल पूर्णांक mes_v10_1_hw_fini(व्योम *handle);
 
-#define MES_EOP_SIZE   2048
+#घोषणा MES_EOP_SIZE   2048
 
-static void mes_v10_1_ring_set_wptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल व्योम mes_v10_1_ring_set_wptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
-	if (ring->use_doorbell) {
+	अगर (ring->use_करोorbell) अणु
 		atomic64_set((atomic64_t *)&adev->wb.wb[ring->wptr_offs],
 			     ring->wptr);
-		WDOORBELL64(ring->doorbell_index, ring->wptr);
-	} else {
+		WDOORBELL64(ring->करोorbell_index, ring->wptr);
+	पूर्ण अन्यथा अणु
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u64 mes_v10_1_ring_get_rptr(struct amdgpu_ring *ring)
-{
-	return ring->adev->wb.wb[ring->rptr_offs];
-}
+अटल u64 mes_v10_1_ring_get_rptr(काष्ठा amdgpu_ring *ring)
+अणु
+	वापस ring->adev->wb.wb[ring->rptr_offs];
+पूर्ण
 
-static u64 mes_v10_1_ring_get_wptr(struct amdgpu_ring *ring)
-{
+अटल u64 mes_v10_1_ring_get_wptr(काष्ठा amdgpu_ring *ring)
+अणु
 	u64 wptr;
 
-	if (ring->use_doorbell)
-		wptr = atomic64_read((atomic64_t *)
+	अगर (ring->use_करोorbell)
+		wptr = atomic64_पढ़ो((atomic64_t *)
 				     &ring->adev->wb.wb[ring->wptr_offs]);
-	else
+	अन्यथा
 		BUG();
-	return wptr;
-}
+	वापस wptr;
+पूर्ण
 
-static const struct amdgpu_ring_funcs mes_v10_1_ring_funcs = {
+अटल स्थिर काष्ठा amdgpu_ring_funcs mes_v10_1_ring_funcs = अणु
 	.type = AMDGPU_RING_TYPE_MES,
 	.align_mask = 1,
 	.nop = 0,
@@ -80,58 +81,58 @@ static const struct amdgpu_ring_funcs mes_v10_1_ring_funcs = {
 	.get_wptr = mes_v10_1_ring_get_wptr,
 	.set_wptr = mes_v10_1_ring_set_wptr,
 	.insert_nop = amdgpu_ring_insert_nop,
-};
+पूर्ण;
 
-static int mes_v10_1_submit_pkt_and_poll_completion(struct amdgpu_mes *mes,
-						    void *pkt, int size)
-{
-	int ndw = size / 4;
-	signed long r;
-	union MESAPI__ADD_QUEUE *x_pkt = pkt;
-	struct amdgpu_device *adev = mes->adev;
-	struct amdgpu_ring *ring = &mes->ring;
+अटल पूर्णांक mes_v10_1_submit_pkt_and_poll_completion(काष्ठा amdgpu_mes *mes,
+						    व्योम *pkt, पूर्णांक size)
+अणु
+	पूर्णांक ndw = size / 4;
+	चिन्हित दीर्घ r;
+	जोड़ MESAPI__ADD_QUEUE *x_pkt = pkt;
+	काष्ठा amdgpu_device *adev = mes->adev;
+	काष्ठा amdgpu_ring *ring = &mes->ring;
 
 	BUG_ON(size % 4 != 0);
 
-	if (amdgpu_ring_alloc(ring, ndw))
-		return -ENOMEM;
+	अगर (amdgpu_ring_alloc(ring, ndw))
+		वापस -ENOMEM;
 
-	amdgpu_ring_write_multiple(ring, pkt, ndw);
+	amdgpu_ring_ग_लिखो_multiple(ring, pkt, ndw);
 	amdgpu_ring_commit(ring);
 
 	DRM_DEBUG("MES msg=%d was emitted\n", x_pkt->header.opcode);
 
-	r = amdgpu_fence_wait_polling(ring, ring->fence_drv.sync_seq,
-				      adev->usec_timeout);
-	if (r < 1) {
+	r = amdgpu_fence_रुको_polling(ring, ring->fence_drv.sync_seq,
+				      adev->usec_समयout);
+	अगर (r < 1) अणु
 		DRM_ERROR("MES failed to response msg=%d\n",
 			  x_pkt->header.opcode);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int convert_to_mes_queue_type(int queue_type)
-{
-	if (queue_type == AMDGPU_RING_TYPE_GFX)
-		return MES_QUEUE_TYPE_GFX;
-	else if (queue_type == AMDGPU_RING_TYPE_COMPUTE)
-		return MES_QUEUE_TYPE_COMPUTE;
-	else if (queue_type == AMDGPU_RING_TYPE_SDMA)
-		return MES_QUEUE_TYPE_SDMA;
-	else
+अटल पूर्णांक convert_to_mes_queue_type(पूर्णांक queue_type)
+अणु
+	अगर (queue_type == AMDGPU_RING_TYPE_GFX)
+		वापस MES_QUEUE_TYPE_GFX;
+	अन्यथा अगर (queue_type == AMDGPU_RING_TYPE_COMPUTE)
+		वापस MES_QUEUE_TYPE_COMPUTE;
+	अन्यथा अगर (queue_type == AMDGPU_RING_TYPE_SDMA)
+		वापस MES_QUEUE_TYPE_SDMA;
+	अन्यथा
 		BUG();
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int mes_v10_1_add_hw_queue(struct amdgpu_mes *mes,
-				  struct mes_add_queue_input *input)
-{
-	struct amdgpu_device *adev = mes->adev;
-	union MESAPI__ADD_QUEUE mes_add_queue_pkt;
+अटल पूर्णांक mes_v10_1_add_hw_queue(काष्ठा amdgpu_mes *mes,
+				  काष्ठा mes_add_queue_input *input)
+अणु
+	काष्ठा amdgpu_device *adev = mes->adev;
+	जोड़ MESAPI__ADD_QUEUE mes_add_queue_pkt;
 
-	memset(&mes_add_queue_pkt, 0, sizeof(mes_add_queue_pkt));
+	स_रखो(&mes_add_queue_pkt, 0, माप(mes_add_queue_pkt));
 
 	mes_add_queue_pkt.header.type = MES_API_TYPE_SCHEDULER;
 	mes_add_queue_pkt.header.opcode = MES_SCH_API_ADD_QUEUE;
@@ -140,8 +141,8 @@ static int mes_v10_1_add_hw_queue(struct amdgpu_mes *mes,
 	mes_add_queue_pkt.process_id = input->process_id;
 	mes_add_queue_pkt.page_table_base_addr =
 		input->page_table_base_addr - adev->gmc.vram_start;
-	mes_add_queue_pkt.process_va_start = input->process_va_start;
-	mes_add_queue_pkt.process_va_end = input->process_va_end;
+	mes_add_queue_pkt.process_बहु_शुरू = input->process_बहु_शुरू;
+	mes_add_queue_pkt.process_बहु_पूर्ण = input->process_बहु_पूर्ण;
 	mes_add_queue_pkt.process_quantum = input->process_quantum;
 	mes_add_queue_pkt.process_context_addr = input->process_context_addr;
 	mes_add_queue_pkt.gang_quantum = input->gang_quantum;
@@ -150,7 +151,7 @@ static int mes_v10_1_add_hw_queue(struct amdgpu_mes *mes,
 		input->inprocess_gang_priority;
 	mes_add_queue_pkt.gang_global_priority_level =
 		input->gang_global_priority_level;
-	mes_add_queue_pkt.doorbell_offset = input->doorbell_offset;
+	mes_add_queue_pkt.करोorbell_offset = input->करोorbell_offset;
 	mes_add_queue_pkt.mqd_addr = input->mqd_addr;
 	mes_add_queue_pkt.wptr_addr = input->wptr_addr;
 	mes_add_queue_pkt.queue_type =
@@ -162,50 +163,50 @@ static int mes_v10_1_add_hw_queue(struct amdgpu_mes *mes,
 	mes_add_queue_pkt.api_status.api_completion_fence_value =
 		++mes->ring.fence_drv.sync_seq;
 
-	return mes_v10_1_submit_pkt_and_poll_completion(mes,
-			&mes_add_queue_pkt, sizeof(mes_add_queue_pkt));
-}
+	वापस mes_v10_1_submit_pkt_and_poll_completion(mes,
+			&mes_add_queue_pkt, माप(mes_add_queue_pkt));
+पूर्ण
 
-static int mes_v10_1_remove_hw_queue(struct amdgpu_mes *mes,
-				     struct mes_remove_queue_input *input)
-{
-	union MESAPI__REMOVE_QUEUE mes_remove_queue_pkt;
+अटल पूर्णांक mes_v10_1_हटाओ_hw_queue(काष्ठा amdgpu_mes *mes,
+				     काष्ठा mes_हटाओ_queue_input *input)
+अणु
+	जोड़ MESAPI__REMOVE_QUEUE mes_हटाओ_queue_pkt;
 
-	memset(&mes_remove_queue_pkt, 0, sizeof(mes_remove_queue_pkt));
+	स_रखो(&mes_हटाओ_queue_pkt, 0, माप(mes_हटाओ_queue_pkt));
 
-	mes_remove_queue_pkt.header.type = MES_API_TYPE_SCHEDULER;
-	mes_remove_queue_pkt.header.opcode = MES_SCH_API_REMOVE_QUEUE;
-	mes_remove_queue_pkt.header.dwsize = API_FRAME_SIZE_IN_DWORDS;
+	mes_हटाओ_queue_pkt.header.type = MES_API_TYPE_SCHEDULER;
+	mes_हटाओ_queue_pkt.header.opcode = MES_SCH_API_REMOVE_QUEUE;
+	mes_हटाओ_queue_pkt.header.dwsize = API_FRAME_SIZE_IN_DWORDS;
 
-	mes_remove_queue_pkt.doorbell_offset = input->doorbell_offset;
-	mes_remove_queue_pkt.gang_context_addr = input->gang_context_addr;
+	mes_हटाओ_queue_pkt.करोorbell_offset = input->करोorbell_offset;
+	mes_हटाओ_queue_pkt.gang_context_addr = input->gang_context_addr;
 
-	mes_remove_queue_pkt.api_status.api_completion_fence_addr =
+	mes_हटाओ_queue_pkt.api_status.api_completion_fence_addr =
 		mes->ring.fence_drv.gpu_addr;
-	mes_remove_queue_pkt.api_status.api_completion_fence_value =
+	mes_हटाओ_queue_pkt.api_status.api_completion_fence_value =
 		++mes->ring.fence_drv.sync_seq;
 
-	return mes_v10_1_submit_pkt_and_poll_completion(mes,
-			&mes_remove_queue_pkt, sizeof(mes_remove_queue_pkt));
-}
+	वापस mes_v10_1_submit_pkt_and_poll_completion(mes,
+			&mes_हटाओ_queue_pkt, माप(mes_हटाओ_queue_pkt));
+पूर्ण
 
-static int mes_v10_1_suspend_gang(struct amdgpu_mes *mes,
-				  struct mes_suspend_gang_input *input)
-{
-	return 0;
-}
+अटल पूर्णांक mes_v10_1_suspend_gang(काष्ठा amdgpu_mes *mes,
+				  काष्ठा mes_suspend_gang_input *input)
+अणु
+	वापस 0;
+पूर्ण
 
-static int mes_v10_1_resume_gang(struct amdgpu_mes *mes,
-				 struct mes_resume_gang_input *input)
-{
-	return 0;
-}
+अटल पूर्णांक mes_v10_1_resume_gang(काष्ठा amdgpu_mes *mes,
+				 काष्ठा mes_resume_gang_input *input)
+अणु
+	वापस 0;
+पूर्ण
 
-static int mes_v10_1_query_sched_status(struct amdgpu_mes *mes)
-{
-	union MESAPI__QUERY_MES_STATUS mes_status_pkt;
+अटल पूर्णांक mes_v10_1_query_sched_status(काष्ठा amdgpu_mes *mes)
+अणु
+	जोड़ MESAPI__QUERY_MES_STATUS mes_status_pkt;
 
-	memset(&mes_status_pkt, 0, sizeof(mes_status_pkt));
+	स_रखो(&mes_status_pkt, 0, माप(mes_status_pkt));
 
 	mes_status_pkt.header.type = MES_API_TYPE_SCHEDULER;
 	mes_status_pkt.header.opcode = MES_SCH_API_QUERY_SCHEDULER_STATUS;
@@ -216,17 +217,17 @@ static int mes_v10_1_query_sched_status(struct amdgpu_mes *mes)
 	mes_status_pkt.api_status.api_completion_fence_value =
 		++mes->ring.fence_drv.sync_seq;
 
-	return mes_v10_1_submit_pkt_and_poll_completion(mes,
-			&mes_status_pkt, sizeof(mes_status_pkt));
-}
+	वापस mes_v10_1_submit_pkt_and_poll_completion(mes,
+			&mes_status_pkt, माप(mes_status_pkt));
+पूर्ण
 
-static int mes_v10_1_set_hw_resources(struct amdgpu_mes *mes)
-{
-	int i;
-	struct amdgpu_device *adev = mes->adev;
-	union MESAPI_SET_HW_RESOURCES mes_set_hw_res_pkt;
+अटल पूर्णांक mes_v10_1_set_hw_resources(काष्ठा amdgpu_mes *mes)
+अणु
+	पूर्णांक i;
+	काष्ठा amdgpu_device *adev = mes->adev;
+	जोड़ MESAPI_SET_HW_RESOURCES mes_set_hw_res_pkt;
 
-	memset(&mes_set_hw_res_pkt, 0, sizeof(mes_set_hw_res_pkt));
+	स_रखो(&mes_set_hw_res_pkt, 0, माप(mes_set_hw_res_pkt));
 
 	mes_set_hw_res_pkt.header.type = MES_API_TYPE_SCHEDULER;
 	mes_set_hw_res_pkt.header.opcode = MES_SCH_API_SET_HW_RSRC;
@@ -240,79 +241,79 @@ static int mes_v10_1_set_hw_resources(struct amdgpu_mes *mes)
 	mes_set_hw_res_pkt.query_status_fence_gpu_mc_ptr =
 		mes->query_status_fence_gpu_addr;
 
-	for (i = 0; i < MAX_COMPUTE_PIPES; i++)
+	क्रम (i = 0; i < MAX_COMPUTE_PIPES; i++)
 		mes_set_hw_res_pkt.compute_hqd_mask[i] =
 			mes->compute_hqd_mask[i];
 
-	for (i = 0; i < MAX_GFX_PIPES; i++)
+	क्रम (i = 0; i < MAX_GFX_PIPES; i++)
 		mes_set_hw_res_pkt.gfx_hqd_mask[i] = mes->gfx_hqd_mask[i];
 
-	for (i = 0; i < MAX_SDMA_PIPES; i++)
+	क्रम (i = 0; i < MAX_SDMA_PIPES; i++)
 		mes_set_hw_res_pkt.sdma_hqd_mask[i] = mes->sdma_hqd_mask[i];
 
-	for (i = 0; i < AMD_PRIORITY_NUM_LEVELS; i++)
-		mes_set_hw_res_pkt.agreegated_doorbells[i] =
-			mes->agreegated_doorbells[i];
+	क्रम (i = 0; i < AMD_PRIORITY_NUM_LEVELS; i++)
+		mes_set_hw_res_pkt.agreegated_करोorbells[i] =
+			mes->agreegated_करोorbells[i];
 
 	mes_set_hw_res_pkt.api_status.api_completion_fence_addr =
 		mes->ring.fence_drv.gpu_addr;
 	mes_set_hw_res_pkt.api_status.api_completion_fence_value =
 		++mes->ring.fence_drv.sync_seq;
 
-	return mes_v10_1_submit_pkt_and_poll_completion(mes,
-			&mes_set_hw_res_pkt, sizeof(mes_set_hw_res_pkt));
-}
+	वापस mes_v10_1_submit_pkt_and_poll_completion(mes,
+			&mes_set_hw_res_pkt, माप(mes_set_hw_res_pkt));
+पूर्ण
 
-static const struct amdgpu_mes_funcs mes_v10_1_funcs = {
+अटल स्थिर काष्ठा amdgpu_mes_funcs mes_v10_1_funcs = अणु
 	.add_hw_queue = mes_v10_1_add_hw_queue,
-	.remove_hw_queue = mes_v10_1_remove_hw_queue,
+	.हटाओ_hw_queue = mes_v10_1_हटाओ_hw_queue,
 	.suspend_gang = mes_v10_1_suspend_gang,
 	.resume_gang = mes_v10_1_resume_gang,
-};
+पूर्ण;
 
-static int mes_v10_1_init_microcode(struct amdgpu_device *adev)
-{
-	const char *chip_name;
-	char fw_name[30];
-	int err;
-	const struct mes_firmware_header_v1_0 *mes_hdr;
-	struct amdgpu_firmware_info *info;
+अटल पूर्णांक mes_v10_1_init_microcode(काष्ठा amdgpu_device *adev)
+अणु
+	स्थिर अक्षर *chip_name;
+	अक्षर fw_name[30];
+	पूर्णांक err;
+	स्थिर काष्ठा mes_firmware_header_v1_0 *mes_hdr;
+	काष्ठा amdgpu_firmware_info *info;
 
-	switch (adev->asic_type) {
-	case CHIP_NAVI10:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_NAVI10:
 		chip_name = "navi10";
-		break;
-	case CHIP_SIENNA_CICHLID:
+		अवरोध;
+	हाल CHIP_SIENNA_CICHLID:
 		chip_name = "sienna_cichlid";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	snprintf(fw_name, sizeof(fw_name), "amdgpu/%s_mes.bin", chip_name);
+	snम_लिखो(fw_name, माप(fw_name), "amdgpu/%s_mes.bin", chip_name);
 	err = request_firmware(&adev->mes.fw, fw_name, adev->dev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = amdgpu_ucode_validate(adev->mes.fw);
-	if (err) {
+	अगर (err) अणु
 		release_firmware(adev->mes.fw);
-		adev->mes.fw = NULL;
-		return err;
-	}
+		adev->mes.fw = शून्य;
+		वापस err;
+	पूर्ण
 
-	mes_hdr = (const struct mes_firmware_header_v1_0 *)adev->mes.fw->data;
+	mes_hdr = (स्थिर काष्ठा mes_firmware_header_v1_0 *)adev->mes.fw->data;
 	adev->mes.ucode_fw_version = le32_to_cpu(mes_hdr->mes_ucode_version);
 	adev->mes.ucode_fw_version =
 		le32_to_cpu(mes_hdr->mes_ucode_data_version);
 	adev->mes.uc_start_addr =
 		le32_to_cpu(mes_hdr->mes_uc_start_addr_lo) |
-		((uint64_t)(le32_to_cpu(mes_hdr->mes_uc_start_addr_hi)) << 32);
+		((uपूर्णांक64_t)(le32_to_cpu(mes_hdr->mes_uc_start_addr_hi)) << 32);
 	adev->mes.data_start_addr =
 		le32_to_cpu(mes_hdr->mes_data_start_addr_lo) |
-		((uint64_t)(le32_to_cpu(mes_hdr->mes_data_start_addr_hi)) << 32);
+		((uपूर्णांक64_t)(le32_to_cpu(mes_hdr->mes_data_start_addr_hi)) << 32);
 
-	if (adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) {
+	अगर (adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) अणु
 		info = &adev->firmware.ucode[AMDGPU_UCODE_ID_CP_MES];
 		info->ucode_id = AMDGPU_UCODE_ID_CP_MES;
 		info->fw = adev->mes.fw;
@@ -326,28 +327,28 @@ static int mes_v10_1_init_microcode(struct amdgpu_device *adev)
 		adev->firmware.fw_size +=
 			ALIGN(le32_to_cpu(mes_hdr->mes_ucode_data_size_bytes),
 			      PAGE_SIZE);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mes_v10_1_free_microcode(struct amdgpu_device *adev)
-{
+अटल व्योम mes_v10_1_मुक्त_microcode(काष्ठा amdgpu_device *adev)
+अणु
 	release_firmware(adev->mes.fw);
-	adev->mes.fw = NULL;
-}
+	adev->mes.fw = शून्य;
+पूर्ण
 
-static int mes_v10_1_allocate_ucode_buffer(struct amdgpu_device *adev)
-{
-	int r;
-	const struct mes_firmware_header_v1_0 *mes_hdr;
-	const __le32 *fw_data;
-	unsigned fw_size;
+अटल पूर्णांक mes_v10_1_allocate_ucode_buffer(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
+	स्थिर काष्ठा mes_firmware_header_v1_0 *mes_hdr;
+	स्थिर __le32 *fw_data;
+	अचिन्हित fw_size;
 
-	mes_hdr = (const struct mes_firmware_header_v1_0 *)
+	mes_hdr = (स्थिर काष्ठा mes_firmware_header_v1_0 *)
 		adev->mes.fw->data;
 
-	fw_data = (const __le32 *)(adev->mes.fw->data +
+	fw_data = (स्थिर __le32 *)(adev->mes.fw->data +
 		   le32_to_cpu(mes_hdr->mes_ucode_offset_bytes));
 	fw_size = le32_to_cpu(mes_hdr->mes_ucode_size_bytes);
 
@@ -355,31 +356,31 @@ static int mes_v10_1_allocate_ucode_buffer(struct amdgpu_device *adev)
 				      PAGE_SIZE, AMDGPU_GEM_DOMAIN_GTT,
 				      &adev->mes.ucode_fw_obj,
 				      &adev->mes.ucode_fw_gpu_addr,
-				      (void **)&adev->mes.ucode_fw_ptr);
-	if (r) {
+				      (व्योम **)&adev->mes.ucode_fw_ptr);
+	अगर (r) अणु
 		dev_err(adev->dev, "(%d) failed to create mes fw bo\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	memcpy(adev->mes.ucode_fw_ptr, fw_data, fw_size);
+	स_नकल(adev->mes.ucode_fw_ptr, fw_data, fw_size);
 
 	amdgpu_bo_kunmap(adev->mes.ucode_fw_obj);
 	amdgpu_bo_unreserve(adev->mes.ucode_fw_obj);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mes_v10_1_allocate_ucode_data_buffer(struct amdgpu_device *adev)
-{
-	int r;
-	const struct mes_firmware_header_v1_0 *mes_hdr;
-	const __le32 *fw_data;
-	unsigned fw_size;
+अटल पूर्णांक mes_v10_1_allocate_ucode_data_buffer(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
+	स्थिर काष्ठा mes_firmware_header_v1_0 *mes_hdr;
+	स्थिर __le32 *fw_data;
+	अचिन्हित fw_size;
 
-	mes_hdr = (const struct mes_firmware_header_v1_0 *)
+	mes_hdr = (स्थिर काष्ठा mes_firmware_header_v1_0 *)
 		adev->mes.fw->data;
 
-	fw_data = (const __le32 *)(adev->mes.fw->data +
+	fw_data = (स्थिर __le32 *)(adev->mes.fw->data +
 		   le32_to_cpu(mes_hdr->mes_ucode_data_offset_bytes));
 	fw_size = le32_to_cpu(mes_hdr->mes_ucode_data_size_bytes);
 
@@ -387,45 +388,45 @@ static int mes_v10_1_allocate_ucode_data_buffer(struct amdgpu_device *adev)
 				      64 * 1024, AMDGPU_GEM_DOMAIN_GTT,
 				      &adev->mes.data_fw_obj,
 				      &adev->mes.data_fw_gpu_addr,
-				      (void **)&adev->mes.data_fw_ptr);
-	if (r) {
+				      (व्योम **)&adev->mes.data_fw_ptr);
+	अगर (r) अणु
 		dev_err(adev->dev, "(%d) failed to create mes data fw bo\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	memcpy(adev->mes.data_fw_ptr, fw_data, fw_size);
+	स_नकल(adev->mes.data_fw_ptr, fw_data, fw_size);
 
 	amdgpu_bo_kunmap(adev->mes.data_fw_obj);
 	amdgpu_bo_unreserve(adev->mes.data_fw_obj);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mes_v10_1_free_ucode_buffers(struct amdgpu_device *adev)
-{
-	amdgpu_bo_free_kernel(&adev->mes.data_fw_obj,
+अटल व्योम mes_v10_1_मुक्त_ucode_buffers(काष्ठा amdgpu_device *adev)
+अणु
+	amdgpu_bo_मुक्त_kernel(&adev->mes.data_fw_obj,
 			      &adev->mes.data_fw_gpu_addr,
-			      (void **)&adev->mes.data_fw_ptr);
+			      (व्योम **)&adev->mes.data_fw_ptr);
 
-	amdgpu_bo_free_kernel(&adev->mes.ucode_fw_obj,
+	amdgpu_bo_मुक्त_kernel(&adev->mes.ucode_fw_obj,
 			      &adev->mes.ucode_fw_gpu_addr,
-			      (void **)&adev->mes.ucode_fw_ptr);
-}
+			      (व्योम **)&adev->mes.ucode_fw_ptr);
+पूर्ण
 
-static void mes_v10_1_enable(struct amdgpu_device *adev, bool enable)
-{
-	uint32_t data = 0;
+अटल व्योम mes_v10_1_enable(काष्ठा amdgpu_device *adev, bool enable)
+अणु
+	uपूर्णांक32_t data = 0;
 
-	if (enable) {
+	अगर (enable) अणु
 		data = RREG32_SOC15(GC, 0, mmCP_MES_CNTL);
 		data = REG_SET_FIELD(data, CP_MES_CNTL, MES_PIPE0_RESET, 1);
 		WREG32_SOC15(GC, 0, mmCP_MES_CNTL, data);
 
 		/* set ucode start address */
 		WREG32_SOC15(GC, 0, mmCP_MES_PRGRM_CNTR_START,
-			     (uint32_t)(adev->mes.uc_start_addr) >> 2);
+			     (uपूर्णांक32_t)(adev->mes.uc_start_addr) >> 2);
 
-		/* clear BYPASS_UNCACHED to avoid hangs after interrupt. */
+		/* clear BYPASS_UNCACHED to aव्योम hangs after पूर्णांकerrupt. */
 		data = RREG32_SOC15(GC, 0, mmCP_MES_DC_OP_CNTL);
 		data = REG_SET_FIELD(data, CP_MES_DC_OP_CNTL,
 				     BYPASS_UNCACHED, 0);
@@ -434,7 +435,7 @@ static void mes_v10_1_enable(struct amdgpu_device *adev, bool enable)
 		/* unhalt MES and activate pipe0 */
 		data = REG_SET_FIELD(0, CP_MES_CNTL, MES_PIPE0_ACTIVE, 1);
 		WREG32_SOC15(GC, 0, mmCP_MES_CNTL, data);
-	} else {
+	पूर्ण अन्यथा अणु
 		data = RREG32_SOC15(GC, 0, mmCP_MES_CNTL);
 		data = REG_SET_FIELD(data, CP_MES_CNTL, MES_PIPE0_ACTIVE, 0);
 		data = REG_SET_FIELD(data, CP_MES_CNTL,
@@ -442,27 +443,27 @@ static void mes_v10_1_enable(struct amdgpu_device *adev, bool enable)
 		data = REG_SET_FIELD(data, CP_MES_CNTL, MES_PIPE0_RESET, 1);
 		data = REG_SET_FIELD(data, CP_MES_CNTL, MES_HALT, 1);
 		WREG32_SOC15(GC, 0, mmCP_MES_CNTL, data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* This function is for backdoor MES firmware */
-static int mes_v10_1_load_microcode(struct amdgpu_device *adev)
-{
-	int r;
-	uint32_t data;
+/* This function is क्रम backकरोor MES firmware */
+अटल पूर्णांक mes_v10_1_load_microcode(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
+	uपूर्णांक32_t data;
 
-	if (!adev->mes.fw)
-		return -EINVAL;
+	अगर (!adev->mes.fw)
+		वापस -EINVAL;
 
 	r = mes_v10_1_allocate_ucode_buffer(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = mes_v10_1_allocate_ucode_data_buffer(adev);
-	if (r) {
-		mes_v10_1_free_ucode_buffers(adev);
-		return r;
-	}
+	अगर (r) अणु
+		mes_v10_1_मुक्त_ucode_buffers(adev);
+		वापस r;
+	पूर्ण
 
 	mes_v10_1_enable(adev, false);
 
@@ -474,7 +475,7 @@ static int mes_v10_1_load_microcode(struct amdgpu_device *adev)
 
 	/* set ucode start address */
 	WREG32_SOC15(GC, 0, mmCP_MES_PRGRM_CNTR_START,
-		     (uint32_t)(adev->mes.uc_start_addr) >> 2);
+		     (uपूर्णांक32_t)(adev->mes.uc_start_addr) >> 2);
 
 	/* set ucode fimrware address */
 	WREG32_SOC15(GC, 0, mmCP_MES_IC_BASE_LO,
@@ -482,7 +483,7 @@ static int mes_v10_1_load_microcode(struct amdgpu_device *adev)
 	WREG32_SOC15(GC, 0, mmCP_MES_IC_BASE_HI,
 		     upper_32_bits(adev->mes.ucode_fw_gpu_addr));
 
-	/* set ucode instruction cache boundary to 2M-1 */
+	/* set ucode inकाष्ठाion cache boundary to 2M-1 */
 	WREG32_SOC15(GC, 0, mmCP_MES_MIBOUND_LO, 0x1FFFFF);
 
 	/* set ucode data firmware address */
@@ -495,182 +496,182 @@ static int mes_v10_1_load_microcode(struct amdgpu_device *adev)
 	WREG32_SOC15(GC, 0, mmCP_MES_MDBOUND_LO, 0x3FFFF);
 
 	/* invalidate ICACHE */
-	switch (adev->asic_type) {
-	case CHIP_SIENNA_CICHLID:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_SIENNA_CICHLID:
 		data = RREG32_SOC15(GC, 0, mmCP_MES_IC_OP_CNTL_Sienna_Cichlid);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		data = RREG32_SOC15(GC, 0, mmCP_MES_IC_OP_CNTL);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	data = REG_SET_FIELD(data, CP_MES_IC_OP_CNTL, PRIME_ICACHE, 0);
 	data = REG_SET_FIELD(data, CP_MES_IC_OP_CNTL, INVALIDATE_CACHE, 1);
-	switch (adev->asic_type) {
-	case CHIP_SIENNA_CICHLID:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_SIENNA_CICHLID:
 		WREG32_SOC15(GC, 0, mmCP_MES_IC_OP_CNTL_Sienna_Cichlid, data);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WREG32_SOC15(GC, 0, mmCP_MES_IC_OP_CNTL, data);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* prime the ICACHE. */
-	switch (adev->asic_type) {
-	case CHIP_SIENNA_CICHLID:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_SIENNA_CICHLID:
 		data = RREG32_SOC15(GC, 0, mmCP_MES_IC_OP_CNTL_Sienna_Cichlid);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		data = RREG32_SOC15(GC, 0, mmCP_MES_IC_OP_CNTL);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	data = REG_SET_FIELD(data, CP_MES_IC_OP_CNTL, PRIME_ICACHE, 1);
-	switch (adev->asic_type) {
-	case CHIP_SIENNA_CICHLID:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_SIENNA_CICHLID:
 		WREG32_SOC15(GC, 0, mmCP_MES_IC_OP_CNTL_Sienna_Cichlid, data);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WREG32_SOC15(GC, 0, mmCP_MES_IC_OP_CNTL, data);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	nv_grbm_select(adev, 0, 0, 0, 0);
 	mutex_unlock(&adev->srbm_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mes_v10_1_allocate_eop_buf(struct amdgpu_device *adev)
-{
-	int r;
+अटल पूर्णांक mes_v10_1_allocate_eop_buf(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
 	u32 *eop;
 
 	r = amdgpu_bo_create_reserved(adev, MES_EOP_SIZE, PAGE_SIZE,
 				      AMDGPU_GEM_DOMAIN_GTT,
 				      &adev->mes.eop_gpu_obj,
 				      &adev->mes.eop_gpu_addr,
-				      (void **)&eop);
-	if (r) {
+				      (व्योम **)&eop);
+	अगर (r) अणु
 		dev_warn(adev->dev, "(%d) create EOP bo failed\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	memset(eop, 0, adev->mes.eop_gpu_obj->tbo.base.size);
+	स_रखो(eop, 0, adev->mes.eop_gpu_obj->tbo.base.size);
 
 	amdgpu_bo_kunmap(adev->mes.eop_gpu_obj);
 	amdgpu_bo_unreserve(adev->mes.eop_gpu_obj);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mes_v10_1_allocate_mem_slots(struct amdgpu_device *adev)
-{
-	int r;
+अटल पूर्णांक mes_v10_1_allocate_mem_slots(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
 
 	r = amdgpu_device_wb_get(adev, &adev->mes.sch_ctx_offs);
-	if (r) {
+	अगर (r) अणु
 		dev_err(adev->dev,
 			"(%d) mes sch_ctx_offs wb alloc failed\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 	adev->mes.sch_ctx_gpu_addr =
 		adev->wb.gpu_addr + (adev->mes.sch_ctx_offs * 4);
 	adev->mes.sch_ctx_ptr =
-		(uint64_t *)&adev->wb.wb[adev->mes.sch_ctx_offs];
+		(uपूर्णांक64_t *)&adev->wb.wb[adev->mes.sch_ctx_offs];
 
 	r = amdgpu_device_wb_get(adev, &adev->mes.query_status_fence_offs);
-	if (r) {
+	अगर (r) अणु
 		dev_err(adev->dev,
 			"(%d) query_status_fence_offs wb alloc failed\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 	adev->mes.query_status_fence_gpu_addr =
 		adev->wb.gpu_addr + (adev->mes.query_status_fence_offs * 4);
 	adev->mes.query_status_fence_ptr =
-		(uint64_t *)&adev->wb.wb[adev->mes.query_status_fence_offs];
+		(uपूर्णांक64_t *)&adev->wb.wb[adev->mes.query_status_fence_offs];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mes_v10_1_mqd_init(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
-	struct v10_compute_mqd *mqd = ring->mqd_ptr;
-	uint64_t hqd_gpu_addr, wb_gpu_addr, eop_base_addr;
-	uint32_t tmp;
+अटल पूर्णांक mes_v10_1_mqd_init(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
+	काष्ठा v10_compute_mqd *mqd = ring->mqd_ptr;
+	uपूर्णांक64_t hqd_gpu_addr, wb_gpu_addr, eop_base_addr;
+	uपूर्णांक32_t पंचांगp;
 
 	mqd->header = 0xC0310800;
 	mqd->compute_pipelinestat_enable = 0x00000001;
-	mqd->compute_static_thread_mgmt_se0 = 0xffffffff;
-	mqd->compute_static_thread_mgmt_se1 = 0xffffffff;
-	mqd->compute_static_thread_mgmt_se2 = 0xffffffff;
-	mqd->compute_static_thread_mgmt_se3 = 0xffffffff;
+	mqd->compute_अटल_thपढ़ो_mgmt_se0 = 0xffffffff;
+	mqd->compute_अटल_thपढ़ो_mgmt_se1 = 0xffffffff;
+	mqd->compute_अटल_thपढ़ो_mgmt_se2 = 0xffffffff;
+	mqd->compute_अटल_thपढ़ो_mgmt_se3 = 0xffffffff;
 	mqd->compute_misc_reserved = 0x00000003;
 
 	eop_base_addr = ring->eop_gpu_addr >> 8;
 	mqd->cp_hqd_eop_base_addr_lo = eop_base_addr;
 	mqd->cp_hqd_eop_base_addr_hi = upper_32_bits(eop_base_addr);
 
-	/* set the EOP size, register value is 2^(EOP_SIZE+1) dwords */
-	tmp = RREG32_SOC15(GC, 0, mmCP_HQD_EOP_CONTROL);
-	tmp = REG_SET_FIELD(tmp, CP_HQD_EOP_CONTROL, EOP_SIZE,
+	/* set the EOP size, रेजिस्टर value is 2^(EOP_SIZE+1) dwords */
+	पंचांगp = RREG32_SOC15(GC, 0, mmCP_HQD_EOP_CONTROL);
+	पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_EOP_CONTROL, EOP_SIZE,
 			(order_base_2(MES_EOP_SIZE / 4) - 1));
 
-	mqd->cp_hqd_eop_control = tmp;
+	mqd->cp_hqd_eop_control = पंचांगp;
 
-	/* enable doorbell? */
-	tmp = RREG32_SOC15(GC, 0, mmCP_HQD_PQ_DOORBELL_CONTROL);
+	/* enable करोorbell? */
+	पंचांगp = RREG32_SOC15(GC, 0, mmCP_HQD_PQ_DOORBELL_CONTROL);
 
-	if (ring->use_doorbell) {
-		tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_DOORBELL_CONTROL,
-				    DOORBELL_OFFSET, ring->doorbell_index);
-		tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_DOORBELL_CONTROL,
+	अगर (ring->use_करोorbell) अणु
+		पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_DOORBELL_CONTROL,
+				    DOORBELL_OFFSET, ring->करोorbell_index);
+		पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_DOORBELL_CONTROL,
 				    DOORBELL_EN, 1);
-		tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_DOORBELL_CONTROL,
+		पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_DOORBELL_CONTROL,
 				    DOORBELL_SOURCE, 0);
-		tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_DOORBELL_CONTROL,
+		पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_DOORBELL_CONTROL,
 				    DOORBELL_HIT, 0);
-	}
-	else
-		tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_DOORBELL_CONTROL,
+	पूर्ण
+	अन्यथा
+		पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_DOORBELL_CONTROL,
 				    DOORBELL_EN, 0);
 
-	mqd->cp_hqd_pq_doorbell_control = tmp;
+	mqd->cp_hqd_pq_करोorbell_control = पंचांगp;
 
-	/* disable the queue if it's active */
+	/* disable the queue अगर it's active */
 	ring->wptr = 0;
 	mqd->cp_hqd_dequeue_request = 0;
 	mqd->cp_hqd_pq_rptr = 0;
 	mqd->cp_hqd_pq_wptr_lo = 0;
 	mqd->cp_hqd_pq_wptr_hi = 0;
 
-	/* set the pointer to the MQD */
+	/* set the poपूर्णांकer to the MQD */
 	mqd->cp_mqd_base_addr_lo = ring->mqd_gpu_addr & 0xfffffffc;
 	mqd->cp_mqd_base_addr_hi = upper_32_bits(ring->mqd_gpu_addr);
 
 	/* set MQD vmid to 0 */
-	tmp = RREG32_SOC15(GC, 0, mmCP_MQD_CONTROL);
-	tmp = REG_SET_FIELD(tmp, CP_MQD_CONTROL, VMID, 0);
-	mqd->cp_mqd_control = tmp;
+	पंचांगp = RREG32_SOC15(GC, 0, mmCP_MQD_CONTROL);
+	पंचांगp = REG_SET_FIELD(पंचांगp, CP_MQD_CONTROL, VMID, 0);
+	mqd->cp_mqd_control = पंचांगp;
 
-	/* set the pointer to the HQD, this is similar CP_RB0_BASE/_HI */
+	/* set the poपूर्णांकer to the HQD, this is similar CP_RB0_BASE/_HI */
 	hqd_gpu_addr = ring->gpu_addr >> 8;
 	mqd->cp_hqd_pq_base_lo = hqd_gpu_addr;
 	mqd->cp_hqd_pq_base_hi = upper_32_bits(hqd_gpu_addr);
 
 	/* set up the HQD, this is similar to CP_RB0_CNTL */
-	tmp = RREG32_SOC15(GC, 0, mmCP_HQD_PQ_CONTROL);
-	tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_CONTROL, QUEUE_SIZE,
+	पंचांगp = RREG32_SOC15(GC, 0, mmCP_HQD_PQ_CONTROL);
+	पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_CONTROL, QUEUE_SIZE,
 			    (order_base_2(ring->ring_size / 4) - 1));
-	tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_CONTROL, RPTR_BLOCK_SIZE,
+	पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_CONTROL, RPTR_BLOCK_SIZE,
 			    ((order_base_2(AMDGPU_GPU_PAGE_SIZE / 4) - 1) << 8));
-#ifdef __BIG_ENDIAN
-	tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_CONTROL, ENDIAN_SWAP, 1);
-#endif
-	tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_CONTROL, UNORD_DISPATCH, 0);
-	tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_CONTROL, TUNNEL_DISPATCH, 0);
-	tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_CONTROL, PRIV_STATE, 1);
-	tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_CONTROL, KMD_QUEUE, 1);
-	mqd->cp_hqd_pq_control = tmp;
+#अगर_घोषित __BIG_ENDIAN
+	पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_CONTROL, ENDIAN_SWAP, 1);
+#पूर्ण_अगर
+	पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_CONTROL, UNORD_DISPATCH, 0);
+	पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_CONTROL, TUNNEL_DISPATCH, 0);
+	पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_CONTROL, PRIV_STATE, 1);
+	पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_CONTROL, KMD_QUEUE, 1);
+	mqd->cp_hqd_pq_control = पंचांगp;
 
 	/* set the wb address whether it's enabled or not */
 	wb_gpu_addr = adev->wb.gpu_addr + (ring->rptr_offs * 4);
@@ -678,54 +679,54 @@ static int mes_v10_1_mqd_init(struct amdgpu_ring *ring)
 	mqd->cp_hqd_pq_rptr_report_addr_hi =
 		upper_32_bits(wb_gpu_addr) & 0xffff;
 
-	/* only used if CP_PQ_WPTR_POLL_CNTL.CP_PQ_WPTR_POLL_CNTL__EN_MASK=1 */
+	/* only used अगर CP_PQ_WPTR_POLL_CNTL.CP_PQ_WPTR_POLL_CNTL__EN_MASK=1 */
 	wb_gpu_addr = adev->wb.gpu_addr + (ring->wptr_offs * 4);
 	mqd->cp_hqd_pq_wptr_poll_addr_lo = wb_gpu_addr & 0xfffffff8;
 	mqd->cp_hqd_pq_wptr_poll_addr_hi = upper_32_bits(wb_gpu_addr) & 0xffff;
 
-	tmp = 0;
-	/* enable the doorbell if requested */
-	if (ring->use_doorbell) {
-		tmp = RREG32_SOC15(GC, 0, mmCP_HQD_PQ_DOORBELL_CONTROL);
-		tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_DOORBELL_CONTROL,
-				DOORBELL_OFFSET, ring->doorbell_index);
+	पंचांगp = 0;
+	/* enable the करोorbell अगर requested */
+	अगर (ring->use_करोorbell) अणु
+		पंचांगp = RREG32_SOC15(GC, 0, mmCP_HQD_PQ_DOORBELL_CONTROL);
+		पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_DOORBELL_CONTROL,
+				DOORBELL_OFFSET, ring->करोorbell_index);
 
-		tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_DOORBELL_CONTROL,
+		पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_DOORBELL_CONTROL,
 				    DOORBELL_EN, 1);
-		tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_DOORBELL_CONTROL,
+		पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_DOORBELL_CONTROL,
 				    DOORBELL_SOURCE, 0);
-		tmp = REG_SET_FIELD(tmp, CP_HQD_PQ_DOORBELL_CONTROL,
+		पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PQ_DOORBELL_CONTROL,
 				    DOORBELL_HIT, 0);
-	}
+	पूर्ण
 
-	mqd->cp_hqd_pq_doorbell_control = tmp;
+	mqd->cp_hqd_pq_करोorbell_control = पंचांगp;
 
-	/* reset read and write pointers, similar to CP_RB0_WPTR/_RPTR */
+	/* reset पढ़ो and ग_लिखो poपूर्णांकers, similar to CP_RB0_WPTR/_RPTR */
 	ring->wptr = 0;
 	mqd->cp_hqd_pq_rptr = RREG32_SOC15(GC, 0, mmCP_HQD_PQ_RPTR);
 
-	/* set the vmid for the queue */
+	/* set the vmid क्रम the queue */
 	mqd->cp_hqd_vmid = 0;
 
-	tmp = RREG32_SOC15(GC, 0, mmCP_HQD_PERSISTENT_STATE);
-	tmp = REG_SET_FIELD(tmp, CP_HQD_PERSISTENT_STATE, PRELOAD_SIZE, 0x53);
-	mqd->cp_hqd_persistent_state = tmp;
+	पंचांगp = RREG32_SOC15(GC, 0, mmCP_HQD_PERSISTENT_STATE);
+	पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_PERSISTENT_STATE, PRELOAD_SIZE, 0x53);
+	mqd->cp_hqd_persistent_state = पंचांगp;
 
 	/* set MIN_IB_AVAIL_SIZE */
-	tmp = RREG32_SOC15(GC, 0, mmCP_HQD_IB_CONTROL);
-	tmp = REG_SET_FIELD(tmp, CP_HQD_IB_CONTROL, MIN_IB_AVAIL_SIZE, 3);
-	mqd->cp_hqd_ib_control = tmp;
+	पंचांगp = RREG32_SOC15(GC, 0, mmCP_HQD_IB_CONTROL);
+	पंचांगp = REG_SET_FIELD(पंचांगp, CP_HQD_IB_CONTROL, MIN_IB_AVAIL_SIZE, 3);
+	mqd->cp_hqd_ib_control = पंचांगp;
 
 	/* activate the queue */
 	mqd->cp_hqd_active = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mes_v10_1_queue_init_register(struct amdgpu_ring *ring)
-{
-	struct v10_compute_mqd *mqd = ring->mqd_ptr;
-	struct amdgpu_device *adev = ring->adev;
-	uint32_t data = 0;
+अटल व्योम mes_v10_1_queue_init_रेजिस्टर(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा v10_compute_mqd *mqd = ring->mqd_ptr;
+	काष्ठा amdgpu_device *adev = ring->adev;
+	uपूर्णांक32_t data = 0;
 
 	mutex_lock(&adev->srbm_mutex);
 	nv_grbm_select(adev, 3, 0, 0, 0);
@@ -771,7 +772,7 @@ static void mes_v10_1_queue_init_register(struct amdgpu_ring *ring)
 
 	/* set CP_HQD_PQ_DOORBELL_CONTROL */
 	WREG32_SOC15(GC, 0, mmCP_HQD_PQ_DOORBELL_CONTROL,
-		     mqd->cp_hqd_pq_doorbell_control);
+		     mqd->cp_hqd_pq_करोorbell_control);
 
 	/* set CP_HQD_PERSISTENT_STATE.PRELOAD_SIZE=0x53 */
 	WREG32_SOC15(GC, 0, mmCP_HQD_PERSISTENT_STATE, mqd->cp_hqd_persistent_state);
@@ -781,57 +782,57 @@ static void mes_v10_1_queue_init_register(struct amdgpu_ring *ring)
 
 	nv_grbm_select(adev, 0, 0, 0, 0);
 	mutex_unlock(&adev->srbm_mutex);
-}
+पूर्ण
 
-#if 0
-static int mes_v10_1_kiq_enable_queue(struct amdgpu_device *adev)
-{
-	struct amdgpu_kiq *kiq = &adev->gfx.kiq;
-	struct amdgpu_ring *kiq_ring = &adev->gfx.kiq.ring;
-	int r;
+#अगर 0
+अटल पूर्णांक mes_v10_1_kiq_enable_queue(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_kiq *kiq = &adev->gfx.kiq;
+	काष्ठा amdgpu_ring *kiq_ring = &adev->gfx.kiq.ring;
+	पूर्णांक r;
 
-	if (!kiq->pmf || !kiq->pmf->kiq_map_queues)
-		return -EINVAL;
+	अगर (!kiq->pmf || !kiq->pmf->kiq_map_queues)
+		वापस -EINVAL;
 
 	r = amdgpu_ring_alloc(kiq_ring, kiq->pmf->map_queues_size);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to lock KIQ (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	kiq->pmf->kiq_map_queues(kiq_ring, &adev->mes.ring);
 
 	r = amdgpu_ring_test_ring(kiq_ring);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("kfq enable failed\n");
-		kiq_ring->sched.ready = false;
-	}
-	return r;
-}
-#endif
+		kiq_ring->sched.पढ़ोy = false;
+	पूर्ण
+	वापस r;
+पूर्ण
+#पूर्ण_अगर
 
-static int mes_v10_1_queue_init(struct amdgpu_device *adev)
-{
-	int r;
+अटल पूर्णांक mes_v10_1_queue_init(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
 
 	r = mes_v10_1_mqd_init(&adev->mes.ring);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-#if 0
+#अगर 0
 	r = mes_v10_1_kiq_enable_queue(adev);
-	if (r)
-		return r;
-#else
-	mes_v10_1_queue_init_register(&adev->mes.ring);
-#endif
+	अगर (r)
+		वापस r;
+#अन्यथा
+	mes_v10_1_queue_init_रेजिस्टर(&adev->mes.ring);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mes_v10_1_ring_init(struct amdgpu_device *adev)
-{
-	struct amdgpu_ring *ring;
+अटल पूर्णांक mes_v10_1_ring_init(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ring *ring;
 
 	ring = &adev->mes.ring;
 
@@ -841,155 +842,155 @@ static int mes_v10_1_ring_init(struct amdgpu_device *adev)
 	ring->pipe = 0;
 	ring->queue = 0;
 
-	ring->ring_obj = NULL;
-	ring->use_doorbell = true;
-	ring->doorbell_index = adev->doorbell_index.mes_ring << 1;
+	ring->ring_obj = शून्य;
+	ring->use_करोorbell = true;
+	ring->करोorbell_index = adev->करोorbell_index.mes_ring << 1;
 	ring->eop_gpu_addr = adev->mes.eop_gpu_addr;
 	ring->no_scheduler = true;
-	sprintf(ring->name, "mes_%d.%d.%d", ring->me, ring->pipe, ring->queue);
+	प्र_लिखो(ring->name, "mes_%d.%d.%d", ring->me, ring->pipe, ring->queue);
 
-	return amdgpu_ring_init(adev, ring, 1024, NULL, 0,
-				AMDGPU_RING_PRIO_DEFAULT, NULL);
-}
+	वापस amdgpu_ring_init(adev, ring, 1024, शून्य, 0,
+				AMDGPU_RING_PRIO_DEFAULT, शून्य);
+पूर्ण
 
-static int mes_v10_1_mqd_sw_init(struct amdgpu_device *adev)
-{
-	int r, mqd_size = sizeof(struct v10_compute_mqd);
-	struct amdgpu_ring *ring = &adev->mes.ring;
+अटल पूर्णांक mes_v10_1_mqd_sw_init(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r, mqd_size = माप(काष्ठा v10_compute_mqd);
+	काष्ठा amdgpu_ring *ring = &adev->mes.ring;
 
-	if (ring->mqd_obj)
-		return 0;
+	अगर (ring->mqd_obj)
+		वापस 0;
 
 	r = amdgpu_bo_create_kernel(adev, mqd_size, PAGE_SIZE,
 				    AMDGPU_GEM_DOMAIN_GTT, &ring->mqd_obj,
 				    &ring->mqd_gpu_addr, &ring->mqd_ptr);
-	if (r) {
+	अगर (r) अणु
 		dev_warn(adev->dev, "failed to create ring mqd bo (%d)", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	/* prepare MQD backup */
-	adev->mes.mqd_backup = kmalloc(mqd_size, GFP_KERNEL);
-	if (!adev->mes.mqd_backup)
+	adev->mes.mqd_backup = kदो_स्मृति(mqd_size, GFP_KERNEL);
+	अगर (!adev->mes.mqd_backup)
 		dev_warn(adev->dev,
 			 "no memory to create MQD backup for ring %s\n",
 			 ring->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mes_v10_1_sw_init(void *handle)
-{
-	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक mes_v10_1_sw_init(व्योम *handle)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	adev->mes.adev = adev;
 	adev->mes.funcs = &mes_v10_1_funcs;
 
 	r = mes_v10_1_init_microcode(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = mes_v10_1_allocate_eop_buf(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = mes_v10_1_mqd_sw_init(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = mes_v10_1_ring_init(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = mes_v10_1_allocate_mem_slots(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mes_v10_1_sw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक mes_v10_1_sw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	amdgpu_device_wb_free(adev, adev->mes.sch_ctx_offs);
-	amdgpu_device_wb_free(adev, adev->mes.query_status_fence_offs);
+	amdgpu_device_wb_मुक्त(adev, adev->mes.sch_ctx_offs);
+	amdgpu_device_wb_मुक्त(adev, adev->mes.query_status_fence_offs);
 
-	kfree(adev->mes.mqd_backup);
+	kमुक्त(adev->mes.mqd_backup);
 
-	amdgpu_bo_free_kernel(&adev->mes.ring.mqd_obj,
+	amdgpu_bo_मुक्त_kernel(&adev->mes.ring.mqd_obj,
 			      &adev->mes.ring.mqd_gpu_addr,
 			      &adev->mes.ring.mqd_ptr);
 
-	amdgpu_bo_free_kernel(&adev->mes.eop_gpu_obj,
+	amdgpu_bo_मुक्त_kernel(&adev->mes.eop_gpu_obj,
 			      &adev->mes.eop_gpu_addr,
-			      NULL);
+			      शून्य);
 
-	mes_v10_1_free_microcode(adev);
+	mes_v10_1_मुक्त_microcode(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mes_v10_1_hw_init(void *handle)
-{
-	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक mes_v10_1_hw_init(व्योम *handle)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	if (adev->firmware.load_type == AMDGPU_FW_LOAD_DIRECT) {
+	अगर (adev->firmware.load_type == AMDGPU_FW_LOAD_सूचीECT) अणु
 		r = mes_v10_1_load_microcode(adev);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("failed to MES fw, r=%d\n", r);
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
 	mes_v10_1_enable(adev, true);
 
 	r = mes_v10_1_queue_init(adev);
-	if (r)
-		goto failure;
+	अगर (r)
+		जाओ failure;
 
 	r = mes_v10_1_set_hw_resources(&adev->mes);
-	if (r)
-		goto failure;
+	अगर (r)
+		जाओ failure;
 
 	r = mes_v10_1_query_sched_status(&adev->mes);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("MES is busy\n");
-		goto failure;
-	}
+		जाओ failure;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 failure:
 	mes_v10_1_hw_fini(adev);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int mes_v10_1_hw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक mes_v10_1_hw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	mes_v10_1_enable(adev, false);
 
-	if (adev->firmware.load_type == AMDGPU_FW_LOAD_DIRECT)
-		mes_v10_1_free_ucode_buffers(adev);
+	अगर (adev->firmware.load_type == AMDGPU_FW_LOAD_सूचीECT)
+		mes_v10_1_मुक्त_ucode_buffers(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mes_v10_1_suspend(void *handle)
-{
-	return 0;
-}
+अटल पूर्णांक mes_v10_1_suspend(व्योम *handle)
+अणु
+	वापस 0;
+पूर्ण
 
-static int mes_v10_1_resume(void *handle)
-{
-	return 0;
-}
+अटल पूर्णांक mes_v10_1_resume(व्योम *handle)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct amd_ip_funcs mes_v10_1_ip_funcs = {
+अटल स्थिर काष्ठा amd_ip_funcs mes_v10_1_ip_funcs = अणु
 	.name = "mes_v10_1",
 	.sw_init = mes_v10_1_sw_init,
 	.sw_fini = mes_v10_1_sw_fini,
@@ -997,12 +998,12 @@ static const struct amd_ip_funcs mes_v10_1_ip_funcs = {
 	.hw_fini = mes_v10_1_hw_fini,
 	.suspend = mes_v10_1_suspend,
 	.resume = mes_v10_1_resume,
-};
+पूर्ण;
 
-const struct amdgpu_ip_block_version mes_v10_1_ip_block = {
+स्थिर काष्ठा amdgpu_ip_block_version mes_v10_1_ip_block = अणु
 	.type = AMD_IP_BLOCK_TYPE_MES,
 	.major = 10,
 	.minor = 1,
 	.rev = 0,
 	.funcs = &mes_v10_1_ip_funcs,
-};
+पूर्ण;

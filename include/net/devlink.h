@@ -1,283 +1,284 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * include/net/devlink.h - Network physical device Netlink interface
+ * include/net/devlink.h - Network physical device Netlink पूर्णांकerface
  * Copyright (c) 2016 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016 Jiri Pirko <jiri@mellanox.com>
  */
-#ifndef _NET_DEVLINK_H_
-#define _NET_DEVLINK_H_
+#अगर_अघोषित _NET_DEVLINK_H_
+#घोषणा _NET_DEVLINK_H_
 
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/gfp.h>
-#include <linux/list.h>
-#include <linux/netdevice.h>
-#include <linux/spinlock.h>
-#include <linux/workqueue.h>
-#include <linux/refcount.h>
-#include <net/net_namespace.h>
-#include <net/flow_offload.h>
-#include <uapi/linux/devlink.h>
-#include <linux/xarray.h>
-#include <linux/firmware.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/list.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/refcount.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/flow_offload.h>
+#समावेश <uapi/linux/devlink.h>
+#समावेश <linux/xarray.h>
+#समावेश <linux/firmware.h>
 
-#define DEVLINK_RELOAD_STATS_ARRAY_SIZE \
+#घोषणा DEVLINK_RELOAD_STATS_ARRAY_SIZE \
 	(__DEVLINK_RELOAD_LIMIT_MAX * __DEVLINK_RELOAD_ACTION_MAX)
 
-struct devlink_dev_stats {
+काष्ठा devlink_dev_stats अणु
 	u32 reload_stats[DEVLINK_RELOAD_STATS_ARRAY_SIZE];
 	u32 remote_reload_stats[DEVLINK_RELOAD_STATS_ARRAY_SIZE];
-};
+पूर्ण;
 
-struct devlink_ops;
+काष्ठा devlink_ops;
 
-struct devlink {
-	struct list_head list;
-	struct list_head port_list;
-	struct list_head sb_list;
-	struct list_head dpipe_table_list;
-	struct list_head resource_list;
-	struct list_head param_list;
-	struct list_head region_list;
-	struct list_head reporter_list;
-	struct mutex reporters_lock; /* protects reporter_list */
-	struct devlink_dpipe_headers *dpipe_headers;
-	struct list_head trap_list;
-	struct list_head trap_group_list;
-	struct list_head trap_policer_list;
-	const struct devlink_ops *ops;
-	struct xarray snapshot_ids;
-	struct devlink_dev_stats stats;
-	struct device *dev;
+काष्ठा devlink अणु
+	काष्ठा list_head list;
+	काष्ठा list_head port_list;
+	काष्ठा list_head sb_list;
+	काष्ठा list_head dpipe_table_list;
+	काष्ठा list_head resource_list;
+	काष्ठा list_head param_list;
+	काष्ठा list_head region_list;
+	काष्ठा list_head reporter_list;
+	काष्ठा mutex reporters_lock; /* protects reporter_list */
+	काष्ठा devlink_dpipe_headers *dpipe_headers;
+	काष्ठा list_head trap_list;
+	काष्ठा list_head trap_group_list;
+	काष्ठा list_head trap_policer_list;
+	स्थिर काष्ठा devlink_ops *ops;
+	काष्ठा xarray snapshot_ids;
+	काष्ठा devlink_dev_stats stats;
+	काष्ठा device *dev;
 	possible_net_t _net;
-	struct mutex lock; /* Serializes access to devlink instance specific objects such as
+	काष्ठा mutex lock; /* Serializes access to devlink instance specअगरic objects such as
 			    * port, sb, dpipe, resource, params, region, traps and more.
 			    */
 	u8 reload_failed:1,
 	   reload_enabled:1,
-	   registered:1;
-	char priv[0] __aligned(NETDEV_ALIGN);
-};
+	   रेजिस्टरed:1;
+	अक्षर priv[0] __aligned(NETDEV_ALIGN);
+पूर्ण;
 
-struct devlink_port_phys_attrs {
+काष्ठा devlink_port_phys_attrs अणु
 	u32 port_number; /* Same value as "split group".
 			  * A physical port which is visible to the user
-			  * for a given port flavour.
+			  * क्रम a given port flavour.
 			  */
 	u32 split_subport_number; /* If the port is split, this is the number of subport. */
-};
+पूर्ण;
 
 /**
- * struct devlink_port_pci_pf_attrs - devlink port's PCI PF attributes
+ * काष्ठा devlink_port_pci_pf_attrs - devlink port's PCI PF attributes
  * @controller: Associated controller number
- * @pf: Associated PCI PF number for this port.
- * @external: when set, indicates if a port is for an external controller
+ * @pf: Associated PCI PF number क्रम this port.
+ * @बाह्यal: when set, indicates अगर a port is क्रम an बाह्यal controller
  */
-struct devlink_port_pci_pf_attrs {
+काष्ठा devlink_port_pci_pf_attrs अणु
 	u32 controller;
 	u16 pf;
-	u8 external:1;
-};
+	u8 बाह्यal:1;
+पूर्ण;
 
 /**
- * struct devlink_port_pci_vf_attrs - devlink port's PCI VF attributes
+ * काष्ठा devlink_port_pci_vf_attrs - devlink port's PCI VF attributes
  * @controller: Associated controller number
- * @pf: Associated PCI PF number for this port.
- * @vf: Associated PCI VF for of the PCI PF for this port.
- * @external: when set, indicates if a port is for an external controller
+ * @pf: Associated PCI PF number क्रम this port.
+ * @vf: Associated PCI VF क्रम of the PCI PF क्रम this port.
+ * @बाह्यal: when set, indicates अगर a port is क्रम an बाह्यal controller
  */
-struct devlink_port_pci_vf_attrs {
+काष्ठा devlink_port_pci_vf_attrs अणु
 	u32 controller;
 	u16 pf;
 	u16 vf;
-	u8 external:1;
-};
+	u8 बाह्यal:1;
+पूर्ण;
 
 /**
- * struct devlink_port_pci_sf_attrs - devlink port's PCI SF attributes
+ * काष्ठा devlink_port_pci_sf_attrs - devlink port's PCI SF attributes
  * @controller: Associated controller number
- * @sf: Associated PCI SF for of the PCI PF for this port.
- * @pf: Associated PCI PF number for this port.
- * @external: when set, indicates if a port is for an external controller
+ * @sf: Associated PCI SF क्रम of the PCI PF क्रम this port.
+ * @pf: Associated PCI PF number क्रम this port.
+ * @बाह्यal: when set, indicates अगर a port is क्रम an बाह्यal controller
  */
-struct devlink_port_pci_sf_attrs {
+काष्ठा devlink_port_pci_sf_attrs अणु
 	u32 controller;
 	u32 sf;
 	u16 pf;
-	u8 external:1;
-};
+	u8 बाह्यal:1;
+पूर्ण;
 
 /**
- * struct devlink_port_attrs - devlink port object
+ * काष्ठा devlink_port_attrs - devlink port object
  * @flavour: flavour of the port
- * @split: indicates if this is split port
- * @splittable: indicates if the port can be split.
+ * @split: indicates अगर this is split port
+ * @splittable: indicates अगर the port can be split.
  * @lanes: maximum number of lanes the port supports. 0 value is not passed to netlink.
- * @switch_id: if the port is part of switch, this is buffer with ID, otherwise this is NULL
+ * @चयन_id: अगर the port is part of चयन, this is buffer with ID, otherwise this is शून्य
  * @phys: physical port attributes
  * @pci_pf: PCI PF port attributes
  * @pci_vf: PCI VF port attributes
  * @pci_sf: PCI SF port attributes
  */
-struct devlink_port_attrs {
+काष्ठा devlink_port_attrs अणु
 	u8 split:1,
 	   splittable:1;
 	u32 lanes;
-	enum devlink_port_flavour flavour;
-	struct netdev_phys_item_id switch_id;
-	union {
-		struct devlink_port_phys_attrs phys;
-		struct devlink_port_pci_pf_attrs pci_pf;
-		struct devlink_port_pci_vf_attrs pci_vf;
-		struct devlink_port_pci_sf_attrs pci_sf;
-	};
-};
+	क्रमागत devlink_port_flavour flavour;
+	काष्ठा netdev_phys_item_id चयन_id;
+	जोड़ अणु
+		काष्ठा devlink_port_phys_attrs phys;
+		काष्ठा devlink_port_pci_pf_attrs pci_pf;
+		काष्ठा devlink_port_pci_vf_attrs pci_vf;
+		काष्ठा devlink_port_pci_sf_attrs pci_sf;
+	पूर्ण;
+पूर्ण;
 
-struct devlink_port {
-	struct list_head list;
-	struct list_head param_list;
-	struct list_head region_list;
-	struct devlink *devlink;
-	unsigned int index;
-	bool registered;
+काष्ठा devlink_port अणु
+	काष्ठा list_head list;
+	काष्ठा list_head param_list;
+	काष्ठा list_head region_list;
+	काष्ठा devlink *devlink;
+	अचिन्हित पूर्णांक index;
+	bool रेजिस्टरed;
 	spinlock_t type_lock; /* Protects type and type_dev
-			       * pointer consistency.
+			       * poपूर्णांकer consistency.
 			       */
-	enum devlink_port_type type;
-	enum devlink_port_type desired_type;
-	void *type_dev;
-	struct devlink_port_attrs attrs;
+	क्रमागत devlink_port_type type;
+	क्रमागत devlink_port_type desired_type;
+	व्योम *type_dev;
+	काष्ठा devlink_port_attrs attrs;
 	u8 attrs_set:1,
-	   switch_port:1;
-	struct delayed_work type_warn_dw;
-	struct list_head reporter_list;
-	struct mutex reporters_lock; /* Protects reporter_list */
-};
+	   चयन_port:1;
+	काष्ठा delayed_work type_warn_dw;
+	काष्ठा list_head reporter_list;
+	काष्ठा mutex reporters_lock; /* Protects reporter_list */
+पूर्ण;
 
-struct devlink_port_new_attrs {
-	enum devlink_port_flavour flavour;
-	unsigned int port_index;
+काष्ठा devlink_port_new_attrs अणु
+	क्रमागत devlink_port_flavour flavour;
+	अचिन्हित पूर्णांक port_index;
 	u32 controller;
 	u32 sfnum;
 	u16 pfnum;
 	u8 port_index_valid:1,
 	   controller_valid:1,
 	   sfnum_valid:1;
-};
+पूर्ण;
 
-struct devlink_sb_pool_info {
-	enum devlink_sb_pool_type pool_type;
+काष्ठा devlink_sb_pool_info अणु
+	क्रमागत devlink_sb_pool_type pool_type;
 	u32 size;
-	enum devlink_sb_threshold_type threshold_type;
+	क्रमागत devlink_sb_threshold_type threshold_type;
 	u32 cell_size;
-};
+पूर्ण;
 
 /**
- * struct devlink_dpipe_field - dpipe field object
+ * काष्ठा devlink_dpipe_field - dpipe field object
  * @name: field name
  * @id: index inside the headers field array
  * @bitwidth: bitwidth
  * @mapping_type: mapping type
  */
-struct devlink_dpipe_field {
-	const char *name;
-	unsigned int id;
-	unsigned int bitwidth;
-	enum devlink_dpipe_field_mapping_type mapping_type;
-};
+काष्ठा devlink_dpipe_field अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक id;
+	अचिन्हित पूर्णांक bitwidth;
+	क्रमागत devlink_dpipe_field_mapping_type mapping_type;
+पूर्ण;
 
 /**
- * struct devlink_dpipe_header - dpipe header object
+ * काष्ठा devlink_dpipe_header - dpipe header object
  * @name: header name
  * @id: index, global/local detrmined by global bit
  * @fields: fields
  * @fields_count: number of fields
- * @global: indicates if header is shared like most protocol header
- *	    or driver specific
+ * @global: indicates अगर header is shared like most protocol header
+ *	    or driver specअगरic
  */
-struct devlink_dpipe_header {
-	const char *name;
-	unsigned int id;
-	struct devlink_dpipe_field *fields;
-	unsigned int fields_count;
+काष्ठा devlink_dpipe_header अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक id;
+	काष्ठा devlink_dpipe_field *fields;
+	अचिन्हित पूर्णांक fields_count;
 	bool global;
-};
+पूर्ण;
 
 /**
- * struct devlink_dpipe_match - represents match operation
+ * काष्ठा devlink_dpipe_match - represents match operation
  * @type: type of match
  * @header_index: header index (packets can have several headers of same
- *		  type like in case of tunnels)
+ *		  type like in हाल of tunnels)
  * @header: header
  * @fieled_id: field index
  */
-struct devlink_dpipe_match {
-	enum devlink_dpipe_match_type type;
-	unsigned int header_index;
-	struct devlink_dpipe_header *header;
-	unsigned int field_id;
-};
+काष्ठा devlink_dpipe_match अणु
+	क्रमागत devlink_dpipe_match_type type;
+	अचिन्हित पूर्णांक header_index;
+	काष्ठा devlink_dpipe_header *header;
+	अचिन्हित पूर्णांक field_id;
+पूर्ण;
 
 /**
- * struct devlink_dpipe_action - represents action operation
+ * काष्ठा devlink_dpipe_action - represents action operation
  * @type: type of action
  * @header_index: header index (packets can have several headers of same
- *		  type like in case of tunnels)
+ *		  type like in हाल of tunnels)
  * @header: header
  * @fieled_id: field index
  */
-struct devlink_dpipe_action {
-	enum devlink_dpipe_action_type type;
-	unsigned int header_index;
-	struct devlink_dpipe_header *header;
-	unsigned int field_id;
-};
+काष्ठा devlink_dpipe_action अणु
+	क्रमागत devlink_dpipe_action_type type;
+	अचिन्हित पूर्णांक header_index;
+	काष्ठा devlink_dpipe_header *header;
+	अचिन्हित पूर्णांक field_id;
+पूर्ण;
 
 /**
- * struct devlink_dpipe_value - represents value of match/action
+ * काष्ठा devlink_dpipe_value - represents value of match/action
  * @action: action
  * @match: match
- * @mapping_value: in case the field has some mapping this value
- *                 specified the mapping value
- * @mapping_valid: specify if mapping value is valid
+ * @mapping_value: in हाल the field has some mapping this value
+ *                 specअगरied the mapping value
+ * @mapping_valid: specअगरy अगर mapping value is valid
  * @value_size: value size
  * @value: value
  * @mask: bit mask
  */
-struct devlink_dpipe_value {
-	union {
-		struct devlink_dpipe_action *action;
-		struct devlink_dpipe_match *match;
-	};
-	unsigned int mapping_value;
+काष्ठा devlink_dpipe_value अणु
+	जोड़ अणु
+		काष्ठा devlink_dpipe_action *action;
+		काष्ठा devlink_dpipe_match *match;
+	पूर्ण;
+	अचिन्हित पूर्णांक mapping_value;
 	bool mapping_valid;
-	unsigned int value_size;
-	void *value;
-	void *mask;
-};
+	अचिन्हित पूर्णांक value_size;
+	व्योम *value;
+	व्योम *mask;
+पूर्ण;
 
 /**
- * struct devlink_dpipe_entry - table entry object
+ * काष्ठा devlink_dpipe_entry - table entry object
  * @index: index of the entry in the table
  * @match_values: match values
  * @matche_values_count: count of matches tuples
  * @action_values: actions values
  * @action_values_count: count of actions values
  * @counter: value of counter
- * @counter_valid: Specify if value is valid from hardware
+ * @counter_valid: Specअगरy अगर value is valid from hardware
  */
-struct devlink_dpipe_entry {
+काष्ठा devlink_dpipe_entry अणु
 	u64 index;
-	struct devlink_dpipe_value *match_values;
-	unsigned int match_values_count;
-	struct devlink_dpipe_value *action_values;
-	unsigned int action_values_count;
+	काष्ठा devlink_dpipe_value *match_values;
+	अचिन्हित पूर्णांक match_values_count;
+	काष्ठा devlink_dpipe_value *action_values;
+	अचिन्हित पूर्णांक action_values_count;
 	u64 counter;
 	bool counter_valid;
-};
+पूर्ण;
 
 /**
- * struct devlink_dpipe_dump_ctx - context provided to driver in order
+ * काष्ठा devlink_dpipe_dump_ctx - context provided to driver in order
  *				   to dump
  * @info: info
  * @cmd: devlink command
@@ -285,210 +286,210 @@ struct devlink_dpipe_entry {
  * @nest: top attribute
  * @hdr: hdr
  */
-struct devlink_dpipe_dump_ctx {
-	struct genl_info *info;
-	enum devlink_command cmd;
-	struct sk_buff *skb;
-	struct nlattr *nest;
-	void *hdr;
-};
+काष्ठा devlink_dpipe_dump_ctx अणु
+	काष्ठा genl_info *info;
+	क्रमागत devlink_command cmd;
+	काष्ठा sk_buff *skb;
+	काष्ठा nlattr *nest;
+	व्योम *hdr;
+पूर्ण;
 
-struct devlink_dpipe_table_ops;
+काष्ठा devlink_dpipe_table_ops;
 
 /**
- * struct devlink_dpipe_table - table object
- * @priv: private
+ * काष्ठा devlink_dpipe_table - table object
+ * @priv: निजी
  * @name: table name
- * @counters_enabled: indicates if counters are active
- * @counter_control_extern: indicates if counter control is in dpipe or
- *			    external tool
+ * @counters_enabled: indicates अगर counters are active
+ * @counter_control_बाह्य: indicates अगर counter control is in dpipe or
+ *			    बाह्यal tool
  * @resource_valid: Indicate that the resource id is valid
  * @resource_id: relative resource this table is related to
  * @resource_units: number of resource's unit consumed per table's entry
  * @table_ops: table operations
  * @rcu: rcu
  */
-struct devlink_dpipe_table {
-	void *priv;
-	struct list_head list;
-	const char *name;
+काष्ठा devlink_dpipe_table अणु
+	व्योम *priv;
+	काष्ठा list_head list;
+	स्थिर अक्षर *name;
 	bool counters_enabled;
-	bool counter_control_extern;
+	bool counter_control_बाह्य;
 	bool resource_valid;
 	u64 resource_id;
 	u64 resource_units;
-	struct devlink_dpipe_table_ops *table_ops;
-	struct rcu_head rcu;
-};
+	काष्ठा devlink_dpipe_table_ops *table_ops;
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
 /**
- * struct devlink_dpipe_table_ops - dpipe_table ops
+ * काष्ठा devlink_dpipe_table_ops - dpipe_table ops
  * @actions_dump - dumps all tables actions
  * @matches_dump - dumps all tables matches
  * @entries_dump - dumps all active entries in the table
  * @counters_set_update - when changing the counter status hardware sync
- *			  maybe needed to allocate/free counter related
+ *			  maybe needed to allocate/मुक्त counter related
  *			  resources
  * @size_get - get size
  */
-struct devlink_dpipe_table_ops {
-	int (*actions_dump)(void *priv, struct sk_buff *skb);
-	int (*matches_dump)(void *priv, struct sk_buff *skb);
-	int (*entries_dump)(void *priv, bool counters_enabled,
-			    struct devlink_dpipe_dump_ctx *dump_ctx);
-	int (*counters_set_update)(void *priv, bool enable);
-	u64 (*size_get)(void *priv);
-};
+काष्ठा devlink_dpipe_table_ops अणु
+	पूर्णांक (*actions_dump)(व्योम *priv, काष्ठा sk_buff *skb);
+	पूर्णांक (*matches_dump)(व्योम *priv, काष्ठा sk_buff *skb);
+	पूर्णांक (*entries_dump)(व्योम *priv, bool counters_enabled,
+			    काष्ठा devlink_dpipe_dump_ctx *dump_ctx);
+	पूर्णांक (*counters_set_update)(व्योम *priv, bool enable);
+	u64 (*size_get)(व्योम *priv);
+पूर्ण;
 
 /**
- * struct devlink_dpipe_headers - dpipe headers
- * @headers - header array can be shared (global bit) or driver specific
+ * काष्ठा devlink_dpipe_headers - dpipe headers
+ * @headers - header array can be shared (global bit) or driver specअगरic
  * @headers_count - count of headers
  */
-struct devlink_dpipe_headers {
-	struct devlink_dpipe_header **headers;
-	unsigned int headers_count;
-};
+काष्ठा devlink_dpipe_headers अणु
+	काष्ठा devlink_dpipe_header **headers;
+	अचिन्हित पूर्णांक headers_count;
+पूर्ण;
 
 /**
- * struct devlink_resource_size_params - resource's size parameters
+ * काष्ठा devlink_resource_size_params - resource's size parameters
  * @size_min: minimum size which can be set
  * @size_max: maximum size which can be set
  * @size_granularity: size granularity
  * @size_unit: resource's basic unit
  */
-struct devlink_resource_size_params {
+काष्ठा devlink_resource_size_params अणु
 	u64 size_min;
 	u64 size_max;
 	u64 size_granularity;
-	enum devlink_resource_unit unit;
-};
+	क्रमागत devlink_resource_unit unit;
+पूर्ण;
 
-static inline void
-devlink_resource_size_params_init(struct devlink_resource_size_params *size_params,
+अटल अंतरभूत व्योम
+devlink_resource_size_params_init(काष्ठा devlink_resource_size_params *size_params,
 				  u64 size_min, u64 size_max,
 				  u64 size_granularity,
-				  enum devlink_resource_unit unit)
-{
+				  क्रमागत devlink_resource_unit unit)
+अणु
 	size_params->size_min = size_min;
 	size_params->size_max = size_max;
 	size_params->size_granularity = size_granularity;
 	size_params->unit = unit;
-}
+पूर्ण
 
-typedef u64 devlink_resource_occ_get_t(void *priv);
+प्रकार u64 devlink_resource_occ_get_t(व्योम *priv);
 
 /**
- * struct devlink_resource - devlink resource
+ * काष्ठा devlink_resource - devlink resource
  * @name: name of the resource
  * @id: id, per devlink instance
  * @size: size of the resource
  * @size_new: updated size of the resource, reload is needed
- * @size_valid: valid in case the total size of the resource is valid
+ * @size_valid: valid in हाल the total size of the resource is valid
  *              including its children
  * @parent: parent resource
  * @size_params: size parameters
  * @list: parent list
  * @resource_list: list of child resources
  */
-struct devlink_resource {
-	const char *name;
+काष्ठा devlink_resource अणु
+	स्थिर अक्षर *name;
 	u64 id;
 	u64 size;
 	u64 size_new;
 	bool size_valid;
-	struct devlink_resource *parent;
-	struct devlink_resource_size_params size_params;
-	struct list_head list;
-	struct list_head resource_list;
+	काष्ठा devlink_resource *parent;
+	काष्ठा devlink_resource_size_params size_params;
+	काष्ठा list_head list;
+	काष्ठा list_head resource_list;
 	devlink_resource_occ_get_t *occ_get;
-	void *occ_get_priv;
-};
+	व्योम *occ_get_priv;
+पूर्ण;
 
-#define DEVLINK_RESOURCE_ID_PARENT_TOP 0
+#घोषणा DEVLINK_RESOURCE_ID_PARENT_TOP 0
 
-#define DEVLINK_RESOURCE_GENERIC_NAME_PORTS "physical_ports"
+#घोषणा DEVLINK_RESOURCE_GENERIC_NAME_PORTS "physical_ports"
 
-#define __DEVLINK_PARAM_MAX_STRING_VALUE 32
-enum devlink_param_type {
+#घोषणा __DEVLINK_PARAM_MAX_STRING_VALUE 32
+क्रमागत devlink_param_type अणु
 	DEVLINK_PARAM_TYPE_U8,
 	DEVLINK_PARAM_TYPE_U16,
 	DEVLINK_PARAM_TYPE_U32,
 	DEVLINK_PARAM_TYPE_STRING,
 	DEVLINK_PARAM_TYPE_BOOL,
-};
+पूर्ण;
 
-union devlink_param_value {
+जोड़ devlink_param_value अणु
 	u8 vu8;
 	u16 vu16;
 	u32 vu32;
-	char vstr[__DEVLINK_PARAM_MAX_STRING_VALUE];
+	अक्षर vstr[__DEVLINK_PARAM_MAX_STRING_VALUE];
 	bool vbool;
-};
+पूर्ण;
 
-struct devlink_param_gset_ctx {
-	union devlink_param_value val;
-	enum devlink_param_cmode cmode;
-};
+काष्ठा devlink_param_gset_ctx अणु
+	जोड़ devlink_param_value val;
+	क्रमागत devlink_param_cmode cmode;
+पूर्ण;
 
 /**
- * struct devlink_flash_notify - devlink dev flash notify data
+ * काष्ठा devlink_flash_notअगरy - devlink dev flash notअगरy data
  * @status_msg: current status string
  * @component: firmware component being updated
- * @done: amount of work completed of total amount
- * @total: amount of work expected to be done
- * @timeout: expected max timeout in seconds
+ * @करोne: amount of work completed of total amount
+ * @total: amount of work expected to be करोne
+ * @समयout: expected max समयout in seconds
  *
  * These are values to be given to userland to be displayed in order
  * to show current activity in a firmware update process.
  */
-struct devlink_flash_notify {
-	const char *status_msg;
-	const char *component;
-	unsigned long done;
-	unsigned long total;
-	unsigned long timeout;
-};
+काष्ठा devlink_flash_notअगरy अणु
+	स्थिर अक्षर *status_msg;
+	स्थिर अक्षर *component;
+	अचिन्हित दीर्घ करोne;
+	अचिन्हित दीर्घ total;
+	अचिन्हित दीर्घ समयout;
+पूर्ण;
 
 /**
- * struct devlink_param - devlink configuration parameter data
+ * काष्ठा devlink_param - devlink configuration parameter data
  * @name: name of the parameter
- * @generic: indicates if the parameter is generic or driver specific
+ * @generic: indicates अगर the parameter is generic or driver specअगरic
  * @type: parameter type
- * @supported_cmodes: bitmap of supported configuration modes
- * @get: get parameter value, used for runtime and permanent
+ * @supported_cmodes: biपंचांगap of supported configuration modes
+ * @get: get parameter value, used क्रम runसमय and permanent
  *       configuration modes
- * @set: set parameter value, used for runtime and permanent
+ * @set: set parameter value, used क्रम runसमय and permanent
  *       configuration modes
  * @validate: validate input value is applicable (within value range, etc.)
  *
- * This struct should be used by the driver to fill the data for
- * a parameter it registers.
+ * This काष्ठा should be used by the driver to fill the data क्रम
+ * a parameter it रेजिस्टरs.
  */
-struct devlink_param {
+काष्ठा devlink_param अणु
 	u32 id;
-	const char *name;
+	स्थिर अक्षर *name;
 	bool generic;
-	enum devlink_param_type type;
-	unsigned long supported_cmodes;
-	int (*get)(struct devlink *devlink, u32 id,
-		   struct devlink_param_gset_ctx *ctx);
-	int (*set)(struct devlink *devlink, u32 id,
-		   struct devlink_param_gset_ctx *ctx);
-	int (*validate)(struct devlink *devlink, u32 id,
-			union devlink_param_value val,
-			struct netlink_ext_ack *extack);
-};
+	क्रमागत devlink_param_type type;
+	अचिन्हित दीर्घ supported_cmodes;
+	पूर्णांक (*get)(काष्ठा devlink *devlink, u32 id,
+		   काष्ठा devlink_param_gset_ctx *ctx);
+	पूर्णांक (*set)(काष्ठा devlink *devlink, u32 id,
+		   काष्ठा devlink_param_gset_ctx *ctx);
+	पूर्णांक (*validate)(काष्ठा devlink *devlink, u32 id,
+			जोड़ devlink_param_value val,
+			काष्ठा netlink_ext_ack *extack);
+पूर्ण;
 
-struct devlink_param_item {
-	struct list_head list;
-	const struct devlink_param *param;
-	union devlink_param_value driverinit_value;
+काष्ठा devlink_param_item अणु
+	काष्ठा list_head list;
+	स्थिर काष्ठा devlink_param *param;
+	जोड़ devlink_param_value driverinit_value;
 	bool driverinit_value_valid;
 	bool published;
-};
+पूर्ण;
 
-enum devlink_param_generic_id {
+क्रमागत devlink_param_generic_id अणु
 	DEVLINK_PARAM_GENERIC_ID_INT_ERR_RESET,
 	DEVLINK_PARAM_GENERIC_ID_MAX_MACS,
 	DEVLINK_PARAM_GENERIC_ID_ENABLE_SRIOV,
@@ -504,44 +505,44 @@ enum devlink_param_generic_id {
 	/* add new param generic ids above here*/
 	__DEVLINK_PARAM_GENERIC_ID_MAX,
 	DEVLINK_PARAM_GENERIC_ID_MAX = __DEVLINK_PARAM_GENERIC_ID_MAX - 1,
-};
+पूर्ण;
 
-#define DEVLINK_PARAM_GENERIC_INT_ERR_RESET_NAME "internal_error_reset"
-#define DEVLINK_PARAM_GENERIC_INT_ERR_RESET_TYPE DEVLINK_PARAM_TYPE_BOOL
+#घोषणा DEVLINK_PARAM_GENERIC_INT_ERR_RESET_NAME "internal_error_reset"
+#घोषणा DEVLINK_PARAM_GENERIC_INT_ERR_RESET_TYPE DEVLINK_PARAM_TYPE_BOOL
 
-#define DEVLINK_PARAM_GENERIC_MAX_MACS_NAME "max_macs"
-#define DEVLINK_PARAM_GENERIC_MAX_MACS_TYPE DEVLINK_PARAM_TYPE_U32
+#घोषणा DEVLINK_PARAM_GENERIC_MAX_MACS_NAME "max_macs"
+#घोषणा DEVLINK_PARAM_GENERIC_MAX_MACS_TYPE DEVLINK_PARAM_TYPE_U32
 
-#define DEVLINK_PARAM_GENERIC_ENABLE_SRIOV_NAME "enable_sriov"
-#define DEVLINK_PARAM_GENERIC_ENABLE_SRIOV_TYPE DEVLINK_PARAM_TYPE_BOOL
+#घोषणा DEVLINK_PARAM_GENERIC_ENABLE_SRIOV_NAME "enable_sriov"
+#घोषणा DEVLINK_PARAM_GENERIC_ENABLE_SRIOV_TYPE DEVLINK_PARAM_TYPE_BOOL
 
-#define DEVLINK_PARAM_GENERIC_REGION_SNAPSHOT_NAME "region_snapshot_enable"
-#define DEVLINK_PARAM_GENERIC_REGION_SNAPSHOT_TYPE DEVLINK_PARAM_TYPE_BOOL
+#घोषणा DEVLINK_PARAM_GENERIC_REGION_SNAPSHOT_NAME "region_snapshot_enable"
+#घोषणा DEVLINK_PARAM_GENERIC_REGION_SNAPSHOT_TYPE DEVLINK_PARAM_TYPE_BOOL
 
-#define DEVLINK_PARAM_GENERIC_IGNORE_ARI_NAME "ignore_ari"
-#define DEVLINK_PARAM_GENERIC_IGNORE_ARI_TYPE DEVLINK_PARAM_TYPE_BOOL
+#घोषणा DEVLINK_PARAM_GENERIC_IGNORE_ARI_NAME "ignore_ari"
+#घोषणा DEVLINK_PARAM_GENERIC_IGNORE_ARI_TYPE DEVLINK_PARAM_TYPE_BOOL
 
-#define DEVLINK_PARAM_GENERIC_MSIX_VEC_PER_PF_MAX_NAME "msix_vec_per_pf_max"
-#define DEVLINK_PARAM_GENERIC_MSIX_VEC_PER_PF_MAX_TYPE DEVLINK_PARAM_TYPE_U32
+#घोषणा DEVLINK_PARAM_GENERIC_MSIX_VEC_PER_PF_MAX_NAME "msix_vec_per_pf_max"
+#घोषणा DEVLINK_PARAM_GENERIC_MSIX_VEC_PER_PF_MAX_TYPE DEVLINK_PARAM_TYPE_U32
 
-#define DEVLINK_PARAM_GENERIC_MSIX_VEC_PER_PF_MIN_NAME "msix_vec_per_pf_min"
-#define DEVLINK_PARAM_GENERIC_MSIX_VEC_PER_PF_MIN_TYPE DEVLINK_PARAM_TYPE_U32
+#घोषणा DEVLINK_PARAM_GENERIC_MSIX_VEC_PER_PF_MIN_NAME "msix_vec_per_pf_min"
+#घोषणा DEVLINK_PARAM_GENERIC_MSIX_VEC_PER_PF_MIN_TYPE DEVLINK_PARAM_TYPE_U32
 
-#define DEVLINK_PARAM_GENERIC_FW_LOAD_POLICY_NAME "fw_load_policy"
-#define DEVLINK_PARAM_GENERIC_FW_LOAD_POLICY_TYPE DEVLINK_PARAM_TYPE_U8
+#घोषणा DEVLINK_PARAM_GENERIC_FW_LOAD_POLICY_NAME "fw_load_policy"
+#घोषणा DEVLINK_PARAM_GENERIC_FW_LOAD_POLICY_TYPE DEVLINK_PARAM_TYPE_U8
 
-#define DEVLINK_PARAM_GENERIC_RESET_DEV_ON_DRV_PROBE_NAME \
+#घोषणा DEVLINK_PARAM_GENERIC_RESET_DEV_ON_DRV_PROBE_NAME \
 	"reset_dev_on_drv_probe"
-#define DEVLINK_PARAM_GENERIC_RESET_DEV_ON_DRV_PROBE_TYPE DEVLINK_PARAM_TYPE_U8
+#घोषणा DEVLINK_PARAM_GENERIC_RESET_DEV_ON_DRV_PROBE_TYPE DEVLINK_PARAM_TYPE_U8
 
-#define DEVLINK_PARAM_GENERIC_ENABLE_ROCE_NAME "enable_roce"
-#define DEVLINK_PARAM_GENERIC_ENABLE_ROCE_TYPE DEVLINK_PARAM_TYPE_BOOL
+#घोषणा DEVLINK_PARAM_GENERIC_ENABLE_ROCE_NAME "enable_roce"
+#घोषणा DEVLINK_PARAM_GENERIC_ENABLE_ROCE_TYPE DEVLINK_PARAM_TYPE_BOOL
 
-#define DEVLINK_PARAM_GENERIC_ENABLE_REMOTE_DEV_RESET_NAME "enable_remote_dev_reset"
-#define DEVLINK_PARAM_GENERIC_ENABLE_REMOTE_DEV_RESET_TYPE DEVLINK_PARAM_TYPE_BOOL
+#घोषणा DEVLINK_PARAM_GENERIC_ENABLE_REMOTE_DEV_RESET_NAME "enable_remote_dev_reset"
+#घोषणा DEVLINK_PARAM_GENERIC_ENABLE_REMOTE_DEV_RESET_TYPE DEVLINK_PARAM_TYPE_BOOL
 
-#define DEVLINK_PARAM_GENERIC(_id, _cmodes, _get, _set, _validate)	\
-{									\
+#घोषणा DEVLINK_PARAM_GENERIC(_id, _cmodes, _get, _set, _validate)	\
+अणु									\
 	.id = DEVLINK_PARAM_GENERIC_ID_##_id,				\
 	.name = DEVLINK_PARAM_GENERIC_##_id##_NAME,			\
 	.type = DEVLINK_PARAM_GENERIC_##_id##_TYPE,			\
@@ -550,10 +551,10 @@ enum devlink_param_generic_id {
 	.get = _get,							\
 	.set = _set,							\
 	.validate = _validate,						\
-}
+पूर्ण
 
-#define DEVLINK_PARAM_DRIVER(_id, _name, _type, _cmodes, _get, _set, _validate)	\
-{									\
+#घोषणा DEVLINK_PARAM_DRIVER(_id, _name, _type, _cmodes, _get, _set, _validate)	\
+अणु									\
 	.id = _id,							\
 	.name = _name,							\
 	.type = _type,							\
@@ -561,152 +562,152 @@ enum devlink_param_generic_id {
 	.get = _get,							\
 	.set = _set,							\
 	.validate = _validate,						\
-}
+पूर्ण
 
-/* Part number, identifier of board design */
-#define DEVLINK_INFO_VERSION_GENERIC_BOARD_ID	"board.id"
+/* Part number, identअगरier of board design */
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_BOARD_ID	"board.id"
 /* Revision of board design */
-#define DEVLINK_INFO_VERSION_GENERIC_BOARD_REV	"board.rev"
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_BOARD_REV	"board.rev"
 /* Maker of the board */
-#define DEVLINK_INFO_VERSION_GENERIC_BOARD_MANUFACTURE	"board.manufacture"
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_BOARD_MANUFACTURE	"board.manufacture"
 
-/* Part number, identifier of asic design */
-#define DEVLINK_INFO_VERSION_GENERIC_ASIC_ID	"asic.id"
+/* Part number, identअगरier of asic design */
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_ASIC_ID	"asic.id"
 /* Revision of asic design */
-#define DEVLINK_INFO_VERSION_GENERIC_ASIC_REV	"asic.rev"
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_ASIC_REV	"asic.rev"
 
 /* Overall FW version */
-#define DEVLINK_INFO_VERSION_GENERIC_FW		"fw"
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_FW		"fw"
 /* Control processor FW version */
-#define DEVLINK_INFO_VERSION_GENERIC_FW_MGMT	"fw.mgmt"
-/* FW interface specification version */
-#define DEVLINK_INFO_VERSION_GENERIC_FW_MGMT_API	"fw.mgmt.api"
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_FW_MGMT	"fw.mgmt"
+/* FW पूर्णांकerface specअगरication version */
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_FW_MGMT_API	"fw.mgmt.api"
 /* Data path microcode controlling high-speed packet processing */
-#define DEVLINK_INFO_VERSION_GENERIC_FW_APP	"fw.app"
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_FW_APP	"fw.app"
 /* UNDI software version */
-#define DEVLINK_INFO_VERSION_GENERIC_FW_UNDI	"fw.undi"
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_FW_UNDI	"fw.undi"
 /* NCSI support/handler version */
-#define DEVLINK_INFO_VERSION_GENERIC_FW_NCSI	"fw.ncsi"
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_FW_NCSI	"fw.ncsi"
 /* FW parameter set id */
-#define DEVLINK_INFO_VERSION_GENERIC_FW_PSID	"fw.psid"
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_FW_PSID	"fw.psid"
 /* RoCE FW version */
-#define DEVLINK_INFO_VERSION_GENERIC_FW_ROCE	"fw.roce"
-/* Firmware bundle identifier */
-#define DEVLINK_INFO_VERSION_GENERIC_FW_BUNDLE_ID	"fw.bundle_id"
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_FW_ROCE	"fw.roce"
+/* Firmware bundle identअगरier */
+#घोषणा DEVLINK_INFO_VERSION_GENERIC_FW_BUNDLE_ID	"fw.bundle_id"
 
 /**
- * struct devlink_flash_update_params - Flash Update parameters
- * @fw: pointer to the firmware data to update from
+ * काष्ठा devlink_flash_update_params - Flash Update parameters
+ * @fw: poपूर्णांकer to the firmware data to update from
  * @component: the flash component to update
  *
  * With the exception of fw, drivers must opt-in to parameters by
  * setting the appropriate bit in the supported_flash_update_params field in
- * their devlink_ops structure.
+ * their devlink_ops काष्ठाure.
  */
-struct devlink_flash_update_params {
-	const struct firmware *fw;
-	const char *component;
-	u32 overwrite_mask;
-};
+काष्ठा devlink_flash_update_params अणु
+	स्थिर काष्ठा firmware *fw;
+	स्थिर अक्षर *component;
+	u32 overग_लिखो_mask;
+पूर्ण;
 
-#define DEVLINK_SUPPORT_FLASH_UPDATE_COMPONENT		BIT(0)
-#define DEVLINK_SUPPORT_FLASH_UPDATE_OVERWRITE_MASK	BIT(1)
+#घोषणा DEVLINK_SUPPORT_FLASH_UPDATE_COMPONENT		BIT(0)
+#घोषणा DEVLINK_SUPPORT_FLASH_UPDATE_OVERWRITE_MASK	BIT(1)
 
-struct devlink_region;
-struct devlink_info_req;
+काष्ठा devlink_region;
+काष्ठा devlink_info_req;
 
 /**
- * struct devlink_region_ops - Region operations
+ * काष्ठा devlink_region_ops - Region operations
  * @name: region name
- * @destructor: callback used to free snapshot memory when deleting
+ * @deकाष्ठाor: callback used to मुक्त snapshot memory when deleting
  * @snapshot: callback to request an immediate snapshot. On success,
- *            the data variable must be updated to point to the snapshot data.
- *            The function will be called while the devlink instance lock is
+ *            the data variable must be updated to poपूर्णांक to the snapshot data.
+ *            The function will be called जबतक the devlink instance lock is
  *            held.
- * @priv: Pointer to driver private data for the region operation
+ * @priv: Poपूर्णांकer to driver निजी data क्रम the region operation
  */
-struct devlink_region_ops {
-	const char *name;
-	void (*destructor)(const void *data);
-	int (*snapshot)(struct devlink *devlink,
-			const struct devlink_region_ops *ops,
-			struct netlink_ext_ack *extack,
+काष्ठा devlink_region_ops अणु
+	स्थिर अक्षर *name;
+	व्योम (*deकाष्ठाor)(स्थिर व्योम *data);
+	पूर्णांक (*snapshot)(काष्ठा devlink *devlink,
+			स्थिर काष्ठा devlink_region_ops *ops,
+			काष्ठा netlink_ext_ack *extack,
 			u8 **data);
-	void *priv;
-};
+	व्योम *priv;
+पूर्ण;
 
 /**
- * struct devlink_port_region_ops - Region operations for a port
+ * काष्ठा devlink_port_region_ops - Region operations क्रम a port
  * @name: region name
- * @destructor: callback used to free snapshot memory when deleting
+ * @deकाष्ठाor: callback used to मुक्त snapshot memory when deleting
  * @snapshot: callback to request an immediate snapshot. On success,
- *            the data variable must be updated to point to the snapshot data.
- *            The function will be called while the devlink instance lock is
+ *            the data variable must be updated to poपूर्णांक to the snapshot data.
+ *            The function will be called जबतक the devlink instance lock is
  *            held.
- * @priv: Pointer to driver private data for the region operation
+ * @priv: Poपूर्णांकer to driver निजी data क्रम the region operation
  */
-struct devlink_port_region_ops {
-	const char *name;
-	void (*destructor)(const void *data);
-	int (*snapshot)(struct devlink_port *port,
-			const struct devlink_port_region_ops *ops,
-			struct netlink_ext_ack *extack,
+काष्ठा devlink_port_region_ops अणु
+	स्थिर अक्षर *name;
+	व्योम (*deकाष्ठाor)(स्थिर व्योम *data);
+	पूर्णांक (*snapshot)(काष्ठा devlink_port *port,
+			स्थिर काष्ठा devlink_port_region_ops *ops,
+			काष्ठा netlink_ext_ack *extack,
 			u8 **data);
-	void *priv;
-};
+	व्योम *priv;
+पूर्ण;
 
-struct devlink_fmsg;
-struct devlink_health_reporter;
+काष्ठा devlink_fmsg;
+काष्ठा devlink_health_reporter;
 
-enum devlink_health_reporter_state {
+क्रमागत devlink_health_reporter_state अणु
 	DEVLINK_HEALTH_REPORTER_STATE_HEALTHY,
 	DEVLINK_HEALTH_REPORTER_STATE_ERROR,
-};
+पूर्ण;
 
 /**
- * struct devlink_health_reporter_ops - Reporter operations
+ * काष्ठा devlink_health_reporter_ops - Reporter operations
  * @name: reporter name
  * @recover: callback to recover from reported error
- *           if priv_ctx is NULL, run a full recover
+ *           अगर priv_ctx is शून्य, run a full recover
  * @dump: callback to dump an object
- *        if priv_ctx is NULL, run a full dump
+ *        अगर priv_ctx is शून्य, run a full dump
  * @diagnose: callback to diagnose the current status
  * @test: callback to trigger a test event
  */
 
-struct devlink_health_reporter_ops {
-	char *name;
-	int (*recover)(struct devlink_health_reporter *reporter,
-		       void *priv_ctx, struct netlink_ext_ack *extack);
-	int (*dump)(struct devlink_health_reporter *reporter,
-		    struct devlink_fmsg *fmsg, void *priv_ctx,
-		    struct netlink_ext_ack *extack);
-	int (*diagnose)(struct devlink_health_reporter *reporter,
-			struct devlink_fmsg *fmsg,
-			struct netlink_ext_ack *extack);
-	int (*test)(struct devlink_health_reporter *reporter,
-		    struct netlink_ext_ack *extack);
-};
+काष्ठा devlink_health_reporter_ops अणु
+	अक्षर *name;
+	पूर्णांक (*recover)(काष्ठा devlink_health_reporter *reporter,
+		       व्योम *priv_ctx, काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*dump)(काष्ठा devlink_health_reporter *reporter,
+		    काष्ठा devlink_fmsg *fmsg, व्योम *priv_ctx,
+		    काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*diagnose)(काष्ठा devlink_health_reporter *reporter,
+			काष्ठा devlink_fmsg *fmsg,
+			काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*test)(काष्ठा devlink_health_reporter *reporter,
+		    काष्ठा netlink_ext_ack *extack);
+पूर्ण;
 
 /**
- * struct devlink_trap_metadata - Packet trap metadata.
+ * काष्ठा devlink_trap_metadata - Packet trap metadata.
  * @trap_name: Trap name.
  * @trap_group_name: Trap group name.
  * @input_dev: Input netdevice.
  * @fa_cookie: Flow action user cookie.
  * @trap_type: Trap type.
  */
-struct devlink_trap_metadata {
-	const char *trap_name;
-	const char *trap_group_name;
-	struct net_device *input_dev;
-	const struct flow_action_cookie *fa_cookie;
-	enum devlink_trap_type trap_type;
-};
+काष्ठा devlink_trap_metadata अणु
+	स्थिर अक्षर *trap_name;
+	स्थिर अक्षर *trap_group_name;
+	काष्ठा net_device *input_dev;
+	स्थिर काष्ठा flow_action_cookie *fa_cookie;
+	क्रमागत devlink_trap_type trap_type;
+पूर्ण;
 
 /**
- * struct devlink_trap_policer - Immutable packet trap policer attributes.
- * @id: Policer identifier.
+ * काष्ठा devlink_trap_policer - Immutable packet trap policer attributes.
+ * @id: Policer identअगरier.
  * @init_rate: Initial rate in packets / sec.
  * @init_burst: Initial burst size in packets.
  * @max_rate: Maximum rate.
@@ -714,10 +715,10 @@ struct devlink_trap_metadata {
  * @max_burst: Maximum burst size.
  * @min_burst: Minimum burst size.
  *
- * Describes immutable attributes of packet trap policers that drivers register
+ * Describes immutable attributes of packet trap policers that drivers रेजिस्टर
  * with devlink.
  */
-struct devlink_trap_policer {
+काष्ठा devlink_trap_policer अणु
 	u32 id;
 	u64 init_rate;
 	u64 init_burst;
@@ -725,55 +726,55 @@ struct devlink_trap_policer {
 	u64 min_rate;
 	u64 max_burst;
 	u64 min_burst;
-};
+पूर्ण;
 
 /**
- * struct devlink_trap_group - Immutable packet trap group attributes.
+ * काष्ठा devlink_trap_group - Immutable packet trap group attributes.
  * @name: Trap group name.
- * @id: Trap group identifier.
+ * @id: Trap group identअगरier.
  * @generic: Whether the trap group is generic or not.
- * @init_policer_id: Initial policer identifier.
+ * @init_policer_id: Initial policer identअगरier.
  *
- * Describes immutable attributes of packet trap groups that drivers register
+ * Describes immutable attributes of packet trap groups that drivers रेजिस्टर
  * with devlink.
  */
-struct devlink_trap_group {
-	const char *name;
+काष्ठा devlink_trap_group अणु
+	स्थिर अक्षर *name;
 	u16 id;
 	bool generic;
 	u32 init_policer_id;
-};
+पूर्ण;
 
-#define DEVLINK_TRAP_METADATA_TYPE_F_IN_PORT	BIT(0)
-#define DEVLINK_TRAP_METADATA_TYPE_F_FA_COOKIE	BIT(1)
+#घोषणा DEVLINK_TRAP_METADATA_TYPE_F_IN_PORT	BIT(0)
+#घोषणा DEVLINK_TRAP_METADATA_TYPE_F_FA_COOKIE	BIT(1)
 
 /**
- * struct devlink_trap - Immutable packet trap attributes.
+ * काष्ठा devlink_trap - Immutable packet trap attributes.
  * @type: Trap type.
  * @init_action: Initial trap action.
  * @generic: Whether the trap is generic or not.
- * @id: Trap identifier.
+ * @id: Trap identअगरier.
  * @name: Trap name.
- * @init_group_id: Initial group identifier.
+ * @init_group_id: Initial group identअगरier.
  * @metadata_cap: Metadata types that can be provided by the trap.
  *
- * Describes immutable attributes of packet traps that drivers register with
+ * Describes immutable attributes of packet traps that drivers रेजिस्टर with
  * devlink.
  */
-struct devlink_trap {
-	enum devlink_trap_type type;
-	enum devlink_trap_action init_action;
+काष्ठा devlink_trap अणु
+	क्रमागत devlink_trap_type type;
+	क्रमागत devlink_trap_action init_action;
 	bool generic;
 	u16 id;
-	const char *name;
+	स्थिर अक्षर *name;
 	u16 init_group_id;
 	u32 metadata_cap;
-};
+पूर्ण;
 
-/* All traps must be documented in
+/* All traps must be करोcumented in
  * Documentation/networking/devlink/devlink-trap.rst
  */
-enum devlink_trap_generic_id {
+क्रमागत devlink_trap_generic_id अणु
 	DEVLINK_TRAP_GENERIC_ID_SMAC_MC,
 	DEVLINK_TRAP_GENERIC_ID_VLAN_TAG_MISMATCH,
 	DEVLINK_TRAP_GENERIC_ID_INGRESS_VLAN_FILTER,
@@ -840,7 +841,7 @@ enum devlink_trap_generic_id {
 	DEVLINK_TRAP_GENERIC_ID_IPV6_DIP_ALL_ROUTERS,
 	DEVLINK_TRAP_GENERIC_ID_IPV6_ROUTER_SOLICIT,
 	DEVLINK_TRAP_GENERIC_ID_IPV6_ROUTER_ADVERT,
-	DEVLINK_TRAP_GENERIC_ID_IPV6_REDIRECT,
+	DEVLINK_TRAP_GENERIC_ID_IPV6_REसूचीECT,
 	DEVLINK_TRAP_GENERIC_ID_IPV4_ROUTER_ALERT,
 	DEVLINK_TRAP_GENERIC_ID_IPV6_ROUTER_ALERT,
 	DEVLINK_TRAP_GENERIC_ID_PTP_EVENT,
@@ -870,12 +871,12 @@ enum devlink_trap_generic_id {
 	/* Add new generic trap IDs above */
 	__DEVLINK_TRAP_GENERIC_ID_MAX,
 	DEVLINK_TRAP_GENERIC_ID_MAX = __DEVLINK_TRAP_GENERIC_ID_MAX - 1,
-};
+पूर्ण;
 
-/* All trap groups must be documented in
+/* All trap groups must be करोcumented in
  * Documentation/networking/devlink/devlink-trap.rst
  */
-enum devlink_trap_group_generic_id {
+क्रमागत devlink_trap_group_generic_id अणु
 	DEVLINK_TRAP_GROUP_GENERIC_ID_L2_DROPS,
 	DEVLINK_TRAP_GROUP_GENERIC_ID_L3_DROPS,
 	DEVLINK_TRAP_GROUP_GENERIC_ID_L3_EXCEPTIONS,
@@ -907,249 +908,249 @@ enum devlink_trap_group_generic_id {
 	__DEVLINK_TRAP_GROUP_GENERIC_ID_MAX,
 	DEVLINK_TRAP_GROUP_GENERIC_ID_MAX =
 		__DEVLINK_TRAP_GROUP_GENERIC_ID_MAX - 1,
-};
+पूर्ण;
 
-#define DEVLINK_TRAP_GENERIC_NAME_SMAC_MC \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_SMAC_MC \
 	"source_mac_is_multicast"
-#define DEVLINK_TRAP_GENERIC_NAME_VLAN_TAG_MISMATCH \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_VLAN_TAG_MISMATCH \
 	"vlan_tag_mismatch"
-#define DEVLINK_TRAP_GENERIC_NAME_INGRESS_VLAN_FILTER \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_INGRESS_VLAN_FILTER \
 	"ingress_vlan_filter"
-#define DEVLINK_TRAP_GENERIC_NAME_INGRESS_STP_FILTER \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_INGRESS_STP_FILTER \
 	"ingress_spanning_tree_filter"
-#define DEVLINK_TRAP_GENERIC_NAME_EMPTY_TX_LIST \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_EMPTY_TX_LIST \
 	"port_list_is_empty"
-#define DEVLINK_TRAP_GENERIC_NAME_PORT_LOOPBACK_FILTER \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_PORT_LOOPBACK_FILTER \
 	"port_loopback_filter"
-#define DEVLINK_TRAP_GENERIC_NAME_BLACKHOLE_ROUTE \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_BLACKHOLE_ROUTE \
 	"blackhole_route"
-#define DEVLINK_TRAP_GENERIC_NAME_TTL_ERROR \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_TTL_ERROR \
 	"ttl_value_is_too_small"
-#define DEVLINK_TRAP_GENERIC_NAME_TAIL_DROP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_TAIL_DROP \
 	"tail_drop"
-#define DEVLINK_TRAP_GENERIC_NAME_NON_IP_PACKET \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_NON_IP_PACKET \
 	"non_ip"
-#define DEVLINK_TRAP_GENERIC_NAME_UC_DIP_MC_DMAC \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_UC_DIP_MC_DMAC \
 	"uc_dip_over_mc_dmac"
-#define DEVLINK_TRAP_GENERIC_NAME_DIP_LB \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_DIP_LB \
 	"dip_is_loopback_address"
-#define DEVLINK_TRAP_GENERIC_NAME_SIP_MC \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_SIP_MC \
 	"sip_is_mc"
-#define DEVLINK_TRAP_GENERIC_NAME_SIP_LB \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_SIP_LB \
 	"sip_is_loopback_address"
-#define DEVLINK_TRAP_GENERIC_NAME_CORRUPTED_IP_HDR \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_CORRUPTED_IP_HDR \
 	"ip_header_corrupted"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV4_SIP_BC \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV4_SIP_BC \
 	"ipv4_sip_is_limited_bc"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_MC_DIP_RESERVED_SCOPE \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_MC_DIP_RESERVED_SCOPE \
 	"ipv6_mc_dip_reserved_scope"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_MC_DIP_INTERFACE_LOCAL_SCOPE \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_MC_DIP_INTERFACE_LOCAL_SCOPE \
 	"ipv6_mc_dip_interface_local_scope"
-#define DEVLINK_TRAP_GENERIC_NAME_MTU_ERROR \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_MTU_ERROR \
 	"mtu_value_is_too_small"
-#define DEVLINK_TRAP_GENERIC_NAME_UNRESOLVED_NEIGH \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_UNRESOLVED_NEIGH \
 	"unresolved_neigh"
-#define DEVLINK_TRAP_GENERIC_NAME_RPF \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_RPF \
 	"mc_reverse_path_forwarding"
-#define DEVLINK_TRAP_GENERIC_NAME_REJECT_ROUTE \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_REJECT_ROUTE \
 	"reject_route"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV4_LPM_UNICAST_MISS \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV4_LPM_UNICAST_MISS \
 	"ipv4_lpm_miss"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_LPM_UNICAST_MISS \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_LPM_UNICAST_MISS \
 	"ipv6_lpm_miss"
-#define DEVLINK_TRAP_GENERIC_NAME_NON_ROUTABLE \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_NON_ROUTABLE \
 	"non_routable_packet"
-#define DEVLINK_TRAP_GENERIC_NAME_DECAP_ERROR \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_DECAP_ERROR \
 	"decap_error"
-#define DEVLINK_TRAP_GENERIC_NAME_OVERLAY_SMAC_MC \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_OVERLAY_SMAC_MC \
 	"overlay_smac_is_mc"
-#define DEVLINK_TRAP_GENERIC_NAME_INGRESS_FLOW_ACTION_DROP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_INGRESS_FLOW_ACTION_DROP \
 	"ingress_flow_action_drop"
-#define DEVLINK_TRAP_GENERIC_NAME_EGRESS_FLOW_ACTION_DROP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_EGRESS_FLOW_ACTION_DROP \
 	"egress_flow_action_drop"
-#define DEVLINK_TRAP_GENERIC_NAME_STP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_STP \
 	"stp"
-#define DEVLINK_TRAP_GENERIC_NAME_LACP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_LACP \
 	"lacp"
-#define DEVLINK_TRAP_GENERIC_NAME_LLDP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_LLDP \
 	"lldp"
-#define DEVLINK_TRAP_GENERIC_NAME_IGMP_QUERY \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IGMP_QUERY \
 	"igmp_query"
-#define DEVLINK_TRAP_GENERIC_NAME_IGMP_V1_REPORT \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IGMP_V1_REPORT \
 	"igmp_v1_report"
-#define DEVLINK_TRAP_GENERIC_NAME_IGMP_V2_REPORT \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IGMP_V2_REPORT \
 	"igmp_v2_report"
-#define DEVLINK_TRAP_GENERIC_NAME_IGMP_V3_REPORT \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IGMP_V3_REPORT \
 	"igmp_v3_report"
-#define DEVLINK_TRAP_GENERIC_NAME_IGMP_V2_LEAVE \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IGMP_V2_LEAVE \
 	"igmp_v2_leave"
-#define DEVLINK_TRAP_GENERIC_NAME_MLD_QUERY \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_MLD_QUERY \
 	"mld_query"
-#define DEVLINK_TRAP_GENERIC_NAME_MLD_V1_REPORT \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_MLD_V1_REPORT \
 	"mld_v1_report"
-#define DEVLINK_TRAP_GENERIC_NAME_MLD_V2_REPORT \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_MLD_V2_REPORT \
 	"mld_v2_report"
-#define DEVLINK_TRAP_GENERIC_NAME_MLD_V1_DONE \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_MLD_V1_DONE \
 	"mld_v1_done"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV4_DHCP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV4_DHCP \
 	"ipv4_dhcp"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_DHCP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_DHCP \
 	"ipv6_dhcp"
-#define DEVLINK_TRAP_GENERIC_NAME_ARP_REQUEST \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_ARP_REQUEST \
 	"arp_request"
-#define DEVLINK_TRAP_GENERIC_NAME_ARP_RESPONSE \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_ARP_RESPONSE \
 	"arp_response"
-#define DEVLINK_TRAP_GENERIC_NAME_ARP_OVERLAY \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_ARP_OVERLAY \
 	"arp_overlay"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_NEIGH_SOLICIT \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_NEIGH_SOLICIT \
 	"ipv6_neigh_solicit"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_NEIGH_ADVERT \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_NEIGH_ADVERT \
 	"ipv6_neigh_advert"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV4_BFD \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV4_BFD \
 	"ipv4_bfd"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_BFD \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_BFD \
 	"ipv6_bfd"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV4_OSPF \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV4_OSPF \
 	"ipv4_ospf"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_OSPF \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_OSPF \
 	"ipv6_ospf"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV4_BGP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV4_BGP \
 	"ipv4_bgp"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_BGP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_BGP \
 	"ipv6_bgp"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV4_VRRP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV4_VRRP \
 	"ipv4_vrrp"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_VRRP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_VRRP \
 	"ipv6_vrrp"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV4_PIM \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV4_PIM \
 	"ipv4_pim"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_PIM \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_PIM \
 	"ipv6_pim"
-#define DEVLINK_TRAP_GENERIC_NAME_UC_LB \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_UC_LB \
 	"uc_loopback"
-#define DEVLINK_TRAP_GENERIC_NAME_LOCAL_ROUTE \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_LOCAL_ROUTE \
 	"local_route"
-#define DEVLINK_TRAP_GENERIC_NAME_EXTERNAL_ROUTE \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_EXTERNAL_ROUTE \
 	"external_route"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_UC_DIP_LINK_LOCAL_SCOPE \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_UC_DIP_LINK_LOCAL_SCOPE \
 	"ipv6_uc_dip_link_local_scope"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_DIP_ALL_NODES \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_DIP_ALL_NODES \
 	"ipv6_dip_all_nodes"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_DIP_ALL_ROUTERS \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_DIP_ALL_ROUTERS \
 	"ipv6_dip_all_routers"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_ROUTER_SOLICIT \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_ROUTER_SOLICIT \
 	"ipv6_router_solicit"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_ROUTER_ADVERT \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_ROUTER_ADVERT \
 	"ipv6_router_advert"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_REDIRECT \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_REसूचीECT \
 	"ipv6_redirect"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV4_ROUTER_ALERT \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV4_ROUTER_ALERT \
 	"ipv4_router_alert"
-#define DEVLINK_TRAP_GENERIC_NAME_IPV6_ROUTER_ALERT \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPV6_ROUTER_ALERT \
 	"ipv6_router_alert"
-#define DEVLINK_TRAP_GENERIC_NAME_PTP_EVENT \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_PTP_EVENT \
 	"ptp_event"
-#define DEVLINK_TRAP_GENERIC_NAME_PTP_GENERAL \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_PTP_GENERAL \
 	"ptp_general"
-#define DEVLINK_TRAP_GENERIC_NAME_FLOW_ACTION_SAMPLE \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_FLOW_ACTION_SAMPLE \
 	"flow_action_sample"
-#define DEVLINK_TRAP_GENERIC_NAME_FLOW_ACTION_TRAP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_FLOW_ACTION_TRAP \
 	"flow_action_trap"
-#define DEVLINK_TRAP_GENERIC_NAME_EARLY_DROP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_EARLY_DROP \
 	"early_drop"
-#define DEVLINK_TRAP_GENERIC_NAME_VXLAN_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_VXLAN_PARSING \
 	"vxlan_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_LLC_SNAP_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_LLC_SNAP_PARSING \
 	"llc_snap_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_VLAN_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_VLAN_PARSING \
 	"vlan_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_PPPOE_PPP_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_PPPOE_PPP_PARSING \
 	"pppoe_ppp_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_MPLS_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_MPLS_PARSING \
 	"mpls_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_ARP_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_ARP_PARSING \
 	"arp_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_IP_1_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IP_1_PARSING \
 	"ip_1_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_IP_N_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IP_N_PARSING \
 	"ip_n_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_GRE_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_GRE_PARSING \
 	"gre_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_UDP_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_UDP_PARSING \
 	"udp_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_TCP_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_TCP_PARSING \
 	"tcp_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_IPSEC_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_IPSEC_PARSING \
 	"ipsec_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_SCTP_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_SCTP_PARSING \
 	"sctp_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_DCCP_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_DCCP_PARSING \
 	"dccp_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_GTP_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_GTP_PARSING \
 	"gtp_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_ESP_PARSING \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_ESP_PARSING \
 	"esp_parsing"
-#define DEVLINK_TRAP_GENERIC_NAME_BLACKHOLE_NEXTHOP \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_BLACKHOLE_NEXTHOP \
 	"blackhole_nexthop"
-#define DEVLINK_TRAP_GENERIC_NAME_DMAC_FILTER \
+#घोषणा DEVLINK_TRAP_GENERIC_NAME_DMAC_FILTER \
 	"dmac_filter"
 
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_L2_DROPS \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_L2_DROPS \
 	"l2_drops"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_L3_DROPS \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_L3_DROPS \
 	"l3_drops"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_L3_EXCEPTIONS \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_L3_EXCEPTIONS \
 	"l3_exceptions"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_BUFFER_DROPS \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_BUFFER_DROPS \
 	"buffer_drops"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_TUNNEL_DROPS \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_TUNNEL_DROPS \
 	"tunnel_drops"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_ACL_DROPS \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_ACL_DROPS \
 	"acl_drops"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_STP \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_STP \
 	"stp"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_LACP \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_LACP \
 	"lacp"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_LLDP \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_LLDP \
 	"lldp"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_MC_SNOOPING  \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_MC_SNOOPING  \
 	"mc_snooping"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_DHCP \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_DHCP \
 	"dhcp"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_NEIGH_DISCOVERY \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_NEIGH_DISCOVERY \
 	"neigh_discovery"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_BFD \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_BFD \
 	"bfd"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_OSPF \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_OSPF \
 	"ospf"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_BGP \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_BGP \
 	"bgp"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_VRRP \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_VRRP \
 	"vrrp"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_PIM \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_PIM \
 	"pim"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_UC_LB \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_UC_LB \
 	"uc_loopback"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_LOCAL_DELIVERY \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_LOCAL_DELIVERY \
 	"local_delivery"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_EXTERNAL_DELIVERY \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_EXTERNAL_DELIVERY \
 	"external_delivery"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_IPV6 \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_IPV6 \
 	"ipv6"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_PTP_EVENT \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_PTP_EVENT \
 	"ptp_event"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_PTP_GENERAL \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_PTP_GENERAL \
 	"ptp_general"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_ACL_SAMPLE \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_ACL_SAMPLE \
 	"acl_sample"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_ACL_TRAP \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_ACL_TRAP \
 	"acl_trap"
-#define DEVLINK_TRAP_GROUP_GENERIC_NAME_PARSER_ERROR_DROPS \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC_NAME_PARSER_ERROR_DROPS \
 	"parser_error_drops"
 
-#define DEVLINK_TRAP_GENERIC(_type, _init_action, _id, _group_id,	      \
+#घोषणा DEVLINK_TRAP_GENERIC(_type, _init_action, _id, _group_id,	      \
 			     _metadata_cap)				      \
-	{								      \
+	अणु								      \
 		.type = DEVLINK_TRAP_TYPE_##_type,			      \
 		.init_action = DEVLINK_TRAP_ACTION_##_init_action,	      \
 		.generic = true,					      \
@@ -1157,11 +1158,11 @@ enum devlink_trap_group_generic_id {
 		.name = DEVLINK_TRAP_GENERIC_NAME_##_id,		      \
 		.init_group_id = _group_id,				      \
 		.metadata_cap = _metadata_cap,				      \
-	}
+	पूर्ण
 
-#define DEVLINK_TRAP_DRIVER(_type, _init_action, _id, _name, _group_id,	      \
+#घोषणा DEVLINK_TRAP_DRIVER(_type, _init_action, _id, _name, _group_id,	      \
 			    _metadata_cap)				      \
-	{								      \
+	अणु								      \
 		.type = DEVLINK_TRAP_TYPE_##_type,			      \
 		.init_action = DEVLINK_TRAP_ACTION_##_init_action,	      \
 		.generic = false,					      \
@@ -1169,19 +1170,19 @@ enum devlink_trap_group_generic_id {
 		.name = _name,						      \
 		.init_group_id = _group_id,				      \
 		.metadata_cap = _metadata_cap,				      \
-	}
+	पूर्ण
 
-#define DEVLINK_TRAP_GROUP_GENERIC(_id, _policer_id)			      \
-	{								      \
+#घोषणा DEVLINK_TRAP_GROUP_GENERIC(_id, _policer_id)			      \
+	अणु								      \
 		.name = DEVLINK_TRAP_GROUP_GENERIC_NAME_##_id,		      \
 		.id = DEVLINK_TRAP_GROUP_GENERIC_ID_##_id,		      \
 		.generic = true,					      \
 		.init_policer_id = _policer_id,				      \
-	}
+	पूर्ण
 
-#define DEVLINK_TRAP_POLICER(_id, _rate, _burst, _max_rate, _min_rate,	      \
+#घोषणा DEVLINK_TRAP_POLICER(_id, _rate, _burst, _max_rate, _min_rate,	      \
 			     _max_burst, _min_burst)			      \
-	{								      \
+	अणु								      \
 		.id = _id,						      \
 		.init_rate = _rate,					      \
 		.init_burst = _burst,					      \
@@ -1189,90 +1190,90 @@ enum devlink_trap_group_generic_id {
 		.min_rate = _min_rate,					      \
 		.max_burst = _max_burst,				      \
 		.min_burst = _min_burst,				      \
-	}
+	पूर्ण
 
-struct devlink_ops {
+काष्ठा devlink_ops अणु
 	/**
 	 * @supported_flash_update_params:
 	 * mask of parameters supported by the driver's .flash_update
 	 * implemementation.
 	 */
 	u32 supported_flash_update_params;
-	unsigned long reload_actions;
-	unsigned long reload_limits;
-	int (*reload_down)(struct devlink *devlink, bool netns_change,
-			   enum devlink_reload_action action,
-			   enum devlink_reload_limit limit,
-			   struct netlink_ext_ack *extack);
-	int (*reload_up)(struct devlink *devlink, enum devlink_reload_action action,
-			 enum devlink_reload_limit limit, u32 *actions_performed,
-			 struct netlink_ext_ack *extack);
-	int (*port_type_set)(struct devlink_port *devlink_port,
-			     enum devlink_port_type port_type);
-	int (*port_split)(struct devlink *devlink, unsigned int port_index,
-			  unsigned int count, struct netlink_ext_ack *extack);
-	int (*port_unsplit)(struct devlink *devlink, unsigned int port_index,
-			    struct netlink_ext_ack *extack);
-	int (*sb_pool_get)(struct devlink *devlink, unsigned int sb_index,
+	अचिन्हित दीर्घ reload_actions;
+	अचिन्हित दीर्घ reload_limits;
+	पूर्णांक (*reload_करोwn)(काष्ठा devlink *devlink, bool netns_change,
+			   क्रमागत devlink_reload_action action,
+			   क्रमागत devlink_reload_limit limit,
+			   काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*reload_up)(काष्ठा devlink *devlink, क्रमागत devlink_reload_action action,
+			 क्रमागत devlink_reload_limit limit, u32 *actions_perक्रमmed,
+			 काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*port_type_set)(काष्ठा devlink_port *devlink_port,
+			     क्रमागत devlink_port_type port_type);
+	पूर्णांक (*port_split)(काष्ठा devlink *devlink, अचिन्हित पूर्णांक port_index,
+			  अचिन्हित पूर्णांक count, काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*port_unsplit)(काष्ठा devlink *devlink, अचिन्हित पूर्णांक port_index,
+			    काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*sb_pool_get)(काष्ठा devlink *devlink, अचिन्हित पूर्णांक sb_index,
 			   u16 pool_index,
-			   struct devlink_sb_pool_info *pool_info);
-	int (*sb_pool_set)(struct devlink *devlink, unsigned int sb_index,
+			   काष्ठा devlink_sb_pool_info *pool_info);
+	पूर्णांक (*sb_pool_set)(काष्ठा devlink *devlink, अचिन्हित पूर्णांक sb_index,
 			   u16 pool_index, u32 size,
-			   enum devlink_sb_threshold_type threshold_type,
-			   struct netlink_ext_ack *extack);
-	int (*sb_port_pool_get)(struct devlink_port *devlink_port,
-				unsigned int sb_index, u16 pool_index,
+			   क्रमागत devlink_sb_threshold_type threshold_type,
+			   काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*sb_port_pool_get)(काष्ठा devlink_port *devlink_port,
+				अचिन्हित पूर्णांक sb_index, u16 pool_index,
 				u32 *p_threshold);
-	int (*sb_port_pool_set)(struct devlink_port *devlink_port,
-				unsigned int sb_index, u16 pool_index,
-				u32 threshold, struct netlink_ext_ack *extack);
-	int (*sb_tc_pool_bind_get)(struct devlink_port *devlink_port,
-				   unsigned int sb_index,
+	पूर्णांक (*sb_port_pool_set)(काष्ठा devlink_port *devlink_port,
+				अचिन्हित पूर्णांक sb_index, u16 pool_index,
+				u32 threshold, काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*sb_tc_pool_bind_get)(काष्ठा devlink_port *devlink_port,
+				   अचिन्हित पूर्णांक sb_index,
 				   u16 tc_index,
-				   enum devlink_sb_pool_type pool_type,
+				   क्रमागत devlink_sb_pool_type pool_type,
 				   u16 *p_pool_index, u32 *p_threshold);
-	int (*sb_tc_pool_bind_set)(struct devlink_port *devlink_port,
-				   unsigned int sb_index,
+	पूर्णांक (*sb_tc_pool_bind_set)(काष्ठा devlink_port *devlink_port,
+				   अचिन्हित पूर्णांक sb_index,
 				   u16 tc_index,
-				   enum devlink_sb_pool_type pool_type,
+				   क्रमागत devlink_sb_pool_type pool_type,
 				   u16 pool_index, u32 threshold,
-				   struct netlink_ext_ack *extack);
-	int (*sb_occ_snapshot)(struct devlink *devlink,
-			       unsigned int sb_index);
-	int (*sb_occ_max_clear)(struct devlink *devlink,
-				unsigned int sb_index);
-	int (*sb_occ_port_pool_get)(struct devlink_port *devlink_port,
-				    unsigned int sb_index, u16 pool_index,
+				   काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*sb_occ_snapshot)(काष्ठा devlink *devlink,
+			       अचिन्हित पूर्णांक sb_index);
+	पूर्णांक (*sb_occ_max_clear)(काष्ठा devlink *devlink,
+				अचिन्हित पूर्णांक sb_index);
+	पूर्णांक (*sb_occ_port_pool_get)(काष्ठा devlink_port *devlink_port,
+				    अचिन्हित पूर्णांक sb_index, u16 pool_index,
 				    u32 *p_cur, u32 *p_max);
-	int (*sb_occ_tc_port_bind_get)(struct devlink_port *devlink_port,
-				       unsigned int sb_index,
+	पूर्णांक (*sb_occ_tc_port_bind_get)(काष्ठा devlink_port *devlink_port,
+				       अचिन्हित पूर्णांक sb_index,
 				       u16 tc_index,
-				       enum devlink_sb_pool_type pool_type,
+				       क्रमागत devlink_sb_pool_type pool_type,
 				       u32 *p_cur, u32 *p_max);
 
-	int (*eswitch_mode_get)(struct devlink *devlink, u16 *p_mode);
-	int (*eswitch_mode_set)(struct devlink *devlink, u16 mode,
-				struct netlink_ext_ack *extack);
-	int (*eswitch_inline_mode_get)(struct devlink *devlink, u8 *p_inline_mode);
-	int (*eswitch_inline_mode_set)(struct devlink *devlink, u8 inline_mode,
-				       struct netlink_ext_ack *extack);
-	int (*eswitch_encap_mode_get)(struct devlink *devlink,
-				      enum devlink_eswitch_encap_mode *p_encap_mode);
-	int (*eswitch_encap_mode_set)(struct devlink *devlink,
-				      enum devlink_eswitch_encap_mode encap_mode,
-				      struct netlink_ext_ack *extack);
-	int (*info_get)(struct devlink *devlink, struct devlink_info_req *req,
-			struct netlink_ext_ack *extack);
+	पूर्णांक (*eचयन_mode_get)(काष्ठा devlink *devlink, u16 *p_mode);
+	पूर्णांक (*eचयन_mode_set)(काष्ठा devlink *devlink, u16 mode,
+				काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*eचयन_अंतरभूत_mode_get)(काष्ठा devlink *devlink, u8 *p_अंतरभूत_mode);
+	पूर्णांक (*eचयन_अंतरभूत_mode_set)(काष्ठा devlink *devlink, u8 अंतरभूत_mode,
+				       काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*eचयन_encap_mode_get)(काष्ठा devlink *devlink,
+				      क्रमागत devlink_eचयन_encap_mode *p_encap_mode);
+	पूर्णांक (*eचयन_encap_mode_set)(काष्ठा devlink *devlink,
+				      क्रमागत devlink_eचयन_encap_mode encap_mode,
+				      काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*info_get)(काष्ठा devlink *devlink, काष्ठा devlink_info_req *req,
+			काष्ठा netlink_ext_ack *extack);
 	/**
 	 * @flash_update: Device flash update function
 	 *
-	 * Used to perform a flash update for the device. The set of
+	 * Used to perक्रमm a flash update क्रम the device. The set of
 	 * parameters supported by the driver should be set in
 	 * supported_flash_update_params.
 	 */
-	int (*flash_update)(struct devlink *devlink,
-			    struct devlink_flash_update_params *params,
-			    struct netlink_ext_ack *extack);
+	पूर्णांक (*flash_update)(काष्ठा devlink *devlink,
+			    काष्ठा devlink_flash_update_params *params,
+			    काष्ठा netlink_ext_ack *extack);
 	/**
 	 * @trap_init: Trap initialization function.
 	 *
@@ -1281,132 +1282,132 @@ struct devlink_ops {
 	 * context, so that they could efficiently pass it to
 	 * devlink_trap_report() when the trap is triggered.
 	 */
-	int (*trap_init)(struct devlink *devlink,
-			 const struct devlink_trap *trap, void *trap_ctx);
+	पूर्णांक (*trap_init)(काष्ठा devlink *devlink,
+			 स्थिर काष्ठा devlink_trap *trap, व्योम *trap_ctx);
 	/**
 	 * @trap_fini: Trap de-initialization function.
 	 *
 	 * Should be used by device drivers to de-initialize the trap in the
 	 * underlying device.
 	 */
-	void (*trap_fini)(struct devlink *devlink,
-			  const struct devlink_trap *trap, void *trap_ctx);
+	व्योम (*trap_fini)(काष्ठा devlink *devlink,
+			  स्थिर काष्ठा devlink_trap *trap, व्योम *trap_ctx);
 	/**
 	 * @trap_action_set: Trap action set function.
 	 */
-	int (*trap_action_set)(struct devlink *devlink,
-			       const struct devlink_trap *trap,
-			       enum devlink_trap_action action,
-			       struct netlink_ext_ack *extack);
+	पूर्णांक (*trap_action_set)(काष्ठा devlink *devlink,
+			       स्थिर काष्ठा devlink_trap *trap,
+			       क्रमागत devlink_trap_action action,
+			       काष्ठा netlink_ext_ack *extack);
 	/**
 	 * @trap_group_init: Trap group initialization function.
 	 *
 	 * Should be used by device drivers to initialize the trap group in the
 	 * underlying device.
 	 */
-	int (*trap_group_init)(struct devlink *devlink,
-			       const struct devlink_trap_group *group);
+	पूर्णांक (*trap_group_init)(काष्ठा devlink *devlink,
+			       स्थिर काष्ठा devlink_trap_group *group);
 	/**
 	 * @trap_group_set: Trap group parameters set function.
 	 *
-	 * Note: @policer can be NULL when a policer is being unbound from
+	 * Note: @policer can be शून्य when a policer is being unbound from
 	 * @group.
 	 */
-	int (*trap_group_set)(struct devlink *devlink,
-			      const struct devlink_trap_group *group,
-			      const struct devlink_trap_policer *policer,
-			      struct netlink_ext_ack *extack);
+	पूर्णांक (*trap_group_set)(काष्ठा devlink *devlink,
+			      स्थिर काष्ठा devlink_trap_group *group,
+			      स्थिर काष्ठा devlink_trap_policer *policer,
+			      काष्ठा netlink_ext_ack *extack);
 	/**
 	 * @trap_group_action_set: Trap group action set function.
 	 *
 	 * If this callback is populated, it will take precedence over looping
 	 * over all traps in a group and calling .trap_action_set().
 	 */
-	int (*trap_group_action_set)(struct devlink *devlink,
-				     const struct devlink_trap_group *group,
-				     enum devlink_trap_action action,
-				     struct netlink_ext_ack *extack);
+	पूर्णांक (*trap_group_action_set)(काष्ठा devlink *devlink,
+				     स्थिर काष्ठा devlink_trap_group *group,
+				     क्रमागत devlink_trap_action action,
+				     काष्ठा netlink_ext_ack *extack);
 	/**
 	 * @trap_policer_init: Trap policer initialization function.
 	 *
 	 * Should be used by device drivers to initialize the trap policer in
 	 * the underlying device.
 	 */
-	int (*trap_policer_init)(struct devlink *devlink,
-				 const struct devlink_trap_policer *policer);
+	पूर्णांक (*trap_policer_init)(काष्ठा devlink *devlink,
+				 स्थिर काष्ठा devlink_trap_policer *policer);
 	/**
 	 * @trap_policer_fini: Trap policer de-initialization function.
 	 *
 	 * Should be used by device drivers to de-initialize the trap policer
 	 * in the underlying device.
 	 */
-	void (*trap_policer_fini)(struct devlink *devlink,
-				  const struct devlink_trap_policer *policer);
+	व्योम (*trap_policer_fini)(काष्ठा devlink *devlink,
+				  स्थिर काष्ठा devlink_trap_policer *policer);
 	/**
 	 * @trap_policer_set: Trap policer parameters set function.
 	 */
-	int (*trap_policer_set)(struct devlink *devlink,
-				const struct devlink_trap_policer *policer,
+	पूर्णांक (*trap_policer_set)(काष्ठा devlink *devlink,
+				स्थिर काष्ठा devlink_trap_policer *policer,
 				u64 rate, u64 burst,
-				struct netlink_ext_ack *extack);
+				काष्ठा netlink_ext_ack *extack);
 	/**
 	 * @trap_policer_counter_get: Trap policer counter get function.
 	 *
 	 * Should be used by device drivers to report number of packets dropped
 	 * by the policer.
 	 */
-	int (*trap_policer_counter_get)(struct devlink *devlink,
-					const struct devlink_trap_policer *policer,
+	पूर्णांक (*trap_policer_counter_get)(काष्ठा devlink *devlink,
+					स्थिर काष्ठा devlink_trap_policer *policer,
 					u64 *p_drops);
 	/**
 	 * @port_function_hw_addr_get: Port function's hardware address get function.
 	 *
 	 * Should be used by device drivers to report the hardware address of a function managed
-	 * by the devlink port. Driver should return -EOPNOTSUPP if it doesn't support port
-	 * function handling for a particular port.
+	 * by the devlink port. Driver should वापस -EOPNOTSUPP अगर it करोesn't support port
+	 * function handling क्रम a particular port.
 	 *
-	 * Note: @extack can be NULL when port notifier queries the port function.
+	 * Note: @extack can be शून्य when port notअगरier queries the port function.
 	 */
-	int (*port_function_hw_addr_get)(struct devlink *devlink, struct devlink_port *port,
-					 u8 *hw_addr, int *hw_addr_len,
-					 struct netlink_ext_ack *extack);
+	पूर्णांक (*port_function_hw_addr_get)(काष्ठा devlink *devlink, काष्ठा devlink_port *port,
+					 u8 *hw_addr, पूर्णांक *hw_addr_len,
+					 काष्ठा netlink_ext_ack *extack);
 	/**
 	 * @port_function_hw_addr_set: Port function's hardware address set function.
 	 *
 	 * Should be used by device drivers to set the hardware address of a function managed
-	 * by the devlink port. Driver should return -EOPNOTSUPP if it doesn't support port
-	 * function handling for a particular port.
+	 * by the devlink port. Driver should वापस -EOPNOTSUPP अगर it करोesn't support port
+	 * function handling क्रम a particular port.
 	 */
-	int (*port_function_hw_addr_set)(struct devlink *devlink, struct devlink_port *port,
-					 const u8 *hw_addr, int hw_addr_len,
-					 struct netlink_ext_ack *extack);
+	पूर्णांक (*port_function_hw_addr_set)(काष्ठा devlink *devlink, काष्ठा devlink_port *port,
+					 स्थिर u8 *hw_addr, पूर्णांक hw_addr_len,
+					 काष्ठा netlink_ext_ack *extack);
 	/**
-	 * port_new() - Add a new port function of a specified flavor
+	 * port_new() - Add a new port function of a specअगरied flavor
 	 * @devlink: Devlink instance
 	 * @attrs: attributes of the new port
-	 * @extack: extack for reporting error messages
+	 * @extack: extack क्रम reporting error messages
 	 * @new_port_index: index of the new port
 	 *
 	 * Devlink core will call this device driver function upon user request
-	 * to create a new port function of a specified flavor and optional
+	 * to create a new port function of a specअगरied flavor and optional
 	 * attributes
 	 *
 	 * Notes:
 	 *	- Called without devlink instance lock being held. Drivers must
 	 *	  implement own means of synchronization
-	 *	- On success, drivers must register a port with devlink core
+	 *	- On success, drivers must रेजिस्टर a port with devlink core
 	 *
 	 * Return: 0 on success, negative value otherwise.
 	 */
-	int (*port_new)(struct devlink *devlink,
-			const struct devlink_port_new_attrs *attrs,
-			struct netlink_ext_ack *extack,
-			unsigned int *new_port_index);
+	पूर्णांक (*port_new)(काष्ठा devlink *devlink,
+			स्थिर काष्ठा devlink_port_new_attrs *attrs,
+			काष्ठा netlink_ext_ack *extack,
+			अचिन्हित पूर्णांक *new_port_index);
 	/**
 	 * port_del() - Delete a port function
 	 * @devlink: Devlink instance
 	 * @port_index: port function index to delete
-	 * @extack: extack for reporting error messages
+	 * @extack: extack क्रम reporting error messages
 	 *
 	 * Devlink core will call this device driver function upon user request
 	 * to delete a previously created port function
@@ -1414,351 +1415,351 @@ struct devlink_ops {
 	 * Notes:
 	 *	- Called without devlink instance lock being held. Drivers must
 	 *	  implement own means of synchronization
-	 *	- On success, drivers must unregister the corresponding devlink
+	 *	- On success, drivers must unरेजिस्टर the corresponding devlink
 	 *	  port
 	 *
 	 * Return: 0 on success, negative value otherwise.
 	 */
-	int (*port_del)(struct devlink *devlink, unsigned int port_index,
-			struct netlink_ext_ack *extack);
+	पूर्णांक (*port_del)(काष्ठा devlink *devlink, अचिन्हित पूर्णांक port_index,
+			काष्ठा netlink_ext_ack *extack);
 	/**
 	 * port_fn_state_get() - Get the state of a port function
 	 * @devlink: Devlink instance
 	 * @port: The devlink port
 	 * @state: Admin configured state
 	 * @opstate: Current operational state
-	 * @extack: extack for reporting error messages
+	 * @extack: extack क्रम reporting error messages
 	 *
 	 * Reports the admin and operational state of a devlink port function
 	 *
 	 * Return: 0 on success, negative value otherwise.
 	 */
-	int (*port_fn_state_get)(struct devlink *devlink,
-				 struct devlink_port *port,
-				 enum devlink_port_fn_state *state,
-				 enum devlink_port_fn_opstate *opstate,
-				 struct netlink_ext_ack *extack);
+	पूर्णांक (*port_fn_state_get)(काष्ठा devlink *devlink,
+				 काष्ठा devlink_port *port,
+				 क्रमागत devlink_port_fn_state *state,
+				 क्रमागत devlink_port_fn_opstate *opstate,
+				 काष्ठा netlink_ext_ack *extack);
 	/**
 	 * port_fn_state_set() - Set the admin state of a port function
 	 * @devlink: Devlink instance
 	 * @port: The devlink port
 	 * @state: Admin state
-	 * @extack: extack for reporting error messages
+	 * @extack: extack क्रम reporting error messages
 	 *
 	 * Set the admin state of a devlink port function
 	 *
 	 * Return: 0 on success, negative value otherwise.
 	 */
-	int (*port_fn_state_set)(struct devlink *devlink,
-				 struct devlink_port *port,
-				 enum devlink_port_fn_state state,
-				 struct netlink_ext_ack *extack);
-};
+	पूर्णांक (*port_fn_state_set)(काष्ठा devlink *devlink,
+				 काष्ठा devlink_port *port,
+				 क्रमागत devlink_port_fn_state state,
+				 काष्ठा netlink_ext_ack *extack);
+पूर्ण;
 
-static inline void *devlink_priv(struct devlink *devlink)
-{
+अटल अंतरभूत व्योम *devlink_priv(काष्ठा devlink *devlink)
+अणु
 	BUG_ON(!devlink);
-	return &devlink->priv;
-}
+	वापस &devlink->priv;
+पूर्ण
 
-static inline struct devlink *priv_to_devlink(void *priv)
-{
+अटल अंतरभूत काष्ठा devlink *priv_to_devlink(व्योम *priv)
+अणु
 	BUG_ON(!priv);
-	return container_of(priv, struct devlink, priv);
-}
+	वापस container_of(priv, काष्ठा devlink, priv);
+पूर्ण
 
-static inline struct devlink_port *
-netdev_to_devlink_port(struct net_device *dev)
-{
-	if (dev->netdev_ops->ndo_get_devlink_port)
-		return dev->netdev_ops->ndo_get_devlink_port(dev);
-	return NULL;
-}
+अटल अंतरभूत काष्ठा devlink_port *
+netdev_to_devlink_port(काष्ठा net_device *dev)
+अणु
+	अगर (dev->netdev_ops->nकरो_get_devlink_port)
+		वापस dev->netdev_ops->nकरो_get_devlink_port(dev);
+	वापस शून्य;
+पूर्ण
 
-static inline struct devlink *netdev_to_devlink(struct net_device *dev)
-{
-	struct devlink_port *devlink_port = netdev_to_devlink_port(dev);
+अटल अंतरभूत काष्ठा devlink *netdev_to_devlink(काष्ठा net_device *dev)
+अणु
+	काष्ठा devlink_port *devlink_port = netdev_to_devlink_port(dev);
 
-	if (devlink_port)
-		return devlink_port->devlink;
-	return NULL;
-}
+	अगर (devlink_port)
+		वापस devlink_port->devlink;
+	वापस शून्य;
+पूर्ण
 
-struct ib_device;
+काष्ठा ib_device;
 
-struct net *devlink_net(const struct devlink *devlink);
-void devlink_net_set(struct devlink *devlink, struct net *net);
-struct devlink *devlink_alloc(const struct devlink_ops *ops, size_t priv_size);
-int devlink_register(struct devlink *devlink, struct device *dev);
-void devlink_unregister(struct devlink *devlink);
-void devlink_reload_enable(struct devlink *devlink);
-void devlink_reload_disable(struct devlink *devlink);
-void devlink_free(struct devlink *devlink);
-int devlink_port_register(struct devlink *devlink,
-			  struct devlink_port *devlink_port,
-			  unsigned int port_index);
-void devlink_port_unregister(struct devlink_port *devlink_port);
-void devlink_port_type_eth_set(struct devlink_port *devlink_port,
-			       struct net_device *netdev);
-void devlink_port_type_ib_set(struct devlink_port *devlink_port,
-			      struct ib_device *ibdev);
-void devlink_port_type_clear(struct devlink_port *devlink_port);
-void devlink_port_attrs_set(struct devlink_port *devlink_port,
-			    struct devlink_port_attrs *devlink_port_attrs);
-void devlink_port_attrs_pci_pf_set(struct devlink_port *devlink_port, u32 controller,
-				   u16 pf, bool external);
-void devlink_port_attrs_pci_vf_set(struct devlink_port *devlink_port, u32 controller,
-				   u16 pf, u16 vf, bool external);
-void devlink_port_attrs_pci_sf_set(struct devlink_port *devlink_port,
+काष्ठा net *devlink_net(स्थिर काष्ठा devlink *devlink);
+व्योम devlink_net_set(काष्ठा devlink *devlink, काष्ठा net *net);
+काष्ठा devlink *devlink_alloc(स्थिर काष्ठा devlink_ops *ops, माप_प्रकार priv_size);
+पूर्णांक devlink_रेजिस्टर(काष्ठा devlink *devlink, काष्ठा device *dev);
+व्योम devlink_unरेजिस्टर(काष्ठा devlink *devlink);
+व्योम devlink_reload_enable(काष्ठा devlink *devlink);
+व्योम devlink_reload_disable(काष्ठा devlink *devlink);
+व्योम devlink_मुक्त(काष्ठा devlink *devlink);
+पूर्णांक devlink_port_रेजिस्टर(काष्ठा devlink *devlink,
+			  काष्ठा devlink_port *devlink_port,
+			  अचिन्हित पूर्णांक port_index);
+व्योम devlink_port_unरेजिस्टर(काष्ठा devlink_port *devlink_port);
+व्योम devlink_port_type_eth_set(काष्ठा devlink_port *devlink_port,
+			       काष्ठा net_device *netdev);
+व्योम devlink_port_type_ib_set(काष्ठा devlink_port *devlink_port,
+			      काष्ठा ib_device *ibdev);
+व्योम devlink_port_type_clear(काष्ठा devlink_port *devlink_port);
+व्योम devlink_port_attrs_set(काष्ठा devlink_port *devlink_port,
+			    काष्ठा devlink_port_attrs *devlink_port_attrs);
+व्योम devlink_port_attrs_pci_pf_set(काष्ठा devlink_port *devlink_port, u32 controller,
+				   u16 pf, bool बाह्यal);
+व्योम devlink_port_attrs_pci_vf_set(काष्ठा devlink_port *devlink_port, u32 controller,
+				   u16 pf, u16 vf, bool बाह्यal);
+व्योम devlink_port_attrs_pci_sf_set(काष्ठा devlink_port *devlink_port,
 				   u32 controller, u16 pf, u32 sf,
-				   bool external);
-int devlink_sb_register(struct devlink *devlink, unsigned int sb_index,
+				   bool बाह्यal);
+पूर्णांक devlink_sb_रेजिस्टर(काष्ठा devlink *devlink, अचिन्हित पूर्णांक sb_index,
 			u32 size, u16 ingress_pools_count,
 			u16 egress_pools_count, u16 ingress_tc_count,
 			u16 egress_tc_count);
-void devlink_sb_unregister(struct devlink *devlink, unsigned int sb_index);
-int devlink_dpipe_table_register(struct devlink *devlink,
-				 const char *table_name,
-				 struct devlink_dpipe_table_ops *table_ops,
-				 void *priv, bool counter_control_extern);
-void devlink_dpipe_table_unregister(struct devlink *devlink,
-				    const char *table_name);
-int devlink_dpipe_headers_register(struct devlink *devlink,
-				   struct devlink_dpipe_headers *dpipe_headers);
-void devlink_dpipe_headers_unregister(struct devlink *devlink);
-bool devlink_dpipe_table_counter_enabled(struct devlink *devlink,
-					 const char *table_name);
-int devlink_dpipe_entry_ctx_prepare(struct devlink_dpipe_dump_ctx *dump_ctx);
-int devlink_dpipe_entry_ctx_append(struct devlink_dpipe_dump_ctx *dump_ctx,
-				   struct devlink_dpipe_entry *entry);
-int devlink_dpipe_entry_ctx_close(struct devlink_dpipe_dump_ctx *dump_ctx);
-void devlink_dpipe_entry_clear(struct devlink_dpipe_entry *entry);
-int devlink_dpipe_action_put(struct sk_buff *skb,
-			     struct devlink_dpipe_action *action);
-int devlink_dpipe_match_put(struct sk_buff *skb,
-			    struct devlink_dpipe_match *match);
-extern struct devlink_dpipe_header devlink_dpipe_header_ethernet;
-extern struct devlink_dpipe_header devlink_dpipe_header_ipv4;
-extern struct devlink_dpipe_header devlink_dpipe_header_ipv6;
+व्योम devlink_sb_unरेजिस्टर(काष्ठा devlink *devlink, अचिन्हित पूर्णांक sb_index);
+पूर्णांक devlink_dpipe_table_रेजिस्टर(काष्ठा devlink *devlink,
+				 स्थिर अक्षर *table_name,
+				 काष्ठा devlink_dpipe_table_ops *table_ops,
+				 व्योम *priv, bool counter_control_बाह्य);
+व्योम devlink_dpipe_table_unरेजिस्टर(काष्ठा devlink *devlink,
+				    स्थिर अक्षर *table_name);
+पूर्णांक devlink_dpipe_headers_रेजिस्टर(काष्ठा devlink *devlink,
+				   काष्ठा devlink_dpipe_headers *dpipe_headers);
+व्योम devlink_dpipe_headers_unरेजिस्टर(काष्ठा devlink *devlink);
+bool devlink_dpipe_table_counter_enabled(काष्ठा devlink *devlink,
+					 स्थिर अक्षर *table_name);
+पूर्णांक devlink_dpipe_entry_ctx_prepare(काष्ठा devlink_dpipe_dump_ctx *dump_ctx);
+पूर्णांक devlink_dpipe_entry_ctx_append(काष्ठा devlink_dpipe_dump_ctx *dump_ctx,
+				   काष्ठा devlink_dpipe_entry *entry);
+पूर्णांक devlink_dpipe_entry_ctx_बंद(काष्ठा devlink_dpipe_dump_ctx *dump_ctx);
+व्योम devlink_dpipe_entry_clear(काष्ठा devlink_dpipe_entry *entry);
+पूर्णांक devlink_dpipe_action_put(काष्ठा sk_buff *skb,
+			     काष्ठा devlink_dpipe_action *action);
+पूर्णांक devlink_dpipe_match_put(काष्ठा sk_buff *skb,
+			    काष्ठा devlink_dpipe_match *match);
+बाह्य काष्ठा devlink_dpipe_header devlink_dpipe_header_ethernet;
+बाह्य काष्ठा devlink_dpipe_header devlink_dpipe_header_ipv4;
+बाह्य काष्ठा devlink_dpipe_header devlink_dpipe_header_ipv6;
 
-int devlink_resource_register(struct devlink *devlink,
-			      const char *resource_name,
+पूर्णांक devlink_resource_रेजिस्टर(काष्ठा devlink *devlink,
+			      स्थिर अक्षर *resource_name,
 			      u64 resource_size,
 			      u64 resource_id,
 			      u64 parent_resource_id,
-			      const struct devlink_resource_size_params *size_params);
-void devlink_resources_unregister(struct devlink *devlink,
-				  struct devlink_resource *resource);
-int devlink_resource_size_get(struct devlink *devlink,
+			      स्थिर काष्ठा devlink_resource_size_params *size_params);
+व्योम devlink_resources_unरेजिस्टर(काष्ठा devlink *devlink,
+				  काष्ठा devlink_resource *resource);
+पूर्णांक devlink_resource_size_get(काष्ठा devlink *devlink,
 			      u64 resource_id,
 			      u64 *p_resource_size);
-int devlink_dpipe_table_resource_set(struct devlink *devlink,
-				     const char *table_name, u64 resource_id,
+पूर्णांक devlink_dpipe_table_resource_set(काष्ठा devlink *devlink,
+				     स्थिर अक्षर *table_name, u64 resource_id,
 				     u64 resource_units);
-void devlink_resource_occ_get_register(struct devlink *devlink,
+व्योम devlink_resource_occ_get_रेजिस्टर(काष्ठा devlink *devlink,
 				       u64 resource_id,
 				       devlink_resource_occ_get_t *occ_get,
-				       void *occ_get_priv);
-void devlink_resource_occ_get_unregister(struct devlink *devlink,
+				       व्योम *occ_get_priv);
+व्योम devlink_resource_occ_get_unरेजिस्टर(काष्ठा devlink *devlink,
 					 u64 resource_id);
-int devlink_params_register(struct devlink *devlink,
-			    const struct devlink_param *params,
-			    size_t params_count);
-void devlink_params_unregister(struct devlink *devlink,
-			       const struct devlink_param *params,
-			       size_t params_count);
-void devlink_params_publish(struct devlink *devlink);
-void devlink_params_unpublish(struct devlink *devlink);
-int devlink_port_params_register(struct devlink_port *devlink_port,
-				 const struct devlink_param *params,
-				 size_t params_count);
-void devlink_port_params_unregister(struct devlink_port *devlink_port,
-				    const struct devlink_param *params,
-				    size_t params_count);
-int devlink_param_driverinit_value_get(struct devlink *devlink, u32 param_id,
-				       union devlink_param_value *init_val);
-int devlink_param_driverinit_value_set(struct devlink *devlink, u32 param_id,
-				       union devlink_param_value init_val);
-int
-devlink_port_param_driverinit_value_get(struct devlink_port *devlink_port,
+पूर्णांक devlink_params_रेजिस्टर(काष्ठा devlink *devlink,
+			    स्थिर काष्ठा devlink_param *params,
+			    माप_प्रकार params_count);
+व्योम devlink_params_unरेजिस्टर(काष्ठा devlink *devlink,
+			       स्थिर काष्ठा devlink_param *params,
+			       माप_प्रकार params_count);
+व्योम devlink_params_publish(काष्ठा devlink *devlink);
+व्योम devlink_params_unpublish(काष्ठा devlink *devlink);
+पूर्णांक devlink_port_params_रेजिस्टर(काष्ठा devlink_port *devlink_port,
+				 स्थिर काष्ठा devlink_param *params,
+				 माप_प्रकार params_count);
+व्योम devlink_port_params_unरेजिस्टर(काष्ठा devlink_port *devlink_port,
+				    स्थिर काष्ठा devlink_param *params,
+				    माप_प्रकार params_count);
+पूर्णांक devlink_param_driverinit_value_get(काष्ठा devlink *devlink, u32 param_id,
+				       जोड़ devlink_param_value *init_val);
+पूर्णांक devlink_param_driverinit_value_set(काष्ठा devlink *devlink, u32 param_id,
+				       जोड़ devlink_param_value init_val);
+पूर्णांक
+devlink_port_param_driverinit_value_get(काष्ठा devlink_port *devlink_port,
 					u32 param_id,
-					union devlink_param_value *init_val);
-int devlink_port_param_driverinit_value_set(struct devlink_port *devlink_port,
+					जोड़ devlink_param_value *init_val);
+पूर्णांक devlink_port_param_driverinit_value_set(काष्ठा devlink_port *devlink_port,
 					    u32 param_id,
-					    union devlink_param_value init_val);
-void devlink_param_value_changed(struct devlink *devlink, u32 param_id);
-void devlink_port_param_value_changed(struct devlink_port *devlink_port,
+					    जोड़ devlink_param_value init_val);
+व्योम devlink_param_value_changed(काष्ठा devlink *devlink, u32 param_id);
+व्योम devlink_port_param_value_changed(काष्ठा devlink_port *devlink_port,
 				      u32 param_id);
-void devlink_param_value_str_fill(union devlink_param_value *dst_val,
-				  const char *src);
-struct devlink_region *
-devlink_region_create(struct devlink *devlink,
-		      const struct devlink_region_ops *ops,
+व्योम devlink_param_value_str_fill(जोड़ devlink_param_value *dst_val,
+				  स्थिर अक्षर *src);
+काष्ठा devlink_region *
+devlink_region_create(काष्ठा devlink *devlink,
+		      स्थिर काष्ठा devlink_region_ops *ops,
 		      u32 region_max_snapshots, u64 region_size);
-struct devlink_region *
-devlink_port_region_create(struct devlink_port *port,
-			   const struct devlink_port_region_ops *ops,
+काष्ठा devlink_region *
+devlink_port_region_create(काष्ठा devlink_port *port,
+			   स्थिर काष्ठा devlink_port_region_ops *ops,
 			   u32 region_max_snapshots, u64 region_size);
-void devlink_region_destroy(struct devlink_region *region);
-void devlink_port_region_destroy(struct devlink_region *region);
+व्योम devlink_region_destroy(काष्ठा devlink_region *region);
+व्योम devlink_port_region_destroy(काष्ठा devlink_region *region);
 
-int devlink_region_snapshot_id_get(struct devlink *devlink, u32 *id);
-void devlink_region_snapshot_id_put(struct devlink *devlink, u32 id);
-int devlink_region_snapshot_create(struct devlink_region *region,
+पूर्णांक devlink_region_snapshot_id_get(काष्ठा devlink *devlink, u32 *id);
+व्योम devlink_region_snapshot_id_put(काष्ठा devlink *devlink, u32 id);
+पूर्णांक devlink_region_snapshot_create(काष्ठा devlink_region *region,
 				   u8 *data, u32 snapshot_id);
-int devlink_info_serial_number_put(struct devlink_info_req *req,
-				   const char *sn);
-int devlink_info_driver_name_put(struct devlink_info_req *req,
-				 const char *name);
-int devlink_info_board_serial_number_put(struct devlink_info_req *req,
-					 const char *bsn);
-int devlink_info_version_fixed_put(struct devlink_info_req *req,
-				   const char *version_name,
-				   const char *version_value);
-int devlink_info_version_stored_put(struct devlink_info_req *req,
-				    const char *version_name,
-				    const char *version_value);
-int devlink_info_version_running_put(struct devlink_info_req *req,
-				     const char *version_name,
-				     const char *version_value);
+पूर्णांक devlink_info_serial_number_put(काष्ठा devlink_info_req *req,
+				   स्थिर अक्षर *sn);
+पूर्णांक devlink_info_driver_name_put(काष्ठा devlink_info_req *req,
+				 स्थिर अक्षर *name);
+पूर्णांक devlink_info_board_serial_number_put(काष्ठा devlink_info_req *req,
+					 स्थिर अक्षर *bsn);
+पूर्णांक devlink_info_version_fixed_put(काष्ठा devlink_info_req *req,
+				   स्थिर अक्षर *version_name,
+				   स्थिर अक्षर *version_value);
+पूर्णांक devlink_info_version_stored_put(काष्ठा devlink_info_req *req,
+				    स्थिर अक्षर *version_name,
+				    स्थिर अक्षर *version_value);
+पूर्णांक devlink_info_version_running_put(काष्ठा devlink_info_req *req,
+				     स्थिर अक्षर *version_name,
+				     स्थिर अक्षर *version_value);
 
-int devlink_fmsg_obj_nest_start(struct devlink_fmsg *fmsg);
-int devlink_fmsg_obj_nest_end(struct devlink_fmsg *fmsg);
+पूर्णांक devlink_fmsg_obj_nest_start(काष्ठा devlink_fmsg *fmsg);
+पूर्णांक devlink_fmsg_obj_nest_end(काष्ठा devlink_fmsg *fmsg);
 
-int devlink_fmsg_pair_nest_start(struct devlink_fmsg *fmsg, const char *name);
-int devlink_fmsg_pair_nest_end(struct devlink_fmsg *fmsg);
+पूर्णांक devlink_fmsg_pair_nest_start(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name);
+पूर्णांक devlink_fmsg_pair_nest_end(काष्ठा devlink_fmsg *fmsg);
 
-int devlink_fmsg_arr_pair_nest_start(struct devlink_fmsg *fmsg,
-				     const char *name);
-int devlink_fmsg_arr_pair_nest_end(struct devlink_fmsg *fmsg);
-int devlink_fmsg_binary_pair_nest_start(struct devlink_fmsg *fmsg,
-					const char *name);
-int devlink_fmsg_binary_pair_nest_end(struct devlink_fmsg *fmsg);
+पूर्णांक devlink_fmsg_arr_pair_nest_start(काष्ठा devlink_fmsg *fmsg,
+				     स्थिर अक्षर *name);
+पूर्णांक devlink_fmsg_arr_pair_nest_end(काष्ठा devlink_fmsg *fmsg);
+पूर्णांक devlink_fmsg_binary_pair_nest_start(काष्ठा devlink_fmsg *fmsg,
+					स्थिर अक्षर *name);
+पूर्णांक devlink_fmsg_binary_pair_nest_end(काष्ठा devlink_fmsg *fmsg);
 
-int devlink_fmsg_bool_put(struct devlink_fmsg *fmsg, bool value);
-int devlink_fmsg_u8_put(struct devlink_fmsg *fmsg, u8 value);
-int devlink_fmsg_u32_put(struct devlink_fmsg *fmsg, u32 value);
-int devlink_fmsg_u64_put(struct devlink_fmsg *fmsg, u64 value);
-int devlink_fmsg_string_put(struct devlink_fmsg *fmsg, const char *value);
-int devlink_fmsg_binary_put(struct devlink_fmsg *fmsg, const void *value,
+पूर्णांक devlink_fmsg_bool_put(काष्ठा devlink_fmsg *fmsg, bool value);
+पूर्णांक devlink_fmsg_u8_put(काष्ठा devlink_fmsg *fmsg, u8 value);
+पूर्णांक devlink_fmsg_u32_put(काष्ठा devlink_fmsg *fmsg, u32 value);
+पूर्णांक devlink_fmsg_u64_put(काष्ठा devlink_fmsg *fmsg, u64 value);
+पूर्णांक devlink_fmsg_string_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *value);
+पूर्णांक devlink_fmsg_binary_put(काष्ठा devlink_fmsg *fmsg, स्थिर व्योम *value,
 			    u16 value_len);
 
-int devlink_fmsg_bool_pair_put(struct devlink_fmsg *fmsg, const char *name,
+पूर्णांक devlink_fmsg_bool_pair_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name,
 			       bool value);
-int devlink_fmsg_u8_pair_put(struct devlink_fmsg *fmsg, const char *name,
+पूर्णांक devlink_fmsg_u8_pair_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name,
 			     u8 value);
-int devlink_fmsg_u32_pair_put(struct devlink_fmsg *fmsg, const char *name,
+पूर्णांक devlink_fmsg_u32_pair_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name,
 			      u32 value);
-int devlink_fmsg_u64_pair_put(struct devlink_fmsg *fmsg, const char *name,
+पूर्णांक devlink_fmsg_u64_pair_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name,
 			      u64 value);
-int devlink_fmsg_string_pair_put(struct devlink_fmsg *fmsg, const char *name,
-				 const char *value);
-int devlink_fmsg_binary_pair_put(struct devlink_fmsg *fmsg, const char *name,
-				 const void *value, u32 value_len);
+पूर्णांक devlink_fmsg_string_pair_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name,
+				 स्थिर अक्षर *value);
+पूर्णांक devlink_fmsg_binary_pair_put(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name,
+				 स्थिर व्योम *value, u32 value_len);
 
-struct devlink_health_reporter *
-devlink_health_reporter_create(struct devlink *devlink,
-			       const struct devlink_health_reporter_ops *ops,
-			       u64 graceful_period, void *priv);
+काष्ठा devlink_health_reporter *
+devlink_health_reporter_create(काष्ठा devlink *devlink,
+			       स्थिर काष्ठा devlink_health_reporter_ops *ops,
+			       u64 graceful_period, व्योम *priv);
 
-struct devlink_health_reporter *
-devlink_port_health_reporter_create(struct devlink_port *port,
-				    const struct devlink_health_reporter_ops *ops,
-				    u64 graceful_period, void *priv);
+काष्ठा devlink_health_reporter *
+devlink_port_health_reporter_create(काष्ठा devlink_port *port,
+				    स्थिर काष्ठा devlink_health_reporter_ops *ops,
+				    u64 graceful_period, व्योम *priv);
 
-void
-devlink_health_reporter_destroy(struct devlink_health_reporter *reporter);
+व्योम
+devlink_health_reporter_destroy(काष्ठा devlink_health_reporter *reporter);
 
-void
-devlink_port_health_reporter_destroy(struct devlink_health_reporter *reporter);
+व्योम
+devlink_port_health_reporter_destroy(काष्ठा devlink_health_reporter *reporter);
 
-void *
-devlink_health_reporter_priv(struct devlink_health_reporter *reporter);
-int devlink_health_report(struct devlink_health_reporter *reporter,
-			  const char *msg, void *priv_ctx);
-void
-devlink_health_reporter_state_update(struct devlink_health_reporter *reporter,
-				     enum devlink_health_reporter_state state);
-void
-devlink_health_reporter_recovery_done(struct devlink_health_reporter *reporter);
+व्योम *
+devlink_health_reporter_priv(काष्ठा devlink_health_reporter *reporter);
+पूर्णांक devlink_health_report(काष्ठा devlink_health_reporter *reporter,
+			  स्थिर अक्षर *msg, व्योम *priv_ctx);
+व्योम
+devlink_health_reporter_state_update(काष्ठा devlink_health_reporter *reporter,
+				     क्रमागत devlink_health_reporter_state state);
+व्योम
+devlink_health_reporter_recovery_करोne(काष्ठा devlink_health_reporter *reporter);
 
-bool devlink_is_reload_failed(const struct devlink *devlink);
-void devlink_remote_reload_actions_performed(struct devlink *devlink,
-					     enum devlink_reload_limit limit,
-					     u32 actions_performed);
+bool devlink_is_reload_failed(स्थिर काष्ठा devlink *devlink);
+व्योम devlink_remote_reload_actions_perक्रमmed(काष्ठा devlink *devlink,
+					     क्रमागत devlink_reload_limit limit,
+					     u32 actions_perक्रमmed);
 
-void devlink_flash_update_status_notify(struct devlink *devlink,
-					const char *status_msg,
-					const char *component,
-					unsigned long done,
-					unsigned long total);
-void devlink_flash_update_timeout_notify(struct devlink *devlink,
-					 const char *status_msg,
-					 const char *component,
-					 unsigned long timeout);
+व्योम devlink_flash_update_status_notअगरy(काष्ठा devlink *devlink,
+					स्थिर अक्षर *status_msg,
+					स्थिर अक्षर *component,
+					अचिन्हित दीर्घ करोne,
+					अचिन्हित दीर्घ total);
+व्योम devlink_flash_update_समयout_notअगरy(काष्ठा devlink *devlink,
+					 स्थिर अक्षर *status_msg,
+					 स्थिर अक्षर *component,
+					 अचिन्हित दीर्घ समयout);
 
-int devlink_traps_register(struct devlink *devlink,
-			   const struct devlink_trap *traps,
-			   size_t traps_count, void *priv);
-void devlink_traps_unregister(struct devlink *devlink,
-			      const struct devlink_trap *traps,
-			      size_t traps_count);
-void devlink_trap_report(struct devlink *devlink, struct sk_buff *skb,
-			 void *trap_ctx, struct devlink_port *in_devlink_port,
-			 const struct flow_action_cookie *fa_cookie);
-void *devlink_trap_ctx_priv(void *trap_ctx);
-int devlink_trap_groups_register(struct devlink *devlink,
-				 const struct devlink_trap_group *groups,
-				 size_t groups_count);
-void devlink_trap_groups_unregister(struct devlink *devlink,
-				    const struct devlink_trap_group *groups,
-				    size_t groups_count);
-int
-devlink_trap_policers_register(struct devlink *devlink,
-			       const struct devlink_trap_policer *policers,
-			       size_t policers_count);
-void
-devlink_trap_policers_unregister(struct devlink *devlink,
-				 const struct devlink_trap_policer *policers,
-				 size_t policers_count);
+पूर्णांक devlink_traps_रेजिस्टर(काष्ठा devlink *devlink,
+			   स्थिर काष्ठा devlink_trap *traps,
+			   माप_प्रकार traps_count, व्योम *priv);
+व्योम devlink_traps_unरेजिस्टर(काष्ठा devlink *devlink,
+			      स्थिर काष्ठा devlink_trap *traps,
+			      माप_प्रकार traps_count);
+व्योम devlink_trap_report(काष्ठा devlink *devlink, काष्ठा sk_buff *skb,
+			 व्योम *trap_ctx, काष्ठा devlink_port *in_devlink_port,
+			 स्थिर काष्ठा flow_action_cookie *fa_cookie);
+व्योम *devlink_trap_ctx_priv(व्योम *trap_ctx);
+पूर्णांक devlink_trap_groups_रेजिस्टर(काष्ठा devlink *devlink,
+				 स्थिर काष्ठा devlink_trap_group *groups,
+				 माप_प्रकार groups_count);
+व्योम devlink_trap_groups_unरेजिस्टर(काष्ठा devlink *devlink,
+				    स्थिर काष्ठा devlink_trap_group *groups,
+				    माप_प्रकार groups_count);
+पूर्णांक
+devlink_trap_policers_रेजिस्टर(काष्ठा devlink *devlink,
+			       स्थिर काष्ठा devlink_trap_policer *policers,
+			       माप_प्रकार policers_count);
+व्योम
+devlink_trap_policers_unरेजिस्टर(काष्ठा devlink *devlink,
+				 स्थिर काष्ठा devlink_trap_policer *policers,
+				 माप_प्रकार policers_count);
 
-#if IS_ENABLED(CONFIG_NET_DEVLINK)
+#अगर IS_ENABLED(CONFIG_NET_DEVLINK)
 
-void devlink_compat_running_version(struct net_device *dev,
-				    char *buf, size_t len);
-int devlink_compat_flash_update(struct net_device *dev, const char *file_name);
-int devlink_compat_phys_port_name_get(struct net_device *dev,
-				      char *name, size_t len);
-int devlink_compat_switch_id_get(struct net_device *dev,
-				 struct netdev_phys_item_id *ppid);
+व्योम devlink_compat_running_version(काष्ठा net_device *dev,
+				    अक्षर *buf, माप_प्रकार len);
+पूर्णांक devlink_compat_flash_update(काष्ठा net_device *dev, स्थिर अक्षर *file_name);
+पूर्णांक devlink_compat_phys_port_name_get(काष्ठा net_device *dev,
+				      अक्षर *name, माप_प्रकार len);
+पूर्णांक devlink_compat_चयन_id_get(काष्ठा net_device *dev,
+				 काष्ठा netdev_phys_item_id *ppid);
 
-#else
+#अन्यथा
 
-static inline void
-devlink_compat_running_version(struct net_device *dev, char *buf, size_t len)
-{
-}
+अटल अंतरभूत व्योम
+devlink_compat_running_version(काष्ठा net_device *dev, अक्षर *buf, माप_प्रकार len)
+अणु
+पूर्ण
 
-static inline int
-devlink_compat_flash_update(struct net_device *dev, const char *file_name)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक
+devlink_compat_flash_update(काष्ठा net_device *dev, स्थिर अक्षर *file_name)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int
-devlink_compat_phys_port_name_get(struct net_device *dev,
-				  char *name, size_t len)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक
+devlink_compat_phys_port_name_get(काष्ठा net_device *dev,
+				  अक्षर *name, माप_प्रकार len)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int
-devlink_compat_switch_id_get(struct net_device *dev,
-			     struct netdev_phys_item_id *ppid)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक
+devlink_compat_चयन_id_get(काष्ठा net_device *dev,
+			     काष्ठा netdev_phys_item_id *ppid)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* _NET_DEVLINK_H_ */
+#पूर्ण_अगर /* _NET_DEVLINK_H_ */

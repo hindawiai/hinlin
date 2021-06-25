@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *  Driver for Quantek QT1010 silicon tuner
+ *  Driver क्रम Quantek QT1010 silicon tuner
  *
  *  Copyright (C) 2006 Antti Palosaari <crope@iki.fi>
  *                     Aapo Tahkola <aet@rasterburn.org>
  */
 
-#ifndef QT1010_PRIV_H
-#define QT1010_PRIV_H
+#अगर_अघोषित QT1010_PRIV_H
+#घोषणा QT1010_PRIV_H
 
 /*
 reg def meaning
@@ -29,8 +30,8 @@ reg def meaning
 0e  b6  ?
 0f  2c  ?
 10  10  ?
-11  f1  ? maybe device specified adjustment
-12  11  ? maybe device specified adjustment
+11  f1  ? maybe device specअगरied adjusपंचांगent
+12  11  ? maybe device specअगरied adjusपंचांगent
 13  3f  ?
 14  1f  ?
 15  3f  ?
@@ -42,7 +43,7 @@ reg def meaning
 1b  00  ?
 1c  89  ?
 1d  00  ?
-1e  00  ? looks like operation register; write cmd here, read result from 1f-26
+1e  00  ? looks like operation रेजिस्टर; ग_लिखो cmd here, पढ़ो result from 1f-26
 1f  20  ? chip initialization
 20  e0  ? chip initialization
 21  20  ?
@@ -62,32 +63,32 @@ reg def meaning
 2f  00  ? not used?
 */
 
-#define QT1010_STEP         (125 * kHz) /*
-					 * used by Windows drivers,
-				         * hw could be more precise but we don't
+#घोषणा QT1010_STEP         (125 * kHz) /*
+					 * used by Winकरोws drivers,
+				         * hw could be more precise but we करोn't
 				         * know how to use
 					 */
-#define QT1010_MIN_FREQ   (48 * MHz)
-#define QT1010_MAX_FREQ  (860 * MHz)
-#define QT1010_OFFSET   (1246 * MHz)
+#घोषणा QT1010_MIN_FREQ   (48 * MHz)
+#घोषणा QT1010_MAX_FREQ  (860 * MHz)
+#घोषणा QT1010_OFFSET   (1246 * MHz)
 
-#define QT1010_WR 0
-#define QT1010_RD 1
-#define QT1010_M1 3
+#घोषणा QT1010_WR 0
+#घोषणा QT1010_RD 1
+#घोषणा QT1010_M1 3
 
-typedef struct {
+प्रकार काष्ठा अणु
 	u8 oper, reg, val;
-} qt1010_i2c_oper_t;
+पूर्ण qt1010_i2c_oper_t;
 
-struct qt1010_priv {
-	struct qt1010_config *cfg;
-	struct i2c_adapter   *i2c;
+काष्ठा qt1010_priv अणु
+	काष्ठा qt1010_config *cfg;
+	काष्ठा i2c_adapter   *i2c;
 
 	u8 reg1f_init_val;
 	u8 reg20_init_val;
 	u8 reg25_init_val;
 
 	u32 frequency;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

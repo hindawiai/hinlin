@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *    tape device discipline for 3480/3490 tapes.
+ *    tape device discipline क्रम 3480/3490 tapes.
  *
  *    Copyright IBM Corp. 2001, 2009
  *    Author(s): Carsten Otte <cotte@de.ibm.com>
@@ -8,156 +9,156 @@
  *		 Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#define KMSG_COMPONENT "tape_34xx"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "tape_34xx"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/bio.h>
-#include <linux/workqueue.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/slab.h>
 
-#define TAPE_DBF_AREA	tape_34xx_dbf
+#घोषणा TAPE_DBF_AREA	tape_34xx_dbf
 
-#include "tape.h"
-#include "tape_std.h"
+#समावेश "tape.h"
+#समावेश "tape_std.h"
 
 /*
- * Pointer to debug area.
+ * Poपूर्णांकer to debug area.
  */
-debug_info_t *TAPE_DBF_AREA = NULL;
+debug_info_t *TAPE_DBF_AREA = शून्य;
 EXPORT_SYMBOL(TAPE_DBF_AREA);
 
-#define TAPE34XX_FMT_3480	0
-#define TAPE34XX_FMT_3480_2_XF	1
-#define TAPE34XX_FMT_3480_XF	2
+#घोषणा TAPE34XX_FMT_3480	0
+#घोषणा TAPE34XX_FMT_3480_2_XF	1
+#घोषणा TAPE34XX_FMT_3480_XF	2
 
-struct tape_34xx_block_id {
-	unsigned int	wrap		: 1;
-	unsigned int	segment		: 7;
-	unsigned int	format		: 2;
-	unsigned int	block		: 22;
-};
+काष्ठा tape_34xx_block_id अणु
+	अचिन्हित पूर्णांक	wrap		: 1;
+	अचिन्हित पूर्णांक	segment		: 7;
+	अचिन्हित पूर्णांक	क्रमmat		: 2;
+	अचिन्हित पूर्णांक	block		: 22;
+पूर्ण;
 
 /*
  * A list of block ID's is used to faster seek blocks.
  */
-struct tape_34xx_sbid {
-	struct list_head		list;
-	struct tape_34xx_block_id	bid;
-};
+काष्ठा tape_34xx_sbid अणु
+	काष्ठा list_head		list;
+	काष्ठा tape_34xx_block_id	bid;
+पूर्ण;
 
-static void tape_34xx_delete_sbid_from(struct tape_device *, int);
+अटल व्योम tape_34xx_delete_sbid_from(काष्ठा tape_device *, पूर्णांक);
 
 /*
- * Medium sense for 34xx tapes. There is no 'real' medium sense call.
- * So we just do a normal sense.
+ * Medium sense क्रम 34xx tapes. There is no 'real' medium sense call.
+ * So we just करो a normal sense.
  */
-static void __tape_34xx_medium_sense(struct tape_request *request)
-{
-	struct tape_device *device = request->device;
-	unsigned char *sense;
+अटल व्योम __tape_34xx_medium_sense(काष्ठा tape_request *request)
+अणु
+	काष्ठा tape_device *device = request->device;
+	अचिन्हित अक्षर *sense;
 
-	if (request->rc == 0) {
+	अगर (request->rc == 0) अणु
 		sense = request->cpdata;
 
 		/*
 		 * This isn't quite correct. But since INTERVENTION_REQUIRED
 		 * means that the drive is 'neither ready nor on-line' it is
-		 * only slightly inaccurate to say there is no tape loaded if
+		 * only slightly inaccurate to say there is no tape loaded अगर
 		 * the drive isn't online...
 		 */
-		if (sense[0] & SENSE_INTERVENTION_REQUIRED)
+		अगर (sense[0] & SENSE_INTERVENTION_REQUIRED)
 			tape_med_state_set(device, MS_UNLOADED);
-		else
+		अन्यथा
 			tape_med_state_set(device, MS_LOADED);
 
-		if (sense[1] & SENSE_WRITE_PROTECT)
+		अगर (sense[1] & SENSE_WRITE_PROTECT)
 			device->tape_generic_status |= GMT_WR_PROT(~0);
-		else
+		अन्यथा
 			device->tape_generic_status &= ~GMT_WR_PROT(~0);
-	} else
+	पूर्ण अन्यथा
 		DBF_EVENT(4, "tape_34xx: medium sense failed with rc=%d\n",
 			request->rc);
-	tape_free_request(request);
-}
+	tape_मुक्त_request(request);
+पूर्ण
 
-static int tape_34xx_medium_sense(struct tape_device *device)
-{
-	struct tape_request *request;
-	int rc;
+अटल पूर्णांक tape_34xx_medium_sense(काष्ठा tape_device *device)
+अणु
+	काष्ठा tape_request *request;
+	पूर्णांक rc;
 
 	request = tape_alloc_request(1, 32);
-	if (IS_ERR(request)) {
+	अगर (IS_ERR(request)) अणु
 		DBF_EXCEPTION(6, "MSEN fail\n");
-		return PTR_ERR(request);
-	}
+		वापस PTR_ERR(request);
+	पूर्ण
 
 	request->op = TO_MSEN;
 	tape_ccw_end(request->cpaddr, SENSE, 32, request->cpdata);
-	rc = tape_do_io_interruptible(device, request);
+	rc = tape_करो_io_पूर्णांकerruptible(device, request);
 	__tape_34xx_medium_sense(request);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void tape_34xx_medium_sense_async(struct tape_device *device)
-{
-	struct tape_request *request;
+अटल व्योम tape_34xx_medium_sense_async(काष्ठा tape_device *device)
+अणु
+	काष्ठा tape_request *request;
 
 	request = tape_alloc_request(1, 32);
-	if (IS_ERR(request)) {
+	अगर (IS_ERR(request)) अणु
 		DBF_EXCEPTION(6, "MSEN fail\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	request->op = TO_MSEN;
 	tape_ccw_end(request->cpaddr, SENSE, 32, request->cpdata);
-	request->callback = (void *) __tape_34xx_medium_sense;
-	request->callback_data = NULL;
-	tape_do_io_async(device, request);
-}
+	request->callback = (व्योम *) __tape_34xx_medium_sense;
+	request->callback_data = शून्य;
+	tape_करो_io_async(device, request);
+पूर्ण
 
-struct tape_34xx_work {
-	struct tape_device	*device;
-	enum tape_op		 op;
-	struct work_struct	 work;
-};
+काष्ठा tape_34xx_work अणु
+	काष्ठा tape_device	*device;
+	क्रमागत tape_op		 op;
+	काष्ठा work_काष्ठा	 work;
+पूर्ण;
 
 /*
- * These functions are currently used only to schedule a medium_sense for
- * later execution. This is because we get an interrupt whenever a medium
- * is inserted but cannot call tape_do_io* from an interrupt context.
- * Maybe that's useful for other actions we want to start from the
- * interrupt handler.
- * Note: the work handler is called by the system work queue. The tape
+ * These functions are currently used only to schedule a medium_sense क्रम
+ * later execution. This is because we get an पूर्णांकerrupt whenever a medium
+ * is inserted but cannot call tape_करो_io* from an पूर्णांकerrupt context.
+ * Maybe that's useful क्रम other actions we want to start from the
+ * पूर्णांकerrupt handler.
+ * Note: the work handler is called by the प्रणाली work queue. The tape
  * commands started by the handler need to be asynchrounous, otherwise
- * a deadlock can occur e.g. in case of a deferred cc=1 (see __tape_do_irq).
+ * a deadlock can occur e.g. in हाल of a deferred cc=1 (see __tape_करो_irq).
  */
-static void
-tape_34xx_work_handler(struct work_struct *work)
-{
-	struct tape_34xx_work *p =
-		container_of(work, struct tape_34xx_work, work);
-	struct tape_device *device = p->device;
+अटल व्योम
+tape_34xx_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा tape_34xx_work *p =
+		container_of(work, काष्ठा tape_34xx_work, work);
+	काष्ठा tape_device *device = p->device;
 
-	switch(p->op) {
-		case TO_MSEN:
+	चयन(p->op) अणु
+		हाल TO_MSEN:
 			tape_34xx_medium_sense_async(device);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			DBF_EVENT(3, "T34XX: internal error: unknown work\n");
-	}
+	पूर्ण
 	tape_put_device(device);
-	kfree(p);
-}
+	kमुक्त(p);
+पूर्ण
 
-static int
-tape_34xx_schedule_work(struct tape_device *device, enum tape_op op)
-{
-	struct tape_34xx_work *p;
+अटल पूर्णांक
+tape_34xx_schedule_work(काष्ठा tape_device *device, क्रमागत tape_op op)
+अणु
+	काष्ठा tape_34xx_work *p;
 
-	if ((p = kzalloc(sizeof(*p), GFP_ATOMIC)) == NULL)
-		return -ENOMEM;
+	अगर ((p = kzalloc(माप(*p), GFP_ATOMIC)) == शून्य)
+		वापस -ENOMEM;
 
 	INIT_WORK(&p->work, tape_34xx_work_handler);
 
@@ -165,856 +166,856 @@ tape_34xx_schedule_work(struct tape_device *device, enum tape_op op)
 	p->op     = op;
 
 	schedule_work(&p->work);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Done Handler is called when dev stat = DEVICE-END (successful operation)
  */
-static inline int
-tape_34xx_done(struct tape_request *request)
-{
+अटल अंतरभूत पूर्णांक
+tape_34xx_करोne(काष्ठा tape_request *request)
+अणु
 	DBF_EVENT(6, "%s done\n", tape_op_verbose[request->op]);
 
-	switch (request->op) {
-		case TO_DSE:
-		case TO_RUN:
-		case TO_WRI:
-		case TO_WTM:
-		case TO_ASSIGN:
-		case TO_UNASSIGN:
+	चयन (request->op) अणु
+		हाल TO_DSE:
+		हाल TO_RUN:
+		हाल TO_WRI:
+		हाल TO_WTM:
+		हाल TO_ASSIGN:
+		हाल TO_UNASSIGN:
 			tape_34xx_delete_sbid_from(request->device, 0);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			;
-	}
-	return TAPE_IO_SUCCESS;
-}
+	पूर्ण
+	वापस TAPE_IO_SUCCESS;
+पूर्ण
 
-static inline int
-tape_34xx_erp_failed(struct tape_request *request, int rc)
-{
+अटल अंतरभूत पूर्णांक
+tape_34xx_erp_failed(काष्ठा tape_request *request, पूर्णांक rc)
+अणु
 	DBF_EVENT(3, "Error recovery failed for %s (RC=%d)\n",
 		  tape_op_verbose[request->op], rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline int
-tape_34xx_erp_succeeded(struct tape_request *request)
-{
+अटल अंतरभूत पूर्णांक
+tape_34xx_erp_succeeded(काष्ठा tape_request *request)
+अणु
 	DBF_EVENT(3, "Error Recovery successful for %s\n",
 		  tape_op_verbose[request->op]);
-	return tape_34xx_done(request);
-}
+	वापस tape_34xx_करोne(request);
+पूर्ण
 
-static inline int
-tape_34xx_erp_retry(struct tape_request *request)
-{
+अटल अंतरभूत पूर्णांक
+tape_34xx_erp_retry(काष्ठा tape_request *request)
+अणु
 	DBF_EVENT(3, "xerp retr %s\n", tape_op_verbose[request->op]);
-	return TAPE_IO_RETRY;
-}
+	वापस TAPE_IO_RETRY;
+पूर्ण
 
 /*
  * This function is called, when no request is outstanding and we get an
- * interrupt
+ * पूर्णांकerrupt
  */
-static int
-tape_34xx_unsolicited_irq(struct tape_device *device, struct irb *irb)
-{
-	if (irb->scsw.cmd.dstat == 0x85) { /* READY */
+अटल पूर्णांक
+tape_34xx_unsolicited_irq(काष्ठा tape_device *device, काष्ठा irb *irb)
+अणु
+	अगर (irb->scsw.cmd.dstat == 0x85) अणु /* READY */
 		/* A medium was inserted in the drive. */
 		DBF_EVENT(6, "xuud med\n");
 		tape_34xx_delete_sbid_from(device, 0);
 		tape_34xx_schedule_work(device, TO_MSEN);
-	} else {
+	पूर्ण अन्यथा अणु
 		DBF_EVENT(3, "unsol.irq! dev end: %08x\n", device->cdev_id);
-		tape_dump_sense_dbf(device, NULL, irb);
-	}
-	return TAPE_IO_SUCCESS;
-}
+		tape_dump_sense_dbf(device, शून्य, irb);
+	पूर्ण
+	वापस TAPE_IO_SUCCESS;
+पूर्ण
 
 /*
  * Read Opposite Error Recovery Function:
- * Used, when Read Forward does not work
+ * Used, when Read Forward करोes not work
  */
-static int
-tape_34xx_erp_read_opposite(struct tape_device *device,
-			    struct tape_request *request)
-{
-	if (request->op == TO_RFO) {
+अटल पूर्णांक
+tape_34xx_erp_पढ़ो_opposite(काष्ठा tape_device *device,
+			    काष्ठा tape_request *request)
+अणु
+	अगर (request->op == TO_RFO) अणु
 		/*
-		 * We did read forward, but the data could not be read
-		 * *correctly*. We transform the request to a read backward
+		 * We did पढ़ो क्रमward, but the data could not be पढ़ो
+		 * *correctly*. We transक्रमm the request to a पढ़ो backward
 		 * and try again.
 		 */
-		tape_std_read_backward(device, request);
-		return tape_34xx_erp_retry(request);
-	}
+		tape_std_पढ़ो_backward(device, request);
+		वापस tape_34xx_erp_retry(request);
+	पूर्ण
 
 	/*
-	 * We tried to read forward and backward, but hat no
+	 * We tried to पढ़ो क्रमward and backward, but hat no
 	 * success -> failed.
 	 */
-	return tape_34xx_erp_failed(request, -EIO);
-}
+	वापस tape_34xx_erp_failed(request, -EIO);
+पूर्ण
 
-static int
-tape_34xx_erp_bug(struct tape_device *device, struct tape_request *request,
-		  struct irb *irb, int no)
-{
-	if (request->op != TO_ASSIGN) {
+अटल पूर्णांक
+tape_34xx_erp_bug(काष्ठा tape_device *device, काष्ठा tape_request *request,
+		  काष्ठा irb *irb, पूर्णांक no)
+अणु
+	अगर (request->op != TO_ASSIGN) अणु
 		dev_err(&device->cdev->dev, "An unexpected condition %d "
 			"occurred in tape error recovery\n", no);
 		tape_dump_sense_dbf(device, request, irb);
-	}
-	return tape_34xx_erp_failed(request, -EIO);
-}
+	पूर्ण
+	वापस tape_34xx_erp_failed(request, -EIO);
+पूर्ण
 
 /*
  * Handle data overrun between cu and drive. The channel speed might
  * be too slow.
  */
-static int
-tape_34xx_erp_overrun(struct tape_device *device, struct tape_request *request,
-		      struct irb *irb)
-{
-	if (irb->ecw[3] == 0x40) {
+अटल पूर्णांक
+tape_34xx_erp_overrun(काष्ठा tape_device *device, काष्ठा tape_request *request,
+		      काष्ठा irb *irb)
+अणु
+	अगर (irb->ecw[3] == 0x40) अणु
 		dev_warn (&device->cdev->dev, "A data overrun occurred between"
 			" the control unit and tape unit\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	}
-	return tape_34xx_erp_bug(device, request, irb, -1);
-}
+		वापस tape_34xx_erp_failed(request, -EIO);
+	पूर्ण
+	वापस tape_34xx_erp_bug(device, request, irb, -1);
+पूर्ण
 
 /*
  * Handle record sequence error.
  */
-static int
-tape_34xx_erp_sequence(struct tape_device *device,
-		       struct tape_request *request, struct irb *irb)
-{
-	if (irb->ecw[3] == 0x41) {
+अटल पूर्णांक
+tape_34xx_erp_sequence(काष्ठा tape_device *device,
+		       काष्ठा tape_request *request, काष्ठा irb *irb)
+अणु
+	अगर (irb->ecw[3] == 0x41) अणु
 		/*
 		 * cu detected incorrect block-id sequence on tape.
 		 */
 		dev_warn (&device->cdev->dev, "The block ID sequence on the "
 			"tape is incorrect\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	}
+		वापस tape_34xx_erp_failed(request, -EIO);
+	पूर्ण
 	/*
-	 * Record sequence error bit is set, but erpa does not
+	 * Record sequence error bit is set, but erpa करोes not
 	 * show record sequence error.
 	 */
-	return tape_34xx_erp_bug(device, request, irb, -2);
-}
+	वापस tape_34xx_erp_bug(device, request, irb, -2);
+पूर्ण
 
 /*
- * This function analyses the tape's sense-data in case of a unit-check.
+ * This function analyses the tape's sense-data in हाल of a unit-check.
  * If possible, it tries to recover from the error. Else the user is
- * informed about the problem.
+ * inक्रमmed about the problem.
  */
-static int
-tape_34xx_unit_check(struct tape_device *device, struct tape_request *request,
-		     struct irb *irb)
-{
-	int inhibit_cu_recovery;
+अटल पूर्णांक
+tape_34xx_unit_check(काष्ठा tape_device *device, काष्ठा tape_request *request,
+		     काष्ठा irb *irb)
+अणु
+	पूर्णांक inhibit_cu_recovery;
 	__u8* sense;
 
 	inhibit_cu_recovery = (*device->modeset_byte & 0x80) ? 1 : 0;
 	sense = irb->ecw;
 
-	if (
+	अगर (
 		sense[0] & SENSE_COMMAND_REJECT &&
 		sense[1] & SENSE_WRITE_PROTECT
-	) {
-		if (
+	) अणु
+		अगर (
 			request->op == TO_DSE ||
 			request->op == TO_WRI ||
 			request->op == TO_WTM
-		) {
-			/* medium is write protected */
-			return tape_34xx_erp_failed(request, -EACCES);
-		} else {
-			return tape_34xx_erp_bug(device, request, irb, -3);
-		}
-	}
+		) अणु
+			/* medium is ग_लिखो रक्षित */
+			वापस tape_34xx_erp_failed(request, -EACCES);
+		पूर्ण अन्यथा अणु
+			वापस tape_34xx_erp_bug(device, request, irb, -3);
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Special cases for various tape-states when reaching
+	 * Special हालs क्रम various tape-states when reaching
 	 * end of recorded area
 	 *
-	 * FIXME: Maybe a special case of the special case:
+	 * FIXME: Maybe a special हाल of the special हाल:
 	 *        sense[0] == SENSE_EQUIPMENT_CHECK &&
 	 *        sense[1] == SENSE_DRIVE_ONLINE    &&
 	 *        sense[3] == 0x47 (Volume Fenced)
 	 *
-	 *        This was caused by continued FSF or FSR after an
+	 *        This was caused by जारीd FSF or FSR after an
 	 *        'End Of Data'.
 	 */
-	if ((
+	अगर ((
 		sense[0] == SENSE_DATA_CHECK      ||
 		sense[0] == SENSE_EQUIPMENT_CHECK ||
 		sense[0] == SENSE_EQUIPMENT_CHECK + SENSE_DEFERRED_UNIT_CHECK
 	) && (
 		sense[1] == SENSE_DRIVE_ONLINE ||
 		sense[1] == SENSE_BEGINNING_OF_TAPE + SENSE_WRITE_MODE
-	)) {
-		switch (request->op) {
+	)) अणु
+		चयन (request->op) अणु
 		/*
 		 * sense[0] == SENSE_DATA_CHECK   &&
 		 * sense[1] == SENSE_DRIVE_ONLINE
 		 * sense[3] == 0x36 (End Of Data)
 		 *
-		 * Further seeks might return a 'Volume Fenced'.
+		 * Further seeks might वापस a 'Volume Fenced'.
 		 */
-		case TO_FSF:
-		case TO_FSB:
+		हाल TO_FSF:
+		हाल TO_FSB:
 			/* Trying to seek beyond end of recorded area */
-			return tape_34xx_erp_failed(request, -ENOSPC);
-		case TO_BSB:
-			return tape_34xx_erp_retry(request);
+			वापस tape_34xx_erp_failed(request, -ENOSPC);
+		हाल TO_BSB:
+			वापस tape_34xx_erp_retry(request);
 
 		/*
 		 * sense[0] == SENSE_DATA_CHECK   &&
 		 * sense[1] == SENSE_DRIVE_ONLINE &&
 		 * sense[3] == 0x36 (End Of Data)
 		 */
-		case TO_LBL:
+		हाल TO_LBL:
 			/* Block could not be located. */
 			tape_34xx_delete_sbid_from(device, 0);
-			return tape_34xx_erp_failed(request, -EIO);
+			वापस tape_34xx_erp_failed(request, -EIO);
 
-		case TO_RFO:
-			/* Read beyond end of recorded area -> 0 bytes read */
-			return tape_34xx_erp_failed(request, 0);
+		हाल TO_RFO:
+			/* Read beyond end of recorded area -> 0 bytes पढ़ो */
+			वापस tape_34xx_erp_failed(request, 0);
 
 		/*
 		 * sense[0] == SENSE_EQUIPMENT_CHECK &&
 		 * sense[1] == SENSE_DRIVE_ONLINE    &&
 		 * sense[3] == 0x38 (Physical End Of Volume)
 		 */
-		case TO_WRI:
+		हाल TO_WRI:
 			/* Writing at physical end of volume */
-			return tape_34xx_erp_failed(request, -ENOSPC);
-		default:
-			return tape_34xx_erp_failed(request, 0);
-		}
-	}
+			वापस tape_34xx_erp_failed(request, -ENOSPC);
+		शेष:
+			वापस tape_34xx_erp_failed(request, 0);
+		पूर्ण
+	पूर्ण
 
 	/* Sensing special bits */
-	if (sense[0] & SENSE_BUS_OUT_CHECK)
-		return tape_34xx_erp_retry(request);
+	अगर (sense[0] & SENSE_BUS_OUT_CHECK)
+		वापस tape_34xx_erp_retry(request);
 
-	if (sense[0] & SENSE_DATA_CHECK) {
+	अगर (sense[0] & SENSE_DATA_CHECK) अणु
 		/*
 		 * hardware failure, damaged tape or improper
 		 * operating conditions
 		 */
-		switch (sense[3]) {
-		case 0x23:
-			/* a read data check occurred */
-			if ((sense[2] & SENSE_TAPE_SYNC_MODE) ||
+		चयन (sense[3]) अणु
+		हाल 0x23:
+			/* a पढ़ो data check occurred */
+			अगर ((sense[2] & SENSE_TAPE_SYNC_MODE) ||
 			    inhibit_cu_recovery)
 				// data check is not permanent, may be
 				// recovered. We always use async-mode with
 				// cu-recovery, so this should *never* happen.
-				return tape_34xx_erp_bug(device, request,
+				वापस tape_34xx_erp_bug(device, request,
 							 irb, -4);
 
 			/* data check is permanent, CU recovery has failed */
 			dev_warn (&device->cdev->dev, "A read error occurred "
 				"that cannot be recovered\n");
-			return tape_34xx_erp_failed(request, -EIO);
-		case 0x25:
-			// a write data check occurred
-			if ((sense[2] & SENSE_TAPE_SYNC_MODE) ||
+			वापस tape_34xx_erp_failed(request, -EIO);
+		हाल 0x25:
+			// a ग_लिखो data check occurred
+			अगर ((sense[2] & SENSE_TAPE_SYNC_MODE) ||
 			    inhibit_cu_recovery)
 				// data check is not permanent, may be
 				// recovered. We always use async-mode with
 				// cu-recovery, so this should *never* happen.
-				return tape_34xx_erp_bug(device, request,
+				वापस tape_34xx_erp_bug(device, request,
 							 irb, -5);
 
 			// data check is permanent, cu-recovery has failed
 			dev_warn (&device->cdev->dev, "A write error on the "
 				"tape cannot be recovered\n");
-			return tape_34xx_erp_failed(request, -EIO);
-		case 0x26:
-			/* Data Check (read opposite) occurred. */
-			return tape_34xx_erp_read_opposite(device, request);
-		case 0x28:
+			वापस tape_34xx_erp_failed(request, -EIO);
+		हाल 0x26:
+			/* Data Check (पढ़ो opposite) occurred. */
+			वापस tape_34xx_erp_पढ़ो_opposite(device, request);
+		हाल 0x28:
 			/* ID-Mark at tape start couldn't be written */
 			dev_warn (&device->cdev->dev, "Writing the ID-mark "
 				"failed\n");
-			return tape_34xx_erp_failed(request, -EIO);
-		case 0x31:
-			/* Tape void. Tried to read beyond end of device. */
+			वापस tape_34xx_erp_failed(request, -EIO);
+		हाल 0x31:
+			/* Tape व्योम. Tried to पढ़ो beyond end of device. */
 			dev_warn (&device->cdev->dev, "Reading the tape beyond"
 				" the end of the recorded area failed\n");
-			return tape_34xx_erp_failed(request, -ENOSPC);
-		case 0x41:
+			वापस tape_34xx_erp_failed(request, -ENOSPC);
+		हाल 0x41:
 			/* Record sequence error. */
 			dev_warn (&device->cdev->dev, "The tape contains an "
 				"incorrect block ID sequence\n");
-			return tape_34xx_erp_failed(request, -EIO);
-		default:
-			/* all data checks for 3480 should result in one of
+			वापस tape_34xx_erp_failed(request, -EIO);
+		शेष:
+			/* all data checks क्रम 3480 should result in one of
 			 * the above erpa-codes. For 3490, other data-check
-			 * conditions do exist. */
-			if (device->cdev->id.driver_info == tape_3480)
-				return tape_34xx_erp_bug(device, request,
+			 * conditions करो exist. */
+			अगर (device->cdev->id.driver_info == tape_3480)
+				वापस tape_34xx_erp_bug(device, request,
 							 irb, -6);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sense[0] & SENSE_OVERRUN)
-		return tape_34xx_erp_overrun(device, request, irb);
+	अगर (sense[0] & SENSE_OVERRUN)
+		वापस tape_34xx_erp_overrun(device, request, irb);
 
-	if (sense[1] & SENSE_RECORD_SEQUENCE_ERR)
-		return tape_34xx_erp_sequence(device, request, irb);
+	अगर (sense[1] & SENSE_RECORD_SEQUENCE_ERR)
+		वापस tape_34xx_erp_sequence(device, request, irb);
 
 	/* Sensing erpa codes */
-	switch (sense[3]) {
-	case 0x00:
+	चयन (sense[3]) अणु
+	हाल 0x00:
 		/* Unit check with erpa code 0. Report and ignore. */
-		return TAPE_IO_SUCCESS;
-	case 0x21:
+		वापस TAPE_IO_SUCCESS;
+	हाल 0x21:
 		/*
-		 * Data streaming not operational. CU will switch to
-		 * interlock mode. Reissue the command.
+		 * Data streaming not operational. CU will चयन to
+		 * पूर्णांकerlock mode. Reissue the command.
 		 */
-		return tape_34xx_erp_retry(request);
-	case 0x22:
+		वापस tape_34xx_erp_retry(request);
+	हाल 0x22:
 		/*
 		 * Path equipment check. Might be drive adapter error, buffer
-		 * error on the lower interface, internal path not usable,
+		 * error on the lower पूर्णांकerface, पूर्णांकernal path not usable,
 		 * or error during cartridge load.
 		 */
 		dev_warn (&device->cdev->dev, "A path equipment check occurred"
 			" for the tape device\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x24:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x24:
 		/*
 		 * Load display check. Load display was command was issued,
 		 * but the drive is displaying a drive check message. Can
 		 * be threated as "device end".
 		 */
-		return tape_34xx_erp_succeeded(request);
-	case 0x27:
+		वापस tape_34xx_erp_succeeded(request);
+	हाल 0x27:
 		/*
 		 * Command reject. May indicate illegal channel program or
 		 * buffer over/underrun. Since all channel programs are
 		 * issued by this driver and ought be correct, we assume a
 		 * over/underrun situation and retry the channel program.
 		 */
-		return tape_34xx_erp_retry(request);
-	case 0x29:
+		वापस tape_34xx_erp_retry(request);
+	हाल 0x29:
 		/*
 		 * Function incompatible. Either the tape is idrc compressed
-		 * but the hardware isn't capable to do idrc, or a perform
-		 * subsystem func is issued and the CU is not on-line.
+		 * but the hardware isn't capable to करो idrc, or a perक्रमm
+		 * subप्रणाली func is issued and the CU is not on-line.
 		 */
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x2a:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x2a:
 		/*
-		 * Unsolicited environmental data. An internal counter
+		 * Unsolicited environmental data. An पूर्णांकernal counter
 		 * overflows, we can ignore this and reissue the cmd.
 		 */
-		return tape_34xx_erp_retry(request);
-	case 0x2b:
+		वापस tape_34xx_erp_retry(request);
+	हाल 0x2b:
 		/*
 		 * Environmental data present. Indicates either unload
-		 * completed ok or read buffered log command completed ok.
+		 * completed ok or पढ़ो buffered log command completed ok.
 		 */
-		if (request->op == TO_RUN) {
+		अगर (request->op == TO_RUN) अणु
 			/* Rewind unload completed ok. */
 			tape_med_state_set(device, MS_UNLOADED);
-			return tape_34xx_erp_succeeded(request);
-		}
-		/* tape_34xx doesn't use read buffered log commands. */
-		return tape_34xx_erp_bug(device, request, irb, sense[3]);
-	case 0x2c:
+			वापस tape_34xx_erp_succeeded(request);
+		पूर्ण
+		/* tape_34xx करोesn't use पढ़ो buffered log commands. */
+		वापस tape_34xx_erp_bug(device, request, irb, sense[3]);
+	हाल 0x2c:
 		/*
 		 * Permanent equipment check. CU has tried recovery, but
 		 * did not succeed.
 		 */
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x2d:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x2d:
 		/* Data security erase failure. */
-		if (request->op == TO_DSE)
-			return tape_34xx_erp_failed(request, -EIO);
+		अगर (request->op == TO_DSE)
+			वापस tape_34xx_erp_failed(request, -EIO);
 		/* Data security erase failure, but no such command issued. */
-		return tape_34xx_erp_bug(device, request, irb, sense[3]);
-	case 0x2e:
+		वापस tape_34xx_erp_bug(device, request, irb, sense[3]);
+	हाल 0x2e:
 		/*
 		 * Not capable. This indicates either that the drive fails
-		 * reading the format id mark or that that format specified
+		 * पढ़ोing the क्रमmat id mark or that that क्रमmat specअगरied
 		 * is not supported by the drive.
 		 */
 		dev_warn (&device->cdev->dev, "The tape unit cannot process "
 			"the tape format\n");
-		return tape_34xx_erp_failed(request, -EMEDIUMTYPE);
-	case 0x30:
-		/* The medium is write protected. */
+		वापस tape_34xx_erp_failed(request, -EMEDIUMTYPE);
+	हाल 0x30:
+		/* The medium is ग_लिखो रक्षित. */
 		dev_warn (&device->cdev->dev, "The tape medium is write-"
 			"protected\n");
-		return tape_34xx_erp_failed(request, -EACCES);
-	case 0x32:
+		वापस tape_34xx_erp_failed(request, -EACCES);
+	हाल 0x32:
 		// Tension loss. We cannot recover this, it's an I/O error.
 		dev_warn (&device->cdev->dev, "The tape does not have the "
 			"required tape tension\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x33:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x33:
 		/*
 		 * Load Failure. The cartridge was not inserted correctly or
-		 * the tape is not threaded correctly.
+		 * the tape is not thपढ़ोed correctly.
 		 */
 		dev_warn (&device->cdev->dev, "The tape unit failed to load"
 			" the cartridge\n");
 		tape_34xx_delete_sbid_from(device, 0);
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x34:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x34:
 		/*
-		 * Unload failure. The drive cannot maintain tape tension
+		 * Unload failure. The drive cannot मुख्यtain tape tension
 		 * and control tape movement during an unload operation.
 		 */
 		dev_warn (&device->cdev->dev, "Automatic unloading of the tape"
 			" cartridge failed\n");
-		if (request->op == TO_RUN)
-			return tape_34xx_erp_failed(request, -EIO);
-		return tape_34xx_erp_bug(device, request, irb, sense[3]);
-	case 0x35:
+		अगर (request->op == TO_RUN)
+			वापस tape_34xx_erp_failed(request, -EIO);
+		वापस tape_34xx_erp_bug(device, request, irb, sense[3]);
+	हाल 0x35:
 		/*
 		 * Drive equipment check. One of the following:
 		 * - cu cannot recover from a drive detected error
 		 * - a check code message is shown on drive display
-		 * - the cartridge loader does not respond correctly
+		 * - the cartridge loader करोes not respond correctly
 		 * - a failure occurs during an index, load, or unload cycle
 		 */
 		dev_warn (&device->cdev->dev, "An equipment check has occurred"
 			" on the tape unit\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x36:
-		if (device->cdev->id.driver_info == tape_3490)
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x36:
+		अगर (device->cdev->id.driver_info == tape_3490)
 			/* End of data. */
-			return tape_34xx_erp_failed(request, -EIO);
-		/* This erpa is reserved for 3480 */
-		return tape_34xx_erp_bug(device, request, irb, sense[3]);
-	case 0x37:
+			वापस tape_34xx_erp_failed(request, -EIO);
+		/* This erpa is reserved क्रम 3480 */
+		वापस tape_34xx_erp_bug(device, request, irb, sense[3]);
+	हाल 0x37:
 		/*
-		 * Tape length error. The tape is shorter than reported in
+		 * Tape length error. The tape is लघुer than reported in
 		 * the beginning-of-tape data.
 		 */
 		dev_warn (&device->cdev->dev, "The tape information states an"
 			" incorrect length\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x38:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x38:
 		/*
-		 * Physical end of tape. A read/write operation reached
+		 * Physical end of tape. A पढ़ो/ग_लिखो operation reached
 		 * the physical end of tape.
 		 */
-		if (request->op==TO_WRI ||
+		अगर (request->op==TO_WRI ||
 		    request->op==TO_DSE ||
 		    request->op==TO_WTM)
-			return tape_34xx_erp_failed(request, -ENOSPC);
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x39:
+			वापस tape_34xx_erp_failed(request, -ENOSPC);
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x39:
 		/* Backward at Beginning of tape. */
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x3a:
-		/* Drive switched to not ready. */
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x3a:
+		/* Drive चयनed to not पढ़ोy. */
 		dev_warn (&device->cdev->dev, "The tape unit is not ready\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x3b:
-		/* Manual rewind or unload. This causes an I/O error. */
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x3b:
+		/* Manual शुरुआत or unload. This causes an I/O error. */
 		dev_warn (&device->cdev->dev, "The tape medium has been "
 			"rewound or unloaded manually\n");
 		tape_34xx_delete_sbid_from(device, 0);
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x42:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x42:
 		/*
 		 * Degraded mode. A condition that can cause degraded
-		 * performance is detected.
+		 * perक्रमmance is detected.
 		 */
 		dev_warn (&device->cdev->dev, "The tape subsystem is running "
 			"in degraded mode\n");
-		return tape_34xx_erp_retry(request);
-	case 0x43:
-		/* Drive not ready. */
+		वापस tape_34xx_erp_retry(request);
+	हाल 0x43:
+		/* Drive not पढ़ोy. */
 		tape_34xx_delete_sbid_from(device, 0);
 		tape_med_state_set(device, MS_UNLOADED);
-		/* Some commands commands are successful even in this case */
-		if (sense[1] & SENSE_DRIVE_ONLINE) {
-			switch(request->op) {
-				case TO_ASSIGN:
-				case TO_UNASSIGN:
-				case TO_DIS:
-				case TO_NOP:
-					return tape_34xx_done(request);
-					break;
-				default:
-					break;
-			}
-		}
-		return tape_34xx_erp_failed(request, -ENOMEDIUM);
-	case 0x44:
+		/* Some commands commands are successful even in this हाल */
+		अगर (sense[1] & SENSE_DRIVE_ONLINE) अणु
+			चयन(request->op) अणु
+				हाल TO_ASSIGN:
+				हाल TO_UNASSIGN:
+				हाल TO_DIS:
+				हाल TO_NOP:
+					वापस tape_34xx_करोne(request);
+					अवरोध;
+				शेष:
+					अवरोध;
+			पूर्ण
+		पूर्ण
+		वापस tape_34xx_erp_failed(request, -ENOMEDIUM);
+	हाल 0x44:
 		/* Locate Block unsuccessful. */
-		if (request->op != TO_BLOCK && request->op != TO_LBL)
+		अगर (request->op != TO_BLOCK && request->op != TO_LBL)
 			/* No locate block was issued. */
-			return tape_34xx_erp_bug(device, request,
+			वापस tape_34xx_erp_bug(device, request,
 						 irb, sense[3]);
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x45:
-		/* The drive is assigned to a different channel path. */
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x45:
+		/* The drive is asचिन्हित to a dअगरferent channel path. */
 		dev_warn (&device->cdev->dev, "The tape unit is already "
 			"assigned\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x46:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x46:
 		/*
-		 * Drive not on-line. Drive may be switched offline,
-		 * the power supply may be switched off or
+		 * Drive not on-line. Drive may be चयनed offline,
+		 * the घातer supply may be चयनed off or
 		 * the drive address may not be set correctly.
 		 */
 		dev_warn (&device->cdev->dev, "The tape unit is not online\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x47:
-		/* Volume fenced. CU reports volume integrity is lost. */
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x47:
+		/* Volume fenced. CU reports volume पूर्णांकegrity is lost. */
 		dev_warn (&device->cdev->dev, "The control unit has fenced "
 			"access to the tape volume\n");
 		tape_34xx_delete_sbid_from(device, 0);
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x48:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x48:
 		/* Log sense data and retry request. */
-		return tape_34xx_erp_retry(request);
-	case 0x49:
+		वापस tape_34xx_erp_retry(request);
+	हाल 0x49:
 		/* Bus out check. A parity check error on the bus was found. */
 		dev_warn (&device->cdev->dev, "A parity error occurred on the "
 			"tape bus\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x4a:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x4a:
 		/* Control unit erp failed. */
 		dev_warn (&device->cdev->dev, "I/O error recovery failed on "
 			"the tape control unit\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x4b:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x4b:
 		/*
 		 * CU and drive incompatible. The drive requests micro-program
 		 * patches, which are not available on the CU.
 		 */
 		dev_warn (&device->cdev->dev, "The tape unit requires a "
 			"firmware update\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x4c:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x4c:
 		/*
 		 * Recovered Check-One failure. Cu develops a hardware error,
 		 * but is able to recover.
 		 */
-		return tape_34xx_erp_retry(request);
-	case 0x4d:
-		if (device->cdev->id.driver_info == tape_3490)
+		वापस tape_34xx_erp_retry(request);
+	हाल 0x4d:
+		अगर (device->cdev->id.driver_info == tape_3490)
 			/*
-			 * Resetting event received. Since the driver does
+			 * Resetting event received. Since the driver करोes
 			 * not support resetting event recovery (which has to
 			 * be handled by the I/O Layer), retry our command.
 			 */
-			return tape_34xx_erp_retry(request);
-		/* This erpa is reserved for 3480. */
-		return tape_34xx_erp_bug(device, request, irb, sense[3]);
-	case 0x4e:
-		if (device->cdev->id.driver_info == tape_3490) {
+			वापस tape_34xx_erp_retry(request);
+		/* This erpa is reserved क्रम 3480. */
+		वापस tape_34xx_erp_bug(device, request, irb, sense[3]);
+	हाल 0x4e:
+		अगर (device->cdev->id.driver_info == tape_3490) अणु
 			/*
 			 * Maximum block size exceeded. This indicates, that
-			 * the block to be written is larger than allowed for
+			 * the block to be written is larger than allowed क्रम
 			 * buffered mode.
 			 */
 			dev_warn (&device->cdev->dev, "The maximum block size"
 				" for buffered mode is exceeded\n");
-			return tape_34xx_erp_failed(request, -ENOBUFS);
-		}
-		/* This erpa is reserved for 3480. */
-		return tape_34xx_erp_bug(device, request, irb, sense[3]);
-	case 0x50:
+			वापस tape_34xx_erp_failed(request, -ENOBUFS);
+		पूर्ण
+		/* This erpa is reserved क्रम 3480. */
+		वापस tape_34xx_erp_bug(device, request, irb, sense[3]);
+	हाल 0x50:
 		/*
 		 * Read buffered log (Overflow). CU is running in extended
 		 * buffered log mode, and a counter overflows. This should
 		 * never happen, since we're never running in extended
 		 * buffered log mode.
 		 */
-		return tape_34xx_erp_retry(request);
-	case 0x51:
+		वापस tape_34xx_erp_retry(request);
+	हाल 0x51:
 		/*
-		 * Read buffered log (EOV). EOF processing occurs while the
+		 * Read buffered log (EOV). खातापूर्ण processing occurs जबतक the
 		 * CU is in extended buffered log mode. This should never
 		 * happen, since we're never running in extended buffered
 		 * log mode.
 		 */
-		return tape_34xx_erp_retry(request);
-	case 0x52:
+		वापस tape_34xx_erp_retry(request);
+	हाल 0x52:
 		/* End of Volume complete. Rewind unload completed ok. */
-		if (request->op == TO_RUN) {
+		अगर (request->op == TO_RUN) अणु
 			tape_med_state_set(device, MS_UNLOADED);
 			tape_34xx_delete_sbid_from(device, 0);
-			return tape_34xx_erp_succeeded(request);
-		}
-		return tape_34xx_erp_bug(device, request, irb, sense[3]);
-	case 0x53:
-		/* Global command intercept. */
-		return tape_34xx_erp_retry(request);
-	case 0x54:
-		/* Channel interface recovery (temporary). */
-		return tape_34xx_erp_retry(request);
-	case 0x55:
-		/* Channel interface recovery (permanent). */
+			वापस tape_34xx_erp_succeeded(request);
+		पूर्ण
+		वापस tape_34xx_erp_bug(device, request, irb, sense[3]);
+	हाल 0x53:
+		/* Global command पूर्णांकercept. */
+		वापस tape_34xx_erp_retry(request);
+	हाल 0x54:
+		/* Channel पूर्णांकerface recovery (temporary). */
+		वापस tape_34xx_erp_retry(request);
+	हाल 0x55:
+		/* Channel पूर्णांकerface recovery (permanent). */
 		dev_warn (&device->cdev->dev, "A channel interface error cannot be"
 			" recovered\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x56:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x56:
 		/* Channel protocol error. */
 		dev_warn (&device->cdev->dev, "A channel protocol error "
 			"occurred\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x57:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x57:
 		/*
-		 * 3480: Attention intercept.
-		 * 3490: Global status intercept.
+		 * 3480: Attention पूर्णांकercept.
+		 * 3490: Global status पूर्णांकercept.
 		 */
-		return tape_34xx_erp_retry(request);
-	case 0x5a:
+		वापस tape_34xx_erp_retry(request);
+	हाल 0x5a:
 		/*
-		 * Tape length incompatible. The tape inserted is too long,
+		 * Tape length incompatible. The tape inserted is too दीर्घ,
 		 * which could cause damage to the tape or the drive.
 		 */
 		dev_warn (&device->cdev->dev, "The tape unit does not support "
 			"the tape length\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x5b:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x5b:
 		/* Format 3480 XF incompatible */
-		if (sense[1] & SENSE_BEGINNING_OF_TAPE)
+		अगर (sense[1] & SENSE_BEGINNING_OF_TAPE)
 			/* The tape will get overwritten. */
-			return tape_34xx_erp_retry(request);
+			वापस tape_34xx_erp_retry(request);
 		dev_warn (&device->cdev->dev, "The tape unit does not support"
 			" format 3480 XF\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x5c:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x5c:
 		/* Format 3480-2 XF incompatible */
 		dev_warn (&device->cdev->dev, "The tape unit does not support tape "
 			"format 3480-2 XF\n");
-		return tape_34xx_erp_failed(request, -EIO);
-	case 0x5d:
+		वापस tape_34xx_erp_failed(request, -EIO);
+	हाल 0x5d:
 		/* Tape length violation. */
 		dev_warn (&device->cdev->dev, "The tape unit does not support"
 			" the current tape length\n");
-		return tape_34xx_erp_failed(request, -EMEDIUMTYPE);
-	case 0x5e:
+		वापस tape_34xx_erp_failed(request, -EMEDIUMTYPE);
+	हाल 0x5e:
 		/* Compaction algorithm incompatible. */
 		dev_warn (&device->cdev->dev, "The tape unit does not support"
 			" the compaction algorithm\n");
-		return tape_34xx_erp_failed(request, -EMEDIUMTYPE);
+		वापस tape_34xx_erp_failed(request, -EMEDIUMTYPE);
 
 		/* The following erpas should have been covered earlier. */
-	case 0x23: /* Read data check. */
-	case 0x25: /* Write data check. */
-	case 0x26: /* Data check (read opposite). */
-	case 0x28: /* Write id mark check. */
-	case 0x31: /* Tape void. */
-	case 0x40: /* Overrun error. */
-	case 0x41: /* Record sequence error. */
-		/* All other erpas are reserved for future use. */
-	default:
-		return tape_34xx_erp_bug(device, request, irb, sense[3]);
-	}
-}
+	हाल 0x23: /* Read data check. */
+	हाल 0x25: /* Write data check. */
+	हाल 0x26: /* Data check (पढ़ो opposite). */
+	हाल 0x28: /* Write id mark check. */
+	हाल 0x31: /* Tape व्योम. */
+	हाल 0x40: /* Overrun error. */
+	हाल 0x41: /* Record sequence error. */
+		/* All other erpas are reserved क्रम future use. */
+	शेष:
+		वापस tape_34xx_erp_bug(device, request, irb, sense[3]);
+	पूर्ण
+पूर्ण
 
 /*
- * 3480/3490 interrupt handler
+ * 3480/3490 पूर्णांकerrupt handler
  */
-static int
-tape_34xx_irq(struct tape_device *device, struct tape_request *request,
-	      struct irb *irb)
-{
-	if (request == NULL)
-		return tape_34xx_unsolicited_irq(device, irb);
+अटल पूर्णांक
+tape_34xx_irq(काष्ठा tape_device *device, काष्ठा tape_request *request,
+	      काष्ठा irb *irb)
+अणु
+	अगर (request == शून्य)
+		वापस tape_34xx_unsolicited_irq(device, irb);
 
-	if ((irb->scsw.cmd.dstat & DEV_STAT_UNIT_EXCEP) &&
+	अगर ((irb->scsw.cmd.dstat & DEV_STAT_UNIT_EXCEP) &&
 	    (irb->scsw.cmd.dstat & DEV_STAT_DEV_END) &&
-	    (request->op == TO_WRI)) {
+	    (request->op == TO_WRI)) अणु
 		/* Write at end of volume */
-		return tape_34xx_erp_failed(request, -ENOSPC);
-	}
+		वापस tape_34xx_erp_failed(request, -ENOSPC);
+	पूर्ण
 
-	if (irb->scsw.cmd.dstat & DEV_STAT_UNIT_CHECK)
-		return tape_34xx_unit_check(device, request, irb);
+	अगर (irb->scsw.cmd.dstat & DEV_STAT_UNIT_CHECK)
+		वापस tape_34xx_unit_check(device, request, irb);
 
-	if (irb->scsw.cmd.dstat & DEV_STAT_DEV_END) {
+	अगर (irb->scsw.cmd.dstat & DEV_STAT_DEV_END) अणु
 		/*
 		 * A unit exception occurs on skipping over a tapemark block.
 		 */
-		if (irb->scsw.cmd.dstat & DEV_STAT_UNIT_EXCEP) {
-			if (request->op == TO_BSB || request->op == TO_FSB)
+		अगर (irb->scsw.cmd.dstat & DEV_STAT_UNIT_EXCEP) अणु
+			अगर (request->op == TO_BSB || request->op == TO_FSB)
 				request->rescnt++;
-			else
+			अन्यथा
 				DBF_EVENT(5, "Unit Exception!\n");
-		}
-		return tape_34xx_done(request);
-	}
+		पूर्ण
+		वापस tape_34xx_करोne(request);
+	पूर्ण
 
 	DBF_EVENT(6, "xunknownirq\n");
 	tape_dump_sense_dbf(device, request, irb);
-	return TAPE_IO_STOP;
-}
+	वापस TAPE_IO_STOP;
+पूर्ण
 
 /*
  * ioctl_overload
  */
-static int
-tape_34xx_ioctl(struct tape_device *device, unsigned int cmd, unsigned long arg)
-{
-	if (cmd == TAPE390_DISPLAY) {
-		struct display_struct disp;
+अटल पूर्णांक
+tape_34xx_ioctl(काष्ठा tape_device *device, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	अगर (cmd == TAPE390_DISPLAY) अणु
+		काष्ठा display_काष्ठा disp;
 
-		if (copy_from_user(&disp, (char __user *) arg, sizeof(disp)) != 0)
-			return -EFAULT;
+		अगर (copy_from_user(&disp, (अक्षर __user *) arg, माप(disp)) != 0)
+			वापस -EFAULT;
 
-		return tape_std_display(device, &disp);
-	} else
-		return -EINVAL;
-}
+		वापस tape_std_display(device, &disp);
+	पूर्ण अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static inline void
-tape_34xx_append_new_sbid(struct tape_34xx_block_id bid, struct list_head *l)
-{
-	struct tape_34xx_sbid *	new_sbid;
+अटल अंतरभूत व्योम
+tape_34xx_append_new_sbid(काष्ठा tape_34xx_block_id bid, काष्ठा list_head *l)
+अणु
+	काष्ठा tape_34xx_sbid *	new_sbid;
 
-	new_sbid = kmalloc(sizeof(*new_sbid), GFP_ATOMIC);
-	if (!new_sbid)
-		return;
+	new_sbid = kदो_स्मृति(माप(*new_sbid), GFP_ATOMIC);
+	अगर (!new_sbid)
+		वापस;
 
 	new_sbid->bid = bid;
 	list_add(&new_sbid->list, l);
-}
+पूर्ण
 
 /*
  * Build up the search block ID list. The block ID consists of a logical
- * block number and a hardware specific part. The hardware specific part
- * helps the tape drive to speed up searching for a specific block.
+ * block number and a hardware specअगरic part. The hardware specअगरic part
+ * helps the tape drive to speed up searching क्रम a specअगरic block.
  */
-static void
-tape_34xx_add_sbid(struct tape_device *device, struct tape_34xx_block_id bid)
-{
-	struct list_head *	sbid_list;
-	struct tape_34xx_sbid *	sbid;
-	struct list_head *	l;
+अटल व्योम
+tape_34xx_add_sbid(काष्ठा tape_device *device, काष्ठा tape_34xx_block_id bid)
+अणु
+	काष्ठा list_head *	sbid_list;
+	काष्ठा tape_34xx_sbid *	sbid;
+	काष्ठा list_head *	l;
 
 	/*
-	 * immediately return if there is no list at all or the block to add
+	 * immediately वापस अगर there is no list at all or the block to add
 	 * is located in segment 1 of wrap 0 because this position is used
-	 * if no hardware position data is supplied.
+	 * अगर no hardware position data is supplied.
 	 */
-	sbid_list = (struct list_head *) device->discdata;
-	if (!sbid_list || (bid.segment < 2 && bid.wrap == 0))
-		return;
+	sbid_list = (काष्ठा list_head *) device->discdata;
+	अगर (!sbid_list || (bid.segment < 2 && bid.wrap == 0))
+		वापस;
 
 	/*
 	 * Search the position where to insert the new entry. Hardware
 	 * acceleration uses only the segment and wrap number. So we
-	 * need only one entry for a specific wrap/segment combination.
+	 * need only one entry क्रम a specअगरic wrap/segment combination.
 	 * If there is a block with a lower number but the same hard-
 	 * ware position data we just update the block number in the
 	 * existing entry.
 	 */
-	list_for_each(l, sbid_list) {
-		sbid = list_entry(l, struct tape_34xx_sbid, list);
+	list_क्रम_each(l, sbid_list) अणु
+		sbid = list_entry(l, काष्ठा tape_34xx_sbid, list);
 
-		if (
+		अगर (
 			(sbid->bid.segment == bid.segment) &&
 			(sbid->bid.wrap    == bid.wrap)
-		) {
-			if (bid.block < sbid->bid.block)
+		) अणु
+			अगर (bid.block < sbid->bid.block)
 				sbid->bid = bid;
-			else return;
-			break;
-		}
+			अन्यथा वापस;
+			अवरोध;
+		पूर्ण
 
 		/* Sort in according to logical block number. */
-		if (bid.block < sbid->bid.block) {
+		अगर (bid.block < sbid->bid.block) अणु
 			tape_34xx_append_new_sbid(bid, l->prev);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	/* List empty or new block bigger than last entry. */
-	if (l == sbid_list)
+	अगर (l == sbid_list)
 		tape_34xx_append_new_sbid(bid, l->prev);
 
 	DBF_LH(4, "Current list is:\n");
-	list_for_each(l, sbid_list) {
-		sbid = list_entry(l, struct tape_34xx_sbid, list);
+	list_क्रम_each(l, sbid_list) अणु
+		sbid = list_entry(l, काष्ठा tape_34xx_sbid, list);
 		DBF_LH(4, "%d:%03d@%05d\n",
 			sbid->bid.wrap,
 			sbid->bid.segment,
 			sbid->bid.block
 		);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Delete all entries from the search block ID list that belong to tape blocks
+ * Delete all entries from the search block ID list that beदीर्घ to tape blocks
  * equal or higher than the given number.
  */
-static void
-tape_34xx_delete_sbid_from(struct tape_device *device, int from)
-{
-	struct list_head *	sbid_list;
-	struct tape_34xx_sbid *	sbid;
-	struct list_head *	l;
-	struct list_head *	n;
+अटल व्योम
+tape_34xx_delete_sbid_from(काष्ठा tape_device *device, पूर्णांक from)
+अणु
+	काष्ठा list_head *	sbid_list;
+	काष्ठा tape_34xx_sbid *	sbid;
+	काष्ठा list_head *	l;
+	काष्ठा list_head *	n;
 
-	sbid_list = (struct list_head *) device->discdata;
-	if (!sbid_list)
-		return;
+	sbid_list = (काष्ठा list_head *) device->discdata;
+	अगर (!sbid_list)
+		वापस;
 
-	list_for_each_safe(l, n, sbid_list) {
-		sbid = list_entry(l, struct tape_34xx_sbid, list);
-		if (sbid->bid.block >= from) {
+	list_क्रम_each_safe(l, n, sbid_list) अणु
+		sbid = list_entry(l, काष्ठा tape_34xx_sbid, list);
+		अगर (sbid->bid.block >= from) अणु
 			DBF_LH(4, "Delete sbid %d:%03d@%05d\n",
 				sbid->bid.wrap,
 				sbid->bid.segment,
 				sbid->bid.block
 			);
 			list_del(l);
-			kfree(sbid);
-		}
-	}
-}
+			kमुक्त(sbid);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Merge hardware position data into a block id.
+ * Merge hardware position data पूर्णांकo a block id.
  */
-static void
+अटल व्योम
 tape_34xx_merge_sbid(
-	struct tape_device *		device,
-	struct tape_34xx_block_id *	bid
-) {
-	struct tape_34xx_sbid *	sbid;
-	struct tape_34xx_sbid *	sbid_to_use;
-	struct list_head *	sbid_list;
-	struct list_head *	l;
+	काष्ठा tape_device *		device,
+	काष्ठा tape_34xx_block_id *	bid
+) अणु
+	काष्ठा tape_34xx_sbid *	sbid;
+	काष्ठा tape_34xx_sbid *	sbid_to_use;
+	काष्ठा list_head *	sbid_list;
+	काष्ठा list_head *	l;
 
-	sbid_list = (struct list_head *) device->discdata;
+	sbid_list = (काष्ठा list_head *) device->discdata;
 	bid->wrap    = 0;
 	bid->segment = 1;
 
-	if (!sbid_list || list_empty(sbid_list))
-		return;
+	अगर (!sbid_list || list_empty(sbid_list))
+		वापस;
 
-	sbid_to_use = NULL;
-	list_for_each(l, sbid_list) {
-		sbid = list_entry(l, struct tape_34xx_sbid, list);
+	sbid_to_use = शून्य;
+	list_क्रम_each(l, sbid_list) अणु
+		sbid = list_entry(l, काष्ठा tape_34xx_sbid, list);
 
-		if (sbid->bid.block >= bid->block)
-			break;
+		अगर (sbid->bid.block >= bid->block)
+			अवरोध;
 		sbid_to_use = sbid;
-	}
-	if (sbid_to_use) {
+	पूर्ण
+	अगर (sbid_to_use) अणु
 		bid->wrap    = sbid_to_use->bid.wrap;
 		bid->segment = sbid_to_use->bid.segment;
 		DBF_LH(4, "Use %d:%03d@%05d for %05d\n",
@@ -1023,106 +1024,106 @@ tape_34xx_merge_sbid(
 			sbid_to_use->bid.block,
 			bid->block
 		);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-tape_34xx_setup_device(struct tape_device * device)
-{
-	int			rc;
-	struct list_head *	discdata;
+अटल पूर्णांक
+tape_34xx_setup_device(काष्ठा tape_device * device)
+अणु
+	पूर्णांक			rc;
+	काष्ठा list_head *	discdata;
 
 	DBF_EVENT(6, "34xx device setup\n");
-	if ((rc = tape_std_assign(device)) == 0) {
-		if ((rc = tape_34xx_medium_sense(device)) != 0) {
+	अगर ((rc = tape_std_assign(device)) == 0) अणु
+		अगर ((rc = tape_34xx_medium_sense(device)) != 0) अणु
 			DBF_LH(3, "34xx medium sense returned %d\n", rc);
-		}
-	}
-	discdata = kmalloc(sizeof(struct list_head), GFP_KERNEL);
-	if (discdata) {
+		पूर्ण
+	पूर्ण
+	discdata = kदो_स्मृति(माप(काष्ठा list_head), GFP_KERNEL);
+	अगर (discdata) अणु
 			INIT_LIST_HEAD(discdata);
 			device->discdata = discdata;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void
-tape_34xx_cleanup_device(struct tape_device *device)
-{
+अटल व्योम
+tape_34xx_cleanup_device(काष्ठा tape_device *device)
+अणु
 	tape_std_unassign(device);
 	
-	if (device->discdata) {
+	अगर (device->discdata) अणु
 		tape_34xx_delete_sbid_from(device, 0);
-		kfree(device->discdata);
-		device->discdata = NULL;
-	}
-}
+		kमुक्त(device->discdata);
+		device->discdata = शून्य;
+	पूर्ण
+पूर्ण
 
 
 /*
  * MTTELL: Tell block. Return the number of block relative to current file.
  */
-static int
-tape_34xx_mttell(struct tape_device *device, int mt_count)
-{
-	struct {
-		struct tape_34xx_block_id	cbid;
-		struct tape_34xx_block_id	dbid;
-	} __attribute__ ((packed)) block_id;
-	int rc;
+अटल पूर्णांक
+tape_34xx_mttell(काष्ठा tape_device *device, पूर्णांक mt_count)
+अणु
+	काष्ठा अणु
+		काष्ठा tape_34xx_block_id	cbid;
+		काष्ठा tape_34xx_block_id	dbid;
+	पूर्ण __attribute__ ((packed)) block_id;
+	पूर्णांक rc;
 
-	rc = tape_std_read_block_id(device, (__u64 *) &block_id);
-	if (rc)
-		return rc;
+	rc = tape_std_पढ़ो_block_id(device, (__u64 *) &block_id);
+	अगर (rc)
+		वापस rc;
 
 	tape_34xx_add_sbid(device, block_id.cbid);
-	return block_id.cbid.block;
-}
+	वापस block_id.cbid.block;
+पूर्ण
 
 /*
- * MTSEEK: seek to the specified block.
+ * MTSEEK: seek to the specअगरied block.
  */
-static int
-tape_34xx_mtseek(struct tape_device *device, int mt_count)
-{
-	struct tape_request *request;
-	struct tape_34xx_block_id *	bid;
+अटल पूर्णांक
+tape_34xx_mtseek(काष्ठा tape_device *device, पूर्णांक mt_count)
+अणु
+	काष्ठा tape_request *request;
+	काष्ठा tape_34xx_block_id *	bid;
 
-	if (mt_count > 0x3fffff) {
+	अगर (mt_count > 0x3fffff) अणु
 		DBF_EXCEPTION(6, "xsee parm\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	request = tape_alloc_request(3, 4);
-	if (IS_ERR(request))
-		return PTR_ERR(request);
+	अगर (IS_ERR(request))
+		वापस PTR_ERR(request);
 
 	/* setup ccws */
 	request->op = TO_LBL;
-	bid         = (struct tape_34xx_block_id *) request->cpdata;
-	bid->format = (*device->modeset_byte & 0x08) ?
+	bid         = (काष्ठा tape_34xx_block_id *) request->cpdata;
+	bid->क्रमmat = (*device->modeset_byte & 0x08) ?
 			TAPE34XX_FMT_3480_XF : TAPE34XX_FMT_3480;
 	bid->block  = mt_count;
 	tape_34xx_merge_sbid(device, bid);
 
 	tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1, device->modeset_byte);
 	tape_ccw_cc(request->cpaddr + 1, LOCATE, 4, request->cpdata);
-	tape_ccw_end(request->cpaddr + 2, NOP, 0, NULL);
+	tape_ccw_end(request->cpaddr + 2, NOP, 0, शून्य);
 
 	/* execute it */
-	return tape_do_io_free(device, request);
-}
+	वापस tape_करो_io_मुक्त(device, request);
+पूर्ण
 
 /*
  * List of 3480/3490 magnetic tape commands.
  */
-static tape_mtop_fn tape_34xx_mtop[TAPE_NR_MTOPS] = {
+अटल tape_mtop_fn tape_34xx_mtop[TAPE_NR_MTOPS] = अणु
 	[MTRESET]	 = tape_std_mtreset,
 	[MTFSF]		 = tape_std_mtfsf,
 	[MTBSF]		 = tape_std_mtbsf,
 	[MTFSR]		 = tape_std_mtfsr,
 	[MTBSR]		 = tape_std_mtbsr,
-	[MTWEOF]	 = tape_std_mtweof,
+	[MTWखातापूर्ण]	 = tape_std_mtweof,
 	[MTREW]		 = tape_std_mtrew,
 	[MTOFFL]	 = tape_std_mtoffl,
 	[MTNOP]		 = tape_std_mtnop,
@@ -1131,97 +1132,97 @@ static tape_mtop_fn tape_34xx_mtop[TAPE_NR_MTOPS] = {
 	[MTFSFM]	 = tape_std_mtfsfm,
 	[MTEOM]		 = tape_std_mteom,
 	[MTERASE]	 = tape_std_mterase,
-	[MTRAS1]	 = NULL,
-	[MTRAS2]	 = NULL,
-	[MTRAS3]	 = NULL,
+	[MTRAS1]	 = शून्य,
+	[MTRAS2]	 = शून्य,
+	[MTRAS3]	 = शून्य,
 	[MTSETBLK]	 = tape_std_mtsetblk,
-	[MTSETDENSITY]	 = NULL,
+	[MTSETDENSITY]	 = शून्य,
 	[MTSEEK]	 = tape_34xx_mtseek,
 	[MTTELL]	 = tape_34xx_mttell,
-	[MTSETDRVBUFFER] = NULL,
-	[MTFSS]		 = NULL,
-	[MTBSS]		 = NULL,
-	[MTWSM]		 = NULL,
-	[MTLOCK]	 = NULL,
-	[MTUNLOCK]	 = NULL,
+	[MTSETDRVBUFFER] = शून्य,
+	[MTFSS]		 = शून्य,
+	[MTBSS]		 = शून्य,
+	[MTWSM]		 = शून्य,
+	[MTLOCK]	 = शून्य,
+	[MTUNLOCK]	 = शून्य,
 	[MTLOAD]	 = tape_std_mtload,
 	[MTUNLOAD]	 = tape_std_mtunload,
 	[MTCOMPRESSION]	 = tape_std_mtcompression,
-	[MTSETPART]	 = NULL,
-	[MTMKPART]	 = NULL
-};
+	[MTSETPART]	 = शून्य,
+	[MTMKPART]	 = शून्य
+पूर्ण;
 
 /*
- * Tape discipline structure for 3480 and 3490.
+ * Tape discipline काष्ठाure क्रम 3480 and 3490.
  */
-static struct tape_discipline tape_discipline_34xx = {
+अटल काष्ठा tape_discipline tape_discipline_34xx = अणु
 	.owner = THIS_MODULE,
 	.setup_device = tape_34xx_setup_device,
 	.cleanup_device = tape_34xx_cleanup_device,
 	.process_eov = tape_std_process_eov,
 	.irq = tape_34xx_irq,
-	.read_block = tape_std_read_block,
-	.write_block = tape_std_write_block,
+	.पढ़ो_block = tape_std_पढ़ो_block,
+	.ग_लिखो_block = tape_std_ग_लिखो_block,
 	.ioctl_fn = tape_34xx_ioctl,
 	.mtop_array = tape_34xx_mtop
-};
+पूर्ण;
 
-static struct ccw_device_id tape_34xx_ids[] = {
-	{ CCW_DEVICE_DEVTYPE(0x3480, 0, 0x3480, 0), .driver_info = tape_3480},
-	{ CCW_DEVICE_DEVTYPE(0x3490, 0, 0x3490, 0), .driver_info = tape_3490},
-	{ /* end of list */ },
-};
+अटल काष्ठा ccw_device_id tape_34xx_ids[] = अणु
+	अणु CCW_DEVICE_DEVTYPE(0x3480, 0, 0x3480, 0), .driver_info = tape_3480पूर्ण,
+	अणु CCW_DEVICE_DEVTYPE(0x3490, 0, 0x3490, 0), .driver_info = tape_3490पूर्ण,
+	अणु /* end of list */ पूर्ण,
+पूर्ण;
 
-static int
-tape_34xx_online(struct ccw_device *cdev)
-{
-	return tape_generic_online(
+अटल पूर्णांक
+tape_34xx_online(काष्ठा ccw_device *cdev)
+अणु
+	वापस tape_generic_online(
 		dev_get_drvdata(&cdev->dev),
 		&tape_discipline_34xx
 	);
-}
+पूर्ण
 
-static struct ccw_driver tape_34xx_driver = {
-	.driver = {
+अटल काष्ठा ccw_driver tape_34xx_driver = अणु
+	.driver = अणु
 		.name = "tape_34xx",
 		.owner = THIS_MODULE,
-	},
+	पूर्ण,
 	.ids = tape_34xx_ids,
 	.probe = tape_generic_probe,
-	.remove = tape_generic_remove,
+	.हटाओ = tape_generic_हटाओ,
 	.set_online = tape_34xx_online,
 	.set_offline = tape_generic_offline,
-	.int_class = IRQIO_TAP,
-};
+	.पूर्णांक_class = IRQIO_TAP,
+पूर्ण;
 
-static int
-tape_34xx_init (void)
-{
-	int rc;
+अटल पूर्णांक
+tape_34xx_init (व्योम)
+अणु
+	पूर्णांक rc;
 
-	TAPE_DBF_AREA = debug_register ( "tape_34xx", 2, 2, 4*sizeof(long));
-	debug_register_view(TAPE_DBF_AREA, &debug_sprintf_view);
-#ifdef DBF_LIKE_HELL
+	TAPE_DBF_AREA = debug_रेजिस्टर ( "tape_34xx", 2, 2, 4*माप(दीर्घ));
+	debug_रेजिस्टर_view(TAPE_DBF_AREA, &debug_प्र_लिखो_view);
+#अगर_घोषित DBF_LIKE_HELL
 	debug_set_level(TAPE_DBF_AREA, 6);
-#endif
+#पूर्ण_अगर
 
 	DBF_EVENT(3, "34xx init\n");
-	/* Register driver for 3480/3490 tapes. */
-	rc = ccw_driver_register(&tape_34xx_driver);
-	if (rc)
+	/* Register driver क्रम 3480/3490 tapes. */
+	rc = ccw_driver_रेजिस्टर(&tape_34xx_driver);
+	अगर (rc)
 		DBF_EVENT(3, "34xx init failed\n");
-	else
+	अन्यथा
 		DBF_EVENT(3, "34xx registered\n");
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void
-tape_34xx_exit(void)
-{
-	ccw_driver_unregister(&tape_34xx_driver);
+अटल व्योम
+tape_34xx_निकास(व्योम)
+अणु
+	ccw_driver_unरेजिस्टर(&tape_34xx_driver);
 
-	debug_unregister(TAPE_DBF_AREA);
-}
+	debug_unरेजिस्टर(TAPE_DBF_AREA);
+पूर्ण
 
 MODULE_DEVICE_TABLE(ccw, tape_34xx_ids);
 MODULE_AUTHOR("(C) 2001-2002 IBM Deutschland Entwicklung GmbH");
@@ -1229,4 +1230,4 @@ MODULE_DESCRIPTION("Linux on zSeries channel attached 3480 tape device driver");
 MODULE_LICENSE("GPL");
 
 module_init(tape_34xx_init);
-module_exit(tape_34xx_exit);
+module_निकास(tape_34xx_निकास);

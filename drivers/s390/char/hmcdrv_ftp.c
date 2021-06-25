@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *    HMC Drive FTP Services
  *
@@ -6,54 +7,54 @@
  *    Author(s): Ralf Hoppe (rhoppe@de.ibm.com)
  */
 
-#define KMSG_COMPONENT "hmcdrv"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "hmcdrv"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/export.h>
 
-#include <linux/ctype.h>
-#include <linux/crc16.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/crc16.h>
 
-#include "hmcdrv_ftp.h"
-#include "hmcdrv_cache.h"
-#include "sclp_ftp.h"
-#include "diag_ftp.h"
+#समावेश "hmcdrv_ftp.h"
+#समावेश "hmcdrv_cache.h"
+#समावेश "sclp_ftp.h"
+#समावेश "diag_ftp.h"
 
 /**
- * struct hmcdrv_ftp_ops - HMC drive FTP operations
+ * काष्ठा hmcdrv_ftp_ops - HMC drive FTP operations
  * @startup: startup function
- * @shutdown: shutdown function
+ * @shutकरोwn: shutकरोwn function
  * @cmd: FTP transfer function
  */
-struct hmcdrv_ftp_ops {
-	int (*startup)(void);
-	void (*shutdown)(void);
-	ssize_t (*transfer)(const struct hmcdrv_ftp_cmdspec *ftp,
-			    size_t *fsize);
-};
+काष्ठा hmcdrv_ftp_ops अणु
+	पूर्णांक (*startup)(व्योम);
+	व्योम (*shutकरोwn)(व्योम);
+	sमाप_प्रकार (*transfer)(स्थिर काष्ठा hmcdrv_ftp_cmdspec *ftp,
+			    माप_प्रकार *fsize);
+पूर्ण;
 
-static enum hmcdrv_ftp_cmdid hmcdrv_ftp_cmd_getid(const char *cmd, int len);
-static int hmcdrv_ftp_parse(char *cmd, struct hmcdrv_ftp_cmdspec *ftp);
+अटल क्रमागत hmcdrv_ftp_cmdid hmcdrv_ftp_cmd_getid(स्थिर अक्षर *cmd, पूर्णांक len);
+अटल पूर्णांक hmcdrv_ftp_parse(अक्षर *cmd, काष्ठा hmcdrv_ftp_cmdspec *ftp);
 
-static const struct hmcdrv_ftp_ops *hmcdrv_ftp_funcs; /* current operations */
-static DEFINE_MUTEX(hmcdrv_ftp_mutex); /* mutex for hmcdrv_ftp_funcs */
-static unsigned hmcdrv_ftp_refcnt; /* start/shutdown reference counter */
+अटल स्थिर काष्ठा hmcdrv_ftp_ops *hmcdrv_ftp_funcs; /* current operations */
+अटल DEFINE_MUTEX(hmcdrv_ftp_mutex); /* mutex क्रम hmcdrv_ftp_funcs */
+अटल अचिन्हित hmcdrv_ftp_refcnt; /* start/shutकरोwn reference counter */
 
 /**
  * hmcdrv_ftp_cmd_getid() - determine FTP command ID from a command string
  * @cmd: FTP command string (NOT zero-terminated)
  * @len: length of FTP command string in @cmd
  */
-static enum hmcdrv_ftp_cmdid hmcdrv_ftp_cmd_getid(const char *cmd, int len)
-{
+अटल क्रमागत hmcdrv_ftp_cmdid hmcdrv_ftp_cmd_getid(स्थिर अक्षर *cmd, पूर्णांक len)
+अणु
 	/* HMC FTP command descriptor */
-	struct hmcdrv_ftp_cmd_desc {
-		const char *str;	   /* command string */
-		enum hmcdrv_ftp_cmdid cmd; /* associated command as enum */
-	};
+	काष्ठा hmcdrv_ftp_cmd_desc अणु
+		स्थिर अक्षर *str;	   /* command string */
+		क्रमागत hmcdrv_ftp_cmdid cmd; /* associated command as क्रमागत */
+	पूर्ण;
 
 	/* Description of all HMC drive FTP commands
 	 *
@@ -61,284 +62,284 @@ static enum hmcdrv_ftp_cmdid hmcdrv_ftp_cmd_getid(const char *cmd, int len)
 	 * 1. Array size should be a prime number.
 	 * 2. Do not change the order of commands in table (because the
 	 *    index is determined by CRC % ARRAY_SIZE).
-	 * 3. Original command 'nlist' was renamed, else the CRC would
-	 *    collide with 'append' (see point 2).
+	 * 3. Original command 'nlist' was नामd, अन्यथा the CRC would
+	 *    collide with 'append' (see poपूर्णांक 2).
 	 */
-	static const struct hmcdrv_ftp_cmd_desc ftpcmds[7] = {
+	अटल स्थिर काष्ठा hmcdrv_ftp_cmd_desc ftpcmds[7] = अणु
 
-		{.str = "get", /* [0] get (CRC = 0x68eb) */
-		 .cmd = HMCDRV_FTP_GET},
-		{.str = "dir", /* [1] dir (CRC = 0x6a9e) */
-		 .cmd = HMCDRV_FTP_DIR},
-		{.str = "delete", /* [2] delete (CRC = 0x53ae) */
-		 .cmd = HMCDRV_FTP_DELETE},
-		{.str = "nls", /* [3] nls (CRC = 0xf87c) */
-		 .cmd = HMCDRV_FTP_NLIST},
-		{.str = "put", /* [4] put (CRC = 0xac56) */
-		 .cmd = HMCDRV_FTP_PUT},
-		{.str = "append", /* [5] append (CRC = 0xf56e) */
-		 .cmd = HMCDRV_FTP_APPEND},
-		{.str = NULL} /* [6] unused */
-	};
+		अणु.str = "get", /* [0] get (CRC = 0x68eb) */
+		 .cmd = HMCDRV_FTP_GETपूर्ण,
+		अणु.str = "dir", /* [1] dir (CRC = 0x6a9e) */
+		 .cmd = HMCDRV_FTP_सूचीपूर्ण,
+		अणु.str = "delete", /* [2] delete (CRC = 0x53ae) */
+		 .cmd = HMCDRV_FTP_DELETEपूर्ण,
+		अणु.str = "nls", /* [3] nls (CRC = 0xf87c) */
+		 .cmd = HMCDRV_FTP_NLISTपूर्ण,
+		अणु.str = "put", /* [4] put (CRC = 0xac56) */
+		 .cmd = HMCDRV_FTP_PUTपूर्ण,
+		अणु.str = "append", /* [5] append (CRC = 0xf56e) */
+		 .cmd = HMCDRV_FTP_APPENDपूर्ण,
+		अणु.str = शून्यपूर्ण /* [6] unused */
+	पूर्ण;
 
-	const struct hmcdrv_ftp_cmd_desc *pdesc;
+	स्थिर काष्ठा hmcdrv_ftp_cmd_desc *pdesc;
 
 	u16 crc = 0xffffU;
 
-	if (len == 0)
-		return HMCDRV_FTP_NOOP; /* error indiactor */
+	अगर (len == 0)
+		वापस HMCDRV_FTP_NOOP; /* error indiactor */
 
 	crc = crc16(crc, cmd, len);
 	pdesc = ftpcmds + (crc % ARRAY_SIZE(ftpcmds));
 	pr_debug("FTP command '%s' has CRC 0x%04x, at table pos. %lu\n",
 		 cmd, crc, (crc % ARRAY_SIZE(ftpcmds)));
 
-	if (!pdesc->str || strncmp(pdesc->str, cmd, len))
-		return HMCDRV_FTP_NOOP;
+	अगर (!pdesc->str || म_भेदन(pdesc->str, cmd, len))
+		वापस HMCDRV_FTP_NOOP;
 
 	pr_debug("FTP command '%s' found, with ID %d\n",
 		 pdesc->str, pdesc->cmd);
 
-	return pdesc->cmd;
-}
+	वापस pdesc->cmd;
+पूर्ण
 
 /**
  * hmcdrv_ftp_parse() - HMC drive FTP command parser
  * @cmd: FTP command string "<cmd> <filename>"
- * @ftp: Pointer to FTP command specification buffer (output)
+ * @ftp: Poपूर्णांकer to FTP command specअगरication buffer (output)
  *
- * Return: 0 on success, else a (negative) error code
+ * Return: 0 on success, अन्यथा a (negative) error code
  */
-static int hmcdrv_ftp_parse(char *cmd, struct hmcdrv_ftp_cmdspec *ftp)
-{
-	char *start;
-	int argc = 0;
+अटल पूर्णांक hmcdrv_ftp_parse(अक्षर *cmd, काष्ठा hmcdrv_ftp_cmdspec *ftp)
+अणु
+	अक्षर *start;
+	पूर्णांक argc = 0;
 
 	ftp->id = HMCDRV_FTP_NOOP;
-	ftp->fname = NULL;
+	ftp->fname = शून्य;
 
-	while (*cmd != '\0') {
+	जबतक (*cmd != '\0') अणु
 
-		while (isspace(*cmd))
+		जबतक (है_खाली(*cmd))
 			++cmd;
 
-		if (*cmd == '\0')
-			break;
+		अगर (*cmd == '\0')
+			अवरोध;
 
 		start = cmd;
 
-		switch (argc) {
-		case 0: /* 1st argument (FTP command) */
-			while ((*cmd != '\0') && !isspace(*cmd))
+		चयन (argc) अणु
+		हाल 0: /* 1st argument (FTP command) */
+			जबतक ((*cmd != '\0') && !है_खाली(*cmd))
 				++cmd;
 			ftp->id = hmcdrv_ftp_cmd_getid(start, cmd - start);
-			break;
-		case 1: /* 2nd / last argument (rest of line) */
-			while ((*cmd != '\0') && !iscntrl(*cmd))
+			अवरोध;
+		हाल 1: /* 2nd / last argument (rest of line) */
+			जबतक ((*cmd != '\0') && !है_नियंत्रण(*cmd))
 				++cmd;
 			ftp->fname = start;
 			fallthrough;
-		default:
+		शेष:
 			*cmd = '\0';
-			break;
-		} /* switch */
+			अवरोध;
+		पूर्ण /* चयन */
 
 		++argc;
-	} /* while */
+	पूर्ण /* जबतक */
 
-	if (!ftp->fname || (ftp->id == HMCDRV_FTP_NOOP))
-		return -EINVAL;
+	अगर (!ftp->fname || (ftp->id == HMCDRV_FTP_NOOP))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * hmcdrv_ftp_do() - perform a HMC drive FTP, with data from kernel-space
- * @ftp: pointer to FTP command specification
+ * hmcdrv_ftp_करो() - perक्रमm a HMC drive FTP, with data from kernel-space
+ * @ftp: poपूर्णांकer to FTP command specअगरication
  *
- * Return: number of bytes read/written or a negative error code
+ * Return: number of bytes पढ़ो/written or a negative error code
  */
-ssize_t hmcdrv_ftp_do(const struct hmcdrv_ftp_cmdspec *ftp)
-{
-	ssize_t len;
+sमाप_प्रकार hmcdrv_ftp_करो(स्थिर काष्ठा hmcdrv_ftp_cmdspec *ftp)
+अणु
+	sमाप_प्रकार len;
 
 	mutex_lock(&hmcdrv_ftp_mutex);
 
-	if (hmcdrv_ftp_funcs && hmcdrv_ftp_refcnt) {
+	अगर (hmcdrv_ftp_funcs && hmcdrv_ftp_refcnt) अणु
 		pr_debug("starting transfer, cmd %d for '%s' at %lld with %zd bytes\n",
-			 ftp->id, ftp->fname, (long long) ftp->ofs, ftp->len);
+			 ftp->id, ftp->fname, (दीर्घ दीर्घ) ftp->ofs, ftp->len);
 		len = hmcdrv_cache_cmd(ftp, hmcdrv_ftp_funcs->transfer);
-	} else {
+	पूर्ण अन्यथा अणु
 		len = -ENXIO;
-	}
+	पूर्ण
 
 	mutex_unlock(&hmcdrv_ftp_mutex);
-	return len;
-}
-EXPORT_SYMBOL(hmcdrv_ftp_do);
+	वापस len;
+पूर्ण
+EXPORT_SYMBOL(hmcdrv_ftp_करो);
 
 /**
- * hmcdrv_ftp_probe() - probe for the HMC drive FTP service
+ * hmcdrv_ftp_probe() - probe क्रम the HMC drive FTP service
  *
- * Return: 0 if service is available, else an (negative) error code
+ * Return: 0 अगर service is available, अन्यथा an (negative) error code
  */
-int hmcdrv_ftp_probe(void)
-{
-	int rc;
+पूर्णांक hmcdrv_ftp_probe(व्योम)
+अणु
+	पूर्णांक rc;
 
-	struct hmcdrv_ftp_cmdspec ftp = {
+	काष्ठा hmcdrv_ftp_cmdspec ftp = अणु
 		.id = HMCDRV_FTP_NOOP,
 		.ofs = 0,
 		.fname = "",
 		.len = PAGE_SIZE
-	};
+	पूर्ण;
 
-	ftp.buf = (void *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
+	ftp.buf = (व्योम *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
 
-	if (!ftp.buf)
-		return -ENOMEM;
+	अगर (!ftp.buf)
+		वापस -ENOMEM;
 
 	rc = hmcdrv_ftp_startup();
 
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	rc = hmcdrv_ftp_do(&ftp);
-	hmcdrv_ftp_shutdown();
+	rc = hmcdrv_ftp_करो(&ftp);
+	hmcdrv_ftp_shutकरोwn();
 
-	switch (rc) {
-	case -ENOENT: /* no such file/media or currently busy, */
-	case -EBUSY:  /* but service seems to be available */
+	चयन (rc) अणु
+	हाल -ENOENT: /* no such file/media or currently busy, */
+	हाल -EBUSY:  /* but service seems to be available */
 		rc = 0;
-		break;
-	default: /* leave 'rc' as it is for [0, -EPERM, -E...] */
-		if (rc > 0)
+		अवरोध;
+	शेष: /* leave 'rc' as it is क्रम [0, -EPERM, -E...] */
+		अगर (rc > 0)
 			rc = 0; /* clear length (success) */
-		break;
-	} /* switch */
+		अवरोध;
+	पूर्ण /* चयन */
 out:
-	free_page((unsigned long) ftp.buf);
-	return rc;
-}
+	मुक्त_page((अचिन्हित दीर्घ) ftp.buf);
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL(hmcdrv_ftp_probe);
 
 /**
- * hmcdrv_ftp_cmd() - Perform a HMC drive FTP, with data from user-space
+ * hmcdrv_ftp_cmd() - Perक्रमm a HMC drive FTP, with data from user-space
  *
  * @cmd: FTP command string "<cmd> <filename>"
- * @offset: file position to read/write
- * @buf: user-space buffer for read/written directory/file
- * @len: size of @buf (read/dir) or number of bytes to write
+ * @offset: file position to पढ़ो/ग_लिखो
+ * @buf: user-space buffer क्रम पढ़ो/written directory/file
+ * @len: size of @buf (पढ़ो/dir) or number of bytes to ग_लिखो
  *
- * This function must not be called before hmcdrv_ftp_startup() was called.
+ * This function must not be called beक्रमe hmcdrv_ftp_startup() was called.
  *
- * Return: number of bytes read/written or a negative error code
+ * Return: number of bytes पढ़ो/written or a negative error code
  */
-ssize_t hmcdrv_ftp_cmd(char __kernel *cmd, loff_t offset,
-		       char __user *buf, size_t len)
-{
-	int order;
+sमाप_प्रकार hmcdrv_ftp_cmd(अक्षर __kernel *cmd, loff_t offset,
+		       अक्षर __user *buf, माप_प्रकार len)
+अणु
+	पूर्णांक order;
 
-	struct hmcdrv_ftp_cmdspec ftp = {.len = len, .ofs = offset};
-	ssize_t retlen = hmcdrv_ftp_parse(cmd, &ftp);
+	काष्ठा hmcdrv_ftp_cmdspec ftp = अणु.len = len, .ofs = offsetपूर्ण;
+	sमाप_प्रकार retlen = hmcdrv_ftp_parse(cmd, &ftp);
 
-	if (retlen)
-		return retlen;
+	अगर (retlen)
+		वापस retlen;
 
 	order = get_order(ftp.len);
-	ftp.buf = (void *) __get_free_pages(GFP_KERNEL | GFP_DMA, order);
+	ftp.buf = (व्योम *) __get_मुक्त_pages(GFP_KERNEL | GFP_DMA, order);
 
-	if (!ftp.buf)
-		return -ENOMEM;
+	अगर (!ftp.buf)
+		वापस -ENOMEM;
 
-	switch (ftp.id) {
-	case HMCDRV_FTP_DIR:
-	case HMCDRV_FTP_NLIST:
-	case HMCDRV_FTP_GET:
-		retlen = hmcdrv_ftp_do(&ftp);
+	चयन (ftp.id) अणु
+	हाल HMCDRV_FTP_सूची:
+	हाल HMCDRV_FTP_NLIST:
+	हाल HMCDRV_FTP_GET:
+		retlen = hmcdrv_ftp_करो(&ftp);
 
-		if ((retlen >= 0) &&
+		अगर ((retlen >= 0) &&
 		    copy_to_user(buf, ftp.buf, retlen))
 			retlen = -EFAULT;
-		break;
+		अवरोध;
 
-	case HMCDRV_FTP_PUT:
-	case HMCDRV_FTP_APPEND:
-		if (!copy_from_user(ftp.buf, buf, ftp.len))
-			retlen = hmcdrv_ftp_do(&ftp);
-		else
+	हाल HMCDRV_FTP_PUT:
+	हाल HMCDRV_FTP_APPEND:
+		अगर (!copy_from_user(ftp.buf, buf, ftp.len))
+			retlen = hmcdrv_ftp_करो(&ftp);
+		अन्यथा
 			retlen = -EFAULT;
-		break;
+		अवरोध;
 
-	case HMCDRV_FTP_DELETE:
-		retlen = hmcdrv_ftp_do(&ftp);
-		break;
+	हाल HMCDRV_FTP_DELETE:
+		retlen = hmcdrv_ftp_करो(&ftp);
+		अवरोध;
 
-	default:
+	शेष:
 		retlen = -EOPNOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	free_pages((unsigned long) ftp.buf, order);
-	return retlen;
-}
+	मुक्त_pages((अचिन्हित दीर्घ) ftp.buf, order);
+	वापस retlen;
+पूर्ण
 
 /**
- * hmcdrv_ftp_startup() - startup of HMC drive FTP functionality for a
+ * hmcdrv_ftp_startup() - startup of HMC drive FTP functionality क्रम a
  * dedicated (owner) instance
  *
- * Return: 0 on success, else an (negative) error code
+ * Return: 0 on success, अन्यथा an (negative) error code
  */
-int hmcdrv_ftp_startup(void)
-{
-	static const struct hmcdrv_ftp_ops hmcdrv_ftp_zvm = {
+पूर्णांक hmcdrv_ftp_startup(व्योम)
+अणु
+	अटल स्थिर काष्ठा hmcdrv_ftp_ops hmcdrv_ftp_zvm = अणु
 		.startup = diag_ftp_startup,
-		.shutdown = diag_ftp_shutdown,
+		.shutकरोwn = diag_ftp_shutकरोwn,
 		.transfer = diag_ftp_cmd
-	};
+	पूर्ण;
 
-	static const struct hmcdrv_ftp_ops hmcdrv_ftp_lpar = {
+	अटल स्थिर काष्ठा hmcdrv_ftp_ops hmcdrv_ftp_lpar = अणु
 		.startup = sclp_ftp_startup,
-		.shutdown = sclp_ftp_shutdown,
+		.shutकरोwn = sclp_ftp_shutकरोwn,
 		.transfer = sclp_ftp_cmd
-	};
+	पूर्ण;
 
-	int rc = 0;
+	पूर्णांक rc = 0;
 
-	mutex_lock(&hmcdrv_ftp_mutex); /* block transfers while start-up */
+	mutex_lock(&hmcdrv_ftp_mutex); /* block transfers जबतक start-up */
 
-	if (hmcdrv_ftp_refcnt == 0) {
-		if (MACHINE_IS_VM)
+	अगर (hmcdrv_ftp_refcnt == 0) अणु
+		अगर (MACHINE_IS_VM)
 			hmcdrv_ftp_funcs = &hmcdrv_ftp_zvm;
-		else if (MACHINE_IS_LPAR || MACHINE_IS_KVM)
+		अन्यथा अगर (MACHINE_IS_LPAR || MACHINE_IS_KVM)
 			hmcdrv_ftp_funcs = &hmcdrv_ftp_lpar;
-		else
+		अन्यथा
 			rc = -EOPNOTSUPP;
 
-		if (hmcdrv_ftp_funcs)
+		अगर (hmcdrv_ftp_funcs)
 			rc = hmcdrv_ftp_funcs->startup();
-	}
+	पूर्ण
 
-	if (!rc)
+	अगर (!rc)
 		++hmcdrv_ftp_refcnt;
 
 	mutex_unlock(&hmcdrv_ftp_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL(hmcdrv_ftp_startup);
 
 /**
- * hmcdrv_ftp_shutdown() - shutdown of HMC drive FTP functionality for a
+ * hmcdrv_ftp_shutकरोwn() - shutकरोwn of HMC drive FTP functionality क्रम a
  * dedicated (owner) instance
  */
-void hmcdrv_ftp_shutdown(void)
-{
+व्योम hmcdrv_ftp_shutकरोwn(व्योम)
+अणु
 	mutex_lock(&hmcdrv_ftp_mutex);
 	--hmcdrv_ftp_refcnt;
 
-	if ((hmcdrv_ftp_refcnt == 0) && hmcdrv_ftp_funcs)
-		hmcdrv_ftp_funcs->shutdown();
+	अगर ((hmcdrv_ftp_refcnt == 0) && hmcdrv_ftp_funcs)
+		hmcdrv_ftp_funcs->shutकरोwn();
 
 	mutex_unlock(&hmcdrv_ftp_mutex);
-}
-EXPORT_SYMBOL(hmcdrv_ftp_shutdown);
+पूर्ण
+EXPORT_SYMBOL(hmcdrv_ftp_shutकरोwn);

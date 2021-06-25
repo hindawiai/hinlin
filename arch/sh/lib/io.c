@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/sh/lib/io.c - SH32 optimized I/O routines
  *
@@ -8,28 +9,28 @@
  * Provide real functions which expand to whatever the header file defined.
  * Also definitions of machine independent IO functions.
  */
-#include <linux/module.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
 
-void __raw_readsl(const void __iomem *addr, void *datap, int len)
-{
+व्योम __raw_पढ़ोsl(स्थिर व्योम __iomem *addr, व्योम *datap, पूर्णांक len)
+अणु
 	u32 *data;
 
-	for (data = datap; (len != 0) && (((u32)data & 0x1f) != 0); len--)
-		*data++ = __raw_readl(addr);
+	क्रम (data = datap; (len != 0) && (((u32)data & 0x1f) != 0); len--)
+		*data++ = __raw_पढ़ोl(addr);
 
-	if (likely(len >= (0x20 >> 2))) {
-		int tmp2, tmp3, tmp4, tmp5, tmp6;
+	अगर (likely(len >= (0x20 >> 2))) अणु
+		पूर्णांक पंचांगp2, पंचांगp3, पंचांगp4, पंचांगp5, पंचांगp6;
 
-		__asm__ __volatile__(
+		__यंत्र__ __अस्थिर__(
 			"1:			\n\t"
 			"mov.l	@%7, r0		\n\t"
 			"mov.l	@%7, %2		\n\t"
-#ifdef CONFIG_CPU_SH4
+#अगर_घोषित CONFIG_CPU_SH4
 			"movca.l r0, @%0	\n\t"
-#else
+#अन्यथा
 			"mov.l	r0, @%0		\n\t"
-#endif
+#पूर्ण_अगर
 			"mov.l	@%7, %3		\n\t"
 			"mov.l	@%7, %4		\n\t"
 			"mov.l	@%7, %5		\n\t"
@@ -49,31 +50,31 @@ void __raw_readsl(const void __iomem *addr, void *datap, int len)
 			"bf.s	1b		\n\t"
 			" add	#0x20, %0	\n\t"
 			: "=&r" (data), "=&r" (len),
-			  "=&r" (tmp2), "=&r" (tmp3), "=&r" (tmp4),
-			  "=&r" (tmp5), "=&r" (tmp6)
+			  "=&r" (पंचांगp2), "=&r" (पंचांगp3), "=&r" (पंचांगp4),
+			  "=&r" (पंचांगp5), "=&r" (पंचांगp6)
 			: "r"(addr), "0" (data), "1" (len)
 			: "r0", "r7", "t", "memory");
-	}
+	पूर्ण
 
-	for (; len != 0; len--)
-		*data++ = __raw_readl(addr);
-}
-EXPORT_SYMBOL(__raw_readsl);
+	क्रम (; len != 0; len--)
+		*data++ = __raw_पढ़ोl(addr);
+पूर्ण
+EXPORT_SYMBOL(__raw_पढ़ोsl);
 
-void __raw_writesl(void __iomem *addr, const void *data, int len)
-{
-	if (likely(len != 0)) {
-		int tmp1;
+व्योम __raw_ग_लिखोsl(व्योम __iomem *addr, स्थिर व्योम *data, पूर्णांक len)
+अणु
+	अगर (likely(len != 0)) अणु
+		पूर्णांक पंचांगp1;
 
-		__asm__ __volatile__ (
+		__यंत्र__ __अस्थिर__ (
 			"1:				\n\t"
 			"mov.l	@%0+, %1	\n\t"
 			"dt		%3		\n\t"
 			"bf.s		1b		\n\t"
 			" mov.l	%1, @%4		\n\t"
-			: "=&r" (data), "=&r" (tmp1)
+			: "=&r" (data), "=&r" (पंचांगp1)
 			: "0" (data), "r" (len), "r"(addr)
 			: "t", "memory");
-	}
-}
-EXPORT_SYMBOL(__raw_writesl);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(__raw_ग_लिखोsl);

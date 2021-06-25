@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015, Sony Mobile Communications Inc.
  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  */
-#include <linux/device.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/slab.h>
-#include <linux/soc/qcom/smem_state.h>
+#समावेश <linux/device.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/soc/qcom/smem_state.h>
 
-static LIST_HEAD(smem_states);
-static DEFINE_MUTEX(list_lock);
+अटल LIST_HEAD(smem_states);
+अटल DEFINE_MUTEX(list_lock);
 
 /**
- * struct qcom_smem_state - state context
- * @refcount:	refcount for the state
- * @orphan:	boolean indicator that this state has been unregistered
+ * काष्ठा qcom_smem_state - state context
+ * @refcount:	refcount क्रम the state
+ * @orphan:	boolean indicator that this state has been unरेजिस्टरed
  * @list:	entry in smem_states list
- * @of_node:	of_node to use for matching the state in DT
- * @priv:	implementation private data
- * @ops:	ops for the state
+ * @of_node:	of_node to use क्रम matching the state in DT
+ * @priv:	implementation निजी data
+ * @ops:	ops क्रम the state
  */
-struct qcom_smem_state {
-	struct kref refcount;
+काष्ठा qcom_smem_state अणु
+	काष्ठा kref refcount;
 	bool orphan;
 
-	struct list_head list;
-	struct device_node *of_node;
+	काष्ठा list_head list;
+	काष्ठा device_node *of_node;
 
-	void *priv;
+	व्योम *priv;
 
-	struct qcom_smem_state_ops ops;
-};
+	काष्ठा qcom_smem_state_ops ops;
+पूर्ण;
 
 /**
  * qcom_smem_state_update_bits() - update the masked bits in state with value
  * @state:	state handle acquired by calling qcom_smem_state_get()
- * @mask:	bit mask for the change
- * @value:	new value for the masked bits
+ * @mask:	bit mask क्रम the change
+ * @value:	new value क्रम the masked bits
  *
- * Returns 0 on success, otherwise negative errno.
+ * Returns 0 on success, otherwise negative त्रुटि_सं.
  */
-int qcom_smem_state_update_bits(struct qcom_smem_state *state,
+पूर्णांक qcom_smem_state_update_bits(काष्ठा qcom_smem_state *state,
 				u32 mask,
 				u32 value)
-{
-	if (state->orphan)
-		return -ENXIO;
+अणु
+	अगर (state->orphan)
+		वापस -ENXIO;
 
-	if (!state->ops.update_bits)
-		return -ENOTSUPP;
+	अगर (!state->ops.update_bits)
+		वापस -ENOTSUPP;
 
-	return state->ops.update_bits(state->priv, mask, value);
-}
+	वापस state->ops.update_bits(state->priv, mask, value);
+पूर्ण
 EXPORT_SYMBOL_GPL(qcom_smem_state_update_bits);
 
-static struct qcom_smem_state *of_node_to_state(struct device_node *np)
-{
-	struct qcom_smem_state *state;
+अटल काष्ठा qcom_smem_state *of_node_to_state(काष्ठा device_node *np)
+अणु
+	काष्ठा qcom_smem_state *state;
 
 	mutex_lock(&list_lock);
 
-	list_for_each_entry(state, &smem_states, list) {
-		if (state->of_node == np) {
+	list_क्रम_each_entry(state, &smem_states, list) अणु
+		अगर (state->of_node == np) अणु
 			kref_get(&state->refcount);
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 	state = ERR_PTR(-EPROBE_DEFER);
 
 unlock:
 	mutex_unlock(&list_lock);
 
-	return state;
-}
+	वापस state;
+पूर्ण
 
 /**
  * qcom_smem_state_get() - acquire handle to a state
- * @dev:	client device pointer
+ * @dev:	client device poपूर्णांकer
  * @con_id:	name of the state to lookup
  * @bit:	flags from the state reference, indicating which bit's affected
  *
  * Returns handle to the state, or ERR_PTR(). qcom_smem_state_put() must be
- * called to release the returned state handle.
+ * called to release the वापसed state handle.
  */
-struct qcom_smem_state *qcom_smem_state_get(struct device *dev,
-					    const char *con_id,
-					    unsigned *bit)
-{
-	struct qcom_smem_state *state;
-	struct of_phandle_args args;
-	int index = 0;
-	int ret;
+काष्ठा qcom_smem_state *qcom_smem_state_get(काष्ठा device *dev,
+					    स्थिर अक्षर *con_id,
+					    अचिन्हित *bit)
+अणु
+	काष्ठा qcom_smem_state *state;
+	काष्ठा of_phandle_args args;
+	पूर्णांक index = 0;
+	पूर्णांक ret;
 
-	if (con_id) {
+	अगर (con_id) अणु
 		index = of_property_match_string(dev->of_node,
 						 "qcom,smem-state-names",
 						 con_id);
-		if (index < 0) {
+		अगर (index < 0) अणु
 			dev_err(dev, "missing qcom,smem-state-names\n");
-			return ERR_PTR(index);
-		}
-	}
+			वापस ERR_PTR(index);
+		पूर्ण
+	पूर्ण
 
 	ret = of_parse_phandle_with_args(dev->of_node,
 					 "qcom,smem-states",
 					 "#qcom,smem-state-cells",
 					 index,
 					 &args);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to parse qcom,smem-states property\n");
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	if (args.args_count != 1) {
+	अगर (args.args_count != 1) अणु
 		dev_err(dev, "invalid #qcom,smem-state-cells\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	state = of_node_to_state(args.np);
-	if (IS_ERR(state))
-		goto put;
+	अगर (IS_ERR(state))
+		जाओ put;
 
 	*bit = args.args[0];
 
 put:
 	of_node_put(args.np);
-	return state;
-}
+	वापस state;
+पूर्ण
 EXPORT_SYMBOL_GPL(qcom_smem_state_get);
 
-static void qcom_smem_state_release(struct kref *ref)
-{
-	struct qcom_smem_state *state = container_of(ref, struct qcom_smem_state, refcount);
+अटल व्योम qcom_smem_state_release(काष्ठा kref *ref)
+अणु
+	काष्ठा qcom_smem_state *state = container_of(ref, काष्ठा qcom_smem_state, refcount);
 
 	list_del(&state->list);
-	kfree(state);
-}
+	kमुक्त(state);
+पूर्ण
 
 /**
  * qcom_smem_state_put() - release state handle
  * @state:	state handle to be released
  */
-void qcom_smem_state_put(struct qcom_smem_state *state)
-{
+व्योम qcom_smem_state_put(काष्ठा qcom_smem_state *state)
+अणु
 	mutex_lock(&list_lock);
 	kref_put(&state->refcount, qcom_smem_state_release);
 	mutex_unlock(&list_lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(qcom_smem_state_put);
 
 /**
- * qcom_smem_state_register() - register a new state
- * @of_node:	of_node used for matching client lookups
+ * qcom_smem_state_रेजिस्टर() - रेजिस्टर a new state
+ * @of_node:	of_node used क्रम matching client lookups
  * @ops:	implementation ops
- * @priv:	implementation specific private data
+ * @priv:	implementation specअगरic निजी data
  */
-struct qcom_smem_state *qcom_smem_state_register(struct device_node *of_node,
-						 const struct qcom_smem_state_ops *ops,
-						 void *priv)
-{
-	struct qcom_smem_state *state;
+काष्ठा qcom_smem_state *qcom_smem_state_रेजिस्टर(काष्ठा device_node *of_node,
+						 स्थिर काष्ठा qcom_smem_state_ops *ops,
+						 व्योम *priv)
+अणु
+	काष्ठा qcom_smem_state *state;
 
-	state = kzalloc(sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return ERR_PTR(-ENOMEM);
+	state = kzalloc(माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस ERR_PTR(-ENOMEM);
 
 	kref_init(&state->refcount);
 
@@ -177,17 +178,17 @@ struct qcom_smem_state *qcom_smem_state_register(struct device_node *of_node,
 	list_add(&state->list, &smem_states);
 	mutex_unlock(&list_lock);
 
-	return state;
-}
-EXPORT_SYMBOL_GPL(qcom_smem_state_register);
+	वापस state;
+पूर्ण
+EXPORT_SYMBOL_GPL(qcom_smem_state_रेजिस्टर);
 
 /**
- * qcom_smem_state_unregister() - unregister a registered state
- * @state:	state handle to be unregistered
+ * qcom_smem_state_unरेजिस्टर() - unरेजिस्टर a रेजिस्टरed state
+ * @state:	state handle to be unरेजिस्टरed
  */
-void qcom_smem_state_unregister(struct qcom_smem_state *state)
-{
+व्योम qcom_smem_state_unरेजिस्टर(काष्ठा qcom_smem_state *state)
+अणु
 	state->orphan = true;
 	qcom_smem_state_put(state);
-}
-EXPORT_SYMBOL_GPL(qcom_smem_state_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(qcom_smem_state_unरेजिस्टर);

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /***********************license start************************************
  * Copyright (c) 2003-2017 Cavium, Inc.
  * All rights reserved.
@@ -7,23 +8,23 @@
  * This file is provided under the terms of the Cavium License (see below)
  * or under the terms of GNU General Public License, Version 2, as
  * published by the Free Software Foundation. When using or redistributing
- * this file, you may do so under either license.
+ * this file, you may करो so under either license.
  *
- * Cavium License:  Redistribution and use in source and binary forms, with
- * or without modification, are permitted provided that the following
+ * Cavium License:  Redistribution and use in source and binary क्रमms, with
+ * or without modअगरication, are permitted provided that the following
  * conditions are met:
  *
  *  * Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- *  * Redistributions in binary form must reproduce the above
+ *  * Redistributions in binary क्रमm must reproduce the above
  *    copyright notice, this list of conditions and the following
- *    disclaimer in the documentation and/or other materials provided
+ *    disclaimer in the करोcumentation and/or other materials provided
  *    with the distribution.
  *
  *  * Neither the name of Cavium Inc. nor the names of its contributors may be
- *    used to endorse or promote products derived from this software without
- *    specific prior written permission.
+ *    used to enकरोrse or promote products derived from this software without
+ *    specअगरic prior written permission.
  *
  * This Software, including technical data, may be subject to U.S. export
  * control laws, including the U.S. Export Administration Act and its
@@ -43,33 +44,33 @@
  * WITH YOU.
  ***********************license end**************************************/
 
-#ifndef __ZIP_MAIN_H__
-#define __ZIP_MAIN_H__
+#अगर_अघोषित __ZIP_MAIN_H__
+#घोषणा __ZIP_MAIN_H__
 
-#include "zip_device.h"
-#include "zip_regs.h"
+#समावेश "zip_device.h"
+#समावेश "zip_regs.h"
 
 /* PCI device IDs */
-#define PCI_DEVICE_ID_THUNDERX_ZIP   0xA01A
+#घोषणा PCI_DEVICE_ID_THUNDERX_ZIP   0xA01A
 
 /* ZIP device BARs */
-#define PCI_CFG_ZIP_PF_BAR0   0  /* Base addr for normal regs */
+#घोषणा PCI_CFG_ZIP_PF_BAR0   0  /* Base addr क्रम normal regs */
 
 /* Maximum available zip queues */
-#define ZIP_MAX_NUM_QUEUES    8
+#घोषणा ZIP_MAX_NUM_QUEUES    8
 
-#define ZIP_128B_ALIGN        7
+#घोषणा ZIP_128B_ALIGN        7
 
 /* Command queue buffer size */
-#define ZIP_CMD_QBUF_SIZE     (8064 + 8)
+#घोषणा ZIP_CMD_QBUF_SIZE     (8064 + 8)
 
-struct zip_registers {
-	char  *reg_name;
+काष्ठा zip_रेजिस्टरs अणु
+	अक्षर  *reg_name;
 	u64   reg_offset;
-};
+पूर्ण;
 
 /* ZIP Compression - Decompression stats */
-struct zip_stats {
+काष्ठा zip_stats अणु
 	atomic64_t    comp_req_submit;
 	atomic64_t    comp_req_complete;
 	atomic64_t    decomp_req_submit;
@@ -79,42 +80,42 @@ struct zip_stats {
 	atomic64_t    decomp_in_bytes;
 	atomic64_t    decomp_out_bytes;
 	atomic64_t    decomp_bad_reqs;
-};
+पूर्ण;
 
-/* ZIP Instruction Queue */
-struct zip_iq {
+/* ZIP Inकाष्ठाion Queue */
+काष्ठा zip_iq अणु
 	u64        *sw_head;
 	u64        *sw_tail;
 	u64        *hw_tail;
-	u64        done_cnt;
+	u64        करोne_cnt;
 	u64        pend_cnt;
-	u64        free_flag;
+	u64        मुक्त_flag;
 
 	/* ZIP IQ lock */
 	spinlock_t  lock;
-};
+पूर्ण;
 
 /* ZIP Device */
-struct zip_device {
+काष्ठा zip_device अणु
 	u32               index;
-	void __iomem      *reg_base;
-	struct pci_dev    *pdev;
+	व्योम __iomem      *reg_base;
+	काष्ठा pci_dev    *pdev;
 
-	/* Different ZIP Constants */
+	/* Dअगरferent ZIP Constants */
 	u64               depth;
 	u64               onfsize;
 	u64               ctxsize;
 
-	struct zip_iq     iq[ZIP_MAX_NUM_QUEUES];
-	struct zip_stats  stats;
-};
+	काष्ठा zip_iq     iq[ZIP_MAX_NUM_QUEUES];
+	काष्ठा zip_stats  stats;
+पूर्ण;
 
 /* Prototypes */
-struct zip_device *zip_get_device(int node_id);
-int zip_get_node_id(void);
-void zip_reg_write(u64 val, u64 __iomem *addr);
-u64 zip_reg_read(u64 __iomem *addr);
-void zip_update_cmd_bufs(struct zip_device *zip_dev, u32 queue);
-u32 zip_load_instr(union zip_inst_s *instr, struct zip_device *zip_dev);
+काष्ठा zip_device *zip_get_device(पूर्णांक node_id);
+पूर्णांक zip_get_node_id(व्योम);
+व्योम zip_reg_ग_लिखो(u64 val, u64 __iomem *addr);
+u64 zip_reg_पढ़ो(u64 __iomem *addr);
+व्योम zip_update_cmd_bufs(काष्ठा zip_device *zip_dev, u32 queue);
+u32 zip_load_instr(जोड़ zip_inst_s *instr, काष्ठा zip_device *zip_dev);
 
-#endif /* ZIP_MAIN_H */
+#पूर्ण_अगर /* ZIP_MAIN_H */

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,47 +20,47 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <core/memory.h>
-#include <subdev/mc.h>
-#include <subdev/mmu.h>
-#include <engine/fifo.h>
+#समावेश <core/memory.h>
+#समावेश <subdev/mc.h>
+#समावेश <subdev/mmu.h>
+#समावेश <engine/fअगरo.h>
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
-static void
-tu102_fault_buffer_intr(struct nvkm_fault_buffer *buffer, bool enable)
-{
+अटल व्योम
+tu102_fault_buffer_पूर्णांकr(काष्ठा nvkm_fault_buffer *buffer, bool enable)
+अणु
 	/*XXX: Earlier versions of RM touched the old regs on Turing,
-	 *     which don't appear to actually work anymore, but newer
-	 *     versions of RM don't appear to touch anything at all..
+	 *     which करोn't appear to actually work anymore, but newer
+	 *     versions of RM करोn't appear to touch anything at all..
 	 */
-	struct nvkm_device *device = buffer->fault->subdev.device;
+	काष्ठा nvkm_device *device = buffer->fault->subdev.device;
 
-	nvkm_mc_intr_mask(device, NVKM_SUBDEV_FAULT, 0, enable);
-}
+	nvkm_mc_पूर्णांकr_mask(device, NVKM_SUBDEV_FAULT, 0, enable);
+पूर्ण
 
-static void
-tu102_fault_buffer_fini(struct nvkm_fault_buffer *buffer)
-{
-	struct nvkm_device *device = buffer->fault->subdev.device;
-	const u32 foff = buffer->id * 0x20;
+अटल व्योम
+tu102_fault_buffer_fini(काष्ठा nvkm_fault_buffer *buffer)
+अणु
+	काष्ठा nvkm_device *device = buffer->fault->subdev.device;
+	स्थिर u32 foff = buffer->id * 0x20;
 
-	/* Disable the fault interrupts */
+	/* Disable the fault पूर्णांकerrupts */
 	nvkm_wr32(device, 0xb81408, 0x1);
 	nvkm_wr32(device, 0xb81410, 0x10);
 
 	nvkm_mask(device, 0xb83010 + foff, 0x80000000, 0x00000000);
-}
+पूर्ण
 
-static void
-tu102_fault_buffer_init(struct nvkm_fault_buffer *buffer)
-{
-	struct nvkm_device *device = buffer->fault->subdev.device;
-	const u32 foff = buffer->id * 0x20;
+अटल व्योम
+tu102_fault_buffer_init(काष्ठा nvkm_fault_buffer *buffer)
+अणु
+	काष्ठा nvkm_device *device = buffer->fault->subdev.device;
+	स्थिर u32 foff = buffer->id * 0x20;
 
-	/* Enable the fault interrupts */
+	/* Enable the fault पूर्णांकerrupts */
 	nvkm_wr32(device, 0xb81208, 0x1);
 	nvkm_wr32(device, 0xb81210, 0x10);
 
@@ -67,36 +68,36 @@ tu102_fault_buffer_init(struct nvkm_fault_buffer *buffer)
 	nvkm_wr32(device, 0xb83004 + foff, upper_32_bits(buffer->addr));
 	nvkm_wr32(device, 0xb83000 + foff, lower_32_bits(buffer->addr));
 	nvkm_mask(device, 0xb83010 + foff, 0x80000000, 0x80000000);
-}
+पूर्ण
 
-static void
-tu102_fault_buffer_info(struct nvkm_fault_buffer *buffer)
-{
-	struct nvkm_device *device = buffer->fault->subdev.device;
-	const u32 foff = buffer->id * 0x20;
+अटल व्योम
+tu102_fault_buffer_info(काष्ठा nvkm_fault_buffer *buffer)
+अणु
+	काष्ठा nvkm_device *device = buffer->fault->subdev.device;
+	स्थिर u32 foff = buffer->id * 0x20;
 
 	nvkm_mask(device, 0xb83010 + foff, 0x40000000, 0x40000000);
 
 	buffer->entries = nvkm_rd32(device, 0xb83010 + foff) & 0x000fffff;
 	buffer->get = 0xb83008 + foff;
 	buffer->put = 0xb8300c + foff;
-}
+पूर्ण
 
-static void
-tu102_fault_intr_fault(struct nvkm_fault *fault)
-{
-	struct nvkm_subdev *subdev = &fault->subdev;
-	struct nvkm_device *device = subdev->device;
-	struct nvkm_fault_data info;
-	const u32 addrlo = nvkm_rd32(device, 0xb83080);
-	const u32 addrhi = nvkm_rd32(device, 0xb83084);
-	const u32  info0 = nvkm_rd32(device, 0xb83088);
-	const u32 insthi = nvkm_rd32(device, 0xb8308c);
-	const u32  info1 = nvkm_rd32(device, 0xb83090);
+अटल व्योम
+tu102_fault_पूर्णांकr_fault(काष्ठा nvkm_fault *fault)
+अणु
+	काष्ठा nvkm_subdev *subdev = &fault->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	काष्ठा nvkm_fault_data info;
+	स्थिर u32 addrlo = nvkm_rd32(device, 0xb83080);
+	स्थिर u32 addrhi = nvkm_rd32(device, 0xb83084);
+	स्थिर u32  info0 = nvkm_rd32(device, 0xb83088);
+	स्थिर u32 insthi = nvkm_rd32(device, 0xb8308c);
+	स्थिर u32  info1 = nvkm_rd32(device, 0xb83090);
 
 	info.addr = ((u64)addrhi << 32) | addrlo;
 	info.inst = ((u64)insthi << 32) | (info0 & 0xfffff000);
-	info.time = 0;
+	info.समय = 0;
 	info.engine = (info0 & 0x000000ff);
 	info.valid  = (info1 & 0x80000000) >> 31;
 	info.gpc    = (info1 & 0x1f000000) >> 24;
@@ -105,84 +106,84 @@ tu102_fault_intr_fault(struct nvkm_fault *fault)
 	info.client = (info1 & 0x00007f00) >> 8;
 	info.reason = (info1 & 0x0000001f);
 
-	nvkm_fifo_fault(device->fifo, &info);
-}
+	nvkm_fअगरo_fault(device->fअगरo, &info);
+पूर्ण
 
-static void
-tu102_fault_intr(struct nvkm_fault *fault)
-{
-	struct nvkm_subdev *subdev = &fault->subdev;
-	struct nvkm_device *device = subdev->device;
+अटल व्योम
+tu102_fault_पूर्णांकr(काष्ठा nvkm_fault *fault)
+अणु
+	काष्ठा nvkm_subdev *subdev = &fault->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	u32 stat = nvkm_rd32(device, 0xb83094);
 
-	if (stat & 0x80000000) {
-		tu102_fault_intr_fault(fault);
+	अगर (stat & 0x80000000) अणु
+		tu102_fault_पूर्णांकr_fault(fault);
 		nvkm_wr32(device, 0xb83094, 0x80000000);
 		stat &= ~0x80000000;
-	}
+	पूर्ण
 
-	if (stat & 0x00000200) {
-		/* Clear the associated interrupt flag */
+	अगर (stat & 0x00000200) अणु
+		/* Clear the associated पूर्णांकerrupt flag */
 		nvkm_wr32(device, 0xb81010, 0x10);
 
-		if (fault->buffer[0]) {
-			nvkm_event_send(&fault->event, 1, 0, NULL, 0);
+		अगर (fault->buffer[0]) अणु
+			nvkm_event_send(&fault->event, 1, 0, शून्य, 0);
 			stat &= ~0x00000200;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Replayable MMU fault */
-	if (stat & 0x00000100) {
-		/* Clear the associated interrupt flag */
+	अगर (stat & 0x00000100) अणु
+		/* Clear the associated पूर्णांकerrupt flag */
 		nvkm_wr32(device, 0xb81008, 0x1);
 
-		if (fault->buffer[1]) {
-			nvkm_event_send(&fault->event, 1, 1, NULL, 0);
+		अगर (fault->buffer[1]) अणु
+			nvkm_event_send(&fault->event, 1, 1, शून्य, 0);
 			stat &= ~0x00000100;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (stat) {
+	अगर (stat) अणु
 		nvkm_debug(subdev, "intr %08x\n", stat);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-tu102_fault_fini(struct nvkm_fault *fault)
-{
-	nvkm_notify_put(&fault->nrpfb);
-	if (fault->buffer[0])
+अटल व्योम
+tu102_fault_fini(काष्ठा nvkm_fault *fault)
+अणु
+	nvkm_notअगरy_put(&fault->nrpfb);
+	अगर (fault->buffer[0])
 		fault->func->buffer.fini(fault->buffer[0]);
 	/*XXX: disable priv faults */
-}
+पूर्ण
 
-static void
-tu102_fault_init(struct nvkm_fault *fault)
-{
+अटल व्योम
+tu102_fault_init(काष्ठा nvkm_fault *fault)
+अणु
 	/*XXX: enable priv faults */
 	fault->func->buffer.init(fault->buffer[0]);
-	nvkm_notify_get(&fault->nrpfb);
-}
+	nvkm_notअगरy_get(&fault->nrpfb);
+पूर्ण
 
-static const struct nvkm_fault_func
-tu102_fault = {
+अटल स्थिर काष्ठा nvkm_fault_func
+tu102_fault = अणु
 	.oneinit = gv100_fault_oneinit,
 	.init = tu102_fault_init,
 	.fini = tu102_fault_fini,
-	.intr = tu102_fault_intr,
+	.पूर्णांकr = tu102_fault_पूर्णांकr,
 	.buffer.nr = 2,
 	.buffer.entry_size = 32,
 	.buffer.info = tu102_fault_buffer_info,
 	.buffer.pin = gp100_fault_buffer_pin,
 	.buffer.init = tu102_fault_buffer_init,
 	.buffer.fini = tu102_fault_buffer_fini,
-	.buffer.intr = tu102_fault_buffer_intr,
-	.user = { { 0, 0, VOLTA_FAULT_BUFFER_A }, 1 },
-};
+	.buffer.पूर्णांकr = tu102_fault_buffer_पूर्णांकr,
+	.user = अणु अणु 0, 0, VOLTA_FAULT_BUFFER_A पूर्ण, 1 पूर्ण,
+पूर्ण;
 
-int
-tu102_fault_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-		struct nvkm_fault **pfault)
-{
-	return nvkm_fault_new_(&tu102_fault, device, type, inst, pfault);
-}
+पूर्णांक
+tu102_fault_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+		काष्ठा nvkm_fault **pfault)
+अणु
+	वापस nvkm_fault_new_(&tu102_fault, device, type, inst, pfault);
+पूर्ण

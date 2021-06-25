@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2019 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2019 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <linux/compiler.h>
+#समावेश <linux/compiler.h>
 
-static struct ins_ops *csky__associate_ins_ops(struct arch *arch,
-					       const char *name)
-{
-	struct ins_ops *ops = NULL;
+अटल काष्ठा ins_ops *csky__associate_ins_ops(काष्ठा arch *arch,
+					       स्थिर अक्षर *name)
+अणु
+	काष्ठा ins_ops *ops = शून्य;
 
 	/* catch all kind of jumps */
-	if (!strcmp(name, "bt") ||
-	    !strcmp(name, "bf") ||
-	    !strcmp(name, "bez") ||
-	    !strcmp(name, "bnez") ||
-	    !strcmp(name, "bnezad") ||
-	    !strcmp(name, "bhsz") ||
-	    !strcmp(name, "bhz") ||
-	    !strcmp(name, "blsz") ||
-	    !strcmp(name, "blz") ||
-	    !strcmp(name, "br") ||
-	    !strcmp(name, "jmpi") ||
-	    !strcmp(name, "jmp"))
+	अगर (!म_भेद(name, "bt") ||
+	    !म_भेद(name, "bf") ||
+	    !म_भेद(name, "bez") ||
+	    !म_भेद(name, "bnez") ||
+	    !म_भेद(name, "bnezad") ||
+	    !म_भेद(name, "bhsz") ||
+	    !म_भेद(name, "bhz") ||
+	    !म_भेद(name, "blsz") ||
+	    !म_भेद(name, "blz") ||
+	    !म_भेद(name, "br") ||
+	    !म_भेद(name, "jmpi") ||
+	    !म_भेद(name, "jmp"))
 		ops = &jump_ops;
 
 	/* catch function call */
-	if (!strcmp(name, "bsr") ||
-	    !strcmp(name, "jsri") ||
-	    !strcmp(name, "jsr"))
+	अगर (!म_भेद(name, "bsr") ||
+	    !म_भेद(name, "jsri") ||
+	    !म_भेद(name, "jsr"))
 		ops = &call_ops;
 
-	/* catch function return */
-	if (!strcmp(name, "rts"))
+	/* catch function वापस */
+	अगर (!म_भेद(name, "rts"))
 		ops = &ret_ops;
 
-	if (ops)
+	अगर (ops)
 		arch__associate_ins_ops(arch, name, ops);
-	return ops;
-}
+	वापस ops;
+पूर्ण
 
-static int csky__annotate_init(struct arch *arch, char *cpuid __maybe_unused)
-{
+अटल पूर्णांक csky__annotate_init(काष्ठा arch *arch, अक्षर *cpuid __maybe_unused)
+अणु
 	arch->initialized = true;
-	arch->objdump.comment_char = '/';
-	arch->associate_instruction_ops = csky__associate_ins_ops;
+	arch->objdump.comment_अक्षर = '/';
+	arch->associate_inकाष्ठाion_ops = csky__associate_ins_ops;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

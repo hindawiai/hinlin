@@ -1,340 +1,341 @@
-// SPDX--License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX--License-Identअगरier: GPL-2.0
 
-#include <asm/platform_early.h>
-#include <linux/mod_devicetable.h>
-#include <linux/pm.h>
+#समावेश <यंत्र/platक्रमm_early.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/pm.h>
 
-static __initdata LIST_HEAD(sh_early_platform_driver_list);
-static __initdata LIST_HEAD(sh_early_platform_device_list);
+अटल __initdata LIST_HEAD(sh_early_platक्रमm_driver_list);
+अटल __initdata LIST_HEAD(sh_early_platक्रमm_device_list);
 
-static const struct platform_device_id *
-platform_match_id(const struct platform_device_id *id,
-		  struct platform_device *pdev)
-{
-	while (id->name[0]) {
-		if (strcmp(pdev->name, id->name) == 0) {
+अटल स्थिर काष्ठा platक्रमm_device_id *
+platक्रमm_match_id(स्थिर काष्ठा platक्रमm_device_id *id,
+		  काष्ठा platक्रमm_device *pdev)
+अणु
+	जबतक (id->name[0]) अणु
+		अगर (म_भेद(pdev->name, id->name) == 0) अणु
 			pdev->id_entry = id;
-			return id;
-		}
+			वापस id;
+		पूर्ण
 		id++;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int platform_match(struct device *dev, struct device_driver *drv)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct platform_driver *pdrv = to_platform_driver(drv);
+अटल पूर्णांक platक्रमm_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा platक्रमm_driver *pdrv = to_platक्रमm_driver(drv);
 
 	/* When driver_override is set, only bind to the matching driver */
-	if (pdev->driver_override)
-		return !strcmp(pdev->driver_override, drv->name);
+	अगर (pdev->driver_override)
+		वापस !म_भेद(pdev->driver_override, drv->name);
 
 	/* Then try to match against the id table */
-	if (pdrv->id_table)
-		return platform_match_id(pdrv->id_table, pdev) != NULL;
+	अगर (pdrv->id_table)
+		वापस platक्रमm_match_id(pdrv->id_table, pdev) != शून्य;
 
 	/* fall-back to driver name match */
-	return (strcmp(pdev->name, drv->name) == 0);
-}
+	वापस (म_भेद(pdev->name, drv->name) == 0);
+पूर्ण
 
-#ifdef CONFIG_PM
-static void device_pm_init_common(struct device *dev)
-{
-	if (!dev->power.early_init) {
-		spin_lock_init(&dev->power.lock);
-		dev->power.qos = NULL;
-		dev->power.early_init = true;
-	}
-}
+#अगर_घोषित CONFIG_PM
+अटल व्योम device_pm_init_common(काष्ठा device *dev)
+अणु
+	अगर (!dev->घातer.early_init) अणु
+		spin_lock_init(&dev->घातer.lock);
+		dev->घातer.qos = शून्य;
+		dev->घातer.early_init = true;
+	पूर्ण
+पूर्ण
 
-static void pm_runtime_early_init(struct device *dev)
-{
-	dev->power.disable_depth = 1;
+अटल व्योम pm_runसमय_early_init(काष्ठा device *dev)
+अणु
+	dev->घातer.disable_depth = 1;
 	device_pm_init_common(dev);
-}
-#else
-static void pm_runtime_early_init(struct device *dev) {}
-#endif
+पूर्ण
+#अन्यथा
+अटल व्योम pm_runसमय_early_init(काष्ठा device *dev) अणुपूर्ण
+#पूर्ण_अगर
 
 /**
- * sh_early_platform_driver_register - register early platform driver
- * @epdrv: sh_early_platform driver structure
+ * sh_early_platक्रमm_driver_रेजिस्टर - रेजिस्टर early platक्रमm driver
+ * @epdrv: sh_early_platक्रमm driver काष्ठाure
  * @buf: string passed from early_param()
  *
- * Helper function for sh_early_platform_init() / sh_early_platform_init_buffer()
+ * Helper function क्रम sh_early_platक्रमm_init() / sh_early_platक्रमm_init_buffer()
  */
-int __init sh_early_platform_driver_register(struct sh_early_platform_driver *epdrv,
-					  char *buf)
-{
-	char *tmp;
-	int n;
+पूर्णांक __init sh_early_platक्रमm_driver_रेजिस्टर(काष्ठा sh_early_platक्रमm_driver *epdrv,
+					  अक्षर *buf)
+अणु
+	अक्षर *पंचांगp;
+	पूर्णांक n;
 
 	/* Simply add the driver to the end of the global list.
-	 * Drivers will by default be put on the list in compiled-in order.
+	 * Drivers will by शेष be put on the list in compiled-in order.
 	 */
-	if (!epdrv->list.next) {
+	अगर (!epdrv->list.next) अणु
 		INIT_LIST_HEAD(&epdrv->list);
-		list_add_tail(&epdrv->list, &sh_early_platform_driver_list);
-	}
+		list_add_tail(&epdrv->list, &sh_early_platक्रमm_driver_list);
+	पूर्ण
 
-	/* If the user has specified device then make sure the driver
-	 * gets prioritized. The driver of the last device specified on
+	/* If the user has specअगरied device then make sure the driver
+	 * माला_लो prioritized. The driver of the last device specअगरied on
 	 * command line will be put first on the list.
 	 */
-	n = strlen(epdrv->pdrv->driver.name);
-	if (buf && !strncmp(buf, epdrv->pdrv->driver.name, n)) {
-		list_move(&epdrv->list, &sh_early_platform_driver_list);
+	n = म_माप(epdrv->pdrv->driver.name);
+	अगर (buf && !म_भेदन(buf, epdrv->pdrv->driver.name, n)) अणु
+		list_move(&epdrv->list, &sh_early_platक्रमm_driver_list);
 
 		/* Allow passing parameters after device name */
-		if (buf[n] == '\0' || buf[n] == ',')
+		अगर (buf[n] == '\0' || buf[n] == ',')
 			epdrv->requested_id = -1;
-		else {
-			epdrv->requested_id = simple_strtoul(&buf[n + 1],
-							     &tmp, 10);
+		अन्यथा अणु
+			epdrv->requested_id = simple_म_से_अदीर्घ(&buf[n + 1],
+							     &पंचांगp, 10);
 
-			if (buf[n] != '.' || (tmp == &buf[n + 1])) {
+			अगर (buf[n] != '.' || (पंचांगp == &buf[n + 1])) अणु
 				epdrv->requested_id = EARLY_PLATFORM_ID_ERROR;
 				n = 0;
-			} else
-				n += strcspn(&buf[n + 1], ",") + 1;
-		}
+			पूर्ण अन्यथा
+				n += म_खोज(&buf[n + 1], ",") + 1;
+		पूर्ण
 
-		if (buf[n] == ',')
+		अगर (buf[n] == ',')
 			n++;
 
-		if (epdrv->bufsize) {
-			memcpy(epdrv->buffer, &buf[n],
-			       min_t(int, epdrv->bufsize, strlen(&buf[n]) + 1));
+		अगर (epdrv->bufsize) अणु
+			स_नकल(epdrv->buffer, &buf[n],
+			       min_t(पूर्णांक, epdrv->bufsize, म_माप(&buf[n]) + 1));
 			epdrv->buffer[epdrv->bufsize - 1] = '\0';
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * sh_early_platform_add_devices - adds a number of early platform devices
- * @devs: array of early platform devices to add
- * @num: number of early platform devices in array
+ * sh_early_platक्रमm_add_devices - adds a number of early platक्रमm devices
+ * @devs: array of early platक्रमm devices to add
+ * @num: number of early platक्रमm devices in array
  *
- * Used by early architecture code to register early platform devices and
- * their platform data.
+ * Used by early architecture code to रेजिस्टर early platक्रमm devices and
+ * their platक्रमm data.
  */
-void __init sh_early_platform_add_devices(struct platform_device **devs, int num)
-{
-	struct device *dev;
-	int i;
+व्योम __init sh_early_platक्रमm_add_devices(काष्ठा platक्रमm_device **devs, पूर्णांक num)
+अणु
+	काष्ठा device *dev;
+	पूर्णांक i;
 
 	/* simply add the devices to list */
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		dev = &devs[i]->dev;
 
-		if (!dev->devres_head.next) {
-			pm_runtime_early_init(dev);
+		अगर (!dev->devres_head.next) अणु
+			pm_runसमय_early_init(dev);
 			INIT_LIST_HEAD(&dev->devres_head);
 			list_add_tail(&dev->devres_head,
-				      &sh_early_platform_device_list);
-		}
-	}
-}
+				      &sh_early_platक्रमm_device_list);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * sh_early_platform_driver_register_all - register early platform drivers
- * @class_str: string to identify early platform driver class
+ * sh_early_platक्रमm_driver_रेजिस्टर_all - रेजिस्टर early platक्रमm drivers
+ * @class_str: string to identअगरy early platक्रमm driver class
  *
- * Used by architecture code to register all early platform drivers
- * for a certain class. If omitted then only early platform drivers
- * with matching kernel command line class parameters will be registered.
+ * Used by architecture code to रेजिस्टर all early platक्रमm drivers
+ * क्रम a certain class. If omitted then only early platक्रमm drivers
+ * with matching kernel command line class parameters will be रेजिस्टरed.
  */
-void __init sh_early_platform_driver_register_all(char *class_str)
-{
+व्योम __init sh_early_platक्रमm_driver_रेजिस्टर_all(अक्षर *class_str)
+अणु
 	/* The "class_str" parameter may or may not be present on the kernel
 	 * command line. If it is present then there may be more than one
 	 * matching parameter.
 	 *
-	 * Since we register our early platform drivers using early_param()
-	 * we need to make sure that they also get registered in the case
+	 * Since we रेजिस्टर our early platक्रमm drivers using early_param()
+	 * we need to make sure that they also get रेजिस्टरed in the हाल
 	 * when the parameter is missing from the kernel command line.
 	 *
-	 * We use parse_early_options() to make sure the early_param() gets
+	 * We use parse_early_options() to make sure the early_param() माला_लो
 	 * called at least once. The early_param() may be called more than
-	 * once since the name of the preferred device may be specified on
-	 * the kernel command line. sh_early_platform_driver_register() handles
-	 * this case for us.
+	 * once since the name of the preferred device may be specअगरied on
+	 * the kernel command line. sh_early_platक्रमm_driver_रेजिस्टर() handles
+	 * this हाल क्रम us.
 	 */
 	parse_early_options(class_str);
-}
+पूर्ण
 
 /**
- * sh_early_platform_match - find early platform device matching driver
- * @epdrv: early platform driver structure
+ * sh_early_platक्रमm_match - find early platक्रमm device matching driver
+ * @epdrv: early platक्रमm driver काष्ठाure
  * @id: id to match against
  */
-static struct platform_device * __init
-sh_early_platform_match(struct sh_early_platform_driver *epdrv, int id)
-{
-	struct platform_device *pd;
+अटल काष्ठा platक्रमm_device * __init
+sh_early_platक्रमm_match(काष्ठा sh_early_platक्रमm_driver *epdrv, पूर्णांक id)
+अणु
+	काष्ठा platक्रमm_device *pd;
 
-	list_for_each_entry(pd, &sh_early_platform_device_list, dev.devres_head)
-		if (platform_match(&pd->dev, &epdrv->pdrv->driver))
-			if (pd->id == id)
-				return pd;
+	list_क्रम_each_entry(pd, &sh_early_platक्रमm_device_list, dev.devres_head)
+		अगर (platक्रमm_match(&pd->dev, &epdrv->pdrv->driver))
+			अगर (pd->id == id)
+				वापस pd;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * sh_early_platform_left - check if early platform driver has matching devices
- * @epdrv: early platform driver structure
- * @id: return true if id or above exists
+ * sh_early_platक्रमm_left - check अगर early platक्रमm driver has matching devices
+ * @epdrv: early platक्रमm driver काष्ठाure
+ * @id: वापस true अगर id or above exists
  */
-static int __init sh_early_platform_left(struct sh_early_platform_driver *epdrv,
-				       int id)
-{
-	struct platform_device *pd;
+अटल पूर्णांक __init sh_early_platक्रमm_left(काष्ठा sh_early_platक्रमm_driver *epdrv,
+				       पूर्णांक id)
+अणु
+	काष्ठा platक्रमm_device *pd;
 
-	list_for_each_entry(pd, &sh_early_platform_device_list, dev.devres_head)
-		if (platform_match(&pd->dev, &epdrv->pdrv->driver))
-			if (pd->id >= id)
-				return 1;
+	list_क्रम_each_entry(pd, &sh_early_platक्रमm_device_list, dev.devres_head)
+		अगर (platक्रमm_match(&pd->dev, &epdrv->pdrv->driver))
+			अगर (pd->id >= id)
+				वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * sh_early_platform_driver_probe_id - probe drivers matching class_str and id
- * @class_str: string to identify early platform driver class
+ * sh_early_platक्रमm_driver_probe_id - probe drivers matching class_str and id
+ * @class_str: string to identअगरy early platक्रमm driver class
  * @id: id to match against
- * @nr_probe: number of platform devices to successfully probe before exiting
+ * @nr_probe: number of platक्रमm devices to successfully probe beक्रमe निकासing
  */
-static int __init sh_early_platform_driver_probe_id(char *class_str,
-						 int id,
-						 int nr_probe)
-{
-	struct sh_early_platform_driver *epdrv;
-	struct platform_device *match;
-	int match_id;
-	int n = 0;
-	int left = 0;
+अटल पूर्णांक __init sh_early_platक्रमm_driver_probe_id(अक्षर *class_str,
+						 पूर्णांक id,
+						 पूर्णांक nr_probe)
+अणु
+	काष्ठा sh_early_platक्रमm_driver *epdrv;
+	काष्ठा platक्रमm_device *match;
+	पूर्णांक match_id;
+	पूर्णांक n = 0;
+	पूर्णांक left = 0;
 
-	list_for_each_entry(epdrv, &sh_early_platform_driver_list, list) {
+	list_क्रम_each_entry(epdrv, &sh_early_platक्रमm_driver_list, list) अणु
 		/* only use drivers matching our class_str */
-		if (strcmp(class_str, epdrv->class_str))
-			continue;
+		अगर (म_भेद(class_str, epdrv->class_str))
+			जारी;
 
-		if (id == -2) {
+		अगर (id == -2) अणु
 			match_id = epdrv->requested_id;
 			left = 1;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			match_id = id;
-			left += sh_early_platform_left(epdrv, id);
+			left += sh_early_platक्रमm_left(epdrv, id);
 
 			/* skip requested id */
-			switch (epdrv->requested_id) {
-			case EARLY_PLATFORM_ID_ERROR:
-			case EARLY_PLATFORM_ID_UNSET:
-				break;
-			default:
-				if (epdrv->requested_id == id)
+			चयन (epdrv->requested_id) अणु
+			हाल EARLY_PLATFORM_ID_ERROR:
+			हाल EARLY_PLATFORM_ID_UNSET:
+				अवरोध;
+			शेष:
+				अगर (epdrv->requested_id == id)
 					match_id = EARLY_PLATFORM_ID_UNSET;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		switch (match_id) {
-		case EARLY_PLATFORM_ID_ERROR:
+		चयन (match_id) अणु
+		हाल EARLY_PLATFORM_ID_ERROR:
 			pr_warn("%s: unable to parse %s parameter\n",
 				class_str, epdrv->pdrv->driver.name);
 			fallthrough;
-		case EARLY_PLATFORM_ID_UNSET:
-			match = NULL;
-			break;
-		default:
-			match = sh_early_platform_match(epdrv, match_id);
-		}
+		हाल EARLY_PLATFORM_ID_UNSET:
+			match = शून्य;
+			अवरोध;
+		शेष:
+			match = sh_early_platक्रमm_match(epdrv, match_id);
+		पूर्ण
 
-		if (match) {
+		अगर (match) अणु
 			/*
 			 * Set up a sensible init_name to enable
-			 * dev_name() and others to be used before the
+			 * dev_name() and others to be used beक्रमe the
 			 * rest of the driver core is initialized.
 			 */
-			if (!match->dev.init_name && slab_is_available()) {
-				if (match->id != -1)
+			अगर (!match->dev.init_name && slab_is_available()) अणु
+				अगर (match->id != -1)
 					match->dev.init_name =
-						kasprintf(GFP_KERNEL, "%s.%d",
+						kaप्र_लिखो(GFP_KERNEL, "%s.%d",
 							  match->name,
 							  match->id);
-				else
+				अन्यथा
 					match->dev.init_name =
-						kasprintf(GFP_KERNEL, "%s",
+						kaप्र_लिखो(GFP_KERNEL, "%s",
 							  match->name);
 
-				if (!match->dev.init_name)
-					return -ENOMEM;
-			}
+				अगर (!match->dev.init_name)
+					वापस -ENOMEM;
+			पूर्ण
 
-			if (epdrv->pdrv->probe(match))
+			अगर (epdrv->pdrv->probe(match))
 				pr_warn("%s: unable to probe %s early.\n",
 					class_str, match->name);
-			else
+			अन्यथा
 				n++;
-		}
+		पूर्ण
 
-		if (n >= nr_probe)
-			break;
-	}
+		अगर (n >= nr_probe)
+			अवरोध;
+	पूर्ण
 
-	if (left)
-		return n;
-	else
-		return -ENODEV;
-}
+	अगर (left)
+		वापस n;
+	अन्यथा
+		वापस -ENODEV;
+पूर्ण
 
 /**
- * sh_early_platform_driver_probe - probe a class of registered drivers
- * @class_str: string to identify early platform driver class
- * @nr_probe: number of platform devices to successfully probe before exiting
- * @user_only: only probe user specified early platform devices
+ * sh_early_platक्रमm_driver_probe - probe a class of रेजिस्टरed drivers
+ * @class_str: string to identअगरy early platक्रमm driver class
+ * @nr_probe: number of platक्रमm devices to successfully probe beक्रमe निकासing
+ * @user_only: only probe user specअगरied early platक्रमm devices
  *
- * Used by architecture code to probe registered early platform drivers
- * within a certain class. For probe to happen a registered early platform
- * device matching a registered early platform driver is needed.
+ * Used by architecture code to probe रेजिस्टरed early platक्रमm drivers
+ * within a certain class. For probe to happen a रेजिस्टरed early platक्रमm
+ * device matching a रेजिस्टरed early platक्रमm driver is needed.
  */
-int __init sh_early_platform_driver_probe(char *class_str,
-				       int nr_probe,
-				       int user_only)
-{
-	int k, n, i;
+पूर्णांक __init sh_early_platक्रमm_driver_probe(अक्षर *class_str,
+				       पूर्णांक nr_probe,
+				       पूर्णांक user_only)
+अणु
+	पूर्णांक k, n, i;
 
 	n = 0;
-	for (i = -2; n < nr_probe; i++) {
-		k = sh_early_platform_driver_probe_id(class_str, i, nr_probe - n);
+	क्रम (i = -2; n < nr_probe; i++) अणु
+		k = sh_early_platक्रमm_driver_probe_id(class_str, i, nr_probe - n);
 
-		if (k < 0)
-			break;
+		अगर (k < 0)
+			अवरोध;
 
 		n += k;
 
-		if (user_only)
-			break;
-	}
+		अगर (user_only)
+			अवरोध;
+	पूर्ण
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
 /**
- * early_platform_cleanup - clean up early platform code
+ * early_platक्रमm_cleanup - clean up early platक्रमm code
  */
-void __init early_platform_cleanup(void)
-{
-	struct platform_device *pd, *pd2;
+व्योम __init early_platक्रमm_cleanup(व्योम)
+अणु
+	काष्ठा platक्रमm_device *pd, *pd2;
 
 	/* clean up the devres list used to chain devices */
-	list_for_each_entry_safe(pd, pd2, &sh_early_platform_device_list,
-				 dev.devres_head) {
+	list_क्रम_each_entry_safe(pd, pd2, &sh_early_platक्रमm_device_list,
+				 dev.devres_head) अणु
 		list_del(&pd->dev.devres_head);
-		memset(&pd->dev.devres_head, 0, sizeof(pd->dev.devres_head));
-	}
-}
+		स_रखो(&pd->dev.devres_head, 0, माप(pd->dev.devres_head));
+	पूर्ण
+पूर्ण

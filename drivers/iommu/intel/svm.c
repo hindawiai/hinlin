@@ -1,692 +1,693 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright © 2015 Intel Corporation.
+ * Copyright तऊ 2015 Intel Corporation.
  *
  * Authors: David Woodhouse <dwmw2@infradead.org>
  */
 
-#include <linux/intel-iommu.h>
-#include <linux/mmu_notifier.h>
-#include <linux/sched.h>
-#include <linux/sched/mm.h>
-#include <linux/slab.h>
-#include <linux/intel-svm.h>
-#include <linux/rculist.h>
-#include <linux/pci.h>
-#include <linux/pci-ats.h>
-#include <linux/dmar.h>
-#include <linux/interrupt.h>
-#include <linux/mm_types.h>
-#include <linux/ioasid.h>
-#include <asm/page.h>
-#include <asm/fpu/api.h>
+#समावेश <linux/पूर्णांकel-iommu.h>
+#समावेश <linux/mmu_notअगरier.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकel-svm.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci-ats.h>
+#समावेश <linux/dmar.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mm_types.h>
+#समावेश <linux/ioasid.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/fpu/api.h>
 
-#include "pasid.h"
+#समावेश "pasid.h"
 
-static irqreturn_t prq_event_thread(int irq, void *d);
-static void intel_svm_drain_prq(struct device *dev, u32 pasid);
+अटल irqवापस_t prq_event_thपढ़ो(पूर्णांक irq, व्योम *d);
+अटल व्योम पूर्णांकel_svm_drain_prq(काष्ठा device *dev, u32 pasid);
 
-#define PRQ_ORDER 0
+#घोषणा PRQ_ORDER 0
 
-int intel_svm_enable_prq(struct intel_iommu *iommu)
-{
-	struct page *pages;
-	int irq, ret;
+पूर्णांक पूर्णांकel_svm_enable_prq(काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	काष्ठा page *pages;
+	पूर्णांक irq, ret;
 
 	pages = alloc_pages(GFP_KERNEL | __GFP_ZERO, PRQ_ORDER);
-	if (!pages) {
+	अगर (!pages) अणु
 		pr_warn("IOMMU: %s: Failed to allocate page request queue\n",
 			iommu->name);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	iommu->prq = page_address(pages);
 
 	irq = dmar_alloc_hwirq(DMAR_UNITS_SUPPORTED + iommu->seq_id, iommu->node, iommu);
-	if (irq <= 0) {
+	अगर (irq <= 0) अणु
 		pr_err("IOMMU: %s: Failed to create IRQ vector for page request queue\n",
 		       iommu->name);
 		ret = -EINVAL;
 	err:
-		free_pages((unsigned long)iommu->prq, PRQ_ORDER);
-		iommu->prq = NULL;
-		return ret;
-	}
+		मुक्त_pages((अचिन्हित दीर्घ)iommu->prq, PRQ_ORDER);
+		iommu->prq = शून्य;
+		वापस ret;
+	पूर्ण
 	iommu->pr_irq = irq;
 
-	snprintf(iommu->prq_name, sizeof(iommu->prq_name), "dmar%d-prq", iommu->seq_id);
+	snम_लिखो(iommu->prq_name, माप(iommu->prq_name), "dmar%d-prq", iommu->seq_id);
 
-	ret = request_threaded_irq(irq, NULL, prq_event_thread, IRQF_ONESHOT,
+	ret = request_thपढ़ोed_irq(irq, शून्य, prq_event_thपढ़ो, IRQF_ONESHOT,
 				   iommu->prq_name, iommu);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("IOMMU: %s: Failed to request IRQ for page request queue\n",
 		       iommu->name);
-		dmar_free_hwirq(irq);
+		dmar_मुक्त_hwirq(irq);
 		iommu->pr_irq = 0;
-		goto err;
-	}
-	dmar_writeq(iommu->reg + DMAR_PQH_REG, 0ULL);
-	dmar_writeq(iommu->reg + DMAR_PQT_REG, 0ULL);
-	dmar_writeq(iommu->reg + DMAR_PQA_REG, virt_to_phys(iommu->prq) | PRQ_ORDER);
+		जाओ err;
+	पूर्ण
+	dmar_ग_लिखोq(iommu->reg + DMAR_PQH_REG, 0ULL);
+	dmar_ग_लिखोq(iommu->reg + DMAR_PQT_REG, 0ULL);
+	dmar_ग_लिखोq(iommu->reg + DMAR_PQA_REG, virt_to_phys(iommu->prq) | PRQ_ORDER);
 
 	init_completion(&iommu->prq_complete);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int intel_svm_finish_prq(struct intel_iommu *iommu)
-{
-	dmar_writeq(iommu->reg + DMAR_PQH_REG, 0ULL);
-	dmar_writeq(iommu->reg + DMAR_PQT_REG, 0ULL);
-	dmar_writeq(iommu->reg + DMAR_PQA_REG, 0ULL);
+पूर्णांक पूर्णांकel_svm_finish_prq(काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	dmar_ग_लिखोq(iommu->reg + DMAR_PQH_REG, 0ULL);
+	dmar_ग_लिखोq(iommu->reg + DMAR_PQT_REG, 0ULL);
+	dmar_ग_लिखोq(iommu->reg + DMAR_PQA_REG, 0ULL);
 
-	if (iommu->pr_irq) {
-		free_irq(iommu->pr_irq, iommu);
-		dmar_free_hwirq(iommu->pr_irq);
+	अगर (iommu->pr_irq) अणु
+		मुक्त_irq(iommu->pr_irq, iommu);
+		dmar_मुक्त_hwirq(iommu->pr_irq);
 		iommu->pr_irq = 0;
-	}
+	पूर्ण
 
-	free_pages((unsigned long)iommu->prq, PRQ_ORDER);
-	iommu->prq = NULL;
+	मुक्त_pages((अचिन्हित दीर्घ)iommu->prq, PRQ_ORDER);
+	iommu->prq = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline bool intel_svm_capable(struct intel_iommu *iommu)
-{
-	return iommu->flags & VTD_FLAG_SVM_CAPABLE;
-}
+अटल अंतरभूत bool पूर्णांकel_svm_capable(काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	वापस iommu->flags & VTD_FLAG_SVM_CAPABLE;
+पूर्ण
 
-void intel_svm_check(struct intel_iommu *iommu)
-{
-	if (!pasid_supported(iommu))
-		return;
+व्योम पूर्णांकel_svm_check(काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	अगर (!pasid_supported(iommu))
+		वापस;
 
-	if (cpu_feature_enabled(X86_FEATURE_GBPAGES) &&
-	    !cap_fl1gp_support(iommu->cap)) {
+	अगर (cpu_feature_enabled(X86_FEATURE_GBPAGES) &&
+	    !cap_fl1gp_support(iommu->cap)) अणु
 		pr_err("%s SVM disabled, incompatible 1GB page capability\n",
 		       iommu->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (cpu_feature_enabled(X86_FEATURE_LA57) &&
-	    !cap_5lp_support(iommu->cap)) {
+	अगर (cpu_feature_enabled(X86_FEATURE_LA57) &&
+	    !cap_5lp_support(iommu->cap)) अणु
 		pr_err("%s SVM disabled, incompatible paging mode\n",
 		       iommu->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	iommu->flags |= VTD_FLAG_SVM_CAPABLE;
-}
+पूर्ण
 
-static void __flush_svm_range_dev(struct intel_svm *svm,
-				  struct intel_svm_dev *sdev,
-				  unsigned long address,
-				  unsigned long pages, int ih)
-{
-	struct device_domain_info *info = get_domain_info(sdev->dev);
+अटल व्योम __flush_svm_range_dev(काष्ठा पूर्णांकel_svm *svm,
+				  काष्ठा पूर्णांकel_svm_dev *sdev,
+				  अचिन्हित दीर्घ address,
+				  अचिन्हित दीर्घ pages, पूर्णांक ih)
+अणु
+	काष्ठा device_करोमुख्य_info *info = get_करोमुख्य_info(sdev->dev);
 
-	if (WARN_ON(!pages))
-		return;
+	अगर (WARN_ON(!pages))
+		वापस;
 
 	qi_flush_piotlb(sdev->iommu, sdev->did, svm->pasid, address, pages, ih);
-	if (info->ats_enabled)
+	अगर (info->ats_enabled)
 		qi_flush_dev_iotlb_pasid(sdev->iommu, sdev->sid, info->pfsid,
 					 svm->pasid, sdev->qdep, address,
 					 order_base_2(pages));
-}
+पूर्ण
 
-static void intel_flush_svm_range_dev(struct intel_svm *svm,
-				      struct intel_svm_dev *sdev,
-				      unsigned long address,
-				      unsigned long pages, int ih)
-{
-	unsigned long shift = ilog2(__roundup_pow_of_two(pages));
-	unsigned long align = (1ULL << (VTD_PAGE_SHIFT + shift));
-	unsigned long start = ALIGN_DOWN(address, align);
-	unsigned long end = ALIGN(address + (pages << VTD_PAGE_SHIFT), align);
+अटल व्योम पूर्णांकel_flush_svm_range_dev(काष्ठा पूर्णांकel_svm *svm,
+				      काष्ठा पूर्णांकel_svm_dev *sdev,
+				      अचिन्हित दीर्घ address,
+				      अचिन्हित दीर्घ pages, पूर्णांक ih)
+अणु
+	अचिन्हित दीर्घ shअगरt = ilog2(__roundup_घात_of_two(pages));
+	अचिन्हित दीर्घ align = (1ULL << (VTD_PAGE_SHIFT + shअगरt));
+	अचिन्हित दीर्घ start = ALIGN_DOWN(address, align);
+	अचिन्हित दीर्घ end = ALIGN(address + (pages << VTD_PAGE_SHIFT), align);
 
-	while (start < end) {
+	जबतक (start < end) अणु
 		__flush_svm_range_dev(svm, sdev, start, align >> VTD_PAGE_SHIFT, ih);
 		start += align;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void intel_flush_svm_range(struct intel_svm *svm, unsigned long address,
-				unsigned long pages, int ih)
-{
-	struct intel_svm_dev *sdev;
+अटल व्योम पूर्णांकel_flush_svm_range(काष्ठा पूर्णांकel_svm *svm, अचिन्हित दीर्घ address,
+				अचिन्हित दीर्घ pages, पूर्णांक ih)
+अणु
+	काष्ठा पूर्णांकel_svm_dev *sdev;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(sdev, &svm->devs, list)
-		intel_flush_svm_range_dev(svm, sdev, address, pages, ih);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(sdev, &svm->devs, list)
+		पूर्णांकel_flush_svm_range_dev(svm, sdev, address, pages, ih);
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-/* Pages have been freed at this point */
-static void intel_invalidate_range(struct mmu_notifier *mn,
-				   struct mm_struct *mm,
-				   unsigned long start, unsigned long end)
-{
-	struct intel_svm *svm = container_of(mn, struct intel_svm, notifier);
+/* Pages have been मुक्तd at this poपूर्णांक */
+अटल व्योम पूर्णांकel_invalidate_range(काष्ठा mmu_notअगरier *mn,
+				   काष्ठा mm_काष्ठा *mm,
+				   अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	काष्ठा पूर्णांकel_svm *svm = container_of(mn, काष्ठा पूर्णांकel_svm, notअगरier);
 
-	intel_flush_svm_range(svm, start,
+	पूर्णांकel_flush_svm_range(svm, start,
 			      (end - start + PAGE_SIZE - 1) >> VTD_PAGE_SHIFT, 0);
-}
+पूर्ण
 
-static void intel_mm_release(struct mmu_notifier *mn, struct mm_struct *mm)
-{
-	struct intel_svm *svm = container_of(mn, struct intel_svm, notifier);
-	struct intel_svm_dev *sdev;
+अटल व्योम पूर्णांकel_mm_release(काष्ठा mmu_notअगरier *mn, काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा पूर्णांकel_svm *svm = container_of(mn, काष्ठा पूर्णांकel_svm, notअगरier);
+	काष्ठा पूर्णांकel_svm_dev *sdev;
 
-	/* This might end up being called from exit_mmap(), *before* the page
-	 * tables are cleared. And __mmu_notifier_release() will delete us from
-	 * the list of notifiers so that our invalidate_range() callback doesn't
+	/* This might end up being called from निकास_mmap(), *beक्रमe* the page
+	 * tables are cleared. And __mmu_notअगरier_release() will delete us from
+	 * the list of notअगरiers so that our invalidate_range() callback करोesn't
 	 * get called when the page tables are cleared. So we need to protect
 	 * against hardware accessing those page tables.
 	 *
-	 * We do it by clearing the entry in the PASID table and then flushing
+	 * We करो it by clearing the entry in the PASID table and then flushing
 	 * the IOTLB and the PASID table caches. This might upset hardware;
-	 * perhaps we'll want to point the PASID to a dummy PGD (like the zero
+	 * perhaps we'll want to poपूर्णांक the PASID to a dummy PGD (like the zero
 	 * page) so that we end up taking a fault that the hardware really
 	 * *has* to handle gracefully without affecting other processes.
 	 */
-	rcu_read_lock();
-	list_for_each_entry_rcu(sdev, &svm->devs, list)
-		intel_pasid_tear_down_entry(sdev->iommu, sdev->dev,
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(sdev, &svm->devs, list)
+		पूर्णांकel_pasid_tear_करोwn_entry(sdev->iommu, sdev->dev,
 					    svm->pasid, true);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-}
+पूर्ण
 
-static const struct mmu_notifier_ops intel_mmuops = {
-	.release = intel_mm_release,
-	.invalidate_range = intel_invalidate_range,
-};
+अटल स्थिर काष्ठा mmu_notअगरier_ops पूर्णांकel_mmuops = अणु
+	.release = पूर्णांकel_mm_release,
+	.invalidate_range = पूर्णांकel_invalidate_range,
+पूर्ण;
 
-static DEFINE_MUTEX(pasid_mutex);
-static LIST_HEAD(global_svm_list);
+अटल DEFINE_MUTEX(pasid_mutex);
+अटल LIST_HEAD(global_svm_list);
 
-#define for_each_svm_dev(sdev, svm, d)			\
-	list_for_each_entry((sdev), &(svm)->devs, list)	\
-		if ((d) != (sdev)->dev) {} else
+#घोषणा क्रम_each_svm_dev(sdev, svm, d)			\
+	list_क्रम_each_entry((sdev), &(svm)->devs, list)	\
+		अगर ((d) != (sdev)->dev) अणुपूर्ण अन्यथा
 
-static int pasid_to_svm_sdev(struct device *dev, unsigned int pasid,
-			     struct intel_svm **rsvm,
-			     struct intel_svm_dev **rsdev)
-{
-	struct intel_svm_dev *d, *sdev = NULL;
-	struct intel_svm *svm;
+अटल पूर्णांक pasid_to_svm_sdev(काष्ठा device *dev, अचिन्हित पूर्णांक pasid,
+			     काष्ठा पूर्णांकel_svm **rsvm,
+			     काष्ठा पूर्णांकel_svm_dev **rsdev)
+अणु
+	काष्ठा पूर्णांकel_svm_dev *d, *sdev = शून्य;
+	काष्ठा पूर्णांकel_svm *svm;
 
 	/* The caller should hold the pasid_mutex lock */
-	if (WARN_ON(!mutex_is_locked(&pasid_mutex)))
-		return -EINVAL;
+	अगर (WARN_ON(!mutex_is_locked(&pasid_mutex)))
+		वापस -EINVAL;
 
-	if (pasid == INVALID_IOASID || pasid >= PASID_MAX)
-		return -EINVAL;
+	अगर (pasid == INVALID_IOASID || pasid >= PASID_MAX)
+		वापस -EINVAL;
 
-	svm = ioasid_find(NULL, pasid, NULL);
-	if (IS_ERR(svm))
-		return PTR_ERR(svm);
+	svm = ioasid_find(शून्य, pasid, शून्य);
+	अगर (IS_ERR(svm))
+		वापस PTR_ERR(svm);
 
-	if (!svm)
-		goto out;
+	अगर (!svm)
+		जाओ out;
 
 	/*
-	 * If we found svm for the PASID, there must be at least one device
+	 * If we found svm क्रम the PASID, there must be at least one device
 	 * bond.
 	 */
-	if (WARN_ON(list_empty(&svm->devs)))
-		return -EINVAL;
+	अगर (WARN_ON(list_empty(&svm->devs)))
+		वापस -EINVAL;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(d, &svm->devs, list) {
-		if (d->dev == dev) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(d, &svm->devs, list) अणु
+		अगर (d->dev == dev) अणु
 			sdev = d;
-			break;
-		}
-	}
-	rcu_read_unlock();
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 out:
 	*rsvm = svm;
 	*rsdev = sdev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int intel_svm_bind_gpasid(struct iommu_domain *domain, struct device *dev,
-			  struct iommu_gpasid_bind_data *data)
-{
-	struct intel_iommu *iommu = device_to_iommu(dev, NULL, NULL);
-	struct intel_svm_dev *sdev = NULL;
-	struct dmar_domain *dmar_domain;
-	struct device_domain_info *info;
-	struct intel_svm *svm = NULL;
-	unsigned long iflags;
-	int ret = 0;
+पूर्णांक पूर्णांकel_svm_bind_gpasid(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev,
+			  काष्ठा iommu_gpasid_bind_data *data)
+अणु
+	काष्ठा पूर्णांकel_iommu *iommu = device_to_iommu(dev, शून्य, शून्य);
+	काष्ठा पूर्णांकel_svm_dev *sdev = शून्य;
+	काष्ठा dmar_करोमुख्य *dmar_करोमुख्य;
+	काष्ठा device_करोमुख्य_info *info;
+	काष्ठा पूर्णांकel_svm *svm = शून्य;
+	अचिन्हित दीर्घ अगरlags;
+	पूर्णांक ret = 0;
 
-	if (WARN_ON(!iommu) || !data)
-		return -EINVAL;
+	अगर (WARN_ON(!iommu) || !data)
+		वापस -EINVAL;
 
-	if (data->format != IOMMU_PASID_FORMAT_INTEL_VTD)
-		return -EINVAL;
+	अगर (data->क्रमmat != IOMMU_PASID_FORMAT_INTEL_VTD)
+		वापस -EINVAL;
 
-	/* IOMMU core ensures argsz is more than the start of the union */
-	if (data->argsz < offsetofend(struct iommu_gpasid_bind_data, vendor.vtd))
-		return -EINVAL;
+	/* IOMMU core ensures argsz is more than the start of the जोड़ */
+	अगर (data->argsz < दुरत्वend(काष्ठा iommu_gpasid_bind_data, venकरोr.vtd))
+		वापस -EINVAL;
 
-	/* Make sure no undefined flags are used in vendor data */
-	if (data->vendor.vtd.flags & ~(IOMMU_SVA_VTD_GPASID_LAST - 1))
-		return -EINVAL;
+	/* Make sure no undefined flags are used in venकरोr data */
+	अगर (data->venकरोr.vtd.flags & ~(IOMMU_SVA_VTD_GPASID_LAST - 1))
+		वापस -EINVAL;
 
-	if (!dev_is_pci(dev))
-		return -ENOTSUPP;
+	अगर (!dev_is_pci(dev))
+		वापस -ENOTSUPP;
 
 	/* VT-d supports devices with full 20 bit PASIDs only */
-	if (pci_max_pasids(to_pci_dev(dev)) != PASID_MAX)
-		return -EINVAL;
+	अगर (pci_max_pasids(to_pci_dev(dev)) != PASID_MAX)
+		वापस -EINVAL;
 
 	/*
 	 * We only check host PASID range, we have no knowledge to check
 	 * guest PASID range.
 	 */
-	if (data->hpasid <= 0 || data->hpasid >= PASID_MAX)
-		return -EINVAL;
+	अगर (data->hpasid <= 0 || data->hpasid >= PASID_MAX)
+		वापस -EINVAL;
 
-	info = get_domain_info(dev);
-	if (!info)
-		return -EINVAL;
+	info = get_करोमुख्य_info(dev);
+	अगर (!info)
+		वापस -EINVAL;
 
-	dmar_domain = to_dmar_domain(domain);
+	dmar_करोमुख्य = to_dmar_करोमुख्य(करोमुख्य);
 
 	mutex_lock(&pasid_mutex);
 	ret = pasid_to_svm_sdev(dev, data->hpasid, &svm, &sdev);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (sdev) {
+	अगर (sdev) अणु
 		/*
 		 * Do not allow multiple bindings of the same device-PASID since
 		 * there is only one SL page tables per PASID. We may revisit
-		 * once sharing PGD across domains are supported.
+		 * once sharing PGD across करोमुख्यs are supported.
 		 */
 		dev_warn_ratelimited(dev, "Already bound with PASID %u\n",
 				     svm->pasid);
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!svm) {
+	अगर (!svm) अणु
 		/* We come here when PASID has never been bond to a device. */
-		svm = kzalloc(sizeof(*svm), GFP_KERNEL);
-		if (!svm) {
+		svm = kzalloc(माप(*svm), GFP_KERNEL);
+		अगर (!svm) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		/* REVISIT: upper layer/VFIO can track host process that bind
-		 * the PASID. ioasid_set = mm might be sufficient for vfio to
+		 * the PASID. ioasid_set = mm might be sufficient क्रम vfio to
 		 * check pasid VMM ownership. We can drop the following line
 		 * once VFIO and IOASID set check is in place.
 		 */
 		svm->mm = get_task_mm(current);
 		svm->pasid = data->hpasid;
-		if (data->flags & IOMMU_SVA_GPASID_VAL) {
+		अगर (data->flags & IOMMU_SVA_GPASID_VAL) अणु
 			svm->gpasid = data->gpasid;
 			svm->flags |= SVM_FLAG_GUEST_PASID;
-		}
+		पूर्ण
 		ioasid_set_data(data->hpasid, svm);
 		INIT_LIST_HEAD_RCU(&svm->devs);
 		mmput(svm->mm);
-	}
-	sdev = kzalloc(sizeof(*sdev), GFP_KERNEL);
-	if (!sdev) {
+	पूर्ण
+	sdev = kzalloc(माप(*sdev), GFP_KERNEL);
+	अगर (!sdev) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	sdev->dev = dev;
 	sdev->sid = PCI_DEVID(info->bus, info->devfn);
 	sdev->iommu = iommu;
 
-	/* Only count users if device has aux domains */
-	if (iommu_dev_feature_enabled(dev, IOMMU_DEV_FEAT_AUX))
+	/* Only count users अगर device has aux करोमुख्यs */
+	अगर (iommu_dev_feature_enabled(dev, IOMMU_DEV_FEAT_AUX))
 		sdev->users = 1;
 
-	/* Set up device context entry for PASID if not enabled already */
-	ret = intel_iommu_enable_pasid(iommu, sdev->dev);
-	if (ret) {
+	/* Set up device context entry क्रम PASID अगर not enabled alपढ़ोy */
+	ret = पूर्णांकel_iommu_enable_pasid(iommu, sdev->dev);
+	अगर (ret) अणु
 		dev_err_ratelimited(dev, "Failed to enable PASID capability\n");
-		kfree(sdev);
-		goto out;
-	}
+		kमुक्त(sdev);
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * PASID table is per device for better security. Therefore, for
+	 * PASID table is per device क्रम better security. Thereक्रमe, क्रम
 	 * each bind of a new device even with an existing PASID, we need to
 	 * call the nested mode setup function here.
 	 */
-	spin_lock_irqsave(&iommu->lock, iflags);
-	ret = intel_pasid_setup_nested(iommu, dev,
-				       (pgd_t *)(uintptr_t)data->gpgd,
-				       data->hpasid, &data->vendor.vtd, dmar_domain,
+	spin_lock_irqsave(&iommu->lock, अगरlags);
+	ret = पूर्णांकel_pasid_setup_nested(iommu, dev,
+				       (pgd_t *)(uपूर्णांकptr_t)data->gpgd,
+				       data->hpasid, &data->venकरोr.vtd, dmar_करोमुख्य,
 				       data->addr_width);
-	spin_unlock_irqrestore(&iommu->lock, iflags);
-	if (ret) {
+	spin_unlock_irqrestore(&iommu->lock, अगरlags);
+	अगर (ret) अणु
 		dev_err_ratelimited(dev, "Failed to set up PASID %llu in nested mode, Err %d\n",
 				    data->hpasid, ret);
 		/*
-		 * PASID entry should be in cleared state if nested mode
+		 * PASID entry should be in cleared state अगर nested mode
 		 * set up failed. So we only need to clear IOASID tracking
-		 * data such that free call will succeed.
+		 * data such that मुक्त call will succeed.
 		 */
-		kfree(sdev);
-		goto out;
-	}
+		kमुक्त(sdev);
+		जाओ out;
+	पूर्ण
 
 	svm->flags |= SVM_FLAG_GUEST_MODE;
 
 	init_rcu_head(&sdev->rcu);
 	list_add_rcu(&sdev->list, &svm->devs);
  out:
-	if (!IS_ERR_OR_NULL(svm) && list_empty(&svm->devs)) {
-		ioasid_set_data(data->hpasid, NULL);
-		kfree(svm);
-	}
+	अगर (!IS_ERR_OR_शून्य(svm) && list_empty(&svm->devs)) अणु
+		ioasid_set_data(data->hpasid, शून्य);
+		kमुक्त(svm);
+	पूर्ण
 
 	mutex_unlock(&pasid_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int intel_svm_unbind_gpasid(struct device *dev, u32 pasid)
-{
-	struct intel_iommu *iommu = device_to_iommu(dev, NULL, NULL);
-	struct intel_svm_dev *sdev;
-	struct intel_svm *svm;
-	int ret;
+पूर्णांक पूर्णांकel_svm_unbind_gpasid(काष्ठा device *dev, u32 pasid)
+अणु
+	काष्ठा पूर्णांकel_iommu *iommu = device_to_iommu(dev, शून्य, शून्य);
+	काष्ठा पूर्णांकel_svm_dev *sdev;
+	काष्ठा पूर्णांकel_svm *svm;
+	पूर्णांक ret;
 
-	if (WARN_ON(!iommu))
-		return -EINVAL;
+	अगर (WARN_ON(!iommu))
+		वापस -EINVAL;
 
 	mutex_lock(&pasid_mutex);
 	ret = pasid_to_svm_sdev(dev, pasid, &svm, &sdev);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (sdev) {
-		if (iommu_dev_feature_enabled(dev, IOMMU_DEV_FEAT_AUX))
+	अगर (sdev) अणु
+		अगर (iommu_dev_feature_enabled(dev, IOMMU_DEV_FEAT_AUX))
 			sdev->users--;
-		if (!sdev->users) {
+		अगर (!sdev->users) अणु
 			list_del_rcu(&sdev->list);
-			intel_pasid_tear_down_entry(iommu, dev,
+			पूर्णांकel_pasid_tear_करोwn_entry(iommu, dev,
 						    svm->pasid, false);
-			intel_svm_drain_prq(dev, svm->pasid);
-			kfree_rcu(sdev, rcu);
+			पूर्णांकel_svm_drain_prq(dev, svm->pasid);
+			kमुक्त_rcu(sdev, rcu);
 
-			if (list_empty(&svm->devs)) {
+			अगर (list_empty(&svm->devs)) अणु
 				/*
-				 * We do not free the IOASID here in that
+				 * We करो not मुक्त the IOASID here in that
 				 * IOMMU driver did not allocate it.
-				 * Unlike native SVM, IOASID for guest use was
+				 * Unlike native SVM, IOASID क्रम guest use was
 				 * allocated prior to the bind call.
-				 * In any case, if the free call comes before
-				 * the unbind, IOMMU driver will get notified
-				 * and perform cleanup.
+				 * In any हाल, अगर the मुक्त call comes beक्रमe
+				 * the unbind, IOMMU driver will get notअगरied
+				 * and perक्रमm cleanup.
 				 */
-				ioasid_set_data(pasid, NULL);
-				kfree(svm);
-			}
-		}
-	}
+				ioasid_set_data(pasid, शून्य);
+				kमुक्त(svm);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 out:
 	mutex_unlock(&pasid_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void _load_pasid(void *unused)
-{
+अटल व्योम _load_pasid(व्योम *unused)
+अणु
 	update_pasid();
-}
+पूर्ण
 
-static void load_pasid(struct mm_struct *mm, u32 pasid)
-{
+अटल व्योम load_pasid(काष्ठा mm_काष्ठा *mm, u32 pasid)
+अणु
 	mutex_lock(&mm->context.lock);
 
 	/* Synchronize with READ_ONCE in update_pasid(). */
 	smp_store_release(&mm->pasid, pasid);
 
 	/* Update PASID MSR on all CPUs running the mm's tasks. */
-	on_each_cpu_mask(mm_cpumask(mm), _load_pasid, NULL, true);
+	on_each_cpu_mask(mm_cpumask(mm), _load_pasid, शून्य, true);
 
 	mutex_unlock(&mm->context.lock);
-}
+पूर्ण
 
 /* Caller must hold pasid_mutex, mm reference */
-static int
-intel_svm_bind_mm(struct device *dev, unsigned int flags,
-		  struct mm_struct *mm, struct intel_svm_dev **sd)
-{
-	struct intel_iommu *iommu = device_to_iommu(dev, NULL, NULL);
-	struct intel_svm *svm = NULL, *t;
-	struct device_domain_info *info;
-	struct intel_svm_dev *sdev;
-	unsigned long iflags;
-	int pasid_max;
-	int ret;
+अटल पूर्णांक
+पूर्णांकel_svm_bind_mm(काष्ठा device *dev, अचिन्हित पूर्णांक flags,
+		  काष्ठा mm_काष्ठा *mm, काष्ठा पूर्णांकel_svm_dev **sd)
+अणु
+	काष्ठा पूर्णांकel_iommu *iommu = device_to_iommu(dev, शून्य, शून्य);
+	काष्ठा पूर्णांकel_svm *svm = शून्य, *t;
+	काष्ठा device_करोमुख्य_info *info;
+	काष्ठा पूर्णांकel_svm_dev *sdev;
+	अचिन्हित दीर्घ अगरlags;
+	पूर्णांक pasid_max;
+	पूर्णांक ret;
 
-	if (!iommu || dmar_disabled)
-		return -EINVAL;
+	अगर (!iommu || dmar_disabled)
+		वापस -EINVAL;
 
-	if (!intel_svm_capable(iommu))
-		return -ENOTSUPP;
+	अगर (!पूर्णांकel_svm_capable(iommu))
+		वापस -ENOTSUPP;
 
-	if (dev_is_pci(dev)) {
+	अगर (dev_is_pci(dev)) अणु
 		pasid_max = pci_max_pasids(to_pci_dev(dev));
-		if (pasid_max < 0)
-			return -EINVAL;
-	} else
+		अगर (pasid_max < 0)
+			वापस -EINVAL;
+	पूर्ण अन्यथा
 		pasid_max = 1 << 20;
 
-	/* Bind supervisor PASID shuld have mm = NULL */
-	if (flags & SVM_FLAG_SUPERVISOR_MODE) {
-		if (!ecap_srs(iommu->ecap) || mm) {
+	/* Bind supervisor PASID shuld have mm = शून्य */
+	अगर (flags & SVM_FLAG_SUPERVISOR_MODE) अणु
+		अगर (!ecap_srs(iommu->ecap) || mm) अणु
 			pr_err("Supervisor PASID with user provided mm.\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry(t, &global_svm_list, list) {
-		if (t->mm != mm)
-			continue;
+	list_क्रम_each_entry(t, &global_svm_list, list) अणु
+		अगर (t->mm != mm)
+			जारी;
 
 		svm = t;
-		if (svm->pasid >= pasid_max) {
+		अगर (svm->pasid >= pasid_max) अणु
 			dev_warn(dev,
 				 "Limited PASID width. Cannot use existing PASID %d\n",
 				 svm->pasid);
 			ret = -ENOSPC;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* Find the matching device in svm list */
-		for_each_svm_dev(sdev, svm, dev) {
+		क्रम_each_svm_dev(sdev, svm, dev) अणु
 			sdev->users++;
-			goto success;
-		}
+			जाओ success;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	sdev = kzalloc(sizeof(*sdev), GFP_KERNEL);
-	if (!sdev) {
+	sdev = kzalloc(माप(*sdev), GFP_KERNEL);
+	अगर (!sdev) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	sdev->dev = dev;
 	sdev->iommu = iommu;
 
-	ret = intel_iommu_enable_pasid(iommu, dev);
-	if (ret) {
-		kfree(sdev);
-		goto out;
-	}
+	ret = पूर्णांकel_iommu_enable_pasid(iommu, dev);
+	अगर (ret) अणु
+		kमुक्त(sdev);
+		जाओ out;
+	पूर्ण
 
-	info = get_domain_info(dev);
+	info = get_करोमुख्य_info(dev);
 	sdev->did = FLPT_DEFAULT_DID;
 	sdev->sid = PCI_DEVID(info->bus, info->devfn);
-	if (info->ats_enabled) {
+	अगर (info->ats_enabled) अणु
 		sdev->dev_iotlb = 1;
 		sdev->qdep = info->ats_qdep;
-		if (sdev->qdep >= QI_DEV_EIOTLB_MAX_INVS)
+		अगर (sdev->qdep >= QI_DEV_EIOTLB_MAX_INVS)
 			sdev->qdep = 0;
-	}
+	पूर्ण
 
 	/* Finish the setup now we know we're keeping it */
 	sdev->users = 1;
 	init_rcu_head(&sdev->rcu);
 
-	if (!svm) {
-		svm = kzalloc(sizeof(*svm), GFP_KERNEL);
-		if (!svm) {
+	अगर (!svm) अणु
+		svm = kzalloc(माप(*svm), GFP_KERNEL);
+		अगर (!svm) अणु
 			ret = -ENOMEM;
-			kfree(sdev);
-			goto out;
-		}
+			kमुक्त(sdev);
+			जाओ out;
+		पूर्ण
 
-		if (pasid_max > intel_pasid_max_id)
-			pasid_max = intel_pasid_max_id;
+		अगर (pasid_max > पूर्णांकel_pasid_max_id)
+			pasid_max = पूर्णांकel_pasid_max_id;
 
-		/* Do not use PASID 0, reserved for RID to PASID */
-		svm->pasid = ioasid_alloc(NULL, PASID_MIN,
+		/* Do not use PASID 0, reserved क्रम RID to PASID */
+		svm->pasid = ioasid_alloc(शून्य, PASID_MIN,
 					  pasid_max - 1, svm);
-		if (svm->pasid == INVALID_IOASID) {
-			kfree(svm);
-			kfree(sdev);
+		अगर (svm->pasid == INVALID_IOASID) अणु
+			kमुक्त(svm);
+			kमुक्त(sdev);
 			ret = -ENOSPC;
-			goto out;
-		}
-		svm->notifier.ops = &intel_mmuops;
+			जाओ out;
+		पूर्ण
+		svm->notअगरier.ops = &पूर्णांकel_mmuops;
 		svm->mm = mm;
 		svm->flags = flags;
 		INIT_LIST_HEAD_RCU(&svm->devs);
 		INIT_LIST_HEAD(&svm->list);
 		ret = -ENOMEM;
-		if (mm) {
-			ret = mmu_notifier_register(&svm->notifier, mm);
-			if (ret) {
+		अगर (mm) अणु
+			ret = mmu_notअगरier_रेजिस्टर(&svm->notअगरier, mm);
+			अगर (ret) अणु
 				ioasid_put(svm->pasid);
-				kfree(svm);
-				kfree(sdev);
-				goto out;
-			}
-		}
+				kमुक्त(svm);
+				kमुक्त(sdev);
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		spin_lock_irqsave(&iommu->lock, iflags);
-		ret = intel_pasid_setup_first_level(iommu, dev,
+		spin_lock_irqsave(&iommu->lock, अगरlags);
+		ret = पूर्णांकel_pasid_setup_first_level(iommu, dev,
 				mm ? mm->pgd : init_mm.pgd,
 				svm->pasid, FLPT_DEFAULT_DID,
 				(mm ? 0 : PASID_FLAG_SUPERVISOR_MODE) |
 				(cpu_feature_enabled(X86_FEATURE_LA57) ?
 				 PASID_FLAG_FL5LP : 0));
-		spin_unlock_irqrestore(&iommu->lock, iflags);
-		if (ret) {
-			if (mm)
-				mmu_notifier_unregister(&svm->notifier, mm);
+		spin_unlock_irqrestore(&iommu->lock, अगरlags);
+		अगर (ret) अणु
+			अगर (mm)
+				mmu_notअगरier_unरेजिस्टर(&svm->notअगरier, mm);
 			ioasid_put(svm->pasid);
-			kfree(svm);
-			kfree(sdev);
-			goto out;
-		}
+			kमुक्त(svm);
+			kमुक्त(sdev);
+			जाओ out;
+		पूर्ण
 
 		list_add_tail(&svm->list, &global_svm_list);
-		if (mm) {
+		अगर (mm) अणु
 			/* The newly allocated pasid is loaded to the mm. */
 			load_pasid(mm, svm->pasid);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * Binding a new device with existing PASID, need to setup
 		 * the PASID entry.
 		 */
-		spin_lock_irqsave(&iommu->lock, iflags);
-		ret = intel_pasid_setup_first_level(iommu, dev,
+		spin_lock_irqsave(&iommu->lock, अगरlags);
+		ret = पूर्णांकel_pasid_setup_first_level(iommu, dev,
 						mm ? mm->pgd : init_mm.pgd,
 						svm->pasid, FLPT_DEFAULT_DID,
 						(mm ? 0 : PASID_FLAG_SUPERVISOR_MODE) |
 						(cpu_feature_enabled(X86_FEATURE_LA57) ?
 						PASID_FLAG_FL5LP : 0));
-		spin_unlock_irqrestore(&iommu->lock, iflags);
-		if (ret) {
-			kfree(sdev);
-			goto out;
-		}
-	}
+		spin_unlock_irqrestore(&iommu->lock, अगरlags);
+		अगर (ret) अणु
+			kमुक्त(sdev);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	list_add_rcu(&sdev->list, &svm->devs);
 success:
 	sdev->pasid = svm->pasid;
 	sdev->sva.dev = dev;
-	if (sd)
+	अगर (sd)
 		*sd = sdev;
 	ret = 0;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Caller must hold pasid_mutex */
-static int intel_svm_unbind_mm(struct device *dev, u32 pasid)
-{
-	struct intel_svm_dev *sdev;
-	struct intel_iommu *iommu;
-	struct intel_svm *svm;
-	int ret = -EINVAL;
+अटल पूर्णांक पूर्णांकel_svm_unbind_mm(काष्ठा device *dev, u32 pasid)
+अणु
+	काष्ठा पूर्णांकel_svm_dev *sdev;
+	काष्ठा पूर्णांकel_iommu *iommu;
+	काष्ठा पूर्णांकel_svm *svm;
+	पूर्णांक ret = -EINVAL;
 
-	iommu = device_to_iommu(dev, NULL, NULL);
-	if (!iommu)
-		goto out;
+	iommu = device_to_iommu(dev, शून्य, शून्य);
+	अगर (!iommu)
+		जाओ out;
 
 	ret = pasid_to_svm_sdev(dev, pasid, &svm, &sdev);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (sdev) {
+	अगर (sdev) अणु
 		sdev->users--;
-		if (!sdev->users) {
+		अगर (!sdev->users) अणु
 			list_del_rcu(&sdev->list);
-			/* Flush the PASID cache and IOTLB for this device.
-			 * Note that we do depend on the hardware *not* using
+			/* Flush the PASID cache and IOTLB क्रम this device.
+			 * Note that we करो depend on the hardware *not* using
 			 * the PASID any more. Just as we depend on other
 			 * devices never using PASIDs that they have no right
 			 * to use. We have a *shared* PASID table, because it's
 			 * large and has to be physically contiguous. So it's
 			 * hard to be as defensive as we might like. */
-			intel_pasid_tear_down_entry(iommu, dev,
+			पूर्णांकel_pasid_tear_करोwn_entry(iommu, dev,
 						    svm->pasid, false);
-			intel_svm_drain_prq(dev, svm->pasid);
-			kfree_rcu(sdev, rcu);
+			पूर्णांकel_svm_drain_prq(dev, svm->pasid);
+			kमुक्त_rcu(sdev, rcu);
 
-			if (list_empty(&svm->devs)) {
+			अगर (list_empty(&svm->devs)) अणु
 				ioasid_put(svm->pasid);
-				if (svm->mm) {
-					mmu_notifier_unregister(&svm->notifier, svm->mm);
+				अगर (svm->mm) अणु
+					mmu_notअगरier_unरेजिस्टर(&svm->notअगरier, svm->mm);
 					/* Clear mm's pasid. */
 					load_pasid(svm->mm, PASID_DISABLED);
-				}
+				पूर्ण
 				list_del(&svm->list);
 				/* We mandate that no page faults may be outstanding
-				 * for the PASID when intel_svm_unbind_mm() is called.
+				 * क्रम the PASID when पूर्णांकel_svm_unbind_mm() is called.
 				 * If that is not obeyed, subtle errors will happen.
 				 * Let's make them less subtle... */
-				memset(svm, 0x6b, sizeof(*svm));
-				kfree(svm);
-			}
-		}
-	}
+				स_रखो(svm, 0x6b, माप(*svm));
+				kमुक्त(svm);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Page request queue descriptor */
-struct page_req_dsc {
-	union {
-		struct {
+काष्ठा page_req_dsc अणु
+	जोड़ अणु
+		काष्ठा अणु
 			u64 type:8;
 			u64 pasid_present:1;
 			u64 priv_data_present:1;
@@ -696,114 +697,114 @@ struct page_req_dsc {
 			u64 exe_req:1;
 			u64 pm_req:1;
 			u64 rsvd2:10;
-		};
+		पूर्ण;
 		u64 qw_0;
-	};
-	union {
-		struct {
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
 			u64 rd_req:1;
 			u64 wr_req:1;
 			u64 lpig:1;
 			u64 prg_index:9;
 			u64 addr:52;
-		};
+		पूर्ण;
 		u64 qw_1;
-	};
+	पूर्ण;
 	u64 priv_data[2];
-};
+पूर्ण;
 
-#define PRQ_RING_MASK	((0x1000 << PRQ_ORDER) - 0x20)
+#घोषणा PRQ_RING_MASK	((0x1000 << PRQ_ORDER) - 0x20)
 
-static bool access_error(struct vm_area_struct *vma, struct page_req_dsc *req)
-{
-	unsigned long requested = 0;
+अटल bool access_error(काष्ठा vm_area_काष्ठा *vma, काष्ठा page_req_dsc *req)
+अणु
+	अचिन्हित दीर्घ requested = 0;
 
-	if (req->exe_req)
+	अगर (req->exe_req)
 		requested |= VM_EXEC;
 
-	if (req->rd_req)
+	अगर (req->rd_req)
 		requested |= VM_READ;
 
-	if (req->wr_req)
+	अगर (req->wr_req)
 		requested |= VM_WRITE;
 
-	return (requested & ~vma->vm_flags) != 0;
-}
+	वापस (requested & ~vma->vm_flags) != 0;
+पूर्ण
 
-static bool is_canonical_address(u64 addr)
-{
-	int shift = 64 - (__VIRTUAL_MASK_SHIFT + 1);
-	long saddr = (long) addr;
+अटल bool is_canonical_address(u64 addr)
+अणु
+	पूर्णांक shअगरt = 64 - (__VIRTUAL_MASK_SHIFT + 1);
+	दीर्घ saddr = (दीर्घ) addr;
 
-	return (((saddr << shift) >> shift) == saddr);
-}
+	वापस (((saddr << shअगरt) >> shअगरt) == saddr);
+पूर्ण
 
 /**
- * intel_svm_drain_prq - Drain page requests and responses for a pasid
+ * पूर्णांकel_svm_drain_prq - Drain page requests and responses क्रम a pasid
  * @dev: target device
- * @pasid: pasid for draining
+ * @pasid: pasid क्रम draining
  *
  * Drain all pending page requests and responses related to @pasid in both
  * software and hardware. This is supposed to be called after the device
  * driver has stopped DMA, the pasid entry has been cleared, and both IOTLB
  * and DevTLB have been invalidated.
  *
- * It waits until all pending page requests for @pasid in the page fault
- * queue are completed by the prq handling thread. Then follow the steps
+ * It रुकोs until all pending page requests क्रम @pasid in the page fault
+ * queue are completed by the prq handling thपढ़ो. Then follow the steps
  * described in VT-d spec CH7.10 to drain all page requests and page
  * responses pending in the hardware.
  */
-static void intel_svm_drain_prq(struct device *dev, u32 pasid)
-{
-	struct device_domain_info *info;
-	struct dmar_domain *domain;
-	struct intel_iommu *iommu;
-	struct qi_desc desc[3];
-	struct pci_dev *pdev;
-	int head, tail;
+अटल व्योम पूर्णांकel_svm_drain_prq(काष्ठा device *dev, u32 pasid)
+अणु
+	काष्ठा device_करोमुख्य_info *info;
+	काष्ठा dmar_करोमुख्य *करोमुख्य;
+	काष्ठा पूर्णांकel_iommu *iommu;
+	काष्ठा qi_desc desc[3];
+	काष्ठा pci_dev *pdev;
+	पूर्णांक head, tail;
 	u16 sid, did;
-	int qdep;
+	पूर्णांक qdep;
 
-	info = get_domain_info(dev);
-	if (WARN_ON(!info || !dev_is_pci(dev)))
-		return;
+	info = get_करोमुख्य_info(dev);
+	अगर (WARN_ON(!info || !dev_is_pci(dev)))
+		वापस;
 
-	if (!info->pri_enabled)
-		return;
+	अगर (!info->pri_enabled)
+		वापस;
 
 	iommu = info->iommu;
-	domain = info->domain;
+	करोमुख्य = info->करोमुख्य;
 	pdev = to_pci_dev(dev);
 	sid = PCI_DEVID(info->bus, info->devfn);
-	did = domain->iommu_did[iommu->seq_id];
+	did = करोमुख्य->iommu_did[iommu->seq_id];
 	qdep = pci_ats_queue_depth(pdev);
 
 	/*
-	 * Check and wait until all pending page requests in the queue are
-	 * handled by the prq handling thread.
+	 * Check and रुको until all pending page requests in the queue are
+	 * handled by the prq handling thपढ़ो.
 	 */
 prq_retry:
 	reinit_completion(&iommu->prq_complete);
-	tail = dmar_readq(iommu->reg + DMAR_PQT_REG) & PRQ_RING_MASK;
-	head = dmar_readq(iommu->reg + DMAR_PQH_REG) & PRQ_RING_MASK;
-	while (head != tail) {
-		struct page_req_dsc *req;
+	tail = dmar_पढ़ोq(iommu->reg + DMAR_PQT_REG) & PRQ_RING_MASK;
+	head = dmar_पढ़ोq(iommu->reg + DMAR_PQH_REG) & PRQ_RING_MASK;
+	जबतक (head != tail) अणु
+		काष्ठा page_req_dsc *req;
 
-		req = &iommu->prq[head / sizeof(*req)];
-		if (!req->pasid_present || req->pasid != pasid) {
-			head = (head + sizeof(*req)) & PRQ_RING_MASK;
-			continue;
-		}
+		req = &iommu->prq[head / माप(*req)];
+		अगर (!req->pasid_present || req->pasid != pasid) अणु
+			head = (head + माप(*req)) & PRQ_RING_MASK;
+			जारी;
+		पूर्ण
 
-		wait_for_completion(&iommu->prq_complete);
-		goto prq_retry;
-	}
+		रुको_क्रम_completion(&iommu->prq_complete);
+		जाओ prq_retry;
+	पूर्ण
 
 	/*
-	 * Perform steps described in VT-d spec CH7.10 to drain page
+	 * Perक्रमm steps described in VT-d spec CH7.10 to drain page
 	 * requests and responses in hardware.
 	 */
-	memset(desc, 0, sizeof(desc));
+	स_रखो(desc, 0, माप(desc));
 	desc[0].qw0 = QI_IWD_STATUS_DATA(QI_DONE) |
 			QI_IWD_FENCE |
 			QI_IWD_TYPE;
@@ -819,192 +820,192 @@ prq_retry:
 qi_retry:
 	reinit_completion(&iommu->prq_complete);
 	qi_submit_sync(iommu, desc, 3, QI_OPT_WAIT_DRAIN);
-	if (readl(iommu->reg + DMAR_PRS_REG) & DMA_PRS_PRO) {
-		wait_for_completion(&iommu->prq_complete);
-		goto qi_retry;
-	}
-}
+	अगर (पढ़ोl(iommu->reg + DMAR_PRS_REG) & DMA_PRS_PRO) अणु
+		रुको_क्रम_completion(&iommu->prq_complete);
+		जाओ qi_retry;
+	पूर्ण
+पूर्ण
 
-static int prq_to_iommu_prot(struct page_req_dsc *req)
-{
-	int prot = 0;
+अटल पूर्णांक prq_to_iommu_prot(काष्ठा page_req_dsc *req)
+अणु
+	पूर्णांक prot = 0;
 
-	if (req->rd_req)
+	अगर (req->rd_req)
 		prot |= IOMMU_FAULT_PERM_READ;
-	if (req->wr_req)
+	अगर (req->wr_req)
 		prot |= IOMMU_FAULT_PERM_WRITE;
-	if (req->exe_req)
+	अगर (req->exe_req)
 		prot |= IOMMU_FAULT_PERM_EXEC;
-	if (req->pm_req)
+	अगर (req->pm_req)
 		prot |= IOMMU_FAULT_PERM_PRIV;
 
-	return prot;
-}
+	वापस prot;
+पूर्ण
 
-static int
-intel_svm_prq_report(struct device *dev, struct page_req_dsc *desc)
-{
-	struct iommu_fault_event event;
+अटल पूर्णांक
+पूर्णांकel_svm_prq_report(काष्ठा device *dev, काष्ठा page_req_dsc *desc)
+अणु
+	काष्ठा iommu_fault_event event;
 
-	if (!dev || !dev_is_pci(dev))
-		return -ENODEV;
+	अगर (!dev || !dev_is_pci(dev))
+		वापस -ENODEV;
 
-	/* Fill in event data for device specific processing */
-	memset(&event, 0, sizeof(struct iommu_fault_event));
+	/* Fill in event data क्रम device specअगरic processing */
+	स_रखो(&event, 0, माप(काष्ठा iommu_fault_event));
 	event.fault.type = IOMMU_FAULT_PAGE_REQ;
 	event.fault.prm.addr = (u64)desc->addr << VTD_PAGE_SHIFT;
 	event.fault.prm.pasid = desc->pasid;
 	event.fault.prm.grpid = desc->prg_index;
 	event.fault.prm.perm = prq_to_iommu_prot(desc);
 
-	if (desc->lpig)
+	अगर (desc->lpig)
 		event.fault.prm.flags |= IOMMU_FAULT_PAGE_REQUEST_LAST_PAGE;
-	if (desc->pasid_present) {
+	अगर (desc->pasid_present) अणु
 		event.fault.prm.flags |= IOMMU_FAULT_PAGE_REQUEST_PASID_VALID;
 		event.fault.prm.flags |= IOMMU_FAULT_PAGE_RESPONSE_NEEDS_PASID;
-	}
-	if (desc->priv_data_present) {
+	पूर्ण
+	अगर (desc->priv_data_present) अणु
 		/*
-		 * Set last page in group bit if private data is present,
-		 * page response is required as it does for LPIG.
-		 * iommu_report_device_fault() doesn't understand this vendor
-		 * specific requirement thus we set last_page as a workaround.
+		 * Set last page in group bit अगर निजी data is present,
+		 * page response is required as it करोes क्रम LPIG.
+		 * iommu_report_device_fault() करोesn't understand this venकरोr
+		 * specअगरic requirement thus we set last_page as a workaround.
 		 */
 		event.fault.prm.flags |= IOMMU_FAULT_PAGE_REQUEST_LAST_PAGE;
 		event.fault.prm.flags |= IOMMU_FAULT_PAGE_REQUEST_PRIV_DATA;
-		memcpy(event.fault.prm.private_data, desc->priv_data,
-		       sizeof(desc->priv_data));
-	}
+		स_नकल(event.fault.prm.निजी_data, desc->priv_data,
+		       माप(desc->priv_data));
+	पूर्ण
 
-	return iommu_report_device_fault(dev, &event);
-}
+	वापस iommu_report_device_fault(dev, &event);
+पूर्ण
 
-static irqreturn_t prq_event_thread(int irq, void *d)
-{
-	struct intel_svm_dev *sdev = NULL;
-	struct intel_iommu *iommu = d;
-	struct intel_svm *svm = NULL;
-	int head, tail, handled = 0;
-	unsigned int flags = 0;
+अटल irqवापस_t prq_event_thपढ़ो(पूर्णांक irq, व्योम *d)
+अणु
+	काष्ठा पूर्णांकel_svm_dev *sdev = शून्य;
+	काष्ठा पूर्णांकel_iommu *iommu = d;
+	काष्ठा पूर्णांकel_svm *svm = शून्य;
+	पूर्णांक head, tail, handled = 0;
+	अचिन्हित पूर्णांक flags = 0;
 
-	/* Clear PPR bit before reading head/tail registers, to
-	 * ensure that we get a new interrupt if needed. */
-	writel(DMA_PRS_PPR, iommu->reg + DMAR_PRS_REG);
+	/* Clear PPR bit beक्रमe पढ़ोing head/tail रेजिस्टरs, to
+	 * ensure that we get a new पूर्णांकerrupt अगर needed. */
+	ग_लिखोl(DMA_PRS_PPR, iommu->reg + DMAR_PRS_REG);
 
-	tail = dmar_readq(iommu->reg + DMAR_PQT_REG) & PRQ_RING_MASK;
-	head = dmar_readq(iommu->reg + DMAR_PQH_REG) & PRQ_RING_MASK;
-	while (head != tail) {
-		struct vm_area_struct *vma;
-		struct page_req_dsc *req;
-		struct qi_desc resp;
-		int result;
+	tail = dmar_पढ़ोq(iommu->reg + DMAR_PQT_REG) & PRQ_RING_MASK;
+	head = dmar_पढ़ोq(iommu->reg + DMAR_PQH_REG) & PRQ_RING_MASK;
+	जबतक (head != tail) अणु
+		काष्ठा vm_area_काष्ठा *vma;
+		काष्ठा page_req_dsc *req;
+		काष्ठा qi_desc resp;
+		पूर्णांक result;
 		vm_fault_t ret;
 		u64 address;
 
 		handled = 1;
-		req = &iommu->prq[head / sizeof(*req)];
+		req = &iommu->prq[head / माप(*req)];
 		result = QI_RESP_INVALID;
 		address = (u64)req->addr << VTD_PAGE_SHIFT;
-		if (!req->pasid_present) {
+		अगर (!req->pasid_present) अणु
 			pr_err("%s: Page request without PASID: %08llx %08llx\n",
-			       iommu->name, ((unsigned long long *)req)[0],
-			       ((unsigned long long *)req)[1]);
-			goto no_pasid;
-		}
-		/* We shall not receive page request for supervisor SVM */
-		if (req->pm_req && (req->rd_req | req->wr_req)) {
+			       iommu->name, ((अचिन्हित दीर्घ दीर्घ *)req)[0],
+			       ((अचिन्हित दीर्घ दीर्घ *)req)[1]);
+			जाओ no_pasid;
+		पूर्ण
+		/* We shall not receive page request क्रम supervisor SVM */
+		अगर (req->pm_req && (req->rd_req | req->wr_req)) अणु
 			pr_err("Unexpected page request in Privilege Mode");
-			/* No need to find the matching sdev as for bad_req */
-			goto no_pasid;
-		}
-		/* DMA read with exec requeset is not supported. */
-		if (req->exe_req && req->rd_req) {
+			/* No need to find the matching sdev as क्रम bad_req */
+			जाओ no_pasid;
+		पूर्ण
+		/* DMA पढ़ो with exec requeset is not supported. */
+		अगर (req->exe_req && req->rd_req) अणु
 			pr_err("Execution request not supported\n");
-			goto no_pasid;
-		}
-		if (!svm || svm->pasid != req->pasid) {
-			rcu_read_lock();
-			svm = ioasid_find(NULL, req->pasid, NULL);
+			जाओ no_pasid;
+		पूर्ण
+		अगर (!svm || svm->pasid != req->pasid) अणु
+			rcu_पढ़ो_lock();
+			svm = ioasid_find(शून्य, req->pasid, शून्य);
 			/* It *can't* go away, because the driver is not permitted
-			 * to unbind the mm while any page faults are outstanding.
-			 * So we only need RCU to protect the internal idr code. */
-			rcu_read_unlock();
-			if (IS_ERR_OR_NULL(svm)) {
+			 * to unbind the mm जबतक any page faults are outstanding.
+			 * So we only need RCU to protect the पूर्णांकernal idr code. */
+			rcu_पढ़ो_unlock();
+			अगर (IS_ERR_OR_शून्य(svm)) अणु
 				pr_err("%s: Page request for invalid PASID %d: %08llx %08llx\n",
-				       iommu->name, req->pasid, ((unsigned long long *)req)[0],
-				       ((unsigned long long *)req)[1]);
-				goto no_pasid;
-			}
-		}
+				       iommu->name, req->pasid, ((अचिन्हित दीर्घ दीर्घ *)req)[0],
+				       ((अचिन्हित दीर्घ दीर्घ *)req)[1]);
+				जाओ no_pasid;
+			पूर्ण
+		पूर्ण
 
-		if (!sdev || sdev->sid != req->rid) {
-			struct intel_svm_dev *t;
+		अगर (!sdev || sdev->sid != req->rid) अणु
+			काष्ठा पूर्णांकel_svm_dev *t;
 
-			sdev = NULL;
-			rcu_read_lock();
-			list_for_each_entry_rcu(t, &svm->devs, list) {
-				if (t->sid == req->rid) {
+			sdev = शून्य;
+			rcu_पढ़ो_lock();
+			list_क्रम_each_entry_rcu(t, &svm->devs, list) अणु
+				अगर (t->sid == req->rid) अणु
 					sdev = t;
-					break;
-				}
-			}
-			rcu_read_unlock();
-		}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			rcu_पढ़ो_unlock();
+		पूर्ण
 
 		/* Since we're using init_mm.pgd directly, we should never take
 		 * any faults on kernel addresses. */
-		if (!svm->mm)
-			goto bad_req;
+		अगर (!svm->mm)
+			जाओ bad_req;
 
-		/* If address is not canonical, return invalid response */
-		if (!is_canonical_address(address))
-			goto bad_req;
+		/* If address is not canonical, वापस invalid response */
+		अगर (!is_canonical_address(address))
+			जाओ bad_req;
 
 		/*
 		 * If prq is to be handled outside iommu driver via receiver of
-		 * the fault notifiers, we skip the page response here.
+		 * the fault notअगरiers, we skip the page response here.
 		 */
-		if (svm->flags & SVM_FLAG_GUEST_MODE) {
-			if (sdev && !intel_svm_prq_report(sdev->dev, req))
-				goto prq_advance;
-			else
-				goto bad_req;
-		}
+		अगर (svm->flags & SVM_FLAG_GUEST_MODE) अणु
+			अगर (sdev && !पूर्णांकel_svm_prq_report(sdev->dev, req))
+				जाओ prq_advance;
+			अन्यथा
+				जाओ bad_req;
+		पूर्ण
 
-		/* If the mm is already defunct, don't handle faults. */
-		if (!mmget_not_zero(svm->mm))
-			goto bad_req;
+		/* If the mm is alपढ़ोy defunct, करोn't handle faults. */
+		अगर (!mmget_not_zero(svm->mm))
+			जाओ bad_req;
 
-		mmap_read_lock(svm->mm);
+		mmap_पढ़ो_lock(svm->mm);
 		vma = find_extend_vma(svm->mm, address);
-		if (!vma || address < vma->vm_start)
-			goto invalid;
+		अगर (!vma || address < vma->vm_start)
+			जाओ invalid;
 
-		if (access_error(vma, req))
-			goto invalid;
+		अगर (access_error(vma, req))
+			जाओ invalid;
 
 		flags = FAULT_FLAG_USER | FAULT_FLAG_REMOTE;
-		if (req->wr_req)
+		अगर (req->wr_req)
 			flags |= FAULT_FLAG_WRITE;
 
-		ret = handle_mm_fault(vma, address, flags, NULL);
-		if (ret & VM_FAULT_ERROR)
-			goto invalid;
+		ret = handle_mm_fault(vma, address, flags, शून्य);
+		अगर (ret & VM_FAULT_ERROR)
+			जाओ invalid;
 
 		result = QI_RESP_SUCCESS;
 invalid:
-		mmap_read_unlock(svm->mm);
+		mmap_पढ़ो_unlock(svm->mm);
 		mmput(svm->mm);
 bad_req:
-		/* We get here in the error case where the PASID lookup failed,
-		   and these can be NULL. Do not use them below this point! */
-		sdev = NULL;
-		svm = NULL;
+		/* We get here in the error हाल where the PASID lookup failed,
+		   and these can be शून्य. Do not use them below this poपूर्णांक! */
+		sdev = शून्य;
+		svm = शून्य;
 no_pasid:
-		if (req->lpig || req->priv_data_present) {
+		अगर (req->lpig || req->priv_data_present) अणु
 			/*
-			 * Per VT-d spec. v3.0 ch7.7, system software must
-			 * respond with page group response if private data
+			 * Per VT-d spec. v3.0 ch7.7, प्रणाली software must
+			 * respond with page group response अगर निजी data
 			 * is present (PDP) or last page in group (LPIG) bit
 			 * is set. This is an additional VT-d feature beyond
 			 * PCI ATS spec.
@@ -1020,187 +1021,187 @@ no_pasid:
 			resp.qw2 = 0;
 			resp.qw3 = 0;
 
-			if (req->priv_data_present)
-				memcpy(&resp.qw2, req->priv_data,
-				       sizeof(req->priv_data));
+			अगर (req->priv_data_present)
+				स_नकल(&resp.qw2, req->priv_data,
+				       माप(req->priv_data));
 			qi_submit_sync(iommu, &resp, 1, 0);
-		}
+		पूर्ण
 prq_advance:
-		head = (head + sizeof(*req)) & PRQ_RING_MASK;
-	}
+		head = (head + माप(*req)) & PRQ_RING_MASK;
+	पूर्ण
 
-	dmar_writeq(iommu->reg + DMAR_PQH_REG, tail);
+	dmar_ग_लिखोq(iommu->reg + DMAR_PQH_REG, tail);
 
 	/*
-	 * Clear the page request overflow bit and wake up all threads that
-	 * are waiting for the completion of this handling.
+	 * Clear the page request overflow bit and wake up all thपढ़ोs that
+	 * are रुकोing क्रम the completion of this handling.
 	 */
-	if (readl(iommu->reg + DMAR_PRS_REG) & DMA_PRS_PRO) {
+	अगर (पढ़ोl(iommu->reg + DMAR_PRS_REG) & DMA_PRS_PRO) अणु
 		pr_info_ratelimited("IOMMU: %s: PRQ overflow detected\n",
 				    iommu->name);
-		head = dmar_readq(iommu->reg + DMAR_PQH_REG) & PRQ_RING_MASK;
-		tail = dmar_readq(iommu->reg + DMAR_PQT_REG) & PRQ_RING_MASK;
-		if (head == tail) {
-			writel(DMA_PRS_PRO, iommu->reg + DMAR_PRS_REG);
+		head = dmar_पढ़ोq(iommu->reg + DMAR_PQH_REG) & PRQ_RING_MASK;
+		tail = dmar_पढ़ोq(iommu->reg + DMAR_PQT_REG) & PRQ_RING_MASK;
+		अगर (head == tail) अणु
+			ग_लिखोl(DMA_PRS_PRO, iommu->reg + DMAR_PRS_REG);
 			pr_info_ratelimited("IOMMU: %s: PRQ overflow cleared",
 					    iommu->name);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!completion_done(&iommu->prq_complete))
+	अगर (!completion_करोne(&iommu->prq_complete))
 		complete(&iommu->prq_complete);
 
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-#define to_intel_svm_dev(handle) container_of(handle, struct intel_svm_dev, sva)
-struct iommu_sva *
-intel_svm_bind(struct device *dev, struct mm_struct *mm, void *drvdata)
-{
-	struct iommu_sva *sva = ERR_PTR(-EINVAL);
-	struct intel_svm_dev *sdev = NULL;
-	unsigned int flags = 0;
-	int ret;
+#घोषणा to_पूर्णांकel_svm_dev(handle) container_of(handle, काष्ठा पूर्णांकel_svm_dev, sva)
+काष्ठा iommu_sva *
+पूर्णांकel_svm_bind(काष्ठा device *dev, काष्ठा mm_काष्ठा *mm, व्योम *drvdata)
+अणु
+	काष्ठा iommu_sva *sva = ERR_PTR(-EINVAL);
+	काष्ठा पूर्णांकel_svm_dev *sdev = शून्य;
+	अचिन्हित पूर्णांक flags = 0;
+	पूर्णांक ret;
 
 	/*
 	 * TODO: Consolidate with generic iommu-sva bind after it is merged.
-	 * It will require shared SVM data structures, i.e. combine io_mm
-	 * and intel_svm etc.
+	 * It will require shared SVM data काष्ठाures, i.e. combine io_mm
+	 * and पूर्णांकel_svm etc.
 	 */
-	if (drvdata)
-		flags = *(unsigned int *)drvdata;
+	अगर (drvdata)
+		flags = *(अचिन्हित पूर्णांक *)drvdata;
 	mutex_lock(&pasid_mutex);
-	ret = intel_svm_bind_mm(dev, flags, mm, &sdev);
-	if (ret)
+	ret = पूर्णांकel_svm_bind_mm(dev, flags, mm, &sdev);
+	अगर (ret)
 		sva = ERR_PTR(ret);
-	else if (sdev)
+	अन्यथा अगर (sdev)
 		sva = &sdev->sva;
-	else
+	अन्यथा
 		WARN(!sdev, "SVM bind succeeded with no sdev!\n");
 
 	mutex_unlock(&pasid_mutex);
 
-	return sva;
-}
+	वापस sva;
+पूर्ण
 
-void intel_svm_unbind(struct iommu_sva *sva)
-{
-	struct intel_svm_dev *sdev;
+व्योम पूर्णांकel_svm_unbind(काष्ठा iommu_sva *sva)
+अणु
+	काष्ठा पूर्णांकel_svm_dev *sdev;
 
 	mutex_lock(&pasid_mutex);
-	sdev = to_intel_svm_dev(sva);
-	intel_svm_unbind_mm(sdev->dev, sdev->pasid);
+	sdev = to_पूर्णांकel_svm_dev(sva);
+	पूर्णांकel_svm_unbind_mm(sdev->dev, sdev->pasid);
 	mutex_unlock(&pasid_mutex);
-}
+पूर्ण
 
-u32 intel_svm_get_pasid(struct iommu_sva *sva)
-{
-	struct intel_svm_dev *sdev;
+u32 पूर्णांकel_svm_get_pasid(काष्ठा iommu_sva *sva)
+अणु
+	काष्ठा पूर्णांकel_svm_dev *sdev;
 	u32 pasid;
 
 	mutex_lock(&pasid_mutex);
-	sdev = to_intel_svm_dev(sva);
+	sdev = to_पूर्णांकel_svm_dev(sva);
 	pasid = sdev->pasid;
 	mutex_unlock(&pasid_mutex);
 
-	return pasid;
-}
+	वापस pasid;
+पूर्ण
 
-int intel_svm_page_response(struct device *dev,
-			    struct iommu_fault_event *evt,
-			    struct iommu_page_response *msg)
-{
-	struct iommu_fault_page_request *prm;
-	struct intel_svm_dev *sdev = NULL;
-	struct intel_svm *svm = NULL;
-	struct intel_iommu *iommu;
-	bool private_present;
+पूर्णांक पूर्णांकel_svm_page_response(काष्ठा device *dev,
+			    काष्ठा iommu_fault_event *evt,
+			    काष्ठा iommu_page_response *msg)
+अणु
+	काष्ठा iommu_fault_page_request *prm;
+	काष्ठा पूर्णांकel_svm_dev *sdev = शून्य;
+	काष्ठा पूर्णांकel_svm *svm = शून्य;
+	काष्ठा पूर्णांकel_iommu *iommu;
+	bool निजी_present;
 	bool pasid_present;
 	bool last_page;
 	u8 bus, devfn;
-	int ret = 0;
+	पूर्णांक ret = 0;
 	u16 sid;
 
-	if (!dev || !dev_is_pci(dev))
-		return -ENODEV;
+	अगर (!dev || !dev_is_pci(dev))
+		वापस -ENODEV;
 
 	iommu = device_to_iommu(dev, &bus, &devfn);
-	if (!iommu)
-		return -ENODEV;
+	अगर (!iommu)
+		वापस -ENODEV;
 
-	if (!msg || !evt)
-		return -EINVAL;
+	अगर (!msg || !evt)
+		वापस -EINVAL;
 
 	mutex_lock(&pasid_mutex);
 
 	prm = &evt->fault.prm;
 	sid = PCI_DEVID(bus, devfn);
 	pasid_present = prm->flags & IOMMU_FAULT_PAGE_REQUEST_PASID_VALID;
-	private_present = prm->flags & IOMMU_FAULT_PAGE_REQUEST_PRIV_DATA;
+	निजी_present = prm->flags & IOMMU_FAULT_PAGE_REQUEST_PRIV_DATA;
 	last_page = prm->flags & IOMMU_FAULT_PAGE_REQUEST_LAST_PAGE;
 
-	if (!pasid_present) {
+	अगर (!pasid_present) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (prm->pasid == 0 || prm->pasid >= PASID_MAX) {
+	अगर (prm->pasid == 0 || prm->pasid >= PASID_MAX) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = pasid_to_svm_sdev(dev, prm->pasid, &svm, &sdev);
-	if (ret || !sdev) {
+	अगर (ret || !sdev) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * For responses from userspace, need to make sure that the
 	 * pasid has been bound to its mm.
 	 */
-	if (svm->flags & SVM_FLAG_GUEST_MODE) {
-		struct mm_struct *mm;
+	अगर (svm->flags & SVM_FLAG_GUEST_MODE) अणु
+		काष्ठा mm_काष्ठा *mm;
 
 		mm = get_task_mm(current);
-		if (!mm) {
+		अगर (!mm) अणु
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (mm != svm->mm) {
+		अगर (mm != svm->mm) अणु
 			ret = -ENODEV;
 			mmput(mm);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		mmput(mm);
-	}
+	पूर्ण
 
 	/*
-	 * Per VT-d spec. v3.0 ch7.7, system software must respond
-	 * with page group response if private data is present (PDP)
+	 * Per VT-d spec. v3.0 ch7.7, प्रणाली software must respond
+	 * with page group response अगर निजी data is present (PDP)
 	 * or last page in group (LPIG) bit is set. This is an
 	 * additional VT-d requirement beyond PCI ATS spec.
 	 */
-	if (last_page || private_present) {
-		struct qi_desc desc;
+	अगर (last_page || निजी_present) अणु
+		काष्ठा qi_desc desc;
 
 		desc.qw0 = QI_PGRP_PASID(prm->pasid) | QI_PGRP_DID(sid) |
 				QI_PGRP_PASID_P(pasid_present) |
-				QI_PGRP_PDP(private_present) |
+				QI_PGRP_PDP(निजी_present) |
 				QI_PGRP_RESP_CODE(msg->code) |
 				QI_PGRP_RESP_TYPE;
 		desc.qw1 = QI_PGRP_IDX(prm->grpid) | QI_PGRP_LPIG(last_page);
 		desc.qw2 = 0;
 		desc.qw3 = 0;
-		if (private_present)
-			memcpy(&desc.qw2, prm->private_data,
-			       sizeof(prm->private_data));
+		अगर (निजी_present)
+			स_नकल(&desc.qw2, prm->निजी_data,
+			       माप(prm->निजी_data));
 
 		qi_submit_sync(iommu, &desc, 1, 0);
-	}
+	पूर्ण
 out:
 	mutex_unlock(&pasid_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण

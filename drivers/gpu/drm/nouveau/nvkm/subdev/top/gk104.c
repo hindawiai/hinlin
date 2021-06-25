@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,99 +22,99 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-static int
-gk104_top_oneinit(struct nvkm_top *top)
-{
-	struct nvkm_subdev *subdev = &top->subdev;
-	struct nvkm_device *device = subdev->device;
-	struct nvkm_top_device *info = NULL;
+अटल पूर्णांक
+gk104_top_oneinit(काष्ठा nvkm_top *top)
+अणु
+	काष्ठा nvkm_subdev *subdev = &top->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	काष्ठा nvkm_top_device *info = शून्य;
 	u32 data, type, inst;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 64; i++) {
-		if (!info) {
-			if (!(info = nvkm_top_device_new(top)))
-				return -ENOMEM;
+	क्रम (i = 0; i < 64; i++) अणु
+		अगर (!info) अणु
+			अगर (!(info = nvkm_top_device_new(top)))
+				वापस -ENOMEM;
 			type = ~0;
 			inst = 0;
-		}
+		पूर्ण
 
 		data = nvkm_rd32(device, 0x022700 + (i * 0x04));
 		nvkm_trace(subdev, "%02x: %08x\n", i, data);
-		switch (data & 0x00000003) {
-		case 0x00000000: /* NOT_VALID */
-			continue;
-		case 0x00000001: /* DATA */
+		चयन (data & 0x00000003) अणु
+		हाल 0x00000000: /* NOT_VALID */
+			जारी;
+		हाल 0x00000001: /* DATA */
 			inst        = (data & 0x3c000000) >> 26;
 			info->addr  = (data & 0x00fff000);
-			if (data & 0x00000004)
+			अगर (data & 0x00000004)
 				info->fault = (data & 0x000003f8) >> 3;
-			break;
-		case 0x00000002: /* ENUM */
-			if (data & 0x00000020)
+			अवरोध;
+		हाल 0x00000002: /* ENUM */
+			अगर (data & 0x00000020)
 				info->engine  = (data & 0x3c000000) >> 26;
-			if (data & 0x00000010)
+			अगर (data & 0x00000010)
 				info->runlist = (data & 0x01e00000) >> 21;
-			if (data & 0x00000008)
-				info->intr    = (data & 0x000f8000) >> 15;
-			if (data & 0x00000004)
+			अगर (data & 0x00000008)
+				info->पूर्णांकr    = (data & 0x000f8000) >> 15;
+			अगर (data & 0x00000004)
 				info->reset   = (data & 0x00003e00) >> 9;
-			break;
-		case 0x00000003: /* ENGINE_TYPE */
+			अवरोध;
+		हाल 0x00000003: /* ENGINE_TYPE */
 			type = (data & 0x7ffffffc) >> 2;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (data & 0x80000000)
-			continue;
+		अगर (data & 0x80000000)
+			जारी;
 
-		/* Translate engine type to NVKM engine identifier. */
-#define I_(T,I) do { info->type = (T); info->inst = (I); } while(0)
-#define O_(T,I) do { WARN_ON(inst); I_(T, I); } while (0)
-		switch (type) {
-		case 0x00000000: O_(NVKM_ENGINE_GR    ,    0); break;
-		case 0x00000001: O_(NVKM_ENGINE_CE    ,    0); break;
-		case 0x00000002: O_(NVKM_ENGINE_CE    ,    1); break;
-		case 0x00000003: O_(NVKM_ENGINE_CE    ,    2); break;
-		case 0x00000008: O_(NVKM_ENGINE_MSPDEC,    0); break;
-		case 0x00000009: O_(NVKM_ENGINE_MSPPP ,    0); break;
-		case 0x0000000a: O_(NVKM_ENGINE_MSVLD ,    0); break;
-		case 0x0000000b: O_(NVKM_ENGINE_MSENC ,    0); break;
-		case 0x0000000c: O_(NVKM_ENGINE_VIC   ,    0); break;
-		case 0x0000000d: O_(NVKM_ENGINE_SEC2  ,    0); break;
-		case 0x0000000e: I_(NVKM_ENGINE_NVENC , inst); break;
-		case 0x0000000f: O_(NVKM_ENGINE_NVENC ,    1); break;
-		case 0x00000010: I_(NVKM_ENGINE_NVDEC , inst); break;
-		case 0x00000012: I_(NVKM_SUBDEV_IOCTRL, inst); break;
-		case 0x00000013: I_(NVKM_ENGINE_CE    , inst); break;
-		case 0x00000014: O_(NVKM_SUBDEV_GSP   ,    0); break;
-		case 0x00000015: O_(NVKM_ENGINE_NVJPG ,    0); break;
-		default:
-			break;
-		}
+		/* Translate engine type to NVKM engine identअगरier. */
+#घोषणा I_(T,I) करो अणु info->type = (T); info->inst = (I); पूर्ण जबतक(0)
+#घोषणा O_(T,I) करो अणु WARN_ON(inst); I_(T, I); पूर्ण जबतक (0)
+		चयन (type) अणु
+		हाल 0x00000000: O_(NVKM_ENGINE_GR    ,    0); अवरोध;
+		हाल 0x00000001: O_(NVKM_ENGINE_CE    ,    0); अवरोध;
+		हाल 0x00000002: O_(NVKM_ENGINE_CE    ,    1); अवरोध;
+		हाल 0x00000003: O_(NVKM_ENGINE_CE    ,    2); अवरोध;
+		हाल 0x00000008: O_(NVKM_ENGINE_MSPDEC,    0); अवरोध;
+		हाल 0x00000009: O_(NVKM_ENGINE_MSPPP ,    0); अवरोध;
+		हाल 0x0000000a: O_(NVKM_ENGINE_MSVLD ,    0); अवरोध;
+		हाल 0x0000000b: O_(NVKM_ENGINE_MSENC ,    0); अवरोध;
+		हाल 0x0000000c: O_(NVKM_ENGINE_VIC   ,    0); अवरोध;
+		हाल 0x0000000d: O_(NVKM_ENGINE_SEC2  ,    0); अवरोध;
+		हाल 0x0000000e: I_(NVKM_ENGINE_NVENC , inst); अवरोध;
+		हाल 0x0000000f: O_(NVKM_ENGINE_NVENC ,    1); अवरोध;
+		हाल 0x00000010: I_(NVKM_ENGINE_NVDEC , inst); अवरोध;
+		हाल 0x00000012: I_(NVKM_SUBDEV_IOCTRL, inst); अवरोध;
+		हाल 0x00000013: I_(NVKM_ENGINE_CE    , inst); अवरोध;
+		हाल 0x00000014: O_(NVKM_SUBDEV_GSP   ,    0); अवरोध;
+		हाल 0x00000015: O_(NVKM_ENGINE_NVJPG ,    0); अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		nvkm_debug(subdev, "%02x.%d (%8s): addr %06x fault %2d "
 				   "engine %2d runlist %2d intr %2d "
 				   "reset %2d\n", type, inst,
 			   info->type == NVKM_SUBDEV_NR ? "????????" : nvkm_subdev_type[info->type],
 			   info->addr, info->fault, info->engine, info->runlist,
-			   info->intr, info->reset);
-		info = NULL;
-	}
+			   info->पूर्णांकr, info->reset);
+		info = शून्य;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_top_func
-gk104_top = {
+अटल स्थिर काष्ठा nvkm_top_func
+gk104_top = अणु
 	.oneinit = gk104_top_oneinit,
-};
+पूर्ण;
 
-int
-gk104_top_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_top **ptop)
-{
-	return nvkm_top_new_(&gk104_top, device, type, inst, ptop);
-}
+पूर्णांक
+gk104_top_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_top **ptop)
+अणु
+	वापस nvkm_top_new_(&gk104_top, device, type, inst, ptop);
+पूर्ण

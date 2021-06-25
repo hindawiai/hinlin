@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * PCM179X ASoC I2C driver
  *
@@ -7,51 +8,51 @@
  *     Jacob Siverskog <jacob@teenage.engineering>
  */
 
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
 
-#include "pcm179x.h"
+#समावेश "pcm179x.h"
 
-static int pcm179x_i2c_probe(struct i2c_client *client,
-			      const struct i2c_device_id *id)
-{
-	struct regmap *regmap;
-	int ret;
+अटल पूर्णांक pcm179x_i2c_probe(काष्ठा i2c_client *client,
+			      स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा regmap *regmap;
+	पूर्णांक ret;
 
 	regmap = devm_regmap_init_i2c(client, &pcm179x_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		ret = PTR_ERR(regmap);
 		dev_err(&client->dev, "Failed to allocate regmap: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return pcm179x_common_init(&client->dev, regmap);
-}
+	वापस pcm179x_common_init(&client->dev, regmap);
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id pcm179x_of_match[] = {
-	{ .compatible = "ti,pcm1792a", },
-	{ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id pcm179x_of_match[] = अणु
+	अणु .compatible = "ti,pcm1792a", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pcm179x_of_match);
-#endif
+#पूर्ण_अगर
 
-static const struct i2c_device_id pcm179x_i2c_ids[] = {
-	{ "pcm179x", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id pcm179x_i2c_ids[] = अणु
+	अणु "pcm179x", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, pcm179x_i2c_ids);
 
-static struct i2c_driver pcm179x_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver pcm179x_i2c_driver = अणु
+	.driver = अणु
 		.name	= "pcm179x",
 		.of_match_table = of_match_ptr(pcm179x_of_match),
-	},
+	पूर्ण,
 	.id_table	= pcm179x_i2c_ids,
 	.probe		= pcm179x_i2c_probe,
-};
+पूर्ण;
 
 module_i2c_driver(pcm179x_i2c_driver);
 

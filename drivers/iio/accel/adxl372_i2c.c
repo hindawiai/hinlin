@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * ADXL372 3-Axis Digital Accelerometer I2C driver
  *
  * Copyright 2018 Analog Devices Inc.
  */
 
-#include <linux/i2c.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
 
-#include "adxl372.h"
+#समावेश "adxl372.h"
 
-static const struct regmap_config adxl372_regmap_config = {
+अटल स्थिर काष्ठा regmap_config adxl372_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.readable_noinc_reg = adxl372_readable_noinc_reg,
-};
+	.पढ़ोable_noinc_reg = adxl372_पढ़ोable_noinc_reg,
+पूर्ण;
 
-static int adxl372_i2c_probe(struct i2c_client *client,
-			     const struct i2c_device_id *id)
-{
-	struct regmap *regmap;
-	unsigned int regval;
-	int ret;
+अटल पूर्णांक adxl372_i2c_probe(काष्ठा i2c_client *client,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा regmap *regmap;
+	अचिन्हित पूर्णांक regval;
+	पूर्णांक ret;
 
 	regmap = devm_regmap_init_i2c(client, &adxl372_regmap_config);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
-	ret = regmap_read(regmap, ADXL372_REVID, &regval);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ADXL372_REVID, &regval);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Starting with the 3rd revision an I2C chip bug was fixed */
-	if (regval < 3)
+	अगर (regval < 3)
 		dev_warn(&client->dev,
 		"I2C might not work properly with other devices on the bus");
 
-	return adxl372_probe(&client->dev, regmap, client->irq, id->name);
-}
+	वापस adxl372_probe(&client->dev, regmap, client->irq, id->name);
+पूर्ण
 
-static const struct i2c_device_id adxl372_i2c_id[] = {
-	{ "adxl372", 0 },
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id adxl372_i2c_id[] = अणु
+	अणु "adxl372", 0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, adxl372_i2c_id);
 
-static const struct of_device_id adxl372_of_match[] = {
-	{ .compatible = "adi,adxl372" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id adxl372_of_match[] = अणु
+	अणु .compatible = "adi,adxl372" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, adxl372_of_match);
 
-static struct i2c_driver adxl372_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver adxl372_i2c_driver = अणु
+	.driver = अणु
 		.name = "adxl372_i2c",
 		.of_match_table = adxl372_of_match,
-	},
+	पूर्ण,
 	.probe = adxl372_i2c_probe,
 	.id_table = adxl372_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(adxl372_i2c_driver);
 

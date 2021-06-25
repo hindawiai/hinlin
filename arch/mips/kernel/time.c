@@ -1,172 +1,173 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2001 MontaVista Software Inc.
  * Author: Jun Sun, jsun@mvista.com or jsun@junsun.net
  * Copyright (c) 2003, 2004  Maciej W. Rozycki
  *
- * Common time service routines for MIPS machines.
+ * Common समय service routines क्रम MIPS machines.
  */
-#include <linux/bug.h>
-#include <linux/clockchips.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/param.h>
-#include <linux/time.h>
-#include <linux/timex.h>
-#include <linux/smp.h>
-#include <linux/spinlock.h>
-#include <linux/export.h>
-#include <linux/cpufreq.h>
-#include <linux/delay.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/param.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/समयx.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/export.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/delay.h>
 
-#include <asm/cpu-features.h>
-#include <asm/cpu-type.h>
-#include <asm/div64.h>
-#include <asm/time.h>
+#समावेश <यंत्र/cpu-features.h>
+#समावेश <यंत्र/cpu-type.h>
+#समावेश <यंत्र/भाग64.h>
+#समावेश <यंत्र/समय.स>
 
-#ifdef CONFIG_CPU_FREQ
+#अगर_घोषित CONFIG_CPU_FREQ
 
-static DEFINE_PER_CPU(unsigned long, pcp_lpj_ref);
-static DEFINE_PER_CPU(unsigned long, pcp_lpj_ref_freq);
-static unsigned long glb_lpj_ref;
-static unsigned long glb_lpj_ref_freq;
+अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, pcp_lpj_ref);
+अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, pcp_lpj_ref_freq);
+अटल अचिन्हित दीर्घ glb_lpj_ref;
+अटल अचिन्हित दीर्घ glb_lpj_ref_freq;
 
-static int cpufreq_callback(struct notifier_block *nb,
-			    unsigned long val, void *data)
-{
-	struct cpufreq_freqs *freq = data;
-	struct cpumask *cpus = freq->policy->cpus;
-	unsigned long lpj;
-	int cpu;
+अटल पूर्णांक cpufreq_callback(काष्ठा notअगरier_block *nb,
+			    अचिन्हित दीर्घ val, व्योम *data)
+अणु
+	काष्ठा cpufreq_freqs *freq = data;
+	काष्ठा cpumask *cpus = freq->policy->cpus;
+	अचिन्हित दीर्घ lpj;
+	पूर्णांक cpu;
 
 	/*
-	 * Skip lpj numbers adjustment if the CPU-freq transition is safe for
+	 * Skip lpj numbers adjusपंचांगent अगर the CPU-freq transition is safe क्रम
 	 * the loops delay. (Is this possible?)
 	 */
-	if (freq->flags & CPUFREQ_CONST_LOOPS)
-		return NOTIFY_OK;
+	अगर (freq->flags & CPUFREQ_CONST_LOOPS)
+		वापस NOTIFY_OK;
 
-	/* Save the initial values of the lpjes for future scaling. */
-	if (!glb_lpj_ref) {
+	/* Save the initial values of the lpjes क्रम future scaling. */
+	अगर (!glb_lpj_ref) अणु
 		glb_lpj_ref = boot_cpu_data.udelay_val;
 		glb_lpj_ref_freq = freq->old;
 
-		for_each_online_cpu(cpu) {
+		क्रम_each_online_cpu(cpu) अणु
 			per_cpu(pcp_lpj_ref, cpu) =
 				cpu_data[cpu].udelay_val;
 			per_cpu(pcp_lpj_ref_freq, cpu) = freq->old;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Adjust global lpj variable and per-CPU udelay_val number in
 	 * accordance with the new CPU frequency.
 	 */
-	if ((val == CPUFREQ_PRECHANGE  && freq->old < freq->new) ||
-	    (val == CPUFREQ_POSTCHANGE && freq->old > freq->new)) {
-		loops_per_jiffy = cpufreq_scale(glb_lpj_ref,
+	अगर ((val == CPUFREQ_PRECHANGE  && freq->old < freq->new) ||
+	    (val == CPUFREQ_POSTCHANGE && freq->old > freq->new)) अणु
+		loops_per_jअगरfy = cpufreq_scale(glb_lpj_ref,
 						glb_lpj_ref_freq,
 						freq->new);
 
-		for_each_cpu(cpu, cpus) {
+		क्रम_each_cpu(cpu, cpus) अणु
 			lpj = cpufreq_scale(per_cpu(pcp_lpj_ref, cpu),
 					    per_cpu(pcp_lpj_ref_freq, cpu),
 					    freq->new);
-			cpu_data[cpu].udelay_val = (unsigned int)lpj;
-		}
-	}
+			cpu_data[cpu].udelay_val = (अचिन्हित पूर्णांक)lpj;
+		पूर्ण
+	पूर्ण
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block cpufreq_notifier = {
-	.notifier_call  = cpufreq_callback,
-};
+अटल काष्ठा notअगरier_block cpufreq_notअगरier = अणु
+	.notअगरier_call  = cpufreq_callback,
+पूर्ण;
 
-static int __init register_cpufreq_notifier(void)
-{
-	return cpufreq_register_notifier(&cpufreq_notifier,
+अटल पूर्णांक __init रेजिस्टर_cpufreq_notअगरier(व्योम)
+अणु
+	वापस cpufreq_रेजिस्टर_notअगरier(&cpufreq_notअगरier,
 					 CPUFREQ_TRANSITION_NOTIFIER);
-}
-core_initcall(register_cpufreq_notifier);
+पूर्ण
+core_initcall(रेजिस्टर_cpufreq_notअगरier);
 
-#endif /* CONFIG_CPU_FREQ */
+#पूर्ण_अगर /* CONFIG_CPU_FREQ */
 
 /*
- * forward reference
+ * क्रमward reference
  */
 DEFINE_SPINLOCK(rtc_lock);
 EXPORT_SYMBOL(rtc_lock);
 
-static int null_perf_irq(void)
-{
-	return 0;
-}
+अटल पूर्णांक null_perf_irq(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-int (*perf_irq)(void) = null_perf_irq;
+पूर्णांक (*perf_irq)(व्योम) = null_perf_irq;
 
 EXPORT_SYMBOL(perf_irq);
 
 /*
- * time_init() - it does the following things.
+ * समय_init() - it करोes the following things.
  *
- * 1) plat_time_init() -
+ * 1) plat_समय_init() -
  *	a) (optional) set up RTC routines,
  *	b) (optional) calibrate and set the mips_hpt_frequency
- *	    (only needed if you intended to use cpu counter as timer interrupt
+ *	    (only needed अगर you पूर्णांकended to use cpu counter as समयr पूर्णांकerrupt
  *	     source)
- * 2) calculate a couple of cached variables for later usage
+ * 2) calculate a couple of cached variables क्रम later usage
  */
 
-unsigned int mips_hpt_frequency;
+अचिन्हित पूर्णांक mips_hpt_frequency;
 EXPORT_SYMBOL_GPL(mips_hpt_frequency);
 
-static __init int cpu_has_mfc0_count_bug(void)
-{
-	switch (current_cpu_type()) {
-	case CPU_R4000PC:
-	case CPU_R4000SC:
-	case CPU_R4000MC:
+अटल __init पूर्णांक cpu_has_mfc0_count_bug(व्योम)
+अणु
+	चयन (current_cpu_type()) अणु
+	हाल CPU_R4000PC:
+	हाल CPU_R4000SC:
+	हाल CPU_R4000MC:
 		/*
-		 * V3.0 is documented as suffering from the mfc0 from count bug.
+		 * V3.0 is करोcumented as suffering from the mfc0 from count bug.
 		 * Afaik this is the last version of the R4000.	 Later versions
 		 * were marketed as R4400.
 		 */
-		return 1;
+		वापस 1;
 
-	case CPU_R4400PC:
-	case CPU_R4400SC:
-	case CPU_R4400MC:
+	हाल CPU_R4400PC:
+	हाल CPU_R4400SC:
+	हाल CPU_R4400MC:
 		/*
-		 * The published errata for the R4400 up to 3.0 say the CPU
+		 * The published errata क्रम the R4400 up to 3.0 say the CPU
 		 * has the mfc0 from count bug.
 		 */
-		if ((current_cpu_data.processor_id & 0xff) <= 0x30)
-			return 1;
+		अगर ((current_cpu_data.processor_id & 0xff) <= 0x30)
+			वापस 1;
 
 		/*
 		 * we assume newer revisions are ok
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init time_init(void)
-{
-	plat_time_init();
+व्योम __init समय_init(व्योम)
+अणु
+	plat_समय_init();
 
 	/*
-	 * The use of the R4k timer as a clock event takes precedence;
-	 * if reading the Count register might interfere with the timer
-	 * interrupt, then we don't use the timer as a clock source.
-	 * We may still use the timer as a clock source though if the
-	 * timer interrupt isn't reliable; the interference doesn't
-	 * matter then, because we don't use the interrupt.
+	 * The use of the R4k समयr as a घड़ी event takes precedence;
+	 * अगर पढ़ोing the Count रेजिस्टर might पूर्णांकerfere with the समयr
+	 * पूर्णांकerrupt, then we करोn't use the समयr as a घड़ी source.
+	 * We may still use the समयr as a घड़ी source though अगर the
+	 * समयr पूर्णांकerrupt isn't reliable; the interference doesn't
+	 * matter then, because we करोn't use the पूर्णांकerrupt.
 	 */
-	if (mips_clockevent_init() != 0 || !cpu_has_mfc0_count_bug())
-		init_mips_clocksource();
-}
+	अगर (mips_घड़ीevent_init() != 0 || !cpu_has_mfc0_count_bug())
+		init_mips_घड़ीsource();
+पूर्ण

@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * AppArmor security module
  *
- * This file contains AppArmor security identifier (secid) definitions
+ * This file contains AppArmor security identअगरier (secid) definitions
  *
  * Copyright 2009-2018 Canonical Ltd.
  */
 
-#ifndef __AA_SECID_H
-#define __AA_SECID_H
+#अगर_अघोषित __AA_SECID_H
+#घोषणा __AA_SECID_H
 
-#include <linux/slab.h>
-#include <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
 
-struct aa_label;
+काष्ठा aa_label;
 
 /* secid value that will not be allocated */
-#define AA_SECID_INVALID 0
+#घोषणा AA_SECID_INVALID 0
 
 /* secid value that matches any other secid */
-#define AA_SECID_WILDCARD 1
+#घोषणा AA_SECID_WILDCARD 1
 
-struct aa_label *aa_secid_to_label(u32 secid);
-int apparmor_secid_to_secctx(u32 secid, char **secdata, u32 *seclen);
-int apparmor_secctx_to_secid(const char *secdata, u32 seclen, u32 *secid);
-void apparmor_release_secctx(char *secdata, u32 seclen);
+काष्ठा aa_label *aa_secid_to_label(u32 secid);
+पूर्णांक apparmor_secid_to_secctx(u32 secid, अक्षर **secdata, u32 *seclen);
+पूर्णांक apparmor_secctx_to_secid(स्थिर अक्षर *secdata, u32 seclen, u32 *secid);
+व्योम apparmor_release_secctx(अक्षर *secdata, u32 seclen);
 
 
-int aa_alloc_secid(struct aa_label *label, gfp_t gfp);
-void aa_free_secid(u32 secid);
-void aa_secid_update(u32 secid, struct aa_label *label);
+पूर्णांक aa_alloc_secid(काष्ठा aa_label *label, gfp_t gfp);
+व्योम aa_मुक्त_secid(u32 secid);
+व्योम aa_secid_update(u32 secid, काष्ठा aa_label *label);
 
-void aa_secids_init(void);
+व्योम aa_secids_init(व्योम);
 
-#endif /* __AA_SECID_H */
+#पूर्ण_अगर /* __AA_SECID_H */

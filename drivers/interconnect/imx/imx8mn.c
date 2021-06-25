@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Interconnect framework driver for i.MX8MN SoC
+ * Interconnect framework driver क्रम i.MX8MN SoC
  *
  * Copyright (c) 2019-2020, NXP
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <dt-bindings/interconnect/imx8mn.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <dt-bindings/पूर्णांकerconnect/imx8mn.h>
 
-#include "imx.h"
+#समावेश "imx.h"
 
-static const struct imx_icc_node_adj_desc imx8mn_dram_adj = {
+अटल स्थिर काष्ठा imx_icc_node_adj_desc imx8mn_dram_adj = अणु
 	.bw_mul = 1,
-	.bw_div = 4,
+	.bw_भाग = 4,
 	.phandle_name = "fsl,ddrc",
-};
+पूर्ण;
 
-static const struct imx_icc_node_adj_desc imx8mn_noc_adj = {
+अटल स्थिर काष्ठा imx_icc_node_adj_desc imx8mn_noc_adj = अणु
 	.bw_mul = 1,
-	.bw_div = 4,
-	.main_noc = true,
-};
+	.bw_भाग = 4,
+	.मुख्य_noc = true,
+पूर्ण;
 
 /*
  * Describe bus masters, slaves and connections between them
  *
- * This is a simplified subset of the bus diagram, there are several other
- * PL301 nics which are skipped/merged into PL301_MAIN
+ * This is a simplअगरied subset of the bus diagram, there are several other
+ * PL301 nics which are skipped/merged पूर्णांकo PL301_MAIN
  */
-static struct imx_icc_node_desc nodes[] = {
+अटल काष्ठा imx_icc_node_desc nodes[] = अणु
 	DEFINE_BUS_INTERCONNECT("NOC", IMX8MN_ICN_NOC, &imx8mn_noc_adj,
 			IMX8MN_ICS_DRAM, IMX8MN_ICN_MAIN),
 
 	DEFINE_BUS_SLAVE("DRAM", IMX8MN_ICS_DRAM, &imx8mn_dram_adj),
-	DEFINE_BUS_SLAVE("OCRAM", IMX8MN_ICS_OCRAM, NULL),
+	DEFINE_BUS_SLAVE("OCRAM", IMX8MN_ICS_OCRAM, शून्य),
 	DEFINE_BUS_MASTER("A53", IMX8MN_ICM_A53, IMX8MN_ICN_NOC),
 
 	/* GPUMIX */
 	DEFINE_BUS_MASTER("GPU", IMX8MN_ICM_GPU, IMX8MN_ICN_GPU),
-	DEFINE_BUS_INTERCONNECT("PL301_GPU", IMX8MN_ICN_GPU, NULL, IMX8MN_ICN_NOC),
+	DEFINE_BUS_INTERCONNECT("PL301_GPU", IMX8MN_ICN_GPU, शून्य, IMX8MN_ICN_NOC),
 
 	/* DISPLAYMIX */
 	DEFINE_BUS_MASTER("CSI1", IMX8MN_ICM_CSI1, IMX8MN_ICN_MIPI),
 	DEFINE_BUS_MASTER("CSI2", IMX8MN_ICM_CSI2, IMX8MN_ICN_MIPI),
 	DEFINE_BUS_MASTER("ISI", IMX8MN_ICM_ISI, IMX8MN_ICN_MIPI),
 	DEFINE_BUS_MASTER("LCDIF", IMX8MN_ICM_LCDIF, IMX8MN_ICN_MIPI),
-	DEFINE_BUS_INTERCONNECT("PL301_MIPI", IMX8MN_ICN_MIPI, NULL, IMX8MN_ICN_NOC),
+	DEFINE_BUS_INTERCONNECT("PL301_MIPI", IMX8MN_ICN_MIPI, शून्य, IMX8MN_ICN_NOC),
 
 	/* USB goes straight to NOC */
 	DEFINE_BUS_MASTER("USB", IMX8MN_ICM_USB, IMX8MN_ICN_NOC),
@@ -54,41 +55,41 @@ static struct imx_icc_node_desc nodes[] = {
 	/* Audio */
 	DEFINE_BUS_MASTER("SDMA2", IMX8MN_ICM_SDMA2, IMX8MN_ICN_AUDIO),
 	DEFINE_BUS_MASTER("SDMA3", IMX8MN_ICM_SDMA3, IMX8MN_ICN_AUDIO),
-	DEFINE_BUS_INTERCONNECT("PL301_AUDIO", IMX8MN_ICN_AUDIO, NULL, IMX8MN_ICN_MAIN),
+	DEFINE_BUS_INTERCONNECT("PL301_AUDIO", IMX8MN_ICN_AUDIO, शून्य, IMX8MN_ICN_MAIN),
 
 	/* Ethernet */
 	DEFINE_BUS_MASTER("ENET", IMX8MN_ICM_ENET, IMX8MN_ICN_ENET),
-	DEFINE_BUS_INTERCONNECT("PL301_ENET", IMX8MN_ICN_ENET, NULL, IMX8MN_ICN_MAIN),
+	DEFINE_BUS_INTERCONNECT("PL301_ENET", IMX8MN_ICN_ENET, शून्य, IMX8MN_ICN_MAIN),
 
 	/* Other */
 	DEFINE_BUS_MASTER("SDMA1", IMX8MN_ICM_SDMA1, IMX8MN_ICN_MAIN),
-	DEFINE_BUS_MASTER("NAND", IMX8MN_ICM_NAND, IMX8MN_ICN_MAIN),
+	DEFINE_BUS_MASTER("NAND", IMX8MN_ICM_न_अंकD, IMX8MN_ICN_MAIN),
 	DEFINE_BUS_MASTER("USDHC1", IMX8MN_ICM_USDHC1, IMX8MN_ICN_MAIN),
 	DEFINE_BUS_MASTER("USDHC2", IMX8MN_ICM_USDHC2, IMX8MN_ICN_MAIN),
 	DEFINE_BUS_MASTER("USDHC3", IMX8MN_ICM_USDHC3, IMX8MN_ICN_MAIN),
-	DEFINE_BUS_INTERCONNECT("PL301_MAIN", IMX8MN_ICN_MAIN, NULL,
+	DEFINE_BUS_INTERCONNECT("PL301_MAIN", IMX8MN_ICN_MAIN, शून्य,
 			IMX8MN_ICN_NOC, IMX8MN_ICS_OCRAM),
-};
+पूर्ण;
 
-static int imx8mn_icc_probe(struct platform_device *pdev)
-{
-	return imx_icc_register(pdev, nodes, ARRAY_SIZE(nodes));
-}
+अटल पूर्णांक imx8mn_icc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस imx_icc_रेजिस्टर(pdev, nodes, ARRAY_SIZE(nodes));
+पूर्ण
 
-static int imx8mn_icc_remove(struct platform_device *pdev)
-{
-	return imx_icc_unregister(pdev);
-}
+अटल पूर्णांक imx8mn_icc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस imx_icc_unरेजिस्टर(pdev);
+पूर्ण
 
-static struct platform_driver imx8mn_icc_driver = {
+अटल काष्ठा platक्रमm_driver imx8mn_icc_driver = अणु
 	.probe = imx8mn_icc_probe,
-	.remove = imx8mn_icc_remove,
-	.driver = {
+	.हटाओ = imx8mn_icc_हटाओ,
+	.driver = अणु
 		.name = "imx8mn-interconnect",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(imx8mn_icc_driver);
+module_platक्रमm_driver(imx8mn_icc_driver);
 MODULE_ALIAS("platform:imx8mn-interconnect");
 MODULE_AUTHOR("Leonard Crestez <leonard.crestez@nxp.com>");
 MODULE_LICENSE("GPL v2");

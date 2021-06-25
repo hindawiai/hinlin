@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * hvconsole.h
  * Copyright (C) 2004 Ryan S Arnold, IBM Corporation
@@ -6,26 +7,26 @@
  * LPAR console support.
  */
 
-#ifndef _PPC64_HVCONSOLE_H
-#define _PPC64_HVCONSOLE_H
-#ifdef __KERNEL__
+#अगर_अघोषित _PPC64_HVCONSOLE_H
+#घोषणा _PPC64_HVCONSOLE_H
+#अगर_घोषित __KERNEL__
 
 /*
- * PSeries firmware will only send/recv up to 16 bytes of character data per
+ * PSeries firmware will only send/recv up to 16 bytes of अक्षरacter data per
  * hcall.
  */
-#define MAX_VIO_PUT_CHARS	16
-#define SIZE_VIO_GET_CHARS	16
+#घोषणा MAX_VIO_PUT_CHARS	16
+#घोषणा SIZE_VIO_GET_CHARS	16
 
 /*
- * Vio firmware always attempts to fetch MAX_VIO_GET_CHARS chars.  The 'count'
- * parm is included to conform to put_chars() function pointer template
+ * Vio firmware always attempts to fetch MAX_VIO_GET_CHARS अक्षरs.  The 'count'
+ * parm is included to conक्रमm to put_अक्षरs() function poपूर्णांकer ढाँचा
  */
-extern int hvc_get_chars(uint32_t vtermno, char *buf, int count);
-extern int hvc_put_chars(uint32_t vtermno, const char *buf, int count);
+बाह्य पूर्णांक hvc_get_अक्षरs(uपूर्णांक32_t vtermno, अक्षर *buf, पूर्णांक count);
+बाह्य पूर्णांक hvc_put_अक्षरs(uपूर्णांक32_t vtermno, स्थिर अक्षर *buf, पूर्णांक count);
 
 /* Provided by HVC VIO */
-void hvc_vio_init_early(void);
+व्योम hvc_vio_init_early(व्योम);
 
-#endif /* __KERNEL__ */
-#endif /* _PPC64_HVCONSOLE_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* _PPC64_HVCONSOLE_H */

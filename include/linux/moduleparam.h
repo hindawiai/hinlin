@@ -1,318 +1,319 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_MODULE_PARAMS_H
-#define _LINUX_MODULE_PARAMS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_MODULE_PARAMS_H
+#घोषणा _LINUX_MODULE_PARAMS_H
 /* (C) Copyright 2001, 2002 Rusty Russell IBM Corporation */
-#include <linux/init.h>
-#include <linux/stringify.h>
-#include <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/kernel.h>
 
 /* You can override this manually, but generally this should match the
    module name. */
-#ifdef MODULE
-#define MODULE_PARAM_PREFIX /* empty */
-#define __MODULE_INFO_PREFIX /* empty */
-#else
-#define MODULE_PARAM_PREFIX KBUILD_MODNAME "."
+#अगर_घोषित MODULE
+#घोषणा MODULE_PARAM_PREFIX /* empty */
+#घोषणा __MODULE_INFO_PREFIX /* empty */
+#अन्यथा
+#घोषणा MODULE_PARAM_PREFIX KBUILD_MODNAME "."
 /* We cannot use MODULE_PARAM_PREFIX because some modules override it. */
-#define __MODULE_INFO_PREFIX KBUILD_MODNAME "."
-#endif
+#घोषणा __MODULE_INFO_PREFIX KBUILD_MODNAME "."
+#पूर्ण_अगर
 
-/* Chosen so that structs with an unsigned long line up. */
-#define MAX_PARAM_PREFIX_LEN (64 - sizeof(unsigned long))
+/* Chosen so that काष्ठाs with an अचिन्हित दीर्घ line up. */
+#घोषणा MAX_PARAM_PREFIX_LEN (64 - माप(अचिन्हित दीर्घ))
 
-#define __MODULE_INFO(tag, name, info)					  \
-	static const char __UNIQUE_ID(name)[]				  \
+#घोषणा __MODULE_INFO(tag, name, info)					  \
+	अटल स्थिर अक्षर __UNIQUE_ID(name)[]				  \
 		__used __section(".modinfo") __aligned(1)		  \
-		= __MODULE_INFO_PREFIX __stringify(tag) "=" info
+		= __MODULE_INFO_PREFIX __stringअगरy(tag) "=" info
 
-#define __MODULE_PARM_TYPE(name, _type)					  \
+#घोषणा __MODULE_PARM_TYPE(name, _type)					  \
 	__MODULE_INFO(parmtype, name##type, #name ":" _type)
 
-/* One for each parameter, describing how to use it.  Some files do
+/* One क्रम each parameter, describing how to use it.  Some files करो
    multiple of these per line, so can't just use MODULE_INFO. */
-#define MODULE_PARM_DESC(_parm, desc) \
+#घोषणा MODULE_PARM_DESC(_parm, desc) \
 	__MODULE_INFO(parm, _parm, #_parm ":" desc)
 
-struct kernel_param;
+काष्ठा kernel_param;
 
 /*
- * Flags available for kernel_param_ops
+ * Flags available क्रम kernel_param_ops
  *
- * NOARG - the parameter allows for no argument (foo instead of foo=1)
+ * NOARG - the parameter allows क्रम no argument (foo instead of foo=1)
  */
-enum {
+क्रमागत अणु
 	KERNEL_PARAM_OPS_FL_NOARG = (1 << 0)
-};
+पूर्ण;
 
-struct kernel_param_ops {
+काष्ठा kernel_param_ops अणु
 	/* How the ops should behave */
-	unsigned int flags;
-	/* Returns 0, or -errno.  arg is in kp->arg. */
-	int (*set)(const char *val, const struct kernel_param *kp);
-	/* Returns length written or -errno.  Buffer is 4k (ie. be short!) */
-	int (*get)(char *buffer, const struct kernel_param *kp);
-	/* Optional function to free kp->arg when module unloaded. */
-	void (*free)(void *arg);
-};
+	अचिन्हित पूर्णांक flags;
+	/* Returns 0, or -त्रुटि_सं.  arg is in kp->arg. */
+	पूर्णांक (*set)(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+	/* Returns length written or -त्रुटि_सं.  Buffer is 4k (ie. be लघु!) */
+	पूर्णांक (*get)(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
+	/* Optional function to मुक्त kp->arg when module unloaded. */
+	व्योम (*मुक्त)(व्योम *arg);
+पूर्ण;
 
 /*
- * Flags available for kernel_param
+ * Flags available क्रम kernel_param
  *
- * UNSAFE - the parameter is dangerous and setting it will taint the kernel
- * HWPARAM - Hardware param not permitted in lockdown mode
+ * UNSAFE - the parameter is dangerous and setting it will taपूर्णांक the kernel
+ * HWPARAM - Hardware param not permitted in lockकरोwn mode
  */
-enum {
+क्रमागत अणु
 	KERNEL_PARAM_FL_UNSAFE	= (1 << 0),
 	KERNEL_PARAM_FL_HWPARAM	= (1 << 1),
-};
+पूर्ण;
 
-struct kernel_param {
-	const char *name;
-	struct module *mod;
-	const struct kernel_param_ops *ops;
-	const u16 perm;
+काष्ठा kernel_param अणु
+	स्थिर अक्षर *name;
+	काष्ठा module *mod;
+	स्थिर काष्ठा kernel_param_ops *ops;
+	स्थिर u16 perm;
 	s8 level;
 	u8 flags;
-	union {
-		void *arg;
-		const struct kparam_string *str;
-		const struct kparam_array *arr;
-	};
-};
+	जोड़ अणु
+		व्योम *arg;
+		स्थिर काष्ठा kparam_string *str;
+		स्थिर काष्ठा kparam_array *arr;
+	पूर्ण;
+पूर्ण;
 
-extern const struct kernel_param __start___param[], __stop___param[];
+बाह्य स्थिर काष्ठा kernel_param __start___param[], __stop___param[];
 
-/* Special one for strings we want to copy into */
-struct kparam_string {
-	unsigned int maxlen;
-	char *string;
-};
+/* Special one क्रम strings we want to copy पूर्णांकo */
+काष्ठा kparam_string अणु
+	अचिन्हित पूर्णांक maxlen;
+	अक्षर *string;
+पूर्ण;
 
-/* Special one for arrays */
-struct kparam_array
-{
-	unsigned int max;
-	unsigned int elemsize;
-	unsigned int *num;
-	const struct kernel_param_ops *ops;
-	void *elem;
-};
+/* Special one क्रम arrays */
+काष्ठा kparam_array
+अणु
+	अचिन्हित पूर्णांक max;
+	अचिन्हित पूर्णांक elemsize;
+	अचिन्हित पूर्णांक *num;
+	स्थिर काष्ठा kernel_param_ops *ops;
+	व्योम *elem;
+पूर्ण;
 
 /**
- * module_param - typesafe helper for a module/cmdline parameter
+ * module_param - typesafe helper क्रम a module/cmdline parameter
  * @name: the variable to alter, and exposed parameter name.
  * @type: the type of the parameter
  * @perm: visibility in sysfs.
  *
  * @name becomes the module parameter, or (prefixed by KBUILD_MODNAME and a
  * ".") the kernel commandline parameter.  Note that - is changed to _, so
- * the user can use "foo-bar=1" even for variable "foo_bar".
+ * the user can use "foo-bar=1" even क्रम variable "foo_bar".
  *
- * @perm is 0 if the variable is not to appear in sysfs, or 0444
- * for world-readable, 0644 for root-writable, etc.  Note that if it
+ * @perm is 0 अगर the variable is not to appear in sysfs, or 0444
+ * क्रम world-पढ़ोable, 0644 क्रम root-writable, etc.  Note that अगर it
  * is writable, you may need to use kernel_param_lock() around
- * accesses (esp. charp, which can be kfreed when it changes).
+ * accesses (esp. अक्षरp, which can be kमुक्तd when it changes).
  *
  * The @type is simply pasted to refer to a param_ops_##type and a
- * param_check_##type: for convenience many standard types are provided but
+ * param_check_##type: क्रम convenience many standard types are provided but
  * you can create your own by defining those variables.
  *
  * Standard types are:
- *	byte, hexint, short, ushort, int, uint, long, ulong
- *	charp: a character pointer
+ *	byte, hexपूर्णांक, लघु, uलघु, पूर्णांक, uपूर्णांक, दीर्घ, uदीर्घ
+ *	अक्षरp: a अक्षरacter poपूर्णांकer
  *	bool: a bool, values 0/1, y/n, Y/N.
  *	invbool: the above, only sense-reversed (N = true).
  */
-#define module_param(name, type, perm)				\
+#घोषणा module_param(name, type, perm)				\
 	module_param_named(name, name, type, perm)
 
 /**
- * module_param_unsafe - same as module_param but taints kernel
+ * module_param_unsafe - same as module_param but taपूर्णांकs kernel
  * @name: the variable to alter, and exposed parameter name.
  * @type: the type of the parameter
  * @perm: visibility in sysfs.
  */
-#define module_param_unsafe(name, type, perm)			\
+#घोषणा module_param_unsafe(name, type, perm)			\
 	module_param_named_unsafe(name, name, type, perm)
 
 /**
- * module_param_named - typesafe helper for a renamed module/cmdline parameter
- * @name: a valid C identifier which is the parameter name.
+ * module_param_named - typesafe helper क्रम a नामd module/cmdline parameter
+ * @name: a valid C identअगरier which is the parameter name.
  * @value: the actual lvalue to alter.
  * @type: the type of the parameter
  * @perm: visibility in sysfs.
  *
  * Usually it's a good idea to have variable names and user-exposed names the
- * same, but that's harder if the variable must be non-static or is inside a
- * structure.  This allows exposure under a different name.
+ * same, but that's harder अगर the variable must be non-अटल or is inside a
+ * काष्ठाure.  This allows exposure under a dअगरferent name.
  */
-#define module_param_named(name, value, type, perm)			   \
+#घोषणा module_param_named(name, value, type, perm)			   \
 	param_check_##type(name, &(value));				   \
 	module_param_cb(name, &param_ops_##type, &value, perm);		   \
 	__MODULE_PARM_TYPE(name, #type)
 
 /**
- * module_param_named_unsafe - same as module_param_named but taints kernel
- * @name: a valid C identifier which is the parameter name.
+ * module_param_named_unsafe - same as module_param_named but taपूर्णांकs kernel
+ * @name: a valid C identअगरier which is the parameter name.
  * @value: the actual lvalue to alter.
  * @type: the type of the parameter
  * @perm: visibility in sysfs.
  */
-#define module_param_named_unsafe(name, value, type, perm)		\
+#घोषणा module_param_named_unsafe(name, value, type, perm)		\
 	param_check_##type(name, &(value));				\
 	module_param_cb_unsafe(name, &param_ops_##type, &value, perm);	\
 	__MODULE_PARM_TYPE(name, #type)
 
 /**
- * module_param_cb - general callback for a module/cmdline parameter
- * @name: a valid C identifier which is the parameter name.
- * @ops: the set & get operations for this parameter.
- * @arg: args for @ops
+ * module_param_cb - general callback क्रम a module/cmdline parameter
+ * @name: a valid C identअगरier which is the parameter name.
+ * @ops: the set & get operations क्रम this parameter.
+ * @arg: args क्रम @ops
  * @perm: visibility in sysfs.
  *
- * The ops can have NULL set or get functions.
+ * The ops can have शून्य set or get functions.
  */
-#define module_param_cb(name, ops, arg, perm)				      \
+#घोषणा module_param_cb(name, ops, arg, perm)				      \
 	__module_param_call(MODULE_PARAM_PREFIX, name, ops, arg, perm, -1, 0)
 
-#define module_param_cb_unsafe(name, ops, arg, perm)			      \
+#घोषणा module_param_cb_unsafe(name, ops, arg, perm)			      \
 	__module_param_call(MODULE_PARAM_PREFIX, name, ops, arg, perm, -1,    \
 			    KERNEL_PARAM_FL_UNSAFE)
 
-#define __level_param_cb(name, ops, arg, perm, level)			\
+#घोषणा __level_param_cb(name, ops, arg, perm, level)			\
 	__module_param_call(MODULE_PARAM_PREFIX, name, ops, arg, perm, level, 0)
 /**
- * core_param_cb - general callback for a module/cmdline parameter
- *                 to be evaluated before core initcall level
- * @name: a valid C identifier which is the parameter name.
- * @ops: the set & get operations for this parameter.
- * @arg: args for @ops
+ * core_param_cb - general callback क्रम a module/cmdline parameter
+ *                 to be evaluated beक्रमe core initcall level
+ * @name: a valid C identअगरier which is the parameter name.
+ * @ops: the set & get operations क्रम this parameter.
+ * @arg: args क्रम @ops
  * @perm: visibility in sysfs.
  *
- * The ops can have NULL set or get functions.
+ * The ops can have शून्य set or get functions.
  */
-#define core_param_cb(name, ops, arg, perm)		\
+#घोषणा core_param_cb(name, ops, arg, perm)		\
 	__level_param_cb(name, ops, arg, perm, 1)
 
 /**
- * postcore_param_cb - general callback for a module/cmdline parameter
- *                     to be evaluated before postcore initcall level
- * @name: a valid C identifier which is the parameter name.
- * @ops: the set & get operations for this parameter.
- * @arg: args for @ops
+ * postcore_param_cb - general callback क्रम a module/cmdline parameter
+ *                     to be evaluated beक्रमe postcore initcall level
+ * @name: a valid C identअगरier which is the parameter name.
+ * @ops: the set & get operations क्रम this parameter.
+ * @arg: args क्रम @ops
  * @perm: visibility in sysfs.
  *
- * The ops can have NULL set or get functions.
+ * The ops can have शून्य set or get functions.
  */
-#define postcore_param_cb(name, ops, arg, perm)		\
+#घोषणा postcore_param_cb(name, ops, arg, perm)		\
 	__level_param_cb(name, ops, arg, perm, 2)
 
 /**
- * arch_param_cb - general callback for a module/cmdline parameter
- *                 to be evaluated before arch initcall level
- * @name: a valid C identifier which is the parameter name.
- * @ops: the set & get operations for this parameter.
- * @arg: args for @ops
+ * arch_param_cb - general callback क्रम a module/cmdline parameter
+ *                 to be evaluated beक्रमe arch initcall level
+ * @name: a valid C identअगरier which is the parameter name.
+ * @ops: the set & get operations क्रम this parameter.
+ * @arg: args क्रम @ops
  * @perm: visibility in sysfs.
  *
- * The ops can have NULL set or get functions.
+ * The ops can have शून्य set or get functions.
  */
-#define arch_param_cb(name, ops, arg, perm)		\
+#घोषणा arch_param_cb(name, ops, arg, perm)		\
 	__level_param_cb(name, ops, arg, perm, 3)
 
 /**
- * subsys_param_cb - general callback for a module/cmdline parameter
- *                   to be evaluated before subsys initcall level
- * @name: a valid C identifier which is the parameter name.
- * @ops: the set & get operations for this parameter.
- * @arg: args for @ops
+ * subsys_param_cb - general callback क्रम a module/cmdline parameter
+ *                   to be evaluated beक्रमe subsys initcall level
+ * @name: a valid C identअगरier which is the parameter name.
+ * @ops: the set & get operations क्रम this parameter.
+ * @arg: args क्रम @ops
  * @perm: visibility in sysfs.
  *
- * The ops can have NULL set or get functions.
+ * The ops can have शून्य set or get functions.
  */
-#define subsys_param_cb(name, ops, arg, perm)		\
+#घोषणा subsys_param_cb(name, ops, arg, perm)		\
 	__level_param_cb(name, ops, arg, perm, 4)
 
 /**
- * fs_param_cb - general callback for a module/cmdline parameter
- *               to be evaluated before fs initcall level
- * @name: a valid C identifier which is the parameter name.
- * @ops: the set & get operations for this parameter.
- * @arg: args for @ops
+ * fs_param_cb - general callback क्रम a module/cmdline parameter
+ *               to be evaluated beक्रमe fs initcall level
+ * @name: a valid C identअगरier which is the parameter name.
+ * @ops: the set & get operations क्रम this parameter.
+ * @arg: args क्रम @ops
  * @perm: visibility in sysfs.
  *
- * The ops can have NULL set or get functions.
+ * The ops can have शून्य set or get functions.
  */
-#define fs_param_cb(name, ops, arg, perm)		\
+#घोषणा fs_param_cb(name, ops, arg, perm)		\
 	__level_param_cb(name, ops, arg, perm, 5)
 
 /**
- * device_param_cb - general callback for a module/cmdline parameter
- *                   to be evaluated before device initcall level
- * @name: a valid C identifier which is the parameter name.
- * @ops: the set & get operations for this parameter.
- * @arg: args for @ops
+ * device_param_cb - general callback क्रम a module/cmdline parameter
+ *                   to be evaluated beक्रमe device initcall level
+ * @name: a valid C identअगरier which is the parameter name.
+ * @ops: the set & get operations क्रम this parameter.
+ * @arg: args क्रम @ops
  * @perm: visibility in sysfs.
  *
- * The ops can have NULL set or get functions.
+ * The ops can have शून्य set or get functions.
  */
-#define device_param_cb(name, ops, arg, perm)		\
+#घोषणा device_param_cb(name, ops, arg, perm)		\
 	__level_param_cb(name, ops, arg, perm, 6)
 
 /**
- * late_param_cb - general callback for a module/cmdline parameter
- *                 to be evaluated before late initcall level
- * @name: a valid C identifier which is the parameter name.
- * @ops: the set & get operations for this parameter.
- * @arg: args for @ops
+ * late_param_cb - general callback क्रम a module/cmdline parameter
+ *                 to be evaluated beक्रमe late initcall level
+ * @name: a valid C identअगरier which is the parameter name.
+ * @ops: the set & get operations क्रम this parameter.
+ * @arg: args क्रम @ops
  * @perm: visibility in sysfs.
  *
- * The ops can have NULL set or get functions.
+ * The ops can have शून्य set or get functions.
  */
-#define late_param_cb(name, ops, arg, perm)		\
+#घोषणा late_param_cb(name, ops, arg, perm)		\
 	__level_param_cb(name, ops, arg, perm, 7)
 
-/* On alpha, ia64 and ppc64 relocations to global data cannot go into
-   read-only sections (which is part of respective UNIX ABI on these
-   platforms). So 'const' makes no sense and even causes compile failures
+/* On alpha, ia64 and ppc64 relocations to global data cannot go पूर्णांकo
+   पढ़ो-only sections (which is part of respective UNIX ABI on these
+   platक्रमms). So 'const' makes no sense and even causes compile failures
    with some compilers. */
-#if defined(CONFIG_ALPHA) || defined(CONFIG_IA64) || defined(CONFIG_PPC64)
-#define __moduleparam_const
-#else
-#define __moduleparam_const const
-#endif
+#अगर defined(CONFIG_ALPHA) || defined(CONFIG_IA64) || defined(CONFIG_PPC64)
+#घोषणा __moduleparam_स्थिर
+#अन्यथा
+#घोषणा __moduleparam_स्थिर स्थिर
+#पूर्ण_अगर
 
-/* This is the fundamental function for registering boot/module
+/* This is the fundamental function क्रम रेजिस्टरing boot/module
    parameters. */
-#define __module_param_call(prefix, name, ops, arg, perm, level, flags)	\
+#घोषणा __module_param_call(prefix, name, ops, arg, perm, level, flags)	\
 	/* Default value instead of permissions? */			\
-	static const char __param_str_##name[] = prefix #name;		\
-	static struct kernel_param __moduleparam_const __param_##name	\
+	अटल स्थिर अक्षर __param_str_##name[] = prefix #name;		\
+	अटल काष्ठा kernel_param __moduleparam_स्थिर __param_##name	\
 	__used __section("__param")					\
-	__aligned(__alignof__(struct kernel_param))			\
-	= { __param_str_##name, THIS_MODULE, ops,			\
-	    VERIFY_OCTAL_PERMISSIONS(perm), level, flags, { arg } }
+	__aligned(__alignof__(काष्ठा kernel_param))			\
+	= अणु __param_str_##name, THIS_MODULE, ops,			\
+	    VERIFY_OCTAL_PERMISSIONS(perm), level, flags, अणु arg पूर्ण पूर्ण
 
 /* Obsolete - use module_param_cb() */
-#define module_param_call(name, _set, _get, arg, perm)			\
-	static const struct kernel_param_ops __param_ops_##name =	\
-		{ .flags = 0, .set = _set, .get = _get };		\
+#घोषणा module_param_call(name, _set, _get, arg, perm)			\
+	अटल स्थिर काष्ठा kernel_param_ops __param_ops_##name =	\
+		अणु .flags = 0, .set = _set, .get = _get पूर्ण;		\
 	__module_param_call(MODULE_PARAM_PREFIX,			\
 			    name, &__param_ops_##name, arg, perm, -1, 0)
 
-#ifdef CONFIG_SYSFS
-extern void kernel_param_lock(struct module *mod);
-extern void kernel_param_unlock(struct module *mod);
-#else
-static inline void kernel_param_lock(struct module *mod)
-{
-}
-static inline void kernel_param_unlock(struct module *mod)
-{
-}
-#endif
+#अगर_घोषित CONFIG_SYSFS
+बाह्य व्योम kernel_param_lock(काष्ठा module *mod);
+बाह्य व्योम kernel_param_unlock(काष्ठा module *mod);
+#अन्यथा
+अटल अंतरभूत व्योम kernel_param_lock(काष्ठा module *mod)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम kernel_param_unlock(काष्ठा module *mod)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef MODULE
+#अगर_अघोषित MODULE
 /**
  * core_param - define a historical core kernel parameter.
  * @name: the name of the cmdline and sysfs parameter (often the same as var)
@@ -321,207 +322,207 @@ static inline void kernel_param_unlock(struct module *mod)
  * @perm: visibility in sysfs
  *
  * core_param is just like module_param(), but cannot be modular and
- * doesn't add a prefix (such as "printk.").  This is for compatibility
+ * करोesn't add a prefix (such as "printk.").  This is क्रम compatibility
  * with __setup(), and it makes sense as truly core parameters aren't
  * tied to the particular file they're in.
  */
-#define core_param(name, var, type, perm)				\
+#घोषणा core_param(name, var, type, perm)				\
 	param_check_##type(name, &(var));				\
 	__module_param_call("", name, &param_ops_##type, &var, perm, -1, 0)
 
 /**
- * core_param_unsafe - same as core_param but taints kernel
+ * core_param_unsafe - same as core_param but taपूर्णांकs kernel
  * @name: the name of the cmdline and sysfs parameter (often the same as var)
  * @var: the variable
  * @type: the type of the parameter
  * @perm: visibility in sysfs
  */
-#define core_param_unsafe(name, var, type, perm)		\
+#घोषणा core_param_unsafe(name, var, type, perm)		\
 	param_check_##type(name, &(var));				\
 	__module_param_call("", name, &param_ops_##type, &var, perm,	\
 			    -1, KERNEL_PARAM_FL_UNSAFE)
 
-#endif /* !MODULE */
+#पूर्ण_अगर /* !MODULE */
 
 /**
- * module_param_string - a char array parameter
+ * module_param_string - a अक्षर array parameter
  * @name: the name of the parameter
  * @string: the string variable
  * @len: the maximum length of the string, incl. terminator
  * @perm: visibility in sysfs.
  *
- * This actually copies the string when it's set (unlike type charp).
- * @len is usually just sizeof(string).
+ * This actually copies the string when it's set (unlike type अक्षरp).
+ * @len is usually just माप(string).
  */
-#define module_param_string(name, string, len, perm)			\
-	static const struct kparam_string __param_string_##name		\
-		= { len, string };					\
+#घोषणा module_param_string(name, string, len, perm)			\
+	अटल स्थिर काष्ठा kparam_string __param_string_##name		\
+		= अणु len, string पूर्ण;					\
 	__module_param_call(MODULE_PARAM_PREFIX, name,			\
 			    &param_ops_string,				\
 			    .str = &__param_string_##name, perm, -1, 0);\
 	__MODULE_PARM_TYPE(name, "string")
 
 /**
- * parameq - checks if two parameter names match
+ * parameq - checks अगर two parameter names match
  * @name1: parameter name 1
  * @name2: parameter name 2
  *
- * Returns true if the two parameter names are equal.
+ * Returns true अगर the two parameter names are equal.
  * Dashes (-) are considered equal to underscores (_).
  */
-extern bool parameq(const char *name1, const char *name2);
+बाह्य bool parameq(स्थिर अक्षर *name1, स्थिर अक्षर *name2);
 
 /**
- * parameqn - checks if two parameter names match
+ * parameqn - checks अगर two parameter names match
  * @name1: parameter name 1
  * @name2: parameter name 2
  * @n: the length to compare
  *
- * Similar to parameq(), except it compares @n characters.
+ * Similar to parameq(), except it compares @n अक्षरacters.
  */
-extern bool parameqn(const char *name1, const char *name2, size_t n);
+बाह्य bool parameqn(स्थिर अक्षर *name1, स्थिर अक्षर *name2, माप_प्रकार n);
 
 /* Called on module insert or kernel boot */
-extern char *parse_args(const char *name,
-		      char *args,
-		      const struct kernel_param *params,
-		      unsigned num,
+बाह्य अक्षर *parse_args(स्थिर अक्षर *name,
+		      अक्षर *args,
+		      स्थिर काष्ठा kernel_param *params,
+		      अचिन्हित num,
 		      s16 level_min,
 		      s16 level_max,
-		      void *arg,
-		      int (*unknown)(char *param, char *val,
-				     const char *doing, void *arg));
+		      व्योम *arg,
+		      पूर्णांक (*unknown)(अक्षर *param, अक्षर *val,
+				     स्थिर अक्षर *करोing, व्योम *arg));
 
-/* Called by module remove. */
-#ifdef CONFIG_SYSFS
-extern void destroy_params(const struct kernel_param *params, unsigned num);
-#else
-static inline void destroy_params(const struct kernel_param *params,
-				  unsigned num)
-{
-}
-#endif /* !CONFIG_SYSFS */
+/* Called by module हटाओ. */
+#अगर_घोषित CONFIG_SYSFS
+बाह्य व्योम destroy_params(स्थिर काष्ठा kernel_param *params, अचिन्हित num);
+#अन्यथा
+अटल अंतरभूत व्योम destroy_params(स्थिर काष्ठा kernel_param *params,
+				  अचिन्हित num)
+अणु
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_SYSFS */
 
 /* All the helper functions */
-/* The macros to do compile-time type checking stolen from Jakub
-   Jelinek, who IIRC came up with this idea for the 2.4 module init code. */
-#define __param_check(name, p, type) \
-	static inline type __always_unused *__check_##name(void) { return(p); }
+/* The macros to करो compile-समय type checking stolen from Jakub
+   Jelinek, who IIRC came up with this idea क्रम the 2.4 module init code. */
+#घोषणा __param_check(name, p, type) \
+	अटल अंतरभूत type __always_unused *__check_##name(व्योम) अणु वापस(p); पूर्ण
 
-extern const struct kernel_param_ops param_ops_byte;
-extern int param_set_byte(const char *val, const struct kernel_param *kp);
-extern int param_get_byte(char *buffer, const struct kernel_param *kp);
-#define param_check_byte(name, p) __param_check(name, p, unsigned char)
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_byte;
+बाह्य पूर्णांक param_set_byte(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+बाह्य पूर्णांक param_get_byte(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
+#घोषणा param_check_byte(name, p) __param_check(name, p, अचिन्हित अक्षर)
 
-extern const struct kernel_param_ops param_ops_short;
-extern int param_set_short(const char *val, const struct kernel_param *kp);
-extern int param_get_short(char *buffer, const struct kernel_param *kp);
-#define param_check_short(name, p) __param_check(name, p, short)
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_लघु;
+बाह्य पूर्णांक param_set_लघु(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+बाह्य पूर्णांक param_get_लघु(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
+#घोषणा param_check_लघु(name, p) __param_check(name, p, लघु)
 
-extern const struct kernel_param_ops param_ops_ushort;
-extern int param_set_ushort(const char *val, const struct kernel_param *kp);
-extern int param_get_ushort(char *buffer, const struct kernel_param *kp);
-#define param_check_ushort(name, p) __param_check(name, p, unsigned short)
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_uलघु;
+बाह्य पूर्णांक param_set_uलघु(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+बाह्य पूर्णांक param_get_uलघु(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
+#घोषणा param_check_uलघु(name, p) __param_check(name, p, अचिन्हित लघु)
 
-extern const struct kernel_param_ops param_ops_int;
-extern int param_set_int(const char *val, const struct kernel_param *kp);
-extern int param_get_int(char *buffer, const struct kernel_param *kp);
-#define param_check_int(name, p) __param_check(name, p, int)
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_पूर्णांक;
+बाह्य पूर्णांक param_set_पूर्णांक(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+बाह्य पूर्णांक param_get_पूर्णांक(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
+#घोषणा param_check_पूर्णांक(name, p) __param_check(name, p, पूर्णांक)
 
-extern const struct kernel_param_ops param_ops_uint;
-extern int param_set_uint(const char *val, const struct kernel_param *kp);
-extern int param_get_uint(char *buffer, const struct kernel_param *kp);
-#define param_check_uint(name, p) __param_check(name, p, unsigned int)
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_uपूर्णांक;
+बाह्य पूर्णांक param_set_uपूर्णांक(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+बाह्य पूर्णांक param_get_uपूर्णांक(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
+#घोषणा param_check_uपूर्णांक(name, p) __param_check(name, p, अचिन्हित पूर्णांक)
 
-extern const struct kernel_param_ops param_ops_long;
-extern int param_set_long(const char *val, const struct kernel_param *kp);
-extern int param_get_long(char *buffer, const struct kernel_param *kp);
-#define param_check_long(name, p) __param_check(name, p, long)
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_दीर्घ;
+बाह्य पूर्णांक param_set_दीर्घ(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+बाह्य पूर्णांक param_get_दीर्घ(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
+#घोषणा param_check_दीर्घ(name, p) __param_check(name, p, दीर्घ)
 
-extern const struct kernel_param_ops param_ops_ulong;
-extern int param_set_ulong(const char *val, const struct kernel_param *kp);
-extern int param_get_ulong(char *buffer, const struct kernel_param *kp);
-#define param_check_ulong(name, p) __param_check(name, p, unsigned long)
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_uदीर्घ;
+बाह्य पूर्णांक param_set_uदीर्घ(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+बाह्य पूर्णांक param_get_uदीर्घ(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
+#घोषणा param_check_uदीर्घ(name, p) __param_check(name, p, अचिन्हित दीर्घ)
 
-extern const struct kernel_param_ops param_ops_ullong;
-extern int param_set_ullong(const char *val, const struct kernel_param *kp);
-extern int param_get_ullong(char *buffer, const struct kernel_param *kp);
-#define param_check_ullong(name, p) __param_check(name, p, unsigned long long)
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_ulदीर्घ;
+बाह्य पूर्णांक param_set_ulदीर्घ(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+बाह्य पूर्णांक param_get_ulदीर्घ(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
+#घोषणा param_check_ulदीर्घ(name, p) __param_check(name, p, अचिन्हित दीर्घ दीर्घ)
 
-extern const struct kernel_param_ops param_ops_hexint;
-extern int param_set_hexint(const char *val, const struct kernel_param *kp);
-extern int param_get_hexint(char *buffer, const struct kernel_param *kp);
-#define param_check_hexint(name, p) param_check_uint(name, p)
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_hexपूर्णांक;
+बाह्य पूर्णांक param_set_hexपूर्णांक(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+बाह्य पूर्णांक param_get_hexपूर्णांक(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
+#घोषणा param_check_hexपूर्णांक(name, p) param_check_uपूर्णांक(name, p)
 
-extern const struct kernel_param_ops param_ops_charp;
-extern int param_set_charp(const char *val, const struct kernel_param *kp);
-extern int param_get_charp(char *buffer, const struct kernel_param *kp);
-extern void param_free_charp(void *arg);
-#define param_check_charp(name, p) __param_check(name, p, char *)
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_अक्षरp;
+बाह्य पूर्णांक param_set_अक्षरp(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+बाह्य पूर्णांक param_get_अक्षरp(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
+बाह्य व्योम param_मुक्त_अक्षरp(व्योम *arg);
+#घोषणा param_check_अक्षरp(name, p) __param_check(name, p, अक्षर *)
 
-/* We used to allow int as well as bool.  We're taking that away! */
-extern const struct kernel_param_ops param_ops_bool;
-extern int param_set_bool(const char *val, const struct kernel_param *kp);
-extern int param_get_bool(char *buffer, const struct kernel_param *kp);
-#define param_check_bool(name, p) __param_check(name, p, bool)
+/* We used to allow पूर्णांक as well as bool.  We're taking that away! */
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_bool;
+बाह्य पूर्णांक param_set_bool(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+बाह्य पूर्णांक param_get_bool(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
+#घोषणा param_check_bool(name, p) __param_check(name, p, bool)
 
-extern const struct kernel_param_ops param_ops_bool_enable_only;
-extern int param_set_bool_enable_only(const char *val,
-				      const struct kernel_param *kp);
-/* getter is the same as for the regular bool */
-#define param_check_bool_enable_only param_check_bool
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_bool_enable_only;
+बाह्य पूर्णांक param_set_bool_enable_only(स्थिर अक्षर *val,
+				      स्थिर काष्ठा kernel_param *kp);
+/* getter is the same as क्रम the regular bool */
+#घोषणा param_check_bool_enable_only param_check_bool
 
-extern const struct kernel_param_ops param_ops_invbool;
-extern int param_set_invbool(const char *val, const struct kernel_param *kp);
-extern int param_get_invbool(char *buffer, const struct kernel_param *kp);
-#define param_check_invbool(name, p) __param_check(name, p, bool)
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_invbool;
+बाह्य पूर्णांक param_set_invbool(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+बाह्य पूर्णांक param_get_invbool(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
+#घोषणा param_check_invbool(name, p) __param_check(name, p, bool)
 
-/* An int, which can only be set like a bool (though it shows as an int). */
-extern const struct kernel_param_ops param_ops_bint;
-extern int param_set_bint(const char *val, const struct kernel_param *kp);
-#define param_get_bint param_get_int
-#define param_check_bint param_check_int
+/* An पूर्णांक, which can only be set like a bool (though it shows as an पूर्णांक). */
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_bपूर्णांक;
+बाह्य पूर्णांक param_set_bपूर्णांक(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
+#घोषणा param_get_bपूर्णांक param_get_पूर्णांक
+#घोषणा param_check_bपूर्णांक param_check_पूर्णांक
 
 /**
  * module_param_array - a parameter which is an array of some type
  * @name: the name of the array variable
  * @type: the type, as per module_param()
- * @nump: optional pointer filled in with the number written
+ * @nump: optional poपूर्णांकer filled in with the number written
  * @perm: visibility in sysfs
  *
  * Input and output are as comma-separated values.  Commas inside values
- * don't work properly (eg. an array of charp).
+ * करोn't work properly (eg. an array of अक्षरp).
  *
  * ARRAY_SIZE(@name) is used to determine the number of elements in the
  * array, so the definition must be visible.
  */
-#define module_param_array(name, type, nump, perm)		\
+#घोषणा module_param_array(name, type, nump, perm)		\
 	module_param_array_named(name, name, type, nump, perm)
 
 /**
- * module_param_array_named - renamed parameter which is an array of some type
- * @name: a valid C identifier which is the parameter name
+ * module_param_array_named - नामd parameter which is an array of some type
+ * @name: a valid C identअगरier which is the parameter name
  * @array: the name of the array variable
  * @type: the type, as per module_param()
- * @nump: optional pointer filled in with the number written
+ * @nump: optional poपूर्णांकer filled in with the number written
  * @perm: visibility in sysfs
  *
- * This exposes a different name than the actual variable name.  See
- * module_param_named() for why this might be necessary.
+ * This exposes a dअगरferent name than the actual variable name.  See
+ * module_param_named() क्रम why this might be necessary.
  */
-#define module_param_array_named(name, array, type, nump, perm)		\
+#घोषणा module_param_array_named(name, array, type, nump, perm)		\
 	param_check_##type(name, &(array)[0]);				\
-	static const struct kparam_array __param_arr_##name		\
-	= { .max = ARRAY_SIZE(array), .num = nump,                      \
+	अटल स्थिर काष्ठा kparam_array __param_arr_##name		\
+	= अणु .max = ARRAY_SIZE(array), .num = nump,                      \
 	    .ops = &param_ops_##type,					\
-	    .elemsize = sizeof(array[0]), .elem = array };		\
+	    .elemsize = माप(array[0]), .elem = array पूर्ण;		\
 	__module_param_call(MODULE_PARAM_PREFIX, name,			\
 			    &param_array_ops,				\
 			    .arr = &__param_arr_##name,			\
 			    perm, -1, 0);				\
 	__MODULE_PARM_TYPE(name, "array of " #type)
 
-enum hwparam_type {
+क्रमागत hwparam_type अणु
 	hwparam_ioport,		/* Module parameter configures an I/O port */
 	hwparam_iomem,		/* Module parameter configures an I/O mem address */
 	hwparam_ioport_or_iomem, /* Module parameter could be either, depending on other option */
@@ -529,21 +530,21 @@ enum hwparam_type {
 	hwparam_dma,		/* Module parameter configures a DMA channel */
 	hwparam_dma_addr,	/* Module parameter configures a DMA buffer address */
 	hwparam_other,		/* Module parameter configures some other value */
-};
+पूर्ण;
 
 /**
  * module_param_hw_named - A parameter representing a hw parameters
- * @name: a valid C identifier which is the parameter name.
+ * @name: a valid C identअगरier which is the parameter name.
  * @value: the actual lvalue to alter.
  * @type: the type of the parameter
- * @hwtype: what the value represents (enum hwparam_type)
+ * @hwtype: what the value represents (क्रमागत hwparam_type)
  * @perm: visibility in sysfs.
  *
  * Usually it's a good idea to have variable names and user-exposed names the
- * same, but that's harder if the variable must be non-static or is inside a
- * structure.  This allows exposure under a different name.
+ * same, but that's harder अगर the variable must be non-अटल or is inside a
+ * काष्ठाure.  This allows exposure under a dअगरferent name.
  */
-#define module_param_hw_named(name, value, type, hwtype, perm)		\
+#घोषणा module_param_hw_named(name, value, type, hwtype, perm)		\
 	param_check_##type(name, &(value));				\
 	__module_param_call(MODULE_PARAM_PREFIX, name,			\
 			    &param_ops_##type, &value,			\
@@ -551,29 +552,29 @@ enum hwparam_type {
 			    KERNEL_PARAM_FL_HWPARAM | (hwparam_##hwtype & 0));	\
 	__MODULE_PARM_TYPE(name, #type)
 
-#define module_param_hw(name, type, hwtype, perm)		\
+#घोषणा module_param_hw(name, type, hwtype, perm)		\
 	module_param_hw_named(name, name, type, hwtype, perm)
 
 /**
  * module_param_hw_array - A parameter representing an array of hw parameters
  * @name: the name of the array variable
  * @type: the type, as per module_param()
- * @hwtype: what the value represents (enum hwparam_type)
- * @nump: optional pointer filled in with the number written
+ * @hwtype: what the value represents (क्रमागत hwparam_type)
+ * @nump: optional poपूर्णांकer filled in with the number written
  * @perm: visibility in sysfs
  *
  * Input and output are as comma-separated values.  Commas inside values
- * don't work properly (eg. an array of charp).
+ * करोn't work properly (eg. an array of अक्षरp).
  *
  * ARRAY_SIZE(@name) is used to determine the number of elements in the
  * array, so the definition must be visible.
  */
-#define module_param_hw_array(name, type, hwtype, nump, perm)		\
+#घोषणा module_param_hw_array(name, type, hwtype, nump, perm)		\
 	param_check_##type(name, &(name)[0]);				\
-	static const struct kparam_array __param_arr_##name		\
-	= { .max = ARRAY_SIZE(name), .num = nump,			\
+	अटल स्थिर काष्ठा kparam_array __param_arr_##name		\
+	= अणु .max = ARRAY_SIZE(name), .num = nump,			\
 	    .ops = &param_ops_##type,					\
-	    .elemsize = sizeof(name[0]), .elem = name };		\
+	    .elemsize = माप(name[0]), .elem = name पूर्ण;		\
 	__module_param_call(MODULE_PARAM_PREFIX, name,			\
 			    &param_array_ops,				\
 			    .arr = &__param_arr_##name,			\
@@ -582,32 +583,32 @@ enum hwparam_type {
 	__MODULE_PARM_TYPE(name, "array of " #type)
 
 
-extern const struct kernel_param_ops param_array_ops;
+बाह्य स्थिर काष्ठा kernel_param_ops param_array_ops;
 
-extern const struct kernel_param_ops param_ops_string;
-extern int param_set_copystring(const char *val, const struct kernel_param *);
-extern int param_get_string(char *buffer, const struct kernel_param *kp);
+बाह्य स्थिर काष्ठा kernel_param_ops param_ops_string;
+बाह्य पूर्णांक param_set_copystring(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *);
+बाह्य पूर्णांक param_get_string(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp);
 
-/* for exporting parameters in /sys/module/.../parameters */
+/* क्रम exporting parameters in /sys/module/.../parameters */
 
-struct module;
+काष्ठा module;
 
-#if defined(CONFIG_SYSFS) && defined(CONFIG_MODULES)
-extern int module_param_sysfs_setup(struct module *mod,
-				    const struct kernel_param *kparam,
-				    unsigned int num_params);
+#अगर defined(CONFIG_SYSFS) && defined(CONFIG_MODULES)
+बाह्य पूर्णांक module_param_sysfs_setup(काष्ठा module *mod,
+				    स्थिर काष्ठा kernel_param *kparam,
+				    अचिन्हित पूर्णांक num_params);
 
-extern void module_param_sysfs_remove(struct module *mod);
-#else
-static inline int module_param_sysfs_setup(struct module *mod,
-			     const struct kernel_param *kparam,
-			     unsigned int num_params)
-{
-	return 0;
-}
+बाह्य व्योम module_param_sysfs_हटाओ(काष्ठा module *mod);
+#अन्यथा
+अटल अंतरभूत पूर्णांक module_param_sysfs_setup(काष्ठा module *mod,
+			     स्थिर काष्ठा kernel_param *kparam,
+			     अचिन्हित पूर्णांक num_params)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void module_param_sysfs_remove(struct module *mod)
-{ }
-#endif
+अटल अंतरभूत व्योम module_param_sysfs_हटाओ(काष्ठा module *mod)
+अणु पूर्ण
+#पूर्ण_अगर
 
-#endif /* _LINUX_MODULE_PARAMS_H */
+#पूर्ण_अगर /* _LINUX_MODULE_PARAMS_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * This driver enables Trace Buffer Extension (TRBE) as a per-cpu coresight
  * sink device could then pair with an appropriate per-cpu coresight source
@@ -11,142 +12,142 @@
  *
  * Author: Anshuman Khandual <anshuman.khandual@arm.com>
  */
-#define DRVNAME "arm_trbe"
+#घोषणा DRVNAME "arm_trbe"
 
-#define pr_fmt(fmt) DRVNAME ": " fmt
+#घोषणा pr_fmt(fmt) DRVNAME ": " fmt
 
-#include <asm/barrier.h>
-#include "coresight-trbe.h"
+#समावेश <यंत्र/barrier.h>
+#समावेश "coresight-trbe.h"
 
-#define PERF_IDX2OFF(idx, buf) ((idx) % ((buf)->nr_pages << PAGE_SHIFT))
+#घोषणा PERF_IDX2OFF(idx, buf) ((idx) % ((buf)->nr_pages << PAGE_SHIFT))
 
 /*
  * A padding packet that will help the user space tools
  * in skipping relevant sections in the captured trace
- * data which could not be decoded. TRBE doesn't support
- * formatting the trace data, unlike the legacy CoreSight
+ * data which could not be decoded. TRBE करोesn't support
+ * क्रमmatting the trace data, unlike the legacy CoreSight
  * sinks and thus we use ETE trace packets to pad the
  * sections of the buffer.
  */
-#define ETE_IGNORE_PACKET		0x70
+#घोषणा ETE_IGNORE_PACKET		0x70
 
 /*
  * Minimum amount of meaningful trace will contain:
  * A-Sync, Trace Info, Trace On, Address, Atom.
  * This is about 44bytes of ETE trace. To be on
  * the safer side, we assume 64bytes is the minimum
- * space required for a meaningful session, before
+ * space required क्रम a meaningful session, beक्रमe
  * we hit a "WRAP" event.
  */
-#define TRBE_TRACE_MIN_BUF_SIZE		64
+#घोषणा TRBE_TRACE_MIN_BUF_SIZE		64
 
-enum trbe_fault_action {
+क्रमागत trbe_fault_action अणु
 	TRBE_FAULT_ACT_WRAP,
 	TRBE_FAULT_ACT_SPURIOUS,
 	TRBE_FAULT_ACT_FATAL,
-};
+पूर्ण;
 
-struct trbe_buf {
+काष्ठा trbe_buf अणु
 	/*
 	 * Even though trbe_base represents vmap()
 	 * mapped allocated buffer's start address,
-	 * it's being as unsigned long for various
+	 * it's being as अचिन्हित दीर्घ क्रम various
 	 * arithmetic and comparision operations &
-	 * also to be consistent with trbe_write &
-	 * trbe_limit sibling pointers.
+	 * also to be consistent with trbe_ग_लिखो &
+	 * trbe_limit sibling poपूर्णांकers.
 	 */
-	unsigned long trbe_base;
-	unsigned long trbe_limit;
-	unsigned long trbe_write;
-	int nr_pages;
-	void **pages;
+	अचिन्हित दीर्घ trbe_base;
+	अचिन्हित दीर्घ trbe_limit;
+	अचिन्हित दीर्घ trbe_ग_लिखो;
+	पूर्णांक nr_pages;
+	व्योम **pages;
 	bool snapshot;
-	struct trbe_cpudata *cpudata;
-};
+	काष्ठा trbe_cpudata *cpudata;
+पूर्ण;
 
-struct trbe_cpudata {
+काष्ठा trbe_cpudata अणु
 	bool trbe_flag;
 	u64 trbe_align;
-	int cpu;
-	enum cs_mode mode;
-	struct trbe_buf *buf;
-	struct trbe_drvdata *drvdata;
-};
+	पूर्णांक cpu;
+	क्रमागत cs_mode mode;
+	काष्ठा trbe_buf *buf;
+	काष्ठा trbe_drvdata *drvdata;
+पूर्ण;
 
-struct trbe_drvdata {
-	struct trbe_cpudata __percpu *cpudata;
-	struct perf_output_handle * __percpu *handle;
-	struct hlist_node hotplug_node;
-	int irq;
+काष्ठा trbe_drvdata अणु
+	काष्ठा trbe_cpudata __percpu *cpudata;
+	काष्ठा perf_output_handle * __percpu *handle;
+	काष्ठा hlist_node hotplug_node;
+	पूर्णांक irq;
 	cpumask_t supported_cpus;
-	enum cpuhp_state trbe_online;
-	struct platform_device *pdev;
-};
+	क्रमागत cpuhp_state trbe_online;
+	काष्ठा platक्रमm_device *pdev;
+पूर्ण;
 
-static int trbe_alloc_node(struct perf_event *event)
-{
-	if (event->cpu == -1)
-		return NUMA_NO_NODE;
-	return cpu_to_node(event->cpu);
-}
+अटल पूर्णांक trbe_alloc_node(काष्ठा perf_event *event)
+अणु
+	अगर (event->cpu == -1)
+		वापस NUMA_NO_NODE;
+	वापस cpu_to_node(event->cpu);
+पूर्ण
 
-static void trbe_drain_buffer(void)
-{
+अटल व्योम trbe_drain_buffer(व्योम)
+अणु
 	tsb_csync();
 	dsb(nsh);
-}
+पूर्ण
 
-static void trbe_drain_and_disable_local(void)
-{
-	u64 trblimitr = read_sysreg_s(SYS_TRBLIMITR_EL1);
+अटल व्योम trbe_drain_and_disable_local(व्योम)
+अणु
+	u64 trblimitr = पढ़ो_sysreg_s(SYS_TRBLIMITR_EL1);
 
 	trbe_drain_buffer();
 
 	/*
 	 * Disable the TRBE without clearing LIMITPTR which
-	 * might be required for fetching the buffer limits.
+	 * might be required क्रम fetching the buffer limits.
 	 */
 	trblimitr &= ~TRBLIMITR_ENABLE;
-	write_sysreg_s(trblimitr, SYS_TRBLIMITR_EL1);
+	ग_लिखो_sysreg_s(trblimitr, SYS_TRBLIMITR_EL1);
 	isb();
-}
+पूर्ण
 
-static void trbe_reset_local(void)
-{
+अटल व्योम trbe_reset_local(व्योम)
+अणु
 	trbe_drain_and_disable_local();
-	write_sysreg_s(0, SYS_TRBLIMITR_EL1);
-	write_sysreg_s(0, SYS_TRBPTR_EL1);
-	write_sysreg_s(0, SYS_TRBBASER_EL1);
-	write_sysreg_s(0, SYS_TRBSR_EL1);
-}
+	ग_लिखो_sysreg_s(0, SYS_TRBLIMITR_EL1);
+	ग_लिखो_sysreg_s(0, SYS_TRBPTR_EL1);
+	ग_लिखो_sysreg_s(0, SYS_TRBBASER_EL1);
+	ग_लिखो_sysreg_s(0, SYS_TRBSR_EL1);
+पूर्ण
 
-static void trbe_stop_and_truncate_event(struct perf_output_handle *handle)
-{
-	struct trbe_buf *buf = etm_perf_sink_config(handle);
+अटल व्योम trbe_stop_and_truncate_event(काष्ठा perf_output_handle *handle)
+अणु
+	काष्ठा trbe_buf *buf = eपंचांग_perf_sink_config(handle);
 
 	/*
 	 * We cannot proceed with the buffer collection and we
-	 * do not have any data for the current session. The
-	 * etm_perf driver expects to close out the aux_buffer
+	 * करो not have any data क्रम the current session. The
+	 * eपंचांग_perf driver expects to बंद out the aux_buffer
 	 * at event_stop(). So disable the TRBE here and leave
-	 * the update_buffer() to return a 0 size.
+	 * the update_buffer() to वापस a 0 size.
 	 */
 	trbe_drain_and_disable_local();
 	perf_aux_output_flag(handle, PERF_AUX_FLAG_TRUNCATED);
-	*this_cpu_ptr(buf->cpudata->drvdata->handle) = NULL;
-}
+	*this_cpu_ptr(buf->cpudata->drvdata->handle) = शून्य;
+पूर्ण
 
 /*
  * TRBE Buffer Management
  *
- * The TRBE buffer spans from the base pointer till the limit pointer. When enabled,
- * it starts writing trace data from the write pointer onward till the limit pointer.
- * When the write pointer reaches the address just before the limit pointer, it gets
- * wrapped around again to the base pointer. This is called a TRBE wrap event, which
- * generates a maintenance interrupt when operated in WRAP or FILL mode. This driver
+ * The TRBE buffer spans from the base poपूर्णांकer till the limit poपूर्णांकer. When enabled,
+ * it starts writing trace data from the ग_लिखो poपूर्णांकer onward till the limit poपूर्णांकer.
+ * When the ग_लिखो poपूर्णांकer reaches the address just beक्रमe the limit poपूर्णांकer, it माला_लो
+ * wrapped around again to the base poपूर्णांकer. This is called a TRBE wrap event, which
+ * generates a मुख्यtenance पूर्णांकerrupt when operated in WRAP or FILL mode. This driver
  * uses FILL mode, where the TRBE stops the trace collection at wrap event. The IRQ
  * handler updates the AUX buffer and re-enables the TRBE with updated WRITE and
- * LIMIT pointers.
+ * LIMIT poपूर्णांकers.
  *
  *	Wrap around with an IRQ
  *	------ < ------ < ------- < ----- < -----
@@ -156,10 +157,10 @@ static void trbe_stop_and_truncate_event(struct perf_output_handle *handle)
  *	+---------------+-----------------------+
  *	|		|			|
  *	+---------------+-----------------------+
- *	Base Pointer	Write Pointer		Limit Pointer
+ *	Base Poपूर्णांकer	Write Poपूर्णांकer		Limit Poपूर्णांकer
  *
- * The base and limit pointers always needs to be PAGE_SIZE aligned. But the write
- * pointer can be aligned to the implementation defined TRBE trace buffer alignment
+ * The base and limit poपूर्णांकers always needs to be PAGE_SIZE aligned. But the ग_लिखो
+ * poपूर्णांकer can be aligned to the implementation defined TRBE trace buffer alignment
  * as captured in trbe_cpudata->trbe_align.
  *
  *
@@ -167,38 +168,38 @@ static void trbe_stop_and_truncate_event(struct perf_output_handle *handle)
  *	+---------------------------------------+----- ~ ~ ------
  *	|$$$$$$$|################|$$$$$$$$$$$$$$|		|
  *	+---------------------------------------+----- ~ ~ ------
- *	Base Pointer	Write Pointer		Limit Pointer
+ *	Base Poपूर्णांकer	Write Poपूर्णांकer		Limit Poपूर्णांकer
  *
  * The perf_output_handle indices (head, tail, wakeup) are monotonically increasing
- * values which tracks all the driver writes and user reads from the perf auxiliary
- * buffer. Generally [head..tail] is the area where the driver can write into unless
+ * values which tracks all the driver ग_लिखोs and user पढ़ोs from the perf auxiliary
+ * buffer. Generally [head..tail] is the area where the driver can ग_लिखो पूर्णांकo unless
  * the wakeup is behind the tail. Enabled TRBE buffer span needs to be adjusted and
- * configured depending on the perf_output_handle indices, so that the driver does
- * not override into areas in the perf auxiliary buffer which is being or yet to be
+ * configured depending on the perf_output_handle indices, so that the driver करोes
+ * not override पूर्णांकo areas in the perf auxiliary buffer which is being or yet to be
  * consumed from the user space. The enabled TRBE buffer area is a moving subset of
  * the allocated perf auxiliary buffer.
  */
-static void trbe_pad_buf(struct perf_output_handle *handle, int len)
-{
-	struct trbe_buf *buf = etm_perf_sink_config(handle);
+अटल व्योम trbe_pad_buf(काष्ठा perf_output_handle *handle, पूर्णांक len)
+अणु
+	काष्ठा trbe_buf *buf = eपंचांग_perf_sink_config(handle);
 	u64 head = PERF_IDX2OFF(handle->head, buf);
 
-	memset((void *)buf->trbe_base + head, ETE_IGNORE_PACKET, len);
-	if (!buf->snapshot)
+	स_रखो((व्योम *)buf->trbe_base + head, ETE_IGNORE_PACKET, len);
+	अगर (!buf->snapshot)
 		perf_aux_output_skip(handle, len);
-}
+पूर्ण
 
-static unsigned long trbe_snapshot_offset(struct perf_output_handle *handle)
-{
-	struct trbe_buf *buf = etm_perf_sink_config(handle);
+अटल अचिन्हित दीर्घ trbe_snapshot_offset(काष्ठा perf_output_handle *handle)
+अणु
+	काष्ठा trbe_buf *buf = eपंचांग_perf_sink_config(handle);
 
 	/*
 	 * The ETE trace has alignment synchronization packets allowing
-	 * the decoder to reset in case of an overflow or corruption.
-	 * So we can use the entire buffer for the snapshot mode.
+	 * the decoder to reset in हाल of an overflow or corruption.
+	 * So we can use the entire buffer क्रम the snapshot mode.
 	 */
-	return buf->nr_pages * PAGE_SIZE;
-}
+	वापस buf->nr_pages * PAGE_SIZE;
+पूर्ण
 
 /*
  * TRBE Limit Calculation
@@ -210,11 +211,11 @@ static unsigned long trbe_snapshot_offset(struct perf_output_handle *handle)
  * %%%% - Free area, disabled, trace will not be written
  * ==== - Free area, padded with ETE_IGNORE_PACKET, trace will be skipped
  */
-static unsigned long __trbe_normal_offset(struct perf_output_handle *handle)
-{
-	struct trbe_buf *buf = etm_perf_sink_config(handle);
-	struct trbe_cpudata *cpudata = buf->cpudata;
-	const u64 bufsize = buf->nr_pages * PAGE_SIZE;
+अटल अचिन्हित दीर्घ __trbe_normal_offset(काष्ठा perf_output_handle *handle)
+अणु
+	काष्ठा trbe_buf *buf = eपंचांग_perf_sink_config(handle);
+	काष्ठा trbe_cpudata *cpudata = buf->cpudata;
+	स्थिर u64 bufsize = buf->nr_pages * PAGE_SIZE;
 	u64 limit = bufsize;
 	u64 head, tail, wakeup;
 
@@ -231,18 +232,18 @@ static unsigned long __trbe_normal_offset(struct perf_output_handle *handle)
 	 * trbe_base				trbe_base + nr_pages
 	 *
 	 * Perf aux buffer output head position can be misaligned depending on
-	 * various factors including user space reads. In case misaligned, head
-	 * needs to be aligned before TRBE can be configured. Pad the alignment
+	 * various factors including user space पढ़ोs. In हाल misaligned, head
+	 * needs to be aligned beक्रमe TRBE can be configured. Pad the alignment
 	 * gap with ETE_IGNORE_PACKET bytes that will be ignored by user tools
 	 * and skip this section thus advancing the head.
 	 */
-	if (!IS_ALIGNED(head, cpudata->trbe_align)) {
-		unsigned long delta = roundup(head, cpudata->trbe_align) - head;
+	अगर (!IS_ALIGNED(head, cpudata->trbe_align)) अणु
+		अचिन्हित दीर्घ delta = roundup(head, cpudata->trbe_align) - head;
 
 		delta = min(delta, handle->size);
 		trbe_pad_buf(handle, delta);
 		head = PERF_IDX2OFF(handle->head, buf);
-	}
+	पूर्ण
 
 	/*
 	 *	head = tail (size = 0)
@@ -251,23 +252,23 @@ static unsigned long __trbe_normal_offset(struct perf_output_handle *handle)
 	 * +----|-------------------------------+
 	 * trbe_base				trbe_base + nr_pages
 	 *
-	 * Perf aux buffer does not have any space for the driver to write into.
+	 * Perf aux buffer करोes not have any space क्रम the driver to ग_लिखो पूर्णांकo.
 	 * Just communicate trace truncation event to the user space by marking
 	 * it with PERF_AUX_FLAG_TRUNCATED.
 	 */
-	if (!handle->size) {
+	अगर (!handle->size) अणु
 		perf_aux_output_flag(handle, PERF_AUX_FLAG_TRUNCATED);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Compute the tail and wakeup indices now that we've aligned head */
 	tail = PERF_IDX2OFF(handle->head + handle->size, buf);
 	wakeup = PERF_IDX2OFF(handle->wakeup, buf);
 
 	/*
-	 * Lets calculate the buffer area which TRBE could write into. There
+	 * Lets calculate the buffer area which TRBE could ग_लिखो पूर्णांकo. There
 	 * are three possible scenarios here. Limit needs to be aligned with
-	 * PAGE_SIZE per the TRBE requirement. Always avoid clobbering the
+	 * PAGE_SIZE per the TRBE requirement. Always aव्योम clobbering the
 	 * unconsumed data.
 	 *
 	 * 1) head < tail
@@ -278,9 +279,9 @@ static unsigned long __trbe_normal_offset(struct perf_output_handle *handle)
 	 * +----|-----------------------|-------+
 	 * trbe_base			limit	trbe_base + nr_pages
 	 *
-	 * TRBE could write into [head..tail] area. Unless the tail is right at
+	 * TRBE could ग_लिखो पूर्णांकo [head..tail] area. Unless the tail is right at
 	 * the end of the buffer, neither an wrap around nor an IRQ is expected
-	 * while being enabled.
+	 * जबतक being enabled.
 	 *
 	 * 2) head == tail
 	 *
@@ -290,7 +291,7 @@ static unsigned long __trbe_normal_offset(struct perf_output_handle *handle)
 	 * +----|-------------------------------+
 	 * trbe_base				limit = trbe_base + nr_pages
 	 *
-	 * TRBE should just write into [head..base + nr_pages] area even though
+	 * TRBE should just ग_लिखो पूर्णांकo [head..base + nr_pages] area even though
 	 * the entire buffer is empty. Reason being, when the trace reaches the
 	 * end of the buffer, it will just wrap around with an IRQ giving an
 	 * opportunity to reconfigure the buffer.
@@ -303,21 +304,21 @@ static unsigned long __trbe_normal_offset(struct perf_output_handle *handle)
 	 * +----|-----------------------|-------+
 	 * trbe_base				limit = trbe_base + nr_pages
 	 *
-	 * TRBE should just write into [head..base + nr_pages] area even though
+	 * TRBE should just ग_लिखो पूर्णांकo [head..base + nr_pages] area even though
 	 * the [trbe_base..tail] is also empty. Reason being, when the trace
 	 * reaches the end of the buffer, it will just wrap around with an IRQ
 	 * giving an opportunity to reconfigure the buffer.
 	 */
-	if (head < tail)
-		limit = round_down(tail, PAGE_SIZE);
+	अगर (head < tail)
+		limit = round_करोwn(tail, PAGE_SIZE);
 
 	/*
-	 * Wakeup may be arbitrarily far into the future. If it's not in the
+	 * Wakeup may be arbitrarily far पूर्णांकo the future. If it's not in the
 	 * current generation, either we'll wrap before hitting it, or it's
-	 * in the past and has been handled already.
+	 * in the past and has been handled alपढ़ोy.
 	 *
-	 * If there's a wakeup before we wrap, arrange to be woken up by the
-	 * page boundary following it. Keep the tail boundary if that's lower.
+	 * If there's a wakeup beक्रमe we wrap, arrange to be woken up by the
+	 * page boundary following it. Keep the tail boundary अगर that's lower.
 	 *
 	 *	head		wakeup	tail
 	 * +----|---------------|-------|-------+
@@ -325,14 +326,14 @@ static unsigned long __trbe_normal_offset(struct perf_output_handle *handle)
 	 * +----|---------------|-------|-------+
 	 * trbe_base		limit		trbe_base + nr_pages
 	 */
-	if (handle->wakeup < (handle->head + handle->size) && head <= wakeup)
+	अगर (handle->wakeup < (handle->head + handle->size) && head <= wakeup)
 		limit = min(limit, round_up(wakeup, PAGE_SIZE));
 
 	/*
-	 * There are two situation when this can happen i.e limit is before
+	 * There are two situation when this can happen i.e limit is beक्रमe
 	 * the head and hence TRBE cannot be configured.
 	 *
-	 * 1) head < tail (aligned down with PAGE_SIZE) and also they are both
+	 * 1) head < tail (aligned करोwn with PAGE_SIZE) and also they are both
 	 * within the same PAGE size range.
 	 *
 	 *			PAGE_SIZE
@@ -356,47 +357,47 @@ static unsigned long __trbe_normal_offset(struct perf_output_handle *handle)
 	 * +----|------|-------|--------|-------+
 	 * trbe_base				trbe_base + nr_pages
 	 */
-	if (limit > head)
-		return limit;
+	अगर (limit > head)
+		वापस limit;
 
 	trbe_pad_buf(handle, handle->size);
 	perf_aux_output_flag(handle, PERF_AUX_FLAG_TRUNCATED);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long trbe_normal_offset(struct perf_output_handle *handle)
-{
-	struct trbe_buf *buf = perf_get_aux(handle);
+अटल अचिन्हित दीर्घ trbe_normal_offset(काष्ठा perf_output_handle *handle)
+अणु
+	काष्ठा trbe_buf *buf = perf_get_aux(handle);
 	u64 limit = __trbe_normal_offset(handle);
 	u64 head = PERF_IDX2OFF(handle->head, buf);
 
 	/*
-	 * If the head is too close to the limit and we don't
-	 * have space for a meaningful run, we rather pad it
+	 * If the head is too बंद to the limit and we करोn't
+	 * have space क्रम a meaningful run, we rather pad it
 	 * and start fresh.
 	 */
-	if (limit && (limit - head < TRBE_TRACE_MIN_BUF_SIZE)) {
+	अगर (limit && (limit - head < TRBE_TRACE_MIN_BUF_SIZE)) अणु
 		trbe_pad_buf(handle, limit - head);
 		limit = __trbe_normal_offset(handle);
-	}
-	return limit;
-}
+	पूर्ण
+	वापस limit;
+पूर्ण
 
-static unsigned long compute_trbe_buffer_limit(struct perf_output_handle *handle)
-{
-	struct trbe_buf *buf = etm_perf_sink_config(handle);
-	unsigned long offset;
+अटल अचिन्हित दीर्घ compute_trbe_buffer_limit(काष्ठा perf_output_handle *handle)
+अणु
+	काष्ठा trbe_buf *buf = eपंचांग_perf_sink_config(handle);
+	अचिन्हित दीर्घ offset;
 
-	if (buf->snapshot)
+	अगर (buf->snapshot)
 		offset = trbe_snapshot_offset(handle);
-	else
+	अन्यथा
 		offset = trbe_normal_offset(handle);
-	return buf->trbe_base + offset;
-}
+	वापस buf->trbe_base + offset;
+पूर्ण
 
-static void clr_trbe_status(void)
-{
-	u64 trbsr = read_sysreg_s(SYS_TRBSR_EL1);
+अटल व्योम clr_trbe_status(व्योम)
+अणु
+	u64 trbsr = पढ़ो_sysreg_s(SYS_TRBSR_EL1);
 
 	WARN_ON(is_trbe_enabled());
 	trbsr &= ~TRBSR_IRQ;
@@ -405,12 +406,12 @@ static void clr_trbe_status(void)
 	trbsr &= ~(TRBSR_EC_MASK << TRBSR_EC_SHIFT);
 	trbsr &= ~(TRBSR_BSC_MASK << TRBSR_BSC_SHIFT);
 	trbsr &= ~TRBSR_STOP;
-	write_sysreg_s(trbsr, SYS_TRBSR_EL1);
-}
+	ग_लिखो_sysreg_s(trbsr, SYS_TRBSR_EL1);
+पूर्ण
 
-static void set_trbe_limit_pointer_enabled(unsigned long addr)
-{
-	u64 trblimitr = read_sysreg_s(SYS_TRBLIMITR_EL1);
+अटल व्योम set_trbe_limit_poपूर्णांकer_enabled(अचिन्हित दीर्घ addr)
+अणु
+	u64 trblimitr = पढ़ो_sysreg_s(SYS_TRBLIMITR_EL1);
 
 	WARN_ON(!IS_ALIGNED(addr, (1UL << TRBLIMITR_LIMIT_SHIFT)));
 	WARN_ON(!IS_ALIGNED(addr, PAGE_SIZE));
@@ -421,18 +422,18 @@ static void set_trbe_limit_pointer_enabled(unsigned long addr)
 	trblimitr &= ~(TRBLIMITR_LIMIT_MASK << TRBLIMITR_LIMIT_SHIFT);
 
 	/*
-	 * Fill trace buffer mode is used here while configuring the
-	 * TRBE for trace capture. In this particular mode, the trace
-	 * collection is stopped and a maintenance interrupt is raised
-	 * when the current write pointer wraps. This pause in trace
+	 * Fill trace buffer mode is used here जबतक configuring the
+	 * TRBE क्रम trace capture. In this particular mode, the trace
+	 * collection is stopped and a मुख्यtenance पूर्णांकerrupt is उठाओd
+	 * when the current ग_लिखो poपूर्णांकer wraps. This छोड़ो in trace
 	 * collection gives the software an opportunity to capture the
-	 * trace data in the interrupt handler, before reconfiguring
+	 * trace data in the पूर्णांकerrupt handler, beक्रमe reconfiguring
 	 * the TRBE.
 	 */
 	trblimitr |= (TRBE_FILL_MODE_FILL & TRBLIMITR_FILL_MODE_MASK) << TRBLIMITR_FILL_MODE_SHIFT;
 
 	/*
-	 * Trigger mode is not used here while configuring the TRBE for
+	 * Trigger mode is not used here जबतक configuring the TRBE क्रम
 	 * the trace capture. Hence just keep this in the ignore mode.
 	 */
 	trblimitr |= (TRBE_TRIG_MODE_IGNORE & TRBLIMITR_TRIG_MODE_MASK) <<
@@ -440,119 +441,119 @@ static void set_trbe_limit_pointer_enabled(unsigned long addr)
 	trblimitr |= (addr & PAGE_MASK);
 
 	trblimitr |= TRBLIMITR_ENABLE;
-	write_sysreg_s(trblimitr, SYS_TRBLIMITR_EL1);
+	ग_लिखो_sysreg_s(trblimitr, SYS_TRBLIMITR_EL1);
 
 	/* Synchronize the TRBE enable event */
 	isb();
-}
+पूर्ण
 
-static void trbe_enable_hw(struct trbe_buf *buf)
-{
-	WARN_ON(buf->trbe_write < buf->trbe_base);
-	WARN_ON(buf->trbe_write >= buf->trbe_limit);
+अटल व्योम trbe_enable_hw(काष्ठा trbe_buf *buf)
+अणु
+	WARN_ON(buf->trbe_ग_लिखो < buf->trbe_base);
+	WARN_ON(buf->trbe_ग_लिखो >= buf->trbe_limit);
 	set_trbe_disabled();
 	isb();
 	clr_trbe_status();
-	set_trbe_base_pointer(buf->trbe_base);
-	set_trbe_write_pointer(buf->trbe_write);
+	set_trbe_base_poपूर्णांकer(buf->trbe_base);
+	set_trbe_ग_लिखो_poपूर्णांकer(buf->trbe_ग_लिखो);
 
 	/*
-	 * Synchronize all the register updates
-	 * till now before enabling the TRBE.
+	 * Synchronize all the रेजिस्टर updates
+	 * till now beक्रमe enabling the TRBE.
 	 */
 	isb();
-	set_trbe_limit_pointer_enabled(buf->trbe_limit);
-}
+	set_trbe_limit_poपूर्णांकer_enabled(buf->trbe_limit);
+पूर्ण
 
-static enum trbe_fault_action trbe_get_fault_act(u64 trbsr)
-{
-	int ec = get_trbe_ec(trbsr);
-	int bsc = get_trbe_bsc(trbsr);
+अटल क्रमागत trbe_fault_action trbe_get_fault_act(u64 trbsr)
+अणु
+	पूर्णांक ec = get_trbe_ec(trbsr);
+	पूर्णांक bsc = get_trbe_bsc(trbsr);
 
 	WARN_ON(is_trbe_running(trbsr));
-	if (is_trbe_trg(trbsr) || is_trbe_abort(trbsr))
-		return TRBE_FAULT_ACT_FATAL;
+	अगर (is_trbe_trg(trbsr) || is_trbe_पात(trbsr))
+		वापस TRBE_FAULT_ACT_FATAL;
 
-	if ((ec == TRBE_EC_STAGE1_ABORT) || (ec == TRBE_EC_STAGE2_ABORT))
-		return TRBE_FAULT_ACT_FATAL;
+	अगर ((ec == TRBE_EC_STAGE1_ABORT) || (ec == TRBE_EC_STAGE2_ABORT))
+		वापस TRBE_FAULT_ACT_FATAL;
 
-	if (is_trbe_wrap(trbsr) && (ec == TRBE_EC_OTHERS) && (bsc == TRBE_BSC_FILLED)) {
-		if (get_trbe_write_pointer() == get_trbe_base_pointer())
-			return TRBE_FAULT_ACT_WRAP;
-	}
-	return TRBE_FAULT_ACT_SPURIOUS;
-}
+	अगर (is_trbe_wrap(trbsr) && (ec == TRBE_EC_OTHERS) && (bsc == TRBE_BSC_FILLED)) अणु
+		अगर (get_trbe_ग_लिखो_poपूर्णांकer() == get_trbe_base_poपूर्णांकer())
+			वापस TRBE_FAULT_ACT_WRAP;
+	पूर्ण
+	वापस TRBE_FAULT_ACT_SPURIOUS;
+पूर्ण
 
-static void *arm_trbe_alloc_buffer(struct coresight_device *csdev,
-				   struct perf_event *event, void **pages,
-				   int nr_pages, bool snapshot)
-{
-	struct trbe_buf *buf;
-	struct page **pglist;
-	int i;
+अटल व्योम *arm_trbe_alloc_buffer(काष्ठा coresight_device *csdev,
+				   काष्ठा perf_event *event, व्योम **pages,
+				   पूर्णांक nr_pages, bool snapshot)
+अणु
+	काष्ठा trbe_buf *buf;
+	काष्ठा page **pglist;
+	पूर्णांक i;
 
 	/*
-	 * TRBE LIMIT and TRBE WRITE pointers must be page aligned. But with
-	 * just a single page, there would not be any room left while writing
-	 * into a partially filled TRBE buffer after the page size alignment.
+	 * TRBE LIMIT and TRBE WRITE poपूर्णांकers must be page aligned. But with
+	 * just a single page, there would not be any room left जबतक writing
+	 * पूर्णांकo a partially filled TRBE buffer after the page size alignment.
 	 * Hence restrict the minimum buffer size as two pages.
 	 */
-	if (nr_pages < 2)
-		return NULL;
+	अगर (nr_pages < 2)
+		वापस शून्य;
 
-	buf = kzalloc_node(sizeof(*buf), GFP_KERNEL, trbe_alloc_node(event));
-	if (!buf)
-		return ERR_PTR(-ENOMEM);
+	buf = kzalloc_node(माप(*buf), GFP_KERNEL, trbe_alloc_node(event));
+	अगर (!buf)
+		वापस ERR_PTR(-ENOMEM);
 
-	pglist = kcalloc(nr_pages, sizeof(*pglist), GFP_KERNEL);
-	if (!pglist) {
-		kfree(buf);
-		return ERR_PTR(-ENOMEM);
-	}
+	pglist = kसुस्मृति(nr_pages, माप(*pglist), GFP_KERNEL);
+	अगर (!pglist) अणु
+		kमुक्त(buf);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	for (i = 0; i < nr_pages; i++)
+	क्रम (i = 0; i < nr_pages; i++)
 		pglist[i] = virt_to_page(pages[i]);
 
-	buf->trbe_base = (unsigned long)vmap(pglist, nr_pages, VM_MAP, PAGE_KERNEL);
-	if (!buf->trbe_base) {
-		kfree(pglist);
-		kfree(buf);
-		return ERR_PTR(-ENOMEM);
-	}
+	buf->trbe_base = (अचिन्हित दीर्घ)vmap(pglist, nr_pages, VM_MAP, PAGE_KERNEL);
+	अगर (!buf->trbe_base) अणु
+		kमुक्त(pglist);
+		kमुक्त(buf);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 	buf->trbe_limit = buf->trbe_base + nr_pages * PAGE_SIZE;
-	buf->trbe_write = buf->trbe_base;
+	buf->trbe_ग_लिखो = buf->trbe_base;
 	buf->snapshot = snapshot;
 	buf->nr_pages = nr_pages;
 	buf->pages = pages;
-	kfree(pglist);
-	return buf;
-}
+	kमुक्त(pglist);
+	वापस buf;
+पूर्ण
 
-static void arm_trbe_free_buffer(void *config)
-{
-	struct trbe_buf *buf = config;
+अटल व्योम arm_trbe_मुक्त_buffer(व्योम *config)
+अणु
+	काष्ठा trbe_buf *buf = config;
 
-	vunmap((void *)buf->trbe_base);
-	kfree(buf);
-}
+	vunmap((व्योम *)buf->trbe_base);
+	kमुक्त(buf);
+पूर्ण
 
-static unsigned long arm_trbe_update_buffer(struct coresight_device *csdev,
-					    struct perf_output_handle *handle,
-					    void *config)
-{
-	struct trbe_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
-	struct trbe_cpudata *cpudata = dev_get_drvdata(&csdev->dev);
-	struct trbe_buf *buf = config;
-	enum trbe_fault_action act;
-	unsigned long size, offset;
-	unsigned long write, base, status;
-	unsigned long flags;
+अटल अचिन्हित दीर्घ arm_trbe_update_buffer(काष्ठा coresight_device *csdev,
+					    काष्ठा perf_output_handle *handle,
+					    व्योम *config)
+अणु
+	काष्ठा trbe_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
+	काष्ठा trbe_cpudata *cpudata = dev_get_drvdata(&csdev->dev);
+	काष्ठा trbe_buf *buf = config;
+	क्रमागत trbe_fault_action act;
+	अचिन्हित दीर्घ size, offset;
+	अचिन्हित दीर्घ ग_लिखो, base, status;
+	अचिन्हित दीर्घ flags;
 
 	WARN_ON(buf->cpudata != cpudata);
 	WARN_ON(cpudata->cpu != smp_processor_id());
 	WARN_ON(cpudata->drvdata != drvdata);
-	if (cpudata->mode != CS_MODE_PERF)
-		return 0;
+	अगर (cpudata->mode != CS_MODE_PERF)
+		वापस 0;
 
 	perf_aux_output_flag(handle, PERF_AUX_FLAG_CORESIGHT_FORMAT_RAW);
 
@@ -561,7 +562,7 @@ static unsigned long arm_trbe_update_buffer(struct coresight_device *csdev,
 	 * fill up the buffer triggering, an IRQ. This could be consumed
 	 * by the PE asynchronously, causing a race here against
 	 * the IRQ handler in closing out the handle. So, let us
-	 * make sure the IRQ can't trigger while we are collecting
+	 * make sure the IRQ can't trigger जबतक we are collecting
 	 * the buffer. We also make sure that a WRAP event is handled
 	 * accordingly.
 	 */
@@ -570,30 +571,30 @@ static unsigned long arm_trbe_update_buffer(struct coresight_device *csdev,
 	/*
 	 * If the TRBE was disabled due to lack of space in the AUX buffer or a
 	 * spurious fault, the driver leaves it disabled, truncating the buffer.
-	 * Since the etm_perf driver expects to close out the AUX buffer, the
+	 * Since the eपंचांग_perf driver expects to बंद out the AUX buffer, the
 	 * driver skips it. Thus, just pass in 0 size here to indicate that the
 	 * buffer was truncated.
 	 */
-	if (!is_trbe_enabled()) {
+	अगर (!is_trbe_enabled()) अणु
 		size = 0;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	/*
-	 * perf handle structure needs to be shared with the TRBE IRQ handler for
+	 * perf handle काष्ठाure needs to be shared with the TRBE IRQ handler क्रम
 	 * capturing trace data and restarting the handle. There is a probability
-	 * of an undefined reference based crash when etm event is being stopped
-	 * while a TRBE IRQ also getting processed. This happens due the release
-	 * of perf handle via perf_aux_output_end() in etm_event_stop(). Stopping
+	 * of an undefined reference based crash when eपंचांग event is being stopped
+	 * जबतक a TRBE IRQ also getting processed. This happens due the release
+	 * of perf handle via perf_aux_output_end() in eपंचांग_event_stop(). Stopping
 	 * the TRBE here will ensure that no IRQ could be generated when the perf
-	 * handle gets freed in etm_event_stop().
+	 * handle माला_लो मुक्तd in eपंचांग_event_stop().
 	 */
 	trbe_drain_and_disable_local();
-	write = get_trbe_write_pointer();
-	base = get_trbe_base_pointer();
+	ग_लिखो = get_trbe_ग_लिखो_poपूर्णांकer();
+	base = get_trbe_base_poपूर्णांकer();
 
-	/* Check if there is a pending interrupt and handle it here */
-	status = read_sysreg_s(SYS_TRBSR_EL1);
-	if (is_trbe_irq(status)) {
+	/* Check अगर there is a pending पूर्णांकerrupt and handle it here */
+	status = पढ़ो_sysreg_s(SYS_TRBSR_EL1);
+	अगर (is_trbe_irq(status)) अणु
 
 		/*
 		 * Now that we are handling the IRQ here, clear the IRQ
@@ -608,102 +609,102 @@ static unsigned long arm_trbe_update_buffer(struct coresight_device *csdev,
 		 * If this was not due to a WRAP event, we have some
 		 * errors and as such buffer is empty.
 		 */
-		if (act != TRBE_FAULT_ACT_WRAP) {
+		अगर (act != TRBE_FAULT_ACT_WRAP) अणु
 			size = 0;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		/*
-		 * Otherwise, the buffer is full and the write pointer
-		 * has reached base. Adjust this back to the Limit pointer
-		 * for correct size. Also, mark the buffer truncated.
+		 * Otherwise, the buffer is full and the ग_लिखो poपूर्णांकer
+		 * has reached base. Adjust this back to the Limit poपूर्णांकer
+		 * क्रम correct size. Also, mark the buffer truncated.
 		 */
-		write = get_trbe_limit_pointer();
+		ग_लिखो = get_trbe_limit_poपूर्णांकer();
 		perf_aux_output_flag(handle, PERF_AUX_FLAG_TRUNCATED);
-	}
+	पूर्ण
 
-	offset = write - base;
-	if (WARN_ON_ONCE(offset < PERF_IDX2OFF(handle->head, buf)))
+	offset = ग_लिखो - base;
+	अगर (WARN_ON_ONCE(offset < PERF_IDX2OFF(handle->head, buf)))
 		size = 0;
-	else
+	अन्यथा
 		size = offset - PERF_IDX2OFF(handle->head, buf);
 
-done:
+करोne:
 	local_irq_restore(flags);
 
-	if (buf->snapshot)
+	अगर (buf->snapshot)
 		handle->head += size;
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int arm_trbe_enable(struct coresight_device *csdev, u32 mode, void *data)
-{
-	struct trbe_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
-	struct trbe_cpudata *cpudata = dev_get_drvdata(&csdev->dev);
-	struct perf_output_handle *handle = data;
-	struct trbe_buf *buf = etm_perf_sink_config(handle);
+अटल पूर्णांक arm_trbe_enable(काष्ठा coresight_device *csdev, u32 mode, व्योम *data)
+अणु
+	काष्ठा trbe_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
+	काष्ठा trbe_cpudata *cpudata = dev_get_drvdata(&csdev->dev);
+	काष्ठा perf_output_handle *handle = data;
+	काष्ठा trbe_buf *buf = eपंचांग_perf_sink_config(handle);
 
 	WARN_ON(cpudata->cpu != smp_processor_id());
 	WARN_ON(cpudata->drvdata != drvdata);
-	if (mode != CS_MODE_PERF)
-		return -EINVAL;
+	अगर (mode != CS_MODE_PERF)
+		वापस -EINVAL;
 
 	*this_cpu_ptr(drvdata->handle) = handle;
 	cpudata->buf = buf;
 	cpudata->mode = mode;
 	buf->cpudata = cpudata;
 	buf->trbe_limit = compute_trbe_buffer_limit(handle);
-	buf->trbe_write = buf->trbe_base + PERF_IDX2OFF(handle->head, buf);
-	if (buf->trbe_limit == buf->trbe_base) {
+	buf->trbe_ग_लिखो = buf->trbe_base + PERF_IDX2OFF(handle->head, buf);
+	अगर (buf->trbe_limit == buf->trbe_base) अणु
 		trbe_stop_and_truncate_event(handle);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	trbe_enable_hw(buf);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arm_trbe_disable(struct coresight_device *csdev)
-{
-	struct trbe_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
-	struct trbe_cpudata *cpudata = dev_get_drvdata(&csdev->dev);
-	struct trbe_buf *buf = cpudata->buf;
+अटल पूर्णांक arm_trbe_disable(काष्ठा coresight_device *csdev)
+अणु
+	काष्ठा trbe_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
+	काष्ठा trbe_cpudata *cpudata = dev_get_drvdata(&csdev->dev);
+	काष्ठा trbe_buf *buf = cpudata->buf;
 
 	WARN_ON(buf->cpudata != cpudata);
 	WARN_ON(cpudata->cpu != smp_processor_id());
 	WARN_ON(cpudata->drvdata != drvdata);
-	if (cpudata->mode != CS_MODE_PERF)
-		return -EINVAL;
+	अगर (cpudata->mode != CS_MODE_PERF)
+		वापस -EINVAL;
 
 	trbe_drain_and_disable_local();
-	buf->cpudata = NULL;
-	cpudata->buf = NULL;
+	buf->cpudata = शून्य;
+	cpudata->buf = शून्य;
 	cpudata->mode = CS_MODE_DISABLED;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void trbe_handle_spurious(struct perf_output_handle *handle)
-{
-	struct trbe_buf *buf = etm_perf_sink_config(handle);
+अटल व्योम trbe_handle_spurious(काष्ठा perf_output_handle *handle)
+अणु
+	काष्ठा trbe_buf *buf = eपंचांग_perf_sink_config(handle);
 
 	buf->trbe_limit = compute_trbe_buffer_limit(handle);
-	buf->trbe_write = buf->trbe_base + PERF_IDX2OFF(handle->head, buf);
-	if (buf->trbe_limit == buf->trbe_base) {
+	buf->trbe_ग_लिखो = buf->trbe_base + PERF_IDX2OFF(handle->head, buf);
+	अगर (buf->trbe_limit == buf->trbe_base) अणु
 		trbe_drain_and_disable_local();
-		return;
-	}
+		वापस;
+	पूर्ण
 	trbe_enable_hw(buf);
-}
+पूर्ण
 
-static void trbe_handle_overflow(struct perf_output_handle *handle)
-{
-	struct perf_event *event = handle->event;
-	struct trbe_buf *buf = etm_perf_sink_config(handle);
-	unsigned long offset, size;
-	struct etm_event_data *event_data;
+अटल व्योम trbe_handle_overflow(काष्ठा perf_output_handle *handle)
+अणु
+	काष्ठा perf_event *event = handle->event;
+	काष्ठा trbe_buf *buf = eपंचांग_perf_sink_config(handle);
+	अचिन्हित दीर्घ offset, size;
+	काष्ठा eपंचांग_event_data *event_data;
 
-	offset = get_trbe_limit_pointer() - get_trbe_base_pointer();
+	offset = get_trbe_limit_poपूर्णांकer() - get_trbe_base_poपूर्णांकer();
 	size = offset - PERF_IDX2OFF(handle->head, buf);
-	if (buf->snapshot)
+	अगर (buf->snapshot)
 		handle->head += size;
 
 	/*
@@ -714,78 +715,78 @@ static void trbe_handle_overflow(struct perf_output_handle *handle)
 				     PERF_AUX_FLAG_TRUNCATED);
 	perf_aux_output_end(handle, size);
 	event_data = perf_aux_output_begin(handle, event);
-	if (!event_data) {
+	अगर (!event_data) अणु
 		/*
 		 * We are unable to restart the trace collection,
-		 * thus leave the TRBE disabled. The etm-perf driver
+		 * thus leave the TRBE disabled. The eपंचांग-perf driver
 		 * is able to detect this with a disconnected handle
-		 * (handle->event = NULL).
+		 * (handle->event = शून्य).
 		 */
 		trbe_drain_and_disable_local();
-		*this_cpu_ptr(buf->cpudata->drvdata->handle) = NULL;
-		return;
-	}
+		*this_cpu_ptr(buf->cpudata->drvdata->handle) = शून्य;
+		वापस;
+	पूर्ण
 	buf->trbe_limit = compute_trbe_buffer_limit(handle);
-	buf->trbe_write = buf->trbe_base + PERF_IDX2OFF(handle->head, buf);
-	if (buf->trbe_limit == buf->trbe_base) {
+	buf->trbe_ग_लिखो = buf->trbe_base + PERF_IDX2OFF(handle->head, buf);
+	अगर (buf->trbe_limit == buf->trbe_base) अणु
 		trbe_stop_and_truncate_event(handle);
-		return;
-	}
+		वापस;
+	पूर्ण
 	*this_cpu_ptr(buf->cpudata->drvdata->handle) = handle;
 	trbe_enable_hw(buf);
-}
+पूर्ण
 
-static bool is_perf_trbe(struct perf_output_handle *handle)
-{
-	struct trbe_buf *buf = etm_perf_sink_config(handle);
-	struct trbe_cpudata *cpudata = buf->cpudata;
-	struct trbe_drvdata *drvdata = cpudata->drvdata;
-	int cpu = smp_processor_id();
+अटल bool is_perf_trbe(काष्ठा perf_output_handle *handle)
+अणु
+	काष्ठा trbe_buf *buf = eपंचांग_perf_sink_config(handle);
+	काष्ठा trbe_cpudata *cpudata = buf->cpudata;
+	काष्ठा trbe_drvdata *drvdata = cpudata->drvdata;
+	पूर्णांक cpu = smp_processor_id();
 
-	WARN_ON(buf->trbe_base != get_trbe_base_pointer());
-	WARN_ON(buf->trbe_limit != get_trbe_limit_pointer());
+	WARN_ON(buf->trbe_base != get_trbe_base_poपूर्णांकer());
+	WARN_ON(buf->trbe_limit != get_trbe_limit_poपूर्णांकer());
 
-	if (cpudata->mode != CS_MODE_PERF)
-		return false;
+	अगर (cpudata->mode != CS_MODE_PERF)
+		वापस false;
 
-	if (cpudata->cpu != cpu)
-		return false;
+	अगर (cpudata->cpu != cpu)
+		वापस false;
 
-	if (!cpumask_test_cpu(cpu, &drvdata->supported_cpus))
-		return false;
+	अगर (!cpumask_test_cpu(cpu, &drvdata->supported_cpus))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static irqreturn_t arm_trbe_irq_handler(int irq, void *dev)
-{
-	struct perf_output_handle **handle_ptr = dev;
-	struct perf_output_handle *handle = *handle_ptr;
-	enum trbe_fault_action act;
+अटल irqवापस_t arm_trbe_irq_handler(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा perf_output_handle **handle_ptr = dev;
+	काष्ठा perf_output_handle *handle = *handle_ptr;
+	क्रमागत trbe_fault_action act;
 	u64 status;
 
 	/*
 	 * Ensure the trace is visible to the CPUs and
-	 * any external aborts have been resolved.
+	 * any बाह्यal पातs have been resolved.
 	 */
 	trbe_drain_and_disable_local();
 
-	status = read_sysreg_s(SYS_TRBSR_EL1);
+	status = पढ़ो_sysreg_s(SYS_TRBSR_EL1);
 	/*
 	 * If the pending IRQ was handled by update_buffer callback
-	 * we have nothing to do here.
+	 * we have nothing to करो here.
 	 */
-	if (!is_trbe_irq(status))
-		return IRQ_NONE;
+	अगर (!is_trbe_irq(status))
+		वापस IRQ_NONE;
 
 	clr_trbe_irq();
 	isb();
 
-	if (WARN_ON_ONCE(!handle) || !perf_get_aux(handle))
-		return IRQ_NONE;
+	अगर (WARN_ON_ONCE(!handle) || !perf_get_aux(handle))
+		वापस IRQ_NONE;
 
-	if (!is_perf_trbe(handle))
-		return IRQ_NONE;
+	अगर (!is_perf_trbe(handle))
+		वापस IRQ_NONE;
 
 	/*
 	 * Ensure perf callbacks have completed, which may disable
@@ -794,85 +795,85 @@ static irqreturn_t arm_trbe_irq_handler(int irq, void *dev)
 	irq_work_run();
 
 	act = trbe_get_fault_act(status);
-	switch (act) {
-	case TRBE_FAULT_ACT_WRAP:
+	चयन (act) अणु
+	हाल TRBE_FAULT_ACT_WRAP:
 		trbe_handle_overflow(handle);
-		break;
-	case TRBE_FAULT_ACT_SPURIOUS:
+		अवरोध;
+	हाल TRBE_FAULT_ACT_SPURIOUS:
 		trbe_handle_spurious(handle);
-		break;
-	case TRBE_FAULT_ACT_FATAL:
+		अवरोध;
+	हाल TRBE_FAULT_ACT_FATAL:
 		trbe_stop_and_truncate_event(handle);
-		break;
-	}
-	return IRQ_HANDLED;
-}
+		अवरोध;
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct coresight_ops_sink arm_trbe_sink_ops = {
+अटल स्थिर काष्ठा coresight_ops_sink arm_trbe_sink_ops = अणु
 	.enable		= arm_trbe_enable,
 	.disable	= arm_trbe_disable,
 	.alloc_buffer	= arm_trbe_alloc_buffer,
-	.free_buffer	= arm_trbe_free_buffer,
+	.मुक्त_buffer	= arm_trbe_मुक्त_buffer,
 	.update_buffer	= arm_trbe_update_buffer,
-};
+पूर्ण;
 
-static const struct coresight_ops arm_trbe_cs_ops = {
+अटल स्थिर काष्ठा coresight_ops arm_trbe_cs_ops = अणु
 	.sink_ops	= &arm_trbe_sink_ops,
-};
+पूर्ण;
 
-static ssize_t align_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct trbe_cpudata *cpudata = dev_get_drvdata(dev);
+अटल sमाप_प्रकार align_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा trbe_cpudata *cpudata = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%llx\n", cpudata->trbe_align);
-}
-static DEVICE_ATTR_RO(align);
+	वापस प्र_लिखो(buf, "%llx\n", cpudata->trbe_align);
+पूर्ण
+अटल DEVICE_ATTR_RO(align);
 
-static ssize_t flag_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct trbe_cpudata *cpudata = dev_get_drvdata(dev);
+अटल sमाप_प्रकार flag_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा trbe_cpudata *cpudata = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", cpudata->trbe_flag);
-}
-static DEVICE_ATTR_RO(flag);
+	वापस प्र_लिखो(buf, "%d\n", cpudata->trbe_flag);
+पूर्ण
+अटल DEVICE_ATTR_RO(flag);
 
-static struct attribute *arm_trbe_attrs[] = {
+अटल काष्ठा attribute *arm_trbe_attrs[] = अणु
 	&dev_attr_align.attr,
 	&dev_attr_flag.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group arm_trbe_group = {
+अटल स्थिर काष्ठा attribute_group arm_trbe_group = अणु
 	.attrs = arm_trbe_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *arm_trbe_groups[] = {
+अटल स्थिर काष्ठा attribute_group *arm_trbe_groups[] = अणु
 	&arm_trbe_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void arm_trbe_enable_cpu(void *info)
-{
-	struct trbe_drvdata *drvdata = info;
+अटल व्योम arm_trbe_enable_cpu(व्योम *info)
+अणु
+	काष्ठा trbe_drvdata *drvdata = info;
 
 	trbe_reset_local();
 	enable_percpu_irq(drvdata->irq, IRQ_TYPE_NONE);
-}
+पूर्ण
 
-static void arm_trbe_register_coresight_cpu(struct trbe_drvdata *drvdata, int cpu)
-{
-	struct trbe_cpudata *cpudata = per_cpu_ptr(drvdata->cpudata, cpu);
-	struct coresight_device *trbe_csdev = coresight_get_percpu_sink(cpu);
-	struct coresight_desc desc = { 0 };
-	struct device *dev;
+अटल व्योम arm_trbe_रेजिस्टर_coresight_cpu(काष्ठा trbe_drvdata *drvdata, पूर्णांक cpu)
+अणु
+	काष्ठा trbe_cpudata *cpudata = per_cpu_ptr(drvdata->cpudata, cpu);
+	काष्ठा coresight_device *trbe_csdev = coresight_get_percpu_sink(cpu);
+	काष्ठा coresight_desc desc = अणु 0 पूर्ण;
+	काष्ठा device *dev;
 
-	if (WARN_ON(trbe_csdev))
-		return;
+	अगर (WARN_ON(trbe_csdev))
+		वापस;
 
 	dev = &cpudata->drvdata->pdev->dev;
-	desc.name = devm_kasprintf(dev, GFP_KERNEL, "trbe%d", cpu);
-	if (!desc.name)
-		goto cpu_clear;
+	desc.name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "trbe%d", cpu);
+	अगर (!desc.name)
+		जाओ cpu_clear;
 
 	desc.type = CORESIGHT_DEV_TYPE_SINK;
 	desc.subtype.sink_subtype = CORESIGHT_DEV_SUBTYPE_SINK_PERCPU_SYSMEM;
@@ -880,277 +881,277 @@ static void arm_trbe_register_coresight_cpu(struct trbe_drvdata *drvdata, int cp
 	desc.pdata = dev_get_platdata(dev);
 	desc.groups = arm_trbe_groups;
 	desc.dev = dev;
-	trbe_csdev = coresight_register(&desc);
-	if (IS_ERR(trbe_csdev))
-		goto cpu_clear;
+	trbe_csdev = coresight_रेजिस्टर(&desc);
+	अगर (IS_ERR(trbe_csdev))
+		जाओ cpu_clear;
 
 	dev_set_drvdata(&trbe_csdev->dev, cpudata);
 	coresight_set_percpu_sink(cpu, trbe_csdev);
-	return;
+	वापस;
 cpu_clear:
 	cpumask_clear_cpu(cpu, &drvdata->supported_cpus);
-}
+पूर्ण
 
-static void arm_trbe_probe_cpu(void *info)
-{
-	struct trbe_drvdata *drvdata = info;
-	int cpu = smp_processor_id();
-	struct trbe_cpudata *cpudata = per_cpu_ptr(drvdata->cpudata, cpu);
+अटल व्योम arm_trbe_probe_cpu(व्योम *info)
+अणु
+	काष्ठा trbe_drvdata *drvdata = info;
+	पूर्णांक cpu = smp_processor_id();
+	काष्ठा trbe_cpudata *cpudata = per_cpu_ptr(drvdata->cpudata, cpu);
 	u64 trbidr;
 
-	if (WARN_ON(!cpudata))
-		goto cpu_clear;
+	अगर (WARN_ON(!cpudata))
+		जाओ cpu_clear;
 
-	if (!is_trbe_available()) {
+	अगर (!is_trbe_available()) अणु
 		pr_err("TRBE is not implemented on cpu %d\n", cpu);
-		goto cpu_clear;
-	}
+		जाओ cpu_clear;
+	पूर्ण
 
-	trbidr = read_sysreg_s(SYS_TRBIDR_EL1);
-	if (!is_trbe_programmable(trbidr)) {
+	trbidr = पढ़ो_sysreg_s(SYS_TRBIDR_EL1);
+	अगर (!is_trbe_programmable(trbidr)) अणु
 		pr_err("TRBE is owned in higher exception level on cpu %d\n", cpu);
-		goto cpu_clear;
-	}
+		जाओ cpu_clear;
+	पूर्ण
 
 	cpudata->trbe_align = 1ULL << get_trbe_address_align(trbidr);
-	if (cpudata->trbe_align > SZ_2K) {
+	अगर (cpudata->trbe_align > SZ_2K) अणु
 		pr_err("Unsupported alignment on cpu %d\n", cpu);
-		goto cpu_clear;
-	}
+		जाओ cpu_clear;
+	पूर्ण
 	cpudata->trbe_flag = get_trbe_flag_update(trbidr);
 	cpudata->cpu = cpu;
 	cpudata->drvdata = drvdata;
-	return;
+	वापस;
 cpu_clear:
 	cpumask_clear_cpu(cpu, &drvdata->supported_cpus);
-}
+पूर्ण
 
-static void arm_trbe_remove_coresight_cpu(void *info)
-{
-	int cpu = smp_processor_id();
-	struct trbe_drvdata *drvdata = info;
-	struct trbe_cpudata *cpudata = per_cpu_ptr(drvdata->cpudata, cpu);
-	struct coresight_device *trbe_csdev = coresight_get_percpu_sink(cpu);
+अटल व्योम arm_trbe_हटाओ_coresight_cpu(व्योम *info)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	काष्ठा trbe_drvdata *drvdata = info;
+	काष्ठा trbe_cpudata *cpudata = per_cpu_ptr(drvdata->cpudata, cpu);
+	काष्ठा coresight_device *trbe_csdev = coresight_get_percpu_sink(cpu);
 
 	disable_percpu_irq(drvdata->irq);
 	trbe_reset_local();
-	if (trbe_csdev) {
-		coresight_unregister(trbe_csdev);
-		cpudata->drvdata = NULL;
-		coresight_set_percpu_sink(cpu, NULL);
-	}
-}
+	अगर (trbe_csdev) अणु
+		coresight_unरेजिस्टर(trbe_csdev);
+		cpudata->drvdata = शून्य;
+		coresight_set_percpu_sink(cpu, शून्य);
+	पूर्ण
+पूर्ण
 
-static int arm_trbe_probe_coresight(struct trbe_drvdata *drvdata)
-{
-	int cpu;
+अटल पूर्णांक arm_trbe_probe_coresight(काष्ठा trbe_drvdata *drvdata)
+अणु
+	पूर्णांक cpu;
 
 	drvdata->cpudata = alloc_percpu(typeof(*drvdata->cpudata));
-	if (!drvdata->cpudata)
-		return -ENOMEM;
+	अगर (!drvdata->cpudata)
+		वापस -ENOMEM;
 
-	for_each_cpu(cpu, &drvdata->supported_cpus) {
+	क्रम_each_cpu(cpu, &drvdata->supported_cpus) अणु
 		smp_call_function_single(cpu, arm_trbe_probe_cpu, drvdata, 1);
-		if (cpumask_test_cpu(cpu, &drvdata->supported_cpus))
-			arm_trbe_register_coresight_cpu(drvdata, cpu);
-		if (cpumask_test_cpu(cpu, &drvdata->supported_cpus))
+		अगर (cpumask_test_cpu(cpu, &drvdata->supported_cpus))
+			arm_trbe_रेजिस्टर_coresight_cpu(drvdata, cpu);
+		अगर (cpumask_test_cpu(cpu, &drvdata->supported_cpus))
 			smp_call_function_single(cpu, arm_trbe_enable_cpu, drvdata, 1);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int arm_trbe_remove_coresight(struct trbe_drvdata *drvdata)
-{
-	int cpu;
+अटल पूर्णांक arm_trbe_हटाओ_coresight(काष्ठा trbe_drvdata *drvdata)
+अणु
+	पूर्णांक cpu;
 
-	for_each_cpu(cpu, &drvdata->supported_cpus)
-		smp_call_function_single(cpu, arm_trbe_remove_coresight_cpu, drvdata, 1);
-	free_percpu(drvdata->cpudata);
-	return 0;
-}
+	क्रम_each_cpu(cpu, &drvdata->supported_cpus)
+		smp_call_function_single(cpu, arm_trbe_हटाओ_coresight_cpu, drvdata, 1);
+	मुक्त_percpu(drvdata->cpudata);
+	वापस 0;
+पूर्ण
 
-static int arm_trbe_cpu_startup(unsigned int cpu, struct hlist_node *node)
-{
-	struct trbe_drvdata *drvdata = hlist_entry_safe(node, struct trbe_drvdata, hotplug_node);
+अटल पूर्णांक arm_trbe_cpu_startup(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
+अणु
+	काष्ठा trbe_drvdata *drvdata = hlist_entry_safe(node, काष्ठा trbe_drvdata, hotplug_node);
 
-	if (cpumask_test_cpu(cpu, &drvdata->supported_cpus)) {
+	अगर (cpumask_test_cpu(cpu, &drvdata->supported_cpus)) अणु
 
 		/*
-		 * If this CPU was not probed for TRBE,
+		 * If this CPU was not probed क्रम TRBE,
 		 * initialize it now.
 		 */
-		if (!coresight_get_percpu_sink(cpu)) {
+		अगर (!coresight_get_percpu_sink(cpu)) अणु
 			arm_trbe_probe_cpu(drvdata);
-			if (cpumask_test_cpu(cpu, &drvdata->supported_cpus))
-				arm_trbe_register_coresight_cpu(drvdata, cpu);
-			if (cpumask_test_cpu(cpu, &drvdata->supported_cpus))
+			अगर (cpumask_test_cpu(cpu, &drvdata->supported_cpus))
+				arm_trbe_रेजिस्टर_coresight_cpu(drvdata, cpu);
+			अगर (cpumask_test_cpu(cpu, &drvdata->supported_cpus))
 				arm_trbe_enable_cpu(drvdata);
-		} else {
+		पूर्ण अन्यथा अणु
 			arm_trbe_enable_cpu(drvdata);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int arm_trbe_cpu_teardown(unsigned int cpu, struct hlist_node *node)
-{
-	struct trbe_drvdata *drvdata = hlist_entry_safe(node, struct trbe_drvdata, hotplug_node);
+अटल पूर्णांक arm_trbe_cpu_tearकरोwn(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
+अणु
+	काष्ठा trbe_drvdata *drvdata = hlist_entry_safe(node, काष्ठा trbe_drvdata, hotplug_node);
 
-	if (cpumask_test_cpu(cpu, &drvdata->supported_cpus)) {
+	अगर (cpumask_test_cpu(cpu, &drvdata->supported_cpus)) अणु
 		disable_percpu_irq(drvdata->irq);
 		trbe_reset_local();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int arm_trbe_probe_cpuhp(struct trbe_drvdata *drvdata)
-{
-	enum cpuhp_state trbe_online;
-	int ret;
+अटल पूर्णांक arm_trbe_probe_cpuhp(काष्ठा trbe_drvdata *drvdata)
+अणु
+	क्रमागत cpuhp_state trbe_online;
+	पूर्णांक ret;
 
 	trbe_online = cpuhp_setup_state_multi(CPUHP_AP_ONLINE_DYN, DRVNAME,
-					      arm_trbe_cpu_startup, arm_trbe_cpu_teardown);
-	if (trbe_online < 0)
-		return trbe_online;
+					      arm_trbe_cpu_startup, arm_trbe_cpu_tearकरोwn);
+	अगर (trbe_online < 0)
+		वापस trbe_online;
 
 	ret = cpuhp_state_add_instance(trbe_online, &drvdata->hotplug_node);
-	if (ret) {
-		cpuhp_remove_multi_state(trbe_online);
-		return ret;
-	}
+	अगर (ret) अणु
+		cpuhp_हटाओ_multi_state(trbe_online);
+		वापस ret;
+	पूर्ण
 	drvdata->trbe_online = trbe_online;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void arm_trbe_remove_cpuhp(struct trbe_drvdata *drvdata)
-{
-	cpuhp_remove_multi_state(drvdata->trbe_online);
-}
+अटल व्योम arm_trbe_हटाओ_cpuhp(काष्ठा trbe_drvdata *drvdata)
+अणु
+	cpuhp_हटाओ_multi_state(drvdata->trbe_online);
+पूर्ण
 
-static int arm_trbe_probe_irq(struct platform_device *pdev,
-			      struct trbe_drvdata *drvdata)
-{
-	int ret;
+अटल पूर्णांक arm_trbe_probe_irq(काष्ठा platक्रमm_device *pdev,
+			      काष्ठा trbe_drvdata *drvdata)
+अणु
+	पूर्णांक ret;
 
-	drvdata->irq = platform_get_irq(pdev, 0);
-	if (drvdata->irq < 0) {
+	drvdata->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (drvdata->irq < 0) अणु
 		pr_err("IRQ not found for the platform device\n");
-		return drvdata->irq;
-	}
+		वापस drvdata->irq;
+	पूर्ण
 
-	if (!irq_is_percpu(drvdata->irq)) {
+	अगर (!irq_is_percpu(drvdata->irq)) अणु
 		pr_err("IRQ is not a PPI\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (irq_get_percpu_devid_partition(drvdata->irq, &drvdata->supported_cpus))
-		return -EINVAL;
+	अगर (irq_get_percpu_devid_partition(drvdata->irq, &drvdata->supported_cpus))
+		वापस -EINVAL;
 
-	drvdata->handle = alloc_percpu(struct perf_output_handle *);
-	if (!drvdata->handle)
-		return -ENOMEM;
+	drvdata->handle = alloc_percpu(काष्ठा perf_output_handle *);
+	अगर (!drvdata->handle)
+		वापस -ENOMEM;
 
 	ret = request_percpu_irq(drvdata->irq, arm_trbe_irq_handler, DRVNAME, drvdata->handle);
-	if (ret) {
-		free_percpu(drvdata->handle);
-		return ret;
-	}
-	return 0;
-}
+	अगर (ret) अणु
+		मुक्त_percpu(drvdata->handle);
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void arm_trbe_remove_irq(struct trbe_drvdata *drvdata)
-{
-	free_percpu_irq(drvdata->irq, drvdata->handle);
-	free_percpu(drvdata->handle);
-}
+अटल व्योम arm_trbe_हटाओ_irq(काष्ठा trbe_drvdata *drvdata)
+अणु
+	मुक्त_percpu_irq(drvdata->irq, drvdata->handle);
+	मुक्त_percpu(drvdata->handle);
+पूर्ण
 
-static int arm_trbe_device_probe(struct platform_device *pdev)
-{
-	struct coresight_platform_data *pdata;
-	struct trbe_drvdata *drvdata;
-	struct device *dev = &pdev->dev;
-	int ret;
+अटल पूर्णांक arm_trbe_device_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा coresight_platक्रमm_data *pdata;
+	काष्ठा trbe_drvdata *drvdata;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक ret;
 
-	drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
-	if (!drvdata)
-		return -ENOMEM;
+	drvdata = devm_kzalloc(dev, माप(*drvdata), GFP_KERNEL);
+	अगर (!drvdata)
+		वापस -ENOMEM;
 
-	pdata = coresight_get_platform_data(dev);
-	if (IS_ERR(pdata))
-		return PTR_ERR(pdata);
+	pdata = coresight_get_platक्रमm_data(dev);
+	अगर (IS_ERR(pdata))
+		वापस PTR_ERR(pdata);
 
 	dev_set_drvdata(dev, drvdata);
-	dev->platform_data = pdata;
+	dev->platक्रमm_data = pdata;
 	drvdata->pdev = pdev;
 	ret = arm_trbe_probe_irq(pdev, drvdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = arm_trbe_probe_coresight(drvdata);
-	if (ret)
-		goto probe_failed;
+	अगर (ret)
+		जाओ probe_failed;
 
 	ret = arm_trbe_probe_cpuhp(drvdata);
-	if (ret)
-		goto cpuhp_failed;
+	अगर (ret)
+		जाओ cpuhp_failed;
 
-	return 0;
+	वापस 0;
 cpuhp_failed:
-	arm_trbe_remove_coresight(drvdata);
+	arm_trbe_हटाओ_coresight(drvdata);
 probe_failed:
-	arm_trbe_remove_irq(drvdata);
-	return ret;
-}
+	arm_trbe_हटाओ_irq(drvdata);
+	वापस ret;
+पूर्ण
 
-static int arm_trbe_device_remove(struct platform_device *pdev)
-{
-	struct trbe_drvdata *drvdata = platform_get_drvdata(pdev);
+अटल पूर्णांक arm_trbe_device_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा trbe_drvdata *drvdata = platक्रमm_get_drvdata(pdev);
 
-	arm_trbe_remove_cpuhp(drvdata);
-	arm_trbe_remove_coresight(drvdata);
-	arm_trbe_remove_irq(drvdata);
-	return 0;
-}
+	arm_trbe_हटाओ_cpuhp(drvdata);
+	arm_trbe_हटाओ_coresight(drvdata);
+	arm_trbe_हटाओ_irq(drvdata);
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id arm_trbe_of_match[] = {
-	{ .compatible = "arm,trace-buffer-extension"},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id arm_trbe_of_match[] = अणु
+	अणु .compatible = "arm,trace-buffer-extension"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, arm_trbe_of_match);
 
-static struct platform_driver arm_trbe_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver arm_trbe_driver = अणु
+	.driver	= अणु
 		.name = DRVNAME,
 		.of_match_table = of_match_ptr(arm_trbe_of_match),
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe	= arm_trbe_device_probe,
-	.remove	= arm_trbe_device_remove,
-};
+	.हटाओ	= arm_trbe_device_हटाओ,
+पूर्ण;
 
-static int __init arm_trbe_init(void)
-{
-	int ret;
+अटल पूर्णांक __init arm_trbe_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (arm64_kernel_unmapped_at_el0()) {
+	अगर (arm64_kernel_unmapped_at_el0()) अणु
 		pr_err("TRBE wouldn't work if kernel gets unmapped at EL0\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	ret = platform_driver_register(&arm_trbe_driver);
-	if (!ret)
-		return 0;
+	ret = platक्रमm_driver_रेजिस्टर(&arm_trbe_driver);
+	अगर (!ret)
+		वापस 0;
 
 	pr_err("Error registering %s platform driver\n", DRVNAME);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit arm_trbe_exit(void)
-{
-	platform_driver_unregister(&arm_trbe_driver);
-}
+अटल व्योम __निकास arm_trbe_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&arm_trbe_driver);
+पूर्ण
 module_init(arm_trbe_init);
-module_exit(arm_trbe_exit);
+module_निकास(arm_trbe_निकास);
 
 MODULE_AUTHOR("Anshuman Khandual <anshuman.khandual@arm.com>");
 MODULE_DESCRIPTION("Arm Trace Buffer Extension (TRBE) driver");

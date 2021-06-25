@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *         Copyright (c) 2007 by Silicon Motion, Inc. (SMI)
  *
  *  swi2c.c --- SM750/SM718 DDK
- *  This file contains the source code for I2C using software
+ *  This file contains the source code क्रम I2C using software
  *  implementation.
  */
 
-#include "ddk750_chip.h"
-#include "ddk750_reg.h"
-#include "ddk750_swi2c.h"
-#include "ddk750_power.h"
+#समावेश "ddk750_chip.h"
+#समावेश "ddk750_reg.h"
+#समावेश "ddk750_swi2c.h"
+#समावेश "ddk750_power.h"
 
 /*
  * I2C Software Master Driver:
  * ===========================
- * Each i2c cycle is split into 4 sections. Each of these section marks
- * a point in time where the SCL or SDA may be changed.
+ * Each i2c cycle is split पूर्णांकo 4 sections. Each of these section marks
+ * a poपूर्णांक in समय where the SCL or SDA may be changed.
  *
  * 1 Cycle == |  Section I. |  Section 2. |  Section 3. |  Section 4. |
  *            +-------------+-------------+-------------+-------------+
@@ -25,9 +26,9 @@
  *                                          ____________ _____________
  * SCL == XXXX _____________ ____________ /
  *
- * I.e. the SCL may only be changed in section 1. and section 3. while
+ * I.e. the SCL may only be changed in section 1. and section 3. जबतक
  * the SDA may only be changed in section 2. and section 4. The table
- * below gives the changes for these 2 lines in the varios sections.
+ * below gives the changes क्रम these 2 lines in the varios sections.
  *
  * Section changes Table:
  * ======================
@@ -50,55 +51,55 @@
  *
  */
 
-/* GPIO pins used for this I2C. It ranges from 0 to 63. */
-static unsigned char sw_i2c_clk_gpio = DEFAULT_I2C_SCL;
-static unsigned char sw_i2c_data_gpio = DEFAULT_I2C_SDA;
+/* GPIO pins used क्रम this I2C. It ranges from 0 to 63. */
+अटल अचिन्हित अक्षर sw_i2c_clk_gpio = DEFAULT_I2C_SCL;
+अटल अचिन्हित अक्षर sw_i2c_data_gpio = DEFAULT_I2C_SDA;
 
 /*
- *  Below is the variable declaration for the GPIO pin register usage
- *  for the i2c Clock and i2c Data.
+ *  Below is the variable declaration क्रम the GPIO pin रेजिस्टर usage
+ *  क्रम the i2c Clock and i2c Data.
  *
  *  Note:
- *      Notice that the GPIO usage for the i2c clock and i2c Data are
+ *      Notice that the GPIO usage क्रम the i2c घड़ी and i2c Data are
  *      separated. This is to make this code flexible enough when
- *      two separate GPIO pins for the clock and data are located
- *      in two different GPIO register set (worst case).
+ *      two separate GPIO pins क्रम the घड़ी and data are located
+ *      in two dअगरferent GPIO रेजिस्टर set (worst हाल).
  */
 
 /* i2c Clock GPIO Register usage */
-static unsigned long sw_i2c_clk_gpio_mux_reg = GPIO_MUX;
-static unsigned long sw_i2c_clk_gpio_data_reg = GPIO_DATA;
-static unsigned long sw_i2c_clk_gpio_data_dir_reg = GPIO_DATA_DIRECTION;
+अटल अचिन्हित दीर्घ sw_i2c_clk_gpio_mux_reg = GPIO_MUX;
+अटल अचिन्हित दीर्घ sw_i2c_clk_gpio_data_reg = GPIO_DATA;
+अटल अचिन्हित दीर्घ sw_i2c_clk_gpio_data_dir_reg = GPIO_DATA_सूचीECTION;
 
 /* i2c Data GPIO Register usage */
-static unsigned long sw_i2c_data_gpio_mux_reg = GPIO_MUX;
-static unsigned long sw_i2c_data_gpio_data_reg = GPIO_DATA;
-static unsigned long sw_i2c_data_gpio_data_dir_reg = GPIO_DATA_DIRECTION;
+अटल अचिन्हित दीर्घ sw_i2c_data_gpio_mux_reg = GPIO_MUX;
+अटल अचिन्हित दीर्घ sw_i2c_data_gpio_data_reg = GPIO_DATA;
+अटल अचिन्हित दीर्घ sw_i2c_data_gpio_data_dir_reg = GPIO_DATA_सूचीECTION;
 
 /*
- *  This function puts a delay between command
+ *  This function माला_दो a delay between command
  */
-static void sw_i2c_wait(void)
-{
+अटल व्योम sw_i2c_रुको(व्योम)
+अणु
 	/* find a bug:
-	 * peekIO method works well before suspend/resume
+	 * peekIO method works well beक्रमe suspend/resume
 	 * but after suspend, peekIO(0x3ce,0x61) & 0x10
-	 * always be non-zero,which makes the while loop
+	 * always be non-zero,which makes the जबतक loop
 	 * never finish.
-	 * use non-ultimate for loop below is safe
+	 * use non-ultimate क्रम loop below is safe
 	 */
 
-    /* Change wait algorithm to use PCI bus clock,
+    /* Change रुको algorithm to use PCI bus घड़ी,
      * it's more reliable than counter loop ..
-     * write 0x61 to 0x3ce and read from 0x3cf
+     * ग_लिखो 0x61 to 0x3ce and पढ़ो from 0x3cf
      */
-	int i, tmp;
+	पूर्णांक i, पंचांगp;
 
-	for (i = 0; i < 600; i++) {
-		tmp = i;
-		tmp += i;
-	}
-}
+	क्रम (i = 0; i < 600; i++) अणु
+		पंचांगp = i;
+		पंचांगp += i;
+	पूर्ण
+पूर्ण
 
 /*
  *  This function set/reset the SCL GPIO pin
@@ -108,25 +109,25 @@ static void sw_i2c_wait(void)
  *
  *  Notes:
  *      When setting SCL to high, just set the GPIO as input where the pull up
- *      resistor will pull the signal up. Do not use software to pull up the
- *      signal because the i2c will fail when other device try to drive the
- *      signal due to SM50x will drive the signal to always high.
+ *      resistor will pull the संकेत up. Do not use software to pull up the
+ *      संकेत because the i2c will fail when other device try to drive the
+ *      संकेत due to SM50x will drive the संकेत to always high.
  */
-static void sw_i2c_scl(unsigned char value)
-{
-	unsigned long gpio_data;
-	unsigned long gpio_dir;
+अटल व्योम sw_i2c_scl(अचिन्हित अक्षर value)
+अणु
+	अचिन्हित दीर्घ gpio_data;
+	अचिन्हित दीर्घ gpio_dir;
 
 	gpio_dir = peek32(sw_i2c_clk_gpio_data_dir_reg);
-	if (value) {    /* High */
+	अगर (value) अणु    /* High */
 		/*
-		 * Set direction as input. This will automatically
-		 * pull the signal up.
+		 * Set direction as input. This will स्वतःmatically
+		 * pull the संकेत up.
 		 */
 		gpio_dir &= ~(1 << sw_i2c_clk_gpio);
 		poke32(sw_i2c_clk_gpio_data_dir_reg, gpio_dir);
-	} else {        /* Low */
-		/* Set the signal down */
+	पूर्ण अन्यथा अणु        /* Low */
+		/* Set the संकेत करोwn */
 		gpio_data = peek32(sw_i2c_clk_gpio_data_reg);
 		gpio_data &= ~(1 << sw_i2c_clk_gpio);
 		poke32(sw_i2c_clk_gpio_data_reg, gpio_data);
@@ -134,8 +135,8 @@ static void sw_i2c_scl(unsigned char value)
 		/* Set direction as output */
 		gpio_dir |= (1 << sw_i2c_clk_gpio);
 		poke32(sw_i2c_clk_gpio_data_dir_reg, gpio_dir);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *  This function set/reset the SDA GPIO pin
@@ -145,25 +146,25 @@ static void sw_i2c_scl(unsigned char value)
  *
  *  Notes:
  *      When setting SCL to high, just set the GPIO as input where the pull up
- *      resistor will pull the signal up. Do not use software to pull up the
- *      signal because the i2c will fail when other device try to drive the
- *      signal due to SM50x will drive the signal to always high.
+ *      resistor will pull the संकेत up. Do not use software to pull up the
+ *      संकेत because the i2c will fail when other device try to drive the
+ *      संकेत due to SM50x will drive the संकेत to always high.
  */
-static void sw_i2c_sda(unsigned char value)
-{
-	unsigned long gpio_data;
-	unsigned long gpio_dir;
+अटल व्योम sw_i2c_sda(अचिन्हित अक्षर value)
+अणु
+	अचिन्हित दीर्घ gpio_data;
+	अचिन्हित दीर्घ gpio_dir;
 
 	gpio_dir = peek32(sw_i2c_data_gpio_data_dir_reg);
-	if (value) {    /* High */
+	अगर (value) अणु    /* High */
 		/*
-		 * Set direction as input. This will automatically
-		 * pull the signal up.
+		 * Set direction as input. This will स्वतःmatically
+		 * pull the संकेत up.
 		 */
 		gpio_dir &= ~(1 << sw_i2c_data_gpio);
 		poke32(sw_i2c_data_gpio_data_dir_reg, gpio_dir);
-	} else {        /* Low */
-		/* Set the signal down */
+	पूर्ण अन्यथा अणु        /* Low */
+		/* Set the संकेत करोwn */
 		gpio_data = peek32(sw_i2c_data_gpio_data_reg);
 		gpio_data &= ~(1 << sw_i2c_data_gpio);
 		poke32(sw_i2c_data_gpio_data_reg, gpio_data);
@@ -171,173 +172,173 @@ static void sw_i2c_sda(unsigned char value)
 		/* Set direction as output */
 		gpio_dir |= (1 << sw_i2c_data_gpio);
 		poke32(sw_i2c_data_gpio_data_dir_reg, gpio_dir);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *  This function read the data from the SDA GPIO pin
+ *  This function पढ़ो the data from the SDA GPIO pin
  *
  *  Return Value:
  *      The SDA data bit sent by the Slave
  */
-static unsigned char sw_i2c_read_sda(void)
-{
-	unsigned long gpio_dir;
-	unsigned long gpio_data;
-	unsigned long dir_mask = 1 << sw_i2c_data_gpio;
+अटल अचिन्हित अक्षर sw_i2c_पढ़ो_sda(व्योम)
+अणु
+	अचिन्हित दीर्घ gpio_dir;
+	अचिन्हित दीर्घ gpio_data;
+	अचिन्हित दीर्घ dir_mask = 1 << sw_i2c_data_gpio;
 
 	/* Make sure that the direction is input (High) */
 	gpio_dir = peek32(sw_i2c_data_gpio_data_dir_reg);
-	if ((gpio_dir & dir_mask) != ~dir_mask) {
+	अगर ((gpio_dir & dir_mask) != ~dir_mask) अणु
 		gpio_dir &= ~(1 << sw_i2c_data_gpio);
 		poke32(sw_i2c_data_gpio_data_dir_reg, gpio_dir);
-	}
+	पूर्ण
 
-	/* Now read the SDA line */
+	/* Now पढ़ो the SDA line */
 	gpio_data = peek32(sw_i2c_data_gpio_data_reg);
-	if (gpio_data & (1 << sw_i2c_data_gpio))
-		return 1;
-	else
-		return 0;
-}
+	अगर (gpio_data & (1 << sw_i2c_data_gpio))
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 /*
- *  This function sends ACK signal
+ *  This function sends ACK संकेत
  */
-static void sw_i2c_ack(void)
-{
-	return;  /* Single byte read is ok without it. */
-}
+अटल व्योम sw_i2c_ack(व्योम)
+अणु
+	वापस;  /* Single byte पढ़ो is ok without it. */
+पूर्ण
 
 /*
  *  This function sends the start command to the slave device
  */
-static void sw_i2c_start(void)
-{
+अटल व्योम sw_i2c_start(व्योम)
+अणु
 	/* Start I2C */
 	sw_i2c_sda(1);
 	sw_i2c_scl(1);
 	sw_i2c_sda(0);
-}
+पूर्ण
 
 /*
  *  This function sends the stop command to the slave device
  */
-static void sw_i2c_stop(void)
-{
+अटल व्योम sw_i2c_stop(व्योम)
+अणु
 	/* Stop the I2C */
 	sw_i2c_scl(1);
 	sw_i2c_sda(0);
 	sw_i2c_sda(1);
-}
+पूर्ण
 
 /*
- *  This function writes one byte to the slave device
+ *  This function ग_लिखोs one byte to the slave device
  *
  *  Parameters:
- *      data    - Data to be write to the slave device
+ *      data    - Data to be ग_लिखो to the slave device
  *
  *  Return Value:
  *       0   - Success
- *      -1   - Fail to write byte
+ *      -1   - Fail to ग_लिखो byte
  */
-static long sw_i2c_write_byte(unsigned char data)
-{
-	unsigned char value = data;
-	int i;
+अटल दीर्घ sw_i2c_ग_लिखो_byte(अचिन्हित अक्षर data)
+अणु
+	अचिन्हित अक्षर value = data;
+	पूर्णांक i;
 
 	/* Sending the data bit by bit */
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		/* Set SCL to low */
 		sw_i2c_scl(0);
 
 		/* Send data bit */
-		if ((value & 0x80) != 0)
+		अगर ((value & 0x80) != 0)
 			sw_i2c_sda(1);
-		else
+		अन्यथा
 			sw_i2c_sda(0);
 
-		sw_i2c_wait();
+		sw_i2c_रुको();
 
 		/* Toggle clk line to one */
 		sw_i2c_scl(1);
-		sw_i2c_wait();
+		sw_i2c_रुको();
 
-		/* Shift byte to be sent */
+		/* Shअगरt byte to be sent */
 		value = value << 1;
-	}
+	पूर्ण
 
 	/* Set the SCL Low and SDA High (prepare to get input) */
 	sw_i2c_scl(0);
 	sw_i2c_sda(1);
 
-	/* Set the SCL High for ack */
-	sw_i2c_wait();
+	/* Set the SCL High क्रम ack */
+	sw_i2c_रुको();
 	sw_i2c_scl(1);
-	sw_i2c_wait();
+	sw_i2c_रुको();
 
 	/* Read SDA, until SDA==0 */
-	for (i = 0; i < 0xff; i++) {
-		if (!sw_i2c_read_sda())
-			break;
+	क्रम (i = 0; i < 0xff; i++) अणु
+		अगर (!sw_i2c_पढ़ो_sda())
+			अवरोध;
 
 		sw_i2c_scl(0);
-		sw_i2c_wait();
+		sw_i2c_रुको();
 		sw_i2c_scl(1);
-		sw_i2c_wait();
-	}
+		sw_i2c_रुको();
+	पूर्ण
 
 	/* Set the SCL Low and SDA High */
 	sw_i2c_scl(0);
 	sw_i2c_sda(1);
 
-	if (i < 0xff)
-		return 0;
-	else
-		return -1;
-}
+	अगर (i < 0xff)
+		वापस 0;
+	अन्यथा
+		वापस -1;
+पूर्ण
 
 /*
- *  This function reads one byte from the slave device
+ *  This function पढ़ोs one byte from the slave device
  *
  *  Parameters:
  *      ack    - Flag to indicate either to send the acknowledge
  *            message to the slave device or not
  *
  *  Return Value:
- *      One byte data read from the Slave device
+ *      One byte data पढ़ो from the Slave device
  */
-static unsigned char sw_i2c_read_byte(unsigned char ack)
-{
-	int i;
-	unsigned char data = 0;
+अटल अचिन्हित अक्षर sw_i2c_पढ़ो_byte(अचिन्हित अक्षर ack)
+अणु
+	पूर्णांक i;
+	अचिन्हित अक्षर data = 0;
 
-	for (i = 7; i >= 0; i--) {
+	क्रम (i = 7; i >= 0; i--) अणु
 		/* Set the SCL to Low and SDA to High (Input) */
 		sw_i2c_scl(0);
 		sw_i2c_sda(1);
-		sw_i2c_wait();
+		sw_i2c_रुको();
 
 		/* Set the SCL High */
 		sw_i2c_scl(1);
-		sw_i2c_wait();
+		sw_i2c_रुको();
 
 		/* Read data bits from SDA */
-		data |= (sw_i2c_read_sda() << i);
-	}
+		data |= (sw_i2c_पढ़ो_sda() << i);
+	पूर्ण
 
-	if (ack)
+	अगर (ack)
 		sw_i2c_ack();
 
 	/* Set the SCL Low and SDA High */
 	sw_i2c_scl(0);
 	sw_i2c_sda(1);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
 /*
- * This function initializes GPIO port for SW I2C communication.
+ * This function initializes GPIO port क्रम SW I2C communication.
  *
  * Parameters:
  *      clk_gpio      - The GPIO pin to be used as i2c SCL
@@ -347,32 +348,32 @@ static unsigned char sw_i2c_read_byte(unsigned char ack)
  *      -1   - Fail to initialize the i2c
  *       0   - Success
  */
-static long sm750le_i2c_init(unsigned char clk_gpio, unsigned char data_gpio)
-{
-	int i;
+अटल दीर्घ sm750le_i2c_init(अचिन्हित अक्षर clk_gpio, अचिन्हित अक्षर data_gpio)
+अणु
+	पूर्णांक i;
 
-	/* Initialize the GPIO pin for the i2c Clock Register */
+	/* Initialize the GPIO pin क्रम the i2c Clock Register */
 	sw_i2c_clk_gpio_data_reg = GPIO_DATA_SM750LE;
-	sw_i2c_clk_gpio_data_dir_reg = GPIO_DATA_DIRECTION_SM750LE;
+	sw_i2c_clk_gpio_data_dir_reg = GPIO_DATA_सूचीECTION_SM750LE;
 
 	/* Initialize the Clock GPIO Offset */
 	sw_i2c_clk_gpio = clk_gpio;
 
-	/* Initialize the GPIO pin for the i2c Data Register */
+	/* Initialize the GPIO pin क्रम the i2c Data Register */
 	sw_i2c_data_gpio_data_reg = GPIO_DATA_SM750LE;
-	sw_i2c_data_gpio_data_dir_reg = GPIO_DATA_DIRECTION_SM750LE;
+	sw_i2c_data_gpio_data_dir_reg = GPIO_DATA_सूचीECTION_SM750LE;
 
 	/* Initialize the Data GPIO Offset */
 	sw_i2c_data_gpio = data_gpio;
 
-	/* Note that SM750LE don't have GPIO MUX and power is always on */
+	/* Note that SM750LE करोn't have GPIO MUX and घातer is always on */
 
 	/* Clear the i2c lines. */
-	for (i = 0; i < 9; i++)
+	क्रम (i = 0; i < 9; i++)
 		sw_i2c_stop();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This function initializes the i2c attributes and bus
@@ -385,120 +386,120 @@ static long sm750le_i2c_init(unsigned char clk_gpio, unsigned char data_gpio)
  *      -1   - Fail to initialize the i2c
  *       0   - Success
  */
-long sm750_sw_i2c_init(unsigned char clk_gpio, unsigned char data_gpio)
-{
-	int i;
+दीर्घ sm750_sw_i2c_init(अचिन्हित अक्षर clk_gpio, अचिन्हित अक्षर data_gpio)
+अणु
+	पूर्णांक i;
 
 	/*
-	 * Return 0 if the GPIO pins to be used is out of range. The
+	 * Return 0 अगर the GPIO pins to be used is out of range. The
 	 * range is only from [0..63]
 	 */
-	if ((clk_gpio > 31) || (data_gpio > 31))
-		return -1;
+	अगर ((clk_gpio > 31) || (data_gpio > 31))
+		वापस -1;
 
-	if (sm750_get_chip_type() == SM750LE)
-		return sm750le_i2c_init(clk_gpio, data_gpio);
+	अगर (sm750_get_chip_type() == SM750LE)
+		वापस sm750le_i2c_init(clk_gpio, data_gpio);
 
-	/* Initialize the GPIO pin for the i2c Clock Register */
+	/* Initialize the GPIO pin क्रम the i2c Clock Register */
 	sw_i2c_clk_gpio_mux_reg = GPIO_MUX;
 	sw_i2c_clk_gpio_data_reg = GPIO_DATA;
-	sw_i2c_clk_gpio_data_dir_reg = GPIO_DATA_DIRECTION;
+	sw_i2c_clk_gpio_data_dir_reg = GPIO_DATA_सूचीECTION;
 
 	/* Initialize the Clock GPIO Offset */
 	sw_i2c_clk_gpio = clk_gpio;
 
-	/* Initialize the GPIO pin for the i2c Data Register */
+	/* Initialize the GPIO pin क्रम the i2c Data Register */
 	sw_i2c_data_gpio_mux_reg = GPIO_MUX;
 	sw_i2c_data_gpio_data_reg = GPIO_DATA;
-	sw_i2c_data_gpio_data_dir_reg = GPIO_DATA_DIRECTION;
+	sw_i2c_data_gpio_data_dir_reg = GPIO_DATA_सूचीECTION;
 
 	/* Initialize the Data GPIO Offset */
 	sw_i2c_data_gpio = data_gpio;
 
-	/* Enable the GPIO pins for the i2c Clock and Data (GPIO MUX) */
+	/* Enable the GPIO pins क्रम the i2c Clock and Data (GPIO MUX) */
 	poke32(sw_i2c_clk_gpio_mux_reg,
 	       peek32(sw_i2c_clk_gpio_mux_reg) & ~(1 << sw_i2c_clk_gpio));
 	poke32(sw_i2c_data_gpio_mux_reg,
 	       peek32(sw_i2c_data_gpio_mux_reg) & ~(1 << sw_i2c_data_gpio));
 
-	/* Enable GPIO power */
+	/* Enable GPIO घातer */
 	sm750_enable_gpio(1);
 
 	/* Clear the i2c lines. */
-	for (i = 0; i < 9; i++)
+	क्रम (i = 0; i < 9; i++)
 		sw_i2c_stop();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *  This function reads the slave device's register
+ *  This function पढ़ोs the slave device's रेजिस्टर
  *
  *  Parameters:
- *      addr   - i2c Slave device address which register
- *                        to be read from
- *      reg    - Slave device's register to be read
+ *      addr   - i2c Slave device address which रेजिस्टर
+ *                        to be पढ़ो from
+ *      reg    - Slave device's रेजिस्टर to be पढ़ो
  *
  *  Return Value:
  *      Register value
  */
-unsigned char sm750_sw_i2c_read_reg(unsigned char addr, unsigned char reg)
-{
-	unsigned char data;
+अचिन्हित अक्षर sm750_sw_i2c_पढ़ो_reg(अचिन्हित अक्षर addr, अचिन्हित अक्षर reg)
+अणु
+	अचिन्हित अक्षर data;
 
-	/* Send the Start signal */
+	/* Send the Start संकेत */
 	sw_i2c_start();
 
 	/* Send the device address */
-	sw_i2c_write_byte(addr);
+	sw_i2c_ग_लिखो_byte(addr);
 
-	/* Send the register index */
-	sw_i2c_write_byte(reg);
+	/* Send the रेजिस्टर index */
+	sw_i2c_ग_लिखो_byte(reg);
 
-	/* Get the bus again and get the data from the device read address */
+	/* Get the bus again and get the data from the device पढ़ो address */
 	sw_i2c_start();
-	sw_i2c_write_byte(addr + 1);
-	data = sw_i2c_read_byte(1);
+	sw_i2c_ग_लिखो_byte(addr + 1);
+	data = sw_i2c_पढ़ो_byte(1);
 
 	/* Stop swI2C and release the bus */
 	sw_i2c_stop();
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
 /*
- *  This function writes a value to the slave device's register
+ *  This function ग_लिखोs a value to the slave device's रेजिस्टर
  *
  *  Parameters:
- *      addr            - i2c Slave device address which register
+ *      addr            - i2c Slave device address which रेजिस्टर
  *                        to be written
- *      reg             - Slave device's register to be written
- *      data            - Data to be written to the register
+ *      reg             - Slave device's रेजिस्टर to be written
+ *      data            - Data to be written to the रेजिस्टर
  *
  *  Result:
  *          0   - Success
  *         -1   - Fail
  */
-long sm750_sw_i2c_write_reg(unsigned char addr,
-			    unsigned char reg,
-			    unsigned char data)
-{
-	long ret = 0;
+दीर्घ sm750_sw_i2c_ग_लिखो_reg(अचिन्हित अक्षर addr,
+			    अचिन्हित अक्षर reg,
+			    अचिन्हित अक्षर data)
+अणु
+	दीर्घ ret = 0;
 
-	/* Send the Start signal */
+	/* Send the Start संकेत */
 	sw_i2c_start();
 
-	/* Send the device address and read the data. All should return success
-	 * in order for the writing processed to be successful
+	/* Send the device address and पढ़ो the data. All should वापस success
+	 * in order क्रम the writing processed to be successful
 	 */
-	if ((sw_i2c_write_byte(addr) != 0) ||
-	    (sw_i2c_write_byte(reg) != 0) ||
-	    (sw_i2c_write_byte(data) != 0)) {
+	अगर ((sw_i2c_ग_लिखो_byte(addr) != 0) ||
+	    (sw_i2c_ग_लिखो_byte(reg) != 0) ||
+	    (sw_i2c_ग_लिखो_byte(data) != 0)) अणु
 		ret = -1;
-	}
+	पूर्ण
 
 	/* Stop i2c and release the bus */
 	sw_i2c_stop();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

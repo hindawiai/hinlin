@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Support PCI IO workaround
  *
@@ -6,192 +7,192 @@
  *		       IBM, Corp.
  *  (C) Copyright 2007-2008 TOSHIBA CORPORATION
  */
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/kernel.h>
-#include <linux/sched/mm.h>	/* for init_mm */
-#include <linux/pgtable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched/mm.h>	/* क्रम init_mm */
+#समावेश <linux/pgtable.h>
 
-#include <asm/io.h>
-#include <asm/machdep.h>
-#include <asm/ppc-pci.h>
-#include <asm/io-workarounds.h>
-#include <asm/pte-walk.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/ppc-pci.h>
+#समावेश <यंत्र/io-workarounds.h>
+#समावेश <यंत्र/pte-walk.h>
 
 
-#define IOWA_MAX_BUS	8
+#घोषणा IOWA_MAX_BUS	8
 
-static struct iowa_bus iowa_busses[IOWA_MAX_BUS];
-static unsigned int iowa_bus_count;
+अटल काष्ठा iowa_bus iowa_busses[IOWA_MAX_BUS];
+अटल अचिन्हित पूर्णांक iowa_bus_count;
 
-static struct iowa_bus *iowa_pci_find(unsigned long vaddr, unsigned long paddr)
-{
-	int i, j;
-	struct resource *res;
-	unsigned long vstart, vend;
+अटल काष्ठा iowa_bus *iowa_pci_find(अचिन्हित दीर्घ vaddr, अचिन्हित दीर्घ paddr)
+अणु
+	पूर्णांक i, j;
+	काष्ठा resource *res;
+	अचिन्हित दीर्घ vstart, vend;
 
-	for (i = 0; i < iowa_bus_count; i++) {
-		struct iowa_bus *bus = &iowa_busses[i];
-		struct pci_controller *phb = bus->phb;
+	क्रम (i = 0; i < iowa_bus_count; i++) अणु
+		काष्ठा iowa_bus *bus = &iowa_busses[i];
+		काष्ठा pci_controller *phb = bus->phb;
 
-		if (vaddr) {
-			vstart = (unsigned long)phb->io_base_virt;
+		अगर (vaddr) अणु
+			vstart = (अचिन्हित दीर्घ)phb->io_base_virt;
 			vend = vstart + phb->pci_io_size - 1;
-			if ((vaddr >= vstart) && (vaddr <= vend))
-				return bus;
-		}
+			अगर ((vaddr >= vstart) && (vaddr <= vend))
+				वापस bus;
+		पूर्ण
 
-		if (paddr)
-			for (j = 0; j < 3; j++) {
+		अगर (paddr)
+			क्रम (j = 0; j < 3; j++) अणु
 				res = &phb->mem_resources[j];
-				if (paddr >= res->start && paddr <= res->end)
-					return bus;
-			}
-	}
+				अगर (paddr >= res->start && paddr <= res->end)
+					वापस bus;
+			पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#ifdef CONFIG_PPC_INDIRECT_MMIO
-struct iowa_bus *iowa_mem_find_bus(const PCI_IO_ADDR addr)
-{
-	struct iowa_bus *bus;
-	int token;
+#अगर_घोषित CONFIG_PPC_INसूचीECT_MMIO
+काष्ठा iowa_bus *iowa_mem_find_bus(स्थिर PCI_IO_ADDR addr)
+अणु
+	काष्ठा iowa_bus *bus;
+	पूर्णांक token;
 
 	token = PCI_GET_ADDR_TOKEN(addr);
 
-	if (token && token <= iowa_bus_count)
+	अगर (token && token <= iowa_bus_count)
 		bus = &iowa_busses[token - 1];
-	else {
-		unsigned long vaddr, paddr;
+	अन्यथा अणु
+		अचिन्हित दीर्घ vaddr, paddr;
 
-		vaddr = (unsigned long)PCI_FIX_ADDR(addr);
-		if (vaddr < PHB_IO_BASE || vaddr >= PHB_IO_END)
-			return NULL;
+		vaddr = (अचिन्हित दीर्घ)PCI_FIX_ADDR(addr);
+		अगर (vaddr < PHB_IO_BASE || vaddr >= PHB_IO_END)
+			वापस शून्य;
 
 		paddr = ppc_find_vmap_phys(vaddr);
 
 		bus = iowa_pci_find(vaddr, paddr);
 
-		if (bus == NULL)
-			return NULL;
-	}
+		अगर (bus == शून्य)
+			वापस शून्य;
+	पूर्ण
 
-	return bus;
-}
-#else /* CONFIG_PPC_INDIRECT_MMIO */
-struct iowa_bus *iowa_mem_find_bus(const PCI_IO_ADDR addr)
-{
-	return NULL;
-}
-#endif /* !CONFIG_PPC_INDIRECT_MMIO */
+	वापस bus;
+पूर्ण
+#अन्यथा /* CONFIG_PPC_INसूचीECT_MMIO */
+काष्ठा iowa_bus *iowa_mem_find_bus(स्थिर PCI_IO_ADDR addr)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_PPC_INसूचीECT_MMIO */
 
-#ifdef CONFIG_PPC_INDIRECT_PIO
-struct iowa_bus *iowa_pio_find_bus(unsigned long port)
-{
-	unsigned long vaddr = (unsigned long)pci_io_base + port;
-	return iowa_pci_find(vaddr, 0);
-}
-#else
-struct iowa_bus *iowa_pio_find_bus(unsigned long port)
-{
-	return NULL;
-}
-#endif
+#अगर_घोषित CONFIG_PPC_INसूचीECT_PIO
+काष्ठा iowa_bus *iowa_pio_find_bus(अचिन्हित दीर्घ port)
+अणु
+	अचिन्हित दीर्घ vaddr = (अचिन्हित दीर्घ)pci_io_base + port;
+	वापस iowa_pci_find(vaddr, 0);
+पूर्ण
+#अन्यथा
+काष्ठा iowa_bus *iowa_pio_find_bus(अचिन्हित दीर्घ port)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#define DEF_PCI_AC_RET(name, ret, at, al, space, aa)		\
-static ret iowa_##name at					\
-{								\
-	struct iowa_bus *bus;					\
+#घोषणा DEF_PCI_AC_RET(name, ret, at, al, space, aa)		\
+अटल ret iowa_##name at					\
+अणु								\
+	काष्ठा iowa_bus *bus;					\
 	bus = iowa_##space##_find_bus(aa);			\
-	if (bus && bus->ops && bus->ops->name)			\
-		return bus->ops->name al;			\
-	return __do_##name al;					\
-}
+	अगर (bus && bus->ops && bus->ops->name)			\
+		वापस bus->ops->name al;			\
+	वापस __करो_##name al;					\
+पूर्ण
 
-#define DEF_PCI_AC_NORET(name, at, al, space, aa)		\
-static void iowa_##name at					\
-{								\
-	struct iowa_bus *bus;					\
+#घोषणा DEF_PCI_AC_NORET(name, at, al, space, aa)		\
+अटल व्योम iowa_##name at					\
+अणु								\
+	काष्ठा iowa_bus *bus;					\
 	bus = iowa_##space##_find_bus(aa);			\
-	if (bus && bus->ops && bus->ops->name) {		\
+	अगर (bus && bus->ops && bus->ops->name) अणु		\
 		bus->ops->name al;				\
-		return;						\
-	}							\
-	__do_##name al;						\
-}
+		वापस;						\
+	पूर्ण							\
+	__करो_##name al;						\
+पूर्ण
 
-#include <asm/io-defs.h>
+#समावेश <यंत्र/io-defs.h>
 
-#undef DEF_PCI_AC_RET
-#undef DEF_PCI_AC_NORET
+#अघोषित DEF_PCI_AC_RET
+#अघोषित DEF_PCI_AC_NORET
 
-static const struct ppc_pci_io iowa_pci_io = {
+अटल स्थिर काष्ठा ppc_pci_io iowa_pci_io = अणु
 
-#define DEF_PCI_AC_RET(name, ret, at, al, space, aa)	.name = iowa_##name,
-#define DEF_PCI_AC_NORET(name, at, al, space, aa)	.name = iowa_##name,
+#घोषणा DEF_PCI_AC_RET(name, ret, at, al, space, aa)	.name = iowa_##name,
+#घोषणा DEF_PCI_AC_NORET(name, at, al, space, aa)	.name = iowa_##name,
 
-#include <asm/io-defs.h>
+#समावेश <यंत्र/io-defs.h>
 
-#undef DEF_PCI_AC_RET
-#undef DEF_PCI_AC_NORET
+#अघोषित DEF_PCI_AC_RET
+#अघोषित DEF_PCI_AC_NORET
 
-};
+पूर्ण;
 
-#ifdef CONFIG_PPC_INDIRECT_MMIO
-void __iomem *iowa_ioremap(phys_addr_t addr, unsigned long size,
-			   pgprot_t prot, void *caller)
-{
-	struct iowa_bus *bus;
-	void __iomem *res = __ioremap_caller(addr, size, prot, caller);
-	int busno;
+#अगर_घोषित CONFIG_PPC_INसूचीECT_MMIO
+व्योम __iomem *iowa_ioremap(phys_addr_t addr, अचिन्हित दीर्घ size,
+			   pgprot_t prot, व्योम *caller)
+अणु
+	काष्ठा iowa_bus *bus;
+	व्योम __iomem *res = __ioremap_caller(addr, size, prot, caller);
+	पूर्णांक busno;
 
-	bus = iowa_pci_find(0, (unsigned long)addr);
-	if (bus != NULL) {
+	bus = iowa_pci_find(0, (अचिन्हित दीर्घ)addr);
+	अगर (bus != शून्य) अणु
 		busno = bus - iowa_busses;
 		PCI_SET_ADDR_TOKEN(res, busno + 1);
-	}
-	return res;
-}
-#endif /* !CONFIG_PPC_INDIRECT_MMIO */
+	पूर्ण
+	वापस res;
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_PPC_INसूचीECT_MMIO */
 
 bool io_workaround_inited;
 
 /* Enable IO workaround */
-static void io_workaround_init(void)
-{
-	if (io_workaround_inited)
-		return;
+अटल व्योम io_workaround_init(व्योम)
+अणु
+	अगर (io_workaround_inited)
+		वापस;
 	ppc_pci_io = iowa_pci_io;
 	io_workaround_inited = true;
-}
+पूर्ण
 
 /* Register new bus to support workaround */
-void iowa_register_bus(struct pci_controller *phb, struct ppc_pci_io *ops,
-		       int (*initfunc)(struct iowa_bus *, void *), void *data)
-{
-	struct iowa_bus *bus;
-	struct device_node *np = phb->dn;
+व्योम iowa_रेजिस्टर_bus(काष्ठा pci_controller *phb, काष्ठा ppc_pci_io *ops,
+		       पूर्णांक (*initfunc)(काष्ठा iowa_bus *, व्योम *), व्योम *data)
+अणु
+	काष्ठा iowa_bus *bus;
+	काष्ठा device_node *np = phb->dn;
 
 	io_workaround_init();
 
-	if (iowa_bus_count >= IOWA_MAX_BUS) {
+	अगर (iowa_bus_count >= IOWA_MAX_BUS) अणु
 		pr_err("IOWA:Too many pci bridges, "
 		       "workarounds disabled for %pOF\n", np);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	bus = &iowa_busses[iowa_bus_count];
 	bus->phb = phb;
 	bus->ops = ops;
-	bus->private = data;
+	bus->निजी = data;
 
-	if (initfunc)
-		if ((*initfunc)(bus, data))
-			return;
+	अगर (initfunc)
+		अगर ((*initfunc)(bus, data))
+			वापस;
 
 	iowa_bus_count++;
 
 	pr_debug("IOWA:[%d]Add bus, %pOF.\n", iowa_bus_count-1, np);
-}
+पूर्ण
 

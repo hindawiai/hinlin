@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,53 +21,53 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __ARCTURUS_PPT_H__
-#define __ARCTURUS_PPT_H__
+#अगर_अघोषित __ARCTURUS_PPT_H__
+#घोषणा __ARCTURUS_PPT_H__
 
-#define ARCTURUS_UMD_PSTATE_GFXCLK_LEVEL         0x3
-#define ARCTURUS_UMD_PSTATE_SOCCLK_LEVEL         0x3
-#define ARCTURUS_UMD_PSTATE_MCLK_LEVEL           0x2
+#घोषणा ARCTURUS_UMD_PSTATE_GFXCLK_LEVEL         0x3
+#घोषणा ARCTURUS_UMD_PSTATE_SOCCLK_LEVEL         0x3
+#घोषणा ARCTURUS_UMD_PSTATE_MCLK_LEVEL           0x2
 
-#define MAX_DPM_NUMBER 16
-#define MAX_PCIE_CONF 2
+#घोषणा MAX_DPM_NUMBER 16
+#घोषणा MAX_PCIE_CONF 2
 
-struct arcturus_dpm_level {
+काष्ठा arcturus_dpm_level अणु
         bool            enabled;
-        uint32_t        value;
-        uint32_t        param1;
-};
+        uपूर्णांक32_t        value;
+        uपूर्णांक32_t        param1;
+पूर्ण;
 
-struct arcturus_dpm_state {
-        uint32_t  soft_min_level;
-        uint32_t  soft_max_level;
-        uint32_t  hard_min_level;
-        uint32_t  hard_max_level;
-};
+काष्ठा arcturus_dpm_state अणु
+        uपूर्णांक32_t  soft_min_level;
+        uपूर्णांक32_t  soft_max_level;
+        uपूर्णांक32_t  hard_min_level;
+        uपूर्णांक32_t  hard_max_level;
+पूर्ण;
 
-struct arcturus_single_dpm_table {
-        uint32_t                count;
-        struct arcturus_dpm_state dpm_state;
-        struct arcturus_dpm_level dpm_levels[MAX_DPM_NUMBER];
-};
+काष्ठा arcturus_single_dpm_table अणु
+        uपूर्णांक32_t                count;
+        काष्ठा arcturus_dpm_state dpm_state;
+        काष्ठा arcturus_dpm_level dpm_levels[MAX_DPM_NUMBER];
+पूर्ण;
 
-struct arcturus_pcie_table {
-        uint16_t count;
-        uint8_t  pcie_gen[MAX_PCIE_CONF];
-        uint8_t  pcie_lane[MAX_PCIE_CONF];
-        uint32_t lclk[MAX_PCIE_CONF];
-};
+काष्ठा arcturus_pcie_table अणु
+        uपूर्णांक16_t count;
+        uपूर्णांक8_t  pcie_gen[MAX_PCIE_CONF];
+        uपूर्णांक8_t  pcie_lane[MAX_PCIE_CONF];
+        uपूर्णांक32_t lclk[MAX_PCIE_CONF];
+पूर्ण;
 
-struct arcturus_dpm_table {
-        struct arcturus_single_dpm_table  soc_table;
-        struct arcturus_single_dpm_table  gfx_table;
-        struct arcturus_single_dpm_table  mem_table;
-        struct arcturus_single_dpm_table  eclk_table;
-        struct arcturus_single_dpm_table  vclk_table;
-        struct arcturus_single_dpm_table  dclk_table;
-        struct arcturus_single_dpm_table  fclk_table;
-        struct arcturus_pcie_table        pcie_table;
-};
+काष्ठा arcturus_dpm_table अणु
+        काष्ठा arcturus_single_dpm_table  soc_table;
+        काष्ठा arcturus_single_dpm_table  gfx_table;
+        काष्ठा arcturus_single_dpm_table  mem_table;
+        काष्ठा arcturus_single_dpm_table  eclk_table;
+        काष्ठा arcturus_single_dpm_table  vclk_table;
+        काष्ठा arcturus_single_dpm_table  dclk_table;
+        काष्ठा arcturus_single_dpm_table  fclk_table;
+        काष्ठा arcturus_pcie_table        pcie_table;
+पूर्ण;
 
-extern void arcturus_set_ppt_funcs(struct smu_context *smu);
+बाह्य व्योम arcturus_set_ppt_funcs(काष्ठा smu_context *smu);
 
-#endif
+#पूर्ण_अगर

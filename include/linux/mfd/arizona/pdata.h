@@ -1,194 +1,195 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Platform data for Arizona devices
+ * Platक्रमm data क्रम Arizona devices
  *
  * Copyright 2012 Wolfson Microelectronics. PLC.
  */
 
-#ifndef _ARIZONA_PDATA_H
-#define _ARIZONA_PDATA_H
+#अगर_अघोषित _ARIZONA_PDATA_H
+#घोषणा _ARIZONA_PDATA_H
 
-#include <dt-bindings/mfd/arizona.h>
-#include <linux/regulator/arizona-ldo1.h>
-#include <linux/regulator/arizona-micsupp.h>
+#समावेश <dt-bindings/mfd/arizona.h>
+#समावेश <linux/regulator/arizona-lकरो1.h>
+#समावेश <linux/regulator/arizona-micsupp.h>
 
-#define ARIZONA_GPN_DIR_MASK                     0x8000  /* GPN_DIR */
-#define ARIZONA_GPN_DIR_SHIFT                        15  /* GPN_DIR */
-#define ARIZONA_GPN_DIR_WIDTH                         1  /* GPN_DIR */
-#define ARIZONA_GPN_PU_MASK                      0x4000  /* GPN_PU */
-#define ARIZONA_GPN_PU_SHIFT                         14  /* GPN_PU */
-#define ARIZONA_GPN_PU_WIDTH                          1  /* GPN_PU */
-#define ARIZONA_GPN_PD_MASK                      0x2000  /* GPN_PD */
-#define ARIZONA_GPN_PD_SHIFT                         13  /* GPN_PD */
-#define ARIZONA_GPN_PD_WIDTH                          1  /* GPN_PD */
-#define ARIZONA_GPN_LVL_MASK                     0x0800  /* GPN_LVL */
-#define ARIZONA_GPN_LVL_SHIFT                        11  /* GPN_LVL */
-#define ARIZONA_GPN_LVL_WIDTH                         1  /* GPN_LVL */
-#define ARIZONA_GPN_POL_MASK                     0x0400  /* GPN_POL */
-#define ARIZONA_GPN_POL_SHIFT                        10  /* GPN_POL */
-#define ARIZONA_GPN_POL_WIDTH                         1  /* GPN_POL */
-#define ARIZONA_GPN_OP_CFG_MASK                  0x0200  /* GPN_OP_CFG */
-#define ARIZONA_GPN_OP_CFG_SHIFT                      9  /* GPN_OP_CFG */
-#define ARIZONA_GPN_OP_CFG_WIDTH                      1  /* GPN_OP_CFG */
-#define ARIZONA_GPN_DB_MASK                      0x0100  /* GPN_DB */
-#define ARIZONA_GPN_DB_SHIFT                          8  /* GPN_DB */
-#define ARIZONA_GPN_DB_WIDTH                          1  /* GPN_DB */
-#define ARIZONA_GPN_FN_MASK                      0x007F  /* GPN_FN - [6:0] */
-#define ARIZONA_GPN_FN_SHIFT                          0  /* GPN_FN - [6:0] */
-#define ARIZONA_GPN_FN_WIDTH                          7  /* GPN_FN - [6:0] */
+#घोषणा ARIZONA_GPN_सूची_MASK                     0x8000  /* GPN_सूची */
+#घोषणा ARIZONA_GPN_सूची_SHIFT                        15  /* GPN_सूची */
+#घोषणा ARIZONA_GPN_सूची_WIDTH                         1  /* GPN_सूची */
+#घोषणा ARIZONA_GPN_PU_MASK                      0x4000  /* GPN_PU */
+#घोषणा ARIZONA_GPN_PU_SHIFT                         14  /* GPN_PU */
+#घोषणा ARIZONA_GPN_PU_WIDTH                          1  /* GPN_PU */
+#घोषणा ARIZONA_GPN_PD_MASK                      0x2000  /* GPN_PD */
+#घोषणा ARIZONA_GPN_PD_SHIFT                         13  /* GPN_PD */
+#घोषणा ARIZONA_GPN_PD_WIDTH                          1  /* GPN_PD */
+#घोषणा ARIZONA_GPN_LVL_MASK                     0x0800  /* GPN_LVL */
+#घोषणा ARIZONA_GPN_LVL_SHIFT                        11  /* GPN_LVL */
+#घोषणा ARIZONA_GPN_LVL_WIDTH                         1  /* GPN_LVL */
+#घोषणा ARIZONA_GPN_POL_MASK                     0x0400  /* GPN_POL */
+#घोषणा ARIZONA_GPN_POL_SHIFT                        10  /* GPN_POL */
+#घोषणा ARIZONA_GPN_POL_WIDTH                         1  /* GPN_POL */
+#घोषणा ARIZONA_GPN_OP_CFG_MASK                  0x0200  /* GPN_OP_CFG */
+#घोषणा ARIZONA_GPN_OP_CFG_SHIFT                      9  /* GPN_OP_CFG */
+#घोषणा ARIZONA_GPN_OP_CFG_WIDTH                      1  /* GPN_OP_CFG */
+#घोषणा ARIZONA_GPN_DB_MASK                      0x0100  /* GPN_DB */
+#घोषणा ARIZONA_GPN_DB_SHIFT                          8  /* GPN_DB */
+#घोषणा ARIZONA_GPN_DB_WIDTH                          1  /* GPN_DB */
+#घोषणा ARIZONA_GPN_FN_MASK                      0x007F  /* GPN_FN - [6:0] */
+#घोषणा ARIZONA_GPN_FN_SHIFT                          0  /* GPN_FN - [6:0] */
+#घोषणा ARIZONA_GPN_FN_WIDTH                          7  /* GPN_FN - [6:0] */
 
-#define ARIZONA_MAX_GPIO 5
+#घोषणा ARIZONA_MAX_GPIO 5
 
-#define ARIZONA_MAX_INPUT 4
+#घोषणा ARIZONA_MAX_INPUT 4
 
-#define ARIZONA_MAX_MICBIAS 3
+#घोषणा ARIZONA_MAX_MICBIAS 3
 
-#define ARIZONA_MAX_OUTPUT 6
+#घोषणा ARIZONA_MAX_OUTPUT 6
 
-#define ARIZONA_MAX_AIF 3
+#घोषणा ARIZONA_MAX_AIF 3
 
-#define ARIZONA_HAP_ACT_ERM 0
-#define ARIZONA_HAP_ACT_LRA 2
+#घोषणा ARIZONA_HAP_ACT_ERM 0
+#घोषणा ARIZONA_HAP_ACT_LRA 2
 
-#define ARIZONA_MAX_PDM_SPK 2
+#घोषणा ARIZONA_MAX_PDM_SPK 2
 
-struct regulator_init_data;
-struct gpio_desc;
+काष्ठा regulator_init_data;
+काष्ठा gpio_desc;
 
-struct arizona_micbias {
-	int mV;                    /** Regulated voltage */
-	unsigned int ext_cap:1;    /** External capacitor fitted */
-	unsigned int discharge:1;  /** Actively discharge */
-	unsigned int soft_start:1; /** Disable aggressive startup ramp rate */
-	unsigned int bypass:1;     /** Use bypass mode */
-};
+काष्ठा arizona_micbias अणु
+	पूर्णांक mV;                    /** Regulated voltage */
+	अचिन्हित पूर्णांक ext_cap:1;    /** External capacitor fitted */
+	अचिन्हित पूर्णांक disअक्षरge:1;  /** Actively disअक्षरge */
+	अचिन्हित पूर्णांक soft_start:1; /** Disable aggressive startup ramp rate */
+	अचिन्हित पूर्णांक bypass:1;     /** Use bypass mode */
+पूर्ण;
 
-struct arizona_micd_config {
-	unsigned int src;
-	unsigned int bias;
+काष्ठा arizona_micd_config अणु
+	अचिन्हित पूर्णांक src;
+	अचिन्हित पूर्णांक bias;
 	bool gpio;
-};
+पूर्ण;
 
-struct arizona_micd_range {
-	int max;  /** Ohms */
-	int key;  /** Key to report to input layer */
-};
+काष्ठा arizona_micd_range अणु
+	पूर्णांक max;  /** Ohms */
+	पूर्णांक key;  /** Key to report to input layer */
+पूर्ण;
 
-struct arizona_pdata {
-	struct gpio_desc *reset;      /** GPIO controlling /RESET, if any */
+काष्ठा arizona_pdata अणु
+	काष्ठा gpio_desc *reset;      /** GPIO controlling /RESET, अगर any */
 
-	/** Regulator configuration for MICVDD */
-	struct arizona_micsupp_pdata micvdd;
+	/** Regulator configuration क्रम MICVDD */
+	काष्ठा arizona_micsupp_pdata micvdd;
 
-	/** Regulator configuration for LDO1 */
-	struct arizona_ldo1_pdata ldo1;
+	/** Regulator configuration क्रम LDO1 */
+	काष्ठा arizona_lकरो1_pdata lकरो1;
 
-	/** If a direct 32kHz clock is provided on an MCLK specify it here */
-	int clk32k_src;
+	/** If a direct 32kHz घड़ी is provided on an MCLK specअगरy it here */
+	पूर्णांक clk32k_src;
 
-	/** Mode for primary IRQ (defaults to active low) */
-	unsigned int irq_flags;
+	/** Mode क्रम primary IRQ (शेषs to active low) */
+	अचिन्हित पूर्णांक irq_flags;
 
 	/* Base GPIO */
-	int gpio_base;
+	पूर्णांक gpio_base;
 
-	/** Pin state for GPIO pins */
-	unsigned int gpio_defaults[ARIZONA_MAX_GPIO];
+	/** Pin state क्रम GPIO pins */
+	अचिन्हित पूर्णांक gpio_शेषs[ARIZONA_MAX_GPIO];
 
 	/**
-	 * Maximum number of channels clocks will be generated for,
-	 * useful for systems where and I2S bus with multiple data
+	 * Maximum number of channels घड़ीs will be generated क्रम,
+	 * useful क्रम प्रणालीs where and I2S bus with multiple data
 	 * lines is mastered.
 	 */
-	unsigned int max_channels_clocked[ARIZONA_MAX_AIF];
+	अचिन्हित पूर्णांक max_channels_घड़ीed[ARIZONA_MAX_AIF];
 
-	/** GPIO5 is used for jack detection */
+	/** GPIO5 is used क्रम jack detection */
 	bool jd_gpio5;
 
-	/** Internal pull on GPIO5 is disabled when used for jack detection */
+	/** Internal pull on GPIO5 is disabled when used क्रम jack detection */
 	bool jd_gpio5_nopull;
 
-	/** set to true if jackdet contact opens on insert */
+	/** set to true अगर jackdet contact खोलोs on insert */
 	bool jd_invert;
 
-	/** Use the headphone detect circuit to identify the accessory */
+	/** Use the headphone detect circuit to identअगरy the accessory */
 	bool hpdet_acc_id;
 
-	/** Check for line output with HPDET method */
+	/** Check क्रम line output with HPDET method */
 	bool hpdet_acc_id_line;
 
-	/** GPIO used for mic isolation with HPDET */
-	int hpdet_id_gpio;
+	/** GPIO used क्रम mic isolation with HPDET */
+	पूर्णांक hpdet_id_gpio;
 
-	/** Channel to use for headphone detection */
-	unsigned int hpdet_channel;
+	/** Channel to use क्रम headphone detection */
+	अचिन्हित पूर्णांक hpdet_channel;
 
 	/** Use software comparison to determine mic presence */
 	bool micd_software_compare;
 
-	/** Extra debounce timeout used during initial mic detection (ms) */
-	unsigned int micd_detect_debounce;
+	/** Extra debounce समयout used during initial mic detection (ms) */
+	अचिन्हित पूर्णांक micd_detect_debounce;
 
-	/** GPIO for mic detection polarity */
-	int micd_pol_gpio;
+	/** GPIO क्रम mic detection polarity */
+	पूर्णांक micd_pol_gpio;
 
 	/** Mic detect ramp rate */
-	unsigned int micd_bias_start_time;
+	अचिन्हित पूर्णांक micd_bias_start_समय;
 
 	/** Mic detect sample rate */
-	unsigned int micd_rate;
+	अचिन्हित पूर्णांक micd_rate;
 
 	/** Mic detect debounce level */
-	unsigned int micd_dbtime;
+	अचिन्हित पूर्णांक micd_dbसमय;
 
-	/** Mic detect timeout (ms) */
-	unsigned int micd_timeout;
+	/** Mic detect समयout (ms) */
+	अचिन्हित पूर्णांक micd_समयout;
 
-	/** Force MICBIAS on for mic detect */
-	bool micd_force_micbias;
+	/** Force MICBIAS on क्रम mic detect */
+	bool micd_क्रमce_micbias;
 
 	/** Mic detect level parameters */
-	const struct arizona_micd_range *micd_ranges;
-	int num_micd_ranges;
+	स्थिर काष्ठा arizona_micd_range *micd_ranges;
+	पूर्णांक num_micd_ranges;
 
 	/** Headset polarity configurations */
-	struct arizona_micd_config *micd_configs;
-	int num_micd_configs;
+	काष्ठा arizona_micd_config *micd_configs;
+	पूर्णांक num_micd_configs;
 
-	/** Reference voltage for DMIC inputs */
-	int dmic_ref[ARIZONA_MAX_INPUT];
+	/** Reference voltage क्रम DMIC inमाला_दो */
+	पूर्णांक dmic_ref[ARIZONA_MAX_INPUT];
 
 	/** MICBIAS configurations */
-	struct arizona_micbias micbias[ARIZONA_MAX_MICBIAS];
+	काष्ठा arizona_micbias micbias[ARIZONA_MAX_MICBIAS];
 
 	/**
-	 * Mode of input structures
+	 * Mode of input काष्ठाures
 	 * One of the ARIZONA_INMODE_xxx values
 	 * wm5102/wm5110/wm8280/wm8997: [0]=IN1 [1]=IN2 [2]=IN3 [3]=IN4
 	 * wm8998: [0]=IN1A [1]=IN2A [2]=IN1B [3]=IN2B
 	 */
-	int inmode[ARIZONA_MAX_INPUT];
+	पूर्णांक inmode[ARIZONA_MAX_INPUT];
 
-	/** Mode for outputs */
-	int out_mono[ARIZONA_MAX_OUTPUT];
+	/** Mode क्रम outमाला_दो */
+	पूर्णांक out_mono[ARIZONA_MAX_OUTPUT];
 
 	/** Limit output volumes */
-	unsigned int out_vol_limit[2 * ARIZONA_MAX_OUTPUT];
+	अचिन्हित पूर्णांक out_vol_limit[2 * ARIZONA_MAX_OUTPUT];
 
 	/** PDM speaker mute setting */
-	unsigned int spk_mute[ARIZONA_MAX_PDM_SPK];
+	अचिन्हित पूर्णांक spk_mute[ARIZONA_MAX_PDM_SPK];
 
-	/** PDM speaker format */
-	unsigned int spk_fmt[ARIZONA_MAX_PDM_SPK];
+	/** PDM speaker क्रमmat */
+	अचिन्हित पूर्णांक spk_fmt[ARIZONA_MAX_PDM_SPK];
 
 	/** Haptic actuator type */
-	unsigned int hap_act;
+	अचिन्हित पूर्णांक hap_act;
 
-	/** GPIO for primary IRQ (used for edge triggered emulation) */
-	int irq_gpio;
+	/** GPIO क्रम primary IRQ (used क्रम edge triggered emulation) */
+	पूर्णांक irq_gpio;
 
-	/** General purpose switch control */
-	unsigned int gpsw;
-};
+	/** General purpose चयन control */
+	अचिन्हित पूर्णांक gpsw;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

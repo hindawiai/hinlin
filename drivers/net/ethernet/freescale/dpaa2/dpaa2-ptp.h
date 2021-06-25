@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright 2018 NXP
  * Copyright 2020 NXP
  */
 
-#ifndef __RTC_H
-#define __RTC_H
+#अगर_अघोषित __RTC_H
+#घोषणा __RTC_H
 
-#include <linux/fsl/ptp_qoriq.h>
+#समावेश <linux/fsl/ptp_qoriq.h>
 
-#include "dprtc.h"
-#include "dprtc-cmd.h"
+#समावेश "dprtc.h"
+#समावेश "dprtc-cmd.h"
 
-extern int dpaa2_phc_index;
-extern struct ptp_qoriq *dpaa2_ptp;
+बाह्य पूर्णांक dpaa2_phc_index;
+बाह्य काष्ठा ptp_qoriq *dpaa2_ptp;
 
-#endif
+#पूर्ण_अगर

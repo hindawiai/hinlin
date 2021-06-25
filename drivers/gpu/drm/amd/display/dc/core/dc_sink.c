@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,87 +24,87 @@
  *
  */
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-#include "dm_services.h"
-#include "dm_helpers.h"
-#include "core_types.h"
+#समावेश "dm_services.h"
+#समावेश "dm_helpers.h"
+#समावेश "core_types.h"
 
 /*******************************************************************************
  * Private functions
  ******************************************************************************/
 
-static void dc_sink_destruct(struct dc_sink *sink)
-{
-	if (sink->dc_container_id) {
-		kfree(sink->dc_container_id);
-		sink->dc_container_id = NULL;
-	}
-}
+अटल व्योम dc_sink_deकाष्ठा(काष्ठा dc_sink *sink)
+अणु
+	अगर (sink->dc_container_id) अणु
+		kमुक्त(sink->dc_container_id);
+		sink->dc_container_id = शून्य;
+	पूर्ण
+पूर्ण
 
-static bool dc_sink_construct(struct dc_sink *sink, const struct dc_sink_init_data *init_params)
-{
+अटल bool dc_sink_स्थिरruct(काष्ठा dc_sink *sink, स्थिर काष्ठा dc_sink_init_data *init_params)
+अणु
 
-	struct dc_link *link = init_params->link;
+	काष्ठा dc_link *link = init_params->link;
 
-	if (!link)
-		return false;
+	अगर (!link)
+		वापस false;
 
-	sink->sink_signal = init_params->sink_signal;
+	sink->sink_संकेत = init_params->sink_संकेत;
 	sink->link = link;
 	sink->ctx = link->ctx;
-	sink->dongle_max_pix_clk = init_params->dongle_max_pix_clk;
+	sink->करोngle_max_pix_clk = init_params->करोngle_max_pix_clk;
 	sink->converter_disable_audio = init_params->converter_disable_audio;
-	sink->dc_container_id = NULL;
+	sink->dc_container_id = शून्य;
 	sink->sink_id = init_params->link->ctx->dc_sink_id_count;
-	// increment dc_sink_id_count because we don't want two sinks with same ID
+	// increment dc_sink_id_count because we करोn't want two sinks with same ID
 	// unless they are actually the same
 	init_params->link->ctx->dc_sink_id_count++;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*******************************************************************************
  * Public functions
  ******************************************************************************/
 
-void dc_sink_retain(struct dc_sink *sink)
-{
+व्योम dc_sink_retain(काष्ठा dc_sink *sink)
+अणु
 	kref_get(&sink->refcount);
-}
+पूर्ण
 
-static void dc_sink_free(struct kref *kref)
-{
-	struct dc_sink *sink = container_of(kref, struct dc_sink, refcount);
-	dc_sink_destruct(sink);
-	kfree(sink);
-}
+अटल व्योम dc_sink_मुक्त(काष्ठा kref *kref)
+अणु
+	काष्ठा dc_sink *sink = container_of(kref, काष्ठा dc_sink, refcount);
+	dc_sink_deकाष्ठा(sink);
+	kमुक्त(sink);
+पूर्ण
 
-void dc_sink_release(struct dc_sink *sink)
-{
-	kref_put(&sink->refcount, dc_sink_free);
-}
+व्योम dc_sink_release(काष्ठा dc_sink *sink)
+अणु
+	kref_put(&sink->refcount, dc_sink_मुक्त);
+पूर्ण
 
-struct dc_sink *dc_sink_create(const struct dc_sink_init_data *init_params)
-{
-	struct dc_sink *sink = kzalloc(sizeof(*sink), GFP_KERNEL);
+काष्ठा dc_sink *dc_sink_create(स्थिर काष्ठा dc_sink_init_data *init_params)
+अणु
+	काष्ठा dc_sink *sink = kzalloc(माप(*sink), GFP_KERNEL);
 
-	if (NULL == sink)
-		goto alloc_fail;
+	अगर (शून्य == sink)
+		जाओ alloc_fail;
 
-	if (false == dc_sink_construct(sink, init_params))
-		goto construct_fail;
+	अगर (false == dc_sink_स्थिरruct(sink, init_params))
+		जाओ स्थिरruct_fail;
 
 	kref_init(&sink->refcount);
 
-	return sink;
+	वापस sink;
 
-construct_fail:
-	kfree(sink);
+स्थिरruct_fail:
+	kमुक्त(sink);
 
 alloc_fail:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*******************************************************************************
  * Protected functions - visible only inside of DC (not visible in DM)

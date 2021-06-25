@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2011 Red Hat, Inc.  All rights reserved.
  */
 
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/completion.h>
-#include <linux/buffer_head.h>
-#include <linux/namei.h>
-#include <linux/mm.h>
-#include <linux/cred.h>
-#include <linux/xattr.h>
-#include <linux/posix_acl.h>
-#include <linux/gfs2_ondisk.h>
-#include <linux/crc32.h>
-#include <linux/iomap.h>
-#include <linux/security.h>
-#include <linux/fiemap.h>
-#include <linux/uaccess.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/posix_acl.h>
+#समावेश <linux/gfs2_ondisk.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/iomap.h>
+#समावेश <linux/security.h>
+#समावेश <linux/fiemap.h>
+#समावेश <linux/uaccess.h>
 
-#include "gfs2.h"
-#include "incore.h"
-#include "acl.h"
-#include "bmap.h"
-#include "dir.h"
-#include "xattr.h"
-#include "glock.h"
-#include "inode.h"
-#include "meta_io.h"
-#include "quota.h"
-#include "rgrp.h"
-#include "trans.h"
-#include "util.h"
-#include "super.h"
-#include "glops.h"
+#समावेश "gfs2.h"
+#समावेश "incore.h"
+#समावेश "acl.h"
+#समावेश "bmap.h"
+#समावेश "dir.h"
+#समावेश "xattr.h"
+#समावेश "glock.h"
+#समावेश "inode.h"
+#समावेश "meta_io.h"
+#समावेश "quota.h"
+#समावेश "rgrp.h"
+#समावेश "trans.h"
+#समावेश "util.h"
+#समावेश "super.h"
+#समावेश "glops.h"
 
-static const struct inode_operations gfs2_file_iops;
-static const struct inode_operations gfs2_dir_iops;
-static const struct inode_operations gfs2_symlink_iops;
+अटल स्थिर काष्ठा inode_operations gfs2_file_iops;
+अटल स्थिर काष्ठा inode_operations gfs2_dir_iops;
+अटल स्थिर काष्ठा inode_operations gfs2_symlink_iops;
 
-static int iget_test(struct inode *inode, void *opaque)
-{
+अटल पूर्णांक iget_test(काष्ठा inode *inode, व्योम *opaque)
+अणु
 	u64 no_addr = *(u64 *)opaque;
 
-	return GFS2_I(inode)->i_no_addr == no_addr;
-}
+	वापस GFS2_I(inode)->i_no_addr == no_addr;
+पूर्ण
 
-static int iget_set(struct inode *inode, void *opaque)
-{
+अटल पूर्णांक iget_set(काष्ठा inode *inode, व्योम *opaque)
+अणु
 	u64 no_addr = *(u64 *)opaque;
 
 	GFS2_I(inode)->i_no_addr = no_addr;
 	inode->i_ino = no_addr;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct inode *gfs2_iget(struct super_block *sb, u64 no_addr)
-{
-	struct inode *inode;
+अटल काष्ठा inode *gfs2_iget(काष्ठा super_block *sb, u64 no_addr)
+अणु
+	काष्ठा inode *inode;
 
 repeat:
 	inode = iget5_locked(sb, no_addr, iget_test, iget_set, &no_addr);
-	if (!inode)
-		return inode;
-	if (is_bad_inode(inode)) {
+	अगर (!inode)
+		वापस inode;
+	अगर (is_bad_inode(inode)) अणु
 		iput(inode);
-		goto repeat;
-	}
-	return inode;
-}
+		जाओ repeat;
+	पूर्ण
+	वापस inode;
+पूर्ण
 
 /**
  * gfs2_set_iop - Sets inode operations
@@ -79,266 +80,266 @@ repeat:
  * from directory entry inside gfs2_inode_lookup().
  */
 
-static void gfs2_set_iop(struct inode *inode)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(inode);
+अटल व्योम gfs2_set_iop(काष्ठा inode *inode)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(inode);
 	umode_t mode = inode->i_mode;
 
-	if (S_ISREG(mode)) {
+	अगर (S_ISREG(mode)) अणु
 		inode->i_op = &gfs2_file_iops;
-		if (gfs2_localflocks(sdp))
+		अगर (gfs2_localflocks(sdp))
 			inode->i_fop = &gfs2_file_fops_nolock;
-		else
+		अन्यथा
 			inode->i_fop = &gfs2_file_fops;
-	} else if (S_ISDIR(mode)) {
+	पूर्ण अन्यथा अगर (S_ISसूची(mode)) अणु
 		inode->i_op = &gfs2_dir_iops;
-		if (gfs2_localflocks(sdp))
+		अगर (gfs2_localflocks(sdp))
 			inode->i_fop = &gfs2_dir_fops_nolock;
-		else
+		अन्यथा
 			inode->i_fop = &gfs2_dir_fops;
-	} else if (S_ISLNK(mode)) {
+	पूर्ण अन्यथा अगर (S_ISLNK(mode)) अणु
 		inode->i_op = &gfs2_symlink_iops;
-	} else {
+	पूर्ण अन्यथा अणु
 		inode->i_op = &gfs2_file_iops;
 		init_special_inode(inode, inode->i_mode, inode->i_rdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * gfs2_inode_lookup - Lookup an inode
  * @sb: The super block
  * @type: The type of the inode
  * @no_addr: The inode number
- * @no_formal_ino: The inode generation number
+ * @no_क्रमmal_ino: The inode generation number
  * @blktype: Requested block type (GFS2_BLKST_DINODE or GFS2_BLKST_UNLINKED;
- *           GFS2_BLKST_FREE to indicate not to verify)
+ *           GFS2_BLKST_FREE to indicate not to verअगरy)
  *
  * If @type is DT_UNKNOWN, the inode type is fetched from disk.
  *
  * If @blktype is anything other than GFS2_BLKST_FREE (which is used as a
- * placeholder because it doesn't otherwise make sense), the on-disk block type
- * is verified to be @blktype.
+ * placeholder because it करोesn't otherwise make sense), the on-disk block type
+ * is verअगरied to be @blktype.
  *
- * When @no_formal_ino is non-zero, this function will return ERR_PTR(-ESTALE)
- * if it detects that @no_formal_ino doesn't match the actual inode generation
- * number.  However, it doesn't always know unless @type is DT_UNKNOWN.
+ * When @no_क्रमmal_ino is non-zero, this function will वापस ERR_PTR(-ESTALE)
+ * अगर it detects that @no_क्रमmal_ino करोesn't match the actual inode generation
+ * number.  However, it करोesn't always know unless @type is DT_UNKNOWN.
  *
  * Returns: A VFS inode, or an error
  */
 
-struct inode *gfs2_inode_lookup(struct super_block *sb, unsigned int type,
-				u64 no_addr, u64 no_formal_ino,
-				unsigned int blktype)
-{
-	struct inode *inode;
-	struct gfs2_inode *ip;
-	struct gfs2_glock *io_gl = NULL;
-	struct gfs2_holder i_gh;
-	int error;
+काष्ठा inode *gfs2_inode_lookup(काष्ठा super_block *sb, अचिन्हित पूर्णांक type,
+				u64 no_addr, u64 no_क्रमmal_ino,
+				अचिन्हित पूर्णांक blktype)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा gfs2_inode *ip;
+	काष्ठा gfs2_glock *io_gl = शून्य;
+	काष्ठा gfs2_holder i_gh;
+	पूर्णांक error;
 
 	gfs2_holder_mark_uninitialized(&i_gh);
 	inode = gfs2_iget(sb, no_addr);
-	if (!inode)
-		return ERR_PTR(-ENOMEM);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOMEM);
 
 	ip = GFS2_I(inode);
 
-	if (inode->i_state & I_NEW) {
-		struct gfs2_sbd *sdp = GFS2_SB(inode);
+	अगर (inode->i_state & I_NEW) अणु
+		काष्ठा gfs2_sbd *sdp = GFS2_SB(inode);
 
 		error = gfs2_glock_get(sdp, no_addr, &gfs2_inode_glops, CREATE, &ip->i_gl);
-		if (unlikely(error))
-			goto fail;
+		अगर (unlikely(error))
+			जाओ fail;
 		flush_delayed_work(&ip->i_gl->gl_work);
 
-		error = gfs2_glock_get(sdp, no_addr, &gfs2_iopen_glops, CREATE, &io_gl);
-		if (unlikely(error))
-			goto fail;
-		if (blktype != GFS2_BLKST_UNLINKED)
+		error = gfs2_glock_get(sdp, no_addr, &gfs2_iखोलो_glops, CREATE, &io_gl);
+		अगर (unlikely(error))
+			जाओ fail;
+		अगर (blktype != GFS2_BLKST_UNLINKED)
 			gfs2_cancel_delete_work(io_gl);
 
-		if (type == DT_UNKNOWN || blktype != GFS2_BLKST_FREE) {
+		अगर (type == DT_UNKNOWN || blktype != GFS2_BLKST_FREE) अणु
 			/*
-			 * The GL_SKIP flag indicates to skip reading the inode
-			 * block.  We read the inode with gfs2_inode_refresh
+			 * The GL_SKIP flag indicates to skip पढ़ोing the inode
+			 * block.  We पढ़ो the inode with gfs2_inode_refresh
 			 * after possibly checking the block type.
 			 */
 			error = gfs2_glock_nq_init(ip->i_gl, LM_ST_EXCLUSIVE,
 						   GL_SKIP, &i_gh);
-			if (error)
-				goto fail;
+			अगर (error)
+				जाओ fail;
 
 			error = -ESTALE;
-			if (no_formal_ino &&
-			    gfs2_inode_already_deleted(ip->i_gl, no_formal_ino))
-				goto fail;
+			अगर (no_क्रमmal_ino &&
+			    gfs2_inode_alपढ़ोy_deleted(ip->i_gl, no_क्रमmal_ino))
+				जाओ fail;
 
-			if (blktype != GFS2_BLKST_FREE) {
+			अगर (blktype != GFS2_BLKST_FREE) अणु
 				error = gfs2_check_blk_type(sdp, no_addr,
 							    blktype);
-				if (error)
-					goto fail;
-			}
-		}
+				अगर (error)
+					जाओ fail;
+			पूर्ण
+		पूर्ण
 
 		glock_set_object(ip->i_gl, ip);
 		set_bit(GIF_INVALID, &ip->i_flags);
-		error = gfs2_glock_nq_init(io_gl, LM_ST_SHARED, GL_EXACT, &ip->i_iopen_gh);
-		if (unlikely(error))
-			goto fail;
-		glock_set_object(ip->i_iopen_gh.gh_gl, ip);
+		error = gfs2_glock_nq_init(io_gl, LM_ST_SHARED, GL_EXACT, &ip->i_iखोलो_gh);
+		अगर (unlikely(error))
+			जाओ fail;
+		glock_set_object(ip->i_iखोलो_gh.gh_gl, ip);
 		gfs2_glock_put(io_gl);
-		io_gl = NULL;
+		io_gl = शून्य;
 
-		/* Lowest possible timestamp; will be overwritten in gfs2_dinode_in. */
-		inode->i_atime.tv_sec = 1LL << (8 * sizeof(inode->i_atime.tv_sec) - 1);
-		inode->i_atime.tv_nsec = 0;
+		/* Lowest possible बारtamp; will be overwritten in gfs2_dinode_in. */
+		inode->i_aसमय.tv_sec = 1LL << (8 * माप(inode->i_aसमय.tv_sec) - 1);
+		inode->i_aसमय.tv_nsec = 0;
 
-		if (type == DT_UNKNOWN) {
-			/* Inode glock must be locked already */
+		अगर (type == DT_UNKNOWN) अणु
+			/* Inode glock must be locked alपढ़ोy */
 			error = gfs2_inode_refresh(GFS2_I(inode));
-			if (error)
-				goto fail;
-		} else {
-			ip->i_no_formal_ino = no_formal_ino;
+			अगर (error)
+				जाओ fail;
+		पूर्ण अन्यथा अणु
+			ip->i_no_क्रमmal_ino = no_क्रमmal_ino;
 			inode->i_mode = DT2IF(type);
-		}
+		पूर्ण
 
-		if (gfs2_holder_initialized(&i_gh))
+		अगर (gfs2_holder_initialized(&i_gh))
 			gfs2_glock_dq_uninit(&i_gh);
 
 		gfs2_set_iop(inode);
-	}
+	पूर्ण
 
-	if (no_formal_ino && ip->i_no_formal_ino &&
-	    no_formal_ino != ip->i_no_formal_ino) {
+	अगर (no_क्रमmal_ino && ip->i_no_क्रमmal_ino &&
+	    no_क्रमmal_ino != ip->i_no_क्रमmal_ino) अणु
 		error = -ESTALE;
-		if (inode->i_state & I_NEW)
-			goto fail;
+		अगर (inode->i_state & I_NEW)
+			जाओ fail;
 		iput(inode);
-		return ERR_PTR(error);
-	}
+		वापस ERR_PTR(error);
+	पूर्ण
 
-	if (inode->i_state & I_NEW)
+	अगर (inode->i_state & I_NEW)
 		unlock_new_inode(inode);
 
-	return inode;
+	वापस inode;
 
 fail:
-	if (io_gl)
+	अगर (io_gl)
 		gfs2_glock_put(io_gl);
-	if (gfs2_holder_initialized(&i_gh))
+	अगर (gfs2_holder_initialized(&i_gh))
 		gfs2_glock_dq_uninit(&i_gh);
 	iget_failed(inode);
-	return ERR_PTR(error);
-}
+	वापस ERR_PTR(error);
+पूर्ण
 
 /**
  * gfs2_lookup_by_inum - look up an inode by inode number
  * @sdp: The super block
  * @no_addr: The inode number
- * @no_formal_ino: The inode generation number (0 for any)
+ * @no_क्रमmal_ino: The inode generation number (0 क्रम any)
  * @blktype: Requested block type (see gfs2_inode_lookup)
  */
-struct inode *gfs2_lookup_by_inum(struct gfs2_sbd *sdp, u64 no_addr,
-				  u64 no_formal_ino, unsigned int blktype)
-{
-	struct super_block *sb = sdp->sd_vfs;
-	struct inode *inode;
-	int error;
+काष्ठा inode *gfs2_lookup_by_inum(काष्ठा gfs2_sbd *sdp, u64 no_addr,
+				  u64 no_क्रमmal_ino, अचिन्हित पूर्णांक blktype)
+अणु
+	काष्ठा super_block *sb = sdp->sd_vfs;
+	काष्ठा inode *inode;
+	पूर्णांक error;
 
-	inode = gfs2_inode_lookup(sb, DT_UNKNOWN, no_addr, no_formal_ino,
+	inode = gfs2_inode_lookup(sb, DT_UNKNOWN, no_addr, no_क्रमmal_ino,
 				  blktype);
-	if (IS_ERR(inode))
-		return inode;
+	अगर (IS_ERR(inode))
+		वापस inode;
 
-	if (no_formal_ino) {
+	अगर (no_क्रमmal_ino) अणु
 		error = -EIO;
-		if (GFS2_I(inode)->i_diskflags & GFS2_DIF_SYSTEM)
-			goto fail_iput;
-	}
-	return inode;
+		अगर (GFS2_I(inode)->i_diskflags & GFS2_DIF_SYSTEM)
+			जाओ fail_iput;
+	पूर्ण
+	वापस inode;
 
 fail_iput:
 	iput(inode);
-	return ERR_PTR(error);
-}
+	वापस ERR_PTR(error);
+पूर्ण
 
 
-struct inode *gfs2_lookup_simple(struct inode *dip, const char *name)
-{
-	struct qstr qstr;
-	struct inode *inode;
+काष्ठा inode *gfs2_lookup_simple(काष्ठा inode *dip, स्थिर अक्षर *name)
+अणु
+	काष्ठा qstr qstr;
+	काष्ठा inode *inode;
 	gfs2_str2qstr(&qstr, name);
 	inode = gfs2_lookupi(dip, &qstr, 1);
 	/* gfs2_lookupi has inconsistent callers: vfs
-	 * related routines expect NULL for no entry found,
+	 * related routines expect शून्य क्रम no entry found,
 	 * gfs2_lookup_simple callers expect ENOENT
-	 * and do not check for NULL.
+	 * and करो not check क्रम शून्य.
 	 */
-	if (inode == NULL)
-		return ERR_PTR(-ENOENT);
-	else
-		return inode;
-}
+	अगर (inode == शून्य)
+		वापस ERR_PTR(-ENOENT);
+	अन्यथा
+		वापस inode;
+पूर्ण
 
 
 /**
- * gfs2_lookupi - Look up a filename in a directory and return its inode
+ * gfs2_lookupi - Look up a filename in a directory and वापस its inode
  * @dir: The inode of the directory containing the inode to look-up
- * @name: The name of the inode to look for
+ * @name: The name of the inode to look क्रम
  * @is_root: If 1, ignore the caller's permissions
  *
- * This can be called via the VFS filldir function when NFS is doing
- * a readdirplus and the inode which its intending to stat isn't
- * already in cache. In this case we must not take the directory glock
- * again, since the readdir call will have already taken that lock.
+ * This can be called via the VFS filldir function when NFS is करोing
+ * a सूची_पढ़ोplus and the inode which its पूर्णांकending to stat isn't
+ * alपढ़ोy in cache. In this हाल we must not take the directory glock
+ * again, since the सूची_पढ़ो call will have alपढ़ोy taken that lock.
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-struct inode *gfs2_lookupi(struct inode *dir, const struct qstr *name,
-			   int is_root)
-{
-	struct super_block *sb = dir->i_sb;
-	struct gfs2_inode *dip = GFS2_I(dir);
-	struct gfs2_holder d_gh;
-	int error = 0;
-	struct inode *inode = NULL;
+काष्ठा inode *gfs2_lookupi(काष्ठा inode *dir, स्थिर काष्ठा qstr *name,
+			   पूर्णांक is_root)
+अणु
+	काष्ठा super_block *sb = dir->i_sb;
+	काष्ठा gfs2_inode *dip = GFS2_I(dir);
+	काष्ठा gfs2_holder d_gh;
+	पूर्णांक error = 0;
+	काष्ठा inode *inode = शून्य;
 
 	gfs2_holder_mark_uninitialized(&d_gh);
-	if (!name->len || name->len > GFS2_FNAMESIZE)
-		return ERR_PTR(-ENAMETOOLONG);
+	अगर (!name->len || name->len > GFS2_FNAMESIZE)
+		वापस ERR_PTR(-ENAMETOOLONG);
 
-	if ((name->len == 1 && memcmp(name->name, ".", 1) == 0) ||
-	    (name->len == 2 && memcmp(name->name, "..", 2) == 0 &&
-	     dir == d_inode(sb->s_root))) {
+	अगर ((name->len == 1 && स_भेद(name->name, ".", 1) == 0) ||
+	    (name->len == 2 && स_भेद(name->name, "..", 2) == 0 &&
+	     dir == d_inode(sb->s_root))) अणु
 		igrab(dir);
-		return dir;
-	}
+		वापस dir;
+	पूर्ण
 
-	if (gfs2_glock_is_locked_by_me(dip->i_gl) == NULL) {
+	अगर (gfs2_glock_is_locked_by_me(dip->i_gl) == शून्य) अणु
 		error = gfs2_glock_nq_init(dip->i_gl, LM_ST_SHARED, 0, &d_gh);
-		if (error)
-			return ERR_PTR(error);
-	}
+		अगर (error)
+			वापस ERR_PTR(error);
+	पूर्ण
 
-	if (!is_root) {
+	अगर (!is_root) अणु
 		error = gfs2_permission(&init_user_ns, dir, MAY_EXEC);
-		if (error)
-			goto out;
-	}
+		अगर (error)
+			जाओ out;
+	पूर्ण
 
 	inode = gfs2_dir_search(dir, name, false);
-	if (IS_ERR(inode))
+	अगर (IS_ERR(inode))
 		error = PTR_ERR(inode);
 out:
-	if (gfs2_holder_initialized(&d_gh))
+	अगर (gfs2_holder_initialized(&d_gh))
 		gfs2_glock_dq_uninit(&d_gh);
-	if (error == -ENOENT)
-		return NULL;
-	return inode ? inode : ERR_PTR(error);
-}
+	अगर (error == -ENOENT)
+		वापस शून्य;
+	वापस inode ? inode : ERR_PTR(error);
+पूर्ण
 
 /**
  * create_ok - OK to create a new on-disk inode here?
@@ -346,73 +347,73 @@ out:
  * @name:  Name of new dinode
  * @mode:
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int create_ok(struct gfs2_inode *dip, const struct qstr *name,
+अटल पूर्णांक create_ok(काष्ठा gfs2_inode *dip, स्थिर काष्ठा qstr *name,
 		     umode_t mode)
-{
-	int error;
+अणु
+	पूर्णांक error;
 
 	error = gfs2_permission(&init_user_ns, &dip->i_inode,
 				MAY_WRITE | MAY_EXEC);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	/*  Don't create entries in an unlinked directory  */
-	if (!dip->i_inode.i_nlink)
-		return -ENOENT;
+	अगर (!dip->i_inode.i_nlink)
+		वापस -ENOENT;
 
-	if (dip->i_entries == (u32)-1)
-		return -EFBIG;
-	if (S_ISDIR(mode) && dip->i_inode.i_nlink == (u32)-1)
-		return -EMLINK;
+	अगर (dip->i_entries == (u32)-1)
+		वापस -EFBIG;
+	अगर (S_ISसूची(mode) && dip->i_inode.i_nlink == (u32)-1)
+		वापस -EMLINK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void munge_mode_uid_gid(const struct gfs2_inode *dip,
-			       struct inode *inode)
-{
-	if (GFS2_SB(&dip->i_inode)->sd_args.ar_suiddir &&
+अटल व्योम munge_mode_uid_gid(स्थिर काष्ठा gfs2_inode *dip,
+			       काष्ठा inode *inode)
+अणु
+	अगर (GFS2_SB(&dip->i_inode)->sd_args.ar_suiddir &&
 	    (dip->i_inode.i_mode & S_ISUID) &&
-	    !uid_eq(dip->i_inode.i_uid, GLOBAL_ROOT_UID)) {
-		if (S_ISDIR(inode->i_mode))
+	    !uid_eq(dip->i_inode.i_uid, GLOBAL_ROOT_UID)) अणु
+		अगर (S_ISसूची(inode->i_mode))
 			inode->i_mode |= S_ISUID;
-		else if (!uid_eq(dip->i_inode.i_uid, current_fsuid()))
+		अन्यथा अगर (!uid_eq(dip->i_inode.i_uid, current_fsuid()))
 			inode->i_mode &= ~07111;
 		inode->i_uid = dip->i_inode.i_uid;
-	} else
+	पूर्ण अन्यथा
 		inode->i_uid = current_fsuid();
 
-	if (dip->i_inode.i_mode & S_ISGID) {
-		if (S_ISDIR(inode->i_mode))
+	अगर (dip->i_inode.i_mode & S_ISGID) अणु
+		अगर (S_ISसूची(inode->i_mode))
 			inode->i_mode |= S_ISGID;
 		inode->i_gid = dip->i_inode.i_gid;
-	} else
+	पूर्ण अन्यथा
 		inode->i_gid = current_fsgid();
-}
+पूर्ण
 
-static int alloc_dinode(struct gfs2_inode *ip, u32 flags, unsigned *dblocks)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
-	struct gfs2_alloc_parms ap = { .target = *dblocks, .aflags = flags, };
-	int error;
+अटल पूर्णांक alloc_dinode(काष्ठा gfs2_inode *ip, u32 flags, अचिन्हित *dblocks)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
+	काष्ठा gfs2_alloc_parms ap = अणु .target = *dblocks, .aflags = flags, पूर्ण;
+	पूर्णांक error;
 
 	error = gfs2_quota_lock_check(ip, &ap);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
 	error = gfs2_inplace_reserve(ip, &ap);
-	if (error)
-		goto out_quota;
+	अगर (error)
+		जाओ out_quota;
 
 	error = gfs2_trans_begin(sdp, (*dblocks * RES_RG_BIT) + RES_STATFS + RES_QUOTA, 0);
-	if (error)
-		goto out_ipreserv;
+	अगर (error)
+		जाओ out_ipreserv;
 
 	error = gfs2_alloc_blocks(ip, &ip->i_no_addr, dblocks, 1, &ip->i_generation);
-	ip->i_no_formal_ino = ip->i_generation;
+	ip->i_no_क्रमmal_ino = ip->i_generation;
 	ip->i_inode.i_ino = ip->i_no_addr;
 	ip->i_goal = ip->i_no_addr;
 
@@ -423,70 +424,70 @@ out_ipreserv:
 out_quota:
 	gfs2_quota_unlock(ip);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void gfs2_init_dir(struct buffer_head *dibh,
-			  const struct gfs2_inode *parent)
-{
-	struct gfs2_dinode *di = (struct gfs2_dinode *)dibh->b_data;
-	struct gfs2_dirent *dent = (struct gfs2_dirent *)(di+1);
+अटल व्योम gfs2_init_dir(काष्ठा buffer_head *dibh,
+			  स्थिर काष्ठा gfs2_inode *parent)
+अणु
+	काष्ठा gfs2_dinode *di = (काष्ठा gfs2_dinode *)dibh->b_data;
+	काष्ठा gfs2_dirent *dent = (काष्ठा gfs2_dirent *)(di+1);
 
-	gfs2_qstr2dirent(&gfs2_qdot, GFS2_DIRENT_SIZE(gfs2_qdot.len), dent);
-	dent->de_inum = di->di_num; /* already GFS2 endian */
-	dent->de_type = cpu_to_be16(DT_DIR);
+	gfs2_qstr2dirent(&gfs2_qकरोt, GFS2_सूचीENT_SIZE(gfs2_qकरोt.len), dent);
+	dent->de_inum = di->di_num; /* alपढ़ोy GFS2 endian */
+	dent->de_type = cpu_to_be16(DT_सूची);
 
-	dent = (struct gfs2_dirent *)((char*)dent + GFS2_DIRENT_SIZE(1));
-	gfs2_qstr2dirent(&gfs2_qdotdot, dibh->b_size - GFS2_DIRENT_SIZE(1) - sizeof(struct gfs2_dinode), dent);
+	dent = (काष्ठा gfs2_dirent *)((अक्षर*)dent + GFS2_सूचीENT_SIZE(1));
+	gfs2_qstr2dirent(&gfs2_qकरोtकरोt, dibh->b_size - GFS2_सूचीENT_SIZE(1) - माप(काष्ठा gfs2_dinode), dent);
 	gfs2_inum_out(parent, dent);
-	dent->de_type = cpu_to_be16(DT_DIR);
+	dent->de_type = cpu_to_be16(DT_सूची);
 	
-}
+पूर्ण
 
 /**
- * gfs2_init_xattr - Initialise an xattr block for a new inode
+ * gfs2_init_xattr - Initialise an xattr block क्रम a new inode
  * @ip: The inode in question
  *
- * This sets up an empty xattr block for a new inode, ready to
+ * This sets up an empty xattr block क्रम a new inode, पढ़ोy to
  * take any ACLs, LSM xattrs, etc.
  */
 
-static void gfs2_init_xattr(struct gfs2_inode *ip)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
-	struct buffer_head *bh;
-	struct gfs2_ea_header *ea;
+अटल व्योम gfs2_init_xattr(काष्ठा gfs2_inode *ip)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
+	काष्ठा buffer_head *bh;
+	काष्ठा gfs2_ea_header *ea;
 
 	bh = gfs2_meta_new(ip->i_gl, ip->i_eattr);
 	gfs2_trans_add_meta(ip->i_gl, bh);
 	gfs2_metatype_set(bh, GFS2_METATYPE_EA, GFS2_FORMAT_EA);
-	gfs2_buffer_clear_tail(bh, sizeof(struct gfs2_meta_header));
+	gfs2_buffer_clear_tail(bh, माप(काष्ठा gfs2_meta_header));
 
 	ea = GFS2_EA_BH2FIRST(bh);
 	ea->ea_rec_len = cpu_to_be32(sdp->sd_jbsize);
 	ea->ea_type = GFS2_EATYPE_UNUSED;
 	ea->ea_flags = GFS2_EAFLAG_LAST;
 
-	brelse(bh);
-}
+	brअन्यथा(bh);
+पूर्ण
 
 /**
- * init_dinode - Fill in a new dinode structure
+ * init_dinode - Fill in a new dinode काष्ठाure
  * @dip: The directory this inode is being created in
  * @ip: The inode
- * @symname: The symlink destination (if a symlink)
+ * @symname: The symlink destination (अगर a symlink)
  *
  */
 
-static void init_dinode(struct gfs2_inode *dip, struct gfs2_inode *ip,
-			const char *symname)
-{
-	struct gfs2_dinode *di;
-	struct buffer_head *dibh;
+अटल व्योम init_dinode(काष्ठा gfs2_inode *dip, काष्ठा gfs2_inode *ip,
+			स्थिर अक्षर *symname)
+अणु
+	काष्ठा gfs2_dinode *di;
+	काष्ठा buffer_head *dibh;
 
 	dibh = gfs2_meta_new(ip->i_gl, ip->i_no_addr);
 	gfs2_trans_add_meta(ip->i_gl, dibh);
-	di = (struct gfs2_dinode *)dibh->b_data;
+	di = (काष्ठा gfs2_dinode *)dibh->b_data;
 	gfs2_dinode_out(ip, di);
 
 	di->di_major = cpu_to_be32(imajor(&ip->i_inode));
@@ -494,69 +495,69 @@ static void init_dinode(struct gfs2_inode *dip, struct gfs2_inode *ip,
 	di->__pad1 = 0;
 	di->__pad2 = 0;
 	di->__pad3 = 0;
-	memset(&di->__pad4, 0, sizeof(di->__pad4));
-	memset(&di->di_reserved, 0, sizeof(di->di_reserved));
-	gfs2_buffer_clear_tail(dibh, sizeof(struct gfs2_dinode));
+	स_रखो(&di->__pad4, 0, माप(di->__pad4));
+	स_रखो(&di->di_reserved, 0, माप(di->di_reserved));
+	gfs2_buffer_clear_tail(dibh, माप(काष्ठा gfs2_dinode));
 
-	switch(ip->i_inode.i_mode & S_IFMT) {
-	case S_IFDIR:
+	चयन(ip->i_inode.i_mode & S_IFMT) अणु
+	हाल S_IFसूची:
 		gfs2_init_dir(dibh, dip);
-		break;
-	case S_IFLNK:
-		memcpy(dibh->b_data + sizeof(struct gfs2_dinode), symname, ip->i_inode.i_size);
-		break;
-	}
+		अवरोध;
+	हाल S_IFLNK:
+		स_नकल(dibh->b_data + माप(काष्ठा gfs2_dinode), symname, ip->i_inode.i_size);
+		अवरोध;
+	पूर्ण
 
 	set_buffer_uptodate(dibh);
-	brelse(dibh);
-}
+	brअन्यथा(dibh);
+पूर्ण
 
 /**
  * gfs2_trans_da_blks - Calculate number of blocks to link inode
- * @dip: The directory we are linking into
- * @da: The dir add information
+ * @dip: The directory we are linking पूर्णांकo
+ * @da: The dir add inक्रमmation
  * @nr_inodes: The number of inodes involved
  *
  * This calculate the number of blocks we need to reserve in a
- * transaction to link @nr_inodes into a directory. In most cases
+ * transaction to link @nr_inodes पूर्णांकo a directory. In most हालs
  * @nr_inodes will be 2 (the directory plus the inode being linked in)
- * but in case of rename, 4 may be required.
+ * but in हाल of नाम, 4 may be required.
  *
  * Returns: Number of blocks
  */
 
-static unsigned gfs2_trans_da_blks(const struct gfs2_inode *dip,
-				   const struct gfs2_diradd *da,
-				   unsigned nr_inodes)
-{
-	return da->nr_blocks + gfs2_rg_blocks(dip, da->nr_blocks) +
+अटल अचिन्हित gfs2_trans_da_blks(स्थिर काष्ठा gfs2_inode *dip,
+				   स्थिर काष्ठा gfs2_diradd *da,
+				   अचिन्हित nr_inodes)
+अणु
+	वापस da->nr_blocks + gfs2_rg_blocks(dip, da->nr_blocks) +
 	       (nr_inodes * RES_DINODE) + RES_QUOTA + RES_STATFS;
-}
+पूर्ण
 
-static int link_dinode(struct gfs2_inode *dip, const struct qstr *name,
-		       struct gfs2_inode *ip, struct gfs2_diradd *da)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(&dip->i_inode);
-	struct gfs2_alloc_parms ap = { .target = da->nr_blocks, };
-	int error;
+अटल पूर्णांक link_dinode(काष्ठा gfs2_inode *dip, स्थिर काष्ठा qstr *name,
+		       काष्ठा gfs2_inode *ip, काष्ठा gfs2_diradd *da)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(&dip->i_inode);
+	काष्ठा gfs2_alloc_parms ap = अणु .target = da->nr_blocks, पूर्ण;
+	पूर्णांक error;
 
-	if (da->nr_blocks) {
+	अगर (da->nr_blocks) अणु
 		error = gfs2_quota_lock_check(dip, &ap);
-		if (error)
-			goto fail_quota_locks;
+		अगर (error)
+			जाओ fail_quota_locks;
 
 		error = gfs2_inplace_reserve(dip, &ap);
-		if (error)
-			goto fail_quota_locks;
+		अगर (error)
+			जाओ fail_quota_locks;
 
 		error = gfs2_trans_begin(sdp, gfs2_trans_da_blks(dip, da, 2), 0);
-		if (error)
-			goto fail_ipreserv;
-	} else {
+		अगर (error)
+			जाओ fail_ipreserv;
+	पूर्ण अन्यथा अणु
 		error = gfs2_trans_begin(sdp, RES_LEAF + 2 * RES_DINODE, 0);
-		if (error)
-			goto fail_quota_locks;
-	}
+		अगर (error)
+			जाओ fail_quota_locks;
+	पूर्ण
 
 	error = gfs2_dir_add(&dip->i_inode, name, ip, da);
 
@@ -565,121 +566,121 @@ fail_ipreserv:
 	gfs2_inplace_release(dip);
 fail_quota_locks:
 	gfs2_quota_unlock(dip);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int gfs2_initxattrs(struct inode *inode, const struct xattr *xattr_array,
-		    void *fs_info)
-{
-	const struct xattr *xattr;
-	int err = 0;
+अटल पूर्णांक gfs2_initxattrs(काष्ठा inode *inode, स्थिर काष्ठा xattr *xattr_array,
+		    व्योम *fs_info)
+अणु
+	स्थिर काष्ठा xattr *xattr;
+	पूर्णांक err = 0;
 
-	for (xattr = xattr_array; xattr->name != NULL; xattr++) {
+	क्रम (xattr = xattr_array; xattr->name != शून्य; xattr++) अणु
 		err = __gfs2_xattr_set(inode, xattr->name, xattr->value,
 				       xattr->value_len, 0,
 				       GFS2_EATYPE_SECURITY);
-		if (err < 0)
-			break;
-	}
-	return err;
-}
+		अगर (err < 0)
+			अवरोध;
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /**
  * gfs2_create_inode - Create a new inode
  * @dir: The parent directory
  * @dentry: The new dentry
- * @file: If non-NULL, the file which is being opened
+ * @file: If non-शून्य, the file which is being खोलोed
  * @mode: The permissions on the new inode
  * @dev: For device nodes, this is the device number
  * @symname: For symlinks, this is the link destination
- * @size: The initial size of the inode (ignored for directories)
- * @excl: Force fail if inode exists
+ * @size: The initial size of the inode (ignored क्रम directories)
+ * @excl: Force fail अगर inode exists
  *
  * Returns: 0 on success, or error code
  */
 
-static int gfs2_create_inode(struct inode *dir, struct dentry *dentry,
-			     struct file *file,
-			     umode_t mode, dev_t dev, const char *symname,
-			     unsigned int size, int excl)
-{
-	const struct qstr *name = &dentry->d_name;
-	struct posix_acl *default_acl, *acl;
-	struct gfs2_holder ghs[2];
-	struct inode *inode = NULL;
-	struct gfs2_inode *dip = GFS2_I(dir), *ip;
-	struct gfs2_sbd *sdp = GFS2_SB(&dip->i_inode);
-	struct gfs2_glock *io_gl;
-	int error, free_vfs_inode = 1;
+अटल पूर्णांक gfs2_create_inode(काष्ठा inode *dir, काष्ठा dentry *dentry,
+			     काष्ठा file *file,
+			     umode_t mode, dev_t dev, स्थिर अक्षर *symname,
+			     अचिन्हित पूर्णांक size, पूर्णांक excl)
+अणु
+	स्थिर काष्ठा qstr *name = &dentry->d_name;
+	काष्ठा posix_acl *शेष_acl, *acl;
+	काष्ठा gfs2_holder ghs[2];
+	काष्ठा inode *inode = शून्य;
+	काष्ठा gfs2_inode *dip = GFS2_I(dir), *ip;
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(&dip->i_inode);
+	काष्ठा gfs2_glock *io_gl;
+	पूर्णांक error, मुक्त_vfs_inode = 1;
 	u32 aflags = 0;
-	unsigned blocks = 1;
-	struct gfs2_diradd da = { .bh = NULL, .save_loc = 1, };
+	अचिन्हित blocks = 1;
+	काष्ठा gfs2_diradd da = अणु .bh = शून्य, .save_loc = 1, पूर्ण;
 
-	if (!name->len || name->len > GFS2_FNAMESIZE)
-		return -ENAMETOOLONG;
+	अगर (!name->len || name->len > GFS2_FNAMESIZE)
+		वापस -ENAMETOOLONG;
 
 	error = gfs2_qa_get(dip);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = gfs2_rindex_update(sdp);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 
 	error = gfs2_glock_nq_init(dip->i_gl, LM_ST_EXCLUSIVE, 0, ghs);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 	gfs2_holder_mark_uninitialized(ghs + 1);
 
 	error = create_ok(dip, name, mode);
-	if (error)
-		goto fail_gunlock;
+	अगर (error)
+		जाओ fail_gunlock;
 
 	inode = gfs2_dir_search(dir, &dentry->d_name, !S_ISREG(mode) || excl);
 	error = PTR_ERR(inode);
-	if (!IS_ERR(inode)) {
-		if (S_ISDIR(inode->i_mode)) {
+	अगर (!IS_ERR(inode)) अणु
+		अगर (S_ISसूची(inode->i_mode)) अणु
 			iput(inode);
-			inode = ERR_PTR(-EISDIR);
-			goto fail_gunlock;
-		}
+			inode = ERR_PTR(-EISसूची);
+			जाओ fail_gunlock;
+		पूर्ण
 		d_instantiate(dentry, inode);
 		error = 0;
-		if (file) {
-			if (S_ISREG(inode->i_mode))
-				error = finish_open(file, dentry, gfs2_open_common);
-			else
-				error = finish_no_open(file, NULL);
-		}
+		अगर (file) अणु
+			अगर (S_ISREG(inode->i_mode))
+				error = finish_खोलो(file, dentry, gfs2_खोलो_common);
+			अन्यथा
+				error = finish_no_खोलो(file, शून्य);
+		पूर्ण
 		gfs2_glock_dq_uninit(ghs);
-		goto fail;
-	} else if (error != -ENOENT) {
-		goto fail_gunlock;
-	}
+		जाओ fail;
+	पूर्ण अन्यथा अगर (error != -ENOENT) अणु
+		जाओ fail_gunlock;
+	पूर्ण
 
 	error = gfs2_diradd_alloc_required(dir, name, &da);
-	if (error < 0)
-		goto fail_gunlock;
+	अगर (error < 0)
+		जाओ fail_gunlock;
 
 	inode = new_inode(sdp->sd_vfs);
 	error = -ENOMEM;
-	if (!inode)
-		goto fail_gunlock;
+	अगर (!inode)
+		जाओ fail_gunlock;
 
-	error = posix_acl_create(dir, &mode, &default_acl, &acl);
-	if (error)
-		goto fail_gunlock;
+	error = posix_acl_create(dir, &mode, &शेष_acl, &acl);
+	अगर (error)
+		जाओ fail_gunlock;
 
 	ip = GFS2_I(inode);
 	error = gfs2_qa_get(ip);
-	if (error)
-		goto fail_free_acls;
+	अगर (error)
+		जाओ fail_मुक्त_acls;
 
 	inode->i_mode = mode;
-	set_nlink(inode, S_ISDIR(mode) ? 2 : 1);
+	set_nlink(inode, S_ISसूची(mode) ? 2 : 1);
 	inode->i_rdev = dev;
 	inode->i_size = size;
-	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
+	inode->i_aसमय = inode->i_mसमय = inode->i_स_समय = current_समय(inode);
 	munge_mode_uid_gid(dip, inode);
 	check_and_update_goal(dip);
 	ip->i_goal = dip->i_goal;
@@ -688,151 +689,151 @@ static int gfs2_create_inode(struct inode *dir, struct dentry *dentry,
 	ip->i_height = 0;
 	ip->i_depth = 0;
 	ip->i_entries = 0;
-	ip->i_no_addr = 0; /* Temporarily zero until real addr is assigned */
+	ip->i_no_addr = 0; /* Temporarily zero until real addr is asचिन्हित */
 
-	switch(mode & S_IFMT) {
-	case S_IFREG:
-		if ((dip->i_diskflags & GFS2_DIF_INHERIT_JDATA) ||
+	चयन(mode & S_IFMT) अणु
+	हाल S_IFREG:
+		अगर ((dip->i_diskflags & GFS2_DIF_INHERIT_JDATA) ||
 		    gfs2_tune_get(sdp, gt_new_files_jdata))
 			ip->i_diskflags |= GFS2_DIF_JDATA;
 		gfs2_set_aops(inode);
-		break;
-	case S_IFDIR:
+		अवरोध;
+	हाल S_IFसूची:
 		ip->i_diskflags |= (dip->i_diskflags & GFS2_DIF_INHERIT_JDATA);
 		ip->i_diskflags |= GFS2_DIF_JDATA;
 		ip->i_entries = 2;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Force SYSTEM flag on all files and subdirs of a SYSTEM directory */
-	if (dip->i_diskflags & GFS2_DIF_SYSTEM)
+	अगर (dip->i_diskflags & GFS2_DIF_SYSTEM)
 		ip->i_diskflags |= GFS2_DIF_SYSTEM;
 
 	gfs2_set_inode_flags(inode);
 
-	if ((GFS2_I(d_inode(sdp->sd_root_dir)) == dip) ||
-	    (dip->i_diskflags & GFS2_DIF_TOPDIR))
+	अगर ((GFS2_I(d_inode(sdp->sd_root_dir)) == dip) ||
+	    (dip->i_diskflags & GFS2_DIF_TOPसूची))
 		aflags |= GFS2_AF_ORLOV;
 
-	if (default_acl || acl)
+	अगर (शेष_acl || acl)
 		blocks++;
 
 	error = alloc_dinode(ip, aflags, &blocks);
-	if (error)
-		goto fail_free_inode;
+	अगर (error)
+		जाओ fail_मुक्त_inode;
 
 	gfs2_set_inode_blocks(inode, blocks);
 
 	error = gfs2_glock_get(sdp, ip->i_no_addr, &gfs2_inode_glops, CREATE, &ip->i_gl);
-	if (error)
-		goto fail_free_inode;
+	अगर (error)
+		जाओ fail_मुक्त_inode;
 	flush_delayed_work(&ip->i_gl->gl_work);
 	glock_set_object(ip->i_gl, ip);
 
-	error = gfs2_glock_get(sdp, ip->i_no_addr, &gfs2_iopen_glops, CREATE, &io_gl);
-	if (error)
-		goto fail_free_inode;
+	error = gfs2_glock_get(sdp, ip->i_no_addr, &gfs2_iखोलो_glops, CREATE, &io_gl);
+	अगर (error)
+		जाओ fail_मुक्त_inode;
 	gfs2_cancel_delete_work(io_gl);
 	glock_set_object(io_gl, ip);
 
 	error = gfs2_glock_nq_init(ip->i_gl, LM_ST_EXCLUSIVE, GL_SKIP, ghs + 1);
-	if (error)
-		goto fail_gunlock2;
+	अगर (error)
+		जाओ fail_gunlock2;
 
 	error = gfs2_trans_begin(sdp, blocks, 0);
-	if (error)
-		goto fail_gunlock2;
+	अगर (error)
+		जाओ fail_gunlock2;
 
-	if (blocks > 1) {
+	अगर (blocks > 1) अणु
 		ip->i_eattr = ip->i_no_addr + 1;
 		gfs2_init_xattr(ip);
-	}
+	पूर्ण
 	init_dinode(dip, ip, symname);
 	gfs2_trans_end(sdp);
 
-	error = gfs2_glock_nq_init(io_gl, LM_ST_SHARED, GL_EXACT, &ip->i_iopen_gh);
-	if (error)
-		goto fail_gunlock2;
+	error = gfs2_glock_nq_init(io_gl, LM_ST_SHARED, GL_EXACT, &ip->i_iखोलो_gh);
+	अगर (error)
+		जाओ fail_gunlock2;
 
 	gfs2_set_iop(inode);
 	insert_inode_hash(inode);
 
-	free_vfs_inode = 0; /* After this point, the inode is no longer
-			       considered free. Any failures need to undo
-			       the gfs2 structures. */
-	if (default_acl) {
-		error = __gfs2_set_acl(inode, default_acl, ACL_TYPE_DEFAULT);
-		if (error)
-			goto fail_gunlock3;
-		posix_acl_release(default_acl);
-		default_acl = NULL;
-	}
-	if (acl) {
+	मुक्त_vfs_inode = 0; /* After this poपूर्णांक, the inode is no दीर्घer
+			       considered मुक्त. Any failures need to unकरो
+			       the gfs2 काष्ठाures. */
+	अगर (शेष_acl) अणु
+		error = __gfs2_set_acl(inode, शेष_acl, ACL_TYPE_DEFAULT);
+		अगर (error)
+			जाओ fail_gunlock3;
+		posix_acl_release(शेष_acl);
+		शेष_acl = शून्य;
+	पूर्ण
+	अगर (acl) अणु
 		error = __gfs2_set_acl(inode, acl, ACL_TYPE_ACCESS);
-		if (error)
-			goto fail_gunlock3;
+		अगर (error)
+			जाओ fail_gunlock3;
 		posix_acl_release(acl);
-		acl = NULL;
-	}
+		acl = शून्य;
+	पूर्ण
 
 	error = security_inode_init_security(&ip->i_inode, &dip->i_inode, name,
-					     &gfs2_initxattrs, NULL);
-	if (error)
-		goto fail_gunlock3;
+					     &gfs2_initxattrs, शून्य);
+	अगर (error)
+		जाओ fail_gunlock3;
 
 	error = link_dinode(dip, name, ip, &da);
-	if (error)
-		goto fail_gunlock3;
+	अगर (error)
+		जाओ fail_gunlock3;
 
 	mark_inode_dirty(inode);
 	d_instantiate(dentry, inode);
 	/* After instantiate, errors should result in evict which will destroy
-	 * both inode and iopen glocks properly. */
-	if (file) {
+	 * both inode and iखोलो glocks properly. */
+	अगर (file) अणु
 		file->f_mode |= FMODE_CREATED;
-		error = finish_open(file, dentry, gfs2_open_common);
-	}
+		error = finish_खोलो(file, dentry, gfs2_खोलो_common);
+	पूर्ण
 	gfs2_glock_dq_uninit(ghs);
 	gfs2_qa_put(ip);
 	gfs2_glock_dq_uninit(ghs + 1);
 	gfs2_glock_put(io_gl);
 	gfs2_qa_put(dip);
-	return error;
+	वापस error;
 
 fail_gunlock3:
 	glock_clear_object(io_gl, ip);
-	gfs2_glock_dq_uninit(&ip->i_iopen_gh);
+	gfs2_glock_dq_uninit(&ip->i_iखोलो_gh);
 fail_gunlock2:
 	glock_clear_object(io_gl, ip);
 	gfs2_glock_put(io_gl);
-fail_free_inode:
-	if (ip->i_gl) {
+fail_मुक्त_inode:
+	अगर (ip->i_gl) अणु
 		glock_clear_object(ip->i_gl, ip);
-		if (free_vfs_inode) /* else evict will do the put for us */
+		अगर (मुक्त_vfs_inode) /* अन्यथा evict will करो the put क्रम us */
 			gfs2_glock_put(ip->i_gl);
-	}
-	gfs2_rs_delete(ip, NULL);
+	पूर्ण
+	gfs2_rs_delete(ip, शून्य);
 	gfs2_qa_put(ip);
-fail_free_acls:
-	posix_acl_release(default_acl);
+fail_मुक्त_acls:
+	posix_acl_release(शेष_acl);
 	posix_acl_release(acl);
 fail_gunlock:
 	gfs2_dir_no_add(&da);
 	gfs2_glock_dq_uninit(ghs);
-	if (!IS_ERR_OR_NULL(inode)) {
+	अगर (!IS_ERR_OR_शून्य(inode)) अणु
 		clear_nlink(inode);
-		if (!free_vfs_inode)
+		अगर (!मुक्त_vfs_inode)
 			mark_inode_dirty(inode);
-		set_bit(free_vfs_inode ? GIF_FREE_VFS_INODE : GIF_ALLOC_FAILED,
+		set_bit(मुक्त_vfs_inode ? GIF_FREE_VFS_INODE : GIF_ALLOC_FAILED,
 			&GFS2_I(inode)->i_flags);
 		iput(inode);
-	}
-	if (gfs2_holder_initialized(ghs + 1))
+	पूर्ण
+	अगर (gfs2_holder_initialized(ghs + 1))
 		gfs2_glock_dq_uninit(ghs + 1);
 fail:
 	gfs2_qa_put(dip);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * gfs2_create - Create a file
@@ -840,72 +841,72 @@ fail:
  * @dir: The directory in which to create the file
  * @dentry: The dentry of the new file
  * @mode: The mode of the new file
- * @excl: Force fail if inode exists
+ * @excl: Force fail अगर inode exists
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int gfs2_create(struct user_namespace *mnt_userns, struct inode *dir,
-		       struct dentry *dentry, umode_t mode, bool excl)
-{
-	return gfs2_create_inode(dir, dentry, NULL, S_IFREG | mode, 0, NULL, 0, excl);
-}
+अटल पूर्णांक gfs2_create(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+		       काष्ठा dentry *dentry, umode_t mode, bool excl)
+अणु
+	वापस gfs2_create_inode(dir, dentry, शून्य, S_IFREG | mode, 0, शून्य, 0, excl);
+पूर्ण
 
 /**
- * __gfs2_lookup - Look up a filename in a directory and return its inode
+ * __gfs2_lookup - Look up a filename in a directory and वापस its inode
  * @dir: The directory inode
  * @dentry: The dentry of the new inode
- * @file: File to be opened
+ * @file: File to be खोलोed
  *
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static struct dentry *__gfs2_lookup(struct inode *dir, struct dentry *dentry,
-				    struct file *file)
-{
-	struct inode *inode;
-	struct dentry *d;
-	struct gfs2_holder gh;
-	struct gfs2_glock *gl;
-	int error;
+अटल काष्ठा dentry *__gfs2_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry,
+				    काष्ठा file *file)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा dentry *d;
+	काष्ठा gfs2_holder gh;
+	काष्ठा gfs2_glock *gl;
+	पूर्णांक error;
 
 	inode = gfs2_lookupi(dir, &dentry->d_name, 0);
-	if (inode == NULL) {
-		d_add(dentry, NULL);
-		return NULL;
-	}
-	if (IS_ERR(inode))
-		return ERR_CAST(inode);
+	अगर (inode == शून्य) अणु
+		d_add(dentry, शून्य);
+		वापस शून्य;
+	पूर्ण
+	अगर (IS_ERR(inode))
+		वापस ERR_CAST(inode);
 
 	gl = GFS2_I(inode)->i_gl;
 	error = gfs2_glock_nq_init(gl, LM_ST_SHARED, LM_FLAG_ANY, &gh);
-	if (error) {
+	अगर (error) अणु
 		iput(inode);
-		return ERR_PTR(error);
-	}
+		वापस ERR_PTR(error);
+	पूर्ण
 
 	d = d_splice_alias(inode, dentry);
-	if (IS_ERR(d)) {
+	अगर (IS_ERR(d)) अणु
 		gfs2_glock_dq_uninit(&gh);
-		return d;
-	}
-	if (file && S_ISREG(inode->i_mode))
-		error = finish_open(file, dentry, gfs2_open_common);
+		वापस d;
+	पूर्ण
+	अगर (file && S_ISREG(inode->i_mode))
+		error = finish_खोलो(file, dentry, gfs2_खोलो_common);
 
 	gfs2_glock_dq_uninit(&gh);
-	if (error) {
+	अगर (error) अणु
 		dput(d);
-		return ERR_PTR(error);
-	}
-	return d;
-}
+		वापस ERR_PTR(error);
+	पूर्ण
+	वापस d;
+पूर्ण
 
-static struct dentry *gfs2_lookup(struct inode *dir, struct dentry *dentry,
-				  unsigned flags)
-{
-	return __gfs2_lookup(dir, dentry, NULL);
-}
+अटल काष्ठा dentry *gfs2_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry,
+				  अचिन्हित flags)
+अणु
+	वापस __gfs2_lookup(dir, dentry, शून्य);
+पूर्ण
 
 /**
  * gfs2_link - Link to a file
@@ -913,124 +914,124 @@ static struct dentry *gfs2_lookup(struct inode *dir, struct dentry *dentry,
  * @dir: Add link to this directory
  * @dentry: The name of the link
  *
- * Link the inode in "old_dentry" into the directory "dir" with the
+ * Link the inode in "old_dentry" पूर्णांकo the directory "dir" with the
  * name in "dentry".
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int gfs2_link(struct dentry *old_dentry, struct inode *dir,
-		     struct dentry *dentry)
-{
-	struct gfs2_inode *dip = GFS2_I(dir);
-	struct gfs2_sbd *sdp = GFS2_SB(dir);
-	struct inode *inode = d_inode(old_dentry);
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder ghs[2];
-	struct buffer_head *dibh;
-	struct gfs2_diradd da = { .bh = NULL, .save_loc = 1, };
-	int error;
+अटल पूर्णांक gfs2_link(काष्ठा dentry *old_dentry, काष्ठा inode *dir,
+		     काष्ठा dentry *dentry)
+अणु
+	काष्ठा gfs2_inode *dip = GFS2_I(dir);
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(dir);
+	काष्ठा inode *inode = d_inode(old_dentry);
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_holder ghs[2];
+	काष्ठा buffer_head *dibh;
+	काष्ठा gfs2_diradd da = अणु .bh = शून्य, .save_loc = 1, पूर्ण;
+	पूर्णांक error;
 
-	if (S_ISDIR(inode->i_mode))
-		return -EPERM;
+	अगर (S_ISसूची(inode->i_mode))
+		वापस -EPERM;
 
 	error = gfs2_qa_get(dip);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	gfs2_holder_init(dip->i_gl, LM_ST_EXCLUSIVE, 0, ghs);
 	gfs2_holder_init(ip->i_gl, LM_ST_EXCLUSIVE, 0, ghs + 1);
 
 	error = gfs2_glock_nq(ghs); /* parent */
-	if (error)
-		goto out_parent;
+	अगर (error)
+		जाओ out_parent;
 
 	error = gfs2_glock_nq(ghs + 1); /* child */
-	if (error)
-		goto out_child;
+	अगर (error)
+		जाओ out_child;
 
 	error = -ENOENT;
-	if (inode->i_nlink == 0)
-		goto out_gunlock;
+	अगर (inode->i_nlink == 0)
+		जाओ out_gunlock;
 
 	error = gfs2_permission(&init_user_ns, dir, MAY_WRITE | MAY_EXEC);
-	if (error)
-		goto out_gunlock;
+	अगर (error)
+		जाओ out_gunlock;
 
-	error = gfs2_dir_check(dir, &dentry->d_name, NULL);
-	switch (error) {
-	case -ENOENT:
-		break;
-	case 0:
+	error = gfs2_dir_check(dir, &dentry->d_name, शून्य);
+	चयन (error) अणु
+	हाल -ENOENT:
+		अवरोध;
+	हाल 0:
 		error = -EEXIST;
-		goto out_gunlock;
-	default:
-		goto out_gunlock;
-	}
+		जाओ out_gunlock;
+	शेष:
+		जाओ out_gunlock;
+	पूर्ण
 
 	error = -EINVAL;
-	if (!dip->i_inode.i_nlink)
-		goto out_gunlock;
+	अगर (!dip->i_inode.i_nlink)
+		जाओ out_gunlock;
 	error = -EFBIG;
-	if (dip->i_entries == (u32)-1)
-		goto out_gunlock;
+	अगर (dip->i_entries == (u32)-1)
+		जाओ out_gunlock;
 	error = -EPERM;
-	if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
-		goto out_gunlock;
+	अगर (IS_IMMUTABLE(inode) || IS_APPEND(inode))
+		जाओ out_gunlock;
 	error = -EINVAL;
-	if (!ip->i_inode.i_nlink)
-		goto out_gunlock;
+	अगर (!ip->i_inode.i_nlink)
+		जाओ out_gunlock;
 	error = -EMLINK;
-	if (ip->i_inode.i_nlink == (u32)-1)
-		goto out_gunlock;
+	अगर (ip->i_inode.i_nlink == (u32)-1)
+		जाओ out_gunlock;
 
 	error = gfs2_diradd_alloc_required(dir, &dentry->d_name, &da);
-	if (error < 0)
-		goto out_gunlock;
+	अगर (error < 0)
+		जाओ out_gunlock;
 
-	if (da.nr_blocks) {
-		struct gfs2_alloc_parms ap = { .target = da.nr_blocks, };
+	अगर (da.nr_blocks) अणु
+		काष्ठा gfs2_alloc_parms ap = अणु .target = da.nr_blocks, पूर्ण;
 		error = gfs2_quota_lock_check(dip, &ap);
-		if (error)
-			goto out_gunlock;
+		अगर (error)
+			जाओ out_gunlock;
 
 		error = gfs2_inplace_reserve(dip, &ap);
-		if (error)
-			goto out_gunlock_q;
+		अगर (error)
+			जाओ out_gunlock_q;
 
 		error = gfs2_trans_begin(sdp, gfs2_trans_da_blks(dip, &da, 2), 0);
-		if (error)
-			goto out_ipres;
-	} else {
+		अगर (error)
+			जाओ out_ipres;
+	पूर्ण अन्यथा अणु
 		error = gfs2_trans_begin(sdp, 2 * RES_DINODE + RES_LEAF, 0);
-		if (error)
-			goto out_ipres;
-	}
+		अगर (error)
+			जाओ out_ipres;
+	पूर्ण
 
 	error = gfs2_meta_inode_buffer(ip, &dibh);
-	if (error)
-		goto out_end_trans;
+	अगर (error)
+		जाओ out_end_trans;
 
 	error = gfs2_dir_add(dir, &dentry->d_name, ip, &da);
-	if (error)
-		goto out_brelse;
+	अगर (error)
+		जाओ out_brअन्यथा;
 
 	gfs2_trans_add_meta(ip->i_gl, dibh);
 	inc_nlink(&ip->i_inode);
-	ip->i_inode.i_ctime = current_time(&ip->i_inode);
+	ip->i_inode.i_स_समय = current_समय(&ip->i_inode);
 	ihold(inode);
 	d_instantiate(dentry, inode);
 	mark_inode_dirty(inode);
 
-out_brelse:
-	brelse(dibh);
+out_brअन्यथा:
+	brअन्यथा(dibh);
 out_end_trans:
 	gfs2_trans_end(sdp);
 out_ipres:
-	if (da.nr_blocks)
+	अगर (da.nr_blocks)
 		gfs2_inplace_release(dip);
 out_gunlock_q:
-	if (da.nr_blocks)
+	अगर (da.nr_blocks)
 		gfs2_quota_unlock(dip);
 out_gunlock:
 	gfs2_dir_no_add(&da);
@@ -1041,8 +1042,8 @@ out_parent:
 	gfs2_qa_put(dip);
 	gfs2_holder_uninit(ghs);
 	gfs2_holder_uninit(ghs + 1);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * gfs2_unlink_ok - check to see that a inode is still in a directory
@@ -1052,32 +1053,32 @@ out_parent:
  *
  * Assumes that the lock on (at least) @dip is held.
  *
- * Returns: 0 if the parent/child relationship is correct, errno if it isn't
+ * Returns: 0 अगर the parent/child relationship is correct, त्रुटि_सं अगर it isn't
  */
 
-static int gfs2_unlink_ok(struct gfs2_inode *dip, const struct qstr *name,
-			  const struct gfs2_inode *ip)
-{
-	int error;
+अटल पूर्णांक gfs2_unlink_ok(काष्ठा gfs2_inode *dip, स्थिर काष्ठा qstr *name,
+			  स्थिर काष्ठा gfs2_inode *ip)
+अणु
+	पूर्णांक error;
 
-	if (IS_IMMUTABLE(&ip->i_inode) || IS_APPEND(&ip->i_inode))
-		return -EPERM;
+	अगर (IS_IMMUTABLE(&ip->i_inode) || IS_APPEND(&ip->i_inode))
+		वापस -EPERM;
 
-	if ((dip->i_inode.i_mode & S_ISVTX) &&
+	अगर ((dip->i_inode.i_mode & S_ISVTX) &&
 	    !uid_eq(dip->i_inode.i_uid, current_fsuid()) &&
 	    !uid_eq(ip->i_inode.i_uid, current_fsuid()) && !capable(CAP_FOWNER))
-		return -EPERM;
+		वापस -EPERM;
 
-	if (IS_APPEND(&dip->i_inode))
-		return -EPERM;
+	अगर (IS_APPEND(&dip->i_inode))
+		वापस -EPERM;
 
 	error = gfs2_permission(&init_user_ns, &dip->i_inode,
 				MAY_WRITE | MAY_EXEC);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	return gfs2_dir_check(&dip->i_inode, name, ip);
-}
+	वापस gfs2_dir_check(&dip->i_inode, name, ip);
+पूर्ण
 
 /**
  * gfs2_unlink_inode - Removes an inode from its parent dir and unlinks it
@@ -1085,59 +1086,59 @@ static int gfs2_unlink_ok(struct gfs2_inode *dip, const struct qstr *name,
  * @dentry: The dentry to unlink
  *
  * Called with all the locks and in a transaction. This will only be
- * called for a directory after it has been checked to ensure it is empty.
+ * called क्रम a directory after it has been checked to ensure it is empty.
  *
  * Returns: 0 on success, or an error
  */
 
-static int gfs2_unlink_inode(struct gfs2_inode *dip,
-			     const struct dentry *dentry)
-{
-	struct inode *inode = d_inode(dentry);
-	struct gfs2_inode *ip = GFS2_I(inode);
-	int error;
+अटल पूर्णांक gfs2_unlink_inode(काष्ठा gfs2_inode *dip,
+			     स्थिर काष्ठा dentry *dentry)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	पूर्णांक error;
 
 	error = gfs2_dir_del(dip, dentry);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	ip->i_entries = 0;
-	inode->i_ctime = current_time(inode);
-	if (S_ISDIR(inode->i_mode))
+	inode->i_स_समय = current_समय(inode);
+	अगर (S_ISसूची(inode->i_mode))
 		clear_nlink(inode);
-	else
+	अन्यथा
 		drop_nlink(inode);
 	mark_inode_dirty(inode);
-	if (inode->i_nlink == 0)
+	अगर (inode->i_nlink == 0)
 		gfs2_unlink_di(inode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
- * gfs2_unlink - Unlink an inode (this does rmdir as well)
+ * gfs2_unlink - Unlink an inode (this करोes सूची_हटाओ as well)
  * @dir: The inode of the directory containing the inode to unlink
  * @dentry: The file itself
  *
  * This routine uses the type of the inode as a flag to figure out
- * whether this is an unlink or an rmdir.
+ * whether this is an unlink or an सूची_हटाओ.
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int gfs2_unlink(struct inode *dir, struct dentry *dentry)
-{
-	struct gfs2_inode *dip = GFS2_I(dir);
-	struct gfs2_sbd *sdp = GFS2_SB(dir);
-	struct inode *inode = d_inode(dentry);
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder ghs[3];
-	struct gfs2_rgrpd *rgd;
-	int error;
+अटल पूर्णांक gfs2_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	काष्ठा gfs2_inode *dip = GFS2_I(dir);
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(dir);
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_holder ghs[3];
+	काष्ठा gfs2_rgrpd *rgd;
+	पूर्णांक error;
 
 	error = gfs2_rindex_update(sdp);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = -EROFS;
 
@@ -1145,41 +1146,41 @@ static int gfs2_unlink(struct inode *dir, struct dentry *dentry)
 	gfs2_holder_init(ip->i_gl,  LM_ST_EXCLUSIVE, 0, ghs + 1);
 
 	rgd = gfs2_blk2rgrpd(sdp, ip->i_no_addr, 1);
-	if (!rgd)
-		goto out_inodes;
+	अगर (!rgd)
+		जाओ out_inodes;
 
 	gfs2_holder_init(rgd->rd_gl, LM_ST_EXCLUSIVE, LM_FLAG_NODE_SCOPE, ghs + 2);
 
 
 	error = gfs2_glock_nq(ghs); /* parent */
-	if (error)
-		goto out_parent;
+	अगर (error)
+		जाओ out_parent;
 
 	error = gfs2_glock_nq(ghs + 1); /* child */
-	if (error)
-		goto out_child;
+	अगर (error)
+		जाओ out_child;
 
 	error = -ENOENT;
-	if (inode->i_nlink == 0)
-		goto out_rgrp;
+	अगर (inode->i_nlink == 0)
+		जाओ out_rgrp;
 
-	if (S_ISDIR(inode->i_mode)) {
+	अगर (S_ISसूची(inode->i_mode)) अणु
 		error = -ENOTEMPTY;
-		if (ip->i_entries > 2 || inode->i_nlink > 2)
-			goto out_rgrp;
-	}
+		अगर (ip->i_entries > 2 || inode->i_nlink > 2)
+			जाओ out_rgrp;
+	पूर्ण
 
 	error = gfs2_glock_nq(ghs + 2); /* rgrp */
-	if (error)
-		goto out_rgrp;
+	अगर (error)
+		जाओ out_rgrp;
 
 	error = gfs2_unlink_ok(dip, &dentry->d_name, ip);
-	if (error)
-		goto out_gunlock;
+	अगर (error)
+		जाओ out_gunlock;
 
 	error = gfs2_trans_begin(sdp, 2*RES_DINODE + 3*RES_LEAF + RES_RG_BIT, 0);
-	if (error)
-		goto out_gunlock;
+	अगर (error)
+		जाओ out_gunlock;
 
 	error = gfs2_unlink_inode(dip, dentry);
 	gfs2_trans_end(sdp);
@@ -1195,47 +1196,47 @@ out_parent:
 out_inodes:
 	gfs2_holder_uninit(ghs + 1);
 	gfs2_holder_uninit(ghs);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * gfs2_symlink - Create a symlink
  * @mnt_userns: User namespace of the mount the inode was found from
  * @dir: The directory to create the symlink in
  * @dentry: The dentry to put the symlink in
- * @symname: The thing which the link points to
+ * @symname: The thing which the link poपूर्णांकs to
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int gfs2_symlink(struct user_namespace *mnt_userns, struct inode *dir,
-			struct dentry *dentry, const char *symname)
-{
-	unsigned int size;
+अटल पूर्णांक gfs2_symlink(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+			काष्ठा dentry *dentry, स्थिर अक्षर *symname)
+अणु
+	अचिन्हित पूर्णांक size;
 
-	size = strlen(symname);
-	if (size >= gfs2_max_stuffed_size(GFS2_I(dir)))
-		return -ENAMETOOLONG;
+	size = म_माप(symname);
+	अगर (size >= gfs2_max_stuffed_size(GFS2_I(dir)))
+		वापस -ENAMETOOLONG;
 
-	return gfs2_create_inode(dir, dentry, NULL, S_IFLNK | S_IRWXUGO, 0, symname, size, 0);
-}
+	वापस gfs2_create_inode(dir, dentry, शून्य, S_IFLNK | S_IRWXUGO, 0, symname, size, 0);
+पूर्ण
 
 /**
- * gfs2_mkdir - Make a directory
+ * gfs2_सूची_गढ़ो - Make a directory
  * @mnt_userns: User namespace of the mount the inode was found from
  * @dir: The parent directory of the new one
  * @dentry: The dentry of the new directory
  * @mode: The mode of the new directory
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int gfs2_mkdir(struct user_namespace *mnt_userns, struct inode *dir,
-		      struct dentry *dentry, umode_t mode)
-{
-	unsigned dsize = gfs2_max_stuffed_size(GFS2_I(dir));
-	return gfs2_create_inode(dir, dentry, NULL, S_IFDIR | mode, 0, NULL, dsize, 0);
-}
+अटल पूर्णांक gfs2_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+		      काष्ठा dentry *dentry, umode_t mode)
+अणु
+	अचिन्हित dsize = gfs2_max_stuffed_size(GFS2_I(dir));
+	वापस gfs2_create_inode(dir, dentry, शून्य, S_IFसूची | mode, 0, शून्य, dsize, 0);
+पूर्ण
 
 /**
  * gfs2_mknod - Make a special file
@@ -1243,372 +1244,372 @@ static int gfs2_mkdir(struct user_namespace *mnt_userns, struct inode *dir,
  * @dir: The directory in which the special file will reside
  * @dentry: The dentry of the special file
  * @mode: The mode of the special file
- * @dev: The device specification of the special file
+ * @dev: The device specअगरication of the special file
  *
  */
 
-static int gfs2_mknod(struct user_namespace *mnt_userns, struct inode *dir,
-		      struct dentry *dentry, umode_t mode, dev_t dev)
-{
-	return gfs2_create_inode(dir, dentry, NULL, mode, dev, NULL, 0, 0);
-}
+अटल पूर्णांक gfs2_mknod(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+		      काष्ठा dentry *dentry, umode_t mode, dev_t dev)
+अणु
+	वापस gfs2_create_inode(dir, dentry, शून्य, mode, dev, शून्य, 0, 0);
+पूर्ण
 
 /**
- * gfs2_atomic_open - Atomically open a file
+ * gfs2_atomic_खोलो - Atomically खोलो a file
  * @dir: The directory
  * @dentry: The proposed new entry
- * @file: The proposed new struct file
- * @flags: open flags
+ * @file: The proposed new काष्ठा file
+ * @flags: खोलो flags
  * @mode: File mode
  *
- * Returns: error code or 0 for success
+ * Returns: error code or 0 क्रम success
  */
 
-static int gfs2_atomic_open(struct inode *dir, struct dentry *dentry,
-			    struct file *file, unsigned flags,
+अटल पूर्णांक gfs2_atomic_खोलो(काष्ठा inode *dir, काष्ठा dentry *dentry,
+			    काष्ठा file *file, अचिन्हित flags,
 			    umode_t mode)
-{
-	struct dentry *d;
+अणु
+	काष्ठा dentry *d;
 	bool excl = !!(flags & O_EXCL);
 
-	if (!d_in_lookup(dentry))
-		goto skip_lookup;
+	अगर (!d_in_lookup(dentry))
+		जाओ skip_lookup;
 
 	d = __gfs2_lookup(dir, dentry, file);
-	if (IS_ERR(d))
-		return PTR_ERR(d);
-	if (d != NULL)
+	अगर (IS_ERR(d))
+		वापस PTR_ERR(d);
+	अगर (d != शून्य)
 		dentry = d;
-	if (d_really_is_positive(dentry)) {
-		if (!(file->f_mode & FMODE_OPENED))
-			return finish_no_open(file, d);
+	अगर (d_really_is_positive(dentry)) अणु
+		अगर (!(file->f_mode & FMODE_OPENED))
+			वापस finish_no_खोलो(file, d);
 		dput(d);
-		return excl && (flags & O_CREAT) ? -EEXIST : 0;
-	}
+		वापस excl && (flags & O_CREAT) ? -EEXIST : 0;
+	पूर्ण
 
-	BUG_ON(d != NULL);
+	BUG_ON(d != शून्य);
 
 skip_lookup:
-	if (!(flags & O_CREAT))
-		return -ENOENT;
+	अगर (!(flags & O_CREAT))
+		वापस -ENOENT;
 
-	return gfs2_create_inode(dir, dentry, file, S_IFREG | mode, 0, NULL, 0, excl);
-}
+	वापस gfs2_create_inode(dir, dentry, file, S_IFREG | mode, 0, शून्य, 0, excl);
+पूर्ण
 
 /*
- * gfs2_ok_to_move - check if it's ok to move a directory to another directory
+ * gfs2_ok_to_move - check अगर it's ok to move a directory to another directory
  * @this: move this
  * @to: to here
  *
- * Follow @to back to the root and make sure we don't encounter @this
- * Assumes we already hold the rename lock.
+ * Follow @to back to the root and make sure we करोn't encounter @this
+ * Assumes we alपढ़ोy hold the नाम lock.
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int gfs2_ok_to_move(struct gfs2_inode *this, struct gfs2_inode *to)
-{
-	struct inode *dir = &to->i_inode;
-	struct super_block *sb = dir->i_sb;
-	struct inode *tmp;
-	int error = 0;
+अटल पूर्णांक gfs2_ok_to_move(काष्ठा gfs2_inode *this, काष्ठा gfs2_inode *to)
+अणु
+	काष्ठा inode *dir = &to->i_inode;
+	काष्ठा super_block *sb = dir->i_sb;
+	काष्ठा inode *पंचांगp;
+	पूर्णांक error = 0;
 
 	igrab(dir);
 
-	for (;;) {
-		if (dir == &this->i_inode) {
+	क्रम (;;) अणु
+		अगर (dir == &this->i_inode) अणु
 			error = -EINVAL;
-			break;
-		}
-		if (dir == d_inode(sb->s_root)) {
+			अवरोध;
+		पूर्ण
+		अगर (dir == d_inode(sb->s_root)) अणु
 			error = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		tmp = gfs2_lookupi(dir, &gfs2_qdotdot, 1);
-		if (!tmp) {
+		पंचांगp = gfs2_lookupi(dir, &gfs2_qकरोtकरोt, 1);
+		अगर (!पंचांगp) अणु
 			error = -ENOENT;
-			break;
-		}
-		if (IS_ERR(tmp)) {
-			error = PTR_ERR(tmp);
-			break;
-		}
+			अवरोध;
+		पूर्ण
+		अगर (IS_ERR(पंचांगp)) अणु
+			error = PTR_ERR(पंचांगp);
+			अवरोध;
+		पूर्ण
 
 		iput(dir);
-		dir = tmp;
-	}
+		dir = पंचांगp;
+	पूर्ण
 
 	iput(dir);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * update_moved_ino - Update an inode that's being moved
  * @ip: The inode being moved
  * @ndip: The parent directory of the new filename
- * @dir_rename: True of ip is a directory
+ * @dir_नाम: True of ip is a directory
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int update_moved_ino(struct gfs2_inode *ip, struct gfs2_inode *ndip,
-			    int dir_rename)
-{
-	if (dir_rename)
-		return gfs2_dir_mvino(ip, &gfs2_qdotdot, ndip, DT_DIR);
+अटल पूर्णांक update_moved_ino(काष्ठा gfs2_inode *ip, काष्ठा gfs2_inode *ndip,
+			    पूर्णांक dir_नाम)
+अणु
+	अगर (dir_नाम)
+		वापस gfs2_dir_mvino(ip, &gfs2_qकरोtकरोt, ndip, DT_सूची);
 
-	ip->i_inode.i_ctime = current_time(&ip->i_inode);
+	ip->i_inode.i_स_समय = current_समय(&ip->i_inode);
 	mark_inode_dirty_sync(&ip->i_inode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
- * gfs2_rename - Rename a file
+ * gfs2_नाम - Rename a file
  * @odir: Parent directory of old file name
  * @odentry: The old dentry of the file
  * @ndir: Parent directory of new file name
  * @ndentry: The new dentry of the file
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int gfs2_rename(struct inode *odir, struct dentry *odentry,
-		       struct inode *ndir, struct dentry *ndentry)
-{
-	struct gfs2_inode *odip = GFS2_I(odir);
-	struct gfs2_inode *ndip = GFS2_I(ndir);
-	struct gfs2_inode *ip = GFS2_I(d_inode(odentry));
-	struct gfs2_inode *nip = NULL;
-	struct gfs2_sbd *sdp = GFS2_SB(odir);
-	struct gfs2_holder ghs[4], r_gh, rd_gh;
-	struct gfs2_rgrpd *nrgd;
-	unsigned int num_gh;
-	int dir_rename = 0;
-	struct gfs2_diradd da = { .nr_blocks = 0, .save_loc = 0, };
-	unsigned int x;
-	int error;
+अटल पूर्णांक gfs2_नाम(काष्ठा inode *odir, काष्ठा dentry *odentry,
+		       काष्ठा inode *ndir, काष्ठा dentry *ndentry)
+अणु
+	काष्ठा gfs2_inode *odip = GFS2_I(odir);
+	काष्ठा gfs2_inode *ndip = GFS2_I(ndir);
+	काष्ठा gfs2_inode *ip = GFS2_I(d_inode(odentry));
+	काष्ठा gfs2_inode *nip = शून्य;
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(odir);
+	काष्ठा gfs2_holder ghs[4], r_gh, rd_gh;
+	काष्ठा gfs2_rgrpd *nrgd;
+	अचिन्हित पूर्णांक num_gh;
+	पूर्णांक dir_नाम = 0;
+	काष्ठा gfs2_diradd da = अणु .nr_blocks = 0, .save_loc = 0, पूर्ण;
+	अचिन्हित पूर्णांक x;
+	पूर्णांक error;
 
 	gfs2_holder_mark_uninitialized(&r_gh);
 	gfs2_holder_mark_uninitialized(&rd_gh);
-	if (d_really_is_positive(ndentry)) {
+	अगर (d_really_is_positive(ndentry)) अणु
 		nip = GFS2_I(d_inode(ndentry));
-		if (ip == nip)
-			return 0;
-	}
+		अगर (ip == nip)
+			वापस 0;
+	पूर्ण
 
 	error = gfs2_rindex_update(sdp);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = gfs2_qa_get(ndip);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (odip != ndip) {
-		error = gfs2_glock_nq_init(sdp->sd_rename_gl, LM_ST_EXCLUSIVE,
+	अगर (odip != ndip) अणु
+		error = gfs2_glock_nq_init(sdp->sd_नाम_gl, LM_ST_EXCLUSIVE,
 					   0, &r_gh);
-		if (error)
-			goto out;
+		अगर (error)
+			जाओ out;
 
-		if (S_ISDIR(ip->i_inode.i_mode)) {
-			dir_rename = 1;
-			/* don't move a directory into its subdir */
+		अगर (S_ISसूची(ip->i_inode.i_mode)) अणु
+			dir_नाम = 1;
+			/* करोn't move a directory पूर्णांकo its subdir */
 			error = gfs2_ok_to_move(ip, ndip);
-			if (error)
-				goto out_gunlock_r;
-		}
-	}
+			अगर (error)
+				जाओ out_gunlock_r;
+		पूर्ण
+	पूर्ण
 
 	num_gh = 1;
 	gfs2_holder_init(odip->i_gl, LM_ST_EXCLUSIVE, GL_ASYNC, ghs);
-	if (odip != ndip) {
+	अगर (odip != ndip) अणु
 		gfs2_holder_init(ndip->i_gl, LM_ST_EXCLUSIVE,GL_ASYNC,
 				 ghs + num_gh);
 		num_gh++;
-	}
+	पूर्ण
 	gfs2_holder_init(ip->i_gl, LM_ST_EXCLUSIVE, GL_ASYNC, ghs + num_gh);
 	num_gh++;
 
-	if (nip) {
+	अगर (nip) अणु
 		gfs2_holder_init(nip->i_gl, LM_ST_EXCLUSIVE, GL_ASYNC,
 				 ghs + num_gh);
 		num_gh++;
-	}
+	पूर्ण
 
-	for (x = 0; x < num_gh; x++) {
+	क्रम (x = 0; x < num_gh; x++) अणु
 		error = gfs2_glock_nq(ghs + x);
-		if (error)
-			goto out_gunlock;
-	}
-	error = gfs2_glock_async_wait(num_gh, ghs);
-	if (error)
-		goto out_gunlock;
+		अगर (error)
+			जाओ out_gunlock;
+	पूर्ण
+	error = gfs2_glock_async_रुको(num_gh, ghs);
+	अगर (error)
+		जाओ out_gunlock;
 
-	if (nip) {
-		/* Grab the resource group glock for unlink flag twiddling.
-		 * This is the case where the target dinode already exists
-		 * so we unlink before doing the rename.
+	अगर (nip) अणु
+		/* Grab the resource group glock क्रम unlink flag twiddling.
+		 * This is the हाल where the target dinode alपढ़ोy exists
+		 * so we unlink beक्रमe करोing the नाम.
 		 */
 		nrgd = gfs2_blk2rgrpd(sdp, nip->i_no_addr, 1);
-		if (!nrgd) {
+		अगर (!nrgd) अणु
 			error = -ENOENT;
-			goto out_gunlock;
-		}
+			जाओ out_gunlock;
+		पूर्ण
 		error = gfs2_glock_nq_init(nrgd->rd_gl, LM_ST_EXCLUSIVE,
 					   LM_FLAG_NODE_SCOPE, &rd_gh);
-		if (error)
-			goto out_gunlock;
-	}
+		अगर (error)
+			जाओ out_gunlock;
+	पूर्ण
 
 	error = -ENOENT;
-	if (ip->i_inode.i_nlink == 0)
-		goto out_gunlock;
+	अगर (ip->i_inode.i_nlink == 0)
+		जाओ out_gunlock;
 
 	/* Check out the old directory */
 
 	error = gfs2_unlink_ok(odip, &odentry->d_name, ip);
-	if (error)
-		goto out_gunlock;
+	अगर (error)
+		जाओ out_gunlock;
 
 	/* Check out the new directory */
 
-	if (nip) {
+	अगर (nip) अणु
 		error = gfs2_unlink_ok(ndip, &ndentry->d_name, nip);
-		if (error)
-			goto out_gunlock;
+		अगर (error)
+			जाओ out_gunlock;
 
-		if (nip->i_inode.i_nlink == 0) {
+		अगर (nip->i_inode.i_nlink == 0) अणु
 			error = -EAGAIN;
-			goto out_gunlock;
-		}
+			जाओ out_gunlock;
+		पूर्ण
 
-		if (S_ISDIR(nip->i_inode.i_mode)) {
-			if (nip->i_entries < 2) {
+		अगर (S_ISसूची(nip->i_inode.i_mode)) अणु
+			अगर (nip->i_entries < 2) अणु
 				gfs2_consist_inode(nip);
 				error = -EIO;
-				goto out_gunlock;
-			}
-			if (nip->i_entries > 2) {
+				जाओ out_gunlock;
+			पूर्ण
+			अगर (nip->i_entries > 2) अणु
 				error = -ENOTEMPTY;
-				goto out_gunlock;
-			}
-		}
-	} else {
+				जाओ out_gunlock;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		error = gfs2_permission(&init_user_ns, ndir,
 					MAY_WRITE | MAY_EXEC);
-		if (error)
-			goto out_gunlock;
+		अगर (error)
+			जाओ out_gunlock;
 
-		error = gfs2_dir_check(ndir, &ndentry->d_name, NULL);
-		switch (error) {
-		case -ENOENT:
+		error = gfs2_dir_check(ndir, &ndentry->d_name, शून्य);
+		चयन (error) अणु
+		हाल -ENOENT:
 			error = 0;
-			break;
-		case 0:
+			अवरोध;
+		हाल 0:
 			error = -EEXIST;
-			goto out_gunlock;
-		default:
-			goto out_gunlock;
-		}
+			जाओ out_gunlock;
+		शेष:
+			जाओ out_gunlock;
+		पूर्ण
 
-		if (odip != ndip) {
-			if (!ndip->i_inode.i_nlink) {
+		अगर (odip != ndip) अणु
+			अगर (!ndip->i_inode.i_nlink) अणु
 				error = -ENOENT;
-				goto out_gunlock;
-			}
-			if (ndip->i_entries == (u32)-1) {
+				जाओ out_gunlock;
+			पूर्ण
+			अगर (ndip->i_entries == (u32)-1) अणु
 				error = -EFBIG;
-				goto out_gunlock;
-			}
-			if (S_ISDIR(ip->i_inode.i_mode) &&
-			    ndip->i_inode.i_nlink == (u32)-1) {
+				जाओ out_gunlock;
+			पूर्ण
+			अगर (S_ISसूची(ip->i_inode.i_mode) &&
+			    ndip->i_inode.i_nlink == (u32)-1) अणु
 				error = -EMLINK;
-				goto out_gunlock;
-			}
-		}
-	}
+				जाओ out_gunlock;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Check out the dir to be renamed */
+	/* Check out the dir to be नामd */
 
-	if (dir_rename) {
+	अगर (dir_नाम) अणु
 		error = gfs2_permission(&init_user_ns, d_inode(odentry),
 					MAY_WRITE);
-		if (error)
-			goto out_gunlock;
-	}
+		अगर (error)
+			जाओ out_gunlock;
+	पूर्ण
 
-	if (nip == NULL) {
+	अगर (nip == शून्य) अणु
 		error = gfs2_diradd_alloc_required(ndir, &ndentry->d_name, &da);
-		if (error)
-			goto out_gunlock;
-	}
+		अगर (error)
+			जाओ out_gunlock;
+	पूर्ण
 
-	if (da.nr_blocks) {
-		struct gfs2_alloc_parms ap = { .target = da.nr_blocks, };
+	अगर (da.nr_blocks) अणु
+		काष्ठा gfs2_alloc_parms ap = अणु .target = da.nr_blocks, पूर्ण;
 		error = gfs2_quota_lock_check(ndip, &ap);
-		if (error)
-			goto out_gunlock;
+		अगर (error)
+			जाओ out_gunlock;
 
 		error = gfs2_inplace_reserve(ndip, &ap);
-		if (error)
-			goto out_gunlock_q;
+		अगर (error)
+			जाओ out_gunlock_q;
 
 		error = gfs2_trans_begin(sdp, gfs2_trans_da_blks(ndip, &da, 4) +
 					 4 * RES_LEAF + 4, 0);
-		if (error)
-			goto out_ipreserv;
-	} else {
+		अगर (error)
+			जाओ out_ipreserv;
+	पूर्ण अन्यथा अणु
 		error = gfs2_trans_begin(sdp, 4 * RES_DINODE +
 					 5 * RES_LEAF + 4, 0);
-		if (error)
-			goto out_gunlock;
-	}
+		अगर (error)
+			जाओ out_gunlock;
+	पूर्ण
 
-	/* Remove the target file, if it exists */
+	/* Remove the target file, अगर it exists */
 
-	if (nip)
+	अगर (nip)
 		error = gfs2_unlink_inode(ndip, ndentry);
 
-	error = update_moved_ino(ip, ndip, dir_rename);
-	if (error)
-		goto out_end_trans;
+	error = update_moved_ino(ip, ndip, dir_नाम);
+	अगर (error)
+		जाओ out_end_trans;
 
 	error = gfs2_dir_del(odip, odentry);
-	if (error)
-		goto out_end_trans;
+	अगर (error)
+		जाओ out_end_trans;
 
 	error = gfs2_dir_add(ndir, &ndentry->d_name, ip, &da);
-	if (error)
-		goto out_end_trans;
+	अगर (error)
+		जाओ out_end_trans;
 
 out_end_trans:
 	gfs2_trans_end(sdp);
 out_ipreserv:
-	if (da.nr_blocks)
+	अगर (da.nr_blocks)
 		gfs2_inplace_release(ndip);
 out_gunlock_q:
-	if (da.nr_blocks)
+	अगर (da.nr_blocks)
 		gfs2_quota_unlock(ndip);
 out_gunlock:
 	gfs2_dir_no_add(&da);
-	if (gfs2_holder_initialized(&rd_gh))
+	अगर (gfs2_holder_initialized(&rd_gh))
 		gfs2_glock_dq_uninit(&rd_gh);
 
-	while (x--) {
-		if (gfs2_holder_queued(ghs + x))
+	जबतक (x--) अणु
+		अगर (gfs2_holder_queued(ghs + x))
 			gfs2_glock_dq(ghs + x);
 		gfs2_holder_uninit(ghs + x);
-	}
+	पूर्ण
 out_gunlock_r:
-	if (gfs2_holder_initialized(&r_gh))
+	अगर (gfs2_holder_initialized(&r_gh))
 		gfs2_glock_dq_uninit(&r_gh);
 out:
 	gfs2_qa_put(ndip);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * gfs2_exchange - exchange two files
@@ -1616,221 +1617,221 @@ out:
  * @odentry: The old dentry of the file
  * @ndir: Parent directory of new file name
  * @ndentry: The new dentry of the file
- * @flags: The rename flags
+ * @flags: The नाम flags
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int gfs2_exchange(struct inode *odir, struct dentry *odentry,
-			 struct inode *ndir, struct dentry *ndentry,
-			 unsigned int flags)
-{
-	struct gfs2_inode *odip = GFS2_I(odir);
-	struct gfs2_inode *ndip = GFS2_I(ndir);
-	struct gfs2_inode *oip = GFS2_I(odentry->d_inode);
-	struct gfs2_inode *nip = GFS2_I(ndentry->d_inode);
-	struct gfs2_sbd *sdp = GFS2_SB(odir);
-	struct gfs2_holder ghs[4], r_gh;
-	unsigned int num_gh;
-	unsigned int x;
+अटल पूर्णांक gfs2_exchange(काष्ठा inode *odir, काष्ठा dentry *odentry,
+			 काष्ठा inode *ndir, काष्ठा dentry *ndentry,
+			 अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा gfs2_inode *odip = GFS2_I(odir);
+	काष्ठा gfs2_inode *ndip = GFS2_I(ndir);
+	काष्ठा gfs2_inode *oip = GFS2_I(odentry->d_inode);
+	काष्ठा gfs2_inode *nip = GFS2_I(ndentry->d_inode);
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(odir);
+	काष्ठा gfs2_holder ghs[4], r_gh;
+	अचिन्हित पूर्णांक num_gh;
+	अचिन्हित पूर्णांक x;
 	umode_t old_mode = oip->i_inode.i_mode;
 	umode_t new_mode = nip->i_inode.i_mode;
-	int error;
+	पूर्णांक error;
 
 	gfs2_holder_mark_uninitialized(&r_gh);
 	error = gfs2_rindex_update(sdp);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (odip != ndip) {
-		error = gfs2_glock_nq_init(sdp->sd_rename_gl, LM_ST_EXCLUSIVE,
+	अगर (odip != ndip) अणु
+		error = gfs2_glock_nq_init(sdp->sd_नाम_gl, LM_ST_EXCLUSIVE,
 					   0, &r_gh);
-		if (error)
-			goto out;
+		अगर (error)
+			जाओ out;
 
-		if (S_ISDIR(old_mode)) {
-			/* don't move a directory into its subdir */
+		अगर (S_ISसूची(old_mode)) अणु
+			/* करोn't move a directory पूर्णांकo its subdir */
 			error = gfs2_ok_to_move(oip, ndip);
-			if (error)
-				goto out_gunlock_r;
-		}
+			अगर (error)
+				जाओ out_gunlock_r;
+		पूर्ण
 
-		if (S_ISDIR(new_mode)) {
-			/* don't move a directory into its subdir */
+		अगर (S_ISसूची(new_mode)) अणु
+			/* करोn't move a directory पूर्णांकo its subdir */
 			error = gfs2_ok_to_move(nip, odip);
-			if (error)
-				goto out_gunlock_r;
-		}
-	}
+			अगर (error)
+				जाओ out_gunlock_r;
+		पूर्ण
+	पूर्ण
 
 	num_gh = 1;
 	gfs2_holder_init(odip->i_gl, LM_ST_EXCLUSIVE, GL_ASYNC, ghs);
-	if (odip != ndip) {
+	अगर (odip != ndip) अणु
 		gfs2_holder_init(ndip->i_gl, LM_ST_EXCLUSIVE, GL_ASYNC,
 				 ghs + num_gh);
 		num_gh++;
-	}
+	पूर्ण
 	gfs2_holder_init(oip->i_gl, LM_ST_EXCLUSIVE, GL_ASYNC, ghs + num_gh);
 	num_gh++;
 
 	gfs2_holder_init(nip->i_gl, LM_ST_EXCLUSIVE, GL_ASYNC, ghs + num_gh);
 	num_gh++;
 
-	for (x = 0; x < num_gh; x++) {
+	क्रम (x = 0; x < num_gh; x++) अणु
 		error = gfs2_glock_nq(ghs + x);
-		if (error)
-			goto out_gunlock;
-	}
+		अगर (error)
+			जाओ out_gunlock;
+	पूर्ण
 
-	error = gfs2_glock_async_wait(num_gh, ghs);
-	if (error)
-		goto out_gunlock;
+	error = gfs2_glock_async_रुको(num_gh, ghs);
+	अगर (error)
+		जाओ out_gunlock;
 
 	error = -ENOENT;
-	if (oip->i_inode.i_nlink == 0 || nip->i_inode.i_nlink == 0)
-		goto out_gunlock;
+	अगर (oip->i_inode.i_nlink == 0 || nip->i_inode.i_nlink == 0)
+		जाओ out_gunlock;
 
 	error = gfs2_unlink_ok(odip, &odentry->d_name, oip);
-	if (error)
-		goto out_gunlock;
+	अगर (error)
+		जाओ out_gunlock;
 	error = gfs2_unlink_ok(ndip, &ndentry->d_name, nip);
-	if (error)
-		goto out_gunlock;
+	अगर (error)
+		जाओ out_gunlock;
 
-	if (S_ISDIR(old_mode)) {
+	अगर (S_ISसूची(old_mode)) अणु
 		error = gfs2_permission(&init_user_ns, odentry->d_inode,
 					MAY_WRITE);
-		if (error)
-			goto out_gunlock;
-	}
-	if (S_ISDIR(new_mode)) {
+		अगर (error)
+			जाओ out_gunlock;
+	पूर्ण
+	अगर (S_ISसूची(new_mode)) अणु
 		error = gfs2_permission(&init_user_ns, ndentry->d_inode,
 					MAY_WRITE);
-		if (error)
-			goto out_gunlock;
-	}
+		अगर (error)
+			जाओ out_gunlock;
+	पूर्ण
 	error = gfs2_trans_begin(sdp, 4 * RES_DINODE + 4 * RES_LEAF, 0);
-	if (error)
-		goto out_gunlock;
+	अगर (error)
+		जाओ out_gunlock;
 
-	error = update_moved_ino(oip, ndip, S_ISDIR(old_mode));
-	if (error)
-		goto out_end_trans;
+	error = update_moved_ino(oip, ndip, S_ISसूची(old_mode));
+	अगर (error)
+		जाओ out_end_trans;
 
-	error = update_moved_ino(nip, odip, S_ISDIR(new_mode));
-	if (error)
-		goto out_end_trans;
+	error = update_moved_ino(nip, odip, S_ISसूची(new_mode));
+	अगर (error)
+		जाओ out_end_trans;
 
 	error = gfs2_dir_mvino(ndip, &ndentry->d_name, oip,
 			       IF2DT(old_mode));
-	if (error)
-		goto out_end_trans;
+	अगर (error)
+		जाओ out_end_trans;
 
 	error = gfs2_dir_mvino(odip, &odentry->d_name, nip,
 			       IF2DT(new_mode));
-	if (error)
-		goto out_end_trans;
+	अगर (error)
+		जाओ out_end_trans;
 
-	if (odip != ndip) {
-		if (S_ISDIR(new_mode) && !S_ISDIR(old_mode)) {
+	अगर (odip != ndip) अणु
+		अगर (S_ISसूची(new_mode) && !S_ISसूची(old_mode)) अणु
 			inc_nlink(&odip->i_inode);
 			drop_nlink(&ndip->i_inode);
-		} else if (S_ISDIR(old_mode) && !S_ISDIR(new_mode)) {
+		पूर्ण अन्यथा अगर (S_ISसूची(old_mode) && !S_ISसूची(new_mode)) अणु
 			inc_nlink(&ndip->i_inode);
 			drop_nlink(&odip->i_inode);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mark_inode_dirty(&ndip->i_inode);
-	if (odip != ndip)
+	अगर (odip != ndip)
 		mark_inode_dirty(&odip->i_inode);
 
 out_end_trans:
 	gfs2_trans_end(sdp);
 out_gunlock:
-	while (x--) {
-		if (gfs2_holder_queued(ghs + x))
+	जबतक (x--) अणु
+		अगर (gfs2_holder_queued(ghs + x))
 			gfs2_glock_dq(ghs + x);
 		gfs2_holder_uninit(ghs + x);
-	}
+	पूर्ण
 out_gunlock_r:
-	if (gfs2_holder_initialized(&r_gh))
+	अगर (gfs2_holder_initialized(&r_gh))
 		gfs2_glock_dq_uninit(&r_gh);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int gfs2_rename2(struct user_namespace *mnt_userns, struct inode *odir,
-			struct dentry *odentry, struct inode *ndir,
-			struct dentry *ndentry, unsigned int flags)
-{
+अटल पूर्णांक gfs2_नाम2(काष्ठा user_namespace *mnt_userns, काष्ठा inode *odir,
+			काष्ठा dentry *odentry, काष्ठा inode *ndir,
+			काष्ठा dentry *ndentry, अचिन्हित पूर्णांक flags)
+अणु
 	flags &= ~RENAME_NOREPLACE;
 
-	if (flags & ~RENAME_EXCHANGE)
-		return -EINVAL;
+	अगर (flags & ~RENAME_EXCHANGE)
+		वापस -EINVAL;
 
-	if (flags & RENAME_EXCHANGE)
-		return gfs2_exchange(odir, odentry, ndir, ndentry, flags);
+	अगर (flags & RENAME_EXCHANGE)
+		वापस gfs2_exchange(odir, odentry, ndir, ndentry, flags);
 
-	return gfs2_rename(odir, odentry, ndir, ndentry);
-}
+	वापस gfs2_नाम(odir, odentry, ndir, ndentry);
+पूर्ण
 
 /**
  * gfs2_get_link - Follow a symbolic link
  * @dentry: The dentry of the link
  * @inode: The inode of the link
- * @done: destructor for return value
+ * @करोne: deकाष्ठाor क्रम वापस value
  *
  * This can handle symlinks of any size.
  *
  * Returns: 0 on success or error code
  */
 
-static const char *gfs2_get_link(struct dentry *dentry,
-				 struct inode *inode,
-				 struct delayed_call *done)
-{
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder i_gh;
-	struct buffer_head *dibh;
-	unsigned int size;
-	char *buf;
-	int error;
+अटल स्थिर अक्षर *gfs2_get_link(काष्ठा dentry *dentry,
+				 काष्ठा inode *inode,
+				 काष्ठा delayed_call *करोne)
+अणु
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_holder i_gh;
+	काष्ठा buffer_head *dibh;
+	अचिन्हित पूर्णांक size;
+	अक्षर *buf;
+	पूर्णांक error;
 
-	if (!dentry)
-		return ERR_PTR(-ECHILD);
+	अगर (!dentry)
+		वापस ERR_PTR(-ECHILD);
 
 	gfs2_holder_init(ip->i_gl, LM_ST_SHARED, 0, &i_gh);
 	error = gfs2_glock_nq(&i_gh);
-	if (error) {
+	अगर (error) अणु
 		gfs2_holder_uninit(&i_gh);
-		return ERR_PTR(error);
-	}
+		वापस ERR_PTR(error);
+	पूर्ण
 
-	size = (unsigned int)i_size_read(&ip->i_inode);
-	if (size == 0) {
+	size = (अचिन्हित पूर्णांक)i_size_पढ़ो(&ip->i_inode);
+	अगर (size == 0) अणु
 		gfs2_consist_inode(ip);
 		buf = ERR_PTR(-EIO);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	error = gfs2_meta_inode_buffer(ip, &dibh);
-	if (error) {
+	अगर (error) अणु
 		buf = ERR_PTR(error);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	buf = kzalloc(size + 1, GFP_NOFS);
-	if (!buf)
+	अगर (!buf)
 		buf = ERR_PTR(-ENOMEM);
-	else
-		memcpy(buf, dibh->b_data + sizeof(struct gfs2_dinode), size);
-	brelse(dibh);
+	अन्यथा
+		स_नकल(buf, dibh->b_data + माप(काष्ठा gfs2_dinode), size);
+	brअन्यथा(dibh);
 out:
 	gfs2_glock_dq_uninit(&i_gh);
-	if (!IS_ERR(buf))
-		set_delayed_call(done, kfree_link, buf);
-	return buf;
-}
+	अगर (!IS_ERR(buf))
+		set_delayed_call(करोne, kमुक्त_link, buf);
+	वापस buf;
+पूर्ण
 
 /**
  * gfs2_permission
@@ -1839,114 +1840,114 @@ out:
  * @mask: The mask to be tested
  *
  * This may be called from the VFS directly, or from within GFS2 with the
- * inode locked, so we look to see if the glock is already locked and only
- * lock the glock if its not already been done.
+ * inode locked, so we look to see अगर the glock is alपढ़ोy locked and only
+ * lock the glock अगर its not alपढ़ोy been करोne.
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-int gfs2_permission(struct user_namespace *mnt_userns, struct inode *inode,
-		    int mask)
-{
-	struct gfs2_inode *ip;
-	struct gfs2_holder i_gh;
-	int error;
+पूर्णांक gfs2_permission(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		    पूर्णांक mask)
+अणु
+	काष्ठा gfs2_inode *ip;
+	काष्ठा gfs2_holder i_gh;
+	पूर्णांक error;
 
 	gfs2_holder_mark_uninitialized(&i_gh);
 	ip = GFS2_I(inode);
-	if (gfs2_glock_is_locked_by_me(ip->i_gl) == NULL) {
-		if (mask & MAY_NOT_BLOCK)
-			return -ECHILD;
+	अगर (gfs2_glock_is_locked_by_me(ip->i_gl) == शून्य) अणु
+		अगर (mask & MAY_NOT_BLOCK)
+			वापस -ECHILD;
 		error = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED, LM_FLAG_ANY, &i_gh);
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 
-	if ((mask & MAY_WRITE) && IS_IMMUTABLE(inode))
+	अगर ((mask & MAY_WRITE) && IS_IMMUTABLE(inode))
 		error = -EPERM;
-	else
+	अन्यथा
 		error = generic_permission(&init_user_ns, inode, mask);
-	if (gfs2_holder_initialized(&i_gh))
+	अगर (gfs2_holder_initialized(&i_gh))
 		gfs2_glock_dq_uninit(&i_gh);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int __gfs2_setattr_simple(struct inode *inode, struct iattr *attr)
-{
+अटल पूर्णांक __gfs2_setattr_simple(काष्ठा inode *inode, काष्ठा iattr *attr)
+अणु
 	setattr_copy(&init_user_ns, inode, attr);
 	mark_inode_dirty(inode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfs2_setattr_simple(struct inode *inode, struct iattr *attr)
-{
-	int error;
+अटल पूर्णांक gfs2_setattr_simple(काष्ठा inode *inode, काष्ठा iattr *attr)
+अणु
+	पूर्णांक error;
 
-	if (current->journal_info)
-		return __gfs2_setattr_simple(inode, attr);
+	अगर (current->journal_info)
+		वापस __gfs2_setattr_simple(inode, attr);
 
 	error = gfs2_trans_begin(GFS2_SB(inode), RES_DINODE, 0);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = __gfs2_setattr_simple(inode, attr);
 	gfs2_trans_end(GFS2_SB(inode));
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int setattr_chown(struct inode *inode, struct iattr *attr)
-{
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_sbd *sdp = GFS2_SB(inode);
+अटल पूर्णांक setattr_chown(काष्ठा inode *inode, काष्ठा iattr *attr)
+अणु
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(inode);
 	kuid_t ouid, nuid;
 	kgid_t ogid, ngid;
-	int error;
-	struct gfs2_alloc_parms ap;
+	पूर्णांक error;
+	काष्ठा gfs2_alloc_parms ap;
 
 	ouid = inode->i_uid;
 	ogid = inode->i_gid;
 	nuid = attr->ia_uid;
 	ngid = attr->ia_gid;
 
-	if (!(attr->ia_valid & ATTR_UID) || uid_eq(ouid, nuid))
+	अगर (!(attr->ia_valid & ATTR_UID) || uid_eq(ouid, nuid))
 		ouid = nuid = NO_UID_QUOTA_CHANGE;
-	if (!(attr->ia_valid & ATTR_GID) || gid_eq(ogid, ngid))
+	अगर (!(attr->ia_valid & ATTR_GID) || gid_eq(ogid, ngid))
 		ogid = ngid = NO_GID_QUOTA_CHANGE;
 	error = gfs2_qa_get(ip);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = gfs2_rindex_update(sdp);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
 	error = gfs2_quota_lock(ip, nuid, ngid);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
 	ap.target = gfs2_get_inode_blocks(&ip->i_inode);
 
-	if (!uid_eq(ouid, NO_UID_QUOTA_CHANGE) ||
-	    !gid_eq(ogid, NO_GID_QUOTA_CHANGE)) {
+	अगर (!uid_eq(ouid, NO_UID_QUOTA_CHANGE) ||
+	    !gid_eq(ogid, NO_GID_QUOTA_CHANGE)) अणु
 		error = gfs2_quota_check(ip, nuid, ngid, &ap);
-		if (error)
-			goto out_gunlock_q;
-	}
+		अगर (error)
+			जाओ out_gunlock_q;
+	पूर्ण
 
 	error = gfs2_trans_begin(sdp, RES_DINODE + 2 * RES_QUOTA, 0);
-	if (error)
-		goto out_gunlock_q;
+	अगर (error)
+		जाओ out_gunlock_q;
 
 	error = gfs2_setattr_simple(inode, attr);
-	if (error)
-		goto out_end_trans;
+	अगर (error)
+		जाओ out_end_trans;
 
-	if (!uid_eq(ouid, NO_UID_QUOTA_CHANGE) ||
-	    !gid_eq(ogid, NO_GID_QUOTA_CHANGE)) {
+	अगर (!uid_eq(ouid, NO_UID_QUOTA_CHANGE) ||
+	    !gid_eq(ogid, NO_GID_QUOTA_CHANGE)) अणु
 		gfs2_quota_change(ip, -(s64)ap.target, ouid, ogid);
 		gfs2_quota_change(ip, ap.target, nuid, ngid);
-	}
+	पूर्ण
 
 out_end_trans:
 	gfs2_trans_end(sdp);
@@ -1954,103 +1955,103 @@ out_gunlock_q:
 	gfs2_quota_unlock(ip);
 out:
 	gfs2_qa_put(ip);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * gfs2_setattr - Change attributes on an inode
  * @mnt_userns: User namespace of the mount the inode was found from
  * @dentry: The dentry which is changing
- * @attr: The structure describing the change
+ * @attr: The काष्ठाure describing the change
  *
  * The VFS layer wants to change one or more of an inodes attributes.  Write
  * that change out to disk.
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int gfs2_setattr(struct user_namespace *mnt_userns,
-			struct dentry *dentry, struct iattr *attr)
-{
-	struct inode *inode = d_inode(dentry);
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder i_gh;
-	int error;
+अटल पूर्णांक gfs2_setattr(काष्ठा user_namespace *mnt_userns,
+			काष्ठा dentry *dentry, काष्ठा iattr *attr)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_holder i_gh;
+	पूर्णांक error;
 
 	error = gfs2_qa_get(ip);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = gfs2_glock_nq_init(ip->i_gl, LM_ST_EXCLUSIVE, 0, &i_gh);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
 	error = -EPERM;
-	if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
-		goto error;
+	अगर (IS_IMMUTABLE(inode) || IS_APPEND(inode))
+		जाओ error;
 
 	error = setattr_prepare(&init_user_ns, dentry, attr);
-	if (error)
-		goto error;
+	अगर (error)
+		जाओ error;
 
-	if (attr->ia_valid & ATTR_SIZE)
+	अगर (attr->ia_valid & ATTR_SIZE)
 		error = gfs2_setattr_size(inode, attr->ia_size);
-	else if (attr->ia_valid & (ATTR_UID | ATTR_GID))
+	अन्यथा अगर (attr->ia_valid & (ATTR_UID | ATTR_GID))
 		error = setattr_chown(inode, attr);
-	else {
+	अन्यथा अणु
 		error = gfs2_setattr_simple(inode, attr);
-		if (!error && attr->ia_valid & ATTR_MODE)
+		अगर (!error && attr->ia_valid & ATTR_MODE)
 			error = posix_acl_chmod(&init_user_ns, inode,
 						inode->i_mode);
-	}
+	पूर्ण
 
 error:
-	if (!error)
+	अगर (!error)
 		mark_inode_dirty(inode);
 	gfs2_glock_dq_uninit(&i_gh);
 out:
 	gfs2_qa_put(ip);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * gfs2_getattr - Read out an inode's attributes
  * @mnt_userns:	user namespace of the mount the inode was found from
  * @path: Object to query
  * @stat: The inode's stats
- * @request_mask: Mask of STATX_xxx flags indicating the caller's interests
+ * @request_mask: Mask of STATX_xxx flags indicating the caller's पूर्णांकerests
  * @flags: AT_STATX_xxx setting
  *
  * This may be called from the VFS directly, or from within GFS2 with the
- * inode locked, so we look to see if the glock is already locked and only
- * lock the glock if its not already been done. Note that its the NFS
- * readdirplus operation which causes this to be called (from filldir)
- * with the glock already held.
+ * inode locked, so we look to see अगर the glock is alपढ़ोy locked and only
+ * lock the glock अगर its not alपढ़ोy been करोne. Note that its the NFS
+ * सूची_पढ़ोplus operation which causes this to be called (from filldir)
+ * with the glock alपढ़ोy held.
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int gfs2_getattr(struct user_namespace *mnt_userns,
-			const struct path *path, struct kstat *stat,
-			u32 request_mask, unsigned int flags)
-{
-	struct inode *inode = d_inode(path->dentry);
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder gh;
+अटल पूर्णांक gfs2_getattr(काष्ठा user_namespace *mnt_userns,
+			स्थिर काष्ठा path *path, काष्ठा kstat *stat,
+			u32 request_mask, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा inode *inode = d_inode(path->dentry);
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_holder gh;
 	u32 gfsflags;
-	int error;
+	पूर्णांक error;
 
 	gfs2_holder_mark_uninitialized(&gh);
-	if (gfs2_glock_is_locked_by_me(ip->i_gl) == NULL) {
+	अगर (gfs2_glock_is_locked_by_me(ip->i_gl) == शून्य) अणु
 		error = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED, LM_FLAG_ANY, &gh);
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 
 	gfsflags = ip->i_diskflags;
-	if (gfsflags & GFS2_DIF_APPENDONLY)
+	अगर (gfsflags & GFS2_DIF_APPENDONLY)
 		stat->attributes |= STATX_ATTR_APPEND;
-	if (gfsflags & GFS2_DIF_IMMUTABLE)
+	अगर (gfsflags & GFS2_DIF_IMMUTABLE)
 		stat->attributes |= STATX_ATTR_IMMUTABLE;
 
 	stat->attributes_mask |= (STATX_ATTR_APPEND |
@@ -2061,24 +2062,24 @@ static int gfs2_getattr(struct user_namespace *mnt_userns,
 
 	generic_fillattr(&init_user_ns, inode, stat);
 
-	if (gfs2_holder_initialized(&gh))
+	अगर (gfs2_holder_initialized(&gh))
 		gfs2_glock_dq_uninit(&gh);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfs2_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
+अटल पूर्णांक gfs2_fiemap(काष्ठा inode *inode, काष्ठा fiemap_extent_info *fieinfo,
 		       u64 start, u64 len)
-{
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder gh;
-	int ret;
+अणु
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_holder gh;
+	पूर्णांक ret;
 
 	inode_lock_shared(inode);
 
 	ret = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED, 0, &gh);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = iomap_fiemap(inode, fieinfo, start, len, &gfs2_iomap_ops);
 
@@ -2086,67 +2087,67 @@ static int gfs2_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
 
 out:
 	inode_unlock_shared(inode);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-loff_t gfs2_seek_data(struct file *file, loff_t offset)
-{
-	struct inode *inode = file->f_mapping->host;
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder gh;
+loff_t gfs2_seek_data(काष्ठा file *file, loff_t offset)
+अणु
+	काष्ठा inode *inode = file->f_mapping->host;
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_holder gh;
 	loff_t ret;
 
 	inode_lock_shared(inode);
 	ret = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED, 0, &gh);
-	if (!ret)
+	अगर (!ret)
 		ret = iomap_seek_data(inode, offset, &gfs2_iomap_ops);
 	gfs2_glock_dq_uninit(&gh);
 	inode_unlock_shared(inode);
 
-	if (ret < 0)
-		return ret;
-	return vfs_setpos(file, ret, inode->i_sb->s_maxbytes);
-}
+	अगर (ret < 0)
+		वापस ret;
+	वापस vfs_setpos(file, ret, inode->i_sb->s_maxbytes);
+पूर्ण
 
-loff_t gfs2_seek_hole(struct file *file, loff_t offset)
-{
-	struct inode *inode = file->f_mapping->host;
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder gh;
+loff_t gfs2_seek_hole(काष्ठा file *file, loff_t offset)
+अणु
+	काष्ठा inode *inode = file->f_mapping->host;
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_holder gh;
 	loff_t ret;
 
 	inode_lock_shared(inode);
 	ret = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED, 0, &gh);
-	if (!ret)
+	अगर (!ret)
 		ret = iomap_seek_hole(inode, offset, &gfs2_iomap_ops);
 	gfs2_glock_dq_uninit(&gh);
 	inode_unlock_shared(inode);
 
-	if (ret < 0)
-		return ret;
-	return vfs_setpos(file, ret, inode->i_sb->s_maxbytes);
-}
+	अगर (ret < 0)
+		वापस ret;
+	वापस vfs_setpos(file, ret, inode->i_sb->s_maxbytes);
+पूर्ण
 
-static int gfs2_update_time(struct inode *inode, struct timespec64 *time,
-			    int flags)
-{
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_glock *gl = ip->i_gl;
-	struct gfs2_holder *gh;
-	int error;
+अटल पूर्णांक gfs2_update_समय(काष्ठा inode *inode, काष्ठा बारpec64 *समय,
+			    पूर्णांक flags)
+अणु
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_glock *gl = ip->i_gl;
+	काष्ठा gfs2_holder *gh;
+	पूर्णांक error;
 
 	gh = gfs2_glock_is_locked_by_me(gl);
-	if (gh && !gfs2_glock_is_held_excl(gl)) {
+	अगर (gh && !gfs2_glock_is_held_excl(gl)) अणु
 		gfs2_glock_dq(gh);
 		gfs2_holder_reinit(LM_ST_EXCLUSIVE, 0, gh);
 		error = gfs2_glock_nq(gh);
-		if (error)
-			return error;
-	}
-	return generic_update_time(inode, time, flags);
-}
+		अगर (error)
+			वापस error;
+	पूर्ण
+	वापस generic_update_समय(inode, समय, flags);
+पूर्ण
 
-static const struct inode_operations gfs2_file_iops = {
+अटल स्थिर काष्ठा inode_operations gfs2_file_iops = अणु
 	.permission = gfs2_permission,
 	.setattr = gfs2_setattr,
 	.getattr = gfs2_getattr,
@@ -2154,21 +2155,21 @@ static const struct inode_operations gfs2_file_iops = {
 	.fiemap = gfs2_fiemap,
 	.get_acl = gfs2_get_acl,
 	.set_acl = gfs2_set_acl,
-	.update_time = gfs2_update_time,
+	.update_समय = gfs2_update_समय,
 	.fileattr_get = gfs2_fileattr_get,
 	.fileattr_set = gfs2_fileattr_set,
-};
+पूर्ण;
 
-static const struct inode_operations gfs2_dir_iops = {
+अटल स्थिर काष्ठा inode_operations gfs2_dir_iops = अणु
 	.create = gfs2_create,
 	.lookup = gfs2_lookup,
 	.link = gfs2_link,
 	.unlink = gfs2_unlink,
 	.symlink = gfs2_symlink,
-	.mkdir = gfs2_mkdir,
-	.rmdir = gfs2_unlink,
+	.सूची_गढ़ो = gfs2_सूची_गढ़ो,
+	.सूची_हटाओ = gfs2_unlink,
 	.mknod = gfs2_mknod,
-	.rename = gfs2_rename2,
+	.नाम = gfs2_नाम2,
 	.permission = gfs2_permission,
 	.setattr = gfs2_setattr,
 	.getattr = gfs2_getattr,
@@ -2176,18 +2177,18 @@ static const struct inode_operations gfs2_dir_iops = {
 	.fiemap = gfs2_fiemap,
 	.get_acl = gfs2_get_acl,
 	.set_acl = gfs2_set_acl,
-	.update_time = gfs2_update_time,
-	.atomic_open = gfs2_atomic_open,
+	.update_समय = gfs2_update_समय,
+	.atomic_खोलो = gfs2_atomic_खोलो,
 	.fileattr_get = gfs2_fileattr_get,
 	.fileattr_set = gfs2_fileattr_set,
-};
+पूर्ण;
 
-static const struct inode_operations gfs2_symlink_iops = {
+अटल स्थिर काष्ठा inode_operations gfs2_symlink_iops = अणु
 	.get_link = gfs2_get_link,
 	.permission = gfs2_permission,
 	.setattr = gfs2_setattr,
 	.getattr = gfs2_getattr,
 	.listxattr = gfs2_listxattr,
 	.fiemap = gfs2_fiemap,
-};
+पूर्ण;
 

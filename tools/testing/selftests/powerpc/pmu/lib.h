@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#ifndef __SELFTESTS_POWERPC_PMU_LIB_H
-#define __SELFTESTS_POWERPC_PMU_LIB_H
+#अगर_अघोषित __SELFTESTS_POWERPC_PMU_LIB_H
+#घोषणा __SELFTESTS_POWERPC_PMU_LIB_H
 
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
+#समावेश <stdbool.h>
+#समावेश <मानकपन.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <माला.स>
+#समावेश <unistd.h>
 
-union pipe {
-	struct {
-		int read_fd;
-		int write_fd;
-	};
-	int fds[2];
-};
+जोड़ pipe अणु
+	काष्ठा अणु
+		पूर्णांक पढ़ो_fd;
+		पूर्णांक ग_लिखो_fd;
+	पूर्ण;
+	पूर्णांक fds[2];
+पूर्ण;
 
-extern int bind_to_cpu(int cpu);
-extern int kill_child_and_wait(pid_t child_pid);
-extern int wait_for_child(pid_t child_pid);
-extern int sync_with_child(union pipe read_pipe, union pipe write_pipe);
-extern int wait_for_parent(union pipe read_pipe);
-extern int notify_parent(union pipe write_pipe);
-extern int notify_parent_of_error(union pipe write_pipe);
-extern pid_t eat_cpu(int (test_function)(void));
-extern bool require_paranoia_below(int level);
+बाह्य पूर्णांक bind_to_cpu(पूर्णांक cpu);
+बाह्य पूर्णांक समाप्त_child_and_रुको(pid_t child_pid);
+बाह्य पूर्णांक रुको_क्रम_child(pid_t child_pid);
+बाह्य पूर्णांक sync_with_child(जोड़ pipe पढ़ो_pipe, जोड़ pipe ग_लिखो_pipe);
+बाह्य पूर्णांक रुको_क्रम_parent(जोड़ pipe पढ़ो_pipe);
+बाह्य पूर्णांक notअगरy_parent(जोड़ pipe ग_लिखो_pipe);
+बाह्य पूर्णांक notअगरy_parent_of_error(जोड़ pipe ग_लिखो_pipe);
+बाह्य pid_t eat_cpu(पूर्णांक (test_function)(व्योम));
+बाह्य bool require_paranoia_below(पूर्णांक level);
 
-struct addr_range {
-	uint64_t first, last;
-};
+काष्ठा addr_range अणु
+	uपूर्णांक64_t first, last;
+पूर्ण;
 
-extern struct addr_range libc, vdso;
+बाह्य काष्ठा addr_range libc, vdso;
 
-int parse_proc_maps(void);
+पूर्णांक parse_proc_maps(व्योम);
 
-#endif /* __SELFTESTS_POWERPC_PMU_LIB_H */
+#पूर्ण_अगर /* __SELFTESTS_POWERPC_PMU_LIB_H */

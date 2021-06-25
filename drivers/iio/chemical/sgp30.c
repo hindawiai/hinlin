@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * sgp30.c - Support for Sensirion SGP Gas Sensors
+ * sgp30.c - Support क्रम Sensirion SGP Gas Sensors
  *
  * Copyright (C) 2018 Andreas Brauchli <andreas.brauchli@sensirion.com>
  *
@@ -13,58 +14,58 @@
  * TODO:
  * - baseline support
  * - humidity compensation
- * - power mode switching (SGPC3)
+ * - घातer mode चयनing (SGPC3)
  */
 
-#include <linux/crc8.h>
-#include <linux/delay.h>
-#include <linux/kthread.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/mutex.h>
-#include <linux/i2c.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
+#समावेश <linux/crc8.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
 
-#define SGP_WORD_LEN				2
-#define SGP_CRC8_POLYNOMIAL			0x31
-#define SGP_CRC8_INIT				0xff
-#define SGP_CRC8_LEN				1
-#define SGP_CMD(cmd_word)			cpu_to_be16(cmd_word)
-#define SGP_CMD_DURATION_US			12000
-#define SGP_MEASUREMENT_DURATION_US		50000
-#define SGP_CMD_LEN				SGP_WORD_LEN
-#define SGP_CMD_MAX_BUF_SIZE			(SGP_CMD_LEN + 2 * SGP_WORD_LEN)
-#define SGP_MEASUREMENT_LEN			2
-#define SGP30_MEASURE_INTERVAL_HZ		1
-#define SGPC3_MEASURE_INTERVAL_HZ		2
-#define SGP_VERS_PRODUCT(data)	((((data)->feature_set) & 0xf000) >> 12)
-#define SGP_VERS_RESERVED(data)	((((data)->feature_set) & 0x0800) >> 11)
-#define SGP_VERS_GEN(data)	((((data)->feature_set) & 0x0600) >> 9)
-#define SGP_VERS_ENG_BIT(data)	((((data)->feature_set) & 0x0100) >> 8)
-#define SGP_VERS_MAJOR(data)	((((data)->feature_set) & 0x00e0) >> 5)
-#define SGP_VERS_MINOR(data)	(((data)->feature_set) & 0x001f)
+#घोषणा SGP_WORD_LEN				2
+#घोषणा SGP_CRC8_POLYNOMIAL			0x31
+#घोषणा SGP_CRC8_INIT				0xff
+#घोषणा SGP_CRC8_LEN				1
+#घोषणा SGP_CMD(cmd_word)			cpu_to_be16(cmd_word)
+#घोषणा SGP_CMD_DURATION_US			12000
+#घोषणा SGP_MEASUREMENT_DURATION_US		50000
+#घोषणा SGP_CMD_LEN				SGP_WORD_LEN
+#घोषणा SGP_CMD_MAX_BUF_SIZE			(SGP_CMD_LEN + 2 * SGP_WORD_LEN)
+#घोषणा SGP_MEASUREMENT_LEN			2
+#घोषणा SGP30_MEASURE_INTERVAL_HZ		1
+#घोषणा SGPC3_MEASURE_INTERVAL_HZ		2
+#घोषणा SGP_VERS_PRODUCT(data)	((((data)->feature_set) & 0xf000) >> 12)
+#घोषणा SGP_VERS_RESERVED(data)	((((data)->feature_set) & 0x0800) >> 11)
+#घोषणा SGP_VERS_GEN(data)	((((data)->feature_set) & 0x0600) >> 9)
+#घोषणा SGP_VERS_ENG_BIT(data)	((((data)->feature_set) & 0x0100) >> 8)
+#घोषणा SGP_VERS_MAJOR(data)	((((data)->feature_set) & 0x00e0) >> 5)
+#घोषणा SGP_VERS_MINOR(data)	(((data)->feature_set) & 0x001f)
 
 DECLARE_CRC8_TABLE(sgp_crc8_table);
 
-enum sgp_product_id {
+क्रमागत sgp_product_id अणु
 	SGP30 = 0,
 	SGPC3,
-};
+पूर्ण;
 
-enum sgp30_channel_idx {
+क्रमागत sgp30_channel_idx अणु
 	SGP30_IAQ_TVOC_IDX = 0,
 	SGP30_IAQ_CO2EQ_IDX,
 	SGP30_SIG_ETOH_IDX,
 	SGP30_SIG_H2_IDX,
-};
+पूर्ण;
 
-enum sgpc3_channel_idx {
+क्रमागत sgpc3_channel_idx अणु
 	SGPC3_IAQ_TVOC_IDX = 10,
 	SGPC3_SIG_ETOH_IDX,
-};
+पूर्ण;
 
-enum sgp_cmd {
+क्रमागत sgp_cmd अणु
 	SGP_CMD_IAQ_INIT			= SGP_CMD(0x2003),
 	SGP_CMD_IAQ_MEASURE			= SGP_CMD(0x2008),
 	SGP_CMD_GET_FEATURE_SET			= SGP_CMD(0x202f),
@@ -73,126 +74,126 @@ enum sgp_cmd {
 	SGP30_CMD_MEASURE_SIGNAL		= SGP_CMD(0x2050),
 
 	SGPC3_CMD_MEASURE_RAW			= SGP_CMD(0x2046),
-};
+पूर्ण;
 
-struct sgp_version {
+काष्ठा sgp_version अणु
 	u8 major;
 	u8 minor;
-};
+पूर्ण;
 
-struct sgp_crc_word {
+काष्ठा sgp_crc_word अणु
 	__be16 value;
 	u8 crc8;
-} __attribute__((__packed__));
+पूर्ण __attribute__((__packed__));
 
-union sgp_reading {
+जोड़ sgp_पढ़ोing अणु
 	u8 start;
-	struct sgp_crc_word raw_words[4];
-};
+	काष्ठा sgp_crc_word raw_words[4];
+पूर्ण;
 
-enum _iaq_buffer_state {
+क्रमागत _iaq_buffer_state अणु
 	IAQ_BUFFER_EMPTY = 0,
 	IAQ_BUFFER_DEFAULT_VALS,
 	IAQ_BUFFER_VALID,
-};
+पूर्ण;
 
-struct sgp_data {
-	struct i2c_client *client;
-	struct task_struct *iaq_thread;
-	struct mutex data_lock;
-	unsigned long iaq_init_start_jiffies;
-	unsigned long iaq_defval_skip_jiffies;
+काष्ठा sgp_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा task_काष्ठा *iaq_thपढ़ो;
+	काष्ठा mutex data_lock;
+	अचिन्हित दीर्घ iaq_init_start_jअगरfies;
+	अचिन्हित दीर्घ iaq_defval_skip_jअगरfies;
 	u16 product_id;
 	u16 feature_set;
-	unsigned long measure_interval_jiffies;
-	enum sgp_cmd iaq_init_cmd;
-	enum sgp_cmd measure_iaq_cmd;
-	enum sgp_cmd measure_gas_signals_cmd;
-	union sgp_reading buffer;
-	union sgp_reading iaq_buffer;
-	enum _iaq_buffer_state iaq_buffer_state;
-};
+	अचिन्हित दीर्घ measure_पूर्णांकerval_jअगरfies;
+	क्रमागत sgp_cmd iaq_init_cmd;
+	क्रमागत sgp_cmd measure_iaq_cmd;
+	क्रमागत sgp_cmd measure_gas_संकेतs_cmd;
+	जोड़ sgp_पढ़ोing buffer;
+	जोड़ sgp_पढ़ोing iaq_buffer;
+	क्रमागत _iaq_buffer_state iaq_buffer_state;
+पूर्ण;
 
-struct sgp_device {
-	const struct iio_chan_spec *channels;
-	int num_channels;
-};
+काष्ठा sgp_device अणु
+	स्थिर काष्ठा iio_chan_spec *channels;
+	पूर्णांक num_channels;
+पूर्ण;
 
-static const struct sgp_version supported_versions_sgp30[] = {
-	{
+अटल स्थिर काष्ठा sgp_version supported_versions_sgp30[] = अणु
+	अणु
 		.major = 1,
 		.minor = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct sgp_version supported_versions_sgpc3[] = {
-	{
+अटल स्थिर काष्ठा sgp_version supported_versions_sgpc3[] = अणु
+	अणु
 		.major = 0,
 		.minor = 4,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct iio_chan_spec sgp30_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec sgp30_channels[] = अणु
+	अणु
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_VOC,
-		.modified = 1,
+		.modअगरied = 1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED),
 		.address = SGP30_IAQ_TVOC_IDX,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_CO2,
-		.modified = 1,
+		.modअगरied = 1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED),
 		.address = SGP30_IAQ_CO2EQ_IDX,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_ETHANOL,
-		.modified = 1,
+		.modअगरied = 1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.address = SGP30_SIG_ETOH_IDX,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_H2,
-		.modified = 1,
+		.modअगरied = 1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.address = SGP30_SIG_H2_IDX,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct iio_chan_spec sgpc3_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec sgpc3_channels[] = अणु
+	अणु
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_VOC,
-		.modified = 1,
+		.modअगरied = 1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED),
 		.address = SGPC3_IAQ_TVOC_IDX,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_ETHANOL,
-		.modified = 1,
+		.modअगरied = 1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.address = SGPC3_SIG_ETOH_IDX,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct sgp_device sgp_devices[] = {
-	[SGP30] = {
+अटल स्थिर काष्ठा sgp_device sgp_devices[] = अणु
+	[SGP30] = अणु
 		.channels = sgp30_channels,
 		.num_channels = ARRAY_SIZE(sgp30_channels),
-	},
-	[SGPC3] = {
+	पूर्ण,
+	[SGPC3] = अणु
 		.channels = sgpc3_channels,
 		.num_channels = ARRAY_SIZE(sgpc3_channels),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /**
- * sgp_verify_buffer() - verify the checksums of the data buffer words
+ * sgp_verअगरy_buffer() - verअगरy the checksums of the data buffer words
  *
  * @data:       SGP data
  * @buf:        Raw data buffer
@@ -200,318 +201,318 @@ static const struct sgp_device sgp_devices[] = {
  *
  * Return:      0 on success, negative error otherwise.
  */
-static int sgp_verify_buffer(const struct sgp_data *data,
-			     union sgp_reading *buf, size_t word_count)
-{
-	size_t size = word_count * (SGP_WORD_LEN + SGP_CRC8_LEN);
-	int i;
+अटल पूर्णांक sgp_verअगरy_buffer(स्थिर काष्ठा sgp_data *data,
+			     जोड़ sgp_पढ़ोing *buf, माप_प्रकार word_count)
+अणु
+	माप_प्रकार size = word_count * (SGP_WORD_LEN + SGP_CRC8_LEN);
+	पूर्णांक i;
 	u8 crc;
 	u8 *data_buf = &buf->start;
 
-	for (i = 0; i < size; i += SGP_WORD_LEN + SGP_CRC8_LEN) {
+	क्रम (i = 0; i < size; i += SGP_WORD_LEN + SGP_CRC8_LEN) अणु
 		crc = crc8(sgp_crc8_table, &data_buf[i], SGP_WORD_LEN,
 			   SGP_CRC8_INIT);
-		if (crc != data_buf[i + SGP_WORD_LEN]) {
+		अगर (crc != data_buf[i + SGP_WORD_LEN]) अणु
 			dev_err(&data->client->dev, "CRC error\n");
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * sgp_read_cmd() - reads data from sensor after issuing a command
- * The caller must hold data->data_lock for the duration of the call.
+ * sgp_पढ़ो_cmd() - पढ़ोs data from sensor after issuing a command
+ * The caller must hold data->data_lock क्रम the duration of the call.
  * @data:        SGP data
  * @cmd:         SGP Command to issue
  * @buf:         Raw data buffer to use
- * @word_count:  Num words to read, excluding CRC bytes
- * @duration_us: Time taken to sensor to take a reading and data to be ready.
+ * @word_count:  Num words to पढ़ो, excluding CRC bytes
+ * @duration_us: Time taken to sensor to take a पढ़ोing and data to be पढ़ोy.
  *
  * Return:       0 on success, negative error otherwise.
  */
-static int sgp_read_cmd(struct sgp_data *data, enum sgp_cmd cmd,
-			union sgp_reading *buf, size_t word_count,
-			unsigned long duration_us)
-{
-	int ret;
-	struct i2c_client *client = data->client;
-	size_t size = word_count * (SGP_WORD_LEN + SGP_CRC8_LEN);
+अटल पूर्णांक sgp_पढ़ो_cmd(काष्ठा sgp_data *data, क्रमागत sgp_cmd cmd,
+			जोड़ sgp_पढ़ोing *buf, माप_प्रकार word_count,
+			अचिन्हित दीर्घ duration_us)
+अणु
+	पूर्णांक ret;
+	काष्ठा i2c_client *client = data->client;
+	माप_प्रकार size = word_count * (SGP_WORD_LEN + SGP_CRC8_LEN);
 	u8 *data_buf;
 
-	ret = i2c_master_send(client, (const char *)&cmd, SGP_CMD_LEN);
-	if (ret != SGP_CMD_LEN)
-		return -EIO;
+	ret = i2c_master_send(client, (स्थिर अक्षर *)&cmd, SGP_CMD_LEN);
+	अगर (ret != SGP_CMD_LEN)
+		वापस -EIO;
 	usleep_range(duration_us, duration_us + 1000);
 
-	if (word_count == 0)
-		return 0;
+	अगर (word_count == 0)
+		वापस 0;
 
 	data_buf = &buf->start;
 	ret = i2c_master_recv(client, data_buf, size);
-	if (ret < 0)
-		return ret;
-	if (ret != size)
-		return -EIO;
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret != size)
+		वापस -EIO;
 
-	return sgp_verify_buffer(data, buf, word_count);
-}
+	वापस sgp_verअगरy_buffer(data, buf, word_count);
+पूर्ण
 
 /**
  * sgp_measure_iaq() - measure and retrieve IAQ values from sensor
- * The caller must hold data->data_lock for the duration of the call.
+ * The caller must hold data->data_lock क्रम the duration of the call.
  * @data:       SGP data
  *
- * Return:      0 on success, -EBUSY on default values, negative error
+ * Return:      0 on success, -EBUSY on शेष values, negative error
  *              otherwise.
  */
 
-static int sgp_measure_iaq(struct sgp_data *data)
-{
-	int ret;
-	/* data contains default values */
-	bool default_vals = !time_after(jiffies, data->iaq_init_start_jiffies +
-						 data->iaq_defval_skip_jiffies);
+अटल पूर्णांक sgp_measure_iaq(काष्ठा sgp_data *data)
+अणु
+	पूर्णांक ret;
+	/* data contains शेष values */
+	bool शेष_vals = !समय_after(jअगरfies, data->iaq_init_start_jअगरfies +
+						 data->iaq_defval_skip_jअगरfies);
 
-	ret = sgp_read_cmd(data, data->measure_iaq_cmd, &data->iaq_buffer,
+	ret = sgp_पढ़ो_cmd(data, data->measure_iaq_cmd, &data->iaq_buffer,
 			   SGP_MEASUREMENT_LEN, SGP_MEASUREMENT_DURATION_US);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	data->iaq_buffer_state = IAQ_BUFFER_DEFAULT_VALS;
 
-	if (default_vals)
-		return -EBUSY;
+	अगर (शेष_vals)
+		वापस -EBUSY;
 
 	data->iaq_buffer_state = IAQ_BUFFER_VALID;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sgp_iaq_thread_sleep_until(const struct sgp_data *data,
-				       unsigned long sleep_jiffies)
-{
-	const long IAQ_POLL = 50000;
+अटल व्योम sgp_iaq_thपढ़ो_sleep_until(स्थिर काष्ठा sgp_data *data,
+				       अचिन्हित दीर्घ sleep_jअगरfies)
+अणु
+	स्थिर दीर्घ IAQ_POLL = 50000;
 
-	while (!time_after(jiffies, sleep_jiffies)) {
+	जबतक (!समय_after(jअगरfies, sleep_jअगरfies)) अणु
 		usleep_range(IAQ_POLL, IAQ_POLL + 10000);
-		if (kthread_should_stop() || data->iaq_init_start_jiffies == 0)
-			return;
-	}
-}
+		अगर (kthपढ़ो_should_stop() || data->iaq_init_start_jअगरfies == 0)
+			वापस;
+	पूर्ण
+पूर्ण
 
-static int sgp_iaq_threadfn(void *p)
-{
-	struct sgp_data *data = (struct sgp_data *)p;
-	unsigned long next_update_jiffies;
-	int ret;
+अटल पूर्णांक sgp_iaq_thपढ़ोfn(व्योम *p)
+अणु
+	काष्ठा sgp_data *data = (काष्ठा sgp_data *)p;
+	अचिन्हित दीर्घ next_update_jअगरfies;
+	पूर्णांक ret;
 
-	while (!kthread_should_stop()) {
+	जबतक (!kthपढ़ो_should_stop()) अणु
 		mutex_lock(&data->data_lock);
-		if (data->iaq_init_start_jiffies == 0) {
-			ret = sgp_read_cmd(data, data->iaq_init_cmd, NULL, 0,
+		अगर (data->iaq_init_start_jअगरfies == 0) अणु
+			ret = sgp_पढ़ो_cmd(data, data->iaq_init_cmd, शून्य, 0,
 					   SGP_CMD_DURATION_US);
-			if (ret < 0)
-				goto unlock_sleep_continue;
-			data->iaq_init_start_jiffies = jiffies;
-		}
+			अगर (ret < 0)
+				जाओ unlock_sleep_जारी;
+			data->iaq_init_start_jअगरfies = jअगरfies;
+		पूर्ण
 
 		ret = sgp_measure_iaq(data);
-		if (ret && ret != -EBUSY) {
+		अगर (ret && ret != -EBUSY) अणु
 			dev_warn(&data->client->dev,
 				 "IAQ measurement error [%d]\n", ret);
-		}
-unlock_sleep_continue:
-		next_update_jiffies = jiffies + data->measure_interval_jiffies;
+		पूर्ण
+unlock_sleep_जारी:
+		next_update_jअगरfies = jअगरfies + data->measure_पूर्णांकerval_jअगरfies;
 		mutex_unlock(&data->data_lock);
-		sgp_iaq_thread_sleep_until(data, next_update_jiffies);
-	}
+		sgp_iaq_thपढ़ो_sleep_until(data, next_update_jअगरfies);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sgp_read_raw(struct iio_dev *indio_dev,
-			struct iio_chan_spec const *chan, int *val,
-			int *val2, long mask)
-{
-	struct sgp_data *data = iio_priv(indio_dev);
-	struct sgp_crc_word *words;
-	int ret;
+अटल पूर्णांक sgp_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val,
+			पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा sgp_data *data = iio_priv(indio_dev);
+	काष्ठा sgp_crc_word *words;
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_PROCESSED:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_PROCESSED:
 		mutex_lock(&data->data_lock);
-		if (data->iaq_buffer_state != IAQ_BUFFER_VALID) {
+		अगर (data->iaq_buffer_state != IAQ_BUFFER_VALID) अणु
 			mutex_unlock(&data->data_lock);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 		words = data->iaq_buffer.raw_words;
-		switch (chan->address) {
-		case SGP30_IAQ_TVOC_IDX:
-		case SGPC3_IAQ_TVOC_IDX:
+		चयन (chan->address) अणु
+		हाल SGP30_IAQ_TVOC_IDX:
+		हाल SGPC3_IAQ_TVOC_IDX:
 			*val = 0;
 			*val2 = be16_to_cpu(words[1].value);
-			ret = IIO_VAL_INT_PLUS_NANO;
-			break;
-		case SGP30_IAQ_CO2EQ_IDX:
+			ret = IIO_VAL_INT_PLUS_न_अंकO;
+			अवरोध;
+		हाल SGP30_IAQ_CO2EQ_IDX:
 			*val = 0;
 			*val2 = be16_to_cpu(words[0].value);
 			ret = IIO_VAL_INT_PLUS_MICRO;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mutex_unlock(&data->data_lock);
-		break;
-	case IIO_CHAN_INFO_RAW:
+		अवरोध;
+	हाल IIO_CHAN_INFO_RAW:
 		mutex_lock(&data->data_lock);
-		if (chan->address == SGPC3_SIG_ETOH_IDX) {
-			if (data->iaq_buffer_state == IAQ_BUFFER_EMPTY)
+		अगर (chan->address == SGPC3_SIG_ETOH_IDX) अणु
+			अगर (data->iaq_buffer_state == IAQ_BUFFER_EMPTY)
 				ret = -EBUSY;
-			else
+			अन्यथा
 				ret = 0;
 			words = data->iaq_buffer.raw_words;
-		} else {
-			ret = sgp_read_cmd(data, data->measure_gas_signals_cmd,
+		पूर्ण अन्यथा अणु
+			ret = sgp_पढ़ो_cmd(data, data->measure_gas_संकेतs_cmd,
 					   &data->buffer, SGP_MEASUREMENT_LEN,
 					   SGP_MEASUREMENT_DURATION_US);
 			words = data->buffer.raw_words;
-		}
-		if (ret) {
+		पूर्ण
+		अगर (ret) अणु
 			mutex_unlock(&data->data_lock);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		switch (chan->address) {
-		case SGP30_SIG_ETOH_IDX:
+		चयन (chan->address) अणु
+		हाल SGP30_SIG_ETOH_IDX:
 			*val = be16_to_cpu(words[1].value);
 			ret = IIO_VAL_INT;
-			break;
-		case SGPC3_SIG_ETOH_IDX:
-		case SGP30_SIG_H2_IDX:
+			अवरोध;
+		हाल SGPC3_SIG_ETOH_IDX:
+		हाल SGP30_SIG_H2_IDX:
 			*val = be16_to_cpu(words[0].value);
 			ret = IIO_VAL_INT;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mutex_unlock(&data->data_lock);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sgp_check_compat(struct sgp_data *data,
-			    unsigned int product_id)
-{
-	struct device *dev = &data->client->dev;
-	const struct sgp_version *supported_versions;
+अटल पूर्णांक sgp_check_compat(काष्ठा sgp_data *data,
+			    अचिन्हित पूर्णांक product_id)
+अणु
+	काष्ठा device *dev = &data->client->dev;
+	स्थिर काष्ठा sgp_version *supported_versions;
 	u16 ix, num_fs;
 	u16 product, generation, major, minor;
 
-	/* driver does not match product */
+	/* driver करोes not match product */
 	generation = SGP_VERS_GEN(data);
-	if (generation != 0) {
+	अगर (generation != 0) अणु
 		dev_err(dev,
 			"incompatible product generation %d != 0", generation);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	product = SGP_VERS_PRODUCT(data);
-	if (product != product_id) {
+	अगर (product != product_id) अणु
 		dev_err(dev, "sensor reports a different product: 0x%04hx\n",
 			product);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (SGP_VERS_RESERVED(data))
+	अगर (SGP_VERS_RESERVED(data))
 		dev_warn(dev, "reserved bit is set\n");
 
-	/* engineering samples are not supported: no interface guarantees */
-	if (SGP_VERS_ENG_BIT(data))
-		return -ENODEV;
+	/* engineering samples are not supported: no पूर्णांकerface guarantees */
+	अगर (SGP_VERS_ENG_BIT(data))
+		वापस -ENODEV;
 
-	switch (product) {
-	case SGP30:
+	चयन (product) अणु
+	हाल SGP30:
 		supported_versions = supported_versions_sgp30;
 		num_fs = ARRAY_SIZE(supported_versions_sgp30);
-		break;
-	case SGPC3:
+		अवरोध;
+	हाल SGPC3:
 		supported_versions = supported_versions_sgpc3;
 		num_fs = ARRAY_SIZE(supported_versions_sgpc3);
-		break;
-	default:
-		return -ENODEV;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENODEV;
+	पूर्ण
 
 	major = SGP_VERS_MAJOR(data);
 	minor = SGP_VERS_MINOR(data);
-	for (ix = 0; ix < num_fs; ix++) {
-		if (major == supported_versions[ix].major &&
+	क्रम (ix = 0; ix < num_fs; ix++) अणु
+		अगर (major == supported_versions[ix].major &&
 		    minor >= supported_versions[ix].minor)
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 	dev_err(dev, "unsupported sgp version: %d.%d\n", major, minor);
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void sgp_init(struct sgp_data *data)
-{
+अटल व्योम sgp_init(काष्ठा sgp_data *data)
+अणु
 	data->iaq_init_cmd = SGP_CMD_IAQ_INIT;
-	data->iaq_init_start_jiffies = 0;
+	data->iaq_init_start_jअगरfies = 0;
 	data->iaq_buffer_state = IAQ_BUFFER_EMPTY;
-	switch (SGP_VERS_PRODUCT(data)) {
-	case SGP30:
-		data->measure_interval_jiffies = SGP30_MEASURE_INTERVAL_HZ * HZ;
+	चयन (SGP_VERS_PRODUCT(data)) अणु
+	हाल SGP30:
+		data->measure_पूर्णांकerval_jअगरfies = SGP30_MEASURE_INTERVAL_HZ * HZ;
 		data->measure_iaq_cmd = SGP_CMD_IAQ_MEASURE;
-		data->measure_gas_signals_cmd = SGP30_CMD_MEASURE_SIGNAL;
+		data->measure_gas_संकेतs_cmd = SGP30_CMD_MEASURE_SIGNAL;
 		data->product_id = SGP30;
-		data->iaq_defval_skip_jiffies = 15 * HZ;
-		break;
-	case SGPC3:
-		data->measure_interval_jiffies = SGPC3_MEASURE_INTERVAL_HZ * HZ;
+		data->iaq_defval_skip_jअगरfies = 15 * HZ;
+		अवरोध;
+	हाल SGPC3:
+		data->measure_पूर्णांकerval_jअगरfies = SGPC3_MEASURE_INTERVAL_HZ * HZ;
 		data->measure_iaq_cmd = SGPC3_CMD_MEASURE_RAW;
-		data->measure_gas_signals_cmd = SGPC3_CMD_MEASURE_RAW;
+		data->measure_gas_संकेतs_cmd = SGPC3_CMD_MEASURE_RAW;
 		data->product_id = SGPC3;
-		data->iaq_defval_skip_jiffies =
-			43 * data->measure_interval_jiffies;
-		break;
-	}
-}
+		data->iaq_defval_skip_jअगरfies =
+			43 * data->measure_पूर्णांकerval_jअगरfies;
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static const struct iio_info sgp_info = {
-	.read_raw	= sgp_read_raw,
-};
+अटल स्थिर काष्ठा iio_info sgp_info = अणु
+	.पढ़ो_raw	= sgp_पढ़ो_raw,
+पूर्ण;
 
-static const struct of_device_id sgp_dt_ids[] = {
-	{ .compatible = "sensirion,sgp30", .data = (void *)SGP30 },
-	{ .compatible = "sensirion,sgpc3", .data = (void *)SGPC3 },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id sgp_dt_ids[] = अणु
+	अणु .compatible = "sensirion,sgp30", .data = (व्योम *)SGP30 पूर्ण,
+	अणु .compatible = "sensirion,sgpc3", .data = (व्योम *)SGPC3 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static int sgp_probe(struct i2c_client *client,
-		     const struct i2c_device_id *id)
-{
-	struct device *dev = &client->dev;
-	struct iio_dev *indio_dev;
-	struct sgp_data *data;
-	unsigned long product_id;
-	int ret;
+अटल पूर्णांक sgp_probe(काष्ठा i2c_client *client,
+		     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा sgp_data *data;
+	अचिन्हित दीर्घ product_id;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(dev, sizeof(*data));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, माप(*data));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
-	if (dev_fwnode(dev))
-		product_id = (unsigned long)device_get_match_data(dev);
-	else
+	अगर (dev_fwnode(dev))
+		product_id = (अचिन्हित दीर्घ)device_get_match_data(dev);
+	अन्यथा
 		product_id = id->driver_data;
 
 	data = iio_priv(indio_dev);
@@ -520,67 +521,67 @@ static int sgp_probe(struct i2c_client *client,
 	crc8_populate_msb(sgp_crc8_table, SGP_CRC8_POLYNOMIAL);
 	mutex_init(&data->data_lock);
 
-	/* get feature set version and write it to client data */
-	ret = sgp_read_cmd(data, SGP_CMD_GET_FEATURE_SET, &data->buffer, 1,
+	/* get feature set version and ग_लिखो it to client data */
+	ret = sgp_पढ़ो_cmd(data, SGP_CMD_GET_FEATURE_SET, &data->buffer, 1,
 			   SGP_CMD_DURATION_US);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	data->feature_set = be16_to_cpu(data->buffer.raw_words[0].value);
 
 	ret = sgp_check_compat(data, product_id);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	indio_dev->info = &sgp_info;
 	indio_dev->name = id->name;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = sgp_devices[product_id].channels;
 	indio_dev->num_channels = sgp_devices[product_id].num_channels;
 
 	sgp_init(data);
 
-	ret = devm_iio_device_register(dev, indio_dev);
-	if (ret) {
+	ret = devm_iio_device_रेजिस्टर(dev, indio_dev);
+	अगर (ret) अणु
 		dev_err(dev, "failed to register iio device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	data->iaq_thread = kthread_run(sgp_iaq_threadfn, data,
+	data->iaq_thपढ़ो = kthपढ़ो_run(sgp_iaq_thपढ़ोfn, data,
 				       "%s-iaq", data->client->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sgp_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
-	struct sgp_data *data = iio_priv(indio_dev);
+अटल पूर्णांक sgp_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+	काष्ठा sgp_data *data = iio_priv(indio_dev);
 
-	if (data->iaq_thread)
-		kthread_stop(data->iaq_thread);
+	अगर (data->iaq_thपढ़ो)
+		kthपढ़ो_stop(data->iaq_thपढ़ो);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id sgp_id[] = {
-	{ "sgp30", SGP30 },
-	{ "sgpc3", SGPC3 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id sgp_id[] = अणु
+	अणु "sgp30", SGP30 पूर्ण,
+	अणु "sgpc3", SGPC3 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, sgp_id);
 MODULE_DEVICE_TABLE(of, sgp_dt_ids);
 
-static struct i2c_driver sgp_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver sgp_driver = अणु
+	.driver = अणु
 		.name = "sgp30",
 		.of_match_table = sgp_dt_ids,
-	},
+	पूर्ण,
 	.probe = sgp_probe,
-	.remove = sgp_remove,
+	.हटाओ = sgp_हटाओ,
 	.id_table = sgp_id,
-};
+पूर्ण;
 module_i2c_driver(sgp_driver);
 
 MODULE_AUTHOR("Andreas Brauchli <andreas.brauchli@sensirion.com>");

@@ -1,55 +1,56 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
  /*
- * Driver for Microtek Scanmaker X6 USB scanner and possibly others.
+ * Driver क्रम Microtek Scanmaker X6 USB scanner and possibly others.
  * 
- * (C) Copyright 2000 John Fremlin <vii@penguinpowered.com>
+ * (C) Copyright 2000 John Fremlin <vii@penguinघातered.com>
  * (C) Copyright 2000 Oliver Neukum <Oliver.Neukum@lrz.uni-muenchen.de>
  *
- * See microtek.c for history
+ * See microtek.c क्रम history
  *
  */
 
-typedef void (*mts_scsi_cmnd_callback)(struct scsi_cmnd *);
+प्रकार व्योम (*mts_scsi_cmnd_callback)(काष्ठा scsi_cmnd *);
 
 
-struct mts_transfer_context
-{
-	struct mts_desc *instance;
+काष्ठा mts_transfer_context
+अणु
+	काष्ठा mts_desc *instance;
 	mts_scsi_cmnd_callback final_callback;
-	struct scsi_cmnd *srb;
+	काष्ठा scsi_cmnd *srb;
 	
-	void *data;
-	unsigned data_length;
-	int data_pipe;
-	struct scatterlist *curr_sg;
+	व्योम *data;
+	अचिन्हित data_length;
+	पूर्णांक data_pipe;
+	काष्ठा scatterlist *curr_sg;
 
-	u8 *scsi_status; /* status returned from ep_response after command completion */
-};
+	u8 *scsi_status; /* status वापसed from ep_response after command completion */
+पूर्ण;
 
 
-struct mts_desc {
-	struct mts_desc *next;
-	struct mts_desc *prev;
+काष्ठा mts_desc अणु
+	काष्ठा mts_desc *next;
+	काष्ठा mts_desc *prev;
 
-	struct usb_device *usb_dev;
-	struct usb_interface *usb_intf;
+	काष्ठा usb_device *usb_dev;
+	काष्ठा usb_पूर्णांकerface *usb_पूर्णांकf;
 
-	/* Endpoint addresses */
+	/* Endpoपूर्णांक addresses */
 	u8 ep_out;
 	u8 ep_response;
 	u8 ep_image;
 
-	struct Scsi_Host *host;
+	काष्ठा Scsi_Host *host;
 
-	struct urb *urb;
-	struct mts_transfer_context context;
-};
+	काष्ठा urb *urb;
+	काष्ठा mts_transfer_context context;
+पूर्ण;
 
 
-#define MTS_EP_OUT	0x1
-#define MTS_EP_RESPONSE	0x2
-#define MTS_EP_IMAGE	0x3
-#define MTS_EP_TOTAL	0x3
+#घोषणा MTS_EP_OUT	0x1
+#घोषणा MTS_EP_RESPONSE	0x2
+#घोषणा MTS_EP_IMAGE	0x3
+#घोषणा MTS_EP_TOTAL	0x3
 
-#define MTS_SCSI_ERR_MASK ~0x3fu
+#घोषणा MTS_SCSI_ERR_MASK ~0x3fu
 

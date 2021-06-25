@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for Digigram VXpocket V2/440 soundcards
+ * Driver क्रम Digigram VXpocket V2/440 soundcards
  *
  * Copyright (c) 2002 by Takashi Iwai <tiwai@suse.de>
 
  */
 
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <sound/core.h>
-#include "vxpocket.h"
-#include <pcmcia/ciscode.h>
-#include <pcmcia/cisreg.h>
-#include <sound/initval.h>
-#include <sound/tlv.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/core.h>
+#समावेश "vxpocket.h"
+#समावेश <pcmcia/ciscode.h>
+#समावेश <pcmcia/cisreg.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/tlv.h>
 
 MODULE_AUTHOR("Takashi Iwai <tiwai@suse.de>");
 MODULE_DESCRIPTION("Digigram VXPocket");
 MODULE_LICENSE("GPL");
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable switches */
-static int ibl[SNDRV_CARDS];
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable चयनes */
+अटल पूर्णांक ibl[SNDRV_CARDS];
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for VXPocket soundcard.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for VXPocket soundcard.");
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "Enable VXPocket soundcard.");
-module_param_array(ibl, int, NULL, 0444);
+module_param_array(ibl, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(ibl, "Capture IBL size for VXPocket soundcard.");
  
 
 /*
  */
 
-static unsigned int card_alloc;
+अटल अचिन्हित पूर्णांक card_alloc;
 
 
 /*
  */
-static void vxpocket_release(struct pcmcia_device *link)
-{
-	free_irq(link->irq, link->priv);
+अटल व्योम vxpocket_release(काष्ठा pcmcia_device *link)
+अणु
+	मुक्त_irq(link->irq, link->priv);
 	pcmcia_disable_device(link);
-}
+पूर्ण
 
 /*
- * destructor, called from snd_card_free_when_closed()
+ * deकाष्ठाor, called from snd_card_मुक्त_when_बंदd()
  */
-static int snd_vxpocket_dev_free(struct snd_device *device)
-{
-	struct vx_core *chip = device->device_data;
+अटल पूर्णांक snd_vxpocket_dev_मुक्त(काष्ठा snd_device *device)
+अणु
+	काष्ठा vx_core *chip = device->device_data;
 
-	snd_vx_free_firmware(chip);
-	kfree(chip);
-	return 0;
-}
+	snd_vx_मुक्त_firmware(chip);
+	kमुक्त(chip);
+	वापस 0;
+पूर्ण
 
 
 /*
- * Hardware information
+ * Hardware inक्रमmation
  */
 
 /* VX-pocket V2
  *
  * 1 DSP, 1 sync UER
- * 1 programmable clock (NIY)
+ * 1 programmable घड़ी (NIY)
  * 1 stereo analog input (line/micro)
  * 1 stereo analog output
- * Only output levels can be modified
+ * Only output levels can be modअगरied
  */
 
-static const DECLARE_TLV_DB_SCALE(db_scale_old_vol, -11350, 50, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_old_vol, -11350, 50, 0);
 
-static const struct snd_vx_hardware vxpocket_hw = {
+अटल स्थिर काष्ठा snd_vx_hardware vxpocket_hw = अणु
 	.name = "VXPocket",
 	.type = VX_TYPE_VXPOCKET,
 
@@ -88,7 +89,7 @@ static const struct snd_vx_hardware vxpocket_hw = {
 	.num_outs = 1,
 	.output_level_max = VX_ANALOG_OUT_LEVEL_MAX,
 	.output_level_db_scale = db_scale_old_vol,
-};	
+पूर्ण;	
 
 /* VX-pocket 440
  *
@@ -96,11 +97,11 @@ static const struct snd_vx_hardware vxpocket_hw = {
  * SMPTE (NIY)
  * 2 stereo analog input (line/micro)
  * 2 stereo analog output
- * Only output levels can be modified
- * UER, but only for the first two inputs and outputs.
+ * Only output levels can be modअगरied
+ * UER, but only क्रम the first two inमाला_दो and outमाला_दो.
  */
 
-static const struct snd_vx_hardware vxp440_hw = {
+अटल स्थिर काष्ठा snd_vx_hardware vxp440_hw = अणु
 	.name = "VXPocket440",
 	.type = VX_TYPE_VXP440,
 
@@ -110,33 +111,33 @@ static const struct snd_vx_hardware vxp440_hw = {
 	.num_outs = 2,
 	.output_level_max = VX_ANALOG_OUT_LEVEL_MAX,
 	.output_level_db_scale = db_scale_old_vol,
-};	
+पूर्ण;	
 
 
 /*
  * create vxpocket instance
  */
-static int snd_vxpocket_new(struct snd_card *card, int ibl,
-			    struct pcmcia_device *link,
-			    struct snd_vxpocket **chip_ret)
-{
-	struct vx_core *chip;
-	struct snd_vxpocket *vxp;
-	static const struct snd_device_ops ops = {
-		.dev_free =	snd_vxpocket_dev_free,
-	};
-	int err;
+अटल पूर्णांक snd_vxpocket_new(काष्ठा snd_card *card, पूर्णांक ibl,
+			    काष्ठा pcmcia_device *link,
+			    काष्ठा snd_vxpocket **chip_ret)
+अणु
+	काष्ठा vx_core *chip;
+	काष्ठा snd_vxpocket *vxp;
+	अटल स्थिर काष्ठा snd_device_ops ops = अणु
+		.dev_मुक्त =	snd_vxpocket_dev_मुक्त,
+	पूर्ण;
+	पूर्णांक err;
 
 	chip = snd_vx_create(card, &vxpocket_hw, &snd_vxpocket_ops,
-			     sizeof(struct snd_vxpocket) - sizeof(struct vx_core));
-	if (!chip)
-		return -ENOMEM;
+			     माप(काष्ठा snd_vxpocket) - माप(काष्ठा vx_core));
+	अगर (!chip)
+		वापस -ENOMEM;
 
 	err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops);
-	if (err < 0) {
-		kfree(chip);
-		return err;
-	}
+	अगर (err < 0) अणु
+		kमुक्त(chip);
+		वापस err;
+	पूर्ण
 	chip->ibl.size = ibl;
 
 	vxp = to_vxpocket(chip);
@@ -152,210 +153,210 @@ static int snd_vxpocket_new(struct snd_card *card, int ibl,
 	link->config_regs = PRESENT_OPTION;
 
 	*chip_ret = vxp;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
  * snd_vxpocket_assign_resources - initialize the hardware and card instance.
  * @chip: VX core instance
- * @port: i/o port for the card
- * @irq: irq number for the card
+ * @port: i/o port क्रम the card
+ * @irq: irq number क्रम the card
  *
- * this function assigns the specified port and irq, boot the card,
+ * this function assigns the specअगरied port and irq, boot the card,
  * create pcm and control instances, and initialize the rest hardware.
  *
- * returns 0 if successful, or a negative error code.
+ * वापसs 0 अगर successful, or a negative error code.
  */
-static int snd_vxpocket_assign_resources(struct vx_core *chip, int port, int irq)
-{
-	int err;
-	struct snd_card *card = chip->card;
-	struct snd_vxpocket *vxp = to_vxpocket(chip);
+अटल पूर्णांक snd_vxpocket_assign_resources(काष्ठा vx_core *chip, पूर्णांक port, पूर्णांक irq)
+अणु
+	पूर्णांक err;
+	काष्ठा snd_card *card = chip->card;
+	काष्ठा snd_vxpocket *vxp = to_vxpocket(chip);
 
-	snd_printdd(KERN_DEBUG "vxpocket assign resources: port = 0x%x, irq = %d\n", port, irq);
+	snd_prपूर्णांकdd(KERN_DEBUG "vxpocket assign resources: port = 0x%x, irq = %d\n", port, irq);
 	vxp->port = port;
 
-	sprintf(card->shortname, "Digigram %s", card->driver);
-	sprintf(card->longname, "%s at 0x%x, irq %i",
-		card->shortname, port, irq);
+	प्र_लिखो(card->लघुname, "Digigram %s", card->driver);
+	प्र_लिखो(card->दीर्घname, "%s at 0x%x, irq %i",
+		card->लघुname, port, irq);
 
 	chip->irq = irq;
 	card->sync_irq = chip->irq;
 
-	if ((err = snd_vx_setup_firmware(chip)) < 0)
-		return err;
+	अगर ((err = snd_vx_setup_firmware(chip)) < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  * configuration callback
  */
 
-static int vxpocket_config(struct pcmcia_device *link)
-{
-	struct vx_core *chip = link->priv;
-	int ret;
+अटल पूर्णांक vxpocket_config(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा vx_core *chip = link->priv;
+	पूर्णांक ret;
 
-	snd_printdd(KERN_DEBUG "vxpocket_config called\n");
+	snd_prपूर्णांकdd(KERN_DEBUG "vxpocket_config called\n");
 
 	/* redefine hardware record according to the VERSION1 string */
-	if (!strcmp(link->prod_id[1], "VX-POCKET")) {
-		snd_printdd("VX-pocket is detected\n");
-	} else {
-		snd_printdd("VX-pocket 440 is detected\n");
-		/* overwrite the hardware information */
+	अगर (!म_भेद(link->prod_id[1], "VX-POCKET")) अणु
+		snd_prपूर्णांकdd("VX-pocket is detected\n");
+	पूर्ण अन्यथा अणु
+		snd_prपूर्णांकdd("VX-pocket 440 is detected\n");
+		/* overग_लिखो the hardware inक्रमmation */
 		chip->hw = &vxp440_hw;
 		chip->type = vxp440_hw.type;
-		strcpy(chip->card->driver, vxp440_hw.name);
-	}
+		म_नकल(chip->card->driver, vxp440_hw.name);
+	पूर्ण
 
 	ret = pcmcia_request_io(link);
-	if (ret)
-		goto failed_preirq;
+	अगर (ret)
+		जाओ failed_preirq;
 
-	ret = request_threaded_irq(link->irq, snd_vx_irq_handler,
-				   snd_vx_threaded_irq_handler,
+	ret = request_thपढ़ोed_irq(link->irq, snd_vx_irq_handler,
+				   snd_vx_thपढ़ोed_irq_handler,
 				   IRQF_SHARED, link->devname, link->priv);
-	if (ret)
-		goto failed_preirq;
+	अगर (ret)
+		जाओ failed_preirq;
 
 	ret = pcmcia_enable_device(link);
-	if (ret)
-		goto failed;
+	अगर (ret)
+		जाओ failed;
 
 	chip->dev = &link->dev;
 
-	if (snd_vxpocket_assign_resources(chip, link->resource[0]->start,
+	अगर (snd_vxpocket_assign_resources(chip, link->resource[0]->start,
 						link->irq) < 0)
-		goto failed;
+		जाओ failed;
 
-	return 0;
+	वापस 0;
 
  failed:
-	free_irq(link->irq, link->priv);
+	मुक्त_irq(link->irq, link->priv);
 failed_preirq:
 	pcmcia_disable_device(link);
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int vxp_suspend(struct pcmcia_device *link)
-{
-	struct vx_core *chip = link->priv;
+अटल पूर्णांक vxp_suspend(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा vx_core *chip = link->priv;
 
-	snd_printdd(KERN_DEBUG "SUSPEND\n");
-	if (chip) {
-		snd_printdd(KERN_DEBUG "snd_vx_suspend calling\n");
+	snd_prपूर्णांकdd(KERN_DEBUG "SUSPEND\n");
+	अगर (chip) अणु
+		snd_prपूर्णांकdd(KERN_DEBUG "snd_vx_suspend calling\n");
 		snd_vx_suspend(chip);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vxp_resume(struct pcmcia_device *link)
-{
-	struct vx_core *chip = link->priv;
+अटल पूर्णांक vxp_resume(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा vx_core *chip = link->priv;
 
-	snd_printdd(KERN_DEBUG "RESUME\n");
-	if (pcmcia_dev_present(link)) {
-		//struct snd_vxpocket *vxp = (struct snd_vxpocket *)chip;
-		if (chip) {
-			snd_printdd(KERN_DEBUG "calling snd_vx_resume\n");
+	snd_prपूर्णांकdd(KERN_DEBUG "RESUME\n");
+	अगर (pcmcia_dev_present(link)) अणु
+		//काष्ठा snd_vxpocket *vxp = (काष्ठा snd_vxpocket *)chip;
+		अगर (chip) अणु
+			snd_prपूर्णांकdd(KERN_DEBUG "calling snd_vx_resume\n");
 			snd_vx_resume(chip);
-		}
-	}
-	snd_printdd(KERN_DEBUG "resume done!\n");
+		पूर्ण
+	पूर्ण
+	snd_prपूर्णांकdd(KERN_DEBUG "resume done!\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 
 /*
  */
-static int vxpocket_probe(struct pcmcia_device *p_dev)
-{
-	struct snd_card *card;
-	struct snd_vxpocket *vxp;
-	int i, err;
+अटल पूर्णांक vxpocket_probe(काष्ठा pcmcia_device *p_dev)
+अणु
+	काष्ठा snd_card *card;
+	काष्ठा snd_vxpocket *vxp;
+	पूर्णांक i, err;
 
 	/* find an empty slot from the card list */
-	for (i = 0; i < SNDRV_CARDS; i++) {
-		if (!(card_alloc & (1 << i)))
-			break;
-	}
-	if (i >= SNDRV_CARDS) {
-		snd_printk(KERN_ERR "vxpocket: too many cards found\n");
-		return -EINVAL;
-	}
-	if (! enable[i])
-		return -ENODEV; /* disabled explicitly */
+	क्रम (i = 0; i < SNDRV_CARDS; i++) अणु
+		अगर (!(card_alloc & (1 << i)))
+			अवरोध;
+	पूर्ण
+	अगर (i >= SNDRV_CARDS) अणु
+		snd_prपूर्णांकk(KERN_ERR "vxpocket: too many cards found\n");
+		वापस -EINVAL;
+	पूर्ण
+	अगर (! enable[i])
+		वापस -ENODEV; /* disabled explicitly */
 
 	/* ok, create a card instance */
 	err = snd_card_new(&p_dev->dev, index[i], id[i], THIS_MODULE,
 			   0, &card);
-	if (err < 0) {
-		snd_printk(KERN_ERR "vxpocket: cannot create a card instance\n");
-		return err;
-	}
+	अगर (err < 0) अणु
+		snd_prपूर्णांकk(KERN_ERR "vxpocket: cannot create a card instance\n");
+		वापस err;
+	पूर्ण
 
 	err = snd_vxpocket_new(card, ibl[i], p_dev, &vxp);
-	if (err < 0) {
-		snd_card_free(card);
-		return err;
-	}
-	card->private_data = vxp;
+	अगर (err < 0) अणु
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
+	card->निजी_data = vxp;
 
 	vxp->index = i;
 	card_alloc |= 1 << i;
 
 	vxp->p_dev = p_dev;
 
-	return vxpocket_config(p_dev);
-}
+	वापस vxpocket_config(p_dev);
+पूर्ण
 
-static void vxpocket_detach(struct pcmcia_device *link)
-{
-	struct snd_vxpocket *vxp;
-	struct vx_core *chip;
+अटल व्योम vxpocket_detach(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा snd_vxpocket *vxp;
+	काष्ठा vx_core *chip;
 
-	if (! link)
-		return;
+	अगर (! link)
+		वापस;
 
 	vxp = link->priv;
-	chip = (struct vx_core *)vxp;
+	chip = (काष्ठा vx_core *)vxp;
 	card_alloc &= ~(1 << vxp->index);
 
 	chip->chip_status |= VX_STAT_IS_STALE; /* to be sure */
 	snd_card_disconnect(chip->card);
 	vxpocket_release(link);
-	snd_card_free_when_closed(chip->card);
-}
+	snd_card_मुक्त_when_बंदd(chip->card);
+पूर्ण
 
 /*
- * Module entry points
+ * Module entry poपूर्णांकs
  */
 
-static const struct pcmcia_device_id vxp_ids[] = {
+अटल स्थिर काष्ठा pcmcia_device_id vxp_ids[] = अणु
 	PCMCIA_DEVICE_MANF_CARD(0x01f1, 0x0100),
-	PCMCIA_DEVICE_NULL
-};
+	PCMCIA_DEVICE_शून्य
+पूर्ण;
 MODULE_DEVICE_TABLE(pcmcia, vxp_ids);
 
-static struct pcmcia_driver vxp_cs_driver = {
+अटल काष्ठा pcmcia_driver vxp_cs_driver = अणु
 	.owner		= THIS_MODULE,
 	.name		= "snd-vxpocket",
 	.probe		= vxpocket_probe,
-	.remove		= vxpocket_detach,
+	.हटाओ		= vxpocket_detach,
 	.id_table	= vxp_ids,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend	= vxp_suspend,
 	.resume		= vxp_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 module_pcmcia_driver(vxp_cs_driver);

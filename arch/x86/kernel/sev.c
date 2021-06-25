@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AMD Memory Encryption Support
  *
@@ -7,309 +8,309 @@
  * Author: Joerg Roedel <jroedel@suse.de>
  */
 
-#define pr_fmt(fmt)	"SEV-ES: " fmt
+#घोषणा pr_fmt(fmt)	"SEV-ES: " fmt
 
-#include <linux/sched/debug.h>	/* For show_regs() */
-#include <linux/percpu-defs.h>
-#include <linux/mem_encrypt.h>
-#include <linux/lockdep.h>
-#include <linux/printk.h>
-#include <linux/mm_types.h>
-#include <linux/set_memory.h>
-#include <linux/memblock.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
+#समावेश <linux/sched/debug.h>	/* For show_regs() */
+#समावेश <linux/percpu-defs.h>
+#समावेश <linux/mem_encrypt.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/mm_types.h>
+#समावेश <linux/set_memory.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
 
-#include <asm/cpu_entry_area.h>
-#include <asm/stacktrace.h>
-#include <asm/sev.h>
-#include <asm/insn-eval.h>
-#include <asm/fpu/internal.h>
-#include <asm/processor.h>
-#include <asm/realmode.h>
-#include <asm/traps.h>
-#include <asm/svm.h>
-#include <asm/smp.h>
-#include <asm/cpu.h>
+#समावेश <यंत्र/cpu_entry_area.h>
+#समावेश <यंत्र/stacktrace.h>
+#समावेश <यंत्र/sev.h>
+#समावेश <यंत्र/insn-eval.h>
+#समावेश <यंत्र/fpu/पूर्णांकernal.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/realmode.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/svm.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/cpu.h>
 
-#define DR7_RESET_VALUE        0x400
+#घोषणा DR7_RESET_VALUE        0x400
 
 /* For early boot hypervisor communication in SEV-ES enabled guests */
-static struct ghcb boot_ghcb_page __bss_decrypted __aligned(PAGE_SIZE);
+अटल काष्ठा ghcb boot_ghcb_page __bss_decrypted __aligned(PAGE_SIZE);
 
 /*
- * Needs to be in the .data section because we need it NULL before bss is
+ * Needs to be in the .data section because we need it शून्य beक्रमe bss is
  * cleared
  */
-static struct ghcb __initdata *boot_ghcb;
+अटल काष्ठा ghcb __initdata *boot_ghcb;
 
-/* #VC handler runtime per-CPU data */
-struct sev_es_runtime_data {
-	struct ghcb ghcb_page;
+/* #VC handler runसमय per-CPU data */
+काष्ठा sev_es_runसमय_data अणु
+	काष्ठा ghcb ghcb_page;
 
-	/* Physical storage for the per-CPU IST stack of the #VC handler */
-	char ist_stack[EXCEPTION_STKSZ] __aligned(PAGE_SIZE);
+	/* Physical storage क्रम the per-CPU IST stack of the #VC handler */
+	अक्षर ist_stack[EXCEPTION_STKSZ] __aligned(PAGE_SIZE);
 
 	/*
-	 * Physical storage for the per-CPU fall-back stack of the #VC handler.
-	 * The fall-back stack is used when it is not safe to switch back to the
-	 * interrupted stack in the #VC entry code.
+	 * Physical storage क्रम the per-CPU fall-back stack of the #VC handler.
+	 * The fall-back stack is used when it is not safe to चयन back to the
+	 * पूर्णांकerrupted stack in the #VC entry code.
 	 */
-	char fallback_stack[EXCEPTION_STKSZ] __aligned(PAGE_SIZE);
+	अक्षर fallback_stack[EXCEPTION_STKSZ] __aligned(PAGE_SIZE);
 
 	/*
-	 * Reserve one page per CPU as backup storage for the unencrypted GHCB.
-	 * It is needed when an NMI happens while the #VC handler uses the real
+	 * Reserve one page per CPU as backup storage क्रम the unencrypted GHCB.
+	 * It is needed when an NMI happens जबतक the #VC handler uses the real
 	 * GHCB, and the NMI handler itself is causing another #VC exception. In
-	 * that case the GHCB content of the first handler needs to be backed up
+	 * that हाल the GHCB content of the first handler needs to be backed up
 	 * and restored.
 	 */
-	struct ghcb backup_ghcb;
+	काष्ठा ghcb backup_ghcb;
 
 	/*
 	 * Mark the per-cpu GHCBs as in-use to detect nested #VC exceptions.
-	 * There is no need for it to be atomic, because nothing is written to
-	 * the GHCB between the read and the write of ghcb_active. So it is safe
-	 * to use it when a nested #VC exception happens before the write.
+	 * There is no need क्रम it to be atomic, because nothing is written to
+	 * the GHCB between the पढ़ो and the ग_लिखो of ghcb_active. So it is safe
+	 * to use it when a nested #VC exception happens beक्रमe the ग_लिखो.
 	 *
-	 * This is necessary for example in the #VC->NMI->#VC case when the NMI
-	 * happens while the first #VC handler uses the GHCB. When the NMI code
-	 * raises a second #VC handler it might overwrite the contents of the
-	 * GHCB written by the first handler. To avoid this the content of the
+	 * This is necessary क्रम example in the #VC->NMI->#VC हाल when the NMI
+	 * happens जबतक the first #VC handler uses the GHCB. When the NMI code
+	 * उठाओs a second #VC handler it might overग_लिखो the contents of the
+	 * GHCB written by the first handler. To aव्योम this the content of the
 	 * GHCB is saved and restored when the GHCB is detected to be in use
-	 * already.
+	 * alपढ़ोy.
 	 */
 	bool ghcb_active;
 	bool backup_ghcb_active;
 
 	/*
-	 * Cached DR7 value - write it on DR7 writes and return it on reads.
+	 * Cached DR7 value - ग_लिखो it on DR7 ग_लिखोs and वापस it on पढ़ोs.
 	 * That value will never make it to the real hardware DR7 as debugging
 	 * is currently unsupported in SEV-ES guests.
 	 */
-	unsigned long dr7;
-};
+	अचिन्हित दीर्घ dr7;
+पूर्ण;
 
-struct ghcb_state {
-	struct ghcb *ghcb;
-};
+काष्ठा ghcb_state अणु
+	काष्ठा ghcb *ghcb;
+पूर्ण;
 
-static DEFINE_PER_CPU(struct sev_es_runtime_data*, runtime_data);
+अटल DEFINE_PER_CPU(काष्ठा sev_es_runसमय_data*, runसमय_data);
 DEFINE_STATIC_KEY_FALSE(sev_es_enable_key);
 
-/* Needed in vc_early_forward_exception */
-void do_early_exception(struct pt_regs *regs, int trapnr);
+/* Needed in vc_early_क्रमward_exception */
+व्योम करो_early_exception(काष्ठा pt_regs *regs, पूर्णांक trapnr);
 
-static void __init setup_vc_stacks(int cpu)
-{
-	struct sev_es_runtime_data *data;
-	struct cpu_entry_area *cea;
-	unsigned long vaddr;
+अटल व्योम __init setup_vc_stacks(पूर्णांक cpu)
+अणु
+	काष्ठा sev_es_runसमय_data *data;
+	काष्ठा cpu_entry_area *cea;
+	अचिन्हित दीर्घ vaddr;
 	phys_addr_t pa;
 
-	data = per_cpu(runtime_data, cpu);
+	data = per_cpu(runसमय_data, cpu);
 	cea  = get_cpu_entry_area(cpu);
 
 	/* Map #VC IST stack */
 	vaddr = CEA_ESTACK_BOT(&cea->estacks, VC);
 	pa    = __pa(data->ist_stack);
-	cea_set_pte((void *)vaddr, pa, PAGE_KERNEL);
+	cea_set_pte((व्योम *)vaddr, pa, PAGE_KERNEL);
 
 	/* Map VC fall-back stack */
 	vaddr = CEA_ESTACK_BOT(&cea->estacks, VC2);
 	pa    = __pa(data->fallback_stack);
-	cea_set_pte((void *)vaddr, pa, PAGE_KERNEL);
-}
+	cea_set_pte((व्योम *)vaddr, pa, PAGE_KERNEL);
+पूर्ण
 
-static __always_inline bool on_vc_stack(struct pt_regs *regs)
-{
-	unsigned long sp = regs->sp;
+अटल __always_अंतरभूत bool on_vc_stack(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ sp = regs->sp;
 
 	/* User-mode RSP is not trusted */
-	if (user_mode(regs))
-		return false;
+	अगर (user_mode(regs))
+		वापस false;
 
 	/* SYSCALL gap still has user-mode RSP */
-	if (ip_within_syscall_gap(regs))
-		return false;
+	अगर (ip_within_syscall_gap(regs))
+		वापस false;
 
-	return ((sp >= __this_cpu_ist_bottom_va(VC)) && (sp < __this_cpu_ist_top_va(VC)));
-}
+	वापस ((sp >= __this_cpu_ist_bottom_va(VC)) && (sp < __this_cpu_ist_top_va(VC)));
+पूर्ण
 
 /*
- * This function handles the case when an NMI is raised in the #VC
- * exception handler entry code, before the #VC handler has switched off
- * its IST stack. In this case, the IST entry for #VC must be adjusted,
- * so that any nested #VC exception will not overwrite the stack
- * contents of the interrupted #VC handler.
+ * This function handles the हाल when an NMI is उठाओd in the #VC
+ * exception handler entry code, beक्रमe the #VC handler has चयनed off
+ * its IST stack. In this हाल, the IST entry क्रम #VC must be adjusted,
+ * so that any nested #VC exception will not overग_लिखो the stack
+ * contents of the पूर्णांकerrupted #VC handler.
  *
  * The IST entry is adjusted unconditionally so that it can be also be
- * unconditionally adjusted back in __sev_es_ist_exit(). Otherwise a
- * nested sev_es_ist_exit() call may adjust back the IST entry too
+ * unconditionally adjusted back in __sev_es_ist_निकास(). Otherwise a
+ * nested sev_es_ist_निकास() call may adjust back the IST entry too
  * early.
  *
- * The __sev_es_ist_enter() and __sev_es_ist_exit() functions always run
+ * The __sev_es_ist_enter() and __sev_es_ist_निकास() functions always run
  * on the NMI IST stack, as they are only called from NMI handling code
  * right now.
  */
-void noinstr __sev_es_ist_enter(struct pt_regs *regs)
-{
-	unsigned long old_ist, new_ist;
+व्योम noinstr __sev_es_ist_enter(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ old_ist, new_ist;
 
 	/* Read old IST entry */
-	new_ist = old_ist = __this_cpu_read(cpu_tss_rw.x86_tss.ist[IST_INDEX_VC]);
+	new_ist = old_ist = __this_cpu_पढ़ो(cpu_tss_rw.x86_tss.ist[IST_INDEX_VC]);
 
 	/*
-	 * If NMI happened while on the #VC IST stack, set the new IST
-	 * value below regs->sp, so that the interrupted stack frame is
+	 * If NMI happened जबतक on the #VC IST stack, set the new IST
+	 * value below regs->sp, so that the पूर्णांकerrupted stack frame is
 	 * not overwritten by subsequent #VC exceptions.
 	 */
-	if (on_vc_stack(regs))
+	अगर (on_vc_stack(regs))
 		new_ist = regs->sp;
 
 	/*
 	 * Reserve additional 8 bytes and store old IST value so this
-	 * adjustment can be unrolled in __sev_es_ist_exit().
+	 * adjusपंचांगent can be unrolled in __sev_es_ist_निकास().
 	 */
-	new_ist -= sizeof(old_ist);
-	*(unsigned long *)new_ist = old_ist;
+	new_ist -= माप(old_ist);
+	*(अचिन्हित दीर्घ *)new_ist = old_ist;
 
 	/* Set new IST entry */
-	this_cpu_write(cpu_tss_rw.x86_tss.ist[IST_INDEX_VC], new_ist);
-}
+	this_cpu_ग_लिखो(cpu_tss_rw.x86_tss.ist[IST_INDEX_VC], new_ist);
+पूर्ण
 
-void noinstr __sev_es_ist_exit(void)
-{
-	unsigned long ist;
+व्योम noinstr __sev_es_ist_निकास(व्योम)
+अणु
+	अचिन्हित दीर्घ ist;
 
 	/* Read IST entry */
-	ist = __this_cpu_read(cpu_tss_rw.x86_tss.ist[IST_INDEX_VC]);
+	ist = __this_cpu_पढ़ो(cpu_tss_rw.x86_tss.ist[IST_INDEX_VC]);
 
-	if (WARN_ON(ist == __this_cpu_ist_top_va(VC)))
-		return;
+	अगर (WARN_ON(ist == __this_cpu_ist_top_va(VC)))
+		वापस;
 
-	/* Read back old IST entry and write it to the TSS */
-	this_cpu_write(cpu_tss_rw.x86_tss.ist[IST_INDEX_VC], *(unsigned long *)ist);
-}
+	/* Read back old IST entry and ग_लिखो it to the TSS */
+	this_cpu_ग_लिखो(cpu_tss_rw.x86_tss.ist[IST_INDEX_VC], *(अचिन्हित दीर्घ *)ist);
+पूर्ण
 
-static __always_inline struct ghcb *sev_es_get_ghcb(struct ghcb_state *state)
-{
-	struct sev_es_runtime_data *data;
-	struct ghcb *ghcb;
+अटल __always_अंतरभूत काष्ठा ghcb *sev_es_get_ghcb(काष्ठा ghcb_state *state)
+अणु
+	काष्ठा sev_es_runसमय_data *data;
+	काष्ठा ghcb *ghcb;
 
-	data = this_cpu_read(runtime_data);
+	data = this_cpu_पढ़ो(runसमय_data);
 	ghcb = &data->ghcb_page;
 
-	if (unlikely(data->ghcb_active)) {
-		/* GHCB is already in use - save its contents */
+	अगर (unlikely(data->ghcb_active)) अणु
+		/* GHCB is alपढ़ोy in use - save its contents */
 
-		if (unlikely(data->backup_ghcb_active)) {
+		अगर (unlikely(data->backup_ghcb_active)) अणु
 			/*
-			 * Backup-GHCB is also already in use. There is no way
-			 * to continue here so just kill the machine. To make
+			 * Backup-GHCB is also alपढ़ोy in use. There is no way
+			 * to जारी here so just समाप्त the machine. To make
 			 * panic() work, mark GHCBs inactive so that messages
-			 * can be printed out.
+			 * can be prपूर्णांकed out.
 			 */
 			data->ghcb_active        = false;
 			data->backup_ghcb_active = false;
 
 			panic("Unable to handle #VC exception! GHCB and Backup GHCB are already in use");
-		}
+		पूर्ण
 
-		/* Mark backup_ghcb active before writing to it */
+		/* Mark backup_ghcb active beक्रमe writing to it */
 		data->backup_ghcb_active = true;
 
 		state->ghcb = &data->backup_ghcb;
 
 		/* Backup GHCB content */
 		*state->ghcb = *ghcb;
-	} else {
-		state->ghcb = NULL;
+	पूर्ण अन्यथा अणु
+		state->ghcb = शून्य;
 		data->ghcb_active = true;
-	}
+	पूर्ण
 
-	return ghcb;
-}
+	वापस ghcb;
+पूर्ण
 
-/* Needed in vc_early_forward_exception */
-void do_early_exception(struct pt_regs *regs, int trapnr);
+/* Needed in vc_early_क्रमward_exception */
+व्योम करो_early_exception(काष्ठा pt_regs *regs, पूर्णांक trapnr);
 
-static inline u64 sev_es_rd_ghcb_msr(void)
-{
-	return __rdmsr(MSR_AMD64_SEV_ES_GHCB);
-}
+अटल अंतरभूत u64 sev_es_rd_ghcb_msr(व्योम)
+अणु
+	वापस __rdmsr(MSR_AMD64_SEV_ES_GHCB);
+पूर्ण
 
-static __always_inline void sev_es_wr_ghcb_msr(u64 val)
-{
+अटल __always_अंतरभूत व्योम sev_es_wr_ghcb_msr(u64 val)
+अणु
 	u32 low, high;
 
 	low  = (u32)(val);
 	high = (u32)(val >> 32);
 
 	native_wrmsr(MSR_AMD64_SEV_ES_GHCB, low, high);
-}
+पूर्ण
 
-static int vc_fetch_insn_kernel(struct es_em_ctxt *ctxt,
-				unsigned char *buffer)
-{
-	return copy_from_kernel_nofault(buffer, (unsigned char *)ctxt->regs->ip, MAX_INSN_SIZE);
-}
+अटल पूर्णांक vc_fetch_insn_kernel(काष्ठा es_em_ctxt *ctxt,
+				अचिन्हित अक्षर *buffer)
+अणु
+	वापस copy_from_kernel_nofault(buffer, (अचिन्हित अक्षर *)ctxt->regs->ip, MAX_INSN_SIZE);
+पूर्ण
 
-static enum es_result __vc_decode_user_insn(struct es_em_ctxt *ctxt)
-{
-	char buffer[MAX_INSN_SIZE];
-	int res;
+अटल क्रमागत es_result __vc_decode_user_insn(काष्ठा es_em_ctxt *ctxt)
+अणु
+	अक्षर buffer[MAX_INSN_SIZE];
+	पूर्णांक res;
 
 	res = insn_fetch_from_user_inatomic(ctxt->regs, buffer);
-	if (!res) {
+	अगर (!res) अणु
 		ctxt->fi.vector     = X86_TRAP_PF;
 		ctxt->fi.error_code = X86_PF_INSTR | X86_PF_USER;
 		ctxt->fi.cr2        = ctxt->regs->ip;
-		return ES_EXCEPTION;
-	}
+		वापस ES_EXCEPTION;
+	पूर्ण
 
-	if (!insn_decode_from_regs(&ctxt->insn, ctxt->regs, buffer, res))
-		return ES_DECODE_FAILED;
+	अगर (!insn_decode_from_regs(&ctxt->insn, ctxt->regs, buffer, res))
+		वापस ES_DECODE_FAILED;
 
-	if (ctxt->insn.immediate.got)
-		return ES_OK;
-	else
-		return ES_DECODE_FAILED;
-}
+	अगर (ctxt->insn.immediate.got)
+		वापस ES_OK;
+	अन्यथा
+		वापस ES_DECODE_FAILED;
+पूर्ण
 
-static enum es_result __vc_decode_kern_insn(struct es_em_ctxt *ctxt)
-{
-	char buffer[MAX_INSN_SIZE];
-	int res, ret;
+अटल क्रमागत es_result __vc_decode_kern_insn(काष्ठा es_em_ctxt *ctxt)
+अणु
+	अक्षर buffer[MAX_INSN_SIZE];
+	पूर्णांक res, ret;
 
 	res = vc_fetch_insn_kernel(ctxt, buffer);
-	if (res) {
+	अगर (res) अणु
 		ctxt->fi.vector     = X86_TRAP_PF;
 		ctxt->fi.error_code = X86_PF_INSTR;
 		ctxt->fi.cr2        = ctxt->regs->ip;
-		return ES_EXCEPTION;
-	}
+		वापस ES_EXCEPTION;
+	पूर्ण
 
 	ret = insn_decode(&ctxt->insn, buffer, MAX_INSN_SIZE, INSN_MODE_64);
-	if (ret < 0)
-		return ES_DECODE_FAILED;
-	else
-		return ES_OK;
-}
+	अगर (ret < 0)
+		वापस ES_DECODE_FAILED;
+	अन्यथा
+		वापस ES_OK;
+पूर्ण
 
-static enum es_result vc_decode_insn(struct es_em_ctxt *ctxt)
-{
-	if (user_mode(ctxt->regs))
-		return __vc_decode_user_insn(ctxt);
-	else
-		return __vc_decode_kern_insn(ctxt);
-}
+अटल क्रमागत es_result vc_decode_insn(काष्ठा es_em_ctxt *ctxt)
+अणु
+	अगर (user_mode(ctxt->regs))
+		वापस __vc_decode_user_insn(ctxt);
+	अन्यथा
+		वापस __vc_decode_kern_insn(ctxt);
+पूर्ण
 
-static enum es_result vc_write_mem(struct es_em_ctxt *ctxt,
-				   char *dst, char *buf, size_t size)
-{
-	unsigned long error_code = X86_PF_PROT | X86_PF_WRITE;
-	char __user *target = (char __user *)dst;
+अटल क्रमागत es_result vc_ग_लिखो_mem(काष्ठा es_em_ctxt *ctxt,
+				   अक्षर *dst, अक्षर *buf, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ error_code = X86_PF_PROT | X86_PF_WRITE;
+	अक्षर __user *target = (अक्षर __user *)dst;
 	u64 d8;
 	u32 d4;
 	u16 d2;
@@ -317,8 +318,8 @@ static enum es_result vc_write_mem(struct es_em_ctxt *ctxt,
 
 	/*
 	 * This function uses __put_user() independent of whether kernel or user
-	 * memory is accessed. This works fine because __put_user() does no
-	 * sanity checks of the pointer being accessed. All that it does is
+	 * memory is accessed. This works fine because __put_user() करोes no
+	 * sanity checks of the poपूर्णांकer being accessed. All that it करोes is
 	 * to report when the access failed.
 	 *
 	 * Also, this function runs in atomic context, so __put_user() is not
@@ -327,57 +328,57 @@ static enum es_result vc_write_mem(struct es_em_ctxt *ctxt,
 	 * fault, so additional pagefault_enable()/disable() calls are not
 	 * needed.
 	 *
-	 * The access can't be done via copy_to_user() here because
-	 * vc_write_mem() must not use string instructions to access unsafe
+	 * The access can't be करोne via copy_to_user() here because
+	 * vc_ग_लिखो_mem() must not use string inकाष्ठाions to access unsafe
 	 * memory. The reason is that MOVS is emulated by the #VC handler by
-	 * splitting the move up into a read and a write and taking a nested #VC
+	 * splitting the move up पूर्णांकo a पढ़ो and a ग_लिखो and taking a nested #VC
 	 * exception on whatever of them is the MMIO access. Using string
-	 * instructions here would cause infinite nesting.
+	 * inकाष्ठाions here would cause infinite nesting.
 	 */
-	switch (size) {
-	case 1:
-		memcpy(&d1, buf, 1);
-		if (__put_user(d1, target))
-			goto fault;
-		break;
-	case 2:
-		memcpy(&d2, buf, 2);
-		if (__put_user(d2, target))
-			goto fault;
-		break;
-	case 4:
-		memcpy(&d4, buf, 4);
-		if (__put_user(d4, target))
-			goto fault;
-		break;
-	case 8:
-		memcpy(&d8, buf, 8);
-		if (__put_user(d8, target))
-			goto fault;
-		break;
-	default:
+	चयन (size) अणु
+	हाल 1:
+		स_नकल(&d1, buf, 1);
+		अगर (__put_user(d1, target))
+			जाओ fault;
+		अवरोध;
+	हाल 2:
+		स_नकल(&d2, buf, 2);
+		अगर (__put_user(d2, target))
+			जाओ fault;
+		अवरोध;
+	हाल 4:
+		स_नकल(&d4, buf, 4);
+		अगर (__put_user(d4, target))
+			जाओ fault;
+		अवरोध;
+	हाल 8:
+		स_नकल(&d8, buf, 8);
+		अगर (__put_user(d8, target))
+			जाओ fault;
+		अवरोध;
+	शेष:
 		WARN_ONCE(1, "%s: Invalid size: %zu\n", __func__, size);
-		return ES_UNSUPPORTED;
-	}
+		वापस ES_UNSUPPORTED;
+	पूर्ण
 
-	return ES_OK;
+	वापस ES_OK;
 
 fault:
-	if (user_mode(ctxt->regs))
+	अगर (user_mode(ctxt->regs))
 		error_code |= X86_PF_USER;
 
 	ctxt->fi.vector = X86_TRAP_PF;
 	ctxt->fi.error_code = error_code;
-	ctxt->fi.cr2 = (unsigned long)dst;
+	ctxt->fi.cr2 = (अचिन्हित दीर्घ)dst;
 
-	return ES_EXCEPTION;
-}
+	वापस ES_EXCEPTION;
+पूर्ण
 
-static enum es_result vc_read_mem(struct es_em_ctxt *ctxt,
-				  char *src, char *buf, size_t size)
-{
-	unsigned long error_code = X86_PF_PROT;
-	char __user *s = (char __user *)src;
+अटल क्रमागत es_result vc_पढ़ो_mem(काष्ठा es_em_ctxt *ctxt,
+				  अक्षर *src, अक्षर *buf, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ error_code = X86_PF_PROT;
+	अक्षर __user *s = (अक्षर __user *)src;
 	u64 d8;
 	u32 d4;
 	u16 d2;
@@ -385,8 +386,8 @@ static enum es_result vc_read_mem(struct es_em_ctxt *ctxt,
 
 	/*
 	 * This function uses __get_user() independent of whether kernel or user
-	 * memory is accessed. This works fine because __get_user() does no
-	 * sanity checks of the pointer being accessed. All that it does is
+	 * memory is accessed. This works fine because __get_user() करोes no
+	 * sanity checks of the poपूर्णांकer being accessed. All that it करोes is
 	 * to report when the access failed.
 	 *
 	 * Also, this function runs in atomic context, so __get_user() is not
@@ -395,136 +396,136 @@ static enum es_result vc_read_mem(struct es_em_ctxt *ctxt,
 	 * fault, so additional pagefault_enable()/disable() calls are not
 	 * needed.
 	 *
-	 * The access can't be done via copy_from_user() here because
-	 * vc_read_mem() must not use string instructions to access unsafe
+	 * The access can't be करोne via copy_from_user() here because
+	 * vc_पढ़ो_mem() must not use string inकाष्ठाions to access unsafe
 	 * memory. The reason is that MOVS is emulated by the #VC handler by
-	 * splitting the move up into a read and a write and taking a nested #VC
+	 * splitting the move up पूर्णांकo a पढ़ो and a ग_लिखो and taking a nested #VC
 	 * exception on whatever of them is the MMIO access. Using string
-	 * instructions here would cause infinite nesting.
+	 * inकाष्ठाions here would cause infinite nesting.
 	 */
-	switch (size) {
-	case 1:
-		if (__get_user(d1, s))
-			goto fault;
-		memcpy(buf, &d1, 1);
-		break;
-	case 2:
-		if (__get_user(d2, s))
-			goto fault;
-		memcpy(buf, &d2, 2);
-		break;
-	case 4:
-		if (__get_user(d4, s))
-			goto fault;
-		memcpy(buf, &d4, 4);
-		break;
-	case 8:
-		if (__get_user(d8, s))
-			goto fault;
-		memcpy(buf, &d8, 8);
-		break;
-	default:
+	चयन (size) अणु
+	हाल 1:
+		अगर (__get_user(d1, s))
+			जाओ fault;
+		स_नकल(buf, &d1, 1);
+		अवरोध;
+	हाल 2:
+		अगर (__get_user(d2, s))
+			जाओ fault;
+		स_नकल(buf, &d2, 2);
+		अवरोध;
+	हाल 4:
+		अगर (__get_user(d4, s))
+			जाओ fault;
+		स_नकल(buf, &d4, 4);
+		अवरोध;
+	हाल 8:
+		अगर (__get_user(d8, s))
+			जाओ fault;
+		स_नकल(buf, &d8, 8);
+		अवरोध;
+	शेष:
 		WARN_ONCE(1, "%s: Invalid size: %zu\n", __func__, size);
-		return ES_UNSUPPORTED;
-	}
+		वापस ES_UNSUPPORTED;
+	पूर्ण
 
-	return ES_OK;
+	वापस ES_OK;
 
 fault:
-	if (user_mode(ctxt->regs))
+	अगर (user_mode(ctxt->regs))
 		error_code |= X86_PF_USER;
 
 	ctxt->fi.vector = X86_TRAP_PF;
 	ctxt->fi.error_code = error_code;
-	ctxt->fi.cr2 = (unsigned long)src;
+	ctxt->fi.cr2 = (अचिन्हित दीर्घ)src;
 
-	return ES_EXCEPTION;
-}
+	वापस ES_EXCEPTION;
+पूर्ण
 
-static enum es_result vc_slow_virt_to_phys(struct ghcb *ghcb, struct es_em_ctxt *ctxt,
-					   unsigned long vaddr, phys_addr_t *paddr)
-{
-	unsigned long va = (unsigned long)vaddr;
-	unsigned int level;
+अटल क्रमागत es_result vc_slow_virt_to_phys(काष्ठा ghcb *ghcb, काष्ठा es_em_ctxt *ctxt,
+					   अचिन्हित दीर्घ vaddr, phys_addr_t *paddr)
+अणु
+	अचिन्हित दीर्घ va = (अचिन्हित दीर्घ)vaddr;
+	अचिन्हित पूर्णांक level;
 	phys_addr_t pa;
 	pgd_t *pgd;
 	pte_t *pte;
 
-	pgd = __va(read_cr3_pa());
+	pgd = __va(पढ़ो_cr3_pa());
 	pgd = &pgd[pgd_index(va)];
 	pte = lookup_address_in_pgd(pgd, va, &level);
-	if (!pte) {
+	अगर (!pte) अणु
 		ctxt->fi.vector     = X86_TRAP_PF;
 		ctxt->fi.cr2        = vaddr;
 		ctxt->fi.error_code = 0;
 
-		if (user_mode(ctxt->regs))
+		अगर (user_mode(ctxt->regs))
 			ctxt->fi.error_code |= X86_PF_USER;
 
-		return ES_EXCEPTION;
-	}
+		वापस ES_EXCEPTION;
+	पूर्ण
 
-	if (WARN_ON_ONCE(pte_val(*pte) & _PAGE_ENC))
+	अगर (WARN_ON_ONCE(pte_val(*pte) & _PAGE_ENC))
 		/* Emulated MMIO to/from encrypted memory not supported */
-		return ES_UNSUPPORTED;
+		वापस ES_UNSUPPORTED;
 
 	pa = (phys_addr_t)pte_pfn(*pte) << PAGE_SHIFT;
 	pa |= va & ~page_level_mask(level);
 
 	*paddr = pa;
 
-	return ES_OK;
-}
+	वापस ES_OK;
+पूर्ण
 
 /* Include code shared with pre-decompression boot stage */
-#include "sev-shared.c"
+#समावेश "sev-shared.c"
 
-static __always_inline void sev_es_put_ghcb(struct ghcb_state *state)
-{
-	struct sev_es_runtime_data *data;
-	struct ghcb *ghcb;
+अटल __always_अंतरभूत व्योम sev_es_put_ghcb(काष्ठा ghcb_state *state)
+अणु
+	काष्ठा sev_es_runसमय_data *data;
+	काष्ठा ghcb *ghcb;
 
-	data = this_cpu_read(runtime_data);
+	data = this_cpu_पढ़ो(runसमय_data);
 	ghcb = &data->ghcb_page;
 
-	if (state->ghcb) {
+	अगर (state->ghcb) अणु
 		/* Restore GHCB from Backup */
 		*ghcb = *state->ghcb;
 		data->backup_ghcb_active = false;
-		state->ghcb = NULL;
-	} else {
+		state->ghcb = शून्य;
+	पूर्ण अन्यथा अणु
 		/*
-		 * Invalidate the GHCB so a VMGEXIT instruction issued
+		 * Invalidate the GHCB so a VMGEXIT inकाष्ठाion issued
 		 * from userspace won't appear to be valid.
 		 */
 		vc_ghcb_invalidate(ghcb);
 		data->ghcb_active = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void noinstr __sev_es_nmi_complete(void)
-{
-	struct ghcb_state state;
-	struct ghcb *ghcb;
+व्योम noinstr __sev_es_nmi_complete(व्योम)
+अणु
+	काष्ठा ghcb_state state;
+	काष्ठा ghcb *ghcb;
 
 	ghcb = sev_es_get_ghcb(&state);
 
 	vc_ghcb_invalidate(ghcb);
-	ghcb_set_sw_exit_code(ghcb, SVM_VMGEXIT_NMI_COMPLETE);
-	ghcb_set_sw_exit_info_1(ghcb, 0);
-	ghcb_set_sw_exit_info_2(ghcb, 0);
+	ghcb_set_sw_निकास_code(ghcb, SVM_VMGEXIT_NMI_COMPLETE);
+	ghcb_set_sw_निकास_info_1(ghcb, 0);
+	ghcb_set_sw_निकास_info_2(ghcb, 0);
 
 	sev_es_wr_ghcb_msr(__pa_nodebug(ghcb));
 	VMGEXIT();
 
 	sev_es_put_ghcb(&state);
-}
+पूर्ण
 
-static u64 get_jump_table_addr(void)
-{
-	struct ghcb_state state;
-	unsigned long flags;
-	struct ghcb *ghcb;
+अटल u64 get_jump_table_addr(व्योम)
+अणु
+	काष्ठा ghcb_state state;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ghcb *ghcb;
 	u64 ret = 0;
 
 	local_irq_save(flags);
@@ -532,26 +533,26 @@ static u64 get_jump_table_addr(void)
 	ghcb = sev_es_get_ghcb(&state);
 
 	vc_ghcb_invalidate(ghcb);
-	ghcb_set_sw_exit_code(ghcb, SVM_VMGEXIT_AP_JUMP_TABLE);
-	ghcb_set_sw_exit_info_1(ghcb, SVM_VMGEXIT_GET_AP_JUMP_TABLE);
-	ghcb_set_sw_exit_info_2(ghcb, 0);
+	ghcb_set_sw_निकास_code(ghcb, SVM_VMGEXIT_AP_JUMP_TABLE);
+	ghcb_set_sw_निकास_info_1(ghcb, SVM_VMGEXIT_GET_AP_JUMP_TABLE);
+	ghcb_set_sw_निकास_info_2(ghcb, 0);
 
 	sev_es_wr_ghcb_msr(__pa(ghcb));
 	VMGEXIT();
 
-	if (ghcb_sw_exit_info_1_is_valid(ghcb) &&
-	    ghcb_sw_exit_info_2_is_valid(ghcb))
-		ret = ghcb->save.sw_exit_info_2;
+	अगर (ghcb_sw_निकास_info_1_is_valid(ghcb) &&
+	    ghcb_sw_निकास_info_2_is_valid(ghcb))
+		ret = ghcb->save.sw_निकास_info_2;
 
 	sev_es_put_ghcb(&state);
 
 	local_irq_restore(flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
-{
+पूर्णांक sev_es_setup_ap_jump_table(काष्ठा real_mode_header *rmh)
+अणु
 	u16 startup_cs, startup_ip;
 	phys_addr_t jump_table_pa;
 	u64 jump_table_addr;
@@ -560,12 +561,12 @@ int sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
 	jump_table_addr = get_jump_table_addr();
 
 	/* On UP guests there is no jump table so this is not a failure */
-	if (!jump_table_addr)
-		return 0;
+	अगर (!jump_table_addr)
+		वापस 0;
 
-	/* Check if AP Jump Table is page-aligned */
-	if (jump_table_addr & ~PAGE_MASK)
-		return -EINVAL;
+	/* Check अगर AP Jump Table is page-aligned */
+	अगर (jump_table_addr & ~PAGE_MASK)
+		वापस -EINVAL;
 
 	jump_table_pa = jump_table_addr & PAGE_MASK;
 
@@ -574,119 +575,119 @@ int sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
 			   rmh->trampoline_start);
 
 	jump_table = ioremap_encrypted(jump_table_pa, PAGE_SIZE);
-	if (!jump_table)
-		return -EIO;
+	अगर (!jump_table)
+		वापस -EIO;
 
-	writew(startup_ip, &jump_table[0]);
-	writew(startup_cs, &jump_table[1]);
+	ग_लिखोw(startup_ip, &jump_table[0]);
+	ग_लिखोw(startup_cs, &jump_table[1]);
 
 	iounmap(jump_table);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This is needed by the OVMF UEFI firmware which will use whatever it finds in
  * the GHCB MSR as its GHCB to talk to the hypervisor. So make sure the per-cpu
- * runtime GHCBs used by the kernel are also mapped in the EFI page-table.
+ * runसमय GHCBs used by the kernel are also mapped in the EFI page-table.
  */
-int __init sev_es_efi_map_ghcbs(pgd_t *pgd)
-{
-	struct sev_es_runtime_data *data;
-	unsigned long address, pflags;
-	int cpu;
+पूर्णांक __init sev_es_efi_map_ghcbs(pgd_t *pgd)
+अणु
+	काष्ठा sev_es_runसमय_data *data;
+	अचिन्हित दीर्घ address, pflags;
+	पूर्णांक cpu;
 	u64 pfn;
 
-	if (!sev_es_active())
-		return 0;
+	अगर (!sev_es_active())
+		वापस 0;
 
 	pflags = _PAGE_NX | _PAGE_RW;
 
-	for_each_possible_cpu(cpu) {
-		data = per_cpu(runtime_data, cpu);
+	क्रम_each_possible_cpu(cpu) अणु
+		data = per_cpu(runसमय_data, cpu);
 
 		address = __pa(&data->ghcb_page);
 		pfn = address >> PAGE_SHIFT;
 
-		if (kernel_map_pages_in_pgd(pgd, pfn, address, 1, pflags))
-			return 1;
-	}
+		अगर (kernel_map_pages_in_pgd(pgd, pfn, address, 1, pflags))
+			वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum es_result vc_handle_msr(struct ghcb *ghcb, struct es_em_ctxt *ctxt)
-{
-	struct pt_regs *regs = ctxt->regs;
-	enum es_result ret;
-	u64 exit_info_1;
+अटल क्रमागत es_result vc_handle_msr(काष्ठा ghcb *ghcb, काष्ठा es_em_ctxt *ctxt)
+अणु
+	काष्ठा pt_regs *regs = ctxt->regs;
+	क्रमागत es_result ret;
+	u64 निकास_info_1;
 
 	/* Is it a WRMSR? */
-	exit_info_1 = (ctxt->insn.opcode.bytes[1] == 0x30) ? 1 : 0;
+	निकास_info_1 = (ctxt->insn.opcode.bytes[1] == 0x30) ? 1 : 0;
 
 	ghcb_set_rcx(ghcb, regs->cx);
-	if (exit_info_1) {
+	अगर (निकास_info_1) अणु
 		ghcb_set_rax(ghcb, regs->ax);
 		ghcb_set_rdx(ghcb, regs->dx);
-	}
+	पूर्ण
 
-	ret = sev_es_ghcb_hv_call(ghcb, ctxt, SVM_EXIT_MSR, exit_info_1, 0);
+	ret = sev_es_ghcb_hv_call(ghcb, ctxt, SVM_EXIT_MSR, निकास_info_1, 0);
 
-	if ((ret == ES_OK) && (!exit_info_1)) {
+	अगर ((ret == ES_OK) && (!निकास_info_1)) अणु
 		regs->ax = ghcb->save.rax;
 		regs->dx = ghcb->save.rdx;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This function runs on the first #VC exception after the kernel
- * switched to virtual addresses.
+ * चयनed to भव addresses.
  */
-static bool __init sev_es_setup_ghcb(void)
-{
+अटल bool __init sev_es_setup_ghcb(व्योम)
+अणु
 	/* First make sure the hypervisor talks a supported protocol. */
-	if (!sev_es_negotiate_protocol())
-		return false;
+	अगर (!sev_es_negotiate_protocol())
+		वापस false;
 
 	/*
-	 * Clear the boot_ghcb. The first exception comes in before the bss
+	 * Clear the boot_ghcb. The first exception comes in beक्रमe the bss
 	 * section is cleared.
 	 */
-	memset(&boot_ghcb_page, 0, PAGE_SIZE);
+	स_रखो(&boot_ghcb_page, 0, PAGE_SIZE);
 
-	/* Alright - Make the boot-ghcb public */
+	/* Alright - Make the boot-ghcb खुला */
 	boot_ghcb = &boot_ghcb_page;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-static void sev_es_ap_hlt_loop(void)
-{
-	struct ghcb_state state;
-	struct ghcb *ghcb;
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अटल व्योम sev_es_ap_hlt_loop(व्योम)
+अणु
+	काष्ठा ghcb_state state;
+	काष्ठा ghcb *ghcb;
 
 	ghcb = sev_es_get_ghcb(&state);
 
-	while (true) {
+	जबतक (true) अणु
 		vc_ghcb_invalidate(ghcb);
-		ghcb_set_sw_exit_code(ghcb, SVM_VMGEXIT_AP_HLT_LOOP);
-		ghcb_set_sw_exit_info_1(ghcb, 0);
-		ghcb_set_sw_exit_info_2(ghcb, 0);
+		ghcb_set_sw_निकास_code(ghcb, SVM_VMGEXIT_AP_HLT_LOOP);
+		ghcb_set_sw_निकास_info_1(ghcb, 0);
+		ghcb_set_sw_निकास_info_2(ghcb, 0);
 
 		sev_es_wr_ghcb_msr(__pa(ghcb));
 		VMGEXIT();
 
-		/* Wakeup signal? */
-		if (ghcb_sw_exit_info_2_is_valid(ghcb) &&
-		    ghcb->save.sw_exit_info_2)
-			break;
-	}
+		/* Wakeup संकेत? */
+		अगर (ghcb_sw_निकास_info_2_is_valid(ghcb) &&
+		    ghcb->save.sw_निकास_info_2)
+			अवरोध;
+	पूर्ण
 
 	sev_es_put_ghcb(&state);
-}
+पूर्ण
 
 /*
  * Play_dead handler when running under SEV-ES. This is needed because
@@ -694,8 +695,8 @@ static void sev_es_ap_hlt_loop(void)
  * Instead the kernel has to issue a VMGEXIT to halt the VCPU until the
  * hypervisor wakes it up again.
  */
-static void sev_es_play_dead(void)
-{
+अटल व्योम sev_es_play_dead(व्योम)
+अणु
 	play_dead_common();
 
 	/* IRQs now disabled */
@@ -707,649 +708,649 @@ static void sev_es_play_dead(void)
 	 * startup code to get it back online.
 	 */
 	start_cpu0();
-}
-#else  /* CONFIG_HOTPLUG_CPU */
-#define sev_es_play_dead	native_play_dead
-#endif /* CONFIG_HOTPLUG_CPU */
+पूर्ण
+#अन्यथा  /* CONFIG_HOTPLUG_CPU */
+#घोषणा sev_es_play_dead	native_play_dead
+#पूर्ण_अगर /* CONFIG_HOTPLUG_CPU */
 
-#ifdef CONFIG_SMP
-static void __init sev_es_setup_play_dead(void)
-{
+#अगर_घोषित CONFIG_SMP
+अटल व्योम __init sev_es_setup_play_dead(व्योम)
+अणु
 	smp_ops.play_dead = sev_es_play_dead;
-}
-#else
-static inline void sev_es_setup_play_dead(void) { }
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम sev_es_setup_play_dead(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-static void __init alloc_runtime_data(int cpu)
-{
-	struct sev_es_runtime_data *data;
+अटल व्योम __init alloc_runसमय_data(पूर्णांक cpu)
+अणु
+	काष्ठा sev_es_runसमय_data *data;
 
-	data = memblock_alloc(sizeof(*data), PAGE_SIZE);
-	if (!data)
+	data = memblock_alloc(माप(*data), PAGE_SIZE);
+	अगर (!data)
 		panic("Can't allocate SEV-ES runtime data");
 
-	per_cpu(runtime_data, cpu) = data;
-}
+	per_cpu(runसमय_data, cpu) = data;
+पूर्ण
 
-static void __init init_ghcb(int cpu)
-{
-	struct sev_es_runtime_data *data;
-	int err;
+अटल व्योम __init init_ghcb(पूर्णांक cpu)
+अणु
+	काष्ठा sev_es_runसमय_data *data;
+	पूर्णांक err;
 
-	data = per_cpu(runtime_data, cpu);
+	data = per_cpu(runसमय_data, cpu);
 
-	err = early_set_memory_decrypted((unsigned long)&data->ghcb_page,
-					 sizeof(data->ghcb_page));
-	if (err)
+	err = early_set_memory_decrypted((अचिन्हित दीर्घ)&data->ghcb_page,
+					 माप(data->ghcb_page));
+	अगर (err)
 		panic("Can't map GHCBs unencrypted");
 
-	memset(&data->ghcb_page, 0, sizeof(data->ghcb_page));
+	स_रखो(&data->ghcb_page, 0, माप(data->ghcb_page));
 
 	data->ghcb_active = false;
 	data->backup_ghcb_active = false;
-}
+पूर्ण
 
-void __init sev_es_init_vc_handling(void)
-{
-	int cpu;
+व्योम __init sev_es_init_vc_handling(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	BUILD_BUG_ON(offsetof(struct sev_es_runtime_data, ghcb_page) % PAGE_SIZE);
+	BUILD_BUG_ON(दुरत्व(काष्ठा sev_es_runसमय_data, ghcb_page) % PAGE_SIZE);
 
-	if (!sev_es_active())
-		return;
+	अगर (!sev_es_active())
+		वापस;
 
-	if (!sev_es_check_cpu_features())
+	अगर (!sev_es_check_cpu_features())
 		panic("SEV-ES CPU Features missing");
 
 	/* Enable SEV-ES special handling */
-	static_branch_enable(&sev_es_enable_key);
+	अटल_branch_enable(&sev_es_enable_key);
 
 	/* Initialize per-cpu GHCB pages */
-	for_each_possible_cpu(cpu) {
-		alloc_runtime_data(cpu);
+	क्रम_each_possible_cpu(cpu) अणु
+		alloc_runसमय_data(cpu);
 		init_ghcb(cpu);
 		setup_vc_stacks(cpu);
-	}
+	पूर्ण
 
 	sev_es_setup_play_dead();
 
-	/* Secondary CPUs use the runtime #VC handler */
-	initial_vc_handler = (unsigned long)safe_stack_exc_vmm_communication;
-}
+	/* Secondary CPUs use the runसमय #VC handler */
+	initial_vc_handler = (अचिन्हित दीर्घ)safe_stack_exc_vmm_communication;
+पूर्ण
 
-static void __init vc_early_forward_exception(struct es_em_ctxt *ctxt)
-{
-	int trapnr = ctxt->fi.vector;
+अटल व्योम __init vc_early_क्रमward_exception(काष्ठा es_em_ctxt *ctxt)
+अणु
+	पूर्णांक trapnr = ctxt->fi.vector;
 
-	if (trapnr == X86_TRAP_PF)
-		native_write_cr2(ctxt->fi.cr2);
+	अगर (trapnr == X86_TRAP_PF)
+		native_ग_लिखो_cr2(ctxt->fi.cr2);
 
 	ctxt->regs->orig_ax = ctxt->fi.error_code;
-	do_early_exception(ctxt->regs, trapnr);
-}
+	करो_early_exception(ctxt->regs, trapnr);
+पूर्ण
 
-static long *vc_insn_get_reg(struct es_em_ctxt *ctxt)
-{
-	long *reg_array;
-	int offset;
+अटल दीर्घ *vc_insn_get_reg(काष्ठा es_em_ctxt *ctxt)
+अणु
+	दीर्घ *reg_array;
+	पूर्णांक offset;
 
-	reg_array = (long *)ctxt->regs;
+	reg_array = (दीर्घ *)ctxt->regs;
 	offset    = insn_get_modrm_reg_off(&ctxt->insn, ctxt->regs);
 
-	if (offset < 0)
-		return NULL;
+	अगर (offset < 0)
+		वापस शून्य;
 
-	offset /= sizeof(long);
+	offset /= माप(दीर्घ);
 
-	return reg_array + offset;
-}
+	वापस reg_array + offset;
+पूर्ण
 
-static long *vc_insn_get_rm(struct es_em_ctxt *ctxt)
-{
-	long *reg_array;
-	int offset;
+अटल दीर्घ *vc_insn_get_rm(काष्ठा es_em_ctxt *ctxt)
+अणु
+	दीर्घ *reg_array;
+	पूर्णांक offset;
 
-	reg_array = (long *)ctxt->regs;
+	reg_array = (दीर्घ *)ctxt->regs;
 	offset    = insn_get_modrm_rm_off(&ctxt->insn, ctxt->regs);
 
-	if (offset < 0)
-		return NULL;
+	अगर (offset < 0)
+		वापस शून्य;
 
-	offset /= sizeof(long);
+	offset /= माप(दीर्घ);
 
-	return reg_array + offset;
-}
-static enum es_result vc_do_mmio(struct ghcb *ghcb, struct es_em_ctxt *ctxt,
-				 unsigned int bytes, bool read)
-{
-	u64 exit_code, exit_info_1, exit_info_2;
-	unsigned long ghcb_pa = __pa(ghcb);
-	enum es_result res;
+	वापस reg_array + offset;
+पूर्ण
+अटल क्रमागत es_result vc_करो_mmio(काष्ठा ghcb *ghcb, काष्ठा es_em_ctxt *ctxt,
+				 अचिन्हित पूर्णांक bytes, bool पढ़ो)
+अणु
+	u64 निकास_code, निकास_info_1, निकास_info_2;
+	अचिन्हित दीर्घ ghcb_pa = __pa(ghcb);
+	क्रमागत es_result res;
 	phys_addr_t paddr;
-	void __user *ref;
+	व्योम __user *ref;
 
 	ref = insn_get_addr_ref(&ctxt->insn, ctxt->regs);
-	if (ref == (void __user *)-1L)
-		return ES_UNSUPPORTED;
+	अगर (ref == (व्योम __user *)-1L)
+		वापस ES_UNSUPPORTED;
 
-	exit_code = read ? SVM_VMGEXIT_MMIO_READ : SVM_VMGEXIT_MMIO_WRITE;
+	निकास_code = पढ़ो ? SVM_VMGEXIT_MMIO_READ : SVM_VMGEXIT_MMIO_WRITE;
 
-	res = vc_slow_virt_to_phys(ghcb, ctxt, (unsigned long)ref, &paddr);
-	if (res != ES_OK) {
-		if (res == ES_EXCEPTION && !read)
+	res = vc_slow_virt_to_phys(ghcb, ctxt, (अचिन्हित दीर्घ)ref, &paddr);
+	अगर (res != ES_OK) अणु
+		अगर (res == ES_EXCEPTION && !पढ़ो)
 			ctxt->fi.error_code |= X86_PF_WRITE;
 
-		return res;
-	}
+		वापस res;
+	पूर्ण
 
-	exit_info_1 = paddr;
+	निकास_info_1 = paddr;
 	/* Can never be greater than 8 */
-	exit_info_2 = bytes;
+	निकास_info_2 = bytes;
 
-	ghcb_set_sw_scratch(ghcb, ghcb_pa + offsetof(struct ghcb, shared_buffer));
+	ghcb_set_sw_scratch(ghcb, ghcb_pa + दुरत्व(काष्ठा ghcb, shared_buffer));
 
-	return sev_es_ghcb_hv_call(ghcb, ctxt, exit_code, exit_info_1, exit_info_2);
-}
+	वापस sev_es_ghcb_hv_call(ghcb, ctxt, निकास_code, निकास_info_1, निकास_info_2);
+पूर्ण
 
-static enum es_result vc_handle_mmio_twobyte_ops(struct ghcb *ghcb,
-						 struct es_em_ctxt *ctxt)
-{
-	struct insn *insn = &ctxt->insn;
-	unsigned int bytes = 0;
-	enum es_result ret;
-	int sign_byte;
-	long *reg_data;
+अटल क्रमागत es_result vc_handle_mmio_twobyte_ops(काष्ठा ghcb *ghcb,
+						 काष्ठा es_em_ctxt *ctxt)
+अणु
+	काष्ठा insn *insn = &ctxt->insn;
+	अचिन्हित पूर्णांक bytes = 0;
+	क्रमागत es_result ret;
+	पूर्णांक sign_byte;
+	दीर्घ *reg_data;
 
-	switch (insn->opcode.bytes[1]) {
+	चयन (insn->opcode.bytes[1]) अणु
 		/* MMIO Read w/ zero-extension */
-	case 0xb6:
+	हाल 0xb6:
 		bytes = 1;
 		fallthrough;
-	case 0xb7:
-		if (!bytes)
+	हाल 0xb7:
+		अगर (!bytes)
 			bytes = 2;
 
-		ret = vc_do_mmio(ghcb, ctxt, bytes, true);
-		if (ret)
-			break;
+		ret = vc_करो_mmio(ghcb, ctxt, bytes, true);
+		अगर (ret)
+			अवरोध;
 
-		/* Zero extend based on operand size */
+		/* Zero extend based on opeअक्रम size */
 		reg_data = vc_insn_get_reg(ctxt);
-		if (!reg_data)
-			return ES_DECODE_FAILED;
+		अगर (!reg_data)
+			वापस ES_DECODE_FAILED;
 
-		memset(reg_data, 0, insn->opnd_bytes);
+		स_रखो(reg_data, 0, insn->opnd_bytes);
 
-		memcpy(reg_data, ghcb->shared_buffer, bytes);
-		break;
+		स_नकल(reg_data, ghcb->shared_buffer, bytes);
+		अवरोध;
 
 		/* MMIO Read w/ sign-extension */
-	case 0xbe:
+	हाल 0xbe:
 		bytes = 1;
 		fallthrough;
-	case 0xbf:
-		if (!bytes)
+	हाल 0xbf:
+		अगर (!bytes)
 			bytes = 2;
 
-		ret = vc_do_mmio(ghcb, ctxt, bytes, true);
-		if (ret)
-			break;
+		ret = vc_करो_mmio(ghcb, ctxt, bytes, true);
+		अगर (ret)
+			अवरोध;
 
-		/* Sign extend based on operand size */
+		/* Sign extend based on opeअक्रम size */
 		reg_data = vc_insn_get_reg(ctxt);
-		if (!reg_data)
-			return ES_DECODE_FAILED;
+		अगर (!reg_data)
+			वापस ES_DECODE_FAILED;
 
-		if (bytes == 1) {
+		अगर (bytes == 1) अणु
 			u8 *val = (u8 *)ghcb->shared_buffer;
 
 			sign_byte = (*val & 0x80) ? 0xff : 0x00;
-		} else {
+		पूर्ण अन्यथा अणु
 			u16 *val = (u16 *)ghcb->shared_buffer;
 
 			sign_byte = (*val & 0x8000) ? 0xff : 0x00;
-		}
-		memset(reg_data, sign_byte, insn->opnd_bytes);
+		पूर्ण
+		स_रखो(reg_data, sign_byte, insn->opnd_bytes);
 
-		memcpy(reg_data, ghcb->shared_buffer, bytes);
-		break;
+		स_नकल(reg_data, ghcb->shared_buffer, bytes);
+		अवरोध;
 
-	default:
+	शेष:
 		ret = ES_UNSUPPORTED;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * The MOVS instruction has two memory operands, which raises the
+ * The MOVS inकाष्ठाion has two memory opeअक्रमs, which उठाओs the
  * problem that it is not known whether the access to the source or the
- * destination caused the #VC exception (and hence whether an MMIO read
- * or write operation needs to be emulated).
+ * destination caused the #VC exception (and hence whether an MMIO पढ़ो
+ * or ग_लिखो operation needs to be emulated).
  *
  * Instead of playing games with walking page-tables and trying to guess
  * whether the source or destination is an MMIO range, split the move
- * into two operations, a read and a write with only one memory operand.
+ * पूर्णांकo two operations, a पढ़ो and a ग_लिखो with only one memory opeअक्रम.
  * This will cause a nested #VC exception on the MMIO address which can
  * then be handled.
  *
  * This implementation has the benefit that it also supports MOVS where
  * source _and_ destination are MMIO regions.
  *
- * It will slow MOVS on MMIO down a lot, but in SEV-ES guests it is a
- * rare operation. If it turns out to be a performance problem the split
- * operations can be moved to memcpy_fromio() and memcpy_toio().
+ * It will slow MOVS on MMIO करोwn a lot, but in SEV-ES guests it is a
+ * rare operation. If it turns out to be a perक्रमmance problem the split
+ * operations can be moved to स_नकल_fromio() and स_नकल_toio().
  */
-static enum es_result vc_handle_mmio_movs(struct es_em_ctxt *ctxt,
-					  unsigned int bytes)
-{
-	unsigned long ds_base, es_base;
-	unsigned char *src, *dst;
-	unsigned char buffer[8];
-	enum es_result ret;
+अटल क्रमागत es_result vc_handle_mmio_movs(काष्ठा es_em_ctxt *ctxt,
+					  अचिन्हित पूर्णांक bytes)
+अणु
+	अचिन्हित दीर्घ ds_base, es_base;
+	अचिन्हित अक्षर *src, *dst;
+	अचिन्हित अक्षर buffer[8];
+	क्रमागत es_result ret;
 	bool rep;
-	int off;
+	पूर्णांक off;
 
 	ds_base = insn_get_seg_base(ctxt->regs, INAT_SEG_REG_DS);
 	es_base = insn_get_seg_base(ctxt->regs, INAT_SEG_REG_ES);
 
-	if (ds_base == -1L || es_base == -1L) {
+	अगर (ds_base == -1L || es_base == -1L) अणु
 		ctxt->fi.vector = X86_TRAP_GP;
 		ctxt->fi.error_code = 0;
-		return ES_EXCEPTION;
-	}
+		वापस ES_EXCEPTION;
+	पूर्ण
 
-	src = ds_base + (unsigned char *)ctxt->regs->si;
-	dst = es_base + (unsigned char *)ctxt->regs->di;
+	src = ds_base + (अचिन्हित अक्षर *)ctxt->regs->si;
+	dst = es_base + (अचिन्हित अक्षर *)ctxt->regs->di;
 
-	ret = vc_read_mem(ctxt, src, buffer, bytes);
-	if (ret != ES_OK)
-		return ret;
+	ret = vc_पढ़ो_mem(ctxt, src, buffer, bytes);
+	अगर (ret != ES_OK)
+		वापस ret;
 
-	ret = vc_write_mem(ctxt, dst, buffer, bytes);
-	if (ret != ES_OK)
-		return ret;
+	ret = vc_ग_लिखो_mem(ctxt, dst, buffer, bytes);
+	अगर (ret != ES_OK)
+		वापस ret;
 
-	if (ctxt->regs->flags & X86_EFLAGS_DF)
+	अगर (ctxt->regs->flags & X86_EFLAGS_DF)
 		off = -bytes;
-	else
+	अन्यथा
 		off =  bytes;
 
 	ctxt->regs->si += off;
 	ctxt->regs->di += off;
 
 	rep = insn_has_rep_prefix(&ctxt->insn);
-	if (rep)
+	अगर (rep)
 		ctxt->regs->cx -= 1;
 
-	if (!rep || ctxt->regs->cx == 0)
-		return ES_OK;
-	else
-		return ES_RETRY;
-}
+	अगर (!rep || ctxt->regs->cx == 0)
+		वापस ES_OK;
+	अन्यथा
+		वापस ES_RETRY;
+पूर्ण
 
-static enum es_result vc_handle_mmio(struct ghcb *ghcb,
-				     struct es_em_ctxt *ctxt)
-{
-	struct insn *insn = &ctxt->insn;
-	unsigned int bytes = 0;
-	enum es_result ret;
-	long *reg_data;
+अटल क्रमागत es_result vc_handle_mmio(काष्ठा ghcb *ghcb,
+				     काष्ठा es_em_ctxt *ctxt)
+अणु
+	काष्ठा insn *insn = &ctxt->insn;
+	अचिन्हित पूर्णांक bytes = 0;
+	क्रमागत es_result ret;
+	दीर्घ *reg_data;
 
-	switch (insn->opcode.bytes[0]) {
+	चयन (insn->opcode.bytes[0]) अणु
 	/* MMIO Write */
-	case 0x88:
+	हाल 0x88:
 		bytes = 1;
 		fallthrough;
-	case 0x89:
-		if (!bytes)
+	हाल 0x89:
+		अगर (!bytes)
 			bytes = insn->opnd_bytes;
 
 		reg_data = vc_insn_get_reg(ctxt);
-		if (!reg_data)
-			return ES_DECODE_FAILED;
+		अगर (!reg_data)
+			वापस ES_DECODE_FAILED;
 
-		memcpy(ghcb->shared_buffer, reg_data, bytes);
+		स_नकल(ghcb->shared_buffer, reg_data, bytes);
 
-		ret = vc_do_mmio(ghcb, ctxt, bytes, false);
-		break;
+		ret = vc_करो_mmio(ghcb, ctxt, bytes, false);
+		अवरोध;
 
-	case 0xc6:
+	हाल 0xc6:
 		bytes = 1;
 		fallthrough;
-	case 0xc7:
-		if (!bytes)
+	हाल 0xc7:
+		अगर (!bytes)
 			bytes = insn->opnd_bytes;
 
-		memcpy(ghcb->shared_buffer, insn->immediate1.bytes, bytes);
+		स_नकल(ghcb->shared_buffer, insn->immediate1.bytes, bytes);
 
-		ret = vc_do_mmio(ghcb, ctxt, bytes, false);
-		break;
+		ret = vc_करो_mmio(ghcb, ctxt, bytes, false);
+		अवरोध;
 
 		/* MMIO Read */
-	case 0x8a:
+	हाल 0x8a:
 		bytes = 1;
 		fallthrough;
-	case 0x8b:
-		if (!bytes)
+	हाल 0x8b:
+		अगर (!bytes)
 			bytes = insn->opnd_bytes;
 
-		ret = vc_do_mmio(ghcb, ctxt, bytes, true);
-		if (ret)
-			break;
+		ret = vc_करो_mmio(ghcb, ctxt, bytes, true);
+		अगर (ret)
+			अवरोध;
 
 		reg_data = vc_insn_get_reg(ctxt);
-		if (!reg_data)
-			return ES_DECODE_FAILED;
+		अगर (!reg_data)
+			वापस ES_DECODE_FAILED;
 
-		/* Zero-extend for 32-bit operation */
-		if (bytes == 4)
+		/* Zero-extend क्रम 32-bit operation */
+		अगर (bytes == 4)
 			*reg_data = 0;
 
-		memcpy(reg_data, ghcb->shared_buffer, bytes);
-		break;
+		स_नकल(reg_data, ghcb->shared_buffer, bytes);
+		अवरोध;
 
-		/* MOVS instruction */
-	case 0xa4:
+		/* MOVS inकाष्ठाion */
+	हाल 0xa4:
 		bytes = 1;
 		fallthrough;
-	case 0xa5:
-		if (!bytes)
+	हाल 0xa5:
+		अगर (!bytes)
 			bytes = insn->opnd_bytes;
 
 		ret = vc_handle_mmio_movs(ctxt, bytes);
-		break;
+		अवरोध;
 		/* Two-Byte Opcodes */
-	case 0x0f:
+	हाल 0x0f:
 		ret = vc_handle_mmio_twobyte_ops(ghcb, ctxt);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = ES_UNSUPPORTED;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum es_result vc_handle_dr7_write(struct ghcb *ghcb,
-					  struct es_em_ctxt *ctxt)
-{
-	struct sev_es_runtime_data *data = this_cpu_read(runtime_data);
-	long val, *reg = vc_insn_get_rm(ctxt);
-	enum es_result ret;
+अटल क्रमागत es_result vc_handle_dr7_ग_लिखो(काष्ठा ghcb *ghcb,
+					  काष्ठा es_em_ctxt *ctxt)
+अणु
+	काष्ठा sev_es_runसमय_data *data = this_cpu_पढ़ो(runसमय_data);
+	दीर्घ val, *reg = vc_insn_get_rm(ctxt);
+	क्रमागत es_result ret;
 
-	if (!reg)
-		return ES_DECODE_FAILED;
+	अगर (!reg)
+		वापस ES_DECODE_FAILED;
 
 	val = *reg;
 
 	/* Upper 32 bits must be written as zeroes */
-	if (val >> 32) {
+	अगर (val >> 32) अणु
 		ctxt->fi.vector = X86_TRAP_GP;
 		ctxt->fi.error_code = 0;
-		return ES_EXCEPTION;
-	}
+		वापस ES_EXCEPTION;
+	पूर्ण
 
 	/* Clear out other reserved bits and set bit 10 */
 	val = (val & 0xffff23ffL) | BIT(10);
 
-	/* Early non-zero writes to DR7 are not supported */
-	if (!data && (val & ~DR7_RESET_VALUE))
-		return ES_UNSUPPORTED;
+	/* Early non-zero ग_लिखोs to DR7 are not supported */
+	अगर (!data && (val & ~DR7_RESET_VALUE))
+		वापस ES_UNSUPPORTED;
 
-	/* Using a value of 0 for ExitInfo1 means RAX holds the value */
+	/* Using a value of 0 क्रम ExitInfo1 means RAX holds the value */
 	ghcb_set_rax(ghcb, val);
 	ret = sev_es_ghcb_hv_call(ghcb, ctxt, SVM_EXIT_WRITE_DR7, 0, 0);
-	if (ret != ES_OK)
-		return ret;
+	अगर (ret != ES_OK)
+		वापस ret;
 
-	if (data)
+	अगर (data)
 		data->dr7 = val;
 
-	return ES_OK;
-}
+	वापस ES_OK;
+पूर्ण
 
-static enum es_result vc_handle_dr7_read(struct ghcb *ghcb,
-					 struct es_em_ctxt *ctxt)
-{
-	struct sev_es_runtime_data *data = this_cpu_read(runtime_data);
-	long *reg = vc_insn_get_rm(ctxt);
+अटल क्रमागत es_result vc_handle_dr7_पढ़ो(काष्ठा ghcb *ghcb,
+					 काष्ठा es_em_ctxt *ctxt)
+अणु
+	काष्ठा sev_es_runसमय_data *data = this_cpu_पढ़ो(runसमय_data);
+	दीर्घ *reg = vc_insn_get_rm(ctxt);
 
-	if (!reg)
-		return ES_DECODE_FAILED;
+	अगर (!reg)
+		वापस ES_DECODE_FAILED;
 
-	if (data)
+	अगर (data)
 		*reg = data->dr7;
-	else
+	अन्यथा
 		*reg = DR7_RESET_VALUE;
 
-	return ES_OK;
-}
+	वापस ES_OK;
+पूर्ण
 
-static enum es_result vc_handle_wbinvd(struct ghcb *ghcb,
-				       struct es_em_ctxt *ctxt)
-{
-	return sev_es_ghcb_hv_call(ghcb, ctxt, SVM_EXIT_WBINVD, 0, 0);
-}
+अटल क्रमागत es_result vc_handle_wbinvd(काष्ठा ghcb *ghcb,
+				       काष्ठा es_em_ctxt *ctxt)
+अणु
+	वापस sev_es_ghcb_hv_call(ghcb, ctxt, SVM_EXIT_WBINVD, 0, 0);
+पूर्ण
 
-static enum es_result vc_handle_rdpmc(struct ghcb *ghcb, struct es_em_ctxt *ctxt)
-{
-	enum es_result ret;
+अटल क्रमागत es_result vc_handle_rdpmc(काष्ठा ghcb *ghcb, काष्ठा es_em_ctxt *ctxt)
+अणु
+	क्रमागत es_result ret;
 
 	ghcb_set_rcx(ghcb, ctxt->regs->cx);
 
 	ret = sev_es_ghcb_hv_call(ghcb, ctxt, SVM_EXIT_RDPMC, 0, 0);
-	if (ret != ES_OK)
-		return ret;
+	अगर (ret != ES_OK)
+		वापस ret;
 
-	if (!(ghcb_rax_is_valid(ghcb) && ghcb_rdx_is_valid(ghcb)))
-		return ES_VMM_ERROR;
+	अगर (!(ghcb_rax_is_valid(ghcb) && ghcb_rdx_is_valid(ghcb)))
+		वापस ES_VMM_ERROR;
 
 	ctxt->regs->ax = ghcb->save.rax;
 	ctxt->regs->dx = ghcb->save.rdx;
 
-	return ES_OK;
-}
+	वापस ES_OK;
+पूर्ण
 
-static enum es_result vc_handle_monitor(struct ghcb *ghcb,
-					struct es_em_ctxt *ctxt)
-{
+अटल क्रमागत es_result vc_handle_monitor(काष्ठा ghcb *ghcb,
+					काष्ठा es_em_ctxt *ctxt)
+अणु
 	/*
-	 * Treat it as a NOP and do not leak a physical address to the
+	 * Treat it as a NOP and करो not leak a physical address to the
 	 * hypervisor.
 	 */
-	return ES_OK;
-}
+	वापस ES_OK;
+पूर्ण
 
-static enum es_result vc_handle_mwait(struct ghcb *ghcb,
-				      struct es_em_ctxt *ctxt)
-{
+अटल क्रमागत es_result vc_handle_mरुको(काष्ठा ghcb *ghcb,
+				      काष्ठा es_em_ctxt *ctxt)
+अणु
 	/* Treat the same as MONITOR/MONITORX */
-	return ES_OK;
-}
+	वापस ES_OK;
+पूर्ण
 
-static enum es_result vc_handle_vmmcall(struct ghcb *ghcb,
-					struct es_em_ctxt *ctxt)
-{
-	enum es_result ret;
+अटल क्रमागत es_result vc_handle_vmmcall(काष्ठा ghcb *ghcb,
+					काष्ठा es_em_ctxt *ctxt)
+अणु
+	क्रमागत es_result ret;
 
 	ghcb_set_rax(ghcb, ctxt->regs->ax);
 	ghcb_set_cpl(ghcb, user_mode(ctxt->regs) ? 3 : 0);
 
-	if (x86_platform.hyper.sev_es_hcall_prepare)
-		x86_platform.hyper.sev_es_hcall_prepare(ghcb, ctxt->regs);
+	अगर (x86_platक्रमm.hyper.sev_es_hcall_prepare)
+		x86_platक्रमm.hyper.sev_es_hcall_prepare(ghcb, ctxt->regs);
 
 	ret = sev_es_ghcb_hv_call(ghcb, ctxt, SVM_EXIT_VMMCALL, 0, 0);
-	if (ret != ES_OK)
-		return ret;
+	अगर (ret != ES_OK)
+		वापस ret;
 
-	if (!ghcb_rax_is_valid(ghcb))
-		return ES_VMM_ERROR;
+	अगर (!ghcb_rax_is_valid(ghcb))
+		वापस ES_VMM_ERROR;
 
 	ctxt->regs->ax = ghcb->save.rax;
 
 	/*
-	 * Call sev_es_hcall_finish() after regs->ax is already set.
-	 * This allows the hypervisor handler to overwrite it again if
+	 * Call sev_es_hcall_finish() after regs->ax is alपढ़ोy set.
+	 * This allows the hypervisor handler to overग_लिखो it again अगर
 	 * necessary.
 	 */
-	if (x86_platform.hyper.sev_es_hcall_finish &&
-	    !x86_platform.hyper.sev_es_hcall_finish(ghcb, ctxt->regs))
-		return ES_VMM_ERROR;
+	अगर (x86_platक्रमm.hyper.sev_es_hcall_finish &&
+	    !x86_platक्रमm.hyper.sev_es_hcall_finish(ghcb, ctxt->regs))
+		वापस ES_VMM_ERROR;
 
-	return ES_OK;
-}
+	वापस ES_OK;
+पूर्ण
 
-static enum es_result vc_handle_trap_ac(struct ghcb *ghcb,
-					struct es_em_ctxt *ctxt)
-{
+अटल क्रमागत es_result vc_handle_trap_ac(काष्ठा ghcb *ghcb,
+					काष्ठा es_em_ctxt *ctxt)
+अणु
 	/*
-	 * Calling ecx_alignment_check() directly does not work, because it
+	 * Calling ecx_alignment_check() directly करोes not work, because it
 	 * enables IRQs and the GHCB is active. Forward the exception and call
-	 * it later from vc_forward_exception().
+	 * it later from vc_क्रमward_exception().
 	 */
 	ctxt->fi.vector = X86_TRAP_AC;
 	ctxt->fi.error_code = 0;
-	return ES_EXCEPTION;
-}
+	वापस ES_EXCEPTION;
+पूर्ण
 
-static __always_inline void vc_handle_trap_db(struct pt_regs *regs)
-{
-	if (user_mode(regs))
+अटल __always_अंतरभूत व्योम vc_handle_trap_db(काष्ठा pt_regs *regs)
+अणु
+	अगर (user_mode(regs))
 		noist_exc_debug(regs);
-	else
+	अन्यथा
 		exc_debug(regs);
-}
+पूर्ण
 
-static enum es_result vc_handle_exitcode(struct es_em_ctxt *ctxt,
-					 struct ghcb *ghcb,
-					 unsigned long exit_code)
-{
-	enum es_result result;
+अटल क्रमागत es_result vc_handle_निकासcode(काष्ठा es_em_ctxt *ctxt,
+					 काष्ठा ghcb *ghcb,
+					 अचिन्हित दीर्घ निकास_code)
+अणु
+	क्रमागत es_result result;
 
-	switch (exit_code) {
-	case SVM_EXIT_READ_DR7:
-		result = vc_handle_dr7_read(ghcb, ctxt);
-		break;
-	case SVM_EXIT_WRITE_DR7:
-		result = vc_handle_dr7_write(ghcb, ctxt);
-		break;
-	case SVM_EXIT_EXCP_BASE + X86_TRAP_AC:
+	चयन (निकास_code) अणु
+	हाल SVM_EXIT_READ_DR7:
+		result = vc_handle_dr7_पढ़ो(ghcb, ctxt);
+		अवरोध;
+	हाल SVM_EXIT_WRITE_DR7:
+		result = vc_handle_dr7_ग_लिखो(ghcb, ctxt);
+		अवरोध;
+	हाल SVM_EXIT_EXCP_BASE + X86_TRAP_AC:
 		result = vc_handle_trap_ac(ghcb, ctxt);
-		break;
-	case SVM_EXIT_RDTSC:
-	case SVM_EXIT_RDTSCP:
-		result = vc_handle_rdtsc(ghcb, ctxt, exit_code);
-		break;
-	case SVM_EXIT_RDPMC:
+		अवरोध;
+	हाल SVM_EXIT_RDTSC:
+	हाल SVM_EXIT_RDTSCP:
+		result = vc_handle_rdtsc(ghcb, ctxt, निकास_code);
+		अवरोध;
+	हाल SVM_EXIT_RDPMC:
 		result = vc_handle_rdpmc(ghcb, ctxt);
-		break;
-	case SVM_EXIT_INVD:
+		अवरोध;
+	हाल SVM_EXIT_INVD:
 		pr_err_ratelimited("#VC exception for INVD??? Seriously???\n");
 		result = ES_UNSUPPORTED;
-		break;
-	case SVM_EXIT_CPUID:
+		अवरोध;
+	हाल SVM_EXIT_CPUID:
 		result = vc_handle_cpuid(ghcb, ctxt);
-		break;
-	case SVM_EXIT_IOIO:
+		अवरोध;
+	हाल SVM_EXIT_IOIO:
 		result = vc_handle_ioio(ghcb, ctxt);
-		break;
-	case SVM_EXIT_MSR:
+		अवरोध;
+	हाल SVM_EXIT_MSR:
 		result = vc_handle_msr(ghcb, ctxt);
-		break;
-	case SVM_EXIT_VMMCALL:
+		अवरोध;
+	हाल SVM_EXIT_VMMCALL:
 		result = vc_handle_vmmcall(ghcb, ctxt);
-		break;
-	case SVM_EXIT_WBINVD:
+		अवरोध;
+	हाल SVM_EXIT_WBINVD:
 		result = vc_handle_wbinvd(ghcb, ctxt);
-		break;
-	case SVM_EXIT_MONITOR:
+		अवरोध;
+	हाल SVM_EXIT_MONITOR:
 		result = vc_handle_monitor(ghcb, ctxt);
-		break;
-	case SVM_EXIT_MWAIT:
-		result = vc_handle_mwait(ghcb, ctxt);
-		break;
-	case SVM_EXIT_NPF:
+		अवरोध;
+	हाल SVM_EXIT_MWAIT:
+		result = vc_handle_mरुको(ghcb, ctxt);
+		अवरोध;
+	हाल SVM_EXIT_NPF:
 		result = vc_handle_mmio(ghcb, ctxt);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/*
 		 * Unexpected #VC exception
 		 */
 		result = ES_UNSUPPORTED;
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static __always_inline void vc_forward_exception(struct es_em_ctxt *ctxt)
-{
-	long error_code = ctxt->fi.error_code;
-	int trapnr = ctxt->fi.vector;
+अटल __always_अंतरभूत व्योम vc_क्रमward_exception(काष्ठा es_em_ctxt *ctxt)
+अणु
+	दीर्घ error_code = ctxt->fi.error_code;
+	पूर्णांक trapnr = ctxt->fi.vector;
 
 	ctxt->regs->orig_ax = ctxt->fi.error_code;
 
-	switch (trapnr) {
-	case X86_TRAP_GP:
+	चयन (trapnr) अणु
+	हाल X86_TRAP_GP:
 		exc_general_protection(ctxt->regs, error_code);
-		break;
-	case X86_TRAP_UD:
+		अवरोध;
+	हाल X86_TRAP_UD:
 		exc_invalid_op(ctxt->regs);
-		break;
-	case X86_TRAP_PF:
-		write_cr2(ctxt->fi.cr2);
+		अवरोध;
+	हाल X86_TRAP_PF:
+		ग_लिखो_cr2(ctxt->fi.cr2);
 		exc_page_fault(ctxt->regs, error_code);
-		break;
-	case X86_TRAP_AC:
+		अवरोध;
+	हाल X86_TRAP_AC:
 		exc_alignment_check(ctxt->regs, error_code);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_emerg("Unsupported exception in #VC instruction emulation - can't continue\n");
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static __always_inline bool on_vc_fallback_stack(struct pt_regs *regs)
-{
-	unsigned long sp = (unsigned long)regs;
+अटल __always_अंतरभूत bool on_vc_fallback_stack(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ sp = (अचिन्हित दीर्घ)regs;
 
-	return (sp >= __this_cpu_ist_bottom_va(VC2) && sp < __this_cpu_ist_top_va(VC2));
-}
+	वापस (sp >= __this_cpu_ist_bottom_va(VC2) && sp < __this_cpu_ist_top_va(VC2));
+पूर्ण
 
 /*
  * Main #VC exception handler. It is called when the entry code was able to
- * switch off the IST to a safe kernel stack.
+ * चयन off the IST to a safe kernel stack.
  *
- * With the current implementation it is always possible to switch to a safe
- * stack because #VC exceptions only happen at known places, like intercepted
- * instructions or accesses to MMIO areas/IO ports. They can also happen with
- * code instrumentation when the hypervisor intercepts #DB, but the critical
- * paths are forbidden to be instrumented, so #DB exceptions currently also
+ * With the current implementation it is always possible to चयन to a safe
+ * stack because #VC exceptions only happen at known places, like पूर्णांकercepted
+ * inकाष्ठाions or accesses to MMIO areas/IO ports. They can also happen with
+ * code instrumentation when the hypervisor पूर्णांकercepts #DB, but the critical
+ * paths are क्रमbidden to be instrumented, so #DB exceptions currently also
  * only happen in safe places.
  */
 DEFINE_IDTENTRY_VC_SAFE_STACK(exc_vmm_communication)
-{
+अणु
 	irqentry_state_t irq_state;
-	struct ghcb_state state;
-	struct es_em_ctxt ctxt;
-	enum es_result result;
-	struct ghcb *ghcb;
+	काष्ठा ghcb_state state;
+	काष्ठा es_em_ctxt ctxt;
+	क्रमागत es_result result;
+	काष्ठा ghcb *ghcb;
 
 	/*
-	 * Handle #DB before calling into !noinstr code to avoid recursive #DB.
+	 * Handle #DB beक्रमe calling पूर्णांकo !noinstr code to aव्योम recursive #DB.
 	 */
-	if (error_code == SVM_EXIT_EXCP_BASE + X86_TRAP_DB) {
+	अगर (error_code == SVM_EXIT_EXCP_BASE + X86_TRAP_DB) अणु
 		vc_handle_trap_db(regs);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	irq_state = irqentry_nmi_enter(regs);
-	lockdep_assert_irqs_disabled();
+	lockdep_निश्चित_irqs_disabled();
 	instrumentation_begin();
 
 	/*
-	 * This is invoked through an interrupt gate, so IRQs are disabled. The
-	 * code below might walk page-tables for user or kernel addresses, so
+	 * This is invoked through an पूर्णांकerrupt gate, so IRQs are disabled. The
+	 * code below might walk page-tables क्रम user or kernel addresses, so
 	 * keep the IRQs disabled to protect us against concurrent TLB flushes.
 	 */
 
@@ -1358,58 +1359,58 @@ DEFINE_IDTENTRY_VC_SAFE_STACK(exc_vmm_communication)
 	vc_ghcb_invalidate(ghcb);
 	result = vc_init_em_ctxt(&ctxt, regs, error_code);
 
-	if (result == ES_OK)
-		result = vc_handle_exitcode(&ctxt, ghcb, error_code);
+	अगर (result == ES_OK)
+		result = vc_handle_निकासcode(&ctxt, ghcb, error_code);
 
 	sev_es_put_ghcb(&state);
 
 	/* Done - now check the result */
-	switch (result) {
-	case ES_OK:
+	चयन (result) अणु
+	हाल ES_OK:
 		vc_finish_insn(&ctxt);
-		break;
-	case ES_UNSUPPORTED:
+		अवरोध;
+	हाल ES_UNSUPPORTED:
 		pr_err_ratelimited("Unsupported exit-code 0x%02lx in early #VC exception (IP: 0x%lx)\n",
 				   error_code, regs->ip);
-		goto fail;
-	case ES_VMM_ERROR:
+		जाओ fail;
+	हाल ES_VMM_ERROR:
 		pr_err_ratelimited("Failure in communication with VMM (exit-code 0x%02lx IP: 0x%lx)\n",
 				   error_code, regs->ip);
-		goto fail;
-	case ES_DECODE_FAILED:
+		जाओ fail;
+	हाल ES_DECODE_FAILED:
 		pr_err_ratelimited("Failed to decode instruction (exit-code 0x%02lx IP: 0x%lx)\n",
 				   error_code, regs->ip);
-		goto fail;
-	case ES_EXCEPTION:
-		vc_forward_exception(&ctxt);
-		break;
-	case ES_RETRY:
-		/* Nothing to do */
-		break;
-	default:
+		जाओ fail;
+	हाल ES_EXCEPTION:
+		vc_क्रमward_exception(&ctxt);
+		अवरोध;
+	हाल ES_RETRY:
+		/* Nothing to करो */
+		अवरोध;
+	शेष:
 		pr_emerg("Unknown result in %s():%d\n", __func__, result);
 		/*
-		 * Emulating the instruction which caused the #VC exception
-		 * failed - can't continue so print debug information
+		 * Emulating the inकाष्ठाion which caused the #VC exception
+		 * failed - can't जारी so prपूर्णांक debug inक्रमmation
 		 */
 		BUG();
-	}
+	पूर्ण
 
 out:
 	instrumentation_end();
-	irqentry_nmi_exit(regs, irq_state);
+	irqentry_nmi_निकास(regs, irq_state);
 
-	return;
+	वापस;
 
 fail:
-	if (user_mode(regs)) {
+	अगर (user_mode(regs)) अणु
 		/*
-		 * Do not kill the machine if user-space triggered the
+		 * Do not समाप्त the machine अगर user-space triggered the
 		 * exception. Send SIGBUS instead and let user-space deal with
 		 * it.
 		 */
-		force_sig_fault(SIGBUS, BUS_OBJERR, (void __user *)0);
-	} else {
+		क्रमce_sig_fault(SIGBUS, BUS_OBJERR, (व्योम __user *)0);
+	पूर्ण अन्यथा अणु
 		pr_emerg("PANIC: Unhandled #VC exception in kernel space (result=%d)\n",
 			 result);
 
@@ -1421,75 +1422,75 @@ fail:
 
 		/* If that fails and we get here - just panic */
 		panic("Returned from Terminate-Request to Hypervisor\n");
-	}
+	पूर्ण
 
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
 /* This handler runs on the #VC fall-back stack. It can cause further #VC exceptions */
 DEFINE_IDTENTRY_VC_IST(exc_vmm_communication)
-{
+अणु
 	instrumentation_begin();
 	panic("Can't handle #VC exception from unsupported context\n");
 	instrumentation_end();
-}
+पूर्ण
 
 DEFINE_IDTENTRY_VC(exc_vmm_communication)
-{
-	if (likely(!on_vc_fallback_stack(regs)))
+अणु
+	अगर (likely(!on_vc_fallback_stack(regs)))
 		safe_stack_exc_vmm_communication(regs, error_code);
-	else
+	अन्यथा
 		ist_exc_vmm_communication(regs, error_code);
-}
+पूर्ण
 
-bool __init handle_vc_boot_ghcb(struct pt_regs *regs)
-{
-	unsigned long exit_code = regs->orig_ax;
-	struct es_em_ctxt ctxt;
-	enum es_result result;
+bool __init handle_vc_boot_ghcb(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ निकास_code = regs->orig_ax;
+	काष्ठा es_em_ctxt ctxt;
+	क्रमागत es_result result;
 
 	/* Do initial setup or terminate the guest */
-	if (unlikely(boot_ghcb == NULL && !sev_es_setup_ghcb()))
+	अगर (unlikely(boot_ghcb == शून्य && !sev_es_setup_ghcb()))
 		sev_es_terminate(GHCB_SEV_ES_REASON_GENERAL_REQUEST);
 
 	vc_ghcb_invalidate(boot_ghcb);
 
-	result = vc_init_em_ctxt(&ctxt, regs, exit_code);
-	if (result == ES_OK)
-		result = vc_handle_exitcode(&ctxt, boot_ghcb, exit_code);
+	result = vc_init_em_ctxt(&ctxt, regs, निकास_code);
+	अगर (result == ES_OK)
+		result = vc_handle_निकासcode(&ctxt, boot_ghcb, निकास_code);
 
 	/* Done - now check the result */
-	switch (result) {
-	case ES_OK:
+	चयन (result) अणु
+	हाल ES_OK:
 		vc_finish_insn(&ctxt);
-		break;
-	case ES_UNSUPPORTED:
-		early_printk("PANIC: Unsupported exit-code 0x%02lx in early #VC exception (IP: 0x%lx)\n",
-				exit_code, regs->ip);
-		goto fail;
-	case ES_VMM_ERROR:
-		early_printk("PANIC: Failure in communication with VMM (exit-code 0x%02lx IP: 0x%lx)\n",
-				exit_code, regs->ip);
-		goto fail;
-	case ES_DECODE_FAILED:
-		early_printk("PANIC: Failed to decode instruction (exit-code 0x%02lx IP: 0x%lx)\n",
-				exit_code, regs->ip);
-		goto fail;
-	case ES_EXCEPTION:
-		vc_early_forward_exception(&ctxt);
-		break;
-	case ES_RETRY:
-		/* Nothing to do */
-		break;
-	default:
+		अवरोध;
+	हाल ES_UNSUPPORTED:
+		early_prपूर्णांकk("PANIC: Unsupported exit-code 0x%02lx in early #VC exception (IP: 0x%lx)\n",
+				निकास_code, regs->ip);
+		जाओ fail;
+	हाल ES_VMM_ERROR:
+		early_prपूर्णांकk("PANIC: Failure in communication with VMM (exit-code 0x%02lx IP: 0x%lx)\n",
+				निकास_code, regs->ip);
+		जाओ fail;
+	हाल ES_DECODE_FAILED:
+		early_prपूर्णांकk("PANIC: Failed to decode instruction (exit-code 0x%02lx IP: 0x%lx)\n",
+				निकास_code, regs->ip);
+		जाओ fail;
+	हाल ES_EXCEPTION:
+		vc_early_क्रमward_exception(&ctxt);
+		अवरोध;
+	हाल ES_RETRY:
+		/* Nothing to करो */
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	return true;
+	वापस true;
 
 fail:
 	show_regs(regs);
 
-	while (true)
+	जबतक (true)
 		halt();
-}
+पूर्ण

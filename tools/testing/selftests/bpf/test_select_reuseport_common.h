@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (c) 2018 Facebook */
 
-#ifndef __TEST_SELECT_REUSEPORT_COMMON_H
-#define __TEST_SELECT_REUSEPORT_COMMON_H
+#अगर_अघोषित __TEST_SELECT_REUSEPORT_COMMON_H
+#घोषणा __TEST_SELECT_REUSEPORT_COMMON_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum result {
+क्रमागत result अणु
 	DROP_ERR_INNER_MAP,
 	DROP_ERR_SKB_DATA,
 	DROP_ERR_SK_SELECT_REUSEPORT,
@@ -14,14 +15,14 @@ enum result {
 	PASS,
 	PASS_ERR_SK_SELECT_REUSEPORT,
 	NR_RESULTS,
-};
+पूर्ण;
 
-struct cmd {
+काष्ठा cmd अणु
 	__u32 reuseport_index;
 	__u32 pass_on_failure;
-};
+पूर्ण;
 
-struct data_check {
+काष्ठा data_check अणु
 	__u32 ip_protocol;
 	__u32 skb_addrs[8];
 	__u16 skb_ports[2];
@@ -31,6 +32,6 @@ struct data_check {
 
 	__u32 len;
 	__u32 hash;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

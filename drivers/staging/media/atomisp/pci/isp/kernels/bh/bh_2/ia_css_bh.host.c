@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#if !defined(HAS_NO_HMEM)
+#अगर !defined(HAS_NO_HMEM)
 
-#include "ia_css_types.h"
-#include "sh_css_internal.h"
-#include "assert_support.h"
-#include "sh_css_frac.h"
+#समावेश "ia_css_types.h"
+#समावेश "sh_css_internal.h"
+#समावेश "assert_support.h"
+#समावेश "sh_css_frac.h"
 
-#include "ia_css_bh.host.h"
+#समावेश "ia_css_bh.host.h"
 
-void
+व्योम
 ia_css_bh_hmem_decode(
-    struct ia_css_3a_rgby_output *out_ptr,
-    const struct ia_css_bh_table *hmem_buf)
-{
-	int i;
+    काष्ठा ia_css_3a_rgby_output *out_ptr,
+    स्थिर काष्ठा ia_css_bh_table *hmem_buf)
+अणु
+	पूर्णांक i;
 
 	/*
 	 * No weighted histogram, hence no grid definition
 	 */
-	if (!hmem_buf)
-		return;
-	assert(sizeof_hmem(HMEM0_ID) == sizeof(*hmem_buf));
+	अगर (!hmem_buf)
+		वापस;
+	निश्चित(माप_hmem(HMEM0_ID) == माप(*hmem_buf));
 
-	/* Deinterleave */
-	for (i = 0; i < HMEM_UNIT_SIZE; i++) {
+	/* Deपूर्णांकerleave */
+	क्रम (i = 0; i < HMEM_UNIT_SIZE; i++) अणु
 		out_ptr[i].r = hmem_buf->hmem[BH_COLOR_R][i];
 		out_ptr[i].g = hmem_buf->hmem[BH_COLOR_G][i];
 		out_ptr[i].b = hmem_buf->hmem[BH_COLOR_B][i];
 		out_ptr[i].y = hmem_buf->hmem[BH_COLOR_Y][i];
-		/* sh_css_print ("hmem[%d] = %d, %d, %d, %d\n",
+		/* sh_css_prपूर्णांक ("hmem[%d] = %d, %d, %d, %d\n",
 			i, out_ptr[i].r, out_ptr[i].g, out_ptr[i].b, out_ptr[i].y); */
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
+व्योम
 ia_css_bh_encode(
-    struct sh_css_isp_bh_params *to,
-    const struct ia_css_3a_config *from,
-    unsigned int size)
-{
-	(void)size;
+    काष्ठा sh_css_isp_bh_params *to,
+    स्थिर काष्ठा ia_css_3a_config *from,
+    अचिन्हित पूर्णांक size)
+अणु
+	(व्योम)size;
 	/* coefficients to calculate Y */
 	to->y_coef_r =
 	    uDIGIT_FITTING(from->ae_y_coef_r, 16, SH_CSS_AE_YCOEF_SHIFT);
@@ -61,6 +62,6 @@ ia_css_bh_encode(
 	    uDIGIT_FITTING(from->ae_y_coef_g, 16, SH_CSS_AE_YCOEF_SHIFT);
 	to->y_coef_b =
 	    uDIGIT_FITTING(from->ae_y_coef_b, 16, SH_CSS_AE_YCOEF_SHIFT);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

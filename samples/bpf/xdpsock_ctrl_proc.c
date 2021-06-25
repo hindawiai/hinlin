@@ -1,187 +1,188 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2017 - 2018 Intel Corporation. */
 
-#include <errno.h>
-#include <getopt.h>
-#include <libgen.h>
-#include <net/if.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <getopt.h>
+#समावेश <libgen.h>
+#समावेश <net/अगर.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <sys/socket.h>
+#समावेश <sys/un.h>
+#समावेश <unistd.h>
 
-#include <bpf/bpf.h>
-#include <bpf/xsk.h>
-#include "xdpsock.h"
+#समावेश <bpf/bpf.h>
+#समावेश <bpf/xsk.h>
+#समावेश "xdpsock.h"
 
-static const char *opt_if = "";
+अटल स्थिर अक्षर *opt_अगर = "";
 
-static struct option long_options[] = {
-	{"interface", required_argument, 0, 'i'},
-	{0, 0, 0, 0}
-};
+अटल काष्ठा option दीर्घ_options[] = अणु
+	अणु"interface", required_argument, 0, 'i'पूर्ण,
+	अणु0, 0, 0, 0पूर्ण
+पूर्ण;
 
-static void usage(const char *prog)
-{
-	const char *str =
+अटल व्योम usage(स्थिर अक्षर *prog)
+अणु
+	स्थिर अक्षर *str =
 		"  Usage: %s [OPTIONS]\n"
 		"  Options:\n"
 		"  -i, --interface=n	Run on interface n\n"
 		"\n";
-	fprintf(stderr, "%s\n", str);
+	ख_लिखो(मानक_त्रुटि, "%s\n", str);
 
-	exit(0);
-}
+	निकास(0);
+पूर्ण
 
-static void parse_command_line(int argc, char **argv)
-{
-	int option_index, c;
+अटल व्योम parse_command_line(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक option_index, c;
 
 	opterr = 0;
 
-	for (;;) {
-		c = getopt_long(argc, argv, "i:",
-				long_options, &option_index);
-		if (c == -1)
-			break;
+	क्रम (;;) अणु
+		c = getopt_दीर्घ(argc, argv, "i:",
+				दीर्घ_options, &option_index);
+		अगर (c == -1)
+			अवरोध;
 
-		switch (c) {
-		case 'i':
-			opt_if = optarg;
-			break;
-		default:
+		चयन (c) अणु
+		हाल 'i':
+			opt_अगर = optarg;
+			अवरोध;
+		शेष:
 			usage(basename(argv[0]));
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int send_xsks_map_fd(int sock, int fd)
-{
-	char cmsgbuf[CMSG_SPACE(sizeof(int))];
-	struct msghdr msg;
-	struct iovec iov;
-	int value = 0;
+अटल पूर्णांक send_xsks_map_fd(पूर्णांक sock, पूर्णांक fd)
+अणु
+	अक्षर cmsgbuf[CMSG_SPACE(माप(पूर्णांक))];
+	काष्ठा msghdr msg;
+	काष्ठा iovec iov;
+	पूर्णांक value = 0;
 
-	if (fd == -1) {
-		fprintf(stderr, "Incorrect fd = %d\n", fd);
-		return -1;
-	}
+	अगर (fd == -1) अणु
+		ख_लिखो(मानक_त्रुटि, "Incorrect fd = %d\n", fd);
+		वापस -1;
+	पूर्ण
 	iov.iov_base = &value;
-	iov.iov_len = sizeof(int);
+	iov.iov_len = माप(पूर्णांक);
 
-	msg.msg_name = NULL;
+	msg.msg_name = शून्य;
 	msg.msg_namelen = 0;
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 	msg.msg_flags = 0;
 	msg.msg_control = cmsgbuf;
-	msg.msg_controllen = CMSG_LEN(sizeof(int));
+	msg.msg_controllen = CMSG_LEN(माप(पूर्णांक));
 
-	struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
+	काष्ठा cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
 
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_RIGHTS;
-	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+	cmsg->cmsg_len = CMSG_LEN(माप(पूर्णांक));
 
-	*(int *)CMSG_DATA(cmsg) = fd;
-	int ret = sendmsg(sock, &msg, 0);
+	*(पूर्णांक *)CMSG_DATA(cmsg) = fd;
+	पूर्णांक ret = sendmsg(sock, &msg, 0);
 
-	if (ret == -1) {
-		fprintf(stderr, "Sendmsg failed with %s", strerror(errno));
-		return -errno;
-	}
+	अगर (ret == -1) अणु
+		ख_लिखो(मानक_त्रुटि, "Sendmsg failed with %s", म_त्रुटि(त्रुटि_सं));
+		वापस -त्रुटि_सं;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-main(int argc, char **argv)
-{
-	struct sockaddr_un server;
-	int listening = 1;
-	int rval, msgsock;
-	int ifindex = 0;
-	int flag = 1;
-	int cmd = 0;
-	int sock;
-	int err;
-	int xsks_map_fd;
+पूर्णांक
+मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा sockaddr_un server;
+	पूर्णांक listening = 1;
+	पूर्णांक rval, msgsock;
+	पूर्णांक अगरindex = 0;
+	पूर्णांक flag = 1;
+	पूर्णांक cmd = 0;
+	पूर्णांक sock;
+	पूर्णांक err;
+	पूर्णांक xsks_map_fd;
 
 	parse_command_line(argc, argv);
 
-	ifindex = if_nametoindex(opt_if);
-	if (ifindex == 0) {
-		fprintf(stderr, "Unable to get ifindex for Interface %s. Reason:%s",
-			opt_if, strerror(errno));
-		return -errno;
-	}
+	अगरindex = अगर_nametoindex(opt_अगर);
+	अगर (अगरindex == 0) अणु
+		ख_लिखो(मानक_त्रुटि, "Unable to get ifindex for Interface %s. Reason:%s",
+			opt_अगर, म_त्रुटि(त्रुटि_सं));
+		वापस -त्रुटि_सं;
+	पूर्ण
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (sock < 0) {
-		fprintf(stderr, "Opening socket stream failed: %s", strerror(errno));
-		return -errno;
-	}
+	अगर (sock < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "Opening socket stream failed: %s", म_त्रुटि(त्रुटि_सं));
+		वापस -त्रुटि_सं;
+	पूर्ण
 
 	server.sun_family = AF_UNIX;
-	strcpy(server.sun_path, SOCKET_NAME);
+	म_नकल(server.sun_path, SOCKET_NAME);
 
-	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int));
+	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &flag, माप(पूर्णांक));
 
-	if (bind(sock, (struct sockaddr *)&server, sizeof(struct sockaddr_un))) {
-		fprintf(stderr, "Binding to socket stream failed: %s", strerror(errno));
-		return -errno;
-	}
+	अगर (bind(sock, (काष्ठा sockaddr *)&server, माप(काष्ठा sockaddr_un))) अणु
+		ख_लिखो(मानक_त्रुटि, "Binding to socket stream failed: %s", म_त्रुटि(त्रुटि_सं));
+		वापस -त्रुटि_सं;
+	पूर्ण
 
 	listen(sock, MAX_NUM_OF_CLIENTS);
 
-	err = xsk_setup_xdp_prog(ifindex, &xsks_map_fd);
-	if (err) {
-		fprintf(stderr, "Setup of xdp program failed\n");
-		goto close_sock;
-	}
+	err = xsk_setup_xdp_prog(अगरindex, &xsks_map_fd);
+	अगर (err) अणु
+		ख_लिखो(मानक_त्रुटि, "Setup of xdp program failed\n");
+		जाओ बंद_sock;
+	पूर्ण
 
-	while (listening) {
+	जबतक (listening) अणु
 		msgsock = accept(sock, 0, 0);
-		if (msgsock == -1) {
-			fprintf(stderr, "Error accepting connection: %s", strerror(errno));
-			err = -errno;
-			goto close_sock;
-		}
+		अगर (msgsock == -1) अणु
+			ख_लिखो(मानक_त्रुटि, "Error accepting connection: %s", म_त्रुटि(त्रुटि_सं));
+			err = -त्रुटि_सं;
+			जाओ बंद_sock;
+		पूर्ण
 		err = send_xsks_map_fd(msgsock, xsks_map_fd);
-		if (err <= 0) {
-			fprintf(stderr, "Error %d sending xsks_map_fd\n", err);
-			goto cleanup;
-		}
-		do {
-			rval = read(msgsock, &cmd, sizeof(int));
-			if (rval < 0) {
-				fprintf(stderr, "Error reading stream message");
-			} else {
-				if (cmd != CLOSE_CONN)
-					fprintf(stderr, "Recv unknown cmd = %d\n", cmd);
+		अगर (err <= 0) अणु
+			ख_लिखो(मानक_त्रुटि, "Error %d sending xsks_map_fd\n", err);
+			जाओ cleanup;
+		पूर्ण
+		करो अणु
+			rval = पढ़ो(msgsock, &cmd, माप(पूर्णांक));
+			अगर (rval < 0) अणु
+				ख_लिखो(मानक_त्रुटि, "Error reading stream message");
+			पूर्ण अन्यथा अणु
+				अगर (cmd != CLOSE_CONN)
+					ख_लिखो(मानक_त्रुटि, "Recv unknown cmd = %d\n", cmd);
 				listening = 0;
-				break;
-			}
-		} while (rval > 0);
-	}
-	close(msgsock);
-	close(sock);
+				अवरोध;
+			पूर्ण
+		पूर्ण जबतक (rval > 0);
+	पूर्ण
+	बंद(msgsock);
+	बंद(sock);
 	unlink(SOCKET_NAME);
 
-	/* Unset fd for given ifindex */
-	err = bpf_set_link_xdp_fd(ifindex, -1, 0);
-	if (err) {
-		fprintf(stderr, "Error when unsetting bpf prog_fd for ifindex(%d)\n", ifindex);
-		return err;
-	}
+	/* Unset fd क्रम given अगरindex */
+	err = bpf_set_link_xdp_fd(अगरindex, -1, 0);
+	अगर (err) अणु
+		ख_लिखो(मानक_त्रुटि, "Error when unsetting bpf prog_fd for ifindex(%d)\n", अगरindex);
+		वापस err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 cleanup:
-	close(msgsock);
-close_sock:
-	close(sock);
+	बंद(msgsock);
+बंद_sock:
+	बंद(sock);
 	unlink(SOCKET_NAME);
-	return err;
-}
+	वापस err;
+पूर्ण

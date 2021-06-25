@@ -1,472 +1,473 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/clk/tegra.h>
-#include <linux/genalloc.h>
-#include <linux/mailbox_client.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm.h>
-#include <linux/semaphore.h>
-#include <linux/sched/clock.h>
+#समावेश <linux/clk/tegra.h>
+#समावेश <linux/genभाग.स>
+#समावेश <linux/mailbox_client.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/sched/घड़ी.h>
 
-#include <soc/tegra/bpmp.h>
-#include <soc/tegra/bpmp-abi.h>
-#include <soc/tegra/ivc.h>
+#समावेश <soc/tegra/bpmp.h>
+#समावेश <soc/tegra/bpmp-abi.h>
+#समावेश <soc/tegra/ivc.h>
 
-#include "bpmp-private.h"
+#समावेश "bpmp-private.h"
 
-#define MSG_ACK		BIT(0)
-#define MSG_RING	BIT(1)
-#define TAG_SZ		32
+#घोषणा MSG_ACK		BIT(0)
+#घोषणा MSG_RING	BIT(1)
+#घोषणा TAG_SZ		32
 
-static inline struct tegra_bpmp *
-mbox_client_to_bpmp(struct mbox_client *client)
-{
-	return container_of(client, struct tegra_bpmp, mbox.client);
-}
+अटल अंतरभूत काष्ठा tegra_bpmp *
+mbox_client_to_bpmp(काष्ठा mbox_client *client)
+अणु
+	वापस container_of(client, काष्ठा tegra_bpmp, mbox.client);
+पूर्ण
 
-static inline const struct tegra_bpmp_ops *
-channel_to_ops(struct tegra_bpmp_channel *channel)
-{
-	struct tegra_bpmp *bpmp = channel->bpmp;
+अटल अंतरभूत स्थिर काष्ठा tegra_bpmp_ops *
+channel_to_ops(काष्ठा tegra_bpmp_channel *channel)
+अणु
+	काष्ठा tegra_bpmp *bpmp = channel->bpmp;
 
-	return bpmp->soc->ops;
-}
+	वापस bpmp->soc->ops;
+पूर्ण
 
-struct tegra_bpmp *tegra_bpmp_get(struct device *dev)
-{
-	struct platform_device *pdev;
-	struct tegra_bpmp *bpmp;
-	struct device_node *np;
+काष्ठा tegra_bpmp *tegra_bpmp_get(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा tegra_bpmp *bpmp;
+	काष्ठा device_node *np;
 
 	np = of_parse_phandle(dev->of_node, "nvidia,bpmp", 0);
-	if (!np)
-		return ERR_PTR(-ENOENT);
+	अगर (!np)
+		वापस ERR_PTR(-ENOENT);
 
 	pdev = of_find_device_by_node(np);
-	if (!pdev) {
+	अगर (!pdev) अणु
 		bpmp = ERR_PTR(-ENODEV);
-		goto put;
-	}
+		जाओ put;
+	पूर्ण
 
-	bpmp = platform_get_drvdata(pdev);
-	if (!bpmp) {
+	bpmp = platक्रमm_get_drvdata(pdev);
+	अगर (!bpmp) अणु
 		bpmp = ERR_PTR(-EPROBE_DEFER);
 		put_device(&pdev->dev);
-		goto put;
-	}
+		जाओ put;
+	पूर्ण
 
 put:
 	of_node_put(np);
-	return bpmp;
-}
+	वापस bpmp;
+पूर्ण
 EXPORT_SYMBOL_GPL(tegra_bpmp_get);
 
-void tegra_bpmp_put(struct tegra_bpmp *bpmp)
-{
-	if (bpmp)
+व्योम tegra_bpmp_put(काष्ठा tegra_bpmp *bpmp)
+अणु
+	अगर (bpmp)
 		put_device(bpmp->dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(tegra_bpmp_put);
 
-static int
-tegra_bpmp_channel_get_thread_index(struct tegra_bpmp_channel *channel)
-{
-	struct tegra_bpmp *bpmp = channel->bpmp;
-	unsigned int count;
-	int index;
+अटल पूर्णांक
+tegra_bpmp_channel_get_thपढ़ो_index(काष्ठा tegra_bpmp_channel *channel)
+अणु
+	काष्ठा tegra_bpmp *bpmp = channel->bpmp;
+	अचिन्हित पूर्णांक count;
+	पूर्णांक index;
 
-	count = bpmp->soc->channels.thread.count;
+	count = bpmp->soc->channels.thपढ़ो.count;
 
-	index = channel - channel->bpmp->threaded_channels;
-	if (index < 0 || index >= count)
-		return -EINVAL;
+	index = channel - channel->bpmp->thपढ़ोed_channels;
+	अगर (index < 0 || index >= count)
+		वापस -EINVAL;
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static bool tegra_bpmp_message_valid(const struct tegra_bpmp_message *msg)
-{
-	return (msg->tx.size <= MSG_DATA_MIN_SZ) &&
+अटल bool tegra_bpmp_message_valid(स्थिर काष्ठा tegra_bpmp_message *msg)
+अणु
+	वापस (msg->tx.size <= MSG_DATA_MIN_SZ) &&
 	       (msg->rx.size <= MSG_DATA_MIN_SZ) &&
 	       (msg->tx.size == 0 || msg->tx.data) &&
 	       (msg->rx.size == 0 || msg->rx.data);
-}
+पूर्ण
 
-static bool tegra_bpmp_is_response_ready(struct tegra_bpmp_channel *channel)
-{
-	const struct tegra_bpmp_ops *ops = channel_to_ops(channel);
+अटल bool tegra_bpmp_is_response_पढ़ोy(काष्ठा tegra_bpmp_channel *channel)
+अणु
+	स्थिर काष्ठा tegra_bpmp_ops *ops = channel_to_ops(channel);
 
-	return ops->is_response_ready(channel);
-}
+	वापस ops->is_response_पढ़ोy(channel);
+पूर्ण
 
-static bool tegra_bpmp_is_request_ready(struct tegra_bpmp_channel *channel)
-{
-	const struct tegra_bpmp_ops *ops = channel_to_ops(channel);
+अटल bool tegra_bpmp_is_request_पढ़ोy(काष्ठा tegra_bpmp_channel *channel)
+अणु
+	स्थिर काष्ठा tegra_bpmp_ops *ops = channel_to_ops(channel);
 
-	return ops->is_request_ready(channel);
-}
+	वापस ops->is_request_पढ़ोy(channel);
+पूर्ण
 
-static int tegra_bpmp_wait_response(struct tegra_bpmp_channel *channel)
-{
-	unsigned long timeout = channel->bpmp->soc->channels.cpu_tx.timeout;
-	ktime_t end;
+अटल पूर्णांक tegra_bpmp_रुको_response(काष्ठा tegra_bpmp_channel *channel)
+अणु
+	अचिन्हित दीर्घ समयout = channel->bpmp->soc->channels.cpu_tx.समयout;
+	kसमय_प्रकार end;
 
-	end = ktime_add_us(ktime_get(), timeout);
+	end = kसमय_add_us(kसमय_get(), समयout);
 
-	do {
-		if (tegra_bpmp_is_response_ready(channel))
-			return 0;
-	} while (ktime_before(ktime_get(), end));
+	करो अणु
+		अगर (tegra_bpmp_is_response_पढ़ोy(channel))
+			वापस 0;
+	पूर्ण जबतक (kसमय_beक्रमe(kसमय_get(), end));
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int tegra_bpmp_ack_response(struct tegra_bpmp_channel *channel)
-{
-	const struct tegra_bpmp_ops *ops = channel_to_ops(channel);
+अटल पूर्णांक tegra_bpmp_ack_response(काष्ठा tegra_bpmp_channel *channel)
+अणु
+	स्थिर काष्ठा tegra_bpmp_ops *ops = channel_to_ops(channel);
 
-	return ops->ack_response(channel);
-}
+	वापस ops->ack_response(channel);
+पूर्ण
 
-static int tegra_bpmp_ack_request(struct tegra_bpmp_channel *channel)
-{
-	const struct tegra_bpmp_ops *ops = channel_to_ops(channel);
+अटल पूर्णांक tegra_bpmp_ack_request(काष्ठा tegra_bpmp_channel *channel)
+अणु
+	स्थिर काष्ठा tegra_bpmp_ops *ops = channel_to_ops(channel);
 
-	return ops->ack_request(channel);
-}
+	वापस ops->ack_request(channel);
+पूर्ण
 
-static bool
-tegra_bpmp_is_request_channel_free(struct tegra_bpmp_channel *channel)
-{
-	const struct tegra_bpmp_ops *ops = channel_to_ops(channel);
+अटल bool
+tegra_bpmp_is_request_channel_मुक्त(काष्ठा tegra_bpmp_channel *channel)
+अणु
+	स्थिर काष्ठा tegra_bpmp_ops *ops = channel_to_ops(channel);
 
-	return ops->is_request_channel_free(channel);
-}
+	वापस ops->is_request_channel_मुक्त(channel);
+पूर्ण
 
-static bool
-tegra_bpmp_is_response_channel_free(struct tegra_bpmp_channel *channel)
-{
-	const struct tegra_bpmp_ops *ops = channel_to_ops(channel);
+अटल bool
+tegra_bpmp_is_response_channel_मुक्त(काष्ठा tegra_bpmp_channel *channel)
+अणु
+	स्थिर काष्ठा tegra_bpmp_ops *ops = channel_to_ops(channel);
 
-	return ops->is_response_channel_free(channel);
-}
+	वापस ops->is_response_channel_मुक्त(channel);
+पूर्ण
 
-static int
-tegra_bpmp_wait_request_channel_free(struct tegra_bpmp_channel *channel)
-{
-	unsigned long timeout = channel->bpmp->soc->channels.cpu_tx.timeout;
-	ktime_t start, now;
+अटल पूर्णांक
+tegra_bpmp_रुको_request_channel_मुक्त(काष्ठा tegra_bpmp_channel *channel)
+अणु
+	अचिन्हित दीर्घ समयout = channel->bpmp->soc->channels.cpu_tx.समयout;
+	kसमय_प्रकार start, now;
 
-	start = ns_to_ktime(local_clock());
+	start = ns_to_kसमय(local_घड़ी());
 
-	do {
-		if (tegra_bpmp_is_request_channel_free(channel))
-			return 0;
+	करो अणु
+		अगर (tegra_bpmp_is_request_channel_मुक्त(channel))
+			वापस 0;
 
-		now = ns_to_ktime(local_clock());
-	} while (ktime_us_delta(now, start) < timeout);
+		now = ns_to_kसमय(local_घड़ी());
+	पूर्ण जबतक (kसमय_us_delta(now, start) < समयout);
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int tegra_bpmp_post_request(struct tegra_bpmp_channel *channel)
-{
-	const struct tegra_bpmp_ops *ops = channel_to_ops(channel);
+अटल पूर्णांक tegra_bpmp_post_request(काष्ठा tegra_bpmp_channel *channel)
+अणु
+	स्थिर काष्ठा tegra_bpmp_ops *ops = channel_to_ops(channel);
 
-	return ops->post_request(channel);
-}
+	वापस ops->post_request(channel);
+पूर्ण
 
-static int tegra_bpmp_post_response(struct tegra_bpmp_channel *channel)
-{
-	const struct tegra_bpmp_ops *ops = channel_to_ops(channel);
+अटल पूर्णांक tegra_bpmp_post_response(काष्ठा tegra_bpmp_channel *channel)
+अणु
+	स्थिर काष्ठा tegra_bpmp_ops *ops = channel_to_ops(channel);
 
-	return ops->post_response(channel);
-}
+	वापस ops->post_response(channel);
+पूर्ण
 
-static int tegra_bpmp_ring_doorbell(struct tegra_bpmp *bpmp)
-{
-	return bpmp->soc->ops->ring_doorbell(bpmp);
-}
+अटल पूर्णांक tegra_bpmp_ring_करोorbell(काष्ठा tegra_bpmp *bpmp)
+अणु
+	वापस bpmp->soc->ops->ring_करोorbell(bpmp);
+पूर्ण
 
-static ssize_t __tegra_bpmp_channel_read(struct tegra_bpmp_channel *channel,
-					 void *data, size_t size, int *ret)
-{
-	int err;
+अटल sमाप_प्रकार __tegra_bpmp_channel_पढ़ो(काष्ठा tegra_bpmp_channel *channel,
+					 व्योम *data, माप_प्रकार size, पूर्णांक *ret)
+अणु
+	पूर्णांक err;
 
-	if (data && size > 0)
-		memcpy(data, channel->ib->data, size);
+	अगर (data && size > 0)
+		स_नकल(data, channel->ib->data, size);
 
 	err = tegra_bpmp_ack_response(channel);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	*ret = channel->ib->code;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t tegra_bpmp_channel_read(struct tegra_bpmp_channel *channel,
-				       void *data, size_t size, int *ret)
-{
-	struct tegra_bpmp *bpmp = channel->bpmp;
-	unsigned long flags;
-	ssize_t err;
-	int index;
+अटल sमाप_प्रकार tegra_bpmp_channel_पढ़ो(काष्ठा tegra_bpmp_channel *channel,
+				       व्योम *data, माप_प्रकार size, पूर्णांक *ret)
+अणु
+	काष्ठा tegra_bpmp *bpmp = channel->bpmp;
+	अचिन्हित दीर्घ flags;
+	sमाप_प्रकार err;
+	पूर्णांक index;
 
-	index = tegra_bpmp_channel_get_thread_index(channel);
-	if (index < 0) {
+	index = tegra_bpmp_channel_get_thपढ़ो_index(channel);
+	अगर (index < 0) अणु
 		err = index;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	spin_lock_irqsave(&bpmp->lock, flags);
-	err = __tegra_bpmp_channel_read(channel, data, size, ret);
-	clear_bit(index, bpmp->threaded.allocated);
+	err = __tegra_bpmp_channel_पढ़ो(channel, data, size, ret);
+	clear_bit(index, bpmp->thपढ़ोed.allocated);
 	spin_unlock_irqrestore(&bpmp->lock, flags);
 
 unlock:
-	up(&bpmp->threaded.lock);
+	up(&bpmp->thपढ़ोed.lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static ssize_t __tegra_bpmp_channel_write(struct tegra_bpmp_channel *channel,
-					  unsigned int mrq, unsigned long flags,
-					  const void *data, size_t size)
-{
+अटल sमाप_प्रकार __tegra_bpmp_channel_ग_लिखो(काष्ठा tegra_bpmp_channel *channel,
+					  अचिन्हित पूर्णांक mrq, अचिन्हित दीर्घ flags,
+					  स्थिर व्योम *data, माप_प्रकार size)
+अणु
 	channel->ob->code = mrq;
 	channel->ob->flags = flags;
 
-	if (data && size > 0)
-		memcpy(channel->ob->data, data, size);
+	अगर (data && size > 0)
+		स_नकल(channel->ob->data, data, size);
 
-	return tegra_bpmp_post_request(channel);
-}
+	वापस tegra_bpmp_post_request(channel);
+पूर्ण
 
-static struct tegra_bpmp_channel *
-tegra_bpmp_write_threaded(struct tegra_bpmp *bpmp, unsigned int mrq,
-			  const void *data, size_t size)
-{
-	unsigned long timeout = bpmp->soc->channels.thread.timeout;
-	unsigned int count = bpmp->soc->channels.thread.count;
-	struct tegra_bpmp_channel *channel;
-	unsigned long flags;
-	unsigned int index;
-	int err;
+अटल काष्ठा tegra_bpmp_channel *
+tegra_bpmp_ग_लिखो_thपढ़ोed(काष्ठा tegra_bpmp *bpmp, अचिन्हित पूर्णांक mrq,
+			  स्थिर व्योम *data, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ समयout = bpmp->soc->channels.thपढ़ो.समयout;
+	अचिन्हित पूर्णांक count = bpmp->soc->channels.thपढ़ो.count;
+	काष्ठा tegra_bpmp_channel *channel;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक index;
+	पूर्णांक err;
 
-	err = down_timeout(&bpmp->threaded.lock, usecs_to_jiffies(timeout));
-	if (err < 0)
-		return ERR_PTR(err);
+	err = करोwn_समयout(&bpmp->thपढ़ोed.lock, usecs_to_jअगरfies(समयout));
+	अगर (err < 0)
+		वापस ERR_PTR(err);
 
 	spin_lock_irqsave(&bpmp->lock, flags);
 
-	index = find_first_zero_bit(bpmp->threaded.allocated, count);
-	if (index == count) {
+	index = find_first_zero_bit(bpmp->thपढ़ोed.allocated, count);
+	अगर (index == count) अणु
 		err = -EBUSY;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	channel = &bpmp->threaded_channels[index];
+	channel = &bpmp->thपढ़ोed_channels[index];
 
-	if (!tegra_bpmp_is_request_channel_free(channel)) {
+	अगर (!tegra_bpmp_is_request_channel_मुक्त(channel)) अणु
 		err = -EBUSY;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	set_bit(index, bpmp->threaded.allocated);
+	set_bit(index, bpmp->thपढ़ोed.allocated);
 
-	err = __tegra_bpmp_channel_write(channel, mrq, MSG_ACK | MSG_RING,
+	err = __tegra_bpmp_channel_ग_लिखो(channel, mrq, MSG_ACK | MSG_RING,
 					 data, size);
-	if (err < 0)
-		goto clear_allocated;
+	अगर (err < 0)
+		जाओ clear_allocated;
 
-	set_bit(index, bpmp->threaded.busy);
+	set_bit(index, bpmp->thपढ़ोed.busy);
 
 	spin_unlock_irqrestore(&bpmp->lock, flags);
-	return channel;
+	वापस channel;
 
 clear_allocated:
-	clear_bit(index, bpmp->threaded.allocated);
+	clear_bit(index, bpmp->thपढ़ोed.allocated);
 unlock:
 	spin_unlock_irqrestore(&bpmp->lock, flags);
-	up(&bpmp->threaded.lock);
+	up(&bpmp->thपढ़ोed.lock);
 
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static ssize_t tegra_bpmp_channel_write(struct tegra_bpmp_channel *channel,
-					unsigned int mrq, unsigned long flags,
-					const void *data, size_t size)
-{
-	int err;
+अटल sमाप_प्रकार tegra_bpmp_channel_ग_लिखो(काष्ठा tegra_bpmp_channel *channel,
+					अचिन्हित पूर्णांक mrq, अचिन्हित दीर्घ flags,
+					स्थिर व्योम *data, माप_प्रकार size)
+अणु
+	पूर्णांक err;
 
-	err = tegra_bpmp_wait_request_channel_free(channel);
-	if (err < 0)
-		return err;
+	err = tegra_bpmp_रुको_request_channel_मुक्त(channel);
+	अगर (err < 0)
+		वापस err;
 
-	return __tegra_bpmp_channel_write(channel, mrq, flags, data, size);
-}
+	वापस __tegra_bpmp_channel_ग_लिखो(channel, mrq, flags, data, size);
+पूर्ण
 
-int tegra_bpmp_transfer_atomic(struct tegra_bpmp *bpmp,
-			       struct tegra_bpmp_message *msg)
-{
-	struct tegra_bpmp_channel *channel;
-	int err;
+पूर्णांक tegra_bpmp_transfer_atomic(काष्ठा tegra_bpmp *bpmp,
+			       काष्ठा tegra_bpmp_message *msg)
+अणु
+	काष्ठा tegra_bpmp_channel *channel;
+	पूर्णांक err;
 
-	if (WARN_ON(!irqs_disabled()))
-		return -EPERM;
+	अगर (WARN_ON(!irqs_disabled()))
+		वापस -EPERM;
 
-	if (!tegra_bpmp_message_valid(msg))
-		return -EINVAL;
+	अगर (!tegra_bpmp_message_valid(msg))
+		वापस -EINVAL;
 
 	channel = bpmp->tx_channel;
 
 	spin_lock(&bpmp->atomic_tx_lock);
 
-	err = tegra_bpmp_channel_write(channel, msg->mrq, MSG_ACK,
+	err = tegra_bpmp_channel_ग_लिखो(channel, msg->mrq, MSG_ACK,
 				       msg->tx.data, msg->tx.size);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		spin_unlock(&bpmp->atomic_tx_lock);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	spin_unlock(&bpmp->atomic_tx_lock);
 
-	err = tegra_bpmp_ring_doorbell(bpmp);
-	if (err < 0)
-		return err;
+	err = tegra_bpmp_ring_करोorbell(bpmp);
+	अगर (err < 0)
+		वापस err;
 
-	err = tegra_bpmp_wait_response(channel);
-	if (err < 0)
-		return err;
+	err = tegra_bpmp_रुको_response(channel);
+	अगर (err < 0)
+		वापस err;
 
-	return __tegra_bpmp_channel_read(channel, msg->rx.data, msg->rx.size,
+	वापस __tegra_bpmp_channel_पढ़ो(channel, msg->rx.data, msg->rx.size,
 					 &msg->rx.ret);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(tegra_bpmp_transfer_atomic);
 
-int tegra_bpmp_transfer(struct tegra_bpmp *bpmp,
-			struct tegra_bpmp_message *msg)
-{
-	struct tegra_bpmp_channel *channel;
-	unsigned long timeout;
-	int err;
+पूर्णांक tegra_bpmp_transfer(काष्ठा tegra_bpmp *bpmp,
+			काष्ठा tegra_bpmp_message *msg)
+अणु
+	काष्ठा tegra_bpmp_channel *channel;
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक err;
 
-	if (WARN_ON(irqs_disabled()))
-		return -EPERM;
+	अगर (WARN_ON(irqs_disabled()))
+		वापस -EPERM;
 
-	if (!tegra_bpmp_message_valid(msg))
-		return -EINVAL;
+	अगर (!tegra_bpmp_message_valid(msg))
+		वापस -EINVAL;
 
-	channel = tegra_bpmp_write_threaded(bpmp, msg->mrq, msg->tx.data,
+	channel = tegra_bpmp_ग_लिखो_thपढ़ोed(bpmp, msg->mrq, msg->tx.data,
 					    msg->tx.size);
-	if (IS_ERR(channel))
-		return PTR_ERR(channel);
+	अगर (IS_ERR(channel))
+		वापस PTR_ERR(channel);
 
-	err = tegra_bpmp_ring_doorbell(bpmp);
-	if (err < 0)
-		return err;
+	err = tegra_bpmp_ring_करोorbell(bpmp);
+	अगर (err < 0)
+		वापस err;
 
-	timeout = usecs_to_jiffies(bpmp->soc->channels.thread.timeout);
+	समयout = usecs_to_jअगरfies(bpmp->soc->channels.thपढ़ो.समयout);
 
-	err = wait_for_completion_timeout(&channel->completion, timeout);
-	if (err == 0)
-		return -ETIMEDOUT;
+	err = रुको_क्रम_completion_समयout(&channel->completion, समयout);
+	अगर (err == 0)
+		वापस -ETIMEDOUT;
 
-	return tegra_bpmp_channel_read(channel, msg->rx.data, msg->rx.size,
+	वापस tegra_bpmp_channel_पढ़ो(channel, msg->rx.data, msg->rx.size,
 				       &msg->rx.ret);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(tegra_bpmp_transfer);
 
-static struct tegra_bpmp_mrq *tegra_bpmp_find_mrq(struct tegra_bpmp *bpmp,
-						  unsigned int mrq)
-{
-	struct tegra_bpmp_mrq *entry;
+अटल काष्ठा tegra_bpmp_mrq *tegra_bpmp_find_mrq(काष्ठा tegra_bpmp *bpmp,
+						  अचिन्हित पूर्णांक mrq)
+अणु
+	काष्ठा tegra_bpmp_mrq *entry;
 
-	list_for_each_entry(entry, &bpmp->mrqs, list)
-		if (entry->mrq == mrq)
-			return entry;
+	list_क्रम_each_entry(entry, &bpmp->mrqs, list)
+		अगर (entry->mrq == mrq)
+			वापस entry;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void tegra_bpmp_mrq_return(struct tegra_bpmp_channel *channel, int code,
-			   const void *data, size_t size)
-{
-	unsigned long flags = channel->ib->flags;
-	struct tegra_bpmp *bpmp = channel->bpmp;
-	int err;
+व्योम tegra_bpmp_mrq_वापस(काष्ठा tegra_bpmp_channel *channel, पूर्णांक code,
+			   स्थिर व्योम *data, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ flags = channel->ib->flags;
+	काष्ठा tegra_bpmp *bpmp = channel->bpmp;
+	पूर्णांक err;
 
-	if (WARN_ON(size > MSG_DATA_MIN_SZ))
-		return;
+	अगर (WARN_ON(size > MSG_DATA_MIN_SZ))
+		वापस;
 
 	err = tegra_bpmp_ack_request(channel);
-	if (WARN_ON(err < 0))
-		return;
+	अगर (WARN_ON(err < 0))
+		वापस;
 
-	if ((flags & MSG_ACK) == 0)
-		return;
+	अगर ((flags & MSG_ACK) == 0)
+		वापस;
 
-	if (WARN_ON(!tegra_bpmp_is_response_channel_free(channel)))
-		return;
+	अगर (WARN_ON(!tegra_bpmp_is_response_channel_मुक्त(channel)))
+		वापस;
 
 	channel->ob->code = code;
 
-	if (data && size > 0)
-		memcpy(channel->ob->data, data, size);
+	अगर (data && size > 0)
+		स_नकल(channel->ob->data, data, size);
 
 	err = tegra_bpmp_post_response(channel);
-	if (WARN_ON(err < 0))
-		return;
+	अगर (WARN_ON(err < 0))
+		वापस;
 
-	if (flags & MSG_RING) {
-		err = tegra_bpmp_ring_doorbell(bpmp);
-		if (WARN_ON(err < 0))
-			return;
-	}
-}
-EXPORT_SYMBOL_GPL(tegra_bpmp_mrq_return);
+	अगर (flags & MSG_RING) अणु
+		err = tegra_bpmp_ring_करोorbell(bpmp);
+		अगर (WARN_ON(err < 0))
+			वापस;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra_bpmp_mrq_वापस);
 
-static void tegra_bpmp_handle_mrq(struct tegra_bpmp *bpmp,
-				  unsigned int mrq,
-				  struct tegra_bpmp_channel *channel)
-{
-	struct tegra_bpmp_mrq *entry;
+अटल व्योम tegra_bpmp_handle_mrq(काष्ठा tegra_bpmp *bpmp,
+				  अचिन्हित पूर्णांक mrq,
+				  काष्ठा tegra_bpmp_channel *channel)
+अणु
+	काष्ठा tegra_bpmp_mrq *entry;
 	u32 zero = 0;
 
 	spin_lock(&bpmp->lock);
 
 	entry = tegra_bpmp_find_mrq(bpmp, mrq);
-	if (!entry) {
+	अगर (!entry) अणु
 		spin_unlock(&bpmp->lock);
-		tegra_bpmp_mrq_return(channel, -EINVAL, &zero, sizeof(zero));
-		return;
-	}
+		tegra_bpmp_mrq_वापस(channel, -EINVAL, &zero, माप(zero));
+		वापस;
+	पूर्ण
 
 	entry->handler(mrq, channel, entry->data);
 
 	spin_unlock(&bpmp->lock);
-}
+पूर्ण
 
-int tegra_bpmp_request_mrq(struct tegra_bpmp *bpmp, unsigned int mrq,
-			   tegra_bpmp_mrq_handler_t handler, void *data)
-{
-	struct tegra_bpmp_mrq *entry;
-	unsigned long flags;
+पूर्णांक tegra_bpmp_request_mrq(काष्ठा tegra_bpmp *bpmp, अचिन्हित पूर्णांक mrq,
+			   tegra_bpmp_mrq_handler_t handler, व्योम *data)
+अणु
+	काष्ठा tegra_bpmp_mrq *entry;
+	अचिन्हित दीर्घ flags;
 
-	if (!handler)
-		return -EINVAL;
+	अगर (!handler)
+		वापस -EINVAL;
 
-	entry = devm_kzalloc(bpmp->dev, sizeof(*entry), GFP_KERNEL);
-	if (!entry)
-		return -ENOMEM;
+	entry = devm_kzalloc(bpmp->dev, माप(*entry), GFP_KERNEL);
+	अगर (!entry)
+		वापस -ENOMEM;
 
 	spin_lock_irqsave(&bpmp->lock, flags);
 
@@ -477,224 +478,224 @@ int tegra_bpmp_request_mrq(struct tegra_bpmp *bpmp, unsigned int mrq,
 
 	spin_unlock_irqrestore(&bpmp->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(tegra_bpmp_request_mrq);
 
-void tegra_bpmp_free_mrq(struct tegra_bpmp *bpmp, unsigned int mrq, void *data)
-{
-	struct tegra_bpmp_mrq *entry;
-	unsigned long flags;
+व्योम tegra_bpmp_मुक्त_mrq(काष्ठा tegra_bpmp *bpmp, अचिन्हित पूर्णांक mrq, व्योम *data)
+अणु
+	काष्ठा tegra_bpmp_mrq *entry;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&bpmp->lock, flags);
 
 	entry = tegra_bpmp_find_mrq(bpmp, mrq);
-	if (!entry)
-		goto unlock;
+	अगर (!entry)
+		जाओ unlock;
 
 	list_del(&entry->list);
-	devm_kfree(bpmp->dev, entry);
+	devm_kमुक्त(bpmp->dev, entry);
 
 unlock:
 	spin_unlock_irqrestore(&bpmp->lock, flags);
-}
-EXPORT_SYMBOL_GPL(tegra_bpmp_free_mrq);
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra_bpmp_मुक्त_mrq);
 
-bool tegra_bpmp_mrq_is_supported(struct tegra_bpmp *bpmp, unsigned int mrq)
-{
-	struct mrq_query_abi_request req = { .mrq = cpu_to_le32(mrq) };
-	struct mrq_query_abi_response resp;
-	struct tegra_bpmp_message msg = {
+bool tegra_bpmp_mrq_is_supported(काष्ठा tegra_bpmp *bpmp, अचिन्हित पूर्णांक mrq)
+अणु
+	काष्ठा mrq_query_abi_request req = अणु .mrq = cpu_to_le32(mrq) पूर्ण;
+	काष्ठा mrq_query_abi_response resp;
+	काष्ठा tegra_bpmp_message msg = अणु
 		.mrq = MRQ_QUERY_ABI,
-		.tx = {
+		.tx = अणु
 			.data = &req,
-			.size = sizeof(req),
-		},
-		.rx = {
+			.size = माप(req),
+		पूर्ण,
+		.rx = अणु
 			.data = &resp,
-			.size = sizeof(resp),
-		},
-	};
-	int err;
+			.size = माप(resp),
+		पूर्ण,
+	पूर्ण;
+	पूर्णांक err;
 
 	err = tegra_bpmp_transfer(bpmp, &msg);
-	if (err || msg.rx.ret)
-		return false;
+	अगर (err || msg.rx.ret)
+		वापस false;
 
-	return resp.status == 0;
-}
+	वापस resp.status == 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(tegra_bpmp_mrq_is_supported);
 
-static void tegra_bpmp_mrq_handle_ping(unsigned int mrq,
-				       struct tegra_bpmp_channel *channel,
-				       void *data)
-{
-	struct mrq_ping_request *request;
-	struct mrq_ping_response response;
+अटल व्योम tegra_bpmp_mrq_handle_ping(अचिन्हित पूर्णांक mrq,
+				       काष्ठा tegra_bpmp_channel *channel,
+				       व्योम *data)
+अणु
+	काष्ठा mrq_ping_request *request;
+	काष्ठा mrq_ping_response response;
 
-	request = (struct mrq_ping_request *)channel->ib->data;
+	request = (काष्ठा mrq_ping_request *)channel->ib->data;
 
-	memset(&response, 0, sizeof(response));
+	स_रखो(&response, 0, माप(response));
 	response.reply = request->challenge << 1;
 
-	tegra_bpmp_mrq_return(channel, 0, &response, sizeof(response));
-}
+	tegra_bpmp_mrq_वापस(channel, 0, &response, माप(response));
+पूर्ण
 
-static int tegra_bpmp_ping(struct tegra_bpmp *bpmp)
-{
-	struct mrq_ping_response response;
-	struct mrq_ping_request request;
-	struct tegra_bpmp_message msg;
-	unsigned long flags;
-	ktime_t start, end;
-	int err;
+अटल पूर्णांक tegra_bpmp_ping(काष्ठा tegra_bpmp *bpmp)
+अणु
+	काष्ठा mrq_ping_response response;
+	काष्ठा mrq_ping_request request;
+	काष्ठा tegra_bpmp_message msg;
+	अचिन्हित दीर्घ flags;
+	kसमय_प्रकार start, end;
+	पूर्णांक err;
 
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 	request.challenge = 1;
 
-	memset(&response, 0, sizeof(response));
+	स_रखो(&response, 0, माप(response));
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.mrq = MRQ_PING;
 	msg.tx.data = &request;
-	msg.tx.size = sizeof(request);
+	msg.tx.size = माप(request);
 	msg.rx.data = &response;
-	msg.rx.size = sizeof(response);
+	msg.rx.size = माप(response);
 
 	local_irq_save(flags);
-	start = ktime_get();
+	start = kसमय_get();
 	err = tegra_bpmp_transfer_atomic(bpmp, &msg);
-	end = ktime_get();
+	end = kसमय_get();
 	local_irq_restore(flags);
 
-	if (!err)
+	अगर (!err)
 		dev_dbg(bpmp->dev,
 			"ping ok: challenge: %u, response: %u, time: %lld\n",
 			request.challenge, response.reply,
-			ktime_to_us(ktime_sub(end, start)));
+			kसमय_प्रकारo_us(kसमय_sub(end, start)));
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* deprecated version of tag query */
-static int tegra_bpmp_get_firmware_tag_old(struct tegra_bpmp *bpmp, char *tag,
-					   size_t size)
-{
-	struct mrq_query_tag_request request;
-	struct tegra_bpmp_message msg;
-	unsigned long flags;
+अटल पूर्णांक tegra_bpmp_get_firmware_tag_old(काष्ठा tegra_bpmp *bpmp, अक्षर *tag,
+					   माप_प्रकार size)
+अणु
+	काष्ठा mrq_query_tag_request request;
+	काष्ठा tegra_bpmp_message msg;
+	अचिन्हित दीर्घ flags;
 	dma_addr_t phys;
-	void *virt;
-	int err;
+	व्योम *virt;
+	पूर्णांक err;
 
-	if (size != TAG_SZ)
-		return -EINVAL;
+	अगर (size != TAG_SZ)
+		वापस -EINVAL;
 
 	virt = dma_alloc_coherent(bpmp->dev, TAG_SZ, &phys,
 				  GFP_KERNEL | GFP_DMA32);
-	if (!virt)
-		return -ENOMEM;
+	अगर (!virt)
+		वापस -ENOMEM;
 
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 	request.addr = phys;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.mrq = MRQ_QUERY_TAG;
 	msg.tx.data = &request;
-	msg.tx.size = sizeof(request);
+	msg.tx.size = माप(request);
 
 	local_irq_save(flags);
 	err = tegra_bpmp_transfer_atomic(bpmp, &msg);
 	local_irq_restore(flags);
 
-	if (err == 0)
-		memcpy(tag, virt, TAG_SZ);
+	अगर (err == 0)
+		स_नकल(tag, virt, TAG_SZ);
 
-	dma_free_coherent(bpmp->dev, TAG_SZ, virt, phys);
+	dma_मुक्त_coherent(bpmp->dev, TAG_SZ, virt, phys);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int tegra_bpmp_get_firmware_tag(struct tegra_bpmp *bpmp, char *tag,
-				       size_t size)
-{
-	if (tegra_bpmp_mrq_is_supported(bpmp, MRQ_QUERY_FW_TAG)) {
-		struct mrq_query_fw_tag_response resp;
-		struct tegra_bpmp_message msg = {
+अटल पूर्णांक tegra_bpmp_get_firmware_tag(काष्ठा tegra_bpmp *bpmp, अक्षर *tag,
+				       माप_प्रकार size)
+अणु
+	अगर (tegra_bpmp_mrq_is_supported(bpmp, MRQ_QUERY_FW_TAG)) अणु
+		काष्ठा mrq_query_fw_tag_response resp;
+		काष्ठा tegra_bpmp_message msg = अणु
 			.mrq = MRQ_QUERY_FW_TAG,
-			.rx = {
+			.rx = अणु
 				.data = &resp,
-				.size = sizeof(resp),
-			},
-		};
-		int err;
+				.size = माप(resp),
+			पूर्ण,
+		पूर्ण;
+		पूर्णांक err;
 
-		if (size != sizeof(resp.tag))
-			return -EINVAL;
+		अगर (size != माप(resp.tag))
+			वापस -EINVAL;
 
 		err = tegra_bpmp_transfer(bpmp, &msg);
 
-		if (err)
-			return err;
-		if (msg.rx.ret < 0)
-			return -EINVAL;
+		अगर (err)
+			वापस err;
+		अगर (msg.rx.ret < 0)
+			वापस -EINVAL;
 
-		memcpy(tag, resp.tag, sizeof(resp.tag));
-		return 0;
-	}
+		स_नकल(tag, resp.tag, माप(resp.tag));
+		वापस 0;
+	पूर्ण
 
-	return tegra_bpmp_get_firmware_tag_old(bpmp, tag, size);
-}
+	वापस tegra_bpmp_get_firmware_tag_old(bpmp, tag, size);
+पूर्ण
 
-static void tegra_bpmp_channel_signal(struct tegra_bpmp_channel *channel)
-{
-	unsigned long flags = channel->ob->flags;
+अटल व्योम tegra_bpmp_channel_संकेत(काष्ठा tegra_bpmp_channel *channel)
+अणु
+	अचिन्हित दीर्घ flags = channel->ob->flags;
 
-	if ((flags & MSG_RING) == 0)
-		return;
+	अगर ((flags & MSG_RING) == 0)
+		वापस;
 
 	complete(&channel->completion);
-}
+पूर्ण
 
-void tegra_bpmp_handle_rx(struct tegra_bpmp *bpmp)
-{
-	struct tegra_bpmp_channel *channel;
-	unsigned int i, count;
-	unsigned long *busy;
+व्योम tegra_bpmp_handle_rx(काष्ठा tegra_bpmp *bpmp)
+अणु
+	काष्ठा tegra_bpmp_channel *channel;
+	अचिन्हित पूर्णांक i, count;
+	अचिन्हित दीर्घ *busy;
 
 	channel = bpmp->rx_channel;
-	count = bpmp->soc->channels.thread.count;
-	busy = bpmp->threaded.busy;
+	count = bpmp->soc->channels.thपढ़ो.count;
+	busy = bpmp->thपढ़ोed.busy;
 
-	if (tegra_bpmp_is_request_ready(channel))
+	अगर (tegra_bpmp_is_request_पढ़ोy(channel))
 		tegra_bpmp_handle_mrq(bpmp, channel->ib->code, channel);
 
 	spin_lock(&bpmp->lock);
 
-	for_each_set_bit(i, busy, count) {
-		struct tegra_bpmp_channel *channel;
+	क्रम_each_set_bit(i, busy, count) अणु
+		काष्ठा tegra_bpmp_channel *channel;
 
-		channel = &bpmp->threaded_channels[i];
+		channel = &bpmp->thपढ़ोed_channels[i];
 
-		if (tegra_bpmp_is_response_ready(channel)) {
-			tegra_bpmp_channel_signal(channel);
+		अगर (tegra_bpmp_is_response_पढ़ोy(channel)) अणु
+			tegra_bpmp_channel_संकेत(channel);
 			clear_bit(i, busy);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&bpmp->lock);
-}
+पूर्ण
 
-static int tegra_bpmp_probe(struct platform_device *pdev)
-{
-	struct tegra_bpmp *bpmp;
-	char tag[TAG_SZ];
-	size_t size;
-	int err;
+अटल पूर्णांक tegra_bpmp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tegra_bpmp *bpmp;
+	अक्षर tag[TAG_SZ];
+	माप_प्रकार size;
+	पूर्णांक err;
 
-	bpmp = devm_kzalloc(&pdev->dev, sizeof(*bpmp), GFP_KERNEL);
-	if (!bpmp)
-		return -ENOMEM;
+	bpmp = devm_kzalloc(&pdev->dev, माप(*bpmp), GFP_KERNEL);
+	अगर (!bpmp)
+		वापस -ENOMEM;
 
 	bpmp->soc = of_device_get_match_data(&pdev->dev);
 	bpmp->dev = &pdev->dev;
@@ -702,177 +703,177 @@ static int tegra_bpmp_probe(struct platform_device *pdev)
 	INIT_LIST_HEAD(&bpmp->mrqs);
 	spin_lock_init(&bpmp->lock);
 
-	bpmp->threaded.count = bpmp->soc->channels.thread.count;
-	sema_init(&bpmp->threaded.lock, bpmp->threaded.count);
+	bpmp->thपढ़ोed.count = bpmp->soc->channels.thपढ़ो.count;
+	sema_init(&bpmp->thपढ़ोed.lock, bpmp->thपढ़ोed.count);
 
-	size = BITS_TO_LONGS(bpmp->threaded.count) * sizeof(long);
+	size = BITS_TO_LONGS(bpmp->thपढ़ोed.count) * माप(दीर्घ);
 
-	bpmp->threaded.allocated = devm_kzalloc(&pdev->dev, size, GFP_KERNEL);
-	if (!bpmp->threaded.allocated)
-		return -ENOMEM;
+	bpmp->thपढ़ोed.allocated = devm_kzalloc(&pdev->dev, size, GFP_KERNEL);
+	अगर (!bpmp->thपढ़ोed.allocated)
+		वापस -ENOMEM;
 
-	bpmp->threaded.busy = devm_kzalloc(&pdev->dev, size, GFP_KERNEL);
-	if (!bpmp->threaded.busy)
-		return -ENOMEM;
+	bpmp->thपढ़ोed.busy = devm_kzalloc(&pdev->dev, size, GFP_KERNEL);
+	अगर (!bpmp->thपढ़ोed.busy)
+		वापस -ENOMEM;
 
 	spin_lock_init(&bpmp->atomic_tx_lock);
-	bpmp->tx_channel = devm_kzalloc(&pdev->dev, sizeof(*bpmp->tx_channel),
+	bpmp->tx_channel = devm_kzalloc(&pdev->dev, माप(*bpmp->tx_channel),
 					GFP_KERNEL);
-	if (!bpmp->tx_channel)
-		return -ENOMEM;
+	अगर (!bpmp->tx_channel)
+		वापस -ENOMEM;
 
-	bpmp->rx_channel = devm_kzalloc(&pdev->dev, sizeof(*bpmp->rx_channel),
+	bpmp->rx_channel = devm_kzalloc(&pdev->dev, माप(*bpmp->rx_channel),
 	                                GFP_KERNEL);
-	if (!bpmp->rx_channel)
-		return -ENOMEM;
+	अगर (!bpmp->rx_channel)
+		वापस -ENOMEM;
 
-	bpmp->threaded_channels = devm_kcalloc(&pdev->dev, bpmp->threaded.count,
-					       sizeof(*bpmp->threaded_channels),
+	bpmp->thपढ़ोed_channels = devm_kसुस्मृति(&pdev->dev, bpmp->thपढ़ोed.count,
+					       माप(*bpmp->thपढ़ोed_channels),
 					       GFP_KERNEL);
-	if (!bpmp->threaded_channels)
-		return -ENOMEM;
+	अगर (!bpmp->thपढ़ोed_channels)
+		वापस -ENOMEM;
 
 	err = bpmp->soc->ops->init(bpmp);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = tegra_bpmp_request_mrq(bpmp, MRQ_PING,
 				     tegra_bpmp_mrq_handle_ping, bpmp);
-	if (err < 0)
-		goto deinit;
+	अगर (err < 0)
+		जाओ deinit;
 
 	err = tegra_bpmp_ping(bpmp);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "failed to ping BPMP: %d\n", err);
-		goto free_mrq;
-	}
+		जाओ मुक्त_mrq;
+	पूर्ण
 
-	err = tegra_bpmp_get_firmware_tag(bpmp, tag, sizeof(tag));
-	if (err < 0) {
+	err = tegra_bpmp_get_firmware_tag(bpmp, tag, माप(tag));
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "failed to get firmware tag: %d\n", err);
-		goto free_mrq;
-	}
+		जाओ मुक्त_mrq;
+	पूर्ण
 
-	dev_info(&pdev->dev, "firmware: %.*s\n", (int)sizeof(tag), tag);
+	dev_info(&pdev->dev, "firmware: %.*s\n", (पूर्णांक)माप(tag), tag);
 
-	platform_set_drvdata(pdev, bpmp);
+	platक्रमm_set_drvdata(pdev, bpmp);
 
-	err = of_platform_default_populate(pdev->dev.of_node, NULL, &pdev->dev);
-	if (err < 0)
-		goto free_mrq;
+	err = of_platक्रमm_शेष_populate(pdev->dev.of_node, शून्य, &pdev->dev);
+	अगर (err < 0)
+		जाओ मुक्त_mrq;
 
-	if (of_find_property(pdev->dev.of_node, "#clock-cells", NULL)) {
-		err = tegra_bpmp_init_clocks(bpmp);
-		if (err < 0)
-			goto free_mrq;
-	}
+	अगर (of_find_property(pdev->dev.of_node, "#clock-cells", शून्य)) अणु
+		err = tegra_bpmp_init_घड़ीs(bpmp);
+		अगर (err < 0)
+			जाओ मुक्त_mrq;
+	पूर्ण
 
-	if (of_find_property(pdev->dev.of_node, "#reset-cells", NULL)) {
+	अगर (of_find_property(pdev->dev.of_node, "#reset-cells", शून्य)) अणु
 		err = tegra_bpmp_init_resets(bpmp);
-		if (err < 0)
-			goto free_mrq;
-	}
+		अगर (err < 0)
+			जाओ मुक्त_mrq;
+	पूर्ण
 
-	if (of_find_property(pdev->dev.of_node, "#power-domain-cells", NULL)) {
-		err = tegra_bpmp_init_powergates(bpmp);
-		if (err < 0)
-			goto free_mrq;
-	}
+	अगर (of_find_property(pdev->dev.of_node, "#power-domain-cells", शून्य)) अणु
+		err = tegra_bpmp_init_घातergates(bpmp);
+		अगर (err < 0)
+			जाओ मुक्त_mrq;
+	पूर्ण
 
 	err = tegra_bpmp_init_debugfs(bpmp);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(&pdev->dev, "debugfs initialization failed: %d\n", err);
 
-	return 0;
+	वापस 0;
 
-free_mrq:
-	tegra_bpmp_free_mrq(bpmp, MRQ_PING, bpmp);
+मुक्त_mrq:
+	tegra_bpmp_मुक्त_mrq(bpmp, MRQ_PING, bpmp);
 deinit:
-	if (bpmp->soc->ops->deinit)
+	अगर (bpmp->soc->ops->deinit)
 		bpmp->soc->ops->deinit(bpmp);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __maybe_unused tegra_bpmp_resume(struct device *dev)
-{
-	struct tegra_bpmp *bpmp = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused tegra_bpmp_resume(काष्ठा device *dev)
+अणु
+	काष्ठा tegra_bpmp *bpmp = dev_get_drvdata(dev);
 
-	if (bpmp->soc->ops->resume)
-		return bpmp->soc->ops->resume(bpmp);
-	else
-		return 0;
-}
+	अगर (bpmp->soc->ops->resume)
+		वापस bpmp->soc->ops->resume(bpmp);
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops tegra_bpmp_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops tegra_bpmp_pm_ops = अणु
 	.resume_noirq = tegra_bpmp_resume,
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_ARCH_TEGRA_186_SOC) || \
+#अगर IS_ENABLED(CONFIG_ARCH_TEGRA_186_SOC) || \
     IS_ENABLED(CONFIG_ARCH_TEGRA_194_SOC)
-static const struct tegra_bpmp_soc tegra186_soc = {
-	.channels = {
-		.cpu_tx = {
+अटल स्थिर काष्ठा tegra_bpmp_soc tegra186_soc = अणु
+	.channels = अणु
+		.cpu_tx = अणु
 			.offset = 3,
-			.timeout = 60 * USEC_PER_SEC,
-		},
-		.thread = {
+			.समयout = 60 * USEC_PER_SEC,
+		पूर्ण,
+		.thपढ़ो = अणु
 			.offset = 0,
 			.count = 3,
-			.timeout = 600 * USEC_PER_SEC,
-		},
-		.cpu_rx = {
+			.समयout = 600 * USEC_PER_SEC,
+		पूर्ण,
+		.cpu_rx = अणु
 			.offset = 13,
-			.timeout = 0,
-		},
-	},
+			.समयout = 0,
+		पूर्ण,
+	पूर्ण,
 	.ops = &tegra186_bpmp_ops,
 	.num_resets = 193,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_ARCH_TEGRA_210_SOC)
-static const struct tegra_bpmp_soc tegra210_soc = {
-	.channels = {
-		.cpu_tx = {
+#अगर IS_ENABLED(CONFIG_ARCH_TEGRA_210_SOC)
+अटल स्थिर काष्ठा tegra_bpmp_soc tegra210_soc = अणु
+	.channels = अणु
+		.cpu_tx = अणु
 			.offset = 0,
 			.count = 1,
-			.timeout = 60 * USEC_PER_SEC,
-		},
-		.thread = {
+			.समयout = 60 * USEC_PER_SEC,
+		पूर्ण,
+		.thपढ़ो = अणु
 			.offset = 4,
 			.count = 1,
-			.timeout = 600 * USEC_PER_SEC,
-		},
-		.cpu_rx = {
+			.समयout = 600 * USEC_PER_SEC,
+		पूर्ण,
+		.cpu_rx = अणु
 			.offset = 8,
 			.count = 1,
-			.timeout = 0,
-		},
-	},
+			.समयout = 0,
+		पूर्ण,
+	पूर्ण,
 	.ops = &tegra210_bpmp_ops,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static const struct of_device_id tegra_bpmp_match[] = {
-#if IS_ENABLED(CONFIG_ARCH_TEGRA_186_SOC) || \
+अटल स्थिर काष्ठा of_device_id tegra_bpmp_match[] = अणु
+#अगर IS_ENABLED(CONFIG_ARCH_TEGRA_186_SOC) || \
     IS_ENABLED(CONFIG_ARCH_TEGRA_194_SOC) || \
     IS_ENABLED(CONFIG_ARCH_TEGRA_234_SOC)
-	{ .compatible = "nvidia,tegra186-bpmp", .data = &tegra186_soc },
-#endif
-#if IS_ENABLED(CONFIG_ARCH_TEGRA_210_SOC)
-	{ .compatible = "nvidia,tegra210-bpmp", .data = &tegra210_soc },
-#endif
-	{ }
-};
+	अणु .compatible = "nvidia,tegra186-bpmp", .data = &tegra186_soc पूर्ण,
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_ARCH_TEGRA_210_SOC)
+	अणु .compatible = "nvidia,tegra210-bpmp", .data = &tegra210_soc पूर्ण,
+#पूर्ण_अगर
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_driver tegra_bpmp_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver tegra_bpmp_driver = अणु
+	.driver = अणु
 		.name = "tegra-bpmp",
 		.of_match_table = tegra_bpmp_match,
 		.pm = &tegra_bpmp_pm_ops,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = tegra_bpmp_probe,
-};
-builtin_platform_driver(tegra_bpmp_driver);
+पूर्ण;
+builtin_platक्रमm_driver(tegra_bpmp_driver);

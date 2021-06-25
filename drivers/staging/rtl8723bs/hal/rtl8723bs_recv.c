@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#define _RTL8723BS_RECV_C_
+#घोषणा _RTL8723BS_RECV_C_
 
-#include <drv_types.h>
-#include <rtw_debug.h>
-#include <rtl8723b_hal.h>
+#समावेश <drv_types.h>
+#समावेश <rtw_debug.h>
+#समावेश <rtl8723b_hal.h>
 
-static void initrecvbuf(struct recv_buf *precvbuf, struct adapter *padapter)
-{
+अटल व्योम initrecvbuf(काष्ठा recv_buf *precvbuf, काष्ठा adapter *padapter)
+अणु
 	INIT_LIST_HEAD(&precvbuf->list);
 	spin_lock_init(&precvbuf->recvbuf_lock);
 
 	precvbuf->adapter = padapter;
-}
+पूर्ण
 
-static void update_recvframe_attrib(struct adapter *padapter,
-				    union recv_frame *precvframe,
-				    struct recv_stat *prxstat)
-{
-	struct rx_pkt_attrib *pattrib;
-	struct recv_stat report;
-	struct rxreport_8723b *prxreport = (struct rxreport_8723b *)&report;
+अटल व्योम update_recvframe_attrib(काष्ठा adapter *padapter,
+				    जोड़ recv_frame *precvframe,
+				    काष्ठा recv_stat *prxstat)
+अणु
+	काष्ठा rx_pkt_attrib *pattrib;
+	काष्ठा recv_stat report;
+	काष्ठा rxreport_8723b *prxreport = (काष्ठा rxreport_8723b *)&report;
 
 	report.rxdw0 = prxstat->rxdw0;
 	report.rxdw1 = prxstat->rxdw1;
@@ -34,12 +35,12 @@ static void update_recvframe_attrib(struct adapter *padapter,
 	report.rxdw5 = prxstat->rxdw5;
 
 	pattrib = &precvframe->u.hdr.attrib;
-	memset(pattrib, 0, sizeof(struct rx_pkt_attrib));
+	स_रखो(pattrib, 0, माप(काष्ठा rx_pkt_attrib));
 
 	/*  update rx report to recv_frame attribute */
 	pattrib->pkt_rpt_type = prxreport->c2h_ind ? C2H_PACKET : NORMAL_RX;
 
-	if (pattrib->pkt_rpt_type == NORMAL_RX) {
+	अगर (pattrib->pkt_rpt_type == NORMAL_RX) अणु
 		/*  Normal rx packet */
 		/*  update rx report to recv_frame attribute */
 		pattrib->pkt_len = (u16)prxreport->pktlen;
@@ -63,43 +64,43 @@ static void update_recvframe_attrib(struct adapter *padapter,
 		pattrib->mdata = (u8)prxreport->md;
 
 		pattrib->data_rate = (u8)prxreport->rx_rate;
-	} else {
+	पूर्ण अन्यथा अणु
 		pattrib->pkt_len = (u16)prxreport->pktlen;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Notice:
- *Before calling this function,
- *precvframe->u.hdr.rx_data should be ready!
+ *Beक्रमe calling this function,
+ *precvframe->u.hdr.rx_data should be पढ़ोy!
  */
-static void update_recvframe_phyinfo(union recv_frame *precvframe,
-				     struct phy_stat *pphy_status)
-{
-	struct adapter *padapter = precvframe->u.hdr.adapter;
-	struct rx_pkt_attrib *pattrib = &precvframe->u.hdr.attrib;
-	struct hal_com_data *p_hal_data = GET_HAL_DATA(padapter);
-	struct odm_phy_info *p_phy_info =
-		(struct odm_phy_info *)(&pattrib->phy_info);
+अटल व्योम update_recvframe_phyinfo(जोड़ recv_frame *precvframe,
+				     काष्ठा phy_stat *pphy_status)
+अणु
+	काष्ठा adapter *padapter = precvframe->u.hdr.adapter;
+	काष्ठा rx_pkt_attrib *pattrib = &precvframe->u.hdr.attrib;
+	काष्ठा hal_com_data *p_hal_data = GET_HAL_DATA(padapter);
+	काष्ठा odm_phy_info *p_phy_info =
+		(काष्ठा odm_phy_info *)(&pattrib->phy_info);
 
 	u8 *wlanhdr;
 	u8 *my_bssid;
 	u8 *rx_bssid;
 	u8 *rx_ra;
 	u8 *my_hwaddr;
-	u8 *sa = NULL;
+	u8 *sa = शून्य;
 
-	struct odm_packet_info pkt_info = {
+	काष्ठा odm_packet_info pkt_info = अणु
 		.data_rate   = 0x00,
 		.station_id  = 0x00,
 		.bssid_match = false,
 		.to_self     = false,
 		.is_beacon   = false,
-	};
+	पूर्ण;
 
-	/* unsigned long		irqL; */
-	struct sta_priv *pstapriv;
-	struct sta_info *psta;
+	/* अचिन्हित दीर्घ		irqL; */
+	काष्ठा sta_priv *pstapriv;
+	काष्ठा sta_info *psta;
 
 	wlanhdr = get_recvframe_data(precvframe);
 	my_bssid = get_bssid(&padapter->mlmepriv);
@@ -123,7 +124,7 @@ static void update_recvframe_phyinfo(union recv_frame *precvframe,
 
 	pstapriv = &padapter->stapriv;
 	psta = rtw_get_stainfo(pstapriv, sa);
-	if (psta)
+	अगर (psta)
 		pkt_info.station_id = psta->mac_id;
 
 	pkt_info.data_rate = pattrib->data_rate;
@@ -132,206 +133,206 @@ static void update_recvframe_phyinfo(union recv_frame *precvframe,
 	/* spin_lock_bh(&p_hal_data->odm_stainfo_lock); */
 	ODM_PhyStatusQuery(&p_hal_data->odmpriv, p_phy_info,
 			   (u8 *)pphy_status, &(pkt_info));
-	if (psta)
+	अगर (psta)
 		psta->rssi = pattrib->phy_info.RecvSignalPower;
 	/* spin_unlock_bh(&p_hal_data->odm_stainfo_lock); */
-	precvframe->u.hdr.psta = NULL;
-	if (
+	precvframe->u.hdr.psta = शून्य;
+	अगर (
 		pkt_info.bssid_match &&
 		(check_fwstate(&padapter->mlmepriv, WIFI_AP_STATE) == true)
-	) {
-		if (psta) {
+	) अणु
+		अगर (psta) अणु
 			precvframe->u.hdr.psta = psta;
 			rtl8723b_process_phy_info(padapter, precvframe);
-		}
-	} else if (pkt_info.to_self || pkt_info.is_beacon) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (pkt_info.to_self || pkt_info.is_beacon) अणु
 		u32 adhoc_state = WIFI_ADHOC_STATE | WIFI_ADHOC_MASTER_STATE;
-		if (check_fwstate(&padapter->mlmepriv, adhoc_state))
-			if (psta)
+		अगर (check_fwstate(&padapter->mlmepriv, adhoc_state))
+			अगर (psta)
 				precvframe->u.hdr.psta = psta;
 		rtl8723b_process_phy_info(padapter, precvframe);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rtl8723bs_c2h_packet_handler(struct adapter *padapter,
+अटल व्योम rtl8723bs_c2h_packet_handler(काष्ठा adapter *padapter,
 					 u8 *pbuf, u16 length)
-{
-	u8 *tmp = NULL;
+अणु
+	u8 *पंचांगp = शून्य;
 	u8 res = false;
 
-	if (length == 0)
-		return;
+	अगर (length == 0)
+		वापस;
 
-	tmp = rtw_zmalloc(length);
-	if (!tmp)
-		return;
+	पंचांगp = rtw_zदो_स्मृति(length);
+	अगर (!पंचांगp)
+		वापस;
 
-	memcpy(tmp, pbuf, length);
+	स_नकल(पंचांगp, pbuf, length);
 
-	res = rtw_c2h_packet_wk_cmd(padapter, tmp, length);
+	res = rtw_c2h_packet_wk_cmd(padapter, पंचांगp, length);
 
-	if (!res)
-		kfree(tmp);
-}
+	अगर (!res)
+		kमुक्त(पंचांगp);
+पूर्ण
 
-static inline union recv_frame *try_alloc_recvframe(struct recv_priv *precvpriv,
-						    struct recv_buf *precvbuf)
-{
-	union recv_frame *precvframe;
+अटल अंतरभूत जोड़ recv_frame *try_alloc_recvframe(काष्ठा recv_priv *precvpriv,
+						    काष्ठा recv_buf *precvbuf)
+अणु
+	जोड़ recv_frame *precvframe;
 
-	precvframe = rtw_alloc_recvframe(&precvpriv->free_recv_queue);
-	if (!precvframe) {
+	precvframe = rtw_alloc_recvframe(&precvpriv->मुक्त_recv_queue);
+	अगर (!precvframe) अणु
 		rtw_enqueue_recvbuf_to_head(precvbuf,
 					    &precvpriv->recv_buf_pending_queue);
 
-		/*  The case of can't allocate recvframe should be temporary, */
-		/*  schedule again and hope recvframe is available next time. */
+		/*  The हाल of can't allocate recvframe should be temporary, */
+		/*  schedule again and hope recvframe is available next समय. */
 		tasklet_schedule(&precvpriv->recv_tasklet);
-	}
+	पूर्ण
 
-	return precvframe;
-}
+	वापस precvframe;
+पूर्ण
 
-static inline bool rx_crc_err(struct recv_priv *precvpriv,
-			      struct hal_com_data *p_hal_data,
-			      struct rx_pkt_attrib *pattrib,
-			      union recv_frame *precvframe)
-{
+अटल अंतरभूत bool rx_crc_err(काष्ठा recv_priv *precvpriv,
+			      काष्ठा hal_com_data *p_hal_data,
+			      काष्ठा rx_pkt_attrib *pattrib,
+			      जोड़ recv_frame *precvframe)
+अणु
 	/*  fix Hardware RX data error, drop whole recv_buffer */
-	if ((!(p_hal_data->ReceiveConfig & RCR_ACRC32)) && pattrib->crc_err) {
-		rtw_free_recvframe(precvframe, &precvpriv->free_recv_queue);
-		return true;
-	}
+	अगर ((!(p_hal_data->ReceiveConfig & RCR_ACRC32)) && pattrib->crc_err) अणु
+		rtw_मुक्त_recvframe(precvframe, &precvpriv->मुक्त_recv_queue);
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool pkt_exceeds_tail(struct recv_priv *precvpriv,
+अटल अंतरभूत bool pkt_exceeds_tail(काष्ठा recv_priv *precvpriv,
 				    u8 *end, u8 *tail,
-				    union recv_frame *precvframe)
-{
-	if (end > tail) {
-		rtw_free_recvframe(precvframe, &precvpriv->free_recv_queue);
-		return true;
-	}
+				    जोड़ recv_frame *precvframe)
+अणु
+	अगर (end > tail) अणु
+		rtw_मुक्त_recvframe(precvframe, &precvpriv->मुक्त_recv_queue);
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void rtl8723bs_recv_tasklet(struct tasklet_struct *t)
-{
-	struct adapter *padapter = from_tasklet(padapter, t,
+अटल व्योम rtl8723bs_recv_tasklet(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा adapter *padapter = from_tasklet(padapter, t,
 						recvpriv.recv_tasklet);
-	struct hal_com_data *p_hal_data;
-	struct recv_priv *precvpriv;
-	struct recv_buf *precvbuf;
-	union recv_frame *precvframe;
-	struct rx_pkt_attrib *pattrib;
-	struct __queue *recv_buf_queue;
+	काष्ठा hal_com_data *p_hal_data;
+	काष्ठा recv_priv *precvpriv;
+	काष्ठा recv_buf *precvbuf;
+	जोड़ recv_frame *precvframe;
+	काष्ठा rx_pkt_attrib *pattrib;
+	काष्ठा __queue *recv_buf_queue;
 	u8 *ptr;
 	u32 pkt_offset, skb_len, alloc_sz;
-	struct sk_buff *pkt_copy = NULL;
-	u8 shift_sz = 0, rx_report_sz = 0;
+	काष्ठा sk_buff *pkt_copy = शून्य;
+	u8 shअगरt_sz = 0, rx_report_sz = 0;
 
 	p_hal_data = GET_HAL_DATA(padapter);
 	precvpriv = &padapter->recvpriv;
 	recv_buf_queue = &precvpriv->recv_buf_pending_queue;
 
-	do {
+	करो अणु
 		precvbuf = rtw_dequeue_recvbuf(recv_buf_queue);
-		if (!precvbuf)
-			break;
+		अगर (!precvbuf)
+			अवरोध;
 
 		ptr = precvbuf->pdata;
 
-		while (ptr < precvbuf->ptail) {
+		जबतक (ptr < precvbuf->ptail) अणु
 			precvframe = try_alloc_recvframe(precvpriv, precvbuf);
-			if (!precvframe)
-				return;
+			अगर (!precvframe)
+				वापस;
 
 			/* rx desc parsing */
 			update_recvframe_attrib(padapter, precvframe,
-						(struct recv_stat *)ptr);
+						(काष्ठा recv_stat *)ptr);
 
 			pattrib = &precvframe->u.hdr.attrib;
 
-			if (rx_crc_err(precvpriv, p_hal_data,
+			अगर (rx_crc_err(precvpriv, p_hal_data,
 				       pattrib, precvframe))
-				break;
+				अवरोध;
 
 			rx_report_sz = RXDESC_SIZE + pattrib->drvinfo_sz;
 			pkt_offset = rx_report_sz +
-				pattrib->shift_sz +
+				pattrib->shअगरt_sz +
 				pattrib->pkt_len;
 
-			if (pkt_exceeds_tail(precvpriv, ptr + pkt_offset,
+			अगर (pkt_exceeds_tail(precvpriv, ptr + pkt_offset,
 					     precvbuf->ptail, precvframe))
-				break;
+				अवरोध;
 
-			if ((pattrib->crc_err) || (pattrib->icv_err)) {
-				rtw_free_recvframe(precvframe,
-						   &precvpriv->free_recv_queue);
-			} else {
-				/* 	Modified by Albert 20101213 */
+			अगर ((pattrib->crc_err) || (pattrib->icv_err)) अणु
+				rtw_मुक्त_recvframe(precvframe,
+						   &precvpriv->मुक्त_recv_queue);
+			पूर्ण अन्यथा अणु
+				/* 	Modअगरied by Albert 20101213 */
 				/* 	For 8 bytes IP header alignment. */
-				if (pattrib->qos)	/* 	Qos data, wireless lan header length is 26 */
-					shift_sz = 6;
-				else
-					shift_sz = 0;
+				अगर (pattrib->qos)	/* 	Qos data, wireless lan header length is 26 */
+					shअगरt_sz = 6;
+				अन्यथा
+					shअगरt_sz = 0;
 
 				skb_len = pattrib->pkt_len;
 
-				/*  for first fragment packet, driver need allocate 1536+drvinfo_sz+RXDESC_SIZE to defrag packet. */
-				/*  modify alloc_sz for recvive crc error packet by thomas 2011-06-02 */
-				if ((pattrib->mfrag == 1) && (pattrib->frag_num == 0)) {
-					if (skb_len <= 1650)
+				/*  क्रम first fragment packet, driver need allocate 1536+drvinfo_sz+RXDESC_SIZE to defrag packet. */
+				/*  modअगरy alloc_sz क्रम recvive crc error packet by thomas 2011-06-02 */
+				अगर ((pattrib->mfrag == 1) && (pattrib->frag_num == 0)) अणु
+					अगर (skb_len <= 1650)
 						alloc_sz = 1664;
-					else
+					अन्यथा
 						alloc_sz = skb_len + 14;
-				} else {
+				पूर्ण अन्यथा अणु
 					alloc_sz = skb_len;
-					/* 	6 is for IP header 8 bytes alignment in QoS packet case. */
-					/* 	8 is for skb->data 4 bytes alignment. */
+					/* 	6 is क्रम IP header 8 bytes alignment in QoS packet हाल. */
+					/* 	8 is क्रम skb->data 4 bytes alignment. */
 					alloc_sz += 14;
-				}
+				पूर्ण
 
 				pkt_copy = rtw_skb_alloc(alloc_sz);
-				if (!pkt_copy) {
-					rtw_free_recvframe(precvframe, &precvpriv->free_recv_queue);
-					break;
-				}
+				अगर (!pkt_copy) अणु
+					rtw_मुक्त_recvframe(precvframe, &precvpriv->मुक्त_recv_queue);
+					अवरोध;
+				पूर्ण
 
 				pkt_copy->dev = padapter->pnetdev;
 				precvframe->u.hdr.pkt = pkt_copy;
-				skb_reserve(pkt_copy, 8 - ((SIZE_PTR)(pkt_copy->data) & 7));/* force pkt_copy->data at 8-byte alignment address */
-				skb_reserve(pkt_copy, shift_sz);/* force ip_hdr at 8-byte alignment address according to shift_sz. */
-				memcpy(pkt_copy->data, (ptr + rx_report_sz + pattrib->shift_sz), skb_len);
+				skb_reserve(pkt_copy, 8 - ((SIZE_PTR)(pkt_copy->data) & 7));/* क्रमce pkt_copy->data at 8-byte alignment address */
+				skb_reserve(pkt_copy, shअगरt_sz);/* क्रमce ip_hdr at 8-byte alignment address according to shअगरt_sz. */
+				स_नकल(pkt_copy->data, (ptr + rx_report_sz + pattrib->shअगरt_sz), skb_len);
 				precvframe->u.hdr.rx_head = pkt_copy->head;
 				precvframe->u.hdr.rx_data = precvframe->u.hdr.rx_tail = pkt_copy->data;
-				precvframe->u.hdr.rx_end = skb_end_pointer(pkt_copy);
+				precvframe->u.hdr.rx_end = skb_end_poपूर्णांकer(pkt_copy);
 
 				recvframe_put(precvframe, skb_len);
 				/* recvframe_pull(precvframe, drvinfo_sz + RXDESC_SIZE); */
 
-				if (p_hal_data->ReceiveConfig & RCR_APPFCS)
+				अगर (p_hal_data->ReceiveConfig & RCR_APPFCS)
 					recvframe_pull_tail(precvframe, IEEE80211_FCS_LEN);
 
 				/*  move to drv info position */
 				ptr += RXDESC_SIZE;
 
 				/*  update drv info */
-				if (p_hal_data->ReceiveConfig & RCR_APP_BA_SSN) {
+				अगर (p_hal_data->ReceiveConfig & RCR_APP_BA_SSN) अणु
 					/* rtl8723s_update_bassn(padapter, pdrvinfo); */
 					ptr += 4;
-				}
+				पूर्ण
 
-				if (pattrib->pkt_rpt_type == NORMAL_RX) { /* Normal rx packet */
-					if (pattrib->physt)
-						update_recvframe_phyinfo(precvframe, (struct phy_stat *)ptr);
+				अगर (pattrib->pkt_rpt_type == NORMAL_RX) अणु /* Normal rx packet */
+					अगर (pattrib->physt)
+						update_recvframe_phyinfo(precvframe, (काष्ठा phy_stat *)ptr);
 
 					rtw_recv_entry(precvframe);
-				} else if (pattrib->pkt_rpt_type == C2H_PACKET) {
-					struct c2h_evt_hdr_t	C2hEvent;
+				पूर्ण अन्यथा अगर (pattrib->pkt_rpt_type == C2H_PACKET) अणु
+					काष्ठा c2h_evt_hdr_t	C2hEvent;
 
 					u16 len_c2h = pattrib->pkt_len;
 					u8 *pbuf_c2h = precvframe->u.hdr.rx_data;
@@ -342,138 +343,138 @@ static void rtl8723bs_recv_tasklet(struct tasklet_struct *t)
 					C2hEvent.CmdLen = (len_c2h-2);
 					pdata_c2h = pbuf_c2h+2;
 
-					if (C2hEvent.CmdID == C2H_CCX_TX_RPT)
+					अगर (C2hEvent.CmdID == C2H_CCX_TX_RPT)
 						CCX_FwC2HTxRpt_8723b(padapter, pdata_c2h, C2hEvent.CmdLen);
-					else
+					अन्यथा
 						rtl8723bs_c2h_packet_handler(padapter, precvframe->u.hdr.rx_data, pattrib->pkt_len);
 
-					rtw_free_recvframe(precvframe, &precvpriv->free_recv_queue);
-				}
-			}
+					rtw_मुक्त_recvframe(precvframe, &precvpriv->मुक्त_recv_queue);
+				पूर्ण
+			पूर्ण
 
 			pkt_offset = round_up(pkt_offset, 8);
 			precvbuf->pdata += pkt_offset;
 			ptr = precvbuf->pdata;
-			precvframe = NULL;
-			pkt_copy = NULL;
-		}
+			precvframe = शून्य;
+			pkt_copy = शून्य;
+		पूर्ण
 
-		rtw_enqueue_recvbuf(precvbuf, &precvpriv->free_recv_buf_queue);
-	} while (1);
-}
+		rtw_enqueue_recvbuf(precvbuf, &precvpriv->मुक्त_recv_buf_queue);
+	पूर्ण जबतक (1);
+पूर्ण
 
 /*
- * Initialize recv private variable for hardware dependent
+ * Initialize recv निजी variable क्रम hardware dependent
  * 1. recv buf
  * 2. recv tasklet
  *
  */
-s32 rtl8723bs_init_recv_priv(struct adapter *padapter)
-{
+s32 rtl8723bs_init_recv_priv(काष्ठा adapter *padapter)
+अणु
 	s32 res;
 	u32 i, n;
-	struct recv_priv *precvpriv;
-	struct recv_buf *precvbuf;
+	काष्ठा recv_priv *precvpriv;
+	काष्ठा recv_buf *precvbuf;
 
 	res = _SUCCESS;
 	precvpriv = &padapter->recvpriv;
 
 	/* 3 1. init recv buffer */
-	_rtw_init_queue(&precvpriv->free_recv_buf_queue);
+	_rtw_init_queue(&precvpriv->मुक्त_recv_buf_queue);
 	_rtw_init_queue(&precvpriv->recv_buf_pending_queue);
 
-	n = NR_RECVBUFF * sizeof(struct recv_buf) + 4;
-	precvpriv->pallocated_recv_buf = rtw_zmalloc(n);
-	if (!precvpriv->pallocated_recv_buf) {
+	n = NR_RECVBUFF * माप(काष्ठा recv_buf) + 4;
+	precvpriv->pallocated_recv_buf = rtw_zदो_स्मृति(n);
+	अगर (!precvpriv->pallocated_recv_buf) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	precvpriv->precv_buf = (u8 *)N_BYTE_ALIGMENT((SIZE_PTR)(precvpriv->pallocated_recv_buf), 4);
 
 	/*  init each recv buffer */
-	precvbuf = (struct recv_buf *)precvpriv->precv_buf;
-	for (i = 0; i < NR_RECVBUFF; i++) {
+	precvbuf = (काष्ठा recv_buf *)precvpriv->precv_buf;
+	क्रम (i = 0; i < NR_RECVBUFF; i++) अणु
 		initrecvbuf(precvbuf, padapter);
 
-		if (!precvbuf->pskb) {
-			SIZE_PTR tmpaddr = 0;
+		अगर (!precvbuf->pskb) अणु
+			SIZE_PTR पंचांगpaddr = 0;
 			SIZE_PTR alignment = 0;
 
 			precvbuf->pskb = rtw_skb_alloc(MAX_RECVBUF_SZ + RECVBUFF_ALIGN_SZ);
 
-			if (precvbuf->pskb) {
+			अगर (precvbuf->pskb) अणु
 				precvbuf->pskb->dev = padapter->pnetdev;
 
-				tmpaddr = (SIZE_PTR)precvbuf->pskb->data;
-				alignment = tmpaddr & (RECVBUFF_ALIGN_SZ-1);
+				पंचांगpaddr = (SIZE_PTR)precvbuf->pskb->data;
+				alignment = पंचांगpaddr & (RECVBUFF_ALIGN_SZ-1);
 				skb_reserve(precvbuf->pskb, (RECVBUFF_ALIGN_SZ - alignment));
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		list_add_tail(&precvbuf->list, &precvpriv->free_recv_buf_queue.queue);
+		list_add_tail(&precvbuf->list, &precvpriv->मुक्त_recv_buf_queue.queue);
 
 		precvbuf++;
-	}
-	precvpriv->free_recv_buf_queue_cnt = i;
+	पूर्ण
+	precvpriv->मुक्त_recv_buf_queue_cnt = i;
 
-	if (res == _FAIL)
-		goto initbuferror;
+	अगर (res == _FAIL)
+		जाओ initbuख_त्रुटि;
 
 	/* 3 2. init tasklet */
 	tasklet_setup(&precvpriv->recv_tasklet, rtl8723bs_recv_tasklet);
 
-	goto exit;
+	जाओ निकास;
 
-initbuferror:
-	precvbuf = (struct recv_buf *)precvpriv->precv_buf;
-	if (precvbuf) {
-		n = precvpriv->free_recv_buf_queue_cnt;
-		precvpriv->free_recv_buf_queue_cnt = 0;
-		for (i = 0; i < n ; i++) {
+initbuख_त्रुटि:
+	precvbuf = (काष्ठा recv_buf *)precvpriv->precv_buf;
+	अगर (precvbuf) अणु
+		n = precvpriv->मुक्त_recv_buf_queue_cnt;
+		precvpriv->मुक्त_recv_buf_queue_cnt = 0;
+		क्रम (i = 0; i < n ; i++) अणु
 			list_del_init(&precvbuf->list);
-			rtw_os_recvbuf_resource_free(padapter, precvbuf);
+			rtw_os_recvbuf_resource_मुक्त(padapter, precvbuf);
 			precvbuf++;
-		}
-		precvpriv->precv_buf = NULL;
-	}
+		पूर्ण
+		precvpriv->precv_buf = शून्य;
+	पूर्ण
 
-	kfree(precvpriv->pallocated_recv_buf);
-	precvpriv->pallocated_recv_buf = NULL;
+	kमुक्त(precvpriv->pallocated_recv_buf);
+	precvpriv->pallocated_recv_buf = शून्य;
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
 /*
- * Free recv private variable of hardware dependent
+ * Free recv निजी variable of hardware dependent
  * 1. recv buf
  * 2. recv tasklet
  *
  */
-void rtl8723bs_free_recv_priv(struct adapter *padapter)
-{
+व्योम rtl8723bs_मुक्त_recv_priv(काष्ठा adapter *padapter)
+अणु
 	u32 i;
-	struct recv_priv *precvpriv;
-	struct recv_buf *precvbuf;
+	काष्ठा recv_priv *precvpriv;
+	काष्ठा recv_buf *precvbuf;
 
 	precvpriv = &padapter->recvpriv;
 
-	/* 3 1. kill tasklet */
-	tasklet_kill(&precvpriv->recv_tasklet);
+	/* 3 1. समाप्त tasklet */
+	tasklet_समाप्त(&precvpriv->recv_tasklet);
 
-	/* 3 2. free all recv buffers */
-	precvbuf = (struct recv_buf *)precvpriv->precv_buf;
-	if (precvbuf) {
-		precvpriv->free_recv_buf_queue_cnt = 0;
-		for (i = 0; i < NR_RECVBUFF; i++) {
+	/* 3 2. मुक्त all recv buffers */
+	precvbuf = (काष्ठा recv_buf *)precvpriv->precv_buf;
+	अगर (precvbuf) अणु
+		precvpriv->मुक्त_recv_buf_queue_cnt = 0;
+		क्रम (i = 0; i < NR_RECVBUFF; i++) अणु
 			list_del_init(&precvbuf->list);
-			rtw_os_recvbuf_resource_free(padapter, precvbuf);
+			rtw_os_recvbuf_resource_मुक्त(padapter, precvbuf);
 			precvbuf++;
-		}
-		precvpriv->precv_buf = NULL;
-	}
+		पूर्ण
+		precvpriv->precv_buf = शून्य;
+	पूर्ण
 
-	kfree(precvpriv->pallocated_recv_buf);
-	precvpriv->pallocated_recv_buf = NULL;
-}
+	kमुक्त(precvpriv->pallocated_recv_buf);
+	precvpriv->pallocated_recv_buf = शून्य;
+पूर्ण

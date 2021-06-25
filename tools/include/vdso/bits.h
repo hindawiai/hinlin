@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __VDSO_BITS_H
-#define __VDSO_BITS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __VDSO_BITS_H
+#घोषणा __VDSO_BITS_H
 
-#include <vdso/const.h>
+#समावेश <vdso/स्थिर.h>
 
-#define BIT(nr)			(UL(1) << (nr))
+#घोषणा BIT(nr)			(UL(1) << (nr))
 
-#endif	/* __VDSO_BITS_H */
+#पूर्ण_अगर	/* __VDSO_BITS_H */

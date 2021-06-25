@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <config.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <config.h>
 
-#include "misc.h"
-#include "bug_on.h"
+#समावेश "misc.h"
+#समावेश "bug_on.h"
 
-struct rcu_head;
+काष्ठा rcu_head;
 
-void wakeme_after_rcu(struct rcu_head *head)
-{
+व्योम wakeme_after_rcu(काष्ठा rcu_head *head)
+अणु
 	BUG();
-}
+पूर्ण

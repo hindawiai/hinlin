@@ -1,55 +1,56 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * BCH Error Location Module
  *
  * Copyright (C) 2012 Texas Instruments Incorporated - https://www.ti.com/
  */
 
-#ifndef __ELM_H
-#define __ELM_H
+#अगर_अघोषित __ELM_H
+#घोषणा __ELM_H
 
-enum bch_ecc {
+क्रमागत bch_ecc अणु
 	BCH4_ECC = 0,
 	BCH8_ECC,
 	BCH16_ECC,
-};
+पूर्ण;
 
 /* ELM support 8 error syndrome process */
-#define ERROR_VECTOR_MAX		8
+#घोषणा ERROR_VECTOR_MAX		8
 
 /**
- * struct elm_errorvec - error vector for elm
- * @error_reported:		set true for vectors error is reported
+ * काष्ठा elm_errorvec - error vector क्रम elm
+ * @error_reported:		set true क्रम vectors error is reported
  * @error_uncorrectable:	number of uncorrectable errors
  * @error_count:		number of correctable errors in the sector
- * @error_loc:			buffer for error location
+ * @error_loc:			buffer क्रम error location
  *
  */
-struct elm_errorvec {
+काष्ठा elm_errorvec अणु
 	bool error_reported;
 	bool error_uncorrectable;
-	int error_count;
-	int error_loc[16];
-};
+	पूर्णांक error_count;
+	पूर्णांक error_loc[16];
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_MTD_NAND_OMAP_BCH)
-void elm_decode_bch_error_page(struct device *dev, u8 *ecc_calc,
-		struct elm_errorvec *err_vec);
-int elm_config(struct device *dev, enum bch_ecc bch_type,
-	int ecc_steps, int ecc_step_size, int ecc_syndrome_size);
-#else
-static inline void
-elm_decode_bch_error_page(struct device *dev, u8 *ecc_calc,
-			  struct elm_errorvec *err_vec)
-{
-}
+#अगर IS_ENABLED(CONFIG_MTD_न_अंकD_OMAP_BCH)
+व्योम elm_decode_bch_error_page(काष्ठा device *dev, u8 *ecc_calc,
+		काष्ठा elm_errorvec *err_vec);
+पूर्णांक elm_config(काष्ठा device *dev, क्रमागत bch_ecc bch_type,
+	पूर्णांक ecc_steps, पूर्णांक ecc_step_size, पूर्णांक ecc_syndrome_size);
+#अन्यथा
+अटल अंतरभूत व्योम
+elm_decode_bch_error_page(काष्ठा device *dev, u8 *ecc_calc,
+			  काष्ठा elm_errorvec *err_vec)
+अणु
+पूर्ण
 
-static inline int elm_config(struct device *dev, enum bch_ecc bch_type,
-			     int ecc_steps, int ecc_step_size,
-			     int ecc_syndrome_size)
-{
-	return -ENOSYS;
-}
-#endif /* CONFIG_MTD_NAND_OMAP_BCH */
+अटल अंतरभूत पूर्णांक elm_config(काष्ठा device *dev, क्रमागत bch_ecc bch_type,
+			     पूर्णांक ecc_steps, पूर्णांक ecc_step_size,
+			     पूर्णांक ecc_syndrome_size)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MTD_न_अंकD_OMAP_BCH */
 
-#endif /* __ELM_H */
+#पूर्ण_अगर /* __ELM_H */

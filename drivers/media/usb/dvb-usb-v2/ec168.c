@@ -1,74 +1,75 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * E3C EC168 DVB USB driver
  *
  * Copyright (C) 2009 Antti Palosaari <crope@iki.fi>
  */
 
-#include "ec168.h"
-#include "ec100.h"
-#include "mxl5005s.h"
+#समावेश "ec168.h"
+#समावेश "ec100.h"
+#समावेश "mxl5005s.h"
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-static int ec168_ctrl_msg(struct dvb_usb_device *d, struct ec168_req *req)
-{
-	int ret;
-	unsigned int pipe;
+अटल पूर्णांक ec168_ctrl_msg(काष्ठा dvb_usb_device *d, काष्ठा ec168_req *req)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक pipe;
 	u8 request, requesttype;
 	u8 *buf;
 
-	switch (req->cmd) {
-	case DOWNLOAD_FIRMWARE:
-	case GPIO:
-	case WRITE_I2C:
-	case STREAMING_CTRL:
-		requesttype = (USB_TYPE_VENDOR | USB_DIR_OUT);
+	चयन (req->cmd) अणु
+	हाल DOWNLOAD_FIRMWARE:
+	हाल GPIO:
+	हाल WRITE_I2C:
+	हाल STREAMING_CTRL:
+		requesttype = (USB_TYPE_VENDOR | USB_सूची_OUT);
 		request = req->cmd;
-		break;
-	case READ_I2C:
-		requesttype = (USB_TYPE_VENDOR | USB_DIR_IN);
+		अवरोध;
+	हाल READ_I2C:
+		requesttype = (USB_TYPE_VENDOR | USB_सूची_IN);
 		request = req->cmd;
-		break;
-	case GET_CONFIG:
-		requesttype = (USB_TYPE_VENDOR | USB_DIR_IN);
+		अवरोध;
+	हाल GET_CONFIG:
+		requesttype = (USB_TYPE_VENDOR | USB_सूची_IN);
 		request = CONFIG;
-		break;
-	case SET_CONFIG:
-		requesttype = (USB_TYPE_VENDOR | USB_DIR_OUT);
+		अवरोध;
+	हाल SET_CONFIG:
+		requesttype = (USB_TYPE_VENDOR | USB_सूची_OUT);
 		request = CONFIG;
-		break;
-	case WRITE_DEMOD:
-		requesttype = (USB_TYPE_VENDOR | USB_DIR_OUT);
+		अवरोध;
+	हाल WRITE_DEMOD:
+		requesttype = (USB_TYPE_VENDOR | USB_सूची_OUT);
 		request = DEMOD_RW;
-		break;
-	case READ_DEMOD:
-		requesttype = (USB_TYPE_VENDOR | USB_DIR_IN);
+		अवरोध;
+	हाल READ_DEMOD:
+		requesttype = (USB_TYPE_VENDOR | USB_सूची_IN);
 		request = DEMOD_RW;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&d->udev->dev, "%s: unknown command=%02x\n",
 				KBUILD_MODNAME, req->cmd);
 		ret = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	buf = kmalloc(req->size, GFP_KERNEL);
-	if (!buf) {
+	buf = kदो_स्मृति(req->size, GFP_KERNEL);
+	अगर (!buf) अणु
 		ret = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (requesttype == (USB_TYPE_VENDOR | USB_DIR_OUT)) {
-		/* write */
-		memcpy(buf, req->data, req->size);
+	अगर (requesttype == (USB_TYPE_VENDOR | USB_सूची_OUT)) अणु
+		/* ग_लिखो */
+		स_नकल(buf, req->data, req->size);
 		pipe = usb_sndctrlpipe(d->udev, 0);
-	} else {
-		/* read */
+	पूर्ण अन्यथा अणु
+		/* पढ़ो */
 		pipe = usb_rcvctrlpipe(d->udev, 0);
-	}
+	पूर्ण
 
-	msleep(1); /* avoid I2C errors */
+	msleep(1); /* aव्योम I2C errors */
 
 	ret = usb_control_msg(d->udev, pipe, request, requesttype, req->value,
 		req->index, buf, req->size, EC168_USB_TIMEOUT);
@@ -76,69 +77,69 @@ static int ec168_ctrl_msg(struct dvb_usb_device *d, struct ec168_req *req)
 	dvb_usb_dbg_usb_control_msg(d->udev, request, requesttype, req->value,
 			req->index, buf, req->size);
 
-	if (ret < 0)
-		goto err_dealloc;
-	else
+	अगर (ret < 0)
+		जाओ err_dealloc;
+	अन्यथा
 		ret = 0;
 
-	/* read request, copy returned data to return buf */
-	if (!ret && requesttype == (USB_TYPE_VENDOR | USB_DIR_IN))
-		memcpy(req->data, buf, req->size);
+	/* पढ़ो request, copy वापसed data to वापस buf */
+	अगर (!ret && requesttype == (USB_TYPE_VENDOR | USB_सूची_IN))
+		स_नकल(req->data, buf, req->size);
 
-	kfree(buf);
-	return ret;
+	kमुक्त(buf);
+	वापस ret;
 
 err_dealloc:
-	kfree(buf);
+	kमुक्त(buf);
 error:
 	dev_dbg(&d->udev->dev, "%s: failed=%d\n", __func__, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* I2C */
-static struct ec100_config ec168_ec100_config;
+अटल काष्ठा ec100_config ec168_ec100_config;
 
-static int ec168_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msg[],
-	int num)
-{
-	struct dvb_usb_device *d = i2c_get_adapdata(adap);
-	struct ec168_req req;
-	int i = 0;
-	int ret;
+अटल पूर्णांक ec168_i2c_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg msg[],
+	पूर्णांक num)
+अणु
+	काष्ठा dvb_usb_device *d = i2c_get_adapdata(adap);
+	काष्ठा ec168_req req;
+	पूर्णांक i = 0;
+	पूर्णांक ret;
 
-	if (num > 2)
-		return -EINVAL;
+	अगर (num > 2)
+		वापस -EINVAL;
 
-	if (mutex_lock_interruptible(&d->i2c_mutex) < 0)
-		return -EAGAIN;
+	अगर (mutex_lock_पूर्णांकerruptible(&d->i2c_mutex) < 0)
+		वापस -EAGAIN;
 
-	while (i < num) {
-		if (num > i + 1 && (msg[i+1].flags & I2C_M_RD)) {
-			if (msg[i].addr == ec168_ec100_config.demod_address) {
+	जबतक (i < num) अणु
+		अगर (num > i + 1 && (msg[i+1].flags & I2C_M_RD)) अणु
+			अगर (msg[i].addr == ec168_ec100_config.demod_address) अणु
 				req.cmd = READ_DEMOD;
 				req.value = 0;
 				req.index = 0xff00 + msg[i].buf[0]; /* reg */
-				req.size = msg[i+1].len; /* bytes to read */
+				req.size = msg[i+1].len; /* bytes to पढ़ो */
 				req.data = &msg[i+1].buf[0];
 				ret = ec168_ctrl_msg(d, &req);
 				i += 2;
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_err(&d->udev->dev, "%s: I2C read not " \
 						"implemented\n",
 						KBUILD_MODNAME);
 				ret = -EOPNOTSUPP;
 				i += 2;
-			}
-		} else {
-			if (msg[i].addr == ec168_ec100_config.demod_address) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (msg[i].addr == ec168_ec100_config.demod_address) अणु
 				req.cmd = WRITE_DEMOD;
 				req.value = msg[i].buf[1]; /* val */
 				req.index = 0xff00 + msg[i].buf[0]; /* reg */
 				req.size = 0;
-				req.data = NULL;
+				req.data = शून्य;
 				ret = ec168_ctrl_msg(d, &req);
 				i += 1;
-			} else {
+			पूर्ण अन्यथा अणु
 				req.cmd = WRITE_I2C;
 				req.value = msg[i].buf[0]; /* val */
 				req.index = 0x0100 + msg[i].addr; /* I2C addr */
@@ -146,79 +147,79 @@ static int ec168_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msg[],
 				req.data = &msg[i].buf[1];
 				ret = ec168_ctrl_msg(d, &req);
 				i += 1;
-			}
-		}
-		if (ret)
-			goto error;
+			पूर्ण
+		पूर्ण
+		अगर (ret)
+			जाओ error;
 
-	}
+	पूर्ण
 	ret = i;
 
 error:
 	mutex_unlock(&d->i2c_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 ec168_i2c_func(struct i2c_adapter *adapter)
-{
-	return I2C_FUNC_I2C;
-}
+अटल u32 ec168_i2c_func(काष्ठा i2c_adapter *adapter)
+अणु
+	वापस I2C_FUNC_I2C;
+पूर्ण
 
-static struct i2c_algorithm ec168_i2c_algo = {
+अटल काष्ठा i2c_algorithm ec168_i2c_algo = अणु
 	.master_xfer   = ec168_i2c_xfer,
 	.functionality = ec168_i2c_func,
-};
+पूर्ण;
 
-/* Callbacks for DVB USB */
-static int ec168_identify_state(struct dvb_usb_device *d, const char **name)
-{
-	int ret;
+/* Callbacks क्रम DVB USB */
+अटल पूर्णांक ec168_identअगरy_state(काष्ठा dvb_usb_device *d, स्थिर अक्षर **name)
+अणु
+	पूर्णांक ret;
 	u8 reply;
-	struct ec168_req req = {GET_CONFIG, 0, 1, sizeof(reply), &reply};
+	काष्ठा ec168_req req = अणुGET_CONFIG, 0, 1, माप(reply), &replyपूर्ण;
 	dev_dbg(&d->udev->dev, "%s:\n", __func__);
 
 	ret = ec168_ctrl_msg(d, &req);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
 	dev_dbg(&d->udev->dev, "%s: reply=%02x\n", __func__, reply);
 
-	if (reply == 0x01)
+	अगर (reply == 0x01)
 		ret = WARM;
-	else
+	अन्यथा
 		ret = COLD;
 
-	return ret;
+	वापस ret;
 error:
 	dev_dbg(&d->udev->dev, "%s: failed=%d\n", __func__, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ec168_download_firmware(struct dvb_usb_device *d,
-		const struct firmware *fw)
-{
-	int ret, len, remaining;
-	struct ec168_req req = {DOWNLOAD_FIRMWARE, 0, 0, 0, NULL};
+अटल पूर्णांक ec168_करोwnload_firmware(काष्ठा dvb_usb_device *d,
+		स्थिर काष्ठा firmware *fw)
+अणु
+	पूर्णांक ret, len, reमुख्यing;
+	काष्ठा ec168_req req = अणुDOWNLOAD_FIRMWARE, 0, 0, 0, शून्यपूर्ण;
 	dev_dbg(&d->udev->dev, "%s:\n", __func__);
 
-	#define LEN_MAX 2048 /* max packet size */
-	for (remaining = fw->size; remaining > 0; remaining -= LEN_MAX) {
-		len = remaining;
-		if (len > LEN_MAX)
+	#घोषणा LEN_MAX 2048 /* max packet size */
+	क्रम (reमुख्यing = fw->size; reमुख्यing > 0; reमुख्यing -= LEN_MAX) अणु
+		len = reमुख्यing;
+		अगर (len > LEN_MAX)
 			len = LEN_MAX;
 
 		req.size = len;
-		req.data = (u8 *) &fw->data[fw->size - remaining];
-		req.index = fw->size - remaining;
+		req.data = (u8 *) &fw->data[fw->size - reमुख्यing];
+		req.index = fw->size - reमुख्यing;
 
 		ret = ec168_ctrl_msg(d, &req);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&d->udev->dev,
 					"%s: firmware download failed=%d\n",
 					KBUILD_MODNAME, ret);
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
 	req.size = 0;
 
@@ -227,97 +228,97 @@ static int ec168_download_firmware(struct dvb_usb_device *d,
 	req.value = 0;
 	req.index = 0x0001;
 	ret = ec168_ctrl_msg(d, &req);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	/* really needed - no idea what does */
+	/* really needed - no idea what करोes */
 	req.cmd = GPIO;
 	req.value = 0;
 	req.index = 0x0206;
 	ret = ec168_ctrl_msg(d, &req);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
 	/* activate tuner I2C? */
 	req.cmd = WRITE_I2C;
 	req.value = 0;
 	req.index = 0x00c6;
 	ret = ec168_ctrl_msg(d, &req);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	return ret;
+	वापस ret;
 error:
 	dev_dbg(&d->udev->dev, "%s: failed=%d\n", __func__, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct ec100_config ec168_ec100_config = {
-	.demod_address = 0xff, /* not real address, demod is integrated */
-};
+अटल काष्ठा ec100_config ec168_ec100_config = अणु
+	.demod_address = 0xff, /* not real address, demod is पूर्णांकegrated */
+पूर्ण;
 
-static int ec168_ec100_frontend_attach(struct dvb_usb_adapter *adap)
-{
-	struct dvb_usb_device *d = adap_to_d(adap);
+अटल पूर्णांक ec168_ec100_frontend_attach(काष्ठा dvb_usb_adapter *adap)
+अणु
+	काष्ठा dvb_usb_device *d = adap_to_d(adap);
 	dev_dbg(&d->udev->dev, "%s:\n", __func__);
 
 	adap->fe[0] = dvb_attach(ec100_attach, &ec168_ec100_config,
 			&d->i2c_adap);
-	if (adap->fe[0] == NULL)
-		return -ENODEV;
+	अगर (adap->fe[0] == शून्य)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct mxl5005s_config ec168_mxl5003s_config = {
+अटल काष्ठा mxl5005s_config ec168_mxl5003s_config = अणु
 	.i2c_address     = 0xc6,
-	.if_freq         = IF_FREQ_4570000HZ,
+	.अगर_freq         = IF_FREQ_4570000HZ,
 	.xtal_freq       = CRYSTAL_FREQ_16000000HZ,
 	.agc_mode        = MXL_SINGLE_AGC,
 	.tracking_filter = MXL_TF_OFF,
 	.rssi_enable     = MXL_RSSI_ENABLE,
 	.cap_select      = MXL_CAP_SEL_ENABLE,
-	.div_out         = MXL_DIV_OUT_4,
-	.clock_out       = MXL_CLOCK_OUT_DISABLE,
+	.भाग_out         = MXL_DIV_OUT_4,
+	.घड़ी_out       = MXL_CLOCK_OUT_DISABLE,
 	.output_load     = MXL5005S_IF_OUTPUT_LOAD_200_OHM,
 	.top		 = MXL5005S_TOP_25P2,
 	.mod_mode        = MXL_DIGITAL_MODE,
-	.if_mode         = MXL_ZERO_IF,
+	.अगर_mode         = MXL_ZERO_IF,
 	.AgcMasterByte   = 0x00,
-};
+पूर्ण;
 
-static int ec168_mxl5003s_tuner_attach(struct dvb_usb_adapter *adap)
-{
-	struct dvb_usb_device *d = adap_to_d(adap);
+अटल पूर्णांक ec168_mxl5003s_tuner_attach(काष्ठा dvb_usb_adapter *adap)
+अणु
+	काष्ठा dvb_usb_device *d = adap_to_d(adap);
 	dev_dbg(&d->udev->dev, "%s:\n", __func__);
 
-	return dvb_attach(mxl5005s_attach, adap->fe[0], &d->i2c_adap,
-			&ec168_mxl5003s_config) == NULL ? -ENODEV : 0;
-}
+	वापस dvb_attach(mxl5005s_attach, adap->fe[0], &d->i2c_adap,
+			&ec168_mxl5003s_config) == शून्य ? -ENODEV : 0;
+पूर्ण
 
-static int ec168_streaming_ctrl(struct dvb_frontend *fe, int onoff)
-{
-	struct dvb_usb_device *d = fe_to_d(fe);
-	struct ec168_req req = {STREAMING_CTRL, 0x7f01, 0x0202, 0, NULL};
+अटल पूर्णांक ec168_streaming_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक onoff)
+अणु
+	काष्ठा dvb_usb_device *d = fe_to_d(fe);
+	काष्ठा ec168_req req = अणुSTREAMING_CTRL, 0x7f01, 0x0202, 0, शून्यपूर्ण;
 	dev_dbg(&d->udev->dev, "%s: onoff=%d\n", __func__, onoff);
 
-	if (onoff)
+	अगर (onoff)
 		req.index = 0x0102;
-	return ec168_ctrl_msg(d, &req);
-}
+	वापस ec168_ctrl_msg(d, &req);
+पूर्ण
 
 /* DVB USB Driver stuff */
 /* bInterfaceNumber 0 is HID
  * bInterfaceNumber 1 is DVB-T */
-static const struct dvb_usb_device_properties ec168_props = {
+अटल स्थिर काष्ठा dvb_usb_device_properties ec168_props = अणु
 	.driver_name = KBUILD_MODNAME,
 	.owner = THIS_MODULE,
 	.adapter_nr = adapter_nr,
 	.bInterfaceNumber = 1,
 
-	.identify_state = ec168_identify_state,
+	.identअगरy_state = ec168_identअगरy_state,
 	.firmware = EC168_FIRMWARE,
-	.download_firmware = ec168_download_firmware,
+	.करोwnload_firmware = ec168_करोwnload_firmware,
 
 	.i2c_algo = &ec168_i2c_algo,
 	.frontend_attach = ec168_ec100_frontend_attach,
@@ -325,29 +326,29 @@ static const struct dvb_usb_device_properties ec168_props = {
 	.streaming_ctrl = ec168_streaming_ctrl,
 
 	.num_adapters = 1,
-	.adapter = {
-		{
+	.adapter = अणु
+		अणु
 			.stream = DVB_USB_STREAM_BULK(0x82, 6, 32 * 512),
-		}
-	},
-};
+		पूर्ण
+	पूर्ण,
+पूर्ण;
 
-static const struct usb_device_id ec168_id[] = {
-	{ DVB_USB_DEVICE(USB_VID_E3C, USB_PID_E3C_EC168,
-		     &ec168_props, "E3C EC168 reference design", NULL)},
-	{ DVB_USB_DEVICE(USB_VID_E3C, USB_PID_E3C_EC168_2,
-		     &ec168_props, "E3C EC168 reference design", NULL)},
-	{ DVB_USB_DEVICE(USB_VID_E3C, USB_PID_E3C_EC168_3,
-		     &ec168_props, "E3C EC168 reference design", NULL)},
-	{ DVB_USB_DEVICE(USB_VID_E3C, USB_PID_E3C_EC168_4,
-		     &ec168_props, "E3C EC168 reference design", NULL)},
-	{ DVB_USB_DEVICE(USB_VID_E3C, USB_PID_E3C_EC168_5,
-		     &ec168_props, "E3C EC168 reference design", NULL)},
-	{}
-};
+अटल स्थिर काष्ठा usb_device_id ec168_id[] = अणु
+	अणु DVB_USB_DEVICE(USB_VID_E3C, USB_PID_E3C_EC168,
+		     &ec168_props, "E3C EC168 reference design", शून्य)पूर्ण,
+	अणु DVB_USB_DEVICE(USB_VID_E3C, USB_PID_E3C_EC168_2,
+		     &ec168_props, "E3C EC168 reference design", शून्य)पूर्ण,
+	अणु DVB_USB_DEVICE(USB_VID_E3C, USB_PID_E3C_EC168_3,
+		     &ec168_props, "E3C EC168 reference design", शून्य)पूर्ण,
+	अणु DVB_USB_DEVICE(USB_VID_E3C, USB_PID_E3C_EC168_4,
+		     &ec168_props, "E3C EC168 reference design", शून्य)पूर्ण,
+	अणु DVB_USB_DEVICE(USB_VID_E3C, USB_PID_E3C_EC168_5,
+		     &ec168_props, "E3C EC168 reference design", शून्य)पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, ec168_id);
 
-static struct usb_driver ec168_driver = {
+अटल काष्ठा usb_driver ec168_driver = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = ec168_id,
 	.probe = dvb_usbv2_probe,
@@ -356,7 +357,7 @@ static struct usb_driver ec168_driver = {
 	.resume = dvb_usbv2_resume,
 	.no_dynamic_id = 1,
 	.soft_unbind = 1,
-};
+पूर्ण;
 
 module_usb_driver(ec168_driver);
 

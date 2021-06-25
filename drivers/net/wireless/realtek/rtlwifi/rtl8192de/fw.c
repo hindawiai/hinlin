@@ -1,177 +1,178 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#include "../wifi.h"
-#include "../pci.h"
-#include "../base.h"
-#include "../efuse.h"
-#include "reg.h"
-#include "def.h"
-#include "fw.h"
-#include "sw.h"
+#समावेश "../wifi.h"
+#समावेश "../pci.h"
+#समावेश "../base.h"
+#समावेश "../efuse.h"
+#समावेश "reg.h"
+#समावेश "def.h"
+#समावेश "fw.h"
+#समावेश "sw.h"
 
-static bool _rtl92d_is_fw_downloaded(struct rtl_priv *rtlpriv)
-{
-	return (rtl_read_dword(rtlpriv, REG_MCUFWDL) & MCUFWDL_RDY) ?
+अटल bool _rtl92d_is_fw_करोwnloaded(काष्ठा rtl_priv *rtlpriv)
+अणु
+	वापस (rtl_पढ़ो_dword(rtlpriv, REG_MCUFWDL) & MCUFWDL_RDY) ?
 		true : false;
-}
+पूर्ण
 
-static void _rtl92d_enable_fw_download(struct ieee80211_hw *hw, bool enable)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	u8 tmp;
+अटल व्योम _rtl92d_enable_fw_करोwnload(काष्ठा ieee80211_hw *hw, bool enable)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	u8 पंचांगp;
 
-	if (enable) {
-		tmp = rtl_read_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
-		rtl_write_byte(rtlpriv, REG_SYS_FUNC_EN + 1, tmp | 0x04);
-		tmp = rtl_read_byte(rtlpriv, REG_MCUFWDL);
-		rtl_write_byte(rtlpriv, REG_MCUFWDL, tmp | 0x01);
-		tmp = rtl_read_byte(rtlpriv, REG_MCUFWDL + 2);
-		rtl_write_byte(rtlpriv, REG_MCUFWDL + 2, tmp & 0xf7);
-	} else {
-		tmp = rtl_read_byte(rtlpriv, REG_MCUFWDL);
-		rtl_write_byte(rtlpriv, REG_MCUFWDL, tmp & 0xfe);
-		/* Reserved for fw extension.
-		 * 0x81[7] is used for mac0 status ,
-		 * so don't write this reg here
-		 * rtl_write_byte(rtlpriv, REG_MCUFWDL + 1, 0x00);*/
-	}
-}
+	अगर (enable) अणु
+		पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
+		rtl_ग_लिखो_byte(rtlpriv, REG_SYS_FUNC_EN + 1, पंचांगp | 0x04);
+		पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_MCUFWDL);
+		rtl_ग_लिखो_byte(rtlpriv, REG_MCUFWDL, पंचांगp | 0x01);
+		पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_MCUFWDL + 2);
+		rtl_ग_लिखो_byte(rtlpriv, REG_MCUFWDL + 2, पंचांगp & 0xf7);
+	पूर्ण अन्यथा अणु
+		पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_MCUFWDL);
+		rtl_ग_लिखो_byte(rtlpriv, REG_MCUFWDL, पंचांगp & 0xfe);
+		/* Reserved क्रम fw extension.
+		 * 0x81[7] is used क्रम mac0 status ,
+		 * so करोn't ग_लिखो this reg here
+		 * rtl_ग_लिखो_byte(rtlpriv, REG_MCUFWDL + 1, 0x00);*/
+	पूर्ण
+पूर्ण
 
-static void _rtl92d_write_fw(struct ieee80211_hw *hw,
-			     enum version_8192d version, u8 *buffer, u32 size)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+अटल व्योम _rtl92d_ग_लिखो_fw(काष्ठा ieee80211_hw *hw,
+			     क्रमागत version_8192d version, u8 *buffer, u32 size)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
 	u8 *bufferptr = buffer;
-	u32 pagenums, remainsize;
+	u32 pagक्रमागतs, reमुख्यsize;
 	u32 page, offset;
 
 	rtl_dbg(rtlpriv, COMP_FW, DBG_TRACE, "FW size is %d bytes,\n", size);
-	if (rtlhal->hw_type == HARDWARE_TYPE_RTL8192DE)
+	अगर (rtlhal->hw_type == HARDWARE_TYPE_RTL8192DE)
 		rtl_fill_dummy(bufferptr, &size);
-	pagenums = size / FW_8192D_PAGE_SIZE;
-	remainsize = size % FW_8192D_PAGE_SIZE;
-	if (pagenums > 8)
+	pagक्रमागतs = size / FW_8192D_PAGE_SIZE;
+	reमुख्यsize = size % FW_8192D_PAGE_SIZE;
+	अगर (pagक्रमागतs > 8)
 		pr_err("Page numbers should not greater then 8\n");
-	for (page = 0; page < pagenums; page++) {
+	क्रम (page = 0; page < pagक्रमागतs; page++) अणु
 		offset = page * FW_8192D_PAGE_SIZE;
-		rtl_fw_page_write(hw, page, (bufferptr + offset),
+		rtl_fw_page_ग_लिखो(hw, page, (bufferptr + offset),
 				  FW_8192D_PAGE_SIZE);
-	}
-	if (remainsize) {
-		offset = pagenums * FW_8192D_PAGE_SIZE;
-		page = pagenums;
-		rtl_fw_page_write(hw, page, (bufferptr + offset), remainsize);
-	}
-}
+	पूर्ण
+	अगर (reमुख्यsize) अणु
+		offset = pagक्रमागतs * FW_8192D_PAGE_SIZE;
+		page = pagक्रमागतs;
+		rtl_fw_page_ग_लिखो(hw, page, (bufferptr + offset), reमुख्यsize);
+	पूर्ण
+पूर्ण
 
-static int _rtl92d_fw_free_to_go(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल पूर्णांक _rtl92d_fw_मुक्त_to_go(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 	u32 counter = 0;
 	u32 value32;
 
-	do {
-		value32 = rtl_read_dword(rtlpriv, REG_MCUFWDL);
-	} while ((counter++ < FW_8192D_POLLING_TIMEOUT_COUNT) &&
+	करो अणु
+		value32 = rtl_पढ़ो_dword(rtlpriv, REG_MCUFWDL);
+	पूर्ण जबतक ((counter++ < FW_8192D_POLLING_TIMEOUT_COUNT) &&
 		 (!(value32 & FWDL_CHKSUM_RPT)));
-	if (counter >= FW_8192D_POLLING_TIMEOUT_COUNT) {
+	अगर (counter >= FW_8192D_POLLING_TIMEOUT_COUNT) अणु
 		pr_err("chksum report fail! REG_MCUFWDL:0x%08x\n",
 		       value32);
-		return -EIO;
-	}
-	value32 = rtl_read_dword(rtlpriv, REG_MCUFWDL);
+		वापस -EIO;
+	पूर्ण
+	value32 = rtl_पढ़ो_dword(rtlpriv, REG_MCUFWDL);
 	value32 |= MCUFWDL_RDY;
-	rtl_write_dword(rtlpriv, REG_MCUFWDL, value32);
-	return 0;
-}
+	rtl_ग_लिखो_dword(rtlpriv, REG_MCUFWDL, value32);
+	वापस 0;
+पूर्ण
 
-void rtl92d_firmware_selfreset(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	u8 u1b_tmp;
+व्योम rtl92d_firmware_selfreset(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	u8 u1b_पंचांगp;
 	u8 delay = 100;
 
 	/* Set (REG_HMETFR + 3) to  0x20 is reset 8051 */
-	rtl_write_byte(rtlpriv, REG_HMETFR + 3, 0x20);
-	u1b_tmp = rtl_read_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
-	while (u1b_tmp & BIT(2)) {
+	rtl_ग_लिखो_byte(rtlpriv, REG_HMETFR + 3, 0x20);
+	u1b_पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
+	जबतक (u1b_पंचांगp & BIT(2)) अणु
 		delay--;
-		if (delay == 0)
-			break;
+		अगर (delay == 0)
+			अवरोध;
 		udelay(50);
-		u1b_tmp = rtl_read_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
-	}
+		u1b_पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
+	पूर्ण
 	WARN_ONCE((delay <= 0), "rtl8192de: 8051 reset failed!\n");
 	rtl_dbg(rtlpriv, COMP_FW, DBG_DMESG,
 		"=====> 8051 reset success (%d)\n", delay);
-}
+पूर्ण
 
-static int _rtl92d_fw_init(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+अटल पूर्णांक _rtl92d_fw_init(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
 	u32 counter;
 
 	rtl_dbg(rtlpriv, COMP_FW, DBG_DMESG, "FW already have download\n");
-	/* polling for FW ready */
+	/* polling क्रम FW पढ़ोy */
 	counter = 0;
-	do {
-		if (rtlhal->interfaceindex == 0) {
-			if (rtl_read_byte(rtlpriv, FW_MAC0_READY) &
-			    MAC0_READY) {
+	करो अणु
+		अगर (rtlhal->पूर्णांकerfaceindex == 0) अणु
+			अगर (rtl_पढ़ो_byte(rtlpriv, FW_MAC0_READY) &
+			    MAC0_READY) अणु
 				rtl_dbg(rtlpriv, COMP_FW, DBG_DMESG,
 					"Polling FW ready success!! REG_MCUFWDL: 0x%x\n",
-					rtl_read_byte(rtlpriv,
+					rtl_पढ़ो_byte(rtlpriv,
 						      FW_MAC0_READY));
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 			udelay(5);
-		} else {
-			if (rtl_read_byte(rtlpriv, FW_MAC1_READY) &
-			    MAC1_READY) {
+		पूर्ण अन्यथा अणु
+			अगर (rtl_पढ़ो_byte(rtlpriv, FW_MAC1_READY) &
+			    MAC1_READY) अणु
 				rtl_dbg(rtlpriv, COMP_FW, DBG_DMESG,
 					"Polling FW ready success!! REG_MCUFWDL: 0x%x\n",
-					rtl_read_byte(rtlpriv,
+					rtl_पढ़ो_byte(rtlpriv,
 						      FW_MAC1_READY));
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 			udelay(5);
-		}
-	} while (counter++ < POLLING_READY_TIMEOUT_COUNT);
+		पूर्ण
+	पूर्ण जबतक (counter++ < POLLING_READY_TIMEOUT_COUNT);
 
-	if (rtlhal->interfaceindex == 0) {
+	अगर (rtlhal->पूर्णांकerfaceindex == 0) अणु
 		rtl_dbg(rtlpriv, COMP_FW, DBG_DMESG,
 			"Polling FW ready fail!! MAC0 FW init not ready: 0x%x\n",
-			rtl_read_byte(rtlpriv, FW_MAC0_READY));
-	} else {
+			rtl_पढ़ो_byte(rtlpriv, FW_MAC0_READY));
+	पूर्ण अन्यथा अणु
 		rtl_dbg(rtlpriv, COMP_FW, DBG_DMESG,
 			"Polling FW ready fail!! MAC1 FW init not ready: 0x%x\n",
-			rtl_read_byte(rtlpriv, FW_MAC1_READY));
-	}
+			rtl_पढ़ो_byte(rtlpriv, FW_MAC1_READY));
+	पूर्ण
 	rtl_dbg(rtlpriv, COMP_FW, DBG_DMESG,
 		"Polling FW ready fail!! REG_MCUFWDL:0x%08x\n",
-		rtl_read_dword(rtlpriv, REG_MCUFWDL));
-	return -1;
-}
+		rtl_पढ़ो_dword(rtlpriv, REG_MCUFWDL));
+	वापस -1;
+पूर्ण
 
-int rtl92d_download_fw(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+पूर्णांक rtl92d_करोwnload_fw(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
 	u8 *pfwheader;
 	u8 *pfwdata;
 	u32 fwsize;
-	int err;
-	enum version_8192d version = rtlhal->version;
+	पूर्णांक err;
+	क्रमागत version_8192d version = rtlhal->version;
 	u8 value;
 	u32 count;
-	bool fw_downloaded = false, fwdl_in_process = false;
-	unsigned long flags;
+	bool fw_करोwnloaded = false, fwdl_in_process = false;
+	अचिन्हित दीर्घ flags;
 
-	if (rtlpriv->max_fw_size == 0 || !rtlhal->pfirmware)
-		return 1;
+	अगर (rtlpriv->max_fw_size == 0 || !rtlhal->pfirmware)
+		वापस 1;
 	fwsize = rtlhal->fwsize;
 	pfwheader = rtlhal->pfirmware;
 	pfwdata = rtlhal->pfirmware;
@@ -181,290 +182,290 @@ int rtl92d_download_fw(struct ieee80211_hw *hw)
 		"FirmwareVersion(%d), FirmwareSubVersion(%d), Signature(%#x)\n",
 		rtlhal->fw_version, rtlhal->fw_subversion,
 		GET_FIRMWARE_HDR_SIGNATURE(pfwheader));
-	if (IS_FW_HEADER_EXIST(pfwheader)) {
+	अगर (IS_FW_HEADER_EXIST(pfwheader)) अणु
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 			"Shift 32 bytes for FW header!!\n");
 		pfwdata = pfwdata + 32;
 		fwsize = fwsize - 32;
-	}
+	पूर्ण
 
-	spin_lock_irqsave(&globalmutex_for_fwdownload, flags);
-	fw_downloaded = _rtl92d_is_fw_downloaded(rtlpriv);
-	if ((rtl_read_byte(rtlpriv, 0x1f) & BIT(5)) == BIT(5))
+	spin_lock_irqsave(&globalmutex_क्रम_fwकरोwnload, flags);
+	fw_करोwnloaded = _rtl92d_is_fw_करोwnloaded(rtlpriv);
+	अगर ((rtl_पढ़ो_byte(rtlpriv, 0x1f) & BIT(5)) == BIT(5))
 		fwdl_in_process = true;
-	else
+	अन्यथा
 		fwdl_in_process = false;
-	if (fw_downloaded) {
-		spin_unlock_irqrestore(&globalmutex_for_fwdownload, flags);
-		goto exit;
-	} else if (fwdl_in_process) {
-		spin_unlock_irqrestore(&globalmutex_for_fwdownload, flags);
-		for (count = 0; count < 5000; count++) {
+	अगर (fw_करोwnloaded) अणु
+		spin_unlock_irqrestore(&globalmutex_क्रम_fwकरोwnload, flags);
+		जाओ निकास;
+	पूर्ण अन्यथा अगर (fwdl_in_process) अणु
+		spin_unlock_irqrestore(&globalmutex_क्रम_fwकरोwnload, flags);
+		क्रम (count = 0; count < 5000; count++) अणु
 			udelay(500);
-			spin_lock_irqsave(&globalmutex_for_fwdownload, flags);
-			fw_downloaded = _rtl92d_is_fw_downloaded(rtlpriv);
-			if ((rtl_read_byte(rtlpriv, 0x1f) & BIT(5)) == BIT(5))
+			spin_lock_irqsave(&globalmutex_क्रम_fwकरोwnload, flags);
+			fw_करोwnloaded = _rtl92d_is_fw_करोwnloaded(rtlpriv);
+			अगर ((rtl_पढ़ो_byte(rtlpriv, 0x1f) & BIT(5)) == BIT(5))
 				fwdl_in_process = true;
-			else
+			अन्यथा
 				fwdl_in_process = false;
-			spin_unlock_irqrestore(&globalmutex_for_fwdownload,
+			spin_unlock_irqrestore(&globalmutex_क्रम_fwकरोwnload,
 					       flags);
-			if (fw_downloaded)
-				goto exit;
-			else if (!fwdl_in_process)
-				break;
-			else
+			अगर (fw_करोwnloaded)
+				जाओ निकास;
+			अन्यथा अगर (!fwdl_in_process)
+				अवरोध;
+			अन्यथा
 				rtl_dbg(rtlpriv, COMP_FW, DBG_DMESG,
 					"Wait for another mac download fw\n");
-		}
-		spin_lock_irqsave(&globalmutex_for_fwdownload, flags);
-		value = rtl_read_byte(rtlpriv, 0x1f);
+		पूर्ण
+		spin_lock_irqsave(&globalmutex_क्रम_fwकरोwnload, flags);
+		value = rtl_पढ़ो_byte(rtlpriv, 0x1f);
 		value |= BIT(5);
-		rtl_write_byte(rtlpriv, 0x1f, value);
-		spin_unlock_irqrestore(&globalmutex_for_fwdownload, flags);
-	} else {
-		value = rtl_read_byte(rtlpriv, 0x1f);
+		rtl_ग_लिखो_byte(rtlpriv, 0x1f, value);
+		spin_unlock_irqrestore(&globalmutex_क्रम_fwकरोwnload, flags);
+	पूर्ण अन्यथा अणु
+		value = rtl_पढ़ो_byte(rtlpriv, 0x1f);
 		value |= BIT(5);
-		rtl_write_byte(rtlpriv, 0x1f, value);
-		spin_unlock_irqrestore(&globalmutex_for_fwdownload, flags);
-	}
+		rtl_ग_लिखो_byte(rtlpriv, 0x1f, value);
+		spin_unlock_irqrestore(&globalmutex_क्रम_fwकरोwnload, flags);
+	पूर्ण
 
 	/* If 8051 is running in RAM code, driver should
-	 * inform Fw to reset by itself, or it will cause
-	 * download Fw fail.*/
+	 * inक्रमm Fw to reset by itself, or it will cause
+	 * करोwnload Fw fail.*/
 	/* 8051 RAM code */
-	if (rtl_read_byte(rtlpriv, REG_MCUFWDL) & BIT(7)) {
+	अगर (rtl_पढ़ो_byte(rtlpriv, REG_MCUFWDL) & BIT(7)) अणु
 		rtl92d_firmware_selfreset(hw);
-		rtl_write_byte(rtlpriv, REG_MCUFWDL, 0x00);
-	}
-	_rtl92d_enable_fw_download(hw, true);
-	_rtl92d_write_fw(hw, version, pfwdata, fwsize);
-	_rtl92d_enable_fw_download(hw, false);
-	spin_lock_irqsave(&globalmutex_for_fwdownload, flags);
-	err = _rtl92d_fw_free_to_go(hw);
-	/* download fw over,clear 0x1f[5] */
-	value = rtl_read_byte(rtlpriv, 0x1f);
+		rtl_ग_लिखो_byte(rtlpriv, REG_MCUFWDL, 0x00);
+	पूर्ण
+	_rtl92d_enable_fw_करोwnload(hw, true);
+	_rtl92d_ग_लिखो_fw(hw, version, pfwdata, fwsize);
+	_rtl92d_enable_fw_करोwnload(hw, false);
+	spin_lock_irqsave(&globalmutex_क्रम_fwकरोwnload, flags);
+	err = _rtl92d_fw_मुक्त_to_go(hw);
+	/* करोwnload fw over,clear 0x1f[5] */
+	value = rtl_पढ़ो_byte(rtlpriv, 0x1f);
 	value &= (~BIT(5));
-	rtl_write_byte(rtlpriv, 0x1f, value);
-	spin_unlock_irqrestore(&globalmutex_for_fwdownload, flags);
-	if (err)
+	rtl_ग_लिखो_byte(rtlpriv, 0x1f, value);
+	spin_unlock_irqrestore(&globalmutex_क्रम_fwकरोwnload, flags);
+	अगर (err)
 		pr_err("fw is not ready to run!\n");
-exit:
+निकास:
 	err = _rtl92d_fw_init(hw);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool _rtl92d_check_fw_read_last_h2c(struct ieee80211_hw *hw, u8 boxnum)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल bool _rtl92d_check_fw_पढ़ो_last_h2c(काष्ठा ieee80211_hw *hw, u8 boxnum)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 	u8 val_hmetfr;
 	bool result = false;
 
-	val_hmetfr = rtl_read_byte(rtlpriv, REG_HMETFR);
-	if (((val_hmetfr >> boxnum) & BIT(0)) == 0)
+	val_hmetfr = rtl_पढ़ो_byte(rtlpriv, REG_HMETFR);
+	अगर (((val_hmetfr >> boxnum) & BIT(0)) == 0)
 		result = true;
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void _rtl92d_fill_h2c_command(struct ieee80211_hw *hw,
+अटल व्योम _rtl92d_fill_h2c_command(काष्ठा ieee80211_hw *hw,
 			      u8 element_id, u32 cmd_len, u8 *cmdbuffer)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
 	u8 boxnum;
 	u16 box_reg = 0, box_extreg = 0;
-	u8 u1b_tmp;
-	bool isfw_read = false;
+	u8 u1b_पंचांगp;
+	bool isfw_पढ़ो = false;
 	u8 buf_index = 0;
-	bool bwrite_success = false;
-	u8 wait_h2c_limmit = 100;
-	u8 wait_writeh2c_limmit = 100;
+	bool bग_लिखो_success = false;
+	u8 रुको_h2c_limmit = 100;
+	u8 रुको_ग_लिखोh2c_limmit = 100;
 	u8 boxcontent[4], boxextcontent[2];
-	u32 h2c_waitcounter = 0;
-	unsigned long flag;
+	u32 h2c_रुकोcounter = 0;
+	अचिन्हित दीर्घ flag;
 	u8 idx;
 
-	if (ppsc->rfpwr_state == ERFOFF || ppsc->inactive_pwrstate == ERFOFF) {
+	अगर (ppsc->rfpwr_state == ERFOFF || ppsc->inactive_pwrstate == ERFOFF) अणु
 		rtl_dbg(rtlpriv, COMP_CMD, DBG_LOUD,
 			"Return as RF is off!!!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	rtl_dbg(rtlpriv, COMP_CMD, DBG_LOUD, "come in\n");
-	while (true) {
+	जबतक (true) अणु
 		spin_lock_irqsave(&rtlpriv->locks.h2c_lock, flag);
-		if (rtlhal->h2c_setinprogress) {
+		अगर (rtlhal->h2c_setinprogress) अणु
 			rtl_dbg(rtlpriv, COMP_CMD, DBG_LOUD,
 				"H2C set in progress! Wait to set..element_id(%d)\n",
 				element_id);
 
-			while (rtlhal->h2c_setinprogress) {
+			जबतक (rtlhal->h2c_setinprogress) अणु
 				spin_unlock_irqrestore(&rtlpriv->locks.h2c_lock,
 						       flag);
-				h2c_waitcounter++;
+				h2c_रुकोcounter++;
 				rtl_dbg(rtlpriv, COMP_CMD, DBG_LOUD,
 					"Wait 100 us (%d times)...\n",
-					h2c_waitcounter);
+					h2c_रुकोcounter);
 				udelay(100);
 
-				if (h2c_waitcounter > 1000)
-					return;
+				अगर (h2c_रुकोcounter > 1000)
+					वापस;
 
 				spin_lock_irqsave(&rtlpriv->locks.h2c_lock,
 						  flag);
-			}
+			पूर्ण
 			spin_unlock_irqrestore(&rtlpriv->locks.h2c_lock, flag);
-		} else {
+		पूर्ण अन्यथा अणु
 			rtlhal->h2c_setinprogress = true;
 			spin_unlock_irqrestore(&rtlpriv->locks.h2c_lock, flag);
-			break;
-		}
-	}
-	while (!bwrite_success) {
-		wait_writeh2c_limmit--;
-		if (wait_writeh2c_limmit == 0) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	जबतक (!bग_लिखो_success) अणु
+		रुको_ग_लिखोh2c_limmit--;
+		अगर (रुको_ग_लिखोh2c_limmit == 0) अणु
 			pr_err("Write H2C fail because no trigger for FW INT!\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		boxnum = rtlhal->last_hmeboxnum;
-		switch (boxnum) {
-		case 0:
+		चयन (boxnum) अणु
+		हाल 0:
 			box_reg = REG_HMEBOX_0;
 			box_extreg = REG_HMEBOX_EXT_0;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			box_reg = REG_HMEBOX_1;
 			box_extreg = REG_HMEBOX_EXT_1;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			box_reg = REG_HMEBOX_2;
 			box_extreg = REG_HMEBOX_EXT_2;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			box_reg = REG_HMEBOX_3;
 			box_extreg = REG_HMEBOX_EXT_3;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_err("switch case %#x not processed\n",
 			       boxnum);
-			break;
-		}
-		isfw_read = _rtl92d_check_fw_read_last_h2c(hw, boxnum);
-		while (!isfw_read) {
-			wait_h2c_limmit--;
-			if (wait_h2c_limmit == 0) {
+			अवरोध;
+		पूर्ण
+		isfw_पढ़ो = _rtl92d_check_fw_पढ़ो_last_h2c(hw, boxnum);
+		जबतक (!isfw_पढ़ो) अणु
+			रुको_h2c_limmit--;
+			अगर (रुको_h2c_limmit == 0) अणु
 				rtl_dbg(rtlpriv, COMP_CMD, DBG_LOUD,
 					"Waiting too long for FW read clear HMEBox(%d)!\n",
 					boxnum);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			udelay(10);
-			isfw_read = _rtl92d_check_fw_read_last_h2c(hw, boxnum);
-			u1b_tmp = rtl_read_byte(rtlpriv, 0x1BF);
+			isfw_पढ़ो = _rtl92d_check_fw_पढ़ो_last_h2c(hw, boxnum);
+			u1b_पंचांगp = rtl_पढ़ो_byte(rtlpriv, 0x1BF);
 			rtl_dbg(rtlpriv, COMP_CMD, DBG_LOUD,
 				"Waiting for FW read clear HMEBox(%d)!!! 0x1BF = %2x\n",
-				boxnum, u1b_tmp);
-		}
-		if (!isfw_read) {
+				boxnum, u1b_पंचांगp);
+		पूर्ण
+		अगर (!isfw_पढ़ो) अणु
 			rtl_dbg(rtlpriv, COMP_CMD, DBG_LOUD,
 				"Write H2C register BOX[%d] fail!!!!! Fw do not read.\n",
 				boxnum);
-			break;
-		}
-		memset(boxcontent, 0, sizeof(boxcontent));
-		memset(boxextcontent, 0, sizeof(boxextcontent));
+			अवरोध;
+		पूर्ण
+		स_रखो(boxcontent, 0, माप(boxcontent));
+		स_रखो(boxextcontent, 0, माप(boxextcontent));
 		boxcontent[0] = element_id;
 		rtl_dbg(rtlpriv, COMP_CMD, DBG_LOUD,
 			"Write element_id box_reg(%4x) = %2x\n",
 			box_reg, element_id);
-		switch (cmd_len) {
-		case 1:
+		चयन (cmd_len) अणु
+		हाल 1:
 			boxcontent[0] &= ~(BIT(7));
-			memcpy(boxcontent + 1, cmdbuffer + buf_index, 1);
-			for (idx = 0; idx < 4; idx++)
-				rtl_write_byte(rtlpriv, box_reg + idx,
+			स_नकल(boxcontent + 1, cmdbuffer + buf_index, 1);
+			क्रम (idx = 0; idx < 4; idx++)
+				rtl_ग_लिखो_byte(rtlpriv, box_reg + idx,
 					       boxcontent[idx]);
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			boxcontent[0] &= ~(BIT(7));
-			memcpy(boxcontent + 1, cmdbuffer + buf_index, 2);
-			for (idx = 0; idx < 4; idx++)
-				rtl_write_byte(rtlpriv, box_reg + idx,
+			स_नकल(boxcontent + 1, cmdbuffer + buf_index, 2);
+			क्रम (idx = 0; idx < 4; idx++)
+				rtl_ग_लिखो_byte(rtlpriv, box_reg + idx,
 					       boxcontent[idx]);
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			boxcontent[0] &= ~(BIT(7));
-			memcpy(boxcontent + 1, cmdbuffer + buf_index, 3);
-			for (idx = 0; idx < 4; idx++)
-				rtl_write_byte(rtlpriv, box_reg + idx,
+			स_नकल(boxcontent + 1, cmdbuffer + buf_index, 3);
+			क्रम (idx = 0; idx < 4; idx++)
+				rtl_ग_लिखो_byte(rtlpriv, box_reg + idx,
 					       boxcontent[idx]);
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			boxcontent[0] |= (BIT(7));
-			memcpy(boxextcontent, cmdbuffer + buf_index, 2);
-			memcpy(boxcontent + 1, cmdbuffer + buf_index + 2, 2);
-			for (idx = 0; idx < 2; idx++)
-				rtl_write_byte(rtlpriv, box_extreg + idx,
+			स_नकल(boxextcontent, cmdbuffer + buf_index, 2);
+			स_नकल(boxcontent + 1, cmdbuffer + buf_index + 2, 2);
+			क्रम (idx = 0; idx < 2; idx++)
+				rtl_ग_लिखो_byte(rtlpriv, box_extreg + idx,
 					       boxextcontent[idx]);
-			for (idx = 0; idx < 4; idx++)
-				rtl_write_byte(rtlpriv, box_reg + idx,
+			क्रम (idx = 0; idx < 4; idx++)
+				rtl_ग_लिखो_byte(rtlpriv, box_reg + idx,
 					       boxcontent[idx]);
-			break;
-		case 5:
+			अवरोध;
+		हाल 5:
 			boxcontent[0] |= (BIT(7));
-			memcpy(boxextcontent, cmdbuffer + buf_index, 2);
-			memcpy(boxcontent + 1, cmdbuffer + buf_index + 2, 3);
-			for (idx = 0; idx < 2; idx++)
-				rtl_write_byte(rtlpriv, box_extreg + idx,
+			स_नकल(boxextcontent, cmdbuffer + buf_index, 2);
+			स_नकल(boxcontent + 1, cmdbuffer + buf_index + 2, 3);
+			क्रम (idx = 0; idx < 2; idx++)
+				rtl_ग_लिखो_byte(rtlpriv, box_extreg + idx,
 					       boxextcontent[idx]);
-			for (idx = 0; idx < 4; idx++)
-				rtl_write_byte(rtlpriv, box_reg + idx,
+			क्रम (idx = 0; idx < 4; idx++)
+				rtl_ग_लिखो_byte(rtlpriv, box_reg + idx,
 					       boxcontent[idx]);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_err("switch case %#x not processed\n",
 			       cmd_len);
-			break;
-		}
-		bwrite_success = true;
+			अवरोध;
+		पूर्ण
+		bग_लिखो_success = true;
 		rtlhal->last_hmeboxnum = boxnum + 1;
-		if (rtlhal->last_hmeboxnum == 4)
+		अगर (rtlhal->last_hmeboxnum == 4)
 			rtlhal->last_hmeboxnum = 0;
 		rtl_dbg(rtlpriv, COMP_CMD, DBG_LOUD,
 			"pHalData->last_hmeboxnum  = %d\n",
 			rtlhal->last_hmeboxnum);
-	}
+	पूर्ण
 	spin_lock_irqsave(&rtlpriv->locks.h2c_lock, flag);
 	rtlhal->h2c_setinprogress = false;
 	spin_unlock_irqrestore(&rtlpriv->locks.h2c_lock, flag);
 	rtl_dbg(rtlpriv, COMP_CMD, DBG_LOUD, "go out\n");
-}
+पूर्ण
 
-void rtl92d_fill_h2c_cmd(struct ieee80211_hw *hw,
+व्योम rtl92d_fill_h2c_cmd(काष्ठा ieee80211_hw *hw,
 			 u8 element_id, u32 cmd_len, u8 *cmdbuffer)
-{
-	u32 tmp_cmdbuf[2];
+अणु
+	u32 पंचांगp_cmdbuf[2];
 
-	memset(tmp_cmdbuf, 0, 8);
-	memcpy(tmp_cmdbuf, cmdbuffer, cmd_len);
-	_rtl92d_fill_h2c_command(hw, element_id, cmd_len, (u8 *)&tmp_cmdbuf);
-	return;
-}
+	स_रखो(पंचांगp_cmdbuf, 0, 8);
+	स_नकल(पंचांगp_cmdbuf, cmdbuffer, cmd_len);
+	_rtl92d_fill_h2c_command(hw, element_id, cmd_len, (u8 *)&पंचांगp_cmdbuf);
+	वापस;
+पूर्ण
 
-static bool _rtl92d_cmd_send_packet(struct ieee80211_hw *hw,
-				    struct sk_buff *skb)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	struct rtl8192_tx_ring *ring;
-	struct rtl_tx_desc *pdesc;
+अटल bool _rtl92d_cmd_send_packet(काष्ठा ieee80211_hw *hw,
+				    काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	काष्ठा rtl8192_tx_ring *ring;
+	काष्ठा rtl_tx_desc *pdesc;
 	u8 idx = 0;
-	unsigned long flags;
-	struct sk_buff *pskb;
+	अचिन्हित दीर्घ flags;
+	काष्ठा sk_buff *pskb;
 
 	ring = &rtlpci->tx_ring[BEACON_QUEUE];
 	pskb = __skb_dequeue(&ring->queue);
-	kfree_skb(pskb);
+	kमुक्त_skb(pskb);
 	spin_lock_irqsave(&rtlpriv->locks.irq_th_lock, flags);
 	pdesc = &ring->desc[idx];
 	/* discard output from call below */
@@ -473,16 +474,16 @@ static bool _rtl92d_cmd_send_packet(struct ieee80211_hw *hw,
 	__skb_queue_tail(&ring->queue, skb);
 	spin_unlock_irqrestore(&rtlpriv->locks.irq_th_lock, flags);
 	rtlpriv->cfg->ops->tx_polling(hw, BEACON_QUEUE);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#define BEACON_PG		0	/*->1 */
-#define PSPOLL_PG		2
-#define NULL_PG			3
-#define PROBERSP_PG		4	/*->5 */
-#define TOTAL_RESERVED_PKT_LEN	768
+#घोषणा BEACON_PG		0	/*->1 */
+#घोषणा PSPOLL_PG		2
+#घोषणा शून्य_PG			3
+#घोषणा PROBERSP_PG		4	/*->5 */
+#घोषणा TOTAL_RESERVED_PKT_LEN	768
 
-static u8 reserved_page_packet[TOTAL_RESERVED_PKT_LEN] = {
+अटल u8 reserved_page_packet[TOTAL_RESERVED_PKT_LEN] = अणु
 	/* page 0 beacon */
 	0x80, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0x00, 0xE0, 0x4C, 0x76, 0x00, 0x42,
@@ -590,16 +591,16 @@ static u8 reserved_page_packet[TOTAL_RESERVED_PKT_LEN] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
+पूर्ण;
 
-void rtl92d_set_fw_rsvdpagepkt(struct ieee80211_hw *hw, bool dl_finished)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	struct sk_buff *skb = NULL;
+व्योम rtl92d_set_fw_rsvdpagepkt(काष्ठा ieee80211_hw *hw, bool dl_finished)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	काष्ठा sk_buff *skb = शून्य;
 	u32 totalpacketlen;
 	bool rtstatus;
-	u8 u1rsvdpageloc[3] = { 0 };
+	u8 u1rsvdpageloc[3] = अणु 0 पूर्ण;
 	bool dlok = false;
 	u8 *beacon;
 	u8 *p_pspoll;
@@ -622,11 +623,11 @@ void rtl92d_set_fw_rsvdpagepkt(struct ieee80211_hw *hw, bool dl_finished)
 	/*--------------------------------------------------------
 						(3) null data
 	---------------------------------------------------------*/
-	nullfunc = &reserved_page_packet[NULL_PG * 128];
+	nullfunc = &reserved_page_packet[शून्य_PG * 128];
 	SET_80211_HDR_ADDRESS1(nullfunc, mac->bssid);
 	SET_80211_HDR_ADDRESS2(nullfunc, mac->mac_addr);
 	SET_80211_HDR_ADDRESS3(nullfunc, mac->bssid);
-	SET_H2CCMD_RSVDPAGE_LOC_NULL_DATA(u1rsvdpageloc, NULL_PG);
+	SET_H2CCMD_RSVDPAGE_LOC_शून्य_DATA(u1rsvdpageloc, शून्य_PG);
 	/*---------------------------------------------------------
 						(4) probe response
 	----------------------------------------------------------*/
@@ -643,31 +644,31 @@ void rtl92d_set_fw_rsvdpagepkt(struct ieee80211_hw *hw, bool dl_finished)
 		      "rtl92d_set_fw_rsvdpagepkt(): HW_VAR_SET_TX_CMD: ALL",
 		      u1rsvdpageloc, 3);
 	skb = dev_alloc_skb(totalpacketlen);
-	if (!skb) {
+	अगर (!skb) अणु
 		dlok = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		skb_put_data(skb, &reserved_page_packet, totalpacketlen);
 		rtstatus = _rtl92d_cmd_send_packet(hw, skb);
 
-		if (rtstatus)
+		अगर (rtstatus)
 			dlok = true;
-	}
-	if (dlok) {
+	पूर्ण
+	अगर (dlok) अणु
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 			"Set RSVD page location to Fw\n");
 		RT_PRINT_DATA(rtlpriv, COMP_CMD, DBG_DMESG,
 			      "H2C_RSVDPAGE", u1rsvdpageloc, 3);
 		rtl92d_fill_h2c_cmd(hw, H2C_RSVDPAGE,
-			sizeof(u1rsvdpageloc), u1rsvdpageloc);
-	} else
+			माप(u1rsvdpageloc), u1rsvdpageloc);
+	पूर्ण अन्यथा
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING,
 			"Set RSVD page location to Fw FAIL!!!!!!\n");
-}
+पूर्ण
 
-void rtl92d_set_fw_joinbss_report_cmd(struct ieee80211_hw *hw, u8 mstatus)
-{
-	u8 u1_joinbssrpt_parm[1] = {0};
+व्योम rtl92d_set_fw_joinbss_report_cmd(काष्ठा ieee80211_hw *hw, u8 mstatus)
+अणु
+	u8 u1_joinbssrpt_parm[1] = अणु0पूर्ण;
 
 	SET_H2CCMD_JOINBSSRPT_PARM_OPMODE(u1_joinbssrpt_parm, mstatus);
 	rtl92d_fill_h2c_cmd(hw, H2C_JOINBSSRPT, 1, u1_joinbssrpt_parm);
-}
+पूर्ण

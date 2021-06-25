@@ -1,509 +1,510 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * ipsec.c - Check xfrm on veth inside a net-ns.
  * Copyright (c) 2018 Dmitry Safonov
  */
 
-#define _GNU_SOURCE
+#घोषणा _GNU_SOURCE
 
-#include <arpa/inet.h>
-#include <asm/types.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <linux/limits.h>
-#include <linux/netlink.h>
-#include <linux/random.h>
-#include <linux/rtnetlink.h>
-#include <linux/veth.h>
-#include <linux/xfrm.h>
-#include <netinet/in.h>
-#include <net/if.h>
-#include <sched.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <time.h>
-#include <unistd.h>
+#समावेश <arpa/inet.h>
+#समावेश <यंत्र/types.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <सीमा.स>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/netlink.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/veth.h>
+#समावेश <linux/xfrm.h>
+#समावेश <netinet/in.h>
+#समावेश <net/अगर.h>
+#समावेश <sched.h>
+#समावेश <stdbool.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/mman.h>
+#समावेश <sys/socket.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/syscall.h>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <समय.स>
+#समावेश <unistd.h>
 
-#include "../kselftest.h"
+#समावेश "../kselftest.h"
 
-#define printk(fmt, ...)						\
-	ksft_print_msg("%d[%u] " fmt "\n", getpid(), __LINE__, ##__VA_ARGS__)
+#घोषणा prपूर्णांकk(fmt, ...)						\
+	ksft_prपूर्णांक_msg("%d[%u] " fmt "\n", getpid(), __LINE__, ##__VA_ARGS__)
 
-#define pr_err(fmt, ...)	printk(fmt ": %m", ##__VA_ARGS__)
+#घोषणा pr_err(fmt, ...)	prपूर्णांकk(fmt ": %m", ##__VA_ARGS__)
 
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+#घोषणा ARRAY_SIZE(arr) (माप(arr) / माप((arr)[0]))
+#घोषणा BUILD_BUG_ON(condition) ((व्योम)माप(अक्षर[1 - 2*!!(condition)]))
 
-#define IPV4_STR_SZ	16	/* xxx.xxx.xxx.xxx is longest + \0 */
-#define MAX_PAYLOAD	2048
-#define XFRM_ALGO_KEY_BUF_SIZE	512
-#define MAX_PROCESSES	(1 << 14) /* /16 mask divided by /30 subnets */
-#define INADDR_A	((in_addr_t) 0x0a000000) /* 10.0.0.0 */
-#define INADDR_B	((in_addr_t) 0xc0a80000) /* 192.168.0.0 */
+#घोषणा IPV4_STR_SZ	16	/* xxx.xxx.xxx.xxx is दीर्घest + \0 */
+#घोषणा MAX_PAYLOAD	2048
+#घोषणा XFRM_ALGO_KEY_BUF_SIZE	512
+#घोषणा MAX_PROCESSES	(1 << 14) /* /16 mask भागided by /30 subnets */
+#घोषणा INADDR_A	((in_addr_t) 0x0a000000) /* 10.0.0.0 */
+#घोषणा INADDR_B	((in_addr_t) 0xc0a80000) /* 192.168.0.0 */
 
-/* /30 mask for one veth connection */
-#define PREFIX_LEN	30
-#define child_ip(nr)	(4*nr + 1)
-#define grchild_ip(nr)	(4*nr + 2)
+/* /30 mask क्रम one veth connection */
+#घोषणा PREFIX_LEN	30
+#घोषणा child_ip(nr)	(4*nr + 1)
+#घोषणा grchild_ip(nr)	(4*nr + 2)
 
-#define VETH_FMT	"ktst-%d"
-#define VETH_LEN	12
+#घोषणा VETH_FMT	"ktst-%d"
+#घोषणा VETH_LEN	12
 
-static int nsfd_parent	= -1;
-static int nsfd_childa	= -1;
-static int nsfd_childb	= -1;
-static long page_size;
+अटल पूर्णांक nsfd_parent	= -1;
+अटल पूर्णांक nsfd_childa	= -1;
+अटल पूर्णांक nsfd_childb	= -1;
+अटल दीर्घ page_size;
 
 /*
- * ksft_cnt is static in kselftest, so isn't shared with children.
+ * ksft_cnt is अटल in kselftest, so isn't shared with children.
  * We have to send a test result back to parent and count there.
  * results_fd is a pipe with test feedback from children.
  */
-static int results_fd[2];
+अटल पूर्णांक results_fd[2];
 
-const unsigned int ping_delay_nsec	= 50 * 1000 * 1000;
-const unsigned int ping_timeout		= 300;
-const unsigned int ping_count		= 100;
-const unsigned int ping_success		= 80;
+स्थिर अचिन्हित पूर्णांक ping_delay_nsec	= 50 * 1000 * 1000;
+स्थिर अचिन्हित पूर्णांक ping_समयout		= 300;
+स्थिर अचिन्हित पूर्णांक ping_count		= 100;
+स्थिर अचिन्हित पूर्णांक ping_success		= 80;
 
-static void randomize_buffer(void *buf, size_t buflen)
-{
-	int *p = (int *)buf;
-	size_t words = buflen / sizeof(int);
-	size_t leftover = buflen % sizeof(int);
+अटल व्योम अक्रमomize_buffer(व्योम *buf, माप_प्रकार buflen)
+अणु
+	पूर्णांक *p = (पूर्णांक *)buf;
+	माप_प्रकार words = buflen / माप(पूर्णांक);
+	माप_प्रकार leftover = buflen % माप(पूर्णांक);
 
-	if (!buflen)
-		return;
+	अगर (!buflen)
+		वापस;
 
-	while (words--)
-		*p++ = rand();
+	जबतक (words--)
+		*p++ = अक्रम();
 
-	if (leftover) {
-		int tmp = rand();
+	अगर (leftover) अणु
+		पूर्णांक पंचांगp = अक्रम();
 
-		memcpy(buf + buflen - leftover, &tmp, leftover);
-	}
+		स_नकल(buf + buflen - leftover, &पंचांगp, leftover);
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int unshare_open(void)
-{
-	const char *netns_path = "/proc/self/ns/net";
-	int fd;
+अटल पूर्णांक unshare_खोलो(व्योम)
+अणु
+	स्थिर अक्षर *netns_path = "/proc/self/ns/net";
+	पूर्णांक fd;
 
-	if (unshare(CLONE_NEWNET) != 0) {
+	अगर (unshare(CLONE_NEWNET) != 0) अणु
 		pr_err("unshare()");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	fd = open(netns_path, O_RDONLY);
-	if (fd <= 0) {
+	fd = खोलो(netns_path, O_RDONLY);
+	अगर (fd <= 0) अणु
 		pr_err("open(%s)", netns_path);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static int switch_ns(int fd)
-{
-	if (setns(fd, CLONE_NEWNET)) {
+अटल पूर्णांक चयन_ns(पूर्णांक fd)
+अणु
+	अगर (setns(fd, CLONE_NEWNET)) अणु
 		pr_err("setns()");
-		return -1;
-	}
-	return 0;
-}
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Running the test inside a new parent net namespace to bother less
  * about cleanup on error-path.
  */
-static int init_namespaces(void)
-{
-	nsfd_parent = unshare_open();
-	if (nsfd_parent <= 0)
-		return -1;
+अटल पूर्णांक init_namespaces(व्योम)
+अणु
+	nsfd_parent = unshare_खोलो();
+	अगर (nsfd_parent <= 0)
+		वापस -1;
 
-	nsfd_childa = unshare_open();
-	if (nsfd_childa <= 0)
-		return -1;
+	nsfd_childa = unshare_खोलो();
+	अगर (nsfd_childa <= 0)
+		वापस -1;
 
-	if (switch_ns(nsfd_parent))
-		return -1;
+	अगर (चयन_ns(nsfd_parent))
+		वापस -1;
 
-	nsfd_childb = unshare_open();
-	if (nsfd_childb <= 0)
-		return -1;
+	nsfd_childb = unshare_खोलो();
+	अगर (nsfd_childb <= 0)
+		वापस -1;
 
-	if (switch_ns(nsfd_parent))
-		return -1;
-	return 0;
-}
+	अगर (चयन_ns(nsfd_parent))
+		वापस -1;
+	वापस 0;
+पूर्ण
 
-static int netlink_sock(int *sock, uint32_t *seq_nr, int proto)
-{
-	if (*sock > 0) {
+अटल पूर्णांक netlink_sock(पूर्णांक *sock, uपूर्णांक32_t *seq_nr, पूर्णांक proto)
+अणु
+	अगर (*sock > 0) अणु
 		seq_nr++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	*sock = socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, proto);
-	if (*sock <= 0) {
+	अगर (*sock <= 0) अणु
 		pr_err("socket(AF_NETLINK)");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	randomize_buffer(seq_nr, sizeof(*seq_nr));
+	अक्रमomize_buffer(seq_nr, माप(*seq_nr));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline struct rtattr *rtattr_hdr(struct nlmsghdr *nh)
-{
-	return (struct rtattr *)((char *)(nh) + RTA_ALIGN((nh)->nlmsg_len));
-}
+अटल अंतरभूत काष्ठा rtattr *rtattr_hdr(काष्ठा nlmsghdr *nh)
+अणु
+	वापस (काष्ठा rtattr *)((अक्षर *)(nh) + RTA_ALIGN((nh)->nlmsg_len));
+पूर्ण
 
-static int rtattr_pack(struct nlmsghdr *nh, size_t req_sz,
-		unsigned short rta_type, const void *payload, size_t size)
-{
-	/* NLMSG_ALIGNTO == RTA_ALIGNTO, nlmsg_len already aligned */
-	struct rtattr *attr = rtattr_hdr(nh);
-	size_t nl_size = RTA_ALIGN(nh->nlmsg_len) + RTA_LENGTH(size);
+अटल पूर्णांक rtattr_pack(काष्ठा nlmsghdr *nh, माप_प्रकार req_sz,
+		अचिन्हित लघु rta_type, स्थिर व्योम *payload, माप_प्रकार size)
+अणु
+	/* NLMSG_ALIGNTO == RTA_ALIGNTO, nlmsg_len alपढ़ोy aligned */
+	काष्ठा rtattr *attr = rtattr_hdr(nh);
+	माप_प्रकार nl_size = RTA_ALIGN(nh->nlmsg_len) + RTA_LENGTH(size);
 
-	if (req_sz < nl_size) {
-		printk("req buf is too small: %zu < %zu", req_sz, nl_size);
-		return -1;
-	}
+	अगर (req_sz < nl_size) अणु
+		prपूर्णांकk("req buf is too small: %zu < %zu", req_sz, nl_size);
+		वापस -1;
+	पूर्ण
 	nh->nlmsg_len = nl_size;
 
 	attr->rta_len = RTA_LENGTH(size);
 	attr->rta_type = rta_type;
-	memcpy(RTA_DATA(attr), payload, size);
+	स_नकल(RTA_DATA(attr), payload, size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct rtattr *_rtattr_begin(struct nlmsghdr *nh, size_t req_sz,
-		unsigned short rta_type, const void *payload, size_t size)
-{
-	struct rtattr *ret = rtattr_hdr(nh);
+अटल काष्ठा rtattr *_rtattr_begin(काष्ठा nlmsghdr *nh, माप_प्रकार req_sz,
+		अचिन्हित लघु rta_type, स्थिर व्योम *payload, माप_प्रकार size)
+अणु
+	काष्ठा rtattr *ret = rtattr_hdr(nh);
 
-	if (rtattr_pack(nh, req_sz, rta_type, payload, size))
-		return 0;
+	अगर (rtattr_pack(nh, req_sz, rta_type, payload, size))
+		वापस 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline struct rtattr *rtattr_begin(struct nlmsghdr *nh, size_t req_sz,
-		unsigned short rta_type)
-{
-	return _rtattr_begin(nh, req_sz, rta_type, 0, 0);
-}
+अटल अंतरभूत काष्ठा rtattr *rtattr_begin(काष्ठा nlmsghdr *nh, माप_प्रकार req_sz,
+		अचिन्हित लघु rta_type)
+अणु
+	वापस _rtattr_begin(nh, req_sz, rta_type, 0, 0);
+पूर्ण
 
-static inline void rtattr_end(struct nlmsghdr *nh, struct rtattr *attr)
-{
-	char *nlmsg_end = (char *)nh + nh->nlmsg_len;
+अटल अंतरभूत व्योम rtattr_end(काष्ठा nlmsghdr *nh, काष्ठा rtattr *attr)
+अणु
+	अक्षर *nlmsg_end = (अक्षर *)nh + nh->nlmsg_len;
 
-	attr->rta_len = nlmsg_end - (char *)attr;
-}
+	attr->rta_len = nlmsg_end - (अक्षर *)attr;
+पूर्ण
 
-static int veth_pack_peerb(struct nlmsghdr *nh, size_t req_sz,
-		const char *peer, int ns)
-{
-	struct ifinfomsg pi;
-	struct rtattr *peer_attr;
+अटल पूर्णांक veth_pack_peerb(काष्ठा nlmsghdr *nh, माप_प्रकार req_sz,
+		स्थिर अक्षर *peer, पूर्णांक ns)
+अणु
+	काष्ठा अगरinfomsg pi;
+	काष्ठा rtattr *peer_attr;
 
-	memset(&pi, 0, sizeof(pi));
-	pi.ifi_family	= AF_UNSPEC;
-	pi.ifi_change	= 0xFFFFFFFF;
+	स_रखो(&pi, 0, माप(pi));
+	pi.अगरi_family	= AF_UNSPEC;
+	pi.अगरi_change	= 0xFFFFFFFF;
 
-	peer_attr = _rtattr_begin(nh, req_sz, VETH_INFO_PEER, &pi, sizeof(pi));
-	if (!peer_attr)
-		return -1;
+	peer_attr = _rtattr_begin(nh, req_sz, VETH_INFO_PEER, &pi, माप(pi));
+	अगर (!peer_attr)
+		वापस -1;
 
-	if (rtattr_pack(nh, req_sz, IFLA_IFNAME, peer, strlen(peer)))
-		return -1;
+	अगर (rtattr_pack(nh, req_sz, IFLA_IFNAME, peer, म_माप(peer)))
+		वापस -1;
 
-	if (rtattr_pack(nh, req_sz, IFLA_NET_NS_FD, &ns, sizeof(ns)))
-		return -1;
+	अगर (rtattr_pack(nh, req_sz, IFLA_NET_NS_FD, &ns, माप(ns)))
+		वापस -1;
 
 	rtattr_end(nh, peer_attr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int netlink_check_answer(int sock)
-{
-	struct nlmsgerror {
-		struct nlmsghdr hdr;
-		int error;
-		struct nlmsghdr orig_msg;
-	} answer;
+अटल पूर्णांक netlink_check_answer(पूर्णांक sock)
+अणु
+	काष्ठा nlmsgerror अणु
+		काष्ठा nlmsghdr hdr;
+		पूर्णांक error;
+		काष्ठा nlmsghdr orig_msg;
+	पूर्ण answer;
 
-	if (recv(sock, &answer, sizeof(answer), 0) < 0) {
+	अगर (recv(sock, &answer, माप(answer), 0) < 0) अणु
 		pr_err("recv()");
-		return -1;
-	} else if (answer.hdr.nlmsg_type != NLMSG_ERROR) {
-		printk("expected NLMSG_ERROR, got %d", (int)answer.hdr.nlmsg_type);
-		return -1;
-	} else if (answer.error) {
-		printk("NLMSG_ERROR: %d: %s",
-			answer.error, strerror(-answer.error));
-		return answer.error;
-	}
+		वापस -1;
+	पूर्ण अन्यथा अगर (answer.hdr.nlmsg_type != NLMSG_ERROR) अणु
+		prपूर्णांकk("expected NLMSG_ERROR, got %d", (पूर्णांक)answer.hdr.nlmsg_type);
+		वापस -1;
+	पूर्ण अन्यथा अगर (answer.error) अणु
+		prपूर्णांकk("NLMSG_ERROR: %d: %s",
+			answer.error, म_त्रुटि(-answer.error));
+		वापस answer.error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int veth_add(int sock, uint32_t seq, const char *peera, int ns_a,
-		const char *peerb, int ns_b)
-{
-	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE;
-	struct {
-		struct nlmsghdr		nh;
-		struct ifinfomsg	info;
-		char			attrbuf[MAX_PAYLOAD];
-	} req;
-	const char veth_type[] = "veth";
-	struct rtattr *link_info, *info_data;
+अटल पूर्णांक veth_add(पूर्णांक sock, uपूर्णांक32_t seq, स्थिर अक्षर *peera, पूर्णांक ns_a,
+		स्थिर अक्षर *peerb, पूर्णांक ns_b)
+अणु
+	uपूर्णांक16_t flags = NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE;
+	काष्ठा अणु
+		काष्ठा nlmsghdr		nh;
+		काष्ठा अगरinfomsg	info;
+		अक्षर			attrbuf[MAX_PAYLOAD];
+	पूर्ण req;
+	स्थिर अक्षर veth_type[] = "veth";
+	काष्ठा rtattr *link_info, *info_data;
 
-	memset(&req, 0, sizeof(req));
-	req.nh.nlmsg_len	= NLMSG_LENGTH(sizeof(req.info));
+	स_रखो(&req, 0, माप(req));
+	req.nh.nlmsg_len	= NLMSG_LENGTH(माप(req.info));
 	req.nh.nlmsg_type	= RTM_NEWLINK;
 	req.nh.nlmsg_flags	= flags;
 	req.nh.nlmsg_seq	= seq;
-	req.info.ifi_family	= AF_UNSPEC;
-	req.info.ifi_change	= 0xFFFFFFFF;
+	req.info.अगरi_family	= AF_UNSPEC;
+	req.info.अगरi_change	= 0xFFFFFFFF;
 
-	if (rtattr_pack(&req.nh, sizeof(req), IFLA_IFNAME, peera, strlen(peera)))
-		return -1;
+	अगर (rtattr_pack(&req.nh, माप(req), IFLA_IFNAME, peera, म_माप(peera)))
+		वापस -1;
 
-	if (rtattr_pack(&req.nh, sizeof(req), IFLA_NET_NS_FD, &ns_a, sizeof(ns_a)))
-		return -1;
+	अगर (rtattr_pack(&req.nh, माप(req), IFLA_NET_NS_FD, &ns_a, माप(ns_a)))
+		वापस -1;
 
-	link_info = rtattr_begin(&req.nh, sizeof(req), IFLA_LINKINFO);
-	if (!link_info)
-		return -1;
+	link_info = rtattr_begin(&req.nh, माप(req), IFLA_LINKINFO);
+	अगर (!link_info)
+		वापस -1;
 
-	if (rtattr_pack(&req.nh, sizeof(req), IFLA_INFO_KIND, veth_type, sizeof(veth_type)))
-		return -1;
+	अगर (rtattr_pack(&req.nh, माप(req), IFLA_INFO_KIND, veth_type, माप(veth_type)))
+		वापस -1;
 
-	info_data = rtattr_begin(&req.nh, sizeof(req), IFLA_INFO_DATA);
-	if (!info_data)
-		return -1;
+	info_data = rtattr_begin(&req.nh, माप(req), IFLA_INFO_DATA);
+	अगर (!info_data)
+		वापस -1;
 
-	if (veth_pack_peerb(&req.nh, sizeof(req), peerb, ns_b))
-		return -1;
+	अगर (veth_pack_peerb(&req.nh, माप(req), peerb, ns_b))
+		वापस -1;
 
 	rtattr_end(&req.nh, info_data);
 	rtattr_end(&req.nh, link_info);
 
-	if (send(sock, &req, req.nh.nlmsg_len, 0) < 0) {
+	अगर (send(sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
 		pr_err("send()");
-		return -1;
-	}
-	return netlink_check_answer(sock);
-}
+		वापस -1;
+	पूर्ण
+	वापस netlink_check_answer(sock);
+पूर्ण
 
-static int ip4_addr_set(int sock, uint32_t seq, const char *intf,
-		struct in_addr addr, uint8_t prefix)
-{
-	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE;
-	struct {
-		struct nlmsghdr		nh;
-		struct ifaddrmsg	info;
-		char			attrbuf[MAX_PAYLOAD];
-	} req;
+अटल पूर्णांक ip4_addr_set(पूर्णांक sock, uपूर्णांक32_t seq, स्थिर अक्षर *पूर्णांकf,
+		काष्ठा in_addr addr, uपूर्णांक8_t prefix)
+अणु
+	uपूर्णांक16_t flags = NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE;
+	काष्ठा अणु
+		काष्ठा nlmsghdr		nh;
+		काष्ठा अगरaddrmsg	info;
+		अक्षर			attrbuf[MAX_PAYLOAD];
+	पूर्ण req;
 
-	memset(&req, 0, sizeof(req));
-	req.nh.nlmsg_len	= NLMSG_LENGTH(sizeof(req.info));
+	स_रखो(&req, 0, माप(req));
+	req.nh.nlmsg_len	= NLMSG_LENGTH(माप(req.info));
 	req.nh.nlmsg_type	= RTM_NEWADDR;
 	req.nh.nlmsg_flags	= flags;
 	req.nh.nlmsg_seq	= seq;
-	req.info.ifa_family	= AF_INET;
-	req.info.ifa_prefixlen	= prefix;
-	req.info.ifa_index	= if_nametoindex(intf);
+	req.info.अगरa_family	= AF_INET;
+	req.info.अगरa_prefixlen	= prefix;
+	req.info.अगरa_index	= अगर_nametoindex(पूर्णांकf);
 
-#ifdef DEBUG
-	{
-		char addr_str[IPV4_STR_SZ] = {};
+#अगर_घोषित DEBUG
+	अणु
+		अक्षर addr_str[IPV4_STR_SZ] = अणुपूर्ण;
 
-		strncpy(addr_str, inet_ntoa(addr), IPV4_STR_SZ - 1);
+		म_नकलन(addr_str, inet_ntoa(addr), IPV4_STR_SZ - 1);
 
-		printk("ip addr set %s", addr_str);
-	}
-#endif
+		prपूर्णांकk("ip addr set %s", addr_str);
+	पूर्ण
+#पूर्ण_अगर
 
-	if (rtattr_pack(&req.nh, sizeof(req), IFA_LOCAL, &addr, sizeof(addr)))
-		return -1;
+	अगर (rtattr_pack(&req.nh, माप(req), IFA_LOCAL, &addr, माप(addr)))
+		वापस -1;
 
-	if (rtattr_pack(&req.nh, sizeof(req), IFA_ADDRESS, &addr, sizeof(addr)))
-		return -1;
+	अगर (rtattr_pack(&req.nh, माप(req), IFA_ADDRESS, &addr, माप(addr)))
+		वापस -1;
 
-	if (send(sock, &req, req.nh.nlmsg_len, 0) < 0) {
+	अगर (send(sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
 		pr_err("send()");
-		return -1;
-	}
-	return netlink_check_answer(sock);
-}
+		वापस -1;
+	पूर्ण
+	वापस netlink_check_answer(sock);
+पूर्ण
 
-static int link_set_up(int sock, uint32_t seq, const char *intf)
-{
-	struct {
-		struct nlmsghdr		nh;
-		struct ifinfomsg	info;
-		char			attrbuf[MAX_PAYLOAD];
-	} req;
+अटल पूर्णांक link_set_up(पूर्णांक sock, uपूर्णांक32_t seq, स्थिर अक्षर *पूर्णांकf)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr		nh;
+		काष्ठा अगरinfomsg	info;
+		अक्षर			attrbuf[MAX_PAYLOAD];
+	पूर्ण req;
 
-	memset(&req, 0, sizeof(req));
-	req.nh.nlmsg_len	= NLMSG_LENGTH(sizeof(req.info));
+	स_रखो(&req, 0, माप(req));
+	req.nh.nlmsg_len	= NLMSG_LENGTH(माप(req.info));
 	req.nh.nlmsg_type	= RTM_NEWLINK;
 	req.nh.nlmsg_flags	= NLM_F_REQUEST | NLM_F_ACK;
 	req.nh.nlmsg_seq	= seq;
-	req.info.ifi_family	= AF_UNSPEC;
-	req.info.ifi_change	= 0xFFFFFFFF;
-	req.info.ifi_index	= if_nametoindex(intf);
-	req.info.ifi_flags	= IFF_UP;
-	req.info.ifi_change	= IFF_UP;
+	req.info.अगरi_family	= AF_UNSPEC;
+	req.info.अगरi_change	= 0xFFFFFFFF;
+	req.info.अगरi_index	= अगर_nametoindex(पूर्णांकf);
+	req.info.अगरi_flags	= IFF_UP;
+	req.info.अगरi_change	= IFF_UP;
 
-	if (send(sock, &req, req.nh.nlmsg_len, 0) < 0) {
+	अगर (send(sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
 		pr_err("send()");
-		return -1;
-	}
-	return netlink_check_answer(sock);
-}
+		वापस -1;
+	पूर्ण
+	वापस netlink_check_answer(sock);
+पूर्ण
 
-static int ip4_route_set(int sock, uint32_t seq, const char *intf,
-		struct in_addr src, struct in_addr dst)
-{
-	struct {
-		struct nlmsghdr	nh;
-		struct rtmsg	rt;
-		char		attrbuf[MAX_PAYLOAD];
-	} req;
-	unsigned int index = if_nametoindex(intf);
+अटल पूर्णांक ip4_route_set(पूर्णांक sock, uपूर्णांक32_t seq, स्थिर अक्षर *पूर्णांकf,
+		काष्ठा in_addr src, काष्ठा in_addr dst)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr	nh;
+		काष्ठा rपंचांगsg	rt;
+		अक्षर		attrbuf[MAX_PAYLOAD];
+	पूर्ण req;
+	अचिन्हित पूर्णांक index = अगर_nametoindex(पूर्णांकf);
 
-	memset(&req, 0, sizeof(req));
-	req.nh.nlmsg_len	= NLMSG_LENGTH(sizeof(req.rt));
+	स_रखो(&req, 0, माप(req));
+	req.nh.nlmsg_len	= NLMSG_LENGTH(माप(req.rt));
 	req.nh.nlmsg_type	= RTM_NEWROUTE;
 	req.nh.nlmsg_flags	= NLM_F_REQUEST | NLM_F_ACK | NLM_F_CREATE;
 	req.nh.nlmsg_seq	= seq;
-	req.rt.rtm_family	= AF_INET;
-	req.rt.rtm_dst_len	= 32;
-	req.rt.rtm_table	= RT_TABLE_MAIN;
-	req.rt.rtm_protocol	= RTPROT_BOOT;
-	req.rt.rtm_scope	= RT_SCOPE_LINK;
-	req.rt.rtm_type		= RTN_UNICAST;
+	req.rt.rपंचांग_family	= AF_INET;
+	req.rt.rपंचांग_dst_len	= 32;
+	req.rt.rपंचांग_table	= RT_TABLE_MAIN;
+	req.rt.rपंचांग_protocol	= RTPROT_BOOT;
+	req.rt.rपंचांग_scope	= RT_SCOPE_LINK;
+	req.rt.rपंचांग_type		= RTN_UNICAST;
 
-	if (rtattr_pack(&req.nh, sizeof(req), RTA_DST, &dst, sizeof(dst)))
-		return -1;
+	अगर (rtattr_pack(&req.nh, माप(req), RTA_DST, &dst, माप(dst)))
+		वापस -1;
 
-	if (rtattr_pack(&req.nh, sizeof(req), RTA_PREFSRC, &src, sizeof(src)))
-		return -1;
+	अगर (rtattr_pack(&req.nh, माप(req), RTA_PREFSRC, &src, माप(src)))
+		वापस -1;
 
-	if (rtattr_pack(&req.nh, sizeof(req), RTA_OIF, &index, sizeof(index)))
-		return -1;
+	अगर (rtattr_pack(&req.nh, माप(req), RTA_OIF, &index, माप(index)))
+		वापस -1;
 
-	if (send(sock, &req, req.nh.nlmsg_len, 0) < 0) {
+	अगर (send(sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
 		pr_err("send()");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return netlink_check_answer(sock);
-}
+	वापस netlink_check_answer(sock);
+पूर्ण
 
-static int tunnel_set_route(int route_sock, uint32_t *route_seq, char *veth,
-		struct in_addr tunsrc, struct in_addr tundst)
-{
-	if (ip4_addr_set(route_sock, (*route_seq)++, "lo",
-			tunsrc, PREFIX_LEN)) {
-		printk("Failed to set ipv4 addr");
-		return -1;
-	}
+अटल पूर्णांक tunnel_set_route(पूर्णांक route_sock, uपूर्णांक32_t *route_seq, अक्षर *veth,
+		काष्ठा in_addr tunsrc, काष्ठा in_addr tundst)
+अणु
+	अगर (ip4_addr_set(route_sock, (*route_seq)++, "lo",
+			tunsrc, PREFIX_LEN)) अणु
+		prपूर्णांकk("Failed to set ipv4 addr");
+		वापस -1;
+	पूर्ण
 
-	if (ip4_route_set(route_sock, (*route_seq)++, veth, tunsrc, tundst)) {
-		printk("Failed to set ipv4 route");
-		return -1;
-	}
+	अगर (ip4_route_set(route_sock, (*route_seq)++, veth, tunsrc, tundst)) अणु
+		prपूर्णांकk("Failed to set ipv4 route");
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int init_child(int nsfd, char *veth, unsigned int src, unsigned int dst)
-{
-	struct in_addr intsrc = inet_makeaddr(INADDR_B, src);
-	struct in_addr tunsrc = inet_makeaddr(INADDR_A, src);
-	struct in_addr tundst = inet_makeaddr(INADDR_A, dst);
-	int route_sock = -1, ret = -1;
-	uint32_t route_seq;
+अटल पूर्णांक init_child(पूर्णांक nsfd, अक्षर *veth, अचिन्हित पूर्णांक src, अचिन्हित पूर्णांक dst)
+अणु
+	काष्ठा in_addr पूर्णांकsrc = inet_makeaddr(INADDR_B, src);
+	काष्ठा in_addr tunsrc = inet_makeaddr(INADDR_A, src);
+	काष्ठा in_addr tundst = inet_makeaddr(INADDR_A, dst);
+	पूर्णांक route_sock = -1, ret = -1;
+	uपूर्णांक32_t route_seq;
 
-	if (switch_ns(nsfd))
-		return -1;
+	अगर (चयन_ns(nsfd))
+		वापस -1;
 
-	if (netlink_sock(&route_sock, &route_seq, NETLINK_ROUTE)) {
-		printk("Failed to open netlink route socket in child");
-		return -1;
-	}
+	अगर (netlink_sock(&route_sock, &route_seq, NETLINK_ROUTE)) अणु
+		prपूर्णांकk("Failed to open netlink route socket in child");
+		वापस -1;
+	पूर्ण
 
-	if (ip4_addr_set(route_sock, route_seq++, veth, intsrc, PREFIX_LEN)) {
-		printk("Failed to set ipv4 addr");
-		goto err;
-	}
+	अगर (ip4_addr_set(route_sock, route_seq++, veth, पूर्णांकsrc, PREFIX_LEN)) अणु
+		prपूर्णांकk("Failed to set ipv4 addr");
+		जाओ err;
+	पूर्ण
 
-	if (link_set_up(route_sock, route_seq++, veth)) {
-		printk("Failed to bring up %s", veth);
-		goto err;
-	}
+	अगर (link_set_up(route_sock, route_seq++, veth)) अणु
+		prपूर्णांकk("Failed to bring up %s", veth);
+		जाओ err;
+	पूर्ण
 
-	if (tunnel_set_route(route_sock, &route_seq, veth, tunsrc, tundst)) {
-		printk("Failed to add tunnel route on %s", veth);
-		goto err;
-	}
+	अगर (tunnel_set_route(route_sock, &route_seq, veth, tunsrc, tundst)) अणु
+		prपूर्णांकk("Failed to add tunnel route on %s", veth);
+		जाओ err;
+	पूर्ण
 	ret = 0;
 
 err:
-	close(route_sock);
-	return ret;
-}
+	बंद(route_sock);
+	वापस ret;
+पूर्ण
 
-#define ALGO_LEN	64
-enum desc_type {
+#घोषणा ALGO_LEN	64
+क्रमागत desc_type अणु
 	CREATE_TUNNEL	= 0,
 	ALLOCATE_SPI,
 	MONITOR_ACQUIRE,
 	EXPIRE_STATE,
 	EXPIRE_POLICY,
-};
-const char *desc_name[] = {
+पूर्ण;
+स्थिर अक्षर *desc_name[] = अणु
 	"create tunnel",
 	"alloc spi",
 	"monitor acquire",
 	"expire state",
 	"expire policy"
-};
-struct xfrm_desc {
-	enum desc_type	type;
-	uint8_t		proto;
-	char		a_algo[ALGO_LEN];
-	char		e_algo[ALGO_LEN];
-	char		c_algo[ALGO_LEN];
-	char		ae_algo[ALGO_LEN];
-	unsigned int	icv_len;
-	/* unsigned key_len; */
-};
+पूर्ण;
+काष्ठा xfrm_desc अणु
+	क्रमागत desc_type	type;
+	uपूर्णांक8_t		proto;
+	अक्षर		a_algo[ALGO_LEN];
+	अक्षर		e_algo[ALGO_LEN];
+	अक्षर		c_algo[ALGO_LEN];
+	अक्षर		ae_algo[ALGO_LEN];
+	अचिन्हित पूर्णांक	icv_len;
+	/* अचिन्हित key_len; */
+पूर्ण;
 
-enum msg_type {
+क्रमागत msg_type अणु
 	MSG_ACK		= 0,
 	MSG_EXIT,
 	MSG_PING,
@@ -511,450 +512,450 @@ enum msg_type {
 	MSG_XFRM_ADD,
 	MSG_XFRM_DEL,
 	MSG_XFRM_CLEANUP,
-};
+पूर्ण;
 
-struct test_desc {
-	enum msg_type type;
-	union {
-		struct {
+काष्ठा test_desc अणु
+	क्रमागत msg_type type;
+	जोड़ अणु
+		काष्ठा अणु
 			in_addr_t reply_ip;
-			unsigned int port;
-		} ping;
-		struct xfrm_desc xfrm_desc;
-	} body;
-};
+			अचिन्हित पूर्णांक port;
+		पूर्ण ping;
+		काष्ठा xfrm_desc xfrm_desc;
+	पूर्ण body;
+पूर्ण;
 
-struct test_result {
-	struct xfrm_desc desc;
-	unsigned int res;
-};
+काष्ठा test_result अणु
+	काष्ठा xfrm_desc desc;
+	अचिन्हित पूर्णांक res;
+पूर्ण;
 
-static void write_test_result(unsigned int res, struct xfrm_desc *d)
-{
-	struct test_result tr = {};
-	ssize_t ret;
+अटल व्योम ग_लिखो_test_result(अचिन्हित पूर्णांक res, काष्ठा xfrm_desc *d)
+अणु
+	काष्ठा test_result tr = अणुपूर्ण;
+	sमाप_प्रकार ret;
 
 	tr.desc = *d;
 	tr.res = res;
 
-	ret = write(results_fd[1], &tr, sizeof(tr));
-	if (ret != sizeof(tr))
+	ret = ग_लिखो(results_fd[1], &tr, माप(tr));
+	अगर (ret != माप(tr))
 		pr_err("Failed to write the result in pipe %zd", ret);
-}
+पूर्ण
 
-static void write_msg(int fd, struct test_desc *msg, bool exit_of_fail)
-{
-	ssize_t bytes = write(fd, msg, sizeof(*msg));
+अटल व्योम ग_लिखो_msg(पूर्णांक fd, काष्ठा test_desc *msg, bool निकास_of_fail)
+अणु
+	sमाप_प्रकार bytes = ग_लिखो(fd, msg, माप(*msg));
 
-	/* Make sure that write/read is atomic to a pipe */
-	BUILD_BUG_ON(sizeof(struct test_desc) > PIPE_BUF);
+	/* Make sure that ग_लिखो/पढ़ो is atomic to a pipe */
+	BUILD_BUG_ON(माप(काष्ठा test_desc) > PIPE_BUF);
 
-	if (bytes < 0) {
+	अगर (bytes < 0) अणु
 		pr_err("write()");
-		if (exit_of_fail)
-			exit(KSFT_FAIL);
-	}
-	if (bytes != sizeof(*msg)) {
-		pr_err("sent part of the message %zd/%zu", bytes, sizeof(*msg));
-		if (exit_of_fail)
-			exit(KSFT_FAIL);
-	}
-}
+		अगर (निकास_of_fail)
+			निकास(KSFT_FAIL);
+	पूर्ण
+	अगर (bytes != माप(*msg)) अणु
+		pr_err("sent part of the message %zd/%zu", bytes, माप(*msg));
+		अगर (निकास_of_fail)
+			निकास(KSFT_FAIL);
+	पूर्ण
+पूर्ण
 
-static void read_msg(int fd, struct test_desc *msg, bool exit_of_fail)
-{
-	ssize_t bytes = read(fd, msg, sizeof(*msg));
+अटल व्योम पढ़ो_msg(पूर्णांक fd, काष्ठा test_desc *msg, bool निकास_of_fail)
+अणु
+	sमाप_प्रकार bytes = पढ़ो(fd, msg, माप(*msg));
 
-	if (bytes < 0) {
+	अगर (bytes < 0) अणु
 		pr_err("read()");
-		if (exit_of_fail)
-			exit(KSFT_FAIL);
-	}
-	if (bytes != sizeof(*msg)) {
-		pr_err("got incomplete message %zd/%zu", bytes, sizeof(*msg));
-		if (exit_of_fail)
-			exit(KSFT_FAIL);
-	}
-}
+		अगर (निकास_of_fail)
+			निकास(KSFT_FAIL);
+	पूर्ण
+	अगर (bytes != माप(*msg)) अणु
+		pr_err("got incomplete message %zd/%zu", bytes, माप(*msg));
+		अगर (निकास_of_fail)
+			निकास(KSFT_FAIL);
+	पूर्ण
+पूर्ण
 
-static int udp_ping_init(struct in_addr listen_ip, unsigned int u_timeout,
-		unsigned int *server_port, int sock[2])
-{
-	struct sockaddr_in server;
-	struct timeval t = { .tv_sec = 0, .tv_usec = u_timeout };
-	socklen_t s_len = sizeof(server);
+अटल पूर्णांक udp_ping_init(काष्ठा in_addr listen_ip, अचिन्हित पूर्णांक u_समयout,
+		अचिन्हित पूर्णांक *server_port, पूर्णांक sock[2])
+अणु
+	काष्ठा sockaddr_in server;
+	काष्ठा समयval t = अणु .tv_sec = 0, .tv_usec = u_समयout पूर्ण;
+	socklen_t s_len = माप(server);
 
 	sock[0] = socket(AF_INET, SOCK_DGRAM, 0);
-	if (sock[0] < 0) {
+	अगर (sock[0] < 0) अणु
 		pr_err("socket()");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	server.sin_family	= AF_INET;
 	server.sin_port		= 0;
-	memcpy(&server.sin_addr.s_addr, &listen_ip, sizeof(struct in_addr));
+	स_नकल(&server.sin_addr.s_addr, &listen_ip, माप(काष्ठा in_addr));
 
-	if (bind(sock[0], (struct sockaddr *)&server, s_len)) {
+	अगर (bind(sock[0], (काष्ठा sockaddr *)&server, s_len)) अणु
 		pr_err("bind()");
-		goto err_close_server;
-	}
+		जाओ err_बंद_server;
+	पूर्ण
 
-	if (getsockname(sock[0], (struct sockaddr *)&server, &s_len)) {
+	अगर (माला_लोockname(sock[0], (काष्ठा sockaddr *)&server, &s_len)) अणु
 		pr_err("getsockname()");
-		goto err_close_server;
-	}
+		जाओ err_बंद_server;
+	पूर्ण
 
 	*server_port = ntohs(server.sin_port);
 
-	if (setsockopt(sock[0], SOL_SOCKET, SO_RCVTIMEO, (const char *)&t, sizeof t)) {
+	अगर (setsockopt(sock[0], SOL_SOCKET, SO_RCVTIMEO, (स्थिर अक्षर *)&t, माप t)) अणु
 		pr_err("setsockopt()");
-		goto err_close_server;
-	}
+		जाओ err_बंद_server;
+	पूर्ण
 
 	sock[1] = socket(AF_INET, SOCK_DGRAM, 0);
-	if (sock[1] < 0) {
+	अगर (sock[1] < 0) अणु
 		pr_err("socket()");
-		goto err_close_server;
-	}
+		जाओ err_बंद_server;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_close_server:
-	close(sock[0]);
-	return -1;
-}
+err_बंद_server:
+	बंद(sock[0]);
+	वापस -1;
+पूर्ण
 
-static int udp_ping_send(int sock[2], in_addr_t dest_ip, unsigned int port,
-		char *buf, size_t buf_len)
-{
-	struct sockaddr_in server;
-	const struct sockaddr *dest_addr = (struct sockaddr *)&server;
-	char *sock_buf[buf_len];
-	ssize_t r_bytes, s_bytes;
-
-	server.sin_family	= AF_INET;
-	server.sin_port		= htons(port);
-	server.sin_addr.s_addr	= dest_ip;
-
-	s_bytes = sendto(sock[1], buf, buf_len, 0, dest_addr, sizeof(server));
-	if (s_bytes < 0) {
-		pr_err("sendto()");
-		return -1;
-	} else if (s_bytes != buf_len) {
-		printk("send part of the message: %zd/%zu", s_bytes, sizeof(server));
-		return -1;
-	}
-
-	r_bytes = recv(sock[0], sock_buf, buf_len, 0);
-	if (r_bytes < 0) {
-		if (errno != EAGAIN)
-			pr_err("recv()");
-		return -1;
-	} else if (r_bytes == 0) { /* EOF */
-		printk("EOF on reply to ping");
-		return -1;
-	} else if (r_bytes != buf_len || memcmp(buf, sock_buf, buf_len)) {
-		printk("ping reply packet is corrupted %zd/%zu", r_bytes, buf_len);
-		return -1;
-	}
-
-	return 0;
-}
-
-static int udp_ping_reply(int sock[2], in_addr_t dest_ip, unsigned int port,
-		char *buf, size_t buf_len)
-{
-	struct sockaddr_in server;
-	const struct sockaddr *dest_addr = (struct sockaddr *)&server;
-	char *sock_buf[buf_len];
-	ssize_t r_bytes, s_bytes;
+अटल पूर्णांक udp_ping_send(पूर्णांक sock[2], in_addr_t dest_ip, अचिन्हित पूर्णांक port,
+		अक्षर *buf, माप_प्रकार buf_len)
+अणु
+	काष्ठा sockaddr_in server;
+	स्थिर काष्ठा sockaddr *dest_addr = (काष्ठा sockaddr *)&server;
+	अक्षर *sock_buf[buf_len];
+	sमाप_प्रकार r_bytes, s_bytes;
 
 	server.sin_family	= AF_INET;
 	server.sin_port		= htons(port);
 	server.sin_addr.s_addr	= dest_ip;
 
-	r_bytes = recv(sock[0], sock_buf, buf_len, 0);
-	if (r_bytes < 0) {
-		if (errno != EAGAIN)
-			pr_err("recv()");
-		return -1;
-	}
-	if (r_bytes == 0) { /* EOF */
-		printk("EOF on reply to ping");
-		return -1;
-	}
-	if (r_bytes != buf_len || memcmp(buf, sock_buf, buf_len)) {
-		printk("ping reply packet is corrupted %zd/%zu", r_bytes, buf_len);
-		return -1;
-	}
-
-	s_bytes = sendto(sock[1], buf, buf_len, 0, dest_addr, sizeof(server));
-	if (s_bytes < 0) {
+	s_bytes = sendto(sock[1], buf, buf_len, 0, dest_addr, माप(server));
+	अगर (s_bytes < 0) अणु
 		pr_err("sendto()");
-		return -1;
-	} else if (s_bytes != buf_len) {
-		printk("send part of the message: %zd/%zu", s_bytes, sizeof(server));
-		return -1;
-	}
+		वापस -1;
+	पूर्ण अन्यथा अगर (s_bytes != buf_len) अणु
+		prपूर्णांकk("send part of the message: %zd/%zu", s_bytes, माप(server));
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	r_bytes = recv(sock[0], sock_buf, buf_len, 0);
+	अगर (r_bytes < 0) अणु
+		अगर (त्रुटि_सं != EAGAIN)
+			pr_err("recv()");
+		वापस -1;
+	पूर्ण अन्यथा अगर (r_bytes == 0) अणु /* खातापूर्ण */
+		prपूर्णांकk("EOF on reply to ping");
+		वापस -1;
+	पूर्ण अन्यथा अगर (r_bytes != buf_len || स_भेद(buf, sock_buf, buf_len)) अणु
+		prपूर्णांकk("ping reply packet is corrupted %zd/%zu", r_bytes, buf_len);
+		वापस -1;
+	पूर्ण
 
-typedef int (*ping_f)(int sock[2], in_addr_t dest_ip, unsigned int port,
-		char *buf, size_t buf_len);
-static int do_ping(int cmd_fd, char *buf, size_t buf_len, struct in_addr from,
-		bool init_side, int d_port, in_addr_t to, ping_f func)
-{
-	struct test_desc msg;
-	unsigned int s_port, i, ping_succeeded = 0;
-	int ping_sock[2];
-	char to_str[IPV4_STR_SZ] = {}, from_str[IPV4_STR_SZ] = {};
+	वापस 0;
+पूर्ण
 
-	if (udp_ping_init(from, ping_timeout, &s_port, ping_sock)) {
-		printk("Failed to init ping");
-		return -1;
-	}
+अटल पूर्णांक udp_ping_reply(पूर्णांक sock[2], in_addr_t dest_ip, अचिन्हित पूर्णांक port,
+		अक्षर *buf, माप_प्रकार buf_len)
+अणु
+	काष्ठा sockaddr_in server;
+	स्थिर काष्ठा sockaddr *dest_addr = (काष्ठा sockaddr *)&server;
+	अक्षर *sock_buf[buf_len];
+	sमाप_प्रकार r_bytes, s_bytes;
 
-	memset(&msg, 0, sizeof(msg));
+	server.sin_family	= AF_INET;
+	server.sin_port		= htons(port);
+	server.sin_addr.s_addr	= dest_ip;
+
+	r_bytes = recv(sock[0], sock_buf, buf_len, 0);
+	अगर (r_bytes < 0) अणु
+		अगर (त्रुटि_सं != EAGAIN)
+			pr_err("recv()");
+		वापस -1;
+	पूर्ण
+	अगर (r_bytes == 0) अणु /* खातापूर्ण */
+		prपूर्णांकk("EOF on reply to ping");
+		वापस -1;
+	पूर्ण
+	अगर (r_bytes != buf_len || स_भेद(buf, sock_buf, buf_len)) अणु
+		prपूर्णांकk("ping reply packet is corrupted %zd/%zu", r_bytes, buf_len);
+		वापस -1;
+	पूर्ण
+
+	s_bytes = sendto(sock[1], buf, buf_len, 0, dest_addr, माप(server));
+	अगर (s_bytes < 0) अणु
+		pr_err("sendto()");
+		वापस -1;
+	पूर्ण अन्यथा अगर (s_bytes != buf_len) अणु
+		prपूर्णांकk("send part of the message: %zd/%zu", s_bytes, माप(server));
+		वापस -1;
+	पूर्ण
+
+	वापस 0;
+पूर्ण
+
+प्रकार पूर्णांक (*ping_f)(पूर्णांक sock[2], in_addr_t dest_ip, अचिन्हित पूर्णांक port,
+		अक्षर *buf, माप_प्रकार buf_len);
+अटल पूर्णांक करो_ping(पूर्णांक cmd_fd, अक्षर *buf, माप_प्रकार buf_len, काष्ठा in_addr from,
+		bool init_side, पूर्णांक d_port, in_addr_t to, ping_f func)
+अणु
+	काष्ठा test_desc msg;
+	अचिन्हित पूर्णांक s_port, i, ping_succeeded = 0;
+	पूर्णांक ping_sock[2];
+	अक्षर to_str[IPV4_STR_SZ] = अणुपूर्ण, from_str[IPV4_STR_SZ] = अणुपूर्ण;
+
+	अगर (udp_ping_init(from, ping_समयout, &s_port, ping_sock)) अणु
+		prपूर्णांकk("Failed to init ping");
+		वापस -1;
+	पूर्ण
+
+	स_रखो(&msg, 0, माप(msg));
 	msg.type		= MSG_PING;
 	msg.body.ping.port	= s_port;
-	memcpy(&msg.body.ping.reply_ip, &from, sizeof(from));
+	स_नकल(&msg.body.ping.reply_ip, &from, माप(from));
 
-	write_msg(cmd_fd, &msg, 0);
-	if (init_side) {
+	ग_लिखो_msg(cmd_fd, &msg, 0);
+	अगर (init_side) अणु
 		/* The other end sends ip to ping */
-		read_msg(cmd_fd, &msg, 0);
-		if (msg.type != MSG_PING)
-			return -1;
+		पढ़ो_msg(cmd_fd, &msg, 0);
+		अगर (msg.type != MSG_PING)
+			वापस -1;
 		to = msg.body.ping.reply_ip;
 		d_port = msg.body.ping.port;
-	}
+	पूर्ण
 
-	for (i = 0; i < ping_count ; i++) {
-		struct timespec sleep_time = {
+	क्रम (i = 0; i < ping_count ; i++) अणु
+		काष्ठा बारpec sleep_समय = अणु
 			.tv_sec = 0,
 			.tv_nsec = ping_delay_nsec,
-		};
+		पूर्ण;
 
 		ping_succeeded += !func(ping_sock, to, d_port, buf, page_size);
-		nanosleep(&sleep_time, 0);
-	}
+		nanosleep(&sleep_समय, 0);
+	पूर्ण
 
-	close(ping_sock[0]);
-	close(ping_sock[1]);
+	बंद(ping_sock[0]);
+	बंद(ping_sock[1]);
 
-	strncpy(to_str, inet_ntoa(*(struct in_addr *)&to), IPV4_STR_SZ - 1);
-	strncpy(from_str, inet_ntoa(from), IPV4_STR_SZ - 1);
+	म_नकलन(to_str, inet_ntoa(*(काष्ठा in_addr *)&to), IPV4_STR_SZ - 1);
+	म_नकलन(from_str, inet_ntoa(from), IPV4_STR_SZ - 1);
 
-	if (ping_succeeded < ping_success) {
-		printk("ping (%s) %s->%s failed %u/%u times",
+	अगर (ping_succeeded < ping_success) अणु
+		prपूर्णांकk("ping (%s) %s->%s failed %u/%u times",
 			init_side ? "send" : "reply", from_str, to_str,
 			ping_count - ping_succeeded, ping_count);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-#ifdef DEBUG
-	printk("ping (%s) %s->%s succeeded %u/%u times",
+#अगर_घोषित DEBUG
+	prपूर्णांकk("ping (%s) %s->%s succeeded %u/%u times",
 		init_side ? "send" : "reply", from_str, to_str,
 		ping_succeeded, ping_count);
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xfrm_fill_key(char *name, char *buf,
-		size_t buf_len, unsigned int *key_len)
-{
+अटल पूर्णांक xfrm_fill_key(अक्षर *name, अक्षर *buf,
+		माप_प्रकार buf_len, अचिन्हित पूर्णांक *key_len)
+अणु
 	/* TODO: use set/map instead */
-	if (strncmp(name, "digest_null", ALGO_LEN) == 0)
+	अगर (म_भेदन(name, "digest_null", ALGO_LEN) == 0)
 		*key_len = 0;
-	else if (strncmp(name, "ecb(cipher_null)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "ecb(cipher_null)", ALGO_LEN) == 0)
 		*key_len = 0;
-	else if (strncmp(name, "cbc(des)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "cbc(des)", ALGO_LEN) == 0)
 		*key_len = 64;
-	else if (strncmp(name, "hmac(md5)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "hmac(md5)", ALGO_LEN) == 0)
 		*key_len = 128;
-	else if (strncmp(name, "cmac(aes)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "cmac(aes)", ALGO_LEN) == 0)
 		*key_len = 128;
-	else if (strncmp(name, "xcbc(aes)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "xcbc(aes)", ALGO_LEN) == 0)
 		*key_len = 128;
-	else if (strncmp(name, "cbc(cast5)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "cbc(cast5)", ALGO_LEN) == 0)
 		*key_len = 128;
-	else if (strncmp(name, "cbc(serpent)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "cbc(serpent)", ALGO_LEN) == 0)
 		*key_len = 128;
-	else if (strncmp(name, "hmac(sha1)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "hmac(sha1)", ALGO_LEN) == 0)
 		*key_len = 160;
-	else if (strncmp(name, "hmac(rmd160)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "hmac(rmd160)", ALGO_LEN) == 0)
 		*key_len = 160;
-	else if (strncmp(name, "cbc(des3_ede)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "cbc(des3_ede)", ALGO_LEN) == 0)
 		*key_len = 192;
-	else if (strncmp(name, "hmac(sha256)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "hmac(sha256)", ALGO_LEN) == 0)
 		*key_len = 256;
-	else if (strncmp(name, "cbc(aes)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "cbc(aes)", ALGO_LEN) == 0)
 		*key_len = 256;
-	else if (strncmp(name, "cbc(camellia)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "cbc(camellia)", ALGO_LEN) == 0)
 		*key_len = 256;
-	else if (strncmp(name, "cbc(twofish)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "cbc(twofish)", ALGO_LEN) == 0)
 		*key_len = 256;
-	else if (strncmp(name, "rfc3686(ctr(aes))", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "rfc3686(ctr(aes))", ALGO_LEN) == 0)
 		*key_len = 288;
-	else if (strncmp(name, "hmac(sha384)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "hmac(sha384)", ALGO_LEN) == 0)
 		*key_len = 384;
-	else if (strncmp(name, "cbc(blowfish)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "cbc(blowfish)", ALGO_LEN) == 0)
 		*key_len = 448;
-	else if (strncmp(name, "hmac(sha512)", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "hmac(sha512)", ALGO_LEN) == 0)
 		*key_len = 512;
-	else if (strncmp(name, "rfc4106(gcm(aes))-128", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "rfc4106(gcm(aes))-128", ALGO_LEN) == 0)
 		*key_len = 160;
-	else if (strncmp(name, "rfc4543(gcm(aes))-128", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "rfc4543(gcm(aes))-128", ALGO_LEN) == 0)
 		*key_len = 160;
-	else if (strncmp(name, "rfc4309(ccm(aes))-128", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "rfc4309(ccm(aes))-128", ALGO_LEN) == 0)
 		*key_len = 152;
-	else if (strncmp(name, "rfc4106(gcm(aes))-192", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "rfc4106(gcm(aes))-192", ALGO_LEN) == 0)
 		*key_len = 224;
-	else if (strncmp(name, "rfc4543(gcm(aes))-192", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "rfc4543(gcm(aes))-192", ALGO_LEN) == 0)
 		*key_len = 224;
-	else if (strncmp(name, "rfc4309(ccm(aes))-192", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "rfc4309(ccm(aes))-192", ALGO_LEN) == 0)
 		*key_len = 216;
-	else if (strncmp(name, "rfc4106(gcm(aes))-256", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "rfc4106(gcm(aes))-256", ALGO_LEN) == 0)
 		*key_len = 288;
-	else if (strncmp(name, "rfc4543(gcm(aes))-256", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "rfc4543(gcm(aes))-256", ALGO_LEN) == 0)
 		*key_len = 288;
-	else if (strncmp(name, "rfc4309(ccm(aes))-256", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "rfc4309(ccm(aes))-256", ALGO_LEN) == 0)
 		*key_len = 280;
-	else if (strncmp(name, "rfc7539(chacha20,poly1305)-128", ALGO_LEN) == 0)
+	अन्यथा अगर (म_भेदन(name, "rfc7539(chacha20,poly1305)-128", ALGO_LEN) == 0)
 		*key_len = 0;
 
-	if (*key_len > buf_len) {
-		printk("Can't pack a key - too big for buffer");
-		return -1;
-	}
+	अगर (*key_len > buf_len) अणु
+		prपूर्णांकk("Can't pack a key - too big for buffer");
+		वापस -1;
+	पूर्ण
 
-	randomize_buffer(buf, *key_len);
+	अक्रमomize_buffer(buf, *key_len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xfrm_state_pack_algo(struct nlmsghdr *nh, size_t req_sz,
-		struct xfrm_desc *desc)
-{
-	struct {
-		union {
-			struct xfrm_algo	alg;
-			struct xfrm_algo_aead	aead;
-			struct xfrm_algo_auth	auth;
-		} u;
-		char buf[XFRM_ALGO_KEY_BUF_SIZE];
-	} alg = {};
-	size_t alen, elen, clen, aelen;
-	unsigned short type;
+अटल पूर्णांक xfrm_state_pack_algo(काष्ठा nlmsghdr *nh, माप_प्रकार req_sz,
+		काष्ठा xfrm_desc *desc)
+अणु
+	काष्ठा अणु
+		जोड़ अणु
+			काष्ठा xfrm_algo	alg;
+			काष्ठा xfrm_algo_aead	aead;
+			काष्ठा xfrm_algo_auth	auth;
+		पूर्ण u;
+		अक्षर buf[XFRM_ALGO_KEY_BUF_SIZE];
+	पूर्ण alg = अणुपूर्ण;
+	माप_प्रकार alen, elen, clen, aelen;
+	अचिन्हित लघु type;
 
-	alen = strlen(desc->a_algo);
-	elen = strlen(desc->e_algo);
-	clen = strlen(desc->c_algo);
-	aelen = strlen(desc->ae_algo);
+	alen = म_माप(desc->a_algo);
+	elen = म_माप(desc->e_algo);
+	clen = म_माप(desc->c_algo);
+	aelen = म_माप(desc->ae_algo);
 
-	/* Verify desc */
-	switch (desc->proto) {
-	case IPPROTO_AH:
-		if (!alen || elen || clen || aelen) {
-			printk("BUG: buggy ah desc");
-			return -1;
-		}
-		strncpy(alg.u.alg.alg_name, desc->a_algo, ALGO_LEN - 1);
-		if (xfrm_fill_key(desc->a_algo, alg.u.alg.alg_key,
-				sizeof(alg.buf), &alg.u.alg.alg_key_len))
-			return -1;
+	/* Verअगरy desc */
+	चयन (desc->proto) अणु
+	हाल IPPROTO_AH:
+		अगर (!alen || elen || clen || aelen) अणु
+			prपूर्णांकk("BUG: buggy ah desc");
+			वापस -1;
+		पूर्ण
+		म_नकलन(alg.u.alg.alg_name, desc->a_algo, ALGO_LEN - 1);
+		अगर (xfrm_fill_key(desc->a_algo, alg.u.alg.alg_key,
+				माप(alg.buf), &alg.u.alg.alg_key_len))
+			वापस -1;
 		type = XFRMA_ALG_AUTH;
-		break;
-	case IPPROTO_COMP:
-		if (!clen || elen || alen || aelen) {
-			printk("BUG: buggy comp desc");
-			return -1;
-		}
-		strncpy(alg.u.alg.alg_name, desc->c_algo, ALGO_LEN - 1);
-		if (xfrm_fill_key(desc->c_algo, alg.u.alg.alg_key,
-				sizeof(alg.buf), &alg.u.alg.alg_key_len))
-			return -1;
+		अवरोध;
+	हाल IPPROTO_COMP:
+		अगर (!clen || elen || alen || aelen) अणु
+			prपूर्णांकk("BUG: buggy comp desc");
+			वापस -1;
+		पूर्ण
+		म_नकलन(alg.u.alg.alg_name, desc->c_algo, ALGO_LEN - 1);
+		अगर (xfrm_fill_key(desc->c_algo, alg.u.alg.alg_key,
+				माप(alg.buf), &alg.u.alg.alg_key_len))
+			वापस -1;
 		type = XFRMA_ALG_COMP;
-		break;
-	case IPPROTO_ESP:
-		if (!((alen && elen) ^ aelen) || clen) {
-			printk("BUG: buggy esp desc");
-			return -1;
-		}
-		if (aelen) {
+		अवरोध;
+	हाल IPPROTO_ESP:
+		अगर (!((alen && elen) ^ aelen) || clen) अणु
+			prपूर्णांकk("BUG: buggy esp desc");
+			वापस -1;
+		पूर्ण
+		अगर (aelen) अणु
 			alg.u.aead.alg_icv_len = desc->icv_len;
-			strncpy(alg.u.aead.alg_name, desc->ae_algo, ALGO_LEN - 1);
-			if (xfrm_fill_key(desc->ae_algo, alg.u.aead.alg_key,
-						sizeof(alg.buf), &alg.u.aead.alg_key_len))
-				return -1;
+			म_नकलन(alg.u.aead.alg_name, desc->ae_algo, ALGO_LEN - 1);
+			अगर (xfrm_fill_key(desc->ae_algo, alg.u.aead.alg_key,
+						माप(alg.buf), &alg.u.aead.alg_key_len))
+				वापस -1;
 			type = XFRMA_ALG_AEAD;
-		} else {
+		पूर्ण अन्यथा अणु
 
-			strncpy(alg.u.alg.alg_name, desc->e_algo, ALGO_LEN - 1);
+			म_नकलन(alg.u.alg.alg_name, desc->e_algo, ALGO_LEN - 1);
 			type = XFRMA_ALG_CRYPT;
-			if (xfrm_fill_key(desc->e_algo, alg.u.alg.alg_key,
-						sizeof(alg.buf), &alg.u.alg.alg_key_len))
-				return -1;
-			if (rtattr_pack(nh, req_sz, type, &alg, sizeof(alg)))
-				return -1;
+			अगर (xfrm_fill_key(desc->e_algo, alg.u.alg.alg_key,
+						माप(alg.buf), &alg.u.alg.alg_key_len))
+				वापस -1;
+			अगर (rtattr_pack(nh, req_sz, type, &alg, माप(alg)))
+				वापस -1;
 
-			strncpy(alg.u.alg.alg_name, desc->a_algo, ALGO_LEN);
+			म_नकलन(alg.u.alg.alg_name, desc->a_algo, ALGO_LEN);
 			type = XFRMA_ALG_AUTH;
-			if (xfrm_fill_key(desc->a_algo, alg.u.alg.alg_key,
-						sizeof(alg.buf), &alg.u.alg.alg_key_len))
-				return -1;
-		}
-		break;
-	default:
-		printk("BUG: unknown proto in desc");
-		return -1;
-	}
+			अगर (xfrm_fill_key(desc->a_algo, alg.u.alg.alg_key,
+						माप(alg.buf), &alg.u.alg.alg_key_len))
+				वापस -1;
+		पूर्ण
+		अवरोध;
+	शेष:
+		prपूर्णांकk("BUG: unknown proto in desc");
+		वापस -1;
+	पूर्ण
 
-	if (rtattr_pack(nh, req_sz, type, &alg, sizeof(alg)))
-		return -1;
+	अगर (rtattr_pack(nh, req_sz, type, &alg, माप(alg)))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline uint32_t gen_spi(struct in_addr src)
-{
-	return htonl(inet_lnaof(src));
-}
+अटल अंतरभूत uपूर्णांक32_t gen_spi(काष्ठा in_addr src)
+अणु
+	वापस htonl(inet_lnaof(src));
+पूर्ण
 
-static int xfrm_state_add(int xfrm_sock, uint32_t seq, uint32_t spi,
-		struct in_addr src, struct in_addr dst,
-		struct xfrm_desc *desc)
-{
-	struct {
-		struct nlmsghdr		nh;
-		struct xfrm_usersa_info	info;
-		char			attrbuf[MAX_PAYLOAD];
-	} req;
+अटल पूर्णांक xfrm_state_add(पूर्णांक xfrm_sock, uपूर्णांक32_t seq, uपूर्णांक32_t spi,
+		काष्ठा in_addr src, काष्ठा in_addr dst,
+		काष्ठा xfrm_desc *desc)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr		nh;
+		काष्ठा xfrm_usersa_info	info;
+		अक्षर			attrbuf[MAX_PAYLOAD];
+	पूर्ण req;
 
-	memset(&req, 0, sizeof(req));
-	req.nh.nlmsg_len	= NLMSG_LENGTH(sizeof(req.info));
+	स_रखो(&req, 0, माप(req));
+	req.nh.nlmsg_len	= NLMSG_LENGTH(माप(req.info));
 	req.nh.nlmsg_type	= XFRM_MSG_NEWSA;
 	req.nh.nlmsg_flags	= NLM_F_REQUEST | NLM_F_ACK;
 	req.nh.nlmsg_seq	= seq;
 
 	/* Fill selector. */
-	memcpy(&req.info.sel.daddr, &dst, sizeof(dst));
-	memcpy(&req.info.sel.saddr, &src, sizeof(src));
+	स_नकल(&req.info.sel.daddr, &dst, माप(dst));
+	स_नकल(&req.info.sel.saddr, &src, माप(src));
 	req.info.sel.family		= AF_INET;
 	req.info.sel.prefixlen_d	= PREFIX_LEN;
 	req.info.sel.prefixlen_s	= PREFIX_LEN;
 
 	/* Fill id */
-	memcpy(&req.info.id.daddr, &dst, sizeof(dst));
+	स_नकल(&req.info.id.daddr, &dst, माप(dst));
 	/* Note: zero-spi cannot be deleted */
 	req.info.id.spi = spi;
 	req.info.id.proto	= desc->proto;
 
-	memcpy(&req.info.saddr, &src, sizeof(src));
+	स_नकल(&req.info.saddr, &src, माप(src));
 
-	/* Fill lifteme_cfg */
+	/* Fill lअगरteme_cfg */
 	req.info.lft.soft_byte_limit	= XFRM_INF;
 	req.info.lft.hard_byte_limit	= XFRM_INF;
 	req.info.lft.soft_packet_limit	= XFRM_INF;
@@ -963,76 +964,76 @@ static int xfrm_state_add(int xfrm_sock, uint32_t seq, uint32_t spi,
 	req.info.family		= AF_INET;
 	req.info.mode		= XFRM_MODE_TUNNEL;
 
-	if (xfrm_state_pack_algo(&req.nh, sizeof(req), desc))
-		return -1;
+	अगर (xfrm_state_pack_algo(&req.nh, माप(req), desc))
+		वापस -1;
 
-	if (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) {
+	अगर (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
 		pr_err("send()");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return netlink_check_answer(xfrm_sock);
-}
+	वापस netlink_check_answer(xfrm_sock);
+पूर्ण
 
-static bool xfrm_usersa_found(struct xfrm_usersa_info *info, uint32_t spi,
-		struct in_addr src, struct in_addr dst,
-		struct xfrm_desc *desc)
-{
-	if (memcmp(&info->sel.daddr, &dst, sizeof(dst)))
-		return false;
+अटल bool xfrm_usersa_found(काष्ठा xfrm_usersa_info *info, uपूर्णांक32_t spi,
+		काष्ठा in_addr src, काष्ठा in_addr dst,
+		काष्ठा xfrm_desc *desc)
+अणु
+	अगर (स_भेद(&info->sel.daddr, &dst, माप(dst)))
+		वापस false;
 
-	if (memcmp(&info->sel.saddr, &src, sizeof(src)))
-		return false;
+	अगर (स_भेद(&info->sel.saddr, &src, माप(src)))
+		वापस false;
 
-	if (info->sel.family != AF_INET					||
+	अगर (info->sel.family != AF_INET					||
 			info->sel.prefixlen_d != PREFIX_LEN		||
 			info->sel.prefixlen_s != PREFIX_LEN)
-		return false;
+		वापस false;
 
-	if (info->id.spi != spi || info->id.proto != desc->proto)
-		return false;
+	अगर (info->id.spi != spi || info->id.proto != desc->proto)
+		वापस false;
 
-	if (memcmp(&info->id.daddr, &dst, sizeof(dst)))
-		return false;
+	अगर (स_भेद(&info->id.daddr, &dst, माप(dst)))
+		वापस false;
 
-	if (memcmp(&info->saddr, &src, sizeof(src)))
-		return false;
+	अगर (स_भेद(&info->saddr, &src, माप(src)))
+		वापस false;
 
-	if (info->lft.soft_byte_limit != XFRM_INF			||
+	अगर (info->lft.soft_byte_limit != XFRM_INF			||
 			info->lft.hard_byte_limit != XFRM_INF		||
 			info->lft.soft_packet_limit != XFRM_INF		||
 			info->lft.hard_packet_limit != XFRM_INF)
-		return false;
+		वापस false;
 
-	if (info->family != AF_INET || info->mode != XFRM_MODE_TUNNEL)
-		return false;
+	अगर (info->family != AF_INET || info->mode != XFRM_MODE_TUNNEL)
+		वापस false;
 
 	/* XXX: check xfrm algo, see xfrm_state_pack_algo(). */
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int xfrm_state_check(int xfrm_sock, uint32_t seq, uint32_t spi,
-		struct in_addr src, struct in_addr dst,
-		struct xfrm_desc *desc)
-{
-	struct {
-		struct nlmsghdr		nh;
-		char			attrbuf[MAX_PAYLOAD];
-	} req;
-	struct {
-		struct nlmsghdr		nh;
-		union {
-			struct xfrm_usersa_info	info;
-			int error;
-		};
-		char			attrbuf[MAX_PAYLOAD];
-	} answer;
-	struct xfrm_address_filter filter = {};
+अटल पूर्णांक xfrm_state_check(पूर्णांक xfrm_sock, uपूर्णांक32_t seq, uपूर्णांक32_t spi,
+		काष्ठा in_addr src, काष्ठा in_addr dst,
+		काष्ठा xfrm_desc *desc)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr		nh;
+		अक्षर			attrbuf[MAX_PAYLOAD];
+	पूर्ण req;
+	काष्ठा अणु
+		काष्ठा nlmsghdr		nh;
+		जोड़ अणु
+			काष्ठा xfrm_usersa_info	info;
+			पूर्णांक error;
+		पूर्ण;
+		अक्षर			attrbuf[MAX_PAYLOAD];
+	पूर्ण answer;
+	काष्ठा xfrm_address_filter filter = अणुपूर्ण;
 	bool found = false;
 
 
-	memset(&req, 0, sizeof(req));
+	स_रखो(&req, 0, माप(req));
 	req.nh.nlmsg_len	= NLMSG_LENGTH(0);
 	req.nh.nlmsg_type	= XFRM_MSG_GETSA;
 	req.nh.nlmsg_flags	= NLM_F_REQUEST | NLM_F_DUMP;
@@ -1040,97 +1041,97 @@ static int xfrm_state_check(int xfrm_sock, uint32_t seq, uint32_t spi,
 
 	/*
 	 * Add dump filter by source address as there may be other tunnels
-	 * in this netns (if tests run in parallel).
+	 * in this netns (अगर tests run in parallel).
 	 */
 	filter.family = AF_INET;
 	filter.splen = 0x1f;	/* 0xffffffff mask see addr_match() */
-	memcpy(&filter.saddr, &src, sizeof(src));
-	if (rtattr_pack(&req.nh, sizeof(req), XFRMA_ADDRESS_FILTER,
-				&filter, sizeof(filter)))
-		return -1;
+	स_नकल(&filter.saddr, &src, माप(src));
+	अगर (rtattr_pack(&req.nh, माप(req), XFRMA_ADDRESS_FILTER,
+				&filter, माप(filter)))
+		वापस -1;
 
-	if (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) {
+	अगर (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
 		pr_err("send()");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	while (1) {
-		if (recv(xfrm_sock, &answer, sizeof(answer), 0) < 0) {
+	जबतक (1) अणु
+		अगर (recv(xfrm_sock, &answer, माप(answer), 0) < 0) अणु
 			pr_err("recv()");
-			return -1;
-		}
-		if (answer.nh.nlmsg_type == NLMSG_ERROR) {
-			printk("NLMSG_ERROR: %d: %s",
-				answer.error, strerror(-answer.error));
-			return -1;
-		} else if (answer.nh.nlmsg_type == NLMSG_DONE) {
-			if (found)
-				return 0;
-			printk("didn't find allocated xfrm state in dump");
-			return -1;
-		} else if (answer.nh.nlmsg_type == XFRM_MSG_NEWSA) {
-			if (xfrm_usersa_found(&answer.info, spi, src, dst, desc))
+			वापस -1;
+		पूर्ण
+		अगर (answer.nh.nlmsg_type == NLMSG_ERROR) अणु
+			prपूर्णांकk("NLMSG_ERROR: %d: %s",
+				answer.error, म_त्रुटि(-answer.error));
+			वापस -1;
+		पूर्ण अन्यथा अगर (answer.nh.nlmsg_type == NLMSG_DONE) अणु
+			अगर (found)
+				वापस 0;
+			prपूर्णांकk("didn't find allocated xfrm state in dump");
+			वापस -1;
+		पूर्ण अन्यथा अगर (answer.nh.nlmsg_type == XFRM_MSG_NEWSA) अणु
+			अगर (xfrm_usersa_found(&answer.info, spi, src, dst, desc))
 				found = true;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int xfrm_set(int xfrm_sock, uint32_t *seq,
-		struct in_addr src, struct in_addr dst,
-		struct in_addr tunsrc, struct in_addr tundst,
-		struct xfrm_desc *desc)
-{
-	int err;
+अटल पूर्णांक xfrm_set(पूर्णांक xfrm_sock, uपूर्णांक32_t *seq,
+		काष्ठा in_addr src, काष्ठा in_addr dst,
+		काष्ठा in_addr tunsrc, काष्ठा in_addr tundst,
+		काष्ठा xfrm_desc *desc)
+अणु
+	पूर्णांक err;
 
 	err = xfrm_state_add(xfrm_sock, (*seq)++, gen_spi(src), src, dst, desc);
-	if (err) {
-		printk("Failed to add xfrm state");
-		return -1;
-	}
+	अगर (err) अणु
+		prपूर्णांकk("Failed to add xfrm state");
+		वापस -1;
+	पूर्ण
 
 	err = xfrm_state_add(xfrm_sock, (*seq)++, gen_spi(src), dst, src, desc);
-	if (err) {
-		printk("Failed to add xfrm state");
-		return -1;
-	}
+	अगर (err) अणु
+		prपूर्णांकk("Failed to add xfrm state");
+		वापस -1;
+	पूर्ण
 
-	/* Check dumps for XFRM_MSG_GETSA */
+	/* Check dumps क्रम XFRM_MSG_GETSA */
 	err = xfrm_state_check(xfrm_sock, (*seq)++, gen_spi(src), src, dst, desc);
 	err |= xfrm_state_check(xfrm_sock, (*seq)++, gen_spi(src), dst, src, desc);
-	if (err) {
-		printk("Failed to check xfrm state");
-		return -1;
-	}
+	अगर (err) अणु
+		prपूर्णांकk("Failed to check xfrm state");
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xfrm_policy_add(int xfrm_sock, uint32_t seq, uint32_t spi,
-		struct in_addr src, struct in_addr dst, uint8_t dir,
-		struct in_addr tunsrc, struct in_addr tundst, uint8_t proto)
-{
-	struct {
-		struct nlmsghdr			nh;
-		struct xfrm_userpolicy_info	info;
-		char				attrbuf[MAX_PAYLOAD];
-	} req;
-	struct xfrm_user_tmpl tmpl;
+अटल पूर्णांक xfrm_policy_add(पूर्णांक xfrm_sock, uपूर्णांक32_t seq, uपूर्णांक32_t spi,
+		काष्ठा in_addr src, काष्ठा in_addr dst, uपूर्णांक8_t dir,
+		काष्ठा in_addr tunsrc, काष्ठा in_addr tundst, uपूर्णांक8_t proto)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr			nh;
+		काष्ठा xfrm_userpolicy_info	info;
+		अक्षर				attrbuf[MAX_PAYLOAD];
+	पूर्ण req;
+	काष्ठा xfrm_user_पंचांगpl पंचांगpl;
 
-	memset(&req, 0, sizeof(req));
-	memset(&tmpl, 0, sizeof(tmpl));
-	req.nh.nlmsg_len	= NLMSG_LENGTH(sizeof(req.info));
+	स_रखो(&req, 0, माप(req));
+	स_रखो(&पंचांगpl, 0, माप(पंचांगpl));
+	req.nh.nlmsg_len	= NLMSG_LENGTH(माप(req.info));
 	req.nh.nlmsg_type	= XFRM_MSG_NEWPOLICY;
 	req.nh.nlmsg_flags	= NLM_F_REQUEST | NLM_F_ACK;
 	req.nh.nlmsg_seq	= seq;
 
 	/* Fill selector. */
-	memcpy(&req.info.sel.daddr, &dst, sizeof(tundst));
-	memcpy(&req.info.sel.saddr, &src, sizeof(tunsrc));
+	स_नकल(&req.info.sel.daddr, &dst, माप(tundst));
+	स_नकल(&req.info.sel.saddr, &src, माप(tunsrc));
 	req.info.sel.family		= AF_INET;
 	req.info.sel.prefixlen_d	= PREFIX_LEN;
 	req.info.sel.prefixlen_s	= PREFIX_LEN;
 
-	/* Fill lifteme_cfg */
+	/* Fill lअगरteme_cfg */
 	req.info.lft.soft_byte_limit	= XFRM_INF;
 	req.info.lft.hard_byte_limit	= XFRM_INF;
 	req.info.lft.soft_packet_limit	= XFRM_INF;
@@ -1138,167 +1139,167 @@ static int xfrm_policy_add(int xfrm_sock, uint32_t seq, uint32_t spi,
 
 	req.info.dir = dir;
 
-	/* Fill tmpl */
-	memcpy(&tmpl.id.daddr, &dst, sizeof(dst));
+	/* Fill पंचांगpl */
+	स_नकल(&पंचांगpl.id.daddr, &dst, माप(dst));
 	/* Note: zero-spi cannot be deleted */
-	tmpl.id.spi = spi;
-	tmpl.id.proto	= proto;
-	tmpl.family	= AF_INET;
-	memcpy(&tmpl.saddr, &src, sizeof(src));
-	tmpl.mode	= XFRM_MODE_TUNNEL;
-	tmpl.aalgos = (~(uint32_t)0);
-	tmpl.ealgos = (~(uint32_t)0);
-	tmpl.calgos = (~(uint32_t)0);
+	पंचांगpl.id.spi = spi;
+	पंचांगpl.id.proto	= proto;
+	पंचांगpl.family	= AF_INET;
+	स_नकल(&पंचांगpl.saddr, &src, माप(src));
+	पंचांगpl.mode	= XFRM_MODE_TUNNEL;
+	पंचांगpl.aalgos = (~(uपूर्णांक32_t)0);
+	पंचांगpl.ealgos = (~(uपूर्णांक32_t)0);
+	पंचांगpl.calgos = (~(uपूर्णांक32_t)0);
 
-	if (rtattr_pack(&req.nh, sizeof(req), XFRMA_TMPL, &tmpl, sizeof(tmpl)))
-		return -1;
+	अगर (rtattr_pack(&req.nh, माप(req), XFRMA_TMPL, &पंचांगpl, माप(पंचांगpl)))
+		वापस -1;
 
-	if (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) {
+	अगर (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
 		pr_err("send()");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return netlink_check_answer(xfrm_sock);
-}
+	वापस netlink_check_answer(xfrm_sock);
+पूर्ण
 
-static int xfrm_prepare(int xfrm_sock, uint32_t *seq,
-		struct in_addr src, struct in_addr dst,
-		struct in_addr tunsrc, struct in_addr tundst, uint8_t proto)
-{
-	if (xfrm_policy_add(xfrm_sock, (*seq)++, gen_spi(src), src, dst,
-				XFRM_POLICY_OUT, tunsrc, tundst, proto)) {
-		printk("Failed to add xfrm policy");
-		return -1;
-	}
+अटल पूर्णांक xfrm_prepare(पूर्णांक xfrm_sock, uपूर्णांक32_t *seq,
+		काष्ठा in_addr src, काष्ठा in_addr dst,
+		काष्ठा in_addr tunsrc, काष्ठा in_addr tundst, uपूर्णांक8_t proto)
+अणु
+	अगर (xfrm_policy_add(xfrm_sock, (*seq)++, gen_spi(src), src, dst,
+				XFRM_POLICY_OUT, tunsrc, tundst, proto)) अणु
+		prपूर्णांकk("Failed to add xfrm policy");
+		वापस -1;
+	पूर्ण
 
-	if (xfrm_policy_add(xfrm_sock, (*seq)++, gen_spi(src), dst, src,
-				XFRM_POLICY_IN, tunsrc, tundst, proto)) {
-		printk("Failed to add xfrm policy");
-		return -1;
-	}
+	अगर (xfrm_policy_add(xfrm_sock, (*seq)++, gen_spi(src), dst, src,
+				XFRM_POLICY_IN, tunsrc, tundst, proto)) अणु
+		prपूर्णांकk("Failed to add xfrm policy");
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xfrm_policy_del(int xfrm_sock, uint32_t seq,
-		struct in_addr src, struct in_addr dst, uint8_t dir,
-		struct in_addr tunsrc, struct in_addr tundst)
-{
-	struct {
-		struct nlmsghdr			nh;
-		struct xfrm_userpolicy_id	id;
-		char				attrbuf[MAX_PAYLOAD];
-	} req;
+अटल पूर्णांक xfrm_policy_del(पूर्णांक xfrm_sock, uपूर्णांक32_t seq,
+		काष्ठा in_addr src, काष्ठा in_addr dst, uपूर्णांक8_t dir,
+		काष्ठा in_addr tunsrc, काष्ठा in_addr tundst)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr			nh;
+		काष्ठा xfrm_userpolicy_id	id;
+		अक्षर				attrbuf[MAX_PAYLOAD];
+	पूर्ण req;
 
-	memset(&req, 0, sizeof(req));
-	req.nh.nlmsg_len	= NLMSG_LENGTH(sizeof(req.id));
+	स_रखो(&req, 0, माप(req));
+	req.nh.nlmsg_len	= NLMSG_LENGTH(माप(req.id));
 	req.nh.nlmsg_type	= XFRM_MSG_DELPOLICY;
 	req.nh.nlmsg_flags	= NLM_F_REQUEST | NLM_F_ACK;
 	req.nh.nlmsg_seq	= seq;
 
 	/* Fill id */
-	memcpy(&req.id.sel.daddr, &dst, sizeof(tundst));
-	memcpy(&req.id.sel.saddr, &src, sizeof(tunsrc));
+	स_नकल(&req.id.sel.daddr, &dst, माप(tundst));
+	स_नकल(&req.id.sel.saddr, &src, माप(tunsrc));
 	req.id.sel.family		= AF_INET;
 	req.id.sel.prefixlen_d		= PREFIX_LEN;
 	req.id.sel.prefixlen_s		= PREFIX_LEN;
 	req.id.dir = dir;
 
-	if (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) {
+	अगर (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
 		pr_err("send()");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return netlink_check_answer(xfrm_sock);
-}
+	वापस netlink_check_answer(xfrm_sock);
+पूर्ण
 
-static int xfrm_cleanup(int xfrm_sock, uint32_t *seq,
-		struct in_addr src, struct in_addr dst,
-		struct in_addr tunsrc, struct in_addr tundst)
-{
-	if (xfrm_policy_del(xfrm_sock, (*seq)++, src, dst,
-				XFRM_POLICY_OUT, tunsrc, tundst)) {
-		printk("Failed to add xfrm policy");
-		return -1;
-	}
+अटल पूर्णांक xfrm_cleanup(पूर्णांक xfrm_sock, uपूर्णांक32_t *seq,
+		काष्ठा in_addr src, काष्ठा in_addr dst,
+		काष्ठा in_addr tunsrc, काष्ठा in_addr tundst)
+अणु
+	अगर (xfrm_policy_del(xfrm_sock, (*seq)++, src, dst,
+				XFRM_POLICY_OUT, tunsrc, tundst)) अणु
+		prपूर्णांकk("Failed to add xfrm policy");
+		वापस -1;
+	पूर्ण
 
-	if (xfrm_policy_del(xfrm_sock, (*seq)++, dst, src,
-				XFRM_POLICY_IN, tunsrc, tundst)) {
-		printk("Failed to add xfrm policy");
-		return -1;
-	}
+	अगर (xfrm_policy_del(xfrm_sock, (*seq)++, dst, src,
+				XFRM_POLICY_IN, tunsrc, tundst)) अणु
+		prपूर्णांकk("Failed to add xfrm policy");
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xfrm_state_del(int xfrm_sock, uint32_t seq, uint32_t spi,
-		struct in_addr src, struct in_addr dst, uint8_t proto)
-{
-	struct {
-		struct nlmsghdr		nh;
-		struct xfrm_usersa_id	id;
-		char			attrbuf[MAX_PAYLOAD];
-	} req;
-	xfrm_address_t saddr = {};
+अटल पूर्णांक xfrm_state_del(पूर्णांक xfrm_sock, uपूर्णांक32_t seq, uपूर्णांक32_t spi,
+		काष्ठा in_addr src, काष्ठा in_addr dst, uपूर्णांक8_t proto)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr		nh;
+		काष्ठा xfrm_usersa_id	id;
+		अक्षर			attrbuf[MAX_PAYLOAD];
+	पूर्ण req;
+	xfrm_address_t saddr = अणुपूर्ण;
 
-	memset(&req, 0, sizeof(req));
-	req.nh.nlmsg_len	= NLMSG_LENGTH(sizeof(req.id));
+	स_रखो(&req, 0, माप(req));
+	req.nh.nlmsg_len	= NLMSG_LENGTH(माप(req.id));
 	req.nh.nlmsg_type	= XFRM_MSG_DELSA;
 	req.nh.nlmsg_flags	= NLM_F_REQUEST | NLM_F_ACK;
 	req.nh.nlmsg_seq	= seq;
 
-	memcpy(&req.id.daddr, &dst, sizeof(dst));
+	स_नकल(&req.id.daddr, &dst, माप(dst));
 	req.id.family		= AF_INET;
 	req.id.proto		= proto;
 	/* Note: zero-spi cannot be deleted */
 	req.id.spi = spi;
 
-	memcpy(&saddr, &src, sizeof(src));
-	if (rtattr_pack(&req.nh, sizeof(req), XFRMA_SRCADDR, &saddr, sizeof(saddr)))
-		return -1;
+	स_नकल(&saddr, &src, माप(src));
+	अगर (rtattr_pack(&req.nh, माप(req), XFRMA_SRCADDR, &saddr, माप(saddr)))
+		वापस -1;
 
-	if (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) {
+	अगर (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
 		pr_err("send()");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return netlink_check_answer(xfrm_sock);
-}
+	वापस netlink_check_answer(xfrm_sock);
+पूर्ण
 
-static int xfrm_delete(int xfrm_sock, uint32_t *seq,
-		struct in_addr src, struct in_addr dst,
-		struct in_addr tunsrc, struct in_addr tundst, uint8_t proto)
-{
-	if (xfrm_state_del(xfrm_sock, (*seq)++, gen_spi(src), src, dst, proto)) {
-		printk("Failed to remove xfrm state");
-		return -1;
-	}
+अटल पूर्णांक xfrm_delete(पूर्णांक xfrm_sock, uपूर्णांक32_t *seq,
+		काष्ठा in_addr src, काष्ठा in_addr dst,
+		काष्ठा in_addr tunsrc, काष्ठा in_addr tundst, uपूर्णांक8_t proto)
+अणु
+	अगर (xfrm_state_del(xfrm_sock, (*seq)++, gen_spi(src), src, dst, proto)) अणु
+		prपूर्णांकk("Failed to remove xfrm state");
+		वापस -1;
+	पूर्ण
 
-	if (xfrm_state_del(xfrm_sock, (*seq)++, gen_spi(src), dst, src, proto)) {
-		printk("Failed to remove xfrm state");
-		return -1;
-	}
+	अगर (xfrm_state_del(xfrm_sock, (*seq)++, gen_spi(src), dst, src, proto)) अणु
+		prपूर्णांकk("Failed to remove xfrm state");
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xfrm_state_allocspi(int xfrm_sock, uint32_t *seq,
-		uint32_t spi, uint8_t proto)
-{
-	struct {
-		struct nlmsghdr			nh;
-		struct xfrm_userspi_info	spi;
-	} req;
-	struct {
-		struct nlmsghdr			nh;
-		union {
-			struct xfrm_usersa_info	info;
-			int error;
-		};
-	} answer;
+अटल पूर्णांक xfrm_state_allocspi(पूर्णांक xfrm_sock, uपूर्णांक32_t *seq,
+		uपूर्णांक32_t spi, uपूर्णांक8_t proto)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr			nh;
+		काष्ठा xfrm_userspi_info	spi;
+	पूर्ण req;
+	काष्ठा अणु
+		काष्ठा nlmsghdr			nh;
+		जोड़ अणु
+			काष्ठा xfrm_usersa_info	info;
+			पूर्णांक error;
+		पूर्ण;
+	पूर्ण answer;
 
-	memset(&req, 0, sizeof(req));
-	req.nh.nlmsg_len	= NLMSG_LENGTH(sizeof(req.spi));
+	स_रखो(&req, 0, माप(req));
+	req.nh.nlmsg_len	= NLMSG_LENGTH(माप(req.spi));
 	req.nh.nlmsg_type	= XFRM_MSG_ALLOCSPI;
 	req.nh.nlmsg_flags	= NLM_F_REQUEST;
 	req.nh.nlmsg_seq	= (*seq)++;
@@ -1308,90 +1309,90 @@ static int xfrm_state_allocspi(int xfrm_sock, uint32_t *seq,
 	req.spi.max		= spi;
 	req.spi.info.id.proto	= proto;
 
-	if (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) {
+	अगर (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
 		pr_err("send()");
-		return KSFT_FAIL;
-	}
+		वापस KSFT_FAIL;
+	पूर्ण
 
-	if (recv(xfrm_sock, &answer, sizeof(answer), 0) < 0) {
+	अगर (recv(xfrm_sock, &answer, माप(answer), 0) < 0) अणु
 		pr_err("recv()");
-		return KSFT_FAIL;
-	} else if (answer.nh.nlmsg_type == XFRM_MSG_NEWSA) {
-		uint32_t new_spi = htonl(answer.info.id.spi);
+		वापस KSFT_FAIL;
+	पूर्ण अन्यथा अगर (answer.nh.nlmsg_type == XFRM_MSG_NEWSA) अणु
+		uपूर्णांक32_t new_spi = htonl(answer.info.id.spi);
 
-		if (new_spi != spi) {
-			printk("allocated spi is different from requested: %#x != %#x",
+		अगर (new_spi != spi) अणु
+			prपूर्णांकk("allocated spi is different from requested: %#x != %#x",
 					new_spi, spi);
-			return KSFT_FAIL;
-		}
-		return KSFT_PASS;
-	} else if (answer.nh.nlmsg_type != NLMSG_ERROR) {
-		printk("expected NLMSG_ERROR, got %d", (int)answer.nh.nlmsg_type);
-		return KSFT_FAIL;
-	}
+			वापस KSFT_FAIL;
+		पूर्ण
+		वापस KSFT_PASS;
+	पूर्ण अन्यथा अगर (answer.nh.nlmsg_type != NLMSG_ERROR) अणु
+		prपूर्णांकk("expected NLMSG_ERROR, got %d", (पूर्णांक)answer.nh.nlmsg_type);
+		वापस KSFT_FAIL;
+	पूर्ण
 
-	printk("NLMSG_ERROR: %d: %s", answer.error, strerror(-answer.error));
-	return (answer.error) ? KSFT_FAIL : KSFT_PASS;
-}
+	prपूर्णांकk("NLMSG_ERROR: %d: %s", answer.error, म_त्रुटि(-answer.error));
+	वापस (answer.error) ? KSFT_FAIL : KSFT_PASS;
+पूर्ण
 
-static int netlink_sock_bind(int *sock, uint32_t *seq, int proto, uint32_t groups)
-{
-	struct sockaddr_nl snl = {};
+अटल पूर्णांक netlink_sock_bind(पूर्णांक *sock, uपूर्णांक32_t *seq, पूर्णांक proto, uपूर्णांक32_t groups)
+अणु
+	काष्ठा sockaddr_nl snl = अणुपूर्ण;
 	socklen_t addr_len;
-	int ret = -1;
+	पूर्णांक ret = -1;
 
 	snl.nl_family = AF_NETLINK;
 	snl.nl_groups = groups;
 
-	if (netlink_sock(sock, seq, proto)) {
-		printk("Failed to open xfrm netlink socket");
-		return -1;
-	}
+	अगर (netlink_sock(sock, seq, proto)) अणु
+		prपूर्णांकk("Failed to open xfrm netlink socket");
+		वापस -1;
+	पूर्ण
 
-	if (bind(*sock, (struct sockaddr *)&snl, sizeof(snl)) < 0) {
+	अगर (bind(*sock, (काष्ठा sockaddr *)&snl, माप(snl)) < 0) अणु
 		pr_err("bind()");
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
-	addr_len = sizeof(snl);
-	if (getsockname(*sock, (struct sockaddr *)&snl, &addr_len) < 0) {
+	addr_len = माप(snl);
+	अगर (माला_लोockname(*sock, (काष्ठा sockaddr *)&snl, &addr_len) < 0) अणु
 		pr_err("getsockname()");
-		goto out_close;
-	}
-	if (addr_len != sizeof(snl)) {
-		printk("Wrong address length %d", addr_len);
-		goto out_close;
-	}
-	if (snl.nl_family != AF_NETLINK) {
-		printk("Wrong address family %d", snl.nl_family);
-		goto out_close;
-	}
-	return 0;
+		जाओ out_बंद;
+	पूर्ण
+	अगर (addr_len != माप(snl)) अणु
+		prपूर्णांकk("Wrong address length %d", addr_len);
+		जाओ out_बंद;
+	पूर्ण
+	अगर (snl.nl_family != AF_NETLINK) अणु
+		prपूर्णांकk("Wrong address family %d", snl.nl_family);
+		जाओ out_बंद;
+	पूर्ण
+	वापस 0;
 
-out_close:
-	close(*sock);
-	return ret;
-}
+out_बंद:
+	बंद(*sock);
+	वापस ret;
+पूर्ण
 
-static int xfrm_monitor_acquire(int xfrm_sock, uint32_t *seq, unsigned int nr)
-{
-	struct {
-		struct nlmsghdr nh;
-		union {
-			struct xfrm_user_acquire acq;
-			int error;
-		};
-		char attrbuf[MAX_PAYLOAD];
-	} req;
-	struct xfrm_user_tmpl xfrm_tmpl = {};
-	int xfrm_listen = -1, ret = KSFT_FAIL;
-	uint32_t seq_listen;
+अटल पूर्णांक xfrm_monitor_acquire(पूर्णांक xfrm_sock, uपूर्णांक32_t *seq, अचिन्हित पूर्णांक nr)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr nh;
+		जोड़ अणु
+			काष्ठा xfrm_user_acquire acq;
+			पूर्णांक error;
+		पूर्ण;
+		अक्षर attrbuf[MAX_PAYLOAD];
+	पूर्ण req;
+	काष्ठा xfrm_user_पंचांगpl xfrm_पंचांगpl = अणुपूर्ण;
+	पूर्णांक xfrm_listen = -1, ret = KSFT_FAIL;
+	uपूर्णांक32_t seq_listen;
 
-	if (netlink_sock_bind(&xfrm_listen, &seq_listen, NETLINK_XFRM, XFRMNLGRP_ACQUIRE))
-		return KSFT_FAIL;
+	अगर (netlink_sock_bind(&xfrm_listen, &seq_listen, NETLINK_XFRM, XFRMNLGRP_ACQUIRE))
+		वापस KSFT_FAIL;
 
-	memset(&req, 0, sizeof(req));
-	req.nh.nlmsg_len	= NLMSG_LENGTH(sizeof(req.acq));
+	स_रखो(&req, 0, माप(req));
+	req.nh.nlmsg_len	= NLMSG_LENGTH(माप(req.acq));
 	req.nh.nlmsg_type	= XFRM_MSG_ACQUIRE;
 	req.nh.nlmsg_flags	= NLM_F_REQUEST | NLM_F_ACK;
 	req.nh.nlmsg_seq	= (*seq)++;
@@ -1401,204 +1402,204 @@ static int xfrm_monitor_acquire(int xfrm_sock, uint32_t *seq, unsigned int nr)
 	req.acq.ealgos	= 0xbaad;
 	req.acq.calgos	= 0xbabe;
 
-	xfrm_tmpl.family = AF_INET;
-	xfrm_tmpl.id.proto = IPPROTO_ESP;
-	if (rtattr_pack(&req.nh, sizeof(req), XFRMA_TMPL, &xfrm_tmpl, sizeof(xfrm_tmpl)))
-		goto out_close;
+	xfrm_पंचांगpl.family = AF_INET;
+	xfrm_पंचांगpl.id.proto = IPPROTO_ESP;
+	अगर (rtattr_pack(&req.nh, माप(req), XFRMA_TMPL, &xfrm_पंचांगpl, माप(xfrm_पंचांगpl)))
+		जाओ out_बंद;
 
-	if (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) {
+	अगर (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
 		pr_err("send()");
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
-	if (recv(xfrm_sock, &req, sizeof(req), 0) < 0) {
+	अगर (recv(xfrm_sock, &req, माप(req), 0) < 0) अणु
 		pr_err("recv()");
-		goto out_close;
-	} else if (req.nh.nlmsg_type != NLMSG_ERROR) {
-		printk("expected NLMSG_ERROR, got %d", (int)req.nh.nlmsg_type);
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण अन्यथा अगर (req.nh.nlmsg_type != NLMSG_ERROR) अणु
+		prपूर्णांकk("expected NLMSG_ERROR, got %d", (पूर्णांक)req.nh.nlmsg_type);
+		जाओ out_बंद;
+	पूर्ण
 
-	if (req.error) {
-		printk("NLMSG_ERROR: %d: %s", req.error, strerror(-req.error));
+	अगर (req.error) अणु
+		prपूर्णांकk("NLMSG_ERROR: %d: %s", req.error, म_त्रुटि(-req.error));
 		ret = req.error;
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
-	if (recv(xfrm_listen, &req, sizeof(req), 0) < 0) {
+	अगर (recv(xfrm_listen, &req, माप(req), 0) < 0) अणु
 		pr_err("recv()");
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
-	if (req.acq.aalgos != 0xfeed || req.acq.ealgos != 0xbaad
-			|| req.acq.calgos != 0xbabe) {
-		printk("xfrm_user_acquire has changed  %x %x %x",
+	अगर (req.acq.aalgos != 0xfeed || req.acq.ealgos != 0xbaad
+			|| req.acq.calgos != 0xbabe) अणु
+		prपूर्णांकk("xfrm_user_acquire has changed  %x %x %x",
 				req.acq.aalgos, req.acq.ealgos, req.acq.calgos);
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
 	ret = KSFT_PASS;
-out_close:
-	close(xfrm_listen);
-	return ret;
-}
+out_बंद:
+	बंद(xfrm_listen);
+	वापस ret;
+पूर्ण
 
-static int xfrm_expire_state(int xfrm_sock, uint32_t *seq,
-		unsigned int nr, struct xfrm_desc *desc)
-{
-	struct {
-		struct nlmsghdr nh;
-		union {
-			struct xfrm_user_expire expire;
-			int error;
-		};
-	} req;
-	struct in_addr src, dst;
-	int xfrm_listen = -1, ret = KSFT_FAIL;
-	uint32_t seq_listen;
+अटल पूर्णांक xfrm_expire_state(पूर्णांक xfrm_sock, uपूर्णांक32_t *seq,
+		अचिन्हित पूर्णांक nr, काष्ठा xfrm_desc *desc)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr nh;
+		जोड़ अणु
+			काष्ठा xfrm_user_expire expire;
+			पूर्णांक error;
+		पूर्ण;
+	पूर्ण req;
+	काष्ठा in_addr src, dst;
+	पूर्णांक xfrm_listen = -1, ret = KSFT_FAIL;
+	uपूर्णांक32_t seq_listen;
 
 	src = inet_makeaddr(INADDR_B, child_ip(nr));
 	dst = inet_makeaddr(INADDR_B, grchild_ip(nr));
 
-	if (xfrm_state_add(xfrm_sock, (*seq)++, gen_spi(src), src, dst, desc)) {
-		printk("Failed to add xfrm state");
-		return KSFT_FAIL;
-	}
+	अगर (xfrm_state_add(xfrm_sock, (*seq)++, gen_spi(src), src, dst, desc)) अणु
+		prपूर्णांकk("Failed to add xfrm state");
+		वापस KSFT_FAIL;
+	पूर्ण
 
-	if (netlink_sock_bind(&xfrm_listen, &seq_listen, NETLINK_XFRM, XFRMNLGRP_EXPIRE))
-		return KSFT_FAIL;
+	अगर (netlink_sock_bind(&xfrm_listen, &seq_listen, NETLINK_XFRM, XFRMNLGRP_EXPIRE))
+		वापस KSFT_FAIL;
 
-	memset(&req, 0, sizeof(req));
-	req.nh.nlmsg_len	= NLMSG_LENGTH(sizeof(req.expire));
+	स_रखो(&req, 0, माप(req));
+	req.nh.nlmsg_len	= NLMSG_LENGTH(माप(req.expire));
 	req.nh.nlmsg_type	= XFRM_MSG_EXPIRE;
 	req.nh.nlmsg_flags	= NLM_F_REQUEST | NLM_F_ACK;
 	req.nh.nlmsg_seq	= (*seq)++;
 
-	memcpy(&req.expire.state.id.daddr, &dst, sizeof(dst));
+	स_नकल(&req.expire.state.id.daddr, &dst, माप(dst));
 	req.expire.state.id.spi		= gen_spi(src);
 	req.expire.state.id.proto	= desc->proto;
 	req.expire.state.family		= AF_INET;
 	req.expire.hard			= 0xff;
 
-	if (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) {
+	अगर (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
 		pr_err("send()");
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
-	if (recv(xfrm_sock, &req, sizeof(req), 0) < 0) {
+	अगर (recv(xfrm_sock, &req, माप(req), 0) < 0) अणु
 		pr_err("recv()");
-		goto out_close;
-	} else if (req.nh.nlmsg_type != NLMSG_ERROR) {
-		printk("expected NLMSG_ERROR, got %d", (int)req.nh.nlmsg_type);
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण अन्यथा अगर (req.nh.nlmsg_type != NLMSG_ERROR) अणु
+		prपूर्णांकk("expected NLMSG_ERROR, got %d", (पूर्णांक)req.nh.nlmsg_type);
+		जाओ out_बंद;
+	पूर्ण
 
-	if (req.error) {
-		printk("NLMSG_ERROR: %d: %s", req.error, strerror(-req.error));
+	अगर (req.error) अणु
+		prपूर्णांकk("NLMSG_ERROR: %d: %s", req.error, म_त्रुटि(-req.error));
 		ret = req.error;
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
-	if (recv(xfrm_listen, &req, sizeof(req), 0) < 0) {
+	अगर (recv(xfrm_listen, &req, माप(req), 0) < 0) अणु
 		pr_err("recv()");
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
-	if (req.expire.hard != 0x1) {
-		printk("expire.hard is not set: %x", req.expire.hard);
-		goto out_close;
-	}
+	अगर (req.expire.hard != 0x1) अणु
+		prपूर्णांकk("expire.hard is not set: %x", req.expire.hard);
+		जाओ out_बंद;
+	पूर्ण
 
 	ret = KSFT_PASS;
-out_close:
-	close(xfrm_listen);
-	return ret;
-}
+out_बंद:
+	बंद(xfrm_listen);
+	वापस ret;
+पूर्ण
 
-static int xfrm_expire_policy(int xfrm_sock, uint32_t *seq,
-		unsigned int nr, struct xfrm_desc *desc)
-{
-	struct {
-		struct nlmsghdr nh;
-		union {
-			struct xfrm_user_polexpire expire;
-			int error;
-		};
-	} req;
-	struct in_addr src, dst, tunsrc, tundst;
-	int xfrm_listen = -1, ret = KSFT_FAIL;
-	uint32_t seq_listen;
+अटल पूर्णांक xfrm_expire_policy(पूर्णांक xfrm_sock, uपूर्णांक32_t *seq,
+		अचिन्हित पूर्णांक nr, काष्ठा xfrm_desc *desc)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr nh;
+		जोड़ अणु
+			काष्ठा xfrm_user_polexpire expire;
+			पूर्णांक error;
+		पूर्ण;
+	पूर्ण req;
+	काष्ठा in_addr src, dst, tunsrc, tundst;
+	पूर्णांक xfrm_listen = -1, ret = KSFT_FAIL;
+	uपूर्णांक32_t seq_listen;
 
 	src = inet_makeaddr(INADDR_B, child_ip(nr));
 	dst = inet_makeaddr(INADDR_B, grchild_ip(nr));
 	tunsrc = inet_makeaddr(INADDR_A, child_ip(nr));
 	tundst = inet_makeaddr(INADDR_A, grchild_ip(nr));
 
-	if (xfrm_policy_add(xfrm_sock, (*seq)++, gen_spi(src), src, dst,
-				XFRM_POLICY_OUT, tunsrc, tundst, desc->proto)) {
-		printk("Failed to add xfrm policy");
-		return KSFT_FAIL;
-	}
+	अगर (xfrm_policy_add(xfrm_sock, (*seq)++, gen_spi(src), src, dst,
+				XFRM_POLICY_OUT, tunsrc, tundst, desc->proto)) अणु
+		prपूर्णांकk("Failed to add xfrm policy");
+		वापस KSFT_FAIL;
+	पूर्ण
 
-	if (netlink_sock_bind(&xfrm_listen, &seq_listen, NETLINK_XFRM, XFRMNLGRP_EXPIRE))
-		return KSFT_FAIL;
+	अगर (netlink_sock_bind(&xfrm_listen, &seq_listen, NETLINK_XFRM, XFRMNLGRP_EXPIRE))
+		वापस KSFT_FAIL;
 
-	memset(&req, 0, sizeof(req));
-	req.nh.nlmsg_len	= NLMSG_LENGTH(sizeof(req.expire));
+	स_रखो(&req, 0, माप(req));
+	req.nh.nlmsg_len	= NLMSG_LENGTH(माप(req.expire));
 	req.nh.nlmsg_type	= XFRM_MSG_POLEXPIRE;
 	req.nh.nlmsg_flags	= NLM_F_REQUEST | NLM_F_ACK;
 	req.nh.nlmsg_seq	= (*seq)++;
 
 	/* Fill selector. */
-	memcpy(&req.expire.pol.sel.daddr, &dst, sizeof(tundst));
-	memcpy(&req.expire.pol.sel.saddr, &src, sizeof(tunsrc));
+	स_नकल(&req.expire.pol.sel.daddr, &dst, माप(tundst));
+	स_नकल(&req.expire.pol.sel.saddr, &src, माप(tunsrc));
 	req.expire.pol.sel.family	= AF_INET;
 	req.expire.pol.sel.prefixlen_d	= PREFIX_LEN;
 	req.expire.pol.sel.prefixlen_s	= PREFIX_LEN;
 	req.expire.pol.dir		= XFRM_POLICY_OUT;
 	req.expire.hard			= 0xff;
 
-	if (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) {
+	अगर (send(xfrm_sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
 		pr_err("send()");
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
-	if (recv(xfrm_sock, &req, sizeof(req), 0) < 0) {
+	अगर (recv(xfrm_sock, &req, माप(req), 0) < 0) अणु
 		pr_err("recv()");
-		goto out_close;
-	} else if (req.nh.nlmsg_type != NLMSG_ERROR) {
-		printk("expected NLMSG_ERROR, got %d", (int)req.nh.nlmsg_type);
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण अन्यथा अगर (req.nh.nlmsg_type != NLMSG_ERROR) अणु
+		prपूर्णांकk("expected NLMSG_ERROR, got %d", (पूर्णांक)req.nh.nlmsg_type);
+		जाओ out_बंद;
+	पूर्ण
 
-	if (req.error) {
-		printk("NLMSG_ERROR: %d: %s", req.error, strerror(-req.error));
+	अगर (req.error) अणु
+		prपूर्णांकk("NLMSG_ERROR: %d: %s", req.error, म_त्रुटि(-req.error));
 		ret = req.error;
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
-	if (recv(xfrm_listen, &req, sizeof(req), 0) < 0) {
+	अगर (recv(xfrm_listen, &req, माप(req), 0) < 0) अणु
 		pr_err("recv()");
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
-	if (req.expire.hard != 0x1) {
-		printk("expire.hard is not set: %x", req.expire.hard);
-		goto out_close;
-	}
+	अगर (req.expire.hard != 0x1) अणु
+		prपूर्णांकk("expire.hard is not set: %x", req.expire.hard);
+		जाओ out_बंद;
+	पूर्ण
 
 	ret = KSFT_PASS;
-out_close:
-	close(xfrm_listen);
-	return ret;
-}
+out_बंद:
+	बंद(xfrm_listen);
+	वापस ret;
+पूर्ण
 
-static int child_serv(int xfrm_sock, uint32_t *seq,
-		unsigned int nr, int cmd_fd, void *buf, struct xfrm_desc *desc)
-{
-	struct in_addr src, dst, tunsrc, tundst;
-	struct test_desc msg;
-	int ret = KSFT_FAIL;
+अटल पूर्णांक child_serv(पूर्णांक xfrm_sock, uपूर्णांक32_t *seq,
+		अचिन्हित पूर्णांक nr, पूर्णांक cmd_fd, व्योम *buf, काष्ठा xfrm_desc *desc)
+अणु
+	काष्ठा in_addr src, dst, tunsrc, tundst;
+	काष्ठा test_desc msg;
+	पूर्णांक ret = KSFT_FAIL;
 
 	src = inet_makeaddr(INADDR_B, child_ip(nr));
 	dst = inet_makeaddr(INADDR_B, grchild_ip(nr));
@@ -1606,590 +1607,590 @@ static int child_serv(int xfrm_sock, uint32_t *seq,
 	tundst = inet_makeaddr(INADDR_A, grchild_ip(nr));
 
 	/* UDP pinging without xfrm */
-	if (do_ping(cmd_fd, buf, page_size, src, true, 0, 0, udp_ping_send)) {
-		printk("ping failed before setting xfrm");
-		return KSFT_FAIL;
-	}
+	अगर (करो_ping(cmd_fd, buf, page_size, src, true, 0, 0, udp_ping_send)) अणु
+		prपूर्णांकk("ping failed before setting xfrm");
+		वापस KSFT_FAIL;
+	पूर्ण
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.type = MSG_XFRM_PREPARE;
-	memcpy(&msg.body.xfrm_desc, desc, sizeof(*desc));
-	write_msg(cmd_fd, &msg, 1);
+	स_नकल(&msg.body.xfrm_desc, desc, माप(*desc));
+	ग_लिखो_msg(cmd_fd, &msg, 1);
 
-	if (xfrm_prepare(xfrm_sock, seq, src, dst, tunsrc, tundst, desc->proto)) {
-		printk("failed to prepare xfrm");
-		goto cleanup;
-	}
+	अगर (xfrm_prepare(xfrm_sock, seq, src, dst, tunsrc, tundst, desc->proto)) अणु
+		prपूर्णांकk("failed to prepare xfrm");
+		जाओ cleanup;
+	पूर्ण
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.type = MSG_XFRM_ADD;
-	memcpy(&msg.body.xfrm_desc, desc, sizeof(*desc));
-	write_msg(cmd_fd, &msg, 1);
-	if (xfrm_set(xfrm_sock, seq, src, dst, tunsrc, tundst, desc)) {
-		printk("failed to set xfrm");
-		goto delete;
-	}
+	स_नकल(&msg.body.xfrm_desc, desc, माप(*desc));
+	ग_लिखो_msg(cmd_fd, &msg, 1);
+	अगर (xfrm_set(xfrm_sock, seq, src, dst, tunsrc, tundst, desc)) अणु
+		prपूर्णांकk("failed to set xfrm");
+		जाओ delete;
+	पूर्ण
 
 	/* UDP pinging with xfrm tunnel */
-	if (do_ping(cmd_fd, buf, page_size, tunsrc,
-				true, 0, 0, udp_ping_send)) {
-		printk("ping failed for xfrm");
-		goto delete;
-	}
+	अगर (करो_ping(cmd_fd, buf, page_size, tunsrc,
+				true, 0, 0, udp_ping_send)) अणु
+		prपूर्णांकk("ping failed for xfrm");
+		जाओ delete;
+	पूर्ण
 
 	ret = KSFT_PASS;
 delete:
 	/* xfrm delete */
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.type = MSG_XFRM_DEL;
-	memcpy(&msg.body.xfrm_desc, desc, sizeof(*desc));
-	write_msg(cmd_fd, &msg, 1);
+	स_नकल(&msg.body.xfrm_desc, desc, माप(*desc));
+	ग_लिखो_msg(cmd_fd, &msg, 1);
 
-	if (xfrm_delete(xfrm_sock, seq, src, dst, tunsrc, tundst, desc->proto)) {
-		printk("failed ping to remove xfrm");
+	अगर (xfrm_delete(xfrm_sock, seq, src, dst, tunsrc, tundst, desc->proto)) अणु
+		prपूर्णांकk("failed ping to remove xfrm");
 		ret = KSFT_FAIL;
-	}
+	पूर्ण
 
 cleanup:
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.type = MSG_XFRM_CLEANUP;
-	memcpy(&msg.body.xfrm_desc, desc, sizeof(*desc));
-	write_msg(cmd_fd, &msg, 1);
-	if (xfrm_cleanup(xfrm_sock, seq, src, dst, tunsrc, tundst)) {
-		printk("failed ping to cleanup xfrm");
+	स_नकल(&msg.body.xfrm_desc, desc, माप(*desc));
+	ग_लिखो_msg(cmd_fd, &msg, 1);
+	अगर (xfrm_cleanup(xfrm_sock, seq, src, dst, tunsrc, tundst)) अणु
+		prपूर्णांकk("failed ping to cleanup xfrm");
 		ret = KSFT_FAIL;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int child_f(unsigned int nr, int test_desc_fd, int cmd_fd, void *buf)
-{
-	struct xfrm_desc desc;
-	struct test_desc msg;
-	int xfrm_sock = -1;
-	uint32_t seq;
+अटल पूर्णांक child_f(अचिन्हित पूर्णांक nr, पूर्णांक test_desc_fd, पूर्णांक cmd_fd, व्योम *buf)
+अणु
+	काष्ठा xfrm_desc desc;
+	काष्ठा test_desc msg;
+	पूर्णांक xfrm_sock = -1;
+	uपूर्णांक32_t seq;
 
-	if (switch_ns(nsfd_childa))
-		exit(KSFT_FAIL);
+	अगर (चयन_ns(nsfd_childa))
+		निकास(KSFT_FAIL);
 
-	if (netlink_sock(&xfrm_sock, &seq, NETLINK_XFRM)) {
-		printk("Failed to open xfrm netlink socket");
-		exit(KSFT_FAIL);
-	}
+	अगर (netlink_sock(&xfrm_sock, &seq, NETLINK_XFRM)) अणु
+		prपूर्णांकk("Failed to open xfrm netlink socket");
+		निकास(KSFT_FAIL);
+	पूर्ण
 
-	/* Check that seq sock is ready, just for sure. */
-	memset(&msg, 0, sizeof(msg));
+	/* Check that seq sock is पढ़ोy, just क्रम sure. */
+	स_रखो(&msg, 0, माप(msg));
 	msg.type = MSG_ACK;
-	write_msg(cmd_fd, &msg, 1);
-	read_msg(cmd_fd, &msg, 1);
-	if (msg.type != MSG_ACK) {
-		printk("Ack failed");
-		exit(KSFT_FAIL);
-	}
+	ग_लिखो_msg(cmd_fd, &msg, 1);
+	पढ़ो_msg(cmd_fd, &msg, 1);
+	अगर (msg.type != MSG_ACK) अणु
+		prपूर्णांकk("Ack failed");
+		निकास(KSFT_FAIL);
+	पूर्ण
 
-	for (;;) {
-		ssize_t received = read(test_desc_fd, &desc, sizeof(desc));
-		int ret;
+	क्रम (;;) अणु
+		sमाप_प्रकार received = पढ़ो(test_desc_fd, &desc, माप(desc));
+		पूर्णांक ret;
 
-		if (received == 0) /* EOF */
-			break;
+		अगर (received == 0) /* खातापूर्ण */
+			अवरोध;
 
-		if (received != sizeof(desc)) {
+		अगर (received != माप(desc)) अणु
 			pr_err("read() returned %zd", received);
-			exit(KSFT_FAIL);
-		}
+			निकास(KSFT_FAIL);
+		पूर्ण
 
-		switch (desc.type) {
-		case CREATE_TUNNEL:
+		चयन (desc.type) अणु
+		हाल CREATE_TUNNEL:
 			ret = child_serv(xfrm_sock, &seq, nr,
 					 cmd_fd, buf, &desc);
-			break;
-		case ALLOCATE_SPI:
+			अवरोध;
+		हाल ALLOCATE_SPI:
 			ret = xfrm_state_allocspi(xfrm_sock, &seq,
 						  -1, desc.proto);
-			break;
-		case MONITOR_ACQUIRE:
+			अवरोध;
+		हाल MONITOR_ACQUIRE:
 			ret = xfrm_monitor_acquire(xfrm_sock, &seq, nr);
-			break;
-		case EXPIRE_STATE:
+			अवरोध;
+		हाल EXPIRE_STATE:
 			ret = xfrm_expire_state(xfrm_sock, &seq, nr, &desc);
-			break;
-		case EXPIRE_POLICY:
+			अवरोध;
+		हाल EXPIRE_POLICY:
 			ret = xfrm_expire_policy(xfrm_sock, &seq, nr, &desc);
-			break;
-		default:
-			printk("Unknown desc type %d", desc.type);
-			exit(KSFT_FAIL);
-		}
-		write_test_result(ret, &desc);
-	}
+			अवरोध;
+		शेष:
+			prपूर्णांकk("Unknown desc type %d", desc.type);
+			निकास(KSFT_FAIL);
+		पूर्ण
+		ग_लिखो_test_result(ret, &desc);
+	पूर्ण
 
-	close(xfrm_sock);
+	बंद(xfrm_sock);
 
 	msg.type = MSG_EXIT;
-	write_msg(cmd_fd, &msg, 1);
-	exit(KSFT_PASS);
-}
+	ग_लिखो_msg(cmd_fd, &msg, 1);
+	निकास(KSFT_PASS);
+पूर्ण
 
-static void grand_child_serv(unsigned int nr, int cmd_fd, void *buf,
-		struct test_desc *msg, int xfrm_sock, uint32_t *seq)
-{
-	struct in_addr src, dst, tunsrc, tundst;
+अटल व्योम gअक्रम_child_serv(अचिन्हित पूर्णांक nr, पूर्णांक cmd_fd, व्योम *buf,
+		काष्ठा test_desc *msg, पूर्णांक xfrm_sock, uपूर्णांक32_t *seq)
+अणु
+	काष्ठा in_addr src, dst, tunsrc, tundst;
 	bool tun_reply;
-	struct xfrm_desc *desc = &msg->body.xfrm_desc;
+	काष्ठा xfrm_desc *desc = &msg->body.xfrm_desc;
 
 	src = inet_makeaddr(INADDR_B, grchild_ip(nr));
 	dst = inet_makeaddr(INADDR_B, child_ip(nr));
 	tunsrc = inet_makeaddr(INADDR_A, grchild_ip(nr));
 	tundst = inet_makeaddr(INADDR_A, child_ip(nr));
 
-	switch (msg->type) {
-	case MSG_EXIT:
-		exit(KSFT_PASS);
-	case MSG_ACK:
-		write_msg(cmd_fd, msg, 1);
-		break;
-	case MSG_PING:
-		tun_reply = memcmp(&dst, &msg->body.ping.reply_ip, sizeof(in_addr_t));
+	चयन (msg->type) अणु
+	हाल MSG_EXIT:
+		निकास(KSFT_PASS);
+	हाल MSG_ACK:
+		ग_लिखो_msg(cmd_fd, msg, 1);
+		अवरोध;
+	हाल MSG_PING:
+		tun_reply = स_भेद(&dst, &msg->body.ping.reply_ip, माप(in_addr_t));
 		/* UDP pinging without xfrm */
-		if (do_ping(cmd_fd, buf, page_size, tun_reply ? tunsrc : src,
+		अगर (करो_ping(cmd_fd, buf, page_size, tun_reply ? tunsrc : src,
 				false, msg->body.ping.port,
-				msg->body.ping.reply_ip, udp_ping_reply)) {
-			printk("ping failed before setting xfrm");
-		}
-		break;
-	case MSG_XFRM_PREPARE:
-		if (xfrm_prepare(xfrm_sock, seq, src, dst, tunsrc, tundst,
-					desc->proto)) {
+				msg->body.ping.reply_ip, udp_ping_reply)) अणु
+			prपूर्णांकk("ping failed before setting xfrm");
+		पूर्ण
+		अवरोध;
+	हाल MSG_XFRM_PREPARE:
+		अगर (xfrm_prepare(xfrm_sock, seq, src, dst, tunsrc, tundst,
+					desc->proto)) अणु
 			xfrm_cleanup(xfrm_sock, seq, src, dst, tunsrc, tundst);
-			printk("failed to prepare xfrm");
-		}
-		break;
-	case MSG_XFRM_ADD:
-		if (xfrm_set(xfrm_sock, seq, src, dst, tunsrc, tundst, desc)) {
+			prपूर्णांकk("failed to prepare xfrm");
+		पूर्ण
+		अवरोध;
+	हाल MSG_XFRM_ADD:
+		अगर (xfrm_set(xfrm_sock, seq, src, dst, tunsrc, tundst, desc)) अणु
 			xfrm_cleanup(xfrm_sock, seq, src, dst, tunsrc, tundst);
-			printk("failed to set xfrm");
-		}
-		break;
-	case MSG_XFRM_DEL:
-		if (xfrm_delete(xfrm_sock, seq, src, dst, tunsrc, tundst,
-					desc->proto)) {
+			prपूर्णांकk("failed to set xfrm");
+		पूर्ण
+		अवरोध;
+	हाल MSG_XFRM_DEL:
+		अगर (xfrm_delete(xfrm_sock, seq, src, dst, tunsrc, tundst,
+					desc->proto)) अणु
 			xfrm_cleanup(xfrm_sock, seq, src, dst, tunsrc, tundst);
-			printk("failed to remove xfrm");
-		}
-		break;
-	case MSG_XFRM_CLEANUP:
-		if (xfrm_cleanup(xfrm_sock, seq, src, dst, tunsrc, tundst)) {
-			printk("failed to cleanup xfrm");
-		}
-		break;
-	default:
-		printk("got unknown msg type %d", msg->type);
-	}
-}
+			prपूर्णांकk("failed to remove xfrm");
+		पूर्ण
+		अवरोध;
+	हाल MSG_XFRM_CLEANUP:
+		अगर (xfrm_cleanup(xfrm_sock, seq, src, dst, tunsrc, tundst)) अणु
+			prपूर्णांकk("failed to cleanup xfrm");
+		पूर्ण
+		अवरोध;
+	शेष:
+		prपूर्णांकk("got unknown msg type %d", msg->type);
+	पूर्ण
+पूर्ण
 
-static int grand_child_f(unsigned int nr, int cmd_fd, void *buf)
-{
-	struct test_desc msg;
-	int xfrm_sock = -1;
-	uint32_t seq;
+अटल पूर्णांक gअक्रम_child_f(अचिन्हित पूर्णांक nr, पूर्णांक cmd_fd, व्योम *buf)
+अणु
+	काष्ठा test_desc msg;
+	पूर्णांक xfrm_sock = -1;
+	uपूर्णांक32_t seq;
 
-	if (switch_ns(nsfd_childb))
-		exit(KSFT_FAIL);
+	अगर (चयन_ns(nsfd_childb))
+		निकास(KSFT_FAIL);
 
-	if (netlink_sock(&xfrm_sock, &seq, NETLINK_XFRM)) {
-		printk("Failed to open xfrm netlink socket");
-		exit(KSFT_FAIL);
-	}
+	अगर (netlink_sock(&xfrm_sock, &seq, NETLINK_XFRM)) अणु
+		prपूर्णांकk("Failed to open xfrm netlink socket");
+		निकास(KSFT_FAIL);
+	पूर्ण
 
-	do {
-		read_msg(cmd_fd, &msg, 1);
-		grand_child_serv(nr, cmd_fd, buf, &msg, xfrm_sock, &seq);
-	} while (1);
+	करो अणु
+		पढ़ो_msg(cmd_fd, &msg, 1);
+		gअक्रम_child_serv(nr, cmd_fd, buf, &msg, xfrm_sock, &seq);
+	पूर्ण जबतक (1);
 
-	close(xfrm_sock);
-	exit(KSFT_FAIL);
-}
+	बंद(xfrm_sock);
+	निकास(KSFT_FAIL);
+पूर्ण
 
-static int start_child(unsigned int nr, char *veth, int test_desc_fd[2])
-{
-	int cmd_sock[2];
-	void *data_map;
+अटल पूर्णांक start_child(अचिन्हित पूर्णांक nr, अक्षर *veth, पूर्णांक test_desc_fd[2])
+अणु
+	पूर्णांक cmd_sock[2];
+	व्योम *data_map;
 	pid_t child;
 
-	if (init_child(nsfd_childa, veth, child_ip(nr), grchild_ip(nr)))
-		return -1;
+	अगर (init_child(nsfd_childa, veth, child_ip(nr), grchild_ip(nr)))
+		वापस -1;
 
-	if (init_child(nsfd_childb, veth, grchild_ip(nr), child_ip(nr)))
-		return -1;
+	अगर (init_child(nsfd_childb, veth, grchild_ip(nr), child_ip(nr)))
+		वापस -1;
 
-	child = fork();
-	if (child < 0) {
+	child = विभाजन();
+	अगर (child < 0) अणु
 		pr_err("fork()");
-		return -1;
-	} else if (child) {
+		वापस -1;
+	पूर्ण अन्यथा अगर (child) अणु
 		/* in parent - selftest */
-		return switch_ns(nsfd_parent);
-	}
+		वापस चयन_ns(nsfd_parent);
+	पूर्ण
 
-	if (close(test_desc_fd[1])) {
+	अगर (बंद(test_desc_fd[1])) अणु
 		pr_err("close()");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/* child */
 	data_map = mmap(0, page_size, PROT_READ | PROT_WRITE,
 			MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-	if (data_map == MAP_FAILED) {
+	अगर (data_map == MAP_FAILED) अणु
 		pr_err("mmap()");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	randomize_buffer(data_map, page_size);
+	अक्रमomize_buffer(data_map, page_size);
 
-	if (socketpair(PF_LOCAL, SOCK_SEQPACKET, 0, cmd_sock)) {
+	अगर (socketpair(PF_LOCAL, SOCK_SEQPACKET, 0, cmd_sock)) अणु
 		pr_err("socketpair()");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	child = fork();
-	if (child < 0) {
+	child = विभाजन();
+	अगर (child < 0) अणु
 		pr_err("fork()");
-		return -1;
-	} else if (child) {
-		if (close(cmd_sock[0])) {
+		वापस -1;
+	पूर्ण अन्यथा अगर (child) अणु
+		अगर (बंद(cmd_sock[0])) अणु
 			pr_err("close()");
-			return -1;
-		}
-		return child_f(nr, test_desc_fd[0], cmd_sock[1], data_map);
-	}
-	if (close(cmd_sock[1])) {
+			वापस -1;
+		पूर्ण
+		वापस child_f(nr, test_desc_fd[0], cmd_sock[1], data_map);
+	पूर्ण
+	अगर (बंद(cmd_sock[1])) अणु
 		pr_err("close()");
-		return -1;
-	}
-	return grand_child_f(nr, cmd_sock[0], data_map);
-}
+		वापस -1;
+	पूर्ण
+	वापस gअक्रम_child_f(nr, cmd_sock[0], data_map);
+पूर्ण
 
-static void exit_usage(char **argv)
-{
-	printk("Usage: %s [nr_process]", argv[0]);
-	exit(KSFT_FAIL);
-}
+अटल व्योम निकास_usage(अक्षर **argv)
+अणु
+	prपूर्णांकk("Usage: %s [nr_process]", argv[0]);
+	निकास(KSFT_FAIL);
+पूर्ण
 
-static int __write_desc(int test_desc_fd, struct xfrm_desc *desc)
-{
-	ssize_t ret;
+अटल पूर्णांक __ग_लिखो_desc(पूर्णांक test_desc_fd, काष्ठा xfrm_desc *desc)
+अणु
+	sमाप_प्रकार ret;
 
-	ret = write(test_desc_fd, desc, sizeof(*desc));
+	ret = ग_लिखो(test_desc_fd, desc, माप(*desc));
 
-	if (ret == sizeof(*desc))
-		return 0;
+	अगर (ret == माप(*desc))
+		वापस 0;
 
 	pr_err("Writing test's desc failed %ld", ret);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int write_desc(int proto, int test_desc_fd,
-		char *a, char *e, char *c, char *ae)
-{
-	struct xfrm_desc desc = {};
+अटल पूर्णांक ग_लिखो_desc(पूर्णांक proto, पूर्णांक test_desc_fd,
+		अक्षर *a, अक्षर *e, अक्षर *c, अक्षर *ae)
+अणु
+	काष्ठा xfrm_desc desc = अणुपूर्ण;
 
 	desc.type = CREATE_TUNNEL;
 	desc.proto = proto;
 
-	if (a)
-		strncpy(desc.a_algo, a, ALGO_LEN - 1);
-	if (e)
-		strncpy(desc.e_algo, e, ALGO_LEN - 1);
-	if (c)
-		strncpy(desc.c_algo, c, ALGO_LEN - 1);
-	if (ae)
-		strncpy(desc.ae_algo, ae, ALGO_LEN - 1);
+	अगर (a)
+		म_नकलन(desc.a_algo, a, ALGO_LEN - 1);
+	अगर (e)
+		म_नकलन(desc.e_algo, e, ALGO_LEN - 1);
+	अगर (c)
+		म_नकलन(desc.c_algo, c, ALGO_LEN - 1);
+	अगर (ae)
+		म_नकलन(desc.ae_algo, ae, ALGO_LEN - 1);
 
-	return __write_desc(test_desc_fd, &desc);
-}
+	वापस __ग_लिखो_desc(test_desc_fd, &desc);
+पूर्ण
 
-int proto_list[] = { IPPROTO_AH, IPPROTO_COMP, IPPROTO_ESP };
-char *ah_list[] = {
+पूर्णांक proto_list[] = अणु IPPROTO_AH, IPPROTO_COMP, IPPROTO_ESP पूर्ण;
+अक्षर *ah_list[] = अणु
 	"digest_null", "hmac(md5)", "hmac(sha1)", "hmac(sha256)",
 	"hmac(sha384)", "hmac(sha512)", "hmac(rmd160)",
 	"xcbc(aes)", "cmac(aes)"
-};
-char *comp_list[] = {
+पूर्ण;
+अक्षर *comp_list[] = अणु
 	"deflate",
-#if 0
+#अगर 0
 	/* No compression backend realization */
 	"lzs", "lzjh"
-#endif
-};
-char *e_list[] = {
+#पूर्ण_अगर
+पूर्ण;
+अक्षर *e_list[] = अणु
 	"ecb(cipher_null)", "cbc(des)", "cbc(des3_ede)", "cbc(cast5)",
 	"cbc(blowfish)", "cbc(aes)", "cbc(serpent)", "cbc(camellia)",
 	"cbc(twofish)", "rfc3686(ctr(aes))"
-};
-char *ae_list[] = {
-#if 0
+पूर्ण;
+अक्षर *ae_list[] = अणु
+#अगर 0
 	/* not implemented */
 	"rfc4106(gcm(aes))", "rfc4309(ccm(aes))", "rfc4543(gcm(aes))",
 	"rfc7539esp(chacha20,poly1305)"
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-const unsigned int proto_plan = ARRAY_SIZE(ah_list) + ARRAY_SIZE(comp_list) \
+स्थिर अचिन्हित पूर्णांक proto_plan = ARRAY_SIZE(ah_list) + ARRAY_SIZE(comp_list) \
 				+ (ARRAY_SIZE(ah_list) * ARRAY_SIZE(e_list)) \
 				+ ARRAY_SIZE(ae_list);
 
-static int write_proto_plan(int fd, int proto)
-{
-	unsigned int i;
+अटल पूर्णांक ग_लिखो_proto_plan(पूर्णांक fd, पूर्णांक proto)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	switch (proto) {
-	case IPPROTO_AH:
-		for (i = 0; i < ARRAY_SIZE(ah_list); i++) {
-			if (write_desc(proto, fd, ah_list[i], 0, 0, 0))
-				return -1;
-		}
-		break;
-	case IPPROTO_COMP:
-		for (i = 0; i < ARRAY_SIZE(comp_list); i++) {
-			if (write_desc(proto, fd, 0, 0, comp_list[i], 0))
-				return -1;
-		}
-		break;
-	case IPPROTO_ESP:
-		for (i = 0; i < ARRAY_SIZE(ah_list); i++) {
-			int j;
+	चयन (proto) अणु
+	हाल IPPROTO_AH:
+		क्रम (i = 0; i < ARRAY_SIZE(ah_list); i++) अणु
+			अगर (ग_लिखो_desc(proto, fd, ah_list[i], 0, 0, 0))
+				वापस -1;
+		पूर्ण
+		अवरोध;
+	हाल IPPROTO_COMP:
+		क्रम (i = 0; i < ARRAY_SIZE(comp_list); i++) अणु
+			अगर (ग_लिखो_desc(proto, fd, 0, 0, comp_list[i], 0))
+				वापस -1;
+		पूर्ण
+		अवरोध;
+	हाल IPPROTO_ESP:
+		क्रम (i = 0; i < ARRAY_SIZE(ah_list); i++) अणु
+			पूर्णांक j;
 
-			for (j = 0; j < ARRAY_SIZE(e_list); j++) {
-				if (write_desc(proto, fd, ah_list[i],
+			क्रम (j = 0; j < ARRAY_SIZE(e_list); j++) अणु
+				अगर (ग_लिखो_desc(proto, fd, ah_list[i],
 							e_list[j], 0, 0))
-					return -1;
-			}
-		}
-		for (i = 0; i < ARRAY_SIZE(ae_list); i++) {
-			if (write_desc(proto, fd, 0, 0, 0, ae_list[i]))
-				return -1;
-		}
-		break;
-	default:
-		printk("BUG: Specified unknown proto %d", proto);
-		return -1;
-	}
+					वापस -1;
+			पूर्ण
+		पूर्ण
+		क्रम (i = 0; i < ARRAY_SIZE(ae_list); i++) अणु
+			अगर (ग_लिखो_desc(proto, fd, 0, 0, 0, ae_list[i]))
+				वापस -1;
+		पूर्ण
+		अवरोध;
+	शेष:
+		prपूर्णांकk("BUG: Specified unknown proto %d", proto);
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Some structures in xfrm uapi header differ in size between
+ * Some काष्ठाures in xfrm uapi header dअगरfer in size between
  * 64-bit and 32-bit ABI:
  *
  *             32-bit UABI               |            64-bit UABI
  *  -------------------------------------|-------------------------------------
- *   sizeof(xfrm_usersa_info)     = 220  |  sizeof(xfrm_usersa_info)     = 224
- *   sizeof(xfrm_userpolicy_info) = 164  |  sizeof(xfrm_userpolicy_info) = 168
- *   sizeof(xfrm_userspi_info)    = 228  |  sizeof(xfrm_userspi_info)    = 232
- *   sizeof(xfrm_user_acquire)    = 276  |  sizeof(xfrm_user_acquire)    = 280
- *   sizeof(xfrm_user_expire)     = 224  |  sizeof(xfrm_user_expire)     = 232
- *   sizeof(xfrm_user_polexpire)  = 168  |  sizeof(xfrm_user_polexpire)  = 176
+ *   माप(xfrm_usersa_info)     = 220  |  माप(xfrm_usersa_info)     = 224
+ *   माप(xfrm_userpolicy_info) = 164  |  माप(xfrm_userpolicy_info) = 168
+ *   माप(xfrm_userspi_info)    = 228  |  माप(xfrm_userspi_info)    = 232
+ *   माप(xfrm_user_acquire)    = 276  |  माप(xfrm_user_acquire)    = 280
+ *   माप(xfrm_user_expire)     = 224  |  माप(xfrm_user_expire)     = 232
+ *   माप(xfrm_user_polexpire)  = 168  |  माप(xfrm_user_polexpire)  = 176
  *
- * Check the affected by the UABI difference structures.
+ * Check the affected by the UABI dअगरference काष्ठाures.
  */
-const unsigned int compat_plan = 4;
-static int write_compat_struct_tests(int test_desc_fd)
-{
-	struct xfrm_desc desc = {};
+स्थिर अचिन्हित पूर्णांक compat_plan = 4;
+अटल पूर्णांक ग_लिखो_compat_काष्ठा_tests(पूर्णांक test_desc_fd)
+अणु
+	काष्ठा xfrm_desc desc = अणुपूर्ण;
 
 	desc.type = ALLOCATE_SPI;
 	desc.proto = IPPROTO_AH;
-	strncpy(desc.a_algo, ah_list[0], ALGO_LEN - 1);
+	म_नकलन(desc.a_algo, ah_list[0], ALGO_LEN - 1);
 
-	if (__write_desc(test_desc_fd, &desc))
-		return -1;
+	अगर (__ग_लिखो_desc(test_desc_fd, &desc))
+		वापस -1;
 
 	desc.type = MONITOR_ACQUIRE;
-	if (__write_desc(test_desc_fd, &desc))
-		return -1;
+	अगर (__ग_लिखो_desc(test_desc_fd, &desc))
+		वापस -1;
 
 	desc.type = EXPIRE_STATE;
-	if (__write_desc(test_desc_fd, &desc))
-		return -1;
+	अगर (__ग_लिखो_desc(test_desc_fd, &desc))
+		वापस -1;
 
 	desc.type = EXPIRE_POLICY;
-	if (__write_desc(test_desc_fd, &desc))
-		return -1;
+	अगर (__ग_लिखो_desc(test_desc_fd, &desc))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int write_test_plan(int test_desc_fd)
-{
-	unsigned int i;
+अटल पूर्णांक ग_लिखो_test_plan(पूर्णांक test_desc_fd)
+अणु
+	अचिन्हित पूर्णांक i;
 	pid_t child;
 
-	child = fork();
-	if (child < 0) {
+	child = विभाजन();
+	अगर (child < 0) अणु
 		pr_err("fork()");
-		return -1;
-	}
-	if (child) {
-		if (close(test_desc_fd))
-			printk("close(): %m");
-		return 0;
-	}
+		वापस -1;
+	पूर्ण
+	अगर (child) अणु
+		अगर (बंद(test_desc_fd))
+			prपूर्णांकk("close(): %m");
+		वापस 0;
+	पूर्ण
 
-	if (write_compat_struct_tests(test_desc_fd))
-		exit(KSFT_FAIL);
+	अगर (ग_लिखो_compat_काष्ठा_tests(test_desc_fd))
+		निकास(KSFT_FAIL);
 
-	for (i = 0; i < ARRAY_SIZE(proto_list); i++) {
-		if (write_proto_plan(test_desc_fd, proto_list[i]))
-			exit(KSFT_FAIL);
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(proto_list); i++) अणु
+		अगर (ग_लिखो_proto_plan(test_desc_fd, proto_list[i]))
+			निकास(KSFT_FAIL);
+	पूर्ण
 
-	exit(KSFT_PASS);
-}
+	निकास(KSFT_PASS);
+पूर्ण
 
-static int children_cleanup(void)
-{
-	unsigned ret = KSFT_PASS;
+अटल पूर्णांक children_cleanup(व्योम)
+अणु
+	अचिन्हित ret = KSFT_PASS;
 
-	while (1) {
-		int status;
-		pid_t p = wait(&status);
+	जबतक (1) अणु
+		पूर्णांक status;
+		pid_t p = रुको(&status);
 
-		if ((p < 0) && errno == ECHILD)
-			break;
+		अगर ((p < 0) && त्रुटि_सं == ECHILD)
+			अवरोध;
 
-		if (p < 0) {
+		अगर (p < 0) अणु
 			pr_err("wait()");
-			return KSFT_FAIL;
-		}
+			वापस KSFT_FAIL;
+		पूर्ण
 
-		if (!WIFEXITED(status)) {
+		अगर (!WIFEXITED(status)) अणु
 			ret = KSFT_FAIL;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (WEXITSTATUS(status) == KSFT_FAIL)
+		अगर (WEXITSTATUS(status) == KSFT_FAIL)
 			ret = KSFT_FAIL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-typedef void (*print_res)(const char *, ...);
+प्रकार व्योम (*prपूर्णांक_res)(स्थिर अक्षर *, ...);
 
-static int check_results(void)
-{
-	struct test_result tr = {};
-	struct xfrm_desc *d = &tr.desc;
-	int ret = KSFT_PASS;
+अटल पूर्णांक check_results(व्योम)
+अणु
+	काष्ठा test_result tr = अणुपूर्ण;
+	काष्ठा xfrm_desc *d = &tr.desc;
+	पूर्णांक ret = KSFT_PASS;
 
-	while (1) {
-		ssize_t received = read(results_fd[0], &tr, sizeof(tr));
-		print_res result;
+	जबतक (1) अणु
+		sमाप_प्रकार received = पढ़ो(results_fd[0], &tr, माप(tr));
+		prपूर्णांक_res result;
 
-		if (received == 0) /* EOF */
-			break;
+		अगर (received == 0) /* खातापूर्ण */
+			अवरोध;
 
-		if (received != sizeof(tr)) {
+		अगर (received != माप(tr)) अणु
 			pr_err("read() returned %zd", received);
-			return KSFT_FAIL;
-		}
+			वापस KSFT_FAIL;
+		पूर्ण
 
-		switch (tr.res) {
-		case KSFT_PASS:
+		चयन (tr.res) अणु
+		हाल KSFT_PASS:
 			result = ksft_test_result_pass;
-			break;
-		case KSFT_FAIL:
-		default:
+			अवरोध;
+		हाल KSFT_FAIL:
+		शेष:
 			result = ksft_test_result_fail;
 			ret = KSFT_FAIL;
-		}
+		पूर्ण
 
 		result(" %s: [%u, '%s', '%s', '%s', '%s', %u]\n",
-		       desc_name[d->type], (unsigned int)d->proto, d->a_algo,
+		       desc_name[d->type], (अचिन्हित पूर्णांक)d->proto, d->a_algo,
 		       d->e_algo, d->c_algo, d->ae_algo, d->icv_len);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	unsigned int nr_process = 1;
-	int route_sock = -1, ret = KSFT_SKIP;
-	int test_desc_fd[2];
-	uint32_t route_seq;
-	unsigned int i;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	अचिन्हित पूर्णांक nr_process = 1;
+	पूर्णांक route_sock = -1, ret = KSFT_SKIP;
+	पूर्णांक test_desc_fd[2];
+	uपूर्णांक32_t route_seq;
+	अचिन्हित पूर्णांक i;
 
-	if (argc > 2)
-		exit_usage(argv);
+	अगर (argc > 2)
+		निकास_usage(argv);
 
-	if (argc > 1) {
-		char *endptr;
+	अगर (argc > 1) अणु
+		अक्षर *endptr;
 
-		errno = 0;
-		nr_process = strtol(argv[1], &endptr, 10);
-		if ((errno == ERANGE && (nr_process == LONG_MAX || nr_process == LONG_MIN))
-				|| (errno != 0 && nr_process == 0)
-				|| (endptr == argv[1]) || (*endptr != '\0')) {
-			printk("Failed to parse [nr_process]");
-			exit_usage(argv);
-		}
+		त्रुटि_सं = 0;
+		nr_process = म_से_दीर्घ(argv[1], &endptr, 10);
+		अगर ((त्रुटि_सं == दुस्फल && (nr_process == दीर्घ_उच्च || nr_process == दीर्घ_न्यून))
+				|| (त्रुटि_सं != 0 && nr_process == 0)
+				|| (endptr == argv[1]) || (*endptr != '\0')) अणु
+			prपूर्णांकk("Failed to parse [nr_process]");
+			निकास_usage(argv);
+		पूर्ण
 
-		if (nr_process > MAX_PROCESSES || !nr_process) {
-			printk("nr_process should be between [1; %u]",
+		अगर (nr_process > MAX_PROCESSES || !nr_process) अणु
+			prपूर्णांकk("nr_process should be between [1; %u]",
 					MAX_PROCESSES);
-			exit_usage(argv);
-		}
-	}
+			निकास_usage(argv);
+		पूर्ण
+	पूर्ण
 
-	srand(time(NULL));
+	बेक्रम(समय(शून्य));
 	page_size = sysconf(_SC_PAGESIZE);
-	if (page_size < 1)
-		ksft_exit_skip("sysconf(): %m\n");
+	अगर (page_size < 1)
+		ksft_निकास_skip("sysconf(): %m\n");
 
-	if (pipe2(test_desc_fd, O_DIRECT) < 0)
-		ksft_exit_skip("pipe(): %m\n");
+	अगर (pipe2(test_desc_fd, O_सूचीECT) < 0)
+		ksft_निकास_skip("pipe(): %m\n");
 
-	if (pipe2(results_fd, O_DIRECT) < 0)
-		ksft_exit_skip("pipe(): %m\n");
+	अगर (pipe2(results_fd, O_सूचीECT) < 0)
+		ksft_निकास_skip("pipe(): %m\n");
 
-	if (init_namespaces())
-		ksft_exit_skip("Failed to create namespaces\n");
+	अगर (init_namespaces())
+		ksft_निकास_skip("Failed to create namespaces\n");
 
-	if (netlink_sock(&route_sock, &route_seq, NETLINK_ROUTE))
-		ksft_exit_skip("Failed to open netlink route socket\n");
+	अगर (netlink_sock(&route_sock, &route_seq, NETLINK_ROUTE))
+		ksft_निकास_skip("Failed to open netlink route socket\n");
 
-	for (i = 0; i < nr_process; i++) {
-		char veth[VETH_LEN];
+	क्रम (i = 0; i < nr_process; i++) अणु
+		अक्षर veth[VETH_LEN];
 
-		snprintf(veth, VETH_LEN, VETH_FMT, i);
+		snम_लिखो(veth, VETH_LEN, VETH_FMT, i);
 
-		if (veth_add(route_sock, route_seq++, veth, nsfd_childa, veth, nsfd_childb)) {
-			close(route_sock);
-			ksft_exit_fail_msg("Failed to create veth device");
-		}
+		अगर (veth_add(route_sock, route_seq++, veth, nsfd_childa, veth, nsfd_childb)) अणु
+			बंद(route_sock);
+			ksft_निकास_fail_msg("Failed to create veth device");
+		पूर्ण
 
-		if (start_child(i, veth, test_desc_fd)) {
-			close(route_sock);
-			ksft_exit_fail_msg("Child %u failed to start", i);
-		}
-	}
+		अगर (start_child(i, veth, test_desc_fd)) अणु
+			बंद(route_sock);
+			ksft_निकास_fail_msg("Child %u failed to start", i);
+		पूर्ण
+	पूर्ण
 
-	if (close(route_sock) || close(test_desc_fd[0]) || close(results_fd[1]))
-		ksft_exit_fail_msg("close(): %m");
+	अगर (बंद(route_sock) || बंद(test_desc_fd[0]) || बंद(results_fd[1]))
+		ksft_निकास_fail_msg("close(): %m");
 
 	ksft_set_plan(proto_plan + compat_plan);
 
-	if (write_test_plan(test_desc_fd[1]))
-		ksft_exit_fail_msg("Failed to write test plan to pipe");
+	अगर (ग_लिखो_test_plan(test_desc_fd[1]))
+		ksft_निकास_fail_msg("Failed to write test plan to pipe");
 
 	ret = check_results();
 
-	if (children_cleanup() == KSFT_FAIL)
-		exit(KSFT_FAIL);
+	अगर (children_cleanup() == KSFT_FAIL)
+		निकास(KSFT_FAIL);
 
-	exit(ret);
-}
+	निकास(ret);
+पूर्ण

@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Ftrace support for Microblaze.
+ * Ftrace support क्रम Microblaze.
  *
  * Copyright (C) 2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2009 PetaLogix
@@ -7,37 +8,37 @@
  * Based on MIPS and PowerPC ftrace code
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License. See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <asm/cacheflush.h>
-#include <linux/ftrace.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <linux/ftrace.h>
 
-#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
 /*
- * Hook the return address and push it in the stack of return addrs
- * in current thread info.
+ * Hook the वापस address and push it in the stack of वापस addrs
+ * in current thपढ़ो info.
  */
-void prepare_ftrace_return(unsigned long *parent, unsigned long self_addr)
-{
-	unsigned long old;
-	int faulted;
-	unsigned long return_hooker = (unsigned long)
-				&return_to_handler;
+व्योम prepare_ftrace_वापस(अचिन्हित दीर्घ *parent, अचिन्हित दीर्घ self_addr)
+अणु
+	अचिन्हित दीर्घ old;
+	पूर्णांक faulted;
+	अचिन्हित दीर्घ वापस_hooker = (अचिन्हित दीर्घ)
+				&वापस_to_handler;
 
-	if (unlikely(ftrace_graph_is_dead()))
-		return;
+	अगर (unlikely(ftrace_graph_is_dead()))
+		वापस;
 
-	if (unlikely(atomic_read(&current->tracing_graph_pause)))
-		return;
+	अगर (unlikely(atomic_पढ़ो(&current->tracing_graph_छोड़ो)))
+		वापस;
 
 	/*
-	 * Protect against fault, even if it shouldn't
-	 * happen. This tool is too much intrusive to
+	 * Protect against fault, even अगर it shouldn't
+	 * happen. This tool is too much पूर्णांकrusive to
 	 * ignore such a protection.
 	 */
-	asm volatile("	1:	lwi	%0, %2, 0;"		\
+	यंत्र अस्थिर("	1:	lwi	%0, %2, 0;"		\
 			"2:	swi	%3, %2, 0;"		\
 			"	addik	%1, r0, 0;"		\
 			"3:"					\
@@ -50,30 +51,30 @@ void prepare_ftrace_return(unsigned long *parent, unsigned long self_addr)
 			"	.word	2b,4b;"			\
 			"	.previous;"			\
 			: "=&r" (old), "=r" (faulted)
-			: "r" (parent), "r" (return_hooker)
+			: "r" (parent), "r" (वापस_hooker)
 	);
 
 	flush_dcache_range((u32)parent, (u32)parent + 4);
 	flush_icache_range((u32)parent, (u32)parent + 4);
 
-	if (unlikely(faulted)) {
+	अगर (unlikely(faulted)) अणु
 		ftrace_graph_stop();
 		WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (function_graph_enter(old, self_addr, 0, NULL))
+	अगर (function_graph_enter(old, self_addr, 0, शून्य))
 		*parent = old;
-}
-#endif /* CONFIG_FUNCTION_GRAPH_TRACER */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_FUNCTION_GRAPH_TRACER */
 
-#ifdef CONFIG_DYNAMIC_FTRACE
-/* save value to addr - it is save to do it in asm */
-static int ftrace_modify_code(unsigned long addr, unsigned int value)
-{
-	int faulted = 0;
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+/* save value to addr - it is save to करो it in यंत्र */
+अटल पूर्णांक ftrace_modअगरy_code(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक value)
+अणु
+	पूर्णांक faulted = 0;
 
-	__asm__ __volatile__("	1:	swi	%2, %1, 0;"		\
+	__यंत्र__ __अस्थिर__("	1:	swi	%2, %1, 0;"		\
 				"	addik	%0, r0, 0;"		\
 				"2:"					\
 				"	.section .fixup, \"ax\";"	\
@@ -87,136 +88,136 @@ static int ftrace_modify_code(unsigned long addr, unsigned int value)
 				: "r" (addr), "r" (value)
 	);
 
-	if (unlikely(faulted))
-		return -EFAULT;
+	अगर (unlikely(faulted))
+		वापस -EFAULT;
 
 	flush_dcache_range(addr, addr + 4);
 	flush_icache_range(addr, addr + 4);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define MICROBLAZE_NOP 0x80000000
-#define MICROBLAZE_BRI 0xb800000C
+#घोषणा MICROBLAZE_NOP 0x80000000
+#घोषणा MICROBLAZE_BRI 0xb800000C
 
-static unsigned int recorded; /* if save was or not */
-static unsigned int imm; /* saving whole imm instruction */
+अटल अचिन्हित पूर्णांक recorded; /* अगर save was or not */
+अटल अचिन्हित पूर्णांक imm; /* saving whole imm inकाष्ठाion */
 
 /* There are two approaches howto solve ftrace_make nop function - look below */
-#undef USE_FTRACE_NOP
+#अघोषित USE_FTRACE_NOP
 
-#ifdef USE_FTRACE_NOP
-static unsigned int bralid; /* saving whole bralid instruction */
-#endif
+#अगर_घोषित USE_FTRACE_NOP
+अटल अचिन्हित पूर्णांक bralid; /* saving whole bralid inकाष्ठाion */
+#पूर्ण_अगर
 
-int ftrace_make_nop(struct module *mod,
-			struct dyn_ftrace *rec, unsigned long addr)
-{
+पूर्णांक ftrace_make_nop(काष्ठा module *mod,
+			काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
+अणु
 	/* we have this part of code which we are working with
 	 * b000c000        imm     -16384
 	 * b9fc8e30        bralid  r15, -29136     // c0008e30 <_mcount>
 	 * 80000000        or      r0, r0, r0
 	 *
 	 * The first solution (!USE_FTRACE_NOP-could be called branch solution)
-	 * b000c000        bri	12 (0xC - jump to any other instruction)
+	 * b000c000        bri	12 (0xC - jump to any other inकाष्ठाion)
 	 * b9fc8e30        bralid  r15, -29136     // c0008e30 <_mcount>
 	 * 80000000        or      r0, r0, r0
-	 * any other instruction
+	 * any other inकाष्ठाion
 	 *
 	 * The second solution (USE_FTRACE_NOP) - no jump just nops
 	 * 80000000        or      r0, r0, r0
 	 * 80000000        or      r0, r0, r0
 	 * 80000000        or      r0, r0, r0
 	 */
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (recorded == 0) {
+	अगर (recorded == 0) अणु
 		recorded = 1;
-		imm = *(unsigned int *)rec->ip;
+		imm = *(अचिन्हित पूर्णांक *)rec->ip;
 		pr_debug("%s: imm:0x%x\n", __func__, imm);
-#ifdef USE_FTRACE_NOP
-		bralid = *(unsigned int *)(rec->ip + 4);
+#अगर_घोषित USE_FTRACE_NOP
+		bralid = *(अचिन्हित पूर्णांक *)(rec->ip + 4);
 		pr_debug("%s: bralid 0x%x\n", __func__, bralid);
-#endif /* USE_FTRACE_NOP */
-	}
+#पूर्ण_अगर /* USE_FTRACE_NOP */
+	पूर्ण
 
-#ifdef USE_FTRACE_NOP
-	ret = ftrace_modify_code(rec->ip, MICROBLAZE_NOP);
-	ret += ftrace_modify_code(rec->ip + 4, MICROBLAZE_NOP);
-#else /* USE_FTRACE_NOP */
-	ret = ftrace_modify_code(rec->ip, MICROBLAZE_BRI);
-#endif /* USE_FTRACE_NOP */
-	return ret;
-}
+#अगर_घोषित USE_FTRACE_NOP
+	ret = ftrace_modअगरy_code(rec->ip, MICROBLAZE_NOP);
+	ret += ftrace_modअगरy_code(rec->ip + 4, MICROBLAZE_NOP);
+#अन्यथा /* USE_FTRACE_NOP */
+	ret = ftrace_modअगरy_code(rec->ip, MICROBLAZE_BRI);
+#पूर्ण_अगर /* USE_FTRACE_NOP */
+	वापस ret;
+पूर्ण
 
-/* I believe that first is called ftrace_make_nop before this function */
-int ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr)
-{
-	int ret;
+/* I believe that first is called ftrace_make_nop beक्रमe this function */
+पूर्णांक ftrace_make_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
+अणु
+	पूर्णांक ret;
 	pr_debug("%s: addr:0x%x, rec->ip: 0x%x, imm:0x%x\n",
-		__func__, (unsigned int)addr, (unsigned int)rec->ip, imm);
-	ret = ftrace_modify_code(rec->ip, imm);
-#ifdef USE_FTRACE_NOP
+		__func__, (अचिन्हित पूर्णांक)addr, (अचिन्हित पूर्णांक)rec->ip, imm);
+	ret = ftrace_modअगरy_code(rec->ip, imm);
+#अगर_घोषित USE_FTRACE_NOP
 	pr_debug("%s: bralid:0x%x\n", __func__, bralid);
-	ret += ftrace_modify_code(rec->ip + 4, bralid);
-#endif /* USE_FTRACE_NOP */
-	return ret;
-}
+	ret += ftrace_modअगरy_code(rec->ip + 4, bralid);
+#पूर्ण_अगर /* USE_FTRACE_NOP */
+	वापस ret;
+पूर्ण
 
-int __init ftrace_dyn_arch_init(void)
-{
-	return 0;
-}
+पूर्णांक __init ftrace_dyn_arch_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-int ftrace_update_ftrace_func(ftrace_func_t func)
-{
-	unsigned long ip = (unsigned long)(&ftrace_call);
-	unsigned int upper = (unsigned int)func;
-	unsigned int lower = (unsigned int)func;
-	int ret = 0;
+पूर्णांक ftrace_update_ftrace_func(ftrace_func_t func)
+अणु
+	अचिन्हित दीर्घ ip = (अचिन्हित दीर्घ)(&ftrace_call);
+	अचिन्हित पूर्णांक upper = (अचिन्हित पूर्णांक)func;
+	अचिन्हित पूर्णांक lower = (अचिन्हित पूर्णांक)func;
+	पूर्णांक ret = 0;
 
 	/* create proper saving to ftrace_call poll */
 	upper = 0xb0000000 + (upper >> 16); /* imm func_upper */
 	lower = 0x32800000 + (lower & 0xFFFF); /* addik r20, r0, func_lower */
 
 	pr_debug("%s: func=0x%x, ip=0x%x, upper=0x%x, lower=0x%x\n",
-		__func__, (unsigned int)func, (unsigned int)ip, upper, lower);
+		__func__, (अचिन्हित पूर्णांक)func, (अचिन्हित पूर्णांक)ip, upper, lower);
 
 	/* save upper and lower code */
-	ret = ftrace_modify_code(ip, upper);
-	ret += ftrace_modify_code(ip + 4, lower);
+	ret = ftrace_modअगरy_code(ip, upper);
+	ret += ftrace_modअगरy_code(ip + 4, lower);
 
 	/* We just need to replace the rtsd r15, 8 with NOP */
-	ret += ftrace_modify_code((unsigned long)&ftrace_caller,
+	ret += ftrace_modअगरy_code((अचिन्हित दीर्घ)&ftrace_caller,
 				  MICROBLAZE_NOP);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_FUNCTION_GRAPH_TRACER
-unsigned int old_jump; /* saving place for jump instruction */
+#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
+अचिन्हित पूर्णांक old_jump; /* saving place क्रम jump inकाष्ठाion */
 
-int ftrace_enable_ftrace_graph_caller(void)
-{
-	unsigned int ret;
-	unsigned long ip = (unsigned long)(&ftrace_call_graph);
+पूर्णांक ftrace_enable_ftrace_graph_caller(व्योम)
+अणु
+	अचिन्हित पूर्णांक ret;
+	अचिन्हित दीर्घ ip = (अचिन्हित दीर्घ)(&ftrace_call_graph);
 
-	old_jump = *(unsigned int *)ip; /* save jump over instruction */
-	ret = ftrace_modify_code(ip, MICROBLAZE_NOP);
+	old_jump = *(अचिन्हित पूर्णांक *)ip; /* save jump over inकाष्ठाion */
+	ret = ftrace_modअगरy_code(ip, MICROBLAZE_NOP);
 
 	pr_debug("%s: Replace instruction: 0x%x\n", __func__, old_jump);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ftrace_disable_ftrace_graph_caller(void)
-{
-	unsigned int ret;
-	unsigned long ip = (unsigned long)(&ftrace_call_graph);
+पूर्णांक ftrace_disable_ftrace_graph_caller(व्योम)
+अणु
+	अचिन्हित पूर्णांक ret;
+	अचिन्हित दीर्घ ip = (अचिन्हित दीर्घ)(&ftrace_call_graph);
 
-	ret = ftrace_modify_code(ip, old_jump);
+	ret = ftrace_modअगरy_code(ip, old_jump);
 
 	pr_debug("%s\n", __func__);
-	return ret;
-}
-#endif /* CONFIG_FUNCTION_GRAPH_TRACER */
-#endif /* CONFIG_DYNAMIC_FTRACE */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_FUNCTION_GRAPH_TRACER */
+#पूर्ण_अगर /* CONFIG_DYNAMIC_FTRACE */

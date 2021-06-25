@@ -1,134 +1,135 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_DEBUGREG_H
-#define _ASM_X86_DEBUGREG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_DEBUGREG_H
+#घोषणा _ASM_X86_DEBUGREG_H
 
 
-#include <linux/bug.h>
-#include <uapi/asm/debugreg.h>
+#समावेश <linux/bug.h>
+#समावेश <uapi/यंत्र/debugreg.h>
 
-DECLARE_PER_CPU(unsigned long, cpu_dr7);
+DECLARE_PER_CPU(अचिन्हित दीर्घ, cpu_dr7);
 
-#ifndef CONFIG_PARAVIRT_XXL
+#अगर_अघोषित CONFIG_PARAVIRT_XXL
 /*
- * These special macros can be used to get or set a debugging register
+ * These special macros can be used to get or set a debugging रेजिस्टर
  */
-#define get_debugreg(var, register)				\
-	(var) = native_get_debugreg(register)
-#define set_debugreg(value, register)				\
-	native_set_debugreg(register, value)
-#endif
+#घोषणा get_debugreg(var, रेजिस्टर)				\
+	(var) = native_get_debugreg(रेजिस्टर)
+#घोषणा set_debugreg(value, रेजिस्टर)				\
+	native_set_debugreg(रेजिस्टर, value)
+#पूर्ण_अगर
 
-static __always_inline unsigned long native_get_debugreg(int regno)
-{
-	unsigned long val = 0;	/* Damn you, gcc! */
+अटल __always_अंतरभूत अचिन्हित दीर्घ native_get_debugreg(पूर्णांक regno)
+अणु
+	अचिन्हित दीर्घ val = 0;	/* Damn you, gcc! */
 
-	switch (regno) {
-	case 0:
-		asm("mov %%db0, %0" :"=r" (val));
-		break;
-	case 1:
-		asm("mov %%db1, %0" :"=r" (val));
-		break;
-	case 2:
-		asm("mov %%db2, %0" :"=r" (val));
-		break;
-	case 3:
-		asm("mov %%db3, %0" :"=r" (val));
-		break;
-	case 6:
-		asm("mov %%db6, %0" :"=r" (val));
-		break;
-	case 7:
-		asm("mov %%db7, %0" :"=r" (val));
-		break;
-	default:
+	चयन (regno) अणु
+	हाल 0:
+		यंत्र("mov %%db0, %0" :"=r" (val));
+		अवरोध;
+	हाल 1:
+		यंत्र("mov %%db1, %0" :"=r" (val));
+		अवरोध;
+	हाल 2:
+		यंत्र("mov %%db2, %0" :"=r" (val));
+		अवरोध;
+	हाल 3:
+		यंत्र("mov %%db3, %0" :"=r" (val));
+		अवरोध;
+	हाल 6:
+		यंत्र("mov %%db6, %0" :"=r" (val));
+		अवरोध;
+	हाल 7:
+		यंत्र("mov %%db7, %0" :"=r" (val));
+		अवरोध;
+	शेष:
 		BUG();
-	}
-	return val;
-}
+	पूर्ण
+	वापस val;
+पूर्ण
 
-static __always_inline void native_set_debugreg(int regno, unsigned long value)
-{
-	switch (regno) {
-	case 0:
-		asm("mov %0, %%db0"	::"r" (value));
-		break;
-	case 1:
-		asm("mov %0, %%db1"	::"r" (value));
-		break;
-	case 2:
-		asm("mov %0, %%db2"	::"r" (value));
-		break;
-	case 3:
-		asm("mov %0, %%db3"	::"r" (value));
-		break;
-	case 6:
-		asm("mov %0, %%db6"	::"r" (value));
-		break;
-	case 7:
-		asm("mov %0, %%db7"	::"r" (value));
-		break;
-	default:
+अटल __always_अंतरभूत व्योम native_set_debugreg(पूर्णांक regno, अचिन्हित दीर्घ value)
+अणु
+	चयन (regno) अणु
+	हाल 0:
+		यंत्र("mov %0, %%db0"	::"r" (value));
+		अवरोध;
+	हाल 1:
+		यंत्र("mov %0, %%db1"	::"r" (value));
+		अवरोध;
+	हाल 2:
+		यंत्र("mov %0, %%db2"	::"r" (value));
+		अवरोध;
+	हाल 3:
+		यंत्र("mov %0, %%db3"	::"r" (value));
+		अवरोध;
+	हाल 6:
+		यंत्र("mov %0, %%db6"	::"r" (value));
+		अवरोध;
+	हाल 7:
+		यंत्र("mov %0, %%db7"	::"r" (value));
+		अवरोध;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void hw_breakpoint_disable(void)
-{
-	/* Zero the control register for HW Breakpoint */
+अटल अंतरभूत व्योम hw_अवरोधpoपूर्णांक_disable(व्योम)
+अणु
+	/* Zero the control रेजिस्टर क्रम HW Breakpoपूर्णांक */
 	set_debugreg(0UL, 7);
 
-	/* Zero-out the individual HW breakpoint address registers */
+	/* Zero-out the inभागidual HW अवरोधpoपूर्णांक address रेजिस्टरs */
 	set_debugreg(0UL, 0);
 	set_debugreg(0UL, 1);
 	set_debugreg(0UL, 2);
 	set_debugreg(0UL, 3);
-}
+पूर्ण
 
-static __always_inline bool hw_breakpoint_active(void)
-{
-	return __this_cpu_read(cpu_dr7) & DR_GLOBAL_ENABLE_MASK;
-}
+अटल __always_अंतरभूत bool hw_अवरोधpoपूर्णांक_active(व्योम)
+अणु
+	वापस __this_cpu_पढ़ो(cpu_dr7) & DR_GLOBAL_ENABLE_MASK;
+पूर्ण
 
-extern void hw_breakpoint_restore(void);
+बाह्य व्योम hw_अवरोधpoपूर्णांक_restore(व्योम);
 
-static __always_inline unsigned long local_db_save(void)
-{
-	unsigned long dr7;
+अटल __always_अंतरभूत अचिन्हित दीर्घ local_db_save(व्योम)
+अणु
+	अचिन्हित दीर्घ dr7;
 
-	if (static_cpu_has(X86_FEATURE_HYPERVISOR) && !hw_breakpoint_active())
-		return 0;
+	अगर (अटल_cpu_has(X86_FEATURE_HYPERVISOR) && !hw_अवरोधpoपूर्णांक_active())
+		वापस 0;
 
 	get_debugreg(dr7, 7);
 	dr7 &= ~0x400; /* architecturally set bit */
-	if (dr7)
+	अगर (dr7)
 		set_debugreg(0, 7);
 	/*
-	 * Ensure the compiler doesn't lower the above statements into
-	 * the critical section; disabling breakpoints late would not
+	 * Ensure the compiler करोesn't lower the above statements पूर्णांकo
+	 * the critical section; disabling अवरोधpoपूर्णांकs late would not
 	 * be good.
 	 */
 	barrier();
 
-	return dr7;
-}
+	वापस dr7;
+पूर्ण
 
-static __always_inline void local_db_restore(unsigned long dr7)
-{
+अटल __always_अंतरभूत व्योम local_db_restore(अचिन्हित दीर्घ dr7)
+अणु
 	/*
-	 * Ensure the compiler doesn't raise this statement into
-	 * the critical section; enabling breakpoints early would
+	 * Ensure the compiler करोesn't उठाओ this statement पूर्णांकo
+	 * the critical section; enabling अवरोधpoपूर्णांकs early would
 	 * not be good.
 	 */
 	barrier();
-	if (dr7)
+	अगर (dr7)
 		set_debugreg(dr7, 7);
-}
+पूर्ण
 
-#ifdef CONFIG_CPU_SUP_AMD
-extern void set_dr_addr_mask(unsigned long mask, int dr);
-#else
-static inline void set_dr_addr_mask(unsigned long mask, int dr) { }
-#endif
+#अगर_घोषित CONFIG_CPU_SUP_AMD
+बाह्य व्योम set_dr_addr_mask(अचिन्हित दीर्घ mask, पूर्णांक dr);
+#अन्यथा
+अटल अंतरभूत व्योम set_dr_addr_mask(अचिन्हित दीर्घ mask, पूर्णांक dr) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif /* _ASM_X86_DEBUGREG_H */
+#पूर्ण_अगर /* _ASM_X86_DEBUGREG_H */

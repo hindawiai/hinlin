@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Copyright 2016-2019 HabanaLabs, Ltd.
+ * Copyright 2016-2019 HabanaLअसल, Ltd.
  * All Rights Reserved.
  */
 
-#include "habanalabs.h"
+#समावेश "habanalabs.h"
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-static void hl_ctx_fini(struct hl_ctx *ctx)
-{
-	struct hl_device *hdev = ctx->hdev;
-	u64 idle_mask[HL_BUSY_ENGINES_MASK_EXT_SIZE] = {0};
-	int i;
+अटल व्योम hl_ctx_fini(काष्ठा hl_ctx *ctx)
+अणु
+	काष्ठा hl_device *hdev = ctx->hdev;
+	u64 idle_mask[HL_BUSY_ENGINES_MASK_EXT_SIZE] = अणु0पूर्ण;
+	पूर्णांक i;
 
 	/* Release all allocated pending cb's, those cb's were never
 	 * scheduled so it is safe to release them here
@@ -26,127 +27,127 @@ static void hl_ctx_fini(struct hl_ctx *ctx)
 	hl_hw_block_mem_fini(ctx);
 
 	/*
-	 * If we arrived here, there are no jobs waiting for this context
-	 * on its queues so we can safely remove it.
-	 * This is because for each CS, we increment the ref count and for
+	 * If we arrived here, there are no jobs रुकोing क्रम this context
+	 * on its queues so we can safely हटाओ it.
+	 * This is because क्रम each CS, we increment the ref count and क्रम
 	 * every CS that was finished we decrement it and we won't arrive
 	 * to this function unless the ref count is 0
 	 */
 
-	for (i = 0 ; i < hdev->asic_prop.max_pending_cs ; i++)
+	क्रम (i = 0 ; i < hdev->asic_prop.max_pending_cs ; i++)
 		hl_fence_put(ctx->cs_pending[i]);
 
-	kfree(ctx->cs_pending);
+	kमुक्त(ctx->cs_pending);
 
-	if (ctx->asid != HL_KERNEL_ASID_ID) {
+	अगर (ctx->asid != HL_KERNEL_ASID_ID) अणु
 		dev_dbg(hdev->dev, "closing user context %d\n", ctx->asid);
 
 		/* The engines are stopped as there is no executing CS, but the
 		 * Coresight might be still working by accessing addresses
 		 * related to the stopped engines. Hence stop it explicitly.
-		 * Stop only if this is the compute context, as there can be
+		 * Stop only अगर this is the compute context, as there can be
 		 * only one compute context
 		 */
-		if ((hdev->in_debug) && (hdev->compute_ctx == ctx))
+		अगर ((hdev->in_debug) && (hdev->compute_ctx == ctx))
 			hl_device_set_debug_mode(hdev, false);
 
 		hdev->asic_funcs->ctx_fini(ctx);
 		hl_cb_va_pool_fini(ctx);
 		hl_vm_ctx_fini(ctx);
-		hl_asid_free(hdev, ctx->asid);
+		hl_asid_मुक्त(hdev, ctx->asid);
 
 		/* Scrub both SRAM and DRAM */
 		hdev->asic_funcs->scrub_device_mem(hdev, 0, 0);
 
-		if ((!hdev->pldm) && (hdev->pdev) &&
+		अगर ((!hdev->pldm) && (hdev->pdev) &&
 				(!hdev->asic_funcs->is_device_idle(hdev,
 					idle_mask,
-					HL_BUSY_ENGINES_MASK_EXT_SIZE, NULL)))
+					HL_BUSY_ENGINES_MASK_EXT_SIZE, शून्य)))
 			dev_notice(hdev->dev,
 					"device not idle after user context is closed (0x%llx, 0x%llx)\n",
 						idle_mask[0], idle_mask[1]);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(hdev->dev, "closing kernel context\n");
 		hdev->asic_funcs->ctx_fini(ctx);
 		hl_vm_ctx_fini(ctx);
 		hl_mmu_ctx_fini(ctx);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void hl_ctx_do_release(struct kref *ref)
-{
-	struct hl_ctx *ctx;
+व्योम hl_ctx_करो_release(काष्ठा kref *ref)
+अणु
+	काष्ठा hl_ctx *ctx;
 
-	ctx = container_of(ref, struct hl_ctx, refcount);
+	ctx = container_of(ref, काष्ठा hl_ctx, refcount);
 
 	hl_ctx_fini(ctx);
 
-	if (ctx->hpriv)
+	अगर (ctx->hpriv)
 		hl_hpriv_put(ctx->hpriv);
 
-	kfree(ctx);
-}
+	kमुक्त(ctx);
+पूर्ण
 
-int hl_ctx_create(struct hl_device *hdev, struct hl_fpriv *hpriv)
-{
-	struct hl_ctx_mgr *mgr = &hpriv->ctx_mgr;
-	struct hl_ctx *ctx;
-	int rc;
+पूर्णांक hl_ctx_create(काष्ठा hl_device *hdev, काष्ठा hl_fpriv *hpriv)
+अणु
+	काष्ठा hl_ctx_mgr *mgr = &hpriv->ctx_mgr;
+	काष्ठा hl_ctx *ctx;
+	पूर्णांक rc;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx) {
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx) अणु
 		rc = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	mutex_lock(&mgr->ctx_lock);
 	rc = idr_alloc(&mgr->ctx_handles, ctx, 1, 0, GFP_KERNEL);
 	mutex_unlock(&mgr->ctx_lock);
 
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(hdev->dev, "Failed to allocate IDR for a new CTX\n");
-		goto free_ctx;
-	}
+		जाओ मुक्त_ctx;
+	पूर्ण
 
 	ctx->handle = rc;
 
 	rc = hl_ctx_init(hdev, ctx, false);
-	if (rc)
-		goto remove_from_idr;
+	अगर (rc)
+		जाओ हटाओ_from_idr;
 
 	hl_hpriv_get(hpriv);
 	ctx->hpriv = hpriv;
 
-	/* TODO: remove for multiple contexts per process */
+	/* TODO: हटाओ क्रम multiple contexts per process */
 	hpriv->ctx = ctx;
 
-	/* TODO: remove the following line for multiple process support */
+	/* TODO: हटाओ the following line क्रम multiple process support */
 	hdev->compute_ctx = ctx;
 
-	return 0;
+	वापस 0;
 
-remove_from_idr:
+हटाओ_from_idr:
 	mutex_lock(&mgr->ctx_lock);
-	idr_remove(&mgr->ctx_handles, ctx->handle);
+	idr_हटाओ(&mgr->ctx_handles, ctx->handle);
 	mutex_unlock(&mgr->ctx_lock);
-free_ctx:
-	kfree(ctx);
+मुक्त_ctx:
+	kमुक्त(ctx);
 out_err:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void hl_ctx_free(struct hl_device *hdev, struct hl_ctx *ctx)
-{
-	if (kref_put(&ctx->refcount, hl_ctx_do_release) == 1)
-		return;
+व्योम hl_ctx_मुक्त(काष्ठा hl_device *hdev, काष्ठा hl_ctx *ctx)
+अणु
+	अगर (kref_put(&ctx->refcount, hl_ctx_करो_release) == 1)
+		वापस;
 
 	dev_warn(hdev->dev,
 		"user process released device but its command submissions are still executing\n");
-}
+पूर्ण
 
-int hl_ctx_init(struct hl_device *hdev, struct hl_ctx *ctx, bool is_kernel_ctx)
-{
-	int rc = 0;
+पूर्णांक hl_ctx_init(काष्ठा hl_device *hdev, काष्ठा hl_ctx *ctx, bool is_kernel_ctx)
+अणु
+	पूर्णांक rc = 0;
 
 	ctx->hdev = hdev;
 
@@ -156,147 +157,147 @@ int hl_ctx_init(struct hl_device *hdev, struct hl_ctx *ctx, bool is_kernel_ctx)
 	INIT_LIST_HEAD(&ctx->pending_cb_list);
 	spin_lock_init(&ctx->pending_cb_lock);
 	spin_lock_init(&ctx->cs_lock);
-	atomic_set(&ctx->thread_ctx_switch_token, 1);
-	atomic_set(&ctx->thread_pending_cb_token, 1);
-	ctx->thread_ctx_switch_wait_token = 0;
-	ctx->cs_pending = kcalloc(hdev->asic_prop.max_pending_cs,
-				sizeof(struct hl_fence *),
+	atomic_set(&ctx->thपढ़ो_ctx_चयन_token, 1);
+	atomic_set(&ctx->thपढ़ो_pending_cb_token, 1);
+	ctx->thपढ़ो_ctx_चयन_रुको_token = 0;
+	ctx->cs_pending = kसुस्मृति(hdev->asic_prop.max_pending_cs,
+				माप(काष्ठा hl_fence *),
 				GFP_KERNEL);
-	if (!ctx->cs_pending)
-		return -ENOMEM;
+	अगर (!ctx->cs_pending)
+		वापस -ENOMEM;
 
 	hl_hw_block_mem_init(ctx);
 
-	if (is_kernel_ctx) {
-		ctx->asid = HL_KERNEL_ASID_ID; /* Kernel driver gets ASID 0 */
+	अगर (is_kernel_ctx) अणु
+		ctx->asid = HL_KERNEL_ASID_ID; /* Kernel driver माला_लो ASID 0 */
 		rc = hl_vm_ctx_init(ctx);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(hdev->dev, "Failed to init mem ctx module\n");
 			rc = -ENOMEM;
-			goto err_hw_block_mem_fini;
-		}
+			जाओ err_hw_block_mem_fini;
+		पूर्ण
 
 		rc = hdev->asic_funcs->ctx_init(ctx);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(hdev->dev, "ctx_init failed\n");
-			goto err_vm_ctx_fini;
-		}
-	} else {
+			जाओ err_vm_ctx_fini;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ctx->asid = hl_asid_alloc(hdev);
-		if (!ctx->asid) {
+		अगर (!ctx->asid) अणु
 			dev_err(hdev->dev, "No free ASID, failed to create context\n");
 			rc = -ENOMEM;
-			goto err_hw_block_mem_fini;
-		}
+			जाओ err_hw_block_mem_fini;
+		पूर्ण
 
 		rc = hl_vm_ctx_init(ctx);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(hdev->dev, "Failed to init mem ctx module\n");
 			rc = -ENOMEM;
-			goto err_asid_free;
-		}
+			जाओ err_asid_मुक्त;
+		पूर्ण
 
 		rc = hl_cb_va_pool_init(ctx);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(hdev->dev,
 				"Failed to init VA pool for mapped CB\n");
-			goto err_vm_ctx_fini;
-		}
+			जाओ err_vm_ctx_fini;
+		पूर्ण
 
 		rc = hdev->asic_funcs->ctx_init(ctx);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(hdev->dev, "ctx_init failed\n");
-			goto err_cb_va_pool_fini;
-		}
+			जाओ err_cb_va_pool_fini;
+		पूर्ण
 
 		dev_dbg(hdev->dev, "create user context %d\n", ctx->asid);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_cb_va_pool_fini:
 	hl_cb_va_pool_fini(ctx);
 err_vm_ctx_fini:
 	hl_vm_ctx_fini(ctx);
-err_asid_free:
-	if (ctx->asid != HL_KERNEL_ASID_ID)
-		hl_asid_free(hdev, ctx->asid);
+err_asid_मुक्त:
+	अगर (ctx->asid != HL_KERNEL_ASID_ID)
+		hl_asid_मुक्त(hdev, ctx->asid);
 err_hw_block_mem_fini:
 	hl_hw_block_mem_fini(ctx);
-	kfree(ctx->cs_pending);
+	kमुक्त(ctx->cs_pending);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void hl_ctx_get(struct hl_device *hdev, struct hl_ctx *ctx)
-{
+व्योम hl_ctx_get(काष्ठा hl_device *hdev, काष्ठा hl_ctx *ctx)
+अणु
 	kref_get(&ctx->refcount);
-}
+पूर्ण
 
-int hl_ctx_put(struct hl_ctx *ctx)
-{
-	return kref_put(&ctx->refcount, hl_ctx_do_release);
-}
+पूर्णांक hl_ctx_put(काष्ठा hl_ctx *ctx)
+अणु
+	वापस kref_put(&ctx->refcount, hl_ctx_करो_release);
+पूर्ण
 
-struct hl_fence *hl_ctx_get_fence(struct hl_ctx *ctx, u64 seq)
-{
-	struct asic_fixed_properties *asic_prop = &ctx->hdev->asic_prop;
-	struct hl_fence *fence;
+काष्ठा hl_fence *hl_ctx_get_fence(काष्ठा hl_ctx *ctx, u64 seq)
+अणु
+	काष्ठा asic_fixed_properties *asic_prop = &ctx->hdev->asic_prop;
+	काष्ठा hl_fence *fence;
 
 	spin_lock(&ctx->cs_lock);
 
-	if (seq >= ctx->cs_sequence) {
+	अगर (seq >= ctx->cs_sequence) अणु
 		spin_unlock(&ctx->cs_lock);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if (seq + asic_prop->max_pending_cs < ctx->cs_sequence) {
+	अगर (seq + asic_prop->max_pending_cs < ctx->cs_sequence) अणु
 		spin_unlock(&ctx->cs_lock);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	fence = ctx->cs_pending[seq & (asic_prop->max_pending_cs - 1)];
 	hl_fence_get(fence);
 
 	spin_unlock(&ctx->cs_lock);
 
-	return fence;
-}
+	वापस fence;
+पूर्ण
 
 /*
  * hl_ctx_mgr_init - initialize the context manager
  *
- * @mgr: pointer to context manager structure
+ * @mgr: poपूर्णांकer to context manager काष्ठाure
  *
  * This manager is an object inside the hpriv object of the user process.
- * The function is called when a user process opens the FD.
+ * The function is called when a user process खोलोs the FD.
  */
-void hl_ctx_mgr_init(struct hl_ctx_mgr *mgr)
-{
+व्योम hl_ctx_mgr_init(काष्ठा hl_ctx_mgr *mgr)
+अणु
 	mutex_init(&mgr->ctx_lock);
 	idr_init(&mgr->ctx_handles);
-}
+पूर्ण
 
 /*
  * hl_ctx_mgr_fini - finalize the context manager
  *
- * @hdev: pointer to device structure
- * @mgr: pointer to context manager structure
+ * @hdev: poपूर्णांकer to device काष्ठाure
+ * @mgr: poपूर्णांकer to context manager काष्ठाure
  *
- * This function goes over all the contexts in the manager and frees them.
- * It is called when a process closes the FD.
+ * This function goes over all the contexts in the manager and मुक्तs them.
+ * It is called when a process बंदs the FD.
  */
-void hl_ctx_mgr_fini(struct hl_device *hdev, struct hl_ctx_mgr *mgr)
-{
-	struct hl_ctx *ctx;
-	struct idr *idp;
+व्योम hl_ctx_mgr_fini(काष्ठा hl_device *hdev, काष्ठा hl_ctx_mgr *mgr)
+अणु
+	काष्ठा hl_ctx *ctx;
+	काष्ठा idr *idp;
 	u32 id;
 
 	idp = &mgr->ctx_handles;
 
-	idr_for_each_entry(idp, ctx, id)
-		hl_ctx_free(hdev, ctx);
+	idr_क्रम_each_entry(idp, ctx, id)
+		hl_ctx_मुक्त(hdev, ctx);
 
 	idr_destroy(&mgr->ctx_handles);
 	mutex_destroy(&mgr->ctx_lock);
-}
+पूर्ण

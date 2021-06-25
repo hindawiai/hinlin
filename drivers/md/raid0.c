@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
-   raid0.c : Multiple Devices driver for Linux
+   raid0.c : Multiple Devices driver क्रम Linux
 	     Copyright (C) 1994-96 Marc ZYNGIER
 	     <zyngier@ufr-info-p7.ibp.fr> or
 	     <maz@gloups.fdn.fr>
@@ -10,19 +11,19 @@
 
 */
 
-#include <linux/blkdev.h>
-#include <linux/seq_file.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <trace/events/block.h>
-#include "md.h"
-#include "raid0.h"
-#include "raid5.h"
+#समावेश <linux/blkdev.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <trace/events/block.h>
+#समावेश "md.h"
+#समावेश "raid0.h"
+#समावेश "raid5.h"
 
-static int default_layout = 0;
-module_param(default_layout, int, 0644);
+अटल पूर्णांक शेष_layout = 0;
+module_param(शेष_layout, पूर्णांक, 0644);
 
-#define UNSUPPORTED_MDDEV_FLAGS		\
+#घोषणा UNSUPPORTED_MDDEV_FLAGS		\
 	((1L << MD_HAS_JOURNAL) |	\
 	 (1L << MD_JOURNAL_CLEAN) |	\
 	 (1L << MD_FAILFAST_SUPPORTED) |\
@@ -30,54 +31,54 @@ module_param(default_layout, int, 0644);
 	 (1L << MD_HAS_MULTIPLE_PPLS))
 
 /*
- * inform the user of the raid configuration
+ * inक्रमm the user of the raid configuration
 */
-static void dump_zones(struct mddev *mddev)
-{
-	int j, k;
+अटल व्योम dump_zones(काष्ठा mddev *mddev)
+अणु
+	पूर्णांक j, k;
 	sector_t zone_size = 0;
 	sector_t zone_start = 0;
-	char b[BDEVNAME_SIZE];
-	struct r0conf *conf = mddev->private;
-	int raid_disks = conf->strip_zone[0].nb_dev;
+	अक्षर b[BDEVNAME_SIZE];
+	काष्ठा r0conf *conf = mddev->निजी;
+	पूर्णांक raid_disks = conf->strip_zone[0].nb_dev;
 	pr_debug("md: RAID0 configuration for %s - %d zone%s\n",
 		 mdname(mddev),
 		 conf->nr_strip_zones, conf->nr_strip_zones==1?"":"s");
-	for (j = 0; j < conf->nr_strip_zones; j++) {
-		char line[200];
-		int len = 0;
+	क्रम (j = 0; j < conf->nr_strip_zones; j++) अणु
+		अक्षर line[200];
+		पूर्णांक len = 0;
 
-		for (k = 0; k < conf->strip_zone[j].nb_dev; k++)
-			len += snprintf(line+len, 200-len, "%s%s", k?"/":"",
+		क्रम (k = 0; k < conf->strip_zone[j].nb_dev; k++)
+			len += snम_लिखो(line+len, 200-len, "%s%s", k?"/":"",
 					bdevname(conf->devlist[j*raid_disks
 							       + k]->bdev, b));
 		pr_debug("md: zone%d=[%s]\n", j, line);
 
 		zone_size  = conf->strip_zone[j].zone_end - zone_start;
 		pr_debug("      zone-offset=%10lluKB, device-offset=%10lluKB, size=%10lluKB\n",
-			(unsigned long long)zone_start>>1,
-			(unsigned long long)conf->strip_zone[j].dev_start>>1,
-			(unsigned long long)zone_size>>1);
+			(अचिन्हित दीर्घ दीर्घ)zone_start>>1,
+			(अचिन्हित दीर्घ दीर्घ)conf->strip_zone[j].dev_start>>1,
+			(अचिन्हित दीर्घ दीर्घ)zone_size>>1);
 		zone_start = conf->strip_zone[j].zone_end;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int create_strip_zones(struct mddev *mddev, struct r0conf **private_conf)
-{
-	int i, c, err;
+अटल पूर्णांक create_strip_zones(काष्ठा mddev *mddev, काष्ठा r0conf **निजी_conf)
+अणु
+	पूर्णांक i, c, err;
 	sector_t curr_zone_end, sectors;
-	struct md_rdev *smallest, *rdev1, *rdev2, *rdev, **dev;
-	struct strip_zone *zone;
-	int cnt;
-	char b[BDEVNAME_SIZE];
-	char b2[BDEVNAME_SIZE];
-	struct r0conf *conf = kzalloc(sizeof(*conf), GFP_KERNEL);
-	unsigned blksize = 512;
+	काष्ठा md_rdev *smallest, *rdev1, *rdev2, *rdev, **dev;
+	काष्ठा strip_zone *zone;
+	पूर्णांक cnt;
+	अक्षर b[BDEVNAME_SIZE];
+	अक्षर b2[BDEVNAME_SIZE];
+	काष्ठा r0conf *conf = kzalloc(माप(*conf), GFP_KERNEL);
+	अचिन्हित blksize = 512;
 
-	*private_conf = ERR_PTR(-ENOMEM);
-	if (!conf)
-		return -ENOMEM;
-	rdev_for_each(rdev1, mddev) {
+	*निजी_conf = ERR_PTR(-ENOMEM);
+	अगर (!conf)
+		वापस -ENOMEM;
+	rdev_क्रम_each(rdev1, mddev) अणु
 		pr_debug("md/raid0:%s: looking at %s\n",
 			 mdname(mddev),
 			 bdevname(rdev1->bdev, b));
@@ -85,527 +86,527 @@ static int create_strip_zones(struct mddev *mddev, struct r0conf **private_conf)
 
 		/* round size to chunk_size */
 		sectors = rdev1->sectors;
-		sector_div(sectors, mddev->chunk_sectors);
+		sector_भाग(sectors, mddev->chunk_sectors);
 		rdev1->sectors = sectors * mddev->chunk_sectors;
 
 		blksize = max(blksize, queue_logical_block_size(
 				      rdev1->bdev->bd_disk->queue));
 
-		rdev_for_each(rdev2, mddev) {
+		rdev_क्रम_each(rdev2, mddev) अणु
 			pr_debug("md/raid0:%s:   comparing %s(%llu)"
 				 " with %s(%llu)\n",
 				 mdname(mddev),
 				 bdevname(rdev1->bdev,b),
-				 (unsigned long long)rdev1->sectors,
+				 (अचिन्हित दीर्घ दीर्घ)rdev1->sectors,
 				 bdevname(rdev2->bdev,b2),
-				 (unsigned long long)rdev2->sectors);
-			if (rdev2 == rdev1) {
+				 (अचिन्हित दीर्घ दीर्घ)rdev2->sectors);
+			अगर (rdev2 == rdev1) अणु
 				pr_debug("md/raid0:%s:   END\n",
 					 mdname(mddev));
-				break;
-			}
-			if (rdev2->sectors == rdev1->sectors) {
+				अवरोध;
+			पूर्ण
+			अगर (rdev2->sectors == rdev1->sectors) अणु
 				/*
-				 * Not unique, don't count it as a new
+				 * Not unique, करोn't count it as a new
 				 * group
 				 */
 				pr_debug("md/raid0:%s:   EQUAL\n",
 					 mdname(mddev));
 				c = 1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			pr_debug("md/raid0:%s:   NOT EQUAL\n",
 				 mdname(mddev));
-		}
-		if (!c) {
+		पूर्ण
+		अगर (!c) अणु
 			pr_debug("md/raid0:%s:   ==> UNIQUE\n",
 				 mdname(mddev));
 			conf->nr_strip_zones++;
 			pr_debug("md/raid0:%s: %d zones\n",
 				 mdname(mddev), conf->nr_strip_zones);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	pr_debug("md/raid0:%s: FINAL %d zones\n",
 		 mdname(mddev), conf->nr_strip_zones);
 
-	if (conf->nr_strip_zones == 1) {
+	अगर (conf->nr_strip_zones == 1) अणु
 		conf->layout = RAID0_ORIG_LAYOUT;
-	} else if (mddev->layout == RAID0_ORIG_LAYOUT ||
-		   mddev->layout == RAID0_ALT_MULTIZONE_LAYOUT) {
+	पूर्ण अन्यथा अगर (mddev->layout == RAID0_ORIG_LAYOUT ||
+		   mddev->layout == RAID0_ALT_MULTIZONE_LAYOUT) अणु
 		conf->layout = mddev->layout;
-	} else if (default_layout == RAID0_ORIG_LAYOUT ||
-		   default_layout == RAID0_ALT_MULTIZONE_LAYOUT) {
-		conf->layout = default_layout;
-	} else {
+	पूर्ण अन्यथा अगर (शेष_layout == RAID0_ORIG_LAYOUT ||
+		   शेष_layout == RAID0_ALT_MULTIZONE_LAYOUT) अणु
+		conf->layout = शेष_layout;
+	पूर्ण अन्यथा अणु
 		pr_err("md/raid0:%s: cannot assemble multi-zone RAID0 with default_layout setting\n",
 		       mdname(mddev));
 		pr_err("md/raid0: please set raid0.default_layout to 1 or 2\n");
 		err = -ENOTSUPP;
-		goto abort;
-	}
+		जाओ पात;
+	पूर्ण
 	/*
 	 * now since we have the hard sector sizes, we can make sure
 	 * chunk size is a multiple of that sector size
 	 */
-	if ((mddev->chunk_sectors << 9) % blksize) {
+	अगर ((mddev->chunk_sectors << 9) % blksize) अणु
 		pr_warn("md/raid0:%s: chunk_size of %d not multiple of block size %d\n",
 			mdname(mddev),
 			mddev->chunk_sectors << 9, blksize);
 		err = -EINVAL;
-		goto abort;
-	}
+		जाओ पात;
+	पूर्ण
 
 	err = -ENOMEM;
-	conf->strip_zone = kcalloc(conf->nr_strip_zones,
-				   sizeof(struct strip_zone),
+	conf->strip_zone = kसुस्मृति(conf->nr_strip_zones,
+				   माप(काष्ठा strip_zone),
 				   GFP_KERNEL);
-	if (!conf->strip_zone)
-		goto abort;
-	conf->devlist = kzalloc(array3_size(sizeof(struct md_rdev *),
+	अगर (!conf->strip_zone)
+		जाओ पात;
+	conf->devlist = kzalloc(array3_size(माप(काष्ठा md_rdev *),
 					    conf->nr_strip_zones,
 					    mddev->raid_disks),
 				GFP_KERNEL);
-	if (!conf->devlist)
-		goto abort;
+	अगर (!conf->devlist)
+		जाओ पात;
 
 	/* The first zone must contain all devices, so here we check that
 	 * there is a proper alignment of slots to devices and find them all
 	 */
 	zone = &conf->strip_zone[0];
 	cnt = 0;
-	smallest = NULL;
+	smallest = शून्य;
 	dev = conf->devlist;
 	err = -EINVAL;
-	rdev_for_each(rdev1, mddev) {
-		int j = rdev1->raid_disk;
+	rdev_क्रम_each(rdev1, mddev) अणु
+		पूर्णांक j = rdev1->raid_disk;
 
-		if (mddev->level == 10) {
+		अगर (mddev->level == 10) अणु
 			/* taking over a raid10-n2 array */
 			j /= 2;
 			rdev1->new_raid_disk = j;
-		}
+		पूर्ण
 
-		if (mddev->level == 1) {
+		अगर (mddev->level == 1) अणु
 			/* taiking over a raid1 array-
 			 * we have only one active disk
 			 */
 			j = 0;
 			rdev1->new_raid_disk = j;
-		}
+		पूर्ण
 
-		if (j < 0) {
+		अगर (j < 0) अणु
 			pr_warn("md/raid0:%s: remove inactive devices before converting to RAID0\n",
 				mdname(mddev));
-			goto abort;
-		}
-		if (j >= mddev->raid_disks) {
+			जाओ पात;
+		पूर्ण
+		अगर (j >= mddev->raid_disks) अणु
 			pr_warn("md/raid0:%s: bad disk number %d - aborting!\n",
 				mdname(mddev), j);
-			goto abort;
-		}
-		if (dev[j]) {
+			जाओ पात;
+		पूर्ण
+		अगर (dev[j]) अणु
 			pr_warn("md/raid0:%s: multiple devices for %d - aborting!\n",
 				mdname(mddev), j);
-			goto abort;
-		}
+			जाओ पात;
+		पूर्ण
 		dev[j] = rdev1;
 
-		if (!smallest || (rdev1->sectors < smallest->sectors))
+		अगर (!smallest || (rdev1->sectors < smallest->sectors))
 			smallest = rdev1;
 		cnt++;
-	}
-	if (cnt != mddev->raid_disks) {
+	पूर्ण
+	अगर (cnt != mddev->raid_disks) अणु
 		pr_warn("md/raid0:%s: too few disks (%d of %d) - aborting!\n",
 			mdname(mddev), cnt, mddev->raid_disks);
-		goto abort;
-	}
+		जाओ पात;
+	पूर्ण
 	zone->nb_dev = cnt;
 	zone->zone_end = smallest->sectors * cnt;
 
 	curr_zone_end = zone->zone_end;
 
-	/* now do the other zones */
-	for (i = 1; i < conf->nr_strip_zones; i++)
-	{
-		int j;
+	/* now करो the other zones */
+	क्रम (i = 1; i < conf->nr_strip_zones; i++)
+	अणु
+		पूर्णांक j;
 
 		zone = conf->strip_zone + i;
 		dev = conf->devlist + i * mddev->raid_disks;
 
 		pr_debug("md/raid0:%s: zone %d\n", mdname(mddev), i);
 		zone->dev_start = smallest->sectors;
-		smallest = NULL;
+		smallest = शून्य;
 		c = 0;
 
-		for (j=0; j<cnt; j++) {
+		क्रम (j=0; j<cnt; j++) अणु
 			rdev = conf->devlist[j];
-			if (rdev->sectors <= zone->dev_start) {
+			अगर (rdev->sectors <= zone->dev_start) अणु
 				pr_debug("md/raid0:%s: checking %s ... nope\n",
 					 mdname(mddev),
 					 bdevname(rdev->bdev, b));
-				continue;
-			}
+				जारी;
+			पूर्ण
 			pr_debug("md/raid0:%s: checking %s ..."
 				 " contained as device %d\n",
 				 mdname(mddev),
 				 bdevname(rdev->bdev, b), c);
 			dev[c] = rdev;
 			c++;
-			if (!smallest || rdev->sectors < smallest->sectors) {
+			अगर (!smallest || rdev->sectors < smallest->sectors) अणु
 				smallest = rdev;
 				pr_debug("md/raid0:%s:  (%llu) is smallest!.\n",
 					 mdname(mddev),
-					 (unsigned long long)rdev->sectors);
-			}
-		}
+					 (अचिन्हित दीर्घ दीर्घ)rdev->sectors);
+			पूर्ण
+		पूर्ण
 
 		zone->nb_dev = c;
 		sectors = (smallest->sectors - zone->dev_start) * c;
 		pr_debug("md/raid0:%s: zone->nb_dev: %d, sectors: %llu\n",
 			 mdname(mddev),
-			 zone->nb_dev, (unsigned long long)sectors);
+			 zone->nb_dev, (अचिन्हित दीर्घ दीर्घ)sectors);
 
 		curr_zone_end += sectors;
 		zone->zone_end = curr_zone_end;
 
 		pr_debug("md/raid0:%s: current zone start: %llu\n",
 			 mdname(mddev),
-			 (unsigned long long)smallest->sectors);
-	}
+			 (अचिन्हित दीर्घ दीर्घ)smallest->sectors);
+	पूर्ण
 
 	pr_debug("md/raid0:%s: done.\n", mdname(mddev));
-	*private_conf = conf;
+	*निजी_conf = conf;
 
-	return 0;
-abort:
-	kfree(conf->strip_zone);
-	kfree(conf->devlist);
-	kfree(conf);
-	*private_conf = ERR_PTR(err);
-	return err;
-}
+	वापस 0;
+पात:
+	kमुक्त(conf->strip_zone);
+	kमुक्त(conf->devlist);
+	kमुक्त(conf);
+	*निजी_conf = ERR_PTR(err);
+	वापस err;
+पूर्ण
 
 /* Find the zone which holds a particular offset
  * Update *sectorp to be an offset in that zone
  */
-static struct strip_zone *find_zone(struct r0conf *conf,
+अटल काष्ठा strip_zone *find_zone(काष्ठा r0conf *conf,
 				    sector_t *sectorp)
-{
-	int i;
-	struct strip_zone *z = conf->strip_zone;
+अणु
+	पूर्णांक i;
+	काष्ठा strip_zone *z = conf->strip_zone;
 	sector_t sector = *sectorp;
 
-	for (i = 0; i < conf->nr_strip_zones; i++)
-		if (sector < z[i].zone_end) {
-			if (i)
+	क्रम (i = 0; i < conf->nr_strip_zones; i++)
+		अगर (sector < z[i].zone_end) अणु
+			अगर (i)
 				*sectorp = sector - z[i-1].zone_end;
-			return z + i;
-		}
+			वापस z + i;
+		पूर्ण
 	BUG();
-}
+पूर्ण
 
 /*
  * remaps the bio to the target device. we separate two flows.
- * power 2 flow and a general flow for the sake of performance
+ * घातer 2 flow and a general flow क्रम the sake of perक्रमmance
 */
-static struct md_rdev *map_sector(struct mddev *mddev, struct strip_zone *zone,
+अटल काष्ठा md_rdev *map_sector(काष्ठा mddev *mddev, काष्ठा strip_zone *zone,
 				sector_t sector, sector_t *sector_offset)
-{
-	unsigned int sect_in_chunk;
+अणु
+	अचिन्हित पूर्णांक sect_in_chunk;
 	sector_t chunk;
-	struct r0conf *conf = mddev->private;
-	int raid_disks = conf->strip_zone[0].nb_dev;
-	unsigned int chunk_sects = mddev->chunk_sectors;
+	काष्ठा r0conf *conf = mddev->निजी;
+	पूर्णांक raid_disks = conf->strip_zone[0].nb_dev;
+	अचिन्हित पूर्णांक chunk_sects = mddev->chunk_sectors;
 
-	if (is_power_of_2(chunk_sects)) {
-		int chunksect_bits = ffz(~chunk_sects);
+	अगर (is_घातer_of_2(chunk_sects)) अणु
+		पूर्णांक chunksect_bits = ffz(~chunk_sects);
 		/* find the sector offset inside the chunk */
 		sect_in_chunk  = sector & (chunk_sects - 1);
 		sector >>= chunksect_bits;
 		/* chunk in zone */
 		chunk = *sector_offset;
 		/* quotient is the chunk in real device*/
-		sector_div(chunk, zone->nb_dev << chunksect_bits);
-	} else{
-		sect_in_chunk = sector_div(sector, chunk_sects);
+		sector_भाग(chunk, zone->nb_dev << chunksect_bits);
+	पूर्ण अन्यथाअणु
+		sect_in_chunk = sector_भाग(sector, chunk_sects);
 		chunk = *sector_offset;
-		sector_div(chunk, chunk_sects * zone->nb_dev);
-	}
+		sector_भाग(chunk, chunk_sects * zone->nb_dev);
+	पूर्ण
 	/*
 	*  position the bio over the real device
 	*  real sector = chunk in device + starting of zone
 	*	+ the position in the chunk
 	*/
 	*sector_offset = (chunk * chunk_sects) + sect_in_chunk;
-	return conf->devlist[(zone - conf->strip_zone)*raid_disks
-			     + sector_div(sector, zone->nb_dev)];
-}
+	वापस conf->devlist[(zone - conf->strip_zone)*raid_disks
+			     + sector_भाग(sector, zone->nb_dev)];
+पूर्ण
 
-static sector_t raid0_size(struct mddev *mddev, sector_t sectors, int raid_disks)
-{
+अटल sector_t raid0_size(काष्ठा mddev *mddev, sector_t sectors, पूर्णांक raid_disks)
+अणु
 	sector_t array_sectors = 0;
-	struct md_rdev *rdev;
+	काष्ठा md_rdev *rdev;
 
 	WARN_ONCE(sectors || raid_disks,
 		  "%s does not support generic reshape\n", __func__);
 
-	rdev_for_each(rdev, mddev)
+	rdev_क्रम_each(rdev, mddev)
 		array_sectors += (rdev->sectors &
 				  ~(sector_t)(mddev->chunk_sectors-1));
 
-	return array_sectors;
-}
+	वापस array_sectors;
+पूर्ण
 
-static void raid0_free(struct mddev *mddev, void *priv);
+अटल व्योम raid0_मुक्त(काष्ठा mddev *mddev, व्योम *priv);
 
-static int raid0_run(struct mddev *mddev)
-{
-	struct r0conf *conf;
-	int ret;
+अटल पूर्णांक raid0_run(काष्ठा mddev *mddev)
+अणु
+	काष्ठा r0conf *conf;
+	पूर्णांक ret;
 
-	if (mddev->chunk_sectors == 0) {
+	अगर (mddev->chunk_sectors == 0) अणु
 		pr_warn("md/raid0:%s: chunk size must be set.\n", mdname(mddev));
-		return -EINVAL;
-	}
-	if (md_check_no_bitmap(mddev))
-		return -EINVAL;
+		वापस -EINVAL;
+	पूर्ण
+	अगर (md_check_no_biपंचांगap(mddev))
+		वापस -EINVAL;
 
-	/* if private is not null, we are here after takeover */
-	if (mddev->private == NULL) {
+	/* अगर निजी is not null, we are here after takeover */
+	अगर (mddev->निजी == शून्य) अणु
 		ret = create_strip_zones(mddev, &conf);
-		if (ret < 0)
-			return ret;
-		mddev->private = conf;
-	}
-	conf = mddev->private;
-	if (mddev->queue) {
-		struct md_rdev *rdev;
+		अगर (ret < 0)
+			वापस ret;
+		mddev->निजी = conf;
+	पूर्ण
+	conf = mddev->निजी;
+	अगर (mddev->queue) अणु
+		काष्ठा md_rdev *rdev;
 		bool discard_supported = false;
 
 		blk_queue_max_hw_sectors(mddev->queue, mddev->chunk_sectors);
-		blk_queue_max_write_same_sectors(mddev->queue, mddev->chunk_sectors);
-		blk_queue_max_write_zeroes_sectors(mddev->queue, mddev->chunk_sectors);
-		blk_queue_max_discard_sectors(mddev->queue, UINT_MAX);
+		blk_queue_max_ग_लिखो_same_sectors(mddev->queue, mddev->chunk_sectors);
+		blk_queue_max_ग_लिखो_zeroes_sectors(mddev->queue, mddev->chunk_sectors);
+		blk_queue_max_discard_sectors(mddev->queue, अच_पूर्णांक_उच्च);
 
 		blk_queue_io_min(mddev->queue, mddev->chunk_sectors << 9);
 		blk_queue_io_opt(mddev->queue,
 				 (mddev->chunk_sectors << 9) * mddev->raid_disks);
 
-		rdev_for_each(rdev, mddev) {
+		rdev_क्रम_each(rdev, mddev) अणु
 			disk_stack_limits(mddev->gendisk, rdev->bdev,
 					  rdev->data_offset << 9);
-			if (blk_queue_discard(bdev_get_queue(rdev->bdev)))
+			अगर (blk_queue_discard(bdev_get_queue(rdev->bdev)))
 				discard_supported = true;
-		}
-		if (!discard_supported)
+		पूर्ण
+		अगर (!discard_supported)
 			blk_queue_flag_clear(QUEUE_FLAG_DISCARD, mddev->queue);
-		else
+		अन्यथा
 			blk_queue_flag_set(QUEUE_FLAG_DISCARD, mddev->queue);
-	}
+	पूर्ण
 
 	/* calculate array device size */
 	md_set_array_sectors(mddev, raid0_size(mddev, 0, 0));
 
 	pr_debug("md/raid0:%s: md_size is %llu sectors.\n",
 		 mdname(mddev),
-		 (unsigned long long)mddev->array_sectors);
+		 (अचिन्हित दीर्घ दीर्घ)mddev->array_sectors);
 
 	dump_zones(mddev);
 
-	ret = md_integrity_register(mddev);
+	ret = md_पूर्णांकegrity_रेजिस्टर(mddev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void raid0_free(struct mddev *mddev, void *priv)
-{
-	struct r0conf *conf = priv;
+अटल व्योम raid0_मुक्त(काष्ठा mddev *mddev, व्योम *priv)
+अणु
+	काष्ठा r0conf *conf = priv;
 
-	kfree(conf->strip_zone);
-	kfree(conf->devlist);
-	kfree(conf);
-}
+	kमुक्त(conf->strip_zone);
+	kमुक्त(conf->devlist);
+	kमुक्त(conf);
+पूर्ण
 
-static void raid0_handle_discard(struct mddev *mddev, struct bio *bio)
-{
-	struct r0conf *conf = mddev->private;
-	struct strip_zone *zone;
+अटल व्योम raid0_handle_discard(काष्ठा mddev *mddev, काष्ठा bio *bio)
+अणु
+	काष्ठा r0conf *conf = mddev->निजी;
+	काष्ठा strip_zone *zone;
 	sector_t start = bio->bi_iter.bi_sector;
 	sector_t end;
-	unsigned int stripe_size;
+	अचिन्हित पूर्णांक stripe_size;
 	sector_t first_stripe_index, last_stripe_index;
 	sector_t start_disk_offset;
-	unsigned int start_disk_index;
+	अचिन्हित पूर्णांक start_disk_index;
 	sector_t end_disk_offset;
-	unsigned int end_disk_index;
-	unsigned int disk;
+	अचिन्हित पूर्णांक end_disk_index;
+	अचिन्हित पूर्णांक disk;
 
 	zone = find_zone(conf, &start);
 
-	if (bio_end_sector(bio) > zone->zone_end) {
-		struct bio *split = bio_split(bio,
+	अगर (bio_end_sector(bio) > zone->zone_end) अणु
+		काष्ठा bio *split = bio_split(bio,
 			zone->zone_end - bio->bi_iter.bi_sector, GFP_NOIO,
 			&mddev->bio_set);
 		bio_chain(split, bio);
 		submit_bio_noacct(bio);
 		bio = split;
 		end = zone->zone_end;
-	} else
+	पूर्ण अन्यथा
 		end = bio_end_sector(bio);
 
-	if (zone != conf->strip_zone)
+	अगर (zone != conf->strip_zone)
 		end = end - zone[-1].zone_end;
 
 	/* Now start and end is the offset in zone */
 	stripe_size = zone->nb_dev * mddev->chunk_sectors;
 
 	first_stripe_index = start;
-	sector_div(first_stripe_index, stripe_size);
+	sector_भाग(first_stripe_index, stripe_size);
 	last_stripe_index = end;
-	sector_div(last_stripe_index, stripe_size);
+	sector_भाग(last_stripe_index, stripe_size);
 
-	start_disk_index = (int)(start - first_stripe_index * stripe_size) /
+	start_disk_index = (पूर्णांक)(start - first_stripe_index * stripe_size) /
 		mddev->chunk_sectors;
-	start_disk_offset = ((int)(start - first_stripe_index * stripe_size) %
+	start_disk_offset = ((पूर्णांक)(start - first_stripe_index * stripe_size) %
 		mddev->chunk_sectors) +
 		first_stripe_index * mddev->chunk_sectors;
-	end_disk_index = (int)(end - last_stripe_index * stripe_size) /
+	end_disk_index = (पूर्णांक)(end - last_stripe_index * stripe_size) /
 		mddev->chunk_sectors;
-	end_disk_offset = ((int)(end - last_stripe_index * stripe_size) %
+	end_disk_offset = ((पूर्णांक)(end - last_stripe_index * stripe_size) %
 		mddev->chunk_sectors) +
 		last_stripe_index * mddev->chunk_sectors;
 
-	for (disk = 0; disk < zone->nb_dev; disk++) {
+	क्रम (disk = 0; disk < zone->nb_dev; disk++) अणु
 		sector_t dev_start, dev_end;
-		struct md_rdev *rdev;
+		काष्ठा md_rdev *rdev;
 
-		if (disk < start_disk_index)
+		अगर (disk < start_disk_index)
 			dev_start = (first_stripe_index + 1) *
 				mddev->chunk_sectors;
-		else if (disk > start_disk_index)
+		अन्यथा अगर (disk > start_disk_index)
 			dev_start = first_stripe_index * mddev->chunk_sectors;
-		else
+		अन्यथा
 			dev_start = start_disk_offset;
 
-		if (disk < end_disk_index)
+		अगर (disk < end_disk_index)
 			dev_end = (last_stripe_index + 1) * mddev->chunk_sectors;
-		else if (disk > end_disk_index)
+		अन्यथा अगर (disk > end_disk_index)
 			dev_end = last_stripe_index * mddev->chunk_sectors;
-		else
+		अन्यथा
 			dev_end = end_disk_offset;
 
-		if (dev_end <= dev_start)
-			continue;
+		अगर (dev_end <= dev_start)
+			जारी;
 
 		rdev = conf->devlist[(zone - conf->strip_zone) *
 			conf->strip_zone[0].nb_dev + disk];
 		md_submit_discard_bio(mddev, rdev, bio,
 			dev_start + zone->dev_start + rdev->data_offset,
 			dev_end - dev_start);
-	}
+	पूर्ण
 	bio_endio(bio);
-}
+पूर्ण
 
-static bool raid0_make_request(struct mddev *mddev, struct bio *bio)
-{
-	struct r0conf *conf = mddev->private;
-	struct strip_zone *zone;
-	struct md_rdev *tmp_dev;
+अटल bool raid0_make_request(काष्ठा mddev *mddev, काष्ठा bio *bio)
+अणु
+	काष्ठा r0conf *conf = mddev->निजी;
+	काष्ठा strip_zone *zone;
+	काष्ठा md_rdev *पंचांगp_dev;
 	sector_t bio_sector;
 	sector_t sector;
 	sector_t orig_sector;
-	unsigned chunk_sects;
-	unsigned sectors;
+	अचिन्हित chunk_sects;
+	अचिन्हित sectors;
 
-	if (unlikely(bio->bi_opf & REQ_PREFLUSH)
+	अगर (unlikely(bio->bi_opf & REQ_PREFLUSH)
 	    && md_flush_request(mddev, bio))
-		return true;
+		वापस true;
 
-	if (unlikely((bio_op(bio) == REQ_OP_DISCARD))) {
+	अगर (unlikely((bio_op(bio) == REQ_OP_DISCARD))) अणु
 		raid0_handle_discard(mddev, bio);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	bio_sector = bio->bi_iter.bi_sector;
 	sector = bio_sector;
 	chunk_sects = mddev->chunk_sectors;
 
 	sectors = chunk_sects -
-		(likely(is_power_of_2(chunk_sects))
+		(likely(is_घातer_of_2(chunk_sects))
 		 ? (sector & (chunk_sects-1))
-		 : sector_div(sector, chunk_sects));
+		 : sector_भाग(sector, chunk_sects));
 
-	/* Restore due to sector_div */
+	/* Restore due to sector_भाग */
 	sector = bio_sector;
 
-	if (sectors < bio_sectors(bio)) {
-		struct bio *split = bio_split(bio, sectors, GFP_NOIO,
+	अगर (sectors < bio_sectors(bio)) अणु
+		काष्ठा bio *split = bio_split(bio, sectors, GFP_NOIO,
 					      &mddev->bio_set);
 		bio_chain(split, bio);
 		submit_bio_noacct(bio);
 		bio = split;
-	}
+	पूर्ण
 
 	orig_sector = sector;
-	zone = find_zone(mddev->private, &sector);
-	switch (conf->layout) {
-	case RAID0_ORIG_LAYOUT:
-		tmp_dev = map_sector(mddev, zone, orig_sector, &sector);
-		break;
-	case RAID0_ALT_MULTIZONE_LAYOUT:
-		tmp_dev = map_sector(mddev, zone, sector, &sector);
-		break;
-	default:
+	zone = find_zone(mddev->निजी, &sector);
+	चयन (conf->layout) अणु
+	हाल RAID0_ORIG_LAYOUT:
+		पंचांगp_dev = map_sector(mddev, zone, orig_sector, &sector);
+		अवरोध;
+	हाल RAID0_ALT_MULTIZONE_LAYOUT:
+		पंचांगp_dev = map_sector(mddev, zone, sector, &sector);
+		अवरोध;
+	शेष:
 		WARN(1, "md/raid0:%s: Invalid layout\n", mdname(mddev));
 		bio_io_error(bio);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	if (unlikely(is_mddev_broken(tmp_dev, "raid0"))) {
+	अगर (unlikely(is_mddev_broken(पंचांगp_dev, "raid0"))) अणु
 		bio_io_error(bio);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	bio_set_dev(bio, tmp_dev->bdev);
+	bio_set_dev(bio, पंचांगp_dev->bdev);
 	bio->bi_iter.bi_sector = sector + zone->dev_start +
-		tmp_dev->data_offset;
+		पंचांगp_dev->data_offset;
 
-	if (mddev->gendisk)
+	अगर (mddev->gendisk)
 		trace_block_bio_remap(bio, disk_devt(mddev->gendisk),
 				      bio_sector);
-	mddev_check_writesame(mddev, bio);
-	mddev_check_write_zeroes(mddev, bio);
+	mddev_check_ग_लिखोsame(mddev, bio);
+	mddev_check_ग_लिखो_zeroes(mddev, bio);
 	submit_bio_noacct(bio);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void raid0_status(struct seq_file *seq, struct mddev *mddev)
-{
-	seq_printf(seq, " %dk chunks", mddev->chunk_sectors / 2);
-	return;
-}
+अटल व्योम raid0_status(काष्ठा seq_file *seq, काष्ठा mddev *mddev)
+अणु
+	seq_म_लिखो(seq, " %dk chunks", mddev->chunk_sectors / 2);
+	वापस;
+पूर्ण
 
-static void *raid0_takeover_raid45(struct mddev *mddev)
-{
-	struct md_rdev *rdev;
-	struct r0conf *priv_conf;
+अटल व्योम *raid0_takeover_raid45(काष्ठा mddev *mddev)
+अणु
+	काष्ठा md_rdev *rdev;
+	काष्ठा r0conf *priv_conf;
 
-	if (mddev->degraded != 1) {
+	अगर (mddev->degraded != 1) अणु
 		pr_warn("md/raid0:%s: raid5 must be degraded! Degraded disks: %d\n",
 			mdname(mddev),
 			mddev->degraded);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	rdev_for_each(rdev, mddev) {
-		/* check slot number for a disk */
-		if (rdev->raid_disk == mddev->raid_disks-1) {
+	rdev_क्रम_each(rdev, mddev) अणु
+		/* check slot number क्रम a disk */
+		अगर (rdev->raid_disk == mddev->raid_disks-1) अणु
 			pr_warn("md/raid0:%s: raid5 must have missing parity disk!\n",
 				mdname(mddev));
-			return ERR_PTR(-EINVAL);
-		}
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
 		rdev->sectors = mddev->dev_sectors;
-	}
+	पूर्ण
 
 	/* Set new parameters */
 	mddev->new_level = 0;
@@ -619,35 +620,35 @@ static void *raid0_takeover_raid45(struct mddev *mddev)
 
 	create_strip_zones(mddev, &priv_conf);
 
-	return priv_conf;
-}
+	वापस priv_conf;
+पूर्ण
 
-static void *raid0_takeover_raid10(struct mddev *mddev)
-{
-	struct r0conf *priv_conf;
+अटल व्योम *raid0_takeover_raid10(काष्ठा mddev *mddev)
+अणु
+	काष्ठा r0conf *priv_conf;
 
 	/* Check layout:
 	 *  - far_copies must be 1
 	 *  - near_copies must be 2
 	 *  - disks number must be even
-	 *  - all mirrors must be already degraded
+	 *  - all mirrors must be alपढ़ोy degraded
 	 */
-	if (mddev->layout != ((1 << 8) + 2)) {
+	अगर (mddev->layout != ((1 << 8) + 2)) अणु
 		pr_warn("md/raid0:%s:: Raid0 cannot takeover layout: 0x%x\n",
 			mdname(mddev),
 			mddev->layout);
-		return ERR_PTR(-EINVAL);
-	}
-	if (mddev->raid_disks & 1) {
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
+	अगर (mddev->raid_disks & 1) अणु
 		pr_warn("md/raid0:%s: Raid0 cannot takeover Raid10 with odd disk number.\n",
 			mdname(mddev));
-		return ERR_PTR(-EINVAL);
-	}
-	if (mddev->degraded != (mddev->raid_disks>>1)) {
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
+	अगर (mddev->degraded != (mddev->raid_disks>>1)) अणु
 		pr_warn("md/raid0:%s: All mirrors must be already degraded!\n",
 			mdname(mddev));
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	/* Set new parameters */
 	mddev->new_level = 0;
@@ -661,36 +662,36 @@ static void *raid0_takeover_raid10(struct mddev *mddev)
 	mddev_clear_unsupported_flags(mddev, UNSUPPORTED_MDDEV_FLAGS);
 
 	create_strip_zones(mddev, &priv_conf);
-	return priv_conf;
-}
+	वापस priv_conf;
+पूर्ण
 
-static void *raid0_takeover_raid1(struct mddev *mddev)
-{
-	struct r0conf *priv_conf;
-	int chunksect;
+अटल व्योम *raid0_takeover_raid1(काष्ठा mddev *mddev)
+अणु
+	काष्ठा r0conf *priv_conf;
+	पूर्णांक chunksect;
 
 	/* Check layout:
-	 *  - (N - 1) mirror drives must be already faulty
+	 *  - (N - 1) mirror drives must be alपढ़ोy faulty
 	 */
-	if ((mddev->raid_disks - 1) != mddev->degraded) {
+	अगर ((mddev->raid_disks - 1) != mddev->degraded) अणु
 		pr_err("md/raid0:%s: (N - 1) mirrors drives must be already faulty!\n",
 		       mdname(mddev));
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	/*
-	 * a raid1 doesn't have the notion of chunk size, so
+	 * a raid1 करोesn't have the notion of chunk size, so
 	 * figure out the largest suitable size we can use.
 	 */
-	chunksect = 64 * 2; /* 64K by default */
+	chunksect = 64 * 2; /* 64K by शेष */
 
 	/* The array must be an exact multiple of chunksize */
-	while (chunksect && (mddev->array_sectors & (chunksect - 1)))
+	जबतक (chunksect && (mddev->array_sectors & (chunksect - 1)))
 		chunksect >>= 1;
 
-	if ((chunksect << 9) < PAGE_SIZE)
-		/* array size does not allow a suitable chunk size */
-		return ERR_PTR(-EINVAL);
+	अगर ((chunksect << 9) < PAGE_SIZE)
+		/* array size करोes not allow a suitable chunk size */
+		वापस ERR_PTR(-EINVAL);
 
 	/* Set new parameters */
 	mddev->new_level = 0;
@@ -704,76 +705,76 @@ static void *raid0_takeover_raid1(struct mddev *mddev)
 	mddev_clear_unsupported_flags(mddev, UNSUPPORTED_MDDEV_FLAGS);
 
 	create_strip_zones(mddev, &priv_conf);
-	return priv_conf;
-}
+	वापस priv_conf;
+पूर्ण
 
-static void *raid0_takeover(struct mddev *mddev)
-{
+अटल व्योम *raid0_takeover(काष्ठा mddev *mddev)
+अणु
 	/* raid0 can take over:
-	 *  raid4 - if all data disks are active.
+	 *  raid4 - अगर all data disks are active.
 	 *  raid5 - providing it is Raid4 layout and one disk is faulty
 	 *  raid10 - assuming we have all necessary active disks
 	 *  raid1 - with (N -1) mirror drives faulty
 	 */
 
-	if (mddev->bitmap) {
+	अगर (mddev->biपंचांगap) अणु
 		pr_warn("md/raid0: %s: cannot takeover array with bitmap\n",
 			mdname(mddev));
-		return ERR_PTR(-EBUSY);
-	}
-	if (mddev->level == 4)
-		return raid0_takeover_raid45(mddev);
+		वापस ERR_PTR(-EBUSY);
+	पूर्ण
+	अगर (mddev->level == 4)
+		वापस raid0_takeover_raid45(mddev);
 
-	if (mddev->level == 5) {
-		if (mddev->layout == ALGORITHM_PARITY_N)
-			return raid0_takeover_raid45(mddev);
+	अगर (mddev->level == 5) अणु
+		अगर (mddev->layout == ALGORITHM_PARITY_N)
+			वापस raid0_takeover_raid45(mddev);
 
 		pr_warn("md/raid0:%s: Raid can only takeover Raid5 with layout: %d\n",
 			mdname(mddev), ALGORITHM_PARITY_N);
-	}
+	पूर्ण
 
-	if (mddev->level == 10)
-		return raid0_takeover_raid10(mddev);
+	अगर (mddev->level == 10)
+		वापस raid0_takeover_raid10(mddev);
 
-	if (mddev->level == 1)
-		return raid0_takeover_raid1(mddev);
+	अगर (mddev->level == 1)
+		वापस raid0_takeover_raid1(mddev);
 
 	pr_warn("Takeover from raid%i to raid0 not supported\n",
 		mddev->level);
 
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static void raid0_quiesce(struct mddev *mddev, int quiesce)
-{
-}
+अटल व्योम raid0_quiesce(काष्ठा mddev *mddev, पूर्णांक quiesce)
+अणु
+पूर्ण
 
-static struct md_personality raid0_personality=
-{
+अटल काष्ठा md_personality raid0_personality=
+अणु
 	.name		= "raid0",
 	.level		= 0,
 	.owner		= THIS_MODULE,
 	.make_request	= raid0_make_request,
 	.run		= raid0_run,
-	.free		= raid0_free,
+	.मुक्त		= raid0_मुक्त,
 	.status		= raid0_status,
 	.size		= raid0_size,
 	.takeover	= raid0_takeover,
 	.quiesce	= raid0_quiesce,
-};
+पूर्ण;
 
-static int __init raid0_init (void)
-{
-	return register_md_personality (&raid0_personality);
-}
+अटल पूर्णांक __init raid0_init (व्योम)
+अणु
+	वापस रेजिस्टर_md_personality (&raid0_personality);
+पूर्ण
 
-static void raid0_exit (void)
-{
-	unregister_md_personality (&raid0_personality);
-}
+अटल व्योम raid0_निकास (व्योम)
+अणु
+	unरेजिस्टर_md_personality (&raid0_personality);
+पूर्ण
 
 module_init(raid0_init);
-module_exit(raid0_exit);
+module_निकास(raid0_निकास);
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("RAID0 (striping) personality for MD");
 MODULE_ALIAS("md-personality-2"); /* RAID0 */

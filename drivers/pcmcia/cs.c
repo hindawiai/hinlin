@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * cs.c -- Kernel Card Services - core services
  *
  * The initial developer of the original code is David A. Hinds
- * <dahinds@users.sourceforge.net>.  Portions created by David A. Hinds
+ * <dahinds@users.sourceक्रमge.net>.  Portions created by David A. Hinds
  * are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
  *
  * (C) 1999		David A. Hinds
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/major.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/timer.h>
-#include <linux/ioport.h>
-#include <linux/delay.h>
-#include <linux/pm.h>
-#include <linux/device.h>
-#include <linux/kthread.h>
-#include <linux/freezer.h>
-#include <asm/irq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/major.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <यंत्र/irq.h>
 
-#include <pcmcia/ss.h>
-#include <pcmcia/cistpl.h>
-#include <pcmcia/cisreg.h>
-#include <pcmcia/ds.h>
-#include "cs_internal.h"
+#समावेश <pcmcia/ss.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/cisreg.h>
+#समावेश <pcmcia/ds.h>
+#समावेश "cs_internal.h"
 
 
 /* Module parameters */
@@ -41,28 +42,28 @@ MODULE_AUTHOR("David Hinds <dahinds@users.sourceforge.net>");
 MODULE_DESCRIPTION("Linux Kernel Card Services");
 MODULE_LICENSE("GPL");
 
-#define INT_MODULE_PARM(n, v) static int n = v; module_param(n, int, 0444)
+#घोषणा INT_MODULE_PARM(n, v) अटल पूर्णांक n = v; module_param(n, पूर्णांक, 0444)
 
 INT_MODULE_PARM(setup_delay,	10);		/* centiseconds */
 INT_MODULE_PARM(resume_delay,	20);		/* centiseconds */
-INT_MODULE_PARM(shutdown_delay,	3);		/* centiseconds */
+INT_MODULE_PARM(shutकरोwn_delay,	3);		/* centiseconds */
 INT_MODULE_PARM(vcc_settle,	40);		/* centiseconds */
-INT_MODULE_PARM(reset_time,	10);		/* usecs */
+INT_MODULE_PARM(reset_समय,	10);		/* usecs */
 INT_MODULE_PARM(unreset_delay,	10);		/* centiseconds */
 INT_MODULE_PARM(unreset_check,	10);		/* centiseconds */
 INT_MODULE_PARM(unreset_limit,	30);		/* unreset_check's */
 
-/* Access speed for attribute memory windows */
+/* Access speed क्रम attribute memory winकरोws */
 INT_MODULE_PARM(cis_speed,	300);		/* ns */
 
 
-socket_state_t dead_socket = {
+socket_state_t dead_socket = अणु
 	.csc_mask	= SS_DETECT,
-};
+पूर्ण;
 EXPORT_SYMBOL(dead_socket);
 
 
-/* List of all sockets, protected by a rwsem */
+/* List of all sockets, रक्षित by a rwsem */
 LIST_HEAD(pcmcia_socket_list);
 EXPORT_SYMBOL(pcmcia_socket_list);
 
@@ -70,76 +71,76 @@ DECLARE_RWSEM(pcmcia_socket_list_rwsem);
 EXPORT_SYMBOL(pcmcia_socket_list_rwsem);
 
 
-struct pcmcia_socket *pcmcia_get_socket(struct pcmcia_socket *skt)
-{
-	struct device *dev = get_device(&skt->dev);
-	if (!dev)
-		return NULL;
-	return dev_get_drvdata(dev);
-}
+काष्ठा pcmcia_socket *pcmcia_get_socket(काष्ठा pcmcia_socket *skt)
+अणु
+	काष्ठा device *dev = get_device(&skt->dev);
+	अगर (!dev)
+		वापस शून्य;
+	वापस dev_get_drvdata(dev);
+पूर्ण
 EXPORT_SYMBOL(pcmcia_get_socket);
 
 
-void pcmcia_put_socket(struct pcmcia_socket *skt)
-{
+व्योम pcmcia_put_socket(काष्ठा pcmcia_socket *skt)
+अणु
 	put_device(&skt->dev);
-}
+पूर्ण
 EXPORT_SYMBOL(pcmcia_put_socket);
 
 
-static void pcmcia_release_socket(struct device *dev)
-{
-	struct pcmcia_socket *socket = dev_get_drvdata(dev);
+अटल व्योम pcmcia_release_socket(काष्ठा device *dev)
+अणु
+	काष्ठा pcmcia_socket *socket = dev_get_drvdata(dev);
 
 	complete(&socket->socket_released);
-}
+पूर्ण
 
-static int pccardd(void *__skt);
+अटल पूर्णांक pccardd(व्योम *__skt);
 
 /**
- * pcmcia_register_socket - add a new pcmcia socket device
- * @socket: the &socket to register
+ * pcmcia_रेजिस्टर_socket - add a new pcmcia socket device
+ * @socket: the &socket to रेजिस्टर
  */
-int pcmcia_register_socket(struct pcmcia_socket *socket)
-{
-	struct task_struct *tsk;
-	int ret;
+पूर्णांक pcmcia_रेजिस्टर_socket(काष्ठा pcmcia_socket *socket)
+अणु
+	काष्ठा task_काष्ठा *tsk;
+	पूर्णांक ret;
 
-	if (!socket || !socket->ops || !socket->dev.parent || !socket->resource_ops)
-		return -EINVAL;
+	अगर (!socket || !socket->ops || !socket->dev.parent || !socket->resource_ops)
+		वापस -EINVAL;
 
 	dev_dbg(&socket->dev, "pcmcia_register_socket(0x%p)\n", socket->ops);
 
-	/* try to obtain a socket number [yes, it gets ugly if we
-	 * register more than 2^sizeof(unsigned int) pcmcia
+	/* try to obtain a socket number [yes, it माला_लो ugly अगर we
+	 * रेजिस्टर more than 2^माप(अचिन्हित पूर्णांक) pcmcia
 	 * sockets... but the socket number is deprecated
-	 * anyways, so I don't care] */
-	down_write(&pcmcia_socket_list_rwsem);
-	if (list_empty(&pcmcia_socket_list))
+	 * anyways, so I करोn't care] */
+	करोwn_ग_लिखो(&pcmcia_socket_list_rwsem);
+	अगर (list_empty(&pcmcia_socket_list))
 		socket->sock = 0;
-	else {
-		unsigned int found, i = 1;
-		struct pcmcia_socket *tmp;
-		do {
+	अन्यथा अणु
+		अचिन्हित पूर्णांक found, i = 1;
+		काष्ठा pcmcia_socket *पंचांगp;
+		करो अणु
 			found = 1;
-			list_for_each_entry(tmp, &pcmcia_socket_list, socket_list) {
-				if (tmp->sock == i)
+			list_क्रम_each_entry(पंचांगp, &pcmcia_socket_list, socket_list) अणु
+				अगर (पंचांगp->sock == i)
 					found = 0;
-			}
+			पूर्ण
 			i++;
-		} while (!found);
+		पूर्ण जबतक (!found);
 		socket->sock = i - 1;
-	}
+	पूर्ण
 	list_add_tail(&socket->socket_list, &pcmcia_socket_list);
-	up_write(&pcmcia_socket_list_rwsem);
+	up_ग_लिखो(&pcmcia_socket_list_rwsem);
 
-#ifndef CONFIG_CARDBUS
+#अगर_अघोषित CONFIG_CARDBUS
 	/*
-	 * If we do not support Cardbus, ensure that
+	 * If we करो not support Cardbus, ensure that
 	 * the Cardbus socket capability is disabled.
 	 */
 	socket->features &= ~SS_CAP_CARDBUS;
-#endif
+#पूर्ण_अगर
 
 	/* set proper values in socket->dev */
 	dev_set_drvdata(&socket->dev, socket);
@@ -153,147 +154,147 @@ int pcmcia_register_socket(struct pcmcia_socket *socket)
 	INIT_LIST_HEAD(&socket->cis_cache);
 
 	init_completion(&socket->socket_released);
-	init_completion(&socket->thread_done);
+	init_completion(&socket->thपढ़ो_करोne);
 	mutex_init(&socket->skt_mutex);
 	mutex_init(&socket->ops_mutex);
-	spin_lock_init(&socket->thread_lock);
+	spin_lock_init(&socket->thपढ़ो_lock);
 
-	if (socket->resource_ops->init) {
+	अगर (socket->resource_ops->init) अणु
 		mutex_lock(&socket->ops_mutex);
 		ret = socket->resource_ops->init(socket);
 		mutex_unlock(&socket->ops_mutex);
-		if (ret)
-			goto err;
-	}
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	tsk = kthread_run(pccardd, socket, "pccardd");
-	if (IS_ERR(tsk)) {
+	tsk = kthपढ़ो_run(pccardd, socket, "pccardd");
+	अगर (IS_ERR(tsk)) अणु
 		ret = PTR_ERR(tsk);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	wait_for_completion(&socket->thread_done);
-	if (!socket->thread) {
+	रुको_क्रम_completion(&socket->thपढ़ो_करोne);
+	अगर (!socket->thपढ़ो) अणु
 		dev_warn(&socket->dev,
 			 "PCMCIA: warning: socket thread did not start\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	pcmcia_parse_events(socket, SS_DETECT);
 
 	/*
-	 * Let's try to get the PCMCIA module for 16-bit PCMCIA support.
-	 * If it fails, it doesn't matter -- we still have 32-bit CardBus
+	 * Let's try to get the PCMCIA module क्रम 16-bit PCMCIA support.
+	 * If it fails, it करोesn't matter -- we still have 32-bit CardBus
 	 * support to offer, so this is not a failure mode.
 	 */
-	request_module_nowait("pcmcia");
+	request_module_noरुको("pcmcia");
 
-	return 0;
+	वापस 0;
 
  err:
-	down_write(&pcmcia_socket_list_rwsem);
+	करोwn_ग_लिखो(&pcmcia_socket_list_rwsem);
 	list_del(&socket->socket_list);
-	up_write(&pcmcia_socket_list_rwsem);
-	return ret;
-} /* pcmcia_register_socket */
-EXPORT_SYMBOL(pcmcia_register_socket);
+	up_ग_लिखो(&pcmcia_socket_list_rwsem);
+	वापस ret;
+पूर्ण /* pcmcia_रेजिस्टर_socket */
+EXPORT_SYMBOL(pcmcia_रेजिस्टर_socket);
 
 
 /**
- * pcmcia_unregister_socket - remove a pcmcia socket device
- * @socket: the &socket to unregister
+ * pcmcia_unरेजिस्टर_socket - हटाओ a pcmcia socket device
+ * @socket: the &socket to unरेजिस्टर
  */
-void pcmcia_unregister_socket(struct pcmcia_socket *socket)
-{
-	if (!socket)
-		return;
+व्योम pcmcia_unरेजिस्टर_socket(काष्ठा pcmcia_socket *socket)
+अणु
+	अगर (!socket)
+		वापस;
 
 	dev_dbg(&socket->dev, "pcmcia_unregister_socket(0x%p)\n", socket->ops);
 
-	if (socket->thread)
-		kthread_stop(socket->thread);
+	अगर (socket->thपढ़ो)
+		kthपढ़ो_stop(socket->thपढ़ो);
 
-	/* remove from our own list */
-	down_write(&pcmcia_socket_list_rwsem);
+	/* हटाओ from our own list */
+	करोwn_ग_लिखो(&pcmcia_socket_list_rwsem);
 	list_del(&socket->socket_list);
-	up_write(&pcmcia_socket_list_rwsem);
+	up_ग_लिखो(&pcmcia_socket_list_rwsem);
 
-	/* wait for sysfs to drop all references */
-	if (socket->resource_ops->exit) {
+	/* रुको क्रम sysfs to drop all references */
+	अगर (socket->resource_ops->निकास) अणु
 		mutex_lock(&socket->ops_mutex);
-		socket->resource_ops->exit(socket);
+		socket->resource_ops->निकास(socket);
 		mutex_unlock(&socket->ops_mutex);
-	}
-	wait_for_completion(&socket->socket_released);
-} /* pcmcia_unregister_socket */
-EXPORT_SYMBOL(pcmcia_unregister_socket);
+	पूर्ण
+	रुको_क्रम_completion(&socket->socket_released);
+पूर्ण /* pcmcia_unरेजिस्टर_socket */
+EXPORT_SYMBOL(pcmcia_unरेजिस्टर_socket);
 
 
-struct pcmcia_socket *pcmcia_get_socket_by_nr(unsigned int nr)
-{
-	struct pcmcia_socket *s;
+काष्ठा pcmcia_socket *pcmcia_get_socket_by_nr(अचिन्हित पूर्णांक nr)
+अणु
+	काष्ठा pcmcia_socket *s;
 
-	down_read(&pcmcia_socket_list_rwsem);
-	list_for_each_entry(s, &pcmcia_socket_list, socket_list)
-		if (s->sock == nr) {
-			up_read(&pcmcia_socket_list_rwsem);
-			return s;
-		}
-	up_read(&pcmcia_socket_list_rwsem);
+	करोwn_पढ़ो(&pcmcia_socket_list_rwsem);
+	list_क्रम_each_entry(s, &pcmcia_socket_list, socket_list)
+		अगर (s->sock == nr) अणु
+			up_पढ़ो(&pcmcia_socket_list_rwsem);
+			वापस s;
+		पूर्ण
+	up_पढ़ो(&pcmcia_socket_list_rwsem);
 
-	return NULL;
+	वापस शून्य;
 
-}
+पूर्ण
 EXPORT_SYMBOL(pcmcia_get_socket_by_nr);
 
-static int socket_reset(struct pcmcia_socket *skt)
-{
-	int status, i;
+अटल पूर्णांक socket_reset(काष्ठा pcmcia_socket *skt)
+अणु
+	पूर्णांक status, i;
 
 	dev_dbg(&skt->dev, "reset\n");
 
 	skt->socket.flags |= SS_OUTPUT_ENA | SS_RESET;
 	skt->ops->set_socket(skt, &skt->socket);
-	udelay((long)reset_time);
+	udelay((दीर्घ)reset_समय);
 
 	skt->socket.flags &= ~SS_RESET;
 	skt->ops->set_socket(skt, &skt->socket);
 
 	msleep(unreset_delay * 10);
-	for (i = 0; i < unreset_limit; i++) {
+	क्रम (i = 0; i < unreset_limit; i++) अणु
 		skt->ops->get_status(skt, &status);
 
-		if (!(status & SS_DETECT))
-			return -ENODEV;
+		अगर (!(status & SS_DETECT))
+			वापस -ENODEV;
 
-		if (status & SS_READY)
-			return 0;
+		अगर (status & SS_READY)
+			वापस 0;
 
 		msleep(unreset_check * 10);
-	}
+	पूर्ण
 
 	dev_err(&skt->dev, "time out after reset\n");
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
 /*
- * socket_setup() and socket_shutdown() are called by the main event handler
+ * socket_setup() and socket_shutकरोwn() are called by the मुख्य event handler
  * when card insertion and removal events are received.
- * socket_setup() turns on socket power and resets the socket, in two stages.
- * socket_shutdown() unconfigures a socket and turns off socket power.
+ * socket_setup() turns on socket घातer and resets the socket, in two stages.
+ * socket_shutकरोwn() unconfigures a socket and turns off socket घातer.
  */
-static void socket_shutdown(struct pcmcia_socket *s)
-{
-	int status;
+अटल व्योम socket_shutकरोwn(काष्ठा pcmcia_socket *s)
+अणु
+	पूर्णांक status;
 
 	dev_dbg(&s->dev, "shutdown\n");
 
-	if (s->callback)
-		s->callback->remove(s);
+	अगर (s->callback)
+		s->callback->हटाओ(s);
 
 	mutex_lock(&s->ops_mutex);
 	s->state &= SOCKET_INUSE | SOCKET_PRESENT;
-	msleep(shutdown_delay * 10);
+	msleep(shutकरोwn_delay * 10);
 	s->state &= SOCKET_INUSE;
 
 	/* Blank out the socket state */
@@ -301,373 +302,373 @@ static void socket_shutdown(struct pcmcia_socket *s)
 	s->ops->init(s);
 	s->ops->set_socket(s, &s->socket);
 	s->lock_count = 0;
-	kfree(s->fake_cis);
-	s->fake_cis = NULL;
+	kमुक्त(s->fake_cis);
+	s->fake_cis = शून्य;
 	s->functions = 0;
 
 	/* From here on we can be sure that only we (that is, the
-	 * pccardd thread) accesses this socket, and all (16-bit)
-	 * PCMCIA interactions are gone. Therefore, release
-	 * ops_mutex so that we don't get a sysfs-related lockdep
+	 * pccardd thपढ़ो) accesses this socket, and all (16-bit)
+	 * PCMCIA पूर्णांकeractions are gone. Thereक्रमe, release
+	 * ops_mutex so that we करोn't get a sysfs-related lockdep
 	 * warning.
 	 */
 	mutex_unlock(&s->ops_mutex);
 
-#ifdef CONFIG_CARDBUS
-	cb_free(s);
-#endif
+#अगर_घोषित CONFIG_CARDBUS
+	cb_मुक्त(s);
+#पूर्ण_अगर
 
-	/* give socket some time to power down */
+	/* give socket some समय to घातer करोwn */
 	msleep(100);
 
 	s->ops->get_status(s, &status);
-	if (status & SS_POWERON) {
+	अगर (status & SS_POWERON) अणु
 		dev_err(&s->dev,
 			"*** DANGER *** unable to remove socket power\n");
-	}
+	पूर्ण
 
 	s->state &= ~SOCKET_INUSE;
-}
+पूर्ण
 
-static int socket_setup(struct pcmcia_socket *skt, int initial_delay)
-{
-	int status, i;
+अटल पूर्णांक socket_setup(काष्ठा pcmcia_socket *skt, पूर्णांक initial_delay)
+अणु
+	पूर्णांक status, i;
 
 	dev_dbg(&skt->dev, "setup\n");
 
 	skt->ops->get_status(skt, &status);
-	if (!(status & SS_DETECT))
-		return -ENODEV;
+	अगर (!(status & SS_DETECT))
+		वापस -ENODEV;
 
 	msleep(initial_delay * 10);
 
-	for (i = 0; i < 100; i++) {
+	क्रम (i = 0; i < 100; i++) अणु
 		skt->ops->get_status(skt, &status);
-		if (!(status & SS_DETECT))
-			return -ENODEV;
+		अगर (!(status & SS_DETECT))
+			वापस -ENODEV;
 
-		if (!(status & SS_PENDING))
-			break;
+		अगर (!(status & SS_PENDING))
+			अवरोध;
 
 		msleep(100);
-	}
+	पूर्ण
 
-	if (status & SS_PENDING) {
+	अगर (status & SS_PENDING) अणु
 		dev_err(&skt->dev, "voltage interrogation timed out\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	if (status & SS_CARDBUS) {
-		if (!(skt->features & SS_CAP_CARDBUS)) {
+	अगर (status & SS_CARDBUS) अणु
+		अगर (!(skt->features & SS_CAP_CARDBUS)) अणु
 			dev_err(&skt->dev, "cardbus cards are not supported\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		skt->state |= SOCKET_CARDBUS;
-	} else
+	पूर्ण अन्यथा
 		skt->state &= ~SOCKET_CARDBUS;
 
 	/*
-	 * Decode the card voltage requirements, and apply power to the card.
+	 * Decode the card voltage requirements, and apply घातer to the card.
 	 */
-	if (status & SS_3VCARD)
+	अगर (status & SS_3VCARD)
 		skt->socket.Vcc = skt->socket.Vpp = 33;
-	else if (!(status & SS_XVCARD))
+	अन्यथा अगर (!(status & SS_XVCARD))
 		skt->socket.Vcc = skt->socket.Vpp = 50;
-	else {
+	अन्यथा अणु
 		dev_err(&skt->dev, "unsupported voltage key\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (skt->power_hook)
-		skt->power_hook(skt, HOOK_POWER_PRE);
+	अगर (skt->घातer_hook)
+		skt->घातer_hook(skt, HOOK_POWER_PRE);
 
 	skt->socket.flags = 0;
 	skt->ops->set_socket(skt, &skt->socket);
 
 	/*
-	 * Wait "vcc_settle" for the supply to stabilise.
+	 * Wait "vcc_settle" क्रम the supply to stabilise.
 	 */
 	msleep(vcc_settle * 10);
 
 	skt->ops->get_status(skt, &status);
-	if (!(status & SS_POWERON)) {
+	अगर (!(status & SS_POWERON)) अणु
 		dev_err(&skt->dev, "unable to apply power\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	status = socket_reset(skt);
 
-	if (skt->power_hook)
-		skt->power_hook(skt, HOOK_POWER_POST);
+	अगर (skt->घातer_hook)
+		skt->घातer_hook(skt, HOOK_POWER_POST);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
  * Handle card insertion.  Setup the socket, reset the card,
  * and then tell the rest of PCMCIA that a card is present.
  */
-static int socket_insert(struct pcmcia_socket *skt)
-{
-	int ret;
+अटल पूर्णांक socket_insert(काष्ठा pcmcia_socket *skt)
+अणु
+	पूर्णांक ret;
 
 	dev_dbg(&skt->dev, "insert\n");
 
 	mutex_lock(&skt->ops_mutex);
-	if (skt->state & SOCKET_INUSE) {
+	अगर (skt->state & SOCKET_INUSE) अणु
 		mutex_unlock(&skt->ops_mutex);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	skt->state |= SOCKET_INUSE;
 
 	ret = socket_setup(skt, setup_delay);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		skt->state |= SOCKET_PRESENT;
 
 		dev_notice(&skt->dev, "pccard: %s card inserted into slot %d\n",
 			   (skt->state & SOCKET_CARDBUS) ? "CardBus" : "PCMCIA",
 			   skt->sock);
 
-#ifdef CONFIG_CARDBUS
-		if (skt->state & SOCKET_CARDBUS) {
+#अगर_घोषित CONFIG_CARDBUS
+		अगर (skt->state & SOCKET_CARDBUS) अणु
 			cb_alloc(skt);
 			skt->state |= SOCKET_CARDBUS_CONFIG;
-		}
-#endif
+		पूर्ण
+#पूर्ण_अगर
 		dev_dbg(&skt->dev, "insert done\n");
 		mutex_unlock(&skt->ops_mutex);
 
-		if (!(skt->state & SOCKET_CARDBUS) && (skt->callback))
+		अगर (!(skt->state & SOCKET_CARDBUS) && (skt->callback))
 			skt->callback->add(skt);
-	} else {
+	पूर्ण अन्यथा अणु
 		mutex_unlock(&skt->ops_mutex);
-		socket_shutdown(skt);
-	}
+		socket_shutकरोwn(skt);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int socket_suspend(struct pcmcia_socket *skt)
-{
-	if ((skt->state & SOCKET_SUSPEND) && !(skt->state & SOCKET_IN_RESUME))
-		return -EBUSY;
+अटल पूर्णांक socket_suspend(काष्ठा pcmcia_socket *skt)
+अणु
+	अगर ((skt->state & SOCKET_SUSPEND) && !(skt->state & SOCKET_IN_RESUME))
+		वापस -EBUSY;
 
 	mutex_lock(&skt->ops_mutex);
 	/* store state on first suspend, but not after spurious wakeups */
-	if (!(skt->state & SOCKET_IN_RESUME))
+	अगर (!(skt->state & SOCKET_IN_RESUME))
 		skt->suspended_state = skt->state;
 
 	skt->socket = dead_socket;
 	skt->ops->set_socket(skt, &skt->socket);
-	if (skt->ops->suspend)
+	अगर (skt->ops->suspend)
 		skt->ops->suspend(skt);
 	skt->state |= SOCKET_SUSPEND;
 	skt->state &= ~SOCKET_IN_RESUME;
 	mutex_unlock(&skt->ops_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int socket_early_resume(struct pcmcia_socket *skt)
-{
+अटल पूर्णांक socket_early_resume(काष्ठा pcmcia_socket *skt)
+अणु
 	mutex_lock(&skt->ops_mutex);
 	skt->socket = dead_socket;
 	skt->ops->init(skt);
 	skt->ops->set_socket(skt, &skt->socket);
-	if (skt->state & SOCKET_PRESENT)
+	अगर (skt->state & SOCKET_PRESENT)
 		skt->resume_status = socket_setup(skt, resume_delay);
 	skt->state |= SOCKET_IN_RESUME;
 	mutex_unlock(&skt->ops_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int socket_late_resume(struct pcmcia_socket *skt)
-{
-	int ret = 0;
+अटल पूर्णांक socket_late_resume(काष्ठा pcmcia_socket *skt)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&skt->ops_mutex);
 	skt->state &= ~(SOCKET_SUSPEND | SOCKET_IN_RESUME);
 	mutex_unlock(&skt->ops_mutex);
 
-	if (!(skt->state & SOCKET_PRESENT)) {
+	अगर (!(skt->state & SOCKET_PRESENT)) अणु
 		ret = socket_insert(skt);
-		if (ret == -ENODEV)
+		अगर (ret == -ENODEV)
 			ret = 0;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (skt->resume_status) {
-		socket_shutdown(skt);
-		return 0;
-	}
+	अगर (skt->resume_status) अणु
+		socket_shutकरोwn(skt);
+		वापस 0;
+	पूर्ण
 
-	if (skt->suspended_state != skt->state) {
+	अगर (skt->suspended_state != skt->state) अणु
 		dev_dbg(&skt->dev,
 			"suspend state 0x%x != resume state 0x%x\n",
 			skt->suspended_state, skt->state);
 
-		socket_shutdown(skt);
-		return socket_insert(skt);
-	}
+		socket_shutकरोwn(skt);
+		वापस socket_insert(skt);
+	पूर्ण
 
-	if (!(skt->state & SOCKET_CARDBUS) && (skt->callback))
+	अगर (!(skt->state & SOCKET_CARDBUS) && (skt->callback))
 		ret = skt->callback->early_resume(skt);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Finalize the resume. In case of a cardbus socket, we have
+ * Finalize the resume. In हाल of a cardbus socket, we have
  * to rebind the devices as we can't be certain that it has been
  * replaced, or not.
  */
-static int socket_complete_resume(struct pcmcia_socket *skt)
-{
-	int ret = 0;
-#ifdef CONFIG_CARDBUS
-	if (skt->state & SOCKET_CARDBUS) {
+अटल पूर्णांक socket_complete_resume(काष्ठा pcmcia_socket *skt)
+अणु
+	पूर्णांक ret = 0;
+#अगर_घोषित CONFIG_CARDBUS
+	अगर (skt->state & SOCKET_CARDBUS) अणु
 		/* We can't be sure the CardBus card is the same
-		 * as the one previously inserted. Therefore, remove
+		 * as the one previously inserted. Thereक्रमe, हटाओ
 		 * and re-add... */
-		cb_free(skt);
+		cb_मुक्त(skt);
 		ret = cb_alloc(skt);
-		if (ret)
-			cb_free(skt);
-	}
-#endif
-	return ret;
-}
+		अगर (ret)
+			cb_मुक्त(skt);
+	पूर्ण
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
 /*
- * Resume a socket.  If a card is present, verify its CIS against
- * our cached copy.  If they are different, the card has been
+ * Resume a socket.  If a card is present, verअगरy its CIS against
+ * our cached copy.  If they are dअगरferent, the card has been
  * replaced, and we need to tell the drivers.
  */
-static int socket_resume(struct pcmcia_socket *skt)
-{
-	int err;
-	if (!(skt->state & SOCKET_SUSPEND))
-		return -EBUSY;
+अटल पूर्णांक socket_resume(काष्ठा pcmcia_socket *skt)
+अणु
+	पूर्णांक err;
+	अगर (!(skt->state & SOCKET_SUSPEND))
+		वापस -EBUSY;
 
 	socket_early_resume(skt);
 	err = socket_late_resume(skt);
-	if (!err)
+	अगर (!err)
 		err = socket_complete_resume(skt);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void socket_remove(struct pcmcia_socket *skt)
-{
+अटल व्योम socket_हटाओ(काष्ठा pcmcia_socket *skt)
+अणु
 	dev_notice(&skt->dev, "pccard: card ejected from slot %d\n", skt->sock);
-	socket_shutdown(skt);
-}
+	socket_shutकरोwn(skt);
+पूर्ण
 
 /*
  * Process a socket card detect status change.
  *
- * If we don't have a card already present, delay the detect event for
- * about 20ms (to be on the safe side) before reading the socket status.
+ * If we करोn't have a card alपढ़ोy present, delay the detect event क्रम
+ * about 20ms (to be on the safe side) beक्रमe पढ़ोing the socket status.
  *
- * Some i82365-based systems send multiple SS_DETECT events during card
+ * Some i82365-based प्रणालीs send multiple SS_DETECT events during card
  * insertion, and the "card present" status bit seems to bounce.  This
- * will probably be true with GPIO-based card detection systems after
+ * will probably be true with GPIO-based card detection प्रणालीs after
  * the product has aged.
  */
-static void socket_detect_change(struct pcmcia_socket *skt)
-{
-	if (!(skt->state & SOCKET_SUSPEND)) {
-		int status;
+अटल व्योम socket_detect_change(काष्ठा pcmcia_socket *skt)
+अणु
+	अगर (!(skt->state & SOCKET_SUSPEND)) अणु
+		पूर्णांक status;
 
-		if (!(skt->state & SOCKET_PRESENT))
+		अगर (!(skt->state & SOCKET_PRESENT))
 			msleep(20);
 
 		skt->ops->get_status(skt, &status);
-		if ((skt->state & SOCKET_PRESENT) &&
+		अगर ((skt->state & SOCKET_PRESENT) &&
 		     !(status & SS_DETECT))
-			socket_remove(skt);
-		if (!(skt->state & SOCKET_PRESENT) &&
+			socket_हटाओ(skt);
+		अगर (!(skt->state & SOCKET_PRESENT) &&
 		    (status & SS_DETECT))
 			socket_insert(skt);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pccardd(void *__skt)
-{
-	struct pcmcia_socket *skt = __skt;
-	int ret;
+अटल पूर्णांक pccardd(व्योम *__skt)
+अणु
+	काष्ठा pcmcia_socket *skt = __skt;
+	पूर्णांक ret;
 
-	skt->thread = current;
+	skt->thपढ़ो = current;
 	skt->socket = dead_socket;
 	skt->ops->init(skt);
 	skt->ops->set_socket(skt, &skt->socket);
 
-	/* register with the device core */
-	ret = device_register(&skt->dev);
-	if (ret) {
+	/* रेजिस्टर with the device core */
+	ret = device_रेजिस्टर(&skt->dev);
+	अगर (ret) अणु
 		dev_warn(&skt->dev, "PCMCIA: unable to register socket\n");
-		skt->thread = NULL;
-		complete(&skt->thread_done);
-		return 0;
-	}
+		skt->thपढ़ो = शून्य;
+		complete(&skt->thपढ़ो_करोne);
+		वापस 0;
+	पूर्ण
 	ret = pccard_sysfs_add_socket(&skt->dev);
-	if (ret)
+	अगर (ret)
 		dev_warn(&skt->dev, "err %d adding socket attributes\n", ret);
 
-	complete(&skt->thread_done);
+	complete(&skt->thपढ़ो_करोne);
 
-	/* wait for userspace to catch up */
+	/* रुको क्रम userspace to catch up */
 	msleep(250);
 
-	set_freezable();
-	for (;;) {
-		unsigned long flags;
-		unsigned int events;
-		unsigned int sysfs_events;
+	set_मुक्तzable();
+	क्रम (;;) अणु
+		अचिन्हित दीर्घ flags;
+		अचिन्हित पूर्णांक events;
+		अचिन्हित पूर्णांक sysfs_events;
 
-		spin_lock_irqsave(&skt->thread_lock, flags);
-		events = skt->thread_events;
-		skt->thread_events = 0;
+		spin_lock_irqsave(&skt->thपढ़ो_lock, flags);
+		events = skt->thपढ़ो_events;
+		skt->thपढ़ो_events = 0;
 		sysfs_events = skt->sysfs_events;
 		skt->sysfs_events = 0;
-		spin_unlock_irqrestore(&skt->thread_lock, flags);
+		spin_unlock_irqrestore(&skt->thपढ़ो_lock, flags);
 
 		mutex_lock(&skt->skt_mutex);
-		if (events & SS_DETECT)
+		अगर (events & SS_DETECT)
 			socket_detect_change(skt);
 
-		if (sysfs_events) {
-			if (sysfs_events & PCMCIA_UEVENT_EJECT)
-				socket_remove(skt);
-			if (sysfs_events & PCMCIA_UEVENT_INSERT)
+		अगर (sysfs_events) अणु
+			अगर (sysfs_events & PCMCIA_UEVENT_EJECT)
+				socket_हटाओ(skt);
+			अगर (sysfs_events & PCMCIA_UEVENT_INSERT)
 				socket_insert(skt);
-			if ((sysfs_events & PCMCIA_UEVENT_SUSPEND) &&
-				!(skt->state & SOCKET_CARDBUS)) {
-				if (skt->callback)
+			अगर ((sysfs_events & PCMCIA_UEVENT_SUSPEND) &&
+				!(skt->state & SOCKET_CARDBUS)) अणु
+				अगर (skt->callback)
 					ret = skt->callback->suspend(skt);
-				else
+				अन्यथा
 					ret = 0;
-				if (!ret) {
+				अगर (!ret) अणु
 					socket_suspend(skt);
 					msleep(100);
-				}
-			}
-			if ((sysfs_events & PCMCIA_UEVENT_RESUME) &&
-				!(skt->state & SOCKET_CARDBUS)) {
+				पूर्ण
+			पूर्ण
+			अगर ((sysfs_events & PCMCIA_UEVENT_RESUME) &&
+				!(skt->state & SOCKET_CARDBUS)) अणु
 				ret = socket_resume(skt);
-				if (!ret && skt->callback)
+				अगर (!ret && skt->callback)
 					skt->callback->resume(skt);
-			}
-			if ((sysfs_events & PCMCIA_UEVENT_REQUERY) &&
-				!(skt->state & SOCKET_CARDBUS)) {
-				if (!ret && skt->callback)
+			पूर्ण
+			अगर ((sysfs_events & PCMCIA_UEVENT_REQUERY) &&
+				!(skt->state & SOCKET_CARDBUS)) अणु
+				अगर (!ret && skt->callback)
 					skt->callback->requery(skt);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		mutex_unlock(&skt->skt_mutex);
 
-		if (events || sysfs_events)
-			continue;
+		अगर (events || sysfs_events)
+			जारी;
 
-		if (kthread_should_stop())
-			break;
+		अगर (kthपढ़ो_should_stop())
+			अवरोध;
 
 		set_current_state(TASK_INTERRUPTIBLE);
 
@@ -676,39 +677,39 @@ static int pccardd(void *__skt)
 		/* make sure we are running */
 		__set_current_state(TASK_RUNNING);
 
-		try_to_freeze();
-	}
+		try_to_मुक्तze();
+	पूर्ण
 
-	/* shut down socket, if a device is still present */
-	if (skt->state & SOCKET_PRESENT) {
+	/* shut करोwn socket, अगर a device is still present */
+	अगर (skt->state & SOCKET_PRESENT) अणु
 		mutex_lock(&skt->skt_mutex);
-		socket_remove(skt);
+		socket_हटाओ(skt);
 		mutex_unlock(&skt->skt_mutex);
-	}
+	पूर्ण
 
-	/* remove from the device core */
-	pccard_sysfs_remove_socket(&skt->dev);
-	device_unregister(&skt->dev);
+	/* हटाओ from the device core */
+	pccard_sysfs_हटाओ_socket(&skt->dev);
+	device_unरेजिस्टर(&skt->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Yenta (at least) probes interrupts before registering the socket and
- * starting the handler thread.
+ * Yenta (at least) probes पूर्णांकerrupts beक्रमe रेजिस्टरing the socket and
+ * starting the handler thपढ़ो.
  */
-void pcmcia_parse_events(struct pcmcia_socket *s, u_int events)
-{
-	unsigned long flags;
+व्योम pcmcia_parse_events(काष्ठा pcmcia_socket *s, u_पूर्णांक events)
+अणु
+	अचिन्हित दीर्घ flags;
 	dev_dbg(&s->dev, "parse_events: events %08x\n", events);
-	if (s->thread) {
-		spin_lock_irqsave(&s->thread_lock, flags);
-		s->thread_events |= events;
-		spin_unlock_irqrestore(&s->thread_lock, flags);
+	अगर (s->thपढ़ो) अणु
+		spin_lock_irqsave(&s->thपढ़ो_lock, flags);
+		s->thपढ़ो_events |= events;
+		spin_unlock_irqrestore(&s->thपढ़ो_lock, flags);
 
-		wake_up_process(s->thread);
-	}
-} /* pcmcia_parse_events */
+		wake_up_process(s->thपढ़ो);
+	पूर्ण
+पूर्ण /* pcmcia_parse_events */
 EXPORT_SYMBOL(pcmcia_parse_events);
 
 /**
@@ -717,204 +718,204 @@ EXPORT_SYMBOL(pcmcia_parse_events);
  * @events:	events to pass to pccardd
  *
  * userspace-issued insert, eject, suspend and resume commands must be
- * handled by pccardd to avoid any sysfs-related deadlocks. Valid events
- * are PCMCIA_UEVENT_EJECT (for eject), PCMCIA_UEVENT__INSERT (for insert),
- * PCMCIA_UEVENT_RESUME (for resume), PCMCIA_UEVENT_SUSPEND (for suspend)
- * and PCMCIA_UEVENT_REQUERY (for re-querying the PCMCIA card).
+ * handled by pccardd to aव्योम any sysfs-related deadlocks. Valid events
+ * are PCMCIA_UEVENT_EJECT (क्रम eject), PCMCIA_UEVENT__INSERT (क्रम insert),
+ * PCMCIA_UEVENT_RESUME (क्रम resume), PCMCIA_UEVENT_SUSPEND (क्रम suspend)
+ * and PCMCIA_UEVENT_REQUERY (क्रम re-querying the PCMCIA card).
  */
-void pcmcia_parse_uevents(struct pcmcia_socket *s, u_int events)
-{
-	unsigned long flags;
+व्योम pcmcia_parse_uevents(काष्ठा pcmcia_socket *s, u_पूर्णांक events)
+अणु
+	अचिन्हित दीर्घ flags;
 	dev_dbg(&s->dev, "parse_uevents: events %08x\n", events);
-	if (s->thread) {
-		spin_lock_irqsave(&s->thread_lock, flags);
+	अगर (s->thपढ़ो) अणु
+		spin_lock_irqsave(&s->thपढ़ो_lock, flags);
 		s->sysfs_events |= events;
-		spin_unlock_irqrestore(&s->thread_lock, flags);
+		spin_unlock_irqrestore(&s->thपढ़ो_lock, flags);
 
-		wake_up_process(s->thread);
-	}
-}
+		wake_up_process(s->thपढ़ो);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(pcmcia_parse_uevents);
 
 
-/* register pcmcia_callback */
-int pccard_register_pcmcia(struct pcmcia_socket *s, struct pcmcia_callback *c)
-{
-	int ret = 0;
+/* रेजिस्टर pcmcia_callback */
+पूर्णांक pccard_रेजिस्टर_pcmcia(काष्ठा pcmcia_socket *s, काष्ठा pcmcia_callback *c)
+अणु
+	पूर्णांक ret = 0;
 
 	/* s->skt_mutex also protects s->callback */
 	mutex_lock(&s->skt_mutex);
 
-	if (c) {
+	अगर (c) अणु
 		/* registration */
-		if (s->callback) {
+		अगर (s->callback) अणु
 			ret = -EBUSY;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		s->callback = c;
 
-		if ((s->state & (SOCKET_PRESENT|SOCKET_CARDBUS)) == SOCKET_PRESENT)
+		अगर ((s->state & (SOCKET_PRESENT|SOCKET_CARDBUS)) == SOCKET_PRESENT)
 			s->callback->add(s);
-	} else
-		s->callback = NULL;
+	पूर्ण अन्यथा
+		s->callback = शून्य;
  err:
 	mutex_unlock(&s->skt_mutex);
 
-	return ret;
-}
-EXPORT_SYMBOL(pccard_register_pcmcia);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(pccard_रेजिस्टर_pcmcia);
 
 
 /* I'm not sure which "reset" function this is supposed to use,
- * but for now, it uses the low-level interface's reset, not the
- * CIS register.
+ * but क्रम now, it uses the low-level पूर्णांकerface's reset, not the
+ * CIS रेजिस्टर.
  */
 
-int pcmcia_reset_card(struct pcmcia_socket *skt)
-{
-	int ret;
+पूर्णांक pcmcia_reset_card(काष्ठा pcmcia_socket *skt)
+अणु
+	पूर्णांक ret;
 
 	dev_dbg(&skt->dev, "resetting socket\n");
 
 	mutex_lock(&skt->skt_mutex);
-	do {
-		if (!(skt->state & SOCKET_PRESENT)) {
+	करो अणु
+		अगर (!(skt->state & SOCKET_PRESENT)) अणु
 			dev_dbg(&skt->dev, "can't reset, not present\n");
 			ret = -ENODEV;
-			break;
-		}
-		if (skt->state & SOCKET_SUSPEND) {
+			अवरोध;
+		पूर्ण
+		अगर (skt->state & SOCKET_SUSPEND) अणु
 			dev_dbg(&skt->dev, "can't reset, suspended\n");
 			ret = -EBUSY;
-			break;
-		}
-		if (skt->state & SOCKET_CARDBUS) {
+			अवरोध;
+		पूर्ण
+		अगर (skt->state & SOCKET_CARDBUS) अणु
 			dev_dbg(&skt->dev, "can't reset, is cardbus\n");
 			ret = -EPERM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (skt->callback)
+		अगर (skt->callback)
 			skt->callback->suspend(skt);
 		mutex_lock(&skt->ops_mutex);
 		ret = socket_reset(skt);
 		mutex_unlock(&skt->ops_mutex);
-		if ((ret == 0) && (skt->callback))
+		अगर ((ret == 0) && (skt->callback))
 			skt->callback->resume(skt);
 
 		ret = 0;
-	} while (0);
+	पूर्ण जबतक (0);
 	mutex_unlock(&skt->skt_mutex);
 
-	return ret;
-} /* reset_card */
+	वापस ret;
+पूर्ण /* reset_card */
 EXPORT_SYMBOL(pcmcia_reset_card);
 
 
-static int pcmcia_socket_uevent(struct device *dev,
-				struct kobj_uevent_env *env)
-{
-	struct pcmcia_socket *s = container_of(dev, struct pcmcia_socket, dev);
+अटल पूर्णांक pcmcia_socket_uevent(काष्ठा device *dev,
+				काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा pcmcia_socket *s = container_of(dev, काष्ठा pcmcia_socket, dev);
 
-	if (add_uevent_var(env, "SOCKET_NO=%u", s->sock))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "SOCKET_NO=%u", s->sock))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static struct completion pcmcia_unload;
+अटल काष्ठा completion pcmcia_unload;
 
-static void pcmcia_release_socket_class(struct class *data)
-{
+अटल व्योम pcmcia_release_socket_class(काष्ठा class *data)
+अणु
 	complete(&pcmcia_unload);
-}
+पूर्ण
 
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int __pcmcia_pm_op(struct device *dev,
-			  int (*callback) (struct pcmcia_socket *skt))
-{
-	struct pcmcia_socket *s = container_of(dev, struct pcmcia_socket, dev);
-	int ret;
+अटल पूर्णांक __pcmcia_pm_op(काष्ठा device *dev,
+			  पूर्णांक (*callback) (काष्ठा pcmcia_socket *skt))
+अणु
+	काष्ठा pcmcia_socket *s = container_of(dev, काष्ठा pcmcia_socket, dev);
+	पूर्णांक ret;
 
 	mutex_lock(&s->skt_mutex);
 	ret = callback(s);
 	mutex_unlock(&s->skt_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pcmcia_socket_dev_suspend_noirq(struct device *dev)
-{
-	return __pcmcia_pm_op(dev, socket_suspend);
-}
+अटल पूर्णांक pcmcia_socket_dev_suspend_noirq(काष्ठा device *dev)
+अणु
+	वापस __pcmcia_pm_op(dev, socket_suspend);
+पूर्ण
 
-static int pcmcia_socket_dev_resume_noirq(struct device *dev)
-{
-	return __pcmcia_pm_op(dev, socket_early_resume);
-}
+अटल पूर्णांक pcmcia_socket_dev_resume_noirq(काष्ठा device *dev)
+अणु
+	वापस __pcmcia_pm_op(dev, socket_early_resume);
+पूर्ण
 
-static int __used pcmcia_socket_dev_resume(struct device *dev)
-{
-	return __pcmcia_pm_op(dev, socket_late_resume);
-}
+अटल पूर्णांक __used pcmcia_socket_dev_resume(काष्ठा device *dev)
+अणु
+	वापस __pcmcia_pm_op(dev, socket_late_resume);
+पूर्ण
 
-static void __used pcmcia_socket_dev_complete(struct device *dev)
-{
+अटल व्योम __used pcmcia_socket_dev_complete(काष्ठा device *dev)
+अणु
 	WARN(__pcmcia_pm_op(dev, socket_complete_resume),
 		"failed to complete resume");
-}
+पूर्ण
 
-static const struct dev_pm_ops pcmcia_socket_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops pcmcia_socket_pm_ops = अणु
 	/* dev_resume may be called with IRQs enabled */
-	SET_SYSTEM_SLEEP_PM_OPS(NULL,
+	SET_SYSTEM_SLEEP_PM_OPS(शून्य,
 				pcmcia_socket_dev_resume)
 
 	/* late suspend must be called with IRQs disabled */
 	.suspend_noirq = pcmcia_socket_dev_suspend_noirq,
-	.freeze_noirq = pcmcia_socket_dev_suspend_noirq,
-	.poweroff_noirq = pcmcia_socket_dev_suspend_noirq,
+	.मुक्तze_noirq = pcmcia_socket_dev_suspend_noirq,
+	.घातeroff_noirq = pcmcia_socket_dev_suspend_noirq,
 
 	/* early resume must be called with IRQs disabled */
 	.resume_noirq = pcmcia_socket_dev_resume_noirq,
 	.thaw_noirq = pcmcia_socket_dev_resume_noirq,
 	.restore_noirq = pcmcia_socket_dev_resume_noirq,
 	.complete = pcmcia_socket_dev_complete,
-};
+पूर्ण;
 
-#define PCMCIA_SOCKET_CLASS_PM_OPS (&pcmcia_socket_pm_ops)
+#घोषणा PCMCIA_SOCKET_CLASS_PM_OPS (&pcmcia_socket_pm_ops)
 
-#else /* CONFIG_PM */
+#अन्यथा /* CONFIG_PM */
 
-#define PCMCIA_SOCKET_CLASS_PM_OPS NULL
+#घोषणा PCMCIA_SOCKET_CLASS_PM_OPS शून्य
 
-#endif /* CONFIG_PM */
+#पूर्ण_अगर /* CONFIG_PM */
 
-struct class pcmcia_socket_class = {
+काष्ठा class pcmcia_socket_class = अणु
 	.name = "pcmcia_socket",
 	.dev_uevent = pcmcia_socket_uevent,
 	.dev_release = pcmcia_release_socket,
 	.class_release = pcmcia_release_socket_class,
 	.pm = PCMCIA_SOCKET_CLASS_PM_OPS,
-};
+पूर्ण;
 EXPORT_SYMBOL(pcmcia_socket_class);
 
 
-static int __init init_pcmcia_cs(void)
-{
+अटल पूर्णांक __init init_pcmcia_cs(व्योम)
+अणु
 	init_completion(&pcmcia_unload);
-	return class_register(&pcmcia_socket_class);
-}
+	वापस class_रेजिस्टर(&pcmcia_socket_class);
+पूर्ण
 
-static void __exit exit_pcmcia_cs(void)
-{
-	class_unregister(&pcmcia_socket_class);
-	wait_for_completion(&pcmcia_unload);
-}
+अटल व्योम __निकास निकास_pcmcia_cs(व्योम)
+अणु
+	class_unरेजिस्टर(&pcmcia_socket_class);
+	रुको_क्रम_completion(&pcmcia_unload);
+पूर्ण
 
 subsys_initcall(init_pcmcia_cs);
-module_exit(exit_pcmcia_cs);
+module_निकास(निकास_pcmcia_cs);
 

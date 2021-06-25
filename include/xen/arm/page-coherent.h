@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _XEN_ARM_PAGE_COHERENT_H
-#define _XEN_ARM_PAGE_COHERENT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _XEN_ARM_PAGE_COHERENT_H
+#घोषणा _XEN_ARM_PAGE_COHERENT_H
 
-#include <linux/dma-mapping.h>
-#include <asm/page.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <यंत्र/page.h>
 
-static inline void *xen_alloc_coherent_pages(struct device *hwdev, size_t size,
-		dma_addr_t *dma_handle, gfp_t flags, unsigned long attrs)
-{
-	return dma_direct_alloc(hwdev, size, dma_handle, flags, attrs);
-}
+अटल अंतरभूत व्योम *xen_alloc_coherent_pages(काष्ठा device *hwdev, माप_प्रकार size,
+		dma_addr_t *dma_handle, gfp_t flags, अचिन्हित दीर्घ attrs)
+अणु
+	वापस dma_direct_alloc(hwdev, size, dma_handle, flags, attrs);
+पूर्ण
 
-static inline void xen_free_coherent_pages(struct device *hwdev, size_t size,
-		void *cpu_addr, dma_addr_t dma_handle, unsigned long attrs)
-{
-	dma_direct_free(hwdev, size, cpu_addr, dma_handle, attrs);
-}
+अटल अंतरभूत व्योम xen_मुक्त_coherent_pages(काष्ठा device *hwdev, माप_प्रकार size,
+		व्योम *cpu_addr, dma_addr_t dma_handle, अचिन्हित दीर्घ attrs)
+अणु
+	dma_direct_मुक्त(hwdev, size, cpu_addr, dma_handle, attrs);
+पूर्ण
 
-#endif /* _XEN_ARM_PAGE_COHERENT_H */
+#पूर्ण_अगर /* _XEN_ARM_PAGE_COHERENT_H */

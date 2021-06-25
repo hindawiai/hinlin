@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ASM_IA64_STAT_H
-#define _ASM_IA64_STAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ASM_IA64_STAT_H
+#घोषणा _ASM_IA64_STAT_H
 
 /*
- * Modified 1998, 1999
+ * Modअगरied 1998, 1999
  *	David Mosberger-Tang <davidm@hpl.hp.com>, Hewlett-Packard Co
  */
 
-struct stat {
-	unsigned long	st_dev;
-	unsigned long	st_ino;
-	unsigned long	st_nlink;
-	unsigned int	st_mode;
-	unsigned int	st_uid;
-	unsigned int	st_gid;
-	unsigned int	__pad0;
-	unsigned long	st_rdev;
-	unsigned long	st_size;
-	unsigned long	st_atime;
-	unsigned long	st_atime_nsec;
-	unsigned long	st_mtime;
-	unsigned long	st_mtime_nsec;
-	unsigned long	st_ctime;
-	unsigned long	st_ctime_nsec;
-	unsigned long	st_blksize;
-	long		st_blocks;
-	unsigned long	__unused[3];
-};
+काष्ठा stat अणु
+	अचिन्हित दीर्घ	st_dev;
+	अचिन्हित दीर्घ	st_ino;
+	अचिन्हित दीर्घ	st_nlink;
+	अचिन्हित पूर्णांक	st_mode;
+	अचिन्हित पूर्णांक	st_uid;
+	अचिन्हित पूर्णांक	st_gid;
+	अचिन्हित पूर्णांक	__pad0;
+	अचिन्हित दीर्घ	st_rdev;
+	अचिन्हित दीर्घ	st_size;
+	अचिन्हित दीर्घ	st_aसमय;
+	अचिन्हित दीर्घ	st_aसमय_nsec;
+	अचिन्हित दीर्घ	st_mसमय;
+	अचिन्हित दीर्घ	st_mसमय_nsec;
+	अचिन्हित दीर्घ	st_स_समय;
+	अचिन्हित दीर्घ	st_स_समय_nsec;
+	अचिन्हित दीर्घ	st_blksize;
+	दीर्घ		st_blocks;
+	अचिन्हित दीर्घ	__unused[3];
+पूर्ण;
 
-#define STAT_HAVE_NSEC 1
+#घोषणा STAT_HAVE_NSEC 1
 
-struct ia64_oldstat {
-	unsigned int	st_dev;
-	unsigned int	st_ino;
-	unsigned int	st_mode;
-	unsigned int	st_nlink;
-	unsigned int	st_uid;
-	unsigned int	st_gid;
-	unsigned int	st_rdev;
-	unsigned int	__pad1;
-	unsigned long	st_size;
-	unsigned long	st_atime;
-	unsigned long	st_mtime;
-	unsigned long	st_ctime;
-	unsigned int	st_blksize;
-	int		st_blocks;
-	unsigned int	__unused1;
-	unsigned int	__unused2;
-};
+काष्ठा ia64_oldstat अणु
+	अचिन्हित पूर्णांक	st_dev;
+	अचिन्हित पूर्णांक	st_ino;
+	अचिन्हित पूर्णांक	st_mode;
+	अचिन्हित पूर्णांक	st_nlink;
+	अचिन्हित पूर्णांक	st_uid;
+	अचिन्हित पूर्णांक	st_gid;
+	अचिन्हित पूर्णांक	st_rdev;
+	अचिन्हित पूर्णांक	__pad1;
+	अचिन्हित दीर्घ	st_size;
+	अचिन्हित दीर्घ	st_aसमय;
+	अचिन्हित दीर्घ	st_mसमय;
+	अचिन्हित दीर्घ	st_स_समय;
+	अचिन्हित पूर्णांक	st_blksize;
+	पूर्णांक		st_blocks;
+	अचिन्हित पूर्णांक	__unused1;
+	अचिन्हित पूर्णांक	__unused2;
+पूर्ण;
 
-#endif /* _ASM_IA64_STAT_H */
+#पूर्ण_अगर /* _ASM_IA64_STAT_H */

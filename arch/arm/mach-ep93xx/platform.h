@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * arch/arm/mach-ep93xx/include/mach/platform.h
+ * arch/arm/mach-ep93xx/include/mach/platक्रमm.h
  */
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/platform_data/eth-ep93xx.h>
-#include <linux/reboot.h>
+#समावेश <linux/platक्रमm_data/eth-ep93xx.h>
+#समावेश <linux/reboot.h>
 
-struct device;
-struct i2c_board_info;
-struct spi_board_info;
-struct platform_device;
-struct ep93xxfb_mach_info;
-struct ep93xx_keypad_platform_data;
-struct ep93xx_spi_info;
+काष्ठा device;
+काष्ठा i2c_board_info;
+काष्ठा spi_board_info;
+काष्ठा platक्रमm_device;
+काष्ठा ep93xxfb_mach_info;
+काष्ठा ep93xx_keypad_platक्रमm_data;
+काष्ठा ep93xx_spi_info;
 
-void ep93xx_map_io(void);
-void ep93xx_init_irq(void);
+व्योम ep93xx_map_io(व्योम);
+व्योम ep93xx_init_irq(व्योम);
 
-void ep93xx_register_flash(unsigned int width,
-			   resource_size_t start, resource_size_t size);
+व्योम ep93xx_रेजिस्टर_flash(अचिन्हित पूर्णांक width,
+			   resource_माप_प्रकार start, resource_माप_प्रकार size);
 
-void ep93xx_register_eth(struct ep93xx_eth_data *data, int copy_addr);
-void ep93xx_register_i2c(struct i2c_board_info *devices, int num);
-void ep93xx_register_spi(struct ep93xx_spi_info *info,
-			 struct spi_board_info *devices, int num);
-void ep93xx_register_fb(struct ep93xxfb_mach_info *data);
-void ep93xx_register_pwm(int pwm0, int pwm1);
-void ep93xx_register_keypad(struct ep93xx_keypad_platform_data *data);
-void ep93xx_register_i2s(void);
-void ep93xx_register_ac97(void);
-void ep93xx_register_ide(void);
-void ep93xx_register_adc(void);
+व्योम ep93xx_रेजिस्टर_eth(काष्ठा ep93xx_eth_data *data, पूर्णांक copy_addr);
+व्योम ep93xx_रेजिस्टर_i2c(काष्ठा i2c_board_info *devices, पूर्णांक num);
+व्योम ep93xx_रेजिस्टर_spi(काष्ठा ep93xx_spi_info *info,
+			 काष्ठा spi_board_info *devices, पूर्णांक num);
+व्योम ep93xx_रेजिस्टर_fb(काष्ठा ep93xxfb_mach_info *data);
+व्योम ep93xx_रेजिस्टर_pwm(पूर्णांक pwm0, पूर्णांक pwm1);
+व्योम ep93xx_रेजिस्टर_keypad(काष्ठा ep93xx_keypad_platक्रमm_data *data);
+व्योम ep93xx_रेजिस्टर_i2s(व्योम);
+व्योम ep93xx_रेजिस्टर_ac97(व्योम);
+व्योम ep93xx_रेजिस्टर_ide(व्योम);
+व्योम ep93xx_रेजिस्टर_adc(व्योम);
 
-struct device *ep93xx_init_devices(void);
-extern void ep93xx_timer_init(void);
+काष्ठा device *ep93xx_init_devices(व्योम);
+बाह्य व्योम ep93xx_समयr_init(व्योम);
 
-void ep93xx_restart(enum reboot_mode, const char *);
-void ep93xx_init_late(void);
+व्योम ep93xx_restart(क्रमागत reboot_mode, स्थिर अक्षर *);
+व्योम ep93xx_init_late(व्योम);
 
-#ifdef CONFIG_CRUNCH
-int crunch_init(void);
-#else
-static inline int crunch_init(void) { return 0; }
-#endif
+#अगर_घोषित CONFIG_CRUNCH
+पूर्णांक crunch_init(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक crunch_init(व्योम) अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

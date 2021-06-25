@@ -1,202 +1,203 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016 Anders K. Pedersen <akp@cohaesio.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/netlink.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter/nf_tables.h>
-#include <net/dst.h>
-#include <net/ip6_route.h>
-#include <net/route.h>
-#include <net/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables_core.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <net/dst.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/route.h>
+#समावेश <net/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables_core.h>
 
-struct nft_rt {
-	enum nft_rt_keys	key:8;
+काष्ठा nft_rt अणु
+	क्रमागत nft_rt_keys	key:8;
 	u8			dreg;
-};
+पूर्ण;
 
-static u16 get_tcpmss(const struct nft_pktinfo *pkt, const struct dst_entry *skbdst)
-{
-	u32 minlen = sizeof(struct ipv6hdr), mtu = dst_mtu(skbdst);
-	const struct sk_buff *skb = pkt->skb;
-	struct dst_entry *dst = NULL;
-	struct flowi fl;
+अटल u16 get_tcpmss(स्थिर काष्ठा nft_pktinfo *pkt, स्थिर काष्ठा dst_entry *skbdst)
+अणु
+	u32 minlen = माप(काष्ठा ipv6hdr), mtu = dst_mtu(skbdst);
+	स्थिर काष्ठा sk_buff *skb = pkt->skb;
+	काष्ठा dst_entry *dst = शून्य;
+	काष्ठा flowi fl;
 
-	memset(&fl, 0, sizeof(fl));
+	स_रखो(&fl, 0, माप(fl));
 
-	switch (nft_pf(pkt)) {
-	case NFPROTO_IPV4:
+	चयन (nft_pf(pkt)) अणु
+	हाल NFPROTO_IPV4:
 		fl.u.ip4.daddr = ip_hdr(skb)->saddr;
-		minlen = sizeof(struct iphdr) + sizeof(struct tcphdr);
-		break;
-	case NFPROTO_IPV6:
+		minlen = माप(काष्ठा iphdr) + माप(काष्ठा tcphdr);
+		अवरोध;
+	हाल NFPROTO_IPV6:
 		fl.u.ip6.daddr = ipv6_hdr(skb)->saddr;
-		minlen = sizeof(struct ipv6hdr) + sizeof(struct tcphdr);
-		break;
-	}
+		minlen = माप(काष्ठा ipv6hdr) + माप(काष्ठा tcphdr);
+		अवरोध;
+	पूर्ण
 
 	nf_route(nft_net(pkt), &dst, &fl, false, nft_pf(pkt));
-	if (dst) {
+	अगर (dst) अणु
 		mtu = min(mtu, dst_mtu(dst));
 		dst_release(dst);
-	}
+	पूर्ण
 
-	if (mtu <= minlen || mtu > 0xffff)
-		return TCP_MSS_DEFAULT;
+	अगर (mtu <= minlen || mtu > 0xffff)
+		वापस TCP_MSS_DEFAULT;
 
-	return mtu - minlen;
-}
+	वापस mtu - minlen;
+पूर्ण
 
-void nft_rt_get_eval(const struct nft_expr *expr,
-		     struct nft_regs *regs,
-		     const struct nft_pktinfo *pkt)
-{
-	const struct nft_rt *priv = nft_expr_priv(expr);
-	const struct sk_buff *skb = pkt->skb;
+व्योम nft_rt_get_eval(स्थिर काष्ठा nft_expr *expr,
+		     काष्ठा nft_regs *regs,
+		     स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	स्थिर काष्ठा nft_rt *priv = nft_expr_priv(expr);
+	स्थिर काष्ठा sk_buff *skb = pkt->skb;
 	u32 *dest = &regs->data[priv->dreg];
-	const struct dst_entry *dst;
+	स्थिर काष्ठा dst_entry *dst;
 
 	dst = skb_dst(skb);
-	if (!dst)
-		goto err;
+	अगर (!dst)
+		जाओ err;
 
-	switch (priv->key) {
-#ifdef CONFIG_IP_ROUTE_CLASSID
-	case NFT_RT_CLASSID:
+	चयन (priv->key) अणु
+#अगर_घोषित CONFIG_IP_ROUTE_CLASSID
+	हाल NFT_RT_CLASSID:
 		*dest = dst->tclassid;
-		break;
-#endif
-	case NFT_RT_NEXTHOP4:
-		if (nft_pf(pkt) != NFPROTO_IPV4)
-			goto err;
+		अवरोध;
+#पूर्ण_अगर
+	हाल NFT_RT_NEXTHOP4:
+		अगर (nft_pf(pkt) != NFPROTO_IPV4)
+			जाओ err;
 
-		*dest = (__force u32)rt_nexthop((const struct rtable *)dst,
+		*dest = (__क्रमce u32)rt_nexthop((स्थिर काष्ठा rtable *)dst,
 						ip_hdr(skb)->daddr);
-		break;
-	case NFT_RT_NEXTHOP6:
-		if (nft_pf(pkt) != NFPROTO_IPV6)
-			goto err;
+		अवरोध;
+	हाल NFT_RT_NEXTHOP6:
+		अगर (nft_pf(pkt) != NFPROTO_IPV6)
+			जाओ err;
 
-		memcpy(dest, rt6_nexthop((struct rt6_info *)dst,
+		स_नकल(dest, rt6_nexthop((काष्ठा rt6_info *)dst,
 					 &ipv6_hdr(skb)->daddr),
-		       sizeof(struct in6_addr));
-		break;
-	case NFT_RT_TCPMSS:
+		       माप(काष्ठा in6_addr));
+		अवरोध;
+	हाल NFT_RT_TCPMSS:
 		nft_reg_store16(dest, get_tcpmss(pkt, dst));
-		break;
-#ifdef CONFIG_XFRM
-	case NFT_RT_XFRM:
+		अवरोध;
+#अगर_घोषित CONFIG_XFRM
+	हाल NFT_RT_XFRM:
 		nft_reg_store8(dest, !!dst->xfrm);
-		break;
-#endif
-	default:
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
 		WARN_ON(1);
-		goto err;
-	}
-	return;
+		जाओ err;
+	पूर्ण
+	वापस;
 
 err:
 	regs->verdict.code = NFT_BREAK;
-}
+पूर्ण
 
-static const struct nla_policy nft_rt_policy[NFTA_RT_MAX + 1] = {
-	[NFTA_RT_DREG]		= { .type = NLA_U32 },
-	[NFTA_RT_KEY]		= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy nft_rt_policy[NFTA_RT_MAX + 1] = अणु
+	[NFTA_RT_DREG]		= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_RT_KEY]		= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int nft_rt_get_init(const struct nft_ctx *ctx,
-			   const struct nft_expr *expr,
-			   const struct nlattr * const tb[])
-{
-	struct nft_rt *priv = nft_expr_priv(expr);
-	unsigned int len;
+अटल पूर्णांक nft_rt_get_init(स्थिर काष्ठा nft_ctx *ctx,
+			   स्थिर काष्ठा nft_expr *expr,
+			   स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nft_rt *priv = nft_expr_priv(expr);
+	अचिन्हित पूर्णांक len;
 
-	if (tb[NFTA_RT_KEY] == NULL ||
-	    tb[NFTA_RT_DREG] == NULL)
-		return -EINVAL;
+	अगर (tb[NFTA_RT_KEY] == शून्य ||
+	    tb[NFTA_RT_DREG] == शून्य)
+		वापस -EINVAL;
 
 	priv->key = ntohl(nla_get_be32(tb[NFTA_RT_KEY]));
-	switch (priv->key) {
-#ifdef CONFIG_IP_ROUTE_CLASSID
-	case NFT_RT_CLASSID:
-#endif
-	case NFT_RT_NEXTHOP4:
-		len = sizeof(u32);
-		break;
-	case NFT_RT_NEXTHOP6:
-		len = sizeof(struct in6_addr);
-		break;
-	case NFT_RT_TCPMSS:
-		len = sizeof(u16);
-		break;
-#ifdef CONFIG_XFRM
-	case NFT_RT_XFRM:
-		len = sizeof(u8);
-		break;
-#endif
-	default:
-		return -EOPNOTSUPP;
-	}
+	चयन (priv->key) अणु
+#अगर_घोषित CONFIG_IP_ROUTE_CLASSID
+	हाल NFT_RT_CLASSID:
+#पूर्ण_अगर
+	हाल NFT_RT_NEXTHOP4:
+		len = माप(u32);
+		अवरोध;
+	हाल NFT_RT_NEXTHOP6:
+		len = माप(काष्ठा in6_addr);
+		अवरोध;
+	हाल NFT_RT_TCPMSS:
+		len = माप(u16);
+		अवरोध;
+#अगर_घोषित CONFIG_XFRM
+	हाल NFT_RT_XFRM:
+		len = माप(u8);
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return nft_parse_register_store(ctx, tb[NFTA_RT_DREG], &priv->dreg,
-					NULL, NFT_DATA_VALUE, len);
-}
+	वापस nft_parse_रेजिस्टर_store(ctx, tb[NFTA_RT_DREG], &priv->dreg,
+					शून्य, NFT_DATA_VALUE, len);
+पूर्ण
 
-static int nft_rt_get_dump(struct sk_buff *skb,
-			   const struct nft_expr *expr)
-{
-	const struct nft_rt *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_rt_get_dump(काष्ठा sk_buff *skb,
+			   स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_rt *priv = nft_expr_priv(expr);
 
-	if (nla_put_be32(skb, NFTA_RT_KEY, htonl(priv->key)))
-		goto nla_put_failure;
-	if (nft_dump_register(skb, NFTA_RT_DREG, priv->dreg))
-		goto nla_put_failure;
-	return 0;
+	अगर (nla_put_be32(skb, NFTA_RT_KEY, htonl(priv->key)))
+		जाओ nla_put_failure;
+	अगर (nft_dump_रेजिस्टर(skb, NFTA_RT_DREG, priv->dreg))
+		जाओ nla_put_failure;
+	वापस 0;
 
 nla_put_failure:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int nft_rt_validate(const struct nft_ctx *ctx, const struct nft_expr *expr,
-			   const struct nft_data **data)
-{
-	const struct nft_rt *priv = nft_expr_priv(expr);
-	unsigned int hooks;
+अटल पूर्णांक nft_rt_validate(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr,
+			   स्थिर काष्ठा nft_data **data)
+अणु
+	स्थिर काष्ठा nft_rt *priv = nft_expr_priv(expr);
+	अचिन्हित पूर्णांक hooks;
 
-	switch (priv->key) {
-	case NFT_RT_NEXTHOP4:
-	case NFT_RT_NEXTHOP6:
-	case NFT_RT_CLASSID:
-	case NFT_RT_XFRM:
-		return 0;
-	case NFT_RT_TCPMSS:
+	चयन (priv->key) अणु
+	हाल NFT_RT_NEXTHOP4:
+	हाल NFT_RT_NEXTHOP6:
+	हाल NFT_RT_CLASSID:
+	हाल NFT_RT_XFRM:
+		वापस 0;
+	हाल NFT_RT_TCPMSS:
 		hooks = (1 << NF_INET_FORWARD) |
 			(1 << NF_INET_LOCAL_OUT) |
 			(1 << NF_INET_POST_ROUTING);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return nft_chain_validate_hooks(ctx->chain, hooks);
-}
+	वापस nft_chain_validate_hooks(ctx->chain, hooks);
+पूर्ण
 
-static const struct nft_expr_ops nft_rt_get_ops = {
+अटल स्थिर काष्ठा nft_expr_ops nft_rt_get_ops = अणु
 	.type		= &nft_rt_type,
-	.size		= NFT_EXPR_SIZE(sizeof(struct nft_rt)),
+	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_rt)),
 	.eval		= nft_rt_get_eval,
 	.init		= nft_rt_get_init,
 	.dump		= nft_rt_get_dump,
 	.validate	= nft_rt_validate,
-};
+पूर्ण;
 
-struct nft_expr_type nft_rt_type __read_mostly = {
+काष्ठा nft_expr_type nft_rt_type __पढ़ो_mostly = अणु
 	.name		= "rt",
 	.ops		= &nft_rt_get_ops,
 	.policy		= nft_rt_policy,
 	.maxattr	= NFTA_RT_MAX,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;

@@ -1,257 +1,258 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
-#include <linux/sched.h>
-#include <linux/sched/mm.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/completion.h>
-#include <linux/bug.h>
-#include <crypto/hash.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/bug.h>
+#समावेश <crypto/hash.h>
 
-#include "ctree.h"
-#include "discard.h"
-#include "disk-io.h"
-#include "send.h"
-#include "transaction.h"
-#include "sysfs.h"
-#include "volumes.h"
-#include "space-info.h"
-#include "block-group.h"
-#include "qgroup.h"
+#समावेश "ctree.h"
+#समावेश "discard.h"
+#समावेश "disk-io.h"
+#समावेश "send.h"
+#समावेश "transaction.h"
+#समावेश "sysfs.h"
+#समावेश "volumes.h"
+#समावेश "space-info.h"
+#समावेश "block-group.h"
+#समावेश "qgroup.h"
 
-struct btrfs_feature_attr {
-	struct kobj_attribute kobj_attr;
-	enum btrfs_feature_set feature_set;
+काष्ठा btrfs_feature_attr अणु
+	काष्ठा kobj_attribute kobj_attr;
+	क्रमागत btrfs_feature_set feature_set;
 	u64 feature_bit;
-};
+पूर्ण;
 
 /* For raid type sysfs entries */
-struct raid_kobject {
+काष्ठा raid_kobject अणु
 	u64 flags;
-	struct kobject kobj;
-};
+	काष्ठा kobject kobj;
+पूर्ण;
 
-#define __INIT_KOBJ_ATTR(_name, _mode, _show, _store)			\
-{									\
-	.attr	= { .name = __stringify(_name), .mode = _mode },	\
+#घोषणा __INIT_KOBJ_ATTR(_name, _mode, _show, _store)			\
+अणु									\
+	.attr	= अणु .name = __stringअगरy(_name), .mode = _mode पूर्ण,	\
 	.show	= _show,						\
 	.store	= _store,						\
-}
+पूर्ण
 
-#define BTRFS_ATTR_RW(_prefix, _name, _show, _store)			\
-	static struct kobj_attribute btrfs_attr_##_prefix##_##_name =	\
+#घोषणा BTRFS_ATTR_RW(_prefix, _name, _show, _store)			\
+	अटल काष्ठा kobj_attribute btrfs_attr_##_prefix##_##_name =	\
 			__INIT_KOBJ_ATTR(_name, 0644, _show, _store)
 
-#define BTRFS_ATTR(_prefix, _name, _show)				\
-	static struct kobj_attribute btrfs_attr_##_prefix##_##_name =	\
-			__INIT_KOBJ_ATTR(_name, 0444, _show, NULL)
+#घोषणा BTRFS_ATTR(_prefix, _name, _show)				\
+	अटल काष्ठा kobj_attribute btrfs_attr_##_prefix##_##_name =	\
+			__INIT_KOBJ_ATTR(_name, 0444, _show, शून्य)
 
-#define BTRFS_ATTR_PTR(_prefix, _name)					\
+#घोषणा BTRFS_ATTR_PTR(_prefix, _name)					\
 	(&btrfs_attr_##_prefix##_##_name.attr)
 
-#define BTRFS_FEAT_ATTR(_name, _feature_set, _feature_prefix, _feature_bit)  \
-static struct btrfs_feature_attr btrfs_attr_features_##_name = {	     \
+#घोषणा BTRFS_FEAT_ATTR(_name, _feature_set, _feature_prefix, _feature_bit)  \
+अटल काष्ठा btrfs_feature_attr btrfs_attr_features_##_name = अणु	     \
 	.kobj_attr = __INIT_KOBJ_ATTR(_name, S_IRUGO,			     \
 				      btrfs_feature_attr_show,		     \
 				      btrfs_feature_attr_store),	     \
 	.feature_set	= _feature_set,					     \
 	.feature_bit	= _feature_prefix ##_## _feature_bit,		     \
-}
-#define BTRFS_FEAT_ATTR_PTR(_name)					     \
+पूर्ण
+#घोषणा BTRFS_FEAT_ATTR_PTR(_name)					     \
 	(&btrfs_attr_features_##_name.kobj_attr.attr)
 
-#define BTRFS_FEAT_ATTR_COMPAT(name, feature) \
+#घोषणा BTRFS_FEAT_ATTR_COMPAT(name, feature) \
 	BTRFS_FEAT_ATTR(name, FEAT_COMPAT, BTRFS_FEATURE_COMPAT, feature)
-#define BTRFS_FEAT_ATTR_COMPAT_RO(name, feature) \
+#घोषणा BTRFS_FEAT_ATTR_COMPAT_RO(name, feature) \
 	BTRFS_FEAT_ATTR(name, FEAT_COMPAT_RO, BTRFS_FEATURE_COMPAT_RO, feature)
-#define BTRFS_FEAT_ATTR_INCOMPAT(name, feature) \
+#घोषणा BTRFS_FEAT_ATTR_INCOMPAT(name, feature) \
 	BTRFS_FEAT_ATTR(name, FEAT_INCOMPAT, BTRFS_FEATURE_INCOMPAT, feature)
 
-static inline struct btrfs_fs_info *to_fs_info(struct kobject *kobj);
-static inline struct btrfs_fs_devices *to_fs_devs(struct kobject *kobj);
+अटल अंतरभूत काष्ठा btrfs_fs_info *to_fs_info(काष्ठा kobject *kobj);
+अटल अंतरभूत काष्ठा btrfs_fs_devices *to_fs_devs(काष्ठा kobject *kobj);
 
-static struct btrfs_feature_attr *to_btrfs_feature_attr(struct kobj_attribute *a)
-{
-	return container_of(a, struct btrfs_feature_attr, kobj_attr);
-}
+अटल काष्ठा btrfs_feature_attr *to_btrfs_feature_attr(काष्ठा kobj_attribute *a)
+अणु
+	वापस container_of(a, काष्ठा btrfs_feature_attr, kobj_attr);
+पूर्ण
 
-static struct kobj_attribute *attr_to_btrfs_attr(struct attribute *attr)
-{
-	return container_of(attr, struct kobj_attribute, attr);
-}
+अटल काष्ठा kobj_attribute *attr_to_btrfs_attr(काष्ठा attribute *attr)
+अणु
+	वापस container_of(attr, काष्ठा kobj_attribute, attr);
+पूर्ण
 
-static struct btrfs_feature_attr *attr_to_btrfs_feature_attr(
-		struct attribute *attr)
-{
-	return to_btrfs_feature_attr(attr_to_btrfs_attr(attr));
-}
+अटल काष्ठा btrfs_feature_attr *attr_to_btrfs_feature_attr(
+		काष्ठा attribute *attr)
+अणु
+	वापस to_btrfs_feature_attr(attr_to_btrfs_attr(attr));
+पूर्ण
 
-static u64 get_features(struct btrfs_fs_info *fs_info,
-			enum btrfs_feature_set set)
-{
-	struct btrfs_super_block *disk_super = fs_info->super_copy;
-	if (set == FEAT_COMPAT)
-		return btrfs_super_compat_flags(disk_super);
-	else if (set == FEAT_COMPAT_RO)
-		return btrfs_super_compat_ro_flags(disk_super);
-	else
-		return btrfs_super_incompat_flags(disk_super);
-}
+अटल u64 get_features(काष्ठा btrfs_fs_info *fs_info,
+			क्रमागत btrfs_feature_set set)
+अणु
+	काष्ठा btrfs_super_block *disk_super = fs_info->super_copy;
+	अगर (set == FEAT_COMPAT)
+		वापस btrfs_super_compat_flags(disk_super);
+	अन्यथा अगर (set == FEAT_COMPAT_RO)
+		वापस btrfs_super_compat_ro_flags(disk_super);
+	अन्यथा
+		वापस btrfs_super_incompat_flags(disk_super);
+पूर्ण
 
-static void set_features(struct btrfs_fs_info *fs_info,
-			 enum btrfs_feature_set set, u64 features)
-{
-	struct btrfs_super_block *disk_super = fs_info->super_copy;
-	if (set == FEAT_COMPAT)
+अटल व्योम set_features(काष्ठा btrfs_fs_info *fs_info,
+			 क्रमागत btrfs_feature_set set, u64 features)
+अणु
+	काष्ठा btrfs_super_block *disk_super = fs_info->super_copy;
+	अगर (set == FEAT_COMPAT)
 		btrfs_set_super_compat_flags(disk_super, features);
-	else if (set == FEAT_COMPAT_RO)
+	अन्यथा अगर (set == FEAT_COMPAT_RO)
 		btrfs_set_super_compat_ro_flags(disk_super, features);
-	else
+	अन्यथा
 		btrfs_set_super_incompat_flags(disk_super, features);
-}
+पूर्ण
 
-static int can_modify_feature(struct btrfs_feature_attr *fa)
-{
-	int val = 0;
+अटल पूर्णांक can_modअगरy_feature(काष्ठा btrfs_feature_attr *fa)
+अणु
+	पूर्णांक val = 0;
 	u64 set, clear;
-	switch (fa->feature_set) {
-	case FEAT_COMPAT:
+	चयन (fa->feature_set) अणु
+	हाल FEAT_COMPAT:
 		set = BTRFS_FEATURE_COMPAT_SAFE_SET;
 		clear = BTRFS_FEATURE_COMPAT_SAFE_CLEAR;
-		break;
-	case FEAT_COMPAT_RO:
+		अवरोध;
+	हाल FEAT_COMPAT_RO:
 		set = BTRFS_FEATURE_COMPAT_RO_SAFE_SET;
 		clear = BTRFS_FEATURE_COMPAT_RO_SAFE_CLEAR;
-		break;
-	case FEAT_INCOMPAT:
+		अवरोध;
+	हाल FEAT_INCOMPAT:
 		set = BTRFS_FEATURE_INCOMPAT_SAFE_SET;
 		clear = BTRFS_FEATURE_INCOMPAT_SAFE_CLEAR;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_warn("btrfs: sysfs: unknown feature set %d\n",
 				fa->feature_set);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (set & fa->feature_bit)
+	अगर (set & fa->feature_bit)
 		val |= 1;
-	if (clear & fa->feature_bit)
+	अगर (clear & fa->feature_bit)
 		val |= 2;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static ssize_t btrfs_feature_attr_show(struct kobject *kobj,
-				       struct kobj_attribute *a, char *buf)
-{
-	int val = 0;
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
-	struct btrfs_feature_attr *fa = to_btrfs_feature_attr(a);
-	if (fs_info) {
+अटल sमाप_प्रकार btrfs_feature_attr_show(काष्ठा kobject *kobj,
+				       काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	पूर्णांक val = 0;
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
+	काष्ठा btrfs_feature_attr *fa = to_btrfs_feature_attr(a);
+	अगर (fs_info) अणु
 		u64 features = get_features(fs_info, fa->feature_set);
-		if (features & fa->feature_bit)
+		अगर (features & fa->feature_bit)
 			val = 1;
-	} else
-		val = can_modify_feature(fa);
+	पूर्ण अन्यथा
+		val = can_modअगरy_feature(fa);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", val);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", val);
+पूर्ण
 
-static ssize_t btrfs_feature_attr_store(struct kobject *kobj,
-					struct kobj_attribute *a,
-					const char *buf, size_t count)
-{
-	struct btrfs_fs_info *fs_info;
-	struct btrfs_feature_attr *fa = to_btrfs_feature_attr(a);
+अटल sमाप_प्रकार btrfs_feature_attr_store(काष्ठा kobject *kobj,
+					काष्ठा kobj_attribute *a,
+					स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा btrfs_fs_info *fs_info;
+	काष्ठा btrfs_feature_attr *fa = to_btrfs_feature_attr(a);
 	u64 features, set, clear;
-	unsigned long val;
-	int ret;
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
 	fs_info = to_fs_info(kobj);
-	if (!fs_info)
-		return -EPERM;
+	अगर (!fs_info)
+		वापस -EPERM;
 
-	if (sb_rdonly(fs_info->sb))
-		return -EROFS;
+	अगर (sb_rकरोnly(fs_info->sb))
+		वापस -EROFS;
 
-	ret = kstrtoul(skip_spaces(buf), 0, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(skip_spaces(buf), 0, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (fa->feature_set == FEAT_COMPAT) {
+	अगर (fa->feature_set == FEAT_COMPAT) अणु
 		set = BTRFS_FEATURE_COMPAT_SAFE_SET;
 		clear = BTRFS_FEATURE_COMPAT_SAFE_CLEAR;
-	} else if (fa->feature_set == FEAT_COMPAT_RO) {
+	पूर्ण अन्यथा अगर (fa->feature_set == FEAT_COMPAT_RO) अणु
 		set = BTRFS_FEATURE_COMPAT_RO_SAFE_SET;
 		clear = BTRFS_FEATURE_COMPAT_RO_SAFE_CLEAR;
-	} else {
+	पूर्ण अन्यथा अणु
 		set = BTRFS_FEATURE_INCOMPAT_SAFE_SET;
 		clear = BTRFS_FEATURE_INCOMPAT_SAFE_CLEAR;
-	}
+	पूर्ण
 
 	features = get_features(fs_info, fa->feature_set);
 
-	/* Nothing to do */
-	if ((val && (features & fa->feature_bit)) ||
+	/* Nothing to करो */
+	अगर ((val && (features & fa->feature_bit)) ||
 	    (!val && !(features & fa->feature_bit)))
-		return count;
+		वापस count;
 
-	if ((val && !(set & fa->feature_bit)) ||
-	    (!val && !(clear & fa->feature_bit))) {
+	अगर ((val && !(set & fa->feature_bit)) ||
+	    (!val && !(clear & fa->feature_bit))) अणु
 		btrfs_info(fs_info,
 			"%sabling feature %s on mounted fs is not supported.",
 			val ? "En" : "Dis", fa->kobj_attr.attr.name);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	btrfs_info(fs_info, "%s %s feature flag",
 		   val ? "Setting" : "Clearing", fa->kobj_attr.attr.name);
 
 	spin_lock(&fs_info->super_lock);
 	features = get_features(fs_info, fa->feature_set);
-	if (val)
+	अगर (val)
 		features |= fa->feature_bit;
-	else
+	अन्यथा
 		features &= ~fa->feature_bit;
 	set_features(fs_info, fa->feature_set, features);
 	spin_unlock(&fs_info->super_lock);
 
 	/*
-	 * We don't want to do full transaction commit from inside sysfs
+	 * We करोn't want to करो full transaction commit from inside sysfs
 	 */
 	btrfs_set_pending(fs_info, COMMIT);
-	wake_up_process(fs_info->transaction_kthread);
+	wake_up_process(fs_info->transaction_kthपढ़ो);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static umode_t btrfs_feature_visible(struct kobject *kobj,
-				     struct attribute *attr, int unused)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
+अटल umode_t btrfs_feature_visible(काष्ठा kobject *kobj,
+				     काष्ठा attribute *attr, पूर्णांक unused)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
 	umode_t mode = attr->mode;
 
-	if (fs_info) {
-		struct btrfs_feature_attr *fa;
+	अगर (fs_info) अणु
+		काष्ठा btrfs_feature_attr *fa;
 		u64 features;
 
 		fa = attr_to_btrfs_feature_attr(attr);
 		features = get_features(fs_info, fa->feature_set);
 
-		if (can_modify_feature(fa))
+		अगर (can_modअगरy_feature(fa))
 			mode |= S_IWUSR;
-		else if (!(features & fa->feature_bit))
+		अन्यथा अगर (!(features & fa->feature_bit))
 			mode = 0;
-	}
+	पूर्ण
 
-	return mode;
-}
+	वापस mode;
+पूर्ण
 
 BTRFS_FEAT_ATTR_INCOMPAT(mixed_backref, MIXED_BACKREF);
-BTRFS_FEAT_ATTR_INCOMPAT(default_subvol, DEFAULT_SUBVOL);
+BTRFS_FEAT_ATTR_INCOMPAT(शेष_subvol, DEFAULT_SUBVOL);
 BTRFS_FEAT_ATTR_INCOMPAT(mixed_groups, MIXED_GROUPS);
 BTRFS_FEAT_ATTR_INCOMPAT(compress_lzo, COMPRESS_LZO);
 BTRFS_FEAT_ATTR_INCOMPAT(compress_zstd, COMPRESS_ZSTD);
@@ -261,16 +262,16 @@ BTRFS_FEAT_ATTR_INCOMPAT(raid56, RAID56);
 BTRFS_FEAT_ATTR_INCOMPAT(skinny_metadata, SKINNY_METADATA);
 BTRFS_FEAT_ATTR_INCOMPAT(no_holes, NO_HOLES);
 BTRFS_FEAT_ATTR_INCOMPAT(metadata_uuid, METADATA_UUID);
-BTRFS_FEAT_ATTR_COMPAT_RO(free_space_tree, FREE_SPACE_TREE);
+BTRFS_FEAT_ATTR_COMPAT_RO(मुक्त_space_tree, FREE_SPACE_TREE);
 BTRFS_FEAT_ATTR_INCOMPAT(raid1c34, RAID1C34);
-/* Remove once support for zoned allocation is feature complete */
-#ifdef CONFIG_BTRFS_DEBUG
+/* Remove once support क्रम zoned allocation is feature complete */
+#अगर_घोषित CONFIG_BTRFS_DEBUG
 BTRFS_FEAT_ATTR_INCOMPAT(zoned, ZONED);
-#endif
+#पूर्ण_अगर
 
-static struct attribute *btrfs_supported_feature_attrs[] = {
+अटल काष्ठा attribute *btrfs_supported_feature_attrs[] = अणु
 	BTRFS_FEAT_ATTR_PTR(mixed_backref),
-	BTRFS_FEAT_ATTR_PTR(default_subvol),
+	BTRFS_FEAT_ATTR_PTR(शेष_subvol),
 	BTRFS_FEAT_ATTR_PTR(mixed_groups),
 	BTRFS_FEAT_ATTR_PTR(compress_lzo),
 	BTRFS_FEAT_ATTR_PTR(compress_zstd),
@@ -280,399 +281,399 @@ static struct attribute *btrfs_supported_feature_attrs[] = {
 	BTRFS_FEAT_ATTR_PTR(skinny_metadata),
 	BTRFS_FEAT_ATTR_PTR(no_holes),
 	BTRFS_FEAT_ATTR_PTR(metadata_uuid),
-	BTRFS_FEAT_ATTR_PTR(free_space_tree),
+	BTRFS_FEAT_ATTR_PTR(मुक्त_space_tree),
 	BTRFS_FEAT_ATTR_PTR(raid1c34),
-#ifdef CONFIG_BTRFS_DEBUG
+#अगर_घोषित CONFIG_BTRFS_DEBUG
 	BTRFS_FEAT_ATTR_PTR(zoned),
-#endif
-	NULL
-};
+#पूर्ण_अगर
+	शून्य
+पूर्ण;
 
 /*
- * Features which depend on feature bits and may differ between each fs.
+ * Features which depend on feature bits and may dअगरfer between each fs.
  *
- * /sys/fs/btrfs/features lists all available features of this kernel while
+ * /sys/fs/btrfs/features lists all available features of this kernel जबतक
  * /sys/fs/btrfs/UUID/features shows features of the fs which are enabled or
  * can be changed online.
  */
-static const struct attribute_group btrfs_feature_attr_group = {
+अटल स्थिर काष्ठा attribute_group btrfs_feature_attr_group = अणु
 	.name = "features",
 	.is_visible = btrfs_feature_visible,
 	.attrs = btrfs_supported_feature_attrs,
-};
+पूर्ण;
 
-static ssize_t rmdir_subvol_show(struct kobject *kobj,
-				 struct kobj_attribute *ka, char *buf)
-{
-	return scnprintf(buf, PAGE_SIZE, "0\n");
-}
-BTRFS_ATTR(static_feature, rmdir_subvol, rmdir_subvol_show);
+अटल sमाप_प्रकार सूची_हटाओ_subvol_show(काष्ठा kobject *kobj,
+				 काष्ठा kobj_attribute *ka, अक्षर *buf)
+अणु
+	वापस scnम_लिखो(buf, PAGE_SIZE, "0\n");
+पूर्ण
+BTRFS_ATTR(अटल_feature, सूची_हटाओ_subvol, सूची_हटाओ_subvol_show);
 
-static ssize_t supported_checksums_show(struct kobject *kobj,
-					struct kobj_attribute *a, char *buf)
-{
-	ssize_t ret = 0;
-	int i;
+अटल sमाप_प्रकार supported_checksums_show(काष्ठा kobject *kobj,
+					काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	sमाप_प्रकार ret = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < btrfs_get_num_csums(); i++) {
+	क्रम (i = 0; i < btrfs_get_num_csums(); i++) अणु
 		/*
-		 * This "trick" only works as long as 'enum btrfs_csum_type' has
+		 * This "trick" only works as दीर्घ as 'enum btrfs_csum_type' has
 		 * no holes in it
 		 */
-		ret += scnprintf(buf + ret, PAGE_SIZE - ret, "%s%s",
+		ret += scnम_लिखो(buf + ret, PAGE_SIZE - ret, "%s%s",
 				(i == 0 ? "" : " "), btrfs_super_csum_name(i));
 
-	}
+	पूर्ण
 
-	ret += scnprintf(buf + ret, PAGE_SIZE - ret, "\n");
-	return ret;
-}
-BTRFS_ATTR(static_feature, supported_checksums, supported_checksums_show);
+	ret += scnम_लिखो(buf + ret, PAGE_SIZE - ret, "\n");
+	वापस ret;
+पूर्ण
+BTRFS_ATTR(अटल_feature, supported_checksums, supported_checksums_show);
 
-static ssize_t send_stream_version_show(struct kobject *kobj,
-					struct kobj_attribute *ka, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%d\n", BTRFS_SEND_STREAM_VERSION);
-}
-BTRFS_ATTR(static_feature, send_stream_version, send_stream_version_show);
+अटल sमाप_प्रकार send_stream_version_show(काष्ठा kobject *kobj,
+					काष्ठा kobj_attribute *ka, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", BTRFS_SEND_STREAM_VERSION);
+पूर्ण
+BTRFS_ATTR(अटल_feature, send_stream_version, send_stream_version_show);
 
-static const char *rescue_opts[] = {
+अटल स्थिर अक्षर *rescue_opts[] = अणु
 	"usebackuproot",
 	"nologreplay",
 	"ignorebadroots",
 	"ignoredatacsums",
 	"all",
-};
+पूर्ण;
 
-static ssize_t supported_rescue_options_show(struct kobject *kobj,
-					     struct kobj_attribute *a,
-					     char *buf)
-{
-	ssize_t ret = 0;
-	int i;
+अटल sमाप_प्रकार supported_rescue_options_show(काष्ठा kobject *kobj,
+					     काष्ठा kobj_attribute *a,
+					     अक्षर *buf)
+अणु
+	sमाप_प्रकार ret = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(rescue_opts); i++)
-		ret += scnprintf(buf + ret, PAGE_SIZE - ret, "%s%s",
+	क्रम (i = 0; i < ARRAY_SIZE(rescue_opts); i++)
+		ret += scnम_लिखो(buf + ret, PAGE_SIZE - ret, "%s%s",
 				 (i ? " " : ""), rescue_opts[i]);
-	ret += scnprintf(buf + ret, PAGE_SIZE - ret, "\n");
-	return ret;
-}
-BTRFS_ATTR(static_feature, supported_rescue_options,
+	ret += scnम_लिखो(buf + ret, PAGE_SIZE - ret, "\n");
+	वापस ret;
+पूर्ण
+BTRFS_ATTR(अटल_feature, supported_rescue_options,
 	   supported_rescue_options_show);
 
-static ssize_t supported_sectorsizes_show(struct kobject *kobj,
-					  struct kobj_attribute *a,
-					  char *buf)
-{
-	ssize_t ret = 0;
+अटल sमाप_प्रकार supported_sectorsizes_show(काष्ठा kobject *kobj,
+					  काष्ठा kobj_attribute *a,
+					  अक्षर *buf)
+अणु
+	sमाप_प्रकार ret = 0;
 
 	/* Only sectorsize == PAGE_SIZE is now supported */
-	ret += scnprintf(buf + ret, PAGE_SIZE - ret, "%lu\n", PAGE_SIZE);
+	ret += scnम_लिखो(buf + ret, PAGE_SIZE - ret, "%lu\n", PAGE_SIZE);
 
-	return ret;
-}
-BTRFS_ATTR(static_feature, supported_sectorsizes,
+	वापस ret;
+पूर्ण
+BTRFS_ATTR(अटल_feature, supported_sectorsizes,
 	   supported_sectorsizes_show);
 
-static struct attribute *btrfs_supported_static_feature_attrs[] = {
-	BTRFS_ATTR_PTR(static_feature, rmdir_subvol),
-	BTRFS_ATTR_PTR(static_feature, supported_checksums),
-	BTRFS_ATTR_PTR(static_feature, send_stream_version),
-	BTRFS_ATTR_PTR(static_feature, supported_rescue_options),
-	BTRFS_ATTR_PTR(static_feature, supported_sectorsizes),
-	NULL
-};
+अटल काष्ठा attribute *btrfs_supported_अटल_feature_attrs[] = अणु
+	BTRFS_ATTR_PTR(अटल_feature, सूची_हटाओ_subvol),
+	BTRFS_ATTR_PTR(अटल_feature, supported_checksums),
+	BTRFS_ATTR_PTR(अटल_feature, send_stream_version),
+	BTRFS_ATTR_PTR(अटल_feature, supported_rescue_options),
+	BTRFS_ATTR_PTR(अटल_feature, supported_sectorsizes),
+	शून्य
+पूर्ण;
 
 /*
  * Features which only depend on kernel version.
  *
- * These are listed in /sys/fs/btrfs/features along with
+ * These are listed in /sys/fs/btrfs/features aदीर्घ with
  * btrfs_feature_attr_group
  */
-static const struct attribute_group btrfs_static_feature_attr_group = {
+अटल स्थिर काष्ठा attribute_group btrfs_अटल_feature_attr_group = अणु
 	.name = "features",
-	.attrs = btrfs_supported_static_feature_attrs,
-};
+	.attrs = btrfs_supported_अटल_feature_attrs,
+पूर्ण;
 
-#ifdef CONFIG_BTRFS_DEBUG
+#अगर_घोषित CONFIG_BTRFS_DEBUG
 
 /*
  * Discard statistics and tunables
  */
-#define discard_to_fs_info(_kobj)	to_fs_info((_kobj)->parent->parent)
+#घोषणा discard_to_fs_info(_kobj)	to_fs_info((_kobj)->parent->parent)
 
-static ssize_t btrfs_discardable_bytes_show(struct kobject *kobj,
-					    struct kobj_attribute *a,
-					    char *buf)
-{
-	struct btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_discardable_bytes_show(काष्ठा kobject *kobj,
+					    काष्ठा kobj_attribute *a,
+					    अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
 
-	return scnprintf(buf, PAGE_SIZE, "%lld\n",
-			atomic64_read(&fs_info->discard_ctl.discardable_bytes));
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%lld\n",
+			atomic64_पढ़ो(&fs_info->discard_ctl.discardable_bytes));
+पूर्ण
 BTRFS_ATTR(discard, discardable_bytes, btrfs_discardable_bytes_show);
 
-static ssize_t btrfs_discardable_extents_show(struct kobject *kobj,
-					      struct kobj_attribute *a,
-					      char *buf)
-{
-	struct btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_discardable_extents_show(काष्ठा kobject *kobj,
+					      काष्ठा kobj_attribute *a,
+					      अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n",
-			atomic_read(&fs_info->discard_ctl.discardable_extents));
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n",
+			atomic_पढ़ो(&fs_info->discard_ctl.discardable_extents));
+पूर्ण
 BTRFS_ATTR(discard, discardable_extents, btrfs_discardable_extents_show);
 
-static ssize_t btrfs_discard_bitmap_bytes_show(struct kobject *kobj,
-					       struct kobj_attribute *a,
-					       char *buf)
-{
-	struct btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_discard_biपंचांगap_bytes_show(काष्ठा kobject *kobj,
+					       काष्ठा kobj_attribute *a,
+					       अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
 
-	return scnprintf(buf, PAGE_SIZE, "%lld\n",
-			fs_info->discard_ctl.discard_bitmap_bytes);
-}
-BTRFS_ATTR(discard, discard_bitmap_bytes, btrfs_discard_bitmap_bytes_show);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%lld\n",
+			fs_info->discard_ctl.discard_biपंचांगap_bytes);
+पूर्ण
+BTRFS_ATTR(discard, discard_biपंचांगap_bytes, btrfs_discard_biपंचांगap_bytes_show);
 
-static ssize_t btrfs_discard_bytes_saved_show(struct kobject *kobj,
-					      struct kobj_attribute *a,
-					      char *buf)
-{
-	struct btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_discard_bytes_saved_show(काष्ठा kobject *kobj,
+					      काष्ठा kobj_attribute *a,
+					      अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
 
-	return scnprintf(buf, PAGE_SIZE, "%lld\n",
-		atomic64_read(&fs_info->discard_ctl.discard_bytes_saved));
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%lld\n",
+		atomic64_पढ़ो(&fs_info->discard_ctl.discard_bytes_saved));
+पूर्ण
 BTRFS_ATTR(discard, discard_bytes_saved, btrfs_discard_bytes_saved_show);
 
-static ssize_t btrfs_discard_extent_bytes_show(struct kobject *kobj,
-					       struct kobj_attribute *a,
-					       char *buf)
-{
-	struct btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_discard_extent_bytes_show(काष्ठा kobject *kobj,
+					       काष्ठा kobj_attribute *a,
+					       अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
 
-	return scnprintf(buf, PAGE_SIZE, "%lld\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%lld\n",
 			fs_info->discard_ctl.discard_extent_bytes);
-}
+पूर्ण
 BTRFS_ATTR(discard, discard_extent_bytes, btrfs_discard_extent_bytes_show);
 
-static ssize_t btrfs_discard_iops_limit_show(struct kobject *kobj,
-					     struct kobj_attribute *a,
-					     char *buf)
-{
-	struct btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_discard_iops_limit_show(काष्ठा kobject *kobj,
+					     काष्ठा kobj_attribute *a,
+					     अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
 
-	return scnprintf(buf, PAGE_SIZE, "%u\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n",
 			READ_ONCE(fs_info->discard_ctl.iops_limit));
-}
+पूर्ण
 
-static ssize_t btrfs_discard_iops_limit_store(struct kobject *kobj,
-					      struct kobj_attribute *a,
-					      const char *buf, size_t len)
-{
-	struct btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
-	struct btrfs_discard_ctl *discard_ctl = &fs_info->discard_ctl;
+अटल sमाप_प्रकार btrfs_discard_iops_limit_store(काष्ठा kobject *kobj,
+					      काष्ठा kobj_attribute *a,
+					      स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
+	काष्ठा btrfs_discard_ctl *discard_ctl = &fs_info->discard_ctl;
 	u32 iops_limit;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou32(buf, 10, &iops_limit);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
 	WRITE_ONCE(discard_ctl->iops_limit, iops_limit);
 	btrfs_discard_calc_delay(discard_ctl);
 	btrfs_discard_schedule_work(discard_ctl, true);
-	return len;
-}
+	वापस len;
+पूर्ण
 BTRFS_ATTR_RW(discard, iops_limit, btrfs_discard_iops_limit_show,
 	      btrfs_discard_iops_limit_store);
 
-static ssize_t btrfs_discard_kbps_limit_show(struct kobject *kobj,
-					     struct kobj_attribute *a,
-					     char *buf)
-{
-	struct btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_discard_kbps_limit_show(काष्ठा kobject *kobj,
+					     काष्ठा kobj_attribute *a,
+					     अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
 
-	return scnprintf(buf, PAGE_SIZE, "%u\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n",
 			READ_ONCE(fs_info->discard_ctl.kbps_limit));
-}
+पूर्ण
 
-static ssize_t btrfs_discard_kbps_limit_store(struct kobject *kobj,
-					      struct kobj_attribute *a,
-					      const char *buf, size_t len)
-{
-	struct btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
-	struct btrfs_discard_ctl *discard_ctl = &fs_info->discard_ctl;
+अटल sमाप_प्रकार btrfs_discard_kbps_limit_store(काष्ठा kobject *kobj,
+					      काष्ठा kobj_attribute *a,
+					      स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
+	काष्ठा btrfs_discard_ctl *discard_ctl = &fs_info->discard_ctl;
 	u32 kbps_limit;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou32(buf, 10, &kbps_limit);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
 	WRITE_ONCE(discard_ctl->kbps_limit, kbps_limit);
 	btrfs_discard_schedule_work(discard_ctl, true);
-	return len;
-}
+	वापस len;
+पूर्ण
 BTRFS_ATTR_RW(discard, kbps_limit, btrfs_discard_kbps_limit_show,
 	      btrfs_discard_kbps_limit_store);
 
-static ssize_t btrfs_discard_max_discard_size_show(struct kobject *kobj,
-						   struct kobj_attribute *a,
-						   char *buf)
-{
-	struct btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_discard_max_discard_size_show(काष्ठा kobject *kobj,
+						   काष्ठा kobj_attribute *a,
+						   अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
 
-	return scnprintf(buf, PAGE_SIZE, "%llu\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%llu\n",
 			READ_ONCE(fs_info->discard_ctl.max_discard_size));
-}
+पूर्ण
 
-static ssize_t btrfs_discard_max_discard_size_store(struct kobject *kobj,
-						    struct kobj_attribute *a,
-						    const char *buf, size_t len)
-{
-	struct btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
-	struct btrfs_discard_ctl *discard_ctl = &fs_info->discard_ctl;
+अटल sमाप_प्रकार btrfs_discard_max_discard_size_store(काष्ठा kobject *kobj,
+						    काष्ठा kobj_attribute *a,
+						    स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = discard_to_fs_info(kobj);
+	काष्ठा btrfs_discard_ctl *discard_ctl = &fs_info->discard_ctl;
 	u64 max_discard_size;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou64(buf, 10, &max_discard_size);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
 	WRITE_ONCE(discard_ctl->max_discard_size, max_discard_size);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 BTRFS_ATTR_RW(discard, max_discard_size, btrfs_discard_max_discard_size_show,
 	      btrfs_discard_max_discard_size_store);
 
-static const struct attribute *discard_debug_attrs[] = {
+अटल स्थिर काष्ठा attribute *discard_debug_attrs[] = अणु
 	BTRFS_ATTR_PTR(discard, discardable_bytes),
 	BTRFS_ATTR_PTR(discard, discardable_extents),
-	BTRFS_ATTR_PTR(discard, discard_bitmap_bytes),
+	BTRFS_ATTR_PTR(discard, discard_biपंचांगap_bytes),
 	BTRFS_ATTR_PTR(discard, discard_bytes_saved),
 	BTRFS_ATTR_PTR(discard, discard_extent_bytes),
 	BTRFS_ATTR_PTR(discard, iops_limit),
 	BTRFS_ATTR_PTR(discard, kbps_limit),
 	BTRFS_ATTR_PTR(discard, max_discard_size),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*
- * Runtime debugging exported via sysfs
+ * Runसमय debugging exported via sysfs
  *
- * /sys/fs/btrfs/debug - applies to module or all filesystems
- * /sys/fs/btrfs/UUID  - applies only to the given filesystem
+ * /sys/fs/btrfs/debug - applies to module or all fileप्रणालीs
+ * /sys/fs/btrfs/UUID  - applies only to the given fileप्रणाली
  */
-static const struct attribute *btrfs_debug_mount_attrs[] = {
-	NULL,
-};
+अटल स्थिर काष्ठा attribute *btrfs_debug_mount_attrs[] = अणु
+	शून्य,
+पूर्ण;
 
-static struct attribute *btrfs_debug_feature_attrs[] = {
-	NULL
-};
+अटल काष्ठा attribute *btrfs_debug_feature_attrs[] = अणु
+	शून्य
+पूर्ण;
 
-static const struct attribute_group btrfs_debug_feature_attr_group = {
+अटल स्थिर काष्ठा attribute_group btrfs_debug_feature_attr_group = अणु
 	.name = "debug",
 	.attrs = btrfs_debug_feature_attrs,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 
-static ssize_t btrfs_show_u64(u64 *value_ptr, spinlock_t *lock, char *buf)
-{
+अटल sमाप_प्रकार btrfs_show_u64(u64 *value_ptr, spinlock_t *lock, अक्षर *buf)
+अणु
 	u64 val;
-	if (lock)
+	अगर (lock)
 		spin_lock(lock);
 	val = *value_ptr;
-	if (lock)
+	अगर (lock)
 		spin_unlock(lock);
-	return scnprintf(buf, PAGE_SIZE, "%llu\n", val);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%llu\n", val);
+पूर्ण
 
-static ssize_t global_rsv_size_show(struct kobject *kobj,
-				    struct kobj_attribute *ka, char *buf)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj->parent);
-	struct btrfs_block_rsv *block_rsv = &fs_info->global_block_rsv;
-	return btrfs_show_u64(&block_rsv->size, &block_rsv->lock, buf);
-}
+अटल sमाप_प्रकार global_rsv_size_show(काष्ठा kobject *kobj,
+				    काष्ठा kobj_attribute *ka, अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj->parent);
+	काष्ठा btrfs_block_rsv *block_rsv = &fs_info->global_block_rsv;
+	वापस btrfs_show_u64(&block_rsv->size, &block_rsv->lock, buf);
+पूर्ण
 BTRFS_ATTR(allocation, global_rsv_size, global_rsv_size_show);
 
-static ssize_t global_rsv_reserved_show(struct kobject *kobj,
-					struct kobj_attribute *a, char *buf)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj->parent);
-	struct btrfs_block_rsv *block_rsv = &fs_info->global_block_rsv;
-	return btrfs_show_u64(&block_rsv->reserved, &block_rsv->lock, buf);
-}
+अटल sमाप_प्रकार global_rsv_reserved_show(काष्ठा kobject *kobj,
+					काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj->parent);
+	काष्ठा btrfs_block_rsv *block_rsv = &fs_info->global_block_rsv;
+	वापस btrfs_show_u64(&block_rsv->reserved, &block_rsv->lock, buf);
+पूर्ण
 BTRFS_ATTR(allocation, global_rsv_reserved, global_rsv_reserved_show);
 
-#define to_space_info(_kobj) container_of(_kobj, struct btrfs_space_info, kobj)
-#define to_raid_kobj(_kobj) container_of(_kobj, struct raid_kobject, kobj)
+#घोषणा to_space_info(_kobj) container_of(_kobj, काष्ठा btrfs_space_info, kobj)
+#घोषणा to_raid_kobj(_kobj) container_of(_kobj, काष्ठा raid_kobject, kobj)
 
-static ssize_t raid_bytes_show(struct kobject *kobj,
-			       struct kobj_attribute *attr, char *buf);
+अटल sमाप_प्रकार raid_bytes_show(काष्ठा kobject *kobj,
+			       काष्ठा kobj_attribute *attr, अक्षर *buf);
 BTRFS_ATTR(raid, total_bytes, raid_bytes_show);
 BTRFS_ATTR(raid, used_bytes, raid_bytes_show);
 
-static ssize_t raid_bytes_show(struct kobject *kobj,
-			       struct kobj_attribute *attr, char *buf)
+अटल sमाप_प्रकार raid_bytes_show(काष्ठा kobject *kobj,
+			       काष्ठा kobj_attribute *attr, अक्षर *buf)
 
-{
-	struct btrfs_space_info *sinfo = to_space_info(kobj->parent);
-	struct btrfs_block_group *block_group;
-	int index = btrfs_bg_flags_to_raid_index(to_raid_kobj(kobj)->flags);
+अणु
+	काष्ठा btrfs_space_info *sinfo = to_space_info(kobj->parent);
+	काष्ठा btrfs_block_group *block_group;
+	पूर्णांक index = btrfs_bg_flags_to_raid_index(to_raid_kobj(kobj)->flags);
 	u64 val = 0;
 
-	down_read(&sinfo->groups_sem);
-	list_for_each_entry(block_group, &sinfo->block_groups[index], list) {
-		if (&attr->attr == BTRFS_ATTR_PTR(raid, total_bytes))
+	करोwn_पढ़ो(&sinfo->groups_sem);
+	list_क्रम_each_entry(block_group, &sinfo->block_groups[index], list) अणु
+		अगर (&attr->attr == BTRFS_ATTR_PTR(raid, total_bytes))
 			val += block_group->length;
-		else
+		अन्यथा
 			val += block_group->used;
-	}
-	up_read(&sinfo->groups_sem);
-	return scnprintf(buf, PAGE_SIZE, "%llu\n", val);
-}
+	पूर्ण
+	up_पढ़ो(&sinfo->groups_sem);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%llu\n", val);
+पूर्ण
 
-static struct attribute *raid_attrs[] = {
+अटल काष्ठा attribute *raid_attrs[] = अणु
 	BTRFS_ATTR_PTR(raid, total_bytes),
 	BTRFS_ATTR_PTR(raid, used_bytes),
-	NULL
-};
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(raid);
 
-static void release_raid_kobj(struct kobject *kobj)
-{
-	kfree(to_raid_kobj(kobj));
-}
+अटल व्योम release_raid_kobj(काष्ठा kobject *kobj)
+अणु
+	kमुक्त(to_raid_kobj(kobj));
+पूर्ण
 
-static struct kobj_type btrfs_raid_ktype = {
+अटल काष्ठा kobj_type btrfs_raid_ktype = अणु
 	.sysfs_ops = &kobj_sysfs_ops,
 	.release = release_raid_kobj,
-	.default_groups = raid_groups,
-};
+	.शेष_groups = raid_groups,
+पूर्ण;
 
-#define SPACE_INFO_ATTR(field)						\
-static ssize_t btrfs_space_info_show_##field(struct kobject *kobj,	\
-					     struct kobj_attribute *a,	\
-					     char *buf)			\
-{									\
-	struct btrfs_space_info *sinfo = to_space_info(kobj);		\
-	return btrfs_show_u64(&sinfo->field, &sinfo->lock, buf);	\
-}									\
+#घोषणा SPACE_INFO_ATTR(field)						\
+अटल sमाप_प्रकार btrfs_space_info_show_##field(काष्ठा kobject *kobj,	\
+					     काष्ठा kobj_attribute *a,	\
+					     अक्षर *buf)			\
+अणु									\
+	काष्ठा btrfs_space_info *sinfo = to_space_info(kobj);		\
+	वापस btrfs_show_u64(&sinfo->field, &sinfo->lock, buf);	\
+पूर्ण									\
 BTRFS_ATTR(space_info, field, btrfs_space_info_show_##field)
 
-static ssize_t btrfs_space_info_show_total_bytes_pinned(struct kobject *kobj,
-						       struct kobj_attribute *a,
-						       char *buf)
-{
-	struct btrfs_space_info *sinfo = to_space_info(kobj);
+अटल sमाप_प्रकार btrfs_space_info_show_total_bytes_pinned(काष्ठा kobject *kobj,
+						       काष्ठा kobj_attribute *a,
+						       अक्षर *buf)
+अणु
+	काष्ठा btrfs_space_info *sinfo = to_space_info(kobj);
 	s64 val = percpu_counter_sum(&sinfo->total_bytes_pinned);
-	return scnprintf(buf, PAGE_SIZE, "%lld\n", val);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%lld\n", val);
+पूर्ण
 
 SPACE_INFO_ATTR(flags);
 SPACE_INFO_ATTR(total_bytes);
@@ -680,341 +681,341 @@ SPACE_INFO_ATTR(bytes_used);
 SPACE_INFO_ATTR(bytes_pinned);
 SPACE_INFO_ATTR(bytes_reserved);
 SPACE_INFO_ATTR(bytes_may_use);
-SPACE_INFO_ATTR(bytes_readonly);
+SPACE_INFO_ATTR(bytes_पढ़ोonly);
 SPACE_INFO_ATTR(bytes_zone_unusable);
 SPACE_INFO_ATTR(disk_used);
 SPACE_INFO_ATTR(disk_total);
 BTRFS_ATTR(space_info, total_bytes_pinned,
 	   btrfs_space_info_show_total_bytes_pinned);
 
-static struct attribute *space_info_attrs[] = {
+अटल काष्ठा attribute *space_info_attrs[] = अणु
 	BTRFS_ATTR_PTR(space_info, flags),
 	BTRFS_ATTR_PTR(space_info, total_bytes),
 	BTRFS_ATTR_PTR(space_info, bytes_used),
 	BTRFS_ATTR_PTR(space_info, bytes_pinned),
 	BTRFS_ATTR_PTR(space_info, bytes_reserved),
 	BTRFS_ATTR_PTR(space_info, bytes_may_use),
-	BTRFS_ATTR_PTR(space_info, bytes_readonly),
+	BTRFS_ATTR_PTR(space_info, bytes_पढ़ोonly),
 	BTRFS_ATTR_PTR(space_info, bytes_zone_unusable),
 	BTRFS_ATTR_PTR(space_info, disk_used),
 	BTRFS_ATTR_PTR(space_info, disk_total),
 	BTRFS_ATTR_PTR(space_info, total_bytes_pinned),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(space_info);
 
-static void space_info_release(struct kobject *kobj)
-{
-	struct btrfs_space_info *sinfo = to_space_info(kobj);
+अटल व्योम space_info_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा btrfs_space_info *sinfo = to_space_info(kobj);
 	percpu_counter_destroy(&sinfo->total_bytes_pinned);
-	kfree(sinfo);
-}
+	kमुक्त(sinfo);
+पूर्ण
 
-static struct kobj_type space_info_ktype = {
+अटल काष्ठा kobj_type space_info_ktype = अणु
 	.sysfs_ops = &kobj_sysfs_ops,
 	.release = space_info_release,
-	.default_groups = space_info_groups,
-};
+	.शेष_groups = space_info_groups,
+पूर्ण;
 
-static const struct attribute *allocation_attrs[] = {
+अटल स्थिर काष्ठा attribute *allocation_attrs[] = अणु
 	BTRFS_ATTR_PTR(allocation, global_rsv_reserved),
 	BTRFS_ATTR_PTR(allocation, global_rsv_size),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static ssize_t btrfs_label_show(struct kobject *kobj,
-				struct kobj_attribute *a, char *buf)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
-	char *label = fs_info->super_copy->label;
-	ssize_t ret;
+अटल sमाप_प्रकार btrfs_label_show(काष्ठा kobject *kobj,
+				काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
+	अक्षर *label = fs_info->super_copy->label;
+	sमाप_प्रकार ret;
 
 	spin_lock(&fs_info->super_lock);
-	ret = scnprintf(buf, PAGE_SIZE, label[0] ? "%s\n" : "%s", label);
+	ret = scnम_लिखो(buf, PAGE_SIZE, label[0] ? "%s\n" : "%s", label);
 	spin_unlock(&fs_info->super_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t btrfs_label_store(struct kobject *kobj,
-				 struct kobj_attribute *a,
-				 const char *buf, size_t len)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
-	size_t p_len;
+अटल sमाप_प्रकार btrfs_label_store(काष्ठा kobject *kobj,
+				 काष्ठा kobj_attribute *a,
+				 स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
+	माप_प्रकार p_len;
 
-	if (!fs_info)
-		return -EPERM;
+	अगर (!fs_info)
+		वापस -EPERM;
 
-	if (sb_rdonly(fs_info->sb))
-		return -EROFS;
+	अगर (sb_rकरोnly(fs_info->sb))
+		वापस -EROFS;
 
 	/*
 	 * p_len is the len until the first occurrence of either
 	 * '\n' or '\0'
 	 */
-	p_len = strcspn(buf, "\n");
+	p_len = म_खोज(buf, "\n");
 
-	if (p_len >= BTRFS_LABEL_SIZE)
-		return -EINVAL;
+	अगर (p_len >= BTRFS_LABEL_SIZE)
+		वापस -EINVAL;
 
 	spin_lock(&fs_info->super_lock);
-	memset(fs_info->super_copy->label, 0, BTRFS_LABEL_SIZE);
-	memcpy(fs_info->super_copy->label, buf, p_len);
+	स_रखो(fs_info->super_copy->label, 0, BTRFS_LABEL_SIZE);
+	स_नकल(fs_info->super_copy->label, buf, p_len);
 	spin_unlock(&fs_info->super_lock);
 
 	/*
-	 * We don't want to do full transaction commit from inside sysfs
+	 * We करोn't want to करो full transaction commit from inside sysfs
 	 */
 	btrfs_set_pending(fs_info, COMMIT);
-	wake_up_process(fs_info->transaction_kthread);
+	wake_up_process(fs_info->transaction_kthपढ़ो);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 BTRFS_ATTR_RW(, label, btrfs_label_show, btrfs_label_store);
 
-static ssize_t btrfs_nodesize_show(struct kobject *kobj,
-				struct kobj_attribute *a, char *buf)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_nodesize_show(काष्ठा kobject *kobj,
+				काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
 
-	return scnprintf(buf, PAGE_SIZE, "%u\n", fs_info->super_copy->nodesize);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", fs_info->super_copy->nodesize);
+पूर्ण
 
 BTRFS_ATTR(, nodesize, btrfs_nodesize_show);
 
-static ssize_t btrfs_sectorsize_show(struct kobject *kobj,
-				struct kobj_attribute *a, char *buf)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_sectorsize_show(काष्ठा kobject *kobj,
+				काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
 
-	return scnprintf(buf, PAGE_SIZE, "%u\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n",
 			 fs_info->super_copy->sectorsize);
-}
+पूर्ण
 
 BTRFS_ATTR(, sectorsize, btrfs_sectorsize_show);
 
-static ssize_t btrfs_clone_alignment_show(struct kobject *kobj,
-				struct kobj_attribute *a, char *buf)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_clone_alignment_show(काष्ठा kobject *kobj,
+				काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
 
-	return scnprintf(buf, PAGE_SIZE, "%u\n", fs_info->super_copy->sectorsize);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", fs_info->super_copy->sectorsize);
+पूर्ण
 
 BTRFS_ATTR(, clone_alignment, btrfs_clone_alignment_show);
 
-static ssize_t quota_override_show(struct kobject *kobj,
-				   struct kobj_attribute *a, char *buf)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
-	int quota_override;
+अटल sमाप_प्रकार quota_override_show(काष्ठा kobject *kobj,
+				   काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
+	पूर्णांक quota_override;
 
 	quota_override = test_bit(BTRFS_FS_QUOTA_OVERRIDE, &fs_info->flags);
-	return scnprintf(buf, PAGE_SIZE, "%d\n", quota_override);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", quota_override);
+पूर्ण
 
-static ssize_t quota_override_store(struct kobject *kobj,
-				    struct kobj_attribute *a,
-				    const char *buf, size_t len)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
-	unsigned long knob;
-	int err;
+अटल sमाप_प्रकार quota_override_store(काष्ठा kobject *kobj,
+				    काष्ठा kobj_attribute *a,
+				    स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
+	अचिन्हित दीर्घ knob;
+	पूर्णांक err;
 
-	if (!fs_info)
-		return -EPERM;
+	अगर (!fs_info)
+		वापस -EPERM;
 
-	if (!capable(CAP_SYS_RESOURCE))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_RESOURCE))
+		वापस -EPERM;
 
-	err = kstrtoul(buf, 10, &knob);
-	if (err)
-		return err;
-	if (knob > 1)
-		return -EINVAL;
+	err = kम_से_अदीर्घ(buf, 10, &knob);
+	अगर (err)
+		वापस err;
+	अगर (knob > 1)
+		वापस -EINVAL;
 
-	if (knob)
+	अगर (knob)
 		set_bit(BTRFS_FS_QUOTA_OVERRIDE, &fs_info->flags);
-	else
+	अन्यथा
 		clear_bit(BTRFS_FS_QUOTA_OVERRIDE, &fs_info->flags);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 BTRFS_ATTR_RW(, quota_override, quota_override_show, quota_override_store);
 
-static ssize_t btrfs_metadata_uuid_show(struct kobject *kobj,
-				struct kobj_attribute *a, char *buf)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_metadata_uuid_show(काष्ठा kobject *kobj,
+				काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
 
-	return scnprintf(buf, PAGE_SIZE, "%pU\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%pU\n",
 			fs_info->fs_devices->metadata_uuid);
-}
+पूर्ण
 
 BTRFS_ATTR(, metadata_uuid, btrfs_metadata_uuid_show);
 
-static ssize_t btrfs_checksum_show(struct kobject *kobj,
-				   struct kobj_attribute *a, char *buf)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_checksum_show(काष्ठा kobject *kobj,
+				   काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
 	u16 csum_type = btrfs_super_csum_type(fs_info->super_copy);
 
-	return scnprintf(buf, PAGE_SIZE, "%s (%s)\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%s (%s)\n",
 			btrfs_super_csum_name(csum_type),
 			crypto_shash_driver_name(fs_info->csum_shash));
-}
+पूर्ण
 
 BTRFS_ATTR(, checksum, btrfs_checksum_show);
 
-static ssize_t btrfs_exclusive_operation_show(struct kobject *kobj,
-		struct kobj_attribute *a, char *buf)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
-	const char *str;
+अटल sमाप_प्रकार btrfs_exclusive_operation_show(काष्ठा kobject *kobj,
+		काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
+	स्थिर अक्षर *str;
 
-	switch (READ_ONCE(fs_info->exclusive_operation)) {
-		case  BTRFS_EXCLOP_NONE:
+	चयन (READ_ONCE(fs_info->exclusive_operation)) अणु
+		हाल  BTRFS_EXCLOP_NONE:
 			str = "none\n";
-			break;
-		case BTRFS_EXCLOP_BALANCE:
+			अवरोध;
+		हाल BTRFS_EXCLOP_BALANCE:
 			str = "balance\n";
-			break;
-		case BTRFS_EXCLOP_DEV_ADD:
+			अवरोध;
+		हाल BTRFS_EXCLOP_DEV_ADD:
 			str = "device add\n";
-			break;
-		case BTRFS_EXCLOP_DEV_REMOVE:
+			अवरोध;
+		हाल BTRFS_EXCLOP_DEV_REMOVE:
 			str = "device remove\n";
-			break;
-		case BTRFS_EXCLOP_DEV_REPLACE:
+			अवरोध;
+		हाल BTRFS_EXCLOP_DEV_REPLACE:
 			str = "device replace\n";
-			break;
-		case BTRFS_EXCLOP_RESIZE:
+			अवरोध;
+		हाल BTRFS_EXCLOP_RESIZE:
 			str = "resize\n";
-			break;
-		case BTRFS_EXCLOP_SWAP_ACTIVATE:
+			अवरोध;
+		हाल BTRFS_EXCLOP_SWAP_ACTIVATE:
 			str = "swap activate\n";
-			break;
-		default:
+			अवरोध;
+		शेष:
 			str = "UNKNOWN\n";
-			break;
-	}
-	return scnprintf(buf, PAGE_SIZE, "%s", str);
-}
+			अवरोध;
+	पूर्ण
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%s", str);
+पूर्ण
 BTRFS_ATTR(, exclusive_operation, btrfs_exclusive_operation_show);
 
-static ssize_t btrfs_generation_show(struct kobject *kobj,
-				     struct kobj_attribute *a, char *buf)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
+अटल sमाप_प्रकार btrfs_generation_show(काष्ठा kobject *kobj,
+				     काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
 
-	return scnprintf(buf, PAGE_SIZE, "%llu\n", fs_info->generation);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%llu\n", fs_info->generation);
+पूर्ण
 BTRFS_ATTR(, generation, btrfs_generation_show);
 
 /*
- * Look for an exact string @string in @buffer with possible leading or
+ * Look क्रम an exact string @string in @buffer with possible leading or
  * trailing whitespace
  */
-static bool strmatch(const char *buffer, const char *string)
-{
-	const size_t len = strlen(string);
+अटल bool strmatch(स्थिर अक्षर *buffer, स्थिर अक्षर *string)
+अणु
+	स्थिर माप_प्रकार len = म_माप(string);
 
 	/* Skip leading whitespace */
 	buffer = skip_spaces(buffer);
 
-	/* Match entire string, check if the rest is whitespace or empty */
-	if (strncmp(string, buffer, len) == 0 &&
-	    strlen(skip_spaces(buffer + len)) == 0)
-		return true;
+	/* Match entire string, check अगर the rest is whitespace or empty */
+	अगर (म_भेदन(string, buffer, len) == 0 &&
+	    म_माप(skip_spaces(buffer + len)) == 0)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static const char * const btrfs_read_policy_name[] = { "pid" };
+अटल स्थिर अक्षर * स्थिर btrfs_पढ़ो_policy_name[] = अणु "pid" पूर्ण;
 
-static ssize_t btrfs_read_policy_show(struct kobject *kobj,
-				      struct kobj_attribute *a, char *buf)
-{
-	struct btrfs_fs_devices *fs_devices = to_fs_devs(kobj);
-	ssize_t ret = 0;
-	int i;
+अटल sमाप_प्रकार btrfs_पढ़ो_policy_show(काष्ठा kobject *kobj,
+				      काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_devices *fs_devices = to_fs_devs(kobj);
+	sमाप_प्रकार ret = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < BTRFS_NR_READ_POLICY; i++) {
-		if (fs_devices->read_policy == i)
-			ret += scnprintf(buf + ret, PAGE_SIZE - ret, "%s[%s]",
+	क्रम (i = 0; i < BTRFS_NR_READ_POLICY; i++) अणु
+		अगर (fs_devices->पढ़ो_policy == i)
+			ret += scnम_लिखो(buf + ret, PAGE_SIZE - ret, "%s[%s]",
 					 (ret == 0 ? "" : " "),
-					 btrfs_read_policy_name[i]);
-		else
-			ret += scnprintf(buf + ret, PAGE_SIZE - ret, "%s%s",
+					 btrfs_पढ़ो_policy_name[i]);
+		अन्यथा
+			ret += scnम_लिखो(buf + ret, PAGE_SIZE - ret, "%s%s",
 					 (ret == 0 ? "" : " "),
-					 btrfs_read_policy_name[i]);
-	}
+					 btrfs_पढ़ो_policy_name[i]);
+	पूर्ण
 
-	ret += scnprintf(buf + ret, PAGE_SIZE - ret, "\n");
+	ret += scnम_लिखो(buf + ret, PAGE_SIZE - ret, "\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t btrfs_read_policy_store(struct kobject *kobj,
-				       struct kobj_attribute *a,
-				       const char *buf, size_t len)
-{
-	struct btrfs_fs_devices *fs_devices = to_fs_devs(kobj);
-	int i;
+अटल sमाप_प्रकार btrfs_पढ़ो_policy_store(काष्ठा kobject *kobj,
+				       काष्ठा kobj_attribute *a,
+				       स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा btrfs_fs_devices *fs_devices = to_fs_devs(kobj);
+	पूर्णांक i;
 
-	for (i = 0; i < BTRFS_NR_READ_POLICY; i++) {
-		if (strmatch(buf, btrfs_read_policy_name[i])) {
-			if (i != fs_devices->read_policy) {
-				fs_devices->read_policy = i;
+	क्रम (i = 0; i < BTRFS_NR_READ_POLICY; i++) अणु
+		अगर (strmatch(buf, btrfs_पढ़ो_policy_name[i])) अणु
+			अगर (i != fs_devices->पढ़ो_policy) अणु
+				fs_devices->पढ़ो_policy = i;
 				btrfs_info(fs_devices->fs_info,
 					   "read policy set to '%s'",
-					   btrfs_read_policy_name[i]);
-			}
-			return len;
-		}
-	}
+					   btrfs_पढ़ो_policy_name[i]);
+			पूर्ण
+			वापस len;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
-BTRFS_ATTR_RW(, read_policy, btrfs_read_policy_show, btrfs_read_policy_store);
+	वापस -EINVAL;
+पूर्ण
+BTRFS_ATTR_RW(, पढ़ो_policy, btrfs_पढ़ो_policy_show, btrfs_पढ़ो_policy_store);
 
-static ssize_t btrfs_bg_reclaim_threshold_show(struct kobject *kobj,
-					       struct kobj_attribute *a,
-					       char *buf)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
-	ssize_t ret;
+अटल sमाप_प्रकार btrfs_bg_reclaim_threshold_show(काष्ठा kobject *kobj,
+					       काष्ठा kobj_attribute *a,
+					       अक्षर *buf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
+	sमाप_प्रकार ret;
 
-	ret = scnprintf(buf, PAGE_SIZE, "%d\n", fs_info->bg_reclaim_threshold);
+	ret = scnम_लिखो(buf, PAGE_SIZE, "%d\n", fs_info->bg_reclaim_threshold);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t btrfs_bg_reclaim_threshold_store(struct kobject *kobj,
-						struct kobj_attribute *a,
-						const char *buf, size_t len)
-{
-	struct btrfs_fs_info *fs_info = to_fs_info(kobj);
-	int thresh;
-	int ret;
+अटल sमाप_प्रकार btrfs_bg_reclaim_threshold_store(काष्ठा kobject *kobj,
+						काष्ठा kobj_attribute *a,
+						स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = to_fs_info(kobj);
+	पूर्णांक thresh;
+	पूर्णांक ret;
 
-	ret = kstrtoint(buf, 10, &thresh);
-	if (ret)
-		return ret;
+	ret = kstrtoपूर्णांक(buf, 10, &thresh);
+	अगर (ret)
+		वापस ret;
 
-	if (thresh <= 50 || thresh > 100)
-		return -EINVAL;
+	अगर (thresh <= 50 || thresh > 100)
+		वापस -EINVAL;
 
 	fs_info->bg_reclaim_threshold = thresh;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 BTRFS_ATTR_RW(, bg_reclaim_threshold, btrfs_bg_reclaim_threshold_show,
 	      btrfs_bg_reclaim_threshold_store);
 
-static const struct attribute *btrfs_attrs[] = {
+अटल स्थिर काष्ठा attribute *btrfs_attrs[] = अणु
 	BTRFS_ATTR_PTR(, label),
 	BTRFS_ATTR_PTR(, nodesize),
 	BTRFS_ATTR_PTR(, sectorsize),
@@ -1024,378 +1025,378 @@ static const struct attribute *btrfs_attrs[] = {
 	BTRFS_ATTR_PTR(, checksum),
 	BTRFS_ATTR_PTR(, exclusive_operation),
 	BTRFS_ATTR_PTR(, generation),
-	BTRFS_ATTR_PTR(, read_policy),
+	BTRFS_ATTR_PTR(, पढ़ो_policy),
 	BTRFS_ATTR_PTR(, bg_reclaim_threshold),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void btrfs_release_fsid_kobj(struct kobject *kobj)
-{
-	struct btrfs_fs_devices *fs_devs = to_fs_devs(kobj);
+अटल व्योम btrfs_release_fsid_kobj(काष्ठा kobject *kobj)
+अणु
+	काष्ठा btrfs_fs_devices *fs_devs = to_fs_devs(kobj);
 
-	memset(&fs_devs->fsid_kobj, 0, sizeof(struct kobject));
-	complete(&fs_devs->kobj_unregister);
-}
+	स_रखो(&fs_devs->fsid_kobj, 0, माप(काष्ठा kobject));
+	complete(&fs_devs->kobj_unरेजिस्टर);
+पूर्ण
 
-static struct kobj_type btrfs_ktype = {
+अटल काष्ठा kobj_type btrfs_ktype = अणु
 	.sysfs_ops	= &kobj_sysfs_ops,
 	.release	= btrfs_release_fsid_kobj,
-};
+पूर्ण;
 
-static inline struct btrfs_fs_devices *to_fs_devs(struct kobject *kobj)
-{
-	if (kobj->ktype != &btrfs_ktype)
-		return NULL;
-	return container_of(kobj, struct btrfs_fs_devices, fsid_kobj);
-}
+अटल अंतरभूत काष्ठा btrfs_fs_devices *to_fs_devs(काष्ठा kobject *kobj)
+अणु
+	अगर (kobj->ktype != &btrfs_ktype)
+		वापस शून्य;
+	वापस container_of(kobj, काष्ठा btrfs_fs_devices, fsid_kobj);
+पूर्ण
 
-static inline struct btrfs_fs_info *to_fs_info(struct kobject *kobj)
-{
-	if (kobj->ktype != &btrfs_ktype)
-		return NULL;
-	return to_fs_devs(kobj)->fs_info;
-}
+अटल अंतरभूत काष्ठा btrfs_fs_info *to_fs_info(काष्ठा kobject *kobj)
+अणु
+	अगर (kobj->ktype != &btrfs_ktype)
+		वापस शून्य;
+	वापस to_fs_devs(kobj)->fs_info;
+पूर्ण
 
-#define NUM_FEATURE_BITS 64
-#define BTRFS_FEATURE_NAME_MAX 13
-static char btrfs_unknown_feature_names[FEAT_MAX][NUM_FEATURE_BITS][BTRFS_FEATURE_NAME_MAX];
-static struct btrfs_feature_attr btrfs_feature_attrs[FEAT_MAX][NUM_FEATURE_BITS];
+#घोषणा NUM_FEATURE_BITS 64
+#घोषणा BTRFS_FEATURE_NAME_MAX 13
+अटल अक्षर btrfs_unknown_feature_names[FEAT_MAX][NUM_FEATURE_BITS][BTRFS_FEATURE_NAME_MAX];
+अटल काष्ठा btrfs_feature_attr btrfs_feature_attrs[FEAT_MAX][NUM_FEATURE_BITS];
 
-static const u64 supported_feature_masks[FEAT_MAX] = {
+अटल स्थिर u64 supported_feature_masks[FEAT_MAX] = अणु
 	[FEAT_COMPAT]    = BTRFS_FEATURE_COMPAT_SUPP,
 	[FEAT_COMPAT_RO] = BTRFS_FEATURE_COMPAT_RO_SUPP,
 	[FEAT_INCOMPAT]  = BTRFS_FEATURE_INCOMPAT_SUPP,
-};
+पूर्ण;
 
-static int addrm_unknown_feature_attrs(struct btrfs_fs_info *fs_info, bool add)
-{
-	int set;
+अटल पूर्णांक addrm_unknown_feature_attrs(काष्ठा btrfs_fs_info *fs_info, bool add)
+अणु
+	पूर्णांक set;
 
-	for (set = 0; set < FEAT_MAX; set++) {
-		int i;
-		struct attribute *attrs[2];
-		struct attribute_group agroup = {
+	क्रम (set = 0; set < FEAT_MAX; set++) अणु
+		पूर्णांक i;
+		काष्ठा attribute *attrs[2];
+		काष्ठा attribute_group agroup = अणु
 			.name = "features",
 			.attrs = attrs,
-		};
+		पूर्ण;
 		u64 features = get_features(fs_info, set);
 		features &= ~supported_feature_masks[set];
 
-		if (!features)
-			continue;
+		अगर (!features)
+			जारी;
 
-		attrs[1] = NULL;
-		for (i = 0; i < NUM_FEATURE_BITS; i++) {
-			struct btrfs_feature_attr *fa;
+		attrs[1] = शून्य;
+		क्रम (i = 0; i < NUM_FEATURE_BITS; i++) अणु
+			काष्ठा btrfs_feature_attr *fa;
 
-			if (!(features & (1ULL << i)))
-				continue;
+			अगर (!(features & (1ULL << i)))
+				जारी;
 
 			fa = &btrfs_feature_attrs[set][i];
 			attrs[0] = &fa->kobj_attr.attr;
-			if (add) {
-				int ret;
+			अगर (add) अणु
+				पूर्णांक ret;
 				ret = sysfs_merge_group(&fs_info->fs_devices->fsid_kobj,
 							&agroup);
-				if (ret)
-					return ret;
-			} else
+				अगर (ret)
+					वापस ret;
+			पूर्ण अन्यथा
 				sysfs_unmerge_group(&fs_info->fs_devices->fsid_kobj,
 						    &agroup);
-		}
+		पूर्ण
 
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void __btrfs_sysfs_remove_fsid(struct btrfs_fs_devices *fs_devs)
-{
-	if (fs_devs->devinfo_kobj) {
+अटल व्योम __btrfs_sysfs_हटाओ_fsid(काष्ठा btrfs_fs_devices *fs_devs)
+अणु
+	अगर (fs_devs->devinfo_kobj) अणु
 		kobject_del(fs_devs->devinfo_kobj);
 		kobject_put(fs_devs->devinfo_kobj);
-		fs_devs->devinfo_kobj = NULL;
-	}
+		fs_devs->devinfo_kobj = शून्य;
+	पूर्ण
 
-	if (fs_devs->devices_kobj) {
+	अगर (fs_devs->devices_kobj) अणु
 		kobject_del(fs_devs->devices_kobj);
 		kobject_put(fs_devs->devices_kobj);
-		fs_devs->devices_kobj = NULL;
-	}
+		fs_devs->devices_kobj = शून्य;
+	पूर्ण
 
-	if (fs_devs->fsid_kobj.state_initialized) {
+	अगर (fs_devs->fsid_kobj.state_initialized) अणु
 		kobject_del(&fs_devs->fsid_kobj);
 		kobject_put(&fs_devs->fsid_kobj);
-		wait_for_completion(&fs_devs->kobj_unregister);
-	}
-}
+		रुको_क्रम_completion(&fs_devs->kobj_unरेजिस्टर);
+	पूर्ण
+पूर्ण
 
-/* when fs_devs is NULL it will remove all fsid kobject */
-void btrfs_sysfs_remove_fsid(struct btrfs_fs_devices *fs_devs)
-{
-	struct list_head *fs_uuids = btrfs_get_fs_uuids();
+/* when fs_devs is शून्य it will हटाओ all fsid kobject */
+व्योम btrfs_sysfs_हटाओ_fsid(काष्ठा btrfs_fs_devices *fs_devs)
+अणु
+	काष्ठा list_head *fs_uuids = btrfs_get_fs_uuids();
 
-	if (fs_devs) {
-		__btrfs_sysfs_remove_fsid(fs_devs);
-		return;
-	}
+	अगर (fs_devs) अणु
+		__btrfs_sysfs_हटाओ_fsid(fs_devs);
+		वापस;
+	पूर्ण
 
-	list_for_each_entry(fs_devs, fs_uuids, fs_list) {
-		__btrfs_sysfs_remove_fsid(fs_devs);
-	}
-}
+	list_क्रम_each_entry(fs_devs, fs_uuids, fs_list) अणु
+		__btrfs_sysfs_हटाओ_fsid(fs_devs);
+	पूर्ण
+पूर्ण
 
-static void btrfs_sysfs_remove_fs_devices(struct btrfs_fs_devices *fs_devices)
-{
-	struct btrfs_device *device;
-	struct btrfs_fs_devices *seed;
+अटल व्योम btrfs_sysfs_हटाओ_fs_devices(काष्ठा btrfs_fs_devices *fs_devices)
+अणु
+	काष्ठा btrfs_device *device;
+	काष्ठा btrfs_fs_devices *seed;
 
-	list_for_each_entry(device, &fs_devices->devices, dev_list)
-		btrfs_sysfs_remove_device(device);
+	list_क्रम_each_entry(device, &fs_devices->devices, dev_list)
+		btrfs_sysfs_हटाओ_device(device);
 
-	list_for_each_entry(seed, &fs_devices->seed_list, seed_list) {
-		list_for_each_entry(device, &seed->devices, dev_list)
-			btrfs_sysfs_remove_device(device);
-	}
-}
+	list_क्रम_each_entry(seed, &fs_devices->seed_list, seed_list) अणु
+		list_क्रम_each_entry(device, &seed->devices, dev_list)
+			btrfs_sysfs_हटाओ_device(device);
+	पूर्ण
+पूर्ण
 
-void btrfs_sysfs_remove_mounted(struct btrfs_fs_info *fs_info)
-{
-	struct kobject *fsid_kobj = &fs_info->fs_devices->fsid_kobj;
+व्योम btrfs_sysfs_हटाओ_mounted(काष्ठा btrfs_fs_info *fs_info)
+अणु
+	काष्ठा kobject *fsid_kobj = &fs_info->fs_devices->fsid_kobj;
 
-	sysfs_remove_link(fsid_kobj, "bdi");
+	sysfs_हटाओ_link(fsid_kobj, "bdi");
 
-	if (fs_info->space_info_kobj) {
-		sysfs_remove_files(fs_info->space_info_kobj, allocation_attrs);
+	अगर (fs_info->space_info_kobj) अणु
+		sysfs_हटाओ_files(fs_info->space_info_kobj, allocation_attrs);
 		kobject_del(fs_info->space_info_kobj);
 		kobject_put(fs_info->space_info_kobj);
-	}
-#ifdef CONFIG_BTRFS_DEBUG
-	if (fs_info->discard_debug_kobj) {
-		sysfs_remove_files(fs_info->discard_debug_kobj,
+	पूर्ण
+#अगर_घोषित CONFIG_BTRFS_DEBUG
+	अगर (fs_info->discard_debug_kobj) अणु
+		sysfs_हटाओ_files(fs_info->discard_debug_kobj,
 				   discard_debug_attrs);
 		kobject_del(fs_info->discard_debug_kobj);
 		kobject_put(fs_info->discard_debug_kobj);
-	}
-	if (fs_info->debug_kobj) {
-		sysfs_remove_files(fs_info->debug_kobj, btrfs_debug_mount_attrs);
+	पूर्ण
+	अगर (fs_info->debug_kobj) अणु
+		sysfs_हटाओ_files(fs_info->debug_kobj, btrfs_debug_mount_attrs);
 		kobject_del(fs_info->debug_kobj);
 		kobject_put(fs_info->debug_kobj);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	addrm_unknown_feature_attrs(fs_info, false);
-	sysfs_remove_group(fsid_kobj, &btrfs_feature_attr_group);
-	sysfs_remove_files(fsid_kobj, btrfs_attrs);
-	btrfs_sysfs_remove_fs_devices(fs_info->fs_devices);
-}
+	sysfs_हटाओ_group(fsid_kobj, &btrfs_feature_attr_group);
+	sysfs_हटाओ_files(fsid_kobj, btrfs_attrs);
+	btrfs_sysfs_हटाओ_fs_devices(fs_info->fs_devices);
+पूर्ण
 
-static const char * const btrfs_feature_set_names[FEAT_MAX] = {
+अटल स्थिर अक्षर * स्थिर btrfs_feature_set_names[FEAT_MAX] = अणु
 	[FEAT_COMPAT]	 = "compat",
 	[FEAT_COMPAT_RO] = "compat_ro",
 	[FEAT_INCOMPAT]	 = "incompat",
-};
+पूर्ण;
 
-const char *btrfs_feature_set_name(enum btrfs_feature_set set)
-{
-	return btrfs_feature_set_names[set];
-}
+स्थिर अक्षर *btrfs_feature_set_name(क्रमागत btrfs_feature_set set)
+अणु
+	वापस btrfs_feature_set_names[set];
+पूर्ण
 
-char *btrfs_printable_features(enum btrfs_feature_set set, u64 flags)
-{
-	size_t bufsize = 4096; /* safe max, 64 names * 64 bytes */
-	int len = 0;
-	int i;
-	char *str;
+अक्षर *btrfs_prपूर्णांकable_features(क्रमागत btrfs_feature_set set, u64 flags)
+अणु
+	माप_प्रकार bufsize = 4096; /* safe max, 64 names * 64 bytes */
+	पूर्णांक len = 0;
+	पूर्णांक i;
+	अक्षर *str;
 
-	str = kmalloc(bufsize, GFP_KERNEL);
-	if (!str)
-		return str;
+	str = kदो_स्मृति(bufsize, GFP_KERNEL);
+	अगर (!str)
+		वापस str;
 
-	for (i = 0; i < ARRAY_SIZE(btrfs_feature_attrs[set]); i++) {
-		const char *name;
+	क्रम (i = 0; i < ARRAY_SIZE(btrfs_feature_attrs[set]); i++) अणु
+		स्थिर अक्षर *name;
 
-		if (!(flags & (1ULL << i)))
-			continue;
+		अगर (!(flags & (1ULL << i)))
+			जारी;
 
 		name = btrfs_feature_attrs[set][i].kobj_attr.attr.name;
-		len += scnprintf(str + len, bufsize - len, "%s%s",
+		len += scnम_लिखो(str + len, bufsize - len, "%s%s",
 				len ? "," : "", name);
-	}
+	पूर्ण
 
-	return str;
-}
+	वापस str;
+पूर्ण
 
-static void init_feature_attrs(void)
-{
-	struct btrfs_feature_attr *fa;
-	int set, i;
+अटल व्योम init_feature_attrs(व्योम)
+अणु
+	काष्ठा btrfs_feature_attr *fa;
+	पूर्णांक set, i;
 
 	BUILD_BUG_ON(ARRAY_SIZE(btrfs_unknown_feature_names) !=
 		     ARRAY_SIZE(btrfs_feature_attrs));
 	BUILD_BUG_ON(ARRAY_SIZE(btrfs_unknown_feature_names[0]) !=
 		     ARRAY_SIZE(btrfs_feature_attrs[0]));
 
-	memset(btrfs_feature_attrs, 0, sizeof(btrfs_feature_attrs));
-	memset(btrfs_unknown_feature_names, 0,
-	       sizeof(btrfs_unknown_feature_names));
+	स_रखो(btrfs_feature_attrs, 0, माप(btrfs_feature_attrs));
+	स_रखो(btrfs_unknown_feature_names, 0,
+	       माप(btrfs_unknown_feature_names));
 
-	for (i = 0; btrfs_supported_feature_attrs[i]; i++) {
-		struct btrfs_feature_attr *sfa;
-		struct attribute *a = btrfs_supported_feature_attrs[i];
-		int bit;
+	क्रम (i = 0; btrfs_supported_feature_attrs[i]; i++) अणु
+		काष्ठा btrfs_feature_attr *sfa;
+		काष्ठा attribute *a = btrfs_supported_feature_attrs[i];
+		पूर्णांक bit;
 		sfa = attr_to_btrfs_feature_attr(a);
 		bit = ilog2(sfa->feature_bit);
 		fa = &btrfs_feature_attrs[sfa->feature_set][bit];
 
 		fa->kobj_attr.attr.name = sfa->kobj_attr.attr.name;
-	}
+	पूर्ण
 
-	for (set = 0; set < FEAT_MAX; set++) {
-		for (i = 0; i < ARRAY_SIZE(btrfs_feature_attrs[set]); i++) {
-			char *name = btrfs_unknown_feature_names[set][i];
+	क्रम (set = 0; set < FEAT_MAX; set++) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(btrfs_feature_attrs[set]); i++) अणु
+			अक्षर *name = btrfs_unknown_feature_names[set][i];
 			fa = &btrfs_feature_attrs[set][i];
 
-			if (fa->kobj_attr.attr.name)
-				continue;
+			अगर (fa->kobj_attr.attr.name)
+				जारी;
 
-			snprintf(name, BTRFS_FEATURE_NAME_MAX, "%s:%u",
+			snम_लिखो(name, BTRFS_FEATURE_NAME_MAX, "%s:%u",
 				 btrfs_feature_set_names[set], i);
 
 			fa->kobj_attr.attr.name = name;
 			fa->kobj_attr.attr.mode = S_IRUGO;
 			fa->feature_set = set;
 			fa->feature_bit = 1ULL << i;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Create a sysfs entry for a given block group type at path
+ * Create a sysfs entry क्रम a given block group type at path
  * /sys/fs/btrfs/UUID/allocation/data/TYPE
  */
-void btrfs_sysfs_add_block_group_type(struct btrfs_block_group *cache)
-{
-	struct btrfs_fs_info *fs_info = cache->fs_info;
-	struct btrfs_space_info *space_info = cache->space_info;
-	struct raid_kobject *rkobj;
-	const int index = btrfs_bg_flags_to_raid_index(cache->flags);
-	unsigned int nofs_flag;
-	int ret;
+व्योम btrfs_sysfs_add_block_group_type(काष्ठा btrfs_block_group *cache)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = cache->fs_info;
+	काष्ठा btrfs_space_info *space_info = cache->space_info;
+	काष्ठा raid_kobject *rkobj;
+	स्थिर पूर्णांक index = btrfs_bg_flags_to_raid_index(cache->flags);
+	अचिन्हित पूर्णांक nofs_flag;
+	पूर्णांक ret;
 
 	/*
 	 * Setup a NOFS context because kobject_add(), deep in its call chain,
-	 * does GFP_KERNEL allocations, and we are often called in a context
-	 * where if reclaim is triggered we can deadlock (we are either holding
-	 * a transaction handle or some lock required for a transaction
+	 * करोes GFP_KERNEL allocations, and we are often called in a context
+	 * where अगर reclaim is triggered we can deadlock (we are either holding
+	 * a transaction handle or some lock required क्रम a transaction
 	 * commit).
 	 */
-	nofs_flag = memalloc_nofs_save();
+	nofs_flag = meदो_स्मृति_nofs_save();
 
-	rkobj = kzalloc(sizeof(*rkobj), GFP_NOFS);
-	if (!rkobj) {
-		memalloc_nofs_restore(nofs_flag);
+	rkobj = kzalloc(माप(*rkobj), GFP_NOFS);
+	अगर (!rkobj) अणु
+		meदो_स्मृति_nofs_restore(nofs_flag);
 		btrfs_warn(cache->fs_info,
 				"couldn't alloc memory for raid level kobject");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rkobj->flags = cache->flags;
 	kobject_init(&rkobj->kobj, &btrfs_raid_ktype);
 
 	/*
-	 * We call this either on mount, or if we've created a block group for a
-	 * new index type while running (i.e. when restriping).  The running
-	 * case is tricky because we could race with other threads, so we need
-	 * to have this check to make sure we didn't already init the kobject.
+	 * We call this either on mount, or अगर we've created a block group क्रम a
+	 * new index type जबतक running (i.e. when restriping).  The running
+	 * हाल is tricky because we could race with other thपढ़ोs, so we need
+	 * to have this check to make sure we didn't alपढ़ोy init the kobject.
 	 *
-	 * We don't have to protect on the free side because it only happens on
+	 * We करोn't have to protect on the मुक्त side because it only happens on
 	 * unmount.
 	 */
 	spin_lock(&space_info->lock);
-	if (space_info->block_group_kobjs[index]) {
+	अगर (space_info->block_group_kobjs[index]) अणु
 		spin_unlock(&space_info->lock);
 		kobject_put(&rkobj->kobj);
-		return;
-	} else {
+		वापस;
+	पूर्ण अन्यथा अणु
 		space_info->block_group_kobjs[index] = &rkobj->kobj;
-	}
+	पूर्ण
 	spin_unlock(&space_info->lock);
 
 	ret = kobject_add(&rkobj->kobj, &space_info->kobj, "%s",
 			  btrfs_bg_type_to_raid_name(rkobj->flags));
-	memalloc_nofs_restore(nofs_flag);
-	if (ret) {
+	meदो_स्मृति_nofs_restore(nofs_flag);
+	अगर (ret) अणु
 		spin_lock(&space_info->lock);
-		space_info->block_group_kobjs[index] = NULL;
+		space_info->block_group_kobjs[index] = शून्य;
 		spin_unlock(&space_info->lock);
 		kobject_put(&rkobj->kobj);
 		btrfs_warn(fs_info,
 			"failed to add kobject for block cache, ignoring");
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
 /*
- * Remove sysfs directories for all block group types of a given space info and
+ * Remove sysfs directories क्रम all block group types of a given space info and
  * the space info as well
  */
-void btrfs_sysfs_remove_space_info(struct btrfs_space_info *space_info)
-{
-	int i;
+व्योम btrfs_sysfs_हटाओ_space_info(काष्ठा btrfs_space_info *space_info)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
-		struct kobject *kobj;
+	क्रम (i = 0; i < BTRFS_NR_RAID_TYPES; i++) अणु
+		काष्ठा kobject *kobj;
 
 		kobj = space_info->block_group_kobjs[i];
-		space_info->block_group_kobjs[i] = NULL;
-		if (kobj) {
+		space_info->block_group_kobjs[i] = शून्य;
+		अगर (kobj) अणु
 			kobject_del(kobj);
 			kobject_put(kobj);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	kobject_del(&space_info->kobj);
 	kobject_put(&space_info->kobj);
-}
+पूर्ण
 
-static const char *alloc_name(u64 flags)
-{
-	switch (flags) {
-	case BTRFS_BLOCK_GROUP_METADATA | BTRFS_BLOCK_GROUP_DATA:
-		return "mixed";
-	case BTRFS_BLOCK_GROUP_METADATA:
-		return "metadata";
-	case BTRFS_BLOCK_GROUP_DATA:
-		return "data";
-	case BTRFS_BLOCK_GROUP_SYSTEM:
-		return "system";
-	default:
+अटल स्थिर अक्षर *alloc_name(u64 flags)
+अणु
+	चयन (flags) अणु
+	हाल BTRFS_BLOCK_GROUP_METADATA | BTRFS_BLOCK_GROUP_DATA:
+		वापस "mixed";
+	हाल BTRFS_BLOCK_GROUP_METADATA:
+		वापस "metadata";
+	हाल BTRFS_BLOCK_GROUP_DATA:
+		वापस "data";
+	हाल BTRFS_BLOCK_GROUP_SYSTEM:
+		वापस "system";
+	शेष:
 		WARN_ON(1);
-		return "invalid-combination";
-	}
-}
+		वापस "invalid-combination";
+	पूर्ण
+पूर्ण
 
 /*
- * Create a sysfs entry for a space info type at path
+ * Create a sysfs entry क्रम a space info type at path
  * /sys/fs/btrfs/UUID/allocation/TYPE
  */
-int btrfs_sysfs_add_space_info_type(struct btrfs_fs_info *fs_info,
-				    struct btrfs_space_info *space_info)
-{
-	int ret;
+पूर्णांक btrfs_sysfs_add_space_info_type(काष्ठा btrfs_fs_info *fs_info,
+				    काष्ठा btrfs_space_info *space_info)
+अणु
+	पूर्णांक ret;
 
 	ret = kobject_init_and_add(&space_info->kobj, &space_info_ktype,
 				   fs_info->space_info_kobj, "%s",
 				   alloc_name(space_info->flags));
-	if (ret) {
+	अगर (ret) अणु
 		kobject_put(&space_info->kobj);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void btrfs_sysfs_remove_device(struct btrfs_device *device)
-{
-	struct kobject *devices_kobj;
+व्योम btrfs_sysfs_हटाओ_device(काष्ठा btrfs_device *device)
+अणु
+	काष्ठा kobject *devices_kobj;
 
 	/*
 	 * Seed fs_devices devices_kobj aren't used, fetch kobject from the
@@ -1404,346 +1405,346 @@ void btrfs_sysfs_remove_device(struct btrfs_device *device)
 	devices_kobj = device->fs_info->fs_devices->devices_kobj;
 	ASSERT(devices_kobj);
 
-	if (device->bdev)
-		sysfs_remove_link(devices_kobj, bdev_kobj(device->bdev)->name);
+	अगर (device->bdev)
+		sysfs_हटाओ_link(devices_kobj, bdev_kobj(device->bdev)->name);
 
-	if (device->devid_kobj.state_initialized) {
+	अगर (device->devid_kobj.state_initialized) अणु
 		kobject_del(&device->devid_kobj);
 		kobject_put(&device->devid_kobj);
-		wait_for_completion(&device->kobj_unregister);
-	}
-}
+		रुको_क्रम_completion(&device->kobj_unरेजिस्टर);
+	पूर्ण
+पूर्ण
 
-static ssize_t btrfs_devinfo_in_fs_metadata_show(struct kobject *kobj,
-					         struct kobj_attribute *a,
-					         char *buf)
-{
-	int val;
-	struct btrfs_device *device = container_of(kobj, struct btrfs_device,
+अटल sमाप_प्रकार btrfs_devinfo_in_fs_metadata_show(काष्ठा kobject *kobj,
+					         काष्ठा kobj_attribute *a,
+					         अक्षर *buf)
+अणु
+	पूर्णांक val;
+	काष्ठा btrfs_device *device = container_of(kobj, काष्ठा btrfs_device,
 						   devid_kobj);
 
 	val = !!test_bit(BTRFS_DEV_STATE_IN_FS_METADATA, &device->dev_state);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", val);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", val);
+पूर्ण
 BTRFS_ATTR(devid, in_fs_metadata, btrfs_devinfo_in_fs_metadata_show);
 
-static ssize_t btrfs_devinfo_missing_show(struct kobject *kobj,
-					struct kobj_attribute *a, char *buf)
-{
-	int val;
-	struct btrfs_device *device = container_of(kobj, struct btrfs_device,
+अटल sमाप_प्रकार btrfs_devinfo_missing_show(काष्ठा kobject *kobj,
+					काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	पूर्णांक val;
+	काष्ठा btrfs_device *device = container_of(kobj, काष्ठा btrfs_device,
 						   devid_kobj);
 
 	val = !!test_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", val);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", val);
+पूर्ण
 BTRFS_ATTR(devid, missing, btrfs_devinfo_missing_show);
 
-static ssize_t btrfs_devinfo_replace_target_show(struct kobject *kobj,
-					         struct kobj_attribute *a,
-					         char *buf)
-{
-	int val;
-	struct btrfs_device *device = container_of(kobj, struct btrfs_device,
+अटल sमाप_प्रकार btrfs_devinfo_replace_target_show(काष्ठा kobject *kobj,
+					         काष्ठा kobj_attribute *a,
+					         अक्षर *buf)
+अणु
+	पूर्णांक val;
+	काष्ठा btrfs_device *device = container_of(kobj, काष्ठा btrfs_device,
 						   devid_kobj);
 
 	val = !!test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", val);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", val);
+पूर्ण
 BTRFS_ATTR(devid, replace_target, btrfs_devinfo_replace_target_show);
 
-static ssize_t btrfs_devinfo_writeable_show(struct kobject *kobj,
-					    struct kobj_attribute *a, char *buf)
-{
-	int val;
-	struct btrfs_device *device = container_of(kobj, struct btrfs_device,
+अटल sमाप_प्रकार btrfs_devinfo_ग_लिखोable_show(काष्ठा kobject *kobj,
+					    काष्ठा kobj_attribute *a, अक्षर *buf)
+अणु
+	पूर्णांक val;
+	काष्ठा btrfs_device *device = container_of(kobj, काष्ठा btrfs_device,
 						   devid_kobj);
 
 	val = !!test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", val);
-}
-BTRFS_ATTR(devid, writeable, btrfs_devinfo_writeable_show);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", val);
+पूर्ण
+BTRFS_ATTR(devid, ग_लिखोable, btrfs_devinfo_ग_लिखोable_show);
 
-static struct attribute *devid_attrs[] = {
+अटल काष्ठा attribute *devid_attrs[] = अणु
 	BTRFS_ATTR_PTR(devid, in_fs_metadata),
 	BTRFS_ATTR_PTR(devid, missing),
 	BTRFS_ATTR_PTR(devid, replace_target),
-	BTRFS_ATTR_PTR(devid, writeable),
-	NULL
-};
+	BTRFS_ATTR_PTR(devid, ग_लिखोable),
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(devid);
 
-static void btrfs_release_devid_kobj(struct kobject *kobj)
-{
-	struct btrfs_device *device = container_of(kobj, struct btrfs_device,
+अटल व्योम btrfs_release_devid_kobj(काष्ठा kobject *kobj)
+अणु
+	काष्ठा btrfs_device *device = container_of(kobj, काष्ठा btrfs_device,
 						   devid_kobj);
 
-	memset(&device->devid_kobj, 0, sizeof(struct kobject));
-	complete(&device->kobj_unregister);
-}
+	स_रखो(&device->devid_kobj, 0, माप(काष्ठा kobject));
+	complete(&device->kobj_unरेजिस्टर);
+पूर्ण
 
-static struct kobj_type devid_ktype = {
+अटल काष्ठा kobj_type devid_ktype = अणु
 	.sysfs_ops	= &kobj_sysfs_ops,
-	.default_groups = devid_groups,
+	.शेष_groups = devid_groups,
 	.release	= btrfs_release_devid_kobj,
-};
+पूर्ण;
 
-int btrfs_sysfs_add_device(struct btrfs_device *device)
-{
-	int ret;
-	unsigned int nofs_flag;
-	struct kobject *devices_kobj;
-	struct kobject *devinfo_kobj;
+पूर्णांक btrfs_sysfs_add_device(काष्ठा btrfs_device *device)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक nofs_flag;
+	काष्ठा kobject *devices_kobj;
+	काष्ठा kobject *devinfo_kobj;
 
 	/*
 	 * Make sure we use the fs_info::fs_devices to fetch the kobjects even
-	 * for the seed fs_devices
+	 * क्रम the seed fs_devices
 	 */
 	devices_kobj = device->fs_info->fs_devices->devices_kobj;
 	devinfo_kobj = device->fs_info->fs_devices->devinfo_kobj;
 	ASSERT(devices_kobj);
 	ASSERT(devinfo_kobj);
 
-	nofs_flag = memalloc_nofs_save();
+	nofs_flag = meदो_स्मृति_nofs_save();
 
-	if (device->bdev) {
-		struct kobject *disk_kobj = bdev_kobj(device->bdev);
+	अगर (device->bdev) अणु
+		काष्ठा kobject *disk_kobj = bdev_kobj(device->bdev);
 
 		ret = sysfs_create_link(devices_kobj, disk_kobj, disk_kobj->name);
-		if (ret) {
+		अगर (ret) अणु
 			btrfs_warn(device->fs_info,
 				"creating sysfs device link for devid %llu failed: %d",
 				device->devid, ret);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	init_completion(&device->kobj_unregister);
+	init_completion(&device->kobj_unरेजिस्टर);
 	ret = kobject_init_and_add(&device->devid_kobj, &devid_ktype,
 				   devinfo_kobj, "%llu", device->devid);
-	if (ret) {
+	अगर (ret) अणु
 		kobject_put(&device->devid_kobj);
 		btrfs_warn(device->fs_info,
 			   "devinfo init for devid %llu failed: %d",
 			   device->devid, ret);
-	}
+	पूर्ण
 
 out:
-	memalloc_nofs_restore(nofs_flag);
-	return ret;
-}
+	meदो_स्मृति_nofs_restore(nofs_flag);
+	वापस ret;
+पूर्ण
 
-static int btrfs_sysfs_add_fs_devices(struct btrfs_fs_devices *fs_devices)
-{
-	int ret;
-	struct btrfs_device *device;
-	struct btrfs_fs_devices *seed;
+अटल पूर्णांक btrfs_sysfs_add_fs_devices(काष्ठा btrfs_fs_devices *fs_devices)
+अणु
+	पूर्णांक ret;
+	काष्ठा btrfs_device *device;
+	काष्ठा btrfs_fs_devices *seed;
 
-	list_for_each_entry(device, &fs_devices->devices, dev_list) {
+	list_क्रम_each_entry(device, &fs_devices->devices, dev_list) अणु
 		ret = btrfs_sysfs_add_device(device);
-		if (ret)
-			goto fail;
-	}
+		अगर (ret)
+			जाओ fail;
+	पूर्ण
 
-	list_for_each_entry(seed, &fs_devices->seed_list, seed_list) {
-		list_for_each_entry(device, &seed->devices, dev_list) {
+	list_क्रम_each_entry(seed, &fs_devices->seed_list, seed_list) अणु
+		list_क्रम_each_entry(device, &seed->devices, dev_list) अणु
 			ret = btrfs_sysfs_add_device(device);
-			if (ret)
-				goto fail;
-		}
-	}
+			अगर (ret)
+				जाओ fail;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail:
-	btrfs_sysfs_remove_fs_devices(fs_devices);
-	return ret;
-}
+	btrfs_sysfs_हटाओ_fs_devices(fs_devices);
+	वापस ret;
+पूर्ण
 
-void btrfs_kobject_uevent(struct block_device *bdev, enum kobject_action action)
-{
-	int ret;
+व्योम btrfs_kobject_uevent(काष्ठा block_device *bdev, क्रमागत kobject_action action)
+अणु
+	पूर्णांक ret;
 
 	ret = kobject_uevent(&disk_to_dev(bdev->bd_disk)->kobj, action);
-	if (ret)
+	अगर (ret)
 		pr_warn("BTRFS: Sending event '%d' to kobject: '%s' (%p): failed\n",
 			action, kobject_name(&disk_to_dev(bdev->bd_disk)->kobj),
 			&disk_to_dev(bdev->bd_disk)->kobj);
-}
+पूर्ण
 
-void btrfs_sysfs_update_sprout_fsid(struct btrfs_fs_devices *fs_devices)
+व्योम btrfs_sysfs_update_sprout_fsid(काष्ठा btrfs_fs_devices *fs_devices)
 
-{
-	char fsid_buf[BTRFS_UUID_UNPARSED_SIZE];
+अणु
+	अक्षर fsid_buf[BTRFS_UUID_UNPARSED_SIZE];
 
 	/*
-	 * Sprouting changes fsid of the mounted filesystem, rename the fsid
+	 * Sprouting changes fsid of the mounted fileप्रणाली, नाम the fsid
 	 * directory
 	 */
-	snprintf(fsid_buf, BTRFS_UUID_UNPARSED_SIZE, "%pU", fs_devices->fsid);
-	if (kobject_rename(&fs_devices->fsid_kobj, fsid_buf))
+	snम_लिखो(fsid_buf, BTRFS_UUID_UNPARSED_SIZE, "%pU", fs_devices->fsid);
+	अगर (kobject_नाम(&fs_devices->fsid_kobj, fsid_buf))
 		btrfs_warn(fs_devices->fs_info,
 				"sysfs: failed to create fsid for sprout");
-}
+पूर्ण
 
-void btrfs_sysfs_update_devid(struct btrfs_device *device)
-{
-	char tmp[24];
+व्योम btrfs_sysfs_update_devid(काष्ठा btrfs_device *device)
+अणु
+	अक्षर पंचांगp[24];
 
-	snprintf(tmp, sizeof(tmp), "%llu", device->devid);
+	snम_लिखो(पंचांगp, माप(पंचांगp), "%llu", device->devid);
 
-	if (kobject_rename(&device->devid_kobj, tmp))
+	अगर (kobject_नाम(&device->devid_kobj, पंचांगp))
 		btrfs_warn(device->fs_devices->fs_info,
 			   "sysfs: failed to update devid for %llu",
 			   device->devid);
-}
+पूर्ण
 
 /* /sys/fs/btrfs/ entry */
-static struct kset *btrfs_kset;
+अटल काष्ठा kset *btrfs_kset;
 
 /*
  * Creates:
  *		/sys/fs/btrfs/UUID
  *
- * Can be called by the device discovery thread.
+ * Can be called by the device discovery thपढ़ो.
  */
-int btrfs_sysfs_add_fsid(struct btrfs_fs_devices *fs_devs)
-{
-	int error;
+पूर्णांक btrfs_sysfs_add_fsid(काष्ठा btrfs_fs_devices *fs_devs)
+अणु
+	पूर्णांक error;
 
-	init_completion(&fs_devs->kobj_unregister);
+	init_completion(&fs_devs->kobj_unरेजिस्टर);
 	fs_devs->fsid_kobj.kset = btrfs_kset;
-	error = kobject_init_and_add(&fs_devs->fsid_kobj, &btrfs_ktype, NULL,
+	error = kobject_init_and_add(&fs_devs->fsid_kobj, &btrfs_ktype, शून्य,
 				     "%pU", fs_devs->fsid);
-	if (error) {
+	अगर (error) अणु
 		kobject_put(&fs_devs->fsid_kobj);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	fs_devs->devices_kobj = kobject_create_and_add("devices",
 						       &fs_devs->fsid_kobj);
-	if (!fs_devs->devices_kobj) {
+	अगर (!fs_devs->devices_kobj) अणु
 		btrfs_err(fs_devs->fs_info,
 			  "failed to init sysfs device interface");
-		btrfs_sysfs_remove_fsid(fs_devs);
-		return -ENOMEM;
-	}
+		btrfs_sysfs_हटाओ_fsid(fs_devs);
+		वापस -ENOMEM;
+	पूर्ण
 
 	fs_devs->devinfo_kobj = kobject_create_and_add("devinfo",
 						       &fs_devs->fsid_kobj);
-	if (!fs_devs->devinfo_kobj) {
+	अगर (!fs_devs->devinfo_kobj) अणु
 		btrfs_err(fs_devs->fs_info,
 			  "failed to init sysfs devinfo kobject");
-		btrfs_sysfs_remove_fsid(fs_devs);
-		return -ENOMEM;
-	}
+		btrfs_sysfs_हटाओ_fsid(fs_devs);
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int btrfs_sysfs_add_mounted(struct btrfs_fs_info *fs_info)
-{
-	int error;
-	struct btrfs_fs_devices *fs_devs = fs_info->fs_devices;
-	struct kobject *fsid_kobj = &fs_devs->fsid_kobj;
+पूर्णांक btrfs_sysfs_add_mounted(काष्ठा btrfs_fs_info *fs_info)
+अणु
+	पूर्णांक error;
+	काष्ठा btrfs_fs_devices *fs_devs = fs_info->fs_devices;
+	काष्ठा kobject *fsid_kobj = &fs_devs->fsid_kobj;
 
 	error = btrfs_sysfs_add_fs_devices(fs_devs);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = sysfs_create_files(fsid_kobj, btrfs_attrs);
-	if (error) {
-		btrfs_sysfs_remove_fs_devices(fs_devs);
-		return error;
-	}
+	अगर (error) अणु
+		btrfs_sysfs_हटाओ_fs_devices(fs_devs);
+		वापस error;
+	पूर्ण
 
 	error = sysfs_create_group(fsid_kobj,
 				   &btrfs_feature_attr_group);
-	if (error)
-		goto failure;
+	अगर (error)
+		जाओ failure;
 
-#ifdef CONFIG_BTRFS_DEBUG
+#अगर_घोषित CONFIG_BTRFS_DEBUG
 	fs_info->debug_kobj = kobject_create_and_add("debug", fsid_kobj);
-	if (!fs_info->debug_kobj) {
+	अगर (!fs_info->debug_kobj) अणु
 		error = -ENOMEM;
-		goto failure;
-	}
+		जाओ failure;
+	पूर्ण
 
 	error = sysfs_create_files(fs_info->debug_kobj, btrfs_debug_mount_attrs);
-	if (error)
-		goto failure;
+	अगर (error)
+		जाओ failure;
 
 	/* Discard directory */
 	fs_info->discard_debug_kobj = kobject_create_and_add("discard",
 						     fs_info->debug_kobj);
-	if (!fs_info->discard_debug_kobj) {
+	अगर (!fs_info->discard_debug_kobj) अणु
 		error = -ENOMEM;
-		goto failure;
-	}
+		जाओ failure;
+	पूर्ण
 
 	error = sysfs_create_files(fs_info->discard_debug_kobj,
 				   discard_debug_attrs);
-	if (error)
-		goto failure;
-#endif
+	अगर (error)
+		जाओ failure;
+#पूर्ण_अगर
 
 	error = addrm_unknown_feature_attrs(fs_info, true);
-	if (error)
-		goto failure;
+	अगर (error)
+		जाओ failure;
 
 	error = sysfs_create_link(fsid_kobj, &fs_info->sb->s_bdi->dev->kobj, "bdi");
-	if (error)
-		goto failure;
+	अगर (error)
+		जाओ failure;
 
 	fs_info->space_info_kobj = kobject_create_and_add("allocation",
 						  fsid_kobj);
-	if (!fs_info->space_info_kobj) {
+	अगर (!fs_info->space_info_kobj) अणु
 		error = -ENOMEM;
-		goto failure;
-	}
+		जाओ failure;
+	पूर्ण
 
 	error = sysfs_create_files(fs_info->space_info_kobj, allocation_attrs);
-	if (error)
-		goto failure;
+	अगर (error)
+		जाओ failure;
 
-	return 0;
+	वापस 0;
 failure:
-	btrfs_sysfs_remove_mounted(fs_info);
-	return error;
-}
+	btrfs_sysfs_हटाओ_mounted(fs_info);
+	वापस error;
+पूर्ण
 
-static inline struct btrfs_fs_info *qgroup_kobj_to_fs_info(struct kobject *kobj)
-{
-	return to_fs_info(kobj->parent->parent);
-}
+अटल अंतरभूत काष्ठा btrfs_fs_info *qgroup_kobj_to_fs_info(काष्ठा kobject *kobj)
+अणु
+	वापस to_fs_info(kobj->parent->parent);
+पूर्ण
 
-#define QGROUP_ATTR(_member, _show_name)					\
-static ssize_t btrfs_qgroup_show_##_member(struct kobject *qgroup_kobj,		\
-					   struct kobj_attribute *a,		\
-					   char *buf)				\
-{										\
-	struct btrfs_fs_info *fs_info = qgroup_kobj_to_fs_info(qgroup_kobj);	\
-	struct btrfs_qgroup *qgroup = container_of(qgroup_kobj,			\
-			struct btrfs_qgroup, kobj);				\
-	return btrfs_show_u64(&qgroup->_member, &fs_info->qgroup_lock, buf);	\
-}										\
+#घोषणा QGROUP_ATTR(_member, _show_name)					\
+अटल sमाप_प्रकार btrfs_qgroup_show_##_member(काष्ठा kobject *qgroup_kobj,		\
+					   काष्ठा kobj_attribute *a,		\
+					   अक्षर *buf)				\
+अणु										\
+	काष्ठा btrfs_fs_info *fs_info = qgroup_kobj_to_fs_info(qgroup_kobj);	\
+	काष्ठा btrfs_qgroup *qgroup = container_of(qgroup_kobj,			\
+			काष्ठा btrfs_qgroup, kobj);				\
+	वापस btrfs_show_u64(&qgroup->_member, &fs_info->qgroup_lock, buf);	\
+पूर्ण										\
 BTRFS_ATTR(qgroup, _show_name, btrfs_qgroup_show_##_member)
 
-#define QGROUP_RSV_ATTR(_name, _type)						\
-static ssize_t btrfs_qgroup_rsv_show_##_name(struct kobject *qgroup_kobj,	\
-					     struct kobj_attribute *a,		\
-					     char *buf)				\
-{										\
-	struct btrfs_fs_info *fs_info = qgroup_kobj_to_fs_info(qgroup_kobj);	\
-	struct btrfs_qgroup *qgroup = container_of(qgroup_kobj,			\
-			struct btrfs_qgroup, kobj);				\
-	return btrfs_show_u64(&qgroup->rsv.values[_type],			\
+#घोषणा QGROUP_RSV_ATTR(_name, _type)						\
+अटल sमाप_प्रकार btrfs_qgroup_rsv_show_##_name(काष्ठा kobject *qgroup_kobj,	\
+					     काष्ठा kobj_attribute *a,		\
+					     अक्षर *buf)				\
+अणु										\
+	काष्ठा btrfs_fs_info *fs_info = qgroup_kobj_to_fs_info(qgroup_kobj);	\
+	काष्ठा btrfs_qgroup *qgroup = container_of(qgroup_kobj,			\
+			काष्ठा btrfs_qgroup, kobj);				\
+	वापस btrfs_show_u64(&qgroup->rsv.values[_type],			\
 			&fs_info->qgroup_lock, buf);				\
-}										\
+पूर्ण										\
 BTRFS_ATTR(qgroup, rsv_##_name, btrfs_qgroup_rsv_show_##_name)
 
 QGROUP_ATTR(rfer, referenced);
@@ -1753,9 +1754,9 @@ QGROUP_ATTR(max_excl, max_exclusive);
 QGROUP_ATTR(lim_flags, limit_flags);
 QGROUP_RSV_ATTR(data, BTRFS_QGROUP_RSV_DATA);
 QGROUP_RSV_ATTR(meta_pertrans, BTRFS_QGROUP_RSV_META_PERTRANS);
-QGROUP_RSV_ATTR(meta_prealloc, BTRFS_QGROUP_RSV_META_PREALLOC);
+QGROUP_RSV_ATTR(meta_pपुनः_स्मृति, BTRFS_QGROUP_RSV_META_PREALLOC);
 
-static struct attribute *qgroup_attrs[] = {
+अटल काष्ठा attribute *qgroup_attrs[] = अणु
 	BTRFS_ATTR_PTR(qgroup, referenced),
 	BTRFS_ATTR_PTR(qgroup, exclusive),
 	BTRFS_ATTR_PTR(qgroup, max_referenced),
@@ -1763,123 +1764,123 @@ static struct attribute *qgroup_attrs[] = {
 	BTRFS_ATTR_PTR(qgroup, limit_flags),
 	BTRFS_ATTR_PTR(qgroup, rsv_data),
 	BTRFS_ATTR_PTR(qgroup, rsv_meta_pertrans),
-	BTRFS_ATTR_PTR(qgroup, rsv_meta_prealloc),
-	NULL
-};
+	BTRFS_ATTR_PTR(qgroup, rsv_meta_pपुनः_स्मृति),
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(qgroup);
 
-static void qgroup_release(struct kobject *kobj)
-{
-	struct btrfs_qgroup *qgroup = container_of(kobj, struct btrfs_qgroup, kobj);
+अटल व्योम qgroup_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा btrfs_qgroup *qgroup = container_of(kobj, काष्ठा btrfs_qgroup, kobj);
 
-	memset(&qgroup->kobj, 0, sizeof(*kobj));
-}
+	स_रखो(&qgroup->kobj, 0, माप(*kobj));
+पूर्ण
 
-static struct kobj_type qgroup_ktype = {
+अटल काष्ठा kobj_type qgroup_ktype = अणु
 	.sysfs_ops = &kobj_sysfs_ops,
 	.release = qgroup_release,
-	.default_groups = qgroup_groups,
-};
+	.शेष_groups = qgroup_groups,
+पूर्ण;
 
-int btrfs_sysfs_add_one_qgroup(struct btrfs_fs_info *fs_info,
-				struct btrfs_qgroup *qgroup)
-{
-	struct kobject *qgroups_kobj = fs_info->qgroups_kobj;
-	int ret;
+पूर्णांक btrfs_sysfs_add_one_qgroup(काष्ठा btrfs_fs_info *fs_info,
+				काष्ठा btrfs_qgroup *qgroup)
+अणु
+	काष्ठा kobject *qgroups_kobj = fs_info->qgroups_kobj;
+	पूर्णांक ret;
 
-	if (test_bit(BTRFS_FS_STATE_DUMMY_FS_INFO, &fs_info->fs_state))
-		return 0;
-	if (qgroup->kobj.state_initialized)
-		return 0;
-	if (!qgroups_kobj)
-		return -EINVAL;
+	अगर (test_bit(BTRFS_FS_STATE_DUMMY_FS_INFO, &fs_info->fs_state))
+		वापस 0;
+	अगर (qgroup->kobj.state_initialized)
+		वापस 0;
+	अगर (!qgroups_kobj)
+		वापस -EINVAL;
 
 	ret = kobject_init_and_add(&qgroup->kobj, &qgroup_ktype, qgroups_kobj,
 			"%hu_%llu", btrfs_qgroup_level(qgroup->qgroupid),
 			btrfs_qgroup_subvolid(qgroup->qgroupid));
-	if (ret < 0)
+	अगर (ret < 0)
 		kobject_put(&qgroup->kobj);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void btrfs_sysfs_del_qgroups(struct btrfs_fs_info *fs_info)
-{
-	struct btrfs_qgroup *qgroup;
-	struct btrfs_qgroup *next;
+व्योम btrfs_sysfs_del_qgroups(काष्ठा btrfs_fs_info *fs_info)
+अणु
+	काष्ठा btrfs_qgroup *qgroup;
+	काष्ठा btrfs_qgroup *next;
 
-	if (test_bit(BTRFS_FS_STATE_DUMMY_FS_INFO, &fs_info->fs_state))
-		return;
+	अगर (test_bit(BTRFS_FS_STATE_DUMMY_FS_INFO, &fs_info->fs_state))
+		वापस;
 
-	rbtree_postorder_for_each_entry_safe(qgroup, next,
+	rbtree_postorder_क्रम_each_entry_safe(qgroup, next,
 					     &fs_info->qgroup_tree, node)
 		btrfs_sysfs_del_one_qgroup(fs_info, qgroup);
-	if (fs_info->qgroups_kobj) {
+	अगर (fs_info->qgroups_kobj) अणु
 		kobject_del(fs_info->qgroups_kobj);
 		kobject_put(fs_info->qgroups_kobj);
-		fs_info->qgroups_kobj = NULL;
-	}
-}
+		fs_info->qgroups_kobj = शून्य;
+	पूर्ण
+पूर्ण
 
-/* Called when qgroups get initialized, thus there is no need for locking */
-int btrfs_sysfs_add_qgroups(struct btrfs_fs_info *fs_info)
-{
-	struct kobject *fsid_kobj = &fs_info->fs_devices->fsid_kobj;
-	struct btrfs_qgroup *qgroup;
-	struct btrfs_qgroup *next;
-	int ret = 0;
+/* Called when qgroups get initialized, thus there is no need क्रम locking */
+पूर्णांक btrfs_sysfs_add_qgroups(काष्ठा btrfs_fs_info *fs_info)
+अणु
+	काष्ठा kobject *fsid_kobj = &fs_info->fs_devices->fsid_kobj;
+	काष्ठा btrfs_qgroup *qgroup;
+	काष्ठा btrfs_qgroup *next;
+	पूर्णांक ret = 0;
 
-	if (test_bit(BTRFS_FS_STATE_DUMMY_FS_INFO, &fs_info->fs_state))
-		return 0;
+	अगर (test_bit(BTRFS_FS_STATE_DUMMY_FS_INFO, &fs_info->fs_state))
+		वापस 0;
 
 	ASSERT(fsid_kobj);
-	if (fs_info->qgroups_kobj)
-		return 0;
+	अगर (fs_info->qgroups_kobj)
+		वापस 0;
 
 	fs_info->qgroups_kobj = kobject_create_and_add("qgroups", fsid_kobj);
-	if (!fs_info->qgroups_kobj) {
+	अगर (!fs_info->qgroups_kobj) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
-	rbtree_postorder_for_each_entry_safe(qgroup, next,
-					     &fs_info->qgroup_tree, node) {
+		जाओ out;
+	पूर्ण
+	rbtree_postorder_क्रम_each_entry_safe(qgroup, next,
+					     &fs_info->qgroup_tree, node) अणु
 		ret = btrfs_sysfs_add_one_qgroup(fs_info, qgroup);
-		if (ret < 0)
-			goto out;
-	}
+		अगर (ret < 0)
+			जाओ out;
+	पूर्ण
 
 out:
-	if (ret < 0)
+	अगर (ret < 0)
 		btrfs_sysfs_del_qgroups(fs_info);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void btrfs_sysfs_del_one_qgroup(struct btrfs_fs_info *fs_info,
-				struct btrfs_qgroup *qgroup)
-{
-	if (test_bit(BTRFS_FS_STATE_DUMMY_FS_INFO, &fs_info->fs_state))
-		return;
+व्योम btrfs_sysfs_del_one_qgroup(काष्ठा btrfs_fs_info *fs_info,
+				काष्ठा btrfs_qgroup *qgroup)
+अणु
+	अगर (test_bit(BTRFS_FS_STATE_DUMMY_FS_INFO, &fs_info->fs_state))
+		वापस;
 
-	if (qgroup->kobj.state_initialized) {
+	अगर (qgroup->kobj.state_initialized) अणु
 		kobject_del(&qgroup->kobj);
 		kobject_put(&qgroup->kobj);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Change per-fs features in /sys/fs/btrfs/UUID/features to match current
  * values in superblock. Call after any changes to incompat/compat_ro flags
  */
-void btrfs_sysfs_feature_update(struct btrfs_fs_info *fs_info,
-		u64 bit, enum btrfs_feature_set set)
-{
-	struct btrfs_fs_devices *fs_devs;
-	struct kobject *fsid_kobj;
+व्योम btrfs_sysfs_feature_update(काष्ठा btrfs_fs_info *fs_info,
+		u64 bit, क्रमागत btrfs_feature_set set)
+अणु
+	काष्ठा btrfs_fs_devices *fs_devs;
+	काष्ठा kobject *fsid_kobj;
 	u64 __maybe_unused features;
-	int __maybe_unused ret;
+	पूर्णांक __maybe_unused ret;
 
-	if (!fs_info)
-		return;
+	अगर (!fs_info)
+		वापस;
 
 	/*
 	 * See 14e46e04958df74 and e410e34fad913dd, feature bit updates are not
@@ -1891,58 +1892,58 @@ void btrfs_sysfs_feature_update(struct btrfs_fs_info *fs_info,
 	fs_devs = fs_info->fs_devices;
 	fsid_kobj = &fs_devs->fsid_kobj;
 
-	if (!fsid_kobj->state_initialized)
-		return;
+	अगर (!fsid_kobj->state_initialized)
+		वापस;
 
 	/*
 	 * FIXME: this is too heavy to update just one value, ideally we'd like
 	 * to use sysfs_update_group but some refactoring is needed first.
 	 */
-	sysfs_remove_group(fsid_kobj, &btrfs_feature_attr_group);
+	sysfs_हटाओ_group(fsid_kobj, &btrfs_feature_attr_group);
 	ret = sysfs_create_group(fsid_kobj, &btrfs_feature_attr_group);
-}
+पूर्ण
 
-int __init btrfs_init_sysfs(void)
-{
-	int ret;
+पूर्णांक __init btrfs_init_sysfs(व्योम)
+अणु
+	पूर्णांक ret;
 
-	btrfs_kset = kset_create_and_add("btrfs", NULL, fs_kobj);
-	if (!btrfs_kset)
-		return -ENOMEM;
+	btrfs_kset = kset_create_and_add("btrfs", शून्य, fs_kobj);
+	अगर (!btrfs_kset)
+		वापस -ENOMEM;
 
 	init_feature_attrs();
 	ret = sysfs_create_group(&btrfs_kset->kobj, &btrfs_feature_attr_group);
-	if (ret)
-		goto out2;
+	अगर (ret)
+		जाओ out2;
 	ret = sysfs_merge_group(&btrfs_kset->kobj,
-				&btrfs_static_feature_attr_group);
-	if (ret)
-		goto out_remove_group;
+				&btrfs_अटल_feature_attr_group);
+	अगर (ret)
+		जाओ out_हटाओ_group;
 
-#ifdef CONFIG_BTRFS_DEBUG
+#अगर_घोषित CONFIG_BTRFS_DEBUG
 	ret = sysfs_create_group(&btrfs_kset->kobj, &btrfs_debug_feature_attr_group);
-	if (ret)
-		goto out2;
-#endif
+	अगर (ret)
+		जाओ out2;
+#पूर्ण_अगर
 
-	return 0;
+	वापस 0;
 
-out_remove_group:
-	sysfs_remove_group(&btrfs_kset->kobj, &btrfs_feature_attr_group);
+out_हटाओ_group:
+	sysfs_हटाओ_group(&btrfs_kset->kobj, &btrfs_feature_attr_group);
 out2:
-	kset_unregister(btrfs_kset);
+	kset_unरेजिस्टर(btrfs_kset);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void __cold btrfs_exit_sysfs(void)
-{
+व्योम __cold btrfs_निकास_sysfs(व्योम)
+अणु
 	sysfs_unmerge_group(&btrfs_kset->kobj,
-			    &btrfs_static_feature_attr_group);
-	sysfs_remove_group(&btrfs_kset->kobj, &btrfs_feature_attr_group);
-#ifdef CONFIG_BTRFS_DEBUG
-	sysfs_remove_group(&btrfs_kset->kobj, &btrfs_debug_feature_attr_group);
-#endif
-	kset_unregister(btrfs_kset);
-}
+			    &btrfs_अटल_feature_attr_group);
+	sysfs_हटाओ_group(&btrfs_kset->kobj, &btrfs_feature_attr_group);
+#अगर_घोषित CONFIG_BTRFS_DEBUG
+	sysfs_हटाओ_group(&btrfs_kset->kobj, &btrfs_debug_feature_attr_group);
+#पूर्ण_अगर
+	kset_unरेजिस्टर(btrfs_kset);
+पूर्ण
 

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,10 +24,10 @@
  *
  */
 
-#ifndef __DML21_DISPLAY_MODE_VBA_H__
-#define __DML21_DISPLAY_MODE_VBA_H__
+#अगर_अघोषित __DML21_DISPLAY_MODE_VBA_H__
+#घोषणा __DML21_DISPLAY_MODE_VBA_H__
 
-void dml21_recalculate(struct display_mode_lib *mode_lib);
-void dml21_ModeSupportAndSystemConfigurationFull(struct display_mode_lib *mode_lib);
+व्योम dml21_recalculate(काष्ठा display_mode_lib *mode_lib);
+व्योम dml21_ModeSupportAndSystemConfigurationFull(काष्ठा display_mode_lib *mode_lib);
 
-#endif /* _DML21_DISPLAY_MODE_VBA_H_ */
+#पूर्ण_अगर /* _DML21_DISPLAY_MODE_VBA_H_ */

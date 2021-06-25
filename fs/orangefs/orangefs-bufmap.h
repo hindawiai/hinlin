@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * (C) 2001 Clemson University and The University of Chicago
  *
  * See COPYING in top-level directory.
  */
 
-#ifndef __ORANGEFS_BUFMAP_H
-#define __ORANGEFS_BUFMAP_H
+#अगर_अघोषित __ORANGEFS_BUFMAP_H
+#घोषणा __ORANGEFS_BUFMAP_H
 
-int orangefs_bufmap_size_query(void);
+पूर्णांक orangefs_bufmap_size_query(व्योम);
 
-int orangefs_bufmap_shift_query(void);
+पूर्णांक orangefs_bufmap_shअगरt_query(व्योम);
 
-int orangefs_bufmap_initialize(struct ORANGEFS_dev_map_desc *user_desc);
+पूर्णांक orangefs_bufmap_initialize(काष्ठा ORANGEFS_dev_map_desc *user_desc);
 
-void orangefs_bufmap_finalize(void);
+व्योम orangefs_bufmap_finalize(व्योम);
 
-void orangefs_bufmap_run_down(void);
+व्योम orangefs_bufmap_run_करोwn(व्योम);
 
-int orangefs_bufmap_get(void);
+पूर्णांक orangefs_bufmap_get(व्योम);
 
-void orangefs_bufmap_put(int buffer_index);
+व्योम orangefs_bufmap_put(पूर्णांक buffer_index);
 
-int orangefs_readdir_index_get(void);
+पूर्णांक orangefs_सूची_पढ़ो_index_get(व्योम);
 
-void orangefs_readdir_index_put(int buffer_index);
+व्योम orangefs_सूची_पढ़ो_index_put(पूर्णांक buffer_index);
 
-int orangefs_bufmap_copy_from_iovec(struct iov_iter *iter,
-				int buffer_index,
-				size_t size);
+पूर्णांक orangefs_bufmap_copy_from_iovec(काष्ठा iov_iter *iter,
+				पूर्णांक buffer_index,
+				माप_प्रकार size);
 
-int orangefs_bufmap_copy_to_iovec(struct iov_iter *iter,
-			      int buffer_index,
-			      size_t size);
+पूर्णांक orangefs_bufmap_copy_to_iovec(काष्ठा iov_iter *iter,
+			      पूर्णांक buffer_index,
+			      माप_प्रकार size);
 
-void orangefs_bufmap_page_fill(void *kaddr, int buffer_index, int slot_index);
+व्योम orangefs_bufmap_page_fill(व्योम *kaddr, पूर्णांक buffer_index, पूर्णांक slot_index);
 
-#endif /* __ORANGEFS_BUFMAP_H */
+#पूर्ण_अगर /* __ORANGEFS_BUFMAP_H */

@@ -1,194 +1,195 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* FS-Cache cache handling
  *
  * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define FSCACHE_DEBUG_LEVEL CACHE
-#include <linux/module.h>
-#include <linux/slab.h>
-#include "internal.h"
+#घोषणा FSCACHE_DEBUG_LEVEL CACHE
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश "internal.h"
 
 LIST_HEAD(fscache_cache_list);
-DECLARE_RWSEM(fscache_addremove_sem);
+DECLARE_RWSEM(fscache_addहटाओ_sem);
 DECLARE_WAIT_QUEUE_HEAD(fscache_cache_cleared_wq);
 EXPORT_SYMBOL(fscache_cache_cleared_wq);
 
-static LIST_HEAD(fscache_cache_tag_list);
+अटल LIST_HEAD(fscache_cache_tag_list);
 
 /*
  * look up a cache tag
  */
-struct fscache_cache_tag *__fscache_lookup_cache_tag(const char *name)
-{
-	struct fscache_cache_tag *tag, *xtag;
+काष्ठा fscache_cache_tag *__fscache_lookup_cache_tag(स्थिर अक्षर *name)
+अणु
+	काष्ठा fscache_cache_tag *tag, *xtag;
 
-	/* firstly check for the existence of the tag under read lock */
-	down_read(&fscache_addremove_sem);
+	/* firstly check क्रम the existence of the tag under पढ़ो lock */
+	करोwn_पढ़ो(&fscache_addहटाओ_sem);
 
-	list_for_each_entry(tag, &fscache_cache_tag_list, link) {
-		if (strcmp(tag->name, name) == 0) {
+	list_क्रम_each_entry(tag, &fscache_cache_tag_list, link) अणु
+		अगर (म_भेद(tag->name, name) == 0) अणु
 			atomic_inc(&tag->usage);
-			up_read(&fscache_addremove_sem);
-			return tag;
-		}
-	}
+			up_पढ़ो(&fscache_addहटाओ_sem);
+			वापस tag;
+		पूर्ण
+	पूर्ण
 
-	up_read(&fscache_addremove_sem);
+	up_पढ़ो(&fscache_addहटाओ_sem);
 
-	/* the tag does not exist - create a candidate */
-	xtag = kzalloc(sizeof(*xtag) + strlen(name) + 1, GFP_KERNEL);
-	if (!xtag)
-		/* return a dummy tag if out of memory */
-		return ERR_PTR(-ENOMEM);
+	/* the tag करोes not exist - create a candidate */
+	xtag = kzalloc(माप(*xtag) + म_माप(name) + 1, GFP_KERNEL);
+	अगर (!xtag)
+		/* वापस a dummy tag अगर out of memory */
+		वापस ERR_PTR(-ENOMEM);
 
 	atomic_set(&xtag->usage, 1);
-	strcpy(xtag->name, name);
+	म_नकल(xtag->name, name);
 
-	/* write lock, search again and add if still not present */
-	down_write(&fscache_addremove_sem);
+	/* ग_लिखो lock, search again and add अगर still not present */
+	करोwn_ग_लिखो(&fscache_addहटाओ_sem);
 
-	list_for_each_entry(tag, &fscache_cache_tag_list, link) {
-		if (strcmp(tag->name, name) == 0) {
+	list_क्रम_each_entry(tag, &fscache_cache_tag_list, link) अणु
+		अगर (म_भेद(tag->name, name) == 0) अणु
 			atomic_inc(&tag->usage);
-			up_write(&fscache_addremove_sem);
-			kfree(xtag);
-			return tag;
-		}
-	}
+			up_ग_लिखो(&fscache_addहटाओ_sem);
+			kमुक्त(xtag);
+			वापस tag;
+		पूर्ण
+	पूर्ण
 
 	list_add_tail(&xtag->link, &fscache_cache_tag_list);
-	up_write(&fscache_addremove_sem);
-	return xtag;
-}
+	up_ग_लिखो(&fscache_addहटाओ_sem);
+	वापस xtag;
+पूर्ण
 
 /*
  * release a reference to a cache tag
  */
-void __fscache_release_cache_tag(struct fscache_cache_tag *tag)
-{
-	if (tag != ERR_PTR(-ENOMEM)) {
-		down_write(&fscache_addremove_sem);
+व्योम __fscache_release_cache_tag(काष्ठा fscache_cache_tag *tag)
+अणु
+	अगर (tag != ERR_PTR(-ENOMEM)) अणु
+		करोwn_ग_लिखो(&fscache_addहटाओ_sem);
 
-		if (atomic_dec_and_test(&tag->usage))
+		अगर (atomic_dec_and_test(&tag->usage))
 			list_del_init(&tag->link);
-		else
-			tag = NULL;
+		अन्यथा
+			tag = शून्य;
 
-		up_write(&fscache_addremove_sem);
+		up_ग_लिखो(&fscache_addहटाओ_sem);
 
-		kfree(tag);
-	}
-}
+		kमुक्त(tag);
+	पूर्ण
+पूर्ण
 
 /*
  * select a cache in which to store an object
- * - the cache addremove semaphore must be at least read-locked by the caller
+ * - the cache addहटाओ semaphore must be at least पढ़ो-locked by the caller
  * - the object will never be an index
  */
-struct fscache_cache *fscache_select_cache_for_object(
-	struct fscache_cookie *cookie)
-{
-	struct fscache_cache_tag *tag;
-	struct fscache_object *object;
-	struct fscache_cache *cache;
+काष्ठा fscache_cache *fscache_select_cache_क्रम_object(
+	काष्ठा fscache_cookie *cookie)
+अणु
+	काष्ठा fscache_cache_tag *tag;
+	काष्ठा fscache_object *object;
+	काष्ठा fscache_cache *cache;
 
 	_enter("");
 
-	if (list_empty(&fscache_cache_list)) {
+	अगर (list_empty(&fscache_cache_list)) अणु
 		_leave(" = NULL [no cache]");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* we check the parent to determine the cache to use */
 	spin_lock(&cookie->lock);
 
 	/* the first in the parent's backing list should be the preferred
 	 * cache */
-	if (!hlist_empty(&cookie->backing_objects)) {
+	अगर (!hlist_empty(&cookie->backing_objects)) अणु
 		object = hlist_entry(cookie->backing_objects.first,
-				     struct fscache_object, cookie_link);
+				     काष्ठा fscache_object, cookie_link);
 
 		cache = object->cache;
-		if (fscache_object_is_dying(object) ||
+		अगर (fscache_object_is_dying(object) ||
 		    test_bit(FSCACHE_IOERROR, &cache->flags))
-			cache = NULL;
+			cache = शून्य;
 
 		spin_unlock(&cookie->lock);
 		_leave(" = %p [parent]", cache);
-		return cache;
-	}
+		वापस cache;
+	पूर्ण
 
 	/* the parent is unbacked */
-	if (cookie->type != FSCACHE_COOKIE_TYPE_INDEX) {
+	अगर (cookie->type != FSCACHE_COOKIE_TYPE_INDEX) अणु
 		/* cookie not an index and is unbacked */
 		spin_unlock(&cookie->lock);
 		_leave(" = NULL [cookie ub,ni]");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	spin_unlock(&cookie->lock);
 
-	if (!cookie->def->select_cache)
-		goto no_preference;
+	अगर (!cookie->def->select_cache)
+		जाओ no_preference;
 
-	/* ask the netfs for its preference */
+	/* ask the netfs क्रम its preference */
 	tag = cookie->def->select_cache(cookie->parent->netfs_data,
 					cookie->netfs_data);
-	if (!tag)
-		goto no_preference;
+	अगर (!tag)
+		जाओ no_preference;
 
-	if (tag == ERR_PTR(-ENOMEM)) {
+	अगर (tag == ERR_PTR(-ENOMEM)) अणु
 		_leave(" = NULL [nomem tag]");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (!tag->cache) {
+	अगर (!tag->cache) अणु
 		_leave(" = NULL [unbacked tag]");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (test_bit(FSCACHE_IOERROR, &tag->cache->flags))
-		return NULL;
+	अगर (test_bit(FSCACHE_IOERROR, &tag->cache->flags))
+		वापस शून्य;
 
 	_leave(" = %p [specific]", tag->cache);
-	return tag->cache;
+	वापस tag->cache;
 
 no_preference:
 	/* netfs has no preference - just select first cache */
 	cache = list_entry(fscache_cache_list.next,
-			   struct fscache_cache, link);
+			   काष्ठा fscache_cache, link);
 	_leave(" = %p [first]", cache);
-	return cache;
-}
+	वापस cache;
+पूर्ण
 
 /**
  * fscache_init_cache - Initialise a cache record
  * @cache: The cache record to be initialised
  * @ops: The cache operations to be installed in that record
- * @idfmt: Format string to define identifier
- * @...: sprintf-style arguments
+ * @idfmt: Format string to define identअगरier
+ * @...: प्र_लिखो-style arguments
  *
  * Initialise a record of a cache and fill in the name.
  *
- * See Documentation/filesystems/caching/backend-api.rst for a complete
+ * See Documentation/fileप्रणालीs/caching/backend-api.rst क्रम a complete
  * description.
  */
-void fscache_init_cache(struct fscache_cache *cache,
-			const struct fscache_cache_ops *ops,
-			const char *idfmt,
+व्योम fscache_init_cache(काष्ठा fscache_cache *cache,
+			स्थिर काष्ठा fscache_cache_ops *ops,
+			स्थिर अक्षर *idfmt,
 			...)
-{
-	va_list va;
+अणु
+	बहु_सूची va;
 
-	memset(cache, 0, sizeof(*cache));
+	स_रखो(cache, 0, माप(*cache));
 
 	cache->ops = ops;
 
-	va_start(va, idfmt);
-	vsnprintf(cache->identifier, sizeof(cache->identifier), idfmt, va);
-	va_end(va);
+	बहु_शुरू(va, idfmt);
+	vsnम_लिखो(cache->identअगरier, माप(cache->identअगरier), idfmt, va);
+	बहु_पूर्ण(va);
 
 	INIT_WORK(&cache->op_gc, fscache_operation_gc);
 	INIT_LIST_HEAD(&cache->link);
@@ -196,59 +197,59 @@ void fscache_init_cache(struct fscache_cache *cache,
 	INIT_LIST_HEAD(&cache->op_gc_list);
 	spin_lock_init(&cache->object_list_lock);
 	spin_lock_init(&cache->op_gc_list_lock);
-}
+पूर्ण
 EXPORT_SYMBOL(fscache_init_cache);
 
 /**
- * fscache_add_cache - Declare a cache as being open for business
+ * fscache_add_cache - Declare a cache as being खोलो क्रम business
  * @cache: The record describing the cache
- * @ifsdef: The record of the cache object describing the top-level index
+ * @अगरsdef: The record of the cache object describing the top-level index
  * @tagname: The tag describing this cache
  *
- * Add a cache to the system, making it available for netfs's to use.
+ * Add a cache to the प्रणाली, making it available क्रम netfs's to use.
  *
- * See Documentation/filesystems/caching/backend-api.rst for a complete
+ * See Documentation/fileप्रणालीs/caching/backend-api.rst क्रम a complete
  * description.
  */
-int fscache_add_cache(struct fscache_cache *cache,
-		      struct fscache_object *ifsdef,
-		      const char *tagname)
-{
-	struct fscache_cache_tag *tag;
+पूर्णांक fscache_add_cache(काष्ठा fscache_cache *cache,
+		      काष्ठा fscache_object *अगरsdef,
+		      स्थिर अक्षर *tagname)
+अणु
+	काष्ठा fscache_cache_tag *tag;
 
-	ASSERTCMP(ifsdef->cookie, ==, &fscache_fsdef_index);
+	ASSERTCMP(अगरsdef->cookie, ==, &fscache_fsdef_index);
 	BUG_ON(!cache->ops);
-	BUG_ON(!ifsdef);
+	BUG_ON(!अगरsdef);
 
 	cache->flags = 0;
-	ifsdef->event_mask =
+	अगरsdef->event_mask =
 		((1 << NR_FSCACHE_OBJECT_EVENTS) - 1) &
 		~(1 << FSCACHE_OBJECT_EV_CLEARED);
-	__set_bit(FSCACHE_OBJECT_IS_AVAILABLE, &ifsdef->flags);
+	__set_bit(FSCACHE_OBJECT_IS_AVAILABLE, &अगरsdef->flags);
 
-	if (!tagname)
-		tagname = cache->identifier;
+	अगर (!tagname)
+		tagname = cache->identअगरier;
 
 	BUG_ON(!tagname[0]);
 
-	_enter("{%s.%s},,%s", cache->ops->name, cache->identifier, tagname);
+	_enter("{%s.%s},,%s", cache->ops->name, cache->identअगरier, tagname);
 
-	/* we use the cache tag to uniquely identify caches */
+	/* we use the cache tag to uniquely identअगरy caches */
 	tag = __fscache_lookup_cache_tag(tagname);
-	if (IS_ERR(tag))
-		goto nomem;
+	अगर (IS_ERR(tag))
+		जाओ nomem;
 
-	if (test_and_set_bit(FSCACHE_TAG_RESERVED, &tag->flags))
-		goto tag_in_use;
+	अगर (test_and_set_bit(FSCACHE_TAG_RESERVED, &tag->flags))
+		जाओ tag_in_use;
 
 	cache->kobj = kobject_create_and_add(tagname, fscache_root);
-	if (!cache->kobj)
-		goto error;
+	अगर (!cache->kobj)
+		जाओ error;
 
-	ifsdef->cache = cache;
-	cache->fsdef = ifsdef;
+	अगरsdef->cache = cache;
+	cache->fsdef = अगरsdef;
 
-	down_write(&fscache_addremove_sem);
+	करोwn_ग_लिखो(&fscache_addहटाओ_sem);
 
 	tag->cache = cache;
 	cache->tag = tag;
@@ -259,94 +260,94 @@ int fscache_add_cache(struct fscache_cache *cache,
 	/* add the cache's netfs definition index object to the cache's
 	 * list */
 	spin_lock(&cache->object_list_lock);
-	list_add_tail(&ifsdef->cache_link, &cache->object_list);
+	list_add_tail(&अगरsdef->cache_link, &cache->object_list);
 	spin_unlock(&cache->object_list_lock);
-	fscache_objlist_add(ifsdef);
+	fscache_objlist_add(अगरsdef);
 
 	/* add the cache's netfs definition index object to the top level index
 	 * cookie as a known backing object */
 	spin_lock(&fscache_fsdef_index.lock);
 
-	hlist_add_head(&ifsdef->cookie_link,
+	hlist_add_head(&अगरsdef->cookie_link,
 		       &fscache_fsdef_index.backing_objects);
 
 	atomic_inc(&fscache_fsdef_index.usage);
 
-	/* done */
+	/* करोne */
 	spin_unlock(&fscache_fsdef_index.lock);
-	up_write(&fscache_addremove_sem);
+	up_ग_लिखो(&fscache_addहटाओ_sem);
 
 	pr_notice("Cache \"%s\" added (type %s)\n",
 		  cache->tag->name, cache->ops->name);
 	kobject_uevent(cache->kobj, KOBJ_ADD);
 
-	_leave(" = 0 [%s]", cache->identifier);
-	return 0;
+	_leave(" = 0 [%s]", cache->identअगरier);
+	वापस 0;
 
 tag_in_use:
 	pr_err("Cache tag '%s' already in use\n", tagname);
 	__fscache_release_cache_tag(tag);
 	_leave(" = -EXIST");
-	return -EEXIST;
+	वापस -EEXIST;
 
 error:
 	__fscache_release_cache_tag(tag);
 	_leave(" = -EINVAL");
-	return -EINVAL;
+	वापस -EINVAL;
 
 nomem:
 	_leave(" = -ENOMEM");
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 EXPORT_SYMBOL(fscache_add_cache);
 
 /**
  * fscache_io_error - Note a cache I/O error
  * @cache: The record describing the cache
  *
- * Note that an I/O error occurred in a cache and that it should no longer be
- * used for anything.  This also reports the error into the kernel log.
+ * Note that an I/O error occurred in a cache and that it should no दीर्घer be
+ * used क्रम anything.  This also reports the error पूर्णांकo the kernel log.
  *
- * See Documentation/filesystems/caching/backend-api.rst for a complete
+ * See Documentation/fileप्रणालीs/caching/backend-api.rst क्रम a complete
  * description.
  */
-void fscache_io_error(struct fscache_cache *cache)
-{
-	if (!test_and_set_bit(FSCACHE_IOERROR, &cache->flags))
+व्योम fscache_io_error(काष्ठा fscache_cache *cache)
+अणु
+	अगर (!test_and_set_bit(FSCACHE_IOERROR, &cache->flags))
 		pr_err("Cache '%s' stopped due to I/O error\n",
 		       cache->ops->name);
-}
+पूर्ण
 EXPORT_SYMBOL(fscache_io_error);
 
 /*
  * request withdrawal of all the objects in a cache
  * - all the objects being withdrawn are moved onto the supplied list
  */
-static void fscache_withdraw_all_objects(struct fscache_cache *cache,
-					 struct list_head *dying_objects)
-{
-	struct fscache_object *object;
+अटल व्योम fscache_withdraw_all_objects(काष्ठा fscache_cache *cache,
+					 काष्ठा list_head *dying_objects)
+अणु
+	काष्ठा fscache_object *object;
 
-	while (!list_empty(&cache->object_list)) {
+	जबतक (!list_empty(&cache->object_list)) अणु
 		spin_lock(&cache->object_list_lock);
 
-		if (!list_empty(&cache->object_list)) {
+		अगर (!list_empty(&cache->object_list)) अणु
 			object = list_entry(cache->object_list.next,
-					    struct fscache_object, cache_link);
+					    काष्ठा fscache_object, cache_link);
 			list_move_tail(&object->cache_link, dying_objects);
 
 			_debug("withdraw %p", object->cookie);
 
-			/* This must be done under object_list_lock to prevent
+			/* This must be करोne under object_list_lock to prevent
 			 * a race with fscache_drop_object().
 			 */
-			fscache_raise_event(object, FSCACHE_OBJECT_EV_KILL);
-		}
+			fscache_उठाओ_event(object, FSCACHE_OBJECT_EV_KILL);
+		पूर्ण
 
 		spin_unlock(&cache->object_list_lock);
 		cond_resched();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * fscache_withdraw_cache - Withdraw a cache from the active service
@@ -355,11 +356,11 @@ static void fscache_withdraw_all_objects(struct fscache_cache *cache,
  * Withdraw a cache from service, unbinding all its cache objects from the
  * netfs cookies they're currently representing.
  *
- * See Documentation/filesystems/caching/backend-api.rst for a complete
+ * See Documentation/fileप्रणालीs/caching/backend-api.rst क्रम a complete
  * description.
  */
-void fscache_withdraw_cache(struct fscache_cache *cache)
-{
+व्योम fscache_withdraw_cache(काष्ठा fscache_cache *cache)
+अणु
 	LIST_HEAD(dying_objects);
 
 	_enter("");
@@ -367,14 +368,14 @@ void fscache_withdraw_cache(struct fscache_cache *cache)
 	pr_notice("Withdrawing cache \"%s\"\n",
 		  cache->tag->name);
 
-	/* make the cache unavailable for cookie acquisition */
-	if (test_and_set_bit(FSCACHE_CACHE_WITHDRAWN, &cache->flags))
+	/* make the cache unavailable क्रम cookie acquisition */
+	अगर (test_and_set_bit(FSCACHE_CACHE_WITHDRAWN, &cache->flags))
 		BUG();
 
-	down_write(&fscache_addremove_sem);
+	करोwn_ग_लिखो(&fscache_addहटाओ_sem);
 	list_del_init(&cache->link);
-	cache->tag->cache = NULL;
-	up_write(&fscache_addremove_sem);
+	cache->tag->cache = शून्य;
+	up_ग_लिखो(&fscache_addहटाओ_sem);
 
 	/* make sure all pages pinned by operations on behalf of the netfs are
 	 * written to disk */
@@ -389,19 +390,19 @@ void fscache_withdraw_cache(struct fscache_cache *cache)
 	fscache_stat_d(&fscache_n_cop_dissociate_pages);
 
 	/* we now have to destroy all the active objects pertaining to this
-	 * cache - which we do by passing them off to thread pool to be
+	 * cache - which we करो by passing them off to thपढ़ो pool to be
 	 * disposed of */
 	_debug("destroy");
 
 	fscache_withdraw_all_objects(cache, &dying_objects);
 
-	/* wait for all extant objects to finish their outstanding operations
+	/* रुको क्रम all extant objects to finish their outstanding operations
 	 * and go away */
 	_debug("wait for finish");
-	wait_event(fscache_cache_cleared_wq,
-		   atomic_read(&cache->object_count) == 0);
+	रुको_event(fscache_cache_cleared_wq,
+		   atomic_पढ़ो(&cache->object_count) == 0);
 	_debug("wait for clearance");
-	wait_event(fscache_cache_cleared_wq,
+	रुको_event(fscache_cache_cleared_wq,
 		   list_empty(&cache->object_list));
 	_debug("cleared");
 	ASSERT(list_empty(&dying_objects));
@@ -410,8 +411,8 @@ void fscache_withdraw_cache(struct fscache_cache *cache)
 
 	clear_bit(FSCACHE_TAG_RESERVED, &cache->tag->flags);
 	fscache_release_cache_tag(cache->tag);
-	cache->tag = NULL;
+	cache->tag = शून्य;
 
 	_leave("");
-}
+पूर्ण
 EXPORT_SYMBOL(fscache_withdraw_cache);

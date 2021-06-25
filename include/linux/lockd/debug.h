@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * linux/include/linux/lockd/debug.h
  *
@@ -7,34 +8,34 @@
  * Copyright (C) 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
-#ifndef LINUX_LOCKD_DEBUG_H
-#define LINUX_LOCKD_DEBUG_H
+#अगर_अघोषित LINUX_LOCKD_DEBUG_H
+#घोषणा LINUX_LOCKD_DEBUG_H
 
-#include <linux/sunrpc/debug.h>
+#समावेश <linux/sunrpc/debug.h>
 
 /*
  * Enable lockd debugging.
  * Requires RPC_DEBUG.
  */
-#undef ifdebug
-#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
-# define ifdebug(flag)		if (unlikely(nlm_debug & NLMDBG_##flag))
-#else
-# define ifdebug(flag)		if (0)
-#endif
+#अघोषित अगरdebug
+#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+# define अगरdebug(flag)		अगर (unlikely(nlm_debug & NLMDBG_##flag))
+#अन्यथा
+# define अगरdebug(flag)		अगर (0)
+#पूर्ण_अगर
 
 /*
  * Debug flags
  */
-#define NLMDBG_SVC		0x0001
-#define NLMDBG_CLIENT		0x0002
-#define NLMDBG_CLNTLOCK		0x0004
-#define NLMDBG_SVCLOCK		0x0008
-#define NLMDBG_MONITOR		0x0010
-#define NLMDBG_CLNTSUBS		0x0020
-#define NLMDBG_SVCSUBS		0x0040
-#define NLMDBG_HOSTCACHE	0x0080
-#define NLMDBG_XDR		0x0100
-#define NLMDBG_ALL		0x7fff
+#घोषणा NLMDBG_SVC		0x0001
+#घोषणा NLMDBG_CLIENT		0x0002
+#घोषणा NLMDBG_CLNTLOCK		0x0004
+#घोषणा NLMDBG_SVCLOCK		0x0008
+#घोषणा NLMDBG_MONITOR		0x0010
+#घोषणा NLMDBG_CLNTSUBS		0x0020
+#घोषणा NLMDBG_SVCSUBS		0x0040
+#घोषणा NLMDBG_HOSTCACHE	0x0080
+#घोषणा NLMDBG_XDR		0x0100
+#घोषणा NLMDBG_ALL		0x7fff
 
-#endif /* LINUX_LOCKD_DEBUG_H */
+#पूर्ण_अगर /* LINUX_LOCKD_DEBUG_H */

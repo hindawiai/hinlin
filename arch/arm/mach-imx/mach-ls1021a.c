@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2013-2014 Freescale Semiconductor, Inc.
  */
 
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-static const char * const ls1021a_dt_compat[] __initconst = {
+अटल स्थिर अक्षर * स्थिर ls1021a_dt_compat[] __initस्थिर = अणु
 	"fsl,ls1021a",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(LS1021A, "Freescale LS1021A")
 	.smp		= smp_ops(ls1021a_smp_ops),

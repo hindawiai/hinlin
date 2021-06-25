@@ -1,562 +1,563 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/kdebug.h>
-#include <linux/kprobes.h>
-#include <linux/export.h>
-#include <linux/notifier.h>
-#include <linux/rcupdate.h>
-#include <linux/vmalloc.h>
-#include <linux/reboot.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/kdebug.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/export.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/reboot.h>
 
 /*
- *	Notifier list for kernel code which wants to be called
- *	at shutdown. This is used to stop any idling DMA operations
+ *	Notअगरier list क्रम kernel code which wants to be called
+ *	at shutकरोwn. This is used to stop any idling DMA operations
  *	and the like.
  */
-BLOCKING_NOTIFIER_HEAD(reboot_notifier_list);
+BLOCKING_NOTIFIER_HEAD(reboot_notअगरier_list);
 
 /*
- *	Notifier chain core routines.  The exported routines below
+ *	Notअगरier chain core routines.  The exported routines below
  *	are layered on top of these, with appropriate locking added.
  */
 
-static int notifier_chain_register(struct notifier_block **nl,
-		struct notifier_block *n)
-{
-	while ((*nl) != NULL) {
-		if (unlikely((*nl) == n)) {
+अटल पूर्णांक notअगरier_chain_रेजिस्टर(काष्ठा notअगरier_block **nl,
+		काष्ठा notअगरier_block *n)
+अणु
+	जबतक ((*nl) != शून्य) अणु
+		अगर (unlikely((*nl) == n)) अणु
 			WARN(1, "double register detected");
-			return 0;
-		}
-		if (n->priority > (*nl)->priority)
-			break;
+			वापस 0;
+		पूर्ण
+		अगर (n->priority > (*nl)->priority)
+			अवरोध;
 		nl = &((*nl)->next);
-	}
+	पूर्ण
 	n->next = *nl;
-	rcu_assign_pointer(*nl, n);
-	return 0;
-}
+	rcu_assign_poपूर्णांकer(*nl, n);
+	वापस 0;
+पूर्ण
 
-static int notifier_chain_unregister(struct notifier_block **nl,
-		struct notifier_block *n)
-{
-	while ((*nl) != NULL) {
-		if ((*nl) == n) {
-			rcu_assign_pointer(*nl, n->next);
-			return 0;
-		}
+अटल पूर्णांक notअगरier_chain_unरेजिस्टर(काष्ठा notअगरier_block **nl,
+		काष्ठा notअगरier_block *n)
+अणु
+	जबतक ((*nl) != शून्य) अणु
+		अगर ((*nl) == n) अणु
+			rcu_assign_poपूर्णांकer(*nl, n->next);
+			वापस 0;
+		पूर्ण
 		nl = &((*nl)->next);
-	}
-	return -ENOENT;
-}
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 
 /**
- * notifier_call_chain - Informs the registered notifiers about an event.
- *	@nl:		Pointer to head of the blocking notifier chain
- *	@val:		Value passed unmodified to notifier function
- *	@v:		Pointer passed unmodified to notifier function
- *	@nr_to_call:	Number of notifier functions to be called. Don't care
+ * notअगरier_call_chain - Inक्रमms the रेजिस्टरed notअगरiers about an event.
+ *	@nl:		Poपूर्णांकer to head of the blocking notअगरier chain
+ *	@val:		Value passed unmodअगरied to notअगरier function
+ *	@v:		Poपूर्णांकer passed unmodअगरied to notअगरier function
+ *	@nr_to_call:	Number of notअगरier functions to be called. Don't care
  *			value of this parameter is -1.
- *	@nr_calls:	Records the number of notifications sent. Don't care
- *			value of this field is NULL.
- *	@returns:	notifier_call_chain returns the value returned by the
- *			last notifier function called.
+ *	@nr_calls:	Records the number of notअगरications sent. Don't care
+ *			value of this field is शून्य.
+ *	@वापसs:	notअगरier_call_chain वापसs the value वापसed by the
+ *			last notअगरier function called.
  */
-static int notifier_call_chain(struct notifier_block **nl,
-			       unsigned long val, void *v,
-			       int nr_to_call, int *nr_calls)
-{
-	int ret = NOTIFY_DONE;
-	struct notifier_block *nb, *next_nb;
+अटल पूर्णांक notअगरier_call_chain(काष्ठा notअगरier_block **nl,
+			       अचिन्हित दीर्घ val, व्योम *v,
+			       पूर्णांक nr_to_call, पूर्णांक *nr_calls)
+अणु
+	पूर्णांक ret = NOTIFY_DONE;
+	काष्ठा notअगरier_block *nb, *next_nb;
 
 	nb = rcu_dereference_raw(*nl);
 
-	while (nb && nr_to_call) {
+	जबतक (nb && nr_to_call) अणु
 		next_nb = rcu_dereference_raw(nb->next);
 
-#ifdef CONFIG_DEBUG_NOTIFIERS
-		if (unlikely(!func_ptr_is_kernel_text(nb->notifier_call))) {
+#अगर_घोषित CONFIG_DEBUG_NOTIFIERS
+		अगर (unlikely(!func_ptr_is_kernel_text(nb->notअगरier_call))) अणु
 			WARN(1, "Invalid notifier called!");
 			nb = next_nb;
-			continue;
-		}
-#endif
-		ret = nb->notifier_call(nb, val, v);
+			जारी;
+		पूर्ण
+#पूर्ण_अगर
+		ret = nb->notअगरier_call(nb, val, v);
 
-		if (nr_calls)
+		अगर (nr_calls)
 			(*nr_calls)++;
 
-		if (ret & NOTIFY_STOP_MASK)
-			break;
+		अगर (ret & NOTIFY_STOP_MASK)
+			अवरोध;
 		nb = next_nb;
 		nr_to_call--;
-	}
-	return ret;
-}
-NOKPROBE_SYMBOL(notifier_call_chain);
+	पूर्ण
+	वापस ret;
+पूर्ण
+NOKPROBE_SYMBOL(notअगरier_call_chain);
 
 /**
- * notifier_call_chain_robust - Inform the registered notifiers about an event
+ * notअगरier_call_chain_robust - Inक्रमm the रेजिस्टरed notअगरiers about an event
  *                              and rollback on error.
- * @nl:		Pointer to head of the blocking notifier chain
- * @val_up:	Value passed unmodified to the notifier function
- * @val_down:	Value passed unmodified to the notifier function when recovering
+ * @nl:		Poपूर्णांकer to head of the blocking notअगरier chain
+ * @val_up:	Value passed unmodअगरied to the notअगरier function
+ * @val_करोwn:	Value passed unmodअगरied to the notअगरier function when recovering
  *              from an error on @val_up
- * @v		Pointer passed unmodified to the notifier function
+ * @v		Poपूर्णांकer passed unmodअगरied to the notअगरier function
  *
- * NOTE:	It is important the @nl chain doesn't change between the two
- *		invocations of notifier_call_chain() such that we visit the
- *		exact same notifier callbacks; this rules out any RCU usage.
+ * NOTE:	It is important the @nl chain करोesn't change between the two
+ *		invocations of notअगरier_call_chain() such that we visit the
+ *		exact same notअगरier callbacks; this rules out any RCU usage.
  *
- * Returns:	the return value of the @val_up call.
+ * Returns:	the वापस value of the @val_up call.
  */
-static int notifier_call_chain_robust(struct notifier_block **nl,
-				     unsigned long val_up, unsigned long val_down,
-				     void *v)
-{
-	int ret, nr = 0;
+अटल पूर्णांक notअगरier_call_chain_robust(काष्ठा notअगरier_block **nl,
+				     अचिन्हित दीर्घ val_up, अचिन्हित दीर्घ val_करोwn,
+				     व्योम *v)
+अणु
+	पूर्णांक ret, nr = 0;
 
-	ret = notifier_call_chain(nl, val_up, v, -1, &nr);
-	if (ret & NOTIFY_STOP_MASK)
-		notifier_call_chain(nl, val_down, v, nr-1, NULL);
+	ret = notअगरier_call_chain(nl, val_up, v, -1, &nr);
+	अगर (ret & NOTIFY_STOP_MASK)
+		notअगरier_call_chain(nl, val_करोwn, v, nr-1, शून्य);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- *	Atomic notifier chain routines.  Registration and unregistration
+ *	Atomic notअगरier chain routines.  Registration and unregistration
  *	use a spinlock, and call_chain is synchronized by RCU (no locks).
  */
 
 /**
- *	atomic_notifier_chain_register - Add notifier to an atomic notifier chain
- *	@nh: Pointer to head of the atomic notifier chain
- *	@n: New entry in notifier chain
+ *	atomic_notअगरier_chain_रेजिस्टर - Add notअगरier to an atomic notअगरier chain
+ *	@nh: Poपूर्णांकer to head of the atomic notअगरier chain
+ *	@n: New entry in notअगरier chain
  *
- *	Adds a notifier to an atomic notifier chain.
+ *	Adds a notअगरier to an atomic notअगरier chain.
  *
- *	Currently always returns zero.
+ *	Currently always वापसs zero.
  */
-int atomic_notifier_chain_register(struct atomic_notifier_head *nh,
-		struct notifier_block *n)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक atomic_notअगरier_chain_रेजिस्टर(काष्ठा atomic_notअगरier_head *nh,
+		काष्ठा notअगरier_block *n)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&nh->lock, flags);
-	ret = notifier_chain_register(&nh->head, n);
+	ret = notअगरier_chain_रेजिस्टर(&nh->head, n);
 	spin_unlock_irqrestore(&nh->lock, flags);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(atomic_notifier_chain_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(atomic_notअगरier_chain_रेजिस्टर);
 
 /**
- *	atomic_notifier_chain_unregister - Remove notifier from an atomic notifier chain
- *	@nh: Pointer to head of the atomic notifier chain
- *	@n: Entry to remove from notifier chain
+ *	atomic_notअगरier_chain_unरेजिस्टर - Remove notअगरier from an atomic notअगरier chain
+ *	@nh: Poपूर्णांकer to head of the atomic notअगरier chain
+ *	@n: Entry to हटाओ from notअगरier chain
  *
- *	Removes a notifier from an atomic notifier chain.
+ *	Removes a notअगरier from an atomic notअगरier chain.
  *
  *	Returns zero on success or %-ENOENT on failure.
  */
-int atomic_notifier_chain_unregister(struct atomic_notifier_head *nh,
-		struct notifier_block *n)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक atomic_notअगरier_chain_unरेजिस्टर(काष्ठा atomic_notअगरier_head *nh,
+		काष्ठा notअगरier_block *n)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&nh->lock, flags);
-	ret = notifier_chain_unregister(&nh->head, n);
+	ret = notअगरier_chain_unरेजिस्टर(&nh->head, n);
 	spin_unlock_irqrestore(&nh->lock, flags);
 	synchronize_rcu();
-	return ret;
-}
-EXPORT_SYMBOL_GPL(atomic_notifier_chain_unregister);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(atomic_notअगरier_chain_unरेजिस्टर);
 
-int atomic_notifier_call_chain_robust(struct atomic_notifier_head *nh,
-		unsigned long val_up, unsigned long val_down, void *v)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक atomic_notअगरier_call_chain_robust(काष्ठा atomic_notअगरier_head *nh,
+		अचिन्हित दीर्घ val_up, अचिन्हित दीर्घ val_करोwn, व्योम *v)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	/*
-	 * Musn't use RCU; because then the notifier list can
-	 * change between the up and down traversal.
+	 * Musn't use RCU; because then the notअगरier list can
+	 * change between the up and करोwn traversal.
 	 */
 	spin_lock_irqsave(&nh->lock, flags);
-	ret = notifier_call_chain_robust(&nh->head, val_up, val_down, v);
+	ret = notअगरier_call_chain_robust(&nh->head, val_up, val_करोwn, v);
 	spin_unlock_irqrestore(&nh->lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(atomic_notifier_call_chain_robust);
-NOKPROBE_SYMBOL(atomic_notifier_call_chain_robust);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(atomic_notअगरier_call_chain_robust);
+NOKPROBE_SYMBOL(atomic_notअगरier_call_chain_robust);
 
 /**
- *	atomic_notifier_call_chain - Call functions in an atomic notifier chain
- *	@nh: Pointer to head of the atomic notifier chain
- *	@val: Value passed unmodified to notifier function
- *	@v: Pointer passed unmodified to notifier function
+ *	atomic_notअगरier_call_chain - Call functions in an atomic notअगरier chain
+ *	@nh: Poपूर्णांकer to head of the atomic notअगरier chain
+ *	@val: Value passed unmodअगरied to notअगरier function
+ *	@v: Poपूर्णांकer passed unmodअगरied to notअगरier function
  *
- *	Calls each function in a notifier chain in turn.  The functions
+ *	Calls each function in a notअगरier chain in turn.  The functions
  *	run in an atomic context, so they must not block.
  *	This routine uses RCU to synchronize with changes to the chain.
  *
- *	If the return value of the notifier can be and'ed
- *	with %NOTIFY_STOP_MASK then atomic_notifier_call_chain()
- *	will return immediately, with the return value of
- *	the notifier function which halted execution.
- *	Otherwise the return value is the return value
- *	of the last notifier function called.
+ *	If the वापस value of the notअगरier can be and'ed
+ *	with %NOTIFY_STOP_MASK then atomic_notअगरier_call_chain()
+ *	will वापस immediately, with the वापस value of
+ *	the notअगरier function which halted execution.
+ *	Otherwise the वापस value is the वापस value
+ *	of the last notअगरier function called.
  */
-int atomic_notifier_call_chain(struct atomic_notifier_head *nh,
-			       unsigned long val, void *v)
-{
-	int ret;
+पूर्णांक atomic_notअगरier_call_chain(काष्ठा atomic_notअगरier_head *nh,
+			       अचिन्हित दीर्घ val, व्योम *v)
+अणु
+	पूर्णांक ret;
 
-	rcu_read_lock();
-	ret = notifier_call_chain(&nh->head, val, v, -1, NULL);
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	ret = notअगरier_call_chain(&nh->head, val, v, -1, शून्य);
+	rcu_पढ़ो_unlock();
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(atomic_notifier_call_chain);
-NOKPROBE_SYMBOL(atomic_notifier_call_chain);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(atomic_notअगरier_call_chain);
+NOKPROBE_SYMBOL(atomic_notअगरier_call_chain);
 
 /*
- *	Blocking notifier chain routines.  All access to the chain is
+ *	Blocking notअगरier chain routines.  All access to the chain is
  *	synchronized by an rwsem.
  */
 
 /**
- *	blocking_notifier_chain_register - Add notifier to a blocking notifier chain
- *	@nh: Pointer to head of the blocking notifier chain
- *	@n: New entry in notifier chain
+ *	blocking_notअगरier_chain_रेजिस्टर - Add notअगरier to a blocking notअगरier chain
+ *	@nh: Poपूर्णांकer to head of the blocking notअगरier chain
+ *	@n: New entry in notअगरier chain
  *
- *	Adds a notifier to a blocking notifier chain.
+ *	Adds a notअगरier to a blocking notअगरier chain.
  *	Must be called in process context.
  *
- *	Currently always returns zero.
+ *	Currently always वापसs zero.
  */
-int blocking_notifier_chain_register(struct blocking_notifier_head *nh,
-		struct notifier_block *n)
-{
-	int ret;
+पूर्णांक blocking_notअगरier_chain_रेजिस्टर(काष्ठा blocking_notअगरier_head *nh,
+		काष्ठा notअगरier_block *n)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * This code gets used during boot-up, when task switching is
-	 * not yet working and interrupts must remain disabled.  At
-	 * such times we must not call down_write().
+	 * This code माला_लो used during boot-up, when task चयनing is
+	 * not yet working and पूर्णांकerrupts must reमुख्य disabled.  At
+	 * such बार we must not call करोwn_ग_लिखो().
 	 */
-	if (unlikely(system_state == SYSTEM_BOOTING))
-		return notifier_chain_register(&nh->head, n);
+	अगर (unlikely(प्रणाली_state == SYSTEM_BOOTING))
+		वापस notअगरier_chain_रेजिस्टर(&nh->head, n);
 
-	down_write(&nh->rwsem);
-	ret = notifier_chain_register(&nh->head, n);
-	up_write(&nh->rwsem);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(blocking_notifier_chain_register);
+	करोwn_ग_लिखो(&nh->rwsem);
+	ret = notअगरier_chain_रेजिस्टर(&nh->head, n);
+	up_ग_लिखो(&nh->rwsem);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(blocking_notअगरier_chain_रेजिस्टर);
 
 /**
- *	blocking_notifier_chain_unregister - Remove notifier from a blocking notifier chain
- *	@nh: Pointer to head of the blocking notifier chain
- *	@n: Entry to remove from notifier chain
+ *	blocking_notअगरier_chain_unरेजिस्टर - Remove notअगरier from a blocking notअगरier chain
+ *	@nh: Poपूर्णांकer to head of the blocking notअगरier chain
+ *	@n: Entry to हटाओ from notअगरier chain
  *
- *	Removes a notifier from a blocking notifier chain.
+ *	Removes a notअगरier from a blocking notअगरier chain.
  *	Must be called from process context.
  *
  *	Returns zero on success or %-ENOENT on failure.
  */
-int blocking_notifier_chain_unregister(struct blocking_notifier_head *nh,
-		struct notifier_block *n)
-{
-	int ret;
+पूर्णांक blocking_notअगरier_chain_unरेजिस्टर(काष्ठा blocking_notअगरier_head *nh,
+		काष्ठा notअगरier_block *n)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * This code gets used during boot-up, when task switching is
-	 * not yet working and interrupts must remain disabled.  At
-	 * such times we must not call down_write().
+	 * This code माला_लो used during boot-up, when task चयनing is
+	 * not yet working and पूर्णांकerrupts must reमुख्य disabled.  At
+	 * such बार we must not call करोwn_ग_लिखो().
 	 */
-	if (unlikely(system_state == SYSTEM_BOOTING))
-		return notifier_chain_unregister(&nh->head, n);
+	अगर (unlikely(प्रणाली_state == SYSTEM_BOOTING))
+		वापस notअगरier_chain_unरेजिस्टर(&nh->head, n);
 
-	down_write(&nh->rwsem);
-	ret = notifier_chain_unregister(&nh->head, n);
-	up_write(&nh->rwsem);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(blocking_notifier_chain_unregister);
+	करोwn_ग_लिखो(&nh->rwsem);
+	ret = notअगरier_chain_unरेजिस्टर(&nh->head, n);
+	up_ग_लिखो(&nh->rwsem);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(blocking_notअगरier_chain_unरेजिस्टर);
 
-int blocking_notifier_call_chain_robust(struct blocking_notifier_head *nh,
-		unsigned long val_up, unsigned long val_down, void *v)
-{
-	int ret = NOTIFY_DONE;
+पूर्णांक blocking_notअगरier_call_chain_robust(काष्ठा blocking_notअगरier_head *nh,
+		अचिन्हित दीर्घ val_up, अचिन्हित दीर्घ val_करोwn, व्योम *v)
+अणु
+	पूर्णांक ret = NOTIFY_DONE;
 
 	/*
-	 * We check the head outside the lock, but if this access is
-	 * racy then it does not matter what the result of the test
+	 * We check the head outside the lock, but अगर this access is
+	 * racy then it करोes not matter what the result of the test
 	 * is, we re-check the list after having taken the lock anyway:
 	 */
-	if (rcu_access_pointer(nh->head)) {
-		down_read(&nh->rwsem);
-		ret = notifier_call_chain_robust(&nh->head, val_up, val_down, v);
-		up_read(&nh->rwsem);
-	}
-	return ret;
-}
-EXPORT_SYMBOL_GPL(blocking_notifier_call_chain_robust);
+	अगर (rcu_access_poपूर्णांकer(nh->head)) अणु
+		करोwn_पढ़ो(&nh->rwsem);
+		ret = notअगरier_call_chain_robust(&nh->head, val_up, val_करोwn, v);
+		up_पढ़ो(&nh->rwsem);
+	पूर्ण
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(blocking_notअगरier_call_chain_robust);
 
 /**
- *	blocking_notifier_call_chain - Call functions in a blocking notifier chain
- *	@nh: Pointer to head of the blocking notifier chain
- *	@val: Value passed unmodified to notifier function
- *	@v: Pointer passed unmodified to notifier function
+ *	blocking_notअगरier_call_chain - Call functions in a blocking notअगरier chain
+ *	@nh: Poपूर्णांकer to head of the blocking notअगरier chain
+ *	@val: Value passed unmodअगरied to notअगरier function
+ *	@v: Poपूर्णांकer passed unmodअगरied to notअगरier function
  *
- *	Calls each function in a notifier chain in turn.  The functions
+ *	Calls each function in a notअगरier chain in turn.  The functions
  *	run in a process context, so they are allowed to block.
  *
- *	If the return value of the notifier can be and'ed
- *	with %NOTIFY_STOP_MASK then blocking_notifier_call_chain()
- *	will return immediately, with the return value of
- *	the notifier function which halted execution.
- *	Otherwise the return value is the return value
- *	of the last notifier function called.
+ *	If the वापस value of the notअगरier can be and'ed
+ *	with %NOTIFY_STOP_MASK then blocking_notअगरier_call_chain()
+ *	will वापस immediately, with the वापस value of
+ *	the notअगरier function which halted execution.
+ *	Otherwise the वापस value is the वापस value
+ *	of the last notअगरier function called.
  */
-int blocking_notifier_call_chain(struct blocking_notifier_head *nh,
-		unsigned long val, void *v)
-{
-	int ret = NOTIFY_DONE;
+पूर्णांक blocking_notअगरier_call_chain(काष्ठा blocking_notअगरier_head *nh,
+		अचिन्हित दीर्घ val, व्योम *v)
+अणु
+	पूर्णांक ret = NOTIFY_DONE;
 
 	/*
-	 * We check the head outside the lock, but if this access is
-	 * racy then it does not matter what the result of the test
+	 * We check the head outside the lock, but अगर this access is
+	 * racy then it करोes not matter what the result of the test
 	 * is, we re-check the list after having taken the lock anyway:
 	 */
-	if (rcu_access_pointer(nh->head)) {
-		down_read(&nh->rwsem);
-		ret = notifier_call_chain(&nh->head, val, v, -1, NULL);
-		up_read(&nh->rwsem);
-	}
-	return ret;
-}
-EXPORT_SYMBOL_GPL(blocking_notifier_call_chain);
+	अगर (rcu_access_poपूर्णांकer(nh->head)) अणु
+		करोwn_पढ़ो(&nh->rwsem);
+		ret = notअगरier_call_chain(&nh->head, val, v, -1, शून्य);
+		up_पढ़ो(&nh->rwsem);
+	पूर्ण
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(blocking_notअगरier_call_chain);
 
 /*
- *	Raw notifier chain routines.  There is no protection;
+ *	Raw notअगरier chain routines.  There is no protection;
  *	the caller must provide it.  Use at your own risk!
  */
 
 /**
- *	raw_notifier_chain_register - Add notifier to a raw notifier chain
- *	@nh: Pointer to head of the raw notifier chain
- *	@n: New entry in notifier chain
+ *	raw_notअगरier_chain_रेजिस्टर - Add notअगरier to a raw notअगरier chain
+ *	@nh: Poपूर्णांकer to head of the raw notअगरier chain
+ *	@n: New entry in notअगरier chain
  *
- *	Adds a notifier to a raw notifier chain.
+ *	Adds a notअगरier to a raw notअगरier chain.
  *	All locking must be provided by the caller.
  *
- *	Currently always returns zero.
+ *	Currently always वापसs zero.
  */
-int raw_notifier_chain_register(struct raw_notifier_head *nh,
-		struct notifier_block *n)
-{
-	return notifier_chain_register(&nh->head, n);
-}
-EXPORT_SYMBOL_GPL(raw_notifier_chain_register);
+पूर्णांक raw_notअगरier_chain_रेजिस्टर(काष्ठा raw_notअगरier_head *nh,
+		काष्ठा notअगरier_block *n)
+अणु
+	वापस notअगरier_chain_रेजिस्टर(&nh->head, n);
+पूर्ण
+EXPORT_SYMBOL_GPL(raw_notअगरier_chain_रेजिस्टर);
 
 /**
- *	raw_notifier_chain_unregister - Remove notifier from a raw notifier chain
- *	@nh: Pointer to head of the raw notifier chain
- *	@n: Entry to remove from notifier chain
+ *	raw_notअगरier_chain_unरेजिस्टर - Remove notअगरier from a raw notअगरier chain
+ *	@nh: Poपूर्णांकer to head of the raw notअगरier chain
+ *	@n: Entry to हटाओ from notअगरier chain
  *
- *	Removes a notifier from a raw notifier chain.
+ *	Removes a notअगरier from a raw notअगरier chain.
  *	All locking must be provided by the caller.
  *
  *	Returns zero on success or %-ENOENT on failure.
  */
-int raw_notifier_chain_unregister(struct raw_notifier_head *nh,
-		struct notifier_block *n)
-{
-	return notifier_chain_unregister(&nh->head, n);
-}
-EXPORT_SYMBOL_GPL(raw_notifier_chain_unregister);
+पूर्णांक raw_notअगरier_chain_unरेजिस्टर(काष्ठा raw_notअगरier_head *nh,
+		काष्ठा notअगरier_block *n)
+अणु
+	वापस notअगरier_chain_unरेजिस्टर(&nh->head, n);
+पूर्ण
+EXPORT_SYMBOL_GPL(raw_notअगरier_chain_unरेजिस्टर);
 
-int raw_notifier_call_chain_robust(struct raw_notifier_head *nh,
-		unsigned long val_up, unsigned long val_down, void *v)
-{
-	return notifier_call_chain_robust(&nh->head, val_up, val_down, v);
-}
-EXPORT_SYMBOL_GPL(raw_notifier_call_chain_robust);
+पूर्णांक raw_notअगरier_call_chain_robust(काष्ठा raw_notअगरier_head *nh,
+		अचिन्हित दीर्घ val_up, अचिन्हित दीर्घ val_करोwn, व्योम *v)
+अणु
+	वापस notअगरier_call_chain_robust(&nh->head, val_up, val_करोwn, v);
+पूर्ण
+EXPORT_SYMBOL_GPL(raw_notअगरier_call_chain_robust);
 
 /**
- *	raw_notifier_call_chain - Call functions in a raw notifier chain
- *	@nh: Pointer to head of the raw notifier chain
- *	@val: Value passed unmodified to notifier function
- *	@v: Pointer passed unmodified to notifier function
+ *	raw_notअगरier_call_chain - Call functions in a raw notअगरier chain
+ *	@nh: Poपूर्णांकer to head of the raw notअगरier chain
+ *	@val: Value passed unmodअगरied to notअगरier function
+ *	@v: Poपूर्णांकer passed unmodअगरied to notअगरier function
  *
- *	Calls each function in a notifier chain in turn.  The functions
+ *	Calls each function in a notअगरier chain in turn.  The functions
  *	run in an undefined context.
  *	All locking must be provided by the caller.
  *
- *	If the return value of the notifier can be and'ed
- *	with %NOTIFY_STOP_MASK then raw_notifier_call_chain()
- *	will return immediately, with the return value of
- *	the notifier function which halted execution.
- *	Otherwise the return value is the return value
- *	of the last notifier function called.
+ *	If the वापस value of the notअगरier can be and'ed
+ *	with %NOTIFY_STOP_MASK then raw_notअगरier_call_chain()
+ *	will वापस immediately, with the वापस value of
+ *	the notअगरier function which halted execution.
+ *	Otherwise the वापस value is the वापस value
+ *	of the last notअगरier function called.
  */
-int raw_notifier_call_chain(struct raw_notifier_head *nh,
-		unsigned long val, void *v)
-{
-	return notifier_call_chain(&nh->head, val, v, -1, NULL);
-}
-EXPORT_SYMBOL_GPL(raw_notifier_call_chain);
+पूर्णांक raw_notअगरier_call_chain(काष्ठा raw_notअगरier_head *nh,
+		अचिन्हित दीर्घ val, व्योम *v)
+अणु
+	वापस notअगरier_call_chain(&nh->head, val, v, -1, शून्य);
+पूर्ण
+EXPORT_SYMBOL_GPL(raw_notअगरier_call_chain);
 
-#ifdef CONFIG_SRCU
+#अगर_घोषित CONFIG_SRCU
 /*
- *	SRCU notifier chain routines.    Registration and unregistration
+ *	SRCU notअगरier chain routines.    Registration and unregistration
  *	use a mutex, and call_chain is synchronized by SRCU (no locks).
  */
 
 /**
- *	srcu_notifier_chain_register - Add notifier to an SRCU notifier chain
- *	@nh: Pointer to head of the SRCU notifier chain
- *	@n: New entry in notifier chain
+ *	srcu_notअगरier_chain_रेजिस्टर - Add notअगरier to an SRCU notअगरier chain
+ *	@nh: Poपूर्णांकer to head of the SRCU notअगरier chain
+ *	@n: New entry in notअगरier chain
  *
- *	Adds a notifier to an SRCU notifier chain.
+ *	Adds a notअगरier to an SRCU notअगरier chain.
  *	Must be called in process context.
  *
- *	Currently always returns zero.
+ *	Currently always वापसs zero.
  */
-int srcu_notifier_chain_register(struct srcu_notifier_head *nh,
-		struct notifier_block *n)
-{
-	int ret;
+पूर्णांक srcu_notअगरier_chain_रेजिस्टर(काष्ठा srcu_notअगरier_head *nh,
+		काष्ठा notअगरier_block *n)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * This code gets used during boot-up, when task switching is
-	 * not yet working and interrupts must remain disabled.  At
-	 * such times we must not call mutex_lock().
+	 * This code माला_लो used during boot-up, when task चयनing is
+	 * not yet working and पूर्णांकerrupts must reमुख्य disabled.  At
+	 * such बार we must not call mutex_lock().
 	 */
-	if (unlikely(system_state == SYSTEM_BOOTING))
-		return notifier_chain_register(&nh->head, n);
+	अगर (unlikely(प्रणाली_state == SYSTEM_BOOTING))
+		वापस notअगरier_chain_रेजिस्टर(&nh->head, n);
 
 	mutex_lock(&nh->mutex);
-	ret = notifier_chain_register(&nh->head, n);
+	ret = notअगरier_chain_रेजिस्टर(&nh->head, n);
 	mutex_unlock(&nh->mutex);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(srcu_notifier_chain_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(srcu_notअगरier_chain_रेजिस्टर);
 
 /**
- *	srcu_notifier_chain_unregister - Remove notifier from an SRCU notifier chain
- *	@nh: Pointer to head of the SRCU notifier chain
- *	@n: Entry to remove from notifier chain
+ *	srcu_notअगरier_chain_unरेजिस्टर - Remove notअगरier from an SRCU notअगरier chain
+ *	@nh: Poपूर्णांकer to head of the SRCU notअगरier chain
+ *	@n: Entry to हटाओ from notअगरier chain
  *
- *	Removes a notifier from an SRCU notifier chain.
+ *	Removes a notअगरier from an SRCU notअगरier chain.
  *	Must be called from process context.
  *
  *	Returns zero on success or %-ENOENT on failure.
  */
-int srcu_notifier_chain_unregister(struct srcu_notifier_head *nh,
-		struct notifier_block *n)
-{
-	int ret;
+पूर्णांक srcu_notअगरier_chain_unरेजिस्टर(काष्ठा srcu_notअगरier_head *nh,
+		काष्ठा notअगरier_block *n)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * This code gets used during boot-up, when task switching is
-	 * not yet working and interrupts must remain disabled.  At
-	 * such times we must not call mutex_lock().
+	 * This code माला_लो used during boot-up, when task चयनing is
+	 * not yet working and पूर्णांकerrupts must reमुख्य disabled.  At
+	 * such बार we must not call mutex_lock().
 	 */
-	if (unlikely(system_state == SYSTEM_BOOTING))
-		return notifier_chain_unregister(&nh->head, n);
+	अगर (unlikely(प्रणाली_state == SYSTEM_BOOTING))
+		वापस notअगरier_chain_unरेजिस्टर(&nh->head, n);
 
 	mutex_lock(&nh->mutex);
-	ret = notifier_chain_unregister(&nh->head, n);
+	ret = notअगरier_chain_unरेजिस्टर(&nh->head, n);
 	mutex_unlock(&nh->mutex);
 	synchronize_srcu(&nh->srcu);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(srcu_notifier_chain_unregister);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(srcu_notअगरier_chain_unरेजिस्टर);
 
 /**
- *	srcu_notifier_call_chain - Call functions in an SRCU notifier chain
- *	@nh: Pointer to head of the SRCU notifier chain
- *	@val: Value passed unmodified to notifier function
- *	@v: Pointer passed unmodified to notifier function
+ *	srcu_notअगरier_call_chain - Call functions in an SRCU notअगरier chain
+ *	@nh: Poपूर्णांकer to head of the SRCU notअगरier chain
+ *	@val: Value passed unmodअगरied to notअगरier function
+ *	@v: Poपूर्णांकer passed unmodअगरied to notअगरier function
  *
- *	Calls each function in a notifier chain in turn.  The functions
+ *	Calls each function in a notअगरier chain in turn.  The functions
  *	run in a process context, so they are allowed to block.
  *
- *	If the return value of the notifier can be and'ed
- *	with %NOTIFY_STOP_MASK then srcu_notifier_call_chain()
- *	will return immediately, with the return value of
- *	the notifier function which halted execution.
- *	Otherwise the return value is the return value
- *	of the last notifier function called.
+ *	If the वापस value of the notअगरier can be and'ed
+ *	with %NOTIFY_STOP_MASK then srcu_notअगरier_call_chain()
+ *	will वापस immediately, with the वापस value of
+ *	the notअगरier function which halted execution.
+ *	Otherwise the वापस value is the वापस value
+ *	of the last notअगरier function called.
  */
-int srcu_notifier_call_chain(struct srcu_notifier_head *nh,
-		unsigned long val, void *v)
-{
-	int ret;
-	int idx;
+पूर्णांक srcu_notअगरier_call_chain(काष्ठा srcu_notअगरier_head *nh,
+		अचिन्हित दीर्घ val, व्योम *v)
+अणु
+	पूर्णांक ret;
+	पूर्णांक idx;
 
-	idx = srcu_read_lock(&nh->srcu);
-	ret = notifier_call_chain(&nh->head, val, v, -1, NULL);
-	srcu_read_unlock(&nh->srcu, idx);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(srcu_notifier_call_chain);
+	idx = srcu_पढ़ो_lock(&nh->srcu);
+	ret = notअगरier_call_chain(&nh->head, val, v, -1, शून्य);
+	srcu_पढ़ो_unlock(&nh->srcu, idx);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(srcu_notअगरier_call_chain);
 
 /**
- *	srcu_init_notifier_head - Initialize an SRCU notifier head
- *	@nh: Pointer to head of the srcu notifier chain
+ *	srcu_init_notअगरier_head - Initialize an SRCU notअगरier head
+ *	@nh: Poपूर्णांकer to head of the srcu notअगरier chain
  *
- *	Unlike other sorts of notifier heads, SRCU notifier heads require
- *	dynamic initialization.  Be sure to call this routine before
- *	calling any of the other SRCU notifier routines for this head.
+ *	Unlike other sorts of notअगरier heads, SRCU notअगरier heads require
+ *	dynamic initialization.  Be sure to call this routine beक्रमe
+ *	calling any of the other SRCU notअगरier routines क्रम this head.
  *
- *	If an SRCU notifier head is deallocated, it must first be cleaned
- *	up by calling srcu_cleanup_notifier_head().  Otherwise the head's
+ *	If an SRCU notअगरier head is deallocated, it must first be cleaned
+ *	up by calling srcu_cleanup_notअगरier_head().  Otherwise the head's
  *	per-cpu data (used by the SRCU mechanism) will leak.
  */
-void srcu_init_notifier_head(struct srcu_notifier_head *nh)
-{
+व्योम srcu_init_notअगरier_head(काष्ठा srcu_notअगरier_head *nh)
+अणु
 	mutex_init(&nh->mutex);
-	if (init_srcu_struct(&nh->srcu) < 0)
+	अगर (init_srcu_काष्ठा(&nh->srcu) < 0)
 		BUG();
-	nh->head = NULL;
-}
-EXPORT_SYMBOL_GPL(srcu_init_notifier_head);
+	nh->head = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(srcu_init_notअगरier_head);
 
-#endif /* CONFIG_SRCU */
+#पूर्ण_अगर /* CONFIG_SRCU */
 
-static ATOMIC_NOTIFIER_HEAD(die_chain);
+अटल ATOMIC_NOTIFIER_HEAD(die_chain);
 
-int notrace notify_die(enum die_val val, const char *str,
-	       struct pt_regs *regs, long err, int trap, int sig)
-{
-	struct die_args args = {
+पूर्णांक notrace notअगरy_die(क्रमागत die_val val, स्थिर अक्षर *str,
+	       काष्ठा pt_regs *regs, दीर्घ err, पूर्णांक trap, पूर्णांक sig)
+अणु
+	काष्ठा die_args args = अणु
 		.regs	= regs,
 		.str	= str,
 		.err	= err,
 		.trapnr	= trap,
 		.signr	= sig,
 
-	};
+	पूर्ण;
 	RCU_LOCKDEP_WARN(!rcu_is_watching(),
 			   "notify_die called but RCU thinks we're quiescent");
-	return atomic_notifier_call_chain(&die_chain, val, &args);
-}
-NOKPROBE_SYMBOL(notify_die);
+	वापस atomic_notअगरier_call_chain(&die_chain, val, &args);
+पूर्ण
+NOKPROBE_SYMBOL(notअगरy_die);
 
-int register_die_notifier(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_register(&die_chain, nb);
-}
-EXPORT_SYMBOL_GPL(register_die_notifier);
+पूर्णांक रेजिस्टर_die_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_रेजिस्टर(&die_chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_die_notअगरier);
 
-int unregister_die_notifier(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_unregister(&die_chain, nb);
-}
-EXPORT_SYMBOL_GPL(unregister_die_notifier);
+पूर्णांक unरेजिस्टर_die_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_unरेजिस्टर(&die_chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_die_notअगरier);

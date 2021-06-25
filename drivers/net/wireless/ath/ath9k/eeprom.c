@@ -1,594 +1,595 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2008-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "hw.h"
-#include <linux/ath9k_platform.h>
+#समावेश "hw.h"
+#समावेश <linux/ath9k_platक्रमm.h>
 
-void ath9k_hw_analog_shift_regwrite(struct ath_hw *ah, u32 reg, u32 val)
-{
+व्योम ath9k_hw_analog_shअगरt_regग_लिखो(काष्ठा ath_hw *ah, u32 reg, u32 val)
+अणु
         REG_WRITE(ah, reg, val);
 
-        if (ah->config.analog_shiftreg)
+        अगर (ah->config.analog_shअगरtreg)
 		udelay(100);
-}
+पूर्ण
 
-void ath9k_hw_analog_shift_rmw(struct ath_hw *ah, u32 reg, u32 mask,
-			       u32 shift, u32 val)
-{
-	REG_RMW(ah, reg, ((val << shift) & mask), mask);
+व्योम ath9k_hw_analog_shअगरt_rmw(काष्ठा ath_hw *ah, u32 reg, u32 mask,
+			       u32 shअगरt, u32 val)
+अणु
+	REG_RMW(ah, reg, ((val << shअगरt) & mask), mask);
 
-	if (ah->config.analog_shiftreg)
+	अगर (ah->config.analog_shअगरtreg)
 		udelay(100);
-}
+पूर्ण
 
-int16_t ath9k_hw_interpolate(u16 target, u16 srcLeft, u16 srcRight,
-			     int16_t targetLeft, int16_t targetRight)
-{
-	int16_t rv;
+पूर्णांक16_t ath9k_hw_पूर्णांकerpolate(u16 target, u16 srcLeft, u16 srcRight,
+			     पूर्णांक16_t targetLeft, पूर्णांक16_t targetRight)
+अणु
+	पूर्णांक16_t rv;
 
-	if (srcRight == srcLeft) {
+	अगर (srcRight == srcLeft) अणु
 		rv = targetLeft;
-	} else {
-		rv = (int16_t) (((target - srcLeft) * targetRight +
+	पूर्ण अन्यथा अणु
+		rv = (पूर्णांक16_t) (((target - srcLeft) * targetRight +
 				 (srcRight - target) * targetLeft) /
 				(srcRight - srcLeft));
-	}
-	return rv;
-}
+	पूर्ण
+	वापस rv;
+पूर्ण
 
 bool ath9k_hw_get_lower_upper_index(u8 target, u8 *pList, u16 listSize,
 				    u16 *indexL, u16 *indexR)
-{
+अणु
 	u16 i;
 
-	if (target <= pList[0]) {
+	अगर (target <= pList[0]) अणु
 		*indexL = *indexR = 0;
-		return true;
-	}
-	if (target >= pList[listSize - 1]) {
+		वापस true;
+	पूर्ण
+	अगर (target >= pList[listSize - 1]) अणु
 		*indexL = *indexR = (u16) (listSize - 1);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	for (i = 0; i < listSize - 1; i++) {
-		if (pList[i] == target) {
+	क्रम (i = 0; i < listSize - 1; i++) अणु
+		अगर (pList[i] == target) अणु
 			*indexL = *indexR = i;
-			return true;
-		}
-		if (target < pList[i + 1]) {
+			वापस true;
+		पूर्ण
+		अगर (target < pList[i + 1]) अणु
 			*indexL = i;
 			*indexR = (u16) (i + 1);
-			return false;
-		}
-	}
-	return false;
-}
+			वापस false;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-void ath9k_hw_usb_gen_fill_eeprom(struct ath_hw *ah, u16 *eep_data,
-				  int eep_start_loc, int size)
-{
-	int i = 0, j, addr;
+व्योम ath9k_hw_usb_gen_fill_eeprom(काष्ठा ath_hw *ah, u16 *eep_data,
+				  पूर्णांक eep_start_loc, पूर्णांक size)
+अणु
+	पूर्णांक i = 0, j, addr;
 	u32 addrdata[8];
 	u32 data[8];
 
-	for (addr = 0; addr < size; addr++) {
+	क्रम (addr = 0; addr < size; addr++) अणु
 		addrdata[i] = AR5416_EEPROM_OFFSET +
 			((addr + eep_start_loc) << AR5416_EEPROM_S);
 		i++;
-		if (i == 8) {
+		अगर (i == 8) अणु
 			REG_READ_MULTI(ah, addrdata, data, i);
 
-			for (j = 0; j < i; j++) {
+			क्रम (j = 0; j < i; j++) अणु
 				*eep_data = data[j];
 				eep_data++;
-			}
+			पूर्ण
 			i = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (i != 0) {
+	अगर (i != 0) अणु
 		REG_READ_MULTI(ah, addrdata, data, i);
 
-		for (j = 0; j < i; j++) {
+		क्रम (j = 0; j < i; j++) अणु
 			*eep_data = data[j];
 			eep_data++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static bool ath9k_hw_nvram_read_array(u16 *blob, size_t blob_size,
+अटल bool ath9k_hw_nvram_पढ़ो_array(u16 *blob, माप_प्रकार blob_size,
 				      off_t offset, u16 *data)
-{
-	if (offset >= blob_size)
-		return false;
+अणु
+	अगर (offset >= blob_size)
+		वापस false;
 
 	*data =  blob[offset];
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool ath9k_hw_nvram_read_pdata(struct ath9k_platform_data *pdata,
+अटल bool ath9k_hw_nvram_पढ़ो_pdata(काष्ठा ath9k_platक्रमm_data *pdata,
 				      off_t offset, u16 *data)
-{
-	return ath9k_hw_nvram_read_array(pdata->eeprom_data,
+अणु
+	वापस ath9k_hw_nvram_पढ़ो_array(pdata->eeprom_data,
 					 ARRAY_SIZE(pdata->eeprom_data),
 					 offset, data);
-}
+पूर्ण
 
-static bool ath9k_hw_nvram_read_firmware(const struct firmware *eeprom_blob,
+अटल bool ath9k_hw_nvram_पढ़ो_firmware(स्थिर काष्ठा firmware *eeprom_blob,
 					 off_t offset, u16 *data)
-{
-	return ath9k_hw_nvram_read_array((u16 *) eeprom_blob->data,
-					 eeprom_blob->size / sizeof(u16),
+अणु
+	वापस ath9k_hw_nvram_पढ़ो_array((u16 *) eeprom_blob->data,
+					 eeprom_blob->size / माप(u16),
 					 offset, data);
-}
+पूर्ण
 
-bool ath9k_hw_nvram_read(struct ath_hw *ah, u32 off, u16 *data)
-{
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct ath9k_platform_data *pdata = ah->dev->platform_data;
+bool ath9k_hw_nvram_पढ़ो(काष्ठा ath_hw *ah, u32 off, u16 *data)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ath9k_platक्रमm_data *pdata = ah->dev->platक्रमm_data;
 	bool ret;
 
-	if (ah->eeprom_blob)
-		ret = ath9k_hw_nvram_read_firmware(ah->eeprom_blob, off, data);
-	else if (pdata && !pdata->use_eeprom)
-		ret = ath9k_hw_nvram_read_pdata(pdata, off, data);
-	else
-		ret = common->bus_ops->eeprom_read(common, off, data);
+	अगर (ah->eeprom_blob)
+		ret = ath9k_hw_nvram_पढ़ो_firmware(ah->eeprom_blob, off, data);
+	अन्यथा अगर (pdata && !pdata->use_eeprom)
+		ret = ath9k_hw_nvram_पढ़ो_pdata(pdata, off, data);
+	अन्यथा
+		ret = common->bus_ops->eeprom_पढ़ो(common, off, data);
 
-	if (!ret)
+	अगर (!ret)
 		ath_dbg(common, EEPROM,
 			"unable to read eeprom region at offset %u\n", off);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ath9k_hw_nvram_swap_data(struct ath_hw *ah, bool *swap_needed, int size)
-{
+पूर्णांक ath9k_hw_nvram_swap_data(काष्ठा ath_hw *ah, bool *swap_needed, पूर्णांक size)
+अणु
 	u16 magic;
 	u16 *eepdata;
-	int i;
+	पूर्णांक i;
 	bool needs_byteswap = false;
-	struct ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
 
-	if (!ath9k_hw_nvram_read(ah, AR5416_EEPROM_MAGIC_OFFSET, &magic)) {
+	अगर (!ath9k_hw_nvram_पढ़ो(ah, AR5416_EEPROM_MAGIC_OFFSET, &magic)) अणु
 		ath_err(common, "Reading Magic # failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (swab16(magic) == AR5416_EEPROM_MAGIC) {
+	अगर (swab16(magic) == AR5416_EEPROM_MAGIC) अणु
 		needs_byteswap = true;
 		ath_dbg(common, EEPROM,
 			"EEPROM needs byte-swapping to correct endianness.\n");
-	} else if (magic != AR5416_EEPROM_MAGIC) {
-		if (ath9k_hw_use_flash(ah)) {
+	पूर्ण अन्यथा अगर (magic != AR5416_EEPROM_MAGIC) अणु
+		अगर (ath9k_hw_use_flash(ah)) अणु
 			ath_dbg(common, EEPROM,
 				"Ignoring invalid EEPROM magic (0x%04x).\n",
 				magic);
-		} else {
+		पूर्ण अन्यथा अणु
 			ath_err(common,
 				"Invalid EEPROM magic (0x%04x).\n", magic);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (needs_byteswap) {
-		if (ah->ah_flags & AH_NO_EEP_SWAP) {
+	अगर (needs_byteswap) अणु
+		अगर (ah->ah_flags & AH_NO_EEP_SWAP) अणु
 			ath_info(common,
 				 "Ignoring endianness difference in EEPROM magic bytes.\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			eepdata = (u16 *)(&ah->eeprom);
 
-			for (i = 0; i < size; i++)
+			क्रम (i = 0; i < size; i++)
 				eepdata[i] = swab16(eepdata[i]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ah->eep_ops->get_eepmisc(ah) & AR5416_EEPMISC_BIG_ENDIAN) {
+	अगर (ah->eep_ops->get_eepmisc(ah) & AR5416_EEPMISC_BIG_ENDIAN) अणु
 		*swap_needed = true;
 		ath_dbg(common, EEPROM,
 			"Big Endian EEPROM detected according to EEPMISC register.\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		*swap_needed = false;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool ath9k_hw_nvram_validate_checksum(struct ath_hw *ah, int size)
-{
+bool ath9k_hw_nvram_validate_checksum(काष्ठा ath_hw *ah, पूर्णांक size)
+अणु
 	u32 i, sum = 0;
 	u16 *eepdata = (u16 *)(&ah->eeprom);
-	struct ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
 
-	for (i = 0; i < size; i++)
+	क्रम (i = 0; i < size; i++)
 		sum ^= eepdata[i];
 
-	if (sum != 0xffff) {
+	अगर (sum != 0xffff) अणु
 		ath_err(common, "Bad EEPROM checksum 0x%x\n", sum);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool ath9k_hw_nvram_check_version(struct ath_hw *ah, int version, int minrev)
-{
-	struct ath_common *common = ath9k_hw_common(ah);
+bool ath9k_hw_nvram_check_version(काष्ठा ath_hw *ah, पूर्णांक version, पूर्णांक minrev)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
 
-	if (ah->eep_ops->get_eeprom_ver(ah) != version ||
-	    ah->eep_ops->get_eeprom_rev(ah) < minrev) {
+	अगर (ah->eep_ops->get_eeprom_ver(ah) != version ||
+	    ah->eep_ops->get_eeprom_rev(ah) < minrev) अणु
 		ath_err(common, "Bad EEPROM VER 0x%04x or REV 0x%04x\n",
 			ah->eep_ops->get_eeprom_ver(ah),
 			ah->eep_ops->get_eeprom_rev(ah));
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void ath9k_hw_fill_vpd_table(u8 pwrMin, u8 pwrMax, u8 *pPwrList,
+व्योम ath9k_hw_fill_vpd_table(u8 pwrMin, u8 pwrMax, u8 *pPwrList,
 			     u8 *pVpdList, u16 numIntercepts,
 			     u8 *pRetVpdList)
-{
+अणु
 	u16 i, k;
 	u8 currPwr = pwrMin;
 	u16 idxL = 0, idxR = 0;
 
-	for (i = 0; i <= (pwrMax - pwrMin) / 2; i++) {
+	क्रम (i = 0; i <= (pwrMax - pwrMin) / 2; i++) अणु
 		ath9k_hw_get_lower_upper_index(currPwr, pPwrList,
 					       numIntercepts, &(idxL),
 					       &(idxR));
-		if (idxR < 1)
+		अगर (idxR < 1)
 			idxR = 1;
-		if (idxL == numIntercepts - 1)
+		अगर (idxL == numIntercepts - 1)
 			idxL = (u16) (numIntercepts - 2);
-		if (pPwrList[idxL] == pPwrList[idxR])
+		अगर (pPwrList[idxL] == pPwrList[idxR])
 			k = pVpdList[idxL];
-		else
+		अन्यथा
 			k = (u16)(((currPwr - pPwrList[idxL]) * pVpdList[idxR] +
 				   (pPwrList[idxR] - currPwr) * pVpdList[idxL]) /
 				  (pPwrList[idxR] - pPwrList[idxL]));
 		pRetVpdList[i] = (u8) k;
 		currPwr += 2;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ath9k_hw_get_legacy_target_powers(struct ath_hw *ah,
-				       struct ath9k_channel *chan,
-				       struct cal_target_power_leg *powInfo,
+व्योम ath9k_hw_get_legacy_target_घातers(काष्ठा ath_hw *ah,
+				       काष्ठा ath9k_channel *chan,
+				       काष्ठा cal_target_घातer_leg *घातInfo,
 				       u16 numChannels,
-				       struct cal_target_power_leg *pNewPower,
+				       काष्ठा cal_target_घातer_leg *pNewPower,
 				       u16 numRates, bool isExtTarget)
-{
-	struct chan_centers centers;
+अणु
+	काष्ठा chan_centers centers;
 	u16 clo, chi;
-	int i;
-	int matchIndex = -1, lowIndex = -1;
+	पूर्णांक i;
+	पूर्णांक matchIndex = -1, lowIndex = -1;
 	u16 freq;
 
 	ath9k_hw_get_channel_centers(ah, chan, &centers);
 	freq = (isExtTarget) ? centers.ext_center : centers.ctl_center;
 
-	if (freq <= ath9k_hw_fbin2freq(powInfo[0].bChannel,
-				       IS_CHAN_2GHZ(chan))) {
+	अगर (freq <= ath9k_hw_fbin2freq(घातInfo[0].bChannel,
+				       IS_CHAN_2GHZ(chan))) अणु
 		matchIndex = 0;
-	} else {
-		for (i = 0; (i < numChannels) &&
-			     (powInfo[i].bChannel != AR5416_BCHAN_UNUSED); i++) {
-			if (freq == ath9k_hw_fbin2freq(powInfo[i].bChannel,
-						       IS_CHAN_2GHZ(chan))) {
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; (i < numChannels) &&
+			     (घातInfo[i].bChannel != AR5416_BCHAN_UNUSED); i++) अणु
+			अगर (freq == ath9k_hw_fbin2freq(घातInfo[i].bChannel,
+						       IS_CHAN_2GHZ(chan))) अणु
 				matchIndex = i;
-				break;
-			} else if (freq < ath9k_hw_fbin2freq(powInfo[i].bChannel,
+				अवरोध;
+			पूर्ण अन्यथा अगर (freq < ath9k_hw_fbin2freq(घातInfo[i].bChannel,
 						IS_CHAN_2GHZ(chan)) && i > 0 &&
-				   freq > ath9k_hw_fbin2freq(powInfo[i - 1].bChannel,
-						IS_CHAN_2GHZ(chan))) {
+				   freq > ath9k_hw_fbin2freq(घातInfo[i - 1].bChannel,
+						IS_CHAN_2GHZ(chan))) अणु
 				lowIndex = i - 1;
-				break;
-			}
-		}
-		if ((matchIndex == -1) && (lowIndex == -1))
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर ((matchIndex == -1) && (lowIndex == -1))
 			matchIndex = i - 1;
-	}
+	पूर्ण
 
-	if (matchIndex != -1) {
-		*pNewPower = powInfo[matchIndex];
-	} else {
-		clo = ath9k_hw_fbin2freq(powInfo[lowIndex].bChannel,
+	अगर (matchIndex != -1) अणु
+		*pNewPower = घातInfo[matchIndex];
+	पूर्ण अन्यथा अणु
+		clo = ath9k_hw_fbin2freq(घातInfo[lowIndex].bChannel,
 					 IS_CHAN_2GHZ(chan));
-		chi = ath9k_hw_fbin2freq(powInfo[lowIndex + 1].bChannel,
+		chi = ath9k_hw_fbin2freq(घातInfo[lowIndex + 1].bChannel,
 					 IS_CHAN_2GHZ(chan));
 
-		for (i = 0; i < numRates; i++) {
+		क्रम (i = 0; i < numRates; i++) अणु
 			pNewPower->tPow2x[i] =
-				(u8)ath9k_hw_interpolate(freq, clo, chi,
-						powInfo[lowIndex].tPow2x[i],
-						powInfo[lowIndex + 1].tPow2x[i]);
-		}
-	}
-}
+				(u8)ath9k_hw_पूर्णांकerpolate(freq, clo, chi,
+						घातInfo[lowIndex].tPow2x[i],
+						घातInfo[lowIndex + 1].tPow2x[i]);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void ath9k_hw_get_target_powers(struct ath_hw *ah,
-				struct ath9k_channel *chan,
-				struct cal_target_power_ht *powInfo,
+व्योम ath9k_hw_get_target_घातers(काष्ठा ath_hw *ah,
+				काष्ठा ath9k_channel *chan,
+				काष्ठा cal_target_घातer_ht *घातInfo,
 				u16 numChannels,
-				struct cal_target_power_ht *pNewPower,
+				काष्ठा cal_target_घातer_ht *pNewPower,
 				u16 numRates, bool isHt40Target)
-{
-	struct chan_centers centers;
+अणु
+	काष्ठा chan_centers centers;
 	u16 clo, chi;
-	int i;
-	int matchIndex = -1, lowIndex = -1;
+	पूर्णांक i;
+	पूर्णांक matchIndex = -1, lowIndex = -1;
 	u16 freq;
 
 	ath9k_hw_get_channel_centers(ah, chan, &centers);
 	freq = isHt40Target ? centers.synth_center : centers.ctl_center;
 
-	if (freq <= ath9k_hw_fbin2freq(powInfo[0].bChannel, IS_CHAN_2GHZ(chan))) {
+	अगर (freq <= ath9k_hw_fbin2freq(घातInfo[0].bChannel, IS_CHAN_2GHZ(chan))) अणु
 		matchIndex = 0;
-	} else {
-		for (i = 0; (i < numChannels) &&
-			     (powInfo[i].bChannel != AR5416_BCHAN_UNUSED); i++) {
-			if (freq == ath9k_hw_fbin2freq(powInfo[i].bChannel,
-						       IS_CHAN_2GHZ(chan))) {
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; (i < numChannels) &&
+			     (घातInfo[i].bChannel != AR5416_BCHAN_UNUSED); i++) अणु
+			अगर (freq == ath9k_hw_fbin2freq(घातInfo[i].bChannel,
+						       IS_CHAN_2GHZ(chan))) अणु
 				matchIndex = i;
-				break;
-			} else
-				if (freq < ath9k_hw_fbin2freq(powInfo[i].bChannel,
+				अवरोध;
+			पूर्ण अन्यथा
+				अगर (freq < ath9k_hw_fbin2freq(घातInfo[i].bChannel,
 						IS_CHAN_2GHZ(chan)) && i > 0 &&
-				    freq > ath9k_hw_fbin2freq(powInfo[i - 1].bChannel,
-						IS_CHAN_2GHZ(chan))) {
+				    freq > ath9k_hw_fbin2freq(घातInfo[i - 1].bChannel,
+						IS_CHAN_2GHZ(chan))) अणु
 					lowIndex = i - 1;
-					break;
-				}
-		}
-		if ((matchIndex == -1) && (lowIndex == -1))
+					अवरोध;
+				पूर्ण
+		पूर्ण
+		अगर ((matchIndex == -1) && (lowIndex == -1))
 			matchIndex = i - 1;
-	}
+	पूर्ण
 
-	if (matchIndex != -1) {
-		*pNewPower = powInfo[matchIndex];
-	} else {
-		clo = ath9k_hw_fbin2freq(powInfo[lowIndex].bChannel,
+	अगर (matchIndex != -1) अणु
+		*pNewPower = घातInfo[matchIndex];
+	पूर्ण अन्यथा अणु
+		clo = ath9k_hw_fbin2freq(घातInfo[lowIndex].bChannel,
 					 IS_CHAN_2GHZ(chan));
-		chi = ath9k_hw_fbin2freq(powInfo[lowIndex + 1].bChannel,
+		chi = ath9k_hw_fbin2freq(घातInfo[lowIndex + 1].bChannel,
 					 IS_CHAN_2GHZ(chan));
 
-		for (i = 0; i < numRates; i++) {
-			pNewPower->tPow2x[i] = (u8)ath9k_hw_interpolate(freq,
+		क्रम (i = 0; i < numRates; i++) अणु
+			pNewPower->tPow2x[i] = (u8)ath9k_hw_पूर्णांकerpolate(freq,
 						clo, chi,
-						powInfo[lowIndex].tPow2x[i],
-						powInfo[lowIndex + 1].tPow2x[i]);
-		}
-	}
-}
+						घातInfo[lowIndex].tPow2x[i],
+						घातInfo[lowIndex + 1].tPow2x[i]);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-u16 ath9k_hw_get_max_edge_power(u16 freq, struct cal_ctl_edges *pRdEdgesPower,
-				bool is2GHz, int num_band_edges)
-{
+u16 ath9k_hw_get_max_edge_घातer(u16 freq, काष्ठा cal_ctl_edges *pRdEdgesPower,
+				bool is2GHz, पूर्णांक num_band_edges)
+अणु
 	u16 twiceMaxEdgePower = MAX_RATE_POWER;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; (i < num_band_edges) &&
-		     (pRdEdgesPower[i].bChannel != AR5416_BCHAN_UNUSED); i++) {
-		if (freq == ath9k_hw_fbin2freq(pRdEdgesPower[i].bChannel, is2GHz)) {
+	क्रम (i = 0; (i < num_band_edges) &&
+		     (pRdEdgesPower[i].bChannel != AR5416_BCHAN_UNUSED); i++) अणु
+		अगर (freq == ath9k_hw_fbin2freq(pRdEdgesPower[i].bChannel, is2GHz)) अणु
 			twiceMaxEdgePower = CTL_EDGE_TPOWER(pRdEdgesPower[i].ctl);
-			break;
-		} else if ((i > 0) &&
+			अवरोध;
+		पूर्ण अन्यथा अगर ((i > 0) &&
 			   (freq < ath9k_hw_fbin2freq(pRdEdgesPower[i].bChannel,
-						      is2GHz))) {
-			if (ath9k_hw_fbin2freq(pRdEdgesPower[i - 1].bChannel,
+						      is2GHz))) अणु
+			अगर (ath9k_hw_fbin2freq(pRdEdgesPower[i - 1].bChannel,
 					       is2GHz) < freq &&
-			    CTL_EDGE_FLAGS(pRdEdgesPower[i - 1].ctl)) {
+			    CTL_EDGE_FLAGS(pRdEdgesPower[i - 1].ctl)) अणु
 				twiceMaxEdgePower =
 					CTL_EDGE_TPOWER(pRdEdgesPower[i - 1].ctl);
-			}
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return twiceMaxEdgePower;
-}
+	वापस twiceMaxEdgePower;
+पूर्ण
 
-u16 ath9k_hw_get_scaled_power(struct ath_hw *ah, u16 power_limit,
+u16 ath9k_hw_get_scaled_घातer(काष्ठा ath_hw *ah, u16 घातer_limit,
 			      u8 antenna_reduction)
-{
+अणु
 	u16 reduction = antenna_reduction;
 
 	/*
 	 * Reduce scaled Power by number of chains active
-	 * to get the per chain tx power level.
+	 * to get the per chain tx घातer level.
 	 */
-	switch (ar5416_get_ntxchains(ah->txchainmask)) {
-	case 1:
-		break;
-	case 2:
+	चयन (ar5416_get_ntxchains(ah->txchainmask)) अणु
+	हाल 1:
+		अवरोध;
+	हाल 2:
 		reduction += POWER_CORRECTION_FOR_TWO_CHAIN;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		reduction += POWER_CORRECTION_FOR_THREE_CHAIN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (power_limit > reduction)
-		power_limit -= reduction;
-	else
-		power_limit = 0;
+	अगर (घातer_limit > reduction)
+		घातer_limit -= reduction;
+	अन्यथा
+		घातer_limit = 0;
 
-	return min_t(u16, power_limit, MAX_RATE_POWER);
-}
+	वापस min_t(u16, घातer_limit, MAX_RATE_POWER);
+पूर्ण
 
-void ath9k_hw_update_regulatory_maxpower(struct ath_hw *ah)
-{
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct ath_regulatory *regulatory = ath9k_hw_regulatory(ah);
+व्योम ath9k_hw_update_regulatory_maxघातer(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ath_regulatory *regulatory = ath9k_hw_regulatory(ah);
 
-	switch (ar5416_get_ntxchains(ah->txchainmask)) {
-	case 1:
-		break;
-	case 2:
-		regulatory->max_power_level += POWER_CORRECTION_FOR_TWO_CHAIN;
-		break;
-	case 3:
-		regulatory->max_power_level += POWER_CORRECTION_FOR_THREE_CHAIN;
-		break;
-	default:
+	चयन (ar5416_get_ntxchains(ah->txchainmask)) अणु
+	हाल 1:
+		अवरोध;
+	हाल 2:
+		regulatory->max_घातer_level += POWER_CORRECTION_FOR_TWO_CHAIN;
+		अवरोध;
+	हाल 3:
+		regulatory->max_घातer_level += POWER_CORRECTION_FOR_THREE_CHAIN;
+		अवरोध;
+	शेष:
 		ath_dbg(common, EEPROM, "Invalid chainmask configuration\n");
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void ath9k_hw_get_gain_boundaries_pdadcs(struct ath_hw *ah,
-				struct ath9k_channel *chan,
-				void *pRawDataSet,
+व्योम ath9k_hw_get_gain_boundaries_pdadcs(काष्ठा ath_hw *ah,
+				काष्ठा ath9k_channel *chan,
+				व्योम *pRawDataSet,
 				u8 *bChans, u16 availPiers,
 				u16 tPdGainOverlap,
 				u16 *pPdGainBoundaries, u8 *pPDADCValues,
 				u16 numXpdGains)
-{
-	int i, j, k;
-	int16_t ss;
+अणु
+	पूर्णांक i, j, k;
+	पूर्णांक16_t ss;
 	u16 idxL = 0, idxR = 0, numPiers;
-	static u8 vpdTableL[AR5416_NUM_PD_GAINS]
+	अटल u8 vpdTableL[AR5416_NUM_PD_GAINS]
 		[AR5416_MAX_PWR_RANGE_IN_HALF_DB];
-	static u8 vpdTableR[AR5416_NUM_PD_GAINS]
+	अटल u8 vpdTableR[AR5416_NUM_PD_GAINS]
 		[AR5416_MAX_PWR_RANGE_IN_HALF_DB];
-	static u8 vpdTableI[AR5416_NUM_PD_GAINS]
+	अटल u8 vpdTableI[AR5416_NUM_PD_GAINS]
 		[AR5416_MAX_PWR_RANGE_IN_HALF_DB];
 
 	u8 *pVpdL, *pVpdR, *pPwrL, *pPwrR;
 	u8 minPwrT4[AR5416_NUM_PD_GAINS];
 	u8 maxPwrT4[AR5416_NUM_PD_GAINS];
-	int16_t vpdStep;
-	int16_t tmpVal;
+	पूर्णांक16_t vpdStep;
+	पूर्णांक16_t पंचांगpVal;
 	u16 sizeCurrVpdTable, maxIndex, tgtIndex;
 	bool match;
-	int16_t minDelta = 0;
-	struct chan_centers centers;
-	int pdgain_boundary_default;
-	struct cal_data_per_freq *data_def = pRawDataSet;
-	struct cal_data_per_freq_4k *data_4k = pRawDataSet;
-	struct cal_data_per_freq_ar9287 *data_9287 = pRawDataSet;
+	पूर्णांक16_t minDelta = 0;
+	काष्ठा chan_centers centers;
+	पूर्णांक pdgain_boundary_शेष;
+	काष्ठा cal_data_per_freq *data_def = pRawDataSet;
+	काष्ठा cal_data_per_freq_4k *data_4k = pRawDataSet;
+	काष्ठा cal_data_per_freq_ar9287 *data_9287 = pRawDataSet;
 	bool eeprom_4k = AR_SREV_9285(ah) || AR_SREV_9271(ah);
-	int intercepts;
+	पूर्णांक पूर्णांकercepts;
 
-	if (AR_SREV_9287(ah))
-		intercepts = AR9287_PD_GAIN_ICEPTS;
-	else
-		intercepts = AR5416_PD_GAIN_ICEPTS;
+	अगर (AR_SREV_9287(ah))
+		पूर्णांकercepts = AR9287_PD_GAIN_ICEPTS;
+	अन्यथा
+		पूर्णांकercepts = AR5416_PD_GAIN_ICEPTS;
 
-	memset(&minPwrT4, 0, AR5416_NUM_PD_GAINS);
+	स_रखो(&minPwrT4, 0, AR5416_NUM_PD_GAINS);
 	ath9k_hw_get_channel_centers(ah, chan, &centers);
 
-	for (numPiers = 0; numPiers < availPiers; numPiers++) {
-		if (bChans[numPiers] == AR5416_BCHAN_UNUSED)
-			break;
-	}
+	क्रम (numPiers = 0; numPiers < availPiers; numPiers++) अणु
+		अगर (bChans[numPiers] == AR5416_BCHAN_UNUSED)
+			अवरोध;
+	पूर्ण
 
 	match = ath9k_hw_get_lower_upper_index((u8)FREQ2FBIN(centers.synth_center,
 							     IS_CHAN_2GHZ(chan)),
 					       bChans, numPiers, &idxL, &idxR);
 
-	if (match) {
-		if (AR_SREV_9287(ah)) {
-			for (i = 0; i < numXpdGains; i++) {
+	अगर (match) अणु
+		अगर (AR_SREV_9287(ah)) अणु
+			क्रम (i = 0; i < numXpdGains; i++) अणु
 				minPwrT4[i] = data_9287[idxL].pwrPdg[i][0];
-				maxPwrT4[i] = data_9287[idxL].pwrPdg[i][intercepts - 1];
+				maxPwrT4[i] = data_9287[idxL].pwrPdg[i][पूर्णांकercepts - 1];
 				ath9k_hw_fill_vpd_table(minPwrT4[i], maxPwrT4[i],
 						data_9287[idxL].pwrPdg[i],
 						data_9287[idxL].vpdPdg[i],
-						intercepts,
+						पूर्णांकercepts,
 						vpdTableI[i]);
-			}
-		} else if (eeprom_4k) {
-			for (i = 0; i < numXpdGains; i++) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (eeprom_4k) अणु
+			क्रम (i = 0; i < numXpdGains; i++) अणु
 				minPwrT4[i] = data_4k[idxL].pwrPdg[i][0];
-				maxPwrT4[i] = data_4k[idxL].pwrPdg[i][intercepts - 1];
+				maxPwrT4[i] = data_4k[idxL].pwrPdg[i][पूर्णांकercepts - 1];
 				ath9k_hw_fill_vpd_table(minPwrT4[i], maxPwrT4[i],
 						data_4k[idxL].pwrPdg[i],
 						data_4k[idxL].vpdPdg[i],
-						intercepts,
+						पूर्णांकercepts,
 						vpdTableI[i]);
-			}
-		} else {
-			for (i = 0; i < numXpdGains; i++) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			क्रम (i = 0; i < numXpdGains; i++) अणु
 				minPwrT4[i] = data_def[idxL].pwrPdg[i][0];
-				maxPwrT4[i] = data_def[idxL].pwrPdg[i][intercepts - 1];
+				maxPwrT4[i] = data_def[idxL].pwrPdg[i][पूर्णांकercepts - 1];
 				ath9k_hw_fill_vpd_table(minPwrT4[i], maxPwrT4[i],
 						data_def[idxL].pwrPdg[i],
 						data_def[idxL].vpdPdg[i],
-						intercepts,
+						पूर्णांकercepts,
 						vpdTableI[i]);
-			}
-		}
-	} else {
-		for (i = 0; i < numXpdGains; i++) {
-			if (AR_SREV_9287(ah)) {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < numXpdGains; i++) अणु
+			अगर (AR_SREV_9287(ah)) अणु
 				pVpdL = data_9287[idxL].vpdPdg[i];
 				pPwrL = data_9287[idxL].pwrPdg[i];
 				pVpdR = data_9287[idxR].vpdPdg[i];
 				pPwrR = data_9287[idxR].pwrPdg[i];
-			} else if (eeprom_4k) {
+			पूर्ण अन्यथा अगर (eeprom_4k) अणु
 				pVpdL = data_4k[idxL].vpdPdg[i];
 				pPwrL = data_4k[idxL].pwrPdg[i];
 				pVpdR = data_4k[idxR].vpdPdg[i];
 				pPwrR = data_4k[idxR].pwrPdg[i];
-			} else {
+			पूर्ण अन्यथा अणु
 				pVpdL = data_def[idxL].vpdPdg[i];
 				pPwrL = data_def[idxL].pwrPdg[i];
 				pVpdR = data_def[idxR].vpdPdg[i];
 				pPwrR = data_def[idxR].pwrPdg[i];
-			}
+			पूर्ण
 
 			minPwrT4[i] = max(pPwrL[0], pPwrR[0]);
 
 			maxPwrT4[i] =
-				min(pPwrL[intercepts - 1],
-				    pPwrR[intercepts - 1]);
+				min(pPwrL[पूर्णांकercepts - 1],
+				    pPwrR[पूर्णांकercepts - 1]);
 
 
 			ath9k_hw_fill_vpd_table(minPwrT4[i], maxPwrT4[i],
 						pPwrL, pVpdL,
-						intercepts,
+						पूर्णांकercepts,
 						vpdTableL[i]);
 			ath9k_hw_fill_vpd_table(minPwrT4[i], maxPwrT4[i],
 						pPwrR, pVpdR,
-						intercepts,
+						पूर्णांकercepts,
 						vpdTableR[i]);
 
-			for (j = 0; j <= (maxPwrT4[i] - minPwrT4[i]) / 2; j++) {
+			क्रम (j = 0; j <= (maxPwrT4[i] - minPwrT4[i]) / 2; j++) अणु
 				vpdTableI[i][j] =
-					(u8)(ath9k_hw_interpolate((u16)
+					(u8)(ath9k_hw_पूर्णांकerpolate((u16)
 					     FREQ2FBIN(centers.
 						       synth_center,
 						       IS_CHAN_2GHZ
 						       (chan)),
 					     bChans[idxL], bChans[idxR],
 					     vpdTableL[i][j], vpdTableR[i][j]));
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	k = 0;
 
-	for (i = 0; i < numXpdGains; i++) {
-		if (i == (numXpdGains - 1))
+	क्रम (i = 0; i < numXpdGains; i++) अणु
+		अगर (i == (numXpdGains - 1))
 			pPdGainBoundaries[i] =
 				(u16)(maxPwrT4[i] / 2);
-		else
+		अन्यथा
 			pPdGainBoundaries[i] =
 				(u16)((maxPwrT4[i] + minPwrT4[i + 1]) / 4);
 
@@ -597,24 +598,24 @@ void ath9k_hw_get_gain_boundaries_pdadcs(struct ath_hw *ah,
 
 		minDelta = 0;
 
-		if (i == 0) {
-			if (AR_SREV_9280_20_OR_LATER(ah))
-				ss = (int16_t)(0 - (minPwrT4[i] / 2));
-			else
+		अगर (i == 0) अणु
+			अगर (AR_SREV_9280_20_OR_LATER(ah))
+				ss = (पूर्णांक16_t)(0 - (minPwrT4[i] / 2));
+			अन्यथा
 				ss = 0;
-		} else {
-			ss = (int16_t)((pPdGainBoundaries[i - 1] -
+		पूर्ण अन्यथा अणु
+			ss = (पूर्णांक16_t)((pPdGainBoundaries[i - 1] -
 					(minPwrT4[i] / 2)) -
 				       tPdGainOverlap + 1 + minDelta);
-		}
-		vpdStep = (int16_t)(vpdTableI[i][1] - vpdTableI[i][0]);
-		vpdStep = (int16_t)((vpdStep < 1) ? 1 : vpdStep);
+		पूर्ण
+		vpdStep = (पूर्णांक16_t)(vpdTableI[i][1] - vpdTableI[i][0]);
+		vpdStep = (पूर्णांक16_t)((vpdStep < 1) ? 1 : vpdStep);
 
-		while ((ss < 0) && (k < (AR5416_NUM_PDADC_VALUES - 1))) {
-			tmpVal = (int16_t)(vpdTableI[i][0] + ss * vpdStep);
-			pPDADCValues[k++] = (u8)((tmpVal < 0) ? 0 : tmpVal);
+		जबतक ((ss < 0) && (k < (AR5416_NUM_PDADC_VALUES - 1))) अणु
+			पंचांगpVal = (पूर्णांक16_t)(vpdTableI[i][0] + ss * vpdStep);
+			pPDADCValues[k++] = (u8)((पंचांगpVal < 0) ? 0 : पंचांगpVal);
 			ss++;
-		}
+		पूर्ण
 
 		sizeCurrVpdTable = (u8) ((maxPwrT4[i] - minPwrT4[i]) / 2 + 1);
 		tgtIndex = (u8)(pPdGainBoundaries[i] + tPdGainOverlap -
@@ -622,60 +623,60 @@ void ath9k_hw_get_gain_boundaries_pdadcs(struct ath_hw *ah,
 		maxIndex = (tgtIndex < sizeCurrVpdTable) ?
 			tgtIndex : sizeCurrVpdTable;
 
-		while ((ss < maxIndex) && (k < (AR5416_NUM_PDADC_VALUES - 1))) {
+		जबतक ((ss < maxIndex) && (k < (AR5416_NUM_PDADC_VALUES - 1))) अणु
 			pPDADCValues[k++] = vpdTableI[i][ss++];
-		}
+		पूर्ण
 
-		vpdStep = (int16_t)(vpdTableI[i][sizeCurrVpdTable - 1] -
+		vpdStep = (पूर्णांक16_t)(vpdTableI[i][sizeCurrVpdTable - 1] -
 				    vpdTableI[i][sizeCurrVpdTable - 2]);
-		vpdStep = (int16_t)((vpdStep < 1) ? 1 : vpdStep);
+		vpdStep = (पूर्णांक16_t)((vpdStep < 1) ? 1 : vpdStep);
 
-		if (tgtIndex >= maxIndex) {
-			while ((ss <= tgtIndex) &&
-			       (k < (AR5416_NUM_PDADC_VALUES - 1))) {
-				tmpVal = (int16_t)((vpdTableI[i][sizeCurrVpdTable - 1] +
+		अगर (tgtIndex >= maxIndex) अणु
+			जबतक ((ss <= tgtIndex) &&
+			       (k < (AR5416_NUM_PDADC_VALUES - 1))) अणु
+				पंचांगpVal = (पूर्णांक16_t)((vpdTableI[i][sizeCurrVpdTable - 1] +
 						    (ss - maxIndex + 1) * vpdStep));
-				pPDADCValues[k++] = (u8)((tmpVal > 255) ?
-							 255 : tmpVal);
+				pPDADCValues[k++] = (u8)((पंचांगpVal > 255) ?
+							 255 : पंचांगpVal);
 				ss++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (eeprom_4k)
-		pdgain_boundary_default = 58;
-	else
-		pdgain_boundary_default = pPdGainBoundaries[i - 1];
+	अगर (eeprom_4k)
+		pdgain_boundary_शेष = 58;
+	अन्यथा
+		pdgain_boundary_शेष = pPdGainBoundaries[i - 1];
 
-	while (i < AR5416_PD_GAINS_IN_MASK) {
-		pPdGainBoundaries[i] = pdgain_boundary_default;
+	जबतक (i < AR5416_PD_GAINS_IN_MASK) अणु
+		pPdGainBoundaries[i] = pdgain_boundary_शेष;
 		i++;
-	}
+	पूर्ण
 
-	while (k < AR5416_NUM_PDADC_VALUES) {
+	जबतक (k < AR5416_NUM_PDADC_VALUES) अणु
 		pPDADCValues[k] = pPDADCValues[k - 1];
 		k++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int ath9k_hw_eeprom_init(struct ath_hw *ah)
-{
-	int status;
+पूर्णांक ath9k_hw_eeprom_init(काष्ठा ath_hw *ah)
+अणु
+	पूर्णांक status;
 
-	if (AR_SREV_9300_20_OR_LATER(ah))
+	अगर (AR_SREV_9300_20_OR_LATER(ah))
 		ah->eep_ops = &eep_ar9300_ops;
-	else if (AR_SREV_9287(ah)) {
+	अन्यथा अगर (AR_SREV_9287(ah)) अणु
 		ah->eep_ops = &eep_ar9287_ops;
-	} else if (AR_SREV_9285(ah) || AR_SREV_9271(ah)) {
+	पूर्ण अन्यथा अगर (AR_SREV_9285(ah) || AR_SREV_9271(ah)) अणु
 		ah->eep_ops = &eep_4k_ops;
-	} else {
+	पूर्ण अन्यथा अणु
 		ah->eep_ops = &eep_def_ops;
-	}
+	पूर्ण
 
-	if (!ah->eep_ops->fill_eeprom(ah))
-		return -EIO;
+	अगर (!ah->eep_ops->fill_eeprom(ah))
+		वापस -EIO;
 
 	status = ah->eep_ops->check_eeprom(ah);
 
-	return status;
-}
+	वापस status;
+पूर्ण

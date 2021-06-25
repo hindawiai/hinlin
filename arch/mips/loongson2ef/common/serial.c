@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2007 Ralf Baechle (ralf@linux-mips.org)
  *
@@ -10,36 +11,36 @@
  * Author: Wu Zhangjin (wuzhangjin@gmail.com)
  */
 
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/serial_8250.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/serial_8250.h>
 
-#include <asm/bootinfo.h>
+#समावेश <यंत्र/bootinfo.h>
 
-#include <loongson.h>
-#include <machine.h>
+#समावेश <loongson.h>
+#समावेश <machine.h>
 
-#define PORT(int, clk)			\
-{								\
-	.irq		= int,					\
+#घोषणा PORT(पूर्णांक, clk)			\
+अणु								\
+	.irq		= पूर्णांक,					\
 	.uartclk	= clk,					\
 	.iotype		= UPIO_PORT,				\
 	.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,	\
-	.regshift	= 0,					\
-}
+	.regshअगरt	= 0,					\
+पूर्ण
 
-#define PORT_M(int, clk)				\
-{								\
-	.irq		= MIPS_CPU_IRQ_BASE + (int),		\
+#घोषणा PORT_M(पूर्णांक, clk)				\
+अणु								\
+	.irq		= MIPS_CPU_IRQ_BASE + (पूर्णांक),		\
 	.uartclk	= clk,					\
 	.iotype		= UPIO_MEM,				\
-	.membase	= (void __iomem *)NULL,			\
+	.membase	= (व्योम __iomem *)शून्य,			\
 	.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,	\
-	.regshift	= 0,					\
-}
+	.regshअगरt	= 0,					\
+पूर्ण
 
-static struct plat_serial8250_port uart8250_data[MACH_LOONGSON_END + 1] = {
-	[MACH_LOONGSON_UNKNOWN]	= {},
+अटल काष्ठा plat_serial8250_port uart8250_data[MACH_LOONGSON_END + 1] = अणु
+	[MACH_LOONGSON_UNKNOWN]	= अणुपूर्ण,
 	[MACH_LEMOTE_FL2E]	= PORT(4, 1843200),
 	[MACH_LEMOTE_FL2F]	= PORT(3, 1843200),
 	[MACH_LEMOTE_ML2F7]	= PORT_M(3, 3686400),
@@ -47,40 +48,40 @@ static struct plat_serial8250_port uart8250_data[MACH_LOONGSON_END + 1] = {
 	[MACH_DEXXON_GDIUM2F10]	= PORT_M(3, 3686400),
 	[MACH_LEMOTE_NAS]	= PORT_M(3, 3686400),
 	[MACH_LEMOTE_LL2F]	= PORT(3, 1843200),
-	[MACH_LOONGSON_END]	= {},
-};
+	[MACH_LOONGSON_END]	= अणुपूर्ण,
+पूर्ण;
 
-static struct platform_device uart8250_device = {
+अटल काष्ठा platक्रमm_device uart8250_device = अणु
 	.name = "serial8250",
 	.id = PLAT8250_DEV_PLATFORM,
-};
+पूर्ण;
 
-static int __init serial_init(void)
-{
-	unsigned char iotype;
+अटल पूर्णांक __init serial_init(व्योम)
+अणु
+	अचिन्हित अक्षर iotype;
 
 	iotype = uart8250_data[mips_machtype].iotype;
 
-	if (UPIO_MEM == iotype) {
+	अगर (UPIO_MEM == iotype) अणु
 		uart8250_data[mips_machtype].mapbase =
 			loongson_uart_base;
 		uart8250_data[mips_machtype].membase =
-			(void __iomem *)_loongson_uart_base;
-	}
-	else if (UPIO_PORT == iotype)
+			(व्योम __iomem *)_loongson_uart_base;
+	पूर्ण
+	अन्यथा अगर (UPIO_PORT == iotype)
 		uart8250_data[mips_machtype].iobase =
 			loongson_uart_base - LOONGSON_PCIIO_BASE;
 
-	memset(&uart8250_data[mips_machtype + 1], 0,
-			sizeof(struct plat_serial8250_port));
-	uart8250_device.dev.platform_data = &uart8250_data[mips_machtype];
+	स_रखो(&uart8250_data[mips_machtype + 1], 0,
+			माप(काष्ठा plat_serial8250_port));
+	uart8250_device.dev.platक्रमm_data = &uart8250_data[mips_machtype];
 
-	return platform_device_register(&uart8250_device);
-}
+	वापस platक्रमm_device_रेजिस्टर(&uart8250_device);
+पूर्ण
 module_init(serial_init);
 
-static void __exit serial_exit(void)
-{
-	platform_device_unregister(&uart8250_device);
-}
-module_exit(serial_exit);
+अटल व्योम __निकास serial_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(&uart8250_device);
+पूर्ण
+module_निकास(serial_निकास);

@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * WSM host interface (HI) implementation for
+ * WSM host पूर्णांकerface (HI) implementation क्रम
  * ST-Ericsson CW1200 mac80211 drivers.
  *
  * Copyright (c) 2010, ST-Ericsson
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  */
 
-#include <linux/skbuff.h>
-#include <linux/wait.h>
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/random.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/अक्रमom.h>
 
-#include "cw1200.h"
-#include "wsm.h"
-#include "bh.h"
-#include "sta.h"
-#include "debug.h"
+#समावेश "cw1200.h"
+#समावेश "wsm.h"
+#समावेश "bh.h"
+#समावेश "sta.h"
+#समावेश "debug.h"
 
-#define WSM_CMD_TIMEOUT		(2 * HZ) /* With respect to interrupt loss */
-#define WSM_CMD_START_TIMEOUT	(7 * HZ)
-#define WSM_CMD_RESET_TIMEOUT	(3 * HZ) /* 2 sec. timeout was observed.   */
-#define WSM_CMD_MAX_TIMEOUT	(3 * HZ)
+#घोषणा WSM_CMD_TIMEOUT		(2 * HZ) /* With respect to पूर्णांकerrupt loss */
+#घोषणा WSM_CMD_START_TIMEOUT	(7 * HZ)
+#घोषणा WSM_CMD_RESET_TIMEOUT	(3 * HZ) /* 2 sec. समयout was observed.   */
+#घोषणा WSM_CMD_MAX_TIMEOUT	(3 * HZ)
 
-#define WSM_SKIP(buf, size)						\
-	do {								\
-		if ((buf)->data + size > (buf)->end)			\
-			goto underflow;					\
+#घोषणा WSM_SKIP(buf, size)						\
+	करो अणु								\
+		अगर ((buf)->data + size > (buf)->end)			\
+			जाओ underflow;					\
 		(buf)->data += size;					\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define WSM_GET(buf, ptr, size)						\
-	do {								\
-		if ((buf)->data + size > (buf)->end)			\
-			goto underflow;					\
-		memcpy(ptr, (buf)->data, size);				\
+#घोषणा WSM_GET(buf, ptr, size)						\
+	करो अणु								\
+		अगर ((buf)->data + size > (buf)->end)			\
+			जाओ underflow;					\
+		स_नकल(ptr, (buf)->data, size);				\
 		(buf)->data += size;					\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define __WSM_GET(buf, type, type2, cvt)				\
-	({								\
+#घोषणा __WSM_GET(buf, type, type2, cvt)				\
+	(अणु								\
 		type val;						\
-		if ((buf)->data + sizeof(type) > (buf)->end)		\
-			goto underflow;					\
+		अगर ((buf)->data + माप(type) > (buf)->end)		\
+			जाओ underflow;					\
 		val = cvt(*(type2 *)(buf)->data);			\
-		(buf)->data += sizeof(type);				\
+		(buf)->data += माप(type);				\
 		val;							\
-	})
+	पूर्ण)
 
-#define WSM_GET8(buf)  __WSM_GET(buf, u8, u8, (u8))
-#define WSM_GET16(buf) __WSM_GET(buf, u16, __le16, __le16_to_cpu)
-#define WSM_GET32(buf) __WSM_GET(buf, u32, __le32, __le32_to_cpu)
+#घोषणा WSM_GET8(buf)  __WSM_GET(buf, u8, u8, (u8))
+#घोषणा WSM_GET16(buf) __WSM_GET(buf, u16, __le16, __le16_to_cpu)
+#घोषणा WSM_GET32(buf) __WSM_GET(buf, u32, __le32, __le32_to_cpu)
 
-#define WSM_PUT(buf, ptr, size)						\
-	do {								\
-		if ((buf)->data + size > (buf)->end)		\
-			if (wsm_buf_reserve((buf), size))	\
-				goto nomem;				\
-		memcpy((buf)->data, ptr, size);				\
+#घोषणा WSM_PUT(buf, ptr, size)						\
+	करो अणु								\
+		अगर ((buf)->data + size > (buf)->end)		\
+			अगर (wsm_buf_reserve((buf), size))	\
+				जाओ nomem;				\
+		स_नकल((buf)->data, ptr, size);				\
 		(buf)->data += size;					\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define __WSM_PUT(buf, val, type, type2, cvt)				\
-	do {								\
-		if ((buf)->data + sizeof(type) > (buf)->end)		\
-			if (wsm_buf_reserve((buf), sizeof(type))) \
-				goto nomem;				\
+#घोषणा __WSM_PUT(buf, val, type, type2, cvt)				\
+	करो अणु								\
+		अगर ((buf)->data + माप(type) > (buf)->end)		\
+			अगर (wsm_buf_reserve((buf), माप(type))) \
+				जाओ nomem;				\
 		*(type2 *)(buf)->data = cvt(val);			\
-		(buf)->data += sizeof(type);				\
-	} while (0)
+		(buf)->data += माप(type);				\
+	पूर्ण जबतक (0)
 
-#define WSM_PUT8(buf, val)  __WSM_PUT(buf, val, u8, u8, (u8))
-#define WSM_PUT16(buf, val) __WSM_PUT(buf, val, u16, __le16, __cpu_to_le16)
-#define WSM_PUT32(buf, val) __WSM_PUT(buf, val, u32, __le32, __cpu_to_le32)
+#घोषणा WSM_PUT8(buf, val)  __WSM_PUT(buf, val, u8, u8, (u8))
+#घोषणा WSM_PUT16(buf, val) __WSM_PUT(buf, val, u16, __le16, __cpu_to_le16)
+#घोषणा WSM_PUT32(buf, val) __WSM_PUT(buf, val, u32, __le32, __cpu_to_le32)
 
-static void wsm_buf_reset(struct wsm_buf *buf);
-static int wsm_buf_reserve(struct wsm_buf *buf, size_t extra_size);
+अटल व्योम wsm_buf_reset(काष्ठा wsm_buf *buf);
+अटल पूर्णांक wsm_buf_reserve(काष्ठा wsm_buf *buf, माप_प्रकार extra_size);
 
-static int wsm_cmd_send(struct cw1200_common *priv,
-			struct wsm_buf *buf,
-			void *arg, u16 cmd, long tmo);
+अटल पूर्णांक wsm_cmd_send(काष्ठा cw1200_common *priv,
+			काष्ठा wsm_buf *buf,
+			व्योम *arg, u16 cmd, दीर्घ पंचांगo);
 
-#define wsm_cmd_lock(__priv) mutex_lock(&((__priv)->wsm_cmd_mux))
-#define wsm_cmd_unlock(__priv) mutex_unlock(&((__priv)->wsm_cmd_mux))
+#घोषणा wsm_cmd_lock(__priv) mutex_lock(&((__priv)->wsm_cmd_mux))
+#घोषणा wsm_cmd_unlock(__priv) mutex_unlock(&((__priv)->wsm_cmd_mux))
 
 /* ******************************************************************** */
 /* WSM API implementation						*/
 
-static int wsm_generic_confirm(struct cw1200_common *priv,
-			     void *arg,
-			     struct wsm_buf *buf)
-{
+अटल पूर्णांक wsm_generic_confirm(काष्ठा cw1200_common *priv,
+			     व्योम *arg,
+			     काष्ठा wsm_buf *buf)
+अणु
 	u32 status = WSM_GET32(buf);
-	if (status != WSM_STATUS_SUCCESS)
-		return -EINVAL;
-	return 0;
+	अगर (status != WSM_STATUS_SUCCESS)
+		वापस -EINVAL;
+	वापस 0;
 
 underflow:
 	WARN_ON(1);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int wsm_configuration(struct cw1200_common *priv, struct wsm_configuration *arg)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_configuration(काष्ठा cw1200_common *priv, काष्ठा wsm_configuration *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 
 	wsm_cmd_lock(priv);
 
-	WSM_PUT32(buf, arg->dot11MaxTransmitMsduLifeTime);
-	WSM_PUT32(buf, arg->dot11MaxReceiveLifeTime);
-	WSM_PUT32(buf, arg->dot11RtsThreshold);
+	WSM_PUT32(buf, arg->करोt11MaxTransmitMsduLअगरeTime);
+	WSM_PUT32(buf, arg->करोt11MaxReceiveLअगरeTime);
+	WSM_PUT32(buf, arg->करोt11RtsThreshold);
 
 	/* DPD block. */
 	WSM_PUT16(buf, arg->dpdData_size + 12);
 	WSM_PUT16(buf, 1); /* DPD version */
-	WSM_PUT(buf, arg->dot11StationId, ETH_ALEN);
+	WSM_PUT(buf, arg->करोt11StationId, ETH_ALEN);
 	WSM_PUT16(buf, 5); /* DPD flags */
 	WSM_PUT(buf, arg->dpdData, arg->dpdData_size);
 
@@ -124,78 +125,78 @@ int wsm_configuration(struct cw1200_common *priv, struct wsm_configuration *arg)
 			   WSM_CONFIGURATION_REQ_ID, WSM_CMD_TIMEOUT);
 
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int wsm_configuration_confirm(struct cw1200_common *priv,
-				     struct wsm_configuration *arg,
-				     struct wsm_buf *buf)
-{
-	int i;
-	int status;
+अटल पूर्णांक wsm_configuration_confirm(काष्ठा cw1200_common *priv,
+				     काष्ठा wsm_configuration *arg,
+				     काष्ठा wsm_buf *buf)
+अणु
+	पूर्णांक i;
+	पूर्णांक status;
 
 	status = WSM_GET32(buf);
-	if (WARN_ON(status != WSM_STATUS_SUCCESS))
-		return -EINVAL;
+	अगर (WARN_ON(status != WSM_STATUS_SUCCESS))
+		वापस -EINVAL;
 
-	WSM_GET(buf, arg->dot11StationId, ETH_ALEN);
-	arg->dot11FrequencyBandsSupported = WSM_GET8(buf);
+	WSM_GET(buf, arg->करोt11StationId, ETH_ALEN);
+	arg->करोt11FrequencyBandsSupported = WSM_GET8(buf);
 	WSM_SKIP(buf, 1);
 	arg->supportedRateMask = WSM_GET32(buf);
-	for (i = 0; i < 2; ++i) {
-		arg->txPowerRange[i].min_power_level = WSM_GET32(buf);
-		arg->txPowerRange[i].max_power_level = WSM_GET32(buf);
+	क्रम (i = 0; i < 2; ++i) अणु
+		arg->txPowerRange[i].min_घातer_level = WSM_GET32(buf);
+		arg->txPowerRange[i].max_घातer_level = WSM_GET32(buf);
 		arg->txPowerRange[i].stepping = WSM_GET32(buf);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 underflow:
 	WARN_ON(1);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_reset(struct cw1200_common *priv, const struct wsm_reset *arg)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_reset(काष्ठा cw1200_common *priv, स्थिर काष्ठा wsm_reset *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 	u16 cmd = WSM_RESET_REQ_ID | WSM_TX_LINK_ID(arg->link_id);
 
 	wsm_cmd_lock(priv);
 
 	WSM_PUT32(buf, arg->reset_statistics ? 0 : 1);
-	ret = wsm_cmd_send(priv, buf, NULL, cmd, WSM_CMD_RESET_TIMEOUT);
+	ret = wsm_cmd_send(priv, buf, शून्य, cmd, WSM_CMD_RESET_TIMEOUT);
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
 
-struct wsm_mib {
+काष्ठा wsm_mib अणु
 	u16 mib_id;
-	void *buf;
-	size_t buf_size;
-};
+	व्योम *buf;
+	माप_प्रकार buf_size;
+पूर्ण;
 
-int wsm_read_mib(struct cw1200_common *priv, u16 mib_id, void *_buf,
-			size_t buf_size)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
-	struct wsm_mib mib_buf = {
+पूर्णांक wsm_पढ़ो_mib(काष्ठा cw1200_common *priv, u16 mib_id, व्योम *_buf,
+			माप_प्रकार buf_size)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
+	काष्ठा wsm_mib mib_buf = अणु
 		.mib_id = mib_id,
 		.buf = _buf,
 		.buf_size = buf_size,
-	};
+	पूर्ण;
 	wsm_cmd_lock(priv);
 
 	WSM_PUT16(buf, mib_id);
@@ -204,49 +205,49 @@ int wsm_read_mib(struct cw1200_common *priv, u16 mib_id, void *_buf,
 	ret = wsm_cmd_send(priv, buf, &mib_buf,
 			   WSM_READ_MIB_REQ_ID, WSM_CMD_TIMEOUT);
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int wsm_read_mib_confirm(struct cw1200_common *priv,
-				struct wsm_mib *arg,
-				struct wsm_buf *buf)
-{
+अटल पूर्णांक wsm_पढ़ो_mib_confirm(काष्ठा cw1200_common *priv,
+				काष्ठा wsm_mib *arg,
+				काष्ठा wsm_buf *buf)
+अणु
 	u16 size;
-	if (WARN_ON(WSM_GET32(buf) != WSM_STATUS_SUCCESS))
-		return -EINVAL;
+	अगर (WARN_ON(WSM_GET32(buf) != WSM_STATUS_SUCCESS))
+		वापस -EINVAL;
 
-	if (WARN_ON(WSM_GET16(buf) != arg->mib_id))
-		return -EINVAL;
+	अगर (WARN_ON(WSM_GET16(buf) != arg->mib_id))
+		वापस -EINVAL;
 
 	size = WSM_GET16(buf);
-	if (size > arg->buf_size)
+	अगर (size > arg->buf_size)
 		size = arg->buf_size;
 
 	WSM_GET(buf, arg->buf, size);
 	arg->buf_size = size;
-	return 0;
+	वापस 0;
 
 underflow:
 	WARN_ON(1);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_write_mib(struct cw1200_common *priv, u16 mib_id, void *_buf,
-			size_t buf_size)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
-	struct wsm_mib mib_buf = {
+पूर्णांक wsm_ग_लिखो_mib(काष्ठा cw1200_common *priv, u16 mib_id, व्योम *_buf,
+			माप_प्रकार buf_size)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
+	काष्ठा wsm_mib mib_buf = अणु
 		.mib_id = mib_id,
 		.buf = _buf,
 		.buf_size = buf_size,
-	};
+	पूर्ण;
 
 	wsm_cmd_lock(priv);
 
@@ -257,47 +258,47 @@ int wsm_write_mib(struct cw1200_common *priv, u16 mib_id, void *_buf,
 	ret = wsm_cmd_send(priv, buf, &mib_buf,
 			   WSM_WRITE_MIB_REQ_ID, WSM_CMD_TIMEOUT);
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int wsm_write_mib_confirm(struct cw1200_common *priv,
-				struct wsm_mib *arg,
-				struct wsm_buf *buf)
-{
-	int ret;
+अटल पूर्णांक wsm_ग_लिखो_mib_confirm(काष्ठा cw1200_common *priv,
+				काष्ठा wsm_mib *arg,
+				काष्ठा wsm_buf *buf)
+अणु
+	पूर्णांक ret;
 
 	ret = wsm_generic_confirm(priv, arg, buf);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (arg->mib_id == WSM_MIB_ID_OPERATIONAL_POWER_MODE) {
+	अगर (arg->mib_id == WSM_MIB_ID_OPERATIONAL_POWER_MODE) अणु
 		/* OperationalMode: update PM status. */
-		const char *p = arg->buf;
-		cw1200_enable_powersave(priv, (p[0] & 0x0F) ? true : false);
-	}
-	return 0;
-}
+		स्थिर अक्षर *p = arg->buf;
+		cw1200_enable_घातersave(priv, (p[0] & 0x0F) ? true : false);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_scan(struct cw1200_common *priv, const struct wsm_scan *arg)
-{
-	int i;
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_scan(काष्ठा cw1200_common *priv, स्थिर काष्ठा wsm_scan *arg)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 
-	if (arg->num_channels > 48)
-		return -EINVAL;
+	अगर (arg->num_channels > 48)
+		वापस -EINVAL;
 
-	if (arg->num_ssids > 2)
-		return -EINVAL;
+	अगर (arg->num_ssids > 2)
+		वापस -EINVAL;
 
-	if (arg->band > 1)
-		return -EINVAL;
+	अगर (arg->band > 1)
+		वापस -EINVAL;
 
 	wsm_cmd_lock(priv);
 
@@ -305,55 +306,55 @@ int wsm_scan(struct cw1200_common *priv, const struct wsm_scan *arg)
 	WSM_PUT8(buf, arg->type);
 	WSM_PUT8(buf, arg->flags);
 	WSM_PUT8(buf, arg->max_tx_rate);
-	WSM_PUT32(buf, arg->auto_scan_interval);
+	WSM_PUT32(buf, arg->स्वतः_scan_पूर्णांकerval);
 	WSM_PUT8(buf, arg->num_probes);
 	WSM_PUT8(buf, arg->num_channels);
 	WSM_PUT8(buf, arg->num_ssids);
 	WSM_PUT8(buf, arg->probe_delay);
 
-	for (i = 0; i < arg->num_channels; ++i) {
+	क्रम (i = 0; i < arg->num_channels; ++i) अणु
 		WSM_PUT16(buf, arg->ch[i].number);
 		WSM_PUT16(buf, 0);
-		WSM_PUT32(buf, arg->ch[i].min_chan_time);
-		WSM_PUT32(buf, arg->ch[i].max_chan_time);
+		WSM_PUT32(buf, arg->ch[i].min_chan_समय);
+		WSM_PUT32(buf, arg->ch[i].max_chan_समय);
 		WSM_PUT32(buf, 0);
-	}
+	पूर्ण
 
-	for (i = 0; i < arg->num_ssids; ++i) {
+	क्रम (i = 0; i < arg->num_ssids; ++i) अणु
 		WSM_PUT32(buf, arg->ssids[i].length);
 		WSM_PUT(buf, &arg->ssids[i].ssid[0],
-			sizeof(arg->ssids[i].ssid));
-	}
+			माप(arg->ssids[i].ssid));
+	पूर्ण
 
-	ret = wsm_cmd_send(priv, buf, NULL,
+	ret = wsm_cmd_send(priv, buf, शून्य,
 			   WSM_START_SCAN_REQ_ID, WSM_CMD_TIMEOUT);
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_stop_scan(struct cw1200_common *priv)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_stop_scan(काष्ठा cw1200_common *priv)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 	wsm_cmd_lock(priv);
-	ret = wsm_cmd_send(priv, buf, NULL,
+	ret = wsm_cmd_send(priv, buf, शून्य,
 			   WSM_STOP_SCAN_REQ_ID, WSM_CMD_TIMEOUT);
 	wsm_cmd_unlock(priv);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int wsm_tx_confirm(struct cw1200_common *priv,
-			  struct wsm_buf *buf,
-			  int link_id)
-{
-	struct wsm_tx_confirm tx_confirm;
+अटल पूर्णांक wsm_tx_confirm(काष्ठा cw1200_common *priv,
+			  काष्ठा wsm_buf *buf,
+			  पूर्णांक link_id)
+अणु
+	काष्ठा wsm_tx_confirm tx_confirm;
 
 	tx_confirm.packet_id = WSM_GET32(buf);
 	tx_confirm.status = WSM_GET32(buf);
@@ -364,107 +365,107 @@ static int wsm_tx_confirm(struct cw1200_common *priv,
 	tx_confirm.tx_queue_delay = WSM_GET32(buf);
 
 	cw1200_tx_confirm_cb(priv, link_id, &tx_confirm);
-	return 0;
+	वापस 0;
 
 underflow:
 	WARN_ON(1);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int wsm_multi_tx_confirm(struct cw1200_common *priv,
-				struct wsm_buf *buf, int link_id)
-{
-	int ret;
-	int count;
+अटल पूर्णांक wsm_multi_tx_confirm(काष्ठा cw1200_common *priv,
+				काष्ठा wsm_buf *buf, पूर्णांक link_id)
+अणु
+	पूर्णांक ret;
+	पूर्णांक count;
 
 	count = WSM_GET32(buf);
-	if (WARN_ON(count <= 0))
-		return -EINVAL;
+	अगर (WARN_ON(count <= 0))
+		वापस -EINVAL;
 
-	if (count > 1) {
-		/* We already released one buffer, now for the rest */
+	अगर (count > 1) अणु
+		/* We alपढ़ोy released one buffer, now क्रम the rest */
 		ret = wsm_release_tx_buffer(priv, count - 1);
-		if (ret < 0)
-			return ret;
-		else if (ret > 0)
+		अगर (ret < 0)
+			वापस ret;
+		अन्यथा अगर (ret > 0)
 			cw1200_bh_wakeup(priv);
-	}
+	पूर्ण
 
 	cw1200_debug_txed_multi(priv, count);
-	do {
+	करो अणु
 		ret = wsm_tx_confirm(priv, buf, link_id);
-	} while (!ret && --count);
+	पूर्ण जबतक (!ret && --count);
 
-	return ret;
+	वापस ret;
 
 underflow:
 	WARN_ON(1);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /* ******************************************************************** */
 
-static int wsm_join_confirm(struct cw1200_common *priv,
-			    struct wsm_join_cnf *arg,
-			    struct wsm_buf *buf)
-{
+अटल पूर्णांक wsm_join_confirm(काष्ठा cw1200_common *priv,
+			    काष्ठा wsm_join_cnf *arg,
+			    काष्ठा wsm_buf *buf)
+अणु
 	arg->status = WSM_GET32(buf);
-	if (WARN_ON(arg->status) != WSM_STATUS_SUCCESS)
-		return -EINVAL;
+	अगर (WARN_ON(arg->status) != WSM_STATUS_SUCCESS)
+		वापस -EINVAL;
 
-	arg->min_power_level = WSM_GET32(buf);
-	arg->max_power_level = WSM_GET32(buf);
+	arg->min_घातer_level = WSM_GET32(buf);
+	arg->max_घातer_level = WSM_GET32(buf);
 
-	return 0;
+	वापस 0;
 
 underflow:
 	WARN_ON(1);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int wsm_join(struct cw1200_common *priv, struct wsm_join *arg)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
-	struct wsm_join_cnf resp;
+पूर्णांक wsm_join(काष्ठा cw1200_common *priv, काष्ठा wsm_join *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
+	काष्ठा wsm_join_cnf resp;
 	wsm_cmd_lock(priv);
 
 	WSM_PUT8(buf, arg->mode);
 	WSM_PUT8(buf, arg->band);
 	WSM_PUT16(buf, arg->channel_number);
-	WSM_PUT(buf, &arg->bssid[0], sizeof(arg->bssid));
-	WSM_PUT16(buf, arg->atim_window);
+	WSM_PUT(buf, &arg->bssid[0], माप(arg->bssid));
+	WSM_PUT16(buf, arg->atim_winकरोw);
 	WSM_PUT8(buf, arg->preamble_type);
-	WSM_PUT8(buf, arg->probe_for_join);
+	WSM_PUT8(buf, arg->probe_क्रम_join);
 	WSM_PUT8(buf, arg->dtim_period);
 	WSM_PUT8(buf, arg->flags);
 	WSM_PUT32(buf, arg->ssid_len);
-	WSM_PUT(buf, &arg->ssid[0], sizeof(arg->ssid));
-	WSM_PUT32(buf, arg->beacon_interval);
+	WSM_PUT(buf, &arg->ssid[0], माप(arg->ssid));
+	WSM_PUT32(buf, arg->beacon_पूर्णांकerval);
 	WSM_PUT32(buf, arg->basic_rate_set);
 
 	priv->tx_burst_idx = -1;
 	ret = wsm_cmd_send(priv, buf, &resp,
 			   WSM_JOIN_REQ_ID, WSM_CMD_TIMEOUT);
-	/* TODO:  Update state based on resp.min|max_power_level */
+	/* TODO:  Update state based on resp.min|max_घातer_level */
 
 	priv->join_complete_status = resp.status;
 
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_set_bss_params(struct cw1200_common *priv,
-		       const struct wsm_set_bss_params *arg)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_set_bss_params(काष्ठा cw1200_common *priv,
+		       स्थिर काष्ठा wsm_set_bss_params *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 
 	wsm_cmd_lock(priv);
 
@@ -473,45 +474,45 @@ int wsm_set_bss_params(struct cw1200_common *priv,
 	WSM_PUT16(buf, arg->aid);
 	WSM_PUT32(buf, arg->operational_rate_set);
 
-	ret = wsm_cmd_send(priv, buf, NULL,
+	ret = wsm_cmd_send(priv, buf, शून्य,
 			   WSM_SET_BSS_PARAMS_REQ_ID, WSM_CMD_TIMEOUT);
 
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_add_key(struct cw1200_common *priv, const struct wsm_add_key *arg)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_add_key(काष्ठा cw1200_common *priv, स्थिर काष्ठा wsm_add_key *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 
 	wsm_cmd_lock(priv);
 
-	WSM_PUT(buf, arg, sizeof(*arg));
+	WSM_PUT(buf, arg, माप(*arg));
 
-	ret = wsm_cmd_send(priv, buf, NULL,
+	ret = wsm_cmd_send(priv, buf, शून्य,
 			   WSM_ADD_KEY_REQ_ID, WSM_CMD_TIMEOUT);
 
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_remove_key(struct cw1200_common *priv, const struct wsm_remove_key *arg)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_हटाओ_key(काष्ठा cw1200_common *priv, स्थिर काष्ठा wsm_हटाओ_key *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 
 	wsm_cmd_lock(priv);
 
@@ -519,25 +520,25 @@ int wsm_remove_key(struct cw1200_common *priv, const struct wsm_remove_key *arg)
 	WSM_PUT8(buf, 0);
 	WSM_PUT16(buf, 0);
 
-	ret = wsm_cmd_send(priv, buf, NULL,
+	ret = wsm_cmd_send(priv, buf, शून्य,
 			   WSM_REMOVE_KEY_REQ_ID, WSM_CMD_TIMEOUT);
 
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_set_tx_queue_params(struct cw1200_common *priv,
-		const struct wsm_set_tx_queue_params *arg, u8 id)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
-	u8 queue_id_to_wmm_aci[] = {3, 2, 0, 1};
+पूर्णांक wsm_set_tx_queue_params(काष्ठा cw1200_common *priv,
+		स्थिर काष्ठा wsm_set_tx_queue_params *arg, u8 id)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
+	u8 queue_id_to_wmm_aci[] = अणु3, 2, 0, 1पूर्ण;
 
 	wsm_cmd_lock(priv);
 
@@ -545,31 +546,31 @@ int wsm_set_tx_queue_params(struct cw1200_common *priv,
 	WSM_PUT8(buf, 0);
 	WSM_PUT8(buf, arg->ackPolicy);
 	WSM_PUT8(buf, 0);
-	WSM_PUT32(buf, arg->maxTransmitLifetime);
+	WSM_PUT32(buf, arg->maxTransmitLअगरeसमय);
 	WSM_PUT16(buf, arg->allowedMediumTime);
 	WSM_PUT16(buf, 0);
 
-	ret = wsm_cmd_send(priv, buf, NULL, 0x0012, WSM_CMD_TIMEOUT);
+	ret = wsm_cmd_send(priv, buf, शून्य, 0x0012, WSM_CMD_TIMEOUT);
 
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_set_edca_params(struct cw1200_common *priv,
-				const struct wsm_edca_params *arg)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_set_edca_params(काष्ठा cw1200_common *priv,
+				स्थिर काष्ठा wsm_edca_params *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 
 	wsm_cmd_lock(priv);
 
-	/* Implemented according to specification. */
+	/* Implemented according to specअगरication. */
 
 	WSM_PUT16(buf, arg->params[3].cwmin);
 	WSM_PUT16(buf, arg->params[2].cwmin);
@@ -581,198 +582,198 @@ int wsm_set_edca_params(struct cw1200_common *priv,
 	WSM_PUT16(buf, arg->params[1].cwmax);
 	WSM_PUT16(buf, arg->params[0].cwmax);
 
-	WSM_PUT8(buf, arg->params[3].aifns);
-	WSM_PUT8(buf, arg->params[2].aifns);
-	WSM_PUT8(buf, arg->params[1].aifns);
-	WSM_PUT8(buf, arg->params[0].aifns);
+	WSM_PUT8(buf, arg->params[3].aअगरns);
+	WSM_PUT8(buf, arg->params[2].aअगरns);
+	WSM_PUT8(buf, arg->params[1].aअगरns);
+	WSM_PUT8(buf, arg->params[0].aअगरns);
 
 	WSM_PUT16(buf, arg->params[3].txop_limit);
 	WSM_PUT16(buf, arg->params[2].txop_limit);
 	WSM_PUT16(buf, arg->params[1].txop_limit);
 	WSM_PUT16(buf, arg->params[0].txop_limit);
 
-	WSM_PUT32(buf, arg->params[3].max_rx_lifetime);
-	WSM_PUT32(buf, arg->params[2].max_rx_lifetime);
-	WSM_PUT32(buf, arg->params[1].max_rx_lifetime);
-	WSM_PUT32(buf, arg->params[0].max_rx_lifetime);
+	WSM_PUT32(buf, arg->params[3].max_rx_lअगरeसमय);
+	WSM_PUT32(buf, arg->params[2].max_rx_lअगरeसमय);
+	WSM_PUT32(buf, arg->params[1].max_rx_lअगरeसमय);
+	WSM_PUT32(buf, arg->params[0].max_rx_lअगरeसमय);
 
-	ret = wsm_cmd_send(priv, buf, NULL,
+	ret = wsm_cmd_send(priv, buf, शून्य,
 			   WSM_EDCA_PARAMS_REQ_ID, WSM_CMD_TIMEOUT);
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_switch_channel(struct cw1200_common *priv,
-			const struct wsm_switch_channel *arg)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_चयन_channel(काष्ठा cw1200_common *priv,
+			स्थिर काष्ठा wsm_चयन_channel *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 
 	wsm_cmd_lock(priv);
 
 	WSM_PUT8(buf, arg->mode);
-	WSM_PUT8(buf, arg->switch_count);
+	WSM_PUT8(buf, arg->चयन_count);
 	WSM_PUT16(buf, arg->channel_number);
 
-	priv->channel_switch_in_progress = 1;
+	priv->channel_चयन_in_progress = 1;
 
-	ret = wsm_cmd_send(priv, buf, NULL,
+	ret = wsm_cmd_send(priv, buf, शून्य,
 			   WSM_SWITCH_CHANNEL_REQ_ID, WSM_CMD_TIMEOUT);
-	if (ret)
-		priv->channel_switch_in_progress = 0;
+	अगर (ret)
+		priv->channel_चयन_in_progress = 0;
 
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_set_pm(struct cw1200_common *priv, const struct wsm_set_pm *arg)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
-	priv->ps_mode_switch_in_progress = 1;
+पूर्णांक wsm_set_pm(काष्ठा cw1200_common *priv, स्थिर काष्ठा wsm_set_pm *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
+	priv->ps_mode_चयन_in_progress = 1;
 
 	wsm_cmd_lock(priv);
 
 	WSM_PUT8(buf, arg->mode);
 	WSM_PUT8(buf, arg->fast_psm_idle_period);
 	WSM_PUT8(buf, arg->ap_psm_change_period);
-	WSM_PUT8(buf, arg->min_auto_pspoll_period);
+	WSM_PUT8(buf, arg->min_स्वतः_pspoll_period);
 
-	ret = wsm_cmd_send(priv, buf, NULL,
+	ret = wsm_cmd_send(priv, buf, शून्य,
 			   WSM_SET_PM_REQ_ID, WSM_CMD_TIMEOUT);
 
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_start(struct cw1200_common *priv, const struct wsm_start *arg)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_start(काष्ठा cw1200_common *priv, स्थिर काष्ठा wsm_start *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 
 	wsm_cmd_lock(priv);
 
 	WSM_PUT8(buf, arg->mode);
 	WSM_PUT8(buf, arg->band);
 	WSM_PUT16(buf, arg->channel_number);
-	WSM_PUT32(buf, arg->ct_window);
-	WSM_PUT32(buf, arg->beacon_interval);
+	WSM_PUT32(buf, arg->ct_winकरोw);
+	WSM_PUT32(buf, arg->beacon_पूर्णांकerval);
 	WSM_PUT8(buf, arg->dtim_period);
 	WSM_PUT8(buf, arg->preamble);
 	WSM_PUT8(buf, arg->probe_delay);
 	WSM_PUT8(buf, arg->ssid_len);
-	WSM_PUT(buf, arg->ssid, sizeof(arg->ssid));
+	WSM_PUT(buf, arg->ssid, माप(arg->ssid));
 	WSM_PUT32(buf, arg->basic_rate_set);
 
 	priv->tx_burst_idx = -1;
-	ret = wsm_cmd_send(priv, buf, NULL,
+	ret = wsm_cmd_send(priv, buf, शून्य,
 			   WSM_START_REQ_ID, WSM_CMD_START_TIMEOUT);
 
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_beacon_transmit(struct cw1200_common *priv,
-			const struct wsm_beacon_transmit *arg)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_beacon_transmit(काष्ठा cw1200_common *priv,
+			स्थिर काष्ठा wsm_beacon_transmit *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 
 	wsm_cmd_lock(priv);
 
 	WSM_PUT32(buf, arg->enable_beaconing ? 1 : 0);
 
-	ret = wsm_cmd_send(priv, buf, NULL,
+	ret = wsm_cmd_send(priv, buf, शून्य,
 			   WSM_BEACON_TRANSMIT_REQ_ID, WSM_CMD_TIMEOUT);
 
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_start_find(struct cw1200_common *priv)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_start_find(काष्ठा cw1200_common *priv)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 
 	wsm_cmd_lock(priv);
-	ret = wsm_cmd_send(priv, buf, NULL, 0x0019, WSM_CMD_TIMEOUT);
+	ret = wsm_cmd_send(priv, buf, शून्य, 0x0019, WSM_CMD_TIMEOUT);
 	wsm_cmd_unlock(priv);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_stop_find(struct cw1200_common *priv)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_stop_find(काष्ठा cw1200_common *priv)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 
 	wsm_cmd_lock(priv);
-	ret = wsm_cmd_send(priv, buf, NULL, 0x001A, WSM_CMD_TIMEOUT);
+	ret = wsm_cmd_send(priv, buf, शून्य, 0x001A, WSM_CMD_TIMEOUT);
 	wsm_cmd_unlock(priv);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_map_link(struct cw1200_common *priv, const struct wsm_map_link *arg)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_map_link(काष्ठा cw1200_common *priv, स्थिर काष्ठा wsm_map_link *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 	u16 cmd = 0x001C | WSM_TX_LINK_ID(arg->link_id);
 
 	wsm_cmd_lock(priv);
 
-	WSM_PUT(buf, &arg->mac_addr[0], sizeof(arg->mac_addr));
+	WSM_PUT(buf, &arg->mac_addr[0], माप(arg->mac_addr));
 	WSM_PUT16(buf, 0);
 
-	ret = wsm_cmd_send(priv, buf, NULL, cmd, WSM_CMD_TIMEOUT);
+	ret = wsm_cmd_send(priv, buf, शून्य, cmd, WSM_CMD_TIMEOUT);
 
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
 
-int wsm_update_ie(struct cw1200_common *priv,
-		  const struct wsm_update_ie *arg)
-{
-	int ret;
-	struct wsm_buf *buf = &priv->wsm_cmd_buf;
+पूर्णांक wsm_update_ie(काष्ठा cw1200_common *priv,
+		  स्थिर काष्ठा wsm_update_ie *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा wsm_buf *buf = &priv->wsm_cmd_buf;
 
 	wsm_cmd_lock(priv);
 
@@ -780,36 +781,36 @@ int wsm_update_ie(struct cw1200_common *priv,
 	WSM_PUT16(buf, arg->count);
 	WSM_PUT(buf, arg->ies, arg->length);
 
-	ret = wsm_cmd_send(priv, buf, NULL, 0x001B, WSM_CMD_TIMEOUT);
+	ret = wsm_cmd_send(priv, buf, शून्य, 0x001B, WSM_CMD_TIMEOUT);
 
 	wsm_cmd_unlock(priv);
-	return ret;
+	वापस ret;
 
 nomem:
 	wsm_cmd_unlock(priv);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* ******************************************************************** */
-int wsm_set_probe_responder(struct cw1200_common *priv, bool enable)
-{
+पूर्णांक wsm_set_probe_responder(काष्ठा cw1200_common *priv, bool enable)
+अणु
 	priv->rx_filter.probeResponder = enable;
-	return wsm_set_rx_filter(priv, &priv->rx_filter);
-}
+	वापस wsm_set_rx_filter(priv, &priv->rx_filter);
+पूर्ण
 
 /* ******************************************************************** */
 /* WSM indication events implementation					*/
-const char * const cw1200_fw_types[] = {
+स्थिर अक्षर * स्थिर cw1200_fw_types[] = अणु
 	"ETF",
 	"WFM",
 	"WSM",
 	"HI test",
 	"Platform test"
-};
+पूर्ण;
 
-static int wsm_startup_indication(struct cw1200_common *priv,
-					struct wsm_buf *buf)
-{
+अटल पूर्णांक wsm_startup_indication(काष्ठा cw1200_common *priv,
+					काष्ठा wsm_buf *buf)
+अणु
 	priv->wsm_caps.input_buffers     = WSM_GET16(buf);
 	priv->wsm_caps.input_buffer_size = WSM_GET16(buf);
 	priv->wsm_caps.hw_id	  = WSM_GET16(buf);
@@ -820,14 +821,14 @@ static int wsm_startup_indication(struct cw1200_common *priv,
 	priv->wsm_caps.fw_api	  = WSM_GET16(buf);
 	priv->wsm_caps.fw_build   = WSM_GET16(buf);
 	priv->wsm_caps.fw_ver     = WSM_GET16(buf);
-	WSM_GET(buf, priv->wsm_caps.fw_label, sizeof(priv->wsm_caps.fw_label));
-	priv->wsm_caps.fw_label[sizeof(priv->wsm_caps.fw_label) - 1] = 0; /* Do not trust FW too much... */
+	WSM_GET(buf, priv->wsm_caps.fw_label, माप(priv->wsm_caps.fw_label));
+	priv->wsm_caps.fw_label[माप(priv->wsm_caps.fw_label) - 1] = 0; /* Do not trust FW too much... */
 
-	if (WARN_ON(priv->wsm_caps.status))
-		return -EINVAL;
+	अगर (WARN_ON(priv->wsm_caps.status))
+		वापस -EINVAL;
 
-	if (WARN_ON(priv->wsm_caps.fw_type > 4))
-		return -EINVAL;
+	अगर (WARN_ON(priv->wsm_caps.fw_type > 4))
+		वापस -EINVAL;
 
 	pr_info("CW1200 WSM init done.\n"
 		"   Input buffers: %d x %d bytes\n"
@@ -843,28 +844,28 @@ static int wsm_startup_indication(struct cw1200_common *priv,
 		priv->wsm_caps.fw_api, priv->wsm_caps.fw_cap);
 
 	/* Disable unsupported frequency bands */
-	if (!(priv->wsm_caps.fw_cap & 0x1))
-		priv->hw->wiphy->bands[NL80211_BAND_2GHZ] = NULL;
-	if (!(priv->wsm_caps.fw_cap & 0x2))
-		priv->hw->wiphy->bands[NL80211_BAND_5GHZ] = NULL;
+	अगर (!(priv->wsm_caps.fw_cap & 0x1))
+		priv->hw->wiphy->bands[NL80211_BAND_2GHZ] = शून्य;
+	अगर (!(priv->wsm_caps.fw_cap & 0x2))
+		priv->hw->wiphy->bands[NL80211_BAND_5GHZ] = शून्य;
 
-	priv->firmware_ready = 1;
-	wake_up(&priv->wsm_startup_done);
-	return 0;
+	priv->firmware_पढ़ोy = 1;
+	wake_up(&priv->wsm_startup_करोne);
+	वापस 0;
 
 underflow:
 	WARN_ON(1);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int wsm_receive_indication(struct cw1200_common *priv,
-				  int link_id,
-				  struct wsm_buf *buf,
-				  struct sk_buff **skb_p)
-{
-	struct wsm_rx rx;
-	struct ieee80211_hdr *hdr;
-	size_t hdr_len;
+अटल पूर्णांक wsm_receive_indication(काष्ठा cw1200_common *priv,
+				  पूर्णांक link_id,
+				  काष्ठा wsm_buf *buf,
+				  काष्ठा sk_buff **skb_p)
+अणु
+	काष्ठा wsm_rx rx;
+	काष्ठा ieee80211_hdr *hdr;
+	माप_प्रकार hdr_len;
 	__le16 fctl;
 
 	rx.status = WSM_GET32(buf);
@@ -876,55 +877,55 @@ static int wsm_receive_indication(struct cw1200_common *priv,
 	/* FW Workaround: Drop probe resp or
 	   beacon when RSSI is 0
 	*/
-	hdr = (struct ieee80211_hdr *)(*skb_p)->data;
+	hdr = (काष्ठा ieee80211_hdr *)(*skb_p)->data;
 
-	if (!rx.rcpi_rssi &&
+	अगर (!rx.rcpi_rssi &&
 	    (ieee80211_is_probe_resp(hdr->frame_control) ||
 	     ieee80211_is_beacon(hdr->frame_control)))
-		return 0;
+		वापस 0;
 
 	/* If no RSSI subscription has been made,
 	 * convert RCPI to RSSI here
 	 */
-	if (!priv->cqm_use_rssi)
+	अगर (!priv->cqm_use_rssi)
 		rx.rcpi_rssi = rx.rcpi_rssi / 2 - 110;
 
 	fctl = *(__le16 *)buf->data;
 	hdr_len = buf->data - buf->begin;
 	skb_pull(*skb_p, hdr_len);
-	if (!rx.status && ieee80211_is_deauth(fctl)) {
-		if (priv->join_status == CW1200_JOIN_STATUS_STA) {
+	अगर (!rx.status && ieee80211_is_deauth(fctl)) अणु
+		अगर (priv->join_status == CW1200_JOIN_STATUS_STA) अणु
 			/* Shedule unjoin work */
 			pr_debug("[WSM] Issue unjoin command (RX).\n");
 			wsm_lock_tx_async(priv);
-			if (queue_work(priv->workqueue,
+			अगर (queue_work(priv->workqueue,
 				       &priv->unjoin_work) <= 0)
 				wsm_unlock_tx(priv);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	cw1200_rx_cb(priv, &rx, link_id, skb_p);
-	if (*skb_p)
+	अगर (*skb_p)
 		skb_push(*skb_p, hdr_len);
 
-	return 0;
+	वापस 0;
 
 underflow:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int wsm_event_indication(struct cw1200_common *priv, struct wsm_buf *buf)
-{
-	int first;
-	struct cw1200_wsm_event *event;
+अटल पूर्णांक wsm_event_indication(काष्ठा cw1200_common *priv, काष्ठा wsm_buf *buf)
+अणु
+	पूर्णांक first;
+	काष्ठा cw1200_wsm_event *event;
 
-	if (priv->mode == NL80211_IFTYPE_UNSPECIFIED) {
+	अगर (priv->mode == NL80211_IFTYPE_UNSPECIFIED) अणु
 		/* STA is stopped. */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	event = kzalloc(sizeof(struct cw1200_wsm_event), GFP_KERNEL);
-	if (!event)
-		return -ENOMEM;
+	event = kzalloc(माप(काष्ठा cw1200_wsm_event), GFP_KERNEL);
+	अगर (!event)
+		वापस -ENOMEM;
 
 	event->evt.id = WSM_GET32(buf);
 	event->evt.data = WSM_GET32(buf);
@@ -937,97 +938,97 @@ static int wsm_event_indication(struct cw1200_common *priv, struct wsm_buf *buf)
 	list_add_tail(&event->link, &priv->event_queue);
 	spin_unlock(&priv->event_queue_lock);
 
-	if (first)
+	अगर (first)
 		queue_work(priv->workqueue, &priv->event_handler);
 
-	return 0;
+	वापस 0;
 
 underflow:
-	kfree(event);
-	return -EINVAL;
-}
+	kमुक्त(event);
+	वापस -EINVAL;
+पूर्ण
 
-static int wsm_channel_switch_indication(struct cw1200_common *priv,
-					 struct wsm_buf *buf)
-{
+अटल पूर्णांक wsm_channel_चयन_indication(काष्ठा cw1200_common *priv,
+					 काष्ठा wsm_buf *buf)
+अणु
 	WARN_ON(WSM_GET32(buf));
 
-	priv->channel_switch_in_progress = 0;
-	wake_up(&priv->channel_switch_done);
+	priv->channel_चयन_in_progress = 0;
+	wake_up(&priv->channel_चयन_करोne);
 
 	wsm_unlock_tx(priv);
 
-	return 0;
+	वापस 0;
 
 underflow:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int wsm_set_pm_indication(struct cw1200_common *priv,
-				 struct wsm_buf *buf)
-{
-	/* TODO:  Check buf (struct wsm_set_pm_complete) for validity */
-	if (priv->ps_mode_switch_in_progress) {
-		priv->ps_mode_switch_in_progress = 0;
-		wake_up(&priv->ps_mode_switch_done);
-	}
-	return 0;
-}
+अटल पूर्णांक wsm_set_pm_indication(काष्ठा cw1200_common *priv,
+				 काष्ठा wsm_buf *buf)
+अणु
+	/* TODO:  Check buf (काष्ठा wsm_set_pm_complete) क्रम validity */
+	अगर (priv->ps_mode_चयन_in_progress) अणु
+		priv->ps_mode_चयन_in_progress = 0;
+		wake_up(&priv->ps_mode_चयन_करोne);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int wsm_scan_started(struct cw1200_common *priv, void *arg,
-			    struct wsm_buf *buf)
-{
+अटल पूर्णांक wsm_scan_started(काष्ठा cw1200_common *priv, व्योम *arg,
+			    काष्ठा wsm_buf *buf)
+अणु
 	u32 status = WSM_GET32(buf);
-	if (status != WSM_STATUS_SUCCESS) {
+	अगर (status != WSM_STATUS_SUCCESS) अणु
 		cw1200_scan_failed_cb(priv);
-		return -EINVAL;
-	}
-	return 0;
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
 
 underflow:
 	WARN_ON(1);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int wsm_scan_complete_indication(struct cw1200_common *priv,
-					struct wsm_buf *buf)
-{
-	struct wsm_scan_complete arg;
+अटल पूर्णांक wsm_scan_complete_indication(काष्ठा cw1200_common *priv,
+					काष्ठा wsm_buf *buf)
+अणु
+	काष्ठा wsm_scan_complete arg;
 	arg.status = WSM_GET32(buf);
 	arg.psm = WSM_GET8(buf);
 	arg.num_channels = WSM_GET8(buf);
 	cw1200_scan_complete_cb(priv, &arg);
 
-	return 0;
+	वापस 0;
 
 underflow:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int wsm_join_complete_indication(struct cw1200_common *priv,
-					struct wsm_buf *buf)
-{
-	struct wsm_join_complete arg;
+अटल पूर्णांक wsm_join_complete_indication(काष्ठा cw1200_common *priv,
+					काष्ठा wsm_buf *buf)
+अणु
+	काष्ठा wsm_join_complete arg;
 	arg.status = WSM_GET32(buf);
 	pr_debug("[WSM] Join complete indication, status: %d\n", arg.status);
 	cw1200_join_complete_cb(priv, &arg);
 
-	return 0;
+	वापस 0;
 
 underflow:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int wsm_find_complete_indication(struct cw1200_common *priv,
-					struct wsm_buf *buf)
-{
+अटल पूर्णांक wsm_find_complete_indication(काष्ठा cw1200_common *priv,
+					काष्ठा wsm_buf *buf)
+अणु
 	pr_warn("Implement find_complete_indication\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wsm_ba_timeout_indication(struct cw1200_common *priv,
-				     struct wsm_buf *buf)
-{
+अटल पूर्णांक wsm_ba_समयout_indication(काष्ठा cw1200_common *priv,
+				     काष्ठा wsm_buf *buf)
+अणु
 	u8 tid;
 	u8 addr[ETH_ALEN];
 
@@ -1039,17 +1040,17 @@ static int wsm_ba_timeout_indication(struct cw1200_common *priv,
 	pr_info("BlockACK timeout, tid %d, addr %pM\n",
 		tid, addr);
 
-	return 0;
+	वापस 0;
 
 underflow:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int wsm_suspend_resume_indication(struct cw1200_common *priv,
-					 int link_id, struct wsm_buf *buf)
-{
+अटल पूर्णांक wsm_suspend_resume_indication(काष्ठा cw1200_common *priv,
+					 पूर्णांक link_id, काष्ठा wsm_buf *buf)
+अणु
 	u32 flags;
-	struct wsm_suspend_resume arg;
+	काष्ठा wsm_suspend_resume arg;
 
 	flags = WSM_GET32(buf);
 	arg.link_id = link_id;
@@ -1059,44 +1060,44 @@ static int wsm_suspend_resume_indication(struct cw1200_common *priv,
 
 	cw1200_suspend_resume(priv, &arg);
 
-	return 0;
+	वापस 0;
 
 underflow:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 
 /* ******************************************************************** */
 /* WSM TX								*/
 
-static int wsm_cmd_send(struct cw1200_common *priv,
-			struct wsm_buf *buf,
-			void *arg, u16 cmd, long tmo)
-{
-	size_t buf_len = buf->data - buf->begin;
-	int ret;
+अटल पूर्णांक wsm_cmd_send(काष्ठा cw1200_common *priv,
+			काष्ठा wsm_buf *buf,
+			व्योम *arg, u16 cmd, दीर्घ पंचांगo)
+अणु
+	माप_प्रकार buf_len = buf->data - buf->begin;
+	पूर्णांक ret;
 
 	/* Don't bother if we're dead. */
-	if (priv->bh_error) {
+	अगर (priv->bh_error) अणु
 		ret = 0;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* Block until the cmd buffer is completed.  Tortuous. */
 	spin_lock(&priv->wsm_cmd.lock);
-	while (!priv->wsm_cmd.done) {
+	जबतक (!priv->wsm_cmd.करोne) अणु
 		spin_unlock(&priv->wsm_cmd.lock);
 		spin_lock(&priv->wsm_cmd.lock);
-	}
-	priv->wsm_cmd.done = 0;
+	पूर्ण
+	priv->wsm_cmd.करोne = 0;
 	spin_unlock(&priv->wsm_cmd.lock);
 
-	if (cmd == WSM_WRITE_MIB_REQ_ID ||
+	अगर (cmd == WSM_WRITE_MIB_REQ_ID ||
 	    cmd == WSM_READ_MIB_REQ_ID)
 		pr_debug("[WSM] >>> 0x%.4X [MIB: 0x%.4X] (%zu)\n",
 			 cmd, __le16_to_cpu(((__le16 *)buf->begin)[2]),
 			 buf_len);
-	else
+	अन्यथा
 		pr_debug("[WSM] >>> 0x%.4X (%zu)\n", cmd, buf_len);
 
 	/* Due to buggy SPI on CW1200, we need to
@@ -1120,155 +1121,155 @@ static int wsm_cmd_send(struct cw1200_common *priv,
 
 	cw1200_bh_wakeup(priv);
 
-	/* Wait for command completion */
-	ret = wait_event_timeout(priv->wsm_cmd_wq,
-				 priv->wsm_cmd.done, tmo);
+	/* Wait क्रम command completion */
+	ret = रुको_event_समयout(priv->wsm_cmd_wq,
+				 priv->wsm_cmd.करोne, पंचांगo);
 
-	if (!ret && !priv->wsm_cmd.done) {
+	अगर (!ret && !priv->wsm_cmd.करोne) अणु
 		spin_lock(&priv->wsm_cmd.lock);
-		priv->wsm_cmd.done = 1;
-		priv->wsm_cmd.ptr = NULL;
+		priv->wsm_cmd.करोne = 1;
+		priv->wsm_cmd.ptr = शून्य;
 		spin_unlock(&priv->wsm_cmd.lock);
-		if (priv->bh_error) {
-			/* Return ok to help system cleanup */
+		अगर (priv->bh_error) अणु
+			/* Return ok to help प्रणाली cleanup */
 			ret = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_err("CMD req (0x%04x) stuck in firmware, killing BH\n", priv->wsm_cmd.cmd);
-			print_hex_dump_bytes("REQDUMP: ", DUMP_PREFIX_NONE,
+			prपूर्णांक_hex_dump_bytes("REQDUMP: ", DUMP_PREFIX_NONE,
 					     buf->begin, buf_len);
 			pr_err("Outstanding outgoing frames:  %d\n", priv->hw_bufs_used);
 
-			/* Kill BH thread to report the error to the top layer. */
+			/* Kill BH thपढ़ो to report the error to the top layer. */
 			atomic_inc(&priv->bh_term);
 			wake_up(&priv->bh_wq);
 			ret = -ETIMEDOUT;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		spin_lock(&priv->wsm_cmd.lock);
-		BUG_ON(!priv->wsm_cmd.done);
+		BUG_ON(!priv->wsm_cmd.करोne);
 		ret = priv->wsm_cmd.ret;
 		spin_unlock(&priv->wsm_cmd.lock);
-	}
-done:
+	पूर्ण
+करोne:
 	wsm_buf_reset(buf);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* ******************************************************************** */
 /* WSM TX port control							*/
 
-void wsm_lock_tx(struct cw1200_common *priv)
-{
+व्योम wsm_lock_tx(काष्ठा cw1200_common *priv)
+अणु
 	wsm_cmd_lock(priv);
-	if (atomic_inc_return(&priv->tx_lock) == 1) {
-		if (wsm_flush_tx(priv))
+	अगर (atomic_inc_वापस(&priv->tx_lock) == 1) अणु
+		अगर (wsm_flush_tx(priv))
 			pr_debug("[WSM] TX is locked.\n");
-	}
+	पूर्ण
 	wsm_cmd_unlock(priv);
-}
+पूर्ण
 
-void wsm_lock_tx_async(struct cw1200_common *priv)
-{
-	if (atomic_inc_return(&priv->tx_lock) == 1)
+व्योम wsm_lock_tx_async(काष्ठा cw1200_common *priv)
+अणु
+	अगर (atomic_inc_वापस(&priv->tx_lock) == 1)
 		pr_debug("[WSM] TX is locked (async).\n");
-}
+पूर्ण
 
-bool wsm_flush_tx(struct cw1200_common *priv)
-{
-	unsigned long timestamp = jiffies;
+bool wsm_flush_tx(काष्ठा cw1200_common *priv)
+अणु
+	अचिन्हित दीर्घ बारtamp = jअगरfies;
 	bool pending = false;
-	long timeout;
-	int i;
+	दीर्घ समयout;
+	पूर्णांक i;
 
 	/* Flush must be called with TX lock held. */
-	BUG_ON(!atomic_read(&priv->tx_lock));
+	BUG_ON(!atomic_पढ़ो(&priv->tx_lock));
 
-	/* First check if we really need to do something.
-	 * It is safe to use unprotected access, as hw_bufs_used
+	/* First check अगर we really need to करो something.
+	 * It is safe to use unरक्षित access, as hw_bufs_used
 	 * can only decrements.
 	 */
-	if (!priv->hw_bufs_used)
-		return true;
+	अगर (!priv->hw_bufs_used)
+		वापस true;
 
-	if (priv->bh_error) {
-		/* In case of failure do not wait for magic. */
+	अगर (priv->bh_error) अणु
+		/* In हाल of failure करो not रुको क्रम magic. */
 		pr_err("[WSM] Fatal error occurred, will not flush TX.\n");
-		return false;
-	} else {
-		/* Get a timestamp of "oldest" frame */
-		for (i = 0; i < 4; ++i)
-			pending |= cw1200_queue_get_xmit_timestamp(
+		वापस false;
+	पूर्ण अन्यथा अणु
+		/* Get a बारtamp of "oldest" frame */
+		क्रम (i = 0; i < 4; ++i)
+			pending |= cw1200_queue_get_xmit_बारtamp(
 					&priv->tx_queue[i],
-					&timestamp, 0xffffffff);
+					&बारtamp, 0xffffffff);
 		/* If there's nothing pending, we're good */
-		if (!pending)
-			return true;
+		अगर (!pending)
+			वापस true;
 
-		timeout = timestamp + WSM_CMD_LAST_CHANCE_TIMEOUT - jiffies;
-		if (timeout < 0 || wait_event_timeout(priv->bh_evt_wq,
+		समयout = बारtamp + WSM_CMD_LAST_CHANCE_TIMEOUT - jअगरfies;
+		अगर (समयout < 0 || रुको_event_समयout(priv->bh_evt_wq,
 						      !priv->hw_bufs_used,
-						      timeout) <= 0) {
+						      समयout) <= 0) अणु
 			/* Hmmm... Not good. Frame had stuck in firmware. */
 			priv->bh_error = 1;
 			wiphy_err(priv->hw->wiphy, "[WSM] TX Frames (%d) stuck in firmware, killing BH\n", priv->hw_bufs_used);
 			wake_up(&priv->bh_wq);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		/* Ok, everything is flushed. */
-		return true;
-	}
-}
+		वापस true;
+	पूर्ण
+पूर्ण
 
-void wsm_unlock_tx(struct cw1200_common *priv)
-{
-	int tx_lock;
-	tx_lock = atomic_dec_return(&priv->tx_lock);
+व्योम wsm_unlock_tx(काष्ठा cw1200_common *priv)
+अणु
+	पूर्णांक tx_lock;
+	tx_lock = atomic_dec_वापस(&priv->tx_lock);
 	BUG_ON(tx_lock < 0);
 
-	if (tx_lock == 0) {
-		if (!priv->bh_error)
+	अगर (tx_lock == 0) अणु
+		अगर (!priv->bh_error)
 			cw1200_bh_wakeup(priv);
 		pr_debug("[WSM] TX is unlocked.\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* ******************************************************************** */
 /* WSM RX								*/
 
-int wsm_handle_exception(struct cw1200_common *priv, u8 *data, size_t len)
-{
-	struct wsm_buf buf;
+पूर्णांक wsm_handle_exception(काष्ठा cw1200_common *priv, u8 *data, माप_प्रकार len)
+अणु
+	काष्ठा wsm_buf buf;
 	u32 reason;
 	u32 reg[18];
-	char fname[48];
-	unsigned int i;
+	अक्षर fname[48];
+	अचिन्हित पूर्णांक i;
 
-	static const char * const reason_str[] = {
+	अटल स्थिर अक्षर * स्थिर reason_str[] = अणु
 		"undefined instruction",
 		"prefetch abort",
 		"data abort",
 		"unknown error",
-	};
+	पूर्ण;
 
 	buf.begin = buf.data = data;
 	buf.end = &buf.begin[len];
 
 	reason = WSM_GET32(&buf);
-	for (i = 0; i < ARRAY_SIZE(reg); ++i)
+	क्रम (i = 0; i < ARRAY_SIZE(reg); ++i)
 		reg[i] = WSM_GET32(&buf);
-	WSM_GET(&buf, fname, sizeof(fname));
+	WSM_GET(&buf, fname, माप(fname));
 
-	if (reason < 4)
+	अगर (reason < 4)
 		wiphy_err(priv->hw->wiphy,
 			  "Firmware exception: %s.\n",
 			  reason_str[reason]);
-	else
+	अन्यथा
 		wiphy_err(priv->hw->wiphy,
 			  "Firmware assert at %.*s, line %d\n",
-			  (int) sizeof(fname), fname, reg[1]);
+			  (पूर्णांक) माप(fname), fname, reg[1]);
 
-	for (i = 0; i < 12; i += 4)
+	क्रम (i = 0; i < 12; i += 4)
 		wiphy_err(priv->hw->wiphy,
 			  "R%d: 0x%.8X, R%d: 0x%.8X, R%d: 0x%.8X, R%d: 0x%.8X,\n",
 			  i + 0, reg[i + 0], i + 1, reg[i + 1],
@@ -1281,23 +1282,23 @@ int wsm_handle_exception(struct cw1200_common *priv, u8 *data, size_t len)
 		  "CPSR: 0x%.8X, SPSR: 0x%.8X\n",
 		  reg[i + 0], reg[i + 1]);
 
-	print_hex_dump_bytes("R1: ", DUMP_PREFIX_NONE,
-			     fname, sizeof(fname));
-	return 0;
+	prपूर्णांक_hex_dump_bytes("R1: ", DUMP_PREFIX_NONE,
+			     fname, माप(fname));
+	वापस 0;
 
 underflow:
 	wiphy_err(priv->hw->wiphy, "Firmware exception.\n");
-	print_hex_dump_bytes("Exception: ", DUMP_PREFIX_NONE,
+	prपूर्णांक_hex_dump_bytes("Exception: ", DUMP_PREFIX_NONE,
 			     data, len);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int wsm_handle_rx(struct cw1200_common *priv, u16 id,
-		  struct wsm_hdr *wsm, struct sk_buff **skb_p)
-{
-	int ret = 0;
-	struct wsm_buf wsm_buf;
-	int link_id = (id >> 6) & 0x0F;
+पूर्णांक wsm_handle_rx(काष्ठा cw1200_common *priv, u16 id,
+		  काष्ठा wsm_hdr *wsm, काष्ठा sk_buff **skb_p)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा wsm_buf wsm_buf;
+	पूर्णांक link_id = (id >> 6) & 0x0F;
 
 	/* Strip link id. */
 	id &= ~WSM_TX_LINK_ID(WSM_TX_LINK_ID_MAX);
@@ -1309,12 +1310,12 @@ int wsm_handle_rx(struct cw1200_common *priv, u16 id,
 	pr_debug("[WSM] <<< 0x%.4X (%td)\n", id,
 		 wsm_buf.end - wsm_buf.begin);
 
-	if (id == WSM_TX_CONFIRM_IND_ID) {
+	अगर (id == WSM_TX_CONFIRM_IND_ID) अणु
 		ret = wsm_tx_confirm(priv, &wsm_buf, link_id);
-	} else if (id == WSM_MULTI_TX_CONFIRM_ID) {
+	पूर्ण अन्यथा अगर (id == WSM_MULTI_TX_CONFIRM_ID) अणु
 		ret = wsm_multi_tx_confirm(priv, &wsm_buf, link_id);
-	} else if (id & 0x0400) {
-		void *wsm_arg;
+	पूर्ण अन्यथा अगर (id & 0x0400) अणु
+		व्योम *wsm_arg;
 		u16 wsm_cmd;
 
 		/* Do not trust FW too much. Protection against repeated
@@ -1327,282 +1328,282 @@ int wsm_handle_rx(struct cw1200_common *priv, u16 id,
 		priv->wsm_cmd.cmd = 0xFFFF;
 		spin_unlock(&priv->wsm_cmd.lock);
 
-		if (WARN_ON((id & ~0x0400) != wsm_cmd)) {
+		अगर (WARN_ON((id & ~0x0400) != wsm_cmd)) अणु
 			/* Note that any non-zero is a fatal retcode. */
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* Note that wsm_arg can be NULL in case of timeout in
+		/* Note that wsm_arg can be शून्य in हाल of समयout in
 		 * wsm_cmd_send().
 		 */
 
-		switch (id) {
-		case WSM_READ_MIB_RESP_ID:
-			if (wsm_arg)
-				ret = wsm_read_mib_confirm(priv, wsm_arg,
+		चयन (id) अणु
+		हाल WSM_READ_MIB_RESP_ID:
+			अगर (wsm_arg)
+				ret = wsm_पढ़ो_mib_confirm(priv, wsm_arg,
 								&wsm_buf);
-			break;
-		case WSM_WRITE_MIB_RESP_ID:
-			if (wsm_arg)
-				ret = wsm_write_mib_confirm(priv, wsm_arg,
+			अवरोध;
+		हाल WSM_WRITE_MIB_RESP_ID:
+			अगर (wsm_arg)
+				ret = wsm_ग_लिखो_mib_confirm(priv, wsm_arg,
 							    &wsm_buf);
-			break;
-		case WSM_START_SCAN_RESP_ID:
-			if (wsm_arg)
+			अवरोध;
+		हाल WSM_START_SCAN_RESP_ID:
+			अगर (wsm_arg)
 				ret = wsm_scan_started(priv, wsm_arg, &wsm_buf);
-			break;
-		case WSM_CONFIGURATION_RESP_ID:
-			if (wsm_arg)
+			अवरोध;
+		हाल WSM_CONFIGURATION_RESP_ID:
+			अगर (wsm_arg)
 				ret = wsm_configuration_confirm(priv, wsm_arg,
 								&wsm_buf);
-			break;
-		case WSM_JOIN_RESP_ID:
-			if (wsm_arg)
+			अवरोध;
+		हाल WSM_JOIN_RESP_ID:
+			अगर (wsm_arg)
 				ret = wsm_join_confirm(priv, wsm_arg, &wsm_buf);
-			break;
-		case WSM_STOP_SCAN_RESP_ID:
-		case WSM_RESET_RESP_ID:
-		case WSM_ADD_KEY_RESP_ID:
-		case WSM_REMOVE_KEY_RESP_ID:
-		case WSM_SET_PM_RESP_ID:
-		case WSM_SET_BSS_PARAMS_RESP_ID:
-		case 0x0412: /* set_tx_queue_params */
-		case WSM_EDCA_PARAMS_RESP_ID:
-		case WSM_SWITCH_CHANNEL_RESP_ID:
-		case WSM_START_RESP_ID:
-		case WSM_BEACON_TRANSMIT_RESP_ID:
-		case 0x0419: /* start_find */
-		case 0x041A: /* stop_find */
-		case 0x041B: /* update_ie */
-		case 0x041C: /* map_link */
-			WARN_ON(wsm_arg != NULL);
+			अवरोध;
+		हाल WSM_STOP_SCAN_RESP_ID:
+		हाल WSM_RESET_RESP_ID:
+		हाल WSM_ADD_KEY_RESP_ID:
+		हाल WSM_REMOVE_KEY_RESP_ID:
+		हाल WSM_SET_PM_RESP_ID:
+		हाल WSM_SET_BSS_PARAMS_RESP_ID:
+		हाल 0x0412: /* set_tx_queue_params */
+		हाल WSM_EDCA_PARAMS_RESP_ID:
+		हाल WSM_SWITCH_CHANNEL_RESP_ID:
+		हाल WSM_START_RESP_ID:
+		हाल WSM_BEACON_TRANSMIT_RESP_ID:
+		हाल 0x0419: /* start_find */
+		हाल 0x041A: /* stop_find */
+		हाल 0x041B: /* update_ie */
+		हाल 0x041C: /* map_link */
+			WARN_ON(wsm_arg != शून्य);
 			ret = wsm_generic_confirm(priv, wsm_arg, &wsm_buf);
-			if (ret) {
+			अगर (ret) अणु
 				wiphy_warn(priv->hw->wiphy,
 					   "wsm_generic_confirm failed for request 0x%04x.\n",
 					   id & ~0x0400);
 
 				/* often 0x407 and 0x410 occur, this means we're dead.. */
-				if (priv->join_status >= CW1200_JOIN_STATUS_JOINING) {
+				अगर (priv->join_status >= CW1200_JOIN_STATUS_JOINING) अणु
 					wsm_lock_tx(priv);
-					if (queue_work(priv->workqueue, &priv->unjoin_work) <= 0)
+					अगर (queue_work(priv->workqueue, &priv->unjoin_work) <= 0)
 						wsm_unlock_tx(priv);
-				}
-			}
-			break;
-		default:
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		शेष:
 			wiphy_warn(priv->hw->wiphy,
 				   "Unrecognized confirmation 0x%04x\n",
 				   id & ~0x0400);
-		}
+		पूर्ण
 
 		spin_lock(&priv->wsm_cmd.lock);
 		priv->wsm_cmd.ret = ret;
-		priv->wsm_cmd.done = 1;
+		priv->wsm_cmd.करोne = 1;
 		spin_unlock(&priv->wsm_cmd.lock);
 
 		ret = 0; /* Error response from device should ne stop BH. */
 
 		wake_up(&priv->wsm_cmd_wq);
-	} else if (id & 0x0800) {
-		switch (id) {
-		case WSM_STARTUP_IND_ID:
+	पूर्ण अन्यथा अगर (id & 0x0800) अणु
+		चयन (id) अणु
+		हाल WSM_STARTUP_IND_ID:
 			ret = wsm_startup_indication(priv, &wsm_buf);
-			break;
-		case WSM_RECEIVE_IND_ID:
+			अवरोध;
+		हाल WSM_RECEIVE_IND_ID:
 			ret = wsm_receive_indication(priv, link_id,
 						     &wsm_buf, skb_p);
-			break;
-		case 0x0805:
+			अवरोध;
+		हाल 0x0805:
 			ret = wsm_event_indication(priv, &wsm_buf);
-			break;
-		case WSM_SCAN_COMPLETE_IND_ID:
+			अवरोध;
+		हाल WSM_SCAN_COMPLETE_IND_ID:
 			ret = wsm_scan_complete_indication(priv, &wsm_buf);
-			break;
-		case 0x0808:
-			ret = wsm_ba_timeout_indication(priv, &wsm_buf);
-			break;
-		case 0x0809:
+			अवरोध;
+		हाल 0x0808:
+			ret = wsm_ba_समयout_indication(priv, &wsm_buf);
+			अवरोध;
+		हाल 0x0809:
 			ret = wsm_set_pm_indication(priv, &wsm_buf);
-			break;
-		case 0x080A:
-			ret = wsm_channel_switch_indication(priv, &wsm_buf);
-			break;
-		case 0x080B:
+			अवरोध;
+		हाल 0x080A:
+			ret = wsm_channel_चयन_indication(priv, &wsm_buf);
+			अवरोध;
+		हाल 0x080B:
 			ret = wsm_find_complete_indication(priv, &wsm_buf);
-			break;
-		case 0x080C:
+			अवरोध;
+		हाल 0x080C:
 			ret = wsm_suspend_resume_indication(priv,
 					link_id, &wsm_buf);
-			break;
-		case 0x080F:
+			अवरोध;
+		हाल 0x080F:
 			ret = wsm_join_complete_indication(priv, &wsm_buf);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_warn("Unrecognised WSM ID %04x\n", id);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		WARN_ON(1);
 		ret = -EINVAL;
-	}
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool wsm_handle_tx_data(struct cw1200_common *priv,
-			       struct wsm_tx *wsm,
-			       const struct ieee80211_tx_info *tx_info,
-			       const struct cw1200_txpriv *txpriv,
-			       struct cw1200_queue *queue)
-{
+अटल bool wsm_handle_tx_data(काष्ठा cw1200_common *priv,
+			       काष्ठा wsm_tx *wsm,
+			       स्थिर काष्ठा ieee80211_tx_info *tx_info,
+			       स्थिर काष्ठा cw1200_txpriv *txpriv,
+			       काष्ठा cw1200_queue *queue)
+अणु
 	bool handled = false;
-	const struct ieee80211_hdr *frame =
-		(struct ieee80211_hdr *)&((u8 *)wsm)[txpriv->offset];
+	स्थिर काष्ठा ieee80211_hdr *frame =
+		(काष्ठा ieee80211_hdr *)&((u8 *)wsm)[txpriv->offset];
 	__le16 fctl = frame->frame_control;
-	enum {
-		do_probe,
-		do_drop,
-		do_wep,
-		do_tx,
-	} action = do_tx;
+	क्रमागत अणु
+		करो_probe,
+		करो_drop,
+		करो_wep,
+		करो_tx,
+	पूर्ण action = करो_tx;
 
-	switch (priv->mode) {
-	case NL80211_IFTYPE_STATION:
-		if (priv->join_status == CW1200_JOIN_STATUS_MONITOR)
-			action = do_tx;
-		else if (priv->join_status < CW1200_JOIN_STATUS_PRE_STA)
-			action = do_drop;
-		break;
-	case NL80211_IFTYPE_AP:
-		if (!priv->join_status) {
-			action = do_drop;
-		} else if (!(BIT(txpriv->raw_link_id) &
-			     (BIT(0) | priv->link_id_map))) {
+	चयन (priv->mode) अणु
+	हाल NL80211_IFTYPE_STATION:
+		अगर (priv->join_status == CW1200_JOIN_STATUS_MONITOR)
+			action = करो_tx;
+		अन्यथा अगर (priv->join_status < CW1200_JOIN_STATUS_PRE_STA)
+			action = करो_drop;
+		अवरोध;
+	हाल NL80211_IFTYPE_AP:
+		अगर (!priv->join_status) अणु
+			action = करो_drop;
+		पूर्ण अन्यथा अगर (!(BIT(txpriv->raw_link_id) &
+			     (BIT(0) | priv->link_id_map))) अणु
 			wiphy_warn(priv->hw->wiphy,
 				   "A frame with expired link id is dropped.\n");
-			action = do_drop;
-		}
-		if (cw1200_queue_get_generation(wsm->packet_id) >
-				CW1200_MAX_REQUEUE_ATTEMPTS) {
+			action = करो_drop;
+		पूर्ण
+		अगर (cw1200_queue_get_generation(wsm->packet_id) >
+				CW1200_MAX_REQUEUE_ATTEMPTS) अणु
 			/* HACK!!! WSM324 firmware has tendency to requeue
-			 * multicast frames in a loop, causing performance
-			 * drop and high power consumption of the driver.
+			 * multicast frames in a loop, causing perक्रमmance
+			 * drop and high घातer consumption of the driver.
 			 * In this situation it is better just to drop
 			 * the problematic frame.
 			 */
 			wiphy_warn(priv->hw->wiphy,
 				   "Too many attempts to requeue a frame; dropped.\n");
-			action = do_drop;
-		}
-		break;
-	case NL80211_IFTYPE_ADHOC:
-		if (priv->join_status != CW1200_JOIN_STATUS_IBSS)
-			action = do_drop;
-		break;
-	case NL80211_IFTYPE_MESH_POINT:
-		action = do_tx; /* TODO:  Test me! */
-		break;
-	case NL80211_IFTYPE_MONITOR:
-	default:
-		action = do_drop;
-		break;
-	}
+			action = करो_drop;
+		पूर्ण
+		अवरोध;
+	हाल NL80211_IFTYPE_ADHOC:
+		अगर (priv->join_status != CW1200_JOIN_STATUS_IBSS)
+			action = करो_drop;
+		अवरोध;
+	हाल NL80211_IFTYPE_MESH_POINT:
+		action = करो_tx; /* TODO:  Test me! */
+		अवरोध;
+	हाल NL80211_IFTYPE_MONITOR:
+	शेष:
+		action = करो_drop;
+		अवरोध;
+	पूर्ण
 
-	if (action == do_tx) {
-		if (ieee80211_is_nullfunc(fctl)) {
+	अगर (action == करो_tx) अणु
+		अगर (ieee80211_is_nullfunc(fctl)) अणु
 			spin_lock(&priv->bss_loss_lock);
-			if (priv->bss_loss_state) {
+			अगर (priv->bss_loss_state) अणु
 				priv->bss_loss_confirm_id = wsm->packet_id;
 				wsm->queue_id = WSM_QUEUE_VOICE;
-			}
+			पूर्ण
 			spin_unlock(&priv->bss_loss_lock);
-		} else if (ieee80211_is_probe_req(fctl)) {
-			action = do_probe;
-		} else if (ieee80211_is_deauth(fctl) &&
-			   priv->mode != NL80211_IFTYPE_AP) {
+		पूर्ण अन्यथा अगर (ieee80211_is_probe_req(fctl)) अणु
+			action = करो_probe;
+		पूर्ण अन्यथा अगर (ieee80211_is_deauth(fctl) &&
+			   priv->mode != NL80211_IFTYPE_AP) अणु
 			pr_debug("[WSM] Issue unjoin command due to tx deauth.\n");
 			wsm_lock_tx_async(priv);
-			if (queue_work(priv->workqueue,
+			अगर (queue_work(priv->workqueue,
 				       &priv->unjoin_work) <= 0)
 				wsm_unlock_tx(priv);
-		} else if (ieee80211_has_protected(fctl) &&
+		पूर्ण अन्यथा अगर (ieee80211_has_रक्षित(fctl) &&
 			   tx_info->control.hw_key &&
-			   tx_info->control.hw_key->keyidx != priv->wep_default_key_id &&
+			   tx_info->control.hw_key->keyidx != priv->wep_शेष_key_id &&
 			   (tx_info->control.hw_key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
-			    tx_info->control.hw_key->cipher == WLAN_CIPHER_SUITE_WEP104)) {
-			action = do_wep;
-		}
-	}
+			    tx_info->control.hw_key->cipher == WLAN_CIPHER_SUITE_WEP104)) अणु
+			action = करो_wep;
+		पूर्ण
+	पूर्ण
 
-	switch (action) {
-	case do_probe:
-		/* An interesting FW "feature". Device filters probe responses.
+	चयन (action) अणु
+	हाल करो_probe:
+		/* An पूर्णांकeresting FW "feature". Device filters probe responses.
 		 * The easiest way to get it back is to convert
-		 * probe request into WSM start_scan command.
+		 * probe request पूर्णांकo WSM start_scan command.
 		 */
 		pr_debug("[WSM] Convert probe request to scan.\n");
 		wsm_lock_tx_async(priv);
 		priv->pending_frame_id = wsm->packet_id;
-		if (queue_delayed_work(priv->workqueue,
+		अगर (queue_delayed_work(priv->workqueue,
 				       &priv->scan.probe_work, 0) <= 0)
 			wsm_unlock_tx(priv);
 		handled = true;
-		break;
-	case do_drop:
+		अवरोध;
+	हाल करो_drop:
 		pr_debug("[WSM] Drop frame (0x%.4X).\n", fctl);
-		BUG_ON(cw1200_queue_remove(queue, wsm->packet_id));
+		BUG_ON(cw1200_queue_हटाओ(queue, wsm->packet_id));
 		handled = true;
-		break;
-	case do_wep:
+		अवरोध;
+	हाल करो_wep:
 		pr_debug("[WSM] Issue set_default_wep_key.\n");
 		wsm_lock_tx_async(priv);
-		priv->wep_default_key_id = tx_info->control.hw_key->keyidx;
+		priv->wep_शेष_key_id = tx_info->control.hw_key->keyidx;
 		priv->pending_frame_id = wsm->packet_id;
-		if (queue_work(priv->workqueue, &priv->wep_key_work) <= 0)
+		अगर (queue_work(priv->workqueue, &priv->wep_key_work) <= 0)
 			wsm_unlock_tx(priv);
 		handled = true;
-		break;
-	case do_tx:
+		अवरोध;
+	हाल करो_tx:
 		pr_debug("[WSM] Transmit frame.\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Do nothing */
-		break;
-	}
-	return handled;
-}
+		अवरोध;
+	पूर्ण
+	वापस handled;
+पूर्ण
 
-static int cw1200_get_prio_queue(struct cw1200_common *priv,
-				 u32 link_id_map, int *total)
-{
-	static const int urgent = BIT(CW1200_LINK_ID_AFTER_DTIM) |
+अटल पूर्णांक cw1200_get_prio_queue(काष्ठा cw1200_common *priv,
+				 u32 link_id_map, पूर्णांक *total)
+अणु
+	अटल स्थिर पूर्णांक urgent = BIT(CW1200_LINK_ID_AFTER_DTIM) |
 		BIT(CW1200_LINK_ID_UAPSD);
-	struct wsm_edca_queue_params *edca;
-	unsigned score, best = -1;
-	int winner = -1;
-	int queued;
-	int i;
+	काष्ठा wsm_edca_queue_params *edca;
+	अचिन्हित score, best = -1;
+	पूर्णांक winner = -1;
+	पूर्णांक queued;
+	पूर्णांक i;
 
-	/* search for a winner using edca params */
-	for (i = 0; i < 4; ++i) {
+	/* search क्रम a winner using edca params */
+	क्रम (i = 0; i < 4; ++i) अणु
 		queued = cw1200_queue_get_num_queued(&priv->tx_queue[i],
 				link_id_map);
-		if (!queued)
-			continue;
+		अगर (!queued)
+			जारी;
 		*total += queued;
 		edca = &priv->edca.params[i];
-		score = ((edca->aifns + edca->cwmin) << 16) +
+		score = ((edca->aअगरns + edca->cwmin) << 16) +
 			((edca->cwmax - edca->cwmin) *
-			 (get_random_int() & 0xFFFF));
-		if (score < best && (winner < 0 || i != 3)) {
+			 (get_अक्रमom_पूर्णांक() & 0xFFFF));
+		अगर (score < best && (winner < 0 || i != 3)) अणु
 			best = score;
 			winner = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* override winner if bursting */
-	if (winner >= 0 && priv->tx_burst_idx >= 0 &&
+	/* override winner अगर bursting */
+	अगर (winner >= 0 && priv->tx_burst_idx >= 0 &&
 	    winner != priv->tx_burst_idx &&
 	    !cw1200_queue_get_num_queued(
 		    &priv->tx_queue[winner],
@@ -1612,64 +1613,64 @@ static int cw1200_get_prio_queue(struct cw1200_common *priv,
 		    link_id_map))
 		winner = priv->tx_burst_idx;
 
-	return winner;
-}
+	वापस winner;
+पूर्ण
 
-static int wsm_get_tx_queue_and_mask(struct cw1200_common *priv,
-				     struct cw1200_queue **queue_p,
+अटल पूर्णांक wsm_get_tx_queue_and_mask(काष्ठा cw1200_common *priv,
+				     काष्ठा cw1200_queue **queue_p,
 				     u32 *tx_allowed_mask_p,
 				     bool *more)
-{
-	int idx;
+अणु
+	पूर्णांक idx;
 	u32 tx_allowed_mask;
-	int total = 0;
+	पूर्णांक total = 0;
 
-	/* Search for a queue with multicast frames buffered */
-	if (priv->tx_multicast) {
+	/* Search क्रम a queue with multicast frames buffered */
+	अगर (priv->tx_multicast) अणु
 		tx_allowed_mask = BIT(CW1200_LINK_ID_AFTER_DTIM);
 		idx = cw1200_get_prio_queue(priv,
 				tx_allowed_mask, &total);
-		if (idx >= 0) {
+		अगर (idx >= 0) अणु
 			*more = total > 1;
-			goto found;
-		}
-	}
+			जाओ found;
+		पूर्ण
+	पूर्ण
 
-	/* Search for unicast traffic */
+	/* Search क्रम unicast traffic */
 	tx_allowed_mask = ~priv->sta_asleep_mask;
 	tx_allowed_mask |= BIT(CW1200_LINK_ID_UAPSD);
-	if (priv->sta_asleep_mask) {
+	अगर (priv->sta_asleep_mask) अणु
 		tx_allowed_mask |= priv->pspoll_mask;
 		tx_allowed_mask &= ~BIT(CW1200_LINK_ID_AFTER_DTIM);
-	} else {
+	पूर्ण अन्यथा अणु
 		tx_allowed_mask |= BIT(CW1200_LINK_ID_AFTER_DTIM);
-	}
+	पूर्ण
 	idx = cw1200_get_prio_queue(priv,
 			tx_allowed_mask, &total);
-	if (idx < 0)
-		return -ENOENT;
+	अगर (idx < 0)
+		वापस -ENOENT;
 
 found:
 	*queue_p = &priv->tx_queue[idx];
 	*tx_allowed_mask_p = tx_allowed_mask;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int wsm_get_tx(struct cw1200_common *priv, u8 **data,
-	       size_t *tx_len, int *burst)
-{
-	struct wsm_tx *wsm = NULL;
-	struct ieee80211_tx_info *tx_info;
-	struct cw1200_queue *queue = NULL;
-	int queue_num;
+पूर्णांक wsm_get_tx(काष्ठा cw1200_common *priv, u8 **data,
+	       माप_प्रकार *tx_len, पूर्णांक *burst)
+अणु
+	काष्ठा wsm_tx *wsm = शून्य;
+	काष्ठा ieee80211_tx_info *tx_info;
+	काष्ठा cw1200_queue *queue = शून्य;
+	पूर्णांक queue_num;
 	u32 tx_allowed_mask = 0;
-	const struct cw1200_txpriv *txpriv = NULL;
-	int count = 0;
+	स्थिर काष्ठा cw1200_txpriv *txpriv = शून्य;
+	पूर्णांक count = 0;
 
-	/* More is used only for broadcasts. */
+	/* More is used only क्रम broadcasts. */
 	bool more = false;
 
-	if (priv->wsm_cmd.ptr) { /* CMD request */
+	अगर (priv->wsm_cmd.ptr) अणु /* CMD request */
 		++count;
 		spin_lock(&priv->wsm_cmd.lock);
 		BUG_ON(!priv->wsm_cmd.ptr);
@@ -1677,12 +1678,12 @@ int wsm_get_tx(struct cw1200_common *priv, u8 **data,
 		*tx_len = priv->wsm_cmd.len;
 		*burst = 1;
 		spin_unlock(&priv->wsm_cmd.lock);
-	} else {
-		for (;;) {
-			int ret;
+	पूर्ण अन्यथा अणु
+		क्रम (;;) अणु
+			पूर्णांक ret;
 
-			if (atomic_add_return(0, &priv->tx_lock))
-				break;
+			अगर (atomic_add_वापस(0, &priv->tx_lock))
+				अवरोध;
 
 			spin_lock_bh(&priv->ps_state_lock);
 
@@ -1690,30 +1691,30 @@ int wsm_get_tx(struct cw1200_common *priv, u8 **data,
 							&tx_allowed_mask, &more);
 			queue_num = queue - priv->tx_queue;
 
-			if (priv->buffered_multicasts &&
+			अगर (priv->buffered_multicasts &&
 			    (ret || !more) &&
-			    (priv->tx_multicast || !priv->sta_asleep_mask)) {
+			    (priv->tx_multicast || !priv->sta_asleep_mask)) अणु
 				priv->buffered_multicasts = false;
-				if (priv->tx_multicast) {
+				अगर (priv->tx_multicast) अणु
 					priv->tx_multicast = false;
 					queue_work(priv->workqueue,
 						   &priv->multicast_stop_work);
-				}
-			}
+				पूर्ण
+			पूर्ण
 
 			spin_unlock_bh(&priv->ps_state_lock);
 
-			if (ret)
-				break;
+			अगर (ret)
+				अवरोध;
 
-			if (cw1200_queue_get(queue,
+			अगर (cw1200_queue_get(queue,
 					     tx_allowed_mask,
 					     &wsm, &tx_info, &txpriv))
-				continue;
+				जारी;
 
-			if (wsm_handle_tx_data(priv, wsm,
+			अगर (wsm_handle_tx_data(priv, wsm,
 					       tx_info, txpriv, queue))
-				continue;  /* Handled by WSM */
+				जारी;  /* Handled by WSM */
 
 			wsm->hdr.id &= __cpu_to_le16(
 				~WSM_TX_LINK_ID(WSM_TX_LINK_ID_MAX));
@@ -1724,94 +1725,94 @@ int wsm_get_tx(struct cw1200_common *priv, u8 **data,
 			*data = (u8 *)wsm;
 			*tx_len = __le16_to_cpu(wsm->hdr.len);
 
-			/* allow bursting if txop is set */
-			if (priv->edca.params[queue_num].txop_limit)
+			/* allow bursting अगर txop is set */
+			अगर (priv->edca.params[queue_num].txop_limit)
 				*burst = min(*burst,
-					     (int)cw1200_queue_get_num_queued(queue, tx_allowed_mask) + 1);
-			else
+					     (पूर्णांक)cw1200_queue_get_num_queued(queue, tx_allowed_mask) + 1);
+			अन्यथा
 				*burst = 1;
 
 			/* store index of bursting queue */
-			if (*burst > 1)
+			अगर (*burst > 1)
 				priv->tx_burst_idx = queue_num;
-			else
+			अन्यथा
 				priv->tx_burst_idx = -1;
 
-			if (more) {
-				struct ieee80211_hdr *hdr =
-					(struct ieee80211_hdr *)
+			अगर (more) अणु
+				काष्ठा ieee80211_hdr *hdr =
+					(काष्ठा ieee80211_hdr *)
 					&((u8 *)wsm)[txpriv->offset];
 				/* more buffered multicast/broadcast frames
 				 *  ==> set MoreData flag in IEEE 802.11 header
-				 *  to inform PS STAs
+				 *  to inक्रमm PS STAs
 				 */
 				hdr->frame_control |=
 					cpu_to_le16(IEEE80211_FCTL_MOREDATA);
-			}
+			पूर्ण
 
 			pr_debug("[WSM] >>> 0x%.4X (%zu) %p %c\n",
 				 0x0004, *tx_len, *data,
 				 wsm->more ? 'M' : ' ');
 			++count;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-void wsm_txed(struct cw1200_common *priv, u8 *data)
-{
-	if (data == priv->wsm_cmd.ptr) {
+व्योम wsm_txed(काष्ठा cw1200_common *priv, u8 *data)
+अणु
+	अगर (data == priv->wsm_cmd.ptr) अणु
 		spin_lock(&priv->wsm_cmd.lock);
-		priv->wsm_cmd.ptr = NULL;
+		priv->wsm_cmd.ptr = शून्य;
 		spin_unlock(&priv->wsm_cmd.lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* ******************************************************************** */
 /* WSM buffer								*/
 
-void wsm_buf_init(struct wsm_buf *buf)
-{
+व्योम wsm_buf_init(काष्ठा wsm_buf *buf)
+अणु
 	BUG_ON(buf->begin);
-	buf->begin = kmalloc(FWLOAD_BLOCK_SIZE, GFP_KERNEL | GFP_DMA);
+	buf->begin = kदो_स्मृति(FWLOAD_BLOCK_SIZE, GFP_KERNEL | GFP_DMA);
 	buf->end = buf->begin ? &buf->begin[FWLOAD_BLOCK_SIZE] : buf->begin;
 	wsm_buf_reset(buf);
-}
+पूर्ण
 
-void wsm_buf_deinit(struct wsm_buf *buf)
-{
-	kfree(buf->begin);
-	buf->begin = buf->data = buf->end = NULL;
-}
+व्योम wsm_buf_deinit(काष्ठा wsm_buf *buf)
+अणु
+	kमुक्त(buf->begin);
+	buf->begin = buf->data = buf->end = शून्य;
+पूर्ण
 
-static void wsm_buf_reset(struct wsm_buf *buf)
-{
-	if (buf->begin) {
+अटल व्योम wsm_buf_reset(काष्ठा wsm_buf *buf)
+अणु
+	अगर (buf->begin) अणु
 		buf->data = &buf->begin[4];
 		*(u32 *)buf->begin = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		buf->data = buf->begin;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int wsm_buf_reserve(struct wsm_buf *buf, size_t extra_size)
-{
-	size_t pos = buf->data - buf->begin;
-	size_t size = pos + extra_size;
-	u8 *tmp;
+अटल पूर्णांक wsm_buf_reserve(काष्ठा wsm_buf *buf, माप_प्रकार extra_size)
+अणु
+	माप_प्रकार pos = buf->data - buf->begin;
+	माप_प्रकार size = pos + extra_size;
+	u8 *पंचांगp;
 
 	size = round_up(size, FWLOAD_BLOCK_SIZE);
 
-	tmp = krealloc(buf->begin, size, GFP_KERNEL | GFP_DMA);
-	if (!tmp) {
+	पंचांगp = kपुनः_स्मृति(buf->begin, size, GFP_KERNEL | GFP_DMA);
+	अगर (!पंचांगp) अणु
 		wsm_buf_deinit(buf);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	buf->begin = tmp;
+	buf->begin = पंचांगp;
 	buf->data = &buf->begin[pos];
 	buf->end = &buf->begin[size];
-	return 0;
-}
+	वापस 0;
+पूर्ण

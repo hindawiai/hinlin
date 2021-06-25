@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * i2c-ocores.h - definitions for the i2c-ocores interface
+ * i2c-ocores.h - definitions क्रम the i2c-ocores पूर्णांकerface
  *
  * Peter Korsgaard <peter@korsgaard.com>
  */
 
-#ifndef _LINUX_I2C_OCORES_H
-#define _LINUX_I2C_OCORES_H
+#अगर_अघोषित _LINUX_I2C_OCORES_H
+#घोषणा _LINUX_I2C_OCORES_H
 
-struct ocores_i2c_platform_data {
-	u32 reg_shift; /* register offset shift value */
-	u32 reg_io_width; /* register io read/write width */
-	u32 clock_khz; /* input clock in kHz */
-	u32 bus_khz; /* bus clock in kHz */
-	bool big_endian; /* registers are big endian */
+काष्ठा ocores_i2c_platक्रमm_data अणु
+	u32 reg_shअगरt; /* रेजिस्टर offset shअगरt value */
+	u32 reg_io_width; /* रेजिस्टर io पढ़ो/ग_लिखो width */
+	u32 घड़ी_khz; /* input घड़ी in kHz */
+	u32 bus_khz; /* bus घड़ी in kHz */
+	bool big_endian; /* रेजिस्टरs are big endian */
 	u8 num_devices; /* number of devices in the devices list */
-	struct i2c_board_info const *devices; /* devices connected to the bus */
-};
+	काष्ठा i2c_board_info स्थिर *devices; /* devices connected to the bus */
+पूर्ण;
 
-#endif /* _LINUX_I2C_OCORES_H */
+#पूर्ण_अगर /* _LINUX_I2C_OCORES_H */

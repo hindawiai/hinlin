@@ -1,15 +1,16 @@
-#ifndef __UDL_CONNECTOR_H__
-#define __UDL_CONNECTOR_H__
+<शैली गुरु>
+#अगर_अघोषित __UDL_CONNECTOR_H__
+#घोषणा __UDL_CONNECTOR_H__
 
-#include <drm/drm_crtc.h>
+#समावेश <drm/drm_crtc.h>
 
-struct edid;
+काष्ठा edid;
 
-struct udl_drm_connector {
-	struct drm_connector connector;
+काष्ठा udl_drm_connector अणु
+	काष्ठा drm_connector connector;
 	/* last udl_detect edid */
-	struct edid *edid;
-};
+	काष्ठा edid *edid;
+पूर्ण;
 
 
-#endif //__UDL_CONNECTOR_H__
+#पूर्ण_अगर //__UDL_CONNECTOR_H__

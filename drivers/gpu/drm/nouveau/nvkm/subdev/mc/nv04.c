@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,66 +22,66 @@
  *
  * Authors: Ben Skeggs
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-const struct nvkm_mc_map
-nv04_mc_reset[] = {
-	{ 0x00001000, NVKM_ENGINE_GR },
-	{ 0x00000100, NVKM_ENGINE_FIFO },
-	{}
-};
+स्थिर काष्ठा nvkm_mc_map
+nv04_mc_reset[] = अणु
+	अणु 0x00001000, NVKM_ENGINE_GR पूर्ण,
+	अणु 0x00000100, NVKM_ENGINE_FIFO पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct nvkm_mc_map
-nv04_mc_intr[] = {
-	{ 0x01010000, NVKM_ENGINE_DISP },
-	{ 0x00001000, NVKM_ENGINE_GR },
-	{ 0x00000100, NVKM_ENGINE_FIFO },
-	{ 0x10000000, NVKM_SUBDEV_BUS },
-	{ 0x00100000, NVKM_SUBDEV_TIMER },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_mc_map
+nv04_mc_पूर्णांकr[] = अणु
+	अणु 0x01010000, NVKM_ENGINE_DISP पूर्ण,
+	अणु 0x00001000, NVKM_ENGINE_GR पूर्ण,
+	अणु 0x00000100, NVKM_ENGINE_FIFO पूर्ण,
+	अणु 0x10000000, NVKM_SUBDEV_BUS पूर्ण,
+	अणु 0x00100000, NVKM_SUBDEV_TIMER पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-void
-nv04_mc_intr_unarm(struct nvkm_mc *mc)
-{
-	struct nvkm_device *device = mc->subdev.device;
+व्योम
+nv04_mc_पूर्णांकr_unarm(काष्ठा nvkm_mc *mc)
+अणु
+	काष्ठा nvkm_device *device = mc->subdev.device;
 	nvkm_wr32(device, 0x000140, 0x00000000);
 	nvkm_rd32(device, 0x000140);
-}
+पूर्ण
 
-void
-nv04_mc_intr_rearm(struct nvkm_mc *mc)
-{
-	struct nvkm_device *device = mc->subdev.device;
+व्योम
+nv04_mc_पूर्णांकr_rearm(काष्ठा nvkm_mc *mc)
+अणु
+	काष्ठा nvkm_device *device = mc->subdev.device;
 	nvkm_wr32(device, 0x000140, 0x00000001);
-}
+पूर्ण
 
 u32
-nv04_mc_intr_stat(struct nvkm_mc *mc)
-{
-	return nvkm_rd32(mc->subdev.device, 0x000100);
-}
+nv04_mc_पूर्णांकr_stat(काष्ठा nvkm_mc *mc)
+अणु
+	वापस nvkm_rd32(mc->subdev.device, 0x000100);
+पूर्ण
 
-void
-nv04_mc_init(struct nvkm_mc *mc)
-{
-	struct nvkm_device *device = mc->subdev.device;
+व्योम
+nv04_mc_init(काष्ठा nvkm_mc *mc)
+अणु
+	काष्ठा nvkm_device *device = mc->subdev.device;
 	nvkm_wr32(device, 0x000200, 0xffffffff); /* everything enabled */
 	nvkm_wr32(device, 0x001850, 0x00000001); /* disable rom access */
-}
+पूर्ण
 
-static const struct nvkm_mc_func
-nv04_mc = {
+अटल स्थिर काष्ठा nvkm_mc_func
+nv04_mc = अणु
 	.init = nv04_mc_init,
-	.intr = nv04_mc_intr,
-	.intr_unarm = nv04_mc_intr_unarm,
-	.intr_rearm = nv04_mc_intr_rearm,
-	.intr_stat = nv04_mc_intr_stat,
+	.पूर्णांकr = nv04_mc_पूर्णांकr,
+	.पूर्णांकr_unarm = nv04_mc_पूर्णांकr_unarm,
+	.पूर्णांकr_rearm = nv04_mc_पूर्णांकr_rearm,
+	.पूर्णांकr_stat = nv04_mc_पूर्णांकr_stat,
 	.reset = nv04_mc_reset,
-};
+पूर्ण;
 
-int
-nv04_mc_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_mc **pmc)
-{
-	return nvkm_mc_new_(&nv04_mc, device, type, inst, pmc);
-}
+पूर्णांक
+nv04_mc_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_mc **pmc)
+अणु
+	वापस nvkm_mc_new_(&nv04_mc, device, type, inst, pmc);
+पूर्ण

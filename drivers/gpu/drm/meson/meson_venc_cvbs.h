@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2016 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
@@ -8,22 +9,22 @@
  *     Jasper St. Pierre <jstpierre@mecheye.net>
  */
 
-#ifndef __MESON_VENC_CVBS_H
-#define __MESON_VENC_CVBS_H
+#अगर_अघोषित __MESON_VENC_CVBS_H
+#घोषणा __MESON_VENC_CVBS_H
 
-#include "meson_drv.h"
-#include "meson_venc.h"
+#समावेश "meson_drv.h"
+#समावेश "meson_venc.h"
 
-struct meson_cvbs_mode {
-	struct meson_cvbs_enci_mode *enci;
-	struct drm_display_mode mode;
-};
+काष्ठा meson_cvbs_mode अणु
+	काष्ठा meson_cvbs_enci_mode *enci;
+	काष्ठा drm_display_mode mode;
+पूर्ण;
 
-#define MESON_CVBS_MODES_COUNT	2
+#घोषणा MESON_CVBS_MODES_COUNT	2
 
 /* Modes supported by the CVBS output */
-extern struct meson_cvbs_mode meson_cvbs_modes[MESON_CVBS_MODES_COUNT];
+बाह्य काष्ठा meson_cvbs_mode meson_cvbs_modes[MESON_CVBS_MODES_COUNT];
 
-int meson_venc_cvbs_create(struct meson_drm *priv);
+पूर्णांक meson_venc_cvbs_create(काष्ठा meson_drm *priv);
 
-#endif /* __MESON_VENC_CVBS_H */
+#पूर्ण_अगर /* __MESON_VENC_CVBS_H */

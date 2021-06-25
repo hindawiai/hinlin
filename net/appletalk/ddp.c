@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	DDP:	An implementation of the AppleTalk DDP protocol for
+ *	DDP:	An implementation of the AppleTalk DDP protocol क्रम
  *		Ethernet 'ELAP'.
  *
  *		Alan Cox  <alan@lxorguk.ukuu.org.uk>
@@ -20,13 +21,13 @@
  *		Alan Cox		:	Added firewall hooks.
  *		Alan Cox		:	Supports new ARPHRD_LOOPBACK
  *		Christer Weinigel	: 	Routing and /proc fixes.
- *		Bradford Johnson	:	LocalTalk.
+ *		Bradक्रमd Johnson	:	LocalTalk.
  *		Tom Dyas		:	Module support.
- *		Alan Cox		:	Hooks for PPP (based on the
+ *		Alan Cox		:	Hooks क्रम PPP (based on the
  *						LocalTalk hook).
  *		Alan Cox		:	Posix bits
  *		Alan Cox/Mike Freeman	:	Possible fix to NBP problems
- *		Bradford Johnson	:	IP-over-DDP (experimental)
+ *		Bradक्रमd Johnson	:	IP-over-DDP (experimental)
  *		Jay Schulist		:	Moved IP-over-DDP to its own
  *						driver file. (ipddp.c & ipddp.h)
  *		Jay Schulist		:	Made work as module with
@@ -35,1199 +36,1199 @@
  *						procfs, moved probing to AARP
  *						module.
  *              Adrian Sun/
- *              Michael Zuelsdorff      :       fix for net.0 packets. don't
+ *              Michael Zuelsकरोrff      :       fix क्रम net.0 packets. करोn't
  *                                              allow illegal ether/tokentalk
  *                                              port assignment. we lose a
  *                                              valid localtalk port as a
  *                                              result.
- *		Arnaldo C. de Melo	:	Cleanup, in preparation for
+ *		Arnalकरो C. de Melo	:	Cleanup, in preparation क्रम
  *						shared skb support 8)
- *		Arnaldo C. de Melo	:	Move proc stuff to atalk_proc.c,
+ *		Arnalकरो C. de Melo	:	Move proc stuff to atalk_proc.c,
  *						use seq_file
  */
 
-#include <linux/capability.h>
-#include <linux/module.h>
-#include <linux/if_arp.h>
-#include <linux/termios.h>	/* For TIOCOUTQ/INQ */
-#include <linux/compat.h>
-#include <linux/slab.h>
-#include <net/datalink.h>
-#include <net/psnap.h>
-#include <net/sock.h>
-#include <net/tcp_states.h>
-#include <net/route.h>
-#include <net/compat.h>
-#include <linux/atalk.h>
-#include <linux/highmem.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/module.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/termios.h>	/* For TIOCOUTQ/INQ */
+#समावेश <linux/compat.h>
+#समावेश <linux/slab.h>
+#समावेश <net/datalink.h>
+#समावेश <net/psnap.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp_states.h>
+#समावेश <net/route.h>
+#समावेश <net/compat.h>
+#समावेश <linux/atalk.h>
+#समावेश <linux/highस्मृति.स>
 
-struct datalink_proto *ddp_dl, *aarp_dl;
-static const struct proto_ops atalk_dgram_ops;
+काष्ठा datalink_proto *ddp_dl, *aarp_dl;
+अटल स्थिर काष्ठा proto_ops atalk_dgram_ops;
 
 /**************************************************************************\
 *                                                                          *
-* Handlers for the socket list.                                            *
+* Handlers क्रम the socket list.                                            *
 *                                                                          *
 \**************************************************************************/
 
 HLIST_HEAD(atalk_sockets);
 DEFINE_RWLOCK(atalk_sockets_lock);
 
-static inline void __atalk_insert_socket(struct sock *sk)
-{
+अटल अंतरभूत व्योम __atalk_insert_socket(काष्ठा sock *sk)
+अणु
 	sk_add_node(sk, &atalk_sockets);
-}
+पूर्ण
 
-static inline void atalk_remove_socket(struct sock *sk)
-{
-	write_lock_bh(&atalk_sockets_lock);
+अटल अंतरभूत व्योम atalk_हटाओ_socket(काष्ठा sock *sk)
+अणु
+	ग_लिखो_lock_bh(&atalk_sockets_lock);
 	sk_del_node_init(sk);
-	write_unlock_bh(&atalk_sockets_lock);
-}
+	ग_लिखो_unlock_bh(&atalk_sockets_lock);
+पूर्ण
 
-static struct sock *atalk_search_socket(struct sockaddr_at *to,
-					struct atalk_iface *atif)
-{
-	struct sock *s;
+अटल काष्ठा sock *atalk_search_socket(काष्ठा sockaddr_at *to,
+					काष्ठा atalk_अगरace *atअगर)
+अणु
+	काष्ठा sock *s;
 
-	read_lock_bh(&atalk_sockets_lock);
-	sk_for_each(s, &atalk_sockets) {
-		struct atalk_sock *at = at_sk(s);
+	पढ़ो_lock_bh(&atalk_sockets_lock);
+	sk_क्रम_each(s, &atalk_sockets) अणु
+		काष्ठा atalk_sock *at = at_sk(s);
 
-		if (to->sat_port != at->src_port)
-			continue;
+		अगर (to->sat_port != at->src_port)
+			जारी;
 
-		if (to->sat_addr.s_net == ATADDR_ANYNET &&
+		अगर (to->sat_addr.s_net == ATADDR_ANYNET &&
 		    to->sat_addr.s_node == ATADDR_BCAST)
-			goto found;
+			जाओ found;
 
-		if (to->sat_addr.s_net == at->src_net &&
+		अगर (to->sat_addr.s_net == at->src_net &&
 		    (to->sat_addr.s_node == at->src_node ||
 		     to->sat_addr.s_node == ATADDR_BCAST ||
 		     to->sat_addr.s_node == ATADDR_ANYNODE))
-			goto found;
+			जाओ found;
 
-		/* XXXX.0 -- we got a request for this router. make sure
+		/* XXXX.0 -- we got a request क्रम this router. make sure
 		 * that the node is appropriately set. */
-		if (to->sat_addr.s_node == ATADDR_ANYNODE &&
+		अगर (to->sat_addr.s_node == ATADDR_ANYNODE &&
 		    to->sat_addr.s_net != ATADDR_ANYNET &&
-		    atif->address.s_node == at->src_node) {
-			to->sat_addr.s_node = atif->address.s_node;
-			goto found;
-		}
-	}
-	s = NULL;
+		    atअगर->address.s_node == at->src_node) अणु
+			to->sat_addr.s_node = atअगर->address.s_node;
+			जाओ found;
+		पूर्ण
+	पूर्ण
+	s = शून्य;
 found:
-	read_unlock_bh(&atalk_sockets_lock);
-	return s;
-}
+	पढ़ो_unlock_bh(&atalk_sockets_lock);
+	वापस s;
+पूर्ण
 
 /**
  * atalk_find_or_insert_socket - Try to find a socket matching ADDR
- * @sk: socket to insert in the list if it is not there already
- * @sat: address to search for
+ * @sk: socket to insert in the list अगर it is not there alपढ़ोy
+ * @sat: address to search क्रम
  *
- * Try to find a socket matching ADDR in the socket list, if found then return
- * it. If not, insert SK into the socket list.
+ * Try to find a socket matching ADDR in the socket list, अगर found then वापस
+ * it. If not, insert SK पूर्णांकo the socket list.
  *
  * This entire operation must execute atomically.
  */
-static struct sock *atalk_find_or_insert_socket(struct sock *sk,
-						struct sockaddr_at *sat)
-{
-	struct sock *s;
-	struct atalk_sock *at;
+अटल काष्ठा sock *atalk_find_or_insert_socket(काष्ठा sock *sk,
+						काष्ठा sockaddr_at *sat)
+अणु
+	काष्ठा sock *s;
+	काष्ठा atalk_sock *at;
 
-	write_lock_bh(&atalk_sockets_lock);
-	sk_for_each(s, &atalk_sockets) {
+	ग_लिखो_lock_bh(&atalk_sockets_lock);
+	sk_क्रम_each(s, &atalk_sockets) अणु
 		at = at_sk(s);
 
-		if (at->src_net == sat->sat_addr.s_net &&
+		अगर (at->src_net == sat->sat_addr.s_net &&
 		    at->src_node == sat->sat_addr.s_node &&
 		    at->src_port == sat->sat_port)
-			goto found;
-	}
-	s = NULL;
-	__atalk_insert_socket(sk); /* Wheee, it's free, assign and insert. */
+			जाओ found;
+	पूर्ण
+	s = शून्य;
+	__atalk_insert_socket(sk); /* Wheee, it's मुक्त, assign and insert. */
 found:
-	write_unlock_bh(&atalk_sockets_lock);
-	return s;
-}
+	ग_लिखो_unlock_bh(&atalk_sockets_lock);
+	वापस s;
+पूर्ण
 
-static void atalk_destroy_timer(struct timer_list *t)
-{
-	struct sock *sk = from_timer(sk, t, sk_timer);
+अटल व्योम atalk_destroy_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sock *sk = from_समयr(sk, t, sk_समयr);
 
-	if (sk_has_allocations(sk)) {
-		sk->sk_timer.expires = jiffies + SOCK_DESTROY_TIME;
-		add_timer(&sk->sk_timer);
-	} else
+	अगर (sk_has_allocations(sk)) अणु
+		sk->sk_समयr.expires = jअगरfies + SOCK_DESTROY_TIME;
+		add_समयr(&sk->sk_समयr);
+	पूर्ण अन्यथा
 		sock_put(sk);
-}
+पूर्ण
 
-static inline void atalk_destroy_socket(struct sock *sk)
-{
-	atalk_remove_socket(sk);
+अटल अंतरभूत व्योम atalk_destroy_socket(काष्ठा sock *sk)
+अणु
+	atalk_हटाओ_socket(sk);
 	skb_queue_purge(&sk->sk_receive_queue);
 
-	if (sk_has_allocations(sk)) {
-		timer_setup(&sk->sk_timer, atalk_destroy_timer, 0);
-		sk->sk_timer.expires	= jiffies + SOCK_DESTROY_TIME;
-		add_timer(&sk->sk_timer);
-	} else
+	अगर (sk_has_allocations(sk)) अणु
+		समयr_setup(&sk->sk_समयr, atalk_destroy_समयr, 0);
+		sk->sk_समयr.expires	= jअगरfies + SOCK_DESTROY_TIME;
+		add_समयr(&sk->sk_समयr);
+	पूर्ण अन्यथा
 		sock_put(sk);
-}
+पूर्ण
 
 /**************************************************************************\
 *                                                                          *
-* Routing tables for the AppleTalk socket layer.                           *
+* Routing tables क्रम the AppleTalk socket layer.                           *
 *                                                                          *
 \**************************************************************************/
 
-/* Anti-deadlock ordering is atalk_routes_lock --> iface_lock -DaveM */
-struct atalk_route *atalk_routes;
+/* Anti-deadlock ordering is atalk_routes_lock --> अगरace_lock -DaveM */
+काष्ठा atalk_route *atalk_routes;
 DEFINE_RWLOCK(atalk_routes_lock);
 
-struct atalk_iface *atalk_interfaces;
-DEFINE_RWLOCK(atalk_interfaces_lock);
+काष्ठा atalk_अगरace *atalk_पूर्णांकerfaces;
+DEFINE_RWLOCK(atalk_पूर्णांकerfaces_lock);
 
 /* For probing devices or in a routerless network */
-struct atalk_route atrtr_default;
+काष्ठा atalk_route atrtr_शेष;
 
-/* AppleTalk interface control */
+/* AppleTalk पूर्णांकerface control */
 /*
  * Drop a device. Doesn't drop any of its routes - that is the caller's
- * problem. Called when we down the interface or delete the address.
+ * problem. Called when we करोwn the पूर्णांकerface or delete the address.
  */
-static void atif_drop_device(struct net_device *dev)
-{
-	struct atalk_iface **iface = &atalk_interfaces;
-	struct atalk_iface *tmp;
+अटल व्योम atअगर_drop_device(काष्ठा net_device *dev)
+अणु
+	काष्ठा atalk_अगरace **अगरace = &atalk_पूर्णांकerfaces;
+	काष्ठा atalk_अगरace *पंचांगp;
 
-	write_lock_bh(&atalk_interfaces_lock);
-	while ((tmp = *iface) != NULL) {
-		if (tmp->dev == dev) {
-			*iface = tmp->next;
+	ग_लिखो_lock_bh(&atalk_पूर्णांकerfaces_lock);
+	जबतक ((पंचांगp = *अगरace) != शून्य) अणु
+		अगर (पंचांगp->dev == dev) अणु
+			*अगरace = पंचांगp->next;
 			dev_put(dev);
-			kfree(tmp);
-			dev->atalk_ptr = NULL;
-		} else
-			iface = &tmp->next;
-	}
-	write_unlock_bh(&atalk_interfaces_lock);
-}
+			kमुक्त(पंचांगp);
+			dev->atalk_ptr = शून्य;
+		पूर्ण अन्यथा
+			अगरace = &पंचांगp->next;
+	पूर्ण
+	ग_लिखो_unlock_bh(&atalk_पूर्णांकerfaces_lock);
+पूर्ण
 
-static struct atalk_iface *atif_add_device(struct net_device *dev,
-					   struct atalk_addr *sa)
-{
-	struct atalk_iface *iface = kzalloc(sizeof(*iface), GFP_KERNEL);
+अटल काष्ठा atalk_अगरace *atअगर_add_device(काष्ठा net_device *dev,
+					   काष्ठा atalk_addr *sa)
+अणु
+	काष्ठा atalk_अगरace *अगरace = kzalloc(माप(*अगरace), GFP_KERNEL);
 
-	if (!iface)
-		goto out;
+	अगर (!अगरace)
+		जाओ out;
 
 	dev_hold(dev);
-	iface->dev = dev;
-	dev->atalk_ptr = iface;
-	iface->address = *sa;
-	iface->status = 0;
+	अगरace->dev = dev;
+	dev->atalk_ptr = अगरace;
+	अगरace->address = *sa;
+	अगरace->status = 0;
 
-	write_lock_bh(&atalk_interfaces_lock);
-	iface->next = atalk_interfaces;
-	atalk_interfaces = iface;
-	write_unlock_bh(&atalk_interfaces_lock);
+	ग_लिखो_lock_bh(&atalk_पूर्णांकerfaces_lock);
+	अगरace->next = atalk_पूर्णांकerfaces;
+	atalk_पूर्णांकerfaces = अगरace;
+	ग_लिखो_unlock_bh(&atalk_पूर्णांकerfaces_lock);
 out:
-	return iface;
-}
+	वापस अगरace;
+पूर्ण
 
-/* Perform phase 2 AARP probing on our tentative address */
-static int atif_probe_device(struct atalk_iface *atif)
-{
-	int netrange = ntohs(atif->nets.nr_lastnet) -
-			ntohs(atif->nets.nr_firstnet) + 1;
-	int probe_net = ntohs(atif->address.s_net);
-	int probe_node = atif->address.s_node;
-	int netct, nodect;
+/* Perक्रमm phase 2 AARP probing on our tentative address */
+अटल पूर्णांक atअगर_probe_device(काष्ठा atalk_अगरace *atअगर)
+अणु
+	पूर्णांक netrange = ntohs(atअगर->nets.nr_lastnet) -
+			ntohs(atअगर->nets.nr_firstnet) + 1;
+	पूर्णांक probe_net = ntohs(atअगर->address.s_net);
+	पूर्णांक probe_node = atअगर->address.s_node;
+	पूर्णांक netct, nodect;
 
 	/* Offset the network we start probing with */
-	if (probe_net == ATADDR_ANYNET) {
-		probe_net = ntohs(atif->nets.nr_firstnet);
-		if (netrange)
-			probe_net += jiffies % netrange;
-	}
-	if (probe_node == ATADDR_ANYNODE)
-		probe_node = jiffies & 0xFF;
+	अगर (probe_net == ATADDR_ANYNET) अणु
+		probe_net = ntohs(atअगर->nets.nr_firstnet);
+		अगर (netrange)
+			probe_net += jअगरfies % netrange;
+	पूर्ण
+	अगर (probe_node == ATADDR_ANYNODE)
+		probe_node = jअगरfies & 0xFF;
 
 	/* Scan the networks */
-	atif->status |= ATIF_PROBE;
-	for (netct = 0; netct <= netrange; netct++) {
+	atअगर->status |= ATIF_PROBE;
+	क्रम (netct = 0; netct <= netrange; netct++) अणु
 		/* Sweep the available nodes from a given start */
-		atif->address.s_net = htons(probe_net);
-		for (nodect = 0; nodect < 256; nodect++) {
-			atif->address.s_node = (nodect + probe_node) & 0xFF;
-			if (atif->address.s_node > 0 &&
-			    atif->address.s_node < 254) {
+		atअगर->address.s_net = htons(probe_net);
+		क्रम (nodect = 0; nodect < 256; nodect++) अणु
+			atअगर->address.s_node = (nodect + probe_node) & 0xFF;
+			अगर (atअगर->address.s_node > 0 &&
+			    atअगर->address.s_node < 254) अणु
 				/* Probe a proposed address */
-				aarp_probe_network(atif);
+				aarp_probe_network(atअगर);
 
-				if (!(atif->status & ATIF_PROBE_FAIL)) {
-					atif->status &= ~ATIF_PROBE;
-					return 0;
-				}
-			}
-			atif->status &= ~ATIF_PROBE_FAIL;
-		}
+				अगर (!(atअगर->status & ATIF_PROBE_FAIL)) अणु
+					atअगर->status &= ~ATIF_PROBE;
+					वापस 0;
+				पूर्ण
+			पूर्ण
+			atअगर->status &= ~ATIF_PROBE_FAIL;
+		पूर्ण
 		probe_net++;
-		if (probe_net > ntohs(atif->nets.nr_lastnet))
-			probe_net = ntohs(atif->nets.nr_firstnet);
-	}
-	atif->status &= ~ATIF_PROBE;
+		अगर (probe_net > ntohs(atअगर->nets.nr_lastnet))
+			probe_net = ntohs(atअगर->nets.nr_firstnet);
+	पूर्ण
+	atअगर->status &= ~ATIF_PROBE;
 
-	return -EADDRINUSE;	/* Network is full... */
-}
+	वापस -EADDRINUSE;	/* Network is full... */
+पूर्ण
 
 
-/* Perform AARP probing for a proxy address */
-static int atif_proxy_probe_device(struct atalk_iface *atif,
-				   struct atalk_addr *proxy_addr)
-{
-	int netrange = ntohs(atif->nets.nr_lastnet) -
-			ntohs(atif->nets.nr_firstnet) + 1;
-	/* we probe the interface's network */
-	int probe_net = ntohs(atif->address.s_net);
-	int probe_node = ATADDR_ANYNODE;	    /* we'll take anything */
-	int netct, nodect;
+/* Perक्रमm AARP probing क्रम a proxy address */
+अटल पूर्णांक atअगर_proxy_probe_device(काष्ठा atalk_अगरace *atअगर,
+				   काष्ठा atalk_addr *proxy_addr)
+अणु
+	पूर्णांक netrange = ntohs(atअगर->nets.nr_lastnet) -
+			ntohs(atअगर->nets.nr_firstnet) + 1;
+	/* we probe the पूर्णांकerface's network */
+	पूर्णांक probe_net = ntohs(atअगर->address.s_net);
+	पूर्णांक probe_node = ATADDR_ANYNODE;	    /* we'll take anything */
+	पूर्णांक netct, nodect;
 
 	/* Offset the network we start probing with */
-	if (probe_net == ATADDR_ANYNET) {
-		probe_net = ntohs(atif->nets.nr_firstnet);
-		if (netrange)
-			probe_net += jiffies % netrange;
-	}
+	अगर (probe_net == ATADDR_ANYNET) अणु
+		probe_net = ntohs(atअगर->nets.nr_firstnet);
+		अगर (netrange)
+			probe_net += jअगरfies % netrange;
+	पूर्ण
 
-	if (probe_node == ATADDR_ANYNODE)
-		probe_node = jiffies & 0xFF;
+	अगर (probe_node == ATADDR_ANYNODE)
+		probe_node = jअगरfies & 0xFF;
 
 	/* Scan the networks */
-	for (netct = 0; netct <= netrange; netct++) {
+	क्रम (netct = 0; netct <= netrange; netct++) अणु
 		/* Sweep the available nodes from a given start */
 		proxy_addr->s_net = htons(probe_net);
-		for (nodect = 0; nodect < 256; nodect++) {
+		क्रम (nodect = 0; nodect < 256; nodect++) अणु
 			proxy_addr->s_node = (nodect + probe_node) & 0xFF;
-			if (proxy_addr->s_node > 0 &&
-			    proxy_addr->s_node < 254) {
+			अगर (proxy_addr->s_node > 0 &&
+			    proxy_addr->s_node < 254) अणु
 				/* Tell AARP to probe a proposed address */
-				int ret = aarp_proxy_probe_network(atif,
+				पूर्णांक ret = aarp_proxy_probe_network(atअगर,
 								    proxy_addr);
 
-				if (ret != -EADDRINUSE)
-					return ret;
-			}
-		}
+				अगर (ret != -EADDRINUSE)
+					वापस ret;
+			पूर्ण
+		पूर्ण
 		probe_net++;
-		if (probe_net > ntohs(atif->nets.nr_lastnet))
-			probe_net = ntohs(atif->nets.nr_firstnet);
-	}
+		अगर (probe_net > ntohs(atअगर->nets.nr_lastnet))
+			probe_net = ntohs(atअगर->nets.nr_firstnet);
+	पूर्ण
 
-	return -EADDRINUSE;	/* Network is full... */
-}
+	वापस -EADDRINUSE;	/* Network is full... */
+पूर्ण
 
 
-struct atalk_addr *atalk_find_dev_addr(struct net_device *dev)
-{
-	struct atalk_iface *iface = dev->atalk_ptr;
-	return iface ? &iface->address : NULL;
-}
+काष्ठा atalk_addr *atalk_find_dev_addr(काष्ठा net_device *dev)
+अणु
+	काष्ठा atalk_अगरace *अगरace = dev->atalk_ptr;
+	वापस अगरace ? &अगरace->address : शून्य;
+पूर्ण
 
-static struct atalk_addr *atalk_find_primary(void)
-{
-	struct atalk_iface *fiface = NULL;
-	struct atalk_addr *retval;
-	struct atalk_iface *iface;
+अटल काष्ठा atalk_addr *atalk_find_primary(व्योम)
+अणु
+	काष्ठा atalk_अगरace *fअगरace = शून्य;
+	काष्ठा atalk_addr *retval;
+	काष्ठा atalk_अगरace *अगरace;
 
 	/*
-	 * Return a point-to-point interface only if
-	 * there is no non-ptp interface available.
+	 * Return a poपूर्णांक-to-poपूर्णांक पूर्णांकerface only अगर
+	 * there is no non-ptp पूर्णांकerface available.
 	 */
-	read_lock_bh(&atalk_interfaces_lock);
-	for (iface = atalk_interfaces; iface; iface = iface->next) {
-		if (!fiface && !(iface->dev->flags & IFF_LOOPBACK))
-			fiface = iface;
-		if (!(iface->dev->flags & (IFF_LOOPBACK | IFF_POINTOPOINT))) {
-			retval = &iface->address;
-			goto out;
-		}
-	}
+	पढ़ो_lock_bh(&atalk_पूर्णांकerfaces_lock);
+	क्रम (अगरace = atalk_पूर्णांकerfaces; अगरace; अगरace = अगरace->next) अणु
+		अगर (!fअगरace && !(अगरace->dev->flags & IFF_LOOPBACK))
+			fअगरace = अगरace;
+		अगर (!(अगरace->dev->flags & (IFF_LOOPBACK | IFF_POINTOPOINT))) अणु
+			retval = &अगरace->address;
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (fiface)
-		retval = &fiface->address;
-	else if (atalk_interfaces)
-		retval = &atalk_interfaces->address;
-	else
-		retval = NULL;
+	अगर (fअगरace)
+		retval = &fअगरace->address;
+	अन्यथा अगर (atalk_पूर्णांकerfaces)
+		retval = &atalk_पूर्णांकerfaces->address;
+	अन्यथा
+		retval = शून्य;
 out:
-	read_unlock_bh(&atalk_interfaces_lock);
-	return retval;
-}
+	पढ़ो_unlock_bh(&atalk_पूर्णांकerfaces_lock);
+	वापस retval;
+पूर्ण
 
 /*
- * Find a match for 'any network' - ie any of our interfaces with that
- * node number will do just nicely.
+ * Find a match क्रम 'any network' - ie any of our पूर्णांकerfaces with that
+ * node number will करो just nicely.
  */
-static struct atalk_iface *atalk_find_anynet(int node, struct net_device *dev)
-{
-	struct atalk_iface *iface = dev->atalk_ptr;
+अटल काष्ठा atalk_अगरace *atalk_find_anynet(पूर्णांक node, काष्ठा net_device *dev)
+अणु
+	काष्ठा atalk_अगरace *अगरace = dev->atalk_ptr;
 
-	if (!iface || iface->status & ATIF_PROBE)
-		goto out_err;
+	अगर (!अगरace || अगरace->status & ATIF_PROBE)
+		जाओ out_err;
 
-	if (node != ATADDR_BCAST &&
-	    iface->address.s_node != node &&
+	अगर (node != ATADDR_BCAST &&
+	    अगरace->address.s_node != node &&
 	    node != ATADDR_ANYNODE)
-		goto out_err;
+		जाओ out_err;
 out:
-	return iface;
+	वापस अगरace;
 out_err:
-	iface = NULL;
-	goto out;
-}
+	अगरace = शून्य;
+	जाओ out;
+पूर्ण
 
-/* Find a match for a specific network:node pair */
-static struct atalk_iface *atalk_find_interface(__be16 net, int node)
-{
-	struct atalk_iface *iface;
+/* Find a match क्रम a specअगरic network:node pair */
+अटल काष्ठा atalk_अगरace *atalk_find_पूर्णांकerface(__be16 net, पूर्णांक node)
+अणु
+	काष्ठा atalk_अगरace *अगरace;
 
-	read_lock_bh(&atalk_interfaces_lock);
-	for (iface = atalk_interfaces; iface; iface = iface->next) {
-		if ((node == ATADDR_BCAST ||
+	पढ़ो_lock_bh(&atalk_पूर्णांकerfaces_lock);
+	क्रम (अगरace = atalk_पूर्णांकerfaces; अगरace; अगरace = अगरace->next) अणु
+		अगर ((node == ATADDR_BCAST ||
 		     node == ATADDR_ANYNODE ||
-		     iface->address.s_node == node) &&
-		    iface->address.s_net == net &&
-		    !(iface->status & ATIF_PROBE))
-			break;
+		     अगरace->address.s_node == node) &&
+		    अगरace->address.s_net == net &&
+		    !(अगरace->status & ATIF_PROBE))
+			अवरोध;
 
-		/* XXXX.0 -- net.0 returns the iface associated with net */
-		if (node == ATADDR_ANYNODE && net != ATADDR_ANYNET &&
-		    ntohs(iface->nets.nr_firstnet) <= ntohs(net) &&
-		    ntohs(net) <= ntohs(iface->nets.nr_lastnet))
-			break;
-	}
-	read_unlock_bh(&atalk_interfaces_lock);
-	return iface;
-}
+		/* XXXX.0 -- net.0 वापसs the अगरace associated with net */
+		अगर (node == ATADDR_ANYNODE && net != ATADDR_ANYNET &&
+		    ntohs(अगरace->nets.nr_firstnet) <= ntohs(net) &&
+		    ntohs(net) <= ntohs(अगरace->nets.nr_lastnet))
+			अवरोध;
+	पूर्ण
+	पढ़ो_unlock_bh(&atalk_पूर्णांकerfaces_lock);
+	वापस अगरace;
+पूर्ण
 
 
 /*
- * Find a route for an AppleTalk packet. This ought to get cached in
+ * Find a route क्रम an AppleTalk packet. This ought to get cached in
  * the socket (later on...). We know about host routes and the fact
  * that a route must be direct to broadcast.
  */
-static struct atalk_route *atrtr_find(struct atalk_addr *target)
-{
+अटल काष्ठा atalk_route *atrtr_find(काष्ठा atalk_addr *target)
+अणु
 	/*
 	 * we must search through all routes unless we find a
 	 * host route, because some host routes might overlap
 	 * network routes
 	 */
-	struct atalk_route *net_route = NULL;
-	struct atalk_route *r;
+	काष्ठा atalk_route *net_route = शून्य;
+	काष्ठा atalk_route *r;
 
-	read_lock_bh(&atalk_routes_lock);
-	for (r = atalk_routes; r; r = r->next) {
-		if (!(r->flags & RTF_UP))
-			continue;
+	पढ़ो_lock_bh(&atalk_routes_lock);
+	क्रम (r = atalk_routes; r; r = r->next) अणु
+		अगर (!(r->flags & RTF_UP))
+			जारी;
 
-		if (r->target.s_net == target->s_net) {
-			if (r->flags & RTF_HOST) {
+		अगर (r->target.s_net == target->s_net) अणु
+			अगर (r->flags & RTF_HOST) अणु
 				/*
-				 * if this host route is for the target,
-				 * the we're done
+				 * अगर this host route is क्रम the target,
+				 * the we're करोne
 				 */
-				if (r->target.s_node == target->s_node)
-					goto out;
-			} else
+				अगर (r->target.s_node == target->s_node)
+					जाओ out;
+			पूर्ण अन्यथा
 				/*
-				 * this route will work if there isn't a
+				 * this route will work अगर there isn't a
 				 * direct host route, so cache it
 				 */
 				net_route = r;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * if we found a network route but not a direct host
-	 * route, then return it
+	 * अगर we found a network route but not a direct host
+	 * route, then वापस it
 	 */
-	if (net_route)
+	अगर (net_route)
 		r = net_route;
-	else if (atrtr_default.dev)
-		r = &atrtr_default;
-	else /* No route can be found */
-		r = NULL;
+	अन्यथा अगर (atrtr_शेष.dev)
+		r = &atrtr_शेष;
+	अन्यथा /* No route can be found */
+		r = शून्य;
 out:
-	read_unlock_bh(&atalk_routes_lock);
-	return r;
-}
+	पढ़ो_unlock_bh(&atalk_routes_lock);
+	वापस r;
+पूर्ण
 
 
 /*
  * Given an AppleTalk network, find the device to use. This can be
  * a simple lookup.
  */
-struct net_device *atrtr_get_dev(struct atalk_addr *sa)
-{
-	struct atalk_route *atr = atrtr_find(sa);
-	return atr ? atr->dev : NULL;
-}
+काष्ठा net_device *atrtr_get_dev(काष्ठा atalk_addr *sa)
+अणु
+	काष्ठा atalk_route *atr = atrtr_find(sa);
+	वापस atr ? atr->dev : शून्य;
+पूर्ण
 
-/* Set up a default router */
-static void atrtr_set_default(struct net_device *dev)
-{
-	atrtr_default.dev	     = dev;
-	atrtr_default.flags	     = RTF_UP;
-	atrtr_default.gateway.s_net  = htons(0);
-	atrtr_default.gateway.s_node = 0;
-}
+/* Set up a शेष router */
+अटल व्योम atrtr_set_शेष(काष्ठा net_device *dev)
+अणु
+	atrtr_शेष.dev	     = dev;
+	atrtr_शेष.flags	     = RTF_UP;
+	atrtr_शेष.gateway.s_net  = htons(0);
+	atrtr_शेष.gateway.s_node = 0;
+पूर्ण
 
 /*
  * Add a router. Basically make sure it looks valid and stuff the
  * entry in the list. While it uses netranges we always set them to one
  * entry to work like netatalk.
  */
-static int atrtr_create(struct rtentry *r, struct net_device *devhint)
-{
-	struct sockaddr_at *ta = (struct sockaddr_at *)&r->rt_dst;
-	struct sockaddr_at *ga = (struct sockaddr_at *)&r->rt_gateway;
-	struct atalk_route *rt;
-	struct atalk_iface *iface, *riface;
-	int retval = -EINVAL;
+अटल पूर्णांक atrtr_create(काष्ठा rtentry *r, काष्ठा net_device *devhपूर्णांक)
+अणु
+	काष्ठा sockaddr_at *ta = (काष्ठा sockaddr_at *)&r->rt_dst;
+	काष्ठा sockaddr_at *ga = (काष्ठा sockaddr_at *)&r->rt_gateway;
+	काष्ठा atalk_route *rt;
+	काष्ठा atalk_अगरace *अगरace, *rअगरace;
+	पूर्णांक retval = -EINVAL;
 
 	/*
-	 * Fixme: Raise/Lower a routing change semaphore for these
+	 * Fixme: Raise/Lower a routing change semaphore क्रम these
 	 * operations.
 	 */
 
 	/* Validate the request */
-	if (ta->sat_family != AF_APPLETALK ||
-	    (!devhint && ga->sat_family != AF_APPLETALK))
-		goto out;
+	अगर (ta->sat_family != AF_APPLETALK ||
+	    (!devhपूर्णांक && ga->sat_family != AF_APPLETALK))
+		जाओ out;
 
 	/* Now walk the routing table and make our decisions */
-	write_lock_bh(&atalk_routes_lock);
-	for (rt = atalk_routes; rt; rt = rt->next) {
-		if (r->rt_flags != rt->flags)
-			continue;
+	ग_लिखो_lock_bh(&atalk_routes_lock);
+	क्रम (rt = atalk_routes; rt; rt = rt->next) अणु
+		अगर (r->rt_flags != rt->flags)
+			जारी;
 
-		if (ta->sat_addr.s_net == rt->target.s_net) {
-			if (!(rt->flags & RTF_HOST))
-				break;
-			if (ta->sat_addr.s_node == rt->target.s_node)
-				break;
-		}
-	}
+		अगर (ta->sat_addr.s_net == rt->target.s_net) अणु
+			अगर (!(rt->flags & RTF_HOST))
+				अवरोध;
+			अगर (ta->sat_addr.s_node == rt->target.s_node)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!devhint) {
-		riface = NULL;
+	अगर (!devhपूर्णांक) अणु
+		rअगरace = शून्य;
 
-		read_lock_bh(&atalk_interfaces_lock);
-		for (iface = atalk_interfaces; iface; iface = iface->next) {
-			if (!riface &&
+		पढ़ो_lock_bh(&atalk_पूर्णांकerfaces_lock);
+		क्रम (अगरace = atalk_पूर्णांकerfaces; अगरace; अगरace = अगरace->next) अणु
+			अगर (!rअगरace &&
 			    ntohs(ga->sat_addr.s_net) >=
-					ntohs(iface->nets.nr_firstnet) &&
+					ntohs(अगरace->nets.nr_firstnet) &&
 			    ntohs(ga->sat_addr.s_net) <=
-					ntohs(iface->nets.nr_lastnet))
-				riface = iface;
+					ntohs(अगरace->nets.nr_lastnet))
+				rअगरace = अगरace;
 
-			if (ga->sat_addr.s_net == iface->address.s_net &&
-			    ga->sat_addr.s_node == iface->address.s_node)
-				riface = iface;
-		}
-		read_unlock_bh(&atalk_interfaces_lock);
+			अगर (ga->sat_addr.s_net == अगरace->address.s_net &&
+			    ga->sat_addr.s_node == अगरace->address.s_node)
+				rअगरace = अगरace;
+		पूर्ण
+		पढ़ो_unlock_bh(&atalk_पूर्णांकerfaces_lock);
 
 		retval = -ENETUNREACH;
-		if (!riface)
-			goto out_unlock;
+		अगर (!rअगरace)
+			जाओ out_unlock;
 
-		devhint = riface->dev;
-	}
+		devhपूर्णांक = rअगरace->dev;
+	पूर्ण
 
-	if (!rt) {
-		rt = kzalloc(sizeof(*rt), GFP_ATOMIC);
+	अगर (!rt) अणु
+		rt = kzalloc(माप(*rt), GFP_ATOMIC);
 
 		retval = -ENOBUFS;
-		if (!rt)
-			goto out_unlock;
+		अगर (!rt)
+			जाओ out_unlock;
 
 		rt->next = atalk_routes;
 		atalk_routes = rt;
-	}
+	पूर्ण
 
 	/* Fill in the routing entry */
 	rt->target  = ta->sat_addr;
-	dev_hold(devhint);
-	rt->dev     = devhint;
+	dev_hold(devhपूर्णांक);
+	rt->dev     = devhपूर्णांक;
 	rt->flags   = r->rt_flags;
 	rt->gateway = ga->sat_addr;
 
 	retval = 0;
 out_unlock:
-	write_unlock_bh(&atalk_routes_lock);
+	ग_लिखो_unlock_bh(&atalk_routes_lock);
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /* Delete a route. Find it and discard it */
-static int atrtr_delete(struct atalk_addr *addr)
-{
-	struct atalk_route **r = &atalk_routes;
-	int retval = 0;
-	struct atalk_route *tmp;
+अटल पूर्णांक atrtr_delete(काष्ठा atalk_addr *addr)
+अणु
+	काष्ठा atalk_route **r = &atalk_routes;
+	पूर्णांक retval = 0;
+	काष्ठा atalk_route *पंचांगp;
 
-	write_lock_bh(&atalk_routes_lock);
-	while ((tmp = *r) != NULL) {
-		if (tmp->target.s_net == addr->s_net &&
-		    (!(tmp->flags&RTF_GATEWAY) ||
-		     tmp->target.s_node == addr->s_node)) {
-			*r = tmp->next;
-			dev_put(tmp->dev);
-			kfree(tmp);
-			goto out;
-		}
-		r = &tmp->next;
-	}
+	ग_लिखो_lock_bh(&atalk_routes_lock);
+	जबतक ((पंचांगp = *r) != शून्य) अणु
+		अगर (पंचांगp->target.s_net == addr->s_net &&
+		    (!(पंचांगp->flags&RTF_GATEWAY) ||
+		     पंचांगp->target.s_node == addr->s_node)) अणु
+			*r = पंचांगp->next;
+			dev_put(पंचांगp->dev);
+			kमुक्त(पंचांगp);
+			जाओ out;
+		पूर्ण
+		r = &पंचांगp->next;
+	पूर्ण
 	retval = -ENOENT;
 out:
-	write_unlock_bh(&atalk_routes_lock);
-	return retval;
-}
+	ग_लिखो_unlock_bh(&atalk_routes_lock);
+	वापस retval;
+पूर्ण
 
 /*
- * Called when a device is downed. Just throw away any routes
+ * Called when a device is करोwned. Just throw away any routes
  * via it.
  */
-static void atrtr_device_down(struct net_device *dev)
-{
-	struct atalk_route **r = &atalk_routes;
-	struct atalk_route *tmp;
+अटल व्योम atrtr_device_करोwn(काष्ठा net_device *dev)
+अणु
+	काष्ठा atalk_route **r = &atalk_routes;
+	काष्ठा atalk_route *पंचांगp;
 
-	write_lock_bh(&atalk_routes_lock);
-	while ((tmp = *r) != NULL) {
-		if (tmp->dev == dev) {
-			*r = tmp->next;
+	ग_लिखो_lock_bh(&atalk_routes_lock);
+	जबतक ((पंचांगp = *r) != शून्य) अणु
+		अगर (पंचांगp->dev == dev) अणु
+			*r = पंचांगp->next;
 			dev_put(dev);
-			kfree(tmp);
-		} else
-			r = &tmp->next;
-	}
-	write_unlock_bh(&atalk_routes_lock);
+			kमुक्त(पंचांगp);
+		पूर्ण अन्यथा
+			r = &पंचांगp->next;
+	पूर्ण
+	ग_लिखो_unlock_bh(&atalk_routes_lock);
 
-	if (atrtr_default.dev == dev)
-		atrtr_set_default(NULL);
-}
+	अगर (atrtr_शेष.dev == dev)
+		atrtr_set_शेष(शून्य);
+पूर्ण
 
-/* Actually down the interface */
-static inline void atalk_dev_down(struct net_device *dev)
-{
-	atrtr_device_down(dev);	/* Remove all routes for the device */
-	aarp_device_down(dev);	/* Remove AARP entries for the device */
-	atif_drop_device(dev);	/* Remove the device */
-}
+/* Actually करोwn the पूर्णांकerface */
+अटल अंतरभूत व्योम atalk_dev_करोwn(काष्ठा net_device *dev)
+अणु
+	atrtr_device_करोwn(dev);	/* Remove all routes क्रम the device */
+	aarp_device_करोwn(dev);	/* Remove AARP entries क्रम the device */
+	atअगर_drop_device(dev);	/* Remove the device */
+पूर्ण
 
 /*
- * A device event has occurred. Watch for devices going down and
- * delete our use of them (iface and route).
+ * A device event has occurred. Watch क्रम devices going करोwn and
+ * delete our use of them (अगरace and route).
  */
-static int ddp_device_event(struct notifier_block *this, unsigned long event,
-			    void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+अटल पूर्णांक ddp_device_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
+			    व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
 
-	if (!net_eq(dev_net(dev), &init_net))
-		return NOTIFY_DONE;
+	अगर (!net_eq(dev_net(dev), &init_net))
+		वापस NOTIFY_DONE;
 
-	if (event == NETDEV_DOWN)
+	अगर (event == NETDEV_DOWN)
 		/* Discard any use of this */
-		atalk_dev_down(dev);
+		atalk_dev_करोwn(dev);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /* ioctl calls. Shouldn't even need touching */
 /* Device configuration ioctl calls */
-static int atif_ioctl(int cmd, void __user *arg)
-{
-	static char aarp_mcast[6] = { 0x09, 0x00, 0x00, 0xFF, 0xFF, 0xFF };
-	struct ifreq atreq;
-	struct atalk_netrange *nr;
-	struct sockaddr_at *sa;
-	struct net_device *dev;
-	struct atalk_iface *atif;
-	int ct;
-	int limit;
-	struct rtentry rtdef;
-	int add_route;
+अटल पूर्णांक atअगर_ioctl(पूर्णांक cmd, व्योम __user *arg)
+अणु
+	अटल अक्षर aarp_mcast[6] = अणु 0x09, 0x00, 0x00, 0xFF, 0xFF, 0xFF पूर्ण;
+	काष्ठा अगरreq atreq;
+	काष्ठा atalk_netrange *nr;
+	काष्ठा sockaddr_at *sa;
+	काष्ठा net_device *dev;
+	काष्ठा atalk_अगरace *atअगर;
+	पूर्णांक ct;
+	पूर्णांक limit;
+	काष्ठा rtentry rtdef;
+	पूर्णांक add_route;
 
-	if (copy_from_user(&atreq, arg, sizeof(atreq)))
-		return -EFAULT;
+	अगर (copy_from_user(&atreq, arg, माप(atreq)))
+		वापस -EFAULT;
 
-	dev = __dev_get_by_name(&init_net, atreq.ifr_name);
-	if (!dev)
-		return -ENODEV;
+	dev = __dev_get_by_name(&init_net, atreq.अगरr_name);
+	अगर (!dev)
+		वापस -ENODEV;
 
-	sa = (struct sockaddr_at *)&atreq.ifr_addr;
-	atif = atalk_find_dev(dev);
+	sa = (काष्ठा sockaddr_at *)&atreq.अगरr_addr;
+	atअगर = atalk_find_dev(dev);
 
-	switch (cmd) {
-	case SIOCSIFADDR:
-		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
-		if (sa->sat_family != AF_APPLETALK)
-			return -EINVAL;
-		if (dev->type != ARPHRD_ETHER &&
+	चयन (cmd) अणु
+	हाल SIOCSIFADDR:
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
+		अगर (sa->sat_family != AF_APPLETALK)
+			वापस -EINVAL;
+		अगर (dev->type != ARPHRD_ETHER &&
 		    dev->type != ARPHRD_LOOPBACK &&
 		    dev->type != ARPHRD_LOCALTLK &&
 		    dev->type != ARPHRD_PPP)
-			return -EPROTONOSUPPORT;
+			वापस -EPROTONOSUPPORT;
 
-		nr = (struct atalk_netrange *)&sa->sat_zero[0];
+		nr = (काष्ठा atalk_netrange *)&sa->sat_zero[0];
 		add_route = 1;
 
 		/*
-		 * if this is a point-to-point iface, and we already
-		 * have an iface for this AppleTalk address, then we
+		 * अगर this is a poपूर्णांक-to-poपूर्णांक अगरace, and we alपढ़ोy
+		 * have an अगरace क्रम this AppleTalk address, then we
 		 * should not add a route
 		 */
-		if ((dev->flags & IFF_POINTOPOINT) &&
-		    atalk_find_interface(sa->sat_addr.s_net,
-					 sa->sat_addr.s_node)) {
-			printk(KERN_DEBUG "AppleTalk: point-to-point "
+		अगर ((dev->flags & IFF_POINTOPOINT) &&
+		    atalk_find_पूर्णांकerface(sa->sat_addr.s_net,
+					 sa->sat_addr.s_node)) अणु
+			prपूर्णांकk(KERN_DEBUG "AppleTalk: point-to-point "
 			       "interface added with "
 			       "existing address\n");
 			add_route = 0;
-		}
+		पूर्ण
 
 		/*
-		 * Phase 1 is fine on LocalTalk but we don't do
+		 * Phase 1 is fine on LocalTalk but we करोn't करो
 		 * EtherTalk phase 1. Anyone wanting to add it go ahead.
 		 */
-		if (dev->type == ARPHRD_ETHER && nr->nr_phase != 2)
-			return -EPROTONOSUPPORT;
-		if (sa->sat_addr.s_node == ATADDR_BCAST ||
+		अगर (dev->type == ARPHRD_ETHER && nr->nr_phase != 2)
+			वापस -EPROTONOSUPPORT;
+		अगर (sa->sat_addr.s_node == ATADDR_BCAST ||
 		    sa->sat_addr.s_node == 254)
-			return -EINVAL;
-		if (atif) {
-			/* Already setting address */
-			if (atif->status & ATIF_PROBE)
-				return -EBUSY;
+			वापस -EINVAL;
+		अगर (atअगर) अणु
+			/* Alपढ़ोy setting address */
+			अगर (atअगर->status & ATIF_PROBE)
+				वापस -EBUSY;
 
-			atif->address.s_net  = sa->sat_addr.s_net;
-			atif->address.s_node = sa->sat_addr.s_node;
-			atrtr_device_down(dev);	/* Flush old routes */
-		} else {
-			atif = atif_add_device(dev, &sa->sat_addr);
-			if (!atif)
-				return -ENOMEM;
-		}
-		atif->nets = *nr;
+			atअगर->address.s_net  = sa->sat_addr.s_net;
+			atअगर->address.s_node = sa->sat_addr.s_node;
+			atrtr_device_करोwn(dev);	/* Flush old routes */
+		पूर्ण अन्यथा अणु
+			atअगर = atअगर_add_device(dev, &sa->sat_addr);
+			अगर (!atअगर)
+				वापस -ENOMEM;
+		पूर्ण
+		atअगर->nets = *nr;
 
 		/*
-		 * Check if the chosen address is used. If so we
+		 * Check अगर the chosen address is used. If so we
 		 * error and atalkd will try another.
 		 */
 
-		if (!(dev->flags & IFF_LOOPBACK) &&
+		अगर (!(dev->flags & IFF_LOOPBACK) &&
 		    !(dev->flags & IFF_POINTOPOINT) &&
-		    atif_probe_device(atif) < 0) {
-			atif_drop_device(dev);
-			return -EADDRINUSE;
-		}
+		    atअगर_probe_device(atअगर) < 0) अणु
+			atअगर_drop_device(dev);
+			वापस -EADDRINUSE;
+		पूर्ण
 
 		/* Hey it worked - add the direct routes */
-		sa = (struct sockaddr_at *)&rtdef.rt_gateway;
+		sa = (काष्ठा sockaddr_at *)&rtdef.rt_gateway;
 		sa->sat_family = AF_APPLETALK;
-		sa->sat_addr.s_net  = atif->address.s_net;
-		sa->sat_addr.s_node = atif->address.s_node;
-		sa = (struct sockaddr_at *)&rtdef.rt_dst;
+		sa->sat_addr.s_net  = atअगर->address.s_net;
+		sa->sat_addr.s_node = atअगर->address.s_node;
+		sa = (काष्ठा sockaddr_at *)&rtdef.rt_dst;
 		rtdef.rt_flags = RTF_UP;
 		sa->sat_family = AF_APPLETALK;
 		sa->sat_addr.s_node = ATADDR_ANYNODE;
-		if (dev->flags & IFF_LOOPBACK ||
+		अगर (dev->flags & IFF_LOOPBACK ||
 		    dev->flags & IFF_POINTOPOINT)
 			rtdef.rt_flags |= RTF_HOST;
 
 		/* Routerless initial state */
-		if (nr->nr_firstnet == htons(0) &&
-		    nr->nr_lastnet == htons(0xFFFE)) {
-			sa->sat_addr.s_net = atif->address.s_net;
+		अगर (nr->nr_firstnet == htons(0) &&
+		    nr->nr_lastnet == htons(0xFFFE)) अणु
+			sa->sat_addr.s_net = atअगर->address.s_net;
 			atrtr_create(&rtdef, dev);
-			atrtr_set_default(dev);
-		} else {
+			atrtr_set_शेष(dev);
+		पूर्ण अन्यथा अणु
 			limit = ntohs(nr->nr_lastnet);
-			if (limit - ntohs(nr->nr_firstnet) > 4096) {
-				printk(KERN_WARNING "Too many routes/"
+			अगर (limit - ntohs(nr->nr_firstnet) > 4096) अणु
+				prपूर्णांकk(KERN_WARNING "Too many routes/"
 				       "iface.\n");
-				return -EINVAL;
-			}
-			if (add_route)
-				for (ct = ntohs(nr->nr_firstnet);
-				     ct <= limit; ct++) {
+				वापस -EINVAL;
+			पूर्ण
+			अगर (add_route)
+				क्रम (ct = ntohs(nr->nr_firstnet);
+				     ct <= limit; ct++) अणु
 					sa->sat_addr.s_net = htons(ct);
 					atrtr_create(&rtdef, dev);
-				}
-		}
+				पूर्ण
+		पूर्ण
 		dev_mc_add_global(dev, aarp_mcast);
-		return 0;
+		वापस 0;
 
-	case SIOCGIFADDR:
-		if (!atif)
-			return -EADDRNOTAVAIL;
-
-		sa->sat_family = AF_APPLETALK;
-		sa->sat_addr = atif->address;
-		break;
-
-	case SIOCGIFBRDADDR:
-		if (!atif)
-			return -EADDRNOTAVAIL;
+	हाल SIOCGIFADDR:
+		अगर (!atअगर)
+			वापस -EADDRNOTAVAIL;
 
 		sa->sat_family = AF_APPLETALK;
-		sa->sat_addr.s_net = atif->address.s_net;
+		sa->sat_addr = atअगर->address;
+		अवरोध;
+
+	हाल SIOCGIFBRDADDR:
+		अगर (!atअगर)
+			वापस -EADDRNOTAVAIL;
+
+		sa->sat_family = AF_APPLETALK;
+		sa->sat_addr.s_net = atअगर->address.s_net;
 		sa->sat_addr.s_node = ATADDR_BCAST;
-		break;
+		अवरोध;
 
-	case SIOCATALKDIFADDR:
-	case SIOCDIFADDR:
-		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
-		if (sa->sat_family != AF_APPLETALK)
-			return -EINVAL;
-		atalk_dev_down(dev);
-		break;
+	हाल SIOCATALKDIFADDR:
+	हाल SIOCDIFADDR:
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
+		अगर (sa->sat_family != AF_APPLETALK)
+			वापस -EINVAL;
+		atalk_dev_करोwn(dev);
+		अवरोध;
 
-	case SIOCSARP:
-		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
-		if (sa->sat_family != AF_APPLETALK)
-			return -EINVAL;
+	हाल SIOCSARP:
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
+		अगर (sa->sat_family != AF_APPLETALK)
+			वापस -EINVAL;
 		/*
-		 * for now, we only support proxy AARP on ELAP;
-		 * we should be able to do it for LocalTalk, too.
+		 * क्रम now, we only support proxy AARP on ELAP;
+		 * we should be able to करो it क्रम LocalTalk, too.
 		 */
-		if (dev->type != ARPHRD_ETHER)
-			return -EPROTONOSUPPORT;
+		अगर (dev->type != ARPHRD_ETHER)
+			वापस -EPROTONOSUPPORT;
 
 		/*
-		 * atif points to the current interface on this network;
+		 * atअगर poपूर्णांकs to the current पूर्णांकerface on this network;
 		 * we aren't concerned about its current status (at
-		 * least for now), but it has all the settings about
+		 * least क्रम now), but it has all the settings about
 		 * the network we're going to probe. Consequently, it
 		 * must exist.
 		 */
-		if (!atif)
-			return -EADDRNOTAVAIL;
+		अगर (!atअगर)
+			वापस -EADDRNOTAVAIL;
 
-		nr = (struct atalk_netrange *)&(atif->nets);
+		nr = (काष्ठा atalk_netrange *)&(atअगर->nets);
 		/*
-		 * Phase 1 is fine on Localtalk but we don't do
+		 * Phase 1 is fine on Localtalk but we करोn't करो
 		 * Ethertalk phase 1. Anyone wanting to add it go ahead.
 		 */
-		if (dev->type == ARPHRD_ETHER && nr->nr_phase != 2)
-			return -EPROTONOSUPPORT;
+		अगर (dev->type == ARPHRD_ETHER && nr->nr_phase != 2)
+			वापस -EPROTONOSUPPORT;
 
-		if (sa->sat_addr.s_node == ATADDR_BCAST ||
+		अगर (sa->sat_addr.s_node == ATADDR_BCAST ||
 		    sa->sat_addr.s_node == 254)
-			return -EINVAL;
+			वापस -EINVAL;
 
 		/*
-		 * Check if the chosen address is used. If so we
+		 * Check अगर the chosen address is used. If so we
 		 * error and ATCP will try another.
 		 */
-		if (atif_proxy_probe_device(atif, &(sa->sat_addr)) < 0)
-			return -EADDRINUSE;
+		अगर (atअगर_proxy_probe_device(atअगर, &(sa->sat_addr)) < 0)
+			वापस -EADDRINUSE;
 
 		/*
 		 * We now have an address on the local network, and
-		 * the AARP code will defend it for us until we take it
-		 * down. We don't set up any routes right now, because
+		 * the AARP code will defend it क्रम us until we take it
+		 * करोwn. We करोn't set up any routes right now, because
 		 * ATCP will install them manually via SIOCADDRT.
 		 */
-		break;
+		अवरोध;
 
-	case SIOCDARP:
-		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
-		if (sa->sat_family != AF_APPLETALK)
-			return -EINVAL;
-		if (!atif)
-			return -EADDRNOTAVAIL;
+	हाल SIOCDARP:
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
+		अगर (sa->sat_family != AF_APPLETALK)
+			वापस -EINVAL;
+		अगर (!atअगर)
+			वापस -EADDRNOTAVAIL;
 
-		/* give to aarp module to remove proxy entry */
-		aarp_proxy_remove(atif->dev, &(sa->sat_addr));
-		return 0;
-	}
+		/* give to aarp module to हटाओ proxy entry */
+		aarp_proxy_हटाओ(atअगर->dev, &(sa->sat_addr));
+		वापस 0;
+	पूर्ण
 
-	return copy_to_user(arg, &atreq, sizeof(atreq)) ? -EFAULT : 0;
-}
+	वापस copy_to_user(arg, &atreq, माप(atreq)) ? -EFAULT : 0;
+पूर्ण
 
-static int atrtr_ioctl_addrt(struct rtentry *rt)
-{
-	struct net_device *dev = NULL;
+अटल पूर्णांक atrtr_ioctl_addrt(काष्ठा rtentry *rt)
+अणु
+	काष्ठा net_device *dev = शून्य;
 
-	if (rt->rt_dev) {
-		char name[IFNAMSIZ];
+	अगर (rt->rt_dev) अणु
+		अक्षर name[IFNAMSIZ];
 
-		if (copy_from_user(name, rt->rt_dev, IFNAMSIZ-1))
-			return -EFAULT;
+		अगर (copy_from_user(name, rt->rt_dev, IFNAMSIZ-1))
+			वापस -EFAULT;
 		name[IFNAMSIZ-1] = '\0';
 
 		dev = __dev_get_by_name(&init_net, name);
-		if (!dev)
-			return -ENODEV;
-	}
-	return atrtr_create(rt, dev);
-}
+		अगर (!dev)
+			वापस -ENODEV;
+	पूर्ण
+	वापस atrtr_create(rt, dev);
+पूर्ण
 
 /* Routing ioctl() calls */
-static int atrtr_ioctl(unsigned int cmd, void __user *arg)
-{
-	struct rtentry rt;
+अटल पूर्णांक atrtr_ioctl(अचिन्हित पूर्णांक cmd, व्योम __user *arg)
+अणु
+	काष्ठा rtentry rt;
 
-	if (copy_from_user(&rt, arg, sizeof(rt)))
-		return -EFAULT;
+	अगर (copy_from_user(&rt, arg, माप(rt)))
+		वापस -EFAULT;
 
-	switch (cmd) {
-	case SIOCDELRT:
-		if (rt.rt_dst.sa_family != AF_APPLETALK)
-			return -EINVAL;
-		return atrtr_delete(&((struct sockaddr_at *)
+	चयन (cmd) अणु
+	हाल SIOCDELRT:
+		अगर (rt.rt_dst.sa_family != AF_APPLETALK)
+			वापस -EINVAL;
+		वापस atrtr_delete(&((काष्ठा sockaddr_at *)
 				      &rt.rt_dst)->sat_addr);
 
-	case SIOCADDRT:
-		return atrtr_ioctl_addrt(&rt);
-	}
-	return -EINVAL;
-}
+	हाल SIOCADDRT:
+		वापस atrtr_ioctl_addrt(&rt);
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
 /**************************************************************************\
 *                                                                          *
-* Handling for system calls applied via the various interfaces to an       *
+* Handling क्रम प्रणाली calls applied via the various पूर्णांकerfaces to an       *
 * AppleTalk socket object.                                                 *
 *                                                                          *
 \**************************************************************************/
 
 /*
  * Checksum: This is 'optional'. It's quite likely also a good
- * candidate for assembler hackery 8)
+ * candidate क्रम assembler hackery 8)
  */
-static unsigned long atalk_sum_partial(const unsigned char *data,
-				       int len, unsigned long sum)
-{
-	/* This ought to be unwrapped neatly. I'll trust gcc for now */
-	while (len--) {
+अटल अचिन्हित दीर्घ atalk_sum_partial(स्थिर अचिन्हित अक्षर *data,
+				       पूर्णांक len, अचिन्हित दीर्घ sum)
+अणु
+	/* This ought to be unwrapped neatly. I'll trust gcc क्रम now */
+	जबतक (len--) अणु
 		sum += *data++;
 		sum = rol16(sum, 1);
-	}
-	return sum;
-}
+	पूर्ण
+	वापस sum;
+पूर्ण
 
 /*  Checksum skb data --  similar to skb_checksum  */
-static unsigned long atalk_sum_skb(const struct sk_buff *skb, int offset,
-				   int len, unsigned long sum)
-{
-	int start = skb_headlen(skb);
-	struct sk_buff *frag_iter;
-	int i, copy;
+अटल अचिन्हित दीर्घ atalk_sum_skb(स्थिर काष्ठा sk_buff *skb, पूर्णांक offset,
+				   पूर्णांक len, अचिन्हित दीर्घ sum)
+अणु
+	पूर्णांक start = skb_headlen(skb);
+	काष्ठा sk_buff *frag_iter;
+	पूर्णांक i, copy;
 
 	/* checksum stuff in header space */
-	if ((copy = start - offset) > 0) {
-		if (copy > len)
+	अगर ((copy = start - offset) > 0) अणु
+		अगर (copy > len)
 			copy = len;
 		sum = atalk_sum_partial(skb->data + offset, copy, sum);
-		if ((len -= copy) == 0)
-			return sum;
+		अगर ((len -= copy) == 0)
+			वापस sum;
 
 		offset += copy;
-	}
+	पूर्ण
 
 	/* checksum stuff in frags */
-	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
-		int end;
-		const skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
+	क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
+		पूर्णांक end;
+		स्थिर skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 		WARN_ON(start > offset + len);
 
 		end = start + skb_frag_size(frag);
-		if ((copy = end - offset) > 0) {
+		अगर ((copy = end - offset) > 0) अणु
 			u8 *vaddr;
 
-			if (copy > len)
+			अगर (copy > len)
 				copy = len;
 			vaddr = kmap_atomic(skb_frag_page(frag));
 			sum = atalk_sum_partial(vaddr + skb_frag_off(frag) +
 						offset - start, copy, sum);
 			kunmap_atomic(vaddr);
 
-			if (!(len -= copy))
-				return sum;
+			अगर (!(len -= copy))
+				वापस sum;
 			offset += copy;
-		}
+		पूर्ण
 		start = end;
-	}
+	पूर्ण
 
-	skb_walk_frags(skb, frag_iter) {
-		int end;
+	skb_walk_frags(skb, frag_iter) अणु
+		पूर्णांक end;
 
 		WARN_ON(start > offset + len);
 
 		end = start + frag_iter->len;
-		if ((copy = end - offset) > 0) {
-			if (copy > len)
+		अगर ((copy = end - offset) > 0) अणु
+			अगर (copy > len)
 				copy = len;
 			sum = atalk_sum_skb(frag_iter, offset - start,
 					    copy, sum);
-			if ((len -= copy) == 0)
-				return sum;
+			अगर ((len -= copy) == 0)
+				वापस sum;
 			offset += copy;
-		}
+		पूर्ण
 		start = end;
-	}
+	पूर्ण
 
 	BUG_ON(len > 0);
 
-	return sum;
-}
+	वापस sum;
+पूर्ण
 
-static __be16 atalk_checksum(const struct sk_buff *skb, int len)
-{
-	unsigned long sum;
+अटल __be16 atalk_checksum(स्थिर काष्ठा sk_buff *skb, पूर्णांक len)
+अणु
+	अचिन्हित दीर्घ sum;
 
 	/* skip header 4 bytes */
 	sum = atalk_sum_skb(skb, 4, len-4, 0);
 
-	/* Use 0xFFFF for 0. 0 itself means none */
-	return sum ? htons((unsigned short)sum) : htons(0xFFFF);
-}
+	/* Use 0xFFFF क्रम 0. 0 itself means none */
+	वापस sum ? htons((अचिन्हित लघु)sum) : htons(0xFFFF);
+पूर्ण
 
-static struct proto ddp_proto = {
+अटल काष्ठा proto ddp_proto = अणु
 	.name	  = "DDP",
 	.owner	  = THIS_MODULE,
-	.obj_size = sizeof(struct atalk_sock),
-};
+	.obj_size = माप(काष्ठा atalk_sock),
+पूर्ण;
 
 /*
  * Create a socket. Initialise the socket, blank the addresses
  * set the state.
  */
-static int atalk_create(struct net *net, struct socket *sock, int protocol,
-			int kern)
-{
-	struct sock *sk;
-	int rc = -ESOCKTNOSUPPORT;
+अटल पूर्णांक atalk_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
+			पूर्णांक kern)
+अणु
+	काष्ठा sock *sk;
+	पूर्णांक rc = -ESOCKTNOSUPPORT;
 
-	if (!net_eq(net, &init_net))
-		return -EAFNOSUPPORT;
+	अगर (!net_eq(net, &init_net))
+		वापस -EAFNOSUPPORT;
 
 	/*
-	 * We permit SOCK_DGRAM and RAW is an extension. It is trivial to do
-	 * and gives you the full ELAP frame. Should be handy for CAP 8)
+	 * We permit SOCK_DGRAM and RAW is an extension. It is trivial to करो
+	 * and gives you the full ELAP frame. Should be handy क्रम CAP 8)
 	 */
-	if (sock->type != SOCK_RAW && sock->type != SOCK_DGRAM)
-		goto out;
+	अगर (sock->type != SOCK_RAW && sock->type != SOCK_DGRAM)
+		जाओ out;
 
 	rc = -EPERM;
-	if (sock->type == SOCK_RAW && !kern && !capable(CAP_NET_RAW))
-		goto out;
+	अगर (sock->type == SOCK_RAW && !kern && !capable(CAP_NET_RAW))
+		जाओ out;
 
 	rc = -ENOMEM;
 	sk = sk_alloc(net, PF_APPLETALK, GFP_KERNEL, &ddp_proto, kern);
-	if (!sk)
-		goto out;
+	अगर (!sk)
+		जाओ out;
 	rc = 0;
 	sock->ops = &atalk_dgram_ops;
 	sock_init_data(sock, sk);
 
-	/* Checksums on by default */
+	/* Checksums on by शेष */
 	sock_set_flag(sk, SOCK_ZAPPED);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Free a socket. No work needed */
-static int atalk_release(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
+अटल पूर्णांक atalk_release(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
-	if (sk) {
+	अगर (sk) अणु
 		sock_hold(sk);
 		lock_sock(sk);
 
 		sock_orphan(sk);
-		sock->sk = NULL;
+		sock->sk = शून्य;
 		atalk_destroy_socket(sk);
 
 		release_sock(sk);
 		sock_put(sk);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * atalk_pick_and_bind_port - Pick a source port when one is not given
- * @sk: socket to insert into the tables
- * @sat: address to search for
+ * @sk: socket to insert पूर्णांकo the tables
+ * @sat: address to search क्रम
  *
- * Pick a source port when one is not given. If we can find a suitable free
- * one, we insert the socket into the tables using it.
+ * Pick a source port when one is not given. If we can find a suitable मुक्त
+ * one, we insert the socket पूर्णांकo the tables using it.
  *
  * This whole operation must be atomic.
  */
-static int atalk_pick_and_bind_port(struct sock *sk, struct sockaddr_at *sat)
-{
-	int retval;
+अटल पूर्णांक atalk_pick_and_bind_port(काष्ठा sock *sk, काष्ठा sockaddr_at *sat)
+अणु
+	पूर्णांक retval;
 
-	write_lock_bh(&atalk_sockets_lock);
+	ग_लिखो_lock_bh(&atalk_sockets_lock);
 
-	for (sat->sat_port = ATPORT_RESERVED;
+	क्रम (sat->sat_port = ATPORT_RESERVED;
 	     sat->sat_port < ATPORT_LAST;
-	     sat->sat_port++) {
-		struct sock *s;
+	     sat->sat_port++) अणु
+		काष्ठा sock *s;
 
-		sk_for_each(s, &atalk_sockets) {
-			struct atalk_sock *at = at_sk(s);
+		sk_क्रम_each(s, &atalk_sockets) अणु
+			काष्ठा atalk_sock *at = at_sk(s);
 
-			if (at->src_net == sat->sat_addr.s_net &&
+			अगर (at->src_net == sat->sat_addr.s_net &&
 			    at->src_node == sat->sat_addr.s_node &&
 			    at->src_port == sat->sat_port)
-				goto try_next_port;
-		}
+				जाओ try_next_port;
+		पूर्ण
 
-		/* Wheee, it's free, assign and insert. */
+		/* Wheee, it's मुक्त, assign and insert. */
 		__atalk_insert_socket(sk);
 		at_sk(sk)->src_port = sat->sat_port;
 		retval = 0;
-		goto out;
+		जाओ out;
 
 try_next_port:;
-	}
+	पूर्ण
 
 	retval = -EBUSY;
 out:
-	write_unlock_bh(&atalk_sockets_lock);
-	return retval;
-}
+	ग_लिखो_unlock_bh(&atalk_sockets_lock);
+	वापस retval;
+पूर्ण
 
-static int atalk_autobind(struct sock *sk)
-{
-	struct atalk_sock *at = at_sk(sk);
-	struct sockaddr_at sat;
-	struct atalk_addr *ap = atalk_find_primary();
-	int n = -EADDRNOTAVAIL;
+अटल पूर्णांक atalk_स्वतःbind(काष्ठा sock *sk)
+अणु
+	काष्ठा atalk_sock *at = at_sk(sk);
+	काष्ठा sockaddr_at sat;
+	काष्ठा atalk_addr *ap = atalk_find_primary();
+	पूर्णांक n = -EADDRNOTAVAIL;
 
-	if (!ap || ap->s_net == htons(ATADDR_ANYNET))
-		goto out;
+	अगर (!ap || ap->s_net == htons(ATADDR_ANYNET))
+		जाओ out;
 
 	at->src_net  = sat.sat_addr.s_net  = ap->s_net;
 	at->src_node = sat.sat_addr.s_node = ap->s_node;
 
 	n = atalk_pick_and_bind_port(sk, &sat);
-	if (!n)
+	अगर (!n)
 		sock_reset_flag(sk, SOCK_ZAPPED);
 out:
-	return n;
-}
+	वापस n;
+पूर्ण
 
 /* Set the address 'our end' of the connection */
-static int atalk_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
-{
-	struct sockaddr_at *addr = (struct sockaddr_at *)uaddr;
-	struct sock *sk = sock->sk;
-	struct atalk_sock *at = at_sk(sk);
-	int err;
+अटल पूर्णांक atalk_bind(काष्ठा socket *sock, काष्ठा sockaddr *uaddr, पूर्णांक addr_len)
+अणु
+	काष्ठा sockaddr_at *addr = (काष्ठा sockaddr_at *)uaddr;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा atalk_sock *at = at_sk(sk);
+	पूर्णांक err;
 
-	if (!sock_flag(sk, SOCK_ZAPPED) ||
-	    addr_len != sizeof(struct sockaddr_at))
-		return -EINVAL;
+	अगर (!sock_flag(sk, SOCK_ZAPPED) ||
+	    addr_len != माप(काष्ठा sockaddr_at))
+		वापस -EINVAL;
 
-	if (addr->sat_family != AF_APPLETALK)
-		return -EAFNOSUPPORT;
+	अगर (addr->sat_family != AF_APPLETALK)
+		वापस -EAFNOSUPPORT;
 
 	lock_sock(sk);
-	if (addr->sat_addr.s_net == htons(ATADDR_ANYNET)) {
-		struct atalk_addr *ap = atalk_find_primary();
+	अगर (addr->sat_addr.s_net == htons(ATADDR_ANYNET)) अणु
+		काष्ठा atalk_addr *ap = atalk_find_primary();
 
 		err = -EADDRNOTAVAIL;
-		if (!ap)
-			goto out;
+		अगर (!ap)
+			जाओ out;
 
 		at->src_net  = addr->sat_addr.s_net = ap->s_net;
 		at->src_node = addr->sat_addr.s_node = ap->s_node;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = -EADDRNOTAVAIL;
-		if (!atalk_find_interface(addr->sat_addr.s_net,
+		अगर (!atalk_find_पूर्णांकerface(addr->sat_addr.s_net,
 					  addr->sat_addr.s_node))
-			goto out;
+			जाओ out;
 
 		at->src_net  = addr->sat_addr.s_net;
 		at->src_node = addr->sat_addr.s_node;
-	}
+	पूर्ण
 
-	if (addr->sat_port == ATADDR_ANYPORT) {
+	अगर (addr->sat_port == ATADDR_ANYPORT) अणु
 		err = atalk_pick_and_bind_port(sk, addr);
 
-		if (err < 0)
-			goto out;
-	} else {
+		अगर (err < 0)
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		at->src_port = addr->sat_port;
 
 		err = -EADDRINUSE;
-		if (atalk_find_or_insert_socket(sk, addr))
-			goto out;
-	}
+		अगर (atalk_find_or_insert_socket(sk, addr))
+			जाओ out;
+	पूर्ण
 
 	sock_reset_flag(sk, SOCK_ZAPPED);
 	err = 0;
 out:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Set the address we talk to */
-static int atalk_connect(struct socket *sock, struct sockaddr *uaddr,
-			 int addr_len, int flags)
-{
-	struct sock *sk = sock->sk;
-	struct atalk_sock *at = at_sk(sk);
-	struct sockaddr_at *addr;
-	int err;
+अटल पूर्णांक atalk_connect(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
+			 पूर्णांक addr_len, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा atalk_sock *at = at_sk(sk);
+	काष्ठा sockaddr_at *addr;
+	पूर्णांक err;
 
 	sk->sk_state   = TCP_CLOSE;
 	sock->state = SS_UNCONNECTED;
 
-	if (addr_len != sizeof(*addr))
-		return -EINVAL;
+	अगर (addr_len != माप(*addr))
+		वापस -EINVAL;
 
-	addr = (struct sockaddr_at *)uaddr;
+	addr = (काष्ठा sockaddr_at *)uaddr;
 
-	if (addr->sat_family != AF_APPLETALK)
-		return -EAFNOSUPPORT;
+	अगर (addr->sat_family != AF_APPLETALK)
+		वापस -EAFNOSUPPORT;
 
-	if (addr->sat_addr.s_node == ATADDR_BCAST &&
-	    !sock_flag(sk, SOCK_BROADCAST)) {
-#if 1
+	अगर (addr->sat_addr.s_node == ATADDR_BCAST &&
+	    !sock_flag(sk, SOCK_BROADCAST)) अणु
+#अगर 1
 		pr_warn("atalk_connect: %s is broken and did not set SO_BROADCAST.\n",
 			current->comm);
-#else
-		return -EACCES;
-#endif
-	}
+#अन्यथा
+		वापस -EACCES;
+#पूर्ण_अगर
+	पूर्ण
 
 	lock_sock(sk);
 	err = -EBUSY;
-	if (sock_flag(sk, SOCK_ZAPPED))
-		if (atalk_autobind(sk) < 0)
-			goto out;
+	अगर (sock_flag(sk, SOCK_ZAPPED))
+		अगर (atalk_स्वतःbind(sk) < 0)
+			जाओ out;
 
 	err = -ENETUNREACH;
-	if (!atrtr_get_dev(&addr->sat_addr))
-		goto out;
+	अगर (!atrtr_get_dev(&addr->sat_addr))
+		जाओ out;
 
 	at->dest_port = addr->sat_port;
 	at->dest_net  = addr->sat_addr.s_net;
@@ -1238,68 +1239,68 @@ static int atalk_connect(struct socket *sock, struct sockaddr *uaddr,
 	err = 0;
 out:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Find the name of an AppleTalk socket. Just copy the right
- * fields into the sockaddr.
+ * fields पूर्णांकo the sockaddr.
  */
-static int atalk_getname(struct socket *sock, struct sockaddr *uaddr,
-			 int peer)
-{
-	struct sockaddr_at sat;
-	struct sock *sk = sock->sk;
-	struct atalk_sock *at = at_sk(sk);
-	int err;
+अटल पूर्णांक atalk_getname(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
+			 पूर्णांक peer)
+अणु
+	काष्ठा sockaddr_at sat;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा atalk_sock *at = at_sk(sk);
+	पूर्णांक err;
 
 	lock_sock(sk);
 	err = -ENOBUFS;
-	if (sock_flag(sk, SOCK_ZAPPED))
-		if (atalk_autobind(sk) < 0)
-			goto out;
+	अगर (sock_flag(sk, SOCK_ZAPPED))
+		अगर (atalk_स्वतःbind(sk) < 0)
+			जाओ out;
 
-	memset(&sat, 0, sizeof(sat));
+	स_रखो(&sat, 0, माप(sat));
 
-	if (peer) {
+	अगर (peer) अणु
 		err = -ENOTCONN;
-		if (sk->sk_state != TCP_ESTABLISHED)
-			goto out;
+		अगर (sk->sk_state != TCP_ESTABLISHED)
+			जाओ out;
 
 		sat.sat_addr.s_net  = at->dest_net;
 		sat.sat_addr.s_node = at->dest_node;
 		sat.sat_port	    = at->dest_port;
-	} else {
+	पूर्ण अन्यथा अणु
 		sat.sat_addr.s_net  = at->src_net;
 		sat.sat_addr.s_node = at->src_node;
 		sat.sat_port	    = at->src_port;
-	}
+	पूर्ण
 
 	sat.sat_family = AF_APPLETALK;
-	memcpy(uaddr, &sat, sizeof(sat));
-	err = sizeof(struct sockaddr_at);
+	स_नकल(uaddr, &sat, माप(sat));
+	err = माप(काष्ठा sockaddr_at);
 
 out:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPDDP)
-static __inline__ int is_ip_over_ddp(struct sk_buff *skb)
-{
-	return skb->data[12] == 22;
-}
+#अगर IS_ENABLED(CONFIG_IPDDP)
+अटल __अंतरभूत__ पूर्णांक is_ip_over_ddp(काष्ठा sk_buff *skb)
+अणु
+	वापस skb->data[12] == 22;
+पूर्ण
 
-static int handle_ip_over_ddp(struct sk_buff *skb)
-{
-	struct net_device *dev = __dev_get_by_name(&init_net, "ipddp0");
-	struct net_device_stats *stats;
+अटल पूर्णांक handle_ip_over_ddp(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *dev = __dev_get_by_name(&init_net, "ipddp0");
+	काष्ठा net_device_stats *stats;
 
 	/* This needs to be able to handle ipddp"N" devices */
-	if (!dev) {
-		kfree_skb(skb);
-		return NET_RX_DROP;
-	}
+	अगर (!dev) अणु
+		kमुक्त_skb(skb);
+		वापस NET_RX_DROP;
+	पूर्ण
 
 	skb->protocol = htons(ETH_P_IP);
 	skb_pull(skb, 13);
@@ -1309,36 +1310,36 @@ static int handle_ip_over_ddp(struct sk_buff *skb)
 	stats = netdev_priv(dev);
 	stats->rx_packets++;
 	stats->rx_bytes += skb->len + 13;
-	return netif_rx(skb);  /* Send the SKB up to a higher place. */
-}
-#else
-/* make it easy for gcc to optimize this test out, i.e. kill the code */
-#define is_ip_over_ddp(skb) 0
-#define handle_ip_over_ddp(skb) 0
-#endif
+	वापस netअगर_rx(skb);  /* Send the SKB up to a higher place. */
+पूर्ण
+#अन्यथा
+/* make it easy क्रम gcc to optimize this test out, i.e. समाप्त the code */
+#घोषणा is_ip_over_ddp(skb) 0
+#घोषणा handle_ip_over_ddp(skb) 0
+#पूर्ण_अगर
 
-static int atalk_route_packet(struct sk_buff *skb, struct net_device *dev,
-			      struct ddpehdr *ddp, __u16 len_hops, int origlen)
-{
-	struct atalk_route *rt;
-	struct atalk_addr ta;
+अटल पूर्णांक atalk_route_packet(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+			      काष्ठा ddpehdr *ddp, __u16 len_hops, पूर्णांक origlen)
+अणु
+	काष्ठा atalk_route *rt;
+	काष्ठा atalk_addr ta;
 
 	/*
 	 * Don't route multicast, etc., packets, or packets sent to "this
 	 * network"
 	 */
-	if (skb->pkt_type != PACKET_HOST || !ddp->deh_dnet) {
+	अगर (skb->pkt_type != PACKET_HOST || !ddp->deh_dnet) अणु
 		/*
 		 * FIXME:
 		 *
-		 * Can it ever happen that a packet is from a PPP iface and
-		 * needs to be broadcast onto the default network?
+		 * Can it ever happen that a packet is from a PPP अगरace and
+		 * needs to be broadcast onto the शेष network?
 		 */
-		if (dev->type == ARPHRD_PPP)
-			printk(KERN_DEBUG "AppleTalk: didn't forward broadcast "
+		अगर (dev->type == ARPHRD_PPP)
+			prपूर्णांकk(KERN_DEBUG "AppleTalk: didn't forward broadcast "
 					  "packet received from PPP iface\n");
-		goto free_it;
-	}
+		जाओ मुक्त_it;
+	पूर्ण
 
 	ta.s_net  = ddp->deh_dnet;
 	ta.s_node = ddp->deh_dnode;
@@ -1347,8 +1348,8 @@ static int atalk_route_packet(struct sk_buff *skb, struct net_device *dev,
 	rt = atrtr_find(&ta);
 	/* increment hops count */
 	len_hops += 1 << 10;
-	if (!rt || !(len_hops & (15 << 10)))
-		goto free_it;
+	अगर (!rt || !(len_hops & (15 << 10)))
+		जाओ मुक्त_it;
 
 	/* FIXME: use skb->cb to be able to use shared skbs */
 
@@ -1357,13 +1358,13 @@ static int atalk_route_packet(struct sk_buff *skb, struct net_device *dev,
 	 * gateway instead.
 	 */
 
-	if (rt->flags & RTF_GATEWAY) {
+	अगर (rt->flags & RTF_GATEWAY) अणु
 		ta.s_net  = rt->gateway.s_net;
 		ta.s_node = rt->gateway.s_node;
-	}
+	पूर्ण
 
 	/* Fix up skb->len field */
-	skb_trim(skb, min_t(unsigned int, origlen,
+	skb_trim(skb, min_t(अचिन्हित पूर्णांक, origlen,
 			    (rt->dev->hard_header_len +
 			     ddp_dl->header_length + (len_hops & 1023))));
 
@@ -1379,31 +1380,31 @@ static int atalk_route_packet(struct sk_buff *skb, struct net_device *dev,
 	 * Order matters here: If a packet has to be copied to make a new
 	 * headroom (rare hopefully) then it won't need unsharing.
 	 *
-	 * Note. ddp-> becomes invalid at the realloc.
+	 * Note. ddp-> becomes invalid at the पुनः_स्मृति.
 	 */
-	if (skb_headroom(skb) < 22) {
+	अगर (skb_headroom(skb) < 22) अणु
 		/* 22 bytes - 12 ether, 2 len, 3 802.2 5 snap */
-		struct sk_buff *nskb = skb_realloc_headroom(skb, 32);
-		kfree_skb(skb);
+		काष्ठा sk_buff *nskb = skb_पुनः_स्मृति_headroom(skb, 32);
+		kमुक्त_skb(skb);
 		skb = nskb;
-	} else
+	पूर्ण अन्यथा
 		skb = skb_unshare(skb, GFP_ATOMIC);
 
 	/*
-	 * If the buffer didn't vanish into the lack of space bitbucket we can
+	 * If the buffer didn't vanish पूर्णांकo the lack of space bitbucket we can
 	 * send it.
 	 */
-	if (skb == NULL)
-		goto drop;
+	अगर (skb == शून्य)
+		जाओ drop;
 
-	if (aarp_send_ddp(rt->dev, skb, &ta, NULL) == NET_XMIT_DROP)
-		return NET_RX_DROP;
-	return NET_RX_SUCCESS;
-free_it:
-	kfree_skb(skb);
+	अगर (aarp_send_ddp(rt->dev, skb, &ta, शून्य) == NET_XMIT_DROP)
+		वापस NET_RX_DROP;
+	वापस NET_RX_SUCCESS;
+मुक्त_it:
+	kमुक्त_skb(skb);
 drop:
-	return NET_RX_DROP;
-}
+	वापस NET_RX_DROP;
+पूर्ण
 
 /**
  *	atalk_rcv - Receive a packet (in skb) from device dev
@@ -1415,135 +1416,135 @@ drop:
  *	Receive a packet (in skb) from device dev. This has come from the SNAP
  *	decoder, and on entry skb->transport_header is the DDP header, skb->len
  *	is the DDP header, skb->len is the DDP length. The physical headers
- *	have been extracted. PPP should probably pass frames marked as for this
+ *	have been extracted. PPP should probably pass frames marked as क्रम this
  *	layer.  [ie ARPHRD_ETHERTALK]
  */
-static int atalk_rcv(struct sk_buff *skb, struct net_device *dev,
-		     struct packet_type *pt, struct net_device *orig_dev)
-{
-	struct ddpehdr *ddp;
-	struct sock *sock;
-	struct atalk_iface *atif;
-	struct sockaddr_at tosat;
-	int origlen;
+अटल पूर्णांक atalk_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+		     काष्ठा packet_type *pt, काष्ठा net_device *orig_dev)
+अणु
+	काष्ठा ddpehdr *ddp;
+	काष्ठा sock *sock;
+	काष्ठा atalk_अगरace *atअगर;
+	काष्ठा sockaddr_at tosat;
+	पूर्णांक origlen;
 	__u16 len_hops;
 
-	if (!net_eq(dev_net(dev), &init_net))
-		goto drop;
+	अगर (!net_eq(dev_net(dev), &init_net))
+		जाओ drop;
 
-	/* Don't mangle buffer if shared */
-	if (!(skb = skb_share_check(skb, GFP_ATOMIC)))
-		goto out;
+	/* Don't mangle buffer अगर shared */
+	अगर (!(skb = skb_share_check(skb, GFP_ATOMIC)))
+		जाओ out;
 
 	/* Size check and make sure header is contiguous */
-	if (!pskb_may_pull(skb, sizeof(*ddp)))
-		goto drop;
+	अगर (!pskb_may_pull(skb, माप(*ddp)))
+		जाओ drop;
 
 	ddp = ddp_hdr(skb);
 
 	len_hops = ntohs(ddp->deh_len_hops);
 
-	/* Trim buffer in case of stray trailing data */
+	/* Trim buffer in हाल of stray trailing data */
 	origlen = skb->len;
-	skb_trim(skb, min_t(unsigned int, skb->len, len_hops & 1023));
+	skb_trim(skb, min_t(अचिन्हित पूर्णांक, skb->len, len_hops & 1023));
 
 	/*
-	 * Size check to see if ddp->deh_len was crap
+	 * Size check to see अगर ddp->deh_len was crap
 	 * (Otherwise we'll detonate most spectacularly
 	 * in the middle of atalk_checksum() or recvmsg()).
 	 */
-	if (skb->len < sizeof(*ddp) || skb->len < (len_hops & 1023)) {
+	अगर (skb->len < माप(*ddp) || skb->len < (len_hops & 1023)) अणु
 		pr_debug("AppleTalk: dropping corrupted frame (deh_len=%u, "
 			 "skb->len=%u)\n", len_hops & 1023, skb->len);
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 
 	/*
-	 * Any checksums. Note we don't do htons() on this == is assumed to be
-	 * valid for net byte orders all over the networking code...
+	 * Any checksums. Note we करोn't करो htons() on this == is assumed to be
+	 * valid क्रम net byte orders all over the networking code...
 	 */
-	if (ddp->deh_sum &&
+	अगर (ddp->deh_sum &&
 	    atalk_checksum(skb, len_hops & 1023) != ddp->deh_sum)
-		/* Not a valid AppleTalk frame - dustbin time */
-		goto drop;
+		/* Not a valid AppleTalk frame - dustbin समय */
+		जाओ drop;
 
 	/* Check the packet is aimed at us */
-	if (!ddp->deh_dnet)	/* Net 0 is 'this network' */
-		atif = atalk_find_anynet(ddp->deh_dnode, dev);
-	else
-		atif = atalk_find_interface(ddp->deh_dnet, ddp->deh_dnode);
+	अगर (!ddp->deh_dnet)	/* Net 0 is 'this network' */
+		atअगर = atalk_find_anynet(ddp->deh_dnode, dev);
+	अन्यथा
+		atअगर = atalk_find_पूर्णांकerface(ddp->deh_dnet, ddp->deh_dnode);
 
-	if (!atif) {
+	अगर (!atअगर) अणु
 		/* Not ours, so we route the packet via the correct
-		 * AppleTalk iface
+		 * AppleTalk अगरace
 		 */
-		return atalk_route_packet(skb, dev, ddp, len_hops, origlen);
-	}
+		वापस atalk_route_packet(skb, dev, ddp, len_hops, origlen);
+	पूर्ण
 
-	/* if IP over DDP is not selected this code will be optimized out */
-	if (is_ip_over_ddp(skb))
-		return handle_ip_over_ddp(skb);
+	/* अगर IP over DDP is not selected this code will be optimized out */
+	अगर (is_ip_over_ddp(skb))
+		वापस handle_ip_over_ddp(skb);
 	/*
-	 * Which socket - atalk_search_socket() looks for a *full match*
+	 * Which socket - atalk_search_socket() looks क्रम a *full match*
 	 * of the <net, node, port> tuple.
 	 */
 	tosat.sat_addr.s_net  = ddp->deh_dnet;
 	tosat.sat_addr.s_node = ddp->deh_dnode;
 	tosat.sat_port	      = ddp->deh_dport;
 
-	sock = atalk_search_socket(&tosat, atif);
-	if (!sock) /* But not one of our sockets */
-		goto drop;
+	sock = atalk_search_socket(&tosat, atअगर);
+	अगर (!sock) /* But not one of our sockets */
+		जाओ drop;
 
 	/* Queue packet (standard) */
-	if (sock_queue_rcv_skb(sock, skb) < 0)
-		goto drop;
+	अगर (sock_queue_rcv_skb(sock, skb) < 0)
+		जाओ drop;
 
-	return NET_RX_SUCCESS;
+	वापस NET_RX_SUCCESS;
 
 drop:
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 out:
-	return NET_RX_DROP;
+	वापस NET_RX_DROP;
 
-}
+पूर्ण
 
 /*
  * Receive a LocalTalk frame. We make some demands on the caller here.
- * Caller must provide enough headroom on the packet to pull the short
- * header and append a long one.
+ * Caller must provide enough headroom on the packet to pull the लघु
+ * header and append a दीर्घ one.
  */
-static int ltalk_rcv(struct sk_buff *skb, struct net_device *dev,
-		     struct packet_type *pt, struct net_device *orig_dev)
-{
-	if (!net_eq(dev_net(dev), &init_net))
-		goto freeit;
+अटल पूर्णांक ltalk_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+		     काष्ठा packet_type *pt, काष्ठा net_device *orig_dev)
+अणु
+	अगर (!net_eq(dev_net(dev), &init_net))
+		जाओ मुक्तit;
 
-	/* Expand any short form frames */
-	if (skb_mac_header(skb)[2] == 1) {
-		struct ddpehdr *ddp;
+	/* Expand any लघु क्रमm frames */
+	अगर (skb_mac_header(skb)[2] == 1) अणु
+		काष्ठा ddpehdr *ddp;
 		/* Find our address */
-		struct atalk_addr *ap = atalk_find_dev_addr(dev);
+		काष्ठा atalk_addr *ap = atalk_find_dev_addr(dev);
 
-		if (!ap || skb->len < sizeof(__be16) || skb->len > 1023)
-			goto freeit;
+		अगर (!ap || skb->len < माप(__be16) || skb->len > 1023)
+			जाओ मुक्तit;
 
-		/* Don't mangle buffer if shared */
-		if (!(skb = skb_share_check(skb, GFP_ATOMIC)))
-			return 0;
+		/* Don't mangle buffer अगर shared */
+		अगर (!(skb = skb_share_check(skb, GFP_ATOMIC)))
+			वापस 0;
 
 		/*
 		 * The push leaves us with a ddephdr not an shdr, and
 		 * handily the port bytes in the right place preset.
 		 */
-		ddp = skb_push(skb, sizeof(*ddp) - 4);
+		ddp = skb_push(skb, माप(*ddp) - 4);
 
-		/* Now fill in the long header */
+		/* Now fill in the दीर्घ header */
 
 		/*
 		 * These two first. The mac overlays the new source/dest
-		 * network information so we MUST copy these before
-		 * we write the network numbers !
+		 * network inक्रमmation so we MUST copy these beक्रमe
+		 * we ग_लिखो the network numbers !
 		 */
 
 		ddp->deh_dnode = skb_mac_header(skb)[0];     /* From physical header */
@@ -1555,86 +1556,86 @@ static int ltalk_rcv(struct sk_buff *skb, struct net_device *dev,
 		/*
 		 * Not sure about this bit...
 		 */
-		/* Non routable, so force a drop if we slip up later */
+		/* Non routable, so क्रमce a drop अगर we slip up later */
 		ddp->deh_len_hops = htons(skb->len + (DDP_MAXHOPS << 10));
-	}
+	पूर्ण
 	skb_reset_transport_header(skb);
 
-	return atalk_rcv(skb, dev, pt, orig_dev);
-freeit:
-	kfree_skb(skb);
-	return 0;
-}
+	वापस atalk_rcv(skb, dev, pt, orig_dev);
+मुक्तit:
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int atalk_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
-{
-	struct sock *sk = sock->sk;
-	struct atalk_sock *at = at_sk(sk);
-	DECLARE_SOCKADDR(struct sockaddr_at *, usat, msg->msg_name);
-	int flags = msg->msg_flags;
-	int loopback = 0;
-	struct sockaddr_at local_satalk, gsat;
-	struct sk_buff *skb;
-	struct net_device *dev;
-	struct ddpehdr *ddp;
-	int size, hard_header_len;
-	struct atalk_route *rt, *rt_lo = NULL;
-	int err;
+अटल पूर्णांक atalk_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा atalk_sock *at = at_sk(sk);
+	DECLARE_SOCKADDR(काष्ठा sockaddr_at *, usat, msg->msg_name);
+	पूर्णांक flags = msg->msg_flags;
+	पूर्णांक loopback = 0;
+	काष्ठा sockaddr_at local_satalk, gsat;
+	काष्ठा sk_buff *skb;
+	काष्ठा net_device *dev;
+	काष्ठा ddpehdr *ddp;
+	पूर्णांक size, hard_header_len;
+	काष्ठा atalk_route *rt, *rt_lo = शून्य;
+	पूर्णांक err;
 
-	if (flags & ~(MSG_DONTWAIT|MSG_CMSG_COMPAT))
-		return -EINVAL;
+	अगर (flags & ~(MSG_DONTWAIT|MSG_CMSG_COMPAT))
+		वापस -EINVAL;
 
-	if (len > DDP_MAXSZ)
-		return -EMSGSIZE;
+	अगर (len > DDP_MAXSZ)
+		वापस -EMSGSIZE;
 
 	lock_sock(sk);
-	if (usat) {
+	अगर (usat) अणु
 		err = -EBUSY;
-		if (sock_flag(sk, SOCK_ZAPPED))
-			if (atalk_autobind(sk) < 0)
-				goto out;
+		अगर (sock_flag(sk, SOCK_ZAPPED))
+			अगर (atalk_स्वतःbind(sk) < 0)
+				जाओ out;
 
 		err = -EINVAL;
-		if (msg->msg_namelen < sizeof(*usat) ||
+		अगर (msg->msg_namelen < माप(*usat) ||
 		    usat->sat_family != AF_APPLETALK)
-			goto out;
+			जाओ out;
 
 		err = -EPERM;
 		/* netatalk didn't implement this check */
-		if (usat->sat_addr.s_node == ATADDR_BCAST &&
-		    !sock_flag(sk, SOCK_BROADCAST)) {
-			goto out;
-		}
-	} else {
+		अगर (usat->sat_addr.s_node == ATADDR_BCAST &&
+		    !sock_flag(sk, SOCK_BROADCAST)) अणु
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		err = -ENOTCONN;
-		if (sk->sk_state != TCP_ESTABLISHED)
-			goto out;
+		अगर (sk->sk_state != TCP_ESTABLISHED)
+			जाओ out;
 		usat = &local_satalk;
 		usat->sat_family      = AF_APPLETALK;
 		usat->sat_port	      = at->dest_port;
 		usat->sat_addr.s_node = at->dest_node;
 		usat->sat_addr.s_net  = at->dest_net;
-	}
+	पूर्ण
 
 	/* Build a packet */
 	SOCK_DEBUG(sk, "SK %p: Got address.\n", sk);
 
 	/* For headers */
-	size = sizeof(struct ddpehdr) + len + ddp_dl->header_length;
+	size = माप(काष्ठा ddpehdr) + len + ddp_dl->header_length;
 
-	if (usat->sat_addr.s_net || usat->sat_addr.s_node == ATADDR_ANYNODE) {
+	अगर (usat->sat_addr.s_net || usat->sat_addr.s_node == ATADDR_ANYNODE) अणु
 		rt = atrtr_find(&usat->sat_addr);
-	} else {
-		struct atalk_addr at_hint;
+	पूर्ण अन्यथा अणु
+		काष्ठा atalk_addr at_hपूर्णांक;
 
-		at_hint.s_node = 0;
-		at_hint.s_net  = at->src_net;
+		at_hपूर्णांक.s_node = 0;
+		at_hपूर्णांक.s_net  = at->src_net;
 
-		rt = atrtr_find(&at_hint);
-	}
+		rt = atrtr_find(&at_hपूर्णांक);
+	पूर्ण
 	err = -ENETUNREACH;
-	if (!rt)
-		goto out;
+	अगर (!rt)
+		जाओ out;
 
 	dev = rt->dev;
 
@@ -1642,26 +1643,26 @@ static int atalk_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 			sk, size, dev->name);
 
 	hard_header_len = dev->hard_header_len;
-	/* Leave room for loopback hardware header if necessary */
-	if (usat->sat_addr.s_node == ATADDR_BCAST &&
-	    (dev->flags & IFF_LOOPBACK || !(rt->flags & RTF_GATEWAY))) {
-		struct atalk_addr at_lo;
+	/* Leave room क्रम loopback hardware header अगर necessary */
+	अगर (usat->sat_addr.s_node == ATADDR_BCAST &&
+	    (dev->flags & IFF_LOOPBACK || !(rt->flags & RTF_GATEWAY))) अणु
+		काष्ठा atalk_addr at_lo;
 
 		at_lo.s_node = 0;
 		at_lo.s_net  = 0;
 
 		rt_lo = atrtr_find(&at_lo);
 
-		if (rt_lo && rt_lo->dev->hard_header_len > hard_header_len)
+		अगर (rt_lo && rt_lo->dev->hard_header_len > hard_header_len)
 			hard_header_len = rt_lo->dev->hard_header_len;
-	}
+	पूर्ण
 
 	size += hard_header_len;
 	release_sock(sk);
 	skb = sock_alloc_send_skb(sk, size, (flags & MSG_DONTWAIT), &err);
 	lock_sock(sk);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
 	skb_reserve(skb, ddp_dl->header_length);
 	skb_reserve(skb, hard_header_len);
@@ -1669,8 +1670,8 @@ static int atalk_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 
 	SOCK_DEBUG(sk, "SK %p: Begin build.\n", sk);
 
-	ddp = skb_put(skb, sizeof(struct ddpehdr));
-	ddp->deh_len_hops  = htons(len + sizeof(*ddp));
+	ddp = skb_put(skb, माप(काष्ठा ddpehdr));
+	ddp->deh_len_hops  = htons(len + माप(*ddp));
 	ddp->deh_dnet  = usat->sat_addr.s_net;
 	ddp->deh_snet  = at->src_net;
 	ddp->deh_dnode = usat->sat_addr.s_node;
@@ -1680,237 +1681,237 @@ static int atalk_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 
 	SOCK_DEBUG(sk, "SK %p: Copy user data (%zd bytes).\n", sk, len);
 
-	err = memcpy_from_msg(skb_put(skb, len), msg, len);
-	if (err) {
-		kfree_skb(skb);
+	err = स_नकल_from_msg(skb_put(skb, len), msg, len);
+	अगर (err) अणु
+		kमुक्त_skb(skb);
 		err = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (sk->sk_no_check_tx)
+	अगर (sk->sk_no_check_tx)
 		ddp->deh_sum = 0;
-	else
-		ddp->deh_sum = atalk_checksum(skb, len + sizeof(*ddp));
+	अन्यथा
+		ddp->deh_sum = atalk_checksum(skb, len + माप(*ddp));
 
 	/*
-	 * Loopback broadcast packets to non gateway targets (ie routes
+	 * Loopback broadcast packets to non gateway tarमाला_लो (ie routes
 	 * to group we are in)
 	 */
-	if (ddp->deh_dnode == ATADDR_BCAST &&
-	    !(rt->flags & RTF_GATEWAY) && !(dev->flags & IFF_LOOPBACK)) {
-		struct sk_buff *skb2 = skb_copy(skb, GFP_KERNEL);
+	अगर (ddp->deh_dnode == ATADDR_BCAST &&
+	    !(rt->flags & RTF_GATEWAY) && !(dev->flags & IFF_LOOPBACK)) अणु
+		काष्ठा sk_buff *skb2 = skb_copy(skb, GFP_KERNEL);
 
-		if (skb2) {
+		अगर (skb2) अणु
 			loopback = 1;
 			SOCK_DEBUG(sk, "SK %p: send out(copy).\n", sk);
 			/*
 			 * If it fails it is queued/sent above in the aarp queue
 			 */
-			aarp_send_ddp(dev, skb2, &usat->sat_addr, NULL);
-		}
-	}
+			aarp_send_ddp(dev, skb2, &usat->sat_addr, शून्य);
+		पूर्ण
+	पूर्ण
 
-	if (dev->flags & IFF_LOOPBACK || loopback) {
+	अगर (dev->flags & IFF_LOOPBACK || loopback) अणु
 		SOCK_DEBUG(sk, "SK %p: Loop back.\n", sk);
 		/* loop back */
 		skb_orphan(skb);
-		if (ddp->deh_dnode == ATADDR_BCAST) {
-			if (!rt_lo) {
-				kfree_skb(skb);
+		अगर (ddp->deh_dnode == ATADDR_BCAST) अणु
+			अगर (!rt_lo) अणु
+				kमुक्त_skb(skb);
 				err = -ENETUNREACH;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			dev = rt_lo->dev;
 			skb->dev = dev;
-		}
+		पूर्ण
 		ddp_dl->request(ddp_dl, skb, dev->dev_addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		SOCK_DEBUG(sk, "SK %p: send out.\n", sk);
-		if (rt->flags & RTF_GATEWAY) {
+		अगर (rt->flags & RTF_GATEWAY) अणु
 		    gsat.sat_addr = rt->gateway;
 		    usat = &gsat;
-		}
+		पूर्ण
 
 		/*
 		 * If it fails it is queued/sent above in the aarp queue
 		 */
-		aarp_send_ddp(dev, skb, &usat->sat_addr, NULL);
-	}
+		aarp_send_ddp(dev, skb, &usat->sat_addr, शून्य);
+	पूर्ण
 	SOCK_DEBUG(sk, "SK %p: Done write (%zd).\n", sk, len);
 
 out:
 	release_sock(sk);
-	return err ? : len;
-}
+	वापस err ? : len;
+पूर्ण
 
-static int atalk_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
-			 int flags)
-{
-	struct sock *sk = sock->sk;
-	struct ddpehdr *ddp;
-	int copied = 0;
-	int offset = 0;
-	int err = 0;
-	struct sk_buff *skb;
+अटल पूर्णांक atalk_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार size,
+			 पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा ddpehdr *ddp;
+	पूर्णांक copied = 0;
+	पूर्णांक offset = 0;
+	पूर्णांक err = 0;
+	काष्ठा sk_buff *skb;
 
 	skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT,
 						flags & MSG_DONTWAIT, &err);
 	lock_sock(sk);
 
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
 	/* FIXME: use skb->cb to be able to use shared skbs */
 	ddp = ddp_hdr(skb);
 	copied = ntohs(ddp->deh_len_hops) & 1023;
 
-	if (sk->sk_type != SOCK_RAW) {
-		offset = sizeof(*ddp);
+	अगर (sk->sk_type != SOCK_RAW) अणु
+		offset = माप(*ddp);
 		copied -= offset;
-	}
+	पूर्ण
 
-	if (copied > size) {
+	अगर (copied > size) अणु
 		copied = size;
 		msg->msg_flags |= MSG_TRUNC;
-	}
+	पूर्ण
 	err = skb_copy_datagram_msg(skb, offset, msg, copied);
 
-	if (!err && msg->msg_name) {
-		DECLARE_SOCKADDR(struct sockaddr_at *, sat, msg->msg_name);
+	अगर (!err && msg->msg_name) अणु
+		DECLARE_SOCKADDR(काष्ठा sockaddr_at *, sat, msg->msg_name);
 		sat->sat_family      = AF_APPLETALK;
 		sat->sat_port        = ddp->deh_sport;
 		sat->sat_addr.s_node = ddp->deh_snode;
 		sat->sat_addr.s_net  = ddp->deh_snet;
-		msg->msg_namelen     = sizeof(*sat);
-	}
+		msg->msg_namelen     = माप(*sat);
+	पूर्ण
 
-	skb_free_datagram(sk, skb);	/* Free the datagram. */
+	skb_मुक्त_datagram(sk, skb);	/* Free the datagram. */
 
 out:
 	release_sock(sk);
-	return err ? : copied;
-}
+	वापस err ? : copied;
+पूर्ण
 
 
 /*
  * AppleTalk ioctl calls.
  */
-static int atalk_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
-{
-	int rc = -ENOIOCTLCMD;
-	struct sock *sk = sock->sk;
-	void __user *argp = (void __user *)arg;
+अटल पूर्णांक atalk_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक rc = -ENOIOCTLCMD;
+	काष्ठा sock *sk = sock->sk;
+	व्योम __user *argp = (व्योम __user *)arg;
 
-	switch (cmd) {
+	चयन (cmd) अणु
 	/* Protocol layer */
-	case TIOCOUTQ: {
-		long amount = sk->sk_sndbuf - sk_wmem_alloc_get(sk);
+	हाल TIOCOUTQ: अणु
+		दीर्घ amount = sk->sk_sndbuf - sk_wmem_alloc_get(sk);
 
-		if (amount < 0)
+		अगर (amount < 0)
 			amount = 0;
-		rc = put_user(amount, (int __user *)argp);
-		break;
-	}
-	case TIOCINQ: {
+		rc = put_user(amount, (पूर्णांक __user *)argp);
+		अवरोध;
+	पूर्ण
+	हाल TIOCINQ: अणु
 		/*
-		 * These two are safe on a single CPU system as only
+		 * These two are safe on a single CPU प्रणाली as only
 		 * user tasks fiddle here
 		 */
-		struct sk_buff *skb = skb_peek(&sk->sk_receive_queue);
-		long amount = 0;
+		काष्ठा sk_buff *skb = skb_peek(&sk->sk_receive_queue);
+		दीर्घ amount = 0;
 
-		if (skb)
-			amount = skb->len - sizeof(struct ddpehdr);
-		rc = put_user(amount, (int __user *)argp);
-		break;
-	}
+		अगर (skb)
+			amount = skb->len - माप(काष्ठा ddpehdr);
+		rc = put_user(amount, (पूर्णांक __user *)argp);
+		अवरोध;
+	पूर्ण
 	/* Routing */
-	case SIOCADDRT:
-	case SIOCDELRT:
+	हाल SIOCADDRT:
+	हाल SIOCDELRT:
 		rc = -EPERM;
-		if (capable(CAP_NET_ADMIN))
+		अगर (capable(CAP_NET_ADMIN))
 			rc = atrtr_ioctl(cmd, argp);
-		break;
+		अवरोध;
 	/* Interface */
-	case SIOCGIFADDR:
-	case SIOCSIFADDR:
-	case SIOCGIFBRDADDR:
-	case SIOCATALKDIFADDR:
-	case SIOCDIFADDR:
-	case SIOCSARP:		/* proxy AARP */
-	case SIOCDARP:		/* proxy AARP */
+	हाल SIOCGIFADDR:
+	हाल SIOCSIFADDR:
+	हाल SIOCGIFBRDADDR:
+	हाल SIOCATALKDIFADDR:
+	हाल SIOCDIFADDR:
+	हाल SIOCSARP:		/* proxy AARP */
+	हाल SIOCDARP:		/* proxy AARP */
 		rtnl_lock();
-		rc = atif_ioctl(cmd, argp);
+		rc = atअगर_ioctl(cmd, argp);
 		rtnl_unlock();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
-#ifdef CONFIG_COMPAT
-static int atalk_compat_routing_ioctl(struct sock *sk, unsigned int cmd,
-		struct compat_rtentry __user *ur)
-{
+#अगर_घोषित CONFIG_COMPAT
+अटल पूर्णांक atalk_compat_routing_ioctl(काष्ठा sock *sk, अचिन्हित पूर्णांक cmd,
+		काष्ठा compat_rtentry __user *ur)
+अणु
 	compat_uptr_t rtdev;
-	struct rtentry rt;
+	काष्ठा rtentry rt;
 
-	if (copy_from_user(&rt.rt_dst, &ur->rt_dst,
-			3 * sizeof(struct sockaddr)) ||
+	अगर (copy_from_user(&rt.rt_dst, &ur->rt_dst,
+			3 * माप(काष्ठा sockaddr)) ||
 	    get_user(rt.rt_flags, &ur->rt_flags) ||
 	    get_user(rt.rt_metric, &ur->rt_metric) ||
 	    get_user(rt.rt_mtu, &ur->rt_mtu) ||
-	    get_user(rt.rt_window, &ur->rt_window) ||
+	    get_user(rt.rt_winकरोw, &ur->rt_winकरोw) ||
 	    get_user(rt.rt_irtt, &ur->rt_irtt) ||
 	    get_user(rtdev, &ur->rt_dev))
-		return -EFAULT;
+		वापस -EFAULT;
 
-	switch (cmd) {
-	case SIOCDELRT:
-		if (rt.rt_dst.sa_family != AF_APPLETALK)
-			return -EINVAL;
-		return atrtr_delete(&((struct sockaddr_at *)
+	चयन (cmd) अणु
+	हाल SIOCDELRT:
+		अगर (rt.rt_dst.sa_family != AF_APPLETALK)
+			वापस -EINVAL;
+		वापस atrtr_delete(&((काष्ठा sockaddr_at *)
 				      &rt.rt_dst)->sat_addr);
 
-	case SIOCADDRT:
+	हाल SIOCADDRT:
 		rt.rt_dev = compat_ptr(rtdev);
-		return atrtr_ioctl_addrt(&rt);
-	default:
-		return -EINVAL;
-	}
-}
-static int atalk_compat_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
-{
-	void __user *argp = compat_ptr(arg);
-	struct sock *sk = sock->sk;
+		वापस atrtr_ioctl_addrt(&rt);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
+अटल पूर्णांक atalk_compat_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = compat_ptr(arg);
+	काष्ठा sock *sk = sock->sk;
 
-	switch (cmd) {
-	case SIOCADDRT:
-	case SIOCDELRT:
-		return atalk_compat_routing_ioctl(sk, cmd, argp);
+	चयन (cmd) अणु
+	हाल SIOCADDRT:
+	हाल SIOCDELRT:
+		वापस atalk_compat_routing_ioctl(sk, cmd, argp);
 	/*
 	 * SIOCATALKDIFADDR is a SIOCPROTOPRIVATE ioctl number, so we
-	 * cannot handle it in common code. The data we access if ifreq
+	 * cannot handle it in common code. The data we access अगर अगरreq
 	 * here is compatible, so we can simply call the native
 	 * handler.
 	 */
-	case SIOCATALKDIFADDR:
-		return atalk_ioctl(sock, cmd, (unsigned long)argp);
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
-#endif /* CONFIG_COMPAT */
+	हाल SIOCATALKDIFADDR:
+		वापस atalk_ioctl(sock, cmd, (अचिन्हित दीर्घ)argp);
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_COMPAT */
 
 
-static const struct net_proto_family atalk_family_ops = {
+अटल स्थिर काष्ठा net_proto_family atalk_family_ops = अणु
 	.family		= PF_APPLETALK,
 	.create		= atalk_create,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static const struct proto_ops atalk_dgram_ops = {
+अटल स्थिर काष्ठा proto_ops atalk_dgram_ops = अणु
 	.family		= PF_APPLETALK,
 	.owner		= THIS_MODULE,
 	.release	= atalk_release,
@@ -1922,119 +1923,119 @@ static const struct proto_ops atalk_dgram_ops = {
 	.poll		= datagram_poll,
 	.ioctl		= atalk_ioctl,
 	.gettstamp	= sock_gettstamp,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	= atalk_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.listen		= sock_no_listen,
-	.shutdown	= sock_no_shutdown,
+	.shutकरोwn	= sock_no_shutकरोwn,
 	.sendmsg	= atalk_sendmsg,
 	.recvmsg	= atalk_recvmsg,
 	.mmap		= sock_no_mmap,
 	.sendpage	= sock_no_sendpage,
-};
+पूर्ण;
 
-static struct notifier_block ddp_notifier = {
-	.notifier_call	= ddp_device_event,
-};
+अटल काष्ठा notअगरier_block ddp_notअगरier = अणु
+	.notअगरier_call	= ddp_device_event,
+पूर्ण;
 
-static struct packet_type ltalk_packet_type __read_mostly = {
+अटल काष्ठा packet_type ltalk_packet_type __पढ़ो_mostly = अणु
 	.type		= cpu_to_be16(ETH_P_LOCALTALK),
 	.func		= ltalk_rcv,
-};
+पूर्ण;
 
-static struct packet_type ppptalk_packet_type __read_mostly = {
+अटल काष्ठा packet_type ppptalk_packet_type __पढ़ो_mostly = अणु
 	.type		= cpu_to_be16(ETH_P_PPPTALK),
 	.func		= atalk_rcv,
-};
+पूर्ण;
 
-static unsigned char ddp_snap_id[] = { 0x08, 0x00, 0x07, 0x80, 0x9B };
+अटल अचिन्हित अक्षर ddp_snap_id[] = अणु 0x08, 0x00, 0x07, 0x80, 0x9B पूर्ण;
 
-/* Export symbols for use by drivers when AppleTalk is a module */
+/* Export symbols क्रम use by drivers when AppleTalk is a module */
 EXPORT_SYMBOL(atrtr_get_dev);
 EXPORT_SYMBOL(atalk_find_dev_addr);
 
 /* Called by proto.c on kernel start up */
-static int __init atalk_init(void)
-{
-	int rc;
+अटल पूर्णांक __init atalk_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = proto_register(&ddp_proto, 0);
-	if (rc)
-		goto out;
+	rc = proto_रेजिस्टर(&ddp_proto, 0);
+	अगर (rc)
+		जाओ out;
 
-	rc = sock_register(&atalk_family_ops);
-	if (rc)
-		goto out_proto;
+	rc = sock_रेजिस्टर(&atalk_family_ops);
+	अगर (rc)
+		जाओ out_proto;
 
-	ddp_dl = register_snap_client(ddp_snap_id, atalk_rcv);
-	if (!ddp_dl) {
+	ddp_dl = रेजिस्टर_snap_client(ddp_snap_id, atalk_rcv);
+	अगर (!ddp_dl) अणु
 		pr_crit("Unable to register DDP with SNAP.\n");
 		rc = -ENOMEM;
-		goto out_sock;
-	}
+		जाओ out_sock;
+	पूर्ण
 
 	dev_add_pack(&ltalk_packet_type);
 	dev_add_pack(&ppptalk_packet_type);
 
-	rc = register_netdevice_notifier(&ddp_notifier);
-	if (rc)
-		goto out_snap;
+	rc = रेजिस्टर_netdevice_notअगरier(&ddp_notअगरier);
+	अगर (rc)
+		जाओ out_snap;
 
 	rc = aarp_proto_init();
-	if (rc)
-		goto out_dev;
+	अगर (rc)
+		जाओ out_dev;
 
 	rc = atalk_proc_init();
-	if (rc)
-		goto out_aarp;
+	अगर (rc)
+		जाओ out_aarp;
 
-	rc = atalk_register_sysctl();
-	if (rc)
-		goto out_proc;
+	rc = atalk_रेजिस्टर_sysctl();
+	अगर (rc)
+		जाओ out_proc;
 out:
-	return rc;
+	वापस rc;
 out_proc:
-	atalk_proc_exit();
+	atalk_proc_निकास();
 out_aarp:
 	aarp_cleanup_module();
 out_dev:
-	unregister_netdevice_notifier(&ddp_notifier);
+	unरेजिस्टर_netdevice_notअगरier(&ddp_notअगरier);
 out_snap:
-	dev_remove_pack(&ppptalk_packet_type);
-	dev_remove_pack(&ltalk_packet_type);
-	unregister_snap_client(ddp_dl);
+	dev_हटाओ_pack(&ppptalk_packet_type);
+	dev_हटाओ_pack(&ltalk_packet_type);
+	unरेजिस्टर_snap_client(ddp_dl);
 out_sock:
-	sock_unregister(PF_APPLETALK);
+	sock_unरेजिस्टर(PF_APPLETALK);
 out_proto:
-	proto_unregister(&ddp_proto);
-	goto out;
-}
+	proto_unरेजिस्टर(&ddp_proto);
+	जाओ out;
+पूर्ण
 module_init(atalk_init);
 
 /*
  * No explicit module reference count manipulation is needed in the
- * protocol. Socket layer sets module reference count for us
- * and interfaces reference counting is done
+ * protocol. Socket layer sets module reference count क्रम us
+ * and पूर्णांकerfaces reference counting is करोne
  * by the network device layer.
  *
- * Ergo, before the AppleTalk module can be removed, all AppleTalk
- * sockets be closed from user space.
+ * Ergo, beक्रमe the AppleTalk module can be हटाओd, all AppleTalk
+ * sockets be बंदd from user space.
  */
-static void __exit atalk_exit(void)
-{
-#ifdef CONFIG_SYSCTL
-	atalk_unregister_sysctl();
-#endif /* CONFIG_SYSCTL */
-	atalk_proc_exit();
+अटल व्योम __निकास atalk_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_SYSCTL
+	atalk_unरेजिस्टर_sysctl();
+#पूर्ण_अगर /* CONFIG_SYSCTL */
+	atalk_proc_निकास();
 	aarp_cleanup_module();	/* General aarp clean-up. */
-	unregister_netdevice_notifier(&ddp_notifier);
-	dev_remove_pack(&ltalk_packet_type);
-	dev_remove_pack(&ppptalk_packet_type);
-	unregister_snap_client(ddp_dl);
-	sock_unregister(PF_APPLETALK);
-	proto_unregister(&ddp_proto);
-}
-module_exit(atalk_exit);
+	unरेजिस्टर_netdevice_notअगरier(&ddp_notअगरier);
+	dev_हटाओ_pack(&ltalk_packet_type);
+	dev_हटाओ_pack(&ppptalk_packet_type);
+	unरेजिस्टर_snap_client(ddp_dl);
+	sock_unरेजिस्टर(PF_APPLETALK);
+	proto_unरेजिस्टर(&ddp_proto);
+पूर्ण
+module_निकास(atalk_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Alan Cox <alan@lxorguk.ukuu.org.uk>");

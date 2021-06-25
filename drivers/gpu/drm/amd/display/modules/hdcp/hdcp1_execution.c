@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,512 +24,512 @@
  *
  */
 
-#include "hdcp.h"
+#समावेश "hdcp.h"
 
-static inline enum mod_hdcp_status validate_bksv(struct mod_hdcp *hdcp)
-{
-	uint64_t n = 0;
-	uint8_t count = 0;
+अटल अंतरभूत क्रमागत mod_hdcp_status validate_bksv(काष्ठा mod_hdcp *hdcp)
+अणु
+	uपूर्णांक64_t n = 0;
+	uपूर्णांक8_t count = 0;
 
-	memcpy(&n, hdcp->auth.msg.hdcp1.bksv, sizeof(uint64_t));
+	स_नकल(&n, hdcp->auth.msg.hdcp1.bksv, माप(uपूर्णांक64_t));
 
-	while (n) {
+	जबतक (n) अणु
 		count++;
 		n &= (n - 1);
-	}
-	return (count == 20) ? MOD_HDCP_STATUS_SUCCESS :
+	पूर्ण
+	वापस (count == 20) ? MOD_HDCP_STATUS_SUCCESS :
 			MOD_HDCP_STATUS_HDCP1_INVALID_BKSV;
-}
+पूर्ण
 
-static inline enum mod_hdcp_status check_ksv_ready(struct mod_hdcp *hdcp)
-{
-	if (is_dp_hdcp(hdcp))
-		return (hdcp->auth.msg.hdcp1.bstatus & DP_BSTATUS_READY) ?
+अटल अंतरभूत क्रमागत mod_hdcp_status check_ksv_पढ़ोy(काष्ठा mod_hdcp *hdcp)
+अणु
+	अगर (is_dp_hdcp(hdcp))
+		वापस (hdcp->auth.msg.hdcp1.bstatus & DP_BSTATUS_READY) ?
 				MOD_HDCP_STATUS_SUCCESS :
 				MOD_HDCP_STATUS_HDCP1_KSV_LIST_NOT_READY;
-	return (hdcp->auth.msg.hdcp1.bcaps & DRM_HDCP_DDC_BCAPS_KSV_FIFO_READY) ?
+	वापस (hdcp->auth.msg.hdcp1.bcaps & DRM_HDCP_DDC_BCAPS_KSV_FIFO_READY) ?
 			MOD_HDCP_STATUS_SUCCESS :
 			MOD_HDCP_STATUS_HDCP1_KSV_LIST_NOT_READY;
-}
+पूर्ण
 
-static inline enum mod_hdcp_status check_hdcp_capable_dp(struct mod_hdcp *hdcp)
-{
-	return (hdcp->auth.msg.hdcp1.bcaps & DP_BCAPS_HDCP_CAPABLE) ?
+अटल अंतरभूत क्रमागत mod_hdcp_status check_hdcp_capable_dp(काष्ठा mod_hdcp *hdcp)
+अणु
+	वापस (hdcp->auth.msg.hdcp1.bcaps & DP_BCAPS_HDCP_CAPABLE) ?
 			MOD_HDCP_STATUS_SUCCESS :
 			MOD_HDCP_STATUS_HDCP1_NOT_CAPABLE;
-}
+पूर्ण
 
-static inline enum mod_hdcp_status check_r0p_available_dp(struct mod_hdcp *hdcp)
-{
-	enum mod_hdcp_status status;
-	if (is_dp_hdcp(hdcp)) {
+अटल अंतरभूत क्रमागत mod_hdcp_status check_r0p_available_dp(काष्ठा mod_hdcp *hdcp)
+अणु
+	क्रमागत mod_hdcp_status status;
+	अगर (is_dp_hdcp(hdcp)) अणु
 		status = (hdcp->auth.msg.hdcp1.bstatus &
 				DP_BSTATUS_R0_PRIME_READY) ?
 			MOD_HDCP_STATUS_SUCCESS :
 			MOD_HDCP_STATUS_HDCP1_R0_PRIME_PENDING;
-	} else {
+	पूर्ण अन्यथा अणु
 		status = MOD_HDCP_STATUS_INVALID_OPERATION;
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
-static inline enum mod_hdcp_status check_link_integrity_dp(
-		struct mod_hdcp *hdcp)
-{
-	return (hdcp->auth.msg.hdcp1.bstatus &
+अटल अंतरभूत क्रमागत mod_hdcp_status check_link_पूर्णांकegrity_dp(
+		काष्ठा mod_hdcp *hdcp)
+अणु
+	वापस (hdcp->auth.msg.hdcp1.bstatus &
 			DP_BSTATUS_LINK_FAILURE) ?
 			MOD_HDCP_STATUS_HDCP1_LINK_INTEGRITY_FAILURE :
 			MOD_HDCP_STATUS_SUCCESS;
-}
+पूर्ण
 
-static inline enum mod_hdcp_status check_no_reauthentication_request_dp(
-		struct mod_hdcp *hdcp)
-{
-	return (hdcp->auth.msg.hdcp1.bstatus & DP_BSTATUS_REAUTH_REQ) ?
+अटल अंतरभूत क्रमागत mod_hdcp_status check_no_reauthentication_request_dp(
+		काष्ठा mod_hdcp *hdcp)
+अणु
+	वापस (hdcp->auth.msg.hdcp1.bstatus & DP_BSTATUS_REAUTH_REQ) ?
 			MOD_HDCP_STATUS_HDCP1_REAUTH_REQUEST_ISSUED :
 			MOD_HDCP_STATUS_SUCCESS;
-}
+पूर्ण
 
-static inline enum mod_hdcp_status check_no_max_cascade(struct mod_hdcp *hdcp)
-{
-	enum mod_hdcp_status status;
+अटल अंतरभूत क्रमागत mod_hdcp_status check_no_max_cascade(काष्ठा mod_hdcp *hdcp)
+अणु
+	क्रमागत mod_hdcp_status status;
 
-	if (is_dp_hdcp(hdcp))
+	अगर (is_dp_hdcp(hdcp))
 		status = DRM_HDCP_MAX_CASCADE_EXCEEDED(hdcp->auth.msg.hdcp1.binfo_dp >> 8)
 				 ? MOD_HDCP_STATUS_HDCP1_MAX_CASCADE_EXCEEDED_FAILURE
 				 : MOD_HDCP_STATUS_SUCCESS;
-	else
+	अन्यथा
 		status = DRM_HDCP_MAX_CASCADE_EXCEEDED(hdcp->auth.msg.hdcp1.bstatus >> 8)
 				 ? MOD_HDCP_STATUS_HDCP1_MAX_CASCADE_EXCEEDED_FAILURE
 				 : MOD_HDCP_STATUS_SUCCESS;
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static inline enum mod_hdcp_status check_no_max_devs(struct mod_hdcp *hdcp)
-{
-	enum mod_hdcp_status status;
+अटल अंतरभूत क्रमागत mod_hdcp_status check_no_max_devs(काष्ठा mod_hdcp *hdcp)
+अणु
+	क्रमागत mod_hdcp_status status;
 
-	if (is_dp_hdcp(hdcp))
+	अगर (is_dp_hdcp(hdcp))
 		status = DRM_HDCP_MAX_DEVICE_EXCEEDED(hdcp->auth.msg.hdcp1.binfo_dp) ?
 				MOD_HDCP_STATUS_HDCP1_MAX_DEVS_EXCEEDED_FAILURE :
 				MOD_HDCP_STATUS_SUCCESS;
-	else
+	अन्यथा
 		status = DRM_HDCP_MAX_DEVICE_EXCEEDED(hdcp->auth.msg.hdcp1.bstatus) ?
 				MOD_HDCP_STATUS_HDCP1_MAX_DEVS_EXCEEDED_FAILURE :
 				MOD_HDCP_STATUS_SUCCESS;
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static inline uint8_t get_device_count(struct mod_hdcp *hdcp)
-{
-	return is_dp_hdcp(hdcp) ?
+अटल अंतरभूत uपूर्णांक8_t get_device_count(काष्ठा mod_hdcp *hdcp)
+अणु
+	वापस is_dp_hdcp(hdcp) ?
 			DRM_HDCP_NUM_DOWNSTREAM(hdcp->auth.msg.hdcp1.binfo_dp) :
 			DRM_HDCP_NUM_DOWNSTREAM(hdcp->auth.msg.hdcp1.bstatus);
-}
+पूर्ण
 
-static inline enum mod_hdcp_status check_device_count(struct mod_hdcp *hdcp)
-{
-	/* Some MST display may choose to report the internal panel as an HDCP RX.
-	 * To update this condition with 1(because the immediate repeater's internal
+अटल अंतरभूत क्रमागत mod_hdcp_status check_device_count(काष्ठा mod_hdcp *hdcp)
+अणु
+	/* Some MST display may choose to report the पूर्णांकernal panel as an HDCP RX.
+	 * To update this condition with 1(because the immediate repeater's पूर्णांकernal
 	 * panel is possibly not included in DEVICE_COUNT) + get_device_count(hdcp).
 	 * Device count must be greater than or equal to tracked hdcp displays.
 	 */
-	return ((1 + get_device_count(hdcp)) < get_active_display_count(hdcp)) ?
+	वापस ((1 + get_device_count(hdcp)) < get_active_display_count(hdcp)) ?
 			MOD_HDCP_STATUS_HDCP1_DEVICE_COUNT_MISMATCH_FAILURE :
 			MOD_HDCP_STATUS_SUCCESS;
-}
+पूर्ण
 
-static enum mod_hdcp_status wait_for_active_rx(struct mod_hdcp *hdcp,
-		struct mod_hdcp_event_context *event_ctx,
-		struct mod_hdcp_transition_input_hdcp1 *input)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+अटल क्रमागत mod_hdcp_status रुको_क्रम_active_rx(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_event_context *event_ctx,
+		काष्ठा mod_hdcp_transition_input_hdcp1 *input)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	if (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) {
+	अगर (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) अणु
 		event_ctx->unexpected_event = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!mod_hdcp_execute_and_set(mod_hdcp_read_bksv,
-			&input->bksv_read, &status,
+	अगर (!mod_hdcp_execute_and_set(mod_hdcp_पढ़ो_bksv,
+			&input->bksv_पढ़ो, &status,
 			hdcp, "bksv_read"))
-		goto out;
-	if (!mod_hdcp_execute_and_set(mod_hdcp_read_bcaps,
-			&input->bcaps_read, &status,
+		जाओ out;
+	अगर (!mod_hdcp_execute_and_set(mod_hdcp_पढ़ो_bcaps,
+			&input->bcaps_पढ़ो, &status,
 			hdcp, "bcaps_read"))
-		goto out;
+		जाओ out;
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static enum mod_hdcp_status exchange_ksvs(struct mod_hdcp *hdcp,
-		struct mod_hdcp_event_context *event_ctx,
-		struct mod_hdcp_transition_input_hdcp1 *input)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+अटल क्रमागत mod_hdcp_status exchange_ksvs(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_event_context *event_ctx,
+		काष्ठा mod_hdcp_transition_input_hdcp1 *input)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	if (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) {
+	अगर (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) अणु
 		event_ctx->unexpected_event = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!mod_hdcp_execute_and_set(mod_hdcp_hdcp1_create_session,
+	अगर (!mod_hdcp_execute_and_set(mod_hdcp_hdcp1_create_session,
 			&input->create_session, &status,
 			hdcp, "create_session"))
-		goto out;
-	if (!mod_hdcp_execute_and_set(mod_hdcp_write_an,
-			&input->an_write, &status,
+		जाओ out;
+	अगर (!mod_hdcp_execute_and_set(mod_hdcp_ग_लिखो_an,
+			&input->an_ग_लिखो, &status,
 			hdcp, "an_write"))
-		goto out;
-	if (!mod_hdcp_execute_and_set(mod_hdcp_write_aksv,
-			&input->aksv_write, &status,
+		जाओ out;
+	अगर (!mod_hdcp_execute_and_set(mod_hdcp_ग_लिखो_aksv,
+			&input->aksv_ग_लिखो, &status,
 			hdcp, "aksv_write"))
-		goto out;
-	if (!mod_hdcp_execute_and_set(mod_hdcp_read_bksv,
-			&input->bksv_read, &status,
+		जाओ out;
+	अगर (!mod_hdcp_execute_and_set(mod_hdcp_पढ़ो_bksv,
+			&input->bksv_पढ़ो, &status,
 			hdcp, "bksv_read"))
-		goto out;
-	if (!mod_hdcp_execute_and_set(validate_bksv,
+		जाओ out;
+	अगर (!mod_hdcp_execute_and_set(validate_bksv,
 			&input->bksv_validation, &status,
 			hdcp, "bksv_validation"))
-		goto out;
-	if (hdcp->auth.msg.hdcp1.ainfo) {
-		if (!mod_hdcp_execute_and_set(mod_hdcp_write_ainfo,
-				&input->ainfo_write, &status,
+		जाओ out;
+	अगर (hdcp->auth.msg.hdcp1.ainfo) अणु
+		अगर (!mod_hdcp_execute_and_set(mod_hdcp_ग_लिखो_ainfo,
+				&input->ainfo_ग_लिखो, &status,
 				hdcp, "ainfo_write"))
-			goto out;
-	}
+			जाओ out;
+	पूर्ण
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static enum mod_hdcp_status computations_validate_rx_test_for_repeater(
-		struct mod_hdcp *hdcp,
-		struct mod_hdcp_event_context *event_ctx,
-		struct mod_hdcp_transition_input_hdcp1 *input)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+अटल क्रमागत mod_hdcp_status computations_validate_rx_test_क्रम_repeater(
+		काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_event_context *event_ctx,
+		काष्ठा mod_hdcp_transition_input_hdcp1 *input)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	if (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) {
+	अगर (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) अणु
 		event_ctx->unexpected_event = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!mod_hdcp_execute_and_set(mod_hdcp_read_r0p,
-			&input->r0p_read, &status,
+	अगर (!mod_hdcp_execute_and_set(mod_hdcp_पढ़ो_r0p,
+			&input->r0p_पढ़ो, &status,
 			hdcp, "r0p_read"))
-		goto out;
-	if (!mod_hdcp_execute_and_set(mod_hdcp_hdcp1_validate_rx,
+		जाओ out;
+	अगर (!mod_hdcp_execute_and_set(mod_hdcp_hdcp1_validate_rx,
 			&input->rx_validation, &status,
 			hdcp, "rx_validation"))
-		goto out;
-	if (hdcp->connection.is_repeater) {
-		if (!hdcp->connection.link.adjust.hdcp1.postpone_encryption)
-			if (!mod_hdcp_execute_and_set(
+		जाओ out;
+	अगर (hdcp->connection.is_repeater) अणु
+		अगर (!hdcp->connection.link.adjust.hdcp1.postpone_encryption)
+			अगर (!mod_hdcp_execute_and_set(
 					mod_hdcp_hdcp1_enable_encryption,
 					&input->encryption, &status,
 					hdcp, "encryption"))
-				goto out;
-	} else {
-		if (!mod_hdcp_execute_and_set(mod_hdcp_hdcp1_enable_encryption,
+				जाओ out;
+	पूर्ण अन्यथा अणु
+		अगर (!mod_hdcp_execute_and_set(mod_hdcp_hdcp1_enable_encryption,
 				&input->encryption, &status,
 				hdcp, "encryption"))
-			goto out;
-		if (is_dp_mst_hdcp(hdcp))
-			if (!mod_hdcp_execute_and_set(
+			जाओ out;
+		अगर (is_dp_mst_hdcp(hdcp))
+			अगर (!mod_hdcp_execute_and_set(
 					mod_hdcp_hdcp1_enable_dp_stream_encryption,
 					&input->stream_encryption_dp, &status,
 					hdcp, "stream_encryption_dp"))
-				goto out;
-	}
+				जाओ out;
+	पूर्ण
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static enum mod_hdcp_status authenticated(struct mod_hdcp *hdcp,
-		struct mod_hdcp_event_context *event_ctx,
-		struct mod_hdcp_transition_input_hdcp1 *input)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+अटल क्रमागत mod_hdcp_status authenticated(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_event_context *event_ctx,
+		काष्ठा mod_hdcp_transition_input_hdcp1 *input)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	if (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) {
+	अगर (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) अणु
 		event_ctx->unexpected_event = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	mod_hdcp_execute_and_set(mod_hdcp_hdcp1_link_maintenance,
-			&input->link_maintenance, &status,
+	mod_hdcp_execute_and_set(mod_hdcp_hdcp1_link_मुख्यtenance,
+			&input->link_मुख्यtenance, &status,
 			hdcp, "link_maintenance");
 
-	if (status != MOD_HDCP_STATUS_SUCCESS)
+	अगर (status != MOD_HDCP_STATUS_SUCCESS)
 		mod_hdcp_save_current_encryption_states(hdcp);
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static enum mod_hdcp_status wait_for_ready(struct mod_hdcp *hdcp,
-		struct mod_hdcp_event_context *event_ctx,
-		struct mod_hdcp_transition_input_hdcp1 *input)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+अटल क्रमागत mod_hdcp_status रुको_क्रम_पढ़ोy(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_event_context *event_ctx,
+		काष्ठा mod_hdcp_transition_input_hdcp1 *input)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	if (event_ctx->event != MOD_HDCP_EVENT_CALLBACK &&
+	अगर (event_ctx->event != MOD_HDCP_EVENT_CALLBACK &&
 			event_ctx->event != MOD_HDCP_EVENT_CPIRQ &&
-			event_ctx->event != MOD_HDCP_EVENT_WATCHDOG_TIMEOUT) {
+			event_ctx->event != MOD_HDCP_EVENT_WATCHDOG_TIMEOUT) अणु
 		event_ctx->unexpected_event = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (is_dp_hdcp(hdcp)) {
-		if (!mod_hdcp_execute_and_set(mod_hdcp_read_bstatus,
-				&input->bstatus_read, &status,
+	अगर (is_dp_hdcp(hdcp)) अणु
+		अगर (!mod_hdcp_execute_and_set(mod_hdcp_पढ़ो_bstatus,
+				&input->bstatus_पढ़ो, &status,
 				hdcp, "bstatus_read"))
-			goto out;
-		if (!mod_hdcp_execute_and_set(check_link_integrity_dp,
-				&input->link_integrity_check, &status,
+			जाओ out;
+		अगर (!mod_hdcp_execute_and_set(check_link_पूर्णांकegrity_dp,
+				&input->link_पूर्णांकegrity_check, &status,
 				hdcp, "link_integrity_check"))
-			goto out;
-		if (!mod_hdcp_execute_and_set(check_no_reauthentication_request_dp,
+			जाओ out;
+		अगर (!mod_hdcp_execute_and_set(check_no_reauthentication_request_dp,
 				&input->reauth_request_check, &status,
 				hdcp, "reauth_request_check"))
-			goto out;
-	} else {
-		if (!mod_hdcp_execute_and_set(mod_hdcp_read_bcaps,
-				&input->bcaps_read, &status,
+			जाओ out;
+	पूर्ण अन्यथा अणु
+		अगर (!mod_hdcp_execute_and_set(mod_hdcp_पढ़ो_bcaps,
+				&input->bcaps_पढ़ो, &status,
 				hdcp, "bcaps_read"))
-			goto out;
-	}
-	if (!mod_hdcp_execute_and_set(check_ksv_ready,
-			&input->ready_check, &status,
+			जाओ out;
+	पूर्ण
+	अगर (!mod_hdcp_execute_and_set(check_ksv_पढ़ोy,
+			&input->पढ़ोy_check, &status,
 			hdcp, "ready_check"))
-		goto out;
+		जाओ out;
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static enum mod_hdcp_status read_ksv_list(struct mod_hdcp *hdcp,
-		struct mod_hdcp_event_context *event_ctx,
-		struct mod_hdcp_transition_input_hdcp1 *input)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
-	uint8_t device_count;
+अटल क्रमागत mod_hdcp_status पढ़ो_ksv_list(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_event_context *event_ctx,
+		काष्ठा mod_hdcp_transition_input_hdcp1 *input)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+	uपूर्णांक8_t device_count;
 
-	if (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) {
+	अगर (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) अणु
 		event_ctx->unexpected_event = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (is_dp_hdcp(hdcp)) {
-		if (!mod_hdcp_execute_and_set(mod_hdcp_read_binfo,
-				&input->binfo_read_dp, &status,
+	अगर (is_dp_hdcp(hdcp)) अणु
+		अगर (!mod_hdcp_execute_and_set(mod_hdcp_पढ़ो_binfo,
+				&input->binfo_पढ़ो_dp, &status,
 				hdcp, "binfo_read_dp"))
-			goto out;
-	} else {
-		if (!mod_hdcp_execute_and_set(mod_hdcp_read_bstatus,
-				&input->bstatus_read, &status,
+			जाओ out;
+	पूर्ण अन्यथा अणु
+		अगर (!mod_hdcp_execute_and_set(mod_hdcp_पढ़ो_bstatus,
+				&input->bstatus_पढ़ो, &status,
 				hdcp, "bstatus_read"))
-			goto out;
-	}
-	if (!mod_hdcp_execute_and_set(check_no_max_cascade,
+			जाओ out;
+	पूर्ण
+	अगर (!mod_hdcp_execute_and_set(check_no_max_cascade,
 			&input->max_cascade_check, &status,
 			hdcp, "max_cascade_check"))
-		goto out;
-	if (!mod_hdcp_execute_and_set(check_no_max_devs,
+		जाओ out;
+	अगर (!mod_hdcp_execute_and_set(check_no_max_devs,
 			&input->max_devs_check, &status,
 			hdcp, "max_devs_check"))
-		goto out;
-	if (!mod_hdcp_execute_and_set(check_device_count,
+		जाओ out;
+	अगर (!mod_hdcp_execute_and_set(check_device_count,
 			&input->device_count_check, &status,
 			hdcp, "device_count_check"))
-		goto out;
+		जाओ out;
 	device_count = get_device_count(hdcp);
 	hdcp->auth.msg.hdcp1.ksvlist_size = device_count*5;
-	if (!mod_hdcp_execute_and_set(mod_hdcp_read_ksvlist,
-			&input->ksvlist_read, &status,
+	अगर (!mod_hdcp_execute_and_set(mod_hdcp_पढ़ो_ksvlist,
+			&input->ksvlist_पढ़ो, &status,
 			hdcp, "ksvlist_read"))
-		goto out;
-	if (!mod_hdcp_execute_and_set(mod_hdcp_read_vp,
-			&input->vp_read, &status,
+		जाओ out;
+	अगर (!mod_hdcp_execute_and_set(mod_hdcp_पढ़ो_vp,
+			&input->vp_पढ़ो, &status,
 			hdcp, "vp_read"))
-		goto out;
-	if (!mod_hdcp_execute_and_set(mod_hdcp_hdcp1_validate_ksvlist_vp,
+		जाओ out;
+	अगर (!mod_hdcp_execute_and_set(mod_hdcp_hdcp1_validate_ksvlist_vp,
 			&input->ksvlist_vp_validation, &status,
 			hdcp, "ksvlist_vp_validation"))
-		goto out;
-	if (input->encryption != PASS)
-		if (!mod_hdcp_execute_and_set(mod_hdcp_hdcp1_enable_encryption,
+		जाओ out;
+	अगर (input->encryption != PASS)
+		अगर (!mod_hdcp_execute_and_set(mod_hdcp_hdcp1_enable_encryption,
 				&input->encryption, &status,
 				hdcp, "encryption"))
-			goto out;
-	if (is_dp_mst_hdcp(hdcp))
-		if (!mod_hdcp_execute_and_set(
+			जाओ out;
+	अगर (is_dp_mst_hdcp(hdcp))
+		अगर (!mod_hdcp_execute_and_set(
 				mod_hdcp_hdcp1_enable_dp_stream_encryption,
 				&input->stream_encryption_dp, &status,
 				hdcp, "stream_encryption_dp"))
-			goto out;
+			जाओ out;
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static enum mod_hdcp_status determine_rx_hdcp_capable_dp(struct mod_hdcp *hdcp,
-		struct mod_hdcp_event_context *event_ctx,
-		struct mod_hdcp_transition_input_hdcp1 *input)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+अटल क्रमागत mod_hdcp_status determine_rx_hdcp_capable_dp(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_event_context *event_ctx,
+		काष्ठा mod_hdcp_transition_input_hdcp1 *input)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	if (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) {
+	अगर (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) अणु
 		event_ctx->unexpected_event = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!mod_hdcp_execute_and_set(mod_hdcp_read_bcaps,
-			&input->bcaps_read, &status,
+	अगर (!mod_hdcp_execute_and_set(mod_hdcp_पढ़ो_bcaps,
+			&input->bcaps_पढ़ो, &status,
 			hdcp, "bcaps_read"))
-		goto out;
-	if (!mod_hdcp_execute_and_set(check_hdcp_capable_dp,
+		जाओ out;
+	अगर (!mod_hdcp_execute_and_set(check_hdcp_capable_dp,
 			&input->hdcp_capable_dp, &status,
 			hdcp, "hdcp_capable_dp"))
-		goto out;
+		जाओ out;
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static enum mod_hdcp_status wait_for_r0_prime_dp(struct mod_hdcp *hdcp,
-		struct mod_hdcp_event_context *event_ctx,
-		struct mod_hdcp_transition_input_hdcp1 *input)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+अटल क्रमागत mod_hdcp_status रुको_क्रम_r0_prime_dp(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_event_context *event_ctx,
+		काष्ठा mod_hdcp_transition_input_hdcp1 *input)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	if (event_ctx->event != MOD_HDCP_EVENT_CPIRQ &&
-			event_ctx->event != MOD_HDCP_EVENT_WATCHDOG_TIMEOUT) {
+	अगर (event_ctx->event != MOD_HDCP_EVENT_CPIRQ &&
+			event_ctx->event != MOD_HDCP_EVENT_WATCHDOG_TIMEOUT) अणु
 		event_ctx->unexpected_event = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!mod_hdcp_execute_and_set(mod_hdcp_read_bstatus,
-			&input->bstatus_read, &status,
+	अगर (!mod_hdcp_execute_and_set(mod_hdcp_पढ़ो_bstatus,
+			&input->bstatus_पढ़ो, &status,
 			hdcp, "bstatus_read"))
-		goto out;
-	if (!mod_hdcp_execute_and_set(check_r0p_available_dp,
+		जाओ out;
+	अगर (!mod_hdcp_execute_and_set(check_r0p_available_dp,
 			&input->r0p_available_dp, &status,
 			hdcp, "r0p_available_dp"))
-		goto out;
+		जाओ out;
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static enum mod_hdcp_status authenticated_dp(struct mod_hdcp *hdcp,
-		struct mod_hdcp_event_context *event_ctx,
-		struct mod_hdcp_transition_input_hdcp1 *input)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+अटल क्रमागत mod_hdcp_status authenticated_dp(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_event_context *event_ctx,
+		काष्ठा mod_hdcp_transition_input_hdcp1 *input)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	if (event_ctx->event != MOD_HDCP_EVENT_CPIRQ) {
+	अगर (event_ctx->event != MOD_HDCP_EVENT_CPIRQ) अणु
 		event_ctx->unexpected_event = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (status == MOD_HDCP_STATUS_SUCCESS)
-		mod_hdcp_execute_and_set(mod_hdcp_read_bstatus,
-				&input->bstatus_read, &status,
+	अगर (status == MOD_HDCP_STATUS_SUCCESS)
+		mod_hdcp_execute_and_set(mod_hdcp_पढ़ो_bstatus,
+				&input->bstatus_पढ़ो, &status,
 				hdcp, "bstatus_read");
-	if (status == MOD_HDCP_STATUS_SUCCESS)
-		mod_hdcp_execute_and_set(check_link_integrity_dp,
-				&input->link_integrity_check, &status,
+	अगर (status == MOD_HDCP_STATUS_SUCCESS)
+		mod_hdcp_execute_and_set(check_link_पूर्णांकegrity_dp,
+				&input->link_पूर्णांकegrity_check, &status,
 				hdcp, "link_integrity_check");
-	if (status == MOD_HDCP_STATUS_SUCCESS)
+	अगर (status == MOD_HDCP_STATUS_SUCCESS)
 		mod_hdcp_execute_and_set(check_no_reauthentication_request_dp,
 				&input->reauth_request_check, &status,
 				hdcp, "reauth_request_check");
 
-	if (status != MOD_HDCP_STATUS_SUCCESS)
+	अगर (status != MOD_HDCP_STATUS_SUCCESS)
 		mod_hdcp_save_current_encryption_states(hdcp);
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-uint8_t mod_hdcp_execute_and_set(
-		mod_hdcp_action func, uint8_t *flag,
-		enum mod_hdcp_status *status, struct mod_hdcp *hdcp, char *str)
-{
+uपूर्णांक8_t mod_hdcp_execute_and_set(
+		mod_hdcp_action func, uपूर्णांक8_t *flag,
+		क्रमागत mod_hdcp_status *status, काष्ठा mod_hdcp *hdcp, अक्षर *str)
+अणु
 	*status = func(hdcp);
-	if (*status == MOD_HDCP_STATUS_SUCCESS && *flag != PASS) {
+	अगर (*status == MOD_HDCP_STATUS_SUCCESS && *flag != PASS) अणु
 		HDCP_INPUT_PASS_TRACE(hdcp, str);
 		*flag = PASS;
-	} else if (*status != MOD_HDCP_STATUS_SUCCESS && *flag != FAIL) {
+	पूर्ण अन्यथा अगर (*status != MOD_HDCP_STATUS_SUCCESS && *flag != FAIL) अणु
 		HDCP_INPUT_FAIL_TRACE(hdcp, str);
 		*flag = FAIL;
-	}
-	return (*status == MOD_HDCP_STATUS_SUCCESS);
-}
+	पूर्ण
+	वापस (*status == MOD_HDCP_STATUS_SUCCESS);
+पूर्ण
 
-enum mod_hdcp_status mod_hdcp_hdcp1_execution(struct mod_hdcp *hdcp,
-		struct mod_hdcp_event_context *event_ctx,
-		struct mod_hdcp_transition_input_hdcp1 *input)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+क्रमागत mod_hdcp_status mod_hdcp_hdcp1_execution(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_event_context *event_ctx,
+		काष्ठा mod_hdcp_transition_input_hdcp1 *input)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	switch (current_state(hdcp)) {
-	case H1_A0_WAIT_FOR_ACTIVE_RX:
-		status = wait_for_active_rx(hdcp, event_ctx, input);
-		break;
-	case H1_A1_EXCHANGE_KSVS:
+	चयन (current_state(hdcp)) अणु
+	हाल H1_A0_WAIT_FOR_ACTIVE_RX:
+		status = रुको_क्रम_active_rx(hdcp, event_ctx, input);
+		अवरोध;
+	हाल H1_A1_EXCHANGE_KSVS:
 		status = exchange_ksvs(hdcp, event_ctx, input);
-		break;
-	case H1_A2_COMPUTATIONS_A3_VALIDATE_RX_A6_TEST_FOR_REPEATER:
-		status = computations_validate_rx_test_for_repeater(hdcp,
+		अवरोध;
+	हाल H1_A2_COMPUTATIONS_A3_VALIDATE_RX_A6_TEST_FOR_REPEATER:
+		status = computations_validate_rx_test_क्रम_repeater(hdcp,
 				event_ctx, input);
-		break;
-	case H1_A45_AUTHENTICATED:
+		अवरोध;
+	हाल H1_A45_AUTHENTICATED:
 		status = authenticated(hdcp, event_ctx, input);
-		break;
-	case H1_A8_WAIT_FOR_READY:
-		status = wait_for_ready(hdcp, event_ctx, input);
-		break;
-	case H1_A9_READ_KSV_LIST:
-		status = read_ksv_list(hdcp, event_ctx, input);
-		break;
-	default:
+		अवरोध;
+	हाल H1_A8_WAIT_FOR_READY:
+		status = रुको_क्रम_पढ़ोy(hdcp, event_ctx, input);
+		अवरोध;
+	हाल H1_A9_READ_KSV_LIST:
+		status = पढ़ो_ksv_list(hdcp, event_ctx, input);
+		अवरोध;
+	शेष:
 		status = MOD_HDCP_STATUS_INVALID_STATE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-extern enum mod_hdcp_status mod_hdcp_hdcp1_dp_execution(struct mod_hdcp *hdcp,
-		struct mod_hdcp_event_context *event_ctx,
-		struct mod_hdcp_transition_input_hdcp1 *input)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+बाह्य क्रमागत mod_hdcp_status mod_hdcp_hdcp1_dp_execution(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_event_context *event_ctx,
+		काष्ठा mod_hdcp_transition_input_hdcp1 *input)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	switch (current_state(hdcp)) {
-	case D1_A0_DETERMINE_RX_HDCP_CAPABLE:
+	चयन (current_state(hdcp)) अणु
+	हाल D1_A0_DETERMINE_RX_HDCP_CAPABLE:
 		status = determine_rx_hdcp_capable_dp(hdcp, event_ctx, input);
-		break;
-	case D1_A1_EXCHANGE_KSVS:
+		अवरोध;
+	हाल D1_A1_EXCHANGE_KSVS:
 		status = exchange_ksvs(hdcp, event_ctx, input);
-		break;
-	case D1_A23_WAIT_FOR_R0_PRIME:
-		status = wait_for_r0_prime_dp(hdcp, event_ctx, input);
-		break;
-	case D1_A2_COMPUTATIONS_A3_VALIDATE_RX_A5_TEST_FOR_REPEATER:
-		status = computations_validate_rx_test_for_repeater(
+		अवरोध;
+	हाल D1_A23_WAIT_FOR_R0_PRIME:
+		status = रुको_क्रम_r0_prime_dp(hdcp, event_ctx, input);
+		अवरोध;
+	हाल D1_A2_COMPUTATIONS_A3_VALIDATE_RX_A5_TEST_FOR_REPEATER:
+		status = computations_validate_rx_test_क्रम_repeater(
 				hdcp, event_ctx, input);
-		break;
-	case D1_A4_AUTHENTICATED:
+		अवरोध;
+	हाल D1_A4_AUTHENTICATED:
 		status = authenticated_dp(hdcp, event_ctx, input);
-		break;
-	case D1_A6_WAIT_FOR_READY:
-		status = wait_for_ready(hdcp, event_ctx, input);
-		break;
-	case D1_A7_READ_KSV_LIST:
-		status = read_ksv_list(hdcp, event_ctx, input);
-		break;
-	default:
+		अवरोध;
+	हाल D1_A6_WAIT_FOR_READY:
+		status = रुको_क्रम_पढ़ोy(hdcp, event_ctx, input);
+		अवरोध;
+	हाल D1_A7_READ_KSV_LIST:
+		status = पढ़ो_ksv_list(hdcp, event_ctx, input);
+		अवरोध;
+	शेष:
 		status = MOD_HDCP_STATUS_INVALID_STATE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * arch/arm/probes/decode-thumb.h
  *
@@ -6,24 +7,24 @@
  * Written by: David A. Long
  */
 
-#ifndef _ARM_KERNEL_PROBES_THUMB_H
-#define  _ARM_KERNEL_PROBES_THUMB_H
+#अगर_अघोषित _ARM_KERNEL_PROBES_THUMB_H
+#घोषणा  _ARM_KERNEL_PROBES_THUMB_H
 
-#include "decode.h"
-
-/*
- * True if current instruction is in an IT block.
- */
-#define in_it_block(cpsr)	((cpsr & 0x06000c00) != 0x00000000)
+#समावेश "decode.h"
 
 /*
- * Return the condition code to check for the currently executing instruction.
- * This is in ITSTATE<7:4> which is in CPSR<15:12> but is only valid if
- * in_it_block returns true.
+ * True अगर current inकाष्ठाion is in an IT block.
  */
-#define current_cond(cpsr)	((cpsr >> 12) & 0xf)
+#घोषणा in_it_block(cpsr)	((cpsr & 0x06000c00) != 0x00000000)
 
-enum probes_t32_action {
+/*
+ * Return the condition code to check क्रम the currently executing inकाष्ठाion.
+ * This is in ITSTATE<7:4> which is in CPSR<15:12> but is only valid अगर
+ * in_it_block वापसs true.
+ */
+#घोषणा current_cond(cpsr)	((cpsr >> 12) & 0xf)
+
+क्रमागत probes_t32_action अणु
 	PROBES_T32_EMULATE_NONE,
 	PROBES_T32_SIMULATE_NOP,
 	PROBES_T32_LDMSTM,
@@ -54,9 +55,9 @@ enum probes_t32_action {
 	PROBES_T32_MUL_ADD2,
 	PROBES_T32_MUL_ADD_LONG,
 	NUM_PROBES_T32_ACTIONS
-};
+पूर्ण;
 
-enum probes_t16_action {
+क्रमागत probes_t16_action अणु
 	PROBES_T16_ADD_SP,
 	PROBES_T16_CBZ,
 	PROBES_T16_SIGN_EXTEND,
@@ -78,18 +79,18 @@ enum probes_t16_action {
 	PROBES_T16_BRANCH_COND,
 	PROBES_T16_BRANCH,
 	NUM_PROBES_T16_ACTIONS
-};
+पूर्ण;
 
-extern const union decode_item probes_decode_thumb32_table[];
-extern const union decode_item probes_decode_thumb16_table[];
+बाह्य स्थिर जोड़ decode_item probes_decode_thumb32_table[];
+बाह्य स्थिर जोड़ decode_item probes_decode_thumb16_table[];
 
-enum probes_insn __kprobes
-thumb16_probes_decode_insn(probes_opcode_t insn, struct arch_probes_insn *asi,
-		bool emulate, const union decode_action *actions,
-		const struct decode_checker *checkers[]);
-enum probes_insn __kprobes
-thumb32_probes_decode_insn(probes_opcode_t insn, struct arch_probes_insn *asi,
-		bool emulate, const union decode_action *actions,
-		const struct decode_checker *checkers[]);
+क्रमागत probes_insn __kprobes
+thumb16_probes_decode_insn(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
+		bool emulate, स्थिर जोड़ decode_action *actions,
+		स्थिर काष्ठा decode_checker *checkers[]);
+क्रमागत probes_insn __kprobes
+thumb32_probes_decode_insn(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
+		bool emulate, स्थिर जोड़ decode_action *actions,
+		स्थिर काष्ठा decode_checker *checkers[]);
 
-#endif
+#पूर्ण_अगर

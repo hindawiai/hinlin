@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Authors:
@@ -7,105 +8,105 @@
  * Based on: net/wireless/sysfs.c
  */
 
-#include <linux/device.h>
-#include <linux/rtnetlink.h>
+#समावेश <linux/device.h>
+#समावेश <linux/rtnetlink.h>
 
-#include <net/cfg802154.h>
+#समावेश <net/cfg802154.h>
 
-#include "core.h"
-#include "sysfs.h"
-#include "rdev-ops.h"
+#समावेश "core.h"
+#समावेश "sysfs.h"
+#समावेश "rdev-ops.h"
 
-static inline struct cfg802154_registered_device *
-dev_to_rdev(struct device *dev)
-{
-	return container_of(dev, struct cfg802154_registered_device,
+अटल अंतरभूत काष्ठा cfg802154_रेजिस्टरed_device *
+dev_to_rdev(काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा cfg802154_रेजिस्टरed_device,
 			    wpan_phy.dev);
-}
+पूर्ण
 
-#define SHOW_FMT(name, fmt, member)					\
-static ssize_t name ## _show(struct device *dev,			\
-			     struct device_attribute *attr,		\
-			     char *buf)					\
-{									\
-	return sprintf(buf, fmt "\n", dev_to_rdev(dev)->member);	\
-}									\
-static DEVICE_ATTR_RO(name)
+#घोषणा SHOW_FMT(name, fmt, member)					\
+अटल sमाप_प्रकार name ## _show(काष्ठा device *dev,			\
+			     काष्ठा device_attribute *attr,		\
+			     अक्षर *buf)					\
+अणु									\
+	वापस प्र_लिखो(buf, fmt "\n", dev_to_rdev(dev)->member);	\
+पूर्ण									\
+अटल DEVICE_ATTR_RO(name)
 
 SHOW_FMT(index, "%d", wpan_phy_idx);
 
-static ssize_t name_show(struct device *dev,
-			 struct device_attribute *attr,
-			 char *buf)
-{
-	struct wpan_phy *wpan_phy = &dev_to_rdev(dev)->wpan_phy;
+अटल sमाप_प्रकार name_show(काष्ठा device *dev,
+			 काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा wpan_phy *wpan_phy = &dev_to_rdev(dev)->wpan_phy;
 
-	return sprintf(buf, "%s\n", dev_name(&wpan_phy->dev));
-}
-static DEVICE_ATTR_RO(name);
+	वापस प्र_लिखो(buf, "%s\n", dev_name(&wpan_phy->dev));
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static void wpan_phy_release(struct device *dev)
-{
-	struct cfg802154_registered_device *rdev = dev_to_rdev(dev);
+अटल व्योम wpan_phy_release(काष्ठा device *dev)
+अणु
+	काष्ठा cfg802154_रेजिस्टरed_device *rdev = dev_to_rdev(dev);
 
-	cfg802154_dev_free(rdev);
-}
+	cfg802154_dev_मुक्त(rdev);
+पूर्ण
 
-static struct attribute *pmib_attrs[] = {
+अटल काष्ठा attribute *pmib_attrs[] = अणु
 	&dev_attr_index.attr,
 	&dev_attr_name.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(pmib);
 
-#ifdef CONFIG_PM_SLEEP
-static int wpan_phy_suspend(struct device *dev)
-{
-	struct cfg802154_registered_device *rdev = dev_to_rdev(dev);
-	int ret = 0;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक wpan_phy_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा cfg802154_रेजिस्टरed_device *rdev = dev_to_rdev(dev);
+	पूर्णांक ret = 0;
 
-	if (rdev->ops->suspend) {
+	अगर (rdev->ops->suspend) अणु
 		rtnl_lock();
 		ret = rdev_suspend(rdev);
 		rtnl_unlock();
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wpan_phy_resume(struct device *dev)
-{
-	struct cfg802154_registered_device *rdev = dev_to_rdev(dev);
-	int ret = 0;
+अटल पूर्णांक wpan_phy_resume(काष्ठा device *dev)
+अणु
+	काष्ठा cfg802154_रेजिस्टरed_device *rdev = dev_to_rdev(dev);
+	पूर्णांक ret = 0;
 
-	if (rdev->ops->resume) {
+	अगर (rdev->ops->resume) अणु
 		rtnl_lock();
 		ret = rdev_resume(rdev);
 		rtnl_unlock();
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(wpan_phy_pm_ops, wpan_phy_suspend, wpan_phy_resume);
-#define WPAN_PHY_PM_OPS (&wpan_phy_pm_ops)
-#else
-#define WPAN_PHY_PM_OPS NULL
-#endif
+अटल SIMPLE_DEV_PM_OPS(wpan_phy_pm_ops, wpan_phy_suspend, wpan_phy_resume);
+#घोषणा WPAN_PHY_PM_OPS (&wpan_phy_pm_ops)
+#अन्यथा
+#घोषणा WPAN_PHY_PM_OPS शून्य
+#पूर्ण_अगर
 
-struct class wpan_phy_class = {
+काष्ठा class wpan_phy_class = अणु
 	.name = "ieee802154",
 	.dev_release = wpan_phy_release,
 	.dev_groups = pmib_groups,
 	.pm = WPAN_PHY_PM_OPS,
-};
+पूर्ण;
 
-int wpan_phy_sysfs_init(void)
-{
-	return class_register(&wpan_phy_class);
-}
+पूर्णांक wpan_phy_sysfs_init(व्योम)
+अणु
+	वापस class_रेजिस्टर(&wpan_phy_class);
+पूर्ण
 
-void wpan_phy_sysfs_exit(void)
-{
-	class_unregister(&wpan_phy_class);
-}
+व्योम wpan_phy_sysfs_निकास(व्योम)
+अणु
+	class_unरेजिस्टर(&wpan_phy_class);
+पूर्ण

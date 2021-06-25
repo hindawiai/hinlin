@@ -1,115 +1,116 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_NAT_H
-#define _NF_NAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_NAT_H
+#घोषणा _NF_NAT_H
 
-#include <linux/list.h>
-#include <linux/netfilter_ipv4.h>
-#include <linux/netfilter/nf_conntrack_pptp.h>
-#include <net/netfilter/nf_conntrack.h>
-#include <net/netfilter/nf_conntrack_extend.h>
-#include <net/netfilter/nf_conntrack_tuple.h>
-#include <uapi/linux/netfilter/nf_nat.h>
+#समावेश <linux/list.h>
+#समावेश <linux/netfilter_ipv4.h>
+#समावेश <linux/netfilter/nf_conntrack_pptp.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_extend.h>
+#समावेश <net/netfilter/nf_conntrack_tuple.h>
+#समावेश <uapi/linux/netfilter/nf_nat.h>
 
-enum nf_nat_manip_type {
+क्रमागत nf_nat_manip_type अणु
 	NF_NAT_MANIP_SRC,
 	NF_NAT_MANIP_DST
-};
+पूर्ण;
 
 /* SRC manip occurs POST_ROUTING or LOCAL_IN */
-#define HOOK2MANIP(hooknum) ((hooknum) != NF_INET_POST_ROUTING && \
+#घोषणा HOOK2MANIP(hooknum) ((hooknum) != NF_INET_POST_ROUTING && \
 			     (hooknum) != NF_INET_LOCAL_IN)
 
-/* per conntrack: nat application helper private data */
-union nf_conntrack_nat_help {
-	/* insert nat helper private data here */
-#if IS_ENABLED(CONFIG_NF_NAT_PPTP)
-	struct nf_nat_pptp nat_pptp_info;
-#endif
-};
+/* per conntrack: nat application helper निजी data */
+जोड़ nf_conntrack_nat_help अणु
+	/* insert nat helper निजी data here */
+#अगर IS_ENABLED(CONFIG_NF_NAT_PPTP)
+	काष्ठा nf_nat_pptp nat_pptp_info;
+#पूर्ण_अगर
+पूर्ण;
 
-/* The structure embedded in the conntrack structure. */
-struct nf_conn_nat {
-	union nf_conntrack_nat_help help;
-#if IS_ENABLED(CONFIG_NF_NAT_MASQUERADE)
-	int masq_index;
-#endif
-};
+/* The काष्ठाure embedded in the conntrack काष्ठाure. */
+काष्ठा nf_conn_nat अणु
+	जोड़ nf_conntrack_nat_help help;
+#अगर IS_ENABLED(CONFIG_NF_NAT_MASQUERADE)
+	पूर्णांक masq_index;
+#पूर्ण_अगर
+पूर्ण;
 
-/* Set up the info structure to map into this range. */
-unsigned int nf_nat_setup_info(struct nf_conn *ct,
-			       const struct nf_nat_range2 *range,
-			       enum nf_nat_manip_type maniptype);
+/* Set up the info काष्ठाure to map पूर्णांकo this range. */
+अचिन्हित पूर्णांक nf_nat_setup_info(काष्ठा nf_conn *ct,
+			       स्थिर काष्ठा nf_nat_range2 *range,
+			       क्रमागत nf_nat_manip_type maniptype);
 
-extern unsigned int nf_nat_alloc_null_binding(struct nf_conn *ct,
-					      unsigned int hooknum);
+बाह्य अचिन्हित पूर्णांक nf_nat_alloc_null_binding(काष्ठा nf_conn *ct,
+					      अचिन्हित पूर्णांक hooknum);
 
-struct nf_conn_nat *nf_ct_nat_ext_add(struct nf_conn *ct);
+काष्ठा nf_conn_nat *nf_ct_nat_ext_add(काष्ठा nf_conn *ct);
 
-static inline struct nf_conn_nat *nfct_nat(const struct nf_conn *ct)
-{
-#if IS_ENABLED(CONFIG_NF_NAT)
-	return nf_ct_ext_find(ct, NF_CT_EXT_NAT);
-#else
-	return NULL;
-#endif
-}
+अटल अंतरभूत काष्ठा nf_conn_nat *nfct_nat(स्थिर काष्ठा nf_conn *ct)
+अणु
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+	वापस nf_ct_ext_find(ct, NF_CT_EXT_NAT);
+#अन्यथा
+	वापस शून्य;
+#पूर्ण_अगर
+पूर्ण
 
-static inline bool nf_nat_oif_changed(unsigned int hooknum,
-				      enum ip_conntrack_info ctinfo,
-				      struct nf_conn_nat *nat,
-				      const struct net_device *out)
-{
-#if IS_ENABLED(CONFIG_NF_NAT_MASQUERADE)
-	return nat && nat->masq_index && hooknum == NF_INET_POST_ROUTING &&
-	       CTINFO2DIR(ctinfo) == IP_CT_DIR_ORIGINAL &&
-	       nat->masq_index != out->ifindex;
-#else
-	return false;
-#endif
-}
+अटल अंतरभूत bool nf_nat_oअगर_changed(अचिन्हित पूर्णांक hooknum,
+				      क्रमागत ip_conntrack_info ctinfo,
+				      काष्ठा nf_conn_nat *nat,
+				      स्थिर काष्ठा net_device *out)
+अणु
+#अगर IS_ENABLED(CONFIG_NF_NAT_MASQUERADE)
+	वापस nat && nat->masq_index && hooknum == NF_INET_POST_ROUTING &&
+	       CTINFO2सूची(ctinfo) == IP_CT_सूची_ORIGINAL &&
+	       nat->masq_index != out->अगरindex;
+#अन्यथा
+	वापस false;
+#पूर्ण_अगर
+पूर्ण
 
-int nf_nat_register_fn(struct net *net, u8 pf, const struct nf_hook_ops *ops,
-		       const struct nf_hook_ops *nat_ops, unsigned int ops_count);
-void nf_nat_unregister_fn(struct net *net, u8 pf, const struct nf_hook_ops *ops,
-			  unsigned int ops_count);
+पूर्णांक nf_nat_रेजिस्टर_fn(काष्ठा net *net, u8 pf, स्थिर काष्ठा nf_hook_ops *ops,
+		       स्थिर काष्ठा nf_hook_ops *nat_ops, अचिन्हित पूर्णांक ops_count);
+व्योम nf_nat_unरेजिस्टर_fn(काष्ठा net *net, u8 pf, स्थिर काष्ठा nf_hook_ops *ops,
+			  अचिन्हित पूर्णांक ops_count);
 
-unsigned int nf_nat_packet(struct nf_conn *ct, enum ip_conntrack_info ctinfo,
-			   unsigned int hooknum, struct sk_buff *skb);
+अचिन्हित पूर्णांक nf_nat_packet(काष्ठा nf_conn *ct, क्रमागत ip_conntrack_info ctinfo,
+			   अचिन्हित पूर्णांक hooknum, काष्ठा sk_buff *skb);
 
-unsigned int nf_nat_manip_pkt(struct sk_buff *skb, struct nf_conn *ct,
-			      enum nf_nat_manip_type mtype,
-			      enum ip_conntrack_dir dir);
-void nf_nat_csum_recalc(struct sk_buff *skb,
-			u8 nfproto, u8 proto, void *data, __sum16 *check,
-			int datalen, int oldlen);
+अचिन्हित पूर्णांक nf_nat_manip_pkt(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			      क्रमागत nf_nat_manip_type mtype,
+			      क्रमागत ip_conntrack_dir dir);
+व्योम nf_nat_csum_recalc(काष्ठा sk_buff *skb,
+			u8 nfproto, u8 proto, व्योम *data, __sum16 *check,
+			पूर्णांक datalen, पूर्णांक oldlen);
 
-int nf_nat_icmp_reply_translation(struct sk_buff *skb, struct nf_conn *ct,
-				  enum ip_conntrack_info ctinfo,
-				  unsigned int hooknum);
+पूर्णांक nf_nat_icmp_reply_translation(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+				  क्रमागत ip_conntrack_info ctinfo,
+				  अचिन्हित पूर्णांक hooknum);
 
-int nf_nat_icmpv6_reply_translation(struct sk_buff *skb, struct nf_conn *ct,
-				    enum ip_conntrack_info ctinfo,
-				    unsigned int hooknum, unsigned int hdrlen);
+पूर्णांक nf_nat_icmpv6_reply_translation(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+				    क्रमागत ip_conntrack_info ctinfo,
+				    अचिन्हित पूर्णांक hooknum, अचिन्हित पूर्णांक hdrlen);
 
-int nf_nat_ipv4_register_fn(struct net *net, const struct nf_hook_ops *ops);
-void nf_nat_ipv4_unregister_fn(struct net *net, const struct nf_hook_ops *ops);
+पूर्णांक nf_nat_ipv4_रेजिस्टर_fn(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops);
+व्योम nf_nat_ipv4_unरेजिस्टर_fn(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops);
 
-int nf_nat_ipv6_register_fn(struct net *net, const struct nf_hook_ops *ops);
-void nf_nat_ipv6_unregister_fn(struct net *net, const struct nf_hook_ops *ops);
+पूर्णांक nf_nat_ipv6_रेजिस्टर_fn(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops);
+व्योम nf_nat_ipv6_unरेजिस्टर_fn(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops);
 
-int nf_nat_inet_register_fn(struct net *net, const struct nf_hook_ops *ops);
-void nf_nat_inet_unregister_fn(struct net *net, const struct nf_hook_ops *ops);
+पूर्णांक nf_nat_inet_रेजिस्टर_fn(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops);
+व्योम nf_nat_inet_unरेजिस्टर_fn(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops);
 
-unsigned int
-nf_nat_inet_fn(void *priv, struct sk_buff *skb,
-	       const struct nf_hook_state *state);
+अचिन्हित पूर्णांक
+nf_nat_inet_fn(व्योम *priv, काष्ठा sk_buff *skb,
+	       स्थिर काष्ठा nf_hook_state *state);
 
-static inline int nf_nat_initialized(struct nf_conn *ct,
-				     enum nf_nat_manip_type manip)
-{
-	if (manip == NF_NAT_MANIP_SRC)
-		return ct->status & IPS_SRC_NAT_DONE;
-	else
-		return ct->status & IPS_DST_NAT_DONE;
-}
-#endif
+अटल अंतरभूत पूर्णांक nf_nat_initialized(काष्ठा nf_conn *ct,
+				     क्रमागत nf_nat_manip_type manip)
+अणु
+	अगर (manip == NF_NAT_MANIP_SRC)
+		वापस ct->status & IPS_SRC_NAT_DONE;
+	अन्यथा
+		वापस ct->status & IPS_DST_NAT_DONE;
+पूर्ण
+#पूर्ण_अगर

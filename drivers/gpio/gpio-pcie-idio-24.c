@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * GPIO driver for the ACCES PCIe-IDIO-24 family
+ * GPIO driver क्रम the ACCES PCIe-IDIO-24 family
  * Copyright (C) 2018 William Breathitt Gray
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License, version 2, as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * This driver supports the following ACCES devices: PCIe-IDIO-24,
  * PCIe-IDI-24, PCIe-IDO-24, and PCIe-IDIO-12.
  */
-#include <linux/bitmap.h>
-#include <linux/bitops.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/gpio/driver.h>
-#include <linux/interrupt.h>
-#include <linux/irqdesc.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqdesc.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
 
 /*
  * PLX PEX8311 PCI LCS_INTCSR Interrupt Control/Status
@@ -59,40 +60,40 @@
  *  24: Direct Master was the Bus Master during a Master or Target Abort
  *  25: DMA Channel 0 was the Bus Master during a Master or Target Abort
  *  26: DMA Channel 1 was the Bus Master during a Master or Target Abort
- *  27: Target Abort after internal 256 consecutive Master Retrys
+ *  27: Target Abort after पूर्णांकernal 256 consecutive Master Retrys
  *  28: PCI Bus wrote data to LCS_MBOX0
  *  29: PCI Bus wrote data to LCS_MBOX1
  *  30: PCI Bus wrote data to LCS_MBOX2
  *  31: PCI Bus wrote data to LCS_MBOX3
  */
-#define PLX_PEX8311_PCI_LCS_INTCSR  0x68
-#define INTCSR_INTERNAL_PCI_WIRE    BIT(8)
-#define INTCSR_LOCAL_INPUT          BIT(11)
+#घोषणा PLX_PEX8311_PCI_LCS_INTCSR  0x68
+#घोषणा INTCSR_INTERNAL_PCI_WIRE    BIT(8)
+#घोषणा INTCSR_LOCAL_INPUT          BIT(11)
 
 /**
- * struct idio_24_gpio_reg - GPIO device registers structure
- * @out0_7:	Read: FET Outputs 0-7
- *		Write: FET Outputs 0-7
- * @out8_15:	Read: FET Outputs 8-15
- *		Write: FET Outputs 8-15
- * @out16_23:	Read: FET Outputs 16-23
- *		Write: FET Outputs 16-23
- * @ttl_out0_7:	Read: TTL/CMOS Outputs 0-7
- *		Write: TTL/CMOS Outputs 0-7
- * @in0_7:	Read: Isolated Inputs 0-7
+ * काष्ठा idio_24_gpio_reg - GPIO device रेजिस्टरs काष्ठाure
+ * @out0_7:	Read: FET Outमाला_दो 0-7
+ *		Write: FET Outमाला_दो 0-7
+ * @out8_15:	Read: FET Outमाला_दो 8-15
+ *		Write: FET Outमाला_दो 8-15
+ * @out16_23:	Read: FET Outमाला_दो 16-23
+ *		Write: FET Outमाला_दो 16-23
+ * @ttl_out0_7:	Read: TTL/CMOS Outमाला_दो 0-7
+ *		Write: TTL/CMOS Outमाला_दो 0-7
+ * @in0_7:	Read: Isolated Inमाला_दो 0-7
  *		Write: Reserved
- * @in8_15:	Read: Isolated Inputs 8-15
+ * @in8_15:	Read: Isolated Inमाला_दो 8-15
  *		Write: Reserved
- * @in16_23:	Read: Isolated Inputs 16-23
+ * @in16_23:	Read: Isolated Inमाला_दो 16-23
  *		Write: Reserved
- * @ttl_in0_7:	Read: TTL/CMOS Inputs 0-7
+ * @ttl_in0_7:	Read: TTL/CMOS Inमाला_दो 0-7
  *		Write: Reserved
- * @cos0_7:	Read: COS Status Inputs 0-7
- *		Write: COS Clear Inputs 0-7
- * @cos8_15:	Read: COS Status Inputs 8-15
- *		Write: COS Clear Inputs 8-15
- * @cos16_23:	Read: COS Status Inputs 16-23
- *		Write: COS Clear Inputs 16-23
+ * @cos0_7:	Read: COS Status Inमाला_दो 0-7
+ *		Write: COS Clear Inमाला_दो 0-7
+ * @cos8_15:	Read: COS Status Inमाला_दो 8-15
+ *		Write: COS Clear Inमाला_दो 8-15
+ * @cos16_23:	Read: COS Status Inमाला_दो 16-23
+ *		Write: COS Clear Inमाला_दो 16-23
  * @cos_ttl0_7:	Read: COS Status TTL/CMOS 0-7
  *		Write: COS Clear TTL/CMOS 0-7
  * @ctl:	Read: Control Register
@@ -104,7 +105,7 @@
  * @soft_reset:	Read: IRQ Output Pin Status
  *		Write: Software Board Reset
  */
-struct idio_24_gpio_reg {
+काष्ठा idio_24_gpio_reg अणु
 	u8 out0_7;
 	u8 out8_15;
 	u8 out16_23;
@@ -121,368 +122,368 @@ struct idio_24_gpio_reg {
 	u8 reserved;
 	u8 cos_enable;
 	u8 soft_reset;
-};
+पूर्ण;
 
 /**
- * struct idio_24_gpio - GPIO device private data structure
+ * काष्ठा idio_24_gpio - GPIO device निजी data काष्ठाure
  * @chip:	instance of the gpio_chip
  * @lock:	synchronization lock to prevent I/O race conditions
- * @reg:	I/O address offset for the GPIO device registers
- * @irq_mask:	I/O bits affected by interrupts
+ * @reg:	I/O address offset क्रम the GPIO device रेजिस्टरs
+ * @irq_mask:	I/O bits affected by पूर्णांकerrupts
  */
-struct idio_24_gpio {
-	struct gpio_chip chip;
+काष्ठा idio_24_gpio अणु
+	काष्ठा gpio_chip chip;
 	raw_spinlock_t lock;
 	__u8 __iomem *plx;
-	struct idio_24_gpio_reg __iomem *reg;
-	unsigned long irq_mask;
-};
+	काष्ठा idio_24_gpio_reg __iomem *reg;
+	अचिन्हित दीर्घ irq_mask;
+पूर्ण;
 
-static int idio_24_gpio_get_direction(struct gpio_chip *chip,
-	unsigned int offset)
-{
-	struct idio_24_gpio *const idio24gpio = gpiochip_get_data(chip);
-	const unsigned long out_mode_mask = BIT(1);
+अटल पूर्णांक idio_24_gpio_get_direction(काष्ठा gpio_chip *chip,
+	अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा idio_24_gpio *स्थिर idio24gpio = gpiochip_get_data(chip);
+	स्थिर अचिन्हित दीर्घ out_mode_mask = BIT(1);
 
-	/* FET Outputs */
-	if (offset < 24)
-		return GPIO_LINE_DIRECTION_OUT;
+	/* FET Outमाला_दो */
+	अगर (offset < 24)
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	/* Isolated Inputs */
-	if (offset < 48)
-		return GPIO_LINE_DIRECTION_IN;
+	/* Isolated Inमाला_दो */
+	अगर (offset < 48)
+		वापस GPIO_LINE_सूचीECTION_IN;
 
 	/* TTL/CMOS I/O */
 	/* OUT MODE = 1 when TTL/CMOS Output Mode is set */
-	if (ioread8(&idio24gpio->reg->ctl) & out_mode_mask)
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (ioपढ़ो8(&idio24gpio->reg->ctl) & out_mode_mask)
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int idio_24_gpio_direction_input(struct gpio_chip *chip,
-	unsigned int offset)
-{
-	struct idio_24_gpio *const idio24gpio = gpiochip_get_data(chip);
-	unsigned long flags;
-	unsigned int ctl_state;
-	const unsigned long out_mode_mask = BIT(1);
+अटल पूर्णांक idio_24_gpio_direction_input(काष्ठा gpio_chip *chip,
+	अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा idio_24_gpio *स्थिर idio24gpio = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ctl_state;
+	स्थिर अचिन्हित दीर्घ out_mode_mask = BIT(1);
 
 	/* TTL/CMOS I/O */
-	if (offset > 47) {
+	अगर (offset > 47) अणु
 		raw_spin_lock_irqsave(&idio24gpio->lock, flags);
 
 		/* Clear TTL/CMOS Output Mode */
-		ctl_state = ioread8(&idio24gpio->reg->ctl) & ~out_mode_mask;
-		iowrite8(ctl_state, &idio24gpio->reg->ctl);
+		ctl_state = ioपढ़ो8(&idio24gpio->reg->ctl) & ~out_mode_mask;
+		ioग_लिखो8(ctl_state, &idio24gpio->reg->ctl);
 
 		raw_spin_unlock_irqrestore(&idio24gpio->lock, flags);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int idio_24_gpio_direction_output(struct gpio_chip *chip,
-	unsigned int offset, int value)
-{
-	struct idio_24_gpio *const idio24gpio = gpiochip_get_data(chip);
-	unsigned long flags;
-	unsigned int ctl_state;
-	const unsigned long out_mode_mask = BIT(1);
+अटल पूर्णांक idio_24_gpio_direction_output(काष्ठा gpio_chip *chip,
+	अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा idio_24_gpio *स्थिर idio24gpio = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ctl_state;
+	स्थिर अचिन्हित दीर्घ out_mode_mask = BIT(1);
 
 	/* TTL/CMOS I/O */
-	if (offset > 47) {
+	अगर (offset > 47) अणु
 		raw_spin_lock_irqsave(&idio24gpio->lock, flags);
 
 		/* Set TTL/CMOS Output Mode */
-		ctl_state = ioread8(&idio24gpio->reg->ctl) | out_mode_mask;
-		iowrite8(ctl_state, &idio24gpio->reg->ctl);
+		ctl_state = ioपढ़ो8(&idio24gpio->reg->ctl) | out_mode_mask;
+		ioग_लिखो8(ctl_state, &idio24gpio->reg->ctl);
 
 		raw_spin_unlock_irqrestore(&idio24gpio->lock, flags);
-	}
+	पूर्ण
 
 	chip->set(chip, offset, value);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int idio_24_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct idio_24_gpio *const idio24gpio = gpiochip_get_data(chip);
-	const unsigned long offset_mask = BIT(offset % 8);
-	const unsigned long out_mode_mask = BIT(1);
+अटल पूर्णांक idio_24_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा idio_24_gpio *स्थिर idio24gpio = gpiochip_get_data(chip);
+	स्थिर अचिन्हित दीर्घ offset_mask = BIT(offset % 8);
+	स्थिर अचिन्हित दीर्घ out_mode_mask = BIT(1);
 
-	/* FET Outputs */
-	if (offset < 8)
-		return !!(ioread8(&idio24gpio->reg->out0_7) & offset_mask);
+	/* FET Outमाला_दो */
+	अगर (offset < 8)
+		वापस !!(ioपढ़ो8(&idio24gpio->reg->out0_7) & offset_mask);
 
-	if (offset < 16)
-		return !!(ioread8(&idio24gpio->reg->out8_15) & offset_mask);
+	अगर (offset < 16)
+		वापस !!(ioपढ़ो8(&idio24gpio->reg->out8_15) & offset_mask);
 
-	if (offset < 24)
-		return !!(ioread8(&idio24gpio->reg->out16_23) & offset_mask);
+	अगर (offset < 24)
+		वापस !!(ioपढ़ो8(&idio24gpio->reg->out16_23) & offset_mask);
 
-	/* Isolated Inputs */
-	if (offset < 32)
-		return !!(ioread8(&idio24gpio->reg->in0_7) & offset_mask);
+	/* Isolated Inमाला_दो */
+	अगर (offset < 32)
+		वापस !!(ioपढ़ो8(&idio24gpio->reg->in0_7) & offset_mask);
 
-	if (offset < 40)
-		return !!(ioread8(&idio24gpio->reg->in8_15) & offset_mask);
+	अगर (offset < 40)
+		वापस !!(ioपढ़ो8(&idio24gpio->reg->in8_15) & offset_mask);
 
-	if (offset < 48)
-		return !!(ioread8(&idio24gpio->reg->in16_23) & offset_mask);
+	अगर (offset < 48)
+		वापस !!(ioपढ़ो8(&idio24gpio->reg->in16_23) & offset_mask);
 
-	/* TTL/CMOS Outputs */
-	if (ioread8(&idio24gpio->reg->ctl) & out_mode_mask)
-		return !!(ioread8(&idio24gpio->reg->ttl_out0_7) & offset_mask);
+	/* TTL/CMOS Outमाला_दो */
+	अगर (ioपढ़ो8(&idio24gpio->reg->ctl) & out_mode_mask)
+		वापस !!(ioपढ़ो8(&idio24gpio->reg->ttl_out0_7) & offset_mask);
 
-	/* TTL/CMOS Inputs */
-	return !!(ioread8(&idio24gpio->reg->ttl_in0_7) & offset_mask);
-}
+	/* TTL/CMOS Inमाला_दो */
+	वापस !!(ioपढ़ो8(&idio24gpio->reg->ttl_in0_7) & offset_mask);
+पूर्ण
 
-static int idio_24_gpio_get_multiple(struct gpio_chip *chip,
-	unsigned long *mask, unsigned long *bits)
-{
-	struct idio_24_gpio *const idio24gpio = gpiochip_get_data(chip);
-	unsigned long offset;
-	unsigned long gpio_mask;
-	void __iomem *ports[] = {
+अटल पूर्णांक idio_24_gpio_get_multiple(काष्ठा gpio_chip *chip,
+	अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
+अणु
+	काष्ठा idio_24_gpio *स्थिर idio24gpio = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ gpio_mask;
+	व्योम __iomem *ports[] = अणु
 		&idio24gpio->reg->out0_7, &idio24gpio->reg->out8_15,
 		&idio24gpio->reg->out16_23, &idio24gpio->reg->in0_7,
 		&idio24gpio->reg->in8_15, &idio24gpio->reg->in16_23,
-	};
-	size_t index;
-	unsigned long port_state;
-	const unsigned long out_mode_mask = BIT(1);
+	पूर्ण;
+	माप_प्रकार index;
+	अचिन्हित दीर्घ port_state;
+	स्थिर अचिन्हित दीर्घ out_mode_mask = BIT(1);
 
 	/* clear bits array to a clean slate */
-	bitmap_zero(bits, chip->ngpio);
+	biपंचांगap_zero(bits, chip->ngpio);
 
-	for_each_set_clump8(offset, gpio_mask, mask, ARRAY_SIZE(ports) * 8) {
+	क्रम_each_set_clump8(offset, gpio_mask, mask, ARRAY_SIZE(ports) * 8) अणु
 		index = offset / 8;
 
-		/* read bits from current gpio port (port 6 is TTL GPIO) */
-		if (index < 6)
-			port_state = ioread8(ports[index]);
-		else if (ioread8(&idio24gpio->reg->ctl) & out_mode_mask)
-			port_state = ioread8(&idio24gpio->reg->ttl_out0_7);
-		else
-			port_state = ioread8(&idio24gpio->reg->ttl_in0_7);
+		/* पढ़ो bits from current gpio port (port 6 is TTL GPIO) */
+		अगर (index < 6)
+			port_state = ioपढ़ो8(ports[index]);
+		अन्यथा अगर (ioपढ़ो8(&idio24gpio->reg->ctl) & out_mode_mask)
+			port_state = ioपढ़ो8(&idio24gpio->reg->ttl_out0_7);
+		अन्यथा
+			port_state = ioपढ़ो8(&idio24gpio->reg->ttl_in0_7);
 
 		port_state &= gpio_mask;
 
-		bitmap_set_value8(bits, port_state, offset);
-	}
+		biपंचांगap_set_value8(bits, port_state, offset);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void idio_24_gpio_set(struct gpio_chip *chip, unsigned int offset,
-	int value)
-{
-	struct idio_24_gpio *const idio24gpio = gpiochip_get_data(chip);
-	const unsigned long out_mode_mask = BIT(1);
-	void __iomem *base;
-	const unsigned int mask = BIT(offset % 8);
-	unsigned long flags;
-	unsigned int out_state;
+अटल व्योम idio_24_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+	पूर्णांक value)
+अणु
+	काष्ठा idio_24_gpio *स्थिर idio24gpio = gpiochip_get_data(chip);
+	स्थिर अचिन्हित दीर्घ out_mode_mask = BIT(1);
+	व्योम __iomem *base;
+	स्थिर अचिन्हित पूर्णांक mask = BIT(offset % 8);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक out_state;
 
-	/* Isolated Inputs */
-	if (offset > 23 && offset < 48)
-		return;
+	/* Isolated Inमाला_दो */
+	अगर (offset > 23 && offset < 48)
+		वापस;
 
-	/* TTL/CMOS Inputs */
-	if (offset > 47 && !(ioread8(&idio24gpio->reg->ctl) & out_mode_mask))
-		return;
+	/* TTL/CMOS Inमाला_दो */
+	अगर (offset > 47 && !(ioपढ़ो8(&idio24gpio->reg->ctl) & out_mode_mask))
+		वापस;
 
-	/* TTL/CMOS Outputs */
-	if (offset > 47)
+	/* TTL/CMOS Outमाला_दो */
+	अगर (offset > 47)
 		base = &idio24gpio->reg->ttl_out0_7;
-	/* FET Outputs */
-	else if (offset > 15)
+	/* FET Outमाला_दो */
+	अन्यथा अगर (offset > 15)
 		base = &idio24gpio->reg->out16_23;
-	else if (offset > 7)
+	अन्यथा अगर (offset > 7)
 		base = &idio24gpio->reg->out8_15;
-	else
+	अन्यथा
 		base = &idio24gpio->reg->out0_7;
 
 	raw_spin_lock_irqsave(&idio24gpio->lock, flags);
 
-	if (value)
-		out_state = ioread8(base) | mask;
-	else
-		out_state = ioread8(base) & ~mask;
+	अगर (value)
+		out_state = ioपढ़ो8(base) | mask;
+	अन्यथा
+		out_state = ioपढ़ो8(base) & ~mask;
 
-	iowrite8(out_state, base);
+	ioग_लिखो8(out_state, base);
 
 	raw_spin_unlock_irqrestore(&idio24gpio->lock, flags);
-}
+पूर्ण
 
-static void idio_24_gpio_set_multiple(struct gpio_chip *chip,
-	unsigned long *mask, unsigned long *bits)
-{
-	struct idio_24_gpio *const idio24gpio = gpiochip_get_data(chip);
-	unsigned long offset;
-	unsigned long gpio_mask;
-	void __iomem *ports[] = {
+अटल व्योम idio_24_gpio_set_multiple(काष्ठा gpio_chip *chip,
+	अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
+अणु
+	काष्ठा idio_24_gpio *स्थिर idio24gpio = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ gpio_mask;
+	व्योम __iomem *ports[] = अणु
 		&idio24gpio->reg->out0_7, &idio24gpio->reg->out8_15,
 		&idio24gpio->reg->out16_23
-	};
-	size_t index;
-	unsigned long bitmask;
-	unsigned long flags;
-	unsigned long out_state;
-	const unsigned long out_mode_mask = BIT(1);
+	पूर्ण;
+	माप_प्रकार index;
+	अचिन्हित दीर्घ biपंचांगask;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ out_state;
+	स्थिर अचिन्हित दीर्घ out_mode_mask = BIT(1);
 
-	for_each_set_clump8(offset, gpio_mask, mask, ARRAY_SIZE(ports) * 8) {
+	क्रम_each_set_clump8(offset, gpio_mask, mask, ARRAY_SIZE(ports) * 8) अणु
 		index = offset / 8;
 
-		bitmask = bitmap_get_value8(bits, offset) & gpio_mask;
+		biपंचांगask = biपंचांगap_get_value8(bits, offset) & gpio_mask;
 
 		raw_spin_lock_irqsave(&idio24gpio->lock, flags);
 
-		/* read bits from current gpio port (port 6 is TTL GPIO) */
-		if (index < 6) {
-			out_state = ioread8(ports[index]);
-		} else if (ioread8(&idio24gpio->reg->ctl) & out_mode_mask) {
-			out_state = ioread8(&idio24gpio->reg->ttl_out0_7);
-		} else {
-			/* skip TTL GPIO if set for input */
+		/* पढ़ो bits from current gpio port (port 6 is TTL GPIO) */
+		अगर (index < 6) अणु
+			out_state = ioपढ़ो8(ports[index]);
+		पूर्ण अन्यथा अगर (ioपढ़ो8(&idio24gpio->reg->ctl) & out_mode_mask) अणु
+			out_state = ioपढ़ो8(&idio24gpio->reg->ttl_out0_7);
+		पूर्ण अन्यथा अणु
+			/* skip TTL GPIO अगर set क्रम input */
 			raw_spin_unlock_irqrestore(&idio24gpio->lock, flags);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* set requested bit states */
 		out_state &= ~gpio_mask;
-		out_state |= bitmask;
+		out_state |= biपंचांगask;
 
-		/* write bits for current gpio port (port 6 is TTL GPIO) */
-		if (index < 6)
-			iowrite8(out_state, ports[index]);
-		else
-			iowrite8(out_state, &idio24gpio->reg->ttl_out0_7);
+		/* ग_लिखो bits क्रम current gpio port (port 6 is TTL GPIO) */
+		अगर (index < 6)
+			ioग_लिखो8(out_state, ports[index]);
+		अन्यथा
+			ioग_लिखो8(out_state, &idio24gpio->reg->ttl_out0_7);
 
 		raw_spin_unlock_irqrestore(&idio24gpio->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void idio_24_irq_ack(struct irq_data *data)
-{
-}
+अटल व्योम idio_24_irq_ack(काष्ठा irq_data *data)
+अणु
+पूर्ण
 
-static void idio_24_irq_mask(struct irq_data *data)
-{
-	struct gpio_chip *const chip = irq_data_get_irq_chip_data(data);
-	struct idio_24_gpio *const idio24gpio = gpiochip_get_data(chip);
-	unsigned long flags;
-	const unsigned long bit_offset = irqd_to_hwirq(data) - 24;
-	unsigned char new_irq_mask;
-	const unsigned long bank_offset = bit_offset / 8;
-	unsigned char cos_enable_state;
+अटल व्योम idio_24_irq_mask(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *स्थिर chip = irq_data_get_irq_chip_data(data);
+	काष्ठा idio_24_gpio *स्थिर idio24gpio = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ flags;
+	स्थिर अचिन्हित दीर्घ bit_offset = irqd_to_hwirq(data) - 24;
+	अचिन्हित अक्षर new_irq_mask;
+	स्थिर अचिन्हित दीर्घ bank_offset = bit_offset / 8;
+	अचिन्हित अक्षर cos_enable_state;
 
 	raw_spin_lock_irqsave(&idio24gpio->lock, flags);
 
 	idio24gpio->irq_mask &= ~BIT(bit_offset);
 	new_irq_mask = idio24gpio->irq_mask >> bank_offset * 8;
 
-	if (!new_irq_mask) {
-		cos_enable_state = ioread8(&idio24gpio->reg->cos_enable);
+	अगर (!new_irq_mask) अणु
+		cos_enable_state = ioपढ़ो8(&idio24gpio->reg->cos_enable);
 
 		/* Disable Rising Edge detection */
 		cos_enable_state &= ~BIT(bank_offset);
 		/* Disable Falling Edge detection */
 		cos_enable_state &= ~BIT(bank_offset + 4);
 
-		iowrite8(cos_enable_state, &idio24gpio->reg->cos_enable);
-	}
+		ioग_लिखो8(cos_enable_state, &idio24gpio->reg->cos_enable);
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&idio24gpio->lock, flags);
-}
+पूर्ण
 
-static void idio_24_irq_unmask(struct irq_data *data)
-{
-	struct gpio_chip *const chip = irq_data_get_irq_chip_data(data);
-	struct idio_24_gpio *const idio24gpio = gpiochip_get_data(chip);
-	unsigned long flags;
-	unsigned char prev_irq_mask;
-	const unsigned long bit_offset = irqd_to_hwirq(data) - 24;
-	const unsigned long bank_offset = bit_offset / 8;
-	unsigned char cos_enable_state;
+अटल व्योम idio_24_irq_unmask(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *स्थिर chip = irq_data_get_irq_chip_data(data);
+	काष्ठा idio_24_gpio *स्थिर idio24gpio = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर prev_irq_mask;
+	स्थिर अचिन्हित दीर्घ bit_offset = irqd_to_hwirq(data) - 24;
+	स्थिर अचिन्हित दीर्घ bank_offset = bit_offset / 8;
+	अचिन्हित अक्षर cos_enable_state;
 
 	raw_spin_lock_irqsave(&idio24gpio->lock, flags);
 
 	prev_irq_mask = idio24gpio->irq_mask >> bank_offset * 8;
 	idio24gpio->irq_mask |= BIT(bit_offset);
 
-	if (!prev_irq_mask) {
-		cos_enable_state = ioread8(&idio24gpio->reg->cos_enable);
+	अगर (!prev_irq_mask) अणु
+		cos_enable_state = ioपढ़ो8(&idio24gpio->reg->cos_enable);
 
 		/* Enable Rising Edge detection */
 		cos_enable_state |= BIT(bank_offset);
 		/* Enable Falling Edge detection */
 		cos_enable_state |= BIT(bank_offset + 4);
 
-		iowrite8(cos_enable_state, &idio24gpio->reg->cos_enable);
-	}
+		ioग_लिखो8(cos_enable_state, &idio24gpio->reg->cos_enable);
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&idio24gpio->lock, flags);
-}
+पूर्ण
 
-static int idio_24_irq_set_type(struct irq_data *data, unsigned int flow_type)
-{
+अटल पूर्णांक idio_24_irq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक flow_type)
+अणु
 	/* The only valid irq types are none and both-edges */
-	if (flow_type != IRQ_TYPE_NONE &&
+	अगर (flow_type != IRQ_TYPE_NONE &&
 		(flow_type & IRQ_TYPE_EDGE_BOTH) != IRQ_TYPE_EDGE_BOTH)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct irq_chip idio_24_irqchip = {
+अटल काष्ठा irq_chip idio_24_irqchip = अणु
 	.name = "pcie-idio-24",
 	.irq_ack = idio_24_irq_ack,
 	.irq_mask = idio_24_irq_mask,
 	.irq_unmask = idio_24_irq_unmask,
 	.irq_set_type = idio_24_irq_set_type
-};
+पूर्ण;
 
-static irqreturn_t idio_24_irq_handler(int irq, void *dev_id)
-{
-	struct idio_24_gpio *const idio24gpio = dev_id;
-	unsigned long irq_status;
-	struct gpio_chip *const chip = &idio24gpio->chip;
-	unsigned long irq_mask;
-	int gpio;
+अटल irqवापस_t idio_24_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा idio_24_gpio *स्थिर idio24gpio = dev_id;
+	अचिन्हित दीर्घ irq_status;
+	काष्ठा gpio_chip *स्थिर chip = &idio24gpio->chip;
+	अचिन्हित दीर्घ irq_mask;
+	पूर्णांक gpio;
 
 	raw_spin_lock(&idio24gpio->lock);
 
 	/* Read Change-Of-State status */
-	irq_status = ioread32(&idio24gpio->reg->cos0_7);
+	irq_status = ioपढ़ो32(&idio24gpio->reg->cos0_7);
 
 	raw_spin_unlock(&idio24gpio->lock);
 
 	/* Make sure our device generated IRQ */
-	if (!irq_status)
-		return IRQ_NONE;
+	अगर (!irq_status)
+		वापस IRQ_NONE;
 
 	/* Handle only unmasked IRQ */
 	irq_mask = idio24gpio->irq_mask & irq_status;
 
-	for_each_set_bit(gpio, &irq_mask, chip->ngpio - 24)
-		generic_handle_irq(irq_find_mapping(chip->irq.domain,
+	क्रम_each_set_bit(gpio, &irq_mask, chip->ngpio - 24)
+		generic_handle_irq(irq_find_mapping(chip->irq.करोमुख्य,
 			gpio + 24));
 
 	raw_spin_lock(&idio24gpio->lock);
 
 	/* Clear Change-Of-State status */
-	iowrite32(irq_status, &idio24gpio->reg->cos0_7);
+	ioग_लिखो32(irq_status, &idio24gpio->reg->cos0_7);
 
 	raw_spin_unlock(&idio24gpio->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-#define IDIO_24_NGPIO 56
-static const char *idio_24_names[IDIO_24_NGPIO] = {
+#घोषणा IDIO_24_NGPIO 56
+अटल स्थिर अक्षर *idio_24_names[IDIO_24_NGPIO] = अणु
 	"OUT0", "OUT1", "OUT2", "OUT3", "OUT4", "OUT5", "OUT6", "OUT7",
 	"OUT8", "OUT9", "OUT10", "OUT11", "OUT12", "OUT13", "OUT14", "OUT15",
 	"OUT16", "OUT17", "OUT18", "OUT19", "OUT20", "OUT21", "OUT22", "OUT23",
@@ -490,33 +491,33 @@ static const char *idio_24_names[IDIO_24_NGPIO] = {
 	"IIN8", "IIN9", "IIN10", "IIN11", "IIN12", "IIN13", "IIN14", "IIN15",
 	"IIN16", "IIN17", "IIN18", "IIN19", "IIN20", "IIN21", "IIN22", "IIN23",
 	"TTL0", "TTL1", "TTL2", "TTL3", "TTL4", "TTL5", "TTL6", "TTL7"
-};
+पूर्ण;
 
-static int idio_24_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	struct device *const dev = &pdev->dev;
-	struct idio_24_gpio *idio24gpio;
-	int err;
-	const size_t pci_plx_bar_index = 1;
-	const size_t pci_bar_index = 2;
-	const char *const name = pci_name(pdev);
-	struct gpio_irq_chip *girq;
+अटल पूर्णांक idio_24_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा device *स्थिर dev = &pdev->dev;
+	काष्ठा idio_24_gpio *idio24gpio;
+	पूर्णांक err;
+	स्थिर माप_प्रकार pci_plx_bar_index = 1;
+	स्थिर माप_प्रकार pci_bar_index = 2;
+	स्थिर अक्षर *स्थिर name = pci_name(pdev);
+	काष्ठा gpio_irq_chip *girq;
 
-	idio24gpio = devm_kzalloc(dev, sizeof(*idio24gpio), GFP_KERNEL);
-	if (!idio24gpio)
-		return -ENOMEM;
+	idio24gpio = devm_kzalloc(dev, माप(*idio24gpio), GFP_KERNEL);
+	अगर (!idio24gpio)
+		वापस -ENOMEM;
 
 	err = pcim_enable_device(pdev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Failed to enable PCI device (%d)\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = pcim_iomap_regions(pdev, BIT(pci_plx_bar_index) | BIT(pci_bar_index), name);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Unable to map PCI I/O addresses (%d)\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	idio24gpio->plx = pcim_iomap_table(pdev)[pci_plx_bar_index];
 	idio24gpio->reg = pcim_iomap_table(pdev)[pci_bar_index];
@@ -538,51 +539,51 @@ static int idio_24_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	girq = &idio24gpio->chip.irq;
 	girq->chip = &idio_24_irqchip;
 	/* This will let us handle the parent IRQ in the driver */
-	girq->parent_handler = NULL;
+	girq->parent_handler = शून्य;
 	girq->num_parents = 0;
-	girq->parents = NULL;
-	girq->default_type = IRQ_TYPE_NONE;
+	girq->parents = शून्य;
+	girq->शेष_type = IRQ_TYPE_NONE;
 	girq->handler = handle_edge_irq;
 
 	raw_spin_lock_init(&idio24gpio->lock);
 
 	/* Software board reset */
-	iowrite8(0, &idio24gpio->reg->soft_reset);
+	ioग_लिखो8(0, &idio24gpio->reg->soft_reset);
 	/*
-	 * enable PLX PEX8311 internal PCI wire interrupt and local interrupt
+	 * enable PLX PEX8311 पूर्णांकernal PCI wire पूर्णांकerrupt and local पूर्णांकerrupt
 	 * input
 	 */
-	iowrite8((INTCSR_INTERNAL_PCI_WIRE | INTCSR_LOCAL_INPUT) >> 8,
+	ioग_लिखो8((INTCSR_INTERNAL_PCI_WIRE | INTCSR_LOCAL_INPUT) >> 8,
 		 idio24gpio->plx + PLX_PEX8311_PCI_LCS_INTCSR + 1);
 
 	err = devm_gpiochip_add_data(dev, &idio24gpio->chip, idio24gpio);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "GPIO registering failed (%d)\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = devm_request_irq(dev, pdev->irq, idio_24_irq_handler, IRQF_SHARED,
 		name, idio24gpio);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "IRQ handler registering failed (%d)\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pci_device_id idio_24_pci_dev_id[] = {
-	{ PCI_DEVICE(0x494F, 0x0FD0) }, { PCI_DEVICE(0x494F, 0x0BD0) },
-	{ PCI_DEVICE(0x494F, 0x07D0) }, { PCI_DEVICE(0x494F, 0x0FC0) },
-	{ 0 }
-};
+अटल स्थिर काष्ठा pci_device_id idio_24_pci_dev_id[] = अणु
+	अणु PCI_DEVICE(0x494F, 0x0FD0) पूर्ण, अणु PCI_DEVICE(0x494F, 0x0BD0) पूर्ण,
+	अणु PCI_DEVICE(0x494F, 0x07D0) पूर्ण, अणु PCI_DEVICE(0x494F, 0x0FC0) पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, idio_24_pci_dev_id);
 
-static struct pci_driver idio_24_driver = {
+अटल काष्ठा pci_driver idio_24_driver = अणु
 	.name = "pcie-idio-24",
 	.id_table = idio_24_pci_dev_id,
 	.probe = idio_24_probe
-};
+पूर्ण;
 
 module_pci_driver(idio_24_driver);
 

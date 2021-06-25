@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause
 /*
  *  linux/net/sunrpc/gss_krb5_mech.c
  *
@@ -9,32 +10,32 @@
  *  J. Bruce Fields <bfields@umich.edu>
  */
 
-#include <crypto/hash.h>
-#include <crypto/skcipher.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/sunrpc/auth.h>
-#include <linux/sunrpc/gss_krb5.h>
-#include <linux/sunrpc/xdr.h>
-#include <linux/sunrpc/gss_krb5_enctypes.h>
+#समावेश <crypto/hash.h>
+#समावेश <crypto/skcipher.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sunrpc/auth.h>
+#समावेश <linux/sunrpc/gss_krb5.h>
+#समावेश <linux/sunrpc/xdr.h>
+#समावेश <linux/sunrpc/gss_krb5_enctypes.h>
 
-#include "auth_gss_internal.h"
+#समावेश "auth_gss_internal.h"
 
-#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
 # define RPCDBG_FACILITY	RPCDBG_AUTH
-#endif
+#पूर्ण_अगर
 
-static struct gss_api_mech gss_kerberos_mech;	/* forward declaration */
+अटल काष्ठा gss_api_mech gss_kerberos_mech;	/* क्रमward declaration */
 
-static const struct gss_krb5_enctype supported_gss_krb5_enctypes[] = {
-#ifndef CONFIG_SUNRPC_DISABLE_INSECURE_ENCTYPES
+अटल स्थिर काष्ठा gss_krb5_enctype supported_gss_krb5_enctypes[] = अणु
+#अगर_अघोषित CONFIG_SUNRPC_DISABLE_INSECURE_ENCTYPES
 	/*
 	 * DES (All DES enctypes are mapped to the same gss functionality)
 	 */
-	{
+	अणु
 	  .etype = ENCTYPE_DES_CBC_RAW,
 	  .ctype = CKSUMTYPE_RSA_MD5,
 	  .name = "des-cbc-crc",
@@ -42,8 +43,8 @@ static const struct gss_krb5_enctype supported_gss_krb5_enctypes[] = {
 	  .cksum_name = "md5",
 	  .encrypt = krb5_encrypt,
 	  .decrypt = krb5_decrypt,
-	  .mk_key = NULL,
-	  .signalg = SGN_ALG_DES_MAC_MD5,
+	  .mk_key = शून्य,
+	  .संकेतg = SGN_ALG_DES_MAC_MD5,
 	  .sealalg = SEAL_ALG_DES,
 	  .keybytes = 7,
 	  .keylength = 8,
@@ -51,12 +52,12 @@ static const struct gss_krb5_enctype supported_gss_krb5_enctypes[] = {
 	  .conflen = 8,
 	  .cksumlength = 8,
 	  .keyed_cksum = 0,
-	},
-#endif	/* CONFIG_SUNRPC_DISABLE_INSECURE_ENCTYPES */
+	पूर्ण,
+#पूर्ण_अगर	/* CONFIG_SUNRPC_DISABLE_INSECURE_ENCTYPES */
 	/*
 	 * 3DES
 	 */
-	{
+	अणु
 	  .etype = ENCTYPE_DES3_CBC_RAW,
 	  .ctype = CKSUMTYPE_HMAC_SHA1_DES3,
 	  .name = "des3-hmac-sha1",
@@ -65,7 +66,7 @@ static const struct gss_krb5_enctype supported_gss_krb5_enctypes[] = {
 	  .encrypt = krb5_encrypt,
 	  .decrypt = krb5_decrypt,
 	  .mk_key = gss_krb5_des3_make_key,
-	  .signalg = SGN_ALG_HMAC_SHA1_DES3_KD,
+	  .संकेतg = SGN_ALG_HMAC_SHA1_DES3_KD,
 	  .sealalg = SEAL_ALG_DES3KD,
 	  .keybytes = 21,
 	  .keylength = 24,
@@ -73,11 +74,11 @@ static const struct gss_krb5_enctype supported_gss_krb5_enctypes[] = {
 	  .conflen = 8,
 	  .cksumlength = 20,
 	  .keyed_cksum = 1,
-	},
+	पूर्ण,
 	/*
 	 * AES128
 	 */
-	{
+	अणु
 	  .etype = ENCTYPE_AES128_CTS_HMAC_SHA1_96,
 	  .ctype = CKSUMTYPE_HMAC_SHA1_96_AES128,
 	  .name = "aes128-cts",
@@ -88,7 +89,7 @@ static const struct gss_krb5_enctype supported_gss_krb5_enctypes[] = {
 	  .mk_key = gss_krb5_aes_make_key,
 	  .encrypt_v2 = gss_krb5_aes_encrypt,
 	  .decrypt_v2 = gss_krb5_aes_decrypt,
-	  .signalg = -1,
+	  .संकेतg = -1,
 	  .sealalg = -1,
 	  .keybytes = 16,
 	  .keylength = 16,
@@ -96,11 +97,11 @@ static const struct gss_krb5_enctype supported_gss_krb5_enctypes[] = {
 	  .conflen = 16,
 	  .cksumlength = 12,
 	  .keyed_cksum = 1,
-	},
+	पूर्ण,
 	/*
 	 * AES256
 	 */
-	{
+	अणु
 	  .etype = ENCTYPE_AES256_CTS_HMAC_SHA1_96,
 	  .ctype = CKSUMTYPE_HMAC_SHA1_96_AES256,
 	  .name = "aes256-cts",
@@ -111,7 +112,7 @@ static const struct gss_krb5_enctype supported_gss_krb5_enctypes[] = {
 	  .mk_key = gss_krb5_aes_make_key,
 	  .encrypt_v2 = gss_krb5_aes_encrypt,
 	  .decrypt_v2 = gss_krb5_aes_decrypt,
-	  .signalg = -1,
+	  .संकेतg = -1,
 	  .sealalg = -1,
 	  .keybytes = 32,
 	  .keylength = 32,
@@ -119,199 +120,199 @@ static const struct gss_krb5_enctype supported_gss_krb5_enctypes[] = {
 	  .conflen = 16,
 	  .cksumlength = 12,
 	  .keyed_cksum = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const int num_supported_enctypes =
+अटल स्थिर पूर्णांक num_supported_enctypes =
 	ARRAY_SIZE(supported_gss_krb5_enctypes);
 
-static int
-supported_gss_krb5_enctype(int etype)
-{
-	int i;
-	for (i = 0; i < num_supported_enctypes; i++)
-		if (supported_gss_krb5_enctypes[i].etype == etype)
-			return 1;
-	return 0;
-}
+अटल पूर्णांक
+supported_gss_krb5_enctype(पूर्णांक etype)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < num_supported_enctypes; i++)
+		अगर (supported_gss_krb5_enctypes[i].etype == etype)
+			वापस 1;
+	वापस 0;
+पूर्ण
 
-static const struct gss_krb5_enctype *
-get_gss_krb5_enctype(int etype)
-{
-	int i;
-	for (i = 0; i < num_supported_enctypes; i++)
-		if (supported_gss_krb5_enctypes[i].etype == etype)
-			return &supported_gss_krb5_enctypes[i];
-	return NULL;
-}
+अटल स्थिर काष्ठा gss_krb5_enctype *
+get_gss_krb5_enctype(पूर्णांक etype)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < num_supported_enctypes; i++)
+		अगर (supported_gss_krb5_enctypes[i].etype == etype)
+			वापस &supported_gss_krb5_enctypes[i];
+	वापस शून्य;
+पूर्ण
 
-static inline const void *
-get_key(const void *p, const void *end,
-	struct krb5_ctx *ctx, struct crypto_sync_skcipher **res)
-{
-	struct xdr_netobj	key;
-	int			alg;
+अटल अंतरभूत स्थिर व्योम *
+get_key(स्थिर व्योम *p, स्थिर व्योम *end,
+	काष्ठा krb5_ctx *ctx, काष्ठा crypto_sync_skcipher **res)
+अणु
+	काष्ठा xdr_netobj	key;
+	पूर्णांक			alg;
 
-	p = simple_get_bytes(p, end, &alg, sizeof(alg));
-	if (IS_ERR(p))
-		goto out_err;
+	p = simple_get_bytes(p, end, &alg, माप(alg));
+	अगर (IS_ERR(p))
+		जाओ out_err;
 
-	switch (alg) {
-	case ENCTYPE_DES_CBC_CRC:
-	case ENCTYPE_DES_CBC_MD4:
-	case ENCTYPE_DES_CBC_MD5:
+	चयन (alg) अणु
+	हाल ENCTYPE_DES_CBC_CRC:
+	हाल ENCTYPE_DES_CBC_MD4:
+	हाल ENCTYPE_DES_CBC_MD5:
 		/* Map all these key types to ENCTYPE_DES_CBC_RAW */
 		alg = ENCTYPE_DES_CBC_RAW;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!supported_gss_krb5_enctype(alg)) {
-		printk(KERN_WARNING "gss_kerberos_mech: unsupported "
+	अगर (!supported_gss_krb5_enctype(alg)) अणु
+		prपूर्णांकk(KERN_WARNING "gss_kerberos_mech: unsupported "
 			"encryption key algorithm %d\n", alg);
 		p = ERR_PTR(-EINVAL);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 	p = simple_get_netobj(p, end, &key);
-	if (IS_ERR(p))
-		goto out_err;
+	अगर (IS_ERR(p))
+		जाओ out_err;
 
 	*res = crypto_alloc_sync_skcipher(ctx->gk5e->encrypt_name, 0, 0);
-	if (IS_ERR(*res)) {
-		printk(KERN_WARNING "gss_kerberos_mech: unable to initialize "
+	अगर (IS_ERR(*res)) अणु
+		prपूर्णांकk(KERN_WARNING "gss_kerberos_mech: unable to initialize "
 			"crypto algorithm %s\n", ctx->gk5e->encrypt_name);
-		*res = NULL;
-		goto out_err_free_key;
-	}
-	if (crypto_sync_skcipher_setkey(*res, key.data, key.len)) {
-		printk(KERN_WARNING "gss_kerberos_mech: error setting key for "
+		*res = शून्य;
+		जाओ out_err_मुक्त_key;
+	पूर्ण
+	अगर (crypto_sync_skcipher_setkey(*res, key.data, key.len)) अणु
+		prपूर्णांकk(KERN_WARNING "gss_kerberos_mech: error setting key for "
 			"crypto algorithm %s\n", ctx->gk5e->encrypt_name);
-		goto out_err_free_tfm;
-	}
+		जाओ out_err_मुक्त_tfm;
+	पूर्ण
 
-	kfree(key.data);
-	return p;
+	kमुक्त(key.data);
+	वापस p;
 
-out_err_free_tfm:
-	crypto_free_sync_skcipher(*res);
-out_err_free_key:
-	kfree(key.data);
+out_err_मुक्त_tfm:
+	crypto_मुक्त_sync_skcipher(*res);
+out_err_मुक्त_key:
+	kमुक्त(key.data);
 	p = ERR_PTR(-EINVAL);
 out_err:
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static int
-gss_import_v1_context(const void *p, const void *end, struct krb5_ctx *ctx)
-{
+अटल पूर्णांक
+gss_import_v1_context(स्थिर व्योम *p, स्थिर व्योम *end, काष्ठा krb5_ctx *ctx)
+अणु
 	u32 seq_send;
-	int tmp;
-	u32 time32;
+	पूर्णांक पंचांगp;
+	u32 समय32;
 
-	p = simple_get_bytes(p, end, &ctx->initiate, sizeof(ctx->initiate));
-	if (IS_ERR(p))
-		goto out_err;
+	p = simple_get_bytes(p, end, &ctx->initiate, माप(ctx->initiate));
+	अगर (IS_ERR(p))
+		जाओ out_err;
 
-	/* Old format supports only DES!  Any other enctype uses new format */
+	/* Old क्रमmat supports only DES!  Any other enctype uses new क्रमmat */
 	ctx->enctype = ENCTYPE_DES_CBC_RAW;
 
 	ctx->gk5e = get_gss_krb5_enctype(ctx->enctype);
-	if (ctx->gk5e == NULL) {
+	अगर (ctx->gk5e == शून्य) अणु
 		p = ERR_PTR(-EINVAL);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	/* The downcall format was designed before we completely understood
+	/* The करोwncall क्रमmat was deचिन्हित beक्रमe we completely understood
 	 * the uses of the context fields; so it includes some stuff we
 	 * just give some minimal sanity-checking, and some we ignore
 	 * completely (like the next twenty bytes): */
-	if (unlikely(p + 20 > end || p + 20 < p)) {
+	अगर (unlikely(p + 20 > end || p + 20 < p)) अणु
 		p = ERR_PTR(-EFAULT);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 	p += 20;
-	p = simple_get_bytes(p, end, &tmp, sizeof(tmp));
-	if (IS_ERR(p))
-		goto out_err;
-	if (tmp != SGN_ALG_DES_MAC_MD5) {
+	p = simple_get_bytes(p, end, &पंचांगp, माप(पंचांगp));
+	अगर (IS_ERR(p))
+		जाओ out_err;
+	अगर (पंचांगp != SGN_ALG_DES_MAC_MD5) अणु
 		p = ERR_PTR(-ENOSYS);
-		goto out_err;
-	}
-	p = simple_get_bytes(p, end, &tmp, sizeof(tmp));
-	if (IS_ERR(p))
-		goto out_err;
-	if (tmp != SEAL_ALG_DES) {
+		जाओ out_err;
+	पूर्ण
+	p = simple_get_bytes(p, end, &पंचांगp, माप(पंचांगp));
+	अगर (IS_ERR(p))
+		जाओ out_err;
+	अगर (पंचांगp != SEAL_ALG_DES) अणु
 		p = ERR_PTR(-ENOSYS);
-		goto out_err;
-	}
-	p = simple_get_bytes(p, end, &time32, sizeof(time32));
-	if (IS_ERR(p))
-		goto out_err;
-	/* unsigned 32-bit time overflows in year 2106 */
-	ctx->endtime = (time64_t)time32;
-	p = simple_get_bytes(p, end, &seq_send, sizeof(seq_send));
-	if (IS_ERR(p))
-		goto out_err;
+		जाओ out_err;
+	पूर्ण
+	p = simple_get_bytes(p, end, &समय32, माप(समय32));
+	अगर (IS_ERR(p))
+		जाओ out_err;
+	/* अचिन्हित 32-bit समय overflows in year 2106 */
+	ctx->endसमय = (समय64_t)समय32;
+	p = simple_get_bytes(p, end, &seq_send, माप(seq_send));
+	अगर (IS_ERR(p))
+		जाओ out_err;
 	atomic_set(&ctx->seq_send, seq_send);
 	p = simple_get_netobj(p, end, &ctx->mech_used);
-	if (IS_ERR(p))
-		goto out_err;
+	अगर (IS_ERR(p))
+		जाओ out_err;
 	p = get_key(p, end, ctx, &ctx->enc);
-	if (IS_ERR(p))
-		goto out_err_free_mech;
+	अगर (IS_ERR(p))
+		जाओ out_err_मुक्त_mech;
 	p = get_key(p, end, ctx, &ctx->seq);
-	if (IS_ERR(p))
-		goto out_err_free_key1;
-	if (p != end) {
+	अगर (IS_ERR(p))
+		जाओ out_err_मुक्त_key1;
+	अगर (p != end) अणु
 		p = ERR_PTR(-EFAULT);
-		goto out_err_free_key2;
-	}
+		जाओ out_err_मुक्त_key2;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_err_free_key2:
-	crypto_free_sync_skcipher(ctx->seq);
-out_err_free_key1:
-	crypto_free_sync_skcipher(ctx->enc);
-out_err_free_mech:
-	kfree(ctx->mech_used.data);
+out_err_मुक्त_key2:
+	crypto_मुक्त_sync_skcipher(ctx->seq);
+out_err_मुक्त_key1:
+	crypto_मुक्त_sync_skcipher(ctx->enc);
+out_err_मुक्त_mech:
+	kमुक्त(ctx->mech_used.data);
 out_err:
-	return PTR_ERR(p);
-}
+	वापस PTR_ERR(p);
+पूर्ण
 
-static struct crypto_sync_skcipher *
-context_v2_alloc_cipher(struct krb5_ctx *ctx, const char *cname, u8 *key)
-{
-	struct crypto_sync_skcipher *cp;
+अटल काष्ठा crypto_sync_skcipher *
+context_v2_alloc_cipher(काष्ठा krb5_ctx *ctx, स्थिर अक्षर *cname, u8 *key)
+अणु
+	काष्ठा crypto_sync_skcipher *cp;
 
 	cp = crypto_alloc_sync_skcipher(cname, 0, 0);
-	if (IS_ERR(cp)) {
-		dprintk("gss_kerberos_mech: unable to initialize "
+	अगर (IS_ERR(cp)) अणु
+		dprपूर्णांकk("gss_kerberos_mech: unable to initialize "
 			"crypto algorithm %s\n", cname);
-		return NULL;
-	}
-	if (crypto_sync_skcipher_setkey(cp, key, ctx->gk5e->keylength)) {
-		dprintk("gss_kerberos_mech: error setting key for "
+		वापस शून्य;
+	पूर्ण
+	अगर (crypto_sync_skcipher_setkey(cp, key, ctx->gk5e->keylength)) अणु
+		dprपूर्णांकk("gss_kerberos_mech: error setting key for "
 			"crypto algorithm %s\n", cname);
-		crypto_free_sync_skcipher(cp);
-		return NULL;
-	}
-	return cp;
-}
+		crypto_मुक्त_sync_skcipher(cp);
+		वापस शून्य;
+	पूर्ण
+	वापस cp;
+पूर्ण
 
-static inline void
+अटल अंतरभूत व्योम
 set_cdata(u8 cdata[GSS_KRB5_K5CLENGTH], u32 usage, u8 seed)
-{
+अणु
 	cdata[0] = (usage>>24)&0xff;
 	cdata[1] = (usage>>16)&0xff;
 	cdata[2] = (usage>>8)&0xff;
 	cdata[3] = usage&0xff;
 	cdata[4] = seed;
-}
+पूर्ण
 
-static int
-context_derive_keys_des3(struct krb5_ctx *ctx, gfp_t gfp_mask)
-{
-	struct xdr_netobj c, keyin, keyout;
+अटल पूर्णांक
+context_derive_keys_des3(काष्ठा krb5_ctx *ctx, gfp_t gfp_mask)
+अणु
+	काष्ठा xdr_netobj c, keyin, keyout;
 	u8 cdata[GSS_KRB5_K5CLENGTH];
 	u32 err;
 
@@ -325,38 +326,38 @@ context_derive_keys_des3(struct krb5_ctx *ctx, gfp_t gfp_mask)
 	/* seq uses the raw key */
 	ctx->seq = context_v2_alloc_cipher(ctx, ctx->gk5e->encrypt_name,
 					   ctx->Ksess);
-	if (ctx->seq == NULL)
-		goto out_err;
+	अगर (ctx->seq == शून्य)
+		जाओ out_err;
 
 	ctx->enc = context_v2_alloc_cipher(ctx, ctx->gk5e->encrypt_name,
 					   ctx->Ksess);
-	if (ctx->enc == NULL)
-		goto out_free_seq;
+	अगर (ctx->enc == शून्य)
+		जाओ out_मुक्त_seq;
 
 	/* derive cksum */
 	set_cdata(cdata, KG_USAGE_SIGN, KEY_USAGE_SEED_CHECKSUM);
 	keyout.data = ctx->cksum;
 	err = krb5_derive_key(ctx->gk5e, &keyin, &keyout, &c, gfp_mask);
-	if (err) {
-		dprintk("%s: Error %d deriving cksum key\n",
+	अगर (err) अणु
+		dprपूर्णांकk("%s: Error %d deriving cksum key\n",
 			__func__, err);
-		goto out_free_enc;
-	}
+		जाओ out_मुक्त_enc;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_free_enc:
-	crypto_free_sync_skcipher(ctx->enc);
-out_free_seq:
-	crypto_free_sync_skcipher(ctx->seq);
+out_मुक्त_enc:
+	crypto_मुक्त_sync_skcipher(ctx->enc);
+out_मुक्त_seq:
+	crypto_मुक्त_sync_skcipher(ctx->seq);
 out_err:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int
-context_derive_keys_new(struct krb5_ctx *ctx, gfp_t gfp_mask)
-{
-	struct xdr_netobj c, keyin, keyout;
+अटल पूर्णांक
+context_derive_keys_new(काष्ठा krb5_ctx *ctx, gfp_t gfp_mask)
+अणु
+	काष्ठा xdr_netobj c, keyin, keyout;
 	u8 cdata[GSS_KRB5_K5CLENGTH];
 	u32 err;
 
@@ -371,250 +372,250 @@ context_derive_keys_new(struct krb5_ctx *ctx, gfp_t gfp_mask)
 	set_cdata(cdata, KG_USAGE_INITIATOR_SEAL, KEY_USAGE_SEED_ENCRYPTION);
 	keyout.data = ctx->initiator_seal;
 	err = krb5_derive_key(ctx->gk5e, &keyin, &keyout, &c, gfp_mask);
-	if (err) {
-		dprintk("%s: Error %d deriving initiator_seal key\n",
+	अगर (err) अणु
+		dprपूर्णांकk("%s: Error %d deriving initiator_seal key\n",
 			__func__, err);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 	ctx->initiator_enc = context_v2_alloc_cipher(ctx,
 						     ctx->gk5e->encrypt_name,
 						     ctx->initiator_seal);
-	if (ctx->initiator_enc == NULL)
-		goto out_err;
+	अगर (ctx->initiator_enc == शून्य)
+		जाओ out_err;
 
 	/* acceptor seal encryption */
 	set_cdata(cdata, KG_USAGE_ACCEPTOR_SEAL, KEY_USAGE_SEED_ENCRYPTION);
 	keyout.data = ctx->acceptor_seal;
 	err = krb5_derive_key(ctx->gk5e, &keyin, &keyout, &c, gfp_mask);
-	if (err) {
-		dprintk("%s: Error %d deriving acceptor_seal key\n",
+	अगर (err) अणु
+		dprपूर्णांकk("%s: Error %d deriving acceptor_seal key\n",
 			__func__, err);
-		goto out_free_initiator_enc;
-	}
+		जाओ out_मुक्त_initiator_enc;
+	पूर्ण
 	ctx->acceptor_enc = context_v2_alloc_cipher(ctx,
 						    ctx->gk5e->encrypt_name,
 						    ctx->acceptor_seal);
-	if (ctx->acceptor_enc == NULL)
-		goto out_free_initiator_enc;
+	अगर (ctx->acceptor_enc == शून्य)
+		जाओ out_मुक्त_initiator_enc;
 
 	/* initiator sign checksum */
 	set_cdata(cdata, KG_USAGE_INITIATOR_SIGN, KEY_USAGE_SEED_CHECKSUM);
 	keyout.data = ctx->initiator_sign;
 	err = krb5_derive_key(ctx->gk5e, &keyin, &keyout, &c, gfp_mask);
-	if (err) {
-		dprintk("%s: Error %d deriving initiator_sign key\n",
+	अगर (err) अणु
+		dprपूर्णांकk("%s: Error %d deriving initiator_sign key\n",
 			__func__, err);
-		goto out_free_acceptor_enc;
-	}
+		जाओ out_मुक्त_acceptor_enc;
+	पूर्ण
 
 	/* acceptor sign checksum */
 	set_cdata(cdata, KG_USAGE_ACCEPTOR_SIGN, KEY_USAGE_SEED_CHECKSUM);
 	keyout.data = ctx->acceptor_sign;
 	err = krb5_derive_key(ctx->gk5e, &keyin, &keyout, &c, gfp_mask);
-	if (err) {
-		dprintk("%s: Error %d deriving acceptor_sign key\n",
+	अगर (err) अणु
+		dprपूर्णांकk("%s: Error %d deriving acceptor_sign key\n",
 			__func__, err);
-		goto out_free_acceptor_enc;
-	}
+		जाओ out_मुक्त_acceptor_enc;
+	पूर्ण
 
-	/* initiator seal integrity */
+	/* initiator seal पूर्णांकegrity */
 	set_cdata(cdata, KG_USAGE_INITIATOR_SEAL, KEY_USAGE_SEED_INTEGRITY);
-	keyout.data = ctx->initiator_integ;
+	keyout.data = ctx->initiator_पूर्णांकeg;
 	err = krb5_derive_key(ctx->gk5e, &keyin, &keyout, &c, gfp_mask);
-	if (err) {
-		dprintk("%s: Error %d deriving initiator_integ key\n",
+	अगर (err) अणु
+		dprपूर्णांकk("%s: Error %d deriving initiator_integ key\n",
 			__func__, err);
-		goto out_free_acceptor_enc;
-	}
+		जाओ out_मुक्त_acceptor_enc;
+	पूर्ण
 
-	/* acceptor seal integrity */
+	/* acceptor seal पूर्णांकegrity */
 	set_cdata(cdata, KG_USAGE_ACCEPTOR_SEAL, KEY_USAGE_SEED_INTEGRITY);
-	keyout.data = ctx->acceptor_integ;
+	keyout.data = ctx->acceptor_पूर्णांकeg;
 	err = krb5_derive_key(ctx->gk5e, &keyin, &keyout, &c, gfp_mask);
-	if (err) {
-		dprintk("%s: Error %d deriving acceptor_integ key\n",
+	अगर (err) अणु
+		dprपूर्णांकk("%s: Error %d deriving acceptor_integ key\n",
 			__func__, err);
-		goto out_free_acceptor_enc;
-	}
+		जाओ out_मुक्त_acceptor_enc;
+	पूर्ण
 
-	switch (ctx->enctype) {
-	case ENCTYPE_AES128_CTS_HMAC_SHA1_96:
-	case ENCTYPE_AES256_CTS_HMAC_SHA1_96:
+	चयन (ctx->enctype) अणु
+	हाल ENCTYPE_AES128_CTS_HMAC_SHA1_96:
+	हाल ENCTYPE_AES256_CTS_HMAC_SHA1_96:
 		ctx->initiator_enc_aux =
 			context_v2_alloc_cipher(ctx, "cbc(aes)",
 						ctx->initiator_seal);
-		if (ctx->initiator_enc_aux == NULL)
-			goto out_free_acceptor_enc;
+		अगर (ctx->initiator_enc_aux == शून्य)
+			जाओ out_मुक्त_acceptor_enc;
 		ctx->acceptor_enc_aux =
 			context_v2_alloc_cipher(ctx, "cbc(aes)",
 						ctx->acceptor_seal);
-		if (ctx->acceptor_enc_aux == NULL) {
-			crypto_free_sync_skcipher(ctx->initiator_enc_aux);
-			goto out_free_acceptor_enc;
-		}
-	}
+		अगर (ctx->acceptor_enc_aux == शून्य) अणु
+			crypto_मुक्त_sync_skcipher(ctx->initiator_enc_aux);
+			जाओ out_मुक्त_acceptor_enc;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_free_acceptor_enc:
-	crypto_free_sync_skcipher(ctx->acceptor_enc);
-out_free_initiator_enc:
-	crypto_free_sync_skcipher(ctx->initiator_enc);
+out_मुक्त_acceptor_enc:
+	crypto_मुक्त_sync_skcipher(ctx->acceptor_enc);
+out_मुक्त_initiator_enc:
+	crypto_मुक्त_sync_skcipher(ctx->initiator_enc);
 out_err:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int
-gss_import_v2_context(const void *p, const void *end, struct krb5_ctx *ctx,
+अटल पूर्णांक
+gss_import_v2_context(स्थिर व्योम *p, स्थिर व्योम *end, काष्ठा krb5_ctx *ctx,
 		gfp_t gfp_mask)
-{
+अणु
 	u64 seq_send64;
-	int keylen;
-	u32 time32;
+	पूर्णांक keylen;
+	u32 समय32;
 
-	p = simple_get_bytes(p, end, &ctx->flags, sizeof(ctx->flags));
-	if (IS_ERR(p))
-		goto out_err;
+	p = simple_get_bytes(p, end, &ctx->flags, माप(ctx->flags));
+	अगर (IS_ERR(p))
+		जाओ out_err;
 	ctx->initiate = ctx->flags & KRB5_CTX_FLAG_INITIATOR;
 
-	p = simple_get_bytes(p, end, &time32, sizeof(time32));
-	if (IS_ERR(p))
-		goto out_err;
-	/* unsigned 32-bit time overflows in year 2106 */
-	ctx->endtime = (time64_t)time32;
-	p = simple_get_bytes(p, end, &seq_send64, sizeof(seq_send64));
-	if (IS_ERR(p))
-		goto out_err;
+	p = simple_get_bytes(p, end, &समय32, माप(समय32));
+	अगर (IS_ERR(p))
+		जाओ out_err;
+	/* अचिन्हित 32-bit समय overflows in year 2106 */
+	ctx->endसमय = (समय64_t)समय32;
+	p = simple_get_bytes(p, end, &seq_send64, माप(seq_send64));
+	अगर (IS_ERR(p))
+		जाओ out_err;
 	atomic64_set(&ctx->seq_send64, seq_send64);
-	/* set seq_send for use by "older" enctypes */
+	/* set seq_send क्रम use by "older" enctypes */
 	atomic_set(&ctx->seq_send, seq_send64);
-	if (seq_send64 != atomic_read(&ctx->seq_send)) {
-		dprintk("%s: seq_send64 %llx, seq_send %x overflow?\n", __func__,
-			seq_send64, atomic_read(&ctx->seq_send));
+	अगर (seq_send64 != atomic_पढ़ो(&ctx->seq_send)) अणु
+		dprपूर्णांकk("%s: seq_send64 %llx, seq_send %x overflow?\n", __func__,
+			seq_send64, atomic_पढ़ो(&ctx->seq_send));
 		p = ERR_PTR(-EINVAL);
-		goto out_err;
-	}
-	p = simple_get_bytes(p, end, &ctx->enctype, sizeof(ctx->enctype));
-	if (IS_ERR(p))
-		goto out_err;
+		जाओ out_err;
+	पूर्ण
+	p = simple_get_bytes(p, end, &ctx->enctype, माप(ctx->enctype));
+	अगर (IS_ERR(p))
+		जाओ out_err;
 	/* Map ENCTYPE_DES3_CBC_SHA1 to ENCTYPE_DES3_CBC_RAW */
-	if (ctx->enctype == ENCTYPE_DES3_CBC_SHA1)
+	अगर (ctx->enctype == ENCTYPE_DES3_CBC_SHA1)
 		ctx->enctype = ENCTYPE_DES3_CBC_RAW;
 	ctx->gk5e = get_gss_krb5_enctype(ctx->enctype);
-	if (ctx->gk5e == NULL) {
-		dprintk("gss_kerberos_mech: unsupported krb5 enctype %u\n",
+	अगर (ctx->gk5e == शून्य) अणु
+		dprपूर्णांकk("gss_kerberos_mech: unsupported krb5 enctype %u\n",
 			ctx->enctype);
 		p = ERR_PTR(-EINVAL);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 	keylen = ctx->gk5e->keylength;
 
 	p = simple_get_bytes(p, end, ctx->Ksess, keylen);
-	if (IS_ERR(p))
-		goto out_err;
+	अगर (IS_ERR(p))
+		जाओ out_err;
 
-	if (p != end) {
+	अगर (p != end) अणु
 		p = ERR_PTR(-EINVAL);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	ctx->mech_used.data = kmemdup(gss_kerberos_mech.gm_oid.data,
 				      gss_kerberos_mech.gm_oid.len, gfp_mask);
-	if (unlikely(ctx->mech_used.data == NULL)) {
+	अगर (unlikely(ctx->mech_used.data == शून्य)) अणु
 		p = ERR_PTR(-ENOMEM);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 	ctx->mech_used.len = gss_kerberos_mech.gm_oid.len;
 
-	switch (ctx->enctype) {
-	case ENCTYPE_DES3_CBC_RAW:
-		return context_derive_keys_des3(ctx, gfp_mask);
-	case ENCTYPE_AES128_CTS_HMAC_SHA1_96:
-	case ENCTYPE_AES256_CTS_HMAC_SHA1_96:
-		return context_derive_keys_new(ctx, gfp_mask);
-	default:
-		return -EINVAL;
-	}
+	चयन (ctx->enctype) अणु
+	हाल ENCTYPE_DES3_CBC_RAW:
+		वापस context_derive_keys_des3(ctx, gfp_mask);
+	हाल ENCTYPE_AES128_CTS_HMAC_SHA1_96:
+	हाल ENCTYPE_AES256_CTS_HMAC_SHA1_96:
+		वापस context_derive_keys_new(ctx, gfp_mask);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 out_err:
-	return PTR_ERR(p);
-}
+	वापस PTR_ERR(p);
+पूर्ण
 
-static int
-gss_import_sec_context_kerberos(const void *p, size_t len,
-				struct gss_ctx *ctx_id,
-				time64_t *endtime,
+अटल पूर्णांक
+gss_import_sec_context_kerberos(स्थिर व्योम *p, माप_प्रकार len,
+				काष्ठा gss_ctx *ctx_id,
+				समय64_t *endसमय,
 				gfp_t gfp_mask)
-{
-	const void *end = (const void *)((const char *)p + len);
-	struct  krb5_ctx *ctx;
-	int ret;
+अणु
+	स्थिर व्योम *end = (स्थिर व्योम *)((स्थिर अक्षर *)p + len);
+	काष्ठा  krb5_ctx *ctx;
+	पूर्णांक ret;
 
-	ctx = kzalloc(sizeof(*ctx), gfp_mask);
-	if (ctx == NULL)
-		return -ENOMEM;
+	ctx = kzalloc(माप(*ctx), gfp_mask);
+	अगर (ctx == शून्य)
+		वापस -ENOMEM;
 
-	if (len == 85)
+	अगर (len == 85)
 		ret = gss_import_v1_context(p, end, ctx);
-	else
+	अन्यथा
 		ret = gss_import_v2_context(p, end, ctx, gfp_mask);
 
-	if (ret == 0) {
-		ctx_id->internal_ctx_id = ctx;
-		if (endtime)
-			*endtime = ctx->endtime;
-	} else
-		kfree(ctx);
+	अगर (ret == 0) अणु
+		ctx_id->पूर्णांकernal_ctx_id = ctx;
+		अगर (endसमय)
+			*endसमय = ctx->endसमय;
+	पूर्ण अन्यथा
+		kमुक्त(ctx);
 
-	dprintk("RPC:       %s: returning %d\n", __func__, ret);
-	return ret;
-}
+	dprपूर्णांकk("RPC:       %s: returning %d\n", __func__, ret);
+	वापस ret;
+पूर्ण
 
-static void
-gss_delete_sec_context_kerberos(void *internal_ctx) {
-	struct krb5_ctx *kctx = internal_ctx;
+अटल व्योम
+gss_delete_sec_context_kerberos(व्योम *पूर्णांकernal_ctx) अणु
+	काष्ठा krb5_ctx *kctx = पूर्णांकernal_ctx;
 
-	crypto_free_sync_skcipher(kctx->seq);
-	crypto_free_sync_skcipher(kctx->enc);
-	crypto_free_sync_skcipher(kctx->acceptor_enc);
-	crypto_free_sync_skcipher(kctx->initiator_enc);
-	crypto_free_sync_skcipher(kctx->acceptor_enc_aux);
-	crypto_free_sync_skcipher(kctx->initiator_enc_aux);
-	kfree(kctx->mech_used.data);
-	kfree(kctx);
-}
+	crypto_मुक्त_sync_skcipher(kctx->seq);
+	crypto_मुक्त_sync_skcipher(kctx->enc);
+	crypto_मुक्त_sync_skcipher(kctx->acceptor_enc);
+	crypto_मुक्त_sync_skcipher(kctx->initiator_enc);
+	crypto_मुक्त_sync_skcipher(kctx->acceptor_enc_aux);
+	crypto_मुक्त_sync_skcipher(kctx->initiator_enc_aux);
+	kमुक्त(kctx->mech_used.data);
+	kमुक्त(kctx);
+पूर्ण
 
-static const struct gss_api_ops gss_kerberos_ops = {
+अटल स्थिर काष्ठा gss_api_ops gss_kerberos_ops = अणु
 	.gss_import_sec_context	= gss_import_sec_context_kerberos,
 	.gss_get_mic		= gss_get_mic_kerberos,
-	.gss_verify_mic		= gss_verify_mic_kerberos,
+	.gss_verअगरy_mic		= gss_verअगरy_mic_kerberos,
 	.gss_wrap		= gss_wrap_kerberos,
 	.gss_unwrap		= gss_unwrap_kerberos,
 	.gss_delete_sec_context	= gss_delete_sec_context_kerberos,
-};
+पूर्ण;
 
-static struct pf_desc gss_kerberos_pfs[] = {
-	[0] = {
-		.pseudoflavor = RPC_AUTH_GSS_KRB5,
+अटल काष्ठा pf_desc gss_kerberos_pfs[] = अणु
+	[0] = अणु
+		.pseuकरोflavor = RPC_AUTH_GSS_KRB5,
 		.qop = GSS_C_QOP_DEFAULT,
 		.service = RPC_GSS_SVC_NONE,
 		.name = "krb5",
-	},
-	[1] = {
-		.pseudoflavor = RPC_AUTH_GSS_KRB5I,
+	पूर्ण,
+	[1] = अणु
+		.pseuकरोflavor = RPC_AUTH_GSS_KRB5I,
 		.qop = GSS_C_QOP_DEFAULT,
 		.service = RPC_GSS_SVC_INTEGRITY,
 		.name = "krb5i",
 		.datatouch = true,
-	},
-	[2] = {
-		.pseudoflavor = RPC_AUTH_GSS_KRB5P,
+	पूर्ण,
+	[2] = अणु
+		.pseuकरोflavor = RPC_AUTH_GSS_KRB5P,
 		.qop = GSS_C_QOP_DEFAULT,
 		.service = RPC_GSS_SVC_PRIVACY,
 		.name = "krb5p",
 		.datatouch = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 MODULE_ALIAS("rpc-auth-gss-krb5");
 MODULE_ALIAS("rpc-auth-gss-krb5i");
@@ -624,31 +625,31 @@ MODULE_ALIAS("rpc-auth-gss-390004");
 MODULE_ALIAS("rpc-auth-gss-390005");
 MODULE_ALIAS("rpc-auth-gss-1.2.840.113554.1.2.2");
 
-static struct gss_api_mech gss_kerberos_mech = {
+अटल काष्ठा gss_api_mech gss_kerberos_mech = अणु
 	.gm_name	= "krb5",
 	.gm_owner	= THIS_MODULE,
-	.gm_oid		= { 9, "\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" },
+	.gm_oid		= अणु 9, "\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" पूर्ण,
 	.gm_ops		= &gss_kerberos_ops,
 	.gm_pf_num	= ARRAY_SIZE(gss_kerberos_pfs),
 	.gm_pfs		= gss_kerberos_pfs,
 	.gm_upcall_enctypes = KRB5_SUPPORTED_ENCTYPES,
-};
+पूर्ण;
 
-static int __init init_kerberos_module(void)
-{
-	int status;
+अटल पूर्णांक __init init_kerberos_module(व्योम)
+अणु
+	पूर्णांक status;
 
-	status = gss_mech_register(&gss_kerberos_mech);
-	if (status)
-		printk("Failed to register kerberos gss mechanism!\n");
-	return status;
-}
+	status = gss_mech_रेजिस्टर(&gss_kerberos_mech);
+	अगर (status)
+		prपूर्णांकk("Failed to register kerberos gss mechanism!\n");
+	वापस status;
+पूर्ण
 
-static void __exit cleanup_kerberos_module(void)
-{
-	gss_mech_unregister(&gss_kerberos_mech);
-}
+अटल व्योम __निकास cleanup_kerberos_module(व्योम)
+अणु
+	gss_mech_unरेजिस्टर(&gss_kerberos_mech);
+पूर्ण
 
 MODULE_LICENSE("GPL");
 module_init(init_kerberos_module);
-module_exit(cleanup_kerberos_module);
+module_निकास(cleanup_kerberos_module);

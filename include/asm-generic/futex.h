@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_GENERIC_FUTEX_H
-#define _ASM_GENERIC_FUTEX_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_GENERIC_FUTEX_H
+#घोषणा _ASM_GENERIC_FUTEX_H
 
-#include <linux/futex.h>
-#include <linux/uaccess.h>
-#include <asm/errno.h>
+#समावेश <linux/futex.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/त्रुटिसं.स>
 
-#ifndef CONFIG_SMP
+#अगर_अघोषित CONFIG_SMP
 /*
- * The following implementation only for uniprocessor machines.
+ * The following implementation only क्रम uniprocessor machines.
  * It relies on preempt_disable() ensuring mutual exclusion.
  *
  */
 
 /**
- * arch_futex_atomic_op_inuser() - Atomic arithmetic operation with constant
+ * arch_futex_atomic_op_inuser() - Atomic arithmetic operation with स्थिरant
  *			  argument and comparison of the previous
- *			  futex value with another constant.
+ *			  futex value with another स्थिरant.
  *
  * @encoded_op:	encoded operation to execute
- * @uaddr:	pointer to user space address
+ * @uaddr:	poपूर्णांकer to user space address
  *
  * Return:
  * 0 - On success
@@ -27,59 +28,59 @@
  * -EAGAIN - Atomic operation was unable to complete due to contention
  * -ENOSYS - Operation not supported
  */
-static inline int
-arch_futex_atomic_op_inuser(int op, u32 oparg, int *oval, u32 __user *uaddr)
-{
-	int oldval, ret;
-	u32 tmp;
+अटल अंतरभूत पूर्णांक
+arch_futex_atomic_op_inuser(पूर्णांक op, u32 oparg, पूर्णांक *oval, u32 __user *uaddr)
+अणु
+	पूर्णांक oldval, ret;
+	u32 पंचांगp;
 
 	preempt_disable();
 
 	ret = -EFAULT;
-	if (unlikely(get_user(oldval, uaddr) != 0))
-		goto out_pagefault_enable;
+	अगर (unlikely(get_user(oldval, uaddr) != 0))
+		जाओ out_pagefault_enable;
 
 	ret = 0;
-	tmp = oldval;
+	पंचांगp = oldval;
 
-	switch (op) {
-	case FUTEX_OP_SET:
-		tmp = oparg;
-		break;
-	case FUTEX_OP_ADD:
-		tmp += oparg;
-		break;
-	case FUTEX_OP_OR:
-		tmp |= oparg;
-		break;
-	case FUTEX_OP_ANDN:
-		tmp &= ~oparg;
-		break;
-	case FUTEX_OP_XOR:
-		tmp ^= oparg;
-		break;
-	default:
+	चयन (op) अणु
+	हाल FUTEX_OP_SET:
+		पंचांगp = oparg;
+		अवरोध;
+	हाल FUTEX_OP_ADD:
+		पंचांगp += oparg;
+		अवरोध;
+	हाल FUTEX_OP_OR:
+		पंचांगp |= oparg;
+		अवरोध;
+	हाल FUTEX_OP_ANDN:
+		पंचांगp &= ~oparg;
+		अवरोध;
+	हाल FUTEX_OP_XOR:
+		पंचांगp ^= oparg;
+		अवरोध;
+	शेष:
 		ret = -ENOSYS;
-	}
+	पूर्ण
 
-	if (ret == 0 && unlikely(put_user(tmp, uaddr) != 0))
+	अगर (ret == 0 && unlikely(put_user(पंचांगp, uaddr) != 0))
 		ret = -EFAULT;
 
 out_pagefault_enable:
 	preempt_enable();
 
-	if (ret == 0)
+	अगर (ret == 0)
 		*oval = oldval;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * futex_atomic_cmpxchg_inatomic() - Compare and exchange the content of the
- *				uaddr with newval if the current value is
+ *				uaddr with newval अगर the current value is
  *				oldval.
- * @uval:	pointer to store content of @uaddr
- * @uaddr:	pointer to user space address
+ * @uval:	poपूर्णांकer to store content of @uaddr
+ * @uaddr:	poपूर्णांकer to user space address
  * @oldval:	old value
  * @newval:	new value to store to @uaddr
  *
@@ -87,44 +88,44 @@ out_pagefault_enable:
  * 0 - On success
  * -EFAULT - User access resulted in a page fault
  * -EAGAIN - Atomic operation was unable to complete due to contention
- * -ENOSYS - Function not implemented (only if !HAVE_FUTEX_CMPXCHG)
+ * -ENOSYS - Function not implemented (only अगर !HAVE_FUTEX_CMPXCHG)
  */
-static inline int
+अटल अंतरभूत पूर्णांक
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 			      u32 oldval, u32 newval)
-{
+अणु
 	u32 val;
 
 	preempt_disable();
-	if (unlikely(get_user(val, uaddr) != 0)) {
+	अगर (unlikely(get_user(val, uaddr) != 0)) अणु
 		preempt_enable();
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	if (val == oldval && unlikely(put_user(newval, uaddr) != 0)) {
+	अगर (val == oldval && unlikely(put_user(newval, uaddr) != 0)) अणु
 		preempt_enable();
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	*uval = val;
 	preempt_enable();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else
-static inline int
-arch_futex_atomic_op_inuser(int op, u32 oparg, int *oval, u32 __user *uaddr)
-{
-	return -ENOSYS;
-}
+#अन्यथा
+अटल अंतरभूत पूर्णांक
+arch_futex_atomic_op_inuser(पूर्णांक op, u32 oparg, पूर्णांक *oval, u32 __user *uaddr)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int
+अटल अंतरभूत पूर्णांक
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 			      u32 oldval, u32 newval)
-{
-	return -ENOSYS;
-}
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-#endif /* CONFIG_SMP */
-#endif
+#पूर्ण_अगर /* CONFIG_SMP */
+#पूर्ण_अगर

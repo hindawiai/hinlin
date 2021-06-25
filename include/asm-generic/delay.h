@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_GENERIC_DELAY_H
-#define __ASM_GENERIC_DELAY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_GENERIC_DELAY_H
+#घोषणा __ASM_GENERIC_DELAY_H
 
-/* Undefined functions to get compile-time errors */
-extern void __bad_udelay(void);
-extern void __bad_ndelay(void);
+/* Undefined functions to get compile-समय errors */
+बाह्य व्योम __bad_udelay(व्योम);
+बाह्य व्योम __bad_ndelay(व्योम);
 
-extern void __udelay(unsigned long usecs);
-extern void __ndelay(unsigned long nsecs);
-extern void __const_udelay(unsigned long xloops);
-extern void __delay(unsigned long loops);
+बाह्य व्योम __udelay(अचिन्हित दीर्घ usecs);
+बाह्य व्योम __ndelay(अचिन्हित दीर्घ nsecs);
+बाह्य व्योम __स्थिर_udelay(अचिन्हित दीर्घ xloops);
+बाह्य व्योम __delay(अचिन्हित दीर्घ loops);
 
 /*
  * The weird n/20000 thing suppresses a "comparison is always false due to
- * limited range of data type" warning with non-const 8-bit arguments.
+ * limited range of data type" warning with non-स्थिर 8-bit arguments.
  */
 
 /* 0x10c7 is 2**32 / 1000000 (rounded up) */
-#define udelay(n)							\
-	({								\
-		if (__builtin_constant_p(n)) {				\
-			if ((n) / 20000 >= 1)				\
+#घोषणा udelay(n)							\
+	(अणु								\
+		अगर (__builtin_स्थिरant_p(n)) अणु				\
+			अगर ((n) / 20000 >= 1)				\
 				 __bad_udelay();			\
-			else						\
-				__const_udelay((n) * 0x10c7ul);		\
-		} else {						\
+			अन्यथा						\
+				__स्थिर_udelay((n) * 0x10c7ul);		\
+		पूर्ण अन्यथा अणु						\
 			__udelay(n);					\
-		}							\
-	})
+		पूर्ण							\
+	पूर्ण)
 
 /* 0x5 is 2**32 / 1000000000 (rounded up) */
-#define ndelay(n)							\
-	({								\
-		if (__builtin_constant_p(n)) {				\
-			if ((n) / 20000 >= 1)				\
+#घोषणा ndelay(n)							\
+	(अणु								\
+		अगर (__builtin_स्थिरant_p(n)) अणु				\
+			अगर ((n) / 20000 >= 1)				\
 				__bad_ndelay();				\
-			else						\
-				__const_udelay((n) * 5ul);		\
-		} else {						\
+			अन्यथा						\
+				__स्थिर_udelay((n) * 5ul);		\
+		पूर्ण अन्यथा अणु						\
 			__ndelay(n);					\
-		}							\
-	})
+		पूर्ण							\
+	पूर्ण)
 
-#endif /* __ASM_GENERIC_DELAY_H */
+#पूर्ण_अगर /* __ASM_GENERIC_DELAY_H */

@@ -1,151 +1,152 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/acpi.h>
-#include <linux/bitops.h>
-#include <linux/device.h>
-#include <linux/gpio/driver.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/pm.h>
-#include <linux/resource.h>
-#include <linux/types.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/resource.h>
+#समावेश <linux/types.h>
 
 /* Number of pins on BlueField */
-#define MLXBF_GPIO_NR 54
+#घोषणा MLXBF_GPIO_NR 54
 
 /* Pad Electrical Controls. */
-#define MLXBF_GPIO_PAD_CONTROL_FIRST_WORD 0x0700
-#define MLXBF_GPIO_PAD_CONTROL_1_FIRST_WORD 0x0708
-#define MLXBF_GPIO_PAD_CONTROL_2_FIRST_WORD 0x0710
-#define MLXBF_GPIO_PAD_CONTROL_3_FIRST_WORD 0x0718
+#घोषणा MLXBF_GPIO_PAD_CONTROL_FIRST_WORD 0x0700
+#घोषणा MLXBF_GPIO_PAD_CONTROL_1_FIRST_WORD 0x0708
+#घोषणा MLXBF_GPIO_PAD_CONTROL_2_FIRST_WORD 0x0710
+#घोषणा MLXBF_GPIO_PAD_CONTROL_3_FIRST_WORD 0x0718
 
-#define MLXBF_GPIO_PIN_DIR_I 0x1040
-#define MLXBF_GPIO_PIN_DIR_O 0x1048
-#define MLXBF_GPIO_PIN_STATE 0x1000
-#define MLXBF_GPIO_SCRATCHPAD 0x20
+#घोषणा MLXBF_GPIO_PIN_सूची_I 0x1040
+#घोषणा MLXBF_GPIO_PIN_सूची_O 0x1048
+#घोषणा MLXBF_GPIO_PIN_STATE 0x1000
+#घोषणा MLXBF_GPIO_SCRATCHPAD 0x20
 
-#ifdef CONFIG_PM
-struct mlxbf_gpio_context_save_regs {
+#अगर_घोषित CONFIG_PM
+काष्ठा mlxbf_gpio_context_save_regs अणु
 	u64 scratchpad;
 	u64 pad_control[MLXBF_GPIO_NR];
 	u64 pin_dir_i;
 	u64 pin_dir_o;
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-/* Device state structure. */
-struct mlxbf_gpio_state {
-	struct gpio_chip gc;
+/* Device state काष्ठाure. */
+काष्ठा mlxbf_gpio_state अणु
+	काष्ठा gpio_chip gc;
 
 	/* Memory Address */
-	void __iomem *base;
+	व्योम __iomem *base;
 
-#ifdef CONFIG_PM
-	struct mlxbf_gpio_context_save_regs csave_regs;
-#endif
-};
+#अगर_घोषित CONFIG_PM
+	काष्ठा mlxbf_gpio_context_save_regs csave_regs;
+#पूर्ण_अगर
+पूर्ण;
 
-static int mlxbf_gpio_probe(struct platform_device *pdev)
-{
-	struct mlxbf_gpio_state *gs;
-	struct device *dev = &pdev->dev;
-	struct gpio_chip *gc;
-	int ret;
+अटल पूर्णांक mlxbf_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mlxbf_gpio_state *gs;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा gpio_chip *gc;
+	पूर्णांक ret;
 
-	gs = devm_kzalloc(&pdev->dev, sizeof(*gs), GFP_KERNEL);
-	if (!gs)
-		return -ENOMEM;
+	gs = devm_kzalloc(&pdev->dev, माप(*gs), GFP_KERNEL);
+	अगर (!gs)
+		वापस -ENOMEM;
 
-	gs->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(gs->base))
-		return PTR_ERR(gs->base);
+	gs->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(gs->base))
+		वापस PTR_ERR(gs->base);
 
 	gc = &gs->gc;
 	ret = bgpio_init(gc, dev, 8,
 			 gs->base + MLXBF_GPIO_PIN_STATE,
-			 NULL,
-			 NULL,
-			 gs->base + MLXBF_GPIO_PIN_DIR_O,
-			 gs->base + MLXBF_GPIO_PIN_DIR_I,
+			 शून्य,
+			 शून्य,
+			 gs->base + MLXBF_GPIO_PIN_सूची_O,
+			 gs->base + MLXBF_GPIO_PIN_सूची_I,
 			 0);
-	if (ret)
-		return -ENODEV;
+	अगर (ret)
+		वापस -ENODEV;
 
 	gc->owner = THIS_MODULE;
 	gc->ngpio = MLXBF_GPIO_NR;
 
 	ret = devm_gpiochip_add_data(dev, &gs->gc, gs);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed adding memory mapped gpiochip\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, gs);
+	platक्रमm_set_drvdata(pdev, gs);
 	dev_info(&pdev->dev, "registered Mellanox BlueField GPIO");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int mlxbf_gpio_suspend(struct platform_device *pdev, pm_message_t state)
-{
-	struct mlxbf_gpio_state *gs = platform_get_drvdata(pdev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक mlxbf_gpio_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
+अणु
+	काष्ठा mlxbf_gpio_state *gs = platक्रमm_get_drvdata(pdev);
 
-	gs->csave_regs.scratchpad = readq(gs->base + MLXBF_GPIO_SCRATCHPAD);
+	gs->csave_regs.scratchpad = पढ़ोq(gs->base + MLXBF_GPIO_SCRATCHPAD);
 	gs->csave_regs.pad_control[0] =
-		readq(gs->base + MLXBF_GPIO_PAD_CONTROL_FIRST_WORD);
+		पढ़ोq(gs->base + MLXBF_GPIO_PAD_CONTROL_FIRST_WORD);
 	gs->csave_regs.pad_control[1] =
-		readq(gs->base + MLXBF_GPIO_PAD_CONTROL_1_FIRST_WORD);
+		पढ़ोq(gs->base + MLXBF_GPIO_PAD_CONTROL_1_FIRST_WORD);
 	gs->csave_regs.pad_control[2] =
-		readq(gs->base + MLXBF_GPIO_PAD_CONTROL_2_FIRST_WORD);
+		पढ़ोq(gs->base + MLXBF_GPIO_PAD_CONTROL_2_FIRST_WORD);
 	gs->csave_regs.pad_control[3] =
-		readq(gs->base + MLXBF_GPIO_PAD_CONTROL_3_FIRST_WORD);
-	gs->csave_regs.pin_dir_i = readq(gs->base + MLXBF_GPIO_PIN_DIR_I);
-	gs->csave_regs.pin_dir_o = readq(gs->base + MLXBF_GPIO_PIN_DIR_O);
+		पढ़ोq(gs->base + MLXBF_GPIO_PAD_CONTROL_3_FIRST_WORD);
+	gs->csave_regs.pin_dir_i = पढ़ोq(gs->base + MLXBF_GPIO_PIN_सूची_I);
+	gs->csave_regs.pin_dir_o = पढ़ोq(gs->base + MLXBF_GPIO_PIN_सूची_O);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf_gpio_resume(struct platform_device *pdev)
-{
-	struct mlxbf_gpio_state *gs = platform_get_drvdata(pdev);
+अटल पूर्णांक mlxbf_gpio_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mlxbf_gpio_state *gs = platक्रमm_get_drvdata(pdev);
 
-	writeq(gs->csave_regs.scratchpad, gs->base + MLXBF_GPIO_SCRATCHPAD);
-	writeq(gs->csave_regs.pad_control[0],
+	ग_लिखोq(gs->csave_regs.scratchpad, gs->base + MLXBF_GPIO_SCRATCHPAD);
+	ग_लिखोq(gs->csave_regs.pad_control[0],
 	       gs->base + MLXBF_GPIO_PAD_CONTROL_FIRST_WORD);
-	writeq(gs->csave_regs.pad_control[1],
+	ग_लिखोq(gs->csave_regs.pad_control[1],
 	       gs->base + MLXBF_GPIO_PAD_CONTROL_1_FIRST_WORD);
-	writeq(gs->csave_regs.pad_control[2],
+	ग_लिखोq(gs->csave_regs.pad_control[2],
 	       gs->base + MLXBF_GPIO_PAD_CONTROL_2_FIRST_WORD);
-	writeq(gs->csave_regs.pad_control[3],
+	ग_लिखोq(gs->csave_regs.pad_control[3],
 	       gs->base + MLXBF_GPIO_PAD_CONTROL_3_FIRST_WORD);
-	writeq(gs->csave_regs.pin_dir_i, gs->base + MLXBF_GPIO_PIN_DIR_I);
-	writeq(gs->csave_regs.pin_dir_o, gs->base + MLXBF_GPIO_PIN_DIR_O);
+	ग_लिखोq(gs->csave_regs.pin_dir_i, gs->base + MLXBF_GPIO_PIN_सूची_I);
+	ग_लिखोq(gs->csave_regs.pin_dir_o, gs->base + MLXBF_GPIO_PIN_सूची_O);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct acpi_device_id __maybe_unused mlxbf_gpio_acpi_match[] = {
-	{ "MLNXBF02", 0 },
-	{}
-};
+अटल स्थिर काष्ठा acpi_device_id __maybe_unused mlxbf_gpio_acpi_match[] = अणु
+	अणु "MLNXBF02", 0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, mlxbf_gpio_acpi_match);
 
-static struct platform_driver mlxbf_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mlxbf_gpio_driver = अणु
+	.driver = अणु
 		.name = "mlxbf_gpio",
 		.acpi_match_table = ACPI_PTR(mlxbf_gpio_acpi_match),
-	},
+	पूर्ण,
 	.probe    = mlxbf_gpio_probe,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend  = mlxbf_gpio_suspend,
 	.resume   = mlxbf_gpio_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-module_platform_driver(mlxbf_gpio_driver);
+module_platक्रमm_driver(mlxbf_gpio_driver);
 
 MODULE_DESCRIPTION("Mellanox BlueField GPIO Driver");
 MODULE_AUTHOR("Mellanox Technologies");

@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_ATA_PLATFORM_H
-#define __LINUX_ATA_PLATFORM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_ATA_PLATFORM_H
+#घोषणा __LINUX_ATA_PLATFORM_H
 
-struct pata_platform_info {
+काष्ठा pata_platक्रमm_info अणु
 	/*
-	 * I/O port shift, for platforms with ports that are
-	 * constantly spaced and need larger than the 1-byte
+	 * I/O port shअगरt, क्रम platक्रमms with ports that are
+	 * स्थिरantly spaced and need larger than the 1-byte
 	 * spacing used by ata_std_ports().
 	 */
-	unsigned int ioport_shift;
-};
+	अचिन्हित पूर्णांक ioport_shअगरt;
+पूर्ण;
 
-struct scsi_host_template;
+काष्ठा scsi_host_ढाँचा;
 
-extern int __pata_platform_probe(struct device *dev,
-				 struct resource *io_res,
-				 struct resource *ctl_res,
-				 struct resource *irq_res,
-				 unsigned int ioport_shift,
-				 int __pio_mask,
-				 struct scsi_host_template *sht,
+बाह्य पूर्णांक __pata_platक्रमm_probe(काष्ठा device *dev,
+				 काष्ठा resource *io_res,
+				 काष्ठा resource *ctl_res,
+				 काष्ठा resource *irq_res,
+				 अचिन्हित पूर्णांक ioport_shअगरt,
+				 पूर्णांक __pio_mask,
+				 काष्ठा scsi_host_ढाँचा *sht,
 				 bool use16bit);
 
 /*
- * Marvell SATA private data
+ * Marvell SATA निजी data
  */
-struct mv_sata_platform_data {
-	int	n_ports; /* number of sata ports */
-};
+काष्ठा mv_sata_platक्रमm_data अणु
+	पूर्णांक	n_ports; /* number of sata ports */
+पूर्ण;
 
-#endif /* __LINUX_ATA_PLATFORM_H */
+#पूर्ण_अगर /* __LINUX_ATA_PLATFORM_H */

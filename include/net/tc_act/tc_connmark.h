@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_TC_CONNMARK_H
-#define __NET_TC_CONNMARK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_TC_CONNMARK_H
+#घोषणा __NET_TC_CONNMARK_H
 
-#include <net/act_api.h>
+#समावेश <net/act_api.h>
 
-struct tcf_connmark_info {
-	struct tc_action common;
-	struct net *net;
+काष्ठा tcf_connmark_info अणु
+	काष्ठा tc_action common;
+	काष्ठा net *net;
 	u16 zone;
-};
+पूर्ण;
 
-#define to_connmark(a) ((struct tcf_connmark_info *)a)
+#घोषणा to_connmark(a) ((काष्ठा tcf_connmark_info *)a)
 
-#endif /* __NET_TC_CONNMARK_H */
+#पूर्ण_अगर /* __NET_TC_CONNMARK_H */

@@ -1,230 +1,231 @@
+<शैली गुरु>
 /*
- * Defines, structures, APIs for edac_mc module
+ * Defines, काष्ठाures, APIs क्रम edac_mc module
  *
  * (C) 2007 Linux Networx (http://lnxi.com)
  * This file may be distributed under the terms of the
  * GNU General Public License.
  *
  * Written by Thayne Harbaugh
- * Based on work by Dan Hollis <goemon at anime dot net> and others.
+ * Based on work by Dan Hollis <goemon at anime करोt net> and others.
  *	http://www.anime.net/~goemon/linux-ecc/
  *
  * NMI handling support added by
  *     Dave Peterson <dsp@llnl.gov> <dave_peterson@pobox.com>
  *
- * Refactored for multi-source files:
+ * Refactored क्रम multi-source files:
  *	Doug Thompson <norsk5@xmission.com>
  *
- * Please look at Documentation/driver-api/edac.rst for more info about
- * EDAC core structs and functions.
+ * Please look at Documentation/driver-api/edac.rst क्रम more info about
+ * EDAC core काष्ठाs and functions.
  */
 
-#ifndef _EDAC_MC_H_
-#define _EDAC_MC_H_
+#अगर_अघोषित _EDAC_MC_H_
+#घोषणा _EDAC_MC_H_
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/smp.h>
-#include <linux/pci.h>
-#include <linux/time.h>
-#include <linux/nmi.h>
-#include <linux/rcupdate.h>
-#include <linux/completion.h>
-#include <linux/kobject.h>
-#include <linux/platform_device.h>
-#include <linux/workqueue.h>
-#include <linux/edac.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/nmi.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/edac.h>
 
-#if PAGE_SHIFT < 20
-#define PAGES_TO_MiB(pages)	((pages) >> (20 - PAGE_SHIFT))
-#define MiB_TO_PAGES(mb)	((mb) << (20 - PAGE_SHIFT))
-#else				/* PAGE_SHIFT > 20 */
-#define PAGES_TO_MiB(pages)	((pages) << (PAGE_SHIFT - 20))
-#define MiB_TO_PAGES(mb)	((mb) >> (PAGE_SHIFT - 20))
-#endif
+#अगर PAGE_SHIFT < 20
+#घोषणा PAGES_TO_MiB(pages)	((pages) >> (20 - PAGE_SHIFT))
+#घोषणा MiB_TO_PAGES(mb)	((mb) << (20 - PAGE_SHIFT))
+#अन्यथा				/* PAGE_SHIFT > 20 */
+#घोषणा PAGES_TO_MiB(pages)	((pages) << (PAGE_SHIFT - 20))
+#घोषणा MiB_TO_PAGES(mb)	((mb) >> (PAGE_SHIFT - 20))
+#पूर्ण_अगर
 
-#define edac_printk(level, prefix, fmt, arg...) \
-	printk(level "EDAC " prefix ": " fmt, ##arg)
+#घोषणा edac_prपूर्णांकk(level, prefix, fmt, arg...) \
+	prपूर्णांकk(level "EDAC " prefix ": " fmt, ##arg)
 
-#define edac_mc_printk(mci, level, fmt, arg...) \
-	printk(level "EDAC MC%d: " fmt, mci->mc_idx, ##arg)
+#घोषणा edac_mc_prपूर्णांकk(mci, level, fmt, arg...) \
+	prपूर्णांकk(level "EDAC MC%d: " fmt, mci->mc_idx, ##arg)
 
-#define edac_mc_chipset_printk(mci, level, prefix, fmt, arg...) \
-	printk(level "EDAC " prefix " MC%d: " fmt, mci->mc_idx, ##arg)
+#घोषणा edac_mc_chipset_prपूर्णांकk(mci, level, prefix, fmt, arg...) \
+	prपूर्णांकk(level "EDAC " prefix " MC%d: " fmt, mci->mc_idx, ##arg)
 
-#define edac_device_printk(ctl, level, fmt, arg...) \
-	printk(level "EDAC DEVICE%d: " fmt, ctl->dev_idx, ##arg)
+#घोषणा edac_device_prपूर्णांकk(ctl, level, fmt, arg...) \
+	prपूर्णांकk(level "EDAC DEVICE%d: " fmt, ctl->dev_idx, ##arg)
 
-#define edac_pci_printk(ctl, level, fmt, arg...) \
-	printk(level "EDAC PCI%d: " fmt, ctl->pci_idx, ##arg)
+#घोषणा edac_pci_prपूर्णांकk(ctl, level, fmt, arg...) \
+	prपूर्णांकk(level "EDAC PCI%d: " fmt, ctl->pci_idx, ##arg)
 
-/* prefixes for edac_printk() and edac_mc_printk() */
-#define EDAC_MC "MC"
-#define EDAC_PCI "PCI"
-#define EDAC_DEBUG "DEBUG"
+/* prefixes क्रम edac_prपूर्णांकk() and edac_mc_prपूर्णांकk() */
+#घोषणा EDAC_MC "MC"
+#घोषणा EDAC_PCI "PCI"
+#घोषणा EDAC_DEBUG "DEBUG"
 
-extern const char * const edac_mem_types[];
+बाह्य स्थिर अक्षर * स्थिर edac_mem_types[];
 
-#ifdef CONFIG_EDAC_DEBUG
-extern int edac_debug_level;
+#अगर_घोषित CONFIG_EDAC_DEBUG
+बाह्य पूर्णांक edac_debug_level;
 
-#define edac_dbg(level, fmt, ...)					\
-do {									\
-	if (level <= edac_debug_level)					\
-		edac_printk(KERN_DEBUG, EDAC_DEBUG,			\
+#घोषणा edac_dbg(level, fmt, ...)					\
+करो अणु									\
+	अगर (level <= edac_debug_level)					\
+		edac_prपूर्णांकk(KERN_DEBUG, EDAC_DEBUG,			\
 			    "%s: " fmt, __func__, ##__VA_ARGS__);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#else				/* !CONFIG_EDAC_DEBUG */
+#अन्यथा				/* !CONFIG_EDAC_DEBUG */
 
-#define edac_dbg(level, fmt, ...)					\
-do {									\
-	if (0)								\
-		edac_printk(KERN_DEBUG, EDAC_DEBUG,			\
+#घोषणा edac_dbg(level, fmt, ...)					\
+करो अणु									\
+	अगर (0)								\
+		edac_prपूर्णांकk(KERN_DEBUG, EDAC_DEBUG,			\
 			    "%s: " fmt, __func__, ##__VA_ARGS__);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#endif				/* !CONFIG_EDAC_DEBUG */
+#पूर्ण_अगर				/* !CONFIG_EDAC_DEBUG */
 
-#define PCI_VEND_DEV(vend, dev) PCI_VENDOR_ID_ ## vend, \
+#घोषणा PCI_VEND_DEV(vend, dev) PCI_VENDOR_ID_ ## vend, \
 	PCI_DEVICE_ID_ ## vend ## _ ## dev
 
-#define edac_dev_name(dev) (dev)->dev_name
+#घोषणा edac_dev_name(dev) (dev)->dev_name
 
-#define to_mci(k) container_of(k, struct mem_ctl_info, dev)
+#घोषणा to_mci(k) container_of(k, काष्ठा mem_ctl_info, dev)
 
 /**
- * edac_mc_alloc() - Allocate and partially fill a struct &mem_ctl_info.
+ * edac_mc_alloc() - Allocate and partially fill a काष्ठा &mem_ctl_info.
  *
  * @mc_num:		Memory controller number
  * @n_layers:		Number of MC hierarchy layers
  * @layers:		Describes each layer as seen by the Memory Controller
- * @sz_pvt:		size of private storage needed
+ * @sz_pvt:		size of निजी storage needed
  *
  *
- * Everything is kmalloc'ed as one big chunk - more efficient.
- * Only can be used if all structures have the same lifetime - otherwise
- * you have to allocate and initialize your own structures.
+ * Everything is kदो_स्मृति'ed as one big chunk - more efficient.
+ * Only can be used अगर all काष्ठाures have the same lअगरeसमय - otherwise
+ * you have to allocate and initialize your own काष्ठाures.
  *
- * Use edac_mc_free() to free mc structures allocated by this function.
+ * Use edac_mc_मुक्त() to मुक्त mc काष्ठाures allocated by this function.
  *
  * .. note::
  *
- *   drivers handle multi-rank memories in different ways: in some
- *   drivers, one multi-rank memory stick is mapped as one entry, while, in
- *   others, a single multi-rank memory stick would be mapped into several
- *   entries. Currently, this function will allocate multiple struct dimm_info
+ *   drivers handle multi-rank memories in dअगरferent ways: in some
+ *   drivers, one multi-rank memory stick is mapped as one entry, जबतक, in
+ *   others, a single multi-rank memory stick would be mapped पूर्णांकo several
+ *   entries. Currently, this function will allocate multiple काष्ठा dimm_info
  *   on such scenarios, as grouping the multiple ranks require drivers change.
  *
  * Returns:
- *	On success, return a pointer to struct mem_ctl_info pointer;
- *	%NULL otherwise
+ *	On success, वापस a poपूर्णांकer to काष्ठा mem_ctl_info poपूर्णांकer;
+ *	%शून्य otherwise
  */
-struct mem_ctl_info *edac_mc_alloc(unsigned int mc_num,
-				   unsigned int n_layers,
-				   struct edac_mc_layer *layers,
-				   unsigned int sz_pvt);
+काष्ठा mem_ctl_info *edac_mc_alloc(अचिन्हित पूर्णांक mc_num,
+				   अचिन्हित पूर्णांक n_layers,
+				   काष्ठा edac_mc_layer *layers,
+				   अचिन्हित पूर्णांक sz_pvt);
 
 /**
  * edac_get_owner - Return the owner's mod_name of EDAC MC
  *
  * Returns:
- *	Pointer to mod_name string when EDAC MC is owned. NULL otherwise.
+ *	Poपूर्णांकer to mod_name string when EDAC MC is owned. शून्य otherwise.
  */
-extern const char *edac_get_owner(void);
+बाह्य स्थिर अक्षर *edac_get_owner(व्योम);
 
 /*
- * edac_mc_add_mc_with_groups() - Insert the @mci structure into the mci
- *	global list and create sysfs entries associated with @mci structure.
+ * edac_mc_add_mc_with_groups() - Insert the @mci काष्ठाure पूर्णांकo the mci
+ *	global list and create sysfs entries associated with @mci काष्ठाure.
  *
- * @mci: pointer to the mci structure to be added to the list
- * @groups: optional attribute groups for the driver-specific sysfs entries
+ * @mci: poपूर्णांकer to the mci काष्ठाure to be added to the list
+ * @groups: optional attribute groups क्रम the driver-specअगरic sysfs entries
  *
  * Returns:
  *	0 on Success, or an error code on failure
  */
-extern int edac_mc_add_mc_with_groups(struct mem_ctl_info *mci,
-				      const struct attribute_group **groups);
-#define edac_mc_add_mc(mci)	edac_mc_add_mc_with_groups(mci, NULL)
+बाह्य पूर्णांक edac_mc_add_mc_with_groups(काष्ठा mem_ctl_info *mci,
+				      स्थिर काष्ठा attribute_group **groups);
+#घोषणा edac_mc_add_mc(mci)	edac_mc_add_mc_with_groups(mci, शून्य)
 
 /**
- * edac_mc_free() -  Frees a previously allocated @mci structure
+ * edac_mc_मुक्त() -  Frees a previously allocated @mci काष्ठाure
  *
- * @mci: pointer to a struct mem_ctl_info structure
+ * @mci: poपूर्णांकer to a काष्ठा mem_ctl_info काष्ठाure
  */
-extern void edac_mc_free(struct mem_ctl_info *mci);
+बाह्य व्योम edac_mc_मुक्त(काष्ठा mem_ctl_info *mci);
 
 /**
- * edac_has_mcs() - Check if any MCs have been allocated.
+ * edac_has_mcs() - Check अगर any MCs have been allocated.
  *
  * Returns:
- *	True if MC instances have been registered successfully.
+ *	True अगर MC instances have been रेजिस्टरed successfully.
  *	False otherwise.
  */
-extern bool edac_has_mcs(void);
+बाह्य bool edac_has_mcs(व्योम);
 
 /**
- * edac_mc_find() - Search for a mem_ctl_info structure whose index is @idx.
+ * edac_mc_find() - Search क्रम a mem_ctl_info काष्ठाure whose index is @idx.
  *
  * @idx: index to be seek
  *
- * If found, return a pointer to the structure.
- * Else return NULL.
+ * If found, वापस a poपूर्णांकer to the काष्ठाure.
+ * Else वापस शून्य.
  */
-extern struct mem_ctl_info *edac_mc_find(int idx);
+बाह्य काष्ठा mem_ctl_info *edac_mc_find(पूर्णांक idx);
 
 /**
- * find_mci_by_dev() - Scan list of controllers looking for the one that
+ * find_mci_by_dev() - Scan list of controllers looking क्रम the one that
  *	manages the @dev device.
  *
- * @dev: pointer to a struct device related with the MCI
+ * @dev: poपूर्णांकer to a काष्ठा device related with the MCI
  *
- * Returns: on success, returns a pointer to struct &mem_ctl_info;
- * %NULL otherwise.
+ * Returns: on success, वापसs a poपूर्णांकer to काष्ठा &mem_ctl_info;
+ * %शून्य otherwise.
  */
-extern struct mem_ctl_info *find_mci_by_dev(struct device *dev);
+बाह्य काष्ठा mem_ctl_info *find_mci_by_dev(काष्ठा device *dev);
 
 /**
- * edac_mc_del_mc() - Remove sysfs entries for mci structure associated with
- *	@dev and remove mci structure from global list.
+ * edac_mc_del_mc() - Remove sysfs entries क्रम mci काष्ठाure associated with
+ *	@dev and हटाओ mci काष्ठाure from global list.
  *
- * @dev: Pointer to struct &device representing mci structure to remove.
+ * @dev: Poपूर्णांकer to काष्ठा &device representing mci काष्ठाure to हटाओ.
  *
- * Returns: pointer to removed mci structure, or %NULL if device not found.
+ * Returns: poपूर्णांकer to हटाओd mci काष्ठाure, or %शून्य अगर device not found.
  */
-extern struct mem_ctl_info *edac_mc_del_mc(struct device *dev);
+बाह्य काष्ठा mem_ctl_info *edac_mc_del_mc(काष्ठा device *dev);
 
 /**
- * edac_mc_find_csrow_by_page() - Ancillary routine to identify what csrow
+ * edac_mc_find_csrow_by_page() - Ancillary routine to identअगरy what csrow
  *	contains a memory page.
  *
- * @mci: pointer to a struct mem_ctl_info structure
+ * @mci: poपूर्णांकer to a काष्ठा mem_ctl_info काष्ठाure
  * @page: memory page to find
  *
- * Returns: on success, returns the csrow. -1 if not found.
+ * Returns: on success, वापसs the csrow. -1 अगर not found.
  */
-extern int edac_mc_find_csrow_by_page(struct mem_ctl_info *mci,
-				      unsigned long page);
+बाह्य पूर्णांक edac_mc_find_csrow_by_page(काष्ठा mem_ctl_info *mci,
+				      अचिन्हित दीर्घ page);
 
 /**
  * edac_raw_mc_handle_error() - Reports a memory event to userspace without
- *	doing anything to discover the error location.
+ *	करोing anything to discover the error location.
  *
  * @e:			error description
  *
- * This raw function is used internally by edac_mc_handle_error(). It should
+ * This raw function is used पूर्णांकernally by edac_mc_handle_error(). It should
  * only be called directly when the hardware error come directly from BIOS,
- * like in the case of APEI GHES driver.
+ * like in the हाल of APEI GHES driver.
  */
-void edac_raw_mc_handle_error(struct edac_raw_error_desc *e);
+व्योम edac_raw_mc_handle_error(काष्ठा edac_raw_error_desc *e);
 
 /**
  * edac_mc_handle_error() - Reports a memory event to userspace.
  *
  * @type:		severity of the error (CE/UE/Fatal)
- * @mci:		a struct mem_ctl_info pointer
+ * @mci:		a काष्ठा mem_ctl_info poपूर्णांकer
  * @error_count:	Number of errors of the same type
  * @page_frame_number:	mem page where the error occurred
  * @offset_in_page:	offset of the error inside the page
@@ -238,21 +239,21 @@ void edac_raw_mc_handle_error(struct edac_raw_error_desc *e);
  *			may help hardware manufacturers and
  *			EDAC developers to analyse the event
  */
-void edac_mc_handle_error(const enum hw_event_mc_err_type type,
-			  struct mem_ctl_info *mci,
-			  const u16 error_count,
-			  const unsigned long page_frame_number,
-			  const unsigned long offset_in_page,
-			  const unsigned long syndrome,
-			  const int top_layer,
-			  const int mid_layer,
-			  const int low_layer,
-			  const char *msg,
-			  const char *other_detail);
+व्योम edac_mc_handle_error(स्थिर क्रमागत hw_event_mc_err_type type,
+			  काष्ठा mem_ctl_info *mci,
+			  स्थिर u16 error_count,
+			  स्थिर अचिन्हित दीर्घ page_frame_number,
+			  स्थिर अचिन्हित दीर्घ offset_in_page,
+			  स्थिर अचिन्हित दीर्घ syndrome,
+			  स्थिर पूर्णांक top_layer,
+			  स्थिर पूर्णांक mid_layer,
+			  स्थिर पूर्णांक low_layer,
+			  स्थिर अक्षर *msg,
+			  स्थिर अक्षर *other_detail);
 
 /*
  * edac misc APIs
  */
-extern char *edac_op_state_to_string(int op_state);
+बाह्य अक्षर *edac_op_state_to_string(पूर्णांक op_state);
 
-#endif				/* _EDAC_MC_H_ */
+#पूर्ण_अगर				/* _EDAC_MC_H_ */

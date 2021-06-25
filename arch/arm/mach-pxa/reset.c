@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/gpio.h>
-#include <linux/io.h>
-#include <asm/proc-fns.h>
-#include <asm/system_misc.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/proc-fns.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
 
-#include <mach/regs-ost.h>
-#include <mach/reset.h>
-#include <mach/smemc.h>
+#समावेश <mach/regs-ost.h>
+#समावेश <mach/reset.h>
+#समावेश <mach/smemc.h>
 
-unsigned int reset_status;
+अचिन्हित पूर्णांक reset_status;
 EXPORT_SYMBOL(reset_status);
 
-static void do_hw_reset(void);
+अटल व्योम करो_hw_reset(व्योम);
 
-static int reset_gpio = -1;
+अटल पूर्णांक reset_gpio = -1;
 
-int init_gpio_reset(int gpio, int output, int level)
-{
-	int rc;
+पूर्णांक init_gpio_reset(पूर्णांक gpio, पूर्णांक output, पूर्णांक level)
+अणु
+	पूर्णांक rc;
 
 	rc = gpio_request(gpio, "reset generator");
-	if (rc) {
-		printk(KERN_ERR "Can't request reset_gpio\n");
-		goto out;
-	}
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR "Can't request reset_gpio\n");
+		जाओ out;
+	पूर्ण
 
-	if (output)
+	अगर (output)
 		rc = gpio_direction_output(gpio, level);
-	else
+	अन्यथा
 		rc = gpio_direction_input(gpio);
-	if (rc) {
-		printk(KERN_ERR "Can't configure reset_gpio\n");
-		gpio_free(gpio);
-		goto out;
-	}
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR "Can't configure reset_gpio\n");
+		gpio_मुक्त(gpio);
+		जाओ out;
+	पूर्ण
 
 out:
-	if (!rc)
+	अगर (!rc)
 		reset_gpio = gpio;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * Trigger GPIO reset.
  * This covers various types of logic connecting gpio pin
  * to RESET pins (nRESET or GPIO_RESET):
  */
-static void do_gpio_reset(void)
-{
+अटल व्योम करो_gpio_reset(व्योम)
+अणु
 	BUG_ON(reset_gpio == -1);
 
 	/* drive it low */
@@ -63,47 +64,47 @@ static void do_gpio_reset(void)
 	/* falling edge */
 	gpio_set_value(reset_gpio, 0);
 
-	/* give it some time */
+	/* give it some समय */
 	mdelay(10);
 
 	WARN_ON(1);
 	/* fallback */
-	do_hw_reset();
-}
+	करो_hw_reset();
+पूर्ण
 
-static void do_hw_reset(void)
-{
-	/* Initialize the watchdog and let it fire */
-	writel_relaxed(OWER_WME, OWER);
-	writel_relaxed(OSSR_M3, OSSR);
+अटल व्योम करो_hw_reset(व्योम)
+अणु
+	/* Initialize the watchकरोg and let it fire */
+	ग_लिखोl_relaxed(OWER_WME, OWER);
+	ग_लिखोl_relaxed(OSSR_M3, OSSR);
 	/* ... in 100 ms */
-	writel_relaxed(readl_relaxed(OSCR) + 368640, OSMR3);
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(OSCR) + 368640, OSMR3);
 	/*
-	 * SDRAM hangs on watchdog reset on Marvell PXA270 (erratum 71)
-	 * we put SDRAM into self-refresh to prevent that
+	 * SDRAM hangs on watchकरोg reset on Marvell PXA270 (erratum 71)
+	 * we put SDRAM पूर्णांकo self-refresh to prevent that
 	 */
-	while (1)
-		writel_relaxed(MDREFR_SLFRSH, MDREFR);
-}
+	जबतक (1)
+		ग_लिखोl_relaxed(MDREFR_SLFRSH, MDREFR);
+पूर्ण
 
-void pxa_restart(enum reboot_mode mode, const char *cmd)
-{
+व्योम pxa_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
+अणु
 	local_irq_disable();
 	local_fiq_disable();
 
 	clear_reset_status(RESET_STATUS_ALL);
 
-	switch (mode) {
-	case REBOOT_SOFT:
-		/* Jump into ROM at address 0 */
+	चयन (mode) अणु
+	हाल REBOOT_SOFT:
+		/* Jump पूर्णांकo ROM at address 0 */
 		soft_restart(0);
-		break;
-	case REBOOT_GPIO:
-		do_gpio_reset();
-		break;
-	case REBOOT_HARD:
-	default:
-		do_hw_reset();
-		break;
-	}
-}
+		अवरोध;
+	हाल REBOOT_GPIO:
+		करो_gpio_reset();
+		अवरोध;
+	हाल REBOOT_HARD:
+	शेष:
+		करो_hw_reset();
+		अवरोध;
+	पूर्ण
+पूर्ण

@@ -1,90 +1,91 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/arm/mach-ixp4xx/gateway7001-setup.c
  *
- * Board setup for the Gateway 7001 board
+ * Board setup क्रम the Gateway 7001 board
  *
- * Copyright (C) 2007 Imre Kaloz <kaloz@openwrt.org>
+ * Copyright (C) 2007 Imre Kaloz <kaloz@खोलोwrt.org>
  *
  * based on coyote-setup.c:
  *      Copyright (C) 2003-2005 MontaVista Software, Inc.
  *
- * Author: Imre Kaloz <Kaloz@openwrt.org>
+ * Author: Imre Kaloz <Kaloz@खोलोwrt.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/serial.h>
-#include <linux/tty.h>
-#include <linux/serial_8250.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/serial_8250.h>
 
-#include <asm/types.h>
-#include <asm/setup.h>
-#include <asm/memory.h>
-#include <mach/hardware.h>
-#include <asm/irq.h>
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/flash.h>
+#समावेश <यंत्र/types.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/memory.h>
+#समावेश <mach/hardware.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/flash.h>
 
-#include "irqs.h"
+#समावेश "irqs.h"
 
-static struct flash_platform_data gateway7001_flash_data = {
+अटल काष्ठा flash_platक्रमm_data gateway7001_flash_data = अणु
 	.map_name	= "cfi_probe",
 	.width		= 2,
-};
+पूर्ण;
 
-static struct resource gateway7001_flash_resource = {
+अटल काष्ठा resource gateway7001_flash_resource = अणु
 	.flags		= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct platform_device gateway7001_flash = {
+अटल काष्ठा platक्रमm_device gateway7001_flash = अणु
 	.name		= "IXP4XX-Flash",
 	.id		= 0,
-	.dev		= {
-		.platform_data = &gateway7001_flash_data,
-	},
+	.dev		= अणु
+		.platक्रमm_data = &gateway7001_flash_data,
+	पूर्ण,
 	.num_resources	= 1,
 	.resource	= &gateway7001_flash_resource,
-};
+पूर्ण;
 
-static struct resource gateway7001_uart_resource = {
+अटल काष्ठा resource gateway7001_uart_resource = अणु
 	.start	= IXP4XX_UART2_BASE_PHYS,
 	.end	= IXP4XX_UART2_BASE_PHYS + 0x0fff,
 	.flags	= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct plat_serial8250_port gateway7001_uart_data[] = {
-	{
+अटल काष्ठा plat_serial8250_port gateway7001_uart_data[] = अणु
+	अणु
 		.mapbase	= IXP4XX_UART2_BASE_PHYS,
-		.membase	= (char *)IXP4XX_UART2_BASE_VIRT + REG_OFFSET,
+		.membase	= (अक्षर *)IXP4XX_UART2_BASE_VIRT + REG_OFFSET,
 		.irq		= IRQ_IXP4XX_UART2,
 		.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,
 		.iotype		= UPIO_MEM,
-		.regshift	= 2,
+		.regshअगरt	= 2,
 		.uartclk	= IXP4XX_UART_XTAL,
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_device gateway7001_uart = {
+अटल काष्ठा platक्रमm_device gateway7001_uart = अणु
 	.name		= "serial8250",
 	.id		= PLAT8250_DEV_PLATFORM,
-	.dev			= {
-		.platform_data	= gateway7001_uart_data,
-	},
+	.dev			= अणु
+		.platक्रमm_data	= gateway7001_uart_data,
+	पूर्ण,
 	.num_resources	= 1,
 	.resource	= &gateway7001_uart_resource,
-};
+पूर्ण;
 
-static struct platform_device *gateway7001_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *gateway7001_devices[] __initdata = अणु
 	&gateway7001_flash,
 	&gateway7001_uart
-};
+पूर्ण;
 
-static void __init gateway7001_init(void)
-{
+अटल व्योम __init gateway7001_init(व्योम)
+अणु
 	ixp4xx_sys_init();
 
 	gateway7001_flash_resource.start = IXP4XX_EXP_BUS_BASE(0);
@@ -93,21 +94,21 @@ static void __init gateway7001_init(void)
 	*IXP4XX_EXP_CS0 |= IXP4XX_FLASH_WRITABLE;
 	*IXP4XX_EXP_CS1 = *IXP4XX_EXP_CS0;
 
-	platform_add_devices(gateway7001_devices, ARRAY_SIZE(gateway7001_devices));
-}
+	platक्रमm_add_devices(gateway7001_devices, ARRAY_SIZE(gateway7001_devices));
+पूर्ण
 
-#ifdef CONFIG_MACH_GATEWAY7001
+#अगर_घोषित CONFIG_MACH_GATEWAY7001
 MACHINE_START(GATEWAY7001, "Gateway 7001 AP")
-	/* Maintainer: Imre Kaloz <kaloz@openwrt.org> */
+	/* Maपूर्णांकainer: Imre Kaloz <kaloz@खोलोwrt.org> */
 	.map_io		= ixp4xx_map_io,
 	.init_early	= ixp4xx_init_early,
 	.init_irq	= ixp4xx_init_irq,
-	.init_time	= ixp4xx_timer_init,
+	.init_समय	= ixp4xx_समयr_init,
 	.atag_offset	= 0x100,
 	.init_machine	= gateway7001_init,
-#if defined(CONFIG_PCI)
+#अगर defined(CONFIG_PCI)
 	.dma_zone_size	= SZ_64M,
-#endif
+#पूर्ण_अगर
 	.restart	= ixp4xx_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर

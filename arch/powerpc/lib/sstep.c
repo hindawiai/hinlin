@@ -1,209 +1,210 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Single-step support.
  *
  * Copyright (C) 2004 Paul Mackerras <paulus@au.ibm.com>, IBM
  */
-#include <linux/kernel.h>
-#include <linux/kprobes.h>
-#include <linux/ptrace.h>
-#include <linux/prefetch.h>
-#include <asm/sstep.h>
-#include <asm/processor.h>
-#include <linux/uaccess.h>
-#include <asm/cpu_has_feature.h>
-#include <asm/cputable.h>
-#include <asm/disassemble.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/prefetch.h>
+#समावेश <यंत्र/sstep.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/cpu_has_feature.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/disassemble.h>
 
-extern char system_call_common[];
-extern char system_call_vectored_emulate[];
+बाह्य अक्षर प्रणाली_call_common[];
+बाह्य अक्षर प्रणाली_call_vectored_emulate[];
 
-#ifdef CONFIG_PPC64
+#अगर_घोषित CONFIG_PPC64
 /* Bits in SRR1 that are copied from MSR */
-#define MSR_MASK	0xffffffff87c0ffffUL
-#else
-#define MSR_MASK	0x87c0ffff
-#endif
+#घोषणा MSR_MASK	0xffffffff87c0ffffUL
+#अन्यथा
+#घोषणा MSR_MASK	0x87c0ffff
+#पूर्ण_अगर
 
 /* Bits in XER */
-#define XER_SO		0x80000000U
-#define XER_OV		0x40000000U
-#define XER_CA		0x20000000U
-#define XER_OV32	0x00080000U
-#define XER_CA32	0x00040000U
+#घोषणा XER_SO		0x80000000U
+#घोषणा XER_OV		0x40000000U
+#घोषणा XER_CA		0x20000000U
+#घोषणा XER_OV32	0x00080000U
+#घोषणा XER_CA32	0x00040000U
 
-#ifdef CONFIG_VSX
-#define VSX_REGISTER_XTP(rd)   ((((rd) & 1) << 5) | ((rd) & 0xfe))
-#endif
+#अगर_घोषित CONFIG_VSX
+#घोषणा VSX_REGISTER_XTP(rd)   ((((rd) & 1) << 5) | ((rd) & 0xfe))
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_FPU
+#अगर_घोषित CONFIG_PPC_FPU
 /*
  * Functions in ldstfp.S
  */
-extern void get_fpr(int rn, double *p);
-extern void put_fpr(int rn, const double *p);
-extern void get_vr(int rn, __vector128 *p);
-extern void put_vr(int rn, __vector128 *p);
-extern void load_vsrn(int vsr, const void *p);
-extern void store_vsrn(int vsr, void *p);
-extern void conv_sp_to_dp(const float *sp, double *dp);
-extern void conv_dp_to_sp(const double *dp, float *sp);
-#endif
+बाह्य व्योम get_fpr(पूर्णांक rn, द्विगुन *p);
+बाह्य व्योम put_fpr(पूर्णांक rn, स्थिर द्विगुन *p);
+बाह्य व्योम get_vr(पूर्णांक rn, __vector128 *p);
+बाह्य व्योम put_vr(पूर्णांक rn, __vector128 *p);
+बाह्य व्योम load_vsrn(पूर्णांक vsr, स्थिर व्योम *p);
+बाह्य व्योम store_vsrn(पूर्णांक vsr, व्योम *p);
+बाह्य व्योम conv_sp_to_dp(स्थिर भग्न *sp, द्विगुन *dp);
+बाह्य व्योम conv_dp_to_sp(स्थिर द्विगुन *dp, भग्न *sp);
+#पूर्ण_अगर
 
-#ifdef __powerpc64__
+#अगर_घोषित __घातerpc64__
 /*
  * Functions in quad.S
  */
-extern int do_lq(unsigned long ea, unsigned long *regs);
-extern int do_stq(unsigned long ea, unsigned long val0, unsigned long val1);
-extern int do_lqarx(unsigned long ea, unsigned long *regs);
-extern int do_stqcx(unsigned long ea, unsigned long val0, unsigned long val1,
-		    unsigned int *crp);
-#endif
+बाह्य पूर्णांक करो_lq(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ *regs);
+बाह्य पूर्णांक करो_stq(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ val0, अचिन्हित दीर्घ val1);
+बाह्य पूर्णांक करो_lqarx(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ *regs);
+बाह्य पूर्णांक करो_stqcx(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ val0, अचिन्हित दीर्घ val1,
+		    अचिन्हित पूर्णांक *crp);
+#पूर्ण_अगर
 
-#ifdef __LITTLE_ENDIAN__
-#define IS_LE	1
-#define IS_BE	0
-#else
-#define IS_LE	0
-#define IS_BE	1
-#endif
+#अगर_घोषित __LITTLE_ENDIAN__
+#घोषणा IS_LE	1
+#घोषणा IS_BE	0
+#अन्यथा
+#घोषणा IS_LE	0
+#घोषणा IS_BE	1
+#पूर्ण_अगर
 
 /*
  * Emulate the truncation of 64 bit values in 32-bit mode.
  */
-static nokprobe_inline unsigned long truncate_if_32bit(unsigned long msr,
-							unsigned long val)
-{
-#ifdef __powerpc64__
-	if ((msr & MSR_64BIT) == 0)
+अटल nokprobe_अंतरभूत अचिन्हित दीर्घ truncate_अगर_32bit(अचिन्हित दीर्घ msr,
+							अचिन्हित दीर्घ val)
+अणु
+#अगर_घोषित __घातerpc64__
+	अगर ((msr & MSR_64BIT) == 0)
 		val &= 0xffffffffUL;
-#endif
-	return val;
-}
+#पूर्ण_अगर
+	वापस val;
+पूर्ण
 
 /*
- * Determine whether a conditional branch instruction would branch.
+ * Determine whether a conditional branch inकाष्ठाion would branch.
  */
-static nokprobe_inline int branch_taken(unsigned int instr,
-					const struct pt_regs *regs,
-					struct instruction_op *op)
-{
-	unsigned int bo = (instr >> 21) & 0x1f;
-	unsigned int bi;
+अटल nokprobe_अंतरभूत पूर्णांक branch_taken(अचिन्हित पूर्णांक instr,
+					स्थिर काष्ठा pt_regs *regs,
+					काष्ठा inकाष्ठाion_op *op)
+अणु
+	अचिन्हित पूर्णांक bo = (instr >> 21) & 0x1f;
+	अचिन्हित पूर्णांक bi;
 
-	if ((bo & 4) == 0) {
+	अगर ((bo & 4) == 0) अणु
 		/* decrement counter */
 		op->type |= DECCTR;
-		if (((bo >> 1) & 1) ^ (regs->ctr == 1))
-			return 0;
-	}
-	if ((bo & 0x10) == 0) {
+		अगर (((bo >> 1) & 1) ^ (regs->ctr == 1))
+			वापस 0;
+	पूर्ण
+	अगर ((bo & 0x10) == 0) अणु
 		/* check bit from CR */
 		bi = (instr >> 16) & 0x1f;
-		if (((regs->ccr >> (31 - bi)) & 1) != ((bo >> 3) & 1))
-			return 0;
-	}
-	return 1;
-}
+		अगर (((regs->ccr >> (31 - bi)) & 1) != ((bo >> 3) & 1))
+			वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static nokprobe_inline long address_ok(struct pt_regs *regs,
-				       unsigned long ea, int nb)
-{
-	if (!user_mode(regs))
-		return 1;
-	if (__access_ok(ea, nb))
-		return 1;
-	if (__access_ok(ea, 1))
+अटल nokprobe_अंतरभूत दीर्घ address_ok(काष्ठा pt_regs *regs,
+				       अचिन्हित दीर्घ ea, पूर्णांक nb)
+अणु
+	अगर (!user_mode(regs))
+		वापस 1;
+	अगर (__access_ok(ea, nb))
+		वापस 1;
+	अगर (__access_ok(ea, 1))
 		/* Access overlaps the end of the user region */
 		regs->dar = TASK_SIZE_MAX - 1;
-	else
+	अन्यथा
 		regs->dar = ea;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Calculate effective address for a D-form instruction
+ * Calculate effective address क्रम a D-क्रमm inकाष्ठाion
  */
-static nokprobe_inline unsigned long dform_ea(unsigned int instr,
-					      const struct pt_regs *regs)
-{
-	int ra;
-	unsigned long ea;
+अटल nokprobe_अंतरभूत अचिन्हित दीर्घ dक्रमm_ea(अचिन्हित पूर्णांक instr,
+					      स्थिर काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक ra;
+	अचिन्हित दीर्घ ea;
 
 	ra = (instr >> 16) & 0x1f;
-	ea = (signed short) instr;		/* sign-extend */
-	if (ra)
+	ea = (चिन्हित लघु) instr;		/* sign-extend */
+	अगर (ra)
 		ea += regs->gpr[ra];
 
-	return ea;
-}
+	वापस ea;
+पूर्ण
 
-#ifdef __powerpc64__
+#अगर_घोषित __घातerpc64__
 /*
- * Calculate effective address for a DS-form instruction
+ * Calculate effective address क्रम a DS-क्रमm inकाष्ठाion
  */
-static nokprobe_inline unsigned long dsform_ea(unsigned int instr,
-					       const struct pt_regs *regs)
-{
-	int ra;
-	unsigned long ea;
+अटल nokprobe_अंतरभूत अचिन्हित दीर्घ dsक्रमm_ea(अचिन्हित पूर्णांक instr,
+					       स्थिर काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक ra;
+	अचिन्हित दीर्घ ea;
 
 	ra = (instr >> 16) & 0x1f;
-	ea = (signed short) (instr & ~3);	/* sign-extend */
-	if (ra)
+	ea = (चिन्हित लघु) (instr & ~3);	/* sign-extend */
+	अगर (ra)
 		ea += regs->gpr[ra];
 
-	return ea;
-}
+	वापस ea;
+पूर्ण
 
 /*
- * Calculate effective address for a DQ-form instruction
+ * Calculate effective address क्रम a DQ-क्रमm inकाष्ठाion
  */
-static nokprobe_inline unsigned long dqform_ea(unsigned int instr,
-					       const struct pt_regs *regs)
-{
-	int ra;
-	unsigned long ea;
+अटल nokprobe_अंतरभूत अचिन्हित दीर्घ dqक्रमm_ea(अचिन्हित पूर्णांक instr,
+					       स्थिर काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक ra;
+	अचिन्हित दीर्घ ea;
 
 	ra = (instr >> 16) & 0x1f;
-	ea = (signed short) (instr & ~0xf);	/* sign-extend */
-	if (ra)
+	ea = (चिन्हित लघु) (instr & ~0xf);	/* sign-extend */
+	अगर (ra)
 		ea += regs->gpr[ra];
 
-	return ea;
-}
-#endif /* __powerpc64 */
+	वापस ea;
+पूर्ण
+#पूर्ण_अगर /* __घातerpc64 */
 
 /*
- * Calculate effective address for an X-form instruction
+ * Calculate effective address क्रम an X-क्रमm inकाष्ठाion
  */
-static nokprobe_inline unsigned long xform_ea(unsigned int instr,
-					      const struct pt_regs *regs)
-{
-	int ra, rb;
-	unsigned long ea;
+अटल nokprobe_अंतरभूत अचिन्हित दीर्घ xक्रमm_ea(अचिन्हित पूर्णांक instr,
+					      स्थिर काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक ra, rb;
+	अचिन्हित दीर्घ ea;
 
 	ra = (instr >> 16) & 0x1f;
 	rb = (instr >> 11) & 0x1f;
 	ea = regs->gpr[rb];
-	if (ra)
+	अगर (ra)
 		ea += regs->gpr[ra];
 
-	return ea;
-}
+	वापस ea;
+पूर्ण
 
 /*
- * Calculate effective address for a MLS:D-form / 8LS:D-form
- * prefixed instruction
+ * Calculate effective address क्रम a MLS:D-क्रमm / 8LS:D-क्रमm
+ * prefixed inकाष्ठाion
  */
-static nokprobe_inline unsigned long mlsd_8lsd_ea(unsigned int instr,
-						  unsigned int suffix,
-						  const struct pt_regs *regs)
-{
-	int ra, prefix_r;
-	unsigned int  dd;
-	unsigned long ea, d0, d1, d;
+अटल nokprobe_अंतरभूत अचिन्हित दीर्घ mlsd_8lsd_ea(अचिन्हित पूर्णांक instr,
+						  अचिन्हित पूर्णांक suffix,
+						  स्थिर काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक ra, prefix_r;
+	अचिन्हित पूर्णांक  dd;
+	अचिन्हित दीर्घ ea, d0, d1, d;
 
 	prefix_r = GET_PREFIX_R(instr);
 	ra = GET_PREFIX_RA(suffix);
@@ -215,805 +216,805 @@ static nokprobe_inline unsigned long mlsd_8lsd_ea(unsigned int instr,
 	/*
 	 * sign extend a 34 bit number
 	 */
-	dd = (unsigned int)(d >> 2);
-	ea = (signed int)dd;
+	dd = (अचिन्हित पूर्णांक)(d >> 2);
+	ea = (चिन्हित पूर्णांक)dd;
 	ea = (ea << 2) | (d & 0x3);
 
-	if (!prefix_r && ra)
+	अगर (!prefix_r && ra)
 		ea += regs->gpr[ra];
-	else if (!prefix_r && !ra)
+	अन्यथा अगर (!prefix_r && !ra)
 		; /* Leave ea as is */
-	else if (prefix_r)
+	अन्यथा अगर (prefix_r)
 		ea += regs->nip;
 
 	/*
-	 * (prefix_r && ra) is an invalid form. Should already be
-	 * checked for by caller!
+	 * (prefix_r && ra) is an invalid क्रमm. Should alपढ़ोy be
+	 * checked क्रम by caller!
 	 */
 
-	return ea;
-}
+	वापस ea;
+पूर्ण
 
 /*
- * Return the largest power of 2, not greater than sizeof(unsigned long),
+ * Return the largest घातer of 2, not greater than माप(अचिन्हित दीर्घ),
  * such that x is a multiple of it.
  */
-static nokprobe_inline unsigned long max_align(unsigned long x)
-{
-	x |= sizeof(unsigned long);
-	return x & -x;		/* isolates rightmost bit */
-}
+अटल nokprobe_अंतरभूत अचिन्हित दीर्घ max_align(अचिन्हित दीर्घ x)
+अणु
+	x |= माप(अचिन्हित दीर्घ);
+	वापस x & -x;		/* isolates righपंचांगost bit */
+पूर्ण
 
-static nokprobe_inline unsigned long byterev_2(unsigned long x)
-{
-	return ((x >> 8) & 0xff) | ((x & 0xff) << 8);
-}
+अटल nokprobe_अंतरभूत अचिन्हित दीर्घ byterev_2(अचिन्हित दीर्घ x)
+अणु
+	वापस ((x >> 8) & 0xff) | ((x & 0xff) << 8);
+पूर्ण
 
-static nokprobe_inline unsigned long byterev_4(unsigned long x)
-{
-	return ((x >> 24) & 0xff) | ((x >> 8) & 0xff00) |
+अटल nokprobe_अंतरभूत अचिन्हित दीर्घ byterev_4(अचिन्हित दीर्घ x)
+अणु
+	वापस ((x >> 24) & 0xff) | ((x >> 8) & 0xff00) |
 		((x & 0xff00) << 8) | ((x & 0xff) << 24);
-}
+पूर्ण
 
-#ifdef __powerpc64__
-static nokprobe_inline unsigned long byterev_8(unsigned long x)
-{
-	return (byterev_4(x) << 32) | byterev_4(x >> 32);
-}
-#endif
+#अगर_घोषित __घातerpc64__
+अटल nokprobe_अंतरभूत अचिन्हित दीर्घ byterev_8(अचिन्हित दीर्घ x)
+अणु
+	वापस (byterev_4(x) << 32) | byterev_4(x >> 32);
+पूर्ण
+#पूर्ण_अगर
 
-static nokprobe_inline void do_byte_reverse(void *ptr, int nb)
-{
-	switch (nb) {
-	case 2:
+अटल nokprobe_अंतरभूत व्योम करो_byte_reverse(व्योम *ptr, पूर्णांक nb)
+अणु
+	चयन (nb) अणु
+	हाल 2:
 		*(u16 *)ptr = byterev_2(*(u16 *)ptr);
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		*(u32 *)ptr = byterev_4(*(u32 *)ptr);
-		break;
-#ifdef __powerpc64__
-	case 8:
-		*(unsigned long *)ptr = byterev_8(*(unsigned long *)ptr);
-		break;
-	case 16: {
-		unsigned long *up = (unsigned long *)ptr;
-		unsigned long tmp;
-		tmp = byterev_8(up[0]);
+		अवरोध;
+#अगर_घोषित __घातerpc64__
+	हाल 8:
+		*(अचिन्हित दीर्घ *)ptr = byterev_8(*(अचिन्हित दीर्घ *)ptr);
+		अवरोध;
+	हाल 16: अणु
+		अचिन्हित दीर्घ *up = (अचिन्हित दीर्घ *)ptr;
+		अचिन्हित दीर्घ पंचांगp;
+		पंचांगp = byterev_8(up[0]);
 		up[0] = byterev_8(up[1]);
-		up[1] = tmp;
-		break;
-	}
-	case 32: {
-		unsigned long *up = (unsigned long *)ptr;
-		unsigned long tmp;
+		up[1] = पंचांगp;
+		अवरोध;
+	पूर्ण
+	हाल 32: अणु
+		अचिन्हित दीर्घ *up = (अचिन्हित दीर्घ *)ptr;
+		अचिन्हित दीर्घ पंचांगp;
 
-		tmp = byterev_8(up[0]);
+		पंचांगp = byterev_8(up[0]);
 		up[0] = byterev_8(up[3]);
-		up[3] = tmp;
-		tmp = byterev_8(up[2]);
+		up[3] = पंचांगp;
+		पंचांगp = byterev_8(up[2]);
 		up[2] = byterev_8(up[1]);
-		up[1] = tmp;
-		break;
-	}
+		up[1] = पंचांगp;
+		अवरोध;
+	पूर्ण
 
-#endif
-	default:
+#पूर्ण_अगर
+	शेष:
 		WARN_ON_ONCE(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static nokprobe_inline int read_mem_aligned(unsigned long *dest,
-					    unsigned long ea, int nb,
-					    struct pt_regs *regs)
-{
-	int err = 0;
-	unsigned long x = 0;
+अटल nokprobe_अंतरभूत पूर्णांक पढ़ो_mem_aligned(अचिन्हित दीर्घ *dest,
+					    अचिन्हित दीर्घ ea, पूर्णांक nb,
+					    काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक err = 0;
+	अचिन्हित दीर्घ x = 0;
 
-	switch (nb) {
-	case 1:
-		err = __get_user(x, (unsigned char __user *) ea);
-		break;
-	case 2:
-		err = __get_user(x, (unsigned short __user *) ea);
-		break;
-	case 4:
-		err = __get_user(x, (unsigned int __user *) ea);
-		break;
-#ifdef __powerpc64__
-	case 8:
-		err = __get_user(x, (unsigned long __user *) ea);
-		break;
-#endif
-	}
-	if (!err)
+	चयन (nb) अणु
+	हाल 1:
+		err = __get_user(x, (अचिन्हित अक्षर __user *) ea);
+		अवरोध;
+	हाल 2:
+		err = __get_user(x, (अचिन्हित लघु __user *) ea);
+		अवरोध;
+	हाल 4:
+		err = __get_user(x, (अचिन्हित पूर्णांक __user *) ea);
+		अवरोध;
+#अगर_घोषित __घातerpc64__
+	हाल 8:
+		err = __get_user(x, (अचिन्हित दीर्घ __user *) ea);
+		अवरोध;
+#पूर्ण_अगर
+	पूर्ण
+	अगर (!err)
 		*dest = x;
-	else
+	अन्यथा
 		regs->dar = ea;
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Copy from userspace to a buffer, using the largest possible
- * aligned accesses, up to sizeof(long).
+ * aligned accesses, up to माप(दीर्घ).
  */
-static nokprobe_inline int copy_mem_in(u8 *dest, unsigned long ea, int nb,
-				       struct pt_regs *regs)
-{
-	int err = 0;
-	int c;
+अटल nokprobe_अंतरभूत पूर्णांक copy_mem_in(u8 *dest, अचिन्हित दीर्घ ea, पूर्णांक nb,
+				       काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक c;
 
-	for (; nb > 0; nb -= c) {
+	क्रम (; nb > 0; nb -= c) अणु
 		c = max_align(ea);
-		if (c > nb)
+		अगर (c > nb)
 			c = max_align(nb);
-		switch (c) {
-		case 1:
-			err = __get_user(*dest, (unsigned char __user *) ea);
-			break;
-		case 2:
+		चयन (c) अणु
+		हाल 1:
+			err = __get_user(*dest, (अचिन्हित अक्षर __user *) ea);
+			अवरोध;
+		हाल 2:
 			err = __get_user(*(u16 *)dest,
-					 (unsigned short __user *) ea);
-			break;
-		case 4:
+					 (अचिन्हित लघु __user *) ea);
+			अवरोध;
+		हाल 4:
 			err = __get_user(*(u32 *)dest,
-					 (unsigned int __user *) ea);
-			break;
-#ifdef __powerpc64__
-		case 8:
-			err = __get_user(*(unsigned long *)dest,
-					 (unsigned long __user *) ea);
-			break;
-#endif
-		}
-		if (err) {
+					 (अचिन्हित पूर्णांक __user *) ea);
+			अवरोध;
+#अगर_घोषित __घातerpc64__
+		हाल 8:
+			err = __get_user(*(अचिन्हित दीर्घ *)dest,
+					 (अचिन्हित दीर्घ __user *) ea);
+			अवरोध;
+#पूर्ण_अगर
+		पूर्ण
+		अगर (err) अणु
 			regs->dar = ea;
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		dest += c;
 		ea += c;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static nokprobe_inline int read_mem_unaligned(unsigned long *dest,
-					      unsigned long ea, int nb,
-					      struct pt_regs *regs)
-{
-	union {
-		unsigned long ul;
-		u8 b[sizeof(unsigned long)];
-	} u;
-	int i;
-	int err;
+अटल nokprobe_अंतरभूत पूर्णांक पढ़ो_mem_unaligned(अचिन्हित दीर्घ *dest,
+					      अचिन्हित दीर्घ ea, पूर्णांक nb,
+					      काष्ठा pt_regs *regs)
+अणु
+	जोड़ अणु
+		अचिन्हित दीर्घ ul;
+		u8 b[माप(अचिन्हित दीर्घ)];
+	पूर्ण u;
+	पूर्णांक i;
+	पूर्णांक err;
 
 	u.ul = 0;
-	i = IS_BE ? sizeof(unsigned long) - nb : 0;
+	i = IS_BE ? माप(अचिन्हित दीर्घ) - nb : 0;
 	err = copy_mem_in(&u.b[i], ea, nb, regs);
-	if (!err)
+	अगर (!err)
 		*dest = u.ul;
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Read memory at address ea for nb bytes, return 0 for success
- * or -EFAULT if an error occurred.  N.B. nb must be 1, 2, 4 or 8.
- * If nb < sizeof(long), the result is right-justified on BE systems.
+ * Read memory at address ea क्रम nb bytes, वापस 0 क्रम success
+ * or -EFAULT अगर an error occurred.  N.B. nb must be 1, 2, 4 or 8.
+ * If nb < माप(दीर्घ), the result is right-justअगरied on BE प्रणालीs.
  */
-static int read_mem(unsigned long *dest, unsigned long ea, int nb,
-			      struct pt_regs *regs)
-{
-	if (!address_ok(regs, ea, nb))
-		return -EFAULT;
-	if ((ea & (nb - 1)) == 0)
-		return read_mem_aligned(dest, ea, nb, regs);
-	return read_mem_unaligned(dest, ea, nb, regs);
-}
-NOKPROBE_SYMBOL(read_mem);
+अटल पूर्णांक पढ़ो_mem(अचिन्हित दीर्घ *dest, अचिन्हित दीर्घ ea, पूर्णांक nb,
+			      काष्ठा pt_regs *regs)
+अणु
+	अगर (!address_ok(regs, ea, nb))
+		वापस -EFAULT;
+	अगर ((ea & (nb - 1)) == 0)
+		वापस पढ़ो_mem_aligned(dest, ea, nb, regs);
+	वापस पढ़ो_mem_unaligned(dest, ea, nb, regs);
+पूर्ण
+NOKPROBE_SYMBOL(पढ़ो_mem);
 
-static nokprobe_inline int write_mem_aligned(unsigned long val,
-					     unsigned long ea, int nb,
-					     struct pt_regs *regs)
-{
-	int err = 0;
+अटल nokprobe_अंतरभूत पूर्णांक ग_लिखो_mem_aligned(अचिन्हित दीर्घ val,
+					     अचिन्हित दीर्घ ea, पूर्णांक nb,
+					     काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक err = 0;
 
-	switch (nb) {
-	case 1:
-		err = __put_user(val, (unsigned char __user *) ea);
-		break;
-	case 2:
-		err = __put_user(val, (unsigned short __user *) ea);
-		break;
-	case 4:
-		err = __put_user(val, (unsigned int __user *) ea);
-		break;
-#ifdef __powerpc64__
-	case 8:
-		err = __put_user(val, (unsigned long __user *) ea);
-		break;
-#endif
-	}
-	if (err)
+	चयन (nb) अणु
+	हाल 1:
+		err = __put_user(val, (अचिन्हित अक्षर __user *) ea);
+		अवरोध;
+	हाल 2:
+		err = __put_user(val, (अचिन्हित लघु __user *) ea);
+		अवरोध;
+	हाल 4:
+		err = __put_user(val, (अचिन्हित पूर्णांक __user *) ea);
+		अवरोध;
+#अगर_घोषित __घातerpc64__
+	हाल 8:
+		err = __put_user(val, (अचिन्हित दीर्घ __user *) ea);
+		अवरोध;
+#पूर्ण_अगर
+	पूर्ण
+	अगर (err)
 		regs->dar = ea;
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Copy from a buffer to userspace, using the largest possible
- * aligned accesses, up to sizeof(long).
+ * aligned accesses, up to माप(दीर्घ).
  */
-static nokprobe_inline int copy_mem_out(u8 *dest, unsigned long ea, int nb,
-					struct pt_regs *regs)
-{
-	int err = 0;
-	int c;
+अटल nokprobe_अंतरभूत पूर्णांक copy_mem_out(u8 *dest, अचिन्हित दीर्घ ea, पूर्णांक nb,
+					काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक c;
 
-	for (; nb > 0; nb -= c) {
+	क्रम (; nb > 0; nb -= c) अणु
 		c = max_align(ea);
-		if (c > nb)
+		अगर (c > nb)
 			c = max_align(nb);
-		switch (c) {
-		case 1:
-			err = __put_user(*dest, (unsigned char __user *) ea);
-			break;
-		case 2:
+		चयन (c) अणु
+		हाल 1:
+			err = __put_user(*dest, (अचिन्हित अक्षर __user *) ea);
+			अवरोध;
+		हाल 2:
 			err = __put_user(*(u16 *)dest,
-					 (unsigned short __user *) ea);
-			break;
-		case 4:
+					 (अचिन्हित लघु __user *) ea);
+			अवरोध;
+		हाल 4:
 			err = __put_user(*(u32 *)dest,
-					 (unsigned int __user *) ea);
-			break;
-#ifdef __powerpc64__
-		case 8:
-			err = __put_user(*(unsigned long *)dest,
-					 (unsigned long __user *) ea);
-			break;
-#endif
-		}
-		if (err) {
+					 (अचिन्हित पूर्णांक __user *) ea);
+			अवरोध;
+#अगर_घोषित __घातerpc64__
+		हाल 8:
+			err = __put_user(*(अचिन्हित दीर्घ *)dest,
+					 (अचिन्हित दीर्घ __user *) ea);
+			अवरोध;
+#पूर्ण_अगर
+		पूर्ण
+		अगर (err) अणु
 			regs->dar = ea;
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		dest += c;
 		ea += c;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static nokprobe_inline int write_mem_unaligned(unsigned long val,
-					       unsigned long ea, int nb,
-					       struct pt_regs *regs)
-{
-	union {
-		unsigned long ul;
-		u8 b[sizeof(unsigned long)];
-	} u;
-	int i;
+अटल nokprobe_अंतरभूत पूर्णांक ग_लिखो_mem_unaligned(अचिन्हित दीर्घ val,
+					       अचिन्हित दीर्घ ea, पूर्णांक nb,
+					       काष्ठा pt_regs *regs)
+अणु
+	जोड़ अणु
+		अचिन्हित दीर्घ ul;
+		u8 b[माप(अचिन्हित दीर्घ)];
+	पूर्ण u;
+	पूर्णांक i;
 
 	u.ul = val;
-	i = IS_BE ? sizeof(unsigned long) - nb : 0;
-	return copy_mem_out(&u.b[i], ea, nb, regs);
-}
+	i = IS_BE ? माप(अचिन्हित दीर्घ) - nb : 0;
+	वापस copy_mem_out(&u.b[i], ea, nb, regs);
+पूर्ण
 
 /*
- * Write memory at address ea for nb bytes, return 0 for success
- * or -EFAULT if an error occurred.  N.B. nb must be 1, 2, 4 or 8.
+ * Write memory at address ea क्रम nb bytes, वापस 0 क्रम success
+ * or -EFAULT अगर an error occurred.  N.B. nb must be 1, 2, 4 or 8.
  */
-static int write_mem(unsigned long val, unsigned long ea, int nb,
-			       struct pt_regs *regs)
-{
-	if (!address_ok(regs, ea, nb))
-		return -EFAULT;
-	if ((ea & (nb - 1)) == 0)
-		return write_mem_aligned(val, ea, nb, regs);
-	return write_mem_unaligned(val, ea, nb, regs);
-}
-NOKPROBE_SYMBOL(write_mem);
+अटल पूर्णांक ग_लिखो_mem(अचिन्हित दीर्घ val, अचिन्हित दीर्घ ea, पूर्णांक nb,
+			       काष्ठा pt_regs *regs)
+अणु
+	अगर (!address_ok(regs, ea, nb))
+		वापस -EFAULT;
+	अगर ((ea & (nb - 1)) == 0)
+		वापस ग_लिखो_mem_aligned(val, ea, nb, regs);
+	वापस ग_लिखो_mem_unaligned(val, ea, nb, regs);
+पूर्ण
+NOKPROBE_SYMBOL(ग_लिखो_mem);
 
-#ifdef CONFIG_PPC_FPU
+#अगर_घोषित CONFIG_PPC_FPU
 /*
- * These access either the real FP register or the image in the
- * thread_struct, depending on regs->msr & MSR_FP.
+ * These access either the real FP रेजिस्टर or the image in the
+ * thपढ़ो_काष्ठा, depending on regs->msr & MSR_FP.
  */
-static int do_fp_load(struct instruction_op *op, unsigned long ea,
-		      struct pt_regs *regs, bool cross_endian)
-{
-	int err, rn, nb;
-	union {
-		int i;
-		unsigned int u;
-		float f;
-		double d[2];
-		unsigned long l[2];
-		u8 b[2 * sizeof(double)];
-	} u;
+अटल पूर्णांक करो_fp_load(काष्ठा inकाष्ठाion_op *op, अचिन्हित दीर्घ ea,
+		      काष्ठा pt_regs *regs, bool cross_endian)
+अणु
+	पूर्णांक err, rn, nb;
+	जोड़ अणु
+		पूर्णांक i;
+		अचिन्हित पूर्णांक u;
+		भग्न f;
+		द्विगुन d[2];
+		अचिन्हित दीर्घ l[2];
+		u8 b[2 * माप(द्विगुन)];
+	पूर्ण u;
 
 	nb = GETSIZE(op->type);
-	if (!address_ok(regs, ea, nb))
-		return -EFAULT;
+	अगर (!address_ok(regs, ea, nb))
+		वापस -EFAULT;
 	rn = op->reg;
 	err = copy_mem_in(u.b, ea, nb, regs);
-	if (err)
-		return err;
-	if (unlikely(cross_endian)) {
-		do_byte_reverse(u.b, min(nb, 8));
-		if (nb == 16)
-			do_byte_reverse(&u.b[8], 8);
-	}
+	अगर (err)
+		वापस err;
+	अगर (unlikely(cross_endian)) अणु
+		करो_byte_reverse(u.b, min(nb, 8));
+		अगर (nb == 16)
+			करो_byte_reverse(&u.b[8], 8);
+	पूर्ण
 	preempt_disable();
-	if (nb == 4) {
-		if (op->type & FPCONV)
+	अगर (nb == 4) अणु
+		अगर (op->type & FPCONV)
 			conv_sp_to_dp(&u.f, &u.d[0]);
-		else if (op->type & SIGNEXT)
+		अन्यथा अगर (op->type & SIGNEXT)
 			u.l[0] = u.i;
-		else
+		अन्यथा
 			u.l[0] = u.u;
-	}
-	if (regs->msr & MSR_FP)
+	पूर्ण
+	अगर (regs->msr & MSR_FP)
 		put_fpr(rn, &u.d[0]);
-	else
-		current->thread.TS_FPR(rn) = u.l[0];
-	if (nb == 16) {
+	अन्यथा
+		current->thपढ़ो.TS_FPR(rn) = u.l[0];
+	अगर (nb == 16) अणु
 		/* lfdp */
 		rn |= 1;
-		if (regs->msr & MSR_FP)
+		अगर (regs->msr & MSR_FP)
 			put_fpr(rn, &u.d[1]);
-		else
-			current->thread.TS_FPR(rn) = u.l[1];
-	}
+		अन्यथा
+			current->thपढ़ो.TS_FPR(rn) = u.l[1];
+	पूर्ण
 	preempt_enable();
-	return 0;
-}
-NOKPROBE_SYMBOL(do_fp_load);
+	वापस 0;
+पूर्ण
+NOKPROBE_SYMBOL(करो_fp_load);
 
-static int do_fp_store(struct instruction_op *op, unsigned long ea,
-		       struct pt_regs *regs, bool cross_endian)
-{
-	int rn, nb;
-	union {
-		unsigned int u;
-		float f;
-		double d[2];
-		unsigned long l[2];
-		u8 b[2 * sizeof(double)];
-	} u;
+अटल पूर्णांक करो_fp_store(काष्ठा inकाष्ठाion_op *op, अचिन्हित दीर्घ ea,
+		       काष्ठा pt_regs *regs, bool cross_endian)
+अणु
+	पूर्णांक rn, nb;
+	जोड़ अणु
+		अचिन्हित पूर्णांक u;
+		भग्न f;
+		द्विगुन d[2];
+		अचिन्हित दीर्घ l[2];
+		u8 b[2 * माप(द्विगुन)];
+	पूर्ण u;
 
 	nb = GETSIZE(op->type);
-	if (!address_ok(regs, ea, nb))
-		return -EFAULT;
+	अगर (!address_ok(regs, ea, nb))
+		वापस -EFAULT;
 	rn = op->reg;
 	preempt_disable();
-	if (regs->msr & MSR_FP)
+	अगर (regs->msr & MSR_FP)
 		get_fpr(rn, &u.d[0]);
-	else
-		u.l[0] = current->thread.TS_FPR(rn);
-	if (nb == 4) {
-		if (op->type & FPCONV)
+	अन्यथा
+		u.l[0] = current->thपढ़ो.TS_FPR(rn);
+	अगर (nb == 4) अणु
+		अगर (op->type & FPCONV)
 			conv_dp_to_sp(&u.d[0], &u.f);
-		else
+		अन्यथा
 			u.u = u.l[0];
-	}
-	if (nb == 16) {
+	पूर्ण
+	अगर (nb == 16) अणु
 		rn |= 1;
-		if (regs->msr & MSR_FP)
+		अगर (regs->msr & MSR_FP)
 			get_fpr(rn, &u.d[1]);
-		else
-			u.l[1] = current->thread.TS_FPR(rn);
-	}
+		अन्यथा
+			u.l[1] = current->thपढ़ो.TS_FPR(rn);
+	पूर्ण
 	preempt_enable();
-	if (unlikely(cross_endian)) {
-		do_byte_reverse(u.b, min(nb, 8));
-		if (nb == 16)
-			do_byte_reverse(&u.b[8], 8);
-	}
-	return copy_mem_out(u.b, ea, nb, regs);
-}
-NOKPROBE_SYMBOL(do_fp_store);
-#endif
+	अगर (unlikely(cross_endian)) अणु
+		करो_byte_reverse(u.b, min(nb, 8));
+		अगर (nb == 16)
+			करो_byte_reverse(&u.b[8], 8);
+	पूर्ण
+	वापस copy_mem_out(u.b, ea, nb, regs);
+पूर्ण
+NOKPROBE_SYMBOL(करो_fp_store);
+#पूर्ण_अगर
 
-#ifdef CONFIG_ALTIVEC
+#अगर_घोषित CONFIG_ALTIVEC
 /* For Altivec/VMX, no need to worry about alignment */
-static nokprobe_inline int do_vec_load(int rn, unsigned long ea,
-				       int size, struct pt_regs *regs,
+अटल nokprobe_अंतरभूत पूर्णांक करो_vec_load(पूर्णांक rn, अचिन्हित दीर्घ ea,
+				       पूर्णांक size, काष्ठा pt_regs *regs,
 				       bool cross_endian)
-{
-	int err;
-	union {
+अणु
+	पूर्णांक err;
+	जोड़ अणु
 		__vector128 v;
-		u8 b[sizeof(__vector128)];
-	} u = {};
+		u8 b[माप(__vector128)];
+	पूर्ण u = अणुपूर्ण;
 
-	if (!address_ok(regs, ea & ~0xfUL, 16))
-		return -EFAULT;
+	अगर (!address_ok(regs, ea & ~0xfUL, 16))
+		वापस -EFAULT;
 	/* align to multiple of size */
 	ea &= ~(size - 1);
 	err = copy_mem_in(&u.b[ea & 0xf], ea, size, regs);
-	if (err)
-		return err;
-	if (unlikely(cross_endian))
-		do_byte_reverse(&u.b[ea & 0xf], size);
+	अगर (err)
+		वापस err;
+	अगर (unlikely(cross_endian))
+		करो_byte_reverse(&u.b[ea & 0xf], size);
 	preempt_disable();
-	if (regs->msr & MSR_VEC)
+	अगर (regs->msr & MSR_VEC)
 		put_vr(rn, &u.v);
-	else
-		current->thread.vr_state.vr[rn] = u.v;
+	अन्यथा
+		current->thपढ़ो.vr_state.vr[rn] = u.v;
 	preempt_enable();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static nokprobe_inline int do_vec_store(int rn, unsigned long ea,
-					int size, struct pt_regs *regs,
+अटल nokprobe_अंतरभूत पूर्णांक करो_vec_store(पूर्णांक rn, अचिन्हित दीर्घ ea,
+					पूर्णांक size, काष्ठा pt_regs *regs,
 					bool cross_endian)
-{
-	union {
+अणु
+	जोड़ अणु
 		__vector128 v;
-		u8 b[sizeof(__vector128)];
-	} u;
+		u8 b[माप(__vector128)];
+	पूर्ण u;
 
-	if (!address_ok(regs, ea & ~0xfUL, 16))
-		return -EFAULT;
+	अगर (!address_ok(regs, ea & ~0xfUL, 16))
+		वापस -EFAULT;
 	/* align to multiple of size */
 	ea &= ~(size - 1);
 
 	preempt_disable();
-	if (regs->msr & MSR_VEC)
+	अगर (regs->msr & MSR_VEC)
 		get_vr(rn, &u.v);
-	else
-		u.v = current->thread.vr_state.vr[rn];
+	अन्यथा
+		u.v = current->thपढ़ो.vr_state.vr[rn];
 	preempt_enable();
-	if (unlikely(cross_endian))
-		do_byte_reverse(&u.b[ea & 0xf], size);
-	return copy_mem_out(&u.b[ea & 0xf], ea, size, regs);
-}
-#endif /* CONFIG_ALTIVEC */
+	अगर (unlikely(cross_endian))
+		करो_byte_reverse(&u.b[ea & 0xf], size);
+	वापस copy_mem_out(&u.b[ea & 0xf], ea, size, regs);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ALTIVEC */
 
-#ifdef __powerpc64__
-static nokprobe_inline int emulate_lq(struct pt_regs *regs, unsigned long ea,
-				      int reg, bool cross_endian)
-{
-	int err;
+#अगर_घोषित __घातerpc64__
+अटल nokprobe_अंतरभूत पूर्णांक emulate_lq(काष्ठा pt_regs *regs, अचिन्हित दीर्घ ea,
+				      पूर्णांक reg, bool cross_endian)
+अणु
+	पूर्णांक err;
 
-	if (!address_ok(regs, ea, 16))
-		return -EFAULT;
-	/* if aligned, should be atomic */
-	if ((ea & 0xf) == 0) {
-		err = do_lq(ea, &regs->gpr[reg]);
-	} else {
-		err = read_mem(&regs->gpr[reg + IS_LE], ea, 8, regs);
-		if (!err)
-			err = read_mem(&regs->gpr[reg + IS_BE], ea + 8, 8, regs);
-	}
-	if (!err && unlikely(cross_endian))
-		do_byte_reverse(&regs->gpr[reg], 16);
-	return err;
-}
+	अगर (!address_ok(regs, ea, 16))
+		वापस -EFAULT;
+	/* अगर aligned, should be atomic */
+	अगर ((ea & 0xf) == 0) अणु
+		err = करो_lq(ea, &regs->gpr[reg]);
+	पूर्ण अन्यथा अणु
+		err = पढ़ो_mem(&regs->gpr[reg + IS_LE], ea, 8, regs);
+		अगर (!err)
+			err = पढ़ो_mem(&regs->gpr[reg + IS_BE], ea + 8, 8, regs);
+	पूर्ण
+	अगर (!err && unlikely(cross_endian))
+		करो_byte_reverse(&regs->gpr[reg], 16);
+	वापस err;
+पूर्ण
 
-static nokprobe_inline int emulate_stq(struct pt_regs *regs, unsigned long ea,
-				       int reg, bool cross_endian)
-{
-	int err;
-	unsigned long vals[2];
+अटल nokprobe_अंतरभूत पूर्णांक emulate_stq(काष्ठा pt_regs *regs, अचिन्हित दीर्घ ea,
+				       पूर्णांक reg, bool cross_endian)
+अणु
+	पूर्णांक err;
+	अचिन्हित दीर्घ vals[2];
 
-	if (!address_ok(regs, ea, 16))
-		return -EFAULT;
+	अगर (!address_ok(regs, ea, 16))
+		वापस -EFAULT;
 	vals[0] = regs->gpr[reg];
 	vals[1] = regs->gpr[reg + 1];
-	if (unlikely(cross_endian))
-		do_byte_reverse(vals, 16);
+	अगर (unlikely(cross_endian))
+		करो_byte_reverse(vals, 16);
 
-	/* if aligned, should be atomic */
-	if ((ea & 0xf) == 0)
-		return do_stq(ea, vals[0], vals[1]);
+	/* अगर aligned, should be atomic */
+	अगर ((ea & 0xf) == 0)
+		वापस करो_stq(ea, vals[0], vals[1]);
 
-	err = write_mem(vals[IS_LE], ea, 8, regs);
-	if (!err)
-		err = write_mem(vals[IS_BE], ea + 8, 8, regs);
-	return err;
-}
-#endif /* __powerpc64 */
+	err = ग_लिखो_mem(vals[IS_LE], ea, 8, regs);
+	अगर (!err)
+		err = ग_लिखो_mem(vals[IS_BE], ea + 8, 8, regs);
+	वापस err;
+पूर्ण
+#पूर्ण_अगर /* __घातerpc64 */
 
-#ifdef CONFIG_VSX
-void emulate_vsx_load(struct instruction_op *op, union vsx_reg *reg,
-		      const void *mem, bool rev)
-{
-	int size, read_size;
-	int i, j;
-	const unsigned int *wp;
-	const unsigned short *hp;
-	const unsigned char *bp;
+#अगर_घोषित CONFIG_VSX
+व्योम emulate_vsx_load(काष्ठा inकाष्ठाion_op *op, जोड़ vsx_reg *reg,
+		      स्थिर व्योम *mem, bool rev)
+अणु
+	पूर्णांक size, पढ़ो_size;
+	पूर्णांक i, j;
+	स्थिर अचिन्हित पूर्णांक *wp;
+	स्थिर अचिन्हित लघु *hp;
+	स्थिर अचिन्हित अक्षर *bp;
 
 	size = GETSIZE(op->type);
 	reg->d[0] = reg->d[1] = 0;
 
-	switch (op->element_size) {
-	case 32:
+	चयन (op->element_size) अणु
+	हाल 32:
 		/* [p]lxvp[x] */
-	case 16:
+	हाल 16:
 		/* whole vector; lxv[x] or lxvl[l] */
-		if (size == 0)
-			break;
-		memcpy(reg, mem, size);
-		if (IS_LE && (op->vsx_flags & VSX_LDLEFT))
+		अगर (size == 0)
+			अवरोध;
+		स_नकल(reg, mem, size);
+		अगर (IS_LE && (op->vsx_flags & VSX_LDLEFT))
 			rev = !rev;
-		if (rev)
-			do_byte_reverse(reg, size);
-		break;
-	case 8:
+		अगर (rev)
+			करो_byte_reverse(reg, size);
+		अवरोध;
+	हाल 8:
 		/* scalar loads, lxvd2x, lxvdsx */
-		read_size = (size >= 8) ? 8 : size;
-		i = IS_LE ? 8 : 8 - read_size;
-		memcpy(&reg->b[i], mem, read_size);
-		if (rev)
-			do_byte_reverse(&reg->b[i], 8);
-		if (size < 8) {
-			if (op->type & SIGNEXT) {
-				/* size == 4 is the only case here */
-				reg->d[IS_LE] = (signed int) reg->d[IS_LE];
-			} else if (op->vsx_flags & VSX_FPCONV) {
+		पढ़ो_size = (size >= 8) ? 8 : size;
+		i = IS_LE ? 8 : 8 - पढ़ो_size;
+		स_नकल(&reg->b[i], mem, पढ़ो_size);
+		अगर (rev)
+			करो_byte_reverse(&reg->b[i], 8);
+		अगर (size < 8) अणु
+			अगर (op->type & SIGNEXT) अणु
+				/* size == 4 is the only हाल here */
+				reg->d[IS_LE] = (चिन्हित पूर्णांक) reg->d[IS_LE];
+			पूर्ण अन्यथा अगर (op->vsx_flags & VSX_FPCONV) अणु
 				preempt_disable();
 				conv_sp_to_dp(&reg->fp[1 + IS_LE],
 					      &reg->dp[IS_LE]);
 				preempt_enable();
-			}
-		} else {
-			if (size == 16) {
-				unsigned long v = *(unsigned long *)(mem + 8);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (size == 16) अणु
+				अचिन्हित दीर्घ v = *(अचिन्हित दीर्घ *)(mem + 8);
 				reg->d[IS_BE] = !rev ? v : byterev_8(v);
-			} else if (op->vsx_flags & VSX_SPLAT)
+			पूर्ण अन्यथा अगर (op->vsx_flags & VSX_SPLAT)
 				reg->d[IS_BE] = reg->d[IS_LE];
-		}
-		break;
-	case 4:
+		पूर्ण
+		अवरोध;
+	हाल 4:
 		/* lxvw4x, lxvwsx */
 		wp = mem;
-		for (j = 0; j < size / 4; ++j) {
+		क्रम (j = 0; j < size / 4; ++j) अणु
 			i = IS_LE ? 3 - j : j;
 			reg->w[i] = !rev ? *wp++ : byterev_4(*wp++);
-		}
-		if (op->vsx_flags & VSX_SPLAT) {
+		पूर्ण
+		अगर (op->vsx_flags & VSX_SPLAT) अणु
 			u32 val = reg->w[IS_LE ? 3 : 0];
-			for (; j < 4; ++j) {
+			क्रम (; j < 4; ++j) अणु
 				i = IS_LE ? 3 - j : j;
 				reg->w[i] = val;
-			}
-		}
-		break;
-	case 2:
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल 2:
 		/* lxvh8x */
 		hp = mem;
-		for (j = 0; j < size / 2; ++j) {
+		क्रम (j = 0; j < size / 2; ++j) अणु
 			i = IS_LE ? 7 - j : j;
 			reg->h[i] = !rev ? *hp++ : byterev_2(*hp++);
-		}
-		break;
-	case 1:
+		पूर्ण
+		अवरोध;
+	हाल 1:
 		/* lxvb16x */
 		bp = mem;
-		for (j = 0; j < size; ++j) {
+		क्रम (j = 0; j < size; ++j) अणु
 			i = IS_LE ? 15 - j : j;
 			reg->b[i] = *bp++;
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(emulate_vsx_load);
 NOKPROBE_SYMBOL(emulate_vsx_load);
 
-void emulate_vsx_store(struct instruction_op *op, const union vsx_reg *reg,
-		       void *mem, bool rev)
-{
-	int size, write_size;
-	int i, j;
-	union vsx_reg buf;
-	unsigned int *wp;
-	unsigned short *hp;
-	unsigned char *bp;
+व्योम emulate_vsx_store(काष्ठा inकाष्ठाion_op *op, स्थिर जोड़ vsx_reg *reg,
+		       व्योम *mem, bool rev)
+अणु
+	पूर्णांक size, ग_लिखो_size;
+	पूर्णांक i, j;
+	जोड़ vsx_reg buf;
+	अचिन्हित पूर्णांक *wp;
+	अचिन्हित लघु *hp;
+	अचिन्हित अक्षर *bp;
 
 	size = GETSIZE(op->type);
 
-	switch (op->element_size) {
-	case 32:
+	चयन (op->element_size) अणु
+	हाल 32:
 		/* [p]stxvp[x] */
-		if (size == 0)
-			break;
-		if (rev) {
+		अगर (size == 0)
+			अवरोध;
+		अगर (rev) अणु
 			/* reverse 32 bytes */
-			union vsx_reg buf32[2];
+			जोड़ vsx_reg buf32[2];
 			buf32[0].d[0] = byterev_8(reg[1].d[1]);
 			buf32[0].d[1] = byterev_8(reg[1].d[0]);
 			buf32[1].d[0] = byterev_8(reg[0].d[1]);
 			buf32[1].d[1] = byterev_8(reg[0].d[0]);
-			memcpy(mem, buf32, size);
-		} else {
-			memcpy(mem, reg, size);
-		}
-		break;
-	case 16:
+			स_नकल(mem, buf32, size);
+		पूर्ण अन्यथा अणु
+			स_नकल(mem, reg, size);
+		पूर्ण
+		अवरोध;
+	हाल 16:
 		/* stxv, stxvx, stxvl, stxvll */
-		if (size == 0)
-			break;
-		if (IS_LE && (op->vsx_flags & VSX_LDLEFT))
+		अगर (size == 0)
+			अवरोध;
+		अगर (IS_LE && (op->vsx_flags & VSX_LDLEFT))
 			rev = !rev;
-		if (rev) {
+		अगर (rev) अणु
 			/* reverse 16 bytes */
 			buf.d[0] = byterev_8(reg->d[1]);
 			buf.d[1] = byterev_8(reg->d[0]);
 			reg = &buf;
-		}
-		memcpy(mem, reg, size);
-		break;
-	case 8:
+		पूर्ण
+		स_नकल(mem, reg, size);
+		अवरोध;
+	हाल 8:
 		/* scalar stores, stxvd2x */
-		write_size = (size >= 8) ? 8 : size;
-		i = IS_LE ? 8 : 8 - write_size;
-		if (size < 8 && op->vsx_flags & VSX_FPCONV) {
+		ग_लिखो_size = (size >= 8) ? 8 : size;
+		i = IS_LE ? 8 : 8 - ग_लिखो_size;
+		अगर (size < 8 && op->vsx_flags & VSX_FPCONV) अणु
 			buf.d[0] = buf.d[1] = 0;
 			preempt_disable();
 			conv_dp_to_sp(&reg->dp[IS_LE], &buf.fp[1 + IS_LE]);
 			preempt_enable();
 			reg = &buf;
-		}
-		memcpy(mem, &reg->b[i], write_size);
-		if (size == 16)
-			memcpy(mem + 8, &reg->d[IS_BE], 8);
-		if (unlikely(rev)) {
-			do_byte_reverse(mem, write_size);
-			if (size == 16)
-				do_byte_reverse(mem + 8, 8);
-		}
-		break;
-	case 4:
+		पूर्ण
+		स_नकल(mem, &reg->b[i], ग_लिखो_size);
+		अगर (size == 16)
+			स_नकल(mem + 8, &reg->d[IS_BE], 8);
+		अगर (unlikely(rev)) अणु
+			करो_byte_reverse(mem, ग_लिखो_size);
+			अगर (size == 16)
+				करो_byte_reverse(mem + 8, 8);
+		पूर्ण
+		अवरोध;
+	हाल 4:
 		/* stxvw4x */
 		wp = mem;
-		for (j = 0; j < size / 4; ++j) {
+		क्रम (j = 0; j < size / 4; ++j) अणु
 			i = IS_LE ? 3 - j : j;
 			*wp++ = !rev ? reg->w[i] : byterev_4(reg->w[i]);
-		}
-		break;
-	case 2:
+		पूर्ण
+		अवरोध;
+	हाल 2:
 		/* stxvh8x */
 		hp = mem;
-		for (j = 0; j < size / 2; ++j) {
+		क्रम (j = 0; j < size / 2; ++j) अणु
 			i = IS_LE ? 7 - j : j;
 			*hp++ = !rev ? reg->h[i] : byterev_2(reg->h[i]);
-		}
-		break;
-	case 1:
+		पूर्ण
+		अवरोध;
+	हाल 1:
 		/* stvxb16x */
 		bp = mem;
-		for (j = 0; j < size; ++j) {
+		क्रम (j = 0; j < size; ++j) अणु
 			i = IS_LE ? 15 - j : j;
 			*bp++ = reg->b[i];
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(emulate_vsx_store);
 NOKPROBE_SYMBOL(emulate_vsx_store);
 
-static nokprobe_inline int do_vsx_load(struct instruction_op *op,
-				       unsigned long ea, struct pt_regs *regs,
+अटल nokprobe_अंतरभूत पूर्णांक करो_vsx_load(काष्ठा inकाष्ठाion_op *op,
+				       अचिन्हित दीर्घ ea, काष्ठा pt_regs *regs,
 				       bool cross_endian)
-{
-	int reg = op->reg;
-	int i, j, nr_vsx_regs;
+अणु
+	पूर्णांक reg = op->reg;
+	पूर्णांक i, j, nr_vsx_regs;
 	u8 mem[32];
-	union vsx_reg buf[2];
-	int size = GETSIZE(op->type);
+	जोड़ vsx_reg buf[2];
+	पूर्णांक size = GETSIZE(op->type);
 
-	if (!address_ok(regs, ea, size) || copy_mem_in(mem, ea, size, regs))
-		return -EFAULT;
+	अगर (!address_ok(regs, ea, size) || copy_mem_in(mem, ea, size, regs))
+		वापस -EFAULT;
 
-	nr_vsx_regs = max(1ul, size / sizeof(__vector128));
+	nr_vsx_regs = max(1ul, size / माप(__vector128));
 	emulate_vsx_load(op, buf, mem, cross_endian);
 	preempt_disable();
-	if (reg < 32) {
+	अगर (reg < 32) अणु
 		/* FP regs + extensions */
-		if (regs->msr & MSR_FP) {
-			for (i = 0; i < nr_vsx_regs; i++) {
+		अगर (regs->msr & MSR_FP) अणु
+			क्रम (i = 0; i < nr_vsx_regs; i++) अणु
 				j = IS_LE ? nr_vsx_regs - i - 1 : i;
 				load_vsrn(reg + i, &buf[j].v);
-			}
-		} else {
-			for (i = 0; i < nr_vsx_regs; i++) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			क्रम (i = 0; i < nr_vsx_regs; i++) अणु
 				j = IS_LE ? nr_vsx_regs - i - 1 : i;
-				current->thread.fp_state.fpr[reg + i][0] = buf[j].d[0];
-				current->thread.fp_state.fpr[reg + i][1] = buf[j].d[1];
-			}
-		}
-	} else {
-		if (regs->msr & MSR_VEC) {
-			for (i = 0; i < nr_vsx_regs; i++) {
+				current->thपढ़ो.fp_state.fpr[reg + i][0] = buf[j].d[0];
+				current->thपढ़ो.fp_state.fpr[reg + i][1] = buf[j].d[1];
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (regs->msr & MSR_VEC) अणु
+			क्रम (i = 0; i < nr_vsx_regs; i++) अणु
 				j = IS_LE ? nr_vsx_regs - i - 1 : i;
 				load_vsrn(reg + i, &buf[j].v);
-			}
-		} else {
-			for (i = 0; i < nr_vsx_regs; i++) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			क्रम (i = 0; i < nr_vsx_regs; i++) अणु
 				j = IS_LE ? nr_vsx_regs - i - 1 : i;
-				current->thread.vr_state.vr[reg - 32 + i] = buf[j].v;
-			}
-		}
-	}
+				current->thपढ़ो.vr_state.vr[reg - 32 + i] = buf[j].v;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	preempt_enable();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static nokprobe_inline int do_vsx_store(struct instruction_op *op,
-					unsigned long ea, struct pt_regs *regs,
+अटल nokprobe_अंतरभूत पूर्णांक करो_vsx_store(काष्ठा inकाष्ठाion_op *op,
+					अचिन्हित दीर्घ ea, काष्ठा pt_regs *regs,
 					bool cross_endian)
-{
-	int reg = op->reg;
-	int i, j, nr_vsx_regs;
+अणु
+	पूर्णांक reg = op->reg;
+	पूर्णांक i, j, nr_vsx_regs;
 	u8 mem[32];
-	union vsx_reg buf[2];
-	int size = GETSIZE(op->type);
+	जोड़ vsx_reg buf[2];
+	पूर्णांक size = GETSIZE(op->type);
 
-	if (!address_ok(regs, ea, size))
-		return -EFAULT;
+	अगर (!address_ok(regs, ea, size))
+		वापस -EFAULT;
 
-	nr_vsx_regs = max(1ul, size / sizeof(__vector128));
+	nr_vsx_regs = max(1ul, size / माप(__vector128));
 	preempt_disable();
-	if (reg < 32) {
+	अगर (reg < 32) अणु
 		/* FP regs + extensions */
-		if (regs->msr & MSR_FP) {
-			for (i = 0; i < nr_vsx_regs; i++) {
+		अगर (regs->msr & MSR_FP) अणु
+			क्रम (i = 0; i < nr_vsx_regs; i++) अणु
 				j = IS_LE ? nr_vsx_regs - i - 1 : i;
 				store_vsrn(reg + i, &buf[j].v);
-			}
-		} else {
-			for (i = 0; i < nr_vsx_regs; i++) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			क्रम (i = 0; i < nr_vsx_regs; i++) अणु
 				j = IS_LE ? nr_vsx_regs - i - 1 : i;
-				buf[j].d[0] = current->thread.fp_state.fpr[reg + i][0];
-				buf[j].d[1] = current->thread.fp_state.fpr[reg + i][1];
-			}
-		}
-	} else {
-		if (regs->msr & MSR_VEC) {
-			for (i = 0; i < nr_vsx_regs; i++) {
+				buf[j].d[0] = current->thपढ़ो.fp_state.fpr[reg + i][0];
+				buf[j].d[1] = current->thपढ़ो.fp_state.fpr[reg + i][1];
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (regs->msr & MSR_VEC) अणु
+			क्रम (i = 0; i < nr_vsx_regs; i++) अणु
 				j = IS_LE ? nr_vsx_regs - i - 1 : i;
 				store_vsrn(reg + i, &buf[j].v);
-			}
-		} else {
-			for (i = 0; i < nr_vsx_regs; i++) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			क्रम (i = 0; i < nr_vsx_regs; i++) अणु
 				j = IS_LE ? nr_vsx_regs - i - 1 : i;
-				buf[j].v = current->thread.vr_state.vr[reg - 32 + i];
-			}
-		}
-	}
+				buf[j].v = current->thपढ़ो.vr_state.vr[reg - 32 + i];
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	preempt_enable();
 	emulate_vsx_store(op, buf, mem, cross_endian);
-	return  copy_mem_out(mem, ea, size, regs);
-}
-#endif /* CONFIG_VSX */
+	वापस  copy_mem_out(mem, ea, size, regs);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_VSX */
 
-int emulate_dcbz(unsigned long ea, struct pt_regs *regs)
-{
-	int err;
-	unsigned long i, size;
+पूर्णांक emulate_dcbz(अचिन्हित दीर्घ ea, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक err;
+	अचिन्हित दीर्घ i, size;
 
-#ifdef __powerpc64__
+#अगर_घोषित __घातerpc64__
 	size = ppc64_caches.l1d.block_size;
-	if (!(regs->msr & MSR_64BIT))
+	अगर (!(regs->msr & MSR_64BIT))
 		ea &= 0xffffffffUL;
-#else
+#अन्यथा
 	size = L1_CACHE_BYTES;
-#endif
+#पूर्ण_अगर
 	ea &= ~(size - 1);
-	if (!address_ok(regs, ea, size))
-		return -EFAULT;
-	for (i = 0; i < size; i += sizeof(long)) {
-		err = __put_user(0, (unsigned long __user *) (ea + i));
-		if (err) {
+	अगर (!address_ok(regs, ea, size))
+		वापस -EFAULT;
+	क्रम (i = 0; i < size; i += माप(दीर्घ)) अणु
+		err = __put_user(0, (अचिन्हित दीर्घ __user *) (ea + i));
+		अगर (err) अणु
 			regs->dar = ea;
-			return err;
-		}
-	}
-	return 0;
-}
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 NOKPROBE_SYMBOL(emulate_dcbz);
 
-#define __put_user_asmx(x, addr, err, op, cr)		\
-	__asm__ __volatile__(				\
+#घोषणा __put_user_यंत्रx(x, addr, err, op, cr)		\
+	__यंत्र__ __अस्थिर__(				\
 		"1:	" op " %2,0,%3\n"		\
 		"	mfcr	%1\n"			\
 		"2:\n"					\
@@ -1025,8 +1026,8 @@ NOKPROBE_SYMBOL(emulate_dcbz);
 		: "=r" (err), "=r" (cr)			\
 		: "r" (x), "r" (addr), "i" (-EFAULT), "0" (err))
 
-#define __get_user_asmx(x, addr, err, op)		\
-	__asm__ __volatile__(				\
+#घोषणा __get_user_यंत्रx(x, addr, err, op)		\
+	__यंत्र__ __अस्थिर__(				\
 		"1:	"op" %1,0,%2\n"			\
 		"2:\n"					\
 		".section .fixup,\"ax\"\n"		\
@@ -1037,8 +1038,8 @@ NOKPROBE_SYMBOL(emulate_dcbz);
 		: "=r" (err), "=r" (x)			\
 		: "r" (addr), "i" (-EFAULT), "0" (err))
 
-#define __cacheop_user_asmx(addr, err, op)		\
-	__asm__ __volatile__(				\
+#घोषणा __cacheop_user_यंत्रx(addr, err, op)		\
+	__यंत्र__ __अस्थिर__(				\
 		"1:	"op" 0,%1\n"			\
 		"2:\n"					\
 		".section .fixup,\"ax\"\n"		\
@@ -1049,239 +1050,239 @@ NOKPROBE_SYMBOL(emulate_dcbz);
 		: "=r" (err)				\
 		: "r" (addr), "i" (-EFAULT), "0" (err))
 
-static nokprobe_inline void set_cr0(const struct pt_regs *regs,
-				    struct instruction_op *op)
-{
-	long val = op->val;
+अटल nokprobe_अंतरभूत व्योम set_cr0(स्थिर काष्ठा pt_regs *regs,
+				    काष्ठा inकाष्ठाion_op *op)
+अणु
+	दीर्घ val = op->val;
 
 	op->type |= SETCC;
 	op->ccval = (regs->ccr & 0x0fffffff) | ((regs->xer >> 3) & 0x10000000);
-#ifdef __powerpc64__
-	if (!(regs->msr & MSR_64BIT))
-		val = (int) val;
-#endif
-	if (val < 0)
+#अगर_घोषित __घातerpc64__
+	अगर (!(regs->msr & MSR_64BIT))
+		val = (पूर्णांक) val;
+#पूर्ण_अगर
+	अगर (val < 0)
 		op->ccval |= 0x80000000;
-	else if (val > 0)
+	अन्यथा अगर (val > 0)
 		op->ccval |= 0x40000000;
-	else
+	अन्यथा
 		op->ccval |= 0x20000000;
-}
+पूर्ण
 
-static nokprobe_inline void set_ca32(struct instruction_op *op, bool val)
-{
-	if (cpu_has_feature(CPU_FTR_ARCH_300)) {
-		if (val)
+अटल nokprobe_अंतरभूत व्योम set_ca32(काष्ठा inकाष्ठाion_op *op, bool val)
+अणु
+	अगर (cpu_has_feature(CPU_FTR_ARCH_300)) अणु
+		अगर (val)
 			op->xerval |= XER_CA32;
-		else
+		अन्यथा
 			op->xerval &= ~XER_CA32;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static nokprobe_inline void add_with_carry(const struct pt_regs *regs,
-				     struct instruction_op *op, int rd,
-				     unsigned long val1, unsigned long val2,
-				     unsigned long carry_in)
-{
-	unsigned long val = val1 + val2;
+अटल nokprobe_अंतरभूत व्योम add_with_carry(स्थिर काष्ठा pt_regs *regs,
+				     काष्ठा inकाष्ठाion_op *op, पूर्णांक rd,
+				     अचिन्हित दीर्घ val1, अचिन्हित दीर्घ val2,
+				     अचिन्हित दीर्घ carry_in)
+अणु
+	अचिन्हित दीर्घ val = val1 + val2;
 
-	if (carry_in)
+	अगर (carry_in)
 		++val;
 	op->type = COMPUTE + SETREG + SETXER;
 	op->reg = rd;
 	op->val = val;
-#ifdef __powerpc64__
-	if (!(regs->msr & MSR_64BIT)) {
-		val = (unsigned int) val;
-		val1 = (unsigned int) val1;
-	}
-#endif
+#अगर_घोषित __घातerpc64__
+	अगर (!(regs->msr & MSR_64BIT)) अणु
+		val = (अचिन्हित पूर्णांक) val;
+		val1 = (अचिन्हित पूर्णांक) val1;
+	पूर्ण
+#पूर्ण_अगर
 	op->xerval = regs->xer;
-	if (val < val1 || (carry_in && val == val1))
+	अगर (val < val1 || (carry_in && val == val1))
 		op->xerval |= XER_CA;
-	else
+	अन्यथा
 		op->xerval &= ~XER_CA;
 
-	set_ca32(op, (unsigned int)val < (unsigned int)val1 ||
-			(carry_in && (unsigned int)val == (unsigned int)val1));
-}
+	set_ca32(op, (अचिन्हित पूर्णांक)val < (अचिन्हित पूर्णांक)val1 ||
+			(carry_in && (अचिन्हित पूर्णांक)val == (अचिन्हित पूर्णांक)val1));
+पूर्ण
 
-static nokprobe_inline void do_cmp_signed(const struct pt_regs *regs,
-					  struct instruction_op *op,
-					  long v1, long v2, int crfld)
-{
-	unsigned int crval, shift;
-
-	op->type = COMPUTE + SETCC;
-	crval = (regs->xer >> 31) & 1;		/* get SO bit */
-	if (v1 < v2)
-		crval |= 8;
-	else if (v1 > v2)
-		crval |= 4;
-	else
-		crval |= 2;
-	shift = (7 - crfld) * 4;
-	op->ccval = (regs->ccr & ~(0xf << shift)) | (crval << shift);
-}
-
-static nokprobe_inline void do_cmp_unsigned(const struct pt_regs *regs,
-					    struct instruction_op *op,
-					    unsigned long v1,
-					    unsigned long v2, int crfld)
-{
-	unsigned int crval, shift;
+अटल nokprobe_अंतरभूत व्योम करो_cmp_चिन्हित(स्थिर काष्ठा pt_regs *regs,
+					  काष्ठा inकाष्ठाion_op *op,
+					  दीर्घ v1, दीर्घ v2, पूर्णांक crfld)
+अणु
+	अचिन्हित पूर्णांक crval, shअगरt;
 
 	op->type = COMPUTE + SETCC;
 	crval = (regs->xer >> 31) & 1;		/* get SO bit */
-	if (v1 < v2)
+	अगर (v1 < v2)
 		crval |= 8;
-	else if (v1 > v2)
+	अन्यथा अगर (v1 > v2)
 		crval |= 4;
-	else
+	अन्यथा
 		crval |= 2;
-	shift = (7 - crfld) * 4;
-	op->ccval = (regs->ccr & ~(0xf << shift)) | (crval << shift);
-}
+	shअगरt = (7 - crfld) * 4;
+	op->ccval = (regs->ccr & ~(0xf << shअगरt)) | (crval << shअगरt);
+पूर्ण
 
-static nokprobe_inline void do_cmpb(const struct pt_regs *regs,
-				    struct instruction_op *op,
-				    unsigned long v1, unsigned long v2)
-{
-	unsigned long long out_val, mask;
-	int i;
+अटल nokprobe_अंतरभूत व्योम करो_cmp_अचिन्हित(स्थिर काष्ठा pt_regs *regs,
+					    काष्ठा inकाष्ठाion_op *op,
+					    अचिन्हित दीर्घ v1,
+					    अचिन्हित दीर्घ v2, पूर्णांक crfld)
+अणु
+	अचिन्हित पूर्णांक crval, shअगरt;
+
+	op->type = COMPUTE + SETCC;
+	crval = (regs->xer >> 31) & 1;		/* get SO bit */
+	अगर (v1 < v2)
+		crval |= 8;
+	अन्यथा अगर (v1 > v2)
+		crval |= 4;
+	अन्यथा
+		crval |= 2;
+	shअगरt = (7 - crfld) * 4;
+	op->ccval = (regs->ccr & ~(0xf << shअगरt)) | (crval << shअगरt);
+पूर्ण
+
+अटल nokprobe_अंतरभूत व्योम करो_cmpb(स्थिर काष्ठा pt_regs *regs,
+				    काष्ठा inकाष्ठाion_op *op,
+				    अचिन्हित दीर्घ v1, अचिन्हित दीर्घ v2)
+अणु
+	अचिन्हित दीर्घ दीर्घ out_val, mask;
+	पूर्णांक i;
 
 	out_val = 0;
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		mask = 0xffUL << (i * 8);
-		if ((v1 & mask) == (v2 & mask))
+		अगर ((v1 & mask) == (v2 & mask))
 			out_val |= mask;
-	}
+	पूर्ण
 	op->val = out_val;
-}
+पूर्ण
 
 /*
- * The size parameter is used to adjust the equivalent popcnt instruction.
+ * The size parameter is used to adjust the equivalent popcnt inकाष्ठाion.
  * popcntb = 8, popcntw = 32, popcntd = 64
  */
-static nokprobe_inline void do_popcnt(const struct pt_regs *regs,
-				      struct instruction_op *op,
-				      unsigned long v1, int size)
-{
-	unsigned long long out = v1;
+अटल nokprobe_अंतरभूत व्योम करो_popcnt(स्थिर काष्ठा pt_regs *regs,
+				      काष्ठा inकाष्ठाion_op *op,
+				      अचिन्हित दीर्घ v1, पूर्णांक size)
+अणु
+	अचिन्हित दीर्घ दीर्घ out = v1;
 
 	out -= (out >> 1) & 0x5555555555555555ULL;
 	out = (0x3333333333333333ULL & out) +
 	      (0x3333333333333333ULL & (out >> 2));
 	out = (out + (out >> 4)) & 0x0f0f0f0f0f0f0f0fULL;
 
-	if (size == 8) {	/* popcntb */
+	अगर (size == 8) अणु	/* popcntb */
 		op->val = out;
-		return;
-	}
+		वापस;
+	पूर्ण
 	out += out >> 8;
 	out += out >> 16;
-	if (size == 32) {	/* popcntw */
+	अगर (size == 32) अणु	/* popcntw */
 		op->val = out & 0x0000003f0000003fULL;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	out = (out + (out >> 32)) & 0x7f;
 	op->val = out;	/* popcntd */
-}
+पूर्ण
 
-#ifdef CONFIG_PPC64
-static nokprobe_inline void do_bpermd(const struct pt_regs *regs,
-				      struct instruction_op *op,
-				      unsigned long v1, unsigned long v2)
-{
-	unsigned char perm, idx;
-	unsigned int i;
+#अगर_घोषित CONFIG_PPC64
+अटल nokprobe_अंतरभूत व्योम करो_bpermd(स्थिर काष्ठा pt_regs *regs,
+				      काष्ठा inकाष्ठाion_op *op,
+				      अचिन्हित दीर्घ v1, अचिन्हित दीर्घ v2)
+अणु
+	अचिन्हित अक्षर perm, idx;
+	अचिन्हित पूर्णांक i;
 
 	perm = 0;
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		idx = (v1 >> (i * 8)) & 0xff;
-		if (idx < 64)
-			if (v2 & PPC_BIT(idx))
+		अगर (idx < 64)
+			अगर (v2 & PPC_BIT(idx))
 				perm |= 1 << i;
-	}
+	पूर्ण
 	op->val = perm;
-}
-#endif /* CONFIG_PPC64 */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC64 */
 /*
- * The size parameter adjusts the equivalent prty instruction.
+ * The size parameter adjusts the equivalent prty inकाष्ठाion.
  * prtyw = 32, prtyd = 64
  */
-static nokprobe_inline void do_prty(const struct pt_regs *regs,
-				    struct instruction_op *op,
-				    unsigned long v, int size)
-{
-	unsigned long long res = v ^ (v >> 8);
+अटल nokprobe_अंतरभूत व्योम करो_prty(स्थिर काष्ठा pt_regs *regs,
+				    काष्ठा inकाष्ठाion_op *op,
+				    अचिन्हित दीर्घ v, पूर्णांक size)
+अणु
+	अचिन्हित दीर्घ दीर्घ res = v ^ (v >> 8);
 
 	res ^= res >> 16;
-	if (size == 32) {		/* prtyw */
+	अगर (size == 32) अणु		/* prtyw */
 		op->val = res & 0x0000000100000001ULL;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	res ^= res >> 32;
 	op->val = res & 1;	/*prtyd */
-}
+पूर्ण
 
-static nokprobe_inline int trap_compare(long v1, long v2)
-{
-	int ret = 0;
+अटल nokprobe_अंतरभूत पूर्णांक trap_compare(दीर्घ v1, दीर्घ v2)
+अणु
+	पूर्णांक ret = 0;
 
-	if (v1 < v2)
+	अगर (v1 < v2)
 		ret |= 0x10;
-	else if (v1 > v2)
+	अन्यथा अगर (v1 > v2)
 		ret |= 0x08;
-	else
+	अन्यथा
 		ret |= 0x04;
-	if ((unsigned long)v1 < (unsigned long)v2)
+	अगर ((अचिन्हित दीर्घ)v1 < (अचिन्हित दीर्घ)v2)
 		ret |= 0x02;
-	else if ((unsigned long)v1 > (unsigned long)v2)
+	अन्यथा अगर ((अचिन्हित दीर्घ)v1 > (अचिन्हित दीर्घ)v2)
 		ret |= 0x01;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Elements of 32-bit rotate and mask instructions.
+ * Elements of 32-bit rotate and mask inकाष्ठाions.
  */
-#define MASK32(mb, me)	((0xffffffffUL >> (mb)) + \
-			 ((signed long)-0x80000000L >> (me)) + ((me) >= (mb)))
-#ifdef __powerpc64__
-#define MASK64_L(mb)	(~0UL >> (mb))
-#define MASK64_R(me)	((signed long)-0x8000000000000000L >> (me))
-#define MASK64(mb, me)	(MASK64_L(mb) + MASK64_R(me) + ((me) >= (mb)))
-#define DATA32(x)	(((x) & 0xffffffffUL) | (((x) & 0xffffffffUL) << 32))
-#else
-#define DATA32(x)	(x)
-#endif
-#define ROTATE(x, n)	((n) ? (((x) << (n)) | ((x) >> (8 * sizeof(long) - (n)))) : (x))
+#घोषणा MASK32(mb, me)	((0xffffffffUL >> (mb)) + \
+			 ((चिन्हित दीर्घ)-0x80000000L >> (me)) + ((me) >= (mb)))
+#अगर_घोषित __घातerpc64__
+#घोषणा MASK64_L(mb)	(~0UL >> (mb))
+#घोषणा MASK64_R(me)	((चिन्हित दीर्घ)-0x8000000000000000L >> (me))
+#घोषणा MASK64(mb, me)	(MASK64_L(mb) + MASK64_R(me) + ((me) >= (mb)))
+#घोषणा DATA32(x)	(((x) & 0xffffffffUL) | (((x) & 0xffffffffUL) << 32))
+#अन्यथा
+#घोषणा DATA32(x)	(x)
+#पूर्ण_अगर
+#घोषणा ROTATE(x, n)	((n) ? (((x) << (n)) | ((x) >> (8 * माप(दीर्घ) - (n)))) : (x))
 
 /*
- * Decode an instruction, and return information about it in *op
+ * Decode an inकाष्ठाion, and वापस inक्रमmation about it in *op
  * without changing *regs.
- * Integer arithmetic and logical instructions, branches, and barrier
- * instructions can be emulated just using the information in *op.
+ * Integer arithmetic and logical inकाष्ठाions, branches, and barrier
+ * inकाष्ठाions can be emulated just using the inक्रमmation in *op.
  *
- * Return value is 1 if the instruction can be emulated just by
- * updating *regs with the information in *op, -1 if we need the
- * GPRs but *regs doesn't contain the full register set, or 0
+ * Return value is 1 अगर the inकाष्ठाion can be emulated just by
+ * updating *regs with the inक्रमmation in *op, -1 अगर we need the
+ * GPRs but *regs करोesn't contain the full रेजिस्टर set, or 0
  * otherwise.
  */
-int analyse_instr(struct instruction_op *op, const struct pt_regs *regs,
-		  struct ppc_inst instr)
-{
-#ifdef CONFIG_PPC64
-	unsigned int suffixopcode, prefixtype, prefix_r;
-#endif
-	unsigned int opcode, ra, rb, rc, rd, spr, u;
-	unsigned long int imm;
-	unsigned long int val, val2;
-	unsigned int mb, me, sh;
-	unsigned int word, suffix;
-	long ival;
+पूर्णांक analyse_instr(काष्ठा inकाष्ठाion_op *op, स्थिर काष्ठा pt_regs *regs,
+		  काष्ठा ppc_inst instr)
+अणु
+#अगर_घोषित CONFIG_PPC64
+	अचिन्हित पूर्णांक suffixopcode, prefixtype, prefix_r;
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक opcode, ra, rb, rc, rd, spr, u;
+	अचिन्हित दीर्घ पूर्णांक imm;
+	अचिन्हित दीर्घ पूर्णांक val, val2;
+	अचिन्हित पूर्णांक mb, me, sh;
+	अचिन्हित पूर्णांक word, suffix;
+	दीर्घ ival;
 
 	word = ppc_inst_val(instr);
 	suffix = ppc_inst_suffix(instr);
@@ -1289,45 +1290,45 @@ int analyse_instr(struct instruction_op *op, const struct pt_regs *regs,
 	op->type = COMPUTE;
 
 	opcode = ppc_inst_primary_opcode(instr);
-	switch (opcode) {
-	case 16:	/* bc */
+	चयन (opcode) अणु
+	हाल 16:	/* bc */
 		op->type = BRANCH;
-		imm = (signed short)(word & 0xfffc);
-		if ((word & 2) == 0)
+		imm = (चिन्हित लघु)(word & 0xfffc);
+		अगर ((word & 2) == 0)
 			imm += regs->nip;
-		op->val = truncate_if_32bit(regs->msr, imm);
-		if (word & 1)
+		op->val = truncate_अगर_32bit(regs->msr, imm);
+		अगर (word & 1)
 			op->type |= SETLK;
-		if (branch_taken(word, regs, op))
+		अगर (branch_taken(word, regs, op))
 			op->type |= BRTAKEN;
-		return 1;
-#ifdef CONFIG_PPC64
-	case 17:	/* sc */
-		if ((word & 0xfe2) == 2)
+		वापस 1;
+#अगर_घोषित CONFIG_PPC64
+	हाल 17:	/* sc */
+		अगर ((word & 0xfe2) == 2)
 			op->type = SYSCALL;
-		else if (IS_ENABLED(CONFIG_PPC_BOOK3S_64) &&
-				(word & 0xfe3) == 1) {	/* scv */
+		अन्यथा अगर (IS_ENABLED(CONFIG_PPC_BOOK3S_64) &&
+				(word & 0xfe3) == 1) अणु	/* scv */
 			op->type = SYSCALL_VECTORED_0;
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
-		} else
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
+		पूर्ण अन्यथा
 			op->type = UNKNOWN;
-		return 0;
-#endif
-	case 18:	/* b */
+		वापस 0;
+#पूर्ण_अगर
+	हाल 18:	/* b */
 		op->type = BRANCH | BRTAKEN;
 		imm = word & 0x03fffffc;
-		if (imm & 0x02000000)
+		अगर (imm & 0x02000000)
 			imm -= 0x04000000;
-		if ((word & 2) == 0)
+		अगर ((word & 2) == 0)
 			imm += regs->nip;
-		op->val = truncate_if_32bit(regs->msr, imm);
-		if (word & 1)
+		op->val = truncate_अगर_32bit(regs->msr, imm);
+		अगर (word & 1)
 			op->type |= SETLK;
-		return 1;
-	case 19:
-		switch ((word >> 1) & 0x3ff) {
-		case 0:		/* mcrf */
+		वापस 1;
+	हाल 19:
+		चयन ((word >> 1) & 0x3ff) अणु
+		हाल 0:		/* mcrf */
 			op->type = COMPUTE + SETCC;
 			rd = 7 - ((word >> 23) & 0x7);
 			ra = 7 - ((word >> 18) & 0x7);
@@ -1335,37 +1336,37 @@ int analyse_instr(struct instruction_op *op, const struct pt_regs *regs,
 			ra *= 4;
 			val = (regs->ccr >> ra) & 0xf;
 			op->ccval = (regs->ccr & ~(0xfUL << rd)) | (val << rd);
-			return 1;
+			वापस 1;
 
-		case 16:	/* bclr */
-		case 528:	/* bcctr */
+		हाल 16:	/* bclr */
+		हाल 528:	/* bcctr */
 			op->type = BRANCH;
 			imm = (word & 0x400)? regs->ctr: regs->link;
-			op->val = truncate_if_32bit(regs->msr, imm);
-			if (word & 1)
+			op->val = truncate_अगर_32bit(regs->msr, imm);
+			अगर (word & 1)
 				op->type |= SETLK;
-			if (branch_taken(word, regs, op))
+			अगर (branch_taken(word, regs, op))
 				op->type |= BRTAKEN;
-			return 1;
+			वापस 1;
 
-		case 18:	/* rfid, scary */
-			if (regs->msr & MSR_PR)
-				goto priv;
+		हाल 18:	/* rfid, scary */
+			अगर (regs->msr & MSR_PR)
+				जाओ priv;
 			op->type = RFI;
-			return 0;
+			वापस 0;
 
-		case 150:	/* isync */
+		हाल 150:	/* isync */
 			op->type = BARRIER | BARRIER_ISYNC;
-			return 1;
+			वापस 1;
 
-		case 33:	/* crnor */
-		case 129:	/* crandc */
-		case 193:	/* crxor */
-		case 225:	/* crnand */
-		case 257:	/* crand */
-		case 289:	/* creqv */
-		case 417:	/* crorc */
-		case 449:	/* cror */
+		हाल 33:	/* crnor */
+		हाल 129:	/* cअक्रमc */
+		हाल 193:	/* crxor */
+		हाल 225:	/* crnand */
+		हाल 257:	/* cअक्रम */
+		हाल 289:	/* creqv */
+		हाल 417:	/* crorc */
+		हाल 449:	/* cror */
 			op->type = COMPUTE + SETCC;
 			ra = (word >> 16) & 0x1f;
 			rb = (word >> 11) & 0x1f;
@@ -1375,42 +1376,42 @@ int analyse_instr(struct instruction_op *op, const struct pt_regs *regs,
 			val = (word >> (6 + ra * 2 + rb)) & 1;
 			op->ccval = (regs->ccr & ~(1UL << (31 - rd))) |
 				(val << (31 - rd));
-			return 1;
-		}
-		break;
-	case 31:
-		switch ((word >> 1) & 0x3ff) {
-		case 598:	/* sync */
+			वापस 1;
+		पूर्ण
+		अवरोध;
+	हाल 31:
+		चयन ((word >> 1) & 0x3ff) अणु
+		हाल 598:	/* sync */
 			op->type = BARRIER + BARRIER_SYNC;
-#ifdef __powerpc64__
-			switch ((word >> 21) & 3) {
-			case 1:		/* lwsync */
+#अगर_घोषित __घातerpc64__
+			चयन ((word >> 21) & 3) अणु
+			हाल 1:		/* lwsync */
 				op->type = BARRIER + BARRIER_LWSYNC;
-				break;
-			case 2:		/* ptesync */
+				अवरोध;
+			हाल 2:		/* ptesync */
 				op->type = BARRIER + BARRIER_PTESYNC;
-				break;
-			}
-#endif
-			return 1;
+				अवरोध;
+			पूर्ण
+#पूर्ण_अगर
+			वापस 1;
 
-		case 854:	/* eieio */
+		हाल 854:	/* eieio */
 			op->type = BARRIER + BARRIER_EIEIO;
-			return 1;
-		}
-		break;
-	}
+			वापस 1;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	rd = (word >> 21) & 0x1f;
 	ra = (word >> 16) & 0x1f;
 	rb = (word >> 11) & 0x1f;
 	rc = (word >> 6) & 0x1f;
 
-	switch (opcode) {
-#ifdef __powerpc64__
-	case 1:
-		if (!cpu_has_feature(CPU_FTR_ARCH_31))
-			goto unknown_opcode;
+	चयन (opcode) अणु
+#अगर_घोषित __घातerpc64__
+	हाल 1:
+		अगर (!cpu_has_feature(CPU_FTR_ARCH_31))
+			जाओ unknown_opcode;
 
 		prefix_r = GET_PREFIX_R(word);
 		ra = GET_PREFIX_RA(suffix);
@@ -1419,755 +1420,755 @@ int analyse_instr(struct instruction_op *op, const struct pt_regs *regs,
 		op->val = regs->gpr[rd];
 		suffixopcode = get_op(suffix);
 		prefixtype = (word >> 24) & 0x3;
-		switch (prefixtype) {
-		case 2:
-			if (prefix_r && ra)
-				return 0;
-			switch (suffixopcode) {
-			case 14:	/* paddi */
+		चयन (prefixtype) अणु
+		हाल 2:
+			अगर (prefix_r && ra)
+				वापस 0;
+			चयन (suffixopcode) अणु
+			हाल 14:	/* paddi */
 				op->type = COMPUTE | PREFIXED;
 				op->val = mlsd_8lsd_ea(word, suffix, regs);
-				goto compute_done;
-			}
-		}
-		break;
-	case 2:		/* tdi */
-		if (rd & trap_compare(regs->gpr[ra], (short) word))
-			goto trap;
-		return 1;
-#endif
-	case 3:		/* twi */
-		if (rd & trap_compare((int)regs->gpr[ra], (short) word))
-			goto trap;
-		return 1;
+				जाओ compute_करोne;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल 2:		/* tdi */
+		अगर (rd & trap_compare(regs->gpr[ra], (लघु) word))
+			जाओ trap;
+		वापस 1;
+#पूर्ण_अगर
+	हाल 3:		/* twi */
+		अगर (rd & trap_compare((पूर्णांक)regs->gpr[ra], (लघु) word))
+			जाओ trap;
+		वापस 1;
 
-#ifdef __powerpc64__
-	case 4:
+#अगर_घोषित __घातerpc64__
+	हाल 4:
 		/*
-		 * There are very many instructions with this primary opcode
-		 * introduced in the ISA as early as v2.03. However, the ones
-		 * we currently emulate were all introduced with ISA 3.0
+		 * There are very many inकाष्ठाions with this primary opcode
+		 * पूर्णांकroduced in the ISA as early as v2.03. However, the ones
+		 * we currently emulate were all पूर्णांकroduced with ISA 3.0
 		 */
-		if (!cpu_has_feature(CPU_FTR_ARCH_300))
-			goto unknown_opcode;
+		अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+			जाओ unknown_opcode;
 
-		switch (word & 0x3f) {
-		case 48:	/* maddhd */
-			asm volatile(PPC_MADDHD(%0, %1, %2, %3) :
+		चयन (word & 0x3f) अणु
+		हाल 48:	/* maddhd */
+			यंत्र अस्थिर(PPC_MADDHD(%0, %1, %2, %3) :
 				     "=r" (op->val) : "r" (regs->gpr[ra]),
 				     "r" (regs->gpr[rb]), "r" (regs->gpr[rc]));
-			goto compute_done;
+			जाओ compute_करोne;
 
-		case 49:	/* maddhdu */
-			asm volatile(PPC_MADDHDU(%0, %1, %2, %3) :
+		हाल 49:	/* maddhdu */
+			यंत्र अस्थिर(PPC_MADDHDU(%0, %1, %2, %3) :
 				     "=r" (op->val) : "r" (regs->gpr[ra]),
 				     "r" (regs->gpr[rb]), "r" (regs->gpr[rc]));
-			goto compute_done;
+			जाओ compute_करोne;
 
-		case 51:	/* maddld */
-			asm volatile(PPC_MADDLD(%0, %1, %2, %3) :
+		हाल 51:	/* maddld */
+			यंत्र अस्थिर(PPC_MADDLD(%0, %1, %2, %3) :
 				     "=r" (op->val) : "r" (regs->gpr[ra]),
 				     "r" (regs->gpr[rb]), "r" (regs->gpr[rc]));
-			goto compute_done;
-		}
+			जाओ compute_करोne;
+		पूर्ण
 
 		/*
-		 * There are other instructions from ISA 3.0 with the same
-		 * primary opcode which do not have emulation support yet.
+		 * There are other inकाष्ठाions from ISA 3.0 with the same
+		 * primary opcode which करो not have emulation support yet.
 		 */
-		goto unknown_opcode;
-#endif
+		जाओ unknown_opcode;
+#पूर्ण_अगर
 
-	case 7:		/* mulli */
-		op->val = regs->gpr[ra] * (short) word;
-		goto compute_done;
+	हाल 7:		/* mulli */
+		op->val = regs->gpr[ra] * (लघु) word;
+		जाओ compute_करोne;
 
-	case 8:		/* subfic */
-		imm = (short) word;
+	हाल 8:		/* subfic */
+		imm = (लघु) word;
 		add_with_carry(regs, op, rd, ~regs->gpr[ra], imm, 1);
-		return 1;
+		वापस 1;
 
-	case 10:	/* cmpli */
-		imm = (unsigned short) word;
+	हाल 10:	/* cmpli */
+		imm = (अचिन्हित लघु) word;
 		val = regs->gpr[ra];
-#ifdef __powerpc64__
-		if ((rd & 1) == 0)
-			val = (unsigned int) val;
-#endif
-		do_cmp_unsigned(regs, op, val, imm, rd >> 2);
-		return 1;
+#अगर_घोषित __घातerpc64__
+		अगर ((rd & 1) == 0)
+			val = (अचिन्हित पूर्णांक) val;
+#पूर्ण_अगर
+		करो_cmp_अचिन्हित(regs, op, val, imm, rd >> 2);
+		वापस 1;
 
-	case 11:	/* cmpi */
-		imm = (short) word;
+	हाल 11:	/* cmpi */
+		imm = (लघु) word;
 		val = regs->gpr[ra];
-#ifdef __powerpc64__
-		if ((rd & 1) == 0)
-			val = (int) val;
-#endif
-		do_cmp_signed(regs, op, val, imm, rd >> 2);
-		return 1;
+#अगर_घोषित __घातerpc64__
+		अगर ((rd & 1) == 0)
+			val = (पूर्णांक) val;
+#पूर्ण_अगर
+		करो_cmp_चिन्हित(regs, op, val, imm, rd >> 2);
+		वापस 1;
 
-	case 12:	/* addic */
-		imm = (short) word;
+	हाल 12:	/* addic */
+		imm = (लघु) word;
 		add_with_carry(regs, op, rd, regs->gpr[ra], imm, 0);
-		return 1;
+		वापस 1;
 
-	case 13:	/* addic. */
-		imm = (short) word;
+	हाल 13:	/* addic. */
+		imm = (लघु) word;
 		add_with_carry(regs, op, rd, regs->gpr[ra], imm, 0);
 		set_cr0(regs, op);
-		return 1;
+		वापस 1;
 
-	case 14:	/* addi */
-		imm = (short) word;
-		if (ra)
+	हाल 14:	/* addi */
+		imm = (लघु) word;
+		अगर (ra)
 			imm += regs->gpr[ra];
 		op->val = imm;
-		goto compute_done;
+		जाओ compute_करोne;
 
-	case 15:	/* addis */
-		imm = ((short) word) << 16;
-		if (ra)
+	हाल 15:	/* addis */
+		imm = ((लघु) word) << 16;
+		अगर (ra)
 			imm += regs->gpr[ra];
 		op->val = imm;
-		goto compute_done;
+		जाओ compute_करोne;
 
-	case 19:
-		if (((word >> 1) & 0x1f) == 2) {
+	हाल 19:
+		अगर (((word >> 1) & 0x1f) == 2) अणु
 			/* addpcis */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
-			imm = (short) (word & 0xffc1);	/* d0 + d2 fields */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
+			imm = (लघु) (word & 0xffc1);	/* d0 + d2 fields */
 			imm |= (word >> 15) & 0x3e;	/* d1 field */
 			op->val = regs->nip + (imm << 16) + 4;
-			goto compute_done;
-		}
+			जाओ compute_करोne;
+		पूर्ण
 		op->type = UNKNOWN;
-		return 0;
+		वापस 0;
 
-	case 20:	/* rlwimi */
+	हाल 20:	/* rlwimi */
 		mb = (word >> 6) & 0x1f;
 		me = (word >> 1) & 0x1f;
 		val = DATA32(regs->gpr[rd]);
 		imm = MASK32(mb, me);
 		op->val = (regs->gpr[ra] & ~imm) | (ROTATE(val, rb) & imm);
-		goto logical_done;
+		जाओ logical_करोne;
 
-	case 21:	/* rlwinm */
+	हाल 21:	/* rlwinm */
 		mb = (word >> 6) & 0x1f;
 		me = (word >> 1) & 0x1f;
 		val = DATA32(regs->gpr[rd]);
 		op->val = ROTATE(val, rb) & MASK32(mb, me);
-		goto logical_done;
+		जाओ logical_करोne;
 
-	case 23:	/* rlwnm */
+	हाल 23:	/* rlwnm */
 		mb = (word >> 6) & 0x1f;
 		me = (word >> 1) & 0x1f;
 		rb = regs->gpr[rb] & 0x1f;
 		val = DATA32(regs->gpr[rd]);
 		op->val = ROTATE(val, rb) & MASK32(mb, me);
-		goto logical_done;
+		जाओ logical_करोne;
 
-	case 24:	/* ori */
-		op->val = regs->gpr[rd] | (unsigned short) word;
-		goto logical_done_nocc;
+	हाल 24:	/* ori */
+		op->val = regs->gpr[rd] | (अचिन्हित लघु) word;
+		जाओ logical_करोne_nocc;
 
-	case 25:	/* oris */
-		imm = (unsigned short) word;
+	हाल 25:	/* oris */
+		imm = (अचिन्हित लघु) word;
 		op->val = regs->gpr[rd] | (imm << 16);
-		goto logical_done_nocc;
+		जाओ logical_करोne_nocc;
 
-	case 26:	/* xori */
-		op->val = regs->gpr[rd] ^ (unsigned short) word;
-		goto logical_done_nocc;
+	हाल 26:	/* xori */
+		op->val = regs->gpr[rd] ^ (अचिन्हित लघु) word;
+		जाओ logical_करोne_nocc;
 
-	case 27:	/* xoris */
-		imm = (unsigned short) word;
+	हाल 27:	/* xoris */
+		imm = (अचिन्हित लघु) word;
 		op->val = regs->gpr[rd] ^ (imm << 16);
-		goto logical_done_nocc;
+		जाओ logical_करोne_nocc;
 
-	case 28:	/* andi. */
-		op->val = regs->gpr[rd] & (unsigned short) word;
+	हाल 28:	/* andi. */
+		op->val = regs->gpr[rd] & (अचिन्हित लघु) word;
 		set_cr0(regs, op);
-		goto logical_done_nocc;
+		जाओ logical_करोne_nocc;
 
-	case 29:	/* andis. */
-		imm = (unsigned short) word;
+	हाल 29:	/* andis. */
+		imm = (अचिन्हित लघु) word;
 		op->val = regs->gpr[rd] & (imm << 16);
 		set_cr0(regs, op);
-		goto logical_done_nocc;
+		जाओ logical_करोne_nocc;
 
-#ifdef __powerpc64__
-	case 30:	/* rld* */
+#अगर_घोषित __घातerpc64__
+	हाल 30:	/* rld* */
 		mb = ((word >> 6) & 0x1f) | (word & 0x20);
 		val = regs->gpr[rd];
-		if ((word & 0x10) == 0) {
+		अगर ((word & 0x10) == 0) अणु
 			sh = rb | ((word & 2) << 4);
 			val = ROTATE(val, sh);
-			switch ((word >> 2) & 3) {
-			case 0:		/* rldicl */
+			चयन ((word >> 2) & 3) अणु
+			हाल 0:		/* rldicl */
 				val &= MASK64_L(mb);
-				break;
-			case 1:		/* rldicr */
+				अवरोध;
+			हाल 1:		/* rldicr */
 				val &= MASK64_R(mb);
-				break;
-			case 2:		/* rldic */
+				अवरोध;
+			हाल 2:		/* rldic */
 				val &= MASK64(mb, 63 - sh);
-				break;
-			case 3:		/* rldimi */
+				अवरोध;
+			हाल 3:		/* rldimi */
 				imm = MASK64(mb, 63 - sh);
 				val = (regs->gpr[ra] & ~imm) |
 					(val & imm);
-			}
+			पूर्ण
 			op->val = val;
-			goto logical_done;
-		} else {
+			जाओ logical_करोne;
+		पूर्ण अन्यथा अणु
 			sh = regs->gpr[rb] & 0x3f;
 			val = ROTATE(val, sh);
-			switch ((word >> 1) & 7) {
-			case 0:		/* rldcl */
+			चयन ((word >> 1) & 7) अणु
+			हाल 0:		/* rldcl */
 				op->val = val & MASK64_L(mb);
-				goto logical_done;
-			case 1:		/* rldcr */
+				जाओ logical_करोne;
+			हाल 1:		/* rldcr */
 				op->val = val & MASK64_R(mb);
-				goto logical_done;
-			}
-		}
-#endif
-		op->type = UNKNOWN;	/* illegal instruction */
-		return 0;
+				जाओ logical_करोne;
+			पूर्ण
+		पूर्ण
+#पूर्ण_अगर
+		op->type = UNKNOWN;	/* illegal inकाष्ठाion */
+		वापस 0;
 
-	case 31:
+	हाल 31:
 		/* isel occupies 32 minor opcodes */
-		if (((word >> 1) & 0x1f) == 15) {
+		अगर (((word >> 1) & 0x1f) == 15) अणु
 			mb = (word >> 6) & 0x1f; /* bc field */
 			val = (regs->ccr >> (31 - mb)) & 1;
 			val2 = (ra) ? regs->gpr[ra] : 0;
 
 			op->val = (val) ? val2 : regs->gpr[rb];
-			goto compute_done;
-		}
+			जाओ compute_करोne;
+		पूर्ण
 
-		switch ((word >> 1) & 0x3ff) {
-		case 4:		/* tw */
-			if (rd == 0x1f ||
-			    (rd & trap_compare((int)regs->gpr[ra],
-					       (int)regs->gpr[rb])))
-				goto trap;
-			return 1;
-#ifdef __powerpc64__
-		case 68:	/* td */
-			if (rd & trap_compare(regs->gpr[ra], regs->gpr[rb]))
-				goto trap;
-			return 1;
-#endif
-		case 83:	/* mfmsr */
-			if (regs->msr & MSR_PR)
-				goto priv;
+		चयन ((word >> 1) & 0x3ff) अणु
+		हाल 4:		/* tw */
+			अगर (rd == 0x1f ||
+			    (rd & trap_compare((पूर्णांक)regs->gpr[ra],
+					       (पूर्णांक)regs->gpr[rb])))
+				जाओ trap;
+			वापस 1;
+#अगर_घोषित __घातerpc64__
+		हाल 68:	/* td */
+			अगर (rd & trap_compare(regs->gpr[ra], regs->gpr[rb]))
+				जाओ trap;
+			वापस 1;
+#पूर्ण_अगर
+		हाल 83:	/* mfmsr */
+			अगर (regs->msr & MSR_PR)
+				जाओ priv;
 			op->type = MFMSR;
 			op->reg = rd;
-			return 0;
-		case 146:	/* mtmsr */
-			if (regs->msr & MSR_PR)
-				goto priv;
+			वापस 0;
+		हाल 146:	/* mपंचांगsr */
+			अगर (regs->msr & MSR_PR)
+				जाओ priv;
 			op->type = MTMSR;
 			op->reg = rd;
 			op->val = 0xffffffff & ~(MSR_ME | MSR_LE);
-			return 0;
-#ifdef CONFIG_PPC64
-		case 178:	/* mtmsrd */
-			if (regs->msr & MSR_PR)
-				goto priv;
+			वापस 0;
+#अगर_घोषित CONFIG_PPC64
+		हाल 178:	/* mपंचांगsrd */
+			अगर (regs->msr & MSR_PR)
+				जाओ priv;
 			op->type = MTMSR;
 			op->reg = rd;
-			/* only MSR_EE and MSR_RI get changed if bit 15 set */
-			/* mtmsrd doesn't change MSR_HV, MSR_ME or MSR_LE */
+			/* only MSR_EE and MSR_RI get changed अगर bit 15 set */
+			/* mपंचांगsrd करोesn't change MSR_HV, MSR_ME or MSR_LE */
 			imm = (word & 0x10000)? 0x8002: 0xefffffffffffeffeUL;
 			op->val = imm;
-			return 0;
-#endif
+			वापस 0;
+#पूर्ण_अगर
 
-		case 19:	/* mfcr */
+		हाल 19:	/* mfcr */
 			imm = 0xffffffffUL;
-			if ((word >> 20) & 1) {
+			अगर ((word >> 20) & 1) अणु
 				imm = 0xf0000000UL;
-				for (sh = 0; sh < 8; ++sh) {
-					if (word & (0x80000 >> sh))
-						break;
+				क्रम (sh = 0; sh < 8; ++sh) अणु
+					अगर (word & (0x80000 >> sh))
+						अवरोध;
 					imm >>= 4;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			op->val = regs->ccr & imm;
-			goto compute_done;
+			जाओ compute_करोne;
 
-		case 144:	/* mtcrf */
+		हाल 144:	/* mtcrf */
 			op->type = COMPUTE + SETCC;
 			imm = 0xf0000000UL;
 			val = regs->gpr[rd];
 			op->ccval = regs->ccr;
-			for (sh = 0; sh < 8; ++sh) {
-				if (word & (0x80000 >> sh))
+			क्रम (sh = 0; sh < 8; ++sh) अणु
+				अगर (word & (0x80000 >> sh))
 					op->ccval = (op->ccval & ~imm) |
 						(val & imm);
 				imm >>= 4;
-			}
-			return 1;
+			पूर्ण
+			वापस 1;
 
-		case 339:	/* mfspr */
+		हाल 339:	/* mfspr */
 			spr = ((word >> 16) & 0x1f) | ((word >> 6) & 0x3e0);
 			op->type = MFSPR;
 			op->reg = rd;
 			op->spr = spr;
-			if (spr == SPRN_XER || spr == SPRN_LR ||
+			अगर (spr == SPRN_XER || spr == SPRN_LR ||
 			    spr == SPRN_CTR)
-				return 1;
-			return 0;
+				वापस 1;
+			वापस 0;
 
-		case 467:	/* mtspr */
+		हाल 467:	/* mtspr */
 			spr = ((word >> 16) & 0x1f) | ((word >> 6) & 0x3e0);
 			op->type = MTSPR;
 			op->val = regs->gpr[rd];
 			op->spr = spr;
-			if (spr == SPRN_XER || spr == SPRN_LR ||
+			अगर (spr == SPRN_XER || spr == SPRN_LR ||
 			    spr == SPRN_CTR)
-				return 1;
-			return 0;
+				वापस 1;
+			वापस 0;
 
 /*
- * Compare instructions
+ * Compare inकाष्ठाions
  */
-		case 0:	/* cmp */
+		हाल 0:	/* cmp */
 			val = regs->gpr[ra];
 			val2 = regs->gpr[rb];
-#ifdef __powerpc64__
-			if ((rd & 1) == 0) {
+#अगर_घोषित __घातerpc64__
+			अगर ((rd & 1) == 0) अणु
 				/* word (32-bit) compare */
-				val = (int) val;
-				val2 = (int) val2;
-			}
-#endif
-			do_cmp_signed(regs, op, val, val2, rd >> 2);
-			return 1;
+				val = (पूर्णांक) val;
+				val2 = (पूर्णांक) val2;
+			पूर्ण
+#पूर्ण_अगर
+			करो_cmp_चिन्हित(regs, op, val, val2, rd >> 2);
+			वापस 1;
 
-		case 32:	/* cmpl */
+		हाल 32:	/* cmpl */
 			val = regs->gpr[ra];
 			val2 = regs->gpr[rb];
-#ifdef __powerpc64__
-			if ((rd & 1) == 0) {
+#अगर_घोषित __घातerpc64__
+			अगर ((rd & 1) == 0) अणु
 				/* word (32-bit) compare */
-				val = (unsigned int) val;
-				val2 = (unsigned int) val2;
-			}
-#endif
-			do_cmp_unsigned(regs, op, val, val2, rd >> 2);
-			return 1;
+				val = (अचिन्हित पूर्णांक) val;
+				val2 = (अचिन्हित पूर्णांक) val2;
+			पूर्ण
+#पूर्ण_अगर
+			करो_cmp_अचिन्हित(regs, op, val, val2, rd >> 2);
+			वापस 1;
 
-		case 508: /* cmpb */
-			do_cmpb(regs, op, regs->gpr[rd], regs->gpr[rb]);
-			goto logical_done_nocc;
+		हाल 508: /* cmpb */
+			करो_cmpb(regs, op, regs->gpr[rd], regs->gpr[rb]);
+			जाओ logical_करोne_nocc;
 
 /*
- * Arithmetic instructions
+ * Arithmetic inकाष्ठाions
  */
-		case 8:	/* subfc */
+		हाल 8:	/* subfc */
 			add_with_carry(regs, op, rd, ~regs->gpr[ra],
 				       regs->gpr[rb], 1);
-			goto arith_done;
-#ifdef __powerpc64__
-		case 9:	/* mulhdu */
-			asm("mulhdu %0,%1,%2" : "=r" (op->val) :
+			जाओ arith_करोne;
+#अगर_घोषित __घातerpc64__
+		हाल 9:	/* mulhdu */
+			यंत्र("mulhdu %0,%1,%2" : "=r" (op->val) :
 			    "r" (regs->gpr[ra]), "r" (regs->gpr[rb]));
-			goto arith_done;
-#endif
-		case 10:	/* addc */
+			जाओ arith_करोne;
+#पूर्ण_अगर
+		हाल 10:	/* addc */
 			add_with_carry(regs, op, rd, regs->gpr[ra],
 				       regs->gpr[rb], 0);
-			goto arith_done;
+			जाओ arith_करोne;
 
-		case 11:	/* mulhwu */
-			asm("mulhwu %0,%1,%2" : "=r" (op->val) :
+		हाल 11:	/* mulhwu */
+			यंत्र("mulhwu %0,%1,%2" : "=r" (op->val) :
 			    "r" (regs->gpr[ra]), "r" (regs->gpr[rb]));
-			goto arith_done;
+			जाओ arith_करोne;
 
-		case 40:	/* subf */
+		हाल 40:	/* subf */
 			op->val = regs->gpr[rb] - regs->gpr[ra];
-			goto arith_done;
-#ifdef __powerpc64__
-		case 73:	/* mulhd */
-			asm("mulhd %0,%1,%2" : "=r" (op->val) :
+			जाओ arith_करोne;
+#अगर_घोषित __घातerpc64__
+		हाल 73:	/* mulhd */
+			यंत्र("mulhd %0,%1,%2" : "=r" (op->val) :
 			    "r" (regs->gpr[ra]), "r" (regs->gpr[rb]));
-			goto arith_done;
-#endif
-		case 75:	/* mulhw */
-			asm("mulhw %0,%1,%2" : "=r" (op->val) :
+			जाओ arith_करोne;
+#पूर्ण_अगर
+		हाल 75:	/* mulhw */
+			यंत्र("mulhw %0,%1,%2" : "=r" (op->val) :
 			    "r" (regs->gpr[ra]), "r" (regs->gpr[rb]));
-			goto arith_done;
+			जाओ arith_करोne;
 
-		case 104:	/* neg */
+		हाल 104:	/* neg */
 			op->val = -regs->gpr[ra];
-			goto arith_done;
+			जाओ arith_करोne;
 
-		case 136:	/* subfe */
+		हाल 136:	/* subfe */
 			add_with_carry(regs, op, rd, ~regs->gpr[ra],
 				       regs->gpr[rb], regs->xer & XER_CA);
-			goto arith_done;
+			जाओ arith_करोne;
 
-		case 138:	/* adde */
+		हाल 138:	/* adde */
 			add_with_carry(regs, op, rd, regs->gpr[ra],
 				       regs->gpr[rb], regs->xer & XER_CA);
-			goto arith_done;
+			जाओ arith_करोne;
 
-		case 200:	/* subfze */
+		हाल 200:	/* subfze */
 			add_with_carry(regs, op, rd, ~regs->gpr[ra], 0L,
 				       regs->xer & XER_CA);
-			goto arith_done;
+			जाओ arith_करोne;
 
-		case 202:	/* addze */
+		हाल 202:	/* addze */
 			add_with_carry(regs, op, rd, regs->gpr[ra], 0L,
 				       regs->xer & XER_CA);
-			goto arith_done;
+			जाओ arith_करोne;
 
-		case 232:	/* subfme */
+		हाल 232:	/* subfme */
 			add_with_carry(regs, op, rd, ~regs->gpr[ra], -1L,
 				       regs->xer & XER_CA);
-			goto arith_done;
-#ifdef __powerpc64__
-		case 233:	/* mulld */
+			जाओ arith_करोne;
+#अगर_घोषित __घातerpc64__
+		हाल 233:	/* mulld */
 			op->val = regs->gpr[ra] * regs->gpr[rb];
-			goto arith_done;
-#endif
-		case 234:	/* addme */
+			जाओ arith_करोne;
+#पूर्ण_अगर
+		हाल 234:	/* addme */
 			add_with_carry(regs, op, rd, regs->gpr[ra], -1L,
 				       regs->xer & XER_CA);
-			goto arith_done;
+			जाओ arith_करोne;
 
-		case 235:	/* mullw */
-			op->val = (long)(int) regs->gpr[ra] *
-				(int) regs->gpr[rb];
+		हाल 235:	/* mullw */
+			op->val = (दीर्घ)(पूर्णांक) regs->gpr[ra] *
+				(पूर्णांक) regs->gpr[rb];
 
-			goto arith_done;
-#ifdef __powerpc64__
-		case 265:	/* modud */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+			जाओ arith_करोne;
+#अगर_घोषित __घातerpc64__
+		हाल 265:	/* modud */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->val = regs->gpr[ra] % regs->gpr[rb];
-			goto compute_done;
-#endif
-		case 266:	/* add */
+			जाओ compute_करोne;
+#पूर्ण_अगर
+		हाल 266:	/* add */
 			op->val = regs->gpr[ra] + regs->gpr[rb];
-			goto arith_done;
+			जाओ arith_करोne;
 
-		case 267:	/* moduw */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
-			op->val = (unsigned int) regs->gpr[ra] %
-				(unsigned int) regs->gpr[rb];
-			goto compute_done;
-#ifdef __powerpc64__
-		case 457:	/* divdu */
+		हाल 267:	/* moduw */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
+			op->val = (अचिन्हित पूर्णांक) regs->gpr[ra] %
+				(अचिन्हित पूर्णांक) regs->gpr[rb];
+			जाओ compute_करोne;
+#अगर_घोषित __घातerpc64__
+		हाल 457:	/* भागdu */
 			op->val = regs->gpr[ra] / regs->gpr[rb];
-			goto arith_done;
-#endif
-		case 459:	/* divwu */
-			op->val = (unsigned int) regs->gpr[ra] /
-				(unsigned int) regs->gpr[rb];
-			goto arith_done;
-#ifdef __powerpc64__
-		case 489:	/* divd */
-			op->val = (long int) regs->gpr[ra] /
-				(long int) regs->gpr[rb];
-			goto arith_done;
-#endif
-		case 491:	/* divw */
-			op->val = (int) regs->gpr[ra] /
-				(int) regs->gpr[rb];
-			goto arith_done;
-#ifdef __powerpc64__
-		case 425:	/* divde[.] */
-			asm volatile(PPC_DIVDE(%0, %1, %2) :
+			जाओ arith_करोne;
+#पूर्ण_अगर
+		हाल 459:	/* भागwu */
+			op->val = (अचिन्हित पूर्णांक) regs->gpr[ra] /
+				(अचिन्हित पूर्णांक) regs->gpr[rb];
+			जाओ arith_करोne;
+#अगर_घोषित __घातerpc64__
+		हाल 489:	/* भागd */
+			op->val = (दीर्घ पूर्णांक) regs->gpr[ra] /
+				(दीर्घ पूर्णांक) regs->gpr[rb];
+			जाओ arith_करोne;
+#पूर्ण_अगर
+		हाल 491:	/* भागw */
+			op->val = (पूर्णांक) regs->gpr[ra] /
+				(पूर्णांक) regs->gpr[rb];
+			जाओ arith_करोne;
+#अगर_घोषित __घातerpc64__
+		हाल 425:	/* भागde[.] */
+			यंत्र अस्थिर(PPC_DIVDE(%0, %1, %2) :
 				"=r" (op->val) : "r" (regs->gpr[ra]),
 				"r" (regs->gpr[rb]));
-			goto arith_done;
-		case 393:	/* divdeu[.] */
-			asm volatile(PPC_DIVDEU(%0, %1, %2) :
+			जाओ arith_करोne;
+		हाल 393:	/* भागdeu[.] */
+			यंत्र अस्थिर(PPC_DIVDEU(%0, %1, %2) :
 				"=r" (op->val) : "r" (regs->gpr[ra]),
 				"r" (regs->gpr[rb]));
-			goto arith_done;
-#endif
-		case 755:	/* darn */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
-			switch (ra & 0x3) {
-			case 0:
+			जाओ arith_करोne;
+#पूर्ण_अगर
+		हाल 755:	/* darn */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
+			चयन (ra & 0x3) अणु
+			हाल 0:
 				/* 32-bit conditioned */
-				asm volatile(PPC_DARN(%0, 0) : "=r" (op->val));
-				goto compute_done;
+				यंत्र अस्थिर(PPC_DARN(%0, 0) : "=r" (op->val));
+				जाओ compute_करोne;
 
-			case 1:
+			हाल 1:
 				/* 64-bit conditioned */
-				asm volatile(PPC_DARN(%0, 1) : "=r" (op->val));
-				goto compute_done;
+				यंत्र अस्थिर(PPC_DARN(%0, 1) : "=r" (op->val));
+				जाओ compute_करोne;
 
-			case 2:
+			हाल 2:
 				/* 64-bit raw */
-				asm volatile(PPC_DARN(%0, 2) : "=r" (op->val));
-				goto compute_done;
-			}
+				यंत्र अस्थिर(PPC_DARN(%0, 2) : "=r" (op->val));
+				जाओ compute_करोne;
+			पूर्ण
 
-			goto unknown_opcode;
-#ifdef __powerpc64__
-		case 777:	/* modsd */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
-			op->val = (long int) regs->gpr[ra] %
-				(long int) regs->gpr[rb];
-			goto compute_done;
-#endif
-		case 779:	/* modsw */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
-			op->val = (int) regs->gpr[ra] %
-				(int) regs->gpr[rb];
-			goto compute_done;
+			जाओ unknown_opcode;
+#अगर_घोषित __घातerpc64__
+		हाल 777:	/* modsd */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
+			op->val = (दीर्घ पूर्णांक) regs->gpr[ra] %
+				(दीर्घ पूर्णांक) regs->gpr[rb];
+			जाओ compute_करोne;
+#पूर्ण_अगर
+		हाल 779:	/* modsw */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
+			op->val = (पूर्णांक) regs->gpr[ra] %
+				(पूर्णांक) regs->gpr[rb];
+			जाओ compute_करोne;
 
 
 /*
- * Logical instructions
+ * Logical inकाष्ठाions
  */
-		case 26:	/* cntlzw */
-			val = (unsigned int) regs->gpr[rd];
+		हाल 26:	/* cntlzw */
+			val = (अचिन्हित पूर्णांक) regs->gpr[rd];
 			op->val = ( val ? __builtin_clz(val) : 32 );
-			goto logical_done;
-#ifdef __powerpc64__
-		case 58:	/* cntlzd */
+			जाओ logical_करोne;
+#अगर_घोषित __घातerpc64__
+		हाल 58:	/* cntlzd */
 			val = regs->gpr[rd];
 			op->val = ( val ? __builtin_clzl(val) : 64 );
-			goto logical_done;
-#endif
-		case 28:	/* and */
+			जाओ logical_करोne;
+#पूर्ण_अगर
+		हाल 28:	/* and */
 			op->val = regs->gpr[rd] & regs->gpr[rb];
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 60:	/* andc */
+		हाल 60:	/* andc */
 			op->val = regs->gpr[rd] & ~regs->gpr[rb];
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 122:	/* popcntb */
-			do_popcnt(regs, op, regs->gpr[rd], 8);
-			goto logical_done_nocc;
+		हाल 122:	/* popcntb */
+			करो_popcnt(regs, op, regs->gpr[rd], 8);
+			जाओ logical_करोne_nocc;
 
-		case 124:	/* nor */
+		हाल 124:	/* nor */
 			op->val = ~(regs->gpr[rd] | regs->gpr[rb]);
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 154:	/* prtyw */
-			do_prty(regs, op, regs->gpr[rd], 32);
-			goto logical_done_nocc;
+		हाल 154:	/* prtyw */
+			करो_prty(regs, op, regs->gpr[rd], 32);
+			जाओ logical_करोne_nocc;
 
-		case 186:	/* prtyd */
-			do_prty(regs, op, regs->gpr[rd], 64);
-			goto logical_done_nocc;
-#ifdef CONFIG_PPC64
-		case 252:	/* bpermd */
-			do_bpermd(regs, op, regs->gpr[rd], regs->gpr[rb]);
-			goto logical_done_nocc;
-#endif
-		case 284:	/* xor */
+		हाल 186:	/* prtyd */
+			करो_prty(regs, op, regs->gpr[rd], 64);
+			जाओ logical_करोne_nocc;
+#अगर_घोषित CONFIG_PPC64
+		हाल 252:	/* bpermd */
+			करो_bpermd(regs, op, regs->gpr[rd], regs->gpr[rb]);
+			जाओ logical_करोne_nocc;
+#पूर्ण_अगर
+		हाल 284:	/* xor */
 			op->val = ~(regs->gpr[rd] ^ regs->gpr[rb]);
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 316:	/* xor */
+		हाल 316:	/* xor */
 			op->val = regs->gpr[rd] ^ regs->gpr[rb];
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 378:	/* popcntw */
-			do_popcnt(regs, op, regs->gpr[rd], 32);
-			goto logical_done_nocc;
+		हाल 378:	/* popcntw */
+			करो_popcnt(regs, op, regs->gpr[rd], 32);
+			जाओ logical_करोne_nocc;
 
-		case 412:	/* orc */
+		हाल 412:	/* orc */
 			op->val = regs->gpr[rd] | ~regs->gpr[rb];
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 444:	/* or */
+		हाल 444:	/* or */
 			op->val = regs->gpr[rd] | regs->gpr[rb];
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 476:	/* nand */
+		हाल 476:	/* nand */
 			op->val = ~(regs->gpr[rd] & regs->gpr[rb]);
-			goto logical_done;
-#ifdef CONFIG_PPC64
-		case 506:	/* popcntd */
-			do_popcnt(regs, op, regs->gpr[rd], 64);
-			goto logical_done_nocc;
-#endif
-		case 538:	/* cnttzw */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
-			val = (unsigned int) regs->gpr[rd];
+			जाओ logical_करोne;
+#अगर_घोषित CONFIG_PPC64
+		हाल 506:	/* popcntd */
+			करो_popcnt(regs, op, regs->gpr[rd], 64);
+			जाओ logical_करोne_nocc;
+#पूर्ण_अगर
+		हाल 538:	/* cnttzw */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
+			val = (अचिन्हित पूर्णांक) regs->gpr[rd];
 			op->val = (val ? __builtin_ctz(val) : 32);
-			goto logical_done;
-#ifdef __powerpc64__
-		case 570:	/* cnttzd */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+			जाओ logical_करोne;
+#अगर_घोषित __घातerpc64__
+		हाल 570:	/* cnttzd */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			val = regs->gpr[rd];
 			op->val = (val ? __builtin_ctzl(val) : 64);
-			goto logical_done;
-#endif
-		case 922:	/* extsh */
-			op->val = (signed short) regs->gpr[rd];
-			goto logical_done;
+			जाओ logical_करोne;
+#पूर्ण_अगर
+		हाल 922:	/* extsh */
+			op->val = (चिन्हित लघु) regs->gpr[rd];
+			जाओ logical_करोne;
 
-		case 954:	/* extsb */
-			op->val = (signed char) regs->gpr[rd];
-			goto logical_done;
-#ifdef __powerpc64__
-		case 986:	/* extsw */
-			op->val = (signed int) regs->gpr[rd];
-			goto logical_done;
-#endif
+		हाल 954:	/* extsb */
+			op->val = (चिन्हित अक्षर) regs->gpr[rd];
+			जाओ logical_करोne;
+#अगर_घोषित __घातerpc64__
+		हाल 986:	/* extsw */
+			op->val = (चिन्हित पूर्णांक) regs->gpr[rd];
+			जाओ logical_करोne;
+#पूर्ण_अगर
 
 /*
- * Shift instructions
+ * Shअगरt inकाष्ठाions
  */
-		case 24:	/* slw */
+		हाल 24:	/* slw */
 			sh = regs->gpr[rb] & 0x3f;
-			if (sh < 32)
+			अगर (sh < 32)
 				op->val = (regs->gpr[rd] << sh) & 0xffffffffUL;
-			else
+			अन्यथा
 				op->val = 0;
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 536:	/* srw */
+		हाल 536:	/* srw */
 			sh = regs->gpr[rb] & 0x3f;
-			if (sh < 32)
+			अगर (sh < 32)
 				op->val = (regs->gpr[rd] & 0xffffffffUL) >> sh;
-			else
+			अन्यथा
 				op->val = 0;
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 792:	/* sraw */
+		हाल 792:	/* sraw */
 			op->type = COMPUTE + SETREG + SETXER;
 			sh = regs->gpr[rb] & 0x3f;
-			ival = (signed int) regs->gpr[rd];
+			ival = (चिन्हित पूर्णांक) regs->gpr[rd];
 			op->val = ival >> (sh < 32 ? sh : 31);
 			op->xerval = regs->xer;
-			if (ival < 0 && (sh >= 32 || (ival & ((1ul << sh) - 1)) != 0))
+			अगर (ival < 0 && (sh >= 32 || (ival & ((1ul << sh) - 1)) != 0))
 				op->xerval |= XER_CA;
-			else
+			अन्यथा
 				op->xerval &= ~XER_CA;
 			set_ca32(op, op->xerval & XER_CA);
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 824:	/* srawi */
+		हाल 824:	/* srawi */
 			op->type = COMPUTE + SETREG + SETXER;
 			sh = rb;
-			ival = (signed int) regs->gpr[rd];
+			ival = (चिन्हित पूर्णांक) regs->gpr[rd];
 			op->val = ival >> sh;
 			op->xerval = regs->xer;
-			if (ival < 0 && (ival & ((1ul << sh) - 1)) != 0)
+			अगर (ival < 0 && (ival & ((1ul << sh) - 1)) != 0)
 				op->xerval |= XER_CA;
-			else
+			अन्यथा
 				op->xerval &= ~XER_CA;
 			set_ca32(op, op->xerval & XER_CA);
-			goto logical_done;
+			जाओ logical_करोne;
 
-#ifdef __powerpc64__
-		case 27:	/* sld */
+#अगर_घोषित __घातerpc64__
+		हाल 27:	/* sld */
 			sh = regs->gpr[rb] & 0x7f;
-			if (sh < 64)
+			अगर (sh < 64)
 				op->val = regs->gpr[rd] << sh;
-			else
+			अन्यथा
 				op->val = 0;
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 539:	/* srd */
+		हाल 539:	/* srd */
 			sh = regs->gpr[rb] & 0x7f;
-			if (sh < 64)
+			अगर (sh < 64)
 				op->val = regs->gpr[rd] >> sh;
-			else
+			अन्यथा
 				op->val = 0;
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 794:	/* srad */
+		हाल 794:	/* srad */
 			op->type = COMPUTE + SETREG + SETXER;
 			sh = regs->gpr[rb] & 0x7f;
-			ival = (signed long int) regs->gpr[rd];
+			ival = (चिन्हित दीर्घ पूर्णांक) regs->gpr[rd];
 			op->val = ival >> (sh < 64 ? sh : 63);
 			op->xerval = regs->xer;
-			if (ival < 0 && (sh >= 64 || (ival & ((1ul << sh) - 1)) != 0))
+			अगर (ival < 0 && (sh >= 64 || (ival & ((1ul << sh) - 1)) != 0))
 				op->xerval |= XER_CA;
-			else
+			अन्यथा
 				op->xerval &= ~XER_CA;
 			set_ca32(op, op->xerval & XER_CA);
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 826:	/* sradi with sh_5 = 0 */
-		case 827:	/* sradi with sh_5 = 1 */
+		हाल 826:	/* sradi with sh_5 = 0 */
+		हाल 827:	/* sradi with sh_5 = 1 */
 			op->type = COMPUTE + SETREG + SETXER;
 			sh = rb | ((word & 2) << 4);
-			ival = (signed long int) regs->gpr[rd];
+			ival = (चिन्हित दीर्घ पूर्णांक) regs->gpr[rd];
 			op->val = ival >> sh;
 			op->xerval = regs->xer;
-			if (ival < 0 && (ival & ((1ul << sh) - 1)) != 0)
+			अगर (ival < 0 && (ival & ((1ul << sh) - 1)) != 0)
 				op->xerval |= XER_CA;
-			else
+			अन्यथा
 				op->xerval &= ~XER_CA;
 			set_ca32(op, op->xerval & XER_CA);
-			goto logical_done;
+			जाओ logical_करोne;
 
-		case 890:	/* extswsli with sh_5 = 0 */
-		case 891:	/* extswsli with sh_5 = 1 */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 890:	/* extswsli with sh_5 = 0 */
+		हाल 891:	/* extswsli with sh_5 = 1 */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->type = COMPUTE + SETREG;
 			sh = rb | ((word & 2) << 4);
-			val = (signed int) regs->gpr[rd];
-			if (sh)
+			val = (चिन्हित पूर्णांक) regs->gpr[rd];
+			अगर (sh)
 				op->val = ROTATE(val, sh) & MASK64(0, 63 - sh);
-			else
+			अन्यथा
 				op->val = val;
-			goto logical_done;
+			जाओ logical_करोne;
 
-#endif /* __powerpc64__ */
+#पूर्ण_अगर /* __घातerpc64__ */
 
 /*
- * Cache instructions
+ * Cache inकाष्ठाions
  */
-		case 54:	/* dcbst */
+		हाल 54:	/* dcbst */
 			op->type = MKOP(CACHEOP, DCBST, 0);
-			op->ea = xform_ea(word, regs);
-			return 0;
+			op->ea = xक्रमm_ea(word, regs);
+			वापस 0;
 
-		case 86:	/* dcbf */
+		हाल 86:	/* dcbf */
 			op->type = MKOP(CACHEOP, DCBF, 0);
-			op->ea = xform_ea(word, regs);
-			return 0;
+			op->ea = xक्रमm_ea(word, regs);
+			वापस 0;
 
-		case 246:	/* dcbtst */
+		हाल 246:	/* dcbtst */
 			op->type = MKOP(CACHEOP, DCBTST, 0);
-			op->ea = xform_ea(word, regs);
+			op->ea = xक्रमm_ea(word, regs);
 			op->reg = rd;
-			return 0;
+			वापस 0;
 
-		case 278:	/* dcbt */
+		हाल 278:	/* dcbt */
 			op->type = MKOP(CACHEOP, DCBTST, 0);
-			op->ea = xform_ea(word, regs);
+			op->ea = xक्रमm_ea(word, regs);
 			op->reg = rd;
-			return 0;
+			वापस 0;
 
-		case 982:	/* icbi */
+		हाल 982:	/* icbi */
 			op->type = MKOP(CACHEOP, ICBI, 0);
-			op->ea = xform_ea(word, regs);
-			return 0;
+			op->ea = xक्रमm_ea(word, regs);
+			वापस 0;
 
-		case 1014:	/* dcbz */
+		हाल 1014:	/* dcbz */
 			op->type = MKOP(CACHEOP, DCBZ, 0);
-			op->ea = xform_ea(word, regs);
-			return 0;
-		}
-		break;
-	}
+			op->ea = xक्रमm_ea(word, regs);
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 /*
  * Loads and stores.
@@ -2179,704 +2180,704 @@ int analyse_instr(struct instruction_op *op, const struct pt_regs *regs,
 	u = (word >> 20) & UPDATE;
 	op->vsx_flags = 0;
 
-	switch (opcode) {
-	case 31:
+	चयन (opcode) अणु
+	हाल 31:
 		u = word & UPDATE;
-		op->ea = xform_ea(word, regs);
-		switch ((word >> 1) & 0x3ff) {
-		case 20:	/* lwarx */
+		op->ea = xक्रमm_ea(word, regs);
+		चयन ((word >> 1) & 0x3ff) अणु
+		हाल 20:	/* lwarx */
 			op->type = MKOP(LARX, 0, 4);
-			break;
+			अवरोध;
 
-		case 150:	/* stwcx. */
+		हाल 150:	/* stwcx. */
 			op->type = MKOP(STCX, 0, 4);
-			break;
+			अवरोध;
 
-#ifdef __powerpc64__
-		case 84:	/* ldarx */
+#अगर_घोषित __घातerpc64__
+		हाल 84:	/* ldarx */
 			op->type = MKOP(LARX, 0, 8);
-			break;
+			अवरोध;
 
-		case 214:	/* stdcx. */
+		हाल 214:	/* stdcx. */
 			op->type = MKOP(STCX, 0, 8);
-			break;
+			अवरोध;
 
-		case 52:	/* lbarx */
+		हाल 52:	/* lbarx */
 			op->type = MKOP(LARX, 0, 1);
-			break;
+			अवरोध;
 
-		case 694:	/* stbcx. */
+		हाल 694:	/* stbcx. */
 			op->type = MKOP(STCX, 0, 1);
-			break;
+			अवरोध;
 
-		case 116:	/* lharx */
+		हाल 116:	/* lharx */
 			op->type = MKOP(LARX, 0, 2);
-			break;
+			अवरोध;
 
-		case 726:	/* sthcx. */
+		हाल 726:	/* sthcx. */
 			op->type = MKOP(STCX, 0, 2);
-			break;
+			अवरोध;
 
-		case 276:	/* lqarx */
-			if (!((rd & 1) || rd == ra || rd == rb))
+		हाल 276:	/* lqarx */
+			अगर (!((rd & 1) || rd == ra || rd == rb))
 				op->type = MKOP(LARX, 0, 16);
-			break;
+			अवरोध;
 
-		case 182:	/* stqcx. */
-			if (!(rd & 1))
+		हाल 182:	/* stqcx. */
+			अगर (!(rd & 1))
 				op->type = MKOP(STCX, 0, 16);
-			break;
-#endif
+			अवरोध;
+#पूर्ण_अगर
 
-		case 23:	/* lwzx */
-		case 55:	/* lwzux */
+		हाल 23:	/* lwzx */
+		हाल 55:	/* lwzux */
 			op->type = MKOP(LOAD, u, 4);
-			break;
+			अवरोध;
 
-		case 87:	/* lbzx */
-		case 119:	/* lbzux */
+		हाल 87:	/* lbzx */
+		हाल 119:	/* lbzux */
 			op->type = MKOP(LOAD, u, 1);
-			break;
+			अवरोध;
 
-#ifdef CONFIG_ALTIVEC
+#अगर_घोषित CONFIG_ALTIVEC
 		/*
-		 * Note: for the load/store vector element instructions,
-		 * bits of the EA say which field of the VMX register to use.
+		 * Note: क्रम the load/store vector element inकाष्ठाions,
+		 * bits of the EA say which field of the VMX रेजिस्टर to use.
 		 */
-		case 7:		/* lvebx */
+		हाल 7:		/* lvebx */
 			op->type = MKOP(LOAD_VMX, 0, 1);
 			op->element_size = 1;
-			break;
+			अवरोध;
 
-		case 39:	/* lvehx */
+		हाल 39:	/* lvehx */
 			op->type = MKOP(LOAD_VMX, 0, 2);
 			op->element_size = 2;
-			break;
+			अवरोध;
 
-		case 71:	/* lvewx */
+		हाल 71:	/* lvewx */
 			op->type = MKOP(LOAD_VMX, 0, 4);
 			op->element_size = 4;
-			break;
+			अवरोध;
 
-		case 103:	/* lvx */
-		case 359:	/* lvxl */
+		हाल 103:	/* lvx */
+		हाल 359:	/* lvxl */
 			op->type = MKOP(LOAD_VMX, 0, 16);
 			op->element_size = 16;
-			break;
+			अवरोध;
 
-		case 135:	/* stvebx */
+		हाल 135:	/* stvebx */
 			op->type = MKOP(STORE_VMX, 0, 1);
 			op->element_size = 1;
-			break;
+			अवरोध;
 
-		case 167:	/* stvehx */
+		हाल 167:	/* stvehx */
 			op->type = MKOP(STORE_VMX, 0, 2);
 			op->element_size = 2;
-			break;
+			अवरोध;
 
-		case 199:	/* stvewx */
+		हाल 199:	/* stvewx */
 			op->type = MKOP(STORE_VMX, 0, 4);
 			op->element_size = 4;
-			break;
+			अवरोध;
 
-		case 231:	/* stvx */
-		case 487:	/* stvxl */
+		हाल 231:	/* stvx */
+		हाल 487:	/* stvxl */
 			op->type = MKOP(STORE_VMX, 0, 16);
-			break;
-#endif /* CONFIG_ALTIVEC */
+			अवरोध;
+#पूर्ण_अगर /* CONFIG_ALTIVEC */
 
-#ifdef __powerpc64__
-		case 21:	/* ldx */
-		case 53:	/* ldux */
+#अगर_घोषित __घातerpc64__
+		हाल 21:	/* ldx */
+		हाल 53:	/* ldux */
 			op->type = MKOP(LOAD, u, 8);
-			break;
+			अवरोध;
 
-		case 149:	/* stdx */
-		case 181:	/* stdux */
+		हाल 149:	/* stdx */
+		हाल 181:	/* stdux */
 			op->type = MKOP(STORE, u, 8);
-			break;
-#endif
+			अवरोध;
+#पूर्ण_अगर
 
-		case 151:	/* stwx */
-		case 183:	/* stwux */
+		हाल 151:	/* stwx */
+		हाल 183:	/* stwux */
 			op->type = MKOP(STORE, u, 4);
-			break;
+			अवरोध;
 
-		case 215:	/* stbx */
-		case 247:	/* stbux */
+		हाल 215:	/* stbx */
+		हाल 247:	/* stbux */
 			op->type = MKOP(STORE, u, 1);
-			break;
+			अवरोध;
 
-		case 279:	/* lhzx */
-		case 311:	/* lhzux */
+		हाल 279:	/* lhzx */
+		हाल 311:	/* lhzux */
 			op->type = MKOP(LOAD, u, 2);
-			break;
+			अवरोध;
 
-#ifdef __powerpc64__
-		case 341:	/* lwax */
-		case 373:	/* lwaux */
+#अगर_घोषित __घातerpc64__
+		हाल 341:	/* lwax */
+		हाल 373:	/* lwaux */
 			op->type = MKOP(LOAD, SIGNEXT | u, 4);
-			break;
-#endif
+			अवरोध;
+#पूर्ण_अगर
 
-		case 343:	/* lhax */
-		case 375:	/* lhaux */
+		हाल 343:	/* lhax */
+		हाल 375:	/* lhaux */
 			op->type = MKOP(LOAD, SIGNEXT | u, 2);
-			break;
+			अवरोध;
 
-		case 407:	/* sthx */
-		case 439:	/* sthux */
+		हाल 407:	/* sthx */
+		हाल 439:	/* sthux */
 			op->type = MKOP(STORE, u, 2);
-			break;
+			अवरोध;
 
-#ifdef __powerpc64__
-		case 532:	/* ldbrx */
+#अगर_घोषित __घातerpc64__
+		हाल 532:	/* ldbrx */
 			op->type = MKOP(LOAD, BYTEREV, 8);
-			break;
+			अवरोध;
 
-#endif
-		case 533:	/* lswx */
+#पूर्ण_अगर
+		हाल 533:	/* lswx */
 			op->type = MKOP(LOAD_MULTI, 0, regs->xer & 0x7f);
-			break;
+			अवरोध;
 
-		case 534:	/* lwbrx */
+		हाल 534:	/* lwbrx */
 			op->type = MKOP(LOAD, BYTEREV, 4);
-			break;
+			अवरोध;
 
-		case 597:	/* lswi */
-			if (rb == 0)
+		हाल 597:	/* lswi */
+			अगर (rb == 0)
 				rb = 32;	/* # bytes to load */
 			op->type = MKOP(LOAD_MULTI, 0, rb);
 			op->ea = ra ? regs->gpr[ra] : 0;
-			break;
+			अवरोध;
 
-#ifdef CONFIG_PPC_FPU
-		case 535:	/* lfsx */
-		case 567:	/* lfsux */
+#अगर_घोषित CONFIG_PPC_FPU
+		हाल 535:	/* lfsx */
+		हाल 567:	/* lfsux */
 			op->type = MKOP(LOAD_FP, u | FPCONV, 4);
-			break;
+			अवरोध;
 
-		case 599:	/* lfdx */
-		case 631:	/* lfdux */
+		हाल 599:	/* lfdx */
+		हाल 631:	/* lfdux */
 			op->type = MKOP(LOAD_FP, u, 8);
-			break;
+			अवरोध;
 
-		case 663:	/* stfsx */
-		case 695:	/* stfsux */
+		हाल 663:	/* stfsx */
+		हाल 695:	/* stfsux */
 			op->type = MKOP(STORE_FP, u | FPCONV, 4);
-			break;
+			अवरोध;
 
-		case 727:	/* stfdx */
-		case 759:	/* stfdux */
+		हाल 727:	/* stfdx */
+		हाल 759:	/* stfdux */
 			op->type = MKOP(STORE_FP, u, 8);
-			break;
+			अवरोध;
 
-#ifdef __powerpc64__
-		case 791:	/* lfdpx */
+#अगर_घोषित __घातerpc64__
+		हाल 791:	/* lfdpx */
 			op->type = MKOP(LOAD_FP, 0, 16);
-			break;
+			अवरोध;
 
-		case 855:	/* lfiwax */
+		हाल 855:	/* lfiwax */
 			op->type = MKOP(LOAD_FP, SIGNEXT, 4);
-			break;
+			अवरोध;
 
-		case 887:	/* lfiwzx */
+		हाल 887:	/* lfiwzx */
 			op->type = MKOP(LOAD_FP, 0, 4);
-			break;
+			अवरोध;
 
-		case 919:	/* stfdpx */
+		हाल 919:	/* stfdpx */
 			op->type = MKOP(STORE_FP, 0, 16);
-			break;
+			अवरोध;
 
-		case 983:	/* stfiwx */
+		हाल 983:	/* stfiwx */
 			op->type = MKOP(STORE_FP, 0, 4);
-			break;
-#endif /* __powerpc64 */
-#endif /* CONFIG_PPC_FPU */
+			अवरोध;
+#पूर्ण_अगर /* __घातerpc64 */
+#पूर्ण_अगर /* CONFIG_PPC_FPU */
 
-#ifdef __powerpc64__
-		case 660:	/* stdbrx */
+#अगर_घोषित __घातerpc64__
+		हाल 660:	/* stdbrx */
 			op->type = MKOP(STORE, BYTEREV, 8);
 			op->val = byterev_8(regs->gpr[rd]);
-			break;
+			अवरोध;
 
-#endif
-		case 661:	/* stswx */
+#पूर्ण_अगर
+		हाल 661:	/* stswx */
 			op->type = MKOP(STORE_MULTI, 0, regs->xer & 0x7f);
-			break;
+			अवरोध;
 
-		case 662:	/* stwbrx */
+		हाल 662:	/* stwbrx */
 			op->type = MKOP(STORE, BYTEREV, 4);
 			op->val = byterev_4(regs->gpr[rd]);
-			break;
+			अवरोध;
 
-		case 725:	/* stswi */
-			if (rb == 0)
+		हाल 725:	/* stswi */
+			अगर (rb == 0)
 				rb = 32;	/* # bytes to store */
 			op->type = MKOP(STORE_MULTI, 0, rb);
 			op->ea = ra ? regs->gpr[ra] : 0;
-			break;
+			अवरोध;
 
-		case 790:	/* lhbrx */
+		हाल 790:	/* lhbrx */
 			op->type = MKOP(LOAD, BYTEREV, 2);
-			break;
+			अवरोध;
 
-		case 918:	/* sthbrx */
+		हाल 918:	/* sthbrx */
 			op->type = MKOP(STORE, BYTEREV, 2);
 			op->val = byterev_2(regs->gpr[rd]);
-			break;
+			अवरोध;
 
-#ifdef CONFIG_VSX
-		case 12:	/* lxsiwzx */
+#अगर_घोषित CONFIG_VSX
+		हाल 12:	/* lxsiwzx */
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(LOAD_VSX, 0, 4);
 			op->element_size = 8;
-			break;
+			अवरोध;
 
-		case 76:	/* lxsiwax */
+		हाल 76:	/* lxsiwax */
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(LOAD_VSX, SIGNEXT, 4);
 			op->element_size = 8;
-			break;
+			अवरोध;
 
-		case 140:	/* stxsiwx */
+		हाल 140:	/* stxsiwx */
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(STORE_VSX, 0, 4);
 			op->element_size = 8;
-			break;
+			अवरोध;
 
-		case 268:	/* lxvx */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 268:	/* lxvx */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(LOAD_VSX, 0, 16);
 			op->element_size = 16;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-		case 269:	/* lxvl */
-		case 301: {	/* lxvll */
-			int nb;
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 269:	/* lxvl */
+		हाल 301: अणु	/* lxvll */
+			पूर्णांक nb;
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd | ((word & 1) << 5);
 			op->ea = ra ? regs->gpr[ra] : 0;
 			nb = regs->gpr[rb] & 0xff;
-			if (nb > 16)
+			अगर (nb > 16)
 				nb = 16;
 			op->type = MKOP(LOAD_VSX, 0, nb);
 			op->element_size = 16;
 			op->vsx_flags = ((word & 0x20) ? VSX_LDLEFT : 0) |
 				VSX_CHECK_VEC;
-			break;
-		}
-		case 332:	/* lxvdsx */
+			अवरोध;
+		पूर्ण
+		हाल 332:	/* lxvdsx */
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(LOAD_VSX, 0, 8);
 			op->element_size = 8;
 			op->vsx_flags = VSX_SPLAT;
-			break;
+			अवरोध;
 
-		case 333:       /* lxvpx */
-			if (!cpu_has_feature(CPU_FTR_ARCH_31))
-				goto unknown_opcode;
+		हाल 333:       /* lxvpx */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_31))
+				जाओ unknown_opcode;
 			op->reg = VSX_REGISTER_XTP(rd);
 			op->type = MKOP(LOAD_VSX, 0, 32);
 			op->element_size = 32;
-			break;
+			अवरोध;
 
-		case 364:	/* lxvwsx */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 364:	/* lxvwsx */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(LOAD_VSX, 0, 4);
 			op->element_size = 4;
 			op->vsx_flags = VSX_SPLAT | VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-		case 396:	/* stxvx */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 396:	/* stxvx */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(STORE_VSX, 0, 16);
 			op->element_size = 16;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-		case 397:	/* stxvl */
-		case 429: {	/* stxvll */
-			int nb;
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 397:	/* stxvl */
+		हाल 429: अणु	/* stxvll */
+			पूर्णांक nb;
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd | ((word & 1) << 5);
 			op->ea = ra ? regs->gpr[ra] : 0;
 			nb = regs->gpr[rb] & 0xff;
-			if (nb > 16)
+			अगर (nb > 16)
 				nb = 16;
 			op->type = MKOP(STORE_VSX, 0, nb);
 			op->element_size = 16;
 			op->vsx_flags = ((word & 0x20) ? VSX_LDLEFT : 0) |
 				VSX_CHECK_VEC;
-			break;
-		}
-		case 461:       /* stxvpx */
-			if (!cpu_has_feature(CPU_FTR_ARCH_31))
-				goto unknown_opcode;
+			अवरोध;
+		पूर्ण
+		हाल 461:       /* stxvpx */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_31))
+				जाओ unknown_opcode;
 			op->reg = VSX_REGISTER_XTP(rd);
 			op->type = MKOP(STORE_VSX, 0, 32);
 			op->element_size = 32;
-			break;
-		case 524:	/* lxsspx */
+			अवरोध;
+		हाल 524:	/* lxsspx */
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(LOAD_VSX, 0, 4);
 			op->element_size = 8;
 			op->vsx_flags = VSX_FPCONV;
-			break;
+			अवरोध;
 
-		case 588:	/* lxsdx */
+		हाल 588:	/* lxsdx */
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(LOAD_VSX, 0, 8);
 			op->element_size = 8;
-			break;
+			अवरोध;
 
-		case 652:	/* stxsspx */
+		हाल 652:	/* stxsspx */
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(STORE_VSX, 0, 4);
 			op->element_size = 8;
 			op->vsx_flags = VSX_FPCONV;
-			break;
+			अवरोध;
 
-		case 716:	/* stxsdx */
+		हाल 716:	/* stxsdx */
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(STORE_VSX, 0, 8);
 			op->element_size = 8;
-			break;
+			अवरोध;
 
-		case 780:	/* lxvw4x */
+		हाल 780:	/* lxvw4x */
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(LOAD_VSX, 0, 16);
 			op->element_size = 4;
-			break;
+			अवरोध;
 
-		case 781:	/* lxsibzx */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 781:	/* lxsibzx */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(LOAD_VSX, 0, 1);
 			op->element_size = 8;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-		case 812:	/* lxvh8x */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 812:	/* lxvh8x */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(LOAD_VSX, 0, 16);
 			op->element_size = 2;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-		case 813:	/* lxsihzx */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 813:	/* lxsihzx */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(LOAD_VSX, 0, 2);
 			op->element_size = 8;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-		case 844:	/* lxvd2x */
+		हाल 844:	/* lxvd2x */
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(LOAD_VSX, 0, 16);
 			op->element_size = 8;
-			break;
+			अवरोध;
 
-		case 876:	/* lxvb16x */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 876:	/* lxvb16x */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(LOAD_VSX, 0, 16);
 			op->element_size = 1;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-		case 908:	/* stxvw4x */
+		हाल 908:	/* stxvw4x */
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(STORE_VSX, 0, 16);
 			op->element_size = 4;
-			break;
+			अवरोध;
 
-		case 909:	/* stxsibx */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 909:	/* stxsibx */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(STORE_VSX, 0, 1);
 			op->element_size = 8;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-		case 940:	/* stxvh8x */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 940:	/* stxvh8x */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(STORE_VSX, 0, 16);
 			op->element_size = 2;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-		case 941:	/* stxsihx */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 941:	/* stxsihx */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(STORE_VSX, 0, 2);
 			op->element_size = 8;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-		case 972:	/* stxvd2x */
+		हाल 972:	/* stxvd2x */
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(STORE_VSX, 0, 16);
 			op->element_size = 8;
-			break;
+			अवरोध;
 
-		case 1004:	/* stxvb16x */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+		हाल 1004:	/* stxvb16x */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd | ((word & 1) << 5);
 			op->type = MKOP(STORE_VSX, 0, 16);
 			op->element_size = 1;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-#endif /* CONFIG_VSX */
-		}
-		break;
+#पूर्ण_अगर /* CONFIG_VSX */
+		पूर्ण
+		अवरोध;
 
-	case 32:	/* lwz */
-	case 33:	/* lwzu */
+	हाल 32:	/* lwz */
+	हाल 33:	/* lwzu */
 		op->type = MKOP(LOAD, u, 4);
-		op->ea = dform_ea(word, regs);
-		break;
+		op->ea = dक्रमm_ea(word, regs);
+		अवरोध;
 
-	case 34:	/* lbz */
-	case 35:	/* lbzu */
+	हाल 34:	/* lbz */
+	हाल 35:	/* lbzu */
 		op->type = MKOP(LOAD, u, 1);
-		op->ea = dform_ea(word, regs);
-		break;
+		op->ea = dक्रमm_ea(word, regs);
+		अवरोध;
 
-	case 36:	/* stw */
-	case 37:	/* stwu */
+	हाल 36:	/* stw */
+	हाल 37:	/* stwu */
 		op->type = MKOP(STORE, u, 4);
-		op->ea = dform_ea(word, regs);
-		break;
+		op->ea = dक्रमm_ea(word, regs);
+		अवरोध;
 
-	case 38:	/* stb */
-	case 39:	/* stbu */
+	हाल 38:	/* stb */
+	हाल 39:	/* stbu */
 		op->type = MKOP(STORE, u, 1);
-		op->ea = dform_ea(word, regs);
-		break;
+		op->ea = dक्रमm_ea(word, regs);
+		अवरोध;
 
-	case 40:	/* lhz */
-	case 41:	/* lhzu */
+	हाल 40:	/* lhz */
+	हाल 41:	/* lhzu */
 		op->type = MKOP(LOAD, u, 2);
-		op->ea = dform_ea(word, regs);
-		break;
+		op->ea = dक्रमm_ea(word, regs);
+		अवरोध;
 
-	case 42:	/* lha */
-	case 43:	/* lhau */
+	हाल 42:	/* lha */
+	हाल 43:	/* lhau */
 		op->type = MKOP(LOAD, SIGNEXT | u, 2);
-		op->ea = dform_ea(word, regs);
-		break;
+		op->ea = dक्रमm_ea(word, regs);
+		अवरोध;
 
-	case 44:	/* sth */
-	case 45:	/* sthu */
+	हाल 44:	/* sth */
+	हाल 45:	/* sthu */
 		op->type = MKOP(STORE, u, 2);
-		op->ea = dform_ea(word, regs);
-		break;
+		op->ea = dक्रमm_ea(word, regs);
+		अवरोध;
 
-	case 46:	/* lmw */
-		if (ra >= rd)
-			break;		/* invalid form, ra in range to load */
+	हाल 46:	/* lmw */
+		अगर (ra >= rd)
+			अवरोध;		/* invalid क्रमm, ra in range to load */
 		op->type = MKOP(LOAD_MULTI, 0, 4 * (32 - rd));
-		op->ea = dform_ea(word, regs);
-		break;
+		op->ea = dक्रमm_ea(word, regs);
+		अवरोध;
 
-	case 47:	/* stmw */
+	हाल 47:	/* sपंचांगw */
 		op->type = MKOP(STORE_MULTI, 0, 4 * (32 - rd));
-		op->ea = dform_ea(word, regs);
-		break;
+		op->ea = dक्रमm_ea(word, regs);
+		अवरोध;
 
-#ifdef CONFIG_PPC_FPU
-	case 48:	/* lfs */
-	case 49:	/* lfsu */
+#अगर_घोषित CONFIG_PPC_FPU
+	हाल 48:	/* lfs */
+	हाल 49:	/* lfsu */
 		op->type = MKOP(LOAD_FP, u | FPCONV, 4);
-		op->ea = dform_ea(word, regs);
-		break;
+		op->ea = dक्रमm_ea(word, regs);
+		अवरोध;
 
-	case 50:	/* lfd */
-	case 51:	/* lfdu */
+	हाल 50:	/* lfd */
+	हाल 51:	/* lfdu */
 		op->type = MKOP(LOAD_FP, u, 8);
-		op->ea = dform_ea(word, regs);
-		break;
+		op->ea = dक्रमm_ea(word, regs);
+		अवरोध;
 
-	case 52:	/* stfs */
-	case 53:	/* stfsu */
+	हाल 52:	/* stfs */
+	हाल 53:	/* stfsu */
 		op->type = MKOP(STORE_FP, u | FPCONV, 4);
-		op->ea = dform_ea(word, regs);
-		break;
+		op->ea = dक्रमm_ea(word, regs);
+		अवरोध;
 
-	case 54:	/* stfd */
-	case 55:	/* stfdu */
+	हाल 54:	/* stfd */
+	हाल 55:	/* stfdu */
 		op->type = MKOP(STORE_FP, u, 8);
-		op->ea = dform_ea(word, regs);
-		break;
-#endif
+		op->ea = dक्रमm_ea(word, regs);
+		अवरोध;
+#पूर्ण_अगर
 
-#ifdef __powerpc64__
-	case 56:	/* lq */
-		if (!((rd & 1) || (rd == ra)))
+#अगर_घोषित __घातerpc64__
+	हाल 56:	/* lq */
+		अगर (!((rd & 1) || (rd == ra)))
 			op->type = MKOP(LOAD, 0, 16);
-		op->ea = dqform_ea(word, regs);
-		break;
-#endif
+		op->ea = dqक्रमm_ea(word, regs);
+		अवरोध;
+#पूर्ण_अगर
 
-#ifdef CONFIG_VSX
-	case 57:	/* lfdp, lxsd, lxssp */
-		op->ea = dsform_ea(word, regs);
-		switch (word & 3) {
-		case 0:		/* lfdp */
-			if (rd & 1)
-				break;		/* reg must be even */
+#अगर_घोषित CONFIG_VSX
+	हाल 57:	/* lfdp, lxsd, lxssp */
+		op->ea = dsक्रमm_ea(word, regs);
+		चयन (word & 3) अणु
+		हाल 0:		/* lfdp */
+			अगर (rd & 1)
+				अवरोध;		/* reg must be even */
 			op->type = MKOP(LOAD_FP, 0, 16);
-			break;
-		case 2:		/* lxsd */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+			अवरोध;
+		हाल 2:		/* lxsd */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd + 32;
 			op->type = MKOP(LOAD_VSX, 0, 8);
 			op->element_size = 8;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
-		case 3:		/* lxssp */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
+			अवरोध;
+		हाल 3:		/* lxssp */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
 			op->reg = rd + 32;
 			op->type = MKOP(LOAD_VSX, 0, 4);
 			op->element_size = 8;
 			op->vsx_flags = VSX_FPCONV | VSX_CHECK_VEC;
-			break;
-		}
-		break;
-#endif /* CONFIG_VSX */
+			अवरोध;
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर /* CONFIG_VSX */
 
-#ifdef __powerpc64__
-	case 58:	/* ld[u], lwa */
-		op->ea = dsform_ea(word, regs);
-		switch (word & 3) {
-		case 0:		/* ld */
+#अगर_घोषित __घातerpc64__
+	हाल 58:	/* ld[u], lwa */
+		op->ea = dsक्रमm_ea(word, regs);
+		चयन (word & 3) अणु
+		हाल 0:		/* ld */
 			op->type = MKOP(LOAD, 0, 8);
-			break;
-		case 1:		/* ldu */
+			अवरोध;
+		हाल 1:		/* ldu */
 			op->type = MKOP(LOAD, UPDATE, 8);
-			break;
-		case 2:		/* lwa */
+			अवरोध;
+		हाल 2:		/* lwa */
 			op->type = MKOP(LOAD, SIGNEXT, 4);
-			break;
-		}
-		break;
-#endif
+			अवरोध;
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर
 
-#ifdef CONFIG_VSX
-	case 6:
-		if (!cpu_has_feature(CPU_FTR_ARCH_31))
-			goto unknown_opcode;
-		op->ea = dqform_ea(word, regs);
+#अगर_घोषित CONFIG_VSX
+	हाल 6:
+		अगर (!cpu_has_feature(CPU_FTR_ARCH_31))
+			जाओ unknown_opcode;
+		op->ea = dqक्रमm_ea(word, regs);
 		op->reg = VSX_REGISTER_XTP(rd);
 		op->element_size = 32;
-		switch (word & 0xf) {
-		case 0:         /* lxvp */
+		चयन (word & 0xf) अणु
+		हाल 0:         /* lxvp */
 			op->type = MKOP(LOAD_VSX, 0, 32);
-			break;
-		case 1:         /* stxvp */
+			अवरोध;
+		हाल 1:         /* stxvp */
 			op->type = MKOP(STORE_VSX, 0, 32);
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case 61:	/* stfdp, lxv, stxsd, stxssp, stxv */
-		switch (word & 7) {
-		case 0:		/* stfdp with LSB of DS field = 0 */
-		case 4:		/* stfdp with LSB of DS field = 1 */
-			op->ea = dsform_ea(word, regs);
+	हाल 61:	/* stfdp, lxv, stxsd, stxssp, stxv */
+		चयन (word & 7) अणु
+		हाल 0:		/* stfdp with LSB of DS field = 0 */
+		हाल 4:		/* stfdp with LSB of DS field = 1 */
+			op->ea = dsक्रमm_ea(word, regs);
 			op->type = MKOP(STORE_FP, 0, 16);
-			break;
+			अवरोध;
 
-		case 1:		/* lxv */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
-			op->ea = dqform_ea(word, regs);
-			if (word & 8)
+		हाल 1:		/* lxv */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
+			op->ea = dqक्रमm_ea(word, regs);
+			अगर (word & 8)
 				op->reg = rd + 32;
 			op->type = MKOP(LOAD_VSX, 0, 16);
 			op->element_size = 16;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-		case 2:		/* stxsd with LSB of DS field = 0 */
-		case 6:		/* stxsd with LSB of DS field = 1 */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
-			op->ea = dsform_ea(word, regs);
+		हाल 2:		/* stxsd with LSB of DS field = 0 */
+		हाल 6:		/* stxsd with LSB of DS field = 1 */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
+			op->ea = dsक्रमm_ea(word, regs);
 			op->reg = rd + 32;
 			op->type = MKOP(STORE_VSX, 0, 8);
 			op->element_size = 8;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-		case 3:		/* stxssp with LSB of DS field = 0 */
-		case 7:		/* stxssp with LSB of DS field = 1 */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
-			op->ea = dsform_ea(word, regs);
+		हाल 3:		/* stxssp with LSB of DS field = 0 */
+		हाल 7:		/* stxssp with LSB of DS field = 1 */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
+			op->ea = dsक्रमm_ea(word, regs);
 			op->reg = rd + 32;
 			op->type = MKOP(STORE_VSX, 0, 4);
 			op->element_size = 8;
 			op->vsx_flags = VSX_FPCONV | VSX_CHECK_VEC;
-			break;
+			अवरोध;
 
-		case 5:		/* stxv */
-			if (!cpu_has_feature(CPU_FTR_ARCH_300))
-				goto unknown_opcode;
-			op->ea = dqform_ea(word, regs);
-			if (word & 8)
+		हाल 5:		/* stxv */
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+				जाओ unknown_opcode;
+			op->ea = dqक्रमm_ea(word, regs);
+			अगर (word & 8)
 				op->reg = rd + 32;
 			op->type = MKOP(STORE_VSX, 0, 16);
 			op->element_size = 16;
 			op->vsx_flags = VSX_CHECK_VEC;
-			break;
-		}
-		break;
-#endif /* CONFIG_VSX */
+			अवरोध;
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर /* CONFIG_VSX */
 
-#ifdef __powerpc64__
-	case 62:	/* std[u] */
-		op->ea = dsform_ea(word, regs);
-		switch (word & 3) {
-		case 0:		/* std */
+#अगर_घोषित __घातerpc64__
+	हाल 62:	/* std[u] */
+		op->ea = dsक्रमm_ea(word, regs);
+		चयन (word & 3) अणु
+		हाल 0:		/* std */
 			op->type = MKOP(STORE, 0, 8);
-			break;
-		case 1:		/* stdu */
+			अवरोध;
+		हाल 1:		/* stdu */
 			op->type = MKOP(STORE, UPDATE, 8);
-			break;
-		case 2:		/* stq */
-			if (!(rd & 1))
+			अवरोध;
+		हाल 2:		/* stq */
+			अगर (!(rd & 1))
 				op->type = MKOP(STORE, 0, 16);
-			break;
-		}
-		break;
-	case 1: /* Prefixed instructions */
-		if (!cpu_has_feature(CPU_FTR_ARCH_31))
-			goto unknown_opcode;
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 1: /* Prefixed inकाष्ठाions */
+		अगर (!cpu_has_feature(CPU_FTR_ARCH_31))
+			जाओ unknown_opcode;
 
 		prefix_r = GET_PREFIX_R(word);
 		ra = GET_PREFIX_RA(suffix);
@@ -2887,705 +2888,705 @@ int analyse_instr(struct instruction_op *op, const struct pt_regs *regs,
 
 		suffixopcode = get_op(suffix);
 		prefixtype = (word >> 24) & 0x3;
-		switch (prefixtype) {
-		case 0: /* Type 00  Eight-Byte Load/Store */
-			if (prefix_r && ra)
-				break;
+		चयन (prefixtype) अणु
+		हाल 0: /* Type 00  Eight-Byte Load/Store */
+			अगर (prefix_r && ra)
+				अवरोध;
 			op->ea = mlsd_8lsd_ea(word, suffix, regs);
-			switch (suffixopcode) {
-			case 41:	/* plwa */
+			चयन (suffixopcode) अणु
+			हाल 41:	/* plwa */
 				op->type = MKOP(LOAD, PREFIXED | SIGNEXT, 4);
-				break;
-#ifdef CONFIG_VSX
-			case 42:        /* plxsd */
+				अवरोध;
+#अगर_घोषित CONFIG_VSX
+			हाल 42:        /* plxsd */
 				op->reg = rd + 32;
 				op->type = MKOP(LOAD_VSX, PREFIXED, 8);
 				op->element_size = 8;
 				op->vsx_flags = VSX_CHECK_VEC;
-				break;
-			case 43:	/* plxssp */
+				अवरोध;
+			हाल 43:	/* plxssp */
 				op->reg = rd + 32;
 				op->type = MKOP(LOAD_VSX, PREFIXED, 4);
 				op->element_size = 8;
 				op->vsx_flags = VSX_FPCONV | VSX_CHECK_VEC;
-				break;
-			case 46:	/* pstxsd */
+				अवरोध;
+			हाल 46:	/* pstxsd */
 				op->reg = rd + 32;
 				op->type = MKOP(STORE_VSX, PREFIXED, 8);
 				op->element_size = 8;
 				op->vsx_flags = VSX_CHECK_VEC;
-				break;
-			case 47:	/* pstxssp */
+				अवरोध;
+			हाल 47:	/* pstxssp */
 				op->reg = rd + 32;
 				op->type = MKOP(STORE_VSX, PREFIXED, 4);
 				op->element_size = 8;
 				op->vsx_flags = VSX_FPCONV | VSX_CHECK_VEC;
-				break;
-			case 51:	/* plxv1 */
+				अवरोध;
+			हाल 51:	/* plxv1 */
 				op->reg += 32;
 				fallthrough;
-			case 50:	/* plxv0 */
+			हाल 50:	/* plxv0 */
 				op->type = MKOP(LOAD_VSX, PREFIXED, 16);
 				op->element_size = 16;
 				op->vsx_flags = VSX_CHECK_VEC;
-				break;
-			case 55:	/* pstxv1 */
+				अवरोध;
+			हाल 55:	/* pstxv1 */
 				op->reg = rd + 32;
 				fallthrough;
-			case 54:	/* pstxv0 */
+			हाल 54:	/* pstxv0 */
 				op->type = MKOP(STORE_VSX, PREFIXED, 16);
 				op->element_size = 16;
 				op->vsx_flags = VSX_CHECK_VEC;
-				break;
-#endif /* CONFIG_VSX */
-			case 56:        /* plq */
+				अवरोध;
+#पूर्ण_अगर /* CONFIG_VSX */
+			हाल 56:        /* plq */
 				op->type = MKOP(LOAD, PREFIXED, 16);
-				break;
-			case 57:	/* pld */
+				अवरोध;
+			हाल 57:	/* pld */
 				op->type = MKOP(LOAD, PREFIXED, 8);
-				break;
-#ifdef CONFIG_VSX
-			case 58:        /* plxvp */
+				अवरोध;
+#अगर_घोषित CONFIG_VSX
+			हाल 58:        /* plxvp */
 				op->reg = VSX_REGISTER_XTP(rd);
 				op->type = MKOP(LOAD_VSX, PREFIXED, 32);
 				op->element_size = 32;
-				break;
-#endif /* CONFIG_VSX */
-			case 60:        /* pstq */
+				अवरोध;
+#पूर्ण_अगर /* CONFIG_VSX */
+			हाल 60:        /* pstq */
 				op->type = MKOP(STORE, PREFIXED, 16);
-				break;
-			case 61:	/* pstd */
+				अवरोध;
+			हाल 61:	/* pstd */
 				op->type = MKOP(STORE, PREFIXED, 8);
-				break;
-#ifdef CONFIG_VSX
-			case 62:        /* pstxvp */
+				अवरोध;
+#अगर_घोषित CONFIG_VSX
+			हाल 62:        /* pstxvp */
 				op->reg = VSX_REGISTER_XTP(rd);
 				op->type = MKOP(STORE_VSX, PREFIXED, 32);
 				op->element_size = 32;
-				break;
-#endif /* CONFIG_VSX */
-			}
-			break;
-		case 1: /* Type 01 Eight-Byte Register-to-Register */
-			break;
-		case 2: /* Type 10 Modified Load/Store */
-			if (prefix_r && ra)
-				break;
+				अवरोध;
+#पूर्ण_अगर /* CONFIG_VSX */
+			पूर्ण
+			अवरोध;
+		हाल 1: /* Type 01 Eight-Byte Register-to-Register */
+			अवरोध;
+		हाल 2: /* Type 10 Modअगरied Load/Store */
+			अगर (prefix_r && ra)
+				अवरोध;
 			op->ea = mlsd_8lsd_ea(word, suffix, regs);
-			switch (suffixopcode) {
-			case 32:	/* plwz */
+			चयन (suffixopcode) अणु
+			हाल 32:	/* plwz */
 				op->type = MKOP(LOAD, PREFIXED, 4);
-				break;
-			case 34:	/* plbz */
+				अवरोध;
+			हाल 34:	/* plbz */
 				op->type = MKOP(LOAD, PREFIXED, 1);
-				break;
-			case 36:	/* pstw */
+				अवरोध;
+			हाल 36:	/* pstw */
 				op->type = MKOP(STORE, PREFIXED, 4);
-				break;
-			case 38:	/* pstb */
+				अवरोध;
+			हाल 38:	/* pstb */
 				op->type = MKOP(STORE, PREFIXED, 1);
-				break;
-			case 40:	/* plhz */
+				अवरोध;
+			हाल 40:	/* plhz */
 				op->type = MKOP(LOAD, PREFIXED, 2);
-				break;
-			case 42:	/* plha */
+				अवरोध;
+			हाल 42:	/* plha */
 				op->type = MKOP(LOAD, PREFIXED | SIGNEXT, 2);
-				break;
-			case 44:	/* psth */
+				अवरोध;
+			हाल 44:	/* psth */
 				op->type = MKOP(STORE, PREFIXED, 2);
-				break;
-			case 48:        /* plfs */
+				अवरोध;
+			हाल 48:        /* plfs */
 				op->type = MKOP(LOAD_FP, PREFIXED | FPCONV, 4);
-				break;
-			case 50:        /* plfd */
+				अवरोध;
+			हाल 50:        /* plfd */
 				op->type = MKOP(LOAD_FP, PREFIXED, 8);
-				break;
-			case 52:        /* pstfs */
+				अवरोध;
+			हाल 52:        /* pstfs */
 				op->type = MKOP(STORE_FP, PREFIXED | FPCONV, 4);
-				break;
-			case 54:        /* pstfd */
+				अवरोध;
+			हाल 54:        /* pstfd */
 				op->type = MKOP(STORE_FP, PREFIXED, 8);
-				break;
-			}
-			break;
-		case 3: /* Type 11 Modified Register-to-Register */
-			break;
-		}
-#endif /* __powerpc64__ */
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 3: /* Type 11 Modअगरied Register-to-Register */
+			अवरोध;
+		पूर्ण
+#पूर्ण_अगर /* __घातerpc64__ */
 
-	}
+	पूर्ण
 
-	if (OP_IS_LOAD_STORE(op->type) && (op->type & UPDATE)) {
-		switch (GETTYPE(op->type)) {
-		case LOAD:
-			if (ra == rd)
-				goto unknown_opcode;
+	अगर (OP_IS_LOAD_STORE(op->type) && (op->type & UPDATE)) अणु
+		चयन (GETTYPE(op->type)) अणु
+		हाल LOAD:
+			अगर (ra == rd)
+				जाओ unknown_opcode;
 			fallthrough;
-		case STORE:
-		case LOAD_FP:
-		case STORE_FP:
-			if (ra == 0)
-				goto unknown_opcode;
-		}
-	}
+		हाल STORE:
+		हाल LOAD_FP:
+		हाल STORE_FP:
+			अगर (ra == 0)
+				जाओ unknown_opcode;
+		पूर्ण
+	पूर्ण
 
-#ifdef CONFIG_VSX
-	if ((GETTYPE(op->type) == LOAD_VSX ||
+#अगर_घोषित CONFIG_VSX
+	अगर ((GETTYPE(op->type) == LOAD_VSX ||
 	     GETTYPE(op->type) == STORE_VSX) &&
-	    !cpu_has_feature(CPU_FTR_VSX)) {
-		return -1;
-	}
-#endif /* CONFIG_VSX */
+	    !cpu_has_feature(CPU_FTR_VSX)) अणु
+		वापस -1;
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_VSX */
 
-	return 0;
+	वापस 0;
 
  unknown_opcode:
 	op->type = UNKNOWN;
-	return 0;
+	वापस 0;
 
- logical_done:
-	if (word & 1)
+ logical_करोne:
+	अगर (word & 1)
 		set_cr0(regs, op);
- logical_done_nocc:
+ logical_करोne_nocc:
 	op->reg = ra;
 	op->type |= SETREG;
-	return 1;
+	वापस 1;
 
- arith_done:
-	if (word & 1)
+ arith_करोne:
+	अगर (word & 1)
 		set_cr0(regs, op);
- compute_done:
+ compute_करोne:
 	op->reg = rd;
 	op->type |= SETREG;
-	return 1;
+	वापस 1;
 
  priv:
 	op->type = INTERRUPT | 0x700;
 	op->val = SRR1_PROGPRIV;
-	return 0;
+	वापस 0;
 
  trap:
 	op->type = INTERRUPT | 0x700;
 	op->val = SRR1_PROGTRAP;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(analyse_instr);
 NOKPROBE_SYMBOL(analyse_instr);
 
 /*
- * For PPC32 we always use stwu with r1 to change the stack pointer.
+ * For PPC32 we always use stwu with r1 to change the stack poपूर्णांकer.
  * So this emulated store may corrupt the exception frame, now we
  * have to provide the exception frame trampoline, which is pushed
  * below the kprobed function stack. So we only update gpr[1] but
- * don't emulate the real store operation. We will do real store
- * operation safely in exception return code by checking this flag.
+ * करोn't emulate the real store operation. We will करो real store
+ * operation safely in exception वापस code by checking this flag.
  */
-static nokprobe_inline int handle_stack_update(unsigned long ea, struct pt_regs *regs)
-{
+अटल nokprobe_अंतरभूत पूर्णांक handle_stack_update(अचिन्हित दीर्घ ea, काष्ठा pt_regs *regs)
+अणु
 	/*
-	 * Check if we already set since that means we'll
+	 * Check अगर we alपढ़ोy set since that means we'll
 	 * lose the previous value.
 	 */
-	WARN_ON(test_thread_flag(TIF_EMULATE_STACK_STORE));
-	set_thread_flag(TIF_EMULATE_STACK_STORE);
-	return 0;
-}
+	WARN_ON(test_thपढ़ो_flag(TIF_EMULATE_STACK_STORE));
+	set_thपढ़ो_flag(TIF_EMULATE_STACK_STORE);
+	वापस 0;
+पूर्ण
 
-static nokprobe_inline void do_signext(unsigned long *valp, int size)
-{
-	switch (size) {
-	case 2:
-		*valp = (signed short) *valp;
-		break;
-	case 4:
-		*valp = (signed int) *valp;
-		break;
-	}
-}
+अटल nokprobe_अंतरभूत व्योम करो_signext(अचिन्हित दीर्घ *valp, पूर्णांक size)
+अणु
+	चयन (size) अणु
+	हाल 2:
+		*valp = (चिन्हित लघु) *valp;
+		अवरोध;
+	हाल 4:
+		*valp = (चिन्हित पूर्णांक) *valp;
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static nokprobe_inline void do_byterev(unsigned long *valp, int size)
-{
-	switch (size) {
-	case 2:
+अटल nokprobe_अंतरभूत व्योम करो_byterev(अचिन्हित दीर्घ *valp, पूर्णांक size)
+अणु
+	चयन (size) अणु
+	हाल 2:
 		*valp = byterev_2(*valp);
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		*valp = byterev_4(*valp);
-		break;
-#ifdef __powerpc64__
-	case 8:
+		अवरोध;
+#अगर_घोषित __घातerpc64__
+	हाल 8:
 		*valp = byterev_8(*valp);
-		break;
-#endif
-	}
-}
+		अवरोध;
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
 /*
- * Emulate an instruction that can be executed just by updating
+ * Emulate an inकाष्ठाion that can be executed just by updating
  * fields in *regs.
  */
-void emulate_update_regs(struct pt_regs *regs, struct instruction_op *op)
-{
-	unsigned long next_pc;
+व्योम emulate_update_regs(काष्ठा pt_regs *regs, काष्ठा inकाष्ठाion_op *op)
+अणु
+	अचिन्हित दीर्घ next_pc;
 
-	next_pc = truncate_if_32bit(regs->msr, regs->nip + GETLENGTH(op->type));
-	switch (GETTYPE(op->type)) {
-	case COMPUTE:
-		if (op->type & SETREG)
+	next_pc = truncate_अगर_32bit(regs->msr, regs->nip + GETLENGTH(op->type));
+	चयन (GETTYPE(op->type)) अणु
+	हाल COMPUTE:
+		अगर (op->type & SETREG)
 			regs->gpr[op->reg] = op->val;
-		if (op->type & SETCC)
+		अगर (op->type & SETCC)
 			regs->ccr = op->ccval;
-		if (op->type & SETXER)
+		अगर (op->type & SETXER)
 			regs->xer = op->xerval;
-		break;
+		अवरोध;
 
-	case BRANCH:
-		if (op->type & SETLK)
+	हाल BRANCH:
+		अगर (op->type & SETLK)
 			regs->link = next_pc;
-		if (op->type & BRTAKEN)
+		अगर (op->type & BRTAKEN)
 			next_pc = op->val;
-		if (op->type & DECCTR)
+		अगर (op->type & DECCTR)
 			--regs->ctr;
-		break;
+		अवरोध;
 
-	case BARRIER:
-		switch (op->type & BARRIER_MASK) {
-		case BARRIER_SYNC:
+	हाल BARRIER:
+		चयन (op->type & BARRIER_MASK) अणु
+		हाल BARRIER_SYNC:
 			mb();
-			break;
-		case BARRIER_ISYNC:
+			अवरोध;
+		हाल BARRIER_ISYNC:
 			isync();
-			break;
-		case BARRIER_EIEIO:
+			अवरोध;
+		हाल BARRIER_EIEIO:
 			eieio();
-			break;
-		case BARRIER_LWSYNC:
-			asm volatile("lwsync" : : : "memory");
-			break;
-		case BARRIER_PTESYNC:
-			asm volatile("ptesync" : : : "memory");
-			break;
-		}
-		break;
+			अवरोध;
+		हाल BARRIER_LWSYNC:
+			यंत्र अस्थिर("lwsync" : : : "memory");
+			अवरोध;
+		हाल BARRIER_PTESYNC:
+			यंत्र अस्थिर("ptesync" : : : "memory");
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case MFSPR:
-		switch (op->spr) {
-		case SPRN_XER:
+	हाल MFSPR:
+		चयन (op->spr) अणु
+		हाल SPRN_XER:
 			regs->gpr[op->reg] = regs->xer & 0xffffffffUL;
-			break;
-		case SPRN_LR:
+			अवरोध;
+		हाल SPRN_LR:
 			regs->gpr[op->reg] = regs->link;
-			break;
-		case SPRN_CTR:
+			अवरोध;
+		हाल SPRN_CTR:
 			regs->gpr[op->reg] = regs->ctr;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			WARN_ON_ONCE(1);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case MTSPR:
-		switch (op->spr) {
-		case SPRN_XER:
+	हाल MTSPR:
+		चयन (op->spr) अणु
+		हाल SPRN_XER:
 			regs->xer = op->val & 0xffffffffUL;
-			break;
-		case SPRN_LR:
+			अवरोध;
+		हाल SPRN_LR:
 			regs->link = op->val;
-			break;
-		case SPRN_CTR:
+			अवरोध;
+		हाल SPRN_CTR:
 			regs->ctr = op->val;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			WARN_ON_ONCE(1);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		WARN_ON_ONCE(1);
-	}
+	पूर्ण
 	regs->nip = next_pc;
-}
+पूर्ण
 NOKPROBE_SYMBOL(emulate_update_regs);
 
 /*
- * Emulate a previously-analysed load or store instruction.
+ * Emulate a previously-analysed load or store inकाष्ठाion.
  * Return values are:
- * 0 = instruction emulated successfully
+ * 0 = inकाष्ठाion emulated successfully
  * -EFAULT = address out of range or access faulted (regs->dar
  *	     contains the faulting address)
- * -EACCES = misaligned access, instruction requires alignment
+ * -EACCES = misaligned access, inकाष्ठाion requires alignment
  * -EINVAL = unknown operation in *op
  */
-int emulate_loadstore(struct pt_regs *regs, struct instruction_op *op)
-{
-	int err, size, type;
-	int i, rd, nb;
-	unsigned int cr;
-	unsigned long val;
-	unsigned long ea;
+पूर्णांक emulate_loadstore(काष्ठा pt_regs *regs, काष्ठा inकाष्ठाion_op *op)
+अणु
+	पूर्णांक err, size, type;
+	पूर्णांक i, rd, nb;
+	अचिन्हित पूर्णांक cr;
+	अचिन्हित दीर्घ val;
+	अचिन्हित दीर्घ ea;
 	bool cross_endian;
 
 	err = 0;
 	size = GETSIZE(op->type);
 	type = GETTYPE(op->type);
 	cross_endian = (regs->msr & MSR_LE) != (MSR_KERNEL & MSR_LE);
-	ea = truncate_if_32bit(regs->msr, op->ea);
+	ea = truncate_अगर_32bit(regs->msr, op->ea);
 
-	switch (type) {
-	case LARX:
-		if (ea & (size - 1))
-			return -EACCES;		/* can't handle misaligned */
-		if (!address_ok(regs, ea, size))
-			return -EFAULT;
+	चयन (type) अणु
+	हाल LARX:
+		अगर (ea & (size - 1))
+			वापस -EACCES;		/* can't handle misaligned */
+		अगर (!address_ok(regs, ea, size))
+			वापस -EFAULT;
 		err = 0;
 		val = 0;
-		switch (size) {
-#ifdef __powerpc64__
-		case 1:
-			__get_user_asmx(val, ea, err, "lbarx");
-			break;
-		case 2:
-			__get_user_asmx(val, ea, err, "lharx");
-			break;
-#endif
-		case 4:
-			__get_user_asmx(val, ea, err, "lwarx");
-			break;
-#ifdef __powerpc64__
-		case 8:
-			__get_user_asmx(val, ea, err, "ldarx");
-			break;
-		case 16:
-			err = do_lqarx(ea, &regs->gpr[op->reg]);
-			break;
-#endif
-		default:
-			return -EINVAL;
-		}
-		if (err) {
+		चयन (size) अणु
+#अगर_घोषित __घातerpc64__
+		हाल 1:
+			__get_user_यंत्रx(val, ea, err, "lbarx");
+			अवरोध;
+		हाल 2:
+			__get_user_यंत्रx(val, ea, err, "lharx");
+			अवरोध;
+#पूर्ण_अगर
+		हाल 4:
+			__get_user_यंत्रx(val, ea, err, "lwarx");
+			अवरोध;
+#अगर_घोषित __घातerpc64__
+		हाल 8:
+			__get_user_यंत्रx(val, ea, err, "ldarx");
+			अवरोध;
+		हाल 16:
+			err = करो_lqarx(ea, &regs->gpr[op->reg]);
+			अवरोध;
+#पूर्ण_अगर
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अगर (err) अणु
 			regs->dar = ea;
-			break;
-		}
-		if (size < 16)
+			अवरोध;
+		पूर्ण
+		अगर (size < 16)
 			regs->gpr[op->reg] = val;
-		break;
+		अवरोध;
 
-	case STCX:
-		if (ea & (size - 1))
-			return -EACCES;		/* can't handle misaligned */
-		if (!address_ok(regs, ea, size))
-			return -EFAULT;
+	हाल STCX:
+		अगर (ea & (size - 1))
+			वापस -EACCES;		/* can't handle misaligned */
+		अगर (!address_ok(regs, ea, size))
+			वापस -EFAULT;
 		err = 0;
-		switch (size) {
-#ifdef __powerpc64__
-		case 1:
-			__put_user_asmx(op->val, ea, err, "stbcx.", cr);
-			break;
-		case 2:
-			__put_user_asmx(op->val, ea, err, "stbcx.", cr);
-			break;
-#endif
-		case 4:
-			__put_user_asmx(op->val, ea, err, "stwcx.", cr);
-			break;
-#ifdef __powerpc64__
-		case 8:
-			__put_user_asmx(op->val, ea, err, "stdcx.", cr);
-			break;
-		case 16:
-			err = do_stqcx(ea, regs->gpr[op->reg],
+		चयन (size) अणु
+#अगर_घोषित __घातerpc64__
+		हाल 1:
+			__put_user_यंत्रx(op->val, ea, err, "stbcx.", cr);
+			अवरोध;
+		हाल 2:
+			__put_user_यंत्रx(op->val, ea, err, "stbcx.", cr);
+			अवरोध;
+#पूर्ण_अगर
+		हाल 4:
+			__put_user_यंत्रx(op->val, ea, err, "stwcx.", cr);
+			अवरोध;
+#अगर_घोषित __घातerpc64__
+		हाल 8:
+			__put_user_यंत्रx(op->val, ea, err, "stdcx.", cr);
+			अवरोध;
+		हाल 16:
+			err = करो_stqcx(ea, regs->gpr[op->reg],
 				       regs->gpr[op->reg + 1], &cr);
-			break;
-#endif
-		default:
-			return -EINVAL;
-		}
-		if (!err)
+			अवरोध;
+#पूर्ण_अगर
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अगर (!err)
 			regs->ccr = (regs->ccr & 0x0fffffff) |
 				(cr & 0xe0000000) |
 				((regs->xer >> 3) & 0x10000000);
-		else
+		अन्यथा
 			regs->dar = ea;
-		break;
+		अवरोध;
 
-	case LOAD:
-#ifdef __powerpc64__
-		if (size == 16) {
+	हाल LOAD:
+#अगर_घोषित __घातerpc64__
+		अगर (size == 16) अणु
 			err = emulate_lq(regs, ea, op->reg, cross_endian);
-			break;
-		}
-#endif
-		err = read_mem(&regs->gpr[op->reg], ea, size, regs);
-		if (!err) {
-			if (op->type & SIGNEXT)
-				do_signext(&regs->gpr[op->reg], size);
-			if ((op->type & BYTEREV) == (cross_endian ? 0 : BYTEREV))
-				do_byterev(&regs->gpr[op->reg], size);
-		}
-		break;
+			अवरोध;
+		पूर्ण
+#पूर्ण_अगर
+		err = पढ़ो_mem(&regs->gpr[op->reg], ea, size, regs);
+		अगर (!err) अणु
+			अगर (op->type & SIGNEXT)
+				करो_signext(&regs->gpr[op->reg], size);
+			अगर ((op->type & BYTEREV) == (cross_endian ? 0 : BYTEREV))
+				करो_byterev(&regs->gpr[op->reg], size);
+		पूर्ण
+		अवरोध;
 
-#ifdef CONFIG_PPC_FPU
-	case LOAD_FP:
+#अगर_घोषित CONFIG_PPC_FPU
+	हाल LOAD_FP:
 		/*
-		 * If the instruction is in userspace, we can emulate it even
-		 * if the VMX state is not live, because we have the state
-		 * stored in the thread_struct.  If the instruction is in
-		 * the kernel, we must not touch the state in the thread_struct.
+		 * If the inकाष्ठाion is in userspace, we can emulate it even
+		 * अगर the VMX state is not live, because we have the state
+		 * stored in the thपढ़ो_काष्ठा.  If the inकाष्ठाion is in
+		 * the kernel, we must not touch the state in the thपढ़ो_काष्ठा.
 		 */
-		if (!(regs->msr & MSR_PR) && !(regs->msr & MSR_FP))
-			return 0;
-		err = do_fp_load(op, ea, regs, cross_endian);
-		break;
-#endif
-#ifdef CONFIG_ALTIVEC
-	case LOAD_VMX:
-		if (!(regs->msr & MSR_PR) && !(regs->msr & MSR_VEC))
-			return 0;
-		err = do_vec_load(op->reg, ea, size, regs, cross_endian);
-		break;
-#endif
-#ifdef CONFIG_VSX
-	case LOAD_VSX: {
-		unsigned long msrbit = MSR_VSX;
+		अगर (!(regs->msr & MSR_PR) && !(regs->msr & MSR_FP))
+			वापस 0;
+		err = करो_fp_load(op, ea, regs, cross_endian);
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ALTIVEC
+	हाल LOAD_VMX:
+		अगर (!(regs->msr & MSR_PR) && !(regs->msr & MSR_VEC))
+			वापस 0;
+		err = करो_vec_load(op->reg, ea, size, regs, cross_endian);
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_VSX
+	हाल LOAD_VSX: अणु
+		अचिन्हित दीर्घ msrbit = MSR_VSX;
 
 		/*
-		 * Some VSX instructions check the MSR_VEC bit rather than MSR_VSX
-		 * when the target of the instruction is a vector register.
+		 * Some VSX inकाष्ठाions check the MSR_VEC bit rather than MSR_VSX
+		 * when the target of the inकाष्ठाion is a vector रेजिस्टर.
 		 */
-		if (op->reg >= 32 && (op->vsx_flags & VSX_CHECK_VEC))
+		अगर (op->reg >= 32 && (op->vsx_flags & VSX_CHECK_VEC))
 			msrbit = MSR_VEC;
-		if (!(regs->msr & MSR_PR) && !(regs->msr & msrbit))
-			return 0;
-		err = do_vsx_load(op, ea, regs, cross_endian);
-		break;
-	}
-#endif
-	case LOAD_MULTI:
-		if (!address_ok(regs, ea, size))
-			return -EFAULT;
+		अगर (!(regs->msr & MSR_PR) && !(regs->msr & msrbit))
+			वापस 0;
+		err = करो_vsx_load(op, ea, regs, cross_endian);
+		अवरोध;
+	पूर्ण
+#पूर्ण_अगर
+	हाल LOAD_MULTI:
+		अगर (!address_ok(regs, ea, size))
+			वापस -EFAULT;
 		rd = op->reg;
-		for (i = 0; i < size; i += 4) {
-			unsigned int v32 = 0;
+		क्रम (i = 0; i < size; i += 4) अणु
+			अचिन्हित पूर्णांक v32 = 0;
 
 			nb = size - i;
-			if (nb > 4)
+			अगर (nb > 4)
 				nb = 4;
 			err = copy_mem_in((u8 *) &v32, ea, nb, regs);
-			if (err)
-				break;
-			if (unlikely(cross_endian))
+			अगर (err)
+				अवरोध;
+			अगर (unlikely(cross_endian))
 				v32 = byterev_4(v32);
 			regs->gpr[rd] = v32;
 			ea += 4;
-			/* reg number wraps from 31 to 0 for lsw[ix] */
+			/* reg number wraps from 31 to 0 क्रम lsw[ix] */
 			rd = (rd + 1) & 0x1f;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case STORE:
-#ifdef __powerpc64__
-		if (size == 16) {
+	हाल STORE:
+#अगर_घोषित __घातerpc64__
+		अगर (size == 16) अणु
 			err = emulate_stq(regs, ea, op->reg, cross_endian);
-			break;
-		}
-#endif
-		if ((op->type & UPDATE) && size == sizeof(long) &&
+			अवरोध;
+		पूर्ण
+#पूर्ण_अगर
+		अगर ((op->type & UPDATE) && size == माप(दीर्घ) &&
 		    op->reg == 1 && op->update_reg == 1 &&
 		    !(regs->msr & MSR_PR) &&
-		    ea >= regs->gpr[1] - STACK_INT_FRAME_SIZE) {
+		    ea >= regs->gpr[1] - STACK_INT_FRAME_SIZE) अणु
 			err = handle_stack_update(ea, regs);
-			break;
-		}
-		if (unlikely(cross_endian))
-			do_byterev(&op->val, size);
-		err = write_mem(op->val, ea, size, regs);
-		break;
+			अवरोध;
+		पूर्ण
+		अगर (unlikely(cross_endian))
+			करो_byterev(&op->val, size);
+		err = ग_लिखो_mem(op->val, ea, size, regs);
+		अवरोध;
 
-#ifdef CONFIG_PPC_FPU
-	case STORE_FP:
-		if (!(regs->msr & MSR_PR) && !(regs->msr & MSR_FP))
-			return 0;
-		err = do_fp_store(op, ea, regs, cross_endian);
-		break;
-#endif
-#ifdef CONFIG_ALTIVEC
-	case STORE_VMX:
-		if (!(regs->msr & MSR_PR) && !(regs->msr & MSR_VEC))
-			return 0;
-		err = do_vec_store(op->reg, ea, size, regs, cross_endian);
-		break;
-#endif
-#ifdef CONFIG_VSX
-	case STORE_VSX: {
-		unsigned long msrbit = MSR_VSX;
+#अगर_घोषित CONFIG_PPC_FPU
+	हाल STORE_FP:
+		अगर (!(regs->msr & MSR_PR) && !(regs->msr & MSR_FP))
+			वापस 0;
+		err = करो_fp_store(op, ea, regs, cross_endian);
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ALTIVEC
+	हाल STORE_VMX:
+		अगर (!(regs->msr & MSR_PR) && !(regs->msr & MSR_VEC))
+			वापस 0;
+		err = करो_vec_store(op->reg, ea, size, regs, cross_endian);
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_VSX
+	हाल STORE_VSX: अणु
+		अचिन्हित दीर्घ msrbit = MSR_VSX;
 
 		/*
-		 * Some VSX instructions check the MSR_VEC bit rather than MSR_VSX
-		 * when the target of the instruction is a vector register.
+		 * Some VSX inकाष्ठाions check the MSR_VEC bit rather than MSR_VSX
+		 * when the target of the inकाष्ठाion is a vector रेजिस्टर.
 		 */
-		if (op->reg >= 32 && (op->vsx_flags & VSX_CHECK_VEC))
+		अगर (op->reg >= 32 && (op->vsx_flags & VSX_CHECK_VEC))
 			msrbit = MSR_VEC;
-		if (!(regs->msr & MSR_PR) && !(regs->msr & msrbit))
-			return 0;
-		err = do_vsx_store(op, ea, regs, cross_endian);
-		break;
-	}
-#endif
-	case STORE_MULTI:
-		if (!address_ok(regs, ea, size))
-			return -EFAULT;
+		अगर (!(regs->msr & MSR_PR) && !(regs->msr & msrbit))
+			वापस 0;
+		err = करो_vsx_store(op, ea, regs, cross_endian);
+		अवरोध;
+	पूर्ण
+#पूर्ण_अगर
+	हाल STORE_MULTI:
+		अगर (!address_ok(regs, ea, size))
+			वापस -EFAULT;
 		rd = op->reg;
-		for (i = 0; i < size; i += 4) {
-			unsigned int v32 = regs->gpr[rd];
+		क्रम (i = 0; i < size; i += 4) अणु
+			अचिन्हित पूर्णांक v32 = regs->gpr[rd];
 
 			nb = size - i;
-			if (nb > 4)
+			अगर (nb > 4)
 				nb = 4;
-			if (unlikely(cross_endian))
+			अगर (unlikely(cross_endian))
 				v32 = byterev_4(v32);
 			err = copy_mem_out((u8 *) &v32, ea, nb, regs);
-			if (err)
-				break;
+			अगर (err)
+				अवरोध;
 			ea += 4;
-			/* reg number wraps from 31 to 0 for stsw[ix] */
+			/* reg number wraps from 31 to 0 क्रम stsw[ix] */
 			rd = (rd + 1) & 0x1f;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (op->type & UPDATE)
+	अगर (op->type & UPDATE)
 		regs->gpr[op->update_reg] = op->ea;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 NOKPROBE_SYMBOL(emulate_loadstore);
 
 /*
- * Emulate instructions that cause a transfer of control,
- * loads and stores, and a few other instructions.
- * Returns 1 if the step was emulated, 0 if not,
- * or -1 if the instruction is one that should not be stepped,
- * such as an rfid, or a mtmsrd that would clear MSR_RI.
+ * Emulate inकाष्ठाions that cause a transfer of control,
+ * loads and stores, and a few other inकाष्ठाions.
+ * Returns 1 अगर the step was emulated, 0 अगर not,
+ * or -1 अगर the inकाष्ठाion is one that should not be stepped,
+ * such as an rfid, or a mपंचांगsrd that would clear MSR_RI.
  */
-int emulate_step(struct pt_regs *regs, struct ppc_inst instr)
-{
-	struct instruction_op op;
-	int r, err, type;
-	unsigned long val;
-	unsigned long ea;
+पूर्णांक emulate_step(काष्ठा pt_regs *regs, काष्ठा ppc_inst instr)
+अणु
+	काष्ठा inकाष्ठाion_op op;
+	पूर्णांक r, err, type;
+	अचिन्हित दीर्घ val;
+	अचिन्हित दीर्घ ea;
 
 	r = analyse_instr(&op, regs, instr);
-	if (r < 0)
-		return r;
-	if (r > 0) {
+	अगर (r < 0)
+		वापस r;
+	अगर (r > 0) अणु
 		emulate_update_regs(regs, &op);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	err = 0;
 	type = GETTYPE(op.type);
 
-	if (OP_IS_LOAD_STORE(type)) {
+	अगर (OP_IS_LOAD_STORE(type)) अणु
 		err = emulate_loadstore(regs, &op);
-		if (err)
-			return 0;
-		goto instr_done;
-	}
+		अगर (err)
+			वापस 0;
+		जाओ instr_करोne;
+	पूर्ण
 
-	switch (type) {
-	case CACHEOP:
-		ea = truncate_if_32bit(regs->msr, op.ea);
-		if (!address_ok(regs, ea, 8))
-			return 0;
-		switch (op.type & CACHEOP_MASK) {
-		case DCBST:
-			__cacheop_user_asmx(ea, err, "dcbst");
-			break;
-		case DCBF:
-			__cacheop_user_asmx(ea, err, "dcbf");
-			break;
-		case DCBTST:
-			if (op.reg == 0)
-				prefetchw((void *) ea);
-			break;
-		case DCBT:
-			if (op.reg == 0)
-				prefetch((void *) ea);
-			break;
-		case ICBI:
-			__cacheop_user_asmx(ea, err, "icbi");
-			break;
-		case DCBZ:
+	चयन (type) अणु
+	हाल CACHEOP:
+		ea = truncate_अगर_32bit(regs->msr, op.ea);
+		अगर (!address_ok(regs, ea, 8))
+			वापस 0;
+		चयन (op.type & CACHEOP_MASK) अणु
+		हाल DCBST:
+			__cacheop_user_यंत्रx(ea, err, "dcbst");
+			अवरोध;
+		हाल DCBF:
+			__cacheop_user_यंत्रx(ea, err, "dcbf");
+			अवरोध;
+		हाल DCBTST:
+			अगर (op.reg == 0)
+				prefetchw((व्योम *) ea);
+			अवरोध;
+		हाल DCBT:
+			अगर (op.reg == 0)
+				prefetch((व्योम *) ea);
+			अवरोध;
+		हाल ICBI:
+			__cacheop_user_यंत्रx(ea, err, "icbi");
+			अवरोध;
+		हाल DCBZ:
 			err = emulate_dcbz(ea, regs);
-			break;
-		}
-		if (err) {
+			अवरोध;
+		पूर्ण
+		अगर (err) अणु
 			regs->dar = ea;
-			return 0;
-		}
-		goto instr_done;
+			वापस 0;
+		पूर्ण
+		जाओ instr_करोne;
 
-	case MFMSR:
+	हाल MFMSR:
 		regs->gpr[op.reg] = regs->msr & MSR_MASK;
-		goto instr_done;
+		जाओ instr_करोne;
 
-	case MTMSR:
+	हाल MTMSR:
 		val = regs->gpr[op.reg];
-		if ((val & MSR_RI) == 0)
-			/* can't step mtmsr[d] that would clear MSR_RI */
-			return -1;
+		अगर ((val & MSR_RI) == 0)
+			/* can't step mपंचांगsr[d] that would clear MSR_RI */
+			वापस -1;
 		/* here op.val is the mask of bits to change */
 		regs->msr = (regs->msr & ~op.val) | (val & op.val);
-		goto instr_done;
+		जाओ instr_करोne;
 
-#ifdef CONFIG_PPC64
-	case SYSCALL:	/* sc */
+#अगर_घोषित CONFIG_PPC64
+	हाल SYSCALL:	/* sc */
 		/*
 		 * N.B. this uses knowledge about how the syscall
 		 * entry code works.  If that is changed, this will
 		 * need to be changed also.
 		 */
-		if (IS_ENABLED(CONFIG_PPC_FAST_ENDIAN_SWITCH) &&
+		अगर (IS_ENABLED(CONFIG_PPC_FAST_ENDIAN_SWITCH) &&
 				cpu_has_feature(CPU_FTR_REAL_LE) &&
-				regs->gpr[0] == 0x1ebe) {
+				regs->gpr[0] == 0x1ebe) अणु
 			regs->msr ^= MSR_LE;
-			goto instr_done;
-		}
+			जाओ instr_करोne;
+		पूर्ण
 		regs->gpr[9] = regs->gpr[13];
 		regs->gpr[10] = MSR_KERNEL;
 		regs->gpr[11] = regs->nip + 4;
 		regs->gpr[12] = regs->msr & MSR_MASK;
-		regs->gpr[13] = (unsigned long) get_paca();
-		regs->nip = (unsigned long) &system_call_common;
+		regs->gpr[13] = (अचिन्हित दीर्घ) get_paca();
+		regs->nip = (अचिन्हित दीर्घ) &प्रणाली_call_common;
 		regs->msr = MSR_KERNEL;
-		return 1;
+		वापस 1;
 
-#ifdef CONFIG_PPC_BOOK3S_64
-	case SYSCALL_VECTORED_0:	/* scv 0 */
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
+	हाल SYSCALL_VECTORED_0:	/* scv 0 */
 		regs->gpr[9] = regs->gpr[13];
 		regs->gpr[10] = MSR_KERNEL;
 		regs->gpr[11] = regs->nip + 4;
 		regs->gpr[12] = regs->msr & MSR_MASK;
-		regs->gpr[13] = (unsigned long) get_paca();
-		regs->nip = (unsigned long) &system_call_vectored_emulate;
+		regs->gpr[13] = (अचिन्हित दीर्घ) get_paca();
+		regs->nip = (अचिन्हित दीर्घ) &प्रणाली_call_vectored_emulate;
 		regs->msr = MSR_KERNEL;
-		return 1;
-#endif
+		वापस 1;
+#पूर्ण_अगर
 
-	case RFI:
-		return -1;
-#endif
-	}
-	return 0;
+	हाल RFI:
+		वापस -1;
+#पूर्ण_अगर
+	पूर्ण
+	वापस 0;
 
- instr_done:
-	regs->nip = truncate_if_32bit(regs->msr, regs->nip + GETLENGTH(op.type));
-	return 1;
-}
+ instr_करोne:
+	regs->nip = truncate_अगर_32bit(regs->msr, regs->nip + GETLENGTH(op.type));
+	वापस 1;
+पूर्ण
 NOKPROBE_SYMBOL(emulate_step);

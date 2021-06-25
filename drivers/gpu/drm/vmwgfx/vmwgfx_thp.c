@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /*
- * Huge page-table-entry support for IO memory.
+ * Huge page-table-entry support क्रम IO memory.
  *
  * Copyright (C) 2007-2019 Vmware, Inc. All rights reservedd.
  */
-#include "vmwgfx_drv.h"
-#include <drm/ttm/ttm_bo_driver.h>
-#include <drm/ttm/ttm_placement.h>
+#समावेश "vmwgfx_drv.h"
+#समावेश <drm/tपंचांग/tपंचांग_bo_driver.h>
+#समावेश <drm/tपंचांग/tपंचांग_placement.h>
 
 /**
- * struct vmw_thp_manager - Range manager implementing huge page alignment
+ * काष्ठा vmw_thp_manager - Range manager implementing huge page alignment
  *
  * @manager: TTM resource manager.
  * @mm: The underlying range manager. Protected by @lock.
  * @lock: Manager lock.
  */
-struct vmw_thp_manager {
-	struct ttm_resource_manager manager;
-	struct drm_mm mm;
+काष्ठा vmw_thp_manager अणु
+	काष्ठा tपंचांग_resource_manager manager;
+	काष्ठा drm_mm mm;
 	spinlock_t lock;
-};
+पूर्ण;
 
-static struct vmw_thp_manager *to_thp_manager(struct ttm_resource_manager *man)
-{
-	return container_of(man, struct vmw_thp_manager, manager);
-}
+अटल काष्ठा vmw_thp_manager *to_thp_manager(काष्ठा tपंचांग_resource_manager *man)
+अणु
+	वापस container_of(man, काष्ठा vmw_thp_manager, manager);
+पूर्ण
 
-static const struct ttm_resource_manager_func vmw_thp_func;
+अटल स्थिर काष्ठा tपंचांग_resource_manager_func vmw_thp_func;
 
-static int vmw_thp_insert_aligned(struct drm_mm *mm, struct drm_mm_node *node,
-				  unsigned long align_pages,
-				  const struct ttm_place *place,
-				  struct ttm_resource *mem,
-				  unsigned long lpfn,
-				  enum drm_mm_insert_mode mode)
-{
-	if (align_pages >= mem->page_alignment &&
-	    (!mem->page_alignment || align_pages % mem->page_alignment == 0)) {
-		return drm_mm_insert_node_in_range(mm, node,
+अटल पूर्णांक vmw_thp_insert_aligned(काष्ठा drm_mm *mm, काष्ठा drm_mm_node *node,
+				  अचिन्हित दीर्घ align_pages,
+				  स्थिर काष्ठा tपंचांग_place *place,
+				  काष्ठा tपंचांग_resource *mem,
+				  अचिन्हित दीर्घ lpfn,
+				  क्रमागत drm_mm_insert_mode mode)
+अणु
+	अगर (align_pages >= mem->page_alignment &&
+	    (!mem->page_alignment || align_pages % mem->page_alignment == 0)) अणु
+		वापस drm_mm_insert_node_in_range(mm, node,
 						   mem->num_pages,
 						   align_pages, 0,
 						   place->fpfn, lpfn, mode);
-	}
+	पूर्ण
 
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 
-static int vmw_thp_get_node(struct ttm_resource_manager *man,
-			    struct ttm_buffer_object *bo,
-			    const struct ttm_place *place,
-			    struct ttm_resource *mem)
-{
-	struct vmw_thp_manager *rman = to_thp_manager(man);
-	struct drm_mm *mm = &rman->mm;
-	struct drm_mm_node *node;
-	unsigned long align_pages;
-	unsigned long lpfn;
-	enum drm_mm_insert_mode mode = DRM_MM_INSERT_BEST;
-	int ret;
+अटल पूर्णांक vmw_thp_get_node(काष्ठा tपंचांग_resource_manager *man,
+			    काष्ठा tपंचांग_buffer_object *bo,
+			    स्थिर काष्ठा tपंचांग_place *place,
+			    काष्ठा tपंचांग_resource *mem)
+अणु
+	काष्ठा vmw_thp_manager *rman = to_thp_manager(man);
+	काष्ठा drm_mm *mm = &rman->mm;
+	काष्ठा drm_mm_node *node;
+	अचिन्हित दीर्घ align_pages;
+	अचिन्हित दीर्घ lpfn;
+	क्रमागत drm_mm_insert_mode mode = DRM_MM_INSERT_BEST;
+	पूर्णांक ret;
 
-	node = kzalloc(sizeof(*node), GFP_KERNEL);
-	if (!node)
-		return -ENOMEM;
+	node = kzalloc(माप(*node), GFP_KERNEL);
+	अगर (!node)
+		वापस -ENOMEM;
 
 	lpfn = place->lpfn;
-	if (!lpfn)
+	अगर (!lpfn)
 		lpfn = man->size;
 
 	mode = DRM_MM_INSERT_BEST;
-	if (place->flags & TTM_PL_FLAG_TOPDOWN)
+	अगर (place->flags & TTM_PL_FLAG_TOPDOWN)
 		mode = DRM_MM_INSERT_HIGH;
 
 	spin_lock(&rman->lock);
-	if (IS_ENABLED(CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD)) {
+	अगर (IS_ENABLED(CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD)) अणु
 		align_pages = (HPAGE_PUD_SIZE >> PAGE_SHIFT);
-		if (mem->num_pages >= align_pages) {
+		अगर (mem->num_pages >= align_pages) अणु
 			ret = vmw_thp_insert_aligned(mm, node, align_pages,
 						     place, mem, lpfn, mode);
-			if (!ret)
-				goto found_unlock;
-		}
-	}
+			अगर (!ret)
+				जाओ found_unlock;
+		पूर्ण
+	पूर्ण
 
 	align_pages = (HPAGE_PMD_SIZE >> PAGE_SHIFT);
-	if (mem->num_pages >= align_pages) {
+	अगर (mem->num_pages >= align_pages) अणु
 		ret = vmw_thp_insert_aligned(mm, node, align_pages, place, mem,
 					     lpfn, mode);
-		if (!ret)
-			goto found_unlock;
-	}
+		अगर (!ret)
+			जाओ found_unlock;
+	पूर्ण
 
 	ret = drm_mm_insert_node_in_range(mm, node, mem->num_pages,
 					  mem->page_alignment, 0,
@@ -96,86 +97,86 @@ static int vmw_thp_get_node(struct ttm_resource_manager *man,
 found_unlock:
 	spin_unlock(&rman->lock);
 
-	if (unlikely(ret)) {
-		kfree(node);
-	} else {
+	अगर (unlikely(ret)) अणु
+		kमुक्त(node);
+	पूर्ण अन्यथा अणु
 		mem->mm_node = node;
 		mem->start = node->start;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 
-static void vmw_thp_put_node(struct ttm_resource_manager *man,
-			     struct ttm_resource *mem)
-{
-	struct vmw_thp_manager *rman = to_thp_manager(man);
+अटल व्योम vmw_thp_put_node(काष्ठा tपंचांग_resource_manager *man,
+			     काष्ठा tपंचांग_resource *mem)
+अणु
+	काष्ठा vmw_thp_manager *rman = to_thp_manager(man);
 
-	if (mem->mm_node) {
+	अगर (mem->mm_node) अणु
 		spin_lock(&rman->lock);
-		drm_mm_remove_node(mem->mm_node);
+		drm_mm_हटाओ_node(mem->mm_node);
 		spin_unlock(&rman->lock);
 
-		kfree(mem->mm_node);
-		mem->mm_node = NULL;
-	}
-}
+		kमुक्त(mem->mm_node);
+		mem->mm_node = शून्य;
+	पूर्ण
+पूर्ण
 
-int vmw_thp_init(struct vmw_private *dev_priv)
-{
-	struct vmw_thp_manager *rman;
+पूर्णांक vmw_thp_init(काष्ठा vmw_निजी *dev_priv)
+अणु
+	काष्ठा vmw_thp_manager *rman;
 
-	rman = kzalloc(sizeof(*rman), GFP_KERNEL);
-	if (!rman)
-		return -ENOMEM;
+	rman = kzalloc(माप(*rman), GFP_KERNEL);
+	अगर (!rman)
+		वापस -ENOMEM;
 
-	ttm_resource_manager_init(&rman->manager,
+	tपंचांग_resource_manager_init(&rman->manager,
 				  dev_priv->vram_size >> PAGE_SHIFT);
 
 	rman->manager.func = &vmw_thp_func;
 	drm_mm_init(&rman->mm, 0, rman->manager.size);
 	spin_lock_init(&rman->lock);
 
-	ttm_set_driver_manager(&dev_priv->bdev, TTM_PL_VRAM, &rman->manager);
-	ttm_resource_manager_set_used(&rman->manager, true);
-	return 0;
-}
+	tपंचांग_set_driver_manager(&dev_priv->bdev, TTM_PL_VRAM, &rman->manager);
+	tपंचांग_resource_manager_set_used(&rman->manager, true);
+	वापस 0;
+पूर्ण
 
-void vmw_thp_fini(struct vmw_private *dev_priv)
-{
-	struct ttm_resource_manager *man = ttm_manager_type(&dev_priv->bdev, TTM_PL_VRAM);
-	struct vmw_thp_manager *rman = to_thp_manager(man);
-	struct drm_mm *mm = &rman->mm;
-	int ret;
+व्योम vmw_thp_fini(काष्ठा vmw_निजी *dev_priv)
+अणु
+	काष्ठा tपंचांग_resource_manager *man = tपंचांग_manager_type(&dev_priv->bdev, TTM_PL_VRAM);
+	काष्ठा vmw_thp_manager *rman = to_thp_manager(man);
+	काष्ठा drm_mm *mm = &rman->mm;
+	पूर्णांक ret;
 
-	ttm_resource_manager_set_used(man, false);
+	tपंचांग_resource_manager_set_used(man, false);
 
-	ret = ttm_resource_manager_evict_all(&dev_priv->bdev, man);
-	if (ret)
-		return;
+	ret = tपंचांग_resource_manager_evict_all(&dev_priv->bdev, man);
+	अगर (ret)
+		वापस;
 	spin_lock(&rman->lock);
 	drm_mm_clean(mm);
-	drm_mm_takedown(mm);
+	drm_mm_takeकरोwn(mm);
 	spin_unlock(&rman->lock);
-	ttm_resource_manager_cleanup(man);
-	ttm_set_driver_manager(&dev_priv->bdev, TTM_PL_VRAM, NULL);
-	kfree(rman);
-}
+	tपंचांग_resource_manager_cleanup(man);
+	tपंचांग_set_driver_manager(&dev_priv->bdev, TTM_PL_VRAM, शून्य);
+	kमुक्त(rman);
+पूर्ण
 
-static void vmw_thp_debug(struct ttm_resource_manager *man,
-			  struct drm_printer *printer)
-{
-	struct vmw_thp_manager *rman = to_thp_manager(man);
+अटल व्योम vmw_thp_debug(काष्ठा tपंचांग_resource_manager *man,
+			  काष्ठा drm_prपूर्णांकer *prपूर्णांकer)
+अणु
+	काष्ठा vmw_thp_manager *rman = to_thp_manager(man);
 
 	spin_lock(&rman->lock);
-	drm_mm_print(&rman->mm, printer);
+	drm_mm_prपूर्णांक(&rman->mm, prपूर्णांकer);
 	spin_unlock(&rman->lock);
-}
+पूर्ण
 
-static const struct ttm_resource_manager_func vmw_thp_func = {
+अटल स्थिर काष्ठा tपंचांग_resource_manager_func vmw_thp_func = अणु
 	.alloc = vmw_thp_get_node,
-	.free = vmw_thp_put_node,
+	.मुक्त = vmw_thp_put_node,
 	.debug = vmw_thp_debug
-};
+पूर्ण;

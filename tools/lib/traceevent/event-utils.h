@@ -1,67 +1,68 @@
-/* SPDX-License-Identifier: LGPL-2.1 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: LGPL-2.1 */
 /*
  * Copyright (C) 2010 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
  */
-#ifndef __UTIL_H
-#define __UTIL_H
+#अगर_अघोषित __UTIL_H
+#घोषणा __UTIL_H
 
-#include <ctype.h>
+#समावेश <प्रकार.स>
 
 /* Can be overridden */
-void warning(const char *fmt, ...);
-void pr_stat(const char *fmt, ...);
-void vpr_stat(const char *fmt, va_list ap);
+व्योम warning(स्थिर अक्षर *fmt, ...);
+व्योम pr_stat(स्थिर अक्षर *fmt, ...);
+व्योम vpr_stat(स्थिर अक्षर *fmt, बहु_सूची ap);
 
 /* Always available */
-void __warning(const char *fmt, ...);
-void __pr_stat(const char *fmt, ...);
+व्योम __warning(स्थिर अक्षर *fmt, ...);
+व्योम __pr_stat(स्थिर अक्षर *fmt, ...);
 
-void __vwarning(const char *fmt, ...);
-void __vpr_stat(const char *fmt, ...);
+व्योम __vwarning(स्थिर अक्षर *fmt, ...);
+व्योम __vpr_stat(स्थिर अक्षर *fmt, ...);
 
-#define min(x, y) ({				\
+#घोषणा min(x, y) (अणु				\
 	typeof(x) _min1 = (x);			\
 	typeof(y) _min2 = (y);			\
-	(void) (&_min1 == &_min2);		\
-	_min1 < _min2 ? _min1 : _min2; })
+	(व्योम) (&_min1 == &_min2);		\
+	_min1 < _min2 ? _min1 : _min2; पूर्ण)
 
-static inline char *strim(char *string)
-{
-	char *ret;
+अटल अंतरभूत अक्षर *strim(अक्षर *string)
+अणु
+	अक्षर *ret;
 
-	if (!string)
-		return NULL;
-	while (*string) {
-		if (!isspace(*string))
-			break;
+	अगर (!string)
+		वापस शून्य;
+	जबतक (*string) अणु
+		अगर (!है_खाली(*string))
+			अवरोध;
 		string++;
-	}
+	पूर्ण
 	ret = string;
 
-	string = ret + strlen(ret) - 1;
-	while (string > ret) {
-		if (!isspace(*string))
-			break;
+	string = ret + म_माप(ret) - 1;
+	जबतक (string > ret) अणु
+		अगर (!है_खाली(*string))
+			अवरोध;
 		string--;
-	}
+	पूर्ण
 	string[1] = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int has_text(const char *text)
-{
-	if (!text)
-		return 0;
+अटल अंतरभूत पूर्णांक has_text(स्थिर अक्षर *text)
+अणु
+	अगर (!text)
+		वापस 0;
 
-	while (*text) {
-		if (!isspace(*text))
-			return 1;
+	जबतक (*text) अणु
+		अगर (!है_खाली(*text))
+			वापस 1;
 		text++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
     Legend Silicon LGS-8GL5 DMB-TH OFDM demodulator driver
 
@@ -8,179 +9,179 @@
 
 */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <media/dvb_frontend.h>
-#include "lgs8gl5.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश "lgs8gl5.h"
 
 
-#define REG_RESET		0x02
-#define REG_RESET_OFF			0x01
-#define REG_03			0x03
-#define REG_04			0x04
-#define REG_07			0x07
-#define REG_09			0x09
-#define REG_0A			0x0a
-#define REG_0B			0x0b
-#define REG_0C			0x0c
-#define REG_37			0x37
-#define REG_STRENGTH		0x4b
-#define REG_STRENGTH_MASK		0x7f
-#define REG_STRENGTH_CARRIER		0x80
-#define REG_INVERSION		0x7c
-#define REG_INVERSION_ON		0x80
-#define REG_7D			0x7d
-#define REG_7E			0x7e
-#define REG_A2			0xa2
-#define REG_STATUS		0xa4
-#define REG_STATUS_SYNC		0x04
-#define REG_STATUS_LOCK		0x01
+#घोषणा REG_RESET		0x02
+#घोषणा REG_RESET_OFF			0x01
+#घोषणा REG_03			0x03
+#घोषणा REG_04			0x04
+#घोषणा REG_07			0x07
+#घोषणा REG_09			0x09
+#घोषणा REG_0A			0x0a
+#घोषणा REG_0B			0x0b
+#घोषणा REG_0C			0x0c
+#घोषणा REG_37			0x37
+#घोषणा REG_STRENGTH		0x4b
+#घोषणा REG_STRENGTH_MASK		0x7f
+#घोषणा REG_STRENGTH_CARRIER		0x80
+#घोषणा REG_INVERSION		0x7c
+#घोषणा REG_INVERSION_ON		0x80
+#घोषणा REG_7D			0x7d
+#घोषणा REG_7E			0x7e
+#घोषणा REG_A2			0xa2
+#घोषणा REG_STATUS		0xa4
+#घोषणा REG_STATUS_SYNC		0x04
+#घोषणा REG_STATUS_LOCK		0x01
 
 
-struct lgs8gl5_state {
-	struct i2c_adapter *i2c;
-	const struct lgs8gl5_config *config;
-	struct dvb_frontend frontend;
-};
+काष्ठा lgs8gl5_state अणु
+	काष्ठा i2c_adapter *i2c;
+	स्थिर काष्ठा lgs8gl5_config *config;
+	काष्ठा dvb_frontend frontend;
+पूर्ण;
 
 
-static int debug;
-#define dprintk(args...) \
-	do { \
-		if (debug) \
-			printk(KERN_DEBUG "lgs8gl5: " args); \
-	} while (0)
+अटल पूर्णांक debug;
+#घोषणा dprपूर्णांकk(args...) \
+	करो अणु \
+		अगर (debug) \
+			prपूर्णांकk(KERN_DEBUG "lgs8gl5: " args); \
+	पूर्ण जबतक (0)
 
 
-/* Writes into demod's register */
-static int
-lgs8gl5_write_reg(struct lgs8gl5_state *state, u8 reg, u8 data)
-{
-	int ret;
-	u8 buf[] = {reg, data};
-	struct i2c_msg msg = {
+/* Writes पूर्णांकo demod's रेजिस्टर */
+अटल पूर्णांक
+lgs8gl5_ग_लिखो_reg(काष्ठा lgs8gl5_state *state, u8 reg, u8 data)
+अणु
+	पूर्णांक ret;
+	u8 buf[] = अणुreg, dataपूर्ण;
+	काष्ठा i2c_msg msg = अणु
 		.addr  = state->config->demod_address,
 		.flags = 0,
 		.buf   = buf,
 		.len   = 2
-	};
+	पूर्ण;
 
 	ret = i2c_transfer(state->i2c, &msg, 1);
-	if (ret != 1)
-		dprintk("%s: error (reg=0x%02x, val=0x%02x, ret=%i)\n",
+	अगर (ret != 1)
+		dprपूर्णांकk("%s: error (reg=0x%02x, val=0x%02x, ret=%i)\n",
 			__func__, reg, data, ret);
-	return (ret != 1) ? -1 : 0;
-}
+	वापस (ret != 1) ? -1 : 0;
+पूर्ण
 
 
-/* Reads from demod's register */
-static int
-lgs8gl5_read_reg(struct lgs8gl5_state *state, u8 reg)
-{
-	int ret;
-	u8 b0[] = {reg};
-	u8 b1[] = {0};
-	struct i2c_msg msg[2] = {
-		{
+/* Reads from demod's रेजिस्टर */
+अटल पूर्णांक
+lgs8gl5_पढ़ो_reg(काष्ठा lgs8gl5_state *state, u8 reg)
+अणु
+	पूर्णांक ret;
+	u8 b0[] = अणुregपूर्ण;
+	u8 b1[] = अणु0पूर्ण;
+	काष्ठा i2c_msg msg[2] = अणु
+		अणु
 			.addr  = state->config->demod_address,
 			.flags = 0,
 			.buf   = b0,
 			.len   = 1
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr  = state->config->demod_address,
 			.flags = I2C_M_RD,
 			.buf   = b1,
 			.len   = 1
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
 	ret = i2c_transfer(state->i2c, msg, 2);
-	if (ret != 2)
-		return -EIO;
+	अगर (ret != 2)
+		वापस -EIO;
 
-	return b1[0];
-}
-
-
-static int
-lgs8gl5_update_reg(struct lgs8gl5_state *state, u8 reg, u8 data)
-{
-	lgs8gl5_read_reg(state, reg);
-	lgs8gl5_write_reg(state, reg, data);
-	return 0;
-}
+	वापस b1[0];
+पूर्ण
 
 
-/* Writes into alternate device's register */
-/* TODO:  Find out what that device is for! */
-static int
-lgs8gl5_update_alt_reg(struct lgs8gl5_state *state, u8 reg, u8 data)
-{
-	int ret;
-	u8 b0[] = {reg};
-	u8 b1[] = {0};
-	u8 b2[] = {reg, data};
-	struct i2c_msg msg[3] = {
-		{
+अटल पूर्णांक
+lgs8gl5_update_reg(काष्ठा lgs8gl5_state *state, u8 reg, u8 data)
+अणु
+	lgs8gl5_पढ़ो_reg(state, reg);
+	lgs8gl5_ग_लिखो_reg(state, reg, data);
+	वापस 0;
+पूर्ण
+
+
+/* Writes पूर्णांकo alternate device's रेजिस्टर */
+/* TODO:  Find out what that device is क्रम! */
+अटल पूर्णांक
+lgs8gl5_update_alt_reg(काष्ठा lgs8gl5_state *state, u8 reg, u8 data)
+अणु
+	पूर्णांक ret;
+	u8 b0[] = अणुregपूर्ण;
+	u8 b1[] = अणु0पूर्ण;
+	u8 b2[] = अणुreg, dataपूर्ण;
+	काष्ठा i2c_msg msg[3] = अणु
+		अणु
 			.addr  = state->config->demod_address + 2,
 			.flags = 0,
 			.buf   = b0,
 			.len   = 1
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr  = state->config->demod_address + 2,
 			.flags = I2C_M_RD,
 			.buf   = b1,
 			.len   = 1
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr  = state->config->demod_address + 2,
 			.flags = 0,
 			.buf   = b2,
 			.len   = 2
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
 	ret = i2c_transfer(state->i2c, msg, 3);
-	return (ret != 3) ? -1 : 0;
-}
+	वापस (ret != 3) ? -1 : 0;
+पूर्ण
 
 
-static void
-lgs8gl5_soft_reset(struct lgs8gl5_state *state)
-{
+अटल व्योम
+lgs8gl5_soft_reset(काष्ठा lgs8gl5_state *state)
+अणु
 	u8 val;
 
-	dprintk("%s\n", __func__);
+	dprपूर्णांकk("%s\n", __func__);
 
-	val = lgs8gl5_read_reg(state, REG_RESET);
-	lgs8gl5_write_reg(state, REG_RESET, val & ~REG_RESET_OFF);
-	lgs8gl5_write_reg(state, REG_RESET, val | REG_RESET_OFF);
+	val = lgs8gl5_पढ़ो_reg(state, REG_RESET);
+	lgs8gl5_ग_लिखो_reg(state, REG_RESET, val & ~REG_RESET_OFF);
+	lgs8gl5_ग_लिखो_reg(state, REG_RESET, val | REG_RESET_OFF);
 	msleep(5);
-}
+पूर्ण
 
 
 /* Starts demodulation */
-static void
-lgs8gl5_start_demod(struct lgs8gl5_state *state)
-{
+अटल व्योम
+lgs8gl5_start_demod(काष्ठा lgs8gl5_state *state)
+अणु
 	u8  val;
-	int n;
+	पूर्णांक n;
 
-	dprintk("%s\n", __func__);
+	dprपूर्णांकk("%s\n", __func__);
 
 	lgs8gl5_update_alt_reg(state, 0xc2, 0x28);
 	lgs8gl5_soft_reset(state);
 	lgs8gl5_update_reg(state, REG_07, 0x10);
 	lgs8gl5_update_reg(state, REG_07, 0x10);
-	lgs8gl5_write_reg(state, REG_09, 0x0e);
-	lgs8gl5_write_reg(state, REG_0A, 0xe5);
-	lgs8gl5_write_reg(state, REG_0B, 0x35);
-	lgs8gl5_write_reg(state, REG_0C, 0x30);
+	lgs8gl5_ग_लिखो_reg(state, REG_09, 0x0e);
+	lgs8gl5_ग_लिखो_reg(state, REG_0A, 0xe5);
+	lgs8gl5_ग_लिखो_reg(state, REG_0B, 0x35);
+	lgs8gl5_ग_लिखो_reg(state, REG_0C, 0x30);
 
 	lgs8gl5_update_reg(state, REG_03, 0x00);
 	lgs8gl5_update_reg(state, REG_7E, 0x01);
@@ -189,220 +190,220 @@ lgs8gl5_start_demod(struct lgs8gl5_state *state)
 	lgs8gl5_update_reg(state, REG_37, 0x01);
 	lgs8gl5_soft_reset(state);
 
-	/* Wait for carrier */
-	for (n = 0;  n < 10;  n++) {
-		val = lgs8gl5_read_reg(state, REG_STRENGTH);
-		dprintk("Wait for carrier[%d] 0x%02X\n", n, val);
-		if (val & REG_STRENGTH_CARRIER)
-			break;
+	/* Wait क्रम carrier */
+	क्रम (n = 0;  n < 10;  n++) अणु
+		val = lgs8gl5_पढ़ो_reg(state, REG_STRENGTH);
+		dprपूर्णांकk("Wait for carrier[%d] 0x%02X\n", n, val);
+		अगर (val & REG_STRENGTH_CARRIER)
+			अवरोध;
 		msleep(4);
-	}
-	if (!(val & REG_STRENGTH_CARRIER))
-		return;
+	पूर्ण
+	अगर (!(val & REG_STRENGTH_CARRIER))
+		वापस;
 
-	/* Wait for lock */
-	for (n = 0;  n < 20;  n++) {
-		val = lgs8gl5_read_reg(state, REG_STATUS);
-		dprintk("Wait for lock[%d] 0x%02X\n", n, val);
-		if (val & REG_STATUS_LOCK)
-			break;
+	/* Wait क्रम lock */
+	क्रम (n = 0;  n < 20;  n++) अणु
+		val = lgs8gl5_पढ़ो_reg(state, REG_STATUS);
+		dprपूर्णांकk("Wait for lock[%d] 0x%02X\n", n, val);
+		अगर (val & REG_STATUS_LOCK)
+			अवरोध;
 		msleep(12);
-	}
-	if (!(val & REG_STATUS_LOCK))
-		return;
+	पूर्ण
+	अगर (!(val & REG_STATUS_LOCK))
+		वापस;
 
-	lgs8gl5_write_reg(state, REG_7D, lgs8gl5_read_reg(state, REG_A2));
+	lgs8gl5_ग_लिखो_reg(state, REG_7D, lgs8gl5_पढ़ो_reg(state, REG_A2));
 	lgs8gl5_soft_reset(state);
-}
+पूर्ण
 
 
-static int
-lgs8gl5_init(struct dvb_frontend *fe)
-{
-	struct lgs8gl5_state *state = fe->demodulator_priv;
+अटल पूर्णांक
+lgs8gl5_init(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा lgs8gl5_state *state = fe->demodulator_priv;
 
-	dprintk("%s\n", __func__);
+	dprपूर्णांकk("%s\n", __func__);
 
 	lgs8gl5_update_alt_reg(state, 0xc2, 0x28);
 	lgs8gl5_soft_reset(state);
 	lgs8gl5_update_reg(state, REG_07, 0x10);
 	lgs8gl5_update_reg(state, REG_07, 0x10);
-	lgs8gl5_write_reg(state, REG_09, 0x0e);
-	lgs8gl5_write_reg(state, REG_0A, 0xe5);
-	lgs8gl5_write_reg(state, REG_0B, 0x35);
-	lgs8gl5_write_reg(state, REG_0C, 0x30);
+	lgs8gl5_ग_लिखो_reg(state, REG_09, 0x0e);
+	lgs8gl5_ग_लिखो_reg(state, REG_0A, 0xe5);
+	lgs8gl5_ग_लिखो_reg(state, REG_0B, 0x35);
+	lgs8gl5_ग_लिखो_reg(state, REG_0C, 0x30);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int
-lgs8gl5_read_status(struct dvb_frontend *fe, enum fe_status *status)
-{
-	struct lgs8gl5_state *state = fe->demodulator_priv;
-	u8 level = lgs8gl5_read_reg(state, REG_STRENGTH);
-	u8 flags = lgs8gl5_read_reg(state, REG_STATUS);
+अटल पूर्णांक
+lgs8gl5_पढ़ो_status(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status)
+अणु
+	काष्ठा lgs8gl5_state *state = fe->demodulator_priv;
+	u8 level = lgs8gl5_पढ़ो_reg(state, REG_STRENGTH);
+	u8 flags = lgs8gl5_पढ़ो_reg(state, REG_STATUS);
 
 	*status = 0;
 
-	if ((level & REG_STRENGTH_MASK) > 0)
+	अगर ((level & REG_STRENGTH_MASK) > 0)
 		*status |= FE_HAS_SIGNAL;
-	if (level & REG_STRENGTH_CARRIER)
+	अगर (level & REG_STRENGTH_CARRIER)
 		*status |= FE_HAS_CARRIER;
-	if (flags & REG_STATUS_SYNC)
+	अगर (flags & REG_STATUS_SYNC)
 		*status |= FE_HAS_SYNC;
-	if (flags & REG_STATUS_LOCK)
+	अगर (flags & REG_STATUS_LOCK)
 		*status |= FE_HAS_LOCK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int
-lgs8gl5_read_ber(struct dvb_frontend *fe, u32 *ber)
-{
+अटल पूर्णांक
+lgs8gl5_पढ़ो_ber(काष्ठा dvb_frontend *fe, u32 *ber)
+अणु
 	*ber = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int
-lgs8gl5_read_signal_strength(struct dvb_frontend *fe, u16 *signal_strength)
-{
-	struct lgs8gl5_state *state = fe->demodulator_priv;
-	u8 level = lgs8gl5_read_reg(state, REG_STRENGTH);
-	*signal_strength = (level & REG_STRENGTH_MASK) << 8;
+अटल पूर्णांक
+lgs8gl5_पढ़ो_संकेत_strength(काष्ठा dvb_frontend *fe, u16 *संकेत_strength)
+अणु
+	काष्ठा lgs8gl5_state *state = fe->demodulator_priv;
+	u8 level = lgs8gl5_पढ़ो_reg(state, REG_STRENGTH);
+	*संकेत_strength = (level & REG_STRENGTH_MASK) << 8;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int
-lgs8gl5_read_snr(struct dvb_frontend *fe, u16 *snr)
-{
-	struct lgs8gl5_state *state = fe->demodulator_priv;
-	u8 level = lgs8gl5_read_reg(state, REG_STRENGTH);
+अटल पूर्णांक
+lgs8gl5_पढ़ो_snr(काष्ठा dvb_frontend *fe, u16 *snr)
+अणु
+	काष्ठा lgs8gl5_state *state = fe->demodulator_priv;
+	u8 level = lgs8gl5_पढ़ो_reg(state, REG_STRENGTH);
 	*snr = (level & REG_STRENGTH_MASK) << 8;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int
-lgs8gl5_read_ucblocks(struct dvb_frontend *fe, u32 *ucblocks)
-{
+अटल पूर्णांक
+lgs8gl5_पढ़ो_ucblocks(काष्ठा dvb_frontend *fe, u32 *ucblocks)
+अणु
 	*ucblocks = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int
-lgs8gl5_set_frontend(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct lgs8gl5_state *state = fe->demodulator_priv;
+अटल पूर्णांक
+lgs8gl5_set_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा lgs8gl5_state *state = fe->demodulator_priv;
 
-	dprintk("%s\n", __func__);
+	dprपूर्णांकk("%s\n", __func__);
 
-	if (p->bandwidth_hz != 8000000)
-		return -EINVAL;
+	अगर (p->bandwidth_hz != 8000000)
+		वापस -EINVAL;
 
-	if (fe->ops.tuner_ops.set_params) {
+	अगर (fe->ops.tuner_ops.set_params) अणु
 		fe->ops.tuner_ops.set_params(fe);
-		if (fe->ops.i2c_gate_ctrl)
+		अगर (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 0);
-	}
+	पूर्ण
 
 	/* lgs8gl5_set_inversion(state, p->inversion); */
 
 	lgs8gl5_start_demod(state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int
-lgs8gl5_get_frontend(struct dvb_frontend *fe,
-		     struct dtv_frontend_properties *p)
-{
-	struct lgs8gl5_state *state = fe->demodulator_priv;
+अटल पूर्णांक
+lgs8gl5_get_frontend(काष्ठा dvb_frontend *fe,
+		     काष्ठा dtv_frontend_properties *p)
+अणु
+	काष्ठा lgs8gl5_state *state = fe->demodulator_priv;
 
-	u8 inv = lgs8gl5_read_reg(state, REG_INVERSION);
+	u8 inv = lgs8gl5_पढ़ो_reg(state, REG_INVERSION);
 
 	p->inversion = (inv & REG_INVERSION_ON) ? INVERSION_ON : INVERSION_OFF;
 
 	p->code_rate_HP = FEC_1_2;
 	p->code_rate_LP = FEC_7_8;
-	p->guard_interval = GUARD_INTERVAL_1_32;
+	p->guard_पूर्णांकerval = GUARD_INTERVAL_1_32;
 	p->transmission_mode = TRANSMISSION_MODE_2K;
 	p->modulation = QAM_64;
 	p->hierarchy = HIERARCHY_NONE;
 	p->bandwidth_hz = 8000000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int
-lgs8gl5_get_tune_settings(struct dvb_frontend *fe,
-		struct dvb_frontend_tune_settings *fesettings)
-{
+अटल पूर्णांक
+lgs8gl5_get_tune_settings(काष्ठा dvb_frontend *fe,
+		काष्ठा dvb_frontend_tune_settings *fesettings)
+अणु
 	fesettings->min_delay_ms = 240;
 	fesettings->step_size    = 0;
-	fesettings->max_drift    = 0;
-	return 0;
-}
+	fesettings->max_drअगरt    = 0;
+	वापस 0;
+पूर्ण
 
 
-static void
-lgs8gl5_release(struct dvb_frontend *fe)
-{
-	struct lgs8gl5_state *state = fe->demodulator_priv;
-	kfree(state);
-}
+अटल व्योम
+lgs8gl5_release(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा lgs8gl5_state *state = fe->demodulator_priv;
+	kमुक्त(state);
+पूर्ण
 
 
-static const struct dvb_frontend_ops lgs8gl5_ops;
+अटल स्थिर काष्ठा dvb_frontend_ops lgs8gl5_ops;
 
 
-struct dvb_frontend*
-lgs8gl5_attach(const struct lgs8gl5_config *config, struct i2c_adapter *i2c)
-{
-	struct lgs8gl5_state *state = NULL;
+काष्ठा dvb_frontend*
+lgs8gl5_attach(स्थिर काष्ठा lgs8gl5_config *config, काष्ठा i2c_adapter *i2c)
+अणु
+	काष्ठा lgs8gl5_state *state = शून्य;
 
-	dprintk("%s\n", __func__);
+	dprपूर्णांकk("%s\n", __func__);
 
-	/* Allocate memory for the internal state */
-	state = kzalloc(sizeof(struct lgs8gl5_state), GFP_KERNEL);
-	if (state == NULL)
-		goto error;
+	/* Allocate memory क्रम the पूर्णांकernal state */
+	state = kzalloc(माप(काष्ठा lgs8gl5_state), GFP_KERNEL);
+	अगर (state == शून्य)
+		जाओ error;
 
 	/* Setup the state */
 	state->config = config;
 	state->i2c    = i2c;
 
-	/* Check if the demod is there */
-	if (lgs8gl5_read_reg(state, REG_RESET) < 0)
-		goto error;
+	/* Check अगर the demod is there */
+	अगर (lgs8gl5_पढ़ो_reg(state, REG_RESET) < 0)
+		जाओ error;
 
 	/* Create dvb_frontend */
-	memcpy(&state->frontend.ops, &lgs8gl5_ops,
-		sizeof(struct dvb_frontend_ops));
+	स_नकल(&state->frontend.ops, &lgs8gl5_ops,
+		माप(काष्ठा dvb_frontend_ops));
 	state->frontend.demodulator_priv = state;
-	return &state->frontend;
+	वापस &state->frontend;
 
 error:
-	kfree(state);
-	return NULL;
-}
+	kमुक्त(state);
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(lgs8gl5_attach);
 
 
-static const struct dvb_frontend_ops lgs8gl5_ops = {
-	.delsys = { SYS_DTMB },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops lgs8gl5_ops = अणु
+	.delsys = अणु SYS_DTMB पूर्ण,
+	.info = अणु
 		.name			= "Legend Silicon LGS-8GL5 DMB-TH",
 		.frequency_min_hz	= 474 * MHz,
 		.frequency_max_hz	= 858 * MHz,
@@ -415,7 +416,7 @@ static const struct dvb_frontend_ops lgs8gl5_ops = {
 			FE_CAN_GUARD_INTERVAL_AUTO |
 			FE_CAN_HIERARCHY_AUTO |
 			FE_CAN_RECOVER
-	},
+	पूर्ण,
 
 	.release = lgs8gl5_release,
 
@@ -425,15 +426,15 @@ static const struct dvb_frontend_ops lgs8gl5_ops = {
 	.get_frontend = lgs8gl5_get_frontend,
 	.get_tune_settings = lgs8gl5_get_tune_settings,
 
-	.read_status = lgs8gl5_read_status,
-	.read_ber = lgs8gl5_read_ber,
-	.read_signal_strength = lgs8gl5_read_signal_strength,
-	.read_snr = lgs8gl5_read_snr,
-	.read_ucblocks = lgs8gl5_read_ucblocks,
-};
+	.पढ़ो_status = lgs8gl5_पढ़ो_status,
+	.पढ़ो_ber = lgs8gl5_पढ़ो_ber,
+	.पढ़ो_संकेत_strength = lgs8gl5_पढ़ो_संकेत_strength,
+	.पढ़ो_snr = lgs8gl5_पढ़ो_snr,
+	.पढ़ो_ucblocks = lgs8gl5_पढ़ो_ucblocks,
+पूर्ण;
 
 
-module_param(debug, int, 0644);
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Turn on/off frontend debugging (default:off).");
 
 MODULE_DESCRIPTION("Legend Silicon LGS-8GL5 DMB-TH Demodulator driver");

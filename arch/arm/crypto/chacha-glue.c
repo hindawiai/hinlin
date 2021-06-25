@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * ARM NEON accelerated ChaCha and XChaCha stream ciphers,
  * including ChaCha20 (RFC7539)
@@ -7,198 +8,198 @@
  * Copyright (C) 2015 Martin Willi
  */
 
-#include <crypto/algapi.h>
-#include <crypto/internal/chacha.h>
-#include <crypto/internal/simd.h>
-#include <crypto/internal/skcipher.h>
-#include <linux/jump_label.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/पूर्णांकernal/chacha.h>
+#समावेश <crypto/पूर्णांकernal/simd.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include <asm/cputype.h>
-#include <asm/hwcap.h>
-#include <asm/neon.h>
-#include <asm/simd.h>
+#समावेश <यंत्र/cputype.h>
+#समावेश <यंत्र/hwcap.h>
+#समावेश <यंत्र/neon.h>
+#समावेश <यंत्र/simd.h>
 
-asmlinkage void chacha_block_xor_neon(const u32 *state, u8 *dst, const u8 *src,
-				      int nrounds);
-asmlinkage void chacha_4block_xor_neon(const u32 *state, u8 *dst, const u8 *src,
-				       int nrounds, unsigned int nbytes);
-asmlinkage void hchacha_block_arm(const u32 *state, u32 *out, int nrounds);
-asmlinkage void hchacha_block_neon(const u32 *state, u32 *out, int nrounds);
+यंत्रlinkage व्योम chacha_block_xor_neon(स्थिर u32 *state, u8 *dst, स्थिर u8 *src,
+				      पूर्णांक nrounds);
+यंत्रlinkage व्योम chacha_4block_xor_neon(स्थिर u32 *state, u8 *dst, स्थिर u8 *src,
+				       पूर्णांक nrounds, अचिन्हित पूर्णांक nbytes);
+यंत्रlinkage व्योम hchacha_block_arm(स्थिर u32 *state, u32 *out, पूर्णांक nrounds);
+यंत्रlinkage व्योम hchacha_block_neon(स्थिर u32 *state, u32 *out, पूर्णांक nrounds);
 
-asmlinkage void chacha_doarm(u8 *dst, const u8 *src, unsigned int bytes,
-			     const u32 *state, int nrounds);
+यंत्रlinkage व्योम chacha_करोarm(u8 *dst, स्थिर u8 *src, अचिन्हित पूर्णांक bytes,
+			     स्थिर u32 *state, पूर्णांक nrounds);
 
-static __ro_after_init DEFINE_STATIC_KEY_FALSE(use_neon);
+अटल __ro_after_init DEFINE_STATIC_KEY_FALSE(use_neon);
 
-static inline bool neon_usable(void)
-{
-	return static_branch_likely(&use_neon) && crypto_simd_usable();
-}
+अटल अंतरभूत bool neon_usable(व्योम)
+अणु
+	वापस अटल_branch_likely(&use_neon) && crypto_simd_usable();
+पूर्ण
 
-static void chacha_doneon(u32 *state, u8 *dst, const u8 *src,
-			  unsigned int bytes, int nrounds)
-{
+अटल व्योम chacha_करोneon(u32 *state, u8 *dst, स्थिर u8 *src,
+			  अचिन्हित पूर्णांक bytes, पूर्णांक nrounds)
+अणु
 	u8 buf[CHACHA_BLOCK_SIZE];
 
-	while (bytes > CHACHA_BLOCK_SIZE) {
-		unsigned int l = min(bytes, CHACHA_BLOCK_SIZE * 4U);
+	जबतक (bytes > CHACHA_BLOCK_SIZE) अणु
+		अचिन्हित पूर्णांक l = min(bytes, CHACHA_BLOCK_SIZE * 4U);
 
 		chacha_4block_xor_neon(state, dst, src, nrounds, l);
 		bytes -= l;
 		src += l;
 		dst += l;
 		state[12] += DIV_ROUND_UP(l, CHACHA_BLOCK_SIZE);
-	}
-	if (bytes) {
-		const u8 *s = src;
+	पूर्ण
+	अगर (bytes) अणु
+		स्थिर u8 *s = src;
 		u8 *d = dst;
 
-		if (bytes != CHACHA_BLOCK_SIZE)
-			s = d = memcpy(buf, src, bytes);
+		अगर (bytes != CHACHA_BLOCK_SIZE)
+			s = d = स_नकल(buf, src, bytes);
 		chacha_block_xor_neon(state, d, s, nrounds);
-		if (d != dst)
-			memcpy(dst, buf, bytes);
+		अगर (d != dst)
+			स_नकल(dst, buf, bytes);
 		state[12]++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void hchacha_block_arch(const u32 *state, u32 *stream, int nrounds)
-{
-	if (!IS_ENABLED(CONFIG_KERNEL_MODE_NEON) || !neon_usable()) {
+व्योम hchacha_block_arch(स्थिर u32 *state, u32 *stream, पूर्णांक nrounds)
+अणु
+	अगर (!IS_ENABLED(CONFIG_KERNEL_MODE_NEON) || !neon_usable()) अणु
 		hchacha_block_arm(state, stream, nrounds);
-	} else {
+	पूर्ण अन्यथा अणु
 		kernel_neon_begin();
 		hchacha_block_neon(state, stream, nrounds);
 		kernel_neon_end();
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(hchacha_block_arch);
 
-void chacha_init_arch(u32 *state, const u32 *key, const u8 *iv)
-{
+व्योम chacha_init_arch(u32 *state, स्थिर u32 *key, स्थिर u8 *iv)
+अणु
 	chacha_init_generic(state, key, iv);
-}
+पूर्ण
 EXPORT_SYMBOL(chacha_init_arch);
 
-void chacha_crypt_arch(u32 *state, u8 *dst, const u8 *src, unsigned int bytes,
-		       int nrounds)
-{
-	if (!IS_ENABLED(CONFIG_KERNEL_MODE_NEON) || !neon_usable() ||
-	    bytes <= CHACHA_BLOCK_SIZE) {
-		chacha_doarm(dst, src, bytes, state, nrounds);
+व्योम chacha_crypt_arch(u32 *state, u8 *dst, स्थिर u8 *src, अचिन्हित पूर्णांक bytes,
+		       पूर्णांक nrounds)
+अणु
+	अगर (!IS_ENABLED(CONFIG_KERNEL_MODE_NEON) || !neon_usable() ||
+	    bytes <= CHACHA_BLOCK_SIZE) अणु
+		chacha_करोarm(dst, src, bytes, state, nrounds);
 		state[12] += DIV_ROUND_UP(bytes, CHACHA_BLOCK_SIZE);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	do {
-		unsigned int todo = min_t(unsigned int, bytes, SZ_4K);
+	करो अणु
+		अचिन्हित पूर्णांक toकरो = min_t(अचिन्हित पूर्णांक, bytes, SZ_4K);
 
 		kernel_neon_begin();
-		chacha_doneon(state, dst, src, todo, nrounds);
+		chacha_करोneon(state, dst, src, toकरो, nrounds);
 		kernel_neon_end();
 
-		bytes -= todo;
-		src += todo;
-		dst += todo;
-	} while (bytes);
-}
+		bytes -= toकरो;
+		src += toकरो;
+		dst += toकरो;
+	पूर्ण जबतक (bytes);
+पूर्ण
 EXPORT_SYMBOL(chacha_crypt_arch);
 
-static int chacha_stream_xor(struct skcipher_request *req,
-			     const struct chacha_ctx *ctx, const u8 *iv,
+अटल पूर्णांक chacha_stream_xor(काष्ठा skcipher_request *req,
+			     स्थिर काष्ठा chacha_ctx *ctx, स्थिर u8 *iv,
 			     bool neon)
-{
-	struct skcipher_walk walk;
+अणु
+	काष्ठा skcipher_walk walk;
 	u32 state[16];
-	int err;
+	पूर्णांक err;
 
 	err = skcipher_walk_virt(&walk, req, false);
 
 	chacha_init_generic(state, ctx->key, iv);
 
-	while (walk.nbytes > 0) {
-		unsigned int nbytes = walk.nbytes;
+	जबतक (walk.nbytes > 0) अणु
+		अचिन्हित पूर्णांक nbytes = walk.nbytes;
 
-		if (nbytes < walk.total)
-			nbytes = round_down(nbytes, walk.stride);
+		अगर (nbytes < walk.total)
+			nbytes = round_करोwn(nbytes, walk.stride);
 
-		if (!IS_ENABLED(CONFIG_KERNEL_MODE_NEON) || !neon) {
-			chacha_doarm(walk.dst.virt.addr, walk.src.virt.addr,
+		अगर (!IS_ENABLED(CONFIG_KERNEL_MODE_NEON) || !neon) अणु
+			chacha_करोarm(walk.dst.virt.addr, walk.src.virt.addr,
 				     nbytes, state, ctx->nrounds);
 			state[12] += DIV_ROUND_UP(nbytes, CHACHA_BLOCK_SIZE);
-		} else {
+		पूर्ण अन्यथा अणु
 			kernel_neon_begin();
-			chacha_doneon(state, walk.dst.virt.addr,
+			chacha_करोneon(state, walk.dst.virt.addr,
 				      walk.src.virt.addr, nbytes, ctx->nrounds);
 			kernel_neon_end();
-		}
-		err = skcipher_walk_done(&walk, walk.nbytes - nbytes);
-	}
+		पूर्ण
+		err = skcipher_walk_करोne(&walk, walk.nbytes - nbytes);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int do_chacha(struct skcipher_request *req, bool neon)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक करो_chacha(काष्ठा skcipher_request *req, bool neon)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	return chacha_stream_xor(req, ctx, req->iv, neon);
-}
+	वापस chacha_stream_xor(req, ctx, req->iv, neon);
+पूर्ण
 
-static int chacha_arm(struct skcipher_request *req)
-{
-	return do_chacha(req, false);
-}
+अटल पूर्णांक chacha_arm(काष्ठा skcipher_request *req)
+अणु
+	वापस करो_chacha(req, false);
+पूर्ण
 
-static int chacha_neon(struct skcipher_request *req)
-{
-	return do_chacha(req, neon_usable());
-}
+अटल पूर्णांक chacha_neon(काष्ठा skcipher_request *req)
+अणु
+	वापस करो_chacha(req, neon_usable());
+पूर्ण
 
-static int do_xchacha(struct skcipher_request *req, bool neon)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct chacha_ctx subctx;
+अटल पूर्णांक करो_xchacha(काष्ठा skcipher_request *req, bool neon)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा chacha_ctx subctx;
 	u32 state[16];
 	u8 real_iv[16];
 
 	chacha_init_generic(state, ctx->key, req->iv);
 
-	if (!IS_ENABLED(CONFIG_KERNEL_MODE_NEON) || !neon) {
+	अगर (!IS_ENABLED(CONFIG_KERNEL_MODE_NEON) || !neon) अणु
 		hchacha_block_arm(state, subctx.key, ctx->nrounds);
-	} else {
+	पूर्ण अन्यथा अणु
 		kernel_neon_begin();
 		hchacha_block_neon(state, subctx.key, ctx->nrounds);
 		kernel_neon_end();
-	}
+	पूर्ण
 	subctx.nrounds = ctx->nrounds;
 
-	memcpy(&real_iv[0], req->iv + 24, 8);
-	memcpy(&real_iv[8], req->iv + 16, 8);
-	return chacha_stream_xor(req, &subctx, real_iv, neon);
-}
+	स_नकल(&real_iv[0], req->iv + 24, 8);
+	स_नकल(&real_iv[8], req->iv + 16, 8);
+	वापस chacha_stream_xor(req, &subctx, real_iv, neon);
+पूर्ण
 
-static int xchacha_arm(struct skcipher_request *req)
-{
-	return do_xchacha(req, false);
-}
+अटल पूर्णांक xchacha_arm(काष्ठा skcipher_request *req)
+अणु
+	वापस करो_xchacha(req, false);
+पूर्ण
 
-static int xchacha_neon(struct skcipher_request *req)
-{
-	return do_xchacha(req, neon_usable());
-}
+अटल पूर्णांक xchacha_neon(काष्ठा skcipher_request *req)
+अणु
+	वापस करो_xchacha(req, neon_usable());
+पूर्ण
 
-static struct skcipher_alg arm_algs[] = {
-	{
+अटल काष्ठा skcipher_alg arm_algs[] = अणु
+	अणु
 		.base.cra_name		= "chacha20",
 		.base.cra_driver_name	= "chacha20-arm",
 		.base.cra_priority	= 200,
 		.base.cra_blocksize	= 1,
-		.base.cra_ctxsize	= sizeof(struct chacha_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा chacha_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= CHACHA_KEY_SIZE,
@@ -208,12 +209,12 @@ static struct skcipher_alg arm_algs[] = {
 		.setkey			= chacha20_setkey,
 		.encrypt		= chacha_arm,
 		.decrypt		= chacha_arm,
-	}, {
+	पूर्ण, अणु
 		.base.cra_name		= "xchacha20",
 		.base.cra_driver_name	= "xchacha20-arm",
 		.base.cra_priority	= 200,
 		.base.cra_blocksize	= 1,
-		.base.cra_ctxsize	= sizeof(struct chacha_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा chacha_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= CHACHA_KEY_SIZE,
@@ -223,12 +224,12 @@ static struct skcipher_alg arm_algs[] = {
 		.setkey			= chacha20_setkey,
 		.encrypt		= xchacha_arm,
 		.decrypt		= xchacha_arm,
-	}, {
+	पूर्ण, अणु
 		.base.cra_name		= "xchacha12",
 		.base.cra_driver_name	= "xchacha12-arm",
 		.base.cra_priority	= 200,
 		.base.cra_blocksize	= 1,
-		.base.cra_ctxsize	= sizeof(struct chacha_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा chacha_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= CHACHA_KEY_SIZE,
@@ -238,16 +239,16 @@ static struct skcipher_alg arm_algs[] = {
 		.setkey			= chacha12_setkey,
 		.encrypt		= xchacha_arm,
 		.decrypt		= xchacha_arm,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct skcipher_alg neon_algs[] = {
-	{
+अटल काष्ठा skcipher_alg neon_algs[] = अणु
+	अणु
 		.base.cra_name		= "chacha20",
 		.base.cra_driver_name	= "chacha20-neon",
 		.base.cra_priority	= 300,
 		.base.cra_blocksize	= 1,
-		.base.cra_ctxsize	= sizeof(struct chacha_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा chacha_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= CHACHA_KEY_SIZE,
@@ -258,12 +259,12 @@ static struct skcipher_alg neon_algs[] = {
 		.setkey			= chacha20_setkey,
 		.encrypt		= chacha_neon,
 		.decrypt		= chacha_neon,
-	}, {
+	पूर्ण, अणु
 		.base.cra_name		= "xchacha20",
 		.base.cra_driver_name	= "xchacha20-neon",
 		.base.cra_priority	= 300,
 		.base.cra_blocksize	= 1,
-		.base.cra_ctxsize	= sizeof(struct chacha_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा chacha_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= CHACHA_KEY_SIZE,
@@ -274,12 +275,12 @@ static struct skcipher_alg neon_algs[] = {
 		.setkey			= chacha20_setkey,
 		.encrypt		= xchacha_neon,
 		.decrypt		= xchacha_neon,
-	}, {
+	पूर्ण, अणु
 		.base.cra_name		= "xchacha12",
 		.base.cra_driver_name	= "xchacha12-neon",
 		.base.cra_priority	= 300,
 		.base.cra_blocksize	= 1,
-		.base.cra_ctxsize	= sizeof(struct chacha_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा chacha_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= CHACHA_KEY_SIZE,
@@ -290,57 +291,57 @@ static struct skcipher_alg neon_algs[] = {
 		.setkey			= chacha12_setkey,
 		.encrypt		= xchacha_neon,
 		.decrypt		= xchacha_neon,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init chacha_simd_mod_init(void)
-{
-	int err = 0;
+अटल पूर्णांक __init chacha_simd_mod_init(व्योम)
+अणु
+	पूर्णांक err = 0;
 
-	if (IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER)) {
-		err = crypto_register_skciphers(arm_algs, ARRAY_SIZE(arm_algs));
-		if (err)
-			return err;
-	}
+	अगर (IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER)) अणु
+		err = crypto_रेजिस्टर_skciphers(arm_algs, ARRAY_SIZE(arm_algs));
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_KERNEL_MODE_NEON) && (elf_hwcap & HWCAP_NEON)) {
-		int i;
+	अगर (IS_ENABLED(CONFIG_KERNEL_MODE_NEON) && (elf_hwcap & HWCAP_NEON)) अणु
+		पूर्णांक i;
 
-		switch (read_cpuid_part()) {
-		case ARM_CPU_PART_CORTEX_A7:
-		case ARM_CPU_PART_CORTEX_A5:
+		चयन (पढ़ो_cpuid_part()) अणु
+		हाल ARM_CPU_PART_CORTEX_A7:
+		हाल ARM_CPU_PART_CORTEX_A5:
 			/*
-			 * The Cortex-A7 and Cortex-A5 do not perform well with
-			 * the NEON implementation but do incredibly with the
-			 * scalar one and use less power.
+			 * The Cortex-A7 and Cortex-A5 करो not perक्रमm well with
+			 * the NEON implementation but करो incredibly with the
+			 * scalar one and use less घातer.
 			 */
-			for (i = 0; i < ARRAY_SIZE(neon_algs); i++)
+			क्रम (i = 0; i < ARRAY_SIZE(neon_algs); i++)
 				neon_algs[i].base.cra_priority = 0;
-			break;
-		default:
-			static_branch_enable(&use_neon);
-		}
+			अवरोध;
+		शेष:
+			अटल_branch_enable(&use_neon);
+		पूर्ण
 
-		if (IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER)) {
-			err = crypto_register_skciphers(neon_algs, ARRAY_SIZE(neon_algs));
-			if (err)
-				crypto_unregister_skciphers(arm_algs, ARRAY_SIZE(arm_algs));
-		}
-	}
-	return err;
-}
+		अगर (IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER)) अणु
+			err = crypto_रेजिस्टर_skciphers(neon_algs, ARRAY_SIZE(neon_algs));
+			अगर (err)
+				crypto_unरेजिस्टर_skciphers(arm_algs, ARRAY_SIZE(arm_algs));
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void __exit chacha_simd_mod_fini(void)
-{
-	if (IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER)) {
-		crypto_unregister_skciphers(arm_algs, ARRAY_SIZE(arm_algs));
-		if (IS_ENABLED(CONFIG_KERNEL_MODE_NEON) && (elf_hwcap & HWCAP_NEON))
-			crypto_unregister_skciphers(neon_algs, ARRAY_SIZE(neon_algs));
-	}
-}
+अटल व्योम __निकास chacha_simd_mod_fini(व्योम)
+अणु
+	अगर (IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER)) अणु
+		crypto_unरेजिस्टर_skciphers(arm_algs, ARRAY_SIZE(arm_algs));
+		अगर (IS_ENABLED(CONFIG_KERNEL_MODE_NEON) && (elf_hwcap & HWCAP_NEON))
+			crypto_unरेजिस्टर_skciphers(neon_algs, ARRAY_SIZE(neon_algs));
+	पूर्ण
+पूर्ण
 
 module_init(chacha_simd_mod_init);
-module_exit(chacha_simd_mod_fini);
+module_निकास(chacha_simd_mod_fini);
 
 MODULE_DESCRIPTION("ChaCha and XChaCha stream ciphers (scalar and NEON accelerated)");
 MODULE_AUTHOR("Ard Biesheuvel <ard.biesheuvel@linaro.org>");
@@ -351,8 +352,8 @@ MODULE_ALIAS_CRYPTO("xchacha20");
 MODULE_ALIAS_CRYPTO("xchacha20-arm");
 MODULE_ALIAS_CRYPTO("xchacha12");
 MODULE_ALIAS_CRYPTO("xchacha12-arm");
-#ifdef CONFIG_KERNEL_MODE_NEON
+#अगर_घोषित CONFIG_KERNEL_MODE_NEON
 MODULE_ALIAS_CRYPTO("chacha20-neon");
 MODULE_ALIAS_CRYPTO("xchacha20-neon");
 MODULE_ALIAS_CRYPTO("xchacha12-neon");
-#endif
+#पूर्ण_अगर

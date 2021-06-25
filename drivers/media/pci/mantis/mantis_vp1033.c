@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 	Mantis VP-1033 driver
 
@@ -6,24 +7,24 @@
 
 */
 
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <media/dmxdev.h>
-#include <media/dvbdev.h>
-#include <media/dvb_demux.h>
-#include <media/dvb_frontend.h>
-#include <media/dvb_net.h>
+#समावेश <media/dmxdev.h>
+#समावेश <media/dvbdev.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dvb_net.h>
 
-#include "stv0299.h"
-#include "mantis_common.h"
-#include "mantis_ioc.h"
-#include "mantis_dvb.h"
-#include "mantis_vp1033.h"
-#include "mantis_reg.h"
+#समावेश "stv0299.h"
+#समावेश "mantis_common.h"
+#समावेश "mantis_ioc.h"
+#समावेश "mantis_dvb.h"
+#समावेश "mantis_vp1033.h"
+#समावेश "mantis_reg.h"
 
-static u8 lgtdqcs001f_inittab[] = {
+अटल u8 lgtdqcs001f_inittab[] = अणु
 	0x01, 0x15,
 	0x02, 0x30,
 	0x03, 0x00,
@@ -66,79 +67,79 @@ static u8 lgtdqcs001f_inittab[] = {
 	0x33, 0xfc,
 	0x34, 0x13,
 	0xff, 0xff,
-};
+पूर्ण;
 
-#define MANTIS_MODEL_NAME	"VP-1033"
-#define MANTIS_DEV_TYPE		"DVB-S/DSS"
+#घोषणा MANTIS_MODEL_NAME	"VP-1033"
+#घोषणा MANTIS_DEV_TYPE		"DVB-S/DSS"
 
-static int lgtdqcs001f_tuner_set(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct mantis_pci *mantis	= fe->dvb->priv;
-	struct i2c_adapter *adapter	= &mantis->adapter;
+अटल पूर्णांक lgtdqcs001f_tuner_set(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा mantis_pci *mantis	= fe->dvb->priv;
+	काष्ठा i2c_adapter *adapter	= &mantis->adapter;
 
 	u8 buf[4];
-	u32 div;
+	u32 भाग;
 
 
-	struct i2c_msg msg = {.addr = 0x61, .flags = 0, .buf = buf, .len = sizeof(buf)};
+	काष्ठा i2c_msg msg = अणु.addr = 0x61, .flags = 0, .buf = buf, .len = माप(buf)पूर्ण;
 
-	div = p->frequency / 250;
+	भाग = p->frequency / 250;
 
-	buf[0] = (div >> 8) & 0x7f;
-	buf[1] =  div & 0xff;
+	buf[0] = (भाग >> 8) & 0x7f;
+	buf[1] =  भाग & 0xff;
 	buf[2] =  0x83;
 	buf[3] =  0xc0;
 
-	if (p->frequency < 1531000)
+	अगर (p->frequency < 1531000)
 		buf[3] |= 0x04;
-	else
+	अन्यथा
 		buf[3] &= ~0x04;
-	if (i2c_transfer(adapter, &msg, 1) < 0) {
-		dprintk(MANTIS_ERROR, 1, "Write: I2C Transfer failed");
-		return -EIO;
-	}
-	msleep_interruptible(100);
+	अगर (i2c_transfer(adapter, &msg, 1) < 0) अणु
+		dprपूर्णांकk(MANTIS_ERROR, 1, "Write: I2C Transfer failed");
+		वापस -EIO;
+	पूर्ण
+	msleep_पूर्णांकerruptible(100);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lgtdqcs001f_set_symbol_rate(struct dvb_frontend *fe,
+अटल पूर्णांक lgtdqcs001f_set_symbol_rate(काष्ठा dvb_frontend *fe,
 				       u32 srate, u32 ratio)
-{
+अणु
 	u8 aclk = 0;
 	u8 bclk = 0;
 
-	if (srate < 1500000) {
+	अगर (srate < 1500000) अणु
 		aclk = 0xb7;
 		bclk = 0x47;
-	} else if (srate < 3000000) {
+	पूर्ण अन्यथा अगर (srate < 3000000) अणु
 		aclk = 0xb7;
 		bclk = 0x4b;
-	} else if (srate < 7000000) {
+	पूर्ण अन्यथा अगर (srate < 7000000) अणु
 		aclk = 0xb7;
 		bclk = 0x4f;
-	} else if (srate < 14000000) {
+	पूर्ण अन्यथा अगर (srate < 14000000) अणु
 		aclk = 0xb7;
 		bclk = 0x53;
-	} else if (srate < 30000000) {
+	पूर्ण अन्यथा अगर (srate < 30000000) अणु
 		aclk = 0xb6;
 		bclk = 0x53;
-	} else if (srate < 45000000) {
+	पूर्ण अन्यथा अगर (srate < 45000000) अणु
 		aclk = 0xb4;
 		bclk = 0x51;
-	}
-	stv0299_writereg(fe, 0x13, aclk);
-	stv0299_writereg(fe, 0x14, bclk);
+	पूर्ण
+	stv0299_ग_लिखोreg(fe, 0x13, aclk);
+	stv0299_ग_लिखोreg(fe, 0x14, bclk);
 
-	stv0299_writereg(fe, 0x1f, (ratio >> 16) & 0xff);
-	stv0299_writereg(fe, 0x20, (ratio >>  8) & 0xff);
-	stv0299_writereg(fe, 0x21,  ratio & 0xf0);
+	stv0299_ग_लिखोreg(fe, 0x1f, (ratio >> 16) & 0xff);
+	stv0299_ग_लिखोreg(fe, 0x20, (ratio >>  8) & 0xff);
+	stv0299_ग_लिखोreg(fe, 0x21,  ratio & 0xf0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct stv0299_config lgtdqcs001f_config = {
+अटल काष्ठा stv0299_config lgtdqcs001f_config = अणु
 	.demod_address		= 0x68,
 	.inittab		= lgtdqcs001f_inittab,
 	.mclk			= 88000000UL,
@@ -147,45 +148,45 @@ static struct stv0299_config lgtdqcs001f_config = {
 	.volt13_op0_op1		= STV0299_VOLT13_OP0,
 	.min_delay_ms		= 100,
 	.set_symbol_rate	= lgtdqcs001f_set_symbol_rate,
-};
+पूर्ण;
 
-static int vp1033_frontend_init(struct mantis_pci *mantis, struct dvb_frontend *fe)
-{
-	struct i2c_adapter *adapter	= &mantis->adapter;
+अटल पूर्णांक vp1033_frontend_init(काष्ठा mantis_pci *mantis, काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा i2c_adapter *adapter	= &mantis->adapter;
 
-	int err = 0;
+	पूर्णांक err = 0;
 
-	err = mantis_frontend_power(mantis, POWER_ON);
-	if (err == 0) {
+	err = mantis_frontend_घातer(mantis, POWER_ON);
+	अगर (err == 0) अणु
 		mantis_frontend_soft_reset(mantis);
 		msleep(250);
 
-		dprintk(MANTIS_ERROR, 1, "Probing for STV0299 (DVB-S)");
+		dprपूर्णांकk(MANTIS_ERROR, 1, "Probing for STV0299 (DVB-S)");
 		fe = dvb_attach(stv0299_attach, &lgtdqcs001f_config, adapter);
 
-		if (fe) {
+		अगर (fe) अणु
 			fe->ops.tuner_ops.set_params = lgtdqcs001f_tuner_set;
-			dprintk(MANTIS_ERROR, 1, "found STV0299 DVB-S frontend @ 0x%02x",
+			dprपूर्णांकk(MANTIS_ERROR, 1, "found STV0299 DVB-S frontend @ 0x%02x",
 				lgtdqcs001f_config.demod_address);
 
-			dprintk(MANTIS_ERROR, 1, "Mantis DVB-S STV0299 frontend attach success");
-		} else {
-			return -1;
-		}
-	} else {
-		dprintk(MANTIS_ERROR, 1, "Frontend on <%s> POWER ON failed! <%d>",
+			dprपूर्णांकk(MANTIS_ERROR, 1, "Mantis DVB-S STV0299 frontend attach success");
+		पूर्ण अन्यथा अणु
+			वापस -1;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		dprपूर्णांकk(MANTIS_ERROR, 1, "Frontend on <%s> POWER ON failed! <%d>",
 			adapter->name,
 			err);
 
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	mantis->fe = fe;
-	dprintk(MANTIS_ERROR, 1, "Done!");
+	dprपूर्णांकk(MANTIS_ERROR, 1, "Done!");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct mantis_hwconfig vp1033_config = {
+काष्ठा mantis_hwconfig vp1033_config = अणु
 	.model_name		= MANTIS_MODEL_NAME,
 	.dev_type		= MANTIS_DEV_TYPE,
 	.ts_size		= MANTIS_TS_204,
@@ -195,6 +196,6 @@ struct mantis_hwconfig vp1033_config = {
 	.bytes			= 0,
 
 	.frontend_init		= vp1033_frontend_init,
-	.power			= GPIF_A12,
+	.घातer			= GPIF_A12,
 	.reset			= GPIF_A13,
-};
+पूर्ण;

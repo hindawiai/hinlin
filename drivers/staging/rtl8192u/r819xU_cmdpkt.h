@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef R819XUSB_CMDPKT_H
-#define R819XUSB_CMDPKT_H
-/* Different command packet have dedicated message length and definition. */
-#define		CMPK_RX_TX_FB_SIZE		sizeof(struct cmd_pkt_tx_feedback)	/* 20 */
-#define		CMPK_BOTH_QUERY_CONFIG_SIZE	sizeof(struct cmd_pkt_set_configuration)	/* 16 */
-#define		CMPK_RX_TX_STS_SIZE		sizeof(cmpk_tx_status_t)
-#define		CMPK_TX_RAHIS_SIZE		sizeof(cmpk_tx_rahis_t)
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित R819XUSB_CMDPKT_H
+#घोषणा R819XUSB_CMDPKT_H
+/* Dअगरferent command packet have dedicated message length and definition. */
+#घोषणा		CMPK_RX_TX_FB_SIZE		माप(काष्ठा cmd_pkt_tx_feedback)	/* 20 */
+#घोषणा		CMPK_BOTH_QUERY_CONFIG_SIZE	माप(काष्ठा cmd_pkt_set_configuration)	/* 16 */
+#घोषणा		CMPK_RX_TX_STS_SIZE		माप(cmpk_tx_status_t)
+#घोषणा		CMPK_TX_RAHIS_SIZE		माप(cmpk_tx_rahis_t)
 
-/* 2008/05/08 amy For USB constant. */
-#define ISR_TX_BCN_OK		BIT(27)		/* Transmit Beacon OK */
-#define ISR_TX_BCN_ERR		BIT(26)		/* Transmit Beacon Error */
-#define ISR_BCN_TIMER_INTR	BIT(13)		/* Beacon Timer Interrupt */
+/* 2008/05/08 amy For USB स्थिरant. */
+#घोषणा ISR_TX_BCN_OK		BIT(27)		/* Transmit Beacon OK */
+#घोषणा ISR_TX_BCN_ERR		BIT(26)		/* Transmit Beacon Error */
+#घोषणा ISR_BCN_TIMER_INTR	BIT(13)		/* Beacon Timer Interrupt */
 
 /* Define element ID of command packet. */
 
-/*------------------------------Define structure----------------------------*/
-/* Define different command packet structure. */
+/*------------------------------Define काष्ठाure----------------------------*/
+/* Define dअगरferent command packet काष्ठाure. */
 /* 1. RX side: TX feedback packet. */
-struct cmd_pkt_tx_feedback {
+काष्ठा cmd_pkt_tx_feedback अणु
 	/* DWORD 0 */
 	u8	element_id;			/* Command packet type. */
 	u8	length;				/* Command packet length. */
@@ -50,20 +51,20 @@ struct cmd_pkt_tx_feedback {
 	/* DWORD 5 */
 	u16	reserve3;
 	u16	duration;
-};
+पूर्ण;
 
 /* 2. RX side: Interrupt status packet. It includes Beacon State,
- * Beacon Timer Interrupt and other useful information in MAC ISR Reg.
+ * Beacon Timer Interrupt and other useful inक्रमmation in MAC ISR Reg.
  */
-struct cmd_pkt_interrupt_status {
+काष्ठा cmd_pkt_पूर्णांकerrupt_status अणु
 	u8	element_id;			/* Command packet type. */
 	u8	length;				/* Command packet length. */
 	u16	reserve;
-	u32	interrupt_status;		/* Interrupt Status. */
-};
+	u32	पूर्णांकerrupt_status;		/* Interrupt Status. */
+पूर्ण;
 
 /* 3. TX side: Set configuration packet. */
-struct cmd_pkt_set_configuration {
+काष्ठा cmd_pkt_set_configuration अणु
 	u8	element_id;			/* Command packet type. */
 	u8	length;				/* Command packet length. */
 	u16	reserve1;
@@ -78,17 +79,17 @@ struct cmd_pkt_set_configuration {
 	u8	cfg_offset;
 	u32	value;
 	u32	mask;
-};
+पूर्ण;
 
-/* 4. Both side : TX/RX query configuration packet. The query structure is the
+/* 4. Both side : TX/RX query configuration packet. The query काष्ठाure is the
  *    same as set configuration.
  */
-#define		cmpk_query_cfg	cmd_pkt_set_configuration
+#घोषणा		cmpk_query_cfg	cmd_pkt_set_configuration
 
 /* 5. Multi packet feedback status. */
-typedef struct tag_tx_stats_feedback {
+प्रकार काष्ठा tag_tx_stats_feedback अणु
 	/* For endian transfer --> Driver will not the same as
-	 *  firmware structure.
+	 *  firmware काष्ठाure.
 	 */
 	/* DW 0 */
 	u16	reserve1;
@@ -124,12 +125,12 @@ typedef struct tag_tx_stats_feedback {
 	u16	reserve3_23;
 	u8	reserve3_1;
 	u8	rate;
-} __packed cmpk_tx_status_t;
+पूर्ण __packed cmpk_tx_status_t;
 
 /* 6. Debug feedback message. */
 /* Define RX debug message  */
-typedef struct tag_rx_debug_message_feedback {
-	/* For endian transfer --> for driver */
+प्रकार काष्ठा tag_rx_debug_message_feedback अणु
+	/* For endian transfer --> क्रम driver */
 	/* DW 0 */
 	u16	reserve1;
 	u8	length;				/* Command packet length */
@@ -138,11 +139,11 @@ typedef struct tag_rx_debug_message_feedback {
 	/* DW 1-?? */
 	/* Variable debug message. */
 
-} cmpk_rx_dbginfo_t;
+पूर्ण cmpk_rx_dbginfo_t;
 
-/* Define transmit rate history. For big endian format. */
-typedef struct tag_tx_rate_history {
-	/* For endian transfer --> for driver */
+/* Define transmit rate history. For big endian क्रमmat. */
+प्रकार काष्ठा tag_tx_rate_history अणु
+	/* For endian transfer --> क्रम driver */
 	/* DW 0 */
 	u8	element_id;			/* Command packet type */
 	u8	length;				/* Command packet length */
@@ -161,9 +162,9 @@ typedef struct tag_tx_rate_history {
 	 */
 	u16	ht_mcs[4][16];
 
-} __packed cmpk_tx_rahis_t;
+पूर्ण __packed cmpk_tx_rahis_t;
 
-typedef enum tag_command_packet_directories {
+प्रकार क्रमागत tag_command_packet_directories अणु
 	RX_TX_FEEDBACK			= 0,
 	RX_INTERRUPT_STATUS		= 1,
 	TX_SET_CONFIG			= 2,
@@ -173,18 +174,18 @@ typedef enum tag_command_packet_directories {
 	RX_TX_PER_PKT_FEEDBACK		= 6,
 	RX_TX_RATE_HISTORY		= 7,
 	RX_CMD_ELE_MAX
-} cmpk_element_e;
+पूर्ण cmpk_element_e;
 
-typedef enum _rt_status {
+प्रकार क्रमागत _rt_status अणु
 	RT_STATUS_SUCCESS,
 	RT_STATUS_FAILURE,
 	RT_STATUS_PENDING,
 	RT_STATUS_RESOURCE
-} rt_status, *prt_status;
+पूर्ण rt_status, *prt_status;
 
-u32 cmpk_message_handle_rx(struct net_device *dev,
-			   struct ieee80211_rx_stats *pstats);
-rt_status SendTxCommandPacket(struct net_device *dev,
-			      void *pData, u32 DataLen);
+u32 cmpk_message_handle_rx(काष्ठा net_device *dev,
+			   काष्ठा ieee80211_rx_stats *pstats);
+rt_status SendTxCommandPacket(काष्ठा net_device *dev,
+			      व्योम *pData, u32 DataLen);
 
-#endif
+#पूर्ण_अगर

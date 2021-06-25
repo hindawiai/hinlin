@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ASMARM_PCI_H
-#define ASMARM_PCI_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ASMARM_PCI_H
+#घोषणा ASMARM_PCI_H
 
-#ifdef __KERNEL__
-#include <asm/mach/pci.h> /* for pci_sys_data */
+#अगर_घोषित __KERNEL__
+#समावेश <यंत्र/mach/pci.h> /* क्रम pci_sys_data */
 
-extern unsigned long pcibios_min_io;
-#define PCIBIOS_MIN_IO pcibios_min_io
-extern unsigned long pcibios_min_mem;
-#define PCIBIOS_MIN_MEM pcibios_min_mem
+बाह्य अचिन्हित दीर्घ pcibios_min_io;
+#घोषणा PCIBIOS_MIN_IO pcibios_min_io
+बाह्य अचिन्हित दीर्घ pcibios_min_mem;
+#घोषणा PCIBIOS_MIN_MEM pcibios_min_mem
 
-#define pcibios_assign_all_busses()	pci_has_flag(PCI_REASSIGN_ALL_BUS)
+#घोषणा pcibios_assign_all_busses()	pci_has_flag(PCI_REASSIGN_ALL_BUS)
 
-#ifdef CONFIG_PCI_DOMAINS
-static inline int pci_proc_domain(struct pci_bus *bus)
-{
-	return pci_domain_nr(bus);
-}
-#endif /* CONFIG_PCI_DOMAINS */
+#अगर_घोषित CONFIG_PCI_DOMAINS
+अटल अंतरभूत पूर्णांक pci_proc_करोमुख्य(काष्ठा pci_bus *bus)
+अणु
+	वापस pci_करोमुख्य_nr(bus);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI_DOMAINS */
 
-#define HAVE_PCI_MMAP
-#define ARCH_GENERIC_PCI_MMAP_RESOURCE
+#घोषणा HAVE_PCI_MMAP
+#घोषणा ARCH_GENERIC_PCI_MMAP_RESOURCE
 
-static inline int pci_get_legacy_ide_irq(struct pci_dev *dev, int channel)
-{
-	return channel ? 15 : 14;
-}
+अटल अंतरभूत पूर्णांक pci_get_legacy_ide_irq(काष्ठा pci_dev *dev, पूर्णांक channel)
+अणु
+	वापस channel ? 15 : 14;
+पूर्ण
 
-extern void pcibios_report_status(unsigned int status_mask, int warn);
+बाह्य व्योम pcibios_report_status(अचिन्हित पूर्णांक status_mask, पूर्णांक warn);
 
-#endif /* __KERNEL__ */
-#endif
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर

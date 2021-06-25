@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Xilinx Video IP Composite Device
  *
@@ -6,143 +7,143 @@
  * Copyright (C) 2013-2015 Xilinx, Inc.
  *
  * Contacts: Hyun Kwon <hyun.kwon@xilinx.com>
- *           Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ *           Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  */
 
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_graph.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include <media/v4l2-async.h>
-#include <media/v4l2-common.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-fwnode.h>
+#समावेश <media/v4l2-async.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-fwnode.h>
 
-#include "xilinx-dma.h"
-#include "xilinx-vipp.h"
+#समावेश "xilinx-dma.h"
+#समावेश "xilinx-vipp.h"
 
-#define XVIPP_DMA_S2MM				0
-#define XVIPP_DMA_MM2S				1
+#घोषणा XVIPP_DMA_S2MM				0
+#घोषणा XVIPP_DMA_MM2S				1
 
 /**
- * struct xvip_graph_entity - Entity in the video graph
- * @asd: subdev asynchronous registration information
+ * काष्ठा xvip_graph_entity - Entity in the video graph
+ * @asd: subdev asynchronous registration inक्रमmation
  * @entity: media entity, from the corresponding V4L2 subdev
  * @subdev: V4L2 subdev
  */
-struct xvip_graph_entity {
-	struct v4l2_async_subdev asd; /* must be first */
-	struct media_entity *entity;
-	struct v4l2_subdev *subdev;
-};
+काष्ठा xvip_graph_entity अणु
+	काष्ठा v4l2_async_subdev asd; /* must be first */
+	काष्ठा media_entity *entity;
+	काष्ठा v4l2_subdev *subdev;
+पूर्ण;
 
-static inline struct xvip_graph_entity *
-to_xvip_entity(struct v4l2_async_subdev *asd)
-{
-	return container_of(asd, struct xvip_graph_entity, asd);
-}
+अटल अंतरभूत काष्ठा xvip_graph_entity *
+to_xvip_entity(काष्ठा v4l2_async_subdev *asd)
+अणु
+	वापस container_of(asd, काष्ठा xvip_graph_entity, asd);
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Graph Management
  */
 
-static struct xvip_graph_entity *
-xvip_graph_find_entity(struct xvip_composite_device *xdev,
-		       const struct fwnode_handle *fwnode)
-{
-	struct xvip_graph_entity *entity;
-	struct v4l2_async_subdev *asd;
+अटल काष्ठा xvip_graph_entity *
+xvip_graph_find_entity(काष्ठा xvip_composite_device *xdev,
+		       स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा xvip_graph_entity *entity;
+	काष्ठा v4l2_async_subdev *asd;
 
-	list_for_each_entry(asd, &xdev->notifier.asd_list, asd_list) {
+	list_क्रम_each_entry(asd, &xdev->notअगरier.asd_list, asd_list) अणु
 		entity = to_xvip_entity(asd);
-		if (entity->asd.match.fwnode == fwnode)
-			return entity;
-	}
+		अगर (entity->asd.match.fwnode == fwnode)
+			वापस entity;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int xvip_graph_build_one(struct xvip_composite_device *xdev,
-				struct xvip_graph_entity *entity)
-{
+अटल पूर्णांक xvip_graph_build_one(काष्ठा xvip_composite_device *xdev,
+				काष्ठा xvip_graph_entity *entity)
+अणु
 	u32 link_flags = MEDIA_LNK_FL_ENABLED;
-	struct media_entity *local = entity->entity;
-	struct media_entity *remote;
-	struct media_pad *local_pad;
-	struct media_pad *remote_pad;
-	struct xvip_graph_entity *ent;
-	struct v4l2_fwnode_link link;
-	struct fwnode_handle *ep = NULL;
-	int ret = 0;
+	काष्ठा media_entity *local = entity->entity;
+	काष्ठा media_entity *remote;
+	काष्ठा media_pad *local_pad;
+	काष्ठा media_pad *remote_pad;
+	काष्ठा xvip_graph_entity *ent;
+	काष्ठा v4l2_fwnode_link link;
+	काष्ठा fwnode_handle *ep = शून्य;
+	पूर्णांक ret = 0;
 
 	dev_dbg(xdev->dev, "creating links for entity %s\n", local->name);
 
-	while (1) {
-		/* Get the next endpoint and parse its link. */
-		ep = fwnode_graph_get_next_endpoint(entity->asd.match.fwnode,
+	जबतक (1) अणु
+		/* Get the next endpoपूर्णांक and parse its link. */
+		ep = fwnode_graph_get_next_endpoपूर्णांक(entity->asd.match.fwnode,
 						    ep);
-		if (ep == NULL)
-			break;
+		अगर (ep == शून्य)
+			अवरोध;
 
 		dev_dbg(xdev->dev, "processing endpoint %p\n", ep);
 
 		ret = v4l2_fwnode_parse_link(ep, &link);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(xdev->dev, "failed to parse link for %p\n",
 				ep);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Skip sink ports, they will be processed from the other end of
 		 * the link.
 		 */
-		if (link.local_port >= local->num_pads) {
+		अगर (link.local_port >= local->num_pads) अणु
 			dev_err(xdev->dev, "invalid port number %u for %p\n",
 				link.local_port, link.local_node);
 			v4l2_fwnode_put_link(&link);
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		local_pad = &local->pads[link.local_port];
 
-		if (local_pad->flags & MEDIA_PAD_FL_SINK) {
+		अगर (local_pad->flags & MEDIA_PAD_FL_SINK) अणु
 			dev_dbg(xdev->dev, "skipping sink port %p:%u\n",
 				link.local_node, link.local_port);
 			v4l2_fwnode_put_link(&link);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Skip DMA engines, they will be processed separately. */
-		if (link.remote_node == of_fwnode_handle(xdev->dev->of_node)) {
+		अगर (link.remote_node == of_fwnode_handle(xdev->dev->of_node)) अणु
 			dev_dbg(xdev->dev, "skipping DMA port %p:%u\n",
 				link.local_node, link.local_port);
 			v4l2_fwnode_put_link(&link);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Find the remote entity. */
 		ent = xvip_graph_find_entity(xdev, link.remote_node);
-		if (ent == NULL) {
+		अगर (ent == शून्य) अणु
 			dev_err(xdev->dev, "no entity found for %p\n",
 				link.remote_node);
 			v4l2_fwnode_put_link(&link);
 			ret = -ENODEV;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		remote = ent->entity;
 
-		if (link.remote_port >= remote->num_pads) {
+		अगर (link.remote_port >= remote->num_pads) अणु
 			dev_err(xdev->dev, "invalid port number %u on %p\n",
 				link.remote_port, link.remote_node);
 			v4l2_fwnode_put_link(&link);
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		remote_pad = &remote->pads[link.remote_port];
 
@@ -156,106 +157,106 @@ static int xvip_graph_build_one(struct xvip_composite_device *xdev,
 		ret = media_create_pad_link(local, local_pad->index,
 					       remote, remote_pad->index,
 					       link_flags);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(xdev->dev,
 				"failed to create %s:%u -> %s:%u link\n",
 				local->name, local_pad->index,
 				remote->name, remote_pad->index);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	fwnode_handle_put(ep);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct xvip_dma *
-xvip_graph_find_dma(struct xvip_composite_device *xdev, unsigned int port)
-{
-	struct xvip_dma *dma;
+अटल काष्ठा xvip_dma *
+xvip_graph_find_dma(काष्ठा xvip_composite_device *xdev, अचिन्हित पूर्णांक port)
+अणु
+	काष्ठा xvip_dma *dma;
 
-	list_for_each_entry(dma, &xdev->dmas, list) {
-		if (dma->port == port)
-			return dma;
-	}
+	list_क्रम_each_entry(dma, &xdev->dmas, list) अणु
+		अगर (dma->port == port)
+			वापस dma;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int xvip_graph_build_dma(struct xvip_composite_device *xdev)
-{
+अटल पूर्णांक xvip_graph_build_dma(काष्ठा xvip_composite_device *xdev)
+अणु
 	u32 link_flags = MEDIA_LNK_FL_ENABLED;
-	struct device_node *node = xdev->dev->of_node;
-	struct media_entity *source;
-	struct media_entity *sink;
-	struct media_pad *source_pad;
-	struct media_pad *sink_pad;
-	struct xvip_graph_entity *ent;
-	struct v4l2_fwnode_link link;
-	struct device_node *ep = NULL;
-	struct xvip_dma *dma;
-	int ret = 0;
+	काष्ठा device_node *node = xdev->dev->of_node;
+	काष्ठा media_entity *source;
+	काष्ठा media_entity *sink;
+	काष्ठा media_pad *source_pad;
+	काष्ठा media_pad *sink_pad;
+	काष्ठा xvip_graph_entity *ent;
+	काष्ठा v4l2_fwnode_link link;
+	काष्ठा device_node *ep = शून्य;
+	काष्ठा xvip_dma *dma;
+	पूर्णांक ret = 0;
 
 	dev_dbg(xdev->dev, "creating links for DMA engines\n");
 
-	while (1) {
-		/* Get the next endpoint and parse its link. */
-		ep = of_graph_get_next_endpoint(node, ep);
-		if (ep == NULL)
-			break;
+	जबतक (1) अणु
+		/* Get the next endpoपूर्णांक and parse its link. */
+		ep = of_graph_get_next_endpoपूर्णांक(node, ep);
+		अगर (ep == शून्य)
+			अवरोध;
 
 		dev_dbg(xdev->dev, "processing endpoint %pOF\n", ep);
 
 		ret = v4l2_fwnode_parse_link(of_fwnode_handle(ep), &link);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(xdev->dev, "failed to parse link for %pOF\n",
 				ep);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Find the DMA engine. */
 		dma = xvip_graph_find_dma(xdev, link.local_port);
-		if (dma == NULL) {
+		अगर (dma == शून्य) अणु
 			dev_err(xdev->dev, "no DMA engine found for port %u\n",
 				link.local_port);
 			v4l2_fwnode_put_link(&link);
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		dev_dbg(xdev->dev, "creating link for DMA engine %s\n",
 			dma->video.name);
 
 		/* Find the remote entity. */
 		ent = xvip_graph_find_entity(xdev, link.remote_node);
-		if (ent == NULL) {
+		अगर (ent == शून्य) अणु
 			dev_err(xdev->dev, "no entity found for %pOF\n",
 				to_of_node(link.remote_node));
 			v4l2_fwnode_put_link(&link);
 			ret = -ENODEV;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (link.remote_port >= ent->entity->num_pads) {
+		अगर (link.remote_port >= ent->entity->num_pads) अणु
 			dev_err(xdev->dev, "invalid port number %u on %pOF\n",
 				link.remote_port,
 				to_of_node(link.remote_node));
 			v4l2_fwnode_put_link(&link);
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (dma->pad.flags & MEDIA_PAD_FL_SOURCE) {
+		अगर (dma->pad.flags & MEDIA_PAD_FL_SOURCE) अणु
 			source = &dma->video.entity;
 			source_pad = &dma->pad;
 			sink = ent->entity;
 			sink_pad = &sink->pads[link.remote_port];
-		} else {
+		पूर्ण अन्यथा अणु
 			source = ent->entity;
 			source_pad = &source->pads[link.remote_port];
 			sink = &dma->video.entity;
 			sink_pad = &dma->pad;
-		}
+		पूर्ण
 
 		v4l2_fwnode_put_link(&link);
 
@@ -267,382 +268,382 @@ static int xvip_graph_build_dma(struct xvip_composite_device *xdev)
 		ret = media_create_pad_link(source, source_pad->index,
 					       sink, sink_pad->index,
 					       link_flags);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(xdev->dev,
 				"failed to create %s:%u -> %s:%u link\n",
 				source->name, source_pad->index,
 				sink->name, sink_pad->index);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	of_node_put(ep);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xvip_graph_notify_complete(struct v4l2_async_notifier *notifier)
-{
-	struct xvip_composite_device *xdev =
-		container_of(notifier, struct xvip_composite_device, notifier);
-	struct xvip_graph_entity *entity;
-	struct v4l2_async_subdev *asd;
-	int ret;
+अटल पूर्णांक xvip_graph_notअगरy_complete(काष्ठा v4l2_async_notअगरier *notअगरier)
+अणु
+	काष्ठा xvip_composite_device *xdev =
+		container_of(notअगरier, काष्ठा xvip_composite_device, notअगरier);
+	काष्ठा xvip_graph_entity *entity;
+	काष्ठा v4l2_async_subdev *asd;
+	पूर्णांक ret;
 
 	dev_dbg(xdev->dev, "notify complete, all subdevs registered\n");
 
-	/* Create links for every entity. */
-	list_for_each_entry(asd, &xdev->notifier.asd_list, asd_list) {
+	/* Create links क्रम every entity. */
+	list_क्रम_each_entry(asd, &xdev->notअगरier.asd_list, asd_list) अणु
 		entity = to_xvip_entity(asd);
 		ret = xvip_graph_build_one(xdev, entity);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	/* Create links for DMA channels. */
+	/* Create links क्रम DMA channels. */
 	ret = xvip_graph_build_dma(xdev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = v4l2_device_register_subdev_nodes(&xdev->v4l2_dev);
-	if (ret < 0)
+	ret = v4l2_device_रेजिस्टर_subdev_nodes(&xdev->v4l2_dev);
+	अगर (ret < 0)
 		dev_err(xdev->dev, "failed to register subdev nodes\n");
 
-	return media_device_register(&xdev->media_dev);
-}
+	वापस media_device_रेजिस्टर(&xdev->media_dev);
+पूर्ण
 
-static int xvip_graph_notify_bound(struct v4l2_async_notifier *notifier,
-				   struct v4l2_subdev *subdev,
-				   struct v4l2_async_subdev *unused)
-{
-	struct xvip_composite_device *xdev =
-		container_of(notifier, struct xvip_composite_device, notifier);
-	struct xvip_graph_entity *entity;
-	struct v4l2_async_subdev *asd;
+अटल पूर्णांक xvip_graph_notअगरy_bound(काष्ठा v4l2_async_notअगरier *notअगरier,
+				   काष्ठा v4l2_subdev *subdev,
+				   काष्ठा v4l2_async_subdev *unused)
+अणु
+	काष्ठा xvip_composite_device *xdev =
+		container_of(notअगरier, काष्ठा xvip_composite_device, notअगरier);
+	काष्ठा xvip_graph_entity *entity;
+	काष्ठा v4l2_async_subdev *asd;
 
 	/* Locate the entity corresponding to the bound subdev and store the
-	 * subdev pointer.
+	 * subdev poपूर्णांकer.
 	 */
-	list_for_each_entry(asd, &xdev->notifier.asd_list, asd_list) {
+	list_क्रम_each_entry(asd, &xdev->notअगरier.asd_list, asd_list) अणु
 		entity = to_xvip_entity(asd);
 
-		if (entity->asd.match.fwnode != subdev->fwnode)
-			continue;
+		अगर (entity->asd.match.fwnode != subdev->fwnode)
+			जारी;
 
-		if (entity->subdev) {
+		अगर (entity->subdev) अणु
 			dev_err(xdev->dev, "duplicate subdev for node %p\n",
 				entity->asd.match.fwnode);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		dev_dbg(xdev->dev, "subdev %s bound\n", subdev->name);
 		entity->entity = &subdev->entity;
 		entity->subdev = subdev;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_err(xdev->dev, "no entity for subdev %s\n", subdev->name);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct v4l2_async_notifier_operations xvip_graph_notify_ops = {
-	.bound = xvip_graph_notify_bound,
-	.complete = xvip_graph_notify_complete,
-};
+अटल स्थिर काष्ठा v4l2_async_notअगरier_operations xvip_graph_notअगरy_ops = अणु
+	.bound = xvip_graph_notअगरy_bound,
+	.complete = xvip_graph_notअगरy_complete,
+पूर्ण;
 
-static int xvip_graph_parse_one(struct xvip_composite_device *xdev,
-				struct fwnode_handle *fwnode)
-{
-	struct fwnode_handle *remote;
-	struct fwnode_handle *ep = NULL;
-	int ret = 0;
+अटल पूर्णांक xvip_graph_parse_one(काष्ठा xvip_composite_device *xdev,
+				काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा fwnode_handle *remote;
+	काष्ठा fwnode_handle *ep = शून्य;
+	पूर्णांक ret = 0;
 
 	dev_dbg(xdev->dev, "parsing node %p\n", fwnode);
 
-	while (1) {
-		struct xvip_graph_entity *xge;
+	जबतक (1) अणु
+		काष्ठा xvip_graph_entity *xge;
 
-		ep = fwnode_graph_get_next_endpoint(fwnode, ep);
-		if (ep == NULL)
-			break;
+		ep = fwnode_graph_get_next_endpoपूर्णांक(fwnode, ep);
+		अगर (ep == शून्य)
+			अवरोध;
 
 		dev_dbg(xdev->dev, "handling endpoint %p\n", ep);
 
 		remote = fwnode_graph_get_remote_port_parent(ep);
-		if (remote == NULL) {
+		अगर (remote == शून्य) अणु
 			ret = -EINVAL;
-			goto err_notifier_cleanup;
-		}
+			जाओ err_notअगरier_cleanup;
+		पूर्ण
 
 		fwnode_handle_put(ep);
 
-		/* Skip entities that we have already processed. */
-		if (remote == of_fwnode_handle(xdev->dev->of_node) ||
-		    xvip_graph_find_entity(xdev, remote)) {
+		/* Skip entities that we have alपढ़ोy processed. */
+		अगर (remote == of_fwnode_handle(xdev->dev->of_node) ||
+		    xvip_graph_find_entity(xdev, remote)) अणु
 			fwnode_handle_put(remote);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		xge = v4l2_async_notifier_add_fwnode_subdev(
-			&xdev->notifier, remote,
-			struct xvip_graph_entity);
+		xge = v4l2_async_notअगरier_add_fwnode_subdev(
+			&xdev->notअगरier, remote,
+			काष्ठा xvip_graph_entity);
 		fwnode_handle_put(remote);
-		if (IS_ERR(xge)) {
+		अगर (IS_ERR(xge)) अणु
 			ret = PTR_ERR(xge);
-			goto err_notifier_cleanup;
-		}
-	}
+			जाओ err_notअगरier_cleanup;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_notifier_cleanup:
-	v4l2_async_notifier_cleanup(&xdev->notifier);
+err_notअगरier_cleanup:
+	v4l2_async_notअगरier_cleanup(&xdev->notअगरier);
 	fwnode_handle_put(ep);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xvip_graph_parse(struct xvip_composite_device *xdev)
-{
-	struct xvip_graph_entity *entity;
-	struct v4l2_async_subdev *asd;
-	int ret;
+अटल पूर्णांक xvip_graph_parse(काष्ठा xvip_composite_device *xdev)
+अणु
+	काष्ठा xvip_graph_entity *entity;
+	काष्ठा v4l2_async_subdev *asd;
+	पूर्णांक ret;
 
 	/*
 	 * Walk the links to parse the full graph. Start by parsing the
-	 * composite node and then parse entities in turn. The list_for_each
-	 * loop will handle entities added at the end of the list while walking
+	 * composite node and then parse entities in turn. The list_क्रम_each
+	 * loop will handle entities added at the end of the list जबतक walking
 	 * the links.
 	 */
 	ret = xvip_graph_parse_one(xdev, of_fwnode_handle(xdev->dev->of_node));
-	if (ret < 0)
-		return 0;
+	अगर (ret < 0)
+		वापस 0;
 
-	list_for_each_entry(asd, &xdev->notifier.asd_list, asd_list) {
+	list_क्रम_each_entry(asd, &xdev->notअगरier.asd_list, asd_list) अणु
 		entity = to_xvip_entity(asd);
 		ret = xvip_graph_parse_one(xdev, entity->asd.match.fwnode);
-		if (ret < 0) {
-			v4l2_async_notifier_cleanup(&xdev->notifier);
-			break;
-		}
-	}
+		अगर (ret < 0) अणु
+			v4l2_async_notअगरier_cleanup(&xdev->notअगरier);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xvip_graph_dma_init_one(struct xvip_composite_device *xdev,
-				   struct device_node *node)
-{
-	struct xvip_dma *dma;
-	enum v4l2_buf_type type;
-	const char *direction;
-	unsigned int index;
-	int ret;
+अटल पूर्णांक xvip_graph_dma_init_one(काष्ठा xvip_composite_device *xdev,
+				   काष्ठा device_node *node)
+अणु
+	काष्ठा xvip_dma *dma;
+	क्रमागत v4l2_buf_type type;
+	स्थिर अक्षर *direction;
+	अचिन्हित पूर्णांक index;
+	पूर्णांक ret;
 
-	ret = of_property_read_string(node, "direction", &direction);
-	if (ret < 0)
-		return ret;
+	ret = of_property_पढ़ो_string(node, "direction", &direction);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (strcmp(direction, "input") == 0)
+	अगर (म_भेद(direction, "input") == 0)
 		type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	else if (strcmp(direction, "output") == 0)
+	अन्यथा अगर (म_भेद(direction, "output") == 0)
 		type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	of_property_read_u32(node, "reg", &index);
+	of_property_पढ़ो_u32(node, "reg", &index);
 
-	dma = devm_kzalloc(xdev->dev, sizeof(*dma), GFP_KERNEL);
-	if (dma == NULL)
-		return -ENOMEM;
+	dma = devm_kzalloc(xdev->dev, माप(*dma), GFP_KERNEL);
+	अगर (dma == शून्य)
+		वापस -ENOMEM;
 
 	ret = xvip_dma_init(xdev, dma, type, index);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(xdev->dev, "%pOF initialization failed\n", node);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	list_add_tail(&dma->list, &xdev->dmas);
 
 	xdev->v4l2_caps |= type == V4L2_BUF_TYPE_VIDEO_CAPTURE
 			 ? V4L2_CAP_VIDEO_CAPTURE : V4L2_CAP_VIDEO_OUTPUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xvip_graph_dma_init(struct xvip_composite_device *xdev)
-{
-	struct device_node *ports;
-	struct device_node *port;
-	int ret;
+अटल पूर्णांक xvip_graph_dma_init(काष्ठा xvip_composite_device *xdev)
+अणु
+	काष्ठा device_node *ports;
+	काष्ठा device_node *port;
+	पूर्णांक ret;
 
 	ports = of_get_child_by_name(xdev->dev->of_node, "ports");
-	if (ports == NULL) {
+	अगर (ports == शून्य) अणु
 		dev_err(xdev->dev, "ports node not present\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for_each_child_of_node(ports, port) {
+	क्रम_each_child_of_node(ports, port) अणु
 		ret = xvip_graph_dma_init_one(xdev, port);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			of_node_put(port);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xvip_graph_cleanup(struct xvip_composite_device *xdev)
-{
-	struct xvip_dma *dmap;
-	struct xvip_dma *dma;
+अटल व्योम xvip_graph_cleanup(काष्ठा xvip_composite_device *xdev)
+अणु
+	काष्ठा xvip_dma *dmap;
+	काष्ठा xvip_dma *dma;
 
-	v4l2_async_notifier_unregister(&xdev->notifier);
-	v4l2_async_notifier_cleanup(&xdev->notifier);
+	v4l2_async_notअगरier_unरेजिस्टर(&xdev->notअगरier);
+	v4l2_async_notअगरier_cleanup(&xdev->notअगरier);
 
-	list_for_each_entry_safe(dma, dmap, &xdev->dmas, list) {
+	list_क्रम_each_entry_safe(dma, dmap, &xdev->dmas, list) अणु
 		xvip_dma_cleanup(dma);
 		list_del(&dma->list);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int xvip_graph_init(struct xvip_composite_device *xdev)
-{
-	int ret;
+अटल पूर्णांक xvip_graph_init(काष्ठा xvip_composite_device *xdev)
+अणु
+	पूर्णांक ret;
 
 	/* Init the DMA channels. */
 	ret = xvip_graph_dma_init(xdev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(xdev->dev, "DMA initialization failed\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* Parse the graph to extract a list of subdevice DT nodes. */
 	ret = xvip_graph_parse(xdev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(xdev->dev, "graph parsing failed\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (list_empty(&xdev->notifier.asd_list)) {
+	अगर (list_empty(&xdev->notअगरier.asd_list)) अणु
 		dev_err(xdev->dev, "no subdev found in graph\n");
 		ret = -ENOENT;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* Register the subdevices notifier. */
-	xdev->notifier.ops = &xvip_graph_notify_ops;
+	/* Register the subdevices notअगरier. */
+	xdev->notअगरier.ops = &xvip_graph_notअगरy_ops;
 
-	ret = v4l2_async_notifier_register(&xdev->v4l2_dev, &xdev->notifier);
-	if (ret < 0) {
+	ret = v4l2_async_notअगरier_रेजिस्टर(&xdev->v4l2_dev, &xdev->notअगरier);
+	अगर (ret < 0) अणु
 		dev_err(xdev->dev, "notifier registration failed\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	ret = 0;
 
-done:
-	if (ret < 0)
+करोne:
+	अगर (ret < 0)
 		xvip_graph_cleanup(xdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Media Controller and V4L2
  */
 
-static void xvip_composite_v4l2_cleanup(struct xvip_composite_device *xdev)
-{
-	v4l2_device_unregister(&xdev->v4l2_dev);
-	media_device_unregister(&xdev->media_dev);
+अटल व्योम xvip_composite_v4l2_cleanup(काष्ठा xvip_composite_device *xdev)
+अणु
+	v4l2_device_unरेजिस्टर(&xdev->v4l2_dev);
+	media_device_unरेजिस्टर(&xdev->media_dev);
 	media_device_cleanup(&xdev->media_dev);
-}
+पूर्ण
 
-static int xvip_composite_v4l2_init(struct xvip_composite_device *xdev)
-{
-	int ret;
+अटल पूर्णांक xvip_composite_v4l2_init(काष्ठा xvip_composite_device *xdev)
+अणु
+	पूर्णांक ret;
 
 	xdev->media_dev.dev = xdev->dev;
 	strscpy(xdev->media_dev.model, "Xilinx Video Composite Device",
-		sizeof(xdev->media_dev.model));
+		माप(xdev->media_dev.model));
 	xdev->media_dev.hw_revision = 0;
 
 	media_device_init(&xdev->media_dev);
 
 	xdev->v4l2_dev.mdev = &xdev->media_dev;
-	ret = v4l2_device_register(xdev->dev, &xdev->v4l2_dev);
-	if (ret < 0) {
+	ret = v4l2_device_रेजिस्टर(xdev->dev, &xdev->v4l2_dev);
+	अगर (ret < 0) अणु
 		dev_err(xdev->dev, "V4L2 device registration failed (%d)\n",
 			ret);
 		media_device_cleanup(&xdev->media_dev);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
- * Platform Device Driver
+ * Platक्रमm Device Driver
  */
 
-static int xvip_composite_probe(struct platform_device *pdev)
-{
-	struct xvip_composite_device *xdev;
-	int ret;
+अटल पूर्णांक xvip_composite_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा xvip_composite_device *xdev;
+	पूर्णांक ret;
 
-	xdev = devm_kzalloc(&pdev->dev, sizeof(*xdev), GFP_KERNEL);
-	if (!xdev)
-		return -ENOMEM;
+	xdev = devm_kzalloc(&pdev->dev, माप(*xdev), GFP_KERNEL);
+	अगर (!xdev)
+		वापस -ENOMEM;
 
 	xdev->dev = &pdev->dev;
 	INIT_LIST_HEAD(&xdev->dmas);
-	v4l2_async_notifier_init(&xdev->notifier);
+	v4l2_async_notअगरier_init(&xdev->notअगरier);
 
 	ret = xvip_composite_v4l2_init(xdev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = xvip_graph_init(xdev);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
-	platform_set_drvdata(pdev, xdev);
+	platक्रमm_set_drvdata(pdev, xdev);
 
 	dev_info(xdev->dev, "device registered\n");
 
-	return 0;
+	वापस 0;
 
 error:
 	xvip_composite_v4l2_cleanup(xdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xvip_composite_remove(struct platform_device *pdev)
-{
-	struct xvip_composite_device *xdev = platform_get_drvdata(pdev);
+अटल पूर्णांक xvip_composite_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा xvip_composite_device *xdev = platक्रमm_get_drvdata(pdev);
 
 	xvip_graph_cleanup(xdev);
 	xvip_composite_v4l2_cleanup(xdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id xvip_composite_of_id_table[] = {
-	{ .compatible = "xlnx,video" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id xvip_composite_of_id_table[] = अणु
+	अणु .compatible = "xlnx,video" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, xvip_composite_of_id_table);
 
-static struct platform_driver xvip_composite_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver xvip_composite_driver = अणु
+	.driver = अणु
 		.name = "xilinx-video",
 		.of_match_table = xvip_composite_of_id_table,
-	},
+	पूर्ण,
 	.probe = xvip_composite_probe,
-	.remove = xvip_composite_remove,
-};
+	.हटाओ = xvip_composite_हटाओ,
+पूर्ण;
 
-module_platform_driver(xvip_composite_driver);
+module_platक्रमm_driver(xvip_composite_driver);
 
 MODULE_AUTHOR("Laurent Pinchart <laurent.pinchart@ideasonboard.com>");
 MODULE_DESCRIPTION("Xilinx Video IP Composite Driver");

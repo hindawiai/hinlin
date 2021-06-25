@@ -1,234 +1,235 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/drivers/char/ttyprintk.c
+ *  linux/drivers/अक्षर/ttyprपूर्णांकk.c
  *
  *  Copyright (C) 2010  Samo Pogacnik
  */
 
 /*
- * This pseudo device allows user to make printk messages. It is possible
- * to store "console" messages inline with kernel messages for better analyses
- * of the boot process, for example.
+ * This pseuकरो device allows user to make prपूर्णांकk messages. It is possible
+ * to store "console" messages अंतरभूत with kernel messages क्रम better analyses
+ * of the boot process, क्रम example.
  */
 
-#include <linux/device.h>
-#include <linux/serial.h>
-#include <linux/tty.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
+#समावेश <linux/device.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
 
-struct ttyprintk_port {
-	struct tty_port port;
+काष्ठा ttyprपूर्णांकk_port अणु
+	काष्ठा tty_port port;
 	spinlock_t spinlock;
-};
+पूर्ण;
 
-static struct ttyprintk_port tpk_port;
+अटल काष्ठा ttyprपूर्णांकk_port tpk_port;
 
 /*
- * Our simple preformatting supports transparent output of (time-stamped)
- * printk messages (also suitable for logging service):
+ * Our simple preक्रमmatting supports transparent output of (समय-stamped)
+ * prपूर्णांकk messages (also suitable क्रम logging service):
  * - any cr is replaced by nl
- * - adds a ttyprintk source tag in front of each line
- * - too long message is fragmented, with '\'nl between fragments
- * - TPK_STR_SIZE isn't really the write_room limiting factor, because
- *   it is emptied on the fly during preformatting.
+ * - adds a ttyprपूर्णांकk source tag in front of each line
+ * - too दीर्घ message is fragmented, with '\'nl between fragments
+ * - TPK_STR_SIZE isn't really the ग_लिखो_room limiting factor, because
+ *   it is emptied on the fly during preक्रमmatting.
  */
-#define TPK_STR_SIZE 508 /* should be bigger then max expected line length */
-#define TPK_MAX_ROOM 4096 /* we could assume 4K for instance */
-#define TPK_PREFIX KERN_SOH __stringify(CONFIG_TTY_PRINTK_LEVEL)
+#घोषणा TPK_STR_SIZE 508 /* should be bigger then max expected line length */
+#घोषणा TPK_MAX_ROOM 4096 /* we could assume 4K क्रम instance */
+#घोषणा TPK_PREFIX KERN_SOH __stringअगरy(CONFIG_TTY_PRINTK_LEVEL)
 
-static int tpk_curr;
+अटल पूर्णांक tpk_curr;
 
-static char tpk_buffer[TPK_STR_SIZE + 4];
+अटल अक्षर tpk_buffer[TPK_STR_SIZE + 4];
 
-static void tpk_flush(void)
-{
-	if (tpk_curr > 0) {
+अटल व्योम tpk_flush(व्योम)
+अणु
+	अगर (tpk_curr > 0) अणु
 		tpk_buffer[tpk_curr] = '\0';
-		printk(TPK_PREFIX "[U] %s\n", tpk_buffer);
+		prपूर्णांकk(TPK_PREFIX "[U] %s\n", tpk_buffer);
 		tpk_curr = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int tpk_printk(const unsigned char *buf, int count)
-{
-	int i = tpk_curr;
+अटल पूर्णांक tpk_prपूर्णांकk(स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	पूर्णांक i = tpk_curr;
 
-	if (buf == NULL) {
+	अगर (buf == शून्य) अणु
 		tpk_flush();
-		return i;
-	}
+		वापस i;
+	पूर्ण
 
-	for (i = 0; i < count; i++) {
-		if (tpk_curr >= TPK_STR_SIZE) {
-			/* end of tmp buffer reached: cut the message in two */
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (tpk_curr >= TPK_STR_SIZE) अणु
+			/* end of पंचांगp buffer reached: cut the message in two */
 			tpk_buffer[tpk_curr++] = '\\';
 			tpk_flush();
-		}
+		पूर्ण
 
-		switch (buf[i]) {
-		case '\r':
+		चयन (buf[i]) अणु
+		हाल '\r':
 			tpk_flush();
-			if ((i + 1) < count && buf[i + 1] == '\n')
+			अगर ((i + 1) < count && buf[i + 1] == '\n')
 				i++;
-			break;
-		case '\n':
+			अवरोध;
+		हाल '\n':
 			tpk_flush();
-			break;
-		default:
+			अवरोध;
+		शेष:
 			tpk_buffer[tpk_curr++] = buf[i];
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * TTY operations open function.
+ * TTY operations खोलो function.
  */
-static int tpk_open(struct tty_struct *tty, struct file *filp)
-{
+अटल पूर्णांक tpk_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
+अणु
 	tty->driver_data = &tpk_port;
 
-	return tty_port_open(&tpk_port.port, tty, filp);
-}
+	वापस tty_port_खोलो(&tpk_port.port, tty, filp);
+पूर्ण
 
 /*
- * TTY operations close function.
+ * TTY operations बंद function.
  */
-static void tpk_close(struct tty_struct *tty, struct file *filp)
-{
-	struct ttyprintk_port *tpkp = tty->driver_data;
-	unsigned long flags;
+अटल व्योम tpk_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
+अणु
+	काष्ठा ttyprपूर्णांकk_port *tpkp = tty->driver_data;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&tpkp->spinlock, flags);
-	/* flush tpk_printk buffer */
-	tpk_printk(NULL, 0);
+	/* flush tpk_prपूर्णांकk buffer */
+	tpk_prपूर्णांकk(शून्य, 0);
 	spin_unlock_irqrestore(&tpkp->spinlock, flags);
 
-	tty_port_close(&tpkp->port, tty, filp);
-}
+	tty_port_बंद(&tpkp->port, tty, filp);
+पूर्ण
 
 /*
- * TTY operations write function.
+ * TTY operations ग_लिखो function.
  */
-static int tpk_write(struct tty_struct *tty,
-		const unsigned char *buf, int count)
-{
-	struct ttyprintk_port *tpkp = tty->driver_data;
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक tpk_ग_लिखो(काष्ठा tty_काष्ठा *tty,
+		स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	काष्ठा ttyprपूर्णांकk_port *tpkp = tty->driver_data;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 
-	/* exclusive use of tpk_printk within this tty */
+	/* exclusive use of tpk_prपूर्णांकk within this tty */
 	spin_lock_irqsave(&tpkp->spinlock, flags);
-	ret = tpk_printk(buf, count);
+	ret = tpk_prपूर्णांकk(buf, count);
 	spin_unlock_irqrestore(&tpkp->spinlock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * TTY operations write_room function.
+ * TTY operations ग_लिखो_room function.
  */
-static int tpk_write_room(struct tty_struct *tty)
-{
-	return TPK_MAX_ROOM;
-}
+अटल पूर्णांक tpk_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
+अणु
+	वापस TPK_MAX_ROOM;
+पूर्ण
 
 /*
  * TTY operations ioctl function.
  */
-static int tpk_ioctl(struct tty_struct *tty,
-			unsigned int cmd, unsigned long arg)
-{
-	struct ttyprintk_port *tpkp = tty->driver_data;
+अटल पूर्णांक tpk_ioctl(काष्ठा tty_काष्ठा *tty,
+			अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा ttyprपूर्णांकk_port *tpkp = tty->driver_data;
 
-	if (!tpkp)
-		return -EINVAL;
+	अगर (!tpkp)
+		वापस -EINVAL;
 
-	switch (cmd) {
+	चयन (cmd) अणु
 	/* Stop TIOCCONS */
-	case TIOCCONS:
-		return -EOPNOTSUPP;
-	default:
-		return -ENOIOCTLCMD;
-	}
-	return 0;
-}
+	हाल TIOCCONS:
+		वापस -EOPNOTSUPP;
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * TTY operations hangup function.
  */
-static void tpk_hangup(struct tty_struct *tty)
-{
-	struct ttyprintk_port *tpkp = tty->driver_data;
+अटल व्योम tpk_hangup(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा ttyprपूर्णांकk_port *tpkp = tty->driver_data;
 
 	tty_port_hangup(&tpkp->port);
-}
+पूर्ण
 
-static const struct tty_operations ttyprintk_ops = {
-	.open = tpk_open,
-	.close = tpk_close,
-	.write = tpk_write,
-	.write_room = tpk_write_room,
+अटल स्थिर काष्ठा tty_operations ttyprपूर्णांकk_ops = अणु
+	.खोलो = tpk_खोलो,
+	.बंद = tpk_बंद,
+	.ग_लिखो = tpk_ग_लिखो,
+	.ग_लिखो_room = tpk_ग_लिखो_room,
 	.ioctl = tpk_ioctl,
 	.hangup = tpk_hangup,
-};
+पूर्ण;
 
-static const struct tty_port_operations null_ops = { };
+अटल स्थिर काष्ठा tty_port_operations null_ops = अणु पूर्ण;
 
-static struct tty_driver *ttyprintk_driver;
+अटल काष्ठा tty_driver *ttyprपूर्णांकk_driver;
 
-static int __init ttyprintk_init(void)
-{
-	int ret;
+अटल पूर्णांक __init ttyprपूर्णांकk_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	spin_lock_init(&tpk_port.spinlock);
 
-	ttyprintk_driver = tty_alloc_driver(1,
+	ttyprपूर्णांकk_driver = tty_alloc_driver(1,
 			TTY_DRIVER_RESET_TERMIOS |
 			TTY_DRIVER_REAL_RAW |
 			TTY_DRIVER_UNNUMBERED_NODE);
-	if (IS_ERR(ttyprintk_driver))
-		return PTR_ERR(ttyprintk_driver);
+	अगर (IS_ERR(ttyprपूर्णांकk_driver))
+		वापस PTR_ERR(ttyprपूर्णांकk_driver);
 
 	tty_port_init(&tpk_port.port);
 	tpk_port.port.ops = &null_ops;
 
-	ttyprintk_driver->driver_name = "ttyprintk";
-	ttyprintk_driver->name = "ttyprintk";
-	ttyprintk_driver->major = TTYAUX_MAJOR;
-	ttyprintk_driver->minor_start = 3;
-	ttyprintk_driver->type = TTY_DRIVER_TYPE_CONSOLE;
-	ttyprintk_driver->init_termios = tty_std_termios;
-	ttyprintk_driver->init_termios.c_oflag = OPOST | OCRNL | ONOCR | ONLRET;
-	tty_set_operations(ttyprintk_driver, &ttyprintk_ops);
-	tty_port_link_device(&tpk_port.port, ttyprintk_driver, 0);
+	ttyprपूर्णांकk_driver->driver_name = "ttyprintk";
+	ttyprपूर्णांकk_driver->name = "ttyprintk";
+	ttyprपूर्णांकk_driver->major = TTYAUX_MAJOR;
+	ttyprपूर्णांकk_driver->minor_start = 3;
+	ttyprपूर्णांकk_driver->type = TTY_DRIVER_TYPE_CONSOLE;
+	ttyprपूर्णांकk_driver->init_termios = tty_std_termios;
+	ttyprपूर्णांकk_driver->init_termios.c_oflag = OPOST | OCRNL | ONOCR | ONLRET;
+	tty_set_operations(ttyprपूर्णांकk_driver, &ttyprपूर्णांकk_ops);
+	tty_port_link_device(&tpk_port.port, ttyprपूर्णांकk_driver, 0);
 
-	ret = tty_register_driver(ttyprintk_driver);
-	if (ret < 0) {
-		printk(KERN_ERR "Couldn't register ttyprintk driver\n");
-		goto error;
-	}
+	ret = tty_रेजिस्टर_driver(ttyprपूर्णांकk_driver);
+	अगर (ret < 0) अणु
+		prपूर्णांकk(KERN_ERR "Couldn't register ttyprintk driver\n");
+		जाओ error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	put_tty_driver(ttyprintk_driver);
+	put_tty_driver(ttyprपूर्णांकk_driver);
 	tty_port_destroy(&tpk_port.port);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit ttyprintk_exit(void)
-{
-	tty_unregister_driver(ttyprintk_driver);
-	put_tty_driver(ttyprintk_driver);
+अटल व्योम __निकास ttyprपूर्णांकk_निकास(व्योम)
+अणु
+	tty_unरेजिस्टर_driver(ttyprपूर्णांकk_driver);
+	put_tty_driver(ttyprपूर्णांकk_driver);
 	tty_port_destroy(&tpk_port.port);
-}
+पूर्ण
 
-device_initcall(ttyprintk_init);
-module_exit(ttyprintk_exit);
+device_initcall(ttyprपूर्णांकk_init);
+module_निकास(ttyprपूर्णांकk_निकास);
 
 MODULE_LICENSE("GPL");

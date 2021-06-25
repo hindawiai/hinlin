@@ -1,195 +1,196 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright 2018 NXP
- *   Dong Aisheng <aisheng.dong@nxp.com>
+ *   Dong Aisheng <aisheng.करोng@nxp.com>
  */
 
-#include <dt-bindings/firmware/imx/rsrc.h>
-#include <linux/arm-smccc.h>
-#include <linux/clk-provider.h>
-#include <linux/err.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/pm_domain.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
+#समावेश <dt-bindings/firmware/imx/rsrc.h>
+#समावेश <linux/arm-smccc.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
 
-#include "clk-scu.h"
+#समावेश "clk-scu.h"
 
-#define IMX_SIP_CPUFREQ			0xC2000001
-#define IMX_SIP_SET_CPUFREQ		0x00
+#घोषणा IMX_SIP_CPUFREQ			0xC2000001
+#घोषणा IMX_SIP_SET_CPUFREQ		0x00
 
-static struct imx_sc_ipc *ccm_ipc_handle;
-static struct device_node *pd_np;
-static struct platform_driver imx_clk_scu_driver;
+अटल काष्ठा imx_sc_ipc *ccm_ipc_handle;
+अटल काष्ठा device_node *pd_np;
+अटल काष्ठा platक्रमm_driver imx_clk_scu_driver;
 
-struct imx_scu_clk_node {
-	const char *name;
+काष्ठा imx_scu_clk_node अणु
+	स्थिर अक्षर *name;
 	u32 rsrc;
 	u8 clk_type;
-	const char * const *parents;
-	int num_parents;
+	स्थिर अक्षर * स्थिर *parents;
+	पूर्णांक num_parents;
 
-	struct clk_hw *hw;
-	struct list_head node;
-};
+	काष्ठा clk_hw *hw;
+	काष्ठा list_head node;
+पूर्ण;
 
-struct list_head imx_scu_clks[IMX_SC_R_LAST];
+काष्ठा list_head imx_scu_clks[IMX_SC_R_LAST];
 
 /*
- * struct clk_scu - Description of one SCU clock
+ * काष्ठा clk_scu - Description of one SCU घड़ी
  * @hw: the common clk_hw
- * @rsrc_id: resource ID of this SCU clock
- * @clk_type: type of this clock resource
+ * @rsrc_id: resource ID of this SCU घड़ी
+ * @clk_type: type of this घड़ी resource
  */
-struct clk_scu {
-	struct clk_hw hw;
+काष्ठा clk_scu अणु
+	काष्ठा clk_hw hw;
 	u16 rsrc_id;
 	u8 clk_type;
 
-	/* for state save&restore */
+	/* क्रम state save&restore */
 	bool is_enabled;
 	u32 rate;
-};
+पूर्ण;
 
 /*
- * struct imx_sc_msg_req_set_clock_rate - clock set rate protocol
+ * काष्ठा imx_sc_msg_req_set_घड़ी_rate - घड़ी set rate protocol
  * @hdr: SCU protocol header
  * @rate: rate to set
- * @resource: clock resource to set rate
+ * @resource: घड़ी resource to set rate
  * @clk: clk type of this resource
  *
- * This structure describes the SCU protocol of clock rate set
+ * This काष्ठाure describes the SCU protocol of घड़ी rate set
  */
-struct imx_sc_msg_req_set_clock_rate {
-	struct imx_sc_rpc_msg hdr;
+काष्ठा imx_sc_msg_req_set_घड़ी_rate अणु
+	काष्ठा imx_sc_rpc_msg hdr;
 	__le32 rate;
 	__le16 resource;
 	u8 clk;
-} __packed __aligned(4);
+पूर्ण __packed __aligned(4);
 
-struct req_get_clock_rate {
+काष्ठा req_get_घड़ी_rate अणु
 	__le16 resource;
 	u8 clk;
-} __packed __aligned(4);
+पूर्ण __packed __aligned(4);
 
-struct resp_get_clock_rate {
+काष्ठा resp_get_घड़ी_rate अणु
 	__le32 rate;
-};
+पूर्ण;
 
 /*
- * struct imx_sc_msg_get_clock_rate - clock get rate protocol
+ * काष्ठा imx_sc_msg_get_घड़ी_rate - घड़ी get rate protocol
  * @hdr: SCU protocol header
  * @req: get rate request protocol
  * @resp: get rate response protocol
  *
- * This structure describes the SCU protocol of clock rate get
+ * This काष्ठाure describes the SCU protocol of घड़ी rate get
  */
-struct imx_sc_msg_get_clock_rate {
-	struct imx_sc_rpc_msg hdr;
-	union {
-		struct req_get_clock_rate req;
-		struct resp_get_clock_rate resp;
-	} data;
-};
+काष्ठा imx_sc_msg_get_घड़ी_rate अणु
+	काष्ठा imx_sc_rpc_msg hdr;
+	जोड़ अणु
+		काष्ठा req_get_घड़ी_rate req;
+		काष्ठा resp_get_घड़ी_rate resp;
+	पूर्ण data;
+पूर्ण;
 
 /*
- * struct imx_sc_msg_get_clock_parent - clock get parent protocol
+ * काष्ठा imx_sc_msg_get_घड़ी_parent - घड़ी get parent protocol
  * @hdr: SCU protocol header
  * @req: get parent request protocol
  * @resp: get parent response protocol
  *
- * This structure describes the SCU protocol of clock get parent
+ * This काष्ठाure describes the SCU protocol of घड़ी get parent
  */
-struct imx_sc_msg_get_clock_parent {
-	struct imx_sc_rpc_msg hdr;
-	union {
-		struct req_get_clock_parent {
+काष्ठा imx_sc_msg_get_घड़ी_parent अणु
+	काष्ठा imx_sc_rpc_msg hdr;
+	जोड़ अणु
+		काष्ठा req_get_घड़ी_parent अणु
 			__le16 resource;
 			u8 clk;
-		} __packed __aligned(4) req;
-		struct resp_get_clock_parent {
+		पूर्ण __packed __aligned(4) req;
+		काष्ठा resp_get_घड़ी_parent अणु
 			u8 parent;
-		} resp;
-	} data;
-};
+		पूर्ण resp;
+	पूर्ण data;
+पूर्ण;
 
 /*
- * struct imx_sc_msg_set_clock_parent - clock set parent protocol
+ * काष्ठा imx_sc_msg_set_घड़ी_parent - घड़ी set parent protocol
  * @hdr: SCU protocol header
  * @req: set parent request protocol
  *
- * This structure describes the SCU protocol of clock set parent
+ * This काष्ठाure describes the SCU protocol of घड़ी set parent
  */
-struct imx_sc_msg_set_clock_parent {
-	struct imx_sc_rpc_msg hdr;
+काष्ठा imx_sc_msg_set_घड़ी_parent अणु
+	काष्ठा imx_sc_rpc_msg hdr;
 	__le16 resource;
 	u8 clk;
 	u8 parent;
-} __packed;
+पूर्ण __packed;
 
 /*
- * struct imx_sc_msg_req_clock_enable - clock gate protocol
+ * काष्ठा imx_sc_msg_req_घड़ी_enable - घड़ी gate protocol
  * @hdr: SCU protocol header
- * @resource: clock resource to gate
+ * @resource: घड़ी resource to gate
  * @clk: clk type of this resource
- * @enable: whether gate off the clock
- * @autog: HW auto gate enable
+ * @enable: whether gate off the घड़ी
+ * @स्वतःg: HW स्वतः gate enable
  *
- * This structure describes the SCU protocol of clock gate
+ * This काष्ठाure describes the SCU protocol of घड़ी gate
  */
-struct imx_sc_msg_req_clock_enable {
-	struct imx_sc_rpc_msg hdr;
+काष्ठा imx_sc_msg_req_घड़ी_enable अणु
+	काष्ठा imx_sc_rpc_msg hdr;
 	__le16 resource;
 	u8 clk;
 	u8 enable;
-	u8 autog;
-} __packed __aligned(4);
+	u8 स्वतःg;
+पूर्ण __packed __aligned(4);
 
-static inline struct clk_scu *to_clk_scu(struct clk_hw *hw)
-{
-	return container_of(hw, struct clk_scu, hw);
-}
+अटल अंतरभूत काष्ठा clk_scu *to_clk_scu(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(hw, काष्ठा clk_scu, hw);
+पूर्ण
 
-int imx_clk_scu_init(struct device_node *np)
-{
+पूर्णांक imx_clk_scu_init(काष्ठा device_node *np)
+अणु
 	u32 clk_cells;
-	int ret, i;
+	पूर्णांक ret, i;
 
 	ret = imx_scu_get_handle(&ccm_ipc_handle);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	of_property_read_u32(np, "#clock-cells", &clk_cells);
+	of_property_पढ़ो_u32(np, "#clock-cells", &clk_cells);
 
-	if (clk_cells == 2) {
-		for (i = 0; i < IMX_SC_R_LAST; i++)
+	अगर (clk_cells == 2) अणु
+		क्रम (i = 0; i < IMX_SC_R_LAST; i++)
 			INIT_LIST_HEAD(&imx_scu_clks[i]);
 
-		/* pd_np will be used to attach power domains later */
-		pd_np = of_find_compatible_node(NULL, NULL, "fsl,scu-pd");
-		if (!pd_np)
-			return -EINVAL;
-	}
+		/* pd_np will be used to attach घातer करोमुख्यs later */
+		pd_np = of_find_compatible_node(शून्य, शून्य, "fsl,scu-pd");
+		अगर (!pd_np)
+			वापस -EINVAL;
+	पूर्ण
 
-	return platform_driver_register(&imx_clk_scu_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&imx_clk_scu_driver);
+पूर्ण
 
 /*
- * clk_scu_recalc_rate - Get clock rate for a SCU clock
- * @hw: clock to get rate for
- * @parent_rate: parent rate provided by common clock framework, not used
+ * clk_scu_recalc_rate - Get घड़ी rate क्रम a SCU घड़ी
+ * @hw: घड़ी to get rate क्रम
+ * @parent_rate: parent rate provided by common घड़ी framework, not used
  *
- * Gets the current clock rate of a SCU clock. Returns the current
- * clock rate, or zero in failure.
+ * Gets the current घड़ी rate of a SCU घड़ी. Returns the current
+ * घड़ी rate, or zero in failure.
  */
-static unsigned long clk_scu_recalc_rate(struct clk_hw *hw,
-					 unsigned long parent_rate)
-{
-	struct clk_scu *clk = to_clk_scu(hw);
-	struct imx_sc_msg_get_clock_rate msg;
-	struct imx_sc_rpc_msg *hdr = &msg.hdr;
-	int ret;
+अटल अचिन्हित दीर्घ clk_scu_recalc_rate(काष्ठा clk_hw *hw,
+					 अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_scu *clk = to_clk_scu(hw);
+	काष्ठा imx_sc_msg_get_घड़ी_rate msg;
+	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
+	पूर्णांक ret;
 
 	hdr->ver = IMX_SC_RPC_VERSION;
 	hdr->svc = IMX_SC_RPC_SVC_PM;
@@ -200,67 +201,67 @@ static unsigned long clk_scu_recalc_rate(struct clk_hw *hw,
 	msg.data.req.clk = clk->clk_type;
 
 	ret = imx_scu_call_rpc(ccm_ipc_handle, &msg, true);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%s: failed to get clock rate %d\n",
 		       clk_hw_get_name(hw), ret);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return le32_to_cpu(msg.data.resp.rate);
-}
+	वापस le32_to_cpu(msg.data.resp.rate);
+पूर्ण
 
 /*
- * clk_scu_round_rate - Round clock rate for a SCU clock
- * @hw: clock to round rate for
+ * clk_scu_round_rate - Round घड़ी rate क्रम a SCU घड़ी
+ * @hw: घड़ी to round rate क्रम
  * @rate: rate to round
- * @parent_rate: parent rate provided by common clock framework, not used
+ * @parent_rate: parent rate provided by common घड़ी framework, not used
  *
- * Returns the current clock rate, or zero in failure.
+ * Returns the current घड़ी rate, or zero in failure.
  */
-static long clk_scu_round_rate(struct clk_hw *hw, unsigned long rate,
-			       unsigned long *parent_rate)
-{
+अटल दीर्घ clk_scu_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			       अचिन्हित दीर्घ *parent_rate)
+अणु
 	/*
 	 * Assume we support all the requested rate and let the SCU firmware
 	 * to handle the left work
 	 */
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static int clk_scu_atf_set_cpu_rate(struct clk_hw *hw, unsigned long rate,
-				    unsigned long parent_rate)
-{
-	struct clk_scu *clk = to_clk_scu(hw);
-	struct arm_smccc_res res;
-	unsigned long cluster_id;
+अटल पूर्णांक clk_scu_atf_set_cpu_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_scu *clk = to_clk_scu(hw);
+	काष्ठा arm_smccc_res res;
+	अचिन्हित दीर्घ cluster_id;
 
-	if (clk->rsrc_id == IMX_SC_R_A35)
+	अगर (clk->rsrc_id == IMX_SC_R_A35)
 		cluster_id = 0;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	/* CPU frequency scaling can ONLY be done by ARM-Trusted-Firmware */
+	/* CPU frequency scaling can ONLY be करोne by ARM-Trusted-Firmware */
 	arm_smccc_smc(IMX_SIP_CPUFREQ, IMX_SIP_SET_CPUFREQ,
 		      cluster_id, rate, 0, 0, 0, 0, &res);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * clk_scu_set_rate - Set rate for a SCU clock
- * @hw: clock to change rate for
- * @rate: target rate for the clock
- * @parent_rate: rate of the clock parent, not used for SCU clocks
+ * clk_scu_set_rate - Set rate क्रम a SCU घड़ी
+ * @hw: घड़ी to change rate क्रम
+ * @rate: target rate क्रम the घड़ी
+ * @parent_rate: rate of the घड़ी parent, not used क्रम SCU घड़ीs
  *
- * Sets a clock frequency for a SCU clock. Returns the SCU
+ * Sets a घड़ी frequency क्रम a SCU घड़ी. Returns the SCU
  * protocol status.
  */
-static int clk_scu_set_rate(struct clk_hw *hw, unsigned long rate,
-			    unsigned long parent_rate)
-{
-	struct clk_scu *clk = to_clk_scu(hw);
-	struct imx_sc_msg_req_set_clock_rate msg;
-	struct imx_sc_rpc_msg *hdr = &msg.hdr;
+अटल पूर्णांक clk_scu_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_scu *clk = to_clk_scu(hw);
+	काष्ठा imx_sc_msg_req_set_घड़ी_rate msg;
+	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
 
 	hdr->ver = IMX_SC_RPC_VERSION;
 	hdr->svc = IMX_SC_RPC_SVC_PM;
@@ -271,15 +272,15 @@ static int clk_scu_set_rate(struct clk_hw *hw, unsigned long rate,
 	msg.resource = cpu_to_le16(clk->rsrc_id);
 	msg.clk = clk->clk_type;
 
-	return imx_scu_call_rpc(ccm_ipc_handle, &msg, true);
-}
+	वापस imx_scu_call_rpc(ccm_ipc_handle, &msg, true);
+पूर्ण
 
-static u8 clk_scu_get_parent(struct clk_hw *hw)
-{
-	struct clk_scu *clk = to_clk_scu(hw);
-	struct imx_sc_msg_get_clock_parent msg;
-	struct imx_sc_rpc_msg *hdr = &msg.hdr;
-	int ret;
+अटल u8 clk_scu_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_scu *clk = to_clk_scu(hw);
+	काष्ठा imx_sc_msg_get_घड़ी_parent msg;
+	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
+	पूर्णांक ret;
 
 	hdr->ver = IMX_SC_RPC_VERSION;
 	hdr->svc = IMX_SC_RPC_SVC_PM;
@@ -290,20 +291,20 @@ static u8 clk_scu_get_parent(struct clk_hw *hw)
 	msg.data.req.clk = clk->clk_type;
 
 	ret = imx_scu_call_rpc(ccm_ipc_handle, &msg, true);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%s: failed to get clock parent %d\n",
 		       clk_hw_get_name(hw), ret);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return msg.data.resp.parent;
-}
+	वापस msg.data.resp.parent;
+पूर्ण
 
-static int clk_scu_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct clk_scu *clk = to_clk_scu(hw);
-	struct imx_sc_msg_set_clock_parent msg;
-	struct imx_sc_rpc_msg *hdr = &msg.hdr;
+अटल पूर्णांक clk_scu_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा clk_scu *clk = to_clk_scu(hw);
+	काष्ठा imx_sc_msg_set_घड़ी_parent msg;
+	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
 
 	hdr->ver = IMX_SC_RPC_VERSION;
 	hdr->svc = IMX_SC_RPC_SVC_PM;
@@ -314,14 +315,14 @@ static int clk_scu_set_parent(struct clk_hw *hw, u8 index)
 	msg.clk = clk->clk_type;
 	msg.parent = index;
 
-	return imx_scu_call_rpc(ccm_ipc_handle, &msg, true);
-}
+	वापस imx_scu_call_rpc(ccm_ipc_handle, &msg, true);
+पूर्ण
 
-static int sc_pm_clock_enable(struct imx_sc_ipc *ipc, u16 resource,
-			      u8 clk, bool enable, bool autog)
-{
-	struct imx_sc_msg_req_clock_enable msg;
-	struct imx_sc_rpc_msg *hdr = &msg.hdr;
+अटल पूर्णांक sc_pm_घड़ी_enable(काष्ठा imx_sc_ipc *ipc, u16 resource,
+			      u8 clk, bool enable, bool स्वतःg)
+अणु
+	काष्ठा imx_sc_msg_req_घड़ी_enable msg;
+	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
 
 	hdr->ver = IMX_SC_RPC_VERSION;
 	hdr->svc = IMX_SC_RPC_SVC_PM;
@@ -331,44 +332,44 @@ static int sc_pm_clock_enable(struct imx_sc_ipc *ipc, u16 resource,
 	msg.resource = cpu_to_le16(resource);
 	msg.clk = clk;
 	msg.enable = enable;
-	msg.autog = autog;
+	msg.स्वतःg = स्वतःg;
 
-	return imx_scu_call_rpc(ccm_ipc_handle, &msg, true);
-}
+	वापस imx_scu_call_rpc(ccm_ipc_handle, &msg, true);
+पूर्ण
 
 /*
- * clk_scu_prepare - Enable a SCU clock
- * @hw: clock to enable
+ * clk_scu_prepare - Enable a SCU घड़ी
+ * @hw: घड़ी to enable
  *
- * Enable the clock at the DSC slice level
+ * Enable the घड़ी at the DSC slice level
  */
-static int clk_scu_prepare(struct clk_hw *hw)
-{
-	struct clk_scu *clk = to_clk_scu(hw);
+अटल पूर्णांक clk_scu_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_scu *clk = to_clk_scu(hw);
 
-	return sc_pm_clock_enable(ccm_ipc_handle, clk->rsrc_id,
+	वापस sc_pm_घड़ी_enable(ccm_ipc_handle, clk->rsrc_id,
 				  clk->clk_type, true, false);
-}
+पूर्ण
 
 /*
- * clk_scu_unprepare - Disable a SCU clock
- * @hw: clock to enable
+ * clk_scu_unprepare - Disable a SCU घड़ी
+ * @hw: घड़ी to enable
  *
- * Disable the clock at the DSC slice level
+ * Disable the घड़ी at the DSC slice level
  */
-static void clk_scu_unprepare(struct clk_hw *hw)
-{
-	struct clk_scu *clk = to_clk_scu(hw);
-	int ret;
+अटल व्योम clk_scu_unprepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_scu *clk = to_clk_scu(hw);
+	पूर्णांक ret;
 
-	ret = sc_pm_clock_enable(ccm_ipc_handle, clk->rsrc_id,
+	ret = sc_pm_घड़ी_enable(ccm_ipc_handle, clk->rsrc_id,
 				 clk->clk_type, false, false);
-	if (ret)
+	अगर (ret)
 		pr_warn("%s: clk unprepare failed %d\n", clk_hw_get_name(hw),
 			ret);
-}
+पूर्ण
 
-static const struct clk_ops clk_scu_ops = {
+अटल स्थिर काष्ठा clk_ops clk_scu_ops = अणु
 	.recalc_rate = clk_scu_recalc_rate,
 	.round_rate = clk_scu_round_rate,
 	.set_rate = clk_scu_set_rate,
@@ -376,232 +377,232 @@ static const struct clk_ops clk_scu_ops = {
 	.set_parent = clk_scu_set_parent,
 	.prepare = clk_scu_prepare,
 	.unprepare = clk_scu_unprepare,
-};
+पूर्ण;
 
-static const struct clk_ops clk_scu_cpu_ops = {
+अटल स्थिर काष्ठा clk_ops clk_scu_cpu_ops = अणु
 	.recalc_rate = clk_scu_recalc_rate,
 	.round_rate = clk_scu_round_rate,
 	.set_rate = clk_scu_atf_set_cpu_rate,
 	.prepare = clk_scu_prepare,
 	.unprepare = clk_scu_unprepare,
-};
+पूर्ण;
 
-struct clk_hw *__imx_clk_scu(struct device *dev, const char *name,
-			     const char * const *parents, int num_parents,
+काष्ठा clk_hw *__imx_clk_scu(काष्ठा device *dev, स्थिर अक्षर *name,
+			     स्थिर अक्षर * स्थिर *parents, पूर्णांक num_parents,
 			     u32 rsrc_id, u8 clk_type)
-{
-	struct clk_init_data init;
-	struct clk_scu *clk;
-	struct clk_hw *hw;
-	int ret;
+अणु
+	काष्ठा clk_init_data init;
+	काष्ठा clk_scu *clk;
+	काष्ठा clk_hw *hw;
+	पूर्णांक ret;
 
-	clk = kzalloc(sizeof(*clk), GFP_KERNEL);
-	if (!clk)
-		return ERR_PTR(-ENOMEM);
+	clk = kzalloc(माप(*clk), GFP_KERNEL);
+	अगर (!clk)
+		वापस ERR_PTR(-ENOMEM);
 
 	clk->rsrc_id = rsrc_id;
 	clk->clk_type = clk_type;
 
 	init.name = name;
 	init.ops = &clk_scu_ops;
-	if (rsrc_id == IMX_SC_R_A35)
+	अगर (rsrc_id == IMX_SC_R_A35)
 		init.ops = &clk_scu_cpu_ops;
-	else
+	अन्यथा
 		init.ops = &clk_scu_ops;
 	init.parent_names = parents;
 	init.num_parents = num_parents;
 
 	/*
-	 * Note on MX8, the clocks are tightly coupled with power domain
-	 * that once the power domain is off, the clock status may be
+	 * Note on MX8, the घड़ीs are tightly coupled with घातer करोमुख्य
+	 * that once the घातer करोमुख्य is off, the घड़ी status may be
 	 * lost. So we make it NOCACHE to let user to retrieve the real
-	 * clock status from HW instead of using the possible invalid
+	 * घड़ी status from HW instead of using the possible invalid
 	 * cached rate.
 	 */
 	init.flags = CLK_GET_RATE_NOCACHE;
 	clk->hw.init = &init;
 
 	hw = &clk->hw;
-	ret = clk_hw_register(dev, hw);
-	if (ret) {
-		kfree(clk);
+	ret = clk_hw_रेजिस्टर(dev, hw);
+	अगर (ret) अणु
+		kमुक्त(clk);
 		hw = ERR_PTR(ret);
-		return hw;
-	}
+		वापस hw;
+	पूर्ण
 
-	if (dev)
+	अगर (dev)
 		dev_set_drvdata(dev, clk);
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-struct clk_hw *imx_scu_of_clk_src_get(struct of_phandle_args *clkspec,
-				      void *data)
-{
-	unsigned int rsrc = clkspec->args[0];
-	unsigned int idx = clkspec->args[1];
-	struct list_head *scu_clks = data;
-	struct imx_scu_clk_node *clk;
+काष्ठा clk_hw *imx_scu_of_clk_src_get(काष्ठा of_phandle_args *clkspec,
+				      व्योम *data)
+अणु
+	अचिन्हित पूर्णांक rsrc = clkspec->args[0];
+	अचिन्हित पूर्णांक idx = clkspec->args[1];
+	काष्ठा list_head *scu_clks = data;
+	काष्ठा imx_scu_clk_node *clk;
 
-	list_for_each_entry(clk, &scu_clks[rsrc], node) {
-		if (clk->clk_type == idx)
-			return clk->hw;
-	}
+	list_क्रम_each_entry(clk, &scu_clks[rsrc], node) अणु
+		अगर (clk->clk_type == idx)
+			वापस clk->hw;
+	पूर्ण
 
-	return ERR_PTR(-ENODEV);
-}
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-static int imx_clk_scu_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct imx_scu_clk_node *clk = dev_get_platdata(dev);
-	struct clk_hw *hw;
-	int ret;
+अटल पूर्णांक imx_clk_scu_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा imx_scu_clk_node *clk = dev_get_platdata(dev);
+	काष्ठा clk_hw *hw;
+	पूर्णांक ret;
 
-	pm_runtime_set_suspended(dev);
-	pm_runtime_set_autosuspend_delay(dev, 50);
-	pm_runtime_use_autosuspend(&pdev->dev);
-	pm_runtime_enable(dev);
+	pm_runसमय_set_suspended(dev);
+	pm_runसमय_set_स्वतःsuspend_delay(dev, 50);
+	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
+	pm_runसमय_enable(dev);
 
-	ret = pm_runtime_get_sync(dev);
-	if (ret) {
-		pm_runtime_disable(dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(dev);
+	अगर (ret) अणु
+		pm_runसमय_disable(dev);
+		वापस ret;
+	पूर्ण
 
 	hw = __imx_clk_scu(dev, clk->name, clk->parents, clk->num_parents,
 			   clk->rsrc, clk->clk_type);
-	if (IS_ERR(hw)) {
-		pm_runtime_disable(dev);
-		return PTR_ERR(hw);
-	}
+	अगर (IS_ERR(hw)) अणु
+		pm_runसमय_disable(dev);
+		वापस PTR_ERR(hw);
+	पूर्ण
 
 	clk->hw = hw;
 	list_add_tail(&clk->node, &imx_scu_clks[clk->rsrc]);
 
-	pm_runtime_mark_last_busy(&pdev->dev);
-	pm_runtime_put_autosuspend(&pdev->dev);
+	pm_runसमय_mark_last_busy(&pdev->dev);
+	pm_runसमय_put_स्वतःsuspend(&pdev->dev);
 
 	dev_dbg(dev, "register SCU clock rsrc:%d type:%d\n", clk->rsrc,
 		clk->clk_type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused imx_clk_scu_suspend(struct device *dev)
-{
-	struct clk_scu *clk = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused imx_clk_scu_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा clk_scu *clk = dev_get_drvdata(dev);
 
 	clk->rate = clk_hw_get_rate(&clk->hw);
 	clk->is_enabled = clk_hw_is_enabled(&clk->hw);
 
-	if (clk->rate)
+	अगर (clk->rate)
 		dev_dbg(dev, "save rate %d\n", clk->rate);
 
-	if (clk->is_enabled)
+	अगर (clk->is_enabled)
 		dev_dbg(dev, "save enabled state\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused imx_clk_scu_resume(struct device *dev)
-{
-	struct clk_scu *clk = dev_get_drvdata(dev);
-	int ret = 0;
+अटल पूर्णांक __maybe_unused imx_clk_scu_resume(काष्ठा device *dev)
+अणु
+	काष्ठा clk_scu *clk = dev_get_drvdata(dev);
+	पूर्णांक ret = 0;
 
-	if (clk->rate) {
+	अगर (clk->rate) अणु
 		ret = clk_scu_set_rate(&clk->hw, clk->rate, 0);
 		dev_dbg(dev, "restore rate %d %s\n", clk->rate,
 			!ret ? "success" : "failed");
-	}
+	पूर्ण
 
-	if (clk->is_enabled) {
+	अगर (clk->is_enabled) अणु
 		ret = clk_scu_prepare(&clk->hw);
 		dev_dbg(dev, "restore enabled state %s\n",
 			!ret ? "success" : "failed");
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct dev_pm_ops imx_clk_scu_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops imx_clk_scu_pm_ops = अणु
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(imx_clk_scu_suspend,
 				      imx_clk_scu_resume)
-};
+पूर्ण;
 
-static struct platform_driver imx_clk_scu_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx_clk_scu_driver = अणु
+	.driver = अणु
 		.name = "imx-scu-clk",
 		.suppress_bind_attrs = true,
 		.pm = &imx_clk_scu_pm_ops,
-	},
+	पूर्ण,
 	.probe = imx_clk_scu_probe,
-};
+पूर्ण;
 
-static int imx_clk_scu_attach_pd(struct device *dev, u32 rsrc_id)
-{
-	struct of_phandle_args genpdspec = {
+अटल पूर्णांक imx_clk_scu_attach_pd(काष्ठा device *dev, u32 rsrc_id)
+अणु
+	काष्ठा of_phandle_args genpdspec = अणु
 		.np = pd_np,
 		.args_count = 1,
 		.args[0] = rsrc_id,
-	};
+	पूर्ण;
 
-	if (rsrc_id == IMX_SC_R_A35 || rsrc_id == IMX_SC_R_A53 ||
+	अगर (rsrc_id == IMX_SC_R_A35 || rsrc_id == IMX_SC_R_A53 ||
 	    rsrc_id == IMX_SC_R_A72)
-		return 0;
+		वापस 0;
 
-	return of_genpd_add_device(&genpdspec, dev);
-}
+	वापस of_genpd_add_device(&genpdspec, dev);
+पूर्ण
 
-struct clk_hw *imx_clk_scu_alloc_dev(const char *name,
-				     const char * const *parents,
-				     int num_parents, u32 rsrc_id, u8 clk_type)
-{
-	struct imx_scu_clk_node clk = {
+काष्ठा clk_hw *imx_clk_scu_alloc_dev(स्थिर अक्षर *name,
+				     स्थिर अक्षर * स्थिर *parents,
+				     पूर्णांक num_parents, u32 rsrc_id, u8 clk_type)
+अणु
+	काष्ठा imx_scu_clk_node clk = अणु
 		.name = name,
 		.rsrc = rsrc_id,
 		.clk_type = clk_type,
 		.parents = parents,
 		.num_parents = num_parents,
-	};
-	struct platform_device *pdev;
-	int ret;
+	पूर्ण;
+	काष्ठा platक्रमm_device *pdev;
+	पूर्णांक ret;
 
-	pdev = platform_device_alloc(name, PLATFORM_DEVID_NONE);
-	if (!pdev) {
+	pdev = platक्रमm_device_alloc(name, PLATFORM_DEVID_NONE);
+	अगर (!pdev) अणु
 		pr_err("%s: failed to allocate scu clk dev rsrc %d type %d\n",
 		       name, rsrc_id, clk_type);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	ret = platform_device_add_data(pdev, &clk, sizeof(clk));
-	if (ret) {
-		platform_device_put(pdev);
-		return ERR_PTR(ret);
-	}
+	ret = platक्रमm_device_add_data(pdev, &clk, माप(clk));
+	अगर (ret) अणु
+		platक्रमm_device_put(pdev);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	pdev->driver_override = "imx-scu-clk";
 
 	ret = imx_clk_scu_attach_pd(&pdev->dev, rsrc_id);
-	if (ret)
+	अगर (ret)
 		pr_warn("%s: failed to attached the power domain %d\n",
 			name, ret);
 
-	platform_device_add(pdev);
+	platक्रमm_device_add(pdev);
 
-	/* For API backwards compatiblilty, simply return NULL for success */
-	return NULL;
-}
+	/* For API backwards compatiblilty, simply वापस शून्य क्रम success */
+	वापस शून्य;
+पूर्ण
 
-void imx_clk_scu_unregister(void)
-{
-	struct imx_scu_clk_node *clk;
-	int i;
+व्योम imx_clk_scu_unरेजिस्टर(व्योम)
+अणु
+	काष्ठा imx_scu_clk_node *clk;
+	पूर्णांक i;
 
-	for (i = 0; i < IMX_SC_R_LAST; i++) {
-		list_for_each_entry(clk, &imx_scu_clks[i], node) {
-			clk_hw_unregister(clk->hw);
-			kfree(clk);
-		}
-	}
-}
+	क्रम (i = 0; i < IMX_SC_R_LAST; i++) अणु
+		list_क्रम_each_entry(clk, &imx_scu_clks[i], node) अणु
+			clk_hw_unरेजिस्टर(clk->hw);
+			kमुक्त(clk);
+		पूर्ण
+	पूर्ण
+पूर्ण

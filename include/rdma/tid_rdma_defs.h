@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause) */
 /*
  * Copyright(c) 2018 Intel Corporation.
  *
  */
 
-#ifndef TID_RDMA_DEFS_H
-#define TID_RDMA_DEFS_H
+#अगर_अघोषित TID_RDMA_DEFS_H
+#घोषणा TID_RDMA_DEFS_H
 
-#include <rdma/ib_pack.h>
+#समावेश <rdma/ib_pack.h>
 
-struct tid_rdma_read_req {
+काष्ठा tid_rdma_पढ़ो_req अणु
 	__le32 kdeth0;
 	__le32 kdeth1;
-	struct ib_reth reth;
+	काष्ठा ib_reth reth;
 	__be32 tid_flow_psn;
 	__be32 tid_flow_qp;
 	__be32 verbs_qp;
-};
+पूर्ण;
 
-struct tid_rdma_read_resp {
+काष्ठा tid_rdma_पढ़ो_resp अणु
 	__le32 kdeth0;
 	__le32 kdeth1;
 	__be32 aeth;
 	__be32 reserved[4];
 	__be32 verbs_psn;
 	__be32 verbs_qp;
-};
+पूर्ण;
 
-struct tid_rdma_write_req {
+काष्ठा tid_rdma_ग_लिखो_req अणु
 	__le32 kdeth0;
 	__le32 kdeth1;
-	struct ib_reth reth;
+	काष्ठा ib_reth reth;
 	__be32 reserved[2];
 	__be32 verbs_qp;
-};
+पूर्ण;
 
-struct tid_rdma_write_resp {
+काष्ठा tid_rdma_ग_लिखो_resp अणु
 	__le32 kdeth0;
 	__le32 kdeth1;
 	__be32 aeth;
@@ -43,23 +44,23 @@ struct tid_rdma_write_resp {
 	__be32 tid_flow_psn;
 	__be32 tid_flow_qp;
 	__be32 verbs_qp;
-};
+पूर्ण;
 
-struct tid_rdma_write_data {
+काष्ठा tid_rdma_ग_लिखो_data अणु
 	__le32 kdeth0;
 	__le32 kdeth1;
 	__be32 reserved[6];
 	__be32 verbs_qp;
-};
+पूर्ण;
 
-struct tid_rdma_resync {
+काष्ठा tid_rdma_resync अणु
 	__le32 kdeth0;
 	__le32 kdeth1;
 	__be32 reserved[6];
 	__be32 verbs_qp;
-};
+पूर्ण;
 
-struct tid_rdma_ack {
+काष्ठा tid_rdma_ack अणु
 	__le32 kdeth0;
 	__le32 kdeth1;
 	__be32 aeth;
@@ -68,13 +69,13 @@ struct tid_rdma_ack {
 	__be32 verbs_psn;
 	__be32 tid_flow_qp;
 	__be32 verbs_qp;
-};
+पूर्ण;
 
 /*
  * TID RDMA Opcodes
  */
-#define IB_OPCODE_TID_RDMA 0xe0
-enum {
+#घोषणा IB_OPCODE_TID_RDMA 0xe0
+क्रमागत अणु
 	IB_OPCODE_WRITE_REQ       = 0x0,
 	IB_OPCODE_WRITE_RESP      = 0x1,
 	IB_OPCODE_WRITE_DATA      = 0x2,
@@ -92,17 +93,17 @@ enum {
 	IB_OPCODE(TID_RDMA, READ_RESP),
 	IB_OPCODE(TID_RDMA, RESYNC),
 	IB_OPCODE(TID_RDMA, ACK),
-};
+पूर्ण;
 
-#define TID_OP(x) IB_OPCODE_TID_RDMA_##x
+#घोषणा TID_OP(x) IB_OPCODE_TID_RDMA_##x
 
 /*
- * Define TID RDMA specific WR opcodes. The ib_wr_opcode
- * enum already provides some reserved values for use by
- * low level drivers. Two of those are used but renamed
+ * Define TID RDMA specअगरic WR opcodes. The ib_wr_opcode
+ * क्रमागत alपढ़ोy provides some reserved values क्रम use by
+ * low level drivers. Two of those are used but नामd
  * to be more descriptive.
  */
-#define IB_WR_TID_RDMA_WRITE IB_WR_RESERVED1
-#define IB_WR_TID_RDMA_READ  IB_WR_RESERVED2
+#घोषणा IB_WR_TID_RDMA_WRITE IB_WR_RESERVED1
+#घोषणा IB_WR_TID_RDMA_READ  IB_WR_RESERVED2
 
-#endif /* TID_RDMA_DEFS_H */
+#पूर्ण_अगर /* TID_RDMA_DEFS_H */

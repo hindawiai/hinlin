@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * OPAL asynchronus Memory error handling support in PowerNV.
  *
@@ -6,129 +7,129 @@
  * Author: Mahesh Salgaonkar <mahesh@linux.vnet.ibm.com>
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
 
-#include <asm/machdep.h>
-#include <asm/opal.h>
-#include <asm/cputable.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/opal.h>
+#समावेश <यंत्र/cputable.h>
 
-static int opal_mem_err_nb_init;
-static LIST_HEAD(opal_memory_err_list);
-static DEFINE_SPINLOCK(opal_mem_err_lock);
+अटल पूर्णांक opal_mem_err_nb_init;
+अटल LIST_HEAD(opal_memory_err_list);
+अटल DEFINE_SPINLOCK(opal_mem_err_lock);
 
-struct OpalMsgNode {
-	struct list_head list;
-	struct opal_msg msg;
-};
+काष्ठा OpalMsgNode अणु
+	काष्ठा list_head list;
+	काष्ठा opal_msg msg;
+पूर्ण;
 
-static void handle_memory_error_event(struct OpalMemoryErrorData *merr_evt)
-{
-	uint64_t paddr_start, paddr_end;
+अटल व्योम handle_memory_error_event(काष्ठा OpalMemoryErrorData *merr_evt)
+अणु
+	uपूर्णांक64_t paddr_start, paddr_end;
 
 	pr_debug("%s: Retrieved memory error event, type: 0x%x\n",
 		  __func__, merr_evt->type);
-	switch (merr_evt->type) {
-	case OPAL_MEM_ERR_TYPE_RESILIENCE:
+	चयन (merr_evt->type) अणु
+	हाल OPAL_MEM_ERR_TYPE_RESILIENCE:
 		paddr_start = be64_to_cpu(merr_evt->u.resilience.physical_address_start);
 		paddr_end = be64_to_cpu(merr_evt->u.resilience.physical_address_end);
-		break;
-	case OPAL_MEM_ERR_TYPE_DYN_DALLOC:
+		अवरोध;
+	हाल OPAL_MEM_ERR_TYPE_DYN_DALLOC:
 		paddr_start = be64_to_cpu(merr_evt->u.dyn_dealloc.physical_address_start);
 		paddr_end = be64_to_cpu(merr_evt->u.dyn_dealloc.physical_address_end);
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
-	for (; paddr_start < paddr_end; paddr_start += PAGE_SIZE) {
+	क्रम (; paddr_start < paddr_end; paddr_start += PAGE_SIZE) अणु
 		memory_failure(paddr_start >> PAGE_SHIFT, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void handle_memory_error(void)
-{
-	unsigned long flags;
-	struct OpalMemoryErrorData *merr_evt;
-	struct OpalMsgNode *msg_node;
+अटल व्योम handle_memory_error(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा OpalMemoryErrorData *merr_evt;
+	काष्ठा OpalMsgNode *msg_node;
 
 	spin_lock_irqsave(&opal_mem_err_lock, flags);
-	while (!list_empty(&opal_memory_err_list)) {
+	जबतक (!list_empty(&opal_memory_err_list)) अणु
 		 msg_node = list_entry(opal_memory_err_list.next,
-					   struct OpalMsgNode, list);
+					   काष्ठा OpalMsgNode, list);
 		list_del(&msg_node->list);
 		spin_unlock_irqrestore(&opal_mem_err_lock, flags);
 
-		merr_evt = (struct OpalMemoryErrorData *)
+		merr_evt = (काष्ठा OpalMemoryErrorData *)
 					&msg_node->msg.params[0];
 		handle_memory_error_event(merr_evt);
-		kfree(msg_node);
+		kमुक्त(msg_node);
 		spin_lock_irqsave(&opal_mem_err_lock, flags);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&opal_mem_err_lock, flags);
-}
+पूर्ण
 
-static void mem_error_handler(struct work_struct *work)
-{
+अटल व्योम mem_error_handler(काष्ठा work_काष्ठा *work)
+अणु
 	handle_memory_error();
-}
+पूर्ण
 
-static DECLARE_WORK(mem_error_work, mem_error_handler);
+अटल DECLARE_WORK(mem_error_work, mem_error_handler);
 
 /*
- * opal_memory_err_event - notifier handler that queues up the opal message
+ * opal_memory_err_event - notअगरier handler that queues up the opal message
  * to be preocessed later.
  */
-static int opal_memory_err_event(struct notifier_block *nb,
-			  unsigned long msg_type, void *msg)
-{
-	unsigned long flags;
-	struct OpalMsgNode *msg_node;
+अटल पूर्णांक opal_memory_err_event(काष्ठा notअगरier_block *nb,
+			  अचिन्हित दीर्घ msg_type, व्योम *msg)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा OpalMsgNode *msg_node;
 
-	if (msg_type != OPAL_MSG_MEM_ERR)
-		return 0;
+	अगर (msg_type != OPAL_MSG_MEM_ERR)
+		वापस 0;
 
-	msg_node = kzalloc(sizeof(*msg_node), GFP_ATOMIC);
-	if (!msg_node) {
+	msg_node = kzalloc(माप(*msg_node), GFP_ATOMIC);
+	अगर (!msg_node) अणु
 		pr_err("MEMORY_ERROR: out of memory, Opal message event not"
 		       "handled\n");
-		return -ENOMEM;
-	}
-	memcpy(&msg_node->msg, msg, sizeof(msg_node->msg));
+		वापस -ENOMEM;
+	पूर्ण
+	स_नकल(&msg_node->msg, msg, माप(msg_node->msg));
 
 	spin_lock_irqsave(&opal_mem_err_lock, flags);
 	list_add(&msg_node->list, &opal_memory_err_list);
 	spin_unlock_irqrestore(&opal_mem_err_lock, flags);
 
 	schedule_work(&mem_error_work);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct notifier_block opal_mem_err_nb = {
-	.notifier_call	= opal_memory_err_event,
-	.next		= NULL,
+अटल काष्ठा notअगरier_block opal_mem_err_nb = अणु
+	.notअगरier_call	= opal_memory_err_event,
+	.next		= शून्य,
 	.priority	= 0,
-};
+पूर्ण;
 
-static int __init opal_mem_err_init(void)
-{
-	int ret;
+अटल पूर्णांक __init opal_mem_err_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!opal_mem_err_nb_init) {
-		ret = opal_message_notifier_register(
+	अगर (!opal_mem_err_nb_init) अणु
+		ret = opal_message_notअगरier_रेजिस्टर(
 					OPAL_MSG_MEM_ERR, &opal_mem_err_nb);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("%s: Can't register OPAL event notifier (%d)\n",
 			       __func__, ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		opal_mem_err_nb_init = 1;
-	}
-	return 0;
-}
-machine_device_initcall(powernv, opal_mem_err_init);
+	पूर्ण
+	वापस 0;
+पूर्ण
+machine_device_initcall(घातernv, opal_mem_err_init);

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Sonics Silicon Backplane
  * Broadcom PCI-core driver
@@ -5,95 +6,95 @@
  * Copyright 2005, Broadcom Corporation
  * Copyright 2006, 2007, Michael Buesch <m@bues.ch>
  *
- * Licensed under the GNU/GPL. See COPYING for details.
+ * Licensed under the GNU/GPL. See COPYING क्रम details.
  */
 
-#include "ssb_private.h"
+#समावेश "ssb_private.h"
 
-#include <linux/ssb/ssb.h>
-#include <linux/pci.h>
-#include <linux/export.h>
-#include <linux/delay.h>
-#include <linux/ssb/ssb_embedded.h>
+#समावेश <linux/ssb/ssb.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/export.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/ssb/ssb_embedded.h>
 
-static u32 ssb_pcie_read(struct ssb_pcicore *pc, u32 address);
-static void ssb_pcie_write(struct ssb_pcicore *pc, u32 address, u32 data);
-static u16 ssb_pcie_mdio_read(struct ssb_pcicore *pc, u8 device, u8 address);
-static void ssb_pcie_mdio_write(struct ssb_pcicore *pc, u8 device,
+अटल u32 ssb_pcie_पढ़ो(काष्ठा ssb_pcicore *pc, u32 address);
+अटल व्योम ssb_pcie_ग_लिखो(काष्ठा ssb_pcicore *pc, u32 address, u32 data);
+अटल u16 ssb_pcie_mdio_पढ़ो(काष्ठा ssb_pcicore *pc, u8 device, u8 address);
+अटल व्योम ssb_pcie_mdio_ग_लिखो(काष्ठा ssb_pcicore *pc, u8 device,
 				u8 address, u16 data);
 
-static inline
-u32 pcicore_read32(struct ssb_pcicore *pc, u16 offset)
-{
-	return ssb_read32(pc->dev, offset);
-}
+अटल अंतरभूत
+u32 pcicore_पढ़ो32(काष्ठा ssb_pcicore *pc, u16 offset)
+अणु
+	वापस ssb_पढ़ो32(pc->dev, offset);
+पूर्ण
 
-static inline
-void pcicore_write32(struct ssb_pcicore *pc, u16 offset, u32 value)
-{
-	ssb_write32(pc->dev, offset, value);
-}
+अटल अंतरभूत
+व्योम pcicore_ग_लिखो32(काष्ठा ssb_pcicore *pc, u16 offset, u32 value)
+अणु
+	ssb_ग_लिखो32(pc->dev, offset, value);
+पूर्ण
 
-static inline
-u16 pcicore_read16(struct ssb_pcicore *pc, u16 offset)
-{
-	return ssb_read16(pc->dev, offset);
-}
+अटल अंतरभूत
+u16 pcicore_पढ़ो16(काष्ठा ssb_pcicore *pc, u16 offset)
+अणु
+	वापस ssb_पढ़ो16(pc->dev, offset);
+पूर्ण
 
-static inline
-void pcicore_write16(struct ssb_pcicore *pc, u16 offset, u16 value)
-{
-	ssb_write16(pc->dev, offset, value);
-}
+अटल अंतरभूत
+व्योम pcicore_ग_लिखो16(काष्ठा ssb_pcicore *pc, u16 offset, u16 value)
+अणु
+	ssb_ग_लिखो16(pc->dev, offset, value);
+पूर्ण
 
 /**************************************************
- * Code for hostmode operation.
+ * Code क्रम hosपंचांगode operation.
  **************************************************/
 
-#ifdef CONFIG_SSB_PCICORE_HOSTMODE
+#अगर_घोषित CONFIG_SSB_PCICORE_HOSTMODE
 
-#include <asm/paccess.h>
+#समावेश <यंत्र/paccess.h>
 /* Probe a 32bit value on the bus and catch bus exceptions.
  * Returns nonzero on a bus exception.
- * This is MIPS specific */
-#define mips_busprobe32(val, addr)	get_dbe((val), ((u32 *)(addr)))
+ * This is MIPS specअगरic */
+#घोषणा mips_busprobe32(val, addr)	get_dbe((val), ((u32 *)(addr)))
 
 /* Assume one-hot slot wiring */
-#define SSB_PCI_SLOT_MAX	16
+#घोषणा SSB_PCI_SLOT_MAX	16
 
 /* Global lock is OK, as we won't have more than one extpci anyway. */
-static DEFINE_SPINLOCK(cfgspace_lock);
-/* Core to access the external PCI config space. Can only have one. */
-static struct ssb_pcicore *extpci_core;
+अटल DEFINE_SPINLOCK(cfgspace_lock);
+/* Core to access the बाह्यal PCI config space. Can only have one. */
+अटल काष्ठा ssb_pcicore *extpci_core;
 
 
-static u32 get_cfgspace_addr(struct ssb_pcicore *pc,
-			     unsigned int bus, unsigned int dev,
-			     unsigned int func, unsigned int off)
-{
+अटल u32 get_cfgspace_addr(काष्ठा ssb_pcicore *pc,
+			     अचिन्हित पूर्णांक bus, अचिन्हित पूर्णांक dev,
+			     अचिन्हित पूर्णांक func, अचिन्हित पूर्णांक off)
+अणु
 	u32 addr = 0;
-	u32 tmp;
+	u32 पंचांगp;
 
-	/* We do only have one cardbus device behind the bridge. */
-	if (pc->cardbusmode && (dev > 1))
-		goto out;
+	/* We करो only have one cardbus device behind the bridge. */
+	अगर (pc->cardbusmode && (dev > 1))
+		जाओ out;
 
-	if (bus == 0) {
+	अगर (bus == 0) अणु
 		/* Type 0 transaction */
-		if (unlikely(dev >= SSB_PCI_SLOT_MAX))
-			goto out;
-		/* Slide the window */
-		tmp = SSB_PCICORE_SBTOPCI_CFG0;
-		tmp |= ((1 << (dev + 16)) & SSB_PCICORE_SBTOPCI1_MASK);
-		pcicore_write32(pc, SSB_PCICORE_SBTOPCI1, tmp);
+		अगर (unlikely(dev >= SSB_PCI_SLOT_MAX))
+			जाओ out;
+		/* Slide the winकरोw */
+		पंचांगp = SSB_PCICORE_SBTOPCI_CFG0;
+		पंचांगp |= ((1 << (dev + 16)) & SSB_PCICORE_SBTOPCI1_MASK);
+		pcicore_ग_लिखो32(pc, SSB_PCICORE_SBTOPCI1, पंचांगp);
 		/* Calculate the address */
 		addr = SSB_PCI_CFG;
 		addr |= ((1 << (dev + 16)) & ~SSB_PCICORE_SBTOPCI1_MASK);
 		addr |= (func << 8);
 		addr |= (off & ~3);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Type 1 transaction */
-		pcicore_write32(pc, SSB_PCICORE_SBTOPCI1,
+		pcicore_ग_लिखो32(pc, SSB_PCICORE_SBTOPCI1,
 				SSB_PCICORE_SBTOPCI_CFG1);
 		/* Calculate the address */
 		addr = SSB_PCI_CFG;
@@ -101,636 +102,636 @@ static u32 get_cfgspace_addr(struct ssb_pcicore *pc,
 		addr |= (dev << 11);
 		addr |= (func << 8);
 		addr |= (off & ~3);
-	}
+	पूर्ण
 out:
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-static int ssb_extpci_read_config(struct ssb_pcicore *pc,
-				  unsigned int bus, unsigned int dev,
-				  unsigned int func, unsigned int off,
-				  void *buf, int len)
-{
-	int err = -EINVAL;
+अटल पूर्णांक ssb_extpci_पढ़ो_config(काष्ठा ssb_pcicore *pc,
+				  अचिन्हित पूर्णांक bus, अचिन्हित पूर्णांक dev,
+				  अचिन्हित पूर्णांक func, अचिन्हित पूर्णांक off,
+				  व्योम *buf, पूर्णांक len)
+अणु
+	पूर्णांक err = -EINVAL;
 	u32 addr, val;
-	void __iomem *mmio;
+	व्योम __iomem *mmio;
 
-	WARN_ON(!pc->hostmode);
-	if (unlikely(len != 1 && len != 2 && len != 4))
-		goto out;
+	WARN_ON(!pc->hosपंचांगode);
+	अगर (unlikely(len != 1 && len != 2 && len != 4))
+		जाओ out;
 	addr = get_cfgspace_addr(pc, bus, dev, func, off);
-	if (unlikely(!addr))
-		goto out;
+	अगर (unlikely(!addr))
+		जाओ out;
 	err = -ENOMEM;
 	mmio = ioremap(addr, len);
-	if (!mmio)
-		goto out;
+	अगर (!mmio)
+		जाओ out;
 
-	if (mips_busprobe32(val, mmio)) {
+	अगर (mips_busprobe32(val, mmio)) अणु
 		val = 0xffffffff;
-		goto unmap;
-	}
+		जाओ unmap;
+	पूर्ण
 
-	val = readl(mmio);
+	val = पढ़ोl(mmio);
 	val >>= (8 * (off & 3));
 
-	switch (len) {
-	case 1:
+	चयन (len) अणु
+	हाल 1:
 		*((u8 *)buf) = (u8)val;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		*((u16 *)buf) = (u16)val;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		*((u32 *)buf) = (u32)val;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	err = 0;
 unmap:
 	iounmap(mmio);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ssb_extpci_write_config(struct ssb_pcicore *pc,
-				   unsigned int bus, unsigned int dev,
-				   unsigned int func, unsigned int off,
-				   const void *buf, int len)
-{
-	int err = -EINVAL;
+अटल पूर्णांक ssb_extpci_ग_लिखो_config(काष्ठा ssb_pcicore *pc,
+				   अचिन्हित पूर्णांक bus, अचिन्हित पूर्णांक dev,
+				   अचिन्हित पूर्णांक func, अचिन्हित पूर्णांक off,
+				   स्थिर व्योम *buf, पूर्णांक len)
+अणु
+	पूर्णांक err = -EINVAL;
 	u32 addr, val = 0;
-	void __iomem *mmio;
+	व्योम __iomem *mmio;
 
-	WARN_ON(!pc->hostmode);
-	if (unlikely(len != 1 && len != 2 && len != 4))
-		goto out;
+	WARN_ON(!pc->hosपंचांगode);
+	अगर (unlikely(len != 1 && len != 2 && len != 4))
+		जाओ out;
 	addr = get_cfgspace_addr(pc, bus, dev, func, off);
-	if (unlikely(!addr))
-		goto out;
+	अगर (unlikely(!addr))
+		जाओ out;
 	err = -ENOMEM;
 	mmio = ioremap(addr, len);
-	if (!mmio)
-		goto out;
+	अगर (!mmio)
+		जाओ out;
 
-	if (mips_busprobe32(val, mmio)) {
+	अगर (mips_busprobe32(val, mmio)) अणु
 		val = 0xffffffff;
-		goto unmap;
-	}
+		जाओ unmap;
+	पूर्ण
 
-	switch (len) {
-	case 1:
-		val = readl(mmio);
+	चयन (len) अणु
+	हाल 1:
+		val = पढ़ोl(mmio);
 		val &= ~(0xFF << (8 * (off & 3)));
-		val |= *((const u8 *)buf) << (8 * (off & 3));
-		break;
-	case 2:
-		val = readl(mmio);
+		val |= *((स्थिर u8 *)buf) << (8 * (off & 3));
+		अवरोध;
+	हाल 2:
+		val = पढ़ोl(mmio);
 		val &= ~(0xFFFF << (8 * (off & 3)));
-		val |= *((const u16 *)buf) << (8 * (off & 3));
-		break;
-	case 4:
-		val = *((const u32 *)buf);
-		break;
-	}
-	writel(val, mmio);
+		val |= *((स्थिर u16 *)buf) << (8 * (off & 3));
+		अवरोध;
+	हाल 4:
+		val = *((स्थिर u32 *)buf);
+		अवरोध;
+	पूर्ण
+	ग_लिखोl(val, mmio);
 
 	err = 0;
 unmap:
 	iounmap(mmio);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ssb_pcicore_read_config(struct pci_bus *bus, unsigned int devfn,
-				   int reg, int size, u32 *val)
-{
-	unsigned long flags;
-	int err;
+अटल पूर्णांक ssb_pcicore_पढ़ो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+				   पूर्णांक reg, पूर्णांक size, u32 *val)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
 	spin_lock_irqsave(&cfgspace_lock, flags);
-	err = ssb_extpci_read_config(extpci_core, bus->number, PCI_SLOT(devfn),
+	err = ssb_extpci_पढ़ो_config(extpci_core, bus->number, PCI_SLOT(devfn),
 				     PCI_FUNC(devfn), reg, val, size);
 	spin_unlock_irqrestore(&cfgspace_lock, flags);
 
-	return err ? PCIBIOS_DEVICE_NOT_FOUND : PCIBIOS_SUCCESSFUL;
-}
+	वापस err ? PCIBIOS_DEVICE_NOT_FOUND : PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int ssb_pcicore_write_config(struct pci_bus *bus, unsigned int devfn,
-				    int reg, int size, u32 val)
-{
-	unsigned long flags;
-	int err;
+अटल पूर्णांक ssb_pcicore_ग_लिखो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+				    पूर्णांक reg, पूर्णांक size, u32 val)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
 	spin_lock_irqsave(&cfgspace_lock, flags);
-	err = ssb_extpci_write_config(extpci_core, bus->number, PCI_SLOT(devfn),
+	err = ssb_extpci_ग_लिखो_config(extpci_core, bus->number, PCI_SLOT(devfn),
 				      PCI_FUNC(devfn), reg, &val, size);
 	spin_unlock_irqrestore(&cfgspace_lock, flags);
 
-	return err ? PCIBIOS_DEVICE_NOT_FOUND : PCIBIOS_SUCCESSFUL;
-}
+	वापस err ? PCIBIOS_DEVICE_NOT_FOUND : PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static struct pci_ops ssb_pcicore_pciops = {
-	.read	= ssb_pcicore_read_config,
-	.write	= ssb_pcicore_write_config,
-};
+अटल काष्ठा pci_ops ssb_pcicore_pciops = अणु
+	.पढ़ो	= ssb_pcicore_पढ़ो_config,
+	.ग_लिखो	= ssb_pcicore_ग_लिखो_config,
+पूर्ण;
 
-static struct resource ssb_pcicore_mem_resource = {
+अटल काष्ठा resource ssb_pcicore_mem_resource = अणु
 	.name	= "SSB PCIcore external memory",
 	.start	= SSB_PCI_DMA,
 	.end	= SSB_PCI_DMA + SSB_PCI_DMA_SZ - 1,
 	.flags	= IORESOURCE_MEM | IORESOURCE_PCI_FIXED,
-};
+पूर्ण;
 
-static struct resource ssb_pcicore_io_resource = {
+अटल काष्ठा resource ssb_pcicore_io_resource = अणु
 	.name	= "SSB PCIcore external I/O",
 	.start	= 0x100,
 	.end	= 0x7FF,
 	.flags	= IORESOURCE_IO | IORESOURCE_PCI_FIXED,
-};
+पूर्ण;
 
-static struct pci_controller ssb_pcicore_controller = {
+अटल काष्ठा pci_controller ssb_pcicore_controller = अणु
 	.pci_ops	= &ssb_pcicore_pciops,
 	.io_resource	= &ssb_pcicore_io_resource,
 	.mem_resource	= &ssb_pcicore_mem_resource,
-};
+पूर्ण;
 
-/* This function is called when doing a pci_enable_device().
- * We must first check if the device is a device on the PCI-core bridge. */
-int ssb_pcicore_plat_dev_init(struct pci_dev *d)
-{
-	if (d->bus->ops != &ssb_pcicore_pciops) {
+/* This function is called when करोing a pci_enable_device().
+ * We must first check अगर the device is a device on the PCI-core bridge. */
+पूर्णांक ssb_pcicore_plat_dev_init(काष्ठा pci_dev *d)
+अणु
+	अगर (d->bus->ops != &ssb_pcicore_pciops) अणु
 		/* This is not a device on the PCI-core bridge. */
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	dev_info(&d->dev, "PCI: Fixing up device %s\n", pci_name(d));
 
-	/* Fix up interrupt lines */
+	/* Fix up पूर्णांकerrupt lines */
 	d->irq = ssb_mips_irq(extpci_core->dev) + 2;
-	pci_write_config_byte(d, PCI_INTERRUPT_LINE, d->irq);
+	pci_ग_लिखो_config_byte(d, PCI_INTERRUPT_LINE, d->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Early PCI fixup for a device on the PCI-core bridge. */
-static void ssb_pcicore_fixup_pcibridge(struct pci_dev *dev)
-{
+/* Early PCI fixup क्रम a device on the PCI-core bridge. */
+अटल व्योम ssb_pcicore_fixup_pcibridge(काष्ठा pci_dev *dev)
+अणु
 	u8 lat;
 
-	if (dev->bus->ops != &ssb_pcicore_pciops) {
+	अगर (dev->bus->ops != &ssb_pcicore_pciops) अणु
 		/* This is not a device on the PCI-core bridge. */
-		return;
-	}
-	if (dev->bus->number != 0 || PCI_SLOT(dev->devfn) != 0)
-		return;
+		वापस;
+	पूर्ण
+	अगर (dev->bus->number != 0 || PCI_SLOT(dev->devfn) != 0)
+		वापस;
 
 	dev_info(&dev->dev, "PCI: Fixing up bridge %s\n", pci_name(dev));
 
 	/* Enable PCI bridge bus mastering and memory space */
 	pci_set_master(dev);
-	if (pcibios_enable_device(dev, ~0) < 0) {
+	अगर (pcibios_enable_device(dev, ~0) < 0) अणु
 		dev_err(&dev->dev, "PCI: SSB bridge enable failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Enable PCI bridge BAR1 prefetch and burst */
-	pci_write_config_dword(dev, SSB_BAR1_CONTROL, 3);
+	pci_ग_लिखो_config_dword(dev, SSB_BAR1_CONTROL, 3);
 
 	/* Make sure our latency is high enough to handle the devices behind us */
 	lat = 168;
 	dev_info(&dev->dev,
 		 "PCI: Fixing latency timer of device %s to %u\n",
 		 pci_name(dev), lat);
-	pci_write_config_byte(dev, PCI_LATENCY_TIMER, lat);
-}
+	pci_ग_लिखो_config_byte(dev, PCI_LATENCY_TIMER, lat);
+पूर्ण
 DECLARE_PCI_FIXUP_EARLY(PCI_ANY_ID, PCI_ANY_ID, ssb_pcicore_fixup_pcibridge);
 
 /* PCI device IRQ mapping. */
-int ssb_pcicore_pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
-	if (dev->bus->ops != &ssb_pcicore_pciops) {
+पूर्णांक ssb_pcicore_pcibios_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
+	अगर (dev->bus->ops != &ssb_pcicore_pciops) अणु
 		/* This is not a device on the PCI-core bridge. */
-		return -ENODEV;
-	}
-	return ssb_mips_irq(extpci_core->dev) + 2;
-}
+		वापस -ENODEV;
+	पूर्ण
+	वापस ssb_mips_irq(extpci_core->dev) + 2;
+पूर्ण
 
-static void ssb_pcicore_init_hostmode(struct ssb_pcicore *pc)
-{
+अटल व्योम ssb_pcicore_init_hosपंचांगode(काष्ठा ssb_pcicore *pc)
+अणु
 	u32 val;
 
-	if (WARN_ON(extpci_core))
-		return;
+	अगर (WARN_ON(extpci_core))
+		वापस;
 	extpci_core = pc;
 
 	dev_dbg(pc->dev->dev, "PCIcore in host mode found\n");
-	/* Reset devices on the external PCI bus */
+	/* Reset devices on the बाह्यal PCI bus */
 	val = SSB_PCICORE_CTL_RST_OE;
 	val |= SSB_PCICORE_CTL_CLK_OE;
-	pcicore_write32(pc, SSB_PCICORE_CTL, val);
+	pcicore_ग_लिखो32(pc, SSB_PCICORE_CTL, val);
 	val |= SSB_PCICORE_CTL_CLK; /* Clock on */
-	pcicore_write32(pc, SSB_PCICORE_CTL, val);
-	udelay(150); /* Assertion time demanded by the PCI standard */
-	val |= SSB_PCICORE_CTL_RST; /* Deassert RST# */
-	pcicore_write32(pc, SSB_PCICORE_CTL, val);
+	pcicore_ग_लिखो32(pc, SSB_PCICORE_CTL, val);
+	udelay(150); /* Assertion समय demanded by the PCI standard */
+	val |= SSB_PCICORE_CTL_RST; /* Deनिश्चित RST# */
+	pcicore_ग_लिखो32(pc, SSB_PCICORE_CTL, val);
 	val = SSB_PCICORE_ARBCTL_INTERN;
-	pcicore_write32(pc, SSB_PCICORE_ARBCTL, val);
-	udelay(1); /* Assertion time demanded by the PCI standard */
+	pcicore_ग_लिखो32(pc, SSB_PCICORE_ARBCTL, val);
+	udelay(1); /* Assertion समय demanded by the PCI standard */
 
-	if (pc->dev->bus->has_cardbus_slot) {
+	अगर (pc->dev->bus->has_cardbus_slot) अणु
 		dev_dbg(pc->dev->dev, "CardBus slot detected\n");
 		pc->cardbusmode = 1;
 		/* GPIO 1 resets the bridge */
 		ssb_gpio_out(pc->dev->bus, 1, 1);
 		ssb_gpio_outen(pc->dev->bus, 1, 1);
-		pcicore_write16(pc, SSB_PCICORE_SPROM(0),
-				pcicore_read16(pc, SSB_PCICORE_SPROM(0))
+		pcicore_ग_लिखो16(pc, SSB_PCICORE_SPROM(0),
+				pcicore_पढ़ो16(pc, SSB_PCICORE_SPROM(0))
 				| 0x0400);
-	}
+	पूर्ण
 
-	/* 64MB I/O window */
-	pcicore_write32(pc, SSB_PCICORE_SBTOPCI0,
+	/* 64MB I/O winकरोw */
+	pcicore_ग_लिखो32(pc, SSB_PCICORE_SBTOPCI0,
 			SSB_PCICORE_SBTOPCI_IO);
 	/* 64MB config space */
-	pcicore_write32(pc, SSB_PCICORE_SBTOPCI1,
+	pcicore_ग_लिखो32(pc, SSB_PCICORE_SBTOPCI1,
 			SSB_PCICORE_SBTOPCI_CFG0);
-	/* 1GB memory window */
-	pcicore_write32(pc, SSB_PCICORE_SBTOPCI2,
+	/* 1GB memory winकरोw */
+	pcicore_ग_लिखो32(pc, SSB_PCICORE_SBTOPCI2,
 			SSB_PCICORE_SBTOPCI_MEM | SSB_PCI_DMA);
 
 	/*
 	 * Accessing PCI config without a proper delay after devices reset (not
 	 * GPIO reset) was causing reboots on WRT300N v1.0 (BCM4704).
 	 * Tested delay 850 us lowered reboot chance to 50-80%, 1000 us fixed it
-	 * completely. Flushing all writes was also tested but with no luck.
-	 * The same problem was reported for WRT350N v1 (BCM4705), so we just
+	 * completely. Flushing all ग_लिखोs was also tested but with no luck.
+	 * The same problem was reported क्रम WRT350N v1 (BCM4705), so we just
 	 * sleep here unconditionally.
 	 */
 	usleep_range(1000, 2000);
 
 	/* Enable PCI bridge BAR0 prefetch and burst */
 	val = PCI_COMMAND_MASTER | PCI_COMMAND_MEMORY;
-	ssb_extpci_write_config(pc, 0, 0, 0, PCI_COMMAND, &val, 2);
+	ssb_extpci_ग_लिखो_config(pc, 0, 0, 0, PCI_COMMAND, &val, 2);
 	/* Clear error conditions */
 	val = 0;
-	ssb_extpci_write_config(pc, 0, 0, 0, PCI_STATUS, &val, 2);
+	ssb_extpci_ग_लिखो_config(pc, 0, 0, 0, PCI_STATUS, &val, 2);
 
-	/* Enable PCI interrupts */
-	pcicore_write32(pc, SSB_PCICORE_IMASK,
+	/* Enable PCI पूर्णांकerrupts */
+	pcicore_ग_लिखो32(pc, SSB_PCICORE_IMASK,
 			SSB_PCICORE_IMASK_INTA);
 
-	/* Ok, ready to run, register it to the system.
-	 * The following needs change, if we want to port hostmode
-	 * to non-MIPS platform. */
-	ssb_pcicore_controller.io_map_base = (unsigned long)ioremap(SSB_PCI_MEM, 0x04000000);
+	/* Ok, पढ़ोy to run, रेजिस्टर it to the प्रणाली.
+	 * The following needs change, अगर we want to port hosपंचांगode
+	 * to non-MIPS platक्रमm. */
+	ssb_pcicore_controller.io_map_base = (अचिन्हित दीर्घ)ioremap(SSB_PCI_MEM, 0x04000000);
 	set_io_port_base(ssb_pcicore_controller.io_map_base);
-	/* Give some time to the PCI controller to configure itself with the new
-	 * values. Not waiting at this point causes crashes of the machine. */
+	/* Give some समय to the PCI controller to configure itself with the new
+	 * values. Not रुकोing at this poपूर्णांक causes crashes of the machine. */
 	mdelay(10);
-	register_pci_controller(&ssb_pcicore_controller);
-}
+	रेजिस्टर_pci_controller(&ssb_pcicore_controller);
+पूर्ण
 
-static int pcicore_is_in_hostmode(struct ssb_pcicore *pc)
-{
-	struct ssb_bus *bus = pc->dev->bus;
+अटल पूर्णांक pcicore_is_in_hosपंचांगode(काष्ठा ssb_pcicore *pc)
+अणु
+	काष्ठा ssb_bus *bus = pc->dev->bus;
 	u16 chipid_top;
-	u32 tmp;
+	u32 पंचांगp;
 
 	chipid_top = (bus->chip_id & 0xFF00);
-	if (chipid_top != 0x4700 &&
+	अगर (chipid_top != 0x4700 &&
 	    chipid_top != 0x5300)
-		return 0;
+		वापस 0;
 
-	if (bus->sprom.boardflags_lo & SSB_PCICORE_BFL_NOPCI)
-		return 0;
+	अगर (bus->sprom.boardflags_lo & SSB_PCICORE_BFL_NOPCI)
+		वापस 0;
 
-	/* The 200-pin BCM4712 package does not bond out PCI. Even when
-	 * PCI is bonded out, some boards may leave the pins floating. */
-	if (bus->chip_id == 0x4712) {
-		if (bus->chip_package == SSB_CHIPPACK_BCM4712S)
-			return 0;
-		if (bus->chip_package == SSB_CHIPPACK_BCM4712M)
-			return 0;
-	}
-	if (bus->chip_id == 0x5350)
-		return 0;
+	/* The 200-pin BCM4712 package करोes not bond out PCI. Even when
+	 * PCI is bonded out, some boards may leave the pins भग्नing. */
+	अगर (bus->chip_id == 0x4712) अणु
+		अगर (bus->chip_package == SSB_CHIPPACK_BCM4712S)
+			वापस 0;
+		अगर (bus->chip_package == SSB_CHIPPACK_BCM4712M)
+			वापस 0;
+	पूर्ण
+	अगर (bus->chip_id == 0x5350)
+		वापस 0;
 
-	return !mips_busprobe32(tmp, (bus->mmio + (pc->dev->core_index * SSB_CORE_SIZE)));
-}
-#endif /* CONFIG_SSB_PCICORE_HOSTMODE */
+	वापस !mips_busprobe32(पंचांगp, (bus->mmio + (pc->dev->core_index * SSB_CORE_SIZE)));
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SSB_PCICORE_HOSTMODE */
 
 /**************************************************
  * Workarounds.
  **************************************************/
 
-static void ssb_pcicore_fix_sprom_core_index(struct ssb_pcicore *pc)
-{
-	u16 tmp = pcicore_read16(pc, SSB_PCICORE_SPROM(0));
-	if (((tmp & 0xF000) >> 12) != pc->dev->core_index) {
-		tmp &= ~0xF000;
-		tmp |= (pc->dev->core_index << 12);
-		pcicore_write16(pc, SSB_PCICORE_SPROM(0), tmp);
-	}
-}
+अटल व्योम ssb_pcicore_fix_sprom_core_index(काष्ठा ssb_pcicore *pc)
+अणु
+	u16 पंचांगp = pcicore_पढ़ो16(pc, SSB_PCICORE_SPROM(0));
+	अगर (((पंचांगp & 0xF000) >> 12) != pc->dev->core_index) अणु
+		पंचांगp &= ~0xF000;
+		पंचांगp |= (pc->dev->core_index << 12);
+		pcicore_ग_लिखो16(pc, SSB_PCICORE_SPROM(0), पंचांगp);
+	पूर्ण
+पूर्ण
 
-static u8 ssb_pcicore_polarity_workaround(struct ssb_pcicore *pc)
-{
-	return (ssb_pcie_read(pc, 0x204) & 0x10) ? 0xC0 : 0x80;
-}
+अटल u8 ssb_pcicore_polarity_workaround(काष्ठा ssb_pcicore *pc)
+अणु
+	वापस (ssb_pcie_पढ़ो(pc, 0x204) & 0x10) ? 0xC0 : 0x80;
+पूर्ण
 
-static void ssb_pcicore_serdes_workaround(struct ssb_pcicore *pc)
-{
-	const u8 serdes_pll_device = 0x1D;
-	const u8 serdes_rx_device = 0x1F;
-	u16 tmp;
+अटल व्योम ssb_pcicore_serdes_workaround(काष्ठा ssb_pcicore *pc)
+अणु
+	स्थिर u8 serdes_pll_device = 0x1D;
+	स्थिर u8 serdes_rx_device = 0x1F;
+	u16 पंचांगp;
 
-	ssb_pcie_mdio_write(pc, serdes_rx_device, 1 /* Control */,
+	ssb_pcie_mdio_ग_लिखो(pc, serdes_rx_device, 1 /* Control */,
 			    ssb_pcicore_polarity_workaround(pc));
-	tmp = ssb_pcie_mdio_read(pc, serdes_pll_device, 1 /* Control */);
-	if (tmp & 0x4000)
-		ssb_pcie_mdio_write(pc, serdes_pll_device, 1, tmp & ~0x4000);
-}
+	पंचांगp = ssb_pcie_mdio_पढ़ो(pc, serdes_pll_device, 1 /* Control */);
+	अगर (पंचांगp & 0x4000)
+		ssb_pcie_mdio_ग_लिखो(pc, serdes_pll_device, 1, पंचांगp & ~0x4000);
+पूर्ण
 
-static void ssb_pcicore_pci_setup_workarounds(struct ssb_pcicore *pc)
-{
-	struct ssb_device *pdev = pc->dev;
-	struct ssb_bus *bus = pdev->bus;
-	u32 tmp;
+अटल व्योम ssb_pcicore_pci_setup_workarounds(काष्ठा ssb_pcicore *pc)
+अणु
+	काष्ठा ssb_device *pdev = pc->dev;
+	काष्ठा ssb_bus *bus = pdev->bus;
+	u32 पंचांगp;
 
-	tmp = pcicore_read32(pc, SSB_PCICORE_SBTOPCI2);
-	tmp |= SSB_PCICORE_SBTOPCI_PREF;
-	tmp |= SSB_PCICORE_SBTOPCI_BURST;
-	pcicore_write32(pc, SSB_PCICORE_SBTOPCI2, tmp);
+	पंचांगp = pcicore_पढ़ो32(pc, SSB_PCICORE_SBTOPCI2);
+	पंचांगp |= SSB_PCICORE_SBTOPCI_PREF;
+	पंचांगp |= SSB_PCICORE_SBTOPCI_BURST;
+	pcicore_ग_लिखो32(pc, SSB_PCICORE_SBTOPCI2, पंचांगp);
 
-	if (pdev->id.revision < 5) {
-		tmp = ssb_read32(pdev, SSB_IMCFGLO);
-		tmp &= ~SSB_IMCFGLO_SERTO;
-		tmp |= 2;
-		tmp &= ~SSB_IMCFGLO_REQTO;
-		tmp |= 3 << SSB_IMCFGLO_REQTO_SHIFT;
-		ssb_write32(pdev, SSB_IMCFGLO, tmp);
+	अगर (pdev->id.revision < 5) अणु
+		पंचांगp = ssb_पढ़ो32(pdev, SSB_IMCFGLO);
+		पंचांगp &= ~SSB_IMCFGLO_SERTO;
+		पंचांगp |= 2;
+		पंचांगp &= ~SSB_IMCFGLO_REQTO;
+		पंचांगp |= 3 << SSB_IMCFGLO_REQTO_SHIFT;
+		ssb_ग_लिखो32(pdev, SSB_IMCFGLO, पंचांगp);
 		ssb_commit_settings(bus);
-	} else if (pdev->id.revision >= 11) {
-		tmp = pcicore_read32(pc, SSB_PCICORE_SBTOPCI2);
-		tmp |= SSB_PCICORE_SBTOPCI_MRM;
-		pcicore_write32(pc, SSB_PCICORE_SBTOPCI2, tmp);
-	}
-}
+	पूर्ण अन्यथा अगर (pdev->id.revision >= 11) अणु
+		पंचांगp = pcicore_पढ़ो32(pc, SSB_PCICORE_SBTOPCI2);
+		पंचांगp |= SSB_PCICORE_SBTOPCI_MRM;
+		pcicore_ग_लिखो32(pc, SSB_PCICORE_SBTOPCI2, पंचांगp);
+	पूर्ण
+पूर्ण
 
-static void ssb_pcicore_pcie_setup_workarounds(struct ssb_pcicore *pc)
-{
-	u32 tmp;
+अटल व्योम ssb_pcicore_pcie_setup_workarounds(काष्ठा ssb_pcicore *pc)
+अणु
+	u32 पंचांगp;
 	u8 rev = pc->dev->id.revision;
 
-	if (rev == 0 || rev == 1) {
-		/* TLP Workaround register. */
-		tmp = ssb_pcie_read(pc, 0x4);
-		tmp |= 0x8;
-		ssb_pcie_write(pc, 0x4, tmp);
-	}
-	if (rev == 1) {
-		/* DLLP Link Control register. */
-		tmp = ssb_pcie_read(pc, 0x100);
-		tmp |= 0x40;
-		ssb_pcie_write(pc, 0x100, tmp);
-	}
+	अगर (rev == 0 || rev == 1) अणु
+		/* TLP Workaround रेजिस्टर. */
+		पंचांगp = ssb_pcie_पढ़ो(pc, 0x4);
+		पंचांगp |= 0x8;
+		ssb_pcie_ग_लिखो(pc, 0x4, पंचांगp);
+	पूर्ण
+	अगर (rev == 1) अणु
+		/* DLLP Link Control रेजिस्टर. */
+		पंचांगp = ssb_pcie_पढ़ो(pc, 0x100);
+		पंचांगp |= 0x40;
+		ssb_pcie_ग_लिखो(pc, 0x100, पंचांगp);
+	पूर्ण
 
-	if (rev == 0) {
-		const u8 serdes_rx_device = 0x1F;
+	अगर (rev == 0) अणु
+		स्थिर u8 serdes_rx_device = 0x1F;
 
-		ssb_pcie_mdio_write(pc, serdes_rx_device,
+		ssb_pcie_mdio_ग_लिखो(pc, serdes_rx_device,
 					2 /* Timer */, 0x8128);
-		ssb_pcie_mdio_write(pc, serdes_rx_device,
+		ssb_pcie_mdio_ग_लिखो(pc, serdes_rx_device,
 					6 /* CDR */, 0x0100);
-		ssb_pcie_mdio_write(pc, serdes_rx_device,
+		ssb_pcie_mdio_ग_लिखो(pc, serdes_rx_device,
 					7 /* CDR BW */, 0x1466);
-	} else if (rev == 3 || rev == 4 || rev == 5) {
+	पूर्ण अन्यथा अगर (rev == 3 || rev == 4 || rev == 5) अणु
 		/* TODO: DLLP Power Management Threshold */
 		ssb_pcicore_serdes_workaround(pc);
 		/* TODO: ASPM */
-	} else if (rev == 7) {
-		/* TODO: No PLL down */
-	}
+	पूर्ण अन्यथा अगर (rev == 7) अणु
+		/* TODO: No PLL करोwn */
+	पूर्ण
 
-	if (rev >= 6) {
+	अगर (rev >= 6) अणु
 		/* Miscellaneous Configuration Fixup */
-		tmp = pcicore_read16(pc, SSB_PCICORE_SPROM(5));
-		if (!(tmp & 0x8000))
-			pcicore_write16(pc, SSB_PCICORE_SPROM(5),
-					tmp | 0x8000);
-	}
-}
+		पंचांगp = pcicore_पढ़ो16(pc, SSB_PCICORE_SPROM(5));
+		अगर (!(पंचांगp & 0x8000))
+			pcicore_ग_लिखो16(pc, SSB_PCICORE_SPROM(5),
+					पंचांगp | 0x8000);
+	पूर्ण
+पूर्ण
 
 /**************************************************
- * Generic and Clientmode operation code.
+ * Generic and Clienपंचांगode operation code.
  **************************************************/
 
-static void ssb_pcicore_init_clientmode(struct ssb_pcicore *pc)
-{
-	struct ssb_device *pdev = pc->dev;
-	struct ssb_bus *bus = pdev->bus;
+अटल व्योम ssb_pcicore_init_clienपंचांगode(काष्ठा ssb_pcicore *pc)
+अणु
+	काष्ठा ssb_device *pdev = pc->dev;
+	काष्ठा ssb_bus *bus = pdev->bus;
 
-	if (bus->bustype == SSB_BUSTYPE_PCI)
+	अगर (bus->bustype == SSB_BUSTYPE_PCI)
 		ssb_pcicore_fix_sprom_core_index(pc);
 
-	/* Disable PCI interrupts. */
-	ssb_write32(pdev, SSB_INTVEC, 0);
+	/* Disable PCI पूर्णांकerrupts. */
+	ssb_ग_लिखो32(pdev, SSB_INTVEC, 0);
 
 	/* Additional PCIe always once-executed workarounds */
-	if (pc->dev->id.coreid == SSB_DEV_PCIE) {
+	अगर (pc->dev->id.coreid == SSB_DEV_PCIE) अणु
 		ssb_pcicore_serdes_workaround(pc);
 		/* TODO: ASPM */
 		/* TODO: Clock Request Update */
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ssb_pcicore_init(struct ssb_pcicore *pc)
-{
-	struct ssb_device *dev = pc->dev;
+व्योम ssb_pcicore_init(काष्ठा ssb_pcicore *pc)
+अणु
+	काष्ठा ssb_device *dev = pc->dev;
 
-	if (!dev)
-		return;
-	if (!ssb_device_is_enabled(dev))
+	अगर (!dev)
+		वापस;
+	अगर (!ssb_device_is_enabled(dev))
 		ssb_device_enable(dev, 0);
 
-#ifdef CONFIG_SSB_PCICORE_HOSTMODE
-	pc->hostmode = pcicore_is_in_hostmode(pc);
-	if (pc->hostmode)
-		ssb_pcicore_init_hostmode(pc);
-#endif /* CONFIG_SSB_PCICORE_HOSTMODE */
-	if (!pc->hostmode)
-		ssb_pcicore_init_clientmode(pc);
-}
+#अगर_घोषित CONFIG_SSB_PCICORE_HOSTMODE
+	pc->hosपंचांगode = pcicore_is_in_hosपंचांगode(pc);
+	अगर (pc->hosपंचांगode)
+		ssb_pcicore_init_hosपंचांगode(pc);
+#पूर्ण_अगर /* CONFIG_SSB_PCICORE_HOSTMODE */
+	अगर (!pc->hosपंचांगode)
+		ssb_pcicore_init_clienपंचांगode(pc);
+पूर्ण
 
-static u32 ssb_pcie_read(struct ssb_pcicore *pc, u32 address)
-{
-	pcicore_write32(pc, 0x130, address);
-	return pcicore_read32(pc, 0x134);
-}
+अटल u32 ssb_pcie_पढ़ो(काष्ठा ssb_pcicore *pc, u32 address)
+अणु
+	pcicore_ग_लिखो32(pc, 0x130, address);
+	वापस pcicore_पढ़ो32(pc, 0x134);
+पूर्ण
 
-static void ssb_pcie_write(struct ssb_pcicore *pc, u32 address, u32 data)
-{
-	pcicore_write32(pc, 0x130, address);
-	pcicore_write32(pc, 0x134, data);
-}
+अटल व्योम ssb_pcie_ग_लिखो(काष्ठा ssb_pcicore *pc, u32 address, u32 data)
+अणु
+	pcicore_ग_लिखो32(pc, 0x130, address);
+	pcicore_ग_लिखो32(pc, 0x134, data);
+पूर्ण
 
-static void ssb_pcie_mdio_set_phy(struct ssb_pcicore *pc, u8 phy)
-{
-	const u16 mdio_control = 0x128;
-	const u16 mdio_data = 0x12C;
+अटल व्योम ssb_pcie_mdio_set_phy(काष्ठा ssb_pcicore *pc, u8 phy)
+अणु
+	स्थिर u16 mdio_control = 0x128;
+	स्थिर u16 mdio_data = 0x12C;
 	u32 v;
-	int i;
+	पूर्णांक i;
 
 	v = (1 << 30); /* Start of Transaction */
 	v |= (1 << 28); /* Write Transaction */
 	v |= (1 << 17); /* Turnaround */
 	v |= (0x1F << 18);
 	v |= (phy << 4);
-	pcicore_write32(pc, mdio_data, v);
+	pcicore_ग_लिखो32(pc, mdio_data, v);
 
 	udelay(10);
-	for (i = 0; i < 200; i++) {
-		v = pcicore_read32(pc, mdio_control);
-		if (v & 0x100 /* Trans complete */)
-			break;
+	क्रम (i = 0; i < 200; i++) अणु
+		v = pcicore_पढ़ो32(pc, mdio_control);
+		अगर (v & 0x100 /* Trans complete */)
+			अवरोध;
 		msleep(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u16 ssb_pcie_mdio_read(struct ssb_pcicore *pc, u8 device, u8 address)
-{
-	const u16 mdio_control = 0x128;
-	const u16 mdio_data = 0x12C;
-	int max_retries = 10;
+अटल u16 ssb_pcie_mdio_पढ़ो(काष्ठा ssb_pcicore *pc, u8 device, u8 address)
+अणु
+	स्थिर u16 mdio_control = 0x128;
+	स्थिर u16 mdio_data = 0x12C;
+	पूर्णांक max_retries = 10;
 	u16 ret = 0;
 	u32 v;
-	int i;
+	पूर्णांक i;
 
 	v = 0x80; /* Enable Preamble Sequence */
 	v |= 0x2; /* MDIO Clock Divisor */
-	pcicore_write32(pc, mdio_control, v);
+	pcicore_ग_लिखो32(pc, mdio_control, v);
 
-	if (pc->dev->id.revision >= 10) {
+	अगर (pc->dev->id.revision >= 10) अणु
 		max_retries = 200;
 		ssb_pcie_mdio_set_phy(pc, device);
-	}
+	पूर्ण
 
 	v = (1 << 30); /* Start of Transaction */
 	v |= (1 << 29); /* Read Transaction */
 	v |= (1 << 17); /* Turnaround */
-	if (pc->dev->id.revision < 10)
+	अगर (pc->dev->id.revision < 10)
 		v |= (u32)device << 22;
 	v |= (u32)address << 18;
-	pcicore_write32(pc, mdio_data, v);
-	/* Wait for the device to complete the transaction */
+	pcicore_ग_लिखो32(pc, mdio_data, v);
+	/* Wait क्रम the device to complete the transaction */
 	udelay(10);
-	for (i = 0; i < max_retries; i++) {
-		v = pcicore_read32(pc, mdio_control);
-		if (v & 0x100 /* Trans complete */) {
+	क्रम (i = 0; i < max_retries; i++) अणु
+		v = pcicore_पढ़ो32(pc, mdio_control);
+		अगर (v & 0x100 /* Trans complete */) अणु
 			udelay(10);
-			ret = pcicore_read32(pc, mdio_data);
-			break;
-		}
+			ret = pcicore_पढ़ो32(pc, mdio_data);
+			अवरोध;
+		पूर्ण
 		msleep(1);
-	}
-	pcicore_write32(pc, mdio_control, 0);
-	return ret;
-}
+	पूर्ण
+	pcicore_ग_लिखो32(pc, mdio_control, 0);
+	वापस ret;
+पूर्ण
 
-static void ssb_pcie_mdio_write(struct ssb_pcicore *pc, u8 device,
+अटल व्योम ssb_pcie_mdio_ग_लिखो(काष्ठा ssb_pcicore *pc, u8 device,
 				u8 address, u16 data)
-{
-	const u16 mdio_control = 0x128;
-	const u16 mdio_data = 0x12C;
-	int max_retries = 10;
+अणु
+	स्थिर u16 mdio_control = 0x128;
+	स्थिर u16 mdio_data = 0x12C;
+	पूर्णांक max_retries = 10;
 	u32 v;
-	int i;
+	पूर्णांक i;
 
 	v = 0x80; /* Enable Preamble Sequence */
 	v |= 0x2; /* MDIO Clock Divisor */
-	pcicore_write32(pc, mdio_control, v);
+	pcicore_ग_लिखो32(pc, mdio_control, v);
 
-	if (pc->dev->id.revision >= 10) {
+	अगर (pc->dev->id.revision >= 10) अणु
 		max_retries = 200;
 		ssb_pcie_mdio_set_phy(pc, device);
-	}
+	पूर्ण
 
 	v = (1 << 30); /* Start of Transaction */
 	v |= (1 << 28); /* Write Transaction */
 	v |= (1 << 17); /* Turnaround */
-	if (pc->dev->id.revision < 10)
+	अगर (pc->dev->id.revision < 10)
 		v |= (u32)device << 22;
 	v |= (u32)address << 18;
 	v |= data;
-	pcicore_write32(pc, mdio_data, v);
-	/* Wait for the device to complete the transaction */
+	pcicore_ग_लिखो32(pc, mdio_data, v);
+	/* Wait क्रम the device to complete the transaction */
 	udelay(10);
-	for (i = 0; i < max_retries; i++) {
-		v = pcicore_read32(pc, mdio_control);
-		if (v & 0x100 /* Trans complete */)
-			break;
+	क्रम (i = 0; i < max_retries; i++) अणु
+		v = pcicore_पढ़ो32(pc, mdio_control);
+		अगर (v & 0x100 /* Trans complete */)
+			अवरोध;
 		msleep(1);
-	}
-	pcicore_write32(pc, mdio_control, 0);
-}
+	पूर्ण
+	pcicore_ग_लिखो32(pc, mdio_control, 0);
+पूर्ण
 
-int ssb_pcicore_dev_irqvecs_enable(struct ssb_pcicore *pc,
-				   struct ssb_device *dev)
-{
-	struct ssb_device *pdev = pc->dev;
-	struct ssb_bus *bus;
-	int err = 0;
-	u32 tmp;
+पूर्णांक ssb_pcicore_dev_irqvecs_enable(काष्ठा ssb_pcicore *pc,
+				   काष्ठा ssb_device *dev)
+अणु
+	काष्ठा ssb_device *pdev = pc->dev;
+	काष्ठा ssb_bus *bus;
+	पूर्णांक err = 0;
+	u32 पंचांगp;
 
-	if (dev->bus->bustype != SSB_BUSTYPE_PCI) {
+	अगर (dev->bus->bustype != SSB_BUSTYPE_PCI) अणु
 		/* This SSB device is not on a PCI host-bus. So the IRQs are
 		 * not routed through the PCI core.
 		 * So we must not enable routing through the PCI core. */
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!pdev)
-		goto out;
+	अगर (!pdev)
+		जाओ out;
 	bus = pdev->bus;
 
-	might_sleep_if(pdev->id.coreid != SSB_DEV_PCI);
+	might_sleep_अगर(pdev->id.coreid != SSB_DEV_PCI);
 
-	/* Enable interrupts for this device. */
-	if ((pdev->id.revision >= 6) || (pdev->id.coreid == SSB_DEV_PCIE)) {
+	/* Enable पूर्णांकerrupts क्रम this device. */
+	अगर ((pdev->id.revision >= 6) || (pdev->id.coreid == SSB_DEV_PCIE)) अणु
 		u32 coremask;
 
-		/* Calculate the "coremask" for the device. */
+		/* Calculate the "coremask" क्रम the device. */
 		coremask = (1 << dev->core_index);
 
 		WARN_ON(bus->bustype != SSB_BUSTYPE_PCI);
-		err = pci_read_config_dword(bus->host_pci, SSB_PCI_IRQMASK, &tmp);
-		if (err)
-			goto out;
-		tmp |= coremask << 8;
-		err = pci_write_config_dword(bus->host_pci, SSB_PCI_IRQMASK, tmp);
-		if (err)
-			goto out;
-	} else {
-		u32 intvec;
+		err = pci_पढ़ो_config_dword(bus->host_pci, SSB_PCI_IRQMASK, &पंचांगp);
+		अगर (err)
+			जाओ out;
+		पंचांगp |= coremask << 8;
+		err = pci_ग_लिखो_config_dword(bus->host_pci, SSB_PCI_IRQMASK, पंचांगp);
+		अगर (err)
+			जाओ out;
+	पूर्ण अन्यथा अणु
+		u32 पूर्णांकvec;
 
-		intvec = ssb_read32(pdev, SSB_INTVEC);
-		tmp = ssb_read32(dev, SSB_TPSFLAG);
-		tmp &= SSB_TPSFLAG_BPFLAG;
-		intvec |= (1 << tmp);
-		ssb_write32(pdev, SSB_INTVEC, intvec);
-	}
+		पूर्णांकvec = ssb_पढ़ो32(pdev, SSB_INTVEC);
+		पंचांगp = ssb_पढ़ो32(dev, SSB_TPSFLAG);
+		पंचांगp &= SSB_TPSFLAG_BPFLAG;
+		पूर्णांकvec |= (1 << पंचांगp);
+		ssb_ग_लिखो32(pdev, SSB_INTVEC, पूर्णांकvec);
+	पूर्ण
 
 	/* Setup PCIcore operation. */
-	if (pc->setup_done)
-		goto out;
-	if (pdev->id.coreid == SSB_DEV_PCI) {
+	अगर (pc->setup_करोne)
+		जाओ out;
+	अगर (pdev->id.coreid == SSB_DEV_PCI) अणु
 		ssb_pcicore_pci_setup_workarounds(pc);
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ON(pdev->id.coreid != SSB_DEV_PCIE);
 		ssb_pcicore_pcie_setup_workarounds(pc);
-	}
-	pc->setup_done = 1;
+	पूर्ण
+	pc->setup_करोne = 1;
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(ssb_pcicore_dev_irqvecs_enable);

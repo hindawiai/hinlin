@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * r7s9210 processor support
  *
  * Copyright (C) 2018  Renesas Electronics Corporation
- * Copyright (C) 2018  Chris Brandt
+ * Copyright (C) 2018  Chris Bअक्रमt
  *
  */
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-static const char *const r7s9210_boards_compat_dt[] __initconst = {
+अटल स्थिर अक्षर *स्थिर r7s9210_boards_compat_dt[] __initस्थिर = अणु
 	"renesas,r7s9210",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(R7S72100_DT, "Generic R7S9210 (Flattened Device Tree)")
 	.l2c_aux_val    = 0,

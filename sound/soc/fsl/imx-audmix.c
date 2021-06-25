@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright 2017 NXP
  *
@@ -6,247 +7,247 @@
  * License. You may obtain a copy of the GNU General Public License
  * Version 2 or later at the following locations:
  *
- * https://www.opensource.org/licenses/gpl-license.html
- * https://www.gnu.org/copyleft/gpl.html
+ * https://www.खोलोsource.org/licenses/gpl-license.hपंचांगl
+ * https://www.gnu.org/copyleft/gpl.hपंचांगl
  */
 
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/clk.h>
-#include <sound/soc.h>
-#include <sound/soc-dapm.h>
-#include <linux/pm_runtime.h>
-#include "fsl_sai.h"
-#include "fsl_audmix.h"
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/clk.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dapm.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश "fsl_sai.h"
+#समावेश "fsl_audmix.h"
 
-struct imx_audmix {
-	struct platform_device *pdev;
-	struct snd_soc_card card;
-	struct platform_device *audmix_pdev;
-	struct platform_device *out_pdev;
-	struct clk *cpu_mclk;
-	int num_dai;
-	struct snd_soc_dai_link *dai;
-	int num_dai_conf;
-	struct snd_soc_codec_conf *dai_conf;
-	int num_dapm_routes;
-	struct snd_soc_dapm_route *dapm_routes;
-};
+काष्ठा imx_audmix अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा snd_soc_card card;
+	काष्ठा platक्रमm_device *audmix_pdev;
+	काष्ठा platक्रमm_device *out_pdev;
+	काष्ठा clk *cpu_mclk;
+	पूर्णांक num_dai;
+	काष्ठा snd_soc_dai_link *dai;
+	पूर्णांक num_dai_conf;
+	काष्ठा snd_soc_codec_conf *dai_conf;
+	पूर्णांक num_dapm_routes;
+	काष्ठा snd_soc_dapm_route *dapm_routes;
+पूर्ण;
 
-static const u32 imx_audmix_rates[] = {
+अटल स्थिर u32 imx_audmix_rates[] = अणु
 	8000, 12000, 16000, 24000, 32000, 48000, 64000, 96000,
-};
+पूर्ण;
 
-static const struct snd_pcm_hw_constraint_list imx_audmix_rate_constraints = {
+अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list imx_audmix_rate_स्थिरraपूर्णांकs = अणु
 	.count = ARRAY_SIZE(imx_audmix_rates),
 	.list = imx_audmix_rates,
-};
+पूर्ण;
 
-static int imx_audmix_fe_startup(struct snd_pcm_substream *substream)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct imx_audmix *priv = snd_soc_card_get_drvdata(rtd->card);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct device *dev = rtd->card->dev;
-	unsigned long clk_rate = clk_get_rate(priv->cpu_mclk);
-	int ret;
+अटल पूर्णांक imx_audmix_fe_startup(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा imx_audmix *priv = snd_soc_card_get_drvdata(rtd->card);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा device *dev = rtd->card->dev;
+	अचिन्हित दीर्घ clk_rate = clk_get_rate(priv->cpu_mclk);
+	पूर्णांक ret;
 
-	if (clk_rate % 24576000 == 0) {
-		ret = snd_pcm_hw_constraint_list(runtime, 0,
+	अगर (clk_rate % 24576000 == 0) अणु
+		ret = snd_pcm_hw_स्थिरraपूर्णांक_list(runसमय, 0,
 						 SNDRV_PCM_HW_PARAM_RATE,
-						 &imx_audmix_rate_constraints);
-		if (ret < 0)
-			return ret;
-	} else {
+						 &imx_audmix_rate_स्थिरraपूर्णांकs);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		dev_warn(dev, "mclk may be not supported %lu\n", clk_rate);
-	}
+	पूर्ण
 
-	ret = snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_CHANNELS,
+	ret = snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_CHANNELS,
 					   1, 8);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return snd_pcm_hw_constraint_mask64(runtime, SNDRV_PCM_HW_PARAM_FORMAT,
+	वापस snd_pcm_hw_स्थिरraपूर्णांक_mask64(runसमय, SNDRV_PCM_HW_PARAM_FORMAT,
 					    FSL_AUDMIX_FORMATS);
-}
+पूर्ण
 
-static int imx_audmix_fe_hw_params(struct snd_pcm_substream *substream,
-				   struct snd_pcm_hw_params *params)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct device *dev = rtd->card->dev;
+अटल पूर्णांक imx_audmix_fe_hw_params(काष्ठा snd_pcm_substream *substream,
+				   काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा device *dev = rtd->card->dev;
 	bool tx = substream->stream == SNDRV_PCM_STREAM_PLAYBACK;
-	unsigned int fmt = SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_NB_NF;
+	अचिन्हित पूर्णांक fmt = SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_NB_NF;
 	u32 channels = params_channels(params);
-	int ret, dir;
+	पूर्णांक ret, dir;
 
-	/* For playback the AUDMIX is slave, and for record is master */
+	/* For playback the AUDMIX is slave, and क्रम record is master */
 	fmt |= tx ? SND_SOC_DAIFMT_CBS_CFS : SND_SOC_DAIFMT_CBM_CFM;
 	dir  = tx ? SND_SOC_CLOCK_OUT : SND_SOC_CLOCK_IN;
 
 	/* set DAI configuration */
 	ret = snd_soc_dai_set_fmt(asoc_rtd_to_cpu(rtd, 0), fmt);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to set cpu dai fmt: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = snd_soc_dai_set_sysclk(asoc_rtd_to_cpu(rtd, 0), FSL_SAI_CLK_MAST1, 0, dir);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to set cpu sysclk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Per datasheet, AUDMIX expects 8 slots and 32 bits
-	 * for every slot in TDM mode.
+	 * क्रम every slot in TDM mode.
 	 */
 	ret = snd_soc_dai_set_tdm_slot(asoc_rtd_to_cpu(rtd, 0), BIT(channels) - 1,
 				       BIT(channels) - 1, 8, 32);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "failed to set cpu dai tdm slot: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int imx_audmix_be_hw_params(struct snd_pcm_substream *substream,
-				   struct snd_pcm_hw_params *params)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct device *dev = rtd->card->dev;
+अटल पूर्णांक imx_audmix_be_hw_params(काष्ठा snd_pcm_substream *substream,
+				   काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा device *dev = rtd->card->dev;
 	bool tx = substream->stream == SNDRV_PCM_STREAM_PLAYBACK;
-	unsigned int fmt = SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_NB_NF;
-	int ret;
+	अचिन्हित पूर्णांक fmt = SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_NB_NF;
+	पूर्णांक ret;
 
-	if (!tx)
-		return 0;
+	अगर (!tx)
+		वापस 0;
 
 	/* For playback the AUDMIX is slave */
 	fmt |= SND_SOC_DAIFMT_CBM_CFM;
 
 	/* set AUDMIX DAI configuration */
 	ret = snd_soc_dai_set_fmt(asoc_rtd_to_cpu(rtd, 0), fmt);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "failed to set AUDMIX DAI fmt: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct snd_soc_ops imx_audmix_fe_ops = {
+अटल काष्ठा snd_soc_ops imx_audmix_fe_ops = अणु
 	.startup = imx_audmix_fe_startup,
 	.hw_params = imx_audmix_fe_hw_params,
-};
+पूर्ण;
 
-static struct snd_soc_ops imx_audmix_be_ops = {
+अटल काष्ठा snd_soc_ops imx_audmix_be_ops = अणु
 	.hw_params = imx_audmix_be_hw_params,
-};
+पूर्ण;
 
-static int imx_audmix_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct device_node *audmix_np = NULL, *out_cpu_np = NULL;
-	struct platform_device *audmix_pdev = NULL;
-	struct platform_device *cpu_pdev;
-	struct of_phandle_args args;
-	struct imx_audmix *priv;
-	int i, num_dai, ret;
-	const char *fe_name_pref = "HiFi-AUDMIX-FE-";
-	char *be_name, *be_pb, *be_cp, *dai_name, *capture_dai_name;
+अटल पूर्णांक imx_audmix_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा device_node *audmix_np = शून्य, *out_cpu_np = शून्य;
+	काष्ठा platक्रमm_device *audmix_pdev = शून्य;
+	काष्ठा platक्रमm_device *cpu_pdev;
+	काष्ठा of_phandle_args args;
+	काष्ठा imx_audmix *priv;
+	पूर्णांक i, num_dai, ret;
+	स्थिर अक्षर *fe_name_pref = "HiFi-AUDMIX-FE-";
+	अक्षर *be_name, *be_pb, *be_cp, *dai_name, *capture_dai_name;
 
-	if (pdev->dev.parent) {
+	अगर (pdev->dev.parent) अणु
 		audmix_np = pdev->dev.parent->of_node;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&pdev->dev, "Missing parent device.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!audmix_np) {
+	अगर (!audmix_np) अणु
 		dev_err(&pdev->dev, "Missing DT node for parent device.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	audmix_pdev = of_find_device_by_node(audmix_np);
-	if (!audmix_pdev) {
+	अगर (!audmix_pdev) अणु
 		dev_err(&pdev->dev, "Missing AUDMIX platform device for %s\n",
 			np->full_name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	put_device(&audmix_pdev->dev);
 
-	num_dai = of_count_phandle_with_args(audmix_np, "dais", NULL);
-	if (num_dai != FSL_AUDMIX_MAX_DAIS) {
+	num_dai = of_count_phandle_with_args(audmix_np, "dais", शून्य);
+	अगर (num_dai != FSL_AUDMIX_MAX_DAIS) अणु
 		dev_err(&pdev->dev, "Need 2 dais to be provided for %s\n",
 			audmix_np->full_name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->num_dai = 2 * num_dai;
-	priv->dai = devm_kcalloc(&pdev->dev, priv->num_dai,
-				 sizeof(struct snd_soc_dai_link), GFP_KERNEL);
-	if (!priv->dai)
-		return -ENOMEM;
+	priv->dai = devm_kसुस्मृति(&pdev->dev, priv->num_dai,
+				 माप(काष्ठा snd_soc_dai_link), GFP_KERNEL);
+	अगर (!priv->dai)
+		वापस -ENOMEM;
 
 	priv->num_dai_conf = num_dai;
-	priv->dai_conf = devm_kcalloc(&pdev->dev, priv->num_dai_conf,
-				      sizeof(struct snd_soc_codec_conf),
+	priv->dai_conf = devm_kसुस्मृति(&pdev->dev, priv->num_dai_conf,
+				      माप(काष्ठा snd_soc_codec_conf),
 				      GFP_KERNEL);
-	if (!priv->dai_conf)
-		return -ENOMEM;
+	अगर (!priv->dai_conf)
+		वापस -ENOMEM;
 
 	priv->num_dapm_routes = 3 * num_dai;
-	priv->dapm_routes = devm_kcalloc(&pdev->dev, priv->num_dapm_routes,
-					 sizeof(struct snd_soc_dapm_route),
+	priv->dapm_routes = devm_kसुस्मृति(&pdev->dev, priv->num_dapm_routes,
+					 माप(काष्ठा snd_soc_dapm_route),
 					 GFP_KERNEL);
-	if (!priv->dapm_routes)
-		return -ENOMEM;
+	अगर (!priv->dapm_routes)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num_dai; i++) {
-		struct snd_soc_dai_link_component *dlc;
+	क्रम (i = 0; i < num_dai; i++) अणु
+		काष्ठा snd_soc_dai_link_component *dlc;
 
-		/* for CPU/Codec/Platform x 2 */
-		dlc = devm_kcalloc(&pdev->dev, 6, sizeof(*dlc), GFP_KERNEL);
-		if (!dlc) {
+		/* क्रम CPU/Codec/Platक्रमm x 2 */
+		dlc = devm_kसुस्मृति(&pdev->dev, 6, माप(*dlc), GFP_KERNEL);
+		अगर (!dlc) अणु
 			dev_err(&pdev->dev, "failed to allocate dai_link\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
-		ret = of_parse_phandle_with_args(audmix_np, "dais", NULL, i,
+		ret = of_parse_phandle_with_args(audmix_np, "dais", शून्य, i,
 						 &args);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&pdev->dev, "of_parse_phandle_with_args failed\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		cpu_pdev = of_find_device_by_node(args.np);
-		if (!cpu_pdev) {
+		अगर (!cpu_pdev) अणु
 			dev_err(&pdev->dev, "failed to find SAI platform device\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		put_device(&cpu_pdev->dev);
 
-		dai_name = devm_kasprintf(&pdev->dev, GFP_KERNEL, "%s%s",
+		dai_name = devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL, "%s%s",
 					  fe_name_pref, args.np->full_name + 1);
 
 		dev_info(pdev->dev.parent, "DAI FE name:%s\n", dai_name);
 
-		if (i == 0) {
+		अगर (i == 0) अणु
 			out_cpu_np = args.np;
 			capture_dai_name =
-				devm_kasprintf(&pdev->dev, GFP_KERNEL, "%s %s",
+				devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL, "%s %s",
 					       dai_name, "CPU-Capture");
-		}
+		पूर्ण
 
 		priv->dai[i].cpus = &dlc[0];
 		priv->dai[i].codecs = &dlc[1];
-		priv->dai[i].platforms = &dlc[2];
+		priv->dai[i].platक्रमms = &dlc[2];
 
 		priv->dai[i].num_cpus = 1;
 		priv->dai[i].num_codecs = 1;
-		priv->dai[i].num_platforms = 1;
+		priv->dai[i].num_platक्रमms = 1;
 
 		priv->dai[i].name = dai_name;
 		priv->dai[i].stream_name = "HiFi-AUDMIX-FE";
@@ -254,67 +255,67 @@ static int imx_audmix_probe(struct platform_device *pdev)
 		priv->dai[i].codecs->name = "snd-soc-dummy";
 		priv->dai[i].cpus->of_node = args.np;
 		priv->dai[i].cpus->dai_name = dev_name(&cpu_pdev->dev);
-		priv->dai[i].platforms->of_node = args.np;
+		priv->dai[i].platक्रमms->of_node = args.np;
 		priv->dai[i].dynamic = 1;
 		priv->dai[i].dpcm_playback = 1;
 		priv->dai[i].dpcm_capture = (i == 0 ? 1 : 0);
-		priv->dai[i].ignore_pmdown_time = 1;
+		priv->dai[i].ignore_pmकरोwn_समय = 1;
 		priv->dai[i].ops = &imx_audmix_fe_ops;
 
 		/* Add AUDMIX Backend */
-		be_name = devm_kasprintf(&pdev->dev, GFP_KERNEL,
+		be_name = devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL,
 					 "audmix-%d", i);
-		be_pb = devm_kasprintf(&pdev->dev, GFP_KERNEL,
+		be_pb = devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL,
 				       "AUDMIX-Playback-%d", i);
-		be_cp = devm_kasprintf(&pdev->dev, GFP_KERNEL,
+		be_cp = devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL,
 				       "AUDMIX-Capture-%d", i);
 
 		priv->dai[num_dai + i].cpus = &dlc[3];
 		priv->dai[num_dai + i].codecs = &dlc[4];
-		priv->dai[num_dai + i].platforms = &dlc[5];
+		priv->dai[num_dai + i].platक्रमms = &dlc[5];
 
 		priv->dai[num_dai + i].num_cpus = 1;
 		priv->dai[num_dai + i].num_codecs = 1;
-		priv->dai[num_dai + i].num_platforms = 1;
+		priv->dai[num_dai + i].num_platक्रमms = 1;
 
 		priv->dai[num_dai + i].name = be_name;
 		priv->dai[num_dai + i].codecs->dai_name = "snd-soc-dummy-dai";
 		priv->dai[num_dai + i].codecs->name = "snd-soc-dummy";
 		priv->dai[num_dai + i].cpus->of_node = audmix_np;
 		priv->dai[num_dai + i].cpus->dai_name = be_name;
-		priv->dai[num_dai + i].platforms->name = "snd-soc-dummy";
+		priv->dai[num_dai + i].platक्रमms->name = "snd-soc-dummy";
 		priv->dai[num_dai + i].no_pcm = 1;
 		priv->dai[num_dai + i].dpcm_playback = 1;
 		priv->dai[num_dai + i].dpcm_capture  = 1;
-		priv->dai[num_dai + i].ignore_pmdown_time = 1;
+		priv->dai[num_dai + i].ignore_pmकरोwn_समय = 1;
 		priv->dai[num_dai + i].ops = &imx_audmix_be_ops;
 
 		priv->dai_conf[i].dlc.of_node = args.np;
 		priv->dai_conf[i].name_prefix = dai_name;
 
 		priv->dapm_routes[i].source =
-			devm_kasprintf(&pdev->dev, GFP_KERNEL, "%s %s",
+			devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL, "%s %s",
 				       dai_name, "CPU-Playback");
 		priv->dapm_routes[i].sink = be_pb;
 		priv->dapm_routes[num_dai + i].source   = be_pb;
 		priv->dapm_routes[num_dai + i].sink     = be_cp;
 		priv->dapm_routes[2 * num_dai + i].source = be_cp;
 		priv->dapm_routes[2 * num_dai + i].sink   = capture_dai_name;
-	}
+	पूर्ण
 
 	cpu_pdev = of_find_device_by_node(out_cpu_np);
-	if (!cpu_pdev) {
+	अगर (!cpu_pdev) अणु
 		dev_err(&pdev->dev, "failed to find SAI platform device\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	put_device(&cpu_pdev->dev);
 
 	priv->cpu_mclk = devm_clk_get(&cpu_pdev->dev, "mclk1");
-	if (IS_ERR(priv->cpu_mclk)) {
+	अगर (IS_ERR(priv->cpu_mclk)) अणु
 		ret = PTR_ERR(priv->cpu_mclk);
 		dev_err(&cpu_pdev->dev, "failed to get DAI mclk1: %d\n", ret);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	priv->audmix_pdev = audmix_pdev;
 	priv->out_pdev  = cpu_pdev;
@@ -329,26 +330,26 @@ static int imx_audmix_probe(struct platform_device *pdev)
 	priv->card.owner = THIS_MODULE;
 	priv->card.name = "imx-audmix";
 
-	platform_set_drvdata(pdev, &priv->card);
+	platक्रमm_set_drvdata(pdev, &priv->card);
 	snd_soc_card_set_drvdata(&priv->card, priv);
 
-	ret = devm_snd_soc_register_card(&pdev->dev, &priv->card);
-	if (ret) {
+	ret = devm_snd_soc_रेजिस्टर_card(&pdev->dev, &priv->card);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "snd_soc_register_card failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver imx_audmix_driver = {
+अटल काष्ठा platक्रमm_driver imx_audmix_driver = अणु
 	.probe = imx_audmix_probe,
-	.driver = {
+	.driver = अणु
 		.name = "imx-audmix",
 		.pm = &snd_soc_pm_ops,
-	},
-};
-module_platform_driver(imx_audmix_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(imx_audmix_driver);
 
 MODULE_DESCRIPTION("NXP AUDMIX ASoC machine driver");
 MODULE_AUTHOR("Viorel Suman <viorel.suman@nxp.com>");

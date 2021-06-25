@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	Mantis PCI bridge driver
 
@@ -6,13 +7,13 @@
 
 */
 
-#ifndef __MANTIS_DMA_H
-#define __MANTIS_DMA_H
+#अगर_अघोषित __MANTIS_DMA_H
+#घोषणा __MANTIS_DMA_H
 
-extern int mantis_dma_init(struct mantis_pci *mantis);
-extern int mantis_dma_exit(struct mantis_pci *mantis);
-extern void mantis_dma_start(struct mantis_pci *mantis);
-extern void mantis_dma_stop(struct mantis_pci *mantis);
-extern void mantis_dma_xfer(struct tasklet_struct *t);
+बाह्य पूर्णांक mantis_dma_init(काष्ठा mantis_pci *mantis);
+बाह्य पूर्णांक mantis_dma_निकास(काष्ठा mantis_pci *mantis);
+बाह्य व्योम mantis_dma_start(काष्ठा mantis_pci *mantis);
+बाह्य व्योम mantis_dma_stop(काष्ठा mantis_pci *mantis);
+बाह्य व्योम mantis_dma_xfer(काष्ठा tasklet_काष्ठा *t);
 
-#endif /* __MANTIS_DMA_H */
+#पूर्ण_अगर /* __MANTIS_DMA_H */

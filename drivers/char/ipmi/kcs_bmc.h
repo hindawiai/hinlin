@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2015-2018, Intel Corporation.
  */
 
-#ifndef __KCS_BMC_H__
-#define __KCS_BMC_H__
+#अगर_अघोषित __KCS_BMC_H__
+#घोषणा __KCS_BMC_H__
 
-#include <linux/miscdevice.h>
+#समावेश <linux/miscdevice.h>
 
-/* Different phases of the KCS BMC module.
+/* Dअगरferent phases of the KCS BMC module.
  *  KCS_PHASE_IDLE:
  *            BMC should not be expecting nor sending any data.
  *  KCS_PHASE_WRITE_START:
- *            BMC is receiving a WRITE_START command from system software.
+ *            BMC is receiving a WRITE_START command from प्रणाली software.
  *  KCS_PHASE_WRITE_DATA:
- *            BMC is receiving a data byte from system software.
+ *            BMC is receiving a data byte from प्रणाली software.
  *  KCS_PHASE_WRITE_END_CMD:
- *            BMC is waiting a last data byte from system software.
+ *            BMC is रुकोing a last data byte from प्रणाली software.
  *  KCS_PHASE_WRITE_DONE:
- *            BMC has received the whole request from system software.
+ *            BMC has received the whole request from प्रणाली software.
  *  KCS_PHASE_WAIT_READ:
- *            BMC is waiting the response from the upper IPMI service.
+ *            BMC is रुकोing the response from the upper IPMI service.
  *  KCS_PHASE_READ:
- *            BMC is transferring the response to system software.
+ *            BMC is transferring the response to प्रणाली software.
  *  KCS_PHASE_ABORT_ERROR1:
- *            BMC is waiting error status request from system software.
+ *            BMC is रुकोing error status request from प्रणाली software.
  *  KCS_PHASE_ABORT_ERROR2:
- *            BMC is waiting for idle status afer error from system software.
+ *            BMC is रुकोing क्रम idle status afer error from प्रणाली software.
  *  KCS_PHASE_ERROR:
- *            BMC has detected a protocol violation at the interface level.
+ *            BMC has detected a protocol violation at the पूर्णांकerface level.
  */
-enum kcs_phases {
+क्रमागत kcs_phases अणु
 	KCS_PHASE_IDLE,
 
 	KCS_PHASE_WRITE_START,
@@ -44,65 +45,65 @@ enum kcs_phases {
 	KCS_PHASE_ABORT_ERROR1,
 	KCS_PHASE_ABORT_ERROR2,
 	KCS_PHASE_ERROR
-};
+पूर्ण;
 
 /* IPMI 2.0 - Table 9-4, KCS Interface Status Codes */
-enum kcs_errors {
+क्रमागत kcs_errors अणु
 	KCS_NO_ERROR                = 0x00,
 	KCS_ABORTED_BY_COMMAND      = 0x01,
 	KCS_ILLEGAL_CONTROL_CODE    = 0x02,
 	KCS_LENGTH_ERROR            = 0x06,
 	KCS_UNSPECIFIED_ERROR       = 0xFF
-};
+पूर्ण;
 
 /* IPMI 2.0 - 9.5, KCS Interface Registers
  * @idr: Input Data Register
  * @odr: Output Data Register
  * @str: Status Register
  */
-struct kcs_ioreg {
+काष्ठा kcs_ioreg अणु
 	u32 idr;
 	u32 odr;
 	u32 str;
-};
+पूर्ण;
 
-struct kcs_bmc {
+काष्ठा kcs_bmc अणु
 	spinlock_t lock;
 
 	u32 channel;
-	int running;
+	पूर्णांक running;
 
 	/* Setup by BMC KCS controller driver */
-	struct kcs_ioreg ioreg;
-	u8 (*io_inputb)(struct kcs_bmc *kcs_bmc, u32 reg);
-	void (*io_outputb)(struct kcs_bmc *kcs_bmc, u32 reg, u8 b);
+	काष्ठा kcs_ioreg ioreg;
+	u8 (*io_inputb)(काष्ठा kcs_bmc *kcs_bmc, u32 reg);
+	व्योम (*io_outputb)(काष्ठा kcs_bmc *kcs_bmc, u32 reg, u8 b);
 
-	enum kcs_phases phase;
-	enum kcs_errors error;
+	क्रमागत kcs_phases phase;
+	क्रमागत kcs_errors error;
 
-	wait_queue_head_t queue;
+	रुको_queue_head_t queue;
 	bool data_in_avail;
-	int  data_in_idx;
+	पूर्णांक  data_in_idx;
 	u8  *data_in;
 
-	int  data_out_idx;
-	int  data_out_len;
+	पूर्णांक  data_out_idx;
+	पूर्णांक  data_out_len;
 	u8  *data_out;
 
-	struct mutex mutex;
+	काष्ठा mutex mutex;
 	u8 *kbuffer;
 
-	struct miscdevice miscdev;
+	काष्ठा miscdevice miscdev;
 
-	unsigned long priv[];
-};
+	अचिन्हित दीर्घ priv[];
+पूर्ण;
 
-static inline void *kcs_bmc_priv(struct kcs_bmc *kcs_bmc)
-{
-	return kcs_bmc->priv;
-}
+अटल अंतरभूत व्योम *kcs_bmc_priv(काष्ठा kcs_bmc *kcs_bmc)
+अणु
+	वापस kcs_bmc->priv;
+पूर्ण
 
-int kcs_bmc_handle_event(struct kcs_bmc *kcs_bmc);
-struct kcs_bmc *kcs_bmc_alloc(struct device *dev, int sizeof_priv,
+पूर्णांक kcs_bmc_handle_event(काष्ठा kcs_bmc *kcs_bmc);
+काष्ठा kcs_bmc *kcs_bmc_alloc(काष्ठा device *dev, पूर्णांक माप_priv,
 					u32 channel);
-#endif /* __KCS_BMC_H__ */
+#पूर्ण_अगर /* __KCS_BMC_H__ */

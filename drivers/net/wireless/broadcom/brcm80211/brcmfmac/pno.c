@@ -1,114 +1,115 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2016 Broadcom
  */
-#include <linux/netdevice.h>
-#include <linux/gcd.h>
-#include <net/cfg80211.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/gcd.h>
+#समावेश <net/cfg80211.h>
 
-#include "core.h"
-#include "debug.h"
-#include "fwil.h"
-#include "fwil_types.h"
-#include "cfg80211.h"
-#include "pno.h"
+#समावेश "core.h"
+#समावेश "debug.h"
+#समावेश "fwil.h"
+#समावेश "fwil_types.h"
+#समावेश "cfg80211.h"
+#समावेश "pno.h"
 
-#define BRCMF_PNO_VERSION		2
-#define BRCMF_PNO_REPEAT		4
-#define BRCMF_PNO_FREQ_EXPO_MAX		3
-#define BRCMF_PNO_IMMEDIATE_SCAN_BIT	3
-#define BRCMF_PNO_ENABLE_BD_SCAN_BIT	5
-#define BRCMF_PNO_ENABLE_ADAPTSCAN_BIT	6
-#define BRCMF_PNO_REPORT_SEPARATELY_BIT	11
-#define BRCMF_PNO_SCAN_INCOMPLETE	0
-#define BRCMF_PNO_WPA_AUTH_ANY		0xFFFFFFFF
-#define BRCMF_PNO_HIDDEN_BIT		2
-#define BRCMF_PNO_SCHED_SCAN_PERIOD	30
+#घोषणा BRCMF_PNO_VERSION		2
+#घोषणा BRCMF_PNO_REPEAT		4
+#घोषणा BRCMF_PNO_FREQ_EXPO_MAX		3
+#घोषणा BRCMF_PNO_IMMEDIATE_SCAN_BIT	3
+#घोषणा BRCMF_PNO_ENABLE_BD_SCAN_BIT	5
+#घोषणा BRCMF_PNO_ENABLE_ADAPTSCAN_BIT	6
+#घोषणा BRCMF_PNO_REPORT_SEPARATELY_BIT	11
+#घोषणा BRCMF_PNO_SCAN_INCOMPLETE	0
+#घोषणा BRCMF_PNO_WPA_AUTH_ANY		0xFFFFFFFF
+#घोषणा BRCMF_PNO_HIDDEN_BIT		2
+#घोषणा BRCMF_PNO_SCHED_SCAN_PERIOD	30
 
-#define BRCMF_PNO_MAX_BUCKETS		16
-#define GSCAN_BATCH_NO_THR_SET			101
-#define GSCAN_RETRY_THRESHOLD			3
+#घोषणा BRCMF_PNO_MAX_BUCKETS		16
+#घोषणा GSCAN_BATCH_NO_THR_SET			101
+#घोषणा GSCAN_RETRY_THRESHOLD			3
 
-struct brcmf_pno_info {
-	int n_reqs;
-	struct cfg80211_sched_scan_request *reqs[BRCMF_PNO_MAX_BUCKETS];
-	struct mutex req_lock;
-};
+काष्ठा brcmf_pno_info अणु
+	पूर्णांक n_reqs;
+	काष्ठा cfg80211_sched_scan_request *reqs[BRCMF_PNO_MAX_BUCKETS];
+	काष्ठा mutex req_lock;
+पूर्ण;
 
-#define ifp_to_pno(_ifp)	((_ifp)->drvr->config->pno)
+#घोषणा अगरp_to_pno(_अगरp)	((_अगरp)->drvr->config->pno)
 
-static int brcmf_pno_store_request(struct brcmf_pno_info *pi,
-				   struct cfg80211_sched_scan_request *req)
-{
-	if (WARN(pi->n_reqs == BRCMF_PNO_MAX_BUCKETS,
+अटल पूर्णांक brcmf_pno_store_request(काष्ठा brcmf_pno_info *pi,
+				   काष्ठा cfg80211_sched_scan_request *req)
+अणु
+	अगर (WARN(pi->n_reqs == BRCMF_PNO_MAX_BUCKETS,
 		 "pno request storage full\n"))
-		return -ENOSPC;
+		वापस -ENOSPC;
 
 	brcmf_dbg(SCAN, "reqid=%llu\n", req->reqid);
 	mutex_lock(&pi->req_lock);
 	pi->reqs[pi->n_reqs++] = req;
 	mutex_unlock(&pi->req_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmf_pno_remove_request(struct brcmf_pno_info *pi, u64 reqid)
-{
-	int i, err = 0;
+अटल पूर्णांक brcmf_pno_हटाओ_request(काष्ठा brcmf_pno_info *pi, u64 reqid)
+अणु
+	पूर्णांक i, err = 0;
 
 	mutex_lock(&pi->req_lock);
 
-	/* Nothing to do if we have no requests */
-	if (pi->n_reqs == 0)
-		goto done;
+	/* Nothing to करो अगर we have no requests */
+	अगर (pi->n_reqs == 0)
+		जाओ करोne;
 
 	/* find request */
-	for (i = 0; i < pi->n_reqs; i++) {
-		if (pi->reqs[i]->reqid == reqid)
-			break;
-	}
+	क्रम (i = 0; i < pi->n_reqs; i++) अणु
+		अगर (pi->reqs[i]->reqid == reqid)
+			अवरोध;
+	पूर्ण
 	/* request not found */
-	if (WARN(i == pi->n_reqs, "reqid not found\n")) {
+	अगर (WARN(i == pi->n_reqs, "reqid not found\n")) अणु
 		err = -ENOENT;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	brcmf_dbg(SCAN, "reqid=%llu\n", reqid);
 	pi->n_reqs--;
 
-	/* if last we are done */
-	if (!pi->n_reqs || i == pi->n_reqs)
-		goto done;
+	/* अगर last we are करोne */
+	अगर (!pi->n_reqs || i == pi->n_reqs)
+		जाओ करोne;
 
-	/* fill the gap with remaining requests */
-	while (i <= pi->n_reqs - 1) {
+	/* fill the gap with reमुख्यing requests */
+	जबतक (i <= pi->n_reqs - 1) अणु
 		pi->reqs[i] = pi->reqs[i + 1];
 		i++;
-	}
+	पूर्ण
 
-done:
+करोne:
 	mutex_unlock(&pi->req_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int brcmf_pno_channel_config(struct brcmf_if *ifp,
-				    struct brcmf_pno_config_le *cfg)
-{
+अटल पूर्णांक brcmf_pno_channel_config(काष्ठा brcmf_अगर *अगरp,
+				    काष्ठा brcmf_pno_config_le *cfg)
+अणु
 	cfg->reporttype = 0;
 	cfg->flags = 0;
 
-	return brcmf_fil_iovar_data_set(ifp, "pfn_cfg", cfg, sizeof(*cfg));
-}
+	वापस brcmf_fil_iovar_data_set(अगरp, "pfn_cfg", cfg, माप(*cfg));
+पूर्ण
 
-static int brcmf_pno_config(struct brcmf_if *ifp, u32 scan_freq,
+अटल पूर्णांक brcmf_pno_config(काष्ठा brcmf_अगर *अगरp, u32 scan_freq,
 			    u32 mscan, u32 bestn)
-{
-	struct brcmf_pub *drvr = ifp->drvr;
-	struct brcmf_pno_param_le pfn_param;
+अणु
+	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+	काष्ठा brcmf_pno_param_le pfn_param;
 	u16 flags;
 	u32 pfnmem;
 	s32 err;
 
-	memset(&pfn_param, 0, sizeof(pfn_param));
+	स_रखो(&pfn_param, 0, माप(pfn_param));
 	pfn_param.version = cpu_to_le32(BRCMF_PNO_VERSION);
 
 	/* set extra pno params */
@@ -120,65 +121,65 @@ static int brcmf_pno_config(struct brcmf_if *ifp, u32 scan_freq,
 	/* set up pno scan fr */
 	pfn_param.scan_freq = cpu_to_le32(scan_freq);
 
-	if (mscan) {
+	अगर (mscan) अणु
 		pfnmem = bestn;
 
 		/* set bestn in firmware */
-		err = brcmf_fil_iovar_int_set(ifp, "pfnmem", pfnmem);
-		if (err < 0) {
+		err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "pfnmem", pfnmem);
+		अगर (err < 0) अणु
 			bphy_err(drvr, "failed to set pfnmem\n");
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 		/* get max mscan which the firmware supports */
-		err = brcmf_fil_iovar_int_get(ifp, "pfnmem", &pfnmem);
-		if (err < 0) {
+		err = brcmf_fil_iovar_पूर्णांक_get(अगरp, "pfnmem", &pfnmem);
+		अगर (err < 0) अणु
 			bphy_err(drvr, "failed to get pfnmem\n");
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 		mscan = min_t(u32, mscan, pfnmem);
 		pfn_param.mscan = mscan;
 		pfn_param.bestn = bestn;
 		flags |= BIT(BRCMF_PNO_ENABLE_BD_SCAN_BIT);
 		brcmf_dbg(INFO, "mscan=%d, bestn=%d\n", mscan, bestn);
-	}
+	पूर्ण
 
 	pfn_param.flags = cpu_to_le16(flags);
-	err = brcmf_fil_iovar_data_set(ifp, "pfn_set", &pfn_param,
-				       sizeof(pfn_param));
-	if (err)
+	err = brcmf_fil_iovar_data_set(अगरp, "pfn_set", &pfn_param,
+				       माप(pfn_param));
+	अगर (err)
 		bphy_err(drvr, "pfn_set failed, err=%d\n", err);
 
-exit:
-	return err;
-}
+निकास:
+	वापस err;
+पूर्ण
 
-static int brcmf_pno_set_random(struct brcmf_if *ifp, struct brcmf_pno_info *pi)
-{
-	struct brcmf_pub *drvr = ifp->drvr;
-	struct brcmf_pno_macaddr_le pfn_mac;
-	u8 *mac_addr = NULL;
-	u8 *mac_mask = NULL;
-	int err, i;
+अटल पूर्णांक brcmf_pno_set_अक्रमom(काष्ठा brcmf_अगर *अगरp, काष्ठा brcmf_pno_info *pi)
+अणु
+	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+	काष्ठा brcmf_pno_macaddr_le pfn_mac;
+	u8 *mac_addr = शून्य;
+	u8 *mac_mask = शून्य;
+	पूर्णांक err, i;
 
-	for (i = 0; i < pi->n_reqs; i++)
-		if (pi->reqs[i]->flags & NL80211_SCAN_FLAG_RANDOM_ADDR) {
+	क्रम (i = 0; i < pi->n_reqs; i++)
+		अगर (pi->reqs[i]->flags & NL80211_SCAN_FLAG_RANDOM_ADDR) अणु
 			mac_addr = pi->reqs[i]->mac_addr;
 			mac_mask = pi->reqs[i]->mac_addr_mask;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	/* no random mac requested */
-	if (!mac_addr)
-		return 0;
+	/* no अक्रमom mac requested */
+	अगर (!mac_addr)
+		वापस 0;
 
 	pfn_mac.version = BRCMF_PFN_MACADDR_CFG_VER;
 	pfn_mac.flags = BRCMF_PFN_MAC_OUI_ONLY | BRCMF_PFN_SET_MAC_UNASSOC;
 
-	memcpy(pfn_mac.mac, mac_addr, ETH_ALEN);
-	for (i = 0; i < ETH_ALEN; i++) {
+	स_नकल(pfn_mac.mac, mac_addr, ETH_ALEN);
+	क्रम (i = 0; i < ETH_ALEN; i++) अणु
 		pfn_mac.mac[i] &= mac_mask[i];
-		pfn_mac.mac[i] |= get_random_int() & ~(mac_mask[i]);
-	}
+		pfn_mac.mac[i] |= get_अक्रमom_पूर्णांक() & ~(mac_mask[i]);
+	पूर्ण
 	/* Clear multi bit */
 	pfn_mac.mac[0] &= 0xFE;
 	/* Set locally administered */
@@ -186,247 +187,247 @@ static int brcmf_pno_set_random(struct brcmf_if *ifp, struct brcmf_pno_info *pi)
 
 	brcmf_dbg(SCAN, "enabling random mac: reqid=%llu mac=%pM\n",
 		  pi->reqs[i]->reqid, pfn_mac.mac);
-	err = brcmf_fil_iovar_data_set(ifp, "pfn_macaddr", &pfn_mac,
-				       sizeof(pfn_mac));
-	if (err)
+	err = brcmf_fil_iovar_data_set(अगरp, "pfn_macaddr", &pfn_mac,
+				       माप(pfn_mac));
+	अगर (err)
 		bphy_err(drvr, "pfn_macaddr failed, err=%d\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int brcmf_pno_add_ssid(struct brcmf_if *ifp, struct cfg80211_ssid *ssid,
+अटल पूर्णांक brcmf_pno_add_ssid(काष्ठा brcmf_अगर *अगरp, काष्ठा cfg80211_ssid *ssid,
 			      bool active)
-{
-	struct brcmf_pub *drvr = ifp->drvr;
-	struct brcmf_pno_net_param_le pfn;
-	int err;
+अणु
+	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+	काष्ठा brcmf_pno_net_param_le pfn;
+	पूर्णांक err;
 
 	pfn.auth = cpu_to_le32(WLAN_AUTH_OPEN);
 	pfn.wpa_auth = cpu_to_le32(BRCMF_PNO_WPA_AUTH_ANY);
 	pfn.wsec = cpu_to_le32(0);
 	pfn.infra = cpu_to_le32(1);
 	pfn.flags = 0;
-	if (active)
+	अगर (active)
 		pfn.flags = cpu_to_le32(1 << BRCMF_PNO_HIDDEN_BIT);
 	pfn.ssid.SSID_len = cpu_to_le32(ssid->ssid_len);
-	memcpy(pfn.ssid.SSID, ssid->ssid, ssid->ssid_len);
+	स_नकल(pfn.ssid.SSID, ssid->ssid, ssid->ssid_len);
 
 	brcmf_dbg(SCAN, "adding ssid=%.32s (active=%d)\n", ssid->ssid, active);
-	err = brcmf_fil_iovar_data_set(ifp, "pfn_add", &pfn, sizeof(pfn));
-	if (err < 0)
+	err = brcmf_fil_iovar_data_set(अगरp, "pfn_add", &pfn, माप(pfn));
+	अगर (err < 0)
 		bphy_err(drvr, "adding failed: err=%d\n", err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int brcmf_pno_add_bssid(struct brcmf_if *ifp, const u8 *bssid)
-{
-	struct brcmf_pub *drvr = ifp->drvr;
-	struct brcmf_pno_bssid_le bssid_cfg;
-	int err;
+अटल पूर्णांक brcmf_pno_add_bssid(काष्ठा brcmf_अगर *अगरp, स्थिर u8 *bssid)
+अणु
+	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+	काष्ठा brcmf_pno_bssid_le bssid_cfg;
+	पूर्णांक err;
 
-	memcpy(bssid_cfg.bssid, bssid, ETH_ALEN);
+	स_नकल(bssid_cfg.bssid, bssid, ETH_ALEN);
 	bssid_cfg.flags = 0;
 
 	brcmf_dbg(SCAN, "adding bssid=%pM\n", bssid);
-	err = brcmf_fil_iovar_data_set(ifp, "pfn_add_bssid", &bssid_cfg,
-				       sizeof(bssid_cfg));
-	if (err < 0)
+	err = brcmf_fil_iovar_data_set(अगरp, "pfn_add_bssid", &bssid_cfg,
+				       माप(bssid_cfg));
+	अगर (err < 0)
 		bphy_err(drvr, "adding failed: err=%d\n", err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool brcmf_is_ssid_active(struct cfg80211_ssid *ssid,
-				 struct cfg80211_sched_scan_request *req)
-{
-	int i;
+अटल bool brcmf_is_ssid_active(काष्ठा cfg80211_ssid *ssid,
+				 काष्ठा cfg80211_sched_scan_request *req)
+अणु
+	पूर्णांक i;
 
-	if (!ssid || !req->ssids || !req->n_ssids)
-		return false;
+	अगर (!ssid || !req->ssids || !req->n_ssids)
+		वापस false;
 
-	for (i = 0; i < req->n_ssids; i++) {
-		if (ssid->ssid_len == req->ssids[i].ssid_len) {
-			if (!strncmp(ssid->ssid, req->ssids[i].ssid,
+	क्रम (i = 0; i < req->n_ssids; i++) अणु
+		अगर (ssid->ssid_len == req->ssids[i].ssid_len) अणु
+			अगर (!म_भेदन(ssid->ssid, req->ssids[i].ssid,
 				     ssid->ssid_len))
-				return true;
-		}
-	}
-	return false;
-}
+				वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static int brcmf_pno_clean(struct brcmf_if *ifp)
-{
-	struct brcmf_pub *drvr = ifp->drvr;
-	int ret;
+अटल पूर्णांक brcmf_pno_clean(काष्ठा brcmf_अगर *अगरp)
+अणु
+	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+	पूर्णांक ret;
 
 	/* Disable pfn */
-	ret = brcmf_fil_iovar_int_set(ifp, "pfn", 0);
-	if (ret == 0) {
+	ret = brcmf_fil_iovar_पूर्णांक_set(अगरp, "pfn", 0);
+	अगर (ret == 0) अणु
 		/* clear pfn */
-		ret = brcmf_fil_iovar_data_set(ifp, "pfnclear", NULL, 0);
-	}
-	if (ret < 0)
+		ret = brcmf_fil_iovar_data_set(अगरp, "pfnclear", शून्य, 0);
+	पूर्ण
+	अगर (ret < 0)
 		bphy_err(drvr, "failed code %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int brcmf_pno_get_bucket_channels(struct cfg80211_sched_scan_request *r,
-					 struct brcmf_pno_config_le *pno_cfg)
-{
+अटल पूर्णांक brcmf_pno_get_bucket_channels(काष्ठा cfg80211_sched_scan_request *r,
+					 काष्ठा brcmf_pno_config_le *pno_cfg)
+अणु
 	u32 n_chan = le32_to_cpu(pno_cfg->channel_num);
 	u16 chan;
-	int i, err = 0;
+	पूर्णांक i, err = 0;
 
-	for (i = 0; i < r->n_channels; i++) {
-		if (n_chan >= BRCMF_NUMCHANNELS) {
+	क्रम (i = 0; i < r->n_channels; i++) अणु
+		अगर (n_chan >= BRCMF_NUMCHANNELS) अणु
 			err = -ENOSPC;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		chan = r->channels[i]->hw_value;
 		brcmf_dbg(SCAN, "[%d] Chan : %u\n", n_chan, chan);
 		pno_cfg->channel_list[n_chan++] = cpu_to_le16(chan);
-	}
-	/* return number of channels */
+	पूर्ण
+	/* वापस number of channels */
 	err = n_chan;
-done:
+करोne:
 	pno_cfg->channel_num = cpu_to_le32(n_chan);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int brcmf_pno_prep_fwconfig(struct brcmf_pno_info *pi,
-				   struct brcmf_pno_config_le *pno_cfg,
-				   struct brcmf_gscan_bucket_config **buckets,
+अटल पूर्णांक brcmf_pno_prep_fwconfig(काष्ठा brcmf_pno_info *pi,
+				   काष्ठा brcmf_pno_config_le *pno_cfg,
+				   काष्ठा brcmf_gscan_bucket_config **buckets,
 				   u32 *scan_freq)
-{
-	struct cfg80211_sched_scan_request *sr;
-	struct brcmf_gscan_bucket_config *fw_buckets;
-	int i, err, chidx;
+अणु
+	काष्ठा cfg80211_sched_scan_request *sr;
+	काष्ठा brcmf_gscan_bucket_config *fw_buckets;
+	पूर्णांक i, err, chidx;
 
 	brcmf_dbg(SCAN, "n_reqs=%d\n", pi->n_reqs);
-	if (WARN_ON(!pi->n_reqs))
-		return -ENODATA;
+	अगर (WARN_ON(!pi->n_reqs))
+		वापस -ENODATA;
 
 	/*
-	 * actual scan period is determined using gcd() for each
+	 * actual scan period is determined using gcd() क्रम each
 	 * scheduled scan period.
 	 */
-	*scan_freq = pi->reqs[0]->scan_plans[0].interval;
-	for (i = 1; i < pi->n_reqs; i++) {
+	*scan_freq = pi->reqs[0]->scan_plans[0].पूर्णांकerval;
+	क्रम (i = 1; i < pi->n_reqs; i++) अणु
 		sr = pi->reqs[i];
-		*scan_freq = gcd(sr->scan_plans[0].interval, *scan_freq);
-	}
-	if (*scan_freq < BRCMF_PNO_SCHED_SCAN_MIN_PERIOD) {
+		*scan_freq = gcd(sr->scan_plans[0].पूर्णांकerval, *scan_freq);
+	पूर्ण
+	अगर (*scan_freq < BRCMF_PNO_SCHED_SCAN_MIN_PERIOD) अणु
 		brcmf_dbg(SCAN, "scan period too small, using minimum\n");
 		*scan_freq = BRCMF_PNO_SCHED_SCAN_MIN_PERIOD;
-	}
+	पूर्ण
 
-	*buckets = NULL;
-	fw_buckets = kcalloc(pi->n_reqs, sizeof(*fw_buckets), GFP_KERNEL);
-	if (!fw_buckets)
-		return -ENOMEM;
+	*buckets = शून्य;
+	fw_buckets = kसुस्मृति(pi->n_reqs, माप(*fw_buckets), GFP_KERNEL);
+	अगर (!fw_buckets)
+		वापस -ENOMEM;
 
-	memset(pno_cfg, 0, sizeof(*pno_cfg));
-	for (i = 0; i < pi->n_reqs; i++) {
+	स_रखो(pno_cfg, 0, माप(*pno_cfg));
+	क्रम (i = 0; i < pi->n_reqs; i++) अणु
 		sr = pi->reqs[i];
 		chidx = brcmf_pno_get_bucket_channels(sr, pno_cfg);
-		if (chidx < 0) {
+		अगर (chidx < 0) अणु
 			err = chidx;
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 		fw_buckets[i].bucket_end_index = chidx - 1;
 		fw_buckets[i].bucket_freq_multiple =
-			sr->scan_plans[0].interval / *scan_freq;
+			sr->scan_plans[0].पूर्णांकerval / *scan_freq;
 		/* assure period is non-zero */
-		if (!fw_buckets[i].bucket_freq_multiple)
+		अगर (!fw_buckets[i].bucket_freq_multiple)
 			fw_buckets[i].bucket_freq_multiple = 1;
 		fw_buckets[i].flag = BRCMF_PNO_REPORT_NO_BATCH;
-	}
+	पूर्ण
 
-	if (BRCMF_SCAN_ON()) {
+	अगर (BRCMF_SCAN_ON()) अणु
 		brcmf_err("base period=%u\n", *scan_freq);
-		for (i = 0; i < pi->n_reqs; i++) {
+		क्रम (i = 0; i < pi->n_reqs; i++) अणु
 			brcmf_err("[%d] period %u max %u repeat %u flag %x idx %u\n",
 				  i, fw_buckets[i].bucket_freq_multiple,
 				  le16_to_cpu(fw_buckets[i].max_freq_multiple),
 				  fw_buckets[i].repeat, fw_buckets[i].flag,
 				  fw_buckets[i].bucket_end_index);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	*buckets = fw_buckets;
-	return pi->n_reqs;
+	वापस pi->n_reqs;
 
 fail:
-	kfree(fw_buckets);
-	return err;
-}
+	kमुक्त(fw_buckets);
+	वापस err;
+पूर्ण
 
-static int brcmf_pno_config_networks(struct brcmf_if *ifp,
-				     struct brcmf_pno_info *pi)
-{
-	struct cfg80211_sched_scan_request *r;
-	struct cfg80211_match_set *ms;
+अटल पूर्णांक brcmf_pno_config_networks(काष्ठा brcmf_अगर *अगरp,
+				     काष्ठा brcmf_pno_info *pi)
+अणु
+	काष्ठा cfg80211_sched_scan_request *r;
+	काष्ठा cfg80211_match_set *ms;
 	bool active;
-	int i, j, err = 0;
+	पूर्णांक i, j, err = 0;
 
-	for (i = 0; i < pi->n_reqs; i++) {
+	क्रम (i = 0; i < pi->n_reqs; i++) अणु
 		r = pi->reqs[i];
 
-		for (j = 0; j < r->n_match_sets; j++) {
+		क्रम (j = 0; j < r->n_match_sets; j++) अणु
 			ms = &r->match_sets[j];
-			if (ms->ssid.ssid_len) {
+			अगर (ms->ssid.ssid_len) अणु
 				active = brcmf_is_ssid_active(&ms->ssid, r);
-				err = brcmf_pno_add_ssid(ifp, &ms->ssid,
+				err = brcmf_pno_add_ssid(अगरp, &ms->ssid,
 							 active);
-			}
-			if (!err && is_valid_ether_addr(ms->bssid))
-				err = brcmf_pno_add_bssid(ifp, ms->bssid);
+			पूर्ण
+			अगर (!err && is_valid_ether_addr(ms->bssid))
+				err = brcmf_pno_add_bssid(अगरp, ms->bssid);
 
-			if (err < 0)
-				return err;
-		}
-	}
-	return 0;
-}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int brcmf_pno_config_sched_scans(struct brcmf_if *ifp)
-{
-	struct brcmf_pub *drvr = ifp->drvr;
-	struct brcmf_pno_info *pi;
-	struct brcmf_gscan_config *gscan_cfg;
-	struct brcmf_gscan_bucket_config *buckets;
-	struct brcmf_pno_config_le pno_cfg;
-	size_t gsz;
+अटल पूर्णांक brcmf_pno_config_sched_scans(काष्ठा brcmf_अगर *अगरp)
+अणु
+	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+	काष्ठा brcmf_pno_info *pi;
+	काष्ठा brcmf_gscan_config *gscan_cfg;
+	काष्ठा brcmf_gscan_bucket_config *buckets;
+	काष्ठा brcmf_pno_config_le pno_cfg;
+	माप_प्रकार gsz;
 	u32 scan_freq;
-	int err, n_buckets;
+	पूर्णांक err, n_buckets;
 
-	pi = ifp_to_pno(ifp);
+	pi = अगरp_to_pno(अगरp);
 	n_buckets = brcmf_pno_prep_fwconfig(pi, &pno_cfg, &buckets,
 					    &scan_freq);
-	if (n_buckets < 0)
-		return n_buckets;
+	अगर (n_buckets < 0)
+		वापस n_buckets;
 
-	gsz = sizeof(*gscan_cfg) + (n_buckets - 1) * sizeof(*buckets);
+	gsz = माप(*gscan_cfg) + (n_buckets - 1) * माप(*buckets);
 	gscan_cfg = kzalloc(gsz, GFP_KERNEL);
-	if (!gscan_cfg) {
+	अगर (!gscan_cfg) अणु
 		err = -ENOMEM;
-		goto free_buckets;
-	}
+		जाओ मुक्त_buckets;
+	पूर्ण
 
 	/* clean up everything */
-	err = brcmf_pno_clean(ifp);
-	if  (err < 0) {
+	err = brcmf_pno_clean(अगरp);
+	अगर  (err < 0) अणु
 		bphy_err(drvr, "failed error=%d\n", err);
-		goto free_gscan;
-	}
+		जाओ मुक्त_gscan;
+	पूर्ण
 
 	/* configure pno */
-	err = brcmf_pno_config(ifp, scan_freq, 0, 0);
-	if (err < 0)
-		goto free_gscan;
+	err = brcmf_pno_config(अगरp, scan_freq, 0, 0);
+	अगर (err < 0)
+		जाओ मुक्त_gscan;
 
-	err = brcmf_pno_channel_config(ifp, &pno_cfg);
-	if (err < 0)
-		goto clean;
+	err = brcmf_pno_channel_config(अगरp, &pno_cfg);
+	अगर (err < 0)
+		जाओ clean;
 
 	gscan_cfg->version = cpu_to_le16(BRCMF_GSCAN_CFG_VERSION);
 	gscan_cfg->retry_threshold = GSCAN_RETRY_THRESHOLD;
@@ -434,162 +435,162 @@ static int brcmf_pno_config_sched_scans(struct brcmf_if *ifp)
 	gscan_cfg->flags = BRCMF_GSCAN_CFG_ALL_BUCKETS_IN_1ST_SCAN;
 
 	gscan_cfg->count_of_channel_buckets = n_buckets;
-	memcpy(&gscan_cfg->bucket[0], buckets,
-	       n_buckets * sizeof(*buckets));
+	स_नकल(&gscan_cfg->bucket[0], buckets,
+	       n_buckets * माप(*buckets));
 
-	err = brcmf_fil_iovar_data_set(ifp, "pfn_gscan_cfg", gscan_cfg, gsz);
+	err = brcmf_fil_iovar_data_set(अगरp, "pfn_gscan_cfg", gscan_cfg, gsz);
 
-	if (err < 0)
-		goto clean;
+	अगर (err < 0)
+		जाओ clean;
 
-	/* configure random mac */
-	err = brcmf_pno_set_random(ifp, pi);
-	if (err < 0)
-		goto clean;
+	/* configure अक्रमom mac */
+	err = brcmf_pno_set_अक्रमom(अगरp, pi);
+	अगर (err < 0)
+		जाओ clean;
 
-	err = brcmf_pno_config_networks(ifp, pi);
-	if (err < 0)
-		goto clean;
+	err = brcmf_pno_config_networks(अगरp, pi);
+	अगर (err < 0)
+		जाओ clean;
 
 	/* Enable the PNO */
-	err = brcmf_fil_iovar_int_set(ifp, "pfn", 1);
+	err = brcmf_fil_iovar_पूर्णांक_set(अगरp, "pfn", 1);
 
 clean:
-	if (err < 0)
-		brcmf_pno_clean(ifp);
-free_gscan:
-	kfree(gscan_cfg);
-free_buckets:
-	kfree(buckets);
-	return err;
-}
+	अगर (err < 0)
+		brcmf_pno_clean(अगरp);
+मुक्त_gscan:
+	kमुक्त(gscan_cfg);
+मुक्त_buckets:
+	kमुक्त(buckets);
+	वापस err;
+पूर्ण
 
-int brcmf_pno_start_sched_scan(struct brcmf_if *ifp,
-			       struct cfg80211_sched_scan_request *req)
-{
-	struct brcmf_pno_info *pi;
-	int ret;
+पूर्णांक brcmf_pno_start_sched_scan(काष्ठा brcmf_अगर *अगरp,
+			       काष्ठा cfg80211_sched_scan_request *req)
+अणु
+	काष्ठा brcmf_pno_info *pi;
+	पूर्णांक ret;
 
 	brcmf_dbg(TRACE, "reqid=%llu\n", req->reqid);
 
-	pi = ifp_to_pno(ifp);
+	pi = अगरp_to_pno(अगरp);
 	ret = brcmf_pno_store_request(pi, req);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = brcmf_pno_config_sched_scans(ifp);
-	if (ret < 0) {
-		brcmf_pno_remove_request(pi, req->reqid);
-		if (pi->n_reqs)
-			(void)brcmf_pno_config_sched_scans(ifp);
-		return ret;
-	}
-	return 0;
-}
+	ret = brcmf_pno_config_sched_scans(अगरp);
+	अगर (ret < 0) अणु
+		brcmf_pno_हटाओ_request(pi, req->reqid);
+		अगर (pi->n_reqs)
+			(व्योम)brcmf_pno_config_sched_scans(अगरp);
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int brcmf_pno_stop_sched_scan(struct brcmf_if *ifp, u64 reqid)
-{
-	struct brcmf_pno_info *pi;
-	int err;
+पूर्णांक brcmf_pno_stop_sched_scan(काष्ठा brcmf_अगर *अगरp, u64 reqid)
+अणु
+	काष्ठा brcmf_pno_info *pi;
+	पूर्णांक err;
 
 	brcmf_dbg(TRACE, "reqid=%llu\n", reqid);
 
-	pi = ifp_to_pno(ifp);
+	pi = अगरp_to_pno(अगरp);
 
 	/* No PNO request */
-	if (!pi->n_reqs)
-		return 0;
+	अगर (!pi->n_reqs)
+		वापस 0;
 
-	err = brcmf_pno_remove_request(pi, reqid);
-	if (err)
-		return err;
+	err = brcmf_pno_हटाओ_request(pi, reqid);
+	अगर (err)
+		वापस err;
 
-	brcmf_pno_clean(ifp);
+	brcmf_pno_clean(अगरp);
 
-	if (pi->n_reqs)
-		(void)brcmf_pno_config_sched_scans(ifp);
+	अगर (pi->n_reqs)
+		(व्योम)brcmf_pno_config_sched_scans(अगरp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int brcmf_pno_attach(struct brcmf_cfg80211_info *cfg)
-{
-	struct brcmf_pno_info *pi;
+पूर्णांक brcmf_pno_attach(काष्ठा brcmf_cfg80211_info *cfg)
+अणु
+	काष्ठा brcmf_pno_info *pi;
 
 	brcmf_dbg(TRACE, "enter\n");
-	pi = kzalloc(sizeof(*pi), GFP_KERNEL);
-	if (!pi)
-		return -ENOMEM;
+	pi = kzalloc(माप(*pi), GFP_KERNEL);
+	अगर (!pi)
+		वापस -ENOMEM;
 
 	cfg->pno = pi;
 	mutex_init(&pi->req_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void brcmf_pno_detach(struct brcmf_cfg80211_info *cfg)
-{
-	struct brcmf_pno_info *pi;
+व्योम brcmf_pno_detach(काष्ठा brcmf_cfg80211_info *cfg)
+अणु
+	काष्ठा brcmf_pno_info *pi;
 
 	brcmf_dbg(TRACE, "enter\n");
 	pi = cfg->pno;
-	cfg->pno = NULL;
+	cfg->pno = शून्य;
 
 	WARN_ON(pi->n_reqs);
 	mutex_destroy(&pi->req_lock);
-	kfree(pi);
-}
+	kमुक्त(pi);
+पूर्ण
 
-void brcmf_pno_wiphy_params(struct wiphy *wiphy, bool gscan)
-{
+व्योम brcmf_pno_wiphy_params(काष्ठा wiphy *wiphy, bool gscan)
+अणु
 	/* scheduled scan settings */
 	wiphy->max_sched_scan_reqs = gscan ? BRCMF_PNO_MAX_BUCKETS : 1;
 	wiphy->max_sched_scan_ssids = BRCMF_PNO_MAX_PFN_COUNT;
 	wiphy->max_match_sets = BRCMF_PNO_MAX_PFN_COUNT;
 	wiphy->max_sched_scan_ie_len = BRCMF_SCAN_IE_LEN_MAX;
-	wiphy->max_sched_scan_plan_interval = BRCMF_PNO_SCHED_SCAN_MAX_PERIOD;
-}
+	wiphy->max_sched_scan_plan_पूर्णांकerval = BRCMF_PNO_SCHED_SCAN_MAX_PERIOD;
+पूर्ण
 
-u64 brcmf_pno_find_reqid_by_bucket(struct brcmf_pno_info *pi, u32 bucket)
-{
+u64 brcmf_pno_find_reqid_by_bucket(काष्ठा brcmf_pno_info *pi, u32 bucket)
+अणु
 	u64 reqid = 0;
 
 	mutex_lock(&pi->req_lock);
 
-	if (bucket < pi->n_reqs)
+	अगर (bucket < pi->n_reqs)
 		reqid = pi->reqs[bucket]->reqid;
 
 	mutex_unlock(&pi->req_lock);
-	return reqid;
-}
+	वापस reqid;
+पूर्ण
 
-u32 brcmf_pno_get_bucket_map(struct brcmf_pno_info *pi,
-			     struct brcmf_pno_net_info_le *ni)
-{
-	struct cfg80211_sched_scan_request *req;
-	struct cfg80211_match_set *ms;
+u32 brcmf_pno_get_bucket_map(काष्ठा brcmf_pno_info *pi,
+			     काष्ठा brcmf_pno_net_info_le *ni)
+अणु
+	काष्ठा cfg80211_sched_scan_request *req;
+	काष्ठा cfg80211_match_set *ms;
 	u32 bucket_map = 0;
-	int i, j;
+	पूर्णांक i, j;
 
 	mutex_lock(&pi->req_lock);
-	for (i = 0; i < pi->n_reqs; i++) {
+	क्रम (i = 0; i < pi->n_reqs; i++) अणु
 		req = pi->reqs[i];
 
-		if (!req->n_match_sets)
-			continue;
-		for (j = 0; j < req->n_match_sets; j++) {
+		अगर (!req->n_match_sets)
+			जारी;
+		क्रम (j = 0; j < req->n_match_sets; j++) अणु
 			ms = &req->match_sets[j];
-			if (ms->ssid.ssid_len == ni->SSID_len &&
-			    !memcmp(ms->ssid.ssid, ni->SSID, ni->SSID_len)) {
+			अगर (ms->ssid.ssid_len == ni->SSID_len &&
+			    !स_भेद(ms->ssid.ssid, ni->SSID, ni->SSID_len)) अणु
 				bucket_map |= BIT(i);
-				break;
-			}
-			if (is_valid_ether_addr(ms->bssid) &&
-			    !memcmp(ms->bssid, ni->bssid, ETH_ALEN)) {
+				अवरोध;
+			पूर्ण
+			अगर (is_valid_ether_addr(ms->bssid) &&
+			    !स_भेद(ms->bssid, ni->bssid, ETH_ALEN)) अणु
 				bucket_map |= BIT(i);
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&pi->req_lock);
-	return bucket_map;
-}
+	वापस bucket_map;
+पूर्ण

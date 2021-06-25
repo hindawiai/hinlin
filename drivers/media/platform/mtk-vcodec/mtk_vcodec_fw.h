@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _MTK_VCODEC_FW_H_
-#define _MTK_VCODEC_FW_H_
+#अगर_अघोषित _MTK_VCODEC_FW_H_
+#घोषणा _MTK_VCODEC_FW_H_
 
-#include <linux/remoteproc.h>
-#include <linux/remoteproc/mtk_scp.h>
+#समावेश <linux/remoteproc.h>
+#समावेश <linux/remoteproc/mtk_scp.h>
 
-#include "../mtk-vpu/mtk_vpu.h"
+#समावेश "../mtk-vpu/mtk_vpu.h"
 
-struct mtk_vcodec_dev;
+काष्ठा mtk_vcodec_dev;
 
-enum mtk_vcodec_fw_type {
+क्रमागत mtk_vcodec_fw_type अणु
 	VPU,
 	SCP,
-};
+पूर्ण;
 
-enum mtk_vcodec_fw_use {
+क्रमागत mtk_vcodec_fw_use अणु
 	DECODER,
 	ENCODER,
-};
+पूर्ण;
 
-struct mtk_vcodec_fw;
+काष्ठा mtk_vcodec_fw;
 
-typedef void (*mtk_vcodec_ipi_handler) (void *data,
-	unsigned int len, void *priv);
+प्रकार व्योम (*mtk_vcodec_ipi_handler) (व्योम *data,
+	अचिन्हित पूर्णांक len, व्योम *priv);
 
-struct mtk_vcodec_fw *mtk_vcodec_fw_select(struct mtk_vcodec_dev *dev,
-					   enum mtk_vcodec_fw_type type,
-					   enum mtk_vcodec_fw_use fw_use);
-void mtk_vcodec_fw_release(struct mtk_vcodec_fw *fw);
+काष्ठा mtk_vcodec_fw *mtk_vcodec_fw_select(काष्ठा mtk_vcodec_dev *dev,
+					   क्रमागत mtk_vcodec_fw_type type,
+					   क्रमागत mtk_vcodec_fw_use fw_use);
+व्योम mtk_vcodec_fw_release(काष्ठा mtk_vcodec_fw *fw);
 
-int mtk_vcodec_fw_load_firmware(struct mtk_vcodec_fw *fw);
-unsigned int mtk_vcodec_fw_get_vdec_capa(struct mtk_vcodec_fw *fw);
-unsigned int mtk_vcodec_fw_get_venc_capa(struct mtk_vcodec_fw *fw);
-void *mtk_vcodec_fw_map_dm_addr(struct mtk_vcodec_fw *fw, u32 mem_addr);
-int mtk_vcodec_fw_ipi_register(struct mtk_vcodec_fw *fw, int id,
+पूर्णांक mtk_vcodec_fw_load_firmware(काष्ठा mtk_vcodec_fw *fw);
+अचिन्हित पूर्णांक mtk_vcodec_fw_get_vdec_capa(काष्ठा mtk_vcodec_fw *fw);
+अचिन्हित पूर्णांक mtk_vcodec_fw_get_venc_capa(काष्ठा mtk_vcodec_fw *fw);
+व्योम *mtk_vcodec_fw_map_dm_addr(काष्ठा mtk_vcodec_fw *fw, u32 mem_addr);
+पूर्णांक mtk_vcodec_fw_ipi_रेजिस्टर(काष्ठा mtk_vcodec_fw *fw, पूर्णांक id,
 			       mtk_vcodec_ipi_handler handler,
-			       const char *name, void *priv);
-int mtk_vcodec_fw_ipi_send(struct mtk_vcodec_fw *fw, int id,
-			   void *buf, unsigned int len, unsigned int wait);
+			       स्थिर अक्षर *name, व्योम *priv);
+पूर्णांक mtk_vcodec_fw_ipi_send(काष्ठा mtk_vcodec_fw *fw, पूर्णांक id,
+			   व्योम *buf, अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक रुको);
 
-#endif /* _MTK_VCODEC_FW_H_ */
+#पूर्ण_अगर /* _MTK_VCODEC_FW_H_ */

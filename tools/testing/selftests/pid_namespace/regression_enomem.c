@@ -1,44 +1,45 @@
-#define _GNU_SOURCE
-#include <assert.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <linux/types.h>
-#include <sched.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <syscall.h>
-#include <sys/wait.h>
+<शैली गुरु>
+#घोषणा _GNU_SOURCE
+#समावेश <निश्चित.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <linux/types.h>
+#समावेश <sched.h>
+#समावेश <संकेत.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <syscall.h>
+#समावेश <sys/रुको.h>
 
-#include "../kselftest_harness.h"
-#include "../pidfd/pidfd.h"
+#समावेश "../kselftest_harness.h"
+#समावेश "../pidfd/pidfd.h"
 
 /*
- * Regression test for:
+ * Regression test क्रम:
  * 35f71bc0a09a ("fork: report pid reservation failure properly")
  * b26ebfe12f34 ("pid: Fix error return value in some cases")
  */
 TEST(regression_enomem)
-{
+अणु
 	pid_t pid;
 
-	if (geteuid())
+	अगर (geteuid())
 		EXPECT_EQ(0, unshare(CLONE_NEWUSER));
 
 	EXPECT_EQ(0, unshare(CLONE_NEWPID));
 
-	pid = fork();
+	pid = विभाजन();
 	ASSERT_GE(pid, 0);
 
-	if (pid == 0)
-		exit(EXIT_SUCCESS);
+	अगर (pid == 0)
+		निकास(निकास_सफल);
 
-	EXPECT_EQ(0, wait_for_pid(pid));
+	EXPECT_EQ(0, रुको_क्रम_pid(pid));
 
-	pid = fork();
+	pid = विभाजन();
 	ASSERT_LT(pid, 0);
-	ASSERT_EQ(errno, ENOMEM);
-}
+	ASSERT_EQ(त्रुटि_सं, ENOMEM);
+पूर्ण
 
 TEST_HARNESS_MAIN

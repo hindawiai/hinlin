@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: ISC */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ISC */
 /*
  * Copyright (C) 2019 Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
-#if !defined(__MT7615_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
-#define __MT7615_TRACE_H
+#अगर !defined(__MT7615_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा __MT7615_TRACE_H
 
-#include <linux/tracepoint.h>
-#include "mt7615.h"
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश "mt7615.h"
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM mt7615
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM mt7615
 
-#define MAXNAME		32
-#define DEV_ENTRY	__array(char, wiphy_name, 32)
-#define DEV_ASSIGN	strlcpy(__entry->wiphy_name,	\
+#घोषणा MAXNAME		32
+#घोषणा DEV_ENTRY	__array(अक्षर, wiphy_name, 32)
+#घोषणा DEV_ASSIGN	strlcpy(__entry->wiphy_name,	\
 				wiphy_name(mt76_hw(dev)->wiphy), MAXNAME)
-#define DEV_PR_FMT	"%s"
-#define DEV_PR_ARG	__entry->wiphy_name
+#घोषणा DEV_PR_FMT	"%s"
+#घोषणा DEV_PR_ARG	__entry->wiphy_name
 
-#define TOKEN_ENTRY	__field(u16, token)
-#define TOKEN_ASSIGN	__entry->token = token
-#define TOKEN_PR_FMT	" %d"
-#define TOKEN_PR_ARG	__entry->token
+#घोषणा TOKEN_ENTRY	__field(u16, token)
+#घोषणा TOKEN_ASSIGN	__entry->token = token
+#घोषणा TOKEN_PR_FMT	" %d"
+#घोषणा TOKEN_PR_ARG	__entry->token
 
 DECLARE_EVENT_CLASS(dev_token,
-	TP_PROTO(struct mt7615_dev *dev, u16 token),
+	TP_PROTO(काष्ठा mt7615_dev *dev, u16 token),
 	TP_ARGS(dev, token),
 	TP_STRUCT__entry(
 		DEV_ENTRY
@@ -35,22 +36,22 @@ DECLARE_EVENT_CLASS(dev_token,
 		DEV_ASSIGN;
 		TOKEN_ASSIGN;
 	),
-	TP_printk(
+	TP_prपूर्णांकk(
 		DEV_PR_FMT TOKEN_PR_FMT,
 		DEV_PR_ARG, TOKEN_PR_ARG
 	)
 );
 
-DEFINE_EVENT(dev_token, mac_tx_free,
-	TP_PROTO(struct mt7615_dev *dev, u16 token),
+DEFINE_EVENT(dev_token, mac_tx_मुक्त,
+	TP_PROTO(काष्ठा mt7615_dev *dev, u16 token),
 	TP_ARGS(dev, token)
 );
 
-#endif
+#पूर्ण_अगर
 
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_FILE mt7615_trace
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_खाता mt7615_trace
 
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

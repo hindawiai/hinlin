@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2005 Topspin Communications.  All rights reserved.
  * Copyright (c) 2005, 2006 Cisco Systems.  All rights reserved.
@@ -8,20 +9,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -34,158 +35,158 @@
  * SOFTWARE.
  */
 
-#ifndef RDMA_CORE_H
-#define RDMA_CORE_H
+#अगर_अघोषित RDMA_CORE_H
+#घोषणा RDMA_CORE_H
 
-#include <linux/idr.h>
-#include <rdma/uverbs_types.h>
-#include <rdma/uverbs_ioctl.h>
-#include <rdma/ib_verbs.h>
-#include <linux/mutex.h>
+#समावेश <linux/idr.h>
+#समावेश <rdma/uverbs_types.h>
+#समावेश <rdma/uverbs_ioctl.h>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <linux/mutex.h>
 
-struct ib_uverbs_device;
+काष्ठा ib_uverbs_device;
 
-void uverbs_destroy_ufile_hw(struct ib_uverbs_file *ufile,
-			     enum rdma_remove_reason reason);
+व्योम uverbs_destroy_ufile_hw(काष्ठा ib_uverbs_file *ufile,
+			     क्रमागत rdma_हटाओ_reason reason);
 
-int uobj_destroy(struct ib_uobject *uobj, struct uverbs_attr_bundle *attrs);
+पूर्णांक uobj_destroy(काष्ठा ib_uobject *uobj, काष्ठा uverbs_attr_bundle *attrs);
 
 /*
  * Get an ib_uobject that corresponds to the given id from ufile, assuming
  * the object is from the given type. Lock it to the required access when
  * applicable.
  * This function could create (access == NEW), destroy (access == DESTROY)
- * or unlock (access == READ || access == WRITE) objects if required.
+ * or unlock (access == READ || access == WRITE) objects अगर required.
  * The action will be finalized only when uverbs_finalize_object or
  * uverbs_finalize_objects are called.
  */
-struct ib_uobject *
-uverbs_get_uobject_from_file(u16 object_id, enum uverbs_obj_access access,
-			     s64 id, struct uverbs_attr_bundle *attrs);
+काष्ठा ib_uobject *
+uverbs_get_uobject_from_file(u16 object_id, क्रमागत uverbs_obj_access access,
+			     s64 id, काष्ठा uverbs_attr_bundle *attrs);
 
-void uverbs_finalize_object(struct ib_uobject *uobj,
-			    enum uverbs_obj_access access, bool hw_obj_valid,
-			    bool commit, struct uverbs_attr_bundle *attrs);
+व्योम uverbs_finalize_object(काष्ठा ib_uobject *uobj,
+			    क्रमागत uverbs_obj_access access, bool hw_obj_valid,
+			    bool commit, काष्ठा uverbs_attr_bundle *attrs);
 
-int uverbs_output_written(const struct uverbs_attr_bundle *bundle, size_t idx);
+पूर्णांक uverbs_output_written(स्थिर काष्ठा uverbs_attr_bundle *bundle, माप_प्रकार idx);
 
-void setup_ufile_idr_uobject(struct ib_uverbs_file *ufile);
-void release_ufile_idr_uobject(struct ib_uverbs_file *ufile);
+व्योम setup_ufile_idr_uobject(काष्ठा ib_uverbs_file *ufile);
+व्योम release_ufile_idr_uobject(काष्ठा ib_uverbs_file *ufile);
 
-struct ib_udata *uverbs_get_cleared_udata(struct uverbs_attr_bundle *attrs);
+काष्ठा ib_udata *uverbs_get_cleared_udata(काष्ठा uverbs_attr_bundle *attrs);
 
 /*
- * This is the runtime description of the uverbs API, used by the syscall
+ * This is the runसमय description of the uverbs API, used by the syscall
  * machinery to validate and dispatch calls.
  */
 
 /*
- * Depending on ID the slot pointer in the radix tree points at one of these
- * structs.
+ * Depending on ID the slot poपूर्णांकer in the radix tree poपूर्णांकs at one of these
+ * काष्ठाs.
  */
 
-struct uverbs_api_ioctl_method {
-	int(__rcu *handler)(struct uverbs_attr_bundle *attrs);
+काष्ठा uverbs_api_ioctl_method अणु
+	पूर्णांक(__rcu *handler)(काष्ठा uverbs_attr_bundle *attrs);
 	DECLARE_BITMAP(attr_mandatory, UVERBS_API_ATTR_BKEY_LEN);
 	u16 bundle_size;
 	u8 use_stack:1;
 	u8 driver_method:1;
 	u8 disabled:1;
 	u8 has_udata:1;
-	u8 key_bitmap_len;
+	u8 key_biपंचांगap_len;
 	u8 destroy_bkey;
-};
+पूर्ण;
 
-struct uverbs_api_write_method {
-	int (*handler)(struct uverbs_attr_bundle *attrs);
+काष्ठा uverbs_api_ग_लिखो_method अणु
+	पूर्णांक (*handler)(काष्ठा uverbs_attr_bundle *attrs);
 	u8 disabled:1;
 	u8 is_ex:1;
 	u8 has_udata:1;
 	u8 has_resp:1;
 	u8 req_size;
 	u8 resp_size;
-};
+पूर्ण;
 
-struct uverbs_api_attr {
-	struct uverbs_attr_spec spec;
-};
+काष्ठा uverbs_api_attr अणु
+	काष्ठा uverbs_attr_spec spec;
+पूर्ण;
 
-struct uverbs_api {
-	/* radix tree contains struct uverbs_api_* pointers */
-	struct radix_tree_root radix;
-	enum rdma_driver_id driver_id;
+काष्ठा uverbs_api अणु
+	/* radix tree contains काष्ठा uverbs_api_* poपूर्णांकers */
+	काष्ठा radix_tree_root radix;
+	क्रमागत rdma_driver_id driver_id;
 
-	unsigned int num_write;
-	unsigned int num_write_ex;
-	struct uverbs_api_write_method notsupp_method;
-	const struct uverbs_api_write_method **write_methods;
-	const struct uverbs_api_write_method **write_ex_methods;
-};
+	अचिन्हित पूर्णांक num_ग_लिखो;
+	अचिन्हित पूर्णांक num_ग_लिखो_ex;
+	काष्ठा uverbs_api_ग_लिखो_method notsupp_method;
+	स्थिर काष्ठा uverbs_api_ग_लिखो_method **ग_लिखो_methods;
+	स्थिर काष्ठा uverbs_api_ग_लिखो_method **ग_लिखो_ex_methods;
+पूर्ण;
 
 /*
  * Get an uverbs_api_object that corresponds to the given object_id.
  * Note:
  * -ENOMSG means that any object is allowed to match during lookup.
  */
-static inline const struct uverbs_api_object *
-uapi_get_object(struct uverbs_api *uapi, u16 object_id)
-{
-	const struct uverbs_api_object *res;
+अटल अंतरभूत स्थिर काष्ठा uverbs_api_object *
+uapi_get_object(काष्ठा uverbs_api *uapi, u16 object_id)
+अणु
+	स्थिर काष्ठा uverbs_api_object *res;
 
-	if (object_id == UVERBS_IDR_ANY_OBJECT)
-		return ERR_PTR(-ENOMSG);
+	अगर (object_id == UVERBS_IDR_ANY_OBJECT)
+		वापस ERR_PTR(-ENOMSG);
 
 	res = radix_tree_lookup(&uapi->radix, uapi_key_obj(object_id));
-	if (!res)
-		return ERR_PTR(-ENOENT);
+	अगर (!res)
+		वापस ERR_PTR(-ENOENT);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-char *uapi_key_format(char *S, unsigned int key);
-struct uverbs_api *uverbs_alloc_api(struct ib_device *ibdev);
-void uverbs_disassociate_api_pre(struct ib_uverbs_device *uverbs_dev);
-void uverbs_disassociate_api(struct uverbs_api *uapi);
-void uverbs_destroy_api(struct uverbs_api *uapi);
-void uapi_compute_bundle_size(struct uverbs_api_ioctl_method *method_elm,
-			      unsigned int num_attrs);
-void uverbs_user_mmap_disassociate(struct ib_uverbs_file *ufile);
+अक्षर *uapi_key_क्रमmat(अक्षर *S, अचिन्हित पूर्णांक key);
+काष्ठा uverbs_api *uverbs_alloc_api(काष्ठा ib_device *ibdev);
+व्योम uverbs_disassociate_api_pre(काष्ठा ib_uverbs_device *uverbs_dev);
+व्योम uverbs_disassociate_api(काष्ठा uverbs_api *uapi);
+व्योम uverbs_destroy_api(काष्ठा uverbs_api *uapi);
+व्योम uapi_compute_bundle_size(काष्ठा uverbs_api_ioctl_method *method_elm,
+			      अचिन्हित पूर्णांक num_attrs);
+व्योम uverbs_user_mmap_disassociate(काष्ठा ib_uverbs_file *ufile);
 
-extern const struct uapi_definition uverbs_def_obj_async_fd[];
-extern const struct uapi_definition uverbs_def_obj_counters[];
-extern const struct uapi_definition uverbs_def_obj_cq[];
-extern const struct uapi_definition uverbs_def_obj_device[];
-extern const struct uapi_definition uverbs_def_obj_dm[];
-extern const struct uapi_definition uverbs_def_obj_flow_action[];
-extern const struct uapi_definition uverbs_def_obj_intf[];
-extern const struct uapi_definition uverbs_def_obj_mr[];
-extern const struct uapi_definition uverbs_def_obj_qp[];
-extern const struct uapi_definition uverbs_def_obj_srq[];
-extern const struct uapi_definition uverbs_def_obj_wq[];
-extern const struct uapi_definition uverbs_def_write_intf[];
+बाह्य स्थिर काष्ठा uapi_definition uverbs_def_obj_async_fd[];
+बाह्य स्थिर काष्ठा uapi_definition uverbs_def_obj_counters[];
+बाह्य स्थिर काष्ठा uapi_definition uverbs_def_obj_cq[];
+बाह्य स्थिर काष्ठा uapi_definition uverbs_def_obj_device[];
+बाह्य स्थिर काष्ठा uapi_definition uverbs_def_obj_dm[];
+बाह्य स्थिर काष्ठा uapi_definition uverbs_def_obj_flow_action[];
+बाह्य स्थिर काष्ठा uapi_definition uverbs_def_obj_पूर्णांकf[];
+बाह्य स्थिर काष्ठा uapi_definition uverbs_def_obj_mr[];
+बाह्य स्थिर काष्ठा uapi_definition uverbs_def_obj_qp[];
+बाह्य स्थिर काष्ठा uapi_definition uverbs_def_obj_srq[];
+बाह्य स्थिर काष्ठा uapi_definition uverbs_def_obj_wq[];
+बाह्य स्थिर काष्ठा uapi_definition uverbs_def_ग_लिखो_पूर्णांकf[];
 
-static inline const struct uverbs_api_write_method *
-uapi_get_method(const struct uverbs_api *uapi, u32 command)
-{
+अटल अंतरभूत स्थिर काष्ठा uverbs_api_ग_लिखो_method *
+uapi_get_method(स्थिर काष्ठा uverbs_api *uapi, u32 command)
+अणु
 	u32 cmd_idx = command & IB_USER_VERBS_CMD_COMMAND_MASK;
 
-	if (command & ~(u32)(IB_USER_VERBS_CMD_FLAG_EXTENDED |
+	अगर (command & ~(u32)(IB_USER_VERBS_CMD_FLAG_EXTENDED |
 			     IB_USER_VERBS_CMD_COMMAND_MASK))
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	if (command & IB_USER_VERBS_CMD_FLAG_EXTENDED) {
-		if (cmd_idx >= uapi->num_write_ex)
-			return ERR_PTR(-EOPNOTSUPP);
-		return uapi->write_ex_methods[cmd_idx];
-	}
+	अगर (command & IB_USER_VERBS_CMD_FLAG_EXTENDED) अणु
+		अगर (cmd_idx >= uapi->num_ग_लिखो_ex)
+			वापस ERR_PTR(-EOPNOTSUPP);
+		वापस uapi->ग_लिखो_ex_methods[cmd_idx];
+	पूर्ण
 
-	if (cmd_idx >= uapi->num_write)
-		return ERR_PTR(-EOPNOTSUPP);
-	return uapi->write_methods[cmd_idx];
-}
+	अगर (cmd_idx >= uapi->num_ग_लिखो)
+		वापस ERR_PTR(-EOPNOTSUPP);
+	वापस uapi->ग_लिखो_methods[cmd_idx];
+पूर्ण
 
-void uverbs_fill_udata(struct uverbs_attr_bundle *bundle,
-		       struct ib_udata *udata, unsigned int attr_in,
-		       unsigned int attr_out);
+व्योम uverbs_fill_udata(काष्ठा uverbs_attr_bundle *bundle,
+		       काष्ठा ib_udata *udata, अचिन्हित पूर्णांक attr_in,
+		       अचिन्हित पूर्णांक attr_out);
 
-#endif /* RDMA_CORE_H */
+#पूर्ण_अगर /* RDMA_CORE_H */

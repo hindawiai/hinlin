@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Fast Ethernet Controller (FEC) driver for Motorola MPC8xx.
+ * Fast Ethernet Controller (FEC) driver क्रम Motorola MPC8xx.
  * Copyright (c) 1997 Dan Malek (dmalek@jlc.net)
  *
  * Right now, I am very wasteful with the buffers.  I allocate memory
- * pages and then divide them into 2K frame buffers.  This way I know I
+ * pages and then भागide them पूर्णांकo 2K frame buffers.  This way I know I
  * have buffers large enough to hold one frame within one buffer descriptor.
  * Once I get this working, I will use 64 or 128 byte CPM buffers, which
  * will be much more memory efficient and will easily handle lots of
@@ -13,7 +14,7 @@
  * Much better multiple PHY support by Magnus Damm.
  * Copyright (c) 2000 Ericsson Radio Systems AB.
  *
- * Support for FEC controller of ColdFire processors.
+ * Support क्रम FEC controller of ColdFire processors.
  * Copyright (c) 2001-2005 Greg Ungerer (gerg@snapgear.com)
  *
  * Bug fixes and cleanup by Philippe De Muyter (phdm@macqel.be)
@@ -22,150 +23,150 @@
  * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/pm_runtime.h>
-#include <linux/ptrace.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <net/ip.h>
-#include <net/selftests.h>
-#include <net/tso.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/icmp.h>
-#include <linux/spinlock.h>
-#include <linux/workqueue.h>
-#include <linux/bitops.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/clk.h>
-#include <linux/crc32.h>
-#include <linux/platform_device.h>
-#include <linux/mdio.h>
-#include <linux/phy.h>
-#include <linux/fec.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_gpio.h>
-#include <linux/of_mdio.h>
-#include <linux/of_net.h>
-#include <linux/regulator/consumer.h>
-#include <linux/if_vlan.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/prefetch.h>
-#include <linux/mfd/syscon.h>
-#include <linux/regmap.h>
-#include <soc/imx/cpuidle.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <net/ip.h>
+#समावेश <net/selftests.h>
+#समावेश <net/tso.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mdपन.स>
+#समावेश <linux/phy.h>
+#समावेश <linux/fec.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/of_net.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/regmap.h>
+#समावेश <soc/imx/cpuidle.h>
 
-#include <asm/cacheflush.h>
+#समावेश <यंत्र/cacheflush.h>
 
-#include "fec.h"
+#समावेश "fec.h"
 
-static void set_multicast_list(struct net_device *ndev);
-static void fec_enet_itr_coal_init(struct net_device *ndev);
+अटल व्योम set_multicast_list(काष्ठा net_device *ndev);
+अटल व्योम fec_enet_itr_coal_init(काष्ठा net_device *ndev);
 
-#define DRIVER_NAME	"fec"
+#घोषणा DRIVER_NAME	"fec"
 
 /* Pause frame feild and FIFO threshold */
-#define FEC_ENET_FCE	(1 << 5)
-#define FEC_ENET_RSEM_V	0x84
-#define FEC_ENET_RSFL_V	16
-#define FEC_ENET_RAEM_V	0x8
-#define FEC_ENET_RAFL_V	0x8
-#define FEC_ENET_OPD_V	0xFFF0
-#define FEC_MDIO_PM_TIMEOUT  100 /* ms */
+#घोषणा FEC_ENET_FCE	(1 << 5)
+#घोषणा FEC_ENET_RSEM_V	0x84
+#घोषणा FEC_ENET_RSFL_V	16
+#घोषणा FEC_ENET_RAEM_V	0x8
+#घोषणा FEC_ENET_RAFL_V	0x8
+#घोषणा FEC_ENET_OPD_V	0xFFF0
+#घोषणा FEC_MDIO_PM_TIMEOUT  100 /* ms */
 
-struct fec_devinfo {
+काष्ठा fec_devinfo अणु
 	u32 quirks;
-};
+पूर्ण;
 
-static const struct fec_devinfo fec_imx25_info = {
+अटल स्थिर काष्ठा fec_devinfo fec_imx25_info = अणु
 	.quirks = FEC_QUIRK_USE_GASKET | FEC_QUIRK_MIB_CLEAR |
 		  FEC_QUIRK_HAS_FRREG,
-};
+पूर्ण;
 
-static const struct fec_devinfo fec_imx27_info = {
+अटल स्थिर काष्ठा fec_devinfo fec_imx27_info = अणु
 	.quirks = FEC_QUIRK_MIB_CLEAR | FEC_QUIRK_HAS_FRREG,
-};
+पूर्ण;
 
-static const struct fec_devinfo fec_imx28_info = {
+अटल स्थिर काष्ठा fec_devinfo fec_imx28_info = अणु
 	.quirks = FEC_QUIRK_ENET_MAC | FEC_QUIRK_SWAP_FRAME |
 		  FEC_QUIRK_SINGLE_MDIO | FEC_QUIRK_HAS_RACC |
 		  FEC_QUIRK_HAS_FRREG | FEC_QUIRK_CLEAR_SETUP_MII |
 		  FEC_QUIRK_NO_HARD_RESET,
-};
+पूर्ण;
 
-static const struct fec_devinfo fec_imx6q_info = {
+अटल स्थिर काष्ठा fec_devinfo fec_imx6q_info = अणु
 	.quirks = FEC_QUIRK_ENET_MAC | FEC_QUIRK_HAS_GBIT |
 		  FEC_QUIRK_HAS_BUFDESC_EX | FEC_QUIRK_HAS_CSUM |
 		  FEC_QUIRK_HAS_VLAN | FEC_QUIRK_ERR006358 |
 		  FEC_QUIRK_HAS_RACC | FEC_QUIRK_CLEAR_SETUP_MII,
-};
+पूर्ण;
 
-static const struct fec_devinfo fec_mvf600_info = {
+अटल स्थिर काष्ठा fec_devinfo fec_mvf600_info = अणु
 	.quirks = FEC_QUIRK_ENET_MAC | FEC_QUIRK_HAS_RACC,
-};
+पूर्ण;
 
-static const struct fec_devinfo fec_imx6x_info = {
+अटल स्थिर काष्ठा fec_devinfo fec_imx6x_info = अणु
 	.quirks = FEC_QUIRK_ENET_MAC | FEC_QUIRK_HAS_GBIT |
 		  FEC_QUIRK_HAS_BUFDESC_EX | FEC_QUIRK_HAS_CSUM |
 		  FEC_QUIRK_HAS_VLAN | FEC_QUIRK_HAS_AVB |
 		  FEC_QUIRK_ERR007885 | FEC_QUIRK_BUG_CAPTURE |
 		  FEC_QUIRK_HAS_RACC | FEC_QUIRK_HAS_COALESCE |
 		  FEC_QUIRK_CLEAR_SETUP_MII,
-};
+पूर्ण;
 
-static const struct fec_devinfo fec_imx6ul_info = {
+अटल स्थिर काष्ठा fec_devinfo fec_imx6ul_info = अणु
 	.quirks = FEC_QUIRK_ENET_MAC | FEC_QUIRK_HAS_GBIT |
 		  FEC_QUIRK_HAS_BUFDESC_EX | FEC_QUIRK_HAS_CSUM |
 		  FEC_QUIRK_HAS_VLAN | FEC_QUIRK_ERR007885 |
 		  FEC_QUIRK_BUG_CAPTURE | FEC_QUIRK_HAS_RACC |
 		  FEC_QUIRK_HAS_COALESCE | FEC_QUIRK_CLEAR_SETUP_MII,
-};
+पूर्ण;
 
-static struct platform_device_id fec_devtype[] = {
-	{
-		/* keep it for coldfire */
+अटल काष्ठा platक्रमm_device_id fec_devtype[] = अणु
+	अणु
+		/* keep it क्रम coldfire */
 		.name = DRIVER_NAME,
 		.driver_data = 0,
-	}, {
+	पूर्ण, अणु
 		.name = "imx25-fec",
-		.driver_data = (kernel_ulong_t)&fec_imx25_info,
-	}, {
+		.driver_data = (kernel_uदीर्घ_t)&fec_imx25_info,
+	पूर्ण, अणु
 		.name = "imx27-fec",
-		.driver_data = (kernel_ulong_t)&fec_imx27_info,
-	}, {
+		.driver_data = (kernel_uदीर्घ_t)&fec_imx27_info,
+	पूर्ण, अणु
 		.name = "imx28-fec",
-		.driver_data = (kernel_ulong_t)&fec_imx28_info,
-	}, {
+		.driver_data = (kernel_uदीर्घ_t)&fec_imx28_info,
+	पूर्ण, अणु
 		.name = "imx6q-fec",
-		.driver_data = (kernel_ulong_t)&fec_imx6q_info,
-	}, {
+		.driver_data = (kernel_uदीर्घ_t)&fec_imx6q_info,
+	पूर्ण, अणु
 		.name = "mvf600-fec",
-		.driver_data = (kernel_ulong_t)&fec_mvf600_info,
-	}, {
+		.driver_data = (kernel_uदीर्घ_t)&fec_mvf600_info,
+	पूर्ण, अणु
 		.name = "imx6sx-fec",
-		.driver_data = (kernel_ulong_t)&fec_imx6x_info,
-	}, {
+		.driver_data = (kernel_uदीर्घ_t)&fec_imx6x_info,
+	पूर्ण, अणु
 		.name = "imx6ul-fec",
-		.driver_data = (kernel_ulong_t)&fec_imx6ul_info,
-	}, {
+		.driver_data = (kernel_uदीर्घ_t)&fec_imx6ul_info,
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
-MODULE_DEVICE_TABLE(platform, fec_devtype);
+	पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, fec_devtype);
 
-enum imx_fec_type {
+क्रमागत imx_fec_type अणु
 	IMX25_FEC = 1,	/* runs on i.mx25/50/53 */
 	IMX27_FEC,	/* runs on i.mx27/35/51 */
 	IMX28_FEC,
@@ -173,167 +174,167 @@ enum imx_fec_type {
 	MVF600_FEC,
 	IMX6SX_FEC,
 	IMX6UL_FEC,
-};
+पूर्ण;
 
-static const struct of_device_id fec_dt_ids[] = {
-	{ .compatible = "fsl,imx25-fec", .data = &fec_devtype[IMX25_FEC], },
-	{ .compatible = "fsl,imx27-fec", .data = &fec_devtype[IMX27_FEC], },
-	{ .compatible = "fsl,imx28-fec", .data = &fec_devtype[IMX28_FEC], },
-	{ .compatible = "fsl,imx6q-fec", .data = &fec_devtype[IMX6Q_FEC], },
-	{ .compatible = "fsl,mvf600-fec", .data = &fec_devtype[MVF600_FEC], },
-	{ .compatible = "fsl,imx6sx-fec", .data = &fec_devtype[IMX6SX_FEC], },
-	{ .compatible = "fsl,imx6ul-fec", .data = &fec_devtype[IMX6UL_FEC], },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id fec_dt_ids[] = अणु
+	अणु .compatible = "fsl,imx25-fec", .data = &fec_devtype[IMX25_FEC], पूर्ण,
+	अणु .compatible = "fsl,imx27-fec", .data = &fec_devtype[IMX27_FEC], पूर्ण,
+	अणु .compatible = "fsl,imx28-fec", .data = &fec_devtype[IMX28_FEC], पूर्ण,
+	अणु .compatible = "fsl,imx6q-fec", .data = &fec_devtype[IMX6Q_FEC], पूर्ण,
+	अणु .compatible = "fsl,mvf600-fec", .data = &fec_devtype[MVF600_FEC], पूर्ण,
+	अणु .compatible = "fsl,imx6sx-fec", .data = &fec_devtype[IMX6SX_FEC], पूर्ण,
+	अणु .compatible = "fsl,imx6ul-fec", .data = &fec_devtype[IMX6UL_FEC], पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, fec_dt_ids);
 
-static unsigned char macaddr[ETH_ALEN];
-module_param_array(macaddr, byte, NULL, 0);
+अटल अचिन्हित अक्षर macaddr[ETH_ALEN];
+module_param_array(macaddr, byte, शून्य, 0);
 MODULE_PARM_DESC(macaddr, "FEC Ethernet MAC address");
 
-#if defined(CONFIG_M5272)
+#अगर defined(CONFIG_M5272)
 /*
- * Some hardware gets it MAC address out of local flash memory.
- * if this is non-zero then assume it is the address to get MAC from.
+ * Some hardware माला_लो it MAC address out of local flash memory.
+ * अगर this is non-zero then assume it is the address to get MAC from.
  */
-#if defined(CONFIG_NETtel)
-#define	FEC_FLASHMAC	0xf0006006
-#elif defined(CONFIG_GILBARCONAP) || defined(CONFIG_SCALES)
-#define	FEC_FLASHMAC	0xf0006000
-#elif defined(CONFIG_CANCam)
-#define	FEC_FLASHMAC	0xf0020000
-#elif defined (CONFIG_M5272C3)
-#define	FEC_FLASHMAC	(0xffe04000 + 4)
-#elif defined(CONFIG_MOD5272)
-#define FEC_FLASHMAC	0xffc0406b
-#else
-#define	FEC_FLASHMAC	0
-#endif
-#endif /* CONFIG_M5272 */
+#अगर defined(CONFIG_NETtel)
+#घोषणा	FEC_FLASHMAC	0xf0006006
+#या_अगर defined(CONFIG_GILBARCONAP) || defined(CONFIG_SCALES)
+#घोषणा	FEC_FLASHMAC	0xf0006000
+#या_अगर defined(CONFIG_CANCam)
+#घोषणा	FEC_FLASHMAC	0xf0020000
+#या_अगर defined (CONFIG_M5272C3)
+#घोषणा	FEC_FLASHMAC	(0xffe04000 + 4)
+#या_अगर defined(CONFIG_MOD5272)
+#घोषणा FEC_FLASHMAC	0xffc0406b
+#अन्यथा
+#घोषणा	FEC_FLASHMAC	0
+#पूर्ण_अगर
+#पूर्ण_अगर /* CONFIG_M5272 */
 
-/* The FEC stores dest/src/type/vlan, data, and checksum for receive packets.
+/* The FEC stores dest/src/type/vlan, data, and checksum क्रम receive packets.
  *
  * 2048 byte skbufs are allocated. However, alignment requirements
- * varies between FEC variants. Worst case is 64, so round down by 64.
+ * varies between FEC variants. Worst हाल is 64, so round करोwn by 64.
  */
-#define PKT_MAXBUF_SIZE		(round_down(2048 - 64, 64))
-#define PKT_MINBUF_SIZE		64
+#घोषणा PKT_MAXBUF_SIZE		(round_करोwn(2048 - 64, 64))
+#घोषणा PKT_MINBUF_SIZE		64
 
 /* FEC receive acceleration */
-#define FEC_RACC_IPDIS		(1 << 1)
-#define FEC_RACC_PRODIS		(1 << 2)
-#define FEC_RACC_SHIFT16	BIT(7)
-#define FEC_RACC_OPTIONS	(FEC_RACC_IPDIS | FEC_RACC_PRODIS)
+#घोषणा FEC_RACC_IPDIS		(1 << 1)
+#घोषणा FEC_RACC_PRODIS		(1 << 2)
+#घोषणा FEC_RACC_SHIFT16	BIT(7)
+#घोषणा FEC_RACC_OPTIONS	(FEC_RACC_IPDIS | FEC_RACC_PRODIS)
 
 /* MIB Control Register */
-#define FEC_MIB_CTRLSTAT_DISABLE	BIT(31)
+#घोषणा FEC_MIB_CTRLSTAT_DISABLE	BIT(31)
 
 /*
- * The 5270/5271/5280/5282/532x RX control register also contains maximum frame
- * size bits. Other FEC hardware does not, so we need to take that into
+ * The 5270/5271/5280/5282/532x RX control रेजिस्टर also contains maximum frame
+ * size bits. Other FEC hardware करोes not, so we need to take that पूर्णांकo
  * account when setting it.
  */
-#if defined(CONFIG_M523x) || defined(CONFIG_M527x) || defined(CONFIG_M528x) || \
+#अगर defined(CONFIG_M523x) || defined(CONFIG_M527x) || defined(CONFIG_M528x) || \
     defined(CONFIG_M520x) || defined(CONFIG_M532x) || defined(CONFIG_ARM) || \
     defined(CONFIG_ARM64)
-#define	OPT_FRAME_SIZE	(PKT_MAXBUF_SIZE << 16)
-#else
-#define	OPT_FRAME_SIZE	0
-#endif
+#घोषणा	OPT_FRAME_SIZE	(PKT_MAXBUF_SIZE << 16)
+#अन्यथा
+#घोषणा	OPT_FRAME_SIZE	0
+#पूर्ण_अगर
 
 /* FEC MII MMFR bits definition */
-#define FEC_MMFR_ST		(1 << 30)
-#define FEC_MMFR_ST_C45		(0)
-#define FEC_MMFR_OP_READ	(2 << 28)
-#define FEC_MMFR_OP_READ_C45	(3 << 28)
-#define FEC_MMFR_OP_WRITE	(1 << 28)
-#define FEC_MMFR_OP_ADDR_WRITE	(0)
-#define FEC_MMFR_PA(v)		((v & 0x1f) << 23)
-#define FEC_MMFR_RA(v)		((v & 0x1f) << 18)
-#define FEC_MMFR_TA		(2 << 16)
-#define FEC_MMFR_DATA(v)	(v & 0xffff)
+#घोषणा FEC_MMFR_ST		(1 << 30)
+#घोषणा FEC_MMFR_ST_C45		(0)
+#घोषणा FEC_MMFR_OP_READ	(2 << 28)
+#घोषणा FEC_MMFR_OP_READ_C45	(3 << 28)
+#घोषणा FEC_MMFR_OP_WRITE	(1 << 28)
+#घोषणा FEC_MMFR_OP_ADDR_WRITE	(0)
+#घोषणा FEC_MMFR_PA(v)		((v & 0x1f) << 23)
+#घोषणा FEC_MMFR_RA(v)		((v & 0x1f) << 18)
+#घोषणा FEC_MMFR_TA		(2 << 16)
+#घोषणा FEC_MMFR_DATA(v)	(v & 0xffff)
 /* FEC ECR bits definition */
-#define FEC_ECR_MAGICEN		(1 << 2)
-#define FEC_ECR_SLEEP		(1 << 3)
+#घोषणा FEC_ECR_MAGICEN		(1 << 2)
+#घोषणा FEC_ECR_SLEEP		(1 << 3)
 
-#define FEC_MII_TIMEOUT		30000 /* us */
+#घोषणा FEC_MII_TIMEOUT		30000 /* us */
 
-/* Transmitter timeout */
-#define TX_TIMEOUT (2 * HZ)
+/* Transmitter समयout */
+#घोषणा TX_TIMEOUT (2 * HZ)
 
-#define FEC_PAUSE_FLAG_AUTONEG	0x1
-#define FEC_PAUSE_FLAG_ENABLE	0x2
-#define FEC_WOL_HAS_MAGIC_PACKET	(0x1 << 0)
-#define FEC_WOL_FLAG_ENABLE		(0x1 << 1)
-#define FEC_WOL_FLAG_SLEEP_ON		(0x1 << 2)
+#घोषणा FEC_PAUSE_FLAG_AUTONEG	0x1
+#घोषणा FEC_PAUSE_FLAG_ENABLE	0x2
+#घोषणा FEC_WOL_HAS_MAGIC_PACKET	(0x1 << 0)
+#घोषणा FEC_WOL_FLAG_ENABLE		(0x1 << 1)
+#घोषणा FEC_WOL_FLAG_SLEEP_ON		(0x1 << 2)
 
-#define COPYBREAK_DEFAULT	256
+#घोषणा COPYBREAK_DEFAULT	256
 
-/* Max number of allowed TCP segments for software TSO */
-#define FEC_MAX_TSO_SEGS	100
-#define FEC_MAX_SKB_DESCS	(FEC_MAX_TSO_SEGS * 2 + MAX_SKB_FRAGS)
+/* Max number of allowed TCP segments क्रम software TSO */
+#घोषणा FEC_MAX_TSO_SEGS	100
+#घोषणा FEC_MAX_SKB_DESCS	(FEC_MAX_TSO_SEGS * 2 + MAX_SKB_FRAGS)
 
-#define IS_TSO_HEADER(txq, addr) \
+#घोषणा IS_TSO_HEADER(txq, addr) \
 	((addr >= txq->tso_hdrs_dma) && \
 	(addr < txq->tso_hdrs_dma + txq->bd.ring_size * TSO_HEADER_SIZE))
 
-static int mii_cnt;
+अटल पूर्णांक mii_cnt;
 
-static struct bufdesc *fec_enet_get_nextdesc(struct bufdesc *bdp,
-					     struct bufdesc_prop *bd)
-{
-	return (bdp >= bd->last) ? bd->base
-			: (struct bufdesc *)(((void *)bdp) + bd->dsize);
-}
+अटल काष्ठा bufdesc *fec_enet_get_nextdesc(काष्ठा bufdesc *bdp,
+					     काष्ठा bufdesc_prop *bd)
+अणु
+	वापस (bdp >= bd->last) ? bd->base
+			: (काष्ठा bufdesc *)(((व्योम *)bdp) + bd->dsize);
+पूर्ण
 
-static struct bufdesc *fec_enet_get_prevdesc(struct bufdesc *bdp,
-					     struct bufdesc_prop *bd)
-{
-	return (bdp <= bd->base) ? bd->last
-			: (struct bufdesc *)(((void *)bdp) - bd->dsize);
-}
+अटल काष्ठा bufdesc *fec_enet_get_prevdesc(काष्ठा bufdesc *bdp,
+					     काष्ठा bufdesc_prop *bd)
+अणु
+	वापस (bdp <= bd->base) ? bd->last
+			: (काष्ठा bufdesc *)(((व्योम *)bdp) - bd->dsize);
+पूर्ण
 
-static int fec_enet_get_bd_index(struct bufdesc *bdp,
-				 struct bufdesc_prop *bd)
-{
-	return ((const char *)bdp - (const char *)bd->base) >> bd->dsize_log2;
-}
+अटल पूर्णांक fec_enet_get_bd_index(काष्ठा bufdesc *bdp,
+				 काष्ठा bufdesc_prop *bd)
+अणु
+	वापस ((स्थिर अक्षर *)bdp - (स्थिर अक्षर *)bd->base) >> bd->dsize_log2;
+पूर्ण
 
-static int fec_enet_get_free_txdesc_num(struct fec_enet_priv_tx_q *txq)
-{
-	int entries;
+अटल पूर्णांक fec_enet_get_मुक्त_txdesc_num(काष्ठा fec_enet_priv_tx_q *txq)
+अणु
+	पूर्णांक entries;
 
-	entries = (((const char *)txq->dirty_tx -
-			(const char *)txq->bd.cur) >> txq->bd.dsize_log2) - 1;
+	entries = (((स्थिर अक्षर *)txq->dirty_tx -
+			(स्थिर अक्षर *)txq->bd.cur) >> txq->bd.dsize_log2) - 1;
 
-	return entries >= 0 ? entries : entries + txq->bd.ring_size;
-}
+	वापस entries >= 0 ? entries : entries + txq->bd.ring_size;
+पूर्ण
 
-static void swap_buffer(void *bufaddr, int len)
-{
-	int i;
-	unsigned int *buf = bufaddr;
+अटल व्योम swap_buffer(व्योम *bufaddr, पूर्णांक len)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक *buf = bufaddr;
 
-	for (i = 0; i < len; i += 4, buf++)
+	क्रम (i = 0; i < len; i += 4, buf++)
 		swab32s(buf);
-}
+पूर्ण
 
-static void swap_buffer2(void *dst_buf, void *src_buf, int len)
-{
-	int i;
-	unsigned int *src = src_buf;
-	unsigned int *dst = dst_buf;
+अटल व्योम swap_buffer2(व्योम *dst_buf, व्योम *src_buf, पूर्णांक len)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक *src = src_buf;
+	अचिन्हित पूर्णांक *dst = dst_buf;
 
-	for (i = 0; i < len; i += 4, src++, dst++)
+	क्रम (i = 0; i < len; i += 4, src++, dst++)
 		*dst = swab32p(src);
-}
+पूर्ण
 
-static void fec_dump(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct bufdesc *bdp;
-	struct fec_enet_priv_tx_q *txq;
-	int index = 0;
+अटल व्योम fec_dump(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा bufdesc *bdp;
+	काष्ठा fec_enet_priv_tx_q *txq;
+	पूर्णांक index = 0;
 
 	netdev_info(ndev, "TX ring dump\n");
 	pr_info("Nr     SC     addr       len  SKB\n");
@@ -341,7 +342,7 @@ static void fec_dump(struct net_device *ndev)
 	txq = fep->tx_queue[0];
 	bdp = txq->bd.base;
 
-	do {
+	करो अणु
 		pr_info("%3u %c%c 0x%04x 0x%08x %4u %p\n",
 			index,
 			bdp == txq->bd.cur ? 'S' : ' ',
@@ -352,53 +353,53 @@ static void fec_dump(struct net_device *ndev)
 			txq->tx_skbuff[index]);
 		bdp = fec_enet_get_nextdesc(bdp, &txq->bd);
 		index++;
-	} while (bdp != txq->bd.base);
-}
+	पूर्ण जबतक (bdp != txq->bd.base);
+पूर्ण
 
-static inline bool is_ipv4_pkt(struct sk_buff *skb)
-{
-	return skb->protocol == htons(ETH_P_IP) && ip_hdr(skb)->version == 4;
-}
+अटल अंतरभूत bool is_ipv4_pkt(काष्ठा sk_buff *skb)
+अणु
+	वापस skb->protocol == htons(ETH_P_IP) && ip_hdr(skb)->version == 4;
+पूर्ण
 
-static int
-fec_enet_clear_csum(struct sk_buff *skb, struct net_device *ndev)
-{
-	/* Only run for packets requiring a checksum. */
-	if (skb->ip_summed != CHECKSUM_PARTIAL)
-		return 0;
+अटल पूर्णांक
+fec_enet_clear_csum(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
+अणु
+	/* Only run क्रम packets requiring a checksum. */
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL)
+		वापस 0;
 
-	if (unlikely(skb_cow_head(skb, 0)))
-		return -1;
+	अगर (unlikely(skb_cow_head(skb, 0)))
+		वापस -1;
 
-	if (is_ipv4_pkt(skb))
+	अगर (is_ipv4_pkt(skb))
 		ip_hdr(skb)->check = 0;
 	*(__sum16 *)(skb->head + skb->csum_start + skb->csum_offset) = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct bufdesc *
-fec_enet_txq_submit_frag_skb(struct fec_enet_priv_tx_q *txq,
-			     struct sk_buff *skb,
-			     struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct bufdesc *bdp = txq->bd.cur;
-	struct bufdesc_ex *ebdp;
-	int nr_frags = skb_shinfo(skb)->nr_frags;
-	int frag, frag_len;
-	unsigned short status;
-	unsigned int estatus = 0;
+अटल काष्ठा bufdesc *
+fec_enet_txq_submit_frag_skb(काष्ठा fec_enet_priv_tx_q *txq,
+			     काष्ठा sk_buff *skb,
+			     काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा bufdesc *bdp = txq->bd.cur;
+	काष्ठा bufdesc_ex *ebdp;
+	पूर्णांक nr_frags = skb_shinfo(skb)->nr_frags;
+	पूर्णांक frag, frag_len;
+	अचिन्हित लघु status;
+	अचिन्हित पूर्णांक estatus = 0;
 	skb_frag_t *this_frag;
-	unsigned int index;
-	void *bufaddr;
+	अचिन्हित पूर्णांक index;
+	व्योम *bufaddr;
 	dma_addr_t addr;
-	int i;
+	पूर्णांक i;
 
-	for (frag = 0; frag < nr_frags; frag++) {
+	क्रम (frag = 0; frag < nr_frags; frag++) अणु
 		this_frag = &skb_shinfo(skb)->frags[frag];
 		bdp = fec_enet_get_nextdesc(bdp, &txq->bd);
-		ebdp = (struct bufdesc_ex *)bdp;
+		ebdp = (काष्ठा bufdesc_ex *)bdp;
 
 		status = fec16_to_cpu(bdp->cbd_sc);
 		status &= ~BD_ENET_TX_STATS;
@@ -406,92 +407,92 @@ fec_enet_txq_submit_frag_skb(struct fec_enet_priv_tx_q *txq,
 		frag_len = skb_frag_size(&skb_shinfo(skb)->frags[frag]);
 
 		/* Handle the last BD specially */
-		if (frag == nr_frags - 1) {
+		अगर (frag == nr_frags - 1) अणु
 			status |= (BD_ENET_TX_INTR | BD_ENET_TX_LAST);
-			if (fep->bufdesc_ex) {
+			अगर (fep->bufdesc_ex) अणु
 				estatus |= BD_ENET_TX_INT;
-				if (unlikely(skb_shinfo(skb)->tx_flags &
+				अगर (unlikely(skb_shinfo(skb)->tx_flags &
 					SKBTX_HW_TSTAMP && fep->hwts_tx_en))
 					estatus |= BD_ENET_TX_TS;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (fep->bufdesc_ex) {
-			if (fep->quirks & FEC_QUIRK_HAS_AVB)
+		अगर (fep->bufdesc_ex) अणु
+			अगर (fep->quirks & FEC_QUIRK_HAS_AVB)
 				estatus |= FEC_TX_BD_FTYPE(txq->bd.qid);
-			if (skb->ip_summed == CHECKSUM_PARTIAL)
+			अगर (skb->ip_summed == CHECKSUM_PARTIAL)
 				estatus |= BD_ENET_TX_PINS | BD_ENET_TX_IINS;
 			ebdp->cbd_bdu = 0;
 			ebdp->cbd_esc = cpu_to_fec32(estatus);
-		}
+		पूर्ण
 
 		bufaddr = skb_frag_address(this_frag);
 
 		index = fec_enet_get_bd_index(bdp, &txq->bd);
-		if (((unsigned long) bufaddr) & fep->tx_align ||
-			fep->quirks & FEC_QUIRK_SWAP_FRAME) {
-			memcpy(txq->tx_bounce[index], bufaddr, frag_len);
+		अगर (((अचिन्हित दीर्घ) bufaddr) & fep->tx_align ||
+			fep->quirks & FEC_QUIRK_SWAP_FRAME) अणु
+			स_नकल(txq->tx_bounce[index], bufaddr, frag_len);
 			bufaddr = txq->tx_bounce[index];
 
-			if (fep->quirks & FEC_QUIRK_SWAP_FRAME)
+			अगर (fep->quirks & FEC_QUIRK_SWAP_FRAME)
 				swap_buffer(bufaddr, frag_len);
-		}
+		पूर्ण
 
 		addr = dma_map_single(&fep->pdev->dev, bufaddr, frag_len,
 				      DMA_TO_DEVICE);
-		if (dma_mapping_error(&fep->pdev->dev, addr)) {
-			if (net_ratelimit())
+		अगर (dma_mapping_error(&fep->pdev->dev, addr)) अणु
+			अगर (net_ratelimit())
 				netdev_err(ndev, "Tx DMA memory map failed\n");
-			goto dma_mapping_error;
-		}
+			जाओ dma_mapping_error;
+		पूर्ण
 
 		bdp->cbd_bufaddr = cpu_to_fec32(addr);
 		bdp->cbd_datlen = cpu_to_fec16(frag_len);
 		/* Make sure the updates to rest of the descriptor are
-		 * performed before transferring ownership.
+		 * perक्रमmed beक्रमe transferring ownership.
 		 */
 		wmb();
 		bdp->cbd_sc = cpu_to_fec16(status);
-	}
+	पूर्ण
 
-	return bdp;
+	वापस bdp;
 dma_mapping_error:
 	bdp = txq->bd.cur;
-	for (i = 0; i < frag; i++) {
+	क्रम (i = 0; i < frag; i++) अणु
 		bdp = fec_enet_get_nextdesc(bdp, &txq->bd);
 		dma_unmap_single(&fep->pdev->dev, fec32_to_cpu(bdp->cbd_bufaddr),
 				 fec16_to_cpu(bdp->cbd_datlen), DMA_TO_DEVICE);
-	}
-	return ERR_PTR(-ENOMEM);
-}
+	पूर्ण
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
-static int fec_enet_txq_submit_skb(struct fec_enet_priv_tx_q *txq,
-				   struct sk_buff *skb, struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int nr_frags = skb_shinfo(skb)->nr_frags;
-	struct bufdesc *bdp, *last_bdp;
-	void *bufaddr;
+अटल पूर्णांक fec_enet_txq_submit_skb(काष्ठा fec_enet_priv_tx_q *txq,
+				   काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक nr_frags = skb_shinfo(skb)->nr_frags;
+	काष्ठा bufdesc *bdp, *last_bdp;
+	व्योम *bufaddr;
 	dma_addr_t addr;
-	unsigned short status;
-	unsigned short buflen;
-	unsigned int estatus = 0;
-	unsigned int index;
-	int entries_free;
+	अचिन्हित लघु status;
+	अचिन्हित लघु buflen;
+	अचिन्हित पूर्णांक estatus = 0;
+	अचिन्हित पूर्णांक index;
+	पूर्णांक entries_मुक्त;
 
-	entries_free = fec_enet_get_free_txdesc_num(txq);
-	if (entries_free < MAX_SKB_FRAGS + 1) {
-		dev_kfree_skb_any(skb);
-		if (net_ratelimit())
+	entries_मुक्त = fec_enet_get_मुक्त_txdesc_num(txq);
+	अगर (entries_मुक्त < MAX_SKB_FRAGS + 1) अणु
+		dev_kमुक्त_skb_any(skb);
+		अगर (net_ratelimit())
 			netdev_err(ndev, "NOT enough BD for SG!\n");
-		return NETDEV_TX_OK;
-	}
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	/* Protocol checksum off-load for TCP and UDP. */
-	if (fec_enet_clear_csum(skb, ndev)) {
-		dev_kfree_skb_any(skb);
-		return NETDEV_TX_OK;
-	}
+	/* Protocol checksum off-load क्रम TCP and UDP. */
+	अगर (fec_enet_clear_csum(skb, ndev)) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
 	/* Fill in a Tx ring entry */
 	bdp = txq->bd.cur;
@@ -499,77 +500,77 @@ static int fec_enet_txq_submit_skb(struct fec_enet_priv_tx_q *txq,
 	status = fec16_to_cpu(bdp->cbd_sc);
 	status &= ~BD_ENET_TX_STATS;
 
-	/* Set buffer length and buffer pointer */
+	/* Set buffer length and buffer poपूर्णांकer */
 	bufaddr = skb->data;
 	buflen = skb_headlen(skb);
 
 	index = fec_enet_get_bd_index(bdp, &txq->bd);
-	if (((unsigned long) bufaddr) & fep->tx_align ||
-		fep->quirks & FEC_QUIRK_SWAP_FRAME) {
-		memcpy(txq->tx_bounce[index], skb->data, buflen);
+	अगर (((अचिन्हित दीर्घ) bufaddr) & fep->tx_align ||
+		fep->quirks & FEC_QUIRK_SWAP_FRAME) अणु
+		स_नकल(txq->tx_bounce[index], skb->data, buflen);
 		bufaddr = txq->tx_bounce[index];
 
-		if (fep->quirks & FEC_QUIRK_SWAP_FRAME)
+		अगर (fep->quirks & FEC_QUIRK_SWAP_FRAME)
 			swap_buffer(bufaddr, buflen);
-	}
+	पूर्ण
 
-	/* Push the data cache so the CPM does not get stale memory data. */
+	/* Push the data cache so the CPM करोes not get stale memory data. */
 	addr = dma_map_single(&fep->pdev->dev, bufaddr, buflen, DMA_TO_DEVICE);
-	if (dma_mapping_error(&fep->pdev->dev, addr)) {
-		dev_kfree_skb_any(skb);
-		if (net_ratelimit())
+	अगर (dma_mapping_error(&fep->pdev->dev, addr)) अणु
+		dev_kमुक्त_skb_any(skb);
+		अगर (net_ratelimit())
 			netdev_err(ndev, "Tx DMA memory map failed\n");
-		return NETDEV_TX_OK;
-	}
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	if (nr_frags) {
+	अगर (nr_frags) अणु
 		last_bdp = fec_enet_txq_submit_frag_skb(txq, skb, ndev);
-		if (IS_ERR(last_bdp)) {
+		अगर (IS_ERR(last_bdp)) अणु
 			dma_unmap_single(&fep->pdev->dev, addr,
 					 buflen, DMA_TO_DEVICE);
-			dev_kfree_skb_any(skb);
-			return NETDEV_TX_OK;
-		}
-	} else {
+			dev_kमुक्त_skb_any(skb);
+			वापस NETDEV_TX_OK;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		status |= (BD_ENET_TX_INTR | BD_ENET_TX_LAST);
-		if (fep->bufdesc_ex) {
+		अगर (fep->bufdesc_ex) अणु
 			estatus = BD_ENET_TX_INT;
-			if (unlikely(skb_shinfo(skb)->tx_flags &
+			अगर (unlikely(skb_shinfo(skb)->tx_flags &
 				SKBTX_HW_TSTAMP && fep->hwts_tx_en))
 				estatus |= BD_ENET_TX_TS;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	bdp->cbd_bufaddr = cpu_to_fec32(addr);
 	bdp->cbd_datlen = cpu_to_fec16(buflen);
 
-	if (fep->bufdesc_ex) {
+	अगर (fep->bufdesc_ex) अणु
 
-		struct bufdesc_ex *ebdp = (struct bufdesc_ex *)bdp;
+		काष्ठा bufdesc_ex *ebdp = (काष्ठा bufdesc_ex *)bdp;
 
-		if (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP &&
+		अगर (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP &&
 			fep->hwts_tx_en))
 			skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
 
-		if (fep->quirks & FEC_QUIRK_HAS_AVB)
+		अगर (fep->quirks & FEC_QUIRK_HAS_AVB)
 			estatus |= FEC_TX_BD_FTYPE(txq->bd.qid);
 
-		if (skb->ip_summed == CHECKSUM_PARTIAL)
+		अगर (skb->ip_summed == CHECKSUM_PARTIAL)
 			estatus |= BD_ENET_TX_PINS | BD_ENET_TX_IINS;
 
 		ebdp->cbd_bdu = 0;
 		ebdp->cbd_esc = cpu_to_fec32(estatus);
-	}
+	पूर्ण
 
 	index = fec_enet_get_bd_index(last_bdp, &txq->bd);
-	/* Save skb pointer */
+	/* Save skb poपूर्णांकer */
 	txq->tx_skbuff[index] = skb;
 
-	/* Make sure the updates to rest of the descriptor are performed before
+	/* Make sure the updates to rest of the descriptor are perक्रमmed beक्रमe
 	 * transferring ownership.
 	 */
 	wmb();
 
-	/* Send it on its way.  Tell FEC it's ready, interrupt when done,
+	/* Send it on its way.  Tell FEC it's पढ़ोy, पूर्णांकerrupt when करोne,
 	 * it's the last BD of the frame, and to put the CRC on the end.
 	 */
 	status |= (BD_ENET_TX_READY | BD_ENET_TX_TC);
@@ -578,30 +579,30 @@ static int fec_enet_txq_submit_skb(struct fec_enet_priv_tx_q *txq,
 	/* If this was the last BD in the ring, start at the beginning again. */
 	bdp = fec_enet_get_nextdesc(last_bdp, &txq->bd);
 
-	skb_tx_timestamp(skb);
+	skb_tx_बारtamp(skb);
 
-	/* Make sure the update to bdp and tx_skbuff are performed before
+	/* Make sure the update to bdp and tx_skbuff are perक्रमmed beक्रमe
 	 * txq->bd.cur.
 	 */
 	wmb();
 	txq->bd.cur = bdp;
 
 	/* Trigger transmission start */
-	writel(0, txq->bd.reg_desc_active);
+	ग_लिखोl(0, txq->bd.reg_desc_active);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-fec_enet_txq_put_data_tso(struct fec_enet_priv_tx_q *txq, struct sk_buff *skb,
-			  struct net_device *ndev,
-			  struct bufdesc *bdp, int index, char *data,
-			  int size, bool last_tcp, bool is_last)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct bufdesc_ex *ebdp = container_of(bdp, struct bufdesc_ex, desc);
-	unsigned short status;
-	unsigned int estatus = 0;
+अटल पूर्णांक
+fec_enet_txq_put_data_tso(काष्ठा fec_enet_priv_tx_q *txq, काष्ठा sk_buff *skb,
+			  काष्ठा net_device *ndev,
+			  काष्ठा bufdesc *bdp, पूर्णांक index, अक्षर *data,
+			  पूर्णांक size, bool last_tcp, bool is_last)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा bufdesc_ex *ebdp = container_of(bdp, काष्ठा bufdesc_ex, desc);
+	अचिन्हित लघु status;
+	अचिन्हित पूर्णांक estatus = 0;
 	dma_addr_t addr;
 
 	status = fec16_to_cpu(bdp->cbd_sc);
@@ -609,61 +610,61 @@ fec_enet_txq_put_data_tso(struct fec_enet_priv_tx_q *txq, struct sk_buff *skb,
 
 	status |= (BD_ENET_TX_TC | BD_ENET_TX_READY);
 
-	if (((unsigned long) data) & fep->tx_align ||
-		fep->quirks & FEC_QUIRK_SWAP_FRAME) {
-		memcpy(txq->tx_bounce[index], data, size);
+	अगर (((अचिन्हित दीर्घ) data) & fep->tx_align ||
+		fep->quirks & FEC_QUIRK_SWAP_FRAME) अणु
+		स_नकल(txq->tx_bounce[index], data, size);
 		data = txq->tx_bounce[index];
 
-		if (fep->quirks & FEC_QUIRK_SWAP_FRAME)
+		अगर (fep->quirks & FEC_QUIRK_SWAP_FRAME)
 			swap_buffer(data, size);
-	}
+	पूर्ण
 
 	addr = dma_map_single(&fep->pdev->dev, data, size, DMA_TO_DEVICE);
-	if (dma_mapping_error(&fep->pdev->dev, addr)) {
-		dev_kfree_skb_any(skb);
-		if (net_ratelimit())
+	अगर (dma_mapping_error(&fep->pdev->dev, addr)) अणु
+		dev_kमुक्त_skb_any(skb);
+		अगर (net_ratelimit())
 			netdev_err(ndev, "Tx DMA memory map failed\n");
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	bdp->cbd_datlen = cpu_to_fec16(size);
 	bdp->cbd_bufaddr = cpu_to_fec32(addr);
 
-	if (fep->bufdesc_ex) {
-		if (fep->quirks & FEC_QUIRK_HAS_AVB)
+	अगर (fep->bufdesc_ex) अणु
+		अगर (fep->quirks & FEC_QUIRK_HAS_AVB)
 			estatus |= FEC_TX_BD_FTYPE(txq->bd.qid);
-		if (skb->ip_summed == CHECKSUM_PARTIAL)
+		अगर (skb->ip_summed == CHECKSUM_PARTIAL)
 			estatus |= BD_ENET_TX_PINS | BD_ENET_TX_IINS;
 		ebdp->cbd_bdu = 0;
 		ebdp->cbd_esc = cpu_to_fec32(estatus);
-	}
+	पूर्ण
 
 	/* Handle the last BD specially */
-	if (last_tcp)
+	अगर (last_tcp)
 		status |= (BD_ENET_TX_LAST | BD_ENET_TX_TC);
-	if (is_last) {
+	अगर (is_last) अणु
 		status |= BD_ENET_TX_INTR;
-		if (fep->bufdesc_ex)
+		अगर (fep->bufdesc_ex)
 			ebdp->cbd_esc |= cpu_to_fec32(BD_ENET_TX_INT);
-	}
+	पूर्ण
 
 	bdp->cbd_sc = cpu_to_fec16(status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-fec_enet_txq_put_hdr_tso(struct fec_enet_priv_tx_q *txq,
-			 struct sk_buff *skb, struct net_device *ndev,
-			 struct bufdesc *bdp, int index)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int hdr_len = skb_transport_offset(skb) + tcp_hdrlen(skb);
-	struct bufdesc_ex *ebdp = container_of(bdp, struct bufdesc_ex, desc);
-	void *bufaddr;
-	unsigned long dmabuf;
-	unsigned short status;
-	unsigned int estatus = 0;
+अटल पूर्णांक
+fec_enet_txq_put_hdr_tso(काष्ठा fec_enet_priv_tx_q *txq,
+			 काष्ठा sk_buff *skb, काष्ठा net_device *ndev,
+			 काष्ठा bufdesc *bdp, पूर्णांक index)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक hdr_len = skb_transport_offset(skb) + tcp_hdrlen(skb);
+	काष्ठा bufdesc_ex *ebdp = container_of(bdp, काष्ठा bufdesc_ex, desc);
+	व्योम *bufaddr;
+	अचिन्हित दीर्घ dmabuf;
+	अचिन्हित लघु status;
+	अचिन्हित पूर्णांक estatus = 0;
 
 	status = fec16_to_cpu(bdp->cbd_sc);
 	status &= ~BD_ENET_TX_STATS;
@@ -671,87 +672,87 @@ fec_enet_txq_put_hdr_tso(struct fec_enet_priv_tx_q *txq,
 
 	bufaddr = txq->tso_hdrs + index * TSO_HEADER_SIZE;
 	dmabuf = txq->tso_hdrs_dma + index * TSO_HEADER_SIZE;
-	if (((unsigned long)bufaddr) & fep->tx_align ||
-		fep->quirks & FEC_QUIRK_SWAP_FRAME) {
-		memcpy(txq->tx_bounce[index], skb->data, hdr_len);
+	अगर (((अचिन्हित दीर्घ)bufaddr) & fep->tx_align ||
+		fep->quirks & FEC_QUIRK_SWAP_FRAME) अणु
+		स_नकल(txq->tx_bounce[index], skb->data, hdr_len);
 		bufaddr = txq->tx_bounce[index];
 
-		if (fep->quirks & FEC_QUIRK_SWAP_FRAME)
+		अगर (fep->quirks & FEC_QUIRK_SWAP_FRAME)
 			swap_buffer(bufaddr, hdr_len);
 
 		dmabuf = dma_map_single(&fep->pdev->dev, bufaddr,
 					hdr_len, DMA_TO_DEVICE);
-		if (dma_mapping_error(&fep->pdev->dev, dmabuf)) {
-			dev_kfree_skb_any(skb);
-			if (net_ratelimit())
+		अगर (dma_mapping_error(&fep->pdev->dev, dmabuf)) अणु
+			dev_kमुक्त_skb_any(skb);
+			अगर (net_ratelimit())
 				netdev_err(ndev, "Tx DMA memory map failed\n");
-			return NETDEV_TX_BUSY;
-		}
-	}
+			वापस NETDEV_TX_BUSY;
+		पूर्ण
+	पूर्ण
 
 	bdp->cbd_bufaddr = cpu_to_fec32(dmabuf);
 	bdp->cbd_datlen = cpu_to_fec16(hdr_len);
 
-	if (fep->bufdesc_ex) {
-		if (fep->quirks & FEC_QUIRK_HAS_AVB)
+	अगर (fep->bufdesc_ex) अणु
+		अगर (fep->quirks & FEC_QUIRK_HAS_AVB)
 			estatus |= FEC_TX_BD_FTYPE(txq->bd.qid);
-		if (skb->ip_summed == CHECKSUM_PARTIAL)
+		अगर (skb->ip_summed == CHECKSUM_PARTIAL)
 			estatus |= BD_ENET_TX_PINS | BD_ENET_TX_IINS;
 		ebdp->cbd_bdu = 0;
 		ebdp->cbd_esc = cpu_to_fec32(estatus);
-	}
+	पूर्ण
 
 	bdp->cbd_sc = cpu_to_fec16(status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fec_enet_txq_submit_tso(struct fec_enet_priv_tx_q *txq,
-				   struct sk_buff *skb,
-				   struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int hdr_len, total_len, data_left;
-	struct bufdesc *bdp = txq->bd.cur;
-	struct tso_t tso;
-	unsigned int index = 0;
-	int ret;
+अटल पूर्णांक fec_enet_txq_submit_tso(काष्ठा fec_enet_priv_tx_q *txq,
+				   काष्ठा sk_buff *skb,
+				   काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक hdr_len, total_len, data_left;
+	काष्ठा bufdesc *bdp = txq->bd.cur;
+	काष्ठा tso_t tso;
+	अचिन्हित पूर्णांक index = 0;
+	पूर्णांक ret;
 
-	if (tso_count_descs(skb) >= fec_enet_get_free_txdesc_num(txq)) {
-		dev_kfree_skb_any(skb);
-		if (net_ratelimit())
+	अगर (tso_count_descs(skb) >= fec_enet_get_मुक्त_txdesc_num(txq)) अणु
+		dev_kमुक्त_skb_any(skb);
+		अगर (net_ratelimit())
 			netdev_err(ndev, "NOT enough BD for TSO!\n");
-		return NETDEV_TX_OK;
-	}
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	/* Protocol checksum off-load for TCP and UDP. */
-	if (fec_enet_clear_csum(skb, ndev)) {
-		dev_kfree_skb_any(skb);
-		return NETDEV_TX_OK;
-	}
+	/* Protocol checksum off-load क्रम TCP and UDP. */
+	अगर (fec_enet_clear_csum(skb, ndev)) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
 	/* Initialize the TSO handler, and prepare the first payload */
 	hdr_len = tso_start(skb, &tso);
 
 	total_len = skb->len - hdr_len;
-	while (total_len > 0) {
-		char *hdr;
+	जबतक (total_len > 0) अणु
+		अक्षर *hdr;
 
 		index = fec_enet_get_bd_index(bdp, &txq->bd);
-		data_left = min_t(int, skb_shinfo(skb)->gso_size, total_len);
+		data_left = min_t(पूर्णांक, skb_shinfo(skb)->gso_size, total_len);
 		total_len -= data_left;
 
 		/* prepare packet headers: MAC + IP + TCP */
 		hdr = txq->tso_hdrs + index * TSO_HEADER_SIZE;
 		tso_build_hdr(skb, hdr, &tso, data_left, total_len == 0);
 		ret = fec_enet_txq_put_hdr_tso(txq, skb, ndev, bdp, index);
-		if (ret)
-			goto err_release;
+		अगर (ret)
+			जाओ err_release;
 
-		while (data_left > 0) {
-			int size;
+		जबतक (data_left > 0) अणु
+			पूर्णांक size;
 
-			size = min_t(int, tso.size, data_left);
+			size = min_t(पूर्णांक, tso.size, data_left);
 			bdp = fec_enet_get_nextdesc(bdp, &txq->bd);
 			index = fec_enet_get_bd_index(bdp, &txq->bd);
 			ret = fec_enet_txq_put_data_tso(txq, skb, ndev,
@@ -759,221 +760,221 @@ static int fec_enet_txq_submit_tso(struct fec_enet_priv_tx_q *txq,
 							tso.data, size,
 							size == data_left,
 							total_len == 0);
-			if (ret)
-				goto err_release;
+			अगर (ret)
+				जाओ err_release;
 
 			data_left -= size;
 			tso_build_data(skb, &tso, size);
-		}
+		पूर्ण
 
 		bdp = fec_enet_get_nextdesc(bdp, &txq->bd);
-	}
+	पूर्ण
 
-	/* Save skb pointer */
+	/* Save skb poपूर्णांकer */
 	txq->tx_skbuff[index] = skb;
 
-	skb_tx_timestamp(skb);
+	skb_tx_बारtamp(skb);
 	txq->bd.cur = bdp;
 
 	/* Trigger transmission start */
-	if (!(fep->quirks & FEC_QUIRK_ERR007885) ||
-	    !readl(txq->bd.reg_desc_active) ||
-	    !readl(txq->bd.reg_desc_active) ||
-	    !readl(txq->bd.reg_desc_active) ||
-	    !readl(txq->bd.reg_desc_active))
-		writel(0, txq->bd.reg_desc_active);
+	अगर (!(fep->quirks & FEC_QUIRK_ERR007885) ||
+	    !पढ़ोl(txq->bd.reg_desc_active) ||
+	    !पढ़ोl(txq->bd.reg_desc_active) ||
+	    !पढ़ोl(txq->bd.reg_desc_active) ||
+	    !पढ़ोl(txq->bd.reg_desc_active))
+		ग_लिखोl(0, txq->bd.reg_desc_active);
 
-	return 0;
+	वापस 0;
 
 err_release:
-	/* TODO: Release all used data descriptors for TSO */
-	return ret;
-}
+	/* TODO: Release all used data descriptors क्रम TSO */
+	वापस ret;
+पूर्ण
 
-static netdev_tx_t
-fec_enet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int entries_free;
-	unsigned short queue;
-	struct fec_enet_priv_tx_q *txq;
-	struct netdev_queue *nq;
-	int ret;
+अटल netdev_tx_t
+fec_enet_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक entries_मुक्त;
+	अचिन्हित लघु queue;
+	काष्ठा fec_enet_priv_tx_q *txq;
+	काष्ठा netdev_queue *nq;
+	पूर्णांक ret;
 
 	queue = skb_get_queue_mapping(skb);
 	txq = fep->tx_queue[queue];
 	nq = netdev_get_tx_queue(ndev, queue);
 
-	if (skb_is_gso(skb))
+	अगर (skb_is_gso(skb))
 		ret = fec_enet_txq_submit_tso(txq, skb, ndev);
-	else
+	अन्यथा
 		ret = fec_enet_txq_submit_skb(txq, skb, ndev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	entries_free = fec_enet_get_free_txdesc_num(txq);
-	if (entries_free <= txq->tx_stop_threshold)
-		netif_tx_stop_queue(nq);
+	entries_मुक्त = fec_enet_get_मुक्त_txdesc_num(txq);
+	अगर (entries_मुक्त <= txq->tx_stop_threshold)
+		netअगर_tx_stop_queue(nq);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 /* Init RX & TX buffer descriptors
  */
-static void fec_enet_bd_init(struct net_device *dev)
-{
-	struct fec_enet_private *fep = netdev_priv(dev);
-	struct fec_enet_priv_tx_q *txq;
-	struct fec_enet_priv_rx_q *rxq;
-	struct bufdesc *bdp;
-	unsigned int i;
-	unsigned int q;
+अटल व्योम fec_enet_bd_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(dev);
+	काष्ठा fec_enet_priv_tx_q *txq;
+	काष्ठा fec_enet_priv_rx_q *rxq;
+	काष्ठा bufdesc *bdp;
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक q;
 
-	for (q = 0; q < fep->num_rx_queues; q++) {
+	क्रम (q = 0; q < fep->num_rx_queues; q++) अणु
 		/* Initialize the receive buffer descriptors. */
 		rxq = fep->rx_queue[q];
 		bdp = rxq->bd.base;
 
-		for (i = 0; i < rxq->bd.ring_size; i++) {
+		क्रम (i = 0; i < rxq->bd.ring_size; i++) अणु
 
-			/* Initialize the BD for every fragment in the page. */
-			if (bdp->cbd_bufaddr)
+			/* Initialize the BD क्रम every fragment in the page. */
+			अगर (bdp->cbd_bufaddr)
 				bdp->cbd_sc = cpu_to_fec16(BD_ENET_RX_EMPTY);
-			else
+			अन्यथा
 				bdp->cbd_sc = cpu_to_fec16(0);
 			bdp = fec_enet_get_nextdesc(bdp, &rxq->bd);
-		}
+		पूर्ण
 
 		/* Set the last buffer to wrap */
 		bdp = fec_enet_get_prevdesc(bdp, &rxq->bd);
 		bdp->cbd_sc |= cpu_to_fec16(BD_SC_WRAP);
 
 		rxq->bd.cur = rxq->bd.base;
-	}
+	पूर्ण
 
-	for (q = 0; q < fep->num_tx_queues; q++) {
-		/* ...and the same for transmit */
+	क्रम (q = 0; q < fep->num_tx_queues; q++) अणु
+		/* ...and the same क्रम transmit */
 		txq = fep->tx_queue[q];
 		bdp = txq->bd.base;
 		txq->bd.cur = bdp;
 
-		for (i = 0; i < txq->bd.ring_size; i++) {
-			/* Initialize the BD for every fragment in the page. */
+		क्रम (i = 0; i < txq->bd.ring_size; i++) अणु
+			/* Initialize the BD क्रम every fragment in the page. */
 			bdp->cbd_sc = cpu_to_fec16(0);
-			if (bdp->cbd_bufaddr &&
+			अगर (bdp->cbd_bufaddr &&
 			    !IS_TSO_HEADER(txq, fec32_to_cpu(bdp->cbd_bufaddr)))
 				dma_unmap_single(&fep->pdev->dev,
 						 fec32_to_cpu(bdp->cbd_bufaddr),
 						 fec16_to_cpu(bdp->cbd_datlen),
 						 DMA_TO_DEVICE);
-			if (txq->tx_skbuff[i]) {
-				dev_kfree_skb_any(txq->tx_skbuff[i]);
-				txq->tx_skbuff[i] = NULL;
-			}
+			अगर (txq->tx_skbuff[i]) अणु
+				dev_kमुक्त_skb_any(txq->tx_skbuff[i]);
+				txq->tx_skbuff[i] = शून्य;
+			पूर्ण
 			bdp->cbd_bufaddr = cpu_to_fec32(0);
 			bdp = fec_enet_get_nextdesc(bdp, &txq->bd);
-		}
+		पूर्ण
 
 		/* Set the last buffer to wrap */
 		bdp = fec_enet_get_prevdesc(bdp, &txq->bd);
 		bdp->cbd_sc |= cpu_to_fec16(BD_SC_WRAP);
 		txq->dirty_tx = bdp;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void fec_enet_active_rxring(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int i;
+अटल व्योम fec_enet_active_rxring(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक i;
 
-	for (i = 0; i < fep->num_rx_queues; i++)
-		writel(0, fep->rx_queue[i]->bd.reg_desc_active);
-}
+	क्रम (i = 0; i < fep->num_rx_queues; i++)
+		ग_लिखोl(0, fep->rx_queue[i]->bd.reg_desc_active);
+पूर्ण
 
-static void fec_enet_enable_ring(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct fec_enet_priv_tx_q *txq;
-	struct fec_enet_priv_rx_q *rxq;
-	int i;
+अटल व्योम fec_enet_enable_ring(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा fec_enet_priv_tx_q *txq;
+	काष्ठा fec_enet_priv_rx_q *rxq;
+	पूर्णांक i;
 
-	for (i = 0; i < fep->num_rx_queues; i++) {
+	क्रम (i = 0; i < fep->num_rx_queues; i++) अणु
 		rxq = fep->rx_queue[i];
-		writel(rxq->bd.dma, fep->hwp + FEC_R_DES_START(i));
-		writel(PKT_MAXBUF_SIZE, fep->hwp + FEC_R_BUFF_SIZE(i));
+		ग_लिखोl(rxq->bd.dma, fep->hwp + FEC_R_DES_START(i));
+		ग_लिखोl(PKT_MAXBUF_SIZE, fep->hwp + FEC_R_BUFF_SIZE(i));
 
 		/* enable DMA1/2 */
-		if (i)
-			writel(RCMR_MATCHEN | RCMR_CMP(i),
+		अगर (i)
+			ग_लिखोl(RCMR_MATCHEN | RCMR_CMP(i),
 			       fep->hwp + FEC_RCMR(i));
-	}
+	पूर्ण
 
-	for (i = 0; i < fep->num_tx_queues; i++) {
+	क्रम (i = 0; i < fep->num_tx_queues; i++) अणु
 		txq = fep->tx_queue[i];
-		writel(txq->bd.dma, fep->hwp + FEC_X_DES_START(i));
+		ग_लिखोl(txq->bd.dma, fep->hwp + FEC_X_DES_START(i));
 
 		/* enable DMA1/2 */
-		if (i)
-			writel(DMA_CLASS_EN | IDLE_SLOPE(i),
+		अगर (i)
+			ग_लिखोl(DMA_CLASS_EN | IDLE_SLOPE(i),
 			       fep->hwp + FEC_DMA_CFG(i));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void fec_enet_reset_skb(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct fec_enet_priv_tx_q *txq;
-	int i, j;
+अटल व्योम fec_enet_reset_skb(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा fec_enet_priv_tx_q *txq;
+	पूर्णांक i, j;
 
-	for (i = 0; i < fep->num_tx_queues; i++) {
+	क्रम (i = 0; i < fep->num_tx_queues; i++) अणु
 		txq = fep->tx_queue[i];
 
-		for (j = 0; j < txq->bd.ring_size; j++) {
-			if (txq->tx_skbuff[j]) {
-				dev_kfree_skb_any(txq->tx_skbuff[j]);
-				txq->tx_skbuff[j] = NULL;
-			}
-		}
-	}
-}
+		क्रम (j = 0; j < txq->bd.ring_size; j++) अणु
+			अगर (txq->tx_skbuff[j]) अणु
+				dev_kमुक्त_skb_any(txq->tx_skbuff[j]);
+				txq->tx_skbuff[j] = शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * This function is called to start or restart the FEC during a link
- * change, transmit timeout, or to reconfigure the FEC.  The network
- * packet processing for this device must be stopped before this call.
+ * change, transmit समयout, or to reconfigure the FEC.  The network
+ * packet processing क्रम this device must be stopped beक्रमe this call.
  */
-static void
-fec_restart(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल व्योम
+fec_restart(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 	u32 temp_mac[2];
 	u32 rcntl = OPT_FRAME_SIZE | 0x04;
 	u32 ecntl = 0x2; /* ETHEREN */
 
-	/* Whack a reset.  We should wait for this.
+	/* Whack a reset.  We should रुको क्रम this.
 	 * For i.MX6SX SOC, enet use AXI bus, we use disable MAC
 	 * instead of reset MAC itself.
 	 */
-	if (fep->quirks & FEC_QUIRK_HAS_AVB ||
-	    ((fep->quirks & FEC_QUIRK_NO_HARD_RESET) && fep->link)) {
-		writel(0, fep->hwp + FEC_ECNTRL);
-	} else {
-		writel(1, fep->hwp + FEC_ECNTRL);
+	अगर (fep->quirks & FEC_QUIRK_HAS_AVB ||
+	    ((fep->quirks & FEC_QUIRK_NO_HARD_RESET) && fep->link)) अणु
+		ग_लिखोl(0, fep->hwp + FEC_ECNTRL);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(1, fep->hwp + FEC_ECNTRL);
 		udelay(10);
-	}
+	पूर्ण
 
 	/*
-	 * enet-mac reset will reset mac address registers too,
+	 * enet-mac reset will reset mac address रेजिस्टरs too,
 	 * so need to reconfigure it.
 	 */
-	memcpy(&temp_mac, ndev->dev_addr, ETH_ALEN);
-	writel((__force u32)cpu_to_be32(temp_mac[0]),
+	स_नकल(&temp_mac, ndev->dev_addr, ETH_ALEN);
+	ग_लिखोl((__क्रमce u32)cpu_to_be32(temp_mac[0]),
 	       fep->hwp + FEC_ADDR_LOW);
-	writel((__force u32)cpu_to_be32(temp_mac[1]),
+	ग_लिखोl((__क्रमce u32)cpu_to_be32(temp_mac[1]),
 	       fep->hwp + FEC_ADDR_HIGH);
 
-	/* Clear any outstanding interrupt, except MDIO. */
-	writel((0xffffffff & ~FEC_ENET_MII), fep->hwp + FEC_IEVENT);
+	/* Clear any outstanding पूर्णांकerrupt, except MDIO. */
+	ग_लिखोl((0xffffffff & ~FEC_ENET_MII), fep->hwp + FEC_IEVENT);
 
 	fec_enet_bd_init(ndev);
 
@@ -983,69 +984,69 @@ fec_restart(struct net_device *ndev)
 	fec_enet_reset_skb(ndev);
 
 	/* Enable MII mode */
-	if (fep->full_duplex == DUPLEX_FULL) {
+	अगर (fep->full_duplex == DUPLEX_FULL) अणु
 		/* FD enable */
-		writel(0x04, fep->hwp + FEC_X_CNTRL);
-	} else {
+		ग_लिखोl(0x04, fep->hwp + FEC_X_CNTRL);
+	पूर्ण अन्यथा अणु
 		/* No Rcv on Xmit */
 		rcntl |= 0x02;
-		writel(0x0, fep->hwp + FEC_X_CNTRL);
-	}
+		ग_लिखोl(0x0, fep->hwp + FEC_X_CNTRL);
+	पूर्ण
 
 	/* Set MII speed */
-	writel(fep->phy_speed, fep->hwp + FEC_MII_SPEED);
+	ग_लिखोl(fep->phy_speed, fep->hwp + FEC_MII_SPEED);
 
-#if !defined(CONFIG_M5272)
-	if (fep->quirks & FEC_QUIRK_HAS_RACC) {
-		u32 val = readl(fep->hwp + FEC_RACC);
+#अगर !defined(CONFIG_M5272)
+	अगर (fep->quirks & FEC_QUIRK_HAS_RACC) अणु
+		u32 val = पढ़ोl(fep->hwp + FEC_RACC);
 
 		/* align IP header */
 		val |= FEC_RACC_SHIFT16;
-		if (fep->csum_flags & FLAG_RX_CSUM_ENABLED)
+		अगर (fep->csum_flags & FLAG_RX_CSUM_ENABLED)
 			/* set RX checksum */
 			val |= FEC_RACC_OPTIONS;
-		else
+		अन्यथा
 			val &= ~FEC_RACC_OPTIONS;
-		writel(val, fep->hwp + FEC_RACC);
-		writel(PKT_MAXBUF_SIZE, fep->hwp + FEC_FTRL);
-	}
-#endif
+		ग_लिखोl(val, fep->hwp + FEC_RACC);
+		ग_लिखोl(PKT_MAXBUF_SIZE, fep->hwp + FEC_FTRL);
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
-	 * The phy interface and speed need to get configured
-	 * differently on enet-mac.
+	 * The phy पूर्णांकerface and speed need to get configured
+	 * dअगरferently on enet-mac.
 	 */
-	if (fep->quirks & FEC_QUIRK_ENET_MAC) {
+	अगर (fep->quirks & FEC_QUIRK_ENET_MAC) अणु
 		/* Enable flow control and length check */
 		rcntl |= 0x40000000 | 0x00000020;
 
 		/* RGMII, RMII or MII */
-		if (fep->phy_interface == PHY_INTERFACE_MODE_RGMII ||
-		    fep->phy_interface == PHY_INTERFACE_MODE_RGMII_ID ||
-		    fep->phy_interface == PHY_INTERFACE_MODE_RGMII_RXID ||
-		    fep->phy_interface == PHY_INTERFACE_MODE_RGMII_TXID)
+		अगर (fep->phy_पूर्णांकerface == PHY_INTERFACE_MODE_RGMII ||
+		    fep->phy_पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_ID ||
+		    fep->phy_पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_RXID ||
+		    fep->phy_पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_TXID)
 			rcntl |= (1 << 6);
-		else if (fep->phy_interface == PHY_INTERFACE_MODE_RMII)
+		अन्यथा अगर (fep->phy_पूर्णांकerface == PHY_INTERFACE_MODE_RMII)
 			rcntl |= (1 << 8);
-		else
+		अन्यथा
 			rcntl &= ~(1 << 8);
 
 		/* 1G, 100M or 10M */
-		if (ndev->phydev) {
-			if (ndev->phydev->speed == SPEED_1000)
+		अगर (ndev->phydev) अणु
+			अगर (ndev->phydev->speed == SPEED_1000)
 				ecntl |= (1 << 5);
-			else if (ndev->phydev->speed == SPEED_100)
+			अन्यथा अगर (ndev->phydev->speed == SPEED_100)
 				rcntl &= ~(1 << 9);
-			else
+			अन्यथा
 				rcntl |= (1 << 9);
-		}
-	} else {
-#ifdef FEC_MIIGSK_ENR
-		if (fep->quirks & FEC_QUIRK_USE_GASKET) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+#अगर_घोषित FEC_MIIGSK_ENR
+		अगर (fep->quirks & FEC_QUIRK_USE_GASKET) अणु
 			u32 cfgr;
-			/* disable the gasket and wait */
-			writel(0, fep->hwp + FEC_MIIGSK_ENR);
-			while (readl(fep->hwp + FEC_MIIGSK_ENR) & 4)
+			/* disable the gasket and रुको */
+			ग_लिखोl(0, fep->hwp + FEC_MIIGSK_ENR);
+			जबतक (पढ़ोl(fep->hwp + FEC_MIIGSK_ENR) & 4)
 				udelay(1);
 
 			/*
@@ -1053,199 +1054,199 @@ fec_restart(struct net_device *ndev)
 			 *   RMII, 50 MHz, no loopback, no echo
 			 *   MII, 25 MHz, no loopback, no echo
 			 */
-			cfgr = (fep->phy_interface == PHY_INTERFACE_MODE_RMII)
+			cfgr = (fep->phy_पूर्णांकerface == PHY_INTERFACE_MODE_RMII)
 				? BM_MIIGSK_CFGR_RMII : BM_MIIGSK_CFGR_MII;
-			if (ndev->phydev && ndev->phydev->speed == SPEED_10)
+			अगर (ndev->phydev && ndev->phydev->speed == SPEED_10)
 				cfgr |= BM_MIIGSK_CFGR_FRCONT_10M;
-			writel(cfgr, fep->hwp + FEC_MIIGSK_CFGR);
+			ग_लिखोl(cfgr, fep->hwp + FEC_MIIGSK_CFGR);
 
 			/* re-enable the gasket */
-			writel(2, fep->hwp + FEC_MIIGSK_ENR);
-		}
-#endif
-	}
+			ग_लिखोl(2, fep->hwp + FEC_MIIGSK_ENR);
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
-#if !defined(CONFIG_M5272)
-	/* enable pause frame*/
-	if ((fep->pause_flag & FEC_PAUSE_FLAG_ENABLE) ||
-	    ((fep->pause_flag & FEC_PAUSE_FLAG_AUTONEG) &&
-	     ndev->phydev && ndev->phydev->pause)) {
+#अगर !defined(CONFIG_M5272)
+	/* enable छोड़ो frame*/
+	अगर ((fep->छोड़ो_flag & FEC_PAUSE_FLAG_ENABLE) ||
+	    ((fep->छोड़ो_flag & FEC_PAUSE_FLAG_AUTONEG) &&
+	     ndev->phydev && ndev->phydev->छोड़ो)) अणु
 		rcntl |= FEC_ENET_FCE;
 
 		/* set FIFO threshold parameter to reduce overrun */
-		writel(FEC_ENET_RSEM_V, fep->hwp + FEC_R_FIFO_RSEM);
-		writel(FEC_ENET_RSFL_V, fep->hwp + FEC_R_FIFO_RSFL);
-		writel(FEC_ENET_RAEM_V, fep->hwp + FEC_R_FIFO_RAEM);
-		writel(FEC_ENET_RAFL_V, fep->hwp + FEC_R_FIFO_RAFL);
+		ग_लिखोl(FEC_ENET_RSEM_V, fep->hwp + FEC_R_FIFO_RSEM);
+		ग_लिखोl(FEC_ENET_RSFL_V, fep->hwp + FEC_R_FIFO_RSFL);
+		ग_लिखोl(FEC_ENET_RAEM_V, fep->hwp + FEC_R_FIFO_RAEM);
+		ग_लिखोl(FEC_ENET_RAFL_V, fep->hwp + FEC_R_FIFO_RAFL);
 
 		/* OPD */
-		writel(FEC_ENET_OPD_V, fep->hwp + FEC_OPD);
-	} else {
+		ग_लिखोl(FEC_ENET_OPD_V, fep->hwp + FEC_OPD);
+	पूर्ण अन्यथा अणु
 		rcntl &= ~FEC_ENET_FCE;
-	}
-#endif /* !defined(CONFIG_M5272) */
+	पूर्ण
+#पूर्ण_अगर /* !defined(CONFIG_M5272) */
 
-	writel(rcntl, fep->hwp + FEC_R_CNTRL);
+	ग_लिखोl(rcntl, fep->hwp + FEC_R_CNTRL);
 
 	/* Setup multicast filter. */
 	set_multicast_list(ndev);
-#ifndef CONFIG_M5272
-	writel(0, fep->hwp + FEC_HASH_TABLE_HIGH);
-	writel(0, fep->hwp + FEC_HASH_TABLE_LOW);
-#endif
+#अगर_अघोषित CONFIG_M5272
+	ग_लिखोl(0, fep->hwp + FEC_HASH_TABLE_HIGH);
+	ग_लिखोl(0, fep->hwp + FEC_HASH_TABLE_LOW);
+#पूर्ण_अगर
 
-	if (fep->quirks & FEC_QUIRK_ENET_MAC) {
+	अगर (fep->quirks & FEC_QUIRK_ENET_MAC) अणु
 		/* enable ENET endian swap */
 		ecntl |= (1 << 8);
-		/* enable ENET store and forward mode */
-		writel(1 << 8, fep->hwp + FEC_X_WMRK);
-	}
+		/* enable ENET store and क्रमward mode */
+		ग_लिखोl(1 << 8, fep->hwp + FEC_X_WMRK);
+	पूर्ण
 
-	if (fep->bufdesc_ex)
+	अगर (fep->bufdesc_ex)
 		ecntl |= (1 << 4);
 
-#ifndef CONFIG_M5272
+#अगर_अघोषित CONFIG_M5272
 	/* Enable the MIB statistic event counters */
-	writel(0 << 31, fep->hwp + FEC_MIB_CTRLSTAT);
-#endif
+	ग_लिखोl(0 << 31, fep->hwp + FEC_MIB_CTRLSTAT);
+#पूर्ण_अगर
 
 	/* And last, enable the transmit and receive processing */
-	writel(ecntl, fep->hwp + FEC_ECNTRL);
+	ग_लिखोl(ecntl, fep->hwp + FEC_ECNTRL);
 	fec_enet_active_rxring(ndev);
 
-	if (fep->bufdesc_ex)
+	अगर (fep->bufdesc_ex)
 		fec_ptp_start_cyclecounter(ndev);
 
-	/* Enable interrupts we wish to service */
-	if (fep->link)
-		writel(FEC_DEFAULT_IMASK, fep->hwp + FEC_IMASK);
-	else
-		writel(0, fep->hwp + FEC_IMASK);
+	/* Enable पूर्णांकerrupts we wish to service */
+	अगर (fep->link)
+		ग_लिखोl(FEC_DEFAULT_IMASK, fep->hwp + FEC_IMASK);
+	अन्यथा
+		ग_लिखोl(0, fep->hwp + FEC_IMASK);
 
-	/* Init the interrupt coalescing */
+	/* Init the पूर्णांकerrupt coalescing */
 	fec_enet_itr_coal_init(ndev);
 
-}
+पूर्ण
 
-static void fec_enet_stop_mode(struct fec_enet_private *fep, bool enabled)
-{
-	struct fec_platform_data *pdata = fep->pdev->dev.platform_data;
-	struct fec_stop_mode_gpr *stop_gpr = &fep->stop_gpr;
+अटल व्योम fec_enet_stop_mode(काष्ठा fec_enet_निजी *fep, bool enabled)
+अणु
+	काष्ठा fec_platक्रमm_data *pdata = fep->pdev->dev.platक्रमm_data;
+	काष्ठा fec_stop_mode_gpr *stop_gpr = &fep->stop_gpr;
 
-	if (stop_gpr->gpr) {
-		if (enabled)
+	अगर (stop_gpr->gpr) अणु
+		अगर (enabled)
 			regmap_update_bits(stop_gpr->gpr, stop_gpr->reg,
 					   BIT(stop_gpr->bit),
 					   BIT(stop_gpr->bit));
-		else
+		अन्यथा
 			regmap_update_bits(stop_gpr->gpr, stop_gpr->reg,
 					   BIT(stop_gpr->bit), 0);
-	} else if (pdata && pdata->sleep_mode_enable) {
+	पूर्ण अन्यथा अगर (pdata && pdata->sleep_mode_enable) अणु
 		pdata->sleep_mode_enable(enabled);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-fec_stop(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	u32 rmii_mode = readl(fep->hwp + FEC_R_CNTRL) & (1 << 8);
+अटल व्योम
+fec_stop(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	u32 rmii_mode = पढ़ोl(fep->hwp + FEC_R_CNTRL) & (1 << 8);
 	u32 val;
 
 	/* We cannot expect a graceful transmit stop without link !!! */
-	if (fep->link) {
-		writel(1, fep->hwp + FEC_X_CNTRL); /* Graceful transmit stop */
+	अगर (fep->link) अणु
+		ग_लिखोl(1, fep->hwp + FEC_X_CNTRL); /* Graceful transmit stop */
 		udelay(10);
-		if (!(readl(fep->hwp + FEC_IEVENT) & FEC_ENET_GRA))
+		अगर (!(पढ़ोl(fep->hwp + FEC_IEVENT) & FEC_ENET_GRA))
 			netdev_err(ndev, "Graceful transmit stop did not complete!\n");
-	}
+	पूर्ण
 
-	/* Whack a reset.  We should wait for this.
+	/* Whack a reset.  We should रुको क्रम this.
 	 * For i.MX6SX SOC, enet use AXI bus, we use disable MAC
 	 * instead of reset MAC itself.
 	 */
-	if (!(fep->wol_flag & FEC_WOL_FLAG_SLEEP_ON)) {
-		if (fep->quirks & FEC_QUIRK_HAS_AVB) {
-			writel(0, fep->hwp + FEC_ECNTRL);
-		} else {
-			writel(1, fep->hwp + FEC_ECNTRL);
+	अगर (!(fep->wol_flag & FEC_WOL_FLAG_SLEEP_ON)) अणु
+		अगर (fep->quirks & FEC_QUIRK_HAS_AVB) अणु
+			ग_लिखोl(0, fep->hwp + FEC_ECNTRL);
+		पूर्ण अन्यथा अणु
+			ग_लिखोl(1, fep->hwp + FEC_ECNTRL);
 			udelay(10);
-		}
-		writel(FEC_DEFAULT_IMASK, fep->hwp + FEC_IMASK);
-	} else {
-		writel(FEC_DEFAULT_IMASK | FEC_ENET_WAKEUP, fep->hwp + FEC_IMASK);
-		val = readl(fep->hwp + FEC_ECNTRL);
+		पूर्ण
+		ग_लिखोl(FEC_DEFAULT_IMASK, fep->hwp + FEC_IMASK);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(FEC_DEFAULT_IMASK | FEC_ENET_WAKEUP, fep->hwp + FEC_IMASK);
+		val = पढ़ोl(fep->hwp + FEC_ECNTRL);
 		val |= (FEC_ECR_MAGICEN | FEC_ECR_SLEEP);
-		writel(val, fep->hwp + FEC_ECNTRL);
+		ग_लिखोl(val, fep->hwp + FEC_ECNTRL);
 		fec_enet_stop_mode(fep, true);
-	}
-	writel(fep->phy_speed, fep->hwp + FEC_MII_SPEED);
+	पूर्ण
+	ग_लिखोl(fep->phy_speed, fep->hwp + FEC_MII_SPEED);
 
-	/* We have to keep ENET enabled to have MII interrupt stay working */
-	if (fep->quirks & FEC_QUIRK_ENET_MAC &&
-		!(fep->wol_flag & FEC_WOL_FLAG_SLEEP_ON)) {
-		writel(2, fep->hwp + FEC_ECNTRL);
-		writel(rmii_mode, fep->hwp + FEC_R_CNTRL);
-	}
-}
+	/* We have to keep ENET enabled to have MII पूर्णांकerrupt stay working */
+	अगर (fep->quirks & FEC_QUIRK_ENET_MAC &&
+		!(fep->wol_flag & FEC_WOL_FLAG_SLEEP_ON)) अणु
+		ग_लिखोl(2, fep->hwp + FEC_ECNTRL);
+		ग_लिखोl(rmii_mode, fep->hwp + FEC_R_CNTRL);
+	पूर्ण
+पूर्ण
 
 
-static void
-fec_timeout(struct net_device *ndev, unsigned int txqueue)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल व्योम
+fec_समयout(काष्ठा net_device *ndev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 
 	fec_dump(ndev);
 
 	ndev->stats.tx_errors++;
 
-	schedule_work(&fep->tx_timeout_work);
-}
+	schedule_work(&fep->tx_समयout_work);
+पूर्ण
 
-static void fec_enet_timeout_work(struct work_struct *work)
-{
-	struct fec_enet_private *fep =
-		container_of(work, struct fec_enet_private, tx_timeout_work);
-	struct net_device *ndev = fep->netdev;
+अटल व्योम fec_enet_समयout_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fec_enet_निजी *fep =
+		container_of(work, काष्ठा fec_enet_निजी, tx_समयout_work);
+	काष्ठा net_device *ndev = fep->netdev;
 
 	rtnl_lock();
-	if (netif_device_present(ndev) || netif_running(ndev)) {
+	अगर (netअगर_device_present(ndev) || netअगर_running(ndev)) अणु
 		napi_disable(&fep->napi);
-		netif_tx_lock_bh(ndev);
+		netअगर_tx_lock_bh(ndev);
 		fec_restart(ndev);
-		netif_tx_wake_all_queues(ndev);
-		netif_tx_unlock_bh(ndev);
+		netअगर_tx_wake_all_queues(ndev);
+		netअगर_tx_unlock_bh(ndev);
 		napi_enable(&fep->napi);
-	}
+	पूर्ण
 	rtnl_unlock();
-}
+पूर्ण
 
-static void
-fec_enet_hwtstamp(struct fec_enet_private *fep, unsigned ts,
-	struct skb_shared_hwtstamps *hwtstamps)
-{
-	unsigned long flags;
+अटल व्योम
+fec_enet_hwtstamp(काष्ठा fec_enet_निजी *fep, अचिन्हित ts,
+	काष्ठा skb_shared_hwtstamps *hwtstamps)
+अणु
+	अचिन्हित दीर्घ flags;
 	u64 ns;
 
-	spin_lock_irqsave(&fep->tmreg_lock, flags);
-	ns = timecounter_cyc2time(&fep->tc, ts);
-	spin_unlock_irqrestore(&fep->tmreg_lock, flags);
+	spin_lock_irqsave(&fep->पंचांगreg_lock, flags);
+	ns = समयcounter_cyc2समय(&fep->tc, ts);
+	spin_unlock_irqrestore(&fep->पंचांगreg_lock, flags);
 
-	memset(hwtstamps, 0, sizeof(*hwtstamps));
-	hwtstamps->hwtstamp = ns_to_ktime(ns);
-}
+	स_रखो(hwtstamps, 0, माप(*hwtstamps));
+	hwtstamps->hwtstamp = ns_to_kसमय(ns);
+पूर्ण
 
-static void
-fec_enet_tx_queue(struct net_device *ndev, u16 queue_id)
-{
-	struct	fec_enet_private *fep;
-	struct bufdesc *bdp;
-	unsigned short status;
-	struct	sk_buff	*skb;
-	struct fec_enet_priv_tx_q *txq;
-	struct netdev_queue *nq;
-	int	index = 0;
-	int	entries_free;
+अटल व्योम
+fec_enet_tx_queue(काष्ठा net_device *ndev, u16 queue_id)
+अणु
+	काष्ठा	fec_enet_निजी *fep;
+	काष्ठा bufdesc *bdp;
+	अचिन्हित लघु status;
+	काष्ठा	sk_buff	*skb;
+	काष्ठा fec_enet_priv_tx_q *txq;
+	काष्ठा netdev_queue *nq;
+	पूर्णांक	index = 0;
+	पूर्णांक	entries_मुक्त;
 
 	fep = netdev_priv(ndev);
 
@@ -1257,216 +1258,216 @@ fec_enet_tx_queue(struct net_device *ndev, u16 queue_id)
 	/* get next bdp of dirty_tx */
 	bdp = fec_enet_get_nextdesc(bdp, &txq->bd);
 
-	while (bdp != READ_ONCE(txq->bd.cur)) {
+	जबतक (bdp != READ_ONCE(txq->bd.cur)) अणु
 		/* Order the load of bd.cur and cbd_sc */
 		rmb();
 		status = fec16_to_cpu(READ_ONCE(bdp->cbd_sc));
-		if (status & BD_ENET_TX_READY)
-			break;
+		अगर (status & BD_ENET_TX_READY)
+			अवरोध;
 
 		index = fec_enet_get_bd_index(bdp, &txq->bd);
 
 		skb = txq->tx_skbuff[index];
-		txq->tx_skbuff[index] = NULL;
-		if (!IS_TSO_HEADER(txq, fec32_to_cpu(bdp->cbd_bufaddr)))
+		txq->tx_skbuff[index] = शून्य;
+		अगर (!IS_TSO_HEADER(txq, fec32_to_cpu(bdp->cbd_bufaddr)))
 			dma_unmap_single(&fep->pdev->dev,
 					 fec32_to_cpu(bdp->cbd_bufaddr),
 					 fec16_to_cpu(bdp->cbd_datlen),
 					 DMA_TO_DEVICE);
 		bdp->cbd_bufaddr = cpu_to_fec32(0);
-		if (!skb)
-			goto skb_done;
+		अगर (!skb)
+			जाओ skb_करोne;
 
-		/* Check for errors. */
-		if (status & (BD_ENET_TX_HB | BD_ENET_TX_LC |
+		/* Check क्रम errors. */
+		अगर (status & (BD_ENET_TX_HB | BD_ENET_TX_LC |
 				   BD_ENET_TX_RL | BD_ENET_TX_UN |
-				   BD_ENET_TX_CSL)) {
+				   BD_ENET_TX_CSL)) अणु
 			ndev->stats.tx_errors++;
-			if (status & BD_ENET_TX_HB)  /* No heartbeat */
+			अगर (status & BD_ENET_TX_HB)  /* No heartbeat */
 				ndev->stats.tx_heartbeat_errors++;
-			if (status & BD_ENET_TX_LC)  /* Late collision */
-				ndev->stats.tx_window_errors++;
-			if (status & BD_ENET_TX_RL)  /* Retrans limit */
-				ndev->stats.tx_aborted_errors++;
-			if (status & BD_ENET_TX_UN)  /* Underrun */
-				ndev->stats.tx_fifo_errors++;
-			if (status & BD_ENET_TX_CSL) /* Carrier lost */
+			अगर (status & BD_ENET_TX_LC)  /* Late collision */
+				ndev->stats.tx_winकरोw_errors++;
+			अगर (status & BD_ENET_TX_RL)  /* Retrans limit */
+				ndev->stats.tx_पातed_errors++;
+			अगर (status & BD_ENET_TX_UN)  /* Underrun */
+				ndev->stats.tx_fअगरo_errors++;
+			अगर (status & BD_ENET_TX_CSL) /* Carrier lost */
 				ndev->stats.tx_carrier_errors++;
-		} else {
+		पूर्ण अन्यथा अणु
 			ndev->stats.tx_packets++;
 			ndev->stats.tx_bytes += skb->len;
-		}
+		पूर्ण
 
-		/* NOTE: SKBTX_IN_PROGRESS being set does not imply it's we who
-		 * are to time stamp the packet, so we still need to check time
+		/* NOTE: SKBTX_IN_PROGRESS being set करोes not imply it's we who
+		 * are to समय stamp the packet, so we still need to check समय
 		 * stamping enabled flag.
 		 */
-		if (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_IN_PROGRESS &&
+		अगर (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_IN_PROGRESS &&
 			     fep->hwts_tx_en) &&
-		    fep->bufdesc_ex) {
-			struct skb_shared_hwtstamps shhwtstamps;
-			struct bufdesc_ex *ebdp = (struct bufdesc_ex *)bdp;
+		    fep->bufdesc_ex) अणु
+			काष्ठा skb_shared_hwtstamps shhwtstamps;
+			काष्ठा bufdesc_ex *ebdp = (काष्ठा bufdesc_ex *)bdp;
 
 			fec_enet_hwtstamp(fep, fec32_to_cpu(ebdp->ts), &shhwtstamps);
 			skb_tstamp_tx(skb, &shhwtstamps);
-		}
+		पूर्ण
 
 		/* Deferred means some collisions occurred during transmit,
 		 * but we eventually sent the packet OK.
 		 */
-		if (status & BD_ENET_TX_DEF)
+		अगर (status & BD_ENET_TX_DEF)
 			ndev->stats.collisions++;
 
 		/* Free the sk buffer associated with this last transmit */
-		dev_kfree_skb_any(skb);
-skb_done:
-		/* Make sure the update to bdp and tx_skbuff are performed
-		 * before dirty_tx
+		dev_kमुक्त_skb_any(skb);
+skb_करोne:
+		/* Make sure the update to bdp and tx_skbuff are perक्रमmed
+		 * beक्रमe dirty_tx
 		 */
 		wmb();
 		txq->dirty_tx = bdp;
 
-		/* Update pointer to next buffer descriptor to be transmitted */
+		/* Update poपूर्णांकer to next buffer descriptor to be transmitted */
 		bdp = fec_enet_get_nextdesc(bdp, &txq->bd);
 
-		/* Since we have freed up a buffer, the ring is no longer full
+		/* Since we have मुक्तd up a buffer, the ring is no दीर्घer full
 		 */
-		if (netif_tx_queue_stopped(nq)) {
-			entries_free = fec_enet_get_free_txdesc_num(txq);
-			if (entries_free >= txq->tx_wake_threshold)
-				netif_tx_wake_queue(nq);
-		}
-	}
+		अगर (netअगर_tx_queue_stopped(nq)) अणु
+			entries_मुक्त = fec_enet_get_मुक्त_txdesc_num(txq);
+			अगर (entries_मुक्त >= txq->tx_wake_threshold)
+				netअगर_tx_wake_queue(nq);
+		पूर्ण
+	पूर्ण
 
 	/* ERR006358: Keep the transmitter going */
-	if (bdp != txq->bd.cur &&
-	    readl(txq->bd.reg_desc_active) == 0)
-		writel(0, txq->bd.reg_desc_active);
-}
+	अगर (bdp != txq->bd.cur &&
+	    पढ़ोl(txq->bd.reg_desc_active) == 0)
+		ग_लिखोl(0, txq->bd.reg_desc_active);
+पूर्ण
 
-static void fec_enet_tx(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int i;
+अटल व्योम fec_enet_tx(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक i;
 
 	/* Make sure that AVB queues are processed first. */
-	for (i = fep->num_tx_queues - 1; i >= 0; i--)
+	क्रम (i = fep->num_tx_queues - 1; i >= 0; i--)
 		fec_enet_tx_queue(ndev, i);
-}
+पूर्ण
 
-static int
-fec_enet_new_rxbdp(struct net_device *ndev, struct bufdesc *bdp, struct sk_buff *skb)
-{
-	struct  fec_enet_private *fep = netdev_priv(ndev);
-	int off;
+अटल पूर्णांक
+fec_enet_new_rxbdp(काष्ठा net_device *ndev, काष्ठा bufdesc *bdp, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा  fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक off;
 
-	off = ((unsigned long)skb->data) & fep->rx_align;
-	if (off)
+	off = ((अचिन्हित दीर्घ)skb->data) & fep->rx_align;
+	अगर (off)
 		skb_reserve(skb, fep->rx_align + 1 - off);
 
 	bdp->cbd_bufaddr = cpu_to_fec32(dma_map_single(&fep->pdev->dev, skb->data, FEC_ENET_RX_FRSIZE - fep->rx_align, DMA_FROM_DEVICE));
-	if (dma_mapping_error(&fep->pdev->dev, fec32_to_cpu(bdp->cbd_bufaddr))) {
-		if (net_ratelimit())
+	अगर (dma_mapping_error(&fep->pdev->dev, fec32_to_cpu(bdp->cbd_bufaddr))) अणु
+		अगर (net_ratelimit())
 			netdev_err(ndev, "Rx DMA memory map failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool fec_enet_copybreak(struct net_device *ndev, struct sk_buff **skb,
-			       struct bufdesc *bdp, u32 length, bool swap)
-{
-	struct  fec_enet_private *fep = netdev_priv(ndev);
-	struct sk_buff *new_skb;
+अटल bool fec_enet_copyअवरोध(काष्ठा net_device *ndev, काष्ठा sk_buff **skb,
+			       काष्ठा bufdesc *bdp, u32 length, bool swap)
+अणु
+	काष्ठा  fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा sk_buff *new_skb;
 
-	if (length > fep->rx_copybreak)
-		return false;
+	अगर (length > fep->rx_copyअवरोध)
+		वापस false;
 
 	new_skb = netdev_alloc_skb(ndev, length);
-	if (!new_skb)
-		return false;
+	अगर (!new_skb)
+		वापस false;
 
-	dma_sync_single_for_cpu(&fep->pdev->dev,
+	dma_sync_single_क्रम_cpu(&fep->pdev->dev,
 				fec32_to_cpu(bdp->cbd_bufaddr),
 				FEC_ENET_RX_FRSIZE - fep->rx_align,
 				DMA_FROM_DEVICE);
-	if (!swap)
-		memcpy(new_skb->data, (*skb)->data, length);
-	else
+	अगर (!swap)
+		स_नकल(new_skb->data, (*skb)->data, length);
+	अन्यथा
 		swap_buffer2(new_skb->data, (*skb)->data, length);
 	*skb = new_skb;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* During a receive, the bd_rx.cur points to the current incoming buffer.
- * When we update through the ring, if the next incoming buffer has
- * not been given to the system, we just set the empty indicator,
+/* During a receive, the bd_rx.cur poपूर्णांकs to the current incoming buffer.
+ * When we update through the ring, अगर the next incoming buffer has
+ * not been given to the प्रणाली, we just set the empty indicator,
  * effectively tossing the packet.
  */
-static int
-fec_enet_rx_queue(struct net_device *ndev, int budget, u16 queue_id)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct fec_enet_priv_rx_q *rxq;
-	struct bufdesc *bdp;
-	unsigned short status;
-	struct  sk_buff *skb_new = NULL;
-	struct  sk_buff *skb;
-	ushort	pkt_len;
+अटल पूर्णांक
+fec_enet_rx_queue(काष्ठा net_device *ndev, पूर्णांक budget, u16 queue_id)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा fec_enet_priv_rx_q *rxq;
+	काष्ठा bufdesc *bdp;
+	अचिन्हित लघु status;
+	काष्ठा  sk_buff *skb_new = शून्य;
+	काष्ठा  sk_buff *skb;
+	uलघु	pkt_len;
 	__u8 *data;
-	int	pkt_received = 0;
-	struct	bufdesc_ex *ebdp = NULL;
+	पूर्णांक	pkt_received = 0;
+	काष्ठा	bufdesc_ex *ebdp = शून्य;
 	bool	vlan_packet_rcvd = false;
 	u16	vlan_tag;
-	int	index = 0;
-	bool	is_copybreak;
+	पूर्णांक	index = 0;
+	bool	is_copyअवरोध;
 	bool	need_swap = fep->quirks & FEC_QUIRK_SWAP_FRAME;
 
-#ifdef CONFIG_M532x
+#अगर_घोषित CONFIG_M532x
 	flush_cache_all();
-#endif
+#पूर्ण_अगर
 	rxq = fep->rx_queue[queue_id];
 
-	/* First, grab all of the stats for the incoming packet.
-	 * These get messed up if we get called due to a busy condition.
+	/* First, grab all of the stats क्रम the incoming packet.
+	 * These get messed up अगर we get called due to a busy condition.
 	 */
 	bdp = rxq->bd.cur;
 
-	while (!((status = fec16_to_cpu(bdp->cbd_sc)) & BD_ENET_RX_EMPTY)) {
+	जबतक (!((status = fec16_to_cpu(bdp->cbd_sc)) & BD_ENET_RX_EMPTY)) अणु
 
-		if (pkt_received >= budget)
-			break;
+		अगर (pkt_received >= budget)
+			अवरोध;
 		pkt_received++;
 
-		writel(FEC_ENET_RXF, fep->hwp + FEC_IEVENT);
+		ग_लिखोl(FEC_ENET_RXF, fep->hwp + FEC_IEVENT);
 
-		/* Check for errors. */
+		/* Check क्रम errors. */
 		status ^= BD_ENET_RX_LAST;
-		if (status & (BD_ENET_RX_LG | BD_ENET_RX_SH | BD_ENET_RX_NO |
+		अगर (status & (BD_ENET_RX_LG | BD_ENET_RX_SH | BD_ENET_RX_NO |
 			   BD_ENET_RX_CR | BD_ENET_RX_OV | BD_ENET_RX_LAST |
-			   BD_ENET_RX_CL)) {
+			   BD_ENET_RX_CL)) अणु
 			ndev->stats.rx_errors++;
-			if (status & BD_ENET_RX_OV) {
+			अगर (status & BD_ENET_RX_OV) अणु
 				/* FIFO overrun */
-				ndev->stats.rx_fifo_errors++;
-				goto rx_processing_done;
-			}
-			if (status & (BD_ENET_RX_LG | BD_ENET_RX_SH
-						| BD_ENET_RX_LAST)) {
-				/* Frame too long or too short. */
+				ndev->stats.rx_fअगरo_errors++;
+				जाओ rx_processing_करोne;
+			पूर्ण
+			अगर (status & (BD_ENET_RX_LG | BD_ENET_RX_SH
+						| BD_ENET_RX_LAST)) अणु
+				/* Frame too दीर्घ or too लघु. */
 				ndev->stats.rx_length_errors++;
-				if (status & BD_ENET_RX_LAST)
+				अगर (status & BD_ENET_RX_LAST)
 					netdev_err(ndev, "rcv is not +last\n");
-			}
-			if (status & BD_ENET_RX_CR)	/* CRC Error */
+			पूर्ण
+			अगर (status & BD_ENET_RX_CR)	/* CRC Error */
 				ndev->stats.rx_crc_errors++;
 			/* Report late collisions as a frame error. */
-			if (status & (BD_ENET_RX_NO | BD_ENET_RX_CL))
+			अगर (status & (BD_ENET_RX_NO | BD_ENET_RX_CL))
 				ndev->stats.rx_frame_errors++;
-			goto rx_processing_done;
-		}
+			जाओ rx_processing_करोne;
+		पूर्ण
 
 		/* Process the incoming frame. */
 		ndev->stats.rx_packets++;
@@ -1476,76 +1477,76 @@ fec_enet_rx_queue(struct net_device *ndev, int budget, u16 queue_id)
 		index = fec_enet_get_bd_index(bdp, &rxq->bd);
 		skb = rxq->rx_skbuff[index];
 
-		/* The packet length includes FCS, but we don't want to
+		/* The packet length includes FCS, but we करोn't want to
 		 * include that when passing upstream as it messes up
 		 * bridging applications.
 		 */
-		is_copybreak = fec_enet_copybreak(ndev, &skb, bdp, pkt_len - 4,
+		is_copyअवरोध = fec_enet_copyअवरोध(ndev, &skb, bdp, pkt_len - 4,
 						  need_swap);
-		if (!is_copybreak) {
+		अगर (!is_copyअवरोध) अणु
 			skb_new = netdev_alloc_skb(ndev, FEC_ENET_RX_FRSIZE);
-			if (unlikely(!skb_new)) {
+			अगर (unlikely(!skb_new)) अणु
 				ndev->stats.rx_dropped++;
-				goto rx_processing_done;
-			}
+				जाओ rx_processing_करोne;
+			पूर्ण
 			dma_unmap_single(&fep->pdev->dev,
 					 fec32_to_cpu(bdp->cbd_bufaddr),
 					 FEC_ENET_RX_FRSIZE - fep->rx_align,
 					 DMA_FROM_DEVICE);
-		}
+		पूर्ण
 
 		prefetch(skb->data - NET_IP_ALIGN);
 		skb_put(skb, pkt_len - 4);
 		data = skb->data;
 
-		if (!is_copybreak && need_swap)
+		अगर (!is_copyअवरोध && need_swap)
 			swap_buffer(data, pkt_len);
 
-#if !defined(CONFIG_M5272)
-		if (fep->quirks & FEC_QUIRK_HAS_RACC)
-			data = skb_pull_inline(skb, 2);
-#endif
+#अगर !defined(CONFIG_M5272)
+		अगर (fep->quirks & FEC_QUIRK_HAS_RACC)
+			data = skb_pull_अंतरभूत(skb, 2);
+#पूर्ण_अगर
 
 		/* Extract the enhanced buffer descriptor */
-		ebdp = NULL;
-		if (fep->bufdesc_ex)
-			ebdp = (struct bufdesc_ex *)bdp;
+		ebdp = शून्य;
+		अगर (fep->bufdesc_ex)
+			ebdp = (काष्ठा bufdesc_ex *)bdp;
 
-		/* If this is a VLAN packet remove the VLAN Tag */
+		/* If this is a VLAN packet हटाओ the VLAN Tag */
 		vlan_packet_rcvd = false;
-		if ((ndev->features & NETIF_F_HW_VLAN_CTAG_RX) &&
+		अगर ((ndev->features & NETIF_F_HW_VLAN_CTAG_RX) &&
 		    fep->bufdesc_ex &&
-		    (ebdp->cbd_esc & cpu_to_fec32(BD_ENET_RX_VLAN))) {
-			/* Push and remove the vlan tag */
-			struct vlan_hdr *vlan_header =
-					(struct vlan_hdr *) (data + ETH_HLEN);
+		    (ebdp->cbd_esc & cpu_to_fec32(BD_ENET_RX_VLAN))) अणु
+			/* Push and हटाओ the vlan tag */
+			काष्ठा vlan_hdr *vlan_header =
+					(काष्ठा vlan_hdr *) (data + ETH_HLEN);
 			vlan_tag = ntohs(vlan_header->h_vlan_TCI);
 
 			vlan_packet_rcvd = true;
 
-			memmove(skb->data + VLAN_HLEN, data, ETH_ALEN * 2);
+			स_हटाओ(skb->data + VLAN_HLEN, data, ETH_ALEN * 2);
 			skb_pull(skb, VLAN_HLEN);
-		}
+		पूर्ण
 
 		skb->protocol = eth_type_trans(skb, ndev);
 
-		/* Get receive timestamp from the skb */
-		if (fep->hwts_rx_en && fep->bufdesc_ex)
+		/* Get receive बारtamp from the skb */
+		अगर (fep->hwts_rx_en && fep->bufdesc_ex)
 			fec_enet_hwtstamp(fep, fec32_to_cpu(ebdp->ts),
 					  skb_hwtstamps(skb));
 
-		if (fep->bufdesc_ex &&
-		    (fep->csum_flags & FLAG_RX_CSUM_ENABLED)) {
-			if (!(ebdp->cbd_esc & cpu_to_fec32(FLAG_RX_CSUM_ERROR))) {
-				/* don't check it */
+		अगर (fep->bufdesc_ex &&
+		    (fep->csum_flags & FLAG_RX_CSUM_ENABLED)) अणु
+			अगर (!(ebdp->cbd_esc & cpu_to_fec32(FLAG_RX_CSUM_ERROR))) अणु
+				/* करोn't check it */
 				skb->ip_summed = CHECKSUM_UNNECESSARY;
-			} else {
-				skb_checksum_none_assert(skb);
-			}
-		}
+			पूर्ण अन्यथा अणु
+				skb_checksum_none_निश्चित(skb);
+			पूर्ण
+		पूर्ण
 
 		/* Handle received VLAN packets */
-		if (vlan_packet_rcvd)
+		अगर (vlan_packet_rcvd)
 			__vlan_hwaccel_put_tag(skb,
 					       htons(ETH_P_8021Q),
 					       vlan_tag);
@@ -1553,125 +1554,125 @@ fec_enet_rx_queue(struct net_device *ndev, int budget, u16 queue_id)
 		skb_record_rx_queue(skb, queue_id);
 		napi_gro_receive(&fep->napi, skb);
 
-		if (is_copybreak) {
-			dma_sync_single_for_device(&fep->pdev->dev,
+		अगर (is_copyअवरोध) अणु
+			dma_sync_single_क्रम_device(&fep->pdev->dev,
 						   fec32_to_cpu(bdp->cbd_bufaddr),
 						   FEC_ENET_RX_FRSIZE - fep->rx_align,
 						   DMA_FROM_DEVICE);
-		} else {
+		पूर्ण अन्यथा अणु
 			rxq->rx_skbuff[index] = skb_new;
 			fec_enet_new_rxbdp(ndev, bdp, skb_new);
-		}
+		पूर्ण
 
-rx_processing_done:
-		/* Clear the status flags for this buffer */
+rx_processing_करोne:
+		/* Clear the status flags क्रम this buffer */
 		status &= ~BD_ENET_RX_STATS;
 
 		/* Mark the buffer empty */
 		status |= BD_ENET_RX_EMPTY;
 
-		if (fep->bufdesc_ex) {
-			struct bufdesc_ex *ebdp = (struct bufdesc_ex *)bdp;
+		अगर (fep->bufdesc_ex) अणु
+			काष्ठा bufdesc_ex *ebdp = (काष्ठा bufdesc_ex *)bdp;
 
 			ebdp->cbd_esc = cpu_to_fec32(BD_ENET_RX_INT);
 			ebdp->cbd_prot = 0;
 			ebdp->cbd_bdu = 0;
-		}
+		पूर्ण
 		/* Make sure the updates to rest of the descriptor are
-		 * performed before transferring ownership.
+		 * perक्रमmed beक्रमe transferring ownership.
 		 */
 		wmb();
 		bdp->cbd_sc = cpu_to_fec16(status);
 
-		/* Update BD pointer to next entry */
+		/* Update BD poपूर्णांकer to next entry */
 		bdp = fec_enet_get_nextdesc(bdp, &rxq->bd);
 
-		/* Doing this here will keep the FEC running while we process
+		/* Doing this here will keep the FEC running जबतक we process
 		 * incoming frames.  On a heavily loaded network, we should be
-		 * able to keep up at the expense of system resources.
+		 * able to keep up at the expense of प्रणाली resources.
 		 */
-		writel(0, rxq->bd.reg_desc_active);
-	}
+		ग_लिखोl(0, rxq->bd.reg_desc_active);
+	पूर्ण
 	rxq->bd.cur = bdp;
-	return pkt_received;
-}
+	वापस pkt_received;
+पूर्ण
 
-static int fec_enet_rx(struct net_device *ndev, int budget)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int i, done = 0;
+अटल पूर्णांक fec_enet_rx(काष्ठा net_device *ndev, पूर्णांक budget)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक i, करोne = 0;
 
 	/* Make sure that AVB queues are processed first. */
-	for (i = fep->num_rx_queues - 1; i >= 0; i--)
-		done += fec_enet_rx_queue(ndev, budget - done, i);
+	क्रम (i = fep->num_rx_queues - 1; i >= 0; i--)
+		करोne += fec_enet_rx_queue(ndev, budget - करोne, i);
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-static bool fec_enet_collect_events(struct fec_enet_private *fep)
-{
-	uint int_events;
+अटल bool fec_enet_collect_events(काष्ठा fec_enet_निजी *fep)
+अणु
+	uपूर्णांक पूर्णांक_events;
 
-	int_events = readl(fep->hwp + FEC_IEVENT);
+	पूर्णांक_events = पढ़ोl(fep->hwp + FEC_IEVENT);
 
-	/* Don't clear MDIO events, we poll for those */
-	int_events &= ~FEC_ENET_MII;
+	/* Don't clear MDIO events, we poll क्रम those */
+	पूर्णांक_events &= ~FEC_ENET_MII;
 
-	writel(int_events, fep->hwp + FEC_IEVENT);
+	ग_लिखोl(पूर्णांक_events, fep->hwp + FEC_IEVENT);
 
-	return int_events != 0;
-}
+	वापस पूर्णांक_events != 0;
+पूर्ण
 
-static irqreturn_t
-fec_enet_interrupt(int irq, void *dev_id)
-{
-	struct net_device *ndev = dev_id;
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	irqreturn_t ret = IRQ_NONE;
+अटल irqवापस_t
+fec_enet_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *ndev = dev_id;
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	irqवापस_t ret = IRQ_NONE;
 
-	if (fec_enet_collect_events(fep) && fep->link) {
+	अगर (fec_enet_collect_events(fep) && fep->link) अणु
 		ret = IRQ_HANDLED;
 
-		if (napi_schedule_prep(&fep->napi)) {
-			/* Disable interrupts */
-			writel(0, fep->hwp + FEC_IMASK);
+		अगर (napi_schedule_prep(&fep->napi)) अणु
+			/* Disable पूर्णांकerrupts */
+			ग_लिखोl(0, fep->hwp + FEC_IMASK);
 			__napi_schedule(&fep->napi);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fec_enet_rx_napi(struct napi_struct *napi, int budget)
-{
-	struct net_device *ndev = napi->dev;
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int done = 0;
+अटल पूर्णांक fec_enet_rx_napi(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा net_device *ndev = napi->dev;
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक करोne = 0;
 
-	do {
-		done += fec_enet_rx(ndev, budget - done);
+	करो अणु
+		करोne += fec_enet_rx(ndev, budget - करोne);
 		fec_enet_tx(ndev);
-	} while ((done < budget) && fec_enet_collect_events(fep));
+	पूर्ण जबतक ((करोne < budget) && fec_enet_collect_events(fep));
 
-	if (done < budget) {
-		napi_complete_done(napi, done);
-		writel(FEC_DEFAULT_IMASK, fep->hwp + FEC_IMASK);
-	}
+	अगर (करोne < budget) अणु
+		napi_complete_करोne(napi, करोne);
+		ग_लिखोl(FEC_DEFAULT_IMASK, fep->hwp + FEC_IMASK);
+	पूर्ण
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
 /* ------------------------------------------------------------------------- */
-static int fec_get_mac(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	unsigned char *iap, tmpaddr[ETH_ALEN];
-	int ret;
+अटल पूर्णांक fec_get_mac(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	अचिन्हित अक्षर *iap, पंचांगpaddr[ETH_ALEN];
+	पूर्णांक ret;
 
 	/*
 	 * try to get mac address in following order:
 	 *
-	 * 1) module parameter via kernel command line in form
+	 * 1) module parameter via kernel command line in क्रमm
 	 *    fec.macaddr=0x00,0x04,0x9f,0x01,0x30,0xe0
 	 */
 	iap = macaddr;
@@ -1679,258 +1680,258 @@ static int fec_get_mac(struct net_device *ndev)
 	/*
 	 * 2) from device tree data
 	 */
-	if (!is_valid_ether_addr(iap)) {
-		struct device_node *np = fep->pdev->dev.of_node;
-		if (np) {
-			ret = of_get_mac_address(np, tmpaddr);
-			if (!ret)
-				iap = tmpaddr;
-			else if (ret == -EPROBE_DEFER)
-				return ret;
-		}
-	}
+	अगर (!is_valid_ether_addr(iap)) अणु
+		काष्ठा device_node *np = fep->pdev->dev.of_node;
+		अगर (np) अणु
+			ret = of_get_mac_address(np, पंचांगpaddr);
+			अगर (!ret)
+				iap = पंचांगpaddr;
+			अन्यथा अगर (ret == -EPROBE_DEFER)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * 3) from flash or fuse (via platform data)
+	 * 3) from flash or fuse (via platक्रमm data)
 	 */
-	if (!is_valid_ether_addr(iap)) {
-#ifdef CONFIG_M5272
-		if (FEC_FLASHMAC)
-			iap = (unsigned char *)FEC_FLASHMAC;
-#else
-		struct fec_platform_data *pdata = dev_get_platdata(&fep->pdev->dev);
+	अगर (!is_valid_ether_addr(iap)) अणु
+#अगर_घोषित CONFIG_M5272
+		अगर (FEC_FLASHMAC)
+			iap = (अचिन्हित अक्षर *)FEC_FLASHMAC;
+#अन्यथा
+		काष्ठा fec_platक्रमm_data *pdata = dev_get_platdata(&fep->pdev->dev);
 
-		if (pdata)
-			iap = (unsigned char *)&pdata->mac;
-#endif
-	}
-
-	/*
-	 * 4) FEC mac registers set by bootloader
-	 */
-	if (!is_valid_ether_addr(iap)) {
-		*((__be32 *) &tmpaddr[0]) =
-			cpu_to_be32(readl(fep->hwp + FEC_ADDR_LOW));
-		*((__be16 *) &tmpaddr[4]) =
-			cpu_to_be16(readl(fep->hwp + FEC_ADDR_HIGH) >> 16);
-		iap = &tmpaddr[0];
-	}
+		अगर (pdata)
+			iap = (अचिन्हित अक्षर *)&pdata->mac;
+#पूर्ण_अगर
+	पूर्ण
 
 	/*
-	 * 5) random mac address
+	 * 4) FEC mac रेजिस्टरs set by bootloader
 	 */
-	if (!is_valid_ether_addr(iap)) {
-		/* Report it and use a random ethernet address instead */
+	अगर (!is_valid_ether_addr(iap)) अणु
+		*((__be32 *) &पंचांगpaddr[0]) =
+			cpu_to_be32(पढ़ोl(fep->hwp + FEC_ADDR_LOW));
+		*((__be16 *) &पंचांगpaddr[4]) =
+			cpu_to_be16(पढ़ोl(fep->hwp + FEC_ADDR_HIGH) >> 16);
+		iap = &पंचांगpaddr[0];
+	पूर्ण
+
+	/*
+	 * 5) अक्रमom mac address
+	 */
+	अगर (!is_valid_ether_addr(iap)) अणु
+		/* Report it and use a अक्रमom ethernet address instead */
 		dev_err(&fep->pdev->dev, "Invalid MAC address: %pM\n", iap);
-		eth_hw_addr_random(ndev);
+		eth_hw_addr_अक्रमom(ndev);
 		dev_info(&fep->pdev->dev, "Using random MAC address: %pM\n",
 			 ndev->dev_addr);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	memcpy(ndev->dev_addr, iap, ETH_ALEN);
+	स_नकल(ndev->dev_addr, iap, ETH_ALEN);
 
-	/* Adjust MAC if using macaddr */
-	if (iap == macaddr)
+	/* Adjust MAC अगर using macaddr */
+	अगर (iap == macaddr)
 		 ndev->dev_addr[ETH_ALEN-1] = macaddr[ETH_ALEN-1] + fep->dev_id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ------------------------------------------------------------------------- */
 
 /*
  * Phy section
  */
-static void fec_enet_adjust_link(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct phy_device *phy_dev = ndev->phydev;
-	int status_change = 0;
+अटल व्योम fec_enet_adjust_link(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा phy_device *phy_dev = ndev->phydev;
+	पूर्णांक status_change = 0;
 
 	/*
-	 * If the netdev is down, or is going down, we're not interested
-	 * in link state events, so just mark our idea of the link as down
+	 * If the netdev is करोwn, or is going करोwn, we're not पूर्णांकerested
+	 * in link state events, so just mark our idea of the link as करोwn
 	 * and ignore the event.
 	 */
-	if (!netif_running(ndev) || !netif_device_present(ndev)) {
+	अगर (!netअगर_running(ndev) || !netअगर_device_present(ndev)) अणु
 		fep->link = 0;
-	} else if (phy_dev->link) {
-		if (!fep->link) {
+	पूर्ण अन्यथा अगर (phy_dev->link) अणु
+		अगर (!fep->link) अणु
 			fep->link = phy_dev->link;
 			status_change = 1;
-		}
+		पूर्ण
 
-		if (fep->full_duplex != phy_dev->duplex) {
+		अगर (fep->full_duplex != phy_dev->duplex) अणु
 			fep->full_duplex = phy_dev->duplex;
 			status_change = 1;
-		}
+		पूर्ण
 
-		if (phy_dev->speed != fep->speed) {
+		अगर (phy_dev->speed != fep->speed) अणु
 			fep->speed = phy_dev->speed;
 			status_change = 1;
-		}
+		पूर्ण
 
-		/* if any of the above changed restart the FEC */
-		if (status_change) {
+		/* अगर any of the above changed restart the FEC */
+		अगर (status_change) अणु
 			napi_disable(&fep->napi);
-			netif_tx_lock_bh(ndev);
+			netअगर_tx_lock_bh(ndev);
 			fec_restart(ndev);
-			netif_tx_wake_all_queues(ndev);
-			netif_tx_unlock_bh(ndev);
+			netअगर_tx_wake_all_queues(ndev);
+			netअगर_tx_unlock_bh(ndev);
 			napi_enable(&fep->napi);
-		}
-	} else {
-		if (fep->link) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (fep->link) अणु
 			napi_disable(&fep->napi);
-			netif_tx_lock_bh(ndev);
+			netअगर_tx_lock_bh(ndev);
 			fec_stop(ndev);
-			netif_tx_unlock_bh(ndev);
+			netअगर_tx_unlock_bh(ndev);
 			napi_enable(&fep->napi);
 			fep->link = phy_dev->link;
 			status_change = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (status_change)
-		phy_print_status(phy_dev);
-}
+	अगर (status_change)
+		phy_prपूर्णांक_status(phy_dev);
+पूर्ण
 
-static int fec_enet_mdio_wait(struct fec_enet_private *fep)
-{
-	uint ievent;
-	int ret;
+अटल पूर्णांक fec_enet_mdio_रुको(काष्ठा fec_enet_निजी *fep)
+अणु
+	uपूर्णांक ievent;
+	पूर्णांक ret;
 
-	ret = readl_poll_timeout_atomic(fep->hwp + FEC_IEVENT, ievent,
+	ret = पढ़ोl_poll_समयout_atomic(fep->hwp + FEC_IEVENT, ievent,
 					ievent & FEC_ENET_MII, 2, 30000);
 
-	if (!ret)
-		writel(FEC_ENET_MII, fep->hwp + FEC_IEVENT);
+	अगर (!ret)
+		ग_लिखोl(FEC_ENET_MII, fep->hwp + FEC_IEVENT);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fec_enet_mdio_read(struct mii_bus *bus, int mii_id, int regnum)
-{
-	struct fec_enet_private *fep = bus->priv;
-	struct device *dev = &fep->pdev->dev;
-	int ret = 0, frame_start, frame_addr, frame_op;
+अटल पूर्णांक fec_enet_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक mii_id, पूर्णांक regnum)
+अणु
+	काष्ठा fec_enet_निजी *fep = bus->priv;
+	काष्ठा device *dev = &fep->pdev->dev;
+	पूर्णांक ret = 0, frame_start, frame_addr, frame_op;
 	bool is_c45 = !!(regnum & MII_ADDR_C45);
 
-	ret = pm_runtime_resume_and_get(dev);
-	if (ret < 0)
-		return ret;
+	ret = pm_runसमय_resume_and_get(dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (is_c45) {
+	अगर (is_c45) अणु
 		frame_start = FEC_MMFR_ST_C45;
 
-		/* write address */
+		/* ग_लिखो address */
 		frame_addr = (regnum >> 16);
-		writel(frame_start | FEC_MMFR_OP_ADDR_WRITE |
+		ग_लिखोl(frame_start | FEC_MMFR_OP_ADDR_WRITE |
 		       FEC_MMFR_PA(mii_id) | FEC_MMFR_RA(frame_addr) |
 		       FEC_MMFR_TA | (regnum & 0xFFFF),
 		       fep->hwp + FEC_MII_DATA);
 
-		/* wait for end of transfer */
-		ret = fec_enet_mdio_wait(fep);
-		if (ret) {
+		/* रुको क्रम end of transfer */
+		ret = fec_enet_mdio_रुको(fep);
+		अगर (ret) अणु
 			netdev_err(fep->netdev, "MDIO address write timeout\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		frame_op = FEC_MMFR_OP_READ_C45;
 
-	} else {
-		/* C22 read */
+	पूर्ण अन्यथा अणु
+		/* C22 पढ़ो */
 		frame_op = FEC_MMFR_OP_READ;
 		frame_start = FEC_MMFR_ST;
 		frame_addr = regnum;
-	}
+	पूर्ण
 
-	/* start a read op */
-	writel(frame_start | frame_op |
+	/* start a पढ़ो op */
+	ग_लिखोl(frame_start | frame_op |
 		FEC_MMFR_PA(mii_id) | FEC_MMFR_RA(frame_addr) |
 		FEC_MMFR_TA, fep->hwp + FEC_MII_DATA);
 
-	/* wait for end of transfer */
-	ret = fec_enet_mdio_wait(fep);
-	if (ret) {
+	/* रुको क्रम end of transfer */
+	ret = fec_enet_mdio_रुको(fep);
+	अगर (ret) अणु
 		netdev_err(fep->netdev, "MDIO read timeout\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = FEC_MMFR_DATA(readl(fep->hwp + FEC_MII_DATA));
+	ret = FEC_MMFR_DATA(पढ़ोl(fep->hwp + FEC_MII_DATA));
 
 out:
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_put_autosuspend(dev);
+	pm_runसमय_mark_last_busy(dev);
+	pm_runसमय_put_स्वतःsuspend(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fec_enet_mdio_write(struct mii_bus *bus, int mii_id, int regnum,
+अटल पूर्णांक fec_enet_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक mii_id, पूर्णांक regnum,
 			   u16 value)
-{
-	struct fec_enet_private *fep = bus->priv;
-	struct device *dev = &fep->pdev->dev;
-	int ret, frame_start, frame_addr;
+अणु
+	काष्ठा fec_enet_निजी *fep = bus->priv;
+	काष्ठा device *dev = &fep->pdev->dev;
+	पूर्णांक ret, frame_start, frame_addr;
 	bool is_c45 = !!(regnum & MII_ADDR_C45);
 
-	ret = pm_runtime_resume_and_get(dev);
-	if (ret < 0)
-		return ret;
+	ret = pm_runसमय_resume_and_get(dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (is_c45) {
+	अगर (is_c45) अणु
 		frame_start = FEC_MMFR_ST_C45;
 
-		/* write address */
+		/* ग_लिखो address */
 		frame_addr = (regnum >> 16);
-		writel(frame_start | FEC_MMFR_OP_ADDR_WRITE |
+		ग_लिखोl(frame_start | FEC_MMFR_OP_ADDR_WRITE |
 		       FEC_MMFR_PA(mii_id) | FEC_MMFR_RA(frame_addr) |
 		       FEC_MMFR_TA | (regnum & 0xFFFF),
 		       fep->hwp + FEC_MII_DATA);
 
-		/* wait for end of transfer */
-		ret = fec_enet_mdio_wait(fep);
-		if (ret) {
+		/* रुको क्रम end of transfer */
+		ret = fec_enet_mdio_रुको(fep);
+		अगर (ret) अणु
 			netdev_err(fep->netdev, "MDIO address write timeout\n");
-			goto out;
-		}
-	} else {
-		/* C22 write */
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* C22 ग_लिखो */
 		frame_start = FEC_MMFR_ST;
 		frame_addr = regnum;
-	}
+	पूर्ण
 
-	/* start a write op */
-	writel(frame_start | FEC_MMFR_OP_WRITE |
+	/* start a ग_लिखो op */
+	ग_लिखोl(frame_start | FEC_MMFR_OP_WRITE |
 		FEC_MMFR_PA(mii_id) | FEC_MMFR_RA(frame_addr) |
 		FEC_MMFR_TA | FEC_MMFR_DATA(value),
 		fep->hwp + FEC_MII_DATA);
 
-	/* wait for end of transfer */
-	ret = fec_enet_mdio_wait(fep);
-	if (ret)
+	/* रुको क्रम end of transfer */
+	ret = fec_enet_mdio_रुको(fep);
+	अगर (ret)
 		netdev_err(fep->netdev, "MDIO write timeout\n");
 
 out:
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_put_autosuspend(dev);
+	pm_runसमय_mark_last_busy(dev);
+	pm_runसमय_put_स्वतःsuspend(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void fec_enet_phy_reset_after_clk_enable(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct phy_device *phy_dev = ndev->phydev;
+अटल व्योम fec_enet_phy_reset_after_clk_enable(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा phy_device *phy_dev = ndev->phydev;
 
-	if (phy_dev) {
+	अगर (phy_dev) अणु
 		phy_reset_after_clk_enable(phy_dev);
-	} else if (fep->phy_node) {
+	पूर्ण अन्यथा अगर (fep->phy_node) अणु
 		/*
 		 * If the PHY still is not bound to the MAC, but there is
-		 * OF PHY node and a matching PHY device instance already,
+		 * OF PHY node and a matching PHY device instance alपढ़ोy,
 		 * use the OF PHY node to obtain the PHY device instance,
 		 * and then use that PHY device instance when triggering
 		 * the PHY reset.
@@ -1938,117 +1939,117 @@ static void fec_enet_phy_reset_after_clk_enable(struct net_device *ndev)
 		phy_dev = of_phy_find_device(fep->phy_node);
 		phy_reset_after_clk_enable(phy_dev);
 		put_device(&phy_dev->mdio.dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int fec_enet_clk_enable(struct net_device *ndev, bool enable)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक fec_enet_clk_enable(काष्ठा net_device *ndev, bool enable)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक ret;
 
-	if (enable) {
+	अगर (enable) अणु
 		ret = clk_prepare_enable(fep->clk_enet_out);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		if (fep->clk_ptp) {
+		अगर (fep->clk_ptp) अणु
 			mutex_lock(&fep->ptp_clk_mutex);
 			ret = clk_prepare_enable(fep->clk_ptp);
-			if (ret) {
+			अगर (ret) अणु
 				mutex_unlock(&fep->ptp_clk_mutex);
-				goto failed_clk_ptp;
-			} else {
+				जाओ failed_clk_ptp;
+			पूर्ण अन्यथा अणु
 				fep->ptp_clk_on = true;
-			}
+			पूर्ण
 			mutex_unlock(&fep->ptp_clk_mutex);
-		}
+		पूर्ण
 
 		ret = clk_prepare_enable(fep->clk_ref);
-		if (ret)
-			goto failed_clk_ref;
+		अगर (ret)
+			जाओ failed_clk_ref;
 
 		fec_enet_phy_reset_after_clk_enable(ndev);
-	} else {
+	पूर्ण अन्यथा अणु
 		clk_disable_unprepare(fep->clk_enet_out);
-		if (fep->clk_ptp) {
+		अगर (fep->clk_ptp) अणु
 			mutex_lock(&fep->ptp_clk_mutex);
 			clk_disable_unprepare(fep->clk_ptp);
 			fep->ptp_clk_on = false;
 			mutex_unlock(&fep->ptp_clk_mutex);
-		}
+		पूर्ण
 		clk_disable_unprepare(fep->clk_ref);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 failed_clk_ref:
-	if (fep->clk_ptp) {
+	अगर (fep->clk_ptp) अणु
 		mutex_lock(&fep->ptp_clk_mutex);
 		clk_disable_unprepare(fep->clk_ptp);
 		fep->ptp_clk_on = false;
 		mutex_unlock(&fep->ptp_clk_mutex);
-	}
+	पूर्ण
 failed_clk_ptp:
 	clk_disable_unprepare(fep->clk_enet_out);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fec_enet_mii_probe(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct phy_device *phy_dev = NULL;
-	char mdio_bus_id[MII_BUS_ID_SIZE];
-	char phy_name[MII_BUS_ID_SIZE + 3];
-	int phy_id;
-	int dev_id = fep->dev_id;
+अटल पूर्णांक fec_enet_mii_probe(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा phy_device *phy_dev = शून्य;
+	अक्षर mdio_bus_id[MII_BUS_ID_SIZE];
+	अक्षर phy_name[MII_BUS_ID_SIZE + 3];
+	पूर्णांक phy_id;
+	पूर्णांक dev_id = fep->dev_id;
 
-	if (fep->phy_node) {
+	अगर (fep->phy_node) अणु
 		phy_dev = of_phy_connect(ndev, fep->phy_node,
 					 &fec_enet_adjust_link, 0,
-					 fep->phy_interface);
-		if (!phy_dev) {
+					 fep->phy_पूर्णांकerface);
+		अगर (!phy_dev) अणु
 			netdev_err(ndev, "Unable to connect to phy\n");
-			return -ENODEV;
-		}
-	} else {
-		/* check for attached phy */
-		for (phy_id = 0; (phy_id < PHY_MAX_ADDR); phy_id++) {
-			if (!mdiobus_is_registered_device(fep->mii_bus, phy_id))
-				continue;
-			if (dev_id--)
-				continue;
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* check क्रम attached phy */
+		क्रम (phy_id = 0; (phy_id < PHY_MAX_ADDR); phy_id++) अणु
+			अगर (!mdiobus_is_रेजिस्टरed_device(fep->mii_bus, phy_id))
+				जारी;
+			अगर (dev_id--)
+				जारी;
 			strlcpy(mdio_bus_id, fep->mii_bus->id, MII_BUS_ID_SIZE);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (phy_id >= PHY_MAX_ADDR) {
+		अगर (phy_id >= PHY_MAX_ADDR) अणु
 			netdev_info(ndev, "no PHY, assuming direct connection to switch\n");
 			strlcpy(mdio_bus_id, "fixed-0", MII_BUS_ID_SIZE);
 			phy_id = 0;
-		}
+		पूर्ण
 
-		snprintf(phy_name, sizeof(phy_name),
+		snम_लिखो(phy_name, माप(phy_name),
 			 PHY_ID_FMT, mdio_bus_id, phy_id);
 		phy_dev = phy_connect(ndev, phy_name, &fec_enet_adjust_link,
-				      fep->phy_interface);
-	}
+				      fep->phy_पूर्णांकerface);
+	पूर्ण
 
-	if (IS_ERR(phy_dev)) {
+	अगर (IS_ERR(phy_dev)) अणु
 		netdev_err(ndev, "could not attach to PHY\n");
-		return PTR_ERR(phy_dev);
-	}
+		वापस PTR_ERR(phy_dev);
+	पूर्ण
 
 	/* mask with MAC supported features */
-	if (fep->quirks & FEC_QUIRK_HAS_GBIT) {
+	अगर (fep->quirks & FEC_QUIRK_HAS_GBIT) अणु
 		phy_set_max_speed(phy_dev, 1000);
-		phy_remove_link_mode(phy_dev,
+		phy_हटाओ_link_mode(phy_dev,
 				     ETHTOOL_LINK_MODE_1000baseT_Half_BIT);
-#if !defined(CONFIG_M5272)
-		phy_support_sym_pause(phy_dev);
-#endif
-	}
-	else
+#अगर !defined(CONFIG_M5272)
+		phy_support_sym_छोड़ो(phy_dev);
+#पूर्ण_अगर
+	पूर्ण
+	अन्यथा
 		phy_set_max_speed(phy_dev, 100);
 
 	fep->link = 0;
@@ -2058,94 +2059,94 @@ static int fec_enet_mii_probe(struct net_device *ndev)
 
 	phy_attached_info(phy_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fec_enet_mii_init(struct platform_device *pdev)
-{
-	static struct mii_bus *fec0_mii_bus;
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल पूर्णांक fec_enet_mii_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	अटल काष्ठा mii_bus *fec0_mii_bus;
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 	bool suppress_preamble = false;
-	struct device_node *node;
-	int err = -ENXIO;
-	u32 mii_speed, holdtime;
+	काष्ठा device_node *node;
+	पूर्णांक err = -ENXIO;
+	u32 mii_speed, holdसमय;
 	u32 bus_freq;
 
 	/*
-	 * The i.MX28 dual fec interfaces are not equal.
-	 * Here are the differences:
+	 * The i.MX28 dual fec पूर्णांकerfaces are not equal.
+	 * Here are the dअगरferences:
 	 *
-	 *  - fec0 supports MII & RMII modes while fec1 only supports RMII
-	 *  - fec0 acts as the 1588 time master while fec1 is slave
-	 *  - external phys can only be configured by fec0
+	 *  - fec0 supports MII & RMII modes जबतक fec1 only supports RMII
+	 *  - fec0 acts as the 1588 समय master जबतक fec1 is slave
+	 *  - बाह्यal phys can only be configured by fec0
 	 *
 	 * That is to say fec1 can not work independently. It only works
 	 * when fec0 is working. The reason behind this design is that the
-	 * second interface is added primarily for Switch mode.
+	 * second पूर्णांकerface is added primarily क्रम Switch mode.
 	 *
-	 * Because of the last point above, both phys are attached on fec0
-	 * mdio interface in board design, and need to be configured by
+	 * Because of the last poपूर्णांक above, both phys are attached on fec0
+	 * mdio पूर्णांकerface in board design, and need to be configured by
 	 * fec0 mii_bus.
 	 */
-	if ((fep->quirks & FEC_QUIRK_SINGLE_MDIO) && fep->dev_id > 0) {
+	अगर ((fep->quirks & FEC_QUIRK_SINGLE_MDIO) && fep->dev_id > 0) अणु
 		/* fec1 uses fec0 mii_bus */
-		if (mii_cnt && fec0_mii_bus) {
+		अगर (mii_cnt && fec0_mii_bus) अणु
 			fep->mii_bus = fec0_mii_bus;
 			mii_cnt++;
-			return 0;
-		}
-		return -ENOENT;
-	}
+			वापस 0;
+		पूर्ण
+		वापस -ENOENT;
+	पूर्ण
 
-	bus_freq = 2500000; /* 2.5MHz by default */
+	bus_freq = 2500000; /* 2.5MHz by शेष */
 	node = of_get_child_by_name(pdev->dev.of_node, "mdio");
-	if (node) {
-		of_property_read_u32(node, "clock-frequency", &bus_freq);
-		suppress_preamble = of_property_read_bool(node,
+	अगर (node) अणु
+		of_property_पढ़ो_u32(node, "clock-frequency", &bus_freq);
+		suppress_preamble = of_property_पढ़ो_bool(node,
 							  "suppress-preamble");
-	}
+	पूर्ण
 
 	/*
 	 * Set MII speed (= clk_get_rate() / 2 * phy_speed)
 	 *
-	 * The formula for FEC MDC is 'ref_freq / (MII_SPEED x 2)' while
-	 * for ENET-MAC is 'ref_freq / ((MII_SPEED + 1) x 2)'.  The i.MX28
-	 * Reference Manual has an error on this, and gets fixed on i.MX6Q
-	 * document.
+	 * The क्रमmula क्रम FEC MDC is 'ref_freq / (MII_SPEED x 2)' जबतक
+	 * क्रम ENET-MAC is 'ref_freq / ((MII_SPEED + 1) x 2)'.  The i.MX28
+	 * Reference Manual has an error on this, and माला_लो fixed on i.MX6Q
+	 * करोcument.
 	 */
 	mii_speed = DIV_ROUND_UP(clk_get_rate(fep->clk_ipg), bus_freq * 2);
-	if (fep->quirks & FEC_QUIRK_ENET_MAC)
+	अगर (fep->quirks & FEC_QUIRK_ENET_MAC)
 		mii_speed--;
-	if (mii_speed > 63) {
+	अगर (mii_speed > 63) अणु
 		dev_err(&pdev->dev,
 			"fec clock (%lu) too fast to get right mii speed\n",
 			clk_get_rate(fep->clk_ipg));
 		err = -EINVAL;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	/*
 	 * The i.MX28 and i.MX6 types have another filed in the MSCR (aka
-	 * MII_SPEED) register that defines the MDIO output hold time. Earlier
-	 * versions are RAZ there, so just ignore the difference and write the
-	 * register always.
-	 * The minimal hold time according to IEE802.3 (clause 22) is 10 ns.
+	 * MII_SPEED) रेजिस्टर that defines the MDIO output hold समय. Earlier
+	 * versions are RAZ there, so just ignore the dअगरference and ग_लिखो the
+	 * रेजिस्टर always.
+	 * The minimal hold समय according to IEE802.3 (clause 22) is 10 ns.
 	 * HOLDTIME + 1 is the number of clk cycles the fec is holding the
 	 * output.
 	 * The HOLDTIME bitfield takes values between 0 and 7 (inclusive).
-	 * Given that ceil(clkrate / 5000000) <= 64, the calculation for
-	 * holdtime cannot result in a value greater than 3.
+	 * Given that उच्चमान(clkrate / 5000000) <= 64, the calculation क्रम
+	 * holdसमय cannot result in a value greater than 3.
 	 */
-	holdtime = DIV_ROUND_UP(clk_get_rate(fep->clk_ipg), 100000000) - 1;
+	holdसमय = DIV_ROUND_UP(clk_get_rate(fep->clk_ipg), 100000000) - 1;
 
-	fep->phy_speed = mii_speed << 1 | holdtime << 8;
+	fep->phy_speed = mii_speed << 1 | holdसमय << 8;
 
-	if (suppress_preamble)
+	अगर (suppress_preamble)
 		fep->phy_speed |= BIT(7);
 
-	if (fep->quirks & FEC_QUIRK_CLEAR_SETUP_MII) {
-		/* Clear MMFR to avoid to generate MII event by writing MSCR.
+	अगर (fep->quirks & FEC_QUIRK_CLEAR_SETUP_MII) अणु
+		/* Clear MMFR to aव्योम to generate MII event by writing MSCR.
 		 * MII event generation condition:
 		 * - writing MSCR:
 		 *	- mmfr[31:0]_not_zero & mscr[7:0]_is_zero &
@@ -2153,85 +2154,85 @@ static int fec_enet_mii_init(struct platform_device *pdev)
 		 * - writing MMFR:
 		 *	- mscr[7:0]_not_zero
 		 */
-		writel(0, fep->hwp + FEC_MII_DATA);
-	}
+		ग_लिखोl(0, fep->hwp + FEC_MII_DATA);
+	पूर्ण
 
-	writel(fep->phy_speed, fep->hwp + FEC_MII_SPEED);
+	ग_लिखोl(fep->phy_speed, fep->hwp + FEC_MII_SPEED);
 
 	/* Clear any pending transaction complete indication */
-	writel(FEC_ENET_MII, fep->hwp + FEC_IEVENT);
+	ग_लिखोl(FEC_ENET_MII, fep->hwp + FEC_IEVENT);
 
 	fep->mii_bus = mdiobus_alloc();
-	if (fep->mii_bus == NULL) {
+	अगर (fep->mii_bus == शून्य) अणु
 		err = -ENOMEM;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	fep->mii_bus->name = "fec_enet_mii_bus";
-	fep->mii_bus->read = fec_enet_mdio_read;
-	fep->mii_bus->write = fec_enet_mdio_write;
-	snprintf(fep->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
+	fep->mii_bus->पढ़ो = fec_enet_mdio_पढ़ो;
+	fep->mii_bus->ग_लिखो = fec_enet_mdio_ग_लिखो;
+	snम_लिखो(fep->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
 		pdev->name, fep->dev_id + 1);
 	fep->mii_bus->priv = fep;
 	fep->mii_bus->parent = &pdev->dev;
 
-	err = of_mdiobus_register(fep->mii_bus, node);
-	if (err)
-		goto err_out_free_mdiobus;
+	err = of_mdiobus_रेजिस्टर(fep->mii_bus, node);
+	अगर (err)
+		जाओ err_out_मुक्त_mdiobus;
 	of_node_put(node);
 
 	mii_cnt++;
 
 	/* save fec0 mii_bus */
-	if (fep->quirks & FEC_QUIRK_SINGLE_MDIO)
+	अगर (fep->quirks & FEC_QUIRK_SINGLE_MDIO)
 		fec0_mii_bus = fep->mii_bus;
 
-	return 0;
+	वापस 0;
 
-err_out_free_mdiobus:
-	mdiobus_free(fep->mii_bus);
+err_out_मुक्त_mdiobus:
+	mdiobus_मुक्त(fep->mii_bus);
 err_out:
 	of_node_put(node);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void fec_enet_mii_remove(struct fec_enet_private *fep)
-{
-	if (--mii_cnt == 0) {
-		mdiobus_unregister(fep->mii_bus);
-		mdiobus_free(fep->mii_bus);
-	}
-}
+अटल व्योम fec_enet_mii_हटाओ(काष्ठा fec_enet_निजी *fep)
+अणु
+	अगर (--mii_cnt == 0) अणु
+		mdiobus_unरेजिस्टर(fep->mii_bus);
+		mdiobus_मुक्त(fep->mii_bus);
+	पूर्ण
+पूर्ण
 
-static void fec_enet_get_drvinfo(struct net_device *ndev,
-				 struct ethtool_drvinfo *info)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल व्योम fec_enet_get_drvinfo(काष्ठा net_device *ndev,
+				 काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 
 	strlcpy(info->driver, fep->pdev->dev.driver->name,
-		sizeof(info->driver));
-	strlcpy(info->bus_info, dev_name(&ndev->dev), sizeof(info->bus_info));
-}
+		माप(info->driver));
+	strlcpy(info->bus_info, dev_name(&ndev->dev), माप(info->bus_info));
+पूर्ण
 
-static int fec_enet_get_regs_len(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct resource *r;
-	int s = 0;
+अटल पूर्णांक fec_enet_get_regs_len(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा resource *r;
+	पूर्णांक s = 0;
 
-	r = platform_get_resource(fep->pdev, IORESOURCE_MEM, 0);
-	if (r)
+	r = platक्रमm_get_resource(fep->pdev, IORESOURCE_MEM, 0);
+	अगर (r)
 		s = resource_size(r);
 
-	return s;
-}
+	वापस s;
+पूर्ण
 
-/* List of registers that can be safety be read to dump them with ethtool */
-#if defined(CONFIG_M523x) || defined(CONFIG_M527x) || defined(CONFIG_M528x) || \
+/* List of रेजिस्टरs that can be safety be पढ़ो to dump them with ethtool */
+#अगर defined(CONFIG_M523x) || defined(CONFIG_M527x) || defined(CONFIG_M528x) || \
 	defined(CONFIG_M520x) || defined(CONFIG_M532x) || defined(CONFIG_ARM) || \
 	defined(CONFIG_ARM64) || defined(CONFIG_COMPILE_TEST)
-static __u32 fec_enet_register_version = 2;
-static u32 fec_enet_register_offset[] = {
+अटल __u32 fec_enet_रेजिस्टर_version = 2;
+अटल u32 fec_enet_रेजिस्टर_offset[] = अणु
 	FEC_IEVENT, FEC_IMASK, FEC_R_DES_ACTIVE_0, FEC_X_DES_ACTIVE_0,
 	FEC_ECNTRL, FEC_MII_DATA, FEC_MII_SPEED, FEC_MIB_CTRLSTAT, FEC_R_CNTRL,
 	FEC_X_CNTRL, FEC_ADDR_LOW, FEC_ADDR_HIGH, FEC_OPD, FEC_TXIC0, FEC_TXIC1,
@@ -2259,10 +2260,10 @@ static u32 fec_enet_register_offset[] = {
 	RMON_R_P_GTE2048, RMON_R_OCTETS,
 	IEEE_R_DROP, IEEE_R_FRAME_OK, IEEE_R_CRC, IEEE_R_ALIGN, IEEE_R_MACERR,
 	IEEE_R_FDXFC, IEEE_R_OCTETS_OK
-};
-#else
-static __u32 fec_enet_register_version = 1;
-static u32 fec_enet_register_offset[] = {
+पूर्ण;
+#अन्यथा
+अटल __u32 fec_enet_रेजिस्टर_version = 1;
+अटल u32 fec_enet_रेजिस्टर_offset[] = अणु
 	FEC_ECNTRL, FEC_IEVENT, FEC_IMASK, FEC_IVEC, FEC_R_DES_ACTIVE_0,
 	FEC_R_DES_ACTIVE_1, FEC_R_DES_ACTIVE_2, FEC_X_DES_ACTIVE_0,
 	FEC_X_DES_ACTIVE_1, FEC_X_DES_ACTIVE_2, FEC_MII_DATA, FEC_MII_SPEED,
@@ -2272,58 +2273,58 @@ static u32 fec_enet_register_offset[] = {
 	FEC_R_DES_START_1, FEC_R_DES_START_2, FEC_X_DES_START_0,
 	FEC_X_DES_START_1, FEC_X_DES_START_2, FEC_R_BUFF_SIZE_0,
 	FEC_R_BUFF_SIZE_1, FEC_R_BUFF_SIZE_2
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static void fec_enet_get_regs(struct net_device *ndev,
-			      struct ethtool_regs *regs, void *regbuf)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल व्योम fec_enet_get_regs(काष्ठा net_device *ndev,
+			      काष्ठा ethtool_regs *regs, व्योम *regbuf)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 	u32 __iomem *theregs = (u32 __iomem *)fep->hwp;
-	struct device *dev = &fep->pdev->dev;
+	काष्ठा device *dev = &fep->pdev->dev;
 	u32 *buf = (u32 *)regbuf;
 	u32 i, off;
-	int ret;
+	पूर्णांक ret;
 
-	ret = pm_runtime_resume_and_get(dev);
-	if (ret < 0)
-		return;
+	ret = pm_runसमय_resume_and_get(dev);
+	अगर (ret < 0)
+		वापस;
 
-	regs->version = fec_enet_register_version;
+	regs->version = fec_enet_रेजिस्टर_version;
 
-	memset(buf, 0, regs->len);
+	स_रखो(buf, 0, regs->len);
 
-	for (i = 0; i < ARRAY_SIZE(fec_enet_register_offset); i++) {
-		off = fec_enet_register_offset[i];
+	क्रम (i = 0; i < ARRAY_SIZE(fec_enet_रेजिस्टर_offset); i++) अणु
+		off = fec_enet_रेजिस्टर_offset[i];
 
-		if ((off == FEC_R_BOUND || off == FEC_R_FSTART) &&
+		अगर ((off == FEC_R_BOUND || off == FEC_R_FSTART) &&
 		    !(fep->quirks & FEC_QUIRK_HAS_FRREG))
-			continue;
+			जारी;
 
 		off >>= 2;
-		buf[off] = readl(&theregs[off]);
-	}
+		buf[off] = पढ़ोl(&theregs[off]);
+	पूर्ण
 
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_put_autosuspend(dev);
-}
+	pm_runसमय_mark_last_busy(dev);
+	pm_runसमय_put_स्वतःsuspend(dev);
+पूर्ण
 
-static int fec_enet_get_ts_info(struct net_device *ndev,
-				struct ethtool_ts_info *info)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल पूर्णांक fec_enet_get_ts_info(काष्ठा net_device *ndev,
+				काष्ठा ethtool_ts_info *info)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 
-	if (fep->bufdesc_ex) {
+	अगर (fep->bufdesc_ex) अणु
 
-		info->so_timestamping = SOF_TIMESTAMPING_TX_SOFTWARE |
+		info->so_बारtamping = SOF_TIMESTAMPING_TX_SOFTWARE |
 					SOF_TIMESTAMPING_RX_SOFTWARE |
 					SOF_TIMESTAMPING_SOFTWARE |
 					SOF_TIMESTAMPING_TX_HARDWARE |
 					SOF_TIMESTAMPING_RX_HARDWARE |
 					SOF_TIMESTAMPING_RAW_HARDWARE;
-		if (fep->ptp_clock)
-			info->phc_index = ptp_clock_index(fep->ptp_clock);
-		else
+		अगर (fep->ptp_घड़ी)
+			info->phc_index = ptp_घड़ी_index(fep->ptp_घड़ी);
+		अन्यथा
 			info->phc_index = -1;
 
 		info->tx_types = (1 << HWTSTAMP_TX_OFF) |
@@ -2331,316 +2332,316 @@ static int fec_enet_get_ts_info(struct net_device *ndev,
 
 		info->rx_filters = (1 << HWTSTAMP_FILTER_NONE) |
 				   (1 << HWTSTAMP_FILTER_ALL);
-		return 0;
-	} else {
-		return ethtool_op_get_ts_info(ndev, info);
-	}
-}
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		वापस ethtool_op_get_ts_info(ndev, info);
+	पूर्ण
+पूर्ण
 
-#if !defined(CONFIG_M5272)
+#अगर !defined(CONFIG_M5272)
 
-static void fec_enet_get_pauseparam(struct net_device *ndev,
-				    struct ethtool_pauseparam *pause)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल व्योम fec_enet_get_छोड़ोparam(काष्ठा net_device *ndev,
+				    काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 
-	pause->autoneg = (fep->pause_flag & FEC_PAUSE_FLAG_AUTONEG) != 0;
-	pause->tx_pause = (fep->pause_flag & FEC_PAUSE_FLAG_ENABLE) != 0;
-	pause->rx_pause = pause->tx_pause;
-}
+	छोड़ो->स्वतःneg = (fep->छोड़ो_flag & FEC_PAUSE_FLAG_AUTONEG) != 0;
+	छोड़ो->tx_छोड़ो = (fep->छोड़ो_flag & FEC_PAUSE_FLAG_ENABLE) != 0;
+	छोड़ो->rx_छोड़ो = छोड़ो->tx_छोड़ो;
+पूर्ण
 
-static int fec_enet_set_pauseparam(struct net_device *ndev,
-				   struct ethtool_pauseparam *pause)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल पूर्णांक fec_enet_set_छोड़ोparam(काष्ठा net_device *ndev,
+				   काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 
-	if (!ndev->phydev)
-		return -ENODEV;
+	अगर (!ndev->phydev)
+		वापस -ENODEV;
 
-	if (pause->tx_pause != pause->rx_pause) {
+	अगर (छोड़ो->tx_छोड़ो != छोड़ो->rx_छोड़ो) अणु
 		netdev_info(ndev,
 			"hardware only support enable/disable both tx and rx");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	fep->pause_flag = 0;
+	fep->छोड़ो_flag = 0;
 
-	/* tx pause must be same as rx pause */
-	fep->pause_flag |= pause->rx_pause ? FEC_PAUSE_FLAG_ENABLE : 0;
-	fep->pause_flag |= pause->autoneg ? FEC_PAUSE_FLAG_AUTONEG : 0;
+	/* tx छोड़ो must be same as rx छोड़ो */
+	fep->छोड़ो_flag |= छोड़ो->rx_छोड़ो ? FEC_PAUSE_FLAG_ENABLE : 0;
+	fep->छोड़ो_flag |= छोड़ो->स्वतःneg ? FEC_PAUSE_FLAG_AUTONEG : 0;
 
-	phy_set_sym_pause(ndev->phydev, pause->rx_pause, pause->tx_pause,
-			  pause->autoneg);
+	phy_set_sym_छोड़ो(ndev->phydev, छोड़ो->rx_छोड़ो, छोड़ो->tx_छोड़ो,
+			  छोड़ो->स्वतःneg);
 
-	if (pause->autoneg) {
-		if (netif_running(ndev))
+	अगर (छोड़ो->स्वतःneg) अणु
+		अगर (netअगर_running(ndev))
 			fec_stop(ndev);
 		phy_start_aneg(ndev->phydev);
-	}
-	if (netif_running(ndev)) {
+	पूर्ण
+	अगर (netअगर_running(ndev)) अणु
 		napi_disable(&fep->napi);
-		netif_tx_lock_bh(ndev);
+		netअगर_tx_lock_bh(ndev);
 		fec_restart(ndev);
-		netif_tx_wake_all_queues(ndev);
-		netif_tx_unlock_bh(ndev);
+		netअगर_tx_wake_all_queues(ndev);
+		netअगर_tx_unlock_bh(ndev);
 		napi_enable(&fep->napi);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct fec_stat {
-	char name[ETH_GSTRING_LEN];
+अटल स्थिर काष्ठा fec_stat अणु
+	अक्षर name[ETH_GSTRING_LEN];
 	u16 offset;
-} fec_stats[] = {
+पूर्ण fec_stats[] = अणु
 	/* RMON TX */
-	{ "tx_dropped", RMON_T_DROP },
-	{ "tx_packets", RMON_T_PACKETS },
-	{ "tx_broadcast", RMON_T_BC_PKT },
-	{ "tx_multicast", RMON_T_MC_PKT },
-	{ "tx_crc_errors", RMON_T_CRC_ALIGN },
-	{ "tx_undersize", RMON_T_UNDERSIZE },
-	{ "tx_oversize", RMON_T_OVERSIZE },
-	{ "tx_fragment", RMON_T_FRAG },
-	{ "tx_jabber", RMON_T_JAB },
-	{ "tx_collision", RMON_T_COL },
-	{ "tx_64byte", RMON_T_P64 },
-	{ "tx_65to127byte", RMON_T_P65TO127 },
-	{ "tx_128to255byte", RMON_T_P128TO255 },
-	{ "tx_256to511byte", RMON_T_P256TO511 },
-	{ "tx_512to1023byte", RMON_T_P512TO1023 },
-	{ "tx_1024to2047byte", RMON_T_P1024TO2047 },
-	{ "tx_GTE2048byte", RMON_T_P_GTE2048 },
-	{ "tx_octets", RMON_T_OCTETS },
+	अणु "tx_dropped", RMON_T_DROP पूर्ण,
+	अणु "tx_packets", RMON_T_PACKETS पूर्ण,
+	अणु "tx_broadcast", RMON_T_BC_PKT पूर्ण,
+	अणु "tx_multicast", RMON_T_MC_PKT पूर्ण,
+	अणु "tx_crc_errors", RMON_T_CRC_ALIGN पूर्ण,
+	अणु "tx_undersize", RMON_T_UNDERSIZE पूर्ण,
+	अणु "tx_oversize", RMON_T_OVERSIZE पूर्ण,
+	अणु "tx_fragment", RMON_T_FRAG पूर्ण,
+	अणु "tx_jabber", RMON_T_JAB पूर्ण,
+	अणु "tx_collision", RMON_T_COL पूर्ण,
+	अणु "tx_64byte", RMON_T_P64 पूर्ण,
+	अणु "tx_65to127byte", RMON_T_P65TO127 पूर्ण,
+	अणु "tx_128to255byte", RMON_T_P128TO255 पूर्ण,
+	अणु "tx_256to511byte", RMON_T_P256TO511 पूर्ण,
+	अणु "tx_512to1023byte", RMON_T_P512TO1023 पूर्ण,
+	अणु "tx_1024to2047byte", RMON_T_P1024TO2047 पूर्ण,
+	अणु "tx_GTE2048byte", RMON_T_P_GTE2048 पूर्ण,
+	अणु "tx_octets", RMON_T_OCTETS पूर्ण,
 
 	/* IEEE TX */
-	{ "IEEE_tx_drop", IEEE_T_DROP },
-	{ "IEEE_tx_frame_ok", IEEE_T_FRAME_OK },
-	{ "IEEE_tx_1col", IEEE_T_1COL },
-	{ "IEEE_tx_mcol", IEEE_T_MCOL },
-	{ "IEEE_tx_def", IEEE_T_DEF },
-	{ "IEEE_tx_lcol", IEEE_T_LCOL },
-	{ "IEEE_tx_excol", IEEE_T_EXCOL },
-	{ "IEEE_tx_macerr", IEEE_T_MACERR },
-	{ "IEEE_tx_cserr", IEEE_T_CSERR },
-	{ "IEEE_tx_sqe", IEEE_T_SQE },
-	{ "IEEE_tx_fdxfc", IEEE_T_FDXFC },
-	{ "IEEE_tx_octets_ok", IEEE_T_OCTETS_OK },
+	अणु "IEEE_tx_drop", IEEE_T_DROP पूर्ण,
+	अणु "IEEE_tx_frame_ok", IEEE_T_FRAME_OK पूर्ण,
+	अणु "IEEE_tx_1col", IEEE_T_1COL पूर्ण,
+	अणु "IEEE_tx_mcol", IEEE_T_MCOL पूर्ण,
+	अणु "IEEE_tx_def", IEEE_T_DEF पूर्ण,
+	अणु "IEEE_tx_lcol", IEEE_T_LCOL पूर्ण,
+	अणु "IEEE_tx_excol", IEEE_T_EXCOL पूर्ण,
+	अणु "IEEE_tx_macerr", IEEE_T_MACERR पूर्ण,
+	अणु "IEEE_tx_cserr", IEEE_T_CSERR पूर्ण,
+	अणु "IEEE_tx_sqe", IEEE_T_SQE पूर्ण,
+	अणु "IEEE_tx_fdxfc", IEEE_T_FDXFC पूर्ण,
+	अणु "IEEE_tx_octets_ok", IEEE_T_OCTETS_OK पूर्ण,
 
 	/* RMON RX */
-	{ "rx_packets", RMON_R_PACKETS },
-	{ "rx_broadcast", RMON_R_BC_PKT },
-	{ "rx_multicast", RMON_R_MC_PKT },
-	{ "rx_crc_errors", RMON_R_CRC_ALIGN },
-	{ "rx_undersize", RMON_R_UNDERSIZE },
-	{ "rx_oversize", RMON_R_OVERSIZE },
-	{ "rx_fragment", RMON_R_FRAG },
-	{ "rx_jabber", RMON_R_JAB },
-	{ "rx_64byte", RMON_R_P64 },
-	{ "rx_65to127byte", RMON_R_P65TO127 },
-	{ "rx_128to255byte", RMON_R_P128TO255 },
-	{ "rx_256to511byte", RMON_R_P256TO511 },
-	{ "rx_512to1023byte", RMON_R_P512TO1023 },
-	{ "rx_1024to2047byte", RMON_R_P1024TO2047 },
-	{ "rx_GTE2048byte", RMON_R_P_GTE2048 },
-	{ "rx_octets", RMON_R_OCTETS },
+	अणु "rx_packets", RMON_R_PACKETS पूर्ण,
+	अणु "rx_broadcast", RMON_R_BC_PKT पूर्ण,
+	अणु "rx_multicast", RMON_R_MC_PKT पूर्ण,
+	अणु "rx_crc_errors", RMON_R_CRC_ALIGN पूर्ण,
+	अणु "rx_undersize", RMON_R_UNDERSIZE पूर्ण,
+	अणु "rx_oversize", RMON_R_OVERSIZE पूर्ण,
+	अणु "rx_fragment", RMON_R_FRAG पूर्ण,
+	अणु "rx_jabber", RMON_R_JAB पूर्ण,
+	अणु "rx_64byte", RMON_R_P64 पूर्ण,
+	अणु "rx_65to127byte", RMON_R_P65TO127 पूर्ण,
+	अणु "rx_128to255byte", RMON_R_P128TO255 पूर्ण,
+	अणु "rx_256to511byte", RMON_R_P256TO511 पूर्ण,
+	अणु "rx_512to1023byte", RMON_R_P512TO1023 पूर्ण,
+	अणु "rx_1024to2047byte", RMON_R_P1024TO2047 पूर्ण,
+	अणु "rx_GTE2048byte", RMON_R_P_GTE2048 पूर्ण,
+	अणु "rx_octets", RMON_R_OCTETS पूर्ण,
 
 	/* IEEE RX */
-	{ "IEEE_rx_drop", IEEE_R_DROP },
-	{ "IEEE_rx_frame_ok", IEEE_R_FRAME_OK },
-	{ "IEEE_rx_crc", IEEE_R_CRC },
-	{ "IEEE_rx_align", IEEE_R_ALIGN },
-	{ "IEEE_rx_macerr", IEEE_R_MACERR },
-	{ "IEEE_rx_fdxfc", IEEE_R_FDXFC },
-	{ "IEEE_rx_octets_ok", IEEE_R_OCTETS_OK },
-};
+	अणु "IEEE_rx_drop", IEEE_R_DROP पूर्ण,
+	अणु "IEEE_rx_frame_ok", IEEE_R_FRAME_OK पूर्ण,
+	अणु "IEEE_rx_crc", IEEE_R_CRC पूर्ण,
+	अणु "IEEE_rx_align", IEEE_R_ALIGN पूर्ण,
+	अणु "IEEE_rx_macerr", IEEE_R_MACERR पूर्ण,
+	अणु "IEEE_rx_fdxfc", IEEE_R_FDXFC पूर्ण,
+	अणु "IEEE_rx_octets_ok", IEEE_R_OCTETS_OK पूर्ण,
+पूर्ण;
 
-#define FEC_STATS_SIZE		(ARRAY_SIZE(fec_stats) * sizeof(u64))
+#घोषणा FEC_STATS_SIZE		(ARRAY_SIZE(fec_stats) * माप(u64))
 
-static void fec_enet_update_ethtool_stats(struct net_device *dev)
-{
-	struct fec_enet_private *fep = netdev_priv(dev);
-	int i;
+अटल व्योम fec_enet_update_ethtool_stats(काष्ठा net_device *dev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(dev);
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(fec_stats); i++)
-		fep->ethtool_stats[i] = readl(fep->hwp + fec_stats[i].offset);
-}
+	क्रम (i = 0; i < ARRAY_SIZE(fec_stats); i++)
+		fep->ethtool_stats[i] = पढ़ोl(fep->hwp + fec_stats[i].offset);
+पूर्ण
 
-static void fec_enet_get_ethtool_stats(struct net_device *dev,
-				       struct ethtool_stats *stats, u64 *data)
-{
-	struct fec_enet_private *fep = netdev_priv(dev);
+अटल व्योम fec_enet_get_ethtool_stats(काष्ठा net_device *dev,
+				       काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(dev);
 
-	if (netif_running(dev))
+	अगर (netअगर_running(dev))
 		fec_enet_update_ethtool_stats(dev);
 
-	memcpy(data, fep->ethtool_stats, FEC_STATS_SIZE);
-}
+	स_नकल(data, fep->ethtool_stats, FEC_STATS_SIZE);
+पूर्ण
 
-static void fec_enet_get_strings(struct net_device *netdev,
+अटल व्योम fec_enet_get_strings(काष्ठा net_device *netdev,
 	u32 stringset, u8 *data)
-{
-	int i;
-	switch (stringset) {
-	case ETH_SS_STATS:
-		for (i = 0; i < ARRAY_SIZE(fec_stats); i++)
-			memcpy(data + i * ETH_GSTRING_LEN,
+अणु
+	पूर्णांक i;
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < ARRAY_SIZE(fec_stats); i++)
+			स_नकल(data + i * ETH_GSTRING_LEN,
 				fec_stats[i].name, ETH_GSTRING_LEN);
-		break;
-	case ETH_SS_TEST:
+		अवरोध;
+	हाल ETH_SS_TEST:
 		net_selftest_get_strings(data);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int fec_enet_get_sset_count(struct net_device *dev, int sset)
-{
-	switch (sset) {
-	case ETH_SS_STATS:
-		return ARRAY_SIZE(fec_stats);
-	case ETH_SS_TEST:
-		return net_selftest_get_count();
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक fec_enet_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
+अणु
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
+		वापस ARRAY_SIZE(fec_stats);
+	हाल ETH_SS_TEST:
+		वापस net_selftest_get_count();
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static void fec_enet_clear_ethtool_stats(struct net_device *dev)
-{
-	struct fec_enet_private *fep = netdev_priv(dev);
-	int i;
+अटल व्योम fec_enet_clear_ethtool_stats(काष्ठा net_device *dev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(dev);
+	पूर्णांक i;
 
 	/* Disable MIB statistics counters */
-	writel(FEC_MIB_CTRLSTAT_DISABLE, fep->hwp + FEC_MIB_CTRLSTAT);
+	ग_लिखोl(FEC_MIB_CTRLSTAT_DISABLE, fep->hwp + FEC_MIB_CTRLSTAT);
 
-	for (i = 0; i < ARRAY_SIZE(fec_stats); i++)
-		writel(0, fep->hwp + fec_stats[i].offset);
+	क्रम (i = 0; i < ARRAY_SIZE(fec_stats); i++)
+		ग_लिखोl(0, fep->hwp + fec_stats[i].offset);
 
 	/* Don't disable MIB statistics counters */
-	writel(0, fep->hwp + FEC_MIB_CTRLSTAT);
-}
+	ग_लिखोl(0, fep->hwp + FEC_MIB_CTRLSTAT);
+पूर्ण
 
-#else	/* !defined(CONFIG_M5272) */
-#define FEC_STATS_SIZE	0
-static inline void fec_enet_update_ethtool_stats(struct net_device *dev)
-{
-}
+#अन्यथा	/* !defined(CONFIG_M5272) */
+#घोषणा FEC_STATS_SIZE	0
+अटल अंतरभूत व्योम fec_enet_update_ethtool_stats(काष्ठा net_device *dev)
+अणु
+पूर्ण
 
-static inline void fec_enet_clear_ethtool_stats(struct net_device *dev)
-{
-}
-#endif /* !defined(CONFIG_M5272) */
+अटल अंतरभूत व्योम fec_enet_clear_ethtool_stats(काष्ठा net_device *dev)
+अणु
+पूर्ण
+#पूर्ण_अगर /* !defined(CONFIG_M5272) */
 
-/* ITR clock source is enet system clock (clk_ahb).
+/* ITR घड़ी source is enet प्रणाली घड़ी (clk_ahb).
  * TCTT unit is cycle_ns * 64 cycle
  * So, the ICTT value = X us / (cycle_ns * 64)
  */
-static int fec_enet_us_to_itr_clock(struct net_device *ndev, int us)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल पूर्णांक fec_enet_us_to_itr_घड़ी(काष्ठा net_device *ndev, पूर्णांक us)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 
-	return us * (fep->itr_clk_rate / 64000) / 1000;
-}
+	वापस us * (fep->itr_clk_rate / 64000) / 1000;
+पूर्ण
 
-/* Set threshold for interrupt coalescing */
-static void fec_enet_itr_coal_set(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int rx_itr, tx_itr;
+/* Set threshold क्रम पूर्णांकerrupt coalescing */
+अटल व्योम fec_enet_itr_coal_set(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक rx_itr, tx_itr;
 
-	/* Must be greater than zero to avoid unpredictable behavior */
-	if (!fep->rx_time_itr || !fep->rx_pkts_itr ||
-	    !fep->tx_time_itr || !fep->tx_pkts_itr)
-		return;
+	/* Must be greater than zero to aव्योम unpredictable behavior */
+	अगर (!fep->rx_समय_itr || !fep->rx_pkts_itr ||
+	    !fep->tx_समय_itr || !fep->tx_pkts_itr)
+		वापस;
 
-	/* Select enet system clock as Interrupt Coalescing
-	 * timer Clock Source
+	/* Select enet प्रणाली घड़ी as Interrupt Coalescing
+	 * समयr Clock Source
 	 */
 	rx_itr = FEC_ITR_CLK_SEL;
 	tx_itr = FEC_ITR_CLK_SEL;
 
 	/* set ICFT and ICTT */
 	rx_itr |= FEC_ITR_ICFT(fep->rx_pkts_itr);
-	rx_itr |= FEC_ITR_ICTT(fec_enet_us_to_itr_clock(ndev, fep->rx_time_itr));
+	rx_itr |= FEC_ITR_ICTT(fec_enet_us_to_itr_घड़ी(ndev, fep->rx_समय_itr));
 	tx_itr |= FEC_ITR_ICFT(fep->tx_pkts_itr);
-	tx_itr |= FEC_ITR_ICTT(fec_enet_us_to_itr_clock(ndev, fep->tx_time_itr));
+	tx_itr |= FEC_ITR_ICTT(fec_enet_us_to_itr_घड़ी(ndev, fep->tx_समय_itr));
 
 	rx_itr |= FEC_ITR_EN;
 	tx_itr |= FEC_ITR_EN;
 
-	writel(tx_itr, fep->hwp + FEC_TXIC0);
-	writel(rx_itr, fep->hwp + FEC_RXIC0);
-	if (fep->quirks & FEC_QUIRK_HAS_AVB) {
-		writel(tx_itr, fep->hwp + FEC_TXIC1);
-		writel(rx_itr, fep->hwp + FEC_RXIC1);
-		writel(tx_itr, fep->hwp + FEC_TXIC2);
-		writel(rx_itr, fep->hwp + FEC_RXIC2);
-	}
-}
+	ग_लिखोl(tx_itr, fep->hwp + FEC_TXIC0);
+	ग_लिखोl(rx_itr, fep->hwp + FEC_RXIC0);
+	अगर (fep->quirks & FEC_QUIRK_HAS_AVB) अणु
+		ग_लिखोl(tx_itr, fep->hwp + FEC_TXIC1);
+		ग_लिखोl(rx_itr, fep->hwp + FEC_RXIC1);
+		ग_लिखोl(tx_itr, fep->hwp + FEC_TXIC2);
+		ग_लिखोl(rx_itr, fep->hwp + FEC_RXIC2);
+	पूर्ण
+पूर्ण
 
-static int
-fec_enet_get_coalesce(struct net_device *ndev, struct ethtool_coalesce *ec)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल पूर्णांक
+fec_enet_get_coalesce(काष्ठा net_device *ndev, काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 
-	if (!(fep->quirks & FEC_QUIRK_HAS_COALESCE))
-		return -EOPNOTSUPP;
+	अगर (!(fep->quirks & FEC_QUIRK_HAS_COALESCE))
+		वापस -EOPNOTSUPP;
 
-	ec->rx_coalesce_usecs = fep->rx_time_itr;
+	ec->rx_coalesce_usecs = fep->rx_समय_itr;
 	ec->rx_max_coalesced_frames = fep->rx_pkts_itr;
 
-	ec->tx_coalesce_usecs = fep->tx_time_itr;
+	ec->tx_coalesce_usecs = fep->tx_समय_itr;
 	ec->tx_max_coalesced_frames = fep->tx_pkts_itr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-fec_enet_set_coalesce(struct net_device *ndev, struct ethtool_coalesce *ec)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct device *dev = &fep->pdev->dev;
-	unsigned int cycle;
+अटल पूर्णांक
+fec_enet_set_coalesce(काष्ठा net_device *ndev, काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा device *dev = &fep->pdev->dev;
+	अचिन्हित पूर्णांक cycle;
 
-	if (!(fep->quirks & FEC_QUIRK_HAS_COALESCE))
-		return -EOPNOTSUPP;
+	अगर (!(fep->quirks & FEC_QUIRK_HAS_COALESCE))
+		वापस -EOPNOTSUPP;
 
-	if (ec->rx_max_coalesced_frames > 255) {
+	अगर (ec->rx_max_coalesced_frames > 255) अणु
 		dev_err(dev, "Rx coalesced frames exceed hardware limitation\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ec->tx_max_coalesced_frames > 255) {
+	अगर (ec->tx_max_coalesced_frames > 255) अणु
 		dev_err(dev, "Tx coalesced frame exceed hardware limitation\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	cycle = fec_enet_us_to_itr_clock(ndev, ec->rx_coalesce_usecs);
-	if (cycle > 0xFFFF) {
+	cycle = fec_enet_us_to_itr_घड़ी(ndev, ec->rx_coalesce_usecs);
+	अगर (cycle > 0xFFFF) अणु
 		dev_err(dev, "Rx coalesced usec exceed hardware limitation\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	cycle = fec_enet_us_to_itr_clock(ndev, ec->tx_coalesce_usecs);
-	if (cycle > 0xFFFF) {
+	cycle = fec_enet_us_to_itr_घड़ी(ndev, ec->tx_coalesce_usecs);
+	अगर (cycle > 0xFFFF) अणु
 		dev_err(dev, "Tx coalesced usec exceed hardware limitation\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	fep->rx_time_itr = ec->rx_coalesce_usecs;
+	fep->rx_समय_itr = ec->rx_coalesce_usecs;
 	fep->rx_pkts_itr = ec->rx_max_coalesced_frames;
 
-	fep->tx_time_itr = ec->tx_coalesce_usecs;
+	fep->tx_समय_itr = ec->tx_coalesce_usecs;
 	fep->tx_pkts_itr = ec->tx_max_coalesced_frames;
 
 	fec_enet_itr_coal_set(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fec_enet_itr_coal_init(struct net_device *ndev)
-{
-	struct ethtool_coalesce ec;
+अटल व्योम fec_enet_itr_coal_init(काष्ठा net_device *ndev)
+अणु
+	काष्ठा ethtool_coalesce ec;
 
 	ec.rx_coalesce_usecs = FEC_ITR_ICTT_DEFAULT;
 	ec.rx_max_coalesced_frames = FEC_ITR_ICFT_DEFAULT;
@@ -2649,85 +2650,85 @@ static void fec_enet_itr_coal_init(struct net_device *ndev)
 	ec.tx_max_coalesced_frames = FEC_ITR_ICFT_DEFAULT;
 
 	fec_enet_set_coalesce(ndev, &ec);
-}
+पूर्ण
 
-static int fec_enet_get_tunable(struct net_device *netdev,
-				const struct ethtool_tunable *tuna,
-				void *data)
-{
-	struct fec_enet_private *fep = netdev_priv(netdev);
-	int ret = 0;
+अटल पूर्णांक fec_enet_get_tunable(काष्ठा net_device *netdev,
+				स्थिर काष्ठा ethtool_tunable *tuna,
+				व्योम *data)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(netdev);
+	पूर्णांक ret = 0;
 
-	switch (tuna->id) {
-	case ETHTOOL_RX_COPYBREAK:
-		*(u32 *)data = fep->rx_copybreak;
-		break;
-	default:
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_RX_COPYBREAK:
+		*(u32 *)data = fep->rx_copyअवरोध;
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fec_enet_set_tunable(struct net_device *netdev,
-				const struct ethtool_tunable *tuna,
-				const void *data)
-{
-	struct fec_enet_private *fep = netdev_priv(netdev);
-	int ret = 0;
+अटल पूर्णांक fec_enet_set_tunable(काष्ठा net_device *netdev,
+				स्थिर काष्ठा ethtool_tunable *tuna,
+				स्थिर व्योम *data)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(netdev);
+	पूर्णांक ret = 0;
 
-	switch (tuna->id) {
-	case ETHTOOL_RX_COPYBREAK:
-		fep->rx_copybreak = *(u32 *)data;
-		break;
-	default:
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_RX_COPYBREAK:
+		fep->rx_copyअवरोध = *(u32 *)data;
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-fec_enet_get_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल व्योम
+fec_enet_get_wol(काष्ठा net_device *ndev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 
-	if (fep->wol_flag & FEC_WOL_HAS_MAGIC_PACKET) {
+	अगर (fep->wol_flag & FEC_WOL_HAS_MAGIC_PACKET) अणु
 		wol->supported = WAKE_MAGIC;
 		wol->wolopts = fep->wol_flag & FEC_WOL_FLAG_ENABLE ? WAKE_MAGIC : 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		wol->supported = wol->wolopts = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-fec_enet_set_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल पूर्णांक
+fec_enet_set_wol(काष्ठा net_device *ndev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 
-	if (!(fep->wol_flag & FEC_WOL_HAS_MAGIC_PACKET))
-		return -EINVAL;
+	अगर (!(fep->wol_flag & FEC_WOL_HAS_MAGIC_PACKET))
+		वापस -EINVAL;
 
-	if (wol->wolopts & ~WAKE_MAGIC)
-		return -EINVAL;
+	अगर (wol->wolopts & ~WAKE_MAGIC)
+		वापस -EINVAL;
 
 	device_set_wakeup_enable(&ndev->dev, wol->wolopts & WAKE_MAGIC);
-	if (device_may_wakeup(&ndev->dev)) {
+	अगर (device_may_wakeup(&ndev->dev)) अणु
 		fep->wol_flag |= FEC_WOL_FLAG_ENABLE;
-		if (fep->irq[0] > 0)
+		अगर (fep->irq[0] > 0)
 			enable_irq_wake(fep->irq[0]);
-	} else {
+	पूर्ण अन्यथा अणु
 		fep->wol_flag &= (~FEC_WOL_FLAG_ENABLE);
-		if (fep->irq[0] > 0)
+		अगर (fep->irq[0] > 0)
 			disable_irq_wake(fep->irq[0]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ethtool_ops fec_enet_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops fec_enet_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_MAX_FRAMES,
 	.get_drvinfo		= fec_enet_get_drvinfo,
@@ -2737,13 +2738,13 @@ static const struct ethtool_ops fec_enet_ethtool_ops = {
 	.get_link		= ethtool_op_get_link,
 	.get_coalesce		= fec_enet_get_coalesce,
 	.set_coalesce		= fec_enet_set_coalesce,
-#ifndef CONFIG_M5272
-	.get_pauseparam		= fec_enet_get_pauseparam,
-	.set_pauseparam		= fec_enet_set_pauseparam,
+#अगर_अघोषित CONFIG_M5272
+	.get_छोड़ोparam		= fec_enet_get_छोड़ोparam,
+	.set_छोड़ोparam		= fec_enet_set_छोड़ोparam,
 	.get_strings		= fec_enet_get_strings,
 	.get_ethtool_stats	= fec_enet_get_ethtool_stats,
 	.get_sset_count		= fec_enet_get_sset_count,
-#endif
+#पूर्ण_अगर
 	.get_ts_info		= fec_enet_get_ts_info,
 	.get_tunable		= fec_enet_get_tunable,
 	.set_tunable		= fec_enet_set_tunable,
@@ -2752,108 +2753,108 @@ static const struct ethtool_ops fec_enet_ethtool_ops = {
 	.get_link_ksettings	= phy_ethtool_get_link_ksettings,
 	.set_link_ksettings	= phy_ethtool_set_link_ksettings,
 	.self_test		= net_selftest,
-};
+पूर्ण;
 
-static int fec_enet_ioctl(struct net_device *ndev, struct ifreq *rq, int cmd)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct phy_device *phydev = ndev->phydev;
+अटल पूर्णांक fec_enet_ioctl(काष्ठा net_device *ndev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा phy_device *phydev = ndev->phydev;
 
-	if (!netif_running(ndev))
-		return -EINVAL;
+	अगर (!netअगर_running(ndev))
+		वापस -EINVAL;
 
-	if (!phydev)
-		return -ENODEV;
+	अगर (!phydev)
+		वापस -ENODEV;
 
-	if (fep->bufdesc_ex) {
+	अगर (fep->bufdesc_ex) अणु
 		bool use_fec_hwts = !phy_has_hwtstamp(phydev);
 
-		if (cmd == SIOCSHWTSTAMP) {
-			if (use_fec_hwts)
-				return fec_ptp_set(ndev, rq);
+		अगर (cmd == SIOCSHWTSTAMP) अणु
+			अगर (use_fec_hwts)
+				वापस fec_ptp_set(ndev, rq);
 			fec_ptp_disable_hwts(ndev);
-		} else if (cmd == SIOCGHWTSTAMP) {
-			if (use_fec_hwts)
-				return fec_ptp_get(ndev, rq);
-		}
-	}
+		पूर्ण अन्यथा अगर (cmd == SIOCGHWTSTAMP) अणु
+			अगर (use_fec_hwts)
+				वापस fec_ptp_get(ndev, rq);
+		पूर्ण
+	पूर्ण
 
-	return phy_mii_ioctl(phydev, rq, cmd);
-}
+	वापस phy_mii_ioctl(phydev, rq, cmd);
+पूर्ण
 
-static void fec_enet_free_buffers(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	unsigned int i;
-	struct sk_buff *skb;
-	struct bufdesc	*bdp;
-	struct fec_enet_priv_tx_q *txq;
-	struct fec_enet_priv_rx_q *rxq;
-	unsigned int q;
+अटल व्योम fec_enet_मुक्त_buffers(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	अचिन्हित पूर्णांक i;
+	काष्ठा sk_buff *skb;
+	काष्ठा bufdesc	*bdp;
+	काष्ठा fec_enet_priv_tx_q *txq;
+	काष्ठा fec_enet_priv_rx_q *rxq;
+	अचिन्हित पूर्णांक q;
 
-	for (q = 0; q < fep->num_rx_queues; q++) {
+	क्रम (q = 0; q < fep->num_rx_queues; q++) अणु
 		rxq = fep->rx_queue[q];
 		bdp = rxq->bd.base;
-		for (i = 0; i < rxq->bd.ring_size; i++) {
+		क्रम (i = 0; i < rxq->bd.ring_size; i++) अणु
 			skb = rxq->rx_skbuff[i];
-			rxq->rx_skbuff[i] = NULL;
-			if (skb) {
+			rxq->rx_skbuff[i] = शून्य;
+			अगर (skb) अणु
 				dma_unmap_single(&fep->pdev->dev,
 						 fec32_to_cpu(bdp->cbd_bufaddr),
 						 FEC_ENET_RX_FRSIZE - fep->rx_align,
 						 DMA_FROM_DEVICE);
-				dev_kfree_skb(skb);
-			}
+				dev_kमुक्त_skb(skb);
+			पूर्ण
 			bdp = fec_enet_get_nextdesc(bdp, &rxq->bd);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (q = 0; q < fep->num_tx_queues; q++) {
+	क्रम (q = 0; q < fep->num_tx_queues; q++) अणु
 		txq = fep->tx_queue[q];
-		for (i = 0; i < txq->bd.ring_size; i++) {
-			kfree(txq->tx_bounce[i]);
-			txq->tx_bounce[i] = NULL;
+		क्रम (i = 0; i < txq->bd.ring_size; i++) अणु
+			kमुक्त(txq->tx_bounce[i]);
+			txq->tx_bounce[i] = शून्य;
 			skb = txq->tx_skbuff[i];
-			txq->tx_skbuff[i] = NULL;
-			dev_kfree_skb(skb);
-		}
-	}
-}
+			txq->tx_skbuff[i] = शून्य;
+			dev_kमुक्त_skb(skb);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void fec_enet_free_queue(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int i;
-	struct fec_enet_priv_tx_q *txq;
+अटल व्योम fec_enet_मुक्त_queue(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक i;
+	काष्ठा fec_enet_priv_tx_q *txq;
 
-	for (i = 0; i < fep->num_tx_queues; i++)
-		if (fep->tx_queue[i] && fep->tx_queue[i]->tso_hdrs) {
+	क्रम (i = 0; i < fep->num_tx_queues; i++)
+		अगर (fep->tx_queue[i] && fep->tx_queue[i]->tso_hdrs) अणु
 			txq = fep->tx_queue[i];
-			dma_free_coherent(&fep->pdev->dev,
+			dma_मुक्त_coherent(&fep->pdev->dev,
 					  txq->bd.ring_size * TSO_HEADER_SIZE,
 					  txq->tso_hdrs,
 					  txq->tso_hdrs_dma);
-		}
+		पूर्ण
 
-	for (i = 0; i < fep->num_rx_queues; i++)
-		kfree(fep->rx_queue[i]);
-	for (i = 0; i < fep->num_tx_queues; i++)
-		kfree(fep->tx_queue[i]);
-}
+	क्रम (i = 0; i < fep->num_rx_queues; i++)
+		kमुक्त(fep->rx_queue[i]);
+	क्रम (i = 0; i < fep->num_tx_queues; i++)
+		kमुक्त(fep->tx_queue[i]);
+पूर्ण
 
-static int fec_enet_alloc_queue(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int i;
-	int ret = 0;
-	struct fec_enet_priv_tx_q *txq;
+अटल पूर्णांक fec_enet_alloc_queue(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक i;
+	पूर्णांक ret = 0;
+	काष्ठा fec_enet_priv_tx_q *txq;
 
-	for (i = 0; i < fep->num_tx_queues; i++) {
-		txq = kzalloc(sizeof(*txq), GFP_KERNEL);
-		if (!txq) {
+	क्रम (i = 0; i < fep->num_tx_queues; i++) अणु
+		txq = kzalloc(माप(*txq), GFP_KERNEL);
+		अगर (!txq) अणु
 			ret = -ENOMEM;
-			goto alloc_failed;
-		}
+			जाओ alloc_failed;
+		पूर्ण
 
 		fep->tx_queue[i] = txq;
 		txq->bd.ring_size = TX_RING_SIZE;
@@ -2867,459 +2868,459 @@ static int fec_enet_alloc_queue(struct net_device *ndev)
 					txq->bd.ring_size * TSO_HEADER_SIZE,
 					&txq->tso_hdrs_dma,
 					GFP_KERNEL);
-		if (!txq->tso_hdrs) {
+		अगर (!txq->tso_hdrs) अणु
 			ret = -ENOMEM;
-			goto alloc_failed;
-		}
-	}
+			जाओ alloc_failed;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < fep->num_rx_queues; i++) {
-		fep->rx_queue[i] = kzalloc(sizeof(*fep->rx_queue[i]),
+	क्रम (i = 0; i < fep->num_rx_queues; i++) अणु
+		fep->rx_queue[i] = kzalloc(माप(*fep->rx_queue[i]),
 					   GFP_KERNEL);
-		if (!fep->rx_queue[i]) {
+		अगर (!fep->rx_queue[i]) अणु
 			ret = -ENOMEM;
-			goto alloc_failed;
-		}
+			जाओ alloc_failed;
+		पूर्ण
 
 		fep->rx_queue[i]->bd.ring_size = RX_RING_SIZE;
 		fep->total_rx_ring_size += fep->rx_queue[i]->bd.ring_size;
-	}
-	return ret;
+	पूर्ण
+	वापस ret;
 
 alloc_failed:
-	fec_enet_free_queue(ndev);
-	return ret;
-}
+	fec_enet_मुक्त_queue(ndev);
+	वापस ret;
+पूर्ण
 
-static int
-fec_enet_alloc_rxq_buffers(struct net_device *ndev, unsigned int queue)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	unsigned int i;
-	struct sk_buff *skb;
-	struct bufdesc	*bdp;
-	struct fec_enet_priv_rx_q *rxq;
+अटल पूर्णांक
+fec_enet_alloc_rxq_buffers(काष्ठा net_device *ndev, अचिन्हित पूर्णांक queue)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	अचिन्हित पूर्णांक i;
+	काष्ठा sk_buff *skb;
+	काष्ठा bufdesc	*bdp;
+	काष्ठा fec_enet_priv_rx_q *rxq;
 
 	rxq = fep->rx_queue[queue];
 	bdp = rxq->bd.base;
-	for (i = 0; i < rxq->bd.ring_size; i++) {
+	क्रम (i = 0; i < rxq->bd.ring_size; i++) अणु
 		skb = netdev_alloc_skb(ndev, FEC_ENET_RX_FRSIZE);
-		if (!skb)
-			goto err_alloc;
+		अगर (!skb)
+			जाओ err_alloc;
 
-		if (fec_enet_new_rxbdp(ndev, bdp, skb)) {
-			dev_kfree_skb(skb);
-			goto err_alloc;
-		}
+		अगर (fec_enet_new_rxbdp(ndev, bdp, skb)) अणु
+			dev_kमुक्त_skb(skb);
+			जाओ err_alloc;
+		पूर्ण
 
 		rxq->rx_skbuff[i] = skb;
 		bdp->cbd_sc = cpu_to_fec16(BD_ENET_RX_EMPTY);
 
-		if (fep->bufdesc_ex) {
-			struct bufdesc_ex *ebdp = (struct bufdesc_ex *)bdp;
+		अगर (fep->bufdesc_ex) अणु
+			काष्ठा bufdesc_ex *ebdp = (काष्ठा bufdesc_ex *)bdp;
 			ebdp->cbd_esc = cpu_to_fec32(BD_ENET_RX_INT);
-		}
+		पूर्ण
 
 		bdp = fec_enet_get_nextdesc(bdp, &rxq->bd);
-	}
+	पूर्ण
 
 	/* Set the last buffer to wrap. */
 	bdp = fec_enet_get_prevdesc(bdp, &rxq->bd);
 	bdp->cbd_sc |= cpu_to_fec16(BD_SC_WRAP);
-	return 0;
+	वापस 0;
 
  err_alloc:
-	fec_enet_free_buffers(ndev);
-	return -ENOMEM;
-}
+	fec_enet_मुक्त_buffers(ndev);
+	वापस -ENOMEM;
+पूर्ण
 
-static int
-fec_enet_alloc_txq_buffers(struct net_device *ndev, unsigned int queue)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	unsigned int i;
-	struct bufdesc  *bdp;
-	struct fec_enet_priv_tx_q *txq;
+अटल पूर्णांक
+fec_enet_alloc_txq_buffers(काष्ठा net_device *ndev, अचिन्हित पूर्णांक queue)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	अचिन्हित पूर्णांक i;
+	काष्ठा bufdesc  *bdp;
+	काष्ठा fec_enet_priv_tx_q *txq;
 
 	txq = fep->tx_queue[queue];
 	bdp = txq->bd.base;
-	for (i = 0; i < txq->bd.ring_size; i++) {
-		txq->tx_bounce[i] = kmalloc(FEC_ENET_TX_FRSIZE, GFP_KERNEL);
-		if (!txq->tx_bounce[i])
-			goto err_alloc;
+	क्रम (i = 0; i < txq->bd.ring_size; i++) अणु
+		txq->tx_bounce[i] = kदो_स्मृति(FEC_ENET_TX_FRSIZE, GFP_KERNEL);
+		अगर (!txq->tx_bounce[i])
+			जाओ err_alloc;
 
 		bdp->cbd_sc = cpu_to_fec16(0);
 		bdp->cbd_bufaddr = cpu_to_fec32(0);
 
-		if (fep->bufdesc_ex) {
-			struct bufdesc_ex *ebdp = (struct bufdesc_ex *)bdp;
+		अगर (fep->bufdesc_ex) अणु
+			काष्ठा bufdesc_ex *ebdp = (काष्ठा bufdesc_ex *)bdp;
 			ebdp->cbd_esc = cpu_to_fec32(BD_ENET_TX_INT);
-		}
+		पूर्ण
 
 		bdp = fec_enet_get_nextdesc(bdp, &txq->bd);
-	}
+	पूर्ण
 
 	/* Set the last buffer to wrap. */
 	bdp = fec_enet_get_prevdesc(bdp, &txq->bd);
 	bdp->cbd_sc |= cpu_to_fec16(BD_SC_WRAP);
 
-	return 0;
+	वापस 0;
 
  err_alloc:
-	fec_enet_free_buffers(ndev);
-	return -ENOMEM;
-}
+	fec_enet_मुक्त_buffers(ndev);
+	वापस -ENOMEM;
+पूर्ण
 
-static int fec_enet_alloc_buffers(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	unsigned int i;
+अटल पूर्णांक fec_enet_alloc_buffers(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < fep->num_rx_queues; i++)
-		if (fec_enet_alloc_rxq_buffers(ndev, i))
-			return -ENOMEM;
+	क्रम (i = 0; i < fep->num_rx_queues; i++)
+		अगर (fec_enet_alloc_rxq_buffers(ndev, i))
+			वापस -ENOMEM;
 
-	for (i = 0; i < fep->num_tx_queues; i++)
-		if (fec_enet_alloc_txq_buffers(ndev, i))
-			return -ENOMEM;
-	return 0;
-}
+	क्रम (i = 0; i < fep->num_tx_queues; i++)
+		अगर (fec_enet_alloc_txq_buffers(ndev, i))
+			वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static int
-fec_enet_open(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक
+fec_enet_खोलो(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक ret;
 	bool reset_again;
 
-	ret = pm_runtime_resume_and_get(&fep->pdev->dev);
-	if (ret < 0)
-		return ret;
+	ret = pm_runसमय_resume_and_get(&fep->pdev->dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	pinctrl_pm_select_default_state(&fep->pdev->dev);
+	pinctrl_pm_select_शेष_state(&fep->pdev->dev);
 	ret = fec_enet_clk_enable(ndev, true);
-	if (ret)
-		goto clk_enable;
+	अगर (ret)
+		जाओ clk_enable;
 
-	/* During the first fec_enet_open call the PHY isn't probed at this
-	 * point. Therefore the phy_reset_after_clk_enable() call within
+	/* During the first fec_enet_खोलो call the PHY isn't probed at this
+	 * poपूर्णांक. Thereक्रमe the phy_reset_after_clk_enable() call within
 	 * fec_enet_clk_enable() fails. As we need this reset in order to be
-	 * sure the PHY is working correctly we check if we need to reset again
+	 * sure the PHY is working correctly we check अगर we need to reset again
 	 * later when the PHY is probed
 	 */
-	if (ndev->phydev && ndev->phydev->drv)
+	अगर (ndev->phydev && ndev->phydev->drv)
 		reset_again = false;
-	else
+	अन्यथा
 		reset_again = true;
 
-	/* I should reset the ring buffers here, but I don't yet know
-	 * a simple way to do that.
+	/* I should reset the ring buffers here, but I करोn't yet know
+	 * a simple way to करो that.
 	 */
 
 	ret = fec_enet_alloc_buffers(ndev);
-	if (ret)
-		goto err_enet_alloc;
+	अगर (ret)
+		जाओ err_enet_alloc;
 
 	/* Init MAC prior to mii bus probe */
 	fec_restart(ndev);
 
-	/* Call phy_reset_after_clk_enable() again if it failed during
-	 * phy_reset_after_clk_enable() before because the PHY wasn't probed.
+	/* Call phy_reset_after_clk_enable() again अगर it failed during
+	 * phy_reset_after_clk_enable() beक्रमe because the PHY wasn't probed.
 	 */
-	if (reset_again)
+	अगर (reset_again)
 		fec_enet_phy_reset_after_clk_enable(ndev);
 
-	/* Probe and connect to PHY when open the interface */
+	/* Probe and connect to PHY when खोलो the पूर्णांकerface */
 	ret = fec_enet_mii_probe(ndev);
-	if (ret)
-		goto err_enet_mii_probe;
+	अगर (ret)
+		जाओ err_enet_mii_probe;
 
-	if (fep->quirks & FEC_QUIRK_ERR006687)
+	अगर (fep->quirks & FEC_QUIRK_ERR006687)
 		imx6q_cpuidle_fec_irqs_used();
 
 	napi_enable(&fep->napi);
 	phy_start(ndev->phydev);
-	netif_tx_start_all_queues(ndev);
+	netअगर_tx_start_all_queues(ndev);
 
 	device_set_wakeup_enable(&ndev->dev, fep->wol_flag &
 				 FEC_WOL_FLAG_ENABLE);
 
-	return 0;
+	वापस 0;
 
 err_enet_mii_probe:
-	fec_enet_free_buffers(ndev);
+	fec_enet_मुक्त_buffers(ndev);
 err_enet_alloc:
 	fec_enet_clk_enable(ndev, false);
 clk_enable:
-	pm_runtime_mark_last_busy(&fep->pdev->dev);
-	pm_runtime_put_autosuspend(&fep->pdev->dev);
+	pm_runसमय_mark_last_busy(&fep->pdev->dev);
+	pm_runसमय_put_स्वतःsuspend(&fep->pdev->dev);
 	pinctrl_pm_select_sleep_state(&fep->pdev->dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-fec_enet_close(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल पूर्णांक
+fec_enet_बंद(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 
 	phy_stop(ndev->phydev);
 
-	if (netif_device_present(ndev)) {
+	अगर (netअगर_device_present(ndev)) अणु
 		napi_disable(&fep->napi);
-		netif_tx_disable(ndev);
+		netअगर_tx_disable(ndev);
 		fec_stop(ndev);
-	}
+	पूर्ण
 
 	phy_disconnect(ndev->phydev);
 
-	if (fep->quirks & FEC_QUIRK_ERR006687)
+	अगर (fep->quirks & FEC_QUIRK_ERR006687)
 		imx6q_cpuidle_fec_irqs_unused();
 
 	fec_enet_update_ethtool_stats(ndev);
 
 	fec_enet_clk_enable(ndev, false);
 	pinctrl_pm_select_sleep_state(&fep->pdev->dev);
-	pm_runtime_mark_last_busy(&fep->pdev->dev);
-	pm_runtime_put_autosuspend(&fep->pdev->dev);
+	pm_runसमय_mark_last_busy(&fep->pdev->dev);
+	pm_runसमय_put_स्वतःsuspend(&fep->pdev->dev);
 
-	fec_enet_free_buffers(ndev);
+	fec_enet_मुक्त_buffers(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Set or clear the multicast filter for this adaptor.
+/* Set or clear the multicast filter क्रम this adaptor.
  * Skeleton taken from sunlance driver.
- * The CPM Ethernet implementation allows Multicast as well as individual
+ * The CPM Ethernet implementation allows Multicast as well as inभागidual
  * MAC address filtering.  Some of the drivers check to make sure it is
  * a group multicast address, and discard those that are not.  I guess I
- * will do the same for now, but just remove the test if you want
- * individual filtering as well (do the upper net layers want or support
+ * will करो the same क्रम now, but just हटाओ the test अगर you want
+ * inभागidual filtering as well (करो the upper net layers want or support
  * this kind of feature?).
  */
 
-#define FEC_HASH_BITS	6		/* #bits in hash */
+#घोषणा FEC_HASH_BITS	6		/* #bits in hash */
 
-static void set_multicast_list(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct netdev_hw_addr *ha;
-	unsigned int crc, tmp;
-	unsigned char hash;
-	unsigned int hash_high = 0, hash_low = 0;
+अटल व्योम set_multicast_list(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा netdev_hw_addr *ha;
+	अचिन्हित पूर्णांक crc, पंचांगp;
+	अचिन्हित अक्षर hash;
+	अचिन्हित पूर्णांक hash_high = 0, hash_low = 0;
 
-	if (ndev->flags & IFF_PROMISC) {
-		tmp = readl(fep->hwp + FEC_R_CNTRL);
-		tmp |= 0x8;
-		writel(tmp, fep->hwp + FEC_R_CNTRL);
-		return;
-	}
+	अगर (ndev->flags & IFF_PROMISC) अणु
+		पंचांगp = पढ़ोl(fep->hwp + FEC_R_CNTRL);
+		पंचांगp |= 0x8;
+		ग_लिखोl(पंचांगp, fep->hwp + FEC_R_CNTRL);
+		वापस;
+	पूर्ण
 
-	tmp = readl(fep->hwp + FEC_R_CNTRL);
-	tmp &= ~0x8;
-	writel(tmp, fep->hwp + FEC_R_CNTRL);
+	पंचांगp = पढ़ोl(fep->hwp + FEC_R_CNTRL);
+	पंचांगp &= ~0x8;
+	ग_लिखोl(पंचांगp, fep->hwp + FEC_R_CNTRL);
 
-	if (ndev->flags & IFF_ALLMULTI) {
+	अगर (ndev->flags & IFF_ALLMULTI) अणु
 		/* Catch all multicast addresses, so set the
 		 * filter to all 1's
 		 */
-		writel(0xffffffff, fep->hwp + FEC_GRP_HASH_TABLE_HIGH);
-		writel(0xffffffff, fep->hwp + FEC_GRP_HASH_TABLE_LOW);
+		ग_लिखोl(0xffffffff, fep->hwp + FEC_GRP_HASH_TABLE_HIGH);
+		ग_लिखोl(0xffffffff, fep->hwp + FEC_GRP_HASH_TABLE_LOW);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Add the addresses in hash register */
-	netdev_for_each_mc_addr(ha, ndev) {
+	/* Add the addresses in hash रेजिस्टर */
+	netdev_क्रम_each_mc_addr(ha, ndev) अणु
 		/* calculate crc32 value of mac address */
 		crc = ether_crc_le(ndev->addr_len, ha->addr);
 
 		/* only upper 6 bits (FEC_HASH_BITS) are used
-		 * which point to specific bit in the hash registers
+		 * which poपूर्णांक to specअगरic bit in the hash रेजिस्टरs
 		 */
 		hash = (crc >> (32 - FEC_HASH_BITS)) & 0x3f;
 
-		if (hash > 31)
+		अगर (hash > 31)
 			hash_high |= 1 << (hash - 32);
-		else
+		अन्यथा
 			hash_low |= 1 << hash;
-	}
+	पूर्ण
 
-	writel(hash_high, fep->hwp + FEC_GRP_HASH_TABLE_HIGH);
-	writel(hash_low, fep->hwp + FEC_GRP_HASH_TABLE_LOW);
-}
+	ग_लिखोl(hash_high, fep->hwp + FEC_GRP_HASH_TABLE_HIGH);
+	ग_लिखोl(hash_low, fep->hwp + FEC_GRP_HASH_TABLE_LOW);
+पूर्ण
 
 /* Set a MAC change in hardware. */
-static int
-fec_set_mac_address(struct net_device *ndev, void *p)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct sockaddr *addr = p;
+अटल पूर्णांक
+fec_set_mac_address(काष्ठा net_device *ndev, व्योम *p)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा sockaddr *addr = p;
 
-	if (addr) {
-		if (!is_valid_ether_addr(addr->sa_data))
-			return -EADDRNOTAVAIL;
-		memcpy(ndev->dev_addr, addr->sa_data, ndev->addr_len);
-	}
+	अगर (addr) अणु
+		अगर (!is_valid_ether_addr(addr->sa_data))
+			वापस -EADDRNOTAVAIL;
+		स_नकल(ndev->dev_addr, addr->sa_data, ndev->addr_len);
+	पूर्ण
 
-	/* Add netif status check here to avoid system hang in below case:
-	 * ifconfig ethx down; ifconfig ethx hw ether xx:xx:xx:xx:xx:xx;
-	 * After ethx down, fec all clocks are gated off and then register
-	 * access causes system hang.
+	/* Add netअगर status check here to aव्योम प्रणाली hang in below हाल:
+	 * अगरconfig ethx करोwn; अगरconfig ethx hw ether xx:xx:xx:xx:xx:xx;
+	 * After ethx करोwn, fec all घड़ीs are gated off and then रेजिस्टर
+	 * access causes प्रणाली hang.
 	 */
-	if (!netif_running(ndev))
-		return 0;
+	अगर (!netअगर_running(ndev))
+		वापस 0;
 
-	writel(ndev->dev_addr[3] | (ndev->dev_addr[2] << 8) |
+	ग_लिखोl(ndev->dev_addr[3] | (ndev->dev_addr[2] << 8) |
 		(ndev->dev_addr[1] << 16) | (ndev->dev_addr[0] << 24),
 		fep->hwp + FEC_ADDR_LOW);
-	writel((ndev->dev_addr[5] << 16) | (ndev->dev_addr[4] << 24),
+	ग_लिखोl((ndev->dev_addr[5] << 16) | (ndev->dev_addr[4] << 24),
 		fep->hwp + FEC_ADDR_HIGH);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
 /**
  * fec_poll_controller - FEC Poll controller function
  * @dev: The FEC network adapter
  *
- * Polled functionality used by netconsole and others in non interrupt mode
+ * Polled functionality used by netconsole and others in non पूर्णांकerrupt mode
  *
  */
-static void fec_poll_controller(struct net_device *dev)
-{
-	int i;
-	struct fec_enet_private *fep = netdev_priv(dev);
+अटल व्योम fec_poll_controller(काष्ठा net_device *dev)
+अणु
+	पूर्णांक i;
+	काष्ठा fec_enet_निजी *fep = netdev_priv(dev);
 
-	for (i = 0; i < FEC_IRQ_NUM; i++) {
-		if (fep->irq[i] > 0) {
+	क्रम (i = 0; i < FEC_IRQ_NUM; i++) अणु
+		अगर (fep->irq[i] > 0) अणु
 			disable_irq(fep->irq[i]);
-			fec_enet_interrupt(fep->irq[i], dev);
+			fec_enet_पूर्णांकerrupt(fep->irq[i], dev);
 			enable_irq(fep->irq[i]);
-		}
-	}
-}
-#endif
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static inline void fec_enet_set_netdev_features(struct net_device *netdev,
+अटल अंतरभूत व्योम fec_enet_set_netdev_features(काष्ठा net_device *netdev,
 	netdev_features_t features)
-{
-	struct fec_enet_private *fep = netdev_priv(netdev);
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(netdev);
 	netdev_features_t changed = features ^ netdev->features;
 
 	netdev->features = features;
 
 	/* Receive checksum has been changed */
-	if (changed & NETIF_F_RXCSUM) {
-		if (features & NETIF_F_RXCSUM)
+	अगर (changed & NETIF_F_RXCSUM) अणु
+		अगर (features & NETIF_F_RXCSUM)
 			fep->csum_flags |= FLAG_RX_CSUM_ENABLED;
-		else
+		अन्यथा
 			fep->csum_flags &= ~FLAG_RX_CSUM_ENABLED;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int fec_set_features(struct net_device *netdev,
+अटल पूर्णांक fec_set_features(काष्ठा net_device *netdev,
 	netdev_features_t features)
-{
-	struct fec_enet_private *fep = netdev_priv(netdev);
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(netdev);
 	netdev_features_t changed = features ^ netdev->features;
 
-	if (netif_running(netdev) && changed & NETIF_F_RXCSUM) {
+	अगर (netअगर_running(netdev) && changed & NETIF_F_RXCSUM) अणु
 		napi_disable(&fep->napi);
-		netif_tx_lock_bh(netdev);
+		netअगर_tx_lock_bh(netdev);
 		fec_stop(netdev);
 		fec_enet_set_netdev_features(netdev, features);
 		fec_restart(netdev);
-		netif_tx_wake_all_queues(netdev);
-		netif_tx_unlock_bh(netdev);
+		netअगर_tx_wake_all_queues(netdev);
+		netअगर_tx_unlock_bh(netdev);
 		napi_enable(&fep->napi);
-	} else {
+	पूर्ण अन्यथा अणु
 		fec_enet_set_netdev_features(netdev, features);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops fec_netdev_ops = {
-	.ndo_open		= fec_enet_open,
-	.ndo_stop		= fec_enet_close,
-	.ndo_start_xmit		= fec_enet_start_xmit,
-	.ndo_set_rx_mode	= set_multicast_list,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_tx_timeout		= fec_timeout,
-	.ndo_set_mac_address	= fec_set_mac_address,
-	.ndo_do_ioctl		= fec_enet_ioctl,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	= fec_poll_controller,
-#endif
-	.ndo_set_features	= fec_set_features,
-};
+अटल स्थिर काष्ठा net_device_ops fec_netdev_ops = अणु
+	.nकरो_खोलो		= fec_enet_खोलो,
+	.nकरो_stop		= fec_enet_बंद,
+	.nकरो_start_xmit		= fec_enet_start_xmit,
+	.nकरो_set_rx_mode	= set_multicast_list,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_tx_समयout		= fec_समयout,
+	.nकरो_set_mac_address	= fec_set_mac_address,
+	.nकरो_करो_ioctl		= fec_enet_ioctl,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller	= fec_poll_controller,
+#पूर्ण_अगर
+	.nकरो_set_features	= fec_set_features,
+पूर्ण;
 
-static const unsigned short offset_des_active_rxq[] = {
+अटल स्थिर अचिन्हित लघु offset_des_active_rxq[] = अणु
 	FEC_R_DES_ACTIVE_0, FEC_R_DES_ACTIVE_1, FEC_R_DES_ACTIVE_2
-};
+पूर्ण;
 
-static const unsigned short offset_des_active_txq[] = {
+अटल स्थिर अचिन्हित लघु offset_des_active_txq[] = अणु
 	FEC_X_DES_ACTIVE_0, FEC_X_DES_ACTIVE_1, FEC_X_DES_ACTIVE_2
-};
+पूर्ण;
 
  /*
-  * XXX:  We need to clean up on failure exits here.
+  * XXX:  We need to clean up on failure निकासs here.
   *
   */
-static int fec_enet_init(struct net_device *ndev)
-{
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct bufdesc *cbd_base;
+अटल पूर्णांक fec_enet_init(काष्ठा net_device *ndev)
+अणु
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा bufdesc *cbd_base;
 	dma_addr_t bd_dma;
-	int bd_size;
-	unsigned int i;
-	unsigned dsize = fep->bufdesc_ex ? sizeof(struct bufdesc_ex) :
-			sizeof(struct bufdesc);
-	unsigned dsize_log2 = __fls(dsize);
-	int ret;
+	पूर्णांक bd_size;
+	अचिन्हित पूर्णांक i;
+	अचिन्हित dsize = fep->bufdesc_ex ? माप(काष्ठा bufdesc_ex) :
+			माप(काष्ठा bufdesc);
+	अचिन्हित dsize_log2 = __fls(dsize);
+	पूर्णांक ret;
 
 	WARN_ON(dsize != (1 << dsize_log2));
-#if defined(CONFIG_ARM) || defined(CONFIG_ARM64)
+#अगर defined(CONFIG_ARM) || defined(CONFIG_ARM64)
 	fep->rx_align = 0xf;
 	fep->tx_align = 0xf;
-#else
+#अन्यथा
 	fep->rx_align = 0x3;
 	fep->tx_align = 0x3;
-#endif
+#पूर्ण_अगर
 
 	/* Check mask of the streaming and coherent API */
 	ret = dma_set_mask_and_coherent(&fep->pdev->dev, DMA_BIT_MASK(32));
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_warn(&fep->pdev->dev, "No suitable DMA available\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = fec_enet_alloc_queue(ndev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	bd_size = (fep->total_tx_ring_size + fep->total_rx_ring_size) * dsize;
 
-	/* Allocate memory for buffer descriptors. */
+	/* Allocate memory क्रम buffer descriptors. */
 	cbd_base = dmam_alloc_coherent(&fep->pdev->dev, bd_size, &bd_dma,
 				       GFP_KERNEL);
-	if (!cbd_base) {
+	अगर (!cbd_base) अणु
 		ret = -ENOMEM;
-		goto free_queue_mem;
-	}
+		जाओ मुक्त_queue_mem;
+	पूर्ण
 
 	/* Get the Ethernet address */
 	ret = fec_get_mac(ndev);
-	if (ret)
-		goto free_queue_mem;
+	अगर (ret)
+		जाओ मुक्त_queue_mem;
 
-	/* make sure MAC we just acquired is programmed into the hw */
-	fec_set_mac_address(ndev, NULL);
+	/* make sure MAC we just acquired is programmed पूर्णांकo the hw */
+	fec_set_mac_address(ndev, शून्य);
 
 	/* Set receive and transmit descriptor base. */
-	for (i = 0; i < fep->num_rx_queues; i++) {
-		struct fec_enet_priv_rx_q *rxq = fep->rx_queue[i];
-		unsigned size = dsize * rxq->bd.ring_size;
+	क्रम (i = 0; i < fep->num_rx_queues; i++) अणु
+		काष्ठा fec_enet_priv_rx_q *rxq = fep->rx_queue[i];
+		अचिन्हित size = dsize * rxq->bd.ring_size;
 
 		rxq->bd.qid = i;
 		rxq->bd.base = cbd_base;
@@ -3329,13 +3330,13 @@ static int fec_enet_init(struct net_device *ndev)
 		rxq->bd.dsize_log2 = dsize_log2;
 		rxq->bd.reg_desc_active = fep->hwp + offset_des_active_rxq[i];
 		bd_dma += size;
-		cbd_base = (struct bufdesc *)(((void *)cbd_base) + size);
-		rxq->bd.last = (struct bufdesc *)(((void *)cbd_base) - dsize);
-	}
+		cbd_base = (काष्ठा bufdesc *)(((व्योम *)cbd_base) + size);
+		rxq->bd.last = (काष्ठा bufdesc *)(((व्योम *)cbd_base) - dsize);
+	पूर्ण
 
-	for (i = 0; i < fep->num_tx_queues; i++) {
-		struct fec_enet_priv_tx_q *txq = fep->tx_queue[i];
-		unsigned size = dsize * txq->bd.ring_size;
+	क्रम (i = 0; i < fep->num_tx_queues; i++) अणु
+		काष्ठा fec_enet_priv_tx_q *txq = fep->tx_queue[i];
+		अचिन्हित size = dsize * txq->bd.ring_size;
 
 		txq->bd.qid = i;
 		txq->bd.base = cbd_base;
@@ -3345,188 +3346,188 @@ static int fec_enet_init(struct net_device *ndev)
 		txq->bd.dsize_log2 = dsize_log2;
 		txq->bd.reg_desc_active = fep->hwp + offset_des_active_txq[i];
 		bd_dma += size;
-		cbd_base = (struct bufdesc *)(((void *)cbd_base) + size);
-		txq->bd.last = (struct bufdesc *)(((void *)cbd_base) - dsize);
-	}
+		cbd_base = (काष्ठा bufdesc *)(((व्योम *)cbd_base) + size);
+		txq->bd.last = (काष्ठा bufdesc *)(((व्योम *)cbd_base) - dsize);
+	पूर्ण
 
 
-	/* The FEC Ethernet specific entries in the device structure */
-	ndev->watchdog_timeo = TX_TIMEOUT;
+	/* The FEC Ethernet specअगरic entries in the device काष्ठाure */
+	ndev->watchकरोg_समयo = TX_TIMEOUT;
 	ndev->netdev_ops = &fec_netdev_ops;
 	ndev->ethtool_ops = &fec_enet_ethtool_ops;
 
-	writel(FEC_RX_DISABLED_IMASK, fep->hwp + FEC_IMASK);
-	netif_napi_add(ndev, &fep->napi, fec_enet_rx_napi, NAPI_POLL_WEIGHT);
+	ग_लिखोl(FEC_RX_DISABLED_IMASK, fep->hwp + FEC_IMASK);
+	netअगर_napi_add(ndev, &fep->napi, fec_enet_rx_napi, NAPI_POLL_WEIGHT);
 
-	if (fep->quirks & FEC_QUIRK_HAS_VLAN)
+	अगर (fep->quirks & FEC_QUIRK_HAS_VLAN)
 		/* enable hw VLAN support */
 		ndev->features |= NETIF_F_HW_VLAN_CTAG_RX;
 
-	if (fep->quirks & FEC_QUIRK_HAS_CSUM) {
+	अगर (fep->quirks & FEC_QUIRK_HAS_CSUM) अणु
 		ndev->gso_max_segs = FEC_MAX_TSO_SEGS;
 
 		/* enable hw accelerator */
 		ndev->features |= (NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM
 				| NETIF_F_RXCSUM | NETIF_F_SG | NETIF_F_TSO);
 		fep->csum_flags |= FLAG_RX_CSUM_ENABLED;
-	}
+	पूर्ण
 
-	if (fep->quirks & FEC_QUIRK_HAS_AVB) {
+	अगर (fep->quirks & FEC_QUIRK_HAS_AVB) अणु
 		fep->tx_align = 0;
 		fep->rx_align = 0x3f;
-	}
+	पूर्ण
 
 	ndev->hw_features = ndev->features;
 
 	fec_restart(ndev);
 
-	if (fep->quirks & FEC_QUIRK_MIB_CLEAR)
+	अगर (fep->quirks & FEC_QUIRK_MIB_CLEAR)
 		fec_enet_clear_ethtool_stats(ndev);
-	else
+	अन्यथा
 		fec_enet_update_ethtool_stats(ndev);
 
-	return 0;
+	वापस 0;
 
-free_queue_mem:
-	fec_enet_free_queue(ndev);
-	return ret;
-}
+मुक्त_queue_mem:
+	fec_enet_मुक्त_queue(ndev);
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_OF
-static int fec_reset_phy(struct platform_device *pdev)
-{
-	int err, phy_reset;
+#अगर_घोषित CONFIG_OF
+अटल पूर्णांक fec_reset_phy(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक err, phy_reset;
 	bool active_high = false;
-	int msec = 1, phy_post_delay = 0;
-	struct device_node *np = pdev->dev.of_node;
+	पूर्णांक msec = 1, phy_post_delay = 0;
+	काष्ठा device_node *np = pdev->dev.of_node;
 
-	if (!np)
-		return 0;
+	अगर (!np)
+		वापस 0;
 
-	err = of_property_read_u32(np, "phy-reset-duration", &msec);
-	/* A sane reset duration should not be longer than 1s */
-	if (!err && msec > 1000)
+	err = of_property_पढ़ो_u32(np, "phy-reset-duration", &msec);
+	/* A sane reset duration should not be दीर्घer than 1s */
+	अगर (!err && msec > 1000)
 		msec = 1;
 
 	phy_reset = of_get_named_gpio(np, "phy-reset-gpios", 0);
-	if (phy_reset == -EPROBE_DEFER)
-		return phy_reset;
-	else if (!gpio_is_valid(phy_reset))
-		return 0;
+	अगर (phy_reset == -EPROBE_DEFER)
+		वापस phy_reset;
+	अन्यथा अगर (!gpio_is_valid(phy_reset))
+		वापस 0;
 
-	err = of_property_read_u32(np, "phy-reset-post-delay", &phy_post_delay);
+	err = of_property_पढ़ो_u32(np, "phy-reset-post-delay", &phy_post_delay);
 	/* valid reset duration should be less than 1s */
-	if (!err && phy_post_delay > 1000)
-		return -EINVAL;
+	अगर (!err && phy_post_delay > 1000)
+		वापस -EINVAL;
 
-	active_high = of_property_read_bool(np, "phy-reset-active-high");
+	active_high = of_property_पढ़ो_bool(np, "phy-reset-active-high");
 
 	err = devm_gpio_request_one(&pdev->dev, phy_reset,
 			active_high ? GPIOF_OUT_INIT_HIGH : GPIOF_OUT_INIT_LOW,
 			"phy-reset");
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "failed to get phy-reset-gpios: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (msec > 20)
+	अगर (msec > 20)
 		msleep(msec);
-	else
+	अन्यथा
 		usleep_range(msec * 1000, msec * 1000 + 1000);
 
 	gpio_set_value_cansleep(phy_reset, !active_high);
 
-	if (!phy_post_delay)
-		return 0;
+	अगर (!phy_post_delay)
+		वापस 0;
 
-	if (phy_post_delay > 20)
+	अगर (phy_post_delay > 20)
 		msleep(phy_post_delay);
-	else
+	अन्यथा
 		usleep_range(phy_post_delay * 1000,
 			     phy_post_delay * 1000 + 1000);
 
-	return 0;
-}
-#else /* CONFIG_OF */
-static int fec_reset_phy(struct platform_device *pdev)
-{
+	वापस 0;
+पूर्ण
+#अन्यथा /* CONFIG_OF */
+अटल पूर्णांक fec_reset_phy(काष्ठा platक्रमm_device *pdev)
+अणु
 	/*
-	 * In case of platform probe, the reset has been done
+	 * In हाल of platक्रमm probe, the reset has been करोne
 	 * by machine code.
 	 */
-	return 0;
-}
-#endif /* CONFIG_OF */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OF */
 
-static void
-fec_enet_get_queue_num(struct platform_device *pdev, int *num_tx, int *num_rx)
-{
-	struct device_node *np = pdev->dev.of_node;
+अटल व्योम
+fec_enet_get_queue_num(काष्ठा platक्रमm_device *pdev, पूर्णांक *num_tx, पूर्णांक *num_rx)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
 
 	*num_tx = *num_rx = 1;
 
-	if (!np || !of_device_is_available(np))
-		return;
+	अगर (!np || !of_device_is_available(np))
+		वापस;
 
 	/* parse the num of tx and rx queues */
-	of_property_read_u32(np, "fsl,num-tx-queues", num_tx);
+	of_property_पढ़ो_u32(np, "fsl,num-tx-queues", num_tx);
 
-	of_property_read_u32(np, "fsl,num-rx-queues", num_rx);
+	of_property_पढ़ो_u32(np, "fsl,num-rx-queues", num_rx);
 
-	if (*num_tx < 1 || *num_tx > FEC_ENET_MAX_TX_QS) {
+	अगर (*num_tx < 1 || *num_tx > FEC_ENET_MAX_TX_QS) अणु
 		dev_warn(&pdev->dev, "Invalid num_tx(=%d), fall back to 1\n",
 			 *num_tx);
 		*num_tx = 1;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (*num_rx < 1 || *num_rx > FEC_ENET_MAX_RX_QS) {
+	अगर (*num_rx < 1 || *num_rx > FEC_ENET_MAX_RX_QS) अणु
 		dev_warn(&pdev->dev, "Invalid num_rx(=%d), fall back to 1\n",
 			 *num_rx);
 		*num_rx = 1;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-}
+पूर्ण
 
-static int fec_enet_get_irq_cnt(struct platform_device *pdev)
-{
-	int irq_cnt = platform_irq_count(pdev);
+अटल पूर्णांक fec_enet_get_irq_cnt(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक irq_cnt = platक्रमm_irq_count(pdev);
 
-	if (irq_cnt > FEC_IRQ_NUM)
-		irq_cnt = FEC_IRQ_NUM;	/* last for pps */
-	else if (irq_cnt == 2)
-		irq_cnt = 1;	/* last for pps */
-	else if (irq_cnt <= 0)
+	अगर (irq_cnt > FEC_IRQ_NUM)
+		irq_cnt = FEC_IRQ_NUM;	/* last क्रम pps */
+	अन्यथा अगर (irq_cnt == 2)
+		irq_cnt = 1;	/* last क्रम pps */
+	अन्यथा अगर (irq_cnt <= 0)
 		irq_cnt = 1;	/* At least 1 irq is needed */
-	return irq_cnt;
-}
+	वापस irq_cnt;
+पूर्ण
 
-static int fec_enet_init_stop_mode(struct fec_enet_private *fep,
-				   struct device_node *np)
-{
-	struct device_node *gpr_np;
+अटल पूर्णांक fec_enet_init_stop_mode(काष्ठा fec_enet_निजी *fep,
+				   काष्ठा device_node *np)
+अणु
+	काष्ठा device_node *gpr_np;
 	u32 out_val[3];
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	gpr_np = of_parse_phandle(np, "fsl,stop-mode", 0);
-	if (!gpr_np)
-		return 0;
+	अगर (!gpr_np)
+		वापस 0;
 
-	ret = of_property_read_u32_array(np, "fsl,stop-mode", out_val,
+	ret = of_property_पढ़ो_u32_array(np, "fsl,stop-mode", out_val,
 					 ARRAY_SIZE(out_val));
-	if (ret) {
+	अगर (ret) अणु
 		dev_dbg(&fep->pdev->dev, "no stop mode property\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	fep->stop_gpr.gpr = syscon_node_to_regmap(gpr_np);
-	if (IS_ERR(fep->stop_gpr.gpr)) {
+	अगर (IS_ERR(fep->stop_gpr.gpr)) अणु
 		dev_err(&fep->pdev->dev, "could not find gpr regmap\n");
 		ret = PTR_ERR(fep->stop_gpr.gpr);
-		fep->stop_gpr.gpr = NULL;
-		goto out;
-	}
+		fep->stop_gpr.gpr = शून्य;
+		जाओ out;
+	पूर्ण
 
 	fep->stop_gpr.reg = out_val[1];
 	fep->stop_gpr.bit = out_val[2];
@@ -3534,240 +3535,240 @@ static int fec_enet_init_stop_mode(struct fec_enet_private *fep,
 out:
 	of_node_put(gpr_np);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-fec_probe(struct platform_device *pdev)
-{
-	struct fec_enet_private *fep;
-	struct fec_platform_data *pdata;
-	phy_interface_t interface;
-	struct net_device *ndev;
-	int i, irq, ret = 0;
-	const struct of_device_id *of_id;
-	static int dev_id;
-	struct device_node *np = pdev->dev.of_node, *phy_node;
-	int num_tx_qs;
-	int num_rx_qs;
-	char irq_name[8];
-	int irq_cnt;
-	struct fec_devinfo *dev_info;
+अटल पूर्णांक
+fec_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fec_enet_निजी *fep;
+	काष्ठा fec_platक्रमm_data *pdata;
+	phy_पूर्णांकerface_t पूर्णांकerface;
+	काष्ठा net_device *ndev;
+	पूर्णांक i, irq, ret = 0;
+	स्थिर काष्ठा of_device_id *of_id;
+	अटल पूर्णांक dev_id;
+	काष्ठा device_node *np = pdev->dev.of_node, *phy_node;
+	पूर्णांक num_tx_qs;
+	पूर्णांक num_rx_qs;
+	अक्षर irq_name[8];
+	पूर्णांक irq_cnt;
+	काष्ठा fec_devinfo *dev_info;
 
 	fec_enet_get_queue_num(pdev, &num_tx_qs, &num_rx_qs);
 
 	/* Init network device */
-	ndev = alloc_etherdev_mqs(sizeof(struct fec_enet_private) +
+	ndev = alloc_etherdev_mqs(माप(काष्ठा fec_enet_निजी) +
 				  FEC_STATS_SIZE, num_tx_qs, num_rx_qs);
-	if (!ndev)
-		return -ENOMEM;
+	अगर (!ndev)
+		वापस -ENOMEM;
 
 	SET_NETDEV_DEV(ndev, &pdev->dev);
 
-	/* setup board info structure */
+	/* setup board info काष्ठाure */
 	fep = netdev_priv(ndev);
 
 	of_id = of_match_device(fec_dt_ids, &pdev->dev);
-	if (of_id)
+	अगर (of_id)
 		pdev->id_entry = of_id->data;
-	dev_info = (struct fec_devinfo *)pdev->id_entry->driver_data;
-	if (dev_info)
+	dev_info = (काष्ठा fec_devinfo *)pdev->id_entry->driver_data;
+	अगर (dev_info)
 		fep->quirks = dev_info->quirks;
 
 	fep->netdev = ndev;
 	fep->num_rx_queues = num_rx_qs;
 	fep->num_tx_queues = num_tx_qs;
 
-#if !defined(CONFIG_M5272)
-	/* default enable pause frame auto negotiation */
-	if (fep->quirks & FEC_QUIRK_HAS_GBIT)
-		fep->pause_flag |= FEC_PAUSE_FLAG_AUTONEG;
-#endif
+#अगर !defined(CONFIG_M5272)
+	/* शेष enable छोड़ो frame स्वतः negotiation */
+	अगर (fep->quirks & FEC_QUIRK_HAS_GBIT)
+		fep->छोड़ो_flag |= FEC_PAUSE_FLAG_AUTONEG;
+#पूर्ण_अगर
 
-	/* Select default pin state */
-	pinctrl_pm_select_default_state(&pdev->dev);
+	/* Select शेष pin state */
+	pinctrl_pm_select_शेष_state(&pdev->dev);
 
-	fep->hwp = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(fep->hwp)) {
+	fep->hwp = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(fep->hwp)) अणु
 		ret = PTR_ERR(fep->hwp);
-		goto failed_ioremap;
-	}
+		जाओ failed_ioremap;
+	पूर्ण
 
 	fep->pdev = pdev;
 	fep->dev_id = dev_id++;
 
-	platform_set_drvdata(pdev, ndev);
+	platक्रमm_set_drvdata(pdev, ndev);
 
-	if ((of_machine_is_compatible("fsl,imx6q") ||
+	अगर ((of_machine_is_compatible("fsl,imx6q") ||
 	     of_machine_is_compatible("fsl,imx6dl")) &&
-	    !of_property_read_bool(np, "fsl,err006687-workaround-present"))
+	    !of_property_पढ़ो_bool(np, "fsl,err006687-workaround-present"))
 		fep->quirks |= FEC_QUIRK_ERR006687;
 
-	if (of_get_property(np, "fsl,magic-packet", NULL))
+	अगर (of_get_property(np, "fsl,magic-packet", शून्य))
 		fep->wol_flag |= FEC_WOL_HAS_MAGIC_PACKET;
 
 	ret = fec_enet_init_stop_mode(fep, np);
-	if (ret)
-		goto failed_stop_mode;
+	अगर (ret)
+		जाओ failed_stop_mode;
 
 	phy_node = of_parse_phandle(np, "phy-handle", 0);
-	if (!phy_node && of_phy_is_fixed_link(np)) {
-		ret = of_phy_register_fixed_link(np);
-		if (ret < 0) {
+	अगर (!phy_node && of_phy_is_fixed_link(np)) अणु
+		ret = of_phy_रेजिस्टर_fixed_link(np);
+		अगर (ret < 0) अणु
 			dev_err(&pdev->dev,
 				"broken fixed-link specification\n");
-			goto failed_phy;
-		}
+			जाओ failed_phy;
+		पूर्ण
 		phy_node = of_node_get(np);
-	}
+	पूर्ण
 	fep->phy_node = phy_node;
 
-	ret = of_get_phy_mode(pdev->dev.of_node, &interface);
-	if (ret) {
+	ret = of_get_phy_mode(pdev->dev.of_node, &पूर्णांकerface);
+	अगर (ret) अणु
 		pdata = dev_get_platdata(&pdev->dev);
-		if (pdata)
-			fep->phy_interface = pdata->phy;
-		else
-			fep->phy_interface = PHY_INTERFACE_MODE_MII;
-	} else {
-		fep->phy_interface = interface;
-	}
+		अगर (pdata)
+			fep->phy_पूर्णांकerface = pdata->phy;
+		अन्यथा
+			fep->phy_पूर्णांकerface = PHY_INTERFACE_MODE_MII;
+	पूर्ण अन्यथा अणु
+		fep->phy_पूर्णांकerface = पूर्णांकerface;
+	पूर्ण
 
 	fep->clk_ipg = devm_clk_get(&pdev->dev, "ipg");
-	if (IS_ERR(fep->clk_ipg)) {
+	अगर (IS_ERR(fep->clk_ipg)) अणु
 		ret = PTR_ERR(fep->clk_ipg);
-		goto failed_clk;
-	}
+		जाओ failed_clk;
+	पूर्ण
 
 	fep->clk_ahb = devm_clk_get(&pdev->dev, "ahb");
-	if (IS_ERR(fep->clk_ahb)) {
+	अगर (IS_ERR(fep->clk_ahb)) अणु
 		ret = PTR_ERR(fep->clk_ahb);
-		goto failed_clk;
-	}
+		जाओ failed_clk;
+	पूर्ण
 
 	fep->itr_clk_rate = clk_get_rate(fep->clk_ahb);
 
 	/* enet_out is optional, depends on board */
 	fep->clk_enet_out = devm_clk_get(&pdev->dev, "enet_out");
-	if (IS_ERR(fep->clk_enet_out))
-		fep->clk_enet_out = NULL;
+	अगर (IS_ERR(fep->clk_enet_out))
+		fep->clk_enet_out = शून्य;
 
 	fep->ptp_clk_on = false;
 	mutex_init(&fep->ptp_clk_mutex);
 
 	/* clk_ref is optional, depends on board */
 	fep->clk_ref = devm_clk_get(&pdev->dev, "enet_clk_ref");
-	if (IS_ERR(fep->clk_ref))
-		fep->clk_ref = NULL;
+	अगर (IS_ERR(fep->clk_ref))
+		fep->clk_ref = शून्य;
 
 	fep->bufdesc_ex = fep->quirks & FEC_QUIRK_HAS_BUFDESC_EX;
 	fep->clk_ptp = devm_clk_get(&pdev->dev, "ptp");
-	if (IS_ERR(fep->clk_ptp)) {
-		fep->clk_ptp = NULL;
+	अगर (IS_ERR(fep->clk_ptp)) अणु
+		fep->clk_ptp = शून्य;
 		fep->bufdesc_ex = false;
-	}
+	पूर्ण
 
 	ret = fec_enet_clk_enable(ndev, true);
-	if (ret)
-		goto failed_clk;
+	अगर (ret)
+		जाओ failed_clk;
 
 	ret = clk_prepare_enable(fep->clk_ipg);
-	if (ret)
-		goto failed_clk_ipg;
+	अगर (ret)
+		जाओ failed_clk_ipg;
 	ret = clk_prepare_enable(fep->clk_ahb);
-	if (ret)
-		goto failed_clk_ahb;
+	अगर (ret)
+		जाओ failed_clk_ahb;
 
 	fep->reg_phy = devm_regulator_get_optional(&pdev->dev, "phy");
-	if (!IS_ERR(fep->reg_phy)) {
+	अगर (!IS_ERR(fep->reg_phy)) अणु
 		ret = regulator_enable(fep->reg_phy);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev,
 				"Failed to enable phy regulator: %d\n", ret);
-			goto failed_regulator;
-		}
-	} else {
-		if (PTR_ERR(fep->reg_phy) == -EPROBE_DEFER) {
+			जाओ failed_regulator;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (PTR_ERR(fep->reg_phy) == -EPROBE_DEFER) अणु
 			ret = -EPROBE_DEFER;
-			goto failed_regulator;
-		}
-		fep->reg_phy = NULL;
-	}
+			जाओ failed_regulator;
+		पूर्ण
+		fep->reg_phy = शून्य;
+	पूर्ण
 
-	pm_runtime_set_autosuspend_delay(&pdev->dev, FEC_MDIO_PM_TIMEOUT);
-	pm_runtime_use_autosuspend(&pdev->dev);
-	pm_runtime_get_noresume(&pdev->dev);
-	pm_runtime_set_active(&pdev->dev);
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, FEC_MDIO_PM_TIMEOUT);
+	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
+	pm_runसमय_get_noresume(&pdev->dev);
+	pm_runसमय_set_active(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
 	ret = fec_reset_phy(pdev);
-	if (ret)
-		goto failed_reset;
+	अगर (ret)
+		जाओ failed_reset;
 
 	irq_cnt = fec_enet_get_irq_cnt(pdev);
-	if (fep->bufdesc_ex)
+	अगर (fep->bufdesc_ex)
 		fec_ptp_init(pdev, irq_cnt);
 
 	ret = fec_enet_init(ndev);
-	if (ret)
-		goto failed_init;
+	अगर (ret)
+		जाओ failed_init;
 
-	for (i = 0; i < irq_cnt; i++) {
-		snprintf(irq_name, sizeof(irq_name), "int%d", i);
-		irq = platform_get_irq_byname_optional(pdev, irq_name);
-		if (irq < 0)
-			irq = platform_get_irq(pdev, i);
-		if (irq < 0) {
+	क्रम (i = 0; i < irq_cnt; i++) अणु
+		snम_लिखो(irq_name, माप(irq_name), "int%d", i);
+		irq = platक्रमm_get_irq_byname_optional(pdev, irq_name);
+		अगर (irq < 0)
+			irq = platक्रमm_get_irq(pdev, i);
+		अगर (irq < 0) अणु
 			ret = irq;
-			goto failed_irq;
-		}
-		ret = devm_request_irq(&pdev->dev, irq, fec_enet_interrupt,
+			जाओ failed_irq;
+		पूर्ण
+		ret = devm_request_irq(&pdev->dev, irq, fec_enet_पूर्णांकerrupt,
 				       0, pdev->name, ndev);
-		if (ret)
-			goto failed_irq;
+		अगर (ret)
+			जाओ failed_irq;
 
 		fep->irq[i] = irq;
-	}
+	पूर्ण
 
 	ret = fec_enet_mii_init(pdev);
-	if (ret)
-		goto failed_mii_init;
+	अगर (ret)
+		जाओ failed_mii_init;
 
-	/* Carrier starts down, phylib will bring it up */
-	netif_carrier_off(ndev);
+	/* Carrier starts करोwn, phylib will bring it up */
+	netअगर_carrier_off(ndev);
 	fec_enet_clk_enable(ndev, false);
 	pinctrl_pm_select_sleep_state(&pdev->dev);
 
 	ndev->max_mtu = PKT_MAXBUF_SIZE - ETH_HLEN - ETH_FCS_LEN;
 
-	ret = register_netdev(ndev);
-	if (ret)
-		goto failed_register;
+	ret = रेजिस्टर_netdev(ndev);
+	अगर (ret)
+		जाओ failed_रेजिस्टर;
 
 	device_init_wakeup(&ndev->dev, fep->wol_flag &
 			   FEC_WOL_HAS_MAGIC_PACKET);
 
-	if (fep->bufdesc_ex && fep->ptp_clock)
+	अगर (fep->bufdesc_ex && fep->ptp_घड़ी)
 		netdev_info(ndev, "registered PHC device %d\n", fep->dev_id);
 
-	fep->rx_copybreak = COPYBREAK_DEFAULT;
-	INIT_WORK(&fep->tx_timeout_work, fec_enet_timeout_work);
+	fep->rx_copyअवरोध = COPYBREAK_DEFAULT;
+	INIT_WORK(&fep->tx_समयout_work, fec_enet_समयout_work);
 
-	pm_runtime_mark_last_busy(&pdev->dev);
-	pm_runtime_put_autosuspend(&pdev->dev);
+	pm_runसमय_mark_last_busy(&pdev->dev);
+	pm_runसमय_put_स्वतःsuspend(&pdev->dev);
 
-	return 0;
+	वापस 0;
 
-failed_register:
-	fec_enet_mii_remove(fep);
+failed_रेजिस्टर:
+	fec_enet_mii_हटाओ(fep);
 failed_mii_init:
 failed_irq:
 failed_init:
 	fec_ptp_stop(pdev);
 failed_reset:
-	pm_runtime_put_noidle(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
-	if (fep->reg_phy)
+	pm_runसमय_put_noidle(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
+	अगर (fep->reg_phy)
 		regulator_disable(fep->reg_phy);
 failed_regulator:
 	clk_disable_unprepare(fep->clk_ahb);
@@ -3776,180 +3777,180 @@ failed_clk_ahb:
 failed_clk_ipg:
 	fec_enet_clk_enable(ndev, false);
 failed_clk:
-	if (of_phy_is_fixed_link(np))
-		of_phy_deregister_fixed_link(np);
+	अगर (of_phy_is_fixed_link(np))
+		of_phy_deरेजिस्टर_fixed_link(np);
 	of_node_put(phy_node);
 failed_stop_mode:
 failed_phy:
 	dev_id--;
 failed_ioremap:
-	free_netdev(ndev);
+	मुक्त_netdev(ndev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-fec_drv_remove(struct platform_device *pdev)
-{
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct device_node *np = pdev->dev.of_node;
-	int ret;
+अटल पूर्णांक
+fec_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	काष्ठा device_node *np = pdev->dev.of_node;
+	पूर्णांक ret;
 
-	ret = pm_runtime_resume_and_get(&pdev->dev);
-	if (ret < 0)
-		return ret;
+	ret = pm_runसमय_resume_and_get(&pdev->dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	cancel_work_sync(&fep->tx_timeout_work);
+	cancel_work_sync(&fep->tx_समयout_work);
 	fec_ptp_stop(pdev);
-	unregister_netdev(ndev);
-	fec_enet_mii_remove(fep);
-	if (fep->reg_phy)
+	unरेजिस्टर_netdev(ndev);
+	fec_enet_mii_हटाओ(fep);
+	अगर (fep->reg_phy)
 		regulator_disable(fep->reg_phy);
 
-	if (of_phy_is_fixed_link(np))
-		of_phy_deregister_fixed_link(np);
+	अगर (of_phy_is_fixed_link(np))
+		of_phy_deरेजिस्टर_fixed_link(np);
 	of_node_put(fep->phy_node);
-	free_netdev(ndev);
+	मुक्त_netdev(ndev);
 
 	clk_disable_unprepare(fep->clk_ahb);
 	clk_disable_unprepare(fep->clk_ipg);
-	pm_runtime_put_noidle(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_put_noidle(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused fec_suspend(struct device *dev)
-{
-	struct net_device *ndev = dev_get_drvdata(dev);
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल पूर्णांक __maybe_unused fec_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 
 	rtnl_lock();
-	if (netif_running(ndev)) {
-		if (fep->wol_flag & FEC_WOL_FLAG_ENABLE)
+	अगर (netअगर_running(ndev)) अणु
+		अगर (fep->wol_flag & FEC_WOL_FLAG_ENABLE)
 			fep->wol_flag |= FEC_WOL_FLAG_SLEEP_ON;
 		phy_stop(ndev->phydev);
 		napi_disable(&fep->napi);
-		netif_tx_lock_bh(ndev);
-		netif_device_detach(ndev);
-		netif_tx_unlock_bh(ndev);
+		netअगर_tx_lock_bh(ndev);
+		netअगर_device_detach(ndev);
+		netअगर_tx_unlock_bh(ndev);
 		fec_stop(ndev);
 		fec_enet_clk_enable(ndev, false);
-		if (!(fep->wol_flag & FEC_WOL_FLAG_ENABLE))
+		अगर (!(fep->wol_flag & FEC_WOL_FLAG_ENABLE))
 			pinctrl_pm_select_sleep_state(&fep->pdev->dev);
-	}
+	पूर्ण
 	rtnl_unlock();
 
-	if (fep->reg_phy && !(fep->wol_flag & FEC_WOL_FLAG_ENABLE))
+	अगर (fep->reg_phy && !(fep->wol_flag & FEC_WOL_FLAG_ENABLE))
 		regulator_disable(fep->reg_phy);
 
-	/* SOC supply clock to phy, when clock is disabled, phy link down
-	 * SOC control phy regulator, when regulator is disabled, phy link down
+	/* SOC supply घड़ी to phy, when घड़ी is disabled, phy link करोwn
+	 * SOC control phy regulator, when regulator is disabled, phy link करोwn
 	 */
-	if (fep->clk_enet_out || fep->reg_phy)
+	अगर (fep->clk_enet_out || fep->reg_phy)
 		fep->link = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused fec_resume(struct device *dev)
-{
-	struct net_device *ndev = dev_get_drvdata(dev);
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int ret;
-	int val;
+अटल पूर्णांक __maybe_unused fec_resume(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक ret;
+	पूर्णांक val;
 
-	if (fep->reg_phy && !(fep->wol_flag & FEC_WOL_FLAG_ENABLE)) {
+	अगर (fep->reg_phy && !(fep->wol_flag & FEC_WOL_FLAG_ENABLE)) अणु
 		ret = regulator_enable(fep->reg_phy);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	rtnl_lock();
-	if (netif_running(ndev)) {
+	अगर (netअगर_running(ndev)) अणु
 		ret = fec_enet_clk_enable(ndev, true);
-		if (ret) {
+		अगर (ret) अणु
 			rtnl_unlock();
-			goto failed_clk;
-		}
-		if (fep->wol_flag & FEC_WOL_FLAG_ENABLE) {
+			जाओ failed_clk;
+		पूर्ण
+		अगर (fep->wol_flag & FEC_WOL_FLAG_ENABLE) अणु
 			fec_enet_stop_mode(fep, false);
 
-			val = readl(fep->hwp + FEC_ECNTRL);
+			val = पढ़ोl(fep->hwp + FEC_ECNTRL);
 			val &= ~(FEC_ECR_MAGICEN | FEC_ECR_SLEEP);
-			writel(val, fep->hwp + FEC_ECNTRL);
+			ग_लिखोl(val, fep->hwp + FEC_ECNTRL);
 			fep->wol_flag &= ~FEC_WOL_FLAG_SLEEP_ON;
-		} else {
-			pinctrl_pm_select_default_state(&fep->pdev->dev);
-		}
+		पूर्ण अन्यथा अणु
+			pinctrl_pm_select_शेष_state(&fep->pdev->dev);
+		पूर्ण
 		fec_restart(ndev);
-		netif_tx_lock_bh(ndev);
-		netif_device_attach(ndev);
-		netif_tx_unlock_bh(ndev);
+		netअगर_tx_lock_bh(ndev);
+		netअगर_device_attach(ndev);
+		netअगर_tx_unlock_bh(ndev);
 		napi_enable(&fep->napi);
 		phy_init_hw(ndev->phydev);
 		phy_start(ndev->phydev);
-	}
+	पूर्ण
 	rtnl_unlock();
 
-	return 0;
+	वापस 0;
 
 failed_clk:
-	if (fep->reg_phy)
+	अगर (fep->reg_phy)
 		regulator_disable(fep->reg_phy);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused fec_runtime_suspend(struct device *dev)
-{
-	struct net_device *ndev = dev_get_drvdata(dev);
-	struct fec_enet_private *fep = netdev_priv(ndev);
+अटल पूर्णांक __maybe_unused fec_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
 
 	clk_disable_unprepare(fep->clk_ahb);
 	clk_disable_unprepare(fep->clk_ipg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused fec_runtime_resume(struct device *dev)
-{
-	struct net_device *ndev = dev_get_drvdata(dev);
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक __maybe_unused fec_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	काष्ठा fec_enet_निजी *fep = netdev_priv(ndev);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(fep->clk_ahb);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = clk_prepare_enable(fep->clk_ipg);
-	if (ret)
-		goto failed_clk_ipg;
+	अगर (ret)
+		जाओ failed_clk_ipg;
 
-	return 0;
+	वापस 0;
 
 failed_clk_ipg:
 	clk_disable_unprepare(fep->clk_ahb);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct dev_pm_ops fec_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops fec_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(fec_suspend, fec_resume)
-	SET_RUNTIME_PM_OPS(fec_runtime_suspend, fec_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(fec_runसमय_suspend, fec_runसमय_resume, शून्य)
+पूर्ण;
 
-static struct platform_driver fec_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver fec_driver = अणु
+	.driver	= अणु
 		.name	= DRIVER_NAME,
 		.pm	= &fec_pm_ops,
 		.of_match_table = fec_dt_ids,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.id_table = fec_devtype,
 	.probe	= fec_probe,
-	.remove	= fec_drv_remove,
-};
+	.हटाओ	= fec_drv_हटाओ,
+पूर्ण;
 
-module_platform_driver(fec_driver);
+module_platक्रमm_driver(fec_driver);
 
 MODULE_ALIAS("platform:"DRIVER_NAME);
 MODULE_LICENSE("GPL");

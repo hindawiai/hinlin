@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <linux/export.h>
-#include <linux/mm.h>
-#include <linux/io.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पन.स>
 
-pgprot_t phys_mem_access_prot(struct file *file, unsigned long pfn,
-			      unsigned long size, pgprot_t vma_prot)
-{
-	if (!pfn_valid(pfn)) {
-		return pgprot_noncached(vma_prot);
-	} else if (file->f_flags & O_SYNC) {
-		return pgprot_writecombine(vma_prot);
-	}
+pgprot_t phys_mem_access_prot(काष्ठा file *file, अचिन्हित दीर्घ pfn,
+			      अचिन्हित दीर्घ size, pgprot_t vma_prot)
+अणु
+	अगर (!pfn_valid(pfn)) अणु
+		वापस pgprot_noncached(vma_prot);
+	पूर्ण अन्यथा अगर (file->f_flags & O_SYNC) अणु
+		वापस pgprot_ग_लिखोcombine(vma_prot);
+	पूर्ण
 
-	return vma_prot;
-}
+	वापस vma_prot;
+पूर्ण
 EXPORT_SYMBOL(phys_mem_access_prot);

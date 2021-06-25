@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Generic Syscon Reboot Driver
  *
  * Copyright (c) 2013, Applied Micro Circuits Corporation
  * Author: Feng Kan <fkan@apm.com>
  */
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/notifier.h>
-#include <linux/mfd/syscon.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/reboot.h>
-#include <linux/regmap.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/regmap.h>
 
-struct syscon_reboot_context {
-	struct regmap *map;
+काष्ठा syscon_reboot_context अणु
+	काष्ठा regmap *map;
 	u32 offset;
 	u32 value;
 	u32 mask;
-	struct notifier_block restart_handler;
-};
+	काष्ठा notअगरier_block restart_handler;
+पूर्ण;
 
-static int syscon_restart_handle(struct notifier_block *this,
-					unsigned long mode, void *cmd)
-{
-	struct syscon_reboot_context *ctx =
-			container_of(this, struct syscon_reboot_context,
+अटल पूर्णांक syscon_restart_handle(काष्ठा notअगरier_block *this,
+					अचिन्हित दीर्घ mode, व्योम *cmd)
+अणु
+	काष्ठा syscon_reboot_context *ctx =
+			container_of(this, काष्ठा syscon_reboot_context,
 					restart_handler);
 
 	/* Issue the reboot */
@@ -36,65 +37,65 @@ static int syscon_restart_handle(struct notifier_block *this,
 	mdelay(1000);
 
 	pr_emerg("Unable to restart system\n");
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int syscon_reboot_probe(struct platform_device *pdev)
-{
-	struct syscon_reboot_context *ctx;
-	struct device *dev = &pdev->dev;
-	int mask_err, value_err;
-	int err;
+अटल पूर्णांक syscon_reboot_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा syscon_reboot_context *ctx;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक mask_err, value_err;
+	पूर्णांक err;
 
-	ctx = devm_kzalloc(&pdev->dev, sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = devm_kzalloc(&pdev->dev, माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	ctx->map = syscon_regmap_lookup_by_phandle(dev->of_node, "regmap");
-	if (IS_ERR(ctx->map)) {
+	अगर (IS_ERR(ctx->map)) अणु
 		ctx->map = syscon_node_to_regmap(dev->parent->of_node);
-		if (IS_ERR(ctx->map))
-			return PTR_ERR(ctx->map);
-	}
+		अगर (IS_ERR(ctx->map))
+			वापस PTR_ERR(ctx->map);
+	पूर्ण
 
-	if (of_property_read_u32(pdev->dev.of_node, "offset", &ctx->offset))
-		return -EINVAL;
+	अगर (of_property_पढ़ो_u32(pdev->dev.of_node, "offset", &ctx->offset))
+		वापस -EINVAL;
 
-	value_err = of_property_read_u32(pdev->dev.of_node, "value", &ctx->value);
-	mask_err = of_property_read_u32(pdev->dev.of_node, "mask", &ctx->mask);
-	if (value_err && mask_err) {
+	value_err = of_property_पढ़ो_u32(pdev->dev.of_node, "value", &ctx->value);
+	mask_err = of_property_पढ़ो_u32(pdev->dev.of_node, "mask", &ctx->mask);
+	अगर (value_err && mask_err) अणु
 		dev_err(dev, "unable to read 'value' and 'mask'");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (value_err) {
+	अगर (value_err) अणु
 		/* support old binding */
 		ctx->value = ctx->mask;
 		ctx->mask = 0xFFFFFFFF;
-	} else if (mask_err) {
+	पूर्ण अन्यथा अगर (mask_err) अणु
 		/* support value without mask*/
 		ctx->mask = 0xFFFFFFFF;
-	}
+	पूर्ण
 
-	ctx->restart_handler.notifier_call = syscon_restart_handle;
+	ctx->restart_handler.notअगरier_call = syscon_restart_handle;
 	ctx->restart_handler.priority = 192;
-	err = register_restart_handler(&ctx->restart_handler);
-	if (err)
+	err = रेजिस्टर_restart_handler(&ctx->restart_handler);
+	अगर (err)
 		dev_err(dev, "can't register restart notifier (err=%d)\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct of_device_id syscon_reboot_of_match[] = {
-	{ .compatible = "syscon-reboot" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id syscon_reboot_of_match[] = अणु
+	अणु .compatible = "syscon-reboot" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver syscon_reboot_driver = {
+अटल काष्ठा platक्रमm_driver syscon_reboot_driver = अणु
 	.probe = syscon_reboot_probe,
-	.driver = {
+	.driver = अणु
 		.name = "syscon-reboot",
 		.of_match_table = syscon_reboot_of_match,
-	},
-};
-builtin_platform_driver(syscon_reboot_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(syscon_reboot_driver);

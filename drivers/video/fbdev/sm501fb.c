@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* linux/drivers/video/sm501fb.c
  *
  * Copyright (c) 2006 Simtec Electronics
  *	Vincent Sanders <vince@simtec.co.uk>
  *	Ben Dooks <ben@simtec.co.uk>
  *
- * Framebuffer driver for the Silicon Motion SM501
+ * Framebuffer driver क्रम the Silicon Motion SM501
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/tty.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/fb.h>
-#include <linux/init.h>
-#include <linux/vmalloc.h>
-#include <linux/dma-mapping.h>
-#include <linux/interrupt.h>
-#include <linux/workqueue.h>
-#include <linux/wait.h>
-#include <linux/platform_device.h>
-#include <linux/clk.h>
-#include <linux/console.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/console.h>
+#समावेश <linux/पन.स>
 
-#include <linux/uaccess.h>
-#include <asm/div64.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/भाग64.h>
 
-#ifdef CONFIG_PM
-#include <linux/pm.h>
-#endif
+#अगर_घोषित CONFIG_PM
+#समावेश <linux/pm.h>
+#पूर्ण_अगर
 
-#include <linux/sm501.h>
-#include <linux/sm501-regs.h>
+#समावेश <linux/sm501.h>
+#समावेश <linux/sm501-regs.h>
 
-#include "edid.h"
+#समावेश "edid.h"
 
-static char *fb_mode = "640x480-16@60";
-static unsigned long default_bpp = 16;
+अटल अक्षर *fb_mode = "640x480-16@60";
+अटल अचिन्हित दीर्घ शेष_bpp = 16;
 
-static const struct fb_videomode sm501_default_mode = {
+अटल स्थिर काष्ठा fb_videomode sm501_शेष_mode = अणु
 	.refresh	= 60,
 	.xres		= 640,
 	.yres		= 480,
-	.pixclock	= 20833,
+	.pixघड़ी	= 20833,
 	.left_margin	= 142,
 	.right_margin	= 13,
 	.upper_margin	= 21,
@@ -56,184 +57,184 @@ static const struct fb_videomode sm501_default_mode = {
 	.vsync_len	= 3,
 	.sync		= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
 	.vmode		= FB_VMODE_NONINTERLACED
-};
+पूर्ण;
 
-#define NR_PALETTE	256
+#घोषणा NR_PALETTE	256
 
-enum sm501_controller {
+क्रमागत sm501_controller अणु
 	HEAD_CRT	= 0,
 	HEAD_PANEL	= 1,
-};
+पूर्ण;
 
 /* SM501 memory address.
  *
- * This structure is used to track memory usage within the SM501 framebuffer
+ * This काष्ठाure is used to track memory usage within the SM501 framebuffer
  * allocation. The sm_addr field is stored as an offset as it is often used
  * against both the physical and mapped addresses.
  */
-struct sm501_mem {
-	unsigned long	 size;
-	unsigned long	 sm_addr;	/* offset from base of sm501 fb. */
-	void __iomem	*k_addr;
-};
+काष्ठा sm501_mem अणु
+	अचिन्हित दीर्घ	 size;
+	अचिन्हित दीर्घ	 sm_addr;	/* offset from base of sm501 fb. */
+	व्योम __iomem	*k_addr;
+पूर्ण;
 
-/* private data that is shared between all frambuffers* */
-struct sm501fb_info {
-	struct device		*dev;
-	struct fb_info		*fb[2];		/* fb info for both heads */
-	struct resource		*fbmem_res;	/* framebuffer resource */
-	struct resource		*regs_res;	/* registers resource */
-	struct resource		*regs2d_res;	/* 2d registers resource */
-	struct sm501_platdata_fb *pdata;	/* our platform data */
+/* निजी data that is shared between all frambuffers* */
+काष्ठा sm501fb_info अणु
+	काष्ठा device		*dev;
+	काष्ठा fb_info		*fb[2];		/* fb info क्रम both heads */
+	काष्ठा resource		*fbmem_res;	/* framebuffer resource */
+	काष्ठा resource		*regs_res;	/* रेजिस्टरs resource */
+	काष्ठा resource		*regs2d_res;	/* 2d रेजिस्टरs resource */
+	काष्ठा sm501_platdata_fb *pdata;	/* our platक्रमm data */
 
-	unsigned long		 pm_crt_ctrl;	/* pm: crt ctrl save */
+	अचिन्हित दीर्घ		 pm_crt_ctrl;	/* pm: crt ctrl save */
 
-	int			 irq;
-	int			 swap_endian;	/* set to swap rgb=>bgr */
-	void __iomem		*regs;		/* remapped registers */
-	void __iomem		*regs2d;	/* 2d remapped registers */
-	void __iomem		*fbmem;		/* remapped framebuffer */
-	size_t			 fbmem_len;	/* length of remapped region */
+	पूर्णांक			 irq;
+	पूर्णांक			 swap_endian;	/* set to swap rgb=>bgr */
+	व्योम __iomem		*regs;		/* remapped रेजिस्टरs */
+	व्योम __iomem		*regs2d;	/* 2d remapped रेजिस्टरs */
+	व्योम __iomem		*fbmem;		/* remapped framebuffer */
+	माप_प्रकार			 fbmem_len;	/* length of remapped region */
 	u8 *edid_data;
-};
+पूर्ण;
 
-/* per-framebuffer private data */
-struct sm501fb_par {
-	u32			 pseudo_palette[16];
+/* per-framebuffer निजी data */
+काष्ठा sm501fb_par अणु
+	u32			 pseuकरो_palette[16];
 
-	enum sm501_controller	 head;
-	struct sm501_mem	 cursor;
-	struct sm501_mem	 screen;
-	struct fb_ops		 ops;
+	क्रमागत sm501_controller	 head;
+	काष्ठा sm501_mem	 cursor;
+	काष्ठा sm501_mem	 screen;
+	काष्ठा fb_ops		 ops;
 
-	void			*store_fb;
-	void			*store_cursor;
-	void __iomem		*cursor_regs;
-	struct sm501fb_info	*info;
-};
+	व्योम			*store_fb;
+	व्योम			*store_cursor;
+	व्योम __iomem		*cursor_regs;
+	काष्ठा sm501fb_info	*info;
+पूर्ण;
 
 /* Helper functions */
 
-static inline int h_total(struct fb_var_screeninfo *var)
-{
-	return var->xres + var->left_margin +
+अटल अंतरभूत पूर्णांक h_total(काष्ठा fb_var_screeninfo *var)
+अणु
+	वापस var->xres + var->left_margin +
 		var->right_margin + var->hsync_len;
-}
+पूर्ण
 
-static inline int v_total(struct fb_var_screeninfo *var)
-{
-	return var->yres + var->upper_margin +
+अटल अंतरभूत पूर्णांक v_total(काष्ठा fb_var_screeninfo *var)
+अणु
+	वापस var->yres + var->upper_margin +
 		var->lower_margin + var->vsync_len;
-}
+पूर्ण
 
 /* sm501fb_sync_regs()
  *
- * This call is mainly for PCI bus systems where we need to
- * ensure that any writes to the bus are completed before the
+ * This call is मुख्यly क्रम PCI bus प्रणालीs where we need to
+ * ensure that any ग_लिखोs to the bus are completed beक्रमe the
  * next phase, or after completing a function.
 */
 
-static inline void sm501fb_sync_regs(struct sm501fb_info *info)
-{
-	smc501_readl(info->regs);
-}
+अटल अंतरभूत व्योम sm501fb_sync_regs(काष्ठा sm501fb_info *info)
+अणु
+	smc501_पढ़ोl(info->regs);
+पूर्ण
 
 /* sm501_alloc_mem
  *
- * This is an attempt to lay out memory for the two framebuffers and
- * everything else
+ * This is an attempt to lay out memory क्रम the two framebuffers and
+ * everything अन्यथा
  *
  * |fbmem_res->start					       fbmem_res->end|
  * |									     |
  * |fb[0].fix.smem_start    |	      |fb[1].fix.smem_start    |     2K	     |
  * |-> fb[0].fix.smem_len <-| spare   |-> fb[1].fix.smem_len <-|-> cursors <-|
  *
- * The "spare" space is for the 2d engine data
- * the fixed is space for the cursors (2x1Kbyte)
+ * The "spare" space is क्रम the 2d engine data
+ * the fixed is space क्रम the cursors (2x1Kbyte)
  *
- * we need to allocate memory for the 2D acceleration engine
- * command list and the data for the engine to deal with.
+ * we need to allocate memory क्रम the 2D acceleration engine
+ * command list and the data क्रम the engine to deal with.
  *
  * - all allocations must be 128bit aligned
  * - cursors are 64x64x2 bits (1Kbyte)
  *
  */
 
-#define SM501_MEMF_CURSOR		(1)
-#define SM501_MEMF_PANEL		(2)
-#define SM501_MEMF_CRT			(4)
-#define SM501_MEMF_ACCEL		(8)
+#घोषणा SM501_MEMF_CURSOR		(1)
+#घोषणा SM501_MEMF_PANEL		(2)
+#घोषणा SM501_MEMF_CRT			(4)
+#घोषणा SM501_MEMF_ACCEL		(8)
 
-static int sm501_alloc_mem(struct sm501fb_info *inf, struct sm501_mem *mem,
-			   unsigned int why, size_t size, u32 smem_len)
-{
-	struct sm501fb_par *par;
-	struct fb_info *fbi;
-	unsigned int ptr;
-	unsigned int end;
+अटल पूर्णांक sm501_alloc_mem(काष्ठा sm501fb_info *inf, काष्ठा sm501_mem *mem,
+			   अचिन्हित पूर्णांक why, माप_प्रकार size, u32 smem_len)
+अणु
+	काष्ठा sm501fb_par *par;
+	काष्ठा fb_info *fbi;
+	अचिन्हित पूर्णांक ptr;
+	अचिन्हित पूर्णांक end;
 
-	switch (why) {
-	case SM501_MEMF_CURSOR:
+	चयन (why) अणु
+	हाल SM501_MEMF_CURSOR:
 		ptr = inf->fbmem_len - size;
 		inf->fbmem_len = ptr;	/* adjust available memory. */
-		break;
+		अवरोध;
 
-	case SM501_MEMF_PANEL:
-		if (size > inf->fbmem_len)
-			return -ENOMEM;
+	हाल SM501_MEMF_PANEL:
+		अगर (size > inf->fbmem_len)
+			वापस -ENOMEM;
 
 		ptr = inf->fbmem_len - size;
 		fbi = inf->fb[HEAD_CRT];
 
-		/* round down, some programs such as directfb do not draw
+		/* round करोwn, some programs such as directfb करो not draw
 		 * 0,0 correctly unless the start is aligned to a page start.
 		 */
 
-		if (ptr > 0)
+		अगर (ptr > 0)
 			ptr &= ~(PAGE_SIZE - 1);
 
-		if (fbi && ptr < smem_len)
-			return -ENOMEM;
+		अगर (fbi && ptr < smem_len)
+			वापस -ENOMEM;
 
-		break;
+		अवरोध;
 
-	case SM501_MEMF_CRT:
+	हाल SM501_MEMF_CRT:
 		ptr = 0;
 
-		/* check to see if we have panel memory allocated
+		/* check to see अगर we have panel memory allocated
 		 * which would put an limit on available memory. */
 
 		fbi = inf->fb[HEAD_PANEL];
-		if (fbi) {
+		अगर (fbi) अणु
 			par = fbi->par;
 			end = par->screen.k_addr ? par->screen.sm_addr : inf->fbmem_len;
-		} else
+		पूर्ण अन्यथा
 			end = inf->fbmem_len;
 
-		if ((ptr + size) > end)
-			return -ENOMEM;
+		अगर ((ptr + size) > end)
+			वापस -ENOMEM;
 
-		break;
+		अवरोध;
 
-	case SM501_MEMF_ACCEL:
+	हाल SM501_MEMF_ACCEL:
 		fbi = inf->fb[HEAD_CRT];
 		ptr = fbi ? smem_len : 0;
 
 		fbi = inf->fb[HEAD_PANEL];
-		if (fbi) {
+		अगर (fbi) अणु
 			par = fbi->par;
 			end = par->screen.sm_addr;
-		} else
+		पूर्ण अन्यथा
 			end = inf->fbmem_len;
 
-		if ((ptr + size) > end)
-			return -ENOMEM;
+		अगर ((ptr + size) > end)
+			वापस -ENOMEM;
 
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	mem->size    = size;
 	mem->sm_addr = ptr;
@@ -242,8 +243,8 @@ static int sm501_alloc_mem(struct sm501fb_info *inf, struct sm501_mem *mem,
 	dev_dbg(inf->dev, "%s: result %08lx, %p - %u, %zd\n",
 		__func__, mem->sm_addr, mem->k_addr, why, size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* sm501fb_ps_to_hz
  *
@@ -253,91 +254,91 @@ static int sm501_alloc_mem(struct sm501fb_info *inf, struct sm501_mem *mem,
  * the limited PLL settings on the SM501.
 */
 
-static unsigned long sm501fb_ps_to_hz(unsigned long psvalue)
-{
-	unsigned long long numerator=1000000000000ULL;
+अटल अचिन्हित दीर्घ sm501fb_ps_to_hz(अचिन्हित दीर्घ psvalue)
+अणु
+	अचिन्हित दीर्घ दीर्घ numerator=1000000000000ULL;
 
 	/* 10^12 / picosecond period gives frequency in Hz */
-	do_div(numerator, psvalue);
-	return (unsigned long)numerator;
-}
+	करो_भाग(numerator, psvalue);
+	वापस (अचिन्हित दीर्घ)numerator;
+पूर्ण
 
-/* sm501fb_hz_to_ps is identical to the opposite transform */
+/* sm501fb_hz_to_ps is identical to the opposite transक्रमm */
 
-#define sm501fb_hz_to_ps(x) sm501fb_ps_to_hz(x)
+#घोषणा sm501fb_hz_to_ps(x) sm501fb_ps_to_hz(x)
 
 /* sm501fb_setup_gamma
  *
- * Programs a linear 1.0 gamma ramp in case the gamma
- * correction is enabled without programming anything else.
+ * Programs a linear 1.0 gamma ramp in हाल the gamma
+ * correction is enabled without programming anything अन्यथा.
 */
 
-static void sm501fb_setup_gamma(struct sm501fb_info *fbi,
-				unsigned long palette)
-{
-	unsigned long value = 0;
-	int offset;
+अटल व्योम sm501fb_setup_gamma(काष्ठा sm501fb_info *fbi,
+				अचिन्हित दीर्घ palette)
+अणु
+	अचिन्हित दीर्घ value = 0;
+	पूर्णांक offset;
 
 	/* set gamma values */
-	for (offset = 0; offset < 256 * 4; offset += 4) {
-		smc501_writel(value, fbi->regs + palette + offset);
+	क्रम (offset = 0; offset < 256 * 4; offset += 4) अणु
+		smc501_ग_लिखोl(value, fbi->regs + palette + offset);
 		value += 0x010101; 	/* Advance RGB by 1,1,1.*/
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* sm501fb_check_var
  *
- * check common variables for both panel and crt
+ * check common variables क्रम both panel and crt
 */
 
-static int sm501fb_check_var(struct fb_var_screeninfo *var,
-			     struct fb_info *info)
-{
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *sm  = par->info;
-	unsigned long tmp;
+अटल पूर्णांक sm501fb_check_var(काष्ठा fb_var_screeninfo *var,
+			     काष्ठा fb_info *info)
+अणु
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *sm  = par->info;
+	अचिन्हित दीर्घ पंचांगp;
 
-	/* check we can fit these values into the registers */
+	/* check we can fit these values पूर्णांकo the रेजिस्टरs */
 
-	if (var->hsync_len > 255 || var->vsync_len > 63)
-		return -EINVAL;
+	अगर (var->hsync_len > 255 || var->vsync_len > 63)
+		वापस -EINVAL;
 
 	/* hdisplay end and hsync start */
-	if ((var->xres + var->right_margin) > 4096)
-		return -EINVAL;
+	अगर ((var->xres + var->right_margin) > 4096)
+		वापस -EINVAL;
 
 	/* vdisplay end and vsync start */
-	if ((var->yres + var->lower_margin) > 2048)
-		return -EINVAL;
+	अगर ((var->yres + var->lower_margin) > 2048)
+		वापस -EINVAL;
 
 	/* hard limits of device */
 
-	if (h_total(var) > 4096 || v_total(var) > 2048)
-		return -EINVAL;
+	अगर (h_total(var) > 4096 || v_total(var) > 2048)
+		वापस -EINVAL;
 
 	/* check our line length is going to be 128 bit aligned */
 
-	tmp = (var->xres * var->bits_per_pixel) / 8;
-	if ((tmp & 15) != 0)
-		return -EINVAL;
+	पंचांगp = (var->xres * var->bits_per_pixel) / 8;
+	अगर ((पंचांगp & 15) != 0)
+		वापस -EINVAL;
 
-	/* check the virtual size */
+	/* check the भव size */
 
-	if (var->xres_virtual > 4096 || var->yres_virtual > 2048)
-		return -EINVAL;
+	अगर (var->xres_भव > 4096 || var->yres_भव > 2048)
+		वापस -EINVAL;
 
 	/* can cope with 8,16 or 32bpp */
 
-	if (var->bits_per_pixel <= 8)
+	अगर (var->bits_per_pixel <= 8)
 		var->bits_per_pixel = 8;
-	else if (var->bits_per_pixel <= 16)
+	अन्यथा अगर (var->bits_per_pixel <= 16)
 		var->bits_per_pixel = 16;
-	else if (var->bits_per_pixel == 24)
+	अन्यथा अगर (var->bits_per_pixel == 24)
 		var->bits_per_pixel = 32;
 
 	/* set r/g/b positions and validate bpp */
-	switch(var->bits_per_pixel) {
-	case 8:
+	चयन(var->bits_per_pixel) अणु
+	हाल 8:
 		var->red.length		= var->bits_per_pixel;
 		var->red.offset		= 0;
 		var->green.length	= var->bits_per_pixel;
@@ -347,142 +348,142 @@ static int sm501fb_check_var(struct fb_var_screeninfo *var,
 		var->transp.length	= 0;
 		var->transp.offset	= 0;
 
-		break;
+		अवरोध;
 
-	case 16:
-		if (sm->pdata->flags & SM501_FBPD_SWAP_FB_ENDIAN) {
+	हाल 16:
+		अगर (sm->pdata->flags & SM501_FBPD_SWAP_FB_ENDIAN) अणु
 			var->blue.offset	= 11;
 			var->green.offset	= 5;
 			var->red.offset		= 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			var->red.offset		= 11;
 			var->green.offset	= 5;
 			var->blue.offset	= 0;
-		}
+		पूर्ण
 		var->transp.offset	= 0;
 
 		var->red.length		= 5;
 		var->green.length	= 6;
 		var->blue.length	= 5;
 		var->transp.length	= 0;
-		break;
+		अवरोध;
 
-	case 32:
-		if (sm->pdata->flags & SM501_FBPD_SWAP_FB_ENDIAN) {
+	हाल 32:
+		अगर (sm->pdata->flags & SM501_FBPD_SWAP_FB_ENDIAN) अणु
 			var->transp.offset	= 0;
 			var->red.offset		= 8;
 			var->green.offset	= 16;
 			var->blue.offset	= 24;
-		} else {
+		पूर्ण अन्यथा अणु
 			var->transp.offset	= 24;
 			var->red.offset		= 16;
 			var->green.offset	= 8;
 			var->blue.offset	= 0;
-		}
+		पूर्ण
 
 		var->red.length		= 8;
 		var->green.length	= 8;
 		var->blue.length	= 8;
 		var->transp.length	= 0;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * sm501fb_check_var_crt():
  *
- * check the parameters for the CRT head, and either bring them
- * back into range, or return -EINVAL.
+ * check the parameters क्रम the CRT head, and either bring them
+ * back पूर्णांकo range, or वापस -EINVAL.
 */
 
-static int sm501fb_check_var_crt(struct fb_var_screeninfo *var,
-				 struct fb_info *info)
-{
-	return sm501fb_check_var(var, info);
-}
+अटल पूर्णांक sm501fb_check_var_crt(काष्ठा fb_var_screeninfo *var,
+				 काष्ठा fb_info *info)
+अणु
+	वापस sm501fb_check_var(var, info);
+पूर्ण
 
 /* sm501fb_check_var_pnl():
  *
- * check the parameters for the CRT head, and either bring them
- * back into range, or return -EINVAL.
+ * check the parameters क्रम the CRT head, and either bring them
+ * back पूर्णांकo range, or वापस -EINVAL.
 */
 
-static int sm501fb_check_var_pnl(struct fb_var_screeninfo *var,
-				 struct fb_info *info)
-{
-	return sm501fb_check_var(var, info);
-}
+अटल पूर्णांक sm501fb_check_var_pnl(काष्ठा fb_var_screeninfo *var,
+				 काष्ठा fb_info *info)
+अणु
+	वापस sm501fb_check_var(var, info);
+पूर्ण
 
 /* sm501fb_set_par_common
  *
- * set common registers for framebuffers
+ * set common रेजिस्टरs क्रम framebuffers
 */
 
-static int sm501fb_set_par_common(struct fb_info *info,
-				  struct fb_var_screeninfo *var)
-{
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *fbi = par->info;
-	unsigned long pixclock;      /* pixelclock in Hz */
-	unsigned long sm501pixclock; /* pixelclock the 501 can achieve in Hz */
-	unsigned int mem_type;
-	unsigned int clock_type;
-	unsigned int head_addr;
-	unsigned int smem_len;
+अटल पूर्णांक sm501fb_set_par_common(काष्ठा fb_info *info,
+				  काष्ठा fb_var_screeninfo *var)
+अणु
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *fbi = par->info;
+	अचिन्हित दीर्घ pixघड़ी;      /* pixelघड़ी in Hz */
+	अचिन्हित दीर्घ sm501pixघड़ी; /* pixelघड़ी the 501 can achieve in Hz */
+	अचिन्हित पूर्णांक mem_type;
+	अचिन्हित पूर्णांक घड़ी_प्रकारype;
+	अचिन्हित पूर्णांक head_addr;
+	अचिन्हित पूर्णांक smem_len;
 
 	dev_dbg(fbi->dev, "%s: %dx%d, bpp = %d, virtual %dx%d\n",
 		__func__, var->xres, var->yres, var->bits_per_pixel,
-		var->xres_virtual, var->yres_virtual);
+		var->xres_भव, var->yres_भव);
 
-	switch (par->head) {
-	case HEAD_CRT:
+	चयन (par->head) अणु
+	हाल HEAD_CRT:
 		mem_type = SM501_MEMF_CRT;
-		clock_type = SM501_CLOCK_V2XCLK;
+		घड़ी_प्रकारype = SM501_CLOCK_V2XCLK;
 		head_addr = SM501_DC_CRT_FB_ADDR;
-		break;
+		अवरोध;
 
-	case HEAD_PANEL:
+	हाल HEAD_PANEL:
 		mem_type = SM501_MEMF_PANEL;
-		clock_type = SM501_CLOCK_P2XCLK;
+		घड़ी_प्रकारype = SM501_CLOCK_P2XCLK;
 		head_addr = SM501_DC_PANEL_FB_ADDR;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		mem_type = 0;		/* stop compiler warnings */
 		head_addr = 0;
-		clock_type = 0;
-	}
+		घड़ी_प्रकारype = 0;
+	पूर्ण
 
-	switch (var->bits_per_pixel) {
-	case 8:
+	चयन (var->bits_per_pixel) अणु
+	हाल 8:
 		info->fix.visual = FB_VISUAL_PSEUDOCOLOR;
-		break;
+		अवरोध;
 
-	case 16:
+	हाल 16:
 		info->fix.visual = FB_VISUAL_TRUECOLOR;
-		break;
+		अवरोध;
 
-	case 32:
+	हाल 32:
 		info->fix.visual = FB_VISUAL_TRUECOLOR;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* allocate fb memory within 501 */
-	info->fix.line_length = (var->xres_virtual * var->bits_per_pixel)/8;
-	smem_len = info->fix.line_length * var->yres_virtual;
+	info->fix.line_length = (var->xres_भव * var->bits_per_pixel)/8;
+	smem_len = info->fix.line_length * var->yres_भव;
 
 	dev_dbg(fbi->dev, "%s: line length = %u\n", __func__,
 		info->fix.line_length);
 
-	if (sm501_alloc_mem(fbi, &par->screen, mem_type, smem_len, smem_len)) {
+	अगर (sm501_alloc_mem(fbi, &par->screen, mem_type, smem_len, smem_len)) अणु
 		dev_err(fbi->dev, "no memory available\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	mutex_lock(&info->mm_lock);
 	info->fix.smem_start = fbi->fbmem_res->start + par->screen.sm_addr;
@@ -494,43 +495,43 @@ static int sm501fb_set_par_common(struct fb_info *info,
 
 	/* set start of framebuffer to the screen */
 
-	smc501_writel(par->screen.sm_addr | SM501_ADDR_FLIP,
+	smc501_ग_लिखोl(par->screen.sm_addr | SM501_ADDR_FLIP,
 			fbi->regs + head_addr);
 
-	/* program CRT clock  */
+	/* program CRT घड़ी  */
 
-	pixclock = sm501fb_ps_to_hz(var->pixclock);
+	pixघड़ी = sm501fb_ps_to_hz(var->pixघड़ी);
 
-	sm501pixclock = sm501_set_clock(fbi->dev->parent, clock_type,
-					pixclock);
+	sm501pixघड़ी = sm501_set_घड़ी(fbi->dev->parent, घड़ी_प्रकारype,
+					pixघड़ी);
 
-	/* update fb layer with actual clock used */
-	var->pixclock = sm501fb_hz_to_ps(sm501pixclock);
+	/* update fb layer with actual घड़ी used */
+	var->pixघड़ी = sm501fb_hz_to_ps(sm501pixघड़ी);
 
 	dev_dbg(fbi->dev, "%s: pixclock(ps) = %u, pixclock(Hz)  = %lu, "
 	       "sm501pixclock = %lu,  error = %ld%%\n",
-	       __func__, var->pixclock, pixclock, sm501pixclock,
-	       ((pixclock - sm501pixclock)*100)/pixclock);
+	       __func__, var->pixघड़ी, pixघड़ी, sm501pixघड़ी,
+	       ((pixघड़ी - sm501pixघड़ी)*100)/pixघड़ी);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* sm501fb_set_par_geometry
  *
- * set the geometry registers for specified framebuffer.
+ * set the geometry रेजिस्टरs क्रम specअगरied framebuffer.
 */
 
-static void sm501fb_set_par_geometry(struct fb_info *info,
-				     struct fb_var_screeninfo *var)
-{
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *fbi = par->info;
-	void __iomem *base = fbi->regs;
-	unsigned long reg;
+अटल व्योम sm501fb_set_par_geometry(काष्ठा fb_info *info,
+				     काष्ठा fb_var_screeninfo *var)
+अणु
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *fbi = par->info;
+	व्योम __iomem *base = fbi->regs;
+	अचिन्हित दीर्घ reg;
 
-	if (par->head == HEAD_CRT)
+	अगर (par->head == HEAD_CRT)
 		base += SM501_DC_CRT_H_TOT;
-	else
+	अन्यथा
 		base += SM501_DC_PANEL_H_TOT;
 
 	/* set framebuffer width and display width */
@@ -538,7 +539,7 @@ static void sm501fb_set_par_geometry(struct fb_info *info,
 	reg = info->fix.line_length;
 	reg |= ((var->xres * var->bits_per_pixel)/8) << 16;
 
-	smc501_writel(reg, fbi->regs + (par->head == HEAD_CRT ?
+	smc501_ग_लिखोl(reg, fbi->regs + (par->head == HEAD_CRT ?
 		    SM501_DC_CRT_FB_OFFSET :  SM501_DC_PANEL_FB_OFFSET));
 
 	/* program horizontal total */
@@ -546,93 +547,93 @@ static void sm501fb_set_par_geometry(struct fb_info *info,
 	reg  = (h_total(var) - 1) << 16;
 	reg |= (var->xres - 1);
 
-	smc501_writel(reg, base + SM501_OFF_DC_H_TOT);
+	smc501_ग_लिखोl(reg, base + SM501_OFF_DC_H_TOT);
 
 	/* program horizontal sync */
 
 	reg  = var->hsync_len << 16;
 	reg |= var->xres + var->right_margin - 1;
 
-	smc501_writel(reg, base + SM501_OFF_DC_H_SYNC);
+	smc501_ग_लिखोl(reg, base + SM501_OFF_DC_H_SYNC);
 
 	/* program vertical total */
 
 	reg  = (v_total(var) - 1) << 16;
 	reg |= (var->yres - 1);
 
-	smc501_writel(reg, base + SM501_OFF_DC_V_TOT);
+	smc501_ग_लिखोl(reg, base + SM501_OFF_DC_V_TOT);
 
 	/* program vertical sync */
 	reg  = var->vsync_len << 16;
 	reg |= var->yres + var->lower_margin - 1;
 
-	smc501_writel(reg, base + SM501_OFF_DC_V_SYNC);
-}
+	smc501_ग_लिखोl(reg, base + SM501_OFF_DC_V_SYNC);
+पूर्ण
 
 /* sm501fb_pan_crt
  *
- * pan the CRT display output within an virtual framebuffer
+ * pan the CRT display output within an भव framebuffer
 */
 
-static int sm501fb_pan_crt(struct fb_var_screeninfo *var,
-			   struct fb_info *info)
-{
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *fbi = par->info;
-	unsigned int bytes_pixel = info->var.bits_per_pixel / 8;
-	unsigned long reg;
-	unsigned long xoffs;
+अटल पूर्णांक sm501fb_pan_crt(काष्ठा fb_var_screeninfo *var,
+			   काष्ठा fb_info *info)
+अणु
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *fbi = par->info;
+	अचिन्हित पूर्णांक bytes_pixel = info->var.bits_per_pixel / 8;
+	अचिन्हित दीर्घ reg;
+	अचिन्हित दीर्घ xoffs;
 
 	xoffs = var->xoffset * bytes_pixel;
 
-	reg = smc501_readl(fbi->regs + SM501_DC_CRT_CONTROL);
+	reg = smc501_पढ़ोl(fbi->regs + SM501_DC_CRT_CONTROL);
 
 	reg &= ~SM501_DC_CRT_CONTROL_PIXEL_MASK;
 	reg |= ((xoffs & 15) / bytes_pixel) << 4;
-	smc501_writel(reg, fbi->regs + SM501_DC_CRT_CONTROL);
+	smc501_ग_लिखोl(reg, fbi->regs + SM501_DC_CRT_CONTROL);
 
 	reg = (par->screen.sm_addr + xoffs +
 	       var->yoffset * info->fix.line_length);
-	smc501_writel(reg | SM501_ADDR_FLIP, fbi->regs + SM501_DC_CRT_FB_ADDR);
+	smc501_ग_लिखोl(reg | SM501_ADDR_FLIP, fbi->regs + SM501_DC_CRT_FB_ADDR);
 
 	sm501fb_sync_regs(fbi);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* sm501fb_pan_pnl
  *
- * pan the panel display output within an virtual framebuffer
+ * pan the panel display output within an भव framebuffer
 */
 
-static int sm501fb_pan_pnl(struct fb_var_screeninfo *var,
-			   struct fb_info *info)
-{
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *fbi = par->info;
-	unsigned long reg;
+अटल पूर्णांक sm501fb_pan_pnl(काष्ठा fb_var_screeninfo *var,
+			   काष्ठा fb_info *info)
+अणु
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *fbi = par->info;
+	अचिन्हित दीर्घ reg;
 
-	reg = var->xoffset | (info->var.xres_virtual << 16);
-	smc501_writel(reg, fbi->regs + SM501_DC_PANEL_FB_WIDTH);
+	reg = var->xoffset | (info->var.xres_भव << 16);
+	smc501_ग_लिखोl(reg, fbi->regs + SM501_DC_PANEL_FB_WIDTH);
 
-	reg = var->yoffset | (info->var.yres_virtual << 16);
-	smc501_writel(reg, fbi->regs + SM501_DC_PANEL_FB_HEIGHT);
+	reg = var->yoffset | (info->var.yres_भव << 16);
+	smc501_ग_लिखोl(reg, fbi->regs + SM501_DC_PANEL_FB_HEIGHT);
 
 	sm501fb_sync_regs(fbi);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* sm501fb_set_par_crt
  *
- * Set the CRT video mode from the fb_info structure
+ * Set the CRT video mode from the fb_info काष्ठाure
 */
 
-static int sm501fb_set_par_crt(struct fb_info *info)
-{
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *fbi = par->info;
-	struct fb_var_screeninfo *var = &info->var;
-	unsigned long control;       /* control register */
-	int ret;
+अटल पूर्णांक sm501fb_set_par_crt(काष्ठा fb_info *info)
+अणु
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *fbi = par->info;
+	काष्ठा fb_var_screeninfo *var = &info->var;
+	अचिन्हित दीर्घ control;       /* control रेजिस्टर */
+	पूर्णांक ret;
 
 	/* activate new configuration */
 
@@ -641,7 +642,7 @@ static int sm501fb_set_par_crt(struct fb_info *info)
 	/* enable CRT DAC - note 0 is on!*/
 	sm501_misc_control(fbi->dev->parent, 0, SM501_MISC_DAC_POWER);
 
-	control = smc501_readl(fbi->regs + SM501_DC_CRT_CONTROL);
+	control = smc501_पढ़ोl(fbi->regs + SM501_DC_CRT_CONTROL);
 
 	control &= (SM501_DC_CRT_CONTROL_PIXEL_MASK |
 		    SM501_DC_CRT_CONTROL_GAMMA |
@@ -650,51 +651,51 @@ static int sm501fb_set_par_crt(struct fb_info *info)
 		    SM501_DC_CRT_CONTROL_CP |
 		    SM501_DC_CRT_CONTROL_TVP);
 
-	/* set the sync polarities before we check data source  */
+	/* set the sync polarities beक्रमe we check data source  */
 
-	if ((var->sync & FB_SYNC_HOR_HIGH_ACT) == 0)
+	अगर ((var->sync & FB_SYNC_HOR_HIGH_ACT) == 0)
 		control |= SM501_DC_CRT_CONTROL_HSP;
 
-	if ((var->sync & FB_SYNC_VERT_HIGH_ACT) == 0)
+	अगर ((var->sync & FB_SYNC_VERT_HIGH_ACT) == 0)
 		control |= SM501_DC_CRT_CONTROL_VSP;
 
-	if ((control & SM501_DC_CRT_CONTROL_SEL) == 0) {
+	अगर ((control & SM501_DC_CRT_CONTROL_SEL) == 0) अणु
 		/* the head is displaying panel data... */
 
 		sm501_alloc_mem(fbi, &par->screen, SM501_MEMF_CRT, 0,
 				info->fix.smem_len);
-		goto out_update;
-	}
+		जाओ out_update;
+	पूर्ण
 
 	ret = sm501fb_set_par_common(info, var);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(fbi->dev, "failed to set common parameters\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	sm501fb_pan_crt(var, info);
 	sm501fb_set_par_geometry(info, var);
 
-	control |= SM501_FIFO_3;	/* fill if >3 free slots */
+	control |= SM501_FIFO_3;	/* fill अगर >3 मुक्त slots */
 
-	switch(var->bits_per_pixel) {
-	case 8:
+	चयन(var->bits_per_pixel) अणु
+	हाल 8:
 		control |= SM501_DC_CRT_CONTROL_8BPP;
-		break;
+		अवरोध;
 
-	case 16:
+	हाल 16:
 		control |= SM501_DC_CRT_CONTROL_16BPP;
 		sm501fb_setup_gamma(fbi, SM501_DC_CRT_PALETTE);
-		break;
+		अवरोध;
 
-	case 32:
+	हाल 32:
 		control |= SM501_DC_CRT_CONTROL_32BPP;
 		sm501fb_setup_gamma(fbi, SM501_DC_CRT_PALETTE);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	control |= SM501_DC_CRT_CONTROL_SEL;	/* CRT displays CRT data */
 	control |= SM501_DC_CRT_CONTROL_TE;	/* enable CRT timing */
@@ -703,122 +704,122 @@ static int sm501fb_set_par_crt(struct fb_info *info)
  out_update:
 	dev_dbg(fbi->dev, "new control is %08lx\n", control);
 
-	smc501_writel(control, fbi->regs + SM501_DC_CRT_CONTROL);
+	smc501_ग_लिखोl(control, fbi->regs + SM501_DC_CRT_CONTROL);
 	sm501fb_sync_regs(fbi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sm501fb_panel_power(struct sm501fb_info *fbi, int to)
-{
-	unsigned long control;
-	void __iomem *ctrl_reg = fbi->regs + SM501_DC_PANEL_CONTROL;
-	struct sm501_platdata_fbsub *pd = fbi->pdata->fb_pnl;
+अटल व्योम sm501fb_panel_घातer(काष्ठा sm501fb_info *fbi, पूर्णांक to)
+अणु
+	अचिन्हित दीर्घ control;
+	व्योम __iomem *ctrl_reg = fbi->regs + SM501_DC_PANEL_CONTROL;
+	काष्ठा sm501_platdata_fbsub *pd = fbi->pdata->fb_pnl;
 
-	control = smc501_readl(ctrl_reg);
+	control = smc501_पढ़ोl(ctrl_reg);
 
-	if (to && (control & SM501_DC_PANEL_CONTROL_VDD) == 0) {
-		/* enable panel power */
+	अगर (to && (control & SM501_DC_PANEL_CONTROL_VDD) == 0) अणु
+		/* enable panel घातer */
 
 		control |= SM501_DC_PANEL_CONTROL_VDD;	/* FPVDDEN */
-		smc501_writel(control, ctrl_reg);
+		smc501_ग_लिखोl(control, ctrl_reg);
 		sm501fb_sync_regs(fbi);
 		mdelay(10);
 
 		control |= SM501_DC_PANEL_CONTROL_DATA;	/* DATA */
-		smc501_writel(control, ctrl_reg);
+		smc501_ग_लिखोl(control, ctrl_reg);
 		sm501fb_sync_regs(fbi);
 		mdelay(10);
 
 		/* VBIASEN */
 
-		if (!(pd->flags & SM501FB_FLAG_PANEL_NO_VBIASEN)) {
-			if (pd->flags & SM501FB_FLAG_PANEL_INV_VBIASEN)
+		अगर (!(pd->flags & SM501FB_FLAG_PANEL_NO_VBIASEN)) अणु
+			अगर (pd->flags & SM501FB_FLAG_PANEL_INV_VBIASEN)
 				control &= ~SM501_DC_PANEL_CONTROL_BIAS;
-			else
+			अन्यथा
 				control |= SM501_DC_PANEL_CONTROL_BIAS;
 
-			smc501_writel(control, ctrl_reg);
+			smc501_ग_लिखोl(control, ctrl_reg);
 			sm501fb_sync_regs(fbi);
 			mdelay(10);
-		}
+		पूर्ण
 
-		if (!(pd->flags & SM501FB_FLAG_PANEL_NO_FPEN)) {
-			if (pd->flags & SM501FB_FLAG_PANEL_INV_FPEN)
+		अगर (!(pd->flags & SM501FB_FLAG_PANEL_NO_FPEN)) अणु
+			अगर (pd->flags & SM501FB_FLAG_PANEL_INV_FPEN)
 				control &= ~SM501_DC_PANEL_CONTROL_FPEN;
-			else
+			अन्यथा
 				control |= SM501_DC_PANEL_CONTROL_FPEN;
 
-			smc501_writel(control, ctrl_reg);
+			smc501_ग_लिखोl(control, ctrl_reg);
 			sm501fb_sync_regs(fbi);
 			mdelay(10);
-		}
-	} else if (!to && (control & SM501_DC_PANEL_CONTROL_VDD) != 0) {
-		/* disable panel power */
-		if (!(pd->flags & SM501FB_FLAG_PANEL_NO_FPEN)) {
-			if (pd->flags & SM501FB_FLAG_PANEL_INV_FPEN)
+		पूर्ण
+	पूर्ण अन्यथा अगर (!to && (control & SM501_DC_PANEL_CONTROL_VDD) != 0) अणु
+		/* disable panel घातer */
+		अगर (!(pd->flags & SM501FB_FLAG_PANEL_NO_FPEN)) अणु
+			अगर (pd->flags & SM501FB_FLAG_PANEL_INV_FPEN)
 				control |= SM501_DC_PANEL_CONTROL_FPEN;
-			else
+			अन्यथा
 				control &= ~SM501_DC_PANEL_CONTROL_FPEN;
 
-			smc501_writel(control, ctrl_reg);
+			smc501_ग_लिखोl(control, ctrl_reg);
 			sm501fb_sync_regs(fbi);
 			mdelay(10);
-		}
+		पूर्ण
 
-		if (!(pd->flags & SM501FB_FLAG_PANEL_NO_VBIASEN)) {
-			if (pd->flags & SM501FB_FLAG_PANEL_INV_VBIASEN)
+		अगर (!(pd->flags & SM501FB_FLAG_PANEL_NO_VBIASEN)) अणु
+			अगर (pd->flags & SM501FB_FLAG_PANEL_INV_VBIASEN)
 				control |= SM501_DC_PANEL_CONTROL_BIAS;
-			else
+			अन्यथा
 				control &= ~SM501_DC_PANEL_CONTROL_BIAS;
 
-			smc501_writel(control, ctrl_reg);
+			smc501_ग_लिखोl(control, ctrl_reg);
 			sm501fb_sync_regs(fbi);
 			mdelay(10);
-		}
+		पूर्ण
 
 		control &= ~SM501_DC_PANEL_CONTROL_DATA;
-		smc501_writel(control, ctrl_reg);
+		smc501_ग_लिखोl(control, ctrl_reg);
 		sm501fb_sync_regs(fbi);
 		mdelay(10);
 
 		control &= ~SM501_DC_PANEL_CONTROL_VDD;
-		smc501_writel(control, ctrl_reg);
+		smc501_ग_लिखोl(control, ctrl_reg);
 		sm501fb_sync_regs(fbi);
 		mdelay(10);
-	}
+	पूर्ण
 
 	sm501fb_sync_regs(fbi);
-}
+पूर्ण
 
 /* sm501fb_set_par_pnl
  *
- * Set the panel video mode from the fb_info structure
+ * Set the panel video mode from the fb_info काष्ठाure
 */
 
-static int sm501fb_set_par_pnl(struct fb_info *info)
-{
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *fbi = par->info;
-	struct fb_var_screeninfo *var = &info->var;
-	unsigned long control;
-	unsigned long reg;
-	int ret;
+अटल पूर्णांक sm501fb_set_par_pnl(काष्ठा fb_info *info)
+अणु
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *fbi = par->info;
+	काष्ठा fb_var_screeninfo *var = &info->var;
+	अचिन्हित दीर्घ control;
+	अचिन्हित दीर्घ reg;
+	पूर्णांक ret;
 
 	dev_dbg(fbi->dev, "%s(%p)\n", __func__, info);
 
 	/* activate this new configuration */
 
 	ret = sm501fb_set_par_common(info, var);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	sm501fb_pan_pnl(var, info);
 	sm501fb_set_par_geometry(info, var);
 
-	/* update control register */
+	/* update control रेजिस्टर */
 
-	control = smc501_readl(fbi->regs + SM501_DC_PANEL_CONTROL);
+	control = smc501_पढ़ोl(fbi->regs + SM501_DC_PANEL_CONTROL);
 	control &= (SM501_DC_PANEL_CONTROL_GAMMA |
 		    SM501_DC_PANEL_CONTROL_VDD  |
 		    SM501_DC_PANEL_CONTROL_DATA |
@@ -831,263 +832,263 @@ static int sm501fb_set_par_pnl(struct fb_info *info)
 		    SM501_DC_PANEL_CONTROL_HPD |
 		    SM501_DC_PANEL_CONTROL_VPD);
 
-	control |= SM501_FIFO_3;	/* fill if >3 free slots */
+	control |= SM501_FIFO_3;	/* fill अगर >3 मुक्त slots */
 
-	switch(var->bits_per_pixel) {
-	case 8:
+	चयन(var->bits_per_pixel) अणु
+	हाल 8:
 		control |= SM501_DC_PANEL_CONTROL_8BPP;
-		break;
+		अवरोध;
 
-	case 16:
+	हाल 16:
 		control |= SM501_DC_PANEL_CONTROL_16BPP;
 		sm501fb_setup_gamma(fbi, SM501_DC_PANEL_PALETTE);
-		break;
+		अवरोध;
 
-	case 32:
+	हाल 32:
 		control |= SM501_DC_PANEL_CONTROL_32BPP;
 		sm501fb_setup_gamma(fbi, SM501_DC_PANEL_PALETTE);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	smc501_writel(0x0, fbi->regs + SM501_DC_PANEL_PANNING_CONTROL);
+	smc501_ग_लिखोl(0x0, fbi->regs + SM501_DC_PANEL_PANNING_CONTROL);
 
 	/* panel plane top left and bottom right location */
 
-	smc501_writel(0x00, fbi->regs + SM501_DC_PANEL_TL_LOC);
+	smc501_ग_लिखोl(0x00, fbi->regs + SM501_DC_PANEL_TL_LOC);
 
 	reg  = var->xres - 1;
 	reg |= (var->yres - 1) << 16;
 
-	smc501_writel(reg, fbi->regs + SM501_DC_PANEL_BR_LOC);
+	smc501_ग_लिखोl(reg, fbi->regs + SM501_DC_PANEL_BR_LOC);
 
-	/* program panel control register */
+	/* program panel control रेजिस्टर */
 
 	control |= SM501_DC_PANEL_CONTROL_TE;	/* enable PANEL timing */
 	control |= SM501_DC_PANEL_CONTROL_EN;	/* enable PANEL gfx plane */
 
-	if ((var->sync & FB_SYNC_HOR_HIGH_ACT) == 0)
+	अगर ((var->sync & FB_SYNC_HOR_HIGH_ACT) == 0)
 		control |= SM501_DC_PANEL_CONTROL_HSP;
 
-	if ((var->sync & FB_SYNC_VERT_HIGH_ACT) == 0)
+	अगर ((var->sync & FB_SYNC_VERT_HIGH_ACT) == 0)
 		control |= SM501_DC_PANEL_CONTROL_VSP;
 
-	smc501_writel(control, fbi->regs + SM501_DC_PANEL_CONTROL);
+	smc501_ग_लिखोl(control, fbi->regs + SM501_DC_PANEL_CONTROL);
 	sm501fb_sync_regs(fbi);
 
-	/* ensure the panel interface is not tristated at this point */
+	/* ensure the panel पूर्णांकerface is not tristated at this poपूर्णांक */
 
-	sm501_modify_reg(fbi->dev->parent, SM501_SYSTEM_CONTROL,
+	sm501_modअगरy_reg(fbi->dev->parent, SM501_SYSTEM_CONTROL,
 			 0, SM501_SYSCTRL_PANEL_TRISTATE);
 
-	/* power the panel up */
-	sm501fb_panel_power(fbi, 1);
-	return 0;
-}
+	/* घातer the panel up */
+	sm501fb_panel_घातer(fbi, 1);
+	वापस 0;
+पूर्ण
 
 
 /* chan_to_field
  *
- * convert a colour value into a field position
+ * convert a colour value पूर्णांकo a field position
  *
  * from pxafb.c
 */
 
-static inline unsigned int chan_to_field(unsigned int chan,
-					 struct fb_bitfield *bf)
-{
+अटल अंतरभूत अचिन्हित पूर्णांक chan_to_field(अचिन्हित पूर्णांक chan,
+					 काष्ठा fb_bitfield *bf)
+अणु
 	chan &= 0xffff;
 	chan >>= 16 - bf->length;
-	return chan << bf->offset;
-}
+	वापस chan << bf->offset;
+पूर्ण
 
 /* sm501fb_setcolreg
  *
- * set the colour mapping for modes that support palettised data
+ * set the colour mapping क्रम modes that support palettised data
 */
 
-static int sm501fb_setcolreg(unsigned regno,
-			     unsigned red, unsigned green, unsigned blue,
-			     unsigned transp, struct fb_info *info)
-{
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *fbi = par->info;
-	void __iomem *base = fbi->regs;
-	unsigned int val;
+अटल पूर्णांक sm501fb_setcolreg(अचिन्हित regno,
+			     अचिन्हित red, अचिन्हित green, अचिन्हित blue,
+			     अचिन्हित transp, काष्ठा fb_info *info)
+अणु
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *fbi = par->info;
+	व्योम __iomem *base = fbi->regs;
+	अचिन्हित पूर्णांक val;
 
-	if (par->head == HEAD_CRT)
+	अगर (par->head == HEAD_CRT)
 		base += SM501_DC_CRT_PALETTE;
-	else
+	अन्यथा
 		base += SM501_DC_PANEL_PALETTE;
 
-	switch (info->fix.visual) {
-	case FB_VISUAL_TRUECOLOR:
+	चयन (info->fix.visual) अणु
+	हाल FB_VISUAL_TRUECOLOR:
 		/* true-colour, use pseuo-palette */
 
-		if (regno < 16) {
-			u32 *pal = par->pseudo_palette;
+		अगर (regno < 16) अणु
+			u32 *pal = par->pseuकरो_palette;
 
 			val  = chan_to_field(red,   &info->var.red);
 			val |= chan_to_field(green, &info->var.green);
 			val |= chan_to_field(blue,  &info->var.blue);
 
 			pal[regno] = val;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FB_VISUAL_PSEUDOCOLOR:
-		if (regno < 256) {
+	हाल FB_VISUAL_PSEUDOCOLOR:
+		अगर (regno < 256) अणु
 			val = (red >> 8) << 16;
 			val |= (green >> 8) << 8;
 			val |= blue >> 8;
 
-			smc501_writel(val, base + (regno * 4));
-		}
+			smc501_ग_लिखोl(val, base + (regno * 4));
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	default:
-		return 1;   /* unknown type */
-	}
+	शेष:
+		वापस 1;   /* unknown type */
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* sm501fb_blank_pnl
  *
- * Blank or un-blank the panel interface
+ * Blank or un-blank the panel पूर्णांकerface
 */
 
-static int sm501fb_blank_pnl(int blank_mode, struct fb_info *info)
-{
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *fbi = par->info;
+अटल पूर्णांक sm501fb_blank_pnl(पूर्णांक blank_mode, काष्ठा fb_info *info)
+अणु
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *fbi = par->info;
 
 	dev_dbg(fbi->dev, "%s(mode=%d, %p)\n", __func__, blank_mode, info);
 
-	switch (blank_mode) {
-	case FB_BLANK_POWERDOWN:
-		sm501fb_panel_power(fbi, 0);
-		break;
+	चयन (blank_mode) अणु
+	हाल FB_BLANK_POWERDOWN:
+		sm501fb_panel_घातer(fbi, 0);
+		अवरोध;
 
-	case FB_BLANK_UNBLANK:
-		sm501fb_panel_power(fbi, 1);
-		break;
+	हाल FB_BLANK_UNBLANK:
+		sm501fb_panel_घातer(fbi, 1);
+		अवरोध;
 
-	case FB_BLANK_NORMAL:
-	case FB_BLANK_VSYNC_SUSPEND:
-	case FB_BLANK_HSYNC_SUSPEND:
-	default:
-		return 1;
-	}
+	हाल FB_BLANK_NORMAL:
+	हाल FB_BLANK_VSYNC_SUSPEND:
+	हाल FB_BLANK_HSYNC_SUSPEND:
+	शेष:
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* sm501fb_blank_crt
  *
- * Blank or un-blank the crt interface
+ * Blank or un-blank the crt पूर्णांकerface
 */
 
-static int sm501fb_blank_crt(int blank_mode, struct fb_info *info)
-{
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *fbi = par->info;
-	unsigned long ctrl;
+अटल पूर्णांक sm501fb_blank_crt(पूर्णांक blank_mode, काष्ठा fb_info *info)
+अणु
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *fbi = par->info;
+	अचिन्हित दीर्घ ctrl;
 
 	dev_dbg(fbi->dev, "%s(mode=%d, %p)\n", __func__, blank_mode, info);
 
-	ctrl = smc501_readl(fbi->regs + SM501_DC_CRT_CONTROL);
+	ctrl = smc501_पढ़ोl(fbi->regs + SM501_DC_CRT_CONTROL);
 
-	switch (blank_mode) {
-	case FB_BLANK_POWERDOWN:
+	चयन (blank_mode) अणु
+	हाल FB_BLANK_POWERDOWN:
 		ctrl &= ~SM501_DC_CRT_CONTROL_ENABLE;
 		sm501_misc_control(fbi->dev->parent, SM501_MISC_DAC_POWER, 0);
 		fallthrough;
 
-	case FB_BLANK_NORMAL:
+	हाल FB_BLANK_NORMAL:
 		ctrl |= SM501_DC_CRT_CONTROL_BLANK;
-		break;
+		अवरोध;
 
-	case FB_BLANK_UNBLANK:
+	हाल FB_BLANK_UNBLANK:
 		ctrl &= ~SM501_DC_CRT_CONTROL_BLANK;
 		ctrl |=  SM501_DC_CRT_CONTROL_ENABLE;
 		sm501_misc_control(fbi->dev->parent, 0, SM501_MISC_DAC_POWER);
-		break;
+		अवरोध;
 
-	case FB_BLANK_VSYNC_SUSPEND:
-	case FB_BLANK_HSYNC_SUSPEND:
-	default:
-		return 1;
+	हाल FB_BLANK_VSYNC_SUSPEND:
+	हाल FB_BLANK_HSYNC_SUSPEND:
+	शेष:
+		वापस 1;
 
-	}
+	पूर्ण
 
-	smc501_writel(ctrl, fbi->regs + SM501_DC_CRT_CONTROL);
+	smc501_ग_लिखोl(ctrl, fbi->regs + SM501_DC_CRT_CONTROL);
 	sm501fb_sync_regs(fbi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* sm501fb_cursor
  *
  * set or change the hardware cursor parameters
 */
 
-static int sm501fb_cursor(struct fb_info *info, struct fb_cursor *cursor)
-{
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *fbi = par->info;
-	void __iomem *base = fbi->regs;
-	unsigned long hwc_addr;
-	unsigned long fg, bg;
+अटल पूर्णांक sm501fb_cursor(काष्ठा fb_info *info, काष्ठा fb_cursor *cursor)
+अणु
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *fbi = par->info;
+	व्योम __iomem *base = fbi->regs;
+	अचिन्हित दीर्घ hwc_addr;
+	अचिन्हित दीर्घ fg, bg;
 
 	dev_dbg(fbi->dev, "%s(%p,%p)\n", __func__, info, cursor);
 
-	if (par->head == HEAD_CRT)
+	अगर (par->head == HEAD_CRT)
 		base += SM501_DC_CRT_HWC_BASE;
-	else
+	अन्यथा
 		base += SM501_DC_PANEL_HWC_BASE;
 
 	/* check not being asked to exceed capabilities */
 
-	if (cursor->image.width > 64)
-		return -EINVAL;
+	अगर (cursor->image.width > 64)
+		वापस -EINVAL;
 
-	if (cursor->image.height > 64)
-		return -EINVAL;
+	अगर (cursor->image.height > 64)
+		वापस -EINVAL;
 
-	if (cursor->image.depth > 1)
-		return -EINVAL;
+	अगर (cursor->image.depth > 1)
+		वापस -EINVAL;
 
-	hwc_addr = smc501_readl(base + SM501_OFF_HWC_ADDR);
+	hwc_addr = smc501_पढ़ोl(base + SM501_OFF_HWC_ADDR);
 
-	if (cursor->enable)
-		smc501_writel(hwc_addr | SM501_HWC_EN,
+	अगर (cursor->enable)
+		smc501_ग_लिखोl(hwc_addr | SM501_HWC_EN,
 				base + SM501_OFF_HWC_ADDR);
-	else
-		smc501_writel(hwc_addr & ~SM501_HWC_EN,
+	अन्यथा
+		smc501_ग_लिखोl(hwc_addr & ~SM501_HWC_EN,
 				base + SM501_OFF_HWC_ADDR);
 
 	/* set data */
-	if (cursor->set & FB_CUR_SETPOS) {
-		unsigned int x = cursor->image.dx;
-		unsigned int y = cursor->image.dy;
+	अगर (cursor->set & FB_CUR_SETPOS) अणु
+		अचिन्हित पूर्णांक x = cursor->image.dx;
+		अचिन्हित पूर्णांक y = cursor->image.dy;
 
-		if (x >= 2048 || y >= 2048 )
-			return -EINVAL;
+		अगर (x >= 2048 || y >= 2048 )
+			वापस -EINVAL;
 
 		dev_dbg(fbi->dev, "set position %d,%d\n", x, y);
 
 		//y += cursor->image.height;
 
-		smc501_writel(x | (y << 16), base + SM501_OFF_HWC_LOC);
-	}
+		smc501_ग_लिखोl(x | (y << 16), base + SM501_OFF_HWC_LOC);
+	पूर्ण
 
-	if (cursor->set & FB_CUR_SETCMAP) {
-		unsigned int bg_col = cursor->image.bg_color;
-		unsigned int fg_col = cursor->image.fg_color;
+	अगर (cursor->set & FB_CUR_SETCMAP) अणु
+		अचिन्हित पूर्णांक bg_col = cursor->image.bg_color;
+		अचिन्हित पूर्णांक fg_col = cursor->image.fg_color;
 
 		dev_dbg(fbi->dev, "%s: update cmap (%08x,%08x)\n",
 			__func__, bg_col, fg_col);
@@ -1102,355 +1103,355 @@ static int sm501fb_cursor(struct fb_info *info, struct fb_cursor *cursor)
 
 		dev_dbg(fbi->dev, "fgcol %08lx, bgcol %08lx\n", fg, bg);
 
-		smc501_writel(bg, base + SM501_OFF_HWC_COLOR_1_2);
-		smc501_writel(fg, base + SM501_OFF_HWC_COLOR_3);
-	}
+		smc501_ग_लिखोl(bg, base + SM501_OFF_HWC_COLOR_1_2);
+		smc501_ग_लिखोl(fg, base + SM501_OFF_HWC_COLOR_3);
+	पूर्ण
 
-	if (cursor->set & FB_CUR_SETSIZE ||
-	    cursor->set & (FB_CUR_SETIMAGE | FB_CUR_SETSHAPE)) {
-		/* SM501 cursor is a two bpp 64x64 bitmap this routine
+	अगर (cursor->set & FB_CUR_SETSIZE ||
+	    cursor->set & (FB_CUR_SETIMAGE | FB_CUR_SETSHAPE)) अणु
+		/* SM501 cursor is a two bpp 64x64 biपंचांगap this routine
 		 * clears it to transparent then combines the cursor
 		 * shape plane with the colour plane to set the
 		 * cursor */
-		int x, y;
-		const unsigned char *pcol = cursor->image.data;
-		const unsigned char *pmsk = cursor->mask;
-		void __iomem   *dst = par->cursor.k_addr;
-		unsigned char  dcol = 0;
-		unsigned char  dmsk = 0;
-		unsigned int   op;
+		पूर्णांक x, y;
+		स्थिर अचिन्हित अक्षर *pcol = cursor->image.data;
+		स्थिर अचिन्हित अक्षर *pmsk = cursor->mask;
+		व्योम __iomem   *dst = par->cursor.k_addr;
+		अचिन्हित अक्षर  dcol = 0;
+		अचिन्हित अक्षर  dmsk = 0;
+		अचिन्हित पूर्णांक   op;
 
 		dev_dbg(fbi->dev, "%s: setting shape (%d,%d)\n",
 			__func__, cursor->image.width, cursor->image.height);
 
-		for (op = 0; op < (64*64*2)/8; op+=4)
-			smc501_writel(0x0, dst + op);
+		क्रम (op = 0; op < (64*64*2)/8; op+=4)
+			smc501_ग_लिखोl(0x0, dst + op);
 
-		for (y = 0; y < cursor->image.height; y++) {
-			for (x = 0; x < cursor->image.width; x++) {
-				if ((x % 8) == 0) {
+		क्रम (y = 0; y < cursor->image.height; y++) अणु
+			क्रम (x = 0; x < cursor->image.width; x++) अणु
+				अगर ((x % 8) == 0) अणु
 					dcol = *pcol++;
 					dmsk = *pmsk++;
-				} else {
+				पूर्ण अन्यथा अणु
 					dcol >>= 1;
 					dmsk >>= 1;
-				}
+				पूर्ण
 
-				if (dmsk & 1) {
+				अगर (dmsk & 1) अणु
 					op = (dcol & 1) ? 1 : 3;
 					op <<= ((x % 4) * 2);
 
-					op |= readb(dst + (x / 4));
-					writeb(op, dst + (x / 4));
-				}
-			}
+					op |= पढ़ोb(dst + (x / 4));
+					ग_लिखोb(op, dst + (x / 4));
+				पूर्ण
+			पूर्ण
 			dst += (64*2)/8;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	sm501fb_sync_regs(fbi);	/* ensure cursor data flushed */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* sm501fb_crtsrc_show
  *
  * device attribute code to show where the crt output is sourced from
 */
 
-static ssize_t sm501fb_crtsrc_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct sm501fb_info *info = dev_get_drvdata(dev);
-	unsigned long ctrl;
+अटल sमाप_प्रकार sm501fb_crtsrc_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा sm501fb_info *info = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ ctrl;
 
-	ctrl = smc501_readl(info->regs + SM501_DC_CRT_CONTROL);
+	ctrl = smc501_पढ़ोl(info->regs + SM501_DC_CRT_CONTROL);
 	ctrl &= SM501_DC_CRT_CONTROL_SEL;
 
-	return snprintf(buf, PAGE_SIZE, "%s\n", ctrl ? "crt" : "panel");
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", ctrl ? "crt" : "panel");
+पूर्ण
 
 /* sm501fb_crtsrc_show
  *
  * device attribute code to set where the crt output is sourced from
 */
 
-static ssize_t sm501fb_crtsrc_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t len)
-{
-	struct sm501fb_info *info = dev_get_drvdata(dev);
-	enum sm501_controller head;
-	unsigned long ctrl;
+अटल sमाप_प्रकार sm501fb_crtsrc_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा sm501fb_info *info = dev_get_drvdata(dev);
+	क्रमागत sm501_controller head;
+	अचिन्हित दीर्घ ctrl;
 
-	if (len < 1)
-		return -EINVAL;
+	अगर (len < 1)
+		वापस -EINVAL;
 
-	if (strncasecmp(buf, "crt", 3) == 0)
+	अगर (strnहालcmp(buf, "crt", 3) == 0)
 		head = HEAD_CRT;
-	else if (strncasecmp(buf, "panel", 5) == 0)
+	अन्यथा अगर (strnहालcmp(buf, "panel", 5) == 0)
 		head = HEAD_PANEL;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	dev_info(dev, "setting crt source to head %d\n", head);
 
-	ctrl = smc501_readl(info->regs + SM501_DC_CRT_CONTROL);
+	ctrl = smc501_पढ़ोl(info->regs + SM501_DC_CRT_CONTROL);
 
-	if (head == HEAD_CRT) {
+	अगर (head == HEAD_CRT) अणु
 		ctrl |= SM501_DC_CRT_CONTROL_SEL;
 		ctrl |= SM501_DC_CRT_CONTROL_ENABLE;
 		ctrl |= SM501_DC_CRT_CONTROL_TE;
-	} else {
+	पूर्ण अन्यथा अणु
 		ctrl &= ~SM501_DC_CRT_CONTROL_SEL;
 		ctrl &= ~SM501_DC_CRT_CONTROL_ENABLE;
 		ctrl &= ~SM501_DC_CRT_CONTROL_TE;
-	}
+	पूर्ण
 
-	smc501_writel(ctrl, info->regs + SM501_DC_CRT_CONTROL);
+	smc501_ग_लिखोl(ctrl, info->regs + SM501_DC_CRT_CONTROL);
 	sm501fb_sync_regs(info);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-/* Prepare the device_attr for registration with sysfs later */
-static DEVICE_ATTR(crt_src, 0664, sm501fb_crtsrc_show, sm501fb_crtsrc_store);
+/* Prepare the device_attr क्रम registration with sysfs later */
+अटल DEVICE_ATTR(crt_src, 0664, sm501fb_crtsrc_show, sm501fb_crtsrc_store);
 
 /* sm501fb_show_regs
  *
- * show the primary sm501 registers
+ * show the primary sm501 रेजिस्टरs
 */
-static int sm501fb_show_regs(struct sm501fb_info *info, char *ptr,
-			     unsigned int start, unsigned int len)
-{
-	void __iomem *mem = info->regs;
-	char *buf = ptr;
-	unsigned int reg;
+अटल पूर्णांक sm501fb_show_regs(काष्ठा sm501fb_info *info, अक्षर *ptr,
+			     अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक len)
+अणु
+	व्योम __iomem *mem = info->regs;
+	अक्षर *buf = ptr;
+	अचिन्हित पूर्णांक reg;
 
-	for (reg = start; reg < (len + start); reg += 4)
-		ptr += sprintf(ptr, "%08x = %08x\n", reg,
-				smc501_readl(mem + reg));
+	क्रम (reg = start; reg < (len + start); reg += 4)
+		ptr += प्र_लिखो(ptr, "%08x = %08x\n", reg,
+				smc501_पढ़ोl(mem + reg));
 
-	return ptr - buf;
-}
+	वापस ptr - buf;
+पूर्ण
 
 /* sm501fb_debug_show_crt
  *
- * show the crt control and cursor registers
+ * show the crt control and cursor रेजिस्टरs
 */
 
-static ssize_t sm501fb_debug_show_crt(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct sm501fb_info *info = dev_get_drvdata(dev);
-	char *ptr = buf;
+अटल sमाप_प्रकार sm501fb_debug_show_crt(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा sm501fb_info *info = dev_get_drvdata(dev);
+	अक्षर *ptr = buf;
 
 	ptr += sm501fb_show_regs(info, ptr, SM501_DC_CRT_CONTROL, 0x40);
 	ptr += sm501fb_show_regs(info, ptr, SM501_DC_CRT_HWC_BASE, 0x10);
 
-	return ptr - buf;
-}
+	वापस ptr - buf;
+पूर्ण
 
-static DEVICE_ATTR(fbregs_crt, 0444, sm501fb_debug_show_crt, NULL);
+अटल DEVICE_ATTR(fbregs_crt, 0444, sm501fb_debug_show_crt, शून्य);
 
 /* sm501fb_debug_show_pnl
  *
- * show the panel control and cursor registers
+ * show the panel control and cursor रेजिस्टरs
 */
 
-static ssize_t sm501fb_debug_show_pnl(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct sm501fb_info *info = dev_get_drvdata(dev);
-	char *ptr = buf;
+अटल sमाप_प्रकार sm501fb_debug_show_pnl(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा sm501fb_info *info = dev_get_drvdata(dev);
+	अक्षर *ptr = buf;
 
 	ptr += sm501fb_show_regs(info, ptr, 0x0, 0x40);
 	ptr += sm501fb_show_regs(info, ptr, SM501_DC_PANEL_HWC_BASE, 0x10);
 
-	return ptr - buf;
-}
+	वापस ptr - buf;
+पूर्ण
 
-static DEVICE_ATTR(fbregs_pnl, 0444, sm501fb_debug_show_pnl, NULL);
+अटल DEVICE_ATTR(fbregs_pnl, 0444, sm501fb_debug_show_pnl, शून्य);
 
-static struct attribute *sm501fb_attrs[] = {
+अटल काष्ठा attribute *sm501fb_attrs[] = अणु
 	&dev_attr_crt_src.attr,
 	&dev_attr_fbregs_pnl.attr,
 	&dev_attr_fbregs_crt.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(sm501fb);
 
 /* acceleration operations */
-static int sm501fb_sync(struct fb_info *info)
-{
-	int count = 1000000;
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *fbi = par->info;
+अटल पूर्णांक sm501fb_sync(काष्ठा fb_info *info)
+अणु
+	पूर्णांक count = 1000000;
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *fbi = par->info;
 
-	/* wait for the 2d engine to be ready */
-	while ((count > 0) &&
-	       (smc501_readl(fbi->regs + SM501_SYSTEM_CONTROL) &
+	/* रुको क्रम the 2d engine to be पढ़ोy */
+	जबतक ((count > 0) &&
+	       (smc501_पढ़ोl(fbi->regs + SM501_SYSTEM_CONTROL) &
 		SM501_SYSCTRL_2D_ENGINE_STATUS) != 0)
 		count--;
 
-	if (count <= 0) {
+	अगर (count <= 0) अणु
 		dev_err(info->dev, "Timeout waiting for 2d engine sync\n");
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void sm501fb_copyarea(struct fb_info *info, const struct fb_copyarea *area)
-{
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *fbi = par->info;
-	int width = area->width;
-	int height = area->height;
-	int sx = area->sx;
-	int sy = area->sy;
-	int dx = area->dx;
-	int dy = area->dy;
-	unsigned long rtl = 0;
+अटल व्योम sm501fb_copyarea(काष्ठा fb_info *info, स्थिर काष्ठा fb_copyarea *area)
+अणु
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *fbi = par->info;
+	पूर्णांक width = area->width;
+	पूर्णांक height = area->height;
+	पूर्णांक sx = area->sx;
+	पूर्णांक sy = area->sy;
+	पूर्णांक dx = area->dx;
+	पूर्णांक dy = area->dy;
+	अचिन्हित दीर्घ rtl = 0;
 
 	/* source clip */
-	if ((sx >= info->var.xres_virtual) ||
-	    (sy >= info->var.yres_virtual))
-		/* source Area not within virtual screen, skipping */
-		return;
-	if ((sx + width) >= info->var.xres_virtual)
-		width = info->var.xres_virtual - sx - 1;
-	if ((sy + height) >= info->var.yres_virtual)
-		height = info->var.yres_virtual - sy - 1;
+	अगर ((sx >= info->var.xres_भव) ||
+	    (sy >= info->var.yres_भव))
+		/* source Area not within भव screen, skipping */
+		वापस;
+	अगर ((sx + width) >= info->var.xres_भव)
+		width = info->var.xres_भव - sx - 1;
+	अगर ((sy + height) >= info->var.yres_भव)
+		height = info->var.yres_भव - sy - 1;
 
 	/* dest clip */
-	if ((dx >= info->var.xres_virtual) ||
-	    (dy >= info->var.yres_virtual))
-		/* Destination Area not within virtual screen, skipping */
-		return;
-	if ((dx + width) >= info->var.xres_virtual)
-		width = info->var.xres_virtual - dx - 1;
-	if ((dy + height) >= info->var.yres_virtual)
-		height = info->var.yres_virtual - dy - 1;
+	अगर ((dx >= info->var.xres_भव) ||
+	    (dy >= info->var.yres_भव))
+		/* Destination Area not within भव screen, skipping */
+		वापस;
+	अगर ((dx + width) >= info->var.xres_भव)
+		width = info->var.xres_भव - dx - 1;
+	अगर ((dy + height) >= info->var.yres_भव)
+		height = info->var.yres_भव - dy - 1;
 
-	if ((sx < dx) || (sy < dy)) {
+	अगर ((sx < dx) || (sy < dy)) अणु
 		rtl = 1 << 27;
 		sx += width - 1;
 		dx += width - 1;
 		sy += height - 1;
 		dy += height - 1;
-	}
+	पूर्ण
 
-	if (sm501fb_sync(info))
-		return;
+	अगर (sm501fb_sync(info))
+		वापस;
 
 	/* set the base addresses */
-	smc501_writel(par->screen.sm_addr, fbi->regs2d + SM501_2D_SOURCE_BASE);
-	smc501_writel(par->screen.sm_addr,
+	smc501_ग_लिखोl(par->screen.sm_addr, fbi->regs2d + SM501_2D_SOURCE_BASE);
+	smc501_ग_लिखोl(par->screen.sm_addr,
 			fbi->regs2d + SM501_2D_DESTINATION_BASE);
 
-	/* set the window width */
-	smc501_writel((info->var.xres << 16) | info->var.xres,
+	/* set the winकरोw width */
+	smc501_ग_लिखोl((info->var.xres << 16) | info->var.xres,
 	       fbi->regs2d + SM501_2D_WINDOW_WIDTH);
 
-	/* set window stride */
-	smc501_writel((info->var.xres_virtual << 16) | info->var.xres_virtual,
+	/* set winकरोw stride */
+	smc501_ग_लिखोl((info->var.xres_भव << 16) | info->var.xres_भव,
 	       fbi->regs2d + SM501_2D_PITCH);
 
-	/* set data format */
-	switch (info->var.bits_per_pixel) {
-	case 8:
-		smc501_writel(0, fbi->regs2d + SM501_2D_STRETCH);
-		break;
-	case 16:
-		smc501_writel(0x00100000, fbi->regs2d + SM501_2D_STRETCH);
-		break;
-	case 32:
-		smc501_writel(0x00200000, fbi->regs2d + SM501_2D_STRETCH);
-		break;
-	}
+	/* set data क्रमmat */
+	चयन (info->var.bits_per_pixel) अणु
+	हाल 8:
+		smc501_ग_लिखोl(0, fbi->regs2d + SM501_2D_STRETCH);
+		अवरोध;
+	हाल 16:
+		smc501_ग_लिखोl(0x00100000, fbi->regs2d + SM501_2D_STRETCH);
+		अवरोध;
+	हाल 32:
+		smc501_ग_लिखोl(0x00200000, fbi->regs2d + SM501_2D_STRETCH);
+		अवरोध;
+	पूर्ण
 
 	/* 2d compare mask */
-	smc501_writel(0xffffffff, fbi->regs2d + SM501_2D_COLOR_COMPARE_MASK);
+	smc501_ग_लिखोl(0xffffffff, fbi->regs2d + SM501_2D_COLOR_COMPARE_MASK);
 
 	/* 2d mask */
-	smc501_writel(0xffffffff, fbi->regs2d + SM501_2D_MASK);
+	smc501_ग_लिखोl(0xffffffff, fbi->regs2d + SM501_2D_MASK);
 
 	/* source and destination x y */
-	smc501_writel((sx << 16) | sy, fbi->regs2d + SM501_2D_SOURCE);
-	smc501_writel((dx << 16) | dy, fbi->regs2d + SM501_2D_DESTINATION);
+	smc501_ग_लिखोl((sx << 16) | sy, fbi->regs2d + SM501_2D_SOURCE);
+	smc501_ग_लिखोl((dx << 16) | dy, fbi->regs2d + SM501_2D_DESTINATION);
 
 	/* w/h */
-	smc501_writel((width << 16) | height, fbi->regs2d + SM501_2D_DIMENSION);
+	smc501_ग_लिखोl((width << 16) | height, fbi->regs2d + SM501_2D_DIMENSION);
 
-	/* do area move */
-	smc501_writel(0x800000cc | rtl, fbi->regs2d + SM501_2D_CONTROL);
-}
+	/* करो area move */
+	smc501_ग_लिखोl(0x800000cc | rtl, fbi->regs2d + SM501_2D_CONTROL);
+पूर्ण
 
-static void sm501fb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
-{
-	struct sm501fb_par  *par = info->par;
-	struct sm501fb_info *fbi = par->info;
-	int width = rect->width, height = rect->height;
+अटल व्योम sm501fb_fillrect(काष्ठा fb_info *info, स्थिर काष्ठा fb_fillrect *rect)
+अणु
+	काष्ठा sm501fb_par  *par = info->par;
+	काष्ठा sm501fb_info *fbi = par->info;
+	पूर्णांक width = rect->width, height = rect->height;
 
-	if ((rect->dx >= info->var.xres_virtual) ||
-	    (rect->dy >= info->var.yres_virtual))
-		/* Rectangle not within virtual screen, skipping */
-		return;
-	if ((rect->dx + width) >= info->var.xres_virtual)
-		width = info->var.xres_virtual - rect->dx - 1;
-	if ((rect->dy + height) >= info->var.yres_virtual)
-		height = info->var.yres_virtual - rect->dy - 1;
+	अगर ((rect->dx >= info->var.xres_भव) ||
+	    (rect->dy >= info->var.yres_भव))
+		/* Rectangle not within भव screen, skipping */
+		वापस;
+	अगर ((rect->dx + width) >= info->var.xres_भव)
+		width = info->var.xres_भव - rect->dx - 1;
+	अगर ((rect->dy + height) >= info->var.yres_भव)
+		height = info->var.yres_भव - rect->dy - 1;
 
-	if (sm501fb_sync(info))
-		return;
+	अगर (sm501fb_sync(info))
+		वापस;
 
 	/* set the base addresses */
-	smc501_writel(par->screen.sm_addr, fbi->regs2d + SM501_2D_SOURCE_BASE);
-	smc501_writel(par->screen.sm_addr,
+	smc501_ग_लिखोl(par->screen.sm_addr, fbi->regs2d + SM501_2D_SOURCE_BASE);
+	smc501_ग_लिखोl(par->screen.sm_addr,
 			fbi->regs2d + SM501_2D_DESTINATION_BASE);
 
-	/* set the window width */
-	smc501_writel((info->var.xres << 16) | info->var.xres,
+	/* set the winकरोw width */
+	smc501_ग_लिखोl((info->var.xres << 16) | info->var.xres,
 	       fbi->regs2d + SM501_2D_WINDOW_WIDTH);
 
-	/* set window stride */
-	smc501_writel((info->var.xres_virtual << 16) | info->var.xres_virtual,
+	/* set winकरोw stride */
+	smc501_ग_लिखोl((info->var.xres_भव << 16) | info->var.xres_भव,
 	       fbi->regs2d + SM501_2D_PITCH);
 
-	/* set data format */
-	switch (info->var.bits_per_pixel) {
-	case 8:
-		smc501_writel(0, fbi->regs2d + SM501_2D_STRETCH);
-		break;
-	case 16:
-		smc501_writel(0x00100000, fbi->regs2d + SM501_2D_STRETCH);
-		break;
-	case 32:
-		smc501_writel(0x00200000, fbi->regs2d + SM501_2D_STRETCH);
-		break;
-	}
+	/* set data क्रमmat */
+	चयन (info->var.bits_per_pixel) अणु
+	हाल 8:
+		smc501_ग_लिखोl(0, fbi->regs2d + SM501_2D_STRETCH);
+		अवरोध;
+	हाल 16:
+		smc501_ग_लिखोl(0x00100000, fbi->regs2d + SM501_2D_STRETCH);
+		अवरोध;
+	हाल 32:
+		smc501_ग_लिखोl(0x00200000, fbi->regs2d + SM501_2D_STRETCH);
+		अवरोध;
+	पूर्ण
 
 	/* 2d compare mask */
-	smc501_writel(0xffffffff, fbi->regs2d + SM501_2D_COLOR_COMPARE_MASK);
+	smc501_ग_लिखोl(0xffffffff, fbi->regs2d + SM501_2D_COLOR_COMPARE_MASK);
 
 	/* 2d mask */
-	smc501_writel(0xffffffff, fbi->regs2d + SM501_2D_MASK);
+	smc501_ग_लिखोl(0xffffffff, fbi->regs2d + SM501_2D_MASK);
 
 	/* colour */
-	smc501_writel(rect->color, fbi->regs2d + SM501_2D_FOREGROUND);
+	smc501_ग_लिखोl(rect->color, fbi->regs2d + SM501_2D_FOREGROUND);
 
 	/* x y */
-	smc501_writel((rect->dx << 16) | rect->dy,
+	smc501_ग_लिखोl((rect->dx << 16) | rect->dy,
 			fbi->regs2d + SM501_2D_DESTINATION);
 
 	/* w/h */
-	smc501_writel((width << 16) | height, fbi->regs2d + SM501_2D_DIMENSION);
+	smc501_ग_लिखोl((width << 16) | height, fbi->regs2d + SM501_2D_DIMENSION);
 
-	/* do rectangle fill */
-	smc501_writel(0x800100cc, fbi->regs2d + SM501_2D_CONTROL);
-}
+	/* करो rectangle fill */
+	smc501_ग_लिखोl(0x800100cc, fbi->regs2d + SM501_2D_CONTROL);
+पूर्ण
 
 
-static struct fb_ops sm501fb_ops_crt = {
+अटल काष्ठा fb_ops sm501fb_ops_crt = अणु
 	.owner		= THIS_MODULE,
 	.fb_check_var	= sm501fb_check_var_crt,
 	.fb_set_par	= sm501fb_set_par_crt,
@@ -1462,9 +1463,9 @@ static struct fb_ops sm501fb_ops_crt = {
 	.fb_copyarea	= sm501fb_copyarea,
 	.fb_imageblit	= cfb_imageblit,
 	.fb_sync	= sm501fb_sync,
-};
+पूर्ण;
 
-static struct fb_ops sm501fb_ops_pnl = {
+अटल काष्ठा fb_ops sm501fb_ops_pnl = अणु
 	.owner		= THIS_MODULE,
 	.fb_check_var	= sm501fb_check_var_pnl,
 	.fb_set_par	= sm501fb_set_par_pnl,
@@ -1476,21 +1477,21 @@ static struct fb_ops sm501fb_ops_pnl = {
 	.fb_copyarea	= sm501fb_copyarea,
 	.fb_imageblit	= cfb_imageblit,
 	.fb_sync	= sm501fb_sync,
-};
+पूर्ण;
 
 /* sm501_init_cursor
  *
  * initialise hw cursor parameters
 */
 
-static int sm501_init_cursor(struct fb_info *fbi, unsigned int reg_base)
-{
-	struct sm501fb_par *par;
-	struct sm501fb_info *info;
-	int ret;
+अटल पूर्णांक sm501_init_cursor(काष्ठा fb_info *fbi, अचिन्हित पूर्णांक reg_base)
+अणु
+	काष्ठा sm501fb_par *par;
+	काष्ठा sm501fb_info *info;
+	पूर्णांक ret;
 
-	if (fbi == NULL)
-		return 0;
+	अगर (fbi == शून्य)
+		वापस 0;
 
 	par = fbi->par;
 	info = par->info;
@@ -1499,137 +1500,137 @@ static int sm501_init_cursor(struct fb_info *fbi, unsigned int reg_base)
 
 	ret = sm501_alloc_mem(info, &par->cursor, SM501_MEMF_CURSOR, 1024,
 			      fbi->fix.smem_len);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* initialise the colour registers */
+	/* initialise the colour रेजिस्टरs */
 
-	smc501_writel(par->cursor.sm_addr,
+	smc501_ग_लिखोl(par->cursor.sm_addr,
 			par->cursor_regs + SM501_OFF_HWC_ADDR);
 
-	smc501_writel(0x00, par->cursor_regs + SM501_OFF_HWC_LOC);
-	smc501_writel(0x00, par->cursor_regs + SM501_OFF_HWC_COLOR_1_2);
-	smc501_writel(0x00, par->cursor_regs + SM501_OFF_HWC_COLOR_3);
+	smc501_ग_लिखोl(0x00, par->cursor_regs + SM501_OFF_HWC_LOC);
+	smc501_ग_लिखोl(0x00, par->cursor_regs + SM501_OFF_HWC_COLOR_1_2);
+	smc501_ग_लिखोl(0x00, par->cursor_regs + SM501_OFF_HWC_COLOR_3);
 	sm501fb_sync_regs(info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* sm501fb_info_start
  *
- * fills the par structure claiming resources and remapping etc.
+ * fills the par काष्ठाure claiming resources and remapping etc.
 */
 
-static int sm501fb_start(struct sm501fb_info *info,
-			 struct platform_device *pdev)
-{
-	struct resource	*res;
-	struct device *dev = &pdev->dev;
-	int k;
-	int ret;
+अटल पूर्णांक sm501fb_start(काष्ठा sm501fb_info *info,
+			 काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource	*res;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक k;
+	पूर्णांक ret;
 
-	info->irq = ret = platform_get_irq(pdev, 0);
-	if (ret < 0) {
-		/* we currently do not use the IRQ */
+	info->irq = ret = platक्रमm_get_irq(pdev, 0);
+	अगर (ret < 0) अणु
+		/* we currently करो not use the IRQ */
 		dev_warn(dev, "no irq for device\n");
-	}
+	पूर्ण
 
-	/* allocate, reserve and remap resources for display
-	 * controller registers */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (res == NULL) {
+	/* allocate, reserve and remap resources क्रम display
+	 * controller रेजिस्टरs */
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (res == शून्य) अणु
 		dev_err(dev, "no resource definition for registers\n");
 		ret = -ENOENT;
-		goto err_release;
-	}
+		जाओ err_release;
+	पूर्ण
 
 	info->regs_res = request_mem_region(res->start,
 					    resource_size(res),
 					    pdev->name);
 
-	if (info->regs_res == NULL) {
+	अगर (info->regs_res == शून्य) अणु
 		dev_err(dev, "cannot claim registers\n");
 		ret = -ENXIO;
-		goto err_release;
-	}
+		जाओ err_release;
+	पूर्ण
 
 	info->regs = ioremap(res->start, resource_size(res));
-	if (info->regs == NULL) {
+	अगर (info->regs == शून्य) अणु
 		dev_err(dev, "cannot remap registers\n");
 		ret = -ENXIO;
-		goto err_regs_res;
-	}
+		जाओ err_regs_res;
+	पूर्ण
 
-	/* allocate, reserve and remap resources for 2d
-	 * controller registers */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
-	if (res == NULL) {
+	/* allocate, reserve and remap resources क्रम 2d
+	 * controller रेजिस्टरs */
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+	अगर (res == शून्य) अणु
 		dev_err(dev, "no resource definition for 2d registers\n");
 		ret = -ENOENT;
-		goto err_regs_map;
-	}
+		जाओ err_regs_map;
+	पूर्ण
 
 	info->regs2d_res = request_mem_region(res->start,
 					      resource_size(res),
 					      pdev->name);
 
-	if (info->regs2d_res == NULL) {
+	अगर (info->regs2d_res == शून्य) अणु
 		dev_err(dev, "cannot claim registers\n");
 		ret = -ENXIO;
-		goto err_regs_map;
-	}
+		जाओ err_regs_map;
+	पूर्ण
 
 	info->regs2d = ioremap(res->start, resource_size(res));
-	if (info->regs2d == NULL) {
+	अगर (info->regs2d == शून्य) अणु
 		dev_err(dev, "cannot remap registers\n");
 		ret = -ENXIO;
-		goto err_regs2d_res;
-	}
+		जाओ err_regs2d_res;
+	पूर्ण
 
-	/* allocate, reserve resources for framebuffer */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 2);
-	if (res == NULL) {
+	/* allocate, reserve resources क्रम framebuffer */
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 2);
+	अगर (res == शून्य) अणु
 		dev_err(dev, "no memory resource defined\n");
 		ret = -ENXIO;
-		goto err_regs2d_map;
-	}
+		जाओ err_regs2d_map;
+	पूर्ण
 
 	info->fbmem_res = request_mem_region(res->start,
 					     resource_size(res),
 					     pdev->name);
-	if (info->fbmem_res == NULL) {
+	अगर (info->fbmem_res == शून्य) अणु
 		dev_err(dev, "cannot claim framebuffer\n");
 		ret = -ENXIO;
-		goto err_regs2d_map;
-	}
+		जाओ err_regs2d_map;
+	पूर्ण
 
 	info->fbmem = ioremap(res->start, resource_size(res));
-	if (info->fbmem == NULL) {
+	अगर (info->fbmem == शून्य) अणु
 		dev_err(dev, "cannot remap framebuffer\n");
 		ret = -ENXIO;
-		goto err_mem_res;
-	}
+		जाओ err_mem_res;
+	पूर्ण
 
 	info->fbmem_len = resource_size(res);
 
-	/* clear framebuffer memory - avoids garbage data on unused fb */
-	memset_io(info->fbmem, 0, info->fbmem_len);
+	/* clear framebuffer memory - aव्योमs garbage data on unused fb */
+	स_रखो_io(info->fbmem, 0, info->fbmem_len);
 
-	/* clear palette ram - undefined at power on */
-	for (k = 0; k < (256 * 3); k++)
-		smc501_writel(0, info->regs + SM501_DC_PANEL_PALETTE + (k * 4));
+	/* clear palette ram - undefined at घातer on */
+	क्रम (k = 0; k < (256 * 3); k++)
+		smc501_ग_लिखोl(0, info->regs + SM501_DC_PANEL_PALETTE + (k * 4));
 
 	/* enable display controller */
-	sm501_unit_power(dev->parent, SM501_GATE_DISPLAY, 1);
+	sm501_unit_घातer(dev->parent, SM501_GATE_DISPLAY, 1);
 
 	/* enable 2d controller */
-	sm501_unit_power(dev->parent, SM501_GATE_2D_ENGINE, 1);
+	sm501_unit_घातer(dev->parent, SM501_GATE_2D_ENGINE, 1);
 
 	/* setup cursors */
 	sm501_init_cursor(info->fb[HEAD_CRT], SM501_DC_CRT_HWC_ADDR);
 	sm501_init_cursor(info->fb[HEAD_PANEL], SM501_DC_PANEL_HWC_ADDR);
 
-	return 0; /* everything is setup */
+	वापस 0; /* everything is setup */
 
  err_mem_res:
 	release_mem_region(info->fbmem_res->start,
@@ -1650,13 +1651,13 @@ static int sm501fb_start(struct sm501fb_info *info,
 			   resource_size(info->regs_res));
 
  err_release:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sm501fb_stop(struct sm501fb_info *info)
-{
+अटल व्योम sm501fb_stop(काष्ठा sm501fb_info *info)
+अणु
 	/* disable display controller */
-	sm501_unit_power(info->dev->parent, SM501_GATE_DISPLAY, 0);
+	sm501_unit_घातer(info->dev->parent, SM501_GATE_DISPLAY, 0);
 
 	iounmap(info->fbmem);
 	release_mem_region(info->fbmem_res->start,
@@ -1669,81 +1670,81 @@ static void sm501fb_stop(struct sm501fb_info *info)
 	iounmap(info->regs);
 	release_mem_region(info->regs_res->start,
 			   resource_size(info->regs_res));
-}
+पूर्ण
 
-static int sm501fb_init_fb(struct fb_info *fb, enum sm501_controller head,
-			   const char *fbname)
-{
-	struct sm501_platdata_fbsub *pd;
-	struct sm501fb_par *par = fb->par;
-	struct sm501fb_info *info = par->info;
-	unsigned long ctrl;
-	unsigned int enable;
-	int ret;
+अटल पूर्णांक sm501fb_init_fb(काष्ठा fb_info *fb, क्रमागत sm501_controller head,
+			   स्थिर अक्षर *fbname)
+अणु
+	काष्ठा sm501_platdata_fbsub *pd;
+	काष्ठा sm501fb_par *par = fb->par;
+	काष्ठा sm501fb_info *info = par->info;
+	अचिन्हित दीर्घ ctrl;
+	अचिन्हित पूर्णांक enable;
+	पूर्णांक ret;
 
-	switch (head) {
-	case HEAD_CRT:
+	चयन (head) अणु
+	हाल HEAD_CRT:
 		pd = info->pdata->fb_crt;
-		ctrl = smc501_readl(info->regs + SM501_DC_CRT_CONTROL);
+		ctrl = smc501_पढ़ोl(info->regs + SM501_DC_CRT_CONTROL);
 		enable = (ctrl & SM501_DC_CRT_CONTROL_ENABLE) ? 1 : 0;
 
-		/* ensure we set the correct source register */
-		if (info->pdata->fb_route != SM501_FB_CRT_PANEL) {
+		/* ensure we set the correct source रेजिस्टर */
+		अगर (info->pdata->fb_route != SM501_FB_CRT_PANEL) अणु
 			ctrl |= SM501_DC_CRT_CONTROL_SEL;
-			smc501_writel(ctrl, info->regs + SM501_DC_CRT_CONTROL);
-		}
+			smc501_ग_लिखोl(ctrl, info->regs + SM501_DC_CRT_CONTROL);
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case HEAD_PANEL:
+	हाल HEAD_PANEL:
 		pd = info->pdata->fb_pnl;
-		ctrl = smc501_readl(info->regs + SM501_DC_PANEL_CONTROL);
+		ctrl = smc501_पढ़ोl(info->regs + SM501_DC_PANEL_CONTROL);
 		enable = (ctrl & SM501_DC_PANEL_CONTROL_EN) ? 1 : 0;
-		break;
+		अवरोध;
 
-	default:
-		pd = NULL;		/* stop compiler warnings */
+	शेष:
+		pd = शून्य;		/* stop compiler warnings */
 		ctrl = 0;
 		enable = 0;
 		BUG();
-	}
+	पूर्ण
 
 	dev_info(info->dev, "fb %s %sabled at start\n",
 		 fbname, enable ? "en" : "dis");
 
-	/* check to see if our routing allows this */
+	/* check to see अगर our routing allows this */
 
-	if (head == HEAD_CRT && info->pdata->fb_route == SM501_FB_CRT_PANEL) {
+	अगर (head == HEAD_CRT && info->pdata->fb_route == SM501_FB_CRT_PANEL) अणु
 		ctrl &= ~SM501_DC_CRT_CONTROL_SEL;
-		smc501_writel(ctrl, info->regs + SM501_DC_CRT_CONTROL);
+		smc501_ग_लिखोl(ctrl, info->regs + SM501_DC_CRT_CONTROL);
 		enable = 0;
-	}
+	पूर्ण
 
-	strlcpy(fb->fix.id, fbname, sizeof(fb->fix.id));
+	strlcpy(fb->fix.id, fbname, माप(fb->fix.id));
 
-	memcpy(&par->ops,
+	स_नकल(&par->ops,
 	       (head == HEAD_CRT) ? &sm501fb_ops_crt : &sm501fb_ops_pnl,
-	       sizeof(struct fb_ops));
+	       माप(काष्ठा fb_ops));
 
 	/* update ops dependent on what we've been passed */
 
-	if ((pd->flags & SM501FB_FLAG_USE_HWCURSOR) == 0)
-		par->ops.fb_cursor = NULL;
+	अगर ((pd->flags & SM501FB_FLAG_USE_HWCURSOR) == 0)
+		par->ops.fb_cursor = शून्य;
 
 	fb->fbops = &par->ops;
 	fb->flags = FBINFO_FLAG_DEFAULT | FBINFO_READS_FAST |
 		FBINFO_HWACCEL_COPYAREA | FBINFO_HWACCEL_FILLRECT |
 		FBINFO_HWACCEL_XPAN | FBINFO_HWACCEL_YPAN;
 
-#if defined(CONFIG_OF)
-#ifdef __BIG_ENDIAN
-	if (of_get_property(info->dev->parent->of_node, "little-endian", NULL))
+#अगर defined(CONFIG_OF)
+#अगर_घोषित __BIG_ENDIAN
+	अगर (of_get_property(info->dev->parent->of_node, "little-endian", शून्य))
 		fb->flags |= FBINFO_FOREIGN_ENDIAN;
-#else
-	if (of_get_property(info->dev->parent->of_node, "big-endian", NULL))
+#अन्यथा
+	अगर (of_get_property(info->dev->parent->of_node, "big-endian", शून्य))
 		fb->flags |= FBINFO_FOREIGN_ENDIAN;
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर
 	/* fixed data */
 
 	fb->fix.type		= FB_TYPE_PACKED_PIXELS;
@@ -1761,270 +1762,270 @@ static int sm501fb_init_fb(struct fb_info *fb, enum sm501_controller head,
 	fb->var.vmode		= FB_VMODE_NONINTERLACED;
 	fb->var.bits_per_pixel  = 16;
 
-	if (info->edid_data) {
+	अगर (info->edid_data) अणु
 			/* Now build modedb from EDID */
 			fb_edid_to_monspecs(info->edid_data, &fb->monspecs);
 			fb_videomode_to_modelist(fb->monspecs.modedb,
 						 fb->monspecs.modedb_len,
 						 &fb->modelist);
-	}
+	पूर्ण
 
-	if (enable && (pd->flags & SM501FB_FLAG_USE_INIT_MODE) && 0) {
-		/* TODO read the mode from the current display */
-	} else {
-		if (pd->def_mode) {
+	अगर (enable && (pd->flags & SM501FB_FLAG_USE_INIT_MODE) && 0) अणु
+		/* TODO पढ़ो the mode from the current display */
+	पूर्ण अन्यथा अणु
+		अगर (pd->def_mode) अणु
 			dev_info(info->dev, "using supplied mode\n");
 			fb_videomode_to_var(&fb->var, pd->def_mode);
 
 			fb->var.bits_per_pixel = pd->def_bpp ? pd->def_bpp : 8;
-			fb->var.xres_virtual = fb->var.xres;
-			fb->var.yres_virtual = fb->var.yres;
-		} else {
-			if (info->edid_data) {
+			fb->var.xres_भव = fb->var.xres;
+			fb->var.yres_भव = fb->var.yres;
+		पूर्ण अन्यथा अणु
+			अगर (info->edid_data) अणु
 				ret = fb_find_mode(&fb->var, fb, fb_mode,
 					fb->monspecs.modedb,
 					fb->monspecs.modedb_len,
-					&sm501_default_mode, default_bpp);
-				/* edid_data is no longer needed, free it */
-				kfree(info->edid_data);
-			} else {
+					&sm501_शेष_mode, शेष_bpp);
+				/* edid_data is no दीर्घer needed, मुक्त it */
+				kमुक्त(info->edid_data);
+			पूर्ण अन्यथा अणु
 				ret = fb_find_mode(&fb->var, fb,
-					   NULL, NULL, 0, NULL, 8);
-			}
+					   शून्य, शून्य, 0, शून्य, 8);
+			पूर्ण
 
-			switch (ret) {
-			case 1:
+			चयन (ret) अणु
+			हाल 1:
 				dev_info(info->dev, "using mode specified in "
 						"@mode\n");
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				dev_info(info->dev, "using mode specified in "
 					"@mode with ignored refresh rate\n");
-				break;
-			case 3:
+				अवरोध;
+			हाल 3:
 				dev_info(info->dev, "using mode default "
 					"mode\n");
-				break;
-			case 4:
+				अवरोध;
+			हाल 4:
 				dev_info(info->dev, "using mode from list\n");
-				break;
-			default:
+				अवरोध;
+			शेष:
 				dev_info(info->dev, "ret = %d\n", ret);
 				dev_info(info->dev, "failed to find mode\n");
-				return -EINVAL;
-			}
-		}
-	}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* initialise and set the palette */
-	if (fb_alloc_cmap(&fb->cmap, NR_PALETTE, 0)) {
+	अगर (fb_alloc_cmap(&fb->cmap, NR_PALETTE, 0)) अणु
 		dev_err(info->dev, "failed to allocate cmap memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	fb_set_cmap(&fb->cmap, fb);
 
 	ret = (fb->fbops->fb_check_var)(&fb->var, fb);
-	if (ret)
+	अगर (ret)
 		dev_err(info->dev, "check_var() failed on initial setup?\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* default platform data if none is supplied (ie, PCI device) */
+/* शेष platक्रमm data अगर none is supplied (ie, PCI device) */
 
-static struct sm501_platdata_fbsub sm501fb_pdata_crt = {
+अटल काष्ठा sm501_platdata_fbsub sm501fb_pdata_crt = अणु
 	.flags		= (SM501FB_FLAG_USE_INIT_MODE |
 			   SM501FB_FLAG_USE_HWCURSOR |
 			   SM501FB_FLAG_USE_HWACCEL |
 			   SM501FB_FLAG_DISABLE_AT_EXIT),
 
-};
+पूर्ण;
 
-static struct sm501_platdata_fbsub sm501fb_pdata_pnl = {
+अटल काष्ठा sm501_platdata_fbsub sm501fb_pdata_pnl = अणु
 	.flags		= (SM501FB_FLAG_USE_INIT_MODE |
 			   SM501FB_FLAG_USE_HWCURSOR |
 			   SM501FB_FLAG_USE_HWACCEL |
 			   SM501FB_FLAG_DISABLE_AT_EXIT),
-};
+पूर्ण;
 
-static struct sm501_platdata_fb sm501fb_def_pdata = {
+अटल काष्ठा sm501_platdata_fb sm501fb_def_pdata = अणु
 	.fb_route		= SM501_FB_OWN,
 	.fb_crt			= &sm501fb_pdata_crt,
 	.fb_pnl			= &sm501fb_pdata_pnl,
-};
+पूर्ण;
 
-static char driver_name_crt[] = "sm501fb-crt";
-static char driver_name_pnl[] = "sm501fb-panel";
+अटल अक्षर driver_name_crt[] = "sm501fb-crt";
+अटल अक्षर driver_name_pnl[] = "sm501fb-panel";
 
-static int sm501fb_probe_one(struct sm501fb_info *info,
-			     enum sm501_controller head)
-{
-	unsigned char *name = (head == HEAD_CRT) ? "crt" : "panel";
-	struct sm501_platdata_fbsub *pd;
-	struct sm501fb_par *par;
-	struct fb_info *fbi;
+अटल पूर्णांक sm501fb_probe_one(काष्ठा sm501fb_info *info,
+			     क्रमागत sm501_controller head)
+अणु
+	अचिन्हित अक्षर *name = (head == HEAD_CRT) ? "crt" : "panel";
+	काष्ठा sm501_platdata_fbsub *pd;
+	काष्ठा sm501fb_par *par;
+	काष्ठा fb_info *fbi;
 
 	pd = (head == HEAD_CRT) ? info->pdata->fb_crt : info->pdata->fb_pnl;
 
-	/* Do not initialise if we've not been given any platform data */
-	if (pd == NULL) {
+	/* Do not initialise अगर we've not been given any platक्रमm data */
+	अगर (pd == शून्य) अणु
 		dev_info(info->dev, "no data for fb %s (disabled)\n", name);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	fbi = framebuffer_alloc(sizeof(struct sm501fb_par), info->dev);
-	if (!fbi)
-		return -ENOMEM;
+	fbi = framebuffer_alloc(माप(काष्ठा sm501fb_par), info->dev);
+	अगर (!fbi)
+		वापस -ENOMEM;
 
 	par = fbi->par;
 	par->info = info;
 	par->head = head;
-	fbi->pseudo_palette = &par->pseudo_palette;
+	fbi->pseuकरो_palette = &par->pseuकरो_palette;
 
 	info->fb[head] = fbi;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Free up anything allocated by sm501fb_init_fb */
 
-static void sm501_free_init_fb(struct sm501fb_info *info,
-				enum sm501_controller head)
-{
-	struct fb_info *fbi = info->fb[head];
+अटल व्योम sm501_मुक्त_init_fb(काष्ठा sm501fb_info *info,
+				क्रमागत sm501_controller head)
+अणु
+	काष्ठा fb_info *fbi = info->fb[head];
 
-	if (!fbi)
-		return;
+	अगर (!fbi)
+		वापस;
 
 	fb_dealloc_cmap(&fbi->cmap);
-}
+पूर्ण
 
-static int sm501fb_start_one(struct sm501fb_info *info,
-			     enum sm501_controller head, const char *drvname)
-{
-	struct fb_info *fbi = info->fb[head];
-	int ret;
+अटल पूर्णांक sm501fb_start_one(काष्ठा sm501fb_info *info,
+			     क्रमागत sm501_controller head, स्थिर अक्षर *drvname)
+अणु
+	काष्ठा fb_info *fbi = info->fb[head];
+	पूर्णांक ret;
 
-	if (!fbi)
-		return 0;
+	अगर (!fbi)
+		वापस 0;
 
 	mutex_init(&info->fb[head]->mm_lock);
 
 	ret = sm501fb_init_fb(info->fb[head], head, drvname);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(info->dev, "cannot initialise fb %s\n", drvname);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = register_framebuffer(info->fb[head]);
-	if (ret) {
+	ret = रेजिस्टर_framebuffer(info->fb[head]);
+	अगर (ret) अणु
 		dev_err(info->dev, "failed to register fb %s\n", drvname);
-		sm501_free_init_fb(info, head);
-		return ret;
-	}
+		sm501_मुक्त_init_fb(info, head);
+		वापस ret;
+	पूर्ण
 
 	dev_info(info->dev, "fb%d: %s frame buffer\n", fbi->node, fbi->fix.id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sm501fb_probe(struct platform_device *pdev)
-{
-	struct sm501fb_info *info;
-	struct device *dev = &pdev->dev;
-	int ret;
+अटल पूर्णांक sm501fb_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sm501fb_info *info;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक ret;
 
 	/* allocate our framebuffers */
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (!info) {
+	info = kzalloc(माप(*info), GFP_KERNEL);
+	अगर (!info) अणु
 		dev_err(dev, "failed to allocate state\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	info->dev = dev = &pdev->dev;
-	platform_set_drvdata(pdev, info);
+	platक्रमm_set_drvdata(pdev, info);
 
-	if (dev->parent->platform_data) {
-		struct sm501_platdata *pd = dev->parent->platform_data;
+	अगर (dev->parent->platक्रमm_data) अणु
+		काष्ठा sm501_platdata *pd = dev->parent->platक्रमm_data;
 		info->pdata = pd->fb;
-	}
+	पूर्ण
 
-	if (info->pdata == NULL) {
-		int found = 0;
-#if defined(CONFIG_OF)
-		struct device_node *np = pdev->dev.parent->of_node;
-		const u8 *prop;
-		const char *cp;
-		int len;
+	अगर (info->pdata == शून्य) अणु
+		पूर्णांक found = 0;
+#अगर defined(CONFIG_OF)
+		काष्ठा device_node *np = pdev->dev.parent->of_node;
+		स्थिर u8 *prop;
+		स्थिर अक्षर *cp;
+		पूर्णांक len;
 
 		info->pdata = &sm501fb_def_pdata;
-		if (np) {
+		अगर (np) अणु
 			/* Get EDID */
 			cp = of_get_property(np, "mode", &len);
-			if (cp)
-				strcpy(fb_mode, cp);
+			अगर (cp)
+				म_नकल(fb_mode, cp);
 			prop = of_get_property(np, "edid", &len);
-			if (prop && len == EDID_LENGTH) {
+			अगर (prop && len == EDID_LENGTH) अणु
 				info->edid_data = kmemdup(prop, EDID_LENGTH,
 							  GFP_KERNEL);
-				if (info->edid_data)
+				अगर (info->edid_data)
 					found = 1;
-			}
-		}
-#endif
-		if (!found) {
+			पूर्ण
+		पूर्ण
+#पूर्ण_अगर
+		अगर (!found) अणु
 			dev_info(dev, "using default configuration data\n");
 			info->pdata = &sm501fb_def_pdata;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* probe for the presence of each panel */
+	/* probe क्रम the presence of each panel */
 
 	ret = sm501fb_probe_one(info, HEAD_CRT);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to probe CRT\n");
-		goto err_alloc;
-	}
+		जाओ err_alloc;
+	पूर्ण
 
 	ret = sm501fb_probe_one(info, HEAD_PANEL);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to probe PANEL\n");
-		goto err_probed_crt;
-	}
+		जाओ err_probed_crt;
+	पूर्ण
 
-	if (info->fb[HEAD_PANEL] == NULL &&
-	    info->fb[HEAD_CRT] == NULL) {
+	अगर (info->fb[HEAD_PANEL] == शून्य &&
+	    info->fb[HEAD_CRT] == शून्य) अणु
 		dev_err(dev, "no framebuffers found\n");
 		ret = -ENODEV;
-		goto err_alloc;
-	}
+		जाओ err_alloc;
+	पूर्ण
 
-	/* get the resources for both of the framebuffers */
+	/* get the resources क्रम both of the framebuffers */
 
 	ret = sm501fb_start(info, pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "cannot initialise SM501\n");
-		goto err_probed_panel;
-	}
+		जाओ err_probed_panel;
+	पूर्ण
 
 	ret = sm501fb_start_one(info, HEAD_CRT, driver_name_crt);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to start CRT\n");
-		goto err_started;
-	}
+		जाओ err_started;
+	पूर्ण
 
 	ret = sm501fb_start_one(info, HEAD_PANEL, driver_name_pnl);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to start Panel\n");
-		goto err_started_crt;
-	}
+		जाओ err_started_crt;
+	पूर्ण
 
-	/* we registered, return ok */
-	return 0;
+	/* we रेजिस्टरed, वापस ok */
+	वापस 0;
 
 err_started_crt:
-	unregister_framebuffer(info->fb[HEAD_CRT]);
-	sm501_free_init_fb(info, HEAD_CRT);
+	unरेजिस्टर_framebuffer(info->fb[HEAD_CRT]);
+	sm501_मुक्त_init_fb(info, HEAD_CRT);
 
 err_started:
 	sm501fb_stop(info);
@@ -2036,54 +2037,54 @@ err_probed_crt:
 	framebuffer_release(info->fb[HEAD_CRT]);
 
 err_alloc:
-	kfree(info);
+	kमुक्त(info);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /*
  *  Cleanup
  */
-static int sm501fb_remove(struct platform_device *pdev)
-{
-	struct sm501fb_info *info = platform_get_drvdata(pdev);
-	struct fb_info	   *fbinfo_crt = info->fb[0];
-	struct fb_info	   *fbinfo_pnl = info->fb[1];
+अटल पूर्णांक sm501fb_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sm501fb_info *info = platक्रमm_get_drvdata(pdev);
+	काष्ठा fb_info	   *fbinfo_crt = info->fb[0];
+	काष्ठा fb_info	   *fbinfo_pnl = info->fb[1];
 
-	sm501_free_init_fb(info, HEAD_CRT);
-	sm501_free_init_fb(info, HEAD_PANEL);
+	sm501_मुक्त_init_fb(info, HEAD_CRT);
+	sm501_मुक्त_init_fb(info, HEAD_PANEL);
 
-	if (fbinfo_crt)
-		unregister_framebuffer(fbinfo_crt);
-	if (fbinfo_pnl)
-		unregister_framebuffer(fbinfo_pnl);
+	अगर (fbinfo_crt)
+		unरेजिस्टर_framebuffer(fbinfo_crt);
+	अगर (fbinfo_pnl)
+		unरेजिस्टर_framebuffer(fbinfo_pnl);
 
 	sm501fb_stop(info);
-	kfree(info);
+	kमुक्त(info);
 
 	framebuffer_release(fbinfo_pnl);
 	framebuffer_release(fbinfo_crt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int sm501fb_suspend_fb(struct sm501fb_info *info,
-			      enum sm501_controller head)
-{
-	struct fb_info *fbi = info->fb[head];
-	struct sm501fb_par *par;
+अटल पूर्णांक sm501fb_suspend_fb(काष्ठा sm501fb_info *info,
+			      क्रमागत sm501_controller head)
+अणु
+	काष्ठा fb_info *fbi = info->fb[head];
+	काष्ठा sm501fb_par *par;
 
-	if (!fbi)
-		return 0;
+	अगर (!fbi)
+		वापस 0;
 
 	par = fbi->par;
-	if (par->screen.size == 0)
-		return 0;
+	अगर (par->screen.size == 0)
+		वापस 0;
 
-	/* blank the relevant interface to ensure unit power minimised */
+	/* blank the relevant पूर्णांकerface to ensure unit घातer minimised */
 	(par->ops.fb_blank)(FB_BLANK_POWERDOWN, fbi);
 
 	/* tell console/fb driver we are suspending */
@@ -2092,47 +2093,47 @@ static int sm501fb_suspend_fb(struct sm501fb_info *info,
 	fb_set_suspend(fbi, 1);
 	console_unlock();
 
-	/* backup copies in case chip is powered down over suspend */
+	/* backup copies in हाल chip is घातered करोwn over suspend */
 
-	par->store_fb = vmalloc(par->screen.size);
-	if (par->store_fb == NULL) {
+	par->store_fb = vदो_स्मृति(par->screen.size);
+	अगर (par->store_fb == शून्य) अणु
 		dev_err(info->dev, "no memory to store screen\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	par->store_cursor = vmalloc(par->cursor.size);
-	if (par->store_cursor == NULL) {
+	par->store_cursor = vदो_स्मृति(par->cursor.size);
+	अगर (par->store_cursor == शून्य) अणु
 		dev_err(info->dev, "no memory to store cursor\n");
-		goto err_nocursor;
-	}
+		जाओ err_nocursor;
+	पूर्ण
 
 	dev_dbg(info->dev, "suspending screen to %p\n", par->store_fb);
 	dev_dbg(info->dev, "suspending cursor to %p\n", par->store_cursor);
 
-	memcpy_fromio(par->store_fb, par->screen.k_addr, par->screen.size);
-	memcpy_fromio(par->store_cursor, par->cursor.k_addr, par->cursor.size);
+	स_नकल_fromio(par->store_fb, par->screen.k_addr, par->screen.size);
+	स_नकल_fromio(par->store_cursor, par->cursor.k_addr, par->cursor.size);
 
-	return 0;
+	वापस 0;
 
  err_nocursor:
-	vfree(par->store_fb);
-	par->store_fb = NULL;
+	vमुक्त(par->store_fb);
+	par->store_fb = शून्य;
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void sm501fb_resume_fb(struct sm501fb_info *info,
-			      enum sm501_controller head)
-{
-	struct fb_info *fbi = info->fb[head];
-	struct sm501fb_par *par;
+अटल व्योम sm501fb_resume_fb(काष्ठा sm501fb_info *info,
+			      क्रमागत sm501_controller head)
+अणु
+	काष्ठा fb_info *fbi = info->fb[head];
+	काष्ठा sm501fb_par *par;
 
-	if (!fbi)
-		return;
+	अगर (!fbi)
+		वापस;
 
 	par = fbi->par;
-	if (par->screen.size == 0)
-		return;
+	अगर (par->screen.size == 0)
+		वापस;
 
 	/* re-activate the configuration */
 
@@ -2143,87 +2144,87 @@ static void sm501fb_resume_fb(struct sm501fb_info *info,
 	dev_dbg(info->dev, "restoring screen from %p\n", par->store_fb);
 	dev_dbg(info->dev, "restoring cursor from %p\n", par->store_cursor);
 
-	if (par->store_fb)
-		memcpy_toio(par->screen.k_addr, par->store_fb,
+	अगर (par->store_fb)
+		स_नकल_toio(par->screen.k_addr, par->store_fb,
 			    par->screen.size);
 
-	if (par->store_cursor)
-		memcpy_toio(par->cursor.k_addr, par->store_cursor,
+	अगर (par->store_cursor)
+		स_नकल_toio(par->cursor.k_addr, par->store_cursor,
 			    par->cursor.size);
 
 	console_lock();
 	fb_set_suspend(fbi, 0);
 	console_unlock();
 
-	vfree(par->store_fb);
-	vfree(par->store_cursor);
-}
+	vमुक्त(par->store_fb);
+	vमुक्त(par->store_cursor);
+पूर्ण
 
 
 /* suspend and resume support */
 
-static int sm501fb_suspend(struct platform_device *pdev, pm_message_t state)
-{
-	struct sm501fb_info *info = platform_get_drvdata(pdev);
+अटल पूर्णांक sm501fb_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
+अणु
+	काष्ठा sm501fb_info *info = platक्रमm_get_drvdata(pdev);
 
 	/* store crt control to resume with */
-	info->pm_crt_ctrl = smc501_readl(info->regs + SM501_DC_CRT_CONTROL);
+	info->pm_crt_ctrl = smc501_पढ़ोl(info->regs + SM501_DC_CRT_CONTROL);
 
 	sm501fb_suspend_fb(info, HEAD_CRT);
 	sm501fb_suspend_fb(info, HEAD_PANEL);
 
-	/* turn off the clocks, in case the device is not powered down */
-	sm501_unit_power(info->dev->parent, SM501_GATE_DISPLAY, 0);
+	/* turn off the घड़ीs, in हाल the device is not घातered करोwn */
+	sm501_unit_घातer(info->dev->parent, SM501_GATE_DISPLAY, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define SM501_CRT_CTRL_SAVE (SM501_DC_CRT_CONTROL_TVP |        \
+#घोषणा SM501_CRT_CTRL_SAVE (SM501_DC_CRT_CONTROL_TVP |        \
 			     SM501_DC_CRT_CONTROL_SEL)
 
 
-static int sm501fb_resume(struct platform_device *pdev)
-{
-	struct sm501fb_info *info = platform_get_drvdata(pdev);
-	unsigned long crt_ctrl;
+अटल पूर्णांक sm501fb_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sm501fb_info *info = platक्रमm_get_drvdata(pdev);
+	अचिन्हित दीर्घ crt_ctrl;
 
-	sm501_unit_power(info->dev->parent, SM501_GATE_DISPLAY, 1);
+	sm501_unit_घातer(info->dev->parent, SM501_GATE_DISPLAY, 1);
 
-	/* restore the items we want to be saved for crt control */
+	/* restore the items we want to be saved क्रम crt control */
 
-	crt_ctrl = smc501_readl(info->regs + SM501_DC_CRT_CONTROL);
+	crt_ctrl = smc501_पढ़ोl(info->regs + SM501_DC_CRT_CONTROL);
 	crt_ctrl &= ~SM501_CRT_CTRL_SAVE;
 	crt_ctrl |= info->pm_crt_ctrl & SM501_CRT_CTRL_SAVE;
-	smc501_writel(crt_ctrl, info->regs + SM501_DC_CRT_CONTROL);
+	smc501_ग_लिखोl(crt_ctrl, info->regs + SM501_DC_CRT_CONTROL);
 
 	sm501fb_resume_fb(info, HEAD_CRT);
 	sm501fb_resume_fb(info, HEAD_PANEL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else
-#define sm501fb_suspend NULL
-#define sm501fb_resume  NULL
-#endif
+#अन्यथा
+#घोषणा sm501fb_suspend शून्य
+#घोषणा sm501fb_resume  शून्य
+#पूर्ण_अगर
 
-static struct platform_driver sm501fb_driver = {
+अटल काष्ठा platक्रमm_driver sm501fb_driver = अणु
 	.probe		= sm501fb_probe,
-	.remove		= sm501fb_remove,
+	.हटाओ		= sm501fb_हटाओ,
 	.suspend	= sm501fb_suspend,
 	.resume		= sm501fb_resume,
-	.driver		= {
+	.driver		= अणु
 		.name	= "sm501-fb",
 		.dev_groups	= sm501fb_groups,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(sm501fb_driver);
+module_platक्रमm_driver(sm501fb_driver);
 
-module_param_named(mode, fb_mode, charp, 0);
+module_param_named(mode, fb_mode, अक्षरp, 0);
 MODULE_PARM_DESC(mode,
 	"Specify resolution as \"<xres>x<yres>[-<bpp>][@<refresh>]\" ");
-module_param_named(bpp, default_bpp, ulong, 0);
+module_param_named(bpp, शेष_bpp, uदीर्घ, 0);
 MODULE_PARM_DESC(bpp, "Specify bit-per-pixel if not specified mode");
 MODULE_AUTHOR("Ben Dooks, Vincent Sanders");
 MODULE_DESCRIPTION("SM501 Framebuffer driver");

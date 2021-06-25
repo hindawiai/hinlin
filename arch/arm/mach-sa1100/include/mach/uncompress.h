@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * arch/arm/mach-sa1100/include/mach/uncompress.h
  *
@@ -7,46 +8,46 @@
  * Reorganised to be machine independent.
  */
 
-#include "hardware.h"
+#समावेश "hardware.h"
 
-#define IOMEM(x)	(x)
+#घोषणा IOMEM(x)	(x)
 
 /*
- * The following code assumes the serial port has already been
- * initialized by the bootloader.  We search for the first enabled
+ * The following code assumes the serial port has alपढ़ोy been
+ * initialized by the bootloader.  We search क्रम the first enabled
  * port in the most probable order.  If you didn't setup a port in
  * your bootloader then nothing will appear (which might be desired).
  */
 
-#define UART(x)		(*(volatile unsigned long *)(serial_port + (x)))
+#घोषणा UART(x)		(*(अस्थिर अचिन्हित दीर्घ *)(serial_port + (x)))
 
-static inline void putc(int c)
-{
-	unsigned long serial_port;
+अटल अंतरभूत व्योम अ_दो(पूर्णांक c)
+अणु
+	अचिन्हित दीर्घ serial_port;
 
-	do {
+	करो अणु
 		serial_port = _Ser3UTCR0;
-		if (UART(UTCR3) & UTCR3_TXE) break;
+		अगर (UART(UTCR3) & UTCR3_TXE) अवरोध;
 		serial_port = _Ser1UTCR0;
-		if (UART(UTCR3) & UTCR3_TXE) break;
+		अगर (UART(UTCR3) & UTCR3_TXE) अवरोध;
 		serial_port = _Ser2UTCR0;
-		if (UART(UTCR3) & UTCR3_TXE) break;
-		return;
-	} while (0);
+		अगर (UART(UTCR3) & UTCR3_TXE) अवरोध;
+		वापस;
+	पूर्ण जबतक (0);
 
-	/* wait for space in the UART's transmitter */
-	while (!(UART(UTSR1) & UTSR1_TNF))
+	/* रुको क्रम space in the UART's transmitter */
+	जबतक (!(UART(UTSR1) & UTSR1_TNF))
 		barrier();
 
-	/* send the character out. */
+	/* send the अक्षरacter out. */
 	UART(UTDR) = c;
-}
+पूर्ण
 
-static inline void flush(void)
-{
-}
+अटल अंतरभूत व्योम flush(व्योम)
+अणु
+पूर्ण
 
 /*
- * Nothing to do for these
+ * Nothing to करो क्रम these
  */
-#define arch_decomp_setup()
+#घोषणा arch_decomp_setup()

@@ -1,705 +1,706 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2002 Roman Zippel <zippel@linux-m68k.org>
  */
 
-#include <sys/types.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
-#include <regex.h>
+#समावेश <sys/types.h>
+#समावेश <प्रकार.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <regex.h>
 
-#include "lkc.h"
+#समावेश "lkc.h"
 
-struct symbol symbol_yes = {
+काष्ठा symbol symbol_yes = अणु
 	.name = "y",
-	.curr = { "y", yes },
+	.curr = अणु "y", yes पूर्ण,
 	.flags = SYMBOL_CONST|SYMBOL_VALID,
-};
+पूर्ण;
 
-struct symbol symbol_mod = {
+काष्ठा symbol symbol_mod = अणु
 	.name = "m",
-	.curr = { "m", mod },
+	.curr = अणु "m", mod पूर्ण,
 	.flags = SYMBOL_CONST|SYMBOL_VALID,
-};
+पूर्ण;
 
-struct symbol symbol_no = {
+काष्ठा symbol symbol_no = अणु
 	.name = "n",
-	.curr = { "n", no },
+	.curr = अणु "n", no पूर्ण,
 	.flags = SYMBOL_CONST|SYMBOL_VALID,
-};
+पूर्ण;
 
-static struct symbol symbol_empty = {
+अटल काष्ठा symbol symbol_empty = अणु
 	.name = "",
-	.curr = { "", no },
+	.curr = अणु "", no पूर्ण,
 	.flags = SYMBOL_VALID,
-};
+पूर्ण;
 
-struct symbol *modules_sym;
-static tristate modules_val;
+काष्ठा symbol *modules_sym;
+अटल tristate modules_val;
 
-enum symbol_type sym_get_type(struct symbol *sym)
-{
-	enum symbol_type type = sym->type;
+क्रमागत symbol_type sym_get_type(काष्ठा symbol *sym)
+अणु
+	क्रमागत symbol_type type = sym->type;
 
-	if (type == S_TRISTATE) {
-		if (sym_is_choice_value(sym) && sym->visible == yes)
+	अगर (type == S_TRISTATE) अणु
+		अगर (sym_is_choice_value(sym) && sym->visible == yes)
 			type = S_BOOLEAN;
-		else if (modules_val == no)
+		अन्यथा अगर (modules_val == no)
 			type = S_BOOLEAN;
-	}
-	return type;
-}
+	पूर्ण
+	वापस type;
+पूर्ण
 
-const char *sym_type_name(enum symbol_type type)
-{
-	switch (type) {
-	case S_BOOLEAN:
-		return "bool";
-	case S_TRISTATE:
-		return "tristate";
-	case S_INT:
-		return "integer";
-	case S_HEX:
-		return "hex";
-	case S_STRING:
-		return "string";
-	case S_UNKNOWN:
-		return "unknown";
-	}
-	return "???";
-}
+स्थिर अक्षर *sym_type_name(क्रमागत symbol_type type)
+अणु
+	चयन (type) अणु
+	हाल S_BOOLEAN:
+		वापस "bool";
+	हाल S_TRISTATE:
+		वापस "tristate";
+	हाल S_INT:
+		वापस "integer";
+	हाल S_HEX:
+		वापस "hex";
+	हाल S_STRING:
+		वापस "string";
+	हाल S_UNKNOWN:
+		वापस "unknown";
+	पूर्ण
+	वापस "???";
+पूर्ण
 
-struct property *sym_get_choice_prop(struct symbol *sym)
-{
-	struct property *prop;
+काष्ठा property *sym_get_choice_prop(काष्ठा symbol *sym)
+अणु
+	काष्ठा property *prop;
 
-	for_all_choices(sym, prop)
-		return prop;
-	return NULL;
-}
+	क्रम_all_choices(sym, prop)
+		वापस prop;
+	वापस शून्य;
+पूर्ण
 
-static struct property *sym_get_default_prop(struct symbol *sym)
-{
-	struct property *prop;
+अटल काष्ठा property *sym_get_शेष_prop(काष्ठा symbol *sym)
+अणु
+	काष्ठा property *prop;
 
-	for_all_defaults(sym, prop) {
+	क्रम_all_शेषs(sym, prop) अणु
 		prop->visible.tri = expr_calc_value(prop->visible.expr);
-		if (prop->visible.tri != no)
-			return prop;
-	}
-	return NULL;
-}
+		अगर (prop->visible.tri != no)
+			वापस prop;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-struct property *sym_get_range_prop(struct symbol *sym)
-{
-	struct property *prop;
+काष्ठा property *sym_get_range_prop(काष्ठा symbol *sym)
+अणु
+	काष्ठा property *prop;
 
-	for_all_properties(sym, prop, P_RANGE) {
+	क्रम_all_properties(sym, prop, P_RANGE) अणु
 		prop->visible.tri = expr_calc_value(prop->visible.expr);
-		if (prop->visible.tri != no)
-			return prop;
-	}
-	return NULL;
-}
+		अगर (prop->visible.tri != no)
+			वापस prop;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static long long sym_get_range_val(struct symbol *sym, int base)
-{
+अटल दीर्घ दीर्घ sym_get_range_val(काष्ठा symbol *sym, पूर्णांक base)
+अणु
 	sym_calc_value(sym);
-	switch (sym->type) {
-	case S_INT:
+	चयन (sym->type) अणु
+	हाल S_INT:
 		base = 10;
-		break;
-	case S_HEX:
+		अवरोध;
+	हाल S_HEX:
 		base = 16;
-		break;
-	default:
-		break;
-	}
-	return strtoll(sym->curr.val, NULL, base);
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस म_से_दीर्घl(sym->curr.val, शून्य, base);
+पूर्ण
 
-static void sym_validate_range(struct symbol *sym)
-{
-	struct property *prop;
-	int base;
-	long long val, val2;
-	char str[64];
+अटल व्योम sym_validate_range(काष्ठा symbol *sym)
+अणु
+	काष्ठा property *prop;
+	पूर्णांक base;
+	दीर्घ दीर्घ val, val2;
+	अक्षर str[64];
 
-	switch (sym->type) {
-	case S_INT:
+	चयन (sym->type) अणु
+	हाल S_INT:
 		base = 10;
-		break;
-	case S_HEX:
+		अवरोध;
+	हाल S_HEX:
 		base = 16;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 	prop = sym_get_range_prop(sym);
-	if (!prop)
-		return;
-	val = strtoll(sym->curr.val, NULL, base);
+	अगर (!prop)
+		वापस;
+	val = म_से_दीर्घl(sym->curr.val, शून्य, base);
 	val2 = sym_get_range_val(prop->expr->left.sym, base);
-	if (val >= val2) {
+	अगर (val >= val2) अणु
 		val2 = sym_get_range_val(prop->expr->right.sym, base);
-		if (val <= val2)
-			return;
-	}
-	if (sym->type == S_INT)
-		sprintf(str, "%lld", val2);
-	else
-		sprintf(str, "0x%llx", val2);
+		अगर (val <= val2)
+			वापस;
+	पूर्ण
+	अगर (sym->type == S_INT)
+		प्र_लिखो(str, "%lld", val2);
+	अन्यथा
+		प्र_लिखो(str, "0x%llx", val2);
 	sym->curr.val = xstrdup(str);
-}
+पूर्ण
 
-static void sym_set_changed(struct symbol *sym)
-{
-	struct property *prop;
+अटल व्योम sym_set_changed(काष्ठा symbol *sym)
+अणु
+	काष्ठा property *prop;
 
 	sym->flags |= SYMBOL_CHANGED;
-	for (prop = sym->prop; prop; prop = prop->next) {
-		if (prop->menu)
+	क्रम (prop = sym->prop; prop; prop = prop->next) अणु
+		अगर (prop->menu)
 			prop->menu->flags |= MENU_CHANGED;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sym_set_all_changed(void)
-{
-	struct symbol *sym;
-	int i;
+अटल व्योम sym_set_all_changed(व्योम)
+अणु
+	काष्ठा symbol *sym;
+	पूर्णांक i;
 
-	for_all_symbols(i, sym)
+	क्रम_all_symbols(i, sym)
 		sym_set_changed(sym);
-}
+पूर्ण
 
-static void sym_calc_visibility(struct symbol *sym)
-{
-	struct property *prop;
-	struct symbol *choice_sym = NULL;
+अटल व्योम sym_calc_visibility(काष्ठा symbol *sym)
+अणु
+	काष्ठा property *prop;
+	काष्ठा symbol *choice_sym = शून्य;
 	tristate tri;
 
 	/* any prompt visible? */
 	tri = no;
 
-	if (sym_is_choice_value(sym))
+	अगर (sym_is_choice_value(sym))
 		choice_sym = prop_get_symbol(sym_get_choice_prop(sym));
 
-	for_all_prompts(sym, prop) {
+	क्रम_all_prompts(sym, prop) अणु
 		prop->visible.tri = expr_calc_value(prop->visible.expr);
 		/*
 		 * Tristate choice_values with visibility 'mod' are
-		 * not visible if the corresponding choice's value is
+		 * not visible अगर the corresponding choice's value is
 		 * 'yes'.
 		 */
-		if (choice_sym && sym->type == S_TRISTATE &&
+		अगर (choice_sym && sym->type == S_TRISTATE &&
 		    prop->visible.tri == mod && choice_sym->curr.tri == yes)
 			prop->visible.tri = no;
 
 		tri = EXPR_OR(tri, prop->visible.tri);
-	}
-	if (tri == mod && (sym->type != S_TRISTATE || modules_val == no))
+	पूर्ण
+	अगर (tri == mod && (sym->type != S_TRISTATE || modules_val == no))
 		tri = yes;
-	if (sym->visible != tri) {
+	अगर (sym->visible != tri) अणु
 		sym->visible = tri;
 		sym_set_changed(sym);
-	}
-	if (sym_is_choice_value(sym))
-		return;
-	/* defaulting to "yes" if no explicit "depends on" are given */
+	पूर्ण
+	अगर (sym_is_choice_value(sym))
+		वापस;
+	/* शेषing to "yes" अगर no explicit "depends on" are given */
 	tri = yes;
-	if (sym->dir_dep.expr)
+	अगर (sym->dir_dep.expr)
 		tri = expr_calc_value(sym->dir_dep.expr);
-	if (tri == mod && sym_get_type(sym) == S_BOOLEAN)
+	अगर (tri == mod && sym_get_type(sym) == S_BOOLEAN)
 		tri = yes;
-	if (sym->dir_dep.tri != tri) {
+	अगर (sym->dir_dep.tri != tri) अणु
 		sym->dir_dep.tri = tri;
 		sym_set_changed(sym);
-	}
+	पूर्ण
 	tri = no;
-	if (sym->rev_dep.expr)
+	अगर (sym->rev_dep.expr)
 		tri = expr_calc_value(sym->rev_dep.expr);
-	if (tri == mod && sym_get_type(sym) == S_BOOLEAN)
+	अगर (tri == mod && sym_get_type(sym) == S_BOOLEAN)
 		tri = yes;
-	if (sym->rev_dep.tri != tri) {
+	अगर (sym->rev_dep.tri != tri) अणु
 		sym->rev_dep.tri = tri;
 		sym_set_changed(sym);
-	}
+	पूर्ण
 	tri = no;
-	if (sym->implied.expr)
+	अगर (sym->implied.expr)
 		tri = expr_calc_value(sym->implied.expr);
-	if (tri == mod && sym_get_type(sym) == S_BOOLEAN)
+	अगर (tri == mod && sym_get_type(sym) == S_BOOLEAN)
 		tri = yes;
-	if (sym->implied.tri != tri) {
+	अगर (sym->implied.tri != tri) अणु
 		sym->implied.tri = tri;
 		sym_set_changed(sym);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Find the default symbol for a choice.
- * First try the default values for the choice symbol
+ * Find the शेष symbol क्रम a choice.
+ * First try the शेष values क्रम the choice symbol
  * Next locate the first visible choice value
- * Return NULL if none was found
+ * Return शून्य अगर none was found
  */
-struct symbol *sym_choice_default(struct symbol *sym)
-{
-	struct symbol *def_sym;
-	struct property *prop;
-	struct expr *e;
+काष्ठा symbol *sym_choice_शेष(काष्ठा symbol *sym)
+अणु
+	काष्ठा symbol *def_sym;
+	काष्ठा property *prop;
+	काष्ठा expr *e;
 
-	/* any of the defaults visible? */
-	for_all_defaults(sym, prop) {
+	/* any of the शेषs visible? */
+	क्रम_all_शेषs(sym, prop) अणु
 		prop->visible.tri = expr_calc_value(prop->visible.expr);
-		if (prop->visible.tri == no)
-			continue;
+		अगर (prop->visible.tri == no)
+			जारी;
 		def_sym = prop_get_symbol(prop);
-		if (def_sym->visible != no)
-			return def_sym;
-	}
+		अगर (def_sym->visible != no)
+			वापस def_sym;
+	पूर्ण
 
 	/* just get the first visible value */
 	prop = sym_get_choice_prop(sym);
-	expr_list_for_each_sym(prop->expr, e, def_sym)
-		if (def_sym->visible != no)
-			return def_sym;
+	expr_list_क्रम_each_sym(prop->expr, e, def_sym)
+		अगर (def_sym->visible != no)
+			वापस def_sym;
 
-	/* failed to locate any defaults */
-	return NULL;
-}
+	/* failed to locate any शेषs */
+	वापस शून्य;
+पूर्ण
 
-static struct symbol *sym_calc_choice(struct symbol *sym)
-{
-	struct symbol *def_sym;
-	struct property *prop;
-	struct expr *e;
-	int flags;
+अटल काष्ठा symbol *sym_calc_choice(काष्ठा symbol *sym)
+अणु
+	काष्ठा symbol *def_sym;
+	काष्ठा property *prop;
+	काष्ठा expr *e;
+	पूर्णांक flags;
 
 	/* first calculate all choice values' visibilities */
 	flags = sym->flags;
 	prop = sym_get_choice_prop(sym);
-	expr_list_for_each_sym(prop->expr, e, def_sym) {
+	expr_list_क्रम_each_sym(prop->expr, e, def_sym) अणु
 		sym_calc_visibility(def_sym);
-		if (def_sym->visible != no)
+		अगर (def_sym->visible != no)
 			flags &= def_sym->flags;
-	}
+	पूर्ण
 
 	sym->flags &= flags | ~SYMBOL_DEF_USER;
 
 	/* is the user choice visible? */
 	def_sym = sym->def[S_DEF_USER].val;
-	if (def_sym && def_sym->visible != no)
-		return def_sym;
+	अगर (def_sym && def_sym->visible != no)
+		वापस def_sym;
 
-	def_sym = sym_choice_default(sym);
+	def_sym = sym_choice_शेष(sym);
 
-	if (def_sym == NULL)
+	अगर (def_sym == शून्य)
 		/* no choice? reset tristate value */
 		sym->curr.tri = no;
 
-	return def_sym;
-}
+	वापस def_sym;
+पूर्ण
 
-static void sym_warn_unmet_dep(struct symbol *sym)
-{
-	struct gstr gs = str_new();
+अटल व्योम sym_warn_unmet_dep(काष्ठा symbol *sym)
+अणु
+	काष्ठा gstr gs = str_new();
 
-	str_printf(&gs,
+	str_म_लिखो(&gs,
 		   "\nWARNING: unmet direct dependencies detected for %s\n",
 		   sym->name);
-	str_printf(&gs,
+	str_म_लिखो(&gs,
 		   "  Depends on [%c]: ",
 		   sym->dir_dep.tri == mod ? 'm' : 'n');
-	expr_gstr_print(sym->dir_dep.expr, &gs);
-	str_printf(&gs, "\n");
+	expr_gstr_prपूर्णांक(sym->dir_dep.expr, &gs);
+	str_म_लिखो(&gs, "\n");
 
-	expr_gstr_print_revdep(sym->rev_dep.expr, &gs, yes,
+	expr_gstr_prपूर्णांक_revdep(sym->rev_dep.expr, &gs, yes,
 			       "  Selected by [y]:\n");
-	expr_gstr_print_revdep(sym->rev_dep.expr, &gs, mod,
+	expr_gstr_prपूर्णांक_revdep(sym->rev_dep.expr, &gs, mod,
 			       "  Selected by [m]:\n");
 
-	fputs(str_get(&gs), stderr);
-}
+	ख_माला_दो(str_get(&gs), मानक_त्रुटि);
+पूर्ण
 
-void sym_calc_value(struct symbol *sym)
-{
-	struct symbol_value newval, oldval;
-	struct property *prop;
-	struct expr *e;
+व्योम sym_calc_value(काष्ठा symbol *sym)
+अणु
+	काष्ठा symbol_value newval, oldval;
+	काष्ठा property *prop;
+	काष्ठा expr *e;
 
-	if (!sym)
-		return;
+	अगर (!sym)
+		वापस;
 
-	if (sym->flags & SYMBOL_VALID)
-		return;
+	अगर (sym->flags & SYMBOL_VALID)
+		वापस;
 
-	if (sym_is_choice_value(sym) &&
-	    sym->flags & SYMBOL_NEED_SET_CHOICE_VALUES) {
+	अगर (sym_is_choice_value(sym) &&
+	    sym->flags & SYMBOL_NEED_SET_CHOICE_VALUES) अणु
 		sym->flags &= ~SYMBOL_NEED_SET_CHOICE_VALUES;
 		prop = sym_get_choice_prop(sym);
 		sym_calc_value(prop_get_symbol(prop));
-	}
+	पूर्ण
 
 	sym->flags |= SYMBOL_VALID;
 
 	oldval = sym->curr;
 
-	switch (sym->type) {
-	case S_INT:
-	case S_HEX:
-	case S_STRING:
+	चयन (sym->type) अणु
+	हाल S_INT:
+	हाल S_HEX:
+	हाल S_STRING:
 		newval = symbol_empty.curr;
-		break;
-	case S_BOOLEAN:
-	case S_TRISTATE:
+		अवरोध;
+	हाल S_BOOLEAN:
+	हाल S_TRISTATE:
 		newval = symbol_no.curr;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		sym->curr.val = sym->name;
 		sym->curr.tri = no;
-		return;
-	}
+		वापस;
+	पूर्ण
 	sym->flags &= ~SYMBOL_WRITE;
 
 	sym_calc_visibility(sym);
 
-	if (sym->visible != no)
+	अगर (sym->visible != no)
 		sym->flags |= SYMBOL_WRITE;
 
-	/* set default if recursively called */
+	/* set शेष अगर recursively called */
 	sym->curr = newval;
 
-	switch (sym_get_type(sym)) {
-	case S_BOOLEAN:
-	case S_TRISTATE:
-		if (sym_is_choice_value(sym) && sym->visible == yes) {
+	चयन (sym_get_type(sym)) अणु
+	हाल S_BOOLEAN:
+	हाल S_TRISTATE:
+		अगर (sym_is_choice_value(sym) && sym->visible == yes) अणु
 			prop = sym_get_choice_prop(sym);
 			newval.tri = (prop_get_symbol(prop)->curr.val == sym) ? yes : no;
-		} else {
-			if (sym->visible != no) {
-				/* if the symbol is visible use the user value
-				 * if available, otherwise try the default value
+		पूर्ण अन्यथा अणु
+			अगर (sym->visible != no) अणु
+				/* अगर the symbol is visible use the user value
+				 * अगर available, otherwise try the शेष value
 				 */
-				if (sym_has_value(sym)) {
+				अगर (sym_has_value(sym)) अणु
 					newval.tri = EXPR_AND(sym->def[S_DEF_USER].tri,
 							      sym->visible);
-					goto calc_newval;
-				}
-			}
-			if (sym->rev_dep.tri != no)
+					जाओ calc_newval;
+				पूर्ण
+			पूर्ण
+			अगर (sym->rev_dep.tri != no)
 				sym->flags |= SYMBOL_WRITE;
-			if (!sym_is_choice(sym)) {
-				prop = sym_get_default_prop(sym);
-				if (prop) {
+			अगर (!sym_is_choice(sym)) अणु
+				prop = sym_get_शेष_prop(sym);
+				अगर (prop) अणु
 					newval.tri = EXPR_AND(expr_calc_value(prop->expr),
 							      prop->visible.tri);
-					if (newval.tri != no)
+					अगर (newval.tri != no)
 						sym->flags |= SYMBOL_WRITE;
-				}
-				if (sym->implied.tri != no) {
+				पूर्ण
+				अगर (sym->implied.tri != no) अणु
 					sym->flags |= SYMBOL_WRITE;
 					newval.tri = EXPR_OR(newval.tri, sym->implied.tri);
 					newval.tri = EXPR_AND(newval.tri,
 							      sym->dir_dep.tri);
-				}
-			}
+				पूर्ण
+			पूर्ण
 		calc_newval:
-			if (sym->dir_dep.tri < sym->rev_dep.tri)
+			अगर (sym->dir_dep.tri < sym->rev_dep.tri)
 				sym_warn_unmet_dep(sym);
 			newval.tri = EXPR_OR(newval.tri, sym->rev_dep.tri);
-		}
-		if (newval.tri == mod && sym_get_type(sym) == S_BOOLEAN)
+		पूर्ण
+		अगर (newval.tri == mod && sym_get_type(sym) == S_BOOLEAN)
 			newval.tri = yes;
-		break;
-	case S_STRING:
-	case S_HEX:
-	case S_INT:
-		if (sym->visible != no && sym_has_value(sym)) {
+		अवरोध;
+	हाल S_STRING:
+	हाल S_HEX:
+	हाल S_INT:
+		अगर (sym->visible != no && sym_has_value(sym)) अणु
 			newval.val = sym->def[S_DEF_USER].val;
-			break;
-		}
-		prop = sym_get_default_prop(sym);
-		if (prop) {
-			struct symbol *ds = prop_get_symbol(prop);
-			if (ds) {
+			अवरोध;
+		पूर्ण
+		prop = sym_get_शेष_prop(sym);
+		अगर (prop) अणु
+			काष्ठा symbol *ds = prop_get_symbol(prop);
+			अगर (ds) अणु
 				sym->flags |= SYMBOL_WRITE;
 				sym_calc_value(ds);
 				newval.val = ds->curr.val;
-			}
-		}
-		break;
-	default:
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	शेष:
 		;
-	}
+	पूर्ण
 
 	sym->curr = newval;
-	if (sym_is_choice(sym) && newval.tri == yes)
+	अगर (sym_is_choice(sym) && newval.tri == yes)
 		sym->curr.val = sym_calc_choice(sym);
 	sym_validate_range(sym);
 
-	if (memcmp(&oldval, &sym->curr, sizeof(oldval))) {
+	अगर (स_भेद(&oldval, &sym->curr, माप(oldval))) अणु
 		sym_set_changed(sym);
-		if (modules_sym == sym) {
+		अगर (modules_sym == sym) अणु
 			sym_set_all_changed();
 			modules_val = modules_sym->curr.tri;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sym_is_choice(sym)) {
-		struct symbol *choice_sym;
+	अगर (sym_is_choice(sym)) अणु
+		काष्ठा symbol *choice_sym;
 
 		prop = sym_get_choice_prop(sym);
-		expr_list_for_each_sym(prop->expr, e, choice_sym) {
-			if ((sym->flags & SYMBOL_WRITE) &&
+		expr_list_क्रम_each_sym(prop->expr, e, choice_sym) अणु
+			अगर ((sym->flags & SYMBOL_WRITE) &&
 			    choice_sym->visible != no)
 				choice_sym->flags |= SYMBOL_WRITE;
-			if (sym->flags & SYMBOL_CHANGED)
+			अगर (sym->flags & SYMBOL_CHANGED)
 				sym_set_changed(choice_sym);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sym->flags & SYMBOL_NO_WRITE)
+	अगर (sym->flags & SYMBOL_NO_WRITE)
 		sym->flags &= ~SYMBOL_WRITE;
 
-	if (sym->flags & SYMBOL_NEED_SET_CHOICE_VALUES)
+	अगर (sym->flags & SYMBOL_NEED_SET_CHOICE_VALUES)
 		set_all_choice_values(sym);
-}
+पूर्ण
 
-void sym_clear_all_valid(void)
-{
-	struct symbol *sym;
-	int i;
+व्योम sym_clear_all_valid(व्योम)
+अणु
+	काष्ठा symbol *sym;
+	पूर्णांक i;
 
-	for_all_symbols(i, sym)
+	क्रम_all_symbols(i, sym)
 		sym->flags &= ~SYMBOL_VALID;
 	conf_set_changed(true);
 	sym_calc_value(modules_sym);
-}
+पूर्ण
 
-bool sym_tristate_within_range(struct symbol *sym, tristate val)
-{
-	int type = sym_get_type(sym);
+bool sym_tristate_within_range(काष्ठा symbol *sym, tristate val)
+अणु
+	पूर्णांक type = sym_get_type(sym);
 
-	if (sym->visible == no)
-		return false;
+	अगर (sym->visible == no)
+		वापस false;
 
-	if (type != S_BOOLEAN && type != S_TRISTATE)
-		return false;
+	अगर (type != S_BOOLEAN && type != S_TRISTATE)
+		वापस false;
 
-	if (type == S_BOOLEAN && val == mod)
-		return false;
-	if (sym->visible <= sym->rev_dep.tri)
-		return false;
-	if (sym_is_choice_value(sym) && sym->visible == yes)
-		return val == yes;
-	return val >= sym->rev_dep.tri && val <= sym->visible;
-}
+	अगर (type == S_BOOLEAN && val == mod)
+		वापस false;
+	अगर (sym->visible <= sym->rev_dep.tri)
+		वापस false;
+	अगर (sym_is_choice_value(sym) && sym->visible == yes)
+		वापस val == yes;
+	वापस val >= sym->rev_dep.tri && val <= sym->visible;
+पूर्ण
 
-bool sym_set_tristate_value(struct symbol *sym, tristate val)
-{
+bool sym_set_tristate_value(काष्ठा symbol *sym, tristate val)
+अणु
 	tristate oldval = sym_get_tristate_value(sym);
 
-	if (oldval != val && !sym_tristate_within_range(sym, val))
-		return false;
+	अगर (oldval != val && !sym_tristate_within_range(sym, val))
+		वापस false;
 
-	if (!(sym->flags & SYMBOL_DEF_USER)) {
+	अगर (!(sym->flags & SYMBOL_DEF_USER)) अणु
 		sym->flags |= SYMBOL_DEF_USER;
 		sym_set_changed(sym);
-	}
+	पूर्ण
 	/*
 	 * setting a choice value also resets the new flag of the choice
 	 * symbol and all other choice values.
 	 */
-	if (sym_is_choice_value(sym) && val == yes) {
-		struct symbol *cs = prop_get_symbol(sym_get_choice_prop(sym));
-		struct property *prop;
-		struct expr *e;
+	अगर (sym_is_choice_value(sym) && val == yes) अणु
+		काष्ठा symbol *cs = prop_get_symbol(sym_get_choice_prop(sym));
+		काष्ठा property *prop;
+		काष्ठा expr *e;
 
 		cs->def[S_DEF_USER].val = sym;
 		cs->flags |= SYMBOL_DEF_USER;
 		prop = sym_get_choice_prop(cs);
-		for (e = prop->expr; e; e = e->left.expr) {
-			if (e->right.sym->visible != no)
+		क्रम (e = prop->expr; e; e = e->left.expr) अणु
+			अगर (e->right.sym->visible != no)
 				e->right.sym->flags |= SYMBOL_DEF_USER;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	sym->def[S_DEF_USER].tri = val;
-	if (oldval != val)
+	अगर (oldval != val)
 		sym_clear_all_valid();
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-tristate sym_toggle_tristate_value(struct symbol *sym)
-{
+tristate sym_toggle_tristate_value(काष्ठा symbol *sym)
+अणु
 	tristate oldval, newval;
 
 	oldval = newval = sym_get_tristate_value(sym);
-	do {
-		switch (newval) {
-		case no:
+	करो अणु
+		चयन (newval) अणु
+		हाल no:
 			newval = mod;
-			break;
-		case mod:
+			अवरोध;
+		हाल mod:
 			newval = yes;
-			break;
-		case yes:
+			अवरोध;
+		हाल yes:
 			newval = no;
-			break;
-		}
-		if (sym_set_tristate_value(sym, newval))
-			break;
-	} while (oldval != newval);
-	return newval;
-}
+			अवरोध;
+		पूर्ण
+		अगर (sym_set_tristate_value(sym, newval))
+			अवरोध;
+	पूर्ण जबतक (oldval != newval);
+	वापस newval;
+पूर्ण
 
-bool sym_string_valid(struct symbol *sym, const char *str)
-{
-	signed char ch;
+bool sym_string_valid(काष्ठा symbol *sym, स्थिर अक्षर *str)
+अणु
+	चिन्हित अक्षर ch;
 
-	switch (sym->type) {
-	case S_STRING:
-		return true;
-	case S_INT:
+	चयन (sym->type) अणु
+	हाल S_STRING:
+		वापस true;
+	हाल S_INT:
 		ch = *str++;
-		if (ch == '-')
+		अगर (ch == '-')
 			ch = *str++;
-		if (!isdigit(ch))
-			return false;
-		if (ch == '0' && *str != 0)
-			return false;
-		while ((ch = *str++)) {
-			if (!isdigit(ch))
-				return false;
-		}
-		return true;
-	case S_HEX:
-		if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
+		अगर (!है_अंक(ch))
+			वापस false;
+		अगर (ch == '0' && *str != 0)
+			वापस false;
+		जबतक ((ch = *str++)) अणु
+			अगर (!है_अंक(ch))
+				वापस false;
+		पूर्ण
+		वापस true;
+	हाल S_HEX:
+		अगर (str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
 			str += 2;
 		ch = *str++;
-		do {
-			if (!isxdigit(ch))
-				return false;
-		} while ((ch = *str++));
-		return true;
-	case S_BOOLEAN:
-	case S_TRISTATE:
-		switch (str[0]) {
-		case 'y': case 'Y':
-		case 'm': case 'M':
-		case 'n': case 'N':
-			return true;
-		}
-		return false;
-	default:
-		return false;
-	}
-}
+		करो अणु
+			अगर (!है_षष्ठादशक(ch))
+				वापस false;
+		पूर्ण जबतक ((ch = *str++));
+		वापस true;
+	हाल S_BOOLEAN:
+	हाल S_TRISTATE:
+		चयन (str[0]) अणु
+		हाल 'y': case 'Y':
+		हाल 'm': case 'M':
+		हाल 'n': case 'N':
+			वापस true;
+		पूर्ण
+		वापस false;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-bool sym_string_within_range(struct symbol *sym, const char *str)
-{
-	struct property *prop;
-	long long val;
+bool sym_string_within_range(काष्ठा symbol *sym, स्थिर अक्षर *str)
+अणु
+	काष्ठा property *prop;
+	दीर्घ दीर्घ val;
 
-	switch (sym->type) {
-	case S_STRING:
-		return sym_string_valid(sym, str);
-	case S_INT:
-		if (!sym_string_valid(sym, str))
-			return false;
+	चयन (sym->type) अणु
+	हाल S_STRING:
+		वापस sym_string_valid(sym, str);
+	हाल S_INT:
+		अगर (!sym_string_valid(sym, str))
+			वापस false;
 		prop = sym_get_range_prop(sym);
-		if (!prop)
-			return true;
-		val = strtoll(str, NULL, 10);
-		return val >= sym_get_range_val(prop->expr->left.sym, 10) &&
+		अगर (!prop)
+			वापस true;
+		val = म_से_दीर्घl(str, शून्य, 10);
+		वापस val >= sym_get_range_val(prop->expr->left.sym, 10) &&
 		       val <= sym_get_range_val(prop->expr->right.sym, 10);
-	case S_HEX:
-		if (!sym_string_valid(sym, str))
-			return false;
+	हाल S_HEX:
+		अगर (!sym_string_valid(sym, str))
+			वापस false;
 		prop = sym_get_range_prop(sym);
-		if (!prop)
-			return true;
-		val = strtoll(str, NULL, 16);
-		return val >= sym_get_range_val(prop->expr->left.sym, 16) &&
+		अगर (!prop)
+			वापस true;
+		val = म_से_दीर्घl(str, शून्य, 16);
+		वापस val >= sym_get_range_val(prop->expr->left.sym, 16) &&
 		       val <= sym_get_range_val(prop->expr->right.sym, 16);
-	case S_BOOLEAN:
-	case S_TRISTATE:
-		switch (str[0]) {
-		case 'y': case 'Y':
-			return sym_tristate_within_range(sym, yes);
-		case 'm': case 'M':
-			return sym_tristate_within_range(sym, mod);
-		case 'n': case 'N':
-			return sym_tristate_within_range(sym, no);
-		}
-		return false;
-	default:
-		return false;
-	}
-}
+	हाल S_BOOLEAN:
+	हाल S_TRISTATE:
+		चयन (str[0]) अणु
+		हाल 'y': case 'Y':
+			वापस sym_tristate_within_range(sym, yes);
+		हाल 'm': case 'M':
+			वापस sym_tristate_within_range(sym, mod);
+		हाल 'n': case 'N':
+			वापस sym_tristate_within_range(sym, no);
+		पूर्ण
+		वापस false;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-bool sym_set_string_value(struct symbol *sym, const char *newval)
-{
-	const char *oldval;
-	char *val;
-	int size;
+bool sym_set_string_value(काष्ठा symbol *sym, स्थिर अक्षर *newval)
+अणु
+	स्थिर अक्षर *oldval;
+	अक्षर *val;
+	पूर्णांक size;
 
-	switch (sym->type) {
-	case S_BOOLEAN:
-	case S_TRISTATE:
-		switch (newval[0]) {
-		case 'y': case 'Y':
-			return sym_set_tristate_value(sym, yes);
-		case 'm': case 'M':
-			return sym_set_tristate_value(sym, mod);
-		case 'n': case 'N':
-			return sym_set_tristate_value(sym, no);
-		}
-		return false;
-	default:
+	चयन (sym->type) अणु
+	हाल S_BOOLEAN:
+	हाल S_TRISTATE:
+		चयन (newval[0]) अणु
+		हाल 'y': case 'Y':
+			वापस sym_set_tristate_value(sym, yes);
+		हाल 'm': case 'M':
+			वापस sym_set_tristate_value(sym, mod);
+		हाल 'n': case 'N':
+			वापस sym_set_tristate_value(sym, no);
+		पूर्ण
+		वापस false;
+	शेष:
 		;
-	}
+	पूर्ण
 
-	if (!sym_string_within_range(sym, newval))
-		return false;
+	अगर (!sym_string_within_range(sym, newval))
+		वापस false;
 
-	if (!(sym->flags & SYMBOL_DEF_USER)) {
+	अगर (!(sym->flags & SYMBOL_DEF_USER)) अणु
 		sym->flags |= SYMBOL_DEF_USER;
 		sym_set_changed(sym);
-	}
+	पूर्ण
 
 	oldval = sym->def[S_DEF_USER].val;
-	size = strlen(newval) + 1;
-	if (sym->type == S_HEX && (newval[0] != '0' || (newval[1] != 'x' && newval[1] != 'X'))) {
+	size = म_माप(newval) + 1;
+	अगर (sym->type == S_HEX && (newval[0] != '0' || (newval[1] != 'x' && newval[1] != 'X'))) अणु
 		size += 2;
-		sym->def[S_DEF_USER].val = val = xmalloc(size);
+		sym->def[S_DEF_USER].val = val = xदो_स्मृति(size);
 		*val++ = '0';
 		*val++ = 'x';
-	} else if (!oldval || strcmp(oldval, newval))
-		sym->def[S_DEF_USER].val = val = xmalloc(size);
-	else
-		return true;
+	पूर्ण अन्यथा अगर (!oldval || म_भेद(oldval, newval))
+		sym->def[S_DEF_USER].val = val = xदो_स्मृति(size);
+	अन्यथा
+		वापस true;
 
-	strcpy(val, newval);
-	free((void *)oldval);
+	म_नकल(val, newval);
+	मुक्त((व्योम *)oldval);
 	sym_clear_all_valid();
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Find the default value associated to a symbol.
- * For tristate symbol handle the modules=n case
- * in which case "m" becomes "y".
- * If the symbol does not have any default then fallback
- * to the fixed default values.
+ * Find the शेष value associated to a symbol.
+ * For tristate symbol handle the modules=n हाल
+ * in which हाल "m" becomes "y".
+ * If the symbol करोes not have any शेष then fallback
+ * to the fixed शेष values.
  */
-const char *sym_get_string_default(struct symbol *sym)
-{
-	struct property *prop;
-	struct symbol *ds;
-	const char *str;
+स्थिर अक्षर *sym_get_string_शेष(काष्ठा symbol *sym)
+अणु
+	काष्ठा property *prop;
+	काष्ठा symbol *ds;
+	स्थिर अक्षर *str;
 	tristate val;
 
 	sym_calc_visibility(sym);
@@ -707,133 +708,133 @@ const char *sym_get_string_default(struct symbol *sym)
 	val = symbol_no.curr.tri;
 	str = symbol_empty.curr.val;
 
-	/* If symbol has a default value look it up */
-	prop = sym_get_default_prop(sym);
-	if (prop != NULL) {
-		switch (sym->type) {
-		case S_BOOLEAN:
-		case S_TRISTATE:
+	/* If symbol has a शेष value look it up */
+	prop = sym_get_शेष_prop(sym);
+	अगर (prop != शून्य) अणु
+		चयन (sym->type) अणु
+		हाल S_BOOLEAN:
+		हाल S_TRISTATE:
 			/* The visibility may limit the value from yes => mod */
 			val = EXPR_AND(expr_calc_value(prop->expr), prop->visible.tri);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/*
 			 * The following fails to handle the situation
-			 * where a default value is further limited by
+			 * where a शेष value is further limited by
 			 * the valid range.
 			 */
 			ds = prop_get_symbol(prop);
-			if (ds != NULL) {
+			अगर (ds != शून्य) अणु
 				sym_calc_value(ds);
-				str = (const char *)ds->curr.val;
-			}
-		}
-	}
+				str = (स्थिर अक्षर *)ds->curr.val;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Handle select statements */
 	val = EXPR_OR(val, sym->rev_dep.tri);
 
-	/* transpose mod to yes if modules are not enabled */
-	if (val == mod)
-		if (!sym_is_choice_value(sym) && modules_sym->curr.tri == no)
+	/* transpose mod to yes अगर modules are not enabled */
+	अगर (val == mod)
+		अगर (!sym_is_choice_value(sym) && modules_sym->curr.tri == no)
 			val = yes;
 
-	/* transpose mod to yes if type is bool */
-	if (sym->type == S_BOOLEAN && val == mod)
+	/* transpose mod to yes अगर type is bool */
+	अगर (sym->type == S_BOOLEAN && val == mod)
 		val = yes;
 
-	/* adjust the default value if this symbol is implied by another */
-	if (val < sym->implied.tri)
+	/* adjust the शेष value अगर this symbol is implied by another */
+	अगर (val < sym->implied.tri)
 		val = sym->implied.tri;
 
-	switch (sym->type) {
-	case S_BOOLEAN:
-	case S_TRISTATE:
-		switch (val) {
-		case no: return "n";
-		case mod: return "m";
-		case yes: return "y";
-		}
-	case S_INT:
-	case S_HEX:
-		return str;
-	case S_STRING:
-		return str;
-	case S_UNKNOWN:
-		break;
-	}
-	return "";
-}
+	चयन (sym->type) अणु
+	हाल S_BOOLEAN:
+	हाल S_TRISTATE:
+		चयन (val) अणु
+		हाल no: वापस "n";
+		हाल mod: वापस "m";
+		हाल yes: वापस "y";
+		पूर्ण
+	हाल S_INT:
+	हाल S_HEX:
+		वापस str;
+	हाल S_STRING:
+		वापस str;
+	हाल S_UNKNOWN:
+		अवरोध;
+	पूर्ण
+	वापस "";
+पूर्ण
 
-const char *sym_get_string_value(struct symbol *sym)
-{
+स्थिर अक्षर *sym_get_string_value(काष्ठा symbol *sym)
+अणु
 	tristate val;
 
-	switch (sym->type) {
-	case S_BOOLEAN:
-	case S_TRISTATE:
+	चयन (sym->type) अणु
+	हाल S_BOOLEAN:
+	हाल S_TRISTATE:
 		val = sym_get_tristate_value(sym);
-		switch (val) {
-		case no:
-			return "n";
-		case mod:
+		चयन (val) अणु
+		हाल no:
+			वापस "n";
+		हाल mod:
 			sym_calc_value(modules_sym);
-			return (modules_sym->curr.tri == no) ? "n" : "m";
-		case yes:
-			return "y";
-		}
-		break;
-	default:
+			वापस (modules_sym->curr.tri == no) ? "n" : "m";
+		हाल yes:
+			वापस "y";
+		पूर्ण
+		अवरोध;
+	शेष:
 		;
-	}
-	return (const char *)sym->curr.val;
-}
+	पूर्ण
+	वापस (स्थिर अक्षर *)sym->curr.val;
+पूर्ण
 
-bool sym_is_changeable(struct symbol *sym)
-{
-	return sym->visible > sym->rev_dep.tri;
-}
+bool sym_is_changeable(काष्ठा symbol *sym)
+अणु
+	वापस sym->visible > sym->rev_dep.tri;
+पूर्ण
 
-static unsigned strhash(const char *s)
-{
+अटल अचिन्हित strhash(स्थिर अक्षर *s)
+अणु
 	/* fnv32 hash */
-	unsigned hash = 2166136261U;
-	for (; *s; s++)
+	अचिन्हित hash = 2166136261U;
+	क्रम (; *s; s++)
 		hash = (hash ^ *s) * 0x01000193;
-	return hash;
-}
+	वापस hash;
+पूर्ण
 
-struct symbol *sym_lookup(const char *name, int flags)
-{
-	struct symbol *symbol;
-	char *new_name;
-	int hash;
+काष्ठा symbol *sym_lookup(स्थिर अक्षर *name, पूर्णांक flags)
+अणु
+	काष्ठा symbol *symbol;
+	अक्षर *new_name;
+	पूर्णांक hash;
 
-	if (name) {
-		if (name[0] && !name[1]) {
-			switch (name[0]) {
-			case 'y': return &symbol_yes;
-			case 'm': return &symbol_mod;
-			case 'n': return &symbol_no;
-			}
-		}
+	अगर (name) अणु
+		अगर (name[0] && !name[1]) अणु
+			चयन (name[0]) अणु
+			हाल 'y': वापस &symbol_yes;
+			हाल 'm': वापस &symbol_mod;
+			हाल 'n': वापस &symbol_no;
+			पूर्ण
+		पूर्ण
 		hash = strhash(name) % SYMBOL_HASHSIZE;
 
-		for (symbol = symbol_hash[hash]; symbol; symbol = symbol->next) {
-			if (symbol->name &&
-			    !strcmp(symbol->name, name) &&
+		क्रम (symbol = symbol_hash[hash]; symbol; symbol = symbol->next) अणु
+			अगर (symbol->name &&
+			    !म_भेद(symbol->name, name) &&
 			    (flags ? symbol->flags & flags
 				   : !(symbol->flags & (SYMBOL_CONST|SYMBOL_CHOICE))))
-				return symbol;
-		}
+				वापस symbol;
+		पूर्ण
 		new_name = xstrdup(name);
-	} else {
-		new_name = NULL;
+	पूर्ण अन्यथा अणु
+		new_name = शून्य;
 		hash = 0;
-	}
+	पूर्ण
 
-	symbol = xmalloc(sizeof(*symbol));
-	memset(symbol, 0, sizeof(*symbol));
+	symbol = xदो_स्मृति(माप(*symbol));
+	स_रखो(symbol, 0, माप(*symbol));
 	symbol->name = new_name;
 	symbol->type = S_UNKNOWN;
 	symbol->flags = flags;
@@ -841,473 +842,473 @@ struct symbol *sym_lookup(const char *name, int flags)
 	symbol->next = symbol_hash[hash];
 	symbol_hash[hash] = symbol;
 
-	return symbol;
-}
+	वापस symbol;
+पूर्ण
 
-struct symbol *sym_find(const char *name)
-{
-	struct symbol *symbol = NULL;
-	int hash = 0;
+काष्ठा symbol *sym_find(स्थिर अक्षर *name)
+अणु
+	काष्ठा symbol *symbol = शून्य;
+	पूर्णांक hash = 0;
 
-	if (!name)
-		return NULL;
+	अगर (!name)
+		वापस शून्य;
 
-	if (name[0] && !name[1]) {
-		switch (name[0]) {
-		case 'y': return &symbol_yes;
-		case 'm': return &symbol_mod;
-		case 'n': return &symbol_no;
-		}
-	}
+	अगर (name[0] && !name[1]) अणु
+		चयन (name[0]) अणु
+		हाल 'y': वापस &symbol_yes;
+		हाल 'm': वापस &symbol_mod;
+		हाल 'n': वापस &symbol_no;
+		पूर्ण
+	पूर्ण
 	hash = strhash(name) % SYMBOL_HASHSIZE;
 
-	for (symbol = symbol_hash[hash]; symbol; symbol = symbol->next) {
-		if (symbol->name &&
-		    !strcmp(symbol->name, name) &&
+	क्रम (symbol = symbol_hash[hash]; symbol; symbol = symbol->next) अणु
+		अगर (symbol->name &&
+		    !म_भेद(symbol->name, name) &&
 		    !(symbol->flags & SYMBOL_CONST))
-				break;
-	}
+				अवरोध;
+	पूर्ण
 
-	return symbol;
-}
+	वापस symbol;
+पूर्ण
 
-const char *sym_escape_string_value(const char *in)
-{
-	const char *p;
-	size_t reslen;
-	char *res;
-	size_t l;
+स्थिर अक्षर *sym_escape_string_value(स्थिर अक्षर *in)
+अणु
+	स्थिर अक्षर *p;
+	माप_प्रकार reslen;
+	अक्षर *res;
+	माप_प्रकार l;
 
-	reslen = strlen(in) + strlen("\"\"") + 1;
+	reslen = म_माप(in) + म_माप("\"\"") + 1;
 
 	p = in;
-	for (;;) {
-		l = strcspn(p, "\"\\");
+	क्रम (;;) अणु
+		l = म_खोज(p, "\"\\");
 		p += l;
 
-		if (p[0] == '\0')
-			break;
+		अगर (p[0] == '\0')
+			अवरोध;
 
 		reslen++;
 		p++;
-	}
+	पूर्ण
 
-	res = xmalloc(reslen);
+	res = xदो_स्मृति(reslen);
 	res[0] = '\0';
 
-	strcat(res, "\"");
+	म_जोड़ो(res, "\"");
 
 	p = in;
-	for (;;) {
-		l = strcspn(p, "\"\\");
-		strncat(res, p, l);
+	क्रम (;;) अणु
+		l = म_खोज(p, "\"\\");
+		म_जोड़न(res, p, l);
 		p += l;
 
-		if (p[0] == '\0')
-			break;
+		अगर (p[0] == '\0')
+			अवरोध;
 
-		strcat(res, "\\");
-		strncat(res, p++, 1);
-	}
+		म_जोड़ो(res, "\\");
+		म_जोड़न(res, p++, 1);
+	पूर्ण
 
-	strcat(res, "\"");
-	return res;
-}
+	म_जोड़ो(res, "\"");
+	वापस res;
+पूर्ण
 
-struct sym_match {
-	struct symbol	*sym;
+काष्ठा sym_match अणु
+	काष्ठा symbol	*sym;
 	off_t		so, eo;
-};
+पूर्ण;
 
 /* Compare matched symbols as thus:
  * - first, symbols that match exactly
  * - then, alphabetical sort
  */
-static int sym_rel_comp(const void *sym1, const void *sym2)
-{
-	const struct sym_match *s1 = sym1;
-	const struct sym_match *s2 = sym2;
-	int exact1, exact2;
+अटल पूर्णांक sym_rel_comp(स्थिर व्योम *sym1, स्थिर व्योम *sym2)
+अणु
+	स्थिर काष्ठा sym_match *s1 = sym1;
+	स्थिर काष्ठा sym_match *s2 = sym2;
+	पूर्णांक exact1, exact2;
 
 	/* Exact match:
-	 * - if matched length on symbol s1 is the length of that symbol,
+	 * - अगर matched length on symbol s1 is the length of that symbol,
 	 *   then this symbol should come first;
-	 * - if matched length on symbol s2 is the length of that symbol,
+	 * - अगर matched length on symbol s2 is the length of that symbol,
 	 *   then this symbol should come first.
 	 * Note: since the search can be a regexp, both symbols may match
-	 * exactly; if this is the case, we can't decide which comes first,
+	 * exactly; अगर this is the हाल, we can't decide which comes first,
 	 * and we fallback to sorting alphabetically.
 	 */
-	exact1 = (s1->eo - s1->so) == strlen(s1->sym->name);
-	exact2 = (s2->eo - s2->so) == strlen(s2->sym->name);
-	if (exact1 && !exact2)
-		return -1;
-	if (!exact1 && exact2)
-		return 1;
+	exact1 = (s1->eo - s1->so) == म_माप(s1->sym->name);
+	exact2 = (s2->eo - s2->so) == म_माप(s2->sym->name);
+	अगर (exact1 && !exact2)
+		वापस -1;
+	अगर (!exact1 && exact2)
+		वापस 1;
 
 	/* As a fallback, sort symbols alphabetically */
-	return strcmp(s1->sym->name, s2->sym->name);
-}
+	वापस म_भेद(s1->sym->name, s2->sym->name);
+पूर्ण
 
-struct symbol **sym_re_search(const char *pattern)
-{
-	struct symbol *sym, **sym_arr = NULL;
-	struct sym_match *sym_match_arr = NULL;
-	int i, cnt, size;
+काष्ठा symbol **sym_re_search(स्थिर अक्षर *pattern)
+अणु
+	काष्ठा symbol *sym, **sym_arr = शून्य;
+	काष्ठा sym_match *sym_match_arr = शून्य;
+	पूर्णांक i, cnt, size;
 	regex_t re;
 	regmatch_t match[1];
 
 	cnt = size = 0;
-	/* Skip if empty */
-	if (strlen(pattern) == 0)
-		return NULL;
-	if (regcomp(&re, pattern, REG_EXTENDED|REG_ICASE))
-		return NULL;
+	/* Skip अगर empty */
+	अगर (म_माप(pattern) == 0)
+		वापस शून्य;
+	अगर (regcomp(&re, pattern, REG_EXTENDED|REG_ICASE))
+		वापस शून्य;
 
-	for_all_symbols(i, sym) {
-		if (sym->flags & SYMBOL_CONST || !sym->name)
-			continue;
-		if (regexec(&re, sym->name, 1, match, 0))
-			continue;
-		if (cnt >= size) {
-			void *tmp;
+	क्रम_all_symbols(i, sym) अणु
+		अगर (sym->flags & SYMBOL_CONST || !sym->name)
+			जारी;
+		अगर (regexec(&re, sym->name, 1, match, 0))
+			जारी;
+		अगर (cnt >= size) अणु
+			व्योम *पंचांगp;
 			size += 16;
-			tmp = realloc(sym_match_arr, size * sizeof(struct sym_match));
-			if (!tmp)
-				goto sym_re_search_free;
-			sym_match_arr = tmp;
-		}
+			पंचांगp = पुनः_स्मृति(sym_match_arr, size * माप(काष्ठा sym_match));
+			अगर (!पंचांगp)
+				जाओ sym_re_search_मुक्त;
+			sym_match_arr = पंचांगp;
+		पूर्ण
 		sym_calc_value(sym);
-		/* As regexec returned 0, we know we have a match, so
+		/* As regexec वापसed 0, we know we have a match, so
 		 * we can use match[0].rm_[se]o without further checks
 		 */
 		sym_match_arr[cnt].so = match[0].rm_so;
 		sym_match_arr[cnt].eo = match[0].rm_eo;
 		sym_match_arr[cnt++].sym = sym;
-	}
-	if (sym_match_arr) {
-		qsort(sym_match_arr, cnt, sizeof(struct sym_match), sym_rel_comp);
-		sym_arr = malloc((cnt+1) * sizeof(struct symbol *));
-		if (!sym_arr)
-			goto sym_re_search_free;
-		for (i = 0; i < cnt; i++)
+	पूर्ण
+	अगर (sym_match_arr) अणु
+		क्विक(sym_match_arr, cnt, माप(काष्ठा sym_match), sym_rel_comp);
+		sym_arr = दो_स्मृति((cnt+1) * माप(काष्ठा symbol *));
+		अगर (!sym_arr)
+			जाओ sym_re_search_मुक्त;
+		क्रम (i = 0; i < cnt; i++)
 			sym_arr[i] = sym_match_arr[i].sym;
-		sym_arr[cnt] = NULL;
-	}
-sym_re_search_free:
-	/* sym_match_arr can be NULL if no match, but free(NULL) is OK */
-	free(sym_match_arr);
-	regfree(&re);
+		sym_arr[cnt] = शून्य;
+	पूर्ण
+sym_re_search_मुक्त:
+	/* sym_match_arr can be शून्य अगर no match, but मुक्त(शून्य) is OK */
+	मुक्त(sym_match_arr);
+	regमुक्त(&re);
 
-	return sym_arr;
-}
+	वापस sym_arr;
+पूर्ण
 
 /*
- * When we check for recursive dependencies we use a stack to save
- * current state so we can print out relevant info to user.
- * The entries are located on the call stack so no need to free memory.
- * Note insert() remove() must always match to properly clear the stack.
+ * When we check क्रम recursive dependencies we use a stack to save
+ * current state so we can prपूर्णांक out relevant info to user.
+ * The entries are located on the call stack so no need to मुक्त memory.
+ * Note insert() हटाओ() must always match to properly clear the stack.
  */
-static struct dep_stack {
-	struct dep_stack *prev, *next;
-	struct symbol *sym;
-	struct property *prop;
-	struct expr **expr;
-} *check_top;
+अटल काष्ठा dep_stack अणु
+	काष्ठा dep_stack *prev, *next;
+	काष्ठा symbol *sym;
+	काष्ठा property *prop;
+	काष्ठा expr **expr;
+पूर्ण *check_top;
 
-static void dep_stack_insert(struct dep_stack *stack, struct symbol *sym)
-{
-	memset(stack, 0, sizeof(*stack));
-	if (check_top)
+अटल व्योम dep_stack_insert(काष्ठा dep_stack *stack, काष्ठा symbol *sym)
+अणु
+	स_रखो(stack, 0, माप(*stack));
+	अगर (check_top)
 		check_top->next = stack;
 	stack->prev = check_top;
 	stack->sym = sym;
 	check_top = stack;
-}
+पूर्ण
 
-static void dep_stack_remove(void)
-{
+अटल व्योम dep_stack_हटाओ(व्योम)
+अणु
 	check_top = check_top->prev;
-	if (check_top)
-		check_top->next = NULL;
-}
+	अगर (check_top)
+		check_top->next = शून्य;
+पूर्ण
 
 /*
  * Called when we have detected a recursive dependency.
- * check_top point to the top of the stact so we use
- * the ->prev pointer to locate the bottom of the stack.
+ * check_top poपूर्णांक to the top of the stact so we use
+ * the ->prev poपूर्णांकer to locate the bottom of the stack.
  */
-static void sym_check_print_recursive(struct symbol *last_sym)
-{
-	struct dep_stack *stack;
-	struct symbol *sym, *next_sym;
-	struct menu *menu = NULL;
-	struct property *prop;
-	struct dep_stack cv_stack;
+अटल व्योम sym_check_prपूर्णांक_recursive(काष्ठा symbol *last_sym)
+अणु
+	काष्ठा dep_stack *stack;
+	काष्ठा symbol *sym, *next_sym;
+	काष्ठा menu *menu = शून्य;
+	काष्ठा property *prop;
+	काष्ठा dep_stack cv_stack;
 
-	if (sym_is_choice_value(last_sym)) {
+	अगर (sym_is_choice_value(last_sym)) अणु
 		dep_stack_insert(&cv_stack, last_sym);
 		last_sym = prop_get_symbol(sym_get_choice_prop(last_sym));
-	}
+	पूर्ण
 
-	for (stack = check_top; stack != NULL; stack = stack->prev)
-		if (stack->sym == last_sym)
-			break;
-	if (!stack) {
-		fprintf(stderr, "unexpected recursive dependency error\n");
-		return;
-	}
+	क्रम (stack = check_top; stack != शून्य; stack = stack->prev)
+		अगर (stack->sym == last_sym)
+			अवरोध;
+	अगर (!stack) अणु
+		ख_लिखो(मानक_त्रुटि, "unexpected recursive dependency error\n");
+		वापस;
+	पूर्ण
 
-	for (; stack; stack = stack->next) {
+	क्रम (; stack; stack = stack->next) अणु
 		sym = stack->sym;
 		next_sym = stack->next ? stack->next->sym : last_sym;
 		prop = stack->prop;
-		if (prop == NULL)
+		अगर (prop == शून्य)
 			prop = stack->sym->prop;
 
-		/* for choice values find the menu entry (used below) */
-		if (sym_is_choice(sym) || sym_is_choice_value(sym)) {
-			for (prop = sym->prop; prop; prop = prop->next) {
+		/* क्रम choice values find the menu entry (used below) */
+		अगर (sym_is_choice(sym) || sym_is_choice_value(sym)) अणु
+			क्रम (prop = sym->prop; prop; prop = prop->next) अणु
 				menu = prop->menu;
-				if (prop->menu)
-					break;
-			}
-		}
-		if (stack->sym == last_sym)
-			fprintf(stderr, "%s:%d:error: recursive dependency detected!\n",
+				अगर (prop->menu)
+					अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (stack->sym == last_sym)
+			ख_लिखो(मानक_त्रुटि, "%s:%d:error: recursive dependency detected!\n",
 				prop->file->name, prop->lineno);
 
-		if (sym_is_choice(sym)) {
-			fprintf(stderr, "%s:%d:\tchoice %s contains symbol %s\n",
+		अगर (sym_is_choice(sym)) अणु
+			ख_लिखो(मानक_त्रुटि, "%s:%d:\tchoice %s contains symbol %s\n",
 				menu->file->name, menu->lineno,
 				sym->name ? sym->name : "<choice>",
 				next_sym->name ? next_sym->name : "<choice>");
-		} else if (sym_is_choice_value(sym)) {
-			fprintf(stderr, "%s:%d:\tsymbol %s is part of choice %s\n",
+		पूर्ण अन्यथा अगर (sym_is_choice_value(sym)) अणु
+			ख_लिखो(मानक_त्रुटि, "%s:%d:\tsymbol %s is part of choice %s\n",
 				menu->file->name, menu->lineno,
 				sym->name ? sym->name : "<choice>",
 				next_sym->name ? next_sym->name : "<choice>");
-		} else if (stack->expr == &sym->dir_dep.expr) {
-			fprintf(stderr, "%s:%d:\tsymbol %s depends on %s\n",
+		पूर्ण अन्यथा अगर (stack->expr == &sym->dir_dep.expr) अणु
+			ख_लिखो(मानक_त्रुटि, "%s:%d:\tsymbol %s depends on %s\n",
 				prop->file->name, prop->lineno,
 				sym->name ? sym->name : "<choice>",
 				next_sym->name ? next_sym->name : "<choice>");
-		} else if (stack->expr == &sym->rev_dep.expr) {
-			fprintf(stderr, "%s:%d:\tsymbol %s is selected by %s\n",
+		पूर्ण अन्यथा अगर (stack->expr == &sym->rev_dep.expr) अणु
+			ख_लिखो(मानक_त्रुटि, "%s:%d:\tsymbol %s is selected by %s\n",
 				prop->file->name, prop->lineno,
 				sym->name ? sym->name : "<choice>",
 				next_sym->name ? next_sym->name : "<choice>");
-		} else if (stack->expr == &sym->implied.expr) {
-			fprintf(stderr, "%s:%d:\tsymbol %s is implied by %s\n",
+		पूर्ण अन्यथा अगर (stack->expr == &sym->implied.expr) अणु
+			ख_लिखो(मानक_त्रुटि, "%s:%d:\tsymbol %s is implied by %s\n",
 				prop->file->name, prop->lineno,
 				sym->name ? sym->name : "<choice>",
 				next_sym->name ? next_sym->name : "<choice>");
-		} else if (stack->expr) {
-			fprintf(stderr, "%s:%d:\tsymbol %s %s value contains %s\n",
+		पूर्ण अन्यथा अगर (stack->expr) अणु
+			ख_लिखो(मानक_त्रुटि, "%s:%d:\tsymbol %s %s value contains %s\n",
 				prop->file->name, prop->lineno,
 				sym->name ? sym->name : "<choice>",
 				prop_get_type_name(prop->type),
 				next_sym->name ? next_sym->name : "<choice>");
-		} else {
-			fprintf(stderr, "%s:%d:\tsymbol %s %s is visible depending on %s\n",
+		पूर्ण अन्यथा अणु
+			ख_लिखो(मानक_त्रुटि, "%s:%d:\tsymbol %s %s is visible depending on %s\n",
 				prop->file->name, prop->lineno,
 				sym->name ? sym->name : "<choice>",
 				prop_get_type_name(prop->type),
 				next_sym->name ? next_sym->name : "<choice>");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	fprintf(stderr,
+	ख_लिखो(मानक_त्रुटि,
 		"For a resolution refer to Documentation/kbuild/kconfig-language.rst\n"
 		"subsection \"Kconfig recursive dependency limitations\"\n"
 		"\n");
 
-	if (check_top == &cv_stack)
-		dep_stack_remove();
-}
+	अगर (check_top == &cv_stack)
+		dep_stack_हटाओ();
+पूर्ण
 
-static struct symbol *sym_check_expr_deps(struct expr *e)
-{
-	struct symbol *sym;
+अटल काष्ठा symbol *sym_check_expr_deps(काष्ठा expr *e)
+अणु
+	काष्ठा symbol *sym;
 
-	if (!e)
-		return NULL;
-	switch (e->type) {
-	case E_OR:
-	case E_AND:
+	अगर (!e)
+		वापस शून्य;
+	चयन (e->type) अणु
+	हाल E_OR:
+	हाल E_AND:
 		sym = sym_check_expr_deps(e->left.expr);
-		if (sym)
-			return sym;
-		return sym_check_expr_deps(e->right.expr);
-	case E_NOT:
-		return sym_check_expr_deps(e->left.expr);
-	case E_EQUAL:
-	case E_GEQ:
-	case E_GTH:
-	case E_LEQ:
-	case E_LTH:
-	case E_UNEQUAL:
+		अगर (sym)
+			वापस sym;
+		वापस sym_check_expr_deps(e->right.expr);
+	हाल E_NOT:
+		वापस sym_check_expr_deps(e->left.expr);
+	हाल E_EQUAL:
+	हाल E_GEQ:
+	हाल E_GTH:
+	हाल E_LEQ:
+	हाल E_LTH:
+	हाल E_UNEQUAL:
 		sym = sym_check_deps(e->left.sym);
-		if (sym)
-			return sym;
-		return sym_check_deps(e->right.sym);
-	case E_SYMBOL:
-		return sym_check_deps(e->left.sym);
-	default:
-		break;
-	}
-	fprintf(stderr, "Oops! How to check %d?\n", e->type);
-	return NULL;
-}
+		अगर (sym)
+			वापस sym;
+		वापस sym_check_deps(e->right.sym);
+	हाल E_SYMBOL:
+		वापस sym_check_deps(e->left.sym);
+	शेष:
+		अवरोध;
+	पूर्ण
+	ख_लिखो(मानक_त्रुटि, "Oops! How to check %d?\n", e->type);
+	वापस शून्य;
+पूर्ण
 
-/* return NULL when dependencies are OK */
-static struct symbol *sym_check_sym_deps(struct symbol *sym)
-{
-	struct symbol *sym2;
-	struct property *prop;
-	struct dep_stack stack;
+/* वापस शून्य when dependencies are OK */
+अटल काष्ठा symbol *sym_check_sym_deps(काष्ठा symbol *sym)
+अणु
+	काष्ठा symbol *sym2;
+	काष्ठा property *prop;
+	काष्ठा dep_stack stack;
 
 	dep_stack_insert(&stack, sym);
 
 	stack.expr = &sym->dir_dep.expr;
 	sym2 = sym_check_expr_deps(sym->dir_dep.expr);
-	if (sym2)
-		goto out;
+	अगर (sym2)
+		जाओ out;
 
 	stack.expr = &sym->rev_dep.expr;
 	sym2 = sym_check_expr_deps(sym->rev_dep.expr);
-	if (sym2)
-		goto out;
+	अगर (sym2)
+		जाओ out;
 
 	stack.expr = &sym->implied.expr;
 	sym2 = sym_check_expr_deps(sym->implied.expr);
-	if (sym2)
-		goto out;
+	अगर (sym2)
+		जाओ out;
 
-	stack.expr = NULL;
+	stack.expr = शून्य;
 
-	for (prop = sym->prop; prop; prop = prop->next) {
-		if (prop->type == P_CHOICE || prop->type == P_SELECT ||
+	क्रम (prop = sym->prop; prop; prop = prop->next) अणु
+		अगर (prop->type == P_CHOICE || prop->type == P_SELECT ||
 		    prop->type == P_IMPLY)
-			continue;
+			जारी;
 		stack.prop = prop;
 		sym2 = sym_check_expr_deps(prop->visible.expr);
-		if (sym2)
-			break;
-		if (prop->type != P_DEFAULT || sym_is_choice(sym))
-			continue;
+		अगर (sym2)
+			अवरोध;
+		अगर (prop->type != P_DEFAULT || sym_is_choice(sym))
+			जारी;
 		stack.expr = &prop->expr;
 		sym2 = sym_check_expr_deps(prop->expr);
-		if (sym2)
-			break;
-		stack.expr = NULL;
-	}
+		अगर (sym2)
+			अवरोध;
+		stack.expr = शून्य;
+	पूर्ण
 
 out:
-	dep_stack_remove();
+	dep_stack_हटाओ();
 
-	return sym2;
-}
+	वापस sym2;
+पूर्ण
 
-static struct symbol *sym_check_choice_deps(struct symbol *choice)
-{
-	struct symbol *sym, *sym2;
-	struct property *prop;
-	struct expr *e;
-	struct dep_stack stack;
+अटल काष्ठा symbol *sym_check_choice_deps(काष्ठा symbol *choice)
+अणु
+	काष्ठा symbol *sym, *sym2;
+	काष्ठा property *prop;
+	काष्ठा expr *e;
+	काष्ठा dep_stack stack;
 
 	dep_stack_insert(&stack, choice);
 
 	prop = sym_get_choice_prop(choice);
-	expr_list_for_each_sym(prop->expr, e, sym)
+	expr_list_क्रम_each_sym(prop->expr, e, sym)
 		sym->flags |= (SYMBOL_CHECK | SYMBOL_CHECKED);
 
 	choice->flags |= (SYMBOL_CHECK | SYMBOL_CHECKED);
 	sym2 = sym_check_sym_deps(choice);
 	choice->flags &= ~SYMBOL_CHECK;
-	if (sym2)
-		goto out;
+	अगर (sym2)
+		जाओ out;
 
-	expr_list_for_each_sym(prop->expr, e, sym) {
+	expr_list_क्रम_each_sym(prop->expr, e, sym) अणु
 		sym2 = sym_check_sym_deps(sym);
-		if (sym2)
-			break;
-	}
+		अगर (sym2)
+			अवरोध;
+	पूर्ण
 out:
-	expr_list_for_each_sym(prop->expr, e, sym)
+	expr_list_क्रम_each_sym(prop->expr, e, sym)
 		sym->flags &= ~SYMBOL_CHECK;
 
-	if (sym2 && sym_is_choice_value(sym2) &&
+	अगर (sym2 && sym_is_choice_value(sym2) &&
 	    prop_get_symbol(sym_get_choice_prop(sym2)) == choice)
 		sym2 = choice;
 
-	dep_stack_remove();
+	dep_stack_हटाओ();
 
-	return sym2;
-}
+	वापस sym2;
+पूर्ण
 
-struct symbol *sym_check_deps(struct symbol *sym)
-{
-	struct symbol *sym2;
-	struct property *prop;
+काष्ठा symbol *sym_check_deps(काष्ठा symbol *sym)
+अणु
+	काष्ठा symbol *sym2;
+	काष्ठा property *prop;
 
-	if (sym->flags & SYMBOL_CHECK) {
-		sym_check_print_recursive(sym);
-		return sym;
-	}
-	if (sym->flags & SYMBOL_CHECKED)
-		return NULL;
+	अगर (sym->flags & SYMBOL_CHECK) अणु
+		sym_check_prपूर्णांक_recursive(sym);
+		वापस sym;
+	पूर्ण
+	अगर (sym->flags & SYMBOL_CHECKED)
+		वापस शून्य;
 
-	if (sym_is_choice_value(sym)) {
-		struct dep_stack stack;
+	अगर (sym_is_choice_value(sym)) अणु
+		काष्ठा dep_stack stack;
 
-		/* for choice groups start the check with main choice symbol */
+		/* क्रम choice groups start the check with मुख्य choice symbol */
 		dep_stack_insert(&stack, sym);
 		prop = sym_get_choice_prop(sym);
 		sym2 = sym_check_deps(prop_get_symbol(prop));
-		dep_stack_remove();
-	} else if (sym_is_choice(sym)) {
+		dep_stack_हटाओ();
+	पूर्ण अन्यथा अगर (sym_is_choice(sym)) अणु
 		sym2 = sym_check_choice_deps(sym);
-	} else {
+	पूर्ण अन्यथा अणु
 		sym->flags |= (SYMBOL_CHECK | SYMBOL_CHECKED);
 		sym2 = sym_check_sym_deps(sym);
 		sym->flags &= ~SYMBOL_CHECK;
-	}
+	पूर्ण
 
-	return sym2;
-}
+	वापस sym2;
+पूर्ण
 
-struct symbol *prop_get_symbol(struct property *prop)
-{
-	if (prop->expr && (prop->expr->type == E_SYMBOL ||
+काष्ठा symbol *prop_get_symbol(काष्ठा property *prop)
+अणु
+	अगर (prop->expr && (prop->expr->type == E_SYMBOL ||
 			   prop->expr->type == E_LIST))
-		return prop->expr->left.sym;
-	return NULL;
-}
+		वापस prop->expr->left.sym;
+	वापस शून्य;
+पूर्ण
 
-const char *prop_get_type_name(enum prop_type type)
-{
-	switch (type) {
-	case P_PROMPT:
-		return "prompt";
-	case P_COMMENT:
-		return "comment";
-	case P_MENU:
-		return "menu";
-	case P_DEFAULT:
-		return "default";
-	case P_CHOICE:
-		return "choice";
-	case P_SELECT:
-		return "select";
-	case P_IMPLY:
-		return "imply";
-	case P_RANGE:
-		return "range";
-	case P_SYMBOL:
-		return "symbol";
-	case P_UNKNOWN:
-		break;
-	}
-	return "unknown";
-}
+स्थिर अक्षर *prop_get_type_name(क्रमागत prop_type type)
+अणु
+	चयन (type) अणु
+	हाल P_PROMPT:
+		वापस "prompt";
+	हाल P_COMMENT:
+		वापस "comment";
+	हाल P_MENU:
+		वापस "menu";
+	हाल P_DEFAULT:
+		वापस "default";
+	हाल P_CHOICE:
+		वापस "choice";
+	हाल P_SELECT:
+		वापस "select";
+	हाल P_IMPLY:
+		वापस "imply";
+	हाल P_RANGE:
+		वापस "range";
+	हाल P_SYMBOL:
+		वापस "symbol";
+	हाल P_UNKNOWN:
+		अवरोध;
+	पूर्ण
+	वापस "unknown";
+पूर्ण

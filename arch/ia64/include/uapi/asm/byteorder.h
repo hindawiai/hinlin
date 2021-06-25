@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ASM_IA64_BYTEORDER_H
-#define _ASM_IA64_BYTEORDER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ASM_IA64_BYTEORDER_H
+#घोषणा _ASM_IA64_BYTEORDER_H
 
-#include <linux/byteorder/little_endian.h>
+#समावेश <linux/byteorder/little_endian.h>
 
-#endif /* _ASM_IA64_BYTEORDER_H */
+#पूर्ण_अगर /* _ASM_IA64_BYTEORDER_H */

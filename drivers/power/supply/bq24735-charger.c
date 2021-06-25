@@ -1,513 +1,514 @@
+<शैली गुरु>
 /*
- * Battery charger driver for TI BQ24735
+ * Battery अक्षरger driver क्रम TI BQ24735
  *
  * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * You should have received a copy of the GNU General Public License aदीर्घ
+ * with this program; अगर not, ग_लिखो to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fअगरth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <linux/devm-helpers.h>
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/gpio/consumer.h>
-#include <linux/power_supply.h>
-#include <linux/slab.h>
+#समावेश <linux/devm-helpers.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/slab.h>
 
-#include <linux/power/bq24735-charger.h>
+#समावेश <linux/घातer/bq24735-अक्षरger.h>
 
-#define BQ24735_CHG_OPT			0x12
-#define BQ24735_CHG_OPT_CHARGE_DISABLE	(1 << 0)
-#define BQ24735_CHG_OPT_AC_PRESENT	(1 << 4)
-#define BQ24735_CHARGE_CURRENT		0x14
-#define BQ24735_CHARGE_CURRENT_MASK	0x1fc0
-#define BQ24735_CHARGE_VOLTAGE		0x15
-#define BQ24735_CHARGE_VOLTAGE_MASK	0x7ff0
-#define BQ24735_INPUT_CURRENT		0x3f
-#define BQ24735_INPUT_CURRENT_MASK	0x1f80
-#define BQ24735_MANUFACTURER_ID		0xfe
-#define BQ24735_DEVICE_ID		0xff
+#घोषणा BQ24735_CHG_OPT			0x12
+#घोषणा BQ24735_CHG_OPT_CHARGE_DISABLE	(1 << 0)
+#घोषणा BQ24735_CHG_OPT_AC_PRESENT	(1 << 4)
+#घोषणा BQ24735_CHARGE_CURRENT		0x14
+#घोषणा BQ24735_CHARGE_CURRENT_MASK	0x1fc0
+#घोषणा BQ24735_CHARGE_VOLTAGE		0x15
+#घोषणा BQ24735_CHARGE_VOLTAGE_MASK	0x7ff0
+#घोषणा BQ24735_INPUT_CURRENT		0x3f
+#घोषणा BQ24735_INPUT_CURRENT_MASK	0x1f80
+#घोषणा BQ24735_MANUFACTURER_ID		0xfe
+#घोषणा BQ24735_DEVICE_ID		0xff
 
-struct bq24735 {
-	struct power_supply		*charger;
-	struct power_supply_desc	charger_desc;
-	struct i2c_client		*client;
-	struct bq24735_platform		*pdata;
-	struct mutex			lock;
-	struct gpio_desc		*status_gpio;
-	struct delayed_work		poll;
-	u32				poll_interval;
-	bool				charging;
-};
+काष्ठा bq24735 अणु
+	काष्ठा घातer_supply		*अक्षरger;
+	काष्ठा घातer_supply_desc	अक्षरger_desc;
+	काष्ठा i2c_client		*client;
+	काष्ठा bq24735_platक्रमm		*pdata;
+	काष्ठा mutex			lock;
+	काष्ठा gpio_desc		*status_gpio;
+	काष्ठा delayed_work		poll;
+	u32				poll_पूर्णांकerval;
+	bool				अक्षरging;
+पूर्ण;
 
-static inline struct bq24735 *to_bq24735(struct power_supply *psy)
-{
-	return power_supply_get_drvdata(psy);
-}
+अटल अंतरभूत काष्ठा bq24735 *to_bq24735(काष्ठा घातer_supply *psy)
+अणु
+	वापस घातer_supply_get_drvdata(psy);
+पूर्ण
 
-static enum power_supply_property bq24735_charger_properties[] = {
+अटल क्रमागत घातer_supply_property bq24735_अक्षरger_properties[] = अणु
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_ONLINE,
-};
+पूर्ण;
 
-static int bq24735_charger_property_is_writeable(struct power_supply *psy,
-						 enum power_supply_property psp)
-{
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		return 1;
-	default:
-		break;
-	}
+अटल पूर्णांक bq24735_अक्षरger_property_is_ग_लिखोable(काष्ठा घातer_supply *psy,
+						 क्रमागत घातer_supply_property psp)
+अणु
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		वापस 1;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int bq24735_write_word(struct i2c_client *client, u8 reg,
+अटल अंतरभूत पूर्णांक bq24735_ग_लिखो_word(काष्ठा i2c_client *client, u8 reg,
 				     u16 value)
-{
-	return i2c_smbus_write_word_data(client, reg, value);
-}
+अणु
+	वापस i2c_smbus_ग_लिखो_word_data(client, reg, value);
+पूर्ण
 
-static inline int bq24735_read_word(struct i2c_client *client, u8 reg)
-{
-	return i2c_smbus_read_word_data(client, reg);
-}
+अटल अंतरभूत पूर्णांक bq24735_पढ़ो_word(काष्ठा i2c_client *client, u8 reg)
+अणु
+	वापस i2c_smbus_पढ़ो_word_data(client, reg);
+पूर्ण
 
-static int bq24735_update_word(struct i2c_client *client, u8 reg,
+अटल पूर्णांक bq24735_update_word(काष्ठा i2c_client *client, u8 reg,
 			       u16 mask, u16 value)
-{
-	unsigned int tmp;
-	int ret;
+अणु
+	अचिन्हित पूर्णांक पंचांगp;
+	पूर्णांक ret;
 
-	ret = bq24735_read_word(client, reg);
-	if (ret < 0)
-		return ret;
+	ret = bq24735_पढ़ो_word(client, reg);
+	अगर (ret < 0)
+		वापस ret;
 
-	tmp = ret & ~mask;
-	tmp |= value & mask;
+	पंचांगp = ret & ~mask;
+	पंचांगp |= value & mask;
 
-	return bq24735_write_word(client, reg, tmp);
-}
+	वापस bq24735_ग_लिखो_word(client, reg, पंचांगp);
+पूर्ण
 
-static int bq24735_config_charger(struct bq24735 *charger)
-{
-	struct bq24735_platform *pdata = charger->pdata;
-	int ret;
+अटल पूर्णांक bq24735_config_अक्षरger(काष्ठा bq24735 *अक्षरger)
+अणु
+	काष्ठा bq24735_platक्रमm *pdata = अक्षरger->pdata;
+	पूर्णांक ret;
 	u16 value;
 
-	if (pdata->ext_control)
-		return 0;
+	अगर (pdata->ext_control)
+		वापस 0;
 
-	if (pdata->charge_current) {
-		value = pdata->charge_current & BQ24735_CHARGE_CURRENT_MASK;
+	अगर (pdata->अक्षरge_current) अणु
+		value = pdata->अक्षरge_current & BQ24735_CHARGE_CURRENT_MASK;
 
-		ret = bq24735_write_word(charger->client,
+		ret = bq24735_ग_लिखो_word(अक्षरger->client,
 					 BQ24735_CHARGE_CURRENT, value);
-		if (ret < 0) {
-			dev_err(&charger->client->dev,
+		अगर (ret < 0) अणु
+			dev_err(&अक्षरger->client->dev,
 				"Failed to write charger current : %d\n",
 				ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (pdata->charge_voltage) {
-		value = pdata->charge_voltage & BQ24735_CHARGE_VOLTAGE_MASK;
+	अगर (pdata->अक्षरge_voltage) अणु
+		value = pdata->अक्षरge_voltage & BQ24735_CHARGE_VOLTAGE_MASK;
 
-		ret = bq24735_write_word(charger->client,
+		ret = bq24735_ग_लिखो_word(अक्षरger->client,
 					 BQ24735_CHARGE_VOLTAGE, value);
-		if (ret < 0) {
-			dev_err(&charger->client->dev,
+		अगर (ret < 0) अणु
+			dev_err(&अक्षरger->client->dev,
 				"Failed to write charger voltage : %d\n",
 				ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (pdata->input_current) {
+	अगर (pdata->input_current) अणु
 		value = pdata->input_current & BQ24735_INPUT_CURRENT_MASK;
 
-		ret = bq24735_write_word(charger->client,
+		ret = bq24735_ग_लिखो_word(अक्षरger->client,
 					 BQ24735_INPUT_CURRENT, value);
-		if (ret < 0) {
-			dev_err(&charger->client->dev,
+		अगर (ret < 0) अणु
+			dev_err(&अक्षरger->client->dev,
 				"Failed to write input current : %d\n",
 				ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int bq24735_enable_charging(struct bq24735 *charger)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक bq24735_enable_अक्षरging(काष्ठा bq24735 *अक्षरger)
+अणु
+	पूर्णांक ret;
 
-	if (charger->pdata->ext_control)
-		return 0;
+	अगर (अक्षरger->pdata->ext_control)
+		वापस 0;
 
-	ret = bq24735_config_charger(charger);
-	if (ret)
-		return ret;
+	ret = bq24735_config_अक्षरger(अक्षरger);
+	अगर (ret)
+		वापस ret;
 
-	return bq24735_update_word(charger->client, BQ24735_CHG_OPT,
+	वापस bq24735_update_word(अक्षरger->client, BQ24735_CHG_OPT,
 				   BQ24735_CHG_OPT_CHARGE_DISABLE, 0);
-}
+पूर्ण
 
-static inline int bq24735_disable_charging(struct bq24735 *charger)
-{
-	if (charger->pdata->ext_control)
-		return 0;
+अटल अंतरभूत पूर्णांक bq24735_disable_अक्षरging(काष्ठा bq24735 *अक्षरger)
+अणु
+	अगर (अक्षरger->pdata->ext_control)
+		वापस 0;
 
-	return bq24735_update_word(charger->client, BQ24735_CHG_OPT,
+	वापस bq24735_update_word(अक्षरger->client, BQ24735_CHG_OPT,
 				   BQ24735_CHG_OPT_CHARGE_DISABLE,
 				   BQ24735_CHG_OPT_CHARGE_DISABLE);
-}
+पूर्ण
 
-static bool bq24735_charger_is_present(struct bq24735 *charger)
-{
-	if (charger->status_gpio) {
-		return !gpiod_get_value_cansleep(charger->status_gpio);
-	} else {
-		int ac = 0;
+अटल bool bq24735_अक्षरger_is_present(काष्ठा bq24735 *अक्षरger)
+अणु
+	अगर (अक्षरger->status_gpio) अणु
+		वापस !gpiod_get_value_cansleep(अक्षरger->status_gpio);
+	पूर्ण अन्यथा अणु
+		पूर्णांक ac = 0;
 
-		ac = bq24735_read_word(charger->client, BQ24735_CHG_OPT);
-		if (ac < 0) {
-			dev_dbg(&charger->client->dev,
+		ac = bq24735_पढ़ो_word(अक्षरger->client, BQ24735_CHG_OPT);
+		अगर (ac < 0) अणु
+			dev_dbg(&अक्षरger->client->dev,
 				"Failed to read charger options : %d\n",
 				ac);
-			return false;
-		}
-		return (ac & BQ24735_CHG_OPT_AC_PRESENT) ? true : false;
-	}
+			वापस false;
+		पूर्ण
+		वापस (ac & BQ24735_CHG_OPT_AC_PRESENT) ? true : false;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int bq24735_charger_is_charging(struct bq24735 *charger)
-{
-	int ret;
+अटल पूर्णांक bq24735_अक्षरger_is_अक्षरging(काष्ठा bq24735 *अक्षरger)
+अणु
+	पूर्णांक ret;
 
-	if (!bq24735_charger_is_present(charger))
-		return 0;
+	अगर (!bq24735_अक्षरger_is_present(अक्षरger))
+		वापस 0;
 
-	ret  = bq24735_read_word(charger->client, BQ24735_CHG_OPT);
-	if (ret < 0)
-		return ret;
+	ret  = bq24735_पढ़ो_word(अक्षरger->client, BQ24735_CHG_OPT);
+	अगर (ret < 0)
+		वापस ret;
 
-	return !(ret & BQ24735_CHG_OPT_CHARGE_DISABLE);
-}
+	वापस !(ret & BQ24735_CHG_OPT_CHARGE_DISABLE);
+पूर्ण
 
-static void bq24735_update(struct bq24735 *charger)
-{
-	mutex_lock(&charger->lock);
+अटल व्योम bq24735_update(काष्ठा bq24735 *अक्षरger)
+अणु
+	mutex_lock(&अक्षरger->lock);
 
-	if (charger->charging && bq24735_charger_is_present(charger))
-		bq24735_enable_charging(charger);
-	else
-		bq24735_disable_charging(charger);
+	अगर (अक्षरger->अक्षरging && bq24735_अक्षरger_is_present(अक्षरger))
+		bq24735_enable_अक्षरging(अक्षरger);
+	अन्यथा
+		bq24735_disable_अक्षरging(अक्षरger);
 
-	mutex_unlock(&charger->lock);
+	mutex_unlock(&अक्षरger->lock);
 
-	power_supply_changed(charger->charger);
-}
+	घातer_supply_changed(अक्षरger->अक्षरger);
+पूर्ण
 
-static irqreturn_t bq24735_charger_isr(int irq, void *devid)
-{
-	struct power_supply *psy = devid;
-	struct bq24735 *charger = to_bq24735(psy);
+अटल irqवापस_t bq24735_अक्षरger_isr(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा घातer_supply *psy = devid;
+	काष्ठा bq24735 *अक्षरger = to_bq24735(psy);
 
-	bq24735_update(charger);
+	bq24735_update(अक्षरger);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void bq24735_poll(struct work_struct *work)
-{
-	struct bq24735 *charger = container_of(work, struct bq24735, poll.work);
+अटल व्योम bq24735_poll(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा bq24735 *अक्षरger = container_of(work, काष्ठा bq24735, poll.work);
 
-	bq24735_update(charger);
+	bq24735_update(अक्षरger);
 
-	schedule_delayed_work(&charger->poll,
-			      msecs_to_jiffies(charger->poll_interval));
-}
+	schedule_delayed_work(&अक्षरger->poll,
+			      msecs_to_jअगरfies(अक्षरger->poll_पूर्णांकerval));
+पूर्ण
 
-static int bq24735_charger_get_property(struct power_supply *psy,
-					enum power_supply_property psp,
-					union power_supply_propval *val)
-{
-	struct bq24735 *charger = to_bq24735(psy);
+अटल पूर्णांक bq24735_अक्षरger_get_property(काष्ठा घातer_supply *psy,
+					क्रमागत घातer_supply_property psp,
+					जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा bq24735 *अक्षरger = to_bq24735(psy);
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = bq24735_charger_is_present(charger) ? 1 : 0;
-		break;
-	case POWER_SUPPLY_PROP_STATUS:
-		switch (bq24735_charger_is_charging(charger)) {
-		case 1:
-			val->intval = POWER_SUPPLY_STATUS_CHARGING;
-			break;
-		case 0:
-			val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
-			break;
-		default:
-			val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
-			break;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = bq24735_अक्षरger_is_present(अक्षरger) ? 1 : 0;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_STATUS:
+		चयन (bq24735_अक्षरger_is_अक्षरging(अक्षरger)) अणु
+		हाल 1:
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
+			अवरोध;
+		हाल 0:
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_NOT_CHARGING;
+			अवरोध;
+		शेष:
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_UNKNOWN;
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bq24735_charger_set_property(struct power_supply *psy,
-					enum power_supply_property psp,
-					const union power_supply_propval *val)
-{
-	struct bq24735 *charger = to_bq24735(psy);
-	int ret;
+अटल पूर्णांक bq24735_अक्षरger_set_property(काष्ठा घातer_supply *psy,
+					क्रमागत घातer_supply_property psp,
+					स्थिर जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा bq24735 *अक्षरger = to_bq24735(psy);
+	पूर्णांक ret;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		switch (val->intval) {
-		case POWER_SUPPLY_STATUS_CHARGING:
-			mutex_lock(&charger->lock);
-			charger->charging = true;
-			ret = bq24735_enable_charging(charger);
-			mutex_unlock(&charger->lock);
-			if (ret)
-				return ret;
-			break;
-		case POWER_SUPPLY_STATUS_DISCHARGING:
-		case POWER_SUPPLY_STATUS_NOT_CHARGING:
-			mutex_lock(&charger->lock);
-			charger->charging = false;
-			ret = bq24735_disable_charging(charger);
-			mutex_unlock(&charger->lock);
-			if (ret)
-				return ret;
-			break;
-		default:
-			return -EINVAL;
-		}
-		power_supply_changed(psy);
-		break;
-	default:
-		return -EPERM;
-	}
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		चयन (val->पूर्णांकval) अणु
+		हाल POWER_SUPPLY_STATUS_CHARGING:
+			mutex_lock(&अक्षरger->lock);
+			अक्षरger->अक्षरging = true;
+			ret = bq24735_enable_अक्षरging(अक्षरger);
+			mutex_unlock(&अक्षरger->lock);
+			अगर (ret)
+				वापस ret;
+			अवरोध;
+		हाल POWER_SUPPLY_STATUS_DISCHARGING:
+		हाल POWER_SUPPLY_STATUS_NOT_CHARGING:
+			mutex_lock(&अक्षरger->lock);
+			अक्षरger->अक्षरging = false;
+			ret = bq24735_disable_अक्षरging(अक्षरger);
+			mutex_unlock(&अक्षरger->lock);
+			अगर (ret)
+				वापस ret;
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		घातer_supply_changed(psy);
+		अवरोध;
+	शेष:
+		वापस -EPERM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct bq24735_platform *bq24735_parse_dt_data(struct i2c_client *client)
-{
-	struct bq24735_platform *pdata;
-	struct device_node *np = client->dev.of_node;
+अटल काष्ठा bq24735_platक्रमm *bq24735_parse_dt_data(काष्ठा i2c_client *client)
+अणु
+	काष्ठा bq24735_platक्रमm *pdata;
+	काष्ठा device_node *np = client->dev.of_node;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	pdata = devm_kzalloc(&client->dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata) {
+	pdata = devm_kzalloc(&client->dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata) अणु
 		dev_err(&client->dev,
 			"Memory alloc for bq24735 pdata failed\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	ret = of_property_read_u32(np, "ti,charge-current", &val);
-	if (!ret)
-		pdata->charge_current = val;
+	ret = of_property_पढ़ो_u32(np, "ti,charge-current", &val);
+	अगर (!ret)
+		pdata->अक्षरge_current = val;
 
-	ret = of_property_read_u32(np, "ti,charge-voltage", &val);
-	if (!ret)
-		pdata->charge_voltage = val;
+	ret = of_property_पढ़ो_u32(np, "ti,charge-voltage", &val);
+	अगर (!ret)
+		pdata->अक्षरge_voltage = val;
 
-	ret = of_property_read_u32(np, "ti,input-current", &val);
-	if (!ret)
+	ret = of_property_पढ़ो_u32(np, "ti,input-current", &val);
+	अगर (!ret)
 		pdata->input_current = val;
 
-	pdata->ext_control = of_property_read_bool(np, "ti,external-control");
+	pdata->ext_control = of_property_पढ़ो_bool(np, "ti,external-control");
 
-	return pdata;
-}
+	वापस pdata;
+पूर्ण
 
-static int bq24735_charger_probe(struct i2c_client *client,
-				 const struct i2c_device_id *id)
-{
-	int ret;
-	struct bq24735 *charger;
-	struct power_supply_desc *supply_desc;
-	struct power_supply_config psy_cfg = {};
-	char *name;
+अटल पूर्णांक bq24735_अक्षरger_probe(काष्ठा i2c_client *client,
+				 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक ret;
+	काष्ठा bq24735 *अक्षरger;
+	काष्ठा घातer_supply_desc *supply_desc;
+	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
+	अक्षर *name;
 
-	charger = devm_kzalloc(&client->dev, sizeof(*charger), GFP_KERNEL);
-	if (!charger)
-		return -ENOMEM;
+	अक्षरger = devm_kzalloc(&client->dev, माप(*अक्षरger), GFP_KERNEL);
+	अगर (!अक्षरger)
+		वापस -ENOMEM;
 
-	mutex_init(&charger->lock);
-	charger->charging = true;
-	charger->pdata = client->dev.platform_data;
+	mutex_init(&अक्षरger->lock);
+	अक्षरger->अक्षरging = true;
+	अक्षरger->pdata = client->dev.platक्रमm_data;
 
-	if (IS_ENABLED(CONFIG_OF) && !charger->pdata && client->dev.of_node)
-		charger->pdata = bq24735_parse_dt_data(client);
+	अगर (IS_ENABLED(CONFIG_OF) && !अक्षरger->pdata && client->dev.of_node)
+		अक्षरger->pdata = bq24735_parse_dt_data(client);
 
-	if (!charger->pdata) {
+	अगर (!अक्षरger->pdata) अणु
 		dev_err(&client->dev, "no platform data provided\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	name = (char *)charger->pdata->name;
-	if (!name) {
-		name = devm_kasprintf(&client->dev, GFP_KERNEL,
+	name = (अक्षर *)अक्षरger->pdata->name;
+	अगर (!name) अणु
+		name = devm_kaप्र_लिखो(&client->dev, GFP_KERNEL,
 				      "bq24735@%s",
 				      dev_name(&client->dev));
-		if (!name) {
+		अगर (!name) अणु
 			dev_err(&client->dev, "Failed to alloc device name\n");
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	charger->client = client;
+	अक्षरger->client = client;
 
-	supply_desc = &charger->charger_desc;
+	supply_desc = &अक्षरger->अक्षरger_desc;
 
 	supply_desc->name = name;
 	supply_desc->type = POWER_SUPPLY_TYPE_MAINS;
-	supply_desc->properties = bq24735_charger_properties;
-	supply_desc->num_properties = ARRAY_SIZE(bq24735_charger_properties);
-	supply_desc->get_property = bq24735_charger_get_property;
-	supply_desc->set_property = bq24735_charger_set_property;
-	supply_desc->property_is_writeable =
-				bq24735_charger_property_is_writeable;
+	supply_desc->properties = bq24735_अक्षरger_properties;
+	supply_desc->num_properties = ARRAY_SIZE(bq24735_अक्षरger_properties);
+	supply_desc->get_property = bq24735_अक्षरger_get_property;
+	supply_desc->set_property = bq24735_अक्षरger_set_property;
+	supply_desc->property_is_ग_लिखोable =
+				bq24735_अक्षरger_property_is_ग_लिखोable;
 
-	psy_cfg.supplied_to = charger->pdata->supplied_to;
-	psy_cfg.num_supplicants = charger->pdata->num_supplicants;
+	psy_cfg.supplied_to = अक्षरger->pdata->supplied_to;
+	psy_cfg.num_supplicants = अक्षरger->pdata->num_supplicants;
 	psy_cfg.of_node = client->dev.of_node;
-	psy_cfg.drv_data = charger;
+	psy_cfg.drv_data = अक्षरger;
 
-	i2c_set_clientdata(client, charger);
+	i2c_set_clientdata(client, अक्षरger);
 
-	charger->status_gpio = devm_gpiod_get_optional(&client->dev,
+	अक्षरger->status_gpio = devm_gpiod_get_optional(&client->dev,
 						       "ti,ac-detect",
 						       GPIOD_IN);
-	if (IS_ERR(charger->status_gpio)) {
-		ret = PTR_ERR(charger->status_gpio);
+	अगर (IS_ERR(अक्षरger->status_gpio)) अणु
+		ret = PTR_ERR(अक्षरger->status_gpio);
 		dev_err(&client->dev, "Getting gpio failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (bq24735_charger_is_present(charger)) {
-		ret = bq24735_read_word(client, BQ24735_MANUFACTURER_ID);
-		if (ret < 0) {
+	अगर (bq24735_अक्षरger_is_present(अक्षरger)) अणु
+		ret = bq24735_पढ़ो_word(client, BQ24735_MANUFACTURER_ID);
+		अगर (ret < 0) अणु
 			dev_err(&client->dev, "Failed to read manufacturer id : %d\n",
 				ret);
-			return ret;
-		} else if (ret != 0x0040) {
+			वापस ret;
+		पूर्ण अन्यथा अगर (ret != 0x0040) अणु
 			dev_err(&client->dev,
 				"manufacturer id mismatch. 0x0040 != 0x%04x\n", ret);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
-		ret = bq24735_read_word(client, BQ24735_DEVICE_ID);
-		if (ret < 0) {
+		ret = bq24735_पढ़ो_word(client, BQ24735_DEVICE_ID);
+		अगर (ret < 0) अणु
 			dev_err(&client->dev, "Failed to read device id : %d\n", ret);
-			return ret;
-		} else if (ret != 0x000B) {
+			वापस ret;
+		पूर्ण अन्यथा अगर (ret != 0x000B) अणु
 			dev_err(&client->dev,
 				"device id mismatch. 0x000b != 0x%04x\n", ret);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
-		ret = bq24735_enable_charging(charger);
-		if (ret < 0) {
+		ret = bq24735_enable_अक्षरging(अक्षरger);
+		अगर (ret < 0) अणु
 			dev_err(&client->dev, "Failed to enable charging\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	charger->charger = devm_power_supply_register(&client->dev, supply_desc,
+	अक्षरger->अक्षरger = devm_घातer_supply_रेजिस्टर(&client->dev, supply_desc,
 						      &psy_cfg);
-	if (IS_ERR(charger->charger)) {
-		ret = PTR_ERR(charger->charger);
+	अगर (IS_ERR(अक्षरger->अक्षरger)) अणु
+		ret = PTR_ERR(अक्षरger->अक्षरger);
 		dev_err(&client->dev, "Failed to register power supply: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (client->irq) {
-		ret = devm_request_threaded_irq(&client->dev, client->irq,
-						NULL, bq24735_charger_isr,
+	अगर (client->irq) अणु
+		ret = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+						शून्य, bq24735_अक्षरger_isr,
 						IRQF_TRIGGER_RISING |
 						IRQF_TRIGGER_FALLING |
 						IRQF_ONESHOT,
 						supply_desc->name,
-						charger->charger);
-		if (ret) {
+						अक्षरger->अक्षरger);
+		अगर (ret) अणु
 			dev_err(&client->dev,
 				"Unable to register IRQ %d err %d\n",
 				client->irq, ret);
-			return ret;
-		}
-	} else {
-		ret = device_property_read_u32(&client->dev, "poll-interval",
-					       &charger->poll_interval);
-		if (ret)
-			return 0;
-		if (!charger->poll_interval)
-			return 0;
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ret = device_property_पढ़ो_u32(&client->dev, "poll-interval",
+					       &अक्षरger->poll_पूर्णांकerval);
+		अगर (ret)
+			वापस 0;
+		अगर (!अक्षरger->poll_पूर्णांकerval)
+			वापस 0;
 
-		ret = devm_delayed_work_autocancel(&client->dev, &charger->poll,
+		ret = devm_delayed_work_स्वतःcancel(&client->dev, &अक्षरger->poll,
 						   bq24735_poll);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		schedule_delayed_work(&charger->poll,
-				      msecs_to_jiffies(charger->poll_interval));
-	}
+		schedule_delayed_work(&अक्षरger->poll,
+				      msecs_to_jअगरfies(अक्षरger->poll_पूर्णांकerval));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id bq24735_charger_id[] = {
-	{ "bq24735-charger", 0 },
-	{}
-};
-MODULE_DEVICE_TABLE(i2c, bq24735_charger_id);
+अटल स्थिर काष्ठा i2c_device_id bq24735_अक्षरger_id[] = अणु
+	अणु "bq24735-charger", 0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(i2c, bq24735_अक्षरger_id);
 
-static const struct of_device_id bq24735_match_ids[] = {
-	{ .compatible = "ti,bq24735", },
-	{ /* end */ }
-};
+अटल स्थिर काष्ठा of_device_id bq24735_match_ids[] = अणु
+	अणु .compatible = "ti,bq24735", पूर्ण,
+	अणु /* end */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bq24735_match_ids);
 
-static struct i2c_driver bq24735_charger_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver bq24735_अक्षरger_driver = अणु
+	.driver = अणु
 		.name = "bq24735-charger",
 		.of_match_table = bq24735_match_ids,
-	},
-	.probe = bq24735_charger_probe,
-	.id_table = bq24735_charger_id,
-};
+	पूर्ण,
+	.probe = bq24735_अक्षरger_probe,
+	.id_table = bq24735_अक्षरger_id,
+पूर्ण;
 
-module_i2c_driver(bq24735_charger_driver);
+module_i2c_driver(bq24735_अक्षरger_driver);
 
 MODULE_DESCRIPTION("bq24735 battery charging driver");
 MODULE_AUTHOR("Darbha Sriharsha <dsriharsha@nvidia.com>");

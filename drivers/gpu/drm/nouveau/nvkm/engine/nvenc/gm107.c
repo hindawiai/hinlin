@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,44 +21,44 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "priv.h"
+#समावेश "priv.h"
 
-static const struct nvkm_falcon_func
-gm107_nvenc_flcn = {
-	.fbif = 0x800,
+अटल स्थिर काष्ठा nvkm_falcon_func
+gm107_nvenc_flcn = अणु
+	.fbअगर = 0x800,
 	.load_imem = nvkm_falcon_v1_load_imem,
 	.load_dmem = nvkm_falcon_v1_load_dmem,
-	.read_dmem = nvkm_falcon_v1_read_dmem,
+	.पढ़ो_dmem = nvkm_falcon_v1_पढ़ो_dmem,
 	.bind_context = nvkm_falcon_v1_bind_context,
-	.wait_for_halt = nvkm_falcon_v1_wait_for_halt,
-	.clear_interrupt = nvkm_falcon_v1_clear_interrupt,
+	.रुको_क्रम_halt = nvkm_falcon_v1_रुको_क्रम_halt,
+	.clear_पूर्णांकerrupt = nvkm_falcon_v1_clear_पूर्णांकerrupt,
 	.set_start_addr = nvkm_falcon_v1_set_start_addr,
 	.start = nvkm_falcon_v1_start,
 	.enable = nvkm_falcon_v1_enable,
 	.disable = nvkm_falcon_v1_disable,
-};
+पूर्ण;
 
-static const struct nvkm_nvenc_func
-gm107_nvenc = {
+अटल स्थिर काष्ठा nvkm_nvenc_func
+gm107_nvenc = अणु
 	.flcn = &gm107_nvenc_flcn,
-};
+पूर्ण;
 
-static int
-gm107_nvenc_nofw(struct nvkm_nvenc *nvenc, int ver,
-		 const struct nvkm_nvenc_fwif *fwif)
-{
-	return 0;
-}
+अटल पूर्णांक
+gm107_nvenc_nofw(काष्ठा nvkm_nvenc *nvenc, पूर्णांक ver,
+		 स्थिर काष्ठा nvkm_nvenc_fwअगर *fwअगर)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_nvenc_fwif
-gm107_nvenc_fwif[] = {
-	{ -1, gm107_nvenc_nofw, &gm107_nvenc },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_nvenc_fwअगर
+gm107_nvenc_fwअगर[] = अणु
+	अणु -1, gm107_nvenc_nofw, &gm107_nvenc पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-int
-gm107_nvenc_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-		struct nvkm_nvenc **pnvenc)
-{
-	return nvkm_nvenc_new_(gm107_nvenc_fwif, device, type, inst, pnvenc);
-}
+पूर्णांक
+gm107_nvenc_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+		काष्ठा nvkm_nvenc **pnvenc)
+अणु
+	वापस nvkm_nvenc_new_(gm107_nvenc_fwअगर, device, type, inst, pnvenc);
+पूर्ण

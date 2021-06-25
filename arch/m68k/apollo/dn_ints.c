@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/interrupt.h>
-#include <linux/irq.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
 
-#include <asm/traps.h>
-#include <asm/apollohw.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/apollohw.h>
 
-unsigned int apollo_irq_startup(struct irq_data *data)
-{
-	unsigned int irq = data->irq;
+अचिन्हित पूर्णांक apollo_irq_startup(काष्ठा irq_data *data)
+अणु
+	अचिन्हित पूर्णांक irq = data->irq;
 
-	if (irq < 8)
-		*(volatile unsigned char *)(pica+1) &= ~(1 << irq);
-	else
-		*(volatile unsigned char *)(picb+1) &= ~(1 << (irq - 8));
-	return 0;
-}
+	अगर (irq < 8)
+		*(अस्थिर अचिन्हित अक्षर *)(pica+1) &= ~(1 << irq);
+	अन्यथा
+		*(अस्थिर अचिन्हित अक्षर *)(picb+1) &= ~(1 << (irq - 8));
+	वापस 0;
+पूर्ण
 
-void apollo_irq_shutdown(struct irq_data *data)
-{
-	unsigned int irq = data->irq;
+व्योम apollo_irq_shutकरोwn(काष्ठा irq_data *data)
+अणु
+	अचिन्हित पूर्णांक irq = data->irq;
 
-	if (irq < 8)
-		*(volatile unsigned char *)(pica+1) |= (1 << irq);
-	else
-		*(volatile unsigned char *)(picb+1) |= (1 << (irq - 8));
-}
+	अगर (irq < 8)
+		*(अस्थिर अचिन्हित अक्षर *)(pica+1) |= (1 << irq);
+	अन्यथा
+		*(अस्थिर अचिन्हित अक्षर *)(picb+1) |= (1 << (irq - 8));
+पूर्ण
 
-void apollo_irq_eoi(struct irq_data *data)
-{
-	*(volatile unsigned char *)(pica) = 0x20;
-	*(volatile unsigned char *)(picb) = 0x20;
-}
+व्योम apollo_irq_eoi(काष्ठा irq_data *data)
+अणु
+	*(अस्थिर अचिन्हित अक्षर *)(pica) = 0x20;
+	*(अस्थिर अचिन्हित अक्षर *)(picb) = 0x20;
+पूर्ण
 
-static struct irq_chip apollo_irq_chip = {
+अटल काष्ठा irq_chip apollo_irq_chip = अणु
 	.name           = "apollo",
 	.irq_startup    = apollo_irq_startup,
-	.irq_shutdown   = apollo_irq_shutdown,
+	.irq_shutकरोwn   = apollo_irq_shutकरोwn,
 	.irq_eoi	= apollo_irq_eoi,
-};
+पूर्ण;
 
 
-void __init dn_init_IRQ(void)
-{
-	m68k_setup_user_interrupt(VEC_USER + 96, 16);
+व्योम __init dn_init_IRQ(व्योम)
+अणु
+	m68k_setup_user_पूर्णांकerrupt(VEC_USER + 96, 16);
 	m68k_setup_irq_controller(&apollo_irq_chip, handle_fasteoi_irq,
 				  IRQ_APOLLO, 16);
-}
+पूर्ण

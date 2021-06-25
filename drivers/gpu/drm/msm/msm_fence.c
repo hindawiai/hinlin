@@ -1,138 +1,139 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2013-2016 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#include <linux/dma-fence.h>
+#समावेश <linux/dma-fence.h>
 
-#include "msm_drv.h"
-#include "msm_fence.h"
+#समावेश "msm_drv.h"
+#समावेश "msm_fence.h"
 
 
-struct msm_fence_context *
-msm_fence_context_alloc(struct drm_device *dev, const char *name)
-{
-	struct msm_fence_context *fctx;
+काष्ठा msm_fence_context *
+msm_fence_context_alloc(काष्ठा drm_device *dev, स्थिर अक्षर *name)
+अणु
+	काष्ठा msm_fence_context *fctx;
 
-	fctx = kzalloc(sizeof(*fctx), GFP_KERNEL);
-	if (!fctx)
-		return ERR_PTR(-ENOMEM);
+	fctx = kzalloc(माप(*fctx), GFP_KERNEL);
+	अगर (!fctx)
+		वापस ERR_PTR(-ENOMEM);
 
 	fctx->dev = dev;
-	strncpy(fctx->name, name, sizeof(fctx->name));
+	म_नकलन(fctx->name, name, माप(fctx->name));
 	fctx->context = dma_fence_context_alloc(1);
-	init_waitqueue_head(&fctx->event);
+	init_रुकोqueue_head(&fctx->event);
 	spin_lock_init(&fctx->spinlock);
 
-	return fctx;
-}
+	वापस fctx;
+पूर्ण
 
-void msm_fence_context_free(struct msm_fence_context *fctx)
-{
-	kfree(fctx);
-}
+व्योम msm_fence_context_मुक्त(काष्ठा msm_fence_context *fctx)
+अणु
+	kमुक्त(fctx);
+पूर्ण
 
-static inline bool fence_completed(struct msm_fence_context *fctx, uint32_t fence)
-{
-	return (int32_t)(fctx->completed_fence - fence) >= 0;
-}
+अटल अंतरभूत bool fence_completed(काष्ठा msm_fence_context *fctx, uपूर्णांक32_t fence)
+अणु
+	वापस (पूर्णांक32_t)(fctx->completed_fence - fence) >= 0;
+पूर्ण
 
-/* legacy path for WAIT_FENCE ioctl: */
-int msm_wait_fence(struct msm_fence_context *fctx, uint32_t fence,
-		ktime_t *timeout, bool interruptible)
-{
-	int ret;
+/* legacy path क्रम WAIT_FENCE ioctl: */
+पूर्णांक msm_रुको_fence(काष्ठा msm_fence_context *fctx, uपूर्णांक32_t fence,
+		kसमय_प्रकार *समयout, bool पूर्णांकerruptible)
+अणु
+	पूर्णांक ret;
 
-	if (fence > fctx->last_fence) {
+	अगर (fence > fctx->last_fence) अणु
 		DRM_ERROR_RATELIMITED("%s: waiting on invalid fence: %u (of %u)\n",
 				fctx->name, fence, fctx->last_fence);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!timeout) {
-		/* no-wait: */
+	अगर (!समयout) अणु
+		/* no-रुको: */
 		ret = fence_completed(fctx, fence) ? 0 : -EBUSY;
-	} else {
-		unsigned long remaining_jiffies = timeout_to_jiffies(timeout);
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ reमुख्यing_jअगरfies = समयout_to_jअगरfies(समयout);
 
-		if (interruptible)
-			ret = wait_event_interruptible_timeout(fctx->event,
+		अगर (पूर्णांकerruptible)
+			ret = रुको_event_पूर्णांकerruptible_समयout(fctx->event,
 				fence_completed(fctx, fence),
-				remaining_jiffies);
-		else
-			ret = wait_event_timeout(fctx->event,
+				reमुख्यing_jअगरfies);
+		अन्यथा
+			ret = रुको_event_समयout(fctx->event,
 				fence_completed(fctx, fence),
-				remaining_jiffies);
+				reमुख्यing_jअगरfies);
 
-		if (ret == 0) {
+		अगर (ret == 0) अणु
 			DBG("timeout waiting for fence: %u (completed: %u)",
 					fence, fctx->completed_fence);
 			ret = -ETIMEDOUT;
-		} else if (ret != -ERESTARTSYS) {
+		पूर्ण अन्यथा अगर (ret != -ERESTARTSYS) अणु
 			ret = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* called from workqueue */
-void msm_update_fence(struct msm_fence_context *fctx, uint32_t fence)
-{
+व्योम msm_update_fence(काष्ठा msm_fence_context *fctx, uपूर्णांक32_t fence)
+अणु
 	spin_lock(&fctx->spinlock);
 	fctx->completed_fence = max(fence, fctx->completed_fence);
 	spin_unlock(&fctx->spinlock);
 
 	wake_up_all(&fctx->event);
-}
+पूर्ण
 
-struct msm_fence {
-	struct dma_fence base;
-	struct msm_fence_context *fctx;
-};
+काष्ठा msm_fence अणु
+	काष्ठा dma_fence base;
+	काष्ठा msm_fence_context *fctx;
+पूर्ण;
 
-static inline struct msm_fence *to_msm_fence(struct dma_fence *fence)
-{
-	return container_of(fence, struct msm_fence, base);
-}
+अटल अंतरभूत काष्ठा msm_fence *to_msm_fence(काष्ठा dma_fence *fence)
+अणु
+	वापस container_of(fence, काष्ठा msm_fence, base);
+पूर्ण
 
-static const char *msm_fence_get_driver_name(struct dma_fence *fence)
-{
-	return "msm";
-}
+अटल स्थिर अक्षर *msm_fence_get_driver_name(काष्ठा dma_fence *fence)
+अणु
+	वापस "msm";
+पूर्ण
 
-static const char *msm_fence_get_timeline_name(struct dma_fence *fence)
-{
-	struct msm_fence *f = to_msm_fence(fence);
-	return f->fctx->name;
-}
+अटल स्थिर अक्षर *msm_fence_get_समयline_name(काष्ठा dma_fence *fence)
+अणु
+	काष्ठा msm_fence *f = to_msm_fence(fence);
+	वापस f->fctx->name;
+पूर्ण
 
-static bool msm_fence_signaled(struct dma_fence *fence)
-{
-	struct msm_fence *f = to_msm_fence(fence);
-	return fence_completed(f->fctx, f->base.seqno);
-}
+अटल bool msm_fence_संकेतed(काष्ठा dma_fence *fence)
+अणु
+	काष्ठा msm_fence *f = to_msm_fence(fence);
+	वापस fence_completed(f->fctx, f->base.seqno);
+पूर्ण
 
-static const struct dma_fence_ops msm_fence_ops = {
+अटल स्थिर काष्ठा dma_fence_ops msm_fence_ops = अणु
 	.get_driver_name = msm_fence_get_driver_name,
-	.get_timeline_name = msm_fence_get_timeline_name,
-	.signaled = msm_fence_signaled,
-};
+	.get_समयline_name = msm_fence_get_समयline_name,
+	.संकेतed = msm_fence_संकेतed,
+पूर्ण;
 
-struct dma_fence *
-msm_fence_alloc(struct msm_fence_context *fctx)
-{
-	struct msm_fence *f;
+काष्ठा dma_fence *
+msm_fence_alloc(काष्ठा msm_fence_context *fctx)
+अणु
+	काष्ठा msm_fence *f;
 
-	f = kzalloc(sizeof(*f), GFP_KERNEL);
-	if (!f)
-		return ERR_PTR(-ENOMEM);
+	f = kzalloc(माप(*f), GFP_KERNEL);
+	अगर (!f)
+		वापस ERR_PTR(-ENOMEM);
 
 	f->fctx = fctx;
 
 	dma_fence_init(&f->base, &msm_fence_ops, &fctx->spinlock,
 		       fctx->context, ++fctx->last_fence);
 
-	return &f->base;
-}
+	वापस &f->base;
+पूर्ण

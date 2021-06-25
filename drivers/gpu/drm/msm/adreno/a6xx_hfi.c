@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2017-2018 The Linux Foundation. All rights reserved. */
 
-#include <linux/completion.h>
-#include <linux/circ_buf.h>
-#include <linux/list.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/circ_buf.h>
+#समावेश <linux/list.h>
 
-#include "a6xx_gmu.h"
-#include "a6xx_gmu.xml.h"
-#include "a6xx_gpu.h"
+#समावेश "a6xx_gmu.h"
+#समावेश "a6xx_gmu.xml.h"
+#समावेश "a6xx_gpu.h"
 
-#define HFI_MSG_ID(val) [val] = #val
+#घोषणा HFI_MSG_ID(val) [val] = #val
 
-static const char * const a6xx_hfi_msg_id[] = {
+अटल स्थिर अक्षर * स्थिर a6xx_hfi_msg_id[] = अणु
 	HFI_MSG_ID(HFI_H2F_MSG_INIT),
 	HFI_MSG_ID(HFI_H2F_MSG_FW_VERSION),
 	HFI_MSG_ID(HFI_H2F_MSG_BW_TABLE),
@@ -21,245 +22,245 @@ static const char * const a6xx_hfi_msg_id[] = {
 	HFI_MSG_ID(HFI_H2F_MSG_CORE_FW_START),
 	HFI_MSG_ID(HFI_H2F_MSG_GX_BW_PERF_VOTE),
 	HFI_MSG_ID(HFI_H2F_MSG_PREPARE_SLUMBER),
-};
+पूर्ण;
 
-static int a6xx_hfi_queue_read(struct a6xx_gmu *gmu,
-	struct a6xx_hfi_queue *queue, u32 *data, u32 dwords)
-{
-	struct a6xx_hfi_queue_header *header = queue->header;
-	u32 i, hdr, index = header->read_index;
+अटल पूर्णांक a6xx_hfi_queue_पढ़ो(काष्ठा a6xx_gmu *gmu,
+	काष्ठा a6xx_hfi_queue *queue, u32 *data, u32 dwords)
+अणु
+	काष्ठा a6xx_hfi_queue_header *header = queue->header;
+	u32 i, hdr, index = header->पढ़ो_index;
 
-	if (header->read_index == header->write_index) {
+	अगर (header->पढ़ो_index == header->ग_लिखो_index) अणु
 		header->rx_request = 1;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	hdr = queue->data[index];
 
 	/*
 	 * If we are to assume that the GMU firmware is in fact a rational actor
 	 * and is programmed to not send us a larger response than we expect
-	 * then we can also assume that if the header size is unexpectedly large
+	 * then we can also assume that अगर the header size is unexpectedly large
 	 * that it is due to memory corruption and/or hardware failure. In this
-	 * case the only reasonable course of action is to BUG() to help harden
+	 * हाल the only reasonable course of action is to BUG() to help harden
 	 * the failure.
 	 */
 
 	BUG_ON(HFI_HEADER_SIZE(hdr) > dwords);
 
-	for (i = 0; i < HFI_HEADER_SIZE(hdr); i++) {
+	क्रम (i = 0; i < HFI_HEADER_SIZE(hdr); i++) अणु
 		data[i] = queue->data[index];
 		index = (index + 1) % header->size;
-	}
+	पूर्ण
 
-	if (!gmu->legacy)
+	अगर (!gmu->legacy)
 		index = ALIGN(index, 4) % header->size;
 
-	header->read_index = index;
-	return HFI_HEADER_SIZE(hdr);
-}
+	header->पढ़ो_index = index;
+	वापस HFI_HEADER_SIZE(hdr);
+पूर्ण
 
-static int a6xx_hfi_queue_write(struct a6xx_gmu *gmu,
-	struct a6xx_hfi_queue *queue, u32 *data, u32 dwords)
-{
-	struct a6xx_hfi_queue_header *header = queue->header;
-	u32 i, space, index = header->write_index;
+अटल पूर्णांक a6xx_hfi_queue_ग_लिखो(काष्ठा a6xx_gmu *gmu,
+	काष्ठा a6xx_hfi_queue *queue, u32 *data, u32 dwords)
+अणु
+	काष्ठा a6xx_hfi_queue_header *header = queue->header;
+	u32 i, space, index = header->ग_लिखो_index;
 
 	spin_lock(&queue->lock);
 
-	space = CIRC_SPACE(header->write_index, header->read_index,
+	space = CIRC_SPACE(header->ग_लिखो_index, header->पढ़ो_index,
 		header->size);
-	if (space < dwords) {
+	अगर (space < dwords) अणु
 		header->dropped++;
 		spin_unlock(&queue->lock);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	for (i = 0; i < dwords; i++) {
+	क्रम (i = 0; i < dwords; i++) अणु
 		queue->data[index] = data[i];
 		index = (index + 1) % header->size;
-	}
+	पूर्ण
 
-	/* Cookify any non used data at the end of the write buffer */
-	if (!gmu->legacy) {
-		for (; index % 4; index = (index + 1) % header->size)
+	/* Cookअगरy any non used data at the end of the ग_लिखो buffer */
+	अगर (!gmu->legacy) अणु
+		क्रम (; index % 4; index = (index + 1) % header->size)
 			queue->data[index] = 0xfafafafa;
-	}
+	पूर्ण
 
-	header->write_index = index;
+	header->ग_लिखो_index = index;
 	spin_unlock(&queue->lock);
 
-	gmu_write(gmu, REG_A6XX_GMU_HOST2GMU_INTR_SET, 0x01);
-	return 0;
-}
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_HOST2GMU_INTR_SET, 0x01);
+	वापस 0;
+पूर्ण
 
-static int a6xx_hfi_wait_for_ack(struct a6xx_gmu *gmu, u32 id, u32 seqnum,
+अटल पूर्णांक a6xx_hfi_रुको_क्रम_ack(काष्ठा a6xx_gmu *gmu, u32 id, u32 seqnum,
 		u32 *payload, u32 payload_size)
-{
-	struct a6xx_hfi_queue *queue = &gmu->queues[HFI_RESPONSE_QUEUE];
+अणु
+	काष्ठा a6xx_hfi_queue *queue = &gmu->queues[HFI_RESPONSE_QUEUE];
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	/* Wait for a response */
-	ret = gmu_poll_timeout(gmu, REG_A6XX_GMU_GMU2HOST_INTR_INFO, val,
+	/* Wait क्रम a response */
+	ret = gmu_poll_समयout(gmu, REG_A6XX_GMU_GMU2HOST_INTR_INFO, val,
 		val & A6XX_GMU_GMU2HOST_INTR_INFO_MSGQ, 100, 5000);
 
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(gmu->dev,
 			"Message %s id %d timed out waiting for response\n",
 			a6xx_hfi_msg_id[id], seqnum);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	/* Clear the interrupt */
-	gmu_write(gmu, REG_A6XX_GMU_GMU2HOST_INTR_CLR,
+	/* Clear the पूर्णांकerrupt */
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_GMU2HOST_INTR_CLR,
 		A6XX_GMU_GMU2HOST_INTR_INFO_MSGQ);
 
-	for (;;) {
-		struct a6xx_hfi_msg_response resp;
+	क्रम (;;) अणु
+		काष्ठा a6xx_hfi_msg_response resp;
 
 		/* Get the next packet */
-		ret = a6xx_hfi_queue_read(gmu, queue, (u32 *) &resp,
-			sizeof(resp) >> 2);
+		ret = a6xx_hfi_queue_पढ़ो(gmu, queue, (u32 *) &resp,
+			माप(resp) >> 2);
 
 		/* If the queue is empty our response never made it */
-		if (!ret) {
+		अगर (!ret) अणु
 			DRM_DEV_ERROR(gmu->dev,
 				"The HFI response queue is unexpectedly empty\n");
 
-			return -ENOENT;
-		}
+			वापस -ENOENT;
+		पूर्ण
 
-		if (HFI_HEADER_ID(resp.header) == HFI_F2H_MSG_ERROR) {
-			struct a6xx_hfi_msg_error *error =
-				(struct a6xx_hfi_msg_error *) &resp;
+		अगर (HFI_HEADER_ID(resp.header) == HFI_F2H_MSG_ERROR) अणु
+			काष्ठा a6xx_hfi_msg_error *error =
+				(काष्ठा a6xx_hfi_msg_error *) &resp;
 
 			DRM_DEV_ERROR(gmu->dev, "GMU firmware error %d\n",
 				error->code);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (seqnum != HFI_HEADER_SEQNUM(resp.ret_header)) {
+		अगर (seqnum != HFI_HEADER_SEQNUM(resp.ret_header)) अणु
 			DRM_DEV_ERROR(gmu->dev,
 				"Unexpected message id %d on the response queue\n",
 				HFI_HEADER_SEQNUM(resp.ret_header));
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (resp.error) {
+		अगर (resp.error) अणु
 			DRM_DEV_ERROR(gmu->dev,
 				"Message %s id %d returned error %d\n",
 				a6xx_hfi_msg_id[id], seqnum, resp.error);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* All is well, copy over the buffer */
-		if (payload && payload_size)
-			memcpy(payload, resp.payload,
-				min_t(u32, payload_size, sizeof(resp.payload)));
+		अगर (payload && payload_size)
+			स_नकल(payload, resp.payload,
+				min_t(u32, payload_size, माप(resp.payload)));
 
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int a6xx_hfi_send_msg(struct a6xx_gmu *gmu, int id,
-		void *data, u32 size, u32 *payload, u32 payload_size)
-{
-	struct a6xx_hfi_queue *queue = &gmu->queues[HFI_COMMAND_QUEUE];
-	int ret, dwords = size >> 2;
+अटल पूर्णांक a6xx_hfi_send_msg(काष्ठा a6xx_gmu *gmu, पूर्णांक id,
+		व्योम *data, u32 size, u32 *payload, u32 payload_size)
+अणु
+	काष्ठा a6xx_hfi_queue *queue = &gmu->queues[HFI_COMMAND_QUEUE];
+	पूर्णांक ret, dwords = size >> 2;
 	u32 seqnum;
 
-	seqnum = atomic_inc_return(&queue->seqnum) % 0xfff;
+	seqnum = atomic_inc_वापस(&queue->seqnum) % 0xfff;
 
 	/* First dword of the message is the message header - fill it in */
 	*((u32 *) data) = (seqnum << 20) | (HFI_MSG_CMD << 16) |
 		(dwords << 8) | id;
 
-	ret = a6xx_hfi_queue_write(gmu, queue, data, dwords);
-	if (ret) {
+	ret = a6xx_hfi_queue_ग_लिखो(gmu, queue, data, dwords);
+	अगर (ret) अणु
 		DRM_DEV_ERROR(gmu->dev, "Unable to send message %s id %d\n",
 			a6xx_hfi_msg_id[id], seqnum);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return a6xx_hfi_wait_for_ack(gmu, id, seqnum, payload, payload_size);
-}
+	वापस a6xx_hfi_रुको_क्रम_ack(gmu, id, seqnum, payload, payload_size);
+पूर्ण
 
-static int a6xx_hfi_send_gmu_init(struct a6xx_gmu *gmu, int boot_state)
-{
-	struct a6xx_hfi_msg_gmu_init_cmd msg = { 0 };
+अटल पूर्णांक a6xx_hfi_send_gmu_init(काष्ठा a6xx_gmu *gmu, पूर्णांक boot_state)
+अणु
+	काष्ठा a6xx_hfi_msg_gmu_init_cmd msg = अणु 0 पूर्ण;
 
 	msg.dbg_buffer_addr = (u32) gmu->debug.iova;
 	msg.dbg_buffer_size = (u32) gmu->debug.size;
 	msg.boot_state = boot_state;
 
-	return a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_INIT, &msg, sizeof(msg),
-		NULL, 0);
-}
+	वापस a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_INIT, &msg, माप(msg),
+		शून्य, 0);
+पूर्ण
 
-static int a6xx_hfi_get_fw_version(struct a6xx_gmu *gmu, u32 *version)
-{
-	struct a6xx_hfi_msg_fw_version msg = { 0 };
+अटल पूर्णांक a6xx_hfi_get_fw_version(काष्ठा a6xx_gmu *gmu, u32 *version)
+अणु
+	काष्ठा a6xx_hfi_msg_fw_version msg = अणु 0 पूर्ण;
 
 	/* Currently supporting version 1.1 */
 	msg.supported_version = (1 << 28) | (1 << 16);
 
-	return a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_FW_VERSION, &msg, sizeof(msg),
-		version, sizeof(*version));
-}
+	वापस a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_FW_VERSION, &msg, माप(msg),
+		version, माप(*version));
+पूर्ण
 
-static int a6xx_hfi_send_perf_table_v1(struct a6xx_gmu *gmu)
-{
-	struct a6xx_hfi_msg_perf_table_v1 msg = { 0 };
-	int i;
+अटल पूर्णांक a6xx_hfi_send_perf_table_v1(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_hfi_msg_perf_table_v1 msg = अणु 0 पूर्ण;
+	पूर्णांक i;
 
 	msg.num_gpu_levels = gmu->nr_gpu_freqs;
 	msg.num_gmu_levels = gmu->nr_gmu_freqs;
 
-	for (i = 0; i < gmu->nr_gpu_freqs; i++) {
+	क्रम (i = 0; i < gmu->nr_gpu_freqs; i++) अणु
 		msg.gx_votes[i].vote = gmu->gx_arc_votes[i];
 		msg.gx_votes[i].freq = gmu->gpu_freqs[i] / 1000;
-	}
+	पूर्ण
 
-	for (i = 0; i < gmu->nr_gmu_freqs; i++) {
+	क्रम (i = 0; i < gmu->nr_gmu_freqs; i++) अणु
 		msg.cx_votes[i].vote = gmu->cx_arc_votes[i];
 		msg.cx_votes[i].freq = gmu->gmu_freqs[i] / 1000;
-	}
+	पूर्ण
 
-	return a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_PERF_TABLE, &msg, sizeof(msg),
-		NULL, 0);
-}
+	वापस a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_PERF_TABLE, &msg, माप(msg),
+		शून्य, 0);
+पूर्ण
 
-static int a6xx_hfi_send_perf_table(struct a6xx_gmu *gmu)
-{
-	struct a6xx_hfi_msg_perf_table msg = { 0 };
-	int i;
+अटल पूर्णांक a6xx_hfi_send_perf_table(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_hfi_msg_perf_table msg = अणु 0 पूर्ण;
+	पूर्णांक i;
 
 	msg.num_gpu_levels = gmu->nr_gpu_freqs;
 	msg.num_gmu_levels = gmu->nr_gmu_freqs;
 
-	for (i = 0; i < gmu->nr_gpu_freqs; i++) {
+	क्रम (i = 0; i < gmu->nr_gpu_freqs; i++) अणु
 		msg.gx_votes[i].vote = gmu->gx_arc_votes[i];
 		msg.gx_votes[i].acd = 0xffffffff;
 		msg.gx_votes[i].freq = gmu->gpu_freqs[i] / 1000;
-	}
+	पूर्ण
 
-	for (i = 0; i < gmu->nr_gmu_freqs; i++) {
+	क्रम (i = 0; i < gmu->nr_gmu_freqs; i++) अणु
 		msg.cx_votes[i].vote = gmu->cx_arc_votes[i];
 		msg.cx_votes[i].freq = gmu->gmu_freqs[i] / 1000;
-	}
+	पूर्ण
 
-	return a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_PERF_TABLE, &msg, sizeof(msg),
-		NULL, 0);
-}
+	वापस a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_PERF_TABLE, &msg, माप(msg),
+		शून्य, 0);
+पूर्ण
 
-static void a618_build_bw_table(struct a6xx_hfi_msg_bw_table *msg)
-{
-	/* Send a single "off" entry since the 618 GMU doesn't do bus scaling */
+अटल व्योम a618_build_bw_table(काष्ठा a6xx_hfi_msg_bw_table *msg)
+अणु
+	/* Send a single "off" entry since the 618 GMU करोesn't करो bus scaling */
 	msg->bw_level_num = 1;
 
 	msg->ddr_cmds_num = 3;
-	msg->ddr_wait_bitmask = 0x01;
+	msg->ddr_रुको_biपंचांगask = 0x01;
 
 	msg->ddr_cmds_addrs[0] = 0x50000;
 	msg->ddr_cmds_addrs[1] = 0x5003c;
@@ -271,18 +272,18 @@ static void a618_build_bw_table(struct a6xx_hfi_msg_bw_table *msg)
 
 	/*
 	 * These are the CX (CNOC) votes - these are used by the GMU but the
-	 * votes are known and fixed for the target
+	 * votes are known and fixed क्रम the target
 	 */
 	msg->cnoc_cmds_num = 1;
-	msg->cnoc_wait_bitmask = 0x01;
+	msg->cnoc_रुको_biपंचांगask = 0x01;
 
 	msg->cnoc_cmds_addrs[0] = 0x5007c;
 	msg->cnoc_cmds_data[0][0] =  0x40000000;
 	msg->cnoc_cmds_data[1][0] =  0x60000001;
-}
+पूर्ण
 
-static void a640_build_bw_table(struct a6xx_hfi_msg_bw_table *msg)
-{
+अटल व्योम a640_build_bw_table(काष्ठा a6xx_hfi_msg_bw_table *msg)
+अणु
 	/*
 	 * Send a single "off" entry just to get things running
 	 * TODO: bus scaling
@@ -290,7 +291,7 @@ static void a640_build_bw_table(struct a6xx_hfi_msg_bw_table *msg)
 	msg->bw_level_num = 1;
 
 	msg->ddr_cmds_num = 3;
-	msg->ddr_wait_bitmask = 0x01;
+	msg->ddr_रुको_biपंचांगask = 0x01;
 
 	msg->ddr_cmds_addrs[0] = 0x50000;
 	msg->ddr_cmds_addrs[1] = 0x5003c;
@@ -302,10 +303,10 @@ static void a640_build_bw_table(struct a6xx_hfi_msg_bw_table *msg)
 
 	/*
 	 * These are the CX (CNOC) votes - these are used by the GMU but the
-	 * votes are known and fixed for the target
+	 * votes are known and fixed क्रम the target
 	 */
 	msg->cnoc_cmds_num = 3;
-	msg->cnoc_wait_bitmask = 0x01;
+	msg->cnoc_रुको_biपंचांगask = 0x01;
 
 	msg->cnoc_cmds_addrs[0] = 0x50034;
 	msg->cnoc_cmds_addrs[1] = 0x5007c;
@@ -318,10 +319,10 @@ static void a640_build_bw_table(struct a6xx_hfi_msg_bw_table *msg)
 	msg->cnoc_cmds_data[1][0] =  0x60000001;
 	msg->cnoc_cmds_data[1][1] =  0x20000001;
 	msg->cnoc_cmds_data[1][2] =  0x60000001;
-}
+पूर्ण
 
-static void a650_build_bw_table(struct a6xx_hfi_msg_bw_table *msg)
-{
+अटल व्योम a650_build_bw_table(काष्ठा a6xx_hfi_msg_bw_table *msg)
+अणु
 	/*
 	 * Send a single "off" entry just to get things running
 	 * TODO: bus scaling
@@ -329,7 +330,7 @@ static void a650_build_bw_table(struct a6xx_hfi_msg_bw_table *msg)
 	msg->bw_level_num = 1;
 
 	msg->ddr_cmds_num = 3;
-	msg->ddr_wait_bitmask = 0x01;
+	msg->ddr_रुको_biपंचांगask = 0x01;
 
 	msg->ddr_cmds_addrs[0] = 0x50000;
 	msg->ddr_cmds_addrs[1] = 0x50004;
@@ -341,23 +342,23 @@ static void a650_build_bw_table(struct a6xx_hfi_msg_bw_table *msg)
 
 	/*
 	 * These are the CX (CNOC) votes - these are used by the GMU but the
-	 * votes are known and fixed for the target
+	 * votes are known and fixed क्रम the target
 	 */
 	msg->cnoc_cmds_num = 1;
-	msg->cnoc_wait_bitmask = 0x01;
+	msg->cnoc_रुको_biपंचांगask = 0x01;
 
 	msg->cnoc_cmds_addrs[0] = 0x500a4;
 	msg->cnoc_cmds_data[0][0] =  0x40000000;
 	msg->cnoc_cmds_data[1][0] =  0x60000001;
-}
+पूर्ण
 
-static void a6xx_build_bw_table(struct a6xx_hfi_msg_bw_table *msg)
-{
-	/* Send a single "off" entry since the 630 GMU doesn't do bus scaling */
+अटल व्योम a6xx_build_bw_table(काष्ठा a6xx_hfi_msg_bw_table *msg)
+अणु
+	/* Send a single "off" entry since the 630 GMU करोesn't करो bus scaling */
 	msg->bw_level_num = 1;
 
 	msg->ddr_cmds_num = 3;
-	msg->ddr_wait_bitmask = 0x07;
+	msg->ddr_रुको_biपंचांगask = 0x07;
 
 	msg->ddr_cmds_addrs[0] = 0x50000;
 	msg->ddr_cmds_addrs[1] = 0x5005c;
@@ -368,12 +369,12 @@ static void a6xx_build_bw_table(struct a6xx_hfi_msg_bw_table *msg)
 	msg->ddr_cmds_data[0][2] =  0x40000000;
 
 	/*
-	 * These are the CX (CNOC) votes.  This is used but the values for the
+	 * These are the CX (CNOC) votes.  This is used but the values क्रम the
 	 * sdm845 GMU are known and fixed so we can hard code them.
 	 */
 
 	msg->cnoc_cmds_num = 3;
-	msg->cnoc_wait_bitmask = 0x05;
+	msg->cnoc_रुको_biपंचांगask = 0x05;
 
 	msg->cnoc_cmds_addrs[0] = 0x50034;
 	msg->cnoc_cmds_addrs[1] = 0x5007c;
@@ -386,99 +387,99 @@ static void a6xx_build_bw_table(struct a6xx_hfi_msg_bw_table *msg)
 	msg->cnoc_cmds_data[1][0] =  0x60000001;
 	msg->cnoc_cmds_data[1][1] =  0x20000001;
 	msg->cnoc_cmds_data[1][2] =  0x60000001;
-}
+पूर्ण
 
 
-static int a6xx_hfi_send_bw_table(struct a6xx_gmu *gmu)
-{
-	struct a6xx_hfi_msg_bw_table msg = { 0 };
-	struct a6xx_gpu *a6xx_gpu = container_of(gmu, struct a6xx_gpu, gmu);
-	struct adreno_gpu *adreno_gpu = &a6xx_gpu->base;
+अटल पूर्णांक a6xx_hfi_send_bw_table(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_hfi_msg_bw_table msg = अणु 0 पूर्ण;
+	काष्ठा a6xx_gpu *a6xx_gpu = container_of(gmu, काष्ठा a6xx_gpu, gmu);
+	काष्ठा adreno_gpu *adreno_gpu = &a6xx_gpu->base;
 
-	if (adreno_is_a618(adreno_gpu))
+	अगर (adreno_is_a618(adreno_gpu))
 		a618_build_bw_table(&msg);
-	else if (adreno_is_a640(adreno_gpu))
+	अन्यथा अगर (adreno_is_a640(adreno_gpu))
 		a640_build_bw_table(&msg);
-	else if (adreno_is_a650(adreno_gpu))
+	अन्यथा अगर (adreno_is_a650(adreno_gpu))
 		a650_build_bw_table(&msg);
-	else
+	अन्यथा
 		a6xx_build_bw_table(&msg);
 
-	return a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_BW_TABLE, &msg, sizeof(msg),
-		NULL, 0);
-}
+	वापस a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_BW_TABLE, &msg, माप(msg),
+		शून्य, 0);
+पूर्ण
 
-static int a6xx_hfi_send_test(struct a6xx_gmu *gmu)
-{
-	struct a6xx_hfi_msg_test msg = { 0 };
+अटल पूर्णांक a6xx_hfi_send_test(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_hfi_msg_test msg = अणु 0 पूर्ण;
 
-	return a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_TEST, &msg, sizeof(msg),
-		NULL, 0);
-}
+	वापस a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_TEST, &msg, माप(msg),
+		शून्य, 0);
+पूर्ण
 
-static int a6xx_hfi_send_start(struct a6xx_gmu *gmu)
-{
-	struct a6xx_hfi_msg_start msg = { 0 };
+अटल पूर्णांक a6xx_hfi_send_start(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_hfi_msg_start msg = अणु 0 पूर्ण;
 
-	return a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_START, &msg, sizeof(msg),
-		NULL, 0);
-}
+	वापस a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_START, &msg, माप(msg),
+		शून्य, 0);
+पूर्ण
 
-static int a6xx_hfi_send_core_fw_start(struct a6xx_gmu *gmu)
-{
-	struct a6xx_hfi_msg_core_fw_start msg = { 0 };
+अटल पूर्णांक a6xx_hfi_send_core_fw_start(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_hfi_msg_core_fw_start msg = अणु 0 पूर्ण;
 
-	return a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_CORE_FW_START, &msg,
-		sizeof(msg), NULL, 0);
-}
+	वापस a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_CORE_FW_START, &msg,
+		माप(msg), शून्य, 0);
+पूर्ण
 
-int a6xx_hfi_set_freq(struct a6xx_gmu *gmu, int index)
-{
-	struct a6xx_hfi_gx_bw_perf_vote_cmd msg = { 0 };
+पूर्णांक a6xx_hfi_set_freq(काष्ठा a6xx_gmu *gmu, पूर्णांक index)
+अणु
+	काष्ठा a6xx_hfi_gx_bw_perf_vote_cmd msg = अणु 0 पूर्ण;
 
 	msg.ack_type = 1; /* blocking */
 	msg.freq = index;
 	msg.bw = 0; /* TODO: bus scaling */
 
-	return a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_GX_BW_PERF_VOTE, &msg,
-		sizeof(msg), NULL, 0);
-}
+	वापस a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_GX_BW_PERF_VOTE, &msg,
+		माप(msg), शून्य, 0);
+पूर्ण
 
-int a6xx_hfi_send_prep_slumber(struct a6xx_gmu *gmu)
-{
-	struct a6xx_hfi_prep_slumber_cmd msg = { 0 };
+पूर्णांक a6xx_hfi_send_prep_slumber(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_hfi_prep_slumber_cmd msg = अणु 0 पूर्ण;
 
 	/* TODO: should freq and bw fields be non-zero ? */
 
-	return a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_PREPARE_SLUMBER, &msg,
-		sizeof(msg), NULL, 0);
-}
+	वापस a6xx_hfi_send_msg(gmu, HFI_H2F_MSG_PREPARE_SLUMBER, &msg,
+		माप(msg), शून्य, 0);
+पूर्ण
 
-static int a6xx_hfi_start_v1(struct a6xx_gmu *gmu, int boot_state)
-{
-	int ret;
+अटल पूर्णांक a6xx_hfi_start_v1(काष्ठा a6xx_gmu *gmu, पूर्णांक boot_state)
+अणु
+	पूर्णांक ret;
 
 	ret = a6xx_hfi_send_gmu_init(gmu, boot_state);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = a6xx_hfi_get_fw_version(gmu, NULL);
-	if (ret)
-		return ret;
+	ret = a6xx_hfi_get_fw_version(gmu, शून्य);
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * We have to get exchange version numbers per the sequence but at this
-	 * point th kernel driver doesn't need to know the exact version of
+	 * poपूर्णांक th kernel driver करोesn't need to know the exact version of
 	 * the GMU firmware
 	 */
 
 	ret = a6xx_hfi_send_perf_table_v1(gmu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = a6xx_hfi_send_bw_table(gmu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * Let the GMU know that there won't be any more HFI messages until next
@@ -486,62 +487,62 @@ static int a6xx_hfi_start_v1(struct a6xx_gmu *gmu, int boot_state)
 	 */
 	a6xx_hfi_send_test(gmu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int a6xx_hfi_start(struct a6xx_gmu *gmu, int boot_state)
-{
-	int ret;
+पूर्णांक a6xx_hfi_start(काष्ठा a6xx_gmu *gmu, पूर्णांक boot_state)
+अणु
+	पूर्णांक ret;
 
-	if (gmu->legacy)
-		return a6xx_hfi_start_v1(gmu, boot_state);
+	अगर (gmu->legacy)
+		वापस a6xx_hfi_start_v1(gmu, boot_state);
 
 
 	ret = a6xx_hfi_send_perf_table(gmu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = a6xx_hfi_send_bw_table(gmu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = a6xx_hfi_send_core_fw_start(gmu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * Downstream driver sends this in its "a6xx_hw_init" equivalent,
 	 * but seems to be no harm in sending it here
 	 */
 	ret = a6xx_hfi_send_start(gmu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void a6xx_hfi_stop(struct a6xx_gmu *gmu)
-{
-	int i;
+व्योम a6xx_hfi_stop(काष्ठा a6xx_gmu *gmu)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(gmu->queues); i++) {
-		struct a6xx_hfi_queue *queue = &gmu->queues[i];
+	क्रम (i = 0; i < ARRAY_SIZE(gmu->queues); i++) अणु
+		काष्ठा a6xx_hfi_queue *queue = &gmu->queues[i];
 
-		if (!queue->header)
-			continue;
+		अगर (!queue->header)
+			जारी;
 
-		if (queue->header->read_index != queue->header->write_index)
+		अगर (queue->header->पढ़ो_index != queue->header->ग_लिखो_index)
 			DRM_DEV_ERROR(gmu->dev, "HFI queue %d is not empty\n", i);
 
-		queue->header->read_index = 0;
-		queue->header->write_index = 0;
-	}
-}
+		queue->header->पढ़ो_index = 0;
+		queue->header->ग_लिखो_index = 0;
+	पूर्ण
+पूर्ण
 
-static void a6xx_hfi_queue_init(struct a6xx_hfi_queue *queue,
-		struct a6xx_hfi_queue_header *header, void *virt, u64 iova,
+अटल व्योम a6xx_hfi_queue_init(काष्ठा a6xx_hfi_queue *queue,
+		काष्ठा a6xx_hfi_queue_header *header, व्योम *virt, u64 iova,
 		u32 id)
-{
+अणु
 	spin_lock_init(&queue->lock);
 	queue->header = header;
 	queue->data = virt;
@@ -558,31 +559,31 @@ static void a6xx_hfi_queue_init(struct a6xx_hfi_queue *queue,
 	header->tx_watermark = 1;
 	header->rx_request = 1;
 	header->tx_request = 0;
-	header->read_index = 0;
-	header->write_index = 0;
-}
+	header->पढ़ो_index = 0;
+	header->ग_लिखो_index = 0;
+पूर्ण
 
-void a6xx_hfi_init(struct a6xx_gmu *gmu)
-{
-	struct a6xx_gmu_bo *hfi = &gmu->hfi;
-	struct a6xx_hfi_queue_table_header *table = hfi->virt;
-	struct a6xx_hfi_queue_header *headers = hfi->virt + sizeof(*table);
+व्योम a6xx_hfi_init(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_gmu_bo *hfi = &gmu->hfi;
+	काष्ठा a6xx_hfi_queue_table_header *table = hfi->virt;
+	काष्ठा a6xx_hfi_queue_header *headers = hfi->virt + माप(*table);
 	u64 offset;
-	int table_size;
+	पूर्णांक table_size;
 
 	/*
 	 * The table size is the size of the table header plus all of the queue
 	 * headers
 	 */
-	table_size = sizeof(*table);
+	table_size = माप(*table);
 	table_size += (ARRAY_SIZE(gmu->queues) *
-		sizeof(struct a6xx_hfi_queue_header));
+		माप(काष्ठा a6xx_hfi_queue_header));
 
 	table->version = 0;
 	table->size = table_size;
 	/* First queue header is located immediately after the table header */
-	table->qhdr0_offset = sizeof(*table) >> 2;
-	table->qhdr_size = sizeof(struct a6xx_hfi_queue_header) >> 2;
+	table->qhdr0_offset = माप(*table) >> 2;
+	table->qhdr_size = माप(काष्ठा a6xx_hfi_queue_header) >> 2;
 	table->num_queues = ARRAY_SIZE(gmu->queues);
 	table->active_queues = ARRAY_SIZE(gmu->queues);
 
@@ -595,4 +596,4 @@ void a6xx_hfi_init(struct a6xx_gmu *gmu)
 	offset += SZ_4K;
 	a6xx_hfi_queue_init(&gmu->queues[1], &headers[1], hfi->virt + offset,
 		hfi->iova + offset, gmu->legacy ? 4 : 1);
-}
+पूर्ण

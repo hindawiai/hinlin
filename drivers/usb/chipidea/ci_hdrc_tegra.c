@@ -1,328 +1,329 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2016, NVIDIA Corporation
  */
 
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/reset.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/reset.h>
 
-#include <linux/usb.h>
-#include <linux/usb/chipidea.h>
-#include <linux/usb/hcd.h>
-#include <linux/usb/of.h>
-#include <linux/usb/phy.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/chipidea.h>
+#समावेश <linux/usb/hcd.h>
+#समावेश <linux/usb/of.h>
+#समावेश <linux/usb/phy.h>
 
-#include "../host/ehci.h"
+#समावेश "../host/ehci.h"
 
-#include "ci.h"
+#समावेश "ci.h"
 
-struct tegra_usb {
-	struct ci_hdrc_platform_data data;
-	struct platform_device *dev;
+काष्ठा tegra_usb अणु
+	काष्ठा ci_hdrc_platक्रमm_data data;
+	काष्ठा platक्रमm_device *dev;
 
-	const struct tegra_usb_soc_info *soc;
-	struct usb_phy *phy;
-	struct clk *clk;
+	स्थिर काष्ठा tegra_usb_soc_info *soc;
+	काष्ठा usb_phy *phy;
+	काष्ठा clk *clk;
 
-	bool needs_double_reset;
-};
+	bool needs_द्विगुन_reset;
+पूर्ण;
 
-struct tegra_usb_soc_info {
-	unsigned long flags;
-	unsigned int txfifothresh;
-	enum usb_dr_mode dr_mode;
-};
+काष्ठा tegra_usb_soc_info अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक txfअगरothresh;
+	क्रमागत usb_dr_mode dr_mode;
+पूर्ण;
 
-static const struct tegra_usb_soc_info tegra20_ehci_soc_info = {
+अटल स्थिर काष्ठा tegra_usb_soc_info tegra20_ehci_soc_info = अणु
 	.flags = CI_HDRC_REQUIRES_ALIGNED_DMA |
 		 CI_HDRC_OVERRIDE_PHY_CONTROL |
 		 CI_HDRC_SUPPORTS_RUNTIME_PM,
 	.dr_mode = USB_DR_MODE_HOST,
-	.txfifothresh = 10,
-};
+	.txfअगरothresh = 10,
+पूर्ण;
 
-static const struct tegra_usb_soc_info tegra30_ehci_soc_info = {
+अटल स्थिर काष्ठा tegra_usb_soc_info tegra30_ehci_soc_info = अणु
 	.flags = CI_HDRC_REQUIRES_ALIGNED_DMA |
 		 CI_HDRC_OVERRIDE_PHY_CONTROL |
 		 CI_HDRC_SUPPORTS_RUNTIME_PM,
 	.dr_mode = USB_DR_MODE_HOST,
-	.txfifothresh = 16,
-};
+	.txfअगरothresh = 16,
+पूर्ण;
 
-static const struct tegra_usb_soc_info tegra20_udc_soc_info = {
+अटल स्थिर काष्ठा tegra_usb_soc_info tegra20_udc_soc_info = अणु
 	.flags = CI_HDRC_REQUIRES_ALIGNED_DMA |
 		 CI_HDRC_OVERRIDE_PHY_CONTROL |
 		 CI_HDRC_SUPPORTS_RUNTIME_PM,
 	.dr_mode = USB_DR_MODE_UNKNOWN,
-	.txfifothresh = 10,
-};
+	.txfअगरothresh = 10,
+पूर्ण;
 
-static const struct tegra_usb_soc_info tegra30_udc_soc_info = {
+अटल स्थिर काष्ठा tegra_usb_soc_info tegra30_udc_soc_info = अणु
 	.flags = CI_HDRC_REQUIRES_ALIGNED_DMA |
 		 CI_HDRC_OVERRIDE_PHY_CONTROL |
 		 CI_HDRC_SUPPORTS_RUNTIME_PM,
 	.dr_mode = USB_DR_MODE_UNKNOWN,
-	.txfifothresh = 16,
-};
+	.txfअगरothresh = 16,
+पूर्ण;
 
-static const struct of_device_id tegra_usb_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id tegra_usb_of_match[] = अणु
+	अणु
 		.compatible = "nvidia,tegra20-ehci",
 		.data = &tegra20_ehci_soc_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "nvidia,tegra30-ehci",
 		.data = &tegra30_ehci_soc_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "nvidia,tegra20-udc",
 		.data = &tegra20_udc_soc_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "nvidia,tegra30-udc",
 		.data = &tegra30_udc_soc_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "nvidia,tegra114-udc",
 		.data = &tegra30_udc_soc_info,
-	}, {
+	पूर्ण, अणु
 		.compatible = "nvidia,tegra124-udc",
 		.data = &tegra30_udc_soc_info,
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
+	पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tegra_usb_of_match);
 
-static int tegra_usb_reset_controller(struct device *dev)
-{
-	struct reset_control *rst, *rst_utmi;
-	struct device_node *phy_np;
-	int err;
+अटल पूर्णांक tegra_usb_reset_controller(काष्ठा device *dev)
+अणु
+	काष्ठा reset_control *rst, *rst_uपंचांगi;
+	काष्ठा device_node *phy_np;
+	पूर्णांक err;
 
 	rst = devm_reset_control_get_shared(dev, "usb");
-	if (IS_ERR(rst)) {
+	अगर (IS_ERR(rst)) अणु
 		dev_err(dev, "can't get ehci reset: %pe\n", rst);
-		return PTR_ERR(rst);
-	}
+		वापस PTR_ERR(rst);
+	पूर्ण
 
 	phy_np = of_parse_phandle(dev->of_node, "nvidia,phy", 0);
-	if (!phy_np)
-		return -ENOENT;
+	अगर (!phy_np)
+		वापस -ENOENT;
 
 	/*
-	 * The 1st USB controller contains some UTMI pad registers that are
-	 * global for all the controllers on the chip. Those registers are
-	 * also cleared when reset is asserted to the 1st controller.
+	 * The 1st USB controller contains some UTMI pad रेजिस्टरs that are
+	 * global क्रम all the controllers on the chip. Those रेजिस्टरs are
+	 * also cleared when reset is निश्चितed to the 1st controller.
 	 */
-	rst_utmi = of_reset_control_get_shared(phy_np, "utmi-pads");
-	if (IS_ERR(rst_utmi)) {
+	rst_uपंचांगi = of_reset_control_get_shared(phy_np, "utmi-pads");
+	अगर (IS_ERR(rst_uपंचांगi)) अणु
 		dev_warn(dev, "can't get utmi-pads reset from the PHY\n");
 		dev_warn(dev, "continuing, but please update your DT\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * PHY driver performs UTMI-pads reset in a case of a
+		 * PHY driver perक्रमms UTMI-pads reset in a हाल of a
 		 * non-legacy DT.
 		 */
-		reset_control_put(rst_utmi);
-	}
+		reset_control_put(rst_uपंचांगi);
+	पूर्ण
 
 	of_node_put(phy_np);
 
 	/* reset control is shared, hence initialize it first */
-	err = reset_control_deassert(rst);
-	if (err)
-		return err;
+	err = reset_control_deनिश्चित(rst);
+	अगर (err)
+		वापस err;
 
-	err = reset_control_assert(rst);
-	if (err)
-		return err;
+	err = reset_control_निश्चित(rst);
+	अगर (err)
+		वापस err;
 
 	udelay(1);
 
-	err = reset_control_deassert(rst);
-	if (err)
-		return err;
+	err = reset_control_deनिश्चित(rst);
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_usb_notify_event(struct ci_hdrc *ci, unsigned int event)
-{
-	struct tegra_usb *usb = dev_get_drvdata(ci->dev->parent);
-	struct ehci_hcd *ehci;
+अटल पूर्णांक tegra_usb_notअगरy_event(काष्ठा ci_hdrc *ci, अचिन्हित पूर्णांक event)
+अणु
+	काष्ठा tegra_usb *usb = dev_get_drvdata(ci->dev->parent);
+	काष्ठा ehci_hcd *ehci;
 
-	switch (event) {
-	case CI_HDRC_CONTROLLER_RESET_EVENT:
-		if (ci->hcd) {
+	चयन (event) अणु
+	हाल CI_HDRC_CONTROLLER_RESET_EVENT:
+		अगर (ci->hcd) अणु
 			ehci = hcd_to_ehci(ci->hcd);
 			ehci->has_tdi_phy_lpm = false;
-			ehci_writel(ehci, usb->soc->txfifothresh << 16,
+			ehci_ग_लिखोl(ehci, usb->soc->txfअगरothresh << 16,
 				    &ehci->regs->txfill_tuning);
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_usb_internal_port_reset(struct ehci_hcd *ehci,
+अटल पूर्णांक tegra_usb_पूर्णांकernal_port_reset(काष्ठा ehci_hcd *ehci,
 					 u32 __iomem *portsc_reg,
-					 unsigned long *flags)
-{
-	u32 saved_usbintr, temp;
-	unsigned int i, tries;
-	int retval = 0;
+					 अचिन्हित दीर्घ *flags)
+अणु
+	u32 saved_usbपूर्णांकr, temp;
+	अचिन्हित पूर्णांक i, tries;
+	पूर्णांक retval = 0;
 
-	saved_usbintr = ehci_readl(ehci, &ehci->regs->intr_enable);
-	/* disable USB interrupt */
-	ehci_writel(ehci, 0, &ehci->regs->intr_enable);
+	saved_usbपूर्णांकr = ehci_पढ़ोl(ehci, &ehci->regs->पूर्णांकr_enable);
+	/* disable USB पूर्णांकerrupt */
+	ehci_ग_लिखोl(ehci, 0, &ehci->regs->पूर्णांकr_enable);
 	spin_unlock_irqrestore(&ehci->lock, *flags);
 
 	/*
-	 * Here we have to do Port Reset at most twice for
+	 * Here we have to करो Port Reset at most twice क्रम
 	 * Port Enable bit to be set.
 	 */
-	for (i = 0; i < 2; i++) {
-		temp = ehci_readl(ehci, portsc_reg);
+	क्रम (i = 0; i < 2; i++) अणु
+		temp = ehci_पढ़ोl(ehci, portsc_reg);
 		temp |= PORT_RESET;
-		ehci_writel(ehci, temp, portsc_reg);
+		ehci_ग_लिखोl(ehci, temp, portsc_reg);
 		fsleep(10000);
 		temp &= ~PORT_RESET;
-		ehci_writel(ehci, temp, portsc_reg);
+		ehci_ग_लिखोl(ehci, temp, portsc_reg);
 		fsleep(1000);
 		tries = 100;
-		do {
+		करो अणु
 			fsleep(1000);
 			/*
-			 * Up to this point, Port Enable bit is
-			 * expected to be set after 2 ms waiting.
-			 * USB1 usually takes extra 45 ms, for safety,
-			 * we take 100 ms as timeout.
+			 * Up to this poपूर्णांक, Port Enable bit is
+			 * expected to be set after 2 ms रुकोing.
+			 * USB1 usually takes extra 45 ms, क्रम safety,
+			 * we take 100 ms as समयout.
 			 */
-			temp = ehci_readl(ehci, portsc_reg);
-		} while (!(temp & PORT_PE) && tries--);
-		if (temp & PORT_PE)
-			break;
-	}
-	if (i == 2)
+			temp = ehci_पढ़ोl(ehci, portsc_reg);
+		पूर्ण जबतक (!(temp & PORT_PE) && tries--);
+		अगर (temp & PORT_PE)
+			अवरोध;
+	पूर्ण
+	अगर (i == 2)
 		retval = -ETIMEDOUT;
 
 	/*
-	 * Clear Connect Status Change bit if it's set.
+	 * Clear Connect Status Change bit अगर it's set.
 	 * We can't clear PORT_PEC. It will also cause PORT_PE to be cleared.
 	 */
-	if (temp & PORT_CSC)
-		ehci_writel(ehci, PORT_CSC, portsc_reg);
+	अगर (temp & PORT_CSC)
+		ehci_ग_लिखोl(ehci, PORT_CSC, portsc_reg);
 
 	/*
-	 * Write to clear any interrupt status bits that might be set
+	 * Write to clear any पूर्णांकerrupt status bits that might be set
 	 * during port reset.
 	 */
-	temp = ehci_readl(ehci, &ehci->regs->status);
-	ehci_writel(ehci, temp, &ehci->regs->status);
+	temp = ehci_पढ़ोl(ehci, &ehci->regs->status);
+	ehci_ग_लिखोl(ehci, temp, &ehci->regs->status);
 
-	/* restore original interrupt-enable bits */
+	/* restore original पूर्णांकerrupt-enable bits */
 	spin_lock_irqsave(&ehci->lock, *flags);
-	ehci_writel(ehci, saved_usbintr, &ehci->regs->intr_enable);
+	ehci_ग_लिखोl(ehci, saved_usbपूर्णांकr, &ehci->regs->पूर्णांकr_enable);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int tegra_ehci_hub_control(struct ci_hdrc *ci, u16 typeReq, u16 wValue,
-				  u16 wIndex, char *buf, u16 wLength,
-				  bool *done, unsigned long *flags)
-{
-	struct tegra_usb *usb = dev_get_drvdata(ci->dev->parent);
-	struct ehci_hcd *ehci = hcd_to_ehci(ci->hcd);
+अटल पूर्णांक tegra_ehci_hub_control(काष्ठा ci_hdrc *ci, u16 typeReq, u16 wValue,
+				  u16 wIndex, अक्षर *buf, u16 wLength,
+				  bool *करोne, अचिन्हित दीर्घ *flags)
+अणु
+	काष्ठा tegra_usb *usb = dev_get_drvdata(ci->dev->parent);
+	काष्ठा ehci_hcd *ehci = hcd_to_ehci(ci->hcd);
 	u32 __iomem *status_reg;
-	int retval = 0;
+	पूर्णांक retval = 0;
 
 	status_reg = &ehci->regs->port_status[(wIndex & 0xff) - 1];
 
-	switch (typeReq) {
-	case SetPortFeature:
-		if (wValue != USB_PORT_FEAT_RESET || !usb->needs_double_reset)
-			break;
+	चयन (typeReq) अणु
+	हाल SetPortFeature:
+		अगर (wValue != USB_PORT_FEAT_RESET || !usb->needs_द्विगुन_reset)
+			अवरोध;
 
-		/* for USB1 port we need to issue Port Reset twice internally */
-		retval = tegra_usb_internal_port_reset(ehci, status_reg, flags);
-		*done  = true;
-		break;
-	}
+		/* क्रम USB1 port we need to issue Port Reset twice पूर्णांकernally */
+		retval = tegra_usb_पूर्णांकernal_port_reset(ehci, status_reg, flags);
+		*करोne  = true;
+		अवरोध;
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void tegra_usb_enter_lpm(struct ci_hdrc *ci, bool enable)
-{
+अटल व्योम tegra_usb_enter_lpm(काष्ठा ci_hdrc *ci, bool enable)
+अणु
 	/*
-	 * Touching any register which belongs to AHB clock domain will
-	 * hang CPU if USB controller is put into low power mode because
-	 * AHB USB clock is gated on Tegra in the LPM.
+	 * Touching any रेजिस्टर which beदीर्घs to AHB घड़ी करोमुख्य will
+	 * hang CPU अगर USB controller is put पूर्णांकo low घातer mode because
+	 * AHB USB घड़ी is gated on Tegra in the LPM.
 	 *
-	 * Tegra PHY has a separate register for checking the clock status
-	 * and usb_phy_set_suspend() takes care of gating/ungating the clocks
-	 * and restoring the PHY state on Tegra. Hence DEVLC/PORTSC registers
+	 * Tegra PHY has a separate रेजिस्टर क्रम checking the घड़ी status
+	 * and usb_phy_set_suspend() takes care of gating/ungating the घड़ीs
+	 * and restoring the PHY state on Tegra. Hence DEVLC/PORTSC रेजिस्टरs
 	 * shouldn't be touched directly by the CI driver.
 	 */
 	usb_phy_set_suspend(ci->usb_phy, enable);
-}
+पूर्ण
 
-static int tegra_usb_probe(struct platform_device *pdev)
-{
-	const struct tegra_usb_soc_info *soc;
-	struct tegra_usb *usb;
-	int err;
+अटल पूर्णांक tegra_usb_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा tegra_usb_soc_info *soc;
+	काष्ठा tegra_usb *usb;
+	पूर्णांक err;
 
-	usb = devm_kzalloc(&pdev->dev, sizeof(*usb), GFP_KERNEL);
-	if (!usb)
-		return -ENOMEM;
+	usb = devm_kzalloc(&pdev->dev, माप(*usb), GFP_KERNEL);
+	अगर (!usb)
+		वापस -ENOMEM;
 
 	soc = of_device_get_match_data(&pdev->dev);
-	if (!soc) {
+	अगर (!soc) अणु
 		dev_err(&pdev->dev, "failed to match OF data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	usb->phy = devm_usb_get_phy_by_phandle(&pdev->dev, "nvidia,phy", 0);
-	if (IS_ERR(usb->phy))
-		return dev_err_probe(&pdev->dev, PTR_ERR(usb->phy),
+	अगर (IS_ERR(usb->phy))
+		वापस dev_err_probe(&pdev->dev, PTR_ERR(usb->phy),
 				     "failed to get PHY\n");
 
-	usb->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(usb->clk)) {
+	usb->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(usb->clk)) अणु
 		err = PTR_ERR(usb->clk);
 		dev_err(&pdev->dev, "failed to get clock: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = clk_prepare_enable(usb->clk);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "failed to enable clock: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (device_property_present(&pdev->dev, "nvidia,needs-double-reset"))
-		usb->needs_double_reset = true;
+	अगर (device_property_present(&pdev->dev, "nvidia,needs-double-reset"))
+		usb->needs_द्विगुन_reset = true;
 
 	err = tegra_usb_reset_controller(&pdev->dev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "failed to reset controller: %d\n", err);
-		goto fail_power_off;
-	}
+		जाओ fail_घातer_off;
+	पूर्ण
 
 	/*
-	 * USB controller registers shouldn't be touched before PHY is
-	 * initialized, otherwise CPU will hang because clocks are gated.
-	 * PHY driver controls gating of internal USB clocks on Tegra.
+	 * USB controller रेजिस्टरs shouldn't be touched beक्रमe PHY is
+	 * initialized, otherwise CPU will hang because घड़ीs are gated.
+	 * PHY driver controls gating of पूर्णांकernal USB घड़ीs on Tegra.
 	 */
 	err = usb_phy_init(usb->phy);
-	if (err)
-		goto fail_power_off;
+	अगर (err)
+		जाओ fail_घातer_off;
 
-	platform_set_drvdata(pdev, usb);
+	platक्रमm_set_drvdata(pdev, usb);
 
-	/* setup and register ChipIdea HDRC device */
+	/* setup and रेजिस्टर ChipIdea HDRC device */
 	usb->soc = soc;
 	usb->data.name = "tegra-usb";
 	usb->data.flags = soc->flags;
@@ -331,49 +332,49 @@ static int tegra_usb_probe(struct platform_device *pdev)
 	usb->data.capoffset = DEF_CAPOFFSET;
 	usb->data.enter_lpm = tegra_usb_enter_lpm;
 	usb->data.hub_control = tegra_ehci_hub_control;
-	usb->data.notify_event = tegra_usb_notify_event;
+	usb->data.notअगरy_event = tegra_usb_notअगरy_event;
 
-	/* Tegra PHY driver currently doesn't support LPM for ULPI */
-	if (of_usb_get_phy_mode(pdev->dev.of_node) == USBPHY_INTERFACE_MODE_ULPI)
+	/* Tegra PHY driver currently करोesn't support LPM क्रम ULPI */
+	अगर (of_usb_get_phy_mode(pdev->dev.of_node) == USBPHY_INTERFACE_MODE_ULPI)
 		usb->data.flags &= ~CI_HDRC_SUPPORTS_RUNTIME_PM;
 
 	usb->dev = ci_hdrc_add_device(&pdev->dev, pdev->resource,
 				      pdev->num_resources, &usb->data);
-	if (IS_ERR(usb->dev)) {
+	अगर (IS_ERR(usb->dev)) अणु
 		err = PTR_ERR(usb->dev);
 		dev_err(&pdev->dev, "failed to add HDRC device: %d\n", err);
-		goto phy_shutdown;
-	}
+		जाओ phy_shutकरोwn;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-phy_shutdown:
-	usb_phy_shutdown(usb->phy);
-fail_power_off:
+phy_shutकरोwn:
+	usb_phy_shutकरोwn(usb->phy);
+fail_घातer_off:
 	clk_disable_unprepare(usb->clk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int tegra_usb_remove(struct platform_device *pdev)
-{
-	struct tegra_usb *usb = platform_get_drvdata(pdev);
+अटल पूर्णांक tegra_usb_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tegra_usb *usb = platक्रमm_get_drvdata(pdev);
 
-	ci_hdrc_remove_device(usb->dev);
-	usb_phy_shutdown(usb->phy);
+	ci_hdrc_हटाओ_device(usb->dev);
+	usb_phy_shutकरोwn(usb->phy);
 	clk_disable_unprepare(usb->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver tegra_usb_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver tegra_usb_driver = अणु
+	.driver = अणु
 		.name = "tegra-usb",
 		.of_match_table = tegra_usb_of_match,
-	},
+	पूर्ण,
 	.probe = tegra_usb_probe,
-	.remove = tegra_usb_remove,
-};
-module_platform_driver(tegra_usb_driver);
+	.हटाओ = tegra_usb_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(tegra_usb_driver);
 
 MODULE_DESCRIPTION("NVIDIA Tegra USB driver");
 MODULE_AUTHOR("Thierry Reding <treding@nvidia.com>");

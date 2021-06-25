@@ -1,187 +1,188 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2012 Calxeda, Inc.
  */
-#include <linux/types.h>
-#include <linux/err.h>
-#include <linux/delay.h>
-#include <linux/export.h>
-#include <linux/io.h>
-#include <linux/interrupt.h>
-#include <linux/completion.h>
-#include <linux/mutex.h>
-#include <linux/notifier.h>
-#include <linux/spinlock.h>
-#include <linux/device.h>
-#include <linux/amba/bus.h>
+#समावेश <linux/types.h>
+#समावेश <linux/err.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/export.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/device.h>
+#समावेश <linux/amba/bus.h>
 
-#include <linux/pl320-ipc.h>
+#समावेश <linux/pl320-ipc.h>
 
-#define IPCMxSOURCE(m)		((m) * 0x40)
-#define IPCMxDSET(m)		(((m) * 0x40) + 0x004)
-#define IPCMxDCLEAR(m)		(((m) * 0x40) + 0x008)
-#define IPCMxDSTATUS(m)		(((m) * 0x40) + 0x00C)
-#define IPCMxMODE(m)		(((m) * 0x40) + 0x010)
-#define IPCMxMSET(m)		(((m) * 0x40) + 0x014)
-#define IPCMxMCLEAR(m)		(((m) * 0x40) + 0x018)
-#define IPCMxMSTATUS(m)		(((m) * 0x40) + 0x01C)
-#define IPCMxSEND(m)		(((m) * 0x40) + 0x020)
-#define IPCMxDR(m, dr)		(((m) * 0x40) + ((dr) * 4) + 0x024)
+#घोषणा IPCMxSOURCE(m)		((m) * 0x40)
+#घोषणा IPCMxDSET(m)		(((m) * 0x40) + 0x004)
+#घोषणा IPCMxDCLEAR(m)		(((m) * 0x40) + 0x008)
+#घोषणा IPCMxDSTATUS(m)		(((m) * 0x40) + 0x00C)
+#घोषणा IPCMxMODE(m)		(((m) * 0x40) + 0x010)
+#घोषणा IPCMxMSET(m)		(((m) * 0x40) + 0x014)
+#घोषणा IPCMxMCLEAR(m)		(((m) * 0x40) + 0x018)
+#घोषणा IPCMxMSTATUS(m)		(((m) * 0x40) + 0x01C)
+#घोषणा IPCMxSEND(m)		(((m) * 0x40) + 0x020)
+#घोषणा IPCMxDR(m, dr)		(((m) * 0x40) + ((dr) * 4) + 0x024)
 
-#define IPCMMIS(irq)		(((irq) * 8) + 0x800)
-#define IPCMRIS(irq)		(((irq) * 8) + 0x804)
+#घोषणा IPCMMIS(irq)		(((irq) * 8) + 0x800)
+#घोषणा IPCMRIS(irq)		(((irq) * 8) + 0x804)
 
-#define MBOX_MASK(n)		(1 << (n))
-#define IPC_TX_MBOX		1
-#define IPC_RX_MBOX		2
+#घोषणा MBOX_MASK(n)		(1 << (n))
+#घोषणा IPC_TX_MBOX		1
+#घोषणा IPC_RX_MBOX		2
 
-#define CHAN_MASK(n)		(1 << (n))
-#define A9_SOURCE		1
-#define M3_SOURCE		0
+#घोषणा CHAN_MASK(n)		(1 << (n))
+#घोषणा A9_SOURCE		1
+#घोषणा M3_SOURCE		0
 
-static void __iomem *ipc_base;
-static int ipc_irq;
-static DEFINE_MUTEX(ipc_m1_lock);
-static DECLARE_COMPLETION(ipc_completion);
-static ATOMIC_NOTIFIER_HEAD(ipc_notifier);
+अटल व्योम __iomem *ipc_base;
+अटल पूर्णांक ipc_irq;
+अटल DEFINE_MUTEX(ipc_m1_lock);
+अटल DECLARE_COMPLETION(ipc_completion);
+अटल ATOMIC_NOTIFIER_HEAD(ipc_notअगरier);
 
-static inline void set_destination(int source, int mbox)
-{
-	writel_relaxed(CHAN_MASK(source), ipc_base + IPCMxDSET(mbox));
-	writel_relaxed(CHAN_MASK(source), ipc_base + IPCMxMSET(mbox));
-}
+अटल अंतरभूत व्योम set_destination(पूर्णांक source, पूर्णांक mbox)
+अणु
+	ग_लिखोl_relaxed(CHAN_MASK(source), ipc_base + IPCMxDSET(mbox));
+	ग_लिखोl_relaxed(CHAN_MASK(source), ipc_base + IPCMxMSET(mbox));
+पूर्ण
 
-static inline void clear_destination(int source, int mbox)
-{
-	writel_relaxed(CHAN_MASK(source), ipc_base + IPCMxDCLEAR(mbox));
-	writel_relaxed(CHAN_MASK(source), ipc_base + IPCMxMCLEAR(mbox));
-}
+अटल अंतरभूत व्योम clear_destination(पूर्णांक source, पूर्णांक mbox)
+अणु
+	ग_लिखोl_relaxed(CHAN_MASK(source), ipc_base + IPCMxDCLEAR(mbox));
+	ग_लिखोl_relaxed(CHAN_MASK(source), ipc_base + IPCMxMCLEAR(mbox));
+पूर्ण
 
-static void __ipc_send(int mbox, u32 *data)
-{
-	int i;
-	for (i = 0; i < 7; i++)
-		writel_relaxed(data[i], ipc_base + IPCMxDR(mbox, i));
-	writel_relaxed(0x1, ipc_base + IPCMxSEND(mbox));
-}
+अटल व्योम __ipc_send(पूर्णांक mbox, u32 *data)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < 7; i++)
+		ग_लिखोl_relaxed(data[i], ipc_base + IPCMxDR(mbox, i));
+	ग_लिखोl_relaxed(0x1, ipc_base + IPCMxSEND(mbox));
+पूर्ण
 
-static u32 __ipc_rcv(int mbox, u32 *data)
-{
-	int i;
-	for (i = 0; i < 7; i++)
-		data[i] = readl_relaxed(ipc_base + IPCMxDR(mbox, i));
-	return data[1];
-}
+अटल u32 __ipc_rcv(पूर्णांक mbox, u32 *data)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < 7; i++)
+		data[i] = पढ़ोl_relaxed(ipc_base + IPCMxDR(mbox, i));
+	वापस data[1];
+पूर्ण
 
-/* blocking implementation from the A9 side, not usable in interrupts! */
-int pl320_ipc_transmit(u32 *data)
-{
-	int ret;
+/* blocking implementation from the A9 side, not usable in पूर्णांकerrupts! */
+पूर्णांक pl320_ipc_transmit(u32 *data)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&ipc_m1_lock);
 
 	init_completion(&ipc_completion);
 	__ipc_send(IPC_TX_MBOX, data);
-	ret = wait_for_completion_timeout(&ipc_completion,
-					  msecs_to_jiffies(1000));
-	if (ret == 0) {
+	ret = रुको_क्रम_completion_समयout(&ipc_completion,
+					  msecs_to_jअगरfies(1000));
+	अगर (ret == 0) अणु
 		ret = -ETIMEDOUT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = __ipc_rcv(IPC_TX_MBOX, data);
 out:
 	mutex_unlock(&ipc_m1_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(pl320_ipc_transmit);
 
-static irqreturn_t ipc_handler(int irq, void *dev)
-{
+अटल irqवापस_t ipc_handler(पूर्णांक irq, व्योम *dev)
+अणु
 	u32 irq_stat;
 	u32 data[7];
 
-	irq_stat = readl_relaxed(ipc_base + IPCMMIS(1));
-	if (irq_stat & MBOX_MASK(IPC_TX_MBOX)) {
-		writel_relaxed(0, ipc_base + IPCMxSEND(IPC_TX_MBOX));
+	irq_stat = पढ़ोl_relaxed(ipc_base + IPCMMIS(1));
+	अगर (irq_stat & MBOX_MASK(IPC_TX_MBOX)) अणु
+		ग_लिखोl_relaxed(0, ipc_base + IPCMxSEND(IPC_TX_MBOX));
 		complete(&ipc_completion);
-	}
-	if (irq_stat & MBOX_MASK(IPC_RX_MBOX)) {
+	पूर्ण
+	अगर (irq_stat & MBOX_MASK(IPC_RX_MBOX)) अणु
 		__ipc_rcv(IPC_RX_MBOX, data);
-		atomic_notifier_call_chain(&ipc_notifier, data[0], data + 1);
-		writel_relaxed(2, ipc_base + IPCMxSEND(IPC_RX_MBOX));
-	}
+		atomic_notअगरier_call_chain(&ipc_notअगरier, data[0], data + 1);
+		ग_लिखोl_relaxed(2, ipc_base + IPCMxSEND(IPC_RX_MBOX));
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int pl320_ipc_register_notifier(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_register(&ipc_notifier, nb);
-}
-EXPORT_SYMBOL_GPL(pl320_ipc_register_notifier);
+पूर्णांक pl320_ipc_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_रेजिस्टर(&ipc_notअगरier, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(pl320_ipc_रेजिस्टर_notअगरier);
 
-int pl320_ipc_unregister_notifier(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_unregister(&ipc_notifier, nb);
-}
-EXPORT_SYMBOL_GPL(pl320_ipc_unregister_notifier);
+पूर्णांक pl320_ipc_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_unरेजिस्टर(&ipc_notअगरier, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(pl320_ipc_unरेजिस्टर_notअगरier);
 
-static int pl320_probe(struct amba_device *adev, const struct amba_id *id)
-{
-	int ret;
+अटल पूर्णांक pl320_probe(काष्ठा amba_device *adev, स्थिर काष्ठा amba_id *id)
+अणु
+	पूर्णांक ret;
 
 	ipc_base = ioremap(adev->res.start, resource_size(&adev->res));
-	if (ipc_base == NULL)
-		return -ENOMEM;
+	अगर (ipc_base == शून्य)
+		वापस -ENOMEM;
 
-	writel_relaxed(0, ipc_base + IPCMxSEND(IPC_TX_MBOX));
+	ग_लिखोl_relaxed(0, ipc_base + IPCMxSEND(IPC_TX_MBOX));
 
 	ipc_irq = adev->irq[0];
-	ret = request_irq(ipc_irq, ipc_handler, 0, dev_name(&adev->dev), NULL);
-	if (ret < 0)
-		goto err;
+	ret = request_irq(ipc_irq, ipc_handler, 0, dev_name(&adev->dev), शून्य);
+	अगर (ret < 0)
+		जाओ err;
 
 	/* Init slow mailbox */
-	writel_relaxed(CHAN_MASK(A9_SOURCE),
+	ग_लिखोl_relaxed(CHAN_MASK(A9_SOURCE),
 		       ipc_base + IPCMxSOURCE(IPC_TX_MBOX));
-	writel_relaxed(CHAN_MASK(M3_SOURCE),
+	ग_लिखोl_relaxed(CHAN_MASK(M3_SOURCE),
 		       ipc_base + IPCMxDSET(IPC_TX_MBOX));
-	writel_relaxed(CHAN_MASK(M3_SOURCE) | CHAN_MASK(A9_SOURCE),
+	ग_लिखोl_relaxed(CHAN_MASK(M3_SOURCE) | CHAN_MASK(A9_SOURCE),
 		       ipc_base + IPCMxMSET(IPC_TX_MBOX));
 
 	/* Init receive mailbox */
-	writel_relaxed(CHAN_MASK(M3_SOURCE),
+	ग_लिखोl_relaxed(CHAN_MASK(M3_SOURCE),
 		       ipc_base + IPCMxSOURCE(IPC_RX_MBOX));
-	writel_relaxed(CHAN_MASK(A9_SOURCE),
+	ग_लिखोl_relaxed(CHAN_MASK(A9_SOURCE),
 		       ipc_base + IPCMxDSET(IPC_RX_MBOX));
-	writel_relaxed(CHAN_MASK(M3_SOURCE) | CHAN_MASK(A9_SOURCE),
+	ग_लिखोl_relaxed(CHAN_MASK(M3_SOURCE) | CHAN_MASK(A9_SOURCE),
 		       ipc_base + IPCMxMSET(IPC_RX_MBOX));
 
-	return 0;
+	वापस 0;
 err:
 	iounmap(ipc_base);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct amba_id pl320_ids[] = {
-	{
+अटल काष्ठा amba_id pl320_ids[] = अणु
+	अणु
 		.id	= 0x00041320,
 		.mask	= 0x000fffff,
-	},
-	{ 0, 0 },
-};
+	पूर्ण,
+	अणु 0, 0 पूर्ण,
+पूर्ण;
 
-static struct amba_driver pl320_driver = {
-	.drv = {
+अटल काष्ठा amba_driver pl320_driver = अणु
+	.drv = अणु
 		.name	= "pl320",
-	},
+	पूर्ण,
 	.id_table	= pl320_ids,
 	.probe		= pl320_probe,
-};
+पूर्ण;
 
-static int __init ipc_init(void)
-{
-	return amba_driver_register(&pl320_driver);
-}
+अटल पूर्णांक __init ipc_init(व्योम)
+अणु
+	वापस amba_driver_रेजिस्टर(&pl320_driver);
+पूर्ण
 subsys_initcall(ipc_init);

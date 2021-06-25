@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,242 +20,242 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Christian König <christian.koenig@amd.com>
+ * Authors: Christian Kथघnig <christian.koenig@amd.com>
  */
 
-#include <linux/firmware.h>
+#समावेश <linux/firmware.h>
 
-#include "amdgpu.h"
-#include "amdgpu_uvd.h"
-#include "cikd.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_uvd.h"
+#समावेश "cikd.h"
 
-#include "uvd/uvd_4_2_d.h"
-#include "uvd/uvd_4_2_sh_mask.h"
+#समावेश "uvd/uvd_4_2_d.h"
+#समावेश "uvd/uvd_4_2_sh_mask.h"
 
-#include "oss/oss_2_0_d.h"
-#include "oss/oss_2_0_sh_mask.h"
+#समावेश "oss/oss_2_0_d.h"
+#समावेश "oss/oss_2_0_sh_mask.h"
 
-#include "bif/bif_4_1_d.h"
+#समावेश "bif/bif_4_1_d.h"
 
-#include "smu/smu_7_0_1_d.h"
-#include "smu/smu_7_0_1_sh_mask.h"
+#समावेश "smu/smu_7_0_1_d.h"
+#समावेश "smu/smu_7_0_1_sh_mask.h"
 
-static void uvd_v4_2_mc_resume(struct amdgpu_device *adev);
-static void uvd_v4_2_set_ring_funcs(struct amdgpu_device *adev);
-static void uvd_v4_2_set_irq_funcs(struct amdgpu_device *adev);
-static int uvd_v4_2_start(struct amdgpu_device *adev);
-static void uvd_v4_2_stop(struct amdgpu_device *adev);
-static int uvd_v4_2_set_clockgating_state(void *handle,
-				enum amd_clockgating_state state);
-static void uvd_v4_2_set_dcm(struct amdgpu_device *adev,
+अटल व्योम uvd_v4_2_mc_resume(काष्ठा amdgpu_device *adev);
+अटल व्योम uvd_v4_2_set_ring_funcs(काष्ठा amdgpu_device *adev);
+अटल व्योम uvd_v4_2_set_irq_funcs(काष्ठा amdgpu_device *adev);
+अटल पूर्णांक uvd_v4_2_start(काष्ठा amdgpu_device *adev);
+अटल व्योम uvd_v4_2_stop(काष्ठा amdgpu_device *adev);
+अटल पूर्णांक uvd_v4_2_set_घड़ीgating_state(व्योम *handle,
+				क्रमागत amd_घड़ीgating_state state);
+अटल व्योम uvd_v4_2_set_dcm(काष्ठा amdgpu_device *adev,
 			     bool sw_mode);
 /**
- * uvd_v4_2_ring_get_rptr - get read pointer
+ * uvd_v4_2_ring_get_rptr - get पढ़ो poपूर्णांकer
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  *
- * Returns the current hardware read pointer
+ * Returns the current hardware पढ़ो poपूर्णांकer
  */
-static uint64_t uvd_v4_2_ring_get_rptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल uपूर्णांक64_t uvd_v4_2_ring_get_rptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
-	return RREG32(mmUVD_RBC_RB_RPTR);
-}
+	वापस RREG32(mmUVD_RBC_RB_RPTR);
+पूर्ण
 
 /**
- * uvd_v4_2_ring_get_wptr - get write pointer
+ * uvd_v4_2_ring_get_wptr - get ग_लिखो poपूर्णांकer
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  *
- * Returns the current hardware write pointer
+ * Returns the current hardware ग_लिखो poपूर्णांकer
  */
-static uint64_t uvd_v4_2_ring_get_wptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल uपूर्णांक64_t uvd_v4_2_ring_get_wptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
-	return RREG32(mmUVD_RBC_RB_WPTR);
-}
+	वापस RREG32(mmUVD_RBC_RB_WPTR);
+पूर्ण
 
 /**
- * uvd_v4_2_ring_set_wptr - set write pointer
+ * uvd_v4_2_ring_set_wptr - set ग_लिखो poपूर्णांकer
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  *
- * Commits the write pointer to the hardware
+ * Commits the ग_लिखो poपूर्णांकer to the hardware
  */
-static void uvd_v4_2_ring_set_wptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल व्योम uvd_v4_2_ring_set_wptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
 	WREG32(mmUVD_RBC_RB_WPTR, lower_32_bits(ring->wptr));
-}
+पूर्ण
 
-static int uvd_v4_2_early_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक uvd_v4_2_early_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 	adev->uvd.num_uvd_inst = 1;
 
 	uvd_v4_2_set_ring_funcs(adev);
 	uvd_v4_2_set_irq_funcs(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uvd_v4_2_sw_init(void *handle)
-{
-	struct amdgpu_ring *ring;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int r;
+अटल पूर्णांक uvd_v4_2_sw_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_ring *ring;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक r;
 
 	/* UVD TRAP */
 	r = amdgpu_irq_add_id(adev, AMDGPU_IRQ_CLIENTID_LEGACY, 124, &adev->uvd.inst->irq);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = amdgpu_uvd_sw_init(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	ring = &adev->uvd.inst->ring;
-	sprintf(ring->name, "uvd");
+	प्र_लिखो(ring->name, "uvd");
 	r = amdgpu_ring_init(adev, ring, 512, &adev->uvd.inst->irq, 0,
-			     AMDGPU_RING_PRIO_DEFAULT, NULL);
-	if (r)
-		return r;
+			     AMDGPU_RING_PRIO_DEFAULT, शून्य);
+	अगर (r)
+		वापस r;
 
 	r = amdgpu_uvd_resume(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = amdgpu_uvd_entity_init(adev);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int uvd_v4_2_sw_fini(void *handle)
-{
-	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक uvd_v4_2_sw_fini(व्योम *handle)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	r = amdgpu_uvd_suspend(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return amdgpu_uvd_sw_fini(adev);
-}
+	वापस amdgpu_uvd_sw_fini(adev);
+पूर्ण
 
-static void uvd_v4_2_enable_mgcg(struct amdgpu_device *adev,
+अटल व्योम uvd_v4_2_enable_mgcg(काष्ठा amdgpu_device *adev,
 				 bool enable);
 /**
  * uvd_v4_2_hw_init - start and test UVD block
  *
- * @handle: handle used to pass amdgpu_device pointer
+ * @handle: handle used to pass amdgpu_device poपूर्णांकer
  *
- * Initialize the hardware, boot up the VCPU and do some testing
+ * Initialize the hardware, boot up the VCPU and करो some testing
  */
-static int uvd_v4_2_hw_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct amdgpu_ring *ring = &adev->uvd.inst->ring;
-	uint32_t tmp;
-	int r;
+अटल पूर्णांक uvd_v4_2_hw_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	काष्ठा amdgpu_ring *ring = &adev->uvd.inst->ring;
+	uपूर्णांक32_t पंचांगp;
+	पूर्णांक r;
 
 	uvd_v4_2_enable_mgcg(adev, true);
-	amdgpu_asic_set_uvd_clocks(adev, 10000, 10000);
+	amdgpu_asic_set_uvd_घड़ीs(adev, 10000, 10000);
 
 	r = amdgpu_ring_test_helper(ring);
-	if (r)
-		goto done;
+	अगर (r)
+		जाओ करोne;
 
 	r = amdgpu_ring_alloc(ring, 10);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("amdgpu: ring failed to lock UVD ring (%d).\n", r);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	tmp = PACKET0(mmUVD_SEMA_WAIT_FAULT_TIMEOUT_CNTL, 0);
-	amdgpu_ring_write(ring, tmp);
-	amdgpu_ring_write(ring, 0xFFFFF);
+	पंचांगp = PACKET0(mmUVD_SEMA_WAIT_FAULT_TIMEOUT_CNTL, 0);
+	amdgpu_ring_ग_लिखो(ring, पंचांगp);
+	amdgpu_ring_ग_लिखो(ring, 0xFFFFF);
 
-	tmp = PACKET0(mmUVD_SEMA_WAIT_INCOMPLETE_TIMEOUT_CNTL, 0);
-	amdgpu_ring_write(ring, tmp);
-	amdgpu_ring_write(ring, 0xFFFFF);
+	पंचांगp = PACKET0(mmUVD_SEMA_WAIT_INCOMPLETE_TIMEOUT_CNTL, 0);
+	amdgpu_ring_ग_लिखो(ring, पंचांगp);
+	amdgpu_ring_ग_लिखो(ring, 0xFFFFF);
 
-	tmp = PACKET0(mmUVD_SEMA_SIGNAL_INCOMPLETE_TIMEOUT_CNTL, 0);
-	amdgpu_ring_write(ring, tmp);
-	amdgpu_ring_write(ring, 0xFFFFF);
+	पंचांगp = PACKET0(mmUVD_SEMA_SIGNAL_INCOMPLETE_TIMEOUT_CNTL, 0);
+	amdgpu_ring_ग_लिखो(ring, पंचांगp);
+	amdgpu_ring_ग_लिखो(ring, 0xFFFFF);
 
-	/* Clear timeout status bits */
-	amdgpu_ring_write(ring, PACKET0(mmUVD_SEMA_TIMEOUT_STATUS, 0));
-	amdgpu_ring_write(ring, 0x8);
+	/* Clear समयout status bits */
+	amdgpu_ring_ग_लिखो(ring, PACKET0(mmUVD_SEMA_TIMEOUT_STATUS, 0));
+	amdgpu_ring_ग_लिखो(ring, 0x8);
 
-	amdgpu_ring_write(ring, PACKET0(mmUVD_SEMA_CNTL, 0));
-	amdgpu_ring_write(ring, 3);
+	amdgpu_ring_ग_लिखो(ring, PACKET0(mmUVD_SEMA_CNTL, 0));
+	amdgpu_ring_ग_लिखो(ring, 3);
 
 	amdgpu_ring_commit(ring);
 
-done:
-	if (!r)
+करोne:
+	अगर (!r)
 		DRM_INFO("UVD initialized successfully.\n");
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * uvd_v4_2_hw_fini - stop the hardware block
  *
- * @handle: handle used to pass amdgpu_device pointer
+ * @handle: handle used to pass amdgpu_device poपूर्णांकer
  *
- * Stop the UVD block, mark ring as not ready any more
+ * Stop the UVD block, mark ring as not पढ़ोy any more
  */
-static int uvd_v4_2_hw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक uvd_v4_2_hw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	if (RREG32(mmUVD_STATUS) != 0)
+	अगर (RREG32(mmUVD_STATUS) != 0)
 		uvd_v4_2_stop(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uvd_v4_2_suspend(void *handle)
-{
-	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक uvd_v4_2_suspend(व्योम *handle)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	r = uvd_v4_2_hw_fini(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return amdgpu_uvd_suspend(adev);
-}
+	वापस amdgpu_uvd_suspend(adev);
+पूर्ण
 
-static int uvd_v4_2_resume(void *handle)
-{
-	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक uvd_v4_2_resume(व्योम *handle)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	r = amdgpu_uvd_resume(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return uvd_v4_2_hw_init(adev);
-}
+	वापस uvd_v4_2_hw_init(adev);
+पूर्ण
 
 /**
  * uvd_v4_2_start - start UVD block
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Setup and start the UVD block
  */
-static int uvd_v4_2_start(struct amdgpu_device *adev)
-{
-	struct amdgpu_ring *ring = &adev->uvd.inst->ring;
-	uint32_t rb_bufsz;
-	int i, j, r;
-	u32 tmp;
+अटल पूर्णांक uvd_v4_2_start(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ring *ring = &adev->uvd.inst->ring;
+	uपूर्णांक32_t rb_bufsz;
+	पूर्णांक i, j, r;
+	u32 पंचांगp;
 	/* disable byte swapping */
 	u32 lmi_swap_cntl = 0;
 	u32 mp_swap_cntl = 0;
@@ -269,24 +270,24 @@ static int uvd_v4_2_start(struct amdgpu_device *adev)
 	WREG32_P(mmSRBM_SOFT_RESET, 0, ~SRBM_SOFT_RESET__SOFT_RESET_UVD_MASK);
 	mdelay(5);
 
-	/* enable VCPU clock */
+	/* enable VCPU घड़ी */
 	WREG32(mmUVD_VCPU_CNTL,  1 << 9);
 
-	/* disable interupt */
+	/* disable पूर्णांकerupt */
 	WREG32_P(mmUVD_MASTINT_EN, 0, ~(1 << 1));
 
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 	/* swap (8 in 32) RB and IB */
 	lmi_swap_cntl = 0xa;
 	mp_swap_cntl = 0;
-#endif
+#पूर्ण_अगर
 	WREG32(mmUVD_LMI_SWAP_CNTL, lmi_swap_cntl);
 	WREG32(mmUVD_MP_SWAP_CNTL, mp_swap_cntl);
 	/* initialize UVD memory controller */
 	WREG32(mmUVD_LMI_CTRL, 0x203108);
 
-	tmp = RREG32(mmUVD_MPC_CNTL);
-	WREG32(mmUVD_MPC_CNTL, tmp | 0x10);
+	पंचांगp = RREG32(mmUVD_MPC_CNTL);
+	WREG32(mmUVD_MPC_CNTL, पंचांगp | 0x10);
 
 	WREG32(mmUVD_MPC_SET_MUXA0, 0x40c2040);
 	WREG32(mmUVD_MPC_SET_MUXA1, 0x0);
@@ -297,8 +298,8 @@ static int uvd_v4_2_start(struct amdgpu_device *adev)
 
 	uvd_v4_2_mc_resume(adev);
 
-	tmp = RREG32_UVD_CTX(ixUVD_LMI_CACHE_CTRL);
-	WREG32_UVD_CTX(ixUVD_LMI_CACHE_CTRL, tmp & (~0x10));
+	पंचांगp = RREG32_UVD_CTX(ixUVD_LMI_CACHE_CTRL);
+	WREG32_UVD_CTX(ixUVD_LMI_CACHE_CTRL, पंचांगp & (~0x10));
 
 	/* enable UMC */
 	WREG32_P(mmUVD_LMI_CTRL2, 0, ~(1 << 8));
@@ -311,17 +312,17 @@ static int uvd_v4_2_start(struct amdgpu_device *adev)
 
 	mdelay(10);
 
-	for (i = 0; i < 10; ++i) {
-		uint32_t status;
-		for (j = 0; j < 100; ++j) {
+	क्रम (i = 0; i < 10; ++i) अणु
+		uपूर्णांक32_t status;
+		क्रम (j = 0; j < 100; ++j) अणु
 			status = RREG32(mmUVD_STATUS);
-			if (status & 2)
-				break;
+			अगर (status & 2)
+				अवरोध;
 			mdelay(10);
-		}
+		पूर्ण
 		r = 0;
-		if (status & 2)
-			break;
+		अगर (status & 2)
+			अवरोध;
 
 		DRM_ERROR("UVD not responding, trying to reset the VCPU!!!\n");
 		WREG32_P(mmUVD_SOFT_RESET, UVD_SOFT_RESET__VCPU_SOFT_RESET_MASK,
@@ -330,29 +331,29 @@ static int uvd_v4_2_start(struct amdgpu_device *adev)
 		WREG32_P(mmUVD_SOFT_RESET, 0, ~UVD_SOFT_RESET__VCPU_SOFT_RESET_MASK);
 		mdelay(10);
 		r = -1;
-	}
+	पूर्ण
 
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("UVD not responding, giving up!!!\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	/* enable interupt */
+	/* enable पूर्णांकerupt */
 	WREG32_P(mmUVD_MASTINT_EN, 3<<1, ~(3 << 1));
 
 	WREG32_P(mmUVD_STATUS, 0, ~(1<<2));
 
-	/* force RBC into idle state */
+	/* क्रमce RBC पूर्णांकo idle state */
 	WREG32(mmUVD_RBC_RB_CNTL, 0x11010101);
 
-	/* Set the write pointer delay */
+	/* Set the ग_लिखो poपूर्णांकer delay */
 	WREG32(mmUVD_RBC_RB_WPTR_CNTL, 0);
 
-	/* program the 4GB memory segment for rptr and ring buffer */
+	/* program the 4GB memory segment क्रम rptr and ring buffer */
 	WREG32(mmUVD_LMI_EXT40_ADDR, upper_32_bits(ring->gpu_addr) |
 				   (0x7 << 16) | (0x1 << 31));
 
-	/* Initialize the ring buffer's read and write pointers */
+	/* Initialize the ring buffer's पढ़ो and ग_लिखो poपूर्णांकers */
 	WREG32(mmUVD_RBC_RB_RPTR, 0x0);
 
 	ring->wptr = RREG32(mmUVD_RBC_RB_RPTR);
@@ -366,64 +367,64 @@ static int uvd_v4_2_start(struct amdgpu_device *adev)
 	rb_bufsz = (0x1 << 8) | rb_bufsz;
 	WREG32_P(mmUVD_RBC_RB_CNTL, rb_bufsz, ~0x11f1f);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * uvd_v4_2_stop - stop UVD block
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * stop the UVD block
  */
-static void uvd_v4_2_stop(struct amdgpu_device *adev)
-{
-	uint32_t i, j;
-	uint32_t status;
+अटल व्योम uvd_v4_2_stop(काष्ठा amdgpu_device *adev)
+अणु
+	uपूर्णांक32_t i, j;
+	uपूर्णांक32_t status;
 
 	WREG32(mmUVD_RBC_RB_CNTL, 0x11010101);
 
-	for (i = 0; i < 10; ++i) {
-		for (j = 0; j < 100; ++j) {
+	क्रम (i = 0; i < 10; ++i) अणु
+		क्रम (j = 0; j < 100; ++j) अणु
 			status = RREG32(mmUVD_STATUS);
-			if (status & 2)
-				break;
+			अगर (status & 2)
+				अवरोध;
 			mdelay(1);
-		}
-		if (status & 2)
-			break;
-	}
+		पूर्ण
+		अगर (status & 2)
+			अवरोध;
+	पूर्ण
 
-	for (i = 0; i < 10; ++i) {
-		for (j = 0; j < 100; ++j) {
+	क्रम (i = 0; i < 10; ++i) अणु
+		क्रम (j = 0; j < 100; ++j) अणु
 			status = RREG32(mmUVD_LMI_STATUS);
-			if (status & 0xf)
-				break;
+			अगर (status & 0xf)
+				अवरोध;
 			mdelay(1);
-		}
-		if (status & 0xf)
-			break;
-	}
+		पूर्ण
+		अगर (status & 0xf)
+			अवरोध;
+	पूर्ण
 
-	/* Stall UMC and register bus before resetting VCPU */
+	/* Stall UMC and रेजिस्टर bus beक्रमe resetting VCPU */
 	WREG32_P(mmUVD_LMI_CTRL2, 1 << 8, ~(1 << 8));
 
-	for (i = 0; i < 10; ++i) {
-		for (j = 0; j < 100; ++j) {
+	क्रम (i = 0; i < 10; ++i) अणु
+		क्रम (j = 0; j < 100; ++j) अणु
 			status = RREG32(mmUVD_LMI_STATUS);
-			if (status & 0x240)
-				break;
+			अगर (status & 0x240)
+				अवरोध;
 			mdelay(1);
-		}
-		if (status & 0x240)
-			break;
-	}
+		पूर्ण
+		अगर (status & 0x240)
+			अवरोध;
+	पूर्ण
 
 	WREG32_P(0x3D49, 0, ~(1 << 2));
 
 	WREG32_P(mmUVD_VCPU_CNTL, 0, ~(1 << 9));
 
-	/* put LMI, VCPU, RBC etc... into reset */
+	/* put LMI, VCPU, RBC etc... पूर्णांकo reset */
 	WREG32(mmUVD_SOFT_RESET, UVD_SOFT_RESET__LMI_SOFT_RESET_MASK |
 		UVD_SOFT_RESET__VCPU_SOFT_RESET_MASK |
 		UVD_SOFT_RESET__LMI_UMC_SOFT_RESET_MASK);
@@ -431,119 +432,119 @@ static void uvd_v4_2_stop(struct amdgpu_device *adev)
 	WREG32(mmUVD_STATUS, 0);
 
 	uvd_v4_2_set_dcm(adev, false);
-}
+पूर्ण
 
 /**
  * uvd_v4_2_ring_emit_fence - emit an fence & trap command
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  * @addr: address
  * @seq: sequence number
  * @flags: fence related flags
  *
  * Write a fence and a trap command to the ring.
  */
-static void uvd_v4_2_ring_emit_fence(struct amdgpu_ring *ring, u64 addr, u64 seq,
-				     unsigned flags)
-{
+अटल व्योम uvd_v4_2_ring_emit_fence(काष्ठा amdgpu_ring *ring, u64 addr, u64 seq,
+				     अचिन्हित flags)
+अणु
 	WARN_ON(flags & AMDGPU_FENCE_FLAG_64BIT);
 
-	amdgpu_ring_write(ring, PACKET0(mmUVD_CONTEXT_ID, 0));
-	amdgpu_ring_write(ring, seq);
-	amdgpu_ring_write(ring, PACKET0(mmUVD_GPCOM_VCPU_DATA0, 0));
-	amdgpu_ring_write(ring, addr & 0xffffffff);
-	amdgpu_ring_write(ring, PACKET0(mmUVD_GPCOM_VCPU_DATA1, 0));
-	amdgpu_ring_write(ring, upper_32_bits(addr) & 0xff);
-	amdgpu_ring_write(ring, PACKET0(mmUVD_GPCOM_VCPU_CMD, 0));
-	amdgpu_ring_write(ring, 0);
+	amdgpu_ring_ग_लिखो(ring, PACKET0(mmUVD_CONTEXT_ID, 0));
+	amdgpu_ring_ग_लिखो(ring, seq);
+	amdgpu_ring_ग_लिखो(ring, PACKET0(mmUVD_GPCOM_VCPU_DATA0, 0));
+	amdgpu_ring_ग_लिखो(ring, addr & 0xffffffff);
+	amdgpu_ring_ग_लिखो(ring, PACKET0(mmUVD_GPCOM_VCPU_DATA1, 0));
+	amdgpu_ring_ग_लिखो(ring, upper_32_bits(addr) & 0xff);
+	amdgpu_ring_ग_लिखो(ring, PACKET0(mmUVD_GPCOM_VCPU_CMD, 0));
+	amdgpu_ring_ग_लिखो(ring, 0);
 
-	amdgpu_ring_write(ring, PACKET0(mmUVD_GPCOM_VCPU_DATA0, 0));
-	amdgpu_ring_write(ring, 0);
-	amdgpu_ring_write(ring, PACKET0(mmUVD_GPCOM_VCPU_DATA1, 0));
-	amdgpu_ring_write(ring, 0);
-	amdgpu_ring_write(ring, PACKET0(mmUVD_GPCOM_VCPU_CMD, 0));
-	amdgpu_ring_write(ring, 2);
-}
+	amdgpu_ring_ग_लिखो(ring, PACKET0(mmUVD_GPCOM_VCPU_DATA0, 0));
+	amdgpu_ring_ग_लिखो(ring, 0);
+	amdgpu_ring_ग_लिखो(ring, PACKET0(mmUVD_GPCOM_VCPU_DATA1, 0));
+	amdgpu_ring_ग_लिखो(ring, 0);
+	amdgpu_ring_ग_लिखो(ring, PACKET0(mmUVD_GPCOM_VCPU_CMD, 0));
+	amdgpu_ring_ग_लिखो(ring, 2);
+पूर्ण
 
 /**
- * uvd_v4_2_ring_test_ring - register write test
+ * uvd_v4_2_ring_test_ring - रेजिस्टर ग_लिखो test
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  *
- * Test if we can successfully write to the context register
+ * Test अगर we can successfully ग_लिखो to the context रेजिस्टर
  */
-static int uvd_v4_2_ring_test_ring(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
-	uint32_t tmp = 0;
-	unsigned i;
-	int r;
+अटल पूर्णांक uvd_v4_2_ring_test_ring(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
+	uपूर्णांक32_t पंचांगp = 0;
+	अचिन्हित i;
+	पूर्णांक r;
 
 	WREG32(mmUVD_CONTEXT_ID, 0xCAFEDEAD);
 	r = amdgpu_ring_alloc(ring, 3);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	amdgpu_ring_write(ring, PACKET0(mmUVD_CONTEXT_ID, 0));
-	amdgpu_ring_write(ring, 0xDEADBEEF);
+	amdgpu_ring_ग_लिखो(ring, PACKET0(mmUVD_CONTEXT_ID, 0));
+	amdgpu_ring_ग_लिखो(ring, 0xDEADBEEF);
 	amdgpu_ring_commit(ring);
-	for (i = 0; i < adev->usec_timeout; i++) {
-		tmp = RREG32(mmUVD_CONTEXT_ID);
-		if (tmp == 0xDEADBEEF)
-			break;
+	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+		पंचांगp = RREG32(mmUVD_CONTEXT_ID);
+		अगर (पंचांगp == 0xDEADBEEF)
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 
-	if (i >= adev->usec_timeout)
+	अगर (i >= adev->usec_समयout)
 		r = -ETIMEDOUT;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * uvd_v4_2_ring_emit_ib - execute indirect buffer
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  * @job: iob associated with the indirect buffer
  * @ib: indirect buffer to execute
  * @flags: flags associated with the indirect buffer
  *
  * Write ring commands to execute the indirect buffer
  */
-static void uvd_v4_2_ring_emit_ib(struct amdgpu_ring *ring,
-				  struct amdgpu_job *job,
-				  struct amdgpu_ib *ib,
-				  uint32_t flags)
-{
-	amdgpu_ring_write(ring, PACKET0(mmUVD_RBC_IB_BASE, 0));
-	amdgpu_ring_write(ring, ib->gpu_addr);
-	amdgpu_ring_write(ring, PACKET0(mmUVD_RBC_IB_SIZE, 0));
-	amdgpu_ring_write(ring, ib->length_dw);
-}
+अटल व्योम uvd_v4_2_ring_emit_ib(काष्ठा amdgpu_ring *ring,
+				  काष्ठा amdgpu_job *job,
+				  काष्ठा amdgpu_ib *ib,
+				  uपूर्णांक32_t flags)
+अणु
+	amdgpu_ring_ग_लिखो(ring, PACKET0(mmUVD_RBC_IB_BASE, 0));
+	amdgpu_ring_ग_लिखो(ring, ib->gpu_addr);
+	amdgpu_ring_ग_लिखो(ring, PACKET0(mmUVD_RBC_IB_SIZE, 0));
+	amdgpu_ring_ग_लिखो(ring, ib->length_dw);
+पूर्ण
 
-static void uvd_v4_2_ring_insert_nop(struct amdgpu_ring *ring, uint32_t count)
-{
-	int i;
+अटल व्योम uvd_v4_2_ring_insert_nop(काष्ठा amdgpu_ring *ring, uपूर्णांक32_t count)
+अणु
+	पूर्णांक i;
 
 	WARN_ON(ring->wptr % 2 || count % 2);
 
-	for (i = 0; i < count / 2; i++) {
-		amdgpu_ring_write(ring, PACKET0(mmUVD_NO_OP, 0));
-		amdgpu_ring_write(ring, 0);
-	}
-}
+	क्रम (i = 0; i < count / 2; i++) अणु
+		amdgpu_ring_ग_लिखो(ring, PACKET0(mmUVD_NO_OP, 0));
+		amdgpu_ring_ग_लिखो(ring, 0);
+	पूर्ण
+पूर्ण
 
 /**
  * uvd_v4_2_mc_resume - memory controller programming
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Let the UVD memory controller know it's offsets
  */
-static void uvd_v4_2_mc_resume(struct amdgpu_device *adev)
-{
-	uint64_t addr;
-	uint32_t size;
+अटल व्योम uvd_v4_2_mc_resume(काष्ठा amdgpu_device *adev)
+अणु
+	uपूर्णांक64_t addr;
+	uपूर्णांक32_t size;
 
 	/* program the VCPU memory controller bits 0-27 */
 	addr = (adev->uvd.inst->gpu_addr + AMDGPU_UVD_FIRMWARE_OFFSET) >> 3;
@@ -573,83 +574,83 @@ static void uvd_v4_2_mc_resume(struct amdgpu_device *adev)
 	WREG32(mmUVD_UDEC_ADDR_CONFIG, adev->gfx.config.gb_addr_config);
 	WREG32(mmUVD_UDEC_DB_ADDR_CONFIG, adev->gfx.config.gb_addr_config);
 	WREG32(mmUVD_UDEC_DBW_ADDR_CONFIG, adev->gfx.config.gb_addr_config);
-}
+पूर्ण
 
-static void uvd_v4_2_enable_mgcg(struct amdgpu_device *adev,
+अटल व्योम uvd_v4_2_enable_mgcg(काष्ठा amdgpu_device *adev,
 				 bool enable)
-{
+अणु
 	u32 orig, data;
 
-	if (enable && (adev->cg_flags & AMD_CG_SUPPORT_UVD_MGCG)) {
+	अगर (enable && (adev->cg_flags & AMD_CG_SUPPORT_UVD_MGCG)) अणु
 		data = RREG32_UVD_CTX(ixUVD_CGC_MEM_CTRL);
 		data |= 0xfff;
 		WREG32_UVD_CTX(ixUVD_CGC_MEM_CTRL, data);
 
 		orig = data = RREG32(mmUVD_CGC_CTRL);
 		data |= UVD_CGC_CTRL__DYN_CLOCK_MODE_MASK;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(mmUVD_CGC_CTRL, data);
-	} else {
+	पूर्ण अन्यथा अणु
 		data = RREG32_UVD_CTX(ixUVD_CGC_MEM_CTRL);
 		data &= ~0xfff;
 		WREG32_UVD_CTX(ixUVD_CGC_MEM_CTRL, data);
 
 		orig = data = RREG32(mmUVD_CGC_CTRL);
 		data &= ~UVD_CGC_CTRL__DYN_CLOCK_MODE_MASK;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(mmUVD_CGC_CTRL, data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void uvd_v4_2_set_dcm(struct amdgpu_device *adev,
+अटल व्योम uvd_v4_2_set_dcm(काष्ठा amdgpu_device *adev,
 			     bool sw_mode)
-{
-	u32 tmp, tmp2;
+अणु
+	u32 पंचांगp, पंचांगp2;
 
 	WREG32_FIELD(UVD_CGC_GATE, REGS, 0);
 
-	tmp = RREG32(mmUVD_CGC_CTRL);
-	tmp &= ~(UVD_CGC_CTRL__CLK_OFF_DELAY_MASK | UVD_CGC_CTRL__CLK_GATE_DLY_TIMER_MASK);
-	tmp |= UVD_CGC_CTRL__DYN_CLOCK_MODE_MASK |
+	पंचांगp = RREG32(mmUVD_CGC_CTRL);
+	पंचांगp &= ~(UVD_CGC_CTRL__CLK_OFF_DELAY_MASK | UVD_CGC_CTRL__CLK_GATE_DLY_TIMER_MASK);
+	पंचांगp |= UVD_CGC_CTRL__DYN_CLOCK_MODE_MASK |
 		(1 << UVD_CGC_CTRL__CLK_GATE_DLY_TIMER__SHIFT) |
 		(4 << UVD_CGC_CTRL__CLK_OFF_DELAY__SHIFT);
 
-	if (sw_mode) {
-		tmp &= ~0x7ffff800;
-		tmp2 = UVD_CGC_CTRL2__DYN_OCLK_RAMP_EN_MASK |
+	अगर (sw_mode) अणु
+		पंचांगp &= ~0x7ffff800;
+		पंचांगp2 = UVD_CGC_CTRL2__DYN_OCLK_RAMP_EN_MASK |
 			UVD_CGC_CTRL2__DYN_RCLK_RAMP_EN_MASK |
 			(7 << UVD_CGC_CTRL2__GATER_DIV_ID__SHIFT);
-	} else {
-		tmp |= 0x7ffff800;
-		tmp2 = 0;
-	}
+	पूर्ण अन्यथा अणु
+		पंचांगp |= 0x7ffff800;
+		पंचांगp2 = 0;
+	पूर्ण
 
-	WREG32(mmUVD_CGC_CTRL, tmp);
-	WREG32_UVD_CTX(ixUVD_CGC_CTRL2, tmp2);
-}
+	WREG32(mmUVD_CGC_CTRL, पंचांगp);
+	WREG32_UVD_CTX(ixUVD_CGC_CTRL2, पंचांगp2);
+पूर्ण
 
-static bool uvd_v4_2_is_idle(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल bool uvd_v4_2_is_idle(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	return !(RREG32(mmSRBM_STATUS) & SRBM_STATUS__UVD_BUSY_MASK);
-}
+	वापस !(RREG32(mmSRBM_STATUS) & SRBM_STATUS__UVD_BUSY_MASK);
+पूर्ण
 
-static int uvd_v4_2_wait_for_idle(void *handle)
-{
-	unsigned i;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक uvd_v4_2_रुको_क्रम_idle(व्योम *handle)
+अणु
+	अचिन्हित i;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	for (i = 0; i < adev->usec_timeout; i++) {
-		if (!(RREG32(mmSRBM_STATUS) & SRBM_STATUS__UVD_BUSY_MASK))
-			return 0;
-	}
-	return -ETIMEDOUT;
-}
+	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+		अगर (!(RREG32(mmSRBM_STATUS) & SRBM_STATUS__UVD_BUSY_MASK))
+			वापस 0;
+	पूर्ण
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int uvd_v4_2_soft_reset(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक uvd_v4_2_soft_reset(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	uvd_v4_2_stop(adev);
 
@@ -657,75 +658,75 @@ static int uvd_v4_2_soft_reset(void *handle)
 			~SRBM_SOFT_RESET__SOFT_RESET_UVD_MASK);
 	mdelay(5);
 
-	return uvd_v4_2_start(adev);
-}
+	वापस uvd_v4_2_start(adev);
+पूर्ण
 
-static int uvd_v4_2_set_interrupt_state(struct amdgpu_device *adev,
-					struct amdgpu_irq_src *source,
-					unsigned type,
-					enum amdgpu_interrupt_state state)
-{
+अटल पूर्णांक uvd_v4_2_set_पूर्णांकerrupt_state(काष्ठा amdgpu_device *adev,
+					काष्ठा amdgpu_irq_src *source,
+					अचिन्हित type,
+					क्रमागत amdgpu_पूर्णांकerrupt_state state)
+अणु
 	// TODO
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uvd_v4_2_process_interrupt(struct amdgpu_device *adev,
-				      struct amdgpu_irq_src *source,
-				      struct amdgpu_iv_entry *entry)
-{
+अटल पूर्णांक uvd_v4_2_process_पूर्णांकerrupt(काष्ठा amdgpu_device *adev,
+				      काष्ठा amdgpu_irq_src *source,
+				      काष्ठा amdgpu_iv_entry *entry)
+अणु
 	DRM_DEBUG("IH: UVD TRAP\n");
 	amdgpu_fence_process(&adev->uvd.inst->ring);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uvd_v4_2_set_clockgating_state(void *handle,
-					  enum amd_clockgating_state state)
-{
-	return 0;
-}
+अटल पूर्णांक uvd_v4_2_set_घड़ीgating_state(व्योम *handle,
+					  क्रमागत amd_घड़ीgating_state state)
+अणु
+	वापस 0;
+पूर्ण
 
-static int uvd_v4_2_set_powergating_state(void *handle,
-					  enum amd_powergating_state state)
-{
-	/* This doesn't actually powergate the UVD block.
-	 * That's done in the dpm code via the SMC.  This
+अटल पूर्णांक uvd_v4_2_set_घातergating_state(व्योम *handle,
+					  क्रमागत amd_घातergating_state state)
+अणु
+	/* This करोesn't actually घातergate the UVD block.
+	 * That's करोne in the dpm code via the SMC.  This
 	 * just re-inits the block as necessary.  The actual
 	 * gating still happens in the dpm code.  We should
 	 * revisit this when there is a cleaner line between
 	 * the smc and the hw blocks
 	 */
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	if (state == AMD_PG_STATE_GATE) {
+	अगर (state == AMD_PG_STATE_GATE) अणु
 		uvd_v4_2_stop(adev);
-		if (adev->pg_flags & AMD_PG_SUPPORT_UVD && !adev->pm.dpm_enabled) {
-			if (!(RREG32_SMC(ixCURRENT_PG_STATUS) &
-				CURRENT_PG_STATUS__UVD_PG_STATUS_MASK)) {
+		अगर (adev->pg_flags & AMD_PG_SUPPORT_UVD && !adev->pm.dpm_enabled) अणु
+			अगर (!(RREG32_SMC(ixCURRENT_PG_STATUS) &
+				CURRENT_PG_STATUS__UVD_PG_STATUS_MASK)) अणु
 				WREG32(mmUVD_PGFSM_CONFIG, (UVD_PGFSM_CONFIG__UVD_PGFSM_FSM_ADDR_MASK   |
 							UVD_PGFSM_CONFIG__UVD_PGFSM_POWER_DOWN_MASK |
 							UVD_PGFSM_CONFIG__UVD_PGFSM_P1_SELECT_MASK));
 				mdelay(20);
-			}
-		}
-		return 0;
-	} else {
-		if (adev->pg_flags & AMD_PG_SUPPORT_UVD && !adev->pm.dpm_enabled) {
-			if (RREG32_SMC(ixCURRENT_PG_STATUS) &
-				CURRENT_PG_STATUS__UVD_PG_STATUS_MASK) {
+			पूर्ण
+		पूर्ण
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		अगर (adev->pg_flags & AMD_PG_SUPPORT_UVD && !adev->pm.dpm_enabled) अणु
+			अगर (RREG32_SMC(ixCURRENT_PG_STATUS) &
+				CURRENT_PG_STATUS__UVD_PG_STATUS_MASK) अणु
 				WREG32(mmUVD_PGFSM_CONFIG, (UVD_PGFSM_CONFIG__UVD_PGFSM_FSM_ADDR_MASK   |
 						UVD_PGFSM_CONFIG__UVD_PGFSM_POWER_UP_MASK |
 						UVD_PGFSM_CONFIG__UVD_PGFSM_P1_SELECT_MASK));
 				mdelay(30);
-			}
-		}
-		return uvd_v4_2_start(adev);
-	}
-}
+			पूर्ण
+		पूर्ण
+		वापस uvd_v4_2_start(adev);
+	पूर्ण
+पूर्ण
 
-static const struct amd_ip_funcs uvd_v4_2_ip_funcs = {
+अटल स्थिर काष्ठा amd_ip_funcs uvd_v4_2_ip_funcs = अणु
 	.name = "uvd_v4_2",
 	.early_init = uvd_v4_2_early_init,
-	.late_init = NULL,
+	.late_init = शून्य,
 	.sw_init = uvd_v4_2_sw_init,
 	.sw_fini = uvd_v4_2_sw_fini,
 	.hw_init = uvd_v4_2_hw_init,
@@ -733,13 +734,13 @@ static const struct amd_ip_funcs uvd_v4_2_ip_funcs = {
 	.suspend = uvd_v4_2_suspend,
 	.resume = uvd_v4_2_resume,
 	.is_idle = uvd_v4_2_is_idle,
-	.wait_for_idle = uvd_v4_2_wait_for_idle,
+	.रुको_क्रम_idle = uvd_v4_2_रुको_क्रम_idle,
 	.soft_reset = uvd_v4_2_soft_reset,
-	.set_clockgating_state = uvd_v4_2_set_clockgating_state,
-	.set_powergating_state = uvd_v4_2_set_powergating_state,
-};
+	.set_घड़ीgating_state = uvd_v4_2_set_घड़ीgating_state,
+	.set_घातergating_state = uvd_v4_2_set_घातergating_state,
+पूर्ण;
 
-static const struct amdgpu_ring_funcs uvd_v4_2_ring_funcs = {
+अटल स्थिर काष्ठा amdgpu_ring_funcs uvd_v4_2_ring_funcs = अणु
 	.type = AMDGPU_RING_TYPE_UVD,
 	.align_mask = 0xf,
 	.support_64bit_ptrs = false,
@@ -759,29 +760,29 @@ static const struct amdgpu_ring_funcs uvd_v4_2_ring_funcs = {
 	.pad_ib = amdgpu_ring_generic_pad_ib,
 	.begin_use = amdgpu_uvd_ring_begin_use,
 	.end_use = amdgpu_uvd_ring_end_use,
-};
+पूर्ण;
 
-static void uvd_v4_2_set_ring_funcs(struct amdgpu_device *adev)
-{
+अटल व्योम uvd_v4_2_set_ring_funcs(काष्ठा amdgpu_device *adev)
+अणु
 	adev->uvd.inst->ring.funcs = &uvd_v4_2_ring_funcs;
-}
+पूर्ण
 
-static const struct amdgpu_irq_src_funcs uvd_v4_2_irq_funcs = {
-	.set = uvd_v4_2_set_interrupt_state,
-	.process = uvd_v4_2_process_interrupt,
-};
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs uvd_v4_2_irq_funcs = अणु
+	.set = uvd_v4_2_set_पूर्णांकerrupt_state,
+	.process = uvd_v4_2_process_पूर्णांकerrupt,
+पूर्ण;
 
-static void uvd_v4_2_set_irq_funcs(struct amdgpu_device *adev)
-{
+अटल व्योम uvd_v4_2_set_irq_funcs(काष्ठा amdgpu_device *adev)
+अणु
 	adev->uvd.inst->irq.num_types = 1;
 	adev->uvd.inst->irq.funcs = &uvd_v4_2_irq_funcs;
-}
+पूर्ण
 
-const struct amdgpu_ip_block_version uvd_v4_2_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version uvd_v4_2_ip_block =
+अणु
 		.type = AMD_IP_BLOCK_TYPE_UVD,
 		.major = 4,
 		.minor = 2,
 		.rev = 0,
 		.funcs = &uvd_v4_2_ip_funcs,
-};
+पूर्ण;

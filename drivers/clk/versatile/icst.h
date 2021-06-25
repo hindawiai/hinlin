@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  Copyright (C) 2003 Deep Blue Solutions, Ltd, All Rights Reserved.
  *
- *  Support functions for calculating clocks/divisors for the ICST
- *  clock generators.  See https://www.idt.com/ for more information
+ *  Support functions क्रम calculating घड़ीs/भागisors क्रम the ICST
+ *  घड़ी generators.  See https://www.idt.com/ क्रम more inक्रमmation
  *  on these devices.
  */
-#ifndef ICST_H
-#define ICST_H
+#अगर_अघोषित ICST_H
+#घोषणा ICST_H
 
-struct icst_params {
-	unsigned long	ref;
-	unsigned long	vco_max;	/* inclusive */
-	unsigned long	vco_min;	/* exclusive */
-	unsigned short	vd_min;		/* inclusive */
-	unsigned short	vd_max;		/* inclusive */
-	unsigned char	rd_min;		/* inclusive */
-	unsigned char	rd_max;		/* inclusive */
-	const unsigned char *s2div;	/* chip specific s2div array */
-	const unsigned char *idx2s;	/* chip specific idx2s array */
-};
+काष्ठा icst_params अणु
+	अचिन्हित दीर्घ	ref;
+	अचिन्हित दीर्घ	vco_max;	/* inclusive */
+	अचिन्हित दीर्घ	vco_min;	/* exclusive */
+	अचिन्हित लघु	vd_min;		/* inclusive */
+	अचिन्हित लघु	vd_max;		/* inclusive */
+	अचिन्हित अक्षर	rd_min;		/* inclusive */
+	अचिन्हित अक्षर	rd_max;		/* inclusive */
+	स्थिर अचिन्हित अक्षर *s2भाग;	/* chip specअगरic s2भाग array */
+	स्थिर अचिन्हित अक्षर *idx2s;	/* chip specअगरic idx2s array */
+पूर्ण;
 
-struct icst_vco {
-	unsigned short	v;
-	unsigned char	r;
-	unsigned char	s;
-};
+काष्ठा icst_vco अणु
+	अचिन्हित लघु	v;
+	अचिन्हित अक्षर	r;
+	अचिन्हित अक्षर	s;
+पूर्ण;
 
-unsigned long icst_hz(const struct icst_params *p, struct icst_vco vco);
-struct icst_vco icst_hz_to_vco(const struct icst_params *p, unsigned long freq);
+अचिन्हित दीर्घ icst_hz(स्थिर काष्ठा icst_params *p, काष्ठा icst_vco vco);
+काष्ठा icst_vco icst_hz_to_vco(स्थिर काष्ठा icst_params *p, अचिन्हित दीर्घ freq);
 
 /*
  * ICST307 VCO frequency must be between 6MHz and 200MHz (3.3 or 5V).
- * This frequency is pre-output divider.
+ * This frequency is pre-output भागider.
  */
-#define ICST307_VCO_MIN	6000000
-#define ICST307_VCO_MAX	200000000
+#घोषणा ICST307_VCO_MIN	6000000
+#घोषणा ICST307_VCO_MAX	200000000
 
-extern const unsigned char icst307_s2div[];
-extern const unsigned char icst307_idx2s[];
+बाह्य स्थिर अचिन्हित अक्षर icst307_s2भाग[];
+बाह्य स्थिर अचिन्हित अक्षर icst307_idx2s[];
 
 /*
  * ICST525 VCO frequency must be between 10MHz and 200MHz (3V) or 320MHz (5V).
- * This frequency is pre-output divider.
+ * This frequency is pre-output भागider.
  */
-#define ICST525_VCO_MIN		10000000
-#define ICST525_VCO_MAX_3V	200000000
-#define ICST525_VCO_MAX_5V	320000000
+#घोषणा ICST525_VCO_MIN		10000000
+#घोषणा ICST525_VCO_MAX_3V	200000000
+#घोषणा ICST525_VCO_MAX_5V	320000000
 
-extern const unsigned char icst525_s2div[];
-extern const unsigned char icst525_idx2s[];
+बाह्य स्थिर अचिन्हित अक्षर icst525_s2भाग[];
+बाह्य स्थिर अचिन्हित अक्षर icst525_idx2s[];
 
-#endif
+#पूर्ण_अगर

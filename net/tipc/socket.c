@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * net/tipc/socket.c: TIPC socket API
  *
@@ -6,17 +7,17 @@
  * Copyright (c) 2020-2021, Red Hat Inc
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    करोcumentation and/or other materials provided with the distribution.
  * 3. Neither the names of the copyright holders nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
+ *    contributors may be used to enकरोrse or promote products derived from
+ *    this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -26,7 +27,7 @@
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -35,68 +36,68 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <linux/rhashtable.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/rhashtable.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include "core.h"
-#include "name_table.h"
-#include "node.h"
-#include "link.h"
-#include "name_distr.h"
-#include "socket.h"
-#include "bcast.h"
-#include "netlink.h"
-#include "group.h"
-#include "trace.h"
+#समावेश "core.h"
+#समावेश "name_table.h"
+#समावेश "node.h"
+#समावेश "link.h"
+#समावेश "name_distr.h"
+#समावेश "socket.h"
+#समावेश "bcast.h"
+#समावेश "netlink.h"
+#समावेश "group.h"
+#समावेश "trace.h"
 
-#define NAGLE_START_INIT	4
-#define NAGLE_START_MAX		1024
-#define CONN_TIMEOUT_DEFAULT    8000    /* default connect timeout = 8s */
-#define CONN_PROBING_INTV	msecs_to_jiffies(3600000)  /* [ms] => 1 h */
-#define TIPC_MAX_PORT		0xffffffff
-#define TIPC_MIN_PORT		1
-#define TIPC_ACK_RATE		4       /* ACK at 1/4 of rcv window size */
+#घोषणा NAGLE_START_INIT	4
+#घोषणा NAGLE_START_MAX		1024
+#घोषणा CONN_TIMEOUT_DEFAULT    8000    /* शेष connect समयout = 8s */
+#घोषणा CONN_PROBING_INTV	msecs_to_jअगरfies(3600000)  /* [ms] => 1 h */
+#घोषणा TIPC_MAX_PORT		0xffffffff
+#घोषणा TIPC_MIN_PORT		1
+#घोषणा TIPC_ACK_RATE		4       /* ACK at 1/4 of rcv winकरोw size */
 
-enum {
+क्रमागत अणु
 	TIPC_LISTEN = TCP_LISTEN,
 	TIPC_ESTABLISHED = TCP_ESTABLISHED,
 	TIPC_OPEN = TCP_CLOSE,
 	TIPC_DISCONNECTING = TCP_CLOSE_WAIT,
 	TIPC_CONNECTING = TCP_SYN_SENT,
-};
+पूर्ण;
 
-struct sockaddr_pair {
-	struct sockaddr_tipc sock;
-	struct sockaddr_tipc member;
-};
+काष्ठा sockaddr_pair अणु
+	काष्ठा sockaddr_tipc sock;
+	काष्ठा sockaddr_tipc member;
+पूर्ण;
 
 /**
- * struct tipc_sock - TIPC socket structure
- * @sk: socket - interacts with 'port' and with user via the socket API
+ * काष्ठा tipc_sock - TIPC socket काष्ठाure
+ * @sk: socket - पूर्णांकeracts with 'port' and with user via the socket API
  * @conn_type: TIPC type used when connection was established
  * @conn_instance: TIPC instance used when connection was established
- * @published: non-zero if port has one or more associated names
+ * @published: non-zero अगर port has one or more associated names
  * @max_pkt: maximum packet size "hint" used when building messages sent by port
  * @maxnagle: maximum size of msg which can be subject to nagle
  * @portid: unique port identity in TIPC socket hash table
- * @phdr: preformatted message header used when sending messages
+ * @phdr: preक्रमmatted message header used when sending messages
  * @cong_links: list of congested links
- * @publications: list of publications for port
+ * @खुलाations: list of खुलाations क्रम port
  * @blocking_link: address of the congested link we are currently sleeping on
- * @pub_count: total # of publications port has made during its lifetime
- * @conn_timeout: the time we can wait for an unresponded setup request
+ * @pub_count: total # of खुलाations port has made during its lअगरeसमय
+ * @conn_समयout: the समय we can रुको क्रम an unresponded setup request
  * @probe_unacked: probe has not received ack yet
  * @dupl_rcvcnt: number of bytes counted twice, in both backlog and rcv queue
  * @cong_link_cnt: number of congested links
  * @snt_unacked: # messages sent by socket, and not yet acked by peer
- * @snd_win: send window size
+ * @snd_win: send winकरोw size
  * @peer_caps: peer capabilities mask
- * @rcv_unacked: # messages read by user, but not yet acked back to peer
- * @rcv_win: receive window size
- * @peer: 'connected' peer for dgram/rdm
+ * @rcv_unacked: # messages पढ़ो by user, but not yet acked back to peer
+ * @rcv_win: receive winकरोw size
+ * @peer: 'connected' peer क्रम dgram/rdm
  * @node: hash table node
- * @mc_method: cookie for use between socket and broadcast layer
- * @rcu: rcu struct for tipc_sock
+ * @mc_method: cookie क्रम use between socket and broadcast layer
+ * @rcu: rcu काष्ठा क्रम tipc_sock
  * @group: TIPC communications group
  * @oneway: message count in one direction (FIXME)
  * @nagle_start: current nagle value
@@ -105,21 +106,21 @@ struct sockaddr_pair {
  * @pkt_cnt: TIPC socket packet count
  * @expect_ack: whether this TIPC socket is expecting an ack
  * @nodelay: setsockopt() TIPC_NODELAY setting
- * @group_is_open: TIPC socket group is fully open (FIXME)
+ * @group_is_खोलो: TIPC socket group is fully खोलो (FIXME)
  */
-struct tipc_sock {
-	struct sock sk;
+काष्ठा tipc_sock अणु
+	काष्ठा sock sk;
 	u32 conn_type;
 	u32 conn_instance;
 	u32 max_pkt;
 	u32 maxnagle;
 	u32 portid;
-	struct tipc_msg phdr;
-	struct list_head cong_links;
-	struct list_head publications;
+	काष्ठा tipc_msg phdr;
+	काष्ठा list_head cong_links;
+	काष्ठा list_head खुलाations;
 	u32 pub_count;
 	atomic_t dupl_rcvcnt;
-	u16 conn_timeout;
+	u16 conn_समयout;
 	bool probe_unacked;
 	u16 cong_link_cnt;
 	u16 snt_unacked;
@@ -127,11 +128,11 @@ struct tipc_sock {
 	u16 peer_caps;
 	u16 rcv_unacked;
 	u16 rcv_win;
-	struct sockaddr_tipc peer;
-	struct rhash_head node;
-	struct tipc_mc_method mc_method;
-	struct rcu_head rcu;
-	struct tipc_group *group;
+	काष्ठा sockaddr_tipc peer;
+	काष्ठा rhash_head node;
+	काष्ठा tipc_mc_method mc_method;
+	काष्ठा rcu_head rcu;
+	काष्ठा tipc_group *group;
 	u32 oneway;
 	u32 nagle_start;
 	u16 snd_backlog;
@@ -139,136 +140,136 @@ struct tipc_sock {
 	u16 pkt_cnt;
 	bool expect_ack;
 	bool nodelay;
-	bool group_is_open;
+	bool group_is_खोलो;
 	bool published;
-};
+पूर्ण;
 
-static int tipc_sk_backlog_rcv(struct sock *sk, struct sk_buff *skb);
-static void tipc_data_ready(struct sock *sk);
-static void tipc_write_space(struct sock *sk);
-static void tipc_sock_destruct(struct sock *sk);
-static int tipc_release(struct socket *sock);
-static int tipc_accept(struct socket *sock, struct socket *new_sock, int flags,
+अटल पूर्णांक tipc_sk_backlog_rcv(काष्ठा sock *sk, काष्ठा sk_buff *skb);
+अटल व्योम tipc_data_पढ़ोy(काष्ठा sock *sk);
+अटल व्योम tipc_ग_लिखो_space(काष्ठा sock *sk);
+अटल व्योम tipc_sock_deकाष्ठा(काष्ठा sock *sk);
+अटल पूर्णांक tipc_release(काष्ठा socket *sock);
+अटल पूर्णांक tipc_accept(काष्ठा socket *sock, काष्ठा socket *new_sock, पूर्णांक flags,
 		       bool kern);
-static void tipc_sk_timeout(struct timer_list *t);
-static int tipc_sk_publish(struct tipc_sock *tsk, struct tipc_uaddr *ua);
-static int tipc_sk_withdraw(struct tipc_sock *tsk, struct tipc_uaddr *ua);
-static int tipc_sk_leave(struct tipc_sock *tsk);
-static struct tipc_sock *tipc_sk_lookup(struct net *net, u32 portid);
-static int tipc_sk_insert(struct tipc_sock *tsk);
-static void tipc_sk_remove(struct tipc_sock *tsk);
-static int __tipc_sendstream(struct socket *sock, struct msghdr *m, size_t dsz);
-static int __tipc_sendmsg(struct socket *sock, struct msghdr *m, size_t dsz);
-static void tipc_sk_push_backlog(struct tipc_sock *tsk, bool nagle_ack);
+अटल व्योम tipc_sk_समयout(काष्ठा समयr_list *t);
+अटल पूर्णांक tipc_sk_publish(काष्ठा tipc_sock *tsk, काष्ठा tipc_uaddr *ua);
+अटल पूर्णांक tipc_sk_withdraw(काष्ठा tipc_sock *tsk, काष्ठा tipc_uaddr *ua);
+अटल पूर्णांक tipc_sk_leave(काष्ठा tipc_sock *tsk);
+अटल काष्ठा tipc_sock *tipc_sk_lookup(काष्ठा net *net, u32 portid);
+अटल पूर्णांक tipc_sk_insert(काष्ठा tipc_sock *tsk);
+अटल व्योम tipc_sk_हटाओ(काष्ठा tipc_sock *tsk);
+अटल पूर्णांक __tipc_sendstream(काष्ठा socket *sock, काष्ठा msghdr *m, माप_प्रकार dsz);
+अटल पूर्णांक __tipc_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *m, माप_प्रकार dsz);
+अटल व्योम tipc_sk_push_backlog(काष्ठा tipc_sock *tsk, bool nagle_ack);
 
-static const struct proto_ops packet_ops;
-static const struct proto_ops stream_ops;
-static const struct proto_ops msg_ops;
-static struct proto tipc_proto;
-static const struct rhashtable_params tsk_rht_params;
+अटल स्थिर काष्ठा proto_ops packet_ops;
+अटल स्थिर काष्ठा proto_ops stream_ops;
+अटल स्थिर काष्ठा proto_ops msg_ops;
+अटल काष्ठा proto tipc_proto;
+अटल स्थिर काष्ठा rhashtable_params tsk_rht_params;
 
-static u32 tsk_own_node(struct tipc_sock *tsk)
-{
-	return msg_prevnode(&tsk->phdr);
-}
+अटल u32 tsk_own_node(काष्ठा tipc_sock *tsk)
+अणु
+	वापस msg_prevnode(&tsk->phdr);
+पूर्ण
 
-static u32 tsk_peer_node(struct tipc_sock *tsk)
-{
-	return msg_destnode(&tsk->phdr);
-}
+अटल u32 tsk_peer_node(काष्ठा tipc_sock *tsk)
+अणु
+	वापस msg_destnode(&tsk->phdr);
+पूर्ण
 
-static u32 tsk_peer_port(struct tipc_sock *tsk)
-{
-	return msg_destport(&tsk->phdr);
-}
+अटल u32 tsk_peer_port(काष्ठा tipc_sock *tsk)
+अणु
+	वापस msg_destport(&tsk->phdr);
+पूर्ण
 
-static  bool tsk_unreliable(struct tipc_sock *tsk)
-{
-	return msg_src_droppable(&tsk->phdr) != 0;
-}
+अटल  bool tsk_unreliable(काष्ठा tipc_sock *tsk)
+अणु
+	वापस msg_src_droppable(&tsk->phdr) != 0;
+पूर्ण
 
-static void tsk_set_unreliable(struct tipc_sock *tsk, bool unreliable)
-{
+अटल व्योम tsk_set_unreliable(काष्ठा tipc_sock *tsk, bool unreliable)
+अणु
 	msg_set_src_droppable(&tsk->phdr, unreliable ? 1 : 0);
-}
+पूर्ण
 
-static bool tsk_unreturnable(struct tipc_sock *tsk)
-{
-	return msg_dest_droppable(&tsk->phdr) != 0;
-}
+अटल bool tsk_unवापसable(काष्ठा tipc_sock *tsk)
+अणु
+	वापस msg_dest_droppable(&tsk->phdr) != 0;
+पूर्ण
 
-static void tsk_set_unreturnable(struct tipc_sock *tsk, bool unreturnable)
-{
-	msg_set_dest_droppable(&tsk->phdr, unreturnable ? 1 : 0);
-}
+अटल व्योम tsk_set_unवापसable(काष्ठा tipc_sock *tsk, bool unवापसable)
+अणु
+	msg_set_dest_droppable(&tsk->phdr, unवापसable ? 1 : 0);
+पूर्ण
 
-static int tsk_importance(struct tipc_sock *tsk)
-{
-	return msg_importance(&tsk->phdr);
-}
+अटल पूर्णांक tsk_importance(काष्ठा tipc_sock *tsk)
+अणु
+	वापस msg_importance(&tsk->phdr);
+पूर्ण
 
-static struct tipc_sock *tipc_sk(const struct sock *sk)
-{
-	return container_of(sk, struct tipc_sock, sk);
-}
+अटल काष्ठा tipc_sock *tipc_sk(स्थिर काष्ठा sock *sk)
+अणु
+	वापस container_of(sk, काष्ठा tipc_sock, sk);
+पूर्ण
 
-int tsk_set_importance(struct sock *sk, int imp)
-{
-	if (imp > TIPC_CRITICAL_IMPORTANCE)
-		return -EINVAL;
+पूर्णांक tsk_set_importance(काष्ठा sock *sk, पूर्णांक imp)
+अणु
+	अगर (imp > TIPC_CRITICAL_IMPORTANCE)
+		वापस -EINVAL;
 	msg_set_importance(&tipc_sk(sk)->phdr, (u32)imp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool tsk_conn_cong(struct tipc_sock *tsk)
-{
-	return tsk->snt_unacked > tsk->snd_win;
-}
+अटल bool tsk_conn_cong(काष्ठा tipc_sock *tsk)
+अणु
+	वापस tsk->snt_unacked > tsk->snd_win;
+पूर्ण
 
-static u16 tsk_blocks(int len)
-{
-	return ((len / FLOWCTL_BLK_SZ) + 1);
-}
+अटल u16 tsk_blocks(पूर्णांक len)
+अणु
+	वापस ((len / FLOWCTL_BLK_SZ) + 1);
+पूर्ण
 
 /* tsk_blocks(): translate a buffer size in bytes to number of
- * advertisable blocks, taking into account the ratio truesize(len)/len
- * We can trust that this ratio is always < 4 for len >= FLOWCTL_BLK_SZ
+ * advertisable blocks, taking पूर्णांकo account the ratio truesize(len)/len
+ * We can trust that this ratio is always < 4 क्रम len >= FLOWCTL_BLK_SZ
  */
-static u16 tsk_adv_blocks(int len)
-{
-	return len / FLOWCTL_BLK_SZ / 4;
-}
+अटल u16 tsk_adv_blocks(पूर्णांक len)
+अणु
+	वापस len / FLOWCTL_BLK_SZ / 4;
+पूर्ण
 
-/* tsk_inc(): increment counter for sent or received data
+/* tsk_inc(): increment counter क्रम sent or received data
  * - If block based flow control is not supported by peer we
  *   fall back to message based ditto, incrementing the counter
  */
-static u16 tsk_inc(struct tipc_sock *tsk, int msglen)
-{
-	if (likely(tsk->peer_caps & TIPC_BLOCK_FLOWCTL))
-		return ((msglen / FLOWCTL_BLK_SZ) + 1);
-	return 1;
-}
+अटल u16 tsk_inc(काष्ठा tipc_sock *tsk, पूर्णांक msglen)
+अणु
+	अगर (likely(tsk->peer_caps & TIPC_BLOCK_FLOWCTL))
+		वापस ((msglen / FLOWCTL_BLK_SZ) + 1);
+	वापस 1;
+पूर्ण
 
 /* tsk_set_nagle - enable/disable nagle property by manipulating maxnagle
  */
-static void tsk_set_nagle(struct tipc_sock *tsk)
-{
-	struct sock *sk = &tsk->sk;
+अटल व्योम tsk_set_nagle(काष्ठा tipc_sock *tsk)
+अणु
+	काष्ठा sock *sk = &tsk->sk;
 
 	tsk->maxnagle = 0;
-	if (sk->sk_type != SOCK_STREAM)
-		return;
-	if (tsk->nodelay)
-		return;
-	if (!(tsk->peer_caps & TIPC_NAGLE))
-		return;
-	/* Limit node local buffer size to avoid receive queue overflow */
-	if (tsk->max_pkt == MAX_MSG_SIZE)
+	अगर (sk->sk_type != SOCK_STREAM)
+		वापस;
+	अगर (tsk->nodelay)
+		वापस;
+	अगर (!(tsk->peer_caps & TIPC_NAGLE))
+		वापस;
+	/* Limit node local buffer size to aव्योम receive queue overflow */
+	अगर (tsk->max_pkt == MAX_MSG_SIZE)
 		tsk->maxnagle = 1500;
-	else
+	अन्यथा
 		tsk->maxnagle = tsk->max_pkt;
-}
+पूर्ण
 
 /**
  * tsk_advance_rx_queue - discard first buffer in socket receive queue
@@ -276,28 +277,28 @@ static void tsk_set_nagle(struct tipc_sock *tsk)
  *
  * Caller must hold socket lock
  */
-static void tsk_advance_rx_queue(struct sock *sk)
-{
-	trace_tipc_sk_advance_rx(sk, NULL, TIPC_DUMP_SK_RCVQ, " ");
-	kfree_skb(__skb_dequeue(&sk->sk_receive_queue));
-}
+अटल व्योम tsk_advance_rx_queue(काष्ठा sock *sk)
+अणु
+	trace_tipc_sk_advance_rx(sk, शून्य, TIPC_DUMP_SK_RCVQ, " ");
+	kमुक्त_skb(__skb_dequeue(&sk->sk_receive_queue));
+पूर्ण
 
 /* tipc_sk_respond() : send response message back to sender
  */
-static void tipc_sk_respond(struct sock *sk, struct sk_buff *skb, int err)
-{
+अटल व्योम tipc_sk_respond(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक err)
+अणु
 	u32 selector;
 	u32 dnode;
 	u32 onode = tipc_own_addr(sock_net(sk));
 
-	if (!tipc_msg_reverse(onode, &skb, err))
-		return;
+	अगर (!tipc_msg_reverse(onode, &skb, err))
+		वापस;
 
 	trace_tipc_sk_rej_msg(sk, skb, TIPC_DUMP_NONE, "@sk_respond!");
 	dnode = msg_destnode(buf_msg(skb));
 	selector = msg_origport(buf_msg(skb));
 	tipc_node_xmit_skb(sock_net(sk), skb, dnode, selector);
-}
+पूर्ण
 
 /**
  * tsk_rej_rx_queue - reject all buffers in socket receive queue
@@ -306,306 +307,306 @@ static void tipc_sk_respond(struct sock *sk, struct sk_buff *skb, int err)
  *
  * Caller must hold socket lock
  */
-static void tsk_rej_rx_queue(struct sock *sk, int error)
-{
-	struct sk_buff *skb;
+अटल व्योम tsk_rej_rx_queue(काष्ठा sock *sk, पूर्णांक error)
+अणु
+	काष्ठा sk_buff *skb;
 
-	while ((skb = __skb_dequeue(&sk->sk_receive_queue)))
+	जबतक ((skb = __skb_dequeue(&sk->sk_receive_queue)))
 		tipc_sk_respond(sk, skb, error);
-}
+पूर्ण
 
-static bool tipc_sk_connected(struct sock *sk)
-{
-	return sk->sk_state == TIPC_ESTABLISHED;
-}
+अटल bool tipc_sk_connected(काष्ठा sock *sk)
+अणु
+	वापस sk->sk_state == TIPC_ESTABLISHED;
+पूर्ण
 
-/* tipc_sk_type_connectionless - check if the socket is datagram socket
+/* tipc_sk_type_connectionless - check अगर the socket is datagram socket
  * @sk: socket
  *
- * Returns true if connection less, false otherwise
+ * Returns true अगर connection less, false otherwise
  */
-static bool tipc_sk_type_connectionless(struct sock *sk)
-{
-	return sk->sk_type == SOCK_RDM || sk->sk_type == SOCK_DGRAM;
-}
+अटल bool tipc_sk_type_connectionless(काष्ठा sock *sk)
+अणु
+	वापस sk->sk_type == SOCK_RDM || sk->sk_type == SOCK_DGRAM;
+पूर्ण
 
-/* tsk_peer_msg - verify if message was sent by connected port's peer
+/* tsk_peer_msg - verअगरy अगर message was sent by connected port's peer
  *
- * Handles cases where the node's network address has changed from
- * the default of <0.0.0> to its configured setting.
+ * Handles हालs where the node's network address has changed from
+ * the शेष of <0.0.0> to its configured setting.
  */
-static bool tsk_peer_msg(struct tipc_sock *tsk, struct tipc_msg *msg)
-{
-	struct sock *sk = &tsk->sk;
+अटल bool tsk_peer_msg(काष्ठा tipc_sock *tsk, काष्ठा tipc_msg *msg)
+अणु
+	काष्ठा sock *sk = &tsk->sk;
 	u32 self = tipc_own_addr(sock_net(sk));
 	u32 peer_port = tsk_peer_port(tsk);
 	u32 orig_node, peer_node;
 
-	if (unlikely(!tipc_sk_connected(sk)))
-		return false;
+	अगर (unlikely(!tipc_sk_connected(sk)))
+		वापस false;
 
-	if (unlikely(msg_origport(msg) != peer_port))
-		return false;
+	अगर (unlikely(msg_origport(msg) != peer_port))
+		वापस false;
 
 	orig_node = msg_orignode(msg);
 	peer_node = tsk_peer_node(tsk);
 
-	if (likely(orig_node == peer_node))
-		return true;
+	अगर (likely(orig_node == peer_node))
+		वापस true;
 
-	if (!orig_node && peer_node == self)
-		return true;
+	अगर (!orig_node && peer_node == self)
+		वापस true;
 
-	if (!peer_node && orig_node == self)
-		return true;
+	अगर (!peer_node && orig_node == self)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* tipc_set_sk_state - set the sk_state of the socket
  * @sk: socket
  *
  * Caller must hold socket lock
  *
- * Returns 0 on success, errno otherwise
+ * Returns 0 on success, त्रुटि_सं otherwise
  */
-static int tipc_set_sk_state(struct sock *sk, int state)
-{
-	int oldsk_state = sk->sk_state;
-	int res = -EINVAL;
+अटल पूर्णांक tipc_set_sk_state(काष्ठा sock *sk, पूर्णांक state)
+अणु
+	पूर्णांक oldsk_state = sk->sk_state;
+	पूर्णांक res = -EINVAL;
 
-	switch (state) {
-	case TIPC_OPEN:
+	चयन (state) अणु
+	हाल TIPC_OPEN:
 		res = 0;
-		break;
-	case TIPC_LISTEN:
-	case TIPC_CONNECTING:
-		if (oldsk_state == TIPC_OPEN)
+		अवरोध;
+	हाल TIPC_LISTEN:
+	हाल TIPC_CONNECTING:
+		अगर (oldsk_state == TIPC_OPEN)
 			res = 0;
-		break;
-	case TIPC_ESTABLISHED:
-		if (oldsk_state == TIPC_CONNECTING ||
+		अवरोध;
+	हाल TIPC_ESTABLISHED:
+		अगर (oldsk_state == TIPC_CONNECTING ||
 		    oldsk_state == TIPC_OPEN)
 			res = 0;
-		break;
-	case TIPC_DISCONNECTING:
-		if (oldsk_state == TIPC_CONNECTING ||
+		अवरोध;
+	हाल TIPC_DISCONNECTING:
+		अगर (oldsk_state == TIPC_CONNECTING ||
 		    oldsk_state == TIPC_ESTABLISHED)
 			res = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!res)
+	अगर (!res)
 		sk->sk_state = state;
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int tipc_sk_sock_err(struct socket *sock, long *timeout)
-{
-	struct sock *sk = sock->sk;
-	int err = sock_error(sk);
-	int typ = sock->type;
+अटल पूर्णांक tipc_sk_sock_err(काष्ठा socket *sock, दीर्घ *समयout)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक err = sock_error(sk);
+	पूर्णांक typ = sock->type;
 
-	if (err)
-		return err;
-	if (typ == SOCK_STREAM || typ == SOCK_SEQPACKET) {
-		if (sk->sk_state == TIPC_DISCONNECTING)
-			return -EPIPE;
-		else if (!tipc_sk_connected(sk))
-			return -ENOTCONN;
-	}
-	if (!*timeout)
-		return -EAGAIN;
-	if (signal_pending(current))
-		return sock_intr_errno(*timeout);
+	अगर (err)
+		वापस err;
+	अगर (typ == SOCK_STREAM || typ == SOCK_SEQPACKET) अणु
+		अगर (sk->sk_state == TIPC_DISCONNECTING)
+			वापस -EPIPE;
+		अन्यथा अगर (!tipc_sk_connected(sk))
+			वापस -ENOTCONN;
+	पूर्ण
+	अगर (!*समयout)
+		वापस -EAGAIN;
+	अगर (संकेत_pending(current))
+		वापस sock_पूर्णांकr_त्रुटि_सं(*समयout);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define tipc_wait_for_cond(sock_, timeo_, condition_)			       \
-({                                                                             \
-	DEFINE_WAIT_FUNC(wait_, woken_wake_function);                          \
-	struct sock *sk_;						       \
-	int rc_;							       \
+#घोषणा tipc_रुको_क्रम_cond(sock_, समयo_, condition_)			       \
+(अणु                                                                             \
+	DEFINE_WAIT_FUNC(रुको_, woken_wake_function);                          \
+	काष्ठा sock *sk_;						       \
+	पूर्णांक rc_;							       \
 									       \
-	while ((rc_ = !(condition_))) {					       \
+	जबतक ((rc_ = !(condition_))) अणु					       \
 		/* coupled with smp_wmb() in tipc_sk_proto_rcv() */            \
 		smp_rmb();                                                     \
 		sk_ = (sock_)->sk;					       \
-		rc_ = tipc_sk_sock_err((sock_), timeo_);		       \
-		if (rc_)						       \
-			break;						       \
-		add_wait_queue(sk_sleep(sk_), &wait_);                         \
+		rc_ = tipc_sk_sock_err((sock_), समयo_);		       \
+		अगर (rc_)						       \
+			अवरोध;						       \
+		add_रुको_queue(sk_sleep(sk_), &रुको_);                         \
 		release_sock(sk_);					       \
-		*(timeo_) = wait_woken(&wait_, TASK_INTERRUPTIBLE, *(timeo_)); \
+		*(समयo_) = रुको_woken(&रुको_, TASK_INTERRUPTIBLE, *(समयo_)); \
 		sched_annotate_sleep();				               \
 		lock_sock(sk_);						       \
-		remove_wait_queue(sk_sleep(sk_), &wait_);		       \
-	}								       \
+		हटाओ_रुको_queue(sk_sleep(sk_), &रुको_);		       \
+	पूर्ण								       \
 	rc_;								       \
-})
+पूर्ण)
 
 /**
  * tipc_sk_create - create a TIPC socket
- * @net: network namespace (must be default network)
- * @sock: pre-allocated socket structure
+ * @net: network namespace (must be शेष network)
+ * @sock: pre-allocated socket काष्ठाure
  * @protocol: protocol indicator (must be 0)
  * @kern: caused by kernel or by userspace?
  *
- * This routine creates additional data structures used by the TIPC socket,
+ * This routine creates additional data काष्ठाures used by the TIPC socket,
  * initializes them, and links them together.
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-static int tipc_sk_create(struct net *net, struct socket *sock,
-			  int protocol, int kern)
-{
-	const struct proto_ops *ops;
-	struct sock *sk;
-	struct tipc_sock *tsk;
-	struct tipc_msg *msg;
+अटल पूर्णांक tipc_sk_create(काष्ठा net *net, काष्ठा socket *sock,
+			  पूर्णांक protocol, पूर्णांक kern)
+अणु
+	स्थिर काष्ठा proto_ops *ops;
+	काष्ठा sock *sk;
+	काष्ठा tipc_sock *tsk;
+	काष्ठा tipc_msg *msg;
 
 	/* Validate arguments */
-	if (unlikely(protocol != 0))
-		return -EPROTONOSUPPORT;
+	अगर (unlikely(protocol != 0))
+		वापस -EPROTONOSUPPORT;
 
-	switch (sock->type) {
-	case SOCK_STREAM:
+	चयन (sock->type) अणु
+	हाल SOCK_STREAM:
 		ops = &stream_ops;
-		break;
-	case SOCK_SEQPACKET:
+		अवरोध;
+	हाल SOCK_SEQPACKET:
 		ops = &packet_ops;
-		break;
-	case SOCK_DGRAM:
-	case SOCK_RDM:
+		अवरोध;
+	हाल SOCK_DGRAM:
+	हाल SOCK_RDM:
 		ops = &msg_ops;
-		break;
-	default:
-		return -EPROTOTYPE;
-	}
+		अवरोध;
+	शेष:
+		वापस -EPROTOTYPE;
+	पूर्ण
 
 	/* Allocate socket's protocol area */
 	sk = sk_alloc(net, AF_TIPC, GFP_KERNEL, &tipc_proto, kern);
-	if (sk == NULL)
-		return -ENOMEM;
+	अगर (sk == शून्य)
+		वापस -ENOMEM;
 
 	tsk = tipc_sk(sk);
 	tsk->max_pkt = MAX_PKT_DEFAULT;
 	tsk->maxnagle = 0;
 	tsk->nagle_start = NAGLE_START_INIT;
-	INIT_LIST_HEAD(&tsk->publications);
+	INIT_LIST_HEAD(&tsk->खुलाations);
 	INIT_LIST_HEAD(&tsk->cong_links);
 	msg = &tsk->phdr;
 
-	/* Finish initializing socket data structures */
+	/* Finish initializing socket data काष्ठाures */
 	sock->ops = ops;
 	sock_init_data(sock, sk);
 	tipc_set_sk_state(sk, TIPC_OPEN);
-	if (tipc_sk_insert(tsk)) {
+	अगर (tipc_sk_insert(tsk)) अणु
 		pr_warn("Socket create failed; port number exhausted\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Ensure tsk is visible before we read own_addr. */
+	/* Ensure tsk is visible beक्रमe we पढ़ो own_addr. */
 	smp_mb();
 
 	tipc_msg_init(tipc_own_addr(net), msg, TIPC_LOW_IMPORTANCE,
 		      TIPC_NAMED_MSG, NAMED_H_SIZE, 0);
 
 	msg_set_origport(msg, tsk->portid);
-	timer_setup(&sk->sk_timer, tipc_sk_timeout, 0);
-	sk->sk_shutdown = 0;
+	समयr_setup(&sk->sk_समयr, tipc_sk_समयout, 0);
+	sk->sk_shutकरोwn = 0;
 	sk->sk_backlog_rcv = tipc_sk_backlog_rcv;
 	sk->sk_rcvbuf = sysctl_tipc_rmem[1];
-	sk->sk_data_ready = tipc_data_ready;
-	sk->sk_write_space = tipc_write_space;
-	sk->sk_destruct = tipc_sock_destruct;
-	tsk->conn_timeout = CONN_TIMEOUT_DEFAULT;
-	tsk->group_is_open = true;
+	sk->sk_data_पढ़ोy = tipc_data_पढ़ोy;
+	sk->sk_ग_लिखो_space = tipc_ग_लिखो_space;
+	sk->sk_deकाष्ठा = tipc_sock_deकाष्ठा;
+	tsk->conn_समयout = CONN_TIMEOUT_DEFAULT;
+	tsk->group_is_खोलो = true;
 	atomic_set(&tsk->dupl_rcvcnt, 0);
 
-	/* Start out with safe limits until we receive an advertised window */
+	/* Start out with safe limits until we receive an advertised winकरोw */
 	tsk->snd_win = tsk_adv_blocks(RCVBUF_MIN);
 	tsk->rcv_win = tsk->snd_win;
 
-	if (tipc_sk_type_connectionless(sk)) {
-		tsk_set_unreturnable(tsk, true);
-		if (sock->type == SOCK_DGRAM)
+	अगर (tipc_sk_type_connectionless(sk)) अणु
+		tsk_set_unवापसable(tsk, true);
+		अगर (sock->type == SOCK_DGRAM)
 			tsk_set_unreliable(tsk, true);
-	}
+	पूर्ण
 	__skb_queue_head_init(&tsk->mc_method.deferredq);
-	trace_tipc_sk_create(sk, NULL, TIPC_DUMP_NONE, " ");
-	return 0;
-}
+	trace_tipc_sk_create(sk, शून्य, TIPC_DUMP_NONE, " ");
+	वापस 0;
+पूर्ण
 
-static void tipc_sk_callback(struct rcu_head *head)
-{
-	struct tipc_sock *tsk = container_of(head, struct tipc_sock, rcu);
+अटल व्योम tipc_sk_callback(काष्ठा rcu_head *head)
+अणु
+	काष्ठा tipc_sock *tsk = container_of(head, काष्ठा tipc_sock, rcu);
 
 	sock_put(&tsk->sk);
-}
+पूर्ण
 
-/* Caller should hold socket lock for the socket. */
-static void __tipc_shutdown(struct socket *sock, int error)
-{
-	struct sock *sk = sock->sk;
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct net *net = sock_net(sk);
-	long timeout = msecs_to_jiffies(CONN_TIMEOUT_DEFAULT);
+/* Caller should hold socket lock क्रम the socket. */
+अटल व्योम __tipc_shutकरोwn(काष्ठा socket *sock, पूर्णांक error)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा net *net = sock_net(sk);
+	दीर्घ समयout = msecs_to_jअगरfies(CONN_TIMEOUT_DEFAULT);
 	u32 dnode = tsk_peer_node(tsk);
-	struct sk_buff *skb;
+	काष्ठा sk_buff *skb;
 
-	/* Avoid that hi-prio shutdown msgs bypass msgs in link wakeup queue */
-	tipc_wait_for_cond(sock, &timeout, (!tsk->cong_link_cnt &&
+	/* Aव्योम that hi-prio shutकरोwn msgs bypass msgs in link wakeup queue */
+	tipc_रुको_क्रम_cond(sock, &समयout, (!tsk->cong_link_cnt &&
 					    !tsk_conn_cong(tsk)));
 
-	/* Push out delayed messages if in Nagle mode */
+	/* Push out delayed messages अगर in Nagle mode */
 	tipc_sk_push_backlog(tsk, false);
 	/* Remove pending SYN */
-	__skb_queue_purge(&sk->sk_write_queue);
+	__skb_queue_purge(&sk->sk_ग_लिखो_queue);
 
-	/* Remove partially received buffer if any */
+	/* Remove partially received buffer अगर any */
 	skb = skb_peek(&sk->sk_receive_queue);
-	if (skb && TIPC_SKB_CB(skb)->bytes_read) {
+	अगर (skb && TIPC_SKB_CB(skb)->bytes_पढ़ो) अणु
 		__skb_unlink(skb, &sk->sk_receive_queue);
-		kfree_skb(skb);
-	}
+		kमुक्त_skb(skb);
+	पूर्ण
 
-	/* Reject all unreceived messages if connectionless */
-	if (tipc_sk_type_connectionless(sk)) {
+	/* Reject all unreceived messages अगर connectionless */
+	अगर (tipc_sk_type_connectionless(sk)) अणु
 		tsk_rej_rx_queue(sk, error);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (sk->sk_state) {
-	case TIPC_CONNECTING:
-	case TIPC_ESTABLISHED:
+	चयन (sk->sk_state) अणु
+	हाल TIPC_CONNECTING:
+	हाल TIPC_ESTABLISHED:
 		tipc_set_sk_state(sk, TIPC_DISCONNECTING);
-		tipc_node_remove_conn(net, dnode, tsk->portid);
+		tipc_node_हटाओ_conn(net, dnode, tsk->portid);
 		/* Send a FIN+/- to its peer */
 		skb = __skb_dequeue(&sk->sk_receive_queue);
-		if (skb) {
+		अगर (skb) अणु
 			__skb_queue_purge(&sk->sk_receive_queue);
 			tipc_sk_respond(sk, skb, error);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		skb = tipc_msg_create(TIPC_CRITICAL_IMPORTANCE,
 				      TIPC_CONN_MSG, SHORT_H_SIZE, 0, dnode,
 				      tsk_own_node(tsk), tsk_peer_port(tsk),
 				      tsk->portid, error);
-		if (skb)
+		अगर (skb)
 			tipc_node_xmit_skb(net, skb, dnode, tsk->portid);
-		break;
-	case TIPC_LISTEN:
+		अवरोध;
+	हाल TIPC_LISTEN:
 		/* Reject all SYN messages */
 		tsk_rej_rx_queue(sk, error);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		__skb_queue_purge(&sk->sk_receive_queue);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * tipc_release - destroy a TIPC socket
@@ -615,37 +616,37 @@ static void __tipc_shutdown(struct socket *sock, int error)
  * For DGRAM and RDM socket types, all queued messages are rejected.
  * For SEQPACKET and STREAM socket types, the first message is rejected
  * and any others are discarded.  (If the first message on a STREAM socket
- * is partially-read, it is discarded and the next one is rejected instead.)
+ * is partially-पढ़ो, it is discarded and the next one is rejected instead.)
  *
- * NOTE: Rejected messages are not necessarily returned to the sender!  They
- * are returned or discarded according to the "destination droppable" setting
- * specified for the message by the sender.
+ * NOTE: Rejected messages are not necessarily वापसed to the sender!  They
+ * are वापसed or discarded according to the "destination droppable" setting
+ * specअगरied क्रम the message by the sender.
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-static int tipc_release(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
-	struct tipc_sock *tsk;
+अटल पूर्णांक tipc_release(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा tipc_sock *tsk;
 
 	/*
-	 * Exit if socket isn't fully initialized (occurs when a failed accept()
+	 * Exit अगर socket isn't fully initialized (occurs when a failed accept()
 	 * releases a pre-allocated child socket that was never used)
 	 */
-	if (sk == NULL)
-		return 0;
+	अगर (sk == शून्य)
+		वापस 0;
 
 	tsk = tipc_sk(sk);
 	lock_sock(sk);
 
-	trace_tipc_sk_release(sk, NULL, TIPC_DUMP_ALL, " ");
-	__tipc_shutdown(sock, TIPC_ERR_NO_PORT);
-	sk->sk_shutdown = SHUTDOWN_MASK;
+	trace_tipc_sk_release(sk, शून्य, TIPC_DUMP_ALL, " ");
+	__tipc_shutकरोwn(sock, TIPC_ERR_NO_PORT);
+	sk->sk_shutकरोwn = SHUTDOWN_MASK;
 	tipc_sk_leave(tsk);
-	tipc_sk_withdraw(tsk, NULL);
+	tipc_sk_withdraw(tsk, शून्य);
 	__skb_queue_purge(&tsk->mc_method.deferredq);
-	sk_stop_timer(sk, &sk->sk_timer);
-	tipc_sk_remove(tsk);
+	sk_stop_समयr(sk, &sk->sk_समयr);
+	tipc_sk_हटाओ(tsk);
 
 	sock_orphan(sk);
 	/* Reject any messages that accumulated in backlog queue */
@@ -653,218 +654,218 @@ static int tipc_release(struct socket *sock)
 	tipc_dest_list_purge(&tsk->cong_links);
 	tsk->cong_link_cnt = 0;
 	call_rcu(&tsk->rcu, tipc_sk_callback);
-	sock->sk = NULL;
+	sock->sk = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * __tipc_bind - associate or disassocate TIPC name(s) with a socket
- * @sock: socket structure
+ * @sock: socket काष्ठाure
  * @skaddr: socket address describing name(s) and desired operation
- * @alen: size of socket address data structure
+ * @alen: size of socket address data काष्ठाure
  *
  * Name and name sequence binding is indicated using a positive scope value;
- * a negative scope value unbinds the specified name.  Specifying no name
+ * a negative scope value unbinds the specअगरied name.  Specअगरying no name
  * (i.e. a socket address length of 0) unbinds all names from the socket.
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  *
- * NOTE: This routine doesn't need to take the socket lock since it doesn't
- *       access any non-constant socket information.
+ * NOTE: This routine करोesn't need to take the socket lock since it doesn't
+ *       access any non-स्थिरant socket inक्रमmation.
  */
-static int __tipc_bind(struct socket *sock, struct sockaddr *skaddr, int alen)
-{
-	struct tipc_uaddr *ua = (struct tipc_uaddr *)skaddr;
-	struct tipc_sock *tsk = tipc_sk(sock->sk);
+अटल पूर्णांक __tipc_bind(काष्ठा socket *sock, काष्ठा sockaddr *skaddr, पूर्णांक alen)
+अणु
+	काष्ठा tipc_uaddr *ua = (काष्ठा tipc_uaddr *)skaddr;
+	काष्ठा tipc_sock *tsk = tipc_sk(sock->sk);
 	bool unbind = false;
 
-	if (unlikely(!alen))
-		return tipc_sk_withdraw(tsk, NULL);
+	अगर (unlikely(!alen))
+		वापस tipc_sk_withdraw(tsk, शून्य);
 
-	if (ua->addrtype == TIPC_SERVICE_ADDR) {
+	अगर (ua->addrtype == TIPC_SERVICE_ADDR) अणु
 		ua->addrtype = TIPC_SERVICE_RANGE;
 		ua->sr.upper = ua->sr.lower;
-	}
-	if (ua->scope < 0) {
+	पूर्ण
+	अगर (ua->scope < 0) अणु
 		unbind = true;
 		ua->scope = -ua->scope;
-	}
+	पूर्ण
 	/* Users may still use deprecated TIPC_ZONE_SCOPE */
-	if (ua->scope != TIPC_NODE_SCOPE)
+	अगर (ua->scope != TIPC_NODE_SCOPE)
 		ua->scope = TIPC_CLUSTER_SCOPE;
 
-	if (tsk->group)
-		return -EACCES;
+	अगर (tsk->group)
+		वापस -EACCES;
 
-	if (unbind)
-		return tipc_sk_withdraw(tsk, ua);
-	return tipc_sk_publish(tsk, ua);
-}
+	अगर (unbind)
+		वापस tipc_sk_withdraw(tsk, ua);
+	वापस tipc_sk_publish(tsk, ua);
+पूर्ण
 
-int tipc_sk_bind(struct socket *sock, struct sockaddr *skaddr, int alen)
-{
-	int res;
+पूर्णांक tipc_sk_bind(काष्ठा socket *sock, काष्ठा sockaddr *skaddr, पूर्णांक alen)
+अणु
+	पूर्णांक res;
 
 	lock_sock(sock->sk);
 	res = __tipc_bind(sock, skaddr, alen);
 	release_sock(sock->sk);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int tipc_bind(struct socket *sock, struct sockaddr *skaddr, int alen)
-{
-	struct tipc_uaddr *ua = (struct tipc_uaddr *)skaddr;
+अटल पूर्णांक tipc_bind(काष्ठा socket *sock, काष्ठा sockaddr *skaddr, पूर्णांक alen)
+अणु
+	काष्ठा tipc_uaddr *ua = (काष्ठा tipc_uaddr *)skaddr;
 	u32 atype = ua->addrtype;
 
-	if (alen) {
-		if (!tipc_uaddr_valid(ua, alen))
-			return -EINVAL;
-		if (atype == TIPC_SOCKET_ADDR)
-			return -EAFNOSUPPORT;
-		if (ua->sr.type < TIPC_RESERVED_TYPES) {
+	अगर (alen) अणु
+		अगर (!tipc_uaddr_valid(ua, alen))
+			वापस -EINVAL;
+		अगर (atype == TIPC_SOCKET_ADDR)
+			वापस -EAFNOSUPPORT;
+		अगर (ua->sr.type < TIPC_RESERVED_TYPES) अणु
 			pr_warn_once("Can't bind to reserved service type %u\n",
 				     ua->sr.type);
-			return -EACCES;
-		}
-	}
-	return tipc_sk_bind(sock, skaddr, alen);
-}
+			वापस -EACCES;
+		पूर्ण
+	पूर्ण
+	वापस tipc_sk_bind(sock, skaddr, alen);
+पूर्ण
 
 /**
  * tipc_getname - get port ID of socket or peer socket
- * @sock: socket structure
- * @uaddr: area for returned socket address
- * @peer: 0 = own ID, 1 = current peer ID, 2 = current/former peer ID
+ * @sock: socket काष्ठाure
+ * @uaddr: area क्रम वापसed socket address
+ * @peer: 0 = own ID, 1 = current peer ID, 2 = current/क्रमmer peer ID
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  *
- * NOTE: This routine doesn't need to take the socket lock since it only
- *       accesses socket information that is unchanging (or which changes in
+ * NOTE: This routine करोesn't need to take the socket lock since it only
+ *       accesses socket inक्रमmation that is unchanging (or which changes in
  *       a completely predictable manner).
  */
-static int tipc_getname(struct socket *sock, struct sockaddr *uaddr,
-			int peer)
-{
-	struct sockaddr_tipc *addr = (struct sockaddr_tipc *)uaddr;
-	struct sock *sk = sock->sk;
-	struct tipc_sock *tsk = tipc_sk(sk);
+अटल पूर्णांक tipc_getname(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
+			पूर्णांक peer)
+अणु
+	काष्ठा sockaddr_tipc *addr = (काष्ठा sockaddr_tipc *)uaddr;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
 
-	memset(addr, 0, sizeof(*addr));
-	if (peer) {
-		if ((!tipc_sk_connected(sk)) &&
+	स_रखो(addr, 0, माप(*addr));
+	अगर (peer) अणु
+		अगर ((!tipc_sk_connected(sk)) &&
 		    ((peer != 2) || (sk->sk_state != TIPC_DISCONNECTING)))
-			return -ENOTCONN;
+			वापस -ENOTCONN;
 		addr->addr.id.ref = tsk_peer_port(tsk);
 		addr->addr.id.node = tsk_peer_node(tsk);
-	} else {
+	पूर्ण अन्यथा अणु
 		addr->addr.id.ref = tsk->portid;
 		addr->addr.id.node = tipc_own_addr(sock_net(sk));
-	}
+	पूर्ण
 
 	addr->addrtype = TIPC_SOCKET_ADDR;
 	addr->family = AF_TIPC;
 	addr->scope = 0;
-	addr->addr.name.domain = 0;
+	addr->addr.name.करोमुख्य = 0;
 
-	return sizeof(*addr);
-}
+	वापस माप(*addr);
+पूर्ण
 
 /**
- * tipc_poll - read and possibly block on pollmask
- * @file: file structure associated with the socket
- * @sock: socket for which to calculate the poll bits
- * @wait: ???
+ * tipc_poll - पढ़ो and possibly block on pollmask
+ * @file: file काष्ठाure associated with the socket
+ * @sock: socket क्रम which to calculate the poll bits
+ * @रुको: ???
  *
  * Return: pollmask value
  *
  * COMMENTARY:
  * It appears that the usual socket locking mechanisms are not useful here
  * since the pollmask info is potentially out-of-date the moment this routine
- * exits.  TCP and other protocols seem to rely on higher level poll routines
- * to handle any preventable race conditions, so TIPC will do the same ...
+ * निकासs.  TCP and other protocols seem to rely on higher level poll routines
+ * to handle any preventable race conditions, so TIPC will करो the same ...
  *
- * IMPORTANT: The fact that a read or write operation is indicated does NOT
- * imply that the operation will succeed, merely that it should be performed
+ * IMPORTANT: The fact that a पढ़ो or ग_लिखो operation is indicated करोes NOT
+ * imply that the operation will succeed, merely that it should be perक्रमmed
  * and will not block.
  */
-static __poll_t tipc_poll(struct file *file, struct socket *sock,
-			      poll_table *wait)
-{
-	struct sock *sk = sock->sk;
-	struct tipc_sock *tsk = tipc_sk(sk);
+अटल __poll_t tipc_poll(काष्ठा file *file, काष्ठा socket *sock,
+			      poll_table *रुको)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
 	__poll_t revents = 0;
 
-	sock_poll_wait(file, sock, wait);
-	trace_tipc_sk_poll(sk, NULL, TIPC_DUMP_ALL, " ");
+	sock_poll_रुको(file, sock, रुको);
+	trace_tipc_sk_poll(sk, शून्य, TIPC_DUMP_ALL, " ");
 
-	if (sk->sk_shutdown & RCV_SHUTDOWN)
+	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
 		revents |= EPOLLRDHUP | EPOLLIN | EPOLLRDNORM;
-	if (sk->sk_shutdown == SHUTDOWN_MASK)
+	अगर (sk->sk_shutकरोwn == SHUTDOWN_MASK)
 		revents |= EPOLLHUP;
 
-	switch (sk->sk_state) {
-	case TIPC_ESTABLISHED:
-		if (!tsk->cong_link_cnt && !tsk_conn_cong(tsk))
+	चयन (sk->sk_state) अणु
+	हाल TIPC_ESTABLISHED:
+		अगर (!tsk->cong_link_cnt && !tsk_conn_cong(tsk))
 			revents |= EPOLLOUT;
 		fallthrough;
-	case TIPC_LISTEN:
-	case TIPC_CONNECTING:
-		if (!skb_queue_empty_lockless(&sk->sk_receive_queue))
+	हाल TIPC_LISTEN:
+	हाल TIPC_CONNECTING:
+		अगर (!skb_queue_empty_lockless(&sk->sk_receive_queue))
 			revents |= EPOLLIN | EPOLLRDNORM;
-		break;
-	case TIPC_OPEN:
-		if (tsk->group_is_open && !tsk->cong_link_cnt)
+		अवरोध;
+	हाल TIPC_OPEN:
+		अगर (tsk->group_is_खोलो && !tsk->cong_link_cnt)
 			revents |= EPOLLOUT;
-		if (!tipc_sk_type_connectionless(sk))
-			break;
-		if (skb_queue_empty_lockless(&sk->sk_receive_queue))
-			break;
+		अगर (!tipc_sk_type_connectionless(sk))
+			अवरोध;
+		अगर (skb_queue_empty_lockless(&sk->sk_receive_queue))
+			अवरोध;
 		revents |= EPOLLIN | EPOLLRDNORM;
-		break;
-	case TIPC_DISCONNECTING:
+		अवरोध;
+	हाल TIPC_DISCONNECTING:
 		revents = EPOLLIN | EPOLLRDNORM | EPOLLHUP;
-		break;
-	}
-	return revents;
-}
+		अवरोध;
+	पूर्ण
+	वापस revents;
+पूर्ण
 
 /**
  * tipc_sendmcast - send multicast message
- * @sock: socket structure
- * @ua: destination address struct
+ * @sock: socket काष्ठाure
+ * @ua: destination address काष्ठा
  * @msg: message to send
  * @dlen: length of data to send
- * @timeout: timeout to wait for wakeup
+ * @समयout: समयout to रुको क्रम wakeup
  *
- * Called from function tipc_sendmsg(), which has done all sanity checks
- * Return: the number of bytes sent on success, or errno
+ * Called from function tipc_sendmsg(), which has करोne all sanity checks
+ * Return: the number of bytes sent on success, or त्रुटि_सं
  */
-static int tipc_sendmcast(struct  socket *sock, struct tipc_uaddr *ua,
-			  struct msghdr *msg, size_t dlen, long timeout)
-{
-	struct sock *sk = sock->sk;
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct tipc_msg *hdr = &tsk->phdr;
-	struct net *net = sock_net(sk);
-	int mtu = tipc_bcast_get_mtu(net);
-	struct sk_buff_head pkts;
-	struct tipc_nlist dsts;
-	int rc;
+अटल पूर्णांक tipc_sendmcast(काष्ठा  socket *sock, काष्ठा tipc_uaddr *ua,
+			  काष्ठा msghdr *msg, माप_प्रकार dlen, दीर्घ समयout)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा tipc_msg *hdr = &tsk->phdr;
+	काष्ठा net *net = sock_net(sk);
+	पूर्णांक mtu = tipc_bcast_get_mtu(net);
+	काष्ठा sk_buff_head pkts;
+	काष्ठा tipc_nlist dsts;
+	पूर्णांक rc;
 
-	if (tsk->group)
-		return -EACCES;
+	अगर (tsk->group)
+		वापस -EACCES;
 
-	/* Block or return if any destination link is congested */
-	rc = tipc_wait_for_cond(sock, &timeout, !tsk->cong_link_cnt);
-	if (unlikely(rc))
-		return rc;
+	/* Block or वापस अगर any destination link is congested */
+	rc = tipc_रुको_क्रम_cond(sock, &समयout, !tsk->cong_link_cnt);
+	अगर (unlikely(rc))
+		वापस rc;
 
 	/* Lookup destination nodes */
 	tipc_nlist_init(&dsts, tipc_own_addr(net));
 	tipc_nametbl_lookup_mcast_nodes(net, ua, &dsts);
-	if (!dsts.local && !dsts.remote)
-		return -EHOSTUNREACH;
+	अगर (!dsts.local && !dsts.remote)
+		वापस -EHOSTUNREACH;
 
 	/* Build message header */
 	msg_set_type(hdr, TIPC_MCAST_MSG);
@@ -880,18 +881,18 @@ static int tipc_sendmcast(struct  socket *sock, struct tipc_uaddr *ua,
 	__skb_queue_head_init(&pkts);
 	rc = tipc_msg_build(hdr, msg, 0, dlen, mtu, &pkts);
 
-	/* Send message if build was successful */
-	if (unlikely(rc == dlen)) {
+	/* Send message अगर build was successful */
+	अगर (unlikely(rc == dlen)) अणु
 		trace_tipc_sk_sendmcast(sk, skb_peek(&pkts),
 					TIPC_DUMP_SK_SNDQ, " ");
 		rc = tipc_mcast_xmit(net, &pkts, &tsk->mc_method, &dsts,
 				     &tsk->cong_link_cnt);
-	}
+	पूर्ण
 
 	tipc_nlist_purge(&dsts);
 
-	return rc ? rc : dlen;
-}
+	वापस rc ? rc : dlen;
+पूर्ण
 
 /**
  * tipc_send_group_msg - send a message to a member in the group
@@ -903,16 +904,16 @@ static int tipc_sendmcast(struct  socket *sock, struct tipc_uaddr *ua,
  * @dport: destination port
  * @dlen: total length of message data
  */
-static int tipc_send_group_msg(struct net *net, struct tipc_sock *tsk,
-			       struct msghdr *m, struct tipc_member *mb,
-			       u32 dnode, u32 dport, int dlen)
-{
+अटल पूर्णांक tipc_send_group_msg(काष्ठा net *net, काष्ठा tipc_sock *tsk,
+			       काष्ठा msghdr *m, काष्ठा tipc_member *mb,
+			       u32 dnode, u32 dport, पूर्णांक dlen)
+अणु
 	u16 bc_snd_nxt = tipc_group_bc_snd_nxt(tsk->group);
-	struct tipc_mc_method *method = &tsk->mc_method;
-	int blks = tsk_blocks(GROUP_H_SIZE + dlen);
-	struct tipc_msg *hdr = &tsk->phdr;
-	struct sk_buff_head pkts;
-	int mtu, rc;
+	काष्ठा tipc_mc_method *method = &tsk->mc_method;
+	पूर्णांक blks = tsk_blocks(GROUP_H_SIZE + dlen);
+	काष्ठा tipc_msg *hdr = &tsk->phdr;
+	काष्ठा sk_buff_head pkts;
+	पूर्णांक mtu, rc;
 
 	/* Complete message header */
 	msg_set_type(hdr, TIPC_GRP_UCAST_MSG);
@@ -925,245 +926,245 @@ static int tipc_send_group_msg(struct net *net, struct tipc_sock *tsk,
 	__skb_queue_head_init(&pkts);
 	mtu = tipc_node_get_mtu(net, dnode, tsk->portid, false);
 	rc = tipc_msg_build(hdr, m, 0, dlen, mtu, &pkts);
-	if (unlikely(rc != dlen))
-		return rc;
+	अगर (unlikely(rc != dlen))
+		वापस rc;
 
 	/* Send message */
 	rc = tipc_node_xmit(net, &pkts, dnode, tsk->portid);
-	if (unlikely(rc == -ELINKCONG)) {
+	अगर (unlikely(rc == -ELINKCONG)) अणु
 		tipc_dest_push(&tsk->cong_links, dnode, 0);
 		tsk->cong_link_cnt++;
-	}
+	पूर्ण
 
-	/* Update send window */
+	/* Update send winकरोw */
 	tipc_group_update_member(mb, blks);
 
 	/* A broadcast sent within next EXPIRE period must follow same path */
 	method->rcast = true;
 	method->mandatory = true;
-	return dlen;
-}
+	वापस dlen;
+पूर्ण
 
 /**
  * tipc_send_group_unicast - send message to a member in the group
- * @sock: socket structure
+ * @sock: socket काष्ठाure
  * @m: message to send
  * @dlen: total length of message data
- * @timeout: timeout to wait for wakeup
+ * @समयout: समयout to रुको क्रम wakeup
  *
- * Called from function tipc_sendmsg(), which has done all sanity checks
- * Return: the number of bytes sent on success, or errno
+ * Called from function tipc_sendmsg(), which has करोne all sanity checks
+ * Return: the number of bytes sent on success, or त्रुटि_सं
  */
-static int tipc_send_group_unicast(struct socket *sock, struct msghdr *m,
-				   int dlen, long timeout)
-{
-	struct sock *sk = sock->sk;
-	struct tipc_uaddr *ua = (struct tipc_uaddr *)m->msg_name;
-	int blks = tsk_blocks(GROUP_H_SIZE + dlen);
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct net *net = sock_net(sk);
-	struct tipc_member *mb = NULL;
+अटल पूर्णांक tipc_send_group_unicast(काष्ठा socket *sock, काष्ठा msghdr *m,
+				   पूर्णांक dlen, दीर्घ समयout)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा tipc_uaddr *ua = (काष्ठा tipc_uaddr *)m->msg_name;
+	पूर्णांक blks = tsk_blocks(GROUP_H_SIZE + dlen);
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा tipc_member *mb = शून्य;
 	u32 node, port;
-	int rc;
+	पूर्णांक rc;
 
 	node = ua->sk.node;
 	port = ua->sk.ref;
-	if (!port && !node)
-		return -EHOSTUNREACH;
+	अगर (!port && !node)
+		वापस -EHOSTUNREACH;
 
-	/* Block or return if destination link or member is congested */
-	rc = tipc_wait_for_cond(sock, &timeout,
+	/* Block or वापस अगर destination link or member is congested */
+	rc = tipc_रुको_क्रम_cond(sock, &समयout,
 				!tipc_dest_find(&tsk->cong_links, node, 0) &&
 				tsk->group &&
 				!tipc_group_cong(tsk->group, node, port, blks,
 						 &mb));
-	if (unlikely(rc))
-		return rc;
+	अगर (unlikely(rc))
+		वापस rc;
 
-	if (unlikely(!mb))
-		return -EHOSTUNREACH;
+	अगर (unlikely(!mb))
+		वापस -EHOSTUNREACH;
 
 	rc = tipc_send_group_msg(net, tsk, m, mb, node, port, dlen);
 
-	return rc ? rc : dlen;
-}
+	वापस rc ? rc : dlen;
+पूर्ण
 
 /**
  * tipc_send_group_anycast - send message to any member with given identity
- * @sock: socket structure
+ * @sock: socket काष्ठाure
  * @m: message to send
  * @dlen: total length of message data
- * @timeout: timeout to wait for wakeup
+ * @समयout: समयout to रुको क्रम wakeup
  *
- * Called from function tipc_sendmsg(), which has done all sanity checks
- * Return: the number of bytes sent on success, or errno
+ * Called from function tipc_sendmsg(), which has करोne all sanity checks
+ * Return: the number of bytes sent on success, or त्रुटि_सं
  */
-static int tipc_send_group_anycast(struct socket *sock, struct msghdr *m,
-				   int dlen, long timeout)
-{
-	struct tipc_uaddr *ua = (struct tipc_uaddr *)m->msg_name;
-	struct sock *sk = sock->sk;
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct list_head *cong_links = &tsk->cong_links;
-	int blks = tsk_blocks(GROUP_H_SIZE + dlen);
-	struct tipc_msg *hdr = &tsk->phdr;
-	struct tipc_member *first = NULL;
-	struct tipc_member *mbr = NULL;
-	struct net *net = sock_net(sk);
+अटल पूर्णांक tipc_send_group_anycast(काष्ठा socket *sock, काष्ठा msghdr *m,
+				   पूर्णांक dlen, दीर्घ समयout)
+अणु
+	काष्ठा tipc_uaddr *ua = (काष्ठा tipc_uaddr *)m->msg_name;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा list_head *cong_links = &tsk->cong_links;
+	पूर्णांक blks = tsk_blocks(GROUP_H_SIZE + dlen);
+	काष्ठा tipc_msg *hdr = &tsk->phdr;
+	काष्ठा tipc_member *first = शून्य;
+	काष्ठा tipc_member *mbr = शून्य;
+	काष्ठा net *net = sock_net(sk);
 	u32 node, port, exclude;
-	struct list_head dsts;
-	int lookups = 0;
-	int dstcnt, rc;
+	काष्ठा list_head dsts;
+	पूर्णांक lookups = 0;
+	पूर्णांक dstcnt, rc;
 	bool cong;
 
 	INIT_LIST_HEAD(&dsts);
 	ua->sa.type = msg_nametype(hdr);
 	ua->scope = msg_lookup_scope(hdr);
 
-	while (++lookups < 4) {
+	जबतक (++lookups < 4) अणु
 		exclude = tipc_group_exclude(tsk->group);
 
-		first = NULL;
+		first = शून्य;
 
-		/* Look for a non-congested destination member, if any */
-		while (1) {
-			if (!tipc_nametbl_lookup_group(net, ua, &dsts, &dstcnt,
+		/* Look क्रम a non-congested destination member, अगर any */
+		जबतक (1) अणु
+			अगर (!tipc_nametbl_lookup_group(net, ua, &dsts, &dstcnt,
 						       exclude, false))
-				return -EHOSTUNREACH;
+				वापस -EHOSTUNREACH;
 			tipc_dest_pop(&dsts, &node, &port);
 			cong = tipc_group_cong(tsk->group, node, port, blks,
 					       &mbr);
-			if (!cong)
-				break;
-			if (mbr == first)
-				break;
-			if (!first)
+			अगर (!cong)
+				अवरोध;
+			अगर (mbr == first)
+				अवरोध;
+			अगर (!first)
 				first = mbr;
-		}
+		पूर्ण
 
-		/* Start over if destination was not in member list */
-		if (unlikely(!mbr))
-			continue;
+		/* Start over अगर destination was not in member list */
+		अगर (unlikely(!mbr))
+			जारी;
 
-		if (likely(!cong && !tipc_dest_find(cong_links, node, 0)))
-			break;
+		अगर (likely(!cong && !tipc_dest_find(cong_links, node, 0)))
+			अवरोध;
 
-		/* Block or return if destination link or member is congested */
-		rc = tipc_wait_for_cond(sock, &timeout,
+		/* Block or वापस अगर destination link or member is congested */
+		rc = tipc_रुको_क्रम_cond(sock, &समयout,
 					!tipc_dest_find(cong_links, node, 0) &&
 					tsk->group &&
 					!tipc_group_cong(tsk->group, node, port,
 							 blks, &mbr));
-		if (unlikely(rc))
-			return rc;
+		अगर (unlikely(rc))
+			वापस rc;
 
-		/* Send, unless destination disappeared while waiting */
-		if (likely(mbr))
-			break;
-	}
+		/* Send, unless destination disappeared जबतक रुकोing */
+		अगर (likely(mbr))
+			अवरोध;
+	पूर्ण
 
-	if (unlikely(lookups >= 4))
-		return -EHOSTUNREACH;
+	अगर (unlikely(lookups >= 4))
+		वापस -EHOSTUNREACH;
 
 	rc = tipc_send_group_msg(net, tsk, m, mbr, node, port, dlen);
 
-	return rc ? rc : dlen;
-}
+	वापस rc ? rc : dlen;
+पूर्ण
 
 /**
  * tipc_send_group_bcast - send message to all members in communication group
- * @sock: socket structure
+ * @sock: socket काष्ठाure
  * @m: message to send
  * @dlen: total length of message data
- * @timeout: timeout to wait for wakeup
+ * @समयout: समयout to रुको क्रम wakeup
  *
- * Called from function tipc_sendmsg(), which has done all sanity checks
- * Return: the number of bytes sent on success, or errno
+ * Called from function tipc_sendmsg(), which has करोne all sanity checks
+ * Return: the number of bytes sent on success, or त्रुटि_सं
  */
-static int tipc_send_group_bcast(struct socket *sock, struct msghdr *m,
-				 int dlen, long timeout)
-{
-	struct tipc_uaddr *ua = (struct tipc_uaddr *)m->msg_name;
-	struct sock *sk = sock->sk;
-	struct net *net = sock_net(sk);
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct tipc_nlist *dsts;
-	struct tipc_mc_method *method = &tsk->mc_method;
+अटल पूर्णांक tipc_send_group_bcast(काष्ठा socket *sock, काष्ठा msghdr *m,
+				 पूर्णांक dlen, दीर्घ समयout)
+अणु
+	काष्ठा tipc_uaddr *ua = (काष्ठा tipc_uaddr *)m->msg_name;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा tipc_nlist *dsts;
+	काष्ठा tipc_mc_method *method = &tsk->mc_method;
 	bool ack = method->mandatory && method->rcast;
-	int blks = tsk_blocks(MCAST_H_SIZE + dlen);
-	struct tipc_msg *hdr = &tsk->phdr;
-	int mtu = tipc_bcast_get_mtu(net);
-	struct sk_buff_head pkts;
-	int rc = -EHOSTUNREACH;
+	पूर्णांक blks = tsk_blocks(MCAST_H_SIZE + dlen);
+	काष्ठा tipc_msg *hdr = &tsk->phdr;
+	पूर्णांक mtu = tipc_bcast_get_mtu(net);
+	काष्ठा sk_buff_head pkts;
+	पूर्णांक rc = -EHOSTUNREACH;
 
-	/* Block or return if any destination link or member is congested */
-	rc = tipc_wait_for_cond(sock, &timeout,
+	/* Block or वापस अगर any destination link or member is congested */
+	rc = tipc_रुको_क्रम_cond(sock, &समयout,
 				!tsk->cong_link_cnt && tsk->group &&
 				!tipc_group_bc_cong(tsk->group, blks));
-	if (unlikely(rc))
-		return rc;
+	अगर (unlikely(rc))
+		वापस rc;
 
 	dsts = tipc_group_dests(tsk->group);
-	if (!dsts->local && !dsts->remote)
-		return -EHOSTUNREACH;
+	अगर (!dsts->local && !dsts->remote)
+		वापस -EHOSTUNREACH;
 
 	/* Complete message header */
-	if (ua) {
+	अगर (ua) अणु
 		msg_set_type(hdr, TIPC_GRP_MCAST_MSG);
 		msg_set_nameinst(hdr, ua->sa.instance);
-	} else {
+	पूर्ण अन्यथा अणु
 		msg_set_type(hdr, TIPC_GRP_BCAST_MSG);
 		msg_set_nameinst(hdr, 0);
-	}
+	पूर्ण
 	msg_set_hdr_sz(hdr, GROUP_H_SIZE);
 	msg_set_destport(hdr, 0);
 	msg_set_destnode(hdr, 0);
 	msg_set_grp_bc_seqno(hdr, tipc_group_bc_snd_nxt(tsk->group));
 
-	/* Avoid getting stuck with repeated forced replicasts */
+	/* Aव्योम getting stuck with repeated क्रमced replicasts */
 	msg_set_grp_bc_ack_req(hdr, ack);
 
 	/* Build message as chain of buffers */
 	__skb_queue_head_init(&pkts);
 	rc = tipc_msg_build(hdr, m, 0, dlen, mtu, &pkts);
-	if (unlikely(rc != dlen))
-		return rc;
+	अगर (unlikely(rc != dlen))
+		वापस rc;
 
 	/* Send message */
 	rc = tipc_mcast_xmit(net, &pkts, method, dsts, &tsk->cong_link_cnt);
-	if (unlikely(rc))
-		return rc;
+	अगर (unlikely(rc))
+		वापस rc;
 
-	/* Update broadcast sequence number and send windows */
+	/* Update broadcast sequence number and send winकरोws */
 	tipc_group_update_bc_members(tsk->group, blks, ack);
 
-	/* Broadcast link is now free to choose method for next broadcast */
+	/* Broadcast link is now मुक्त to choose method क्रम next broadcast */
 	method->mandatory = false;
-	method->expires = jiffies;
+	method->expires = jअगरfies;
 
-	return dlen;
-}
+	वापस dlen;
+पूर्ण
 
 /**
  * tipc_send_group_mcast - send message to all members with given identity
- * @sock: socket structure
+ * @sock: socket काष्ठाure
  * @m: message to send
  * @dlen: total length of message data
- * @timeout: timeout to wait for wakeup
+ * @समयout: समयout to रुको क्रम wakeup
  *
- * Called from function tipc_sendmsg(), which has done all sanity checks
- * Return: the number of bytes sent on success, or errno
+ * Called from function tipc_sendmsg(), which has करोne all sanity checks
+ * Return: the number of bytes sent on success, or त्रुटि_सं
  */
-static int tipc_send_group_mcast(struct socket *sock, struct msghdr *m,
-				 int dlen, long timeout)
-{
-	struct tipc_uaddr *ua = (struct tipc_uaddr *)m->msg_name;
-	struct sock *sk = sock->sk;
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct tipc_group *grp = tsk->group;
-	struct tipc_msg *hdr = &tsk->phdr;
-	struct net *net = sock_net(sk);
-	struct list_head dsts;
+अटल पूर्णांक tipc_send_group_mcast(काष्ठा socket *sock, काष्ठा msghdr *m,
+				 पूर्णांक dlen, दीर्घ समयout)
+अणु
+	काष्ठा tipc_uaddr *ua = (काष्ठा tipc_uaddr *)m->msg_name;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा tipc_group *grp = tsk->group;
+	काष्ठा tipc_msg *hdr = &tsk->phdr;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा list_head dsts;
 	u32 dstcnt, exclude;
 
 	INIT_LIST_HEAD(&dsts);
@@ -1171,17 +1172,17 @@ static int tipc_send_group_mcast(struct socket *sock, struct msghdr *m,
 	ua->scope = msg_lookup_scope(hdr);
 	exclude = tipc_group_exclude(grp);
 
-	if (!tipc_nametbl_lookup_group(net, ua, &dsts, &dstcnt, exclude, true))
-		return -EHOSTUNREACH;
+	अगर (!tipc_nametbl_lookup_group(net, ua, &dsts, &dstcnt, exclude, true))
+		वापस -EHOSTUNREACH;
 
-	if (dstcnt == 1) {
+	अगर (dstcnt == 1) अणु
 		tipc_dest_pop(&dsts, &ua->sk.node, &ua->sk.ref);
-		return tipc_send_group_unicast(sock, m, dlen, timeout);
-	}
+		वापस tipc_send_group_unicast(sock, m, dlen, समयout);
+	पूर्ण
 
 	tipc_dest_list_purge(&dsts);
-	return tipc_send_group_bcast(sock, m, dlen, timeout);
-}
+	वापस tipc_send_group_bcast(sock, m, dlen, समयout);
+पूर्ण
 
 /**
  * tipc_sk_mcast_rcv - Deliver multicast messages to all destination sockets
@@ -1189,27 +1190,27 @@ static int tipc_send_group_mcast(struct socket *sock, struct msghdr *m,
  * @arrvq: queue with arriving messages, to be cloned after destination lookup
  * @inputq: queue with cloned messages, delivered to socket after dest lookup
  *
- * Multi-threaded: parallel calls with reference to same queues may occur
+ * Multi-thपढ़ोed: parallel calls with reference to same queues may occur
  */
-void tipc_sk_mcast_rcv(struct net *net, struct sk_buff_head *arrvq,
-		       struct sk_buff_head *inputq)
-{
+व्योम tipc_sk_mcast_rcv(काष्ठा net *net, काष्ठा sk_buff_head *arrvq,
+		       काष्ठा sk_buff_head *inputq)
+अणु
 	u32 self = tipc_own_addr(net);
-	struct sk_buff *skb, *_skb;
+	काष्ठा sk_buff *skb, *_skb;
 	u32 portid, onode;
-	struct sk_buff_head tmpq;
-	struct list_head dports;
-	struct tipc_msg *hdr;
-	struct tipc_uaddr ua;
-	int user, mtyp, hlen;
+	काष्ठा sk_buff_head पंचांगpq;
+	काष्ठा list_head dports;
+	काष्ठा tipc_msg *hdr;
+	काष्ठा tipc_uaddr ua;
+	पूर्णांक user, mtyp, hlen;
 	bool exact;
 
-	__skb_queue_head_init(&tmpq);
+	__skb_queue_head_init(&पंचांगpq);
 	INIT_LIST_HEAD(&dports);
 	ua.addrtype = TIPC_SERVICE_RANGE;
 
 	skb = tipc_skb_peek(arrvq, &inputq->lock);
-	for (; skb; skb = tipc_skb_peek(arrvq, &inputq->lock)) {
+	क्रम (; skb; skb = tipc_skb_peek(arrvq, &inputq->lock)) अणु
 		hdr = buf_msg(skb);
 		user = msg_user(hdr);
 		mtyp = msg_type(hdr);
@@ -1217,454 +1218,454 @@ void tipc_sk_mcast_rcv(struct net *net, struct sk_buff_head *arrvq,
 		onode = msg_orignode(hdr);
 		ua.sr.type = msg_nametype(hdr);
 
-		if (mtyp == TIPC_GRP_UCAST_MSG || user == GROUP_PROTOCOL) {
+		अगर (mtyp == TIPC_GRP_UCAST_MSG || user == GROUP_PROTOCOL) अणु
 			spin_lock_bh(&inputq->lock);
-			if (skb_peek(arrvq) == skb) {
+			अगर (skb_peek(arrvq) == skb) अणु
 				__skb_dequeue(arrvq);
 				__skb_queue_tail(inputq, skb);
-			}
-			kfree_skb(skb);
+			पूर्ण
+			kमुक्त_skb(skb);
 			spin_unlock_bh(&inputq->lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Group messages require exact scope match */
-		if (msg_in_group(hdr)) {
+		अगर (msg_in_group(hdr)) अणु
 			ua.sr.lower = 0;
 			ua.sr.upper = ~0;
 			ua.scope = msg_lookup_scope(hdr);
 			exact = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* TIPC_NODE_SCOPE means "any scope" in this context */
-			if (onode == self)
+			अगर (onode == self)
 				ua.scope = TIPC_NODE_SCOPE;
-			else
+			अन्यथा
 				ua.scope = TIPC_CLUSTER_SCOPE;
 			exact = false;
 			ua.sr.lower = msg_namelower(hdr);
 			ua.sr.upper = msg_nameupper(hdr);
-		}
+		पूर्ण
 
 		/* Create destination port list: */
 		tipc_nametbl_lookup_mcast_sockets(net, &ua, exact, &dports);
 
 		/* Clone message per destination */
-		while (tipc_dest_pop(&dports, NULL, &portid)) {
+		जबतक (tipc_dest_pop(&dports, शून्य, &portid)) अणु
 			_skb = __pskb_copy(skb, hlen, GFP_ATOMIC);
-			if (_skb) {
+			अगर (_skb) अणु
 				msg_set_destport(buf_msg(_skb), portid);
-				__skb_queue_tail(&tmpq, _skb);
-				continue;
-			}
+				__skb_queue_tail(&पंचांगpq, _skb);
+				जारी;
+			पूर्ण
 			pr_warn("Failed to clone mcast rcv buffer\n");
-		}
-		/* Append to inputq if not already done by other thread */
+		पूर्ण
+		/* Append to inputq अगर not alपढ़ोy करोne by other thपढ़ो */
 		spin_lock_bh(&inputq->lock);
-		if (skb_peek(arrvq) == skb) {
-			skb_queue_splice_tail_init(&tmpq, inputq);
+		अगर (skb_peek(arrvq) == skb) अणु
+			skb_queue_splice_tail_init(&पंचांगpq, inputq);
 			/* Decrease the skb's refcnt as increasing in the
 			 * function tipc_skb_peek
 			 */
-			kfree_skb(__skb_dequeue(arrvq));
-		}
+			kमुक्त_skb(__skb_dequeue(arrvq));
+		पूर्ण
 		spin_unlock_bh(&inputq->lock);
-		__skb_queue_purge(&tmpq);
-		kfree_skb(skb);
-	}
+		__skb_queue_purge(&पंचांगpq);
+		kमुक्त_skb(skb);
+	पूर्ण
 	tipc_sk_rcv(net, inputq);
-}
+पूर्ण
 
-/* tipc_sk_push_backlog(): send accumulated buffers in socket write queue
+/* tipc_sk_push_backlog(): send accumulated buffers in socket ग_लिखो queue
  *                         when socket is in Nagle mode
  */
-static void tipc_sk_push_backlog(struct tipc_sock *tsk, bool nagle_ack)
-{
-	struct sk_buff_head *txq = &tsk->sk.sk_write_queue;
-	struct sk_buff *skb = skb_peek_tail(txq);
-	struct net *net = sock_net(&tsk->sk);
+अटल व्योम tipc_sk_push_backlog(काष्ठा tipc_sock *tsk, bool nagle_ack)
+अणु
+	काष्ठा sk_buff_head *txq = &tsk->sk.sk_ग_लिखो_queue;
+	काष्ठा sk_buff *skb = skb_peek_tail(txq);
+	काष्ठा net *net = sock_net(&tsk->sk);
 	u32 dnode = tsk_peer_node(tsk);
-	int rc;
+	पूर्णांक rc;
 
-	if (nagle_ack) {
+	अगर (nagle_ack) अणु
 		tsk->pkt_cnt += skb_queue_len(txq);
-		if (!tsk->pkt_cnt || tsk->msg_acc / tsk->pkt_cnt < 2) {
+		अगर (!tsk->pkt_cnt || tsk->msg_acc / tsk->pkt_cnt < 2) अणु
 			tsk->oneway = 0;
-			if (tsk->nagle_start < NAGLE_START_MAX)
+			अगर (tsk->nagle_start < NAGLE_START_MAX)
 				tsk->nagle_start *= 2;
 			tsk->expect_ack = false;
 			pr_debug("tsk %10u: bad nagle %u -> %u, next start %u!\n",
 				 tsk->portid, tsk->msg_acc, tsk->pkt_cnt,
 				 tsk->nagle_start);
-		} else {
+		पूर्ण अन्यथा अणु
 			tsk->nagle_start = NAGLE_START_INIT;
-			if (skb) {
+			अगर (skb) अणु
 				msg_set_ack_required(buf_msg(skb));
 				tsk->expect_ack = true;
-			} else {
+			पूर्ण अन्यथा अणु
 				tsk->expect_ack = false;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		tsk->msg_acc = 0;
 		tsk->pkt_cnt = 0;
-	}
+	पूर्ण
 
-	if (!skb || tsk->cong_link_cnt)
-		return;
+	अगर (!skb || tsk->cong_link_cnt)
+		वापस;
 
 	/* Do not send SYN again after congestion */
-	if (msg_is_syn(buf_msg(skb)))
-		return;
+	अगर (msg_is_syn(buf_msg(skb)))
+		वापस;
 
-	if (tsk->msg_acc)
+	अगर (tsk->msg_acc)
 		tsk->pkt_cnt += skb_queue_len(txq);
 	tsk->snt_unacked += tsk->snd_backlog;
 	tsk->snd_backlog = 0;
 	rc = tipc_node_xmit(net, txq, dnode, tsk->portid);
-	if (rc == -ELINKCONG)
+	अगर (rc == -ELINKCONG)
 		tsk->cong_link_cnt = 1;
-}
+पूर्ण
 
 /**
  * tipc_sk_conn_proto_rcv - receive a connection mng protocol message
  * @tsk: receiving socket
- * @skb: pointer to message buffer.
+ * @skb: poपूर्णांकer to message buffer.
  * @inputq: buffer list containing the buffers
  * @xmitq: output message area
  */
-static void tipc_sk_conn_proto_rcv(struct tipc_sock *tsk, struct sk_buff *skb,
-				   struct sk_buff_head *inputq,
-				   struct sk_buff_head *xmitq)
-{
-	struct tipc_msg *hdr = buf_msg(skb);
+अटल व्योम tipc_sk_conn_proto_rcv(काष्ठा tipc_sock *tsk, काष्ठा sk_buff *skb,
+				   काष्ठा sk_buff_head *inputq,
+				   काष्ठा sk_buff_head *xmitq)
+अणु
+	काष्ठा tipc_msg *hdr = buf_msg(skb);
 	u32 onode = tsk_own_node(tsk);
-	struct sock *sk = &tsk->sk;
-	int mtyp = msg_type(hdr);
+	काष्ठा sock *sk = &tsk->sk;
+	पूर्णांक mtyp = msg_type(hdr);
 	bool was_cong;
 
-	/* Ignore if connection cannot be validated: */
-	if (!tsk_peer_msg(tsk, hdr)) {
+	/* Ignore अगर connection cannot be validated: */
+	अगर (!tsk_peer_msg(tsk, hdr)) अणु
 		trace_tipc_sk_drop_msg(sk, skb, TIPC_DUMP_NONE, "@proto_rcv!");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (unlikely(msg_errcode(hdr))) {
+	अगर (unlikely(msg_errcode(hdr))) अणु
 		tipc_set_sk_state(sk, TIPC_DISCONNECTING);
-		tipc_node_remove_conn(sock_net(sk), tsk_peer_node(tsk),
+		tipc_node_हटाओ_conn(sock_net(sk), tsk_peer_node(tsk),
 				      tsk_peer_port(tsk));
 		sk->sk_state_change(sk);
 
-		/* State change is ignored if socket already awake,
-		 * - convert msg to abort msg and add to inqueue
+		/* State change is ignored अगर socket alपढ़ोy awake,
+		 * - convert msg to पात msg and add to inqueue
 		 */
 		msg_set_user(hdr, TIPC_CRITICAL_IMPORTANCE);
 		msg_set_type(hdr, TIPC_CONN_MSG);
 		msg_set_size(hdr, BASIC_H_SIZE);
 		msg_set_hdr_sz(hdr, BASIC_H_SIZE);
 		__skb_queue_tail(inputq, skb);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	tsk->probe_unacked = false;
 
-	if (mtyp == CONN_PROBE) {
+	अगर (mtyp == CONN_PROBE) अणु
 		msg_set_type(hdr, CONN_PROBE_REPLY);
-		if (tipc_msg_reverse(onode, &skb, TIPC_OK))
+		अगर (tipc_msg_reverse(onode, &skb, TIPC_OK))
 			__skb_queue_tail(xmitq, skb);
-		return;
-	} else if (mtyp == CONN_ACK) {
+		वापस;
+	पूर्ण अन्यथा अगर (mtyp == CONN_ACK) अणु
 		was_cong = tsk_conn_cong(tsk);
 		tipc_sk_push_backlog(tsk, msg_nagle_ack(hdr));
 		tsk->snt_unacked -= msg_conn_ack(hdr);
-		if (tsk->peer_caps & TIPC_BLOCK_FLOWCTL)
+		अगर (tsk->peer_caps & TIPC_BLOCK_FLOWCTL)
 			tsk->snd_win = msg_adv_win(hdr);
-		if (was_cong && !tsk_conn_cong(tsk))
-			sk->sk_write_space(sk);
-	} else if (mtyp != CONN_PROBE_REPLY) {
+		अगर (was_cong && !tsk_conn_cong(tsk))
+			sk->sk_ग_लिखो_space(sk);
+	पूर्ण अन्यथा अगर (mtyp != CONN_PROBE_REPLY) अणु
 		pr_warn("Received unknown CONN_PROTO msg\n");
-	}
-exit:
-	kfree_skb(skb);
-}
+	पूर्ण
+निकास:
+	kमुक्त_skb(skb);
+पूर्ण
 
 /**
  * tipc_sendmsg - send message in connectionless manner
- * @sock: socket structure
+ * @sock: socket काष्ठाure
  * @m: message to send
  * @dsz: amount of user data to be sent
  *
- * Message must have an destination specified explicitly.
- * Used for SOCK_RDM and SOCK_DGRAM messages,
- * and for 'SYN' messages on SOCK_SEQPACKET and SOCK_STREAM connections.
+ * Message must have an destination specअगरied explicitly.
+ * Used क्रम SOCK_RDM and SOCK_DGRAM messages,
+ * and क्रम 'SYN' messages on SOCK_SEQPACKET and SOCK_STREAM connections.
  * (Note: 'SYN+' is prohibited on SOCK_STREAM.)
  *
- * Return: the number of bytes sent on success, or errno otherwise
+ * Return: the number of bytes sent on success, or त्रुटि_सं otherwise
  */
-static int tipc_sendmsg(struct socket *sock,
-			struct msghdr *m, size_t dsz)
-{
-	struct sock *sk = sock->sk;
-	int ret;
+अटल पूर्णांक tipc_sendmsg(काष्ठा socket *sock,
+			काष्ठा msghdr *m, माप_प्रकार dsz)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक ret;
 
 	lock_sock(sk);
 	ret = __tipc_sendmsg(sock, m, dsz);
 	release_sock(sk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __tipc_sendmsg(struct socket *sock, struct msghdr *m, size_t dlen)
-{
-	struct sock *sk = sock->sk;
-	struct net *net = sock_net(sk);
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct tipc_uaddr *ua = (struct tipc_uaddr *)m->msg_name;
-	long timeout = sock_sndtimeo(sk, m->msg_flags & MSG_DONTWAIT);
-	struct list_head *clinks = &tsk->cong_links;
+अटल पूर्णांक __tipc_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *m, माप_प्रकार dlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा tipc_uaddr *ua = (काष्ठा tipc_uaddr *)m->msg_name;
+	दीर्घ समयout = sock_sndसमयo(sk, m->msg_flags & MSG_DONTWAIT);
+	काष्ठा list_head *clinks = &tsk->cong_links;
 	bool syn = !tipc_sk_type_connectionless(sk);
-	struct tipc_group *grp = tsk->group;
-	struct tipc_msg *hdr = &tsk->phdr;
-	struct tipc_socket_addr skaddr;
-	struct sk_buff_head pkts;
-	int atype, mtu, rc;
+	काष्ठा tipc_group *grp = tsk->group;
+	काष्ठा tipc_msg *hdr = &tsk->phdr;
+	काष्ठा tipc_socket_addr skaddr;
+	काष्ठा sk_buff_head pkts;
+	पूर्णांक atype, mtu, rc;
 
-	if (unlikely(dlen > TIPC_MAX_USER_MSG_SIZE))
-		return -EMSGSIZE;
+	अगर (unlikely(dlen > TIPC_MAX_USER_MSG_SIZE))
+		वापस -EMSGSIZE;
 
-	if (ua) {
-		if (!tipc_uaddr_valid(ua, m->msg_namelen))
-			return -EINVAL;
+	अगर (ua) अणु
+		अगर (!tipc_uaddr_valid(ua, m->msg_namelen))
+			वापस -EINVAL;
 		 atype = ua->addrtype;
-	}
+	पूर्ण
 
-	/* If socket belongs to a communication group follow other paths */
-	if (grp) {
-		if (!ua)
-			return tipc_send_group_bcast(sock, m, dlen, timeout);
-		if (atype == TIPC_SERVICE_ADDR)
-			return tipc_send_group_anycast(sock, m, dlen, timeout);
-		if (atype == TIPC_SOCKET_ADDR)
-			return tipc_send_group_unicast(sock, m, dlen, timeout);
-		if (atype == TIPC_SERVICE_RANGE)
-			return tipc_send_group_mcast(sock, m, dlen, timeout);
-		return -EINVAL;
-	}
+	/* If socket beदीर्घs to a communication group follow other paths */
+	अगर (grp) अणु
+		अगर (!ua)
+			वापस tipc_send_group_bcast(sock, m, dlen, समयout);
+		अगर (atype == TIPC_SERVICE_ADDR)
+			वापस tipc_send_group_anycast(sock, m, dlen, समयout);
+		अगर (atype == TIPC_SOCKET_ADDR)
+			वापस tipc_send_group_unicast(sock, m, dlen, समयout);
+		अगर (atype == TIPC_SERVICE_RANGE)
+			वापस tipc_send_group_mcast(sock, m, dlen, समयout);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!ua) {
-		ua = (struct tipc_uaddr *)&tsk->peer;
-		if (!syn && ua->family != AF_TIPC)
-			return -EDESTADDRREQ;
+	अगर (!ua) अणु
+		ua = (काष्ठा tipc_uaddr *)&tsk->peer;
+		अगर (!syn && ua->family != AF_TIPC)
+			वापस -EDESTADDRREQ;
 		atype = ua->addrtype;
-	}
+	पूर्ण
 
-	if (unlikely(syn)) {
-		if (sk->sk_state == TIPC_LISTEN)
-			return -EPIPE;
-		if (sk->sk_state != TIPC_OPEN)
-			return -EISCONN;
-		if (tsk->published)
-			return -EOPNOTSUPP;
-		if (atype == TIPC_SERVICE_ADDR) {
+	अगर (unlikely(syn)) अणु
+		अगर (sk->sk_state == TIPC_LISTEN)
+			वापस -EPIPE;
+		अगर (sk->sk_state != TIPC_OPEN)
+			वापस -EISCONN;
+		अगर (tsk->published)
+			वापस -EOPNOTSUPP;
+		अगर (atype == TIPC_SERVICE_ADDR) अणु
 			tsk->conn_type = ua->sa.type;
 			tsk->conn_instance = ua->sa.instance;
-		}
+		पूर्ण
 		msg_set_syn(hdr, 1);
-	}
+	पूर्ण
 
 	/* Determine destination */
-	if (atype == TIPC_SERVICE_RANGE) {
-		return tipc_sendmcast(sock, ua, m, dlen, timeout);
-	} else if (atype == TIPC_SERVICE_ADDR) {
+	अगर (atype == TIPC_SERVICE_RANGE) अणु
+		वापस tipc_sendmcast(sock, ua, m, dlen, समयout);
+	पूर्ण अन्यथा अगर (atype == TIPC_SERVICE_ADDR) अणु
 		skaddr.node = ua->lookup_node;
 		ua->scope = tipc_node2scope(skaddr.node);
-		if (!tipc_nametbl_lookup_anycast(net, ua, &skaddr))
-			return -EHOSTUNREACH;
-	} else if (atype == TIPC_SOCKET_ADDR) {
+		अगर (!tipc_nametbl_lookup_anycast(net, ua, &skaddr))
+			वापस -EHOSTUNREACH;
+	पूर्ण अन्यथा अगर (atype == TIPC_SOCKET_ADDR) अणु
 		skaddr = ua->sk;
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Block or return if destination link is congested */
-	rc = tipc_wait_for_cond(sock, &timeout,
+	/* Block or वापस अगर destination link is congested */
+	rc = tipc_रुको_क्रम_cond(sock, &समयout,
 				!tipc_dest_find(clinks, skaddr.node, 0));
-	if (unlikely(rc))
-		return rc;
+	अगर (unlikely(rc))
+		वापस rc;
 
 	/* Finally build message header */
 	msg_set_destnode(hdr, skaddr.node);
 	msg_set_destport(hdr, skaddr.ref);
-	if (atype == TIPC_SERVICE_ADDR) {
+	अगर (atype == TIPC_SERVICE_ADDR) अणु
 		msg_set_type(hdr, TIPC_NAMED_MSG);
 		msg_set_hdr_sz(hdr, NAMED_H_SIZE);
 		msg_set_nametype(hdr, ua->sa.type);
 		msg_set_nameinst(hdr, ua->sa.instance);
 		msg_set_lookup_scope(hdr, ua->scope);
-	} else { /* TIPC_SOCKET_ADDR */
-		msg_set_type(hdr, TIPC_DIRECT_MSG);
+	पूर्ण अन्यथा अणु /* TIPC_SOCKET_ADDR */
+		msg_set_type(hdr, TIPC_सूचीECT_MSG);
 		msg_set_lookup_scope(hdr, 0);
 		msg_set_hdr_sz(hdr, BASIC_H_SIZE);
-	}
+	पूर्ण
 
 	/* Add message body */
 	__skb_queue_head_init(&pkts);
 	mtu = tipc_node_get_mtu(net, skaddr.node, tsk->portid, true);
 	rc = tipc_msg_build(hdr, m, 0, dlen, mtu, &pkts);
-	if (unlikely(rc != dlen))
-		return rc;
-	if (unlikely(syn && !tipc_msg_skb_clone(&pkts, &sk->sk_write_queue))) {
+	अगर (unlikely(rc != dlen))
+		वापस rc;
+	अगर (unlikely(syn && !tipc_msg_skb_clone(&pkts, &sk->sk_ग_लिखो_queue))) अणु
 		__skb_queue_purge(&pkts);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Send message */
 	trace_tipc_sk_sendmsg(sk, skb_peek(&pkts), TIPC_DUMP_SK_SNDQ, " ");
 	rc = tipc_node_xmit(net, &pkts, skaddr.node, tsk->portid);
-	if (unlikely(rc == -ELINKCONG)) {
+	अगर (unlikely(rc == -ELINKCONG)) अणु
 		tipc_dest_push(clinks, skaddr.node, 0);
 		tsk->cong_link_cnt++;
 		rc = 0;
-	}
+	पूर्ण
 
-	if (unlikely(syn && !rc))
+	अगर (unlikely(syn && !rc))
 		tipc_set_sk_state(sk, TIPC_CONNECTING);
 
-	return rc ? rc : dlen;
-}
+	वापस rc ? rc : dlen;
+पूर्ण
 
 /**
  * tipc_sendstream - send stream-oriented data
- * @sock: socket structure
+ * @sock: socket काष्ठाure
  * @m: data to send
  * @dsz: total length of data to be transmitted
  *
- * Used for SOCK_STREAM data.
+ * Used क्रम SOCK_STREAM data.
  *
  * Return: the number of bytes sent on success (or partial success),
- * or errno if no data sent
+ * or त्रुटि_सं अगर no data sent
  */
-static int tipc_sendstream(struct socket *sock, struct msghdr *m, size_t dsz)
-{
-	struct sock *sk = sock->sk;
-	int ret;
+अटल पूर्णांक tipc_sendstream(काष्ठा socket *sock, काष्ठा msghdr *m, माप_प्रकार dsz)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक ret;
 
 	lock_sock(sk);
 	ret = __tipc_sendstream(sock, m, dsz);
 	release_sock(sk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __tipc_sendstream(struct socket *sock, struct msghdr *m, size_t dlen)
-{
-	struct sock *sk = sock->sk;
-	DECLARE_SOCKADDR(struct sockaddr_tipc *, dest, m->msg_name);
-	long timeout = sock_sndtimeo(sk, m->msg_flags & MSG_DONTWAIT);
-	struct sk_buff_head *txq = &sk->sk_write_queue;
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct tipc_msg *hdr = &tsk->phdr;
-	struct net *net = sock_net(sk);
-	struct sk_buff *skb;
+अटल पूर्णांक __tipc_sendstream(काष्ठा socket *sock, काष्ठा msghdr *m, माप_प्रकार dlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	DECLARE_SOCKADDR(काष्ठा sockaddr_tipc *, dest, m->msg_name);
+	दीर्घ समयout = sock_sndसमयo(sk, m->msg_flags & MSG_DONTWAIT);
+	काष्ठा sk_buff_head *txq = &sk->sk_ग_लिखो_queue;
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा tipc_msg *hdr = &tsk->phdr;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा sk_buff *skb;
 	u32 dnode = tsk_peer_node(tsk);
-	int maxnagle = tsk->maxnagle;
-	int maxpkt = tsk->max_pkt;
-	int send, sent = 0;
-	int blocks, rc = 0;
+	पूर्णांक maxnagle = tsk->maxnagle;
+	पूर्णांक maxpkt = tsk->max_pkt;
+	पूर्णांक send, sent = 0;
+	पूर्णांक blocks, rc = 0;
 
-	if (unlikely(dlen > INT_MAX))
-		return -EMSGSIZE;
+	अगर (unlikely(dlen > पूर्णांक_उच्च))
+		वापस -EMSGSIZE;
 
 	/* Handle implicit connection setup */
-	if (unlikely(dest)) {
+	अगर (unlikely(dest)) अणु
 		rc = __tipc_sendmsg(sock, m, dlen);
-		if (dlen && dlen == rc) {
+		अगर (dlen && dlen == rc) अणु
 			tsk->peer_caps = tipc_node_get_capabilities(net, dnode);
 			tsk->snt_unacked = tsk_inc(tsk, dlen + msg_hdr_sz(hdr));
-		}
-		return rc;
-	}
+		पूर्ण
+		वापस rc;
+	पूर्ण
 
-	do {
-		rc = tipc_wait_for_cond(sock, &timeout,
+	करो अणु
+		rc = tipc_रुको_क्रम_cond(sock, &समयout,
 					(!tsk->cong_link_cnt &&
 					 !tsk_conn_cong(tsk) &&
 					 tipc_sk_connected(sk)));
-		if (unlikely(rc))
-			break;
-		send = min_t(size_t, dlen - sent, TIPC_MAX_USER_MSG_SIZE);
+		अगर (unlikely(rc))
+			अवरोध;
+		send = min_t(माप_प्रकार, dlen - sent, TIPC_MAX_USER_MSG_SIZE);
 		blocks = tsk->snd_backlog;
-		if (tsk->oneway++ >= tsk->nagle_start && maxnagle &&
-		    send <= maxnagle) {
+		अगर (tsk->oneway++ >= tsk->nagle_start && maxnagle &&
+		    send <= maxnagle) अणु
 			rc = tipc_msg_append(hdr, m, send, maxnagle, txq);
-			if (unlikely(rc < 0))
-				break;
+			अगर (unlikely(rc < 0))
+				अवरोध;
 			blocks += rc;
 			tsk->msg_acc++;
-			if (blocks <= 64 && tsk->expect_ack) {
+			अगर (blocks <= 64 && tsk->expect_ack) अणु
 				tsk->snd_backlog = blocks;
 				sent += send;
-				break;
-			} else if (blocks > 64) {
+				अवरोध;
+			पूर्ण अन्यथा अगर (blocks > 64) अणु
 				tsk->pkt_cnt += skb_queue_len(txq);
-			} else {
+			पूर्ण अन्यथा अणु
 				skb = skb_peek_tail(txq);
-				if (skb) {
+				अगर (skb) अणु
 					msg_set_ack_required(buf_msg(skb));
 					tsk->expect_ack = true;
-				} else {
+				पूर्ण अन्यथा अणु
 					tsk->expect_ack = false;
-				}
+				पूर्ण
 				tsk->msg_acc = 0;
 				tsk->pkt_cnt = 0;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			rc = tipc_msg_build(hdr, m, sent, send, maxpkt, txq);
-			if (unlikely(rc != send))
-				break;
+			अगर (unlikely(rc != send))
+				अवरोध;
 			blocks += tsk_inc(tsk, send + MIN_H_SIZE);
-		}
+		पूर्ण
 		trace_tipc_sk_sendstream(sk, skb_peek(txq),
 					 TIPC_DUMP_SK_SNDQ, " ");
 		rc = tipc_node_xmit(net, txq, dnode, tsk->portid);
-		if (unlikely(rc == -ELINKCONG)) {
+		अगर (unlikely(rc == -ELINKCONG)) अणु
 			tsk->cong_link_cnt = 1;
 			rc = 0;
-		}
-		if (likely(!rc)) {
+		पूर्ण
+		अगर (likely(!rc)) अणु
 			tsk->snt_unacked += blocks;
 			tsk->snd_backlog = 0;
 			sent += send;
-		}
-	} while (sent < dlen && !rc);
+		पूर्ण
+	पूर्ण जबतक (sent < dlen && !rc);
 
-	return sent ? sent : rc;
-}
+	वापस sent ? sent : rc;
+पूर्ण
 
 /**
  * tipc_send_packet - send a connection-oriented message
- * @sock: socket structure
+ * @sock: socket काष्ठाure
  * @m: message to send
  * @dsz: length of data to be transmitted
  *
- * Used for SOCK_SEQPACKET messages.
+ * Used क्रम SOCK_SEQPACKET messages.
  *
- * Return: the number of bytes sent on success, or errno otherwise
+ * Return: the number of bytes sent on success, or त्रुटि_सं otherwise
  */
-static int tipc_send_packet(struct socket *sock, struct msghdr *m, size_t dsz)
-{
-	if (dsz > TIPC_MAX_USER_MSG_SIZE)
-		return -EMSGSIZE;
+अटल पूर्णांक tipc_send_packet(काष्ठा socket *sock, काष्ठा msghdr *m, माप_प्रकार dsz)
+अणु
+	अगर (dsz > TIPC_MAX_USER_MSG_SIZE)
+		वापस -EMSGSIZE;
 
-	return tipc_sendstream(sock, m, dsz);
-}
+	वापस tipc_sendstream(sock, m, dsz);
+पूर्ण
 
 /* tipc_sk_finish_conn - complete the setup of a connection
  */
-static void tipc_sk_finish_conn(struct tipc_sock *tsk, u32 peer_port,
+अटल व्योम tipc_sk_finish_conn(काष्ठा tipc_sock *tsk, u32 peer_port,
 				u32 peer_node)
-{
-	struct sock *sk = &tsk->sk;
-	struct net *net = sock_net(sk);
-	struct tipc_msg *msg = &tsk->phdr;
+अणु
+	काष्ठा sock *sk = &tsk->sk;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा tipc_msg *msg = &tsk->phdr;
 
 	msg_set_syn(msg, 0);
 	msg_set_destnode(msg, peer_node);
@@ -1673,46 +1674,46 @@ static void tipc_sk_finish_conn(struct tipc_sock *tsk, u32 peer_port,
 	msg_set_lookup_scope(msg, 0);
 	msg_set_hdr_sz(msg, SHORT_H_SIZE);
 
-	sk_reset_timer(sk, &sk->sk_timer, jiffies + CONN_PROBING_INTV);
+	sk_reset_समयr(sk, &sk->sk_समयr, jअगरfies + CONN_PROBING_INTV);
 	tipc_set_sk_state(sk, TIPC_ESTABLISHED);
 	tipc_node_add_conn(net, peer_node, tsk->portid, peer_port);
 	tsk->max_pkt = tipc_node_get_mtu(net, peer_node, tsk->portid, true);
 	tsk->peer_caps = tipc_node_get_capabilities(net, peer_node);
 	tsk_set_nagle(tsk);
-	__skb_queue_purge(&sk->sk_write_queue);
-	if (tsk->peer_caps & TIPC_BLOCK_FLOWCTL)
-		return;
+	__skb_queue_purge(&sk->sk_ग_लिखो_queue);
+	अगर (tsk->peer_caps & TIPC_BLOCK_FLOWCTL)
+		वापस;
 
 	/* Fall back to message based flow control */
 	tsk->rcv_win = FLOWCTL_MSG_WIN;
 	tsk->snd_win = FLOWCTL_MSG_WIN;
-}
+पूर्ण
 
 /**
- * tipc_sk_set_orig_addr - capture sender's address for received message
- * @m: descriptor for message info
+ * tipc_sk_set_orig_addr - capture sender's address क्रम received message
+ * @m: descriptor क्रम message info
  * @skb: received message
  *
- * Note: Address is not captured if not requested by receiver.
+ * Note: Address is not captured अगर not requested by receiver.
  */
-static void tipc_sk_set_orig_addr(struct msghdr *m, struct sk_buff *skb)
-{
-	DECLARE_SOCKADDR(struct sockaddr_pair *, srcaddr, m->msg_name);
-	struct tipc_msg *hdr = buf_msg(skb);
+अटल व्योम tipc_sk_set_orig_addr(काष्ठा msghdr *m, काष्ठा sk_buff *skb)
+अणु
+	DECLARE_SOCKADDR(काष्ठा sockaddr_pair *, srcaddr, m->msg_name);
+	काष्ठा tipc_msg *hdr = buf_msg(skb);
 
-	if (!srcaddr)
-		return;
+	अगर (!srcaddr)
+		वापस;
 
 	srcaddr->sock.family = AF_TIPC;
 	srcaddr->sock.addrtype = TIPC_SOCKET_ADDR;
 	srcaddr->sock.scope = 0;
 	srcaddr->sock.addr.id.ref = msg_origport(hdr);
 	srcaddr->sock.addr.id.node = msg_orignode(hdr);
-	srcaddr->sock.addr.name.domain = 0;
-	m->msg_namelen = sizeof(struct sockaddr_tipc);
+	srcaddr->sock.addr.name.करोमुख्य = 0;
+	m->msg_namelen = माप(काष्ठा sockaddr_tipc);
 
-	if (!msg_in_group(hdr))
-		return;
+	अगर (!msg_in_group(hdr))
+		वापस;
 
 	/* Group message users may also want to know sending member's id */
 	srcaddr->member.family = AF_TIPC;
@@ -1720,318 +1721,318 @@ static void tipc_sk_set_orig_addr(struct msghdr *m, struct sk_buff *skb)
 	srcaddr->member.scope = 0;
 	srcaddr->member.addr.name.name.type = msg_nametype(hdr);
 	srcaddr->member.addr.name.name.instance = TIPC_SKB_CB(skb)->orig_member;
-	srcaddr->member.addr.name.domain = 0;
-	m->msg_namelen = sizeof(*srcaddr);
-}
+	srcaddr->member.addr.name.करोमुख्य = 0;
+	m->msg_namelen = माप(*srcaddr);
+पूर्ण
 
 /**
- * tipc_sk_anc_data_recv - optionally capture ancillary data for received message
- * @m: descriptor for message info
+ * tipc_sk_anc_data_recv - optionally capture ancillary data क्रम received message
+ * @m: descriptor क्रम message info
  * @skb: received message buffer
  * @tsk: TIPC port associated with message
  *
- * Note: Ancillary data is not captured if not requested by receiver.
+ * Note: Ancillary data is not captured अगर not requested by receiver.
  *
- * Return: 0 if successful, otherwise errno
+ * Return: 0 अगर successful, otherwise त्रुटि_सं
  */
-static int tipc_sk_anc_data_recv(struct msghdr *m, struct sk_buff *skb,
-				 struct tipc_sock *tsk)
-{
-	struct tipc_msg *msg;
+अटल पूर्णांक tipc_sk_anc_data_recv(काष्ठा msghdr *m, काष्ठा sk_buff *skb,
+				 काष्ठा tipc_sock *tsk)
+अणु
+	काष्ठा tipc_msg *msg;
 	u32 anc_data[3];
 	u32 err;
 	u32 dest_type;
-	int has_name;
-	int res;
+	पूर्णांक has_name;
+	पूर्णांक res;
 
-	if (likely(m->msg_controllen == 0))
-		return 0;
+	अगर (likely(m->msg_controllen == 0))
+		वापस 0;
 	msg = buf_msg(skb);
 
 	/* Optionally capture errored message object(s) */
 	err = msg ? msg_errcode(msg) : 0;
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		anc_data[0] = err;
 		anc_data[1] = msg_data_sz(msg);
 		res = put_cmsg(m, SOL_TIPC, TIPC_ERRINFO, 8, anc_data);
-		if (res)
-			return res;
-		if (anc_data[1]) {
-			if (skb_linearize(skb))
-				return -ENOMEM;
+		अगर (res)
+			वापस res;
+		अगर (anc_data[1]) अणु
+			अगर (skb_linearize(skb))
+				वापस -ENOMEM;
 			msg = buf_msg(skb);
 			res = put_cmsg(m, SOL_TIPC, TIPC_RETDATA, anc_data[1],
 				       msg_data(msg));
-			if (res)
-				return res;
-		}
-	}
+			अगर (res)
+				वापस res;
+		पूर्ण
+	पूर्ण
 
 	/* Optionally capture message destination object */
-	dest_type = msg ? msg_type(msg) : TIPC_DIRECT_MSG;
-	switch (dest_type) {
-	case TIPC_NAMED_MSG:
+	dest_type = msg ? msg_type(msg) : TIPC_सूचीECT_MSG;
+	चयन (dest_type) अणु
+	हाल TIPC_NAMED_MSG:
 		has_name = 1;
 		anc_data[0] = msg_nametype(msg);
 		anc_data[1] = msg_namelower(msg);
 		anc_data[2] = msg_namelower(msg);
-		break;
-	case TIPC_MCAST_MSG:
+		अवरोध;
+	हाल TIPC_MCAST_MSG:
 		has_name = 1;
 		anc_data[0] = msg_nametype(msg);
 		anc_data[1] = msg_namelower(msg);
 		anc_data[2] = msg_nameupper(msg);
-		break;
-	case TIPC_CONN_MSG:
+		अवरोध;
+	हाल TIPC_CONN_MSG:
 		has_name = (tsk->conn_type != 0);
 		anc_data[0] = tsk->conn_type;
 		anc_data[1] = tsk->conn_instance;
 		anc_data[2] = tsk->conn_instance;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		has_name = 0;
-	}
-	if (has_name) {
+	पूर्ण
+	अगर (has_name) अणु
 		res = put_cmsg(m, SOL_TIPC, TIPC_DESTNAME, 12, anc_data);
-		if (res)
-			return res;
-	}
+		अगर (res)
+			वापस res;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sk_buff *tipc_sk_build_ack(struct tipc_sock *tsk)
-{
-	struct sock *sk = &tsk->sk;
-	struct sk_buff *skb = NULL;
-	struct tipc_msg *msg;
+अटल काष्ठा sk_buff *tipc_sk_build_ack(काष्ठा tipc_sock *tsk)
+अणु
+	काष्ठा sock *sk = &tsk->sk;
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा tipc_msg *msg;
 	u32 peer_port = tsk_peer_port(tsk);
 	u32 dnode = tsk_peer_node(tsk);
 
-	if (!tipc_sk_connected(sk))
-		return NULL;
+	अगर (!tipc_sk_connected(sk))
+		वापस शून्य;
 	skb = tipc_msg_create(CONN_MANAGER, CONN_ACK, INT_H_SIZE, 0,
 			      dnode, tsk_own_node(tsk), peer_port,
 			      tsk->portid, TIPC_OK);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 	msg = buf_msg(skb);
 	msg_set_conn_ack(msg, tsk->rcv_unacked);
 	tsk->rcv_unacked = 0;
 
-	/* Adjust to and advertize the correct window limit */
-	if (tsk->peer_caps & TIPC_BLOCK_FLOWCTL) {
+	/* Adjust to and advertize the correct winकरोw limit */
+	अगर (tsk->peer_caps & TIPC_BLOCK_FLOWCTL) अणु
 		tsk->rcv_win = tsk_adv_blocks(tsk->sk.sk_rcvbuf);
 		msg_set_adv_win(msg, tsk->rcv_win);
-	}
-	return skb;
-}
+	पूर्ण
+	वापस skb;
+पूर्ण
 
-static void tipc_sk_send_ack(struct tipc_sock *tsk)
-{
-	struct sk_buff *skb;
+अटल व्योम tipc_sk_send_ack(काष्ठा tipc_sock *tsk)
+अणु
+	काष्ठा sk_buff *skb;
 
 	skb = tipc_sk_build_ack(tsk);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
 	tipc_node_xmit_skb(sock_net(&tsk->sk), skb, tsk_peer_node(tsk),
 			   msg_link_selector(buf_msg(skb)));
-}
+पूर्ण
 
-static int tipc_wait_for_rcvmsg(struct socket *sock, long *timeop)
-{
-	struct sock *sk = sock->sk;
-	DEFINE_WAIT_FUNC(wait, woken_wake_function);
-	long timeo = *timeop;
-	int err = sock_error(sk);
+अटल पूर्णांक tipc_रुको_क्रम_rcvmsg(काष्ठा socket *sock, दीर्घ *समयop)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+	दीर्घ समयo = *समयop;
+	पूर्णांक err = sock_error(sk);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (;;) {
-		if (timeo && skb_queue_empty(&sk->sk_receive_queue)) {
-			if (sk->sk_shutdown & RCV_SHUTDOWN) {
+	क्रम (;;) अणु
+		अगर (समयo && skb_queue_empty(&sk->sk_receive_queue)) अणु
+			अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN) अणु
 				err = -ENOTCONN;
-				break;
-			}
-			add_wait_queue(sk_sleep(sk), &wait);
+				अवरोध;
+			पूर्ण
+			add_रुको_queue(sk_sleep(sk), &रुको);
 			release_sock(sk);
-			timeo = wait_woken(&wait, TASK_INTERRUPTIBLE, timeo);
+			समयo = रुको_woken(&रुको, TASK_INTERRUPTIBLE, समयo);
 			sched_annotate_sleep();
 			lock_sock(sk);
-			remove_wait_queue(sk_sleep(sk), &wait);
-		}
+			हटाओ_रुको_queue(sk_sleep(sk), &रुको);
+		पूर्ण
 		err = 0;
-		if (!skb_queue_empty(&sk->sk_receive_queue))
-			break;
+		अगर (!skb_queue_empty(&sk->sk_receive_queue))
+			अवरोध;
 		err = -EAGAIN;
-		if (!timeo)
-			break;
-		err = sock_intr_errno(timeo);
-		if (signal_pending(current))
-			break;
+		अगर (!समयo)
+			अवरोध;
+		err = sock_पूर्णांकr_त्रुटि_सं(समयo);
+		अगर (संकेत_pending(current))
+			अवरोध;
 
 		err = sock_error(sk);
-		if (err)
-			break;
-	}
-	*timeop = timeo;
-	return err;
-}
+		अगर (err)
+			अवरोध;
+	पूर्ण
+	*समयop = समयo;
+	वापस err;
+पूर्ण
 
 /**
  * tipc_recvmsg - receive packet-oriented message
  * @sock: network socket
- * @m: descriptor for message info
+ * @m: descriptor क्रम message info
  * @buflen: length of user buffer area
  * @flags: receive flags
  *
- * Used for SOCK_DGRAM, SOCK_RDM, and SOCK_SEQPACKET messages.
- * If the complete message doesn't fit in user area, truncate it.
+ * Used क्रम SOCK_DGRAM, SOCK_RDM, and SOCK_SEQPACKET messages.
+ * If the complete message करोesn't fit in user area, truncate it.
  *
- * Return: size of returned message data, errno otherwise
+ * Return: size of वापसed message data, त्रुटि_सं otherwise
  */
-static int tipc_recvmsg(struct socket *sock, struct msghdr *m,
-			size_t buflen,	int flags)
-{
-	struct sock *sk = sock->sk;
+अटल पूर्णांक tipc_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *m,
+			माप_प्रकार buflen,	पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
 	bool connected = !tipc_sk_type_connectionless(sk);
-	struct tipc_sock *tsk = tipc_sk(sk);
-	int rc, err, hlen, dlen, copy;
-	struct sk_buff_head xmitq;
-	struct tipc_msg *hdr;
-	struct sk_buff *skb;
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	पूर्णांक rc, err, hlen, dlen, copy;
+	काष्ठा sk_buff_head xmitq;
+	काष्ठा tipc_msg *hdr;
+	काष्ठा sk_buff *skb;
 	bool grp_evt;
-	long timeout;
+	दीर्घ समयout;
 
 	/* Catch invalid receive requests */
-	if (unlikely(!buflen))
-		return -EINVAL;
+	अगर (unlikely(!buflen))
+		वापस -EINVAL;
 
 	lock_sock(sk);
-	if (unlikely(connected && sk->sk_state == TIPC_OPEN)) {
+	अगर (unlikely(connected && sk->sk_state == TIPC_OPEN)) अणु
 		rc = -ENOTCONN;
-		goto exit;
-	}
-	timeout = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
+		जाओ निकास;
+	पूर्ण
+	समयout = sock_rcvसमयo(sk, flags & MSG_DONTWAIT);
 
-	/* Step rcv queue to first msg with data or error; wait if necessary */
-	do {
-		rc = tipc_wait_for_rcvmsg(sock, &timeout);
-		if (unlikely(rc))
-			goto exit;
+	/* Step rcv queue to first msg with data or error; रुको अगर necessary */
+	करो अणु
+		rc = tipc_रुको_क्रम_rcvmsg(sock, &समयout);
+		अगर (unlikely(rc))
+			जाओ निकास;
 		skb = skb_peek(&sk->sk_receive_queue);
 		hdr = buf_msg(skb);
 		dlen = msg_data_sz(hdr);
 		hlen = msg_hdr_sz(hdr);
 		err = msg_errcode(hdr);
 		grp_evt = msg_is_grp_evt(hdr);
-		if (likely(dlen || err))
-			break;
+		अगर (likely(dlen || err))
+			अवरोध;
 		tsk_advance_rx_queue(sk);
-	} while (1);
+	पूर्ण जबतक (1);
 
 	/* Collect msg meta data, including error code and rejected data */
 	tipc_sk_set_orig_addr(m, skb);
 	rc = tipc_sk_anc_data_recv(m, skb, tsk);
-	if (unlikely(rc))
-		goto exit;
+	अगर (unlikely(rc))
+		जाओ निकास;
 	hdr = buf_msg(skb);
 
-	/* Capture data if non-error msg, otherwise just set return value */
-	if (likely(!err)) {
-		copy = min_t(int, dlen, buflen);
-		if (unlikely(copy != dlen))
+	/* Capture data अगर non-error msg, otherwise just set वापस value */
+	अगर (likely(!err)) अणु
+		copy = min_t(पूर्णांक, dlen, buflen);
+		अगर (unlikely(copy != dlen))
 			m->msg_flags |= MSG_TRUNC;
 		rc = skb_copy_datagram_msg(skb, hlen, m, copy);
-	} else {
+	पूर्ण अन्यथा अणु
 		copy = 0;
 		rc = 0;
-		if (err != TIPC_CONN_SHUTDOWN && connected && !m->msg_control)
+		अगर (err != TIPC_CONN_SHUTDOWN && connected && !m->msg_control)
 			rc = -ECONNRESET;
-	}
-	if (unlikely(rc))
-		goto exit;
+	पूर्ण
+	अगर (unlikely(rc))
+		जाओ निकास;
 
-	/* Mark message as group event if applicable */
-	if (unlikely(grp_evt)) {
-		if (msg_grp_evt(hdr) == TIPC_WITHDRAWN)
+	/* Mark message as group event अगर applicable */
+	अगर (unlikely(grp_evt)) अणु
+		अगर (msg_grp_evt(hdr) == TIPC_WITHDRAWN)
 			m->msg_flags |= MSG_EOR;
 		m->msg_flags |= MSG_OOB;
 		copy = 0;
-	}
+	पूर्ण
 
 	/* Caption of data or error code/rejected data was successful */
-	if (unlikely(flags & MSG_PEEK))
-		goto exit;
+	अगर (unlikely(flags & MSG_PEEK))
+		जाओ निकास;
 
 	/* Send group flow control advertisement when applicable */
-	if (tsk->group && msg_in_group(hdr) && !grp_evt) {
+	अगर (tsk->group && msg_in_group(hdr) && !grp_evt) अणु
 		__skb_queue_head_init(&xmitq);
 		tipc_group_update_rcv_win(tsk->group, tsk_blocks(hlen + dlen),
 					  msg_orignode(hdr), msg_origport(hdr),
 					  &xmitq);
 		tipc_node_distr_xmit(sock_net(sk), &xmitq);
-	}
+	पूर्ण
 
 	tsk_advance_rx_queue(sk);
 
-	if (likely(!connected))
-		goto exit;
+	अगर (likely(!connected))
+		जाओ निकास;
 
 	/* Send connection flow control advertisement when applicable */
 	tsk->rcv_unacked += tsk_inc(tsk, hlen + dlen);
-	if (tsk->rcv_unacked >= tsk->rcv_win / TIPC_ACK_RATE)
+	अगर (tsk->rcv_unacked >= tsk->rcv_win / TIPC_ACK_RATE)
 		tipc_sk_send_ack(tsk);
-exit:
+निकास:
 	release_sock(sk);
-	return rc ? rc : copy;
-}
+	वापस rc ? rc : copy;
+पूर्ण
 
 /**
  * tipc_recvstream - receive stream-oriented data
  * @sock: network socket
- * @m: descriptor for message info
+ * @m: descriptor क्रम message info
  * @buflen: total size of user buffer area
  * @flags: receive flags
  *
- * Used for SOCK_STREAM messages only.  If not enough data is available
- * will optionally wait for more; never truncates data.
+ * Used क्रम SOCK_STREAM messages only.  If not enough data is available
+ * will optionally रुको क्रम more; never truncates data.
  *
- * Return: size of returned message data, errno otherwise
+ * Return: size of वापसed message data, त्रुटि_सं otherwise
  */
-static int tipc_recvstream(struct socket *sock, struct msghdr *m,
-			   size_t buflen, int flags)
-{
-	struct sock *sk = sock->sk;
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct sk_buff *skb;
-	struct tipc_msg *hdr;
-	struct tipc_skb_cb *skb_cb;
+अटल पूर्णांक tipc_recvstream(काष्ठा socket *sock, काष्ठा msghdr *m,
+			   माप_प्रकार buflen, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा sk_buff *skb;
+	काष्ठा tipc_msg *hdr;
+	काष्ठा tipc_skb_cb *skb_cb;
 	bool peek = flags & MSG_PEEK;
-	int offset, required, copy, copied = 0;
-	int hlen, dlen, err, rc;
-	long timeout;
+	पूर्णांक offset, required, copy, copied = 0;
+	पूर्णांक hlen, dlen, err, rc;
+	दीर्घ समयout;
 
 	/* Catch invalid receive attempts */
-	if (unlikely(!buflen))
-		return -EINVAL;
+	अगर (unlikely(!buflen))
+		वापस -EINVAL;
 
 	lock_sock(sk);
 
-	if (unlikely(sk->sk_state == TIPC_OPEN)) {
+	अगर (unlikely(sk->sk_state == TIPC_OPEN)) अणु
 		rc = -ENOTCONN;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	required = sock_rcvlowat(sk, flags & MSG_WAITALL, buflen);
-	timeout = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
+	समयout = sock_rcvसमयo(sk, flags & MSG_DONTWAIT);
 
-	do {
-		/* Look at first msg in receive queue; wait if necessary */
-		rc = tipc_wait_for_rcvmsg(sock, &timeout);
-		if (unlikely(rc))
-			break;
+	करो अणु
+		/* Look at first msg in receive queue; रुको अगर necessary */
+		rc = tipc_रुको_क्रम_rcvmsg(sock, &समयout);
+		अगर (unlikely(rc))
+			अवरोध;
 		skb = skb_peek(&sk->sk_receive_queue);
 		skb_cb = TIPC_SKB_CB(skb);
 		hdr = buf_msg(skb);
@@ -2040,240 +2041,240 @@ static int tipc_recvstream(struct socket *sock, struct msghdr *m,
 		err = msg_errcode(hdr);
 
 		/* Discard any empty non-errored (SYN-) message */
-		if (unlikely(!dlen && !err)) {
+		अगर (unlikely(!dlen && !err)) अणु
 			tsk_advance_rx_queue(sk);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Collect msg meta data, incl. error code and rejected data */
-		if (!copied) {
+		अगर (!copied) अणु
 			tipc_sk_set_orig_addr(m, skb);
 			rc = tipc_sk_anc_data_recv(m, skb, tsk);
-			if (rc)
-				break;
+			अगर (rc)
+				अवरोध;
 			hdr = buf_msg(skb);
-		}
+		पूर्ण
 
-		/* Copy data if msg ok, otherwise return error/partial data */
-		if (likely(!err)) {
-			offset = skb_cb->bytes_read;
-			copy = min_t(int, dlen - offset, buflen - copied);
+		/* Copy data अगर msg ok, otherwise वापस error/partial data */
+		अगर (likely(!err)) अणु
+			offset = skb_cb->bytes_पढ़ो;
+			copy = min_t(पूर्णांक, dlen - offset, buflen - copied);
 			rc = skb_copy_datagram_msg(skb, hlen + offset, m, copy);
-			if (unlikely(rc))
-				break;
+			अगर (unlikely(rc))
+				अवरोध;
 			copied += copy;
 			offset += copy;
-			if (unlikely(offset < dlen)) {
-				if (!peek)
-					skb_cb->bytes_read = offset;
-				break;
-			}
-		} else {
+			अगर (unlikely(offset < dlen)) अणु
+				अगर (!peek)
+					skb_cb->bytes_पढ़ो = offset;
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			rc = 0;
-			if ((err != TIPC_CONN_SHUTDOWN) && !m->msg_control)
+			अगर ((err != TIPC_CONN_SHUTDOWN) && !m->msg_control)
 				rc = -ECONNRESET;
-			if (copied || rc)
-				break;
-		}
+			अगर (copied || rc)
+				अवरोध;
+		पूर्ण
 
-		if (unlikely(peek))
-			break;
+		अगर (unlikely(peek))
+			अवरोध;
 
 		tsk_advance_rx_queue(sk);
 
 		/* Send connection flow control advertisement when applicable */
 		tsk->rcv_unacked += tsk_inc(tsk, hlen + dlen);
-		if (tsk->rcv_unacked >= tsk->rcv_win / TIPC_ACK_RATE)
+		अगर (tsk->rcv_unacked >= tsk->rcv_win / TIPC_ACK_RATE)
 			tipc_sk_send_ack(tsk);
 
-		/* Exit if all requested data or FIN/error received */
-		if (copied == buflen || err)
-			break;
+		/* Exit अगर all requested data or FIN/error received */
+		अगर (copied == buflen || err)
+			अवरोध;
 
-	} while (!skb_queue_empty(&sk->sk_receive_queue) || copied < required);
-exit:
+	पूर्ण जबतक (!skb_queue_empty(&sk->sk_receive_queue) || copied < required);
+निकास:
 	release_sock(sk);
-	return copied ? copied : rc;
-}
+	वापस copied ? copied : rc;
+पूर्ण
 
 /**
- * tipc_write_space - wake up thread if port congestion is released
+ * tipc_ग_लिखो_space - wake up thपढ़ो अगर port congestion is released
  * @sk: socket
  */
-static void tipc_write_space(struct sock *sk)
-{
-	struct socket_wq *wq;
+अटल व्योम tipc_ग_लिखो_space(काष्ठा sock *sk)
+अणु
+	काष्ठा socket_wq *wq;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	wq = rcu_dereference(sk->sk_wq);
-	if (skwq_has_sleeper(wq))
-		wake_up_interruptible_sync_poll(&wq->wait, EPOLLOUT |
+	अगर (skwq_has_sleeper(wq))
+		wake_up_पूर्णांकerruptible_sync_poll(&wq->रुको, EPOLLOUT |
 						EPOLLWRNORM | EPOLLWRBAND);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
- * tipc_data_ready - wake up threads to indicate messages have been received
+ * tipc_data_पढ़ोy - wake up thपढ़ोs to indicate messages have been received
  * @sk: socket
  */
-static void tipc_data_ready(struct sock *sk)
-{
-	struct socket_wq *wq;
+अटल व्योम tipc_data_पढ़ोy(काष्ठा sock *sk)
+अणु
+	काष्ठा socket_wq *wq;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	wq = rcu_dereference(sk->sk_wq);
-	if (skwq_has_sleeper(wq))
-		wake_up_interruptible_sync_poll(&wq->wait, EPOLLIN |
+	अगर (skwq_has_sleeper(wq))
+		wake_up_पूर्णांकerruptible_sync_poll(&wq->रुको, EPOLLIN |
 						EPOLLRDNORM | EPOLLRDBAND);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void tipc_sock_destruct(struct sock *sk)
-{
+अटल व्योम tipc_sock_deकाष्ठा(काष्ठा sock *sk)
+अणु
 	__skb_queue_purge(&sk->sk_receive_queue);
-}
+पूर्ण
 
-static void tipc_sk_proto_rcv(struct sock *sk,
-			      struct sk_buff_head *inputq,
-			      struct sk_buff_head *xmitq)
-{
-	struct sk_buff *skb = __skb_dequeue(inputq);
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct tipc_msg *hdr = buf_msg(skb);
-	struct tipc_group *grp = tsk->group;
+अटल व्योम tipc_sk_proto_rcv(काष्ठा sock *sk,
+			      काष्ठा sk_buff_head *inputq,
+			      काष्ठा sk_buff_head *xmitq)
+अणु
+	काष्ठा sk_buff *skb = __skb_dequeue(inputq);
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा tipc_msg *hdr = buf_msg(skb);
+	काष्ठा tipc_group *grp = tsk->group;
 	bool wakeup = false;
 
-	switch (msg_user(hdr)) {
-	case CONN_MANAGER:
+	चयन (msg_user(hdr)) अणु
+	हाल CONN_MANAGER:
 		tipc_sk_conn_proto_rcv(tsk, skb, inputq, xmitq);
-		return;
-	case SOCK_WAKEUP:
+		वापस;
+	हाल SOCK_WAKEUP:
 		tipc_dest_del(&tsk->cong_links, msg_orignode(hdr), 0);
-		/* coupled with smp_rmb() in tipc_wait_for_cond() */
+		/* coupled with smp_rmb() in tipc_रुको_क्रम_cond() */
 		smp_wmb();
 		tsk->cong_link_cnt--;
 		wakeup = true;
 		tipc_sk_push_backlog(tsk, false);
-		break;
-	case GROUP_PROTOCOL:
+		अवरोध;
+	हाल GROUP_PROTOCOL:
 		tipc_group_proto_rcv(grp, &wakeup, hdr, inputq, xmitq);
-		break;
-	case TOP_SRV:
+		अवरोध;
+	हाल TOP_SRV:
 		tipc_group_member_evt(tsk->group, &wakeup, &sk->sk_rcvbuf,
 				      hdr, inputq, xmitq);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (wakeup)
-		sk->sk_write_space(sk);
+	अगर (wakeup)
+		sk->sk_ग_लिखो_space(sk);
 
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
 /**
- * tipc_sk_filter_connect - check incoming message for a connection-based socket
+ * tipc_sk_filter_connect - check incoming message क्रम a connection-based socket
  * @tsk: TIPC socket
- * @skb: pointer to message buffer.
- * @xmitq: for Nagle ACK if any
- * Return: true if message should be added to receive queue, false otherwise
+ * @skb: poपूर्णांकer to message buffer.
+ * @xmitq: क्रम Nagle ACK अगर any
+ * Return: true अगर message should be added to receive queue, false otherwise
  */
-static bool tipc_sk_filter_connect(struct tipc_sock *tsk, struct sk_buff *skb,
-				   struct sk_buff_head *xmitq)
-{
-	struct sock *sk = &tsk->sk;
-	struct net *net = sock_net(sk);
-	struct tipc_msg *hdr = buf_msg(skb);
+अटल bool tipc_sk_filter_connect(काष्ठा tipc_sock *tsk, काष्ठा sk_buff *skb,
+				   काष्ठा sk_buff_head *xmitq)
+अणु
+	काष्ठा sock *sk = &tsk->sk;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा tipc_msg *hdr = buf_msg(skb);
 	bool con_msg = msg_connected(hdr);
 	u32 pport = tsk_peer_port(tsk);
 	u32 pnode = tsk_peer_node(tsk);
 	u32 oport = msg_origport(hdr);
 	u32 onode = msg_orignode(hdr);
-	int err = msg_errcode(hdr);
-	unsigned long delay;
+	पूर्णांक err = msg_errcode(hdr);
+	अचिन्हित दीर्घ delay;
 
-	if (unlikely(msg_mcast(hdr)))
-		return false;
+	अगर (unlikely(msg_mcast(hdr)))
+		वापस false;
 	tsk->oneway = 0;
 
-	switch (sk->sk_state) {
-	case TIPC_CONNECTING:
+	चयन (sk->sk_state) अणु
+	हाल TIPC_CONNECTING:
 		/* Setup ACK */
-		if (likely(con_msg)) {
-			if (err)
-				break;
+		अगर (likely(con_msg)) अणु
+			अगर (err)
+				अवरोध;
 			tipc_sk_finish_conn(tsk, oport, onode);
 			msg_set_importance(&tsk->phdr, msg_importance(hdr));
 			/* ACK+ message with data is added to receive queue */
-			if (msg_data_sz(hdr))
-				return true;
+			अगर (msg_data_sz(hdr))
+				वापस true;
 			/* Empty ACK-, - wake up sleeping connect() and drop */
 			sk->sk_state_change(sk);
 			msg_set_dest_droppable(hdr, 1);
-			return false;
-		}
-		/* Ignore connectionless message if not from listening socket */
-		if (oport != pport || onode != pnode)
-			return false;
+			वापस false;
+		पूर्ण
+		/* Ignore connectionless message अगर not from listening socket */
+		अगर (oport != pport || onode != pnode)
+			वापस false;
 
 		/* Rejected SYN */
-		if (err != TIPC_ERR_OVERLOAD)
-			break;
+		अगर (err != TIPC_ERR_OVERLOAD)
+			अवरोध;
 
-		/* Prepare for new setup attempt if we have a SYN clone */
-		if (skb_queue_empty(&sk->sk_write_queue))
-			break;
-		get_random_bytes(&delay, 2);
-		delay %= (tsk->conn_timeout / 4);
-		delay = msecs_to_jiffies(delay + 100);
-		sk_reset_timer(sk, &sk->sk_timer, jiffies + delay);
-		return false;
-	case TIPC_OPEN:
-	case TIPC_DISCONNECTING:
-		return false;
-	case TIPC_LISTEN:
+		/* Prepare क्रम new setup attempt अगर we have a SYN clone */
+		अगर (skb_queue_empty(&sk->sk_ग_लिखो_queue))
+			अवरोध;
+		get_अक्रमom_bytes(&delay, 2);
+		delay %= (tsk->conn_समयout / 4);
+		delay = msecs_to_jअगरfies(delay + 100);
+		sk_reset_समयr(sk, &sk->sk_समयr, jअगरfies + delay);
+		वापस false;
+	हाल TIPC_OPEN:
+	हाल TIPC_DISCONNECTING:
+		वापस false;
+	हाल TIPC_LISTEN:
 		/* Accept only SYN message */
-		if (!msg_is_syn(hdr) &&
+		अगर (!msg_is_syn(hdr) &&
 		    tipc_node_get_capabilities(net, onode) & TIPC_SYN_BIT)
-			return false;
-		if (!con_msg && !err)
-			return true;
-		return false;
-	case TIPC_ESTABLISHED:
-		if (!skb_queue_empty(&sk->sk_write_queue))
+			वापस false;
+		अगर (!con_msg && !err)
+			वापस true;
+		वापस false;
+	हाल TIPC_ESTABLISHED:
+		अगर (!skb_queue_empty(&sk->sk_ग_लिखो_queue))
 			tipc_sk_push_backlog(tsk, false);
 		/* Accept only connection-based messages sent by peer */
-		if (likely(con_msg && !err && pport == oport &&
-			   pnode == onode)) {
-			if (msg_ack_required(hdr)) {
-				struct sk_buff *skb;
+		अगर (likely(con_msg && !err && pport == oport &&
+			   pnode == onode)) अणु
+			अगर (msg_ack_required(hdr)) अणु
+				काष्ठा sk_buff *skb;
 
 				skb = tipc_sk_build_ack(tsk);
-				if (skb) {
+				अगर (skb) अणु
 					msg_set_nagle_ack(buf_msg(skb));
 					__skb_queue_tail(xmitq, skb);
-				}
-			}
-			return true;
-		}
-		if (!tsk_peer_msg(tsk, hdr))
-			return false;
-		if (!err)
-			return true;
+				पूर्ण
+			पूर्ण
+			वापस true;
+		पूर्ण
+		अगर (!tsk_peer_msg(tsk, hdr))
+			वापस false;
+		अगर (!err)
+			वापस true;
 		tipc_set_sk_state(sk, TIPC_DISCONNECTING);
-		tipc_node_remove_conn(net, pnode, tsk->portid);
+		tipc_node_हटाओ_conn(net, pnode, tsk->portid);
 		sk->sk_state_change(sk);
-		return true;
-	default:
+		वापस true;
+	शेष:
 		pr_err("Unknown sk_state %u\n", sk->sk_state);
-	}
+	पूर्ण
 	/* Abort connection setup attempt */
 	tipc_set_sk_state(sk, TIPC_DISCONNECTING);
 	sk->sk_err = ECONNREFUSED;
 	sk->sk_state_change(sk);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * rcvbuf_limit - get proper overload limit of socket receive queue
@@ -2281,7 +2282,7 @@ static bool tipc_sk_filter_connect(struct tipc_sock *tsk, struct sk_buff *skb,
  * @skb: message
  *
  * For connection oriented messages, irrespective of importance,
- * default queue limit is 2 MB.
+ * शेष queue limit is 2 MB.
  *
  * For connectionless messages, queue limits are based on message
  * importance as follows:
@@ -2293,91 +2294,91 @@ static bool tipc_sk_filter_connect(struct tipc_sock *tsk, struct sk_buff *skb,
  *
  * Return: overload limit according to corresponding message importance
  */
-static unsigned int rcvbuf_limit(struct sock *sk, struct sk_buff *skb)
-{
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct tipc_msg *hdr = buf_msg(skb);
+अटल अचिन्हित पूर्णांक rcvbuf_limit(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा tipc_msg *hdr = buf_msg(skb);
 
-	if (unlikely(msg_in_group(hdr)))
-		return READ_ONCE(sk->sk_rcvbuf);
+	अगर (unlikely(msg_in_group(hdr)))
+		वापस READ_ONCE(sk->sk_rcvbuf);
 
-	if (unlikely(!msg_connected(hdr)))
-		return READ_ONCE(sk->sk_rcvbuf) << msg_importance(hdr);
+	अगर (unlikely(!msg_connected(hdr)))
+		वापस READ_ONCE(sk->sk_rcvbuf) << msg_importance(hdr);
 
-	if (likely(tsk->peer_caps & TIPC_BLOCK_FLOWCTL))
-		return READ_ONCE(sk->sk_rcvbuf);
+	अगर (likely(tsk->peer_caps & TIPC_BLOCK_FLOWCTL))
+		वापस READ_ONCE(sk->sk_rcvbuf);
 
-	return FLOWCTL_MSG_LIM;
-}
+	वापस FLOWCTL_MSG_LIM;
+पूर्ण
 
 /**
  * tipc_sk_filter_rcv - validate incoming message
  * @sk: socket
- * @skb: pointer to message.
+ * @skb: poपूर्णांकer to message.
  * @xmitq: output message area (FIXME)
  *
- * Enqueues message on receive queue if acceptable; optionally handles
- * disconnect indication for a connected socket.
+ * Enqueues message on receive queue अगर acceptable; optionally handles
+ * disconnect indication क्रम a connected socket.
  *
- * Called with socket lock already taken
+ * Called with socket lock alपढ़ोy taken
  */
-static void tipc_sk_filter_rcv(struct sock *sk, struct sk_buff *skb,
-			       struct sk_buff_head *xmitq)
-{
+अटल व्योम tipc_sk_filter_rcv(काष्ठा sock *sk, काष्ठा sk_buff *skb,
+			       काष्ठा sk_buff_head *xmitq)
+अणु
 	bool sk_conn = !tipc_sk_type_connectionless(sk);
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct tipc_group *grp = tsk->group;
-	struct tipc_msg *hdr = buf_msg(skb);
-	struct net *net = sock_net(sk);
-	struct sk_buff_head inputq;
-	int mtyp = msg_type(hdr);
-	int limit, err = TIPC_OK;
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा tipc_group *grp = tsk->group;
+	काष्ठा tipc_msg *hdr = buf_msg(skb);
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा sk_buff_head inputq;
+	पूर्णांक mtyp = msg_type(hdr);
+	पूर्णांक limit, err = TIPC_OK;
 
 	trace_tipc_sk_filter_rcv(sk, skb, TIPC_DUMP_ALL, " ");
-	TIPC_SKB_CB(skb)->bytes_read = 0;
+	TIPC_SKB_CB(skb)->bytes_पढ़ो = 0;
 	__skb_queue_head_init(&inputq);
 	__skb_queue_tail(&inputq, skb);
 
-	if (unlikely(!msg_isdata(hdr)))
+	अगर (unlikely(!msg_isdata(hdr)))
 		tipc_sk_proto_rcv(sk, &inputq, xmitq);
 
-	if (unlikely(grp))
+	अगर (unlikely(grp))
 		tipc_group_filter_msg(grp, &inputq, xmitq);
 
-	if (unlikely(!grp) && mtyp == TIPC_MCAST_MSG)
+	अगर (unlikely(!grp) && mtyp == TIPC_MCAST_MSG)
 		tipc_mcast_filter_msg(net, &tsk->mc_method.deferredq, &inputq);
 
-	/* Validate and add to receive buffer if there is space */
-	while ((skb = __skb_dequeue(&inputq))) {
+	/* Validate and add to receive buffer अगर there is space */
+	जबतक ((skb = __skb_dequeue(&inputq))) अणु
 		hdr = buf_msg(skb);
 		limit = rcvbuf_limit(sk, skb);
-		if ((sk_conn && !tipc_sk_filter_connect(tsk, skb, xmitq)) ||
+		अगर ((sk_conn && !tipc_sk_filter_connect(tsk, skb, xmitq)) ||
 		    (!sk_conn && msg_connected(hdr)) ||
 		    (!grp && msg_in_group(hdr)))
 			err = TIPC_ERR_NO_PORT;
-		else if (sk_rmem_alloc_get(sk) + skb->truesize >= limit) {
+		अन्यथा अगर (sk_rmem_alloc_get(sk) + skb->truesize >= limit) अणु
 			trace_tipc_sk_dump(sk, skb, TIPC_DUMP_ALL,
 					   "err_overload2!");
 			atomic_inc(&sk->sk_drops);
 			err = TIPC_ERR_OVERLOAD;
-		}
+		पूर्ण
 
-		if (unlikely(err)) {
-			if (tipc_msg_reverse(tipc_own_addr(net), &skb, err)) {
+		अगर (unlikely(err)) अणु
+			अगर (tipc_msg_reverse(tipc_own_addr(net), &skb, err)) अणु
 				trace_tipc_sk_rej_msg(sk, skb, TIPC_DUMP_NONE,
 						      "@filter_rcv!");
 				__skb_queue_tail(xmitq, skb);
-			}
+			पूर्ण
 			err = TIPC_OK;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		__skb_queue_tail(&sk->sk_receive_queue, skb);
 		skb_set_owner_r(skb, sk);
 		trace_tipc_sk_overlimit2(sk, skb, TIPC_DUMP_ALL,
 					 "rcvq >90% allocated!");
-		sk->sk_data_ready(sk);
-	}
-}
+		sk->sk_data_पढ़ोy(sk);
+	पूर्ण
+पूर्ण
 
 /**
  * tipc_sk_backlog_rcv - handle incoming message from backlog queue
@@ -2386,350 +2387,350 @@ static void tipc_sk_filter_rcv(struct sock *sk, struct sk_buff *skb,
  *
  * Caller must hold socket lock
  */
-static int tipc_sk_backlog_rcv(struct sock *sk, struct sk_buff *skb)
-{
-	unsigned int before = sk_rmem_alloc_get(sk);
-	struct sk_buff_head xmitq;
-	unsigned int added;
+अटल पूर्णांक tipc_sk_backlog_rcv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक beक्रमe = sk_rmem_alloc_get(sk);
+	काष्ठा sk_buff_head xmitq;
+	अचिन्हित पूर्णांक added;
 
 	__skb_queue_head_init(&xmitq);
 
 	tipc_sk_filter_rcv(sk, skb, &xmitq);
-	added = sk_rmem_alloc_get(sk) - before;
+	added = sk_rmem_alloc_get(sk) - beक्रमe;
 	atomic_add(added, &tipc_sk(sk)->dupl_rcvcnt);
 
-	/* Send pending response/rejected messages, if any */
+	/* Send pending response/rejected messages, अगर any */
 	tipc_node_distr_xmit(sock_net(sk), &xmitq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * tipc_sk_enqueue - extract all buffers with destination 'dport' from
  *                   inputq and try adding them to socket or backlog queue
- * @inputq: list of incoming buffers with potentially different destinations
+ * @inputq: list of incoming buffers with potentially dअगरferent destinations
  * @sk: socket where the buffers should be enqueued
- * @dport: port number for the socket
+ * @dport: port number क्रम the socket
  * @xmitq: output queue
  *
  * Caller must hold socket lock
  */
-static void tipc_sk_enqueue(struct sk_buff_head *inputq, struct sock *sk,
-			    u32 dport, struct sk_buff_head *xmitq)
-{
-	unsigned long time_limit = jiffies + 2;
-	struct sk_buff *skb;
-	unsigned int lim;
+अटल व्योम tipc_sk_enqueue(काष्ठा sk_buff_head *inputq, काष्ठा sock *sk,
+			    u32 dport, काष्ठा sk_buff_head *xmitq)
+अणु
+	अचिन्हित दीर्घ समय_limit = jअगरfies + 2;
+	काष्ठा sk_buff *skb;
+	अचिन्हित पूर्णांक lim;
 	atomic_t *dcnt;
 	u32 onode;
 
-	while (skb_queue_len(inputq)) {
-		if (unlikely(time_after_eq(jiffies, time_limit)))
-			return;
+	जबतक (skb_queue_len(inputq)) अणु
+		अगर (unlikely(समय_after_eq(jअगरfies, समय_limit)))
+			वापस;
 
 		skb = tipc_skb_dequeue(inputq, dport);
-		if (unlikely(!skb))
-			return;
+		अगर (unlikely(!skb))
+			वापस;
 
-		/* Add message directly to receive queue if possible */
-		if (!sock_owned_by_user(sk)) {
+		/* Add message directly to receive queue अगर possible */
+		अगर (!sock_owned_by_user(sk)) अणु
 			tipc_sk_filter_rcv(sk, skb, xmitq);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* Try backlog, compensating for double-counted bytes */
+		/* Try backlog, compensating क्रम द्विगुन-counted bytes */
 		dcnt = &tipc_sk(sk)->dupl_rcvcnt;
-		if (!sk->sk_backlog.len)
+		अगर (!sk->sk_backlog.len)
 			atomic_set(dcnt, 0);
-		lim = rcvbuf_limit(sk, skb) + atomic_read(dcnt);
-		if (likely(!sk_add_backlog(sk, skb, lim))) {
+		lim = rcvbuf_limit(sk, skb) + atomic_पढ़ो(dcnt);
+		अगर (likely(!sk_add_backlog(sk, skb, lim))) अणु
 			trace_tipc_sk_overlimit1(sk, skb, TIPC_DUMP_ALL,
 						 "bklg & rcvq >90% allocated!");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		trace_tipc_sk_dump(sk, skb, TIPC_DUMP_ALL, "err_overload!");
 		/* Overload => reject message back to sender */
 		onode = tipc_own_addr(sock_net(sk));
 		atomic_inc(&sk->sk_drops);
-		if (tipc_msg_reverse(onode, &skb, TIPC_ERR_OVERLOAD)) {
+		अगर (tipc_msg_reverse(onode, &skb, TIPC_ERR_OVERLOAD)) अणु
 			trace_tipc_sk_rej_msg(sk, skb, TIPC_DUMP_ALL,
 					      "@sk_enqueue!");
 			__skb_queue_tail(xmitq, skb);
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * tipc_sk_rcv - handle a chain of incoming buffers
  * @net: the associated network namespace
  * @inputq: buffer list containing the buffers
  * Consumes all buffers in list until inputq is empty
- * Note: may be called in multiple threads referring to the same queue
+ * Note: may be called in multiple thपढ़ोs referring to the same queue
  */
-void tipc_sk_rcv(struct net *net, struct sk_buff_head *inputq)
-{
-	struct sk_buff_head xmitq;
+व्योम tipc_sk_rcv(काष्ठा net *net, काष्ठा sk_buff_head *inputq)
+अणु
+	काष्ठा sk_buff_head xmitq;
 	u32 dnode, dport = 0;
-	int err;
-	struct tipc_sock *tsk;
-	struct sock *sk;
-	struct sk_buff *skb;
+	पूर्णांक err;
+	काष्ठा tipc_sock *tsk;
+	काष्ठा sock *sk;
+	काष्ठा sk_buff *skb;
 
 	__skb_queue_head_init(&xmitq);
-	while (skb_queue_len(inputq)) {
+	जबतक (skb_queue_len(inputq)) अणु
 		dport = tipc_skb_peek_port(inputq, dport);
 		tsk = tipc_sk_lookup(net, dport);
 
-		if (likely(tsk)) {
+		अगर (likely(tsk)) अणु
 			sk = &tsk->sk;
-			if (likely(spin_trylock_bh(&sk->sk_lock.slock))) {
+			अगर (likely(spin_trylock_bh(&sk->sk_lock.slock))) अणु
 				tipc_sk_enqueue(inputq, sk, dport, &xmitq);
 				spin_unlock_bh(&sk->sk_lock.slock);
-			}
-			/* Send pending response/rejected messages, if any */
+			पूर्ण
+			/* Send pending response/rejected messages, अगर any */
 			tipc_node_distr_xmit(sock_net(sk), &xmitq);
 			sock_put(sk);
-			continue;
-		}
-		/* No destination socket => dequeue skb if still there */
+			जारी;
+		पूर्ण
+		/* No destination socket => dequeue skb अगर still there */
 		skb = tipc_skb_dequeue(inputq, dport);
-		if (!skb)
-			return;
+		अगर (!skb)
+			वापस;
 
-		/* Try secondary lookup if unresolved named message */
+		/* Try secondary lookup अगर unresolved named message */
 		err = TIPC_ERR_NO_PORT;
-		if (tipc_msg_lookup_dest(net, skb, &err))
-			goto xmit;
+		अगर (tipc_msg_lookup_dest(net, skb, &err))
+			जाओ xmit;
 
-		/* Prepare for message rejection */
-		if (!tipc_msg_reverse(tipc_own_addr(net), &skb, err))
-			continue;
+		/* Prepare क्रम message rejection */
+		अगर (!tipc_msg_reverse(tipc_own_addr(net), &skb, err))
+			जारी;
 
-		trace_tipc_sk_rej_msg(NULL, skb, TIPC_DUMP_NONE, "@sk_rcv!");
+		trace_tipc_sk_rej_msg(शून्य, skb, TIPC_DUMP_NONE, "@sk_rcv!");
 xmit:
 		dnode = msg_destnode(buf_msg(skb));
 		tipc_node_xmit_skb(net, skb, dnode, dport);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int tipc_wait_for_connect(struct socket *sock, long *timeo_p)
-{
-	DEFINE_WAIT_FUNC(wait, woken_wake_function);
-	struct sock *sk = sock->sk;
-	int done;
+अटल पूर्णांक tipc_रुको_क्रम_connect(काष्ठा socket *sock, दीर्घ *समयo_p)
+अणु
+	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक करोne;
 
-	do {
-		int err = sock_error(sk);
-		if (err)
-			return err;
-		if (!*timeo_p)
-			return -ETIMEDOUT;
-		if (signal_pending(current))
-			return sock_intr_errno(*timeo_p);
-		if (sk->sk_state == TIPC_DISCONNECTING)
-			break;
+	करो अणु
+		पूर्णांक err = sock_error(sk);
+		अगर (err)
+			वापस err;
+		अगर (!*समयo_p)
+			वापस -ETIMEDOUT;
+		अगर (संकेत_pending(current))
+			वापस sock_पूर्णांकr_त्रुटि_सं(*समयo_p);
+		अगर (sk->sk_state == TIPC_DISCONNECTING)
+			अवरोध;
 
-		add_wait_queue(sk_sleep(sk), &wait);
-		done = sk_wait_event(sk, timeo_p, tipc_sk_connected(sk),
-				     &wait);
-		remove_wait_queue(sk_sleep(sk), &wait);
-	} while (!done);
-	return 0;
-}
+		add_रुको_queue(sk_sleep(sk), &रुको);
+		करोne = sk_रुको_event(sk, समयo_p, tipc_sk_connected(sk),
+				     &रुको);
+		हटाओ_रुको_queue(sk_sleep(sk), &रुको);
+	पूर्ण जबतक (!करोne);
+	वापस 0;
+पूर्ण
 
-static bool tipc_sockaddr_is_sane(struct sockaddr_tipc *addr)
-{
-	if (addr->family != AF_TIPC)
-		return false;
-	if (addr->addrtype == TIPC_SERVICE_RANGE)
-		return (addr->addr.nameseq.lower <= addr->addr.nameseq.upper);
-	return (addr->addrtype == TIPC_SERVICE_ADDR ||
+अटल bool tipc_sockaddr_is_sane(काष्ठा sockaddr_tipc *addr)
+अणु
+	अगर (addr->family != AF_TIPC)
+		वापस false;
+	अगर (addr->addrtype == TIPC_SERVICE_RANGE)
+		वापस (addr->addr.nameseq.lower <= addr->addr.nameseq.upper);
+	वापस (addr->addrtype == TIPC_SERVICE_ADDR ||
 		addr->addrtype == TIPC_SOCKET_ADDR);
-}
+पूर्ण
 
 /**
  * tipc_connect - establish a connection to another TIPC port
- * @sock: socket structure
- * @dest: socket address for destination port
- * @destlen: size of socket address data structure
+ * @sock: socket काष्ठाure
+ * @dest: socket address क्रम destination port
+ * @destlen: size of socket address data काष्ठाure
  * @flags: file-related flags associated with socket
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-static int tipc_connect(struct socket *sock, struct sockaddr *dest,
-			int destlen, int flags)
-{
-	struct sock *sk = sock->sk;
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct sockaddr_tipc *dst = (struct sockaddr_tipc *)dest;
-	struct msghdr m = {NULL,};
-	long timeout = (flags & O_NONBLOCK) ? 0 : tsk->conn_timeout;
-	int previous;
-	int res = 0;
+अटल पूर्णांक tipc_connect(काष्ठा socket *sock, काष्ठा sockaddr *dest,
+			पूर्णांक destlen, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा sockaddr_tipc *dst = (काष्ठा sockaddr_tipc *)dest;
+	काष्ठा msghdr m = अणुशून्य,पूर्ण;
+	दीर्घ समयout = (flags & O_NONBLOCK) ? 0 : tsk->conn_समयout;
+	पूर्णांक previous;
+	पूर्णांक res = 0;
 
-	if (destlen != sizeof(struct sockaddr_tipc))
-		return -EINVAL;
+	अगर (destlen != माप(काष्ठा sockaddr_tipc))
+		वापस -EINVAL;
 
 	lock_sock(sk);
 
-	if (tsk->group) {
+	अगर (tsk->group) अणु
 		res = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (dst->family == AF_UNSPEC) {
-		memset(&tsk->peer, 0, sizeof(struct sockaddr_tipc));
-		if (!tipc_sk_type_connectionless(sk))
+	अगर (dst->family == AF_UNSPEC) अणु
+		स_रखो(&tsk->peer, 0, माप(काष्ठा sockaddr_tipc));
+		अगर (!tipc_sk_type_connectionless(sk))
 			res = -EINVAL;
-		goto exit;
-	}
-	if (!tipc_sockaddr_is_sane(dst)) {
+		जाओ निकास;
+	पूर्ण
+	अगर (!tipc_sockaddr_is_sane(dst)) अणु
 		res = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	/* DGRAM/RDM connect(), just save the destaddr */
-	if (tipc_sk_type_connectionless(sk)) {
-		memcpy(&tsk->peer, dest, destlen);
-		goto exit;
-	} else if (dst->addrtype == TIPC_SERVICE_RANGE) {
+	अगर (tipc_sk_type_connectionless(sk)) अणु
+		स_नकल(&tsk->peer, dest, destlen);
+		जाओ निकास;
+	पूर्ण अन्यथा अगर (dst->addrtype == TIPC_SERVICE_RANGE) अणु
 		res = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	previous = sk->sk_state;
 
-	switch (sk->sk_state) {
-	case TIPC_OPEN:
+	चयन (sk->sk_state) अणु
+	हाल TIPC_OPEN:
 		/* Send a 'SYN-' to destination */
 		m.msg_name = dest;
 		m.msg_namelen = destlen;
 
-		/* If connect is in non-blocking case, set MSG_DONTWAIT to
+		/* If connect is in non-blocking हाल, set MSG_DONTWAIT to
 		 * indicate send_msg() is never blocked.
 		 */
-		if (!timeout)
+		अगर (!समयout)
 			m.msg_flags = MSG_DONTWAIT;
 
 		res = __tipc_sendmsg(sock, &m, 0);
-		if ((res < 0) && (res != -EWOULDBLOCK))
-			goto exit;
+		अगर ((res < 0) && (res != -EWOULDBLOCK))
+			जाओ निकास;
 
 		/* Just entered TIPC_CONNECTING state; the only
-		 * difference is that return value in non-blocking
-		 * case is EINPROGRESS, rather than EALREADY.
+		 * dअगरference is that वापस value in non-blocking
+		 * हाल is EINPROGRESS, rather than EALREADY.
 		 */
 		res = -EINPROGRESS;
 		fallthrough;
-	case TIPC_CONNECTING:
-		if (!timeout) {
-			if (previous == TIPC_CONNECTING)
+	हाल TIPC_CONNECTING:
+		अगर (!समयout) अणु
+			अगर (previous == TIPC_CONNECTING)
 				res = -EALREADY;
-			goto exit;
-		}
-		timeout = msecs_to_jiffies(timeout);
-		/* Wait until an 'ACK' or 'RST' arrives, or a timeout occurs */
-		res = tipc_wait_for_connect(sock, &timeout);
-		break;
-	case TIPC_ESTABLISHED:
+			जाओ निकास;
+		पूर्ण
+		समयout = msecs_to_jअगरfies(समयout);
+		/* Wait until an 'ACK' or 'RST' arrives, or a समयout occurs */
+		res = tipc_रुको_क्रम_connect(sock, &समयout);
+		अवरोध;
+	हाल TIPC_ESTABLISHED:
 		res = -EISCONN;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		res = -EINVAL;
-	}
+	पूर्ण
 
-exit:
+निकास:
 	release_sock(sk);
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /**
- * tipc_listen - allow socket to listen for incoming connections
- * @sock: socket structure
+ * tipc_listen - allow socket to listen क्रम incoming connections
+ * @sock: socket काष्ठाure
  * @len: (unused)
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-static int tipc_listen(struct socket *sock, int len)
-{
-	struct sock *sk = sock->sk;
-	int res;
+अटल पूर्णांक tipc_listen(काष्ठा socket *sock, पूर्णांक len)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक res;
 
 	lock_sock(sk);
 	res = tipc_set_sk_state(sk, TIPC_LISTEN);
 	release_sock(sk);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int tipc_wait_for_accept(struct socket *sock, long timeo)
-{
-	struct sock *sk = sock->sk;
-	DEFINE_WAIT(wait);
-	int err;
+अटल पूर्णांक tipc_रुको_क्रम_accept(काष्ठा socket *sock, दीर्घ समयo)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	DEFINE_WAIT(रुको);
+	पूर्णांक err;
 
-	/* True wake-one mechanism for incoming connections: only
-	 * one process gets woken up, not the 'whole herd'.
-	 * Since we do not 'race & poll' for established sockets
-	 * anymore, the common case will execute the loop only once.
+	/* True wake-one mechanism क्रम incoming connections: only
+	 * one process माला_लो woken up, not the 'whole herd'.
+	 * Since we करो not 'race & poll' क्रम established sockets
+	 * anymore, the common हाल will execute the loop only once.
 	*/
-	for (;;) {
-		prepare_to_wait_exclusive(sk_sleep(sk), &wait,
+	क्रम (;;) अणु
+		prepare_to_रुको_exclusive(sk_sleep(sk), &रुको,
 					  TASK_INTERRUPTIBLE);
-		if (timeo && skb_queue_empty(&sk->sk_receive_queue)) {
+		अगर (समयo && skb_queue_empty(&sk->sk_receive_queue)) अणु
 			release_sock(sk);
-			timeo = schedule_timeout(timeo);
+			समयo = schedule_समयout(समयo);
 			lock_sock(sk);
-		}
+		पूर्ण
 		err = 0;
-		if (!skb_queue_empty(&sk->sk_receive_queue))
-			break;
+		अगर (!skb_queue_empty(&sk->sk_receive_queue))
+			अवरोध;
 		err = -EAGAIN;
-		if (!timeo)
-			break;
-		err = sock_intr_errno(timeo);
-		if (signal_pending(current))
-			break;
-	}
-	finish_wait(sk_sleep(sk), &wait);
-	return err;
-}
+		अगर (!समयo)
+			अवरोध;
+		err = sock_पूर्णांकr_त्रुटि_सं(समयo);
+		अगर (संकेत_pending(current))
+			अवरोध;
+	पूर्ण
+	finish_रुको(sk_sleep(sk), &रुको);
+	वापस err;
+पूर्ण
 
 /**
- * tipc_accept - wait for connection request
+ * tipc_accept - रुको क्रम connection request
  * @sock: listening socket
  * @new_sock: new socket that is to be connected
  * @flags: file-related flags associated with socket
  * @kern: caused by kernel or by userspace?
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-static int tipc_accept(struct socket *sock, struct socket *new_sock, int flags,
+अटल पूर्णांक tipc_accept(काष्ठा socket *sock, काष्ठा socket *new_sock, पूर्णांक flags,
 		       bool kern)
-{
-	struct sock *new_sk, *sk = sock->sk;
-	struct sk_buff *buf;
-	struct tipc_sock *new_tsock;
-	struct tipc_msg *msg;
-	long timeo;
-	int res;
+अणु
+	काष्ठा sock *new_sk, *sk = sock->sk;
+	काष्ठा sk_buff *buf;
+	काष्ठा tipc_sock *new_tsock;
+	काष्ठा tipc_msg *msg;
+	दीर्घ समयo;
+	पूर्णांक res;
 
 	lock_sock(sk);
 
-	if (sk->sk_state != TIPC_LISTEN) {
+	अगर (sk->sk_state != TIPC_LISTEN) अणु
 		res = -EINVAL;
-		goto exit;
-	}
-	timeo = sock_rcvtimeo(sk, flags & O_NONBLOCK);
-	res = tipc_wait_for_accept(sock, timeo);
-	if (res)
-		goto exit;
+		जाओ निकास;
+	पूर्ण
+	समयo = sock_rcvसमयo(sk, flags & O_NONBLOCK);
+	res = tipc_रुको_क्रम_accept(sock, समयo);
+	अगर (res)
+		जाओ निकास;
 
 	buf = skb_peek(&sk->sk_receive_queue);
 
 	res = tipc_sk_create(sock_net(sock->sk), new_sock, 0, kern);
-	if (res)
-		goto exit;
+	अगर (res)
+		जाओ निकास;
 	security_sk_clone(sock->sk, new_sock->sk);
 
 	new_sk = new_sock->sk;
@@ -2741,7 +2742,7 @@ static int tipc_accept(struct socket *sock, struct socket *new_sock, int flags,
 
 	/*
 	 * Reject any stray messages received by new socket
-	 * before the socket lock was taken (very, very unlikely)
+	 * beक्रमe the socket lock was taken (very, very unlikely)
 	 */
 	tsk_rej_rx_queue(new_sk, TIPC_ERR_NO_PORT);
 
@@ -2749,220 +2750,220 @@ static int tipc_accept(struct socket *sock, struct socket *new_sock, int flags,
 	tipc_sk_finish_conn(new_tsock, msg_origport(msg), msg_orignode(msg));
 
 	tsk_set_importance(new_sk, msg_importance(msg));
-	if (msg_named(msg)) {
+	अगर (msg_named(msg)) अणु
 		new_tsock->conn_type = msg_nametype(msg);
 		new_tsock->conn_instance = msg_nameinst(msg);
-	}
+	पूर्ण
 
 	/*
 	 * Respond to 'SYN-' by discarding it & returning 'ACK'-.
 	 * Respond to 'SYN+' by queuing it on new socket.
 	 */
-	if (!msg_data_sz(msg)) {
-		struct msghdr m = {NULL,};
+	अगर (!msg_data_sz(msg)) अणु
+		काष्ठा msghdr m = अणुशून्य,पूर्ण;
 
 		tsk_advance_rx_queue(sk);
 		__tipc_sendstream(new_sock, &m, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		__skb_dequeue(&sk->sk_receive_queue);
 		__skb_queue_head(&new_sk->sk_receive_queue, buf);
 		skb_set_owner_r(buf, new_sk);
-	}
+	पूर्ण
 	release_sock(new_sk);
-exit:
+निकास:
 	release_sock(sk);
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /**
- * tipc_shutdown - shutdown socket connection
- * @sock: socket structure
- * @how: direction to close (must be SHUT_RDWR)
+ * tipc_shutकरोwn - shutकरोwn socket connection
+ * @sock: socket काष्ठाure
+ * @how: direction to बंद (must be SHUT_RDWR)
  *
- * Terminates connection (if necessary), then purges socket's receive queue.
+ * Terminates connection (अगर necessary), then purges socket's receive queue.
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-static int tipc_shutdown(struct socket *sock, int how)
-{
-	struct sock *sk = sock->sk;
-	int res;
+अटल पूर्णांक tipc_shutकरोwn(काष्ठा socket *sock, पूर्णांक how)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक res;
 
-	if (how != SHUT_RDWR)
-		return -EINVAL;
+	अगर (how != SHUT_RDWR)
+		वापस -EINVAL;
 
 	lock_sock(sk);
 
-	trace_tipc_sk_shutdown(sk, NULL, TIPC_DUMP_ALL, " ");
-	__tipc_shutdown(sock, TIPC_CONN_SHUTDOWN);
-	sk->sk_shutdown = SHUTDOWN_MASK;
+	trace_tipc_sk_shutकरोwn(sk, शून्य, TIPC_DUMP_ALL, " ");
+	__tipc_shutकरोwn(sock, TIPC_CONN_SHUTDOWN);
+	sk->sk_shutकरोwn = SHUTDOWN_MASK;
 
-	if (sk->sk_state == TIPC_DISCONNECTING) {
+	अगर (sk->sk_state == TIPC_DISCONNECTING) अणु
 		/* Discard any unreceived messages */
 		__skb_queue_purge(&sk->sk_receive_queue);
 
 		res = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		res = -ENOTCONN;
-	}
+	पूर्ण
 	/* Wake up anyone sleeping in poll. */
 	sk->sk_state_change(sk);
 
 	release_sock(sk);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void tipc_sk_check_probing_state(struct sock *sk,
-					struct sk_buff_head *list)
-{
-	struct tipc_sock *tsk = tipc_sk(sk);
+अटल व्योम tipc_sk_check_probing_state(काष्ठा sock *sk,
+					काष्ठा sk_buff_head *list)
+अणु
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
 	u32 pnode = tsk_peer_node(tsk);
 	u32 pport = tsk_peer_port(tsk);
 	u32 self = tsk_own_node(tsk);
 	u32 oport = tsk->portid;
-	struct sk_buff *skb;
+	काष्ठा sk_buff *skb;
 
-	if (tsk->probe_unacked) {
+	अगर (tsk->probe_unacked) अणु
 		tipc_set_sk_state(sk, TIPC_DISCONNECTING);
 		sk->sk_err = ECONNABORTED;
-		tipc_node_remove_conn(sock_net(sk), pnode, pport);
+		tipc_node_हटाओ_conn(sock_net(sk), pnode, pport);
 		sk->sk_state_change(sk);
-		return;
-	}
+		वापस;
+	पूर्ण
 	/* Prepare new probe */
 	skb = tipc_msg_create(CONN_MANAGER, CONN_PROBE, INT_H_SIZE, 0,
 			      pnode, self, pport, oport, TIPC_OK);
-	if (skb)
+	अगर (skb)
 		__skb_queue_tail(list, skb);
 	tsk->probe_unacked = true;
-	sk_reset_timer(sk, &sk->sk_timer, jiffies + CONN_PROBING_INTV);
-}
+	sk_reset_समयr(sk, &sk->sk_समयr, jअगरfies + CONN_PROBING_INTV);
+पूर्ण
 
-static void tipc_sk_retry_connect(struct sock *sk, struct sk_buff_head *list)
-{
-	struct tipc_sock *tsk = tipc_sk(sk);
+अटल व्योम tipc_sk_retry_connect(काष्ठा sock *sk, काष्ठा sk_buff_head *list)
+अणु
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
 
-	/* Try again later if dest link is congested */
-	if (tsk->cong_link_cnt) {
-		sk_reset_timer(sk, &sk->sk_timer, msecs_to_jiffies(100));
-		return;
-	}
-	/* Prepare SYN for retransmit */
-	tipc_msg_skb_clone(&sk->sk_write_queue, list);
-}
+	/* Try again later अगर dest link is congested */
+	अगर (tsk->cong_link_cnt) अणु
+		sk_reset_समयr(sk, &sk->sk_समयr, msecs_to_jअगरfies(100));
+		वापस;
+	पूर्ण
+	/* Prepare SYN क्रम retransmit */
+	tipc_msg_skb_clone(&sk->sk_ग_लिखो_queue, list);
+पूर्ण
 
-static void tipc_sk_timeout(struct timer_list *t)
-{
-	struct sock *sk = from_timer(sk, t, sk_timer);
-	struct tipc_sock *tsk = tipc_sk(sk);
+अटल व्योम tipc_sk_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sock *sk = from_समयr(sk, t, sk_समयr);
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
 	u32 pnode = tsk_peer_node(tsk);
-	struct sk_buff_head list;
-	int rc = 0;
+	काष्ठा sk_buff_head list;
+	पूर्णांक rc = 0;
 
 	__skb_queue_head_init(&list);
 	bh_lock_sock(sk);
 
-	/* Try again later if socket is busy */
-	if (sock_owned_by_user(sk)) {
-		sk_reset_timer(sk, &sk->sk_timer, jiffies + HZ / 20);
+	/* Try again later अगर socket is busy */
+	अगर (sock_owned_by_user(sk)) अणु
+		sk_reset_समयr(sk, &sk->sk_समयr, jअगरfies + HZ / 20);
 		bh_unlock_sock(sk);
 		sock_put(sk);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (sk->sk_state == TIPC_ESTABLISHED)
+	अगर (sk->sk_state == TIPC_ESTABLISHED)
 		tipc_sk_check_probing_state(sk, &list);
-	else if (sk->sk_state == TIPC_CONNECTING)
+	अन्यथा अगर (sk->sk_state == TIPC_CONNECTING)
 		tipc_sk_retry_connect(sk, &list);
 
 	bh_unlock_sock(sk);
 
-	if (!skb_queue_empty(&list))
+	अगर (!skb_queue_empty(&list))
 		rc = tipc_node_xmit(sock_net(sk), &list, pnode, tsk->portid);
 
 	/* SYN messages may cause link congestion */
-	if (rc == -ELINKCONG) {
+	अगर (rc == -ELINKCONG) अणु
 		tipc_dest_push(&tsk->cong_links, pnode, 0);
 		tsk->cong_link_cnt = 1;
-	}
+	पूर्ण
 	sock_put(sk);
-}
+पूर्ण
 
-static int tipc_sk_publish(struct tipc_sock *tsk, struct tipc_uaddr *ua)
-{
-	struct sock *sk = &tsk->sk;
-	struct net *net = sock_net(sk);
-	struct tipc_socket_addr skaddr;
-	struct publication *p;
+अटल पूर्णांक tipc_sk_publish(काष्ठा tipc_sock *tsk, काष्ठा tipc_uaddr *ua)
+अणु
+	काष्ठा sock *sk = &tsk->sk;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा tipc_socket_addr skaddr;
+	काष्ठा खुलाation *p;
 	u32 key;
 
-	if (tipc_sk_connected(sk))
-		return -EINVAL;
+	अगर (tipc_sk_connected(sk))
+		वापस -EINVAL;
 	key = tsk->portid + tsk->pub_count + 1;
-	if (key == tsk->portid)
-		return -EADDRINUSE;
+	अगर (key == tsk->portid)
+		वापस -EADDRINUSE;
 	skaddr.ref = tsk->portid;
 	skaddr.node = tipc_own_addr(net);
 	p = tipc_nametbl_publish(net, ua, &skaddr, key);
-	if (unlikely(!p))
-		return -EINVAL;
+	अगर (unlikely(!p))
+		वापस -EINVAL;
 
-	list_add(&p->binding_sock, &tsk->publications);
+	list_add(&p->binding_sock, &tsk->खुलाations);
 	tsk->pub_count++;
 	tsk->published = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tipc_sk_withdraw(struct tipc_sock *tsk, struct tipc_uaddr *ua)
-{
-	struct net *net = sock_net(&tsk->sk);
-	struct publication *safe, *p;
-	struct tipc_uaddr _ua;
-	int rc = -EINVAL;
+अटल पूर्णांक tipc_sk_withdraw(काष्ठा tipc_sock *tsk, काष्ठा tipc_uaddr *ua)
+अणु
+	काष्ठा net *net = sock_net(&tsk->sk);
+	काष्ठा खुलाation *safe, *p;
+	काष्ठा tipc_uaddr _ua;
+	पूर्णांक rc = -EINVAL;
 
-	list_for_each_entry_safe(p, safe, &tsk->publications, binding_sock) {
-		if (!ua) {
+	list_क्रम_each_entry_safe(p, safe, &tsk->खुलाations, binding_sock) अणु
+		अगर (!ua) अणु
 			tipc_uaddr(&_ua, TIPC_SERVICE_RANGE, p->scope,
 				   p->sr.type, p->sr.lower, p->sr.upper);
 			tipc_nametbl_withdraw(net, &_ua, &p->sk, p->key);
-			continue;
-		}
-		/* Unbind specific publication */
-		if (p->scope != ua->scope)
-			continue;
-		if (p->sr.type != ua->sr.type)
-			continue;
-		if (p->sr.lower != ua->sr.lower)
-			continue;
-		if (p->sr.upper != ua->sr.upper)
-			break;
+			जारी;
+		पूर्ण
+		/* Unbind specअगरic खुलाation */
+		अगर (p->scope != ua->scope)
+			जारी;
+		अगर (p->sr.type != ua->sr.type)
+			जारी;
+		अगर (p->sr.lower != ua->sr.lower)
+			जारी;
+		अगर (p->sr.upper != ua->sr.upper)
+			अवरोध;
 		tipc_nametbl_withdraw(net, ua, &p->sk, p->key);
 		rc = 0;
-		break;
-	}
-	if (list_empty(&tsk->publications)) {
+		अवरोध;
+	पूर्ण
+	अगर (list_empty(&tsk->खुलाations)) अणु
 		tsk->published = 0;
 		rc = 0;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
 /* tipc_sk_reinit: set non-zero address in all existing sockets
  *                 when we go from standalone to network mode.
  */
-void tipc_sk_reinit(struct net *net)
-{
-	struct tipc_net *tn = net_generic(net, tipc_net_id);
-	struct rhashtable_iter iter;
-	struct tipc_sock *tsk;
-	struct tipc_msg *msg;
+व्योम tipc_sk_reinit(काष्ठा net *net)
+अणु
+	काष्ठा tipc_net *tn = net_generic(net, tipc_net_id);
+	काष्ठा rhashtable_iter iter;
+	काष्ठा tipc_sock *tsk;
+	काष्ठा tipc_msg *msg;
 
 	rhashtable_walk_enter(&tn->sk_rht, &iter);
 
-	do {
+	करो अणु
 		rhashtable_walk_start(&iter);
 
-		while ((tsk = rhashtable_walk_next(&iter)) && !IS_ERR(tsk)) {
+		जबतक ((tsk = rhashtable_walk_next(&iter)) && !IS_ERR(tsk)) अणु
 			sock_hold(&tsk->sk);
 			rhashtable_walk_stop(&iter);
 			lock_sock(&tsk->sk);
@@ -2972,108 +2973,108 @@ void tipc_sk_reinit(struct net *net)
 			release_sock(&tsk->sk);
 			rhashtable_walk_start(&iter);
 			sock_put(&tsk->sk);
-		}
+		पूर्ण
 
 		rhashtable_walk_stop(&iter);
-	} while (tsk == ERR_PTR(-EAGAIN));
+	पूर्ण जबतक (tsk == ERR_PTR(-EAGAIN));
 
-	rhashtable_walk_exit(&iter);
-}
+	rhashtable_walk_निकास(&iter);
+पूर्ण
 
-static struct tipc_sock *tipc_sk_lookup(struct net *net, u32 portid)
-{
-	struct tipc_net *tn = net_generic(net, tipc_net_id);
-	struct tipc_sock *tsk;
+अटल काष्ठा tipc_sock *tipc_sk_lookup(काष्ठा net *net, u32 portid)
+अणु
+	काष्ठा tipc_net *tn = net_generic(net, tipc_net_id);
+	काष्ठा tipc_sock *tsk;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tsk = rhashtable_lookup(&tn->sk_rht, &portid, tsk_rht_params);
-	if (tsk)
+	अगर (tsk)
 		sock_hold(&tsk->sk);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return tsk;
-}
+	वापस tsk;
+पूर्ण
 
-static int tipc_sk_insert(struct tipc_sock *tsk)
-{
-	struct sock *sk = &tsk->sk;
-	struct net *net = sock_net(sk);
-	struct tipc_net *tn = net_generic(net, tipc_net_id);
-	u32 remaining = (TIPC_MAX_PORT - TIPC_MIN_PORT) + 1;
-	u32 portid = prandom_u32() % remaining + TIPC_MIN_PORT;
+अटल पूर्णांक tipc_sk_insert(काष्ठा tipc_sock *tsk)
+अणु
+	काष्ठा sock *sk = &tsk->sk;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा tipc_net *tn = net_generic(net, tipc_net_id);
+	u32 reमुख्यing = (TIPC_MAX_PORT - TIPC_MIN_PORT) + 1;
+	u32 portid = pअक्रमom_u32() % reमुख्यing + TIPC_MIN_PORT;
 
-	while (remaining--) {
+	जबतक (reमुख्यing--) अणु
 		portid++;
-		if ((portid < TIPC_MIN_PORT) || (portid > TIPC_MAX_PORT))
+		अगर ((portid < TIPC_MIN_PORT) || (portid > TIPC_MAX_PORT))
 			portid = TIPC_MIN_PORT;
 		tsk->portid = portid;
 		sock_hold(&tsk->sk);
-		if (!rhashtable_lookup_insert_fast(&tn->sk_rht, &tsk->node,
+		अगर (!rhashtable_lookup_insert_fast(&tn->sk_rht, &tsk->node,
 						   tsk_rht_params))
-			return 0;
+			वापस 0;
 		sock_put(&tsk->sk);
-	}
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void tipc_sk_remove(struct tipc_sock *tsk)
-{
-	struct sock *sk = &tsk->sk;
-	struct tipc_net *tn = net_generic(sock_net(sk), tipc_net_id);
+अटल व्योम tipc_sk_हटाओ(काष्ठा tipc_sock *tsk)
+अणु
+	काष्ठा sock *sk = &tsk->sk;
+	काष्ठा tipc_net *tn = net_generic(sock_net(sk), tipc_net_id);
 
-	if (!rhashtable_remove_fast(&tn->sk_rht, &tsk->node, tsk_rht_params)) {
-		WARN_ON(refcount_read(&sk->sk_refcnt) == 1);
+	अगर (!rhashtable_हटाओ_fast(&tn->sk_rht, &tsk->node, tsk_rht_params)) अणु
+		WARN_ON(refcount_पढ़ो(&sk->sk_refcnt) == 1);
 		__sock_put(sk);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct rhashtable_params tsk_rht_params = {
-	.nelem_hint = 192,
-	.head_offset = offsetof(struct tipc_sock, node),
-	.key_offset = offsetof(struct tipc_sock, portid),
-	.key_len = sizeof(u32), /* portid */
+अटल स्थिर काष्ठा rhashtable_params tsk_rht_params = अणु
+	.nelem_hपूर्णांक = 192,
+	.head_offset = दुरत्व(काष्ठा tipc_sock, node),
+	.key_offset = दुरत्व(काष्ठा tipc_sock, portid),
+	.key_len = माप(u32), /* portid */
 	.max_size = 1048576,
 	.min_size = 256,
-	.automatic_shrinking = true,
-};
+	.स्वतःmatic_shrinking = true,
+पूर्ण;
 
-int tipc_sk_rht_init(struct net *net)
-{
-	struct tipc_net *tn = net_generic(net, tipc_net_id);
+पूर्णांक tipc_sk_rht_init(काष्ठा net *net)
+अणु
+	काष्ठा tipc_net *tn = net_generic(net, tipc_net_id);
 
-	return rhashtable_init(&tn->sk_rht, &tsk_rht_params);
-}
+	वापस rhashtable_init(&tn->sk_rht, &tsk_rht_params);
+पूर्ण
 
-void tipc_sk_rht_destroy(struct net *net)
-{
-	struct tipc_net *tn = net_generic(net, tipc_net_id);
+व्योम tipc_sk_rht_destroy(काष्ठा net *net)
+अणु
+	काष्ठा tipc_net *tn = net_generic(net, tipc_net_id);
 
-	/* Wait for socket readers to complete */
+	/* Wait क्रम socket पढ़ोers to complete */
 	synchronize_net();
 
 	rhashtable_destroy(&tn->sk_rht);
-}
+पूर्ण
 
-static int tipc_sk_join(struct tipc_sock *tsk, struct tipc_group_req *mreq)
-{
-	struct net *net = sock_net(&tsk->sk);
-	struct tipc_group *grp = tsk->group;
-	struct tipc_msg *hdr = &tsk->phdr;
-	struct tipc_uaddr ua;
-	int rc;
+अटल पूर्णांक tipc_sk_join(काष्ठा tipc_sock *tsk, काष्ठा tipc_group_req *mreq)
+अणु
+	काष्ठा net *net = sock_net(&tsk->sk);
+	काष्ठा tipc_group *grp = tsk->group;
+	काष्ठा tipc_msg *hdr = &tsk->phdr;
+	काष्ठा tipc_uaddr ua;
+	पूर्णांक rc;
 
-	if (mreq->type < TIPC_RESERVED_TYPES)
-		return -EACCES;
-	if (mreq->scope > TIPC_NODE_SCOPE)
-		return -EINVAL;
-	if (mreq->scope != TIPC_NODE_SCOPE)
+	अगर (mreq->type < TIPC_RESERVED_TYPES)
+		वापस -EACCES;
+	अगर (mreq->scope > TIPC_NODE_SCOPE)
+		वापस -EINVAL;
+	अगर (mreq->scope != TIPC_NODE_SCOPE)
 		mreq->scope = TIPC_CLUSTER_SCOPE;
-	if (grp)
-		return -EACCES;
-	grp = tipc_group_create(net, tsk->portid, mreq, &tsk->group_is_open);
-	if (!grp)
-		return -ENOMEM;
+	अगर (grp)
+		वापस -EACCES;
+	grp = tipc_group_create(net, tsk->portid, mreq, &tsk->group_is_खोलो);
+	अगर (!grp)
+		वापस -ENOMEM;
 	tsk->group = grp;
 	msg_set_lookup_scope(hdr, mreq->scope);
 	msg_set_nametype(hdr, mreq->type);
@@ -3082,246 +3083,246 @@ static int tipc_sk_join(struct tipc_sock *tsk, struct tipc_group_req *mreq)
 		   mreq->type, mreq->instance, mreq->instance);
 	tipc_nametbl_build_group(net, grp, &ua);
 	rc = tipc_sk_publish(tsk, &ua);
-	if (rc) {
+	अगर (rc) अणु
 		tipc_group_delete(net, grp);
-		tsk->group = NULL;
-		return rc;
-	}
+		tsk->group = शून्य;
+		वापस rc;
+	पूर्ण
 	/* Eliminate any risk that a broadcast overtakes sent JOINs */
 	tsk->mc_method.rcast = true;
 	tsk->mc_method.mandatory = true;
 	tipc_group_join(net, grp, &tsk->sk.sk_rcvbuf);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int tipc_sk_leave(struct tipc_sock *tsk)
-{
-	struct net *net = sock_net(&tsk->sk);
-	struct tipc_group *grp = tsk->group;
-	struct tipc_uaddr ua;
-	int scope;
+अटल पूर्णांक tipc_sk_leave(काष्ठा tipc_sock *tsk)
+अणु
+	काष्ठा net *net = sock_net(&tsk->sk);
+	काष्ठा tipc_group *grp = tsk->group;
+	काष्ठा tipc_uaddr ua;
+	पूर्णांक scope;
 
-	if (!grp)
-		return -EINVAL;
+	अगर (!grp)
+		वापस -EINVAL;
 	ua.addrtype = TIPC_SERVICE_RANGE;
 	tipc_group_self(grp, &ua.sr, &scope);
 	ua.scope = scope;
 	tipc_group_delete(net, grp);
-	tsk->group = NULL;
+	tsk->group = शून्य;
 	tipc_sk_withdraw(tsk, &ua);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * tipc_setsockopt - set socket option
- * @sock: socket structure
+ * @sock: socket काष्ठाure
  * @lvl: option level
- * @opt: option identifier
- * @ov: pointer to new option value
+ * @opt: option identअगरier
+ * @ov: poपूर्णांकer to new option value
  * @ol: length of option value
  *
  * For stream sockets only, accepts and ignores all IPPROTO_TCP options
  * (to ease compatibility).
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-static int tipc_setsockopt(struct socket *sock, int lvl, int opt,
-			   sockptr_t ov, unsigned int ol)
-{
-	struct sock *sk = sock->sk;
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct tipc_group_req mreq;
+अटल पूर्णांक tipc_setsockopt(काष्ठा socket *sock, पूर्णांक lvl, पूर्णांक opt,
+			   sockptr_t ov, अचिन्हित पूर्णांक ol)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा tipc_group_req mreq;
 	u32 value = 0;
-	int res = 0;
+	पूर्णांक res = 0;
 
-	if ((lvl == IPPROTO_TCP) && (sock->type == SOCK_STREAM))
-		return 0;
-	if (lvl != SOL_TIPC)
-		return -ENOPROTOOPT;
+	अगर ((lvl == IPPROTO_TCP) && (sock->type == SOCK_STREAM))
+		वापस 0;
+	अगर (lvl != SOL_TIPC)
+		वापस -ENOPROTOOPT;
 
-	switch (opt) {
-	case TIPC_IMPORTANCE:
-	case TIPC_SRC_DROPPABLE:
-	case TIPC_DEST_DROPPABLE:
-	case TIPC_CONN_TIMEOUT:
-	case TIPC_NODELAY:
-		if (ol < sizeof(value))
-			return -EINVAL;
-		if (copy_from_sockptr(&value, ov, sizeof(u32)))
-			return -EFAULT;
-		break;
-	case TIPC_GROUP_JOIN:
-		if (ol < sizeof(mreq))
-			return -EINVAL;
-		if (copy_from_sockptr(&mreq, ov, sizeof(mreq)))
-			return -EFAULT;
-		break;
-	default:
-		if (!sockptr_is_null(ov) || ol)
-			return -EINVAL;
-	}
+	चयन (opt) अणु
+	हाल TIPC_IMPORTANCE:
+	हाल TIPC_SRC_DROPPABLE:
+	हाल TIPC_DEST_DROPPABLE:
+	हाल TIPC_CONN_TIMEOUT:
+	हाल TIPC_NODELAY:
+		अगर (ol < माप(value))
+			वापस -EINVAL;
+		अगर (copy_from_sockptr(&value, ov, माप(u32)))
+			वापस -EFAULT;
+		अवरोध;
+	हाल TIPC_GROUP_JOIN:
+		अगर (ol < माप(mreq))
+			वापस -EINVAL;
+		अगर (copy_from_sockptr(&mreq, ov, माप(mreq)))
+			वापस -EFAULT;
+		अवरोध;
+	शेष:
+		अगर (!sockptr_is_null(ov) || ol)
+			वापस -EINVAL;
+	पूर्ण
 
 	lock_sock(sk);
 
-	switch (opt) {
-	case TIPC_IMPORTANCE:
+	चयन (opt) अणु
+	हाल TIPC_IMPORTANCE:
 		res = tsk_set_importance(sk, value);
-		break;
-	case TIPC_SRC_DROPPABLE:
-		if (sock->type != SOCK_STREAM)
+		अवरोध;
+	हाल TIPC_SRC_DROPPABLE:
+		अगर (sock->type != SOCK_STREAM)
 			tsk_set_unreliable(tsk, value);
-		else
+		अन्यथा
 			res = -ENOPROTOOPT;
-		break;
-	case TIPC_DEST_DROPPABLE:
-		tsk_set_unreturnable(tsk, value);
-		break;
-	case TIPC_CONN_TIMEOUT:
-		tipc_sk(sk)->conn_timeout = value;
-		break;
-	case TIPC_MCAST_BROADCAST:
+		अवरोध;
+	हाल TIPC_DEST_DROPPABLE:
+		tsk_set_unवापसable(tsk, value);
+		अवरोध;
+	हाल TIPC_CONN_TIMEOUT:
+		tipc_sk(sk)->conn_समयout = value;
+		अवरोध;
+	हाल TIPC_MCAST_BROADCAST:
 		tsk->mc_method.rcast = false;
 		tsk->mc_method.mandatory = true;
-		break;
-	case TIPC_MCAST_REPLICAST:
+		अवरोध;
+	हाल TIPC_MCAST_REPLICAST:
 		tsk->mc_method.rcast = true;
 		tsk->mc_method.mandatory = true;
-		break;
-	case TIPC_GROUP_JOIN:
+		अवरोध;
+	हाल TIPC_GROUP_JOIN:
 		res = tipc_sk_join(tsk, &mreq);
-		break;
-	case TIPC_GROUP_LEAVE:
+		अवरोध;
+	हाल TIPC_GROUP_LEAVE:
 		res = tipc_sk_leave(tsk);
-		break;
-	case TIPC_NODELAY:
+		अवरोध;
+	हाल TIPC_NODELAY:
 		tsk->nodelay = !!value;
 		tsk_set_nagle(tsk);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		res = -EINVAL;
-	}
+	पूर्ण
 
 	release_sock(sk);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /**
- * tipc_getsockopt - get socket option
- * @sock: socket structure
+ * tipc_माला_लोockopt - get socket option
+ * @sock: socket काष्ठाure
  * @lvl: option level
- * @opt: option identifier
- * @ov: receptacle for option value
- * @ol: receptacle for length of option value
+ * @opt: option identअगरier
+ * @ov: receptacle क्रम option value
+ * @ol: receptacle क्रम length of option value
  *
- * For stream sockets only, returns 0 length result for all IPPROTO_TCP options
+ * For stream sockets only, वापसs 0 length result क्रम all IPPROTO_TCP options
  * (to ease compatibility).
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-static int tipc_getsockopt(struct socket *sock, int lvl, int opt,
-			   char __user *ov, int __user *ol)
-{
-	struct sock *sk = sock->sk;
-	struct tipc_sock *tsk = tipc_sk(sk);
-	struct tipc_service_range seq;
-	int len, scope;
+अटल पूर्णांक tipc_माला_लोockopt(काष्ठा socket *sock, पूर्णांक lvl, पूर्णांक opt,
+			   अक्षर __user *ov, पूर्णांक __user *ol)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा tipc_sock *tsk = tipc_sk(sk);
+	काष्ठा tipc_service_range seq;
+	पूर्णांक len, scope;
 	u32 value;
-	int res;
+	पूर्णांक res;
 
-	if ((lvl == IPPROTO_TCP) && (sock->type == SOCK_STREAM))
-		return put_user(0, ol);
-	if (lvl != SOL_TIPC)
-		return -ENOPROTOOPT;
+	अगर ((lvl == IPPROTO_TCP) && (sock->type == SOCK_STREAM))
+		वापस put_user(0, ol);
+	अगर (lvl != SOL_TIPC)
+		वापस -ENOPROTOOPT;
 	res = get_user(len, ol);
-	if (res)
-		return res;
+	अगर (res)
+		वापस res;
 
 	lock_sock(sk);
 
-	switch (opt) {
-	case TIPC_IMPORTANCE:
+	चयन (opt) अणु
+	हाल TIPC_IMPORTANCE:
 		value = tsk_importance(tsk);
-		break;
-	case TIPC_SRC_DROPPABLE:
+		अवरोध;
+	हाल TIPC_SRC_DROPPABLE:
 		value = tsk_unreliable(tsk);
-		break;
-	case TIPC_DEST_DROPPABLE:
-		value = tsk_unreturnable(tsk);
-		break;
-	case TIPC_CONN_TIMEOUT:
-		value = tsk->conn_timeout;
-		/* no need to set "res", since already 0 at this point */
-		break;
-	case TIPC_NODE_RECVQ_DEPTH:
+		अवरोध;
+	हाल TIPC_DEST_DROPPABLE:
+		value = tsk_unवापसable(tsk);
+		अवरोध;
+	हाल TIPC_CONN_TIMEOUT:
+		value = tsk->conn_समयout;
+		/* no need to set "res", since alपढ़ोy 0 at this poपूर्णांक */
+		अवरोध;
+	हाल TIPC_NODE_RECVQ_DEPTH:
 		value = 0; /* was tipc_queue_size, now obsolete */
-		break;
-	case TIPC_SOCK_RECVQ_DEPTH:
+		अवरोध;
+	हाल TIPC_SOCK_RECVQ_DEPTH:
 		value = skb_queue_len(&sk->sk_receive_queue);
-		break;
-	case TIPC_SOCK_RECVQ_USED:
+		अवरोध;
+	हाल TIPC_SOCK_RECVQ_USED:
 		value = sk_rmem_alloc_get(sk);
-		break;
-	case TIPC_GROUP_JOIN:
+		अवरोध;
+	हाल TIPC_GROUP_JOIN:
 		seq.type = 0;
-		if (tsk->group)
+		अगर (tsk->group)
 			tipc_group_self(tsk->group, &seq, &scope);
 		value = seq.type;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		res = -EINVAL;
-	}
+	पूर्ण
 
 	release_sock(sk);
 
-	if (res)
-		return res;	/* "get" failed */
+	अगर (res)
+		वापस res;	/* "get" failed */
 
-	if (len < sizeof(value))
-		return -EINVAL;
+	अगर (len < माप(value))
+		वापस -EINVAL;
 
-	if (copy_to_user(ov, &value, sizeof(value)))
-		return -EFAULT;
+	अगर (copy_to_user(ov, &value, माप(value)))
+		वापस -EFAULT;
 
-	return put_user(sizeof(value), ol);
-}
+	वापस put_user(माप(value), ol);
+पूर्ण
 
-static int tipc_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
-{
-	struct net *net = sock_net(sock->sk);
-	struct tipc_sioc_nodeid_req nr = {0};
-	struct tipc_sioc_ln_req lnr;
-	void __user *argp = (void __user *)arg;
+अटल पूर्णांक tipc_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा net *net = sock_net(sock->sk);
+	काष्ठा tipc_sioc_nodeid_req nr = अणु0पूर्ण;
+	काष्ठा tipc_sioc_ln_req lnr;
+	व्योम __user *argp = (व्योम __user *)arg;
 
-	switch (cmd) {
-	case SIOCGETLINKNAME:
-		if (copy_from_user(&lnr, argp, sizeof(lnr)))
-			return -EFAULT;
-		if (!tipc_node_get_linkname(net,
+	चयन (cmd) अणु
+	हाल SIOCGETLINKNAME:
+		अगर (copy_from_user(&lnr, argp, माप(lnr)))
+			वापस -EFAULT;
+		अगर (!tipc_node_get_linkname(net,
 					    lnr.bearer_id & 0xffff, lnr.peer,
-					    lnr.linkname, TIPC_MAX_LINK_NAME)) {
-			if (copy_to_user(argp, &lnr, sizeof(lnr)))
-				return -EFAULT;
-			return 0;
-		}
-		return -EADDRNOTAVAIL;
-	case SIOCGETNODEID:
-		if (copy_from_user(&nr, argp, sizeof(nr)))
-			return -EFAULT;
-		if (!tipc_node_get_id(net, nr.peer, nr.node_id))
-			return -EADDRNOTAVAIL;
-		if (copy_to_user(argp, &nr, sizeof(nr)))
-			return -EFAULT;
-		return 0;
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
+					    lnr.linkname, TIPC_MAX_LINK_NAME)) अणु
+			अगर (copy_to_user(argp, &lnr, माप(lnr)))
+				वापस -EFAULT;
+			वापस 0;
+		पूर्ण
+		वापस -EADDRNOTAVAIL;
+	हाल SIOCGETNODEID:
+		अगर (copy_from_user(&nr, argp, माप(nr)))
+			वापस -EFAULT;
+		अगर (!tipc_node_get_id(net, nr.peer, nr.node_id))
+			वापस -EADDRNOTAVAIL;
+		अगर (copy_to_user(argp, &nr, माप(nr)))
+			वापस -EFAULT;
+		वापस 0;
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
 
-static int tipc_socketpair(struct socket *sock1, struct socket *sock2)
-{
-	struct tipc_sock *tsk2 = tipc_sk(sock2->sk);
-	struct tipc_sock *tsk1 = tipc_sk(sock1->sk);
+अटल पूर्णांक tipc_socketpair(काष्ठा socket *sock1, काष्ठा socket *sock2)
+अणु
+	काष्ठा tipc_sock *tsk2 = tipc_sk(sock2->sk);
+	काष्ठा tipc_sock *tsk1 = tipc_sk(sock1->sk);
 	u32 onode = tipc_own_addr(sock_net(sock1->sk));
 
 	tsk1->peer.family = AF_TIPC;
@@ -3337,12 +3338,12 @@ static int tipc_socketpair(struct socket *sock1, struct socket *sock2)
 
 	tipc_sk_finish_conn(tsk1, tsk2->portid, onode);
 	tipc_sk_finish_conn(tsk2, tsk1->portid, onode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Protocol switches for the various types of TIPC sockets */
+/* Protocol चयनes क्रम the various types of TIPC sockets */
 
-static const struct proto_ops msg_ops = {
+अटल स्थिर काष्ठा proto_ops msg_ops = अणु
 	.owner		= THIS_MODULE,
 	.family		= AF_TIPC,
 	.release	= tipc_release,
@@ -3354,16 +3355,16 @@ static const struct proto_ops msg_ops = {
 	.poll		= tipc_poll,
 	.ioctl		= tipc_ioctl,
 	.listen		= sock_no_listen,
-	.shutdown	= tipc_shutdown,
+	.shutकरोwn	= tipc_shutकरोwn,
 	.setsockopt	= tipc_setsockopt,
-	.getsockopt	= tipc_getsockopt,
+	.माला_लोockopt	= tipc_माला_लोockopt,
 	.sendmsg	= tipc_sendmsg,
 	.recvmsg	= tipc_recvmsg,
 	.mmap		= sock_no_mmap,
 	.sendpage	= sock_no_sendpage
-};
+पूर्ण;
 
-static const struct proto_ops packet_ops = {
+अटल स्थिर काष्ठा proto_ops packet_ops = अणु
 	.owner		= THIS_MODULE,
 	.family		= AF_TIPC,
 	.release	= tipc_release,
@@ -3375,16 +3376,16 @@ static const struct proto_ops packet_ops = {
 	.poll		= tipc_poll,
 	.ioctl		= tipc_ioctl,
 	.listen		= tipc_listen,
-	.shutdown	= tipc_shutdown,
+	.shutकरोwn	= tipc_shutकरोwn,
 	.setsockopt	= tipc_setsockopt,
-	.getsockopt	= tipc_getsockopt,
+	.माला_लोockopt	= tipc_माला_लोockopt,
 	.sendmsg	= tipc_send_packet,
 	.recvmsg	= tipc_recvmsg,
 	.mmap		= sock_no_mmap,
 	.sendpage	= sock_no_sendpage
-};
+पूर्ण;
 
-static const struct proto_ops stream_ops = {
+अटल स्थिर काष्ठा proto_ops stream_ops = अणु
 	.owner		= THIS_MODULE,
 	.family		= AF_TIPC,
 	.release	= tipc_release,
@@ -3396,244 +3397,244 @@ static const struct proto_ops stream_ops = {
 	.poll		= tipc_poll,
 	.ioctl		= tipc_ioctl,
 	.listen		= tipc_listen,
-	.shutdown	= tipc_shutdown,
+	.shutकरोwn	= tipc_shutकरोwn,
 	.setsockopt	= tipc_setsockopt,
-	.getsockopt	= tipc_getsockopt,
+	.माला_लोockopt	= tipc_माला_लोockopt,
 	.sendmsg	= tipc_sendstream,
 	.recvmsg	= tipc_recvstream,
 	.mmap		= sock_no_mmap,
 	.sendpage	= sock_no_sendpage
-};
+पूर्ण;
 
-static const struct net_proto_family tipc_family_ops = {
+अटल स्थिर काष्ठा net_proto_family tipc_family_ops = अणु
 	.owner		= THIS_MODULE,
 	.family		= AF_TIPC,
 	.create		= tipc_sk_create
-};
+पूर्ण;
 
-static struct proto tipc_proto = {
+अटल काष्ठा proto tipc_proto = अणु
 	.name		= "TIPC",
 	.owner		= THIS_MODULE,
-	.obj_size	= sizeof(struct tipc_sock),
+	.obj_size	= माप(काष्ठा tipc_sock),
 	.sysctl_rmem	= sysctl_tipc_rmem
-};
+पूर्ण;
 
 /**
- * tipc_socket_init - initialize TIPC socket interface
+ * tipc_socket_init - initialize TIPC socket पूर्णांकerface
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-int tipc_socket_init(void)
-{
-	int res;
+पूर्णांक tipc_socket_init(व्योम)
+अणु
+	पूर्णांक res;
 
-	res = proto_register(&tipc_proto, 1);
-	if (res) {
+	res = proto_रेजिस्टर(&tipc_proto, 1);
+	अगर (res) अणु
 		pr_err("Failed to register TIPC protocol type\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	res = sock_register(&tipc_family_ops);
-	if (res) {
+	res = sock_रेजिस्टर(&tipc_family_ops);
+	अगर (res) अणु
 		pr_err("Failed to register TIPC socket type\n");
-		proto_unregister(&tipc_proto);
-		goto out;
-	}
+		proto_unरेजिस्टर(&tipc_proto);
+		जाओ out;
+	पूर्ण
  out:
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /**
- * tipc_socket_stop - stop TIPC socket interface
+ * tipc_socket_stop - stop TIPC socket पूर्णांकerface
  */
-void tipc_socket_stop(void)
-{
-	sock_unregister(tipc_family_ops.family);
-	proto_unregister(&tipc_proto);
-}
+व्योम tipc_socket_stop(व्योम)
+अणु
+	sock_unरेजिस्टर(tipc_family_ops.family);
+	proto_unरेजिस्टर(&tipc_proto);
+पूर्ण
 
-/* Caller should hold socket lock for the passed tipc socket. */
-static int __tipc_nl_add_sk_con(struct sk_buff *skb, struct tipc_sock *tsk)
-{
+/* Caller should hold socket lock क्रम the passed tipc socket. */
+अटल पूर्णांक __tipc_nl_add_sk_con(काष्ठा sk_buff *skb, काष्ठा tipc_sock *tsk)
+अणु
 	u32 peer_node;
 	u32 peer_port;
-	struct nlattr *nest;
+	काष्ठा nlattr *nest;
 
 	peer_node = tsk_peer_node(tsk);
 	peer_port = tsk_peer_port(tsk);
 
 	nest = nla_nest_start_noflag(skb, TIPC_NLA_SOCK_CON);
-	if (!nest)
-		return -EMSGSIZE;
+	अगर (!nest)
+		वापस -EMSGSIZE;
 
-	if (nla_put_u32(skb, TIPC_NLA_CON_NODE, peer_node))
-		goto msg_full;
-	if (nla_put_u32(skb, TIPC_NLA_CON_SOCK, peer_port))
-		goto msg_full;
+	अगर (nla_put_u32(skb, TIPC_NLA_CON_NODE, peer_node))
+		जाओ msg_full;
+	अगर (nla_put_u32(skb, TIPC_NLA_CON_SOCK, peer_port))
+		जाओ msg_full;
 
-	if (tsk->conn_type != 0) {
-		if (nla_put_flag(skb, TIPC_NLA_CON_FLAG))
-			goto msg_full;
-		if (nla_put_u32(skb, TIPC_NLA_CON_TYPE, tsk->conn_type))
-			goto msg_full;
-		if (nla_put_u32(skb, TIPC_NLA_CON_INST, tsk->conn_instance))
-			goto msg_full;
-	}
+	अगर (tsk->conn_type != 0) अणु
+		अगर (nla_put_flag(skb, TIPC_NLA_CON_FLAG))
+			जाओ msg_full;
+		अगर (nla_put_u32(skb, TIPC_NLA_CON_TYPE, tsk->conn_type))
+			जाओ msg_full;
+		अगर (nla_put_u32(skb, TIPC_NLA_CON_INST, tsk->conn_instance))
+			जाओ msg_full;
+	पूर्ण
 	nla_nest_end(skb, nest);
 
-	return 0;
+	वापस 0;
 
 msg_full:
 	nla_nest_cancel(skb, nest);
 
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int __tipc_nl_add_sk_info(struct sk_buff *skb, struct tipc_sock
+अटल पूर्णांक __tipc_nl_add_sk_info(काष्ठा sk_buff *skb, काष्ठा tipc_sock
 			  *tsk)
-{
-	struct net *net = sock_net(skb->sk);
-	struct sock *sk = &tsk->sk;
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा sock *sk = &tsk->sk;
 
-	if (nla_put_u32(skb, TIPC_NLA_SOCK_REF, tsk->portid) ||
+	अगर (nla_put_u32(skb, TIPC_NLA_SOCK_REF, tsk->portid) ||
 	    nla_put_u32(skb, TIPC_NLA_SOCK_ADDR, tipc_own_addr(net)))
-		return -EMSGSIZE;
+		वापस -EMSGSIZE;
 
-	if (tipc_sk_connected(sk)) {
-		if (__tipc_nl_add_sk_con(skb, tsk))
-			return -EMSGSIZE;
-	} else if (!list_empty(&tsk->publications)) {
-		if (nla_put_flag(skb, TIPC_NLA_SOCK_HAS_PUBL))
-			return -EMSGSIZE;
-	}
-	return 0;
-}
+	अगर (tipc_sk_connected(sk)) अणु
+		अगर (__tipc_nl_add_sk_con(skb, tsk))
+			वापस -EMSGSIZE;
+	पूर्ण अन्यथा अगर (!list_empty(&tsk->खुलाations)) अणु
+		अगर (nla_put_flag(skb, TIPC_NLA_SOCK_HAS_PUBL))
+			वापस -EMSGSIZE;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Caller should hold socket lock for the passed tipc socket. */
-static int __tipc_nl_add_sk(struct sk_buff *skb, struct netlink_callback *cb,
-			    struct tipc_sock *tsk)
-{
-	struct nlattr *attrs;
-	void *hdr;
+/* Caller should hold socket lock क्रम the passed tipc socket. */
+अटल पूर्णांक __tipc_nl_add_sk(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb,
+			    काष्ठा tipc_sock *tsk)
+अणु
+	काष्ठा nlattr *attrs;
+	व्योम *hdr;
 
 	hdr = genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			  &tipc_genl_family, NLM_F_MULTI, TIPC_NL_SOCK_GET);
-	if (!hdr)
-		goto msg_cancel;
+	अगर (!hdr)
+		जाओ msg_cancel;
 
 	attrs = nla_nest_start_noflag(skb, TIPC_NLA_SOCK);
-	if (!attrs)
-		goto genlmsg_cancel;
+	अगर (!attrs)
+		जाओ genlmsg_cancel;
 
-	if (__tipc_nl_add_sk_info(skb, tsk))
-		goto attr_msg_cancel;
+	अगर (__tipc_nl_add_sk_info(skb, tsk))
+		जाओ attr_msg_cancel;
 
 	nla_nest_end(skb, attrs);
 	genlmsg_end(skb, hdr);
 
-	return 0;
+	वापस 0;
 
 attr_msg_cancel:
 	nla_nest_cancel(skb, attrs);
 genlmsg_cancel:
 	genlmsg_cancel(skb, hdr);
 msg_cancel:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-int tipc_nl_sk_walk(struct sk_buff *skb, struct netlink_callback *cb,
-		    int (*skb_handler)(struct sk_buff *skb,
-				       struct netlink_callback *cb,
-				       struct tipc_sock *tsk))
-{
-	struct rhashtable_iter *iter = (void *)cb->args[4];
-	struct tipc_sock *tsk;
-	int err;
+पूर्णांक tipc_nl_sk_walk(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb,
+		    पूर्णांक (*skb_handler)(काष्ठा sk_buff *skb,
+				       काष्ठा netlink_callback *cb,
+				       काष्ठा tipc_sock *tsk))
+अणु
+	काष्ठा rhashtable_iter *iter = (व्योम *)cb->args[4];
+	काष्ठा tipc_sock *tsk;
+	पूर्णांक err;
 
 	rhashtable_walk_start(iter);
-	while ((tsk = rhashtable_walk_next(iter)) != NULL) {
-		if (IS_ERR(tsk)) {
+	जबतक ((tsk = rhashtable_walk_next(iter)) != शून्य) अणु
+		अगर (IS_ERR(tsk)) अणु
 			err = PTR_ERR(tsk);
-			if (err == -EAGAIN) {
+			अगर (err == -EAGAIN) अणु
 				err = 0;
-				continue;
-			}
-			break;
-		}
+				जारी;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		sock_hold(&tsk->sk);
 		rhashtable_walk_stop(iter);
 		lock_sock(&tsk->sk);
 		err = skb_handler(skb, cb, tsk);
-		if (err) {
+		अगर (err) अणु
 			release_sock(&tsk->sk);
 			sock_put(&tsk->sk);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		release_sock(&tsk->sk);
 		rhashtable_walk_start(iter);
 		sock_put(&tsk->sk);
-	}
+	पूर्ण
 	rhashtable_walk_stop(iter);
 out:
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 EXPORT_SYMBOL(tipc_nl_sk_walk);
 
-int tipc_dump_start(struct netlink_callback *cb)
-{
-	return __tipc_dump_start(cb, sock_net(cb->skb->sk));
-}
+पूर्णांक tipc_dump_start(काष्ठा netlink_callback *cb)
+अणु
+	वापस __tipc_dump_start(cb, sock_net(cb->skb->sk));
+पूर्ण
 EXPORT_SYMBOL(tipc_dump_start);
 
-int __tipc_dump_start(struct netlink_callback *cb, struct net *net)
-{
+पूर्णांक __tipc_dump_start(काष्ठा netlink_callback *cb, काष्ठा net *net)
+अणु
 	/* tipc_nl_name_table_dump() uses cb->args[0...3]. */
-	struct rhashtable_iter *iter = (void *)cb->args[4];
-	struct tipc_net *tn = tipc_net(net);
+	काष्ठा rhashtable_iter *iter = (व्योम *)cb->args[4];
+	काष्ठा tipc_net *tn = tipc_net(net);
 
-	if (!iter) {
-		iter = kmalloc(sizeof(*iter), GFP_KERNEL);
-		if (!iter)
-			return -ENOMEM;
+	अगर (!iter) अणु
+		iter = kदो_स्मृति(माप(*iter), GFP_KERNEL);
+		अगर (!iter)
+			वापस -ENOMEM;
 
-		cb->args[4] = (long)iter;
-	}
+		cb->args[4] = (दीर्घ)iter;
+	पूर्ण
 
 	rhashtable_walk_enter(&tn->sk_rht, iter);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int tipc_dump_done(struct netlink_callback *cb)
-{
-	struct rhashtable_iter *hti = (void *)cb->args[4];
+पूर्णांक tipc_dump_करोne(काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा rhashtable_iter *hti = (व्योम *)cb->args[4];
 
-	rhashtable_walk_exit(hti);
-	kfree(hti);
-	return 0;
-}
-EXPORT_SYMBOL(tipc_dump_done);
+	rhashtable_walk_निकास(hti);
+	kमुक्त(hti);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(tipc_dump_करोne);
 
-int tipc_sk_fill_sock_diag(struct sk_buff *skb, struct netlink_callback *cb,
-			   struct tipc_sock *tsk, u32 sk_filter_state,
-			   u64 (*tipc_diag_gen_cookie)(struct sock *sk))
-{
-	struct sock *sk = &tsk->sk;
-	struct nlattr *attrs;
-	struct nlattr *stat;
+पूर्णांक tipc_sk_fill_sock_diag(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb,
+			   काष्ठा tipc_sock *tsk, u32 sk_filter_state,
+			   u64 (*tipc_diag_gen_cookie)(काष्ठा sock *sk))
+अणु
+	काष्ठा sock *sk = &tsk->sk;
+	काष्ठा nlattr *attrs;
+	काष्ठा nlattr *stat;
 
 	/*filter response w.r.t sk_state*/
-	if (!(sk_filter_state & (1 << sk->sk_state)))
-		return 0;
+	अगर (!(sk_filter_state & (1 << sk->sk_state)))
+		वापस 0;
 
 	attrs = nla_nest_start_noflag(skb, TIPC_NLA_SOCK);
-	if (!attrs)
-		goto msg_cancel;
+	अगर (!attrs)
+		जाओ msg_cancel;
 
-	if (__tipc_nl_add_sk_info(skb, tsk))
-		goto attr_msg_cancel;
+	अगर (__tipc_nl_add_sk_info(skb, tsk))
+		जाओ attr_msg_cancel;
 
-	if (nla_put_u32(skb, TIPC_NLA_SOCK_TYPE, (u32)sk->sk_type) ||
+	अगर (nla_put_u32(skb, TIPC_NLA_SOCK_TYPE, (u32)sk->sk_type) ||
 	    nla_put_u32(skb, TIPC_NLA_SOCK_TIPC_STATE, (u32)sk->sk_state) ||
 	    nla_put_u32(skb, TIPC_NLA_SOCK_INO, sock_i_ino(sk)) ||
 	    nla_put_u32(skb, TIPC_NLA_SOCK_UID,
@@ -3642,105 +3643,105 @@ int tipc_sk_fill_sock_diag(struct sk_buff *skb, struct netlink_callback *cb,
 	    nla_put_u64_64bit(skb, TIPC_NLA_SOCK_COOKIE,
 			      tipc_diag_gen_cookie(sk),
 			      TIPC_NLA_SOCK_PAD))
-		goto attr_msg_cancel;
+		जाओ attr_msg_cancel;
 
 	stat = nla_nest_start_noflag(skb, TIPC_NLA_SOCK_STAT);
-	if (!stat)
-		goto attr_msg_cancel;
+	अगर (!stat)
+		जाओ attr_msg_cancel;
 
-	if (nla_put_u32(skb, TIPC_NLA_SOCK_STAT_RCVQ,
+	अगर (nla_put_u32(skb, TIPC_NLA_SOCK_STAT_RCVQ,
 			skb_queue_len(&sk->sk_receive_queue)) ||
 	    nla_put_u32(skb, TIPC_NLA_SOCK_STAT_SENDQ,
-			skb_queue_len(&sk->sk_write_queue)) ||
+			skb_queue_len(&sk->sk_ग_लिखो_queue)) ||
 	    nla_put_u32(skb, TIPC_NLA_SOCK_STAT_DROP,
-			atomic_read(&sk->sk_drops)))
-		goto stat_msg_cancel;
+			atomic_पढ़ो(&sk->sk_drops)))
+		जाओ stat_msg_cancel;
 
-	if (tsk->cong_link_cnt &&
+	अगर (tsk->cong_link_cnt &&
 	    nla_put_flag(skb, TIPC_NLA_SOCK_STAT_LINK_CONG))
-		goto stat_msg_cancel;
+		जाओ stat_msg_cancel;
 
-	if (tsk_conn_cong(tsk) &&
+	अगर (tsk_conn_cong(tsk) &&
 	    nla_put_flag(skb, TIPC_NLA_SOCK_STAT_CONN_CONG))
-		goto stat_msg_cancel;
+		जाओ stat_msg_cancel;
 
 	nla_nest_end(skb, stat);
 
-	if (tsk->group)
-		if (tipc_group_fill_sock_diag(tsk->group, skb))
-			goto stat_msg_cancel;
+	अगर (tsk->group)
+		अगर (tipc_group_fill_sock_diag(tsk->group, skb))
+			जाओ stat_msg_cancel;
 
 	nla_nest_end(skb, attrs);
 
-	return 0;
+	वापस 0;
 
 stat_msg_cancel:
 	nla_nest_cancel(skb, stat);
 attr_msg_cancel:
 	nla_nest_cancel(skb, attrs);
 msg_cancel:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 EXPORT_SYMBOL(tipc_sk_fill_sock_diag);
 
-int tipc_nl_sk_dump(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	return tipc_nl_sk_walk(skb, cb, __tipc_nl_add_sk);
-}
+पूर्णांक tipc_nl_sk_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	वापस tipc_nl_sk_walk(skb, cb, __tipc_nl_add_sk);
+पूर्ण
 
-/* Caller should hold socket lock for the passed tipc socket. */
-static int __tipc_nl_add_sk_publ(struct sk_buff *skb,
-				 struct netlink_callback *cb,
-				 struct publication *publ)
-{
-	void *hdr;
-	struct nlattr *attrs;
+/* Caller should hold socket lock क्रम the passed tipc socket. */
+अटल पूर्णांक __tipc_nl_add_sk_publ(काष्ठा sk_buff *skb,
+				 काष्ठा netlink_callback *cb,
+				 काष्ठा खुलाation *publ)
+अणु
+	व्योम *hdr;
+	काष्ठा nlattr *attrs;
 
 	hdr = genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			  &tipc_genl_family, NLM_F_MULTI, TIPC_NL_PUBL_GET);
-	if (!hdr)
-		goto msg_cancel;
+	अगर (!hdr)
+		जाओ msg_cancel;
 
 	attrs = nla_nest_start_noflag(skb, TIPC_NLA_PUBL);
-	if (!attrs)
-		goto genlmsg_cancel;
+	अगर (!attrs)
+		जाओ genlmsg_cancel;
 
-	if (nla_put_u32(skb, TIPC_NLA_PUBL_KEY, publ->key))
-		goto attr_msg_cancel;
-	if (nla_put_u32(skb, TIPC_NLA_PUBL_TYPE, publ->sr.type))
-		goto attr_msg_cancel;
-	if (nla_put_u32(skb, TIPC_NLA_PUBL_LOWER, publ->sr.lower))
-		goto attr_msg_cancel;
-	if (nla_put_u32(skb, TIPC_NLA_PUBL_UPPER, publ->sr.upper))
-		goto attr_msg_cancel;
+	अगर (nla_put_u32(skb, TIPC_NLA_PUBL_KEY, publ->key))
+		जाओ attr_msg_cancel;
+	अगर (nla_put_u32(skb, TIPC_NLA_PUBL_TYPE, publ->sr.type))
+		जाओ attr_msg_cancel;
+	अगर (nla_put_u32(skb, TIPC_NLA_PUBL_LOWER, publ->sr.lower))
+		जाओ attr_msg_cancel;
+	अगर (nla_put_u32(skb, TIPC_NLA_PUBL_UPPER, publ->sr.upper))
+		जाओ attr_msg_cancel;
 
 	nla_nest_end(skb, attrs);
 	genlmsg_end(skb, hdr);
 
-	return 0;
+	वापस 0;
 
 attr_msg_cancel:
 	nla_nest_cancel(skb, attrs);
 genlmsg_cancel:
 	genlmsg_cancel(skb, hdr);
 msg_cancel:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-/* Caller should hold socket lock for the passed tipc socket. */
-static int __tipc_nl_list_sk_publ(struct sk_buff *skb,
-				  struct netlink_callback *cb,
-				  struct tipc_sock *tsk, u32 *last_publ)
-{
-	int err;
-	struct publication *p;
+/* Caller should hold socket lock क्रम the passed tipc socket. */
+अटल पूर्णांक __tipc_nl_list_sk_publ(काष्ठा sk_buff *skb,
+				  काष्ठा netlink_callback *cb,
+				  काष्ठा tipc_sock *tsk, u32 *last_publ)
+अणु
+	पूर्णांक err;
+	काष्ठा खुलाation *p;
 
-	if (*last_publ) {
-		list_for_each_entry(p, &tsk->publications, binding_sock) {
-			if (p->key == *last_publ)
-				break;
-		}
-		if (p->key != *last_publ) {
+	अगर (*last_publ) अणु
+		list_क्रम_each_entry(p, &tsk->खुलाations, binding_sock) अणु
+			अगर (p->key == *last_publ)
+				अवरोध;
+		पूर्ण
+		अगर (p->key != *last_publ) अणु
 			/* We never set seq or call nl_dump_check_consistent()
 			 * this means that setting prev_seq here will cause the
 			 * consistence check to fail in the netlink callback
@@ -3749,94 +3750,94 @@ static int __tipc_nl_list_sk_publ(struct sk_buff *skb,
 			 */
 			cb->prev_seq = 1;
 			*last_publ = 0;
-			return -EPIPE;
-		}
-	} else {
-		p = list_first_entry(&tsk->publications, struct publication,
+			वापस -EPIPE;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		p = list_first_entry(&tsk->खुलाations, काष्ठा खुलाation,
 				     binding_sock);
-	}
+	पूर्ण
 
-	list_for_each_entry_from(p, &tsk->publications, binding_sock) {
+	list_क्रम_each_entry_from(p, &tsk->खुलाations, binding_sock) अणु
 		err = __tipc_nl_add_sk_publ(skb, cb, p);
-		if (err) {
+		अगर (err) अणु
 			*last_publ = p->key;
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 	*last_publ = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int tipc_nl_publ_dump(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	int err;
+पूर्णांक tipc_nl_publ_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	पूर्णांक err;
 	u32 tsk_portid = cb->args[0];
 	u32 last_publ = cb->args[1];
-	u32 done = cb->args[2];
-	struct net *net = sock_net(skb->sk);
-	struct tipc_sock *tsk;
+	u32 करोne = cb->args[2];
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा tipc_sock *tsk;
 
-	if (!tsk_portid) {
-		struct nlattr **attrs = genl_dumpit_info(cb)->attrs;
-		struct nlattr *sock[TIPC_NLA_SOCK_MAX + 1];
+	अगर (!tsk_portid) अणु
+		काष्ठा nlattr **attrs = genl_dumpit_info(cb)->attrs;
+		काष्ठा nlattr *sock[TIPC_NLA_SOCK_MAX + 1];
 
-		if (!attrs[TIPC_NLA_SOCK])
-			return -EINVAL;
+		अगर (!attrs[TIPC_NLA_SOCK])
+			वापस -EINVAL;
 
 		err = nla_parse_nested_deprecated(sock, TIPC_NLA_SOCK_MAX,
 						  attrs[TIPC_NLA_SOCK],
-						  tipc_nl_sock_policy, NULL);
-		if (err)
-			return err;
+						  tipc_nl_sock_policy, शून्य);
+		अगर (err)
+			वापस err;
 
-		if (!sock[TIPC_NLA_SOCK_REF])
-			return -EINVAL;
+		अगर (!sock[TIPC_NLA_SOCK_REF])
+			वापस -EINVAL;
 
 		tsk_portid = nla_get_u32(sock[TIPC_NLA_SOCK_REF]);
-	}
+	पूर्ण
 
-	if (done)
-		return 0;
+	अगर (करोne)
+		वापस 0;
 
 	tsk = tipc_sk_lookup(net, tsk_portid);
-	if (!tsk)
-		return -EINVAL;
+	अगर (!tsk)
+		वापस -EINVAL;
 
 	lock_sock(&tsk->sk);
 	err = __tipc_nl_list_sk_publ(skb, cb, tsk, &last_publ);
-	if (!err)
-		done = 1;
+	अगर (!err)
+		करोne = 1;
 	release_sock(&tsk->sk);
 	sock_put(&tsk->sk);
 
 	cb->args[0] = tsk_portid;
 	cb->args[1] = last_publ;
-	cb->args[2] = done;
+	cb->args[2] = करोne;
 
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
 /**
- * tipc_sk_filtering - check if a socket should be traced
+ * tipc_sk_filtering - check अगर a socket should be traced
  * @sk: the socket to be examined
  *
- * @sysctl_tipc_sk_filter is used as the socket tuple for filtering:
+ * @sysctl_tipc_sk_filter is used as the socket tuple क्रम filtering:
  * (portid, sock type, name type, name lower, name upper)
  *
- * Return: true if the socket meets the socket tuple data
+ * Return: true अगर the socket meets the socket tuple data
  * (value 0 = 'any') or when there is no tuple set (all = 0),
  * otherwise false
  */
-bool tipc_sk_filtering(struct sock *sk)
-{
-	struct tipc_sock *tsk;
-	struct publication *p;
+bool tipc_sk_filtering(काष्ठा sock *sk)
+अणु
+	काष्ठा tipc_sock *tsk;
+	काष्ठा खुलाation *p;
 	u32 _port, _sktype, _type, _lower, _upper;
 	u32 type = 0, lower = 0, upper = 0;
 
-	if (!sk)
-		return true;
+	अगर (!sk)
+		वापस true;
 
 	tsk = tipc_sk(sk);
 
@@ -3846,158 +3847,158 @@ bool tipc_sk_filtering(struct sock *sk)
 	_lower = sysctl_tipc_sk_filter[3];
 	_upper = sysctl_tipc_sk_filter[4];
 
-	if (!_port && !_sktype && !_type && !_lower && !_upper)
-		return true;
+	अगर (!_port && !_sktype && !_type && !_lower && !_upper)
+		वापस true;
 
-	if (_port)
-		return (_port == tsk->portid);
+	अगर (_port)
+		वापस (_port == tsk->portid);
 
-	if (_sktype && _sktype != sk->sk_type)
-		return false;
+	अगर (_sktype && _sktype != sk->sk_type)
+		वापस false;
 
-	if (tsk->published) {
-		p = list_first_entry_or_null(&tsk->publications,
-					     struct publication, binding_sock);
-		if (p) {
+	अगर (tsk->published) अणु
+		p = list_first_entry_or_null(&tsk->खुलाations,
+					     काष्ठा खुलाation, binding_sock);
+		अगर (p) अणु
 			type = p->sr.type;
 			lower = p->sr.lower;
 			upper = p->sr.upper;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!tipc_sk_type_connectionless(sk)) {
+	अगर (!tipc_sk_type_connectionless(sk)) अणु
 		type = tsk->conn_type;
 		lower = tsk->conn_instance;
 		upper = tsk->conn_instance;
-	}
+	पूर्ण
 
-	if ((_type && _type != type) || (_lower && _lower != lower) ||
+	अगर ((_type && _type != type) || (_lower && _lower != lower) ||
 	    (_upper && _upper != upper))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-u32 tipc_sock_get_portid(struct sock *sk)
-{
-	return (sk) ? (tipc_sk(sk))->portid : 0;
-}
+u32 tipc_sock_get_portid(काष्ठा sock *sk)
+अणु
+	वापस (sk) ? (tipc_sk(sk))->portid : 0;
+पूर्ण
 
 /**
- * tipc_sk_overlimit1 - check if socket rx queue is about to be overloaded,
+ * tipc_sk_overlimit1 - check अगर socket rx queue is about to be overloaded,
  *			both the rcv and backlog queues are considered
  * @sk: tipc sk to be checked
  * @skb: tipc msg to be checked
  *
- * Return: true if the socket rx queue allocation is > 90%, otherwise false
+ * Return: true अगर the socket rx queue allocation is > 90%, otherwise false
  */
 
-bool tipc_sk_overlimit1(struct sock *sk, struct sk_buff *skb)
-{
+bool tipc_sk_overlimit1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	atomic_t *dcnt = &tipc_sk(sk)->dupl_rcvcnt;
-	unsigned int lim = rcvbuf_limit(sk, skb) + atomic_read(dcnt);
-	unsigned int qsize = sk->sk_backlog.len + sk_rmem_alloc_get(sk);
+	अचिन्हित पूर्णांक lim = rcvbuf_limit(sk, skb) + atomic_पढ़ो(dcnt);
+	अचिन्हित पूर्णांक qsize = sk->sk_backlog.len + sk_rmem_alloc_get(sk);
 
-	return (qsize > lim * 90 / 100);
-}
+	वापस (qsize > lim * 90 / 100);
+पूर्ण
 
 /**
- * tipc_sk_overlimit2 - check if socket rx queue is about to be overloaded,
+ * tipc_sk_overlimit2 - check अगर socket rx queue is about to be overloaded,
  *			only the rcv queue is considered
  * @sk: tipc sk to be checked
  * @skb: tipc msg to be checked
  *
- * Return: true if the socket rx queue allocation is > 90%, otherwise false
+ * Return: true अगर the socket rx queue allocation is > 90%, otherwise false
  */
 
-bool tipc_sk_overlimit2(struct sock *sk, struct sk_buff *skb)
-{
-	unsigned int lim = rcvbuf_limit(sk, skb);
-	unsigned int qsize = sk_rmem_alloc_get(sk);
+bool tipc_sk_overlimit2(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक lim = rcvbuf_limit(sk, skb);
+	अचिन्हित पूर्णांक qsize = sk_rmem_alloc_get(sk);
 
-	return (qsize > lim * 90 / 100);
-}
+	वापस (qsize > lim * 90 / 100);
+पूर्ण
 
 /**
  * tipc_sk_dump - dump TIPC socket
  * @sk: tipc sk to be dumped
- * @dqueues: bitmask to decide if any socket queue to be dumped?
- *           - TIPC_DUMP_NONE: don't dump socket queues
+ * @dqueues: biपंचांगask to decide अगर any socket queue to be dumped?
+ *           - TIPC_DUMP_NONE: करोn't dump socket queues
  *           - TIPC_DUMP_SK_SNDQ: dump socket send queue
  *           - TIPC_DUMP_SK_RCVQ: dump socket rcv queue
  *           - TIPC_DUMP_SK_BKLGQ: dump socket backlog queue
  *           - TIPC_DUMP_ALL: dump all the socket queues above
- * @buf: returned buffer of dump data in format
+ * @buf: वापसed buffer of dump data in क्रमmat
  */
-int tipc_sk_dump(struct sock *sk, u16 dqueues, char *buf)
-{
-	int i = 0;
-	size_t sz = (dqueues) ? SK_LMAX : SK_LMIN;
-	struct tipc_sock *tsk;
-	struct publication *p;
+पूर्णांक tipc_sk_dump(काष्ठा sock *sk, u16 dqueues, अक्षर *buf)
+अणु
+	पूर्णांक i = 0;
+	माप_प्रकार sz = (dqueues) ? SK_LMAX : SK_LMIN;
+	काष्ठा tipc_sock *tsk;
+	काष्ठा खुलाation *p;
 	bool tsk_connected;
 
-	if (!sk) {
-		i += scnprintf(buf, sz, "sk data: (null)\n");
-		return i;
-	}
+	अगर (!sk) अणु
+		i += scnम_लिखो(buf, sz, "sk data: (null)\n");
+		वापस i;
+	पूर्ण
 
 	tsk = tipc_sk(sk);
 	tsk_connected = !tipc_sk_type_connectionless(sk);
 
-	i += scnprintf(buf, sz, "sk data: %u", sk->sk_type);
-	i += scnprintf(buf + i, sz - i, " %d", sk->sk_state);
-	i += scnprintf(buf + i, sz - i, " %x", tsk_own_node(tsk));
-	i += scnprintf(buf + i, sz - i, " %u", tsk->portid);
-	i += scnprintf(buf + i, sz - i, " | %u", tsk_connected);
-	if (tsk_connected) {
-		i += scnprintf(buf + i, sz - i, " %x", tsk_peer_node(tsk));
-		i += scnprintf(buf + i, sz - i, " %u", tsk_peer_port(tsk));
-		i += scnprintf(buf + i, sz - i, " %u", tsk->conn_type);
-		i += scnprintf(buf + i, sz - i, " %u", tsk->conn_instance);
-	}
-	i += scnprintf(buf + i, sz - i, " | %u", tsk->published);
-	if (tsk->published) {
-		p = list_first_entry_or_null(&tsk->publications,
-					     struct publication, binding_sock);
-		i += scnprintf(buf + i, sz - i, " %u", (p) ? p->sr.type : 0);
-		i += scnprintf(buf + i, sz - i, " %u", (p) ? p->sr.lower : 0);
-		i += scnprintf(buf + i, sz - i, " %u", (p) ? p->sr.upper : 0);
-	}
-	i += scnprintf(buf + i, sz - i, " | %u", tsk->snd_win);
-	i += scnprintf(buf + i, sz - i, " %u", tsk->rcv_win);
-	i += scnprintf(buf + i, sz - i, " %u", tsk->max_pkt);
-	i += scnprintf(buf + i, sz - i, " %x", tsk->peer_caps);
-	i += scnprintf(buf + i, sz - i, " %u", tsk->cong_link_cnt);
-	i += scnprintf(buf + i, sz - i, " %u", tsk->snt_unacked);
-	i += scnprintf(buf + i, sz - i, " %u", tsk->rcv_unacked);
-	i += scnprintf(buf + i, sz - i, " %u", atomic_read(&tsk->dupl_rcvcnt));
-	i += scnprintf(buf + i, sz - i, " %u", sk->sk_shutdown);
-	i += scnprintf(buf + i, sz - i, " | %d", sk_wmem_alloc_get(sk));
-	i += scnprintf(buf + i, sz - i, " %d", sk->sk_sndbuf);
-	i += scnprintf(buf + i, sz - i, " | %d", sk_rmem_alloc_get(sk));
-	i += scnprintf(buf + i, sz - i, " %d", sk->sk_rcvbuf);
-	i += scnprintf(buf + i, sz - i, " | %d\n", READ_ONCE(sk->sk_backlog.len));
+	i += scnम_लिखो(buf, sz, "sk data: %u", sk->sk_type);
+	i += scnम_लिखो(buf + i, sz - i, " %d", sk->sk_state);
+	i += scnम_लिखो(buf + i, sz - i, " %x", tsk_own_node(tsk));
+	i += scnम_लिखो(buf + i, sz - i, " %u", tsk->portid);
+	i += scnम_लिखो(buf + i, sz - i, " | %u", tsk_connected);
+	अगर (tsk_connected) अणु
+		i += scnम_लिखो(buf + i, sz - i, " %x", tsk_peer_node(tsk));
+		i += scnम_लिखो(buf + i, sz - i, " %u", tsk_peer_port(tsk));
+		i += scnम_लिखो(buf + i, sz - i, " %u", tsk->conn_type);
+		i += scnम_लिखो(buf + i, sz - i, " %u", tsk->conn_instance);
+	पूर्ण
+	i += scnम_लिखो(buf + i, sz - i, " | %u", tsk->published);
+	अगर (tsk->published) अणु
+		p = list_first_entry_or_null(&tsk->खुलाations,
+					     काष्ठा खुलाation, binding_sock);
+		i += scnम_लिखो(buf + i, sz - i, " %u", (p) ? p->sr.type : 0);
+		i += scnम_लिखो(buf + i, sz - i, " %u", (p) ? p->sr.lower : 0);
+		i += scnम_लिखो(buf + i, sz - i, " %u", (p) ? p->sr.upper : 0);
+	पूर्ण
+	i += scnम_लिखो(buf + i, sz - i, " | %u", tsk->snd_win);
+	i += scnम_लिखो(buf + i, sz - i, " %u", tsk->rcv_win);
+	i += scnम_लिखो(buf + i, sz - i, " %u", tsk->max_pkt);
+	i += scnम_लिखो(buf + i, sz - i, " %x", tsk->peer_caps);
+	i += scnम_लिखो(buf + i, sz - i, " %u", tsk->cong_link_cnt);
+	i += scnम_लिखो(buf + i, sz - i, " %u", tsk->snt_unacked);
+	i += scnम_लिखो(buf + i, sz - i, " %u", tsk->rcv_unacked);
+	i += scnम_लिखो(buf + i, sz - i, " %u", atomic_पढ़ो(&tsk->dupl_rcvcnt));
+	i += scnम_लिखो(buf + i, sz - i, " %u", sk->sk_shutकरोwn);
+	i += scnम_लिखो(buf + i, sz - i, " | %d", sk_wmem_alloc_get(sk));
+	i += scnम_लिखो(buf + i, sz - i, " %d", sk->sk_sndbuf);
+	i += scnम_लिखो(buf + i, sz - i, " | %d", sk_rmem_alloc_get(sk));
+	i += scnम_लिखो(buf + i, sz - i, " %d", sk->sk_rcvbuf);
+	i += scnम_लिखो(buf + i, sz - i, " | %d\n", READ_ONCE(sk->sk_backlog.len));
 
-	if (dqueues & TIPC_DUMP_SK_SNDQ) {
-		i += scnprintf(buf + i, sz - i, "sk_write_queue: ");
-		i += tipc_list_dump(&sk->sk_write_queue, false, buf + i);
-	}
+	अगर (dqueues & TIPC_DUMP_SK_SNDQ) अणु
+		i += scnम_लिखो(buf + i, sz - i, "sk_write_queue: ");
+		i += tipc_list_dump(&sk->sk_ग_लिखो_queue, false, buf + i);
+	पूर्ण
 
-	if (dqueues & TIPC_DUMP_SK_RCVQ) {
-		i += scnprintf(buf + i, sz - i, "sk_receive_queue: ");
+	अगर (dqueues & TIPC_DUMP_SK_RCVQ) अणु
+		i += scnम_लिखो(buf + i, sz - i, "sk_receive_queue: ");
 		i += tipc_list_dump(&sk->sk_receive_queue, false, buf + i);
-	}
+	पूर्ण
 
-	if (dqueues & TIPC_DUMP_SK_BKLGQ) {
-		i += scnprintf(buf + i, sz - i, "sk_backlog:\n  head ");
+	अगर (dqueues & TIPC_DUMP_SK_BKLGQ) अणु
+		i += scnम_लिखो(buf + i, sz - i, "sk_backlog:\n  head ");
 		i += tipc_skb_dump(sk->sk_backlog.head, false, buf + i);
-		if (sk->sk_backlog.tail != sk->sk_backlog.head) {
-			i += scnprintf(buf + i, sz - i, "  tail ");
+		अगर (sk->sk_backlog.tail != sk->sk_backlog.head) अणु
+			i += scnम_लिखो(buf + i, sz - i, "  tail ");
 			i += tipc_skb_dump(sk->sk_backlog.tail, false,
 					   buf + i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण

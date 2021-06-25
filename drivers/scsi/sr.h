@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *      sr.h by David Giller
  *      CD-ROM disk driver header file
@@ -8,77 +9,77 @@
  *      SCSI disk driver header file by
  *              Drew Eckhardt 
  *
- *      <drew@colorado.edu>
+ *      <drew@coloraकरो.edu>
  *
- *       Modified by Eric Youngdale eric@andante.org to
+ *       Modअगरied by Eric Youngdale eric@andante.org to
  *       add scatter-gather, multiple outstanding request, and other
  *       enhancements.
  */
 
-#ifndef _SR_H
-#define _SR_H
+#अगर_अघोषित _SR_H
+#घोषणा _SR_H
 
-#include <linux/genhd.h>
-#include <linux/kref.h>
-#include <linux/mutex.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/mutex.h>
 
-#define MAX_RETRIES	3
-#define SR_TIMEOUT	(30 * HZ)
+#घोषणा MAX_RETRIES	3
+#घोषणा SR_TIMEOUT	(30 * HZ)
 
-struct scsi_device;
+काष्ठा scsi_device;
 
-/* The CDROM is fairly slow, so we need a little extra time */
-/* In fact, it is very slow if it has to spin up first */
-#define IOCTL_TIMEOUT 30*HZ
+/* The CDROM is fairly slow, so we need a little extra समय */
+/* In fact, it is very slow अगर it has to spin up first */
+#घोषणा IOCTL_TIMEOUT 30*HZ
 
 
-typedef struct scsi_cd {
-	struct scsi_driver *driver;
-	unsigned capacity;	/* size in blocks                       */
-	struct scsi_device *device;
-	unsigned int vendor;	/* vendor code, see sr_vendor.c         */
-	unsigned long ms_offset;	/* for reading multisession-CD's        */
-	unsigned writeable : 1;
-	unsigned use:1;		/* is this device still supportable     */
-	unsigned xa_flag:1;	/* CD has XA sectors ? */
-	unsigned readcd_known:1;	/* drive supports READ_CD (0xbe) */
-	unsigned readcd_cdda:1;	/* reading audio data using READ_CD */
-	unsigned media_present:1;	/* media is present */
+प्रकार काष्ठा scsi_cd अणु
+	काष्ठा scsi_driver *driver;
+	अचिन्हित capacity;	/* size in blocks                       */
+	काष्ठा scsi_device *device;
+	अचिन्हित पूर्णांक venकरोr;	/* venकरोr code, see sr_venकरोr.c         */
+	अचिन्हित दीर्घ ms_offset;	/* क्रम पढ़ोing multisession-CD's        */
+	अचिन्हित ग_लिखोable : 1;
+	अचिन्हित use:1;		/* is this device still supportable     */
+	अचिन्हित xa_flag:1;	/* CD has XA sectors ? */
+	अचिन्हित पढ़ोcd_known:1;	/* drive supports READ_CD (0xbe) */
+	अचिन्हित पढ़ोcd_cdda:1;	/* पढ़ोing audio data using READ_CD */
+	अचिन्हित media_present:1;	/* media is present */
 
 	/* GET_EVENT spurious event handling, blk layer guarantees exclusion */
-	int tur_mismatch;		/* nr of get_event TUR mismatches */
+	पूर्णांक tur_mismatch;		/* nr of get_event TUR mismatches */
 	bool tur_changed:1;		/* changed according to TUR */
 	bool get_event_changed:1;	/* changed according to GET_EVENT */
 	bool ignore_get_event:1;	/* GET_EVENT is unreliable, use TUR */
 
-	struct cdrom_device_info cdi;
-	struct mutex lock;
+	काष्ठा cdrom_device_info cdi;
+	काष्ठा mutex lock;
 	/* We hold gendisk and scsi_device references on probe and use
 	 * the refs on this kref to decide when to release them */
-	struct kref kref;
-	struct gendisk *disk;
-} Scsi_CD;
+	काष्ठा kref kref;
+	काष्ठा gendisk *disk;
+पूर्ण Scsi_CD;
 
-#define sr_printk(prefix, cd, fmt, a...) \
-	sdev_prefix_printk(prefix, (cd)->device, (cd)->cdi.name, fmt, ##a)
+#घोषणा sr_prपूर्णांकk(prefix, cd, fmt, a...) \
+	sdev_prefix_prपूर्णांकk(prefix, (cd)->device, (cd)->cdi.name, fmt, ##a)
 
-int sr_do_ioctl(Scsi_CD *, struct packet_command *);
+पूर्णांक sr_करो_ioctl(Scsi_CD *, काष्ठा packet_command *);
 
-int sr_lock_door(struct cdrom_device_info *, int);
-int sr_tray_move(struct cdrom_device_info *, int);
-int sr_drive_status(struct cdrom_device_info *, int);
-int sr_disk_status(struct cdrom_device_info *);
-int sr_get_last_session(struct cdrom_device_info *, struct cdrom_multisession *);
-int sr_get_mcn(struct cdrom_device_info *, struct cdrom_mcn *);
-int sr_reset(struct cdrom_device_info *);
-int sr_select_speed(struct cdrom_device_info *cdi, int speed);
-int sr_audio_ioctl(struct cdrom_device_info *, unsigned int, void *);
+पूर्णांक sr_lock_करोor(काष्ठा cdrom_device_info *, पूर्णांक);
+पूर्णांक sr_tray_move(काष्ठा cdrom_device_info *, पूर्णांक);
+पूर्णांक sr_drive_status(काष्ठा cdrom_device_info *, पूर्णांक);
+पूर्णांक sr_disk_status(काष्ठा cdrom_device_info *);
+पूर्णांक sr_get_last_session(काष्ठा cdrom_device_info *, काष्ठा cdrom_multisession *);
+पूर्णांक sr_get_mcn(काष्ठा cdrom_device_info *, काष्ठा cdrom_mcn *);
+पूर्णांक sr_reset(काष्ठा cdrom_device_info *);
+पूर्णांक sr_select_speed(काष्ठा cdrom_device_info *cdi, पूर्णांक speed);
+पूर्णांक sr_audio_ioctl(काष्ठा cdrom_device_info *, अचिन्हित पूर्णांक, व्योम *);
 
-int sr_is_xa(Scsi_CD *);
+पूर्णांक sr_is_xa(Scsi_CD *);
 
-/* sr_vendor.c */
-void sr_vendor_init(Scsi_CD *);
-int sr_cd_check(struct cdrom_device_info *);
-int sr_set_blocklength(Scsi_CD *, int blocklength);
+/* sr_venकरोr.c */
+व्योम sr_venकरोr_init(Scsi_CD *);
+पूर्णांक sr_cd_check(काष्ठा cdrom_device_info *);
+पूर्णांक sr_set_blocklength(Scsi_CD *, पूर्णांक blocklength);
 
-#endif
+#पूर्ण_अगर

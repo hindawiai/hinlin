@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * CAAM public-level include definitions for the JobR backend
+ * CAAM खुला-level include definitions क्रम the JobR backend
  *
  * Copyright 2008-2011 Freescale Semiconductor, Inc.
  */
 
-#ifndef JR_H
-#define JR_H
+#अगर_अघोषित JR_H
+#घोषणा JR_H
 
-/* Prototypes for backend-level services exposed to APIs */
-struct device *caam_jr_alloc(void);
-void caam_jr_free(struct device *rdev);
-int caam_jr_enqueue(struct device *dev, u32 *desc,
-		    void (*cbk)(struct device *dev, u32 *desc, u32 status,
-				void *areq),
-		    void *areq);
+/* Prototypes क्रम backend-level services exposed to APIs */
+काष्ठा device *caam_jr_alloc(व्योम);
+व्योम caam_jr_मुक्त(काष्ठा device *rdev);
+पूर्णांक caam_jr_enqueue(काष्ठा device *dev, u32 *desc,
+		    व्योम (*cbk)(काष्ठा device *dev, u32 *desc, u32 status,
+				व्योम *areq),
+		    व्योम *areq);
 
-#endif /* JR_H */
+#पूर्ण_अगर /* JR_H */

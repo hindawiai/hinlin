@@ -1,229 +1,230 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Driver for TI CC2520 802.15.4 Wireless-PAN Networking controller
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Driver क्रम TI CC2520 802.15.4 Wireless-PAN Networking controller
  *
  * Copyright (C) 2014 Varka Bhadram <varkab@cdac.in>
  *		      Md.Jamal Mohiuddin <mjmohiuddin@cdac.in>
  *		      P Sowjanya <sowjanyap@cdac.in>
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/gpio.h>
-#include <linux/delay.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/cc2520.h>
-#include <linux/workqueue.h>
-#include <linux/interrupt.h>
-#include <linux/skbuff.h>
-#include <linux/of_gpio.h>
-#include <linux/ieee802154.h>
-#include <linux/crc-ccitt.h>
-#include <asm/unaligned.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/cc2520.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/ieee802154.h>
+#समावेश <linux/crc-ccitt.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <net/mac802154.h>
-#include <net/cfg802154.h>
+#समावेश <net/mac802154.h>
+#समावेश <net/cfg802154.h>
 
-#define	SPI_COMMAND_BUFFER	3
-#define	HIGH			1
-#define	LOW			0
-#define	STATE_IDLE		0
-#define	RSSI_VALID		0
-#define	RSSI_OFFSET		78
+#घोषणा	SPI_COMMAND_BUFFER	3
+#घोषणा	HIGH			1
+#घोषणा	LOW			0
+#घोषणा	STATE_IDLE		0
+#घोषणा	RSSI_VALID		0
+#घोषणा	RSSI_OFFSET		78
 
-#define	CC2520_RAM_SIZE		640
-#define	CC2520_FIFO_SIZE	128
+#घोषणा	CC2520_RAM_SIZE		640
+#घोषणा	CC2520_FIFO_SIZE	128
 
-#define	CC2520RAM_TXFIFO	0x100
-#define	CC2520RAM_RXFIFO	0x180
-#define	CC2520RAM_IEEEADDR	0x3EA
-#define	CC2520RAM_PANID		0x3F2
-#define	CC2520RAM_SHORTADDR	0x3F4
+#घोषणा	CC2520RAM_TXFIFO	0x100
+#घोषणा	CC2520RAM_RXFIFO	0x180
+#घोषणा	CC2520RAM_IEEEADDR	0x3EA
+#घोषणा	CC2520RAM_PANID		0x3F2
+#घोषणा	CC2520RAM_SHORTADDR	0x3F4
 
-#define	CC2520_FREG_MASK	0x3F
+#घोषणा	CC2520_FREG_MASK	0x3F
 
 /* status byte values */
-#define	CC2520_STATUS_XOSC32M_STABLE	BIT(7)
-#define	CC2520_STATUS_RSSI_VALID	BIT(6)
-#define	CC2520_STATUS_TX_UNDERFLOW	BIT(3)
+#घोषणा	CC2520_STATUS_XOSC32M_STABLE	BIT(7)
+#घोषणा	CC2520_STATUS_RSSI_VALID	BIT(6)
+#घोषणा	CC2520_STATUS_TX_UNDERFLOW	BIT(3)
 
-/* IEEE-802.15.4 defined constants (2.4 GHz logical channels) */
-#define	CC2520_MINCHANNEL		11
-#define	CC2520_MAXCHANNEL		26
-#define	CC2520_CHANNEL_SPACING		5
+/* IEEE-802.15.4 defined स्थिरants (2.4 GHz logical channels) */
+#घोषणा	CC2520_MINCHANNEL		11
+#घोषणा	CC2520_MAXCHANNEL		26
+#घोषणा	CC2520_CHANNEL_SPACING		5
 
 /* command strobes */
-#define	CC2520_CMD_SNOP			0x00
-#define	CC2520_CMD_IBUFLD		0x02
-#define	CC2520_CMD_SIBUFEX		0x03
-#define	CC2520_CMD_SSAMPLECCA		0x04
-#define	CC2520_CMD_SRES			0x0f
-#define	CC2520_CMD_MEMORY_MASK		0x0f
-#define	CC2520_CMD_MEMORY_READ		0x10
-#define	CC2520_CMD_MEMORY_WRITE		0x20
-#define	CC2520_CMD_RXBUF		0x30
-#define	CC2520_CMD_RXBUFCP		0x38
-#define	CC2520_CMD_RXBUFMOV		0x32
-#define	CC2520_CMD_TXBUF		0x3A
-#define	CC2520_CMD_TXBUFCP		0x3E
-#define	CC2520_CMD_RANDOM		0x3C
-#define	CC2520_CMD_SXOSCON		0x40
-#define	CC2520_CMD_STXCAL		0x41
-#define	CC2520_CMD_SRXON		0x42
-#define	CC2520_CMD_STXON		0x43
-#define	CC2520_CMD_STXONCCA		0x44
-#define	CC2520_CMD_SRFOFF		0x45
-#define	CC2520_CMD_SXOSCOFF		0x46
-#define	CC2520_CMD_SFLUSHRX		0x47
-#define	CC2520_CMD_SFLUSHTX		0x48
-#define	CC2520_CMD_SACK			0x49
-#define	CC2520_CMD_SACKPEND		0x4A
-#define	CC2520_CMD_SNACK		0x4B
-#define	CC2520_CMD_SRXMASKBITSET	0x4C
-#define	CC2520_CMD_SRXMASKBITCLR	0x4D
-#define	CC2520_CMD_RXMASKAND		0x4E
-#define	CC2520_CMD_RXMASKOR		0x4F
-#define	CC2520_CMD_MEMCP		0x50
-#define	CC2520_CMD_MEMCPR		0x52
-#define	CC2520_CMD_MEMXCP		0x54
-#define	CC2520_CMD_MEMXWR		0x56
-#define	CC2520_CMD_BCLR			0x58
-#define	CC2520_CMD_BSET			0x59
-#define	CC2520_CMD_CTR_UCTR		0x60
-#define	CC2520_CMD_CBCMAC		0x64
-#define	CC2520_CMD_UCBCMAC		0x66
-#define	CC2520_CMD_CCM			0x68
-#define	CC2520_CMD_UCCM			0x6A
-#define	CC2520_CMD_ECB			0x70
-#define	CC2520_CMD_ECBO			0x72
-#define	CC2520_CMD_ECBX			0x74
-#define	CC2520_CMD_INC			0x78
-#define	CC2520_CMD_ABORT		0x7F
-#define	CC2520_CMD_REGISTER_READ	0x80
-#define	CC2520_CMD_REGISTER_WRITE	0xC0
+#घोषणा	CC2520_CMD_SNOP			0x00
+#घोषणा	CC2520_CMD_IBUFLD		0x02
+#घोषणा	CC2520_CMD_SIBUFEX		0x03
+#घोषणा	CC2520_CMD_SSAMPLECCA		0x04
+#घोषणा	CC2520_CMD_SRES			0x0f
+#घोषणा	CC2520_CMD_MEMORY_MASK		0x0f
+#घोषणा	CC2520_CMD_MEMORY_READ		0x10
+#घोषणा	CC2520_CMD_MEMORY_WRITE		0x20
+#घोषणा	CC2520_CMD_RXBUF		0x30
+#घोषणा	CC2520_CMD_RXBUFCP		0x38
+#घोषणा	CC2520_CMD_RXBUFMOV		0x32
+#घोषणा	CC2520_CMD_TXBUF		0x3A
+#घोषणा	CC2520_CMD_TXBUFCP		0x3E
+#घोषणा	CC2520_CMD_RANDOM		0x3C
+#घोषणा	CC2520_CMD_SXOSCON		0x40
+#घोषणा	CC2520_CMD_STXCAL		0x41
+#घोषणा	CC2520_CMD_SRXON		0x42
+#घोषणा	CC2520_CMD_STXON		0x43
+#घोषणा	CC2520_CMD_STXONCCA		0x44
+#घोषणा	CC2520_CMD_SRFOFF		0x45
+#घोषणा	CC2520_CMD_SXOSCOFF		0x46
+#घोषणा	CC2520_CMD_SFLUSHRX		0x47
+#घोषणा	CC2520_CMD_SFLUSHTX		0x48
+#घोषणा	CC2520_CMD_SACK			0x49
+#घोषणा	CC2520_CMD_SACKPEND		0x4A
+#घोषणा	CC2520_CMD_SNACK		0x4B
+#घोषणा	CC2520_CMD_SRXMASKBITSET	0x4C
+#घोषणा	CC2520_CMD_SRXMASKBITCLR	0x4D
+#घोषणा	CC2520_CMD_RXMASKAND		0x4E
+#घोषणा	CC2520_CMD_RXMASKOR		0x4F
+#घोषणा	CC2520_CMD_MEMCP		0x50
+#घोषणा	CC2520_CMD_MEMCPR		0x52
+#घोषणा	CC2520_CMD_MEMXCP		0x54
+#घोषणा	CC2520_CMD_MEMXWR		0x56
+#घोषणा	CC2520_CMD_BCLR			0x58
+#घोषणा	CC2520_CMD_BSET			0x59
+#घोषणा	CC2520_CMD_CTR_UCTR		0x60
+#घोषणा	CC2520_CMD_CBCMAC		0x64
+#घोषणा	CC2520_CMD_UCBCMAC		0x66
+#घोषणा	CC2520_CMD_CCM			0x68
+#घोषणा	CC2520_CMD_UCCM			0x6A
+#घोषणा	CC2520_CMD_ECB			0x70
+#घोषणा	CC2520_CMD_ECBO			0x72
+#घोषणा	CC2520_CMD_ECBX			0x74
+#घोषणा	CC2520_CMD_INC			0x78
+#घोषणा	CC2520_CMD_ABORT		0x7F
+#घोषणा	CC2520_CMD_REGISTER_READ	0x80
+#घोषणा	CC2520_CMD_REGISTER_WRITE	0xC0
 
-/* status registers */
-#define	CC2520_CHIPID			0x40
-#define	CC2520_VERSION			0x42
-#define	CC2520_EXTCLOCK			0x44
-#define	CC2520_MDMCTRL0			0x46
-#define	CC2520_MDMCTRL1			0x47
-#define	CC2520_FREQEST			0x48
-#define	CC2520_RXCTRL			0x4A
-#define	CC2520_FSCTRL			0x4C
-#define	CC2520_FSCAL0			0x4E
-#define	CC2520_FSCAL1			0x4F
-#define	CC2520_FSCAL2			0x50
-#define	CC2520_FSCAL3			0x51
-#define	CC2520_AGCCTRL0			0x52
-#define	CC2520_AGCCTRL1			0x53
-#define	CC2520_AGCCTRL2			0x54
-#define	CC2520_AGCCTRL3			0x55
-#define	CC2520_ADCTEST0			0x56
-#define	CC2520_ADCTEST1			0x57
-#define	CC2520_ADCTEST2			0x58
-#define	CC2520_MDMTEST0			0x5A
-#define	CC2520_MDMTEST1			0x5B
-#define	CC2520_DACTEST0			0x5C
-#define	CC2520_DACTEST1			0x5D
-#define	CC2520_ATEST			0x5E
-#define	CC2520_DACTEST2			0x5F
-#define	CC2520_PTEST0			0x60
-#define	CC2520_PTEST1			0x61
-#define	CC2520_RESERVED			0x62
-#define	CC2520_DPUBIST			0x7A
-#define	CC2520_ACTBIST			0x7C
-#define	CC2520_RAMBIST			0x7E
+/* status रेजिस्टरs */
+#घोषणा	CC2520_CHIPID			0x40
+#घोषणा	CC2520_VERSION			0x42
+#घोषणा	CC2520_EXTCLOCK			0x44
+#घोषणा	CC2520_MDMCTRL0			0x46
+#घोषणा	CC2520_MDMCTRL1			0x47
+#घोषणा	CC2520_FREQEST			0x48
+#घोषणा	CC2520_RXCTRL			0x4A
+#घोषणा	CC2520_FSCTRL			0x4C
+#घोषणा	CC2520_FSCAL0			0x4E
+#घोषणा	CC2520_FSCAL1			0x4F
+#घोषणा	CC2520_FSCAL2			0x50
+#घोषणा	CC2520_FSCAL3			0x51
+#घोषणा	CC2520_AGCCTRL0			0x52
+#घोषणा	CC2520_AGCCTRL1			0x53
+#घोषणा	CC2520_AGCCTRL2			0x54
+#घोषणा	CC2520_AGCCTRL3			0x55
+#घोषणा	CC2520_ADCTEST0			0x56
+#घोषणा	CC2520_ADCTEST1			0x57
+#घोषणा	CC2520_ADCTEST2			0x58
+#घोषणा	CC2520_MDMTEST0			0x5A
+#घोषणा	CC2520_MDMTEST1			0x5B
+#घोषणा	CC2520_DACTEST0			0x5C
+#घोषणा	CC2520_DACTEST1			0x5D
+#घोषणा	CC2520_ATEST			0x5E
+#घोषणा	CC2520_DACTEST2			0x5F
+#घोषणा	CC2520_PTEST0			0x60
+#घोषणा	CC2520_PTEST1			0x61
+#घोषणा	CC2520_RESERVED			0x62
+#घोषणा	CC2520_DPUBIST			0x7A
+#घोषणा	CC2520_ACTBIST			0x7C
+#घोषणा	CC2520_RAMBIST			0x7E
 
-/* frame registers */
-#define	CC2520_FRMFILT0			0x00
-#define	CC2520_FRMFILT1			0x01
-#define	CC2520_SRCMATCH			0x02
-#define	CC2520_SRCSHORTEN0		0x04
-#define	CC2520_SRCSHORTEN1		0x05
-#define	CC2520_SRCSHORTEN2		0x06
-#define	CC2520_SRCEXTEN0		0x08
-#define	CC2520_SRCEXTEN1		0x09
-#define	CC2520_SRCEXTEN2		0x0A
-#define	CC2520_FRMCTRL0			0x0C
-#define	CC2520_FRMCTRL1			0x0D
-#define	CC2520_RXENABLE0		0x0E
-#define	CC2520_RXENABLE1		0x0F
-#define	CC2520_EXCFLAG0			0x10
-#define	CC2520_EXCFLAG1			0x11
-#define	CC2520_EXCFLAG2			0x12
-#define	CC2520_EXCMASKA0		0x14
-#define	CC2520_EXCMASKA1		0x15
-#define	CC2520_EXCMASKA2		0x16
-#define	CC2520_EXCMASKB0		0x18
-#define	CC2520_EXCMASKB1		0x19
-#define	CC2520_EXCMASKB2		0x1A
-#define	CC2520_EXCBINDX0		0x1C
-#define	CC2520_EXCBINDX1		0x1D
-#define	CC2520_EXCBINDY0		0x1E
-#define	CC2520_EXCBINDY1		0x1F
-#define	CC2520_GPIOCTRL0		0x20
-#define	CC2520_GPIOCTRL1		0x21
-#define	CC2520_GPIOCTRL2		0x22
-#define	CC2520_GPIOCTRL3		0x23
-#define	CC2520_GPIOCTRL4		0x24
-#define	CC2520_GPIOCTRL5		0x25
-#define	CC2520_GPIOPOLARITY		0x26
-#define	CC2520_GPIOCTRL			0x28
-#define	CC2520_DPUCON			0x2A
-#define	CC2520_DPUSTAT			0x2C
-#define	CC2520_FREQCTRL			0x2E
-#define	CC2520_FREQTUNE			0x2F
-#define	CC2520_TXPOWER			0x30
-#define	CC2520_TXCTRL			0x31
-#define	CC2520_FSMSTAT0			0x32
-#define	CC2520_FSMSTAT1			0x33
-#define	CC2520_FIFOPCTRL		0x34
-#define	CC2520_FSMCTRL			0x35
-#define	CC2520_CCACTRL0			0x36
-#define	CC2520_CCACTRL1			0x37
-#define	CC2520_RSSI			0x38
-#define	CC2520_RSSISTAT			0x39
-#define	CC2520_RXFIRST			0x3C
-#define	CC2520_RXFIFOCNT		0x3E
-#define	CC2520_TXFIFOCNT		0x3F
+/* frame रेजिस्टरs */
+#घोषणा	CC2520_FRMFILT0			0x00
+#घोषणा	CC2520_FRMFILT1			0x01
+#घोषणा	CC2520_SRCMATCH			0x02
+#घोषणा	CC2520_SRCSHORTEN0		0x04
+#घोषणा	CC2520_SRCSHORTEN1		0x05
+#घोषणा	CC2520_SRCSHORTEN2		0x06
+#घोषणा	CC2520_SRCEXTEN0		0x08
+#घोषणा	CC2520_SRCEXTEN1		0x09
+#घोषणा	CC2520_SRCEXTEN2		0x0A
+#घोषणा	CC2520_FRMCTRL0			0x0C
+#घोषणा	CC2520_FRMCTRL1			0x0D
+#घोषणा	CC2520_RXENABLE0		0x0E
+#घोषणा	CC2520_RXENABLE1		0x0F
+#घोषणा	CC2520_EXCFLAG0			0x10
+#घोषणा	CC2520_EXCFLAG1			0x11
+#घोषणा	CC2520_EXCFLAG2			0x12
+#घोषणा	CC2520_EXCMASKA0		0x14
+#घोषणा	CC2520_EXCMASKA1		0x15
+#घोषणा	CC2520_EXCMASKA2		0x16
+#घोषणा	CC2520_EXCMASKB0		0x18
+#घोषणा	CC2520_EXCMASKB1		0x19
+#घोषणा	CC2520_EXCMASKB2		0x1A
+#घोषणा	CC2520_EXCBINDX0		0x1C
+#घोषणा	CC2520_EXCBINDX1		0x1D
+#घोषणा	CC2520_EXCBINDY0		0x1E
+#घोषणा	CC2520_EXCBINDY1		0x1F
+#घोषणा	CC2520_GPIOCTRL0		0x20
+#घोषणा	CC2520_GPIOCTRL1		0x21
+#घोषणा	CC2520_GPIOCTRL2		0x22
+#घोषणा	CC2520_GPIOCTRL3		0x23
+#घोषणा	CC2520_GPIOCTRL4		0x24
+#घोषणा	CC2520_GPIOCTRL5		0x25
+#घोषणा	CC2520_GPIOPOLARITY		0x26
+#घोषणा	CC2520_GPIOCTRL			0x28
+#घोषणा	CC2520_DPUCON			0x2A
+#घोषणा	CC2520_DPUSTAT			0x2C
+#घोषणा	CC2520_FREQCTRL			0x2E
+#घोषणा	CC2520_FREQTUNE			0x2F
+#घोषणा	CC2520_TXPOWER			0x30
+#घोषणा	CC2520_TXCTRL			0x31
+#घोषणा	CC2520_FSMSTAT0			0x32
+#घोषणा	CC2520_FSMSTAT1			0x33
+#घोषणा	CC2520_FIFOPCTRL		0x34
+#घोषणा	CC2520_FSMCTRL			0x35
+#घोषणा	CC2520_CCACTRL0			0x36
+#घोषणा	CC2520_CCACTRL1			0x37
+#घोषणा	CC2520_RSSI			0x38
+#घोषणा	CC2520_RSSISTAT			0x39
+#घोषणा	CC2520_RXFIRST			0x3C
+#घोषणा	CC2520_RXFIFOCNT		0x3E
+#घोषणा	CC2520_TXFIFOCNT		0x3F
 
 /* CC2520_FRMFILT0 */
-#define FRMFILT0_FRAME_FILTER_EN	BIT(0)
-#define FRMFILT0_PAN_COORDINATOR	BIT(1)
+#घोषणा FRMFILT0_FRAME_FILTER_EN	BIT(0)
+#घोषणा FRMFILT0_PAN_COORDINATOR	BIT(1)
 
 /* CC2520_FRMCTRL0 */
-#define FRMCTRL0_AUTOACK		BIT(5)
-#define FRMCTRL0_AUTOCRC		BIT(6)
+#घोषणा FRMCTRL0_AUTOACK		BIT(5)
+#घोषणा FRMCTRL0_AUTOCRC		BIT(6)
 
 /* CC2520_FRMCTRL1 */
-#define FRMCTRL1_SET_RXENMASK_ON_TX	BIT(0)
-#define FRMCTRL1_IGNORE_TX_UNDERF	BIT(1)
+#घोषणा FRMCTRL1_SET_RXENMASK_ON_TX	BIT(0)
+#घोषणा FRMCTRL1_IGNORE_TX_UNDERF	BIT(1)
 
-/* Driver private information */
-struct cc2520_private {
-	struct spi_device *spi;		/* SPI device structure */
-	struct ieee802154_hw *hw;	/* IEEE-802.15.4 device */
+/* Driver निजी inक्रमmation */
+काष्ठा cc2520_निजी अणु
+	काष्ठा spi_device *spi;		/* SPI device काष्ठाure */
+	काष्ठा ieee802154_hw *hw;	/* IEEE-802.15.4 device */
 	u8 *buf;			/* SPI TX/Rx data buffer */
-	struct mutex buffer_mutex;	/* SPI buffer mutex */
-	bool is_tx;			/* Flag for sync b/w Tx and Rx */
-	bool amplified;			/* Flag for CC2591 */
-	int fifo_pin;			/* FIFO GPIO pin number */
-	struct work_struct fifop_irqwork;/* Workqueue for FIFOP */
-	spinlock_t lock;		/* Lock for is_tx*/
-	struct completion tx_complete;	/* Work completion for Tx */
-	bool promiscuous;               /* Flag for promiscuous mode */
-};
+	काष्ठा mutex buffer_mutex;	/* SPI buffer mutex */
+	bool is_tx;			/* Flag क्रम sync b/w Tx and Rx */
+	bool amplअगरied;			/* Flag क्रम CC2591 */
+	पूर्णांक fअगरo_pin;			/* FIFO GPIO pin number */
+	काष्ठा work_काष्ठा fअगरop_irqwork;/* Workqueue क्रम FIFOP */
+	spinlock_t lock;		/* Lock क्रम is_tx*/
+	काष्ठा completion tx_complete;	/* Work completion क्रम Tx */
+	bool promiscuous;               /* Flag क्रम promiscuous mode */
+पूर्ण;
 
 /* Generic Functions */
-static int
-cc2520_cmd_strobe(struct cc2520_private *priv, u8 cmd)
-{
-	int ret;
-	struct spi_message msg;
-	struct spi_transfer xfer = {
+अटल पूर्णांक
+cc2520_cmd_strobe(काष्ठा cc2520_निजी *priv, u8 cmd)
+अणु
+	पूर्णांक ret;
+	काष्ठा spi_message msg;
+	काष्ठा spi_transfer xfer = अणु
 		.len = 0,
 		.tx_buf = priv->buf,
 		.rx_buf = priv->buf,
-	};
+	पूर्ण;
 
 	spi_message_init(&msg);
 	spi_message_add_tail(&xfer, &msg);
@@ -239,19 +240,19 @@ cc2520_cmd_strobe(struct cc2520_private *priv, u8 cmd)
 		 "buf[0] = %02x\n", priv->buf[0]);
 	mutex_unlock(&priv->buffer_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-cc2520_get_status(struct cc2520_private *priv, u8 *status)
-{
-	int ret;
-	struct spi_message msg;
-	struct spi_transfer xfer = {
+अटल पूर्णांक
+cc2520_get_status(काष्ठा cc2520_निजी *priv, u8 *status)
+अणु
+	पूर्णांक ret;
+	काष्ठा spi_message msg;
+	काष्ठा spi_transfer xfer = अणु
 		.len = 0,
 		.tx_buf = priv->buf,
 		.rx_buf = priv->buf,
-	};
+	पूर्ण;
 
 	spi_message_init(&msg);
 	spi_message_add_tail(&xfer, &msg);
@@ -262,63 +263,63 @@ cc2520_get_status(struct cc2520_private *priv, u8 *status)
 		 "get status command buf[0] = %02x\n", priv->buf[0]);
 
 	ret = spi_sync(priv->spi, &msg);
-	if (!ret)
+	अगर (!ret)
 		*status = priv->buf[0];
 	dev_vdbg(&priv->spi->dev,
 		 "buf[0] = %02x\n", priv->buf[0]);
 	mutex_unlock(&priv->buffer_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-cc2520_write_register(struct cc2520_private *priv, u8 reg, u8 value)
-{
-	int status;
-	struct spi_message msg;
-	struct spi_transfer xfer = {
+अटल पूर्णांक
+cc2520_ग_लिखो_रेजिस्टर(काष्ठा cc2520_निजी *priv, u8 reg, u8 value)
+अणु
+	पूर्णांक status;
+	काष्ठा spi_message msg;
+	काष्ठा spi_transfer xfer = अणु
 		.len = 0,
 		.tx_buf = priv->buf,
 		.rx_buf = priv->buf,
-	};
+	पूर्ण;
 
 	spi_message_init(&msg);
 	spi_message_add_tail(&xfer, &msg);
 
 	mutex_lock(&priv->buffer_mutex);
 
-	if (reg <= CC2520_FREG_MASK) {
+	अगर (reg <= CC2520_FREG_MASK) अणु
 		priv->buf[xfer.len++] = CC2520_CMD_REGISTER_WRITE | reg;
 		priv->buf[xfer.len++] = value;
-	} else {
+	पूर्ण अन्यथा अणु
 		priv->buf[xfer.len++] = CC2520_CMD_MEMORY_WRITE;
 		priv->buf[xfer.len++] = reg;
 		priv->buf[xfer.len++] = value;
-	}
+	पूर्ण
 	status = spi_sync(priv->spi, &msg);
-	if (msg.status)
+	अगर (msg.status)
 		status = msg.status;
 
 	mutex_unlock(&priv->buffer_mutex);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int
-cc2520_write_ram(struct cc2520_private *priv, u16 reg, u8 len, u8 *data)
-{
-	int status;
-	struct spi_message msg;
-	struct spi_transfer xfer_head = {
+अटल पूर्णांक
+cc2520_ग_लिखो_ram(काष्ठा cc2520_निजी *priv, u16 reg, u8 len, u8 *data)
+अणु
+	पूर्णांक status;
+	काष्ठा spi_message msg;
+	काष्ठा spi_transfer xfer_head = अणु
 		.len        = 0,
 		.tx_buf        = priv->buf,
 		.rx_buf        = priv->buf,
-	};
+	पूर्ण;
 
-	struct spi_transfer xfer_buf = {
+	काष्ठा spi_transfer xfer_buf = अणु
 		.len = len,
 		.tx_buf = data,
-	};
+	पूर्ण;
 
 	mutex_lock(&priv->buffer_mutex);
 	priv->buf[xfer_head.len++] = (CC2520_CMD_MEMORY_WRITE |
@@ -331,28 +332,28 @@ cc2520_write_ram(struct cc2520_private *priv, u16 reg, u8 len, u8 *data)
 
 	status = spi_sync(priv->spi, &msg);
 	dev_dbg(&priv->spi->dev, "spi status = %d\n", status);
-	if (msg.status)
+	अगर (msg.status)
 		status = msg.status;
 
 	mutex_unlock(&priv->buffer_mutex);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int
-cc2520_read_register(struct cc2520_private *priv, u8 reg, u8 *data)
-{
-	int status;
-	struct spi_message msg;
-	struct spi_transfer xfer1 = {
+अटल पूर्णांक
+cc2520_पढ़ो_रेजिस्टर(काष्ठा cc2520_निजी *priv, u8 reg, u8 *data)
+अणु
+	पूर्णांक status;
+	काष्ठा spi_message msg;
+	काष्ठा spi_transfer xfer1 = अणु
 		.len = 0,
 		.tx_buf = priv->buf,
 		.rx_buf = priv->buf,
-	};
+	पूर्ण;
 
-	struct spi_transfer xfer2 = {
+	काष्ठा spi_transfer xfer2 = अणु
 		.len = 1,
 		.rx_buf = data,
-	};
+	पूर्ण;
 
 	spi_message_init(&msg);
 	spi_message_add_tail(&xfer1, &msg);
@@ -365,39 +366,39 @@ cc2520_read_register(struct cc2520_private *priv, u8 reg, u8 *data)
 	status = spi_sync(priv->spi, &msg);
 	dev_dbg(&priv->spi->dev,
 		"spi status = %d\n", status);
-	if (msg.status)
+	अगर (msg.status)
 		status = msg.status;
 
 	mutex_unlock(&priv->buffer_mutex);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int
-cc2520_write_txfifo(struct cc2520_private *priv, u8 pkt_len, u8 *data, u8 len)
-{
-	int status;
+अटल पूर्णांक
+cc2520_ग_लिखो_txfअगरo(काष्ठा cc2520_निजी *priv, u8 pkt_len, u8 *data, u8 len)
+अणु
+	पूर्णांक status;
 
 	/* length byte must include FCS even
-	 * if it is calculated in the hardware
+	 * अगर it is calculated in the hardware
 	 */
-	int len_byte = pkt_len;
+	पूर्णांक len_byte = pkt_len;
 
-	struct spi_message msg;
+	काष्ठा spi_message msg;
 
-	struct spi_transfer xfer_head = {
+	काष्ठा spi_transfer xfer_head = अणु
 		.len = 0,
 		.tx_buf = priv->buf,
 		.rx_buf = priv->buf,
-	};
-	struct spi_transfer xfer_len = {
+	पूर्ण;
+	काष्ठा spi_transfer xfer_len = अणु
 		.len = 1,
 		.tx_buf = &len_byte,
-	};
-	struct spi_transfer xfer_buf = {
+	पूर्ण;
+	काष्ठा spi_transfer xfer_buf = अणु
 		.len = len,
 		.tx_buf = data,
-	};
+	पूर्ण;
 
 	spi_message_init(&msg);
 	spi_message_add_tail(&xfer_head, &msg);
@@ -411,30 +412,30 @@ cc2520_write_txfifo(struct cc2520_private *priv, u8 pkt_len, u8 *data, u8 len)
 
 	status = spi_sync(priv->spi, &msg);
 	dev_vdbg(&priv->spi->dev, "status = %d\n", status);
-	if (msg.status)
+	अगर (msg.status)
 		status = msg.status;
 	dev_vdbg(&priv->spi->dev, "status = %d\n", status);
 	dev_vdbg(&priv->spi->dev, "buf[0] = %02x\n", priv->buf[0]);
 	mutex_unlock(&priv->buffer_mutex);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int
-cc2520_read_rxfifo(struct cc2520_private *priv, u8 *data, u8 len)
-{
-	int status;
-	struct spi_message msg;
+अटल पूर्णांक
+cc2520_पढ़ो_rxfअगरo(काष्ठा cc2520_निजी *priv, u8 *data, u8 len)
+अणु
+	पूर्णांक status;
+	काष्ठा spi_message msg;
 
-	struct spi_transfer xfer_head = {
+	काष्ठा spi_transfer xfer_head = अणु
 		.len = 0,
 		.tx_buf = priv->buf,
 		.rx_buf = priv->buf,
-	};
-	struct spi_transfer xfer_buf = {
+	पूर्ण;
+	काष्ठा spi_transfer xfer_buf = अणु
 		.len = len,
 		.rx_buf = data,
-	};
+	पूर्ण;
 
 	spi_message_init(&msg);
 	spi_message_add_tail(&xfer_head, &msg);
@@ -448,7 +449,7 @@ cc2520_read_rxfifo(struct cc2520_private *priv, u8 *data, u8 len)
 
 	status = spi_sync(priv->spi, &msg);
 	dev_vdbg(&priv->spi->dev, "status = %d\n", status);
-	if (msg.status)
+	अगर (msg.status)
 		status = msg.status;
 	dev_vdbg(&priv->spi->dev, "status = %d\n", status);
 	dev_vdbg(&priv->spi->dev,
@@ -457,56 +458,56 @@ cc2520_read_rxfifo(struct cc2520_private *priv, u8 *data, u8 len)
 
 	mutex_unlock(&priv->buffer_mutex);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int cc2520_start(struct ieee802154_hw *hw)
-{
-	return cc2520_cmd_strobe(hw->priv, CC2520_CMD_SRXON);
-}
+अटल पूर्णांक cc2520_start(काष्ठा ieee802154_hw *hw)
+अणु
+	वापस cc2520_cmd_strobe(hw->priv, CC2520_CMD_SRXON);
+पूर्ण
 
-static void cc2520_stop(struct ieee802154_hw *hw)
-{
+अटल व्योम cc2520_stop(काष्ठा ieee802154_hw *hw)
+अणु
 	cc2520_cmd_strobe(hw->priv, CC2520_CMD_SRFOFF);
-}
+पूर्ण
 
-static int
-cc2520_tx(struct ieee802154_hw *hw, struct sk_buff *skb)
-{
-	struct cc2520_private *priv = hw->priv;
-	unsigned long flags;
-	int rc;
+अटल पूर्णांक
+cc2520_tx(काष्ठा ieee802154_hw *hw, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cc2520_निजी *priv = hw->priv;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
 	u8 status = 0;
 	u8 pkt_len;
 
 	/* In promiscuous mode we disable AUTOCRC so we can get the raw CRC
 	 * values on RX. This means we need to manually add the CRC on TX.
 	 */
-	if (priv->promiscuous) {
+	अगर (priv->promiscuous) अणु
 		u16 crc = crc_ccitt(0, skb->data, skb->len);
 
 		put_unaligned_le16(crc, skb_put(skb, 2));
 		pkt_len = skb->len;
-	} else {
+	पूर्ण अन्यथा अणु
 		pkt_len = skb->len + 2;
-	}
+	पूर्ण
 
 	rc = cc2520_cmd_strobe(priv, CC2520_CMD_SFLUSHTX);
-	if (rc)
-		goto err_tx;
+	अगर (rc)
+		जाओ err_tx;
 
-	rc = cc2520_write_txfifo(priv, pkt_len, skb->data, skb->len);
-	if (rc)
-		goto err_tx;
+	rc = cc2520_ग_लिखो_txfअगरo(priv, pkt_len, skb->data, skb->len);
+	अगर (rc)
+		जाओ err_tx;
 
 	rc = cc2520_get_status(priv, &status);
-	if (rc)
-		goto err_tx;
+	अगर (rc)
+		जाओ err_tx;
 
-	if (status & CC2520_STATUS_TX_UNDERFLOW) {
+	अगर (status & CC2520_STATUS_TX_UNDERFLOW) अणु
 		dev_err(&priv->spi->dev, "cc2520 tx underflow exception\n");
-		goto err_tx;
-	}
+		जाओ err_tx;
+	पूर्ण
 
 	spin_lock_irqsave(&priv->lock, flags);
 	WARN_ON(priv->is_tx);
@@ -514,124 +515,124 @@ cc2520_tx(struct ieee802154_hw *hw, struct sk_buff *skb)
 	spin_unlock_irqrestore(&priv->lock, flags);
 
 	rc = cc2520_cmd_strobe(priv, CC2520_CMD_STXONCCA);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
-	rc = wait_for_completion_interruptible(&priv->tx_complete);
-	if (rc < 0)
-		goto err;
+	rc = रुको_क्रम_completion_पूर्णांकerruptible(&priv->tx_complete);
+	अगर (rc < 0)
+		जाओ err;
 
 	cc2520_cmd_strobe(priv, CC2520_CMD_SFLUSHTX);
 	cc2520_cmd_strobe(priv, CC2520_CMD_SRXON);
 
-	return rc;
+	वापस rc;
 err:
 	spin_lock_irqsave(&priv->lock, flags);
 	priv->is_tx = 0;
 	spin_unlock_irqrestore(&priv->lock, flags);
 err_tx:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cc2520_rx(struct cc2520_private *priv)
-{
+अटल पूर्णांक cc2520_rx(काष्ठा cc2520_निजी *priv)
+अणु
 	u8 len = 0, lqi = 0, bytes = 1;
-	struct sk_buff *skb;
+	काष्ठा sk_buff *skb;
 
 	/* Read single length byte from the radio. */
-	cc2520_read_rxfifo(priv, &len, bytes);
+	cc2520_पढ़ो_rxfअगरo(priv, &len, bytes);
 
-	if (!ieee802154_is_valid_psdu_len(len)) {
+	अगर (!ieee802154_is_valid_psdu_len(len)) अणु
 		/* Corrupted frame received, clear frame buffer by
-		 * reading entire buffer.
+		 * पढ़ोing entire buffer.
 		 */
 		dev_dbg(&priv->spi->dev, "corrupted frame received\n");
 		len = IEEE802154_MTU;
-	}
+	पूर्ण
 
 	skb = dev_alloc_skb(len);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	if (cc2520_read_rxfifo(priv, skb_put(skb, len), len)) {
+	अगर (cc2520_पढ़ो_rxfअगरo(priv, skb_put(skb, len), len)) अणु
 		dev_dbg(&priv->spi->dev, "frame reception failed\n");
-		kfree_skb(skb);
-		return -EINVAL;
-	}
+		kमुक्त_skb(skb);
+		वापस -EINVAL;
+	पूर्ण
 
 	/* In promiscuous mode, we configure the radio to include the
 	 * CRC (AUTOCRC==0) and we pass on the packet unconditionally. If not
 	 * in promiscuous mode, we check the CRC here, but leave the
-	 * RSSI/LQI/CRC_OK bytes as they will get removed in the mac layer.
+	 * RSSI/LQI/CRC_OK bytes as they will get हटाओd in the mac layer.
 	 */
-	if (!priv->promiscuous) {
+	अगर (!priv->promiscuous) अणु
 		bool crc_ok;
 
-		/* Check if the CRC is valid. With AUTOCRC set, the most
-		 * significant bit of the last byte returned from the CC2520
+		/* Check अगर the CRC is valid. With AUTOCRC set, the most
+		 * signअगरicant bit of the last byte वापसed from the CC2520
 		 * is CRC_OK flag. See section 20.3.4 of the datasheet.
 		 */
 		crc_ok = skb->data[len - 1] & BIT(7);
 
 		/* If we failed CRC drop the packet in the driver layer. */
-		if (!crc_ok) {
+		अगर (!crc_ok) अणु
 			dev_dbg(&priv->spi->dev, "CRC check failed\n");
-			kfree_skb(skb);
-			return -EINVAL;
-		}
+			kमुक्त_skb(skb);
+			वापस -EINVAL;
+		पूर्ण
 
 		/* To calculate LQI, the lower 7 bits of the last byte (the
 		 * correlation value provided by the radio) must be scaled to
 		 * the range 0-255. According to section 20.6, the correlation
 		 * value ranges from 50-110. Ideally this would be calibrated
 		 * per hardware design, but we use roughly the datasheet values
-		 * to get close enough while avoiding floating point.
+		 * to get बंद enough जबतक aव्योमing भग्नing poपूर्णांक.
 		 */
 		lqi = skb->data[len - 1] & 0x7f;
-		if (lqi < 50)
+		अगर (lqi < 50)
 			lqi = 50;
-		else if (lqi > 113)
+		अन्यथा अगर (lqi > 113)
 			lqi = 113;
 		lqi = (lqi - 50) * 4;
-	}
+	पूर्ण
 
 	ieee802154_rx_irqsafe(priv->hw, skb, lqi);
 
 	dev_vdbg(&priv->spi->dev, "RXFIFO: %x %x\n", len, lqi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-cc2520_ed(struct ieee802154_hw *hw, u8 *level)
-{
-	struct cc2520_private *priv = hw->priv;
+अटल पूर्णांक
+cc2520_ed(काष्ठा ieee802154_hw *hw, u8 *level)
+अणु
+	काष्ठा cc2520_निजी *priv = hw->priv;
 	u8 status = 0xff;
 	u8 rssi;
-	int ret;
+	पूर्णांक ret;
 
-	ret = cc2520_read_register(priv, CC2520_RSSISTAT, &status);
-	if (ret)
-		return ret;
+	ret = cc2520_पढ़ो_रेजिस्टर(priv, CC2520_RSSISTAT, &status);
+	अगर (ret)
+		वापस ret;
 
-	if (status != RSSI_VALID)
-		return -EINVAL;
+	अगर (status != RSSI_VALID)
+		वापस -EINVAL;
 
-	ret = cc2520_read_register(priv, CC2520_RSSI, &rssi);
-	if (ret)
-		return ret;
+	ret = cc2520_पढ़ो_रेजिस्टर(priv, CC2520_RSSI, &rssi);
+	अगर (ret)
+		वापस ret;
 
 	/* level = RSSI(rssi) - OFFSET [dBm] : offset is 76dBm */
 	*level = rssi - RSSI_OFFSET;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-cc2520_set_channel(struct ieee802154_hw *hw, u8 page, u8 channel)
-{
-	struct cc2520_private *priv = hw->priv;
-	int ret;
+अटल पूर्णांक
+cc2520_set_channel(काष्ठा ieee802154_hw *hw, u8 page, u8 channel)
+अणु
+	काष्ठा cc2520_निजी *priv = hw->priv;
+	पूर्णांक ret;
 
 	dev_dbg(&priv->spi->dev, "trying to set channel\n");
 
@@ -639,178 +640,178 @@ cc2520_set_channel(struct ieee802154_hw *hw, u8 page, u8 channel)
 	WARN_ON(channel < CC2520_MINCHANNEL);
 	WARN_ON(channel > CC2520_MAXCHANNEL);
 
-	ret = cc2520_write_register(priv, CC2520_FREQCTRL,
+	ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_FREQCTRL,
 				    11 + 5 * (channel - 11));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-cc2520_filter(struct ieee802154_hw *hw,
-	      struct ieee802154_hw_addr_filt *filt, unsigned long changed)
-{
-	struct cc2520_private *priv = hw->priv;
-	int ret = 0;
+अटल पूर्णांक
+cc2520_filter(काष्ठा ieee802154_hw *hw,
+	      काष्ठा ieee802154_hw_addr_filt *filt, अचिन्हित दीर्घ changed)
+अणु
+	काष्ठा cc2520_निजी *priv = hw->priv;
+	पूर्णांक ret = 0;
 
-	if (changed & IEEE802154_AFILT_PANID_CHANGED) {
+	अगर (changed & IEEE802154_AFILT_PANID_CHANGED) अणु
 		u16 panid = le16_to_cpu(filt->pan_id);
 
 		dev_vdbg(&priv->spi->dev, "%s called for pan id\n", __func__);
-		ret = cc2520_write_ram(priv, CC2520RAM_PANID,
-				       sizeof(panid), (u8 *)&panid);
-	}
+		ret = cc2520_ग_लिखो_ram(priv, CC2520RAM_PANID,
+				       माप(panid), (u8 *)&panid);
+	पूर्ण
 
-	if (changed & IEEE802154_AFILT_IEEEADDR_CHANGED) {
+	अगर (changed & IEEE802154_AFILT_IEEEADDR_CHANGED) अणु
 		dev_vdbg(&priv->spi->dev,
 			 "%s called for IEEE addr\n", __func__);
-		ret = cc2520_write_ram(priv, CC2520RAM_IEEEADDR,
-				       sizeof(filt->ieee_addr),
+		ret = cc2520_ग_लिखो_ram(priv, CC2520RAM_IEEEADDR,
+				       माप(filt->ieee_addr),
 				       (u8 *)&filt->ieee_addr);
-	}
+	पूर्ण
 
-	if (changed & IEEE802154_AFILT_SADDR_CHANGED) {
-		u16 addr = le16_to_cpu(filt->short_addr);
+	अगर (changed & IEEE802154_AFILT_SADDR_CHANGED) अणु
+		u16 addr = le16_to_cpu(filt->लघु_addr);
 
 		dev_vdbg(&priv->spi->dev, "%s called for saddr\n", __func__);
-		ret = cc2520_write_ram(priv, CC2520RAM_SHORTADDR,
-				       sizeof(addr), (u8 *)&addr);
-	}
+		ret = cc2520_ग_लिखो_ram(priv, CC2520RAM_SHORTADDR,
+				       माप(addr), (u8 *)&addr);
+	पूर्ण
 
-	if (changed & IEEE802154_AFILT_PANC_CHANGED) {
+	अगर (changed & IEEE802154_AFILT_PANC_CHANGED) अणु
 		u8 frmfilt0;
 
 		dev_vdbg(&priv->spi->dev,
 			 "%s called for panc change\n", __func__);
 
-		cc2520_read_register(priv, CC2520_FRMFILT0, &frmfilt0);
+		cc2520_पढ़ो_रेजिस्टर(priv, CC2520_FRMFILT0, &frmfilt0);
 
-		if (filt->pan_coord)
+		अगर (filt->pan_coord)
 			frmfilt0 |= FRMFILT0_PAN_COORDINATOR;
-		else
+		अन्यथा
 			frmfilt0 &= ~FRMFILT0_PAN_COORDINATOR;
 
-		ret = cc2520_write_register(priv, CC2520_FRMFILT0, frmfilt0);
-	}
+		ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_FRMFILT0, frmfilt0);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int cc2520_set_tx_power(struct cc2520_private *priv, s32 mbm)
-{
-	u8 power;
+अटल अंतरभूत पूर्णांक cc2520_set_tx_घातer(काष्ठा cc2520_निजी *priv, s32 mbm)
+अणु
+	u8 घातer;
 
-	switch (mbm) {
-	case 500:
-		power = 0xF7;
-		break;
-	case 300:
-		power = 0xF2;
-		break;
-	case 200:
-		power = 0xAB;
-		break;
-	case 100:
-		power = 0x13;
-		break;
-	case 0:
-		power = 0x32;
-		break;
-	case -200:
-		power = 0x81;
-		break;
-	case -400:
-		power = 0x88;
-		break;
-	case -700:
-		power = 0x2C;
-		break;
-	case -1800:
-		power = 0x03;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (mbm) अणु
+	हाल 500:
+		घातer = 0xF7;
+		अवरोध;
+	हाल 300:
+		घातer = 0xF2;
+		अवरोध;
+	हाल 200:
+		घातer = 0xAB;
+		अवरोध;
+	हाल 100:
+		घातer = 0x13;
+		अवरोध;
+	हाल 0:
+		घातer = 0x32;
+		अवरोध;
+	हाल -200:
+		घातer = 0x81;
+		अवरोध;
+	हाल -400:
+		घातer = 0x88;
+		अवरोध;
+	हाल -700:
+		घातer = 0x2C;
+		अवरोध;
+	हाल -1800:
+		घातer = 0x03;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return cc2520_write_register(priv, CC2520_TXPOWER, power);
-}
+	वापस cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_TXPOWER, घातer);
+पूर्ण
 
-static inline int cc2520_cc2591_set_tx_power(struct cc2520_private *priv,
+अटल अंतरभूत पूर्णांक cc2520_cc2591_set_tx_घातer(काष्ठा cc2520_निजी *priv,
 					     s32 mbm)
-{
-	u8 power;
+अणु
+	u8 घातer;
 
-	switch (mbm) {
-	case 1700:
-		power = 0xF9;
-		break;
-	case 1600:
-		power = 0xF0;
-		break;
-	case 1400:
-		power = 0xA0;
-		break;
-	case 1100:
-		power = 0x2C;
-		break;
-	case -100:
-		power = 0x03;
-		break;
-	case -800:
-		power = 0x01;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (mbm) अणु
+	हाल 1700:
+		घातer = 0xF9;
+		अवरोध;
+	हाल 1600:
+		घातer = 0xF0;
+		अवरोध;
+	हाल 1400:
+		घातer = 0xA0;
+		अवरोध;
+	हाल 1100:
+		घातer = 0x2C;
+		अवरोध;
+	हाल -100:
+		घातer = 0x03;
+		अवरोध;
+	हाल -800:
+		घातer = 0x01;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return cc2520_write_register(priv, CC2520_TXPOWER, power);
-}
+	वापस cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_TXPOWER, घातer);
+पूर्ण
 
-#define CC2520_MAX_TX_POWERS 0x8
-static const s32 cc2520_powers[CC2520_MAX_TX_POWERS + 1] = {
+#घोषणा CC2520_MAX_TX_POWERS 0x8
+अटल स्थिर s32 cc2520_घातers[CC2520_MAX_TX_POWERS + 1] = अणु
 	500, 300, 200, 100, 0, -200, -400, -700, -1800,
-};
+पूर्ण;
 
-#define CC2520_CC2591_MAX_TX_POWERS 0x5
-static const s32 cc2520_cc2591_powers[CC2520_CC2591_MAX_TX_POWERS + 1] = {
+#घोषणा CC2520_CC2591_MAX_TX_POWERS 0x5
+अटल स्थिर s32 cc2520_cc2591_घातers[CC2520_CC2591_MAX_TX_POWERS + 1] = अणु
 	1700, 1600, 1400, 1100, -100, -800,
-};
+पूर्ण;
 
-static int
-cc2520_set_txpower(struct ieee802154_hw *hw, s32 mbm)
-{
-	struct cc2520_private *priv = hw->priv;
+अटल पूर्णांक
+cc2520_set_txघातer(काष्ठा ieee802154_hw *hw, s32 mbm)
+अणु
+	काष्ठा cc2520_निजी *priv = hw->priv;
 
-	if (!priv->amplified)
-		return cc2520_set_tx_power(priv, mbm);
+	अगर (!priv->amplअगरied)
+		वापस cc2520_set_tx_घातer(priv, mbm);
 
-	return cc2520_cc2591_set_tx_power(priv, mbm);
-}
+	वापस cc2520_cc2591_set_tx_घातer(priv, mbm);
+पूर्ण
 
-static int
-cc2520_set_promiscuous_mode(struct ieee802154_hw *hw, bool on)
-{
-	struct cc2520_private *priv = hw->priv;
+अटल पूर्णांक
+cc2520_set_promiscuous_mode(काष्ठा ieee802154_hw *hw, bool on)
+अणु
+	काष्ठा cc2520_निजी *priv = hw->priv;
 	u8 frmfilt0;
 
 	dev_dbg(&priv->spi->dev, "%s : mode %d\n", __func__, on);
 
 	priv->promiscuous = on;
 
-	cc2520_read_register(priv, CC2520_FRMFILT0, &frmfilt0);
+	cc2520_पढ़ो_रेजिस्टर(priv, CC2520_FRMFILT0, &frmfilt0);
 
-	if (on) {
-		/* Disable automatic ACK, automatic CRC, and frame filtering. */
-		cc2520_write_register(priv, CC2520_FRMCTRL0, 0);
+	अगर (on) अणु
+		/* Disable स्वतःmatic ACK, स्वतःmatic CRC, and frame filtering. */
+		cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_FRMCTRL0, 0);
 		frmfilt0 &= ~FRMFILT0_FRAME_FILTER_EN;
-	} else {
-		cc2520_write_register(priv, CC2520_FRMCTRL0, FRMCTRL0_AUTOACK |
+	पूर्ण अन्यथा अणु
+		cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_FRMCTRL0, FRMCTRL0_AUTOACK |
 							     FRMCTRL0_AUTOCRC);
 		frmfilt0 |= FRMFILT0_FRAME_FILTER_EN;
-	}
-	return cc2520_write_register(priv, CC2520_FRMFILT0, frmfilt0);
-}
+	पूर्ण
+	वापस cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_FRMFILT0, frmfilt0);
+पूर्ण
 
-static const struct ieee802154_ops cc2520_ops = {
+अटल स्थिर काष्ठा ieee802154_ops cc2520_ops = अणु
 	.owner = THIS_MODULE,
 	.start = cc2520_start,
 	.stop = cc2520_stop,
@@ -818,354 +819,354 @@ static const struct ieee802154_ops cc2520_ops = {
 	.ed = cc2520_ed,
 	.set_channel = cc2520_set_channel,
 	.set_hw_addr_filt = cc2520_filter,
-	.set_txpower = cc2520_set_txpower,
+	.set_txघातer = cc2520_set_txघातer,
 	.set_promiscuous_mode = cc2520_set_promiscuous_mode,
-};
+पूर्ण;
 
-static int cc2520_register(struct cc2520_private *priv)
-{
-	int ret = -ENOMEM;
+अटल पूर्णांक cc2520_रेजिस्टर(काष्ठा cc2520_निजी *priv)
+अणु
+	पूर्णांक ret = -ENOMEM;
 
-	priv->hw = ieee802154_alloc_hw(sizeof(*priv), &cc2520_ops);
-	if (!priv->hw)
-		goto err_ret;
+	priv->hw = ieee802154_alloc_hw(माप(*priv), &cc2520_ops);
+	अगर (!priv->hw)
+		जाओ err_ret;
 
 	priv->hw->priv = priv;
 	priv->hw->parent = &priv->spi->dev;
 	priv->hw->extra_tx_headroom = 0;
-	ieee802154_random_extended_addr(&priv->hw->phy->perm_extended_addr);
+	ieee802154_अक्रमom_extended_addr(&priv->hw->phy->perm_extended_addr);
 
-	/* We do support only 2.4 Ghz */
+	/* We करो support only 2.4 Ghz */
 	priv->hw->phy->supported.channels[0] = 0x7FFF800;
 	priv->hw->flags = IEEE802154_HW_TX_OMIT_CKSUM | IEEE802154_HW_AFILT |
 			  IEEE802154_HW_PROMISCUOUS;
 
 	priv->hw->phy->flags = WPAN_PHY_FLAG_TXPOWER;
 
-	if (!priv->amplified) {
-		priv->hw->phy->supported.tx_powers = cc2520_powers;
-		priv->hw->phy->supported.tx_powers_size = ARRAY_SIZE(cc2520_powers);
-		priv->hw->phy->transmit_power = priv->hw->phy->supported.tx_powers[4];
-	} else {
-		priv->hw->phy->supported.tx_powers = cc2520_cc2591_powers;
-		priv->hw->phy->supported.tx_powers_size = ARRAY_SIZE(cc2520_cc2591_powers);
-		priv->hw->phy->transmit_power = priv->hw->phy->supported.tx_powers[0];
-	}
+	अगर (!priv->amplअगरied) अणु
+		priv->hw->phy->supported.tx_घातers = cc2520_घातers;
+		priv->hw->phy->supported.tx_घातers_size = ARRAY_SIZE(cc2520_घातers);
+		priv->hw->phy->transmit_घातer = priv->hw->phy->supported.tx_घातers[4];
+	पूर्ण अन्यथा अणु
+		priv->hw->phy->supported.tx_घातers = cc2520_cc2591_घातers;
+		priv->hw->phy->supported.tx_घातers_size = ARRAY_SIZE(cc2520_cc2591_घातers);
+		priv->hw->phy->transmit_घातer = priv->hw->phy->supported.tx_घातers[0];
+	पूर्ण
 
 	priv->hw->phy->current_channel = 11;
 
 	dev_vdbg(&priv->spi->dev, "registered cc2520\n");
-	ret = ieee802154_register_hw(priv->hw);
-	if (ret)
-		goto err_free_device;
+	ret = ieee802154_रेजिस्टर_hw(priv->hw);
+	अगर (ret)
+		जाओ err_मुक्त_device;
 
-	return 0;
+	वापस 0;
 
-err_free_device:
-	ieee802154_free_hw(priv->hw);
+err_मुक्त_device:
+	ieee802154_मुक्त_hw(priv->hw);
 err_ret:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cc2520_fifop_irqwork(struct work_struct *work)
-{
-	struct cc2520_private *priv
-		= container_of(work, struct cc2520_private, fifop_irqwork);
+अटल व्योम cc2520_fअगरop_irqwork(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cc2520_निजी *priv
+		= container_of(work, काष्ठा cc2520_निजी, fअगरop_irqwork);
 
 	dev_dbg(&priv->spi->dev, "fifop interrupt received\n");
 
-	if (gpio_get_value(priv->fifo_pin))
+	अगर (gpio_get_value(priv->fअगरo_pin))
 		cc2520_rx(priv);
-	else
+	अन्यथा
 		dev_dbg(&priv->spi->dev, "rxfifo overflow\n");
 
 	cc2520_cmd_strobe(priv, CC2520_CMD_SFLUSHRX);
 	cc2520_cmd_strobe(priv, CC2520_CMD_SFLUSHRX);
-}
+पूर्ण
 
-static irqreturn_t cc2520_fifop_isr(int irq, void *data)
-{
-	struct cc2520_private *priv = data;
+अटल irqवापस_t cc2520_fअगरop_isr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा cc2520_निजी *priv = data;
 
-	schedule_work(&priv->fifop_irqwork);
+	schedule_work(&priv->fअगरop_irqwork);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t cc2520_sfd_isr(int irq, void *data)
-{
-	struct cc2520_private *priv = data;
-	unsigned long flags;
+अटल irqवापस_t cc2520_sfd_isr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा cc2520_निजी *priv = data;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	if (priv->is_tx) {
+	अगर (priv->is_tx) अणु
 		priv->is_tx = 0;
 		spin_unlock_irqrestore(&priv->lock, flags);
 		dev_dbg(&priv->spi->dev, "SFD for TX\n");
 		complete(&priv->tx_complete);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock_irqrestore(&priv->lock, flags);
 		dev_dbg(&priv->spi->dev, "SFD for RX\n");
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int cc2520_get_platform_data(struct spi_device *spi,
-				    struct cc2520_platform_data *pdata)
-{
-	struct device_node *np = spi->dev.of_node;
-	struct cc2520_private *priv = spi_get_drvdata(spi);
+अटल पूर्णांक cc2520_get_platक्रमm_data(काष्ठा spi_device *spi,
+				    काष्ठा cc2520_platक्रमm_data *pdata)
+अणु
+	काष्ठा device_node *np = spi->dev.of_node;
+	काष्ठा cc2520_निजी *priv = spi_get_drvdata(spi);
 
-	if (!np) {
-		struct cc2520_platform_data *spi_pdata = spi->dev.platform_data;
+	अगर (!np) अणु
+		काष्ठा cc2520_platक्रमm_data *spi_pdata = spi->dev.platक्रमm_data;
 
-		if (!spi_pdata)
-			return -ENOENT;
+		अगर (!spi_pdata)
+			वापस -ENOENT;
 		*pdata = *spi_pdata;
-		priv->fifo_pin = pdata->fifo;
-		return 0;
-	}
+		priv->fअगरo_pin = pdata->fअगरo;
+		वापस 0;
+	पूर्ण
 
-	pdata->fifo = of_get_named_gpio(np, "fifo-gpio", 0);
-	priv->fifo_pin = pdata->fifo;
+	pdata->fअगरo = of_get_named_gpio(np, "fifo-gpio", 0);
+	priv->fअगरo_pin = pdata->fअगरo;
 
-	pdata->fifop = of_get_named_gpio(np, "fifop-gpio", 0);
+	pdata->fअगरop = of_get_named_gpio(np, "fifop-gpio", 0);
 
 	pdata->sfd = of_get_named_gpio(np, "sfd-gpio", 0);
 	pdata->cca = of_get_named_gpio(np, "cca-gpio", 0);
 	pdata->vreg = of_get_named_gpio(np, "vreg-gpio", 0);
 	pdata->reset = of_get_named_gpio(np, "reset-gpio", 0);
 
-	/* CC2591 front end for CC2520 */
-	if (of_property_read_bool(np, "amplified"))
-		priv->amplified = true;
+	/* CC2591 front end क्रम CC2520 */
+	अगर (of_property_पढ़ो_bool(np, "amplified"))
+		priv->amplअगरied = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cc2520_hw_init(struct cc2520_private *priv)
-{
+अटल पूर्णांक cc2520_hw_init(काष्ठा cc2520_निजी *priv)
+अणु
 	u8 status = 0, state = 0xff;
-	int ret;
-	int timeout = 100;
-	struct cc2520_platform_data pdata;
+	पूर्णांक ret;
+	पूर्णांक समयout = 100;
+	काष्ठा cc2520_platक्रमm_data pdata;
 
-	ret = cc2520_get_platform_data(priv->spi, &pdata);
-	if (ret)
-		goto err_ret;
+	ret = cc2520_get_platक्रमm_data(priv->spi, &pdata);
+	अगर (ret)
+		जाओ err_ret;
 
-	ret = cc2520_read_register(priv, CC2520_FSMSTAT1, &state);
-	if (ret)
-		goto err_ret;
+	ret = cc2520_पढ़ो_रेजिस्टर(priv, CC2520_FSMSTAT1, &state);
+	अगर (ret)
+		जाओ err_ret;
 
-	if (state != STATE_IDLE)
-		return -EINVAL;
+	अगर (state != STATE_IDLE)
+		वापस -EINVAL;
 
-	do {
+	करो अणु
 		ret = cc2520_get_status(priv, &status);
-		if (ret)
-			goto err_ret;
+		अगर (ret)
+			जाओ err_ret;
 
-		if (timeout-- <= 0) {
+		अगर (समयout-- <= 0) अणु
 			dev_err(&priv->spi->dev, "oscillator start failed!\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		udelay(1);
-	} while (!(status & CC2520_STATUS_XOSC32M_STABLE));
+	पूर्ण जबतक (!(status & CC2520_STATUS_XOSC32M_STABLE));
 
 	dev_vdbg(&priv->spi->dev, "oscillator brought up\n");
 
-	/* If the CC2520 is connected to a CC2591 amplifier, we must both
+	/* If the CC2520 is connected to a CC2591 amplअगरier, we must both
 	 * configure GPIOs on the CC2520 to correctly configure the CC2591
 	 * and change a couple settings of the CC2520 to work with the
-	 * amplifier. See section 8 page 17 of TI application note AN065.
+	 * amplअगरier. See section 8 page 17 of TI application note AN065.
 	 * http://www.ti.com/lit/an/swra229a/swra229a.pdf
 	 */
-	if (priv->amplified) {
-		ret = cc2520_write_register(priv, CC2520_AGCCTRL1, 0x16);
-		if (ret)
-			goto err_ret;
+	अगर (priv->amplअगरied) अणु
+		ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_AGCCTRL1, 0x16);
+		अगर (ret)
+			जाओ err_ret;
 
-		ret = cc2520_write_register(priv, CC2520_GPIOCTRL0, 0x46);
-		if (ret)
-			goto err_ret;
+		ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_GPIOCTRL0, 0x46);
+		अगर (ret)
+			जाओ err_ret;
 
-		ret = cc2520_write_register(priv, CC2520_GPIOCTRL5, 0x47);
-		if (ret)
-			goto err_ret;
+		ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_GPIOCTRL5, 0x47);
+		अगर (ret)
+			जाओ err_ret;
 
-		ret = cc2520_write_register(priv, CC2520_GPIOPOLARITY, 0x1e);
-		if (ret)
-			goto err_ret;
+		ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_GPIOPOLARITY, 0x1e);
+		अगर (ret)
+			जाओ err_ret;
 
-		ret = cc2520_write_register(priv, CC2520_TXCTRL, 0xc1);
-		if (ret)
-			goto err_ret;
-	} else {
-		ret = cc2520_write_register(priv, CC2520_AGCCTRL1, 0x11);
-		if (ret)
-			goto err_ret;
-	}
+		ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_TXCTRL, 0xc1);
+		अगर (ret)
+			जाओ err_ret;
+	पूर्ण अन्यथा अणु
+		ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_AGCCTRL1, 0x11);
+		अगर (ret)
+			जाओ err_ret;
+	पूर्ण
 
-	/* Registers default value: section 28.1 in Datasheet */
+	/* Registers शेष value: section 28.1 in Datasheet */
 
 	/* Set the CCA threshold to -50 dBm. This seems to have been copied
 	 * from the TinyOS CC2520 driver and is much higher than the -84 dBm
 	 * threshold suggested in the datasheet.
 	 */
-	ret = cc2520_write_register(priv, CC2520_CCACTRL0, 0x1A);
-	if (ret)
-		goto err_ret;
+	ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_CCACTRL0, 0x1A);
+	अगर (ret)
+		जाओ err_ret;
 
-	ret = cc2520_write_register(priv, CC2520_MDMCTRL0, 0x85);
-	if (ret)
-		goto err_ret;
+	ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_MDMCTRL0, 0x85);
+	अगर (ret)
+		जाओ err_ret;
 
-	ret = cc2520_write_register(priv, CC2520_MDMCTRL1, 0x14);
-	if (ret)
-		goto err_ret;
+	ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_MDMCTRL1, 0x14);
+	अगर (ret)
+		जाओ err_ret;
 
-	ret = cc2520_write_register(priv, CC2520_RXCTRL, 0x3f);
-	if (ret)
-		goto err_ret;
+	ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_RXCTRL, 0x3f);
+	अगर (ret)
+		जाओ err_ret;
 
-	ret = cc2520_write_register(priv, CC2520_FSCTRL, 0x5a);
-	if (ret)
-		goto err_ret;
+	ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_FSCTRL, 0x5a);
+	अगर (ret)
+		जाओ err_ret;
 
-	ret = cc2520_write_register(priv, CC2520_FSCAL1, 0x2b);
-	if (ret)
-		goto err_ret;
+	ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_FSCAL1, 0x2b);
+	अगर (ret)
+		जाओ err_ret;
 
-	ret = cc2520_write_register(priv, CC2520_ADCTEST0, 0x10);
-	if (ret)
-		goto err_ret;
+	ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_ADCTEST0, 0x10);
+	अगर (ret)
+		जाओ err_ret;
 
-	ret = cc2520_write_register(priv, CC2520_ADCTEST1, 0x0e);
-	if (ret)
-		goto err_ret;
+	ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_ADCTEST1, 0x0e);
+	अगर (ret)
+		जाओ err_ret;
 
-	ret = cc2520_write_register(priv, CC2520_ADCTEST2, 0x03);
-	if (ret)
-		goto err_ret;
+	ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_ADCTEST2, 0x03);
+	अगर (ret)
+		जाओ err_ret;
 
-	/* Configure registers correctly for this driver. */
-	ret = cc2520_write_register(priv, CC2520_FRMCTRL1,
+	/* Configure रेजिस्टरs correctly क्रम this driver. */
+	ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_FRMCTRL1,
 				    FRMCTRL1_SET_RXENMASK_ON_TX |
 				    FRMCTRL1_IGNORE_TX_UNDERF);
-	if (ret)
-		goto err_ret;
+	अगर (ret)
+		जाओ err_ret;
 
-	ret = cc2520_write_register(priv, CC2520_FIFOPCTRL, 127);
-	if (ret)
-		goto err_ret;
+	ret = cc2520_ग_लिखो_रेजिस्टर(priv, CC2520_FIFOPCTRL, 127);
+	अगर (ret)
+		जाओ err_ret;
 
-	return 0;
+	वापस 0;
 
 err_ret:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cc2520_probe(struct spi_device *spi)
-{
-	struct cc2520_private *priv;
-	struct cc2520_platform_data pdata;
-	int ret;
+अटल पूर्णांक cc2520_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा cc2520_निजी *priv;
+	काष्ठा cc2520_platक्रमm_data pdata;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(&spi->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&spi->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	spi_set_drvdata(spi, priv);
 
-	ret = cc2520_get_platform_data(spi, &pdata);
-	if (ret < 0) {
+	ret = cc2520_get_platक्रमm_data(spi, &pdata);
+	अगर (ret < 0) अणु
 		dev_err(&spi->dev, "no platform data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	priv->spi = spi;
 
 	priv->buf = devm_kzalloc(&spi->dev,
 				 SPI_COMMAND_BUFFER, GFP_KERNEL);
-	if (!priv->buf)
-		return -ENOMEM;
+	अगर (!priv->buf)
+		वापस -ENOMEM;
 
 	mutex_init(&priv->buffer_mutex);
-	INIT_WORK(&priv->fifop_irqwork, cc2520_fifop_irqwork);
+	INIT_WORK(&priv->fअगरop_irqwork, cc2520_fअगरop_irqwork);
 	spin_lock_init(&priv->lock);
 	init_completion(&priv->tx_complete);
 
 	/* Assumption that CC2591 is not connected */
-	priv->amplified = false;
+	priv->amplअगरied = false;
 
 	/* Request all the gpio's */
-	if (!gpio_is_valid(pdata.fifo)) {
+	अगर (!gpio_is_valid(pdata.fअगरo)) अणु
 		dev_err(&spi->dev, "fifo gpio is not valid\n");
 		ret = -EINVAL;
-		goto err_hw_init;
-	}
+		जाओ err_hw_init;
+	पूर्ण
 
-	ret = devm_gpio_request_one(&spi->dev, pdata.fifo,
+	ret = devm_gpio_request_one(&spi->dev, pdata.fअगरo,
 				    GPIOF_IN, "fifo");
-	if (ret)
-		goto err_hw_init;
+	अगर (ret)
+		जाओ err_hw_init;
 
-	if (!gpio_is_valid(pdata.cca)) {
+	अगर (!gpio_is_valid(pdata.cca)) अणु
 		dev_err(&spi->dev, "cca gpio is not valid\n");
 		ret = -EINVAL;
-		goto err_hw_init;
-	}
+		जाओ err_hw_init;
+	पूर्ण
 
 	ret = devm_gpio_request_one(&spi->dev, pdata.cca,
 				    GPIOF_IN, "cca");
-	if (ret)
-		goto err_hw_init;
+	अगर (ret)
+		जाओ err_hw_init;
 
-	if (!gpio_is_valid(pdata.fifop)) {
+	अगर (!gpio_is_valid(pdata.fअगरop)) अणु
 		dev_err(&spi->dev, "fifop gpio is not valid\n");
 		ret = -EINVAL;
-		goto err_hw_init;
-	}
+		जाओ err_hw_init;
+	पूर्ण
 
-	ret = devm_gpio_request_one(&spi->dev, pdata.fifop,
+	ret = devm_gpio_request_one(&spi->dev, pdata.fअगरop,
 				    GPIOF_IN, "fifop");
-	if (ret)
-		goto err_hw_init;
+	अगर (ret)
+		जाओ err_hw_init;
 
-	if (!gpio_is_valid(pdata.sfd)) {
+	अगर (!gpio_is_valid(pdata.sfd)) अणु
 		dev_err(&spi->dev, "sfd gpio is not valid\n");
 		ret = -EINVAL;
-		goto err_hw_init;
-	}
+		जाओ err_hw_init;
+	पूर्ण
 
 	ret = devm_gpio_request_one(&spi->dev, pdata.sfd,
 				    GPIOF_IN, "sfd");
-	if (ret)
-		goto err_hw_init;
+	अगर (ret)
+		जाओ err_hw_init;
 
-	if (!gpio_is_valid(pdata.reset)) {
+	अगर (!gpio_is_valid(pdata.reset)) अणु
 		dev_err(&spi->dev, "reset gpio is not valid\n");
 		ret = -EINVAL;
-		goto err_hw_init;
-	}
+		जाओ err_hw_init;
+	पूर्ण
 
 	ret = devm_gpio_request_one(&spi->dev, pdata.reset,
 				    GPIOF_OUT_INIT_LOW, "reset");
-	if (ret)
-		goto err_hw_init;
+	अगर (ret)
+		जाओ err_hw_init;
 
-	if (!gpio_is_valid(pdata.vreg)) {
+	अगर (!gpio_is_valid(pdata.vreg)) अणु
 		dev_err(&spi->dev, "vreg gpio is not valid\n");
 		ret = -EINVAL;
-		goto err_hw_init;
-	}
+		जाओ err_hw_init;
+	पूर्ण
 
 	ret = devm_gpio_request_one(&spi->dev, pdata.vreg,
 				    GPIOF_OUT_INIT_LOW, "vreg");
-	if (ret)
-		goto err_hw_init;
+	अगर (ret)
+		जाओ err_hw_init;
 
 	gpio_set_value(pdata.vreg, HIGH);
 	usleep_range(100, 150);
@@ -1174,80 +1175,80 @@ static int cc2520_probe(struct spi_device *spi)
 	usleep_range(200, 250);
 
 	ret = cc2520_hw_init(priv);
-	if (ret)
-		goto err_hw_init;
+	अगर (ret)
+		जाओ err_hw_init;
 
-	/* Set up fifop interrupt */
+	/* Set up fअगरop पूर्णांकerrupt */
 	ret = devm_request_irq(&spi->dev,
-			       gpio_to_irq(pdata.fifop),
-			       cc2520_fifop_isr,
+			       gpio_to_irq(pdata.fअगरop),
+			       cc2520_fअगरop_isr,
 			       IRQF_TRIGGER_RISING,
 			       dev_name(&spi->dev),
 			       priv);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&spi->dev, "could not get fifop irq\n");
-		goto err_hw_init;
-	}
+		जाओ err_hw_init;
+	पूर्ण
 
-	/* Set up sfd interrupt */
+	/* Set up sfd पूर्णांकerrupt */
 	ret = devm_request_irq(&spi->dev,
 			       gpio_to_irq(pdata.sfd),
 			       cc2520_sfd_isr,
 			       IRQF_TRIGGER_FALLING,
 			       dev_name(&spi->dev),
 			       priv);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&spi->dev, "could not get sfd irq\n");
-		goto err_hw_init;
-	}
+		जाओ err_hw_init;
+	पूर्ण
 
-	ret = cc2520_register(priv);
-	if (ret)
-		goto err_hw_init;
+	ret = cc2520_रेजिस्टर(priv);
+	अगर (ret)
+		जाओ err_hw_init;
 
-	return 0;
+	वापस 0;
 
 err_hw_init:
 	mutex_destroy(&priv->buffer_mutex);
-	flush_work(&priv->fifop_irqwork);
-	return ret;
-}
+	flush_work(&priv->fअगरop_irqwork);
+	वापस ret;
+पूर्ण
 
-static int cc2520_remove(struct spi_device *spi)
-{
-	struct cc2520_private *priv = spi_get_drvdata(spi);
+अटल पूर्णांक cc2520_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा cc2520_निजी *priv = spi_get_drvdata(spi);
 
 	mutex_destroy(&priv->buffer_mutex);
-	flush_work(&priv->fifop_irqwork);
+	flush_work(&priv->fअगरop_irqwork);
 
-	ieee802154_unregister_hw(priv->hw);
-	ieee802154_free_hw(priv->hw);
+	ieee802154_unरेजिस्टर_hw(priv->hw);
+	ieee802154_मुक्त_hw(priv->hw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id cc2520_ids[] = {
-	{"cc2520", },
-	{},
-};
+अटल स्थिर काष्ठा spi_device_id cc2520_ids[] = अणु
+	अणु"cc2520", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, cc2520_ids);
 
-static const struct of_device_id cc2520_of_ids[] = {
-	{.compatible = "ti,cc2520", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id cc2520_of_ids[] = अणु
+	अणु.compatible = "ti,cc2520", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, cc2520_of_ids);
 
-/* SPI driver structure */
-static struct spi_driver cc2520_driver = {
-	.driver = {
+/* SPI driver काष्ठाure */
+अटल काष्ठा spi_driver cc2520_driver = अणु
+	.driver = अणु
 		.name = "cc2520",
 		.of_match_table = of_match_ptr(cc2520_of_ids),
-	},
+	पूर्ण,
 	.id_table = cc2520_ids,
 	.probe = cc2520_probe,
-	.remove = cc2520_remove,
-};
+	.हटाओ = cc2520_हटाओ,
+पूर्ण;
 module_spi_driver(cc2520_driver);
 
 MODULE_AUTHOR("Varka Bhadram <varkab@cdac.in>");

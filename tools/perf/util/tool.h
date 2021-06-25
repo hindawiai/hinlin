@@ -1,59 +1,60 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_TOOL_H
-#define __PERF_TOOL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_TOOL_H
+#घोषणा __PERF_TOOL_H
 
-#include <stdbool.h>
+#समावेश <stdbool.h>
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct perf_session;
-union perf_event;
-struct evlist;
-struct evsel;
-struct perf_sample;
-struct perf_tool;
-struct machine;
-struct ordered_events;
+काष्ठा perf_session;
+जोड़ perf_event;
+काष्ठा evlist;
+काष्ठा evsel;
+काष्ठा perf_sample;
+काष्ठा perf_tool;
+काष्ठा machine;
+काष्ठा ordered_events;
 
-typedef int (*event_sample)(struct perf_tool *tool, union perf_event *event,
-			    struct perf_sample *sample,
-			    struct evsel *evsel, struct machine *machine);
+प्रकार पूर्णांक (*event_sample)(काष्ठा perf_tool *tool, जोड़ perf_event *event,
+			    काष्ठा perf_sample *sample,
+			    काष्ठा evsel *evsel, काष्ठा machine *machine);
 
-typedef int (*event_op)(struct perf_tool *tool, union perf_event *event,
-			struct perf_sample *sample, struct machine *machine);
+प्रकार पूर्णांक (*event_op)(काष्ठा perf_tool *tool, जोड़ perf_event *event,
+			काष्ठा perf_sample *sample, काष्ठा machine *machine);
 
-typedef int (*event_attr_op)(struct perf_tool *tool,
-			     union perf_event *event,
-			     struct evlist **pevlist);
+प्रकार पूर्णांक (*event_attr_op)(काष्ठा perf_tool *tool,
+			     जोड़ perf_event *event,
+			     काष्ठा evlist **pevlist);
 
-typedef int (*event_op2)(struct perf_session *session, union perf_event *event);
-typedef s64 (*event_op3)(struct perf_session *session, union perf_event *event);
-typedef int (*event_op4)(struct perf_session *session, union perf_event *event, u64 data);
+प्रकार पूर्णांक (*event_op2)(काष्ठा perf_session *session, जोड़ perf_event *event);
+प्रकार s64 (*event_op3)(काष्ठा perf_session *session, जोड़ perf_event *event);
+प्रकार पूर्णांक (*event_op4)(काष्ठा perf_session *session, जोड़ perf_event *event, u64 data);
 
-typedef int (*event_oe)(struct perf_tool *tool, union perf_event *event,
-			struct ordered_events *oe);
+प्रकार पूर्णांक (*event_oe)(काष्ठा perf_tool *tool, जोड़ perf_event *event,
+			काष्ठा ordered_events *oe);
 
-enum show_feature_header {
+क्रमागत show_feature_header अणु
 	SHOW_FEAT_NO_HEADER = 0,
 	SHOW_FEAT_HEADER,
 	SHOW_FEAT_HEADER_FULL_INFO,
-};
+पूर्ण;
 
-struct perf_tool {
+काष्ठा perf_tool अणु
 	event_sample	sample,
-			read;
+			पढ़ो;
 	event_op	mmap,
 			mmap2,
 			comm,
 			namespaces,
 			cgroup,
-			fork,
-			exit,
+			विभाजन,
+			निकास,
 			lost,
 			lost_samples,
 			aux,
 			itrace_start,
-			context_switch,
+			context_चयन,
 			throttle,
 			unthrottle,
 			ksymbol,
@@ -68,8 +69,8 @@ struct perf_tool {
 			id_index,
 			auxtrace_info,
 			auxtrace_error,
-			time_conv,
-			thread_map,
+			समय_conv,
+			thपढ़ो_map,
 			cpu_map,
 			stat_config,
 			stat,
@@ -78,11 +79,11 @@ struct perf_tool {
 	event_op4	compressed;
 	event_op3	auxtrace;
 	bool		ordered_events;
-	bool		ordering_requires_timestamps;
+	bool		ordering_requires_बारtamps;
 	bool		namespace_events;
 	bool		cgroup_events;
 	bool		no_warn;
-	enum show_feature_header show_feat_hdr;
-};
+	क्रमागत show_feature_header show_feat_hdr;
+पूर्ण;
 
-#endif /* __PERF_TOOL_H */
+#पूर्ण_अगर /* __PERF_TOOL_H */

@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2007-2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2007-2009 PetaLogix
- * Copyright (C) 2006 Atmark Techno, Inc.
+ * Copyright (C) 2006 Aपंचांगark Techno, Inc.
  */
-#ifndef _ASM_MICROBLAZE_SETUP_H
-#define _ASM_MICROBLAZE_SETUP_H
+#अगर_अघोषित _ASM_MICROBLAZE_SETUP_H
+#घोषणा _ASM_MICROBLAZE_SETUP_H
 
-#include <uapi/asm/setup.h>
+#समावेश <uapi/यंत्र/setup.h>
 
-# ifndef __ASSEMBLY__
-extern char cmd_line[COMMAND_LINE_SIZE];
+# अगरndef __ASSEMBLY__
+बाह्य अक्षर cmd_line[COMMAND_LINE_SIZE];
 
-extern char *klimit;
+बाह्य अक्षर *klimit;
 
-extern void mmu_reset(void);
+बाह्य व्योम mmu_reset(व्योम);
 
-void time_init(void);
-void init_IRQ(void);
-void machine_early_init(const char *cmdline, unsigned int ram,
-		unsigned int fdt, unsigned int msr, unsigned int tlb0,
-		unsigned int tlb1);
+व्योम समय_init(व्योम);
+व्योम init_IRQ(व्योम);
+व्योम machine_early_init(स्थिर अक्षर *cmdline, अचिन्हित पूर्णांक ram,
+		अचिन्हित पूर्णांक fdt, अचिन्हित पूर्णांक msr, अचिन्हित पूर्णांक tlb0,
+		अचिन्हित पूर्णांक tlb1);
 
-void machine_restart(char *cmd);
-void machine_shutdown(void);
-void machine_halt(void);
-void machine_power_off(void);
+व्योम machine_restart(अक्षर *cmd);
+व्योम machine_shutकरोwn(व्योम);
+व्योम machine_halt(व्योम);
+व्योम machine_घातer_off(व्योम);
 
-extern void *zalloc_maybe_bootmem(size_t size, gfp_t mask);
+बाह्य व्योम *zalloc_maybe_booपंचांगem(माप_प्रकार size, gfp_t mask);
 
-# endif /* __ASSEMBLY__ */
-#endif /* _ASM_MICROBLAZE_SETUP_H */
+# endअगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* _ASM_MICROBLAZE_SETUP_H */

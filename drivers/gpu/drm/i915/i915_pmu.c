@@ -1,653 +1,654 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2017-2018 Intel Corporation
+ * Copyright तऊ 2017-2018 Intel Corporation
  */
 
-#include <linux/pm_runtime.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "gt/intel_engine.h"
-#include "gt/intel_engine_pm.h"
-#include "gt/intel_engine_user.h"
-#include "gt/intel_gt_pm.h"
-#include "gt/intel_rc6.h"
-#include "gt/intel_rps.h"
+#समावेश "gt/intel_engine.h"
+#समावेश "gt/intel_engine_pm.h"
+#समावेश "gt/intel_engine_user.h"
+#समावेश "gt/intel_gt_pm.h"
+#समावेश "gt/intel_rc6.h"
+#समावेश "gt/intel_rps.h"
 
-#include "i915_drv.h"
-#include "i915_pmu.h"
-#include "intel_pm.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_pmu.h"
+#समावेश "intel_pm.h"
 
-/* Frequency for the sampling timer for events which need it. */
-#define FREQUENCY 200
-#define PERIOD max_t(u64, 10000, NSEC_PER_SEC / FREQUENCY)
+/* Frequency क्रम the sampling समयr क्रम events which need it. */
+#घोषणा FREQUENCY 200
+#घोषणा PERIOD max_t(u64, 10000, NSEC_PER_SEC / FREQUENCY)
 
-#define ENGINE_SAMPLE_MASK \
+#घोषणा ENGINE_SAMPLE_MASK \
 	(BIT(I915_SAMPLE_BUSY) | \
 	 BIT(I915_SAMPLE_WAIT) | \
 	 BIT(I915_SAMPLE_SEMA))
 
-static cpumask_t i915_pmu_cpumask;
-static unsigned int i915_pmu_target_cpu = -1;
+अटल cpumask_t i915_pmu_cpumask;
+अटल अचिन्हित पूर्णांक i915_pmu_target_cpu = -1;
 
-static u8 engine_config_sample(u64 config)
-{
-	return config & I915_PMU_SAMPLE_MASK;
-}
+अटल u8 engine_config_sample(u64 config)
+अणु
+	वापस config & I915_PMU_SAMPLE_MASK;
+पूर्ण
 
-static u8 engine_event_sample(struct perf_event *event)
-{
-	return engine_config_sample(event->attr.config);
-}
+अटल u8 engine_event_sample(काष्ठा perf_event *event)
+अणु
+	वापस engine_config_sample(event->attr.config);
+पूर्ण
 
-static u8 engine_event_class(struct perf_event *event)
-{
-	return (event->attr.config >> I915_PMU_CLASS_SHIFT) & 0xff;
-}
+अटल u8 engine_event_class(काष्ठा perf_event *event)
+अणु
+	वापस (event->attr.config >> I915_PMU_CLASS_SHIFT) & 0xff;
+पूर्ण
 
-static u8 engine_event_instance(struct perf_event *event)
-{
-	return (event->attr.config >> I915_PMU_SAMPLE_BITS) & 0xff;
-}
+अटल u8 engine_event_instance(काष्ठा perf_event *event)
+अणु
+	वापस (event->attr.config >> I915_PMU_SAMPLE_BITS) & 0xff;
+पूर्ण
 
-static bool is_engine_config(u64 config)
-{
-	return config < __I915_PMU_OTHER(0);
-}
+अटल bool is_engine_config(u64 config)
+अणु
+	वापस config < __I915_PMU_OTHER(0);
+पूर्ण
 
-static unsigned int other_bit(const u64 config)
-{
-	unsigned int val;
+अटल अचिन्हित पूर्णांक other_bit(स्थिर u64 config)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	switch (config) {
-	case I915_PMU_ACTUAL_FREQUENCY:
+	चयन (config) अणु
+	हाल I915_PMU_ACTUAL_FREQUENCY:
 		val =  __I915_PMU_ACTUAL_FREQUENCY_ENABLED;
-		break;
-	case I915_PMU_REQUESTED_FREQUENCY:
+		अवरोध;
+	हाल I915_PMU_REQUESTED_FREQUENCY:
 		val = __I915_PMU_REQUESTED_FREQUENCY_ENABLED;
-		break;
-	case I915_PMU_RC6_RESIDENCY:
+		अवरोध;
+	हाल I915_PMU_RC6_RESIDENCY:
 		val = __I915_PMU_RC6_RESIDENCY_ENABLED;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/*
-		 * Events that do not require sampling, or tracking state
+		 * Events that करो not require sampling, or tracking state
 		 * transitions between enabled and disabled can be ignored.
 		 */
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return I915_ENGINE_SAMPLE_COUNT + val;
-}
+	वापस I915_ENGINE_SAMPLE_COUNT + val;
+पूर्ण
 
-static unsigned int config_bit(const u64 config)
-{
-	if (is_engine_config(config))
-		return engine_config_sample(config);
-	else
-		return other_bit(config);
-}
+अटल अचिन्हित पूर्णांक config_bit(स्थिर u64 config)
+अणु
+	अगर (is_engine_config(config))
+		वापस engine_config_sample(config);
+	अन्यथा
+		वापस other_bit(config);
+पूर्ण
 
-static u64 config_mask(u64 config)
-{
-	return BIT_ULL(config_bit(config));
-}
+अटल u64 config_mask(u64 config)
+अणु
+	वापस BIT_ULL(config_bit(config));
+पूर्ण
 
-static bool is_engine_event(struct perf_event *event)
-{
-	return is_engine_config(event->attr.config);
-}
+अटल bool is_engine_event(काष्ठा perf_event *event)
+अणु
+	वापस is_engine_config(event->attr.config);
+पूर्ण
 
-static unsigned int event_bit(struct perf_event *event)
-{
-	return config_bit(event->attr.config);
-}
+अटल अचिन्हित पूर्णांक event_bit(काष्ठा perf_event *event)
+अणु
+	वापस config_bit(event->attr.config);
+पूर्ण
 
-static bool pmu_needs_timer(struct i915_pmu *pmu, bool gpu_active)
-{
-	struct drm_i915_private *i915 = container_of(pmu, typeof(*i915), pmu);
+अटल bool pmu_needs_समयr(काष्ठा i915_pmu *pmu, bool gpu_active)
+अणु
+	काष्ठा drm_i915_निजी *i915 = container_of(pmu, typeof(*i915), pmu);
 	u32 enable;
 
 	/*
-	 * Only some counters need the sampling timer.
+	 * Only some counters need the sampling समयr.
 	 *
-	 * We start with a bitmask of all currently enabled events.
+	 * We start with a biपंचांगask of all currently enabled events.
 	 */
 	enable = pmu->enable;
 
 	/*
-	 * Mask out all the ones which do not need the timer, or in
-	 * other words keep all the ones that could need the timer.
+	 * Mask out all the ones which करो not need the समयr, or in
+	 * other words keep all the ones that could need the समयr.
 	 */
 	enable &= config_mask(I915_PMU_ACTUAL_FREQUENCY) |
 		  config_mask(I915_PMU_REQUESTED_FREQUENCY) |
 		  ENGINE_SAMPLE_MASK;
 
 	/*
-	 * When the GPU is idle per-engine counters do not need to be
+	 * When the GPU is idle per-engine counters करो not need to be
 	 * running so clear those bits out.
 	 */
-	if (!gpu_active)
+	अगर (!gpu_active)
 		enable &= ~ENGINE_SAMPLE_MASK;
 	/*
-	 * Also there is software busyness tracking available we do not
-	 * need the timer for I915_SAMPLE_BUSY counter.
+	 * Also there is software busyness tracking available we करो not
+	 * need the समयr क्रम I915_SAMPLE_BUSY counter.
 	 */
-	else if (i915->caps.scheduler & I915_SCHEDULER_CAP_ENGINE_BUSY_STATS)
+	अन्यथा अगर (i915->caps.scheduler & I915_SCHEDULER_CAP_ENGINE_BUSY_STATS)
 		enable &= ~BIT(I915_SAMPLE_BUSY);
 
 	/*
-	 * If some bits remain it means we need the sampling timer running.
+	 * If some bits reमुख्य it means we need the sampling समयr running.
 	 */
-	return enable;
-}
+	वापस enable;
+पूर्ण
 
-static u64 __get_rc6(struct intel_gt *gt)
-{
-	struct drm_i915_private *i915 = gt->i915;
+अटल u64 __get_rc6(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
 	u64 val;
 
-	val = intel_rc6_residency_ns(&gt->rc6,
+	val = पूर्णांकel_rc6_residency_ns(&gt->rc6,
 				     IS_VALLEYVIEW(i915) ?
 				     VLV_GT_RENDER_RC6 :
 				     GEN6_GT_GFX_RC6);
 
-	if (HAS_RC6p(i915))
-		val += intel_rc6_residency_ns(&gt->rc6, GEN6_GT_GFX_RC6p);
+	अगर (HAS_RC6p(i915))
+		val += पूर्णांकel_rc6_residency_ns(&gt->rc6, GEN6_GT_GFX_RC6p);
 
-	if (HAS_RC6pp(i915))
-		val += intel_rc6_residency_ns(&gt->rc6, GEN6_GT_GFX_RC6pp);
+	अगर (HAS_RC6pp(i915))
+		val += पूर्णांकel_rc6_residency_ns(&gt->rc6, GEN6_GT_GFX_RC6pp);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline s64 ktime_since_raw(const ktime_t kt)
-{
-	return ktime_to_ns(ktime_sub(ktime_get_raw(), kt));
-}
+अटल अंतरभूत s64 kसमय_since_raw(स्थिर kसमय_प्रकार kt)
+अणु
+	वापस kसमय_प्रकारo_ns(kसमय_sub(kसमय_get_raw(), kt));
+पूर्ण
 
-static u64 get_rc6(struct intel_gt *gt)
-{
-	struct drm_i915_private *i915 = gt->i915;
-	struct i915_pmu *pmu = &i915->pmu;
-	unsigned long flags;
+अटल u64 get_rc6(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	काष्ठा i915_pmu *pmu = &i915->pmu;
+	अचिन्हित दीर्घ flags;
 	bool awake = false;
 	u64 val;
 
-	if (intel_gt_pm_get_if_awake(gt)) {
+	अगर (पूर्णांकel_gt_pm_get_अगर_awake(gt)) अणु
 		val = __get_rc6(gt);
-		intel_gt_pm_put_async(gt);
+		पूर्णांकel_gt_pm_put_async(gt);
 		awake = true;
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&pmu->lock, flags);
 
-	if (awake) {
+	अगर (awake) अणु
 		pmu->sample[__I915_SAMPLE_RC6].cur = val;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * We think we are runtime suspended.
+		 * We think we are runसमय suspended.
 		 *
 		 * Report the delta from when the device was suspended to now,
 		 * on top of the last known real value, as the approximated RC6
 		 * counter value.
 		 */
-		val = ktime_since_raw(pmu->sleep_last);
+		val = kसमय_since_raw(pmu->sleep_last);
 		val += pmu->sample[__I915_SAMPLE_RC6].cur;
-	}
+	पूर्ण
 
-	if (val < pmu->sample[__I915_SAMPLE_RC6_LAST_REPORTED].cur)
+	अगर (val < pmu->sample[__I915_SAMPLE_RC6_LAST_REPORTED].cur)
 		val = pmu->sample[__I915_SAMPLE_RC6_LAST_REPORTED].cur;
-	else
+	अन्यथा
 		pmu->sample[__I915_SAMPLE_RC6_LAST_REPORTED].cur = val;
 
 	spin_unlock_irqrestore(&pmu->lock, flags);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void init_rc6(struct i915_pmu *pmu)
-{
-	struct drm_i915_private *i915 = container_of(pmu, typeof(*i915), pmu);
-	intel_wakeref_t wakeref;
+अटल व्योम init_rc6(काष्ठा i915_pmu *pmu)
+अणु
+	काष्ठा drm_i915_निजी *i915 = container_of(pmu, typeof(*i915), pmu);
+	पूर्णांकel_wakeref_t wakeref;
 
-	with_intel_runtime_pm(i915->gt.uncore->rpm, wakeref) {
+	with_पूर्णांकel_runसमय_pm(i915->gt.uncore->rpm, wakeref) अणु
 		pmu->sample[__I915_SAMPLE_RC6].cur = __get_rc6(&i915->gt);
 		pmu->sample[__I915_SAMPLE_RC6_LAST_REPORTED].cur =
 					pmu->sample[__I915_SAMPLE_RC6].cur;
-		pmu->sleep_last = ktime_get_raw();
-	}
-}
+		pmu->sleep_last = kसमय_get_raw();
+	पूर्ण
+पूर्ण
 
-static void park_rc6(struct drm_i915_private *i915)
-{
-	struct i915_pmu *pmu = &i915->pmu;
+अटल व्योम park_rc6(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_pmu *pmu = &i915->pmu;
 
 	pmu->sample[__I915_SAMPLE_RC6].cur = __get_rc6(&i915->gt);
-	pmu->sleep_last = ktime_get_raw();
-}
+	pmu->sleep_last = kसमय_get_raw();
+पूर्ण
 
-static void __i915_pmu_maybe_start_timer(struct i915_pmu *pmu)
-{
-	if (!pmu->timer_enabled && pmu_needs_timer(pmu, true)) {
-		pmu->timer_enabled = true;
-		pmu->timer_last = ktime_get();
-		hrtimer_start_range_ns(&pmu->timer,
-				       ns_to_ktime(PERIOD), 0,
+अटल व्योम __i915_pmu_maybe_start_समयr(काष्ठा i915_pmu *pmu)
+अणु
+	अगर (!pmu->समयr_enabled && pmu_needs_समयr(pmu, true)) अणु
+		pmu->समयr_enabled = true;
+		pmu->समयr_last = kसमय_get();
+		hrसमयr_start_range_ns(&pmu->समयr,
+				       ns_to_kसमय(PERIOD), 0,
 				       HRTIMER_MODE_REL_PINNED);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void i915_pmu_gt_parked(struct drm_i915_private *i915)
-{
-	struct i915_pmu *pmu = &i915->pmu;
+व्योम i915_pmu_gt_parked(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_pmu *pmu = &i915->pmu;
 
-	if (!pmu->base.event_init)
-		return;
+	अगर (!pmu->base.event_init)
+		वापस;
 
 	spin_lock_irq(&pmu->lock);
 
 	park_rc6(i915);
 
 	/*
-	 * Signal sampling timer to stop if only engine events are enabled and
+	 * Signal sampling समयr to stop अगर only engine events are enabled and
 	 * GPU went idle.
 	 */
-	pmu->timer_enabled = pmu_needs_timer(pmu, false);
+	pmu->समयr_enabled = pmu_needs_समयr(pmu, false);
 
 	spin_unlock_irq(&pmu->lock);
-}
+पूर्ण
 
-void i915_pmu_gt_unparked(struct drm_i915_private *i915)
-{
-	struct i915_pmu *pmu = &i915->pmu;
+व्योम i915_pmu_gt_unparked(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_pmu *pmu = &i915->pmu;
 
-	if (!pmu->base.event_init)
-		return;
+	अगर (!pmu->base.event_init)
+		वापस;
 
 	spin_lock_irq(&pmu->lock);
 
 	/*
-	 * Re-enable sampling timer when GPU goes active.
+	 * Re-enable sampling समयr when GPU goes active.
 	 */
-	__i915_pmu_maybe_start_timer(pmu);
+	__i915_pmu_maybe_start_समयr(pmu);
 
 	spin_unlock_irq(&pmu->lock);
-}
+पूर्ण
 
-static void
-add_sample(struct i915_pmu_sample *sample, u32 val)
-{
+अटल व्योम
+add_sample(काष्ठा i915_pmu_sample *sample, u32 val)
+अणु
 	sample->cur += val;
-}
+पूर्ण
 
-static bool exclusive_mmio_access(const struct drm_i915_private *i915)
-{
+अटल bool exclusive_mmio_access(स्थिर काष्ठा drm_i915_निजी *i915)
+अणु
 	/*
-	 * We have to avoid concurrent mmio cache line access on gen7 or
+	 * We have to aव्योम concurrent mmio cache line access on gen7 or
 	 * risk a machine hang. For a fun history lesson dig out the old
-	 * userspace intel_gpu_top and run it on Ivybridge or Haswell!
+	 * userspace पूर्णांकel_gpu_top and run it on Ivybridge or Haswell!
 	 */
-	return IS_GEN(i915, 7);
-}
+	वापस IS_GEN(i915, 7);
+पूर्ण
 
-static void engine_sample(struct intel_engine_cs *engine, unsigned int period_ns)
-{
-	struct intel_engine_pmu *pmu = &engine->pmu;
+अटल व्योम engine_sample(काष्ठा पूर्णांकel_engine_cs *engine, अचिन्हित पूर्णांक period_ns)
+अणु
+	काष्ठा पूर्णांकel_engine_pmu *pmu = &engine->pmu;
 	bool busy;
 	u32 val;
 
 	val = ENGINE_READ_FW(engine, RING_CTL);
-	if (val == 0) /* powerwell off => engine idle */
-		return;
+	अगर (val == 0) /* घातerwell off => engine idle */
+		वापस;
 
-	if (val & RING_WAIT)
+	अगर (val & RING_WAIT)
 		add_sample(&pmu->sample[I915_SAMPLE_WAIT], period_ns);
-	if (val & RING_WAIT_SEMAPHORE)
+	अगर (val & RING_WAIT_SEMAPHORE)
 		add_sample(&pmu->sample[I915_SAMPLE_SEMA], period_ns);
 
 	/* No need to sample when busy stats are supported. */
-	if (intel_engine_supports_stats(engine))
-		return;
+	अगर (पूर्णांकel_engine_supports_stats(engine))
+		वापस;
 
 	/*
-	 * While waiting on a semaphore or event, MI_MODE reports the
+	 * While रुकोing on a semaphore or event, MI_MODE reports the
 	 * ring as idle. However, previously using the seqno, and with
-	 * execlists sampling, we account for the ring waiting as the
-	 * engine being busy. Therefore, we record the sample as being
-	 * busy if either waiting or !idle.
+	 * execlists sampling, we account क्रम the ring रुकोing as the
+	 * engine being busy. Thereक्रमe, we record the sample as being
+	 * busy अगर either रुकोing or !idle.
 	 */
 	busy = val & (RING_WAIT_SEMAPHORE | RING_WAIT);
-	if (!busy) {
+	अगर (!busy) अणु
 		val = ENGINE_READ_FW(engine, RING_MI_MODE);
 		busy = !(val & MODE_IDLE);
-	}
-	if (busy)
+	पूर्ण
+	अगर (busy)
 		add_sample(&pmu->sample[I915_SAMPLE_BUSY], period_ns);
-}
+पूर्ण
 
-static void
-engines_sample(struct intel_gt *gt, unsigned int period_ns)
-{
-	struct drm_i915_private *i915 = gt->i915;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	unsigned long flags;
+अटल व्योम
+engines_sample(काष्ठा पूर्णांकel_gt *gt, अचिन्हित पूर्णांक period_ns)
+अणु
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	अचिन्हित दीर्घ flags;
 
-	if ((i915->pmu.enable & ENGINE_SAMPLE_MASK) == 0)
-		return;
+	अगर ((i915->pmu.enable & ENGINE_SAMPLE_MASK) == 0)
+		वापस;
 
-	if (!intel_gt_pm_is_awake(gt))
-		return;
+	अगर (!पूर्णांकel_gt_pm_is_awake(gt))
+		वापस;
 
-	for_each_engine(engine, gt, id) {
-		if (!intel_engine_pm_get_if_awake(engine))
-			continue;
+	क्रम_each_engine(engine, gt, id) अणु
+		अगर (!पूर्णांकel_engine_pm_get_अगर_awake(engine))
+			जारी;
 
-		if (exclusive_mmio_access(i915)) {
+		अगर (exclusive_mmio_access(i915)) अणु
 			spin_lock_irqsave(&engine->uncore->lock, flags);
 			engine_sample(engine, period_ns);
 			spin_unlock_irqrestore(&engine->uncore->lock, flags);
-		} else {
+		पूर्ण अन्यथा अणु
 			engine_sample(engine, period_ns);
-		}
+		पूर्ण
 
-		intel_engine_pm_put_async(engine);
-	}
-}
+		पूर्णांकel_engine_pm_put_async(engine);
+	पूर्ण
+पूर्ण
 
-static void
-add_sample_mult(struct i915_pmu_sample *sample, u32 val, u32 mul)
-{
+अटल व्योम
+add_sample_mult(काष्ठा i915_pmu_sample *sample, u32 val, u32 mul)
+अणु
 	sample->cur += mul_u32_u32(val, mul);
-}
+पूर्ण
 
-static bool frequency_sampling_enabled(struct i915_pmu *pmu)
-{
-	return pmu->enable &
+अटल bool frequency_sampling_enabled(काष्ठा i915_pmu *pmu)
+अणु
+	वापस pmu->enable &
 	       (config_mask(I915_PMU_ACTUAL_FREQUENCY) |
 		config_mask(I915_PMU_REQUESTED_FREQUENCY));
-}
+पूर्ण
 
-static void
-frequency_sample(struct intel_gt *gt, unsigned int period_ns)
-{
-	struct drm_i915_private *i915 = gt->i915;
-	struct intel_uncore *uncore = gt->uncore;
-	struct i915_pmu *pmu = &i915->pmu;
-	struct intel_rps *rps = &gt->rps;
+अटल व्योम
+frequency_sample(काष्ठा पूर्णांकel_gt *gt, अचिन्हित पूर्णांक period_ns)
+अणु
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
+	काष्ठा i915_pmu *pmu = &i915->pmu;
+	काष्ठा पूर्णांकel_rps *rps = &gt->rps;
 
-	if (!frequency_sampling_enabled(pmu))
-		return;
+	अगर (!frequency_sampling_enabled(pmu))
+		वापस;
 
-	/* Report 0/0 (actual/requested) frequency while parked. */
-	if (!intel_gt_pm_get_if_awake(gt))
-		return;
+	/* Report 0/0 (actual/requested) frequency जबतक parked. */
+	अगर (!पूर्णांकel_gt_pm_get_अगर_awake(gt))
+		वापस;
 
-	if (pmu->enable & config_mask(I915_PMU_ACTUAL_FREQUENCY)) {
+	अगर (pmu->enable & config_mask(I915_PMU_ACTUAL_FREQUENCY)) अणु
 		u32 val;
 
 		/*
-		 * We take a quick peek here without using forcewake
-		 * so that we don't perturb the system under observation
-		 * (forcewake => !rc6 => increased power use). We expect
-		 * that if the read fails because it is outside of the
-		 * mmio power well, then it will return 0 -- in which
-		 * case we assume the system is running at the intended
-		 * frequency. Fortunately, the read should rarely fail!
+		 * We take a quick peek here without using क्रमcewake
+		 * so that we करोn't perturb the प्रणाली under observation
+		 * (क्रमcewake => !rc6 => increased घातer use). We expect
+		 * that अगर the पढ़ो fails because it is outside of the
+		 * mmio घातer well, then it will वापस 0 -- in which
+		 * हाल we assume the प्रणाली is running at the पूर्णांकended
+		 * frequency. Fortunately, the पढ़ो should rarely fail!
 		 */
-		val = intel_uncore_read_fw(uncore, GEN6_RPSTAT1);
-		if (val)
-			val = intel_rps_get_cagf(rps, val);
-		else
+		val = पूर्णांकel_uncore_पढ़ो_fw(uncore, GEN6_RPSTAT1);
+		अगर (val)
+			val = पूर्णांकel_rps_get_cagf(rps, val);
+		अन्यथा
 			val = rps->cur_freq;
 
 		add_sample_mult(&pmu->sample[__I915_SAMPLE_FREQ_ACT],
-				intel_gpu_freq(rps, val), period_ns / 1000);
-	}
+				पूर्णांकel_gpu_freq(rps, val), period_ns / 1000);
+	पूर्ण
 
-	if (pmu->enable & config_mask(I915_PMU_REQUESTED_FREQUENCY)) {
+	अगर (pmu->enable & config_mask(I915_PMU_REQUESTED_FREQUENCY)) अणु
 		add_sample_mult(&pmu->sample[__I915_SAMPLE_FREQ_REQ],
-				intel_gpu_freq(rps, rps->cur_freq),
+				पूर्णांकel_gpu_freq(rps, rps->cur_freq),
 				period_ns / 1000);
-	}
+	पूर्ण
 
-	intel_gt_pm_put_async(gt);
-}
+	पूर्णांकel_gt_pm_put_async(gt);
+पूर्ण
 
-static enum hrtimer_restart i915_sample(struct hrtimer *hrtimer)
-{
-	struct drm_i915_private *i915 =
-		container_of(hrtimer, struct drm_i915_private, pmu.timer);
-	struct i915_pmu *pmu = &i915->pmu;
-	struct intel_gt *gt = &i915->gt;
-	unsigned int period_ns;
-	ktime_t now;
+अटल क्रमागत hrसमयr_restart i915_sample(काष्ठा hrसमयr *hrसमयr)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
+		container_of(hrसमयr, काष्ठा drm_i915_निजी, pmu.समयr);
+	काष्ठा i915_pmu *pmu = &i915->pmu;
+	काष्ठा पूर्णांकel_gt *gt = &i915->gt;
+	अचिन्हित पूर्णांक period_ns;
+	kसमय_प्रकार now;
 
-	if (!READ_ONCE(pmu->timer_enabled))
-		return HRTIMER_NORESTART;
+	अगर (!READ_ONCE(pmu->समयr_enabled))
+		वापस HRTIMER_NORESTART;
 
-	now = ktime_get();
-	period_ns = ktime_to_ns(ktime_sub(now, pmu->timer_last));
-	pmu->timer_last = now;
+	now = kसमय_get();
+	period_ns = kसमय_प्रकारo_ns(kसमय_sub(now, pmu->समयr_last));
+	pmu->समयr_last = now;
 
 	/*
-	 * Strictly speaking the passed in period may not be 100% accurate for
-	 * all internal calculation, since some amount of time can be spent on
-	 * grabbing the forcewake. However the potential error from timer call-
-	 * back delay greatly dominates this so we keep it simple.
+	 * Strictly speaking the passed in period may not be 100% accurate क्रम
+	 * all पूर्णांकernal calculation, since some amount of समय can be spent on
+	 * grabbing the क्रमcewake. However the potential error from समयr call-
+	 * back delay greatly करोminates this so we keep it simple.
 	 */
 	engines_sample(gt, period_ns);
 	frequency_sample(gt, period_ns);
 
-	hrtimer_forward(hrtimer, now, ns_to_ktime(PERIOD));
+	hrसमयr_क्रमward(hrसमयr, now, ns_to_kसमय(PERIOD));
 
-	return HRTIMER_RESTART;
-}
+	वापस HRTIMER_RESTART;
+पूर्ण
 
-static void i915_pmu_event_destroy(struct perf_event *event)
-{
-	struct drm_i915_private *i915 =
+अटल व्योम i915_pmu_event_destroy(काष्ठा perf_event *event)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
 		container_of(event->pmu, typeof(*i915), pmu.base);
 
 	drm_WARN_ON(&i915->drm, event->parent);
 
 	drm_dev_put(&i915->drm);
-}
+पूर्ण
 
-static int
-engine_event_status(struct intel_engine_cs *engine,
-		    enum drm_i915_pmu_engine_sample sample)
-{
-	switch (sample) {
-	case I915_SAMPLE_BUSY:
-	case I915_SAMPLE_WAIT:
-		break;
-	case I915_SAMPLE_SEMA:
-		if (INTEL_GEN(engine->i915) < 6)
-			return -ENODEV;
-		break;
-	default:
-		return -ENOENT;
-	}
+अटल पूर्णांक
+engine_event_status(काष्ठा पूर्णांकel_engine_cs *engine,
+		    क्रमागत drm_i915_pmu_engine_sample sample)
+अणु
+	चयन (sample) अणु
+	हाल I915_SAMPLE_BUSY:
+	हाल I915_SAMPLE_WAIT:
+		अवरोध;
+	हाल I915_SAMPLE_SEMA:
+		अगर (INTEL_GEN(engine->i915) < 6)
+			वापस -ENODEV;
+		अवरोध;
+	शेष:
+		वापस -ENOENT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-config_status(struct drm_i915_private *i915, u64 config)
-{
-	switch (config) {
-	case I915_PMU_ACTUAL_FREQUENCY:
-		if (IS_VALLEYVIEW(i915) || IS_CHERRYVIEW(i915))
-			/* Requires a mutex for sampling! */
-			return -ENODEV;
+अटल पूर्णांक
+config_status(काष्ठा drm_i915_निजी *i915, u64 config)
+अणु
+	चयन (config) अणु
+	हाल I915_PMU_ACTUAL_FREQUENCY:
+		अगर (IS_VALLEYVIEW(i915) || IS_CHERRYVIEW(i915))
+			/* Requires a mutex क्रम sampling! */
+			वापस -ENODEV;
 		fallthrough;
-	case I915_PMU_REQUESTED_FREQUENCY:
-		if (INTEL_GEN(i915) < 6)
-			return -ENODEV;
-		break;
-	case I915_PMU_INTERRUPTS:
-		break;
-	case I915_PMU_RC6_RESIDENCY:
-		if (!HAS_RC6(i915))
-			return -ENODEV;
-		break;
-	case I915_PMU_SOFTWARE_GT_AWAKE_TIME:
-		break;
-	default:
-		return -ENOENT;
-	}
+	हाल I915_PMU_REQUESTED_FREQUENCY:
+		अगर (INTEL_GEN(i915) < 6)
+			वापस -ENODEV;
+		अवरोध;
+	हाल I915_PMU_INTERRUPTS:
+		अवरोध;
+	हाल I915_PMU_RC6_RESIDENCY:
+		अगर (!HAS_RC6(i915))
+			वापस -ENODEV;
+		अवरोध;
+	हाल I915_PMU_SOFTWARE_GT_AWAKE_TIME:
+		अवरोध;
+	शेष:
+		वापस -ENOENT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int engine_event_init(struct perf_event *event)
-{
-	struct drm_i915_private *i915 =
+अटल पूर्णांक engine_event_init(काष्ठा perf_event *event)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
 		container_of(event->pmu, typeof(*i915), pmu.base);
-	struct intel_engine_cs *engine;
+	काष्ठा पूर्णांकel_engine_cs *engine;
 
-	engine = intel_engine_lookup_user(i915, engine_event_class(event),
+	engine = पूर्णांकel_engine_lookup_user(i915, engine_event_class(event),
 					  engine_event_instance(event));
-	if (!engine)
-		return -ENODEV;
+	अगर (!engine)
+		वापस -ENODEV;
 
-	return engine_event_status(engine, engine_event_sample(event));
-}
+	वापस engine_event_status(engine, engine_event_sample(event));
+पूर्ण
 
-static int i915_pmu_event_init(struct perf_event *event)
-{
-	struct drm_i915_private *i915 =
+अटल पूर्णांक i915_pmu_event_init(काष्ठा perf_event *event)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
 		container_of(event->pmu, typeof(*i915), pmu.base);
-	struct i915_pmu *pmu = &i915->pmu;
-	int ret;
+	काष्ठा i915_pmu *pmu = &i915->pmu;
+	पूर्णांक ret;
 
-	if (pmu->closed)
-		return -ENODEV;
+	अगर (pmu->बंदd)
+		वापस -ENODEV;
 
-	if (event->attr.type != event->pmu->type)
-		return -ENOENT;
+	अगर (event->attr.type != event->pmu->type)
+		वापस -ENOENT;
 
 	/* unsupported modes and filters */
-	if (event->attr.sample_period) /* no sampling */
-		return -EINVAL;
+	अगर (event->attr.sample_period) /* no sampling */
+		वापस -EINVAL;
 
-	if (has_branch_stack(event))
-		return -EOPNOTSUPP;
+	अगर (has_branch_stack(event))
+		वापस -EOPNOTSUPP;
 
-	if (event->cpu < 0)
-		return -EINVAL;
+	अगर (event->cpu < 0)
+		वापस -EINVAL;
 
-	/* only allow running on one cpu at a time */
-	if (!cpumask_test_cpu(event->cpu, &i915_pmu_cpumask))
-		return -EINVAL;
+	/* only allow running on one cpu at a समय */
+	अगर (!cpumask_test_cpu(event->cpu, &i915_pmu_cpumask))
+		वापस -EINVAL;
 
-	if (is_engine_event(event))
+	अगर (is_engine_event(event))
 		ret = engine_event_init(event);
-	else
+	अन्यथा
 		ret = config_status(i915, event->attr.config);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!event->parent) {
+	अगर (!event->parent) अणु
 		drm_dev_get(&i915->drm);
 		event->destroy = i915_pmu_event_destroy;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u64 __i915_pmu_event_read(struct perf_event *event)
-{
-	struct drm_i915_private *i915 =
+अटल u64 __i915_pmu_event_पढ़ो(काष्ठा perf_event *event)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
 		container_of(event->pmu, typeof(*i915), pmu.base);
-	struct i915_pmu *pmu = &i915->pmu;
+	काष्ठा i915_pmu *pmu = &i915->pmu;
 	u64 val = 0;
 
-	if (is_engine_event(event)) {
+	अगर (is_engine_event(event)) अणु
 		u8 sample = engine_event_sample(event);
-		struct intel_engine_cs *engine;
+		काष्ठा पूर्णांकel_engine_cs *engine;
 
-		engine = intel_engine_lookup_user(i915,
+		engine = पूर्णांकel_engine_lookup_user(i915,
 						  engine_event_class(event),
 						  engine_event_instance(event));
 
-		if (drm_WARN_ON_ONCE(&i915->drm, !engine)) {
+		अगर (drm_WARN_ON_ONCE(&i915->drm, !engine)) अणु
 			/* Do nothing */
-		} else if (sample == I915_SAMPLE_BUSY &&
-			   intel_engine_supports_stats(engine)) {
-			ktime_t unused;
+		पूर्ण अन्यथा अगर (sample == I915_SAMPLE_BUSY &&
+			   पूर्णांकel_engine_supports_stats(engine)) अणु
+			kसमय_प्रकार unused;
 
-			val = ktime_to_ns(intel_engine_get_busy_time(engine,
+			val = kसमय_प्रकारo_ns(पूर्णांकel_engine_get_busy_समय(engine,
 								     &unused));
-		} else {
+		पूर्ण अन्यथा अणु
 			val = engine->pmu.sample[sample].cur;
-		}
-	} else {
-		switch (event->attr.config) {
-		case I915_PMU_ACTUAL_FREQUENCY:
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (event->attr.config) अणु
+		हाल I915_PMU_ACTUAL_FREQUENCY:
 			val =
-			   div_u64(pmu->sample[__I915_SAMPLE_FREQ_ACT].cur,
+			   भाग_u64(pmu->sample[__I915_SAMPLE_FREQ_ACT].cur,
 				   USEC_PER_SEC /* to MHz */);
-			break;
-		case I915_PMU_REQUESTED_FREQUENCY:
+			अवरोध;
+		हाल I915_PMU_REQUESTED_FREQUENCY:
 			val =
-			   div_u64(pmu->sample[__I915_SAMPLE_FREQ_REQ].cur,
+			   भाग_u64(pmu->sample[__I915_SAMPLE_FREQ_REQ].cur,
 				   USEC_PER_SEC /* to MHz */);
-			break;
-		case I915_PMU_INTERRUPTS:
+			अवरोध;
+		हाल I915_PMU_INTERRUPTS:
 			val = READ_ONCE(pmu->irq_count);
-			break;
-		case I915_PMU_RC6_RESIDENCY:
+			अवरोध;
+		हाल I915_PMU_RC6_RESIDENCY:
 			val = get_rc6(&i915->gt);
-			break;
-		case I915_PMU_SOFTWARE_GT_AWAKE_TIME:
-			val = ktime_to_ns(intel_gt_get_awake_time(&i915->gt));
-			break;
-		}
-	}
+			अवरोध;
+		हाल I915_PMU_SOFTWARE_GT_AWAKE_TIME:
+			val = kसमय_प्रकारo_ns(पूर्णांकel_gt_get_awake_समय(&i915->gt));
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void i915_pmu_event_read(struct perf_event *event)
-{
-	struct drm_i915_private *i915 =
+अटल व्योम i915_pmu_event_पढ़ो(काष्ठा perf_event *event)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
 		container_of(event->pmu, typeof(*i915), pmu.base);
-	struct hw_perf_event *hwc = &event->hw;
-	struct i915_pmu *pmu = &i915->pmu;
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा i915_pmu *pmu = &i915->pmu;
 	u64 prev, new;
 
-	if (pmu->closed) {
+	अगर (pmu->बंदd) अणु
 		event->hw.state = PERF_HES_STOPPED;
-		return;
-	}
+		वापस;
+	पूर्ण
 again:
-	prev = local64_read(&hwc->prev_count);
-	new = __i915_pmu_event_read(event);
+	prev = local64_पढ़ो(&hwc->prev_count);
+	new = __i915_pmu_event_पढ़ो(event);
 
-	if (local64_cmpxchg(&hwc->prev_count, prev, new) != prev)
-		goto again;
+	अगर (local64_cmpxchg(&hwc->prev_count, prev, new) != prev)
+		जाओ again;
 
 	local64_add(new - prev, &event->count);
-}
+पूर्ण
 
-static void i915_pmu_enable(struct perf_event *event)
-{
-	struct drm_i915_private *i915 =
+अटल व्योम i915_pmu_enable(काष्ठा perf_event *event)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
 		container_of(event->pmu, typeof(*i915), pmu.base);
-	struct i915_pmu *pmu = &i915->pmu;
-	unsigned long flags;
-	unsigned int bit;
+	काष्ठा i915_pmu *pmu = &i915->pmu;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक bit;
 
 	bit = event_bit(event);
-	if (bit == -1)
-		goto update;
+	अगर (bit == -1)
+		जाओ update;
 
 	spin_lock_irqsave(&pmu->lock, flags);
 
 	/*
-	 * Update the bitmask of enabled events and increment
+	 * Update the biपंचांगask of enabled events and increment
 	 * the event reference counter.
 	 */
 	BUILD_BUG_ON(ARRAY_SIZE(pmu->enable_count) != I915_PMU_MASK_BITS);
@@ -658,19 +659,19 @@ static void i915_pmu_enable(struct perf_event *event)
 	pmu->enable_count[bit]++;
 
 	/*
-	 * Start the sampling timer if needed and not already enabled.
+	 * Start the sampling समयr अगर needed and not alपढ़ोy enabled.
 	 */
-	__i915_pmu_maybe_start_timer(pmu);
+	__i915_pmu_maybe_start_समयr(pmu);
 
 	/*
-	 * For per-engine events the bitmask and reference counting
+	 * For per-engine events the biपंचांगask and reference counting
 	 * is stored per engine.
 	 */
-	if (is_engine_event(event)) {
+	अगर (is_engine_event(event)) अणु
 		u8 sample = engine_event_sample(event);
-		struct intel_engine_cs *engine;
+		काष्ठा पूर्णांकel_engine_cs *engine;
 
-		engine = intel_engine_lookup_user(i915,
+		engine = पूर्णांकel_engine_lookup_user(i915,
 						  engine_event_class(event),
 						  engine_event_instance(event));
 
@@ -684,37 +685,37 @@ static void i915_pmu_enable(struct perf_event *event)
 
 		engine->pmu.enable |= BIT(sample);
 		engine->pmu.enable_count[sample]++;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&pmu->lock, flags);
 
 update:
 	/*
 	 * Store the current counter value so we can report the correct delta
-	 * for all listeners. Even when the event was already enabled and has
+	 * क्रम all listeners. Even when the event was alपढ़ोy enabled and has
 	 * an existing non-zero value.
 	 */
-	local64_set(&event->hw.prev_count, __i915_pmu_event_read(event));
-}
+	local64_set(&event->hw.prev_count, __i915_pmu_event_पढ़ो(event));
+पूर्ण
 
-static void i915_pmu_disable(struct perf_event *event)
-{
-	struct drm_i915_private *i915 =
+अटल व्योम i915_pmu_disable(काष्ठा perf_event *event)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
 		container_of(event->pmu, typeof(*i915), pmu.base);
-	unsigned int bit = event_bit(event);
-	struct i915_pmu *pmu = &i915->pmu;
-	unsigned long flags;
+	अचिन्हित पूर्णांक bit = event_bit(event);
+	काष्ठा i915_pmu *pmu = &i915->pmu;
+	अचिन्हित दीर्घ flags;
 
-	if (bit == -1)
-		return;
+	अगर (bit == -1)
+		वापस;
 
 	spin_lock_irqsave(&pmu->lock, flags);
 
-	if (is_engine_event(event)) {
+	अगर (is_engine_event(event)) अणु
 		u8 sample = engine_event_sample(event);
-		struct intel_engine_cs *engine;
+		काष्ठा पूर्णांकel_engine_cs *engine;
 
-		engine = intel_engine_lookup_user(i915,
+		engine = पूर्णांकel_engine_lookup_user(i915,
 						  engine_event_class(event),
 						  engine_event_instance(event));
 
@@ -724,272 +725,272 @@ static void i915_pmu_disable(struct perf_event *event)
 
 		/*
 		 * Decrement the reference count and clear the enabled
-		 * bitmask when the last listener on an event goes away.
+		 * biपंचांगask when the last listener on an event goes away.
 		 */
-		if (--engine->pmu.enable_count[sample] == 0)
+		अगर (--engine->pmu.enable_count[sample] == 0)
 			engine->pmu.enable &= ~BIT(sample);
-	}
+	पूर्ण
 
 	GEM_BUG_ON(bit >= ARRAY_SIZE(pmu->enable_count));
 	GEM_BUG_ON(pmu->enable_count[bit] == 0);
 	/*
 	 * Decrement the reference count and clear the enabled
-	 * bitmask when the last listener on an event goes away.
+	 * biपंचांगask when the last listener on an event goes away.
 	 */
-	if (--pmu->enable_count[bit] == 0) {
+	अगर (--pmu->enable_count[bit] == 0) अणु
 		pmu->enable &= ~BIT_ULL(bit);
-		pmu->timer_enabled &= pmu_needs_timer(pmu, true);
-	}
+		pmu->समयr_enabled &= pmu_needs_समयr(pmu, true);
+	पूर्ण
 
 	spin_unlock_irqrestore(&pmu->lock, flags);
-}
+पूर्ण
 
-static void i915_pmu_event_start(struct perf_event *event, int flags)
-{
-	struct drm_i915_private *i915 =
+अटल व्योम i915_pmu_event_start(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
 		container_of(event->pmu, typeof(*i915), pmu.base);
-	struct i915_pmu *pmu = &i915->pmu;
+	काष्ठा i915_pmu *pmu = &i915->pmu;
 
-	if (pmu->closed)
-		return;
+	अगर (pmu->बंदd)
+		वापस;
 
 	i915_pmu_enable(event);
 	event->hw.state = 0;
-}
+पूर्ण
 
-static void i915_pmu_event_stop(struct perf_event *event, int flags)
-{
-	if (flags & PERF_EF_UPDATE)
-		i915_pmu_event_read(event);
+अटल व्योम i915_pmu_event_stop(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	अगर (flags & PERF_EF_UPDATE)
+		i915_pmu_event_पढ़ो(event);
 	i915_pmu_disable(event);
 	event->hw.state = PERF_HES_STOPPED;
-}
+पूर्ण
 
-static int i915_pmu_event_add(struct perf_event *event, int flags)
-{
-	struct drm_i915_private *i915 =
+अटल पूर्णांक i915_pmu_event_add(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
 		container_of(event->pmu, typeof(*i915), pmu.base);
-	struct i915_pmu *pmu = &i915->pmu;
+	काष्ठा i915_pmu *pmu = &i915->pmu;
 
-	if (pmu->closed)
-		return -ENODEV;
+	अगर (pmu->बंदd)
+		वापस -ENODEV;
 
-	if (flags & PERF_EF_START)
+	अगर (flags & PERF_EF_START)
 		i915_pmu_event_start(event, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void i915_pmu_event_del(struct perf_event *event, int flags)
-{
+अटल व्योम i915_pmu_event_del(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
 	i915_pmu_event_stop(event, PERF_EF_UPDATE);
-}
+पूर्ण
 
-static int i915_pmu_event_event_idx(struct perf_event *event)
-{
-	return 0;
-}
+अटल पूर्णांक i915_pmu_event_event_idx(काष्ठा perf_event *event)
+अणु
+	वापस 0;
+पूर्ण
 
-struct i915_str_attribute {
-	struct device_attribute attr;
-	const char *str;
-};
+काष्ठा i915_str_attribute अणु
+	काष्ठा device_attribute attr;
+	स्थिर अक्षर *str;
+पूर्ण;
 
-static ssize_t i915_pmu_format_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct i915_str_attribute *eattr;
+अटल sमाप_प्रकार i915_pmu_क्रमmat_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा i915_str_attribute *eattr;
 
-	eattr = container_of(attr, struct i915_str_attribute, attr);
-	return sprintf(buf, "%s\n", eattr->str);
-}
+	eattr = container_of(attr, काष्ठा i915_str_attribute, attr);
+	वापस प्र_लिखो(buf, "%s\n", eattr->str);
+पूर्ण
 
-#define I915_PMU_FORMAT_ATTR(_name, _config) \
-	(&((struct i915_str_attribute[]) { \
-		{ .attr = __ATTR(_name, 0444, i915_pmu_format_show, NULL), \
-		  .str = _config, } \
-	})[0].attr.attr)
+#घोषणा I915_PMU_FORMAT_ATTR(_name, _config) \
+	(&((काष्ठा i915_str_attribute[]) अणु \
+		अणु .attr = __ATTR(_name, 0444, i915_pmu_क्रमmat_show, शून्य), \
+		  .str = _config, पूर्ण \
+	पूर्ण)[0].attr.attr)
 
-static struct attribute *i915_pmu_format_attrs[] = {
+अटल काष्ठा attribute *i915_pmu_क्रमmat_attrs[] = अणु
 	I915_PMU_FORMAT_ATTR(i915_eventid, "config:0-20"),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group i915_pmu_format_attr_group = {
+अटल स्थिर काष्ठा attribute_group i915_pmu_क्रमmat_attr_group = अणु
 	.name = "format",
-	.attrs = i915_pmu_format_attrs,
-};
+	.attrs = i915_pmu_क्रमmat_attrs,
+पूर्ण;
 
-struct i915_ext_attribute {
-	struct device_attribute attr;
-	unsigned long val;
-};
+काष्ठा i915_ext_attribute अणु
+	काष्ठा device_attribute attr;
+	अचिन्हित दीर्घ val;
+पूर्ण;
 
-static ssize_t i915_pmu_event_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct i915_ext_attribute *eattr;
+अटल sमाप_प्रकार i915_pmu_event_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा i915_ext_attribute *eattr;
 
-	eattr = container_of(attr, struct i915_ext_attribute, attr);
-	return sprintf(buf, "config=0x%lx\n", eattr->val);
-}
+	eattr = container_of(attr, काष्ठा i915_ext_attribute, attr);
+	वापस प्र_लिखो(buf, "config=0x%lx\n", eattr->val);
+पूर्ण
 
-static ssize_t
-i915_pmu_get_attr_cpumask(struct device *dev,
-			  struct device_attribute *attr,
-			  char *buf)
-{
-	return cpumap_print_to_pagebuf(true, buf, &i915_pmu_cpumask);
-}
+अटल sमाप_प्रकार
+i915_pmu_get_attr_cpumask(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	वापस cpumap_prपूर्णांक_to_pagebuf(true, buf, &i915_pmu_cpumask);
+पूर्ण
 
-static DEVICE_ATTR(cpumask, 0444, i915_pmu_get_attr_cpumask, NULL);
+अटल DEVICE_ATTR(cpumask, 0444, i915_pmu_get_attr_cpumask, शून्य);
 
-static struct attribute *i915_cpumask_attrs[] = {
+अटल काष्ठा attribute *i915_cpumask_attrs[] = अणु
 	&dev_attr_cpumask.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group i915_pmu_cpumask_attr_group = {
+अटल स्थिर काष्ठा attribute_group i915_pmu_cpumask_attr_group = अणु
 	.attrs = i915_cpumask_attrs,
-};
+पूर्ण;
 
-#define __event(__config, __name, __unit) \
-{ \
+#घोषणा __event(__config, __name, __unit) \
+अणु \
 	.config = (__config), \
 	.name = (__name), \
 	.unit = (__unit), \
-}
+पूर्ण
 
-#define __engine_event(__sample, __name) \
-{ \
+#घोषणा __engine_event(__sample, __name) \
+अणु \
 	.sample = (__sample), \
 	.name = (__name), \
-}
+पूर्ण
 
-static struct i915_ext_attribute *
-add_i915_attr(struct i915_ext_attribute *attr, const char *name, u64 config)
-{
+अटल काष्ठा i915_ext_attribute *
+add_i915_attr(काष्ठा i915_ext_attribute *attr, स्थिर अक्षर *name, u64 config)
+अणु
 	sysfs_attr_init(&attr->attr.attr);
 	attr->attr.attr.name = name;
 	attr->attr.attr.mode = 0444;
 	attr->attr.show = i915_pmu_event_show;
 	attr->val = config;
 
-	return ++attr;
-}
+	वापस ++attr;
+पूर्ण
 
-static struct perf_pmu_events_attr *
-add_pmu_attr(struct perf_pmu_events_attr *attr, const char *name,
-	     const char *str)
-{
+अटल काष्ठा perf_pmu_events_attr *
+add_pmu_attr(काष्ठा perf_pmu_events_attr *attr, स्थिर अक्षर *name,
+	     स्थिर अक्षर *str)
+अणु
 	sysfs_attr_init(&attr->attr.attr);
 	attr->attr.attr.name = name;
 	attr->attr.attr.mode = 0444;
 	attr->attr.show = perf_event_sysfs_show;
 	attr->event_str = str;
 
-	return ++attr;
-}
+	वापस ++attr;
+पूर्ण
 
-static struct attribute **
-create_event_attributes(struct i915_pmu *pmu)
-{
-	struct drm_i915_private *i915 = container_of(pmu, typeof(*i915), pmu);
-	static const struct {
+अटल काष्ठा attribute **
+create_event_attributes(काष्ठा i915_pmu *pmu)
+अणु
+	काष्ठा drm_i915_निजी *i915 = container_of(pmu, typeof(*i915), pmu);
+	अटल स्थिर काष्ठा अणु
 		u64 config;
-		const char *name;
-		const char *unit;
-	} events[] = {
+		स्थिर अक्षर *name;
+		स्थिर अक्षर *unit;
+	पूर्ण events[] = अणु
 		__event(I915_PMU_ACTUAL_FREQUENCY, "actual-frequency", "M"),
 		__event(I915_PMU_REQUESTED_FREQUENCY, "requested-frequency", "M"),
-		__event(I915_PMU_INTERRUPTS, "interrupts", NULL),
+		__event(I915_PMU_INTERRUPTS, "interrupts", शून्य),
 		__event(I915_PMU_RC6_RESIDENCY, "rc6-residency", "ns"),
 		__event(I915_PMU_SOFTWARE_GT_AWAKE_TIME, "software-gt-awake-time", "ns"),
-	};
-	static const struct {
-		enum drm_i915_pmu_engine_sample sample;
-		char *name;
-	} engine_events[] = {
+	पूर्ण;
+	अटल स्थिर काष्ठा अणु
+		क्रमागत drm_i915_pmu_engine_sample sample;
+		अक्षर *name;
+	पूर्ण engine_events[] = अणु
 		__engine_event(I915_SAMPLE_BUSY, "busy"),
 		__engine_event(I915_SAMPLE_SEMA, "sema"),
 		__engine_event(I915_SAMPLE_WAIT, "wait"),
-	};
-	unsigned int count = 0;
-	struct perf_pmu_events_attr *pmu_attr = NULL, *pmu_iter;
-	struct i915_ext_attribute *i915_attr = NULL, *i915_iter;
-	struct attribute **attr = NULL, **attr_iter;
-	struct intel_engine_cs *engine;
-	unsigned int i;
+	पूर्ण;
+	अचिन्हित पूर्णांक count = 0;
+	काष्ठा perf_pmu_events_attr *pmu_attr = शून्य, *pmu_iter;
+	काष्ठा i915_ext_attribute *i915_attr = शून्य, *i915_iter;
+	काष्ठा attribute **attr = शून्य, **attr_iter;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	अचिन्हित पूर्णांक i;
 
 	/* Count how many counters we will be exposing. */
-	for (i = 0; i < ARRAY_SIZE(events); i++) {
-		if (!config_status(i915, events[i].config))
+	क्रम (i = 0; i < ARRAY_SIZE(events); i++) अणु
+		अगर (!config_status(i915, events[i].config))
 			count++;
-	}
+	पूर्ण
 
-	for_each_uabi_engine(engine, i915) {
-		for (i = 0; i < ARRAY_SIZE(engine_events); i++) {
-			if (!engine_event_status(engine,
+	क्रम_each_uabi_engine(engine, i915) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(engine_events); i++) अणु
+			अगर (!engine_event_status(engine,
 						 engine_events[i].sample))
 				count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Allocate attribute objects and table. */
-	i915_attr = kcalloc(count, sizeof(*i915_attr), GFP_KERNEL);
-	if (!i915_attr)
-		goto err_alloc;
+	i915_attr = kसुस्मृति(count, माप(*i915_attr), GFP_KERNEL);
+	अगर (!i915_attr)
+		जाओ err_alloc;
 
-	pmu_attr = kcalloc(count, sizeof(*pmu_attr), GFP_KERNEL);
-	if (!pmu_attr)
-		goto err_alloc;
+	pmu_attr = kसुस्मृति(count, माप(*pmu_attr), GFP_KERNEL);
+	अगर (!pmu_attr)
+		जाओ err_alloc;
 
-	/* Max one pointer of each attribute type plus a termination entry. */
-	attr = kcalloc(count * 2 + 1, sizeof(*attr), GFP_KERNEL);
-	if (!attr)
-		goto err_alloc;
+	/* Max one poपूर्णांकer of each attribute type plus a termination entry. */
+	attr = kसुस्मृति(count * 2 + 1, माप(*attr), GFP_KERNEL);
+	अगर (!attr)
+		जाओ err_alloc;
 
 	i915_iter = i915_attr;
 	pmu_iter = pmu_attr;
 	attr_iter = attr;
 
 	/* Initialize supported non-engine counters. */
-	for (i = 0; i < ARRAY_SIZE(events); i++) {
-		char *str;
+	क्रम (i = 0; i < ARRAY_SIZE(events); i++) अणु
+		अक्षर *str;
 
-		if (config_status(i915, events[i].config))
-			continue;
+		अगर (config_status(i915, events[i].config))
+			जारी;
 
 		str = kstrdup(events[i].name, GFP_KERNEL);
-		if (!str)
-			goto err;
+		अगर (!str)
+			जाओ err;
 
 		*attr_iter++ = &i915_iter->attr.attr;
 		i915_iter = add_i915_attr(i915_iter, str, events[i].config);
 
-		if (events[i].unit) {
-			str = kasprintf(GFP_KERNEL, "%s.unit", events[i].name);
-			if (!str)
-				goto err;
+		अगर (events[i].unit) अणु
+			str = kaप्र_लिखो(GFP_KERNEL, "%s.unit", events[i].name);
+			अगर (!str)
+				जाओ err;
 
 			*attr_iter++ = &pmu_iter->attr.attr;
 			pmu_iter = add_pmu_attr(pmu_iter, str, events[i].unit);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Initialize supported engine counters. */
-	for_each_uabi_engine(engine, i915) {
-		for (i = 0; i < ARRAY_SIZE(engine_events); i++) {
-			char *str;
+	क्रम_each_uabi_engine(engine, i915) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(engine_events); i++) अणु
+			अक्षर *str;
 
-			if (engine_event_status(engine,
+			अगर (engine_event_status(engine,
 						engine_events[i].sample))
-				continue;
+				जारी;
 
-			str = kasprintf(GFP_KERNEL, "%s-%s",
+			str = kaप्र_लिखो(GFP_KERNEL, "%s-%s",
 					engine->name, engine_events[i].name);
-			if (!str)
-				goto err;
+			अगर (!str)
+				जाओ err;
 
 			*attr_iter++ = &i915_iter->attr.attr;
 			i915_iter =
@@ -998,187 +999,187 @@ create_event_attributes(struct i915_pmu *pmu)
 								engine->uabi_instance,
 								engine_events[i].sample));
 
-			str = kasprintf(GFP_KERNEL, "%s-%s.unit",
+			str = kaप्र_लिखो(GFP_KERNEL, "%s-%s.unit",
 					engine->name, engine_events[i].name);
-			if (!str)
-				goto err;
+			अगर (!str)
+				जाओ err;
 
 			*attr_iter++ = &pmu_iter->attr.attr;
 			pmu_iter = add_pmu_attr(pmu_iter, str, "ns");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	pmu->i915_attr = i915_attr;
 	pmu->pmu_attr = pmu_attr;
 
-	return attr;
+	वापस attr;
 
 err:;
-	for (attr_iter = attr; *attr_iter; attr_iter++)
-		kfree((*attr_iter)->name);
+	क्रम (attr_iter = attr; *attr_iter; attr_iter++)
+		kमुक्त((*attr_iter)->name);
 
 err_alloc:
-	kfree(attr);
-	kfree(i915_attr);
-	kfree(pmu_attr);
+	kमुक्त(attr);
+	kमुक्त(i915_attr);
+	kमुक्त(pmu_attr);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void free_event_attributes(struct i915_pmu *pmu)
-{
-	struct attribute **attr_iter = pmu->events_attr_group.attrs;
+अटल व्योम मुक्त_event_attributes(काष्ठा i915_pmu *pmu)
+अणु
+	काष्ठा attribute **attr_iter = pmu->events_attr_group.attrs;
 
-	for (; *attr_iter; attr_iter++)
-		kfree((*attr_iter)->name);
+	क्रम (; *attr_iter; attr_iter++)
+		kमुक्त((*attr_iter)->name);
 
-	kfree(pmu->events_attr_group.attrs);
-	kfree(pmu->i915_attr);
-	kfree(pmu->pmu_attr);
+	kमुक्त(pmu->events_attr_group.attrs);
+	kमुक्त(pmu->i915_attr);
+	kमुक्त(pmu->pmu_attr);
 
-	pmu->events_attr_group.attrs = NULL;
-	pmu->i915_attr = NULL;
-	pmu->pmu_attr = NULL;
-}
+	pmu->events_attr_group.attrs = शून्य;
+	pmu->i915_attr = शून्य;
+	pmu->pmu_attr = शून्य;
+पूर्ण
 
-static int i915_pmu_cpu_online(unsigned int cpu, struct hlist_node *node)
-{
-	struct i915_pmu *pmu = hlist_entry_safe(node, typeof(*pmu), cpuhp.node);
+अटल पूर्णांक i915_pmu_cpu_online(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
+अणु
+	काष्ठा i915_pmu *pmu = hlist_entry_safe(node, typeof(*pmu), cpuhp.node);
 
 	GEM_BUG_ON(!pmu->base.event_init);
 
-	/* Select the first online CPU as a designated reader. */
-	if (!cpumask_weight(&i915_pmu_cpumask))
+	/* Select the first online CPU as a designated पढ़ोer. */
+	अगर (!cpumask_weight(&i915_pmu_cpumask))
 		cpumask_set_cpu(cpu, &i915_pmu_cpumask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i915_pmu_cpu_offline(unsigned int cpu, struct hlist_node *node)
-{
-	struct i915_pmu *pmu = hlist_entry_safe(node, typeof(*pmu), cpuhp.node);
-	unsigned int target = i915_pmu_target_cpu;
+अटल पूर्णांक i915_pmu_cpu_offline(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
+अणु
+	काष्ठा i915_pmu *pmu = hlist_entry_safe(node, typeof(*pmu), cpuhp.node);
+	अचिन्हित पूर्णांक target = i915_pmu_target_cpu;
 
 	GEM_BUG_ON(!pmu->base.event_init);
 
 	/*
-	 * Unregistering an instance generates a CPU offline event which we must
-	 * ignore to avoid incorrectly modifying the shared i915_pmu_cpumask.
+	 * Unरेजिस्टरing an instance generates a CPU offline event which we must
+	 * ignore to aव्योम incorrectly modअगरying the shared i915_pmu_cpumask.
 	 */
-	if (pmu->closed)
-		return 0;
+	अगर (pmu->बंदd)
+		वापस 0;
 
-	if (cpumask_test_and_clear_cpu(cpu, &i915_pmu_cpumask)) {
+	अगर (cpumask_test_and_clear_cpu(cpu, &i915_pmu_cpumask)) अणु
 		target = cpumask_any_but(topology_sibling_cpumask(cpu), cpu);
 
-		/* Migrate events if there is a valid target */
-		if (target < nr_cpu_ids) {
+		/* Migrate events अगर there is a valid target */
+		अगर (target < nr_cpu_ids) अणु
 			cpumask_set_cpu(target, &i915_pmu_cpumask);
 			i915_pmu_target_cpu = target;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (target < nr_cpu_ids && target != pmu->cpuhp.cpu) {
+	अगर (target < nr_cpu_ids && target != pmu->cpuhp.cpu) अणु
 		perf_pmu_migrate_context(&pmu->base, cpu, target);
 		pmu->cpuhp.cpu = target;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum cpuhp_state cpuhp_slot = CPUHP_INVALID;
+अटल क्रमागत cpuhp_state cpuhp_slot = CPUHP_INVALID;
 
-void i915_pmu_init(void)
-{
-	int ret;
+व्योम i915_pmu_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = cpuhp_setup_state_multi(CPUHP_AP_ONLINE_DYN,
 				      "perf/x86/intel/i915:online",
 				      i915_pmu_cpu_online,
 				      i915_pmu_cpu_offline);
-	if (ret < 0)
+	अगर (ret < 0)
 		pr_notice("Failed to setup cpuhp state for i915 PMU! (%d)\n",
 			  ret);
-	else
+	अन्यथा
 		cpuhp_slot = ret;
-}
+पूर्ण
 
-void i915_pmu_exit(void)
-{
-	if (cpuhp_slot != CPUHP_INVALID)
-		cpuhp_remove_multi_state(cpuhp_slot);
-}
+व्योम i915_pmu_निकास(व्योम)
+अणु
+	अगर (cpuhp_slot != CPUHP_INVALID)
+		cpuhp_हटाओ_multi_state(cpuhp_slot);
+पूर्ण
 
-static int i915_pmu_register_cpuhp_state(struct i915_pmu *pmu)
-{
-	if (cpuhp_slot == CPUHP_INVALID)
-		return -EINVAL;
+अटल पूर्णांक i915_pmu_रेजिस्टर_cpuhp_state(काष्ठा i915_pmu *pmu)
+अणु
+	अगर (cpuhp_slot == CPUHP_INVALID)
+		वापस -EINVAL;
 
-	return cpuhp_state_add_instance(cpuhp_slot, &pmu->cpuhp.node);
-}
+	वापस cpuhp_state_add_instance(cpuhp_slot, &pmu->cpuhp.node);
+पूर्ण
 
-static void i915_pmu_unregister_cpuhp_state(struct i915_pmu *pmu)
-{
-	cpuhp_state_remove_instance(cpuhp_slot, &pmu->cpuhp.node);
-}
+अटल व्योम i915_pmu_unरेजिस्टर_cpuhp_state(काष्ठा i915_pmu *pmu)
+अणु
+	cpuhp_state_हटाओ_instance(cpuhp_slot, &pmu->cpuhp.node);
+पूर्ण
 
-static bool is_igp(struct drm_i915_private *i915)
-{
-	struct pci_dev *pdev = to_pci_dev(i915->drm.dev);
+अटल bool is_igp(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(i915->drm.dev);
 
 	/* IGP is 0000:00:02.0 */
-	return pci_domain_nr(pdev->bus) == 0 &&
+	वापस pci_करोमुख्य_nr(pdev->bus) == 0 &&
 	       pdev->bus->number == 0 &&
 	       PCI_SLOT(pdev->devfn) == 2 &&
 	       PCI_FUNC(pdev->devfn) == 0;
-}
+पूर्ण
 
-void i915_pmu_register(struct drm_i915_private *i915)
-{
-	struct i915_pmu *pmu = &i915->pmu;
-	const struct attribute_group *attr_groups[] = {
-		&i915_pmu_format_attr_group,
+व्योम i915_pmu_रेजिस्टर(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_pmu *pmu = &i915->pmu;
+	स्थिर काष्ठा attribute_group *attr_groups[] = अणु
+		&i915_pmu_क्रमmat_attr_group,
 		&pmu->events_attr_group,
 		&i915_pmu_cpumask_attr_group,
-		NULL
-	};
+		शून्य
+	पूर्ण;
 
-	int ret = -ENOMEM;
+	पूर्णांक ret = -ENOMEM;
 
-	if (INTEL_GEN(i915) <= 2) {
+	अगर (INTEL_GEN(i915) <= 2) अणु
 		drm_info(&i915->drm, "PMU not supported for this GPU.");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_init(&pmu->lock);
-	hrtimer_init(&pmu->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	pmu->timer.function = i915_sample;
+	hrसमयr_init(&pmu->समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	pmu->समयr.function = i915_sample;
 	pmu->cpuhp.cpu = -1;
 	init_rc6(pmu);
 
-	if (!is_igp(i915)) {
-		pmu->name = kasprintf(GFP_KERNEL,
+	अगर (!is_igp(i915)) अणु
+		pmu->name = kaप्र_लिखो(GFP_KERNEL,
 				      "i915_%s",
 				      dev_name(i915->drm.dev));
-		if (pmu->name) {
+		अगर (pmu->name) अणु
 			/* tools/perf reserves colons as special. */
-			strreplace((char *)pmu->name, ':', '_');
-		}
-	} else {
+			strreplace((अक्षर *)pmu->name, ':', '_');
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pmu->name = "i915";
-	}
-	if (!pmu->name)
-		goto err;
+	पूर्ण
+	अगर (!pmu->name)
+		जाओ err;
 
 	pmu->events_attr_group.name = "events";
 	pmu->events_attr_group.attrs = create_event_attributes(pmu);
-	if (!pmu->events_attr_group.attrs)
-		goto err_name;
+	अगर (!pmu->events_attr_group.attrs)
+		जाओ err_name;
 
-	pmu->base.attr_groups = kmemdup(attr_groups, sizeof(attr_groups),
+	pmu->base.attr_groups = kmemdup(attr_groups, माप(attr_groups),
 					GFP_KERNEL);
-	if (!pmu->base.attr_groups)
-		goto err_attr;
+	अगर (!pmu->base.attr_groups)
+		जाओ err_attr;
 
 	pmu->base.module	= THIS_MODULE;
 	pmu->base.task_ctx_nr	= perf_invalid_context;
@@ -1187,56 +1188,56 @@ void i915_pmu_register(struct drm_i915_private *i915)
 	pmu->base.del		= i915_pmu_event_del;
 	pmu->base.start		= i915_pmu_event_start;
 	pmu->base.stop		= i915_pmu_event_stop;
-	pmu->base.read		= i915_pmu_event_read;
+	pmu->base.पढ़ो		= i915_pmu_event_पढ़ो;
 	pmu->base.event_idx	= i915_pmu_event_event_idx;
 
-	ret = perf_pmu_register(&pmu->base, pmu->name, -1);
-	if (ret)
-		goto err_groups;
+	ret = perf_pmu_रेजिस्टर(&pmu->base, pmu->name, -1);
+	अगर (ret)
+		जाओ err_groups;
 
-	ret = i915_pmu_register_cpuhp_state(pmu);
-	if (ret)
-		goto err_unreg;
+	ret = i915_pmu_रेजिस्टर_cpuhp_state(pmu);
+	अगर (ret)
+		जाओ err_unreg;
 
-	return;
+	वापस;
 
 err_unreg:
-	perf_pmu_unregister(&pmu->base);
+	perf_pmu_unरेजिस्टर(&pmu->base);
 err_groups:
-	kfree(pmu->base.attr_groups);
+	kमुक्त(pmu->base.attr_groups);
 err_attr:
-	pmu->base.event_init = NULL;
-	free_event_attributes(pmu);
+	pmu->base.event_init = शून्य;
+	मुक्त_event_attributes(pmu);
 err_name:
-	if (!is_igp(i915))
-		kfree(pmu->name);
+	अगर (!is_igp(i915))
+		kमुक्त(pmu->name);
 err:
 	drm_notice(&i915->drm, "Failed to register PMU!\n");
-}
+पूर्ण
 
-void i915_pmu_unregister(struct drm_i915_private *i915)
-{
-	struct i915_pmu *pmu = &i915->pmu;
+व्योम i915_pmu_unरेजिस्टर(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_pmu *pmu = &i915->pmu;
 
-	if (!pmu->base.event_init)
-		return;
+	अगर (!pmu->base.event_init)
+		वापस;
 
 	/*
 	 * "Disconnect" the PMU callbacks - since all are atomic synchronize_rcu
-	 * ensures all currently executing ones will have exited before we
+	 * ensures all currently executing ones will have निकासed beक्रमe we
 	 * proceed with unregistration.
 	 */
-	pmu->closed = true;
+	pmu->बंदd = true;
 	synchronize_rcu();
 
-	hrtimer_cancel(&pmu->timer);
+	hrसमयr_cancel(&pmu->समयr);
 
-	i915_pmu_unregister_cpuhp_state(pmu);
+	i915_pmu_unरेजिस्टर_cpuhp_state(pmu);
 
-	perf_pmu_unregister(&pmu->base);
-	pmu->base.event_init = NULL;
-	kfree(pmu->base.attr_groups);
-	if (!is_igp(i915))
-		kfree(pmu->name);
-	free_event_attributes(pmu);
-}
+	perf_pmu_unरेजिस्टर(&pmu->base);
+	pmu->base.event_init = शून्य;
+	kमुक्त(pmu->base.attr_groups);
+	अगर (!is_igp(i915))
+		kमुक्त(pmu->name);
+	मुक्त_event_attributes(pmu);
+पूर्ण

@@ -1,116 +1,117 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Samsung EXYNOS4x12 FIMC-IS (Imaging Subsystem) driver
+ * Samsung EXYNOS4x12 FIMC-IS (Imaging Subप्रणाली) driver
  *
  * Copyright (C) 2013 Samsung Electronics Co., Ltd.
  *
  * Authors: Sylwester Nawrocki <s.nawrocki@samsung.com>
  *          Younghwan Joo <yhwan.joo@samsung.com>
  */
-#ifndef FIMC_ISP_H_
-#define FIMC_ISP_H_
+#अगर_अघोषित FIMC_ISP_H_
+#घोषणा FIMC_ISP_H_
 
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/sched.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
-#include <linux/videodev2.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/videodev2.h>
 
-#include <media/media-entity.h>
-#include <media/videobuf2-v4l2.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-mediabus.h>
-#include <media/drv-intf/exynos-fimc.h>
+#समावेश <media/media-entity.h>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-mediabus.h>
+#समावेश <media/drv-पूर्णांकf/exynos-fimc.h>
 
-extern int fimc_isp_debug;
+बाह्य पूर्णांक fimc_isp_debug;
 
-#define isp_dbg(level, dev, fmt, arg...) \
+#घोषणा isp_dbg(level, dev, fmt, arg...) \
 	v4l2_dbg(level, fimc_isp_debug, dev, fmt, ## arg)
 
-/* FIXME: revisit these constraints */
-#define FIMC_ISP_SINK_WIDTH_MIN		(16 + 8)
-#define FIMC_ISP_SINK_HEIGHT_MIN	(12 + 8)
-#define FIMC_ISP_SOURCE_WIDTH_MIN	8
-#define FIMC_ISP_SOURCE_HEIGHT_MIN	8
-#define FIMC_ISP_CAC_MARGIN_WIDTH	16
-#define FIMC_ISP_CAC_MARGIN_HEIGHT	12
+/* FIXME: revisit these स्थिरraपूर्णांकs */
+#घोषणा FIMC_ISP_SINK_WIDTH_MIN		(16 + 8)
+#घोषणा FIMC_ISP_SINK_HEIGHT_MIN	(12 + 8)
+#घोषणा FIMC_ISP_SOURCE_WIDTH_MIN	8
+#घोषणा FIMC_ISP_SOURCE_HEIGHT_MIN	8
+#घोषणा FIMC_ISP_CAC_MARGIN_WIDTH	16
+#घोषणा FIMC_ISP_CAC_MARGIN_HEIGHT	12
 
-#define FIMC_ISP_SINK_WIDTH_MAX		(4000 - 16)
-#define FIMC_ISP_SINK_HEIGHT_MAX	(4000 + 12)
-#define FIMC_ISP_SOURCE_WIDTH_MAX	4000
-#define FIMC_ISP_SOURCE_HEIGHT_MAX	4000
+#घोषणा FIMC_ISP_SINK_WIDTH_MAX		(4000 - 16)
+#घोषणा FIMC_ISP_SINK_HEIGHT_MAX	(4000 + 12)
+#घोषणा FIMC_ISP_SOURCE_WIDTH_MAX	4000
+#घोषणा FIMC_ISP_SOURCE_HEIGHT_MAX	4000
 
-#define FIMC_ISP_NUM_FORMATS		3
-#define FIMC_ISP_REQ_BUFS_MIN		2
-#define FIMC_ISP_REQ_BUFS_MAX		32
+#घोषणा FIMC_ISP_NUM_FORMATS		3
+#घोषणा FIMC_ISP_REQ_BUFS_MIN		2
+#घोषणा FIMC_ISP_REQ_BUFS_MAX		32
 
-#define FIMC_ISP_SD_PAD_SINK		0
-#define FIMC_ISP_SD_PAD_SRC_FIFO	1
-#define FIMC_ISP_SD_PAD_SRC_DMA		2
-#define FIMC_ISP_SD_PADS_NUM		3
-#define FIMC_ISP_MAX_PLANES		1
+#घोषणा FIMC_ISP_SD_PAD_SINK		0
+#घोषणा FIMC_ISP_SD_PAD_SRC_FIFO	1
+#घोषणा FIMC_ISP_SD_PAD_SRC_DMA		2
+#घोषणा FIMC_ISP_SD_PADS_NUM		3
+#घोषणा FIMC_ISP_MAX_PLANES		1
 
 /**
- * struct fimc_isp_frame - source/target frame properties
+ * काष्ठा fimc_isp_frame - source/target frame properties
  * @width: full image width
  * @height: full image height
  * @rect: crop/composition rectangle
  */
-struct fimc_isp_frame {
+काष्ठा fimc_isp_frame अणु
 	u16 width;
 	u16 height;
-	struct v4l2_rect rect;
-};
+	काष्ठा v4l2_rect rect;
+पूर्ण;
 
-struct fimc_isp_ctrls {
-	struct v4l2_ctrl_handler handler;
+काष्ठा fimc_isp_ctrls अणु
+	काष्ठा v4l2_ctrl_handler handler;
 
 	/* Auto white balance */
-	struct v4l2_ctrl *auto_wb;
+	काष्ठा v4l2_ctrl *स्वतः_wb;
 	/* Auto ISO control cluster */
-	struct {
-		struct v4l2_ctrl *auto_iso;
-		struct v4l2_ctrl *iso;
-	};
+	काष्ठा अणु
+		काष्ठा v4l2_ctrl *स्वतः_iso;
+		काष्ठा v4l2_ctrl *iso;
+	पूर्ण;
 	/* Adjust - contrast */
-	struct v4l2_ctrl *contrast;
+	काष्ठा v4l2_ctrl *contrast;
 	/* Adjust - saturation */
-	struct v4l2_ctrl *saturation;
+	काष्ठा v4l2_ctrl *saturation;
 	/* Adjust - sharpness */
-	struct v4l2_ctrl *sharpness;
+	काष्ठा v4l2_ctrl *sharpness;
 	/* Adjust - brightness */
-	struct v4l2_ctrl *brightness;
+	काष्ठा v4l2_ctrl *brightness;
 	/* Adjust - hue */
-	struct v4l2_ctrl *hue;
+	काष्ठा v4l2_ctrl *hue;
 
 	/* Auto/manual exposure */
-	struct v4l2_ctrl *auto_exp;
+	काष्ठा v4l2_ctrl *स्वतः_exp;
 	/* Manual exposure value */
-	struct v4l2_ctrl *exposure;
+	काष्ठा v4l2_ctrl *exposure;
 	/* AE/AWB lock/unlock */
-	struct v4l2_ctrl *aewb_lock;
+	काष्ठा v4l2_ctrl *aewb_lock;
 	/* Exposure metering mode */
-	struct v4l2_ctrl *exp_metering;
+	काष्ठा v4l2_ctrl *exp_metering;
 	/* AFC */
-	struct v4l2_ctrl *afc;
+	काष्ठा v4l2_ctrl *afc;
 	/* ISP image effect */
-	struct v4l2_ctrl *colorfx;
-};
+	काष्ठा v4l2_ctrl *colorfx;
+पूर्ण;
 
-struct isp_video_buf {
-	struct vb2_v4l2_buffer vb;
+काष्ठा isp_video_buf अणु
+	काष्ठा vb2_v4l2_buffer vb;
 	dma_addr_t dma_addr[FIMC_ISP_MAX_PLANES];
-	unsigned int index;
-};
+	अचिन्हित पूर्णांक index;
+पूर्ण;
 
-#define to_isp_video_buf(_b) container_of(_b, struct isp_video_buf, vb)
+#घोषणा to_isp_video_buf(_b) container_of(_b, काष्ठा isp_video_buf, vb)
 
-#define FIMC_ISP_MAX_BUFS	4
+#घोषणा FIMC_ISP_MAX_BUFS	4
 
 /**
- * struct fimc_is_video - fimc-is video device structure
- * @ve: video_device structure and media pipeline
+ * काष्ठा fimc_is_video - fimc-is video device काष्ठाure
+ * @ve: video_device काष्ठाure and media pipeline
  * @type: video device type (CAPTURE/OUTPUT)
  * @pad: video device media (sink) pad
  * @pending_buf_q: pending buffers queue head
@@ -118,43 +119,43 @@ struct isp_video_buf {
  * @vb_queue: vb2 buffer queue
  * @reqbufs_count: the number of buffers requested in REQBUFS ioctl
  * @buf_count: number of video buffers scheduled in hardware
- * @buf_mask: bitmask of the queued video buffer indices
+ * @buf_mask: biपंचांगask of the queued video buffer indices
  * @frame_count: counter of frames dequeued to user space
  * @streaming: is streaming in progress?
  * @buffers: buffer info
- * @format: current fimc pixel format
- * @pixfmt: current pixel format
+ * @क्रमmat: current fimc pixel क्रमmat
+ * @pixfmt: current pixel क्रमmat
  */
-struct fimc_is_video {
-	struct exynos_video_entity ve;
-	enum v4l2_buf_type	type;
-	struct media_pad	pad;
-	struct list_head	pending_buf_q;
-	struct list_head	active_buf_q;
-	struct vb2_queue	vb_queue;
-	unsigned int		reqbufs_count;
-	unsigned int		buf_count;
-	unsigned int		buf_mask;
-	unsigned int		frame_count;
-	int			streaming;
-	struct isp_video_buf	*buffers[FIMC_ISP_MAX_BUFS];
-	const struct fimc_fmt	*format;
-	struct v4l2_pix_format_mplane pixfmt;
-};
+काष्ठा fimc_is_video अणु
+	काष्ठा exynos_video_entity ve;
+	क्रमागत v4l2_buf_type	type;
+	काष्ठा media_pad	pad;
+	काष्ठा list_head	pending_buf_q;
+	काष्ठा list_head	active_buf_q;
+	काष्ठा vb2_queue	vb_queue;
+	अचिन्हित पूर्णांक		reqbufs_count;
+	अचिन्हित पूर्णांक		buf_count;
+	अचिन्हित पूर्णांक		buf_mask;
+	अचिन्हित पूर्णांक		frame_count;
+	पूर्णांक			streaming;
+	काष्ठा isp_video_buf	*buffers[FIMC_ISP_MAX_BUFS];
+	स्थिर काष्ठा fimc_fmt	*क्रमmat;
+	काष्ठा v4l2_pix_क्रमmat_mplane pixfmt;
+पूर्ण;
 
-/* struct fimc_isp:state bit definitions */
-#define ST_ISP_VID_CAP_BUF_PREP		0
-#define ST_ISP_VID_CAP_STREAMING	1
+/* काष्ठा fimc_isp:state bit definitions */
+#घोषणा ST_ISP_VID_CAP_BUF_PREP		0
+#घोषणा ST_ISP_VID_CAP_STREAMING	1
 
 /**
- * struct fimc_isp - FIMC-IS ISP data structure
- * @pdev: pointer to FIMC-IS platform device
+ * काष्ठा fimc_isp - FIMC-IS ISP data काष्ठाure
+ * @pdev: poपूर्णांकer to FIMC-IS platक्रमm device
  * @subdev: ISP v4l2_subdev
  * @subdev_pads: the ISP subdev media pads
- * @src_fmt: source mediabus format
- * @sink_fmt: sink mediabus format
+ * @src_fmt: source mediabus क्रमmat
+ * @sink_fmt: sink mediabus क्रमmat
  * @test_pattern: test pattern controls
- * @ctrls: v4l2 controls structure
+ * @ctrls: v4l2 controls काष्ठाure
  * @video_lock: mutex serializing video device operations
  * @subdev_lock: mutex serializing subdev operations
  * @cac_margin_x: horizontal CAC margin in pixels
@@ -162,36 +163,36 @@ struct fimc_is_video {
  * @state: driver state flags
  * @video_capture: the ISP block video capture device
  */
-struct fimc_isp {
-	struct platform_device		*pdev;
-	struct v4l2_subdev		subdev;
-	struct media_pad		subdev_pads[FIMC_ISP_SD_PADS_NUM];
-	struct v4l2_mbus_framefmt	src_fmt;
-	struct v4l2_mbus_framefmt	sink_fmt;
-	struct v4l2_ctrl		*test_pattern;
-	struct fimc_isp_ctrls		ctrls;
+काष्ठा fimc_isp अणु
+	काष्ठा platक्रमm_device		*pdev;
+	काष्ठा v4l2_subdev		subdev;
+	काष्ठा media_pad		subdev_pads[FIMC_ISP_SD_PADS_NUM];
+	काष्ठा v4l2_mbus_framefmt	src_fmt;
+	काष्ठा v4l2_mbus_framefmt	sink_fmt;
+	काष्ठा v4l2_ctrl		*test_pattern;
+	काष्ठा fimc_isp_ctrls		ctrls;
 
-	struct mutex			video_lock;
-	struct mutex			subdev_lock;
+	काष्ठा mutex			video_lock;
+	काष्ठा mutex			subdev_lock;
 
-	unsigned int			cac_margin_x;
-	unsigned int			cac_margin_y;
+	अचिन्हित पूर्णांक			cac_margin_x;
+	अचिन्हित पूर्णांक			cac_margin_y;
 
-	unsigned long			state;
+	अचिन्हित दीर्घ			state;
 
-	struct fimc_is_video		video_capture;
-};
+	काष्ठा fimc_is_video		video_capture;
+पूर्ण;
 
-#define ctrl_to_fimc_isp(_ctrl) \
-	container_of(ctrl->handler, struct fimc_isp, ctrls.handler)
+#घोषणा ctrl_to_fimc_isp(_ctrl) \
+	container_of(ctrl->handler, काष्ठा fimc_isp, ctrls.handler)
 
-struct fimc_is;
+काष्ठा fimc_is;
 
-int fimc_isp_subdev_create(struct fimc_isp *isp);
-void fimc_isp_subdev_destroy(struct fimc_isp *isp);
-void fimc_isp_irq_handler(struct fimc_is *is);
-int fimc_is_create_controls(struct fimc_isp *isp);
-int fimc_is_delete_controls(struct fimc_isp *isp);
-const struct fimc_fmt *fimc_isp_find_format(const u32 *pixelformat,
-					const u32 *mbus_code, int index);
-#endif /* FIMC_ISP_H_ */
+पूर्णांक fimc_isp_subdev_create(काष्ठा fimc_isp *isp);
+व्योम fimc_isp_subdev_destroy(काष्ठा fimc_isp *isp);
+व्योम fimc_isp_irq_handler(काष्ठा fimc_is *is);
+पूर्णांक fimc_is_create_controls(काष्ठा fimc_isp *isp);
+पूर्णांक fimc_is_delete_controls(काष्ठा fimc_isp *isp);
+स्थिर काष्ठा fimc_fmt *fimc_isp_find_क्रमmat(स्थिर u32 *pixelक्रमmat,
+					स्थिर u32 *mbus_code, पूर्णांक index);
+#पूर्ण_अगर /* FIMC_ISP_H_ */

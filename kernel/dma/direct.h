@@ -1,119 +1,120 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2018 Christoph Hellwig.
  *
  * DMA operations that map physical memory directly without using an IOMMU.
  */
-#ifndef _KERNEL_DMA_DIRECT_H
-#define _KERNEL_DMA_DIRECT_H
+#अगर_अघोषित _KERNEL_DMA_सूचीECT_H
+#घोषणा _KERNEL_DMA_सूचीECT_H
 
-#include <linux/dma-direct.h>
+#समावेश <linux/dma-direct.h>
 
-int dma_direct_get_sgtable(struct device *dev, struct sg_table *sgt,
-		void *cpu_addr, dma_addr_t dma_addr, size_t size,
-		unsigned long attrs);
-bool dma_direct_can_mmap(struct device *dev);
-int dma_direct_mmap(struct device *dev, struct vm_area_struct *vma,
-		void *cpu_addr, dma_addr_t dma_addr, size_t size,
-		unsigned long attrs);
-bool dma_direct_need_sync(struct device *dev, dma_addr_t dma_addr);
-int dma_direct_map_sg(struct device *dev, struct scatterlist *sgl, int nents,
-		enum dma_data_direction dir, unsigned long attrs);
-size_t dma_direct_max_mapping_size(struct device *dev);
+पूर्णांक dma_direct_get_sgtable(काष्ठा device *dev, काष्ठा sg_table *sgt,
+		व्योम *cpu_addr, dma_addr_t dma_addr, माप_प्रकार size,
+		अचिन्हित दीर्घ attrs);
+bool dma_direct_can_mmap(काष्ठा device *dev);
+पूर्णांक dma_direct_mmap(काष्ठा device *dev, काष्ठा vm_area_काष्ठा *vma,
+		व्योम *cpu_addr, dma_addr_t dma_addr, माप_प्रकार size,
+		अचिन्हित दीर्घ attrs);
+bool dma_direct_need_sync(काष्ठा device *dev, dma_addr_t dma_addr);
+पूर्णांक dma_direct_map_sg(काष्ठा device *dev, काष्ठा scatterlist *sgl, पूर्णांक nents,
+		क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs);
+माप_प्रकार dma_direct_max_mapping_size(काष्ठा device *dev);
 
-#if defined(CONFIG_ARCH_HAS_SYNC_DMA_FOR_DEVICE) || \
+#अगर defined(CONFIG_ARCH_HAS_SYNC_DMA_FOR_DEVICE) || \
     defined(CONFIG_SWIOTLB)
-void dma_direct_sync_sg_for_device(struct device *dev, struct scatterlist *sgl,
-		int nents, enum dma_data_direction dir);
-#else
-static inline void dma_direct_sync_sg_for_device(struct device *dev,
-		struct scatterlist *sgl, int nents, enum dma_data_direction dir)
-{
-}
-#endif
+व्योम dma_direct_sync_sg_क्रम_device(काष्ठा device *dev, काष्ठा scatterlist *sgl,
+		पूर्णांक nents, क्रमागत dma_data_direction dir);
+#अन्यथा
+अटल अंतरभूत व्योम dma_direct_sync_sg_क्रम_device(काष्ठा device *dev,
+		काष्ठा scatterlist *sgl, पूर्णांक nents, क्रमागत dma_data_direction dir)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_ARCH_HAS_SYNC_DMA_FOR_CPU) || \
+#अगर defined(CONFIG_ARCH_HAS_SYNC_DMA_FOR_CPU) || \
     defined(CONFIG_ARCH_HAS_SYNC_DMA_FOR_CPU_ALL) || \
     defined(CONFIG_SWIOTLB)
-void dma_direct_unmap_sg(struct device *dev, struct scatterlist *sgl,
-		int nents, enum dma_data_direction dir, unsigned long attrs);
-void dma_direct_sync_sg_for_cpu(struct device *dev,
-		struct scatterlist *sgl, int nents, enum dma_data_direction dir);
-#else
-static inline void dma_direct_unmap_sg(struct device *dev,
-		struct scatterlist *sgl, int nents, enum dma_data_direction dir,
-		unsigned long attrs)
-{
-}
-static inline void dma_direct_sync_sg_for_cpu(struct device *dev,
-		struct scatterlist *sgl, int nents, enum dma_data_direction dir)
-{
-}
-#endif
+व्योम dma_direct_unmap_sg(काष्ठा device *dev, काष्ठा scatterlist *sgl,
+		पूर्णांक nents, क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs);
+व्योम dma_direct_sync_sg_क्रम_cpu(काष्ठा device *dev,
+		काष्ठा scatterlist *sgl, पूर्णांक nents, क्रमागत dma_data_direction dir);
+#अन्यथा
+अटल अंतरभूत व्योम dma_direct_unmap_sg(काष्ठा device *dev,
+		काष्ठा scatterlist *sgl, पूर्णांक nents, क्रमागत dma_data_direction dir,
+		अचिन्हित दीर्घ attrs)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम dma_direct_sync_sg_क्रम_cpu(काष्ठा device *dev,
+		काष्ठा scatterlist *sgl, पूर्णांक nents, क्रमागत dma_data_direction dir)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static inline void dma_direct_sync_single_for_device(struct device *dev,
-		dma_addr_t addr, size_t size, enum dma_data_direction dir)
-{
+अटल अंतरभूत व्योम dma_direct_sync_single_क्रम_device(काष्ठा device *dev,
+		dma_addr_t addr, माप_प्रकार size, क्रमागत dma_data_direction dir)
+अणु
 	phys_addr_t paddr = dma_to_phys(dev, addr);
 
-	if (unlikely(is_swiotlb_buffer(paddr)))
-		swiotlb_sync_single_for_device(dev, paddr, size, dir);
+	अगर (unlikely(is_swiotlb_buffer(paddr)))
+		swiotlb_sync_single_क्रम_device(dev, paddr, size, dir);
 
-	if (!dev_is_dma_coherent(dev))
-		arch_sync_dma_for_device(paddr, size, dir);
-}
+	अगर (!dev_is_dma_coherent(dev))
+		arch_sync_dma_क्रम_device(paddr, size, dir);
+पूर्ण
 
-static inline void dma_direct_sync_single_for_cpu(struct device *dev,
-		dma_addr_t addr, size_t size, enum dma_data_direction dir)
-{
+अटल अंतरभूत व्योम dma_direct_sync_single_क्रम_cpu(काष्ठा device *dev,
+		dma_addr_t addr, माप_प्रकार size, क्रमागत dma_data_direction dir)
+अणु
 	phys_addr_t paddr = dma_to_phys(dev, addr);
 
-	if (!dev_is_dma_coherent(dev)) {
-		arch_sync_dma_for_cpu(paddr, size, dir);
-		arch_sync_dma_for_cpu_all();
-	}
+	अगर (!dev_is_dma_coherent(dev)) अणु
+		arch_sync_dma_क्रम_cpu(paddr, size, dir);
+		arch_sync_dma_क्रम_cpu_all();
+	पूर्ण
 
-	if (unlikely(is_swiotlb_buffer(paddr)))
-		swiotlb_sync_single_for_cpu(dev, paddr, size, dir);
+	अगर (unlikely(is_swiotlb_buffer(paddr)))
+		swiotlb_sync_single_क्रम_cpu(dev, paddr, size, dir);
 
-	if (dir == DMA_FROM_DEVICE)
+	अगर (dir == DMA_FROM_DEVICE)
 		arch_dma_mark_clean(paddr, size);
-}
+पूर्ण
 
-static inline dma_addr_t dma_direct_map_page(struct device *dev,
-		struct page *page, unsigned long offset, size_t size,
-		enum dma_data_direction dir, unsigned long attrs)
-{
+अटल अंतरभूत dma_addr_t dma_direct_map_page(काष्ठा device *dev,
+		काष्ठा page *page, अचिन्हित दीर्घ offset, माप_प्रकार size,
+		क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs)
+अणु
 	phys_addr_t phys = page_to_phys(page) + offset;
 	dma_addr_t dma_addr = phys_to_dma(dev, phys);
 
-	if (unlikely(swiotlb_force == SWIOTLB_FORCE))
-		return swiotlb_map(dev, phys, size, dir, attrs);
+	अगर (unlikely(swiotlb_क्रमce == SWIOTLB_FORCE))
+		वापस swiotlb_map(dev, phys, size, dir, attrs);
 
-	if (unlikely(!dma_capable(dev, dma_addr, size, true))) {
-		if (swiotlb_force != SWIOTLB_NO_FORCE)
-			return swiotlb_map(dev, phys, size, dir, attrs);
+	अगर (unlikely(!dma_capable(dev, dma_addr, size, true))) अणु
+		अगर (swiotlb_क्रमce != SWIOTLB_NO_FORCE)
+			वापस swiotlb_map(dev, phys, size, dir, attrs);
 
 		dev_WARN_ONCE(dev, 1,
 			     "DMA addr %pad+%zu overflow (mask %llx, bus limit %llx).\n",
 			     &dma_addr, size, *dev->dma_mask, dev->bus_dma_limit);
-		return DMA_MAPPING_ERROR;
-	}
+		वापस DMA_MAPPING_ERROR;
+	पूर्ण
 
-	if (!dev_is_dma_coherent(dev) && !(attrs & DMA_ATTR_SKIP_CPU_SYNC))
-		arch_sync_dma_for_device(phys, size, dir);
-	return dma_addr;
-}
+	अगर (!dev_is_dma_coherent(dev) && !(attrs & DMA_ATTR_SKIP_CPU_SYNC))
+		arch_sync_dma_क्रम_device(phys, size, dir);
+	वापस dma_addr;
+पूर्ण
 
-static inline void dma_direct_unmap_page(struct device *dev, dma_addr_t addr,
-		size_t size, enum dma_data_direction dir, unsigned long attrs)
-{
+अटल अंतरभूत व्योम dma_direct_unmap_page(काष्ठा device *dev, dma_addr_t addr,
+		माप_प्रकार size, क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs)
+अणु
 	phys_addr_t phys = dma_to_phys(dev, addr);
 
-	if (!(attrs & DMA_ATTR_SKIP_CPU_SYNC))
-		dma_direct_sync_single_for_cpu(dev, addr, size, dir);
+	अगर (!(attrs & DMA_ATTR_SKIP_CPU_SYNC))
+		dma_direct_sync_single_क्रम_cpu(dev, addr, size, dir);
 
-	if (unlikely(is_swiotlb_buffer(phys)))
+	अगर (unlikely(is_swiotlb_buffer(phys)))
 		swiotlb_tbl_unmap_single(dev, phys, size, dir, attrs);
-}
-#endif /* _KERNEL_DMA_DIRECT_H */
+पूर्ण
+#पूर्ण_अगर /* _KERNEL_DMA_सूचीECT_H */

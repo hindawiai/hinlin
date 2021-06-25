@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,213 +23,213 @@
  * Authors: Alex Deucher
  */
 
-#include <linux/firmware.h>
+#समावेश <linux/firmware.h>
 
-#include "radeon.h"
-#include "cikd.h"
-#include "ppsmc.h"
-#include "radeon_ucode.h"
-#include "ci_dpm.h"
+#समावेश "radeon.h"
+#समावेश "cikd.h"
+#समावेश "ppsmc.h"
+#समावेश "radeon_ucode.h"
+#समावेश "ci_dpm.h"
 
-static int ci_set_smc_sram_address(struct radeon_device *rdev,
+अटल पूर्णांक ci_set_smc_sram_address(काष्ठा radeon_device *rdev,
 				   u32 smc_address, u32 limit)
-{
-	if (smc_address & 3)
-		return -EINVAL;
-	if ((smc_address + 3) > limit)
-		return -EINVAL;
+अणु
+	अगर (smc_address & 3)
+		वापस -EINVAL;
+	अगर ((smc_address + 3) > limit)
+		वापस -EINVAL;
 
 	WREG32(SMC_IND_INDEX_0, smc_address);
 	WREG32_P(SMC_IND_ACCESS_CNTL, 0, ~AUTO_INCREMENT_IND_0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ci_copy_bytes_to_smc(struct radeon_device *rdev,
+पूर्णांक ci_copy_bytes_to_smc(काष्ठा radeon_device *rdev,
 			 u32 smc_start_address,
-			 const u8 *src, u32 byte_count, u32 limit)
-{
-	unsigned long flags;
+			 स्थिर u8 *src, u32 byte_count, u32 limit)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 data, original_data;
 	u32 addr;
-	u32 extra_shift;
-	int ret = 0;
+	u32 extra_shअगरt;
+	पूर्णांक ret = 0;
 
-	if (smc_start_address & 3)
-		return -EINVAL;
-	if ((smc_start_address + byte_count) > limit)
-		return -EINVAL;
+	अगर (smc_start_address & 3)
+		वापस -EINVAL;
+	अगर ((smc_start_address + byte_count) > limit)
+		वापस -EINVAL;
 
 	addr = smc_start_address;
 
 	spin_lock_irqsave(&rdev->smc_idx_lock, flags);
-	while (byte_count >= 4) {
+	जबतक (byte_count >= 4) अणु
 		/* SMC address space is BE */
 		data = (src[0] << 24) | (src[1] << 16) | (src[2] << 8) | src[3];
 
 		ret = ci_set_smc_sram_address(rdev, addr, limit);
-		if (ret)
-			goto done;
+		अगर (ret)
+			जाओ करोne;
 
 		WREG32(SMC_IND_DATA_0, data);
 
 		src += 4;
 		byte_count -= 4;
 		addr += 4;
-	}
+	पूर्ण
 
-	/* RMW for the final bytes */
-	if (byte_count > 0) {
+	/* RMW क्रम the final bytes */
+	अगर (byte_count > 0) अणु
 		data = 0;
 
 		ret = ci_set_smc_sram_address(rdev, addr, limit);
-		if (ret)
-			goto done;
+		अगर (ret)
+			जाओ करोne;
 
 		original_data = RREG32(SMC_IND_DATA_0);
 
-		extra_shift = 8 * (4 - byte_count);
+		extra_shअगरt = 8 * (4 - byte_count);
 
-		while (byte_count > 0) {
+		जबतक (byte_count > 0) अणु
 			data = (data << 8) + *src++;
 			byte_count--;
-		}
+		पूर्ण
 
-		data <<= extra_shift;
+		data <<= extra_shअगरt;
 
-		data |= (original_data & ~((~0UL) << extra_shift));
+		data |= (original_data & ~((~0UL) << extra_shअगरt));
 
 		ret = ci_set_smc_sram_address(rdev, addr, limit);
-		if (ret)
-			goto done;
+		अगर (ret)
+			जाओ करोne;
 
 		WREG32(SMC_IND_DATA_0, data);
-	}
+	पूर्ण
 
-done:
+करोne:
 	spin_unlock_irqrestore(&rdev->smc_idx_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void ci_start_smc(struct radeon_device *rdev)
-{
-	u32 tmp = RREG32_SMC(SMC_SYSCON_RESET_CNTL);
+व्योम ci_start_smc(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp = RREG32_SMC(SMC_SYSCON_RESET_CNTL);
 
-	tmp &= ~RST_REG;
-	WREG32_SMC(SMC_SYSCON_RESET_CNTL, tmp);
-}
+	पंचांगp &= ~RST_REG;
+	WREG32_SMC(SMC_SYSCON_RESET_CNTL, पंचांगp);
+पूर्ण
 
-void ci_reset_smc(struct radeon_device *rdev)
-{
-	u32 tmp = RREG32_SMC(SMC_SYSCON_RESET_CNTL);
+व्योम ci_reset_smc(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp = RREG32_SMC(SMC_SYSCON_RESET_CNTL);
 
-	tmp |= RST_REG;
-	WREG32_SMC(SMC_SYSCON_RESET_CNTL, tmp);
-}
+	पंचांगp |= RST_REG;
+	WREG32_SMC(SMC_SYSCON_RESET_CNTL, पंचांगp);
+पूर्ण
 
-int ci_program_jump_on_start(struct radeon_device *rdev)
-{
-	static const u8 data[] = { 0xE0, 0x00, 0x80, 0x40 };
+पूर्णांक ci_program_jump_on_start(काष्ठा radeon_device *rdev)
+अणु
+	अटल स्थिर u8 data[] = अणु 0xE0, 0x00, 0x80, 0x40 पूर्ण;
 
-	return ci_copy_bytes_to_smc(rdev, 0x0, data, 4, sizeof(data)+1);
-}
+	वापस ci_copy_bytes_to_smc(rdev, 0x0, data, 4, माप(data)+1);
+पूर्ण
 
-void ci_stop_smc_clock(struct radeon_device *rdev)
-{
-	u32 tmp = RREG32_SMC(SMC_SYSCON_CLOCK_CNTL_0);
+व्योम ci_stop_smc_घड़ी(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp = RREG32_SMC(SMC_SYSCON_CLOCK_CNTL_0);
 
-	tmp |= CK_DISABLE;
+	पंचांगp |= CK_DISABLE;
 
-	WREG32_SMC(SMC_SYSCON_CLOCK_CNTL_0, tmp);
-}
+	WREG32_SMC(SMC_SYSCON_CLOCK_CNTL_0, पंचांगp);
+पूर्ण
 
-void ci_start_smc_clock(struct radeon_device *rdev)
-{
-	u32 tmp = RREG32_SMC(SMC_SYSCON_CLOCK_CNTL_0);
+व्योम ci_start_smc_घड़ी(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp = RREG32_SMC(SMC_SYSCON_CLOCK_CNTL_0);
 
-	tmp &= ~CK_DISABLE;
+	पंचांगp &= ~CK_DISABLE;
 
-	WREG32_SMC(SMC_SYSCON_CLOCK_CNTL_0, tmp);
-}
+	WREG32_SMC(SMC_SYSCON_CLOCK_CNTL_0, पंचांगp);
+पूर्ण
 
-bool ci_is_smc_running(struct radeon_device *rdev)
-{
+bool ci_is_smc_running(काष्ठा radeon_device *rdev)
+अणु
 	u32 clk = RREG32_SMC(SMC_SYSCON_CLOCK_CNTL_0);
 	u32 pc_c = RREG32_SMC(SMC_PC_C);
 
-	if (!(clk & CK_DISABLE) && (0x20100 <= pc_c))
-		return true;
+	अगर (!(clk & CK_DISABLE) && (0x20100 <= pc_c))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-#if 0
-PPSMC_Result ci_wait_for_smc_inactive(struct radeon_device *rdev)
-{
-	u32 tmp;
-	int i;
+#अगर 0
+PPSMC_Result ci_रुको_क्रम_smc_inactive(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp;
+	पूर्णांक i;
 
-	if (!ci_is_smc_running(rdev))
-		return PPSMC_Result_OK;
+	अगर (!ci_is_smc_running(rdev))
+		वापस PPSMC_Result_OK;
 
-	for (i = 0; i < rdev->usec_timeout; i++) {
-		tmp = RREG32_SMC(SMC_SYSCON_CLOCK_CNTL_0);
-		if ((tmp & CKEN) == 0)
-			break;
+	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+		पंचांगp = RREG32_SMC(SMC_SYSCON_CLOCK_CNTL_0);
+		अगर ((पंचांगp & CKEN) == 0)
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 
-	return PPSMC_Result_OK;
-}
-#endif
+	वापस PPSMC_Result_OK;
+पूर्ण
+#पूर्ण_अगर
 
-int ci_load_smc_ucode(struct radeon_device *rdev, u32 limit)
-{
-	unsigned long flags;
+पूर्णांक ci_load_smc_ucode(काष्ठा radeon_device *rdev, u32 limit)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 ucode_start_address;
 	u32 ucode_size;
-	const u8 *src;
+	स्थिर u8 *src;
 	u32 data;
 
-	if (!rdev->smc_fw)
-		return -EINVAL;
+	अगर (!rdev->smc_fw)
+		वापस -EINVAL;
 
-	if (rdev->new_fw) {
-		const struct smc_firmware_header_v1_0 *hdr =
-			(const struct smc_firmware_header_v1_0 *)rdev->smc_fw->data;
+	अगर (rdev->new_fw) अणु
+		स्थिर काष्ठा smc_firmware_header_v1_0 *hdr =
+			(स्थिर काष्ठा smc_firmware_header_v1_0 *)rdev->smc_fw->data;
 
-		radeon_ucode_print_smc_hdr(&hdr->header);
+		radeon_ucode_prपूर्णांक_smc_hdr(&hdr->header);
 
 		ucode_start_address = le32_to_cpu(hdr->ucode_start_addr);
 		ucode_size = le32_to_cpu(hdr->header.ucode_size_bytes);
-		src = (const u8 *)
+		src = (स्थिर u8 *)
 			(rdev->smc_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
-	} else {
-		switch (rdev->family) {
-		case CHIP_BONAIRE:
+	पूर्ण अन्यथा अणु
+		चयन (rdev->family) अणु
+		हाल CHIP_BONAIRE:
 			ucode_start_address = BONAIRE_SMC_UCODE_START;
 			ucode_size = BONAIRE_SMC_UCODE_SIZE;
-			break;
-		case CHIP_HAWAII:
+			अवरोध;
+		हाल CHIP_HAWAII:
 			ucode_start_address = HAWAII_SMC_UCODE_START;
 			ucode_size = HAWAII_SMC_UCODE_SIZE;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			DRM_ERROR("unknown asic in smc ucode loader\n");
 			BUG();
-		}
+		पूर्ण
 
-		src = (const u8 *)rdev->smc_fw->data;
-	}
+		src = (स्थिर u8 *)rdev->smc_fw->data;
+	पूर्ण
 
-	if (ucode_size & 3)
-		return -EINVAL;
+	अगर (ucode_size & 3)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&rdev->smc_idx_lock, flags);
 	WREG32(SMC_IND_INDEX_0, ucode_start_address);
 	WREG32_P(SMC_IND_ACCESS_CNTL, AUTO_INCREMENT_IND_0, ~AUTO_INCREMENT_IND_0);
-	while (ucode_size >= 4) {
+	जबतक (ucode_size >= 4) अणु
 		/* SMC address space is BE */
 		data = (src[0] << 24) | (src[1] << 16) | (src[2] << 8) | src[3];
 
@@ -236,39 +237,39 @@ int ci_load_smc_ucode(struct radeon_device *rdev, u32 limit)
 
 		src += 4;
 		ucode_size -= 4;
-	}
+	पूर्ण
 	WREG32_P(SMC_IND_ACCESS_CNTL, 0, ~AUTO_INCREMENT_IND_0);
 	spin_unlock_irqrestore(&rdev->smc_idx_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ci_read_smc_sram_dword(struct radeon_device *rdev,
+पूर्णांक ci_पढ़ो_smc_sram_dword(काष्ठा radeon_device *rdev,
 			   u32 smc_address, u32 *value, u32 limit)
-{
-	unsigned long flags;
-	int ret;
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&rdev->smc_idx_lock, flags);
 	ret = ci_set_smc_sram_address(rdev, smc_address, limit);
-	if (ret == 0)
+	अगर (ret == 0)
 		*value = RREG32(SMC_IND_DATA_0);
 	spin_unlock_irqrestore(&rdev->smc_idx_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ci_write_smc_sram_dword(struct radeon_device *rdev,
+पूर्णांक ci_ग_लिखो_smc_sram_dword(काष्ठा radeon_device *rdev,
 			    u32 smc_address, u32 value, u32 limit)
-{
-	unsigned long flags;
-	int ret;
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&rdev->smc_idx_lock, flags);
 	ret = ci_set_smc_sram_address(rdev, smc_address, limit);
-	if (ret == 0)
+	अगर (ret == 0)
 		WREG32(SMC_IND_DATA_0, value);
 	spin_unlock_irqrestore(&rdev->smc_idx_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

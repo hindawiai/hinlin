@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _XEN_DEBUGFS_H
-#define _XEN_DEBUGFS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _XEN_DEBUGFS_H
+#घोषणा _XEN_DEBUGFS_H
 
-struct dentry * __init xen_init_debugfs(void);
+काष्ठा dentry * __init xen_init_debugfs(व्योम);
 
-#endif /* _XEN_DEBUGFS_H */
+#पूर्ण_अगर /* _XEN_DEBUGFS_H */

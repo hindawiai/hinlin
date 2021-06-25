@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2015 Texas Instruments Incorporated - http://www.ti.com/
  *	Andrew F. Davis <afd@ti.com>
@@ -6,65 +7,65 @@
  * Based on the TPS65912 driver
  */
 
-#include <linux/gpio/driver.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/mfd/tps65086.h>
+#समावेश <linux/mfd/tps65086.h>
 
-struct tps65086_gpio {
-	struct gpio_chip chip;
-	struct tps65086 *tps;
-};
+काष्ठा tps65086_gpio अणु
+	काष्ठा gpio_chip chip;
+	काष्ठा tps65086 *tps;
+पूर्ण;
 
-static int tps65086_gpio_get_direction(struct gpio_chip *chip,
-				       unsigned offset)
-{
+अटल पूर्णांक tps65086_gpio_get_direction(काष्ठा gpio_chip *chip,
+				       अचिन्हित offset)
+अणु
 	/* This device is output only */
-	return GPIO_LINE_DIRECTION_OUT;
-}
+	वापस GPIO_LINE_सूचीECTION_OUT;
+पूर्ण
 
-static int tps65086_gpio_direction_input(struct gpio_chip *chip,
-					 unsigned offset)
-{
+अटल पूर्णांक tps65086_gpio_direction_input(काष्ठा gpio_chip *chip,
+					 अचिन्हित offset)
+अणु
 	/* This device is output only */
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int tps65086_gpio_direction_output(struct gpio_chip *chip,
-					  unsigned offset, int value)
-{
-	struct tps65086_gpio *gpio = gpiochip_get_data(chip);
+अटल पूर्णांक tps65086_gpio_direction_output(काष्ठा gpio_chip *chip,
+					  अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा tps65086_gpio *gpio = gpiochip_get_data(chip);
 
 	/* Set the initial value */
 	regmap_update_bits(gpio->tps->regmap, TPS65086_GPOCTRL,
 			   BIT(4 + offset), value ? BIT(4 + offset) : 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tps65086_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct tps65086_gpio *gpio = gpiochip_get_data(chip);
-	int ret, val;
+अटल पूर्णांक tps65086_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा tps65086_gpio *gpio = gpiochip_get_data(chip);
+	पूर्णांक ret, val;
 
-	ret = regmap_read(gpio->tps->regmap, TPS65086_GPOCTRL, &val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(gpio->tps->regmap, TPS65086_GPOCTRL, &val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return val & BIT(4 + offset);
-}
+	वापस val & BIT(4 + offset);
+पूर्ण
 
-static void tps65086_gpio_set(struct gpio_chip *chip, unsigned offset,
-			      int value)
-{
-	struct tps65086_gpio *gpio = gpiochip_get_data(chip);
+अटल व्योम tps65086_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset,
+			      पूर्णांक value)
+अणु
+	काष्ठा tps65086_gpio *gpio = gpiochip_get_data(chip);
 
 	regmap_update_bits(gpio->tps->regmap, TPS65086_GPOCTRL,
 			   BIT(4 + offset), value ? BIT(4 + offset) : 0);
-}
+पूर्ण
 
-static const struct gpio_chip template_chip = {
+अटल स्थिर काष्ठा gpio_chip ढाँचा_chip = अणु
 	.label			= "tps65086-gpio",
 	.owner			= THIS_MODULE,
 	.get_direction		= tps65086_gpio_get_direction,
@@ -75,56 +76,56 @@ static const struct gpio_chip template_chip = {
 	.base			= -1,
 	.ngpio			= 4,
 	.can_sleep		= true,
-};
+पूर्ण;
 
-static int tps65086_gpio_probe(struct platform_device *pdev)
-{
-	struct tps65086_gpio *gpio;
-	int ret;
+अटल पूर्णांक tps65086_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tps65086_gpio *gpio;
+	पूर्णांक ret;
 
-	gpio = devm_kzalloc(&pdev->dev, sizeof(*gpio), GFP_KERNEL);
-	if (!gpio)
-		return -ENOMEM;
+	gpio = devm_kzalloc(&pdev->dev, माप(*gpio), GFP_KERNEL);
+	अगर (!gpio)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, gpio);
+	platक्रमm_set_drvdata(pdev, gpio);
 
 	gpio->tps = dev_get_drvdata(pdev->dev.parent);
-	gpio->chip = template_chip;
+	gpio->chip = ढाँचा_chip;
 	gpio->chip.parent = gpio->tps->dev;
 
 	ret = gpiochip_add_data(&gpio->chip, gpio);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Could not register gpiochip, %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tps65086_gpio_remove(struct platform_device *pdev)
-{
-	struct tps65086_gpio *gpio = platform_get_drvdata(pdev);
+अटल पूर्णांक tps65086_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tps65086_gpio *gpio = platक्रमm_get_drvdata(pdev);
 
-	gpiochip_remove(&gpio->chip);
+	gpiochip_हटाओ(&gpio->chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id tps65086_gpio_id_table[] = {
-	{ "tps65086-gpio", },
-	{ /* sentinel */ }
-};
-MODULE_DEVICE_TABLE(platform, tps65086_gpio_id_table);
+अटल स्थिर काष्ठा platक्रमm_device_id tps65086_gpio_id_table[] = अणु
+	अणु "tps65086-gpio", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, tps65086_gpio_id_table);
 
-static struct platform_driver tps65086_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver tps65086_gpio_driver = अणु
+	.driver = अणु
 		.name = "tps65086-gpio",
-	},
+	पूर्ण,
 	.probe = tps65086_gpio_probe,
-	.remove = tps65086_gpio_remove,
+	.हटाओ = tps65086_gpio_हटाओ,
 	.id_table = tps65086_gpio_id_table,
-};
-module_platform_driver(tps65086_gpio_driver);
+पूर्ण;
+module_platक्रमm_driver(tps65086_gpio_driver);
 
 MODULE_AUTHOR("Andrew F. Davis <afd@ti.com>");
 MODULE_DESCRIPTION("TPS65086 GPIO driver");

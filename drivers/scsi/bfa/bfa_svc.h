@@ -1,176 +1,177 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2005-2014 Brocade Communications Systems, Inc.
  * Copyright (c) 2014- QLogic Corporation.
  * All rights reserved
  * www.qlogic.com
  *
- * Linux driver for QLogic BR-series Fibre Channel Host Bus Adapter.
+ * Linux driver क्रम QLogic BR-series Fibre Channel Host Bus Adapter.
  */
 
-#ifndef __BFA_SVC_H__
-#define __BFA_SVC_H__
+#अगर_अघोषित __BFA_SVC_H__
+#घोषणा __BFA_SVC_H__
 
-#include "bfa_cs.h"
-#include "bfi_ms.h"
+#समावेश "bfa_cs.h"
+#समावेश "bfi_ms.h"
 
 
 /*
  * Scatter-gather DMA related defines
  */
-#define BFA_SGPG_MIN	(16)
-#define BFA_SGPG_MAX	(8192)
+#घोषणा BFA_SGPG_MIN	(16)
+#घोषणा BFA_SGPG_MAX	(8192)
 
 /*
- * Alignment macro for SG page allocation
+ * Alignment macro क्रम SG page allocation
  */
-#define BFA_SGPG_ROUNDUP(_l) (((_l) + (sizeof(struct bfi_sgpg_s) - 1))	\
-			      & ~(sizeof(struct bfi_sgpg_s) - 1))
+#घोषणा BFA_SGPG_ROUNDUP(_l) (((_l) + (माप(काष्ठा bfi_sgpg_s) - 1))	\
+			      & ~(माप(काष्ठा bfi_sgpg_s) - 1))
 
-struct bfa_sgpg_wqe_s {
-	struct list_head qe;	/*  queue sg page element	*/
-	int	nsgpg;		/*  pages to be allocated	*/
-	int	nsgpg_total;	/*  total pages required	*/
-	void	(*cbfn) (void *cbarg);	/*  callback function	*/
-	void	*cbarg;		/*  callback arg		*/
-	struct list_head sgpg_q;	/*  queue of alloced sgpgs	*/
-};
+काष्ठा bfa_sgpg_wqe_s अणु
+	काष्ठा list_head qe;	/*  queue sg page element	*/
+	पूर्णांक	nsgpg;		/*  pages to be allocated	*/
+	पूर्णांक	nsgpg_total;	/*  total pages required	*/
+	व्योम	(*cbfn) (व्योम *cbarg);	/*  callback function	*/
+	व्योम	*cbarg;		/*  callback arg		*/
+	काष्ठा list_head sgpg_q;	/*  queue of alloced sgpgs	*/
+पूर्ण;
 
-struct bfa_sgpg_s {
-	struct list_head  qe;	/*  queue sg page element	*/
-	struct bfi_sgpg_s *sgpg;	/*  va of SG page		*/
-	union bfi_addr_u sgpg_pa;	/*  pa of SG page		*/
-};
+काष्ठा bfa_sgpg_s अणु
+	काष्ठा list_head  qe;	/*  queue sg page element	*/
+	काष्ठा bfi_sgpg_s *sgpg;	/*  va of SG page		*/
+	जोड़ bfi_addr_u sgpg_pa;	/*  pa of SG page		*/
+पूर्ण;
 
 /*
- * Given number of SG elements, BFA_SGPG_NPAGE() returns the number of
+ * Given number of SG elements, BFA_SGPG_NPAGE() वापसs the number of
  * SG pages required.
  */
-#define BFA_SGPG_NPAGE(_nsges)  (((_nsges) / BFI_SGPG_DATA_SGES) + 1)
+#घोषणा BFA_SGPG_NPAGE(_nsges)  (((_nsges) / BFI_SGPG_DATA_SGES) + 1)
 
 /* Max SGPG dma segs required */
-#define BFA_SGPG_DMA_SEGS	\
-	BFI_MEM_DMA_NSEGS(BFA_SGPG_MAX, (uint32_t)sizeof(struct bfi_sgpg_s))
+#घोषणा BFA_SGPG_DMA_SEGS	\
+	BFI_MEM_DMA_NSEGS(BFA_SGPG_MAX, (uपूर्णांक32_t)माप(काष्ठा bfi_sgpg_s))
 
-struct bfa_sgpg_mod_s {
-	struct bfa_s *bfa;
-	int		num_sgpgs;	/*  number of SG pages		*/
-	int		free_sgpgs;	/*  number of free SG pages	*/
-	struct list_head	sgpg_q;		/*  queue of free SG pages */
-	struct list_head	sgpg_wait_q;	/*  wait queue for SG pages */
-	struct bfa_mem_dma_s	dma_seg[BFA_SGPG_DMA_SEGS];
-	struct bfa_mem_kva_s	kva_seg;
-};
-#define BFA_SGPG_MOD(__bfa)	(&(__bfa)->modules.sgpg_mod)
-#define BFA_MEM_SGPG_KVA(__bfa) (&(BFA_SGPG_MOD(__bfa)->kva_seg))
+काष्ठा bfa_sgpg_mod_s अणु
+	काष्ठा bfa_s *bfa;
+	पूर्णांक		num_sgpgs;	/*  number of SG pages		*/
+	पूर्णांक		मुक्त_sgpgs;	/*  number of मुक्त SG pages	*/
+	काष्ठा list_head	sgpg_q;		/*  queue of मुक्त SG pages */
+	काष्ठा list_head	sgpg_रुको_q;	/*  रुको queue क्रम SG pages */
+	काष्ठा bfa_mem_dma_s	dma_seg[BFA_SGPG_DMA_SEGS];
+	काष्ठा bfa_mem_kva_s	kva_seg;
+पूर्ण;
+#घोषणा BFA_SGPG_MOD(__bfa)	(&(__bfa)->modules.sgpg_mod)
+#घोषणा BFA_MEM_SGPG_KVA(__bfa) (&(BFA_SGPG_MOD(__bfa)->kva_seg))
 
-bfa_status_t bfa_sgpg_malloc(struct bfa_s *bfa, struct list_head *sgpg_q,
-			     int nsgpgs);
-void bfa_sgpg_mfree(struct bfa_s *bfa, struct list_head *sgpg_q, int nsgpgs);
-void bfa_sgpg_winit(struct bfa_sgpg_wqe_s *wqe,
-		    void (*cbfn) (void *cbarg), void *cbarg);
-void bfa_sgpg_wait(struct bfa_s *bfa, struct bfa_sgpg_wqe_s *wqe, int nsgpgs);
-void bfa_sgpg_wcancel(struct bfa_s *bfa, struct bfa_sgpg_wqe_s *wqe);
+bfa_status_t bfa_sgpg_दो_स्मृति(काष्ठा bfa_s *bfa, काष्ठा list_head *sgpg_q,
+			     पूर्णांक nsgpgs);
+व्योम bfa_sgpg_mमुक्त(काष्ठा bfa_s *bfa, काष्ठा list_head *sgpg_q, पूर्णांक nsgpgs);
+व्योम bfa_sgpg_winit(काष्ठा bfa_sgpg_wqe_s *wqe,
+		    व्योम (*cbfn) (व्योम *cbarg), व्योम *cbarg);
+व्योम bfa_sgpg_रुको(काष्ठा bfa_s *bfa, काष्ठा bfa_sgpg_wqe_s *wqe, पूर्णांक nsgpgs);
+व्योम bfa_sgpg_wcancel(काष्ठा bfa_s *bfa, काष्ठा bfa_sgpg_wqe_s *wqe);
 
 
 /*
  * FCXP related defines
  */
-#define BFA_FCXP_MIN		(1)
-#define BFA_FCXP_MAX		(256)
-#define BFA_FCXP_MAX_IBUF_SZ	(2 * 1024 + 256)
-#define BFA_FCXP_MAX_LBUF_SZ	(4 * 1024 + 256)
+#घोषणा BFA_FCXP_MIN		(1)
+#घोषणा BFA_FCXP_MAX		(256)
+#घोषणा BFA_FCXP_MAX_IBUF_SZ	(2 * 1024 + 256)
+#घोषणा BFA_FCXP_MAX_LBUF_SZ	(4 * 1024 + 256)
 
 /* Max FCXP dma segs required */
-#define BFA_FCXP_DMA_SEGS						\
+#घोषणा BFA_FCXP_DMA_SEGS						\
 	BFI_MEM_DMA_NSEGS(BFA_FCXP_MAX,					\
 		(u32)BFA_FCXP_MAX_IBUF_SZ + BFA_FCXP_MAX_LBUF_SZ)
 
-struct bfa_fcxp_mod_s {
-	struct bfa_s      *bfa;		/* backpointer to BFA */
-	struct bfa_fcxp_s *fcxp_list;	/* array of FCXPs */
+काष्ठा bfa_fcxp_mod_s अणु
+	काष्ठा bfa_s      *bfa;		/* backpoपूर्णांकer to BFA */
+	काष्ठा bfa_fcxp_s *fcxp_list;	/* array of FCXPs */
 	u16	num_fcxps;	/* max num FCXP requests */
-	struct list_head fcxp_req_free_q; /* free FCXPs used for sending req */
-	struct list_head fcxp_rsp_free_q; /* free FCXPs used for sending req */
-	struct list_head fcxp_active_q;	/* active FCXPs */
-	struct list_head req_wait_q;	/* wait queue for free req_fcxp */
-	struct list_head rsp_wait_q;	/* wait queue for free rsp_fcxp */
-	struct list_head fcxp_req_unused_q;	/* unused req_fcxps */
-	struct list_head fcxp_rsp_unused_q;	/* unused rsp_fcxps */
+	काष्ठा list_head fcxp_req_मुक्त_q; /* मुक्त FCXPs used क्रम sending req */
+	काष्ठा list_head fcxp_rsp_मुक्त_q; /* मुक्त FCXPs used क्रम sending req */
+	काष्ठा list_head fcxp_active_q;	/* active FCXPs */
+	काष्ठा list_head req_रुको_q;	/* रुको queue क्रम मुक्त req_fcxp */
+	काष्ठा list_head rsp_रुको_q;	/* रुको queue क्रम मुक्त rsp_fcxp */
+	काष्ठा list_head fcxp_req_unused_q;	/* unused req_fcxps */
+	काष्ठा list_head fcxp_rsp_unused_q;	/* unused rsp_fcxps */
 	u32	req_pld_sz;
 	u32	rsp_pld_sz;
-	struct bfa_mem_dma_s dma_seg[BFA_FCXP_DMA_SEGS];
-	struct bfa_mem_kva_s kva_seg;
-};
+	काष्ठा bfa_mem_dma_s dma_seg[BFA_FCXP_DMA_SEGS];
+	काष्ठा bfa_mem_kva_s kva_seg;
+पूर्ण;
 
-#define BFA_FCXP_MOD(__bfa)		(&(__bfa)->modules.fcxp_mod)
-#define BFA_FCXP_FROM_TAG(__mod, __tag)	(&(__mod)->fcxp_list[__tag])
-#define BFA_MEM_FCXP_KVA(__bfa) (&(BFA_FCXP_MOD(__bfa)->kva_seg))
+#घोषणा BFA_FCXP_MOD(__bfa)		(&(__bfa)->modules.fcxp_mod)
+#घोषणा BFA_FCXP_FROM_TAG(__mod, __tag)	(&(__mod)->fcxp_list[__tag])
+#घोषणा BFA_MEM_FCXP_KVA(__bfa) (&(BFA_FCXP_MOD(__bfa)->kva_seg))
 
-typedef void    (*fcxp_send_cb_t) (struct bfa_s *ioc, struct bfa_fcxp_s *fcxp,
-				   void *cb_arg, bfa_status_t req_status,
+प्रकार व्योम    (*fcxp_send_cb_t) (काष्ठा bfa_s *ioc, काष्ठा bfa_fcxp_s *fcxp,
+				   व्योम *cb_arg, bfa_status_t req_status,
 				   u32 rsp_len, u32 resid_len,
-				   struct fchs_s *rsp_fchs);
+				   काष्ठा fchs_s *rsp_fchs);
 
-typedef u64 (*bfa_fcxp_get_sgaddr_t) (void *bfad_fcxp, int sgeid);
-typedef u32 (*bfa_fcxp_get_sglen_t) (void *bfad_fcxp, int sgeid);
-typedef void (*bfa_cb_fcxp_send_t) (void *bfad_fcxp, struct bfa_fcxp_s *fcxp,
-				    void *cbarg, enum bfa_status req_status,
+प्रकार u64 (*bfa_fcxp_get_sgaddr_t) (व्योम *bfad_fcxp, पूर्णांक sgeid);
+प्रकार u32 (*bfa_fcxp_get_sglen_t) (व्योम *bfad_fcxp, पूर्णांक sgeid);
+प्रकार व्योम (*bfa_cb_fcxp_send_t) (व्योम *bfad_fcxp, काष्ठा bfa_fcxp_s *fcxp,
+				    व्योम *cbarg, क्रमागत bfa_status req_status,
 				    u32 rsp_len, u32 resid_len,
-				    struct fchs_s *rsp_fchs);
-typedef void (*bfa_fcxp_alloc_cbfn_t) (void *cbarg, struct bfa_fcxp_s *fcxp);
+				    काष्ठा fchs_s *rsp_fchs);
+प्रकार व्योम (*bfa_fcxp_alloc_cbfn_t) (व्योम *cbarg, काष्ठा bfa_fcxp_s *fcxp);
 
 
 
 /*
- * Information needed for a FCXP request
+ * Inक्रमmation needed क्रम a FCXP request
  */
-struct bfa_fcxp_req_info_s {
-	struct bfa_rport_s *bfa_rport;
-					/* Pointer to the bfa rport that was
-					 * returned from bfa_rport_create().
-					 * This could be left NULL for WKA or
-					 * for FCXP interactions before the
+काष्ठा bfa_fcxp_req_info_s अणु
+	काष्ठा bfa_rport_s *bfa_rport;
+					/* Poपूर्णांकer to the bfa rport that was
+					 * वापसed from bfa_rport_create().
+					 * This could be left शून्य क्रम WKA or
+					 * क्रम FCXP पूर्णांकeractions beक्रमe the
 					 * rport nexus is established
 					 */
-	struct fchs_s	fchs;	/*  request FC header structure */
+	काष्ठा fchs_s	fchs;	/*  request FC header काष्ठाure */
 	u8		cts;	/*  continuous sequence */
-	u8		class;	/*  FC class for the request/response */
+	u8		class;	/*  FC class क्रम the request/response */
 	u16	max_frmsz;	/*  max send frame size */
-	u16	vf_id;	/*  vsan tag if applicable */
+	u16	vf_id;	/*  vsan tag अगर applicable */
 	u8		lp_tag;	/*  lport tag */
 	u32	req_tot_len;	/*  request payload total length */
-};
+पूर्ण;
 
-struct bfa_fcxp_rsp_info_s {
-	struct fchs_s	rsp_fchs;
+काष्ठा bfa_fcxp_rsp_info_s अणु
+	काष्ठा fchs_s	rsp_fchs;
 				/* Response frame's FC header will
 				 * be sent back in this field */
-	u8		rsp_timeout;
-				/* timeout in seconds, 0-no response */
+	u8		rsp_समयout;
+				/* समयout in seconds, 0-no response */
 	u8		rsvd2[3];
 	u32	rsp_maxlen;	/*  max response length expected */
-};
+पूर्ण;
 
-struct bfa_fcxp_s {
-	struct list_head	qe;		/*  fcxp queue element */
+काष्ठा bfa_fcxp_s अणु
+	काष्ठा list_head	qe;		/*  fcxp queue element */
 	bfa_sm_t	sm;		/*  state machine */
-	void		*caller;	/*  driver or fcs */
-	struct bfa_fcxp_mod_s *fcxp_mod;
-	/*  back pointer to fcxp mod */
-	u16	fcxp_tag;	/*  internal tag */
-	struct bfa_fcxp_req_info_s req_info;
+	व्योम		*caller;	/*  driver or fcs */
+	काष्ठा bfa_fcxp_mod_s *fcxp_mod;
+	/*  back poपूर्णांकer to fcxp mod */
+	u16	fcxp_tag;	/*  पूर्णांकernal tag */
+	काष्ठा bfa_fcxp_req_info_s req_info;
 	/*  request info */
-	struct bfa_fcxp_rsp_info_s rsp_info;
+	काष्ठा bfa_fcxp_rsp_info_s rsp_info;
 	/*  response info */
-	u8	use_ireqbuf;	/*  use internal req buf */
-	u8		use_irspbuf;	/*  use internal rsp buf */
+	u8	use_ireqbuf;	/*  use पूर्णांकernal req buf */
+	u8		use_irspbuf;	/*  use पूर्णांकernal rsp buf */
 	u32	nreq_sgles;	/*  num request SGLEs */
 	u32	nrsp_sgles;	/*  num response SGLEs */
-	struct list_head req_sgpg_q;	/*  SG pages for request buf */
-	struct list_head req_sgpg_wqe;	/*  wait queue for req SG page */
-	struct list_head rsp_sgpg_q;	/*  SG pages for response buf */
-	struct list_head rsp_sgpg_wqe;	/*  wait queue for rsp SG page */
+	काष्ठा list_head req_sgpg_q;	/*  SG pages क्रम request buf */
+	काष्ठा list_head req_sgpg_wqe;	/*  रुको queue क्रम req SG page */
+	काष्ठा list_head rsp_sgpg_q;	/*  SG pages क्रम response buf */
+	काष्ठा list_head rsp_sgpg_wqe;	/*  रुको queue क्रम rsp SG page */
 
 	bfa_fcxp_get_sgaddr_t req_sga_cbfn;
 	/*  SG elem addr user function */
@@ -181,56 +182,56 @@ struct bfa_fcxp_s {
 	bfa_fcxp_get_sglen_t rsp_sglen_cbfn;
 	/*  SG elem len user function */
 	bfa_cb_fcxp_send_t send_cbfn;   /*  send completion callback */
-	void		*send_cbarg;	/*  callback arg */
-	struct bfa_sge_s   req_sge[BFA_FCXP_MAX_SGES];
+	व्योम		*send_cbarg;	/*  callback arg */
+	काष्ठा bfa_sge_s   req_sge[BFA_FCXP_MAX_SGES];
 	/*  req SG elems */
-	struct bfa_sge_s   rsp_sge[BFA_FCXP_MAX_SGES];
+	काष्ठा bfa_sge_s   rsp_sge[BFA_FCXP_MAX_SGES];
 	/*  rsp SG elems */
 	u8		rsp_status;	/*  comp: rsp status */
 	u32	rsp_len;	/*  comp: actual response len */
 	u32	residue_len;	/*  comp: residual rsp length */
-	struct fchs_s	rsp_fchs;	/*  comp: response fchs */
-	struct bfa_cb_qe_s    hcb_qe;	/*  comp: callback qelem */
-	struct bfa_reqq_wait_s	reqq_wqe;
-	bfa_boolean_t	reqq_waiting;
+	काष्ठा fchs_s	rsp_fchs;	/*  comp: response fchs */
+	काष्ठा bfa_cb_qe_s    hcb_qe;	/*  comp: callback qelem */
+	काष्ठा bfa_reqq_रुको_s	reqq_wqe;
+	bfa_boolean_t	reqq_रुकोing;
 	bfa_boolean_t	req_rsp;	/* Used to track req/rsp fcxp */
-};
+पूर्ण;
 
-struct bfa_fcxp_wqe_s {
-	struct list_head		qe;
+काष्ठा bfa_fcxp_wqe_s अणु
+	काष्ठा list_head		qe;
 	bfa_fcxp_alloc_cbfn_t	alloc_cbfn;
-	void		*alloc_cbarg;
-	void		*caller;
-	struct bfa_s	*bfa;
-	int		nreq_sgles;
-	int		nrsp_sgles;
+	व्योम		*alloc_cbarg;
+	व्योम		*caller;
+	काष्ठा bfa_s	*bfa;
+	पूर्णांक		nreq_sgles;
+	पूर्णांक		nrsp_sgles;
 	bfa_fcxp_get_sgaddr_t	req_sga_cbfn;
 	bfa_fcxp_get_sglen_t	req_sglen_cbfn;
 	bfa_fcxp_get_sgaddr_t	rsp_sga_cbfn;
 	bfa_fcxp_get_sglen_t	rsp_sglen_cbfn;
-};
+पूर्ण;
 
-#define BFA_FCXP_REQ_PLD(_fcxp)		(bfa_fcxp_get_reqbuf(_fcxp))
-#define BFA_FCXP_RSP_FCHS(_fcxp)	(&((_fcxp)->rsp_info.fchs))
-#define BFA_FCXP_RSP_PLD(_fcxp)		(bfa_fcxp_get_rspbuf(_fcxp))
+#घोषणा BFA_FCXP_REQ_PLD(_fcxp)		(bfa_fcxp_get_reqbuf(_fcxp))
+#घोषणा BFA_FCXP_RSP_FCHS(_fcxp)	(&((_fcxp)->rsp_info.fchs))
+#घोषणा BFA_FCXP_RSP_PLD(_fcxp)		(bfa_fcxp_get_rspbuf(_fcxp))
 
-#define BFA_FCXP_REQ_PLD_PA(_fcxp)					      \
+#घोषणा BFA_FCXP_REQ_PLD_PA(_fcxp)					      \
 	bfa_mem_get_dmabuf_pa((_fcxp)->fcxp_mod, (_fcxp)->fcxp_tag,	      \
 		(_fcxp)->fcxp_mod->req_pld_sz + (_fcxp)->fcxp_mod->rsp_pld_sz)
 
 /* fcxp_buf = req_buf + rsp_buf :- add req_buf_sz to get to rsp_buf */
-#define BFA_FCXP_RSP_PLD_PA(_fcxp)					       \
+#घोषणा BFA_FCXP_RSP_PLD_PA(_fcxp)					       \
 	(bfa_mem_get_dmabuf_pa((_fcxp)->fcxp_mod, (_fcxp)->fcxp_tag,	       \
 	      (_fcxp)->fcxp_mod->req_pld_sz + (_fcxp)->fcxp_mod->rsp_pld_sz) + \
 	      (_fcxp)->fcxp_mod->req_pld_sz)
 
-void	bfa_fcxp_isr(struct bfa_s *bfa, struct bfi_msg_s *msg);
+व्योम	bfa_fcxp_isr(काष्ठा bfa_s *bfa, काष्ठा bfi_msg_s *msg);
 
 
 /*
  * RPORT related defines
  */
-enum bfa_rport_event {
+क्रमागत bfa_rport_event अणु
 	BFA_RPORT_SM_CREATE	= 1,	/*  rport create event          */
 	BFA_RPORT_SM_DELETE	= 2,	/*  deleting an existing rport  */
 	BFA_RPORT_SM_ONLINE	= 3,	/*  rport is online             */
@@ -240,161 +241,161 @@ enum bfa_rport_event {
 	BFA_RPORT_SM_QOS_SCN	= 7,	/*  QoS SCN from firmware       */
 	BFA_RPORT_SM_SET_SPEED	= 8,	/*  Set Rport Speed             */
 	BFA_RPORT_SM_QRESUME	= 9,	/*  space in requeue queue      */
-};
+पूर्ण;
 
-#define BFA_RPORT_MIN	4
+#घोषणा BFA_RPORT_MIN	4
 
-struct bfa_rport_mod_s {
-	struct bfa_rport_s *rps_list;	/*  list of rports	*/
-	struct list_head	rp_free_q;	/*  free bfa_rports	*/
-	struct list_head	rp_active_q;	/*  free bfa_rports	*/
-	struct list_head	rp_unused_q;	/*  unused bfa rports  */
+काष्ठा bfa_rport_mod_s अणु
+	काष्ठा bfa_rport_s *rps_list;	/*  list of rports	*/
+	काष्ठा list_head	rp_मुक्त_q;	/*  मुक्त bfa_rports	*/
+	काष्ठा list_head	rp_active_q;	/*  मुक्त bfa_rports	*/
+	काष्ठा list_head	rp_unused_q;	/*  unused bfa rports  */
 	u16	num_rports;	/*  number of rports	*/
-	struct bfa_mem_kva_s	kva_seg;
-};
+	काष्ठा bfa_mem_kva_s	kva_seg;
+पूर्ण;
 
-#define BFA_RPORT_MOD(__bfa)	(&(__bfa)->modules.rport_mod)
-#define BFA_MEM_RPORT_KVA(__bfa) (&(BFA_RPORT_MOD(__bfa)->kva_seg))
+#घोषणा BFA_RPORT_MOD(__bfa)	(&(__bfa)->modules.rport_mod)
+#घोषणा BFA_MEM_RPORT_KVA(__bfa) (&(BFA_RPORT_MOD(__bfa)->kva_seg))
 
 /*
  * Convert rport tag to RPORT
  */
-#define BFA_RPORT_FROM_TAG(__bfa, _tag)				\
+#घोषणा BFA_RPORT_FROM_TAG(__bfa, _tag)				\
 	(BFA_RPORT_MOD(__bfa)->rps_list +			\
 	 ((_tag) & (BFA_RPORT_MOD(__bfa)->num_rports - 1)))
 
 /*
- * protected functions
+ * रक्षित functions
  */
-void	bfa_rport_isr(struct bfa_s *bfa, struct bfi_msg_s *msg);
-void	bfa_rport_res_recfg(struct bfa_s *bfa, u16 num_rport_fw);
+व्योम	bfa_rport_isr(काष्ठा bfa_s *bfa, काष्ठा bfi_msg_s *msg);
+व्योम	bfa_rport_res_recfg(काष्ठा bfa_s *bfa, u16 num_rport_fw);
 
 /*
- *	BFA rport information.
+ *	BFA rport inक्रमmation.
  */
-struct bfa_rport_info_s {
+काष्ठा bfa_rport_info_s अणु
 	u16	max_frmsz;	/*  max rcv pdu size		    */
 	u32	pid:24,	/*  remote port ID		    */
 		lp_tag:8;	/*  tag			    */
 	u32	local_pid:24,	/*  local port ID		    */
 		cisc:8;	/*  CIRO supported		    */
-	u8	fc_class;	/*  supported FC classes. enum fc_cos */
-	u8	vf_en;		/*  virtual fabric enable	    */
-	u16	vf_id;		/*  virtual fabric ID		    */
-	enum bfa_port_speed speed;	/*  Rport's current speed	    */
-};
+	u8	fc_class;	/*  supported FC classes. क्रमागत fc_cos */
+	u8	vf_en;		/*  भव fabric enable	    */
+	u16	vf_id;		/*  भव fabric ID		    */
+	क्रमागत bfa_port_speed speed;	/*  Rport's current speed	    */
+पूर्ण;
 
 /*
- * BFA rport data structure
+ * BFA rport data काष्ठाure
  */
-struct bfa_rport_s {
-	struct list_head	qe;	/*  queue element		    */
+काष्ठा bfa_rport_s अणु
+	काष्ठा list_head	qe;	/*  queue element		    */
 	bfa_sm_t	sm;		/*  state machine		    */
-	struct bfa_s	*bfa;		/*  backpointer to BFA		    */
-	void		*rport_drv;	/*  fcs/driver rport object	    */
+	काष्ठा bfa_s	*bfa;		/*  backpoपूर्णांकer to BFA		    */
+	व्योम		*rport_drv;	/*  fcs/driver rport object	    */
 	u16	fw_handle;	/*  firmware rport handle	    */
 	u16	rport_tag;	/*  BFA rport tag		    */
 	u8	lun_mask;	/*  LUN mask flag		    */
-	struct bfa_rport_info_s rport_info; /*  rport info from fcs/driver */
-	struct bfa_reqq_wait_s reqq_wait; /*  to wait for room in reqq     */
-	struct bfa_cb_qe_s hcb_qe;	/*  BFA callback qelem		    */
-	struct bfa_rport_hal_stats_s stats; /*  BFA rport statistics	    */
-	struct bfa_rport_qos_attr_s qos_attr;
-	union a {
+	काष्ठा bfa_rport_info_s rport_info; /*  rport info from fcs/driver */
+	काष्ठा bfa_reqq_रुको_s reqq_रुको; /*  to रुको क्रम room in reqq     */
+	काष्ठा bfa_cb_qe_s hcb_qe;	/*  BFA callback qelem		    */
+	काष्ठा bfa_rport_hal_stats_s stats; /*  BFA rport statistics	    */
+	काष्ठा bfa_rport_qos_attr_s qos_attr;
+	जोड़ a अणु
 		bfa_status_t	status;	/*  f/w status */
-		void		*fw_msg; /*  QoS scn event		    */
-	} event_arg;
-};
-#define BFA_RPORT_FC_COS(_rport)	((_rport)->rport_info.fc_class)
+		व्योम		*fw_msg; /*  QoS scn event		    */
+	पूर्ण event_arg;
+पूर्ण;
+#घोषणा BFA_RPORT_FC_COS(_rport)	((_rport)->rport_info.fc_class)
 
 
 /*
  * UF - unsolicited receive related defines
  */
 
-#define BFA_UF_MIN	(4)
-#define BFA_UF_MAX	(256)
+#घोषणा BFA_UF_MIN	(4)
+#घोषणा BFA_UF_MAX	(256)
 
-struct bfa_uf_s {
-	struct list_head	qe;	/*  queue element		*/
-	struct bfa_s		*bfa;	/*  bfa instance		*/
-	u16	uf_tag;		/*  identifying tag fw msgs	*/
+काष्ठा bfa_uf_s अणु
+	काष्ठा list_head	qe;	/*  queue element		*/
+	काष्ठा bfa_s		*bfa;	/*  bfa instance		*/
+	u16	uf_tag;		/*  identअगरying tag fw msgs	*/
 	u16	vf_id;
 	u16	src_rport_handle;
 	u16	rsvd;
 	u8		*data_ptr;
 	u16	data_len;	/*  actual receive length	*/
 	u16	pb_len;		/*  posted buffer length	*/
-	void		*buf_kva;	/*  buffer virtual address	*/
+	व्योम		*buf_kva;	/*  buffer भव address	*/
 	u64	buf_pa;		/*  buffer physical address	*/
-	struct bfa_cb_qe_s hcb_qe;	/*  comp: BFA comp qelem	*/
-	struct bfa_sge_s sges[BFI_SGE_INLINE_MAX];
-};
+	काष्ठा bfa_cb_qe_s hcb_qe;	/*  comp: BFA comp qelem	*/
+	काष्ठा bfa_sge_s sges[BFI_SGE_INLINE_MAX];
+पूर्ण;
 
 /*
- *      Callback prototype for unsolicited frame receive handler.
+ *      Callback prototype क्रम unsolicited frame receive handler.
  *
- * @param[in]           cbarg           callback arg for receive handler
+ * @param[in]           cbarg           callback arg क्रम receive handler
  * @param[in]           uf              unsolicited frame descriptor
  *
- * @return None
+ * @वापस None
  */
-typedef void (*bfa_cb_uf_recv_t) (void *cbarg, struct bfa_uf_s *uf);
+प्रकार व्योम (*bfa_cb_uf_recv_t) (व्योम *cbarg, काष्ठा bfa_uf_s *uf);
 
-#define BFA_UF_BUFSZ	(2 * 1024 + 256)
+#घोषणा BFA_UF_BUFSZ	(2 * 1024 + 256)
 
-struct bfa_uf_buf_s {
+काष्ठा bfa_uf_buf_s अणु
 	u8	d[BFA_UF_BUFSZ];
-};
+पूर्ण;
 
-#define BFA_PER_UF_DMA_SZ	\
-	(u32)BFA_ROUNDUP(sizeof(struct bfa_uf_buf_s), BFA_DMA_ALIGN_SZ)
+#घोषणा BFA_PER_UF_DMA_SZ	\
+	(u32)BFA_ROUNDUP(माप(काष्ठा bfa_uf_buf_s), BFA_DMA_ALIGN_SZ)
 
 /* Max UF dma segs required */
-#define BFA_UF_DMA_SEGS BFI_MEM_DMA_NSEGS(BFA_UF_MAX, BFA_PER_UF_DMA_SZ)
+#घोषणा BFA_UF_DMA_SEGS BFI_MEM_DMA_NSEGS(BFA_UF_MAX, BFA_PER_UF_DMA_SZ)
 
-struct bfa_uf_mod_s {
-	struct bfa_s *bfa;		/*  back pointer to BFA */
-	struct bfa_uf_s *uf_list;	/*  array of UFs */
+काष्ठा bfa_uf_mod_s अणु
+	काष्ठा bfa_s *bfa;		/*  back poपूर्णांकer to BFA */
+	काष्ठा bfa_uf_s *uf_list;	/*  array of UFs */
 	u16	num_ufs;	/*  num unsolicited rx frames */
-	struct list_head	uf_free_q;	/*  free UFs */
-	struct list_head	uf_posted_q;	/*  UFs posted to IOC */
-	struct list_head	uf_unused_q;	/*  unused UF's */
-	struct bfi_uf_buf_post_s *uf_buf_posts;
+	काष्ठा list_head	uf_मुक्त_q;	/*  मुक्त UFs */
+	काष्ठा list_head	uf_posted_q;	/*  UFs posted to IOC */
+	काष्ठा list_head	uf_unused_q;	/*  unused UF's */
+	काष्ठा bfi_uf_buf_post_s *uf_buf_posts;
 	/*  pre-built UF post msgs */
 	bfa_cb_uf_recv_t ufrecv;	/*  uf recv handler function */
-	void		*cbarg;		/*  uf receive handler arg */
-	struct bfa_mem_dma_s	dma_seg[BFA_UF_DMA_SEGS];
-	struct bfa_mem_kva_s	kva_seg;
-};
+	व्योम		*cbarg;		/*  uf receive handler arg */
+	काष्ठा bfa_mem_dma_s	dma_seg[BFA_UF_DMA_SEGS];
+	काष्ठा bfa_mem_kva_s	kva_seg;
+पूर्ण;
 
-#define BFA_UF_MOD(__bfa)	(&(__bfa)->modules.uf_mod)
-#define BFA_MEM_UF_KVA(__bfa)	(&(BFA_UF_MOD(__bfa)->kva_seg))
+#घोषणा BFA_UF_MOD(__bfa)	(&(__bfa)->modules.uf_mod)
+#घोषणा BFA_MEM_UF_KVA(__bfa)	(&(BFA_UF_MOD(__bfa)->kva_seg))
 
-#define ufm_pbs_pa(_ufmod, _uftag)					\
-	bfa_mem_get_dmabuf_pa(_ufmod, _uftag, BFA_PER_UF_DMA_SZ)
+#घोषणा ufm_pbs_pa(_uभ_शेष, _uftag)					\
+	bfa_mem_get_dmabuf_pa(_uभ_शेष, _uftag, BFA_PER_UF_DMA_SZ)
 
-void	bfa_uf_isr(struct bfa_s *bfa, struct bfi_msg_s *msg);
-void	bfa_uf_res_recfg(struct bfa_s *bfa, u16 num_uf_fw);
+व्योम	bfa_uf_isr(काष्ठा bfa_s *bfa, काष्ठा bfi_msg_s *msg);
+व्योम	bfa_uf_res_recfg(काष्ठा bfa_s *bfa, u16 num_uf_fw);
 
 /*
- * LPS - bfa lport login/logout service interface
+ * LPS - bfa lport login/logout service पूर्णांकerface
  */
-struct bfa_lps_s {
-	struct list_head	qe;	/*  queue element		*/
-	struct bfa_s	*bfa;		/*  parent bfa instance	*/
+काष्ठा bfa_lps_s अणु
+	काष्ठा list_head	qe;	/*  queue element		*/
+	काष्ठा bfa_s	*bfa;		/*  parent bfa instance	*/
 	bfa_sm_t	sm;		/*  finite state machine	*/
 	u8		bfa_tag;	/*  lport tag		*/
 	u8		fw_tag;		/*  lport fw tag                */
 	u8		reqq;		/*  lport request queue	*/
-	u8		alpa;		/*  ALPA for loop topologies	*/
+	u8		alpa;		/*  ALPA क्रम loop topologies	*/
 	u32	lp_pid;		/*  lport port ID		*/
 	bfa_boolean_t	fdisc;		/*  snd FDISC instead of FLOGI	*/
 	bfa_boolean_t	auth_en;	/*  enable authentication	*/
 	bfa_boolean_t	auth_req;	/*  authentication required	*/
 	bfa_boolean_t	npiv_en;	/*  NPIV is allowed by peer	*/
 	bfa_boolean_t	fport;		/*  attached peer is F_PORT	*/
-	bfa_boolean_t	brcd_switch;	/*  attached peer is brcd sw	*/
+	bfa_boolean_t	brcd_चयन;	/*  attached peer is brcd sw	*/
 	bfa_status_t	status;		/*  login status		*/
 	u16		pdusz;		/*  max receive PDU size	*/
 	u16		pr_bbcred;	/*  BB_CREDIT from peer		*/
@@ -405,352 +406,352 @@ struct bfa_lps_s {
 	wwn_t		nwwn;		/*  node wwn of lport		*/
 	wwn_t		pr_pwwn;	/*  port wwn of lport peer	*/
 	wwn_t		pr_nwwn;	/*  node wwn of lport peer	*/
-	mac_t		lp_mac;		/*  fpma/spma MAC for lport	*/
+	mac_t		lp_mac;		/*  fpma/spma MAC क्रम lport	*/
 	mac_t		fcf_mac;	/*  FCF MAC of lport		*/
-	struct bfa_reqq_wait_s	wqe;	/*  request wait queue element	*/
-	void		*uarg;		/*  user callback arg		*/
-	struct bfa_cb_qe_s hcb_qe;	/*  comp: callback qelem	*/
-	struct bfi_lps_login_rsp_s *loginrsp;
+	काष्ठा bfa_reqq_रुको_s	wqe;	/*  request रुको queue element	*/
+	व्योम		*uarg;		/*  user callback arg		*/
+	काष्ठा bfa_cb_qe_s hcb_qe;	/*  comp: callback qelem	*/
+	काष्ठा bfi_lps_login_rsp_s *loginrsp;
 	bfa_eproto_status_t ext_status;
-};
+पूर्ण;
 
-struct bfa_lps_mod_s {
-	struct list_head		lps_free_q;
-	struct list_head		lps_active_q;
-	struct list_head		lps_login_q;
-	struct bfa_lps_s	*lps_arr;
-	int			num_lps;
-	struct bfa_mem_kva_s	kva_seg;
-};
+काष्ठा bfa_lps_mod_s अणु
+	काष्ठा list_head		lps_मुक्त_q;
+	काष्ठा list_head		lps_active_q;
+	काष्ठा list_head		lps_login_q;
+	काष्ठा bfa_lps_s	*lps_arr;
+	पूर्णांक			num_lps;
+	काष्ठा bfa_mem_kva_s	kva_seg;
+पूर्ण;
 
-#define BFA_LPS_MOD(__bfa)		(&(__bfa)->modules.lps_mod)
-#define BFA_LPS_FROM_TAG(__mod, __tag)	(&(__mod)->lps_arr[__tag])
-#define BFA_MEM_LPS_KVA(__bfa)	(&(BFA_LPS_MOD(__bfa)->kva_seg))
+#घोषणा BFA_LPS_MOD(__bfa)		(&(__bfa)->modules.lps_mod)
+#घोषणा BFA_LPS_FROM_TAG(__mod, __tag)	(&(__mod)->lps_arr[__tag])
+#घोषणा BFA_MEM_LPS_KVA(__bfa)	(&(BFA_LPS_MOD(__bfa)->kva_seg))
 
 /*
- * external functions
+ * बाह्यal functions
  */
-void	bfa_lps_isr(struct bfa_s *bfa, struct bfi_msg_s *msg);
+व्योम	bfa_lps_isr(काष्ठा bfa_s *bfa, काष्ठा bfi_msg_s *msg);
 
 
 /*
  * FCPORT related defines
  */
 
-#define BFA_FCPORT(_bfa)	(&((_bfa)->modules.port))
+#घोषणा BFA_FCPORT(_bfa)	(&((_bfa)->modules.port))
 
 /*
- * Link notification data structure
+ * Link notअगरication data काष्ठाure
  */
-struct bfa_fcport_ln_s {
-	struct bfa_fcport_s	*fcport;
+काष्ठा bfa_fcport_ln_s अणु
+	काष्ठा bfa_fcport_s	*fcport;
 	bfa_sm_t		sm;
-	struct bfa_cb_qe_s	ln_qe;	/*  BFA callback queue elem for ln */
-	enum bfa_port_linkstate ln_event; /*  ln event for callback */
-};
+	काष्ठा bfa_cb_qe_s	ln_qe;	/*  BFA callback queue elem क्रम ln */
+	क्रमागत bfa_port_linkstate ln_event; /*  ln event क्रम callback */
+पूर्ण;
 
-struct bfa_fcport_trunk_s {
-	struct bfa_trunk_attr_s	attr;
-};
+काष्ठा bfa_fcport_trunk_s अणु
+	काष्ठा bfa_trunk_attr_s	attr;
+पूर्ण;
 
 /*
- * BFA FC port data structure
+ * BFA FC port data काष्ठाure
  */
-struct bfa_fcport_s {
-	struct bfa_s		*bfa;	/*  parent BFA instance */
+काष्ठा bfa_fcport_s अणु
+	काष्ठा bfa_s		*bfa;	/*  parent BFA instance */
 	bfa_sm_t		sm;	/*  port state machine */
 	wwn_t			nwwn;	/*  node wwn of physical port */
 	wwn_t			pwwn;	/*  port wwn of physical oprt */
-	enum bfa_port_speed speed_sup;
+	क्रमागत bfa_port_speed speed_sup;
 	/*  supported speeds */
-	enum bfa_port_speed speed;	/*  current speed */
-	enum bfa_port_topology topology;	/*  current topology */
+	क्रमागत bfa_port_speed speed;	/*  current speed */
+	क्रमागत bfa_port_topology topology;	/*  current topology */
 	u8			rsvd[3];
 	u8			myalpa;	/*  my ALPA in LOOP topology */
-	u8			alpabm_valid; /* alpa bitmap valid or not */
-	struct fc_alpabm_s	alpabm;	/* alpa bitmap */
-	struct bfa_port_cfg_s	cfg;	/*  current port configuration */
+	u8			alpabm_valid; /* alpa biपंचांगap valid or not */
+	काष्ठा fc_alpabm_s	alpabm;	/* alpa biपंचांगap */
+	काष्ठा bfa_port_cfg_s	cfg;	/*  current port configuration */
 	bfa_boolean_t		use_flash_cfg; /* get port cfg from flash */
-	struct bfa_qos_attr_s  qos_attr;   /* QoS Attributes */
-	struct bfa_qos_vc_attr_s qos_vc_attr;  /*  VC info from ELP */
-	struct bfa_reqq_wait_s	reqq_wait;
-	/*  to wait for room in reqq */
-	struct bfa_reqq_wait_s	svcreq_wait;
-	/*  to wait for room in reqq */
-	struct bfa_reqq_wait_s	stats_reqq_wait;
-	/*  to wait for room in reqq (stats) */
-	void			*event_cbarg;
-	void			(*event_cbfn) (void *cbarg,
-					       enum bfa_port_linkstate event);
-	union {
-		union bfi_fcport_i2h_msg_u i2hmsg;
-	} event_arg;
-	void			*bfad;	/*  BFA driver handle */
-	struct bfa_fcport_ln_s	ln; /*  Link Notification */
-	struct bfa_cb_qe_s	hcb_qe;	/*  BFA callback queue elem */
-	struct bfa_timer_s	timer;	/*  timer */
-	u32		msgtag;	/*  fimrware msg tag for reply */
+	काष्ठा bfa_qos_attr_s  qos_attr;   /* QoS Attributes */
+	काष्ठा bfa_qos_vc_attr_s qos_vc_attr;  /*  VC info from ELP */
+	काष्ठा bfa_reqq_रुको_s	reqq_रुको;
+	/*  to रुको क्रम room in reqq */
+	काष्ठा bfa_reqq_रुको_s	svcreq_रुको;
+	/*  to रुको क्रम room in reqq */
+	काष्ठा bfa_reqq_रुको_s	stats_reqq_रुको;
+	/*  to रुको क्रम room in reqq (stats) */
+	व्योम			*event_cbarg;
+	व्योम			(*event_cbfn) (व्योम *cbarg,
+					       क्रमागत bfa_port_linkstate event);
+	जोड़ अणु
+		जोड़ bfi_fcport_i2h_msg_u i2hmsg;
+	पूर्ण event_arg;
+	व्योम			*bfad;	/*  BFA driver handle */
+	काष्ठा bfa_fcport_ln_s	ln; /*  Link Notअगरication */
+	काष्ठा bfa_cb_qe_s	hcb_qe;	/*  BFA callback queue elem */
+	काष्ठा bfa_समयr_s	समयr;	/*  समयr */
+	u32		msgtag;	/*  fimrware msg tag क्रम reply */
 	u8			*stats_kva;
 	u64		stats_pa;
-	union bfa_fcport_stats_u *stats;
+	जोड़ bfa_fcport_stats_u *stats;
 	bfa_status_t		stats_status; /*  stats/statsclr status */
-	struct list_head	stats_pending_q;
-	struct list_head	statsclr_pending_q;
+	काष्ठा list_head	stats_pending_q;
+	काष्ठा list_head	statsclr_pending_q;
 	bfa_boolean_t		stats_qfull;
-	time64_t		stats_reset_time; /*  stats reset time stamp */
+	समय64_t		stats_reset_समय; /*  stats reset समय stamp */
 	bfa_boolean_t		diag_busy; /*  diag busy status */
 	bfa_boolean_t		beacon; /*  port beacon status */
 	bfa_boolean_t		link_e2e_beacon; /*  link beacon status */
-	struct bfa_fcport_trunk_s trunk;
+	काष्ठा bfa_fcport_trunk_s trunk;
 	u16		fcoe_vlan;
-	struct bfa_mem_dma_s	fcport_dma;
-	bfa_boolean_t		stats_dma_ready;
-	struct bfa_bbcr_attr_s	bbcr_attr;
-	enum bfa_fec_state_s	fec_state;
-};
+	काष्ठा bfa_mem_dma_s	fcport_dma;
+	bfa_boolean_t		stats_dma_पढ़ोy;
+	काष्ठा bfa_bbcr_attr_s	bbcr_attr;
+	क्रमागत bfa_fec_state_s	fec_state;
+पूर्ण;
 
-#define BFA_FCPORT_MOD(__bfa)	(&(__bfa)->modules.fcport)
-#define BFA_MEM_FCPORT_DMA(__bfa) (&(BFA_FCPORT_MOD(__bfa)->fcport_dma))
+#घोषणा BFA_FCPORT_MOD(__bfa)	(&(__bfa)->modules.fcport)
+#घोषणा BFA_MEM_FCPORT_DMA(__bfa) (&(BFA_FCPORT_MOD(__bfa)->fcport_dma))
 
 /*
- * protected functions
+ * रक्षित functions
  */
-void bfa_fcport_init(struct bfa_s *bfa);
-void bfa_fcport_isr(struct bfa_s *bfa, struct bfi_msg_s *msg);
+व्योम bfa_fcport_init(काष्ठा bfa_s *bfa);
+व्योम bfa_fcport_isr(काष्ठा bfa_s *bfa, काष्ठा bfi_msg_s *msg);
 
 /*
  * bfa fcport API functions
  */
-bfa_status_t bfa_fcport_enable(struct bfa_s *bfa);
-bfa_status_t bfa_fcport_disable(struct bfa_s *bfa);
-bfa_status_t bfa_fcport_cfg_speed(struct bfa_s *bfa,
-				  enum bfa_port_speed speed);
-enum bfa_port_speed bfa_fcport_get_speed(struct bfa_s *bfa);
-bfa_status_t bfa_fcport_cfg_topology(struct bfa_s *bfa,
-				     enum bfa_port_topology topo);
-enum bfa_port_topology bfa_fcport_get_topology(struct bfa_s *bfa);
-enum bfa_port_topology bfa_fcport_get_cfg_topology(struct bfa_s *bfa);
-bfa_status_t bfa_fcport_cfg_hardalpa(struct bfa_s *bfa, u8 alpa);
-bfa_boolean_t bfa_fcport_get_hardalpa(struct bfa_s *bfa, u8 *alpa);
-u8 bfa_fcport_get_myalpa(struct bfa_s *bfa);
-bfa_status_t bfa_fcport_clr_hardalpa(struct bfa_s *bfa);
-bfa_status_t bfa_fcport_cfg_maxfrsize(struct bfa_s *bfa, u16 maxsize);
-u16 bfa_fcport_get_maxfrsize(struct bfa_s *bfa);
-u8 bfa_fcport_get_rx_bbcredit(struct bfa_s *bfa);
-void bfa_fcport_get_attr(struct bfa_s *bfa, struct bfa_port_attr_s *attr);
-wwn_t bfa_fcport_get_wwn(struct bfa_s *bfa, bfa_boolean_t node);
-void bfa_fcport_event_register(struct bfa_s *bfa,
-			void (*event_cbfn) (void *cbarg,
-			enum bfa_port_linkstate event), void *event_cbarg);
-bfa_boolean_t bfa_fcport_is_disabled(struct bfa_s *bfa);
-bfa_boolean_t bfa_fcport_is_dport(struct bfa_s *bfa);
-bfa_boolean_t bfa_fcport_is_ddport(struct bfa_s *bfa);
-bfa_status_t bfa_fcport_set_qos_bw(struct bfa_s *bfa,
-				   struct bfa_qos_bw_s *qos_bw);
-enum bfa_port_speed bfa_fcport_get_ratelim_speed(struct bfa_s *bfa);
+bfa_status_t bfa_fcport_enable(काष्ठा bfa_s *bfa);
+bfa_status_t bfa_fcport_disable(काष्ठा bfa_s *bfa);
+bfa_status_t bfa_fcport_cfg_speed(काष्ठा bfa_s *bfa,
+				  क्रमागत bfa_port_speed speed);
+क्रमागत bfa_port_speed bfa_fcport_get_speed(काष्ठा bfa_s *bfa);
+bfa_status_t bfa_fcport_cfg_topology(काष्ठा bfa_s *bfa,
+				     क्रमागत bfa_port_topology topo);
+क्रमागत bfa_port_topology bfa_fcport_get_topology(काष्ठा bfa_s *bfa);
+क्रमागत bfa_port_topology bfa_fcport_get_cfg_topology(काष्ठा bfa_s *bfa);
+bfa_status_t bfa_fcport_cfg_hardalpa(काष्ठा bfa_s *bfa, u8 alpa);
+bfa_boolean_t bfa_fcport_get_hardalpa(काष्ठा bfa_s *bfa, u8 *alpa);
+u8 bfa_fcport_get_myalpa(काष्ठा bfa_s *bfa);
+bfa_status_t bfa_fcport_clr_hardalpa(काष्ठा bfa_s *bfa);
+bfa_status_t bfa_fcport_cfg_maxfrsize(काष्ठा bfa_s *bfa, u16 maxsize);
+u16 bfa_fcport_get_maxfrsize(काष्ठा bfa_s *bfa);
+u8 bfa_fcport_get_rx_bbcredit(काष्ठा bfa_s *bfa);
+व्योम bfa_fcport_get_attr(काष्ठा bfa_s *bfa, काष्ठा bfa_port_attr_s *attr);
+wwn_t bfa_fcport_get_wwn(काष्ठा bfa_s *bfa, bfa_boolean_t node);
+व्योम bfa_fcport_event_रेजिस्टर(काष्ठा bfa_s *bfa,
+			व्योम (*event_cbfn) (व्योम *cbarg,
+			क्रमागत bfa_port_linkstate event), व्योम *event_cbarg);
+bfa_boolean_t bfa_fcport_is_disabled(काष्ठा bfa_s *bfa);
+bfa_boolean_t bfa_fcport_is_dport(काष्ठा bfa_s *bfa);
+bfa_boolean_t bfa_fcport_is_ddport(काष्ठा bfa_s *bfa);
+bfa_status_t bfa_fcport_set_qos_bw(काष्ठा bfa_s *bfa,
+				   काष्ठा bfa_qos_bw_s *qos_bw);
+क्रमागत bfa_port_speed bfa_fcport_get_ratelim_speed(काष्ठा bfa_s *bfa);
 
-void bfa_fcport_set_tx_bbcredit(struct bfa_s *bfa, u16 tx_bbcredit);
-bfa_boolean_t     bfa_fcport_is_ratelim(struct bfa_s *bfa);
-void bfa_fcport_beacon(void *dev, bfa_boolean_t beacon,
+व्योम bfa_fcport_set_tx_bbcredit(काष्ठा bfa_s *bfa, u16 tx_bbcredit);
+bfa_boolean_t     bfa_fcport_is_ratelim(काष्ठा bfa_s *bfa);
+व्योम bfa_fcport_beacon(व्योम *dev, bfa_boolean_t beacon,
 			bfa_boolean_t link_e2e_beacon);
-bfa_boolean_t	bfa_fcport_is_linkup(struct bfa_s *bfa);
-bfa_status_t bfa_fcport_get_stats(struct bfa_s *bfa,
-			struct bfa_cb_pending_q_s *cb);
-bfa_status_t bfa_fcport_clear_stats(struct bfa_s *bfa,
-			struct bfa_cb_pending_q_s *cb);
-bfa_boolean_t bfa_fcport_is_qos_enabled(struct bfa_s *bfa);
-bfa_boolean_t bfa_fcport_is_trunk_enabled(struct bfa_s *bfa);
-void bfa_fcport_dportenable(struct bfa_s *bfa);
-void bfa_fcport_dportdisable(struct bfa_s *bfa);
-bfa_status_t bfa_fcport_is_pbcdisabled(struct bfa_s *bfa);
-void bfa_fcport_cfg_faa(struct bfa_s *bfa, u8 state);
-bfa_status_t bfa_fcport_cfg_bbcr(struct bfa_s *bfa,
+bfa_boolean_t	bfa_fcport_is_linkup(काष्ठा bfa_s *bfa);
+bfa_status_t bfa_fcport_get_stats(काष्ठा bfa_s *bfa,
+			काष्ठा bfa_cb_pending_q_s *cb);
+bfa_status_t bfa_fcport_clear_stats(काष्ठा bfa_s *bfa,
+			काष्ठा bfa_cb_pending_q_s *cb);
+bfa_boolean_t bfa_fcport_is_qos_enabled(काष्ठा bfa_s *bfa);
+bfa_boolean_t bfa_fcport_is_trunk_enabled(काष्ठा bfa_s *bfa);
+व्योम bfa_fcport_dportenable(काष्ठा bfa_s *bfa);
+व्योम bfa_fcport_dportdisable(काष्ठा bfa_s *bfa);
+bfa_status_t bfa_fcport_is_pbcdisabled(काष्ठा bfa_s *bfa);
+व्योम bfa_fcport_cfg_faa(काष्ठा bfa_s *bfa, u8 state);
+bfa_status_t bfa_fcport_cfg_bbcr(काष्ठा bfa_s *bfa,
 			bfa_boolean_t on_off, u8 bb_scn);
-bfa_status_t bfa_fcport_get_bbcr_attr(struct bfa_s *bfa,
-			struct bfa_bbcr_attr_s *bbcr_attr);
+bfa_status_t bfa_fcport_get_bbcr_attr(काष्ठा bfa_s *bfa,
+			काष्ठा bfa_bbcr_attr_s *bbcr_attr);
 
 /*
  * bfa rport API functions
  */
-struct bfa_rport_s *bfa_rport_create(struct bfa_s *bfa, void *rport_drv);
-void bfa_rport_online(struct bfa_rport_s *rport,
-		      struct bfa_rport_info_s *rport_info);
-void bfa_rport_speed(struct bfa_rport_s *rport, enum bfa_port_speed speed);
-void bfa_cb_rport_online(void *rport);
-void bfa_cb_rport_offline(void *rport);
-void bfa_cb_rport_qos_scn_flowid(void *rport,
-				 struct bfa_rport_qos_attr_s old_qos_attr,
-				 struct bfa_rport_qos_attr_s new_qos_attr);
-void bfa_cb_rport_scn_online(struct bfa_s *bfa);
-void bfa_cb_rport_scn_offline(struct bfa_s *bfa);
-void bfa_cb_rport_scn_no_dev(void *rp);
-void bfa_cb_rport_qos_scn_prio(void *rport,
-			       struct bfa_rport_qos_attr_s old_qos_attr,
-			       struct bfa_rport_qos_attr_s new_qos_attr);
+काष्ठा bfa_rport_s *bfa_rport_create(काष्ठा bfa_s *bfa, व्योम *rport_drv);
+व्योम bfa_rport_online(काष्ठा bfa_rport_s *rport,
+		      काष्ठा bfa_rport_info_s *rport_info);
+व्योम bfa_rport_speed(काष्ठा bfa_rport_s *rport, क्रमागत bfa_port_speed speed);
+व्योम bfa_cb_rport_online(व्योम *rport);
+व्योम bfa_cb_rport_offline(व्योम *rport);
+व्योम bfa_cb_rport_qos_scn_flowid(व्योम *rport,
+				 काष्ठा bfa_rport_qos_attr_s old_qos_attr,
+				 काष्ठा bfa_rport_qos_attr_s new_qos_attr);
+व्योम bfa_cb_rport_scn_online(काष्ठा bfa_s *bfa);
+व्योम bfa_cb_rport_scn_offline(काष्ठा bfa_s *bfa);
+व्योम bfa_cb_rport_scn_no_dev(व्योम *rp);
+व्योम bfa_cb_rport_qos_scn_prio(व्योम *rport,
+			       काष्ठा bfa_rport_qos_attr_s old_qos_attr,
+			       काष्ठा bfa_rport_qos_attr_s new_qos_attr);
 
 /*
  *	Rport LUN masking related
  */
-#define BFA_RPORT_TAG_INVALID	0xffff
-#define BFA_LP_TAG_INVALID	0xff
-void	bfa_rport_set_lunmask(struct bfa_s *bfa, struct bfa_rport_s *rp);
-void	bfa_rport_unset_lunmask(struct bfa_s *bfa, struct bfa_rport_s *rp);
+#घोषणा BFA_RPORT_TAG_INVALID	0xffff
+#घोषणा BFA_LP_TAG_INVALID	0xff
+व्योम	bfa_rport_set_lunmask(काष्ठा bfa_s *bfa, काष्ठा bfa_rport_s *rp);
+व्योम	bfa_rport_unset_lunmask(काष्ठा bfa_s *bfa, काष्ठा bfa_rport_s *rp);
 
 /*
  * bfa fcxp API functions
  */
-struct bfa_fcxp_s *bfa_fcxp_req_rsp_alloc(void *bfad_fcxp, struct bfa_s *bfa,
-				  int nreq_sgles, int nrsp_sgles,
+काष्ठा bfa_fcxp_s *bfa_fcxp_req_rsp_alloc(व्योम *bfad_fcxp, काष्ठा bfa_s *bfa,
+				  पूर्णांक nreq_sgles, पूर्णांक nrsp_sgles,
 				  bfa_fcxp_get_sgaddr_t get_req_sga,
 				  bfa_fcxp_get_sglen_t get_req_sglen,
 				  bfa_fcxp_get_sgaddr_t get_rsp_sga,
 				  bfa_fcxp_get_sglen_t get_rsp_sglen,
 				  bfa_boolean_t req);
-void bfa_fcxp_req_rsp_alloc_wait(struct bfa_s *bfa, struct bfa_fcxp_wqe_s *wqe,
+व्योम bfa_fcxp_req_rsp_alloc_रुको(काष्ठा bfa_s *bfa, काष्ठा bfa_fcxp_wqe_s *wqe,
 				bfa_fcxp_alloc_cbfn_t alloc_cbfn,
-				void *cbarg, void *bfad_fcxp,
-				int nreq_sgles, int nrsp_sgles,
+				व्योम *cbarg, व्योम *bfad_fcxp,
+				पूर्णांक nreq_sgles, पूर्णांक nrsp_sgles,
 				bfa_fcxp_get_sgaddr_t get_req_sga,
 				bfa_fcxp_get_sglen_t get_req_sglen,
 				bfa_fcxp_get_sgaddr_t get_rsp_sga,
 				bfa_fcxp_get_sglen_t get_rsp_sglen,
 				bfa_boolean_t req);
-void bfa_fcxp_walloc_cancel(struct bfa_s *bfa,
-			    struct bfa_fcxp_wqe_s *wqe);
-void bfa_fcxp_discard(struct bfa_fcxp_s *fcxp);
+व्योम bfa_fcxp_walloc_cancel(काष्ठा bfa_s *bfa,
+			    काष्ठा bfa_fcxp_wqe_s *wqe);
+व्योम bfa_fcxp_discard(काष्ठा bfa_fcxp_s *fcxp);
 
-void *bfa_fcxp_get_reqbuf(struct bfa_fcxp_s *fcxp);
-void *bfa_fcxp_get_rspbuf(struct bfa_fcxp_s *fcxp);
+व्योम *bfa_fcxp_get_reqbuf(काष्ठा bfa_fcxp_s *fcxp);
+व्योम *bfa_fcxp_get_rspbuf(काष्ठा bfa_fcxp_s *fcxp);
 
-void bfa_fcxp_free(struct bfa_fcxp_s *fcxp);
+व्योम bfa_fcxp_मुक्त(काष्ठा bfa_fcxp_s *fcxp);
 
-void bfa_fcxp_send(struct bfa_fcxp_s *fcxp, struct bfa_rport_s *rport,
+व्योम bfa_fcxp_send(काष्ठा bfa_fcxp_s *fcxp, काष्ठा bfa_rport_s *rport,
 		   u16 vf_id, u8 lp_tag,
-		   bfa_boolean_t cts, enum fc_cos cos,
-		   u32 reqlen, struct fchs_s *fchs,
+		   bfa_boolean_t cts, क्रमागत fc_cos cos,
+		   u32 reqlen, काष्ठा fchs_s *fchs,
 		   bfa_cb_fcxp_send_t cbfn,
-		   void *cbarg,
-		   u32 rsp_maxlen, u8 rsp_timeout);
-bfa_status_t bfa_fcxp_abort(struct bfa_fcxp_s *fcxp);
-u32 bfa_fcxp_get_reqbufsz(struct bfa_fcxp_s *fcxp);
-u32 bfa_fcxp_get_maxrsp(struct bfa_s *bfa);
-void bfa_fcxp_res_recfg(struct bfa_s *bfa, u16 num_fcxp_fw);
+		   व्योम *cbarg,
+		   u32 rsp_maxlen, u8 rsp_समयout);
+bfa_status_t bfa_fcxp_पात(काष्ठा bfa_fcxp_s *fcxp);
+u32 bfa_fcxp_get_reqbufsz(काष्ठा bfa_fcxp_s *fcxp);
+u32 bfa_fcxp_get_maxrsp(काष्ठा bfa_s *bfa);
+व्योम bfa_fcxp_res_recfg(काष्ठा bfa_s *bfa, u16 num_fcxp_fw);
 
-static inline void *
-bfa_uf_get_frmbuf(struct bfa_uf_s *uf)
-{
-	return uf->data_ptr;
-}
+अटल अंतरभूत व्योम *
+bfa_uf_get_frmbuf(काष्ठा bfa_uf_s *uf)
+अणु
+	वापस uf->data_ptr;
+पूर्ण
 
-static inline   u16
-bfa_uf_get_frmlen(struct bfa_uf_s *uf)
-{
-	return uf->data_len;
-}
+अटल अंतरभूत   u16
+bfa_uf_get_frmlen(काष्ठा bfa_uf_s *uf)
+अणु
+	वापस uf->data_len;
+पूर्ण
 
 /*
  * bfa uf API functions
  */
-void bfa_uf_recv_register(struct bfa_s *bfa, bfa_cb_uf_recv_t ufrecv,
-			  void *cbarg);
-void bfa_uf_free(struct bfa_uf_s *uf);
+व्योम bfa_uf_recv_रेजिस्टर(काष्ठा bfa_s *bfa, bfa_cb_uf_recv_t ufrecv,
+			  व्योम *cbarg);
+व्योम bfa_uf_मुक्त(काष्ठा bfa_uf_s *uf);
 
 /*
  * bfa lport service api
  */
 
-u32 bfa_lps_get_max_vport(struct bfa_s *bfa);
-struct bfa_lps_s *bfa_lps_alloc(struct bfa_s *bfa);
-void bfa_lps_delete(struct bfa_lps_s *lps);
-void bfa_lps_flogi(struct bfa_lps_s *lps, void *uarg, u8 alpa,
+u32 bfa_lps_get_max_vport(काष्ठा bfa_s *bfa);
+काष्ठा bfa_lps_s *bfa_lps_alloc(काष्ठा bfa_s *bfa);
+व्योम bfa_lps_delete(काष्ठा bfa_lps_s *lps);
+व्योम bfa_lps_flogi(काष्ठा bfa_lps_s *lps, व्योम *uarg, u8 alpa,
 		   u16 pdusz, wwn_t pwwn, wwn_t nwwn,
 		   bfa_boolean_t auth_en);
-void bfa_lps_fdisc(struct bfa_lps_s *lps, void *uarg, u16 pdusz,
+व्योम bfa_lps_fdisc(काष्ठा bfa_lps_s *lps, व्योम *uarg, u16 pdusz,
 		   wwn_t pwwn, wwn_t nwwn);
-void bfa_lps_fdisclogo(struct bfa_lps_s *lps);
-void bfa_lps_set_n2n_pid(struct bfa_lps_s *lps, u32 n2n_pid);
-u8 bfa_lps_get_fwtag(struct bfa_s *bfa, u8 lp_tag);
-u32 bfa_lps_get_base_pid(struct bfa_s *bfa);
-u8 bfa_lps_get_tag_from_pid(struct bfa_s *bfa, u32 pid);
-void bfa_cb_lps_flogi_comp(void *bfad, void *uarg, bfa_status_t status);
-void bfa_cb_lps_flogo_comp(void *bfad, void *uarg);
-void bfa_cb_lps_fdisc_comp(void *bfad, void *uarg, bfa_status_t status);
-void bfa_cb_lps_fdisclogo_comp(void *bfad, void *uarg);
-void bfa_cb_lps_cvl_event(void *bfad, void *uarg);
+व्योम bfa_lps_fdisclogo(काष्ठा bfa_lps_s *lps);
+व्योम bfa_lps_set_n2n_pid(काष्ठा bfa_lps_s *lps, u32 n2n_pid);
+u8 bfa_lps_get_fwtag(काष्ठा bfa_s *bfa, u8 lp_tag);
+u32 bfa_lps_get_base_pid(काष्ठा bfa_s *bfa);
+u8 bfa_lps_get_tag_from_pid(काष्ठा bfa_s *bfa, u32 pid);
+व्योम bfa_cb_lps_flogi_comp(व्योम *bfad, व्योम *uarg, bfa_status_t status);
+व्योम bfa_cb_lps_flogo_comp(व्योम *bfad, व्योम *uarg);
+व्योम bfa_cb_lps_fdisc_comp(व्योम *bfad, व्योम *uarg, bfa_status_t status);
+व्योम bfa_cb_lps_fdisclogo_comp(व्योम *bfad, व्योम *uarg);
+व्योम bfa_cb_lps_cvl_event(व्योम *bfad, व्योम *uarg);
 
-/* FAA specific APIs */
-bfa_status_t bfa_faa_query(struct bfa_s *bfa, struct bfa_faa_attr_s *attr,
-			bfa_cb_iocfc_t cbfn, void *cbarg);
+/* FAA specअगरic APIs */
+bfa_status_t bfa_faa_query(काष्ठा bfa_s *bfa, काष्ठा bfa_faa_attr_s *attr,
+			bfa_cb_iocfc_t cbfn, व्योम *cbarg);
 
 /*
- *	FC DIAG data structure
+ *	FC DIAG data काष्ठाure
  */
-struct bfa_fcdiag_qtest_s {
-	struct bfa_diag_qtest_result_s *result;
+काष्ठा bfa_fcdiag_qtest_s अणु
+	काष्ठा bfa_diag_qtest_result_s *result;
 	bfa_cb_diag_t	cbfn;
-	void		*cbarg;
-	struct bfa_timer_s	timer;
+	व्योम		*cbarg;
+	काष्ठा bfa_समयr_s	समयr;
 	u32	status;
 	u32	count;
 	u8	lock;
 	u8	queue;
 	u8	all;
-	u8	timer_active;
-};
+	u8	समयr_active;
+पूर्ण;
 
-struct bfa_fcdiag_lb_s {
+काष्ठा bfa_fcdiag_lb_s अणु
 	bfa_cb_diag_t   cbfn;
-	void            *cbarg;
-	void            *result;
+	व्योम            *cbarg;
+	व्योम            *result;
 	bfa_boolean_t   lock;
 	u32        status;
-};
+पूर्ण;
 
-struct bfa_dport_s {
-	struct bfa_s	*bfa;		/* Back pointer to BFA	*/
+काष्ठा bfa_dport_s अणु
+	काष्ठा bfa_s	*bfa;		/* Back poपूर्णांकer to BFA	*/
 	bfa_sm_t	sm;		/* finite state machine */
-	struct bfa_reqq_wait_s reqq_wait;
+	काष्ठा bfa_reqq_रुको_s reqq_रुको;
 	bfa_cb_diag_t	cbfn;
-	void		*cbarg;
-	union bfi_diag_dport_msg_u i2hmsg;
-	u8		test_state;	/* enum dport_test_state  */
+	व्योम		*cbarg;
+	जोड़ bfi_diag_dport_msg_u i2hmsg;
+	u8		test_state;	/* क्रमागत dport_test_state  */
 	u8		dynamic;	/* boolean_t  */
 	u8		rsvd[2];
 	u32		lpcnt;
 	u32		payload;	/* user defined payload pattern */
 	wwn_t		rp_pwwn;
 	wwn_t		rp_nwwn;
-	struct bfa_diag_dport_result_s result;
-};
+	काष्ठा bfa_diag_dport_result_s result;
+पूर्ण;
 
-struct bfa_fcdiag_s {
-	struct bfa_s    *bfa;           /* Back pointer to BFA */
-	struct bfa_trc_mod_s   *trcmod;
-	struct bfa_fcdiag_lb_s lb;
-	struct bfa_fcdiag_qtest_s qtest;
-	struct bfa_dport_s	dport;
-};
+काष्ठा bfa_fcdiag_s अणु
+	काष्ठा bfa_s    *bfa;           /* Back poपूर्णांकer to BFA */
+	काष्ठा bfa_trc_mod_s   *trcmod;
+	काष्ठा bfa_fcdiag_lb_s lb;
+	काष्ठा bfa_fcdiag_qtest_s qtest;
+	काष्ठा bfa_dport_s	dport;
+पूर्ण;
 
-#define BFA_FCDIAG_MOD(__bfa)	(&(__bfa)->modules.fcdiag)
+#घोषणा BFA_FCDIAG_MOD(__bfa)	(&(__bfa)->modules.fcdiag)
 
-void	bfa_fcdiag_intr(struct bfa_s *bfa, struct bfi_msg_s *msg);
+व्योम	bfa_fcdiag_पूर्णांकr(काष्ठा bfa_s *bfa, काष्ठा bfi_msg_s *msg);
 
-bfa_status_t	bfa_fcdiag_loopback(struct bfa_s *bfa,
-				enum bfa_port_opmode opmode,
-				enum bfa_port_speed speed, u32 lpcnt, u32 pat,
-				struct bfa_diag_loopback_result_s *result,
-				bfa_cb_diag_t cbfn, void *cbarg);
-bfa_status_t	bfa_fcdiag_queuetest(struct bfa_s *bfa, u32 ignore,
-			u32 queue, struct bfa_diag_qtest_result_s *result,
-			bfa_cb_diag_t cbfn, void *cbarg);
-bfa_status_t	bfa_fcdiag_lb_is_running(struct bfa_s *bfa);
-bfa_status_t	bfa_dport_enable(struct bfa_s *bfa, u32 lpcnt, u32 pat,
-					bfa_cb_diag_t cbfn, void *cbarg);
-bfa_status_t	bfa_dport_disable(struct bfa_s *bfa, bfa_cb_diag_t cbfn,
-				  void *cbarg);
-bfa_status_t	bfa_dport_start(struct bfa_s *bfa, u32 lpcnt, u32 pat,
-				bfa_cb_diag_t cbfn, void *cbarg);
-bfa_status_t	bfa_dport_show(struct bfa_s *bfa,
-				struct bfa_diag_dport_result_s *result);
+bfa_status_t	bfa_fcdiag_loopback(काष्ठा bfa_s *bfa,
+				क्रमागत bfa_port_opmode opmode,
+				क्रमागत bfa_port_speed speed, u32 lpcnt, u32 pat,
+				काष्ठा bfa_diag_loopback_result_s *result,
+				bfa_cb_diag_t cbfn, व्योम *cbarg);
+bfa_status_t	bfa_fcdiag_queuetest(काष्ठा bfa_s *bfa, u32 ignore,
+			u32 queue, काष्ठा bfa_diag_qtest_result_s *result,
+			bfa_cb_diag_t cbfn, व्योम *cbarg);
+bfa_status_t	bfa_fcdiag_lb_is_running(काष्ठा bfa_s *bfa);
+bfa_status_t	bfa_dport_enable(काष्ठा bfa_s *bfa, u32 lpcnt, u32 pat,
+					bfa_cb_diag_t cbfn, व्योम *cbarg);
+bfa_status_t	bfa_dport_disable(काष्ठा bfa_s *bfa, bfa_cb_diag_t cbfn,
+				  व्योम *cbarg);
+bfa_status_t	bfa_dport_start(काष्ठा bfa_s *bfa, u32 lpcnt, u32 pat,
+				bfa_cb_diag_t cbfn, व्योम *cbarg);
+bfa_status_t	bfa_dport_show(काष्ठा bfa_s *bfa,
+				काष्ठा bfa_diag_dport_result_s *result);
 
-#endif /* __BFA_SVC_H__ */
+#पूर्ण_अगर /* __BFA_SVC_H__ */

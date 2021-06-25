@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
- * Copyright (c) 2019 Alexey Dobriyan <adobriyan@gmail.com>
+ * Copyright (c) 2019 Alexey Dobriyan <aकरोbriyan@gmail.com>
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modअगरy, and distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -18,112 +19,112 @@
  * Test /proc/$PID/maps
  * Test /proc/$PID/smaps
  * Test /proc/$PID/smaps_rollup
- * Test /proc/$PID/statm
+ * Test /proc/$PID/staपंचांग
  *
  * FIXME require CONFIG_TMPFS which can be disabled
  * FIXME test other values from "smaps"
  * FIXME support other archs
  */
-#undef NDEBUG
-#include <assert.h>
-#include <errno.h>
-#include <sched.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/mount.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/syscall.h>
-#include <sys/uio.h>
-#include <linux/kdev_t.h>
-#include <sys/time.h>
-#include <sys/resource.h>
+#अघोषित न_संशोधन
+#समावेश <निश्चित.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <sched.h>
+#समावेश <संकेत.स>
+#समावेश <stdbool.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <मानककोष.स>
+#समावेश <sys/mount.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/रुको.h>
+#समावेश <fcntl.h>
+#समावेश <unistd.h>
+#समावेश <sys/syscall.h>
+#समावेश <sys/uपन.स>
+#समावेश <linux/kdev_t.h>
+#समावेश <sys/समय.स>
+#समावेश <sys/resource.h>
 
-static inline long sys_execveat(int dirfd, const char *pathname, char **argv, char **envp, int flags)
-{
-	return syscall(SYS_execveat, dirfd, pathname, argv, envp, flags);
-}
+अटल अंतरभूत दीर्घ sys_execveat(पूर्णांक dirfd, स्थिर अक्षर *pathname, अक्षर **argv, अक्षर **envp, पूर्णांक flags)
+अणु
+	वापस syscall(SYS_execveat, dirfd, pathname, argv, envp, flags);
+पूर्ण
 
-static void make_private_tmp(void)
-{
-	if (unshare(CLONE_NEWNS) == -1) {
-		if (errno == ENOSYS || errno == EPERM) {
-			exit(4);
-		}
-		exit(1);
-	}
-	if (mount(NULL, "/", NULL, MS_PRIVATE|MS_REC, NULL) == -1) {
-		exit(1);
-	}
-	if (mount(NULL, "/tmp", "tmpfs", 0, NULL) == -1) {
-		exit(1);
-	}
-}
+अटल व्योम make_निजी_पंचांगp(व्योम)
+अणु
+	अगर (unshare(CLONE_NEWNS) == -1) अणु
+		अगर (त्रुटि_सं == ENOSYS || त्रुटि_सं == EPERM) अणु
+			निकास(4);
+		पूर्ण
+		निकास(1);
+	पूर्ण
+	अगर (mount(शून्य, "/", शून्य, MS_PRIVATE|MS_REC, शून्य) == -1) अणु
+		निकास(1);
+	पूर्ण
+	अगर (mount(शून्य, "/tmp", "tmpfs", 0, शून्य) == -1) अणु
+		निकास(1);
+	पूर्ण
+पूर्ण
 
-static pid_t pid = -1;
-static void ate(void)
-{
-	if (pid > 0) {
-		kill(pid, SIGTERM);
-	}
-}
+अटल pid_t pid = -1;
+अटल व्योम ate(व्योम)
+अणु
+	अगर (pid > 0) अणु
+		समाप्त(pid, संक_इति);
+	पूर्ण
+पूर्ण
 
-struct elf64_hdr {
-	uint8_t e_ident[16];
-	uint16_t e_type;
-	uint16_t e_machine;
-	uint32_t e_version;
-	uint64_t e_entry;
-	uint64_t e_phoff;
-	uint64_t e_shoff;
-	uint32_t e_flags;
-	uint16_t e_ehsize;
-	uint16_t e_phentsize;
-	uint16_t e_phnum;
-	uint16_t e_shentsize;
-	uint16_t e_shnum;
-	uint16_t e_shstrndx;
-};
+काष्ठा elf64_hdr अणु
+	uपूर्णांक8_t e_ident[16];
+	uपूर्णांक16_t e_type;
+	uपूर्णांक16_t e_machine;
+	uपूर्णांक32_t e_version;
+	uपूर्णांक64_t e_entry;
+	uपूर्णांक64_t e_phoff;
+	uपूर्णांक64_t e_shoff;
+	uपूर्णांक32_t e_flags;
+	uपूर्णांक16_t e_ehsize;
+	uपूर्णांक16_t e_phentsize;
+	uपूर्णांक16_t e_phnum;
+	uपूर्णांक16_t e_shentsize;
+	uपूर्णांक16_t e_shnum;
+	uपूर्णांक16_t e_shstrndx;
+पूर्ण;
 
-struct elf64_phdr {
-	uint32_t p_type;
-	uint32_t p_flags;
-	uint64_t p_offset;
-	uint64_t p_vaddr;
-	uint64_t p_paddr;
-	uint64_t p_filesz;
-	uint64_t p_memsz;
-	uint64_t p_align;
-};
+काष्ठा elf64_phdr अणु
+	uपूर्णांक32_t p_type;
+	uपूर्णांक32_t p_flags;
+	uपूर्णांक64_t p_offset;
+	uपूर्णांक64_t p_vaddr;
+	uपूर्णांक64_t p_paddr;
+	uपूर्णांक64_t p_filesz;
+	uपूर्णांक64_t p_memsz;
+	uपूर्णांक64_t p_align;
+पूर्ण;
 
-#ifdef __x86_64__
-#define PAGE_SIZE 4096
-#define VADDR (1UL << 32)
-#define MAPS_OFFSET 73
+#अगर_घोषित __x86_64__
+#घोषणा PAGE_SIZE 4096
+#घोषणा VADDR (1UL << 32)
+#घोषणा MAPS_OFFSET 73
 
-#define syscall	0x0f, 0x05
-#define mov_rdi(x)	\
+#घोषणा syscall	0x0f, 0x05
+#घोषणा mov_rdi(x)	\
 	0x48, 0xbf,	\
 	(x)&0xff, ((x)>>8)&0xff, ((x)>>16)&0xff, ((x)>>24)&0xff,	\
 	((x)>>32)&0xff, ((x)>>40)&0xff, ((x)>>48)&0xff, ((x)>>56)&0xff
 
-#define mov_rsi(x)	\
+#घोषणा mov_rsi(x)	\
 	0x48, 0xbe,	\
 	(x)&0xff, ((x)>>8)&0xff, ((x)>>16)&0xff, ((x)>>24)&0xff,	\
 	((x)>>32)&0xff, ((x)>>40)&0xff, ((x)>>48)&0xff, ((x)>>56)&0xff
 
-#define mov_eax(x)	\
+#घोषणा mov_eax(x)	\
 	0xb8, (x)&0xff, ((x)>>8)&0xff, ((x)>>16)&0xff, ((x)>>24)&0xff
 
-static const uint8_t payload[] = {
-	/* Casually unmap stack, vDSO and everything else. */
+अटल स्थिर uपूर्णांक8_t payload[] = अणु
+	/* Casually unmap stack, vDSO and everything अन्यथा. */
 	/* munmap */
 	mov_rdi(VADDR + 4096),
 	mov_rsi((1ULL << 47) - 4096 - VADDR - 4096),
@@ -131,34 +132,34 @@ static const uint8_t payload[] = {
 	syscall,
 
 	/* Ping parent. */
-	/* write(0, &c, 1); */
+	/* ग_लिखो(0, &c, 1); */
 	0x31, 0xff,					/* xor edi, edi */
 	0x48, 0x8d, 0x35, 0x00, 0x00, 0x00, 0x00,	/* lea rsi, [rip] */
 	0xba, 0x01, 0x00, 0x00, 0x00,			/* mov edx, 1 */
 	mov_eax(1),
 	syscall,
 
-	/* 1: pause(); */
+	/* 1: छोड़ो(); */
 	mov_eax(34),
 	syscall,
 
 	0xeb, 0xf7,	/* jmp 1b */
-};
+पूर्ण;
 
-static int make_exe(const uint8_t *payload, size_t len)
-{
-	struct elf64_hdr h;
-	struct elf64_phdr ph;
+अटल पूर्णांक make_exe(स्थिर uपूर्णांक8_t *payload, माप_प्रकार len)
+अणु
+	काष्ठा elf64_hdr h;
+	काष्ठा elf64_phdr ph;
 
-	struct iovec iov[3] = {
-		{&h, sizeof(struct elf64_hdr)},
-		{&ph, sizeof(struct elf64_phdr)},
-		{(void *)payload, len},
-	};
-	int fd, fd1;
-	char buf[64];
+	काष्ठा iovec iov[3] = अणु
+		अणु&h, माप(काष्ठा elf64_hdr)पूर्ण,
+		अणु&ph, माप(काष्ठा elf64_phdr)पूर्ण,
+		अणु(व्योम *)payload, lenपूर्ण,
+	पूर्ण;
+	पूर्णांक fd, fd1;
+	अक्षर buf[64];
 
-	memset(&h, 0, sizeof(h));
+	स_रखो(&h, 0, माप(h));
 	h.e_ident[0] = 0x7f;
 	h.e_ident[1] = 'E';
 	h.e_ident[2] = 'L';
@@ -170,193 +171,193 @@ static int make_exe(const uint8_t *payload, size_t len)
 	h.e_type = 2;
 	h.e_machine = 0x3e;
 	h.e_version = 1;
-	h.e_entry = VADDR + sizeof(struct elf64_hdr) + sizeof(struct elf64_phdr);
-	h.e_phoff = sizeof(struct elf64_hdr);
+	h.e_entry = VADDR + माप(काष्ठा elf64_hdr) + माप(काष्ठा elf64_phdr);
+	h.e_phoff = माप(काष्ठा elf64_hdr);
 	h.e_shoff = 0;
 	h.e_flags = 0;
-	h.e_ehsize = sizeof(struct elf64_hdr);
-	h.e_phentsize = sizeof(struct elf64_phdr);
+	h.e_ehsize = माप(काष्ठा elf64_hdr);
+	h.e_phentsize = माप(काष्ठा elf64_phdr);
 	h.e_phnum = 1;
 	h.e_shentsize = 0;
 	h.e_shnum = 0;
 	h.e_shstrndx = 0;
 
-	memset(&ph, 0, sizeof(ph));
+	स_रखो(&ph, 0, माप(ph));
 	ph.p_type = 1;
 	ph.p_flags = (1<<2)|1;
 	ph.p_offset = 0;
 	ph.p_vaddr = VADDR;
 	ph.p_paddr = 0;
-	ph.p_filesz = sizeof(struct elf64_hdr) + sizeof(struct elf64_phdr) + len;
-	ph.p_memsz = sizeof(struct elf64_hdr) + sizeof(struct elf64_phdr) + len;
+	ph.p_filesz = माप(काष्ठा elf64_hdr) + माप(काष्ठा elf64_phdr) + len;
+	ph.p_memsz = माप(काष्ठा elf64_hdr) + माप(काष्ठा elf64_phdr) + len;
 	ph.p_align = 4096;
 
-	fd = openat(AT_FDCWD, "/tmp", O_WRONLY|O_EXCL|O_TMPFILE, 0700);
-	if (fd == -1) {
-		exit(1);
-	}
+	fd = खोलोat(AT_FDCWD, "/tmp", O_WRONLY|O_EXCL|O_TMPखाता, 0700);
+	अगर (fd == -1) अणु
+		निकास(1);
+	पूर्ण
 
-	if (writev(fd, iov, 3) != sizeof(struct elf64_hdr) + sizeof(struct elf64_phdr) + len) {
-		exit(1);
-	}
+	अगर (ग_लिखोv(fd, iov, 3) != माप(काष्ठा elf64_hdr) + माप(काष्ठा elf64_phdr) + len) अणु
+		निकास(1);
+	पूर्ण
 
-	/* Avoid ETXTBSY on exec. */
-	snprintf(buf, sizeof(buf), "/proc/self/fd/%u", fd);
-	fd1 = open(buf, O_RDONLY|O_CLOEXEC);
-	close(fd);
+	/* Aव्योम ETXTBSY on exec. */
+	snम_लिखो(buf, माप(buf), "/proc/self/fd/%u", fd);
+	fd1 = खोलो(buf, O_RDONLY|O_CLOEXEC);
+	बंद(fd);
 
-	return fd1;
-}
-#endif
+	वापस fd1;
+पूर्ण
+#पूर्ण_अगर
 
-static bool g_vsyscall = false;
+अटल bool g_vsyscall = false;
 
-static const char str_vsyscall[] =
+अटल स्थिर अक्षर str_vsyscall[] =
 "ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]\n";
 
-#ifdef __x86_64__
-static void sigaction_SIGSEGV(int _, siginfo_t *__, void *___)
-{
-	_exit(1);
-}
+#अगर_घोषित __x86_64__
+अटल व्योम sigaction_संक_अंश(पूर्णांक _, siginfo_t *__, व्योम *___)
+अणु
+	_निकास(1);
+पूर्ण
 
 /*
  * vsyscall page can't be unmapped, probe it with memory load.
  */
-static void vsyscall(void)
-{
+अटल व्योम vsyscall(व्योम)
+अणु
 	pid_t pid;
-	int wstatus;
+	पूर्णांक wstatus;
 
-	pid = fork();
-	if (pid < 0) {
-		fprintf(stderr, "fork, errno %d\n", errno);
-		exit(1);
-	}
-	if (pid == 0) {
-		struct rlimit rlim = {0, 0};
-		(void)setrlimit(RLIMIT_CORE, &rlim);
+	pid = विभाजन();
+	अगर (pid < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "fork, errno %d\n", त्रुटि_सं);
+		निकास(1);
+	पूर्ण
+	अगर (pid == 0) अणु
+		काष्ठा rlimit rlim = अणु0, 0पूर्ण;
+		(व्योम)setrlimit(RLIMIT_CORE, &rlim);
 
 		/* Hide "segfault at ffffffffff600000" messages. */
-		struct sigaction act;
-		memset(&act, 0, sizeof(struct sigaction));
+		काष्ठा sigaction act;
+		स_रखो(&act, 0, माप(काष्ठा sigaction));
 		act.sa_flags = SA_SIGINFO;
-		act.sa_sigaction = sigaction_SIGSEGV;
-		(void)sigaction(SIGSEGV, &act, NULL);
+		act.sa_sigaction = sigaction_संक_अंश;
+		(व्योम)sigaction(संक_अंश, &act, शून्य);
 
-		*(volatile int *)0xffffffffff600000UL;
-		exit(0);
-	}
-	waitpid(pid, &wstatus, 0);
-	if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == 0) {
+		*(अस्थिर पूर्णांक *)0xffffffffff600000UL;
+		निकास(0);
+	पूर्ण
+	रुकोpid(pid, &wstatus, 0);
+	अगर (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == 0) अणु
 		g_vsyscall = true;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int main(void)
-{
-	int pipefd[2];
-	int exec_fd;
+पूर्णांक मुख्य(व्योम)
+अणु
+	पूर्णांक pipefd[2];
+	पूर्णांक exec_fd;
 
 	vsyscall();
 
-	atexit(ate);
+	निकास_पर(ate);
 
-	make_private_tmp();
+	make_निजी_पंचांगp();
 
-	/* Reserve fd 0 for 1-byte pipe ping from child. */
-	close(0);
-	if (open("/", O_RDONLY|O_DIRECTORY|O_PATH) != 0) {
-		return 1;
-	}
+	/* Reserve fd 0 क्रम 1-byte pipe ping from child. */
+	बंद(0);
+	अगर (खोलो("/", O_RDONLY|O_सूचीECTORY|O_PATH) != 0) अणु
+		वापस 1;
+	पूर्ण
 
-	exec_fd = make_exe(payload, sizeof(payload));
+	exec_fd = make_exe(payload, माप(payload));
 
-	if (pipe(pipefd) == -1) {
-		return 1;
-	}
-	if (dup2(pipefd[1], 0) != 0) {
-		return 1;
-	}
+	अगर (pipe(pipefd) == -1) अणु
+		वापस 1;
+	पूर्ण
+	अगर (dup2(pipefd[1], 0) != 0) अणु
+		वापस 1;
+	पूर्ण
 
-	pid = fork();
-	if (pid == -1) {
-		return 1;
-	}
-	if (pid == 0) {
-		sys_execveat(exec_fd, "", NULL, NULL, AT_EMPTY_PATH);
-		return 1;
-	}
+	pid = विभाजन();
+	अगर (pid == -1) अणु
+		वापस 1;
+	पूर्ण
+	अगर (pid == 0) अणु
+		sys_execveat(exec_fd, "", शून्य, शून्य, AT_EMPTY_PATH);
+		वापस 1;
+	पूर्ण
 
-	char _;
-	if (read(pipefd[0], &_, 1) != 1) {
-		return 1;
-	}
+	अक्षर _;
+	अगर (पढ़ो(pipefd[0], &_, 1) != 1) अणु
+		वापस 1;
+	पूर्ण
 
-	struct stat st;
-	if (fstat(exec_fd, &st) == -1) {
-		return 1;
-	}
+	काष्ठा stat st;
+	अगर (ख_स्थिति(exec_fd, &st) == -1) अणु
+		वापस 1;
+	पूर्ण
 
 	/* Generate "head -n1 /proc/$PID/maps" */
-	char buf0[256];
-	memset(buf0, ' ', sizeof(buf0));
-	int len = snprintf(buf0, sizeof(buf0),
+	अक्षर buf0[256];
+	स_रखो(buf0, ' ', माप(buf0));
+	पूर्णांक len = snम_लिखो(buf0, माप(buf0),
 			"%08lx-%08lx r-xp 00000000 %02lx:%02lx %llu",
 			VADDR, VADDR + PAGE_SIZE,
 			MAJOR(st.st_dev), MINOR(st.st_dev),
-			(unsigned long long)st.st_ino);
+			(अचिन्हित दीर्घ दीर्घ)st.st_ino);
 	buf0[len] = ' ';
-	snprintf(buf0 + MAPS_OFFSET, sizeof(buf0) - MAPS_OFFSET,
-		 "/tmp/#%llu (deleted)\n", (unsigned long long)st.st_ino);
+	snम_लिखो(buf0 + MAPS_OFFSET, माप(buf0) - MAPS_OFFSET,
+		 "/tmp/#%llu (deleted)\n", (अचिन्हित दीर्घ दीर्घ)st.st_ino);
 
 	/* Test /proc/$PID/maps */
-	{
-		const size_t len = strlen(buf0) + (g_vsyscall ? strlen(str_vsyscall) : 0);
-		char buf[256];
-		ssize_t rv;
-		int fd;
+	अणु
+		स्थिर माप_प्रकार len = म_माप(buf0) + (g_vsyscall ? म_माप(str_vsyscall) : 0);
+		अक्षर buf[256];
+		sमाप_प्रकार rv;
+		पूर्णांक fd;
 
-		snprintf(buf, sizeof(buf), "/proc/%u/maps", pid);
-		fd = open(buf, O_RDONLY);
-		if (fd == -1) {
-			return 1;
-		}
-		rv = read(fd, buf, sizeof(buf));
-		assert(rv == len);
-		assert(memcmp(buf, buf0, strlen(buf0)) == 0);
-		if (g_vsyscall) {
-			assert(memcmp(buf + strlen(buf0), str_vsyscall, strlen(str_vsyscall)) == 0);
-		}
-	}
+		snम_लिखो(buf, माप(buf), "/proc/%u/maps", pid);
+		fd = खोलो(buf, O_RDONLY);
+		अगर (fd == -1) अणु
+			वापस 1;
+		पूर्ण
+		rv = पढ़ो(fd, buf, माप(buf));
+		निश्चित(rv == len);
+		निश्चित(स_भेद(buf, buf0, म_माप(buf0)) == 0);
+		अगर (g_vsyscall) अणु
+			निश्चित(स_भेद(buf + म_माप(buf0), str_vsyscall, म_माप(str_vsyscall)) == 0);
+		पूर्ण
+	पूर्ण
 
 	/* Test /proc/$PID/smaps */
-	{
-		char buf[4096];
-		ssize_t rv;
-		int fd;
+	अणु
+		अक्षर buf[4096];
+		sमाप_प्रकार rv;
+		पूर्णांक fd;
 
-		snprintf(buf, sizeof(buf), "/proc/%u/smaps", pid);
-		fd = open(buf, O_RDONLY);
-		if (fd == -1) {
-			return 1;
-		}
-		rv = read(fd, buf, sizeof(buf));
-		assert(0 <= rv && rv <= sizeof(buf));
+		snम_लिखो(buf, माप(buf), "/proc/%u/smaps", pid);
+		fd = खोलो(buf, O_RDONLY);
+		अगर (fd == -1) अणु
+			वापस 1;
+		पूर्ण
+		rv = पढ़ो(fd, buf, माप(buf));
+		निश्चित(0 <= rv && rv <= माप(buf));
 
-		assert(rv >= strlen(buf0));
-		assert(memcmp(buf, buf0, strlen(buf0)) == 0);
+		निश्चित(rv >= म_माप(buf0));
+		निश्चित(स_भेद(buf, buf0, म_माप(buf0)) == 0);
 
-#define RSS1 "Rss:                   4 kB\n"
-#define RSS2 "Rss:                   0 kB\n"
-#define PSS1 "Pss:                   4 kB\n"
-#define PSS2 "Pss:                   0 kB\n"
-		assert(memmem(buf, rv, RSS1, strlen(RSS1)) ||
-		       memmem(buf, rv, RSS2, strlen(RSS2)));
-		assert(memmem(buf, rv, PSS1, strlen(PSS1)) ||
-		       memmem(buf, rv, PSS2, strlen(PSS2)));
+#घोषणा RSS1 "Rss:                   4 kB\n"
+#घोषणा RSS2 "Rss:                   0 kB\n"
+#घोषणा PSS1 "Pss:                   4 kB\n"
+#घोषणा PSS2 "Pss:                   0 kB\n"
+		निश्चित(memmem(buf, rv, RSS1, म_माप(RSS1)) ||
+		       memmem(buf, rv, RSS2, म_माप(RSS2)));
+		निश्चित(memmem(buf, rv, PSS1, म_माप(PSS1)) ||
+		       memmem(buf, rv, PSS2, म_माप(PSS2)));
 
-		static const char *S[] = {
+		अटल स्थिर अक्षर *S[] = अणु
 			"Size:                  4 kB\n",
 			"KernelPageSize:        4 kB\n",
 			"MMUPageSize:           4 kB\n",
@@ -365,98 +366,98 @@ int main(void)
 			"Shared_Hugetlb:        0 kB\n",
 			"Private_Hugetlb:       0 kB\n",
 			"Locked:                0 kB\n",
-		};
-		int i;
+		पूर्ण;
+		पूर्णांक i;
 
-		for (i = 0; i < sizeof(S)/sizeof(S[0]); i++) {
-			assert(memmem(buf, rv, S[i], strlen(S[i])));
-		}
+		क्रम (i = 0; i < माप(S)/माप(S[0]); i++) अणु
+			निश्चित(memmem(buf, rv, S[i], म_माप(S[i])));
+		पूर्ण
 
-		if (g_vsyscall) {
-			assert(memmem(buf, rv, str_vsyscall, strlen(str_vsyscall)));
-		}
-	}
+		अगर (g_vsyscall) अणु
+			निश्चित(memmem(buf, rv, str_vsyscall, म_माप(str_vsyscall)));
+		पूर्ण
+	पूर्ण
 
 	/* Test /proc/$PID/smaps_rollup */
-	{
-		char bufr[256];
-		memset(bufr, ' ', sizeof(bufr));
-		len = snprintf(bufr, sizeof(bufr),
+	अणु
+		अक्षर bufr[256];
+		स_रखो(bufr, ' ', माप(bufr));
+		len = snम_लिखो(bufr, माप(bufr),
 				"%08lx-%08lx ---p 00000000 00:00 0",
 				VADDR, VADDR + PAGE_SIZE);
 		bufr[len] = ' ';
-		snprintf(bufr + MAPS_OFFSET, sizeof(bufr) - MAPS_OFFSET,
+		snम_लिखो(bufr + MAPS_OFFSET, माप(bufr) - MAPS_OFFSET,
 			 "[rollup]\n");
 
-		char buf[1024];
-		ssize_t rv;
-		int fd;
+		अक्षर buf[1024];
+		sमाप_प्रकार rv;
+		पूर्णांक fd;
 
-		snprintf(buf, sizeof(buf), "/proc/%u/smaps_rollup", pid);
-		fd = open(buf, O_RDONLY);
-		if (fd == -1) {
-			return 1;
-		}
-		rv = read(fd, buf, sizeof(buf));
-		assert(0 <= rv && rv <= sizeof(buf));
+		snम_लिखो(buf, माप(buf), "/proc/%u/smaps_rollup", pid);
+		fd = खोलो(buf, O_RDONLY);
+		अगर (fd == -1) अणु
+			वापस 1;
+		पूर्ण
+		rv = पढ़ो(fd, buf, माप(buf));
+		निश्चित(0 <= rv && rv <= माप(buf));
 
-		assert(rv >= strlen(bufr));
-		assert(memcmp(buf, bufr, strlen(bufr)) == 0);
+		निश्चित(rv >= म_माप(bufr));
+		निश्चित(स_भेद(buf, bufr, म_माप(bufr)) == 0);
 
-		assert(memmem(buf, rv, RSS1, strlen(RSS1)) ||
-		       memmem(buf, rv, RSS2, strlen(RSS2)));
-		assert(memmem(buf, rv, PSS1, strlen(PSS1)) ||
-		       memmem(buf, rv, PSS2, strlen(PSS2)));
+		निश्चित(memmem(buf, rv, RSS1, म_माप(RSS1)) ||
+		       memmem(buf, rv, RSS2, म_माप(RSS2)));
+		निश्चित(memmem(buf, rv, PSS1, म_माप(PSS1)) ||
+		       memmem(buf, rv, PSS2, म_माप(PSS2)));
 
-		static const char *S[] = {
+		अटल स्थिर अक्षर *S[] = अणु
 			"Anonymous:             0 kB\n",
 			"AnonHugePages:         0 kB\n",
 			"Shared_Hugetlb:        0 kB\n",
 			"Private_Hugetlb:       0 kB\n",
 			"Locked:                0 kB\n",
-		};
-		int i;
+		पूर्ण;
+		पूर्णांक i;
 
-		for (i = 0; i < sizeof(S)/sizeof(S[0]); i++) {
-			assert(memmem(buf, rv, S[i], strlen(S[i])));
-		}
-	}
+		क्रम (i = 0; i < माप(S)/माप(S[0]); i++) अणु
+			निश्चित(memmem(buf, rv, S[i], म_माप(S[i])));
+		पूर्ण
+	पूर्ण
 
-	/* Test /proc/$PID/statm */
-	{
-		char buf[64];
-		ssize_t rv;
-		int fd;
+	/* Test /proc/$PID/staपंचांग */
+	अणु
+		अक्षर buf[64];
+		sमाप_प्रकार rv;
+		पूर्णांक fd;
 
-		snprintf(buf, sizeof(buf), "/proc/%u/statm", pid);
-		fd = open(buf, O_RDONLY);
-		if (fd == -1) {
-			return 1;
-		}
-		rv = read(fd, buf, sizeof(buf));
-		assert(rv == 7 * 2);
+		snम_लिखो(buf, माप(buf), "/proc/%u/statm", pid);
+		fd = खोलो(buf, O_RDONLY);
+		अगर (fd == -1) अणु
+			वापस 1;
+		पूर्ण
+		rv = पढ़ो(fd, buf, माप(buf));
+		निश्चित(rv == 7 * 2);
 
-		assert(buf[0] == '1');	/* ->total_vm */
-		assert(buf[1] == ' ');
-		assert(buf[2] == '0' || buf[2] == '1');	/* rss */
-		assert(buf[3] == ' ');
-		assert(buf[4] == '0' || buf[2] == '1');	/* file rss */
-		assert(buf[5] == ' ');
-		assert(buf[6] == '1');	/* ELF executable segments */
-		assert(buf[7] == ' ');
-		assert(buf[8] == '0');
-		assert(buf[9] == ' ');
-		assert(buf[10] == '0');	/* ->data_vm + ->stack_vm */
-		assert(buf[11] == ' ');
-		assert(buf[12] == '0');
-		assert(buf[13] == '\n');
-	}
+		निश्चित(buf[0] == '1');	/* ->total_vm */
+		निश्चित(buf[1] == ' ');
+		निश्चित(buf[2] == '0' || buf[2] == '1');	/* rss */
+		निश्चित(buf[3] == ' ');
+		निश्चित(buf[4] == '0' || buf[2] == '1');	/* file rss */
+		निश्चित(buf[5] == ' ');
+		निश्चित(buf[6] == '1');	/* ELF executable segments */
+		निश्चित(buf[7] == ' ');
+		निश्चित(buf[8] == '0');
+		निश्चित(buf[9] == ' ');
+		निश्चित(buf[10] == '0');	/* ->data_vm + ->stack_vm */
+		निश्चित(buf[11] == ' ');
+		निश्चित(buf[12] == '0');
+		निश्चित(buf[13] == '\n');
+	पूर्ण
 
-	return 0;
-}
-#else
-int main(void)
-{
-	return 4;
-}
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस 4;
+पूर्ण
+#पूर्ण_अगर

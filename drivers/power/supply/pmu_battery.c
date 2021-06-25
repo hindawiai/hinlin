@@ -1,129 +1,130 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Battery class driver for Apple PMU
+ * Battery class driver क्रम Apple PMU
  *
- *	Copyright © 2006  David Woodhouse <dwmw2@infradead.org>
+ *	Copyright तऊ 2006  David Woodhouse <dwmw2@infradead.org>
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/err.h>
-#include <linux/power_supply.h>
-#include <linux/adb.h>
-#include <linux/pmu.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/adb.h>
+#समावेश <linux/pmu.h>
+#समावेश <linux/slab.h>
 
-static struct pmu_battery_dev {
-	struct power_supply *bat;
-	struct power_supply_desc bat_desc;
-	struct pmu_battery_info *pbi;
-	char name[16];
-	int propval;
-} *pbats[PMU_MAX_BATTERIES];
+अटल काष्ठा pmu_battery_dev अणु
+	काष्ठा घातer_supply *bat;
+	काष्ठा घातer_supply_desc bat_desc;
+	काष्ठा pmu_battery_info *pbi;
+	अक्षर name[16];
+	पूर्णांक propval;
+पूर्ण *pbats[PMU_MAX_BATTERIES];
 
-#define to_pmu_battery_dev(x) power_supply_get_drvdata(x)
+#घोषणा to_pmu_battery_dev(x) घातer_supply_get_drvdata(x)
 
 /*********************************************************************
  *		Power
  *********************************************************************/
 
-static int pmu_get_ac_prop(struct power_supply *psy,
-			   enum power_supply_property psp,
-			   union power_supply_propval *val)
-{
-	switch (psp) {
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = (!!(pmu_power_flags & PMU_PWR_AC_PRESENT)) ||
+अटल पूर्णांक pmu_get_ac_prop(काष्ठा घातer_supply *psy,
+			   क्रमागत घातer_supply_property psp,
+			   जोड़ घातer_supply_propval *val)
+अणु
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = (!!(pmu_घातer_flags & PMU_PWR_AC_PRESENT)) ||
 			      (pmu_battery_count == 0);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum power_supply_property pmu_ac_props[] = {
+अटल क्रमागत घातer_supply_property pmu_ac_props[] = अणु
 	POWER_SUPPLY_PROP_ONLINE,
-};
+पूर्ण;
 
-static const struct power_supply_desc pmu_ac_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc pmu_ac_desc = अणु
 	.name = "pmu-ac",
 	.type = POWER_SUPPLY_TYPE_MAINS,
 	.properties = pmu_ac_props,
 	.num_properties = ARRAY_SIZE(pmu_ac_props),
 	.get_property = pmu_get_ac_prop,
-};
+पूर्ण;
 
-static struct power_supply *pmu_ac;
+अटल काष्ठा घातer_supply *pmu_ac;
 
 /*********************************************************************
  *		Battery properties
  *********************************************************************/
 
-static char *pmu_batt_types[] = {
+अटल अक्षर *pmu_batt_types[] = अणु
 	"Smart", "Comet", "Hooper", "Unknown"
-};
+पूर्ण;
 
-static char *pmu_bat_get_model_name(struct pmu_battery_info *pbi)
-{
-	switch (pbi->flags & PMU_BATT_TYPE_MASK) {
-	case PMU_BATT_TYPE_SMART:
-		return pmu_batt_types[0];
-	case PMU_BATT_TYPE_COMET:
-		return pmu_batt_types[1];
-	case PMU_BATT_TYPE_HOOPER:
-		return pmu_batt_types[2];
-	default: break;
-	}
-	return pmu_batt_types[3];
-}
+अटल अक्षर *pmu_bat_get_model_name(काष्ठा pmu_battery_info *pbi)
+अणु
+	चयन (pbi->flags & PMU_BATT_TYPE_MASK) अणु
+	हाल PMU_BATT_TYPE_SMART:
+		वापस pmu_batt_types[0];
+	हाल PMU_BATT_TYPE_COMET:
+		वापस pmu_batt_types[1];
+	हाल PMU_BATT_TYPE_HOOPER:
+		वापस pmu_batt_types[2];
+	शेष: अवरोध;
+	पूर्ण
+	वापस pmu_batt_types[3];
+पूर्ण
 
-static int pmu_bat_get_property(struct power_supply *psy,
-				enum power_supply_property psp,
-				union power_supply_propval *val)
-{
-	struct pmu_battery_dev *pbat = to_pmu_battery_dev(psy);
-	struct pmu_battery_info *pbi = pbat->pbi;
+अटल पूर्णांक pmu_bat_get_property(काष्ठा घातer_supply *psy,
+				क्रमागत घातer_supply_property psp,
+				जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा pmu_battery_dev *pbat = to_pmu_battery_dev(psy);
+	काष्ठा pmu_battery_info *pbi = pbat->pbi;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		if (pbi->flags & PMU_BATT_CHARGING)
-			val->intval = POWER_SUPPLY_STATUS_CHARGING;
-		else if (pmu_power_flags & PMU_PWR_AC_PRESENT)
-			val->intval = POWER_SUPPLY_STATUS_FULL;
-		else
-			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
-		break;
-	case POWER_SUPPLY_PROP_PRESENT:
-		val->intval = !!(pbi->flags & PMU_BATT_PRESENT);
-		break;
-	case POWER_SUPPLY_PROP_MODEL_NAME:
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		अगर (pbi->flags & PMU_BATT_CHARGING)
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
+		अन्यथा अगर (pmu_घातer_flags & PMU_PWR_AC_PRESENT)
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_FULL;
+		अन्यथा
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_PRESENT:
+		val->पूर्णांकval = !!(pbi->flags & PMU_BATT_PRESENT);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = pmu_bat_get_model_name(pbi);
-		break;
-	case POWER_SUPPLY_PROP_ENERGY_AVG:
-		val->intval = pbi->charge     * 1000; /* mWh -> µWh */
-		break;
-	case POWER_SUPPLY_PROP_ENERGY_FULL:
-		val->intval = pbi->max_charge * 1000; /* mWh -> µWh */
-		break;
-	case POWER_SUPPLY_PROP_CURRENT_AVG:
-		val->intval = pbi->amperage   * 1000; /* mA -> µA */
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_AVG:
-		val->intval = pbi->voltage    * 1000; /* mV -> µV */
-		break;
-	case POWER_SUPPLY_PROP_TIME_TO_EMPTY_AVG:
-		val->intval = pbi->time_remaining;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_ENERGY_AVG:
+		val->पूर्णांकval = pbi->अक्षरge     * 1000; /* mWh -> तगWh */
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_ENERGY_FULL:
+		val->पूर्णांकval = pbi->max_अक्षरge * 1000; /* mWh -> तगWh */
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CURRENT_AVG:
+		val->पूर्णांकval = pbi->amperage   * 1000; /* mA -> तगA */
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_AVG:
+		val->पूर्णांकval = pbi->voltage    * 1000; /* mV -> तगV */
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TIME_TO_EMPTY_AVG:
+		val->पूर्णांकval = pbi->समय_reमुख्यing;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum power_supply_property pmu_bat_props[] = {
+अटल क्रमागत घातer_supply_property pmu_bat_props[] = अणु
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_MODEL_NAME,
@@ -132,40 +133,40 @@ static enum power_supply_property pmu_bat_props[] = {
 	POWER_SUPPLY_PROP_CURRENT_AVG,
 	POWER_SUPPLY_PROP_VOLTAGE_AVG,
 	POWER_SUPPLY_PROP_TIME_TO_EMPTY_AVG,
-};
+पूर्ण;
 
 /*********************************************************************
  *		Initialisation
  *********************************************************************/
 
-static struct platform_device *bat_pdev;
+अटल काष्ठा platक्रमm_device *bat_pdev;
 
-static int __init pmu_bat_init(void)
-{
-	int ret = 0;
-	int i;
+अटल पूर्णांक __init pmu_bat_init(व्योम)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	bat_pdev = platform_device_register_simple("pmu-battery",
-						   0, NULL, 0);
-	if (IS_ERR(bat_pdev)) {
+	bat_pdev = platक्रमm_device_रेजिस्टर_simple("pmu-battery",
+						   0, शून्य, 0);
+	अगर (IS_ERR(bat_pdev)) अणु
 		ret = PTR_ERR(bat_pdev);
-		goto pdev_register_failed;
-	}
+		जाओ pdev_रेजिस्टर_failed;
+	पूर्ण
 
-	pmu_ac = power_supply_register(&bat_pdev->dev, &pmu_ac_desc, NULL);
-	if (IS_ERR(pmu_ac)) {
+	pmu_ac = घातer_supply_रेजिस्टर(&bat_pdev->dev, &pmu_ac_desc, शून्य);
+	अगर (IS_ERR(pmu_ac)) अणु
 		ret = PTR_ERR(pmu_ac);
-		goto ac_register_failed;
-	}
+		जाओ ac_रेजिस्टर_failed;
+	पूर्ण
 
-	for (i = 0; i < pmu_battery_count; i++) {
-		struct power_supply_config psy_cfg = {};
-		struct pmu_battery_dev *pbat = kzalloc(sizeof(*pbat),
+	क्रम (i = 0; i < pmu_battery_count; i++) अणु
+		काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
+		काष्ठा pmu_battery_dev *pbat = kzalloc(माप(*pbat),
 						       GFP_KERNEL);
-		if (!pbat)
-			break;
+		अगर (!pbat)
+			अवरोध;
 
-		sprintf(pbat->name, "PMU_battery_%d", i);
+		प्र_लिखो(pbat->name, "PMU_battery_%d", i);
 		pbat->bat_desc.name = pbat->name;
 		pbat->bat_desc.properties = pmu_bat_props;
 		pbat->bat_desc.num_properties = ARRAY_SIZE(pmu_bat_props);
@@ -173,50 +174,50 @@ static int __init pmu_bat_init(void)
 		pbat->pbi = &pmu_batteries[i];
 		psy_cfg.drv_data = pbat;
 
-		pbat->bat = power_supply_register(&bat_pdev->dev,
+		pbat->bat = घातer_supply_रेजिस्टर(&bat_pdev->dev,
 						  &pbat->bat_desc,
 						  &psy_cfg);
-		if (IS_ERR(pbat->bat)) {
+		अगर (IS_ERR(pbat->bat)) अणु
 			ret = PTR_ERR(pbat->bat);
-			kfree(pbat);
-			goto battery_register_failed;
-		}
+			kमुक्त(pbat);
+			जाओ battery_रेजिस्टर_failed;
+		पूर्ण
 		pbats[i] = pbat;
-	}
+	पूर्ण
 
-	goto success;
+	जाओ success;
 
-battery_register_failed:
-	while (i--) {
-		if (!pbats[i])
-			continue;
-		power_supply_unregister(pbats[i]->bat);
-		kfree(pbats[i]);
-	}
-	power_supply_unregister(pmu_ac);
-ac_register_failed:
-	platform_device_unregister(bat_pdev);
-pdev_register_failed:
+battery_रेजिस्टर_failed:
+	जबतक (i--) अणु
+		अगर (!pbats[i])
+			जारी;
+		घातer_supply_unरेजिस्टर(pbats[i]->bat);
+		kमुक्त(pbats[i]);
+	पूर्ण
+	घातer_supply_unरेजिस्टर(pmu_ac);
+ac_रेजिस्टर_failed:
+	platक्रमm_device_unरेजिस्टर(bat_pdev);
+pdev_रेजिस्टर_failed:
 success:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit pmu_bat_exit(void)
-{
-	int i;
+अटल व्योम __निकास pmu_bat_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < PMU_MAX_BATTERIES; i++) {
-		if (!pbats[i])
-			continue;
-		power_supply_unregister(pbats[i]->bat);
-		kfree(pbats[i]);
-	}
-	power_supply_unregister(pmu_ac);
-	platform_device_unregister(bat_pdev);
-}
+	क्रम (i = 0; i < PMU_MAX_BATTERIES; i++) अणु
+		अगर (!pbats[i])
+			जारी;
+		घातer_supply_unरेजिस्टर(pbats[i]->bat);
+		kमुक्त(pbats[i]);
+	पूर्ण
+	घातer_supply_unरेजिस्टर(pmu_ac);
+	platक्रमm_device_unरेजिस्टर(bat_pdev);
+पूर्ण
 
 module_init(pmu_bat_init);
-module_exit(pmu_bat_exit);
+module_निकास(pmu_bat_निकास);
 
 MODULE_AUTHOR("David Woodhouse <dwmw2@infradead.org>");
 MODULE_LICENSE("GPL");

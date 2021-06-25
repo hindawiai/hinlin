@@ -1,54 +1,55 @@
+<शैली गुरु>
 /* Broadcom NetXtreme-C/E network driver.
  *
  * Copyright (c) 2014-2016 Broadcom Corporation
  * Copyright (c) 2016-2018 Broadcom Limited
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
 
-#ifndef BNXT_DCB_H
-#define BNXT_DCB_H
+#अगर_अघोषित BNXT_DCB_H
+#घोषणा BNXT_DCB_H
 
-#include <net/dcbnl.h>
+#समावेश <net/dcbnl.h>
 
-struct bnxt_dcb {
+काष्ठा bnxt_dcb अणु
 	u8			max_tc;
-	struct ieee_pfc		*ieee_pfc;
-	struct ieee_ets		*ieee_ets;
+	काष्ठा ieee_pfc		*ieee_pfc;
+	काष्ठा ieee_ets		*ieee_ets;
 	u8			dcbx_cap;
-	u8			default_pri;
-};
+	u8			शेष_pri;
+पूर्ण;
 
-struct bnxt_cos2bw_cfg {
+काष्ठा bnxt_cos2bw_cfg अणु
 	u8			pad[3];
 	u8			queue_id;
 	__le32			min_bw;
 	__le32			max_bw;
-#define BW_VALUE_UNIT_PERCENT1_100		(0x1UL << 29)
+#घोषणा BW_VALUE_UNIT_PERCENT1_100		(0x1UL << 29)
 	u8			tsa;
 	u8			pri_lvl;
 	u8			bw_weight;
 	u8			unused;
-};
+पूर्ण;
 
-struct bnxt_dscp2pri_entry {
+काष्ठा bnxt_dscp2pri_entry अणु
 	u8	dscp;
 	u8	mask;
 	u8	pri;
-};
+पूर्ण;
 
-#define BNXT_LLQ(q_profile)	\
+#घोषणा BNXT_LLQ(q_profile)	\
 	((q_profile) ==		\
-	 QUEUE_QPORTCFG_RESP_QUEUE_ID0_SERVICE_PROFILE_LOSSLESS_ROCE)
+	 QUEUE_QPORTCFG_RESP_QUEUE_ID0_SERVICE_PROखाता_LOSSLESS_ROCE)
 
-#define BNXT_CNPQ(q_profile)	\
+#घोषणा BNXT_CNPQ(q_profile)	\
 	((q_profile) ==		\
-	 QUEUE_QPORTCFG_RESP_QUEUE_ID0_SERVICE_PROFILE_LOSSY_ROCE_CNP)
+	 QUEUE_QPORTCFG_RESP_QUEUE_ID0_SERVICE_PROखाता_LOSSY_ROCE_CNP)
 
-#define HWRM_STRUCT_DATA_SUBTYPE_HOST_OPERATIONAL	0x0300
+#घोषणा HWRM_STRUCT_DATA_SUBTYPE_HOST_OPERATIONAL	0x0300
 
-void bnxt_dcb_init(struct bnxt *bp);
-void bnxt_dcb_free(struct bnxt *bp);
-#endif
+व्योम bnxt_dcb_init(काष्ठा bnxt *bp);
+व्योम bnxt_dcb_मुक्त(काष्ठा bnxt *bp);
+#पूर्ण_अगर

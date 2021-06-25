@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* taskstats_kern.h - kernel header for per-task statistics interface
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* taskstats_kern.h - kernel header क्रम per-task statistics पूर्णांकerface
  *
  * Copyright (C) Shailabh Nagar, IBM Corp. 2006
  *           (C) Balbir Singh,   IBM Corp. 2006
  */
 
-#ifndef _LINUX_TASKSTATS_KERN_H
-#define _LINUX_TASKSTATS_KERN_H
+#अगर_अघोषित _LINUX_TASKSTATS_KERN_H
+#घोषणा _LINUX_TASKSTATS_KERN_H
 
-#include <linux/taskstats.h>
-#include <linux/sched/signal.h>
-#include <linux/slab.h>
+#समावेश <linux/taskstats.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/slab.h>
 
-#ifdef CONFIG_TASKSTATS
-extern struct kmem_cache *taskstats_cache;
-extern struct mutex taskstats_exit_mutex;
+#अगर_घोषित CONFIG_TASKSTATS
+बाह्य काष्ठा kmem_cache *taskstats_cache;
+बाह्य काष्ठा mutex taskstats_निकास_mutex;
 
-static inline void taskstats_tgid_free(struct signal_struct *sig)
-{
-	if (sig->stats)
-		kmem_cache_free(taskstats_cache, sig->stats);
-}
+अटल अंतरभूत व्योम taskstats_tgid_मुक्त(काष्ठा संकेत_काष्ठा *sig)
+अणु
+	अगर (sig->stats)
+		kmem_cache_मुक्त(taskstats_cache, sig->stats);
+पूर्ण
 
-extern void taskstats_exit(struct task_struct *, int group_dead);
-extern void taskstats_init_early(void);
-#else
-static inline void taskstats_exit(struct task_struct *tsk, int group_dead)
-{}
-static inline void taskstats_tgid_free(struct signal_struct *sig)
-{}
-static inline void taskstats_init_early(void)
-{}
-#endif /* CONFIG_TASKSTATS */
+बाह्य व्योम taskstats_निकास(काष्ठा task_काष्ठा *, पूर्णांक group_dead);
+बाह्य व्योम taskstats_init_early(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम taskstats_निकास(काष्ठा task_काष्ठा *tsk, पूर्णांक group_dead)
+अणुपूर्ण
+अटल अंतरभूत व्योम taskstats_tgid_मुक्त(काष्ठा संकेत_काष्ठा *sig)
+अणुपूर्ण
+अटल अंतरभूत व्योम taskstats_init_early(व्योम)
+अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_TASKSTATS */
 
-#endif
+#पूर्ण_अगर
 

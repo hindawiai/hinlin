@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  */
-#ifndef __PVRUSB2_DEBUGIFC_H
-#define __PVRUSB2_DEBUGIFC_H
+#अगर_अघोषित __PVRUSB2_DEBUGIFC_H
+#घोषणा __PVRUSB2_DEBUGIFC_H
 
-struct pvr2_hdw;
+काष्ठा pvr2_hdw;
 
-/* Print general status of driver.  This will also trigger a probe of
-   the USB link.  Unlike print_info(), this one synchronizes with the
-   driver so the information should be self-consistent (but it will
-   hang if the driver is wedged). */
-int pvr2_debugifc_print_info(struct pvr2_hdw *,
-			     char *buf_ptr, unsigned int buf_size);
+/* Prपूर्णांक general status of driver.  This will also trigger a probe of
+   the USB link.  Unlike prपूर्णांक_info(), this one synchronizes with the
+   driver so the inक्रमmation should be self-consistent (but it will
+   hang अगर the driver is wedged). */
+पूर्णांक pvr2_debugअगरc_prपूर्णांक_info(काष्ठा pvr2_hdw *,
+			     अक्षर *buf_ptr, अचिन्हित पूर्णांक buf_size);
 
-/* Non-intrusively print some useful debugging info from inside the
-   driver.  This should work even if the driver appears to be
+/* Non-पूर्णांकrusively prपूर्णांक some useful debugging info from inside the
+   driver.  This should work even अगर the driver appears to be
    wedged. */
-int pvr2_debugifc_print_status(struct pvr2_hdw *,
-			       char *buf_ptr,unsigned int buf_size);
+पूर्णांक pvr2_debugअगरc_prपूर्णांक_status(काष्ठा pvr2_hdw *,
+			       अक्षर *buf_ptr,अचिन्हित पूर्णांक buf_size);
 
-/* Parse a string command into a driver action. */
-int pvr2_debugifc_docmd(struct pvr2_hdw *,
-			const char *buf_ptr,unsigned int buf_size);
+/* Parse a string command पूर्णांकo a driver action. */
+पूर्णांक pvr2_debugअगरc_करोcmd(काष्ठा pvr2_hdw *,
+			स्थिर अक्षर *buf_ptr,अचिन्हित पूर्णांक buf_size);
 
-#endif /* __PVRUSB2_DEBUGIFC_H */
+#पूर्ण_अगर /* __PVRUSB2_DEBUGIFC_H */

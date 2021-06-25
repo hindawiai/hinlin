@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver core for Samsung SoC onboard UARTs.
+ * Driver core क्रम Samsung SoC onboard UARTs.
  *
  * Ben Dooks, Copyright (c) 2003-2008 Simtec Electronics
  *	http://armlinux.simtec.co.uk/
@@ -9,96 +10,96 @@
 /* Note on 2410 error handling
  *
  * The s3c2410 manual has a love/hate affair with the contents of the
- * UERSTAT register in the UART blocks, and keeps marking some of the
+ * UERSTAT रेजिस्टर in the UART blocks, and keeps marking some of the
  * error bits as reserved. Having checked with the s3c2410x01,
  * it copes with BREAKs properly, so I am happy to ignore the RESERVED
  * feature from the latter versions of the manual.
  *
- * If it becomes aparrent that latter versions of the 2410 remove these
- * bits, then action will have to be taken to differentiate the versions
+ * If it becomes aparrent that latter versions of the 2410 हटाओ these
+ * bits, then action will have to be taken to dअगरferentiate the versions
  * and change the policy on BREAK
  *
  * BJD, 04-Nov-2004
  */
 
-#include <linux/dmaengine.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/ioport.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/init.h>
-#include <linux/sysrq.h>
-#include <linux/console.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/serial_core.h>
-#include <linux/serial.h>
-#include <linux/serial_s3c.h>
-#include <linux/delay.h>
-#include <linux/clk.h>
-#include <linux/cpufreq.h>
-#include <linux/of.h>
-#include <asm/irq.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/console.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_s3c.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/of.h>
+#समावेश <यंत्र/irq.h>
 
 /* UART name and device definitions */
 
-#define S3C24XX_SERIAL_NAME	"ttySAC"
-#define S3C24XX_SERIAL_MAJOR	204
-#define S3C24XX_SERIAL_MINOR	64
+#घोषणा S3C24XX_SERIAL_NAME	"ttySAC"
+#घोषणा S3C24XX_SERIAL_MAJOR	204
+#घोषणा S3C24XX_SERIAL_MINOR	64
 
-#define S3C24XX_TX_PIO			1
-#define S3C24XX_TX_DMA			2
-#define S3C24XX_RX_PIO			1
-#define S3C24XX_RX_DMA			2
+#घोषणा S3C24XX_TX_PIO			1
+#घोषणा S3C24XX_TX_DMA			2
+#घोषणा S3C24XX_RX_PIO			1
+#घोषणा S3C24XX_RX_DMA			2
 
-/* flag to ignore all characters coming in */
-#define RXSTAT_DUMMY_READ (0x10000000)
+/* flag to ignore all अक्षरacters coming in */
+#घोषणा RXSTAT_DUMMY_READ (0x10000000)
 
-enum s3c24xx_port_type {
+क्रमागत s3c24xx_port_type अणु
 	TYPE_S3C24XX,
 	TYPE_S3C6400,
 	TYPE_APPLE_S5L,
-};
+पूर्ण;
 
-struct s3c24xx_uart_info {
-	char			*name;
-	enum s3c24xx_port_type	type;
-	unsigned int		port_type;
-	unsigned int		fifosize;
-	unsigned long		rx_fifomask;
-	unsigned long		rx_fifoshift;
-	unsigned long		rx_fifofull;
-	unsigned long		tx_fifomask;
-	unsigned long		tx_fifoshift;
-	unsigned long		tx_fifofull;
-	unsigned int		def_clk_sel;
-	unsigned long		num_clks;
-	unsigned long		clksel_mask;
-	unsigned long		clksel_shift;
-	unsigned long		ucon_mask;
+काष्ठा s3c24xx_uart_info अणु
+	अक्षर			*name;
+	क्रमागत s3c24xx_port_type	type;
+	अचिन्हित पूर्णांक		port_type;
+	अचिन्हित पूर्णांक		fअगरosize;
+	अचिन्हित दीर्घ		rx_fअगरomask;
+	अचिन्हित दीर्घ		rx_fअगरoshअगरt;
+	अचिन्हित दीर्घ		rx_fअगरofull;
+	अचिन्हित दीर्घ		tx_fअगरomask;
+	अचिन्हित दीर्घ		tx_fअगरoshअगरt;
+	अचिन्हित दीर्घ		tx_fअगरofull;
+	अचिन्हित पूर्णांक		def_clk_sel;
+	अचिन्हित दीर्घ		num_clks;
+	अचिन्हित दीर्घ		clksel_mask;
+	अचिन्हित दीर्घ		clksel_shअगरt;
+	अचिन्हित दीर्घ		ucon_mask;
 
 	/* uart port features */
 
-	unsigned int		has_divslot:1;
-};
+	अचिन्हित पूर्णांक		has_भागslot:1;
+पूर्ण;
 
-struct s3c24xx_serial_drv_data {
-	struct s3c24xx_uart_info	*info;
-	struct s3c2410_uartcfg		*def_cfg;
-	unsigned int			fifosize[CONFIG_SERIAL_SAMSUNG_UARTS];
-};
+काष्ठा s3c24xx_serial_drv_data अणु
+	काष्ठा s3c24xx_uart_info	*info;
+	काष्ठा s3c2410_uartcfg		*def_cfg;
+	अचिन्हित पूर्णांक			fअगरosize[CONFIG_SERIAL_SAMSUNG_UARTS];
+पूर्ण;
 
-struct s3c24xx_uart_dma {
-	unsigned int			rx_chan_id;
-	unsigned int			tx_chan_id;
+काष्ठा s3c24xx_uart_dma अणु
+	अचिन्हित पूर्णांक			rx_chan_id;
+	अचिन्हित पूर्णांक			tx_chan_id;
 
-	struct dma_slave_config		rx_conf;
-	struct dma_slave_config		tx_conf;
+	काष्ठा dma_slave_config		rx_conf;
+	काष्ठा dma_slave_config		tx_conf;
 
-	struct dma_chan			*rx_chan;
-	struct dma_chan			*tx_chan;
+	काष्ठा dma_chan			*rx_chan;
+	काष्ठा dma_chan			*tx_chan;
 
 	dma_addr_t			rx_addr;
 	dma_addr_t			tx_addr;
@@ -106,99 +107,99 @@ struct s3c24xx_uart_dma {
 	dma_cookie_t			rx_cookie;
 	dma_cookie_t			tx_cookie;
 
-	char				*rx_buf;
+	अक्षर				*rx_buf;
 
 	dma_addr_t			tx_transfer_addr;
 
-	size_t				rx_size;
-	size_t				tx_size;
+	माप_प्रकार				rx_size;
+	माप_प्रकार				tx_size;
 
-	struct dma_async_tx_descriptor	*tx_desc;
-	struct dma_async_tx_descriptor	*rx_desc;
+	काष्ठा dma_async_tx_descriptor	*tx_desc;
+	काष्ठा dma_async_tx_descriptor	*rx_desc;
 
-	int				tx_bytes_requested;
-	int				rx_bytes_requested;
-};
+	पूर्णांक				tx_bytes_requested;
+	पूर्णांक				rx_bytes_requested;
+पूर्ण;
 
-struct s3c24xx_uart_port {
-	unsigned char			rx_claimed;
-	unsigned char			tx_claimed;
-	unsigned char			rx_enabled;
-	unsigned char			tx_enabled;
-	unsigned int			pm_level;
-	unsigned long			baudclk_rate;
-	unsigned int			min_dma_size;
+काष्ठा s3c24xx_uart_port अणु
+	अचिन्हित अक्षर			rx_claimed;
+	अचिन्हित अक्षर			tx_claimed;
+	अचिन्हित अक्षर			rx_enabled;
+	अचिन्हित अक्षर			tx_enabled;
+	अचिन्हित पूर्णांक			pm_level;
+	अचिन्हित दीर्घ			baudclk_rate;
+	अचिन्हित पूर्णांक			min_dma_size;
 
-	unsigned int			rx_irq;
-	unsigned int			tx_irq;
+	अचिन्हित पूर्णांक			rx_irq;
+	अचिन्हित पूर्णांक			tx_irq;
 
-	unsigned int			tx_in_progress;
-	unsigned int			tx_mode;
-	unsigned int			rx_mode;
+	अचिन्हित पूर्णांक			tx_in_progress;
+	अचिन्हित पूर्णांक			tx_mode;
+	अचिन्हित पूर्णांक			rx_mode;
 
-	struct s3c24xx_uart_info	*info;
-	struct clk			*clk;
-	struct clk			*baudclk;
-	struct uart_port		port;
-	struct s3c24xx_serial_drv_data	*drv_data;
+	काष्ठा s3c24xx_uart_info	*info;
+	काष्ठा clk			*clk;
+	काष्ठा clk			*baudclk;
+	काष्ठा uart_port		port;
+	काष्ठा s3c24xx_serial_drv_data	*drv_data;
 
-	/* reference to platform data */
-	struct s3c2410_uartcfg		*cfg;
+	/* reference to platक्रमm data */
+	काष्ठा s3c2410_uartcfg		*cfg;
 
-	struct s3c24xx_uart_dma		*dma;
+	काष्ठा s3c24xx_uart_dma		*dma;
 
-#ifdef CONFIG_ARM_S3C24XX_CPUFREQ
-	struct notifier_block		freq_transition;
-#endif
-};
+#अगर_घोषित CONFIG_ARM_S3C24XX_CPUFREQ
+	काष्ठा notअगरier_block		freq_transition;
+#पूर्ण_अगर
+पूर्ण;
 
-static void s3c24xx_serial_tx_chars(struct s3c24xx_uart_port *ourport);
+अटल व्योम s3c24xx_serial_tx_अक्षरs(काष्ठा s3c24xx_uart_port *ourport);
 
 /* conversion functions */
 
-#define s3c24xx_dev_to_port(__dev) dev_get_drvdata(__dev)
+#घोषणा s3c24xx_dev_to_port(__dev) dev_get_drvdata(__dev)
 
-/* register access controls */
+/* रेजिस्टर access controls */
 
-#define portaddr(port, reg) ((port)->membase + (reg))
-#define portaddrl(port, reg) \
-	((unsigned long *)(unsigned long)((port)->membase + (reg)))
+#घोषणा portaddr(port, reg) ((port)->membase + (reg))
+#घोषणा portaddrl(port, reg) \
+	((अचिन्हित दीर्घ *)(अचिन्हित दीर्घ)((port)->membase + (reg)))
 
-static u32 rd_reg(struct uart_port *port, u32 reg)
-{
-	switch (port->iotype) {
-	case UPIO_MEM:
-		return readb_relaxed(portaddr(port, reg));
-	case UPIO_MEM32:
-		return readl_relaxed(portaddr(port, reg));
-	default:
-		return 0;
-	}
-	return 0;
-}
+अटल u32 rd_reg(काष्ठा uart_port *port, u32 reg)
+अणु
+	चयन (port->iotype) अणु
+	हाल UPIO_MEM:
+		वापस पढ़ोb_relaxed(portaddr(port, reg));
+	हाल UPIO_MEM32:
+		वापस पढ़ोl_relaxed(portaddr(port, reg));
+	शेष:
+		वापस 0;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define rd_regl(port, reg) (readl_relaxed(portaddr(port, reg)))
+#घोषणा rd_regl(port, reg) (पढ़ोl_relaxed(portaddr(port, reg)))
 
-static void wr_reg(struct uart_port *port, u32 reg, u32 val)
-{
-	switch (port->iotype) {
-	case UPIO_MEM:
-		writeb_relaxed(val, portaddr(port, reg));
-		break;
-	case UPIO_MEM32:
-		writel_relaxed(val, portaddr(port, reg));
-		break;
-	}
-}
+अटल व्योम wr_reg(काष्ठा uart_port *port, u32 reg, u32 val)
+अणु
+	चयन (port->iotype) अणु
+	हाल UPIO_MEM:
+		ग_लिखोb_relaxed(val, portaddr(port, reg));
+		अवरोध;
+	हाल UPIO_MEM32:
+		ग_लिखोl_relaxed(val, portaddr(port, reg));
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-#define wr_regl(port, reg, val) writel_relaxed(val, portaddr(port, reg))
+#घोषणा wr_regl(port, reg, val) ग_लिखोl_relaxed(val, portaddr(port, reg))
 
 /* Byte-order aware bit setting/clearing functions. */
 
-static inline void s3c24xx_set_bit(struct uart_port *port, int idx,
-				   unsigned int reg)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम s3c24xx_set_bit(काष्ठा uart_port *port, पूर्णांक idx,
+				   अचिन्हित पूर्णांक reg)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	local_irq_save(flags);
@@ -206,12 +207,12 @@ static inline void s3c24xx_set_bit(struct uart_port *port, int idx,
 	val |= (1 << idx);
 	wr_regl(port, reg, val);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static inline void s3c24xx_clear_bit(struct uart_port *port, int idx,
-				     unsigned int reg)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम s3c24xx_clear_bit(काष्ठा uart_port *port, पूर्णांक idx,
+				     अचिन्हित पूर्णांक reg)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	local_irq_save(flags);
@@ -219,35 +220,35 @@ static inline void s3c24xx_clear_bit(struct uart_port *port, int idx,
 	val &= ~(1 << idx);
 	wr_regl(port, reg, val);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static inline struct s3c24xx_uart_port *to_ourport(struct uart_port *port)
-{
-	return container_of(port, struct s3c24xx_uart_port, port);
-}
+अटल अंतरभूत काष्ठा s3c24xx_uart_port *to_ourport(काष्ठा uart_port *port)
+अणु
+	वापस container_of(port, काष्ठा s3c24xx_uart_port, port);
+पूर्ण
 
 /* translate a port to the device name */
 
-static inline const char *s3c24xx_serial_portname(struct uart_port *port)
-{
-	return to_platform_device(port->dev)->name;
-}
+अटल अंतरभूत स्थिर अक्षर *s3c24xx_serial_portname(काष्ठा uart_port *port)
+अणु
+	वापस to_platक्रमm_device(port->dev)->name;
+पूर्ण
 
-static int s3c24xx_serial_txempty_nofifo(struct uart_port *port)
-{
-	return rd_regl(port, S3C2410_UTRSTAT) & S3C2410_UTRSTAT_TXE;
-}
+अटल पूर्णांक s3c24xx_serial_txempty_nofअगरo(काष्ठा uart_port *port)
+अणु
+	वापस rd_regl(port, S3C2410_UTRSTAT) & S3C2410_UTRSTAT_TXE;
+पूर्ण
 
-static void s3c24xx_serial_rx_enable(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
-	unsigned long flags;
-	unsigned int ucon, ufcon;
-	int count = 10000;
+अटल व्योम s3c24xx_serial_rx_enable(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ucon, ufcon;
+	पूर्णांक count = 10000;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	while (--count && !s3c24xx_serial_txempty_nofifo(port))
+	जबतक (--count && !s3c24xx_serial_txempty_nofअगरo(port))
 		udelay(100);
 
 	ufcon = rd_regl(port, S3C2410_UFCON);
@@ -260,13 +261,13 @@ static void s3c24xx_serial_rx_enable(struct uart_port *port)
 
 	ourport->rx_enabled = 1;
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void s3c24xx_serial_rx_disable(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
-	unsigned long flags;
-	unsigned int ucon;
+अटल व्योम s3c24xx_serial_rx_disable(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ucon;
 
 	spin_lock_irqsave(&port->lock, flags);
 
@@ -276,69 +277,69 @@ static void s3c24xx_serial_rx_disable(struct uart_port *port)
 
 	ourport->rx_enabled = 0;
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void s3c24xx_serial_stop_tx(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
-	struct s3c24xx_uart_dma *dma = ourport->dma;
-	struct circ_buf *xmit = &port->state->xmit;
-	struct dma_tx_state state;
-	int count;
+अटल व्योम s3c24xx_serial_stop_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
+	काष्ठा s3c24xx_uart_dma *dma = ourport->dma;
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	काष्ठा dma_tx_state state;
+	पूर्णांक count;
 
-	if (!ourport->tx_enabled)
-		return;
+	अगर (!ourport->tx_enabled)
+		वापस;
 
-	switch (ourport->info->type) {
-	case TYPE_S3C6400:
+	चयन (ourport->info->type) अणु
+	हाल TYPE_S3C6400:
 		s3c24xx_set_bit(port, S3C64XX_UINTM_TXD, S3C64XX_UINTM);
-		break;
-	case TYPE_APPLE_S5L:
+		अवरोध;
+	हाल TYPE_APPLE_S5L:
 		s3c24xx_clear_bit(port, APPLE_S5L_UCON_TXTHRESH_ENA, S3C2410_UCON);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		disable_irq_nosync(ourport->tx_irq);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (dma && dma->tx_chan && ourport->tx_in_progress == S3C24XX_TX_DMA) {
-		dmaengine_pause(dma->tx_chan);
+	अगर (dma && dma->tx_chan && ourport->tx_in_progress == S3C24XX_TX_DMA) अणु
+		dmaengine_छोड़ो(dma->tx_chan);
 		dmaengine_tx_status(dma->tx_chan, dma->tx_cookie, &state);
 		dmaengine_terminate_all(dma->tx_chan);
-		dma_sync_single_for_cpu(ourport->port.dev,
+		dma_sync_single_क्रम_cpu(ourport->port.dev,
 			dma->tx_transfer_addr, dma->tx_size, DMA_TO_DEVICE);
 		async_tx_ack(dma->tx_desc);
 		count = dma->tx_bytes_requested - state.residue;
 		xmit->tail = (xmit->tail + count) & (UART_XMIT_SIZE - 1);
 		port->icount.tx += count;
-	}
+	पूर्ण
 
 	ourport->tx_enabled = 0;
 	ourport->tx_in_progress = 0;
 
-	if (port->flags & UPF_CONS_FLOW)
+	अगर (port->flags & UPF_CONS_FLOW)
 		s3c24xx_serial_rx_enable(port);
 
 	ourport->tx_mode = 0;
-}
+पूर्ण
 
-static void s3c24xx_serial_start_next_tx(struct s3c24xx_uart_port *ourport);
+अटल व्योम s3c24xx_serial_start_next_tx(काष्ठा s3c24xx_uart_port *ourport);
 
-static void s3c24xx_serial_tx_dma_complete(void *args)
-{
-	struct s3c24xx_uart_port *ourport = args;
-	struct uart_port *port = &ourport->port;
-	struct circ_buf *xmit = &port->state->xmit;
-	struct s3c24xx_uart_dma *dma = ourport->dma;
-	struct dma_tx_state state;
-	unsigned long flags;
-	int count;
+अटल व्योम s3c24xx_serial_tx_dma_complete(व्योम *args)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = args;
+	काष्ठा uart_port *port = &ourport->port;
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	काष्ठा s3c24xx_uart_dma *dma = ourport->dma;
+	काष्ठा dma_tx_state state;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count;
 
 	dmaengine_tx_status(dma->tx_chan, dma->tx_cookie, &state);
 	count = dma->tx_bytes_requested - state.residue;
 	async_tx_ack(dma->tx_desc);
 
-	dma_sync_single_for_cpu(ourport->port.dev, dma->tx_transfer_addr,
+	dma_sync_single_क्रम_cpu(ourport->port.dev, dma->tx_transfer_addr,
 				dma->tx_size, DMA_TO_DEVICE);
 
 	spin_lock_irqsave(&port->lock, flags);
@@ -347,30 +348,30 @@ static void s3c24xx_serial_tx_dma_complete(void *args)
 	port->icount.tx += count;
 	ourport->tx_in_progress = 0;
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
 
 	s3c24xx_serial_start_next_tx(ourport);
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void enable_tx_dma(struct s3c24xx_uart_port *ourport)
-{
-	struct uart_port *port = &ourport->port;
+अटल व्योम enable_tx_dma(काष्ठा s3c24xx_uart_port *ourport)
+अणु
+	काष्ठा uart_port *port = &ourport->port;
 	u32 ucon;
 
-	/* Mask Tx interrupt */
-	switch (ourport->info->type) {
-	case TYPE_S3C6400:
+	/* Mask Tx पूर्णांकerrupt */
+	चयन (ourport->info->type) अणु
+	हाल TYPE_S3C6400:
 		s3c24xx_set_bit(port, S3C64XX_UINTM_TXD, S3C64XX_UINTM);
-		break;
-	case TYPE_APPLE_S5L:
+		अवरोध;
+	हाल TYPE_APPLE_S5L:
 		WARN_ON(1); // No DMA
-		break;
-	default:
+		अवरोध;
+	शेष:
 		disable_irq_nosync(ourport->tx_irq);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Enable tx dma mode */
 	ucon = rd_regl(port, S3C2410_UCON);
@@ -381,11 +382,11 @@ static void enable_tx_dma(struct s3c24xx_uart_port *ourport)
 	wr_regl(port,  S3C2410_UCON, ucon);
 
 	ourport->tx_mode = S3C24XX_TX_DMA;
-}
+पूर्ण
 
-static void enable_tx_pio(struct s3c24xx_uart_port *ourport)
-{
-	struct uart_port *port = &ourport->port;
+अटल व्योम enable_tx_pio(काष्ठा s3c24xx_uart_port *ourport)
+अणु
+	काष्ठा uart_port *port = &ourport->port;
 	u32 ucon, ufcon;
 
 	/* Set ufcon txtrig */
@@ -399,60 +400,60 @@ static void enable_tx_pio(struct s3c24xx_uart_port *ourport)
 	ucon |= S3C64XX_UCON_TXMODE_CPU;
 	wr_regl(port,  S3C2410_UCON, ucon);
 
-	/* Unmask Tx interrupt */
-	switch (ourport->info->type) {
-	case TYPE_S3C6400:
+	/* Unmask Tx पूर्णांकerrupt */
+	चयन (ourport->info->type) अणु
+	हाल TYPE_S3C6400:
 		s3c24xx_clear_bit(port, S3C64XX_UINTM_TXD,
 				  S3C64XX_UINTM);
-		break;
-	case TYPE_APPLE_S5L:
+		अवरोध;
+	हाल TYPE_APPLE_S5L:
 		ucon |= APPLE_S5L_UCON_TXTHRESH_ENA_MSK;
 		wr_regl(port, S3C2410_UCON, ucon);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		enable_irq(ourport->tx_irq);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	ourport->tx_mode = S3C24XX_TX_PIO;
 
 	/*
 	 * The Apple version only has edge triggered TX IRQs, so we need
-	 * to kick off the process by sending some characters here.
+	 * to kick off the process by sending some अक्षरacters here.
 	 */
-	if (ourport->info->type == TYPE_APPLE_S5L)
-		s3c24xx_serial_tx_chars(ourport);
-}
+	अगर (ourport->info->type == TYPE_APPLE_S5L)
+		s3c24xx_serial_tx_अक्षरs(ourport);
+पूर्ण
 
-static void s3c24xx_serial_start_tx_pio(struct s3c24xx_uart_port *ourport)
-{
-	if (ourport->tx_mode != S3C24XX_TX_PIO)
+अटल व्योम s3c24xx_serial_start_tx_pio(काष्ठा s3c24xx_uart_port *ourport)
+अणु
+	अगर (ourport->tx_mode != S3C24XX_TX_PIO)
 		enable_tx_pio(ourport);
-}
+पूर्ण
 
-static int s3c24xx_serial_start_tx_dma(struct s3c24xx_uart_port *ourport,
-				      unsigned int count)
-{
-	struct uart_port *port = &ourport->port;
-	struct circ_buf *xmit = &port->state->xmit;
-	struct s3c24xx_uart_dma *dma = ourport->dma;
+अटल पूर्णांक s3c24xx_serial_start_tx_dma(काष्ठा s3c24xx_uart_port *ourport,
+				      अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा uart_port *port = &ourport->port;
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	काष्ठा s3c24xx_uart_dma *dma = ourport->dma;
 
-	if (ourport->tx_mode != S3C24XX_TX_DMA)
+	अगर (ourport->tx_mode != S3C24XX_TX_DMA)
 		enable_tx_dma(ourport);
 
 	dma->tx_size = count & ~(dma_get_cache_alignment() - 1);
 	dma->tx_transfer_addr = dma->tx_addr + xmit->tail;
 
-	dma_sync_single_for_device(ourport->port.dev, dma->tx_transfer_addr,
+	dma_sync_single_क्रम_device(ourport->port.dev, dma->tx_transfer_addr,
 				dma->tx_size, DMA_TO_DEVICE);
 
 	dma->tx_desc = dmaengine_prep_slave_single(dma->tx_chan,
 				dma->tx_transfer_addr, dma->tx_size,
 				DMA_MEM_TO_DEV, DMA_PREP_INTERRUPT);
-	if (!dma->tx_desc) {
+	अगर (!dma->tx_desc) अणु
 		dev_err(ourport->port.dev, "Unable to get desc for Tx\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	dma->tx_desc->callback = s3c24xx_serial_tx_dma_complete;
 	dma->tx_desc->callback_param = ourport;
@@ -461,157 +462,157 @@ static int s3c24xx_serial_start_tx_dma(struct s3c24xx_uart_port *ourport,
 	ourport->tx_in_progress = S3C24XX_TX_DMA;
 	dma->tx_cookie = dmaengine_submit(dma->tx_desc);
 	dma_async_issue_pending(dma->tx_chan);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void s3c24xx_serial_start_next_tx(struct s3c24xx_uart_port *ourport)
-{
-	struct uart_port *port = &ourport->port;
-	struct circ_buf *xmit = &port->state->xmit;
-	unsigned long count;
+अटल व्योम s3c24xx_serial_start_next_tx(काष्ठा s3c24xx_uart_port *ourport)
+अणु
+	काष्ठा uart_port *port = &ourport->port;
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	अचिन्हित दीर्घ count;
 
 	/* Get data size up to the end of buffer */
 	count = CIRC_CNT_TO_END(xmit->head, xmit->tail, UART_XMIT_SIZE);
 
-	if (!count) {
+	अगर (!count) अणु
 		s3c24xx_serial_stop_tx(port);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!ourport->dma || !ourport->dma->tx_chan ||
+	अगर (!ourport->dma || !ourport->dma->tx_chan ||
 	    count < ourport->min_dma_size ||
 	    xmit->tail & (dma_get_cache_alignment() - 1))
 		s3c24xx_serial_start_tx_pio(ourport);
-	else
+	अन्यथा
 		s3c24xx_serial_start_tx_dma(ourport, count);
-}
+पूर्ण
 
-static void s3c24xx_serial_start_tx(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
-	struct circ_buf *xmit = &port->state->xmit;
+अटल व्योम s3c24xx_serial_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
+	काष्ठा circ_buf *xmit = &port->state->xmit;
 
-	if (!ourport->tx_enabled) {
-		if (port->flags & UPF_CONS_FLOW)
+	अगर (!ourport->tx_enabled) अणु
+		अगर (port->flags & UPF_CONS_FLOW)
 			s3c24xx_serial_rx_disable(port);
 
 		ourport->tx_enabled = 1;
-		if (!ourport->dma || !ourport->dma->tx_chan)
+		अगर (!ourport->dma || !ourport->dma->tx_chan)
 			s3c24xx_serial_start_tx_pio(ourport);
-	}
+	पूर्ण
 
-	if (ourport->dma && ourport->dma->tx_chan) {
-		if (!uart_circ_empty(xmit) && !ourport->tx_in_progress)
+	अगर (ourport->dma && ourport->dma->tx_chan) अणु
+		अगर (!uart_circ_empty(xmit) && !ourport->tx_in_progress)
 			s3c24xx_serial_start_next_tx(ourport);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void s3c24xx_uart_copy_rx_to_tty(struct s3c24xx_uart_port *ourport,
-		struct tty_port *tty, int count)
-{
-	struct s3c24xx_uart_dma *dma = ourport->dma;
-	int copied;
+अटल व्योम s3c24xx_uart_copy_rx_to_tty(काष्ठा s3c24xx_uart_port *ourport,
+		काष्ठा tty_port *tty, पूर्णांक count)
+अणु
+	काष्ठा s3c24xx_uart_dma *dma = ourport->dma;
+	पूर्णांक copied;
 
-	if (!count)
-		return;
+	अगर (!count)
+		वापस;
 
-	dma_sync_single_for_cpu(ourport->port.dev, dma->rx_addr,
+	dma_sync_single_क्रम_cpu(ourport->port.dev, dma->rx_addr,
 				dma->rx_size, DMA_FROM_DEVICE);
 
 	ourport->port.icount.rx += count;
-	if (!tty) {
+	अगर (!tty) अणु
 		dev_err(ourport->port.dev, "No tty port\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	copied = tty_insert_flip_string(tty,
-			((unsigned char *)(ourport->dma->rx_buf)), count);
-	if (copied != count) {
+			((अचिन्हित अक्षर *)(ourport->dma->rx_buf)), count);
+	अगर (copied != count) अणु
 		WARN_ON(1);
 		dev_err(ourport->port.dev, "RxData copy to tty layer failed\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void s3c24xx_serial_stop_rx(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
-	struct s3c24xx_uart_dma *dma = ourport->dma;
-	struct tty_port *t = &port->state->port;
-	struct dma_tx_state state;
-	enum dma_status dma_status;
-	unsigned int received;
+अटल व्योम s3c24xx_serial_stop_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
+	काष्ठा s3c24xx_uart_dma *dma = ourport->dma;
+	काष्ठा tty_port *t = &port->state->port;
+	काष्ठा dma_tx_state state;
+	क्रमागत dma_status dma_status;
+	अचिन्हित पूर्णांक received;
 
-	if (ourport->rx_enabled) {
+	अगर (ourport->rx_enabled) अणु
 		dev_dbg(port->dev, "stopping rx\n");
-		switch (ourport->info->type) {
-		case TYPE_S3C6400:
+		चयन (ourport->info->type) अणु
+		हाल TYPE_S3C6400:
 			s3c24xx_set_bit(port, S3C64XX_UINTM_RXD,
 					S3C64XX_UINTM);
-			break;
-		case TYPE_APPLE_S5L:
+			अवरोध;
+		हाल TYPE_APPLE_S5L:
 			s3c24xx_clear_bit(port, APPLE_S5L_UCON_RXTHRESH_ENA, S3C2410_UCON);
 			s3c24xx_clear_bit(port, APPLE_S5L_UCON_RXTO_ENA, S3C2410_UCON);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			disable_irq_nosync(ourport->rx_irq);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		ourport->rx_enabled = 0;
-	}
-	if (dma && dma->rx_chan) {
-		dmaengine_pause(dma->tx_chan);
+	पूर्ण
+	अगर (dma && dma->rx_chan) अणु
+		dmaengine_छोड़ो(dma->tx_chan);
 		dma_status = dmaengine_tx_status(dma->rx_chan,
 				dma->rx_cookie, &state);
-		if (dma_status == DMA_IN_PROGRESS ||
-			dma_status == DMA_PAUSED) {
+		अगर (dma_status == DMA_IN_PROGRESS ||
+			dma_status == DMA_PAUSED) अणु
 			received = dma->rx_bytes_requested - state.residue;
 			dmaengine_terminate_all(dma->rx_chan);
 			s3c24xx_uart_copy_rx_to_tty(ourport, t, received);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline struct s3c24xx_uart_info
-	*s3c24xx_port_to_info(struct uart_port *port)
-{
-	return to_ourport(port)->info;
-}
+अटल अंतरभूत काष्ठा s3c24xx_uart_info
+	*s3c24xx_port_to_info(काष्ठा uart_port *port)
+अणु
+	वापस to_ourport(port)->info;
+पूर्ण
 
-static inline struct s3c2410_uartcfg
-	*s3c24xx_port_to_cfg(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport;
+अटल अंतरभूत काष्ठा s3c2410_uartcfg
+	*s3c24xx_port_to_cfg(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport;
 
-	if (port->dev == NULL)
-		return NULL;
+	अगर (port->dev == शून्य)
+		वापस शून्य;
 
-	ourport = container_of(port, struct s3c24xx_uart_port, port);
-	return ourport->cfg;
-}
+	ourport = container_of(port, काष्ठा s3c24xx_uart_port, port);
+	वापस ourport->cfg;
+पूर्ण
 
-static int s3c24xx_serial_rx_fifocnt(struct s3c24xx_uart_port *ourport,
-				     unsigned long ufstat)
-{
-	struct s3c24xx_uart_info *info = ourport->info;
+अटल पूर्णांक s3c24xx_serial_rx_fअगरocnt(काष्ठा s3c24xx_uart_port *ourport,
+				     अचिन्हित दीर्घ uख_स्थिति)
+अणु
+	काष्ठा s3c24xx_uart_info *info = ourport->info;
 
-	if (ufstat & info->rx_fifofull)
-		return ourport->port.fifosize;
+	अगर (uख_स्थिति & info->rx_fअगरofull)
+		वापस ourport->port.fअगरosize;
 
-	return (ufstat & info->rx_fifomask) >> info->rx_fifoshift;
-}
+	वापस (uख_स्थिति & info->rx_fअगरomask) >> info->rx_fअगरoshअगरt;
+पूर्ण
 
-static void s3c64xx_start_rx_dma(struct s3c24xx_uart_port *ourport);
-static void s3c24xx_serial_rx_dma_complete(void *args)
-{
-	struct s3c24xx_uart_port *ourport = args;
-	struct uart_port *port = &ourport->port;
+अटल व्योम s3c64xx_start_rx_dma(काष्ठा s3c24xx_uart_port *ourport);
+अटल व्योम s3c24xx_serial_rx_dma_complete(व्योम *args)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = args;
+	काष्ठा uart_port *port = &ourport->port;
 
-	struct s3c24xx_uart_dma *dma = ourport->dma;
-	struct tty_port *t = &port->state->port;
-	struct tty_struct *tty = tty_port_tty_get(&ourport->port.state->port);
+	काष्ठा s3c24xx_uart_dma *dma = ourport->dma;
+	काष्ठा tty_port *t = &port->state->port;
+	काष्ठा tty_काष्ठा *tty = tty_port_tty_get(&ourport->port.state->port);
 
-	struct dma_tx_state state;
-	unsigned long flags;
-	int received;
+	काष्ठा dma_tx_state state;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक received;
 
 	dmaengine_tx_status(dma->rx_chan,  dma->rx_cookie, &state);
 	received  = dma->rx_bytes_requested - state.residue;
@@ -619,33 +620,33 @@ static void s3c24xx_serial_rx_dma_complete(void *args)
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	if (received)
+	अगर (received)
 		s3c24xx_uart_copy_rx_to_tty(ourport, t, received);
 
-	if (tty) {
+	अगर (tty) अणु
 		tty_flip_buffer_push(t);
 		tty_kref_put(tty);
-	}
+	पूर्ण
 
 	s3c64xx_start_rx_dma(ourport);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void s3c64xx_start_rx_dma(struct s3c24xx_uart_port *ourport)
-{
-	struct s3c24xx_uart_dma *dma = ourport->dma;
+अटल व्योम s3c64xx_start_rx_dma(काष्ठा s3c24xx_uart_port *ourport)
+अणु
+	काष्ठा s3c24xx_uart_dma *dma = ourport->dma;
 
-	dma_sync_single_for_device(ourport->port.dev, dma->rx_addr,
+	dma_sync_single_क्रम_device(ourport->port.dev, dma->rx_addr,
 				dma->rx_size, DMA_FROM_DEVICE);
 
 	dma->rx_desc = dmaengine_prep_slave_single(dma->rx_chan,
 				dma->rx_addr, dma->rx_size, DMA_DEV_TO_MEM,
 				DMA_PREP_INTERRUPT);
-	if (!dma->rx_desc) {
+	अगर (!dma->rx_desc) अणु
 		dev_err(ourport->port.dev, "Unable to get desc for Rx\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dma->rx_desc->callback = s3c24xx_serial_rx_dma_complete;
 	dma->rx_desc->callback_param = ourport;
@@ -653,15 +654,15 @@ static void s3c64xx_start_rx_dma(struct s3c24xx_uart_port *ourport)
 
 	dma->rx_cookie = dmaengine_submit(dma->rx_desc);
 	dma_async_issue_pending(dma->rx_chan);
-}
+पूर्ण
 
 /* ? - where has parity gone?? */
-#define S3C2410_UERSTAT_PARITY (0x1000)
+#घोषणा S3C2410_UERSTAT_PARITY (0x1000)
 
-static void enable_rx_dma(struct s3c24xx_uart_port *ourport)
-{
-	struct uart_port *port = &ourport->port;
-	unsigned int ucon;
+अटल व्योम enable_rx_dma(काष्ठा s3c24xx_uart_port *ourport)
+अणु
+	काष्ठा uart_port *port = &ourport->port;
+	अचिन्हित पूर्णांक ucon;
 
 	/* set Rx mode to DMA mode */
 	ucon = rd_regl(port, S3C2410_UCON);
@@ -679,373 +680,373 @@ static void enable_rx_dma(struct s3c24xx_uart_port *ourport)
 	wr_regl(port, S3C2410_UCON, ucon);
 
 	ourport->rx_mode = S3C24XX_RX_DMA;
-}
+पूर्ण
 
-static void enable_rx_pio(struct s3c24xx_uart_port *ourport)
-{
-	struct uart_port *port = &ourport->port;
-	unsigned int ucon;
+अटल व्योम enable_rx_pio(काष्ठा s3c24xx_uart_port *ourport)
+अणु
+	काष्ठा uart_port *port = &ourport->port;
+	अचिन्हित पूर्णांक ucon;
 
 	/* set Rx mode to DMA mode */
 	ucon = rd_regl(port, S3C2410_UCON);
 	ucon &= ~S3C64XX_UCON_RXMODE_MASK;
 	ucon |= S3C64XX_UCON_RXMODE_CPU;
 
-	/* Apple types use these bits for IRQ masks */
-	if (ourport->info->type != TYPE_APPLE_S5L) {
+	/* Apple types use these bits क्रम IRQ masks */
+	अगर (ourport->info->type != TYPE_APPLE_S5L) अणु
 		ucon &= ~(S3C64XX_UCON_TIMEOUT_MASK |
 				S3C64XX_UCON_EMPTYINT_EN |
 				S3C64XX_UCON_DMASUS_EN |
 				S3C64XX_UCON_TIMEOUT_EN);
 		ucon |= 0xf << S3C64XX_UCON_TIMEOUT_SHIFT |
 				S3C64XX_UCON_TIMEOUT_EN;
-	}
+	पूर्ण
 	wr_regl(port, S3C2410_UCON, ucon);
 
 	ourport->rx_mode = S3C24XX_RX_PIO;
-}
+पूर्ण
 
-static void s3c24xx_serial_rx_drain_fifo(struct s3c24xx_uart_port *ourport);
+अटल व्योम s3c24xx_serial_rx_drain_fअगरo(काष्ठा s3c24xx_uart_port *ourport);
 
-static irqreturn_t s3c24xx_serial_rx_chars_dma(void *dev_id)
-{
-	unsigned int utrstat, received;
-	struct s3c24xx_uart_port *ourport = dev_id;
-	struct uart_port *port = &ourport->port;
-	struct s3c24xx_uart_dma *dma = ourport->dma;
-	struct tty_struct *tty = tty_port_tty_get(&ourport->port.state->port);
-	struct tty_port *t = &port->state->port;
-	struct dma_tx_state state;
+अटल irqवापस_t s3c24xx_serial_rx_अक्षरs_dma(व्योम *dev_id)
+अणु
+	अचिन्हित पूर्णांक utrstat, received;
+	काष्ठा s3c24xx_uart_port *ourport = dev_id;
+	काष्ठा uart_port *port = &ourport->port;
+	काष्ठा s3c24xx_uart_dma *dma = ourport->dma;
+	काष्ठा tty_काष्ठा *tty = tty_port_tty_get(&ourport->port.state->port);
+	काष्ठा tty_port *t = &port->state->port;
+	काष्ठा dma_tx_state state;
 
 	utrstat = rd_regl(port, S3C2410_UTRSTAT);
 	rd_regl(port, S3C2410_UFSTAT);
 
 	spin_lock(&port->lock);
 
-	if (!(utrstat & S3C2410_UTRSTAT_TIMEOUT)) {
+	अगर (!(utrstat & S3C2410_UTRSTAT_TIMEOUT)) अणु
 		s3c64xx_start_rx_dma(ourport);
-		if (ourport->rx_mode == S3C24XX_RX_PIO)
+		अगर (ourport->rx_mode == S3C24XX_RX_PIO)
 			enable_rx_dma(ourport);
-		goto finish;
-	}
+		जाओ finish;
+	पूर्ण
 
-	if (ourport->rx_mode == S3C24XX_RX_DMA) {
-		dmaengine_pause(dma->rx_chan);
+	अगर (ourport->rx_mode == S3C24XX_RX_DMA) अणु
+		dmaengine_छोड़ो(dma->rx_chan);
 		dmaengine_tx_status(dma->rx_chan, dma->rx_cookie, &state);
 		dmaengine_terminate_all(dma->rx_chan);
 		received = dma->rx_bytes_requested - state.residue;
 		s3c24xx_uart_copy_rx_to_tty(ourport, t, received);
 
 		enable_rx_pio(ourport);
-	}
+	पूर्ण
 
-	s3c24xx_serial_rx_drain_fifo(ourport);
+	s3c24xx_serial_rx_drain_fअगरo(ourport);
 
-	if (tty) {
+	अगर (tty) अणु
 		tty_flip_buffer_push(t);
 		tty_kref_put(tty);
-	}
+	पूर्ण
 
 	wr_regl(port, S3C2410_UTRSTAT, S3C2410_UTRSTAT_TIMEOUT);
 
 finish:
 	spin_unlock(&port->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void s3c24xx_serial_rx_drain_fifo(struct s3c24xx_uart_port *ourport)
-{
-	struct uart_port *port = &ourport->port;
-	unsigned int ufcon, ch, flag, ufstat, uerstat;
-	unsigned int fifocnt = 0;
-	int max_count = port->fifosize;
+अटल व्योम s3c24xx_serial_rx_drain_fअगरo(काष्ठा s3c24xx_uart_port *ourport)
+अणु
+	काष्ठा uart_port *port = &ourport->port;
+	अचिन्हित पूर्णांक ufcon, ch, flag, uख_स्थिति, uerstat;
+	अचिन्हित पूर्णांक fअगरocnt = 0;
+	पूर्णांक max_count = port->fअगरosize;
 
-	while (max_count-- > 0) {
+	जबतक (max_count-- > 0) अणु
 		/*
-		 * Receive all characters known to be in FIFO
-		 * before reading FIFO level again
+		 * Receive all अक्षरacters known to be in FIFO
+		 * beक्रमe पढ़ोing FIFO level again
 		 */
-		if (fifocnt == 0) {
-			ufstat = rd_regl(port, S3C2410_UFSTAT);
-			fifocnt = s3c24xx_serial_rx_fifocnt(ourport, ufstat);
-			if (fifocnt == 0)
-				break;
-		}
-		fifocnt--;
+		अगर (fअगरocnt == 0) अणु
+			uख_स्थिति = rd_regl(port, S3C2410_UFSTAT);
+			fअगरocnt = s3c24xx_serial_rx_fअगरocnt(ourport, uख_स्थिति);
+			अगर (fअगरocnt == 0)
+				अवरोध;
+		पूर्ण
+		fअगरocnt--;
 
 		uerstat = rd_regl(port, S3C2410_UERSTAT);
 		ch = rd_reg(port, S3C2410_URXH);
 
-		if (port->flags & UPF_CONS_FLOW) {
-			int txe = s3c24xx_serial_txempty_nofifo(port);
+		अगर (port->flags & UPF_CONS_FLOW) अणु
+			पूर्णांक txe = s3c24xx_serial_txempty_nofअगरo(port);
 
-			if (ourport->rx_enabled) {
-				if (!txe) {
+			अगर (ourport->rx_enabled) अणु
+				अगर (!txe) अणु
 					ourport->rx_enabled = 0;
-					continue;
-				}
-			} else {
-				if (txe) {
+					जारी;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर (txe) अणु
 					ufcon = rd_regl(port, S3C2410_UFCON);
 					ufcon |= S3C2410_UFCON_RESETRX;
 					wr_regl(port, S3C2410_UFCON, ufcon);
 					ourport->rx_enabled = 1;
-					return;
-				}
-				continue;
-			}
-		}
+					वापस;
+				पूर्ण
+				जारी;
+			पूर्ण
+		पूर्ण
 
-		/* insert the character into the buffer */
+		/* insert the अक्षरacter पूर्णांकo the buffer */
 
 		flag = TTY_NORMAL;
 		port->icount.rx++;
 
-		if (unlikely(uerstat & S3C2410_UERSTAT_ANY)) {
+		अगर (unlikely(uerstat & S3C2410_UERSTAT_ANY)) अणु
 			dev_dbg(port->dev,
 				"rxerr: port ch=0x%02x, rxs=0x%08x\n",
 				ch, uerstat);
 
-			/* check for break */
-			if (uerstat & S3C2410_UERSTAT_BREAK) {
+			/* check क्रम अवरोध */
+			अगर (uerstat & S3C2410_UERSTAT_BREAK) अणु
 				dev_dbg(port->dev, "break!\n");
 				port->icount.brk++;
-				if (uart_handle_break(port))
-					continue; /* Ignore character */
-			}
+				अगर (uart_handle_अवरोध(port))
+					जारी; /* Ignore अक्षरacter */
+			पूर्ण
 
-			if (uerstat & S3C2410_UERSTAT_FRAME)
+			अगर (uerstat & S3C2410_UERSTAT_FRAME)
 				port->icount.frame++;
-			if (uerstat & S3C2410_UERSTAT_OVERRUN)
+			अगर (uerstat & S3C2410_UERSTAT_OVERRUN)
 				port->icount.overrun++;
 
-			uerstat &= port->read_status_mask;
+			uerstat &= port->पढ़ो_status_mask;
 
-			if (uerstat & S3C2410_UERSTAT_BREAK)
+			अगर (uerstat & S3C2410_UERSTAT_BREAK)
 				flag = TTY_BREAK;
-			else if (uerstat & S3C2410_UERSTAT_PARITY)
+			अन्यथा अगर (uerstat & S3C2410_UERSTAT_PARITY)
 				flag = TTY_PARITY;
-			else if (uerstat & (S3C2410_UERSTAT_FRAME |
+			अन्यथा अगर (uerstat & (S3C2410_UERSTAT_FRAME |
 					    S3C2410_UERSTAT_OVERRUN))
 				flag = TTY_FRAME;
-		}
+		पूर्ण
 
-		if (uart_handle_sysrq_char(port, ch))
-			continue; /* Ignore character */
+		अगर (uart_handle_sysrq_अक्षर(port, ch))
+			जारी; /* Ignore अक्षरacter */
 
-		uart_insert_char(port, uerstat, S3C2410_UERSTAT_OVERRUN,
+		uart_insert_अक्षर(port, uerstat, S3C2410_UERSTAT_OVERRUN,
 				 ch, flag);
-	}
+	पूर्ण
 
 	tty_flip_buffer_push(&port->state->port);
-}
+पूर्ण
 
-static irqreturn_t s3c24xx_serial_rx_chars_pio(void *dev_id)
-{
-	struct s3c24xx_uart_port *ourport = dev_id;
-	struct uart_port *port = &ourport->port;
+अटल irqवापस_t s3c24xx_serial_rx_अक्षरs_pio(व्योम *dev_id)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = dev_id;
+	काष्ठा uart_port *port = &ourport->port;
 
 	spin_lock(&port->lock);
-	s3c24xx_serial_rx_drain_fifo(ourport);
+	s3c24xx_serial_rx_drain_fअगरo(ourport);
 	spin_unlock(&port->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t s3c24xx_serial_rx_irq(int irq, void *dev_id)
-{
-	struct s3c24xx_uart_port *ourport = dev_id;
+अटल irqवापस_t s3c24xx_serial_rx_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = dev_id;
 
-	if (ourport->dma && ourport->dma->rx_chan)
-		return s3c24xx_serial_rx_chars_dma(dev_id);
-	return s3c24xx_serial_rx_chars_pio(dev_id);
-}
+	अगर (ourport->dma && ourport->dma->rx_chan)
+		वापस s3c24xx_serial_rx_अक्षरs_dma(dev_id);
+	वापस s3c24xx_serial_rx_अक्षरs_pio(dev_id);
+पूर्ण
 
-static void s3c24xx_serial_tx_chars(struct s3c24xx_uart_port *ourport)
-{
-	struct uart_port *port = &ourport->port;
-	struct circ_buf *xmit = &port->state->xmit;
-	int count, dma_count = 0;
+अटल व्योम s3c24xx_serial_tx_अक्षरs(काष्ठा s3c24xx_uart_port *ourport)
+अणु
+	काष्ठा uart_port *port = &ourport->port;
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	पूर्णांक count, dma_count = 0;
 
 	count = CIRC_CNT_TO_END(xmit->head, xmit->tail, UART_XMIT_SIZE);
 
-	if (ourport->dma && ourport->dma->tx_chan &&
-	    count >= ourport->min_dma_size) {
-		int align = dma_get_cache_alignment() -
+	अगर (ourport->dma && ourport->dma->tx_chan &&
+	    count >= ourport->min_dma_size) अणु
+		पूर्णांक align = dma_get_cache_alignment() -
 			(xmit->tail & (dma_get_cache_alignment() - 1));
-		if (count - align >= ourport->min_dma_size) {
+		अगर (count - align >= ourport->min_dma_size) अणु
 			dma_count = count - align;
 			count = align;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (port->x_char) {
-		wr_reg(port, S3C2410_UTXH, port->x_char);
+	अगर (port->x_अक्षर) अणु
+		wr_reg(port, S3C2410_UTXH, port->x_अक्षर);
 		port->icount.tx++;
-		port->x_char = 0;
-		return;
-	}
+		port->x_अक्षर = 0;
+		वापस;
+	पूर्ण
 
-	/* if there isn't anything more to transmit, or the uart is now
-	 * stopped, disable the uart and exit
+	/* अगर there isn't anything more to transmit, or the uart is now
+	 * stopped, disable the uart and निकास
 	 */
 
-	if (uart_circ_empty(xmit) || uart_tx_stopped(port)) {
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(port)) अणु
 		s3c24xx_serial_stop_tx(port);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* try and drain the buffer... */
 
-	if (count > port->fifosize) {
-		count = port->fifosize;
+	अगर (count > port->fअगरosize) अणु
+		count = port->fअगरosize;
 		dma_count = 0;
-	}
+	पूर्ण
 
-	while (!uart_circ_empty(xmit) && count > 0) {
-		if (rd_regl(port, S3C2410_UFSTAT) & ourport->info->tx_fifofull)
-			break;
+	जबतक (!uart_circ_empty(xmit) && count > 0) अणु
+		अगर (rd_regl(port, S3C2410_UFSTAT) & ourport->info->tx_fअगरofull)
+			अवरोध;
 
 		wr_reg(port, S3C2410_UTXH, xmit->buf[xmit->tail]);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
 		count--;
-	}
+	पूर्ण
 
-	if (!count && dma_count) {
+	अगर (!count && dma_count) अणु
 		s3c24xx_serial_start_tx_dma(ourport, dma_count);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS) {
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS) अणु
 		spin_unlock(&port->lock);
-		uart_write_wakeup(port);
+		uart_ग_लिखो_wakeup(port);
 		spin_lock(&port->lock);
-	}
+	पूर्ण
 
-	if (uart_circ_empty(xmit))
+	अगर (uart_circ_empty(xmit))
 		s3c24xx_serial_stop_tx(port);
-}
+पूर्ण
 
-static irqreturn_t s3c24xx_serial_tx_irq(int irq, void *id)
-{
-	struct s3c24xx_uart_port *ourport = id;
-	struct uart_port *port = &ourport->port;
+अटल irqवापस_t s3c24xx_serial_tx_irq(पूर्णांक irq, व्योम *id)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = id;
+	काष्ठा uart_port *port = &ourport->port;
 
 	spin_lock(&port->lock);
 
-	s3c24xx_serial_tx_chars(ourport);
+	s3c24xx_serial_tx_अक्षरs(ourport);
 
 	spin_unlock(&port->lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* interrupt handler for s3c64xx and later SoC's.*/
-static irqreturn_t s3c64xx_serial_handle_irq(int irq, void *id)
-{
-	struct s3c24xx_uart_port *ourport = id;
-	struct uart_port *port = &ourport->port;
-	unsigned int pend = rd_regl(port, S3C64XX_UINTP);
-	irqreturn_t ret = IRQ_HANDLED;
+/* पूर्णांकerrupt handler क्रम s3c64xx and later SoC's.*/
+अटल irqवापस_t s3c64xx_serial_handle_irq(पूर्णांक irq, व्योम *id)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = id;
+	काष्ठा uart_port *port = &ourport->port;
+	अचिन्हित पूर्णांक pend = rd_regl(port, S3C64XX_UINTP);
+	irqवापस_t ret = IRQ_HANDLED;
 
-	if (pend & S3C64XX_UINTM_RXD_MSK) {
+	अगर (pend & S3C64XX_UINTM_RXD_MSK) अणु
 		ret = s3c24xx_serial_rx_irq(irq, id);
 		wr_regl(port, S3C64XX_UINTP, S3C64XX_UINTM_RXD_MSK);
-	}
-	if (pend & S3C64XX_UINTM_TXD_MSK) {
+	पूर्ण
+	अगर (pend & S3C64XX_UINTM_TXD_MSK) अणु
 		ret = s3c24xx_serial_tx_irq(irq, id);
 		wr_regl(port, S3C64XX_UINTP, S3C64XX_UINTM_TXD_MSK);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-/* interrupt handler for Apple SoC's.*/
-static irqreturn_t apple_serial_handle_irq(int irq, void *id)
-{
-	struct s3c24xx_uart_port *ourport = id;
-	struct uart_port *port = &ourport->port;
-	unsigned int pend = rd_regl(port, S3C2410_UTRSTAT);
-	irqreturn_t ret = IRQ_NONE;
+/* पूर्णांकerrupt handler क्रम Apple SoC's.*/
+अटल irqवापस_t apple_serial_handle_irq(पूर्णांक irq, व्योम *id)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = id;
+	काष्ठा uart_port *port = &ourport->port;
+	अचिन्हित पूर्णांक pend = rd_regl(port, S3C2410_UTRSTAT);
+	irqवापस_t ret = IRQ_NONE;
 
-	if (pend & (APPLE_S5L_UTRSTAT_RXTHRESH | APPLE_S5L_UTRSTAT_RXTO)) {
+	अगर (pend & (APPLE_S5L_UTRSTAT_RXTHRESH | APPLE_S5L_UTRSTAT_RXTO)) अणु
 		wr_regl(port, S3C2410_UTRSTAT,
 			APPLE_S5L_UTRSTAT_RXTHRESH | APPLE_S5L_UTRSTAT_RXTO);
 		ret = s3c24xx_serial_rx_irq(irq, id);
-	}
-	if (pend & APPLE_S5L_UTRSTAT_TXTHRESH) {
+	पूर्ण
+	अगर (pend & APPLE_S5L_UTRSTAT_TXTHRESH) अणु
 		wr_regl(port, S3C2410_UTRSTAT, APPLE_S5L_UTRSTAT_TXTHRESH);
 		ret = s3c24xx_serial_tx_irq(irq, id);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned int s3c24xx_serial_tx_empty(struct uart_port *port)
-{
-	struct s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
-	unsigned long ufstat = rd_regl(port, S3C2410_UFSTAT);
-	unsigned long ufcon = rd_regl(port, S3C2410_UFCON);
+अटल अचिन्हित पूर्णांक s3c24xx_serial_tx_empty(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
+	अचिन्हित दीर्घ uख_स्थिति = rd_regl(port, S3C2410_UFSTAT);
+	अचिन्हित दीर्घ ufcon = rd_regl(port, S3C2410_UFCON);
 
-	if (ufcon & S3C2410_UFCON_FIFOMODE) {
-		if ((ufstat & info->tx_fifomask) != 0 ||
-		    (ufstat & info->tx_fifofull))
-			return 0;
+	अगर (ufcon & S3C2410_UFCON_FIFOMODE) अणु
+		अगर ((uख_स्थिति & info->tx_fअगरomask) != 0 ||
+		    (uख_स्थिति & info->tx_fअगरofull))
+			वापस 0;
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return s3c24xx_serial_txempty_nofifo(port);
-}
+	वापस s3c24xx_serial_txempty_nofअगरo(port);
+पूर्ण
 
 /* no modem control lines */
-static unsigned int s3c24xx_serial_get_mctrl(struct uart_port *port)
-{
-	unsigned int umstat = rd_reg(port, S3C2410_UMSTAT);
+अटल अचिन्हित पूर्णांक s3c24xx_serial_get_mctrl(काष्ठा uart_port *port)
+अणु
+	अचिन्हित पूर्णांक umstat = rd_reg(port, S3C2410_UMSTAT);
 
-	if (umstat & S3C2410_UMSTAT_CTS)
-		return TIOCM_CAR | TIOCM_DSR | TIOCM_CTS;
-	else
-		return TIOCM_CAR | TIOCM_DSR;
-}
+	अगर (umstat & S3C2410_UMSTAT_CTS)
+		वापस TIOCM_CAR | TIOCM_DSR | TIOCM_CTS;
+	अन्यथा
+		वापस TIOCM_CAR | TIOCM_DSR;
+पूर्ण
 
-static void s3c24xx_serial_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-	unsigned int umcon = rd_regl(port, S3C2410_UMCON);
+अटल व्योम s3c24xx_serial_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
+	अचिन्हित पूर्णांक umcon = rd_regl(port, S3C2410_UMCON);
 
-	if (mctrl & TIOCM_RTS)
+	अगर (mctrl & TIOCM_RTS)
 		umcon |= S3C2410_UMCOM_RTS_LOW;
-	else
+	अन्यथा
 		umcon &= ~S3C2410_UMCOM_RTS_LOW;
 
 	wr_regl(port, S3C2410_UMCON, umcon);
-}
+पूर्ण
 
-static void s3c24xx_serial_break_ctl(struct uart_port *port, int break_state)
-{
-	unsigned long flags;
-	unsigned int ucon;
+अटल व्योम s3c24xx_serial_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ucon;
 
 	spin_lock_irqsave(&port->lock, flags);
 
 	ucon = rd_regl(port, S3C2410_UCON);
 
-	if (break_state)
+	अगर (अवरोध_state)
 		ucon |= S3C2410_UCON_SBREAK;
-	else
+	अन्यथा
 		ucon &= ~S3C2410_UCON_SBREAK;
 
 	wr_regl(port, S3C2410_UCON, ucon);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static int s3c24xx_serial_request_dma(struct s3c24xx_uart_port *p)
-{
-	struct s3c24xx_uart_dma	*dma = p->dma;
-	struct dma_slave_caps dma_caps;
-	const char *reason = NULL;
-	int ret;
+अटल पूर्णांक s3c24xx_serial_request_dma(काष्ठा s3c24xx_uart_port *p)
+अणु
+	काष्ठा s3c24xx_uart_dma	*dma = p->dma;
+	काष्ठा dma_slave_caps dma_caps;
+	स्थिर अक्षर *reason = शून्य;
+	पूर्णांक ret;
 
 	/* Default slave configuration parameters */
 	dma->rx_conf.direction		= DMA_DEV_TO_MEM;
@@ -1060,151 +1061,151 @@ static int s3c24xx_serial_request_dma(struct s3c24xx_uart_port *p)
 
 	dma->rx_chan = dma_request_chan(p->port.dev, "rx");
 
-	if (IS_ERR(dma->rx_chan)) {
+	अगर (IS_ERR(dma->rx_chan)) अणु
 		reason = "DMA RX channel request failed";
 		ret = PTR_ERR(dma->rx_chan);
-		goto err_warn;
-	}
+		जाओ err_warn;
+	पूर्ण
 
 	ret = dma_get_slave_caps(dma->rx_chan, &dma_caps);
-	if (ret < 0 ||
-	    dma_caps.residue_granularity < DMA_RESIDUE_GRANULARITY_BURST) {
+	अगर (ret < 0 ||
+	    dma_caps.residue_granularity < DMA_RESIDUE_GRANULARITY_BURST) अणु
 		reason = "insufficient DMA RX engine capabilities";
 		ret = -EOPNOTSUPP;
-		goto err_release_rx;
-	}
+		जाओ err_release_rx;
+	पूर्ण
 
 	dmaengine_slave_config(dma->rx_chan, &dma->rx_conf);
 
 	dma->tx_chan = dma_request_chan(p->port.dev, "tx");
-	if (IS_ERR(dma->tx_chan)) {
+	अगर (IS_ERR(dma->tx_chan)) अणु
 		reason = "DMA TX channel request failed";
 		ret = PTR_ERR(dma->tx_chan);
-		goto err_release_rx;
-	}
+		जाओ err_release_rx;
+	पूर्ण
 
 	ret = dma_get_slave_caps(dma->tx_chan, &dma_caps);
-	if (ret < 0 ||
-	    dma_caps.residue_granularity < DMA_RESIDUE_GRANULARITY_BURST) {
+	अगर (ret < 0 ||
+	    dma_caps.residue_granularity < DMA_RESIDUE_GRANULARITY_BURST) अणु
 		reason = "insufficient DMA TX engine capabilities";
 		ret = -EOPNOTSUPP;
-		goto err_release_tx;
-	}
+		जाओ err_release_tx;
+	पूर्ण
 
 	dmaengine_slave_config(dma->tx_chan, &dma->tx_conf);
 
 	/* RX buffer */
 	dma->rx_size = PAGE_SIZE;
 
-	dma->rx_buf = kmalloc(dma->rx_size, GFP_KERNEL);
-	if (!dma->rx_buf) {
+	dma->rx_buf = kदो_स्मृति(dma->rx_size, GFP_KERNEL);
+	अगर (!dma->rx_buf) अणु
 		ret = -ENOMEM;
-		goto err_release_tx;
-	}
+		जाओ err_release_tx;
+	पूर्ण
 
 	dma->rx_addr = dma_map_single(p->port.dev, dma->rx_buf,
 				dma->rx_size, DMA_FROM_DEVICE);
-	if (dma_mapping_error(p->port.dev, dma->rx_addr)) {
+	अगर (dma_mapping_error(p->port.dev, dma->rx_addr)) अणु
 		reason = "DMA mapping error for RX buffer";
 		ret = -EIO;
-		goto err_free_rx;
-	}
+		जाओ err_मुक्त_rx;
+	पूर्ण
 
 	/* TX buffer */
 	dma->tx_addr = dma_map_single(p->port.dev, p->port.state->xmit.buf,
 				UART_XMIT_SIZE, DMA_TO_DEVICE);
-	if (dma_mapping_error(p->port.dev, dma->tx_addr)) {
+	अगर (dma_mapping_error(p->port.dev, dma->tx_addr)) अणु
 		reason = "DMA mapping error for TX buffer";
 		ret = -EIO;
-		goto err_unmap_rx;
-	}
+		जाओ err_unmap_rx;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_unmap_rx:
 	dma_unmap_single(p->port.dev, dma->rx_addr, dma->rx_size,
 			 DMA_FROM_DEVICE);
-err_free_rx:
-	kfree(dma->rx_buf);
+err_मुक्त_rx:
+	kमुक्त(dma->rx_buf);
 err_release_tx:
 	dma_release_channel(dma->tx_chan);
 err_release_rx:
 	dma_release_channel(dma->rx_chan);
 err_warn:
-	if (reason)
+	अगर (reason)
 		dev_warn(p->port.dev, "%s, DMA will not be used\n", reason);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void s3c24xx_serial_release_dma(struct s3c24xx_uart_port *p)
-{
-	struct s3c24xx_uart_dma	*dma = p->dma;
+अटल व्योम s3c24xx_serial_release_dma(काष्ठा s3c24xx_uart_port *p)
+अणु
+	काष्ठा s3c24xx_uart_dma	*dma = p->dma;
 
-	if (dma->rx_chan) {
+	अगर (dma->rx_chan) अणु
 		dmaengine_terminate_all(dma->rx_chan);
 		dma_unmap_single(p->port.dev, dma->rx_addr,
 				dma->rx_size, DMA_FROM_DEVICE);
-		kfree(dma->rx_buf);
+		kमुक्त(dma->rx_buf);
 		dma_release_channel(dma->rx_chan);
-		dma->rx_chan = NULL;
-	}
+		dma->rx_chan = शून्य;
+	पूर्ण
 
-	if (dma->tx_chan) {
+	अगर (dma->tx_chan) अणु
 		dmaengine_terminate_all(dma->tx_chan);
 		dma_unmap_single(p->port.dev, dma->tx_addr,
 				UART_XMIT_SIZE, DMA_TO_DEVICE);
 		dma_release_channel(dma->tx_chan);
-		dma->tx_chan = NULL;
-	}
-}
+		dma->tx_chan = शून्य;
+	पूर्ण
+पूर्ण
 
-static void s3c24xx_serial_shutdown(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
+अटल व्योम s3c24xx_serial_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
 
-	if (ourport->tx_claimed) {
-		free_irq(ourport->tx_irq, ourport);
+	अगर (ourport->tx_claimed) अणु
+		मुक्त_irq(ourport->tx_irq, ourport);
 		ourport->tx_enabled = 0;
 		ourport->tx_claimed = 0;
 		ourport->tx_mode = 0;
-	}
+	पूर्ण
 
-	if (ourport->rx_claimed) {
-		free_irq(ourport->rx_irq, ourport);
+	अगर (ourport->rx_claimed) अणु
+		मुक्त_irq(ourport->rx_irq, ourport);
 		ourport->rx_claimed = 0;
 		ourport->rx_enabled = 0;
-	}
+	पूर्ण
 
-	if (ourport->dma)
+	अगर (ourport->dma)
 		s3c24xx_serial_release_dma(ourport);
 
 	ourport->tx_in_progress = 0;
-}
+पूर्ण
 
-static void s3c64xx_serial_shutdown(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
+अटल व्योम s3c64xx_serial_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
 
 	ourport->tx_enabled = 0;
 	ourport->tx_mode = 0;
 	ourport->rx_enabled = 0;
 
-	free_irq(port->irq, ourport);
+	मुक्त_irq(port->irq, ourport);
 
 	wr_regl(port, S3C64XX_UINTP, 0xf);
 	wr_regl(port, S3C64XX_UINTM, 0xf);
 
-	if (ourport->dma)
+	अगर (ourport->dma)
 		s3c24xx_serial_release_dma(ourport);
 
 	ourport->tx_in_progress = 0;
-}
+पूर्ण
 
-static void apple_s5l_serial_shutdown(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
+अटल व्योम apple_s5l_serial_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
 
-	unsigned int ucon;
+	अचिन्हित पूर्णांक ucon;
 
 	ucon = rd_regl(port, S3C2410_UCON);
 	ucon &= ~(APPLE_S5L_UCON_TXTHRESH_ENA_MSK |
@@ -1214,32 +1215,32 @@ static void apple_s5l_serial_shutdown(struct uart_port *port)
 
 	wr_regl(port, S3C2410_UTRSTAT, APPLE_S5L_UTRSTAT_ALL_FLAGS);
 
-	free_irq(port->irq, ourport);
+	मुक्त_irq(port->irq, ourport);
 
 	ourport->tx_enabled = 0;
 	ourport->tx_mode = 0;
 	ourport->rx_enabled = 0;
 
-	if (ourport->dma)
+	अगर (ourport->dma)
 		s3c24xx_serial_release_dma(ourport);
 
 	ourport->tx_in_progress = 0;
-}
+पूर्ण
 
-static int s3c24xx_serial_startup(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
-	int ret;
+अटल पूर्णांक s3c24xx_serial_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
+	पूर्णांक ret;
 
 	ourport->rx_enabled = 1;
 
 	ret = request_irq(ourport->rx_irq, s3c24xx_serial_rx_irq, 0,
 			  s3c24xx_serial_portname(port), ourport);
 
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(port->dev, "cannot get irq %d\n", ourport->rx_irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ourport->rx_claimed = 1;
 
@@ -1250,46 +1251,46 @@ static int s3c24xx_serial_startup(struct uart_port *port)
 	ret = request_irq(ourport->tx_irq, s3c24xx_serial_tx_irq, 0,
 			  s3c24xx_serial_portname(port), ourport);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(port->dev, "cannot get irq %d\n", ourport->tx_irq);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ourport->tx_claimed = 1;
 
-	/* the port reset code should have done the correct
-	 * register setup for the port controls
+	/* the port reset code should have करोne the correct
+	 * रेजिस्टर setup क्रम the port controls
 	 */
 
-	return ret;
+	वापस ret;
 
 err:
-	s3c24xx_serial_shutdown(port);
-	return ret;
-}
+	s3c24xx_serial_shutकरोwn(port);
+	वापस ret;
+पूर्ण
 
-static int s3c64xx_serial_startup(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
-	unsigned long flags;
-	unsigned int ufcon;
-	int ret;
+अटल पूर्णांक s3c64xx_serial_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ufcon;
+	पूर्णांक ret;
 
 	wr_regl(port, S3C64XX_UINTM, 0xf);
-	if (ourport->dma) {
+	अगर (ourport->dma) अणु
 		ret = s3c24xx_serial_request_dma(ourport);
-		if (ret < 0) {
-			devm_kfree(port->dev, ourport->dma);
-			ourport->dma = NULL;
-		}
-	}
+		अगर (ret < 0) अणु
+			devm_kमुक्त(port->dev, ourport->dma);
+			ourport->dma = शून्य;
+		पूर्ण
+	पूर्ण
 
 	ret = request_irq(port->irq, s3c64xx_serial_handle_irq, IRQF_SHARED,
 			  s3c24xx_serial_portname(port), ourport);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(port->dev, "cannot get irq %d\n", port->irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* For compatibility with s3c24xx Soc's */
 	ourport->rx_enabled = 1;
@@ -1299,7 +1300,7 @@ static int s3c64xx_serial_startup(struct uart_port *port)
 
 	ufcon = rd_regl(port, S3C2410_UFCON);
 	ufcon |= S3C2410_UFCON_RESETRX | S5PV210_UFCON_RXTRIG8;
-	if (!uart_console(port))
+	अगर (!uart_console(port))
 		ufcon |= S3C2410_UFCON_RESETTX;
 	wr_regl(port, S3C2410_UFCON, ufcon);
 
@@ -1310,24 +1311,24 @@ static int s3c64xx_serial_startup(struct uart_port *port)
 	/* Enable Rx Interrupt */
 	s3c24xx_clear_bit(port, S3C64XX_UINTM_RXD, S3C64XX_UINTM);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int apple_s5l_serial_startup(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
-	unsigned long flags;
-	unsigned int ufcon;
-	int ret;
+अटल पूर्णांक apple_s5l_serial_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ufcon;
+	पूर्णांक ret;
 
 	wr_regl(port, S3C2410_UTRSTAT, APPLE_S5L_UTRSTAT_ALL_FLAGS);
 
 	ret = request_irq(port->irq, apple_serial_handle_irq, 0,
 			  s3c24xx_serial_portname(port), ourport);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(port->dev, "cannot get irq %d\n", port->irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* For compatibility with s3c24xx Soc's */
 	ourport->rx_enabled = 1;
@@ -1337,7 +1338,7 @@ static int apple_s5l_serial_startup(struct uart_port *port)
 
 	ufcon = rd_regl(port, S3C2410_UFCON);
 	ufcon |= S3C2410_UFCON_RESETRX | S5PV210_UFCON_RXTRIG8;
-	if (!uart_console(port))
+	अगर (!uart_console(port))
 		ufcon |= S3C2410_UFCON_RESETTX;
 	wr_regl(port, S3C2410_UFCON, ufcon);
 
@@ -1349,154 +1350,154 @@ static int apple_s5l_serial_startup(struct uart_port *port)
 	s3c24xx_set_bit(port, APPLE_S5L_UCON_RXTHRESH_ENA, S3C2410_UCON);
 	s3c24xx_set_bit(port, APPLE_S5L_UCON_RXTO_ENA, S3C2410_UCON);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* power power management control */
+/* घातer घातer management control */
 
-static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
-			      unsigned int old)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
-	int timeout = 10000;
+अटल व्योम s3c24xx_serial_pm(काष्ठा uart_port *port, अचिन्हित पूर्णांक level,
+			      अचिन्हित पूर्णांक old)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
+	पूर्णांक समयout = 10000;
 
 	ourport->pm_level = level;
 
-	switch (level) {
-	case 3:
-		while (--timeout && !s3c24xx_serial_txempty_nofifo(port))
+	चयन (level) अणु
+	हाल 3:
+		जबतक (--समयout && !s3c24xx_serial_txempty_nofअगरo(port))
 			udelay(100);
 
-		if (!IS_ERR(ourport->baudclk))
+		अगर (!IS_ERR(ourport->baudclk))
 			clk_disable_unprepare(ourport->baudclk);
 
 		clk_disable_unprepare(ourport->clk);
-		break;
+		अवरोध;
 
-	case 0:
+	हाल 0:
 		clk_prepare_enable(ourport->clk);
 
-		if (!IS_ERR(ourport->baudclk))
+		अगर (!IS_ERR(ourport->baudclk))
 			clk_prepare_enable(ourport->baudclk);
 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(port->dev, "s3c24xx_serial: unknown pm %d\n", level);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* baud rate calculation
  *
- * The UARTs on the S3C2410/S3C2440 can take their clocks from a number
- * of different sources, including the peripheral clock ("pclk") and an
- * external clock ("uclk"). The S3C2440 also adds the core clock ("fclk")
- * with a programmable extra divisor.
+ * The UARTs on the S3C2410/S3C2440 can take their घड़ीs from a number
+ * of dअगरferent sources, including the peripheral घड़ी ("pclk") and an
+ * बाह्यal घड़ी ("uclk"). The S3C2440 also adds the core घड़ी ("fclk")
+ * with a programmable extra भागisor.
  *
- * The following code goes through the clock sources, and calculates the
- * baud clocks (and the resultant actual baud rates) and then tries to
- * pick the closest one and select that.
+ * The following code goes through the घड़ी sources, and calculates the
+ * baud घड़ीs (and the resultant actual baud rates) and then tries to
+ * pick the बंदst one and select that.
  *
  */
 
-#define MAX_CLK_NAME_LENGTH 15
+#घोषणा MAX_CLK_NAME_LENGTH 15
 
-static inline int s3c24xx_serial_getsource(struct uart_port *port)
-{
-	struct s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
-	unsigned int ucon;
+अटल अंतरभूत पूर्णांक s3c24xx_serial_माला_लोource(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
+	अचिन्हित पूर्णांक ucon;
 
-	if (info->num_clks == 1)
-		return 0;
+	अगर (info->num_clks == 1)
+		वापस 0;
 
 	ucon = rd_regl(port, S3C2410_UCON);
 	ucon &= info->clksel_mask;
-	return ucon >> info->clksel_shift;
-}
+	वापस ucon >> info->clksel_shअगरt;
+पूर्ण
 
-static void s3c24xx_serial_setsource(struct uart_port *port,
-			unsigned int clk_sel)
-{
-	struct s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
-	unsigned int ucon;
+अटल व्योम s3c24xx_serial_setsource(काष्ठा uart_port *port,
+			अचिन्हित पूर्णांक clk_sel)
+अणु
+	काष्ठा s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
+	अचिन्हित पूर्णांक ucon;
 
-	if (info->num_clks == 1)
-		return;
+	अगर (info->num_clks == 1)
+		वापस;
 
 	ucon = rd_regl(port, S3C2410_UCON);
-	if ((ucon & info->clksel_mask) >> info->clksel_shift == clk_sel)
-		return;
+	अगर ((ucon & info->clksel_mask) >> info->clksel_shअगरt == clk_sel)
+		वापस;
 
 	ucon &= ~info->clksel_mask;
-	ucon |= clk_sel << info->clksel_shift;
+	ucon |= clk_sel << info->clksel_shअगरt;
 	wr_regl(port, S3C2410_UCON, ucon);
-}
+पूर्ण
 
-static unsigned int s3c24xx_serial_getclk(struct s3c24xx_uart_port *ourport,
-			unsigned int req_baud, struct clk **best_clk,
-			unsigned int *clk_num)
-{
-	struct s3c24xx_uart_info *info = ourport->info;
-	struct clk *clk;
-	unsigned long rate;
-	unsigned int cnt, baud, quot, best_quot = 0;
-	char clkname[MAX_CLK_NAME_LENGTH];
-	int calc_deviation, deviation = (1 << 30) - 1;
+अटल अचिन्हित पूर्णांक s3c24xx_serial_अ_लोlk(काष्ठा s3c24xx_uart_port *ourport,
+			अचिन्हित पूर्णांक req_baud, काष्ठा clk **best_clk,
+			अचिन्हित पूर्णांक *clk_num)
+अणु
+	काष्ठा s3c24xx_uart_info *info = ourport->info;
+	काष्ठा clk *clk;
+	अचिन्हित दीर्घ rate;
+	अचिन्हित पूर्णांक cnt, baud, quot, best_quot = 0;
+	अक्षर clkname[MAX_CLK_NAME_LENGTH];
+	पूर्णांक calc_deviation, deviation = (1 << 30) - 1;
 
-	for (cnt = 0; cnt < info->num_clks; cnt++) {
-		/* Keep selected clock if provided */
-		if (ourport->cfg->clk_sel &&
+	क्रम (cnt = 0; cnt < info->num_clks; cnt++) अणु
+		/* Keep selected घड़ी अगर provided */
+		अगर (ourport->cfg->clk_sel &&
 			!(ourport->cfg->clk_sel & (1 << cnt)))
-			continue;
+			जारी;
 
-		sprintf(clkname, "clk_uart_baud%d", cnt);
+		प्र_लिखो(clkname, "clk_uart_baud%d", cnt);
 		clk = clk_get(ourport->port.dev, clkname);
-		if (IS_ERR(clk))
-			continue;
+		अगर (IS_ERR(clk))
+			जारी;
 
 		rate = clk_get_rate(clk);
-		if (!rate)
-			continue;
+		अगर (!rate)
+			जारी;
 
-		if (ourport->info->has_divslot) {
-			unsigned long div = rate / req_baud;
+		अगर (ourport->info->has_भागslot) अणु
+			अचिन्हित दीर्घ भाग = rate / req_baud;
 
-			/* The UDIVSLOT register on the newer UARTs allows us to
-			 * get a divisor adjustment of 1/16th on the baud clock.
+			/* The UDIVSLOT रेजिस्टर on the newer UARTs allows us to
+			 * get a भागisor adjusपंचांगent of 1/16th on the baud घड़ी.
 			 *
-			 * We don't keep the UDIVSLOT value (the 16ths we
+			 * We करोn't keep the UDIVSLOT value (the 16ths we
 			 * calculated by not multiplying the baud by 16) as it
 			 * is easy enough to recalculate.
 			 */
 
-			quot = div / 16;
-			baud = rate / div;
-		} else {
+			quot = भाग / 16;
+			baud = rate / भाग;
+		पूर्ण अन्यथा अणु
 			quot = (rate + (8 * req_baud)) / (16 * req_baud);
 			baud = rate / (quot * 16);
-		}
+		पूर्ण
 		quot--;
 
 		calc_deviation = req_baud - baud;
-		if (calc_deviation < 0)
+		अगर (calc_deviation < 0)
 			calc_deviation = -calc_deviation;
 
-		if (calc_deviation < deviation) {
+		अगर (calc_deviation < deviation) अणु
 			*best_clk = clk;
 			best_quot = quot;
 			*clk_num = cnt;
 			deviation = calc_deviation;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return best_quot;
-}
+	वापस best_quot;
+पूर्ण
 
-/* udivslot_table[]
+/* uभागslot_table[]
  *
- * This table takes the fractional value of the baud divisor and gives
- * the recommended setting for the UDIVSLOT register.
+ * This table takes the fractional value of the baud भागisor and gives
+ * the recommended setting क्रम the UDIVSLOT रेजिस्टर.
  */
-static u16 udivslot_table[16] = {
+अटल u16 uभागslot_table[16] = अणु
 	[0] = 0x0000,
 	[1] = 0x0080,
 	[2] = 0x0808,
@@ -1513,107 +1514,107 @@ static u16 udivslot_table[16] = {
 	[13] = 0xDFDD,
 	[14] = 0xDFDF,
 	[15] = 0xFFDF,
-};
+पूर्ण;
 
-static void s3c24xx_serial_set_termios(struct uart_port *port,
-				       struct ktermios *termios,
-				       struct ktermios *old)
-{
-	struct s3c2410_uartcfg *cfg = s3c24xx_port_to_cfg(port);
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
-	struct clk *clk = ERR_PTR(-EINVAL);
-	unsigned long flags;
-	unsigned int baud, quot, clk_sel = 0;
-	unsigned int ulcon;
-	unsigned int umcon;
-	unsigned int udivslot = 0;
+अटल व्योम s3c24xx_serial_set_termios(काष्ठा uart_port *port,
+				       काष्ठा ktermios *termios,
+				       काष्ठा ktermios *old)
+अणु
+	काष्ठा s3c2410_uartcfg *cfg = s3c24xx_port_to_cfg(port);
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
+	काष्ठा clk *clk = ERR_PTR(-EINVAL);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक baud, quot, clk_sel = 0;
+	अचिन्हित पूर्णांक ulcon;
+	अचिन्हित पूर्णांक umcon;
+	अचिन्हित पूर्णांक uभागslot = 0;
 
 	/*
-	 * We don't support modem control lines.
+	 * We करोn't support modem control lines.
 	 */
 	termios->c_cflag &= ~(HUPCL | CMSPAR);
 	termios->c_cflag |= CLOCAL;
 
 	/*
-	 * Ask the core to calculate the divisor for us.
+	 * Ask the core to calculate the भागisor क्रम us.
 	 */
 
 	baud = uart_get_baud_rate(port, termios, old, 0, 3000000);
-	quot = s3c24xx_serial_getclk(ourport, baud, &clk, &clk_sel);
-	if (baud == 38400 && (port->flags & UPF_SPD_MASK) == UPF_SPD_CUST)
-		quot = port->custom_divisor;
-	if (IS_ERR(clk))
-		return;
+	quot = s3c24xx_serial_अ_लोlk(ourport, baud, &clk, &clk_sel);
+	अगर (baud == 38400 && (port->flags & UPF_SPD_MASK) == UPF_SPD_CUST)
+		quot = port->custom_भागisor;
+	अगर (IS_ERR(clk))
+		वापस;
 
-	/* check to see if we need  to change clock source */
+	/* check to see अगर we need  to change घड़ी source */
 
-	if (ourport->baudclk != clk) {
+	अगर (ourport->baudclk != clk) अणु
 		clk_prepare_enable(clk);
 
 		s3c24xx_serial_setsource(port, clk_sel);
 
-		if (!IS_ERR(ourport->baudclk)) {
+		अगर (!IS_ERR(ourport->baudclk)) अणु
 			clk_disable_unprepare(ourport->baudclk);
 			ourport->baudclk = ERR_PTR(-EINVAL);
-		}
+		पूर्ण
 
 		ourport->baudclk = clk;
 		ourport->baudclk_rate = clk ? clk_get_rate(clk) : 0;
-	}
+	पूर्ण
 
-	if (ourport->info->has_divslot) {
-		unsigned int div = ourport->baudclk_rate / baud;
+	अगर (ourport->info->has_भागslot) अणु
+		अचिन्हित पूर्णांक भाग = ourport->baudclk_rate / baud;
 
-		if (cfg->has_fracval) {
-			udivslot = (div & 15);
-			dev_dbg(port->dev, "fracval = %04x\n", udivslot);
-		} else {
-			udivslot = udivslot_table[div & 15];
+		अगर (cfg->has_fracval) अणु
+			uभागslot = (भाग & 15);
+			dev_dbg(port->dev, "fracval = %04x\n", uभागslot);
+		पूर्ण अन्यथा अणु
+			uभागslot = uभागslot_table[भाग & 15];
 			dev_dbg(port->dev, "udivslot = %04x (div %d)\n",
-				udivslot, div & 15);
-		}
-	}
+				uभागslot, भाग & 15);
+		पूर्ण
+	पूर्ण
 
-	switch (termios->c_cflag & CSIZE) {
-	case CS5:
+	चयन (termios->c_cflag & CSIZE) अणु
+	हाल CS5:
 		dev_dbg(port->dev, "config: 5bits/char\n");
 		ulcon = S3C2410_LCON_CS5;
-		break;
-	case CS6:
+		अवरोध;
+	हाल CS6:
 		dev_dbg(port->dev, "config: 6bits/char\n");
 		ulcon = S3C2410_LCON_CS6;
-		break;
-	case CS7:
+		अवरोध;
+	हाल CS7:
 		dev_dbg(port->dev, "config: 7bits/char\n");
 		ulcon = S3C2410_LCON_CS7;
-		break;
-	case CS8:
-	default:
+		अवरोध;
+	हाल CS8:
+	शेष:
 		dev_dbg(port->dev, "config: 8bits/char\n");
 		ulcon = S3C2410_LCON_CS8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* preserve original lcon IR settings */
 	ulcon |= (cfg->ulcon & S3C2410_LCON_IRM);
 
-	if (termios->c_cflag & CSTOPB)
+	अगर (termios->c_cflag & CSTOPB)
 		ulcon |= S3C2410_LCON_STOPB;
 
-	if (termios->c_cflag & PARENB) {
-		if (termios->c_cflag & PARODD)
+	अगर (termios->c_cflag & PARENB) अणु
+		अगर (termios->c_cflag & PARODD)
 			ulcon |= S3C2410_LCON_PODD;
-		else
+		अन्यथा
 			ulcon |= S3C2410_LCON_PEVEN;
-	} else {
+	पूर्ण अन्यथा अणु
 		ulcon |= S3C2410_LCON_PNONE;
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&port->lock, flags);
 
 	dev_dbg(port->dev,
 		"setting ulcon to %08x, brddiv to %d, udivslot %08x\n",
-		ulcon, quot, udivslot);
+		ulcon, quot, uभागslot);
 
 	wr_regl(port, S3C2410_ULCON, ulcon);
 	wr_regl(port, S3C2410_UBRDIV, quot);
@@ -1621,18 +1622,18 @@ static void s3c24xx_serial_set_termios(struct uart_port *port,
 	port->status &= ~UPSTAT_AUTOCTS;
 
 	umcon = rd_regl(port, S3C2410_UMCON);
-	if (termios->c_cflag & CRTSCTS) {
+	अगर (termios->c_cflag & CRTSCTS) अणु
 		umcon |= S3C2410_UMCOM_AFC;
 		/* Disable RTS when RX FIFO contains 63 bytes */
 		umcon &= ~S3C2412_UMCON_AFC_8;
 		port->status = UPSTAT_AUTOCTS;
-	} else {
+	पूर्ण अन्यथा अणु
 		umcon &= ~S3C2410_UMCOM_AFC;
-	}
+	पूर्ण
 	wr_regl(port, S3C2410_UMCON, umcon);
 
-	if (ourport->info->has_divslot)
-		wr_regl(port, S3C2443_DIVSLOT, udivslot);
+	अगर (ourport->info->has_भागslot)
+		wr_regl(port, S3C2443_DIVSLOT, uभागslot);
 
 	dev_dbg(port->dev,
 		"uart: ulcon = 0x%08x, ucon = 0x%08x, ufcon = 0x%08x\n",
@@ -1641,96 +1642,96 @@ static void s3c24xx_serial_set_termios(struct uart_port *port,
 		rd_regl(port, S3C2410_UFCON));
 
 	/*
-	 * Update the per-port timeout.
+	 * Update the per-port समयout.
 	 */
-	uart_update_timeout(port, termios->c_cflag, baud);
+	uart_update_समयout(port, termios->c_cflag, baud);
 
 	/*
-	 * Which character status flags are we interested in?
+	 * Which अक्षरacter status flags are we पूर्णांकerested in?
 	 */
-	port->read_status_mask = S3C2410_UERSTAT_OVERRUN;
-	if (termios->c_iflag & INPCK)
-		port->read_status_mask |= S3C2410_UERSTAT_FRAME |
+	port->पढ़ो_status_mask = S3C2410_UERSTAT_OVERRUN;
+	अगर (termios->c_अगरlag & INPCK)
+		port->पढ़ो_status_mask |= S3C2410_UERSTAT_FRAME |
 			S3C2410_UERSTAT_PARITY;
 	/*
-	 * Which character status flags should we ignore?
+	 * Which अक्षरacter status flags should we ignore?
 	 */
 	port->ignore_status_mask = 0;
-	if (termios->c_iflag & IGNPAR)
+	अगर (termios->c_अगरlag & IGNPAR)
 		port->ignore_status_mask |= S3C2410_UERSTAT_OVERRUN;
-	if (termios->c_iflag & IGNBRK && termios->c_iflag & IGNPAR)
+	अगर (termios->c_अगरlag & IGNBRK && termios->c_अगरlag & IGNPAR)
 		port->ignore_status_mask |= S3C2410_UERSTAT_FRAME;
 
 	/*
-	 * Ignore all characters if CREAD is not set.
+	 * Ignore all अक्षरacters अगर CREAD is not set.
 	 */
-	if ((termios->c_cflag & CREAD) == 0)
+	अगर ((termios->c_cflag & CREAD) == 0)
 		port->ignore_status_mask |= RXSTAT_DUMMY_READ;
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static const char *s3c24xx_serial_type(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
+अटल स्थिर अक्षर *s3c24xx_serial_type(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
 
-	switch (ourport->info->type) {
-	case TYPE_S3C24XX:
-		return "S3C24XX";
-	case TYPE_S3C6400:
-		return "S3C6400/10";
-	case TYPE_APPLE_S5L:
-		return "APPLE S5L";
-	default:
-		return NULL;
-	}
-}
+	चयन (ourport->info->type) अणु
+	हाल TYPE_S3C24XX:
+		वापस "S3C24XX";
+	हाल TYPE_S3C6400:
+		वापस "S3C6400/10";
+	हाल TYPE_APPLE_S5L:
+		वापस "APPLE S5L";
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-static void s3c24xx_serial_config_port(struct uart_port *port, int flags)
-{
-	struct s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
+अटल व्योम s3c24xx_serial_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+	काष्ठा s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
 
-	if (flags & UART_CONFIG_TYPE)
+	अगर (flags & UART_CONFIG_TYPE)
 		port->type = info->port_type;
-}
+पूर्ण
 
 /*
- * verify the new serial_struct (for TIOCSSERIAL).
+ * verअगरy the new serial_काष्ठा (क्रम TIOCSSERIAL).
  */
-static int
-s3c24xx_serial_verify_port(struct uart_port *port, struct serial_struct *ser)
-{
-	struct s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
+अटल पूर्णांक
+s3c24xx_serial_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
+अणु
+	काष्ठा s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
 
-	if (ser->type != PORT_UNKNOWN && ser->type != info->port_type)
-		return -EINVAL;
+	अगर (ser->type != PORT_UNKNOWN && ser->type != info->port_type)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_SERIAL_SAMSUNG_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_SAMSUNG_CONSOLE
 
-static struct console s3c24xx_serial_console;
+अटल काष्ठा console s3c24xx_serial_console;
 
-static int __init s3c24xx_serial_console_init(void)
-{
-	register_console(&s3c24xx_serial_console);
-	return 0;
-}
+अटल पूर्णांक __init s3c24xx_serial_console_init(व्योम)
+अणु
+	रेजिस्टर_console(&s3c24xx_serial_console);
+	वापस 0;
+पूर्ण
 console_initcall(s3c24xx_serial_console_init);
 
-#define S3C24XX_SERIAL_CONSOLE &s3c24xx_serial_console
-#else
-#define S3C24XX_SERIAL_CONSOLE NULL
-#endif
+#घोषणा S3C24XX_SERIAL_CONSOLE &s3c24xx_serial_console
+#अन्यथा
+#घोषणा S3C24XX_SERIAL_CONSOLE शून्य
+#पूर्ण_अगर
 
-#if defined(CONFIG_SERIAL_SAMSUNG_CONSOLE) && defined(CONFIG_CONSOLE_POLL)
-static int s3c24xx_serial_get_poll_char(struct uart_port *port);
-static void s3c24xx_serial_put_poll_char(struct uart_port *port,
-			 unsigned char c);
-#endif
+#अगर defined(CONFIG_SERIAL_SAMSUNG_CONSOLE) && defined(CONFIG_CONSOLE_POLL)
+अटल पूर्णांक s3c24xx_serial_get_poll_अक्षर(काष्ठा uart_port *port);
+अटल व्योम s3c24xx_serial_put_poll_अक्षर(काष्ठा uart_port *port,
+			 अचिन्हित अक्षर c);
+#पूर्ण_अगर
 
-static const struct uart_ops s3c24xx_serial_ops = {
+अटल स्थिर काष्ठा uart_ops s3c24xx_serial_ops = अणु
 	.pm		= s3c24xx_serial_pm,
 	.tx_empty	= s3c24xx_serial_tx_empty,
 	.get_mctrl	= s3c24xx_serial_get_mctrl,
@@ -1738,20 +1739,20 @@ static const struct uart_ops s3c24xx_serial_ops = {
 	.stop_tx	= s3c24xx_serial_stop_tx,
 	.start_tx	= s3c24xx_serial_start_tx,
 	.stop_rx	= s3c24xx_serial_stop_rx,
-	.break_ctl	= s3c24xx_serial_break_ctl,
+	.अवरोध_ctl	= s3c24xx_serial_अवरोध_ctl,
 	.startup	= s3c24xx_serial_startup,
-	.shutdown	= s3c24xx_serial_shutdown,
+	.shutकरोwn	= s3c24xx_serial_shutकरोwn,
 	.set_termios	= s3c24xx_serial_set_termios,
 	.type		= s3c24xx_serial_type,
 	.config_port	= s3c24xx_serial_config_port,
-	.verify_port	= s3c24xx_serial_verify_port,
-#if defined(CONFIG_SERIAL_SAMSUNG_CONSOLE) && defined(CONFIG_CONSOLE_POLL)
-	.poll_get_char = s3c24xx_serial_get_poll_char,
-	.poll_put_char = s3c24xx_serial_put_poll_char,
-#endif
-};
+	.verअगरy_port	= s3c24xx_serial_verअगरy_port,
+#अगर defined(CONFIG_SERIAL_SAMSUNG_CONSOLE) && defined(CONFIG_CONSOLE_POLL)
+	.poll_get_अक्षर = s3c24xx_serial_get_poll_अक्षर,
+	.poll_put_अक्षर = s3c24xx_serial_put_poll_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct uart_ops s3c64xx_serial_ops = {
+अटल स्थिर काष्ठा uart_ops s3c64xx_serial_ops = अणु
 	.pm		= s3c24xx_serial_pm,
 	.tx_empty	= s3c24xx_serial_tx_empty,
 	.get_mctrl	= s3c24xx_serial_get_mctrl,
@@ -1759,20 +1760,20 @@ static const struct uart_ops s3c64xx_serial_ops = {
 	.stop_tx	= s3c24xx_serial_stop_tx,
 	.start_tx	= s3c24xx_serial_start_tx,
 	.stop_rx	= s3c24xx_serial_stop_rx,
-	.break_ctl	= s3c24xx_serial_break_ctl,
+	.अवरोध_ctl	= s3c24xx_serial_अवरोध_ctl,
 	.startup	= s3c64xx_serial_startup,
-	.shutdown	= s3c64xx_serial_shutdown,
+	.shutकरोwn	= s3c64xx_serial_shutकरोwn,
 	.set_termios	= s3c24xx_serial_set_termios,
 	.type		= s3c24xx_serial_type,
 	.config_port	= s3c24xx_serial_config_port,
-	.verify_port	= s3c24xx_serial_verify_port,
-#if defined(CONFIG_SERIAL_SAMSUNG_CONSOLE) && defined(CONFIG_CONSOLE_POLL)
-	.poll_get_char = s3c24xx_serial_get_poll_char,
-	.poll_put_char = s3c24xx_serial_put_poll_char,
-#endif
-};
+	.verअगरy_port	= s3c24xx_serial_verअगरy_port,
+#अगर defined(CONFIG_SERIAL_SAMSUNG_CONSOLE) && defined(CONFIG_CONSOLE_POLL)
+	.poll_get_अक्षर = s3c24xx_serial_get_poll_अक्षर,
+	.poll_put_अक्षर = s3c24xx_serial_put_poll_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct uart_ops apple_s5l_serial_ops = {
+अटल स्थिर काष्ठा uart_ops apple_s5l_serial_ops = अणु
 	.pm		= s3c24xx_serial_pm,
 	.tx_empty	= s3c24xx_serial_tx_empty,
 	.get_mctrl	= s3c24xx_serial_get_mctrl,
@@ -1780,20 +1781,20 @@ static const struct uart_ops apple_s5l_serial_ops = {
 	.stop_tx	= s3c24xx_serial_stop_tx,
 	.start_tx	= s3c24xx_serial_start_tx,
 	.stop_rx	= s3c24xx_serial_stop_rx,
-	.break_ctl	= s3c24xx_serial_break_ctl,
+	.अवरोध_ctl	= s3c24xx_serial_अवरोध_ctl,
 	.startup	= apple_s5l_serial_startup,
-	.shutdown	= apple_s5l_serial_shutdown,
+	.shutकरोwn	= apple_s5l_serial_shutकरोwn,
 	.set_termios	= s3c24xx_serial_set_termios,
 	.type		= s3c24xx_serial_type,
 	.config_port	= s3c24xx_serial_config_port,
-	.verify_port	= s3c24xx_serial_verify_port,
-#if defined(CONFIG_SERIAL_SAMSUNG_CONSOLE) && defined(CONFIG_CONSOLE_POLL)
-	.poll_get_char = s3c24xx_serial_get_poll_char,
-	.poll_put_char = s3c24xx_serial_put_poll_char,
-#endif
-};
+	.verअगरy_port	= s3c24xx_serial_verअगरy_port,
+#अगर defined(CONFIG_SERIAL_SAMSUNG_CONSOLE) && defined(CONFIG_CONSOLE_POLL)
+	.poll_get_अक्षर = s3c24xx_serial_get_poll_अक्षर,
+	.poll_put_अक्षर = s3c24xx_serial_put_poll_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
-static struct uart_driver s3c24xx_uart_drv = {
+अटल काष्ठा uart_driver s3c24xx_uart_drv = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= "s3c2410_serial",
 	.nr		= CONFIG_SERIAL_SAMSUNG_UARTS,
@@ -1801,316 +1802,316 @@ static struct uart_driver s3c24xx_uart_drv = {
 	.dev_name	= S3C24XX_SERIAL_NAME,
 	.major		= S3C24XX_SERIAL_MAJOR,
 	.minor		= S3C24XX_SERIAL_MINOR,
-};
+पूर्ण;
 
-#define __PORT_LOCK_UNLOCKED(i) \
+#घोषणा __PORT_LOCK_UNLOCKED(i) \
 	__SPIN_LOCK_UNLOCKED(s3c24xx_serial_ports[i].port.lock)
-static struct s3c24xx_uart_port
-s3c24xx_serial_ports[CONFIG_SERIAL_SAMSUNG_UARTS] = {
-	[0] = {
-		.port = {
+अटल काष्ठा s3c24xx_uart_port
+s3c24xx_serial_ports[CONFIG_SERIAL_SAMSUNG_UARTS] = अणु
+	[0] = अणु
+		.port = अणु
 			.lock		= __PORT_LOCK_UNLOCKED(0),
 			.iotype		= UPIO_MEM,
 			.uartclk	= 0,
-			.fifosize	= 16,
+			.fअगरosize	= 16,
 			.ops		= &s3c24xx_serial_ops,
 			.flags		= UPF_BOOT_AUTOCONF,
 			.line		= 0,
-		}
-	},
-	[1] = {
-		.port = {
+		पूर्ण
+	पूर्ण,
+	[1] = अणु
+		.port = अणु
 			.lock		= __PORT_LOCK_UNLOCKED(1),
 			.iotype		= UPIO_MEM,
 			.uartclk	= 0,
-			.fifosize	= 16,
+			.fअगरosize	= 16,
 			.ops		= &s3c24xx_serial_ops,
 			.flags		= UPF_BOOT_AUTOCONF,
 			.line		= 1,
-		}
-	},
-#if CONFIG_SERIAL_SAMSUNG_UARTS > 2
-	[2] = {
-		.port = {
+		पूर्ण
+	पूर्ण,
+#अगर CONFIG_SERIAL_SAMSUNG_UARTS > 2
+	[2] = अणु
+		.port = अणु
 			.lock		= __PORT_LOCK_UNLOCKED(2),
 			.iotype		= UPIO_MEM,
 			.uartclk	= 0,
-			.fifosize	= 16,
+			.fअगरosize	= 16,
 			.ops		= &s3c24xx_serial_ops,
 			.flags		= UPF_BOOT_AUTOCONF,
 			.line		= 2,
-		}
-	},
-#endif
-#if CONFIG_SERIAL_SAMSUNG_UARTS > 3
-	[3] = {
-		.port = {
+		पूर्ण
+	पूर्ण,
+#पूर्ण_अगर
+#अगर CONFIG_SERIAL_SAMSUNG_UARTS > 3
+	[3] = अणु
+		.port = अणु
 			.lock		= __PORT_LOCK_UNLOCKED(3),
 			.iotype		= UPIO_MEM,
 			.uartclk	= 0,
-			.fifosize	= 16,
+			.fअगरosize	= 16,
 			.ops		= &s3c24xx_serial_ops,
 			.flags		= UPF_BOOT_AUTOCONF,
 			.line		= 3,
-		}
-	}
-#endif
-};
-#undef __PORT_LOCK_UNLOCKED
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण;
+#अघोषित __PORT_LOCK_UNLOCKED
 
 /* s3c24xx_serial_resetport
  *
- * reset the fifos and other the settings.
+ * reset the fअगरos and other the settings.
  */
 
-static void s3c24xx_serial_resetport(struct uart_port *port,
-				   struct s3c2410_uartcfg *cfg)
-{
-	struct s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
-	unsigned long ucon = rd_regl(port, S3C2410_UCON);
+अटल व्योम s3c24xx_serial_resetport(काष्ठा uart_port *port,
+				   काष्ठा s3c2410_uartcfg *cfg)
+अणु
+	काष्ठा s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
+	अचिन्हित दीर्घ ucon = rd_regl(port, S3C2410_UCON);
 
 	ucon &= (info->clksel_mask | info->ucon_mask);
 	wr_regl(port, S3C2410_UCON, ucon | cfg->ucon);
 
-	/* reset both fifos */
+	/* reset both fअगरos */
 	wr_regl(port, S3C2410_UFCON, cfg->ufcon | S3C2410_UFCON_RESETBOTH);
 	wr_regl(port, S3C2410_UFCON, cfg->ufcon);
 
-	/* some delay is required after fifo reset */
+	/* some delay is required after fअगरo reset */
 	udelay(1);
-}
+पूर्ण
 
-#ifdef CONFIG_ARM_S3C24XX_CPUFREQ
+#अगर_घोषित CONFIG_ARM_S3C24XX_CPUFREQ
 
-static int s3c24xx_serial_cpufreq_transition(struct notifier_block *nb,
-					     unsigned long val, void *data)
-{
-	struct s3c24xx_uart_port *port;
-	struct uart_port *uport;
+अटल पूर्णांक s3c24xx_serial_cpufreq_transition(काष्ठा notअगरier_block *nb,
+					     अचिन्हित दीर्घ val, व्योम *data)
+अणु
+	काष्ठा s3c24xx_uart_port *port;
+	काष्ठा uart_port *uport;
 
-	port = container_of(nb, struct s3c24xx_uart_port, freq_transition);
+	port = container_of(nb, काष्ठा s3c24xx_uart_port, freq_transition);
 	uport = &port->port;
 
-	/* check to see if port is enabled */
+	/* check to see अगर port is enabled */
 
-	if (port->pm_level != 0)
-		return 0;
+	अगर (port->pm_level != 0)
+		वापस 0;
 
-	/* try and work out if the baudrate is changing, we can detect
-	 * a change in rate, but we do not have support for detecting
-	 * a disturbance in the clock-rate over the change.
+	/* try and work out अगर the baudrate is changing, we can detect
+	 * a change in rate, but we करो not have support क्रम detecting
+	 * a disturbance in the घड़ी-rate over the change.
 	 */
 
-	if (IS_ERR(port->baudclk))
-		goto exit;
+	अगर (IS_ERR(port->baudclk))
+		जाओ निकास;
 
-	if (port->baudclk_rate == clk_get_rate(port->baudclk))
-		goto exit;
+	अगर (port->baudclk_rate == clk_get_rate(port->baudclk))
+		जाओ निकास;
 
-	if (val == CPUFREQ_PRECHANGE) {
-		/* we should really shut the port down whilst the
+	अगर (val == CPUFREQ_PRECHANGE) अणु
+		/* we should really shut the port करोwn whilst the
 		 * frequency change is in progress.
 		 */
 
-	} else if (val == CPUFREQ_POSTCHANGE) {
-		struct ktermios *termios;
-		struct tty_struct *tty;
+	पूर्ण अन्यथा अगर (val == CPUFREQ_POSTCHANGE) अणु
+		काष्ठा ktermios *termios;
+		काष्ठा tty_काष्ठा *tty;
 
-		if (uport->state == NULL)
-			goto exit;
+		अगर (uport->state == शून्य)
+			जाओ निकास;
 
 		tty = uport->state->port.tty;
 
-		if (tty == NULL)
-			goto exit;
+		अगर (tty == शून्य)
+			जाओ निकास;
 
 		termios = &tty->termios;
 
-		if (termios == NULL) {
+		अगर (termios == शून्य) अणु
 			dev_warn(uport->dev, "%s: no termios?\n", __func__);
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
-		s3c24xx_serial_set_termios(uport, termios, NULL);
-	}
+		s3c24xx_serial_set_termios(uport, termios, शून्य);
+	पूर्ण
 
-exit:
-	return 0;
-}
+निकास:
+	वापस 0;
+पूर्ण
 
-static inline int
-s3c24xx_serial_cpufreq_register(struct s3c24xx_uart_port *port)
-{
-	port->freq_transition.notifier_call = s3c24xx_serial_cpufreq_transition;
+अटल अंतरभूत पूर्णांक
+s3c24xx_serial_cpufreq_रेजिस्टर(काष्ठा s3c24xx_uart_port *port)
+अणु
+	port->freq_transition.notअगरier_call = s3c24xx_serial_cpufreq_transition;
 
-	return cpufreq_register_notifier(&port->freq_transition,
+	वापस cpufreq_रेजिस्टर_notअगरier(&port->freq_transition,
 					 CPUFREQ_TRANSITION_NOTIFIER);
-}
+पूर्ण
 
-static inline void
-s3c24xx_serial_cpufreq_deregister(struct s3c24xx_uart_port *port)
-{
-	cpufreq_unregister_notifier(&port->freq_transition,
+अटल अंतरभूत व्योम
+s3c24xx_serial_cpufreq_deरेजिस्टर(काष्ठा s3c24xx_uart_port *port)
+अणु
+	cpufreq_unरेजिस्टर_notअगरier(&port->freq_transition,
 				    CPUFREQ_TRANSITION_NOTIFIER);
-}
+पूर्ण
 
-#else
-static inline int
-s3c24xx_serial_cpufreq_register(struct s3c24xx_uart_port *port)
-{
-	return 0;
-}
+#अन्यथा
+अटल अंतरभूत पूर्णांक
+s3c24xx_serial_cpufreq_रेजिस्टर(काष्ठा s3c24xx_uart_port *port)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void
-s3c24xx_serial_cpufreq_deregister(struct s3c24xx_uart_port *port)
-{
-}
-#endif
+अटल अंतरभूत व्योम
+s3c24xx_serial_cpufreq_deरेजिस्टर(काष्ठा s3c24xx_uart_port *port)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static int s3c24xx_serial_enable_baudclk(struct s3c24xx_uart_port *ourport)
-{
-	struct device *dev = ourport->port.dev;
-	struct s3c24xx_uart_info *info = ourport->info;
-	char clk_name[MAX_CLK_NAME_LENGTH];
-	unsigned int clk_sel;
-	struct clk *clk;
-	int clk_num;
-	int ret;
+अटल पूर्णांक s3c24xx_serial_enable_baudclk(काष्ठा s3c24xx_uart_port *ourport)
+अणु
+	काष्ठा device *dev = ourport->port.dev;
+	काष्ठा s3c24xx_uart_info *info = ourport->info;
+	अक्षर clk_name[MAX_CLK_NAME_LENGTH];
+	अचिन्हित पूर्णांक clk_sel;
+	काष्ठा clk *clk;
+	पूर्णांक clk_num;
+	पूर्णांक ret;
 
 	clk_sel = ourport->cfg->clk_sel ? : info->def_clk_sel;
-	for (clk_num = 0; clk_num < info->num_clks; clk_num++) {
-		if (!(clk_sel & (1 << clk_num)))
-			continue;
+	क्रम (clk_num = 0; clk_num < info->num_clks; clk_num++) अणु
+		अगर (!(clk_sel & (1 << clk_num)))
+			जारी;
 
-		sprintf(clk_name, "clk_uart_baud%d", clk_num);
+		प्र_लिखो(clk_name, "clk_uart_baud%d", clk_num);
 		clk = clk_get(dev, clk_name);
-		if (IS_ERR(clk))
-			continue;
+		अगर (IS_ERR(clk))
+			जारी;
 
 		ret = clk_prepare_enable(clk);
-		if (ret) {
+		अगर (ret) अणु
 			clk_put(clk);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		ourport->baudclk = clk;
 		ourport->baudclk_rate = clk_get_rate(clk);
 		s3c24xx_serial_setsource(&ourport->port, clk_num);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /* s3c24xx_serial_init_port
  *
- * initialise a single serial port from the platform device given
+ * initialise a single serial port from the platक्रमm device given
  */
 
-static int s3c24xx_serial_init_port(struct s3c24xx_uart_port *ourport,
-				    struct platform_device *platdev)
-{
-	struct uart_port *port = &ourport->port;
-	struct s3c2410_uartcfg *cfg = ourport->cfg;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक s3c24xx_serial_init_port(काष्ठा s3c24xx_uart_port *ourport,
+				    काष्ठा platक्रमm_device *platdev)
+अणु
+	काष्ठा uart_port *port = &ourport->port;
+	काष्ठा s3c2410_uartcfg *cfg = ourport->cfg;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	if (platdev == NULL)
-		return -ENODEV;
+	अगर (platdev == शून्य)
+		वापस -ENODEV;
 
-	if (port->mapbase != 0)
-		return -EINVAL;
+	अगर (port->mapbase != 0)
+		वापस -EINVAL;
 
-	/* setup info for port */
+	/* setup info क्रम port */
 	port->dev	= &platdev->dev;
 
 	port->uartclk = 1;
 
-	if (cfg->uart_flags & UPF_CONS_FLOW) {
+	अगर (cfg->uart_flags & UPF_CONS_FLOW) अणु
 		dev_dbg(port->dev, "enabling flow control\n");
 		port->flags |= UPF_CONS_FLOW;
-	}
+	पूर्ण
 
-	/* sort our the physical and virtual addresses for each UART */
+	/* sort our the physical and भव addresses क्रम each UART */
 
-	res = platform_get_resource(platdev, IORESOURCE_MEM, 0);
-	if (res == NULL) {
+	res = platक्रमm_get_resource(platdev, IORESOURCE_MEM, 0);
+	अगर (res == शून्य) अणु
 		dev_err(port->dev, "failed to find memory resource for uart\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_dbg(port->dev, "resource %pR)\n", res);
 
 	port->membase = devm_ioremap_resource(port->dev, res);
-	if (IS_ERR(port->membase)) {
+	अगर (IS_ERR(port->membase)) अणु
 		dev_err(port->dev, "failed to remap controller address\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	port->mapbase = res->start;
-	ret = platform_get_irq(platdev, 0);
-	if (ret < 0) {
+	ret = platक्रमm_get_irq(platdev, 0);
+	अगर (ret < 0) अणु
 		port->irq = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		port->irq = ret;
 		ourport->rx_irq = ret;
 		ourport->tx_irq = ret + 1;
-	}
+	पूर्ण
 
-	switch (ourport->info->type) {
-	case TYPE_S3C24XX:
-		ret = platform_get_irq(platdev, 1);
-		if (ret > 0)
+	चयन (ourport->info->type) अणु
+	हाल TYPE_S3C24XX:
+		ret = platक्रमm_get_irq(platdev, 1);
+		अगर (ret > 0)
 			ourport->tx_irq = ret;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * DMA is currently supported only on DT platforms, if DMA properties
-	 * are specified.
+	 * DMA is currently supported only on DT platक्रमms, अगर DMA properties
+	 * are specअगरied.
 	 */
-	if (platdev->dev.of_node && of_find_property(platdev->dev.of_node,
-						     "dmas", NULL)) {
+	अगर (platdev->dev.of_node && of_find_property(platdev->dev.of_node,
+						     "dmas", शून्य)) अणु
 		ourport->dma = devm_kzalloc(port->dev,
-					    sizeof(*ourport->dma),
+					    माप(*ourport->dma),
 					    GFP_KERNEL);
-		if (!ourport->dma) {
+		अगर (!ourport->dma) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 	ourport->clk	= clk_get(&platdev->dev, "uart");
-	if (IS_ERR(ourport->clk)) {
+	अगर (IS_ERR(ourport->clk)) अणु
 		pr_err("%s: Controller clock not found\n",
 				dev_name(&platdev->dev));
 		ret = PTR_ERR(ourport->clk);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = clk_prepare_enable(ourport->clk);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("uart: clock failed to prepare+enable: %d\n", ret);
 		clk_put(ourport->clk);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = s3c24xx_serial_enable_baudclk(ourport);
-	if (ret)
+	अगर (ret)
 		pr_warn("uart: failed to enable baudclk\n");
 
-	/* Keep all interrupts masked and cleared */
-	switch (ourport->info->type) {
-	case TYPE_S3C6400:
+	/* Keep all पूर्णांकerrupts masked and cleared */
+	चयन (ourport->info->type) अणु
+	हाल TYPE_S3C6400:
 		wr_regl(port, S3C64XX_UINTM, 0xf);
 		wr_regl(port, S3C64XX_UINTP, 0xf);
 		wr_regl(port, S3C64XX_UINTSP, 0xf);
-		break;
-	case TYPE_APPLE_S5L: {
-		unsigned int ucon;
+		अवरोध;
+	हाल TYPE_APPLE_S5L: अणु
+		अचिन्हित पूर्णांक ucon;
 
 		ucon = rd_regl(port, S3C2410_UCON);
 		ucon &= ~(APPLE_S5L_UCON_TXTHRESH_ENA_MSK |
@@ -2119,73 +2120,73 @@ static int s3c24xx_serial_init_port(struct s3c24xx_uart_port *ourport,
 		wr_regl(port, S3C2410_UCON, ucon);
 
 		wr_regl(port, S3C2410_UTRSTAT, APPLE_S5L_UTRSTAT_ALL_FLAGS);
-		break;
-	}
-	default:
-		break;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	dev_dbg(port->dev, "port: map=%pa, mem=%p, irq=%d (%d,%d), clock=%u\n",
 		&port->mapbase, port->membase, port->irq,
 		ourport->rx_irq, ourport->tx_irq, port->uartclk);
 
-	/* reset the fifos (and setup the uart) */
+	/* reset the fअगरos (and setup the uart) */
 	s3c24xx_serial_resetport(port, cfg);
 
-	return 0;
+	वापस 0;
 
 err:
 	port->mapbase = 0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Device driver serial port probe */
 
-#ifdef CONFIG_OF
-static const struct of_device_id s3c24xx_uart_dt_match[];
-#endif
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id s3c24xx_uart_dt_match[];
+#पूर्ण_अगर
 
-static int probe_index;
+अटल पूर्णांक probe_index;
 
-static inline struct s3c24xx_serial_drv_data *
-s3c24xx_get_driver_data(struct platform_device *pdev)
-{
-#ifdef CONFIG_OF
-	if (pdev->dev.of_node) {
-		const struct of_device_id *match;
+अटल अंतरभूत काष्ठा s3c24xx_serial_drv_data *
+s3c24xx_get_driver_data(काष्ठा platक्रमm_device *pdev)
+अणु
+#अगर_घोषित CONFIG_OF
+	अगर (pdev->dev.of_node) अणु
+		स्थिर काष्ठा of_device_id *match;
 
 		match = of_match_node(s3c24xx_uart_dt_match, pdev->dev.of_node);
-		return (struct s3c24xx_serial_drv_data *)match->data;
-	}
-#endif
-	return (struct s3c24xx_serial_drv_data *)
-			platform_get_device_id(pdev)->driver_data;
-}
+		वापस (काष्ठा s3c24xx_serial_drv_data *)match->data;
+	पूर्ण
+#पूर्ण_अगर
+	वापस (काष्ठा s3c24xx_serial_drv_data *)
+			platक्रमm_get_device_id(pdev)->driver_data;
+पूर्ण
 
-static int s3c24xx_serial_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct s3c24xx_uart_port *ourport;
-	int index = probe_index;
-	int ret, prop = 0;
+अटल पूर्णांक s3c24xx_serial_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा s3c24xx_uart_port *ourport;
+	पूर्णांक index = probe_index;
+	पूर्णांक ret, prop = 0;
 
-	if (np) {
+	अगर (np) अणु
 		ret = of_alias_get_id(np, "serial");
-		if (ret >= 0)
+		अगर (ret >= 0)
 			index = ret;
-	}
+	पूर्ण
 
-	if (index >= ARRAY_SIZE(s3c24xx_serial_ports)) {
+	अगर (index >= ARRAY_SIZE(s3c24xx_serial_ports)) अणु
 		dev_err(&pdev->dev, "serial%d out of range\n", index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	ourport = &s3c24xx_serial_ports[index];
 
 	ourport->drv_data = s3c24xx_get_driver_data(pdev);
-	if (!ourport->drv_data) {
+	अगर (!ourport->drv_data) अणु
 		dev_err(&pdev->dev, "could not find driver data\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ourport->baudclk = ERR_PTR(-EINVAL);
 	ourport->info = ourport->drv_data->info;
@@ -2193,175 +2194,175 @@ static int s3c24xx_serial_probe(struct platform_device *pdev)
 			dev_get_platdata(&pdev->dev) :
 			ourport->drv_data->def_cfg;
 
-	switch (ourport->info->type) {
-	case TYPE_S3C24XX:
+	चयन (ourport->info->type) अणु
+	हाल TYPE_S3C24XX:
 		ourport->port.ops = &s3c24xx_serial_ops;
-		break;
-	case TYPE_S3C6400:
+		अवरोध;
+	हाल TYPE_S3C6400:
 		ourport->port.ops = &s3c64xx_serial_ops;
-		break;
-	case TYPE_APPLE_S5L:
+		अवरोध;
+	हाल TYPE_APPLE_S5L:
 		ourport->port.ops = &apple_s5l_serial_ops;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (np) {
-		of_property_read_u32(np,
-			"samsung,uart-fifosize", &ourport->port.fifosize);
+	अगर (np) अणु
+		of_property_पढ़ो_u32(np,
+			"samsung,uart-fifosize", &ourport->port.fअगरosize);
 
-		if (of_property_read_u32(np, "reg-io-width", &prop) == 0) {
-			switch (prop) {
-			case 1:
+		अगर (of_property_पढ़ो_u32(np, "reg-io-width", &prop) == 0) अणु
+			चयन (prop) अणु
+			हाल 1:
 				ourport->port.iotype = UPIO_MEM;
-				break;
-			case 4:
+				अवरोध;
+			हाल 4:
 				ourport->port.iotype = UPIO_MEM32;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				dev_warn(&pdev->dev, "unsupported reg-io-width (%d)\n",
 						prop);
 				ret = -EINVAL;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (ourport->drv_data->fifosize[index])
-		ourport->port.fifosize = ourport->drv_data->fifosize[index];
-	else if (ourport->info->fifosize)
-		ourport->port.fifosize = ourport->info->fifosize;
+	अगर (ourport->drv_data->fअगरosize[index])
+		ourport->port.fअगरosize = ourport->drv_data->fअगरosize[index];
+	अन्यथा अगर (ourport->info->fअगरosize)
+		ourport->port.fअगरosize = ourport->info->fअगरosize;
 	ourport->port.has_sysrq = IS_ENABLED(CONFIG_SERIAL_SAMSUNG_CONSOLE);
 
 	/*
 	 * DMA transfers must be aligned at least to cache line size,
-	 * so find minimal transfer size suitable for DMA mode
+	 * so find minimal transfer size suitable क्रम DMA mode
 	 */
-	ourport->min_dma_size = max_t(int, ourport->port.fifosize,
+	ourport->min_dma_size = max_t(पूर्णांक, ourport->port.fअगरosize,
 				    dma_get_cache_alignment());
 
 	dev_dbg(&pdev->dev, "%s: initialising port %p...\n", __func__, ourport);
 
 	ret = s3c24xx_serial_init_port(ourport, pdev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!s3c24xx_uart_drv.state) {
-		ret = uart_register_driver(&s3c24xx_uart_drv);
-		if (ret < 0) {
+	अगर (!s3c24xx_uart_drv.state) अणु
+		ret = uart_रेजिस्टर_driver(&s3c24xx_uart_drv);
+		अगर (ret < 0) अणु
 			pr_err("Failed to register Samsung UART driver\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	dev_dbg(&pdev->dev, "%s: adding port\n", __func__);
 	uart_add_one_port(&s3c24xx_uart_drv, &ourport->port);
-	platform_set_drvdata(pdev, &ourport->port);
+	platक्रमm_set_drvdata(pdev, &ourport->port);
 
 	/*
-	 * Deactivate the clock enabled in s3c24xx_serial_init_port here,
+	 * Deactivate the घड़ी enabled in s3c24xx_serial_init_port here,
 	 * so that a potential re-enablement through the pm-callback overlaps
-	 * and keeps the clock enabled in this case.
+	 * and keeps the घड़ी enabled in this हाल.
 	 */
 	clk_disable_unprepare(ourport->clk);
-	if (!IS_ERR(ourport->baudclk))
+	अगर (!IS_ERR(ourport->baudclk))
 		clk_disable_unprepare(ourport->baudclk);
 
-	ret = s3c24xx_serial_cpufreq_register(ourport);
-	if (ret < 0)
+	ret = s3c24xx_serial_cpufreq_रेजिस्टर(ourport);
+	अगर (ret < 0)
 		dev_err(&pdev->dev, "failed to add cpufreq notifier\n");
 
 	probe_index++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3c24xx_serial_remove(struct platform_device *dev)
-{
-	struct uart_port *port = s3c24xx_dev_to_port(&dev->dev);
+अटल पूर्णांक s3c24xx_serial_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा uart_port *port = s3c24xx_dev_to_port(&dev->dev);
 
-	if (port) {
-		s3c24xx_serial_cpufreq_deregister(to_ourport(port));
-		uart_remove_one_port(&s3c24xx_uart_drv, port);
-	}
+	अगर (port) अणु
+		s3c24xx_serial_cpufreq_deरेजिस्टर(to_ourport(port));
+		uart_हटाओ_one_port(&s3c24xx_uart_drv, port);
+	पूर्ण
 
-	uart_unregister_driver(&s3c24xx_uart_drv);
+	uart_unरेजिस्टर_driver(&s3c24xx_uart_drv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* UART power management code */
-#ifdef CONFIG_PM_SLEEP
-static int s3c24xx_serial_suspend(struct device *dev)
-{
-	struct uart_port *port = s3c24xx_dev_to_port(dev);
+/* UART घातer management code */
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक s3c24xx_serial_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा uart_port *port = s3c24xx_dev_to_port(dev);
 
-	if (port)
+	अगर (port)
 		uart_suspend_port(&s3c24xx_uart_drv, port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3c24xx_serial_resume(struct device *dev)
-{
-	struct uart_port *port = s3c24xx_dev_to_port(dev);
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
+अटल पूर्णांक s3c24xx_serial_resume(काष्ठा device *dev)
+अणु
+	काष्ठा uart_port *port = s3c24xx_dev_to_port(dev);
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
 
-	if (port) {
+	अगर (port) अणु
 		clk_prepare_enable(ourport->clk);
-		if (!IS_ERR(ourport->baudclk))
+		अगर (!IS_ERR(ourport->baudclk))
 			clk_prepare_enable(ourport->baudclk);
 		s3c24xx_serial_resetport(port, s3c24xx_port_to_cfg(port));
-		if (!IS_ERR(ourport->baudclk))
+		अगर (!IS_ERR(ourport->baudclk))
 			clk_disable_unprepare(ourport->baudclk);
 		clk_disable_unprepare(ourport->clk);
 
 		uart_resume_port(&s3c24xx_uart_drv, port);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3c24xx_serial_resume_noirq(struct device *dev)
-{
-	struct uart_port *port = s3c24xx_dev_to_port(dev);
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
+अटल पूर्णांक s3c24xx_serial_resume_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा uart_port *port = s3c24xx_dev_to_port(dev);
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
 
-	if (port) {
+	अगर (port) अणु
 		/* restore IRQ mask */
-		switch (ourport->info->type) {
-		case TYPE_S3C6400: {
-			unsigned int uintm = 0xf;
+		चयन (ourport->info->type) अणु
+		हाल TYPE_S3C6400: अणु
+			अचिन्हित पूर्णांक uपूर्णांकm = 0xf;
 
-			if (ourport->tx_enabled)
-				uintm &= ~S3C64XX_UINTM_TXD_MSK;
-			if (ourport->rx_enabled)
-				uintm &= ~S3C64XX_UINTM_RXD_MSK;
+			अगर (ourport->tx_enabled)
+				uपूर्णांकm &= ~S3C64XX_UINTM_TXD_MSK;
+			अगर (ourport->rx_enabled)
+				uपूर्णांकm &= ~S3C64XX_UINTM_RXD_MSK;
 			clk_prepare_enable(ourport->clk);
-			if (!IS_ERR(ourport->baudclk))
+			अगर (!IS_ERR(ourport->baudclk))
 				clk_prepare_enable(ourport->baudclk);
-			wr_regl(port, S3C64XX_UINTM, uintm);
-			if (!IS_ERR(ourport->baudclk))
+			wr_regl(port, S3C64XX_UINTM, uपूर्णांकm);
+			अगर (!IS_ERR(ourport->baudclk))
 				clk_disable_unprepare(ourport->baudclk);
 			clk_disable_unprepare(ourport->clk);
-			break;
-		}
-		case TYPE_APPLE_S5L: {
-			unsigned int ucon;
-			int ret;
+			अवरोध;
+		पूर्ण
+		हाल TYPE_APPLE_S5L: अणु
+			अचिन्हित पूर्णांक ucon;
+			पूर्णांक ret;
 
 			ret = clk_prepare_enable(ourport->clk);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(dev, "clk_enable clk failed: %d\n", ret);
-				return ret;
-			}
-			if (!IS_ERR(ourport->baudclk)) {
+				वापस ret;
+			पूर्ण
+			अगर (!IS_ERR(ourport->baudclk)) अणु
 				ret = clk_prepare_enable(ourport->baudclk);
-				if (ret) {
+				अगर (ret) अणु
 					dev_err(dev, "clk_enable baudclk failed: %d\n", ret);
 					clk_disable_unprepare(ourport->clk);
-					return ret;
-				}
-			}
+					वापस ret;
+				पूर्ण
+			पूर्ण
 
 			ucon = rd_regl(port, S3C2410_UCON);
 
@@ -2369,611 +2370,611 @@ static int s3c24xx_serial_resume_noirq(struct device *dev)
 				  APPLE_S5L_UCON_RXTHRESH_ENA_MSK |
 				  APPLE_S5L_UCON_RXTO_ENA_MSK);
 
-			if (ourport->tx_enabled)
+			अगर (ourport->tx_enabled)
 				ucon |= APPLE_S5L_UCON_TXTHRESH_ENA_MSK;
-			if (ourport->rx_enabled)
+			अगर (ourport->rx_enabled)
 				ucon |= APPLE_S5L_UCON_RXTHRESH_ENA_MSK |
 					APPLE_S5L_UCON_RXTO_ENA_MSK;
 
 			wr_regl(port, S3C2410_UCON, ucon);
 
-			if (!IS_ERR(ourport->baudclk))
+			अगर (!IS_ERR(ourport->baudclk))
 				clk_disable_unprepare(ourport->baudclk);
 			clk_disable_unprepare(ourport->clk);
-			break;
-		}
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops s3c24xx_serial_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops s3c24xx_serial_pm_ops = अणु
 	.suspend = s3c24xx_serial_suspend,
 	.resume = s3c24xx_serial_resume,
 	.resume_noirq = s3c24xx_serial_resume_noirq,
-};
-#define SERIAL_SAMSUNG_PM_OPS	(&s3c24xx_serial_pm_ops)
+पूर्ण;
+#घोषणा SERIAL_SAMSUNG_PM_OPS	(&s3c24xx_serial_pm_ops)
 
-#else /* !CONFIG_PM_SLEEP */
+#अन्यथा /* !CONFIG_PM_SLEEP */
 
-#define SERIAL_SAMSUNG_PM_OPS	NULL
-#endif /* CONFIG_PM_SLEEP */
+#घोषणा SERIAL_SAMSUNG_PM_OPS	शून्य
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
 /* Console code */
 
-#ifdef CONFIG_SERIAL_SAMSUNG_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_SAMSUNG_CONSOLE
 
-static struct uart_port *cons_uart;
+अटल काष्ठा uart_port *cons_uart;
 
-static int
-s3c24xx_serial_console_txrdy(struct uart_port *port, unsigned int ufcon)
-{
-	struct s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
-	unsigned long ufstat, utrstat;
+अटल पूर्णांक
+s3c24xx_serial_console_txrdy(काष्ठा uart_port *port, अचिन्हित पूर्णांक ufcon)
+अणु
+	काष्ठा s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
+	अचिन्हित दीर्घ uख_स्थिति, utrstat;
 
-	if (ufcon & S3C2410_UFCON_FIFOMODE) {
-		/* fifo mode - check amount of data in fifo registers... */
+	अगर (ufcon & S3C2410_UFCON_FIFOMODE) अणु
+		/* fअगरo mode - check amount of data in fअगरo रेजिस्टरs... */
 
-		ufstat = rd_regl(port, S3C2410_UFSTAT);
-		return (ufstat & info->tx_fifofull) ? 0 : 1;
-	}
+		uख_स्थिति = rd_regl(port, S3C2410_UFSTAT);
+		वापस (uख_स्थिति & info->tx_fअगरofull) ? 0 : 1;
+	पूर्ण
 
-	/* in non-fifo mode, we go and use the tx buffer empty */
+	/* in non-fअगरo mode, we go and use the tx buffer empty */
 
 	utrstat = rd_regl(port, S3C2410_UTRSTAT);
-	return (utrstat & S3C2410_UTRSTAT_TXE) ? 1 : 0;
-}
+	वापस (utrstat & S3C2410_UTRSTAT_TXE) ? 1 : 0;
+पूर्ण
 
-static bool
-s3c24xx_port_configured(unsigned int ucon)
-{
-	/* consider the serial port configured if the tx/rx mode set */
-	return (ucon & 0xf) != 0;
-}
+अटल bool
+s3c24xx_port_configured(अचिन्हित पूर्णांक ucon)
+अणु
+	/* consider the serial port configured अगर the tx/rx mode set */
+	वापस (ucon & 0xf) != 0;
+पूर्ण
 
-#ifdef CONFIG_CONSOLE_POLL
+#अगर_घोषित CONFIG_CONSOLE_POLL
 /*
- * Console polling routines for writing and reading from the uart while
- * in an interrupt or debug context.
+ * Console polling routines क्रम writing and पढ़ोing from the uart जबतक
+ * in an पूर्णांकerrupt or debug context.
  */
 
-static int s3c24xx_serial_get_poll_char(struct uart_port *port)
-{
-	struct s3c24xx_uart_port *ourport = to_ourport(port);
-	unsigned int ufstat;
+अटल पूर्णांक s3c24xx_serial_get_poll_अक्षर(काष्ठा uart_port *port)
+अणु
+	काष्ठा s3c24xx_uart_port *ourport = to_ourport(port);
+	अचिन्हित पूर्णांक uख_स्थिति;
 
-	ufstat = rd_regl(port, S3C2410_UFSTAT);
-	if (s3c24xx_serial_rx_fifocnt(ourport, ufstat) == 0)
-		return NO_POLL_CHAR;
+	uख_स्थिति = rd_regl(port, S3C2410_UFSTAT);
+	अगर (s3c24xx_serial_rx_fअगरocnt(ourport, uख_स्थिति) == 0)
+		वापस NO_POLL_CHAR;
 
-	return rd_reg(port, S3C2410_URXH);
-}
+	वापस rd_reg(port, S3C2410_URXH);
+पूर्ण
 
-static void s3c24xx_serial_put_poll_char(struct uart_port *port,
-		unsigned char c)
-{
-	unsigned int ufcon = rd_regl(port, S3C2410_UFCON);
-	unsigned int ucon = rd_regl(port, S3C2410_UCON);
+अटल व्योम s3c24xx_serial_put_poll_अक्षर(काष्ठा uart_port *port,
+		अचिन्हित अक्षर c)
+अणु
+	अचिन्हित पूर्णांक ufcon = rd_regl(port, S3C2410_UFCON);
+	अचिन्हित पूर्णांक ucon = rd_regl(port, S3C2410_UCON);
 
 	/* not possible to xmit on unconfigured port */
-	if (!s3c24xx_port_configured(ucon))
-		return;
+	अगर (!s3c24xx_port_configured(ucon))
+		वापस;
 
-	while (!s3c24xx_serial_console_txrdy(port, ufcon))
+	जबतक (!s3c24xx_serial_console_txrdy(port, ufcon))
 		cpu_relax();
 	wr_reg(port, S3C2410_UTXH, c);
-}
+पूर्ण
 
-#endif /* CONFIG_CONSOLE_POLL */
+#पूर्ण_अगर /* CONFIG_CONSOLE_POLL */
 
-static void
-s3c24xx_serial_console_putchar(struct uart_port *port, int ch)
-{
-	unsigned int ufcon = rd_regl(port, S3C2410_UFCON);
+अटल व्योम
+s3c24xx_serial_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	अचिन्हित पूर्णांक ufcon = rd_regl(port, S3C2410_UFCON);
 
-	while (!s3c24xx_serial_console_txrdy(port, ufcon))
+	जबतक (!s3c24xx_serial_console_txrdy(port, ufcon))
 		cpu_relax();
 	wr_reg(port, S3C2410_UTXH, ch);
-}
+पूर्ण
 
-static void
-s3c24xx_serial_console_write(struct console *co, const char *s,
-			     unsigned int count)
-{
-	unsigned int ucon = rd_regl(cons_uart, S3C2410_UCON);
+अटल व्योम
+s3c24xx_serial_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+			     अचिन्हित पूर्णांक count)
+अणु
+	अचिन्हित पूर्णांक ucon = rd_regl(cons_uart, S3C2410_UCON);
 
 	/* not possible to xmit on unconfigured port */
-	if (!s3c24xx_port_configured(ucon))
-		return;
+	अगर (!s3c24xx_port_configured(ucon))
+		वापस;
 
-	uart_console_write(cons_uart, s, count, s3c24xx_serial_console_putchar);
-}
+	uart_console_ग_लिखो(cons_uart, s, count, s3c24xx_serial_console_अक्षर_दो);
+पूर्ण
 
-static void __init
-s3c24xx_serial_get_options(struct uart_port *port, int *baud,
-			   int *parity, int *bits)
-{
-	struct clk *clk;
-	unsigned int ulcon;
-	unsigned int ucon;
-	unsigned int ubrdiv;
-	unsigned long rate;
-	unsigned int clk_sel;
-	char clk_name[MAX_CLK_NAME_LENGTH];
+अटल व्योम __init
+s3c24xx_serial_get_options(काष्ठा uart_port *port, पूर्णांक *baud,
+			   पूर्णांक *parity, पूर्णांक *bits)
+अणु
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक ulcon;
+	अचिन्हित पूर्णांक ucon;
+	अचिन्हित पूर्णांक ubrभाग;
+	अचिन्हित दीर्घ rate;
+	अचिन्हित पूर्णांक clk_sel;
+	अक्षर clk_name[MAX_CLK_NAME_LENGTH];
 
 	ulcon  = rd_regl(port, S3C2410_ULCON);
 	ucon   = rd_regl(port, S3C2410_UCON);
-	ubrdiv = rd_regl(port, S3C2410_UBRDIV);
+	ubrभाग = rd_regl(port, S3C2410_UBRDIV);
 
-	if (s3c24xx_port_configured(ucon)) {
-		switch (ulcon & S3C2410_LCON_CSMASK) {
-		case S3C2410_LCON_CS5:
+	अगर (s3c24xx_port_configured(ucon)) अणु
+		चयन (ulcon & S3C2410_LCON_CSMASK) अणु
+		हाल S3C2410_LCON_CS5:
 			*bits = 5;
-			break;
-		case S3C2410_LCON_CS6:
+			अवरोध;
+		हाल S3C2410_LCON_CS6:
 			*bits = 6;
-			break;
-		case S3C2410_LCON_CS7:
+			अवरोध;
+		हाल S3C2410_LCON_CS7:
 			*bits = 7;
-			break;
-		case S3C2410_LCON_CS8:
-		default:
+			अवरोध;
+		हाल S3C2410_LCON_CS8:
+		शेष:
 			*bits = 8;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		switch (ulcon & S3C2410_LCON_PMASK) {
-		case S3C2410_LCON_PEVEN:
+		चयन (ulcon & S3C2410_LCON_PMASK) अणु
+		हाल S3C2410_LCON_PEVEN:
 			*parity = 'e';
-			break;
+			अवरोध;
 
-		case S3C2410_LCON_PODD:
+		हाल S3C2410_LCON_PODD:
 			*parity = 'o';
-			break;
+			अवरोध;
 
-		case S3C2410_LCON_PNONE:
-		default:
+		हाल S3C2410_LCON_PNONE:
+		शेष:
 			*parity = 'n';
-		}
+		पूर्ण
 
 		/* now calculate the baud rate */
 
-		clk_sel = s3c24xx_serial_getsource(port);
-		sprintf(clk_name, "clk_uart_baud%d", clk_sel);
+		clk_sel = s3c24xx_serial_माला_लोource(port);
+		प्र_लिखो(clk_name, "clk_uart_baud%d", clk_sel);
 
 		clk = clk_get(port->dev, clk_name);
-		if (!IS_ERR(clk))
+		अगर (!IS_ERR(clk))
 			rate = clk_get_rate(clk);
-		else
+		अन्यथा
 			rate = 1;
 
-		*baud = rate / (16 * (ubrdiv + 1));
+		*baud = rate / (16 * (ubrभाग + 1));
 		dev_dbg(port->dev, "calculated baud %d\n", *baud);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init
-s3c24xx_serial_console_setup(struct console *co, char *options)
-{
-	struct uart_port *port;
-	int baud = 9600;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
+अटल पूर्णांक __init
+s3c24xx_serial_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक baud = 9600;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
 
 	/* is this a valid port */
 
-	if (co->index == -1 || co->index >= CONFIG_SERIAL_SAMSUNG_UARTS)
+	अगर (co->index == -1 || co->index >= CONFIG_SERIAL_SAMSUNG_UARTS)
 		co->index = 0;
 
 	port = &s3c24xx_serial_ports[co->index].port;
 
 	/* is the port configured? */
 
-	if (port->mapbase == 0x0)
-		return -ENODEV;
+	अगर (port->mapbase == 0x0)
+		वापस -ENODEV;
 
 	cons_uart = port;
 
 	/*
-	 * Check whether an invalid uart number has been specified, and
-	 * if so, search for the first available port that does have
+	 * Check whether an invalid uart number has been specअगरied, and
+	 * अगर so, search क्रम the first available port that करोes have
 	 * console support.
 	 */
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
-	else
+	अन्यथा
 		s3c24xx_serial_get_options(port, &baud, &parity, &bits);
 
 	dev_dbg(port->dev, "baud %d\n", baud);
 
-	return uart_set_options(port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct console s3c24xx_serial_console = {
+अटल काष्ठा console s3c24xx_serial_console = अणु
 	.name		= S3C24XX_SERIAL_NAME,
 	.device		= uart_console_device,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
-	.write		= s3c24xx_serial_console_write,
+	.ग_लिखो		= s3c24xx_serial_console_ग_लिखो,
 	.setup		= s3c24xx_serial_console_setup,
 	.data		= &s3c24xx_uart_drv,
-};
-#endif /* CONFIG_SERIAL_SAMSUNG_CONSOLE */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_SERIAL_SAMSUNG_CONSOLE */
 
-#ifdef CONFIG_CPU_S3C2410
-static struct s3c24xx_serial_drv_data s3c2410_serial_drv_data = {
-	.info = &(struct s3c24xx_uart_info) {
+#अगर_घोषित CONFIG_CPU_S3C2410
+अटल काष्ठा s3c24xx_serial_drv_data s3c2410_serial_drv_data = अणु
+	.info = &(काष्ठा s3c24xx_uart_info) अणु
 		.name		= "Samsung S3C2410 UART",
 		.type		= TYPE_S3C24XX,
 		.port_type	= PORT_S3C2410,
-		.fifosize	= 16,
-		.rx_fifomask	= S3C2410_UFSTAT_RXMASK,
-		.rx_fifoshift	= S3C2410_UFSTAT_RXSHIFT,
-		.rx_fifofull	= S3C2410_UFSTAT_RXFULL,
-		.tx_fifofull	= S3C2410_UFSTAT_TXFULL,
-		.tx_fifomask	= S3C2410_UFSTAT_TXMASK,
-		.tx_fifoshift	= S3C2410_UFSTAT_TXSHIFT,
+		.fअगरosize	= 16,
+		.rx_fअगरomask	= S3C2410_UFSTAT_RXMASK,
+		.rx_fअगरoshअगरt	= S3C2410_UFSTAT_RXSHIFT,
+		.rx_fअगरofull	= S3C2410_UFSTAT_RXFULL,
+		.tx_fअगरofull	= S3C2410_UFSTAT_TXFULL,
+		.tx_fअगरomask	= S3C2410_UFSTAT_TXMASK,
+		.tx_fअगरoshअगरt	= S3C2410_UFSTAT_TXSHIFT,
 		.def_clk_sel	= S3C2410_UCON_CLKSEL0,
 		.num_clks	= 2,
 		.clksel_mask	= S3C2410_UCON_CLKMASK,
-		.clksel_shift	= S3C2410_UCON_CLKSHIFT,
-	},
-	.def_cfg = &(struct s3c2410_uartcfg) {
+		.clksel_shअगरt	= S3C2410_UCON_CLKSHIFT,
+	पूर्ण,
+	.def_cfg = &(काष्ठा s3c2410_uartcfg) अणु
 		.ucon		= S3C2410_UCON_DEFAULT,
 		.ufcon		= S3C2410_UFCON_DEFAULT,
-	},
-};
-#define S3C2410_SERIAL_DRV_DATA ((kernel_ulong_t)&s3c2410_serial_drv_data)
-#else
-#define S3C2410_SERIAL_DRV_DATA (kernel_ulong_t)NULL
-#endif
+	पूर्ण,
+पूर्ण;
+#घोषणा S3C2410_SERIAL_DRV_DATA ((kernel_uदीर्घ_t)&s3c2410_serial_drv_data)
+#अन्यथा
+#घोषणा S3C2410_SERIAL_DRV_DATA (kernel_uदीर्घ_t)शून्य
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_S3C2412
-static struct s3c24xx_serial_drv_data s3c2412_serial_drv_data = {
-	.info = &(struct s3c24xx_uart_info) {
+#अगर_घोषित CONFIG_CPU_S3C2412
+अटल काष्ठा s3c24xx_serial_drv_data s3c2412_serial_drv_data = अणु
+	.info = &(काष्ठा s3c24xx_uart_info) अणु
 		.name		= "Samsung S3C2412 UART",
 		.type		= TYPE_S3C24XX,
 		.port_type	= PORT_S3C2412,
-		.fifosize	= 64,
-		.has_divslot	= 1,
-		.rx_fifomask	= S3C2440_UFSTAT_RXMASK,
-		.rx_fifoshift	= S3C2440_UFSTAT_RXSHIFT,
-		.rx_fifofull	= S3C2440_UFSTAT_RXFULL,
-		.tx_fifofull	= S3C2440_UFSTAT_TXFULL,
-		.tx_fifomask	= S3C2440_UFSTAT_TXMASK,
-		.tx_fifoshift	= S3C2440_UFSTAT_TXSHIFT,
+		.fअगरosize	= 64,
+		.has_भागslot	= 1,
+		.rx_fअगरomask	= S3C2440_UFSTAT_RXMASK,
+		.rx_fअगरoshअगरt	= S3C2440_UFSTAT_RXSHIFT,
+		.rx_fअगरofull	= S3C2440_UFSTAT_RXFULL,
+		.tx_fअगरofull	= S3C2440_UFSTAT_TXFULL,
+		.tx_fअगरomask	= S3C2440_UFSTAT_TXMASK,
+		.tx_fअगरoshअगरt	= S3C2440_UFSTAT_TXSHIFT,
 		.def_clk_sel	= S3C2410_UCON_CLKSEL2,
 		.num_clks	= 4,
 		.clksel_mask	= S3C2412_UCON_CLKMASK,
-		.clksel_shift	= S3C2412_UCON_CLKSHIFT,
-	},
-	.def_cfg = &(struct s3c2410_uartcfg) {
+		.clksel_shअगरt	= S3C2412_UCON_CLKSHIFT,
+	पूर्ण,
+	.def_cfg = &(काष्ठा s3c2410_uartcfg) अणु
 		.ucon		= S3C2410_UCON_DEFAULT,
 		.ufcon		= S3C2410_UFCON_DEFAULT,
-	},
-};
-#define S3C2412_SERIAL_DRV_DATA ((kernel_ulong_t)&s3c2412_serial_drv_data)
-#else
-#define S3C2412_SERIAL_DRV_DATA (kernel_ulong_t)NULL
-#endif
+	पूर्ण,
+पूर्ण;
+#घोषणा S3C2412_SERIAL_DRV_DATA ((kernel_uदीर्घ_t)&s3c2412_serial_drv_data)
+#अन्यथा
+#घोषणा S3C2412_SERIAL_DRV_DATA (kernel_uदीर्घ_t)शून्य
+#पूर्ण_अगर
 
-#if defined(CONFIG_CPU_S3C2440) || defined(CONFIG_CPU_S3C2416) || \
+#अगर defined(CONFIG_CPU_S3C2440) || defined(CONFIG_CPU_S3C2416) || \
 	defined(CONFIG_CPU_S3C2443) || defined(CONFIG_CPU_S3C2442)
-static struct s3c24xx_serial_drv_data s3c2440_serial_drv_data = {
-	.info = &(struct s3c24xx_uart_info) {
+अटल काष्ठा s3c24xx_serial_drv_data s3c2440_serial_drv_data = अणु
+	.info = &(काष्ठा s3c24xx_uart_info) अणु
 		.name		= "Samsung S3C2440 UART",
 		.type		= TYPE_S3C24XX,
 		.port_type	= PORT_S3C2440,
-		.fifosize	= 64,
-		.has_divslot	= 1,
-		.rx_fifomask	= S3C2440_UFSTAT_RXMASK,
-		.rx_fifoshift	= S3C2440_UFSTAT_RXSHIFT,
-		.rx_fifofull	= S3C2440_UFSTAT_RXFULL,
-		.tx_fifofull	= S3C2440_UFSTAT_TXFULL,
-		.tx_fifomask	= S3C2440_UFSTAT_TXMASK,
-		.tx_fifoshift	= S3C2440_UFSTAT_TXSHIFT,
+		.fअगरosize	= 64,
+		.has_भागslot	= 1,
+		.rx_fअगरomask	= S3C2440_UFSTAT_RXMASK,
+		.rx_fअगरoshअगरt	= S3C2440_UFSTAT_RXSHIFT,
+		.rx_fअगरofull	= S3C2440_UFSTAT_RXFULL,
+		.tx_fअगरofull	= S3C2440_UFSTAT_TXFULL,
+		.tx_fअगरomask	= S3C2440_UFSTAT_TXMASK,
+		.tx_fअगरoshअगरt	= S3C2440_UFSTAT_TXSHIFT,
 		.def_clk_sel	= S3C2410_UCON_CLKSEL2,
 		.num_clks	= 4,
 		.clksel_mask	= S3C2412_UCON_CLKMASK,
-		.clksel_shift	= S3C2412_UCON_CLKSHIFT,
+		.clksel_shअगरt	= S3C2412_UCON_CLKSHIFT,
 		.ucon_mask	= S3C2440_UCON0_DIVMASK,
-	},
-	.def_cfg = &(struct s3c2410_uartcfg) {
+	पूर्ण,
+	.def_cfg = &(काष्ठा s3c2410_uartcfg) अणु
 		.ucon		= S3C2410_UCON_DEFAULT,
 		.ufcon		= S3C2410_UFCON_DEFAULT,
-	},
-};
-#define S3C2440_SERIAL_DRV_DATA ((kernel_ulong_t)&s3c2440_serial_drv_data)
-#else
-#define S3C2440_SERIAL_DRV_DATA (kernel_ulong_t)NULL
-#endif
+	पूर्ण,
+पूर्ण;
+#घोषणा S3C2440_SERIAL_DRV_DATA ((kernel_uदीर्घ_t)&s3c2440_serial_drv_data)
+#अन्यथा
+#घोषणा S3C2440_SERIAL_DRV_DATA (kernel_uदीर्घ_t)शून्य
+#पूर्ण_अगर
 
-#if defined(CONFIG_CPU_S3C6400) || defined(CONFIG_CPU_S3C6410)
-static struct s3c24xx_serial_drv_data s3c6400_serial_drv_data = {
-	.info = &(struct s3c24xx_uart_info) {
+#अगर defined(CONFIG_CPU_S3C6400) || defined(CONFIG_CPU_S3C6410)
+अटल काष्ठा s3c24xx_serial_drv_data s3c6400_serial_drv_data = अणु
+	.info = &(काष्ठा s3c24xx_uart_info) अणु
 		.name		= "Samsung S3C6400 UART",
 		.type		= TYPE_S3C6400,
 		.port_type	= PORT_S3C6400,
-		.fifosize	= 64,
-		.has_divslot	= 1,
-		.rx_fifomask	= S3C2440_UFSTAT_RXMASK,
-		.rx_fifoshift	= S3C2440_UFSTAT_RXSHIFT,
-		.rx_fifofull	= S3C2440_UFSTAT_RXFULL,
-		.tx_fifofull	= S3C2440_UFSTAT_TXFULL,
-		.tx_fifomask	= S3C2440_UFSTAT_TXMASK,
-		.tx_fifoshift	= S3C2440_UFSTAT_TXSHIFT,
+		.fअगरosize	= 64,
+		.has_भागslot	= 1,
+		.rx_fअगरomask	= S3C2440_UFSTAT_RXMASK,
+		.rx_fअगरoshअगरt	= S3C2440_UFSTAT_RXSHIFT,
+		.rx_fअगरofull	= S3C2440_UFSTAT_RXFULL,
+		.tx_fअगरofull	= S3C2440_UFSTAT_TXFULL,
+		.tx_fअगरomask	= S3C2440_UFSTAT_TXMASK,
+		.tx_fअगरoshअगरt	= S3C2440_UFSTAT_TXSHIFT,
 		.def_clk_sel	= S3C2410_UCON_CLKSEL2,
 		.num_clks	= 4,
 		.clksel_mask	= S3C6400_UCON_CLKMASK,
-		.clksel_shift	= S3C6400_UCON_CLKSHIFT,
-	},
-	.def_cfg = &(struct s3c2410_uartcfg) {
+		.clksel_shअगरt	= S3C6400_UCON_CLKSHIFT,
+	पूर्ण,
+	.def_cfg = &(काष्ठा s3c2410_uartcfg) अणु
 		.ucon		= S3C2410_UCON_DEFAULT,
 		.ufcon		= S3C2410_UFCON_DEFAULT,
-	},
-};
-#define S3C6400_SERIAL_DRV_DATA ((kernel_ulong_t)&s3c6400_serial_drv_data)
-#else
-#define S3C6400_SERIAL_DRV_DATA (kernel_ulong_t)NULL
-#endif
+	पूर्ण,
+पूर्ण;
+#घोषणा S3C6400_SERIAL_DRV_DATA ((kernel_uदीर्घ_t)&s3c6400_serial_drv_data)
+#अन्यथा
+#घोषणा S3C6400_SERIAL_DRV_DATA (kernel_uदीर्घ_t)शून्य
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_S5PV210
-static struct s3c24xx_serial_drv_data s5pv210_serial_drv_data = {
-	.info = &(struct s3c24xx_uart_info) {
+#अगर_घोषित CONFIG_CPU_S5PV210
+अटल काष्ठा s3c24xx_serial_drv_data s5pv210_serial_drv_data = अणु
+	.info = &(काष्ठा s3c24xx_uart_info) अणु
 		.name		= "Samsung S5PV210 UART",
 		.type		= TYPE_S3C6400,
 		.port_type	= PORT_S3C6400,
-		.has_divslot	= 1,
-		.rx_fifomask	= S5PV210_UFSTAT_RXMASK,
-		.rx_fifoshift	= S5PV210_UFSTAT_RXSHIFT,
-		.rx_fifofull	= S5PV210_UFSTAT_RXFULL,
-		.tx_fifofull	= S5PV210_UFSTAT_TXFULL,
-		.tx_fifomask	= S5PV210_UFSTAT_TXMASK,
-		.tx_fifoshift	= S5PV210_UFSTAT_TXSHIFT,
+		.has_भागslot	= 1,
+		.rx_fअगरomask	= S5PV210_UFSTAT_RXMASK,
+		.rx_fअगरoshअगरt	= S5PV210_UFSTAT_RXSHIFT,
+		.rx_fअगरofull	= S5PV210_UFSTAT_RXFULL,
+		.tx_fअगरofull	= S5PV210_UFSTAT_TXFULL,
+		.tx_fअगरomask	= S5PV210_UFSTAT_TXMASK,
+		.tx_fअगरoshअगरt	= S5PV210_UFSTAT_TXSHIFT,
 		.def_clk_sel	= S3C2410_UCON_CLKSEL0,
 		.num_clks	= 2,
 		.clksel_mask	= S5PV210_UCON_CLKMASK,
-		.clksel_shift	= S5PV210_UCON_CLKSHIFT,
-	},
-	.def_cfg = &(struct s3c2410_uartcfg) {
+		.clksel_shअगरt	= S5PV210_UCON_CLKSHIFT,
+	पूर्ण,
+	.def_cfg = &(काष्ठा s3c2410_uartcfg) अणु
 		.ucon		= S5PV210_UCON_DEFAULT,
 		.ufcon		= S5PV210_UFCON_DEFAULT,
-	},
-	.fifosize = { 256, 64, 16, 16 },
-};
-#define S5PV210_SERIAL_DRV_DATA ((kernel_ulong_t)&s5pv210_serial_drv_data)
-#else
-#define S5PV210_SERIAL_DRV_DATA	(kernel_ulong_t)NULL
-#endif
+	पूर्ण,
+	.fअगरosize = अणु 256, 64, 16, 16 पूर्ण,
+पूर्ण;
+#घोषणा S5PV210_SERIAL_DRV_DATA ((kernel_uदीर्घ_t)&s5pv210_serial_drv_data)
+#अन्यथा
+#घोषणा S5PV210_SERIAL_DRV_DATA	(kernel_uदीर्घ_t)शून्य
+#पूर्ण_अगर
 
-#if defined(CONFIG_ARCH_EXYNOS)
-#define EXYNOS_COMMON_SERIAL_DRV_DATA				\
-	.info = &(struct s3c24xx_uart_info) {			\
+#अगर defined(CONFIG_ARCH_EXYNOS)
+#घोषणा EXYNOS_COMMON_SERIAL_DRV_DATA				\
+	.info = &(काष्ठा s3c24xx_uart_info) अणु			\
 		.name		= "Samsung Exynos UART",	\
 		.type		= TYPE_S3C6400,			\
 		.port_type	= PORT_S3C6400,			\
-		.has_divslot	= 1,				\
-		.rx_fifomask	= S5PV210_UFSTAT_RXMASK,	\
-		.rx_fifoshift	= S5PV210_UFSTAT_RXSHIFT,	\
-		.rx_fifofull	= S5PV210_UFSTAT_RXFULL,	\
-		.tx_fifofull	= S5PV210_UFSTAT_TXFULL,	\
-		.tx_fifomask	= S5PV210_UFSTAT_TXMASK,	\
-		.tx_fifoshift	= S5PV210_UFSTAT_TXSHIFT,	\
+		.has_भागslot	= 1,				\
+		.rx_fअगरomask	= S5PV210_UFSTAT_RXMASK,	\
+		.rx_fअगरoshअगरt	= S5PV210_UFSTAT_RXSHIFT,	\
+		.rx_fअगरofull	= S5PV210_UFSTAT_RXFULL,	\
+		.tx_fअगरofull	= S5PV210_UFSTAT_TXFULL,	\
+		.tx_fअगरomask	= S5PV210_UFSTAT_TXMASK,	\
+		.tx_fअगरoshअगरt	= S5PV210_UFSTAT_TXSHIFT,	\
 		.def_clk_sel	= S3C2410_UCON_CLKSEL0,		\
 		.num_clks	= 1,				\
 		.clksel_mask	= 0,				\
-		.clksel_shift	= 0,				\
-	},							\
-	.def_cfg = &(struct s3c2410_uartcfg) {			\
+		.clksel_shअगरt	= 0,				\
+	पूर्ण,							\
+	.def_cfg = &(काष्ठा s3c2410_uartcfg) अणु			\
 		.ucon		= S5PV210_UCON_DEFAULT,		\
 		.ufcon		= S5PV210_UFCON_DEFAULT,	\
 		.has_fracval	= 1,				\
-	}							\
+	पूर्ण							\
 
-static struct s3c24xx_serial_drv_data exynos4210_serial_drv_data = {
+अटल काष्ठा s3c24xx_serial_drv_data exynos4210_serial_drv_data = अणु
 	EXYNOS_COMMON_SERIAL_DRV_DATA,
-	.fifosize = { 256, 64, 16, 16 },
-};
+	.fअगरosize = अणु 256, 64, 16, 16 पूर्ण,
+पूर्ण;
 
-static struct s3c24xx_serial_drv_data exynos5433_serial_drv_data = {
+अटल काष्ठा s3c24xx_serial_drv_data exynos5433_serial_drv_data = अणु
 	EXYNOS_COMMON_SERIAL_DRV_DATA,
-	.fifosize = { 64, 256, 16, 256 },
-};
+	.fअगरosize = अणु 64, 256, 16, 256 पूर्ण,
+पूर्ण;
 
-#define EXYNOS4210_SERIAL_DRV_DATA ((kernel_ulong_t)&exynos4210_serial_drv_data)
-#define EXYNOS5433_SERIAL_DRV_DATA ((kernel_ulong_t)&exynos5433_serial_drv_data)
-#else
-#define EXYNOS4210_SERIAL_DRV_DATA (kernel_ulong_t)NULL
-#define EXYNOS5433_SERIAL_DRV_DATA (kernel_ulong_t)NULL
-#endif
+#घोषणा EXYNOS4210_SERIAL_DRV_DATA ((kernel_uदीर्घ_t)&exynos4210_serial_drv_data)
+#घोषणा EXYNOS5433_SERIAL_DRV_DATA ((kernel_uदीर्घ_t)&exynos5433_serial_drv_data)
+#अन्यथा
+#घोषणा EXYNOS4210_SERIAL_DRV_DATA (kernel_uदीर्घ_t)शून्य
+#घोषणा EXYNOS5433_SERIAL_DRV_DATA (kernel_uदीर्घ_t)शून्य
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_APPLE
-static struct s3c24xx_serial_drv_data s5l_serial_drv_data = {
-	.info = &(struct s3c24xx_uart_info) {
+#अगर_घोषित CONFIG_ARCH_APPLE
+अटल काष्ठा s3c24xx_serial_drv_data s5l_serial_drv_data = अणु
+	.info = &(काष्ठा s3c24xx_uart_info) अणु
 		.name		= "Apple S5L UART",
 		.type		= TYPE_APPLE_S5L,
 		.port_type	= PORT_8250,
-		.fifosize	= 16,
-		.rx_fifomask	= S3C2410_UFSTAT_RXMASK,
-		.rx_fifoshift	= S3C2410_UFSTAT_RXSHIFT,
-		.rx_fifofull	= S3C2410_UFSTAT_RXFULL,
-		.tx_fifofull	= S3C2410_UFSTAT_TXFULL,
-		.tx_fifomask	= S3C2410_UFSTAT_TXMASK,
-		.tx_fifoshift	= S3C2410_UFSTAT_TXSHIFT,
+		.fअगरosize	= 16,
+		.rx_fअगरomask	= S3C2410_UFSTAT_RXMASK,
+		.rx_fअगरoshअगरt	= S3C2410_UFSTAT_RXSHIFT,
+		.rx_fअगरofull	= S3C2410_UFSTAT_RXFULL,
+		.tx_fअगरofull	= S3C2410_UFSTAT_TXFULL,
+		.tx_fअगरomask	= S3C2410_UFSTAT_TXMASK,
+		.tx_fअगरoshअगरt	= S3C2410_UFSTAT_TXSHIFT,
 		.def_clk_sel	= S3C2410_UCON_CLKSEL0,
 		.num_clks	= 1,
 		.clksel_mask	= 0,
-		.clksel_shift	= 0,
-	},
-	.def_cfg = &(struct s3c2410_uartcfg) {
+		.clksel_shअगरt	= 0,
+	पूर्ण,
+	.def_cfg = &(काष्ठा s3c2410_uartcfg) अणु
 		.ucon		= APPLE_S5L_UCON_DEFAULT,
 		.ufcon		= S3C2410_UFCON_DEFAULT,
-	},
-};
-#define S5L_SERIAL_DRV_DATA ((kernel_ulong_t)&s5l_serial_drv_data)
-#else
-#define S5L_SERIAL_DRV_DATA ((kernel_ulong_t)NULL)
-#endif
+	पूर्ण,
+पूर्ण;
+#घोषणा S5L_SERIAL_DRV_DATA ((kernel_uदीर्घ_t)&s5l_serial_drv_data)
+#अन्यथा
+#घोषणा S5L_SERIAL_DRV_DATA ((kernel_uदीर्घ_t)शून्य)
+#पूर्ण_अगर
 
-static const struct platform_device_id s3c24xx_serial_driver_ids[] = {
-	{
+अटल स्थिर काष्ठा platक्रमm_device_id s3c24xx_serial_driver_ids[] = अणु
+	अणु
 		.name		= "s3c2410-uart",
 		.driver_data	= S3C2410_SERIAL_DRV_DATA,
-	}, {
+	पूर्ण, अणु
 		.name		= "s3c2412-uart",
 		.driver_data	= S3C2412_SERIAL_DRV_DATA,
-	}, {
+	पूर्ण, अणु
 		.name		= "s3c2440-uart",
 		.driver_data	= S3C2440_SERIAL_DRV_DATA,
-	}, {
+	पूर्ण, अणु
 		.name		= "s3c6400-uart",
 		.driver_data	= S3C6400_SERIAL_DRV_DATA,
-	}, {
+	पूर्ण, अणु
 		.name		= "s5pv210-uart",
 		.driver_data	= S5PV210_SERIAL_DRV_DATA,
-	}, {
+	पूर्ण, अणु
 		.name		= "exynos4210-uart",
 		.driver_data	= EXYNOS4210_SERIAL_DRV_DATA,
-	}, {
+	पूर्ण, अणु
 		.name		= "exynos5433-uart",
 		.driver_data	= EXYNOS5433_SERIAL_DRV_DATA,
-	}, {
+	पूर्ण, अणु
 		.name		= "s5l-uart",
 		.driver_data	= S5L_SERIAL_DRV_DATA,
-	},
-	{ },
-};
-MODULE_DEVICE_TABLE(platform, s3c24xx_serial_driver_ids);
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, s3c24xx_serial_driver_ids);
 
-#ifdef CONFIG_OF
-static const struct of_device_id s3c24xx_uart_dt_match[] = {
-	{ .compatible = "samsung,s3c2410-uart",
-		.data = (void *)S3C2410_SERIAL_DRV_DATA },
-	{ .compatible = "samsung,s3c2412-uart",
-		.data = (void *)S3C2412_SERIAL_DRV_DATA },
-	{ .compatible = "samsung,s3c2440-uart",
-		.data = (void *)S3C2440_SERIAL_DRV_DATA },
-	{ .compatible = "samsung,s3c6400-uart",
-		.data = (void *)S3C6400_SERIAL_DRV_DATA },
-	{ .compatible = "samsung,s5pv210-uart",
-		.data = (void *)S5PV210_SERIAL_DRV_DATA },
-	{ .compatible = "samsung,exynos4210-uart",
-		.data = (void *)EXYNOS4210_SERIAL_DRV_DATA },
-	{ .compatible = "samsung,exynos5433-uart",
-		.data = (void *)EXYNOS5433_SERIAL_DRV_DATA },
-	{ .compatible = "apple,s5l-uart",
-		.data = (void *)S5L_SERIAL_DRV_DATA },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id s3c24xx_uart_dt_match[] = अणु
+	अणु .compatible = "samsung,s3c2410-uart",
+		.data = (व्योम *)S3C2410_SERIAL_DRV_DATA पूर्ण,
+	अणु .compatible = "samsung,s3c2412-uart",
+		.data = (व्योम *)S3C2412_SERIAL_DRV_DATA पूर्ण,
+	अणु .compatible = "samsung,s3c2440-uart",
+		.data = (व्योम *)S3C2440_SERIAL_DRV_DATA पूर्ण,
+	अणु .compatible = "samsung,s3c6400-uart",
+		.data = (व्योम *)S3C6400_SERIAL_DRV_DATA पूर्ण,
+	अणु .compatible = "samsung,s5pv210-uart",
+		.data = (व्योम *)S5PV210_SERIAL_DRV_DATA पूर्ण,
+	अणु .compatible = "samsung,exynos4210-uart",
+		.data = (व्योम *)EXYNOS4210_SERIAL_DRV_DATA पूर्ण,
+	अणु .compatible = "samsung,exynos5433-uart",
+		.data = (व्योम *)EXYNOS5433_SERIAL_DRV_DATA पूर्ण,
+	अणु .compatible = "apple,s5l-uart",
+		.data = (व्योम *)S5L_SERIAL_DRV_DATA पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, s3c24xx_uart_dt_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver samsung_serial_driver = {
+अटल काष्ठा platक्रमm_driver samsung_serial_driver = अणु
 	.probe		= s3c24xx_serial_probe,
-	.remove		= s3c24xx_serial_remove,
+	.हटाओ		= s3c24xx_serial_हटाओ,
 	.id_table	= s3c24xx_serial_driver_ids,
-	.driver		= {
+	.driver		= अणु
 		.name	= "samsung-uart",
 		.pm	= SERIAL_SAMSUNG_PM_OPS,
 		.of_match_table	= of_match_ptr(s3c24xx_uart_dt_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(samsung_serial_driver);
+module_platक्रमm_driver(samsung_serial_driver);
 
-#ifdef CONFIG_SERIAL_SAMSUNG_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_SAMSUNG_CONSOLE
 /*
  * Early console.
  */
 
-static void wr_reg_barrier(struct uart_port *port, u32 reg, u32 val)
-{
-	switch (port->iotype) {
-	case UPIO_MEM:
-		writeb(val, portaddr(port, reg));
-		break;
-	case UPIO_MEM32:
-		writel(val, portaddr(port, reg));
-		break;
-	}
-}
+अटल व्योम wr_reg_barrier(काष्ठा uart_port *port, u32 reg, u32 val)
+अणु
+	चयन (port->iotype) अणु
+	हाल UPIO_MEM:
+		ग_लिखोb(val, portaddr(port, reg));
+		अवरोध;
+	हाल UPIO_MEM32:
+		ग_लिखोl(val, portaddr(port, reg));
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-struct samsung_early_console_data {
+काष्ठा samsung_early_console_data अणु
 	u32 txfull_mask;
-};
+पूर्ण;
 
-static void samsung_early_busyuart(struct uart_port *port)
-{
-	while (!(readl(port->membase + S3C2410_UTRSTAT) & S3C2410_UTRSTAT_TXFE))
+अटल व्योम samsung_early_busyuart(काष्ठा uart_port *port)
+अणु
+	जबतक (!(पढ़ोl(port->membase + S3C2410_UTRSTAT) & S3C2410_UTRSTAT_TXFE))
 		;
-}
+पूर्ण
 
-static void samsung_early_busyuart_fifo(struct uart_port *port)
-{
-	struct samsung_early_console_data *data = port->private_data;
+अटल व्योम samsung_early_busyuart_fअगरo(काष्ठा uart_port *port)
+अणु
+	काष्ठा samsung_early_console_data *data = port->निजी_data;
 
-	while (readl(port->membase + S3C2410_UFSTAT) & data->txfull_mask)
+	जबतक (पढ़ोl(port->membase + S3C2410_UFSTAT) & data->txfull_mask)
 		;
-}
+पूर्ण
 
-static void samsung_early_putc(struct uart_port *port, int c)
-{
-	if (readl(port->membase + S3C2410_UFCON) & S3C2410_UFCON_FIFOMODE)
-		samsung_early_busyuart_fifo(port);
-	else
+अटल व्योम samsung_early_अ_दो(काष्ठा uart_port *port, पूर्णांक c)
+अणु
+	अगर (पढ़ोl(port->membase + S3C2410_UFCON) & S3C2410_UFCON_FIFOMODE)
+		samsung_early_busyuart_fअगरo(port);
+	अन्यथा
 		samsung_early_busyuart(port);
 
 	wr_reg_barrier(port, S3C2410_UTXH, c);
-}
+पूर्ण
 
-static void samsung_early_write(struct console *con, const char *s,
-				unsigned int n)
-{
-	struct earlycon_device *dev = con->data;
+अटल व्योम samsung_early_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s,
+				अचिन्हित पूर्णांक n)
+अणु
+	काष्ठा earlycon_device *dev = con->data;
 
-	uart_console_write(&dev->port, s, n, samsung_early_putc);
-}
+	uart_console_ग_लिखो(&dev->port, s, n, samsung_early_अ_दो);
+पूर्ण
 
-static int __init samsung_early_console_setup(struct earlycon_device *device,
-					      const char *opt)
-{
-	if (!device->port.membase)
-		return -ENODEV;
+अटल पूर्णांक __init samsung_early_console_setup(काष्ठा earlycon_device *device,
+					      स्थिर अक्षर *opt)
+अणु
+	अगर (!device->port.membase)
+		वापस -ENODEV;
 
-	device->con->write = samsung_early_write;
-	return 0;
-}
+	device->con->ग_लिखो = samsung_early_ग_लिखो;
+	वापस 0;
+पूर्ण
 
 /* S3C2410 */
-static struct samsung_early_console_data s3c2410_early_console_data = {
+अटल काष्ठा samsung_early_console_data s3c2410_early_console_data = अणु
 	.txfull_mask = S3C2410_UFSTAT_TXFULL,
-};
+पूर्ण;
 
-static int __init s3c2410_early_console_setup(struct earlycon_device *device,
-					      const char *opt)
-{
-	device->port.private_data = &s3c2410_early_console_data;
-	return samsung_early_console_setup(device, opt);
-}
+अटल पूर्णांक __init s3c2410_early_console_setup(काष्ठा earlycon_device *device,
+					      स्थिर अक्षर *opt)
+अणु
+	device->port.निजी_data = &s3c2410_early_console_data;
+	वापस samsung_early_console_setup(device, opt);
+पूर्ण
 
 OF_EARLYCON_DECLARE(s3c2410, "samsung,s3c2410-uart",
 			s3c2410_early_console_setup);
 
 /* S3C2412, S3C2440, S3C64xx */
-static struct samsung_early_console_data s3c2440_early_console_data = {
+अटल काष्ठा samsung_early_console_data s3c2440_early_console_data = अणु
 	.txfull_mask = S3C2440_UFSTAT_TXFULL,
-};
+पूर्ण;
 
-static int __init s3c2440_early_console_setup(struct earlycon_device *device,
-					      const char *opt)
-{
-	device->port.private_data = &s3c2440_early_console_data;
-	return samsung_early_console_setup(device, opt);
-}
+अटल पूर्णांक __init s3c2440_early_console_setup(काष्ठा earlycon_device *device,
+					      स्थिर अक्षर *opt)
+अणु
+	device->port.निजी_data = &s3c2440_early_console_data;
+	वापस samsung_early_console_setup(device, opt);
+पूर्ण
 
 OF_EARLYCON_DECLARE(s3c2412, "samsung,s3c2412-uart",
 			s3c2440_early_console_setup);
@@ -2983,16 +2984,16 @@ OF_EARLYCON_DECLARE(s3c6400, "samsung,s3c6400-uart",
 			s3c2440_early_console_setup);
 
 /* S5PV210, Exynos */
-static struct samsung_early_console_data s5pv210_early_console_data = {
+अटल काष्ठा samsung_early_console_data s5pv210_early_console_data = अणु
 	.txfull_mask = S5PV210_UFSTAT_TXFULL,
-};
+पूर्ण;
 
-static int __init s5pv210_early_console_setup(struct earlycon_device *device,
-					      const char *opt)
-{
-	device->port.private_data = &s5pv210_early_console_data;
-	return samsung_early_console_setup(device, opt);
-}
+अटल पूर्णांक __init s5pv210_early_console_setup(काष्ठा earlycon_device *device,
+					      स्थिर अक्षर *opt)
+अणु
+	device->port.निजी_data = &s5pv210_early_console_data;
+	वापस samsung_early_console_setup(device, opt);
+पूर्ण
 
 OF_EARLYCON_DECLARE(s5pv210, "samsung,s5pv210-uart",
 			s5pv210_early_console_setup);
@@ -3000,22 +3001,22 @@ OF_EARLYCON_DECLARE(exynos4210, "samsung,exynos4210-uart",
 			s5pv210_early_console_setup);
 
 /* Apple S5L */
-static int __init apple_s5l_early_console_setup(struct earlycon_device *device,
-						const char *opt)
-{
-	/* Close enough to S3C2410 for earlycon... */
-	device->port.private_data = &s3c2410_early_console_data;
+अटल पूर्णांक __init apple_s5l_early_console_setup(काष्ठा earlycon_device *device,
+						स्थिर अक्षर *opt)
+अणु
+	/* Close enough to S3C2410 क्रम earlycon... */
+	device->port.निजी_data = &s3c2410_early_console_data;
 
-#ifdef CONFIG_ARM64
+#अगर_घोषित CONFIG_ARM64
 	/* ... but we need to override the existing fixmap entry as nGnRnE */
 	__set_fixmap(FIX_EARLYCON_MEM_BASE, device->port.mapbase,
 		     __pgprot(PROT_DEVICE_nGnRnE));
-#endif
-	return samsung_early_console_setup(device, opt);
-}
+#पूर्ण_अगर
+	वापस samsung_early_console_setup(device, opt);
+पूर्ण
 
 OF_EARLYCON_DECLARE(s5l, "apple,s5l-uart", apple_s5l_early_console_setup);
-#endif
+#पूर्ण_अगर
 
 MODULE_ALIAS("platform:samsung-uart");
 MODULE_DESCRIPTION("Samsung SoC Serial port driver");

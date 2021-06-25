@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * MTD partitioning layer definitions
  *
@@ -6,110 +7,110 @@
  * This code is GPL
  */
 
-#ifndef MTD_PARTITIONS_H
-#define MTD_PARTITIONS_H
+#अगर_अघोषित MTD_PARTITIONS_H
+#घोषणा MTD_PARTITIONS_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 
 /*
- * Partition definition structure:
+ * Partition definition काष्ठाure:
  *
- * An array of struct partition is passed along with a MTD object to
- * mtd_device_register() to create them.
+ * An array of काष्ठा partition is passed aदीर्घ with a MTD object to
+ * mtd_device_रेजिस्टर() to create them.
  *
  * For each partition, these fields are available:
  * name: string that will be used to label the partition's MTD device.
- * types: some partitions can be containers using specific format to describe
+ * types: some partitions can be containers using specअगरic क्रमmat to describe
  *	embedded subpartitions / volumes. E.g. many home routers use "firmware"
- *	partition that contains at least kernel and rootfs. In such case an
+ *	partition that contains at least kernel and rootfs. In such हाल an
  *	extra parser is needed that will detect these dynamic partitions and
- *	report them to the MTD subsystem. If set this property stores an array
- *	of parser names to use when looking for subpartitions.
- * size: the partition size; if defined as MTDPART_SIZ_FULL, the partition
+ *	report them to the MTD subप्रणाली. If set this property stores an array
+ *	of parser names to use when looking क्रम subpartitions.
+ * size: the partition size; अगर defined as MTDPART_SIZ_FULL, the partition
  * 	will extend to the end of the master MTD device.
- * offset: absolute starting position within the master MTD device; if
+ * offset: असलolute starting position within the master MTD device; अगर
  * 	defined as MTDPART_OFS_APPEND, the partition will start where the
- *	previous one ended; if MTDPART_OFS_NXTBLK, at the next erase block;
- *	if MTDPART_OFS_RETAIN, consume as much as possible, leaving size
+ *	previous one ended; अगर MTDPART_OFS_NXTBLK, at the next erase block;
+ *	अगर MTDPART_OFS_RETAIN, consume as much as possible, leaving size
  *	after the end of partition.
- * mask_flags: contains flags that have to be masked (removed) from the
- * 	master MTD flag set for the corresponding MTD partition.
- * 	For example, to force a read-only partition, simply adding
- * 	MTD_WRITEABLE to the mask_flags will do the trick.
+ * mask_flags: contains flags that have to be masked (हटाओd) from the
+ * 	master MTD flag set क्रम the corresponding MTD partition.
+ * 	For example, to क्रमce a पढ़ो-only partition, simply adding
+ * 	MTD_WRITEABLE to the mask_flags will करो the trick.
  * add_flags: contains flags to add to the parent flags
  *
- * Note: writeable partitions require their size and offset be
+ * Note: ग_लिखोable partitions require their size and offset be
  * erasesize aligned (e.g. use MTDPART_OFS_NEXTBLK).
  */
 
-struct mtd_partition {
-	const char *name;		/* identifier string */
-	const char *const *types;	/* names of parsers to use if any */
-	uint64_t size;			/* partition size */
-	uint64_t offset;		/* offset within the master MTD space */
-	uint32_t mask_flags;		/* master MTD flags to mask out for this partition */
-	uint32_t add_flags;		/* flags to add to the partition */
-	struct device_node *of_node;
-};
+काष्ठा mtd_partition अणु
+	स्थिर अक्षर *name;		/* identअगरier string */
+	स्थिर अक्षर *स्थिर *types;	/* names of parsers to use अगर any */
+	uपूर्णांक64_t size;			/* partition size */
+	uपूर्णांक64_t offset;		/* offset within the master MTD space */
+	uपूर्णांक32_t mask_flags;		/* master MTD flags to mask out क्रम this partition */
+	uपूर्णांक32_t add_flags;		/* flags to add to the partition */
+	काष्ठा device_node *of_node;
+पूर्ण;
 
-#define MTDPART_OFS_RETAIN	(-3)
-#define MTDPART_OFS_NXTBLK	(-2)
-#define MTDPART_OFS_APPEND	(-1)
-#define MTDPART_SIZ_FULL	(0)
+#घोषणा MTDPART_OFS_RETAIN	(-3)
+#घोषणा MTDPART_OFS_NXTBLK	(-2)
+#घोषणा MTDPART_OFS_APPEND	(-1)
+#घोषणा MTDPART_SIZ_FULL	(0)
 
 
-struct mtd_info;
-struct device_node;
+काष्ठा mtd_info;
+काष्ठा device_node;
 
 /**
- * struct mtd_part_parser_data - used to pass data to MTD partition parsers.
- * @origin: for RedBoot, start address of MTD device
+ * काष्ठा mtd_part_parser_data - used to pass data to MTD partition parsers.
+ * @origin: क्रम RedBoot, start address of MTD device
  */
-struct mtd_part_parser_data {
-	unsigned long origin;
-};
+काष्ठा mtd_part_parser_data अणु
+	अचिन्हित दीर्घ origin;
+पूर्ण;
 
 
 /*
  * Functions dealing with the various ways of partitioning the space
  */
 
-struct mtd_part_parser {
-	struct list_head list;
-	struct module *owner;
-	const char *name;
-	const struct of_device_id *of_match_table;
-	int (*parse_fn)(struct mtd_info *, const struct mtd_partition **,
-			struct mtd_part_parser_data *);
-	void (*cleanup)(const struct mtd_partition *pparts, int nr_parts);
-};
+काष्ठा mtd_part_parser अणु
+	काष्ठा list_head list;
+	काष्ठा module *owner;
+	स्थिर अक्षर *name;
+	स्थिर काष्ठा of_device_id *of_match_table;
+	पूर्णांक (*parse_fn)(काष्ठा mtd_info *, स्थिर काष्ठा mtd_partition **,
+			काष्ठा mtd_part_parser_data *);
+	व्योम (*cleanup)(स्थिर काष्ठा mtd_partition *pparts, पूर्णांक nr_parts);
+पूर्ण;
 
-/* Container for passing around a set of parsed partitions */
-struct mtd_partitions {
-	const struct mtd_partition *parts;
-	int nr_parts;
-	const struct mtd_part_parser *parser;
-};
+/* Container क्रम passing around a set of parsed partitions */
+काष्ठा mtd_partitions अणु
+	स्थिर काष्ठा mtd_partition *parts;
+	पूर्णांक nr_parts;
+	स्थिर काष्ठा mtd_part_parser *parser;
+पूर्ण;
 
-extern int __register_mtd_parser(struct mtd_part_parser *parser,
-				 struct module *owner);
-#define register_mtd_parser(parser) __register_mtd_parser(parser, THIS_MODULE)
+बाह्य पूर्णांक __रेजिस्टर_mtd_parser(काष्ठा mtd_part_parser *parser,
+				 काष्ठा module *owner);
+#घोषणा रेजिस्टर_mtd_parser(parser) __रेजिस्टर_mtd_parser(parser, THIS_MODULE)
 
-extern void deregister_mtd_parser(struct mtd_part_parser *parser);
+बाह्य व्योम deरेजिस्टर_mtd_parser(काष्ठा mtd_part_parser *parser);
 
 /*
- * module_mtd_part_parser() - Helper macro for MTD partition parsers that don't
- * do anything special in module init/exit. Each driver may only use this macro
- * once, and calling it replaces module_init() and module_exit().
+ * module_mtd_part_parser() - Helper macro क्रम MTD partition parsers that करोn't
+ * करो anything special in module init/निकास. Each driver may only use this macro
+ * once, and calling it replaces module_init() and module_निकास().
  */
-#define module_mtd_part_parser(__mtd_part_parser) \
-	module_driver(__mtd_part_parser, register_mtd_parser, \
-		      deregister_mtd_parser)
+#घोषणा module_mtd_part_parser(__mtd_part_parser) \
+	module_driver(__mtd_part_parser, रेजिस्टर_mtd_parser, \
+		      deरेजिस्टर_mtd_parser)
 
-int mtd_add_partition(struct mtd_info *master, const char *name,
-		      long long offset, long long length);
-int mtd_del_partition(struct mtd_info *master, int partno);
-uint64_t mtd_get_device_size(const struct mtd_info *mtd);
+पूर्णांक mtd_add_partition(काष्ठा mtd_info *master, स्थिर अक्षर *name,
+		      दीर्घ दीर्घ offset, दीर्घ दीर्घ length);
+पूर्णांक mtd_del_partition(काष्ठा mtd_info *master, पूर्णांक partno);
+uपूर्णांक64_t mtd_get_device_size(स्थिर काष्ठा mtd_info *mtd);
 
-#endif
+#पूर्ण_अगर

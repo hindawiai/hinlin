@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Intel PMC Core platform init
+ * Intel PMC Core platक्रमm init
  * Copyright (c) 2019, Google Inc.
  * Author - Rajat Jain
  *
- * This code instantiates platform devices for intel_pmc_core driver, only
- * on supported platforms that may not have the ACPI devices in the ACPI tables.
- * No new platforms should be added here, because we expect that new platforms
- * should all have the ACPI device, which is the preferred way of enumeration.
+ * This code instantiates platक्रमm devices क्रम पूर्णांकel_pmc_core driver, only
+ * on supported platक्रमms that may not have the ACPI devices in the ACPI tables.
+ * No new platक्रमms should be added here, because we expect that new platक्रमms
+ * should all have the ACPI device, which is the preferred way of क्रमागतeration.
  */
 
-#include <linux/acpi.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <asm/cpu_device_id.h>
-#include <asm/intel-family.h>
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश <यंत्र/पूर्णांकel-family.h>
 
-static void intel_pmc_core_release(struct device *dev)
-{
-	kfree(dev);
-}
+अटल व्योम पूर्णांकel_pmc_core_release(काष्ठा device *dev)
+अणु
+	kमुक्त(dev);
+पूर्ण
 
-static struct platform_device *pmc_core_device;
+अटल काष्ठा platक्रमm_device *pmc_core_device;
 
 /*
- * intel_pmc_core_platform_ids is the list of platforms where we want to
- * instantiate the platform_device if not already instantiated. This is
- * different than intel_pmc_core_ids in intel_pmc_core.c which is the
- * list of platforms that the driver supports for pmc_core device. The
+ * पूर्णांकel_pmc_core_platक्रमm_ids is the list of platक्रमms where we want to
+ * instantiate the platक्रमm_device अगर not alपढ़ोy instantiated. This is
+ * dअगरferent than पूर्णांकel_pmc_core_ids in पूर्णांकel_pmc_core.c which is the
+ * list of platक्रमms that the driver supports क्रम pmc_core device. The
  * other list may grow, but this list should not.
  */
-static const struct x86_cpu_id intel_pmc_core_platform_ids[] = {
+अटल स्थिर काष्ठा x86_cpu_id पूर्णांकel_pmc_core_platक्रमm_ids[] = अणु
 	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE_L,		&pmc_core_device),
 	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE,		&pmc_core_device),
 	X86_MATCH_INTEL_FAM6_MODEL(KABYLAKE_L,		&pmc_core_device),
@@ -41,40 +42,40 @@ static const struct x86_cpu_id intel_pmc_core_platform_ids[] = {
 	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE_L,		&pmc_core_device),
 	X86_MATCH_INTEL_FAM6_MODEL(COMETLAKE,		&pmc_core_device),
 	X86_MATCH_INTEL_FAM6_MODEL(COMETLAKE_L,		&pmc_core_device),
-	{}
-};
-MODULE_DEVICE_TABLE(x86cpu, intel_pmc_core_platform_ids);
+	अणुपूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(x86cpu, पूर्णांकel_pmc_core_platक्रमm_ids);
 
-static int __init pmc_core_platform_init(void)
-{
-	int retval;
+अटल पूर्णांक __init pmc_core_platक्रमm_init(व्योम)
+अणु
+	पूर्णांक retval;
 
-	/* Skip creating the platform device if ACPI already has a device */
-	if (acpi_dev_present("INT33A1", NULL, -1))
-		return -ENODEV;
+	/* Skip creating the platक्रमm device अगर ACPI alपढ़ोy has a device */
+	अगर (acpi_dev_present("INT33A1", शून्य, -1))
+		वापस -ENODEV;
 
-	if (!x86_match_cpu(intel_pmc_core_platform_ids))
-		return -ENODEV;
+	अगर (!x86_match_cpu(पूर्णांकel_pmc_core_platक्रमm_ids))
+		वापस -ENODEV;
 
-	pmc_core_device = kzalloc(sizeof(*pmc_core_device), GFP_KERNEL);
-	if (!pmc_core_device)
-		return -ENOMEM;
+	pmc_core_device = kzalloc(माप(*pmc_core_device), GFP_KERNEL);
+	अगर (!pmc_core_device)
+		वापस -ENOMEM;
 
 	pmc_core_device->name = "intel_pmc_core";
-	pmc_core_device->dev.release = intel_pmc_core_release;
+	pmc_core_device->dev.release = पूर्णांकel_pmc_core_release;
 
-	retval = platform_device_register(pmc_core_device);
-	if (retval)
-		kfree(pmc_core_device);
+	retval = platक्रमm_device_रेजिस्टर(pmc_core_device);
+	अगर (retval)
+		kमुक्त(pmc_core_device);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void __exit pmc_core_platform_exit(void)
-{
-	platform_device_unregister(pmc_core_device);
-}
+अटल व्योम __निकास pmc_core_platक्रमm_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(pmc_core_device);
+पूर्ण
 
-module_init(pmc_core_platform_init);
-module_exit(pmc_core_platform_exit);
+module_init(pmc_core_platक्रमm_init);
+module_निकास(pmc_core_platक्रमm_निकास);
 MODULE_LICENSE("GPL v2");

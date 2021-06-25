@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* drivers/leds/leds-s3c24xx.c
  *
  * (c) 2006 Simtec Electronics
@@ -8,74 +9,74 @@
  * S3C24XX - LEDs GPIO driver
 */
 
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/leds.h>
-#include <linux/gpio/consumer.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/platform_data/leds-s3c24xx.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/leds-s3c24xx.h>
 
 /* our context */
 
-struct s3c24xx_gpio_led {
-	struct led_classdev		 cdev;
-	struct s3c24xx_led_platdata	*pdata;
-	struct gpio_desc		*gpiod;
-};
+काष्ठा s3c24xx_gpio_led अणु
+	काष्ठा led_classdev		 cdev;
+	काष्ठा s3c24xx_led_platdata	*pdata;
+	काष्ठा gpio_desc		*gpiod;
+पूर्ण;
 
-static inline struct s3c24xx_gpio_led *to_gpio(struct led_classdev *led_cdev)
-{
-	return container_of(led_cdev, struct s3c24xx_gpio_led, cdev);
-}
+अटल अंतरभूत काष्ठा s3c24xx_gpio_led *to_gpio(काष्ठा led_classdev *led_cdev)
+अणु
+	वापस container_of(led_cdev, काष्ठा s3c24xx_gpio_led, cdev);
+पूर्ण
 
-static void s3c24xx_led_set(struct led_classdev *led_cdev,
-			    enum led_brightness value)
-{
-	struct s3c24xx_gpio_led *led = to_gpio(led_cdev);
+अटल व्योम s3c24xx_led_set(काष्ठा led_classdev *led_cdev,
+			    क्रमागत led_brightness value)
+अणु
+	काष्ठा s3c24xx_gpio_led *led = to_gpio(led_cdev);
 
 	gpiod_set_value(led->gpiod, !!value);
-}
+पूर्ण
 
-static int s3c24xx_led_probe(struct platform_device *dev)
-{
-	struct s3c24xx_led_platdata *pdata = dev_get_platdata(&dev->dev);
-	struct s3c24xx_gpio_led *led;
-	int ret;
+अटल पूर्णांक s3c24xx_led_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा s3c24xx_led_platdata *pdata = dev_get_platdata(&dev->dev);
+	काष्ठा s3c24xx_gpio_led *led;
+	पूर्णांक ret;
 
-	led = devm_kzalloc(&dev->dev, sizeof(struct s3c24xx_gpio_led),
+	led = devm_kzalloc(&dev->dev, माप(काष्ठा s3c24xx_gpio_led),
 			   GFP_KERNEL);
-	if (!led)
-		return -ENOMEM;
+	अगर (!led)
+		वापस -ENOMEM;
 
 	led->cdev.brightness_set = s3c24xx_led_set;
-	led->cdev.default_trigger = pdata->def_trigger;
+	led->cdev.शेष_trigger = pdata->def_trigger;
 	led->cdev.name = pdata->name;
 	led->cdev.flags |= LED_CORE_SUSPENDRESUME;
 
 	led->pdata = pdata;
 
 	/* Default to off */
-	led->gpiod = devm_gpiod_get(&dev->dev, NULL, GPIOD_OUT_LOW);
-	if (IS_ERR(led->gpiod))
-		return PTR_ERR(led->gpiod);
+	led->gpiod = devm_gpiod_get(&dev->dev, शून्य, GPIOD_OUT_LOW);
+	अगर (IS_ERR(led->gpiod))
+		वापस PTR_ERR(led->gpiod);
 
-	/* register our new led device */
-	ret = devm_led_classdev_register(&dev->dev, &led->cdev);
-	if (ret < 0)
+	/* रेजिस्टर our new led device */
+	ret = devm_led_classdev_रेजिस्टर(&dev->dev, &led->cdev);
+	अगर (ret < 0)
 		dev_err(&dev->dev, "led_classdev_register failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver s3c24xx_led_driver = {
+अटल काष्ठा platक्रमm_driver s3c24xx_led_driver = अणु
 	.probe		= s3c24xx_led_probe,
-	.driver		= {
+	.driver		= अणु
 		.name		= "s3c24xx_led",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(s3c24xx_led_driver);
+module_platक्रमm_driver(s3c24xx_led_driver);
 
 MODULE_AUTHOR("Ben Dooks <ben@simtec.co.uk>");
 MODULE_DESCRIPTION("S3C24XX LED driver");

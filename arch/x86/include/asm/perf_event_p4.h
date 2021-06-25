@@ -1,76 +1,77 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Netburst Performance Events (P4, old Xeon)
+ * Netburst Perक्रमmance Events (P4, old Xeon)
  */
 
-#ifndef PERF_EVENT_P4_H
-#define PERF_EVENT_P4_H
+#अगर_अघोषित PERF_EVENT_P4_H
+#घोषणा PERF_EVENT_P4_H
 
-#include <linux/cpu.h>
-#include <linux/bitops.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/bitops.h>
 
 /*
- * NetBurst has performance MSRs shared between
- * threads if HT is turned on, ie for both logical
+ * NetBurst has perक्रमmance MSRs shared between
+ * thपढ़ोs अगर HT is turned on, ie क्रम both logical
  * processors (mem: in turn in Atom with HT support
- * perf-MSRs are not shared and every thread has its
+ * perf-MSRs are not shared and every thपढ़ो has its
  * own perf-MSRs set)
  */
-#define ARCH_P4_TOTAL_ESCR	(46)
-#define ARCH_P4_RESERVED_ESCR	(2) /* IQ_ESCR(0,1) not always present */
-#define ARCH_P4_MAX_ESCR	(ARCH_P4_TOTAL_ESCR - ARCH_P4_RESERVED_ESCR)
-#define ARCH_P4_MAX_CCCR	(18)
+#घोषणा ARCH_P4_TOTAL_ESCR	(46)
+#घोषणा ARCH_P4_RESERVED_ESCR	(2) /* IQ_ESCR(0,1) not always present */
+#घोषणा ARCH_P4_MAX_ESCR	(ARCH_P4_TOTAL_ESCR - ARCH_P4_RESERVED_ESCR)
+#घोषणा ARCH_P4_MAX_CCCR	(18)
 
-#define ARCH_P4_CNTRVAL_BITS	(40)
-#define ARCH_P4_CNTRVAL_MASK	((1ULL << ARCH_P4_CNTRVAL_BITS) - 1)
-#define ARCH_P4_UNFLAGGED_BIT	((1ULL) << (ARCH_P4_CNTRVAL_BITS - 1))
+#घोषणा ARCH_P4_CNTRVAL_BITS	(40)
+#घोषणा ARCH_P4_CNTRVAL_MASK	((1ULL << ARCH_P4_CNTRVAL_BITS) - 1)
+#घोषणा ARCH_P4_UNFLAGGED_BIT	((1ULL) << (ARCH_P4_CNTRVAL_BITS - 1))
 
-#define P4_ESCR_EVENT_MASK	0x7e000000ULL
-#define P4_ESCR_EVENT_SHIFT	25
-#define P4_ESCR_EVENTMASK_MASK	0x01fffe00ULL
-#define P4_ESCR_EVENTMASK_SHIFT	9
-#define P4_ESCR_TAG_MASK	0x000001e0ULL
-#define P4_ESCR_TAG_SHIFT	5
-#define P4_ESCR_TAG_ENABLE	0x00000010ULL
-#define P4_ESCR_T0_OS		0x00000008ULL
-#define P4_ESCR_T0_USR		0x00000004ULL
-#define P4_ESCR_T1_OS		0x00000002ULL
-#define P4_ESCR_T1_USR		0x00000001ULL
+#घोषणा P4_ESCR_EVENT_MASK	0x7e000000ULL
+#घोषणा P4_ESCR_EVENT_SHIFT	25
+#घोषणा P4_ESCR_EVENTMASK_MASK	0x01fffe00ULL
+#घोषणा P4_ESCR_EVENTMASK_SHIFT	9
+#घोषणा P4_ESCR_TAG_MASK	0x000001e0ULL
+#घोषणा P4_ESCR_TAG_SHIFT	5
+#घोषणा P4_ESCR_TAG_ENABLE	0x00000010ULL
+#घोषणा P4_ESCR_T0_OS		0x00000008ULL
+#घोषणा P4_ESCR_T0_USR		0x00000004ULL
+#घोषणा P4_ESCR_T1_OS		0x00000002ULL
+#घोषणा P4_ESCR_T1_USR		0x00000001ULL
 
-#define P4_ESCR_EVENT(v)	((v) << P4_ESCR_EVENT_SHIFT)
-#define P4_ESCR_EMASK(v)	((v) << P4_ESCR_EVENTMASK_SHIFT)
-#define P4_ESCR_TAG(v)		((v) << P4_ESCR_TAG_SHIFT)
+#घोषणा P4_ESCR_EVENT(v)	((v) << P4_ESCR_EVENT_SHIFT)
+#घोषणा P4_ESCR_EMASK(v)	((v) << P4_ESCR_EVENTMASK_SHIFT)
+#घोषणा P4_ESCR_TAG(v)		((v) << P4_ESCR_TAG_SHIFT)
 
-#define P4_CCCR_OVF			0x80000000ULL
-#define P4_CCCR_CASCADE			0x40000000ULL
-#define P4_CCCR_OVF_PMI_T0		0x04000000ULL
-#define P4_CCCR_OVF_PMI_T1		0x08000000ULL
-#define P4_CCCR_FORCE_OVF		0x02000000ULL
-#define P4_CCCR_EDGE			0x01000000ULL
-#define P4_CCCR_THRESHOLD_MASK		0x00f00000ULL
-#define P4_CCCR_THRESHOLD_SHIFT		20
-#define P4_CCCR_COMPLEMENT		0x00080000ULL
-#define P4_CCCR_COMPARE			0x00040000ULL
-#define P4_CCCR_ESCR_SELECT_MASK	0x0000e000ULL
-#define P4_CCCR_ESCR_SELECT_SHIFT	13
-#define P4_CCCR_ENABLE			0x00001000ULL
-#define P4_CCCR_THREAD_SINGLE		0x00010000ULL
-#define P4_CCCR_THREAD_BOTH		0x00020000ULL
-#define P4_CCCR_THREAD_ANY		0x00030000ULL
-#define P4_CCCR_RESERVED		0x00000fffULL
+#घोषणा P4_CCCR_OVF			0x80000000ULL
+#घोषणा P4_CCCR_CASCADE			0x40000000ULL
+#घोषणा P4_CCCR_OVF_PMI_T0		0x04000000ULL
+#घोषणा P4_CCCR_OVF_PMI_T1		0x08000000ULL
+#घोषणा P4_CCCR_FORCE_OVF		0x02000000ULL
+#घोषणा P4_CCCR_EDGE			0x01000000ULL
+#घोषणा P4_CCCR_THRESHOLD_MASK		0x00f00000ULL
+#घोषणा P4_CCCR_THRESHOLD_SHIFT		20
+#घोषणा P4_CCCR_COMPLEMENT		0x00080000ULL
+#घोषणा P4_CCCR_COMPARE			0x00040000ULL
+#घोषणा P4_CCCR_ESCR_SELECT_MASK	0x0000e000ULL
+#घोषणा P4_CCCR_ESCR_SELECT_SHIFT	13
+#घोषणा P4_CCCR_ENABLE			0x00001000ULL
+#घोषणा P4_CCCR_THREAD_SINGLE		0x00010000ULL
+#घोषणा P4_CCCR_THREAD_BOTH		0x00020000ULL
+#घोषणा P4_CCCR_THREAD_ANY		0x00030000ULL
+#घोषणा P4_CCCR_RESERVED		0x00000fffULL
 
-#define P4_CCCR_THRESHOLD(v)		((v) << P4_CCCR_THRESHOLD_SHIFT)
-#define P4_CCCR_ESEL(v)			((v) << P4_CCCR_ESCR_SELECT_SHIFT)
+#घोषणा P4_CCCR_THRESHOLD(v)		((v) << P4_CCCR_THRESHOLD_SHIFT)
+#घोषणा P4_CCCR_ESEL(v)			((v) << P4_CCCR_ESCR_SELECT_SHIFT)
 
-#define P4_GEN_ESCR_EMASK(class, name, bit)	\
+#घोषणा P4_GEN_ESCR_EMASK(class, name, bit)	\
 	class##__##name = ((1ULL << bit) << P4_ESCR_EVENTMASK_SHIFT)
-#define P4_ESCR_EMASK_BIT(class, name)		class##__##name
+#घोषणा P4_ESCR_EMASK_BIT(class, name)		class##__##name
 
 /*
  * config field is 64bit width and consists of
  * HT << 63 | ESCR << 32 | CCCR
- * where HT is HyperThreading bit (since ESCR
- * has it reserved we may use it for own purpose)
+ * where HT is HyperThपढ़ोing bit (since ESCR
+ * has it reserved we may use it क्रम own purpose)
  *
  * note that this is NOT the addresses of respective
  * ESCR and CCCR but rather an only packed value should
@@ -78,48 +79,48 @@
  *
  * the base idea is to pack as much info as possible
  */
-#define p4_config_pack_escr(v)		(((u64)(v)) << 32)
-#define p4_config_pack_cccr(v)		(((u64)(v)) & 0xffffffffULL)
-#define p4_config_unpack_escr(v)	(((u64)(v)) >> 32)
-#define p4_config_unpack_cccr(v)	(((u64)(v)) & 0xffffffffULL)
+#घोषणा p4_config_pack_escr(v)		(((u64)(v)) << 32)
+#घोषणा p4_config_pack_cccr(v)		(((u64)(v)) & 0xffffffffULL)
+#घोषणा p4_config_unpack_escr(v)	(((u64)(v)) >> 32)
+#घोषणा p4_config_unpack_cccr(v)	(((u64)(v)) & 0xffffffffULL)
 
-#define p4_config_unpack_emask(v)			\
-	({						\
+#घोषणा p4_config_unpack_emask(v)			\
+	(अणु						\
 		u32 t = p4_config_unpack_escr((v));	\
 		t = t &  P4_ESCR_EVENTMASK_MASK;	\
 		t = t >> P4_ESCR_EVENTMASK_SHIFT;	\
 		t;					\
-	})
+	पूर्ण)
 
-#define p4_config_unpack_event(v)			\
-	({						\
+#घोषणा p4_config_unpack_event(v)			\
+	(अणु						\
 		u32 t = p4_config_unpack_escr((v));	\
 		t = t &  P4_ESCR_EVENT_MASK;		\
 		t = t >> P4_ESCR_EVENT_SHIFT;		\
 		t;					\
-	})
+	पूर्ण)
 
-#define P4_CONFIG_HT_SHIFT		63
-#define P4_CONFIG_HT			(1ULL << P4_CONFIG_HT_SHIFT)
+#घोषणा P4_CONFIG_HT_SHIFT		63
+#घोषणा P4_CONFIG_HT			(1ULL << P4_CONFIG_HT_SHIFT)
 
 /*
  * If an event has alias it should be marked
- * with a special bit. (Don't forget to check
+ * with a special bit. (Don't क्रमget to check
  * P4_PEBS_CONFIG_MASK and related bits on
- * modification.)
+ * modअगरication.)
  */
-#define P4_CONFIG_ALIASABLE		(1ULL << 9)
+#घोषणा P4_CONFIG_ALIASABLE		(1ULL << 9)
 
 /*
- * The bits we allow to pass for RAW events
+ * The bits we allow to pass क्रम RAW events
  */
-#define P4_CONFIG_MASK_ESCR		\
+#घोषणा P4_CONFIG_MASK_ESCR		\
 	P4_ESCR_EVENT_MASK	|	\
 	P4_ESCR_EVENTMASK_MASK	|	\
 	P4_ESCR_TAG_MASK	|	\
 	P4_ESCR_TAG_ENABLE
 
-#define P4_CONFIG_MASK_CCCR		\
+#घोषणा P4_CONFIG_MASK_CCCR		\
 	P4_CCCR_EDGE		|	\
 	P4_CCCR_THRESHOLD_MASK	|	\
 	P4_CCCR_COMPLEMENT	|	\
@@ -127,23 +128,23 @@
 	P4_CCCR_THREAD_ANY	|	\
 	P4_CCCR_RESERVED
 
-/* some dangerous bits are reserved for kernel internals */
-#define P4_CONFIG_MASK				  	  \
+/* some dangerous bits are reserved क्रम kernel पूर्णांकernals */
+#घोषणा P4_CONFIG_MASK				  	  \
 	(p4_config_pack_escr(P4_CONFIG_MASK_ESCR))	| \
 	(p4_config_pack_cccr(P4_CONFIG_MASK_CCCR))
 
 /*
- * In case of event aliasing we need to preserve some
+ * In हाल of event aliasing we need to preserve some
  * caller bits, otherwise the mapping won't be complete.
  */
-#define P4_CONFIG_EVENT_ALIAS_MASK			  \
+#घोषणा P4_CONFIG_EVENT_ALIAS_MASK			  \
 	(p4_config_pack_escr(P4_CONFIG_MASK_ESCR)	| \
 	 p4_config_pack_cccr(P4_CCCR_EDGE		| \
 			     P4_CCCR_THRESHOLD_MASK	| \
 			     P4_CCCR_COMPLEMENT		| \
 			     P4_CCCR_COMPARE))
 
-#define  P4_CONFIG_EVENT_ALIAS_IMMUTABLE_BITS		  \
+#घोषणा  P4_CONFIG_EVENT_ALIAS_IMMUTABLE_BITS		  \
 	((P4_CONFIG_HT)					| \
 	 p4_config_pack_escr(P4_ESCR_T0_OS		| \
 			     P4_ESCR_T0_USR		| \
@@ -157,51 +158,51 @@
 			     P4_CCCR_OVF_PMI_T1		| \
 			     P4_CONFIG_ALIASABLE))
 
-static inline bool p4_is_event_cascaded(u64 config)
-{
+अटल अंतरभूत bool p4_is_event_cascaded(u64 config)
+अणु
 	u32 cccr = p4_config_unpack_cccr(config);
-	return !!(cccr & P4_CCCR_CASCADE);
-}
+	वापस !!(cccr & P4_CCCR_CASCADE);
+पूर्ण
 
-static inline int p4_ht_config_thread(u64 config)
-{
-	return !!(config & P4_CONFIG_HT);
-}
+अटल अंतरभूत पूर्णांक p4_ht_config_thपढ़ो(u64 config)
+अणु
+	वापस !!(config & P4_CONFIG_HT);
+पूर्ण
 
-static inline u64 p4_set_ht_bit(u64 config)
-{
-	return config | P4_CONFIG_HT;
-}
+अटल अंतरभूत u64 p4_set_ht_bit(u64 config)
+अणु
+	वापस config | P4_CONFIG_HT;
+पूर्ण
 
-static inline u64 p4_clear_ht_bit(u64 config)
-{
-	return config & ~P4_CONFIG_HT;
-}
+अटल अंतरभूत u64 p4_clear_ht_bit(u64 config)
+अणु
+	वापस config & ~P4_CONFIG_HT;
+पूर्ण
 
-static inline int p4_ht_active(void)
-{
-#ifdef CONFIG_SMP
-	return smp_num_siblings > 1;
-#endif
-	return 0;
-}
+अटल अंतरभूत पूर्णांक p4_ht_active(व्योम)
+अणु
+#अगर_घोषित CONFIG_SMP
+	वापस smp_num_siblings > 1;
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static inline int p4_ht_thread(int cpu)
-{
-#ifdef CONFIG_SMP
-	if (smp_num_siblings == 2)
-		return cpu != cpumask_first(this_cpu_cpumask_var_ptr(cpu_sibling_map));
-#endif
-	return 0;
-}
+अटल अंतरभूत पूर्णांक p4_ht_thपढ़ो(पूर्णांक cpu)
+अणु
+#अगर_घोषित CONFIG_SMP
+	अगर (smp_num_siblings == 2)
+		वापस cpu != cpumask_first(this_cpu_cpumask_var_ptr(cpu_sibling_map));
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static inline int p4_should_swap_ts(u64 config, int cpu)
-{
-	return p4_ht_config_thread(config) ^ p4_ht_thread(cpu);
-}
+अटल अंतरभूत पूर्णांक p4_should_swap_ts(u64 config, पूर्णांक cpu)
+अणु
+	वापस p4_ht_config_thपढ़ो(config) ^ p4_ht_thपढ़ो(cpu);
+पूर्ण
 
-static inline u32 p4_default_cccr_conf(int cpu)
-{
+अटल अंतरभूत u32 p4_शेष_cccr_conf(पूर्णांक cpu)
+अणु
 	/*
 	 * Note that P4_CCCR_THREAD_ANY is "required" on
 	 * non-HT machines (on HT machines we count TS events
@@ -209,40 +210,40 @@ static inline u32 p4_default_cccr_conf(int cpu)
 	 */
 	u32 cccr = P4_CCCR_THREAD_ANY;
 
-	if (!p4_ht_thread(cpu))
+	अगर (!p4_ht_thपढ़ो(cpu))
 		cccr |= P4_CCCR_OVF_PMI_T0;
-	else
+	अन्यथा
 		cccr |= P4_CCCR_OVF_PMI_T1;
 
-	return cccr;
-}
+	वापस cccr;
+पूर्ण
 
-static inline u32 p4_default_escr_conf(int cpu, int exclude_os, int exclude_usr)
-{
+अटल अंतरभूत u32 p4_शेष_escr_conf(पूर्णांक cpu, पूर्णांक exclude_os, पूर्णांक exclude_usr)
+अणु
 	u32 escr = 0;
 
-	if (!p4_ht_thread(cpu)) {
-		if (!exclude_os)
+	अगर (!p4_ht_thपढ़ो(cpu)) अणु
+		अगर (!exclude_os)
 			escr |= P4_ESCR_T0_OS;
-		if (!exclude_usr)
+		अगर (!exclude_usr)
 			escr |= P4_ESCR_T0_USR;
-	} else {
-		if (!exclude_os)
+	पूर्ण अन्यथा अणु
+		अगर (!exclude_os)
 			escr |= P4_ESCR_T1_OS;
-		if (!exclude_usr)
+		अगर (!exclude_usr)
 			escr |= P4_ESCR_T1_USR;
-	}
+	पूर्ण
 
-	return escr;
-}
+	वापस escr;
+पूर्ण
 
 /*
  * This are the events which should be used in "Event Select"
- * field of ESCR register, they are like unique keys which allow
+ * field of ESCR रेजिस्टर, they are like unique keys which allow
  * the kernel to determinate which CCCR and COUNTER should be
  * used to track an event
  */
-enum P4_EVENTS {
+क्रमागत P4_EVENTS अणु
 	P4_EVENT_TC_DELIVER_MODE,
 	P4_EVENT_BPU_FETCH_REQUEST,
 	P4_EVENT_ITLB_REFERENCE,
@@ -289,27 +290,27 @@ enum P4_EVENTS {
 	P4_EVENT_X87_ASSIST,
 	P4_EVENT_MACHINE_CLEAR,
 	P4_EVENT_INSTR_COMPLETED,
-};
+पूर्ण;
 
-#define P4_OPCODE(event)		event##_OPCODE
-#define P4_OPCODE_ESEL(opcode)		((opcode & 0x00ff) >> 0)
-#define P4_OPCODE_EVNT(opcode)		((opcode & 0xff00) >> 8)
-#define P4_OPCODE_PACK(event, sel)	(((event) << 8) | sel)
+#घोषणा P4_OPCODE(event)		event##_OPCODE
+#घोषणा P4_OPCODE_ESEL(opcode)		((opcode & 0x00ff) >> 0)
+#घोषणा P4_OPCODE_EVNT(opcode)		((opcode & 0xff00) >> 8)
+#घोषणा P4_OPCODE_PACK(event, sel)	(((event) << 8) | sel)
 
 /*
  * Comments below the event represent ESCR restriction
- * for this event and counter index per ESCR
+ * क्रम this event and counter index per ESCR
  *
  * MSR_P4_IQ_ESCR0 and MSR_P4_IQ_ESCR1 are available only on early
  * processor builds (family 0FH, models 01H-02H). These MSRs
- * are not available on later versions, so that we don't use
+ * are not available on later versions, so that we करोn't use
  * them completely
  *
- * Also note that CCCR1 do not have P4_CCCR_ENABLE bit properly
+ * Also note that CCCR1 करो not have P4_CCCR_ENABLE bit properly
  * working so that we should not use this CCCR and respective
  * counter as result
  */
-enum P4_EVENT_OPCODES {
+क्रमागत P4_EVENT_OPCODES अणु
 	P4_OPCODE(P4_EVENT_TC_DELIVER_MODE)		= P4_OPCODE_PACK(0x01, 0x01),
 	/*
 	 * MSR_P4_TC_ESCR0:	4, 5
@@ -394,7 +395,7 @@ enum P4_EVENT_OPCODES {
 
 	P4_OPCODE(P4_EVENT_BSQ_ACTIVE_ENTRIES)		= P4_OPCODE_PACK(0x06, 0x07),
 	/*
-	 * NOTE: no ESCR name in docs, it's guessed
+	 * NOTE: no ESCR name in करोcs, it's guessed
 	 * MSR_P4_BSU_ESCR1:	2, 3
 	 */
 
@@ -583,15 +584,15 @@ enum P4_EVENT_OPCODES {
 	 * MSR_P4_CRU_ESCR0:	12, 13, 16
 	 * MSR_P4_CRU_ESCR1:	14, 15, 17
 	 */
-};
+पूर्ण;
 
 /*
  * a caller should use P4_ESCR_EMASK_NAME helper to
- * pick the EventMask needed, for example
+ * pick the EventMask needed, क्रम example
  *
  *	P4_ESCR_EMASK_BIT(P4_EVENT_TC_DELIVER_MODE, DD)
  */
-enum P4_ESCR_EMASKS {
+क्रमागत P4_ESCR_EMASKS अणु
 	P4_GEN_ESCR_EMASK(P4_EVENT_TC_DELIVER_MODE, DD, 0),
 	P4_GEN_ESCR_EMASK(P4_EVENT_TC_DELIVER_MODE, DB, 1),
 	P4_GEN_ESCR_EMASK(P4_EVENT_TC_DELIVER_MODE, DI, 2),
@@ -722,12 +723,12 @@ enum P4_ESCR_EMASKS {
 	P4_GEN_ESCR_EMASK(P4_EVENT_RETIRED_MISPRED_BRANCH_TYPE, CONDITIONAL, 1),
 	P4_GEN_ESCR_EMASK(P4_EVENT_RETIRED_MISPRED_BRANCH_TYPE, CALL, 2),
 	P4_GEN_ESCR_EMASK(P4_EVENT_RETIRED_MISPRED_BRANCH_TYPE, RETURN, 3),
-	P4_GEN_ESCR_EMASK(P4_EVENT_RETIRED_MISPRED_BRANCH_TYPE, INDIRECT, 4),
+	P4_GEN_ESCR_EMASK(P4_EVENT_RETIRED_MISPRED_BRANCH_TYPE, INसूचीECT, 4),
 
 	P4_GEN_ESCR_EMASK(P4_EVENT_RETIRED_BRANCH_TYPE, CONDITIONAL, 1),
 	P4_GEN_ESCR_EMASK(P4_EVENT_RETIRED_BRANCH_TYPE, CALL, 2),
 	P4_GEN_ESCR_EMASK(P4_EVENT_RETIRED_BRANCH_TYPE, RETURN, 3),
-	P4_GEN_ESCR_EMASK(P4_EVENT_RETIRED_BRANCH_TYPE, INDIRECT, 4),
+	P4_GEN_ESCR_EMASK(P4_EVENT_RETIRED_BRANCH_TYPE, INसूचीECT, 4),
 
 	P4_GEN_ESCR_EMASK(P4_EVENT_RESOURCE_STALL, SBFULL, 5),
 
@@ -779,30 +780,30 @@ enum P4_ESCR_EMASKS {
 
 	P4_GEN_ESCR_EMASK(P4_EVENT_INSTR_COMPLETED, NBOGUS, 0),
 	P4_GEN_ESCR_EMASK(P4_EVENT_INSTR_COMPLETED, BOGUS, 1),
-};
+पूर्ण;
 
 /*
- * Note we have UOP and PEBS bits reserved for now
- * just in case if we will need them once
+ * Note we have UOP and PEBS bits reserved क्रम now
+ * just in हाल अगर we will need them once
  */
-#define P4_PEBS_CONFIG_ENABLE		(1ULL << 7)
-#define P4_PEBS_CONFIG_UOP_TAG		(1ULL << 8)
-#define P4_PEBS_CONFIG_METRIC_MASK	0x3FLL
-#define P4_PEBS_CONFIG_MASK		0xFFLL
+#घोषणा P4_PEBS_CONFIG_ENABLE		(1ULL << 7)
+#घोषणा P4_PEBS_CONFIG_UOP_TAG		(1ULL << 8)
+#घोषणा P4_PEBS_CONFIG_METRIC_MASK	0x3FLL
+#घोषणा P4_PEBS_CONFIG_MASK		0xFFLL
 
 /*
  * mem: Only counters MSR_IQ_COUNTER4 (16) and
- * MSR_IQ_COUNTER5 (17) are allowed for PEBS sampling
+ * MSR_IQ_COUNTER5 (17) are allowed क्रम PEBS sampling
  */
-#define P4_PEBS_ENABLE			0x02000000ULL
-#define P4_PEBS_ENABLE_UOP_TAG		0x01000000ULL
+#घोषणा P4_PEBS_ENABLE			0x02000000ULL
+#घोषणा P4_PEBS_ENABLE_UOP_TAG		0x01000000ULL
 
-#define p4_config_unpack_metric(v)	(((u64)(v)) & P4_PEBS_CONFIG_METRIC_MASK)
-#define p4_config_unpack_pebs(v)	(((u64)(v)) & P4_PEBS_CONFIG_MASK)
+#घोषणा p4_config_unpack_metric(v)	(((u64)(v)) & P4_PEBS_CONFIG_METRIC_MASK)
+#घोषणा p4_config_unpack_pebs(v)	(((u64)(v)) & P4_PEBS_CONFIG_MASK)
 
-#define p4_config_pebs_has(v, mask)	(p4_config_unpack_pebs(v) & (mask))
+#घोषणा p4_config_pebs_has(v, mask)	(p4_config_unpack_pebs(v) & (mask))
 
-enum P4_PEBS_METRIC {
+क्रमागत P4_PEBS_METRIC अणु
 	P4_PEBS_METRIC__none,
 
 	P4_PEBS_METRIC__1stl_cache_load_miss_retired,
@@ -816,39 +817,39 @@ enum P4_PEBS_METRIC {
 	P4_PEBS_METRIC__split_store_retired,
 
 	P4_PEBS_METRIC__max
-};
+पूर्ण;
 
 /*
- * Notes on internal configuration of ESCR+CCCR tuples
+ * Notes on पूर्णांकernal configuration of ESCR+CCCR tuples
  *
- * Since P4 has quite the different architecture of
- * performance registers in compare with "architectural"
+ * Since P4 has quite the dअगरferent architecture of
+ * perक्रमmance रेजिस्टरs in compare with "architectural"
  * once and we have on 64 bits to keep configuration
- * of performance event, the following trick is used.
+ * of perक्रमmance event, the following trick is used.
  *
- * 1) Since both ESCR and CCCR registers have only low
- *    32 bits valuable, we pack them into a single 64 bit
+ * 1) Since both ESCR and CCCR रेजिस्टरs have only low
+ *    32 bits valuable, we pack them पूर्णांकo a single 64 bit
  *    configuration. Low 32 bits of such config correspond
- *    to low 32 bits of CCCR register and high 32 bits
- *    correspond to low 32 bits of ESCR register.
+ *    to low 32 bits of CCCR रेजिस्टर and high 32 bits
+ *    correspond to low 32 bits of ESCR रेजिस्टर.
  *
  * 2) The meaning of every bit of such config field can
  *    be found in Intel SDM but it should be noted that
- *    we "borrow" some reserved bits for own usage and
- *    clean them or set to a proper value when we do
- *    a real write to hardware registers.
+ *    we "borrow" some reserved bits क्रम own usage and
+ *    clean them or set to a proper value when we करो
+ *    a real ग_लिखो to hardware रेजिस्टरs.
  *
- * 3) The format of bits of config is the following
+ * 3) The क्रमmat of bits of config is the following
  *    and should be either 0 or set to some predefined
  *    values:
  *
  *    Low 32 bits
  *    -----------
- *      0-6: P4_PEBS_METRIC enum
+ *      0-6: P4_PEBS_METRIC क्रमागत
  *     7-11:                    reserved
  *       12:                    reserved (Enable)
  *    13-15:                    reserved (ESCR select)
- *    16-17: Active Thread
+ *    16-17: Active Thपढ़ो
  *       18: Compare
  *       19: Complement
  *    20-23: Threshold
@@ -869,9 +870,9 @@ enum P4_PEBS_METRIC {
  *        4: Tag Enable
  *      5-8: Tag Value
  *     9-24: Event Mask (may use P4_ESCR_EMASK_BIT helper)
- *    25-30: enum P4_EVENTS
- *       31:                    reserved (HT thread)
+ *    25-30: क्रमागत P4_EVENTS
+ *       31:                    reserved (HT thपढ़ो)
  */
 
-#endif /* PERF_EVENT_P4_H */
+#पूर्ण_अगर /* PERF_EVENT_P4_H */
 

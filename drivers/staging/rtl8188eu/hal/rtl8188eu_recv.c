@@ -1,93 +1,94 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#define _RTL8188EU_RECV_C_
-#include <linux/kmemleak.h>
-#include <osdep_service.h>
-#include <drv_types.h>
-#include <recv_osdep.h>
-#include <mlme_osdep.h>
+#घोषणा _RTL8188EU_RECV_C_
+#समावेश <linux/kmemleak.h>
+#समावेश <osdep_service.h>
+#समावेश <drv_types.h>
+#समावेश <recv_osdep.h>
+#समावेश <mlme_osdep.h>
 
-#include <usb_ops_linux.h>
-#include <wifi.h>
+#समावेश <usb_ops_linux.h>
+#समावेश <wअगरi.h>
 
-#include <rtl8188e_hal.h>
+#समावेश <rtl8188e_hal.h>
 
-int rtw_hal_init_recv_priv(struct adapter *padapter)
-{
-	struct recv_priv *precvpriv = &padapter->recvpriv;
-	int i, res = _SUCCESS;
-	struct recv_buf *precvbuf;
+पूर्णांक rtw_hal_init_recv_priv(काष्ठा adapter *padapter)
+अणु
+	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
+	पूर्णांक i, res = _SUCCESS;
+	काष्ठा recv_buf *precvbuf;
 
 	tasklet_setup(&precvpriv->recv_tasklet, rtl8188eu_recv_tasklet);
 
 	/* init recv_buf */
-	_rtw_init_queue(&precvpriv->free_recv_buf_queue);
+	_rtw_init_queue(&precvpriv->मुक्त_recv_buf_queue);
 
 	precvpriv->precv_buf =
-		kcalloc(NR_RECVBUFF, sizeof(struct recv_buf), GFP_KERNEL);
-	if (!precvpriv->precv_buf) {
+		kसुस्मृति(NR_RECVBUFF, माप(काष्ठा recv_buf), GFP_KERNEL);
+	अगर (!precvpriv->precv_buf) अणु
 		res = _FAIL;
 		RT_TRACE(_module_rtl871x_recv_c_, _drv_err_,
 			 ("alloc recv_buf fail!\n"));
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	precvbuf = precvpriv->precv_buf;
 
-	for (i = 0; i < NR_RECVBUFF; i++) {
+	क्रम (i = 0; i < NR_RECVBUFF; i++) अणु
 		res = rtw_os_recvbuf_resource_alloc(precvbuf);
-		if (res == _FAIL)
-			break;
+		अगर (res == _FAIL)
+			अवरोध;
 		precvbuf->adapter = padapter;
 		precvbuf++;
-	}
+	पूर्ण
 	skb_queue_head_init(&precvpriv->rx_skb_queue);
-	{
-		int i;
-		struct sk_buff *pskb = NULL;
+	अणु
+		पूर्णांक i;
+		काष्ठा sk_buff *pskb = शून्य;
 
-		skb_queue_head_init(&precvpriv->free_recv_skb_queue);
+		skb_queue_head_init(&precvpriv->मुक्त_recv_skb_queue);
 
-		for (i = 0; i < NR_PREALLOC_RECV_SKB; i++) {
+		क्रम (i = 0; i < NR_PREALLOC_RECV_SKB; i++) अणु
 			pskb = __netdev_alloc_skb(padapter->pnetdev,
 						  MAX_RECVBUF_SZ, GFP_KERNEL);
-			if (pskb) {
+			अगर (pskb) अणु
 				kmemleak_not_leak(pskb);
-				skb_queue_tail(&precvpriv->free_recv_skb_queue,
+				skb_queue_tail(&precvpriv->मुक्त_recv_skb_queue,
 					       pskb);
-			}
-			pskb = NULL;
-		}
-	}
-exit:
-	return res;
-}
+			पूर्ण
+			pskb = शून्य;
+		पूर्ण
+	पूर्ण
+निकास:
+	वापस res;
+पूर्ण
 
-void rtw_hal_free_recv_priv(struct adapter *padapter)
-{
-	int i;
-	struct recv_buf *precvbuf;
-	struct recv_priv *precvpriv = &padapter->recvpriv;
+व्योम rtw_hal_मुक्त_recv_priv(काष्ठा adapter *padapter)
+अणु
+	पूर्णांक i;
+	काष्ठा recv_buf *precvbuf;
+	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
 
 	precvbuf = precvpriv->precv_buf;
 
-	for (i = 0; i < NR_RECVBUFF; i++) {
-		usb_free_urb(precvbuf->purb);
+	क्रम (i = 0; i < NR_RECVBUFF; i++) अणु
+		usb_मुक्त_urb(precvbuf->purb);
 		precvbuf++;
-	}
+	पूर्ण
 
-	kfree(precvpriv->precv_buf);
+	kमुक्त(precvpriv->precv_buf);
 
-	if (skb_queue_len(&precvpriv->rx_skb_queue))
+	अगर (skb_queue_len(&precvpriv->rx_skb_queue))
 		DBG_88E(KERN_WARNING "rx_skb_queue not empty\n");
 	skb_queue_purge(&precvpriv->rx_skb_queue);
 
-	if (skb_queue_len(&precvpriv->free_recv_skb_queue))
+	अगर (skb_queue_len(&precvpriv->मुक्त_recv_skb_queue))
 		DBG_88E(KERN_WARNING "free_recv_skb_queue not empty, %d\n",
-			skb_queue_len(&precvpriv->free_recv_skb_queue));
+			skb_queue_len(&precvpriv->मुक्त_recv_skb_queue));
 
-	skb_queue_purge(&precvpriv->free_recv_skb_queue);
-}
+	skb_queue_purge(&precvpriv->मुक्त_recv_skb_queue);
+पूर्ण

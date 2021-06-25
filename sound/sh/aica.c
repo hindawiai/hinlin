@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
 *
 * Copyright Adrian McMenamin 2005, 2006, 2007
 * <adrian@mcmen.demon.co.uk>
 * Requires firmware (BSD licenced) available from:
-* http://linuxdc.cvs.sourceforge.net/linuxdc/linux-sh-dc/sound/oss/aica/firmware/
-* or the maintainer
+* http://linuxdc.cvs.sourceक्रमge.net/linuxdc/linux-sh-dc/sound/oss/aica/firmware/
+* or the मुख्यtainer
 */
 
-#include <linux/init.h>
-#include <linux/jiffies.h>
-#include <linux/slab.h>
-#include <linux/time.h>
-#include <linux/wait.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/firmware.h>
-#include <linux/timer.h>
-#include <linux/delay.h>
-#include <linux/workqueue.h>
-#include <linux/io.h>
-#include <sound/core.h>
-#include <sound/control.h>
-#include <sound/pcm.h>
-#include <sound/initval.h>
-#include <sound/info.h>
-#include <asm/dma.h>
-#include <mach/sysasic.h>
-#include "aica.h"
+#समावेश <linux/init.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/पन.स>
+#समावेश <sound/core.h>
+#समावेश <sound/control.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/info.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <mach/sysasic.h>
+#समावेश "aica.h"
 
 MODULE_AUTHOR("Adrian McMenamin <adrian@mcmen.demon.co.uk>");
 MODULE_DESCRIPTION("Dreamcast AICA sound (pcm) driver");
@@ -35,168 +36,168 @@ MODULE_LICENSE("GPL");
 MODULE_FIRMWARE("aica_firmware.bin");
 
 /* module parameters */
-#define CARD_NAME "AICA"
-static int index = -1;
-static char *id;
-static bool enable = 1;
-module_param(index, int, 0444);
+#घोषणा CARD_NAME "AICA"
+अटल पूर्णांक index = -1;
+अटल अक्षर *id;
+अटल bool enable = 1;
+module_param(index, पूर्णांक, 0444);
 MODULE_PARM_DESC(index, "Index value for " CARD_NAME " soundcard.");
-module_param(id, charp, 0444);
+module_param(id, अक्षरp, 0444);
 MODULE_PARM_DESC(id, "ID string for " CARD_NAME " soundcard.");
 module_param(enable, bool, 0644);
 MODULE_PARM_DESC(enable, "Enable " CARD_NAME " soundcard.");
 
-/* Simple platform device */
-static struct platform_device *pd;
-static struct resource aica_memory_space[2] = {
-	{
+/* Simple platक्रमm device */
+अटल काष्ठा platक्रमm_device *pd;
+अटल काष्ठा resource aica_memory_space[2] = अणु
+	अणु
 	 .name = "AICA ARM CONTROL",
 	 .start = ARM_RESET_REGISTER,
 	 .flags = IORESOURCE_MEM,
 	 .end = ARM_RESET_REGISTER + 3,
-	 },
-	{
+	 पूर्ण,
+	अणु
 	 .name = "AICA Sound RAM",
 	 .start = SPU_MEMORY_BASE,
 	 .flags = IORESOURCE_MEM,
 	 .end = SPU_MEMORY_BASE + 0x200000 - 1,
-	 },
-};
+	 पूर्ण,
+पूर्ण;
 
-/* SPU specific functions */
-/* spu_write_wait - wait for G2-SH FIFO to clear */
-static void spu_write_wait(void)
-{
-	int time_count;
-	time_count = 0;
-	while (1) {
-		if (!(readl(G2_FIFO) & 0x11))
-			break;
-		/* To ensure hardware failure doesn't wedge kernel */
-		time_count++;
-		if (time_count > 0x10000) {
-			snd_printk
+/* SPU specअगरic functions */
+/* spu_ग_लिखो_रुको - रुको क्रम G2-SH FIFO to clear */
+अटल व्योम spu_ग_लिखो_रुको(व्योम)
+अणु
+	पूर्णांक समय_count;
+	समय_count = 0;
+	जबतक (1) अणु
+		अगर (!(पढ़ोl(G2_FIFO) & 0x11))
+			अवरोध;
+		/* To ensure hardware failure करोesn't wedge kernel */
+		समय_count++;
+		अगर (समय_count > 0x10000) अणु
+			snd_prपूर्णांकk
 			    ("WARNING: G2 FIFO appears to be blocked.\n");
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* spu_memset - write to memory in SPU address space */
-static void spu_memset(u32 toi, u32 what, int length)
-{
-	int i;
-	unsigned long flags;
-	if (snd_BUG_ON(length % 4))
-		return;
-	for (i = 0; i < length; i++) {
-		if (!(i % 8))
-			spu_write_wait();
+/* spu_स_रखो - ग_लिखो to memory in SPU address space */
+अटल व्योम spu_स_रखो(u32 toi, u32 what, पूर्णांक length)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
+	अगर (snd_BUG_ON(length % 4))
+		वापस;
+	क्रम (i = 0; i < length; i++) अणु
+		अगर (!(i % 8))
+			spu_ग_लिखो_रुको();
 		local_irq_save(flags);
-		writel(what, toi + SPU_MEMORY_BASE);
+		ग_लिखोl(what, toi + SPU_MEMORY_BASE);
 		local_irq_restore(flags);
 		toi++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* spu_memload - write to SPU address space */
-static void spu_memload(u32 toi, const void *from, int length)
-{
-	unsigned long flags;
-	const u32 *froml = from;
+/* spu_memload - ग_लिखो to SPU address space */
+अटल व्योम spu_memload(u32 toi, स्थिर व्योम *from, पूर्णांक length)
+अणु
+	अचिन्हित दीर्घ flags;
+	स्थिर u32 *froml = from;
 	u32 __iomem *to = (u32 __iomem *) (SPU_MEMORY_BASE + toi);
-	int i;
+	पूर्णांक i;
 	u32 val;
 	length = DIV_ROUND_UP(length, 4);
-	spu_write_wait();
-	for (i = 0; i < length; i++) {
-		if (!(i % 8))
-			spu_write_wait();
+	spu_ग_लिखो_रुको();
+	क्रम (i = 0; i < length; i++) अणु
+		अगर (!(i % 8))
+			spu_ग_लिखो_रुको();
 		val = *froml;
 		local_irq_save(flags);
-		writel(val, to);
+		ग_लिखोl(val, to);
 		local_irq_restore(flags);
 		froml++;
 		to++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* spu_disable - set spu registers to stop sound output */
-static void spu_disable(void)
-{
-	int i;
-	unsigned long flags;
+/* spu_disable - set spu रेजिस्टरs to stop sound output */
+अटल व्योम spu_disable(व्योम)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
 	u32 regval;
-	spu_write_wait();
-	regval = readl(ARM_RESET_REGISTER);
+	spu_ग_लिखो_रुको();
+	regval = पढ़ोl(ARM_RESET_REGISTER);
 	regval |= 1;
-	spu_write_wait();
+	spu_ग_लिखो_रुको();
 	local_irq_save(flags);
-	writel(regval, ARM_RESET_REGISTER);
+	ग_लिखोl(regval, ARM_RESET_REGISTER);
 	local_irq_restore(flags);
-	for (i = 0; i < 64; i++) {
-		spu_write_wait();
-		regval = readl(SPU_REGISTER_BASE + (i * 0x80));
+	क्रम (i = 0; i < 64; i++) अणु
+		spu_ग_लिखो_रुको();
+		regval = पढ़ोl(SPU_REGISTER_BASE + (i * 0x80));
 		regval = (regval & ~0x4000) | 0x8000;
-		spu_write_wait();
+		spu_ग_लिखो_रुको();
 		local_irq_save(flags);
-		writel(regval, SPU_REGISTER_BASE + (i * 0x80));
+		ग_लिखोl(regval, SPU_REGISTER_BASE + (i * 0x80));
 		local_irq_restore(flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* spu_enable - set spu registers to enable sound output */
-static void spu_enable(void)
-{
-	unsigned long flags;
-	u32 regval = readl(ARM_RESET_REGISTER);
+/* spu_enable - set spu रेजिस्टरs to enable sound output */
+अटल व्योम spu_enable(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	u32 regval = पढ़ोl(ARM_RESET_REGISTER);
 	regval &= ~1;
-	spu_write_wait();
+	spu_ग_लिखो_रुको();
 	local_irq_save(flags);
-	writel(regval, ARM_RESET_REGISTER);
+	ग_लिखोl(regval, ARM_RESET_REGISTER);
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /* 
  * Halt the sound processor, clear the memory,
- * load some default ARM7 code, and then restart ARM7
+ * load some शेष ARM7 code, and then restart ARM7
 */
-static void spu_reset(void)
-{
-	unsigned long flags;
+अटल व्योम spu_reset(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 	spu_disable();
-	spu_memset(0, 0, 0x200000 / 4);
+	spu_स_रखो(0, 0, 0x200000 / 4);
 	/* Put ARM7 in endless loop */
 	local_irq_save(flags);
-	__raw_writel(0xea000002, SPU_MEMORY_BASE);
+	__raw_ग_लिखोl(0xea000002, SPU_MEMORY_BASE);
 	local_irq_restore(flags);
 	spu_enable();
-}
+पूर्ण
 
-/* aica_chn_start - write to spu to start playback */
-static void aica_chn_start(void)
-{
-	unsigned long flags;
-	spu_write_wait();
+/* aica_chn_start - ग_लिखो to spu to start playback */
+अटल व्योम aica_chn_start(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	spu_ग_लिखो_रुको();
 	local_irq_save(flags);
-	writel(AICA_CMD_KICK | AICA_CMD_START, (u32 *) AICA_CONTROL_POINT);
+	ग_लिखोl(AICA_CMD_KICK | AICA_CMD_START, (u32 *) AICA_CONTROL_POINT);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-/* aica_chn_halt - write to spu to halt playback */
-static void aica_chn_halt(void)
-{
-	unsigned long flags;
-	spu_write_wait();
+/* aica_chn_halt - ग_लिखो to spu to halt playback */
+अटल व्योम aica_chn_halt(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	spu_ग_लिखो_रुको();
 	local_irq_save(flags);
-	writel(AICA_CMD_KICK | AICA_CMD_STOP, (u32 *) AICA_CONTROL_POINT);
+	ग_लिखोl(AICA_CMD_KICK | AICA_CMD_STOP, (u32 *) AICA_CONTROL_POINT);
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /* ALSA code below */
-static const struct snd_pcm_hardware snd_pcm_aica_playback_hw = {
+अटल स्थिर काष्ठा snd_pcm_hardware snd_pcm_aica_playback_hw = अणु
 	.info = (SNDRV_PCM_INFO_NONINTERLEAVED),
-	.formats =
+	.क्रमmats =
 	    (SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_S16_LE |
 	     SNDRV_PCM_FMTBIT_IMA_ADPCM),
 	.rates = SNDRV_PCM_RATE_8000_48000,
@@ -209,24 +210,24 @@ static const struct snd_pcm_hardware snd_pcm_aica_playback_hw = {
 	.period_bytes_max = AICA_PERIOD_SIZE,
 	.periods_min = AICA_PERIOD_NUMBER,
 	.periods_max = AICA_PERIOD_NUMBER,
-};
+पूर्ण;
 
-static int aica_dma_transfer(int channels, int buffer_size,
-			     struct snd_pcm_substream *substream)
-{
-	int q, err, period_offset;
-	struct snd_card_aica *dreamcastcard;
-	struct snd_pcm_runtime *runtime;
-	unsigned long flags;
+अटल पूर्णांक aica_dma_transfer(पूर्णांक channels, पूर्णांक buffer_size,
+			     काष्ठा snd_pcm_substream *substream)
+अणु
+	पूर्णांक q, err, period_offset;
+	काष्ठा snd_card_aica *dreamcastcard;
+	काष्ठा snd_pcm_runसमय *runसमय;
+	अचिन्हित दीर्घ flags;
 	err = 0;
-	dreamcastcard = substream->pcm->private_data;
+	dreamcastcard = substream->pcm->निजी_data;
 	period_offset = dreamcastcard->clicks;
 	period_offset %= (AICA_PERIOD_NUMBER / channels);
-	runtime = substream->runtime;
-	for (q = 0; q < channels; q++) {
+	runसमय = substream->runसमय;
+	क्रम (q = 0; q < channels; q++) अणु
 		local_irq_save(flags);
 		err = dma_xfer(AICA_DMA_CHANNEL,
-			       (unsigned long) (runtime->dma_area +
+			       (अचिन्हित दीर्घ) (runसमय->dma_area +
 						(AICA_BUFFER_SIZE * q) /
 						channels +
 						AICA_PERIOD_SIZE *
@@ -234,395 +235,395 @@ static int aica_dma_transfer(int channels, int buffer_size,
 			       AICA_CHANNEL0_OFFSET + q * CHANNEL_OFFSET +
 			       AICA_PERIOD_SIZE * period_offset,
 			       buffer_size / channels, AICA_DMA_MODE);
-		if (unlikely(err < 0)) {
+		अगर (unlikely(err < 0)) अणु
 			local_irq_restore(flags);
-			break;
-		}
-		dma_wait_for_completion(AICA_DMA_CHANNEL);
+			अवरोध;
+		पूर्ण
+		dma_रुको_क्रम_completion(AICA_DMA_CHANNEL);
 		local_irq_restore(flags);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void startup_aica(struct snd_card_aica *dreamcastcard)
-{
+अटल व्योम startup_aica(काष्ठा snd_card_aica *dreamcastcard)
+अणु
 	spu_memload(AICA_CHANNEL0_CONTROL_OFFSET,
-		    dreamcastcard->channel, sizeof(struct aica_channel));
+		    dreamcastcard->channel, माप(काष्ठा aica_channel));
 	aica_chn_start();
-}
+पूर्ण
 
-static void run_spu_dma(struct work_struct *work)
-{
-	int buffer_size;
-	struct snd_pcm_runtime *runtime;
-	struct snd_card_aica *dreamcastcard;
+अटल व्योम run_spu_dma(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक buffer_size;
+	काष्ठा snd_pcm_runसमय *runसमय;
+	काष्ठा snd_card_aica *dreamcastcard;
 	dreamcastcard =
-	    container_of(work, struct snd_card_aica, spu_dma_work);
-	runtime = dreamcastcard->substream->runtime;
-	if (unlikely(dreamcastcard->dma_check == 0)) {
+	    container_of(work, काष्ठा snd_card_aica, spu_dma_work);
+	runसमय = dreamcastcard->substream->runसमय;
+	अगर (unlikely(dreamcastcard->dma_check == 0)) अणु
 		buffer_size =
-		    frames_to_bytes(runtime, runtime->buffer_size);
-		if (runtime->channels > 1)
+		    frames_to_bytes(runसमय, runसमय->buffer_size);
+		अगर (runसमय->channels > 1)
 			dreamcastcard->channel->flags |= 0x01;
-		aica_dma_transfer(runtime->channels, buffer_size,
+		aica_dma_transfer(runसमय->channels, buffer_size,
 				  dreamcastcard->substream);
 		startup_aica(dreamcastcard);
 		dreamcastcard->clicks =
-		    buffer_size / (AICA_PERIOD_SIZE * runtime->channels);
-		return;
-	} else {
-		aica_dma_transfer(runtime->channels,
-				  AICA_PERIOD_SIZE * runtime->channels,
+		    buffer_size / (AICA_PERIOD_SIZE * runसमय->channels);
+		वापस;
+	पूर्ण अन्यथा अणु
+		aica_dma_transfer(runसमय->channels,
+				  AICA_PERIOD_SIZE * runसमय->channels,
 				  dreamcastcard->substream);
 		snd_pcm_period_elapsed(dreamcastcard->substream);
 		dreamcastcard->clicks++;
-		if (unlikely(dreamcastcard->clicks >= AICA_PERIOD_NUMBER))
+		अगर (unlikely(dreamcastcard->clicks >= AICA_PERIOD_NUMBER))
 			dreamcastcard->clicks %= AICA_PERIOD_NUMBER;
-		mod_timer(&dreamcastcard->timer, jiffies + 1);
-	}
-}
+		mod_समयr(&dreamcastcard->समयr, jअगरfies + 1);
+	पूर्ण
+पूर्ण
 
-static void aica_period_elapsed(struct timer_list *t)
-{
-	struct snd_card_aica *dreamcastcard = from_timer(dreamcastcard,
-							      t, timer);
-	struct snd_pcm_substream *substream = dreamcastcard->substream;
-	/*timer function - so cannot sleep */
-	int play_period;
-	struct snd_pcm_runtime *runtime;
-	runtime = substream->runtime;
-	dreamcastcard = substream->pcm->private_data;
+अटल व्योम aica_period_elapsed(काष्ठा समयr_list *t)
+अणु
+	काष्ठा snd_card_aica *dreamcastcard = from_समयr(dreamcastcard,
+							      t, समयr);
+	काष्ठा snd_pcm_substream *substream = dreamcastcard->substream;
+	/*समयr function - so cannot sleep */
+	पूर्णांक play_period;
+	काष्ठा snd_pcm_runसमय *runसमय;
+	runसमय = substream->runसमय;
+	dreamcastcard = substream->pcm->निजी_data;
 	/* Have we played out an additional period? */
 	play_period =
-	    frames_to_bytes(runtime,
-			    readl
+	    frames_to_bytes(runसमय,
+			    पढ़ोl
 			    (AICA_CONTROL_CHANNEL_SAMPLE_NUMBER)) /
 	    AICA_PERIOD_SIZE;
-	if (play_period == dreamcastcard->current_period) {
-		/* reschedule the timer */
-		mod_timer(&(dreamcastcard->timer), jiffies + 1);
-		return;
-	}
-	if (runtime->channels > 1)
+	अगर (play_period == dreamcastcard->current_period) अणु
+		/* reschedule the समयr */
+		mod_समयr(&(dreamcastcard->समयr), jअगरfies + 1);
+		वापस;
+	पूर्ण
+	अगर (runसमय->channels > 1)
 		dreamcastcard->current_period = play_period;
-	if (unlikely(dreamcastcard->dma_check == 0))
+	अगर (unlikely(dreamcastcard->dma_check == 0))
 		dreamcastcard->dma_check = 1;
 	schedule_work(&(dreamcastcard->spu_dma_work));
-}
+पूर्ण
 
-static void spu_begin_dma(struct snd_pcm_substream *substream)
-{
-	struct snd_card_aica *dreamcastcard;
-	struct snd_pcm_runtime *runtime;
-	runtime = substream->runtime;
-	dreamcastcard = substream->pcm->private_data;
-	/*get the queue to do the work */
+अटल व्योम spu_begin_dma(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_card_aica *dreamcastcard;
+	काष्ठा snd_pcm_runसमय *runसमय;
+	runसमय = substream->runसमय;
+	dreamcastcard = substream->pcm->निजी_data;
+	/*get the queue to करो the work */
 	schedule_work(&(dreamcastcard->spu_dma_work));
-	mod_timer(&dreamcastcard->timer, jiffies + 4);
-}
+	mod_समयr(&dreamcastcard->समयr, jअगरfies + 4);
+पूर्ण
 
-static int snd_aicapcm_pcm_open(struct snd_pcm_substream
+अटल पूर्णांक snd_aicapcm_pcm_खोलो(काष्ठा snd_pcm_substream
 				*substream)
-{
-	struct snd_pcm_runtime *runtime;
-	struct aica_channel *channel;
-	struct snd_card_aica *dreamcastcard;
-	if (!enable)
-		return -ENOENT;
-	dreamcastcard = substream->pcm->private_data;
-	channel = kmalloc(sizeof(struct aica_channel), GFP_KERNEL);
-	if (!channel)
-		return -ENOMEM;
-	/* set defaults for channel */
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय;
+	काष्ठा aica_channel *channel;
+	काष्ठा snd_card_aica *dreamcastcard;
+	अगर (!enable)
+		वापस -ENOENT;
+	dreamcastcard = substream->pcm->निजी_data;
+	channel = kदो_स्मृति(माप(काष्ठा aica_channel), GFP_KERNEL);
+	अगर (!channel)
+		वापस -ENOMEM;
+	/* set शेषs क्रम channel */
 	channel->sfmt = SM_8BIT;
 	channel->cmd = AICA_CMD_START;
 	channel->vol = dreamcastcard->master_volume;
 	channel->pan = 0x80;
 	channel->pos = 0;
-	channel->flags = 0;	/* default to mono */
+	channel->flags = 0;	/* शेष to mono */
 	dreamcastcard->channel = channel;
-	runtime = substream->runtime;
-	runtime->hw = snd_pcm_aica_playback_hw;
+	runसमय = substream->runसमय;
+	runसमय->hw = snd_pcm_aica_playback_hw;
 	spu_enable();
 	dreamcastcard->clicks = 0;
 	dreamcastcard->current_period = 0;
 	dreamcastcard->dma_check = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_aicapcm_pcm_close(struct snd_pcm_substream
+अटल पूर्णांक snd_aicapcm_pcm_बंद(काष्ठा snd_pcm_substream
 				 *substream)
-{
-	struct snd_card_aica *dreamcastcard = substream->pcm->private_data;
+अणु
+	काष्ठा snd_card_aica *dreamcastcard = substream->pcm->निजी_data;
 	flush_work(&(dreamcastcard->spu_dma_work));
-	del_timer(&dreamcastcard->timer);
-	dreamcastcard->substream = NULL;
-	kfree(dreamcastcard->channel);
+	del_समयr(&dreamcastcard->समयr);
+	dreamcastcard->substream = शून्य;
+	kमुक्त(dreamcastcard->channel);
 	spu_disable();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_aicapcm_pcm_prepare(struct snd_pcm_substream
+अटल पूर्णांक snd_aicapcm_pcm_prepare(काष्ठा snd_pcm_substream
 				   *substream)
-{
-	struct snd_card_aica *dreamcastcard = substream->pcm->private_data;
-	if ((substream->runtime)->format == SNDRV_PCM_FORMAT_S16_LE)
+अणु
+	काष्ठा snd_card_aica *dreamcastcard = substream->pcm->निजी_data;
+	अगर ((substream->runसमय)->क्रमmat == SNDRV_PCM_FORMAT_S16_LE)
 		dreamcastcard->channel->sfmt = SM_16BIT;
-	dreamcastcard->channel->freq = substream->runtime->rate;
+	dreamcastcard->channel->freq = substream->runसमय->rate;
 	dreamcastcard->substream = substream;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_aicapcm_pcm_trigger(struct snd_pcm_substream
-				   *substream, int cmd)
-{
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
+अटल पूर्णांक snd_aicapcm_pcm_trigger(काष्ठा snd_pcm_substream
+				   *substream, पूर्णांक cmd)
+अणु
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
 		spu_begin_dma(substream);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
 		aica_chn_halt();
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static unsigned long snd_aicapcm_pcm_pointer(struct snd_pcm_substream
+अटल अचिन्हित दीर्घ snd_aicapcm_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream
 					     *substream)
-{
-	return readl(AICA_CONTROL_CHANNEL_SAMPLE_NUMBER);
-}
+अणु
+	वापस पढ़ोl(AICA_CONTROL_CHANNEL_SAMPLE_NUMBER);
+पूर्ण
 
-static const struct snd_pcm_ops snd_aicapcm_playback_ops = {
-	.open = snd_aicapcm_pcm_open,
-	.close = snd_aicapcm_pcm_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_aicapcm_playback_ops = अणु
+	.खोलो = snd_aicapcm_pcm_खोलो,
+	.बंद = snd_aicapcm_pcm_बंद,
 	.prepare = snd_aicapcm_pcm_prepare,
 	.trigger = snd_aicapcm_pcm_trigger,
-	.pointer = snd_aicapcm_pcm_pointer,
-};
+	.poपूर्णांकer = snd_aicapcm_pcm_poपूर्णांकer,
+पूर्ण;
 
 /* TO DO: set up to handle more than one pcm instance */
-static int __init snd_aicapcmchip(struct snd_card_aica
-				  *dreamcastcard, int pcm_index)
-{
-	struct snd_pcm *pcm;
-	int err;
+अटल पूर्णांक __init snd_aicapcmchip(काष्ठा snd_card_aica
+				  *dreamcastcard, पूर्णांक pcm_index)
+अणु
+	काष्ठा snd_pcm *pcm;
+	पूर्णांक err;
 	/* AICA has no capture ability */
 	err =
 	    snd_pcm_new(dreamcastcard->card, "AICA PCM", pcm_index, 1, 0,
 			&pcm);
-	if (unlikely(err < 0))
-		return err;
-	pcm->private_data = dreamcastcard;
-	strcpy(pcm->name, "AICA PCM");
+	अगर (unlikely(err < 0))
+		वापस err;
+	pcm->निजी_data = dreamcastcard;
+	म_नकल(pcm->name, "AICA PCM");
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK,
 			&snd_aicapcm_playback_ops);
 	/* Allocate the DMA buffers */
 	snd_pcm_set_managed_buffer_all(pcm,
 				       SNDRV_DMA_TYPE_CONTINUOUS,
-				       NULL,
+				       शून्य,
 				       AICA_BUFFER_SIZE,
 				       AICA_BUFFER_SIZE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Mixer controls */
-#define aica_pcmswitch_info		snd_ctl_boolean_mono_info
+#घोषणा aica_pcmचयन_info		snd_ctl_boolean_mono_info
 
-static int aica_pcmswitch_get(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	ucontrol->value.integer.value[0] = 1;	/* TO DO: Fix me */
-	return 0;
-}
+अटल पूर्णांक aica_pcmचयन_get(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	ucontrol->value.पूर्णांकeger.value[0] = 1;	/* TO DO: Fix me */
+	वापस 0;
+पूर्ण
 
-static int aica_pcmswitch_put(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	if (ucontrol->value.integer.value[0] == 1)
-		return 0;	/* TO DO: Fix me */
-	else
+अटल पूर्णांक aica_pcmचयन_put(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	अगर (ucontrol->value.पूर्णांकeger.value[0] == 1)
+		वापस 0;	/* TO DO: Fix me */
+	अन्यथा
 		aica_chn_halt();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aica_pcmvolume_info(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक aica_pcmvolume_info(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 0xFF;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = 0xFF;
+	वापस 0;
+पूर्ण
 
-static int aica_pcmvolume_get(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_card_aica *dreamcastcard;
-	dreamcastcard = kcontrol->private_data;
-	if (unlikely(!dreamcastcard->channel))
-		return -ETXTBSY;	/* we've not yet been set up */
-	ucontrol->value.integer.value[0] = dreamcastcard->channel->vol;
-	return 0;
-}
+अटल पूर्णांक aica_pcmvolume_get(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_card_aica *dreamcastcard;
+	dreamcastcard = kcontrol->निजी_data;
+	अगर (unlikely(!dreamcastcard->channel))
+		वापस -ETXTBSY;	/* we've not yet been set up */
+	ucontrol->value.पूर्णांकeger.value[0] = dreamcastcard->channel->vol;
+	वापस 0;
+पूर्ण
 
-static int aica_pcmvolume_put(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_card_aica *dreamcastcard;
-	unsigned int vol;
-	dreamcastcard = kcontrol->private_data;
-	if (unlikely(!dreamcastcard->channel))
-		return -ETXTBSY;
-	vol = ucontrol->value.integer.value[0];
-	if (vol > 0xff)
-		return -EINVAL;
-	if (unlikely(dreamcastcard->channel->vol == vol))
-		return 0;
-	dreamcastcard->channel->vol = ucontrol->value.integer.value[0];
-	dreamcastcard->master_volume = ucontrol->value.integer.value[0];
+अटल पूर्णांक aica_pcmvolume_put(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_card_aica *dreamcastcard;
+	अचिन्हित पूर्णांक vol;
+	dreamcastcard = kcontrol->निजी_data;
+	अगर (unlikely(!dreamcastcard->channel))
+		वापस -ETXTBSY;
+	vol = ucontrol->value.पूर्णांकeger.value[0];
+	अगर (vol > 0xff)
+		वापस -EINVAL;
+	अगर (unlikely(dreamcastcard->channel->vol == vol))
+		वापस 0;
+	dreamcastcard->channel->vol = ucontrol->value.पूर्णांकeger.value[0];
+	dreamcastcard->master_volume = ucontrol->value.पूर्णांकeger.value[0];
 	spu_memload(AICA_CHANNEL0_CONTROL_OFFSET,
-		    dreamcastcard->channel, sizeof(struct aica_channel));
-	return 1;
-}
+		    dreamcastcard->channel, माप(काष्ठा aica_channel));
+	वापस 1;
+पूर्ण
 
-static const struct snd_kcontrol_new snd_aica_pcmswitch_control = {
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new snd_aica_pcmचयन_control = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "PCM Playback Switch",
 	.index = 0,
-	.info = aica_pcmswitch_info,
-	.get = aica_pcmswitch_get,
-	.put = aica_pcmswitch_put
-};
+	.info = aica_pcmचयन_info,
+	.get = aica_pcmचयन_get,
+	.put = aica_pcmचयन_put
+पूर्ण;
 
-static const struct snd_kcontrol_new snd_aica_pcmvolume_control = {
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new snd_aica_pcmvolume_control = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "PCM Playback Volume",
 	.index = 0,
 	.info = aica_pcmvolume_info,
 	.get = aica_pcmvolume_get,
 	.put = aica_pcmvolume_put
-};
+पूर्ण;
 
-static int load_aica_firmware(void)
-{
-	int err;
-	const struct firmware *fw_entry;
+अटल पूर्णांक load_aica_firmware(व्योम)
+अणु
+	पूर्णांक err;
+	स्थिर काष्ठा firmware *fw_entry;
 	spu_reset();
 	err = request_firmware(&fw_entry, "aica_firmware.bin", &pd->dev);
-	if (unlikely(err))
-		return err;
-	/* write firmware into memory */
+	अगर (unlikely(err))
+		वापस err;
+	/* ग_लिखो firmware पूर्णांकo memory */
 	spu_disable();
 	spu_memload(0, fw_entry->data, fw_entry->size);
 	spu_enable();
 	release_firmware(fw_entry);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int add_aicamixer_controls(struct snd_card_aica *dreamcastcard)
-{
-	int err;
+अटल पूर्णांक add_aicamixer_controls(काष्ठा snd_card_aica *dreamcastcard)
+अणु
+	पूर्णांक err;
 	err = snd_ctl_add
 	    (dreamcastcard->card,
 	     snd_ctl_new1(&snd_aica_pcmvolume_control, dreamcastcard));
-	if (unlikely(err < 0))
-		return err;
+	अगर (unlikely(err < 0))
+		वापस err;
 	err = snd_ctl_add
 	    (dreamcastcard->card,
-	     snd_ctl_new1(&snd_aica_pcmswitch_control, dreamcastcard));
-	if (unlikely(err < 0))
-		return err;
-	return 0;
-}
+	     snd_ctl_new1(&snd_aica_pcmचयन_control, dreamcastcard));
+	अगर (unlikely(err < 0))
+		वापस err;
+	वापस 0;
+पूर्ण
 
-static int snd_aica_remove(struct platform_device *devptr)
-{
-	struct snd_card_aica *dreamcastcard;
-	dreamcastcard = platform_get_drvdata(devptr);
-	if (unlikely(!dreamcastcard))
-		return -ENODEV;
-	snd_card_free(dreamcastcard->card);
-	kfree(dreamcastcard);
-	return 0;
-}
+अटल पूर्णांक snd_aica_हटाओ(काष्ठा platक्रमm_device *devptr)
+अणु
+	काष्ठा snd_card_aica *dreamcastcard;
+	dreamcastcard = platक्रमm_get_drvdata(devptr);
+	अगर (unlikely(!dreamcastcard))
+		वापस -ENODEV;
+	snd_card_मुक्त(dreamcastcard->card);
+	kमुक्त(dreamcastcard);
+	वापस 0;
+पूर्ण
 
-static int snd_aica_probe(struct platform_device *devptr)
-{
-	int err;
-	struct snd_card_aica *dreamcastcard;
-	dreamcastcard = kzalloc(sizeof(struct snd_card_aica), GFP_KERNEL);
-	if (unlikely(!dreamcastcard))
-		return -ENOMEM;
+अटल पूर्णांक snd_aica_probe(काष्ठा platक्रमm_device *devptr)
+अणु
+	पूर्णांक err;
+	काष्ठा snd_card_aica *dreamcastcard;
+	dreamcastcard = kzalloc(माप(काष्ठा snd_card_aica), GFP_KERNEL);
+	अगर (unlikely(!dreamcastcard))
+		वापस -ENOMEM;
 	err = snd_card_new(&devptr->dev, index, SND_AICA_DRIVER,
 			   THIS_MODULE, 0, &dreamcastcard->card);
-	if (unlikely(err < 0)) {
-		kfree(dreamcastcard);
-		return err;
-	}
-	strcpy(dreamcastcard->card->driver, "snd_aica");
-	strcpy(dreamcastcard->card->shortname, SND_AICA_DRIVER);
-	strcpy(dreamcastcard->card->longname,
+	अगर (unlikely(err < 0)) अणु
+		kमुक्त(dreamcastcard);
+		वापस err;
+	पूर्ण
+	म_नकल(dreamcastcard->card->driver, "snd_aica");
+	म_नकल(dreamcastcard->card->लघुname, SND_AICA_DRIVER);
+	म_नकल(dreamcastcard->card->दीर्घname,
 	       "Yamaha AICA Super Intelligent Sound Processor for SEGA Dreamcast");
 	/* Prepare to use the queue */
 	INIT_WORK(&(dreamcastcard->spu_dma_work), run_spu_dma);
-	timer_setup(&dreamcastcard->timer, aica_period_elapsed, 0);
+	समयr_setup(&dreamcastcard->समयr, aica_period_elapsed, 0);
 	/* Load the PCM 'chip' */
 	err = snd_aicapcmchip(dreamcastcard, 0);
-	if (unlikely(err < 0))
-		goto freedreamcast;
+	अगर (unlikely(err < 0))
+		जाओ मुक्तdreamcast;
 	/* Add basic controls */
 	err = add_aicamixer_controls(dreamcastcard);
-	if (unlikely(err < 0))
-		goto freedreamcast;
-	/* Register the card with ALSA subsystem */
-	err = snd_card_register(dreamcastcard->card);
-	if (unlikely(err < 0))
-		goto freedreamcast;
-	platform_set_drvdata(devptr, dreamcastcard);
-	snd_printk
+	अगर (unlikely(err < 0))
+		जाओ मुक्तdreamcast;
+	/* Register the card with ALSA subप्रणाली */
+	err = snd_card_रेजिस्टर(dreamcastcard->card);
+	अगर (unlikely(err < 0))
+		जाओ मुक्तdreamcast;
+	platक्रमm_set_drvdata(devptr, dreamcastcard);
+	snd_prपूर्णांकk
 	    ("ALSA Driver for Yamaha AICA Super Intelligent Sound Processor\n");
-	return 0;
-      freedreamcast:
-	snd_card_free(dreamcastcard->card);
-	kfree(dreamcastcard);
-	return err;
-}
+	वापस 0;
+      मुक्तdreamcast:
+	snd_card_मुक्त(dreamcastcard->card);
+	kमुक्त(dreamcastcard);
+	वापस err;
+पूर्ण
 
-static struct platform_driver snd_aica_driver = {
+अटल काष्ठा platक्रमm_driver snd_aica_driver = अणु
 	.probe = snd_aica_probe,
-	.remove = snd_aica_remove,
-	.driver = {
+	.हटाओ = snd_aica_हटाओ,
+	.driver = अणु
 		.name = SND_AICA_DRIVER,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init aica_init(void)
-{
-	int err;
-	err = platform_driver_register(&snd_aica_driver);
-	if (unlikely(err < 0))
-		return err;
-	pd = platform_device_register_simple(SND_AICA_DRIVER, -1,
+अटल पूर्णांक __init aica_init(व्योम)
+अणु
+	पूर्णांक err;
+	err = platक्रमm_driver_रेजिस्टर(&snd_aica_driver);
+	अगर (unlikely(err < 0))
+		वापस err;
+	pd = platक्रमm_device_रेजिस्टर_simple(SND_AICA_DRIVER, -1,
 					     aica_memory_space, 2);
-	if (IS_ERR(pd)) {
-		platform_driver_unregister(&snd_aica_driver);
-		return PTR_ERR(pd);
-	}
+	अगर (IS_ERR(pd)) अणु
+		platक्रमm_driver_unरेजिस्टर(&snd_aica_driver);
+		वापस PTR_ERR(pd);
+	पूर्ण
 	/* Load the firmware */
-	return load_aica_firmware();
-}
+	वापस load_aica_firmware();
+पूर्ण
 
-static void __exit aica_exit(void)
-{
-	platform_device_unregister(pd);
-	platform_driver_unregister(&snd_aica_driver);
+अटल व्योम __निकास aica_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(pd);
+	platक्रमm_driver_unरेजिस्टर(&snd_aica_driver);
 	/* Kill any sound still playing and reset ARM7 to safe state */
 	spu_reset();
-}
+पूर्ण
 
 module_init(aica_init);
-module_exit(aica_exit);
+module_निकास(aica_निकास);

@@ -1,272 +1,273 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014 Google, Inc.
  *
- * Selftests for execveat(2).
+ * Selftests क्रम execveat(2).
  */
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE  /* to get O_PATH, AT_EMPTY_PATH */
-#endif
-#include <sys/sendfile.h>
-#include <sys/stat.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#अगर_अघोषित _GNU_SOURCE
+#घोषणा _GNU_SOURCE  /* to get O_PATH, AT_EMPTY_PATH */
+#पूर्ण_अगर
+#समावेश <sys/sendfile.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/syscall.h>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <सीमा.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
 
-#include "../kselftest.h"
+#समावेश "../kselftest.h"
 
-static char longpath[2 * PATH_MAX] = "";
-static char *envp[] = { "IN_TEST=yes", NULL, NULL };
-static char *argv[] = { "execveat", "99", NULL };
+अटल अक्षर दीर्घpath[2 * PATH_MAX] = "";
+अटल अक्षर *envp[] = अणु "IN_TEST=yes", शून्य, शून्य पूर्ण;
+अटल अक्षर *argv[] = अणु "execveat", "99", शून्य पूर्ण;
 
-static int execveat_(int fd, const char *path, char **argv, char **envp,
-		     int flags)
-{
-#ifdef __NR_execveat
-	return syscall(__NR_execveat, fd, path, argv, envp, flags);
-#else
-	errno = ENOSYS;
-	return -1;
-#endif
-}
+अटल पूर्णांक execveat_(पूर्णांक fd, स्थिर अक्षर *path, अक्षर **argv, अक्षर **envp,
+		     पूर्णांक flags)
+अणु
+#अगर_घोषित __NR_execveat
+	वापस syscall(__NR_execveat, fd, path, argv, envp, flags);
+#अन्यथा
+	त्रुटि_सं = ENOSYS;
+	वापस -1;
+#पूर्ण_अगर
+पूर्ण
 
-#define check_execveat_fail(fd, path, flags, errno)	\
-	_check_execveat_fail(fd, path, flags, errno, #errno)
-static int _check_execveat_fail(int fd, const char *path, int flags,
-				int expected_errno, const char *errno_str)
-{
-	int rc;
+#घोषणा check_execveat_fail(fd, path, flags, त्रुटि_सं)	\
+	_check_execveat_fail(fd, path, flags, त्रुटि_सं, #त्रुटि_सं)
+अटल पूर्णांक _check_execveat_fail(पूर्णांक fd, स्थिर अक्षर *path, पूर्णांक flags,
+				पूर्णांक expected_त्रुटि_सं, स्थिर अक्षर *त्रुटि_सं_str)
+अणु
+	पूर्णांक rc;
 
-	errno = 0;
-	printf("Check failure of execveat(%d, '%s', %d) with %s... ",
-		fd, path?:"(null)", flags, errno_str);
+	त्रुटि_सं = 0;
+	म_लिखो("Check failure of execveat(%d, '%s', %d) with %s... ",
+		fd, path?:"(null)", flags, त्रुटि_सं_str);
 	rc = execveat_(fd, path, argv, envp, flags);
 
-	if (rc > 0) {
-		printf("[FAIL] (unexpected success from execveat(2))\n");
-		return 1;
-	}
-	if (errno != expected_errno) {
-		printf("[FAIL] (expected errno %d (%s) not %d (%s)\n",
-			expected_errno, strerror(expected_errno),
-			errno, strerror(errno));
-		return 1;
-	}
-	printf("[OK]\n");
-	return 0;
-}
+	अगर (rc > 0) अणु
+		म_लिखो("[FAIL] (unexpected success from execveat(2))\n");
+		वापस 1;
+	पूर्ण
+	अगर (त्रुटि_सं != expected_त्रुटि_सं) अणु
+		म_लिखो("[FAIL] (expected errno %d (%s) not %d (%s)\n",
+			expected_त्रुटि_सं, म_त्रुटि(expected_त्रुटि_सं),
+			त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+		वापस 1;
+	पूर्ण
+	म_लिखो("[OK]\n");
+	वापस 0;
+पूर्ण
 
-static int check_execveat_invoked_rc(int fd, const char *path, int flags,
-				     int expected_rc, int expected_rc2)
-{
-	int status;
-	int rc;
+अटल पूर्णांक check_execveat_invoked_rc(पूर्णांक fd, स्थिर अक्षर *path, पूर्णांक flags,
+				     पूर्णांक expected_rc, पूर्णांक expected_rc2)
+अणु
+	पूर्णांक status;
+	पूर्णांक rc;
 	pid_t child;
-	int pathlen = path ? strlen(path) : 0;
+	पूर्णांक pathlen = path ? म_माप(path) : 0;
 
-	if (pathlen > 40)
-		printf("Check success of execveat(%d, '%.20s...%s', %d)... ",
+	अगर (pathlen > 40)
+		म_लिखो("Check success of execveat(%d, '%.20s...%s', %d)... ",
 			fd, path, (path + pathlen - 20), flags);
-	else
-		printf("Check success of execveat(%d, '%s', %d)... ",
+	अन्यथा
+		म_लिखो("Check success of execveat(%d, '%s', %d)... ",
 			fd, path?:"(null)", flags);
-	child = fork();
-	if (child < 0) {
-		printf("[FAIL] (fork() failed)\n");
-		return 1;
-	}
-	if (child == 0) {
-		/* Child: do execveat(). */
+	child = विभाजन();
+	अगर (child < 0) अणु
+		म_लिखो("[FAIL] (fork() failed)\n");
+		वापस 1;
+	पूर्ण
+	अगर (child == 0) अणु
+		/* Child: करो execveat(). */
 		rc = execveat_(fd, path, argv, envp, flags);
-		printf("[FAIL]: execveat() failed, rc=%d errno=%d (%s)\n",
-			rc, errno, strerror(errno));
-		exit(1);  /* should not reach here */
-	}
-	/* Parent: wait for & check child's exit status. */
-	rc = waitpid(child, &status, 0);
-	if (rc != child) {
-		printf("[FAIL] (waitpid(%d,...) returned %d)\n", child, rc);
-		return 1;
-	}
-	if (!WIFEXITED(status)) {
-		printf("[FAIL] (child %d did not exit cleanly, status=%08x)\n",
+		म_लिखो("[FAIL]: execveat() failed, rc=%d errno=%d (%s)\n",
+			rc, त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+		निकास(1);  /* should not reach here */
+	पूर्ण
+	/* Parent: रुको क्रम & check child's निकास status. */
+	rc = रुकोpid(child, &status, 0);
+	अगर (rc != child) अणु
+		म_लिखो("[FAIL] (waitpid(%d,...) returned %d)\n", child, rc);
+		वापस 1;
+	पूर्ण
+	अगर (!WIFEXITED(status)) अणु
+		म_लिखो("[FAIL] (child %d did not exit cleanly, status=%08x)\n",
 			child, status);
-		return 1;
-	}
-	if ((WEXITSTATUS(status) != expected_rc) &&
-	    (WEXITSTATUS(status) != expected_rc2)) {
-		printf("[FAIL] (child %d exited with %d not %d nor %d)\n",
+		वापस 1;
+	पूर्ण
+	अगर ((WEXITSTATUS(status) != expected_rc) &&
+	    (WEXITSTATUS(status) != expected_rc2)) अणु
+		म_लिखो("[FAIL] (child %d exited with %d not %d nor %d)\n",
 			child, WEXITSTATUS(status), expected_rc, expected_rc2);
-		return 1;
-	}
-	printf("[OK]\n");
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	म_लिखो("[OK]\n");
+	वापस 0;
+पूर्ण
 
-static int check_execveat(int fd, const char *path, int flags)
-{
-	return check_execveat_invoked_rc(fd, path, flags, 99, 99);
-}
+अटल पूर्णांक check_execveat(पूर्णांक fd, स्थिर अक्षर *path, पूर्णांक flags)
+अणु
+	वापस check_execveat_invoked_rc(fd, path, flags, 99, 99);
+पूर्ण
 
-static char *concat(const char *left, const char *right)
-{
-	char *result = malloc(strlen(left) + strlen(right) + 1);
+अटल अक्षर *concat(स्थिर अक्षर *left, स्थिर अक्षर *right)
+अणु
+	अक्षर *result = दो_स्मृति(म_माप(left) + म_माप(right) + 1);
 
-	strcpy(result, left);
-	strcat(result, right);
-	return result;
-}
+	म_नकल(result, left);
+	म_जोड़ो(result, right);
+	वापस result;
+पूर्ण
 
-static int open_or_die(const char *filename, int flags)
-{
-	int fd = open(filename, flags);
+अटल पूर्णांक खोलो_or_die(स्थिर अक्षर *filename, पूर्णांक flags)
+अणु
+	पूर्णांक fd = खोलो(filename, flags);
 
-	if (fd < 0) {
-		printf("Failed to open '%s'; "
+	अगर (fd < 0) अणु
+		म_लिखो("Failed to open '%s'; "
 			"check prerequisites are available\n", filename);
-		exit(1);
-	}
-	return fd;
-}
+		निकास(1);
+	पूर्ण
+	वापस fd;
+पूर्ण
 
-static void exe_cp(const char *src, const char *dest)
-{
-	int in_fd = open_or_die(src, O_RDONLY);
-	int out_fd = open(dest, O_RDWR|O_CREAT|O_TRUNC, 0755);
-	struct stat info;
+अटल व्योम exe_cp(स्थिर अक्षर *src, स्थिर अक्षर *dest)
+अणु
+	पूर्णांक in_fd = खोलो_or_die(src, O_RDONLY);
+	पूर्णांक out_fd = खोलो(dest, O_RDWR|O_CREAT|O_TRUNC, 0755);
+	काष्ठा stat info;
 
-	fstat(in_fd, &info);
-	sendfile(out_fd, in_fd, NULL, info.st_size);
-	close(in_fd);
-	close(out_fd);
-}
+	ख_स्थिति(in_fd, &info);
+	sendfile(out_fd, in_fd, शून्य, info.st_size);
+	बंद(in_fd);
+	बंद(out_fd);
+पूर्ण
 
-#define XX_DIR_LEN 200
-static int check_execveat_pathmax(int root_dfd, const char *src, int is_script)
-{
-	int fail = 0;
-	int ii, count, len;
-	char longname[XX_DIR_LEN + 1];
-	int fd;
+#घोषणा XX_सूची_LEN 200
+अटल पूर्णांक check_execveat_pathmax(पूर्णांक root_dfd, स्थिर अक्षर *src, पूर्णांक is_script)
+अणु
+	पूर्णांक fail = 0;
+	पूर्णांक ii, count, len;
+	अक्षर दीर्घname[XX_सूची_LEN + 1];
+	पूर्णांक fd;
 
-	if (*longpath == '\0') {
-		/* Create a filename close to PATH_MAX in length */
-		char *cwd = getcwd(NULL, 0);
+	अगर (*दीर्घpath == '\0') अणु
+		/* Create a filename बंद to PATH_MAX in length */
+		अक्षर *cwd = अ_लोwd(शून्य, 0);
 
-		if (!cwd) {
-			printf("Failed to getcwd(), errno=%d (%s)\n",
-			       errno, strerror(errno));
-			return 2;
-		}
-		strcpy(longpath, cwd);
-		strcat(longpath, "/");
-		memset(longname, 'x', XX_DIR_LEN - 1);
-		longname[XX_DIR_LEN - 1] = '/';
-		longname[XX_DIR_LEN] = '\0';
-		count = (PATH_MAX - 3 - strlen(cwd)) / XX_DIR_LEN;
-		for (ii = 0; ii < count; ii++) {
-			strcat(longpath, longname);
-			mkdir(longpath, 0755);
-		}
-		len = (PATH_MAX - 3 - strlen(cwd)) - (count * XX_DIR_LEN);
-		if (len <= 0)
+		अगर (!cwd) अणु
+			म_लिखो("Failed to getcwd(), errno=%d (%s)\n",
+			       त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+			वापस 2;
+		पूर्ण
+		म_नकल(दीर्घpath, cwd);
+		म_जोड़ो(दीर्घpath, "/");
+		स_रखो(दीर्घname, 'x', XX_सूची_LEN - 1);
+		दीर्घname[XX_सूची_LEN - 1] = '/';
+		दीर्घname[XX_सूची_LEN] = '\0';
+		count = (PATH_MAX - 3 - म_माप(cwd)) / XX_सूची_LEN;
+		क्रम (ii = 0; ii < count; ii++) अणु
+			म_जोड़ो(दीर्घpath, दीर्घname);
+			सूची_गढ़ो(दीर्घpath, 0755);
+		पूर्ण
+		len = (PATH_MAX - 3 - म_माप(cwd)) - (count * XX_सूची_LEN);
+		अगर (len <= 0)
 			len = 1;
-		memset(longname, 'y', len);
-		longname[len] = '\0';
-		strcat(longpath, longname);
-		free(cwd);
-	}
-	exe_cp(src, longpath);
+		स_रखो(दीर्घname, 'y', len);
+		दीर्घname[len] = '\0';
+		म_जोड़ो(दीर्घpath, दीर्घname);
+		मुक्त(cwd);
+	पूर्ण
+	exe_cp(src, दीर्घpath);
 
 	/*
-	 * Execute as a pre-opened file descriptor, which works whether this is
-	 * a script or not (because the interpreter sees a filename like
+	 * Execute as a pre-खोलोed file descriptor, which works whether this is
+	 * a script or not (because the पूर्णांकerpreter sees a filename like
 	 * "/dev/fd/20").
 	 */
-	fd = open(longpath, O_RDONLY);
-	if (fd > 0) {
-		printf("Invoke copy of '%s' via filename of length %zu:\n",
-			src, strlen(longpath));
+	fd = खोलो(दीर्घpath, O_RDONLY);
+	अगर (fd > 0) अणु
+		म_लिखो("Invoke copy of '%s' via filename of length %zu:\n",
+			src, म_माप(दीर्घpath));
 		fail += check_execveat(fd, "", AT_EMPTY_PATH);
-	} else {
-		printf("Failed to open length %zu filename, errno=%d (%s)\n",
-			strlen(longpath), errno, strerror(errno));
+	पूर्ण अन्यथा अणु
+		म_लिखो("Failed to open length %zu filename, errno=%d (%s)\n",
+			म_माप(दीर्घpath), त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
 		fail++;
-	}
+	पूर्ण
 
 	/*
-	 * Execute as a long pathname relative to "/".  If this is a script,
-	 * the interpreter will launch but fail to open the script because its
+	 * Execute as a दीर्घ pathname relative to "/".  If this is a script,
+	 * the पूर्णांकerpreter will launch but fail to खोलो the script because its
 	 * name ("/dev/fd/5/xxx....") is bigger than PATH_MAX.
 	 *
 	 * The failure code is usually 127 (POSIX: "If a command is not found,
-	 * the exit status shall be 127."), but some systems give 126 (POSIX:
+	 * the निकास status shall be 127."), but some प्रणालीs give 126 (POSIX:
 	 * "If the command name is found, but it is not an executable utility,
-	 * the exit status shall be 126."), so allow either.
+	 * the निकास status shall be 126."), so allow either.
 	 */
-	if (is_script)
-		fail += check_execveat_invoked_rc(root_dfd, longpath + 1, 0,
+	अगर (is_script)
+		fail += check_execveat_invoked_rc(root_dfd, दीर्घpath + 1, 0,
 						  127, 126);
-	else
-		fail += check_execveat(root_dfd, longpath + 1, 0);
+	अन्यथा
+		fail += check_execveat(root_dfd, दीर्घpath + 1, 0);
 
-	return fail;
-}
+	वापस fail;
+पूर्ण
 
-static int run_tests(void)
-{
-	int fail = 0;
-	char *fullname = realpath("execveat", NULL);
-	char *fullname_script = realpath("script", NULL);
-	char *fullname_symlink = concat(fullname, ".symlink");
-	int subdir_dfd = open_or_die("subdir", O_DIRECTORY|O_RDONLY);
-	int subdir_dfd_ephemeral = open_or_die("subdir.ephemeral",
-					       O_DIRECTORY|O_RDONLY);
-	int dot_dfd = open_or_die(".", O_DIRECTORY|O_RDONLY);
-	int root_dfd = open_or_die("/", O_DIRECTORY|O_RDONLY);
-	int dot_dfd_path = open_or_die(".", O_DIRECTORY|O_RDONLY|O_PATH);
-	int dot_dfd_cloexec = open_or_die(".", O_DIRECTORY|O_RDONLY|O_CLOEXEC);
-	int fd = open_or_die("execveat", O_RDONLY);
-	int fd_path = open_or_die("execveat", O_RDONLY|O_PATH);
-	int fd_symlink = open_or_die("execveat.symlink", O_RDONLY);
-	int fd_denatured = open_or_die("execveat.denatured", O_RDONLY);
-	int fd_denatured_path = open_or_die("execveat.denatured",
+अटल पूर्णांक run_tests(व्योम)
+अणु
+	पूर्णांक fail = 0;
+	अक्षर *fullname = realpath("execveat", शून्य);
+	अक्षर *fullname_script = realpath("script", शून्य);
+	अक्षर *fullname_symlink = concat(fullname, ".symlink");
+	पूर्णांक subdir_dfd = खोलो_or_die("subdir", O_सूचीECTORY|O_RDONLY);
+	पूर्णांक subdir_dfd_ephemeral = खोलो_or_die("subdir.ephemeral",
+					       O_सूचीECTORY|O_RDONLY);
+	पूर्णांक करोt_dfd = खोलो_or_die(".", O_सूचीECTORY|O_RDONLY);
+	पूर्णांक root_dfd = खोलो_or_die("/", O_सूचीECTORY|O_RDONLY);
+	पूर्णांक करोt_dfd_path = खोलो_or_die(".", O_सूचीECTORY|O_RDONLY|O_PATH);
+	पूर्णांक करोt_dfd_cloexec = खोलो_or_die(".", O_सूचीECTORY|O_RDONLY|O_CLOEXEC);
+	पूर्णांक fd = खोलो_or_die("execveat", O_RDONLY);
+	पूर्णांक fd_path = खोलो_or_die("execveat", O_RDONLY|O_PATH);
+	पूर्णांक fd_symlink = खोलो_or_die("execveat.symlink", O_RDONLY);
+	पूर्णांक fd_denatured = खोलो_or_die("execveat.denatured", O_RDONLY);
+	पूर्णांक fd_denatured_path = खोलो_or_die("execveat.denatured",
 					    O_RDONLY|O_PATH);
-	int fd_script = open_or_die("script", O_RDONLY);
-	int fd_ephemeral = open_or_die("execveat.ephemeral", O_RDONLY);
-	int fd_ephemeral_path = open_or_die("execveat.path.ephemeral",
+	पूर्णांक fd_script = खोलो_or_die("script", O_RDONLY);
+	पूर्णांक fd_ephemeral = खोलो_or_die("execveat.ephemeral", O_RDONLY);
+	पूर्णांक fd_ephemeral_path = खोलो_or_die("execveat.path.ephemeral",
 					    O_RDONLY|O_PATH);
-	int fd_script_ephemeral = open_or_die("script.ephemeral", O_RDONLY);
-	int fd_cloexec = open_or_die("execveat", O_RDONLY|O_CLOEXEC);
-	int fd_script_cloexec = open_or_die("script", O_RDONLY|O_CLOEXEC);
+	पूर्णांक fd_script_ephemeral = खोलो_or_die("script.ephemeral", O_RDONLY);
+	पूर्णांक fd_cloexec = खोलो_or_die("execveat", O_RDONLY|O_CLOEXEC);
+	पूर्णांक fd_script_cloexec = खोलो_or_die("script", O_RDONLY|O_CLOEXEC);
 
-	/* Check if we have execveat at all, and bail early if not */
-	errno = 0;
-	execveat_(-1, NULL, NULL, NULL, 0);
-	if (errno == ENOSYS) {
-		ksft_exit_skip(
+	/* Check अगर we have execveat at all, and bail early अगर not */
+	त्रुटि_सं = 0;
+	execveat_(-1, शून्य, शून्य, शून्य, 0);
+	अगर (त्रुटि_सं == ENOSYS) अणु
+		ksft_निकास_skip(
 			"ENOSYS calling execveat - no kernel support?\n");
-	}
+	पूर्ण
 
-	/* Change file position to confirm it doesn't affect anything */
-	lseek(fd, 10, SEEK_SET);
+	/* Change file position to confirm it करोesn't affect anything */
+	lseek(fd, 10, शुरू_से);
 
 	/* Normal executable file: */
 	/*   dfd + path */
 	fail += check_execveat(subdir_dfd, "../execveat", 0);
-	fail += check_execveat(dot_dfd, "execveat", 0);
-	fail += check_execveat(dot_dfd_path, "execveat", 0);
-	/*   absolute path */
+	fail += check_execveat(करोt_dfd, "execveat", 0);
+	fail += check_execveat(करोt_dfd_path, "execveat", 0);
+	/*   असलolute path */
 	fail += check_execveat(AT_FDCWD, fullname, 0);
-	/*   absolute path with nonsense dfd */
+	/*   असलolute path with nonsense dfd */
 	fail += check_execveat(99, fullname, 0);
 	/*   fd + no path */
 	fail += check_execveat(fd, "", AT_EMPTY_PATH);
@@ -275,74 +276,74 @@ static int run_tests(void)
 	/*   O_PATH fd */
 	fail += check_execveat(fd_path, "", AT_EMPTY_PATH);
 
-	/* Mess with executable file that's already open: */
-	/*   fd + no path to a file that's been renamed */
-	rename("execveat.ephemeral", "execveat.moved");
+	/* Mess with executable file that's alपढ़ोy खोलो: */
+	/*   fd + no path to a file that's been नामd */
+	नाम("execveat.ephemeral", "execveat.moved");
 	fail += check_execveat(fd_ephemeral, "", AT_EMPTY_PATH);
 	/*   fd + no path to a file that's been deleted */
-	unlink("execveat.moved"); /* remove the file now fd open */
+	unlink("execveat.moved"); /* हटाओ the file now fd खोलो */
 	fail += check_execveat(fd_ephemeral, "", AT_EMPTY_PATH);
 
-	/* Mess with executable file that's already open with O_PATH */
+	/* Mess with executable file that's alपढ़ोy खोलो with O_PATH */
 	/*   fd + no path to a file that's been deleted */
 	unlink("execveat.path.ephemeral");
 	fail += check_execveat(fd_ephemeral_path, "", AT_EMPTY_PATH);
 
 	/* Invalid argument failures */
 	fail += check_execveat_fail(fd, "", 0, ENOENT);
-	fail += check_execveat_fail(fd, NULL, AT_EMPTY_PATH, EFAULT);
+	fail += check_execveat_fail(fd, शून्य, AT_EMPTY_PATH, EFAULT);
 
 	/* Symlink to executable file: */
 	/*   dfd + path */
-	fail += check_execveat(dot_dfd, "execveat.symlink", 0);
-	fail += check_execveat(dot_dfd_path, "execveat.symlink", 0);
-	/*   absolute path */
+	fail += check_execveat(करोt_dfd, "execveat.symlink", 0);
+	fail += check_execveat(करोt_dfd_path, "execveat.symlink", 0);
+	/*   असलolute path */
 	fail += check_execveat(AT_FDCWD, fullname_symlink, 0);
-	/*   fd + no path, even with AT_SYMLINK_NOFOLLOW (already followed) */
+	/*   fd + no path, even with AT_SYMLINK_NOFOLLOW (alपढ़ोy followed) */
 	fail += check_execveat(fd_symlink, "", AT_EMPTY_PATH);
 	fail += check_execveat(fd_symlink, "",
 			       AT_EMPTY_PATH|AT_SYMLINK_NOFOLLOW);
 
 	/* Symlink fails when AT_SYMLINK_NOFOLLOW set: */
 	/*   dfd + path */
-	fail += check_execveat_fail(dot_dfd, "execveat.symlink",
+	fail += check_execveat_fail(करोt_dfd, "execveat.symlink",
 				    AT_SYMLINK_NOFOLLOW, ELOOP);
-	fail += check_execveat_fail(dot_dfd_path, "execveat.symlink",
+	fail += check_execveat_fail(करोt_dfd_path, "execveat.symlink",
 				    AT_SYMLINK_NOFOLLOW, ELOOP);
-	/*   absolute path */
+	/*   असलolute path */
 	fail += check_execveat_fail(AT_FDCWD, fullname_symlink,
 				    AT_SYMLINK_NOFOLLOW, ELOOP);
 
 	/*  Non-regular file failure */
-	fail += check_execveat_fail(dot_dfd, "pipe", 0, EACCES);
+	fail += check_execveat_fail(करोt_dfd, "pipe", 0, EACCES);
 	unlink("pipe");
 
 	/* Shell script wrapping executable file: */
 	/*   dfd + path */
 	fail += check_execveat(subdir_dfd, "../script", 0);
-	fail += check_execveat(dot_dfd, "script", 0);
-	fail += check_execveat(dot_dfd_path, "script", 0);
-	/*   absolute path */
+	fail += check_execveat(करोt_dfd, "script", 0);
+	fail += check_execveat(करोt_dfd_path, "script", 0);
+	/*   असलolute path */
 	fail += check_execveat(AT_FDCWD, fullname_script, 0);
 	/*   fd + no path */
 	fail += check_execveat(fd_script, "", AT_EMPTY_PATH);
 	fail += check_execveat(fd_script, "",
 			       AT_EMPTY_PATH|AT_SYMLINK_NOFOLLOW);
-	/*   O_CLOEXEC fd fails for a script (as script file inaccessible) */
+	/*   O_CLOEXEC fd fails क्रम a script (as script file inaccessible) */
 	fail += check_execveat_fail(fd_script_cloexec, "", AT_EMPTY_PATH,
 				    ENOENT);
-	fail += check_execveat_fail(dot_dfd_cloexec, "script", 0, ENOENT);
+	fail += check_execveat_fail(करोt_dfd_cloexec, "script", 0, ENOENT);
 
-	/* Mess with script file that's already open: */
-	/*   fd + no path to a file that's been renamed */
-	rename("script.ephemeral", "script.moved");
+	/* Mess with script file that's alपढ़ोy खोलो: */
+	/*   fd + no path to a file that's been नामd */
+	नाम("script.ephemeral", "script.moved");
 	fail += check_execveat(fd_script_ephemeral, "", AT_EMPTY_PATH);
 	/*   fd + no path to a file that's been deleted */
-	unlink("script.moved"); /* remove the file while fd open */
+	unlink("script.moved"); /* हटाओ the file जबतक fd खोलो */
 	fail += check_execveat(fd_script_ephemeral, "", AT_EMPTY_PATH);
 
 	/* Rename a subdirectory in the path: */
-	rename("subdir.ephemeral", "subdir.moved");
+	नाम("subdir.ephemeral", "subdir.moved");
 	fail += check_execveat(subdir_dfd_ephemeral, "../script", 0);
 	fail += check_execveat(subdir_dfd_ephemeral, "script", 0);
 	/* Remove the subdir and its contents */
@@ -353,80 +354,80 @@ static int run_tests(void)
 	fail += check_execveat_fail(subdir_dfd_ephemeral, "script", 0, ENOENT);
 
 	/* Flag values other than AT_SYMLINK_NOFOLLOW => EINVAL */
-	fail += check_execveat_fail(dot_dfd, "execveat", 0xFFFF, EINVAL);
+	fail += check_execveat_fail(करोt_dfd, "execveat", 0xFFFF, EINVAL);
 	/* Invalid path => ENOENT */
-	fail += check_execveat_fail(dot_dfd, "no-such-file", 0, ENOENT);
-	fail += check_execveat_fail(dot_dfd_path, "no-such-file", 0, ENOENT);
+	fail += check_execveat_fail(करोt_dfd, "no-such-file", 0, ENOENT);
+	fail += check_execveat_fail(करोt_dfd_path, "no-such-file", 0, ENOENT);
 	fail += check_execveat_fail(AT_FDCWD, "no-such-file", 0, ENOENT);
 	/* Attempt to execute directory => EACCES */
-	fail += check_execveat_fail(dot_dfd, "", AT_EMPTY_PATH, EACCES);
+	fail += check_execveat_fail(करोt_dfd, "", AT_EMPTY_PATH, EACCES);
 	/* Attempt to execute non-executable => EACCES */
-	fail += check_execveat_fail(dot_dfd, "Makefile", 0, EACCES);
+	fail += check_execveat_fail(करोt_dfd, "Makefile", 0, EACCES);
 	fail += check_execveat_fail(fd_denatured, "", AT_EMPTY_PATH, EACCES);
 	fail += check_execveat_fail(fd_denatured_path, "", AT_EMPTY_PATH,
 				    EACCES);
 	/* Attempt to execute nonsense FD => EBADF */
 	fail += check_execveat_fail(99, "", AT_EMPTY_PATH, EBADF);
 	fail += check_execveat_fail(99, "execveat", 0, EBADF);
-	/* Attempt to execute relative to non-directory => ENOTDIR */
-	fail += check_execveat_fail(fd, "execveat", 0, ENOTDIR);
+	/* Attempt to execute relative to non-directory => ENOTसूची */
+	fail += check_execveat_fail(fd, "execveat", 0, ENOTसूची);
 
 	fail += check_execveat_pathmax(root_dfd, "execveat", 0);
 	fail += check_execveat_pathmax(root_dfd, "script", 1);
-	return fail;
-}
+	वापस fail;
+पूर्ण
 
-static void prerequisites(void)
-{
-	int fd;
-	const char *script = "#!/bin/sh\nexit $*\n";
+अटल व्योम prerequisites(व्योम)
+अणु
+	पूर्णांक fd;
+	स्थिर अक्षर *script = "#!/bin/sh\nexit $*\n";
 
 	/* Create ephemeral copies of files */
 	exe_cp("execveat", "execveat.ephemeral");
 	exe_cp("execveat", "execveat.path.ephemeral");
 	exe_cp("script", "script.ephemeral");
-	mkdir("subdir.ephemeral", 0755);
+	सूची_गढ़ो("subdir.ephemeral", 0755);
 
-	fd = open("subdir.ephemeral/script", O_RDWR|O_CREAT|O_TRUNC, 0755);
-	write(fd, script, strlen(script));
-	close(fd);
+	fd = खोलो("subdir.ephemeral/script", O_RDWR|O_CREAT|O_TRUNC, 0755);
+	ग_लिखो(fd, script, म_माप(script));
+	बंद(fd);
 
-	mkfifo("pipe", 0755);
-}
+	mkfअगरo("pipe", 0755);
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	int ii;
-	int rc;
-	const char *verbose = getenv("VERBOSE");
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक ii;
+	पूर्णांक rc;
+	स्थिर अक्षर *verbose = दो_पर्या("VERBOSE");
 
-	if (argc >= 2) {
-		/* If we are invoked with an argument, don't run tests. */
-		const char *in_test = getenv("IN_TEST");
+	अगर (argc >= 2) अणु
+		/* If we are invoked with an argument, करोn't run tests. */
+		स्थिर अक्षर *in_test = दो_पर्या("IN_TEST");
 
-		if (verbose) {
-			printf("  invoked with:");
-			for (ii = 0; ii < argc; ii++)
-				printf(" [%d]='%s'", ii, argv[ii]);
-			printf("\n");
-		}
+		अगर (verbose) अणु
+			म_लिखो("  invoked with:");
+			क्रम (ii = 0; ii < argc; ii++)
+				म_लिखो(" [%d]='%s'", ii, argv[ii]);
+			म_लिखो("\n");
+		पूर्ण
 
 		/* Check expected environment transferred. */
-		if (!in_test || strcmp(in_test, "yes") != 0) {
-			printf("[FAIL] (no IN_TEST=yes in env)\n");
-			return 1;
-		}
+		अगर (!in_test || म_भेद(in_test, "yes") != 0) अणु
+			म_लिखो("[FAIL] (no IN_TEST=yes in env)\n");
+			वापस 1;
+		पूर्ण
 
-		/* Use the final argument as an exit code. */
-		rc = atoi(argv[argc - 1]);
-		fflush(stdout);
-	} else {
+		/* Use the final argument as an निकास code. */
+		rc = म_से_प(argv[argc - 1]);
+		ख_साफ(मानक_निकास);
+	पूर्ण अन्यथा अणु
 		prerequisites();
-		if (verbose)
+		अगर (verbose)
 			envp[1] = "VERBOSE=1";
 		rc = run_tests();
-		if (rc > 0)
-			printf("%d tests failed\n", rc);
-	}
-	return rc;
-}
+		अगर (rc > 0)
+			म_लिखो("%d tests failed\n", rc);
+	पूर्ण
+	वापस rc;
+पूर्ण

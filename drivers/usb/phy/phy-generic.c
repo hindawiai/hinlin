@@ -1,272 +1,273 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * NOP USB transceiver for all USB transceiver which are either built-in
- * into USB IP or which are mostly autonomous.
+ * NOP USB transceiver क्रम all USB transceiver which are either built-in
+ * पूर्णांकo USB IP or which are mostly स्वतःnomous.
  *
  * Copyright (C) 2009 Texas Instruments Inc
  * Author: Ajay Kumar Gupta <ajay.gupta@ti.com>
  *
  * Current status:
- *	This provides a "nop" transceiver for PHYs which are
- *	autonomous such as isp1504, isp1707, etc.
+ *	This provides a "nop" transceiver क्रम PHYs which are
+ *	स्वतःnomous such as isp1504, isp1707, etc.
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/usb/gadget.h>
-#include <linux/usb/otg.h>
-#include <linux/usb/usb_phy_generic.h>
-#include <linux/slab.h>
-#include <linux/clk.h>
-#include <linux/regulator/consumer.h>
-#include <linux/of.h>
-#include <linux/gpio/consumer.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/usb/otg.h>
+#समावेश <linux/usb/usb_phy_generic.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/of.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/delay.h>
 
-#include "phy-generic.h"
+#समावेश "phy-generic.h"
 
-#define VBUS_IRQ_FLAGS \
+#घोषणा VBUS_IRQ_FLAGS \
 	(IRQF_SHARED | IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING | \
 		IRQF_ONESHOT)
 
-struct platform_device *usb_phy_generic_register(void)
-{
-	return platform_device_register_simple("usb_phy_generic",
-			PLATFORM_DEVID_AUTO, NULL, 0);
-}
-EXPORT_SYMBOL_GPL(usb_phy_generic_register);
+काष्ठा platक्रमm_device *usb_phy_generic_रेजिस्टर(व्योम)
+अणु
+	वापस platक्रमm_device_रेजिस्टर_simple("usb_phy_generic",
+			PLATFORM_DEVID_AUTO, शून्य, 0);
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_phy_generic_रेजिस्टर);
 
-void usb_phy_generic_unregister(struct platform_device *pdev)
-{
-	platform_device_unregister(pdev);
-}
-EXPORT_SYMBOL_GPL(usb_phy_generic_unregister);
+व्योम usb_phy_generic_unरेजिस्टर(काष्ठा platक्रमm_device *pdev)
+अणु
+	platक्रमm_device_unरेजिस्टर(pdev);
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_phy_generic_unरेजिस्टर);
 
-static int nop_set_suspend(struct usb_phy *x, int suspend)
-{
-	struct usb_phy_generic *nop = dev_get_drvdata(x->dev);
+अटल पूर्णांक nop_set_suspend(काष्ठा usb_phy *x, पूर्णांक suspend)
+अणु
+	काष्ठा usb_phy_generic *nop = dev_get_drvdata(x->dev);
 
-	if (!IS_ERR(nop->clk)) {
-		if (suspend)
+	अगर (!IS_ERR(nop->clk)) अणु
+		अगर (suspend)
 			clk_disable_unprepare(nop->clk);
-		else
+		अन्यथा
 			clk_prepare_enable(nop->clk);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nop_reset(struct usb_phy_generic *nop)
-{
-	if (!nop->gpiod_reset)
-		return;
+अटल व्योम nop_reset(काष्ठा usb_phy_generic *nop)
+अणु
+	अगर (!nop->gpiod_reset)
+		वापस;
 
 	gpiod_set_value_cansleep(nop->gpiod_reset, 1);
 	usleep_range(10000, 20000);
 	gpiod_set_value_cansleep(nop->gpiod_reset, 0);
-}
+पूर्ण
 
-/* interface to regulator framework */
-static void nop_set_vbus_draw(struct usb_phy_generic *nop, unsigned mA)
-{
-	struct regulator *vbus_draw = nop->vbus_draw;
-	int enabled;
-	int ret;
+/* पूर्णांकerface to regulator framework */
+अटल व्योम nop_set_vbus_draw(काष्ठा usb_phy_generic *nop, अचिन्हित mA)
+अणु
+	काष्ठा regulator *vbus_draw = nop->vbus_draw;
+	पूर्णांक enabled;
+	पूर्णांक ret;
 
-	if (!vbus_draw)
-		return;
+	अगर (!vbus_draw)
+		वापस;
 
 	enabled = nop->vbus_draw_enabled;
-	if (mA) {
+	अगर (mA) अणु
 		regulator_set_current_limit(vbus_draw, 0, 1000 * mA);
-		if (!enabled) {
+		अगर (!enabled) अणु
 			ret = regulator_enable(vbus_draw);
-			if (ret < 0)
-				return;
+			अगर (ret < 0)
+				वापस;
 			nop->vbus_draw_enabled = 1;
-		}
-	} else {
-		if (enabled) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (enabled) अणु
 			ret = regulator_disable(vbus_draw);
-			if (ret < 0)
-				return;
+			अगर (ret < 0)
+				वापस;
 			nop->vbus_draw_enabled = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	nop->mA = mA;
-}
+पूर्ण
 
 
-static irqreturn_t nop_gpio_vbus_thread(int irq, void *data)
-{
-	struct usb_phy_generic *nop = data;
-	struct usb_otg *otg = nop->phy.otg;
-	int vbus, status;
+अटल irqवापस_t nop_gpio_vbus_thपढ़ो(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा usb_phy_generic *nop = data;
+	काष्ठा usb_otg *otg = nop->phy.otg;
+	पूर्णांक vbus, status;
 
 	vbus = gpiod_get_value(nop->gpiod_vbus);
-	if ((vbus ^ nop->vbus) == 0)
-		return IRQ_HANDLED;
+	अगर ((vbus ^ nop->vbus) == 0)
+		वापस IRQ_HANDLED;
 	nop->vbus = vbus;
 
-	if (vbus) {
+	अगर (vbus) अणु
 		status = USB_EVENT_VBUS;
 		otg->state = OTG_STATE_B_PERIPHERAL;
 		nop->phy.last_event = status;
 
-		/* drawing a "unit load" is *always* OK, except for OTG */
+		/* drawing a "unit load" is *always* OK, except क्रम OTG */
 		nop_set_vbus_draw(nop, 100);
 
-		atomic_notifier_call_chain(&nop->phy.notifier, status,
+		atomic_notअगरier_call_chain(&nop->phy.notअगरier, status,
 					   otg->gadget);
-	} else {
+	पूर्ण अन्यथा अणु
 		nop_set_vbus_draw(nop, 0);
 
 		status = USB_EVENT_NONE;
 		otg->state = OTG_STATE_B_IDLE;
 		nop->phy.last_event = status;
 
-		atomic_notifier_call_chain(&nop->phy.notifier, status,
+		atomic_notअगरier_call_chain(&nop->phy.notअगरier, status,
 					   otg->gadget);
-	}
-	return IRQ_HANDLED;
-}
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int usb_gen_phy_init(struct usb_phy *phy)
-{
-	struct usb_phy_generic *nop = dev_get_drvdata(phy->dev);
-	int ret;
+पूर्णांक usb_gen_phy_init(काष्ठा usb_phy *phy)
+अणु
+	काष्ठा usb_phy_generic *nop = dev_get_drvdata(phy->dev);
+	पूर्णांक ret;
 
-	if (!IS_ERR(nop->vcc)) {
-		if (regulator_enable(nop->vcc))
+	अगर (!IS_ERR(nop->vcc)) अणु
+		अगर (regulator_enable(nop->vcc))
 			dev_err(phy->dev, "Failed to enable power\n");
-	}
+	पूर्ण
 
-	if (!IS_ERR(nop->clk)) {
+	अगर (!IS_ERR(nop->clk)) अणु
 		ret = clk_prepare_enable(nop->clk);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	nop_reset(nop);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_gen_phy_init);
 
-void usb_gen_phy_shutdown(struct usb_phy *phy)
-{
-	struct usb_phy_generic *nop = dev_get_drvdata(phy->dev);
+व्योम usb_gen_phy_shutकरोwn(काष्ठा usb_phy *phy)
+अणु
+	काष्ठा usb_phy_generic *nop = dev_get_drvdata(phy->dev);
 
 	gpiod_set_value_cansleep(nop->gpiod_reset, 1);
 
-	if (!IS_ERR(nop->clk))
+	अगर (!IS_ERR(nop->clk))
 		clk_disable_unprepare(nop->clk);
 
-	if (!IS_ERR(nop->vcc)) {
-		if (regulator_disable(nop->vcc))
+	अगर (!IS_ERR(nop->vcc)) अणु
+		अगर (regulator_disable(nop->vcc))
 			dev_err(phy->dev, "Failed to disable power\n");
-	}
-}
-EXPORT_SYMBOL_GPL(usb_gen_phy_shutdown);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_gen_phy_shutकरोwn);
 
-static int nop_set_peripheral(struct usb_otg *otg, struct usb_gadget *gadget)
-{
-	if (!otg)
-		return -ENODEV;
+अटल पूर्णांक nop_set_peripheral(काष्ठा usb_otg *otg, काष्ठा usb_gadget *gadget)
+अणु
+	अगर (!otg)
+		वापस -ENODEV;
 
-	if (!gadget) {
-		otg->gadget = NULL;
-		return -ENODEV;
-	}
+	अगर (!gadget) अणु
+		otg->gadget = शून्य;
+		वापस -ENODEV;
+	पूर्ण
 
 	otg->gadget = gadget;
-	if (otg->state == OTG_STATE_B_PERIPHERAL)
-		atomic_notifier_call_chain(&otg->usb_phy->notifier,
+	अगर (otg->state == OTG_STATE_B_PERIPHERAL)
+		atomic_notअगरier_call_chain(&otg->usb_phy->notअगरier,
 					   USB_EVENT_VBUS, otg->gadget);
-	else
+	अन्यथा
 		otg->state = OTG_STATE_B_IDLE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nop_set_host(struct usb_otg *otg, struct usb_bus *host)
-{
-	if (!otg)
-		return -ENODEV;
+अटल पूर्णांक nop_set_host(काष्ठा usb_otg *otg, काष्ठा usb_bus *host)
+अणु
+	अगर (!otg)
+		वापस -ENODEV;
 
-	if (!host) {
-		otg->host = NULL;
-		return -ENODEV;
-	}
+	अगर (!host) अणु
+		otg->host = शून्य;
+		वापस -ENODEV;
+	पूर्ण
 
 	otg->host = host;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int usb_phy_gen_create_phy(struct device *dev, struct usb_phy_generic *nop)
-{
-	enum usb_phy_type type = USB_PHY_TYPE_USB2;
-	int err = 0;
+पूर्णांक usb_phy_gen_create_phy(काष्ठा device *dev, काष्ठा usb_phy_generic *nop)
+अणु
+	क्रमागत usb_phy_type type = USB_PHY_TYPE_USB2;
+	पूर्णांक err = 0;
 
 	u32 clk_rate = 0;
 	bool needs_vcc = false, needs_clk = false;
 
-	if (dev->of_node) {
-		struct device_node *node = dev->of_node;
+	अगर (dev->of_node) अणु
+		काष्ठा device_node *node = dev->of_node;
 
-		if (of_property_read_u32(node, "clock-frequency", &clk_rate))
+		अगर (of_property_पढ़ो_u32(node, "clock-frequency", &clk_rate))
 			clk_rate = 0;
 
-		needs_vcc = of_property_read_bool(node, "vcc-supply");
-		needs_clk = of_property_read_bool(node, "clocks");
-	}
+		needs_vcc = of_property_पढ़ो_bool(node, "vcc-supply");
+		needs_clk = of_property_पढ़ो_bool(node, "clocks");
+	पूर्ण
 	nop->gpiod_reset = devm_gpiod_get_optional(dev, "reset",
 						   GPIOD_ASIS);
 	err = PTR_ERR_OR_ZERO(nop->gpiod_reset);
-	if (!err) {
+	अगर (!err) अणु
 		nop->gpiod_vbus = devm_gpiod_get_optional(dev,
 						 "vbus-detect",
 						 GPIOD_ASIS);
 		err = PTR_ERR_OR_ZERO(nop->gpiod_vbus);
-	}
+	पूर्ण
 
-	if (err == -EPROBE_DEFER)
-		return -EPROBE_DEFER;
-	if (err) {
+	अगर (err == -EPROBE_DEFER)
+		वापस -EPROBE_DEFER;
+	अगर (err) अणु
 		dev_err(dev, "Error requesting RESET or VBUS GPIO\n");
-		return err;
-	}
-	if (nop->gpiod_reset)
+		वापस err;
+	पूर्ण
+	अगर (nop->gpiod_reset)
 		gpiod_direction_output(nop->gpiod_reset, 1);
 
-	nop->phy.otg = devm_kzalloc(dev, sizeof(*nop->phy.otg),
+	nop->phy.otg = devm_kzalloc(dev, माप(*nop->phy.otg),
 			GFP_KERNEL);
-	if (!nop->phy.otg)
-		return -ENOMEM;
+	अगर (!nop->phy.otg)
+		वापस -ENOMEM;
 
 	nop->clk = devm_clk_get(dev, "main_clk");
-	if (IS_ERR(nop->clk)) {
+	अगर (IS_ERR(nop->clk)) अणु
 		dev_dbg(dev, "Can't get phy clock: %ld\n",
 					PTR_ERR(nop->clk));
-		if (needs_clk)
-			return PTR_ERR(nop->clk);
-	}
+		अगर (needs_clk)
+			वापस PTR_ERR(nop->clk);
+	पूर्ण
 
-	if (!IS_ERR(nop->clk) && clk_rate) {
+	अगर (!IS_ERR(nop->clk) && clk_rate) अणु
 		err = clk_set_rate(nop->clk, clk_rate);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "Error setting clock rate\n");
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	nop->vcc = devm_regulator_get(dev, "vcc");
-	if (IS_ERR(nop->vcc)) {
+	अगर (IS_ERR(nop->vcc)) अणु
 		dev_dbg(dev, "Error getting vcc regulator: %ld\n",
 					PTR_ERR(nop->vcc));
-		if (needs_vcc)
-			return -EPROBE_DEFER;
-	}
+		अगर (needs_vcc)
+			वापस -EPROBE_DEFER;
+	पूर्ण
 
 	nop->dev		= dev;
 	nop->phy.dev		= nop->dev;
@@ -279,89 +280,89 @@ int usb_phy_gen_create_phy(struct device *dev, struct usb_phy_generic *nop)
 	nop->phy.otg->set_host		= nop_set_host;
 	nop->phy.otg->set_peripheral	= nop_set_peripheral;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_phy_gen_create_phy);
 
-static int usb_phy_generic_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct usb_phy_generic	*nop;
-	int err;
+अटल पूर्णांक usb_phy_generic_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा usb_phy_generic	*nop;
+	पूर्णांक err;
 
-	nop = devm_kzalloc(dev, sizeof(*nop), GFP_KERNEL);
-	if (!nop)
-		return -ENOMEM;
+	nop = devm_kzalloc(dev, माप(*nop), GFP_KERNEL);
+	अगर (!nop)
+		वापस -ENOMEM;
 
 	err = usb_phy_gen_create_phy(dev, nop);
-	if (err)
-		return err;
-	if (nop->gpiod_vbus) {
-		err = devm_request_threaded_irq(&pdev->dev,
+	अगर (err)
+		वापस err;
+	अगर (nop->gpiod_vbus) अणु
+		err = devm_request_thपढ़ोed_irq(&pdev->dev,
 						gpiod_to_irq(nop->gpiod_vbus),
-						NULL, nop_gpio_vbus_thread,
+						शून्य, nop_gpio_vbus_thपढ़ो,
 						VBUS_IRQ_FLAGS, "vbus_detect",
 						nop);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&pdev->dev, "can't request irq %i, err: %d\n",
 				gpiod_to_irq(nop->gpiod_vbus), err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		nop->phy.otg->state = gpiod_get_value(nop->gpiod_vbus) ?
 			OTG_STATE_B_PERIPHERAL : OTG_STATE_B_IDLE;
-	}
+	पूर्ण
 
 	nop->phy.init		= usb_gen_phy_init;
-	nop->phy.shutdown	= usb_gen_phy_shutdown;
+	nop->phy.shutकरोwn	= usb_gen_phy_shutकरोwn;
 
 	err = usb_add_phy_dev(&nop->phy);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "can't register transceiver, err: %d\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	platform_set_drvdata(pdev, nop);
+	platक्रमm_set_drvdata(pdev, nop);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usb_phy_generic_remove(struct platform_device *pdev)
-{
-	struct usb_phy_generic *nop = platform_get_drvdata(pdev);
+अटल पूर्णांक usb_phy_generic_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb_phy_generic *nop = platक्रमm_get_drvdata(pdev);
 
-	usb_remove_phy(&nop->phy);
+	usb_हटाओ_phy(&nop->phy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id nop_xceiv_dt_ids[] = {
-	{ .compatible = "usb-nop-xceiv" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id nop_xceiv_dt_ids[] = अणु
+	अणु .compatible = "usb-nop-xceiv" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, nop_xceiv_dt_ids);
 
-static struct platform_driver usb_phy_generic_driver = {
+अटल काष्ठा platक्रमm_driver usb_phy_generic_driver = अणु
 	.probe		= usb_phy_generic_probe,
-	.remove		= usb_phy_generic_remove,
-	.driver		= {
+	.हटाओ		= usb_phy_generic_हटाओ,
+	.driver		= अणु
 		.name	= "usb_phy_generic",
 		.of_match_table = nop_xceiv_dt_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init usb_phy_generic_init(void)
-{
-	return platform_driver_register(&usb_phy_generic_driver);
-}
+अटल पूर्णांक __init usb_phy_generic_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&usb_phy_generic_driver);
+पूर्ण
 subsys_initcall(usb_phy_generic_init);
 
-static void __exit usb_phy_generic_exit(void)
-{
-	platform_driver_unregister(&usb_phy_generic_driver);
-}
-module_exit(usb_phy_generic_exit);
+अटल व्योम __निकास usb_phy_generic_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&usb_phy_generic_driver);
+पूर्ण
+module_निकास(usb_phy_generic_निकास);
 
 MODULE_ALIAS("platform:usb_phy_generic");
 MODULE_AUTHOR("Texas Instruments Inc");

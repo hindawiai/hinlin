@@ -1,228 +1,229 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * RTC subsystem, interface functions
+ * RTC subप्रणाली, पूर्णांकerface functions
  *
  * Copyright (C) 2005 Tower Technologies
  * Author: Alessandro Zummo <a.zummo@towertech.it>
  *
- * based on arch/arm/common/rtctime.c
+ * based on arch/arm/common/rtस_समय.c
  */
 
-#include <linux/rtc.h>
-#include <linux/sched.h>
-#include <linux/module.h>
-#include <linux/log2.h>
-#include <linux/workqueue.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/module.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/workqueue.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/rtc.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/rtc.h>
 
-static int rtc_timer_enqueue(struct rtc_device *rtc, struct rtc_timer *timer);
-static void rtc_timer_remove(struct rtc_device *rtc, struct rtc_timer *timer);
+अटल पूर्णांक rtc_समयr_enqueue(काष्ठा rtc_device *rtc, काष्ठा rtc_समयr *समयr);
+अटल व्योम rtc_समयr_हटाओ(काष्ठा rtc_device *rtc, काष्ठा rtc_समयr *समयr);
 
-static void rtc_add_offset(struct rtc_device *rtc, struct rtc_time *tm)
-{
-	time64_t secs;
+अटल व्योम rtc_add_offset(काष्ठा rtc_device *rtc, काष्ठा rtc_समय *पंचांग)
+अणु
+	समय64_t secs;
 
-	if (!rtc->offset_secs)
-		return;
+	अगर (!rtc->offset_secs)
+		वापस;
 
-	secs = rtc_tm_to_time64(tm);
+	secs = rtc_पंचांग_to_समय64(पंचांग);
 
 	/*
-	 * Since the reading time values from RTC device are always in the RTC
+	 * Since the पढ़ोing समय values from RTC device are always in the RTC
 	 * original valid range, but we need to skip the overlapped region
 	 * between expanded range and original range, which is no need to add
 	 * the offset.
 	 */
-	if ((rtc->start_secs > rtc->range_min && secs >= rtc->start_secs) ||
+	अगर ((rtc->start_secs > rtc->range_min && secs >= rtc->start_secs) ||
 	    (rtc->start_secs < rtc->range_min &&
 	     secs <= (rtc->start_secs + rtc->range_max - rtc->range_min)))
-		return;
+		वापस;
 
-	rtc_time64_to_tm(secs + rtc->offset_secs, tm);
-}
+	rtc_समय64_to_पंचांग(secs + rtc->offset_secs, पंचांग);
+पूर्ण
 
-static void rtc_subtract_offset(struct rtc_device *rtc, struct rtc_time *tm)
-{
-	time64_t secs;
+अटल व्योम rtc_subtract_offset(काष्ठा rtc_device *rtc, काष्ठा rtc_समय *पंचांग)
+अणु
+	समय64_t secs;
 
-	if (!rtc->offset_secs)
-		return;
+	अगर (!rtc->offset_secs)
+		वापस;
 
-	secs = rtc_tm_to_time64(tm);
+	secs = rtc_पंचांग_to_समय64(पंचांग);
 
 	/*
-	 * If the setting time values are in the valid range of RTC hardware
-	 * device, then no need to subtract the offset when setting time to RTC
-	 * device. Otherwise we need to subtract the offset to make the time
-	 * values are valid for RTC hardware device.
+	 * If the setting समय values are in the valid range of RTC hardware
+	 * device, then no need to subtract the offset when setting समय to RTC
+	 * device. Otherwise we need to subtract the offset to make the समय
+	 * values are valid क्रम RTC hardware device.
 	 */
-	if (secs >= rtc->range_min && secs <= rtc->range_max)
-		return;
+	अगर (secs >= rtc->range_min && secs <= rtc->range_max)
+		वापस;
 
-	rtc_time64_to_tm(secs - rtc->offset_secs, tm);
-}
+	rtc_समय64_to_पंचांग(secs - rtc->offset_secs, पंचांग);
+पूर्ण
 
-static int rtc_valid_range(struct rtc_device *rtc, struct rtc_time *tm)
-{
-	if (rtc->range_min != rtc->range_max) {
-		time64_t time = rtc_tm_to_time64(tm);
-		time64_t range_min = rtc->set_start_time ? rtc->start_secs :
+अटल पूर्णांक rtc_valid_range(काष्ठा rtc_device *rtc, काष्ठा rtc_समय *पंचांग)
+अणु
+	अगर (rtc->range_min != rtc->range_max) अणु
+		समय64_t समय = rtc_पंचांग_to_समय64(पंचांग);
+		समय64_t range_min = rtc->set_start_समय ? rtc->start_secs :
 			rtc->range_min;
-		timeu64_t range_max = rtc->set_start_time ?
+		समयu64_t range_max = rtc->set_start_समय ?
 			(rtc->start_secs + rtc->range_max - rtc->range_min) :
 			rtc->range_max;
 
-		if (time < range_min || time > range_max)
-			return -ERANGE;
-	}
+		अगर (समय < range_min || समय > range_max)
+			वापस -दुस्फल;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __rtc_read_time(struct rtc_device *rtc, struct rtc_time *tm)
-{
-	int err;
+अटल पूर्णांक __rtc_पढ़ो_समय(काष्ठा rtc_device *rtc, काष्ठा rtc_समय *पंचांग)
+अणु
+	पूर्णांक err;
 
-	if (!rtc->ops) {
+	अगर (!rtc->ops) अणु
 		err = -ENODEV;
-	} else if (!rtc->ops->read_time) {
+	पूर्ण अन्यथा अगर (!rtc->ops->पढ़ो_समय) अणु
 		err = -EINVAL;
-	} else {
-		memset(tm, 0, sizeof(struct rtc_time));
-		err = rtc->ops->read_time(rtc->dev.parent, tm);
-		if (err < 0) {
+	पूर्ण अन्यथा अणु
+		स_रखो(पंचांग, 0, माप(काष्ठा rtc_समय));
+		err = rtc->ops->पढ़ो_समय(rtc->dev.parent, पंचांग);
+		अगर (err < 0) अणु
 			dev_dbg(&rtc->dev, "read_time: fail to read: %d\n",
 				err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		rtc_add_offset(rtc, tm);
+		rtc_add_offset(rtc, पंचांग);
 
-		err = rtc_valid_tm(tm);
-		if (err < 0)
+		err = rtc_valid_पंचांग(पंचांग);
+		अगर (err < 0)
 			dev_dbg(&rtc->dev, "read_time: rtc_time isn't valid\n");
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-int rtc_read_time(struct rtc_device *rtc, struct rtc_time *tm)
-{
-	int err;
+पूर्णांक rtc_पढ़ो_समय(काष्ठा rtc_device *rtc, काष्ठा rtc_समय *पंचांग)
+अणु
+	पूर्णांक err;
 
-	err = mutex_lock_interruptible(&rtc->ops_lock);
-	if (err)
-		return err;
+	err = mutex_lock_पूर्णांकerruptible(&rtc->ops_lock);
+	अगर (err)
+		वापस err;
 
-	err = __rtc_read_time(rtc, tm);
+	err = __rtc_पढ़ो_समय(rtc, पंचांग);
 	mutex_unlock(&rtc->ops_lock);
 
-	trace_rtc_read_time(rtc_tm_to_time64(tm), err);
-	return err;
-}
-EXPORT_SYMBOL_GPL(rtc_read_time);
+	trace_rtc_पढ़ो_समय(rtc_पंचांग_to_समय64(पंचांग), err);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(rtc_पढ़ो_समय);
 
-int rtc_set_time(struct rtc_device *rtc, struct rtc_time *tm)
-{
-	int err, uie;
+पूर्णांक rtc_set_समय(काष्ठा rtc_device *rtc, काष्ठा rtc_समय *पंचांग)
+अणु
+	पूर्णांक err, uie;
 
-	err = rtc_valid_tm(tm);
-	if (err != 0)
-		return err;
+	err = rtc_valid_पंचांग(पंचांग);
+	अगर (err != 0)
+		वापस err;
 
-	err = rtc_valid_range(rtc, tm);
-	if (err)
-		return err;
+	err = rtc_valid_range(rtc, पंचांग);
+	अगर (err)
+		वापस err;
 
-	rtc_subtract_offset(rtc, tm);
+	rtc_subtract_offset(rtc, पंचांग);
 
-#ifdef CONFIG_RTC_INTF_DEV_UIE_EMUL
-	uie = rtc->uie_rtctimer.enabled || rtc->uie_irq_active;
-#else
-	uie = rtc->uie_rtctimer.enabled;
-#endif
-	if (uie) {
+#अगर_घोषित CONFIG_RTC_INTF_DEV_UIE_EMUL
+	uie = rtc->uie_rtस_समयr.enabled || rtc->uie_irq_active;
+#अन्यथा
+	uie = rtc->uie_rtस_समयr.enabled;
+#पूर्ण_अगर
+	अगर (uie) अणु
 		err = rtc_update_irq_enable(rtc, 0);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	err = mutex_lock_interruptible(&rtc->ops_lock);
-	if (err)
-		return err;
+	err = mutex_lock_पूर्णांकerruptible(&rtc->ops_lock);
+	अगर (err)
+		वापस err;
 
-	if (!rtc->ops)
+	अगर (!rtc->ops)
 		err = -ENODEV;
-	else if (rtc->ops->set_time)
-		err = rtc->ops->set_time(rtc->dev.parent, tm);
-	else
+	अन्यथा अगर (rtc->ops->set_समय)
+		err = rtc->ops->set_समय(rtc->dev.parent, पंचांग);
+	अन्यथा
 		err = -EINVAL;
 
 	pm_stay_awake(rtc->dev.parent);
 	mutex_unlock(&rtc->ops_lock);
-	/* A timer might have just expired */
+	/* A समयr might have just expired */
 	schedule_work(&rtc->irqwork);
 
-	if (uie) {
+	अगर (uie) अणु
 		err = rtc_update_irq_enable(rtc, 1);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	trace_rtc_set_time(rtc_tm_to_time64(tm), err);
-	return err;
-}
-EXPORT_SYMBOL_GPL(rtc_set_time);
+	trace_rtc_set_समय(rtc_पंचांग_to_समय64(पंचांग), err);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(rtc_set_समय);
 
-static int rtc_read_alarm_internal(struct rtc_device *rtc,
-				   struct rtc_wkalrm *alarm)
-{
-	int err;
+अटल पूर्णांक rtc_पढ़ो_alarm_पूर्णांकernal(काष्ठा rtc_device *rtc,
+				   काष्ठा rtc_wkalrm *alarm)
+अणु
+	पूर्णांक err;
 
-	err = mutex_lock_interruptible(&rtc->ops_lock);
-	if (err)
-		return err;
+	err = mutex_lock_पूर्णांकerruptible(&rtc->ops_lock);
+	अगर (err)
+		वापस err;
 
-	if (!rtc->ops) {
+	अगर (!rtc->ops) अणु
 		err = -ENODEV;
-	} else if (!test_bit(RTC_FEATURE_ALARM, rtc->features) || !rtc->ops->read_alarm) {
+	पूर्ण अन्यथा अगर (!test_bit(RTC_FEATURE_ALARM, rtc->features) || !rtc->ops->पढ़ो_alarm) अणु
 		err = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		alarm->enabled = 0;
 		alarm->pending = 0;
-		alarm->time.tm_sec = -1;
-		alarm->time.tm_min = -1;
-		alarm->time.tm_hour = -1;
-		alarm->time.tm_mday = -1;
-		alarm->time.tm_mon = -1;
-		alarm->time.tm_year = -1;
-		alarm->time.tm_wday = -1;
-		alarm->time.tm_yday = -1;
-		alarm->time.tm_isdst = -1;
-		err = rtc->ops->read_alarm(rtc->dev.parent, alarm);
-	}
+		alarm->समय.पंचांग_sec = -1;
+		alarm->समय.पंचांग_min = -1;
+		alarm->समय.पंचांग_hour = -1;
+		alarm->समय.पंचांग_mday = -1;
+		alarm->समय.पंचांग_mon = -1;
+		alarm->समय.पंचांग_year = -1;
+		alarm->समय.पंचांग_wday = -1;
+		alarm->समय.पंचांग_yday = -1;
+		alarm->समय.पंचांग_isdst = -1;
+		err = rtc->ops->पढ़ो_alarm(rtc->dev.parent, alarm);
+	पूर्ण
 
 	mutex_unlock(&rtc->ops_lock);
 
-	trace_rtc_read_alarm(rtc_tm_to_time64(&alarm->time), err);
-	return err;
-}
+	trace_rtc_पढ़ो_alarm(rtc_पंचांग_to_समय64(&alarm->समय), err);
+	वापस err;
+पूर्ण
 
-int __rtc_read_alarm(struct rtc_device *rtc, struct rtc_wkalrm *alarm)
-{
-	int err;
-	struct rtc_time before, now;
-	int first_time = 1;
-	time64_t t_now, t_alm;
-	enum { none, day, month, year } missing = none;
-	unsigned int days;
+पूर्णांक __rtc_पढ़ो_alarm(काष्ठा rtc_device *rtc, काष्ठा rtc_wkalrm *alarm)
+अणु
+	पूर्णांक err;
+	काष्ठा rtc_समय beक्रमe, now;
+	पूर्णांक first_समय = 1;
+	समय64_t t_now, t_alm;
+	क्रमागत अणु none, day, month, year पूर्ण missing = none;
+	अचिन्हित पूर्णांक days;
 
-	/* The lower level RTC driver may return -1 in some fields,
-	 * creating invalid alarm->time values, for reasons like:
+	/* The lower level RTC driver may वापस -1 in some fields,
+	 * creating invalid alarm->समय values, क्रम reasons like:
 	 *
 	 *   - The hardware may not be capable of filling them in;
-	 *     many alarms match only on time-of-day fields, not
+	 *     many alarms match only on समय-of-day fields, not
 	 *     day/month/year calendar data.
 	 *
 	 *   - Some hardware uses illegal values as "wildcard" match
@@ -231,504 +232,504 @@ int __rtc_read_alarm(struct rtc_device *rtc, struct rtc_wkalrm *alarm)
 	 *     Linux uses only oneshot alarms.
 	 *
 	 * When we see that here, we deal with it by using values from
-	 * a current RTC timestamp for any missing (-1) values.  The
+	 * a current RTC बारtamp क्रम any missing (-1) values.  The
 	 * RTC driver prevents "periodic alarm" modes.
 	 *
-	 * But this can be racey, because some fields of the RTC timestamp
-	 * may have wrapped in the interval since we read the RTC alarm,
+	 * But this can be racey, because some fields of the RTC बारtamp
+	 * may have wrapped in the पूर्णांकerval since we पढ़ो the RTC alarm,
 	 * which would lead to us inserting inconsistent values in place
 	 * of the -1 fields.
 	 *
-	 * Reading the alarm and timestamp in the reverse sequence
+	 * Reading the alarm and बारtamp in the reverse sequence
 	 * would have the same race condition, and not solve the issue.
 	 *
-	 * So, we must first read the RTC timestamp,
-	 * then read the RTC alarm value,
-	 * and then read a second RTC timestamp.
+	 * So, we must first पढ़ो the RTC बारtamp,
+	 * then पढ़ो the RTC alarm value,
+	 * and then पढ़ो a second RTC बारtamp.
 	 *
-	 * If any fields of the second timestamp have changed
-	 * when compared with the first timestamp, then we know
-	 * our timestamp may be inconsistent with that used by
-	 * the low-level rtc_read_alarm_internal() function.
+	 * If any fields of the second बारtamp have changed
+	 * when compared with the first बारtamp, then we know
+	 * our बारtamp may be inconsistent with that used by
+	 * the low-level rtc_पढ़ो_alarm_पूर्णांकernal() function.
 	 *
-	 * So, when the two timestamps disagree, we just loop and do
+	 * So, when the two बारtamps disagree, we just loop and करो
 	 * the process again to get a fully consistent set of values.
 	 *
-	 * This could all instead be done in the lower level driver,
+	 * This could all instead be करोne in the lower level driver,
 	 * but since more than one lower level RTC implementation needs it,
-	 * then it's probably best best to do it here instead of there..
+	 * then it's probably best best to करो it here instead of there..
 	 */
 
-	/* Get the "before" timestamp */
-	err = rtc_read_time(rtc, &before);
-	if (err < 0)
-		return err;
-	do {
-		if (!first_time)
-			memcpy(&before, &now, sizeof(struct rtc_time));
-		first_time = 0;
+	/* Get the "before" बारtamp */
+	err = rtc_पढ़ो_समय(rtc, &beक्रमe);
+	अगर (err < 0)
+		वापस err;
+	करो अणु
+		अगर (!first_समय)
+			स_नकल(&beक्रमe, &now, माप(काष्ठा rtc_समय));
+		first_समय = 0;
 
 		/* get the RTC alarm values, which may be incomplete */
-		err = rtc_read_alarm_internal(rtc, alarm);
-		if (err)
-			return err;
+		err = rtc_पढ़ो_alarm_पूर्णांकernal(rtc, alarm);
+		अगर (err)
+			वापस err;
 
 		/* full-function RTCs won't have such missing fields */
-		if (rtc_valid_tm(&alarm->time) == 0) {
-			rtc_add_offset(rtc, &alarm->time);
-			return 0;
-		}
+		अगर (rtc_valid_पंचांग(&alarm->समय) == 0) अणु
+			rtc_add_offset(rtc, &alarm->समय);
+			वापस 0;
+		पूर्ण
 
-		/* get the "after" timestamp, to detect wrapped fields */
-		err = rtc_read_time(rtc, &now);
-		if (err < 0)
-			return err;
+		/* get the "after" बारtamp, to detect wrapped fields */
+		err = rtc_पढ़ो_समय(rtc, &now);
+		अगर (err < 0)
+			वापस err;
 
-		/* note that tm_sec is a "don't care" value here: */
-	} while (before.tm_min  != now.tm_min ||
-		 before.tm_hour != now.tm_hour ||
-		 before.tm_mon  != now.tm_mon ||
-		 before.tm_year != now.tm_year);
+		/* note that पंचांग_sec is a "don't care" value here: */
+	पूर्ण जबतक (beक्रमe.पंचांग_min  != now.पंचांग_min ||
+		 beक्रमe.पंचांग_hour != now.पंचांग_hour ||
+		 beक्रमe.पंचांग_mon  != now.पंचांग_mon ||
+		 beक्रमe.पंचांग_year != now.पंचांग_year);
 
-	/* Fill in the missing alarm fields using the timestamp; we
-	 * know there's at least one since alarm->time is invalid.
+	/* Fill in the missing alarm fields using the बारtamp; we
+	 * know there's at least one since alarm->समय is invalid.
 	 */
-	if (alarm->time.tm_sec == -1)
-		alarm->time.tm_sec = now.tm_sec;
-	if (alarm->time.tm_min == -1)
-		alarm->time.tm_min = now.tm_min;
-	if (alarm->time.tm_hour == -1)
-		alarm->time.tm_hour = now.tm_hour;
+	अगर (alarm->समय.पंचांग_sec == -1)
+		alarm->समय.पंचांग_sec = now.पंचांग_sec;
+	अगर (alarm->समय.पंचांग_min == -1)
+		alarm->समय.पंचांग_min = now.पंचांग_min;
+	अगर (alarm->समय.पंचांग_hour == -1)
+		alarm->समय.पंचांग_hour = now.पंचांग_hour;
 
-	/* For simplicity, only support date rollover for now */
-	if (alarm->time.tm_mday < 1 || alarm->time.tm_mday > 31) {
-		alarm->time.tm_mday = now.tm_mday;
+	/* For simplicity, only support date rollover क्रम now */
+	अगर (alarm->समय.पंचांग_mday < 1 || alarm->समय.पंचांग_mday > 31) अणु
+		alarm->समय.पंचांग_mday = now.पंचांग_mday;
 		missing = day;
-	}
-	if ((unsigned int)alarm->time.tm_mon >= 12) {
-		alarm->time.tm_mon = now.tm_mon;
-		if (missing == none)
+	पूर्ण
+	अगर ((अचिन्हित पूर्णांक)alarm->समय.पंचांग_mon >= 12) अणु
+		alarm->समय.पंचांग_mon = now.पंचांग_mon;
+		अगर (missing == none)
 			missing = month;
-	}
-	if (alarm->time.tm_year == -1) {
-		alarm->time.tm_year = now.tm_year;
-		if (missing == none)
+	पूर्ण
+	अगर (alarm->समय.पंचांग_year == -1) अणु
+		alarm->समय.पंचांग_year = now.पंचांग_year;
+		अगर (missing == none)
 			missing = year;
-	}
+	पूर्ण
 
-	/* Can't proceed if alarm is still invalid after replacing
+	/* Can't proceed अगर alarm is still invalid after replacing
 	 * missing fields.
 	 */
-	err = rtc_valid_tm(&alarm->time);
-	if (err)
-		goto done;
+	err = rtc_valid_पंचांग(&alarm->समय);
+	अगर (err)
+		जाओ करोne;
 
 	/* with luck, no rollover is needed */
-	t_now = rtc_tm_to_time64(&now);
-	t_alm = rtc_tm_to_time64(&alarm->time);
-	if (t_now < t_alm)
-		goto done;
+	t_now = rtc_पंचांग_to_समय64(&now);
+	t_alm = rtc_पंचांग_to_समय64(&alarm->समय);
+	अगर (t_now < t_alm)
+		जाओ करोne;
 
-	switch (missing) {
-	/* 24 hour rollover ... if it's now 10am Monday, an alarm that
-	 * that will trigger at 5am will do so at 5am Tuesday, which
+	चयन (missing) अणु
+	/* 24 hour rollover ... अगर it's now 10am Monday, an alarm that
+	 * that will trigger at 5am will करो so at 5am Tuesday, which
 	 * could also be in the next month or year.  This is a common
-	 * case, especially for PCs.
+	 * हाल, especially क्रम PCs.
 	 */
-	case day:
+	हाल day:
 		dev_dbg(&rtc->dev, "alarm rollover: %s\n", "day");
 		t_alm += 24 * 60 * 60;
-		rtc_time64_to_tm(t_alm, &alarm->time);
-		break;
+		rtc_समय64_to_पंचांग(t_alm, &alarm->समय);
+		अवरोध;
 
-	/* Month rollover ... if it's the 31th, an alarm on the 3rd will
+	/* Month rollover ... अगर it's the 31th, an alarm on the 3rd will
 	 * be next month.  An alarm matching on the 30th, 29th, or 28th
 	 * may end up in the month after that!  Many newer PCs support
 	 * this type of alarm.
 	 */
-	case month:
+	हाल month:
 		dev_dbg(&rtc->dev, "alarm rollover: %s\n", "month");
-		do {
-			if (alarm->time.tm_mon < 11) {
-				alarm->time.tm_mon++;
-			} else {
-				alarm->time.tm_mon = 0;
-				alarm->time.tm_year++;
-			}
-			days = rtc_month_days(alarm->time.tm_mon,
-					      alarm->time.tm_year);
-		} while (days < alarm->time.tm_mday);
-		break;
+		करो अणु
+			अगर (alarm->समय.पंचांग_mon < 11) अणु
+				alarm->समय.पंचांग_mon++;
+			पूर्ण अन्यथा अणु
+				alarm->समय.पंचांग_mon = 0;
+				alarm->समय.पंचांग_year++;
+			पूर्ण
+			days = rtc_month_days(alarm->समय.पंचांग_mon,
+					      alarm->समय.पंचांग_year);
+		पूर्ण जबतक (days < alarm->समय.पंचांग_mday);
+		अवरोध;
 
-	/* Year rollover ... easy except for leap years! */
-	case year:
+	/* Year rollover ... easy except क्रम leap years! */
+	हाल year:
 		dev_dbg(&rtc->dev, "alarm rollover: %s\n", "year");
-		do {
-			alarm->time.tm_year++;
-		} while (!is_leap_year(alarm->time.tm_year + 1900) &&
-			 rtc_valid_tm(&alarm->time) != 0);
-		break;
+		करो अणु
+			alarm->समय.पंचांग_year++;
+		पूर्ण जबतक (!is_leap_year(alarm->समय.पंचांग_year + 1900) &&
+			 rtc_valid_पंचांग(&alarm->समय) != 0);
+		अवरोध;
 
-	default:
+	शेष:
 		dev_warn(&rtc->dev, "alarm rollover not handled\n");
-	}
+	पूर्ण
 
-	err = rtc_valid_tm(&alarm->time);
+	err = rtc_valid_पंचांग(&alarm->समय);
 
-done:
-	if (err)
+करोne:
+	अगर (err)
 		dev_warn(&rtc->dev, "invalid alarm value: %ptR\n",
-			 &alarm->time);
+			 &alarm->समय);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int rtc_read_alarm(struct rtc_device *rtc, struct rtc_wkalrm *alarm)
-{
-	int err;
+पूर्णांक rtc_पढ़ो_alarm(काष्ठा rtc_device *rtc, काष्ठा rtc_wkalrm *alarm)
+अणु
+	पूर्णांक err;
 
-	err = mutex_lock_interruptible(&rtc->ops_lock);
-	if (err)
-		return err;
-	if (!rtc->ops) {
+	err = mutex_lock_पूर्णांकerruptible(&rtc->ops_lock);
+	अगर (err)
+		वापस err;
+	अगर (!rtc->ops) अणु
 		err = -ENODEV;
-	} else if (!test_bit(RTC_FEATURE_ALARM, rtc->features) || !rtc->ops->read_alarm) {
+	पूर्ण अन्यथा अगर (!test_bit(RTC_FEATURE_ALARM, rtc->features) || !rtc->ops->पढ़ो_alarm) अणु
 		err = -EINVAL;
-	} else {
-		memset(alarm, 0, sizeof(struct rtc_wkalrm));
-		alarm->enabled = rtc->aie_timer.enabled;
-		alarm->time = rtc_ktime_to_tm(rtc->aie_timer.node.expires);
-	}
+	पूर्ण अन्यथा अणु
+		स_रखो(alarm, 0, माप(काष्ठा rtc_wkalrm));
+		alarm->enabled = rtc->aie_समयr.enabled;
+		alarm->समय = rtc_kसमय_प्रकारo_पंचांग(rtc->aie_समयr.node.expires);
+	पूर्ण
 	mutex_unlock(&rtc->ops_lock);
 
-	trace_rtc_read_alarm(rtc_tm_to_time64(&alarm->time), err);
-	return err;
-}
-EXPORT_SYMBOL_GPL(rtc_read_alarm);
+	trace_rtc_पढ़ो_alarm(rtc_पंचांग_to_समय64(&alarm->समय), err);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(rtc_पढ़ो_alarm);
 
-static int __rtc_set_alarm(struct rtc_device *rtc, struct rtc_wkalrm *alarm)
-{
-	struct rtc_time tm;
-	time64_t now, scheduled;
-	int err;
+अटल पूर्णांक __rtc_set_alarm(काष्ठा rtc_device *rtc, काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा rtc_समय पंचांग;
+	समय64_t now, scheduled;
+	पूर्णांक err;
 
-	err = rtc_valid_tm(&alarm->time);
-	if (err)
-		return err;
+	err = rtc_valid_पंचांग(&alarm->समय);
+	अगर (err)
+		वापस err;
 
-	scheduled = rtc_tm_to_time64(&alarm->time);
+	scheduled = rtc_पंचांग_to_समय64(&alarm->समय);
 
 	/* Make sure we're not setting alarms in the past */
-	err = __rtc_read_time(rtc, &tm);
-	if (err)
-		return err;
-	now = rtc_tm_to_time64(&tm);
-	if (scheduled <= now)
-		return -ETIME;
+	err = __rtc_पढ़ो_समय(rtc, &पंचांग);
+	अगर (err)
+		वापस err;
+	now = rtc_पंचांग_to_समय64(&पंचांग);
+	अगर (scheduled <= now)
+		वापस -ETIME;
 	/*
-	 * XXX - We just checked to make sure the alarm time is not
-	 * in the past, but there is still a race window where if
-	 * the is alarm set for the next second and the second ticks
-	 * over right here, before we set the alarm.
+	 * XXX - We just checked to make sure the alarm समय is not
+	 * in the past, but there is still a race winकरोw where अगर
+	 * the is alarm set क्रम the next second and the second ticks
+	 * over right here, beक्रमe we set the alarm.
 	 */
 
-	rtc_subtract_offset(rtc, &alarm->time);
+	rtc_subtract_offset(rtc, &alarm->समय);
 
-	if (!rtc->ops)
+	अगर (!rtc->ops)
 		err = -ENODEV;
-	else if (!test_bit(RTC_FEATURE_ALARM, rtc->features))
+	अन्यथा अगर (!test_bit(RTC_FEATURE_ALARM, rtc->features))
 		err = -EINVAL;
-	else
+	अन्यथा
 		err = rtc->ops->set_alarm(rtc->dev.parent, alarm);
 
-	trace_rtc_set_alarm(rtc_tm_to_time64(&alarm->time), err);
-	return err;
-}
+	trace_rtc_set_alarm(rtc_पंचांग_to_समय64(&alarm->समय), err);
+	वापस err;
+पूर्ण
 
-int rtc_set_alarm(struct rtc_device *rtc, struct rtc_wkalrm *alarm)
-{
-	int err;
+पूर्णांक rtc_set_alarm(काष्ठा rtc_device *rtc, काष्ठा rtc_wkalrm *alarm)
+अणु
+	पूर्णांक err;
 
-	if (!rtc->ops)
-		return -ENODEV;
-	else if (!test_bit(RTC_FEATURE_ALARM, rtc->features))
-		return -EINVAL;
+	अगर (!rtc->ops)
+		वापस -ENODEV;
+	अन्यथा अगर (!test_bit(RTC_FEATURE_ALARM, rtc->features))
+		वापस -EINVAL;
 
-	err = rtc_valid_tm(&alarm->time);
-	if (err != 0)
-		return err;
+	err = rtc_valid_पंचांग(&alarm->समय);
+	अगर (err != 0)
+		वापस err;
 
-	err = rtc_valid_range(rtc, &alarm->time);
-	if (err)
-		return err;
+	err = rtc_valid_range(rtc, &alarm->समय);
+	अगर (err)
+		वापस err;
 
-	err = mutex_lock_interruptible(&rtc->ops_lock);
-	if (err)
-		return err;
-	if (rtc->aie_timer.enabled)
-		rtc_timer_remove(rtc, &rtc->aie_timer);
+	err = mutex_lock_पूर्णांकerruptible(&rtc->ops_lock);
+	अगर (err)
+		वापस err;
+	अगर (rtc->aie_समयr.enabled)
+		rtc_समयr_हटाओ(rtc, &rtc->aie_समयr);
 
-	rtc->aie_timer.node.expires = rtc_tm_to_ktime(alarm->time);
-	rtc->aie_timer.period = 0;
-	if (alarm->enabled)
-		err = rtc_timer_enqueue(rtc, &rtc->aie_timer);
+	rtc->aie_समयr.node.expires = rtc_पंचांग_to_kसमय(alarm->समय);
+	rtc->aie_समयr.period = 0;
+	अगर (alarm->enabled)
+		err = rtc_समयr_enqueue(rtc, &rtc->aie_समयr);
 
 	mutex_unlock(&rtc->ops_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(rtc_set_alarm);
 
-/* Called once per device from rtc_device_register */
-int rtc_initialize_alarm(struct rtc_device *rtc, struct rtc_wkalrm *alarm)
-{
-	int err;
-	struct rtc_time now;
+/* Called once per device from rtc_device_रेजिस्टर */
+पूर्णांक rtc_initialize_alarm(काष्ठा rtc_device *rtc, काष्ठा rtc_wkalrm *alarm)
+अणु
+	पूर्णांक err;
+	काष्ठा rtc_समय now;
 
-	err = rtc_valid_tm(&alarm->time);
-	if (err != 0)
-		return err;
+	err = rtc_valid_पंचांग(&alarm->समय);
+	अगर (err != 0)
+		वापस err;
 
-	err = rtc_read_time(rtc, &now);
-	if (err)
-		return err;
+	err = rtc_पढ़ो_समय(rtc, &now);
+	अगर (err)
+		वापस err;
 
-	err = mutex_lock_interruptible(&rtc->ops_lock);
-	if (err)
-		return err;
+	err = mutex_lock_पूर्णांकerruptible(&rtc->ops_lock);
+	अगर (err)
+		वापस err;
 
-	rtc->aie_timer.node.expires = rtc_tm_to_ktime(alarm->time);
-	rtc->aie_timer.period = 0;
+	rtc->aie_समयr.node.expires = rtc_पंचांग_to_kसमय(alarm->समय);
+	rtc->aie_समयr.period = 0;
 
-	/* Alarm has to be enabled & in the future for us to enqueue it */
-	if (alarm->enabled && (rtc_tm_to_ktime(now) <
-			 rtc->aie_timer.node.expires)) {
-		rtc->aie_timer.enabled = 1;
-		timerqueue_add(&rtc->timerqueue, &rtc->aie_timer.node);
-		trace_rtc_timer_enqueue(&rtc->aie_timer);
-	}
+	/* Alarm has to be enabled & in the future क्रम us to enqueue it */
+	अगर (alarm->enabled && (rtc_पंचांग_to_kसमय(now) <
+			 rtc->aie_समयr.node.expires)) अणु
+		rtc->aie_समयr.enabled = 1;
+		समयrqueue_add(&rtc->समयrqueue, &rtc->aie_समयr.node);
+		trace_rtc_समयr_enqueue(&rtc->aie_समयr);
+	पूर्ण
 	mutex_unlock(&rtc->ops_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(rtc_initialize_alarm);
 
-int rtc_alarm_irq_enable(struct rtc_device *rtc, unsigned int enabled)
-{
-	int err;
+पूर्णांक rtc_alarm_irq_enable(काष्ठा rtc_device *rtc, अचिन्हित पूर्णांक enabled)
+अणु
+	पूर्णांक err;
 
-	err = mutex_lock_interruptible(&rtc->ops_lock);
-	if (err)
-		return err;
+	err = mutex_lock_पूर्णांकerruptible(&rtc->ops_lock);
+	अगर (err)
+		वापस err;
 
-	if (rtc->aie_timer.enabled != enabled) {
-		if (enabled)
-			err = rtc_timer_enqueue(rtc, &rtc->aie_timer);
-		else
-			rtc_timer_remove(rtc, &rtc->aie_timer);
-	}
+	अगर (rtc->aie_समयr.enabled != enabled) अणु
+		अगर (enabled)
+			err = rtc_समयr_enqueue(rtc, &rtc->aie_समयr);
+		अन्यथा
+			rtc_समयr_हटाओ(rtc, &rtc->aie_समयr);
+	पूर्ण
 
-	if (err)
+	अगर (err)
 		/* nothing */;
-	else if (!rtc->ops)
+	अन्यथा अगर (!rtc->ops)
 		err = -ENODEV;
-	else if (!test_bit(RTC_FEATURE_ALARM, rtc->features) || !rtc->ops->alarm_irq_enable)
+	अन्यथा अगर (!test_bit(RTC_FEATURE_ALARM, rtc->features) || !rtc->ops->alarm_irq_enable)
 		err = -EINVAL;
-	else
+	अन्यथा
 		err = rtc->ops->alarm_irq_enable(rtc->dev.parent, enabled);
 
 	mutex_unlock(&rtc->ops_lock);
 
 	trace_rtc_alarm_irq_enable(enabled, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(rtc_alarm_irq_enable);
 
-int rtc_update_irq_enable(struct rtc_device *rtc, unsigned int enabled)
-{
-	int err;
+पूर्णांक rtc_update_irq_enable(काष्ठा rtc_device *rtc, अचिन्हित पूर्णांक enabled)
+अणु
+	पूर्णांक err;
 
-	err = mutex_lock_interruptible(&rtc->ops_lock);
-	if (err)
-		return err;
+	err = mutex_lock_पूर्णांकerruptible(&rtc->ops_lock);
+	अगर (err)
+		वापस err;
 
-#ifdef CONFIG_RTC_INTF_DEV_UIE_EMUL
-	if (enabled == 0 && rtc->uie_irq_active) {
+#अगर_घोषित CONFIG_RTC_INTF_DEV_UIE_EMUL
+	अगर (enabled == 0 && rtc->uie_irq_active) अणु
 		mutex_unlock(&rtc->ops_lock);
-		return rtc_dev_update_irq_enable_emul(rtc, 0);
-	}
-#endif
+		वापस rtc_dev_update_irq_enable_emul(rtc, 0);
+	पूर्ण
+#पूर्ण_अगर
 	/* make sure we're changing state */
-	if (rtc->uie_rtctimer.enabled == enabled)
-		goto out;
+	अगर (rtc->uie_rtस_समयr.enabled == enabled)
+		जाओ out;
 
-	if (rtc->uie_unsupported || !test_bit(RTC_FEATURE_ALARM, rtc->features)) {
+	अगर (rtc->uie_unsupported || !test_bit(RTC_FEATURE_ALARM, rtc->features)) अणु
 		mutex_unlock(&rtc->ops_lock);
-#ifdef CONFIG_RTC_INTF_DEV_UIE_EMUL
-		return rtc_dev_update_irq_enable_emul(rtc, enabled);
-#else
-		return -EINVAL;
-#endif
-	}
+#अगर_घोषित CONFIG_RTC_INTF_DEV_UIE_EMUL
+		वापस rtc_dev_update_irq_enable_emul(rtc, enabled);
+#अन्यथा
+		वापस -EINVAL;
+#पूर्ण_अगर
+	पूर्ण
 
-	if (enabled) {
-		struct rtc_time tm;
-		ktime_t now, onesec;
+	अगर (enabled) अणु
+		काष्ठा rtc_समय पंचांग;
+		kसमय_प्रकार now, onesec;
 
-		err = __rtc_read_time(rtc, &tm);
-		if (err)
-			goto out;
-		onesec = ktime_set(1, 0);
-		now = rtc_tm_to_ktime(tm);
-		rtc->uie_rtctimer.node.expires = ktime_add(now, onesec);
-		rtc->uie_rtctimer.period = ktime_set(1, 0);
-		err = rtc_timer_enqueue(rtc, &rtc->uie_rtctimer);
-	} else {
-		rtc_timer_remove(rtc, &rtc->uie_rtctimer);
-	}
+		err = __rtc_पढ़ो_समय(rtc, &पंचांग);
+		अगर (err)
+			जाओ out;
+		onesec = kसमय_set(1, 0);
+		now = rtc_पंचांग_to_kसमय(पंचांग);
+		rtc->uie_rtस_समयr.node.expires = kसमय_add(now, onesec);
+		rtc->uie_rtस_समयr.period = kसमय_set(1, 0);
+		err = rtc_समयr_enqueue(rtc, &rtc->uie_rtस_समयr);
+	पूर्ण अन्यथा अणु
+		rtc_समयr_हटाओ(rtc, &rtc->uie_rtस_समयr);
+	पूर्ण
 
 out:
 	mutex_unlock(&rtc->ops_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(rtc_update_irq_enable);
 
 /**
  * rtc_handle_legacy_irq - AIE, UIE and PIE event hook
- * @rtc: pointer to the rtc device
+ * @rtc: poपूर्णांकer to the rtc device
  * @num: number of occurence of the event
  * @mode: type of the event, RTC_AF, RTC_UF of RTC_PF
  *
- * This function is called when an AIE, UIE or PIE mode interrupt
+ * This function is called when an AIE, UIE or PIE mode पूर्णांकerrupt
  * has occurred (or been emulated).
  *
  */
-void rtc_handle_legacy_irq(struct rtc_device *rtc, int num, int mode)
-{
-	unsigned long flags;
+व्योम rtc_handle_legacy_irq(काष्ठा rtc_device *rtc, पूर्णांक num, पूर्णांक mode)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/* mark one irq of the appropriate mode */
 	spin_lock_irqsave(&rtc->irq_lock, flags);
 	rtc->irq_data = (rtc->irq_data + (num << 8)) | (RTC_IRQF | mode);
 	spin_unlock_irqrestore(&rtc->irq_lock, flags);
 
-	wake_up_interruptible(&rtc->irq_queue);
-	kill_fasync(&rtc->async_queue, SIGIO, POLL_IN);
-}
+	wake_up_पूर्णांकerruptible(&rtc->irq_queue);
+	समाप्त_fasync(&rtc->async_queue, SIGIO, POLL_IN);
+पूर्ण
 
 /**
- * rtc_aie_update_irq - AIE mode rtctimer hook
- * @rtc: pointer to the rtc_device
+ * rtc_aie_update_irq - AIE mode rtस_समयr hook
+ * @rtc: poपूर्णांकer to the rtc_device
  *
- * This functions is called when the aie_timer expires.
+ * This functions is called when the aie_समयr expires.
  */
-void rtc_aie_update_irq(struct rtc_device *rtc)
-{
+व्योम rtc_aie_update_irq(काष्ठा rtc_device *rtc)
+अणु
 	rtc_handle_legacy_irq(rtc, 1, RTC_AF);
-}
+पूर्ण
 
 /**
- * rtc_uie_update_irq - UIE mode rtctimer hook
- * @rtc: pointer to the rtc_device
+ * rtc_uie_update_irq - UIE mode rtस_समयr hook
+ * @rtc: poपूर्णांकer to the rtc_device
  *
- * This functions is called when the uie_timer expires.
+ * This functions is called when the uie_समयr expires.
  */
-void rtc_uie_update_irq(struct rtc_device *rtc)
-{
+व्योम rtc_uie_update_irq(काष्ठा rtc_device *rtc)
+अणु
 	rtc_handle_legacy_irq(rtc, 1,  RTC_UF);
-}
+पूर्ण
 
 /**
- * rtc_pie_update_irq - PIE mode hrtimer hook
- * @timer: pointer to the pie mode hrtimer
+ * rtc_pie_update_irq - PIE mode hrसमयr hook
+ * @समयr: poपूर्णांकer to the pie mode hrसमयr
  *
- * This function is used to emulate PIE mode interrupts
- * using an hrtimer. This function is called when the periodic
- * hrtimer expires.
+ * This function is used to emulate PIE mode पूर्णांकerrupts
+ * using an hrसमयr. This function is called when the periodic
+ * hrसमयr expires.
  */
-enum hrtimer_restart rtc_pie_update_irq(struct hrtimer *timer)
-{
-	struct rtc_device *rtc;
-	ktime_t period;
+क्रमागत hrसमयr_restart rtc_pie_update_irq(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा rtc_device *rtc;
+	kसमय_प्रकार period;
 	u64 count;
 
-	rtc = container_of(timer, struct rtc_device, pie_timer);
+	rtc = container_of(समयr, काष्ठा rtc_device, pie_समयr);
 
 	period = NSEC_PER_SEC / rtc->irq_freq;
-	count = hrtimer_forward_now(timer, period);
+	count = hrसमयr_क्रमward_now(समयr, period);
 
 	rtc_handle_legacy_irq(rtc, count, RTC_PF);
 
-	return HRTIMER_RESTART;
-}
+	वापस HRTIMER_RESTART;
+पूर्ण
 
 /**
- * rtc_update_irq - Triggered when a RTC interrupt occurs.
+ * rtc_update_irq - Triggered when a RTC पूर्णांकerrupt occurs.
  * @rtc: the rtc device
  * @num: how many irqs are being reported (usually one)
  * @events: mask of RTC_IRQF with one or more of RTC_PF, RTC_AF, RTC_UF
  * Context: any
  */
-void rtc_update_irq(struct rtc_device *rtc,
-		    unsigned long num, unsigned long events)
-{
-	if (IS_ERR_OR_NULL(rtc))
-		return;
+व्योम rtc_update_irq(काष्ठा rtc_device *rtc,
+		    अचिन्हित दीर्घ num, अचिन्हित दीर्घ events)
+अणु
+	अगर (IS_ERR_OR_शून्य(rtc))
+		वापस;
 
 	pm_stay_awake(rtc->dev.parent);
 	schedule_work(&rtc->irqwork);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rtc_update_irq);
 
-struct rtc_device *rtc_class_open(const char *name)
-{
-	struct device *dev;
-	struct rtc_device *rtc = NULL;
+काष्ठा rtc_device *rtc_class_खोलो(स्थिर अक्षर *name)
+अणु
+	काष्ठा device *dev;
+	काष्ठा rtc_device *rtc = शून्य;
 
 	dev = class_find_device_by_name(rtc_class, name);
-	if (dev)
+	अगर (dev)
 		rtc = to_rtc_device(dev);
 
-	if (rtc) {
-		if (!try_module_get(rtc->owner)) {
+	अगर (rtc) अणु
+		अगर (!try_module_get(rtc->owner)) अणु
 			put_device(dev);
-			rtc = NULL;
-		}
-	}
+			rtc = शून्य;
+		पूर्ण
+	पूर्ण
 
-	return rtc;
-}
-EXPORT_SYMBOL_GPL(rtc_class_open);
+	वापस rtc;
+पूर्ण
+EXPORT_SYMBOL_GPL(rtc_class_खोलो);
 
-void rtc_class_close(struct rtc_device *rtc)
-{
+व्योम rtc_class_बंद(काष्ठा rtc_device *rtc)
+अणु
 	module_put(rtc->owner);
 	put_device(&rtc->dev);
-}
-EXPORT_SYMBOL_GPL(rtc_class_close);
+पूर्ण
+EXPORT_SYMBOL_GPL(rtc_class_बंद);
 
-static int rtc_update_hrtimer(struct rtc_device *rtc, int enabled)
-{
+अटल पूर्णांक rtc_update_hrसमयr(काष्ठा rtc_device *rtc, पूर्णांक enabled)
+अणु
 	/*
-	 * We always cancel the timer here first, because otherwise
-	 * we could run into BUG_ON(timer->state != HRTIMER_STATE_CALLBACK);
-	 * when we manage to start the timer before the callback
-	 * returns HRTIMER_RESTART.
+	 * We always cancel the समयr here first, because otherwise
+	 * we could run पूर्णांकo BUG_ON(समयr->state != HRTIMER_STATE_CALLBACK);
+	 * when we manage to start the समयr beक्रमe the callback
+	 * वापसs HRTIMER_RESTART.
 	 *
-	 * We cannot use hrtimer_cancel() here as a running callback
-	 * could be blocked on rtc->irq_task_lock and hrtimer_cancel()
-	 * would spin forever.
+	 * We cannot use hrसमयr_cancel() here as a running callback
+	 * could be blocked on rtc->irq_task_lock and hrसमयr_cancel()
+	 * would spin क्रमever.
 	 */
-	if (hrtimer_try_to_cancel(&rtc->pie_timer) < 0)
-		return -1;
+	अगर (hrसमयr_try_to_cancel(&rtc->pie_समयr) < 0)
+		वापस -1;
 
-	if (enabled) {
-		ktime_t period = NSEC_PER_SEC / rtc->irq_freq;
+	अगर (enabled) अणु
+		kसमय_प्रकार period = NSEC_PER_SEC / rtc->irq_freq;
 
-		hrtimer_start(&rtc->pie_timer, period, HRTIMER_MODE_REL);
-	}
-	return 0;
-}
+		hrसमयr_start(&rtc->pie_समयr, period, HRTIMER_MODE_REL);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * rtc_irq_set_state - enable/disable 2^N Hz periodic IRQs
@@ -737,23 +738,23 @@ static int rtc_update_hrtimer(struct rtc_device *rtc, int enabled)
  * Context: any
  *
  * Note that rtc_irq_set_freq() should previously have been used to
- * specify the desired frequency of periodic IRQ.
+ * specअगरy the desired frequency of periodic IRQ.
  */
-int rtc_irq_set_state(struct rtc_device *rtc, int enabled)
-{
-	int err = 0;
+पूर्णांक rtc_irq_set_state(काष्ठा rtc_device *rtc, पूर्णांक enabled)
+अणु
+	पूर्णांक err = 0;
 
-	while (rtc_update_hrtimer(rtc, enabled) < 0)
+	जबतक (rtc_update_hrसमयr(rtc, enabled) < 0)
 		cpu_relax();
 
 	rtc->pie_enabled = enabled;
 
 	trace_rtc_irq_set_state(enabled, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * rtc_irq_set_freq - set 2^N Hz periodic IRQ frequency for IRQ
+ * rtc_irq_set_freq - set 2^N Hz periodic IRQ frequency क्रम IRQ
  * @rtc: the rtc device
  * @freq: positive frequency
  * Context: any
@@ -761,312 +762,312 @@ int rtc_irq_set_state(struct rtc_device *rtc, int enabled)
  * Note that rtc_irq_set_state() is used to enable or disable the
  * periodic IRQs.
  */
-int rtc_irq_set_freq(struct rtc_device *rtc, int freq)
-{
-	int err = 0;
+पूर्णांक rtc_irq_set_freq(काष्ठा rtc_device *rtc, पूर्णांक freq)
+अणु
+	पूर्णांक err = 0;
 
-	if (freq <= 0 || freq > RTC_MAX_FREQ)
-		return -EINVAL;
+	अगर (freq <= 0 || freq > RTC_MAX_FREQ)
+		वापस -EINVAL;
 
 	rtc->irq_freq = freq;
-	while (rtc->pie_enabled && rtc_update_hrtimer(rtc, 1) < 0)
+	जबतक (rtc->pie_enabled && rtc_update_hrसमयr(rtc, 1) < 0)
 		cpu_relax();
 
 	trace_rtc_irq_set_freq(freq, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * rtc_timer_enqueue - Adds a rtc_timer to the rtc_device timerqueue
+ * rtc_समयr_enqueue - Adds a rtc_समयr to the rtc_device समयrqueue
  * @rtc: rtc device
- * @timer: timer being added.
+ * @समयr: समयr being added.
  *
- * Enqueues a timer onto the rtc devices timerqueue and sets
+ * Enqueues a समयr onto the rtc devices समयrqueue and sets
  * the next alarm event appropriately.
  *
- * Sets the enabled bit on the added timer.
+ * Sets the enabled bit on the added समयr.
  *
- * Must hold ops_lock for proper serialization of timerqueue
+ * Must hold ops_lock क्रम proper serialization of समयrqueue
  */
-static int rtc_timer_enqueue(struct rtc_device *rtc, struct rtc_timer *timer)
-{
-	struct timerqueue_node *next = timerqueue_getnext(&rtc->timerqueue);
-	struct rtc_time tm;
-	ktime_t now;
+अटल पूर्णांक rtc_समयr_enqueue(काष्ठा rtc_device *rtc, काष्ठा rtc_समयr *समयr)
+अणु
+	काष्ठा समयrqueue_node *next = समयrqueue_getnext(&rtc->समयrqueue);
+	काष्ठा rtc_समय पंचांग;
+	kसमय_प्रकार now;
 
-	timer->enabled = 1;
-	__rtc_read_time(rtc, &tm);
-	now = rtc_tm_to_ktime(tm);
+	समयr->enabled = 1;
+	__rtc_पढ़ो_समय(rtc, &पंचांग);
+	now = rtc_पंचांग_to_kसमय(पंचांग);
 
-	/* Skip over expired timers */
-	while (next) {
-		if (next->expires >= now)
-			break;
-		next = timerqueue_iterate_next(next);
-	}
+	/* Skip over expired समयrs */
+	जबतक (next) अणु
+		अगर (next->expires >= now)
+			अवरोध;
+		next = समयrqueue_iterate_next(next);
+	पूर्ण
 
-	timerqueue_add(&rtc->timerqueue, &timer->node);
-	trace_rtc_timer_enqueue(timer);
-	if (!next || ktime_before(timer->node.expires, next->expires)) {
-		struct rtc_wkalrm alarm;
-		int err;
+	समयrqueue_add(&rtc->समयrqueue, &समयr->node);
+	trace_rtc_समयr_enqueue(समयr);
+	अगर (!next || kसमय_beक्रमe(समयr->node.expires, next->expires)) अणु
+		काष्ठा rtc_wkalrm alarm;
+		पूर्णांक err;
 
-		alarm.time = rtc_ktime_to_tm(timer->node.expires);
+		alarm.समय = rtc_kसमय_प्रकारo_पंचांग(समयr->node.expires);
 		alarm.enabled = 1;
 		err = __rtc_set_alarm(rtc, &alarm);
-		if (err == -ETIME) {
+		अगर (err == -ETIME) अणु
 			pm_stay_awake(rtc->dev.parent);
 			schedule_work(&rtc->irqwork);
-		} else if (err) {
-			timerqueue_del(&rtc->timerqueue, &timer->node);
-			trace_rtc_timer_dequeue(timer);
-			timer->enabled = 0;
-			return err;
-		}
-	}
-	return 0;
-}
+		पूर्ण अन्यथा अगर (err) अणु
+			समयrqueue_del(&rtc->समयrqueue, &समयr->node);
+			trace_rtc_समयr_dequeue(समयr);
+			समयr->enabled = 0;
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void rtc_alarm_disable(struct rtc_device *rtc)
-{
-	if (!rtc->ops || !test_bit(RTC_FEATURE_ALARM, rtc->features) || !rtc->ops->alarm_irq_enable)
-		return;
+अटल व्योम rtc_alarm_disable(काष्ठा rtc_device *rtc)
+अणु
+	अगर (!rtc->ops || !test_bit(RTC_FEATURE_ALARM, rtc->features) || !rtc->ops->alarm_irq_enable)
+		वापस;
 
 	rtc->ops->alarm_irq_enable(rtc->dev.parent, false);
 	trace_rtc_alarm_irq_enable(0, 0);
-}
+पूर्ण
 
 /**
- * rtc_timer_remove - Removes a rtc_timer from the rtc_device timerqueue
+ * rtc_समयr_हटाओ - Removes a rtc_समयr from the rtc_device समयrqueue
  * @rtc: rtc device
- * @timer: timer being removed.
+ * @समयr: समयr being हटाओd.
  *
- * Removes a timer onto the rtc devices timerqueue and sets
+ * Removes a समयr onto the rtc devices समयrqueue and sets
  * the next alarm event appropriately.
  *
- * Clears the enabled bit on the removed timer.
+ * Clears the enabled bit on the हटाओd समयr.
  *
- * Must hold ops_lock for proper serialization of timerqueue
+ * Must hold ops_lock क्रम proper serialization of समयrqueue
  */
-static void rtc_timer_remove(struct rtc_device *rtc, struct rtc_timer *timer)
-{
-	struct timerqueue_node *next = timerqueue_getnext(&rtc->timerqueue);
+अटल व्योम rtc_समयr_हटाओ(काष्ठा rtc_device *rtc, काष्ठा rtc_समयr *समयr)
+अणु
+	काष्ठा समयrqueue_node *next = समयrqueue_getnext(&rtc->समयrqueue);
 
-	timerqueue_del(&rtc->timerqueue, &timer->node);
-	trace_rtc_timer_dequeue(timer);
-	timer->enabled = 0;
-	if (next == &timer->node) {
-		struct rtc_wkalrm alarm;
-		int err;
+	समयrqueue_del(&rtc->समयrqueue, &समयr->node);
+	trace_rtc_समयr_dequeue(समयr);
+	समयr->enabled = 0;
+	अगर (next == &समयr->node) अणु
+		काष्ठा rtc_wkalrm alarm;
+		पूर्णांक err;
 
-		next = timerqueue_getnext(&rtc->timerqueue);
-		if (!next) {
+		next = समयrqueue_getnext(&rtc->समयrqueue);
+		अगर (!next) अणु
 			rtc_alarm_disable(rtc);
-			return;
-		}
-		alarm.time = rtc_ktime_to_tm(next->expires);
+			वापस;
+		पूर्ण
+		alarm.समय = rtc_kसमय_प्रकारo_पंचांग(next->expires);
 		alarm.enabled = 1;
 		err = __rtc_set_alarm(rtc, &alarm);
-		if (err == -ETIME) {
+		अगर (err == -ETIME) अणु
 			pm_stay_awake(rtc->dev.parent);
 			schedule_work(&rtc->irqwork);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * rtc_timer_do_work - Expires rtc timers
+ * rtc_समयr_करो_work - Expires rtc समयrs
  * @work: work item
  *
- * Expires rtc timers. Reprograms next alarm event if needed.
+ * Expires rtc समयrs. Reprograms next alarm event अगर needed.
  * Called via worktask.
  *
- * Serializes access to timerqueue via ops_lock mutex
+ * Serializes access to समयrqueue via ops_lock mutex
  */
-void rtc_timer_do_work(struct work_struct *work)
-{
-	struct rtc_timer *timer;
-	struct timerqueue_node *next;
-	ktime_t now;
-	struct rtc_time tm;
+व्योम rtc_समयr_करो_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rtc_समयr *समयr;
+	काष्ठा समयrqueue_node *next;
+	kसमय_प्रकार now;
+	काष्ठा rtc_समय पंचांग;
 
-	struct rtc_device *rtc =
-		container_of(work, struct rtc_device, irqwork);
+	काष्ठा rtc_device *rtc =
+		container_of(work, काष्ठा rtc_device, irqwork);
 
 	mutex_lock(&rtc->ops_lock);
 again:
-	__rtc_read_time(rtc, &tm);
-	now = rtc_tm_to_ktime(tm);
-	while ((next = timerqueue_getnext(&rtc->timerqueue))) {
-		if (next->expires > now)
-			break;
+	__rtc_पढ़ो_समय(rtc, &पंचांग);
+	now = rtc_पंचांग_to_kसमय(पंचांग);
+	जबतक ((next = समयrqueue_getnext(&rtc->समयrqueue))) अणु
+		अगर (next->expires > now)
+			अवरोध;
 
-		/* expire timer */
-		timer = container_of(next, struct rtc_timer, node);
-		timerqueue_del(&rtc->timerqueue, &timer->node);
-		trace_rtc_timer_dequeue(timer);
-		timer->enabled = 0;
-		if (timer->func)
-			timer->func(timer->rtc);
+		/* expire समयr */
+		समयr = container_of(next, काष्ठा rtc_समयr, node);
+		समयrqueue_del(&rtc->समयrqueue, &समयr->node);
+		trace_rtc_समयr_dequeue(समयr);
+		समयr->enabled = 0;
+		अगर (समयr->func)
+			समयr->func(समयr->rtc);
 
-		trace_rtc_timer_fired(timer);
-		/* Re-add/fwd periodic timers */
-		if (ktime_to_ns(timer->period)) {
-			timer->node.expires = ktime_add(timer->node.expires,
-							timer->period);
-			timer->enabled = 1;
-			timerqueue_add(&rtc->timerqueue, &timer->node);
-			trace_rtc_timer_enqueue(timer);
-		}
-	}
+		trace_rtc_समयr_fired(समयr);
+		/* Re-add/fwd periodic समयrs */
+		अगर (kसमय_प्रकारo_ns(समयr->period)) अणु
+			समयr->node.expires = kसमय_add(समयr->node.expires,
+							समयr->period);
+			समयr->enabled = 1;
+			समयrqueue_add(&rtc->समयrqueue, &समयr->node);
+			trace_rtc_समयr_enqueue(समयr);
+		पूर्ण
+	पूर्ण
 
 	/* Set next alarm */
-	if (next) {
-		struct rtc_wkalrm alarm;
-		int err;
-		int retry = 3;
+	अगर (next) अणु
+		काष्ठा rtc_wkalrm alarm;
+		पूर्णांक err;
+		पूर्णांक retry = 3;
 
-		alarm.time = rtc_ktime_to_tm(next->expires);
+		alarm.समय = rtc_kसमय_प्रकारo_पंचांग(next->expires);
 		alarm.enabled = 1;
 reprogram:
 		err = __rtc_set_alarm(rtc, &alarm);
-		if (err == -ETIME) {
-			goto again;
-		} else if (err) {
-			if (retry-- > 0)
-				goto reprogram;
+		अगर (err == -ETIME) अणु
+			जाओ again;
+		पूर्ण अन्यथा अगर (err) अणु
+			अगर (retry-- > 0)
+				जाओ reprogram;
 
-			timer = container_of(next, struct rtc_timer, node);
-			timerqueue_del(&rtc->timerqueue, &timer->node);
-			trace_rtc_timer_dequeue(timer);
-			timer->enabled = 0;
+			समयr = container_of(next, काष्ठा rtc_समयr, node);
+			समयrqueue_del(&rtc->समयrqueue, &समयr->node);
+			trace_rtc_समयr_dequeue(समयr);
+			समयr->enabled = 0;
 			dev_err(&rtc->dev, "__rtc_set_alarm: err=%d\n", err);
-			goto again;
-		}
-	} else {
+			जाओ again;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rtc_alarm_disable(rtc);
-	}
+	पूर्ण
 
 	pm_relax(rtc->dev.parent);
 	mutex_unlock(&rtc->ops_lock);
-}
+पूर्ण
 
-/* rtc_timer_init - Initializes an rtc_timer
- * @timer: timer to be intiialized
- * @f: function pointer to be called when timer fires
- * @rtc: pointer to the rtc_device
+/* rtc_समयr_init - Initializes an rtc_समयr
+ * @समयr: समयr to be पूर्णांकiialized
+ * @f: function poपूर्णांकer to be called when समयr fires
+ * @rtc: poपूर्णांकer to the rtc_device
  *
- * Kernel interface to initializing an rtc_timer.
+ * Kernel पूर्णांकerface to initializing an rtc_समयr.
  */
-void rtc_timer_init(struct rtc_timer *timer, void (*f)(struct rtc_device *r),
-		    struct rtc_device *rtc)
-{
-	timerqueue_init(&timer->node);
-	timer->enabled = 0;
-	timer->func = f;
-	timer->rtc = rtc;
-}
+व्योम rtc_समयr_init(काष्ठा rtc_समयr *समयr, व्योम (*f)(काष्ठा rtc_device *r),
+		    काष्ठा rtc_device *rtc)
+अणु
+	समयrqueue_init(&समयr->node);
+	समयr->enabled = 0;
+	समयr->func = f;
+	समयr->rtc = rtc;
+पूर्ण
 
-/* rtc_timer_start - Sets an rtc_timer to fire in the future
+/* rtc_समयr_start - Sets an rtc_समयr to fire in the future
  * @ rtc: rtc device to be used
- * @ timer: timer being set
- * @ expires: time at which to expire the timer
- * @ period: period that the timer will recur
+ * @ समयr: समयr being set
+ * @ expires: समय at which to expire the समयr
+ * @ period: period that the समयr will recur
  *
- * Kernel interface to set an rtc_timer
+ * Kernel पूर्णांकerface to set an rtc_समयr
  */
-int rtc_timer_start(struct rtc_device *rtc, struct rtc_timer *timer,
-		    ktime_t expires, ktime_t period)
-{
-	int ret = 0;
+पूर्णांक rtc_समयr_start(काष्ठा rtc_device *rtc, काष्ठा rtc_समयr *समयr,
+		    kसमय_प्रकार expires, kसमय_प्रकार period)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&rtc->ops_lock);
-	if (timer->enabled)
-		rtc_timer_remove(rtc, timer);
+	अगर (समयr->enabled)
+		rtc_समयr_हटाओ(rtc, समयr);
 
-	timer->node.expires = expires;
-	timer->period = period;
+	समयr->node.expires = expires;
+	समयr->period = period;
 
-	ret = rtc_timer_enqueue(rtc, timer);
+	ret = rtc_समयr_enqueue(rtc, समयr);
 
 	mutex_unlock(&rtc->ops_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* rtc_timer_cancel - Stops an rtc_timer
+/* rtc_समयr_cancel - Stops an rtc_समयr
  * @ rtc: rtc device to be used
- * @ timer: timer being set
+ * @ समयr: समयr being set
  *
- * Kernel interface to cancel an rtc_timer
+ * Kernel पूर्णांकerface to cancel an rtc_समयr
  */
-void rtc_timer_cancel(struct rtc_device *rtc, struct rtc_timer *timer)
-{
+व्योम rtc_समयr_cancel(काष्ठा rtc_device *rtc, काष्ठा rtc_समयr *समयr)
+अणु
 	mutex_lock(&rtc->ops_lock);
-	if (timer->enabled)
-		rtc_timer_remove(rtc, timer);
+	अगर (समयr->enabled)
+		rtc_समयr_हटाओ(rtc, समयr);
 	mutex_unlock(&rtc->ops_lock);
-}
+पूर्ण
 
 /**
- * rtc_read_offset - Read the amount of rtc offset in parts per billion
+ * rtc_पढ़ो_offset - Read the amount of rtc offset in parts per billion
  * @rtc: rtc device to be used
  * @offset: the offset in parts per billion
  *
- * see below for details.
+ * see below क्रम details.
  *
- * Kernel interface to read rtc clock offset
+ * Kernel पूर्णांकerface to पढ़ो rtc घड़ी offset
  * Returns 0 on success, or a negative number on error.
- * If read_offset() is not implemented for the rtc, return -EINVAL
+ * If पढ़ो_offset() is not implemented क्रम the rtc, वापस -EINVAL
  */
-int rtc_read_offset(struct rtc_device *rtc, long *offset)
-{
-	int ret;
+पूर्णांक rtc_पढ़ो_offset(काष्ठा rtc_device *rtc, दीर्घ *offset)
+अणु
+	पूर्णांक ret;
 
-	if (!rtc->ops)
-		return -ENODEV;
+	अगर (!rtc->ops)
+		वापस -ENODEV;
 
-	if (!rtc->ops->read_offset)
-		return -EINVAL;
+	अगर (!rtc->ops->पढ़ो_offset)
+		वापस -EINVAL;
 
 	mutex_lock(&rtc->ops_lock);
-	ret = rtc->ops->read_offset(rtc->dev.parent, offset);
+	ret = rtc->ops->पढ़ो_offset(rtc->dev.parent, offset);
 	mutex_unlock(&rtc->ops_lock);
 
-	trace_rtc_read_offset(*offset, ret);
-	return ret;
-}
+	trace_rtc_पढ़ो_offset(*offset, ret);
+	वापस ret;
+पूर्ण
 
 /**
  * rtc_set_offset - Adjusts the duration of the average second
  * @rtc: rtc device to be used
  * @offset: the offset in parts per billion
  *
- * Some rtc's allow an adjustment to the average duration of a second
- * to compensate for differences in the actual clock rate due to temperature,
+ * Some rtc's allow an adjusपंचांगent to the average duration of a second
+ * to compensate क्रम dअगरferences in the actual घड़ी rate due to temperature,
  * the crystal, capacitor, etc.
  *
- * The adjustment applied is as follows:
+ * The adjusपंचांगent applied is as follows:
  *   t = t0 * (1 + offset * 1e-9)
  * where t0 is the measured length of 1 RTC second with offset = 0
  *
- * Kernel interface to adjust an rtc clock offset.
+ * Kernel पूर्णांकerface to adjust an rtc घड़ी offset.
  * Return 0 on success, or a negative number on error.
- * If the rtc offset is not setable (or not implemented), return -EINVAL
+ * If the rtc offset is not setable (or not implemented), वापस -EINVAL
  */
-int rtc_set_offset(struct rtc_device *rtc, long offset)
-{
-	int ret;
+पूर्णांक rtc_set_offset(काष्ठा rtc_device *rtc, दीर्घ offset)
+अणु
+	पूर्णांक ret;
 
-	if (!rtc->ops)
-		return -ENODEV;
+	अगर (!rtc->ops)
+		वापस -ENODEV;
 
-	if (!rtc->ops->set_offset)
-		return -EINVAL;
+	अगर (!rtc->ops->set_offset)
+		वापस -EINVAL;
 
 	mutex_lock(&rtc->ops_lock);
 	ret = rtc->ops->set_offset(rtc->dev.parent, offset);
 	mutex_unlock(&rtc->ops_lock);
 
 	trace_rtc_set_offset(offset, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण

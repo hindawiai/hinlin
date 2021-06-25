@@ -1,96 +1,97 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __HID_ROCCAT_PYRA_H
-#define __HID_ROCCAT_PYRA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __HID_ROCCAT_PYRA_H
+#घोषणा __HID_ROCCAT_PYRA_H
 
 /*
- * Copyright (c) 2010 Stefan Achatz <erazor_de@users.sourceforge.net>
+ * Copyright (c) 2010 Stefan Achatz <erazor_de@users.sourceक्रमge.net>
  */
 
 /*
  */
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum {
+क्रमागत अणु
 	PYRA_SIZE_CONTROL = 0x03,
 	PYRA_SIZE_INFO = 0x06,
-	PYRA_SIZE_PROFILE_SETTINGS = 0x0d,
-	PYRA_SIZE_PROFILE_BUTTONS = 0x13,
+	PYRA_SIZE_PROखाता_SETTINGS = 0x0d,
+	PYRA_SIZE_PROखाता_BUTTONS = 0x13,
 	PYRA_SIZE_SETTINGS = 0x03,
-};
+पूर्ण;
 
-enum pyra_control_requests {
-	PYRA_CONTROL_REQUEST_PROFILE_SETTINGS = 0x10,
-	PYRA_CONTROL_REQUEST_PROFILE_BUTTONS = 0x20
-};
+क्रमागत pyra_control_requests अणु
+	PYRA_CONTROL_REQUEST_PROखाता_SETTINGS = 0x10,
+	PYRA_CONTROL_REQUEST_PROखाता_BUTTONS = 0x20
+पूर्ण;
 
-struct pyra_settings {
-	uint8_t command; /* PYRA_COMMAND_SETTINGS */
-	uint8_t size; /* always 3 */
-	uint8_t startup_profile; /* Range 0-4! */
-} __attribute__ ((__packed__));
+काष्ठा pyra_settings अणु
+	uपूर्णांक8_t command; /* PYRA_COMMAND_SETTINGS */
+	uपूर्णांक8_t size; /* always 3 */
+	uपूर्णांक8_t startup_profile; /* Range 0-4! */
+पूर्ण __attribute__ ((__packed__));
 
-struct pyra_profile_settings {
-	uint8_t command; /* PYRA_COMMAND_PROFILE_SETTINGS */
-	uint8_t size; /* always 0xd */
-	uint8_t number; /* Range 0-4 */
-	uint8_t xysync;
-	uint8_t x_sensitivity; /* 0x1-0xa */
-	uint8_t y_sensitivity;
-	uint8_t x_cpi; /* unused */
-	uint8_t y_cpi; /* this value is for x and y */
-	uint8_t lightswitch; /* 0 = off, 1 = on */
-	uint8_t light_effect;
-	uint8_t handedness;
-	uint16_t checksum; /* byte sum */
-} __attribute__ ((__packed__));
+काष्ठा pyra_profile_settings अणु
+	uपूर्णांक8_t command; /* PYRA_COMMAND_PROखाता_SETTINGS */
+	uपूर्णांक8_t size; /* always 0xd */
+	uपूर्णांक8_t number; /* Range 0-4 */
+	uपूर्णांक8_t xysync;
+	uपूर्णांक8_t x_sensitivity; /* 0x1-0xa */
+	uपूर्णांक8_t y_sensitivity;
+	uपूर्णांक8_t x_cpi; /* unused */
+	uपूर्णांक8_t y_cpi; /* this value is क्रम x and y */
+	uपूर्णांक8_t lightचयन; /* 0 = off, 1 = on */
+	uपूर्णांक8_t light_effect;
+	uपूर्णांक8_t handedness;
+	uपूर्णांक16_t checksum; /* byte sum */
+पूर्ण __attribute__ ((__packed__));
 
-struct pyra_info {
-	uint8_t command; /* PYRA_COMMAND_INFO */
-	uint8_t size; /* always 6 */
-	uint8_t firmware_version;
-	uint8_t unknown1; /* always 0 */
-	uint8_t unknown2; /* always 1 */
-	uint8_t unknown3; /* always 0 */
-} __attribute__ ((__packed__));
+काष्ठा pyra_info अणु
+	uपूर्णांक8_t command; /* PYRA_COMMAND_INFO */
+	uपूर्णांक8_t size; /* always 6 */
+	uपूर्णांक8_t firmware_version;
+	uपूर्णांक8_t unknown1; /* always 0 */
+	uपूर्णांक8_t unknown2; /* always 1 */
+	uपूर्णांक8_t unknown3; /* always 0 */
+पूर्ण __attribute__ ((__packed__));
 
-enum pyra_commands {
+क्रमागत pyra_commands अणु
 	PYRA_COMMAND_CONTROL = 0x4,
 	PYRA_COMMAND_SETTINGS = 0x5,
-	PYRA_COMMAND_PROFILE_SETTINGS = 0x6,
-	PYRA_COMMAND_PROFILE_BUTTONS = 0x7,
+	PYRA_COMMAND_PROखाता_SETTINGS = 0x6,
+	PYRA_COMMAND_PROखाता_BUTTONS = 0x7,
 	PYRA_COMMAND_INFO = 0x9,
 	PYRA_COMMAND_B = 0xb
-};
+पूर्ण;
 
-enum pyra_mouse_report_numbers {
+क्रमागत pyra_mouse_report_numbers अणु
 	PYRA_MOUSE_REPORT_NUMBER_HID = 1,
 	PYRA_MOUSE_REPORT_NUMBER_AUDIO = 2,
 	PYRA_MOUSE_REPORT_NUMBER_BUTTON = 3,
-};
+पूर्ण;
 
-struct pyra_mouse_event_button {
-	uint8_t report_number; /* always 3 */
-	uint8_t unknown; /* always 0 */
-	uint8_t type;
-	uint8_t data1;
-	uint8_t data2;
-} __attribute__ ((__packed__));
+काष्ठा pyra_mouse_event_button अणु
+	uपूर्णांक8_t report_number; /* always 3 */
+	uपूर्णांक8_t unknown; /* always 0 */
+	uपूर्णांक8_t type;
+	uपूर्णांक8_t data1;
+	uपूर्णांक8_t data2;
+पूर्ण __attribute__ ((__packed__));
 
-struct pyra_mouse_event_audio {
-	uint8_t report_number; /* always 2 */
-	uint8_t type;
-	uint8_t unused; /* always 0 */
-} __attribute__ ((__packed__));
+काष्ठा pyra_mouse_event_audio अणु
+	uपूर्णांक8_t report_number; /* always 2 */
+	uपूर्णांक8_t type;
+	uपूर्णांक8_t unused; /* always 0 */
+पूर्ण __attribute__ ((__packed__));
 
 /* hid audio controls */
-enum pyra_mouse_event_audio_types {
+क्रमागत pyra_mouse_event_audio_types अणु
 	PYRA_MOUSE_EVENT_AUDIO_TYPE_MUTE = 0xe2,
 	PYRA_MOUSE_EVENT_AUDIO_TYPE_VOLUME_UP = 0xe9,
 	PYRA_MOUSE_EVENT_AUDIO_TYPE_VOLUME_DOWN = 0xea,
-};
+पूर्ण;
 
-enum pyra_mouse_event_button_types {
+क्रमागत pyra_mouse_event_button_types अणु
 	/*
 	 * Mouse sends tilt events on report_number 1 and 3
 	 * Tilt events are sent repeatedly with 0.94s between first and second
@@ -102,8 +103,8 @@ enum pyra_mouse_event_button_types {
 	 * These are sent sequentially
 	 * data1 contains new profile number in range 1-5
 	 */
-	PYRA_MOUSE_EVENT_BUTTON_TYPE_PROFILE_1 = 0x20,
-	PYRA_MOUSE_EVENT_BUTTON_TYPE_PROFILE_2 = 0x30,
+	PYRA_MOUSE_EVENT_BUTTON_TYPE_PROखाता_1 = 0x20,
+	PYRA_MOUSE_EVENT_BUTTON_TYPE_PROखाता_2 = 0x30,
 
 	/*
 	 * data1 = button_number (rmp index)
@@ -124,26 +125,26 @@ enum pyra_mouse_event_button_types {
 	PYRA_MOUSE_EVENT_BUTTON_TYPE_SENSITIVITY = 0xc0,
 
 	PYRA_MOUSE_EVENT_BUTTON_TYPE_MULTIMEDIA = 0xf0,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PYRA_MOUSE_EVENT_BUTTON_PRESS = 0,
 	PYRA_MOUSE_EVENT_BUTTON_RELEASE = 1,
-};
+पूर्ण;
 
-struct pyra_roccat_report {
-	uint8_t type;
-	uint8_t value;
-	uint8_t key;
-} __attribute__ ((__packed__));
+काष्ठा pyra_roccat_report अणु
+	uपूर्णांक8_t type;
+	uपूर्णांक8_t value;
+	uपूर्णांक8_t key;
+पूर्ण __attribute__ ((__packed__));
 
-struct pyra_device {
-	int actual_profile;
-	int actual_cpi;
-	int roccat_claimed;
-	int chrdev_minor;
-	struct mutex pyra_lock;
-	struct pyra_profile_settings profile_settings[5];
-};
+काष्ठा pyra_device अणु
+	पूर्णांक actual_profile;
+	पूर्णांक actual_cpi;
+	पूर्णांक roccat_claimed;
+	पूर्णांक chrdev_minor;
+	काष्ठा mutex pyra_lock;
+	काष्ठा pyra_profile_settings profile_settings[5];
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

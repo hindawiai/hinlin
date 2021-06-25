@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * tw9910 Driver header
  *
@@ -10,11 +11,11 @@
  * Copyright (C) Kuninori Morimoto <morimoto.kuninori@renesas.com>
  */
 
-#ifndef __TW9910_H__
-#define __TW9910_H__
+#अगर_अघोषित __TW9910_H__
+#घोषणा __TW9910_H__
 
 /* MPOUT (multi-purpose output) pin functions */
-enum tw9910_mpout_pin {
+क्रमागत tw9910_mpout_pin अणु
 	TW9910_MPO_VLOSS,
 	TW9910_MPO_HLOCK,
 	TW9910_MPO_SLOCK,
@@ -23,18 +24,18 @@ enum tw9910_mpout_pin {
 	TW9910_MPO_DET50,
 	TW9910_MPO_FIELD,
 	TW9910_MPO_RTCO,
-};
+पूर्ण;
 
 /**
- * struct tw9910_video_info - tw9910 driver interface structure
+ * काष्ठा tw9910_video_info - tw9910 driver पूर्णांकerface काष्ठाure
  * @buswidth:		Parallel data bus width (8 or 16).
  * @mpout:		Selected function of MPOUT (multi-purpose output) pin.
- *			See enum tw9910_mpout_pin
+ *			See क्रमागत tw9910_mpout_pin
  */
-struct tw9910_video_info {
-	unsigned long		buswidth;
-	enum tw9910_mpout_pin	mpout;
-};
+काष्ठा tw9910_video_info अणु
+	अचिन्हित दीर्घ		buswidth;
+	क्रमागत tw9910_mpout_pin	mpout;
+पूर्ण;
 
 
-#endif /* __TW9910_H__ */
+#पूर्ण_अगर /* __TW9910_H__ */

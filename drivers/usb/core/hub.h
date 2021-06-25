@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * usb hub driver head file
  *
@@ -6,162 +7,162 @@
  * Copyright (C) 1999 Johannes Erdfelt
  * Copyright (C) 1999 Gregory P. Smith
  * Copyright (C) 2001 Brad Hards (bhards@bigpond.net.au)
- * Copyright (C) 2012 Intel Corp (tianyu.lan@intel.com)
+ * Copyright (C) 2012 Intel Corp (tianyu.lan@पूर्णांकel.com)
  *
- *  move struct usb_hub to this file.
+ *  move काष्ठा usb_hub to this file.
  */
 
-#include <linux/usb.h>
-#include <linux/usb/ch11.h>
-#include <linux/usb/hcd.h>
-#include "usb.h"
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/ch11.h>
+#समावेश <linux/usb/hcd.h>
+#समावेश "usb.h"
 
-struct usb_hub {
-	struct device		*intfdev;	/* the "interface" device */
-	struct usb_device	*hdev;
-	struct kref		kref;
-	struct urb		*urb;		/* for interrupt polling pipe */
+काष्ठा usb_hub अणु
+	काष्ठा device		*पूर्णांकfdev;	/* the "interface" device */
+	काष्ठा usb_device	*hdev;
+	काष्ठा kref		kref;
+	काष्ठा urb		*urb;		/* क्रम पूर्णांकerrupt polling pipe */
 
-	/* buffer for urb ... with extra space in case of babble */
+	/* buffer क्रम urb ... with extra space in हाल of babble */
 	u8			(*buffer)[8];
-	union {
-		struct usb_hub_status	hub;
-		struct usb_port_status	port;
-	}			*status;	/* buffer for status reports */
-	struct mutex		status_mutex;	/* for the status buffer */
+	जोड़ अणु
+		काष्ठा usb_hub_status	hub;
+		काष्ठा usb_port_status	port;
+	पूर्ण			*status;	/* buffer क्रम status reports */
+	काष्ठा mutex		status_mutex;	/* क्रम the status buffer */
 
-	int			error;		/* last reported error */
-	int			nerrors;	/* track consecutive errors */
+	पूर्णांक			error;		/* last reported error */
+	पूर्णांक			nerrors;	/* track consecutive errors */
 
-	unsigned long		event_bits[1];	/* status change bitmask */
-	unsigned long		change_bits[1];	/* ports with logical connect
+	अचिन्हित दीर्घ		event_bits[1];	/* status change biपंचांगask */
+	अचिन्हित दीर्घ		change_bits[1];	/* ports with logical connect
 							status change */
-	unsigned long		removed_bits[1]; /* ports with a "removed"
+	अचिन्हित दीर्घ		हटाओd_bits[1]; /* ports with a "removed"
 							device present */
-	unsigned long		wakeup_bits[1];	/* ports that have signaled
+	अचिन्हित दीर्घ		wakeup_bits[1];	/* ports that have संकेतed
 							remote wakeup */
-	unsigned long		power_bits[1]; /* ports that are powered */
-	unsigned long		child_usage_bits[1]; /* ports powered on for
+	अचिन्हित दीर्घ		घातer_bits[1]; /* ports that are घातered */
+	अचिन्हित दीर्घ		child_usage_bits[1]; /* ports घातered on क्रम
 							children */
-	unsigned long		warm_reset_bits[1]; /* ports requesting warm
+	अचिन्हित दीर्घ		warm_reset_bits[1]; /* ports requesting warm
 							reset recovery */
-#if USB_MAXCHILDREN > 31 /* 8*sizeof(unsigned long) - 1 */
-#error event_bits[] is too short!
-#endif
+#अगर USB_MAXCHILDREN > 31 /* 8*माप(अचिन्हित दीर्घ) - 1 */
+#त्रुटि event_bits[] is too लघु!
+#पूर्ण_अगर
 
-	struct usb_hub_descriptor *descriptor;	/* class descriptor */
-	struct usb_tt		tt;		/* Transaction Translator */
+	काष्ठा usb_hub_descriptor *descriptor;	/* class descriptor */
+	काष्ठा usb_tt		tt;		/* Transaction Translator */
 
-	unsigned		mA_per_port;	/* current for each child */
-#ifdef	CONFIG_PM
-	unsigned		wakeup_enabled_descendants;
-#endif
+	अचिन्हित		mA_per_port;	/* current क्रम each child */
+#अगर_घोषित	CONFIG_PM
+	अचिन्हित		wakeup_enabled_descendants;
+#पूर्ण_अगर
 
-	unsigned		limited_power:1;
-	unsigned		quiescing:1;
-	unsigned		disconnected:1;
-	unsigned		in_reset:1;
-	unsigned		quirk_disable_autosuspend:1;
+	अचिन्हित		limited_घातer:1;
+	अचिन्हित		quiescing:1;
+	अचिन्हित		disconnected:1;
+	अचिन्हित		in_reset:1;
+	अचिन्हित		quirk_disable_स्वतःsuspend:1;
 
-	unsigned		quirk_check_port_auto_suspend:1;
+	अचिन्हित		quirk_check_port_स्वतः_suspend:1;
 
-	unsigned		has_indicators:1;
+	अचिन्हित		has_indicators:1;
 	u8			indicator[USB_MAXCHILDREN];
-	struct delayed_work	leds;
-	struct delayed_work	init_work;
-	struct work_struct      events;
+	काष्ठा delayed_work	leds;
+	काष्ठा delayed_work	init_work;
+	काष्ठा work_काष्ठा      events;
 	spinlock_t		irq_urb_lock;
-	struct timer_list	irq_urb_retry;
-	struct usb_port		**ports;
-};
+	काष्ठा समयr_list	irq_urb_retry;
+	काष्ठा usb_port		**ports;
+पूर्ण;
 
 /**
- * struct usb port - kernel's representation of a usb port
+ * काष्ठा usb port - kernel's representation of a usb port
  * @child: usb device attached to the port
- * @dev: generic device interface
+ * @dev: generic device पूर्णांकerface
  * @port_owner: port's owner
  * @peer: related usb2 and usb3 ports (share the same connector)
- * @req: default pm qos request for hubs without port power control
+ * @req: शेष pm qos request क्रम hubs without port घातer control
  * @connect_type: port's connect type
- * @location: opaque representation of platform connector location
- * @status_lock: synchronize port_event() vs usb_port_{suspend|resume}
+ * @location: opaque representation of platक्रमm connector location
+ * @status_lock: synchronize port_event() vs usb_port_अणुsuspend|resumeपूर्ण
  * @portnum: port index num based one
  * @is_superspeed cache super-speed status
  * @usb3_lpm_u1_permit: whether USB3 U1 LPM is permitted.
  * @usb3_lpm_u2_permit: whether USB3 U2 LPM is permitted.
  */
-struct usb_port {
-	struct usb_device *child;
-	struct device dev;
-	struct usb_dev_state *port_owner;
-	struct usb_port *peer;
-	struct dev_pm_qos_request *req;
-	enum usb_port_connect_type connect_type;
+काष्ठा usb_port अणु
+	काष्ठा usb_device *child;
+	काष्ठा device dev;
+	काष्ठा usb_dev_state *port_owner;
+	काष्ठा usb_port *peer;
+	काष्ठा dev_pm_qos_request *req;
+	क्रमागत usb_port_connect_type connect_type;
 	usb_port_location_t location;
-	struct mutex status_lock;
+	काष्ठा mutex status_lock;
 	u32 over_current_count;
 	u8 portnum;
 	u32 quirks;
-	unsigned int is_superspeed:1;
-	unsigned int usb3_lpm_u1_permit:1;
-	unsigned int usb3_lpm_u2_permit:1;
-};
+	अचिन्हित पूर्णांक is_superspeed:1;
+	अचिन्हित पूर्णांक usb3_lpm_u1_permit:1;
+	अचिन्हित पूर्णांक usb3_lpm_u2_permit:1;
+पूर्ण;
 
-#define to_usb_port(_dev) \
-	container_of(_dev, struct usb_port, dev)
+#घोषणा to_usb_port(_dev) \
+	container_of(_dev, काष्ठा usb_port, dev)
 
-extern int usb_hub_create_port_device(struct usb_hub *hub,
-		int port1);
-extern void usb_hub_remove_port_device(struct usb_hub *hub,
-		int port1);
-extern int usb_hub_set_port_power(struct usb_device *hdev, struct usb_hub *hub,
-		int port1, bool set);
-extern struct usb_hub *usb_hub_to_struct_hub(struct usb_device *hdev);
-extern int hub_port_debounce(struct usb_hub *hub, int port1,
+बाह्य पूर्णांक usb_hub_create_port_device(काष्ठा usb_hub *hub,
+		पूर्णांक port1);
+बाह्य व्योम usb_hub_हटाओ_port_device(काष्ठा usb_hub *hub,
+		पूर्णांक port1);
+बाह्य पूर्णांक usb_hub_set_port_घातer(काष्ठा usb_device *hdev, काष्ठा usb_hub *hub,
+		पूर्णांक port1, bool set);
+बाह्य काष्ठा usb_hub *usb_hub_to_काष्ठा_hub(काष्ठा usb_device *hdev);
+बाह्य पूर्णांक hub_port_debounce(काष्ठा usb_hub *hub, पूर्णांक port1,
 		bool must_be_connected);
-extern int usb_clear_port_feature(struct usb_device *hdev,
-		int port1, int feature);
+बाह्य पूर्णांक usb_clear_port_feature(काष्ठा usb_device *hdev,
+		पूर्णांक port1, पूर्णांक feature);
 
-static inline bool hub_is_port_power_switchable(struct usb_hub *hub)
-{
+अटल अंतरभूत bool hub_is_port_घातer_चयनable(काष्ठा usb_hub *hub)
+अणु
 	__le16 hcs;
 
-	if (!hub)
-		return false;
+	अगर (!hub)
+		वापस false;
 	hcs = hub->descriptor->wHubCharacteristics;
-	return (le16_to_cpu(hcs) & HUB_CHAR_LPSM) < HUB_CHAR_NO_LPSM;
-}
+	वापस (le16_to_cpu(hcs) & HUB_CHAR_LPSM) < HUB_CHAR_NO_LPSM;
+पूर्ण
 
-static inline int hub_is_superspeed(struct usb_device *hdev)
-{
-	return hdev->descriptor.bDeviceProtocol == USB_HUB_PR_SS;
-}
+अटल अंतरभूत पूर्णांक hub_is_superspeed(काष्ठा usb_device *hdev)
+अणु
+	वापस hdev->descriptor.bDeviceProtocol == USB_HUB_PR_SS;
+पूर्ण
 
-static inline int hub_is_superspeedplus(struct usb_device *hdev)
-{
-	return (hdev->descriptor.bDeviceProtocol == USB_HUB_PR_SS &&
+अटल अंतरभूत पूर्णांक hub_is_superspeedplus(काष्ठा usb_device *hdev)
+अणु
+	वापस (hdev->descriptor.bDeviceProtocol == USB_HUB_PR_SS &&
 		le16_to_cpu(hdev->descriptor.bcdUSB) >= 0x0310 &&
 		hdev->bos->ssp_cap);
-}
+पूर्ण
 
-static inline unsigned hub_power_on_good_delay(struct usb_hub *hub)
-{
-	unsigned delay = hub->descriptor->bPwrOn2PwrGood * 2;
+अटल अंतरभूत अचिन्हित hub_घातer_on_good_delay(काष्ठा usb_hub *hub)
+अणु
+	अचिन्हित delay = hub->descriptor->bPwrOn2PwrGood * 2;
 
-	if (!hub->hdev->parent)	/* root hub */
-		return delay;
-	else /* Wait at least 100 msec for power to become stable */
-		return max(delay, 100U);
-}
+	अगर (!hub->hdev->parent)	/* root hub */
+		वापस delay;
+	अन्यथा /* Wait at least 100 msec क्रम घातer to become stable */
+		वापस max(delay, 100U);
+पूर्ण
 
-static inline int hub_port_debounce_be_connected(struct usb_hub *hub,
-		int port1)
-{
-	return hub_port_debounce(hub, port1, true);
-}
+अटल अंतरभूत पूर्णांक hub_port_debounce_be_connected(काष्ठा usb_hub *hub,
+		पूर्णांक port1)
+अणु
+	वापस hub_port_debounce(hub, port1, true);
+पूर्ण
 
-static inline int hub_port_debounce_be_stable(struct usb_hub *hub,
-		int port1)
-{
-	return hub_port_debounce(hub, port1, false);
-}
+अटल अंतरभूत पूर्णांक hub_port_debounce_be_stable(काष्ठा usb_hub *hub,
+		पूर्णांक port1)
+अणु
+	वापस hub_port_debounce(hub, port1, false);
+पूर्ण

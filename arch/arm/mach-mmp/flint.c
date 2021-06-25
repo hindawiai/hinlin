@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/arch/arm/mach-mmp/flint.c
+ *  linux/arch/arm/mach-mmp/flपूर्णांक.c
  *
- *  Support for the Marvell Flint Development Platform.
+ *  Support क्रम the Marvell Flपूर्णांक Development Platक्रमm.
  *
  *  Copyright (C) 2009 Marvell International Ltd.
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/smc91x.h>
-#include <linux/io.h>
-#include <linux/gpio.h>
-#include <linux/gpio-pxa.h>
-#include <linux/interrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/smc91x.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio-pxa.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include "addr-map.h"
-#include "mfp-mmp2.h"
-#include "mmp2.h"
-#include "irqs.h"
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश "addr-map.h"
+#समावेश "mfp-mmp2.h"
+#समावेश "mmp2.h"
+#समावेश "irqs.h"
 
-#include "common.h"
+#समावेश "common.h"
 
-#define FLINT_NR_IRQS	(MMP_NR_IRQS + 48)
+#घोषणा FLINT_NR_IRQS	(MMP_NR_IRQS + 48)
 
-static unsigned long flint_pin_config[] __initdata = {
+अटल अचिन्हित दीर्घ flपूर्णांक_pin_config[] __initdata = अणु
 	/* UART1 */
 	GPIO45_UART1_RXD,
 	GPIO46_UART1_TXD,
@@ -73,59 +74,59 @@ static unsigned long flint_pin_config[] __initdata = {
 	GPIO149_ND_CLE,
 	GPIO112_ND_RDY0,
 	GPIO160_ND_RDY1,
-};
+पूर्ण;
 
-static struct pxa_gpio_platform_data mmp2_gpio_pdata = {
+अटल काष्ठा pxa_gpio_platक्रमm_data mmp2_gpio_pdata = अणु
 	.irq_base	= MMP_GPIO_TO_IRQ(0),
-};
+पूर्ण;
 
-static struct smc91x_platdata flint_smc91x_info = {
+अटल काष्ठा smc91x_platdata flपूर्णांक_smc91x_info = अणु
 	.flags  = SMC91X_USE_16BIT | SMC91X_NOWAIT,
-};
+पूर्ण;
 
-static struct resource smc91x_resources[] = {
-	[0] = {
+अटल काष्ठा resource smc91x_resources[] = अणु
+	[0] = अणु
 		.start  = SMC_CS1_PHYS_BASE + 0x300,
 		.end    = SMC_CS1_PHYS_BASE + 0xfffff,
 		.flags  = IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start  = MMP_GPIO_TO_IRQ(155),
 		.end    = MMP_GPIO_TO_IRQ(155),
 		.flags  = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct platform_device smc91x_device = {
+अटल काष्ठा platक्रमm_device smc91x_device = अणु
 	.name           = "smc91x",
 	.id             = 0,
-	.dev            = {
-		.platform_data = &flint_smc91x_info,
-	},
+	.dev            = अणु
+		.platक्रमm_data = &flपूर्णांक_smc91x_info,
+	पूर्ण,
 	.num_resources  = ARRAY_SIZE(smc91x_resources),
 	.resource       = smc91x_resources,
-};
+पूर्ण;
 
-static void __init flint_init(void)
-{
-	mfp_config(ARRAY_AND_SIZE(flint_pin_config));
+अटल व्योम __init flपूर्णांक_init(व्योम)
+अणु
+	mfp_config(ARRAY_AND_SIZE(flपूर्णांक_pin_config));
 
 	/* on-chip devices */
 	mmp2_add_uart(1);
 	mmp2_add_uart(2);
-	platform_device_add_data(&mmp2_device_gpio, &mmp2_gpio_pdata,
-				 sizeof(struct pxa_gpio_platform_data));
-	platform_device_register(&mmp2_device_gpio);
+	platक्रमm_device_add_data(&mmp2_device_gpio, &mmp2_gpio_pdata,
+				 माप(काष्ठा pxa_gpio_platक्रमm_data));
+	platक्रमm_device_रेजिस्टर(&mmp2_device_gpio);
 
 	/* off-chip devices */
-	platform_device_register(&smc91x_device);
-}
+	platक्रमm_device_रेजिस्टर(&smc91x_device);
+पूर्ण
 
 MACHINE_START(FLINT, "Flint Development Platform")
 	.map_io		= mmp_map_io,
 	.nr_irqs	= FLINT_NR_IRQS,
 	.init_irq       = mmp2_init_irq,
-	.init_time	= mmp2_timer_init,
-	.init_machine   = flint_init,
+	.init_समय	= mmp2_समयr_init,
+	.init_machine   = flपूर्णांक_init,
 	.restart	= mmp_restart,
 MACHINE_END

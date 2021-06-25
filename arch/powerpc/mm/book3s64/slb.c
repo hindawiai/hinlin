@@ -1,189 +1,190 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * PowerPC64 SLB support.
  *
  * Copyright (C) 2004 David Gibson <dwg@au.ibm.com>, IBM
  * Based on earlier code written by:
- * Dave Engebretsen and Mike Corrigan {engebret|mikejc}@us.ibm.com
+ * Dave Engebretsen and Mike Corrigan अणुengebret|mikejcपूर्ण@us.ibm.com
  *    Copyright (c) 2001 Dave Engebretsen
- * Copyright (C) 2002 Anton Blanchard <anton@au.ibm.com>, IBM
+ * Copyright (C) 2002 Anton Blanअक्षरd <anton@au.ibm.com>, IBM
  */
 
-#include <asm/asm-prototypes.h>
-#include <asm/interrupt.h>
-#include <asm/mmu.h>
-#include <asm/mmu_context.h>
-#include <asm/paca.h>
-#include <asm/ppc-opcode.h>
-#include <asm/cputable.h>
-#include <asm/cacheflush.h>
-#include <asm/smp.h>
-#include <linux/compiler.h>
-#include <linux/context_tracking.h>
-#include <linux/mm_types.h>
-#include <linux/pgtable.h>
+#समावेश <यंत्र/यंत्र-prototypes.h>
+#समावेश <यंत्र/पूर्णांकerrupt.h>
+#समावेश <यंत्र/mmu.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/paca.h>
+#समावेश <यंत्र/ppc-opcode.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/context_tracking.h>
+#समावेश <linux/mm_types.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/udbg.h>
-#include <asm/code-patching.h>
+#समावेश <यंत्र/udbg.h>
+#समावेश <यंत्र/code-patching.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
 
-static long slb_allocate_user(struct mm_struct *mm, unsigned long ea);
+अटल दीर्घ slb_allocate_user(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ea);
 
 bool stress_slb_enabled __initdata;
 
-static int __init parse_stress_slb(char *p)
-{
+अटल पूर्णांक __init parse_stress_slb(अक्षर *p)
+अणु
 	stress_slb_enabled = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("stress_slb", parse_stress_slb);
 
 __ro_after_init DEFINE_STATIC_KEY_FALSE(stress_slb_key);
 
-static void assert_slb_presence(bool present, unsigned long ea)
-{
-#ifdef CONFIG_DEBUG_VM
-	unsigned long tmp;
+अटल व्योम निश्चित_slb_presence(bool present, अचिन्हित दीर्घ ea)
+अणु
+#अगर_घोषित CONFIG_DEBUG_VM
+	अचिन्हित दीर्घ पंचांगp;
 
 	WARN_ON_ONCE(mfmsr() & MSR_EE);
 
-	if (!cpu_has_feature(CPU_FTR_ARCH_206))
-		return;
+	अगर (!cpu_has_feature(CPU_FTR_ARCH_206))
+		वापस;
 
 	/*
 	 * slbfee. requires bit 24 (PPC bit 39) be clear in RB. Hardware
 	 * ignores all other bits from 0-27, so just clear them all.
 	 */
 	ea &= ~((1UL << SID_SHIFT) - 1);
-	asm volatile(__PPC_SLBFEE_DOT(%0, %1) : "=r"(tmp) : "r"(ea) : "cr0");
+	यंत्र अस्थिर(__PPC_SLBFEE_DOT(%0, %1) : "=r"(पंचांगp) : "r"(ea) : "cr0");
 
-	WARN_ON(present == (tmp == 0));
-#endif
-}
+	WARN_ON(present == (पंचांगp == 0));
+#पूर्ण_अगर
+पूर्ण
 
-static inline void slb_shadow_update(unsigned long ea, int ssize,
-				     unsigned long flags,
-				     enum slb_index index)
-{
-	struct slb_shadow *p = get_slb_shadow();
+अटल अंतरभूत व्योम slb_shaकरोw_update(अचिन्हित दीर्घ ea, पूर्णांक ssize,
+				     अचिन्हित दीर्घ flags,
+				     क्रमागत slb_index index)
+अणु
+	काष्ठा slb_shaकरोw *p = get_slb_shaकरोw();
 
 	/*
-	 * Clear the ESID first so the entry is not valid while we are
-	 * updating it.  No write barriers are needed here, provided
-	 * we only update the current CPU's SLB shadow buffer.
+	 * Clear the ESID first so the entry is not valid जबतक we are
+	 * updating it.  No ग_लिखो barriers are needed here, provided
+	 * we only update the current CPU's SLB shaकरोw buffer.
 	 */
 	WRITE_ONCE(p->save_area[index].esid, 0);
 	WRITE_ONCE(p->save_area[index].vsid, cpu_to_be64(mk_vsid_data(ea, ssize, flags)));
 	WRITE_ONCE(p->save_area[index].esid, cpu_to_be64(mk_esid_data(ea, ssize, index)));
-}
+पूर्ण
 
-static inline void slb_shadow_clear(enum slb_index index)
-{
-	WRITE_ONCE(get_slb_shadow()->save_area[index].esid, cpu_to_be64(index));
-}
+अटल अंतरभूत व्योम slb_shaकरोw_clear(क्रमागत slb_index index)
+अणु
+	WRITE_ONCE(get_slb_shaकरोw()->save_area[index].esid, cpu_to_be64(index));
+पूर्ण
 
-static inline void create_shadowed_slbe(unsigned long ea, int ssize,
-					unsigned long flags,
-					enum slb_index index)
-{
+अटल अंतरभूत व्योम create_shaकरोwed_slbe(अचिन्हित दीर्घ ea, पूर्णांक ssize,
+					अचिन्हित दीर्घ flags,
+					क्रमागत slb_index index)
+अणु
 	/*
-	 * Updating the shadow buffer before writing the SLB ensures
-	 * we don't get a stale entry here if we get preempted by PHYP
+	 * Updating the shaकरोw buffer beक्रमe writing the SLB ensures
+	 * we करोn't get a stale entry here अगर we get preempted by PHYP
 	 * between these two statements.
 	 */
-	slb_shadow_update(ea, ssize, flags, index);
+	slb_shaकरोw_update(ea, ssize, flags, index);
 
-	assert_slb_presence(false, ea);
-	asm volatile("slbmte  %0,%1" :
+	निश्चित_slb_presence(false, ea);
+	यंत्र अस्थिर("slbmte  %0,%1" :
 		     : "r" (mk_vsid_data(ea, ssize, flags)),
 		       "r" (mk_esid_data(ea, ssize, index))
 		     : "memory" );
-}
+पूर्ण
 
 /*
- * Insert bolted entries into SLB (which may not be empty, so don't clear
+ * Insert bolted entries पूर्णांकo SLB (which may not be empty, so करोn't clear
  * slb_cache_ptr).
  */
-void __slb_restore_bolted_realmode(void)
-{
-	struct slb_shadow *p = get_slb_shadow();
-	enum slb_index index;
+व्योम __slb_restore_bolted_realmode(व्योम)
+अणु
+	काष्ठा slb_shaकरोw *p = get_slb_shaकरोw();
+	क्रमागत slb_index index;
 
 	 /* No isync needed because realmode. */
-	for (index = 0; index < SLB_NUM_BOLTED; index++) {
-		asm volatile("slbmte  %0,%1" :
+	क्रम (index = 0; index < SLB_NUM_BOLTED; index++) अणु
+		यंत्र अस्थिर("slbmte  %0,%1" :
 		     : "r" (be64_to_cpu(p->save_area[index].vsid)),
 		       "r" (be64_to_cpu(p->save_area[index].esid)));
-	}
+	पूर्ण
 
-	assert_slb_presence(true, local_paca->kstack);
-}
+	निश्चित_slb_presence(true, local_paca->kstack);
+पूर्ण
 
 /*
- * Insert the bolted entries into an empty SLB.
+ * Insert the bolted entries पूर्णांकo an empty SLB.
  */
-void slb_restore_bolted_realmode(void)
-{
+व्योम slb_restore_bolted_realmode(व्योम)
+अणु
 	__slb_restore_bolted_realmode();
 	get_paca()->slb_cache_ptr = 0;
 
-	get_paca()->slb_kern_bitmap = (1U << SLB_NUM_BOLTED) - 1;
-	get_paca()->slb_used_bitmap = get_paca()->slb_kern_bitmap;
-}
+	get_paca()->slb_kern_biपंचांगap = (1U << SLB_NUM_BOLTED) - 1;
+	get_paca()->slb_used_biपंचांगap = get_paca()->slb_kern_biपंचांगap;
+पूर्ण
 
 /*
  * This flushes all SLB entries including 0, so it must be realmode.
  */
-void slb_flush_all_realmode(void)
-{
-	asm volatile("slbmte %0,%0; slbia" : : "r" (0));
-}
+व्योम slb_flush_all_realmode(व्योम)
+अणु
+	यंत्र अस्थिर("slbmte %0,%0; slbia" : : "r" (0));
+पूर्ण
 
-static __always_inline void __slb_flush_and_restore_bolted(bool preserve_kernel_lookaside)
-{
-	struct slb_shadow *p = get_slb_shadow();
-	unsigned long ksp_esid_data, ksp_vsid_data;
+अटल __always_अंतरभूत व्योम __slb_flush_and_restore_bolted(bool preserve_kernel_lookaside)
+अणु
+	काष्ठा slb_shaकरोw *p = get_slb_shaकरोw();
+	अचिन्हित दीर्घ ksp_esid_data, ksp_vsid_data;
 	u32 ih;
 
 	/*
 	 * SLBIA IH=1 on ISA v2.05 and newer processors may preserve lookaside
-	 * information created with Class=0 entries, which we use for kernel
+	 * inक्रमmation created with Class=0 entries, which we use क्रम kernel
 	 * SLB entries (the SLB entries themselves are still invalidated).
 	 *
 	 * Older processors will ignore this optimisation. Over-invalidation
-	 * is fine because we never rely on lookaside information existing.
+	 * is fine because we never rely on lookaside inक्रमmation existing.
 	 */
-	if (preserve_kernel_lookaside)
+	अगर (preserve_kernel_lookaside)
 		ih = 1;
-	else
+	अन्यथा
 		ih = 0;
 
 	ksp_esid_data = be64_to_cpu(p->save_area[KSTACK_INDEX].esid);
 	ksp_vsid_data = be64_to_cpu(p->save_area[KSTACK_INDEX].vsid);
 
-	asm volatile(PPC_SLBIA(%0)"	\n"
+	यंत्र अस्थिर(PPC_SLBIA(%0)"	\n"
 		     "slbmte	%1, %2	\n"
 		     :: "i" (ih),
 			"r" (ksp_vsid_data),
 			"r" (ksp_esid_data)
 		     : "memory");
-}
+पूर्ण
 
 /*
- * This flushes non-bolted entries, it can be run in virtual mode. Must
- * be called with interrupts disabled.
+ * This flushes non-bolted entries, it can be run in भव mode. Must
+ * be called with पूर्णांकerrupts disabled.
  */
-void slb_flush_and_restore_bolted(void)
-{
+व्योम slb_flush_and_restore_bolted(व्योम)
+अणु
 	BUILD_BUG_ON(SLB_NUM_BOLTED != 2);
 
 	WARN_ON(!irqs_disabled());
 
 	/*
 	 * We can't take a PMU exception in the following code, so hard
-	 * disable interrupts.
+	 * disable पूर्णांकerrupts.
 	 */
 	hard_irq_disable();
 
@@ -191,340 +192,340 @@ void slb_flush_and_restore_bolted(void)
 	__slb_flush_and_restore_bolted(false);
 	isync();
 
-	assert_slb_presence(true, get_paca()->kstack);
+	निश्चित_slb_presence(true, get_paca()->kstack);
 
 	get_paca()->slb_cache_ptr = 0;
 
-	get_paca()->slb_kern_bitmap = (1U << SLB_NUM_BOLTED) - 1;
-	get_paca()->slb_used_bitmap = get_paca()->slb_kern_bitmap;
-}
+	get_paca()->slb_kern_biपंचांगap = (1U << SLB_NUM_BOLTED) - 1;
+	get_paca()->slb_used_biपंचांगap = get_paca()->slb_kern_biपंचांगap;
+पूर्ण
 
-void slb_save_contents(struct slb_entry *slb_ptr)
-{
-	int i;
-	unsigned long e, v;
+व्योम slb_save_contents(काष्ठा slb_entry *slb_ptr)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ e, v;
 
 	/* Save slb_cache_ptr value. */
 	get_paca()->slb_save_cache_ptr = get_paca()->slb_cache_ptr;
 
-	if (!slb_ptr)
-		return;
+	अगर (!slb_ptr)
+		वापस;
 
-	for (i = 0; i < mmu_slb_size; i++) {
-		asm volatile("slbmfee  %0,%1" : "=r" (e) : "r" (i));
-		asm volatile("slbmfev  %0,%1" : "=r" (v) : "r" (i));
+	क्रम (i = 0; i < mmu_slb_size; i++) अणु
+		यंत्र अस्थिर("slbmfee  %0,%1" : "=r" (e) : "r" (i));
+		यंत्र अस्थिर("slbmfev  %0,%1" : "=r" (v) : "r" (i));
 		slb_ptr->esid = e;
 		slb_ptr->vsid = v;
 		slb_ptr++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void slb_dump_contents(struct slb_entry *slb_ptr)
-{
-	int i, n;
-	unsigned long e, v;
-	unsigned long llp;
+व्योम slb_dump_contents(काष्ठा slb_entry *slb_ptr)
+अणु
+	पूर्णांक i, n;
+	अचिन्हित दीर्घ e, v;
+	अचिन्हित दीर्घ llp;
 
-	if (!slb_ptr)
-		return;
+	अगर (!slb_ptr)
+		वापस;
 
 	pr_err("SLB contents of cpu 0x%x\n", smp_processor_id());
 
-	for (i = 0; i < mmu_slb_size; i++) {
+	क्रम (i = 0; i < mmu_slb_size; i++) अणु
 		e = slb_ptr->esid;
 		v = slb_ptr->vsid;
 		slb_ptr++;
 
-		if (!e && !v)
-			continue;
+		अगर (!e && !v)
+			जारी;
 
 		pr_err("%02d %016lx %016lx %s\n", i, e, v,
 				(e & SLB_ESID_V) ? "VALID" : "NOT VALID");
 
-		if (!(e & SLB_ESID_V))
-			continue;
+		अगर (!(e & SLB_ESID_V))
+			जारी;
 
 		llp = v & SLB_VSID_LLP;
-		if (v & SLB_VSID_B_1T) {
+		अगर (v & SLB_VSID_B_1T) अणु
 			pr_err("     1T ESID=%9lx VSID=%13lx LLP:%3lx\n",
 			       GET_ESID_1T(e),
 			       (v & ~SLB_VSID_B) >> SLB_VSID_SHIFT_1T, llp);
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_err("   256M ESID=%9lx VSID=%13lx LLP:%3lx\n",
 			       GET_ESID(e),
 			       (v & ~SLB_VSID_B) >> SLB_VSID_SHIFT, llp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!early_cpu_has_feature(CPU_FTR_ARCH_300)) {
-		/* RR is not so useful as it's often not used for allocation */
+	अगर (!early_cpu_has_feature(CPU_FTR_ARCH_300)) अणु
+		/* RR is not so useful as it's often not used क्रम allocation */
 		pr_err("SLB RR allocator index %d\n", get_paca()->stab_rr);
 
 		/* Dump slb cache entires as well. */
 		pr_err("SLB cache ptr value = %d\n", get_paca()->slb_save_cache_ptr);
 		pr_err("Valid SLB cache entries:\n");
-		n = min_t(int, get_paca()->slb_save_cache_ptr, SLB_CACHE_ENTRIES);
-		for (i = 0; i < n; i++)
+		n = min_t(पूर्णांक, get_paca()->slb_save_cache_ptr, SLB_CACHE_ENTRIES);
+		क्रम (i = 0; i < n; i++)
 			pr_err("%02d EA[0-35]=%9x\n", i, get_paca()->slb_cache[i]);
 		pr_err("Rest of SLB cache entries:\n");
-		for (i = n; i < SLB_CACHE_ENTRIES; i++)
+		क्रम (i = n; i < SLB_CACHE_ENTRIES; i++)
 			pr_err("%02d EA[0-35]=%9x\n", i, get_paca()->slb_cache[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void slb_vmalloc_update(void)
-{
+व्योम slb_vदो_स्मृति_update(व्योम)
+अणु
 	/*
-	 * vmalloc is not bolted, so just have to flush non-bolted.
+	 * vदो_स्मृति is not bolted, so just have to flush non-bolted.
 	 */
 	slb_flush_and_restore_bolted();
-}
+पूर्ण
 
-static bool preload_hit(struct thread_info *ti, unsigned long esid)
-{
-	unsigned char i;
+अटल bool preload_hit(काष्ठा thपढ़ो_info *ti, अचिन्हित दीर्घ esid)
+अणु
+	अचिन्हित अक्षर i;
 
-	for (i = 0; i < ti->slb_preload_nr; i++) {
-		unsigned char idx;
+	क्रम (i = 0; i < ti->slb_preload_nr; i++) अणु
+		अचिन्हित अक्षर idx;
 
 		idx = (ti->slb_preload_tail + i) % SLB_PRELOAD_NR;
-		if (esid == ti->slb_preload_esid[idx])
-			return true;
-	}
-	return false;
-}
+		अगर (esid == ti->slb_preload_esid[idx])
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool preload_add(struct thread_info *ti, unsigned long ea)
-{
-	unsigned char idx;
-	unsigned long esid;
+अटल bool preload_add(काष्ठा thपढ़ो_info *ti, अचिन्हित दीर्घ ea)
+अणु
+	अचिन्हित अक्षर idx;
+	अचिन्हित दीर्घ esid;
 
-	if (mmu_has_feature(MMU_FTR_1T_SEGMENT)) {
-		/* EAs are stored >> 28 so 256MB segments don't need clearing */
-		if (ea & ESID_MASK_1T)
+	अगर (mmu_has_feature(MMU_FTR_1T_SEGMENT)) अणु
+		/* EAs are stored >> 28 so 256MB segments करोn't need clearing */
+		अगर (ea & ESID_MASK_1T)
 			ea &= ESID_MASK_1T;
-	}
+	पूर्ण
 
 	esid = ea >> SID_SHIFT;
 
-	if (preload_hit(ti, esid))
-		return false;
+	अगर (preload_hit(ti, esid))
+		वापस false;
 
 	idx = (ti->slb_preload_tail + ti->slb_preload_nr) % SLB_PRELOAD_NR;
 	ti->slb_preload_esid[idx] = esid;
-	if (ti->slb_preload_nr == SLB_PRELOAD_NR)
+	अगर (ti->slb_preload_nr == SLB_PRELOAD_NR)
 		ti->slb_preload_tail = (ti->slb_preload_tail + 1) % SLB_PRELOAD_NR;
-	else
+	अन्यथा
 		ti->slb_preload_nr++;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void preload_age(struct thread_info *ti)
-{
-	if (!ti->slb_preload_nr)
-		return;
+अटल व्योम preload_age(काष्ठा thपढ़ो_info *ti)
+अणु
+	अगर (!ti->slb_preload_nr)
+		वापस;
 	ti->slb_preload_nr--;
 	ti->slb_preload_tail = (ti->slb_preload_tail + 1) % SLB_PRELOAD_NR;
-}
+पूर्ण
 
-void slb_setup_new_exec(void)
-{
-	struct thread_info *ti = current_thread_info();
-	struct mm_struct *mm = current->mm;
-	unsigned long exec = 0x10000000;
+व्योम slb_setup_new_exec(व्योम)
+अणु
+	काष्ठा thपढ़ो_info *ti = current_thपढ़ो_info();
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	अचिन्हित दीर्घ exec = 0x10000000;
 
 	WARN_ON(irqs_disabled());
 
 	/*
 	 * preload cache can only be used to determine whether a SLB
-	 * entry exists if it does not start to overflow.
+	 * entry exists अगर it करोes not start to overflow.
 	 */
-	if (ti->slb_preload_nr + 2 > SLB_PRELOAD_NR)
-		return;
+	अगर (ti->slb_preload_nr + 2 > SLB_PRELOAD_NR)
+		वापस;
 
 	hard_irq_disable();
 
 	/*
 	 * We have no good place to clear the slb preload cache on exec,
-	 * flush_thread is about the earliest arch hook but that happens
-	 * after we switch to the mm and have aleady preloaded the SLBEs.
+	 * flush_thपढ़ो is about the earliest arch hook but that happens
+	 * after we चयन to the mm and have aleady preloaded the SLBEs.
 	 *
 	 * For the most part that's probably okay to use entries from the
-	 * previous exec, they will age out if unused. It may turn out to
-	 * be an advantage to clear the cache before switching to it,
+	 * previous exec, they will age out अगर unused. It may turn out to
+	 * be an advantage to clear the cache beक्रमe चयनing to it,
 	 * however.
 	 */
 
 	/*
-	 * preload some userspace segments into the SLB.
+	 * preload some userspace segments पूर्णांकo the SLB.
 	 * Almost all 32 and 64bit PowerPC executables are linked at
 	 * 0x10000000 so it makes sense to preload this segment.
 	 */
-	if (!is_kernel_addr(exec)) {
-		if (preload_add(ti, exec))
+	अगर (!is_kernel_addr(exec)) अणु
+		अगर (preload_add(ti, exec))
 			slb_allocate_user(mm, exec);
-	}
+	पूर्ण
 
 	/* Libraries and mmaps. */
-	if (!is_kernel_addr(mm->mmap_base)) {
-		if (preload_add(ti, mm->mmap_base))
+	अगर (!is_kernel_addr(mm->mmap_base)) अणु
+		अगर (preload_add(ti, mm->mmap_base))
 			slb_allocate_user(mm, mm->mmap_base);
-	}
+	पूर्ण
 
-	/* see switch_slb */
-	asm volatile("isync" : : : "memory");
+	/* see चयन_slb */
+	यंत्र अस्थिर("isync" : : : "memory");
 
 	local_irq_enable();
-}
+पूर्ण
 
-void preload_new_slb_context(unsigned long start, unsigned long sp)
-{
-	struct thread_info *ti = current_thread_info();
-	struct mm_struct *mm = current->mm;
-	unsigned long heap = mm->start_brk;
+व्योम preload_new_slb_context(अचिन्हित दीर्घ start, अचिन्हित दीर्घ sp)
+अणु
+	काष्ठा thपढ़ो_info *ti = current_thपढ़ो_info();
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	अचिन्हित दीर्घ heap = mm->start_brk;
 
 	WARN_ON(irqs_disabled());
 
 	/* see above */
-	if (ti->slb_preload_nr + 3 > SLB_PRELOAD_NR)
-		return;
+	अगर (ti->slb_preload_nr + 3 > SLB_PRELOAD_NR)
+		वापस;
 
 	hard_irq_disable();
 
 	/* Userspace entry address. */
-	if (!is_kernel_addr(start)) {
-		if (preload_add(ti, start))
+	अगर (!is_kernel_addr(start)) अणु
+		अगर (preload_add(ti, start))
 			slb_allocate_user(mm, start);
-	}
+	पूर्ण
 
-	/* Top of stack, grows down. */
-	if (!is_kernel_addr(sp)) {
-		if (preload_add(ti, sp))
+	/* Top of stack, grows करोwn. */
+	अगर (!is_kernel_addr(sp)) अणु
+		अगर (preload_add(ti, sp))
 			slb_allocate_user(mm, sp);
-	}
+	पूर्ण
 
 	/* Bottom of heap, grows up. */
-	if (heap && !is_kernel_addr(heap)) {
-		if (preload_add(ti, heap))
+	अगर (heap && !is_kernel_addr(heap)) अणु
+		अगर (preload_add(ti, heap))
 			slb_allocate_user(mm, heap);
-	}
+	पूर्ण
 
-	/* see switch_slb */
-	asm volatile("isync" : : : "memory");
+	/* see चयन_slb */
+	यंत्र अस्थिर("isync" : : : "memory");
 
 	local_irq_enable();
-}
+पूर्ण
 
-static void slb_cache_slbie_kernel(unsigned int index)
-{
-	unsigned long slbie_data = get_paca()->slb_cache[index];
-	unsigned long ksp = get_paca()->kstack;
+अटल व्योम slb_cache_slbie_kernel(अचिन्हित पूर्णांक index)
+अणु
+	अचिन्हित दीर्घ slbie_data = get_paca()->slb_cache[index];
+	अचिन्हित दीर्घ ksp = get_paca()->kstack;
 
 	slbie_data <<= SID_SHIFT;
 	slbie_data |= 0xc000000000000000ULL;
-	if ((ksp & slb_esid_mask(mmu_kernel_ssize)) == slbie_data)
-		return;
+	अगर ((ksp & slb_esid_mask(mmu_kernel_ssize)) == slbie_data)
+		वापस;
 	slbie_data |= mmu_kernel_ssize << SLBIE_SSIZE_SHIFT;
 
-	asm volatile("slbie %0" : : "r" (slbie_data));
-}
+	यंत्र अस्थिर("slbie %0" : : "r" (slbie_data));
+पूर्ण
 
-static void slb_cache_slbie_user(unsigned int index)
-{
-	unsigned long slbie_data = get_paca()->slb_cache[index];
+अटल व्योम slb_cache_slbie_user(अचिन्हित पूर्णांक index)
+अणु
+	अचिन्हित दीर्घ slbie_data = get_paca()->slb_cache[index];
 
 	slbie_data <<= SID_SHIFT;
 	slbie_data |= user_segment_size(slbie_data) << SLBIE_SSIZE_SHIFT;
 	slbie_data |= SLBIE_C; /* user slbs have C=1 */
 
-	asm volatile("slbie %0" : : "r" (slbie_data));
-}
+	यंत्र अस्थिर("slbie %0" : : "r" (slbie_data));
+पूर्ण
 
 /* Flush all user entries from the segment table of the current processor. */
-void switch_slb(struct task_struct *tsk, struct mm_struct *mm)
-{
-	struct thread_info *ti = task_thread_info(tsk);
-	unsigned char i;
+व्योम चयन_slb(काष्ठा task_काष्ठा *tsk, काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा thपढ़ो_info *ti = task_thपढ़ो_info(tsk);
+	अचिन्हित अक्षर i;
 
 	/*
-	 * We need interrupts hard-disabled here, not just soft-disabled,
-	 * so that a PMU interrupt can't occur, which might try to access
+	 * We need पूर्णांकerrupts hard-disabled here, not just soft-disabled,
+	 * so that a PMU पूर्णांकerrupt can't occur, which might try to access
 	 * user memory (to get a stack trace) and possible cause an SLB miss
 	 * which would update the slb_cache/slb_cache_ptr fields in the PACA.
 	 */
 	hard_irq_disable();
 	isync();
-	if (stress_slb()) {
+	अगर (stress_slb()) अणु
 		__slb_flush_and_restore_bolted(false);
 		isync();
 		get_paca()->slb_cache_ptr = 0;
-		get_paca()->slb_kern_bitmap = (1U << SLB_NUM_BOLTED) - 1;
+		get_paca()->slb_kern_biपंचांगap = (1U << SLB_NUM_BOLTED) - 1;
 
-	} else if (cpu_has_feature(CPU_FTR_ARCH_300)) {
+	पूर्ण अन्यथा अगर (cpu_has_feature(CPU_FTR_ARCH_300)) अणु
 		/*
 		 * SLBIA IH=3 invalidates all Class=1 SLBEs and their
-		 * associated lookaside structures, which matches what
-		 * switch_slb wants. So ARCH_300 does not use the slb
+		 * associated lookaside काष्ठाures, which matches what
+		 * चयन_slb wants. So ARCH_300 करोes not use the slb
 		 * cache.
 		 */
-		asm volatile(PPC_SLBIA(3));
+		यंत्र अस्थिर(PPC_SLBIA(3));
 
-	} else {
-		unsigned long offset = get_paca()->slb_cache_ptr;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ offset = get_paca()->slb_cache_ptr;
 
-		if (!mmu_has_feature(MMU_FTR_NO_SLBIE_B) &&
-		    offset <= SLB_CACHE_ENTRIES) {
+		अगर (!mmu_has_feature(MMU_FTR_NO_SLBIE_B) &&
+		    offset <= SLB_CACHE_ENTRIES) अणु
 			/*
-			 * Could assert_slb_presence(true) here, but
+			 * Could निश्चित_slb_presence(true) here, but
 			 * hypervisor or machine check could have come
-			 * in and removed the entry at this point.
+			 * in and हटाओd the entry at this poपूर्णांक.
 			 */
 
-			for (i = 0; i < offset; i++)
+			क्रम (i = 0; i < offset; i++)
 				slb_cache_slbie_user(i);
 
 			/* Workaround POWER5 < DD2.1 issue */
-			if (!cpu_has_feature(CPU_FTR_ARCH_207S) && offset == 1)
+			अगर (!cpu_has_feature(CPU_FTR_ARCH_207S) && offset == 1)
 				slb_cache_slbie_user(0);
 
-		} else {
-			/* Flush but retain kernel lookaside information */
+		पूर्ण अन्यथा अणु
+			/* Flush but retain kernel lookaside inक्रमmation */
 			__slb_flush_and_restore_bolted(true);
 			isync();
 
-			get_paca()->slb_kern_bitmap = (1U << SLB_NUM_BOLTED) - 1;
-		}
+			get_paca()->slb_kern_biपंचांगap = (1U << SLB_NUM_BOLTED) - 1;
+		पूर्ण
 
 		get_paca()->slb_cache_ptr = 0;
-	}
-	get_paca()->slb_used_bitmap = get_paca()->slb_kern_bitmap;
+	पूर्ण
+	get_paca()->slb_used_biपंचांगap = get_paca()->slb_kern_biपंचांगap;
 
 	copy_mm_to_paca(mm);
 
 	/*
-	 * We gradually age out SLBs after a number of context switches to
-	 * reduce reload overhead of unused entries (like we do with FP/VEC
-	 * reload). Each time we wrap 256 switches, take an entry out of the
+	 * We gradually age out SLBs after a number of context चयनes to
+	 * reduce reload overhead of unused entries (like we करो with FP/VEC
+	 * reload). Each समय we wrap 256 चयनes, take an entry out of the
 	 * SLB preload cache.
 	 */
-	tsk->thread.load_slb++;
-	if (!tsk->thread.load_slb) {
-		unsigned long pc = KSTK_EIP(tsk);
+	tsk->thपढ़ो.load_slb++;
+	अगर (!tsk->thपढ़ो.load_slb) अणु
+		अचिन्हित दीर्घ pc = KSTK_EIP(tsk);
 
 		preload_age(ti);
 		preload_add(ti, pc);
-	}
+	पूर्ण
 
-	for (i = 0; i < ti->slb_preload_nr; i++) {
-		unsigned char idx;
-		unsigned long ea;
+	क्रम (i = 0; i < ti->slb_preload_nr; i++) अणु
+		अचिन्हित अक्षर idx;
+		अचिन्हित दीर्घ ea;
 
 		idx = (ti->slb_preload_tail + i) % SLB_PRELOAD_NR;
-		ea = (unsigned long)ti->slb_preload_esid[idx] << SID_SHIFT;
+		ea = (अचिन्हित दीर्घ)ti->slb_preload_esid[idx] << SID_SHIFT;
 
 		slb_allocate_user(mm, ea);
-	}
+	पूर्ण
 
 	/*
 	 * Synchronize slbmte preloads with possible subsequent user memory
@@ -532,161 +533,161 @@ void switch_slb(struct task_struct *tsk, struct mm_struct *mm)
 	 * rfid, which is safe).
 	 */
 	isync();
-}
+पूर्ण
 
-void slb_set_size(u16 size)
-{
+व्योम slb_set_size(u16 size)
+अणु
 	mmu_slb_size = size;
-}
+पूर्ण
 
-void slb_initialize(void)
-{
-	unsigned long linear_llp, vmalloc_llp, io_llp;
-	unsigned long lflags;
-	static int slb_encoding_inited;
-#ifdef CONFIG_SPARSEMEM_VMEMMAP
-	unsigned long vmemmap_llp;
-#endif
+व्योम slb_initialize(व्योम)
+अणु
+	अचिन्हित दीर्घ linear_llp, vदो_स्मृति_llp, io_llp;
+	अचिन्हित दीर्घ lflags;
+	अटल पूर्णांक slb_encoding_inited;
+#अगर_घोषित CONFIG_SPARSEMEM_VMEMMAP
+	अचिन्हित दीर्घ vmemmap_llp;
+#पूर्ण_अगर
 
 	/* Prepare our SLB miss handler based on our page size */
 	linear_llp = mmu_psize_defs[mmu_linear_psize].sllp;
 	io_llp = mmu_psize_defs[mmu_io_psize].sllp;
-	vmalloc_llp = mmu_psize_defs[mmu_vmalloc_psize].sllp;
-	get_paca()->vmalloc_sllp = SLB_VSID_KERNEL | vmalloc_llp;
-#ifdef CONFIG_SPARSEMEM_VMEMMAP
+	vदो_स्मृति_llp = mmu_psize_defs[mmu_vदो_स्मृति_psize].sllp;
+	get_paca()->vदो_स्मृति_sllp = SLB_VSID_KERNEL | vदो_स्मृति_llp;
+#अगर_घोषित CONFIG_SPARSEMEM_VMEMMAP
 	vmemmap_llp = mmu_psize_defs[mmu_vmemmap_psize].sllp;
-#endif
-	if (!slb_encoding_inited) {
+#पूर्ण_अगर
+	अगर (!slb_encoding_inited) अणु
 		slb_encoding_inited = 1;
 		pr_devel("SLB: linear  LLP = %04lx\n", linear_llp);
 		pr_devel("SLB: io      LLP = %04lx\n", io_llp);
-#ifdef CONFIG_SPARSEMEM_VMEMMAP
+#अगर_घोषित CONFIG_SPARSEMEM_VMEMMAP
 		pr_devel("SLB: vmemmap LLP = %04lx\n", vmemmap_llp);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	get_paca()->stab_rr = SLB_NUM_BOLTED - 1;
-	get_paca()->slb_kern_bitmap = (1U << SLB_NUM_BOLTED) - 1;
-	get_paca()->slb_used_bitmap = get_paca()->slb_kern_bitmap;
+	get_paca()->slb_kern_biपंचांगap = (1U << SLB_NUM_BOLTED) - 1;
+	get_paca()->slb_used_biपंचांगap = get_paca()->slb_kern_biपंचांगap;
 
 	lflags = SLB_VSID_KERNEL | linear_llp;
 
 	/* Invalidate the entire SLB (even entry 0) & all the ERATS */
-	asm volatile("isync":::"memory");
-	asm volatile("slbmte  %0,%0"::"r" (0) : "memory");
-	asm volatile("isync; slbia; isync":::"memory");
-	create_shadowed_slbe(PAGE_OFFSET, mmu_kernel_ssize, lflags, LINEAR_INDEX);
+	यंत्र अस्थिर("isync":::"memory");
+	यंत्र अस्थिर("slbmte  %0,%0"::"r" (0) : "memory");
+	यंत्र अस्थिर("isync; slbia; isync":::"memory");
+	create_shaकरोwed_slbe(PAGE_OFFSET, mmu_kernel_ssize, lflags, LINEAR_INDEX);
 
 	/*
-	 * For the boot cpu, we're running on the stack in init_thread_union,
+	 * For the boot cpu, we're running on the stack in init_thपढ़ो_जोड़,
 	 * which is in the first segment of the linear mapping, and also
 	 * get_paca()->kstack hasn't been initialized yet.
 	 * For secondary cpus, we need to bolt the kernel stack entry now.
 	 */
-	slb_shadow_clear(KSTACK_INDEX);
-	if (raw_smp_processor_id() != boot_cpuid &&
+	slb_shaकरोw_clear(KSTACK_INDEX);
+	अगर (raw_smp_processor_id() != boot_cpuid &&
 	    (get_paca()->kstack & slb_esid_mask(mmu_kernel_ssize)) > PAGE_OFFSET)
-		create_shadowed_slbe(get_paca()->kstack,
+		create_shaकरोwed_slbe(get_paca()->kstack,
 				     mmu_kernel_ssize, lflags, KSTACK_INDEX);
 
-	asm volatile("isync":::"memory");
-}
+	यंत्र अस्थिर("isync":::"memory");
+पूर्ण
 
-static void slb_cache_update(unsigned long esid_data)
-{
-	int slb_cache_index;
+अटल व्योम slb_cache_update(अचिन्हित दीर्घ esid_data)
+अणु
+	पूर्णांक slb_cache_index;
 
-	if (cpu_has_feature(CPU_FTR_ARCH_300))
-		return; /* ISAv3.0B and later does not use slb_cache */
+	अगर (cpu_has_feature(CPU_FTR_ARCH_300))
+		वापस; /* ISAv3.0B and later करोes not use slb_cache */
 
-	if (stress_slb())
-		return;
+	अगर (stress_slb())
+		वापस;
 
 	/*
 	 * Now update slb cache entries
 	 */
 	slb_cache_index = local_paca->slb_cache_ptr;
-	if (slb_cache_index < SLB_CACHE_ENTRIES) {
+	अगर (slb_cache_index < SLB_CACHE_ENTRIES) अणु
 		/*
-		 * We have space in slb cache for optimized switch_slb().
+		 * We have space in slb cache क्रम optimized चयन_slb().
 		 * Top 36 bits from esid_data as per ISA
 		 */
 		local_paca->slb_cache[slb_cache_index++] = esid_data >> SID_SHIFT;
 		local_paca->slb_cache_ptr++;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Our cache is full and the current cache content strictly
-		 * doesn't indicate the active SLB conents. Bump the ptr
-		 * so that switch_slb() will ignore the cache.
+		 * करोesn't indicate the active SLB conents. Bump the ptr
+		 * so that चयन_slb() will ignore the cache.
 		 */
 		local_paca->slb_cache_ptr = SLB_CACHE_ENTRIES + 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static enum slb_index alloc_slb_index(bool kernel)
-{
-	enum slb_index index;
+अटल क्रमागत slb_index alloc_slb_index(bool kernel)
+अणु
+	क्रमागत slb_index index;
 
 	/*
-	 * The allocation bitmaps can become out of synch with the SLB
-	 * when the _switch code does slbie when bolting a new stack
-	 * segment and it must not be anywhere else in the SLB. This leaves
+	 * The allocation biपंचांगaps can become out of synch with the SLB
+	 * when the _चयन code करोes slbie when bolting a new stack
+	 * segment and it must not be anywhere अन्यथा in the SLB. This leaves
 	 * a kernel allocated entry that is unused in the SLB. With very
-	 * large systems or small segment sizes, the bitmaps could slowly
+	 * large प्रणालीs or small segment sizes, the biपंचांगaps could slowly
 	 * fill with these entries. They will eventually be cleared out
-	 * by the round robin allocator in that case, so it's probably not
-	 * worth accounting for.
+	 * by the round robin allocator in that हाल, so it's probably not
+	 * worth accounting क्रम.
 	 */
 
 	/*
 	 * SLBs beyond 32 entries are allocated with stab_rr only
-	 * POWER7/8/9 have 32 SLB entries, this could be expanded if a
+	 * POWER7/8/9 have 32 SLB entries, this could be expanded अगर a
 	 * future CPU has more.
 	 */
-	if (local_paca->slb_used_bitmap != U32_MAX) {
-		index = ffz(local_paca->slb_used_bitmap);
-		local_paca->slb_used_bitmap |= 1U << index;
-		if (kernel)
-			local_paca->slb_kern_bitmap |= 1U << index;
-	} else {
+	अगर (local_paca->slb_used_biपंचांगap != U32_MAX) अणु
+		index = ffz(local_paca->slb_used_biपंचांगap);
+		local_paca->slb_used_biपंचांगap |= 1U << index;
+		अगर (kernel)
+			local_paca->slb_kern_biपंचांगap |= 1U << index;
+	पूर्ण अन्यथा अणु
 		/* round-robin replacement of slb starting at SLB_NUM_BOLTED. */
 		index = local_paca->stab_rr;
-		if (index < (mmu_slb_size - 1))
+		अगर (index < (mmu_slb_size - 1))
 			index++;
-		else
+		अन्यथा
 			index = SLB_NUM_BOLTED;
 		local_paca->stab_rr = index;
-		if (index < 32) {
-			if (kernel)
-				local_paca->slb_kern_bitmap |= 1U << index;
-			else
-				local_paca->slb_kern_bitmap &= ~(1U << index);
-		}
-	}
+		अगर (index < 32) अणु
+			अगर (kernel)
+				local_paca->slb_kern_biपंचांगap |= 1U << index;
+			अन्यथा
+				local_paca->slb_kern_biपंचांगap &= ~(1U << index);
+		पूर्ण
+	पूर्ण
 	BUG_ON(index < SLB_NUM_BOLTED);
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static long slb_insert_entry(unsigned long ea, unsigned long context,
-				unsigned long flags, int ssize, bool kernel)
-{
-	unsigned long vsid;
-	unsigned long vsid_data, esid_data;
-	enum slb_index index;
+अटल दीर्घ slb_insert_entry(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ context,
+				अचिन्हित दीर्घ flags, पूर्णांक ssize, bool kernel)
+अणु
+	अचिन्हित दीर्घ vsid;
+	अचिन्हित दीर्घ vsid_data, esid_data;
+	क्रमागत slb_index index;
 
 	vsid = get_vsid(context, ea, ssize);
-	if (!vsid)
-		return -EFAULT;
+	अगर (!vsid)
+		वापस -EFAULT;
 
 	/*
-	 * There must not be a kernel SLB fault in alloc_slb_index or before
-	 * slbmte here or the allocation bitmaps could get out of whack with
+	 * There must not be a kernel SLB fault in alloc_slb_index or beक्रमe
+	 * slbmte here or the allocation biपंचांगaps could get out of whack with
 	 * the SLB.
 	 *
-	 * User SLB faults or preloads take this path which might get inlined
-	 * into the caller, so add compiler barriers here to ensure unsafe
-	 * memory accesses do not come between.
+	 * User SLB faults or preloads take this path which might get अंतरभूतd
+	 * पूर्णांकo the caller, so add compiler barriers here to ensure unsafe
+	 * memory accesses करो not come between.
 	 */
 	barrier();
 
@@ -696,191 +697,191 @@ static long slb_insert_entry(unsigned long ea, unsigned long context,
 	esid_data = mk_esid_data(ea, ssize, index);
 
 	/*
-	 * No need for an isync before or after this slbmte. The exception
-	 * we enter with and the rfid we exit with are context synchronizing.
-	 * User preloads should add isync afterwards in case the kernel
-	 * accesses user memory before it returns to userspace with rfid.
+	 * No need क्रम an isync beक्रमe or after this slbmte. The exception
+	 * we enter with and the rfid we निकास with are context synchronizing.
+	 * User preloads should add isync afterwards in हाल the kernel
+	 * accesses user memory beक्रमe it वापसs to userspace with rfid.
 	 */
-	assert_slb_presence(false, ea);
-	if (stress_slb()) {
-		int slb_cache_index = local_paca->slb_cache_ptr;
+	निश्चित_slb_presence(false, ea);
+	अगर (stress_slb()) अणु
+		पूर्णांक slb_cache_index = local_paca->slb_cache_ptr;
 
 		/*
-		 * stress_slb() does not use slb cache, repurpose as a
+		 * stress_slb() करोes not use slb cache, repurpose as a
 		 * cache of inserted (non-bolted) kernel SLB entries. All
 		 * non-bolted kernel entries are flushed on any user fault,
-		 * or if there are already 3 non-boled kernel entries.
+		 * or अगर there are alपढ़ोy 3 non-boled kernel entries.
 		 */
 		BUILD_BUG_ON(SLB_CACHE_ENTRIES < 3);
-		if (!kernel || slb_cache_index == 3) {
-			int i;
+		अगर (!kernel || slb_cache_index == 3) अणु
+			पूर्णांक i;
 
-			for (i = 0; i < slb_cache_index; i++)
+			क्रम (i = 0; i < slb_cache_index; i++)
 				slb_cache_slbie_kernel(i);
 			slb_cache_index = 0;
-		}
+		पूर्ण
 
-		if (kernel)
+		अगर (kernel)
 			local_paca->slb_cache[slb_cache_index++] = esid_data >> SID_SHIFT;
 		local_paca->slb_cache_ptr = slb_cache_index;
-	}
-	asm volatile("slbmte %0, %1" : : "r" (vsid_data), "r" (esid_data));
+	पूर्ण
+	यंत्र अस्थिर("slbmte %0, %1" : : "r" (vsid_data), "r" (esid_data));
 
 	barrier();
 
-	if (!kernel)
+	अगर (!kernel)
 		slb_cache_update(esid_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long slb_allocate_kernel(unsigned long ea, unsigned long id)
-{
-	unsigned long context;
-	unsigned long flags;
-	int ssize;
+अटल दीर्घ slb_allocate_kernel(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ id)
+अणु
+	अचिन्हित दीर्घ context;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ssize;
 
-	if (id == LINEAR_MAP_REGION_ID) {
+	अगर (id == LINEAR_MAP_REGION_ID) अणु
 
 		/* We only support upto H_MAX_PHYSMEM_BITS */
-		if ((ea & EA_MASK) > (1UL << H_MAX_PHYSMEM_BITS))
-			return -EFAULT;
+		अगर ((ea & EA_MASK) > (1UL << H_MAX_PHYSMEM_BITS))
+			वापस -EFAULT;
 
 		flags = SLB_VSID_KERNEL | mmu_psize_defs[mmu_linear_psize].sllp;
 
-#ifdef CONFIG_SPARSEMEM_VMEMMAP
-	} else if (id == VMEMMAP_REGION_ID) {
+#अगर_घोषित CONFIG_SPARSEMEM_VMEMMAP
+	पूर्ण अन्यथा अगर (id == VMEMMAP_REGION_ID) अणु
 
-		if (ea >= H_VMEMMAP_END)
-			return -EFAULT;
+		अगर (ea >= H_VMEMMAP_END)
+			वापस -EFAULT;
 
 		flags = SLB_VSID_KERNEL | mmu_psize_defs[mmu_vmemmap_psize].sllp;
-#endif
-	} else if (id == VMALLOC_REGION_ID) {
+#पूर्ण_अगर
+	पूर्ण अन्यथा अगर (id == VMALLOC_REGION_ID) अणु
 
-		if (ea >= H_VMALLOC_END)
-			return -EFAULT;
+		अगर (ea >= H_VMALLOC_END)
+			वापस -EFAULT;
 
-		flags = local_paca->vmalloc_sllp;
+		flags = local_paca->vदो_स्मृति_sllp;
 
-	} else if (id == IO_REGION_ID) {
+	पूर्ण अन्यथा अगर (id == IO_REGION_ID) अणु
 
-		if (ea >= H_KERN_IO_END)
-			return -EFAULT;
+		अगर (ea >= H_KERN_IO_END)
+			वापस -EFAULT;
 
 		flags = SLB_VSID_KERNEL | mmu_psize_defs[mmu_io_psize].sllp;
 
-	} else {
-		return -EFAULT;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EFAULT;
+	पूर्ण
 
 	ssize = MMU_SEGSIZE_1T;
-	if (!mmu_has_feature(MMU_FTR_1T_SEGMENT))
+	अगर (!mmu_has_feature(MMU_FTR_1T_SEGMENT))
 		ssize = MMU_SEGSIZE_256M;
 
 	context = get_kernel_context(ea);
 
-	return slb_insert_entry(ea, context, flags, ssize, true);
-}
+	वापस slb_insert_entry(ea, context, flags, ssize, true);
+पूर्ण
 
-static long slb_allocate_user(struct mm_struct *mm, unsigned long ea)
-{
-	unsigned long context;
-	unsigned long flags;
-	int bpsize;
-	int ssize;
+अटल दीर्घ slb_allocate_user(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ea)
+अणु
+	अचिन्हित दीर्घ context;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक bpsize;
+	पूर्णांक ssize;
 
 	/*
-	 * consider this as bad access if we take a SLB miss
+	 * consider this as bad access अगर we take a SLB miss
 	 * on an address above addr limit.
 	 */
-	if (ea >= mm_ctx_slb_addr_limit(&mm->context))
-		return -EFAULT;
+	अगर (ea >= mm_ctx_slb_addr_limit(&mm->context))
+		वापस -EFAULT;
 
 	context = get_user_context(&mm->context, ea);
-	if (!context)
-		return -EFAULT;
+	अगर (!context)
+		वापस -EFAULT;
 
-	if (unlikely(ea >= H_PGTABLE_RANGE)) {
+	अगर (unlikely(ea >= H_PGTABLE_RANGE)) अणु
 		WARN_ON(1);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	ssize = user_segment_size(ea);
 
 	bpsize = get_slice_psize(mm, ea);
 	flags = SLB_VSID_USER | mmu_psize_defs[bpsize].sllp;
 
-	return slb_insert_entry(ea, context, flags, ssize, false);
-}
+	वापस slb_insert_entry(ea, context, flags, ssize, false);
+पूर्ण
 
-DEFINE_INTERRUPT_HANDLER_RAW(do_slb_fault)
-{
-	unsigned long ea = regs->dar;
-	unsigned long id = get_region_id(ea);
+DEFINE_INTERRUPT_HANDLER_RAW(करो_slb_fault)
+अणु
+	अचिन्हित दीर्घ ea = regs->dar;
+	अचिन्हित दीर्घ id = get_region_id(ea);
 
 	/* IRQs are not reconciled here, so can't check irqs_disabled */
 	VM_WARN_ON(mfmsr() & MSR_EE);
 
-	if (unlikely(!(regs->msr & MSR_RI)))
-		return -EINVAL;
+	अगर (unlikely(!(regs->msr & MSR_RI)))
+		वापस -EINVAL;
 
 	/*
 	 * SLB kernel faults must be very careful not to touch anything that is
 	 * not bolted. E.g., PACA and global variables are okay, mm->context
 	 * stuff is not. SLB user faults may access all of memory (and induce
 	 * one recursive SLB kernel fault), so the kernel fault must not
-	 * trample on the user fault state at those points.
+	 * trample on the user fault state at those poपूर्णांकs.
 	 */
 
 	/*
-	 * This is a raw interrupt handler, for performance, so that
-	 * fast_interrupt_return can be used. The handler must not touch local
-	 * irq state, or schedule. We could test for usermode and upgrade to a
-	 * normal process context (synchronous) interrupt for those, which
+	 * This is a raw पूर्णांकerrupt handler, क्रम perक्रमmance, so that
+	 * fast_पूर्णांकerrupt_वापस can be used. The handler must not touch local
+	 * irq state, or schedule. We could test क्रम usermode and upgrade to a
+	 * normal process context (synchronous) पूर्णांकerrupt क्रम those, which
 	 * would make them first-class kernel code and able to be traced and
-	 * instrumented, although performance would suffer a bit, it would
+	 * instrumented, although perक्रमmance would suffer a bit, it would
 	 * probably be a good tradeoff.
 	 */
-	if (id >= LINEAR_MAP_REGION_ID) {
-		long err;
-#ifdef CONFIG_DEBUG_VM
+	अगर (id >= LINEAR_MAP_REGION_ID) अणु
+		दीर्घ err;
+#अगर_घोषित CONFIG_DEBUG_VM
 		/* Catch recursive kernel SLB faults. */
 		BUG_ON(local_paca->in_kernel_slb_handler);
 		local_paca->in_kernel_slb_handler = 1;
-#endif
+#पूर्ण_अगर
 		err = slb_allocate_kernel(ea, id);
-#ifdef CONFIG_DEBUG_VM
+#अगर_घोषित CONFIG_DEBUG_VM
 		local_paca->in_kernel_slb_handler = 0;
-#endif
-		return err;
-	} else {
-		struct mm_struct *mm = current->mm;
-		long err;
+#पूर्ण_अगर
+		वापस err;
+	पूर्ण अन्यथा अणु
+		काष्ठा mm_काष्ठा *mm = current->mm;
+		दीर्घ err;
 
-		if (unlikely(!mm))
-			return -EFAULT;
+		अगर (unlikely(!mm))
+			वापस -EFAULT;
 
 		err = slb_allocate_user(mm, ea);
-		if (!err)
-			preload_add(current_thread_info(), ea);
+		अगर (!err)
+			preload_add(current_thपढ़ो_info(), ea);
 
-		return err;
-	}
-}
+		वापस err;
+	पूर्ण
+पूर्ण
 
-DEFINE_INTERRUPT_HANDLER(do_bad_slb_fault)
-{
-	int err = regs->result;
+DEFINE_INTERRUPT_HANDLER(करो_bad_slb_fault)
+अणु
+	पूर्णांक err = regs->result;
 
-	if (err == -EFAULT) {
-		if (user_mode(regs))
-			_exception(SIGSEGV, regs, SEGV_BNDERR, regs->dar);
-		else
-			bad_page_fault(regs, SIGSEGV);
-	} else if (err == -EINVAL) {
+	अगर (err == -EFAULT) अणु
+		अगर (user_mode(regs))
+			_exception(संक_अंश, regs, SEGV_BNDERR, regs->dar);
+		अन्यथा
+			bad_page_fault(regs, संक_अंश);
+	पूर्ण अन्यथा अगर (err == -EINVAL) अणु
 		unrecoverable_exception(regs);
-	} else {
+	पूर्ण अन्यथा अणु
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण

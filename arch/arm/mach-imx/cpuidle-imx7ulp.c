@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright 2017-2018 NXP
  *   Anson Huang <Anson.Huang@nxp.com>
  */
 
-#include <linux/cpuidle.h>
-#include <linux/module.h>
-#include <asm/cpuidle.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/cpuidle.h>
 
-#include "common.h"
-#include "cpuidle.h"
+#समावेश "common.h"
+#समावेश "cpuidle.h"
 
-static int imx7ulp_enter_wait(struct cpuidle_device *dev,
-			    struct cpuidle_driver *drv, int index)
-{
-	if (index == 1)
+अटल पूर्णांक imx7ulp_enter_रुको(काष्ठा cpuidle_device *dev,
+			    काष्ठा cpuidle_driver *drv, पूर्णांक index)
+अणु
+	अगर (index == 1)
 		imx7ulp_set_lpm(ULP_PM_WAIT);
-	else
+	अन्यथा
 		imx7ulp_set_lpm(ULP_PM_STOP);
 
-	cpu_do_idle();
+	cpu_करो_idle();
 
 	imx7ulp_set_lpm(ULP_PM_RUN);
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static struct cpuidle_driver imx7ulp_cpuidle_driver = {
+अटल काष्ठा cpuidle_driver imx7ulp_cpuidle_driver = अणु
 	.name = "imx7ulp_cpuidle",
 	.owner = THIS_MODULE,
-	.states = {
+	.states = अणु
 		/* WFI */
 		ARM_CPUIDLE_WFI_STATE,
 		/* WAIT */
-		{
-			.exit_latency = 50,
+		अणु
+			.निकास_latency = 50,
 			.target_residency = 75,
-			.enter = imx7ulp_enter_wait,
+			.enter = imx7ulp_enter_रुको,
 			.name = "WAIT",
 			.desc = "PSTOP2",
-		},
+		पूर्ण,
 		/* STOP */
-		{
-			.exit_latency = 100,
+		अणु
+			.निकास_latency = 100,
 			.target_residency = 150,
-			.enter = imx7ulp_enter_wait,
+			.enter = imx7ulp_enter_रुको,
 			.name = "STOP",
 			.desc = "PSTOP1",
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.state_count = 3,
 	.safe_state_index = 0,
-};
+पूर्ण;
 
-int __init imx7ulp_cpuidle_init(void)
-{
-	return cpuidle_register(&imx7ulp_cpuidle_driver, NULL);
-}
+पूर्णांक __init imx7ulp_cpuidle_init(व्योम)
+अणु
+	वापस cpuidle_रेजिस्टर(&imx7ulp_cpuidle_driver, शून्य);
+पूर्ण

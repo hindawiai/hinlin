@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/bug.h>
-#include <linux/io.h>
-#include <linux/types.h>
-#include <linux/kdebug.h>
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/sched/debug.h>
-#include <linux/sched/task_stack.h>
-#include <linux/uaccess.h>
-#include <linux/hardirq.h>
-#include <linux/kernel.h>
-#include <linux/kexec.h>
-#include <linux/sched/signal.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/bug.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/types.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kexec.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <linux/extable.h>
-#include <linux/module.h>	/* print_modules */
-#include <asm/unwinder.h>
-#include <asm/traps.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/module.h>	/* prपूर्णांक_modules */
+#समावेश <यंत्र/unwinder.h>
+#समावेश <यंत्र/traps.h>
 
-static DEFINE_SPINLOCK(die_lock);
+अटल DEFINE_SPINLOCK(die_lock);
 
-void die(const char *str, struct pt_regs *regs, long err)
-{
-	static int die_counter;
+व्योम die(स्थिर अक्षर *str, काष्ठा pt_regs *regs, दीर्घ err)
+अणु
+	अटल पूर्णांक die_counter;
 
 	oops_enter();
 
@@ -30,156 +31,156 @@ void die(const char *str, struct pt_regs *regs, long err)
 	console_verbose();
 	bust_spinlocks(1);
 
-	printk("%s: %04lx [#%d]\n", str, err & 0xffff, ++die_counter);
-	print_modules();
+	prपूर्णांकk("%s: %04lx [#%d]\n", str, err & 0xffff, ++die_counter);
+	prपूर्णांक_modules();
 	show_regs(regs);
 
-	printk("Process: %s (pid: %d, stack limit = %p)\n", current->comm,
+	prपूर्णांकk("Process: %s (pid: %d, stack limit = %p)\n", current->comm,
 			task_pid_nr(current), task_stack_page(current) + 1);
 
-	if (!user_mode(regs) || in_interrupt())
+	अगर (!user_mode(regs) || in_पूर्णांकerrupt())
 		dump_mem("Stack: ", KERN_DEFAULT, regs->regs[15],
-			THREAD_SIZE + (unsigned long)task_stack_page(current));
+			THREAD_SIZE + (अचिन्हित दीर्घ)task_stack_page(current));
 
-	notify_die(DIE_OOPS, str, regs, err, 255, SIGSEGV);
+	notअगरy_die(DIE_OOPS, str, regs, err, 255, संक_अंश);
 
 	bust_spinlocks(0);
-	add_taint(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
+	add_taपूर्णांक(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
 	spin_unlock_irq(&die_lock);
-	oops_exit();
+	oops_निकास();
 
-	if (kexec_should_crash(current))
+	अगर (kexec_should_crash(current))
 		crash_kexec(regs);
 
-	if (in_interrupt())
+	अगर (in_पूर्णांकerrupt())
 		panic("Fatal exception in interrupt");
 
-	if (panic_on_oops)
+	अगर (panic_on_oops)
 		panic("Fatal exception");
 
-	do_exit(SIGSEGV);
-}
+	करो_निकास(संक_अंश);
+पूर्ण
 
-void die_if_kernel(const char *str, struct pt_regs *regs, long err)
-{
-	if (!user_mode(regs))
+व्योम die_अगर_kernel(स्थिर अक्षर *str, काष्ठा pt_regs *regs, दीर्घ err)
+अणु
+	अगर (!user_mode(regs))
 		die(str, regs, err);
-}
+पूर्ण
 
 /*
  * try and fix up kernelspace address errors
- * - userspace errors just cause EFAULT to be returned, resulting in SEGV
- * - kernel/userspace interfaces cause a jump to an appropriate handler
+ * - userspace errors just cause EFAULT to be वापसed, resulting in SEGV
+ * - kernel/userspace पूर्णांकerfaces cause a jump to an appropriate handler
  * - other kernel errors are bad
  */
-void die_if_no_fixup(const char *str, struct pt_regs *regs, long err)
-{
-	if (!user_mode(regs)) {
-		const struct exception_table_entry *fixup;
+व्योम die_अगर_no_fixup(स्थिर अक्षर *str, काष्ठा pt_regs *regs, दीर्घ err)
+अणु
+	अगर (!user_mode(regs)) अणु
+		स्थिर काष्ठा exception_table_entry *fixup;
 		fixup = search_exception_tables(regs->pc);
-		if (fixup) {
+		अगर (fixup) अणु
 			regs->pc = fixup->fixup;
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		die(str, regs, err);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_GENERIC_BUG
-static void handle_BUG(struct pt_regs *regs)
-{
-	const struct bug_entry *bug;
-	unsigned long bugaddr = regs->pc;
-	enum bug_trap_type tt;
+#अगर_घोषित CONFIG_GENERIC_BUG
+अटल व्योम handle_BUG(काष्ठा pt_regs *regs)
+अणु
+	स्थिर काष्ठा bug_entry *bug;
+	अचिन्हित दीर्घ bugaddr = regs->pc;
+	क्रमागत bug_trap_type tt;
 
-	if (!is_valid_bugaddr(bugaddr))
-		goto invalid;
+	अगर (!is_valid_bugaddr(bugaddr))
+		जाओ invalid;
 
 	bug = find_bug(bugaddr);
 
 	/* Switch unwinders when unwind_stack() is called */
-	if (bug->flags & BUGFLAG_UNWINDER)
+	अगर (bug->flags & BUGFLAG_UNWINDER)
 		unwinder_faulted = 1;
 
 	tt = report_bug(bugaddr, regs);
-	if (tt == BUG_TRAP_TYPE_WARN) {
-		regs->pc += instruction_size(bugaddr);
-		return;
-	}
+	अगर (tt == BUG_TRAP_TYPE_WARN) अणु
+		regs->pc += inकाष्ठाion_size(bugaddr);
+		वापस;
+	पूर्ण
 
 invalid:
 	die("Kernel BUG", regs, TRAPA_BUG_OPCODE & 0xff);
-}
+पूर्ण
 
-int is_valid_bugaddr(unsigned long addr)
-{
-	insn_size_t opcode;
+पूर्णांक is_valid_bugaddr(अचिन्हित दीर्घ addr)
+अणु
+	insn_माप_प्रकार opcode;
 
-	if (addr < PAGE_OFFSET)
-		return 0;
-	if (get_kernel_nofault(opcode, (insn_size_t *)addr))
-		return 0;
-	if (opcode == TRAPA_BUG_OPCODE)
-		return 1;
+	अगर (addr < PAGE_OFFSET)
+		वापस 0;
+	अगर (get_kernel_nofault(opcode, (insn_माप_प्रकार *)addr))
+		वापस 0;
+	अगर (opcode == TRAPA_BUG_OPCODE)
+		वापस 1;
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Generic trap handler.
  */
 BUILD_TRAP_HANDLER(debug)
-{
+अणु
 	TRAP_HANDLER_DECL;
 
 	/* Rewind */
-	regs->pc -= instruction_size(__raw_readw(regs->pc - 4));
+	regs->pc -= inकाष्ठाion_size(__raw_पढ़ोw(regs->pc - 4));
 
-	if (notify_die(DIE_TRAP, "debug trap", regs, 0, vec & 0xff,
+	अगर (notअगरy_die(DIE_TRAP, "debug trap", regs, 0, vec & 0xff,
 		       SIGTRAP) == NOTIFY_STOP)
-		return;
+		वापस;
 
-	force_sig(SIGTRAP);
-}
+	क्रमce_sig(SIGTRAP);
+पूर्ण
 
 /*
- * Special handler for BUG() traps.
+ * Special handler क्रम BUG() traps.
  */
 BUILD_TRAP_HANDLER(bug)
-{
+अणु
 	TRAP_HANDLER_DECL;
 
 	/* Rewind */
-	regs->pc -= instruction_size(__raw_readw(regs->pc - 4));
+	regs->pc -= inकाष्ठाion_size(__raw_पढ़ोw(regs->pc - 4));
 
-	if (notify_die(DIE_TRAP, "bug trap", regs, 0, TRAPA_BUG_OPCODE & 0xff,
+	अगर (notअगरy_die(DIE_TRAP, "bug trap", regs, 0, TRAPA_BUG_OPCODE & 0xff,
 		       SIGTRAP) == NOTIFY_STOP)
-		return;
+		वापस;
 
-#ifdef CONFIG_GENERIC_BUG
-	if (__kernel_text_address(instruction_pointer(regs))) {
-		insn_size_t insn = *(insn_size_t *)instruction_pointer(regs);
-		if (insn == TRAPA_BUG_OPCODE)
+#अगर_घोषित CONFIG_GENERIC_BUG
+	अगर (__kernel_text_address(inकाष्ठाion_poपूर्णांकer(regs))) अणु
+		insn_माप_प्रकार insn = *(insn_माप_प्रकार *)inकाष्ठाion_poपूर्णांकer(regs);
+		अगर (insn == TRAPA_BUG_OPCODE)
 			handle_BUG(regs);
-		return;
-	}
-#endif
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
 
-	force_sig(SIGTRAP);
-}
+	क्रमce_sig(SIGTRAP);
+पूर्ण
 
-#ifdef CONFIG_DYNAMIC_FTRACE
-extern void arch_ftrace_nmi_enter(void);
-extern void arch_ftrace_nmi_exit(void);
-#else
-static inline void arch_ftrace_nmi_enter(void) { }
-static inline void arch_ftrace_nmi_exit(void) { }
-#endif
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+बाह्य व्योम arch_ftrace_nmi_enter(व्योम);
+बाह्य व्योम arch_ftrace_nmi_निकास(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम arch_ftrace_nmi_enter(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम arch_ftrace_nmi_निकास(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
 BUILD_TRAP_HANDLER(nmi)
-{
+अणु
 	TRAP_HANDLER_DECL;
 
 	arch_ftrace_nmi_enter();
@@ -187,18 +188,18 @@ BUILD_TRAP_HANDLER(nmi)
 	nmi_enter();
 	this_cpu_inc(irq_stat.__nmi_count);
 
-	switch (notify_die(DIE_NMI, "NMI", regs, 0, vec & 0xff, SIGINT)) {
-	case NOTIFY_OK:
-	case NOTIFY_STOP:
-		break;
-	case NOTIFY_BAD:
-		die("Fatal Non-Maskable Interrupt", regs, SIGINT);
-	default:
-		printk(KERN_ALERT "Got NMI, but nobody cared. Ignoring...\n");
-		break;
-	}
+	चयन (notअगरy_die(DIE_NMI, "NMI", regs, 0, vec & 0xff, संक_विघ्न)) अणु
+	हाल NOTIFY_OK:
+	हाल NOTIFY_STOP:
+		अवरोध;
+	हाल NOTIFY_BAD:
+		die("Fatal Non-Maskable Interrupt", regs, संक_विघ्न);
+	शेष:
+		prपूर्णांकk(KERN_ALERT "Got NMI, but nobody cared. Ignoring...\n");
+		अवरोध;
+	पूर्ण
 
-	nmi_exit();
+	nmi_निकास();
 
-	arch_ftrace_nmi_exit();
-}
+	arch_ftrace_nmi_निकास();
+पूर्ण

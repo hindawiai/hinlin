@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Freescale 83xx USB SOC setup code
  *
@@ -7,83 +8,83 @@
  */
 
 
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/of.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/of.h>
 
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <sysdev/fsl_soc.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <sysdev/fsl_soc.h>
 
-#include "mpc83xx.h"
+#समावेश "mpc83xx.h"
 
 
-#ifdef CONFIG_PPC_MPC834x
-int mpc834x_usb_cfg(void)
-{
-	unsigned long sccr, sicrl, sicrh;
-	void __iomem *immap;
-	struct device_node *np = NULL;
-	int port0_is_dr = 0, port1_is_dr = 0;
-	const void *prop, *dr_mode;
+#अगर_घोषित CONFIG_PPC_MPC834x
+पूर्णांक mpc834x_usb_cfg(व्योम)
+अणु
+	अचिन्हित दीर्घ sccr, sicrl, sicrh;
+	व्योम __iomem *immap;
+	काष्ठा device_node *np = शून्य;
+	पूर्णांक port0_is_dr = 0, port1_is_dr = 0;
+	स्थिर व्योम *prop, *dr_mode;
 
 	immap = ioremap(get_immrbase(), 0x1000);
-	if (!immap)
-		return -ENOMEM;
+	अगर (!immap)
+		वापस -ENOMEM;
 
-	/* Read registers */
-	/* Note: DR and MPH must use the same clock setting in SCCR */
+	/* Read रेजिस्टरs */
+	/* Note: DR and MPH must use the same घड़ी setting in SCCR */
 	sccr = in_be32(immap + MPC83XX_SCCR_OFFS) & ~MPC83XX_SCCR_USB_MASK;
 	sicrl = in_be32(immap + MPC83XX_SICRL_OFFS) & ~MPC834X_SICRL_USB_MASK;
 	sicrh = in_be32(immap + MPC83XX_SICRH_OFFS) & ~MPC834X_SICRH_USB_UTMI;
 
-	np = of_find_compatible_node(NULL, NULL, "fsl-usb2-dr");
-	if (np) {
+	np = of_find_compatible_node(शून्य, शून्य, "fsl-usb2-dr");
+	अगर (np) अणु
 		sccr |= MPC83XX_SCCR_USB_DRCM_11;  /* 1:3 */
 
-		prop = of_get_property(np, "phy_type", NULL);
+		prop = of_get_property(np, "phy_type", शून्य);
 		port1_is_dr = 1;
-		if (prop && (!strcmp(prop, "utmi") ||
-					!strcmp(prop, "utmi_wide"))) {
+		अगर (prop && (!म_भेद(prop, "utmi") ||
+					!म_भेद(prop, "utmi_wide"))) अणु
 			sicrl |= MPC834X_SICRL_USB0 | MPC834X_SICRL_USB1;
 			sicrh |= MPC834X_SICRH_USB_UTMI;
 			port0_is_dr = 1;
-		} else if (prop && !strcmp(prop, "serial")) {
-			dr_mode = of_get_property(np, "dr_mode", NULL);
-			if (dr_mode && !strcmp(dr_mode, "otg")) {
+		पूर्ण अन्यथा अगर (prop && !म_भेद(prop, "serial")) अणु
+			dr_mode = of_get_property(np, "dr_mode", शून्य);
+			अगर (dr_mode && !म_भेद(dr_mode, "otg")) अणु
 				sicrl |= MPC834X_SICRL_USB0 | MPC834X_SICRL_USB1;
 				port0_is_dr = 1;
-			} else {
+			पूर्ण अन्यथा अणु
 				sicrl |= MPC834X_SICRL_USB1;
-			}
-		} else if (prop && !strcmp(prop, "ulpi")) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (prop && !म_भेद(prop, "ulpi")) अणु
 			sicrl |= MPC834X_SICRL_USB1;
-		} else {
-			printk(KERN_WARNING "834x USB PHY type not supported\n");
-		}
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk(KERN_WARNING "834x USB PHY type not supported\n");
+		पूर्ण
 		of_node_put(np);
-	}
-	np = of_find_compatible_node(NULL, NULL, "fsl-usb2-mph");
-	if (np) {
+	पूर्ण
+	np = of_find_compatible_node(शून्य, शून्य, "fsl-usb2-mph");
+	अगर (np) अणु
 		sccr |= MPC83XX_SCCR_USB_MPHCM_11; /* 1:3 */
 
-		prop = of_get_property(np, "port0", NULL);
-		if (prop) {
-			if (port0_is_dr)
-				printk(KERN_WARNING
+		prop = of_get_property(np, "port0", शून्य);
+		अगर (prop) अणु
+			अगर (port0_is_dr)
+				prपूर्णांकk(KERN_WARNING
 					"834x USB port0 can't be used by both DR and MPH!\n");
 			sicrl &= ~MPC834X_SICRL_USB0;
-		}
-		prop = of_get_property(np, "port1", NULL);
-		if (prop) {
-			if (port1_is_dr)
-				printk(KERN_WARNING
+		पूर्ण
+		prop = of_get_property(np, "port1", शून्य);
+		अगर (prop) अणु
+			अगर (port1_is_dr)
+				prपूर्णांकk(KERN_WARNING
 					"834x USB port1 can't be used by both DR and MPH!\n");
 			sicrl &= ~MPC834X_SICRL_USB1;
-		}
+		पूर्ण
 		of_node_put(np);
-	}
+	पूर्ण
 
 	/* Write back */
 	out_be32(immap + MPC83XX_SCCR_OFFS, sccr);
@@ -91,70 +92,70 @@ int mpc834x_usb_cfg(void)
 	out_be32(immap + MPC83XX_SICRH_OFFS, sicrh);
 
 	iounmap(immap);
-	return 0;
-}
-#endif /* CONFIG_PPC_MPC834x */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_MPC834x */
 
-#ifdef CONFIG_PPC_MPC831x
-int mpc831x_usb_cfg(void)
-{
+#अगर_घोषित CONFIG_PPC_MPC831x
+पूर्णांक mpc831x_usb_cfg(व्योम)
+अणु
 	u32 temp;
-	void __iomem *immap, *usb_regs;
-	struct device_node *np = NULL;
-	struct device_node *immr_node = NULL;
-	const void *prop;
-	struct resource res;
-	int ret = 0;
-#ifdef CONFIG_USB_OTG
-	const void *dr_mode;
-#endif
+	व्योम __iomem *immap, *usb_regs;
+	काष्ठा device_node *np = शून्य;
+	काष्ठा device_node *immr_node = शून्य;
+	स्थिर व्योम *prop;
+	काष्ठा resource res;
+	पूर्णांक ret = 0;
+#अगर_घोषित CONFIG_USB_OTG
+	स्थिर व्योम *dr_mode;
+#पूर्ण_अगर
 
-	np = of_find_compatible_node(NULL, NULL, "fsl-usb2-dr");
-	if (!np)
-		return -ENODEV;
-	prop = of_get_property(np, "phy_type", NULL);
+	np = of_find_compatible_node(शून्य, शून्य, "fsl-usb2-dr");
+	अगर (!np)
+		वापस -ENODEV;
+	prop = of_get_property(np, "phy_type", शून्य);
 
-	/* Map IMMR space for pin and clock settings */
+	/* Map IMMR space क्रम pin and घड़ी settings */
 	immap = ioremap(get_immrbase(), 0x1000);
-	if (!immap) {
+	अगर (!immap) अणु
 		of_node_put(np);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* Configure clock */
+	/* Configure घड़ी */
 	immr_node = of_get_parent(np);
-	if (immr_node && (of_device_is_compatible(immr_node, "fsl,mpc8315-immr") ||
+	अगर (immr_node && (of_device_is_compatible(immr_node, "fsl,mpc8315-immr") ||
 			of_device_is_compatible(immr_node, "fsl,mpc8308-immr")))
 		clrsetbits_be32(immap + MPC83XX_SCCR_OFFS,
 		                MPC8315_SCCR_USB_MASK,
 		                MPC8315_SCCR_USB_DRCM_01);
-	else
+	अन्यथा
 		clrsetbits_be32(immap + MPC83XX_SCCR_OFFS,
 		                MPC83XX_SCCR_USB_MASK,
 		                MPC83XX_SCCR_USB_DRCM_11);
 
-	/* Configure pin mux for ULPI.  There is no pin mux for UTMI */
-	if (prop && !strcmp(prop, "ulpi")) {
-		if (of_device_is_compatible(immr_node, "fsl,mpc8308-immr")) {
+	/* Configure pin mux क्रम ULPI.  There is no pin mux क्रम UTMI */
+	अगर (prop && !म_भेद(prop, "ulpi")) अणु
+		अगर (of_device_is_compatible(immr_node, "fsl,mpc8308-immr")) अणु
 			clrsetbits_be32(immap + MPC83XX_SICRH_OFFS,
 					MPC8308_SICRH_USB_MASK,
 					MPC8308_SICRH_USB_ULPI);
-		} else if (of_device_is_compatible(immr_node, "fsl,mpc8315-immr")) {
+		पूर्ण अन्यथा अगर (of_device_is_compatible(immr_node, "fsl,mpc8315-immr")) अणु
 			clrsetbits_be32(immap + MPC83XX_SICRL_OFFS,
 					MPC8315_SICRL_USB_MASK,
 					MPC8315_SICRL_USB_ULPI);
 			clrsetbits_be32(immap + MPC83XX_SICRH_OFFS,
 					MPC8315_SICRH_USB_MASK,
 					MPC8315_SICRH_USB_ULPI);
-		} else {
+		पूर्ण अन्यथा अणु
 			clrsetbits_be32(immap + MPC83XX_SICRL_OFFS,
 					MPC831X_SICRL_USB_MASK,
 					MPC831X_SICRL_USB_ULPI);
 			clrsetbits_be32(immap + MPC83XX_SICRH_OFFS,
 					MPC831X_SICRH_USB_MASK,
 					MPC831X_SICRH_USB_ULPI);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	iounmap(immap);
 
@@ -162,90 +163,90 @@ int mpc831x_usb_cfg(void)
 
 	/* Map USB SOC space */
 	ret = of_address_to_resource(np, 0, &res);
-	if (ret) {
+	अगर (ret) अणु
 		of_node_put(np);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	usb_regs = ioremap(res.start, resource_size(&res));
 
 	/* Using on-chip PHY */
-	if (prop && (!strcmp(prop, "utmi_wide") ||
-		     !strcmp(prop, "utmi"))) {
+	अगर (prop && (!म_भेद(prop, "utmi_wide") ||
+		     !म_भेद(prop, "utmi"))) अणु
 		u32 refsel;
 
-		if (of_device_is_compatible(immr_node, "fsl,mpc8308-immr"))
-			goto out;
+		अगर (of_device_is_compatible(immr_node, "fsl,mpc8308-immr"))
+			जाओ out;
 
-		if (of_device_is_compatible(immr_node, "fsl,mpc8315-immr"))
+		अगर (of_device_is_compatible(immr_node, "fsl,mpc8315-immr"))
 			refsel = CONTROL_REFSEL_24MHZ;
-		else
+		अन्यथा
 			refsel = CONTROL_REFSEL_48MHZ;
 		/* Set UTMI_PHY_EN and REFSEL */
 		out_be32(usb_regs + FSL_USB2_CONTROL_OFFS,
 				CONTROL_UTMI_PHY_EN | refsel);
-	/* Using external UPLI PHY */
-	} else if (prop && !strcmp(prop, "ulpi")) {
+	/* Using बाह्यal UPLI PHY */
+	पूर्ण अन्यथा अगर (prop && !म_भेद(prop, "ulpi")) अणु
 		/* Set PHY_CLK_SEL to ULPI */
 		temp = CONTROL_PHY_CLK_SEL_ULPI;
-#ifdef CONFIG_USB_OTG
+#अगर_घोषित CONFIG_USB_OTG
 		/* Set OTG_PORT */
-		if (!of_device_is_compatible(immr_node, "fsl,mpc8308-immr")) {
-			dr_mode = of_get_property(np, "dr_mode", NULL);
-			if (dr_mode && !strcmp(dr_mode, "otg"))
+		अगर (!of_device_is_compatible(immr_node, "fsl,mpc8308-immr")) अणु
+			dr_mode = of_get_property(np, "dr_mode", शून्य);
+			अगर (dr_mode && !म_भेद(dr_mode, "otg"))
 				temp |= CONTROL_OTG_PORT;
-		}
-#endif /* CONFIG_USB_OTG */
+		पूर्ण
+#पूर्ण_अगर /* CONFIG_USB_OTG */
 		out_be32(usb_regs + FSL_USB2_CONTROL_OFFS, temp);
-	} else {
-		printk(KERN_WARNING "831x USB PHY type not supported\n");
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_WARNING "831x USB PHY type not supported\n");
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 out:
 	iounmap(usb_regs);
 	of_node_put(np);
-	return ret;
-}
-#endif /* CONFIG_PPC_MPC831x */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_MPC831x */
 
-#ifdef CONFIG_PPC_MPC837x
-int mpc837x_usb_cfg(void)
-{
-	void __iomem *immap;
-	struct device_node *np = NULL;
-	const void *prop;
-	int ret = 0;
+#अगर_घोषित CONFIG_PPC_MPC837x
+पूर्णांक mpc837x_usb_cfg(व्योम)
+अणु
+	व्योम __iomem *immap;
+	काष्ठा device_node *np = शून्य;
+	स्थिर व्योम *prop;
+	पूर्णांक ret = 0;
 
-	np = of_find_compatible_node(NULL, NULL, "fsl-usb2-dr");
-	if (!np || !of_device_is_available(np)) {
+	np = of_find_compatible_node(शून्य, शून्य, "fsl-usb2-dr");
+	अगर (!np || !of_device_is_available(np)) अणु
 		of_node_put(np);
-		return -ENODEV;
-	}
-	prop = of_get_property(np, "phy_type", NULL);
+		वापस -ENODEV;
+	पूर्ण
+	prop = of_get_property(np, "phy_type", शून्य);
 
-	if (!prop || (strcmp(prop, "ulpi") && strcmp(prop, "serial"))) {
-		printk(KERN_WARNING "837x USB PHY type not supported\n");
+	अगर (!prop || (म_भेद(prop, "ulpi") && म_भेद(prop, "serial"))) अणु
+		prपूर्णांकk(KERN_WARNING "837x USB PHY type not supported\n");
 		of_node_put(np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Map IMMR space for pin and clock settings */
+	/* Map IMMR space क्रम pin and घड़ी settings */
 	immap = ioremap(get_immrbase(), 0x1000);
-	if (!immap) {
+	अगर (!immap) अणु
 		of_node_put(np);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* Configure clock */
+	/* Configure घड़ी */
 	clrsetbits_be32(immap + MPC83XX_SCCR_OFFS, MPC837X_SCCR_USB_DRCM_11,
 			MPC837X_SCCR_USB_DRCM_11);
 
-	/* Configure pin mux for ULPI/serial */
+	/* Configure pin mux क्रम ULPI/serial */
 	clrsetbits_be32(immap + MPC83XX_SICRL_OFFS, MPC837X_SICRL_USB_MASK,
 			MPC837X_SICRL_USB_ULPI);
 
 	iounmap(immap);
 	of_node_put(np);
-	return ret;
-}
-#endif /* CONFIG_PPC_MPC837x */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_MPC837x */

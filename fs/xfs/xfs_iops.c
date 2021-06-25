@@ -1,761 +1,762 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
-#include "xfs_inode.h"
-#include "xfs_acl.h"
-#include "xfs_quota.h"
-#include "xfs_attr.h"
-#include "xfs_trans.h"
-#include "xfs_trace.h"
-#include "xfs_icache.h"
-#include "xfs_symlink.h"
-#include "xfs_dir2.h"
-#include "xfs_iomap.h"
-#include "xfs_error.h"
-#include "xfs_ioctl.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_acl.h"
+#समावेश "xfs_quota.h"
+#समावेश "xfs_attr.h"
+#समावेश "xfs_trans.h"
+#समावेश "xfs_trace.h"
+#समावेश "xfs_icache.h"
+#समावेश "xfs_symlink.h"
+#समावेश "xfs_dir2.h"
+#समावेश "xfs_iomap.h"
+#समावेश "xfs_error.h"
+#समावेश "xfs_ioctl.h"
 
-#include <linux/posix_acl.h>
-#include <linux/security.h>
-#include <linux/iversion.h>
-#include <linux/fiemap.h>
+#समावेश <linux/posix_acl.h>
+#समावेश <linux/security.h>
+#समावेश <linux/iversion.h>
+#समावेश <linux/fiemap.h>
 
 /*
- * Directories have different lock order w.r.t. mmap_lock compared to regular
- * files. This is due to readdir potentially triggering page faults on a user
+ * Directories have dअगरferent lock order w.r.t. mmap_lock compared to regular
+ * files. This is due to सूची_पढ़ो potentially triggering page faults on a user
  * buffer inside filldir(), and this happens with the ilock on the directory
  * held. For regular files, the lock order is the other way around - the
- * mmap_lock is taken during the page fault, and then we lock the ilock to do
- * block mapping. Hence we need a different class for the directory ilock so
+ * mmap_lock is taken during the page fault, and then we lock the ilock to करो
+ * block mapping. Hence we need a dअगरferent class क्रम the directory ilock so
  * that lockdep can tell them apart.
  */
-static struct lock_class_key xfs_nondir_ilock_class;
-static struct lock_class_key xfs_dir_ilock_class;
+अटल काष्ठा lock_class_key xfs_nondir_ilock_class;
+अटल काष्ठा lock_class_key xfs_dir_ilock_class;
 
-static int
+अटल पूर्णांक
 xfs_initxattrs(
-	struct inode		*inode,
-	const struct xattr	*xattr_array,
-	void			*fs_info)
-{
-	const struct xattr	*xattr;
-	struct xfs_inode	*ip = XFS_I(inode);
-	int			error = 0;
+	काष्ठा inode		*inode,
+	स्थिर काष्ठा xattr	*xattr_array,
+	व्योम			*fs_info)
+अणु
+	स्थिर काष्ठा xattr	*xattr;
+	काष्ठा xfs_inode	*ip = XFS_I(inode);
+	पूर्णांक			error = 0;
 
-	for (xattr = xattr_array; xattr->name != NULL; xattr++) {
-		struct xfs_da_args	args = {
+	क्रम (xattr = xattr_array; xattr->name != शून्य; xattr++) अणु
+		काष्ठा xfs_da_args	args = अणु
 			.dp		= ip,
 			.attr_filter	= XFS_ATTR_SECURE,
 			.name		= xattr->name,
-			.namelen	= strlen(xattr->name),
+			.namelen	= म_माप(xattr->name),
 			.value		= xattr->value,
 			.valuelen	= xattr->value_len,
-		};
+		पूर्ण;
 		error = xfs_attr_set(&args);
-		if (error < 0)
-			break;
-	}
-	return error;
-}
+		अगर (error < 0)
+			अवरोध;
+	पूर्ण
+	वापस error;
+पूर्ण
 
 /*
  * Hook in SELinux.  This is not quite correct yet, what we really need
- * here (as we do for default ACLs) is a mechanism by which creation of
- * these attrs can be journalled at inode creation time (along with the
+ * here (as we करो क्रम शेष ACLs) is a mechanism by which creation of
+ * these attrs can be journalled at inode creation समय (aदीर्घ with the
  * inode, of course, such that log replay can't cause these to be lost).
  */
 
-STATIC int
+STATIC पूर्णांक
 xfs_init_security(
-	struct inode	*inode,
-	struct inode	*dir,
-	const struct qstr *qstr)
-{
-	return security_inode_init_security(inode, dir, qstr,
-					     &xfs_initxattrs, NULL);
-}
+	काष्ठा inode	*inode,
+	काष्ठा inode	*dir,
+	स्थिर काष्ठा qstr *qstr)
+अणु
+	वापस security_inode_init_security(inode, dir, qstr,
+					     &xfs_initxattrs, शून्य);
+पूर्ण
 
-static void
+अटल व्योम
 xfs_dentry_to_name(
-	struct xfs_name	*namep,
-	struct dentry	*dentry)
-{
+	काष्ठा xfs_name	*namep,
+	काष्ठा dentry	*dentry)
+अणु
 	namep->name = dentry->d_name.name;
 	namep->len = dentry->d_name.len;
-	namep->type = XFS_DIR3_FT_UNKNOWN;
-}
+	namep->type = XFS_सूची3_FT_UNKNOWN;
+पूर्ण
 
-static int
+अटल पूर्णांक
 xfs_dentry_mode_to_name(
-	struct xfs_name	*namep,
-	struct dentry	*dentry,
-	int		mode)
-{
+	काष्ठा xfs_name	*namep,
+	काष्ठा dentry	*dentry,
+	पूर्णांक		mode)
+अणु
 	namep->name = dentry->d_name.name;
 	namep->len = dentry->d_name.len;
 	namep->type = xfs_mode_to_ftype(mode);
 
-	if (unlikely(namep->type == XFS_DIR3_FT_UNKNOWN))
-		return -EFSCORRUPTED;
+	अगर (unlikely(namep->type == XFS_सूची3_FT_UNKNOWN))
+		वापस -EFSCORRUPTED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-STATIC void
+STATIC व्योम
 xfs_cleanup_inode(
-	struct inode	*dir,
-	struct inode	*inode,
-	struct dentry	*dentry)
-{
-	struct xfs_name	teardown;
+	काष्ठा inode	*dir,
+	काष्ठा inode	*inode,
+	काष्ठा dentry	*dentry)
+अणु
+	काष्ठा xfs_name	tearकरोwn;
 
 	/* Oh, the horror.
 	 * If we can't add the ACL or we fail in
 	 * xfs_init_security we must back out.
 	 * ENOSPC can hit here, among other things.
 	 */
-	xfs_dentry_to_name(&teardown, dentry);
+	xfs_dentry_to_name(&tearकरोwn, dentry);
 
-	xfs_remove(XFS_I(dir), &teardown, XFS_I(inode));
-}
+	xfs_हटाओ(XFS_I(dir), &tearकरोwn, XFS_I(inode));
+पूर्ण
 
 /*
- * Check to see if we are likely to need an extended attribute to be added to
- * the inode we are about to allocate. This allows the attribute fork to be
+ * Check to see अगर we are likely to need an extended attribute to be added to
+ * the inode we are about to allocate. This allows the attribute विभाजन to be
  * created during the inode allocation, reducing the number of transactions we
- * need to do in this fast path.
+ * need to करो in this fast path.
  *
  * The security checks are optimistic, but not guaranteed. The two LSMs that
  * require xattrs to be added here (selinux and smack) are also the only two
- * LSMs that add a sb->s_security structure to the superblock. Hence if security
+ * LSMs that add a sb->s_security काष्ठाure to the superblock. Hence अगर security
  * is enabled and sb->s_security is set, we have a pretty good idea that we are
  * going to be asked to add a security xattr immediately after allocating the
  * xfs inode and instantiating the VFS inode.
  */
-static inline bool
+अटल अंतरभूत bool
 xfs_create_need_xattr(
-	struct inode	*dir,
-	struct posix_acl *default_acl,
-	struct posix_acl *acl)
-{
-	if (acl)
-		return true;
-	if (default_acl)
-		return true;
-#if IS_ENABLED(CONFIG_SECURITY)
-	if (dir->i_sb->s_security)
-		return true;
-#endif
-	return false;
-}
+	काष्ठा inode	*dir,
+	काष्ठा posix_acl *शेष_acl,
+	काष्ठा posix_acl *acl)
+अणु
+	अगर (acl)
+		वापस true;
+	अगर (शेष_acl)
+		वापस true;
+#अगर IS_ENABLED(CONFIG_SECURITY)
+	अगर (dir->i_sb->s_security)
+		वापस true;
+#पूर्ण_अगर
+	वापस false;
+पूर्ण
 
 
-STATIC int
+STATIC पूर्णांक
 xfs_generic_create(
-	struct user_namespace	*mnt_userns,
-	struct inode	*dir,
-	struct dentry	*dentry,
+	काष्ठा user_namespace	*mnt_userns,
+	काष्ठा inode	*dir,
+	काष्ठा dentry	*dentry,
 	umode_t		mode,
 	dev_t		rdev,
-	bool		tmpfile)	/* unnamed file */
-{
-	struct inode	*inode;
-	struct xfs_inode *ip = NULL;
-	struct posix_acl *default_acl, *acl;
-	struct xfs_name	name;
-	int		error;
+	bool		क्षणिक_ख)	/* unnamed file */
+अणु
+	काष्ठा inode	*inode;
+	काष्ठा xfs_inode *ip = शून्य;
+	काष्ठा posix_acl *शेष_acl, *acl;
+	काष्ठा xfs_name	name;
+	पूर्णांक		error;
 
 	/*
 	 * Irix uses Missed'em'V split, but doesn't want to see
 	 * the upper 5 bits of (14bit) major.
 	 */
-	if (S_ISCHR(mode) || S_ISBLK(mode)) {
-		if (unlikely(!sysv_valid_dev(rdev) || MAJOR(rdev) & ~0x1ff))
-			return -EINVAL;
-	} else {
+	अगर (S_ISCHR(mode) || S_ISBLK(mode)) अणु
+		अगर (unlikely(!sysv_valid_dev(rdev) || MAJOR(rdev) & ~0x1ff))
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
 		rdev = 0;
-	}
+	पूर्ण
 
-	error = posix_acl_create(dir, &mode, &default_acl, &acl);
-	if (error)
-		return error;
+	error = posix_acl_create(dir, &mode, &शेष_acl, &acl);
+	अगर (error)
+		वापस error;
 
-	/* Verify mode is valid also for tmpfile case */
+	/* Verअगरy mode is valid also क्रम क्षणिक_ख हाल */
 	error = xfs_dentry_mode_to_name(&name, dentry, mode);
-	if (unlikely(error))
-		goto out_free_acl;
+	अगर (unlikely(error))
+		जाओ out_मुक्त_acl;
 
-	if (!tmpfile) {
+	अगर (!क्षणिक_ख) अणु
 		error = xfs_create(mnt_userns, XFS_I(dir), &name, mode, rdev,
-				xfs_create_need_xattr(dir, default_acl, acl),
+				xfs_create_need_xattr(dir, शेष_acl, acl),
 				&ip);
-	} else {
-		error = xfs_create_tmpfile(mnt_userns, XFS_I(dir), mode, &ip);
-	}
-	if (unlikely(error))
-		goto out_free_acl;
+	पूर्ण अन्यथा अणु
+		error = xfs_create_क्षणिक_ख(mnt_userns, XFS_I(dir), mode, &ip);
+	पूर्ण
+	अगर (unlikely(error))
+		जाओ out_मुक्त_acl;
 
 	inode = VFS_I(ip);
 
 	error = xfs_init_security(inode, dir, &dentry->d_name);
-	if (unlikely(error))
-		goto out_cleanup_inode;
+	अगर (unlikely(error))
+		जाओ out_cleanup_inode;
 
-#ifdef CONFIG_XFS_POSIX_ACL
-	if (default_acl) {
-		error = __xfs_set_acl(inode, default_acl, ACL_TYPE_DEFAULT);
-		if (error)
-			goto out_cleanup_inode;
-	}
-	if (acl) {
+#अगर_घोषित CONFIG_XFS_POSIX_ACL
+	अगर (शेष_acl) अणु
+		error = __xfs_set_acl(inode, शेष_acl, ACL_TYPE_DEFAULT);
+		अगर (error)
+			जाओ out_cleanup_inode;
+	पूर्ण
+	अगर (acl) अणु
 		error = __xfs_set_acl(inode, acl, ACL_TYPE_ACCESS);
-		if (error)
-			goto out_cleanup_inode;
-	}
-#endif
+		अगर (error)
+			जाओ out_cleanup_inode;
+	पूर्ण
+#पूर्ण_अगर
 
 	xfs_setup_iops(ip);
 
-	if (tmpfile) {
+	अगर (क्षणिक_ख) अणु
 		/*
-		 * The VFS requires that any inode fed to d_tmpfile must have
-		 * nlink == 1 so that it can decrement the nlink in d_tmpfile.
+		 * The VFS requires that any inode fed to d_क्षणिक_ख must have
+		 * nlink == 1 so that it can decrement the nlink in d_क्षणिक_ख.
 		 * However, we created the temp file with nlink == 0 because
 		 * we're not allowed to put an inode with nlink > 0 on the
-		 * unlinked list.  Therefore we have to set nlink to 1 so that
-		 * d_tmpfile can immediately set it back to zero.
+		 * unlinked list.  Thereक्रमe we have to set nlink to 1 so that
+		 * d_क्षणिक_ख can immediately set it back to zero.
 		 */
 		set_nlink(inode, 1);
-		d_tmpfile(dentry, inode);
-	} else
+		d_क्षणिक_ख(dentry, inode);
+	पूर्ण अन्यथा
 		d_instantiate(dentry, inode);
 
 	xfs_finish_inode_setup(ip);
 
- out_free_acl:
-	posix_acl_release(default_acl);
+ out_मुक्त_acl:
+	posix_acl_release(शेष_acl);
 	posix_acl_release(acl);
-	return error;
+	वापस error;
 
  out_cleanup_inode:
 	xfs_finish_inode_setup(ip);
-	if (!tmpfile)
+	अगर (!क्षणिक_ख)
 		xfs_cleanup_inode(dir, inode, dentry);
 	xfs_irele(ip);
-	goto out_free_acl;
-}
+	जाओ out_मुक्त_acl;
+पूर्ण
 
-STATIC int
+STATIC पूर्णांक
 xfs_vn_mknod(
-	struct user_namespace	*mnt_userns,
-	struct inode		*dir,
-	struct dentry		*dentry,
+	काष्ठा user_namespace	*mnt_userns,
+	काष्ठा inode		*dir,
+	काष्ठा dentry		*dentry,
 	umode_t			mode,
 	dev_t			rdev)
-{
-	return xfs_generic_create(mnt_userns, dir, dentry, mode, rdev, false);
-}
+अणु
+	वापस xfs_generic_create(mnt_userns, dir, dentry, mode, rdev, false);
+पूर्ण
 
-STATIC int
+STATIC पूर्णांक
 xfs_vn_create(
-	struct user_namespace	*mnt_userns,
-	struct inode		*dir,
-	struct dentry		*dentry,
+	काष्ठा user_namespace	*mnt_userns,
+	काष्ठा inode		*dir,
+	काष्ठा dentry		*dentry,
 	umode_t			mode,
 	bool			flags)
-{
-	return xfs_generic_create(mnt_userns, dir, dentry, mode, 0, false);
-}
+अणु
+	वापस xfs_generic_create(mnt_userns, dir, dentry, mode, 0, false);
+पूर्ण
 
-STATIC int
-xfs_vn_mkdir(
-	struct user_namespace	*mnt_userns,
-	struct inode		*dir,
-	struct dentry		*dentry,
+STATIC पूर्णांक
+xfs_vn_सूची_गढ़ो(
+	काष्ठा user_namespace	*mnt_userns,
+	काष्ठा inode		*dir,
+	काष्ठा dentry		*dentry,
 	umode_t			mode)
-{
-	return xfs_generic_create(mnt_userns, dir, dentry, mode | S_IFDIR, 0,
+अणु
+	वापस xfs_generic_create(mnt_userns, dir, dentry, mode | S_IFसूची, 0,
 				  false);
-}
+पूर्ण
 
-STATIC struct dentry *
+STATIC काष्ठा dentry *
 xfs_vn_lookup(
-	struct inode	*dir,
-	struct dentry	*dentry,
-	unsigned int flags)
-{
-	struct inode *inode;
-	struct xfs_inode *cip;
-	struct xfs_name	name;
-	int		error;
+	काष्ठा inode	*dir,
+	काष्ठा dentry	*dentry,
+	अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा xfs_inode *cip;
+	काष्ठा xfs_name	name;
+	पूर्णांक		error;
 
-	if (dentry->d_name.len >= MAXNAMELEN)
-		return ERR_PTR(-ENAMETOOLONG);
+	अगर (dentry->d_name.len >= MAXNAMELEN)
+		वापस ERR_PTR(-ENAMETOOLONG);
 
 	xfs_dentry_to_name(&name, dentry);
-	error = xfs_lookup(XFS_I(dir), &name, &cip, NULL);
-	if (likely(!error))
+	error = xfs_lookup(XFS_I(dir), &name, &cip, शून्य);
+	अगर (likely(!error))
 		inode = VFS_I(cip);
-	else if (likely(error == -ENOENT))
-		inode = NULL;
-	else
+	अन्यथा अगर (likely(error == -ENOENT))
+		inode = शून्य;
+	अन्यथा
 		inode = ERR_PTR(error);
-	return d_splice_alias(inode, dentry);
-}
+	वापस d_splice_alias(inode, dentry);
+पूर्ण
 
-STATIC struct dentry *
+STATIC काष्ठा dentry *
 xfs_vn_ci_lookup(
-	struct inode	*dir,
-	struct dentry	*dentry,
-	unsigned int flags)
-{
-	struct xfs_inode *ip;
-	struct xfs_name	xname;
-	struct xfs_name ci_name;
-	struct qstr	dname;
-	int		error;
+	काष्ठा inode	*dir,
+	काष्ठा dentry	*dentry,
+	अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा xfs_inode *ip;
+	काष्ठा xfs_name	xname;
+	काष्ठा xfs_name ci_name;
+	काष्ठा qstr	dname;
+	पूर्णांक		error;
 
-	if (dentry->d_name.len >= MAXNAMELEN)
-		return ERR_PTR(-ENAMETOOLONG);
+	अगर (dentry->d_name.len >= MAXNAMELEN)
+		वापस ERR_PTR(-ENAMETOOLONG);
 
 	xfs_dentry_to_name(&xname, dentry);
 	error = xfs_lookup(XFS_I(dir), &xname, &ip, &ci_name);
-	if (unlikely(error)) {
-		if (unlikely(error != -ENOENT))
-			return ERR_PTR(error);
+	अगर (unlikely(error)) अणु
+		अगर (unlikely(error != -ENOENT))
+			वापस ERR_PTR(error);
 		/*
-		 * call d_add(dentry, NULL) here when d_drop_negative_children
+		 * call d_add(dentry, शून्य) here when d_drop_negative_children
 		 * is called in xfs_vn_mknod (ie. allow negative dentries
-		 * with CI filesystems).
+		 * with CI fileप्रणालीs).
 		 */
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	/* if exact match, just splice and exit */
-	if (!ci_name.name)
-		return d_splice_alias(VFS_I(ip), dentry);
+	/* अगर exact match, just splice and निकास */
+	अगर (!ci_name.name)
+		वापस d_splice_alias(VFS_I(ip), dentry);
 
-	/* else case-insensitive match... */
+	/* अन्यथा हाल-insensitive match... */
 	dname.name = ci_name.name;
 	dname.len = ci_name.len;
 	dentry = d_add_ci(dentry, VFS_I(ip), &dname);
-	kmem_free(ci_name.name);
-	return dentry;
-}
+	kmem_मुक्त(ci_name.name);
+	वापस dentry;
+पूर्ण
 
-STATIC int
+STATIC पूर्णांक
 xfs_vn_link(
-	struct dentry	*old_dentry,
-	struct inode	*dir,
-	struct dentry	*dentry)
-{
-	struct inode	*inode = d_inode(old_dentry);
-	struct xfs_name	name;
-	int		error;
+	काष्ठा dentry	*old_dentry,
+	काष्ठा inode	*dir,
+	काष्ठा dentry	*dentry)
+अणु
+	काष्ठा inode	*inode = d_inode(old_dentry);
+	काष्ठा xfs_name	name;
+	पूर्णांक		error;
 
 	error = xfs_dentry_mode_to_name(&name, dentry, inode->i_mode);
-	if (unlikely(error))
-		return error;
+	अगर (unlikely(error))
+		वापस error;
 
 	error = xfs_link(XFS_I(dir), XFS_I(inode), &name);
-	if (unlikely(error))
-		return error;
+	अगर (unlikely(error))
+		वापस error;
 
 	ihold(inode);
 	d_instantiate(dentry, inode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-STATIC int
+STATIC पूर्णांक
 xfs_vn_unlink(
-	struct inode	*dir,
-	struct dentry	*dentry)
-{
-	struct xfs_name	name;
-	int		error;
+	काष्ठा inode	*dir,
+	काष्ठा dentry	*dentry)
+अणु
+	काष्ठा xfs_name	name;
+	पूर्णांक		error;
 
 	xfs_dentry_to_name(&name, dentry);
 
-	error = xfs_remove(XFS_I(dir), &name, XFS_I(d_inode(dentry)));
-	if (error)
-		return error;
+	error = xfs_हटाओ(XFS_I(dir), &name, XFS_I(d_inode(dentry)));
+	अगर (error)
+		वापस error;
 
 	/*
 	 * With unlink, the VFS makes the dentry "negative": no inode,
-	 * but still hashed. This is incompatible with case-insensitive
+	 * but still hashed. This is incompatible with हाल-insensitive
 	 * mode, so invalidate (unhash) the dentry in CI-mode.
 	 */
-	if (xfs_sb_version_hasasciici(&XFS_M(dir->i_sb)->m_sb))
+	अगर (xfs_sb_version_hasasciici(&XFS_M(dir->i_sb)->m_sb))
 		d_invalidate(dentry);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-STATIC int
+STATIC पूर्णांक
 xfs_vn_symlink(
-	struct user_namespace	*mnt_userns,
-	struct inode		*dir,
-	struct dentry		*dentry,
-	const char		*symname)
-{
-	struct inode	*inode;
-	struct xfs_inode *cip = NULL;
-	struct xfs_name	name;
-	int		error;
+	काष्ठा user_namespace	*mnt_userns,
+	काष्ठा inode		*dir,
+	काष्ठा dentry		*dentry,
+	स्थिर अक्षर		*symname)
+अणु
+	काष्ठा inode	*inode;
+	काष्ठा xfs_inode *cip = शून्य;
+	काष्ठा xfs_name	name;
+	पूर्णांक		error;
 	umode_t		mode;
 
 	mode = S_IFLNK |
 		(irix_symlink_mode ? 0777 & ~current_umask() : S_IRWXUGO);
 	error = xfs_dentry_mode_to_name(&name, dentry, mode);
-	if (unlikely(error))
-		goto out;
+	अगर (unlikely(error))
+		जाओ out;
 
 	error = xfs_symlink(mnt_userns, XFS_I(dir), &name, symname, mode, &cip);
-	if (unlikely(error))
-		goto out;
+	अगर (unlikely(error))
+		जाओ out;
 
 	inode = VFS_I(cip);
 
 	error = xfs_init_security(inode, dir, &dentry->d_name);
-	if (unlikely(error))
-		goto out_cleanup_inode;
+	अगर (unlikely(error))
+		जाओ out_cleanup_inode;
 
 	xfs_setup_iops(cip);
 
 	d_instantiate(dentry, inode);
 	xfs_finish_inode_setup(cip);
-	return 0;
+	वापस 0;
 
  out_cleanup_inode:
 	xfs_finish_inode_setup(cip);
 	xfs_cleanup_inode(dir, inode, dentry);
 	xfs_irele(cip);
  out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-STATIC int
-xfs_vn_rename(
-	struct user_namespace	*mnt_userns,
-	struct inode		*odir,
-	struct dentry		*odentry,
-	struct inode		*ndir,
-	struct dentry		*ndentry,
-	unsigned int		flags)
-{
-	struct inode	*new_inode = d_inode(ndentry);
-	int		omode = 0;
-	int		error;
-	struct xfs_name	oname;
-	struct xfs_name	nname;
+STATIC पूर्णांक
+xfs_vn_नाम(
+	काष्ठा user_namespace	*mnt_userns,
+	काष्ठा inode		*odir,
+	काष्ठा dentry		*odentry,
+	काष्ठा inode		*ndir,
+	काष्ठा dentry		*ndentry,
+	अचिन्हित पूर्णांक		flags)
+अणु
+	काष्ठा inode	*new_inode = d_inode(ndentry);
+	पूर्णांक		omode = 0;
+	पूर्णांक		error;
+	काष्ठा xfs_name	oname;
+	काष्ठा xfs_name	nname;
 
-	if (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE | RENAME_WHITEOUT))
-		return -EINVAL;
+	अगर (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE | RENAME_WHITEOUT))
+		वापस -EINVAL;
 
-	/* if we are exchanging files, we need to set i_mode of both files */
-	if (flags & RENAME_EXCHANGE)
+	/* अगर we are exchanging files, we need to set i_mode of both files */
+	अगर (flags & RENAME_EXCHANGE)
 		omode = d_inode(ndentry)->i_mode;
 
 	error = xfs_dentry_mode_to_name(&oname, odentry, omode);
-	if (omode && unlikely(error))
-		return error;
+	अगर (omode && unlikely(error))
+		वापस error;
 
 	error = xfs_dentry_mode_to_name(&nname, ndentry,
 					d_inode(odentry)->i_mode);
-	if (unlikely(error))
-		return error;
+	अगर (unlikely(error))
+		वापस error;
 
-	return xfs_rename(mnt_userns, XFS_I(odir), &oname,
+	वापस xfs_नाम(mnt_userns, XFS_I(odir), &oname,
 			  XFS_I(d_inode(odentry)), XFS_I(ndir), &nname,
-			  new_inode ? XFS_I(new_inode) : NULL, flags);
-}
+			  new_inode ? XFS_I(new_inode) : शून्य, flags);
+पूर्ण
 
 /*
  * careful here - this function can get called recursively, so
  * we need to be very careful about how much stack we use.
- * uio is kmalloced for this reason...
+ * uio is kदो_स्मृतिed क्रम this reason...
  */
-STATIC const char *
+STATIC स्थिर अक्षर *
 xfs_vn_get_link(
-	struct dentry		*dentry,
-	struct inode		*inode,
-	struct delayed_call	*done)
-{
-	char			*link;
-	int			error = -ENOMEM;
+	काष्ठा dentry		*dentry,
+	काष्ठा inode		*inode,
+	काष्ठा delayed_call	*करोne)
+अणु
+	अक्षर			*link;
+	पूर्णांक			error = -ENOMEM;
 
-	if (!dentry)
-		return ERR_PTR(-ECHILD);
+	अगर (!dentry)
+		वापस ERR_PTR(-ECHILD);
 
-	link = kmalloc(XFS_SYMLINK_MAXLEN+1, GFP_KERNEL);
-	if (!link)
-		goto out_err;
+	link = kदो_स्मृति(XFS_SYMLINK_MAXLEN+1, GFP_KERNEL);
+	अगर (!link)
+		जाओ out_err;
 
-	error = xfs_readlink(XFS_I(d_inode(dentry)), link);
-	if (unlikely(error))
-		goto out_kfree;
+	error = xfs_पढ़ोlink(XFS_I(d_inode(dentry)), link);
+	अगर (unlikely(error))
+		जाओ out_kमुक्त;
 
-	set_delayed_call(done, kfree_link, link);
-	return link;
+	set_delayed_call(करोne, kमुक्त_link, link);
+	वापस link;
 
- out_kfree:
-	kfree(link);
+ out_kमुक्त:
+	kमुक्त(link);
  out_err:
-	return ERR_PTR(error);
-}
+	वापस ERR_PTR(error);
+पूर्ण
 
-STATIC const char *
-xfs_vn_get_link_inline(
-	struct dentry		*dentry,
-	struct inode		*inode,
-	struct delayed_call	*done)
-{
-	struct xfs_inode	*ip = XFS_I(inode);
-	char			*link;
+STATIC स्थिर अक्षर *
+xfs_vn_get_link_अंतरभूत(
+	काष्ठा dentry		*dentry,
+	काष्ठा inode		*inode,
+	काष्ठा delayed_call	*करोne)
+अणु
+	काष्ठा xfs_inode	*ip = XFS_I(inode);
+	अक्षर			*link;
 
-	ASSERT(ip->i_df.if_format == XFS_DINODE_FMT_LOCAL);
+	ASSERT(ip->i_df.अगर_क्रमmat == XFS_DINODE_FMT_LOCAL);
 
 	/*
-	 * The VFS crashes on a NULL pointer, so return -EFSCORRUPTED if
-	 * if_data is junk.
+	 * The VFS crashes on a शून्य poपूर्णांकer, so वापस -EFSCORRUPTED अगर
+	 * अगर_data is junk.
 	 */
-	link = ip->i_df.if_u1.if_data;
-	if (XFS_IS_CORRUPT(ip->i_mount, !link))
-		return ERR_PTR(-EFSCORRUPTED);
-	return link;
-}
+	link = ip->i_df.अगर_u1.अगर_data;
+	अगर (XFS_IS_CORRUPT(ip->i_mount, !link))
+		वापस ERR_PTR(-EFSCORRUPTED);
+	वापस link;
+पूर्ण
 
-static uint32_t
+अटल uपूर्णांक32_t
 xfs_stat_blksize(
-	struct xfs_inode	*ip)
-{
-	struct xfs_mount	*mp = ip->i_mount;
+	काष्ठा xfs_inode	*ip)
+अणु
+	काष्ठा xfs_mount	*mp = ip->i_mount;
 
 	/*
-	 * If the file blocks are being allocated from a realtime volume, then
-	 * always return the realtime extent size.
+	 * If the file blocks are being allocated from a realसमय volume, then
+	 * always वापस the realसमय extent size.
 	 */
-	if (XFS_IS_REALTIME_INODE(ip))
-		return xfs_get_extsz_hint(ip) << mp->m_sb.sb_blocklog;
+	अगर (XFS_IS_REALTIME_INODE(ip))
+		वापस xfs_get_extsz_hपूर्णांक(ip) << mp->m_sb.sb_blocklog;
 
 	/*
-	 * Allow large block sizes to be reported to userspace programs if the
+	 * Allow large block sizes to be reported to userspace programs अगर the
 	 * "largeio" mount option is used.
 	 *
-	 * If compatibility mode is specified, simply return the basic unit of
-	 * caching so that we don't get inefficient read/modify/write I/O from
+	 * If compatibility mode is specअगरied, simply वापस the basic unit of
+	 * caching so that we करोn't get inefficient पढ़ो/modअगरy/ग_लिखो I/O from
 	 * user apps. Otherwise....
 	 *
-	 * If the underlying volume is a stripe, then return the stripe width in
+	 * If the underlying volume is a stripe, then वापस the stripe width in
 	 * bytes as the recommended I/O size. It is not a stripe and we've set a
-	 * default buffered I/O size, return that, otherwise return the compat
-	 * default.
+	 * शेष buffered I/O size, वापस that, otherwise वापस the compat
+	 * शेष.
 	 */
-	if (mp->m_flags & XFS_MOUNT_LARGEIO) {
-		if (mp->m_swidth)
-			return mp->m_swidth << mp->m_sb.sb_blocklog;
-		if (mp->m_flags & XFS_MOUNT_ALLOCSIZE)
-			return 1U << mp->m_allocsize_log;
-	}
+	अगर (mp->m_flags & XFS_MOUNT_LARGEIO) अणु
+		अगर (mp->m_swidth)
+			वापस mp->m_swidth << mp->m_sb.sb_blocklog;
+		अगर (mp->m_flags & XFS_MOUNT_ALLOCSIZE)
+			वापस 1U << mp->m_allocsize_log;
+	पूर्ण
 
-	return PAGE_SIZE;
-}
+	वापस PAGE_SIZE;
+पूर्ण
 
-STATIC int
+STATIC पूर्णांक
 xfs_vn_getattr(
-	struct user_namespace	*mnt_userns,
-	const struct path	*path,
-	struct kstat		*stat,
+	काष्ठा user_namespace	*mnt_userns,
+	स्थिर काष्ठा path	*path,
+	काष्ठा kstat		*stat,
 	u32			request_mask,
-	unsigned int		query_flags)
-{
-	struct inode		*inode = d_inode(path->dentry);
-	struct xfs_inode	*ip = XFS_I(inode);
-	struct xfs_mount	*mp = ip->i_mount;
+	अचिन्हित पूर्णांक		query_flags)
+अणु
+	काष्ठा inode		*inode = d_inode(path->dentry);
+	काष्ठा xfs_inode	*ip = XFS_I(inode);
+	काष्ठा xfs_mount	*mp = ip->i_mount;
 
 	trace_xfs_getattr(ip);
 
-	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+	अगर (XFS_FORCED_SHUTDOWN(mp))
+		वापस -EIO;
 
 	stat->size = XFS_ISIZE(ip);
 	stat->dev = inode->i_sb->s_dev;
 	stat->mode = inode->i_mode;
 	stat->nlink = inode->i_nlink;
-	stat->uid = i_uid_into_mnt(mnt_userns, inode);
-	stat->gid = i_gid_into_mnt(mnt_userns, inode);
+	stat->uid = i_uid_पूर्णांकo_mnt(mnt_userns, inode);
+	stat->gid = i_gid_पूर्णांकo_mnt(mnt_userns, inode);
 	stat->ino = ip->i_ino;
-	stat->atime = inode->i_atime;
-	stat->mtime = inode->i_mtime;
-	stat->ctime = inode->i_ctime;
+	stat->aसमय = inode->i_aसमय;
+	stat->mसमय = inode->i_mसमय;
+	stat->स_समय = inode->i_स_समय;
 	stat->blocks = XFS_FSB_TO_BB(mp, ip->i_nblocks + ip->i_delayed_blks);
 
-	if (xfs_sb_version_has_v3inode(&mp->m_sb)) {
-		if (request_mask & STATX_BTIME) {
+	अगर (xfs_sb_version_has_v3inode(&mp->m_sb)) अणु
+		अगर (request_mask & STATX_BTIME) अणु
 			stat->result_mask |= STATX_BTIME;
-			stat->btime = ip->i_crtime;
-		}
-	}
+			stat->bसमय = ip->i_crसमय;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Note: If you add another clause to set an attribute flag, please
 	 * update attributes_mask below.
 	 */
-	if (ip->i_diflags & XFS_DIFLAG_IMMUTABLE)
+	अगर (ip->i_dअगरlags & XFS_DIFLAG_IMMUTABLE)
 		stat->attributes |= STATX_ATTR_IMMUTABLE;
-	if (ip->i_diflags & XFS_DIFLAG_APPEND)
+	अगर (ip->i_dअगरlags & XFS_DIFLAG_APPEND)
 		stat->attributes |= STATX_ATTR_APPEND;
-	if (ip->i_diflags & XFS_DIFLAG_NODUMP)
+	अगर (ip->i_dअगरlags & XFS_DIFLAG_NODUMP)
 		stat->attributes |= STATX_ATTR_NODUMP;
 
 	stat->attributes_mask |= (STATX_ATTR_IMMUTABLE |
 				  STATX_ATTR_APPEND |
 				  STATX_ATTR_NODUMP);
 
-	switch (inode->i_mode & S_IFMT) {
-	case S_IFBLK:
-	case S_IFCHR:
+	चयन (inode->i_mode & S_IFMT) अणु
+	हाल S_IFBLK:
+	हाल S_IFCHR:
 		stat->blksize = BLKDEV_IOSIZE;
 		stat->rdev = inode->i_rdev;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		stat->blksize = xfs_stat_blksize(ip);
 		stat->rdev = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
+अटल व्योम
 xfs_setattr_mode(
-	struct xfs_inode	*ip,
-	struct iattr		*iattr)
-{
-	struct inode		*inode = VFS_I(ip);
+	काष्ठा xfs_inode	*ip,
+	काष्ठा iattr		*iattr)
+अणु
+	काष्ठा inode		*inode = VFS_I(ip);
 	umode_t			mode = iattr->ia_mode;
 
 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
 
 	inode->i_mode &= S_IFMT;
 	inode->i_mode |= mode & ~S_IFMT;
-}
+पूर्ण
 
-void
-xfs_setattr_time(
-	struct xfs_inode	*ip,
-	struct iattr		*iattr)
-{
-	struct inode		*inode = VFS_I(ip);
+व्योम
+xfs_setattr_समय(
+	काष्ठा xfs_inode	*ip,
+	काष्ठा iattr		*iattr)
+अणु
+	काष्ठा inode		*inode = VFS_I(ip);
 
 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
 
-	if (iattr->ia_valid & ATTR_ATIME)
-		inode->i_atime = iattr->ia_atime;
-	if (iattr->ia_valid & ATTR_CTIME)
-		inode->i_ctime = iattr->ia_ctime;
-	if (iattr->ia_valid & ATTR_MTIME)
-		inode->i_mtime = iattr->ia_mtime;
-}
+	अगर (iattr->ia_valid & ATTR_ATIME)
+		inode->i_aसमय = iattr->ia_aसमय;
+	अगर (iattr->ia_valid & ATTR_CTIME)
+		inode->i_स_समय = iattr->ia_स_समय;
+	अगर (iattr->ia_valid & ATTR_MTIME)
+		inode->i_mसमय = iattr->ia_mसमय;
+पूर्ण
 
-static int
+अटल पूर्णांक
 xfs_vn_change_ok(
-	struct user_namespace	*mnt_userns,
-	struct dentry		*dentry,
-	struct iattr		*iattr)
-{
-	struct xfs_mount	*mp = XFS_I(d_inode(dentry))->i_mount;
+	काष्ठा user_namespace	*mnt_userns,
+	काष्ठा dentry		*dentry,
+	काष्ठा iattr		*iattr)
+अणु
+	काष्ठा xfs_mount	*mp = XFS_I(d_inode(dentry))->i_mount;
 
-	if (mp->m_flags & XFS_MOUNT_RDONLY)
-		return -EROFS;
+	अगर (mp->m_flags & XFS_MOUNT_RDONLY)
+		वापस -EROFS;
 
-	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+	अगर (XFS_FORCED_SHUTDOWN(mp))
+		वापस -EIO;
 
-	return setattr_prepare(mnt_userns, dentry, iattr);
-}
+	वापस setattr_prepare(mnt_userns, dentry, iattr);
+पूर्ण
 
 /*
  * Set non-size attributes of an inode.
  *
- * Caution: The caller of this function is responsible for calling
- * setattr_prepare() or otherwise verifying the change is fine.
+ * Caution: The caller of this function is responsible क्रम calling
+ * setattr_prepare() or otherwise verअगरying the change is fine.
  */
-static int
+अटल पूर्णांक
 xfs_setattr_nonsize(
-	struct user_namespace	*mnt_userns,
-	struct xfs_inode	*ip,
-	struct iattr		*iattr)
-{
+	काष्ठा user_namespace	*mnt_userns,
+	काष्ठा xfs_inode	*ip,
+	काष्ठा iattr		*iattr)
+अणु
 	xfs_mount_t		*mp = ip->i_mount;
-	struct inode		*inode = VFS_I(ip);
-	int			mask = iattr->ia_valid;
+	काष्ठा inode		*inode = VFS_I(ip);
+	पूर्णांक			mask = iattr->ia_valid;
 	xfs_trans_t		*tp;
-	int			error;
+	पूर्णांक			error;
 	kuid_t			uid = GLOBAL_ROOT_UID, iuid = GLOBAL_ROOT_UID;
 	kgid_t			gid = GLOBAL_ROOT_GID, igid = GLOBAL_ROOT_GID;
-	struct xfs_dquot	*udqp = NULL, *gdqp = NULL;
-	struct xfs_dquot	*olddquot1 = NULL, *olddquot2 = NULL;
+	काष्ठा xfs_dquot	*udqp = शून्य, *gdqp = शून्य;
+	काष्ठा xfs_dquot	*olddquot1 = शून्य, *olddquot2 = शून्य;
 
 	ASSERT((mask & ATTR_SIZE) == 0);
 
 	/*
-	 * If disk quotas is on, we make sure that the dquots do exist on disk,
-	 * before we start any other transactions. Trying to do this later
-	 * is messy. We don't care to take a readlock to look at the ids
+	 * If disk quotas is on, we make sure that the dquots करो exist on disk,
+	 * beक्रमe we start any other transactions. Trying to करो this later
+	 * is messy. We करोn't care to take a पढ़ोlock to look at the ids
 	 * in inode here, because we can't hold it across the trans_reserve.
-	 * If the IDs do change before we take the ilock, we're covered
+	 * If the IDs करो change beक्रमe we take the ilock, we're covered
 	 * because the i_*dquot fields will get updated anyway.
 	 */
-	if (XFS_IS_QUOTA_ON(mp) && (mask & (ATTR_UID|ATTR_GID))) {
-		uint	qflags = 0;
+	अगर (XFS_IS_QUOTA_ON(mp) && (mask & (ATTR_UID|ATTR_GID))) अणु
+		uपूर्णांक	qflags = 0;
 
-		if ((mask & ATTR_UID) && XFS_IS_UQUOTA_ON(mp)) {
+		अगर ((mask & ATTR_UID) && XFS_IS_UQUOTA_ON(mp)) अणु
 			uid = iattr->ia_uid;
 			qflags |= XFS_QMOPT_UQUOTA;
-		} else {
+		पूर्ण अन्यथा अणु
 			uid = inode->i_uid;
-		}
-		if ((mask & ATTR_GID) && XFS_IS_GQUOTA_ON(mp)) {
+		पूर्ण
+		अगर ((mask & ATTR_GID) && XFS_IS_GQUOTA_ON(mp)) अणु
 			gid = iattr->ia_gid;
 			qflags |= XFS_QMOPT_GQUOTA;
-		}  else {
+		पूर्ण  अन्यथा अणु
 			gid = inode->i_gid;
-		}
+		पूर्ण
 
 		/*
 		 * We take a reference when we initialize udqp and gdqp,
-		 * so it is important that we never blindly double trip on
-		 * the same variable. See xfs_create() for an example.
+		 * so it is important that we never blindly द्विगुन trip on
+		 * the same variable. See xfs_create() क्रम an example.
 		 */
-		ASSERT(udqp == NULL);
-		ASSERT(gdqp == NULL);
+		ASSERT(udqp == शून्य);
+		ASSERT(gdqp == शून्य);
 		error = xfs_qm_vop_dqalloc(ip, uid, gid, ip->i_projid,
-					   qflags, &udqp, &gdqp, NULL);
-		if (error)
-			return error;
-	}
+					   qflags, &udqp, &gdqp, शून्य);
+		अगर (error)
+			वापस error;
+	पूर्ण
 
-	error = xfs_trans_alloc_ichange(ip, udqp, gdqp, NULL,
+	error = xfs_trans_alloc_ichange(ip, udqp, gdqp, शून्य,
 			capable(CAP_FOWNER), &tp);
-	if (error)
-		goto out_dqrele;
+	अगर (error)
+		जाओ out_dqrele;
 
 	/*
 	 * Change file ownership.  Must be the owner or privileged.
 	 */
-	if (mask & (ATTR_UID|ATTR_GID)) {
+	अगर (mask & (ATTR_UID|ATTR_GID)) अणु
 		/*
 		 * These IDs could have changed since we last looked at them.
-		 * But, we're assured that if the ownership did change
-		 * while we didn't have the inode locked, inode's dquot(s)
+		 * But, we're assured that अगर the ownership did change
+		 * जबतक we didn't have the inode locked, inode's dquot(s)
 		 * would have changed also.
 		 */
 		iuid = inode->i_uid;
@@ -767,101 +768,101 @@ xfs_setattr_nonsize(
 		 * CAP_FSETID overrides the following restrictions:
 		 *
 		 * The set-user-ID and set-group-ID bits of a file will be
-		 * cleared upon successful return from chown()
+		 * cleared upon successful वापस from chown()
 		 */
-		if ((inode->i_mode & (S_ISUID|S_ISGID)) &&
+		अगर ((inode->i_mode & (S_ISUID|S_ISGID)) &&
 		    !capable(CAP_FSETID))
 			inode->i_mode &= ~(S_ISUID|S_ISGID);
 
 		/*
-		 * Change the ownerships and register quota modifications
+		 * Change the ownerships and रेजिस्टर quota modअगरications
 		 * in the transaction.
 		 */
-		if (!uid_eq(iuid, uid)) {
-			if (XFS_IS_QUOTA_RUNNING(mp) && XFS_IS_UQUOTA_ON(mp)) {
+		अगर (!uid_eq(iuid, uid)) अणु
+			अगर (XFS_IS_QUOTA_RUNNING(mp) && XFS_IS_UQUOTA_ON(mp)) अणु
 				ASSERT(mask & ATTR_UID);
 				ASSERT(udqp);
 				olddquot1 = xfs_qm_vop_chown(tp, ip,
 							&ip->i_udquot, udqp);
-			}
+			पूर्ण
 			inode->i_uid = uid;
-		}
-		if (!gid_eq(igid, gid)) {
-			if (XFS_IS_QUOTA_RUNNING(mp) && XFS_IS_GQUOTA_ON(mp)) {
+		पूर्ण
+		अगर (!gid_eq(igid, gid)) अणु
+			अगर (XFS_IS_QUOTA_RUNNING(mp) && XFS_IS_GQUOTA_ON(mp)) अणु
 				ASSERT(xfs_sb_version_has_pquotino(&mp->m_sb) ||
 				       !XFS_IS_PQUOTA_ON(mp));
 				ASSERT(mask & ATTR_GID);
 				ASSERT(gdqp);
 				olddquot2 = xfs_qm_vop_chown(tp, ip,
 							&ip->i_gdquot, gdqp);
-			}
+			पूर्ण
 			inode->i_gid = gid;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (mask & ATTR_MODE)
+	अगर (mask & ATTR_MODE)
 		xfs_setattr_mode(ip, iattr);
-	if (mask & (ATTR_ATIME|ATTR_CTIME|ATTR_MTIME))
-		xfs_setattr_time(ip, iattr);
+	अगर (mask & (ATTR_ATIME|ATTR_CTIME|ATTR_MTIME))
+		xfs_setattr_समय(ip, iattr);
 
 	xfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 
 	XFS_STATS_INC(mp, xs_ig_attrchg);
 
-	if (mp->m_flags & XFS_MOUNT_WSYNC)
+	अगर (mp->m_flags & XFS_MOUNT_WSYNC)
 		xfs_trans_set_sync(tp);
 	error = xfs_trans_commit(tp);
 
 	/*
-	 * Release any dquot(s) the inode had kept before chown.
+	 * Release any dquot(s) the inode had kept beक्रमe chown.
 	 */
 	xfs_qm_dqrele(olddquot1);
 	xfs_qm_dqrele(olddquot2);
 	xfs_qm_dqrele(udqp);
 	xfs_qm_dqrele(gdqp);
 
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	/*
 	 * XXX(hch): Updating the ACL entries is not atomic vs the i_mode
-	 * 	     update.  We could avoid this with linked transactions
-	 * 	     and passing down the transaction pointer all the way
+	 * 	     update.  We could aव्योम this with linked transactions
+	 * 	     and passing करोwn the transaction poपूर्णांकer all the way
 	 *	     to attr_set.  No previous user of the generic
 	 * 	     Posix ACL code seems to care about this issue either.
 	 */
-	if (mask & ATTR_MODE) {
+	अगर (mask & ATTR_MODE) अणु
 		error = posix_acl_chmod(mnt_userns, inode, inode->i_mode);
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_dqrele:
 	xfs_qm_dqrele(udqp);
 	xfs_qm_dqrele(gdqp);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
- * Truncate file.  Must have write permission and not be a directory.
+ * Truncate file.  Must have ग_लिखो permission and not be a directory.
  *
- * Caution: The caller of this function is responsible for calling
- * setattr_prepare() or otherwise verifying the change is fine.
+ * Caution: The caller of this function is responsible क्रम calling
+ * setattr_prepare() or otherwise verअगरying the change is fine.
  */
-STATIC int
+STATIC पूर्णांक
 xfs_setattr_size(
-	struct user_namespace	*mnt_userns,
-	struct xfs_inode	*ip,
-	struct iattr		*iattr)
-{
-	struct xfs_mount	*mp = ip->i_mount;
-	struct inode		*inode = VFS_I(ip);
+	काष्ठा user_namespace	*mnt_userns,
+	काष्ठा xfs_inode	*ip,
+	काष्ठा iattr		*iattr)
+अणु
+	काष्ठा xfs_mount	*mp = ip->i_mount;
+	काष्ठा inode		*inode = VFS_I(ip);
 	xfs_off_t		oldsize, newsize;
-	struct xfs_trans	*tp;
-	int			error;
-	uint			lock_flags = 0;
+	काष्ठा xfs_trans	*tp;
+	पूर्णांक			error;
+	uपूर्णांक			lock_flags = 0;
 	bool			did_zeroing = false;
 
 	ASSERT(xfs_isilocked(ip, XFS_IOLOCK_EXCL));
@@ -874,450 +875,450 @@ xfs_setattr_size(
 	newsize = iattr->ia_size;
 
 	/*
-	 * Short circuit the truncate case for zero length files.
+	 * Short circuit the truncate हाल क्रम zero length files.
 	 */
-	if (newsize == 0 && oldsize == 0 && ip->i_df.if_nextents == 0) {
-		if (!(iattr->ia_valid & (ATTR_CTIME|ATTR_MTIME)))
-			return 0;
+	अगर (newsize == 0 && oldsize == 0 && ip->i_df.अगर_nextents == 0) अणु
+		अगर (!(iattr->ia_valid & (ATTR_CTIME|ATTR_MTIME)))
+			वापस 0;
 
 		/*
-		 * Use the regular setattr path to update the timestamps.
+		 * Use the regular setattr path to update the बारtamps.
 		 */
 		iattr->ia_valid &= ~ATTR_SIZE;
-		return xfs_setattr_nonsize(mnt_userns, ip, iattr);
-	}
+		वापस xfs_setattr_nonsize(mnt_userns, ip, iattr);
+	पूर्ण
 
 	/*
 	 * Make sure that the dquots are attached to the inode.
 	 */
 	error = xfs_qm_dqattach(ip);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	/*
-	 * Wait for all direct I/O to complete.
+	 * Wait क्रम all direct I/O to complete.
 	 */
-	inode_dio_wait(inode);
+	inode_dio_रुको(inode);
 
 	/*
-	 * File data changes must be complete before we start the transaction to
-	 * modify the inode.  This needs to be done before joining the inode to
+	 * File data changes must be complete beक्रमe we start the transaction to
+	 * modअगरy the inode.  This needs to be करोne beक्रमe joining the inode to
 	 * the transaction because the inode cannot be unlocked once it is a
 	 * part of the transaction.
 	 *
-	 * Start with zeroing any data beyond EOF that we may expose on file
-	 * extension, or zeroing out the rest of the block on a downward
+	 * Start with zeroing any data beyond खातापूर्ण that we may expose on file
+	 * extension, or zeroing out the rest of the block on a करोwnward
 	 * truncate.
 	 */
-	if (newsize > oldsize) {
+	अगर (newsize > oldsize) अणु
 		trace_xfs_zero_eof(ip, oldsize, newsize - oldsize);
 		error = iomap_zero_range(inode, oldsize, newsize - oldsize,
-				&did_zeroing, &xfs_buffered_write_iomap_ops);
-	} else {
+				&did_zeroing, &xfs_buffered_ग_लिखो_iomap_ops);
+	पूर्ण अन्यथा अणु
 		/*
 		 * iomap won't detect a dirty page over an unwritten block (or a
 		 * cow block over a hole) and subsequently skips zeroing the
-		 * newly post-EOF portion of the page. Flush the new EOF to
-		 * convert the block before the pagecache truncate.
+		 * newly post-खातापूर्ण portion of the page. Flush the new खातापूर्ण to
+		 * convert the block beक्रमe the pagecache truncate.
 		 */
-		error = filemap_write_and_wait_range(inode->i_mapping, newsize,
+		error = filemap_ग_लिखो_and_रुको_range(inode->i_mapping, newsize,
 						     newsize);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 		error = iomap_truncate_page(inode, newsize, &did_zeroing,
-				&xfs_buffered_write_iomap_ops);
-	}
+				&xfs_buffered_ग_लिखो_iomap_ops);
+	पूर्ण
 
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	/*
-	 * We've already locked out new page faults, so now we can safely remove
+	 * We've alपढ़ोy locked out new page faults, so now we can safely हटाओ
 	 * pages from the page cache knowing they won't get refaulted until we
 	 * drop the XFS_MMAP_EXCL lock after the extent manipulations are
-	 * complete. The truncate_setsize() call also cleans partial EOF page
+	 * complete. The truncate_setsize() call also cleans partial खातापूर्ण page
 	 * PTEs on extending truncates and hence ensures sub-page block size
-	 * filesystems are correctly handled, too.
+	 * fileप्रणालीs are correctly handled, too.
 	 *
-	 * We have to do all the page cache truncate work outside the
+	 * We have to करो all the page cache truncate work outside the
 	 * transaction context as the "lock" order is page lock->log space
-	 * reservation as defined by extent allocation in the writeback path.
+	 * reservation as defined by extent allocation in the ग_लिखोback path.
 	 * Hence a truncate can fail with ENOMEM from xfs_trans_alloc(), but
-	 * having already truncated the in-memory version of the file (i.e. made
-	 * user visible changes). There's not much we can do about this, except
+	 * having alपढ़ोy truncated the in-memory version of the file (i.e. made
+	 * user visible changes). There's not much we can करो about this, except
 	 * to hope that the caller sees ENOMEM and retries the truncate
 	 * operation.
 	 *
 	 * And we update in-core i_size and truncate page cache beyond newsize
-	 * before writeback the [i_disk_size, newsize] range, so we're
-	 * guaranteed not to write stale data past the new EOF on truncate down.
+	 * beक्रमe ग_लिखोback the [i_disk_size, newsize] range, so we're
+	 * guaranteed not to ग_लिखो stale data past the new खातापूर्ण on truncate करोwn.
 	 */
 	truncate_setsize(inode, newsize);
 
 	/*
 	 * We are going to log the inode size change in this transaction so
-	 * any previous writes that are beyond the on disk EOF and the new
-	 * EOF that have not been written out need to be written here.  If we
-	 * do not write the data out, we expose ourselves to the null files
+	 * any previous ग_लिखोs that are beyond the on disk खातापूर्ण and the new
+	 * खातापूर्ण that have not been written out need to be written here.  If we
+	 * करो not ग_लिखो the data out, we expose ourselves to the null files
 	 * problem. Note that this includes any block zeroing we did above;
 	 * otherwise those blocks may not be zeroed after a crash.
 	 */
-	if (did_zeroing ||
-	    (newsize > ip->i_disk_size && oldsize != ip->i_disk_size)) {
-		error = filemap_write_and_wait_range(VFS_I(ip)->i_mapping,
+	अगर (did_zeroing ||
+	    (newsize > ip->i_disk_size && oldsize != ip->i_disk_size)) अणु
+		error = filemap_ग_लिखो_and_रुको_range(VFS_I(ip)->i_mapping,
 						ip->i_disk_size, newsize - 1);
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 
 	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_itruncate, 0, 0, 0, &tp);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	lock_flags |= XFS_ILOCK_EXCL;
 	xfs_ilock(ip, XFS_ILOCK_EXCL);
 	xfs_trans_ijoin(tp, ip, 0);
 
 	/*
-	 * Only change the c/mtime if we are changing the size or we are
-	 * explicitly asked to change it.  This handles the semantic difference
+	 * Only change the c/mसमय अगर we are changing the size or we are
+	 * explicitly asked to change it.  This handles the semantic dअगरference
 	 * between truncate() and ftruncate() as implemented in the VFS.
 	 *
-	 * The regular truncate() case without ATTR_CTIME and ATTR_MTIME is a
-	 * special case where we need to update the times despite not having
+	 * The regular truncate() हाल without ATTR_CTIME and ATTR_MTIME is a
+	 * special हाल where we need to update the बार despite not having
 	 * these flags set.  For all other operations the VFS set these flags
-	 * explicitly if it wants a timestamp update.
+	 * explicitly अगर it wants a बारtamp update.
 	 */
-	if (newsize != oldsize &&
-	    !(iattr->ia_valid & (ATTR_CTIME | ATTR_MTIME))) {
-		iattr->ia_ctime = iattr->ia_mtime =
-			current_time(inode);
+	अगर (newsize != oldsize &&
+	    !(iattr->ia_valid & (ATTR_CTIME | ATTR_MTIME))) अणु
+		iattr->ia_स_समय = iattr->ia_mसमय =
+			current_समय(inode);
 		iattr->ia_valid |= ATTR_CTIME | ATTR_MTIME;
-	}
+	पूर्ण
 
 	/*
-	 * The first thing we do is set the size to new_size permanently on
-	 * disk.  This way we don't have to worry about anyone ever being able
-	 * to look at the data being freed even in the face of a crash.
-	 * What we're getting around here is the case where we free a block, it
+	 * The first thing we करो is set the size to new_size permanently on
+	 * disk.  This way we करोn't have to worry about anyone ever being able
+	 * to look at the data being मुक्तd even in the face of a crash.
+	 * What we're getting around here is the हाल where we मुक्त a block, it
 	 * is allocated to another file, it is written to, and then we crash.
-	 * If the new data gets written to the file but the log buffers
-	 * containing the free and reallocation don't, then we'd end up with
-	 * garbage in the blocks being freed.  As long as we make the new size
-	 * permanent before actually freeing any blocks it doesn't matter if
+	 * If the new data माला_लो written to the file but the log buffers
+	 * containing the मुक्त and पुनः_स्मृतिation करोn't, then we'd end up with
+	 * garbage in the blocks being मुक्तd.  As दीर्घ as we make the new size
+	 * permanent beक्रमe actually मुक्तing any blocks it करोesn't matter अगर
 	 * they get written to.
 	 */
 	ip->i_disk_size = newsize;
 	xfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 
-	if (newsize <= oldsize) {
+	अगर (newsize <= oldsize) अणु
 		error = xfs_itruncate_extents(&tp, ip, XFS_DATA_FORK, newsize);
-		if (error)
-			goto out_trans_cancel;
+		अगर (error)
+			जाओ out_trans_cancel;
 
 		/*
 		 * Truncated "down", so we're removing references to old data
-		 * here - if we delay flushing for a long time, we expose
-		 * ourselves unduly to the notorious NULL files problem.  So,
-		 * we mark this inode and flush it when the file is closed,
-		 * and do not wait the usual (long) time for writeout.
+		 * here - अगर we delay flushing क्रम a दीर्घ समय, we expose
+		 * ourselves unduly to the notorious शून्य files problem.  So,
+		 * we mark this inode and flush it when the file is बंदd,
+		 * and करो not रुको the usual (दीर्घ) समय क्रम ग_लिखोout.
 		 */
-		xfs_iflags_set(ip, XFS_ITRUNCATED);
+		xfs_अगरlags_set(ip, XFS_ITRUNCATED);
 
-		/* A truncate down always removes post-EOF blocks. */
+		/* A truncate करोwn always हटाओs post-खातापूर्ण blocks. */
 		xfs_inode_clear_eofblocks_tag(ip);
-	}
+	पूर्ण
 
-	if (iattr->ia_valid & ATTR_MODE)
+	अगर (iattr->ia_valid & ATTR_MODE)
 		xfs_setattr_mode(ip, iattr);
-	if (iattr->ia_valid & (ATTR_ATIME|ATTR_CTIME|ATTR_MTIME))
-		xfs_setattr_time(ip, iattr);
+	अगर (iattr->ia_valid & (ATTR_ATIME|ATTR_CTIME|ATTR_MTIME))
+		xfs_setattr_समय(ip, iattr);
 
 	xfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 
 	XFS_STATS_INC(mp, xs_ig_attrchg);
 
-	if (mp->m_flags & XFS_MOUNT_WSYNC)
+	अगर (mp->m_flags & XFS_MOUNT_WSYNC)
 		xfs_trans_set_sync(tp);
 
 	error = xfs_trans_commit(tp);
 out_unlock:
-	if (lock_flags)
+	अगर (lock_flags)
 		xfs_iunlock(ip, lock_flags);
-	return error;
+	वापस error;
 
 out_trans_cancel:
 	xfs_trans_cancel(tp);
-	goto out_unlock;
-}
+	जाओ out_unlock;
+पूर्ण
 
-int
+पूर्णांक
 xfs_vn_setattr_size(
-	struct user_namespace	*mnt_userns,
-	struct dentry		*dentry,
-	struct iattr		*iattr)
-{
-	struct xfs_inode	*ip = XFS_I(d_inode(dentry));
-	int error;
+	काष्ठा user_namespace	*mnt_userns,
+	काष्ठा dentry		*dentry,
+	काष्ठा iattr		*iattr)
+अणु
+	काष्ठा xfs_inode	*ip = XFS_I(d_inode(dentry));
+	पूर्णांक error;
 
 	trace_xfs_setattr(ip);
 
 	error = xfs_vn_change_ok(mnt_userns, dentry, iattr);
-	if (error)
-		return error;
-	return xfs_setattr_size(mnt_userns, ip, iattr);
-}
+	अगर (error)
+		वापस error;
+	वापस xfs_setattr_size(mnt_userns, ip, iattr);
+पूर्ण
 
-STATIC int
+STATIC पूर्णांक
 xfs_vn_setattr(
-	struct user_namespace	*mnt_userns,
-	struct dentry		*dentry,
-	struct iattr		*iattr)
-{
-	struct inode		*inode = d_inode(dentry);
-	struct xfs_inode	*ip = XFS_I(inode);
-	int			error;
+	काष्ठा user_namespace	*mnt_userns,
+	काष्ठा dentry		*dentry,
+	काष्ठा iattr		*iattr)
+अणु
+	काष्ठा inode		*inode = d_inode(dentry);
+	काष्ठा xfs_inode	*ip = XFS_I(inode);
+	पूर्णांक			error;
 
-	if (iattr->ia_valid & ATTR_SIZE) {
-		uint			iolock;
+	अगर (iattr->ia_valid & ATTR_SIZE) अणु
+		uपूर्णांक			iolock;
 
 		xfs_ilock(ip, XFS_MMAPLOCK_EXCL);
 		iolock = XFS_IOLOCK_EXCL | XFS_MMAPLOCK_EXCL;
 
-		error = xfs_break_layouts(inode, &iolock, BREAK_UNMAP);
-		if (error) {
+		error = xfs_अवरोध_layouts(inode, &iolock, BREAK_UNMAP);
+		अगर (error) अणु
 			xfs_iunlock(ip, XFS_MMAPLOCK_EXCL);
-			return error;
-		}
+			वापस error;
+		पूर्ण
 
 		error = xfs_vn_setattr_size(mnt_userns, dentry, iattr);
 		xfs_iunlock(ip, XFS_MMAPLOCK_EXCL);
-	} else {
+	पूर्ण अन्यथा अणु
 		trace_xfs_setattr(ip);
 
 		error = xfs_vn_change_ok(mnt_userns, dentry, iattr);
-		if (!error)
+		अगर (!error)
 			error = xfs_setattr_nonsize(mnt_userns, ip, iattr);
-	}
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-STATIC int
-xfs_vn_update_time(
-	struct inode		*inode,
-	struct timespec64	*now,
-	int			flags)
-{
-	struct xfs_inode	*ip = XFS_I(inode);
-	struct xfs_mount	*mp = ip->i_mount;
-	int			log_flags = XFS_ILOG_TIMESTAMP;
-	struct xfs_trans	*tp;
-	int			error;
+STATIC पूर्णांक
+xfs_vn_update_समय(
+	काष्ठा inode		*inode,
+	काष्ठा बारpec64	*now,
+	पूर्णांक			flags)
+अणु
+	काष्ठा xfs_inode	*ip = XFS_I(inode);
+	काष्ठा xfs_mount	*mp = ip->i_mount;
+	पूर्णांक			log_flags = XFS_ILOG_TIMESTAMP;
+	काष्ठा xfs_trans	*tp;
+	पूर्णांक			error;
 
-	trace_xfs_update_time(ip);
+	trace_xfs_update_समय(ip);
 
-	if (inode->i_sb->s_flags & SB_LAZYTIME) {
-		if (!((flags & S_VERSION) &&
+	अगर (inode->i_sb->s_flags & SB_LAZYTIME) अणु
+		अगर (!((flags & S_VERSION) &&
 		      inode_maybe_inc_iversion(inode, false)))
-			return generic_update_time(inode, now, flags);
+			वापस generic_update_समय(inode, now, flags);
 
 		/* Capture the iversion update that just occurred */
 		log_flags |= XFS_ILOG_CORE;
-	}
+	पूर्ण
 
 	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_fsyncts, 0, 0, 0, &tp);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	xfs_ilock(ip, XFS_ILOCK_EXCL);
-	if (flags & S_CTIME)
-		inode->i_ctime = *now;
-	if (flags & S_MTIME)
-		inode->i_mtime = *now;
-	if (flags & S_ATIME)
-		inode->i_atime = *now;
+	अगर (flags & S_CTIME)
+		inode->i_स_समय = *now;
+	अगर (flags & S_MTIME)
+		inode->i_mसमय = *now;
+	अगर (flags & S_ATIME)
+		inode->i_aसमय = *now;
 
 	xfs_trans_ijoin(tp, ip, XFS_ILOCK_EXCL);
 	xfs_trans_log_inode(tp, ip, log_flags);
-	return xfs_trans_commit(tp);
-}
+	वापस xfs_trans_commit(tp);
+पूर्ण
 
-STATIC int
+STATIC पूर्णांक
 xfs_vn_fiemap(
-	struct inode		*inode,
-	struct fiemap_extent_info *fieinfo,
+	काष्ठा inode		*inode,
+	काष्ठा fiemap_extent_info *fieinfo,
 	u64			start,
 	u64			length)
-{
-	int			error;
+अणु
+	पूर्णांक			error;
 
 	xfs_ilock(XFS_I(inode), XFS_IOLOCK_SHARED);
-	if (fieinfo->fi_flags & FIEMAP_FLAG_XATTR) {
+	अगर (fieinfo->fi_flags & FIEMAP_FLAG_XATTR) अणु
 		fieinfo->fi_flags &= ~FIEMAP_FLAG_XATTR;
 		error = iomap_fiemap(inode, fieinfo, start, length,
 				&xfs_xattr_iomap_ops);
-	} else {
+	पूर्ण अन्यथा अणु
 		error = iomap_fiemap(inode, fieinfo, start, length,
-				&xfs_read_iomap_ops);
-	}
+				&xfs_पढ़ो_iomap_ops);
+	पूर्ण
 	xfs_iunlock(XFS_I(inode), XFS_IOLOCK_SHARED);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-STATIC int
-xfs_vn_tmpfile(
-	struct user_namespace	*mnt_userns,
-	struct inode		*dir,
-	struct dentry		*dentry,
+STATIC पूर्णांक
+xfs_vn_क्षणिक_ख(
+	काष्ठा user_namespace	*mnt_userns,
+	काष्ठा inode		*dir,
+	काष्ठा dentry		*dentry,
 	umode_t			mode)
-{
-	return xfs_generic_create(mnt_userns, dir, dentry, mode, 0, true);
-}
+अणु
+	वापस xfs_generic_create(mnt_userns, dir, dentry, mode, 0, true);
+पूर्ण
 
-static const struct inode_operations xfs_inode_operations = {
+अटल स्थिर काष्ठा inode_operations xfs_inode_operations = अणु
 	.get_acl		= xfs_get_acl,
 	.set_acl		= xfs_set_acl,
 	.getattr		= xfs_vn_getattr,
 	.setattr		= xfs_vn_setattr,
 	.listxattr		= xfs_vn_listxattr,
 	.fiemap			= xfs_vn_fiemap,
-	.update_time		= xfs_vn_update_time,
+	.update_समय		= xfs_vn_update_समय,
 	.fileattr_get		= xfs_fileattr_get,
 	.fileattr_set		= xfs_fileattr_set,
-};
+पूर्ण;
 
-static const struct inode_operations xfs_dir_inode_operations = {
+अटल स्थिर काष्ठा inode_operations xfs_dir_inode_operations = अणु
 	.create			= xfs_vn_create,
 	.lookup			= xfs_vn_lookup,
 	.link			= xfs_vn_link,
 	.unlink			= xfs_vn_unlink,
 	.symlink		= xfs_vn_symlink,
-	.mkdir			= xfs_vn_mkdir,
+	.सूची_गढ़ो			= xfs_vn_सूची_गढ़ो,
 	/*
-	 * Yes, XFS uses the same method for rmdir and unlink.
+	 * Yes, XFS uses the same method क्रम सूची_हटाओ and unlink.
 	 *
-	 * There are some subtile differences deeper in the code,
-	 * but we use S_ISDIR to check for those.
+	 * There are some subtile dअगरferences deeper in the code,
+	 * but we use S_ISसूची to check क्रम those.
 	 */
-	.rmdir			= xfs_vn_unlink,
+	.सूची_हटाओ			= xfs_vn_unlink,
 	.mknod			= xfs_vn_mknod,
-	.rename			= xfs_vn_rename,
+	.नाम			= xfs_vn_नाम,
 	.get_acl		= xfs_get_acl,
 	.set_acl		= xfs_set_acl,
 	.getattr		= xfs_vn_getattr,
 	.setattr		= xfs_vn_setattr,
 	.listxattr		= xfs_vn_listxattr,
-	.update_time		= xfs_vn_update_time,
-	.tmpfile		= xfs_vn_tmpfile,
+	.update_समय		= xfs_vn_update_समय,
+	.क्षणिक_ख		= xfs_vn_क्षणिक_ख,
 	.fileattr_get		= xfs_fileattr_get,
 	.fileattr_set		= xfs_fileattr_set,
-};
+पूर्ण;
 
-static const struct inode_operations xfs_dir_ci_inode_operations = {
+अटल स्थिर काष्ठा inode_operations xfs_dir_ci_inode_operations = अणु
 	.create			= xfs_vn_create,
 	.lookup			= xfs_vn_ci_lookup,
 	.link			= xfs_vn_link,
 	.unlink			= xfs_vn_unlink,
 	.symlink		= xfs_vn_symlink,
-	.mkdir			= xfs_vn_mkdir,
+	.सूची_गढ़ो			= xfs_vn_सूची_गढ़ो,
 	/*
-	 * Yes, XFS uses the same method for rmdir and unlink.
+	 * Yes, XFS uses the same method क्रम सूची_हटाओ and unlink.
 	 *
-	 * There are some subtile differences deeper in the code,
-	 * but we use S_ISDIR to check for those.
+	 * There are some subtile dअगरferences deeper in the code,
+	 * but we use S_ISसूची to check क्रम those.
 	 */
-	.rmdir			= xfs_vn_unlink,
+	.सूची_हटाओ			= xfs_vn_unlink,
 	.mknod			= xfs_vn_mknod,
-	.rename			= xfs_vn_rename,
+	.नाम			= xfs_vn_नाम,
 	.get_acl		= xfs_get_acl,
 	.set_acl		= xfs_set_acl,
 	.getattr		= xfs_vn_getattr,
 	.setattr		= xfs_vn_setattr,
 	.listxattr		= xfs_vn_listxattr,
-	.update_time		= xfs_vn_update_time,
-	.tmpfile		= xfs_vn_tmpfile,
+	.update_समय		= xfs_vn_update_समय,
+	.क्षणिक_ख		= xfs_vn_क्षणिक_ख,
 	.fileattr_get		= xfs_fileattr_get,
 	.fileattr_set		= xfs_fileattr_set,
-};
+पूर्ण;
 
-static const struct inode_operations xfs_symlink_inode_operations = {
+अटल स्थिर काष्ठा inode_operations xfs_symlink_inode_operations = अणु
 	.get_link		= xfs_vn_get_link,
 	.getattr		= xfs_vn_getattr,
 	.setattr		= xfs_vn_setattr,
 	.listxattr		= xfs_vn_listxattr,
-	.update_time		= xfs_vn_update_time,
-};
+	.update_समय		= xfs_vn_update_समय,
+पूर्ण;
 
-static const struct inode_operations xfs_inline_symlink_inode_operations = {
-	.get_link		= xfs_vn_get_link_inline,
+अटल स्थिर काष्ठा inode_operations xfs_अंतरभूत_symlink_inode_operations = अणु
+	.get_link		= xfs_vn_get_link_अंतरभूत,
 	.getattr		= xfs_vn_getattr,
 	.setattr		= xfs_vn_setattr,
 	.listxattr		= xfs_vn_listxattr,
-	.update_time		= xfs_vn_update_time,
-};
+	.update_समय		= xfs_vn_update_समय,
+पूर्ण;
 
-/* Figure out if this file actually supports DAX. */
-static bool
+/* Figure out अगर this file actually supports DAX. */
+अटल bool
 xfs_inode_supports_dax(
-	struct xfs_inode	*ip)
-{
-	struct xfs_mount	*mp = ip->i_mount;
+	काष्ठा xfs_inode	*ip)
+अणु
+	काष्ठा xfs_mount	*mp = ip->i_mount;
 
 	/* Only supported on regular files. */
-	if (!S_ISREG(VFS_I(ip)->i_mode))
-		return false;
+	अगर (!S_ISREG(VFS_I(ip)->i_mode))
+		वापस false;
 
 	/* Only supported on non-reflinked files. */
-	if (xfs_is_reflink_inode(ip))
-		return false;
+	अगर (xfs_is_reflink_inode(ip))
+		वापस false;
 
 	/* Block size must match page size */
-	if (mp->m_sb.sb_blocksize != PAGE_SIZE)
-		return false;
+	अगर (mp->m_sb.sb_blocksize != PAGE_SIZE)
+		वापस false;
 
 	/* Device has to support DAX too. */
-	return xfs_inode_buftarg(ip)->bt_daxdev != NULL;
-}
+	वापस xfs_inode_buftarg(ip)->bt_daxdev != शून्य;
+पूर्ण
 
-static bool
+अटल bool
 xfs_inode_should_enable_dax(
-	struct xfs_inode *ip)
-{
-	if (!IS_ENABLED(CONFIG_FS_DAX))
-		return false;
-	if (ip->i_mount->m_flags & XFS_MOUNT_DAX_NEVER)
-		return false;
-	if (!xfs_inode_supports_dax(ip))
-		return false;
-	if (ip->i_mount->m_flags & XFS_MOUNT_DAX_ALWAYS)
-		return true;
-	if (ip->i_diflags2 & XFS_DIFLAG2_DAX)
-		return true;
-	return false;
-}
+	काष्ठा xfs_inode *ip)
+अणु
+	अगर (!IS_ENABLED(CONFIG_FS_DAX))
+		वापस false;
+	अगर (ip->i_mount->m_flags & XFS_MOUNT_DAX_NEVER)
+		वापस false;
+	अगर (!xfs_inode_supports_dax(ip))
+		वापस false;
+	अगर (ip->i_mount->m_flags & XFS_MOUNT_DAX_ALWAYS)
+		वापस true;
+	अगर (ip->i_dअगरlags2 & XFS_DIFLAG2_DAX)
+		वापस true;
+	वापस false;
+पूर्ण
 
-void
-xfs_diflags_to_iflags(
-	struct xfs_inode	*ip,
+व्योम
+xfs_dअगरlags_to_अगरlags(
+	काष्ठा xfs_inode	*ip,
 	bool init)
-{
-	struct inode            *inode = VFS_I(ip);
-	unsigned int            xflags = xfs_ip2xflags(ip);
-	unsigned int            flags = 0;
+अणु
+	काष्ठा inode            *inode = VFS_I(ip);
+	अचिन्हित पूर्णांक            xflags = xfs_ip2xflags(ip);
+	अचिन्हित पूर्णांक            flags = 0;
 
 	ASSERT(!(IS_DAX(inode) && init));
 
-	if (xflags & FS_XFLAG_IMMUTABLE)
+	अगर (xflags & FS_XFLAG_IMMUTABLE)
 		flags |= S_IMMUTABLE;
-	if (xflags & FS_XFLAG_APPEND)
+	अगर (xflags & FS_XFLAG_APPEND)
 		flags |= S_APPEND;
-	if (xflags & FS_XFLAG_SYNC)
+	अगर (xflags & FS_XFLAG_SYNC)
 		flags |= S_SYNC;
-	if (xflags & FS_XFLAG_NOATIME)
+	अगर (xflags & FS_XFLAG_NOATIME)
 		flags |= S_NOATIME;
-	if (init && xfs_inode_should_enable_dax(ip))
+	अगर (init && xfs_inode_should_enable_dax(ip))
 		flags |= S_DAX;
 
 	/*
@@ -1326,96 +1327,96 @@ xfs_diflags_to_iflags(
 	 */
 	inode->i_flags &= ~(S_IMMUTABLE | S_APPEND | S_SYNC | S_NOATIME);
 	inode->i_flags |= flags;
-}
+पूर्ण
 
 /*
  * Initialize the Linux inode.
  *
- * When reading existing inodes from disk this is called directly from xfs_iget,
+ * When पढ़ोing existing inodes from disk this is called directly from xfs_iget,
  * when creating a new inode it is called from xfs_ialloc after setting up the
- * inode. These callers have different criteria for clearing XFS_INEW, so leave
+ * inode. These callers have dअगरferent criteria क्रम clearing XFS_INEW, so leave
  * it up to the caller to deal with unlocking the inode appropriately.
  */
-void
+व्योम
 xfs_setup_inode(
-	struct xfs_inode	*ip)
-{
-	struct inode		*inode = &ip->i_vnode;
+	काष्ठा xfs_inode	*ip)
+अणु
+	काष्ठा inode		*inode = &ip->i_vnode;
 	gfp_t			gfp_mask;
 
 	inode->i_ino = ip->i_ino;
 	inode->i_state = I_NEW;
 
 	inode_sb_list_add(inode);
-	/* make the inode look hashed for the writeback code */
+	/* make the inode look hashed क्रम the ग_लिखोback code */
 	inode_fake_hash(inode);
 
-	i_size_write(inode, ip->i_disk_size);
-	xfs_diflags_to_iflags(ip, true);
+	i_size_ग_लिखो(inode, ip->i_disk_size);
+	xfs_dअगरlags_to_अगरlags(ip, true);
 
-	if (S_ISDIR(inode->i_mode)) {
+	अगर (S_ISसूची(inode->i_mode)) अणु
 		/*
-		 * We set the i_rwsem class here to avoid potential races with
+		 * We set the i_rwsem class here to aव्योम potential races with
 		 * lockdep_annotate_inode_mutex_key() reinitialising the lock
-		 * after a filehandle lookup has already found the inode in
-		 * cache before it has been unlocked via unlock_new_inode().
+		 * after a filehandle lookup has alपढ़ोy found the inode in
+		 * cache beक्रमe it has been unlocked via unlock_new_inode().
 		 */
 		lockdep_set_class(&inode->i_rwsem,
 				  &inode->i_sb->s_type->i_mutex_dir_key);
 		lockdep_set_class(&ip->i_lock.mr_lock, &xfs_dir_ilock_class);
-	} else {
+	पूर्ण अन्यथा अणु
 		lockdep_set_class(&ip->i_lock.mr_lock, &xfs_nondir_ilock_class);
-	}
+	पूर्ण
 
 	/*
-	 * Ensure all page cache allocations are done from GFP_NOFS context to
-	 * prevent direct reclaim recursion back into the filesystem and blowing
+	 * Ensure all page cache allocations are करोne from GFP_NOFS context to
+	 * prevent direct reclaim recursion back पूर्णांकo the fileप्रणाली and blowing
 	 * stacks or deadlocking.
 	 */
 	gfp_mask = mapping_gfp_mask(inode->i_mapping);
 	mapping_set_gfp_mask(inode->i_mapping, (gfp_mask & ~(__GFP_FS)));
 
 	/*
-	 * If there is no attribute fork no ACL can exist on this inode,
+	 * If there is no attribute विभाजन no ACL can exist on this inode,
 	 * and it can't have any file capabilities attached to it either.
 	 */
-	if (!XFS_IFORK_Q(ip)) {
+	अगर (!XFS_IFORK_Q(ip)) अणु
 		inode_has_no_xattr(inode);
 		cache_no_acl(inode);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
+व्योम
 xfs_setup_iops(
-	struct xfs_inode	*ip)
-{
-	struct inode		*inode = &ip->i_vnode;
+	काष्ठा xfs_inode	*ip)
+अणु
+	काष्ठा inode		*inode = &ip->i_vnode;
 
-	switch (inode->i_mode & S_IFMT) {
-	case S_IFREG:
+	चयन (inode->i_mode & S_IFMT) अणु
+	हाल S_IFREG:
 		inode->i_op = &xfs_inode_operations;
 		inode->i_fop = &xfs_file_operations;
-		if (IS_DAX(inode))
+		अगर (IS_DAX(inode))
 			inode->i_mapping->a_ops = &xfs_dax_aops;
-		else
+		अन्यथा
 			inode->i_mapping->a_ops = &xfs_address_space_operations;
-		break;
-	case S_IFDIR:
-		if (xfs_sb_version_hasasciici(&XFS_M(inode->i_sb)->m_sb))
+		अवरोध;
+	हाल S_IFसूची:
+		अगर (xfs_sb_version_hasasciici(&XFS_M(inode->i_sb)->m_sb))
 			inode->i_op = &xfs_dir_ci_inode_operations;
-		else
+		अन्यथा
 			inode->i_op = &xfs_dir_inode_operations;
 		inode->i_fop = &xfs_dir_file_operations;
-		break;
-	case S_IFLNK:
-		if (ip->i_df.if_format == XFS_DINODE_FMT_LOCAL)
-			inode->i_op = &xfs_inline_symlink_inode_operations;
-		else
+		अवरोध;
+	हाल S_IFLNK:
+		अगर (ip->i_df.अगर_क्रमmat == XFS_DINODE_FMT_LOCAL)
+			inode->i_op = &xfs_अंतरभूत_symlink_inode_operations;
+		अन्यथा
 			inode->i_op = &xfs_symlink_inode_operations;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		inode->i_op = &xfs_inode_operations;
 		init_special_inode(inode, inode->i_mode, inode->i_rdev);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण

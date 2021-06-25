@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * livepatch.h - x86-specific Kernel Live Patching Core
+ * livepatch.h - x86-specअगरic Kernel Live Patching Core
  *
  * Copyright (C) 2014 Seth Jennings <sjenning@redhat.com>
  * Copyright (C) 2014 SUSE
  */
 
-#ifndef _ASM_X86_LIVEPATCH_H
-#define _ASM_X86_LIVEPATCH_H
+#अगर_अघोषित _ASM_X86_LIVEPATCH_H
+#घोषणा _ASM_X86_LIVEPATCH_H
 
-#include <asm/setup.h>
-#include <linux/ftrace.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <linux/ftrace.h>
 
-static inline void klp_arch_set_pc(struct ftrace_regs *fregs, unsigned long ip)
-{
-	ftrace_instruction_pointer_set(fregs, ip);
-}
+अटल अंतरभूत व्योम klp_arch_set_pc(काष्ठा ftrace_regs *fregs, अचिन्हित दीर्घ ip)
+अणु
+	ftrace_inकाष्ठाion_poपूर्णांकer_set(fregs, ip);
+पूर्ण
 
-#endif /* _ASM_X86_LIVEPATCH_H */
+#पूर्ण_अगर /* _ASM_X86_LIVEPATCH_H */

@@ -1,69 +1,70 @@
+<शैली गुरु>
 /*
  *  Copyright (C) 2001 Andrea Arcangeli <andrea@suse.de> SuSE
- *  Copyright 2003 Andi Kleen, SuSE Labs.
+ *  Copyright 2003 Andi Kleen, SuSE Lअसल.
  *
- *  Thanks to hpa@transmeta.com for some useful hint.
- *  Special thanks to Ingo Molnar for his early experience with
- *  a different vsyscall implementation for Linux/IA32 and for the name.
+ *  Thanks to hpa@transmeta.com क्रम some useful hपूर्णांक.
+ *  Special thanks to Ingo Molnar क्रम his early experience with
+ *  a dअगरferent vsyscall implementation क्रम Linux/IA32 and क्रम the name.
  */
 
-#include <linux/time.h>
-#include <linux/timekeeper_internal.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/समयkeeper_पूर्णांकernal.h>
 
-#include <asm/vvar.h>
+#समावेश <यंत्र/vvar.h>
 
-void update_vsyscall_tz(void)
-{
-	if (unlikely(vvar_data == NULL))
-		return;
+व्योम update_vsyscall_tz(व्योम)
+अणु
+	अगर (unlikely(vvar_data == शून्य))
+		वापस;
 
 	vvar_data->tz_minuteswest = sys_tz.tz_minuteswest;
-	vvar_data->tz_dsttime = sys_tz.tz_dsttime;
-}
+	vvar_data->tz_dstसमय = sys_tz.tz_dstसमय;
+पूर्ण
 
-void update_vsyscall(struct timekeeper *tk)
-{
-	struct vvar_data *vdata = vvar_data;
+व्योम update_vsyscall(काष्ठा समयkeeper *tk)
+अणु
+	काष्ठा vvar_data *vdata = vvar_data;
 
-	if (unlikely(vdata == NULL))
-		return;
+	अगर (unlikely(vdata == शून्य))
+		वापस;
 
-	vvar_write_begin(vdata);
-	vdata->vclock_mode = tk->tkr_mono.clock->archdata.vclock_mode;
-	vdata->clock.cycle_last = tk->tkr_mono.cycle_last;
-	vdata->clock.mask = tk->tkr_mono.mask;
-	vdata->clock.mult = tk->tkr_mono.mult;
-	vdata->clock.shift = tk->tkr_mono.shift;
+	vvar_ग_लिखो_begin(vdata);
+	vdata->vघड़ी_mode = tk->tkr_mono.घड़ी->archdata.vघड़ी_mode;
+	vdata->घड़ी.cycle_last = tk->tkr_mono.cycle_last;
+	vdata->घड़ी.mask = tk->tkr_mono.mask;
+	vdata->घड़ी.mult = tk->tkr_mono.mult;
+	vdata->घड़ी.shअगरt = tk->tkr_mono.shअगरt;
 
-	vdata->wall_time_sec = tk->xtime_sec;
-	vdata->wall_time_snsec = tk->tkr_mono.xtime_nsec;
+	vdata->wall_समय_sec = tk->xसमय_sec;
+	vdata->wall_समय_snsec = tk->tkr_mono.xसमय_nsec;
 
-	vdata->monotonic_time_sec = tk->xtime_sec +
+	vdata->monotonic_समय_sec = tk->xसमय_sec +
 				    tk->wall_to_monotonic.tv_sec;
-	vdata->monotonic_time_snsec = tk->tkr_mono.xtime_nsec +
+	vdata->monotonic_समय_snsec = tk->tkr_mono.xसमय_nsec +
 				      (tk->wall_to_monotonic.tv_nsec <<
-				       tk->tkr_mono.shift);
+				       tk->tkr_mono.shअगरt);
 
-	while (vdata->monotonic_time_snsec >=
-	       (((u64)NSEC_PER_SEC) << tk->tkr_mono.shift)) {
-		vdata->monotonic_time_snsec -=
-				((u64)NSEC_PER_SEC) << tk->tkr_mono.shift;
-		vdata->monotonic_time_sec++;
-	}
+	जबतक (vdata->monotonic_समय_snsec >=
+	       (((u64)NSEC_PER_SEC) << tk->tkr_mono.shअगरt)) अणु
+		vdata->monotonic_समय_snsec -=
+				((u64)NSEC_PER_SEC) << tk->tkr_mono.shअगरt;
+		vdata->monotonic_समय_sec++;
+	पूर्ण
 
-	vdata->wall_time_coarse_sec = tk->xtime_sec;
-	vdata->wall_time_coarse_nsec =
-			(long)(tk->tkr_mono.xtime_nsec >> tk->tkr_mono.shift);
+	vdata->wall_समय_coarse_sec = tk->xसमय_sec;
+	vdata->wall_समय_coarse_nsec =
+			(दीर्घ)(tk->tkr_mono.xसमय_nsec >> tk->tkr_mono.shअगरt);
 
-	vdata->monotonic_time_coarse_sec =
-		vdata->wall_time_coarse_sec + tk->wall_to_monotonic.tv_sec;
-	vdata->monotonic_time_coarse_nsec =
-		vdata->wall_time_coarse_nsec + tk->wall_to_monotonic.tv_nsec;
+	vdata->monotonic_समय_coarse_sec =
+		vdata->wall_समय_coarse_sec + tk->wall_to_monotonic.tv_sec;
+	vdata->monotonic_समय_coarse_nsec =
+		vdata->wall_समय_coarse_nsec + tk->wall_to_monotonic.tv_nsec;
 
-	while (vdata->monotonic_time_coarse_nsec >= NSEC_PER_SEC) {
-		vdata->monotonic_time_coarse_nsec -= NSEC_PER_SEC;
-		vdata->monotonic_time_coarse_sec++;
-	}
+	जबतक (vdata->monotonic_समय_coarse_nsec >= NSEC_PER_SEC) अणु
+		vdata->monotonic_समय_coarse_nsec -= NSEC_PER_SEC;
+		vdata->monotonic_समय_coarse_sec++;
+	पूर्ण
 
-	vvar_write_end(vdata);
-}
+	vvar_ग_लिखो_end(vdata);
+पूर्ण

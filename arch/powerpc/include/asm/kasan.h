@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_KASAN_H
-#define __ASM_KASAN_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_KASAN_H
+#घोषणा __ASM_KASAN_H
 
-#ifdef CONFIG_KASAN
-#define _GLOBAL_KASAN(fn)	_GLOBAL(__##fn)
-#define _GLOBAL_TOC_KASAN(fn)	_GLOBAL_TOC(__##fn)
-#define EXPORT_SYMBOL_KASAN(fn)	EXPORT_SYMBOL(__##fn)
-#else
-#define _GLOBAL_KASAN(fn)	_GLOBAL(fn)
-#define _GLOBAL_TOC_KASAN(fn)	_GLOBAL_TOC(fn)
-#define EXPORT_SYMBOL_KASAN(fn)
-#endif
+#अगर_घोषित CONFIG_KASAN
+#घोषणा _GLOBAL_KASAN(fn)	_GLOBAL(__##fn)
+#घोषणा _GLOBAL_TOC_KASAN(fn)	_GLOBAL_TOC(__##fn)
+#घोषणा EXPORT_SYMBOL_KASAN(fn)	EXPORT_SYMBOL(__##fn)
+#अन्यथा
+#घोषणा _GLOBAL_KASAN(fn)	_GLOBAL(fn)
+#घोषणा _GLOBAL_TOC_KASAN(fn)	_GLOBAL_TOC(fn)
+#घोषणा EXPORT_SYMBOL_KASAN(fn)
+#पूर्ण_अगर
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <asm/page.h>
-#include <linux/sizes.h>
+#समावेश <यंत्र/page.h>
+#समावेश <linux/sizes.h>
 
-#define KASAN_SHADOW_SCALE_SHIFT	3
+#घोषणा KASAN_SHADOW_SCALE_SHIFT	3
 
-#ifdef CONFIG_MODULES
-#define KASAN_KERN_START	ALIGN_DOWN(PAGE_OFFSET - SZ_256M, SZ_256M)
-#else
-#define KASAN_KERN_START	PAGE_OFFSET
-#endif
+#अगर_घोषित CONFIG_MODULES
+#घोषणा KASAN_KERN_START	ALIGN_DOWN(PAGE_OFFSET - SZ_256M, SZ_256M)
+#अन्यथा
+#घोषणा KASAN_KERN_START	PAGE_OFFSET
+#पूर्ण_अगर
 
-#define KASAN_SHADOW_START	(KASAN_SHADOW_OFFSET + \
+#घोषणा KASAN_SHADOW_START	(KASAN_SHADOW_OFFSET + \
 				 (KASAN_KERN_START >> KASAN_SHADOW_SCALE_SHIFT))
 
-#define KASAN_SHADOW_OFFSET	ASM_CONST(CONFIG_KASAN_SHADOW_OFFSET)
+#घोषणा KASAN_SHADOW_OFFSET	ASM_CONST(CONFIG_KASAN_SHADOW_OFFSET)
 
-#define KASAN_SHADOW_END	(-(-KASAN_SHADOW_START >> KASAN_SHADOW_SCALE_SHIFT))
+#घोषणा KASAN_SHADOW_END	(-(-KASAN_SHADOW_START >> KASAN_SHADOW_SCALE_SHIFT))
 
-#ifdef CONFIG_KASAN
-void kasan_early_init(void);
-void kasan_mmu_init(void);
-void kasan_init(void);
-void kasan_late_init(void);
-#else
-static inline void kasan_init(void) { }
-static inline void kasan_mmu_init(void) { }
-static inline void kasan_late_init(void) { }
-#endif
+#अगर_घोषित CONFIG_KASAN
+व्योम kasan_early_init(व्योम);
+व्योम kasan_mmu_init(व्योम);
+व्योम kasan_init(व्योम);
+व्योम kasan_late_init(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम kasan_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम kasan_mmu_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम kasan_late_init(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-void kasan_update_early_region(unsigned long k_start, unsigned long k_end, pte_t pte);
-int kasan_init_shadow_page_tables(unsigned long k_start, unsigned long k_end);
-int kasan_init_region(void *start, size_t size);
+व्योम kasan_update_early_region(अचिन्हित दीर्घ k_start, अचिन्हित दीर्घ k_end, pte_t pte);
+पूर्णांक kasan_init_shaकरोw_page_tables(अचिन्हित दीर्घ k_start, अचिन्हित दीर्घ k_end);
+पूर्णांक kasan_init_region(व्योम *start, माप_प्रकार size);
 
-#endif /* __ASSEMBLY */
-#endif
+#पूर्ण_अगर /* __ASSEMBLY */
+#पूर्ण_अगर

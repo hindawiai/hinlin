@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_CONNTRACK_TFTP_H
-#define _NF_CONNTRACK_TFTP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_CONNTRACK_TFTP_H
+#घोषणा _NF_CONNTRACK_TFTP_H
 
-#define TFTP_PORT 69
+#घोषणा TFTP_PORT 69
 
-#include <linux/netfilter.h>
-#include <linux/skbuff.h>
-#include <linux/types.h>
-#include <net/netfilter/nf_conntrack_expect.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/types.h>
+#समावेश <net/netfilter/nf_conntrack_expect.h>
 
-struct tftphdr {
+काष्ठा tftphdr अणु
 	__be16 opcode;
-};
+पूर्ण;
 
-#define TFTP_OPCODE_READ	1
-#define TFTP_OPCODE_WRITE	2
-#define TFTP_OPCODE_DATA	3
-#define TFTP_OPCODE_ACK		4
-#define TFTP_OPCODE_ERROR	5
+#घोषणा TFTP_OPCODE_READ	1
+#घोषणा TFTP_OPCODE_WRITE	2
+#घोषणा TFTP_OPCODE_DATA	3
+#घोषणा TFTP_OPCODE_ACK		4
+#घोषणा TFTP_OPCODE_ERROR	5
 
-extern unsigned int (*nf_nat_tftp_hook)(struct sk_buff *skb,
-				        enum ip_conntrack_info ctinfo,
-				        struct nf_conntrack_expect *exp);
+बाह्य अचिन्हित पूर्णांक (*nf_nat_tftp_hook)(काष्ठा sk_buff *skb,
+				        क्रमागत ip_conntrack_info ctinfo,
+				        काष्ठा nf_conntrack_expect *exp);
 
-#endif /* _NF_CONNTRACK_TFTP_H */
+#पूर्ण_अगर /* _NF_CONNTRACK_TFTP_H */

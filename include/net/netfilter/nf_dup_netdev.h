@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_DUP_NETDEV_H_
-#define _NF_DUP_NETDEV_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_DUP_NETDEV_H_
+#घोषणा _NF_DUP_NETDEV_H_
 
-#include <net/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables.h>
 
-void nf_dup_netdev_egress(const struct nft_pktinfo *pkt, int oif);
-void nf_fwd_netdev_egress(const struct nft_pktinfo *pkt, int oif);
+व्योम nf_dup_netdev_egress(स्थिर काष्ठा nft_pktinfo *pkt, पूर्णांक oअगर);
+व्योम nf_fwd_netdev_egress(स्थिर काष्ठा nft_pktinfo *pkt, पूर्णांक oअगर);
 
-struct nft_offload_ctx;
-struct nft_flow_rule;
+काष्ठा nft_offload_ctx;
+काष्ठा nft_flow_rule;
 
-int nft_fwd_dup_netdev_offload(struct nft_offload_ctx *ctx,
-			       struct nft_flow_rule *flow,
-			       enum flow_action_id id, int oif);
-#endif
+पूर्णांक nft_fwd_dup_netdev_offload(काष्ठा nft_offload_ctx *ctx,
+			       काष्ठा nft_flow_rule *flow,
+			       क्रमागत flow_action_id id, पूर्णांक oअगर);
+#पूर्ण_अगर

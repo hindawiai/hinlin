@@ -1,108 +1,109 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Copyright (C) 2015 Karol Kosik <karo9@interia.eu>
+ * Copyright (C) 2015 Karol Kosik <karo9@पूर्णांकeria.eu>
  * Copyright (C) 2015-2016 Samsung Electronics
  *               Igor Kotrasinski <i.kotrasinsk@samsung.com>
  */
 
-#include <net/sock.h>
-#include <linux/list.h>
-#include <linux/kthread.h>
+#समावेश <net/sock.h>
+#समावेश <linux/list.h>
+#समावेश <linux/kthपढ़ो.h>
 
-#include "usbip_common.h"
-#include "vudc.h"
+#समावेश "usbip_common.h"
+#समावेश "vudc.h"
 
-static inline void setup_base_pdu(struct usbip_header_basic *base,
+अटल अंतरभूत व्योम setup_base_pdu(काष्ठा usbip_header_basic *base,
 				  __u32 command, __u32 seqnum)
-{
+अणु
 	base->command	= command;
 	base->seqnum	= seqnum;
 	base->devid	= 0;
 	base->ep	= 0;
 	base->direction = 0;
-}
+पूर्ण
 
-static void setup_ret_submit_pdu(struct usbip_header *rpdu, struct urbp *urb_p)
-{
+अटल व्योम setup_ret_submit_pdu(काष्ठा usbip_header *rpdu, काष्ठा urbp *urb_p)
+अणु
 	setup_base_pdu(&rpdu->base, USBIP_RET_SUBMIT, urb_p->seqnum);
 	usbip_pack_pdu(rpdu, urb_p->urb, USBIP_RET_SUBMIT, 1);
-}
+पूर्ण
 
-static void setup_ret_unlink_pdu(struct usbip_header *rpdu,
-				 struct v_unlink *unlink)
-{
+अटल व्योम setup_ret_unlink_pdu(काष्ठा usbip_header *rpdu,
+				 काष्ठा v_unlink *unlink)
+अणु
 	setup_base_pdu(&rpdu->base, USBIP_RET_UNLINK, unlink->seqnum);
 	rpdu->u.ret_unlink.status = unlink->status;
-}
+पूर्ण
 
-static int v_send_ret_unlink(struct vudc *udc, struct v_unlink *unlink)
-{
-	struct msghdr msg;
-	struct kvec iov[1];
-	size_t txsize;
+अटल पूर्णांक v_send_ret_unlink(काष्ठा vudc *udc, काष्ठा v_unlink *unlink)
+अणु
+	काष्ठा msghdr msg;
+	काष्ठा kvec iov[1];
+	माप_प्रकार txsize;
 
-	int ret;
-	struct usbip_header pdu_header;
+	पूर्णांक ret;
+	काष्ठा usbip_header pdu_header;
 
 	txsize = 0;
-	memset(&pdu_header, 0, sizeof(pdu_header));
-	memset(&msg, 0, sizeof(msg));
-	memset(&iov, 0, sizeof(iov));
+	स_रखो(&pdu_header, 0, माप(pdu_header));
+	स_रखो(&msg, 0, माप(msg));
+	स_रखो(&iov, 0, माप(iov));
 
 	/* 1. setup usbip_header */
 	setup_ret_unlink_pdu(&pdu_header, unlink);
 	usbip_header_correct_endian(&pdu_header, 1);
 
 	iov[0].iov_base = &pdu_header;
-	iov[0].iov_len  = sizeof(pdu_header);
-	txsize += sizeof(pdu_header);
+	iov[0].iov_len  = माप(pdu_header);
+	txsize += माप(pdu_header);
 
 	ret = kernel_sendmsg(udc->ud.tcp_socket, &msg, iov,
 			     1, txsize);
-	if (ret != txsize) {
+	अगर (ret != txsize) अणु
 		usbip_event_add(&udc->ud, VUDC_EVENT_ERROR_TCP);
-		if (ret >= 0)
-			return -EPIPE;
-		return ret;
-	}
-	kfree(unlink);
+		अगर (ret >= 0)
+			वापस -EPIPE;
+		वापस ret;
+	पूर्ण
+	kमुक्त(unlink);
 
-	return txsize;
-}
+	वापस txsize;
+पूर्ण
 
-static int v_send_ret_submit(struct vudc *udc, struct urbp *urb_p)
-{
-	struct urb *urb = urb_p->urb;
-	struct usbip_header pdu_header;
-	struct usbip_iso_packet_descriptor *iso_buffer = NULL;
-	struct kvec *iov = NULL;
-	int iovnum = 0;
-	int ret = 0;
-	size_t txsize;
-	struct msghdr msg;
+अटल पूर्णांक v_send_ret_submit(काष्ठा vudc *udc, काष्ठा urbp *urb_p)
+अणु
+	काष्ठा urb *urb = urb_p->urb;
+	काष्ठा usbip_header pdu_header;
+	काष्ठा usbip_iso_packet_descriptor *iso_buffer = शून्य;
+	काष्ठा kvec *iov = शून्य;
+	पूर्णांक iovnum = 0;
+	पूर्णांक ret = 0;
+	माप_प्रकार txsize;
+	काष्ठा msghdr msg;
 
 	txsize = 0;
-	memset(&pdu_header, 0, sizeof(pdu_header));
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&pdu_header, 0, माप(pdu_header));
+	स_रखो(&msg, 0, माप(msg));
 
-	if (urb->actual_length > 0 && !urb->transfer_buffer) {
+	अगर (urb->actual_length > 0 && !urb->transfer_buffer) अणु
 		dev_err(&udc->gadget.dev,
 			"urb: actual_length %d transfer_buffer null\n",
 			urb->actual_length);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (urb_p->type == USB_ENDPOINT_XFER_ISOC)
+	अगर (urb_p->type == USB_ENDPOINT_XFER_ISOC)
 		iovnum = 2 + urb->number_of_packets;
-	else
+	अन्यथा
 		iovnum = 2;
 
-	iov = kcalloc(iovnum, sizeof(*iov), GFP_KERNEL);
-	if (!iov) {
+	iov = kसुस्मृति(iovnum, माप(*iov), GFP_KERNEL);
+	अगर (!iov) अणु
 		usbip_event_add(&udc->ud, VUDC_EVENT_ERROR_MALLOC);
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	iovnum = 0;
 
 	/* 1. setup usbip_header */
@@ -112,151 +113,151 @@ static int v_send_ret_submit(struct vudc *udc, struct urbp *urb_p)
 	usbip_header_correct_endian(&pdu_header, 1);
 
 	iov[iovnum].iov_base = &pdu_header;
-	iov[iovnum].iov_len  = sizeof(pdu_header);
+	iov[iovnum].iov_len  = माप(pdu_header);
 	iovnum++;
-	txsize += sizeof(pdu_header);
+	txsize += माप(pdu_header);
 
 	/* 2. setup transfer buffer */
-	if (urb_p->type != USB_ENDPOINT_XFER_ISOC &&
-	    usb_pipein(urb->pipe) && urb->actual_length > 0) {
+	अगर (urb_p->type != USB_ENDPOINT_XFER_ISOC &&
+	    usb_pipein(urb->pipe) && urb->actual_length > 0) अणु
 		iov[iovnum].iov_base = urb->transfer_buffer;
 		iov[iovnum].iov_len  = urb->actual_length;
 		iovnum++;
 		txsize += urb->actual_length;
-	} else if (urb_p->type == USB_ENDPOINT_XFER_ISOC &&
-		usb_pipein(urb->pipe)) {
+	पूर्ण अन्यथा अगर (urb_p->type == USB_ENDPOINT_XFER_ISOC &&
+		usb_pipein(urb->pipe)) अणु
 		/* FIXME - copypasted from stub_tx, refactor */
-		int i;
+		पूर्णांक i;
 
-		for (i = 0; i < urb->number_of_packets; i++) {
+		क्रम (i = 0; i < urb->number_of_packets; i++) अणु
 			iov[iovnum].iov_base = urb->transfer_buffer +
 				urb->iso_frame_desc[i].offset;
 			iov[iovnum].iov_len =
 				urb->iso_frame_desc[i].actual_length;
 			iovnum++;
 			txsize += urb->iso_frame_desc[i].actual_length;
-		}
+		पूर्ण
 
-		if (txsize != sizeof(pdu_header) + urb->actual_length) {
+		अगर (txsize != माप(pdu_header) + urb->actual_length) अणु
 			usbip_event_add(&udc->ud, VUDC_EVENT_ERROR_TCP);
 			ret = -EPIPE;
-			goto out;
-		}
-	}
-	/* else - no buffer to send */
+			जाओ out;
+		पूर्ण
+	पूर्ण
+	/* अन्यथा - no buffer to send */
 
 	/* 3. setup iso_packet_descriptor */
-	if (urb_p->type == USB_ENDPOINT_XFER_ISOC) {
-		ssize_t len = 0;
+	अगर (urb_p->type == USB_ENDPOINT_XFER_ISOC) अणु
+		sमाप_प्रकार len = 0;
 
 		iso_buffer = usbip_alloc_iso_desc_pdu(urb, &len);
-		if (!iso_buffer) {
+		अगर (!iso_buffer) अणु
 			usbip_event_add(&udc->ud,
 					VUDC_EVENT_ERROR_MALLOC);
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		iov[iovnum].iov_base = iso_buffer;
 		iov[iovnum].iov_len  = len;
 		txsize += len;
 		iovnum++;
-	}
+	पूर्ण
 
 	ret = kernel_sendmsg(udc->ud.tcp_socket, &msg,
 						iov,  iovnum, txsize);
-	if (ret != txsize) {
+	अगर (ret != txsize) अणु
 		usbip_event_add(&udc->ud, VUDC_EVENT_ERROR_TCP);
-		if (ret >= 0)
+		अगर (ret >= 0)
 			ret = -EPIPE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	kfree(iov);
-	kfree(iso_buffer);
-	free_urbp_and_urb(urb_p);
-	if (ret < 0)
-		return ret;
-	return txsize;
-}
+	kमुक्त(iov);
+	kमुक्त(iso_buffer);
+	मुक्त_urbp_and_urb(urb_p);
+	अगर (ret < 0)
+		वापस ret;
+	वापस txsize;
+पूर्ण
 
-static int v_send_ret(struct vudc *udc)
-{
-	unsigned long flags;
-	struct tx_item *txi;
-	size_t total_size = 0;
-	int ret = 0;
+अटल पूर्णांक v_send_ret(काष्ठा vudc *udc)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा tx_item *txi;
+	माप_प्रकार total_size = 0;
+	पूर्णांक ret = 0;
 
 	spin_lock_irqsave(&udc->lock_tx, flags);
-	while (!list_empty(&udc->tx_queue)) {
-		txi = list_first_entry(&udc->tx_queue, struct tx_item,
+	जबतक (!list_empty(&udc->tx_queue)) अणु
+		txi = list_first_entry(&udc->tx_queue, काष्ठा tx_item,
 				       tx_entry);
 		list_del(&txi->tx_entry);
 		spin_unlock_irqrestore(&udc->lock_tx, flags);
 
-		switch (txi->type) {
-		case TX_SUBMIT:
+		चयन (txi->type) अणु
+		हाल TX_SUBMIT:
 			ret = v_send_ret_submit(udc, txi->s);
-			break;
-		case TX_UNLINK:
+			अवरोध;
+		हाल TX_UNLINK:
 			ret = v_send_ret_unlink(udc, txi->u);
-			break;
-		}
-		kfree(txi);
+			अवरोध;
+		पूर्ण
+		kमुक्त(txi);
 
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		total_size += ret;
 
 		spin_lock_irqsave(&udc->lock_tx, flags);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&udc->lock_tx, flags);
-	return total_size;
-}
+	वापस total_size;
+पूर्ण
 
 
-int v_tx_loop(void *data)
-{
-	struct usbip_device *ud = (struct usbip_device *) data;
-	struct vudc *udc = container_of(ud, struct vudc, ud);
-	int ret;
+पूर्णांक v_tx_loop(व्योम *data)
+अणु
+	काष्ठा usbip_device *ud = (काष्ठा usbip_device *) data;
+	काष्ठा vudc *udc = container_of(ud, काष्ठा vudc, ud);
+	पूर्णांक ret;
 
-	while (!kthread_should_stop()) {
-		if (usbip_event_happened(&udc->ud))
-			break;
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		अगर (usbip_event_happened(&udc->ud))
+			अवरोध;
 		ret = v_send_ret(udc);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_warn("v_tx exit with error %d", ret);
-			break;
-		}
-		wait_event_interruptible(udc->tx_waitq,
+			अवरोध;
+		पूर्ण
+		रुको_event_पूर्णांकerruptible(udc->tx_रुकोq,
 					 (!list_empty(&udc->tx_queue) ||
-					 kthread_should_stop()));
-	}
+					 kthपढ़ो_should_stop()));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* called with spinlocks held */
-void v_enqueue_ret_unlink(struct vudc *udc, __u32 seqnum, __u32 status)
-{
-	struct tx_item *txi;
-	struct v_unlink *unlink;
+व्योम v_enqueue_ret_unlink(काष्ठा vudc *udc, __u32 seqnum, __u32 status)
+अणु
+	काष्ठा tx_item *txi;
+	काष्ठा v_unlink *unlink;
 
-	txi = kzalloc(sizeof(*txi), GFP_ATOMIC);
-	if (!txi) {
+	txi = kzalloc(माप(*txi), GFP_ATOMIC);
+	अगर (!txi) अणु
 		usbip_event_add(&udc->ud, VDEV_EVENT_ERROR_MALLOC);
-		return;
-	}
-	unlink = kzalloc(sizeof(*unlink), GFP_ATOMIC);
-	if (!unlink) {
-		kfree(txi);
+		वापस;
+	पूर्ण
+	unlink = kzalloc(माप(*unlink), GFP_ATOMIC);
+	अगर (!unlink) अणु
+		kमुक्त(txi);
 		usbip_event_add(&udc->ud, VDEV_EVENT_ERROR_MALLOC);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	unlink->seqnum = seqnum;
 	unlink->status = status;
@@ -264,21 +265,21 @@ void v_enqueue_ret_unlink(struct vudc *udc, __u32 seqnum, __u32 status)
 	txi->u = unlink;
 
 	list_add_tail(&txi->tx_entry, &udc->tx_queue);
-}
+पूर्ण
 
 /* called with spinlocks held */
-void v_enqueue_ret_submit(struct vudc *udc, struct urbp *urb_p)
-{
-	struct tx_item *txi;
+व्योम v_enqueue_ret_submit(काष्ठा vudc *udc, काष्ठा urbp *urb_p)
+अणु
+	काष्ठा tx_item *txi;
 
-	txi = kzalloc(sizeof(*txi), GFP_ATOMIC);
-	if (!txi) {
+	txi = kzalloc(माप(*txi), GFP_ATOMIC);
+	अगर (!txi) अणु
 		usbip_event_add(&udc->ud, VDEV_EVENT_ERROR_MALLOC);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	txi->type = TX_SUBMIT;
 	txi->s = urb_p;
 
 	list_add_tail(&txi->tx_entry, &udc->tx_queue);
-}
+पूर्ण

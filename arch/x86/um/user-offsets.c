@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdio.h>
-#include <stddef.h>
-#include <signal.h>
-#include <poll.h>
-#include <sys/mman.h>
-#include <sys/user.h>
-#define __FRAME_OFFSETS
-#include <linux/ptrace.h>
-#include <asm/types.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकपन.स>
+#समावेश <मानकघोष.स>
+#समावेश <संकेत.स>
+#समावेश <poll.h>
+#समावेश <sys/mman.h>
+#समावेश <sys/user.h>
+#घोषणा __FRAME_OFFSETS
+#समावेश <linux/ptrace.h>
+#समावेश <यंत्र/types.h>
 
-#define DEFINE(sym, val) \
-	asm volatile("\n->" #sym " %0 " #val : : "i" (val))
+#घोषणा DEFINE(sym, val) \
+	यंत्र अस्थिर("\n->" #sym " %0 " #val : : "i" (val))
 
-#define DEFINE_LONGS(sym, val) \
-	asm volatile("\n->" #sym " %0 " #val : : "i" (val/sizeof(unsigned long)))
+#घोषणा DEFINE_LONGS(sym, val) \
+	यंत्र अस्थिर("\n->" #sym " %0 " #val : : "i" (val/माप(अचिन्हित दीर्घ)))
 
-void foo(void)
-{
-#ifdef __i386__
-	DEFINE_LONGS(HOST_FP_SIZE, sizeof(struct user_fpregs_struct));
-	DEFINE_LONGS(HOST_FPX_SIZE, sizeof(struct user_fpxregs_struct));
+व्योम foo(व्योम)
+अणु
+#अगर_घोषित __i386__
+	DEFINE_LONGS(HOST_FP_SIZE, माप(काष्ठा user_fpregs_काष्ठा));
+	DEFINE_LONGS(HOST_FPX_SIZE, माप(काष्ठा user_fpxregs_काष्ठा));
 
 	DEFINE(HOST_IP, EIP);
 	DEFINE(HOST_SP, UESP);
@@ -38,12 +39,12 @@ void foo(void)
 	DEFINE(HOST_ES, ES);
 	DEFINE(HOST_GS, GS);
 	DEFINE(HOST_ORIG_AX, ORIG_EAX);
-#else
-#ifdef FP_XSTATE_MAGIC1
+#अन्यथा
+#अगर_घोषित FP_XSTATE_MAGIC1
 	DEFINE_LONGS(HOST_FP_SIZE, 2696);
-#else
-	DEFINE(HOST_FP_SIZE, sizeof(struct _fpstate) / sizeof(unsigned long));
-#endif
+#अन्यथा
+	DEFINE(HOST_FP_SIZE, माप(काष्ठा _fpstate) / माप(अचिन्हित दीर्घ));
+#पूर्ण_अगर
 	DEFINE_LONGS(HOST_BX, RBX);
 	DEFINE_LONGS(HOST_CX, RCX);
 	DEFINE_LONGS(HOST_DI, RDI);
@@ -63,18 +64,18 @@ void foo(void)
 	DEFINE_LONGS(HOST_CS, CS);
 	DEFINE_LONGS(HOST_SS, SS);
 	DEFINE_LONGS(HOST_EFLAGS, EFLAGS);
-#if 0
+#अगर 0
 	DEFINE_LONGS(HOST_FS, FS);
 	DEFINE_LONGS(HOST_GS, GS);
 	DEFINE_LONGS(HOST_DS, DS);
 	DEFINE_LONGS(HOST_ES, ES);
-#endif
+#पूर्ण_अगर
 
 	DEFINE_LONGS(HOST_IP, RIP);
 	DEFINE_LONGS(HOST_SP, RSP);
-#endif
+#पूर्ण_अगर
 
-	DEFINE(UM_FRAME_SIZE, sizeof(struct user_regs_struct));
+	DEFINE(UM_FRAME_SIZE, माप(काष्ठा user_regs_काष्ठा));
 	DEFINE(UM_POLLIN, POLLIN);
 	DEFINE(UM_POLLPRI, POLLPRI);
 	DEFINE(UM_POLLOUT, POLLOUT);
@@ -82,4 +83,4 @@ void foo(void)
 	DEFINE(UM_PROT_READ, PROT_READ);
 	DEFINE(UM_PROT_WRITE, PROT_WRITE);
 	DEFINE(UM_PROT_EXEC, PROT_EXEC);
-}
+पूर्ण

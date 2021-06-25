@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * This file contains the jiffies based clocksource.
+ * This file contains the jअगरfies based घड़ीsource.
  *
  * Copyright (C) 2004, 2005 IBM, John Stultz (johnstul@us.ibm.com)
  */
-#include <linux/clocksource.h>
-#include <linux/jiffies.h>
-#include <linux/module.h>
-#include <linux/init.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
 
-#include "timekeeping.h"
+#समावेश "timekeeping.h"
 
 
-/* Since jiffies uses a simple TICK_NSEC multiplier
- * conversion, the .shift value could be zero. However
- * this would make NTP adjustments impossible as they are
- * in units of 1/2^.shift. Thus we use JIFFIES_SHIFT to
- * shift both the nominator and denominator the same
- * amount, and give ntp adjustments in units of 1/2^8
+/* Since jअगरfies uses a simple TICK_NSEC multiplier
+ * conversion, the .shअगरt value could be zero. However
+ * this would make NTP adjusपंचांगents impossible as they are
+ * in units of 1/2^.shअगरt. Thus we use JIFFIES_SHIFT to
+ * shअगरt both the nominator and denominator the same
+ * amount, and give ntp adjusपंचांगents in units of 1/2^8
  *
  * The value 8 is somewhat carefully chosen, as anything
  * larger can result in overflows. TICK_NSEC grows as HZ
  * shrinks, so values greater than 8 overflow 32bits when
  * HZ=100.
  */
-#if HZ < 34
-#define JIFFIES_SHIFT	6
-#elif HZ < 67
-#define JIFFIES_SHIFT	7
-#else
-#define JIFFIES_SHIFT	8
-#endif
+#अगर HZ < 34
+#घोषणा JIFFIES_SHIFT	6
+#या_अगर HZ < 67
+#घोषणा JIFFIES_SHIFT	7
+#अन्यथा
+#घोषणा JIFFIES_SHIFT	8
+#पूर्ण_अगर
 
-static u64 jiffies_read(struct clocksource *cs)
-{
-	return (u64) jiffies;
-}
+अटल u64 jअगरfies_पढ़ो(काष्ठा घड़ीsource *cs)
+अणु
+	वापस (u64) jअगरfies;
+पूर्ण
 
 /*
- * The Jiffies based clocksource is the lowest common
- * denominator clock source which should function on
- * all systems. It has the same coarse resolution as
- * the timer interrupt frequency HZ and it suffers
- * inaccuracies caused by missed or lost timer
- * interrupts and the inability for the timer
- * interrupt hardware to accurately tick at the
+ * The Jअगरfies based घड़ीsource is the lowest common
+ * denominator घड़ी source which should function on
+ * all प्रणालीs. It has the same coarse resolution as
+ * the समयr पूर्णांकerrupt frequency HZ and it suffers
+ * inaccuracies caused by missed or lost समयr
+ * पूर्णांकerrupts and the inability क्रम the समयr
+ * पूर्णांकerrupt hardware to accurately tick at the
  * requested HZ value. It is also not recommended
- * for "tick-less" systems.
+ * क्रम "tick-less" प्रणालीs.
  */
-static struct clocksource clocksource_jiffies = {
+अटल काष्ठा घड़ीsource घड़ीsource_jअगरfies = अणु
 	.name		= "jiffies",
 	.rating		= 1, /* lowest valid rating*/
-	.read		= jiffies_read,
+	.पढ़ो		= jअगरfies_पढ़ो,
 	.mask		= CLOCKSOURCE_MASK(32),
 	.mult		= TICK_NSEC << JIFFIES_SHIFT, /* details above */
-	.shift		= JIFFIES_SHIFT,
+	.shअगरt		= JIFFIES_SHIFT,
 	.max_cycles	= 10,
-};
+पूर्ण;
 
-__cacheline_aligned_in_smp DEFINE_RAW_SPINLOCK(jiffies_lock);
-__cacheline_aligned_in_smp seqcount_raw_spinlock_t jiffies_seq =
-	SEQCNT_RAW_SPINLOCK_ZERO(jiffies_seq, &jiffies_lock);
+__cacheline_aligned_in_smp DEFINE_RAW_SPINLOCK(jअगरfies_lock);
+__cacheline_aligned_in_smp seqcount_raw_spinlock_t jअगरfies_seq =
+	SEQCNT_RAW_SPINLOCK_ZERO(jअगरfies_seq, &jअगरfies_lock);
 
-#if (BITS_PER_LONG < 64)
-u64 get_jiffies_64(void)
-{
-	unsigned int seq;
+#अगर (BITS_PER_LONG < 64)
+u64 get_jअगरfies_64(व्योम)
+अणु
+	अचिन्हित पूर्णांक seq;
 	u64 ret;
 
-	do {
-		seq = read_seqcount_begin(&jiffies_seq);
-		ret = jiffies_64;
-	} while (read_seqcount_retry(&jiffies_seq, seq));
-	return ret;
-}
-EXPORT_SYMBOL(get_jiffies_64);
-#endif
+	करो अणु
+		seq = पढ़ो_seqcount_begin(&jअगरfies_seq);
+		ret = jअगरfies_64;
+	पूर्ण जबतक (पढ़ो_seqcount_retry(&jअगरfies_seq, seq));
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(get_jअगरfies_64);
+#पूर्ण_अगर
 
-EXPORT_SYMBOL(jiffies);
+EXPORT_SYMBOL(jअगरfies);
 
-static int __init init_jiffies_clocksource(void)
-{
-	return __clocksource_register(&clocksource_jiffies);
-}
+अटल पूर्णांक __init init_jअगरfies_घड़ीsource(व्योम)
+अणु
+	वापस __घड़ीsource_रेजिस्टर(&घड़ीsource_jअगरfies);
+पूर्ण
 
-core_initcall(init_jiffies_clocksource);
+core_initcall(init_jअगरfies_घड़ीsource);
 
-struct clocksource * __init __weak clocksource_default_clock(void)
-{
-	return &clocksource_jiffies;
-}
+काष्ठा घड़ीsource * __init __weak घड़ीsource_शेष_घड़ी(व्योम)
+अणु
+	वापस &घड़ीsource_jअगरfies;
+पूर्ण
 
-static struct clocksource refined_jiffies;
+अटल काष्ठा घड़ीsource refined_jअगरfies;
 
-int register_refined_jiffies(long cycles_per_second)
-{
-	u64 nsec_per_tick, shift_hz;
-	long cycles_per_tick;
+पूर्णांक रेजिस्टर_refined_jअगरfies(दीर्घ cycles_per_second)
+अणु
+	u64 nsec_per_tick, shअगरt_hz;
+	दीर्घ cycles_per_tick;
 
 
 
-	refined_jiffies = clocksource_jiffies;
-	refined_jiffies.name = "refined-jiffies";
-	refined_jiffies.rating++;
+	refined_jअगरfies = घड़ीsource_jअगरfies;
+	refined_jअगरfies.name = "refined-jiffies";
+	refined_jअगरfies.rating++;
 
 	/* Calc cycles per tick */
 	cycles_per_tick = (cycles_per_second + HZ/2)/HZ;
-	/* shift_hz stores hz<<8 for extra accuracy */
-	shift_hz = (u64)cycles_per_second << 8;
-	shift_hz += cycles_per_tick/2;
-	do_div(shift_hz, cycles_per_tick);
-	/* Calculate nsec_per_tick using shift_hz */
+	/* shअगरt_hz stores hz<<8 क्रम extra accuracy */
+	shअगरt_hz = (u64)cycles_per_second << 8;
+	shअगरt_hz += cycles_per_tick/2;
+	करो_भाग(shअगरt_hz, cycles_per_tick);
+	/* Calculate nsec_per_tick using shअगरt_hz */
 	nsec_per_tick = (u64)NSEC_PER_SEC << 8;
-	nsec_per_tick += (u32)shift_hz/2;
-	do_div(nsec_per_tick, (u32)shift_hz);
+	nsec_per_tick += (u32)shअगरt_hz/2;
+	करो_भाग(nsec_per_tick, (u32)shअगरt_hz);
 
-	refined_jiffies.mult = ((u32)nsec_per_tick) << JIFFIES_SHIFT;
+	refined_jअगरfies.mult = ((u32)nsec_per_tick) << JIFFIES_SHIFT;
 
-	__clocksource_register(&refined_jiffies);
-	return 0;
-}
+	__घड़ीsource_रेजिस्टर(&refined_jअगरfies);
+	वापस 0;
+पूर्ण

@@ -1,127 +1,128 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * arch/powerpc/platforms/powermac/low_i2c.c
+ * arch/घातerpc/platक्रमms/घातermac/low_i2c.c
  *
  *  Copyright (C) 2003-2005 Ben. Herrenschmidt (benh@kernel.crashing.org)
  *
- * The linux i2c layer isn't completely suitable for our needs for various
+ * The linux i2c layer isn't completely suitable क्रम our needs क्रम various
  * reasons ranging from too late initialisation to semantics not perfectly
- * matching some requirements of the apple platform functions etc...
+ * matching some requirements of the apple platक्रमm functions etc...
  *
- * This file thus provides a simple low level unified i2c interface for
- * powermac that covers the various types of i2c busses used in Apple machines.
+ * This file thus provides a simple low level unअगरied i2c पूर्णांकerface क्रम
+ * घातermac that covers the various types of i2c busses used in Apple machines.
  * For now, keywest, PMU and SMU, though we could add Cuda, or other bit
- * banging busses found on older chipsets in earlier machines if we ever need
+ * banging busses found on older chipsets in earlier machines अगर we ever need
  * one of them.
  *
  * The drivers in this file are synchronous/blocking. In addition, the
- * keywest one is fairly slow due to the use of msleep instead of interrupts
- * as the interrupt is currently used by i2c-keywest. In the long run, we
- * might want to get rid of those high-level interfaces to linux i2c layer
+ * keywest one is fairly slow due to the use of msleep instead of पूर्णांकerrupts
+ * as the पूर्णांकerrupt is currently used by i2c-keywest. In the दीर्घ run, we
+ * might want to get rid of those high-level पूर्णांकerfaces to linux i2c layer
  * either completely (converting all drivers) or replacing them all with a
- * single stub driver on top of this one. Once done, the interrupt will be
- * available for our use.
+ * single stub driver on top of this one. Once करोne, the पूर्णांकerrupt will be
+ * available क्रम our use.
  */
 
-#undef DEBUG
-#undef DEBUG_LOW
+#अघोषित DEBUG
+#अघोषित DEBUG_LOW
 
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/adb.h>
-#include <linux/pmu.h>
-#include <linux/delay.h>
-#include <linux/completion.h>
-#include <linux/platform_device.h>
-#include <linux/interrupt.h>
-#include <linux/timer.h>
-#include <linux/mutex.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <asm/keylargo.h>
-#include <asm/uninorth.h>
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#include <asm/smu.h>
-#include <asm/pmac_pfunc.h>
-#include <asm/pmac_low_i2c.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/adb.h>
+#समावेश <linux/pmu.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/keylargo.h>
+#समावेश <यंत्र/uninorth.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/smu.h>
+#समावेश <यंत्र/pmac_pfunc.h>
+#समावेश <यंत्र/pmac_low_i2c.h>
 
-#ifdef DEBUG
-#define DBG(x...) do {\
-		printk(KERN_DEBUG "low_i2c:" x);	\
-	} while(0)
-#else
-#define DBG(x...)
-#endif
+#अगर_घोषित DEBUG
+#घोषणा DBG(x...) करो अणु\
+		prपूर्णांकk(KERN_DEBUG "low_i2c:" x);	\
+	पूर्ण जबतक(0)
+#अन्यथा
+#घोषणा DBG(x...)
+#पूर्ण_अगर
 
-#ifdef DEBUG_LOW
-#define DBG_LOW(x...) do {\
-		printk(KERN_DEBUG "low_i2c:" x);	\
-	} while(0)
-#else
-#define DBG_LOW(x...)
-#endif
+#अगर_घोषित DEBUG_LOW
+#घोषणा DBG_LOW(x...) करो अणु\
+		prपूर्णांकk(KERN_DEBUG "low_i2c:" x);	\
+	पूर्ण जबतक(0)
+#अन्यथा
+#घोषणा DBG_LOW(x...)
+#पूर्ण_अगर
 
 
-static int pmac_i2c_force_poll = 1;
+अटल पूर्णांक pmac_i2c_क्रमce_poll = 1;
 
 /*
- * A bus structure. Each bus in the system has such a structure associated.
+ * A bus काष्ठाure. Each bus in the प्रणाली has such a काष्ठाure associated.
  */
-struct pmac_i2c_bus
-{
-	struct list_head	link;
-	struct device_node	*controller;
-	struct device_node	*busnode;
-	int			type;
-	int			flags;
-	struct i2c_adapter	adapter;
-	void			*hostdata;
-	int			channel;	/* some hosts have multiple */
-	int			mode;		/* current mode */
-	struct mutex		mutex;
-	int			opened;
-	int			polled;		/* open mode */
-	struct platform_device	*platform_dev;
-	struct lock_class_key   lock_key;
+काष्ठा pmac_i2c_bus
+अणु
+	काष्ठा list_head	link;
+	काष्ठा device_node	*controller;
+	काष्ठा device_node	*busnode;
+	पूर्णांक			type;
+	पूर्णांक			flags;
+	काष्ठा i2c_adapter	adapter;
+	व्योम			*hostdata;
+	पूर्णांक			channel;	/* some hosts have multiple */
+	पूर्णांक			mode;		/* current mode */
+	काष्ठा mutex		mutex;
+	पूर्णांक			खोलोed;
+	पूर्णांक			polled;		/* खोलो mode */
+	काष्ठा platक्रमm_device	*platक्रमm_dev;
+	काष्ठा lock_class_key   lock_key;
 
 	/* ops */
-	int (*open)(struct pmac_i2c_bus *bus);
-	void (*close)(struct pmac_i2c_bus *bus);
-	int (*xfer)(struct pmac_i2c_bus *bus, u8 addrdir, int subsize,
-		    u32 subaddr, u8 *data, int len);
-};
+	पूर्णांक (*खोलो)(काष्ठा pmac_i2c_bus *bus);
+	व्योम (*बंद)(काष्ठा pmac_i2c_bus *bus);
+	पूर्णांक (*xfer)(काष्ठा pmac_i2c_bus *bus, u8 addrdir, पूर्णांक subsize,
+		    u32 subaddr, u8 *data, पूर्णांक len);
+पूर्ण;
 
-static LIST_HEAD(pmac_i2c_busses);
+अटल LIST_HEAD(pmac_i2c_busses);
 
 /*
  * Keywest implementation
  */
 
-struct pmac_i2c_host_kw
-{
-	struct mutex		mutex;		/* Access mutex for use by
+काष्ठा pmac_i2c_host_kw
+अणु
+	काष्ठा mutex		mutex;		/* Access mutex क्रम use by
 						 * i2c-keywest */
-	void __iomem		*base;		/* register base address */
-	int			bsteps;		/* register stepping */
-	int			speed;		/* speed */
-	int			irq;
+	व्योम __iomem		*base;		/* रेजिस्टर base address */
+	पूर्णांक			bsteps;		/* रेजिस्टर stepping */
+	पूर्णांक			speed;		/* speed */
+	पूर्णांक			irq;
 	u8			*data;
-	unsigned		len;
-	int			state;
-	int			rw;
-	int			polled;
-	int			result;
-	struct completion	complete;
+	अचिन्हित		len;
+	पूर्णांक			state;
+	पूर्णांक			rw;
+	पूर्णांक			polled;
+	पूर्णांक			result;
+	काष्ठा completion	complete;
 	spinlock_t		lock;
-	struct timer_list	timeout_timer;
-};
+	काष्ठा समयr_list	समयout_समयr;
+पूर्ण;
 
 /* Register indices */
-typedef enum {
+प्रकार क्रमागत अणु
 	reg_mode = 0,
 	reg_control,
 	reg_status,
@@ -130,313 +131,313 @@ typedef enum {
 	reg_addr,
 	reg_subaddr,
 	reg_data
-} reg_t;
+पूर्ण reg_t;
 
-/* The Tumbler audio equalizer can be really slow sometimes */
-#define KW_POLL_TIMEOUT		(2*HZ)
+/* The Tumbler audio equalizer can be really slow someबार */
+#घोषणा KW_POLL_TIMEOUT		(2*HZ)
 
-/* Mode register */
-#define KW_I2C_MODE_100KHZ	0x00
-#define KW_I2C_MODE_50KHZ	0x01
-#define KW_I2C_MODE_25KHZ	0x02
-#define KW_I2C_MODE_DUMB	0x00
-#define KW_I2C_MODE_STANDARD	0x04
-#define KW_I2C_MODE_STANDARDSUB	0x08
-#define KW_I2C_MODE_COMBINED	0x0C
-#define KW_I2C_MODE_MODE_MASK	0x0C
-#define KW_I2C_MODE_CHAN_MASK	0xF0
+/* Mode रेजिस्टर */
+#घोषणा KW_I2C_MODE_100KHZ	0x00
+#घोषणा KW_I2C_MODE_50KHZ	0x01
+#घोषणा KW_I2C_MODE_25KHZ	0x02
+#घोषणा KW_I2C_MODE_DUMB	0x00
+#घोषणा KW_I2C_MODE_STANDARD	0x04
+#घोषणा KW_I2C_MODE_STANDARDSUB	0x08
+#घोषणा KW_I2C_MODE_COMBINED	0x0C
+#घोषणा KW_I2C_MODE_MODE_MASK	0x0C
+#घोषणा KW_I2C_MODE_CHAN_MASK	0xF0
 
-/* Control register */
-#define KW_I2C_CTL_AAK		0x01
-#define KW_I2C_CTL_XADDR	0x02
-#define KW_I2C_CTL_STOP		0x04
-#define KW_I2C_CTL_START	0x08
+/* Control रेजिस्टर */
+#घोषणा KW_I2C_CTL_AAK		0x01
+#घोषणा KW_I2C_CTL_XADDR	0x02
+#घोषणा KW_I2C_CTL_STOP		0x04
+#घोषणा KW_I2C_CTL_START	0x08
 
-/* Status register */
-#define KW_I2C_STAT_BUSY	0x01
-#define KW_I2C_STAT_LAST_AAK	0x02
-#define KW_I2C_STAT_LAST_RW	0x04
-#define KW_I2C_STAT_SDA		0x08
-#define KW_I2C_STAT_SCL		0x10
+/* Status रेजिस्टर */
+#घोषणा KW_I2C_STAT_BUSY	0x01
+#घोषणा KW_I2C_STAT_LAST_AAK	0x02
+#घोषणा KW_I2C_STAT_LAST_RW	0x04
+#घोषणा KW_I2C_STAT_SDA		0x08
+#घोषणा KW_I2C_STAT_SCL		0x10
 
-/* IER & ISR registers */
-#define KW_I2C_IRQ_DATA		0x01
-#define KW_I2C_IRQ_ADDR		0x02
-#define KW_I2C_IRQ_STOP		0x04
-#define KW_I2C_IRQ_START	0x08
-#define KW_I2C_IRQ_MASK		0x0F
+/* IER & ISR रेजिस्टरs */
+#घोषणा KW_I2C_IRQ_DATA		0x01
+#घोषणा KW_I2C_IRQ_ADDR		0x02
+#घोषणा KW_I2C_IRQ_STOP		0x04
+#घोषणा KW_I2C_IRQ_START	0x08
+#घोषणा KW_I2C_IRQ_MASK		0x0F
 
 /* State machine states */
-enum {
+क्रमागत अणु
 	state_idle,
 	state_addr,
-	state_read,
-	state_write,
+	state_पढ़ो,
+	state_ग_लिखो,
 	state_stop,
 	state_dead
-};
+पूर्ण;
 
-#define WRONG_STATE(name) do {\
-		printk(KERN_DEBUG "KW: wrong state. Got %s, state: %s " \
+#घोषणा WRONG_STATE(name) करो अणु\
+		prपूर्णांकk(KERN_DEBUG "KW: wrong state. Got %s, state: %s " \
 		       "(isr: %02x)\n",	\
 		       name, __kw_state_names[host->state], isr); \
-	} while(0)
+	पूर्ण जबतक(0)
 
-static const char *__kw_state_names[] = {
+अटल स्थिर अक्षर *__kw_state_names[] = अणु
 	"state_idle",
 	"state_addr",
 	"state_read",
 	"state_write",
 	"state_stop",
 	"state_dead"
-};
+पूर्ण;
 
-static inline u8 __kw_read_reg(struct pmac_i2c_host_kw *host, reg_t reg)
-{
-	return readb(host->base + (((unsigned int)reg) << host->bsteps));
-}
+अटल अंतरभूत u8 __kw_पढ़ो_reg(काष्ठा pmac_i2c_host_kw *host, reg_t reg)
+अणु
+	वापस पढ़ोb(host->base + (((अचिन्हित पूर्णांक)reg) << host->bsteps));
+पूर्ण
 
-static inline void __kw_write_reg(struct pmac_i2c_host_kw *host,
+अटल अंतरभूत व्योम __kw_ग_लिखो_reg(काष्ठा pmac_i2c_host_kw *host,
 				  reg_t reg, u8 val)
-{
-	writeb(val, host->base + (((unsigned)reg) << host->bsteps));
-	(void)__kw_read_reg(host, reg_subaddr);
-}
+अणु
+	ग_लिखोb(val, host->base + (((अचिन्हित)reg) << host->bsteps));
+	(व्योम)__kw_पढ़ो_reg(host, reg_subaddr);
+पूर्ण
 
-#define kw_write_reg(reg, val)	__kw_write_reg(host, reg, val)
-#define kw_read_reg(reg)	__kw_read_reg(host, reg)
+#घोषणा kw_ग_लिखो_reg(reg, val)	__kw_ग_लिखो_reg(host, reg, val)
+#घोषणा kw_पढ़ो_reg(reg)	__kw_पढ़ो_reg(host, reg)
 
-static u8 kw_i2c_wait_interrupt(struct pmac_i2c_host_kw *host)
-{
-	int i, j;
+अटल u8 kw_i2c_रुको_पूर्णांकerrupt(काष्ठा pmac_i2c_host_kw *host)
+अणु
+	पूर्णांक i, j;
 	u8 isr;
 	
-	for (i = 0; i < 1000; i++) {
-		isr = kw_read_reg(reg_isr) & KW_I2C_IRQ_MASK;
-		if (isr != 0)
-			return isr;
+	क्रम (i = 0; i < 1000; i++) अणु
+		isr = kw_पढ़ो_reg(reg_isr) & KW_I2C_IRQ_MASK;
+		अगर (isr != 0)
+			वापस isr;
 
-		/* This code is used with the timebase frozen, we cannot rely
+		/* This code is used with the समयbase frozen, we cannot rely
 		 * on udelay nor schedule when in polled mode !
 		 * For now, just use a bogus loop....
 		 */
-		if (host->polled) {
-			for (j = 1; j < 100000; j++)
+		अगर (host->polled) अणु
+			क्रम (j = 1; j < 100000; j++)
 				mb();
-		} else
+		पूर्ण अन्यथा
 			msleep(1);
-	}
-	return isr;
-}
+	पूर्ण
+	वापस isr;
+पूर्ण
 
-static void kw_i2c_do_stop(struct pmac_i2c_host_kw *host, int result)
-{
-	kw_write_reg(reg_control, KW_I2C_CTL_STOP);
+अटल व्योम kw_i2c_करो_stop(काष्ठा pmac_i2c_host_kw *host, पूर्णांक result)
+अणु
+	kw_ग_लिखो_reg(reg_control, KW_I2C_CTL_STOP);
 	host->state = state_stop;
 	host->result = result;
-}
+पूर्ण
 
 
-static void kw_i2c_handle_interrupt(struct pmac_i2c_host_kw *host, u8 isr)
-{
+अटल व्योम kw_i2c_handle_पूर्णांकerrupt(काष्ठा pmac_i2c_host_kw *host, u8 isr)
+अणु
 	u8 ack;
 
 	DBG_LOW("kw_handle_interrupt(%s, isr: %x)\n",
 		__kw_state_names[host->state], isr);
 
-	if (host->state == state_idle) {
-		printk(KERN_WARNING "low_i2c: Keywest got an out of state"
+	अगर (host->state == state_idle) अणु
+		prपूर्णांकk(KERN_WARNING "low_i2c: Keywest got an out of state"
 		       " interrupt, ignoring\n");
-		kw_write_reg(reg_isr, isr);
-		return;
-	}
+		kw_ग_लिखो_reg(reg_isr, isr);
+		वापस;
+	पूर्ण
 
-	if (isr == 0) {
-		printk(KERN_WARNING "low_i2c: Timeout in i2c transfer"
+	अगर (isr == 0) अणु
+		prपूर्णांकk(KERN_WARNING "low_i2c: Timeout in i2c transfer"
 		       " on keywest !\n");
-		if (host->state != state_stop) {
-			kw_i2c_do_stop(host, -EIO);
-			return;
-		}
-		ack = kw_read_reg(reg_status);
-		if (ack & KW_I2C_STAT_BUSY)
-			kw_write_reg(reg_status, 0);
+		अगर (host->state != state_stop) अणु
+			kw_i2c_करो_stop(host, -EIO);
+			वापस;
+		पूर्ण
+		ack = kw_पढ़ो_reg(reg_status);
+		अगर (ack & KW_I2C_STAT_BUSY)
+			kw_ग_लिखो_reg(reg_status, 0);
 		host->state = state_idle;
-		kw_write_reg(reg_ier, 0x00);
-		if (!host->polled)
+		kw_ग_लिखो_reg(reg_ier, 0x00);
+		अगर (!host->polled)
 			complete(&host->complete);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (isr & KW_I2C_IRQ_ADDR) {
-		ack = kw_read_reg(reg_status);
-		if (host->state != state_addr) {
+	अगर (isr & KW_I2C_IRQ_ADDR) अणु
+		ack = kw_पढ़ो_reg(reg_status);
+		अगर (host->state != state_addr) अणु
 			WRONG_STATE("KW_I2C_IRQ_ADDR"); 
-			kw_i2c_do_stop(host, -EIO);
-		}
-		if ((ack & KW_I2C_STAT_LAST_AAK) == 0) {
+			kw_i2c_करो_stop(host, -EIO);
+		पूर्ण
+		अगर ((ack & KW_I2C_STAT_LAST_AAK) == 0) अणु
 			host->result = -ENXIO;
 			host->state = state_stop;
 			DBG_LOW("KW: NAK on address\n");
-		} else {
-			if (host->len == 0)
-				kw_i2c_do_stop(host, 0);
-			else if (host->rw) {
-				host->state = state_read;
-				if (host->len > 1)
-					kw_write_reg(reg_control,
+		पूर्ण अन्यथा अणु
+			अगर (host->len == 0)
+				kw_i2c_करो_stop(host, 0);
+			अन्यथा अगर (host->rw) अणु
+				host->state = state_पढ़ो;
+				अगर (host->len > 1)
+					kw_ग_लिखो_reg(reg_control,
 						     KW_I2C_CTL_AAK);
-			} else {
-				host->state = state_write;
-				kw_write_reg(reg_data, *(host->data++));
+			पूर्ण अन्यथा अणु
+				host->state = state_ग_लिखो;
+				kw_ग_लिखो_reg(reg_data, *(host->data++));
 				host->len--;
-			}
-		}
-		kw_write_reg(reg_isr, KW_I2C_IRQ_ADDR);
-	}
+			पूर्ण
+		पूर्ण
+		kw_ग_लिखो_reg(reg_isr, KW_I2C_IRQ_ADDR);
+	पूर्ण
 
-	if (isr & KW_I2C_IRQ_DATA) {
-		if (host->state == state_read) {
-			*(host->data++) = kw_read_reg(reg_data);
+	अगर (isr & KW_I2C_IRQ_DATA) अणु
+		अगर (host->state == state_पढ़ो) अणु
+			*(host->data++) = kw_पढ़ो_reg(reg_data);
 			host->len--;
-			kw_write_reg(reg_isr, KW_I2C_IRQ_DATA);
-			if (host->len == 0)
+			kw_ग_लिखो_reg(reg_isr, KW_I2C_IRQ_DATA);
+			अगर (host->len == 0)
 				host->state = state_stop;
-			else if (host->len == 1)
-				kw_write_reg(reg_control, 0);
-		} else if (host->state == state_write) {
-			ack = kw_read_reg(reg_status);
-			if ((ack & KW_I2C_STAT_LAST_AAK) == 0) {
+			अन्यथा अगर (host->len == 1)
+				kw_ग_लिखो_reg(reg_control, 0);
+		पूर्ण अन्यथा अगर (host->state == state_ग_लिखो) अणु
+			ack = kw_पढ़ो_reg(reg_status);
+			अगर ((ack & KW_I2C_STAT_LAST_AAK) == 0) अणु
 				DBG_LOW("KW: nack on data write\n");
 				host->result = -EFBIG;
 				host->state = state_stop;
-			} else if (host->len) {
-				kw_write_reg(reg_data, *(host->data++));
+			पूर्ण अन्यथा अगर (host->len) अणु
+				kw_ग_लिखो_reg(reg_data, *(host->data++));
 				host->len--;
-			} else
-				kw_i2c_do_stop(host, 0);
-		} else {
+			पूर्ण अन्यथा
+				kw_i2c_करो_stop(host, 0);
+		पूर्ण अन्यथा अणु
 			WRONG_STATE("KW_I2C_IRQ_DATA"); 
-			if (host->state != state_stop)
-				kw_i2c_do_stop(host, -EIO);
-		}
-		kw_write_reg(reg_isr, KW_I2C_IRQ_DATA);
-	}
+			अगर (host->state != state_stop)
+				kw_i2c_करो_stop(host, -EIO);
+		पूर्ण
+		kw_ग_लिखो_reg(reg_isr, KW_I2C_IRQ_DATA);
+	पूर्ण
 
-	if (isr & KW_I2C_IRQ_STOP) {
-		kw_write_reg(reg_isr, KW_I2C_IRQ_STOP);
-		if (host->state != state_stop) {
+	अगर (isr & KW_I2C_IRQ_STOP) अणु
+		kw_ग_लिखो_reg(reg_isr, KW_I2C_IRQ_STOP);
+		अगर (host->state != state_stop) अणु
 			WRONG_STATE("KW_I2C_IRQ_STOP");
 			host->result = -EIO;
-		}
+		पूर्ण
 		host->state = state_idle;
-		if (!host->polled)
+		अगर (!host->polled)
 			complete(&host->complete);
-	}
+	पूर्ण
 
-	/* Below should only happen in manual mode which we don't use ... */
-	if (isr & KW_I2C_IRQ_START)
-		kw_write_reg(reg_isr, KW_I2C_IRQ_START);
+	/* Below should only happen in manual mode which we करोn't use ... */
+	अगर (isr & KW_I2C_IRQ_START)
+		kw_ग_लिखो_reg(reg_isr, KW_I2C_IRQ_START);
 
-}
+पूर्ण
 
 /* Interrupt handler */
-static irqreturn_t kw_i2c_irq(int irq, void *dev_id)
-{
-	struct pmac_i2c_host_kw *host = dev_id;
-	unsigned long flags;
+अटल irqवापस_t kw_i2c_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा pmac_i2c_host_kw *host = dev_id;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&host->lock, flags);
-	del_timer(&host->timeout_timer);
-	kw_i2c_handle_interrupt(host, kw_read_reg(reg_isr));
-	if (host->state != state_idle) {
-		host->timeout_timer.expires = jiffies + KW_POLL_TIMEOUT;
-		add_timer(&host->timeout_timer);
-	}
+	del_समयr(&host->समयout_समयr);
+	kw_i2c_handle_पूर्णांकerrupt(host, kw_पढ़ो_reg(reg_isr));
+	अगर (host->state != state_idle) अणु
+		host->समयout_समयr.expires = jअगरfies + KW_POLL_TIMEOUT;
+		add_समयr(&host->समयout_समयr);
+	पूर्ण
 	spin_unlock_irqrestore(&host->lock, flags);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void kw_i2c_timeout(struct timer_list *t)
-{
-	struct pmac_i2c_host_kw *host = from_timer(host, t, timeout_timer);
-	unsigned long flags;
+अटल व्योम kw_i2c_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा pmac_i2c_host_kw *host = from_समयr(host, t, समयout_समयr);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&host->lock, flags);
 
 	/*
-	 * If the timer is pending, that means we raced with the
-	 * irq, in which case we just return
+	 * If the समयr is pending, that means we raced with the
+	 * irq, in which हाल we just वापस
 	 */
-	if (timer_pending(&host->timeout_timer))
-		goto skip;
+	अगर (समयr_pending(&host->समयout_समयr))
+		जाओ skip;
 
-	kw_i2c_handle_interrupt(host, kw_read_reg(reg_isr));
-	if (host->state != state_idle) {
-		host->timeout_timer.expires = jiffies + KW_POLL_TIMEOUT;
-		add_timer(&host->timeout_timer);
-	}
+	kw_i2c_handle_पूर्णांकerrupt(host, kw_पढ़ो_reg(reg_isr));
+	अगर (host->state != state_idle) अणु
+		host->समयout_समयr.expires = jअगरfies + KW_POLL_TIMEOUT;
+		add_समयr(&host->समयout_समयr);
+	पूर्ण
  skip:
 	spin_unlock_irqrestore(&host->lock, flags);
-}
+पूर्ण
 
-static int kw_i2c_open(struct pmac_i2c_bus *bus)
-{
-	struct pmac_i2c_host_kw *host = bus->hostdata;
+अटल पूर्णांक kw_i2c_खोलो(काष्ठा pmac_i2c_bus *bus)
+अणु
+	काष्ठा pmac_i2c_host_kw *host = bus->hostdata;
 	mutex_lock(&host->mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void kw_i2c_close(struct pmac_i2c_bus *bus)
-{
-	struct pmac_i2c_host_kw *host = bus->hostdata;
+अटल व्योम kw_i2c_बंद(काष्ठा pmac_i2c_bus *bus)
+अणु
+	काष्ठा pmac_i2c_host_kw *host = bus->hostdata;
 	mutex_unlock(&host->mutex);
-}
+पूर्ण
 
-static int kw_i2c_xfer(struct pmac_i2c_bus *bus, u8 addrdir, int subsize,
-		       u32 subaddr, u8 *data, int len)
-{
-	struct pmac_i2c_host_kw *host = bus->hostdata;
+अटल पूर्णांक kw_i2c_xfer(काष्ठा pmac_i2c_bus *bus, u8 addrdir, पूर्णांक subsize,
+		       u32 subaddr, u8 *data, पूर्णांक len)
+अणु
+	काष्ठा pmac_i2c_host_kw *host = bus->hostdata;
 	u8 mode_reg = host->speed;
-	int use_irq = host->irq && !bus->polled;
+	पूर्णांक use_irq = host->irq && !bus->polled;
 
-	/* Setup mode & subaddress if any */
-	switch(bus->mode) {
-	case pmac_i2c_mode_dumb:
-		return -EINVAL;
-	case pmac_i2c_mode_std:
+	/* Setup mode & subaddress अगर any */
+	चयन(bus->mode) अणु
+	हाल pmac_i2c_mode_dumb:
+		वापस -EINVAL;
+	हाल pmac_i2c_mode_std:
 		mode_reg |= KW_I2C_MODE_STANDARD;
-		if (subsize != 0)
-			return -EINVAL;
-		break;
-	case pmac_i2c_mode_stdsub:
+		अगर (subsize != 0)
+			वापस -EINVAL;
+		अवरोध;
+	हाल pmac_i2c_mode_stdsub:
 		mode_reg |= KW_I2C_MODE_STANDARDSUB;
-		if (subsize != 1)
-			return -EINVAL;
-		break;
-	case pmac_i2c_mode_combined:
+		अगर (subsize != 1)
+			वापस -EINVAL;
+		अवरोध;
+	हाल pmac_i2c_mode_combined:
 		mode_reg |= KW_I2C_MODE_COMBINED;
-		if (subsize != 1)
-			return -EINVAL;
-		break;
-	}
+		अगर (subsize != 1)
+			वापस -EINVAL;
+		अवरोध;
+	पूर्ण
 
 	/* Setup channel & clear pending irqs */
-	kw_write_reg(reg_isr, kw_read_reg(reg_isr));
-	kw_write_reg(reg_mode, mode_reg | (bus->channel << 4));
-	kw_write_reg(reg_status, 0);
+	kw_ग_लिखो_reg(reg_isr, kw_पढ़ो_reg(reg_isr));
+	kw_ग_लिखो_reg(reg_mode, mode_reg | (bus->channel << 4));
+	kw_ग_लिखो_reg(reg_status, 0);
 
 	/* Set up address and r/w bit, strip possible stale bus number from
 	 * address top bits
 	 */
-	kw_write_reg(reg_addr, addrdir & 0xff);
+	kw_ग_लिखो_reg(reg_addr, addrdir & 0xff);
 
 	/* Set up the sub address */
-	if ((mode_reg & KW_I2C_MODE_MODE_MASK) == KW_I2C_MODE_STANDARDSUB
+	अगर ((mode_reg & KW_I2C_MODE_MODE_MASK) == KW_I2C_MODE_STANDARDSUB
 	    || (mode_reg & KW_I2C_MODE_MODE_MASK) == KW_I2C_MODE_COMBINED)
-		kw_write_reg(reg_subaddr, subaddr);
+		kw_ग_लिखो_reg(reg_subaddr, subaddr);
 
-	/* Prepare for async operations */
+	/* Prepare क्रम async operations */
 	host->data = data;
 	host->len = len;
 	host->state = state_addr;
@@ -444,133 +445,133 @@ static int kw_i2c_xfer(struct pmac_i2c_bus *bus, u8 addrdir, int subsize,
 	host->rw = (addrdir & 1);
 	host->polled = bus->polled;
 
-	/* Enable interrupt if not using polled mode and interrupt is
+	/* Enable पूर्णांकerrupt अगर not using polled mode and पूर्णांकerrupt is
 	 * available
 	 */
-	if (use_irq) {
+	अगर (use_irq) अणु
 		/* Clear completion */
 		reinit_completion(&host->complete);
-		/* Ack stale interrupts */
-		kw_write_reg(reg_isr, kw_read_reg(reg_isr));
-		/* Arm timeout */
-		host->timeout_timer.expires = jiffies + KW_POLL_TIMEOUT;
-		add_timer(&host->timeout_timer);
+		/* Ack stale पूर्णांकerrupts */
+		kw_ग_लिखो_reg(reg_isr, kw_पढ़ो_reg(reg_isr));
+		/* Arm समयout */
+		host->समयout_समयr.expires = jअगरfies + KW_POLL_TIMEOUT;
+		add_समयr(&host->समयout_समयr);
 		/* Enable emission */
-		kw_write_reg(reg_ier, KW_I2C_IRQ_MASK);
-	}
+		kw_ग_लिखो_reg(reg_ier, KW_I2C_IRQ_MASK);
+	पूर्ण
 
 	/* Start sending address */
-	kw_write_reg(reg_control, KW_I2C_CTL_XADDR);
+	kw_ग_लिखो_reg(reg_control, KW_I2C_CTL_XADDR);
 
-	/* Wait for completion */
-	if (use_irq)
-		wait_for_completion(&host->complete);
-	else {
-		while(host->state != state_idle) {
-			unsigned long flags;
+	/* Wait क्रम completion */
+	अगर (use_irq)
+		रुको_क्रम_completion(&host->complete);
+	अन्यथा अणु
+		जबतक(host->state != state_idle) अणु
+			अचिन्हित दीर्घ flags;
 
-			u8 isr = kw_i2c_wait_interrupt(host);
+			u8 isr = kw_i2c_रुको_पूर्णांकerrupt(host);
 			spin_lock_irqsave(&host->lock, flags);
-			kw_i2c_handle_interrupt(host, isr);
+			kw_i2c_handle_पूर्णांकerrupt(host, isr);
 			spin_unlock_irqrestore(&host->lock, flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Disable emission */
-	kw_write_reg(reg_ier, 0);
+	kw_ग_लिखो_reg(reg_ier, 0);
 
-	return host->result;
-}
+	वापस host->result;
+पूर्ण
 
-static struct pmac_i2c_host_kw *__init kw_i2c_host_init(struct device_node *np)
-{
-	struct pmac_i2c_host_kw *host;
-	const u32		*psteps, *prate, *addrp;
+अटल काष्ठा pmac_i2c_host_kw *__init kw_i2c_host_init(काष्ठा device_node *np)
+अणु
+	काष्ठा pmac_i2c_host_kw *host;
+	स्थिर u32		*psteps, *prate, *addrp;
 	u32			steps;
 
-	host = kzalloc(sizeof(*host), GFP_KERNEL);
-	if (host == NULL) {
-		printk(KERN_ERR "low_i2c: Can't allocate host for %pOF\n",
+	host = kzalloc(माप(*host), GFP_KERNEL);
+	अगर (host == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "low_i2c: Can't allocate host for %pOF\n",
 		       np);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* Apple is kind enough to provide a valid AAPL,address property
 	 * on all i2c keywest nodes so far ... we would have to fallback
-	 * to macio parsing if that wasn't the case
+	 * to macio parsing अगर that wasn't the हाल
 	 */
-	addrp = of_get_property(np, "AAPL,address", NULL);
-	if (addrp == NULL) {
-		printk(KERN_ERR "low_i2c: Can't find address for %pOF\n",
+	addrp = of_get_property(np, "AAPL,address", शून्य);
+	अगर (addrp == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "low_i2c: Can't find address for %pOF\n",
 		       np);
-		kfree(host);
-		return NULL;
-	}
+		kमुक्त(host);
+		वापस शून्य;
+	पूर्ण
 	mutex_init(&host->mutex);
 	init_completion(&host->complete);
 	spin_lock_init(&host->lock);
-	timer_setup(&host->timeout_timer, kw_i2c_timeout, 0);
+	समयr_setup(&host->समयout_समयr, kw_i2c_समयout, 0);
 
-	psteps = of_get_property(np, "AAPL,address-step", NULL);
+	psteps = of_get_property(np, "AAPL,address-step", शून्य);
 	steps = psteps ? (*psteps) : 0x10;
-	for (host->bsteps = 0; (steps & 0x01) == 0; host->bsteps++)
+	क्रम (host->bsteps = 0; (steps & 0x01) == 0; host->bsteps++)
 		steps >>= 1;
-	/* Select interface rate */
+	/* Select पूर्णांकerface rate */
 	host->speed = KW_I2C_MODE_25KHZ;
-	prate = of_get_property(np, "AAPL,i2c-rate", NULL);
-	if (prate) switch(*prate) {
-	case 100:
+	prate = of_get_property(np, "AAPL,i2c-rate", शून्य);
+	अगर (prate) चयन(*prate) अणु
+	हाल 100:
 		host->speed = KW_I2C_MODE_100KHZ;
-		break;
-	case 50:
+		अवरोध;
+	हाल 50:
 		host->speed = KW_I2C_MODE_50KHZ;
-		break;
-	case 25:
+		अवरोध;
+	हाल 25:
 		host->speed = KW_I2C_MODE_25KHZ;
-		break;
-	}	
+		अवरोध;
+	पूर्ण	
 	host->irq = irq_of_parse_and_map(np, 0);
-	if (!host->irq)
-		printk(KERN_WARNING
+	अगर (!host->irq)
+		prपूर्णांकk(KERN_WARNING
 		       "low_i2c: Failed to map interrupt for %pOF\n",
 		       np);
 
 	host->base = ioremap((*addrp), 0x1000);
-	if (host->base == NULL) {
-		printk(KERN_ERR "low_i2c: Can't map registers for %pOF\n",
+	अगर (host->base == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "low_i2c: Can't map registers for %pOF\n",
 		       np);
-		kfree(host);
-		return NULL;
-	}
+		kमुक्त(host);
+		वापस शून्य;
+	पूर्ण
 
 	/* Make sure IRQ is disabled */
-	kw_write_reg(reg_ier, 0);
+	kw_ग_लिखो_reg(reg_ier, 0);
 
-	/* Request chip interrupt. We set IRQF_NO_SUSPEND because we don't
-	 * want that interrupt disabled between the 2 passes of driver
+	/* Request chip पूर्णांकerrupt. We set IRQF_NO_SUSPEND because we करोn't
+	 * want that पूर्णांकerrupt disabled between the 2 passes of driver
 	 * suspend or we'll have issues running the pfuncs
 	 */
-	if (request_irq(host->irq, kw_i2c_irq, IRQF_NO_SUSPEND,
+	अगर (request_irq(host->irq, kw_i2c_irq, IRQF_NO_SUSPEND,
 			"keywest i2c", host))
 		host->irq = 0;
 
-	printk(KERN_INFO "KeyWest i2c @0x%08x irq %d %pOF\n",
+	prपूर्णांकk(KERN_INFO "KeyWest i2c @0x%08x irq %d %pOF\n",
 	       *addrp, host->irq, np);
 
-	return host;
-}
+	वापस host;
+पूर्ण
 
 
-static void __init kw_i2c_add(struct pmac_i2c_host_kw *host,
-			      struct device_node *controller,
-			      struct device_node *busnode,
-			      int channel)
-{
-	struct pmac_i2c_bus *bus;
+अटल व्योम __init kw_i2c_add(काष्ठा pmac_i2c_host_kw *host,
+			      काष्ठा device_node *controller,
+			      काष्ठा device_node *busnode,
+			      पूर्णांक channel)
+अणु
+	काष्ठा pmac_i2c_bus *bus;
 
-	bus = kzalloc(sizeof(struct pmac_i2c_bus), GFP_KERNEL);
-	if (bus == NULL)
-		return;
+	bus = kzalloc(माप(काष्ठा pmac_i2c_bus), GFP_KERNEL);
+	अगर (bus == शून्य)
+		वापस;
 
 	bus->controller = of_node_get(controller);
 	bus->busnode = of_node_get(busnode);
@@ -578,67 +579,67 @@ static void __init kw_i2c_add(struct pmac_i2c_host_kw *host,
 	bus->hostdata = host;
 	bus->channel = channel;
 	bus->mode = pmac_i2c_mode_std;
-	bus->open = kw_i2c_open;
-	bus->close = kw_i2c_close;
+	bus->खोलो = kw_i2c_खोलो;
+	bus->बंद = kw_i2c_बंद;
 	bus->xfer = kw_i2c_xfer;
 	mutex_init(&bus->mutex);
 	lockdep_set_class(&bus->mutex, &bus->lock_key);
-	if (controller == busnode)
+	अगर (controller == busnode)
 		bus->flags = pmac_i2c_multibus;
 	list_add(&bus->link, &pmac_i2c_busses);
 
-	printk(KERN_INFO " channel %d bus %s\n", channel,
+	prपूर्णांकk(KERN_INFO " channel %d bus %s\n", channel,
 	       (controller == busnode) ? "<multibus>" : busnode->full_name);
-}
+पूर्ण
 
-static void __init kw_i2c_probe(void)
-{
-	struct device_node *np, *child, *parent;
+अटल व्योम __init kw_i2c_probe(व्योम)
+अणु
+	काष्ठा device_node *np, *child, *parent;
 
 	/* Probe keywest-i2c busses */
-	for_each_compatible_node(np, "i2c","keywest-i2c") {
-		struct pmac_i2c_host_kw *host;
-		int multibus;
+	क्रम_each_compatible_node(np, "i2c","keywest-i2c") अणु
+		काष्ठा pmac_i2c_host_kw *host;
+		पूर्णांक multibus;
 
-		/* Found one, init a host structure */
+		/* Found one, init a host काष्ठाure */
 		host = kw_i2c_host_init(np);
-		if (host == NULL)
-			continue;
+		अगर (host == शून्य)
+			जारी;
 
-		/* Now check if we have a multibus setup (old style) or if we
+		/* Now check अगर we have a multibus setup (old style) or अगर we
 		 * have proper bus nodes. Note that the "new" way (proper bus
 		 * nodes) might cause us to not create some busses that are
 		 * kept hidden in the device-tree. In the future, we might
 		 * want to work around that by creating busses without a node
-		 * but not for now
+		 * but not क्रम now
 		 */
-		child = of_get_next_child(np, NULL);
+		child = of_get_next_child(np, शून्य);
 		multibus = !of_node_name_eq(child, "i2c-bus");
 		of_node_put(child);
 
 		/* For a multibus setup, we get the bus count based on the
 		 * parent type
 		 */
-		if (multibus) {
-			int chans, i;
+		अगर (multibus) अणु
+			पूर्णांक chans, i;
 
 			parent = of_get_parent(np);
-			if (parent == NULL)
-				continue;
+			अगर (parent == शून्य)
+				जारी;
 			chans = parent->name[0] == 'u' ? 2 : 1;
-			for (i = 0; i < chans; i++)
+			क्रम (i = 0; i < chans; i++)
 				kw_i2c_add(host, np, np, i);
-		} else {
-			for_each_child_of_node(np, child) {
-				const u32 *reg = of_get_property(child,
-						"reg", NULL);
-				if (reg == NULL)
-					continue;
+		पूर्ण अन्यथा अणु
+			क्रम_each_child_of_node(np, child) अणु
+				स्थिर u32 *reg = of_get_property(child,
+						"reg", शून्य);
+				अगर (reg == शून्य)
+					जारी;
 				kw_i2c_add(host, np, child, *reg);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
 /*
@@ -647,12 +648,12 @@ static void __init kw_i2c_probe(void)
  *
  */
 
-#ifdef CONFIG_ADB_PMU
+#अगर_घोषित CONFIG_ADB_PMU
 
 /*
  * i2c command block to the PMU
  */
-struct pmu_i2c_hdr {
+काष्ठा pmu_i2c_hdr अणु
 	u8	bus;
 	u8	mode;
 	u8	bus2;
@@ -661,83 +662,83 @@ struct pmu_i2c_hdr {
 	u8	comb_addr;
 	u8	count;
 	u8	data[];
-};
+पूर्ण;
 
-static void pmu_i2c_complete(struct adb_request *req)
-{
+अटल व्योम pmu_i2c_complete(काष्ठा adb_request *req)
+अणु
 	complete(req->arg);
-}
+पूर्ण
 
-static int pmu_i2c_xfer(struct pmac_i2c_bus *bus, u8 addrdir, int subsize,
-			u32 subaddr, u8 *data, int len)
-{
-	struct adb_request *req = bus->hostdata;
-	struct pmu_i2c_hdr *hdr = (struct pmu_i2c_hdr *)&req->data[1];
-	struct completion comp;
-	int read = addrdir & 1;
-	int retry;
-	int rc = 0;
+अटल पूर्णांक pmu_i2c_xfer(काष्ठा pmac_i2c_bus *bus, u8 addrdir, पूर्णांक subsize,
+			u32 subaddr, u8 *data, पूर्णांक len)
+अणु
+	काष्ठा adb_request *req = bus->hostdata;
+	काष्ठा pmu_i2c_hdr *hdr = (काष्ठा pmu_i2c_hdr *)&req->data[1];
+	काष्ठा completion comp;
+	पूर्णांक पढ़ो = addrdir & 1;
+	पूर्णांक retry;
+	पूर्णांक rc = 0;
 
 	/* For now, limit ourselves to 16 bytes transfers */
-	if (len > 16)
-		return -EINVAL;
+	अगर (len > 16)
+		वापस -EINVAL;
 
 	init_completion(&comp);
 
-	for (retry = 0; retry < 16; retry++) {
-		memset(req, 0, sizeof(struct adb_request));
+	क्रम (retry = 0; retry < 16; retry++) अणु
+		स_रखो(req, 0, माप(काष्ठा adb_request));
 		hdr->bus = bus->channel;
 		hdr->count = len;
 
-		switch(bus->mode) {
-		case pmac_i2c_mode_std:
-			if (subsize != 0)
-				return -EINVAL;
+		चयन(bus->mode) अणु
+		हाल pmac_i2c_mode_std:
+			अगर (subsize != 0)
+				वापस -EINVAL;
 			hdr->address = addrdir;
 			hdr->mode = PMU_I2C_MODE_SIMPLE;
-			break;
-		case pmac_i2c_mode_stdsub:
-		case pmac_i2c_mode_combined:
-			if (subsize != 1)
-				return -EINVAL;
+			अवरोध;
+		हाल pmac_i2c_mode_stdsub:
+		हाल pmac_i2c_mode_combined:
+			अगर (subsize != 1)
+				वापस -EINVAL;
 			hdr->address = addrdir & 0xfe;
 			hdr->comb_addr = addrdir;
 			hdr->sub_addr = subaddr;
-			if (bus->mode == pmac_i2c_mode_stdsub)
+			अगर (bus->mode == pmac_i2c_mode_stdsub)
 				hdr->mode = PMU_I2C_MODE_STDSUB;
-			else
+			अन्यथा
 				hdr->mode = PMU_I2C_MODE_COMBINED;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
 		reinit_completion(&comp);
 		req->data[0] = PMU_I2C_CMD;
 		req->reply[0] = 0xff;
-		req->nbytes = sizeof(struct pmu_i2c_hdr) + 1;
-		req->done = pmu_i2c_complete;
+		req->nbytes = माप(काष्ठा pmu_i2c_hdr) + 1;
+		req->करोne = pmu_i2c_complete;
 		req->arg = &comp;
-		if (!read && len) {
-			memcpy(hdr->data, data, len);
+		अगर (!पढ़ो && len) अणु
+			स_नकल(hdr->data, data, len);
 			req->nbytes += len;
-		}
+		पूर्ण
 		rc = pmu_queue_request(req);
-		if (rc)
-			return rc;
-		wait_for_completion(&comp);
-		if (req->reply[0] == PMU_I2C_STATUS_OK)
-			break;
+		अगर (rc)
+			वापस rc;
+		रुको_क्रम_completion(&comp);
+		अगर (req->reply[0] == PMU_I2C_STATUS_OK)
+			अवरोध;
 		msleep(15);
-	}
-	if (req->reply[0] != PMU_I2C_STATUS_OK)
-		return -EIO;
+	पूर्ण
+	अगर (req->reply[0] != PMU_I2C_STATUS_OK)
+		वापस -EIO;
 
-	for (retry = 0; retry < 16; retry++) {
-		memset(req, 0, sizeof(struct adb_request));
+	क्रम (retry = 0; retry < 16; retry++) अणु
+		स_रखो(req, 0, माप(काष्ठा adb_request));
 
 		/* I know that looks like a lot, slow as hell, but darwin
-		 * does it so let's be on the safe side for now
+		 * करोes it so let's be on the safe side क्रम now
 		 */
 		msleep(15);
 
@@ -747,60 +748,60 @@ static int pmu_i2c_xfer(struct pmac_i2c_bus *bus, u8 addrdir, int subsize,
 		req->data[0] = PMU_I2C_CMD;
 		req->reply[0] = 0xff;
 		req->nbytes = 2;
-		req->done = pmu_i2c_complete;
+		req->करोne = pmu_i2c_complete;
 		req->arg = &comp;
 		rc = pmu_queue_request(req);
-		if (rc)
-			return rc;
-		wait_for_completion(&comp);
+		अगर (rc)
+			वापस rc;
+		रुको_क्रम_completion(&comp);
 
-		if (req->reply[0] == PMU_I2C_STATUS_OK && !read)
-			return 0;
-		if (req->reply[0] == PMU_I2C_STATUS_DATAREAD && read) {
-			int rlen = req->reply_len - 1;
+		अगर (req->reply[0] == PMU_I2C_STATUS_OK && !पढ़ो)
+			वापस 0;
+		अगर (req->reply[0] == PMU_I2C_STATUS_DATAREAD && पढ़ो) अणु
+			पूर्णांक rlen = req->reply_len - 1;
 
-			if (rlen != len) {
-				printk(KERN_WARNING "low_i2c: PMU returned %d"
+			अगर (rlen != len) अणु
+				prपूर्णांकk(KERN_WARNING "low_i2c: PMU returned %d"
 				       " bytes, expected %d !\n", rlen, len);
-				return -EIO;
-			}
-			if (len)
-				memcpy(data, &req->reply[1], len);
-			return 0;
-		}
-	}
-	return -EIO;
-}
+				वापस -EIO;
+			पूर्ण
+			अगर (len)
+				स_नकल(data, &req->reply[1], len);
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -EIO;
+पूर्ण
 
-static void __init pmu_i2c_probe(void)
-{
-	struct pmac_i2c_bus *bus;
-	struct device_node *busnode;
-	int channel, sz;
+अटल व्योम __init pmu_i2c_probe(व्योम)
+अणु
+	काष्ठा pmac_i2c_bus *bus;
+	काष्ठा device_node *busnode;
+	पूर्णांक channel, sz;
 
-	if (!pmu_present())
-		return;
+	अगर (!pmu_present())
+		वापस;
 
 	/* There might or might not be a "pmu-i2c" node, we use that
 	 * or via-pmu itself, whatever we find. I haven't seen a machine
 	 * with separate bus nodes, so we assume a multibus setup
 	 */
-	busnode = of_find_node_by_name(NULL, "pmu-i2c");
-	if (busnode == NULL)
-		busnode = of_find_node_by_name(NULL, "via-pmu");
-	if (busnode == NULL)
-		return;
+	busnode = of_find_node_by_name(शून्य, "pmu-i2c");
+	अगर (busnode == शून्य)
+		busnode = of_find_node_by_name(शून्य, "via-pmu");
+	अगर (busnode == शून्य)
+		वापस;
 
-	printk(KERN_INFO "PMU i2c %pOF\n", busnode);
+	prपूर्णांकk(KERN_INFO "PMU i2c %pOF\n", busnode);
 
 	/*
-	 * We add bus 1 and 2 only for now, bus 0 is "special"
+	 * We add bus 1 and 2 only क्रम now, bus 0 is "special"
 	 */
-	for (channel = 1; channel <= 2; channel++) {
-		sz = sizeof(struct pmac_i2c_bus) + sizeof(struct adb_request);
+	क्रम (channel = 1; channel <= 2; channel++) अणु
+		sz = माप(काष्ठा pmac_i2c_bus) + माप(काष्ठा adb_request);
 		bus = kzalloc(sz, GFP_KERNEL);
-		if (bus == NULL)
-			return;
+		अगर (bus == शून्य)
+			वापस;
 
 		bus->controller = busnode;
 		bus->busnode = busnode;
@@ -814,11 +815,11 @@ static void __init pmu_i2c_probe(void)
 		bus->flags = pmac_i2c_multibus;
 		list_add(&bus->link, &pmac_i2c_busses);
 
-		printk(KERN_INFO " channel %d bus <multibus>\n", channel);
-	}
-}
+		prपूर्णांकk(KERN_INFO " channel %d bus <multibus>\n", channel);
+	पूर्ण
+पूर्ण
 
-#endif /* CONFIG_ADB_PMU */
+#पूर्ण_अगर /* CONFIG_ADB_PMU */
 
 
 /*
@@ -827,103 +828,103 @@ static void __init pmu_i2c_probe(void)
  *
  */
 
-#ifdef CONFIG_PMAC_SMU
+#अगर_घोषित CONFIG_PMAC_SMU
 
-static void smu_i2c_complete(struct smu_i2c_cmd *cmd, void *misc)
-{
+अटल व्योम smu_i2c_complete(काष्ठा smu_i2c_cmd *cmd, व्योम *misc)
+अणु
 	complete(misc);
-}
+पूर्ण
 
-static int smu_i2c_xfer(struct pmac_i2c_bus *bus, u8 addrdir, int subsize,
-			u32 subaddr, u8 *data, int len)
-{
-	struct smu_i2c_cmd *cmd = bus->hostdata;
-	struct completion comp;
-	int read = addrdir & 1;
-	int rc = 0;
+अटल पूर्णांक smu_i2c_xfer(काष्ठा pmac_i2c_bus *bus, u8 addrdir, पूर्णांक subsize,
+			u32 subaddr, u8 *data, पूर्णांक len)
+अणु
+	काष्ठा smu_i2c_cmd *cmd = bus->hostdata;
+	काष्ठा completion comp;
+	पूर्णांक पढ़ो = addrdir & 1;
+	पूर्णांक rc = 0;
 
-	if ((read && len > SMU_I2C_READ_MAX) ||
-	    ((!read) && len > SMU_I2C_WRITE_MAX))
-		return -EINVAL;
+	अगर ((पढ़ो && len > SMU_I2C_READ_MAX) ||
+	    ((!पढ़ो) && len > SMU_I2C_WRITE_MAX))
+		वापस -EINVAL;
 
-	memset(cmd, 0, sizeof(struct smu_i2c_cmd));
+	स_रखो(cmd, 0, माप(काष्ठा smu_i2c_cmd));
 	cmd->info.bus = bus->channel;
 	cmd->info.devaddr = addrdir;
 	cmd->info.datalen = len;
 
-	switch(bus->mode) {
-	case pmac_i2c_mode_std:
-		if (subsize != 0)
-			return -EINVAL;
+	चयन(bus->mode) अणु
+	हाल pmac_i2c_mode_std:
+		अगर (subsize != 0)
+			वापस -EINVAL;
 		cmd->info.type = SMU_I2C_TRANSFER_SIMPLE;
-		break;
-	case pmac_i2c_mode_stdsub:
-	case pmac_i2c_mode_combined:
-		if (subsize > 3 || subsize < 1)
-			return -EINVAL;
+		अवरोध;
+	हाल pmac_i2c_mode_stdsub:
+	हाल pmac_i2c_mode_combined:
+		अगर (subsize > 3 || subsize < 1)
+			वापस -EINVAL;
 		cmd->info.sublen = subsize;
 		/* that's big-endian only but heh ! */
-		memcpy(&cmd->info.subaddr, ((char *)&subaddr) + (4 - subsize),
+		स_नकल(&cmd->info.subaddr, ((अक्षर *)&subaddr) + (4 - subsize),
 		       subsize);
-		if (bus->mode == pmac_i2c_mode_stdsub)
+		अगर (bus->mode == pmac_i2c_mode_stdsub)
 			cmd->info.type = SMU_I2C_TRANSFER_STDSUB;
-		else
+		अन्यथा
 			cmd->info.type = SMU_I2C_TRANSFER_COMBINED;
-		break;
-	default:
-		return -EINVAL;
-	}
-	if (!read && len)
-		memcpy(cmd->info.data, data, len);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!पढ़ो && len)
+		स_नकल(cmd->info.data, data, len);
 
 	init_completion(&comp);
-	cmd->done = smu_i2c_complete;
+	cmd->करोne = smu_i2c_complete;
 	cmd->misc = &comp;
 	rc = smu_queue_i2c(cmd);
-	if (rc < 0)
-		return rc;
-	wait_for_completion(&comp);
+	अगर (rc < 0)
+		वापस rc;
+	रुको_क्रम_completion(&comp);
 	rc = cmd->status;
 
-	if (read && len)
-		memcpy(data, cmd->info.data, len);
-	return rc < 0 ? rc : 0;
-}
+	अगर (पढ़ो && len)
+		स_नकल(data, cmd->info.data, len);
+	वापस rc < 0 ? rc : 0;
+पूर्ण
 
-static void __init smu_i2c_probe(void)
-{
-	struct device_node *controller, *busnode;
-	struct pmac_i2c_bus *bus;
-	const u32 *reg;
-	int sz;
+अटल व्योम __init smu_i2c_probe(व्योम)
+अणु
+	काष्ठा device_node *controller, *busnode;
+	काष्ठा pmac_i2c_bus *bus;
+	स्थिर u32 *reg;
+	पूर्णांक sz;
 
-	if (!smu_present())
-		return;
+	अगर (!smu_present())
+		वापस;
 
-	controller = of_find_node_by_name(NULL, "smu-i2c-control");
-	if (controller == NULL)
-		controller = of_find_node_by_name(NULL, "smu");
-	if (controller == NULL)
-		return;
+	controller = of_find_node_by_name(शून्य, "smu-i2c-control");
+	अगर (controller == शून्य)
+		controller = of_find_node_by_name(शून्य, "smu");
+	अगर (controller == शून्य)
+		वापस;
 
-	printk(KERN_INFO "SMU i2c %pOF\n", controller);
+	prपूर्णांकk(KERN_INFO "SMU i2c %pOF\n", controller);
 
-	/* Look for childs, note that they might not be of the right
+	/* Look क्रम childs, note that they might not be of the right
 	 * type as older device trees mix i2c busses and other things
 	 * at the same level
 	 */
-	for_each_child_of_node(controller, busnode) {
-		if (!of_node_is_type(busnode, "i2c") &&
+	क्रम_each_child_of_node(controller, busnode) अणु
+		अगर (!of_node_is_type(busnode, "i2c") &&
 		    !of_node_is_type(busnode, "i2c-bus"))
-			continue;
-		reg = of_get_property(busnode, "reg", NULL);
-		if (reg == NULL)
-			continue;
+			जारी;
+		reg = of_get_property(busnode, "reg", शून्य);
+		अगर (reg == शून्य)
+			जारी;
 
-		sz = sizeof(struct pmac_i2c_bus) + sizeof(struct smu_i2c_cmd);
+		sz = माप(काष्ठा pmac_i2c_bus) + माप(काष्ठा smu_i2c_cmd);
 		bus = kzalloc(sz, GFP_KERNEL);
-		if (bus == NULL)
-			return;
+		अगर (bus == शून्य)
+			वापस;
 
 		bus->controller = controller;
 		bus->busnode = of_node_get(busnode);
@@ -937,12 +938,12 @@ static void __init smu_i2c_probe(void)
 		bus->flags = 0;
 		list_add(&bus->link, &pmac_i2c_busses);
 
-		printk(KERN_INFO " channel %x bus %pOF\n",
+		prपूर्णांकk(KERN_INFO " channel %x bus %pOF\n",
 		       bus->channel, busnode);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif /* CONFIG_PMAC_SMU */
+#पूर्ण_अगर /* CONFIG_PMAC_SMU */
 
 /*
  *
@@ -951,191 +952,191 @@ static void __init smu_i2c_probe(void)
  */
 
 
-struct pmac_i2c_bus *pmac_i2c_find_bus(struct device_node *node)
-{
-	struct device_node *p = of_node_get(node);
-	struct device_node *prev = NULL;
-	struct pmac_i2c_bus *bus;
+काष्ठा pmac_i2c_bus *pmac_i2c_find_bus(काष्ठा device_node *node)
+अणु
+	काष्ठा device_node *p = of_node_get(node);
+	काष्ठा device_node *prev = शून्य;
+	काष्ठा pmac_i2c_bus *bus;
 
-	while(p) {
-		list_for_each_entry(bus, &pmac_i2c_busses, link) {
-			if (p == bus->busnode) {
-				if (prev && bus->flags & pmac_i2c_multibus) {
-					const u32 *reg;
+	जबतक(p) अणु
+		list_क्रम_each_entry(bus, &pmac_i2c_busses, link) अणु
+			अगर (p == bus->busnode) अणु
+				अगर (prev && bus->flags & pmac_i2c_multibus) अणु
+					स्थिर u32 *reg;
 					reg = of_get_property(prev, "reg",
-								NULL);
-					if (!reg)
-						continue;
-					if (((*reg) >> 8) != bus->channel)
-						continue;
-				}
+								शून्य);
+					अगर (!reg)
+						जारी;
+					अगर (((*reg) >> 8) != bus->channel)
+						जारी;
+				पूर्ण
 				of_node_put(p);
 				of_node_put(prev);
-				return bus;
-			}
-		}
+				वापस bus;
+			पूर्ण
+		पूर्ण
 		of_node_put(prev);
 		prev = p;
 		p = of_get_parent(p);
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(pmac_i2c_find_bus);
 
-u8 pmac_i2c_get_dev_addr(struct device_node *device)
-{
-	const u32 *reg = of_get_property(device, "reg", NULL);
+u8 pmac_i2c_get_dev_addr(काष्ठा device_node *device)
+अणु
+	स्थिर u32 *reg = of_get_property(device, "reg", शून्य);
 
-	if (reg == NULL)
-		return 0;
+	अगर (reg == शून्य)
+		वापस 0;
 
-	return (*reg) & 0xff;
-}
+	वापस (*reg) & 0xff;
+पूर्ण
 EXPORT_SYMBOL_GPL(pmac_i2c_get_dev_addr);
 
-struct device_node *pmac_i2c_get_controller(struct pmac_i2c_bus *bus)
-{
-	return bus->controller;
-}
+काष्ठा device_node *pmac_i2c_get_controller(काष्ठा pmac_i2c_bus *bus)
+अणु
+	वापस bus->controller;
+पूर्ण
 EXPORT_SYMBOL_GPL(pmac_i2c_get_controller);
 
-struct device_node *pmac_i2c_get_bus_node(struct pmac_i2c_bus *bus)
-{
-	return bus->busnode;
-}
+काष्ठा device_node *pmac_i2c_get_bus_node(काष्ठा pmac_i2c_bus *bus)
+अणु
+	वापस bus->busnode;
+पूर्ण
 EXPORT_SYMBOL_GPL(pmac_i2c_get_bus_node);
 
-int pmac_i2c_get_type(struct pmac_i2c_bus *bus)
-{
-	return bus->type;
-}
+पूर्णांक pmac_i2c_get_type(काष्ठा pmac_i2c_bus *bus)
+अणु
+	वापस bus->type;
+पूर्ण
 EXPORT_SYMBOL_GPL(pmac_i2c_get_type);
 
-int pmac_i2c_get_flags(struct pmac_i2c_bus *bus)
-{
-	return bus->flags;
-}
+पूर्णांक pmac_i2c_get_flags(काष्ठा pmac_i2c_bus *bus)
+अणु
+	वापस bus->flags;
+पूर्ण
 EXPORT_SYMBOL_GPL(pmac_i2c_get_flags);
 
-int pmac_i2c_get_channel(struct pmac_i2c_bus *bus)
-{
-	return bus->channel;
-}
+पूर्णांक pmac_i2c_get_channel(काष्ठा pmac_i2c_bus *bus)
+अणु
+	वापस bus->channel;
+पूर्ण
 EXPORT_SYMBOL_GPL(pmac_i2c_get_channel);
 
 
-struct i2c_adapter *pmac_i2c_get_adapter(struct pmac_i2c_bus *bus)
-{
-	return &bus->adapter;
-}
+काष्ठा i2c_adapter *pmac_i2c_get_adapter(काष्ठा pmac_i2c_bus *bus)
+अणु
+	वापस &bus->adapter;
+पूर्ण
 EXPORT_SYMBOL_GPL(pmac_i2c_get_adapter);
 
-struct pmac_i2c_bus *pmac_i2c_adapter_to_bus(struct i2c_adapter *adapter)
-{
-	struct pmac_i2c_bus *bus;
+काष्ठा pmac_i2c_bus *pmac_i2c_adapter_to_bus(काष्ठा i2c_adapter *adapter)
+अणु
+	काष्ठा pmac_i2c_bus *bus;
 
-	list_for_each_entry(bus, &pmac_i2c_busses, link)
-		if (&bus->adapter == adapter)
-			return bus;
-	return NULL;
-}
+	list_क्रम_each_entry(bus, &pmac_i2c_busses, link)
+		अगर (&bus->adapter == adapter)
+			वापस bus;
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(pmac_i2c_adapter_to_bus);
 
-int pmac_i2c_match_adapter(struct device_node *dev, struct i2c_adapter *adapter)
-{
-	struct pmac_i2c_bus *bus = pmac_i2c_find_bus(dev);
+पूर्णांक pmac_i2c_match_adapter(काष्ठा device_node *dev, काष्ठा i2c_adapter *adapter)
+अणु
+	काष्ठा pmac_i2c_bus *bus = pmac_i2c_find_bus(dev);
 
-	if (bus == NULL)
-		return 0;
-	return (&bus->adapter == adapter);
-}
+	अगर (bus == शून्य)
+		वापस 0;
+	वापस (&bus->adapter == adapter);
+पूर्ण
 EXPORT_SYMBOL_GPL(pmac_i2c_match_adapter);
 
-int pmac_low_i2c_lock(struct device_node *np)
-{
-	struct pmac_i2c_bus *bus, *found = NULL;
+पूर्णांक pmac_low_i2c_lock(काष्ठा device_node *np)
+अणु
+	काष्ठा pmac_i2c_bus *bus, *found = शून्य;
 
-	list_for_each_entry(bus, &pmac_i2c_busses, link) {
-		if (np == bus->controller) {
+	list_क्रम_each_entry(bus, &pmac_i2c_busses, link) अणु
+		अगर (np == bus->controller) अणु
 			found = bus;
-			break;
-		}
-	}
-	if (!found)
-		return -ENODEV;
-	return pmac_i2c_open(bus, 0);
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!found)
+		वापस -ENODEV;
+	वापस pmac_i2c_खोलो(bus, 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(pmac_low_i2c_lock);
 
-int pmac_low_i2c_unlock(struct device_node *np)
-{
-	struct pmac_i2c_bus *bus, *found = NULL;
+पूर्णांक pmac_low_i2c_unlock(काष्ठा device_node *np)
+अणु
+	काष्ठा pmac_i2c_bus *bus, *found = शून्य;
 
-	list_for_each_entry(bus, &pmac_i2c_busses, link) {
-		if (np == bus->controller) {
+	list_क्रम_each_entry(bus, &pmac_i2c_busses, link) अणु
+		अगर (np == bus->controller) अणु
 			found = bus;
-			break;
-		}
-	}
-	if (!found)
-		return -ENODEV;
-	pmac_i2c_close(bus);
-	return 0;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!found)
+		वापस -ENODEV;
+	pmac_i2c_बंद(bus);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(pmac_low_i2c_unlock);
 
 
-int pmac_i2c_open(struct pmac_i2c_bus *bus, int polled)
-{
-	int rc;
+पूर्णांक pmac_i2c_खोलो(काष्ठा pmac_i2c_bus *bus, पूर्णांक polled)
+अणु
+	पूर्णांक rc;
 
 	mutex_lock(&bus->mutex);
-	bus->polled = polled || pmac_i2c_force_poll;
-	bus->opened = 1;
+	bus->polled = polled || pmac_i2c_क्रमce_poll;
+	bus->खोलोed = 1;
 	bus->mode = pmac_i2c_mode_std;
-	if (bus->open && (rc = bus->open(bus)) != 0) {
-		bus->opened = 0;
+	अगर (bus->खोलो && (rc = bus->खोलो(bus)) != 0) अणु
+		bus->खोलोed = 0;
 		mutex_unlock(&bus->mutex);
-		return rc;
-	}
-	return 0;
-}
-EXPORT_SYMBOL_GPL(pmac_i2c_open);
+		वापस rc;
+	पूर्ण
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(pmac_i2c_खोलो);
 
-void pmac_i2c_close(struct pmac_i2c_bus *bus)
-{
-	WARN_ON(!bus->opened);
-	if (bus->close)
-		bus->close(bus);
-	bus->opened = 0;
+व्योम pmac_i2c_बंद(काष्ठा pmac_i2c_bus *bus)
+अणु
+	WARN_ON(!bus->खोलोed);
+	अगर (bus->बंद)
+		bus->बंद(bus);
+	bus->खोलोed = 0;
 	mutex_unlock(&bus->mutex);
-}
-EXPORT_SYMBOL_GPL(pmac_i2c_close);
+पूर्ण
+EXPORT_SYMBOL_GPL(pmac_i2c_बंद);
 
-int pmac_i2c_setmode(struct pmac_i2c_bus *bus, int mode)
-{
-	WARN_ON(!bus->opened);
+पूर्णांक pmac_i2c_seपंचांगode(काष्ठा pmac_i2c_bus *bus, पूर्णांक mode)
+अणु
+	WARN_ON(!bus->खोलोed);
 
-	/* Report me if you see the error below as there might be a new
-	 * "combined4" mode that I need to implement for the SMU bus
+	/* Report me अगर you see the error below as there might be a new
+	 * "combined4" mode that I need to implement क्रम the SMU bus
 	 */
-	if (mode < pmac_i2c_mode_dumb || mode > pmac_i2c_mode_combined) {
-		printk(KERN_ERR "low_i2c: Invalid mode %d requested on"
+	अगर (mode < pmac_i2c_mode_dumb || mode > pmac_i2c_mode_combined) अणु
+		prपूर्णांकk(KERN_ERR "low_i2c: Invalid mode %d requested on"
 		       " bus %pOF !\n", mode, bus->busnode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	bus->mode = mode;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(pmac_i2c_setmode);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(pmac_i2c_seपंचांगode);
 
-int pmac_i2c_xfer(struct pmac_i2c_bus *bus, u8 addrdir, int subsize,
-		  u32 subaddr, u8 *data, int len)
-{
-	int rc;
+पूर्णांक pmac_i2c_xfer(काष्ठा pmac_i2c_bus *bus, u8 addrdir, पूर्णांक subsize,
+		  u32 subaddr, u8 *data, पूर्णांक len)
+अणु
+	पूर्णांक rc;
 
-	WARN_ON(!bus->opened);
+	WARN_ON(!bus->खोलोed);
 
 	DBG("xfer() chan=%d, addrdir=0x%x, mode=%d, subsize=%d, subaddr=0x%x,"
 	    " %d bytes, bus %pOF\n", bus->channel, addrdir, bus->mode, subsize,
@@ -1143,368 +1144,368 @@ int pmac_i2c_xfer(struct pmac_i2c_bus *bus, u8 addrdir, int subsize,
 
 	rc = bus->xfer(bus, addrdir, subsize, subaddr, data, len);
 
-#ifdef DEBUG
-	if (rc)
+#अगर_घोषित DEBUG
+	अगर (rc)
 		DBG("xfer error %d\n", rc);
-#endif
-	return rc;
-}
+#पूर्ण_अगर
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(pmac_i2c_xfer);
 
-/* some quirks for platform function decoding */
-enum {
+/* some quirks क्रम platक्रमm function decoding */
+क्रमागत अणु
 	pmac_i2c_quirk_invmask = 0x00000001u,
 	pmac_i2c_quirk_skip = 0x00000002u,
-};
+पूर्ण;
 
-static void pmac_i2c_devscan(void (*callback)(struct device_node *dev,
-					      int quirks))
-{
-	struct pmac_i2c_bus *bus;
-	struct device_node *np;
-	static struct whitelist_ent {
-		char *name;
-		char *compatible;
-		int quirks;
-	} whitelist[] = {
+अटल व्योम pmac_i2c_devscan(व्योम (*callback)(काष्ठा device_node *dev,
+					      पूर्णांक quirks))
+अणु
+	काष्ठा pmac_i2c_bus *bus;
+	काष्ठा device_node *np;
+	अटल काष्ठा whitelist_ent अणु
+		अक्षर *name;
+		अक्षर *compatible;
+		पूर्णांक quirks;
+	पूर्ण whitelist[] = अणु
 		/* XXX Study device-tree's & apple drivers are get the quirks
 		 * right !
 		 */
-		/* Workaround: It seems that running the clockspreading
+		/* Workaround: It seems that running the घड़ीspपढ़ोing
 		 * properties on the eMac will cause lockups during boot.
-		 * The machine seems to work fine without that. So for now,
+		 * The machine seems to work fine without that. So क्रम now,
 		 * let's make sure i2c-hwclock doesn't match about "imic"
-		 * clocks and we'll figure out if we really need to do
+		 * घड़ीs and we'll figure out अगर we really need to करो
 		 * something special about those later.
 		 */
-		{ "i2c-hwclock", "imic5002", pmac_i2c_quirk_skip },
-		{ "i2c-hwclock", "imic5003", pmac_i2c_quirk_skip },
-		{ "i2c-hwclock", NULL, pmac_i2c_quirk_invmask },
-		{ "i2c-cpu-voltage", NULL, 0},
-		{  "temp-monitor", NULL, 0 },
-		{  "supply-monitor", NULL, 0 },
-		{ NULL, NULL, 0 },
-	};
+		अणु "i2c-hwclock", "imic5002", pmac_i2c_quirk_skip पूर्ण,
+		अणु "i2c-hwclock", "imic5003", pmac_i2c_quirk_skip पूर्ण,
+		अणु "i2c-hwclock", शून्य, pmac_i2c_quirk_invmask पूर्ण,
+		अणु "i2c-cpu-voltage", शून्य, 0पूर्ण,
+		अणु  "temp-monitor", शून्य, 0 पूर्ण,
+		अणु  "supply-monitor", शून्य, 0 पूर्ण,
+		अणु शून्य, शून्य, 0 पूर्ण,
+	पूर्ण;
 
-	/* Only some devices need to have platform functions instantiated
+	/* Only some devices need to have platक्रमm functions instantiated
 	 * here. For now, we have a table. Others, like 9554 i2c GPIOs used
-	 * on Xserve, if we ever do a driver for them, will use their own
-	 * platform function instance
+	 * on Xserve, अगर we ever करो a driver क्रम them, will use their own
+	 * platक्रमm function instance
 	 */
-	list_for_each_entry(bus, &pmac_i2c_busses, link) {
-		for_each_child_of_node(bus->busnode, np) {
-			struct whitelist_ent *p;
-			/* If multibus, check if device is on that bus */
-			if (bus->flags & pmac_i2c_multibus)
-				if (bus != pmac_i2c_find_bus(np))
-					continue;
-			for (p = whitelist; p->name != NULL; p++) {
-				if (!of_node_name_eq(np, p->name))
-					continue;
-				if (p->compatible &&
+	list_क्रम_each_entry(bus, &pmac_i2c_busses, link) अणु
+		क्रम_each_child_of_node(bus->busnode, np) अणु
+			काष्ठा whitelist_ent *p;
+			/* If multibus, check अगर device is on that bus */
+			अगर (bus->flags & pmac_i2c_multibus)
+				अगर (bus != pmac_i2c_find_bus(np))
+					जारी;
+			क्रम (p = whitelist; p->name != शून्य; p++) अणु
+				अगर (!of_node_name_eq(np, p->name))
+					जारी;
+				अगर (p->compatible &&
 				    !of_device_is_compatible(np, p->compatible))
-					continue;
-				if (p->quirks & pmac_i2c_quirk_skip)
-					break;
+					जारी;
+				अगर (p->quirks & pmac_i2c_quirk_skip)
+					अवरोध;
 				callback(np, p->quirks);
-				break;
-			}
-		}
-	}
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#define MAX_I2C_DATA	64
+#घोषणा MAX_I2C_DATA	64
 
-struct pmac_i2c_pf_inst
-{
-	struct pmac_i2c_bus	*bus;
+काष्ठा pmac_i2c_pf_inst
+अणु
+	काष्ठा pmac_i2c_bus	*bus;
 	u8			addr;
 	u8			buffer[MAX_I2C_DATA];
 	u8			scratch[MAX_I2C_DATA];
-	int			bytes;
-	int			quirks;
-};
+	पूर्णांक			bytes;
+	पूर्णांक			quirks;
+पूर्ण;
 
-static void* pmac_i2c_do_begin(struct pmf_function *func, struct pmf_args *args)
-{
-	struct pmac_i2c_pf_inst *inst;
-	struct pmac_i2c_bus	*bus;
+अटल व्योम* pmac_i2c_करो_begin(काष्ठा pmf_function *func, काष्ठा pmf_args *args)
+अणु
+	काष्ठा pmac_i2c_pf_inst *inst;
+	काष्ठा pmac_i2c_bus	*bus;
 
 	bus = pmac_i2c_find_bus(func->node);
-	if (bus == NULL) {
-		printk(KERN_ERR "low_i2c: Can't find bus for %pOF (pfunc)\n",
+	अगर (bus == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "low_i2c: Can't find bus for %pOF (pfunc)\n",
 		       func->node);
-		return NULL;
-	}
-	if (pmac_i2c_open(bus, 0)) {
-		printk(KERN_ERR "low_i2c: Can't open i2c bus for %pOF (pfunc)\n",
+		वापस शून्य;
+	पूर्ण
+	अगर (pmac_i2c_खोलो(bus, 0)) अणु
+		prपूर्णांकk(KERN_ERR "low_i2c: Can't open i2c bus for %pOF (pfunc)\n",
 		       func->node);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* XXX might need GFP_ATOMIC when called during the suspend process,
-	 * but then, there are already lots of issues with suspending when
+	 * but then, there are alपढ़ोy lots of issues with suspending when
 	 * near OOM that need to be resolved, the allocator itself should
 	 * probably make GFP_NOIO implicit during suspend
 	 */
-	inst = kzalloc(sizeof(struct pmac_i2c_pf_inst), GFP_KERNEL);
-	if (inst == NULL) {
-		pmac_i2c_close(bus);
-		return NULL;
-	}
+	inst = kzalloc(माप(काष्ठा pmac_i2c_pf_inst), GFP_KERNEL);
+	अगर (inst == शून्य) अणु
+		pmac_i2c_बंद(bus);
+		वापस शून्य;
+	पूर्ण
 	inst->bus = bus;
 	inst->addr = pmac_i2c_get_dev_addr(func->node);
-	inst->quirks = (int)(long)func->driver_data;
-	return inst;
-}
+	inst->quirks = (पूर्णांक)(दीर्घ)func->driver_data;
+	वापस inst;
+पूर्ण
 
-static void pmac_i2c_do_end(struct pmf_function *func, void *instdata)
-{
-	struct pmac_i2c_pf_inst *inst = instdata;
+अटल व्योम pmac_i2c_करो_end(काष्ठा pmf_function *func, व्योम *instdata)
+अणु
+	काष्ठा pmac_i2c_pf_inst *inst = instdata;
 
-	if (inst == NULL)
-		return;
-	pmac_i2c_close(inst->bus);
-	kfree(inst);
-}
+	अगर (inst == शून्य)
+		वापस;
+	pmac_i2c_बंद(inst->bus);
+	kमुक्त(inst);
+पूर्ण
 
-static int pmac_i2c_do_read(PMF_STD_ARGS, u32 len)
-{
-	struct pmac_i2c_pf_inst *inst = instdata;
+अटल पूर्णांक pmac_i2c_करो_पढ़ो(PMF_STD_ARGS, u32 len)
+अणु
+	काष्ठा pmac_i2c_pf_inst *inst = instdata;
 
 	inst->bytes = len;
-	return pmac_i2c_xfer(inst->bus, inst->addr | pmac_i2c_read, 0, 0,
+	वापस pmac_i2c_xfer(inst->bus, inst->addr | pmac_i2c_पढ़ो, 0, 0,
 			     inst->buffer, len);
-}
+पूर्ण
 
-static int pmac_i2c_do_write(PMF_STD_ARGS, u32 len, const u8 *data)
-{
-	struct pmac_i2c_pf_inst *inst = instdata;
+अटल पूर्णांक pmac_i2c_करो_ग_लिखो(PMF_STD_ARGS, u32 len, स्थिर u8 *data)
+अणु
+	काष्ठा pmac_i2c_pf_inst *inst = instdata;
 
-	return pmac_i2c_xfer(inst->bus, inst->addr | pmac_i2c_write, 0, 0,
+	वापस pmac_i2c_xfer(inst->bus, inst->addr | pmac_i2c_ग_लिखो, 0, 0,
 			     (u8 *)data, len);
-}
+पूर्ण
 
-/* This function is used to do the masking & OR'ing for the "rmw" type
+/* This function is used to करो the masking & OR'ing क्रम the "rmw" type
  * callbacks. Ze should apply the mask and OR in the values in the
- * buffer before writing back. The problem is that it seems that
- * various darwin drivers implement the mask/or differently, thus
+ * buffer beक्रमe writing back. The problem is that it seems that
+ * various darwin drivers implement the mask/or dअगरferently, thus
  * we need to check the quirks first
  */
-static void pmac_i2c_do_apply_rmw(struct pmac_i2c_pf_inst *inst,
-				  u32 len, const u8 *mask, const u8 *val)
-{
-	int i;
+अटल व्योम pmac_i2c_करो_apply_rmw(काष्ठा pmac_i2c_pf_inst *inst,
+				  u32 len, स्थिर u8 *mask, स्थिर u8 *val)
+अणु
+	पूर्णांक i;
 
-	if (inst->quirks & pmac_i2c_quirk_invmask) {
-		for (i = 0; i < len; i ++)
+	अगर (inst->quirks & pmac_i2c_quirk_invmask) अणु
+		क्रम (i = 0; i < len; i ++)
 			inst->scratch[i] = (inst->buffer[i] & mask[i]) | val[i];
-	} else {
-		for (i = 0; i < len; i ++)
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < len; i ++)
 			inst->scratch[i] = (inst->buffer[i] & ~mask[i])
 				| (val[i] & mask[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pmac_i2c_do_rmw(PMF_STD_ARGS, u32 masklen, u32 valuelen,
-			   u32 totallen, const u8 *maskdata,
-			   const u8 *valuedata)
-{
-	struct pmac_i2c_pf_inst *inst = instdata;
+अटल पूर्णांक pmac_i2c_करो_rmw(PMF_STD_ARGS, u32 masklen, u32 valuelen,
+			   u32 totallen, स्थिर u8 *maskdata,
+			   स्थिर u8 *valuedata)
+अणु
+	काष्ठा pmac_i2c_pf_inst *inst = instdata;
 
-	if (masklen > inst->bytes || valuelen > inst->bytes ||
+	अगर (masklen > inst->bytes || valuelen > inst->bytes ||
 	    totallen > inst->bytes || valuelen > masklen)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	pmac_i2c_do_apply_rmw(inst, masklen, maskdata, valuedata);
+	pmac_i2c_करो_apply_rmw(inst, masklen, maskdata, valuedata);
 
-	return pmac_i2c_xfer(inst->bus, inst->addr | pmac_i2c_write, 0, 0,
+	वापस pmac_i2c_xfer(inst->bus, inst->addr | pmac_i2c_ग_लिखो, 0, 0,
 			     inst->scratch, totallen);
-}
+पूर्ण
 
-static int pmac_i2c_do_read_sub(PMF_STD_ARGS, u8 subaddr, u32 len)
-{
-	struct pmac_i2c_pf_inst *inst = instdata;
+अटल पूर्णांक pmac_i2c_करो_पढ़ो_sub(PMF_STD_ARGS, u8 subaddr, u32 len)
+अणु
+	काष्ठा pmac_i2c_pf_inst *inst = instdata;
 
 	inst->bytes = len;
-	return pmac_i2c_xfer(inst->bus, inst->addr | pmac_i2c_read, 1, subaddr,
+	वापस pmac_i2c_xfer(inst->bus, inst->addr | pmac_i2c_पढ़ो, 1, subaddr,
 			     inst->buffer, len);
-}
+पूर्ण
 
-static int pmac_i2c_do_write_sub(PMF_STD_ARGS, u8 subaddr, u32 len,
-				     const u8 *data)
-{
-	struct pmac_i2c_pf_inst *inst = instdata;
+अटल पूर्णांक pmac_i2c_करो_ग_लिखो_sub(PMF_STD_ARGS, u8 subaddr, u32 len,
+				     स्थिर u8 *data)
+अणु
+	काष्ठा pmac_i2c_pf_inst *inst = instdata;
 
-	return pmac_i2c_xfer(inst->bus, inst->addr | pmac_i2c_write, 1,
+	वापस pmac_i2c_xfer(inst->bus, inst->addr | pmac_i2c_ग_लिखो, 1,
 			     subaddr, (u8 *)data, len);
-}
+पूर्ण
 
-static int pmac_i2c_do_set_mode(PMF_STD_ARGS, int mode)
-{
-	struct pmac_i2c_pf_inst *inst = instdata;
+अटल पूर्णांक pmac_i2c_करो_set_mode(PMF_STD_ARGS, पूर्णांक mode)
+अणु
+	काष्ठा pmac_i2c_pf_inst *inst = instdata;
 
-	return pmac_i2c_setmode(inst->bus, mode);
-}
+	वापस pmac_i2c_seपंचांगode(inst->bus, mode);
+पूर्ण
 
-static int pmac_i2c_do_rmw_sub(PMF_STD_ARGS, u8 subaddr, u32 masklen,
-			       u32 valuelen, u32 totallen, const u8 *maskdata,
-			       const u8 *valuedata)
-{
-	struct pmac_i2c_pf_inst *inst = instdata;
+अटल पूर्णांक pmac_i2c_करो_rmw_sub(PMF_STD_ARGS, u8 subaddr, u32 masklen,
+			       u32 valuelen, u32 totallen, स्थिर u8 *maskdata,
+			       स्थिर u8 *valuedata)
+अणु
+	काष्ठा pmac_i2c_pf_inst *inst = instdata;
 
-	if (masklen > inst->bytes || valuelen > inst->bytes ||
+	अगर (masklen > inst->bytes || valuelen > inst->bytes ||
 	    totallen > inst->bytes || valuelen > masklen)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	pmac_i2c_do_apply_rmw(inst, masklen, maskdata, valuedata);
+	pmac_i2c_करो_apply_rmw(inst, masklen, maskdata, valuedata);
 
-	return pmac_i2c_xfer(inst->bus, inst->addr | pmac_i2c_write, 1,
+	वापस pmac_i2c_xfer(inst->bus, inst->addr | pmac_i2c_ग_लिखो, 1,
 			     subaddr, inst->scratch, totallen);
-}
+पूर्ण
 
-static int pmac_i2c_do_mask_and_comp(PMF_STD_ARGS, u32 len,
-				     const u8 *maskdata,
-				     const u8 *valuedata)
-{
-	struct pmac_i2c_pf_inst *inst = instdata;
-	int i, match;
+अटल पूर्णांक pmac_i2c_करो_mask_and_comp(PMF_STD_ARGS, u32 len,
+				     स्थिर u8 *maskdata,
+				     स्थिर u8 *valuedata)
+अणु
+	काष्ठा pmac_i2c_pf_inst *inst = instdata;
+	पूर्णांक i, match;
 
-	/* Get return value pointer, it's assumed to be a u32 */
-	if (!args || !args->count || !args->u[0].p)
-		return -EINVAL;
+	/* Get वापस value poपूर्णांकer, it's assumed to be a u32 */
+	अगर (!args || !args->count || !args->u[0].p)
+		वापस -EINVAL;
 
 	/* Check buffer */
-	if (len > inst->bytes)
-		return -EINVAL;
+	अगर (len > inst->bytes)
+		वापस -EINVAL;
 
-	for (i = 0, match = 1; match && i < len; i ++)
-		if ((inst->buffer[i] & maskdata[i]) != valuedata[i])
+	क्रम (i = 0, match = 1; match && i < len; i ++)
+		अगर ((inst->buffer[i] & maskdata[i]) != valuedata[i])
 			match = 0;
 	*args->u[0].p = match;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pmac_i2c_do_delay(PMF_STD_ARGS, u32 duration)
-{
+अटल पूर्णांक pmac_i2c_करो_delay(PMF_STD_ARGS, u32 duration)
+अणु
 	msleep((duration + 999) / 1000);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static struct pmf_handlers pmac_i2c_pfunc_handlers = {
-	.begin			= pmac_i2c_do_begin,
-	.end			= pmac_i2c_do_end,
-	.read_i2c		= pmac_i2c_do_read,
-	.write_i2c		= pmac_i2c_do_write,
-	.rmw_i2c		= pmac_i2c_do_rmw,
-	.read_i2c_sub		= pmac_i2c_do_read_sub,
-	.write_i2c_sub		= pmac_i2c_do_write_sub,
-	.rmw_i2c_sub		= pmac_i2c_do_rmw_sub,
-	.set_i2c_mode		= pmac_i2c_do_set_mode,
-	.mask_and_compare	= pmac_i2c_do_mask_and_comp,
-	.delay			= pmac_i2c_do_delay,
-};
+अटल काष्ठा pmf_handlers pmac_i2c_pfunc_handlers = अणु
+	.begin			= pmac_i2c_करो_begin,
+	.end			= pmac_i2c_करो_end,
+	.पढ़ो_i2c		= pmac_i2c_करो_पढ़ो,
+	.ग_लिखो_i2c		= pmac_i2c_करो_ग_लिखो,
+	.rmw_i2c		= pmac_i2c_करो_rmw,
+	.पढ़ो_i2c_sub		= pmac_i2c_करो_पढ़ो_sub,
+	.ग_लिखो_i2c_sub		= pmac_i2c_करो_ग_लिखो_sub,
+	.rmw_i2c_sub		= pmac_i2c_करो_rmw_sub,
+	.set_i2c_mode		= pmac_i2c_करो_set_mode,
+	.mask_and_compare	= pmac_i2c_करो_mask_and_comp,
+	.delay			= pmac_i2c_करो_delay,
+पूर्ण;
 
-static void __init pmac_i2c_dev_create(struct device_node *np, int quirks)
-{
+अटल व्योम __init pmac_i2c_dev_create(काष्ठा device_node *np, पूर्णांक quirks)
+अणु
 	DBG("dev_create(%pOF)\n", np);
 
-	pmf_register_driver(np, &pmac_i2c_pfunc_handlers,
-			    (void *)(long)quirks);
-}
+	pmf_रेजिस्टर_driver(np, &pmac_i2c_pfunc_handlers,
+			    (व्योम *)(दीर्घ)quirks);
+पूर्ण
 
-static void __init pmac_i2c_dev_init(struct device_node *np, int quirks)
-{
+अटल व्योम __init pmac_i2c_dev_init(काष्ठा device_node *np, पूर्णांक quirks)
+अणु
 	DBG("dev_create(%pOF)\n", np);
 
-	pmf_do_functions(np, NULL, 0, PMF_FLAGS_ON_INIT, NULL);
-}
+	pmf_करो_functions(np, शून्य, 0, PMF_FLAGS_ON_INIT, शून्य);
+पूर्ण
 
-static void pmac_i2c_dev_suspend(struct device_node *np, int quirks)
-{
+अटल व्योम pmac_i2c_dev_suspend(काष्ठा device_node *np, पूर्णांक quirks)
+अणु
 	DBG("dev_suspend(%pOF)\n", np);
-	pmf_do_functions(np, NULL, 0, PMF_FLAGS_ON_SLEEP, NULL);
-}
+	pmf_करो_functions(np, शून्य, 0, PMF_FLAGS_ON_SLEEP, शून्य);
+पूर्ण
 
-static void pmac_i2c_dev_resume(struct device_node *np, int quirks)
-{
+अटल व्योम pmac_i2c_dev_resume(काष्ठा device_node *np, पूर्णांक quirks)
+अणु
 	DBG("dev_resume(%pOF)\n", np);
-	pmf_do_functions(np, NULL, 0, PMF_FLAGS_ON_WAKE, NULL);
-}
+	pmf_करो_functions(np, शून्य, 0, PMF_FLAGS_ON_WAKE, शून्य);
+पूर्ण
 
-void pmac_pfunc_i2c_suspend(void)
-{
+व्योम pmac_pfunc_i2c_suspend(व्योम)
+अणु
 	pmac_i2c_devscan(pmac_i2c_dev_suspend);
-}
+पूर्ण
 
-void pmac_pfunc_i2c_resume(void)
-{
+व्योम pmac_pfunc_i2c_resume(व्योम)
+अणु
 	pmac_i2c_devscan(pmac_i2c_dev_resume);
-}
+पूर्ण
 
 /*
  * Initialize us: probe all i2c busses on the machine, instantiate
- * busses and platform functions as needed.
+ * busses and platक्रमm functions as needed.
  */
-/* This is non-static as it might be called early by smp code */
-int __init pmac_i2c_init(void)
-{
-	static int i2c_inited;
+/* This is non-अटल as it might be called early by smp code */
+पूर्णांक __init pmac_i2c_init(व्योम)
+अणु
+	अटल पूर्णांक i2c_inited;
 
-	if (i2c_inited)
-		return 0;
+	अगर (i2c_inited)
+		वापस 0;
 	i2c_inited = 1;
 
 	/* Probe keywest-i2c busses */
 	kw_i2c_probe();
 
-#ifdef CONFIG_ADB_PMU
+#अगर_घोषित CONFIG_ADB_PMU
 	/* Probe PMU i2c busses */
 	pmu_i2c_probe();
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_PMAC_SMU
+#अगर_घोषित CONFIG_PMAC_SMU
 	/* Probe SMU i2c busses */
 	smu_i2c_probe();
-#endif
+#पूर्ण_अगर
 
-	/* Now add plaform functions for some known devices */
+	/* Now add plaक्रमm functions क्रम some known devices */
 	pmac_i2c_devscan(pmac_i2c_dev_create);
 
-	return 0;
-}
-machine_arch_initcall(powermac, pmac_i2c_init);
+	वापस 0;
+पूर्ण
+machine_arch_initcall(घातermac, pmac_i2c_init);
 
-/* Since pmac_i2c_init can be called too early for the platform device
- * registration, we need to do it at a later time. In our case, subsys
+/* Since pmac_i2c_init can be called too early क्रम the platक्रमm device
+ * registration, we need to करो it at a later समय. In our हाल, subsys
  * happens to fit well, though I agree it's a bit of a hack...
  */
-static int __init pmac_i2c_create_platform_devices(void)
-{
-	struct pmac_i2c_bus *bus;
-	int i = 0;
+अटल पूर्णांक __init pmac_i2c_create_platक्रमm_devices(व्योम)
+अणु
+	काष्ठा pmac_i2c_bus *bus;
+	पूर्णांक i = 0;
 
-	/* In the case where we are initialized from smp_init(), we must
-	 * not use the timer (and thus the irq). It's safe from now on
+	/* In the हाल where we are initialized from smp_init(), we must
+	 * not use the समयr (and thus the irq). It's safe from now on
 	 * though
 	 */
-	pmac_i2c_force_poll = 0;
+	pmac_i2c_क्रमce_poll = 0;
 
-	/* Create platform devices */
-	list_for_each_entry(bus, &pmac_i2c_busses, link) {
-		bus->platform_dev =
-			platform_device_alloc("i2c-powermac", i++);
-		if (bus->platform_dev == NULL)
-			return -ENOMEM;
-		bus->platform_dev->dev.platform_data = bus;
-		bus->platform_dev->dev.of_node = bus->busnode;
-		platform_device_add(bus->platform_dev);
-	}
+	/* Create platक्रमm devices */
+	list_क्रम_each_entry(bus, &pmac_i2c_busses, link) अणु
+		bus->platक्रमm_dev =
+			platक्रमm_device_alloc("i2c-powermac", i++);
+		अगर (bus->platक्रमm_dev == शून्य)
+			वापस -ENOMEM;
+		bus->platक्रमm_dev->dev.platक्रमm_data = bus;
+		bus->platक्रमm_dev->dev.of_node = bus->busnode;
+		platक्रमm_device_add(bus->platक्रमm_dev);
+	पूर्ण
 
-	/* Now call platform "init" functions */
+	/* Now call platक्रमm "init" functions */
 	pmac_i2c_devscan(pmac_i2c_dev_init);
 
-	return 0;
-}
-machine_subsys_initcall(powermac, pmac_i2c_create_platform_devices);
+	वापस 0;
+पूर्ण
+machine_subsys_initcall(घातermac, pmac_i2c_create_platक्रमm_devices);

@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2007 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,379 +32,379 @@
  *
  */
 
-#include <asm/page.h>
-#include <linux/mlx4/cq.h>
-#include <linux/slab.h>
-#include <linux/mlx4/qp.h>
-#include <linux/skbuff.h>
-#include <linux/if_vlan.h>
-#include <linux/prefetch.h>
-#include <linux/vmalloc.h>
-#include <linux/tcp.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/moduleparam.h>
-#include <linux/indirect_call_wrapper.h>
+#समावेश <यंत्र/page.h>
+#समावेश <linux/mlx4/cq.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mlx4/qp.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/indirect_call_wrapper.h>
 
-#include "mlx4_en.h"
+#समावेश "mlx4_en.h"
 
-int mlx4_en_create_tx_ring(struct mlx4_en_priv *priv,
-			   struct mlx4_en_tx_ring **pring, u32 size,
-			   u16 stride, int node, int queue_index)
-{
-	struct mlx4_en_dev *mdev = priv->mdev;
-	struct mlx4_en_tx_ring *ring;
-	int tmp;
-	int err;
+पूर्णांक mlx4_en_create_tx_ring(काष्ठा mlx4_en_priv *priv,
+			   काष्ठा mlx4_en_tx_ring **pring, u32 size,
+			   u16 stride, पूर्णांक node, पूर्णांक queue_index)
+अणु
+	काष्ठा mlx4_en_dev *mdev = priv->mdev;
+	काष्ठा mlx4_en_tx_ring *ring;
+	पूर्णांक पंचांगp;
+	पूर्णांक err;
 
-	ring = kzalloc_node(sizeof(*ring), GFP_KERNEL, node);
-	if (!ring) {
+	ring = kzalloc_node(माप(*ring), GFP_KERNEL, node);
+	अगर (!ring) अणु
 		en_err(priv, "Failed allocating TX ring\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ring->size = size;
 	ring->size_mask = size - 1;
 	ring->sp_stride = stride;
 	ring->full_size = ring->size - HEADROOM - MAX_DESC_TXBBS;
 
-	tmp = size * sizeof(struct mlx4_en_tx_info);
-	ring->tx_info = kvmalloc_node(tmp, GFP_KERNEL, node);
-	if (!ring->tx_info) {
+	पंचांगp = size * माप(काष्ठा mlx4_en_tx_info);
+	ring->tx_info = kvदो_स्मृति_node(पंचांगp, GFP_KERNEL, node);
+	अगर (!ring->tx_info) अणु
 		err = -ENOMEM;
-		goto err_ring;
-	}
+		जाओ err_ring;
+	पूर्ण
 
 	en_dbg(DRV, priv, "Allocated tx_info ring at addr:%p size:%d\n",
-		 ring->tx_info, tmp);
+		 ring->tx_info, पंचांगp);
 
-	ring->bounce_buf = kmalloc_node(MAX_DESC_SIZE, GFP_KERNEL, node);
-	if (!ring->bounce_buf) {
-		ring->bounce_buf = kmalloc(MAX_DESC_SIZE, GFP_KERNEL);
-		if (!ring->bounce_buf) {
+	ring->bounce_buf = kदो_स्मृति_node(MAX_DESC_SIZE, GFP_KERNEL, node);
+	अगर (!ring->bounce_buf) अणु
+		ring->bounce_buf = kदो_स्मृति(MAX_DESC_SIZE, GFP_KERNEL);
+		अगर (!ring->bounce_buf) अणु
 			err = -ENOMEM;
-			goto err_info;
-		}
-	}
+			जाओ err_info;
+		पूर्ण
+	पूर्ण
 	ring->buf_size = ALIGN(size * ring->sp_stride, MLX4_EN_PAGE_SIZE);
 
 	/* Allocate HW buffers on provided NUMA node */
 	set_dev_node(&mdev->dev->persist->pdev->dev, node);
 	err = mlx4_alloc_hwq_res(mdev->dev, &ring->sp_wqres, ring->buf_size);
 	set_dev_node(&mdev->dev->persist->pdev->dev, mdev->dev->numa_node);
-	if (err) {
+	अगर (err) अणु
 		en_err(priv, "Failed allocating hwq resources\n");
-		goto err_bounce;
-	}
+		जाओ err_bounce;
+	पूर्ण
 
 	ring->buf = ring->sp_wqres.buf.direct.buf;
 
 	en_dbg(DRV, priv, "Allocated TX ring (addr:%p) - buf:%p size:%d buf_size:%d dma:%llx\n",
 	       ring, ring->buf, ring->size, ring->buf_size,
-	       (unsigned long long) ring->sp_wqres.buf.direct.map);
+	       (अचिन्हित दीर्घ दीर्घ) ring->sp_wqres.buf.direct.map);
 
 	err = mlx4_qp_reserve_range(mdev->dev, 1, 1, &ring->qpn,
 				    MLX4_RESERVE_ETH_BF_QP,
 				    MLX4_RES_USAGE_DRIVER);
-	if (err) {
+	अगर (err) अणु
 		en_err(priv, "failed reserving qp for TX ring\n");
-		goto err_hwq_res;
-	}
+		जाओ err_hwq_res;
+	पूर्ण
 
 	err = mlx4_qp_alloc(mdev->dev, ring->qpn, &ring->sp_qp);
-	if (err) {
+	अगर (err) अणु
 		en_err(priv, "Failed allocating qp %d\n", ring->qpn);
-		goto err_reserve;
-	}
+		जाओ err_reserve;
+	पूर्ण
 	ring->sp_qp.event = mlx4_en_sqp_event;
 
 	err = mlx4_bf_alloc(mdev->dev, &ring->bf, node);
-	if (err) {
+	अगर (err) अणु
 		en_dbg(DRV, priv, "working without blueflame (%d)\n", err);
 		ring->bf.uar = &mdev->priv_uar;
 		ring->bf.uar->map = mdev->uar_map;
 		ring->bf_enabled = false;
 		ring->bf_alloced = false;
 		priv->pflags &= ~MLX4_EN_PRIV_FLAGS_BLUEFLAME;
-	} else {
+	पूर्ण अन्यथा अणु
 		ring->bf_alloced = true;
 		ring->bf_enabled = !!(priv->pflags &
 				      MLX4_EN_PRIV_FLAGS_BLUEFLAME);
-	}
+	पूर्ण
 
 	ring->hwtstamp_tx_type = priv->hwtstamp_config.tx_type;
 	ring->queue_index = queue_index;
 
-	if (queue_index < priv->num_tx_rings_p_up)
-		cpumask_set_cpu(cpumask_local_spread(queue_index,
+	अगर (queue_index < priv->num_tx_rings_p_up)
+		cpumask_set_cpu(cpumask_local_spपढ़ो(queue_index,
 						     priv->mdev->dev->numa_node),
 				&ring->sp_affinity_mask);
 
 	*pring = ring;
-	return 0;
+	वापस 0;
 
 err_reserve:
 	mlx4_qp_release_range(mdev->dev, ring->qpn, 1);
 err_hwq_res:
-	mlx4_free_hwq_res(mdev->dev, &ring->sp_wqres, ring->buf_size);
+	mlx4_मुक्त_hwq_res(mdev->dev, &ring->sp_wqres, ring->buf_size);
 err_bounce:
-	kfree(ring->bounce_buf);
-	ring->bounce_buf = NULL;
+	kमुक्त(ring->bounce_buf);
+	ring->bounce_buf = शून्य;
 err_info:
-	kvfree(ring->tx_info);
-	ring->tx_info = NULL;
+	kvमुक्त(ring->tx_info);
+	ring->tx_info = शून्य;
 err_ring:
-	kfree(ring);
-	*pring = NULL;
-	return err;
-}
+	kमुक्त(ring);
+	*pring = शून्य;
+	वापस err;
+पूर्ण
 
-void mlx4_en_destroy_tx_ring(struct mlx4_en_priv *priv,
-			     struct mlx4_en_tx_ring **pring)
-{
-	struct mlx4_en_dev *mdev = priv->mdev;
-	struct mlx4_en_tx_ring *ring = *pring;
+व्योम mlx4_en_destroy_tx_ring(काष्ठा mlx4_en_priv *priv,
+			     काष्ठा mlx4_en_tx_ring **pring)
+अणु
+	काष्ठा mlx4_en_dev *mdev = priv->mdev;
+	काष्ठा mlx4_en_tx_ring *ring = *pring;
 	en_dbg(DRV, priv, "Destroying tx ring, qpn: %d\n", ring->qpn);
 
-	if (ring->bf_alloced)
-		mlx4_bf_free(mdev->dev, &ring->bf);
-	mlx4_qp_remove(mdev->dev, &ring->sp_qp);
-	mlx4_qp_free(mdev->dev, &ring->sp_qp);
+	अगर (ring->bf_alloced)
+		mlx4_bf_मुक्त(mdev->dev, &ring->bf);
+	mlx4_qp_हटाओ(mdev->dev, &ring->sp_qp);
+	mlx4_qp_मुक्त(mdev->dev, &ring->sp_qp);
 	mlx4_qp_release_range(priv->mdev->dev, ring->qpn, 1);
-	mlx4_free_hwq_res(mdev->dev, &ring->sp_wqres, ring->buf_size);
-	kfree(ring->bounce_buf);
-	ring->bounce_buf = NULL;
-	kvfree(ring->tx_info);
-	ring->tx_info = NULL;
-	kfree(ring);
-	*pring = NULL;
-}
+	mlx4_मुक्त_hwq_res(mdev->dev, &ring->sp_wqres, ring->buf_size);
+	kमुक्त(ring->bounce_buf);
+	ring->bounce_buf = शून्य;
+	kvमुक्त(ring->tx_info);
+	ring->tx_info = शून्य;
+	kमुक्त(ring);
+	*pring = शून्य;
+पूर्ण
 
-int mlx4_en_activate_tx_ring(struct mlx4_en_priv *priv,
-			     struct mlx4_en_tx_ring *ring,
-			     int cq, int user_prio)
-{
-	struct mlx4_en_dev *mdev = priv->mdev;
-	int err;
+पूर्णांक mlx4_en_activate_tx_ring(काष्ठा mlx4_en_priv *priv,
+			     काष्ठा mlx4_en_tx_ring *ring,
+			     पूर्णांक cq, पूर्णांक user_prio)
+अणु
+	काष्ठा mlx4_en_dev *mdev = priv->mdev;
+	पूर्णांक err;
 
 	ring->sp_cqn = cq;
 	ring->prod = 0;
 	ring->cons = 0xffffffff;
 	ring->last_nr_txbb = 1;
-	memset(ring->tx_info, 0, ring->size * sizeof(struct mlx4_en_tx_info));
-	memset(ring->buf, 0, ring->buf_size);
-	ring->free_tx_desc = mlx4_en_free_tx_desc;
+	स_रखो(ring->tx_info, 0, ring->size * माप(काष्ठा mlx4_en_tx_info));
+	स_रखो(ring->buf, 0, ring->buf_size);
+	ring->मुक्त_tx_desc = mlx4_en_मुक्त_tx_desc;
 
 	ring->sp_qp_state = MLX4_QP_STATE_RST;
-	ring->doorbell_qpn = cpu_to_be32(ring->sp_qp.qpn << 8);
+	ring->करोorbell_qpn = cpu_to_be32(ring->sp_qp.qpn << 8);
 	ring->mr_key = cpu_to_be32(mdev->mr.key);
 
 	mlx4_en_fill_qp_context(priv, ring->size, ring->sp_stride, 1, 0, ring->qpn,
 				ring->sp_cqn, user_prio, &ring->sp_context);
-	if (ring->bf_alloced)
+	अगर (ring->bf_alloced)
 		ring->sp_context.usr_page =
 			cpu_to_be32(mlx4_to_hw_uar_index(mdev->dev,
 							 ring->bf.uar->index));
 
-	err = mlx4_qp_to_ready(mdev->dev, &ring->sp_wqres.mtt, &ring->sp_context,
+	err = mlx4_qp_to_पढ़ोy(mdev->dev, &ring->sp_wqres.mtt, &ring->sp_context,
 			       &ring->sp_qp, &ring->sp_qp_state);
-	if (!cpumask_empty(&ring->sp_affinity_mask))
-		netif_set_xps_queue(priv->dev, &ring->sp_affinity_mask,
+	अगर (!cpumask_empty(&ring->sp_affinity_mask))
+		netअगर_set_xps_queue(priv->dev, &ring->sp_affinity_mask,
 				    ring->queue_index);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void mlx4_en_deactivate_tx_ring(struct mlx4_en_priv *priv,
-				struct mlx4_en_tx_ring *ring)
-{
-	struct mlx4_en_dev *mdev = priv->mdev;
+व्योम mlx4_en_deactivate_tx_ring(काष्ठा mlx4_en_priv *priv,
+				काष्ठा mlx4_en_tx_ring *ring)
+अणु
+	काष्ठा mlx4_en_dev *mdev = priv->mdev;
 
-	mlx4_qp_modify(mdev->dev, NULL, ring->sp_qp_state,
-		       MLX4_QP_STATE_RST, NULL, 0, 0, &ring->sp_qp);
-}
+	mlx4_qp_modअगरy(mdev->dev, शून्य, ring->sp_qp_state,
+		       MLX4_QP_STATE_RST, शून्य, 0, 0, &ring->sp_qp);
+पूर्ण
 
-static inline bool mlx4_en_is_tx_ring_full(struct mlx4_en_tx_ring *ring)
-{
-	return ring->prod - ring->cons > ring->full_size;
-}
+अटल अंतरभूत bool mlx4_en_is_tx_ring_full(काष्ठा mlx4_en_tx_ring *ring)
+अणु
+	वापस ring->prod - ring->cons > ring->full_size;
+पूर्ण
 
-static void mlx4_en_stamp_wqe(struct mlx4_en_priv *priv,
-			      struct mlx4_en_tx_ring *ring, int index,
+अटल व्योम mlx4_en_stamp_wqe(काष्ठा mlx4_en_priv *priv,
+			      काष्ठा mlx4_en_tx_ring *ring, पूर्णांक index,
 			      u8 owner)
-{
+अणु
 	__be32 stamp = cpu_to_be32(STAMP_VAL | (!!owner << STAMP_SHIFT));
-	struct mlx4_en_tx_desc *tx_desc = ring->buf + (index << LOG_TXBB_SIZE);
-	struct mlx4_en_tx_info *tx_info = &ring->tx_info[index];
-	void *end = ring->buf + ring->buf_size;
+	काष्ठा mlx4_en_tx_desc *tx_desc = ring->buf + (index << LOG_TXBB_SIZE);
+	काष्ठा mlx4_en_tx_info *tx_info = &ring->tx_info[index];
+	व्योम *end = ring->buf + ring->buf_size;
 	__be32 *ptr = (__be32 *)tx_desc;
-	int i;
+	पूर्णांक i;
 
-	/* Optimize the common case when there are no wraparounds */
-	if (likely((void *)tx_desc +
-		   (tx_info->nr_txbb << LOG_TXBB_SIZE) <= end)) {
-		/* Stamp the freed descriptor */
-		for (i = 0; i < tx_info->nr_txbb << LOG_TXBB_SIZE;
-		     i += STAMP_STRIDE) {
+	/* Optimize the common हाल when there are no wraparounds */
+	अगर (likely((व्योम *)tx_desc +
+		   (tx_info->nr_txbb << LOG_TXBB_SIZE) <= end)) अणु
+		/* Stamp the मुक्तd descriptor */
+		क्रम (i = 0; i < tx_info->nr_txbb << LOG_TXBB_SIZE;
+		     i += STAMP_STRIDE) अणु
 			*ptr = stamp;
 			ptr += STAMP_DWORDS;
-		}
-	} else {
-		/* Stamp the freed descriptor */
-		for (i = 0; i < tx_info->nr_txbb << LOG_TXBB_SIZE;
-		     i += STAMP_STRIDE) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* Stamp the मुक्तd descriptor */
+		क्रम (i = 0; i < tx_info->nr_txbb << LOG_TXBB_SIZE;
+		     i += STAMP_STRIDE) अणु
 			*ptr = stamp;
 			ptr += STAMP_DWORDS;
-			if ((void *)ptr >= end) {
+			अगर ((व्योम *)ptr >= end) अणु
 				ptr = ring->buf;
 				stamp ^= cpu_to_be32(0x80000000);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-INDIRECT_CALLABLE_DECLARE(u32 mlx4_en_free_tx_desc(struct mlx4_en_priv *priv,
-						   struct mlx4_en_tx_ring *ring,
-						   int index, u64 timestamp,
-						   int napi_mode));
+INसूचीECT_CALLABLE_DECLARE(u32 mlx4_en_मुक्त_tx_desc(काष्ठा mlx4_en_priv *priv,
+						   काष्ठा mlx4_en_tx_ring *ring,
+						   पूर्णांक index, u64 बारtamp,
+						   पूर्णांक napi_mode));
 
-u32 mlx4_en_free_tx_desc(struct mlx4_en_priv *priv,
-			 struct mlx4_en_tx_ring *ring,
-			 int index, u64 timestamp,
-			 int napi_mode)
-{
-	struct mlx4_en_tx_info *tx_info = &ring->tx_info[index];
-	struct mlx4_en_tx_desc *tx_desc = ring->buf + (index << LOG_TXBB_SIZE);
-	struct mlx4_wqe_data_seg *data = (void *) tx_desc + tx_info->data_offset;
-	void *end = ring->buf + ring->buf_size;
-	struct sk_buff *skb = tx_info->skb;
-	int nr_maps = tx_info->nr_maps;
-	int i;
+u32 mlx4_en_मुक्त_tx_desc(काष्ठा mlx4_en_priv *priv,
+			 काष्ठा mlx4_en_tx_ring *ring,
+			 पूर्णांक index, u64 बारtamp,
+			 पूर्णांक napi_mode)
+अणु
+	काष्ठा mlx4_en_tx_info *tx_info = &ring->tx_info[index];
+	काष्ठा mlx4_en_tx_desc *tx_desc = ring->buf + (index << LOG_TXBB_SIZE);
+	काष्ठा mlx4_wqe_data_seg *data = (व्योम *) tx_desc + tx_info->data_offset;
+	व्योम *end = ring->buf + ring->buf_size;
+	काष्ठा sk_buff *skb = tx_info->skb;
+	पूर्णांक nr_maps = tx_info->nr_maps;
+	पूर्णांक i;
 
-	/* We do not touch skb here, so prefetch skb->users location
+	/* We करो not touch skb here, so prefetch skb->users location
 	 * to speedup consume_skb()
 	 */
 	prefetchw(&skb->users);
 
-	if (unlikely(timestamp)) {
-		struct skb_shared_hwtstamps hwts;
+	अगर (unlikely(बारtamp)) अणु
+		काष्ठा skb_shared_hwtstamps hwts;
 
-		mlx4_en_fill_hwtstamps(priv->mdev, &hwts, timestamp);
+		mlx4_en_fill_hwtstamps(priv->mdev, &hwts, बारtamp);
 		skb_tstamp_tx(skb, &hwts);
-	}
+	पूर्ण
 
-	if (!tx_info->inl) {
-		if (tx_info->linear)
+	अगर (!tx_info->inl) अणु
+		अगर (tx_info->linear)
 			dma_unmap_single(priv->ddev,
 					 tx_info->map0_dma,
 					 tx_info->map0_byte_count,
 					 PCI_DMA_TODEVICE);
-		else
+		अन्यथा
 			dma_unmap_page(priv->ddev,
 				       tx_info->map0_dma,
 				       tx_info->map0_byte_count,
 				       PCI_DMA_TODEVICE);
-		/* Optimize the common case when there are no wraparounds */
-		if (likely((void *)tx_desc +
-			   (tx_info->nr_txbb << LOG_TXBB_SIZE) <= end)) {
-			for (i = 1; i < nr_maps; i++) {
+		/* Optimize the common हाल when there are no wraparounds */
+		अगर (likely((व्योम *)tx_desc +
+			   (tx_info->nr_txbb << LOG_TXBB_SIZE) <= end)) अणु
+			क्रम (i = 1; i < nr_maps; i++) अणु
 				data++;
 				dma_unmap_page(priv->ddev,
 					(dma_addr_t)be64_to_cpu(data->addr),
 					be32_to_cpu(data->byte_count),
 					PCI_DMA_TODEVICE);
-			}
-		} else {
-			if ((void *)data >= end)
-				data = ring->buf + ((void *)data - end);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर ((व्योम *)data >= end)
+				data = ring->buf + ((व्योम *)data - end);
 
-			for (i = 1; i < nr_maps; i++) {
+			क्रम (i = 1; i < nr_maps; i++) अणु
 				data++;
-				/* Check for wraparound before unmapping */
-				if ((void *) data >= end)
+				/* Check क्रम wraparound beक्रमe unmapping */
+				अगर ((व्योम *) data >= end)
 					data = ring->buf;
 				dma_unmap_page(priv->ddev,
 					(dma_addr_t)be64_to_cpu(data->addr),
 					be32_to_cpu(data->byte_count),
 					PCI_DMA_TODEVICE);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	napi_consume_skb(skb, napi_mode);
 
-	return tx_info->nr_txbb;
-}
+	वापस tx_info->nr_txbb;
+पूर्ण
 
-INDIRECT_CALLABLE_DECLARE(u32 mlx4_en_recycle_tx_desc(struct mlx4_en_priv *priv,
-						      struct mlx4_en_tx_ring *ring,
-						      int index, u64 timestamp,
-						      int napi_mode));
+INसूचीECT_CALLABLE_DECLARE(u32 mlx4_en_recycle_tx_desc(काष्ठा mlx4_en_priv *priv,
+						      काष्ठा mlx4_en_tx_ring *ring,
+						      पूर्णांक index, u64 बारtamp,
+						      पूर्णांक napi_mode));
 
-u32 mlx4_en_recycle_tx_desc(struct mlx4_en_priv *priv,
-			    struct mlx4_en_tx_ring *ring,
-			    int index, u64 timestamp,
-			    int napi_mode)
-{
-	struct mlx4_en_tx_info *tx_info = &ring->tx_info[index];
-	struct mlx4_en_rx_alloc frame = {
+u32 mlx4_en_recycle_tx_desc(काष्ठा mlx4_en_priv *priv,
+			    काष्ठा mlx4_en_tx_ring *ring,
+			    पूर्णांक index, u64 बारtamp,
+			    पूर्णांक napi_mode)
+अणु
+	काष्ठा mlx4_en_tx_info *tx_info = &ring->tx_info[index];
+	काष्ठा mlx4_en_rx_alloc frame = अणु
 		.page = tx_info->page,
 		.dma = tx_info->map0_dma,
-	};
+	पूर्ण;
 
-	if (!napi_mode || !mlx4_en_rx_recycle(ring->recycle_ring, &frame)) {
+	अगर (!napi_mode || !mlx4_en_rx_recycle(ring->recycle_ring, &frame)) अणु
 		dma_unmap_page(priv->ddev, tx_info->map0_dma,
 			       PAGE_SIZE, priv->dma_dir);
 		put_page(tx_info->page);
-	}
+	पूर्ण
 
-	return tx_info->nr_txbb;
-}
+	वापस tx_info->nr_txbb;
+पूर्ण
 
-int mlx4_en_free_tx_buf(struct net_device *dev, struct mlx4_en_tx_ring *ring)
-{
-	struct mlx4_en_priv *priv = netdev_priv(dev);
-	int cnt = 0;
+पूर्णांक mlx4_en_मुक्त_tx_buf(काष्ठा net_device *dev, काष्ठा mlx4_en_tx_ring *ring)
+अणु
+	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+	पूर्णांक cnt = 0;
 
 	/* Skip last polled descriptor */
 	ring->cons += ring->last_nr_txbb;
 	en_dbg(DRV, priv, "Freeing Tx buf - cons:0x%x prod:0x%x\n",
 		 ring->cons, ring->prod);
 
-	if ((u32) (ring->prod - ring->cons) > ring->size) {
-		if (netif_msg_tx_err(priv))
+	अगर ((u32) (ring->prod - ring->cons) > ring->size) अणु
+		अगर (netअगर_msg_tx_err(priv))
 			en_warn(priv, "Tx consumer passed producer!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	while (ring->cons != ring->prod) {
-		ring->last_nr_txbb = ring->free_tx_desc(priv, ring,
+	जबतक (ring->cons != ring->prod) अणु
+		ring->last_nr_txbb = ring->मुक्त_tx_desc(priv, ring,
 						ring->cons & ring->size_mask,
 						0, 0 /* Non-NAPI caller */);
 		ring->cons += ring->last_nr_txbb;
 		cnt++;
-	}
+	पूर्ण
 
-	if (ring->tx_queue)
+	अगर (ring->tx_queue)
 		netdev_tx_reset_queue(ring->tx_queue);
 
-	if (cnt)
+	अगर (cnt)
 		en_dbg(DRV, priv, "Freed %d uncompleted tx descriptors\n", cnt);
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static void mlx4_en_handle_err_cqe(struct mlx4_en_priv *priv, struct mlx4_err_cqe *err_cqe,
-				   u16 cqe_index, struct mlx4_en_tx_ring *ring)
-{
-	struct mlx4_en_dev *mdev = priv->mdev;
-	struct mlx4_en_tx_info *tx_info;
-	struct mlx4_en_tx_desc *tx_desc;
+अटल व्योम mlx4_en_handle_err_cqe(काष्ठा mlx4_en_priv *priv, काष्ठा mlx4_err_cqe *err_cqe,
+				   u16 cqe_index, काष्ठा mlx4_en_tx_ring *ring)
+अणु
+	काष्ठा mlx4_en_dev *mdev = priv->mdev;
+	काष्ठा mlx4_en_tx_info *tx_info;
+	काष्ठा mlx4_en_tx_desc *tx_desc;
 	u16 wqe_index;
-	int desc_size;
+	पूर्णांक desc_size;
 
 	en_err(priv, "CQE error - cqn 0x%x, ci 0x%x, vendor syndrome: 0x%x syndrome: 0x%x\n",
-	       ring->sp_cqn, cqe_index, err_cqe->vendor_err_syndrome, err_cqe->syndrome);
-	print_hex_dump(KERN_WARNING, "", DUMP_PREFIX_OFFSET, 16, 1, err_cqe, sizeof(*err_cqe),
+	       ring->sp_cqn, cqe_index, err_cqe->venकरोr_err_syndrome, err_cqe->syndrome);
+	prपूर्णांक_hex_dump(KERN_WARNING, "", DUMP_PREFIX_OFFSET, 16, 1, err_cqe, माप(*err_cqe),
 		       false);
 
 	wqe_index = be16_to_cpu(err_cqe->wqe_index) & ring->size_mask;
@@ -412,39 +413,39 @@ static void mlx4_en_handle_err_cqe(struct mlx4_en_priv *priv, struct mlx4_err_cq
 	en_err(priv, "Related WQE - qpn 0x%x, wqe index 0x%x, wqe size 0x%x\n", ring->qpn,
 	       wqe_index, desc_size);
 	tx_desc = ring->buf + (wqe_index << LOG_TXBB_SIZE);
-	print_hex_dump(KERN_WARNING, "", DUMP_PREFIX_OFFSET, 16, 1, tx_desc, desc_size, false);
+	prपूर्णांक_hex_dump(KERN_WARNING, "", DUMP_PREFIX_OFFSET, 16, 1, tx_desc, desc_size, false);
 
-	if (test_and_set_bit(MLX4_EN_STATE_FLAG_RESTARTING, &priv->state))
-		return;
+	अगर (test_and_set_bit(MLX4_EN_STATE_FLAG_RESTARTING, &priv->state))
+		वापस;
 
 	en_err(priv, "Scheduling port restart\n");
 	queue_work(mdev->workqueue, &priv->restart_task);
-}
+पूर्ण
 
-int mlx4_en_process_tx_cq(struct net_device *dev,
-			  struct mlx4_en_cq *cq, int napi_budget)
-{
-	struct mlx4_en_priv *priv = netdev_priv(dev);
-	struct mlx4_cq *mcq = &cq->mcq;
-	struct mlx4_en_tx_ring *ring = priv->tx_ring[cq->type][cq->ring];
-	struct mlx4_cqe *cqe;
+पूर्णांक mlx4_en_process_tx_cq(काष्ठा net_device *dev,
+			  काष्ठा mlx4_en_cq *cq, पूर्णांक napi_budget)
+अणु
+	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+	काष्ठा mlx4_cq *mcq = &cq->mcq;
+	काष्ठा mlx4_en_tx_ring *ring = priv->tx_ring[cq->type][cq->ring];
+	काष्ठा mlx4_cqe *cqe;
 	u16 index, ring_index, stamp_index;
 	u32 txbbs_skipped = 0;
 	u32 txbbs_stamp = 0;
 	u32 cons_index = mcq->cons_index;
-	int size = cq->size;
+	पूर्णांक size = cq->size;
 	u32 size_mask = ring->size_mask;
-	struct mlx4_cqe *buf = cq->buf;
+	काष्ठा mlx4_cqe *buf = cq->buf;
 	u32 packets = 0;
 	u32 bytes = 0;
-	int factor = priv->cqe_factor;
-	int done = 0;
-	int budget = priv->tx_work_limit;
+	पूर्णांक factor = priv->cqe_factor;
+	पूर्णांक करोne = 0;
+	पूर्णांक budget = priv->tx_work_limit;
 	u32 last_nr_txbb;
 	u32 ring_cons;
 
-	if (unlikely(!priv->port_up))
-		return 0;
+	अगर (unlikely(!priv->port_up))
+		वापस 0;
 
 	netdev_txq_bql_complete_prefetchw(ring->tx_queue);
 
@@ -456,40 +457,40 @@ int mlx4_en_process_tx_cq(struct net_device *dev,
 	stamp_index = ring_index;
 
 	/* Process all completed CQEs */
-	while (XNOR(cqe->owner_sr_opcode & MLX4_CQE_OWNER_MASK,
-			cons_index & size) && (done < budget)) {
+	जबतक (XNOR(cqe->owner_sr_opcode & MLX4_CQE_OWNER_MASK,
+			cons_index & size) && (करोne < budget)) अणु
 		u16 new_index;
 
 		/*
-		 * make sure we read the CQE after we read the
+		 * make sure we पढ़ो the CQE after we पढ़ो the
 		 * ownership bit
 		 */
 		dma_rmb();
 
-		if (unlikely((cqe->owner_sr_opcode & MLX4_CQE_OPCODE_MASK) ==
+		अगर (unlikely((cqe->owner_sr_opcode & MLX4_CQE_OPCODE_MASK) ==
 			     MLX4_CQE_OPCODE_ERROR))
-			if (!test_and_set_bit(MLX4_EN_TX_RING_STATE_RECOVERING, &ring->state))
-				mlx4_en_handle_err_cqe(priv, (struct mlx4_err_cqe *)cqe, index,
+			अगर (!test_and_set_bit(MLX4_EN_TX_RING_STATE_RECOVERING, &ring->state))
+				mlx4_en_handle_err_cqe(priv, (काष्ठा mlx4_err_cqe *)cqe, index,
 						       ring);
 
 		/* Skip over last polled CQE */
 		new_index = be16_to_cpu(cqe->wqe_index) & size_mask;
 
-		do {
-			u64 timestamp = 0;
+		करो अणु
+			u64 बारtamp = 0;
 
 			txbbs_skipped += last_nr_txbb;
 			ring_index = (ring_index + last_nr_txbb) & size_mask;
 
-			if (unlikely(ring->tx_info[ring_index].ts_requested))
-				timestamp = mlx4_en_get_cqe_ts(cqe);
+			अगर (unlikely(ring->tx_info[ring_index].ts_requested))
+				बारtamp = mlx4_en_get_cqe_ts(cqe);
 
-			/* free next descriptor */
-			last_nr_txbb = INDIRECT_CALL_2(ring->free_tx_desc,
-						       mlx4_en_free_tx_desc,
+			/* मुक्त next descriptor */
+			last_nr_txbb = INसूचीECT_CALL_2(ring->मुक्त_tx_desc,
+						       mlx4_en_मुक्त_tx_desc,
 						       mlx4_en_recycle_tx_desc,
 					priv, ring, ring_index,
-					timestamp, napi_budget);
+					बारtamp, napi_budget);
 
 			mlx4_en_stamp_wqe(priv, ring, stamp_index,
 					  !!((ring_cons + txbbs_stamp) &
@@ -498,12 +499,12 @@ int mlx4_en_process_tx_cq(struct net_device *dev,
 			txbbs_stamp = txbbs_skipped;
 			packets++;
 			bytes += ring->tx_info[ring_index].nr_bytes;
-		} while ((++done < budget) && (ring_index != new_index));
+		पूर्ण जबतक ((++करोne < budget) && (ring_index != new_index));
 
 		++cons_index;
 		index = cons_index & size_mask;
 		cqe = mlx4_en_get_cqe(buf, index, priv->cqe_size) + factor;
-	}
+	पूर्ण
 
 	/*
 	 * To prevent CQ overflow we first update CQ consumer and only then
@@ -517,259 +518,259 @@ int mlx4_en_process_tx_cq(struct net_device *dev,
 	WRITE_ONCE(ring->last_nr_txbb, last_nr_txbb);
 	WRITE_ONCE(ring->cons, ring_cons + txbbs_skipped);
 
-	if (cq->type == TX_XDP)
-		return done;
+	अगर (cq->type == TX_XDP)
+		वापस करोne;
 
 	netdev_tx_completed_queue(ring->tx_queue, packets, bytes);
 
-	/* Wakeup Tx queue if this stopped, and ring is not full.
+	/* Wakeup Tx queue अगर this stopped, and ring is not full.
 	 */
-	if (netif_tx_queue_stopped(ring->tx_queue) &&
-	    !mlx4_en_is_tx_ring_full(ring)) {
-		netif_tx_wake_queue(ring->tx_queue);
+	अगर (netअगर_tx_queue_stopped(ring->tx_queue) &&
+	    !mlx4_en_is_tx_ring_full(ring)) अणु
+		netअगर_tx_wake_queue(ring->tx_queue);
 		ring->wake_queue++;
-	}
+	पूर्ण
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-void mlx4_en_tx_irq(struct mlx4_cq *mcq)
-{
-	struct mlx4_en_cq *cq = container_of(mcq, struct mlx4_en_cq, mcq);
-	struct mlx4_en_priv *priv = netdev_priv(cq->dev);
+व्योम mlx4_en_tx_irq(काष्ठा mlx4_cq *mcq)
+अणु
+	काष्ठा mlx4_en_cq *cq = container_of(mcq, काष्ठा mlx4_en_cq, mcq);
+	काष्ठा mlx4_en_priv *priv = netdev_priv(cq->dev);
 
-	if (likely(priv->port_up))
+	अगर (likely(priv->port_up))
 		napi_schedule_irqoff(&cq->napi);
-	else
+	अन्यथा
 		mlx4_en_arm_cq(priv, cq);
-}
+पूर्ण
 
 /* TX CQ polling - called by NAPI */
-int mlx4_en_poll_tx_cq(struct napi_struct *napi, int budget)
-{
-	struct mlx4_en_cq *cq = container_of(napi, struct mlx4_en_cq, napi);
-	struct net_device *dev = cq->dev;
-	struct mlx4_en_priv *priv = netdev_priv(dev);
-	int work_done;
+पूर्णांक mlx4_en_poll_tx_cq(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा mlx4_en_cq *cq = container_of(napi, काष्ठा mlx4_en_cq, napi);
+	काष्ठा net_device *dev = cq->dev;
+	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+	पूर्णांक work_करोne;
 
-	work_done = mlx4_en_process_tx_cq(dev, cq, budget);
-	if (work_done >= budget)
-		return budget;
+	work_करोne = mlx4_en_process_tx_cq(dev, cq, budget);
+	अगर (work_करोne >= budget)
+		वापस budget;
 
-	if (napi_complete_done(napi, work_done))
+	अगर (napi_complete_करोne(napi, work_करोne))
 		mlx4_en_arm_cq(priv, cq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct mlx4_en_tx_desc *mlx4_en_bounce_to_desc(struct mlx4_en_priv *priv,
-						      struct mlx4_en_tx_ring *ring,
+अटल काष्ठा mlx4_en_tx_desc *mlx4_en_bounce_to_desc(काष्ठा mlx4_en_priv *priv,
+						      काष्ठा mlx4_en_tx_ring *ring,
 						      u32 index,
-						      unsigned int desc_size)
-{
+						      अचिन्हित पूर्णांक desc_size)
+अणु
 	u32 copy = (ring->size - index) << LOG_TXBB_SIZE;
-	int i;
+	पूर्णांक i;
 
-	for (i = desc_size - copy - 4; i >= 0; i -= 4) {
-		if ((i & (TXBB_SIZE - 1)) == 0)
+	क्रम (i = desc_size - copy - 4; i >= 0; i -= 4) अणु
+		अगर ((i & (TXBB_SIZE - 1)) == 0)
 			wmb();
 
 		*((u32 *) (ring->buf + i)) =
 			*((u32 *) (ring->bounce_buf + copy + i));
-	}
+	पूर्ण
 
-	for (i = copy - 4; i >= 4 ; i -= 4) {
-		if ((i & (TXBB_SIZE - 1)) == 0)
+	क्रम (i = copy - 4; i >= 4 ; i -= 4) अणु
+		अगर ((i & (TXBB_SIZE - 1)) == 0)
 			wmb();
 
 		*((u32 *)(ring->buf + (index << LOG_TXBB_SIZE) + i)) =
 			*((u32 *) (ring->bounce_buf + i));
-	}
+	पूर्ण
 
 	/* Return real descriptor location */
-	return ring->buf + (index << LOG_TXBB_SIZE);
-}
+	वापस ring->buf + (index << LOG_TXBB_SIZE);
+पूर्ण
 
-/* Decide if skb can be inlined in tx descriptor to avoid dma mapping
+/* Decide अगर skb can be अंतरभूतd in tx descriptor to aव्योम dma mapping
  *
- * It seems strange we do not simply use skb_copy_bits().
- * This would allow to inline all skbs iff skb->len <= inline_thold
+ * It seems strange we करो not simply use skb_copy_bits().
+ * This would allow to अंतरभूत all skbs अगरf skb->len <= अंतरभूत_thold
  *
- * Note that caller already checked skb was not a gso packet
+ * Note that caller alपढ़ोy checked skb was not a gso packet
  */
-static bool is_inline(int inline_thold, const struct sk_buff *skb,
-		      const struct skb_shared_info *shinfo,
-		      void **pfrag)
-{
-	void *ptr;
+अटल bool is_अंतरभूत(पूर्णांक अंतरभूत_thold, स्थिर काष्ठा sk_buff *skb,
+		      स्थिर काष्ठा skb_shared_info *shinfo,
+		      व्योम **pfrag)
+अणु
+	व्योम *ptr;
 
-	if (skb->len > inline_thold || !inline_thold)
-		return false;
+	अगर (skb->len > अंतरभूत_thold || !अंतरभूत_thold)
+		वापस false;
 
-	if (shinfo->nr_frags == 1) {
+	अगर (shinfo->nr_frags == 1) अणु
 		ptr = skb_frag_address_safe(&shinfo->frags[0]);
-		if (unlikely(!ptr))
-			return false;
+		अगर (unlikely(!ptr))
+			वापस false;
 		*pfrag = ptr;
-		return true;
-	}
-	if (shinfo->nr_frags)
-		return false;
-	return true;
-}
+		वापस true;
+	पूर्ण
+	अगर (shinfo->nr_frags)
+		वापस false;
+	वापस true;
+पूर्ण
 
-static int inline_size(const struct sk_buff *skb)
-{
-	if (skb->len + CTRL_SIZE + sizeof(struct mlx4_wqe_inline_seg)
+अटल पूर्णांक अंतरभूत_size(स्थिर काष्ठा sk_buff *skb)
+अणु
+	अगर (skb->len + CTRL_SIZE + माप(काष्ठा mlx4_wqe_अंतरभूत_seg)
 	    <= MLX4_INLINE_ALIGN)
-		return ALIGN(skb->len + CTRL_SIZE +
-			     sizeof(struct mlx4_wqe_inline_seg), 16);
-	else
-		return ALIGN(skb->len + CTRL_SIZE + 2 *
-			     sizeof(struct mlx4_wqe_inline_seg), 16);
-}
+		वापस ALIGN(skb->len + CTRL_SIZE +
+			     माप(काष्ठा mlx4_wqe_अंतरभूत_seg), 16);
+	अन्यथा
+		वापस ALIGN(skb->len + CTRL_SIZE + 2 *
+			     माप(काष्ठा mlx4_wqe_अंतरभूत_seg), 16);
+पूर्ण
 
-static int get_real_size(const struct sk_buff *skb,
-			 const struct skb_shared_info *shinfo,
-			 struct net_device *dev,
-			 int *lso_header_size,
-			 bool *inline_ok,
-			 void **pfrag)
-{
-	struct mlx4_en_priv *priv = netdev_priv(dev);
-	int real_size;
+अटल पूर्णांक get_real_size(स्थिर काष्ठा sk_buff *skb,
+			 स्थिर काष्ठा skb_shared_info *shinfo,
+			 काष्ठा net_device *dev,
+			 पूर्णांक *lso_header_size,
+			 bool *अंतरभूत_ok,
+			 व्योम **pfrag)
+अणु
+	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+	पूर्णांक real_size;
 
-	if (shinfo->gso_size) {
-		*inline_ok = false;
-		if (skb->encapsulation)
+	अगर (shinfo->gso_size) अणु
+		*अंतरभूत_ok = false;
+		अगर (skb->encapsulation)
 			*lso_header_size = (skb_inner_transport_header(skb) - skb->data) + inner_tcp_hdrlen(skb);
-		else
+		अन्यथा
 			*lso_header_size = skb_transport_offset(skb) + tcp_hdrlen(skb);
 		real_size = CTRL_SIZE + shinfo->nr_frags * DS_SIZE +
 			ALIGN(*lso_header_size + 4, DS_SIZE);
-		if (unlikely(*lso_header_size != skb_headlen(skb))) {
-			/* We add a segment for the skb linear buffer only if
+		अगर (unlikely(*lso_header_size != skb_headlen(skb))) अणु
+			/* We add a segment क्रम the skb linear buffer only अगर
 			 * it contains data */
-			if (*lso_header_size < skb_headlen(skb))
+			अगर (*lso_header_size < skb_headlen(skb))
 				real_size += DS_SIZE;
-			else {
-				if (netif_msg_tx_err(priv))
+			अन्यथा अणु
+				अगर (netअगर_msg_tx_err(priv))
 					en_warn(priv, "Non-linear headers\n");
-				return 0;
-			}
-		}
-	} else {
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		*lso_header_size = 0;
-		*inline_ok = is_inline(priv->prof->inline_thold, skb,
+		*अंतरभूत_ok = is_अंतरभूत(priv->prof->अंतरभूत_thold, skb,
 				       shinfo, pfrag);
 
-		if (*inline_ok)
-			real_size = inline_size(skb);
-		else
+		अगर (*अंतरभूत_ok)
+			real_size = अंतरभूत_size(skb);
+		अन्यथा
 			real_size = CTRL_SIZE +
 				    (shinfo->nr_frags + 1) * DS_SIZE;
-	}
+	पूर्ण
 
-	return real_size;
-}
+	वापस real_size;
+पूर्ण
 
-static void build_inline_wqe(struct mlx4_en_tx_desc *tx_desc,
-			     const struct sk_buff *skb,
-			     const struct skb_shared_info *shinfo,
-			     void *fragptr)
-{
-	struct mlx4_wqe_inline_seg *inl = &tx_desc->inl;
-	int spc = MLX4_INLINE_ALIGN - CTRL_SIZE - sizeof(*inl);
-	unsigned int hlen = skb_headlen(skb);
+अटल व्योम build_अंतरभूत_wqe(काष्ठा mlx4_en_tx_desc *tx_desc,
+			     स्थिर काष्ठा sk_buff *skb,
+			     स्थिर काष्ठा skb_shared_info *shinfo,
+			     व्योम *fragptr)
+अणु
+	काष्ठा mlx4_wqe_अंतरभूत_seg *inl = &tx_desc->inl;
+	पूर्णांक spc = MLX4_INLINE_ALIGN - CTRL_SIZE - माप(*inl);
+	अचिन्हित पूर्णांक hlen = skb_headlen(skb);
 
-	if (skb->len <= spc) {
-		if (likely(skb->len >= MIN_PKT_LEN)) {
+	अगर (skb->len <= spc) अणु
+		अगर (likely(skb->len >= MIN_PKT_LEN)) अणु
 			inl->byte_count = cpu_to_be32(1 << 31 | skb->len);
-		} else {
+		पूर्ण अन्यथा अणु
 			inl->byte_count = cpu_to_be32(1 << 31 | MIN_PKT_LEN);
-			memset(((void *)(inl + 1)) + skb->len, 0,
+			स_रखो(((व्योम *)(inl + 1)) + skb->len, 0,
 			       MIN_PKT_LEN - skb->len);
-		}
+		पूर्ण
 		skb_copy_from_linear_data(skb, inl + 1, hlen);
-		if (shinfo->nr_frags)
-			memcpy(((void *)(inl + 1)) + hlen, fragptr,
+		अगर (shinfo->nr_frags)
+			स_नकल(((व्योम *)(inl + 1)) + hlen, fragptr,
 			       skb_frag_size(&shinfo->frags[0]));
 
-	} else {
+	पूर्ण अन्यथा अणु
 		inl->byte_count = cpu_to_be32(1 << 31 | spc);
-		if (hlen <= spc) {
+		अगर (hlen <= spc) अणु
 			skb_copy_from_linear_data(skb, inl + 1, hlen);
-			if (hlen < spc) {
-				memcpy(((void *)(inl + 1)) + hlen,
+			अगर (hlen < spc) अणु
+				स_नकल(((व्योम *)(inl + 1)) + hlen,
 				       fragptr, spc - hlen);
 				fragptr +=  spc - hlen;
-			}
-			inl = (void *) (inl + 1) + spc;
-			memcpy(((void *)(inl + 1)), fragptr, skb->len - spc);
-		} else {
+			पूर्ण
+			inl = (व्योम *) (inl + 1) + spc;
+			स_नकल(((व्योम *)(inl + 1)), fragptr, skb->len - spc);
+		पूर्ण अन्यथा अणु
 			skb_copy_from_linear_data(skb, inl + 1, spc);
-			inl = (void *) (inl + 1) + spc;
+			inl = (व्योम *) (inl + 1) + spc;
 			skb_copy_from_linear_data_offset(skb, spc, inl + 1,
 							 hlen - spc);
-			if (shinfo->nr_frags)
-				memcpy(((void *)(inl + 1)) + hlen - spc,
+			अगर (shinfo->nr_frags)
+				स_नकल(((व्योम *)(inl + 1)) + hlen - spc,
 				       fragptr,
 				       skb_frag_size(&shinfo->frags[0]));
-		}
+		पूर्ण
 
 		dma_wmb();
 		inl->byte_count = cpu_to_be32(1 << 31 | (skb->len - spc));
-	}
-}
+	पूर्ण
+पूर्ण
 
-u16 mlx4_en_select_queue(struct net_device *dev, struct sk_buff *skb,
-			 struct net_device *sb_dev)
-{
-	struct mlx4_en_priv *priv = netdev_priv(dev);
+u16 mlx4_en_select_queue(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+			 काष्ठा net_device *sb_dev)
+अणु
+	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
 	u16 rings_p_up = priv->num_tx_rings_p_up;
 
-	if (netdev_get_num_tc(dev))
-		return netdev_pick_tx(dev, skb, NULL);
+	अगर (netdev_get_num_tc(dev))
+		वापस netdev_pick_tx(dev, skb, शून्य);
 
-	return netdev_pick_tx(dev, skb, NULL) % rings_p_up;
-}
+	वापस netdev_pick_tx(dev, skb, शून्य) % rings_p_up;
+पूर्ण
 
-static void mlx4_bf_copy(void __iomem *dst, const void *src,
-			 unsigned int bytecnt)
-{
-	__iowrite64_copy(dst, src, bytecnt / 8);
-}
+अटल व्योम mlx4_bf_copy(व्योम __iomem *dst, स्थिर व्योम *src,
+			 अचिन्हित पूर्णांक bytecnt)
+अणु
+	__ioग_लिखो64_copy(dst, src, bytecnt / 8);
+पूर्ण
 
-void mlx4_en_xmit_doorbell(struct mlx4_en_tx_ring *ring)
-{
+व्योम mlx4_en_xmit_करोorbell(काष्ठा mlx4_en_tx_ring *ring)
+अणु
 	wmb();
-	/* Since there is no iowrite*_native() that writes the
+	/* Since there is no ioग_लिखो*_native() that ग_लिखोs the
 	 * value as is, without byteswapping - using the one
-	 * the doesn't do byteswapping in the relevant arch
+	 * the करोesn't करो byteswapping in the relevant arch
 	 * endianness.
 	 */
-#if defined(__LITTLE_ENDIAN)
-	iowrite32(
-#else
-	iowrite32be(
-#endif
-		  (__force u32)ring->doorbell_qpn,
+#अगर defined(__LITTLE_ENDIAN)
+	ioग_लिखो32(
+#अन्यथा
+	ioग_लिखो32be(
+#पूर्ण_अगर
+		  (__क्रमce u32)ring->करोorbell_qpn,
 		  ring->bf.uar->map + MLX4_SEND_DOORBELL);
-}
+पूर्ण
 
-static void mlx4_en_tx_write_desc(struct mlx4_en_tx_ring *ring,
-				  struct mlx4_en_tx_desc *tx_desc,
-				  union mlx4_wqe_qpn_vlan qpn_vlan,
-				  int desc_size, int bf_index,
+अटल व्योम mlx4_en_tx_ग_लिखो_desc(काष्ठा mlx4_en_tx_ring *ring,
+				  काष्ठा mlx4_en_tx_desc *tx_desc,
+				  जोड़ mlx4_wqe_qpn_vlan qpn_vlan,
+				  पूर्णांक desc_size, पूर्णांक bf_index,
 				  __be32 op_own, bool bf_ok,
-				  bool send_doorbell)
-{
+				  bool send_करोorbell)
+अणु
 	tx_desc->ctrl.qpn_vlan = qpn_vlan;
 
-	if (bf_ok) {
+	अगर (bf_ok) अणु
 		op_own |= htonl((bf_index & 0xffff) << 8);
 		/* Ensure new descriptor hits memory
-		 * before setting ownership of this descriptor to HW
+		 * beक्रमe setting ownership of this descriptor to HW
 		 */
 		dma_wmb();
 		tx_desc->ctrl.owner_opcode = op_own;
@@ -782,142 +783,142 @@ static void mlx4_en_tx_write_desc(struct mlx4_en_tx_ring *ring,
 		wmb();
 
 		ring->bf.offset ^= ring->bf.buf_size;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Ensure new descriptor hits memory
-		 * before setting ownership of this descriptor to HW
+		 * beक्रमe setting ownership of this descriptor to HW
 		 */
 		dma_wmb();
 		tx_desc->ctrl.owner_opcode = op_own;
-		if (send_doorbell)
-			mlx4_en_xmit_doorbell(ring);
-		else
+		अगर (send_करोorbell)
+			mlx4_en_xmit_करोorbell(ring);
+		अन्यथा
 			ring->xmit_more++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool mlx4_en_build_dma_wqe(struct mlx4_en_priv *priv,
-				  struct skb_shared_info *shinfo,
-				  struct mlx4_wqe_data_seg *data,
-				  struct sk_buff *skb,
-				  int lso_header_size,
+अटल bool mlx4_en_build_dma_wqe(काष्ठा mlx4_en_priv *priv,
+				  काष्ठा skb_shared_info *shinfo,
+				  काष्ठा mlx4_wqe_data_seg *data,
+				  काष्ठा sk_buff *skb,
+				  पूर्णांक lso_header_size,
 				  __be32 mr_key,
-				  struct mlx4_en_tx_info *tx_info)
-{
-	struct device *ddev = priv->ddev;
+				  काष्ठा mlx4_en_tx_info *tx_info)
+अणु
+	काष्ठा device *ddev = priv->ddev;
 	dma_addr_t dma = 0;
 	u32 byte_count = 0;
-	int i_frag;
+	पूर्णांक i_frag;
 
-	/* Map fragments if any */
-	for (i_frag = shinfo->nr_frags - 1; i_frag >= 0; i_frag--) {
-		const skb_frag_t *frag = &shinfo->frags[i_frag];
+	/* Map fragments अगर any */
+	क्रम (i_frag = shinfo->nr_frags - 1; i_frag >= 0; i_frag--) अणु
+		स्थिर skb_frag_t *frag = &shinfo->frags[i_frag];
 		byte_count = skb_frag_size(frag);
 		dma = skb_frag_dma_map(ddev, frag,
 				       0, byte_count,
 				       DMA_TO_DEVICE);
-		if (dma_mapping_error(ddev, dma))
-			goto tx_drop_unmap;
+		अगर (dma_mapping_error(ddev, dma))
+			जाओ tx_drop_unmap;
 
 		data->addr = cpu_to_be64(dma);
 		data->lkey = mr_key;
 		dma_wmb();
 		data->byte_count = cpu_to_be32(byte_count);
 		--data;
-	}
+	पूर्ण
 
-	/* Map linear part if needed */
-	if (tx_info->linear) {
+	/* Map linear part अगर needed */
+	अगर (tx_info->linear) अणु
 		byte_count = skb_headlen(skb) - lso_header_size;
 
 		dma = dma_map_single(ddev, skb->data +
 				     lso_header_size, byte_count,
 				     PCI_DMA_TODEVICE);
-		if (dma_mapping_error(ddev, dma))
-			goto tx_drop_unmap;
+		अगर (dma_mapping_error(ddev, dma))
+			जाओ tx_drop_unmap;
 
 		data->addr = cpu_to_be64(dma);
 		data->lkey = mr_key;
 		dma_wmb();
 		data->byte_count = cpu_to_be32(byte_count);
-	}
-	/* tx completion can avoid cache line miss for common cases */
+	पूर्ण
+	/* tx completion can aव्योम cache line miss क्रम common हालs */
 	tx_info->map0_dma = dma;
 	tx_info->map0_byte_count = byte_count;
 
-	return true;
+	वापस true;
 
 tx_drop_unmap:
 	en_err(priv, "DMA mapping error\n");
 
-	while (++i_frag < shinfo->nr_frags) {
+	जबतक (++i_frag < shinfo->nr_frags) अणु
 		++data;
 		dma_unmap_page(ddev, (dma_addr_t)be64_to_cpu(data->addr),
 			       be32_to_cpu(data->byte_count),
 			       PCI_DMA_TODEVICE);
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-netdev_tx_t mlx4_en_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct skb_shared_info *shinfo = skb_shinfo(skb);
-	struct mlx4_en_priv *priv = netdev_priv(dev);
-	union mlx4_wqe_qpn_vlan	qpn_vlan = {};
-	struct mlx4_en_tx_ring *ring;
-	struct mlx4_en_tx_desc *tx_desc;
-	struct mlx4_wqe_data_seg *data;
-	struct mlx4_en_tx_info *tx_info;
+netdev_tx_t mlx4_en_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा skb_shared_info *shinfo = skb_shinfo(skb);
+	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+	जोड़ mlx4_wqe_qpn_vlan	qpn_vlan = अणुपूर्ण;
+	काष्ठा mlx4_en_tx_ring *ring;
+	काष्ठा mlx4_en_tx_desc *tx_desc;
+	काष्ठा mlx4_wqe_data_seg *data;
+	काष्ठा mlx4_en_tx_info *tx_info;
 	u32 __maybe_unused ring_cons;
-	int tx_ind;
-	int nr_txbb;
-	int desc_size;
-	int real_size;
+	पूर्णांक tx_ind;
+	पूर्णांक nr_txbb;
+	पूर्णांक desc_size;
+	पूर्णांक real_size;
 	u32 index, bf_index;
 	__be32 op_own;
-	int lso_header_size;
-	void *fragptr = NULL;
+	पूर्णांक lso_header_size;
+	व्योम *fragptr = शून्य;
 	bool bounce = false;
-	bool send_doorbell;
+	bool send_करोorbell;
 	bool stop_queue;
-	bool inline_ok;
+	bool अंतरभूत_ok;
 	u8 data_offset;
 	bool bf_ok;
 
 	tx_ind = skb_get_queue_mapping(skb);
 	ring = priv->tx_ring[TX][tx_ind];
 
-	if (unlikely(!priv->port_up))
-		goto tx_drop;
+	अगर (unlikely(!priv->port_up))
+		जाओ tx_drop;
 
 	real_size = get_real_size(skb, shinfo, dev, &lso_header_size,
-				  &inline_ok, &fragptr);
-	if (unlikely(!real_size))
-		goto tx_drop_count;
+				  &अंतरभूत_ok, &fragptr);
+	अगर (unlikely(!real_size))
+		जाओ tx_drop_count;
 
 	/* Align descriptor to TXBB size */
 	desc_size = ALIGN(real_size, TXBB_SIZE);
 	nr_txbb = desc_size >> LOG_TXBB_SIZE;
-	if (unlikely(nr_txbb > MAX_DESC_TXBBS)) {
-		if (netif_msg_tx_err(priv))
+	अगर (unlikely(nr_txbb > MAX_DESC_TXBBS)) अणु
+		अगर (netअगर_msg_tx_err(priv))
 			en_warn(priv, "Oversized header or SG list\n");
-		goto tx_drop_count;
-	}
+		जाओ tx_drop_count;
+	पूर्ण
 
 	bf_ok = ring->bf_enabled;
-	if (skb_vlan_tag_present(skb)) {
+	अगर (skb_vlan_tag_present(skb)) अणु
 		u16 vlan_proto;
 
 		qpn_vlan.vlan_tag = cpu_to_be16(skb_vlan_tag_get(skb));
 		vlan_proto = be16_to_cpu(skb->vlan_proto);
-		if (vlan_proto == ETH_P_8021AD)
+		अगर (vlan_proto == ETH_P_8021AD)
 			qpn_vlan.ins_vlan = MLX4_WQE_CTRL_INS_SVLAN;
-		else if (vlan_proto == ETH_P_8021Q)
+		अन्यथा अगर (vlan_proto == ETH_P_8021Q)
 			qpn_vlan.ins_vlan = MLX4_WQE_CTRL_INS_CVLAN;
-		else
+		अन्यथा
 			qpn_vlan.ins_vlan = 0;
 		bf_ok = false;
-	}
+	पूर्ण
 
 	netdev_txq_bql_enqueue_prefetchw(ring->tx_queue);
 
@@ -925,84 +926,84 @@ netdev_tx_t mlx4_en_xmit(struct sk_buff *skb, struct net_device *dev)
 	index = ring->prod & ring->size_mask;
 	bf_index = ring->prod;
 
-	/* See if we have enough space for whole descriptor TXBB for setting
-	 * SW ownership on next descriptor; if not, use a bounce buffer. */
-	if (likely(index + nr_txbb <= ring->size))
+	/* See अगर we have enough space क्रम whole descriptor TXBB क्रम setting
+	 * SW ownership on next descriptor; अगर not, use a bounce buffer. */
+	अगर (likely(index + nr_txbb <= ring->size))
 		tx_desc = ring->buf + (index << LOG_TXBB_SIZE);
-	else {
-		tx_desc = (struct mlx4_en_tx_desc *) ring->bounce_buf;
+	अन्यथा अणु
+		tx_desc = (काष्ठा mlx4_en_tx_desc *) ring->bounce_buf;
 		bounce = true;
 		bf_ok = false;
-	}
+	पूर्ण
 
 	/* Save skb in tx_info ring */
 	tx_info = &ring->tx_info[index];
 	tx_info->skb = skb;
 	tx_info->nr_txbb = nr_txbb;
 
-	if (!lso_header_size) {
+	अगर (!lso_header_size) अणु
 		data = &tx_desc->data;
-		data_offset = offsetof(struct mlx4_en_tx_desc, data);
-	} else {
-		int lso_align = ALIGN(lso_header_size + 4, DS_SIZE);
+		data_offset = दुरत्व(काष्ठा mlx4_en_tx_desc, data);
+	पूर्ण अन्यथा अणु
+		पूर्णांक lso_align = ALIGN(lso_header_size + 4, DS_SIZE);
 
-		data = (void *)&tx_desc->lso + lso_align;
-		data_offset = offsetof(struct mlx4_en_tx_desc, lso) + lso_align;
-	}
+		data = (व्योम *)&tx_desc->lso + lso_align;
+		data_offset = दुरत्व(काष्ठा mlx4_en_tx_desc, lso) + lso_align;
+	पूर्ण
 
-	/* valid only for none inline segments */
+	/* valid only क्रम none अंतरभूत segments */
 	tx_info->data_offset = data_offset;
 
-	tx_info->inl = inline_ok;
+	tx_info->inl = अंतरभूत_ok;
 
-	tx_info->linear = lso_header_size < skb_headlen(skb) && !inline_ok;
+	tx_info->linear = lso_header_size < skb_headlen(skb) && !अंतरभूत_ok;
 
 	tx_info->nr_maps = shinfo->nr_frags + tx_info->linear;
 	data += tx_info->nr_maps - 1;
 
-	if (!tx_info->inl)
-		if (!mlx4_en_build_dma_wqe(priv, shinfo, data, skb,
+	अगर (!tx_info->inl)
+		अगर (!mlx4_en_build_dma_wqe(priv, shinfo, data, skb,
 					   lso_header_size, ring->mr_key,
 					   tx_info))
-			goto tx_drop_count;
+			जाओ tx_drop_count;
 
 	/*
-	 * For timestamping add flag to skb_shinfo and
-	 * set flag for further reference
+	 * For बारtamping add flag to skb_shinfo and
+	 * set flag क्रम further reference
 	 */
 	tx_info->ts_requested = 0;
-	if (unlikely(ring->hwtstamp_tx_type == HWTSTAMP_TX_ON &&
-		     shinfo->tx_flags & SKBTX_HW_TSTAMP)) {
+	अगर (unlikely(ring->hwtstamp_tx_type == HWTSTAMP_TX_ON &&
+		     shinfo->tx_flags & SKBTX_HW_TSTAMP)) अणु
 		shinfo->tx_flags |= SKBTX_IN_PROGRESS;
 		tx_info->ts_requested = 1;
-	}
+	पूर्ण
 
 	/* Prepare ctrl segement apart opcode+ownership, which depends on
 	 * whether LSO is used */
 	tx_desc->ctrl.srcrb_flags = priv->ctrl_flags;
-	if (likely(skb->ip_summed == CHECKSUM_PARTIAL)) {
-		if (!skb->encapsulation)
+	अगर (likely(skb->ip_summed == CHECKSUM_PARTIAL)) अणु
+		अगर (!skb->encapsulation)
 			tx_desc->ctrl.srcrb_flags |= cpu_to_be32(MLX4_WQE_CTRL_IP_CSUM |
 								 MLX4_WQE_CTRL_TCP_UDP_CSUM);
-		else
+		अन्यथा
 			tx_desc->ctrl.srcrb_flags |= cpu_to_be32(MLX4_WQE_CTRL_IP_CSUM);
 		ring->tx_csum++;
-	}
+	पूर्ण
 
-	if (priv->flags & MLX4_EN_FLAG_ENABLE_HW_LOOPBACK) {
-		struct ethhdr *ethh;
+	अगर (priv->flags & MLX4_EN_FLAG_ENABLE_HW_LOOPBACK) अणु
+		काष्ठा ethhdr *ethh;
 
 		/* Copy dst mac address to wqe. This allows loopback in eSwitch,
 		 * so that VFs and PF can communicate with each other
 		 */
-		ethh = (struct ethhdr *)skb->data;
+		ethh = (काष्ठा ethhdr *)skb->data;
 		tx_desc->ctrl.srcrb_flags16[0] = get_unaligned((__be16 *)ethh->h_dest);
 		tx_desc->ctrl.imm = get_unaligned((__be32 *)(ethh->h_dest + 2));
-	}
+	पूर्ण
 
 	/* Handle LSO (TSO) packets */
-	if (lso_header_size) {
-		int i;
+	अगर (lso_header_size) अणु
+		पूर्णांक i;
 
 		/* Mark opcode as LSO */
 		op_own = cpu_to_be32(MLX4_OPCODE_LSO | (1 << 6)) |
@@ -1014,116 +1015,116 @@ netdev_tx_t mlx4_en_xmit(struct sk_buff *skb, struct net_device *dev)
 			shinfo->gso_size << 16 | lso_header_size);
 
 		/* Copy headers;
-		 * note that we already verified that it is linear */
-		memcpy(tx_desc->lso.header, skb->data, lso_header_size);
+		 * note that we alपढ़ोy verअगरied that it is linear */
+		स_नकल(tx_desc->lso.header, skb->data, lso_header_size);
 
 		ring->tso_packets++;
 
 		i = shinfo->gso_segs;
 		tx_info->nr_bytes = skb->len + (i - 1) * lso_header_size;
 		ring->packets += i;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Normal (Non LSO) packet */
 		op_own = cpu_to_be32(MLX4_OPCODE_SEND) |
 			((ring->prod & ring->size) ?
 			 cpu_to_be32(MLX4_EN_BIT_DESC_OWN) : 0);
-		tx_info->nr_bytes = max_t(unsigned int, skb->len, ETH_ZLEN);
+		tx_info->nr_bytes = max_t(अचिन्हित पूर्णांक, skb->len, ETH_ZLEN);
 		ring->packets++;
-	}
+	पूर्ण
 	ring->bytes += tx_info->nr_bytes;
 
-	if (tx_info->inl)
-		build_inline_wqe(tx_desc, skb, shinfo, fragptr);
+	अगर (tx_info->inl)
+		build_अंतरभूत_wqe(tx_desc, skb, shinfo, fragptr);
 
-	if (skb->encapsulation) {
-		union {
-			struct iphdr *v4;
-			struct ipv6hdr *v6;
-			unsigned char *hdr;
-		} ip;
+	अगर (skb->encapsulation) अणु
+		जोड़ अणु
+			काष्ठा iphdr *v4;
+			काष्ठा ipv6hdr *v6;
+			अचिन्हित अक्षर *hdr;
+		पूर्ण ip;
 		u8 proto;
 
 		ip.hdr = skb_inner_network_header(skb);
 		proto = (ip.v4->version == 4) ? ip.v4->protocol :
 						ip.v6->nexthdr;
 
-		if (proto == IPPROTO_TCP || proto == IPPROTO_UDP)
+		अगर (proto == IPPROTO_TCP || proto == IPPROTO_UDP)
 			op_own |= cpu_to_be32(MLX4_WQE_CTRL_IIP | MLX4_WQE_CTRL_ILP);
-		else
+		अन्यथा
 			op_own |= cpu_to_be32(MLX4_WQE_CTRL_IIP);
-	}
+	पूर्ण
 
 	ring->prod += nr_txbb;
 
-	/* If we used a bounce buffer then copy descriptor back into place */
-	if (unlikely(bounce))
+	/* If we used a bounce buffer then copy descriptor back पूर्णांकo place */
+	अगर (unlikely(bounce))
 		tx_desc = mlx4_en_bounce_to_desc(priv, ring, index, desc_size);
 
-	skb_tx_timestamp(skb);
+	skb_tx_बारtamp(skb);
 
-	/* Check available TXBBs And 2K spare for prefetch */
+	/* Check available TXBBs And 2K spare क्रम prefetch */
 	stop_queue = mlx4_en_is_tx_ring_full(ring);
-	if (unlikely(stop_queue)) {
-		netif_tx_stop_queue(ring->tx_queue);
+	अगर (unlikely(stop_queue)) अणु
+		netअगर_tx_stop_queue(ring->tx_queue);
 		ring->queue_stopped++;
-	}
+	पूर्ण
 
-	send_doorbell = __netdev_tx_sent_queue(ring->tx_queue,
+	send_करोorbell = __netdev_tx_sent_queue(ring->tx_queue,
 					       tx_info->nr_bytes,
 					       netdev_xmit_more());
 
 	real_size = (real_size / 16) & 0x3f;
 
-	bf_ok &= desc_size <= MAX_BF && send_doorbell;
+	bf_ok &= desc_size <= MAX_BF && send_करोorbell;
 
-	if (bf_ok)
-		qpn_vlan.bf_qpn = ring->doorbell_qpn | cpu_to_be32(real_size);
-	else
+	अगर (bf_ok)
+		qpn_vlan.bf_qpn = ring->करोorbell_qpn | cpu_to_be32(real_size);
+	अन्यथा
 		qpn_vlan.fence_size = real_size;
 
-	mlx4_en_tx_write_desc(ring, tx_desc, qpn_vlan, desc_size, bf_index,
-			      op_own, bf_ok, send_doorbell);
+	mlx4_en_tx_ग_लिखो_desc(ring, tx_desc, qpn_vlan, desc_size, bf_index,
+			      op_own, bf_ok, send_करोorbell);
 
-	if (unlikely(stop_queue)) {
-		/* If queue was emptied after the if (stop_queue) , and before
-		 * the netif_tx_stop_queue() - need to wake the queue,
-		 * or else it will remain stopped forever.
+	अगर (unlikely(stop_queue)) अणु
+		/* If queue was emptied after the अगर (stop_queue) , and beक्रमe
+		 * the netअगर_tx_stop_queue() - need to wake the queue,
+		 * or अन्यथा it will reमुख्य stopped क्रमever.
 		 * Need a memory barrier to make sure ring->cons was not
-		 * updated before queue was stopped.
+		 * updated beक्रमe queue was stopped.
 		 */
 		smp_rmb();
 
-		if (unlikely(!mlx4_en_is_tx_ring_full(ring))) {
-			netif_tx_wake_queue(ring->tx_queue);
+		अगर (unlikely(!mlx4_en_is_tx_ring_full(ring))) अणु
+			netअगर_tx_wake_queue(ring->tx_queue);
 			ring->wake_queue++;
-		}
-	}
-	return NETDEV_TX_OK;
+		पूर्ण
+	पूर्ण
+	वापस NETDEV_TX_OK;
 
 tx_drop_count:
 	ring->tx_dropped++;
 tx_drop:
-	dev_kfree_skb_any(skb);
-	return NETDEV_TX_OK;
-}
+	dev_kमुक्त_skb_any(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-#define MLX4_EN_XDP_TX_NRTXBB  1
-#define MLX4_EN_XDP_TX_REAL_SZ (((CTRL_SIZE + MLX4_EN_XDP_TX_NRTXBB * DS_SIZE) \
+#घोषणा MLX4_EN_XDP_TX_NRTXBB  1
+#घोषणा MLX4_EN_XDP_TX_REAL_SZ (((CTRL_SIZE + MLX4_EN_XDP_TX_NRTXBB * DS_SIZE) \
 				 / 16) & 0x3f)
 
-void mlx4_en_init_tx_xdp_ring_descs(struct mlx4_en_priv *priv,
-				    struct mlx4_en_tx_ring *ring)
-{
-	int i;
+व्योम mlx4_en_init_tx_xdp_ring_descs(काष्ठा mlx4_en_priv *priv,
+				    काष्ठा mlx4_en_tx_ring *ring)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ring->size; i++) {
-		struct mlx4_en_tx_info *tx_info = &ring->tx_info[i];
-		struct mlx4_en_tx_desc *tx_desc = ring->buf +
+	क्रम (i = 0; i < ring->size; i++) अणु
+		काष्ठा mlx4_en_tx_info *tx_info = &ring->tx_info[i];
+		काष्ठा mlx4_en_tx_desc *tx_desc = ring->buf +
 			(i << LOG_TXBB_SIZE);
 
 		tx_info->map0_byte_count = PAGE_SIZE;
 		tx_info->nr_txbb = MLX4_EN_XDP_TX_NRTXBB;
-		tx_info->data_offset = offsetof(struct mlx4_en_tx_desc, data);
+		tx_info->data_offset = दुरत्व(काष्ठा mlx4_en_tx_desc, data);
 		tx_info->ts_requested = 0;
 		tx_info->nr_maps = 1;
 		tx_info->linear = 1;
@@ -1132,29 +1133,29 @@ void mlx4_en_init_tx_xdp_ring_descs(struct mlx4_en_priv *priv,
 		tx_desc->data.lkey = ring->mr_key;
 		tx_desc->ctrl.qpn_vlan.fence_size = MLX4_EN_XDP_TX_REAL_SZ;
 		tx_desc->ctrl.srcrb_flags = priv->ctrl_flags;
-	}
-}
+	पूर्ण
+पूर्ण
 
-netdev_tx_t mlx4_en_xmit_frame(struct mlx4_en_rx_ring *rx_ring,
-			       struct mlx4_en_rx_alloc *frame,
-			       struct mlx4_en_priv *priv, unsigned int length,
-			       int tx_ind, bool *doorbell_pending)
-{
-	struct mlx4_en_tx_desc *tx_desc;
-	struct mlx4_en_tx_info *tx_info;
-	struct mlx4_wqe_data_seg *data;
-	struct mlx4_en_tx_ring *ring;
+netdev_tx_t mlx4_en_xmit_frame(काष्ठा mlx4_en_rx_ring *rx_ring,
+			       काष्ठा mlx4_en_rx_alloc *frame,
+			       काष्ठा mlx4_en_priv *priv, अचिन्हित पूर्णांक length,
+			       पूर्णांक tx_ind, bool *करोorbell_pending)
+अणु
+	काष्ठा mlx4_en_tx_desc *tx_desc;
+	काष्ठा mlx4_en_tx_info *tx_info;
+	काष्ठा mlx4_wqe_data_seg *data;
+	काष्ठा mlx4_en_tx_ring *ring;
 	dma_addr_t dma;
 	__be32 op_own;
-	int index;
+	पूर्णांक index;
 
-	if (unlikely(!priv->port_up))
-		goto tx_drop;
+	अगर (unlikely(!priv->port_up))
+		जाओ tx_drop;
 
 	ring = priv->tx_ring[TX_XDP][tx_ind];
 
-	if (unlikely(mlx4_en_is_tx_ring_full(ring)))
-		goto tx_drop_count;
+	अगर (unlikely(mlx4_en_is_tx_ring_full(ring)))
+		जाओ tx_drop_count;
 
 	index = ring->prod & ring->size_mask;
 	tx_info = &ring->tx_info[index];
@@ -1165,18 +1166,18 @@ netdev_tx_t mlx4_en_xmit_frame(struct mlx4_en_rx_ring *rx_ring,
 	dma = frame->dma;
 
 	tx_info->page = frame->page;
-	frame->page = NULL;
+	frame->page = शून्य;
 	tx_info->map0_dma = dma;
-	tx_info->nr_bytes = max_t(unsigned int, length, ETH_ZLEN);
+	tx_info->nr_bytes = max_t(अचिन्हित पूर्णांक, length, ETH_ZLEN);
 
-	dma_sync_single_range_for_device(priv->ddev, dma, frame->page_offset,
+	dma_sync_single_range_क्रम_device(priv->ddev, dma, frame->page_offset,
 					 length, PCI_DMA_TODEVICE);
 
 	data->addr = cpu_to_be64(dma + frame->page_offset);
 	dma_wmb();
 	data->byte_count = cpu_to_be32(length);
 
-	/* tx completion can avoid cache line miss for common cases */
+	/* tx completion can aव्योम cache line miss क्रम common हालs */
 
 	op_own = cpu_to_be32(MLX4_OPCODE_SEND) |
 		((ring->prod & ring->size) ?
@@ -1187,19 +1188,19 @@ netdev_tx_t mlx4_en_xmit_frame(struct mlx4_en_rx_ring *rx_ring,
 	ring->prod += MLX4_EN_XDP_TX_NRTXBB;
 
 	/* Ensure new descriptor hits memory
-	 * before setting ownership of this descriptor to HW
+	 * beक्रमe setting ownership of this descriptor to HW
 	 */
 	dma_wmb();
 	tx_desc->ctrl.owner_opcode = op_own;
 	ring->xmit_more++;
 
-	*doorbell_pending = true;
+	*करोorbell_pending = true;
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 tx_drop_count:
 	rx_ring->xdp_tx_full++;
-	*doorbell_pending = true;
+	*करोorbell_pending = true;
 tx_drop:
-	return NETDEV_TX_BUSY;
-}
+	वापस NETDEV_TX_BUSY;
+पूर्ण

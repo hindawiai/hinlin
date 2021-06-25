@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
-   RFCOMM implementation for Linux Bluetooth stack (BlueZ).
+   RFCOMM implementation क्रम Linux Bluetooth stack (BlueZ).
    Copyright (C) 2002 Maxim Krasnyansky <maxk@qualcomm.com>
-   Copyright (C) 2002 Marcel Holtmann <marcel@holtmann.org>
+   Copyright (C) 2002 Marcel Holपंचांगann <marcel@holपंचांगann.org>
 
-   This program is free software; you can redistribute it and/or modify
+   This program is मुक्त software; you can redistribute it and/or modअगरy
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -11,7 +12,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -24,276 +25,276 @@
 /*
  * RFCOMM sockets.
  */
-#include <linux/compat.h>
-#include <linux/export.h>
-#include <linux/debugfs.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/export.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
-#include <net/bluetooth/l2cap.h>
-#include <net/bluetooth/rfcomm.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/l2cap.h>
+#समावेश <net/bluetooth/rfcomm.h>
 
-static const struct proto_ops rfcomm_sock_ops;
+अटल स्थिर काष्ठा proto_ops rfcomm_sock_ops;
 
-static struct bt_sock_list rfcomm_sk_list = {
+अटल काष्ठा bt_sock_list rfcomm_sk_list = अणु
 	.lock = __RW_LOCK_UNLOCKED(rfcomm_sk_list.lock)
-};
+पूर्ण;
 
-static void rfcomm_sock_close(struct sock *sk);
-static void rfcomm_sock_kill(struct sock *sk);
+अटल व्योम rfcomm_sock_बंद(काष्ठा sock *sk);
+अटल व्योम rfcomm_sock_समाप्त(काष्ठा sock *sk);
 
 /* ---- DLC callbacks ----
  *
  * called under rfcomm_dlc_lock()
  */
-static void rfcomm_sk_data_ready(struct rfcomm_dlc *d, struct sk_buff *skb)
-{
-	struct sock *sk = d->owner;
-	if (!sk)
-		return;
+अटल व्योम rfcomm_sk_data_पढ़ोy(काष्ठा rfcomm_dlc *d, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sock *sk = d->owner;
+	अगर (!sk)
+		वापस;
 
 	atomic_add(skb->len, &sk->sk_rmem_alloc);
 	skb_queue_tail(&sk->sk_receive_queue, skb);
-	sk->sk_data_ready(sk);
+	sk->sk_data_पढ़ोy(sk);
 
-	if (atomic_read(&sk->sk_rmem_alloc) >= sk->sk_rcvbuf)
+	अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) >= sk->sk_rcvbuf)
 		rfcomm_dlc_throttle(d);
-}
+पूर्ण
 
-static void rfcomm_sk_state_change(struct rfcomm_dlc *d, int err)
-{
-	struct sock *sk = d->owner, *parent;
+अटल व्योम rfcomm_sk_state_change(काष्ठा rfcomm_dlc *d, पूर्णांक err)
+अणु
+	काष्ठा sock *sk = d->owner, *parent;
 
-	if (!sk)
-		return;
+	अगर (!sk)
+		वापस;
 
 	BT_DBG("dlc %p state %ld err %d", d, d->state, err);
 
 	spin_lock_bh(&sk->sk_lock.slock);
 
-	if (err)
+	अगर (err)
 		sk->sk_err = err;
 
 	sk->sk_state = d->state;
 
 	parent = bt_sk(sk)->parent;
-	if (parent) {
-		if (d->state == BT_CLOSED) {
+	अगर (parent) अणु
+		अगर (d->state == BT_CLOSED) अणु
 			sock_set_flag(sk, SOCK_ZAPPED);
 			bt_accept_unlink(sk);
-		}
-		parent->sk_data_ready(parent);
-	} else {
-		if (d->state == BT_CONNECTED)
+		पूर्ण
+		parent->sk_data_पढ़ोy(parent);
+	पूर्ण अन्यथा अणु
+		अगर (d->state == BT_CONNECTED)
 			rfcomm_session_getaddr(d->session,
-					       &rfcomm_pi(sk)->src, NULL);
+					       &rfcomm_pi(sk)->src, शून्य);
 		sk->sk_state_change(sk);
-	}
+	पूर्ण
 
 	spin_unlock_bh(&sk->sk_lock.slock);
 
-	if (parent && sock_flag(sk, SOCK_ZAPPED)) {
+	अगर (parent && sock_flag(sk, SOCK_ZAPPED)) अणु
 		/* We have to drop DLC lock here, otherwise
-		 * rfcomm_sock_destruct() will dead lock. */
+		 * rfcomm_sock_deकाष्ठा() will dead lock. */
 		rfcomm_dlc_unlock(d);
-		rfcomm_sock_kill(sk);
+		rfcomm_sock_समाप्त(sk);
 		rfcomm_dlc_lock(d);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* ---- Socket functions ---- */
-static struct sock *__rfcomm_get_listen_sock_by_addr(u8 channel, bdaddr_t *src)
-{
-	struct sock *sk = NULL;
+अटल काष्ठा sock *__rfcomm_get_listen_sock_by_addr(u8 channel, bdaddr_t *src)
+अणु
+	काष्ठा sock *sk = शून्य;
 
-	sk_for_each(sk, &rfcomm_sk_list.head) {
-		if (rfcomm_pi(sk)->channel != channel)
-			continue;
+	sk_क्रम_each(sk, &rfcomm_sk_list.head) अणु
+		अगर (rfcomm_pi(sk)->channel != channel)
+			जारी;
 
-		if (bacmp(&rfcomm_pi(sk)->src, src))
-			continue;
+		अगर (bacmp(&rfcomm_pi(sk)->src, src))
+			जारी;
 
-		if (sk->sk_state == BT_BOUND || sk->sk_state == BT_LISTEN)
-			break;
-	}
+		अगर (sk->sk_state == BT_BOUND || sk->sk_state == BT_LISTEN)
+			अवरोध;
+	पूर्ण
 
-	return sk ? sk : NULL;
-}
+	वापस sk ? sk : शून्य;
+पूर्ण
 
 /* Find socket with channel and source bdaddr.
- * Returns closest match.
+ * Returns बंदst match.
  */
-static struct sock *rfcomm_get_sock_by_channel(int state, u8 channel, bdaddr_t *src)
-{
-	struct sock *sk = NULL, *sk1 = NULL;
+अटल काष्ठा sock *rfcomm_get_sock_by_channel(पूर्णांक state, u8 channel, bdaddr_t *src)
+अणु
+	काष्ठा sock *sk = शून्य, *sk1 = शून्य;
 
-	read_lock(&rfcomm_sk_list.lock);
+	पढ़ो_lock(&rfcomm_sk_list.lock);
 
-	sk_for_each(sk, &rfcomm_sk_list.head) {
-		if (state && sk->sk_state != state)
-			continue;
+	sk_क्रम_each(sk, &rfcomm_sk_list.head) अणु
+		अगर (state && sk->sk_state != state)
+			जारी;
 
-		if (rfcomm_pi(sk)->channel == channel) {
+		अगर (rfcomm_pi(sk)->channel == channel) अणु
 			/* Exact match. */
-			if (!bacmp(&rfcomm_pi(sk)->src, src))
-				break;
+			अगर (!bacmp(&rfcomm_pi(sk)->src, src))
+				अवरोध;
 
 			/* Closest match */
-			if (!bacmp(&rfcomm_pi(sk)->src, BDADDR_ANY))
+			अगर (!bacmp(&rfcomm_pi(sk)->src, BDADDR_ANY))
 				sk1 = sk;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	read_unlock(&rfcomm_sk_list.lock);
+	पढ़ो_unlock(&rfcomm_sk_list.lock);
 
-	return sk ? sk : sk1;
-}
+	वापस sk ? sk : sk1;
+पूर्ण
 
-static void rfcomm_sock_destruct(struct sock *sk)
-{
-	struct rfcomm_dlc *d = rfcomm_pi(sk)->dlc;
+अटल व्योम rfcomm_sock_deकाष्ठा(काष्ठा sock *sk)
+अणु
+	काष्ठा rfcomm_dlc *d = rfcomm_pi(sk)->dlc;
 
 	BT_DBG("sk %p dlc %p", sk, d);
 
 	skb_queue_purge(&sk->sk_receive_queue);
-	skb_queue_purge(&sk->sk_write_queue);
+	skb_queue_purge(&sk->sk_ग_लिखो_queue);
 
 	rfcomm_dlc_lock(d);
-	rfcomm_pi(sk)->dlc = NULL;
+	rfcomm_pi(sk)->dlc = शून्य;
 
-	/* Detach DLC if it's owned by this socket */
-	if (d->owner == sk)
-		d->owner = NULL;
+	/* Detach DLC अगर it's owned by this socket */
+	अगर (d->owner == sk)
+		d->owner = शून्य;
 	rfcomm_dlc_unlock(d);
 
 	rfcomm_dlc_put(d);
-}
+पूर्ण
 
-static void rfcomm_sock_cleanup_listen(struct sock *parent)
-{
-	struct sock *sk;
+अटल व्योम rfcomm_sock_cleanup_listen(काष्ठा sock *parent)
+अणु
+	काष्ठा sock *sk;
 
 	BT_DBG("parent %p", parent);
 
 	/* Close not yet accepted dlcs */
-	while ((sk = bt_accept_dequeue(parent, NULL))) {
-		rfcomm_sock_close(sk);
-		rfcomm_sock_kill(sk);
-	}
+	जबतक ((sk = bt_accept_dequeue(parent, शून्य))) अणु
+		rfcomm_sock_बंद(sk);
+		rfcomm_sock_समाप्त(sk);
+	पूर्ण
 
 	parent->sk_state  = BT_CLOSED;
 	sock_set_flag(parent, SOCK_ZAPPED);
-}
+पूर्ण
 
-/* Kill socket (only if zapped and orphan)
+/* Kill socket (only अगर zapped and orphan)
  * Must be called on unlocked socket.
  */
-static void rfcomm_sock_kill(struct sock *sk)
-{
-	if (!sock_flag(sk, SOCK_ZAPPED) || sk->sk_socket)
-		return;
+अटल व्योम rfcomm_sock_समाप्त(काष्ठा sock *sk)
+अणु
+	अगर (!sock_flag(sk, SOCK_ZAPPED) || sk->sk_socket)
+		वापस;
 
-	BT_DBG("sk %p state %d refcnt %d", sk, sk->sk_state, refcount_read(&sk->sk_refcnt));
+	BT_DBG("sk %p state %d refcnt %d", sk, sk->sk_state, refcount_पढ़ो(&sk->sk_refcnt));
 
 	/* Kill poor orphan */
 	bt_sock_unlink(&rfcomm_sk_list, sk);
 	sock_set_flag(sk, SOCK_DEAD);
 	sock_put(sk);
-}
+पूर्ण
 
-static void __rfcomm_sock_close(struct sock *sk)
-{
-	struct rfcomm_dlc *d = rfcomm_pi(sk)->dlc;
+अटल व्योम __rfcomm_sock_बंद(काष्ठा sock *sk)
+अणु
+	काष्ठा rfcomm_dlc *d = rfcomm_pi(sk)->dlc;
 
 	BT_DBG("sk %p state %d socket %p", sk, sk->sk_state, sk->sk_socket);
 
-	switch (sk->sk_state) {
-	case BT_LISTEN:
+	चयन (sk->sk_state) अणु
+	हाल BT_LISTEN:
 		rfcomm_sock_cleanup_listen(sk);
-		break;
+		अवरोध;
 
-	case BT_CONNECT:
-	case BT_CONNECT2:
-	case BT_CONFIG:
-	case BT_CONNECTED:
-		rfcomm_dlc_close(d, 0);
+	हाल BT_CONNECT:
+	हाल BT_CONNECT2:
+	हाल BT_CONFIG:
+	हाल BT_CONNECTED:
+		rfcomm_dlc_बंद(d, 0);
 		fallthrough;
 
-	default:
+	शेष:
 		sock_set_flag(sk, SOCK_ZAPPED);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* Close socket.
  * Must be called on unlocked socket.
  */
-static void rfcomm_sock_close(struct sock *sk)
-{
+अटल व्योम rfcomm_sock_बंद(काष्ठा sock *sk)
+अणु
 	lock_sock(sk);
-	__rfcomm_sock_close(sk);
+	__rfcomm_sock_बंद(sk);
 	release_sock(sk);
-}
+पूर्ण
 
-static void rfcomm_sock_init(struct sock *sk, struct sock *parent)
-{
-	struct rfcomm_pinfo *pi = rfcomm_pi(sk);
+अटल व्योम rfcomm_sock_init(काष्ठा sock *sk, काष्ठा sock *parent)
+अणु
+	काष्ठा rfcomm_pinfo *pi = rfcomm_pi(sk);
 
 	BT_DBG("sk %p", sk);
 
-	if (parent) {
+	अगर (parent) अणु
 		sk->sk_type = parent->sk_type;
 		pi->dlc->defer_setup = test_bit(BT_SK_DEFER_SETUP,
 						&bt_sk(parent)->flags);
 
 		pi->sec_level = rfcomm_pi(parent)->sec_level;
-		pi->role_switch = rfcomm_pi(parent)->role_switch;
+		pi->role_चयन = rfcomm_pi(parent)->role_चयन;
 
 		security_sk_clone(parent, sk);
-	} else {
+	पूर्ण अन्यथा अणु
 		pi->dlc->defer_setup = 0;
 
 		pi->sec_level = BT_SECURITY_LOW;
-		pi->role_switch = 0;
-	}
+		pi->role_चयन = 0;
+	पूर्ण
 
 	pi->dlc->sec_level = pi->sec_level;
-	pi->dlc->role_switch = pi->role_switch;
-}
+	pi->dlc->role_चयन = pi->role_चयन;
+पूर्ण
 
-static struct proto rfcomm_proto = {
+अटल काष्ठा proto rfcomm_proto = अणु
 	.name		= "RFCOMM",
 	.owner		= THIS_MODULE,
-	.obj_size	= sizeof(struct rfcomm_pinfo)
-};
+	.obj_size	= माप(काष्ठा rfcomm_pinfo)
+पूर्ण;
 
-static struct sock *rfcomm_sock_alloc(struct net *net, struct socket *sock, int proto, gfp_t prio, int kern)
-{
-	struct rfcomm_dlc *d;
-	struct sock *sk;
+अटल काष्ठा sock *rfcomm_sock_alloc(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक proto, gfp_t prio, पूर्णांक kern)
+अणु
+	काष्ठा rfcomm_dlc *d;
+	काष्ठा sock *sk;
 
 	sk = sk_alloc(net, PF_BLUETOOTH, prio, &rfcomm_proto, kern);
-	if (!sk)
-		return NULL;
+	अगर (!sk)
+		वापस शून्य;
 
 	sock_init_data(sock, sk);
 	INIT_LIST_HEAD(&bt_sk(sk)->accept_q);
 
 	d = rfcomm_dlc_alloc(prio);
-	if (!d) {
-		sk_free(sk);
-		return NULL;
-	}
+	अगर (!d) अणु
+		sk_मुक्त(sk);
+		वापस शून्य;
+	पूर्ण
 
-	d->data_ready   = rfcomm_sk_data_ready;
+	d->data_पढ़ोy   = rfcomm_sk_data_पढ़ोy;
 	d->state_change = rfcomm_sk_state_change;
 
 	rfcomm_pi(sk)->dlc = d;
 	d->owner = sk;
 
-	sk->sk_destruct = rfcomm_sock_destruct;
-	sk->sk_sndtimeo = RFCOMM_CONN_TIMEOUT;
+	sk->sk_deकाष्ठा = rfcomm_sock_deकाष्ठा;
+	sk->sk_sndसमयo = RFCOMM_CONN_TIMEOUT;
 
 	sk->sk_sndbuf = RFCOMM_MAX_CREDITS * RFCOMM_DEFAULT_MTU * 10;
 	sk->sk_rcvbuf = RFCOMM_MAX_CREDITS * RFCOMM_DEFAULT_MTU * 10;
@@ -306,687 +307,687 @@ static struct sock *rfcomm_sock_alloc(struct net *net, struct socket *sock, int 
 	bt_sock_link(&rfcomm_sk_list, sk);
 
 	BT_DBG("sk %p", sk);
-	return sk;
-}
+	वापस sk;
+पूर्ण
 
-static int rfcomm_sock_create(struct net *net, struct socket *sock,
-			      int protocol, int kern)
-{
-	struct sock *sk;
+अटल पूर्णांक rfcomm_sock_create(काष्ठा net *net, काष्ठा socket *sock,
+			      पूर्णांक protocol, पूर्णांक kern)
+अणु
+	काष्ठा sock *sk;
 
 	BT_DBG("sock %p", sock);
 
 	sock->state = SS_UNCONNECTED;
 
-	if (sock->type != SOCK_STREAM && sock->type != SOCK_RAW)
-		return -ESOCKTNOSUPPORT;
+	अगर (sock->type != SOCK_STREAM && sock->type != SOCK_RAW)
+		वापस -ESOCKTNOSUPPORT;
 
 	sock->ops = &rfcomm_sock_ops;
 
 	sk = rfcomm_sock_alloc(net, sock, protocol, GFP_ATOMIC, kern);
-	if (!sk)
-		return -ENOMEM;
+	अगर (!sk)
+		वापस -ENOMEM;
 
-	rfcomm_sock_init(sk, NULL);
-	return 0;
-}
+	rfcomm_sock_init(sk, शून्य);
+	वापस 0;
+पूर्ण
 
-static int rfcomm_sock_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
-{
-	struct sockaddr_rc sa;
-	struct sock *sk = sock->sk;
-	int len, err = 0;
+अटल पूर्णांक rfcomm_sock_bind(काष्ठा socket *sock, काष्ठा sockaddr *addr, पूर्णांक addr_len)
+अणु
+	काष्ठा sockaddr_rc sa;
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक len, err = 0;
 
-	if (!addr || addr_len < offsetofend(struct sockaddr, sa_family) ||
+	अगर (!addr || addr_len < दुरत्वend(काष्ठा sockaddr, sa_family) ||
 	    addr->sa_family != AF_BLUETOOTH)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	memset(&sa, 0, sizeof(sa));
-	len = min_t(unsigned int, sizeof(sa), addr_len);
-	memcpy(&sa, addr, len);
+	स_रखो(&sa, 0, माप(sa));
+	len = min_t(अचिन्हित पूर्णांक, माप(sa), addr_len);
+	स_नकल(&sa, addr, len);
 
 	BT_DBG("sk %p %pMR", sk, &sa.rc_bdaddr);
 
 	lock_sock(sk);
 
-	if (sk->sk_state != BT_OPEN) {
+	अगर (sk->sk_state != BT_OPEN) अणु
 		err = -EBADFD;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (sk->sk_type != SOCK_STREAM) {
+	अगर (sk->sk_type != SOCK_STREAM) अणु
 		err = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	write_lock(&rfcomm_sk_list.lock);
+	ग_लिखो_lock(&rfcomm_sk_list.lock);
 
-	if (sa.rc_channel &&
-	    __rfcomm_get_listen_sock_by_addr(sa.rc_channel, &sa.rc_bdaddr)) {
+	अगर (sa.rc_channel &&
+	    __rfcomm_get_listen_sock_by_addr(sa.rc_channel, &sa.rc_bdaddr)) अणु
 		err = -EADDRINUSE;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Save source address */
 		bacpy(&rfcomm_pi(sk)->src, &sa.rc_bdaddr);
 		rfcomm_pi(sk)->channel = sa.rc_channel;
 		sk->sk_state = BT_BOUND;
-	}
+	पूर्ण
 
-	write_unlock(&rfcomm_sk_list.lock);
+	ग_लिखो_unlock(&rfcomm_sk_list.lock);
 
-done:
+करोne:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rfcomm_sock_connect(struct socket *sock, struct sockaddr *addr, int alen, int flags)
-{
-	struct sockaddr_rc *sa = (struct sockaddr_rc *) addr;
-	struct sock *sk = sock->sk;
-	struct rfcomm_dlc *d = rfcomm_pi(sk)->dlc;
-	int err = 0;
+अटल पूर्णांक rfcomm_sock_connect(काष्ठा socket *sock, काष्ठा sockaddr *addr, पूर्णांक alen, पूर्णांक flags)
+अणु
+	काष्ठा sockaddr_rc *sa = (काष्ठा sockaddr_rc *) addr;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा rfcomm_dlc *d = rfcomm_pi(sk)->dlc;
+	पूर्णांक err = 0;
 
 	BT_DBG("sk %p", sk);
 
-	if (alen < sizeof(struct sockaddr_rc) ||
+	अगर (alen < माप(काष्ठा sockaddr_rc) ||
 	    addr->sa_family != AF_BLUETOOTH)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	lock_sock(sk);
 
-	if (sk->sk_state != BT_OPEN && sk->sk_state != BT_BOUND) {
+	अगर (sk->sk_state != BT_OPEN && sk->sk_state != BT_BOUND) अणु
 		err = -EBADFD;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (sk->sk_type != SOCK_STREAM) {
+	अगर (sk->sk_type != SOCK_STREAM) अणु
 		err = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	sk->sk_state = BT_CONNECT;
 	bacpy(&rfcomm_pi(sk)->dst, &sa->rc_bdaddr);
 	rfcomm_pi(sk)->channel = sa->rc_channel;
 
 	d->sec_level = rfcomm_pi(sk)->sec_level;
-	d->role_switch = rfcomm_pi(sk)->role_switch;
+	d->role_चयन = rfcomm_pi(sk)->role_चयन;
 
-	err = rfcomm_dlc_open(d, &rfcomm_pi(sk)->src, &sa->rc_bdaddr,
+	err = rfcomm_dlc_खोलो(d, &rfcomm_pi(sk)->src, &sa->rc_bdaddr,
 			      sa->rc_channel);
-	if (!err)
-		err = bt_sock_wait_state(sk, BT_CONNECTED,
-				sock_sndtimeo(sk, flags & O_NONBLOCK));
+	अगर (!err)
+		err = bt_sock_रुको_state(sk, BT_CONNECTED,
+				sock_sndसमयo(sk, flags & O_NONBLOCK));
 
-done:
+करोne:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rfcomm_sock_listen(struct socket *sock, int backlog)
-{
-	struct sock *sk = sock->sk;
-	int err = 0;
+अटल पूर्णांक rfcomm_sock_listen(काष्ठा socket *sock, पूर्णांक backlog)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक err = 0;
 
 	BT_DBG("sk %p backlog %d", sk, backlog);
 
 	lock_sock(sk);
 
-	if (sk->sk_state != BT_BOUND) {
+	अगर (sk->sk_state != BT_BOUND) अणु
 		err = -EBADFD;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (sk->sk_type != SOCK_STREAM) {
+	अगर (sk->sk_type != SOCK_STREAM) अणु
 		err = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (!rfcomm_pi(sk)->channel) {
+	अगर (!rfcomm_pi(sk)->channel) अणु
 		bdaddr_t *src = &rfcomm_pi(sk)->src;
 		u8 channel;
 
 		err = -EINVAL;
 
-		write_lock(&rfcomm_sk_list.lock);
+		ग_लिखो_lock(&rfcomm_sk_list.lock);
 
-		for (channel = 1; channel < 31; channel++)
-			if (!__rfcomm_get_listen_sock_by_addr(channel, src)) {
+		क्रम (channel = 1; channel < 31; channel++)
+			अगर (!__rfcomm_get_listen_sock_by_addr(channel, src)) अणु
 				rfcomm_pi(sk)->channel = channel;
 				err = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-		write_unlock(&rfcomm_sk_list.lock);
+		ग_लिखो_unlock(&rfcomm_sk_list.lock);
 
-		if (err < 0)
-			goto done;
-	}
+		अगर (err < 0)
+			जाओ करोne;
+	पूर्ण
 
 	sk->sk_max_ack_backlog = backlog;
 	sk->sk_ack_backlog = 0;
 	sk->sk_state = BT_LISTEN;
 
-done:
+करोne:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rfcomm_sock_accept(struct socket *sock, struct socket *newsock, int flags,
+अटल पूर्णांक rfcomm_sock_accept(काष्ठा socket *sock, काष्ठा socket *newsock, पूर्णांक flags,
 			      bool kern)
-{
-	DEFINE_WAIT_FUNC(wait, woken_wake_function);
-	struct sock *sk = sock->sk, *nsk;
-	long timeo;
-	int err = 0;
+अणु
+	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+	काष्ठा sock *sk = sock->sk, *nsk;
+	दीर्घ समयo;
+	पूर्णांक err = 0;
 
 	lock_sock_nested(sk, SINGLE_DEPTH_NESTING);
 
-	if (sk->sk_type != SOCK_STREAM) {
+	अगर (sk->sk_type != SOCK_STREAM) अणु
 		err = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	timeo = sock_rcvtimeo(sk, flags & O_NONBLOCK);
+	समयo = sock_rcvसमयo(sk, flags & O_NONBLOCK);
 
-	BT_DBG("sk %p timeo %ld", sk, timeo);
+	BT_DBG("sk %p timeo %ld", sk, समयo);
 
-	/* Wait for an incoming connection. (wake-one). */
-	add_wait_queue_exclusive(sk_sleep(sk), &wait);
-	while (1) {
-		if (sk->sk_state != BT_LISTEN) {
+	/* Wait क्रम an incoming connection. (wake-one). */
+	add_रुको_queue_exclusive(sk_sleep(sk), &रुको);
+	जबतक (1) अणु
+		अगर (sk->sk_state != BT_LISTEN) अणु
 			err = -EBADFD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		nsk = bt_accept_dequeue(sk, newsock);
-		if (nsk)
-			break;
+		अगर (nsk)
+			अवरोध;
 
-		if (!timeo) {
+		अगर (!समयo) अणु
 			err = -EAGAIN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (signal_pending(current)) {
-			err = sock_intr_errno(timeo);
-			break;
-		}
+		अगर (संकेत_pending(current)) अणु
+			err = sock_पूर्णांकr_त्रुटि_सं(समयo);
+			अवरोध;
+		पूर्ण
 
 		release_sock(sk);
 
-		timeo = wait_woken(&wait, TASK_INTERRUPTIBLE, timeo);
+		समयo = रुको_woken(&रुको, TASK_INTERRUPTIBLE, समयo);
 
 		lock_sock_nested(sk, SINGLE_DEPTH_NESTING);
-	}
-	remove_wait_queue(sk_sleep(sk), &wait);
+	पूर्ण
+	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
 
-	if (err)
-		goto done;
+	अगर (err)
+		जाओ करोne;
 
 	newsock->state = SS_CONNECTED;
 
 	BT_DBG("new socket %p", nsk);
 
-done:
+करोne:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rfcomm_sock_getname(struct socket *sock, struct sockaddr *addr, int peer)
-{
-	struct sockaddr_rc *sa = (struct sockaddr_rc *) addr;
-	struct sock *sk = sock->sk;
+अटल पूर्णांक rfcomm_sock_getname(काष्ठा socket *sock, काष्ठा sockaddr *addr, पूर्णांक peer)
+अणु
+	काष्ठा sockaddr_rc *sa = (काष्ठा sockaddr_rc *) addr;
+	काष्ठा sock *sk = sock->sk;
 
 	BT_DBG("sock %p, sk %p", sock, sk);
 
-	if (peer && sk->sk_state != BT_CONNECTED &&
+	अगर (peer && sk->sk_state != BT_CONNECTED &&
 	    sk->sk_state != BT_CONNECT && sk->sk_state != BT_CONNECT2)
-		return -ENOTCONN;
+		वापस -ENOTCONN;
 
-	memset(sa, 0, sizeof(*sa));
+	स_रखो(sa, 0, माप(*sa));
 	sa->rc_family  = AF_BLUETOOTH;
 	sa->rc_channel = rfcomm_pi(sk)->channel;
-	if (peer)
+	अगर (peer)
 		bacpy(&sa->rc_bdaddr, &rfcomm_pi(sk)->dst);
-	else
+	अन्यथा
 		bacpy(&sa->rc_bdaddr, &rfcomm_pi(sk)->src);
 
-	return sizeof(struct sockaddr_rc);
-}
+	वापस माप(काष्ठा sockaddr_rc);
+पूर्ण
 
-static int rfcomm_sock_sendmsg(struct socket *sock, struct msghdr *msg,
-			       size_t len)
-{
-	struct sock *sk = sock->sk;
-	struct rfcomm_dlc *d = rfcomm_pi(sk)->dlc;
-	struct sk_buff *skb;
-	int sent;
+अटल पूर्णांक rfcomm_sock_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
+			       माप_प्रकार len)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा rfcomm_dlc *d = rfcomm_pi(sk)->dlc;
+	काष्ठा sk_buff *skb;
+	पूर्णांक sent;
 
-	if (test_bit(RFCOMM_DEFER_SETUP, &d->flags))
-		return -ENOTCONN;
+	अगर (test_bit(RFCOMM_DEFER_SETUP, &d->flags))
+		वापस -ENOTCONN;
 
-	if (msg->msg_flags & MSG_OOB)
-		return -EOPNOTSUPP;
+	अगर (msg->msg_flags & MSG_OOB)
+		वापस -EOPNOTSUPP;
 
-	if (sk->sk_shutdown & SEND_SHUTDOWN)
-		return -EPIPE;
+	अगर (sk->sk_shutकरोwn & SEND_SHUTDOWN)
+		वापस -EPIPE;
 
 	BT_DBG("sock %p, sk %p", sock, sk);
 
 	lock_sock(sk);
 
-	sent = bt_sock_wait_ready(sk, msg->msg_flags);
-	if (sent)
-		goto done;
+	sent = bt_sock_रुको_पढ़ोy(sk, msg->msg_flags);
+	अगर (sent)
+		जाओ करोne;
 
-	while (len) {
-		size_t size = min_t(size_t, len, d->mtu);
-		int err;
+	जबतक (len) अणु
+		माप_प्रकार size = min_t(माप_प्रकार, len, d->mtu);
+		पूर्णांक err;
 
 		skb = sock_alloc_send_skb(sk, size + RFCOMM_SKB_RESERVE,
 				msg->msg_flags & MSG_DONTWAIT, &err);
-		if (!skb) {
-			if (sent == 0)
+		अगर (!skb) अणु
+			अगर (sent == 0)
 				sent = err;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		skb_reserve(skb, RFCOMM_SKB_HEAD_RESERVE);
 
-		err = memcpy_from_msg(skb_put(skb, size), msg, size);
-		if (err) {
-			kfree_skb(skb);
-			if (sent == 0)
+		err = स_नकल_from_msg(skb_put(skb, size), msg, size);
+		अगर (err) अणु
+			kमुक्त_skb(skb);
+			अगर (sent == 0)
 				sent = err;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		skb->priority = sk->sk_priority;
 
 		err = rfcomm_dlc_send(d, skb);
-		if (err < 0) {
-			kfree_skb(skb);
-			if (sent == 0)
+		अगर (err < 0) अणु
+			kमुक्त_skb(skb);
+			अगर (sent == 0)
 				sent = err;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		sent += size;
 		len  -= size;
-	}
+	पूर्ण
 
-done:
+करोne:
 	release_sock(sk);
 
-	return sent;
-}
+	वापस sent;
+पूर्ण
 
-static int rfcomm_sock_recvmsg(struct socket *sock, struct msghdr *msg,
-			       size_t size, int flags)
-{
-	struct sock *sk = sock->sk;
-	struct rfcomm_dlc *d = rfcomm_pi(sk)->dlc;
-	int len;
+अटल पूर्णांक rfcomm_sock_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
+			       माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा rfcomm_dlc *d = rfcomm_pi(sk)->dlc;
+	पूर्णांक len;
 
-	if (test_and_clear_bit(RFCOMM_DEFER_SETUP, &d->flags)) {
+	अगर (test_and_clear_bit(RFCOMM_DEFER_SETUP, &d->flags)) अणु
 		rfcomm_dlc_accept(d);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	len = bt_sock_stream_recvmsg(sock, msg, size, flags);
 
 	lock_sock(sk);
-	if (!(flags & MSG_PEEK) && len > 0)
+	अगर (!(flags & MSG_PEEK) && len > 0)
 		atomic_sub(len, &sk->sk_rmem_alloc);
 
-	if (atomic_read(&sk->sk_rmem_alloc) <= (sk->sk_rcvbuf >> 2))
+	अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) <= (sk->sk_rcvbuf >> 2))
 		rfcomm_dlc_unthrottle(rfcomm_pi(sk)->dlc);
 	release_sock(sk);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int rfcomm_sock_setsockopt_old(struct socket *sock, int optname,
-		sockptr_t optval, unsigned int optlen)
-{
-	struct sock *sk = sock->sk;
-	int err = 0;
+अटल पूर्णांक rfcomm_sock_setsockopt_old(काष्ठा socket *sock, पूर्णांक optname,
+		sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक err = 0;
 	u32 opt;
 
 	BT_DBG("sk %p", sk);
 
 	lock_sock(sk);
 
-	switch (optname) {
-	case RFCOMM_LM:
-		if (copy_from_sockptr(&opt, optval, sizeof(u32))) {
+	चयन (optname) अणु
+	हाल RFCOMM_LM:
+		अगर (copy_from_sockptr(&opt, optval, माप(u32))) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (opt & RFCOMM_LM_FIPS) {
+		अगर (opt & RFCOMM_LM_FIPS) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (opt & RFCOMM_LM_AUTH)
+		अगर (opt & RFCOMM_LM_AUTH)
 			rfcomm_pi(sk)->sec_level = BT_SECURITY_LOW;
-		if (opt & RFCOMM_LM_ENCRYPT)
+		अगर (opt & RFCOMM_LM_ENCRYPT)
 			rfcomm_pi(sk)->sec_level = BT_SECURITY_MEDIUM;
-		if (opt & RFCOMM_LM_SECURE)
+		अगर (opt & RFCOMM_LM_SECURE)
 			rfcomm_pi(sk)->sec_level = BT_SECURITY_HIGH;
 
-		rfcomm_pi(sk)->role_switch = (opt & RFCOMM_LM_MASTER);
-		break;
+		rfcomm_pi(sk)->role_चयन = (opt & RFCOMM_LM_MASTER);
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rfcomm_sock_setsockopt(struct socket *sock, int level, int optname,
-		sockptr_t optval, unsigned int optlen)
-{
-	struct sock *sk = sock->sk;
-	struct bt_security sec;
-	int err = 0;
-	size_t len;
+अटल पूर्णांक rfcomm_sock_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
+		sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा bt_security sec;
+	पूर्णांक err = 0;
+	माप_प्रकार len;
 	u32 opt;
 
 	BT_DBG("sk %p", sk);
 
-	if (level == SOL_RFCOMM)
-		return rfcomm_sock_setsockopt_old(sock, optname, optval, optlen);
+	अगर (level == SOL_RFCOMM)
+		वापस rfcomm_sock_setsockopt_old(sock, optname, optval, optlen);
 
-	if (level != SOL_BLUETOOTH)
-		return -ENOPROTOOPT;
+	अगर (level != SOL_BLUETOOTH)
+		वापस -ENOPROTOOPT;
 
 	lock_sock(sk);
 
-	switch (optname) {
-	case BT_SECURITY:
-		if (sk->sk_type != SOCK_STREAM) {
+	चयन (optname) अणु
+	हाल BT_SECURITY:
+		अगर (sk->sk_type != SOCK_STREAM) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		sec.level = BT_SECURITY_LOW;
 
-		len = min_t(unsigned int, sizeof(sec), optlen);
-		if (copy_from_sockptr(&sec, optval, len)) {
+		len = min_t(अचिन्हित पूर्णांक, माप(sec), optlen);
+		अगर (copy_from_sockptr(&sec, optval, len)) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (sec.level > BT_SECURITY_HIGH) {
+		अगर (sec.level > BT_SECURITY_HIGH) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rfcomm_pi(sk)->sec_level = sec.level;
-		break;
+		अवरोध;
 
-	case BT_DEFER_SETUP:
-		if (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) {
+	हाल BT_DEFER_SETUP:
+		अगर (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (copy_from_sockptr(&opt, optval, sizeof(u32))) {
+		अगर (copy_from_sockptr(&opt, optval, माप(u32))) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (opt)
+		अगर (opt)
 			set_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags);
-		else
+		अन्यथा
 			clear_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags);
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rfcomm_sock_getsockopt_old(struct socket *sock, int optname, char __user *optval, int __user *optlen)
-{
-	struct sock *sk = sock->sk;
-	struct sock *l2cap_sk;
-	struct l2cap_conn *conn;
-	struct rfcomm_conninfo cinfo;
-	int len, err = 0;
+अटल पूर्णांक rfcomm_sock_माला_लोockopt_old(काष्ठा socket *sock, पूर्णांक optname, अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा sock *l2cap_sk;
+	काष्ठा l2cap_conn *conn;
+	काष्ठा rfcomm_conninfo cinfo;
+	पूर्णांक len, err = 0;
 	u32 opt;
 
 	BT_DBG("sk %p", sk);
 
-	if (get_user(len, optlen))
-		return -EFAULT;
+	अगर (get_user(len, optlen))
+		वापस -EFAULT;
 
 	lock_sock(sk);
 
-	switch (optname) {
-	case RFCOMM_LM:
-		switch (rfcomm_pi(sk)->sec_level) {
-		case BT_SECURITY_LOW:
+	चयन (optname) अणु
+	हाल RFCOMM_LM:
+		चयन (rfcomm_pi(sk)->sec_level) अणु
+		हाल BT_SECURITY_LOW:
 			opt = RFCOMM_LM_AUTH;
-			break;
-		case BT_SECURITY_MEDIUM:
+			अवरोध;
+		हाल BT_SECURITY_MEDIUM:
 			opt = RFCOMM_LM_AUTH | RFCOMM_LM_ENCRYPT;
-			break;
-		case BT_SECURITY_HIGH:
+			अवरोध;
+		हाल BT_SECURITY_HIGH:
 			opt = RFCOMM_LM_AUTH | RFCOMM_LM_ENCRYPT |
 			      RFCOMM_LM_SECURE;
-			break;
-		case BT_SECURITY_FIPS:
+			अवरोध;
+		हाल BT_SECURITY_FIPS:
 			opt = RFCOMM_LM_AUTH | RFCOMM_LM_ENCRYPT |
 			      RFCOMM_LM_SECURE | RFCOMM_LM_FIPS;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			opt = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (rfcomm_pi(sk)->role_switch)
+		अगर (rfcomm_pi(sk)->role_चयन)
 			opt |= RFCOMM_LM_MASTER;
 
-		if (put_user(opt, (u32 __user *) optval))
+		अगर (put_user(opt, (u32 __user *) optval))
 			err = -EFAULT;
 
-		break;
+		अवरोध;
 
-	case RFCOMM_CONNINFO:
-		if (sk->sk_state != BT_CONNECTED &&
-					!rfcomm_pi(sk)->dlc->defer_setup) {
+	हाल RFCOMM_CONNINFO:
+		अगर (sk->sk_state != BT_CONNECTED &&
+					!rfcomm_pi(sk)->dlc->defer_setup) अणु
 			err = -ENOTCONN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		l2cap_sk = rfcomm_pi(sk)->dlc->session->sock->sk;
 		conn = l2cap_pi(l2cap_sk)->chan->conn;
 
-		memset(&cinfo, 0, sizeof(cinfo));
+		स_रखो(&cinfo, 0, माप(cinfo));
 		cinfo.hci_handle = conn->hcon->handle;
-		memcpy(cinfo.dev_class, conn->hcon->dev_class, 3);
+		स_नकल(cinfo.dev_class, conn->hcon->dev_class, 3);
 
-		len = min_t(unsigned int, len, sizeof(cinfo));
-		if (copy_to_user(optval, (char *) &cinfo, len))
+		len = min_t(अचिन्हित पूर्णांक, len, माप(cinfo));
+		अगर (copy_to_user(optval, (अक्षर *) &cinfo, len))
 			err = -EFAULT;
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rfcomm_sock_getsockopt(struct socket *sock, int level, int optname, char __user *optval, int __user *optlen)
-{
-	struct sock *sk = sock->sk;
-	struct bt_security sec;
-	int len, err = 0;
+अटल पूर्णांक rfcomm_sock_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname, अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा bt_security sec;
+	पूर्णांक len, err = 0;
 
 	BT_DBG("sk %p", sk);
 
-	if (level == SOL_RFCOMM)
-		return rfcomm_sock_getsockopt_old(sock, optname, optval, optlen);
+	अगर (level == SOL_RFCOMM)
+		वापस rfcomm_sock_माला_लोockopt_old(sock, optname, optval, optlen);
 
-	if (level != SOL_BLUETOOTH)
-		return -ENOPROTOOPT;
+	अगर (level != SOL_BLUETOOTH)
+		वापस -ENOPROTOOPT;
 
-	if (get_user(len, optlen))
-		return -EFAULT;
+	अगर (get_user(len, optlen))
+		वापस -EFAULT;
 
 	lock_sock(sk);
 
-	switch (optname) {
-	case BT_SECURITY:
-		if (sk->sk_type != SOCK_STREAM) {
+	चयन (optname) अणु
+	हाल BT_SECURITY:
+		अगर (sk->sk_type != SOCK_STREAM) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		sec.level = rfcomm_pi(sk)->sec_level;
 		sec.key_size = 0;
 
-		len = min_t(unsigned int, len, sizeof(sec));
-		if (copy_to_user(optval, (char *) &sec, len))
+		len = min_t(अचिन्हित पूर्णांक, len, माप(sec));
+		अगर (copy_to_user(optval, (अक्षर *) &sec, len))
 			err = -EFAULT;
 
-		break;
+		अवरोध;
 
-	case BT_DEFER_SETUP:
-		if (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) {
+	हाल BT_DEFER_SETUP:
+		अगर (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (put_user(test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags),
+		अगर (put_user(test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags),
 			     (u32 __user *) optval))
 			err = -EFAULT;
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rfcomm_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
-{
-	struct sock *sk __maybe_unused = sock->sk;
-	int err;
+अटल पूर्णांक rfcomm_sock_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा sock *sk __maybe_unused = sock->sk;
+	पूर्णांक err;
 
 	BT_DBG("sk %p cmd %x arg %lx", sk, cmd, arg);
 
 	err = bt_sock_ioctl(sock, cmd, arg);
 
-	if (err == -ENOIOCTLCMD) {
-#ifdef CONFIG_BT_RFCOMM_TTY
+	अगर (err == -ENOIOCTLCMD) अणु
+#अगर_घोषित CONFIG_BT_RFCOMM_TTY
 		lock_sock(sk);
-		err = rfcomm_dev_ioctl(sk, cmd, (void __user *) arg);
+		err = rfcomm_dev_ioctl(sk, cmd, (व्योम __user *) arg);
 		release_sock(sk);
-#else
+#अन्यथा
 		err = -EOPNOTSUPP;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static int rfcomm_sock_compat_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
-{
-	return rfcomm_sock_ioctl(sock, cmd, (unsigned long)compat_ptr(arg));
-}
-#endif
+#अगर_घोषित CONFIG_COMPAT
+अटल पूर्णांक rfcomm_sock_compat_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस rfcomm_sock_ioctl(sock, cmd, (अचिन्हित दीर्घ)compat_ptr(arg));
+पूर्ण
+#पूर्ण_अगर
 
-static int rfcomm_sock_shutdown(struct socket *sock, int how)
-{
-	struct sock *sk = sock->sk;
-	int err = 0;
+अटल पूर्णांक rfcomm_sock_shutकरोwn(काष्ठा socket *sock, पूर्णांक how)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक err = 0;
 
 	BT_DBG("sock %p, sk %p", sock, sk);
 
-	if (!sk)
-		return 0;
+	अगर (!sk)
+		वापस 0;
 
 	lock_sock(sk);
-	if (!sk->sk_shutdown) {
-		sk->sk_shutdown = SHUTDOWN_MASK;
-		__rfcomm_sock_close(sk);
+	अगर (!sk->sk_shutकरोwn) अणु
+		sk->sk_shutकरोwn = SHUTDOWN_MASK;
+		__rfcomm_sock_बंद(sk);
 
-		if (sock_flag(sk, SOCK_LINGER) && sk->sk_lingertime &&
+		अगर (sock_flag(sk, SOCK_LINGER) && sk->sk_lingerसमय &&
 		    !(current->flags & PF_EXITING))
-			err = bt_sock_wait_state(sk, BT_CLOSED, sk->sk_lingertime);
-	}
+			err = bt_sock_रुको_state(sk, BT_CLOSED, sk->sk_lingerसमय);
+	पूर्ण
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rfcomm_sock_release(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
-	int err;
+अटल पूर्णांक rfcomm_sock_release(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक err;
 
 	BT_DBG("sock %p, sk %p", sock, sk);
 
-	if (!sk)
-		return 0;
+	अगर (!sk)
+		वापस 0;
 
-	err = rfcomm_sock_shutdown(sock, 2);
+	err = rfcomm_sock_shutकरोwn(sock, 2);
 
 	sock_orphan(sk);
-	rfcomm_sock_kill(sk);
-	return err;
-}
+	rfcomm_sock_समाप्त(sk);
+	वापस err;
+पूर्ण
 
 /* ---- RFCOMM core layer callbacks ----
  *
  * called under rfcomm_lock()
  */
-int rfcomm_connect_ind(struct rfcomm_session *s, u8 channel, struct rfcomm_dlc **d)
-{
-	struct sock *sk, *parent;
+पूर्णांक rfcomm_connect_ind(काष्ठा rfcomm_session *s, u8 channel, काष्ठा rfcomm_dlc **d)
+अणु
+	काष्ठा sock *sk, *parent;
 	bdaddr_t src, dst;
-	int result = 0;
+	पूर्णांक result = 0;
 
 	BT_DBG("session %p channel %d", s, channel);
 
 	rfcomm_session_getaddr(s, &src, &dst);
 
-	/* Check if we have socket listening on channel */
+	/* Check अगर we have socket listening on channel */
 	parent = rfcomm_get_sock_by_channel(BT_LISTEN, channel, &src);
-	if (!parent)
-		return 0;
+	अगर (!parent)
+		वापस 0;
 
 	bh_lock_sock(parent);
 
-	/* Check for backlog size */
-	if (sk_acceptq_is_full(parent)) {
+	/* Check क्रम backlog size */
+	अगर (sk_acceptq_is_full(parent)) अणु
 		BT_DBG("backlog full %d", parent->sk_ack_backlog);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	sk = rfcomm_sock_alloc(sock_net(parent), NULL, BTPROTO_RFCOMM, GFP_ATOMIC, 0);
-	if (!sk)
-		goto done;
+	sk = rfcomm_sock_alloc(sock_net(parent), शून्य, BTPROTO_RFCOMM, GFP_ATOMIC, 0);
+	अगर (!sk)
+		जाओ करोne;
 
-	bt_sock_reclassify_lock(sk, BTPROTO_RFCOMM);
+	bt_sock_reclassअगरy_lock(sk, BTPROTO_RFCOMM);
 
 	rfcomm_sock_init(sk, parent);
 	bacpy(&rfcomm_pi(sk)->src, &src);
@@ -996,41 +997,41 @@ int rfcomm_connect_ind(struct rfcomm_session *s, u8 channel, struct rfcomm_dlc *
 	sk->sk_state = BT_CONFIG;
 	bt_accept_enqueue(parent, sk, true);
 
-	/* Accept connection and return socket DLC */
+	/* Accept connection and वापस socket DLC */
 	*d = rfcomm_pi(sk)->dlc;
 	result = 1;
 
-done:
+करोne:
 	bh_unlock_sock(parent);
 
-	if (test_bit(BT_SK_DEFER_SETUP, &bt_sk(parent)->flags))
+	अगर (test_bit(BT_SK_DEFER_SETUP, &bt_sk(parent)->flags))
 		parent->sk_state_change(parent);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int rfcomm_sock_debugfs_show(struct seq_file *f, void *p)
-{
-	struct sock *sk;
+अटल पूर्णांक rfcomm_sock_debugfs_show(काष्ठा seq_file *f, व्योम *p)
+अणु
+	काष्ठा sock *sk;
 
-	read_lock(&rfcomm_sk_list.lock);
+	पढ़ो_lock(&rfcomm_sk_list.lock);
 
-	sk_for_each(sk, &rfcomm_sk_list.head) {
-		seq_printf(f, "%pMR %pMR %d %d\n",
+	sk_क्रम_each(sk, &rfcomm_sk_list.head) अणु
+		seq_म_लिखो(f, "%pMR %pMR %d %d\n",
 			   &rfcomm_pi(sk)->src, &rfcomm_pi(sk)->dst,
 			   sk->sk_state, rfcomm_pi(sk)->channel);
-	}
+	पूर्ण
 
-	read_unlock(&rfcomm_sk_list.lock);
+	पढ़ो_unlock(&rfcomm_sk_list.lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(rfcomm_sock_debugfs);
 
-static struct dentry *rfcomm_sock_debugfs;
+अटल काष्ठा dentry *rfcomm_sock_debugfs;
 
-static const struct proto_ops rfcomm_sock_ops = {
+अटल स्थिर काष्ठा proto_ops rfcomm_sock_ops = अणु
 	.family		= PF_BLUETOOTH,
 	.owner		= THIS_MODULE,
 	.release	= rfcomm_sock_release,
@@ -1041,71 +1042,71 @@ static const struct proto_ops rfcomm_sock_ops = {
 	.getname	= rfcomm_sock_getname,
 	.sendmsg	= rfcomm_sock_sendmsg,
 	.recvmsg	= rfcomm_sock_recvmsg,
-	.shutdown	= rfcomm_sock_shutdown,
+	.shutकरोwn	= rfcomm_sock_shutकरोwn,
 	.setsockopt	= rfcomm_sock_setsockopt,
-	.getsockopt	= rfcomm_sock_getsockopt,
+	.माला_लोockopt	= rfcomm_sock_माला_लोockopt,
 	.ioctl		= rfcomm_sock_ioctl,
 	.gettstamp	= sock_gettstamp,
 	.poll		= bt_sock_poll,
 	.socketpair	= sock_no_socketpair,
 	.mmap		= sock_no_mmap,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	= rfcomm_sock_compat_ioctl,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct net_proto_family rfcomm_sock_family_ops = {
+अटल स्थिर काष्ठा net_proto_family rfcomm_sock_family_ops = अणु
 	.family		= PF_BLUETOOTH,
 	.owner		= THIS_MODULE,
 	.create		= rfcomm_sock_create
-};
+पूर्ण;
 
-int __init rfcomm_init_sockets(void)
-{
-	int err;
+पूर्णांक __init rfcomm_init_sockets(व्योम)
+अणु
+	पूर्णांक err;
 
-	BUILD_BUG_ON(sizeof(struct sockaddr_rc) > sizeof(struct sockaddr));
+	BUILD_BUG_ON(माप(काष्ठा sockaddr_rc) > माप(काष्ठा sockaddr));
 
-	err = proto_register(&rfcomm_proto, 0);
-	if (err < 0)
-		return err;
+	err = proto_रेजिस्टर(&rfcomm_proto, 0);
+	अगर (err < 0)
+		वापस err;
 
-	err = bt_sock_register(BTPROTO_RFCOMM, &rfcomm_sock_family_ops);
-	if (err < 0) {
+	err = bt_sock_रेजिस्टर(BTPROTO_RFCOMM, &rfcomm_sock_family_ops);
+	अगर (err < 0) अणु
 		BT_ERR("RFCOMM socket layer registration failed");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	err = bt_procfs_init(&init_net, "rfcomm", &rfcomm_sk_list, NULL);
-	if (err < 0) {
+	err = bt_procfs_init(&init_net, "rfcomm", &rfcomm_sk_list, शून्य);
+	अगर (err < 0) अणु
 		BT_ERR("Failed to create RFCOMM proc file");
-		bt_sock_unregister(BTPROTO_RFCOMM);
-		goto error;
-	}
+		bt_sock_unरेजिस्टर(BTPROTO_RFCOMM);
+		जाओ error;
+	पूर्ण
 
 	BT_INFO("RFCOMM socket layer initialized");
 
-	if (IS_ERR_OR_NULL(bt_debugfs))
-		return 0;
+	अगर (IS_ERR_OR_शून्य(bt_debugfs))
+		वापस 0;
 
 	rfcomm_sock_debugfs = debugfs_create_file("rfcomm", 0444,
-						  bt_debugfs, NULL,
+						  bt_debugfs, शून्य,
 						  &rfcomm_sock_debugfs_fops);
 
-	return 0;
+	वापस 0;
 
 error:
-	proto_unregister(&rfcomm_proto);
-	return err;
-}
+	proto_unरेजिस्टर(&rfcomm_proto);
+	वापस err;
+पूर्ण
 
-void __exit rfcomm_cleanup_sockets(void)
-{
+व्योम __निकास rfcomm_cleanup_sockets(व्योम)
+अणु
 	bt_procfs_cleanup(&init_net, "rfcomm");
 
-	debugfs_remove(rfcomm_sock_debugfs);
+	debugfs_हटाओ(rfcomm_sock_debugfs);
 
-	bt_sock_unregister(BTPROTO_RFCOMM);
+	bt_sock_unरेजिस्टर(BTPROTO_RFCOMM);
 
-	proto_unregister(&rfcomm_proto);
-}
+	proto_unरेजिस्टर(&rfcomm_proto);
+पूर्ण

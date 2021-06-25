@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Hardware accelerated Matrox Millennium I, II, Mystique, G100, G200, G400 and G450.
@@ -7,233 +8,233 @@
  *
  * Version: 1.64 2002/06/10
  *
- * See matroxfb_base.c for contributors.
+ * See matroxfb_base.c क्रम contributors.
  *
  */
 
-#include "matroxfb_base.h"
-#include "matroxfb_maven.h"
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/i2c-algo-bit.h>
+#समावेश "matroxfb_base.h"
+#समावेश "matroxfb_maven.h"
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c-algo-bit.h>
 
-/* MGA-TVO I2C for G200, G400 */
-#define MAT_CLK		0x20
-#define MAT_DATA	0x10
-/* primary head DDC for Mystique(?), G100, G200, G400 */
-#define DDC1_CLK	0x08
-#define DDC1_DATA	0x02
-/* primary head DDC for Millennium, Millennium II */
-#define DDC1B_CLK	0x10
-#define DDC1B_DATA	0x04
-/* secondary head DDC for G400 */
-#define DDC2_CLK	0x04
-#define DDC2_DATA	0x01
+/* MGA-TVO I2C क्रम G200, G400 */
+#घोषणा MAT_CLK		0x20
+#घोषणा MAT_DATA	0x10
+/* primary head DDC क्रम Mystique(?), G100, G200, G400 */
+#घोषणा DDC1_CLK	0x08
+#घोषणा DDC1_DATA	0x02
+/* primary head DDC क्रम Millennium, Millennium II */
+#घोषणा DDC1B_CLK	0x10
+#घोषणा DDC1B_DATA	0x04
+/* secondary head DDC क्रम G400 */
+#घोषणा DDC2_CLK	0x04
+#घोषणा DDC2_DATA	0x01
 
 /******************************************************/
 
-struct matroxfb_dh_maven_info {
-	struct i2c_bit_adapter	maven;
-	struct i2c_bit_adapter	ddc1;
-	struct i2c_bit_adapter	ddc2;
-};
+काष्ठा matroxfb_dh_maven_info अणु
+	काष्ठा i2c_bit_adapter	maven;
+	काष्ठा i2c_bit_adapter	ddc1;
+	काष्ठा i2c_bit_adapter	ddc2;
+पूर्ण;
 
-static int matroxfb_read_gpio(struct matrox_fb_info* minfo) {
-	unsigned long flags;
-	int v;
+अटल पूर्णांक matroxfb_पढ़ो_gpio(काष्ठा matrox_fb_info* minfo) अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक v;
 
 	matroxfb_DAC_lock_irqsave(flags);
 	v = matroxfb_DAC_in(minfo, DAC_XGENIODATA);
 	matroxfb_DAC_unlock_irqrestore(flags);
-	return v;
-}
+	वापस v;
+पूर्ण
 
-static void matroxfb_set_gpio(struct matrox_fb_info* minfo, int mask, int val) {
-	unsigned long flags;
-	int v;
+अटल व्योम matroxfb_set_gpio(काष्ठा matrox_fb_info* minfo, पूर्णांक mask, पूर्णांक val) अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक v;
 
 	matroxfb_DAC_lock_irqsave(flags);
 	v = (matroxfb_DAC_in(minfo, DAC_XGENIOCTRL) & mask) | val;
 	matroxfb_DAC_out(minfo, DAC_XGENIOCTRL, v);
-	/* We must reset GENIODATA very often... XFree plays with this register */
+	/* We must reset GENIODATA very often... XFree plays with this रेजिस्टर */
 	matroxfb_DAC_out(minfo, DAC_XGENIODATA, 0x00);
 	matroxfb_DAC_unlock_irqrestore(flags);
-}
+पूर्ण
 
 /* software I2C functions */
-static inline void matroxfb_i2c_set(struct matrox_fb_info* minfo, int mask, int state) {
-	if (state)
+अटल अंतरभूत व्योम matroxfb_i2c_set(काष्ठा matrox_fb_info* minfo, पूर्णांक mask, पूर्णांक state) अणु
+	अगर (state)
 		state = 0;
-	else
+	अन्यथा
 		state = mask;
 	matroxfb_set_gpio(minfo, ~mask, state);
-}
+पूर्ण
 
-static void matroxfb_gpio_setsda(void* data, int state) {
-	struct i2c_bit_adapter* b = data;
+अटल व्योम matroxfb_gpio_setsda(व्योम* data, पूर्णांक state) अणु
+	काष्ठा i2c_bit_adapter* b = data;
 	matroxfb_i2c_set(b->minfo, b->mask.data, state);
-}
+पूर्ण
 
-static void matroxfb_gpio_setscl(void* data, int state) {
-	struct i2c_bit_adapter* b = data;
-	matroxfb_i2c_set(b->minfo, b->mask.clock, state);
-}
+अटल व्योम matroxfb_gpio_setscl(व्योम* data, पूर्णांक state) अणु
+	काष्ठा i2c_bit_adapter* b = data;
+	matroxfb_i2c_set(b->minfo, b->mask.घड़ी, state);
+पूर्ण
 
-static int matroxfb_gpio_getsda(void* data) {
-	struct i2c_bit_adapter* b = data;
-	return (matroxfb_read_gpio(b->minfo) & b->mask.data) ? 1 : 0;
-}
+अटल पूर्णांक matroxfb_gpio_माला_लोda(व्योम* data) अणु
+	काष्ठा i2c_bit_adapter* b = data;
+	वापस (matroxfb_पढ़ो_gpio(b->minfo) & b->mask.data) ? 1 : 0;
+पूर्ण
 
-static int matroxfb_gpio_getscl(void* data) {
-	struct i2c_bit_adapter* b = data;
-	return (matroxfb_read_gpio(b->minfo) & b->mask.clock) ? 1 : 0;
-}
+अटल पूर्णांक matroxfb_gpio_माला_लोcl(व्योम* data) अणु
+	काष्ठा i2c_bit_adapter* b = data;
+	वापस (matroxfb_पढ़ो_gpio(b->minfo) & b->mask.घड़ी) ? 1 : 0;
+पूर्ण
 
-static const struct i2c_algo_bit_data matrox_i2c_algo_template =
-{
+अटल स्थिर काष्ठा i2c_algo_bit_data matrox_i2c_algo_ढाँचा =
+अणु
 	.setsda		= matroxfb_gpio_setsda,
 	.setscl		= matroxfb_gpio_setscl,
-	.getsda		= matroxfb_gpio_getsda,
-	.getscl		= matroxfb_gpio_getscl,
+	.माला_लोda		= matroxfb_gpio_माला_लोda,
+	.माला_लोcl		= matroxfb_gpio_माला_लोcl,
 	.udelay		= 10,
-	.timeout	= 100,
-};
+	.समयout	= 100,
+पूर्ण;
 
-static int i2c_bus_reg(struct i2c_bit_adapter* b, struct matrox_fb_info* minfo, 
-		unsigned int data, unsigned int clock, const char *name,
-		int class)
-{
-	int err;
+अटल पूर्णांक i2c_bus_reg(काष्ठा i2c_bit_adapter* b, काष्ठा matrox_fb_info* minfo, 
+		अचिन्हित पूर्णांक data, अचिन्हित पूर्णांक घड़ी, स्थिर अक्षर *name,
+		पूर्णांक class)
+अणु
+	पूर्णांक err;
 
 	b->minfo = minfo;
 	b->mask.data = data;
-	b->mask.clock = clock;
+	b->mask.घड़ी = घड़ी;
 	b->adapter.owner = THIS_MODULE;
-	snprintf(b->adapter.name, sizeof(b->adapter.name), name,
+	snम_लिखो(b->adapter.name, माप(b->adapter.name), name,
 		minfo->fbcon.node);
 	i2c_set_adapdata(&b->adapter, b);
 	b->adapter.class = class;
 	b->adapter.algo_data = &b->bac;
 	b->adapter.dev.parent = &minfo->pcidev->dev;
-	b->bac = matrox_i2c_algo_template;
+	b->bac = matrox_i2c_algo_ढाँचा;
 	b->bac.data = b;
 	err = i2c_bit_add_bus(&b->adapter);
 	b->initialized = !err;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void i2c_bit_bus_del(struct i2c_bit_adapter* b) {
-	if (b->initialized) {
+अटल व्योम i2c_bit_bus_del(काष्ठा i2c_bit_adapter* b) अणु
+	अगर (b->initialized) अणु
 		i2c_del_adapter(&b->adapter);
 		b->initialized = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void i2c_maven_done(struct matroxfb_dh_maven_info* minfo2) {
+अटल अंतरभूत व्योम i2c_maven_करोne(काष्ठा matroxfb_dh_maven_info* minfo2) अणु
 	i2c_bit_bus_del(&minfo2->maven);
-}
+पूर्ण
 
-static inline void i2c_ddc1_done(struct matroxfb_dh_maven_info* minfo2) {
+अटल अंतरभूत व्योम i2c_ddc1_करोne(काष्ठा matroxfb_dh_maven_info* minfo2) अणु
 	i2c_bit_bus_del(&minfo2->ddc1);
-}
+पूर्ण
 
-static inline void i2c_ddc2_done(struct matroxfb_dh_maven_info* minfo2) {
+अटल अंतरभूत व्योम i2c_ddc2_करोne(काष्ठा matroxfb_dh_maven_info* minfo2) अणु
 	i2c_bit_bus_del(&minfo2->ddc2);
-}
+पूर्ण
 
-static void* i2c_matroxfb_probe(struct matrox_fb_info* minfo) {
-	int err;
-	unsigned long flags;
-	struct matroxfb_dh_maven_info* m2info;
+अटल व्योम* i2c_matroxfb_probe(काष्ठा matrox_fb_info* minfo) अणु
+	पूर्णांक err;
+	अचिन्हित दीर्घ flags;
+	काष्ठा matroxfb_dh_maven_info* m2info;
 
-	m2info = kzalloc(sizeof(*m2info), GFP_KERNEL);
-	if (!m2info)
-		return NULL;
+	m2info = kzalloc(माप(*m2info), GFP_KERNEL);
+	अगर (!m2info)
+		वापस शून्य;
 
 	matroxfb_DAC_lock_irqsave(flags);
 	matroxfb_DAC_out(minfo, DAC_XGENIODATA, 0xFF);
 	matroxfb_DAC_out(minfo, DAC_XGENIOCTRL, 0x00);
 	matroxfb_DAC_unlock_irqrestore(flags);
 
-	switch (minfo->chip) {
-		case MGA_2064:
-		case MGA_2164:
+	चयन (minfo->chip) अणु
+		हाल MGA_2064:
+		हाल MGA_2164:
 			err = i2c_bus_reg(&m2info->ddc1, minfo,
 					  DDC1B_DATA, DDC1B_CLK,
 					  "DDC:fb%u #0", I2C_CLASS_DDC);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			err = i2c_bus_reg(&m2info->ddc1, minfo,
 					  DDC1_DATA, DDC1_CLK,
 					  "DDC:fb%u #0", I2C_CLASS_DDC);
-			break;
-	}
-	if (err)
-		goto fail_ddc1;
-	if (minfo->devflags.dualhead) {
+			अवरोध;
+	पूर्ण
+	अगर (err)
+		जाओ fail_ddc1;
+	अगर (minfo->devflags.dualhead) अणु
 		err = i2c_bus_reg(&m2info->ddc2, minfo,
 				  DDC2_DATA, DDC2_CLK,
 				  "DDC:fb%u #1", I2C_CLASS_DDC);
-		if (err == -ENODEV) {
-			printk(KERN_INFO "i2c-matroxfb: VGA->TV plug detected, DDC unavailable.\n");
-		} else if (err)
-			printk(KERN_INFO "i2c-matroxfb: Could not register secondary output i2c bus. Continuing anyway.\n");
+		अगर (err == -ENODEV) अणु
+			prपूर्णांकk(KERN_INFO "i2c-matroxfb: VGA->TV plug detected, DDC unavailable.\n");
+		पूर्ण अन्यथा अगर (err)
+			prपूर्णांकk(KERN_INFO "i2c-matroxfb: Could not register secondary output i2c bus. Continuing anyway.\n");
 		/* Register maven bus even on G450/G550 */
 		err = i2c_bus_reg(&m2info->maven, minfo,
 				  MAT_DATA, MAT_CLK, "MAVEN:fb%u", 0);
-		if (err)
-			printk(KERN_INFO "i2c-matroxfb: Could not register Maven i2c bus. Continuing anyway.\n");
-		else {
-			struct i2c_board_info maven_info = {
+		अगर (err)
+			prपूर्णांकk(KERN_INFO "i2c-matroxfb: Could not register Maven i2c bus. Continuing anyway.\n");
+		अन्यथा अणु
+			काष्ठा i2c_board_info maven_info = अणु
 				I2C_BOARD_INFO("maven", 0x1b),
-			};
-			unsigned short const addr_list[2] = {
+			पूर्ण;
+			अचिन्हित लघु स्थिर addr_list[2] = अणु
 				0x1b, I2C_CLIENT_END
-			};
+			पूर्ण;
 
 			i2c_new_scanned_device(&m2info->maven.adapter,
-					       &maven_info, addr_list, NULL);
-		}
-	}
-	return m2info;
+					       &maven_info, addr_list, शून्य);
+		पूर्ण
+	पूर्ण
+	वापस m2info;
 fail_ddc1:;
-	kfree(m2info);
-	printk(KERN_ERR "i2c-matroxfb: Could not register primary adapter DDC bus.\n");
-	return NULL;
-}
+	kमुक्त(m2info);
+	prपूर्णांकk(KERN_ERR "i2c-matroxfb: Could not register primary adapter DDC bus.\n");
+	वापस शून्य;
+पूर्ण
 
-static void i2c_matroxfb_remove(struct matrox_fb_info* minfo, void* data) {
-	struct matroxfb_dh_maven_info* m2info = data;
+अटल व्योम i2c_matroxfb_हटाओ(काष्ठा matrox_fb_info* minfo, व्योम* data) अणु
+	काष्ठा matroxfb_dh_maven_info* m2info = data;
 
-	i2c_maven_done(m2info);
-	i2c_ddc2_done(m2info);
-	i2c_ddc1_done(m2info);
-	kfree(m2info);
-}
+	i2c_maven_करोne(m2info);
+	i2c_ddc2_करोne(m2info);
+	i2c_ddc1_करोne(m2info);
+	kमुक्त(m2info);
+पूर्ण
 
-static struct matroxfb_driver i2c_matroxfb = {
+अटल काष्ठा matroxfb_driver i2c_matroxfb = अणु
 	.node =		LIST_HEAD_INIT(i2c_matroxfb.node),
 	.name =		"i2c-matroxfb",
 	.probe = 	i2c_matroxfb_probe,
-	.remove =	i2c_matroxfb_remove,
-};
+	.हटाओ =	i2c_matroxfb_हटाओ,
+पूर्ण;
 
-static int __init i2c_matroxfb_init(void) {
-	if (matroxfb_register_driver(&i2c_matroxfb)) {
-		printk(KERN_ERR "i2c-matroxfb: failed to register driver\n");
-		return -ENXIO;
-	}
-	return 0;
-}
+अटल पूर्णांक __init i2c_matroxfb_init(व्योम) अणु
+	अगर (matroxfb_रेजिस्टर_driver(&i2c_matroxfb)) अणु
+		prपूर्णांकk(KERN_ERR "i2c-matroxfb: failed to register driver\n");
+		वापस -ENXIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void __exit i2c_matroxfb_exit(void) {
-	matroxfb_unregister_driver(&i2c_matroxfb);
-}
+अटल व्योम __निकास i2c_matroxfb_निकास(व्योम) अणु
+	matroxfb_unरेजिस्टर_driver(&i2c_matroxfb);
+पूर्ण
 
 MODULE_AUTHOR("(c) 1999-2002 Petr Vandrovec <vandrove@vc.cvut.cz>");
 MODULE_DESCRIPTION("Support module providing I2C buses present on Matrox videocards");
 
 module_init(i2c_matroxfb_init);
-module_exit(i2c_matroxfb_exit);
+module_निकास(i2c_matroxfb_निकास);
 /* no __setup required */
 MODULE_LICENSE("GPL");

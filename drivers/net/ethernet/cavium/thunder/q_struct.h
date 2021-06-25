@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * This file contains HW queue descriptor formats, config register
- * structures etc
+ * This file contains HW queue descriptor क्रमmats, config रेजिस्टर
+ * काष्ठाures etc
  *
  * Copyright (C) 2015 Cavium, Inc.
  */
 
-#ifndef Q_STRUCT_H
-#define Q_STRUCT_H
+#अगर_अघोषित Q_STRUCT_H
+#घोषणा Q_STRUCT_H
 
-/* Load transaction types for reading segment bytes specified by
+/* Load transaction types क्रम पढ़ोing segment bytes specअगरied by
  * NIC_SEND_GATHER_S[LD_TYPE].
  */
-enum nic_send_ld_type_e {
+क्रमागत nic_send_ld_type_e अणु
 	NIC_SEND_LD_TYPE_E_LDD = 0x0,
 	NIC_SEND_LD_TYPE_E_LDT = 0x1,
 	NIC_SEND_LD_TYPE_E_LDWB = 0x2,
 	NIC_SEND_LD_TYPE_E_ENUM_LAST = 0x3,
-};
+पूर्ण;
 
-enum ether_type_algorithm {
+क्रमागत ether_type_algorithm अणु
 	ETYPE_ALG_NONE = 0x0,
 	ETYPE_ALG_SKIP = 0x1,
 	ETYPE_ALG_ENDPARSE = 0x2,
 	ETYPE_ALG_VLAN = 0x3,
 	ETYPE_ALG_VLAN_STRIP = 0x4,
-};
+पूर्ण;
 
-enum layer3_type {
+क्रमागत layer3_type अणु
 	L3TYPE_NONE = 0x00,
 	L3TYPE_GRH = 0x01,
 	L3TYPE_IPV4 = 0x04,
@@ -36,9 +37,9 @@ enum layer3_type {
 	L3TYPE_IPV6_OPTIONS = 0x07,
 	L3TYPE_ET_STOP = 0x0D,
 	L3TYPE_OTHER = 0x0E,
-};
+पूर्ण;
 
-enum layer4_type {
+क्रमागत layer4_type अणु
 	L4TYPE_NONE = 0x00,
 	L4TYPE_IPSEC_ESP = 0x01,
 	L4TYPE_IPFRAG = 0x02,
@@ -49,17 +50,17 @@ enum layer4_type {
 	L4TYPE_GRE = 0x07,
 	L4TYPE_ROCE_BTH = 0x08,
 	L4TYPE_OTHER = 0x0E,
-};
+पूर्ण;
 
 /* CPI and RSSI configuration */
-enum cpi_algorithm_type {
+क्रमागत cpi_algorithm_type अणु
 	CPI_ALG_NONE = 0x0,
 	CPI_ALG_VLAN = 0x1,
 	CPI_ALG_VLAN16 = 0x2,
 	CPI_ALG_DIFF = 0x3,
-};
+पूर्ण;
 
-enum rss_algorithm_type {
+क्रमागत rss_algorithm_type अणु
 	RSS_ALG_NONE = 0x00,
 	RSS_ALG_PORT = 0x01,
 	RSS_ALG_IP = 0x02,
@@ -68,9 +69,9 @@ enum rss_algorithm_type {
 	RSS_ALG_SCTP_IP = 0x05,
 	RSS_ALG_GRE_IP = 0x06,
 	RSS_ALG_ROCE = 0x07,
-};
+पूर्ण;
 
-enum rss_hash_cfg {
+क्रमागत rss_hash_cfg अणु
 	RSS_HASH_L2ETC = 0x00,
 	RSS_HASH_IP = 0x01,
 	RSS_HASH_TCP = 0x02,
@@ -80,24 +81,24 @@ enum rss_hash_cfg {
 	RSS_HASH_ROCE = 0x06,
 	RSS_L3_BIDI = 0x07,
 	RSS_L4_BIDI = 0x08,
-};
+पूर्ण;
 
 /* Completion queue entry types */
-enum cqe_type {
+क्रमागत cqe_type अणु
 	CQE_TYPE_INVALID = 0x0,
 	CQE_TYPE_RX = 0x2,
 	CQE_TYPE_RX_SPLIT = 0x3,
 	CQE_TYPE_RX_TCP = 0x4,
 	CQE_TYPE_SEND = 0x8,
 	CQE_TYPE_SEND_PTP = 0x9,
-};
+पूर्ण;
 
-enum cqe_rx_tcp_status {
+क्रमागत cqe_rx_tcp_status अणु
 	CQE_RX_STATUS_VALID_TCP_CNXT = 0x00,
 	CQE_RX_STATUS_INVALID_TCP_CNXT = 0x0F,
-};
+पूर्ण;
 
-enum cqe_send_status {
+क्रमागत cqe_send_status अणु
 	CQE_SEND_STATUS_GOOD = 0x00,
 	CQE_SEND_STATUS_DESC_FAULT = 0x01,
 	CQE_SEND_STATUS_HDR_CONS_ERR = 0x11,
@@ -114,27 +115,27 @@ enum cqe_send_status {
 	CQE_SEND_STATUS_MEM_FAULT = 0x89,
 	CQE_SEND_STATUS_CSUM_OVERLAP = 0x8A,
 	CQE_SEND_STATUS_CSUM_OVERFLOW = 0x8B,
-};
+पूर्ण;
 
-enum cqe_rx_tcp_end_reason {
+क्रमागत cqe_rx_tcp_end_reason अणु
 	CQE_RX_TCP_END_FIN_FLAG_DET = 0,
 	CQE_RX_TCP_END_INVALID_FLAG = 1,
 	CQE_RX_TCP_END_TIMEOUT = 2,
 	CQE_RX_TCP_END_OUT_OF_SEQ = 3,
 	CQE_RX_TCP_END_PKT_ERR = 4,
 	CQE_RX_TCP_END_QS_DISABLED = 0x0F,
-};
+पूर्ण;
 
-/* Packet protocol level error enumeration */
-enum cqe_rx_err_level {
+/* Packet protocol level error क्रमागतeration */
+क्रमागत cqe_rx_err_level अणु
 	CQE_RX_ERRLVL_RE = 0x0,
 	CQE_RX_ERRLVL_L2 = 0x1,
 	CQE_RX_ERRLVL_L3 = 0x2,
 	CQE_RX_ERRLVL_L4 = 0x3,
-};
+पूर्ण;
 
-/* Packet protocol level error type enumeration */
-enum cqe_rx_err_opcode {
+/* Packet protocol level error type क्रमागतeration */
+क्रमागत cqe_rx_err_opcode अणु
 	CQE_RX_ERR_RE_NONE = 0x0,
 	CQE_RX_ERR_RE_PARTIAL = 0x1,
 	CQE_RX_ERR_RE_JABBER = 0x2,
@@ -166,10 +167,10 @@ enum cqe_rx_err_opcode {
 	CQE_RX_ERR_TCP_OFFSET = 0x66,
 	CQE_RX_ERR_L4_PCLP = 0x67,
 	CQE_RX_ERR_RBDR_TRUNC = 0x70,
-};
+पूर्ण;
 
-struct cqe_rx_t {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा cqe_rx_t अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64   cqe_type:4; /* W0 */
 	u64   stdn_fault:1;
 	u64   rsvd0:1;
@@ -217,7 +218,7 @@ struct cqe_rx_t {
 	u64   rb10_sz:16;
 	u64   rb9_sz:16;
 	u64   rb8_sz:16;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64   err_opcode:8;
 	u64   err_level:3;
 	u64   l2_present:1;
@@ -260,7 +261,7 @@ struct cqe_rx_t {
 	u64   rb9_sz:16;
 	u64   rb10_sz:16;
 	u64   rb11_sz:16; /* W5 */
-#endif
+#पूर्ण_अगर
 	u64   rb0_ptr:64;
 	u64   rb1_ptr:64;
 	u64   rb2_ptr:64;
@@ -273,10 +274,10 @@ struct cqe_rx_t {
 	u64   rb9_ptr:64;
 	u64   rb10_ptr:64;
 	u64   rb11_ptr:64;
-};
+पूर्ण;
 
-struct cqe_rx_tcp_err_t {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा cqe_rx_tcp_err_t अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64   cqe_type:4; /* W0 */
 	u64   rsvd0:60;
 
@@ -285,7 +286,7 @@ struct cqe_rx_tcp_err_t {
 	u64   rsvd2:27;
 	u64   rbdr_bytes:8;
 	u64   rsvd3:24;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64   rsvd0:60;
 	u64   cqe_type:4;
 
@@ -294,11 +295,11 @@ struct cqe_rx_tcp_err_t {
 	u64   rsvd2:27;
 	u64   partial_first:1;
 	u64   rsvd1:4;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-struct cqe_rx_tcp_t {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा cqe_rx_tcp_t अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64   cqe_type:4; /* W0 */
 	u64   rsvd0:52;
 	u64   cq_tcp_status:8;
@@ -307,7 +308,7 @@ struct cqe_rx_tcp_t {
 	u64   tcp_cntx_bytes:8;
 	u64   rsvd2:8;
 	u64   tcp_err_bytes:16;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64   cq_tcp_status:8;
 	u64   rsvd0:52;
 	u64   cqe_type:4; /* W0 */
@@ -316,11 +317,11 @@ struct cqe_rx_tcp_t {
 	u64   rsvd2:8;
 	u64   tcp_cntx_bytes:8;
 	u64   rsvd1:32; /* W1 */
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-struct cqe_send_t {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा cqe_send_t अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64   cqe_type:4; /* W0 */
 	u64   rsvd0:4;
 	u64   sqe_ptr:16;
@@ -331,8 +332,8 @@ struct cqe_send_t {
 	u64   rsvd3:8;
 	u64   send_status:8;
 
-	u64   ptp_timestamp:64; /* W1 */
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	u64   ptp_बारtamp:64; /* W1 */
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64   send_status:8;
 	u64   rsvd3:8;
 	u64   sq_idx:3;
@@ -343,25 +344,25 @@ struct cqe_send_t {
 	u64   rsvd0:4;
 	u64   cqe_type:4; /* W0 */
 
-	u64   ptp_timestamp:64; /* W1 */
-#endif
-};
+	u64   ptp_बारtamp:64; /* W1 */
+#पूर्ण_अगर
+पूर्ण;
 
-union cq_desc_t {
+जोड़ cq_desc_t अणु
 	u64    u[64];
-	struct cqe_send_t snd_hdr;
-	struct cqe_rx_t rx_hdr;
-	struct cqe_rx_tcp_t rx_tcp_hdr;
-	struct cqe_rx_tcp_err_t rx_tcp_err_hdr;
-};
+	काष्ठा cqe_send_t snd_hdr;
+	काष्ठा cqe_rx_t rx_hdr;
+	काष्ठा cqe_rx_tcp_t rx_tcp_hdr;
+	काष्ठा cqe_rx_tcp_err_t rx_tcp_err_hdr;
+पूर्ण;
 
-struct rbdr_entry_t {
+काष्ठा rbdr_entry_t अणु
 	u64   buf_addr;
-};
+पूर्ण;
 
 /* TCP reassembly context */
-struct rbe_tcp_cnxt_t {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा rbe_tcp_cnxt_t अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64   tcp_pkt_cnt:12;
 	u64   rsvd1:4;
 	u64   align_hdr_bytes:4;
@@ -372,7 +373,7 @@ struct rbe_tcp_cnxt_t {
 	u64   rsvd0:54;
 	u64   tcp_end_reason:2;
 	u64   tcp_status:4;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64   tcp_status:4;
 	u64   tcp_end_reason:2;
 	u64   rsvd0:54;
@@ -383,11 +384,11 @@ struct rbe_tcp_cnxt_t {
 	u64   align_hdr_bytes:4;
 	u64   rsvd1:4;
 	u64   tcp_pkt_cnt:12;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /* Always Big endian */
-struct rx_hdr_t {
+काष्ठा rx_hdr_t अणु
 	u64   opaque:32;
 	u64   rss_flow:8;
 	u64   skip_length:6;
@@ -397,52 +398,52 @@ struct rx_hdr_t {
 	u64   dest_alg:2;
 	u64   rsvd0:2;
 	u64   dest_rq:11;
-};
+पूर्ण;
 
-enum send_l4_csum_type {
+क्रमागत send_l4_csum_type अणु
 	SEND_L4_CSUM_DISABLE = 0x00,
 	SEND_L4_CSUM_UDP = 0x01,
 	SEND_L4_CSUM_TCP = 0x02,
 	SEND_L4_CSUM_SCTP = 0x03,
-};
+पूर्ण;
 
-enum send_crc_alg {
+क्रमागत send_crc_alg अणु
 	SEND_CRCALG_CRC32 = 0x00,
 	SEND_CRCALG_CRC32C = 0x01,
 	SEND_CRCALG_ICRC = 0x02,
-};
+पूर्ण;
 
-enum send_load_type {
+क्रमागत send_load_type अणु
 	SEND_LD_TYPE_LDD = 0x00,
 	SEND_LD_TYPE_LDT = 0x01,
 	SEND_LD_TYPE_LDWB = 0x02,
-};
+पूर्ण;
 
-enum send_mem_alg_type {
+क्रमागत send_mem_alg_type अणु
 	SEND_MEMALG_SET = 0x00,
 	SEND_MEMALG_ADD = 0x08,
 	SEND_MEMALG_SUB = 0x09,
 	SEND_MEMALG_ADDLEN = 0x0A,
 	SEND_MEMALG_SUBLEN = 0x0B,
-};
+पूर्ण;
 
-enum send_mem_dsz_type {
+क्रमागत send_mem_dsz_type अणु
 	SEND_MEMDSZ_B64 = 0x00,
 	SEND_MEMDSZ_B32 = 0x01,
 	SEND_MEMDSZ_B8 = 0x03,
-};
+पूर्ण;
 
-enum sq_subdesc_type {
+क्रमागत sq_subdesc_type अणु
 	SQ_DESC_TYPE_INVALID = 0x00,
 	SQ_DESC_TYPE_HEADER = 0x01,
 	SQ_DESC_TYPE_CRC = 0x02,
 	SQ_DESC_TYPE_IMMEDIATE = 0x03,
 	SQ_DESC_TYPE_GATHER = 0x04,
 	SQ_DESC_TYPE_MEMORY = 0x05,
-};
+पूर्ण;
 
-struct sq_crc_subdesc {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा sq_crc_subdesc अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64    rsvd1:32;
 	u64    crc_ival:32;
 	u64    subdesc_type:4;
@@ -451,7 +452,7 @@ struct sq_crc_subdesc {
 	u64    crc_insert_pos:16;
 	u64    hdr_start:16;
 	u64    crc_len:16;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64    crc_len:16;
 	u64    hdr_start:16;
 	u64    crc_insert_pos:16;
@@ -460,11 +461,11 @@ struct sq_crc_subdesc {
 	u64    subdesc_type:4;
 	u64    crc_ival:32;
 	u64    rsvd1:32;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-struct sq_gather_subdesc {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा sq_gather_subdesc अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64    subdesc_type:4; /* W0 */
 	u64    ld_type:2;
 	u64    rsvd0:42;
@@ -472,7 +473,7 @@ struct sq_gather_subdesc {
 
 	u64    rsvd1:15; /* W1 */
 	u64    addr:49;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64    size:16;
 	u64    rsvd0:42;
 	u64    ld_type:2;
@@ -480,28 +481,28 @@ struct sq_gather_subdesc {
 
 	u64    addr:49;
 	u64    rsvd1:15; /* W1 */
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /* SQ immediate subdescriptor */
-struct sq_imm_subdesc {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा sq_imm_subdesc अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64    subdesc_type:4; /* W0 */
 	u64    rsvd0:46;
 	u64    len:14;
 
 	u64    data:64; /* W1 */
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64    len:14;
 	u64    rsvd0:46;
 	u64    subdesc_type:4; /* W0 */
 
 	u64    data:64; /* W1 */
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-struct sq_mem_subdesc {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा sq_mem_subdesc अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64    subdesc_type:4; /* W0 */
 	u64    mem_alg:4;
 	u64    mem_dsz:2;
@@ -511,7 +512,7 @@ struct sq_mem_subdesc {
 
 	u64    rsvd1:15; /* W1 */
 	u64    addr:49;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64    offset:32;
 	u64    rsvd0:21;
 	u64    wmem:1;
@@ -521,16 +522,16 @@ struct sq_mem_subdesc {
 
 	u64    addr:49;
 	u64    rsvd1:15; /* W1 */
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-struct sq_hdr_subdesc {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा sq_hdr_subdesc अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64    subdesc_type:4;
 	u64    tso:1;
 	u64    post_cqe:1; /* Post CQE on no error also */
-	u64    dont_send:1;
-	u64    tstmp:1;
+	u64    करोnt_send:1;
+	u64    tsपंचांगp:1;
 	u64    subdesc_cnt:8;
 	u64    csum_l4:2;
 	u64    csum_l3:1;
@@ -548,7 +549,7 @@ struct sq_hdr_subdesc {
 	u64    tso_start:8;
 	u64    rsvd3:2;
 	u64    tso_max_paysize:14; /* W1 */
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64    tot_len:20;
 	u64    rsvd1:4;
 	u64    l3_offset:8;
@@ -559,8 +560,8 @@ struct sq_hdr_subdesc {
 	u64    csum_l3:1;
 	u64    csum_l4:2;
 	u64    subdesc_cnt:8;
-	u64    tstmp:1;
-	u64    dont_send:1;
+	u64    tsपंचांगp:1;
+	u64    करोnt_send:1;
 	u64    post_cqe:1; /* Post CQE on no error also */
 	u64    tso:1;
 	u64    subdesc_type:4; /* W0 */
@@ -571,24 +572,24 @@ struct sq_hdr_subdesc {
 	u64    inner_l3_offset:8;
 	u64    inner_l4_offset:8;
 	u64    rsvd2:24; /* W1 */
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-/* Queue config register formats */
-struct rq_cfg {
-#if defined(__BIG_ENDIAN_BITFIELD)
+/* Queue config रेजिस्टर क्रमmats */
+काष्ठा rq_cfg अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64 reserved_2_63:62;
 	u64 ena:1;
 	u64 tcp_ena:1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64 tcp_ena:1;
 	u64 ena:1;
 	u64 reserved_2_63:62;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-struct cq_cfg {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा cq_cfg अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64 reserved_43_63:21;
 	u64 ena:1;
 	u64 reset:1;
@@ -598,7 +599,7 @@ struct cq_cfg {
 	u64 reserved_25_31:7;
 	u64 avg_con:9;
 	u64 reserved_0_15:16;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64 reserved_0_15:16;
 	u64 avg_con:9;
 	u64 reserved_25_31:7;
@@ -608,11 +609,11 @@ struct cq_cfg {
 	u64 reset:1;
 	u64 ena:1;
 	u64 reserved_43_63:21;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-struct sq_cfg {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा sq_cfg अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64 reserved_32_63:32;
 	u64 cq_limit:8;
 	u64 reserved_20_23:4;
@@ -623,9 +624,9 @@ struct sq_cfg {
 	u64 reserved_11_15:5;
 	u64 qsize:3;
 	u64 reserved_3_7:5;
-	u64 tstmp_bgx_intf:3;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-	u64 tstmp_bgx_intf:3;
+	u64 tsपंचांगp_bgx_पूर्णांकf:3;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+	u64 tsपंचांगp_bgx_पूर्णांकf:3;
 	u64 reserved_3_7:5;
 	u64 qsize:3;
 	u64 reserved_11_15:5;
@@ -636,11 +637,11 @@ struct sq_cfg {
 	u64 reserved_20_23:4;
 	u64 cq_limit:8;
 	u64 reserved_32_63:32;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-struct rbdr_cfg {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा rbdr_cfg अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64 reserved_45_63:19;
 	u64 ena:1;
 	u64 reset:1;
@@ -651,7 +652,7 @@ struct rbdr_cfg {
 	u64 avg_con:9;
 	u64 reserved_12_15:4;
 	u64 lines:12;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64 lines:12;
 	u64 reserved_12_15:4;
 	u64 avg_con:9;
@@ -662,11 +663,11 @@ struct rbdr_cfg {
 	u64 reset:1;
 	u64 ena: 1;
 	u64 reserved_45_63:19;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-struct qs_cfg {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा qs_cfg अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	u64 reserved_32_63:32;
 	u64 ena:1;
 	u64 reserved_27_30:4;
@@ -674,15 +675,15 @@ struct qs_cfg {
 	u64 sq_ins_pos:6;
 	u64 lock_ena:1;
 	u64 lock_viol_cqe_ena:1;
-	u64 send_tstmp_ena:1;
+	u64 send_tsपंचांगp_ena:1;
 	u64 be:1;
 	u64 reserved_7_15:9;
 	u64 vnic:7;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u64 vnic:7;
 	u64 reserved_7_15:9;
 	u64 be:1;
-	u64 send_tstmp_ena:1;
+	u64 send_tsपंचांगp_ena:1;
 	u64 lock_viol_cqe_ena:1;
 	u64 lock_ena:1;
 	u64 sq_ins_pos:6;
@@ -690,7 +691,7 @@ struct qs_cfg {
 	u64 reserved_27_30:4;
 	u64 ena:1;
 	u64 reserved_32_63:32;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-#endif /* Q_STRUCT_H */
+#पूर्ण_अगर /* Q_STRUCT_H */

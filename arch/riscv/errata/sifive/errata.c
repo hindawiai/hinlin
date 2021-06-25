@@ -1,106 +1,107 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright (C) 2021 Sifive.
+ * Copyright (C) 2021 Sअगरive.
  */
 
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/bug.h>
-#include <asm/patch.h>
-#include <asm/alternative.h>
-#include <asm/vendorid_list.h>
-#include <asm/errata_list.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/bug.h>
+#समावेश <यंत्र/patch.h>
+#समावेश <यंत्र/alternative.h>
+#समावेश <यंत्र/venकरोrid_list.h>
+#समावेश <यंत्र/errata_list.h>
 
-struct errata_info_t {
-	char name[ERRATA_STRING_LENGTH_MAX];
-	bool (*check_func)(unsigned long  arch_id, unsigned long impid);
-};
+काष्ठा errata_info_t अणु
+	अक्षर name[ERRATA_STRING_LENGTH_MAX];
+	bool (*check_func)(अचिन्हित दीर्घ  arch_id, अचिन्हित दीर्घ impid);
+पूर्ण;
 
-static bool errata_cip_453_check_func(unsigned long  arch_id, unsigned long impid)
-{
+अटल bool errata_cip_453_check_func(अचिन्हित दीर्घ  arch_id, अचिन्हित दीर्घ impid)
+अणु
 	/*
 	 * Affected cores:
 	 * Architecture ID: 0x8000000000000007
 	 * Implement ID: 0x20181004 <= impid <= 0x20191105
 	 */
-	if (arch_id != 0x8000000000000007 ||
+	अगर (arch_id != 0x8000000000000007 ||
 	    (impid < 0x20181004 || impid > 0x20191105))
-		return false;
-	return true;
-}
+		वापस false;
+	वापस true;
+पूर्ण
 
-static bool errata_cip_1200_check_func(unsigned long  arch_id, unsigned long impid)
-{
+अटल bool errata_cip_1200_check_func(अचिन्हित दीर्घ  arch_id, अचिन्हित दीर्घ impid)
+अणु
 	/*
 	 * Affected cores:
 	 * Architecture ID: 0x8000000000000007 or 0x1
 	 * Implement ID: mimpid[23:0] <= 0x200630 and mimpid != 0x01200626
 	 */
-	if (arch_id != 0x8000000000000007 && arch_id != 0x1)
-		return false;
-	if ((impid & 0xffffff) > 0x200630 || impid == 0x1200626)
-		return false;
-	return true;
-}
+	अगर (arch_id != 0x8000000000000007 && arch_id != 0x1)
+		वापस false;
+	अगर ((impid & 0xffffff) > 0x200630 || impid == 0x1200626)
+		वापस false;
+	वापस true;
+पूर्ण
 
-static struct errata_info_t errata_list[ERRATA_SIFIVE_NUMBER] = {
-	{
+अटल काष्ठा errata_info_t errata_list[ERRATA_SIFIVE_NUMBER] = अणु
+	अणु
 		.name = "cip-453",
 		.check_func = errata_cip_453_check_func
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cip-1200",
 		.check_func = errata_cip_1200_check_func
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static u32 __init sifive_errata_probe(unsigned long archid, unsigned long impid)
-{
-	int idx;
+अटल u32 __init sअगरive_errata_probe(अचिन्हित दीर्घ archid, अचिन्हित दीर्घ impid)
+अणु
+	पूर्णांक idx;
 	u32 cpu_req_errata = 0;
 
-	for (idx = 0; idx < ERRATA_SIFIVE_NUMBER; idx++)
-		if (errata_list[idx].check_func(archid, impid))
+	क्रम (idx = 0; idx < ERRATA_SIFIVE_NUMBER; idx++)
+		अगर (errata_list[idx].check_func(archid, impid))
 			cpu_req_errata |= (1U << idx);
 
-	return cpu_req_errata;
-}
+	वापस cpu_req_errata;
+पूर्ण
 
-static void __init warn_miss_errata(u32 miss_errata)
-{
-	int i;
+अटल व्योम __init warn_miss_errata(u32 miss_errata)
+अणु
+	पूर्णांक i;
 
 	pr_warn("----------------------------------------------------------------\n");
 	pr_warn("WARNING: Missing the following errata may cause potential issues\n");
-	for (i = 0; i < ERRATA_SIFIVE_NUMBER; i++)
-		if (miss_errata & 0x1 << i)
+	क्रम (i = 0; i < ERRATA_SIFIVE_NUMBER; i++)
+		अगर (miss_errata & 0x1 << i)
 			pr_warn("\tSiFive Errata[%d]:%s\n", i, errata_list[i].name);
 	pr_warn("Please enable the corresponding Kconfig to apply them\n");
 	pr_warn("----------------------------------------------------------------\n");
-}
+पूर्ण
 
-void __init sifive_errata_patch_func(struct alt_entry *begin, struct alt_entry *end,
-				     unsigned long archid, unsigned long impid)
-{
-	struct alt_entry *alt;
-	u32 cpu_req_errata = sifive_errata_probe(archid, impid);
+व्योम __init sअगरive_errata_patch_func(काष्ठा alt_entry *begin, काष्ठा alt_entry *end,
+				     अचिन्हित दीर्घ archid, अचिन्हित दीर्घ impid)
+अणु
+	काष्ठा alt_entry *alt;
+	u32 cpu_req_errata = sअगरive_errata_probe(archid, impid);
 	u32 cpu_apply_errata = 0;
-	u32 tmp;
+	u32 पंचांगp;
 
-	for (alt = begin; alt < end; alt++) {
-		if (alt->vendor_id != SIFIVE_VENDOR_ID)
-			continue;
-		if (alt->errata_id >= ERRATA_SIFIVE_NUMBER) {
+	क्रम (alt = begin; alt < end; alt++) अणु
+		अगर (alt->venकरोr_id != SIFIVE_VENDOR_ID)
+			जारी;
+		अगर (alt->errata_id >= ERRATA_SIFIVE_NUMBER) अणु
 			WARN(1, "This errata id:%d is not in kernel errata list", alt->errata_id);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		tmp = (1U << alt->errata_id);
-		if (cpu_req_errata & tmp) {
+		पंचांगp = (1U << alt->errata_id);
+		अगर (cpu_req_errata & पंचांगp) अणु
 			patch_text_nosync(alt->old_ptr, alt->alt_ptr, alt->alt_len);
-			cpu_apply_errata |= tmp;
-		}
-	}
-	if (cpu_apply_errata != cpu_req_errata)
+			cpu_apply_errata |= पंचांगp;
+		पूर्ण
+	पूर्ण
+	अगर (cpu_apply_errata != cpu_req_errata)
 		warn_miss_errata(cpu_req_errata - cpu_apply_errata);
-}
+पूर्ण

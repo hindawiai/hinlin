@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * VMware VMCI Driver
  *
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
-#ifndef _VMCI_QUEUE_PAIR_H_
-#define _VMCI_QUEUE_PAIR_H_
+#अगर_अघोषित _VMCI_QUEUE_PAIR_H_
+#घोषणा _VMCI_QUEUE_PAIR_H_
 
-#include <linux/vmw_vmci_defs.h>
-#include <linux/types.h>
+#समावेश <linux/vmw_vmci_defs.h>
+#समावेश <linux/types.h>
 
-#include "vmci_context.h"
+#समावेश "vmci_context.h"
 
-/* Callback needed for correctly waiting on events. */
-typedef int (*vmci_event_release_cb) (void *client_data);
+/* Callback needed क्रम correctly रुकोing on events. */
+प्रकार पूर्णांक (*vmci_event_release_cb) (व्योम *client_data);
 
 /* Guest device port I/O. */
-struct ppn_set {
+काष्ठा ppn_set अणु
 	u64 num_produce_pages;
 	u64 num_consume_pages;
 	u64 *produce_ppns;
 	u64 *consume_ppns;
 	bool initialized;
-};
+पूर्ण;
 
 /* VMCIqueue_pairAllocInfo */
-struct vmci_qp_alloc_info {
-	struct vmci_handle handle;
+काष्ठा vmci_qp_alloc_info अणु
+	काष्ठा vmci_handle handle;
 	u32 peer;
 	u32 flags;
 	u64 produce_size;
@@ -36,47 +37,47 @@ struct vmci_qp_alloc_info {
 	u64 num_ppns;
 	s32 result;
 	u32 version;
-};
+पूर्ण;
 
 /* VMCIqueue_pairSetVAInfo */
-struct vmci_qp_set_va_info {
-	struct vmci_handle handle;
+काष्ठा vmci_qp_set_va_info अणु
+	काष्ठा vmci_handle handle;
 	u64 va;		/* Start VA of queue pair PPNs. */
 	u64 num_ppns;
 	u32 version;
 	s32 result;
-};
+पूर्ण;
 
 /*
  * For backwards compatibility, here is a version of the
- * VMCIqueue_pairPageFileInfo before host support end-points was added.
- * Note that the current version of that structure requires VMX to
- * pass down the VA of the mapped file.  Before host support was added
+ * VMCIqueue_pairPageFileInfo beक्रमe host support end-poपूर्णांकs was added.
+ * Note that the current version of that काष्ठाure requires VMX to
+ * pass करोwn the VA of the mapped file.  Beक्रमe host support was added
  * there was nothing of the sort.  So, when the driver sees the ioctl
- * with a parameter that is the sizeof
+ * with a parameter that is the माप
  * VMCIqueue_pairPageFileInfo_NoHostQP then it can infer that the version
  * of VMX running can't attach to host end points because it doesn't
  * provide the VA of the mapped files.
  *
- * The Linux driver doesn't get an indication of the size of the
- * structure passed down from user space.  So, to fix a long standing
- * but unfiled bug, the _pad field has been renamed to version.
+ * The Linux driver करोesn't get an indication of the size of the
+ * काष्ठाure passed करोwn from user space.  So, to fix a दीर्घ standing
+ * but unfiled bug, the _pad field has been नामd to version.
  * Existing versions of VMX always initialize the PageFileInfo
- * structure so that _pad, er, version is set to 0.
+ * काष्ठाure so that _pad, er, version is set to 0.
  *
- * A version value of 1 indicates that the size of the structure has
+ * A version value of 1 indicates that the size of the काष्ठाure has
  * been increased to include two UVA's: produce_uva and consume_uva.
  * These UVA's are of the mmap()'d queue contents backing files.
  *
- * In addition, if when VMX is sending down the
- * VMCIqueue_pairPageFileInfo structure it gets an error then it will
- * try again with the _NoHostQP version of the file to see if an older
+ * In addition, अगर when VMX is sending करोwn the
+ * VMCIqueue_pairPageFileInfo काष्ठाure it माला_लो an error then it will
+ * try again with the _NoHostQP version of the file to see अगर an older
  * VMCI kernel module is running.
  */
 
 /* VMCIqueue_pairPageFileInfo */
-struct vmci_qp_page_file_info {
-	struct vmci_handle handle;
+काष्ठा vmci_qp_page_file_info अणु
+	काष्ठा vmci_handle handle;
 	u64 produce_page_file;	  /* User VA. */
 	u64 consume_page_file;	  /* User VA. */
 	u64 produce_page_file_size;  /* Size of the file name array. */
@@ -85,81 +86,81 @@ struct vmci_qp_page_file_info {
 	u32 version;	/* Was _pad. */
 	u64 produce_va;	/* User VA of the mapped file. */
 	u64 consume_va;	/* User VA of the mapped file. */
-};
+पूर्ण;
 
 /* vmci queuepair detach info */
-struct vmci_qp_dtch_info {
-	struct vmci_handle handle;
+काष्ठा vmci_qp_dtch_info अणु
+	काष्ठा vmci_handle handle;
 	s32 result;
 	u32 _pad;
-};
+पूर्ण;
 
 /*
- * struct vmci_qp_page_store describes how the memory of a given queue pair
+ * काष्ठा vmci_qp_page_store describes how the memory of a given queue pair
  * is backed. When the queue pair is between the host and a guest, the
  * page store consists of references to the guest pages. On vmkernel,
  * this is a list of PPNs, and on hosted, it is a user VA where the
- * queue pair is mapped into the VMX address space.
+ * queue pair is mapped पूर्णांकo the VMX address space.
  */
-struct vmci_qp_page_store {
+काष्ठा vmci_qp_page_store अणु
 	/* Reference to pages backing the queue pair. */
 	u64 pages;
-	/* Length of pageList/virtual address range (in pages). */
+	/* Length of pageList/भव address range (in pages). */
 	u32 len;
-};
+पूर्ण;
 
 /*
- * This data type contains the information about a queue.
+ * This data type contains the inक्रमmation about a queue.
  * There are two queues (hence, queue pairs) per transaction model between a
- * pair of end points, A & B.  One queue is used by end point A to transmit
+ * pair of end poपूर्णांकs, A & B.  One queue is used by end poपूर्णांक A to transmit
  * commands and responses to B.  The other queue is used by B to transmit
  * commands and responses.
  *
- * struct vmci_queue_kern_if is a per-OS defined Queue structure.  It contains
- * either a direct pointer to the linear address of the buffer contents or a
- * pointer to structures which help the OS locate those data pages.  See
- * vmciKernelIf.c for each platform for its definition.
+ * काष्ठा vmci_queue_kern_अगर is a per-OS defined Queue काष्ठाure.  It contains
+ * either a direct poपूर्णांकer to the linear address of the buffer contents or a
+ * poपूर्णांकer to काष्ठाures which help the OS locate those data pages.  See
+ * vmciKernelIf.c क्रम each platक्रमm क्रम its definition.
  */
-struct vmci_queue {
-	struct vmci_queue_header *q_header;
-	struct vmci_queue_header *saved_header;
-	struct vmci_queue_kern_if *kernel_if;
-};
+काष्ठा vmci_queue अणु
+	काष्ठा vmci_queue_header *q_header;
+	काष्ठा vmci_queue_header *saved_header;
+	काष्ठा vmci_queue_kern_अगर *kernel_अगर;
+पूर्ण;
 
 /*
  * Utility function that checks whether the fields of the page
  * store contain valid values.
  * Result:
- * true if the page store is wellformed. false otherwise.
+ * true अगर the page store is wellक्रमmed. false otherwise.
  */
-static inline bool
-VMCI_QP_PAGESTORE_IS_WELLFORMED(struct vmci_qp_page_store *page_store)
-{
-	return page_store->len >= 2;
-}
+अटल अंतरभूत bool
+VMCI_QP_PAGESTORE_IS_WELLFORMED(काष्ठा vmci_qp_page_store *page_store)
+अणु
+	वापस page_store->len >= 2;
+पूर्ण
 
-void vmci_qp_broker_exit(void);
-int vmci_qp_broker_alloc(struct vmci_handle handle, u32 peer,
+व्योम vmci_qp_broker_निकास(व्योम);
+पूर्णांक vmci_qp_broker_alloc(काष्ठा vmci_handle handle, u32 peer,
 			 u32 flags, u32 priv_flags,
 			 u64 produce_size, u64 consume_size,
-			 struct vmci_qp_page_store *page_store,
-			 struct vmci_ctx *context);
-int vmci_qp_broker_set_page_store(struct vmci_handle handle,
+			 काष्ठा vmci_qp_page_store *page_store,
+			 काष्ठा vmci_ctx *context);
+पूर्णांक vmci_qp_broker_set_page_store(काष्ठा vmci_handle handle,
 				  u64 produce_uva, u64 consume_uva,
-				  struct vmci_ctx *context);
-int vmci_qp_broker_detach(struct vmci_handle handle, struct vmci_ctx *context);
+				  काष्ठा vmci_ctx *context);
+पूर्णांक vmci_qp_broker_detach(काष्ठा vmci_handle handle, काष्ठा vmci_ctx *context);
 
-void vmci_qp_guest_endpoints_exit(void);
+व्योम vmci_qp_guest_endpoपूर्णांकs_निकास(व्योम);
 
-int vmci_qp_alloc(struct vmci_handle *handle,
-		  struct vmci_queue **produce_q, u64 produce_size,
-		  struct vmci_queue **consume_q, u64 consume_size,
+पूर्णांक vmci_qp_alloc(काष्ठा vmci_handle *handle,
+		  काष्ठा vmci_queue **produce_q, u64 produce_size,
+		  काष्ठा vmci_queue **consume_q, u64 consume_size,
 		  u32 peer, u32 flags, u32 priv_flags,
-		  bool guest_endpoint, vmci_event_release_cb wakeup_cb,
-		  void *client_data);
-int vmci_qp_broker_map(struct vmci_handle handle,
-		       struct vmci_ctx *context, u64 guest_mem);
-int vmci_qp_broker_unmap(struct vmci_handle handle,
-			 struct vmci_ctx *context, u32 gid);
+		  bool guest_endpoपूर्णांक, vmci_event_release_cb wakeup_cb,
+		  व्योम *client_data);
+पूर्णांक vmci_qp_broker_map(काष्ठा vmci_handle handle,
+		       काष्ठा vmci_ctx *context, u64 guest_mem);
+पूर्णांक vmci_qp_broker_unmap(काष्ठा vmci_handle handle,
+			 काष्ठा vmci_ctx *context, u32 gid);
 
-#endif /* _VMCI_QUEUE_PAIR_H_ */
+#पूर्ण_अगर /* _VMCI_QUEUE_PAIR_H_ */

@@ -1,169 +1,170 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  LEDs triggers for power supply class
+ *  LEDs triggers क्रम घातer supply class
  *
- *  Copyright © 2007  Anton Vorontsov <cbou@mail.ru>
- *  Copyright © 2004  Szabolcs Gyurko
- *  Copyright © 2003  Ian Molton <spyro@f2s.com>
+ *  Copyright तऊ 2007  Anton Vorontsov <cbou@mail.ru>
+ *  Copyright तऊ 2004  Szabolcs Gyurko
+ *  Copyright तऊ 2003  Ian Molton <spyro@f2s.com>
  *
- *  Modified: 2004, Oct     Szabolcs Gyurko
+ *  Modअगरied: 2004, Oct     Szabolcs Gyurko
  */
 
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/power_supply.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/slab.h>
 
-#include "power_supply.h"
+#समावेश "power_supply.h"
 
-/* Battery specific LEDs triggers. */
+/* Battery specअगरic LEDs triggers. */
 
-static void power_supply_update_bat_leds(struct power_supply *psy)
-{
-	union power_supply_propval status;
-	unsigned long delay_on = 0;
-	unsigned long delay_off = 0;
+अटल व्योम घातer_supply_update_bat_leds(काष्ठा घातer_supply *psy)
+अणु
+	जोड़ घातer_supply_propval status;
+	अचिन्हित दीर्घ delay_on = 0;
+	अचिन्हित दीर्घ delay_off = 0;
 
-	if (power_supply_get_property(psy, POWER_SUPPLY_PROP_STATUS, &status))
-		return;
+	अगर (घातer_supply_get_property(psy, POWER_SUPPLY_PROP_STATUS, &status))
+		वापस;
 
-	dev_dbg(&psy->dev, "%s %d\n", __func__, status.intval);
+	dev_dbg(&psy->dev, "%s %d\n", __func__, status.पूर्णांकval);
 
-	switch (status.intval) {
-	case POWER_SUPPLY_STATUS_FULL:
-		led_trigger_event(psy->charging_full_trig, LED_FULL);
-		led_trigger_event(psy->charging_trig, LED_OFF);
+	चयन (status.पूर्णांकval) अणु
+	हाल POWER_SUPPLY_STATUS_FULL:
+		led_trigger_event(psy->अक्षरging_full_trig, LED_FULL);
+		led_trigger_event(psy->अक्षरging_trig, LED_OFF);
 		led_trigger_event(psy->full_trig, LED_FULL);
-		led_trigger_event(psy->charging_blink_full_solid_trig,
+		led_trigger_event(psy->अक्षरging_blink_full_solid_trig,
 			LED_FULL);
-		break;
-	case POWER_SUPPLY_STATUS_CHARGING:
-		led_trigger_event(psy->charging_full_trig, LED_FULL);
-		led_trigger_event(psy->charging_trig, LED_FULL);
+		अवरोध;
+	हाल POWER_SUPPLY_STATUS_CHARGING:
+		led_trigger_event(psy->अक्षरging_full_trig, LED_FULL);
+		led_trigger_event(psy->अक्षरging_trig, LED_FULL);
 		led_trigger_event(psy->full_trig, LED_OFF);
-		led_trigger_blink(psy->charging_blink_full_solid_trig,
+		led_trigger_blink(psy->अक्षरging_blink_full_solid_trig,
 			&delay_on, &delay_off);
-		break;
-	default:
-		led_trigger_event(psy->charging_full_trig, LED_OFF);
-		led_trigger_event(psy->charging_trig, LED_OFF);
+		अवरोध;
+	शेष:
+		led_trigger_event(psy->अक्षरging_full_trig, LED_OFF);
+		led_trigger_event(psy->अक्षरging_trig, LED_OFF);
 		led_trigger_event(psy->full_trig, LED_OFF);
-		led_trigger_event(psy->charging_blink_full_solid_trig,
+		led_trigger_event(psy->अक्षरging_blink_full_solid_trig,
 			LED_OFF);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int power_supply_create_bat_triggers(struct power_supply *psy)
-{
-	psy->charging_full_trig_name = kasprintf(GFP_KERNEL,
+अटल पूर्णांक घातer_supply_create_bat_triggers(काष्ठा घातer_supply *psy)
+अणु
+	psy->अक्षरging_full_trig_name = kaप्र_लिखो(GFP_KERNEL,
 					"%s-charging-or-full", psy->desc->name);
-	if (!psy->charging_full_trig_name)
-		goto charging_full_failed;
+	अगर (!psy->अक्षरging_full_trig_name)
+		जाओ अक्षरging_full_failed;
 
-	psy->charging_trig_name = kasprintf(GFP_KERNEL,
+	psy->अक्षरging_trig_name = kaप्र_लिखो(GFP_KERNEL,
 					"%s-charging", psy->desc->name);
-	if (!psy->charging_trig_name)
-		goto charging_failed;
+	अगर (!psy->अक्षरging_trig_name)
+		जाओ अक्षरging_failed;
 
-	psy->full_trig_name = kasprintf(GFP_KERNEL, "%s-full", psy->desc->name);
-	if (!psy->full_trig_name)
-		goto full_failed;
+	psy->full_trig_name = kaप्र_लिखो(GFP_KERNEL, "%s-full", psy->desc->name);
+	अगर (!psy->full_trig_name)
+		जाओ full_failed;
 
-	psy->charging_blink_full_solid_trig_name = kasprintf(GFP_KERNEL,
+	psy->अक्षरging_blink_full_solid_trig_name = kaप्र_लिखो(GFP_KERNEL,
 		"%s-charging-blink-full-solid", psy->desc->name);
-	if (!psy->charging_blink_full_solid_trig_name)
-		goto charging_blink_full_solid_failed;
+	अगर (!psy->अक्षरging_blink_full_solid_trig_name)
+		जाओ अक्षरging_blink_full_solid_failed;
 
-	led_trigger_register_simple(psy->charging_full_trig_name,
-				    &psy->charging_full_trig);
-	led_trigger_register_simple(psy->charging_trig_name,
-				    &psy->charging_trig);
-	led_trigger_register_simple(psy->full_trig_name,
+	led_trigger_रेजिस्टर_simple(psy->अक्षरging_full_trig_name,
+				    &psy->अक्षरging_full_trig);
+	led_trigger_रेजिस्टर_simple(psy->अक्षरging_trig_name,
+				    &psy->अक्षरging_trig);
+	led_trigger_रेजिस्टर_simple(psy->full_trig_name,
 				    &psy->full_trig);
-	led_trigger_register_simple(psy->charging_blink_full_solid_trig_name,
-				    &psy->charging_blink_full_solid_trig);
+	led_trigger_रेजिस्टर_simple(psy->अक्षरging_blink_full_solid_trig_name,
+				    &psy->अक्षरging_blink_full_solid_trig);
 
-	return 0;
+	वापस 0;
 
-charging_blink_full_solid_failed:
-	kfree(psy->full_trig_name);
+अक्षरging_blink_full_solid_failed:
+	kमुक्त(psy->full_trig_name);
 full_failed:
-	kfree(psy->charging_trig_name);
-charging_failed:
-	kfree(psy->charging_full_trig_name);
-charging_full_failed:
-	return -ENOMEM;
-}
+	kमुक्त(psy->अक्षरging_trig_name);
+अक्षरging_failed:
+	kमुक्त(psy->अक्षरging_full_trig_name);
+अक्षरging_full_failed:
+	वापस -ENOMEM;
+पूर्ण
 
-static void power_supply_remove_bat_triggers(struct power_supply *psy)
-{
-	led_trigger_unregister_simple(psy->charging_full_trig);
-	led_trigger_unregister_simple(psy->charging_trig);
-	led_trigger_unregister_simple(psy->full_trig);
-	led_trigger_unregister_simple(psy->charging_blink_full_solid_trig);
-	kfree(psy->charging_blink_full_solid_trig_name);
-	kfree(psy->full_trig_name);
-	kfree(psy->charging_trig_name);
-	kfree(psy->charging_full_trig_name);
-}
+अटल व्योम घातer_supply_हटाओ_bat_triggers(काष्ठा घातer_supply *psy)
+अणु
+	led_trigger_unरेजिस्टर_simple(psy->अक्षरging_full_trig);
+	led_trigger_unरेजिस्टर_simple(psy->अक्षरging_trig);
+	led_trigger_unरेजिस्टर_simple(psy->full_trig);
+	led_trigger_unरेजिस्टर_simple(psy->अक्षरging_blink_full_solid_trig);
+	kमुक्त(psy->अक्षरging_blink_full_solid_trig_name);
+	kमुक्त(psy->full_trig_name);
+	kमुक्त(psy->अक्षरging_trig_name);
+	kमुक्त(psy->अक्षरging_full_trig_name);
+पूर्ण
 
-/* Generated power specific LEDs triggers. */
+/* Generated घातer specअगरic LEDs triggers. */
 
-static void power_supply_update_gen_leds(struct power_supply *psy)
-{
-	union power_supply_propval online;
+अटल व्योम घातer_supply_update_gen_leds(काष्ठा घातer_supply *psy)
+अणु
+	जोड़ घातer_supply_propval online;
 
-	if (power_supply_get_property(psy, POWER_SUPPLY_PROP_ONLINE, &online))
-		return;
+	अगर (घातer_supply_get_property(psy, POWER_SUPPLY_PROP_ONLINE, &online))
+		वापस;
 
-	dev_dbg(&psy->dev, "%s %d\n", __func__, online.intval);
+	dev_dbg(&psy->dev, "%s %d\n", __func__, online.पूर्णांकval);
 
-	if (online.intval)
+	अगर (online.पूर्णांकval)
 		led_trigger_event(psy->online_trig, LED_FULL);
-	else
+	अन्यथा
 		led_trigger_event(psy->online_trig, LED_OFF);
-}
+पूर्ण
 
-static int power_supply_create_gen_triggers(struct power_supply *psy)
-{
-	psy->online_trig_name = kasprintf(GFP_KERNEL, "%s-online",
+अटल पूर्णांक घातer_supply_create_gen_triggers(काष्ठा घातer_supply *psy)
+अणु
+	psy->online_trig_name = kaप्र_लिखो(GFP_KERNEL, "%s-online",
 					  psy->desc->name);
-	if (!psy->online_trig_name)
-		return -ENOMEM;
+	अगर (!psy->online_trig_name)
+		वापस -ENOMEM;
 
-	led_trigger_register_simple(psy->online_trig_name, &psy->online_trig);
+	led_trigger_रेजिस्टर_simple(psy->online_trig_name, &psy->online_trig);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void power_supply_remove_gen_triggers(struct power_supply *psy)
-{
-	led_trigger_unregister_simple(psy->online_trig);
-	kfree(psy->online_trig_name);
-}
+अटल व्योम घातer_supply_हटाओ_gen_triggers(काष्ठा घातer_supply *psy)
+अणु
+	led_trigger_unरेजिस्टर_simple(psy->online_trig);
+	kमुक्त(psy->online_trig_name);
+पूर्ण
 
 /* Choice what triggers to create&update. */
 
-void power_supply_update_leds(struct power_supply *psy)
-{
-	if (psy->desc->type == POWER_SUPPLY_TYPE_BATTERY)
-		power_supply_update_bat_leds(psy);
-	else
-		power_supply_update_gen_leds(psy);
-}
+व्योम घातer_supply_update_leds(काष्ठा घातer_supply *psy)
+अणु
+	अगर (psy->desc->type == POWER_SUPPLY_TYPE_BATTERY)
+		घातer_supply_update_bat_leds(psy);
+	अन्यथा
+		घातer_supply_update_gen_leds(psy);
+पूर्ण
 
-int power_supply_create_triggers(struct power_supply *psy)
-{
-	if (psy->desc->type == POWER_SUPPLY_TYPE_BATTERY)
-		return power_supply_create_bat_triggers(psy);
-	return power_supply_create_gen_triggers(psy);
-}
+पूर्णांक घातer_supply_create_triggers(काष्ठा घातer_supply *psy)
+अणु
+	अगर (psy->desc->type == POWER_SUPPLY_TYPE_BATTERY)
+		वापस घातer_supply_create_bat_triggers(psy);
+	वापस घातer_supply_create_gen_triggers(psy);
+पूर्ण
 
-void power_supply_remove_triggers(struct power_supply *psy)
-{
-	if (psy->desc->type == POWER_SUPPLY_TYPE_BATTERY)
-		power_supply_remove_bat_triggers(psy);
-	else
-		power_supply_remove_gen_triggers(psy);
-}
+व्योम घातer_supply_हटाओ_triggers(काष्ठा घातer_supply *psy)
+अणु
+	अगर (psy->desc->type == POWER_SUPPLY_TYPE_BATTERY)
+		घातer_supply_हटाओ_bat_triggers(psy);
+	अन्यथा
+		घातer_supply_हटाओ_gen_triggers(psy);
+पूर्ण

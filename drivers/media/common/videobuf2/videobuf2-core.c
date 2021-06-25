@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * videobuf2-core.c - video buffer 2 core framework
  *
@@ -6,42 +7,42 @@
  * Author: Pawel Osciak <pawel@osciak.com>
  *	   Marek Szyprowski <m.szyprowski@samsung.com>
  *
- * The vb2_thread implementation was based on code from videobuf-dvb.c:
- *	(c) 2004 Gerd Knorr <kraxel@bytesex.org> [SUSE Labs]
+ * The vb2_thपढ़ो implementation was based on code from videobuf-dvb.c:
+ *	(c) 2004 Gerd Knorr <kraxel@bytesex.org> [SUSE Lअसल]
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/err.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/poll.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/freezer.h>
-#include <linux/kthread.h>
+#समावेश <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/kthपढ़ो.h>
 
-#include <media/videobuf2-core.h>
-#include <media/v4l2-mc.h>
+#समावेश <media/videobuf2-core.h>
+#समावेश <media/v4l2-mc.h>
 
-#include <trace/events/vb2.h>
+#समावेश <trace/events/vb2.h>
 
-static int debug;
-module_param(debug, int, 0644);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0644);
 
-#define dprintk(q, level, fmt, arg...)					\
-	do {								\
-		if (debug >= level)					\
+#घोषणा dprपूर्णांकk(q, level, fmt, arg...)					\
+	करो अणु								\
+		अगर (debug >= level)					\
 			pr_info("[%s] %s: " fmt, (q)->name, __func__,	\
 				## arg);				\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#ifdef CONFIG_VIDEO_ADV_DEBUG
+#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
 
 /*
  * If advanced debugging is on, then count how often each op is called
@@ -51,149 +52,149 @@ module_param(debug, int, 0644);
  * (and variations thereof) stay balanced.
  */
 
-#define log_memop(vb, op)						\
-	dprintk((vb)->vb2_queue, 2, "call_memop(%d, %s)%s\n",		\
+#घोषणा log_memop(vb, op)						\
+	dprपूर्णांकk((vb)->vb2_queue, 2, "call_memop(%d, %s)%s\n",		\
 		(vb)->index, #op,					\
 		(vb)->vb2_queue->mem_ops->op ? "" : " (nop)")
 
-#define call_memop(vb, op, args...)					\
-({									\
-	struct vb2_queue *_q = (vb)->vb2_queue;				\
-	int err;							\
+#घोषणा call_memop(vb, op, args...)					\
+(अणु									\
+	काष्ठा vb2_queue *_q = (vb)->vb2_queue;				\
+	पूर्णांक err;							\
 									\
 	log_memop(vb, op);						\
 	err = _q->mem_ops->op ? _q->mem_ops->op(args) : 0;		\
-	if (!err)							\
+	अगर (!err)							\
 		(vb)->cnt_mem_ ## op++;					\
 	err;								\
-})
+पूर्ण)
 
-#define call_ptr_memop(vb, op, args...)					\
-({									\
-	struct vb2_queue *_q = (vb)->vb2_queue;				\
-	void *ptr;							\
+#घोषणा call_ptr_memop(vb, op, args...)					\
+(अणु									\
+	काष्ठा vb2_queue *_q = (vb)->vb2_queue;				\
+	व्योम *ptr;							\
 									\
 	log_memop(vb, op);						\
-	ptr = _q->mem_ops->op ? _q->mem_ops->op(args) : NULL;		\
-	if (!IS_ERR_OR_NULL(ptr))					\
+	ptr = _q->mem_ops->op ? _q->mem_ops->op(args) : शून्य;		\
+	अगर (!IS_ERR_OR_शून्य(ptr))					\
 		(vb)->cnt_mem_ ## op++;					\
 	ptr;								\
-})
+पूर्ण)
 
-#define call_void_memop(vb, op, args...)				\
-({									\
-	struct vb2_queue *_q = (vb)->vb2_queue;				\
+#घोषणा call_व्योम_memop(vb, op, args...)				\
+(अणु									\
+	काष्ठा vb2_queue *_q = (vb)->vb2_queue;				\
 									\
 	log_memop(vb, op);						\
-	if (_q->mem_ops->op)						\
+	अगर (_q->mem_ops->op)						\
 		_q->mem_ops->op(args);					\
 	(vb)->cnt_mem_ ## op++;						\
-})
+पूर्ण)
 
-#define log_qop(q, op)							\
-	dprintk(q, 2, "call_qop(%s)%s\n", #op,				\
+#घोषणा log_qop(q, op)							\
+	dprपूर्णांकk(q, 2, "call_qop(%s)%s\n", #op,				\
 		(q)->ops->op ? "" : " (nop)")
 
-#define call_qop(q, op, args...)					\
-({									\
-	int err;							\
+#घोषणा call_qop(q, op, args...)					\
+(अणु									\
+	पूर्णांक err;							\
 									\
 	log_qop(q, op);							\
 	err = (q)->ops->op ? (q)->ops->op(args) : 0;			\
-	if (!err)							\
+	अगर (!err)							\
 		(q)->cnt_ ## op++;					\
 	err;								\
-})
+पूर्ण)
 
-#define call_void_qop(q, op, args...)					\
-({									\
+#घोषणा call_व्योम_qop(q, op, args...)					\
+(अणु									\
 	log_qop(q, op);							\
-	if ((q)->ops->op)						\
+	अगर ((q)->ops->op)						\
 		(q)->ops->op(args);					\
 	(q)->cnt_ ## op++;						\
-})
+पूर्ण)
 
-#define log_vb_qop(vb, op, args...)					\
-	dprintk((vb)->vb2_queue, 2, "call_vb_qop(%d, %s)%s\n",		\
+#घोषणा log_vb_qop(vb, op, args...)					\
+	dprपूर्णांकk((vb)->vb2_queue, 2, "call_vb_qop(%d, %s)%s\n",		\
 		(vb)->index, #op,					\
 		(vb)->vb2_queue->ops->op ? "" : " (nop)")
 
-#define call_vb_qop(vb, op, args...)					\
-({									\
-	int err;							\
+#घोषणा call_vb_qop(vb, op, args...)					\
+(अणु									\
+	पूर्णांक err;							\
 									\
 	log_vb_qop(vb, op);						\
 	err = (vb)->vb2_queue->ops->op ?				\
 		(vb)->vb2_queue->ops->op(args) : 0;			\
-	if (!err)							\
+	अगर (!err)							\
 		(vb)->cnt_ ## op++;					\
 	err;								\
-})
+पूर्ण)
 
-#define call_void_vb_qop(vb, op, args...)				\
-({									\
+#घोषणा call_व्योम_vb_qop(vb, op, args...)				\
+(अणु									\
 	log_vb_qop(vb, op);						\
-	if ((vb)->vb2_queue->ops->op)					\
+	अगर ((vb)->vb2_queue->ops->op)					\
 		(vb)->vb2_queue->ops->op(args);				\
 	(vb)->cnt_ ## op++;						\
-})
+पूर्ण)
 
-#else
+#अन्यथा
 
-#define call_memop(vb, op, args...)					\
+#घोषणा call_memop(vb, op, args...)					\
 	((vb)->vb2_queue->mem_ops->op ?					\
 		(vb)->vb2_queue->mem_ops->op(args) : 0)
 
-#define call_ptr_memop(vb, op, args...)					\
+#घोषणा call_ptr_memop(vb, op, args...)					\
 	((vb)->vb2_queue->mem_ops->op ?					\
-		(vb)->vb2_queue->mem_ops->op(args) : NULL)
+		(vb)->vb2_queue->mem_ops->op(args) : शून्य)
 
-#define call_void_memop(vb, op, args...)				\
-	do {								\
-		if ((vb)->vb2_queue->mem_ops->op)			\
+#घोषणा call_व्योम_memop(vb, op, args...)				\
+	करो अणु								\
+		अगर ((vb)->vb2_queue->mem_ops->op)			\
 			(vb)->vb2_queue->mem_ops->op(args);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define call_qop(q, op, args...)					\
+#घोषणा call_qop(q, op, args...)					\
 	((q)->ops->op ? (q)->ops->op(args) : 0)
 
-#define call_void_qop(q, op, args...)					\
-	do {								\
-		if ((q)->ops->op)					\
+#घोषणा call_व्योम_qop(q, op, args...)					\
+	करो अणु								\
+		अगर ((q)->ops->op)					\
 			(q)->ops->op(args);				\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define call_vb_qop(vb, op, args...)					\
+#घोषणा call_vb_qop(vb, op, args...)					\
 	((vb)->vb2_queue->ops->op ? (vb)->vb2_queue->ops->op(args) : 0)
 
-#define call_void_vb_qop(vb, op, args...)				\
-	do {								\
-		if ((vb)->vb2_queue->ops->op)				\
+#घोषणा call_व्योम_vb_qop(vb, op, args...)				\
+	करो अणु								\
+		अगर ((vb)->vb2_queue->ops->op)				\
 			(vb)->vb2_queue->ops->op(args);			\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#endif
+#पूर्ण_अगर
 
-#define call_bufop(q, op, args...)					\
-({									\
-	int ret = 0;							\
-	if (q && q->buf_ops && q->buf_ops->op)				\
+#घोषणा call_bufop(q, op, args...)					\
+(अणु									\
+	पूर्णांक ret = 0;							\
+	अगर (q && q->buf_ops && q->buf_ops->op)				\
 		ret = q->buf_ops->op(args);				\
 	ret;								\
-})
+पूर्ण)
 
-#define call_void_bufop(q, op, args...)					\
-({									\
-	if (q && q->buf_ops && q->buf_ops->op)				\
+#घोषणा call_व्योम_bufop(q, op, args...)					\
+(अणु									\
+	अगर (q && q->buf_ops && q->buf_ops->op)				\
 		q->buf_ops->op(args);					\
-})
+पूर्ण)
 
-static void __vb2_queue_cancel(struct vb2_queue *q);
-static void __enqueue_in_driver(struct vb2_buffer *vb);
+अटल व्योम __vb2_queue_cancel(काष्ठा vb2_queue *q);
+अटल व्योम __enqueue_in_driver(काष्ठा vb2_buffer *vb);
 
-static const char *vb2_state_name(enum vb2_buffer_state s)
-{
-	static const char * const state_names[] = {
+अटल स्थिर अक्षर *vb2_state_name(क्रमागत vb2_buffer_state s)
+अणु
+	अटल स्थिर अक्षर * स्थिर state_names[] = अणु
 		[VB2_BUF_STATE_DEQUEUED] = "dequeued",
 		[VB2_BUF_STATE_IN_REQUEST] = "in request",
 		[VB2_BUF_STATE_PREPARING] = "preparing",
@@ -201,212 +202,212 @@ static const char *vb2_state_name(enum vb2_buffer_state s)
 		[VB2_BUF_STATE_ACTIVE] = "active",
 		[VB2_BUF_STATE_DONE] = "done",
 		[VB2_BUF_STATE_ERROR] = "error",
-	};
+	पूर्ण;
 
-	if ((unsigned int)(s) < ARRAY_SIZE(state_names))
-		return state_names[s];
-	return "unknown";
-}
+	अगर ((अचिन्हित पूर्णांक)(s) < ARRAY_SIZE(state_names))
+		वापस state_names[s];
+	वापस "unknown";
+पूर्ण
 
 /*
- * __vb2_buf_mem_alloc() - allocate video memory for the given buffer
+ * __vb2_buf_mem_alloc() - allocate video memory क्रम the given buffer
  */
-static int __vb2_buf_mem_alloc(struct vb2_buffer *vb)
-{
-	struct vb2_queue *q = vb->vb2_queue;
-	void *mem_priv;
-	int plane;
-	int ret = -ENOMEM;
+अटल पूर्णांक __vb2_buf_mem_alloc(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_queue *q = vb->vb2_queue;
+	व्योम *mem_priv;
+	पूर्णांक plane;
+	पूर्णांक ret = -ENOMEM;
 
 	/*
-	 * Allocate memory for all planes in this buffer
+	 * Allocate memory क्रम all planes in this buffer
 	 * NOTE: mmapped areas should be page aligned
 	 */
-	for (plane = 0; plane < vb->num_planes; ++plane) {
+	क्रम (plane = 0; plane < vb->num_planes; ++plane) अणु
 		/* Memops alloc requires size to be page aligned. */
-		unsigned long size = PAGE_ALIGN(vb->planes[plane].length);
+		अचिन्हित दीर्घ size = PAGE_ALIGN(vb->planes[plane].length);
 
 		/* Did it wrap around? */
-		if (size < vb->planes[plane].length)
-			goto free;
+		अगर (size < vb->planes[plane].length)
+			जाओ मुक्त;
 
 		mem_priv = call_ptr_memop(vb, alloc,
 				q->alloc_devs[plane] ? : q->dev,
 				q->dma_attrs, size, q->dma_dir, q->gfp_flags);
-		if (IS_ERR_OR_NULL(mem_priv)) {
-			if (mem_priv)
+		अगर (IS_ERR_OR_शून्य(mem_priv)) अणु
+			अगर (mem_priv)
 				ret = PTR_ERR(mem_priv);
-			goto free;
-		}
+			जाओ मुक्त;
+		पूर्ण
 
-		/* Associate allocator private data with this plane */
+		/* Associate allocator निजी data with this plane */
 		vb->planes[plane].mem_priv = mem_priv;
-	}
+	पूर्ण
 
-	return 0;
-free:
-	/* Free already allocated memory if one of the allocations failed */
-	for (; plane > 0; --plane) {
-		call_void_memop(vb, put, vb->planes[plane - 1].mem_priv);
-		vb->planes[plane - 1].mem_priv = NULL;
-	}
+	वापस 0;
+मुक्त:
+	/* Free alपढ़ोy allocated memory अगर one of the allocations failed */
+	क्रम (; plane > 0; --plane) अणु
+		call_व्योम_memop(vb, put, vb->planes[plane - 1].mem_priv);
+		vb->planes[plane - 1].mem_priv = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * __vb2_buf_mem_free() - free memory of the given buffer
+ * __vb2_buf_mem_मुक्त() - मुक्त memory of the given buffer
  */
-static void __vb2_buf_mem_free(struct vb2_buffer *vb)
-{
-	unsigned int plane;
+अटल व्योम __vb2_buf_mem_मुक्त(काष्ठा vb2_buffer *vb)
+अणु
+	अचिन्हित पूर्णांक plane;
 
-	for (plane = 0; plane < vb->num_planes; ++plane) {
-		call_void_memop(vb, put, vb->planes[plane].mem_priv);
-		vb->planes[plane].mem_priv = NULL;
-		dprintk(vb->vb2_queue, 3, "freed plane %d of buffer %d\n",
+	क्रम (plane = 0; plane < vb->num_planes; ++plane) अणु
+		call_व्योम_memop(vb, put, vb->planes[plane].mem_priv);
+		vb->planes[plane].mem_priv = शून्य;
+		dprपूर्णांकk(vb->vb2_queue, 3, "freed plane %d of buffer %d\n",
 			plane, vb->index);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * __vb2_buf_userptr_put() - release userspace memory associated with
  * a USERPTR buffer
  */
-static void __vb2_buf_userptr_put(struct vb2_buffer *vb)
-{
-	unsigned int plane;
+अटल व्योम __vb2_buf_userptr_put(काष्ठा vb2_buffer *vb)
+अणु
+	अचिन्हित पूर्णांक plane;
 
-	for (plane = 0; plane < vb->num_planes; ++plane) {
-		if (vb->planes[plane].mem_priv)
-			call_void_memop(vb, put_userptr, vb->planes[plane].mem_priv);
-		vb->planes[plane].mem_priv = NULL;
-	}
-}
+	क्रम (plane = 0; plane < vb->num_planes; ++plane) अणु
+		अगर (vb->planes[plane].mem_priv)
+			call_व्योम_memop(vb, put_userptr, vb->planes[plane].mem_priv);
+		vb->planes[plane].mem_priv = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
  * __vb2_plane_dmabuf_put() - release memory associated with
  * a DMABUF shared plane
  */
-static void __vb2_plane_dmabuf_put(struct vb2_buffer *vb, struct vb2_plane *p)
-{
-	if (!p->mem_priv)
-		return;
+अटल व्योम __vb2_plane_dmabuf_put(काष्ठा vb2_buffer *vb, काष्ठा vb2_plane *p)
+अणु
+	अगर (!p->mem_priv)
+		वापस;
 
-	if (p->dbuf_mapped)
-		call_void_memop(vb, unmap_dmabuf, p->mem_priv);
+	अगर (p->dbuf_mapped)
+		call_व्योम_memop(vb, unmap_dmabuf, p->mem_priv);
 
-	call_void_memop(vb, detach_dmabuf, p->mem_priv);
+	call_व्योम_memop(vb, detach_dmabuf, p->mem_priv);
 	dma_buf_put(p->dbuf);
-	p->mem_priv = NULL;
-	p->dbuf = NULL;
+	p->mem_priv = शून्य;
+	p->dbuf = शून्य;
 	p->dbuf_mapped = 0;
-}
+पूर्ण
 
 /*
  * __vb2_buf_dmabuf_put() - release memory associated with
  * a DMABUF shared buffer
  */
-static void __vb2_buf_dmabuf_put(struct vb2_buffer *vb)
-{
-	unsigned int plane;
+अटल व्योम __vb2_buf_dmabuf_put(काष्ठा vb2_buffer *vb)
+अणु
+	अचिन्हित पूर्णांक plane;
 
-	for (plane = 0; plane < vb->num_planes; ++plane)
+	क्रम (plane = 0; plane < vb->num_planes; ++plane)
 		__vb2_plane_dmabuf_put(vb, &vb->planes[plane]);
-}
+पूर्ण
 
 /*
- * __vb2_buf_mem_prepare() - call ->prepare() on buffer's private memory
+ * __vb2_buf_mem_prepare() - call ->prepare() on buffer's निजी memory
  * to sync caches
  */
-static void __vb2_buf_mem_prepare(struct vb2_buffer *vb)
-{
-	unsigned int plane;
+अटल व्योम __vb2_buf_mem_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	अचिन्हित पूर्णांक plane;
 
-	if (vb->synced)
-		return;
+	अगर (vb->synced)
+		वापस;
 
-	if (vb->need_cache_sync_on_prepare) {
-		for (plane = 0; plane < vb->num_planes; ++plane)
-			call_void_memop(vb, prepare,
+	अगर (vb->need_cache_sync_on_prepare) अणु
+		क्रम (plane = 0; plane < vb->num_planes; ++plane)
+			call_व्योम_memop(vb, prepare,
 					vb->planes[plane].mem_priv);
-	}
+	पूर्ण
 	vb->synced = 1;
-}
+पूर्ण
 
 /*
- * __vb2_buf_mem_finish() - call ->finish on buffer's private memory
+ * __vb2_buf_mem_finish() - call ->finish on buffer's निजी memory
  * to sync caches
  */
-static void __vb2_buf_mem_finish(struct vb2_buffer *vb)
-{
-	unsigned int plane;
+अटल व्योम __vb2_buf_mem_finish(काष्ठा vb2_buffer *vb)
+अणु
+	अचिन्हित पूर्णांक plane;
 
-	if (!vb->synced)
-		return;
+	अगर (!vb->synced)
+		वापस;
 
-	if (vb->need_cache_sync_on_finish) {
-		for (plane = 0; plane < vb->num_planes; ++plane)
-			call_void_memop(vb, finish,
+	अगर (vb->need_cache_sync_on_finish) अणु
+		क्रम (plane = 0; plane < vb->num_planes; ++plane)
+			call_व्योम_memop(vb, finish,
 					vb->planes[plane].mem_priv);
-	}
+	पूर्ण
 	vb->synced = 0;
-}
+पूर्ण
 
 /*
- * __setup_offsets() - setup unique offsets ("cookies") for every plane in
+ * __setup_offsets() - setup unique offsets ("cookies") क्रम every plane in
  * the buffer.
  */
-static void __setup_offsets(struct vb2_buffer *vb)
-{
-	struct vb2_queue *q = vb->vb2_queue;
-	unsigned int plane;
-	unsigned long off = 0;
+अटल व्योम __setup_offsets(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_queue *q = vb->vb2_queue;
+	अचिन्हित पूर्णांक plane;
+	अचिन्हित दीर्घ off = 0;
 
-	if (vb->index) {
-		struct vb2_buffer *prev = q->bufs[vb->index - 1];
-		struct vb2_plane *p = &prev->planes[prev->num_planes - 1];
+	अगर (vb->index) अणु
+		काष्ठा vb2_buffer *prev = q->bufs[vb->index - 1];
+		काष्ठा vb2_plane *p = &prev->planes[prev->num_planes - 1];
 
 		off = PAGE_ALIGN(p->m.offset + p->length);
-	}
+	पूर्ण
 
-	for (plane = 0; plane < vb->num_planes; ++plane) {
+	क्रम (plane = 0; plane < vb->num_planes; ++plane) अणु
 		vb->planes[plane].m.offset = off;
 
-		dprintk(q, 3, "buffer %d, plane %d offset 0x%08lx\n",
+		dprपूर्णांकk(q, 3, "buffer %d, plane %d offset 0x%08lx\n",
 				vb->index, plane, off);
 
 		off += vb->planes[plane].length;
 		off = PAGE_ALIGN(off);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * __vb2_queue_alloc() - allocate videobuf buffer structures and (for MMAP type)
- * video buffer memory for all buffers/planes on the queue and initializes the
+ * __vb2_queue_alloc() - allocate videobuf buffer काष्ठाures and (क्रम MMAP type)
+ * video buffer memory क्रम all buffers/planes on the queue and initializes the
  * queue
  *
  * Returns the number of buffers successfully allocated.
  */
-static int __vb2_queue_alloc(struct vb2_queue *q, enum vb2_memory memory,
-			     unsigned int num_buffers, unsigned int num_planes,
-			     const unsigned plane_sizes[VB2_MAX_PLANES])
-{
-	unsigned int buffer, plane;
-	struct vb2_buffer *vb;
-	int ret;
+अटल पूर्णांक __vb2_queue_alloc(काष्ठा vb2_queue *q, क्रमागत vb2_memory memory,
+			     अचिन्हित पूर्णांक num_buffers, अचिन्हित पूर्णांक num_planes,
+			     स्थिर अचिन्हित plane_sizes[VB2_MAX_PLANES])
+अणु
+	अचिन्हित पूर्णांक buffer, plane;
+	काष्ठा vb2_buffer *vb;
+	पूर्णांक ret;
 
 	/* Ensure that q->num_buffers+num_buffers is below VB2_MAX_FRAME */
-	num_buffers = min_t(unsigned int, num_buffers,
+	num_buffers = min_t(अचिन्हित पूर्णांक, num_buffers,
 			    VB2_MAX_FRAME - q->num_buffers);
 
-	for (buffer = 0; buffer < num_buffers; ++buffer) {
-		/* Allocate videobuf buffer structures */
-		vb = kzalloc(q->buf_struct_size, GFP_KERNEL);
-		if (!vb) {
-			dprintk(q, 1, "memory alloc for buffer struct failed\n");
-			break;
-		}
+	क्रम (buffer = 0; buffer < num_buffers; ++buffer) अणु
+		/* Allocate videobuf buffer काष्ठाures */
+		vb = kzalloc(q->buf_काष्ठा_size, GFP_KERNEL);
+		अगर (!vb) अणु
+			dprपूर्णांकk(q, 1, "memory alloc for buffer struct failed\n");
+			अवरोध;
+		पूर्ण
 
 		vb->state = VB2_BUF_STATE_DEQUEUED;
 		vb->vb2_queue = q;
@@ -417,156 +418,156 @@ static int __vb2_queue_alloc(struct vb2_queue *q, enum vb2_memory memory,
 		/*
 		 * We need to set these flags here so that the videobuf2 core
 		 * will call ->prepare()/->finish() cache sync/flush on vb2
-		 * buffers when appropriate. However, we can avoid explicit
-		 * ->prepare() and ->finish() cache sync for DMABUF buffers,
+		 * buffers when appropriate. However, we can aव्योम explicit
+		 * ->prepare() and ->finish() cache sync क्रम DMABUF buffers,
 		 * because DMA exporter takes care of it.
 		 */
-		if (q->memory != VB2_MEMORY_DMABUF) {
+		अगर (q->memory != VB2_MEMORY_DMABUF) अणु
 			vb->need_cache_sync_on_prepare = 1;
 			vb->need_cache_sync_on_finish = 1;
-		}
-		for (plane = 0; plane < num_planes; ++plane) {
+		पूर्ण
+		क्रम (plane = 0; plane < num_planes; ++plane) अणु
 			vb->planes[plane].length = plane_sizes[plane];
 			vb->planes[plane].min_length = plane_sizes[plane];
-		}
-		call_void_bufop(q, init_buffer, vb);
+		पूर्ण
+		call_व्योम_bufop(q, init_buffer, vb);
 
 		q->bufs[vb->index] = vb;
 
-		/* Allocate video buffer memory for the MMAP type */
-		if (memory == VB2_MEMORY_MMAP) {
+		/* Allocate video buffer memory क्रम the MMAP type */
+		अगर (memory == VB2_MEMORY_MMAP) अणु
 			ret = __vb2_buf_mem_alloc(vb);
-			if (ret) {
-				dprintk(q, 1, "failed allocating memory for buffer %d\n",
+			अगर (ret) अणु
+				dprपूर्णांकk(q, 1, "failed allocating memory for buffer %d\n",
 					buffer);
-				q->bufs[vb->index] = NULL;
-				kfree(vb);
-				break;
-			}
+				q->bufs[vb->index] = शून्य;
+				kमुक्त(vb);
+				अवरोध;
+			पूर्ण
 			__setup_offsets(vb);
 			/*
 			 * Call the driver-provided buffer initialization
-			 * callback, if given. An error in initialization
+			 * callback, अगर given. An error in initialization
 			 * results in queue setup failure.
 			 */
 			ret = call_vb_qop(vb, buf_init, vb);
-			if (ret) {
-				dprintk(q, 1, "buffer %d %p initialization failed\n",
+			अगर (ret) अणु
+				dprपूर्णांकk(q, 1, "buffer %d %p initialization failed\n",
 					buffer, vb);
-				__vb2_buf_mem_free(vb);
-				q->bufs[vb->index] = NULL;
-				kfree(vb);
-				break;
-			}
-		}
-	}
+				__vb2_buf_mem_मुक्त(vb);
+				q->bufs[vb->index] = शून्य;
+				kमुक्त(vb);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	dprintk(q, 3, "allocated %d buffers, %d plane(s) each\n",
+	dprपूर्णांकk(q, 3, "allocated %d buffers, %d plane(s) each\n",
 		buffer, num_planes);
 
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
 /*
- * __vb2_free_mem() - release all video buffer memory for a given queue
+ * __vb2_मुक्त_mem() - release all video buffer memory क्रम a given queue
  */
-static void __vb2_free_mem(struct vb2_queue *q, unsigned int buffers)
-{
-	unsigned int buffer;
-	struct vb2_buffer *vb;
+अटल व्योम __vb2_मुक्त_mem(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक buffers)
+अणु
+	अचिन्हित पूर्णांक buffer;
+	काष्ठा vb2_buffer *vb;
 
-	for (buffer = q->num_buffers - buffers; buffer < q->num_buffers;
-	     ++buffer) {
+	क्रम (buffer = q->num_buffers - buffers; buffer < q->num_buffers;
+	     ++buffer) अणु
 		vb = q->bufs[buffer];
-		if (!vb)
-			continue;
+		अगर (!vb)
+			जारी;
 
 		/* Free MMAP buffers or release USERPTR buffers */
-		if (q->memory == VB2_MEMORY_MMAP)
-			__vb2_buf_mem_free(vb);
-		else if (q->memory == VB2_MEMORY_DMABUF)
+		अगर (q->memory == VB2_MEMORY_MMAP)
+			__vb2_buf_mem_मुक्त(vb);
+		अन्यथा अगर (q->memory == VB2_MEMORY_DMABUF)
 			__vb2_buf_dmabuf_put(vb);
-		else
+		अन्यथा
 			__vb2_buf_userptr_put(vb);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * __vb2_queue_free() - free buffers at the end of the queue - video memory and
- * related information, if no buffers are left return the queue to an
- * uninitialized state. Might be called even if the queue has already been freed.
+ * __vb2_queue_मुक्त() - मुक्त buffers at the end of the queue - video memory and
+ * related inक्रमmation, अगर no buffers are left वापस the queue to an
+ * uninitialized state. Might be called even अगर the queue has alपढ़ोy been मुक्तd.
  */
-static int __vb2_queue_free(struct vb2_queue *q, unsigned int buffers)
-{
-	unsigned int buffer;
+अटल पूर्णांक __vb2_queue_मुक्त(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक buffers)
+अणु
+	अचिन्हित पूर्णांक buffer;
 
 	/*
-	 * Sanity check: when preparing a buffer the queue lock is released for
-	 * a short while (see __buf_prepare for the details), which would allow
+	 * Sanity check: when preparing a buffer the queue lock is released क्रम
+	 * a लघु जबतक (see __buf_prepare क्रम the details), which would allow
 	 * a race with a reqbufs which can call this function. Removing the
 	 * buffers from underneath __buf_prepare is obviously a bad idea, so we
-	 * check if any of the buffers is in the state PREPARING, and if so we
-	 * just return -EAGAIN.
+	 * check अगर any of the buffers is in the state PREPARING, and अगर so we
+	 * just वापस -EAGAIN.
 	 */
-	for (buffer = q->num_buffers - buffers; buffer < q->num_buffers;
-	     ++buffer) {
-		if (q->bufs[buffer] == NULL)
-			continue;
-		if (q->bufs[buffer]->state == VB2_BUF_STATE_PREPARING) {
-			dprintk(q, 1, "preparing buffers, cannot free\n");
-			return -EAGAIN;
-		}
-	}
+	क्रम (buffer = q->num_buffers - buffers; buffer < q->num_buffers;
+	     ++buffer) अणु
+		अगर (q->bufs[buffer] == शून्य)
+			जारी;
+		अगर (q->bufs[buffer]->state == VB2_BUF_STATE_PREPARING) अणु
+			dprपूर्णांकk(q, 1, "preparing buffers, cannot free\n");
+			वापस -EAGAIN;
+		पूर्ण
+	पूर्ण
 
-	/* Call driver-provided cleanup function for each buffer, if provided */
-	for (buffer = q->num_buffers - buffers; buffer < q->num_buffers;
-	     ++buffer) {
-		struct vb2_buffer *vb = q->bufs[buffer];
+	/* Call driver-provided cleanup function क्रम each buffer, अगर provided */
+	क्रम (buffer = q->num_buffers - buffers; buffer < q->num_buffers;
+	     ++buffer) अणु
+		काष्ठा vb2_buffer *vb = q->bufs[buffer];
 
-		if (vb && vb->planes[0].mem_priv)
-			call_void_vb_qop(vb, buf_cleanup, vb);
-	}
+		अगर (vb && vb->planes[0].mem_priv)
+			call_व्योम_vb_qop(vb, buf_cleanup, vb);
+	पूर्ण
 
 	/* Release video buffer memory */
-	__vb2_free_mem(q, buffers);
+	__vb2_मुक्त_mem(q, buffers);
 
-#ifdef CONFIG_VIDEO_ADV_DEBUG
+#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
 	/*
-	 * Check that all the calls were balances during the life-time of this
-	 * queue. If not (or if the debug level is 1 or up), then dump the
+	 * Check that all the calls were balances during the lअगरe-समय of this
+	 * queue. If not (or अगर the debug level is 1 or up), then dump the
 	 * counters to the kernel log.
 	 */
-	if (q->num_buffers) {
+	अगर (q->num_buffers) अणु
 		bool unbalanced = q->cnt_start_streaming != q->cnt_stop_streaming ||
-				  q->cnt_wait_prepare != q->cnt_wait_finish;
+				  q->cnt_रुको_prepare != q->cnt_रुको_finish;
 
-		if (unbalanced || debug) {
+		अगर (unbalanced || debug) अणु
 			pr_info("counters for queue %p:%s\n", q,
 				unbalanced ? " UNBALANCED!" : "");
 			pr_info("     setup: %u start_streaming: %u stop_streaming: %u\n",
 				q->cnt_queue_setup, q->cnt_start_streaming,
 				q->cnt_stop_streaming);
 			pr_info("     wait_prepare: %u wait_finish: %u\n",
-				q->cnt_wait_prepare, q->cnt_wait_finish);
-		}
+				q->cnt_रुको_prepare, q->cnt_रुको_finish);
+		पूर्ण
 		q->cnt_queue_setup = 0;
-		q->cnt_wait_prepare = 0;
-		q->cnt_wait_finish = 0;
+		q->cnt_रुको_prepare = 0;
+		q->cnt_रुको_finish = 0;
 		q->cnt_start_streaming = 0;
 		q->cnt_stop_streaming = 0;
-	}
-	for (buffer = 0; buffer < q->num_buffers; ++buffer) {
-		struct vb2_buffer *vb = q->bufs[buffer];
+	पूर्ण
+	क्रम (buffer = 0; buffer < q->num_buffers; ++buffer) अणु
+		काष्ठा vb2_buffer *vb = q->bufs[buffer];
 		bool unbalanced = vb->cnt_mem_alloc != vb->cnt_mem_put ||
 				  vb->cnt_mem_prepare != vb->cnt_mem_finish ||
 				  vb->cnt_mem_get_userptr != vb->cnt_mem_put_userptr ||
 				  vb->cnt_mem_attach_dmabuf != vb->cnt_mem_detach_dmabuf ||
 				  vb->cnt_mem_map_dmabuf != vb->cnt_mem_unmap_dmabuf ||
-				  vb->cnt_buf_queue != vb->cnt_buf_done ||
+				  vb->cnt_buf_queue != vb->cnt_buf_करोne ||
 				  vb->cnt_buf_prepare != vb->cnt_buf_finish ||
 				  vb->cnt_buf_init != vb->cnt_buf_cleanup;
 
-		if (unbalanced || debug) {
+		अगर (unbalanced || debug) अणु
 			pr_info("   counters for queue %p, buffer %d:%s\n",
 				q, buffer, unbalanced ? " UNBALANCED!" : "");
 			pr_info("     buf_init: %u buf_cleanup: %u buf_prepare: %u buf_finish: %u\n",
@@ -574,7 +575,7 @@ static int __vb2_queue_free(struct vb2_queue *q, unsigned int buffers)
 				vb->cnt_buf_prepare, vb->cnt_buf_finish);
 			pr_info("     buf_out_validate: %u buf_queue: %u buf_done: %u buf_request_complete: %u\n",
 				vb->cnt_buf_out_validate, vb->cnt_buf_queue,
-				vb->cnt_buf_done, vb->cnt_buf_request_complete);
+				vb->cnt_buf_करोne, vb->cnt_buf_request_complete);
 			pr_info("     alloc: %u put: %u prepare: %u finish: %u mmap: %u\n",
 				vb->cnt_mem_alloc, vb->cnt_mem_put,
 				vb->cnt_mem_prepare, vb->cnt_mem_finish,
@@ -589,275 +590,275 @@ static int __vb2_queue_free(struct vb2_queue *q, unsigned int buffers)
 				vb->cnt_mem_num_users,
 				vb->cnt_mem_vaddr,
 				vb->cnt_mem_cookie);
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
 	/* Free videobuf buffers */
-	for (buffer = q->num_buffers - buffers; buffer < q->num_buffers;
-	     ++buffer) {
-		kfree(q->bufs[buffer]);
-		q->bufs[buffer] = NULL;
-	}
+	क्रम (buffer = q->num_buffers - buffers; buffer < q->num_buffers;
+	     ++buffer) अणु
+		kमुक्त(q->bufs[buffer]);
+		q->bufs[buffer] = शून्य;
+	पूर्ण
 
 	q->num_buffers -= buffers;
-	if (!q->num_buffers) {
+	अगर (!q->num_buffers) अणु
 		q->memory = VB2_MEMORY_UNKNOWN;
 		INIT_LIST_HEAD(&q->queued_list);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-bool vb2_buffer_in_use(struct vb2_queue *q, struct vb2_buffer *vb)
-{
-	unsigned int plane;
-	for (plane = 0; plane < vb->num_planes; ++plane) {
-		void *mem_priv = vb->planes[plane].mem_priv;
+bool vb2_buffer_in_use(काष्ठा vb2_queue *q, काष्ठा vb2_buffer *vb)
+अणु
+	अचिन्हित पूर्णांक plane;
+	क्रम (plane = 0; plane < vb->num_planes; ++plane) अणु
+		व्योम *mem_priv = vb->planes[plane].mem_priv;
 		/*
 		 * If num_users() has not been provided, call_memop
-		 * will return 0, apparently nobody cares about this
-		 * case anyway. If num_users() returns more than 1,
+		 * will वापस 0, apparently nobody cares about this
+		 * हाल anyway. If num_users() वापसs more than 1,
 		 * we are not the only user of the plane's memory.
 		 */
-		if (mem_priv && call_memop(vb, num_users, mem_priv) > 1)
-			return true;
-	}
-	return false;
-}
+		अगर (mem_priv && call_memop(vb, num_users, mem_priv) > 1)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL(vb2_buffer_in_use);
 
 /*
- * __buffers_in_use() - return true if any buffers on the queue are in use and
- * the queue cannot be freed (by the means of REQBUFS(0)) call
+ * __buffers_in_use() - वापस true अगर any buffers on the queue are in use and
+ * the queue cannot be मुक्तd (by the means of REQBUFS(0)) call
  */
-static bool __buffers_in_use(struct vb2_queue *q)
-{
-	unsigned int buffer;
-	for (buffer = 0; buffer < q->num_buffers; ++buffer) {
-		if (vb2_buffer_in_use(q, q->bufs[buffer]))
-			return true;
-	}
-	return false;
-}
+अटल bool __buffers_in_use(काष्ठा vb2_queue *q)
+अणु
+	अचिन्हित पूर्णांक buffer;
+	क्रम (buffer = 0; buffer < q->num_buffers; ++buffer) अणु
+		अगर (vb2_buffer_in_use(q, q->bufs[buffer]))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-void vb2_core_querybuf(struct vb2_queue *q, unsigned int index, void *pb)
-{
-	call_void_bufop(q, fill_user_buffer, q->bufs[index], pb);
-}
+व्योम vb2_core_querybuf(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक index, व्योम *pb)
+अणु
+	call_व्योम_bufop(q, fill_user_buffer, q->bufs[index], pb);
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_core_querybuf);
 
 /*
- * __verify_userptr_ops() - verify that all memory operations required for
+ * __verअगरy_userptr_ops() - verअगरy that all memory operations required क्रम
  * USERPTR queue type have been provided
  */
-static int __verify_userptr_ops(struct vb2_queue *q)
-{
-	if (!(q->io_modes & VB2_USERPTR) || !q->mem_ops->get_userptr ||
+अटल पूर्णांक __verअगरy_userptr_ops(काष्ठा vb2_queue *q)
+अणु
+	अगर (!(q->io_modes & VB2_USERPTR) || !q->mem_ops->get_userptr ||
 	    !q->mem_ops->put_userptr)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * __verify_mmap_ops() - verify that all memory operations required for
+ * __verअगरy_mmap_ops() - verअगरy that all memory operations required क्रम
  * MMAP queue type have been provided
  */
-static int __verify_mmap_ops(struct vb2_queue *q)
-{
-	if (!(q->io_modes & VB2_MMAP) || !q->mem_ops->alloc ||
+अटल पूर्णांक __verअगरy_mmap_ops(काष्ठा vb2_queue *q)
+अणु
+	अगर (!(q->io_modes & VB2_MMAP) || !q->mem_ops->alloc ||
 	    !q->mem_ops->put || !q->mem_ops->mmap)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * __verify_dmabuf_ops() - verify that all memory operations required for
+ * __verअगरy_dmabuf_ops() - verअगरy that all memory operations required क्रम
  * DMABUF queue type have been provided
  */
-static int __verify_dmabuf_ops(struct vb2_queue *q)
-{
-	if (!(q->io_modes & VB2_DMABUF) || !q->mem_ops->attach_dmabuf ||
+अटल पूर्णांक __verअगरy_dmabuf_ops(काष्ठा vb2_queue *q)
+अणु
+	अगर (!(q->io_modes & VB2_DMABUF) || !q->mem_ops->attach_dmabuf ||
 	    !q->mem_ops->detach_dmabuf  || !q->mem_ops->map_dmabuf ||
 	    !q->mem_ops->unmap_dmabuf)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vb2_verify_memory_type(struct vb2_queue *q,
-		enum vb2_memory memory, unsigned int type)
-{
-	if (memory != VB2_MEMORY_MMAP && memory != VB2_MEMORY_USERPTR &&
-	    memory != VB2_MEMORY_DMABUF) {
-		dprintk(q, 1, "unsupported memory type\n");
-		return -EINVAL;
-	}
+पूर्णांक vb2_verअगरy_memory_type(काष्ठा vb2_queue *q,
+		क्रमागत vb2_memory memory, अचिन्हित पूर्णांक type)
+अणु
+	अगर (memory != VB2_MEMORY_MMAP && memory != VB2_MEMORY_USERPTR &&
+	    memory != VB2_MEMORY_DMABUF) अणु
+		dprपूर्णांकk(q, 1, "unsupported memory type\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (type != q->type) {
-		dprintk(q, 1, "requested type is incorrect\n");
-		return -EINVAL;
-	}
+	अगर (type != q->type) अणु
+		dprपूर्णांकk(q, 1, "requested type is incorrect\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Make sure all the required memory ops for given memory type
+	 * Make sure all the required memory ops क्रम given memory type
 	 * are available.
 	 */
-	if (memory == VB2_MEMORY_MMAP && __verify_mmap_ops(q)) {
-		dprintk(q, 1, "MMAP for current setup unsupported\n");
-		return -EINVAL;
-	}
+	अगर (memory == VB2_MEMORY_MMAP && __verअगरy_mmap_ops(q)) अणु
+		dprपूर्णांकk(q, 1, "MMAP for current setup unsupported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (memory == VB2_MEMORY_USERPTR && __verify_userptr_ops(q)) {
-		dprintk(q, 1, "USERPTR for current setup unsupported\n");
-		return -EINVAL;
-	}
+	अगर (memory == VB2_MEMORY_USERPTR && __verअगरy_userptr_ops(q)) अणु
+		dprपूर्णांकk(q, 1, "USERPTR for current setup unsupported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (memory == VB2_MEMORY_DMABUF && __verify_dmabuf_ops(q)) {
-		dprintk(q, 1, "DMABUF for current setup unsupported\n");
-		return -EINVAL;
-	}
+	अगर (memory == VB2_MEMORY_DMABUF && __verअगरy_dmabuf_ops(q)) अणु
+		dprपूर्णांकk(q, 1, "DMABUF for current setup unsupported\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Place the busy tests at the end: -EBUSY can be ignored when
 	 * create_bufs is called with count == 0, but count == 0 should still
-	 * do the memory and type validation.
+	 * करो the memory and type validation.
 	 */
-	if (vb2_fileio_is_active(q)) {
-		dprintk(q, 1, "file io in progress\n");
-		return -EBUSY;
-	}
-	return 0;
-}
-EXPORT_SYMBOL(vb2_verify_memory_type);
+	अगर (vb2_fileio_is_active(q)) अणु
+		dprपूर्णांकk(q, 1, "file io in progress\n");
+		वापस -EBUSY;
+	पूर्ण
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(vb2_verअगरy_memory_type);
 
-int vb2_core_reqbufs(struct vb2_queue *q, enum vb2_memory memory,
-		     unsigned int *count)
-{
-	unsigned int num_buffers, allocated_buffers, num_planes = 0;
-	unsigned plane_sizes[VB2_MAX_PLANES] = { };
-	unsigned int i;
-	int ret;
+पूर्णांक vb2_core_reqbufs(काष्ठा vb2_queue *q, क्रमागत vb2_memory memory,
+		     अचिन्हित पूर्णांक *count)
+अणु
+	अचिन्हित पूर्णांक num_buffers, allocated_buffers, num_planes = 0;
+	अचिन्हित plane_sizes[VB2_MAX_PLANES] = अणु पूर्ण;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	if (q->streaming) {
-		dprintk(q, 1, "streaming active\n");
-		return -EBUSY;
-	}
+	अगर (q->streaming) अणु
+		dprपूर्णांकk(q, 1, "streaming active\n");
+		वापस -EBUSY;
+	पूर्ण
 
-	if (q->waiting_in_dqbuf && *count) {
-		dprintk(q, 1, "another dup()ped fd is waiting for a buffer\n");
-		return -EBUSY;
-	}
+	अगर (q->रुकोing_in_dqbuf && *count) अणु
+		dprपूर्णांकk(q, 1, "another dup()ped fd is waiting for a buffer\n");
+		वापस -EBUSY;
+	पूर्ण
 
-	if (*count == 0 || q->num_buffers != 0 ||
-	    (q->memory != VB2_MEMORY_UNKNOWN && q->memory != memory)) {
+	अगर (*count == 0 || q->num_buffers != 0 ||
+	    (q->memory != VB2_MEMORY_UNKNOWN && q->memory != memory)) अणु
 		/*
-		 * We already have buffers allocated, so first check if they
-		 * are not in use and can be freed.
+		 * We alपढ़ोy have buffers allocated, so first check अगर they
+		 * are not in use and can be मुक्तd.
 		 */
 		mutex_lock(&q->mmap_lock);
-		if (debug && q->memory == VB2_MEMORY_MMAP &&
+		अगर (debug && q->memory == VB2_MEMORY_MMAP &&
 		    __buffers_in_use(q))
-			dprintk(q, 1, "memory in use, orphaning buffers\n");
+			dprपूर्णांकk(q, 1, "memory in use, orphaning buffers\n");
 
 		/*
 		 * Call queue_cancel to clean up any buffers in the
-		 * QUEUED state which is possible if buffers were prepared or
+		 * QUEUED state which is possible अगर buffers were prepared or
 		 * queued without ever calling STREAMON.
 		 */
 		__vb2_queue_cancel(q);
-		ret = __vb2_queue_free(q, q->num_buffers);
+		ret = __vb2_queue_मुक्त(q, q->num_buffers);
 		mutex_unlock(&q->mmap_lock);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/*
-		 * In case of REQBUFS(0) return immediately without calling
+		 * In हाल of REQBUFS(0) वापस immediately without calling
 		 * driver's queue_setup() callback and allocating resources.
 		 */
-		if (*count == 0)
-			return 0;
-	}
+		अगर (*count == 0)
+			वापस 0;
+	पूर्ण
 
 	/*
-	 * Make sure the requested values and current defaults are sane.
+	 * Make sure the requested values and current शेषs are sane.
 	 */
 	WARN_ON(q->min_buffers_needed > VB2_MAX_FRAME);
-	num_buffers = max_t(unsigned int, *count, q->min_buffers_needed);
-	num_buffers = min_t(unsigned int, num_buffers, VB2_MAX_FRAME);
-	memset(q->alloc_devs, 0, sizeof(q->alloc_devs));
+	num_buffers = max_t(अचिन्हित पूर्णांक, *count, q->min_buffers_needed);
+	num_buffers = min_t(अचिन्हित पूर्णांक, num_buffers, VB2_MAX_FRAME);
+	स_रखो(q->alloc_devs, 0, माप(q->alloc_devs));
 	q->memory = memory;
 
 	/*
 	 * Ask the driver how many buffers and planes per buffer it requires.
-	 * Driver also sets the size and allocator context for each plane.
+	 * Driver also sets the size and allocator context क्रम each plane.
 	 */
 	ret = call_qop(q, queue_setup, q, &num_buffers, &num_planes,
 		       plane_sizes, q->alloc_devs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Check that driver has set sane values */
-	if (WARN_ON(!num_planes))
-		return -EINVAL;
+	अगर (WARN_ON(!num_planes))
+		वापस -EINVAL;
 
-	for (i = 0; i < num_planes; i++)
-		if (WARN_ON(!plane_sizes[i]))
-			return -EINVAL;
+	क्रम (i = 0; i < num_planes; i++)
+		अगर (WARN_ON(!plane_sizes[i]))
+			वापस -EINVAL;
 
 	/* Finally, allocate buffers and video memory */
 	allocated_buffers =
 		__vb2_queue_alloc(q, memory, num_buffers, num_planes, plane_sizes);
-	if (allocated_buffers == 0) {
-		dprintk(q, 1, "memory allocation failed\n");
-		return -ENOMEM;
-	}
+	अगर (allocated_buffers == 0) अणु
+		dprपूर्णांकk(q, 1, "memory allocation failed\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
-	 * There is no point in continuing if we can't allocate the minimum
+	 * There is no poपूर्णांक in continuing अगर we can't allocate the minimum
 	 * number of buffers needed by this vb2_queue.
 	 */
-	if (allocated_buffers < q->min_buffers_needed)
+	अगर (allocated_buffers < q->min_buffers_needed)
 		ret = -ENOMEM;
 
 	/*
-	 * Check if driver can handle the allocated number of buffers.
+	 * Check अगर driver can handle the allocated number of buffers.
 	 */
-	if (!ret && allocated_buffers < num_buffers) {
+	अगर (!ret && allocated_buffers < num_buffers) अणु
 		num_buffers = allocated_buffers;
 		/*
 		 * num_planes is set by the previous queue_setup(), but since it
-		 * signals to queue_setup() whether it is called from create_bufs()
-		 * vs reqbufs() we zero it here to signal that queue_setup() is
-		 * called for the reqbufs() case.
+		 * संकेतs to queue_setup() whether it is called from create_bufs()
+		 * vs reqbufs() we zero it here to संकेत that queue_setup() is
+		 * called क्रम the reqbufs() हाल.
 		 */
 		num_planes = 0;
 
 		ret = call_qop(q, queue_setup, q, &num_buffers,
 			       &num_planes, plane_sizes, q->alloc_devs);
 
-		if (!ret && allocated_buffers < num_buffers)
+		अगर (!ret && allocated_buffers < num_buffers)
 			ret = -ENOMEM;
 
 		/*
 		 * Either the driver has accepted a smaller number of buffers,
-		 * or .queue_setup() returned an error
+		 * or .queue_setup() वापसed an error
 		 */
-	}
+	पूर्ण
 
 	mutex_lock(&q->mmap_lock);
 	q->num_buffers = allocated_buffers;
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		/*
-		 * Note: __vb2_queue_free() will subtract 'allocated_buffers'
+		 * Note: __vb2_queue_मुक्त() will subtract 'allocated_buffers'
 		 * from q->num_buffers.
 		 */
-		__vb2_queue_free(q, allocated_buffers);
+		__vb2_queue_मुक्त(q, allocated_buffers);
 		mutex_unlock(&q->mmap_lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	mutex_unlock(&q->mmap_lock);
 
 	/*
@@ -865,47 +866,47 @@ int vb2_core_reqbufs(struct vb2_queue *q, enum vb2_memory memory,
 	 * to the userspace.
 	 */
 	*count = allocated_buffers;
-	q->waiting_for_buffers = !q->is_output;
+	q->रुकोing_क्रम_buffers = !q->is_output;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_core_reqbufs);
 
-int vb2_core_create_bufs(struct vb2_queue *q, enum vb2_memory memory,
-			 unsigned int *count,
-			 unsigned int requested_planes,
-			 const unsigned int requested_sizes[])
-{
-	unsigned int num_planes = 0, num_buffers, allocated_buffers;
-	unsigned plane_sizes[VB2_MAX_PLANES] = { };
-	int ret;
+पूर्णांक vb2_core_create_bufs(काष्ठा vb2_queue *q, क्रमागत vb2_memory memory,
+			 अचिन्हित पूर्णांक *count,
+			 अचिन्हित पूर्णांक requested_planes,
+			 स्थिर अचिन्हित पूर्णांक requested_sizes[])
+अणु
+	अचिन्हित पूर्णांक num_planes = 0, num_buffers, allocated_buffers;
+	अचिन्हित plane_sizes[VB2_MAX_PLANES] = अणु पूर्ण;
+	पूर्णांक ret;
 
-	if (q->num_buffers == VB2_MAX_FRAME) {
-		dprintk(q, 1, "maximum number of buffers already allocated\n");
-		return -ENOBUFS;
-	}
+	अगर (q->num_buffers == VB2_MAX_FRAME) अणु
+		dprपूर्णांकk(q, 1, "maximum number of buffers already allocated\n");
+		वापस -ENOBUFS;
+	पूर्ण
 
-	if (!q->num_buffers) {
-		if (q->waiting_in_dqbuf && *count) {
-			dprintk(q, 1, "another dup()ped fd is waiting for a buffer\n");
-			return -EBUSY;
-		}
-		memset(q->alloc_devs, 0, sizeof(q->alloc_devs));
+	अगर (!q->num_buffers) अणु
+		अगर (q->रुकोing_in_dqbuf && *count) अणु
+			dprपूर्णांकk(q, 1, "another dup()ped fd is waiting for a buffer\n");
+			वापस -EBUSY;
+		पूर्ण
+		स_रखो(q->alloc_devs, 0, माप(q->alloc_devs));
 		q->memory = memory;
-		q->waiting_for_buffers = !q->is_output;
-	} else {
-		if (q->memory != memory) {
-			dprintk(q, 1, "memory model mismatch\n");
-			return -EINVAL;
-		}
-	}
+		q->रुकोing_क्रम_buffers = !q->is_output;
+	पूर्ण अन्यथा अणु
+		अगर (q->memory != memory) अणु
+			dprपूर्णांकk(q, 1, "memory model mismatch\n");
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	num_buffers = min(*count, VB2_MAX_FRAME - q->num_buffers);
 
-	if (requested_planes && requested_sizes) {
+	अगर (requested_planes && requested_sizes) अणु
 		num_planes = requested_planes;
-		memcpy(plane_sizes, requested_sizes, sizeof(plane_sizes));
-	}
+		स_नकल(plane_sizes, requested_sizes, माप(plane_sizes));
+	पूर्ण
 
 	/*
 	 * Ask the driver, whether the requested number of buffers, planes per
@@ -913,21 +914,21 @@ int vb2_core_create_bufs(struct vb2_queue *q, enum vb2_memory memory,
 	 */
 	ret = call_qop(q, queue_setup, q, &num_buffers,
 		       &num_planes, plane_sizes, q->alloc_devs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Finally, allocate buffers and video memory */
 	allocated_buffers = __vb2_queue_alloc(q, memory, num_buffers,
 				num_planes, plane_sizes);
-	if (allocated_buffers == 0) {
-		dprintk(q, 1, "memory allocation failed\n");
-		return -ENOMEM;
-	}
+	अगर (allocated_buffers == 0) अणु
+		dprपूर्णांकk(q, 1, "memory allocation failed\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
-	 * Check if driver can handle the so far allocated number of buffers.
+	 * Check अगर driver can handle the so far allocated number of buffers.
 	 */
-	if (allocated_buffers < num_buffers) {
+	अगर (allocated_buffers < num_buffers) अणु
 		num_buffers = allocated_buffers;
 
 		/*
@@ -937,27 +938,27 @@ int vb2_core_create_bufs(struct vb2_queue *q, enum vb2_memory memory,
 		ret = call_qop(q, queue_setup, q, &num_buffers,
 			       &num_planes, plane_sizes, q->alloc_devs);
 
-		if (!ret && allocated_buffers < num_buffers)
+		अगर (!ret && allocated_buffers < num_buffers)
 			ret = -ENOMEM;
 
 		/*
 		 * Either the driver has accepted a smaller number of buffers,
-		 * or .queue_setup() returned an error
+		 * or .queue_setup() वापसed an error
 		 */
-	}
+	पूर्ण
 
 	mutex_lock(&q->mmap_lock);
 	q->num_buffers += allocated_buffers;
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		/*
-		 * Note: __vb2_queue_free() will subtract 'allocated_buffers'
+		 * Note: __vb2_queue_मुक्त() will subtract 'allocated_buffers'
 		 * from q->num_buffers.
 		 */
-		__vb2_queue_free(q, allocated_buffers);
+		__vb2_queue_मुक्त(q, allocated_buffers);
 		mutex_unlock(&q->mmap_lock);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	mutex_unlock(&q->mmap_lock);
 
 	/*
@@ -966,159 +967,159 @@ int vb2_core_create_bufs(struct vb2_queue *q, enum vb2_memory memory,
 	 */
 	*count = allocated_buffers;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_core_create_bufs);
 
-void *vb2_plane_vaddr(struct vb2_buffer *vb, unsigned int plane_no)
-{
-	if (plane_no >= vb->num_planes || !vb->planes[plane_no].mem_priv)
-		return NULL;
+व्योम *vb2_plane_vaddr(काष्ठा vb2_buffer *vb, अचिन्हित पूर्णांक plane_no)
+अणु
+	अगर (plane_no >= vb->num_planes || !vb->planes[plane_no].mem_priv)
+		वापस शून्य;
 
-	return call_ptr_memop(vb, vaddr, vb->planes[plane_no].mem_priv);
+	वापस call_ptr_memop(vb, vaddr, vb->planes[plane_no].mem_priv);
 
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_plane_vaddr);
 
-void *vb2_plane_cookie(struct vb2_buffer *vb, unsigned int plane_no)
-{
-	if (plane_no >= vb->num_planes || !vb->planes[plane_no].mem_priv)
-		return NULL;
+व्योम *vb2_plane_cookie(काष्ठा vb2_buffer *vb, अचिन्हित पूर्णांक plane_no)
+अणु
+	अगर (plane_no >= vb->num_planes || !vb->planes[plane_no].mem_priv)
+		वापस शून्य;
 
-	return call_ptr_memop(vb, cookie, vb->planes[plane_no].mem_priv);
-}
+	वापस call_ptr_memop(vb, cookie, vb->planes[plane_no].mem_priv);
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_plane_cookie);
 
-void vb2_buffer_done(struct vb2_buffer *vb, enum vb2_buffer_state state)
-{
-	struct vb2_queue *q = vb->vb2_queue;
-	unsigned long flags;
+व्योम vb2_buffer_करोne(काष्ठा vb2_buffer *vb, क्रमागत vb2_buffer_state state)
+अणु
+	काष्ठा vb2_queue *q = vb->vb2_queue;
+	अचिन्हित दीर्घ flags;
 
-	if (WARN_ON(vb->state != VB2_BUF_STATE_ACTIVE))
-		return;
+	अगर (WARN_ON(vb->state != VB2_BUF_STATE_ACTIVE))
+		वापस;
 
-	if (WARN_ON(state != VB2_BUF_STATE_DONE &&
+	अगर (WARN_ON(state != VB2_BUF_STATE_DONE &&
 		    state != VB2_BUF_STATE_ERROR &&
 		    state != VB2_BUF_STATE_QUEUED))
 		state = VB2_BUF_STATE_ERROR;
 
-#ifdef CONFIG_VIDEO_ADV_DEBUG
+#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
 	/*
-	 * Although this is not a callback, it still does have to balance
+	 * Although this is not a callback, it still करोes have to balance
 	 * with the buf_queue op. So update this counter manually.
 	 */
-	vb->cnt_buf_done++;
-#endif
-	dprintk(q, 4, "done processing on buffer %d, state: %s\n",
+	vb->cnt_buf_करोne++;
+#पूर्ण_अगर
+	dprपूर्णांकk(q, 4, "done processing on buffer %d, state: %s\n",
 		vb->index, vb2_state_name(state));
 
-	if (state != VB2_BUF_STATE_QUEUED)
+	अगर (state != VB2_BUF_STATE_QUEUED)
 		__vb2_buf_mem_finish(vb);
 
-	spin_lock_irqsave(&q->done_lock, flags);
-	if (state == VB2_BUF_STATE_QUEUED) {
+	spin_lock_irqsave(&q->करोne_lock, flags);
+	अगर (state == VB2_BUF_STATE_QUEUED) अणु
 		vb->state = VB2_BUF_STATE_QUEUED;
-	} else {
-		/* Add the buffer to the done buffers list */
-		list_add_tail(&vb->done_entry, &q->done_list);
+	पूर्ण अन्यथा अणु
+		/* Add the buffer to the करोne buffers list */
+		list_add_tail(&vb->करोne_entry, &q->करोne_list);
 		vb->state = state;
-	}
+	पूर्ण
 	atomic_dec(&q->owned_by_drv_count);
 
-	if (state != VB2_BUF_STATE_QUEUED && vb->req_obj.req) {
+	अगर (state != VB2_BUF_STATE_QUEUED && vb->req_obj.req) अणु
 		media_request_object_unbind(&vb->req_obj);
 		media_request_object_put(&vb->req_obj);
-	}
+	पूर्ण
 
-	spin_unlock_irqrestore(&q->done_lock, flags);
+	spin_unlock_irqrestore(&q->करोne_lock, flags);
 
-	trace_vb2_buf_done(q, vb);
+	trace_vb2_buf_करोne(q, vb);
 
-	switch (state) {
-	case VB2_BUF_STATE_QUEUED:
-		return;
-	default:
-		/* Inform any processes that may be waiting for buffers */
-		wake_up(&q->done_wq);
-		break;
-	}
-}
-EXPORT_SYMBOL_GPL(vb2_buffer_done);
+	चयन (state) अणु
+	हाल VB2_BUF_STATE_QUEUED:
+		वापस;
+	शेष:
+		/* Inक्रमm any processes that may be रुकोing क्रम buffers */
+		wake_up(&q->करोne_wq);
+		अवरोध;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(vb2_buffer_करोne);
 
-void vb2_discard_done(struct vb2_queue *q)
-{
-	struct vb2_buffer *vb;
-	unsigned long flags;
+व्योम vb2_discard_करोne(काष्ठा vb2_queue *q)
+अणु
+	काष्ठा vb2_buffer *vb;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&q->done_lock, flags);
-	list_for_each_entry(vb, &q->done_list, done_entry)
+	spin_lock_irqsave(&q->करोne_lock, flags);
+	list_क्रम_each_entry(vb, &q->करोne_list, करोne_entry)
 		vb->state = VB2_BUF_STATE_ERROR;
-	spin_unlock_irqrestore(&q->done_lock, flags);
-}
-EXPORT_SYMBOL_GPL(vb2_discard_done);
+	spin_unlock_irqrestore(&q->करोne_lock, flags);
+पूर्ण
+EXPORT_SYMBOL_GPL(vb2_discard_करोne);
 
 /*
  * __prepare_mmap() - prepare an MMAP buffer
  */
-static int __prepare_mmap(struct vb2_buffer *vb)
-{
-	int ret = 0;
+अटल पूर्णांक __prepare_mmap(काष्ठा vb2_buffer *vb)
+अणु
+	पूर्णांक ret = 0;
 
 	ret = call_bufop(vb->vb2_queue, fill_vb2_buffer,
 			 vb, vb->planes);
-	return ret ? ret : call_vb_qop(vb, buf_prepare, vb);
-}
+	वापस ret ? ret : call_vb_qop(vb, buf_prepare, vb);
+पूर्ण
 
 /*
  * __prepare_userptr() - prepare a USERPTR buffer
  */
-static int __prepare_userptr(struct vb2_buffer *vb)
-{
-	struct vb2_plane planes[VB2_MAX_PLANES];
-	struct vb2_queue *q = vb->vb2_queue;
-	void *mem_priv;
-	unsigned int plane;
-	int ret = 0;
-	bool reacquired = vb->planes[0].mem_priv == NULL;
+अटल पूर्णांक __prepare_userptr(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_plane planes[VB2_MAX_PLANES];
+	काष्ठा vb2_queue *q = vb->vb2_queue;
+	व्योम *mem_priv;
+	अचिन्हित पूर्णांक plane;
+	पूर्णांक ret = 0;
+	bool reacquired = vb->planes[0].mem_priv == शून्य;
 
-	memset(planes, 0, sizeof(planes[0]) * vb->num_planes);
-	/* Copy relevant information provided by the userspace */
+	स_रखो(planes, 0, माप(planes[0]) * vb->num_planes);
+	/* Copy relevant inक्रमmation provided by the userspace */
 	ret = call_bufop(vb->vb2_queue, fill_vb2_buffer,
 			 vb, planes);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (plane = 0; plane < vb->num_planes; ++plane) {
-		/* Skip the plane if already verified */
-		if (vb->planes[plane].m.userptr &&
+	क्रम (plane = 0; plane < vb->num_planes; ++plane) अणु
+		/* Skip the plane अगर alपढ़ोy verअगरied */
+		अगर (vb->planes[plane].m.userptr &&
 			vb->planes[plane].m.userptr == planes[plane].m.userptr
 			&& vb->planes[plane].length == planes[plane].length)
-			continue;
+			जारी;
 
-		dprintk(q, 3, "userspace address for plane %d changed, reacquiring memory\n",
+		dprपूर्णांकk(q, 3, "userspace address for plane %d changed, reacquiring memory\n",
 			plane);
 
-		/* Check if the provided plane buffer is large enough */
-		if (planes[plane].length < vb->planes[plane].min_length) {
-			dprintk(q, 1, "provided buffer size %u is less than setup size %u for plane %d\n",
+		/* Check अगर the provided plane buffer is large enough */
+		अगर (planes[plane].length < vb->planes[plane].min_length) अणु
+			dprपूर्णांकk(q, 1, "provided buffer size %u is less than setup size %u for plane %d\n",
 						planes[plane].length,
 						vb->planes[plane].min_length,
 						plane);
 			ret = -EINVAL;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		/* Release previously acquired memory if present */
-		if (vb->planes[plane].mem_priv) {
-			if (!reacquired) {
+		/* Release previously acquired memory अगर present */
+		अगर (vb->planes[plane].mem_priv) अणु
+			अगर (!reacquired) अणु
 				reacquired = true;
-				vb->copied_timestamp = 0;
-				call_void_vb_qop(vb, buf_cleanup, vb);
-			}
-			call_void_memop(vb, put_userptr, vb->planes[plane].mem_priv);
-		}
+				vb->copied_बारtamp = 0;
+				call_व्योम_vb_qop(vb, buf_cleanup, vb);
+			पूर्ण
+			call_व्योम_memop(vb, put_userptr, vb->planes[plane].mem_priv);
+		पूर्ण
 
-		vb->planes[plane].mem_priv = NULL;
+		vb->planes[plane].mem_priv = शून्य;
 		vb->planes[plane].bytesused = 0;
 		vb->planes[plane].length = 0;
 		vb->planes[plane].m.userptr = 0;
@@ -1129,119 +1130,119 @@ static int __prepare_userptr(struct vb2_buffer *vb)
 				q->alloc_devs[plane] ? : q->dev,
 				planes[plane].m.userptr,
 				planes[plane].length, q->dma_dir);
-		if (IS_ERR(mem_priv)) {
-			dprintk(q, 1, "failed acquiring userspace memory for plane %d\n",
+		अगर (IS_ERR(mem_priv)) अणु
+			dprपूर्णांकk(q, 1, "failed acquiring userspace memory for plane %d\n",
 				plane);
 			ret = PTR_ERR(mem_priv);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		vb->planes[plane].mem_priv = mem_priv;
-	}
+	पूर्ण
 
 	/*
-	 * Now that everything is in order, copy relevant information
+	 * Now that everything is in order, copy relevant inक्रमmation
 	 * provided by userspace.
 	 */
-	for (plane = 0; plane < vb->num_planes; ++plane) {
+	क्रम (plane = 0; plane < vb->num_planes; ++plane) अणु
 		vb->planes[plane].bytesused = planes[plane].bytesused;
 		vb->planes[plane].length = planes[plane].length;
 		vb->planes[plane].m.userptr = planes[plane].m.userptr;
 		vb->planes[plane].data_offset = planes[plane].data_offset;
-	}
+	पूर्ण
 
-	if (reacquired) {
+	अगर (reacquired) अणु
 		/*
-		 * One or more planes changed, so we must call buf_init to do
-		 * the driver-specific initialization on the newly acquired
-		 * buffer, if provided.
+		 * One or more planes changed, so we must call buf_init to करो
+		 * the driver-specअगरic initialization on the newly acquired
+		 * buffer, अगर provided.
 		 */
 		ret = call_vb_qop(vb, buf_init, vb);
-		if (ret) {
-			dprintk(q, 1, "buffer initialization failed\n");
-			goto err;
-		}
-	}
+		अगर (ret) अणु
+			dprपूर्णांकk(q, 1, "buffer initialization failed\n");
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 	ret = call_vb_qop(vb, buf_prepare, vb);
-	if (ret) {
-		dprintk(q, 1, "buffer preparation failed\n");
-		call_void_vb_qop(vb, buf_cleanup, vb);
-		goto err;
-	}
+	अगर (ret) अणु
+		dprपूर्णांकk(q, 1, "buffer preparation failed\n");
+		call_व्योम_vb_qop(vb, buf_cleanup, vb);
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
-	/* In case of errors, release planes that were already acquired */
-	for (plane = 0; plane < vb->num_planes; ++plane) {
-		if (vb->planes[plane].mem_priv)
-			call_void_memop(vb, put_userptr,
+	/* In हाल of errors, release planes that were alपढ़ोy acquired */
+	क्रम (plane = 0; plane < vb->num_planes; ++plane) अणु
+		अगर (vb->planes[plane].mem_priv)
+			call_व्योम_memop(vb, put_userptr,
 				vb->planes[plane].mem_priv);
-		vb->planes[plane].mem_priv = NULL;
+		vb->planes[plane].mem_priv = शून्य;
 		vb->planes[plane].m.userptr = 0;
 		vb->planes[plane].length = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * __prepare_dmabuf() - prepare a DMABUF buffer
  */
-static int __prepare_dmabuf(struct vb2_buffer *vb)
-{
-	struct vb2_plane planes[VB2_MAX_PLANES];
-	struct vb2_queue *q = vb->vb2_queue;
-	void *mem_priv;
-	unsigned int plane;
-	int ret = 0;
-	bool reacquired = vb->planes[0].mem_priv == NULL;
+अटल पूर्णांक __prepare_dmabuf(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_plane planes[VB2_MAX_PLANES];
+	काष्ठा vb2_queue *q = vb->vb2_queue;
+	व्योम *mem_priv;
+	अचिन्हित पूर्णांक plane;
+	पूर्णांक ret = 0;
+	bool reacquired = vb->planes[0].mem_priv == शून्य;
 
-	memset(planes, 0, sizeof(planes[0]) * vb->num_planes);
-	/* Copy relevant information provided by the userspace */
+	स_रखो(planes, 0, माप(planes[0]) * vb->num_planes);
+	/* Copy relevant inक्रमmation provided by the userspace */
 	ret = call_bufop(vb->vb2_queue, fill_vb2_buffer,
 			 vb, planes);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (plane = 0; plane < vb->num_planes; ++plane) {
-		struct dma_buf *dbuf = dma_buf_get(planes[plane].m.fd);
+	क्रम (plane = 0; plane < vb->num_planes; ++plane) अणु
+		काष्ठा dma_buf *dbuf = dma_buf_get(planes[plane].m.fd);
 
-		if (IS_ERR_OR_NULL(dbuf)) {
-			dprintk(q, 1, "invalid dmabuf fd for plane %d\n",
+		अगर (IS_ERR_OR_शून्य(dbuf)) अणु
+			dprपूर्णांकk(q, 1, "invalid dmabuf fd for plane %d\n",
 				plane);
 			ret = -EINVAL;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		/* use DMABUF size if length is not provided */
-		if (planes[plane].length == 0)
+		/* use DMABUF size अगर length is not provided */
+		अगर (planes[plane].length == 0)
 			planes[plane].length = dbuf->size;
 
-		if (planes[plane].length < vb->planes[plane].min_length) {
-			dprintk(q, 1, "invalid dmabuf length %u for plane %d, minimum length %u\n",
+		अगर (planes[plane].length < vb->planes[plane].min_length) अणु
+			dprपूर्णांकk(q, 1, "invalid dmabuf length %u for plane %d, minimum length %u\n",
 				planes[plane].length, plane,
 				vb->planes[plane].min_length);
 			dma_buf_put(dbuf);
 			ret = -EINVAL;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		/* Skip the plane if already verified */
-		if (dbuf == vb->planes[plane].dbuf &&
-			vb->planes[plane].length == planes[plane].length) {
+		/* Skip the plane अगर alपढ़ोy verअगरied */
+		अगर (dbuf == vb->planes[plane].dbuf &&
+			vb->planes[plane].length == planes[plane].length) अणु
 			dma_buf_put(dbuf);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		dprintk(q, 3, "buffer for plane %d changed\n", plane);
+		dprपूर्णांकk(q, 3, "buffer for plane %d changed\n", plane);
 
-		if (!reacquired) {
+		अगर (!reacquired) अणु
 			reacquired = true;
-			vb->copied_timestamp = 0;
-			call_void_vb_qop(vb, buf_cleanup, vb);
-		}
+			vb->copied_बारtamp = 0;
+			call_व्योम_vb_qop(vb, buf_cleanup, vb);
+		पूर्ण
 
-		/* Release previously acquired memory if present */
+		/* Release previously acquired memory अगर present */
 		__vb2_plane_dmabuf_put(vb, &vb->planes[plane]);
 		vb->planes[plane].bytesused = 0;
 		vb->planes[plane].length = 0;
@@ -1252,258 +1253,258 @@ static int __prepare_dmabuf(struct vb2_buffer *vb)
 		mem_priv = call_ptr_memop(vb, attach_dmabuf,
 				q->alloc_devs[plane] ? : q->dev,
 				dbuf, planes[plane].length, q->dma_dir);
-		if (IS_ERR(mem_priv)) {
-			dprintk(q, 1, "failed to attach dmabuf\n");
+		अगर (IS_ERR(mem_priv)) अणु
+			dprपूर्णांकk(q, 1, "failed to attach dmabuf\n");
 			ret = PTR_ERR(mem_priv);
 			dma_buf_put(dbuf);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		vb->planes[plane].dbuf = dbuf;
 		vb->planes[plane].mem_priv = mem_priv;
-	}
+	पूर्ण
 
 	/*
-	 * This pins the buffer(s) with dma_buf_map_attachment()). It's done
-	 * here instead just before the DMA, while queueing the buffer(s) so
-	 * userspace knows sooner rather than later if the dma-buf map fails.
+	 * This pins the buffer(s) with dma_buf_map_attachment()). It's करोne
+	 * here instead just beक्रमe the DMA, जबतक queueing the buffer(s) so
+	 * userspace knows sooner rather than later अगर the dma-buf map fails.
 	 */
-	for (plane = 0; plane < vb->num_planes; ++plane) {
-		if (vb->planes[plane].dbuf_mapped)
-			continue;
+	क्रम (plane = 0; plane < vb->num_planes; ++plane) अणु
+		अगर (vb->planes[plane].dbuf_mapped)
+			जारी;
 
 		ret = call_memop(vb, map_dmabuf, vb->planes[plane].mem_priv);
-		if (ret) {
-			dprintk(q, 1, "failed to map dmabuf for plane %d\n",
+		अगर (ret) अणु
+			dprपूर्णांकk(q, 1, "failed to map dmabuf for plane %d\n",
 				plane);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		vb->planes[plane].dbuf_mapped = 1;
-	}
+	पूर्ण
 
 	/*
-	 * Now that everything is in order, copy relevant information
+	 * Now that everything is in order, copy relevant inक्रमmation
 	 * provided by userspace.
 	 */
-	for (plane = 0; plane < vb->num_planes; ++plane) {
+	क्रम (plane = 0; plane < vb->num_planes; ++plane) अणु
 		vb->planes[plane].bytesused = planes[plane].bytesused;
 		vb->planes[plane].length = planes[plane].length;
 		vb->planes[plane].m.fd = planes[plane].m.fd;
 		vb->planes[plane].data_offset = planes[plane].data_offset;
-	}
+	पूर्ण
 
-	if (reacquired) {
+	अगर (reacquired) अणु
 		/*
-		 * Call driver-specific initialization on the newly acquired buffer,
-		 * if provided.
+		 * Call driver-specअगरic initialization on the newly acquired buffer,
+		 * अगर provided.
 		 */
 		ret = call_vb_qop(vb, buf_init, vb);
-		if (ret) {
-			dprintk(q, 1, "buffer initialization failed\n");
-			goto err;
-		}
-	}
+		अगर (ret) अणु
+			dprपूर्णांकk(q, 1, "buffer initialization failed\n");
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 	ret = call_vb_qop(vb, buf_prepare, vb);
-	if (ret) {
-		dprintk(q, 1, "buffer preparation failed\n");
-		call_void_vb_qop(vb, buf_cleanup, vb);
-		goto err;
-	}
+	अगर (ret) अणु
+		dprपूर्णांकk(q, 1, "buffer preparation failed\n");
+		call_व्योम_vb_qop(vb, buf_cleanup, vb);
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
-	/* In case of errors, release planes that were already acquired */
+	/* In हाल of errors, release planes that were alपढ़ोy acquired */
 	__vb2_buf_dmabuf_put(vb);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * __enqueue_in_driver() - enqueue a vb2_buffer in driver for processing
+ * __enqueue_in_driver() - enqueue a vb2_buffer in driver क्रम processing
  */
-static void __enqueue_in_driver(struct vb2_buffer *vb)
-{
-	struct vb2_queue *q = vb->vb2_queue;
+अटल व्योम __enqueue_in_driver(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_queue *q = vb->vb2_queue;
 
 	vb->state = VB2_BUF_STATE_ACTIVE;
 	atomic_inc(&q->owned_by_drv_count);
 
 	trace_vb2_buf_queue(q, vb);
 
-	call_void_vb_qop(vb, buf_queue, vb);
-}
+	call_व्योम_vb_qop(vb, buf_queue, vb);
+पूर्ण
 
-static int __buf_prepare(struct vb2_buffer *vb)
-{
-	struct vb2_queue *q = vb->vb2_queue;
-	enum vb2_buffer_state orig_state = vb->state;
-	int ret;
+अटल पूर्णांक __buf_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_queue *q = vb->vb2_queue;
+	क्रमागत vb2_buffer_state orig_state = vb->state;
+	पूर्णांक ret;
 
-	if (q->error) {
-		dprintk(q, 1, "fatal error occurred on queue\n");
-		return -EIO;
-	}
+	अगर (q->error) अणु
+		dprपूर्णांकk(q, 1, "fatal error occurred on queue\n");
+		वापस -EIO;
+	पूर्ण
 
-	if (vb->prepared)
-		return 0;
+	अगर (vb->prepared)
+		वापस 0;
 	WARN_ON(vb->synced);
 
-	if (q->is_output) {
+	अगर (q->is_output) अणु
 		ret = call_vb_qop(vb, buf_out_validate, vb);
-		if (ret) {
-			dprintk(q, 1, "buffer validation failed\n");
-			return ret;
-		}
-	}
+		अगर (ret) अणु
+			dprपूर्णांकk(q, 1, "buffer validation failed\n");
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	vb->state = VB2_BUF_STATE_PREPARING;
 
-	switch (q->memory) {
-	case VB2_MEMORY_MMAP:
+	चयन (q->memory) अणु
+	हाल VB2_MEMORY_MMAP:
 		ret = __prepare_mmap(vb);
-		break;
-	case VB2_MEMORY_USERPTR:
+		अवरोध;
+	हाल VB2_MEMORY_USERPTR:
 		ret = __prepare_userptr(vb);
-		break;
-	case VB2_MEMORY_DMABUF:
+		अवरोध;
+	हाल VB2_MEMORY_DMABUF:
 		ret = __prepare_dmabuf(vb);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN(1, "Invalid queue type\n");
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret) {
-		dprintk(q, 1, "buffer preparation failed: %d\n", ret);
+	अगर (ret) अणु
+		dprपूर्णांकk(q, 1, "buffer preparation failed: %d\n", ret);
 		vb->state = orig_state;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	__vb2_buf_mem_prepare(vb);
 	vb->prepared = 1;
 	vb->state = orig_state;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vb2_req_prepare(struct media_request_object *obj)
-{
-	struct vb2_buffer *vb = container_of(obj, struct vb2_buffer, req_obj);
-	int ret;
+अटल पूर्णांक vb2_req_prepare(काष्ठा media_request_object *obj)
+अणु
+	काष्ठा vb2_buffer *vb = container_of(obj, काष्ठा vb2_buffer, req_obj);
+	पूर्णांक ret;
 
-	if (WARN_ON(vb->state != VB2_BUF_STATE_IN_REQUEST))
-		return -EINVAL;
+	अगर (WARN_ON(vb->state != VB2_BUF_STATE_IN_REQUEST))
+		वापस -EINVAL;
 
 	mutex_lock(vb->vb2_queue->lock);
 	ret = __buf_prepare(vb);
 	mutex_unlock(vb->vb2_queue->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __vb2_dqbuf(struct vb2_buffer *vb);
+अटल व्योम __vb2_dqbuf(काष्ठा vb2_buffer *vb);
 
-static void vb2_req_unprepare(struct media_request_object *obj)
-{
-	struct vb2_buffer *vb = container_of(obj, struct vb2_buffer, req_obj);
+अटल व्योम vb2_req_unprepare(काष्ठा media_request_object *obj)
+अणु
+	काष्ठा vb2_buffer *vb = container_of(obj, काष्ठा vb2_buffer, req_obj);
 
 	mutex_lock(vb->vb2_queue->lock);
 	__vb2_dqbuf(vb);
 	vb->state = VB2_BUF_STATE_IN_REQUEST;
 	mutex_unlock(vb->vb2_queue->lock);
 	WARN_ON(!vb->req_obj.req);
-}
+पूर्ण
 
-int vb2_core_qbuf(struct vb2_queue *q, unsigned int index, void *pb,
-		  struct media_request *req);
+पूर्णांक vb2_core_qbuf(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक index, व्योम *pb,
+		  काष्ठा media_request *req);
 
-static void vb2_req_queue(struct media_request_object *obj)
-{
-	struct vb2_buffer *vb = container_of(obj, struct vb2_buffer, req_obj);
+अटल व्योम vb2_req_queue(काष्ठा media_request_object *obj)
+अणु
+	काष्ठा vb2_buffer *vb = container_of(obj, काष्ठा vb2_buffer, req_obj);
 
 	mutex_lock(vb->vb2_queue->lock);
-	vb2_core_qbuf(vb->vb2_queue, vb->index, NULL, NULL);
+	vb2_core_qbuf(vb->vb2_queue, vb->index, शून्य, शून्य);
 	mutex_unlock(vb->vb2_queue->lock);
-}
+पूर्ण
 
-static void vb2_req_unbind(struct media_request_object *obj)
-{
-	struct vb2_buffer *vb = container_of(obj, struct vb2_buffer, req_obj);
+अटल व्योम vb2_req_unbind(काष्ठा media_request_object *obj)
+अणु
+	काष्ठा vb2_buffer *vb = container_of(obj, काष्ठा vb2_buffer, req_obj);
 
-	if (vb->state == VB2_BUF_STATE_IN_REQUEST)
-		call_void_bufop(vb->vb2_queue, init_buffer, vb);
-}
+	अगर (vb->state == VB2_BUF_STATE_IN_REQUEST)
+		call_व्योम_bufop(vb->vb2_queue, init_buffer, vb);
+पूर्ण
 
-static void vb2_req_release(struct media_request_object *obj)
-{
-	struct vb2_buffer *vb = container_of(obj, struct vb2_buffer, req_obj);
+अटल व्योम vb2_req_release(काष्ठा media_request_object *obj)
+अणु
+	काष्ठा vb2_buffer *vb = container_of(obj, काष्ठा vb2_buffer, req_obj);
 
-	if (vb->state == VB2_BUF_STATE_IN_REQUEST) {
+	अगर (vb->state == VB2_BUF_STATE_IN_REQUEST) अणु
 		vb->state = VB2_BUF_STATE_DEQUEUED;
-		if (vb->request)
+		अगर (vb->request)
 			media_request_put(vb->request);
-		vb->request = NULL;
-	}
-}
+		vb->request = शून्य;
+	पूर्ण
+पूर्ण
 
-static const struct media_request_object_ops vb2_core_req_ops = {
+अटल स्थिर काष्ठा media_request_object_ops vb2_core_req_ops = अणु
 	.prepare = vb2_req_prepare,
 	.unprepare = vb2_req_unprepare,
 	.queue = vb2_req_queue,
 	.unbind = vb2_req_unbind,
 	.release = vb2_req_release,
-};
+पूर्ण;
 
-bool vb2_request_object_is_buffer(struct media_request_object *obj)
-{
-	return obj->ops == &vb2_core_req_ops;
-}
+bool vb2_request_object_is_buffer(काष्ठा media_request_object *obj)
+अणु
+	वापस obj->ops == &vb2_core_req_ops;
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_request_object_is_buffer);
 
-unsigned int vb2_request_buffer_cnt(struct media_request *req)
-{
-	struct media_request_object *obj;
-	unsigned long flags;
-	unsigned int buffer_cnt = 0;
+अचिन्हित पूर्णांक vb2_request_buffer_cnt(काष्ठा media_request *req)
+अणु
+	काष्ठा media_request_object *obj;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक buffer_cnt = 0;
 
 	spin_lock_irqsave(&req->lock, flags);
-	list_for_each_entry(obj, &req->objects, list)
-		if (vb2_request_object_is_buffer(obj))
+	list_क्रम_each_entry(obj, &req->objects, list)
+		अगर (vb2_request_object_is_buffer(obj))
 			buffer_cnt++;
 	spin_unlock_irqrestore(&req->lock, flags);
 
-	return buffer_cnt;
-}
+	वापस buffer_cnt;
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_request_buffer_cnt);
 
-int vb2_core_prepare_buf(struct vb2_queue *q, unsigned int index, void *pb)
-{
-	struct vb2_buffer *vb;
-	int ret;
+पूर्णांक vb2_core_prepare_buf(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक index, व्योम *pb)
+अणु
+	काष्ठा vb2_buffer *vb;
+	पूर्णांक ret;
 
 	vb = q->bufs[index];
-	if (vb->state != VB2_BUF_STATE_DEQUEUED) {
-		dprintk(q, 1, "invalid buffer state %s\n",
+	अगर (vb->state != VB2_BUF_STATE_DEQUEUED) अणु
+		dprपूर्णांकk(q, 1, "invalid buffer state %s\n",
 			vb2_state_name(vb->state));
-		return -EINVAL;
-	}
-	if (vb->prepared) {
-		dprintk(q, 1, "buffer already prepared\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
+	अगर (vb->prepared) अणु
+		dprपूर्णांकk(q, 1, "buffer already prepared\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = __buf_prepare(vb);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Fill buffer information for the userspace */
-	call_void_bufop(q, fill_user_buffer, vb, pb);
+	/* Fill buffer inक्रमmation क्रम the userspace */
+	call_व्योम_bufop(q, fill_user_buffer, vb, pb);
 
-	dprintk(q, 2, "prepare of buffer %d succeeded\n", vb->index);
+	dprपूर्णांकk(q, 2, "prepare of buffer %d succeeded\n", vb->index);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_core_prepare_buf);
 
 /*
@@ -1512,162 +1513,162 @@ EXPORT_SYMBOL_GPL(vb2_core_prepare_buf);
  *
  * Attempt to start streaming. When this function is called there must be
  * at least q->min_buffers_needed buffers queued up (i.e. the minimum
- * number of buffers required for the DMA engine to function). If the
- * @start_streaming op fails it is supposed to return all the driver-owned
- * buffers back to vb2 in state QUEUED. Check if that happened and if
- * not warn and reclaim them forcefully.
+ * number of buffers required क्रम the DMA engine to function). If the
+ * @start_streaming op fails it is supposed to वापस all the driver-owned
+ * buffers back to vb2 in state QUEUED. Check अगर that happened and अगर
+ * not warn and reclaim them क्रमcefully.
  */
-static int vb2_start_streaming(struct vb2_queue *q)
-{
-	struct vb2_buffer *vb;
-	int ret;
+अटल पूर्णांक vb2_start_streaming(काष्ठा vb2_queue *q)
+अणु
+	काष्ठा vb2_buffer *vb;
+	पूर्णांक ret;
 
 	/*
-	 * If any buffers were queued before streamon,
-	 * we can now pass them to driver for processing.
+	 * If any buffers were queued beक्रमe streamon,
+	 * we can now pass them to driver क्रम processing.
 	 */
-	list_for_each_entry(vb, &q->queued_list, queued_entry)
+	list_क्रम_each_entry(vb, &q->queued_list, queued_entry)
 		__enqueue_in_driver(vb);
 
 	/* Tell the driver to start streaming */
 	q->start_streaming_called = 1;
 	ret = call_qop(q, start_streaming, q,
-		       atomic_read(&q->owned_by_drv_count));
-	if (!ret)
-		return 0;
+		       atomic_पढ़ो(&q->owned_by_drv_count));
+	अगर (!ret)
+		वापस 0;
 
 	q->start_streaming_called = 0;
 
-	dprintk(q, 1, "driver refused to start streaming\n");
+	dprपूर्णांकk(q, 1, "driver refused to start streaming\n");
 	/*
 	 * If you see this warning, then the driver isn't cleaning up properly
 	 * after a failed start_streaming(). See the start_streaming()
-	 * documentation in videobuf2-core.h for more information how buffers
-	 * should be returned to vb2 in start_streaming().
+	 * करोcumentation in videobuf2-core.h क्रम more inक्रमmation how buffers
+	 * should be वापसed to vb2 in start_streaming().
 	 */
-	if (WARN_ON(atomic_read(&q->owned_by_drv_count))) {
-		unsigned i;
+	अगर (WARN_ON(atomic_पढ़ो(&q->owned_by_drv_count))) अणु
+		अचिन्हित i;
 
 		/*
-		 * Forcefully reclaim buffers if the driver did not
-		 * correctly return them to vb2.
+		 * Forcefully reclaim buffers अगर the driver did not
+		 * correctly वापस them to vb2.
 		 */
-		for (i = 0; i < q->num_buffers; ++i) {
+		क्रम (i = 0; i < q->num_buffers; ++i) अणु
 			vb = q->bufs[i];
-			if (vb->state == VB2_BUF_STATE_ACTIVE)
-				vb2_buffer_done(vb, VB2_BUF_STATE_QUEUED);
-		}
+			अगर (vb->state == VB2_BUF_STATE_ACTIVE)
+				vb2_buffer_करोne(vb, VB2_BUF_STATE_QUEUED);
+		पूर्ण
 		/* Must be zero now */
-		WARN_ON(atomic_read(&q->owned_by_drv_count));
-	}
+		WARN_ON(atomic_पढ़ो(&q->owned_by_drv_count));
+	पूर्ण
 	/*
-	 * If done_list is not empty, then start_streaming() didn't call
-	 * vb2_buffer_done(vb, VB2_BUF_STATE_QUEUED) but STATE_ERROR or
+	 * If करोne_list is not empty, then start_streaming() didn't call
+	 * vb2_buffer_करोne(vb, VB2_BUF_STATE_QUEUED) but STATE_ERROR or
 	 * STATE_DONE.
 	 */
-	WARN_ON(!list_empty(&q->done_list));
-	return ret;
-}
+	WARN_ON(!list_empty(&q->करोne_list));
+	वापस ret;
+पूर्ण
 
-int vb2_core_qbuf(struct vb2_queue *q, unsigned int index, void *pb,
-		  struct media_request *req)
-{
-	struct vb2_buffer *vb;
-	int ret;
+पूर्णांक vb2_core_qbuf(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक index, व्योम *pb,
+		  काष्ठा media_request *req)
+अणु
+	काष्ठा vb2_buffer *vb;
+	पूर्णांक ret;
 
-	if (q->error) {
-		dprintk(q, 1, "fatal error occurred on queue\n");
-		return -EIO;
-	}
+	अगर (q->error) अणु
+		dprपूर्णांकk(q, 1, "fatal error occurred on queue\n");
+		वापस -EIO;
+	पूर्ण
 
 	vb = q->bufs[index];
 
-	if (!req && vb->state != VB2_BUF_STATE_IN_REQUEST &&
-	    q->requires_requests) {
-		dprintk(q, 1, "qbuf requires a request\n");
-		return -EBADR;
-	}
+	अगर (!req && vb->state != VB2_BUF_STATE_IN_REQUEST &&
+	    q->requires_requests) अणु
+		dprपूर्णांकk(q, 1, "qbuf requires a request\n");
+		वापस -EBADR;
+	पूर्ण
 
-	if ((req && q->uses_qbuf) ||
+	अगर ((req && q->uses_qbuf) ||
 	    (!req && vb->state != VB2_BUF_STATE_IN_REQUEST &&
-	     q->uses_requests)) {
-		dprintk(q, 1, "queue in wrong mode (qbuf vs requests)\n");
-		return -EBUSY;
-	}
+	     q->uses_requests)) अणु
+		dprपूर्णांकk(q, 1, "queue in wrong mode (qbuf vs requests)\n");
+		वापस -EBUSY;
+	पूर्ण
 
-	if (req) {
-		int ret;
+	अगर (req) अणु
+		पूर्णांक ret;
 
 		q->uses_requests = 1;
-		if (vb->state != VB2_BUF_STATE_DEQUEUED) {
-			dprintk(q, 1, "buffer %d not in dequeued state\n",
+		अगर (vb->state != VB2_BUF_STATE_DEQUEUED) अणु
+			dprपूर्णांकk(q, 1, "buffer %d not in dequeued state\n",
 				vb->index);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (q->is_output && !vb->prepared) {
+		अगर (q->is_output && !vb->prepared) अणु
 			ret = call_vb_qop(vb, buf_out_validate, vb);
-			if (ret) {
-				dprintk(q, 1, "buffer validation failed\n");
-				return ret;
-			}
-		}
+			अगर (ret) अणु
+				dprपूर्णांकk(q, 1, "buffer validation failed\n");
+				वापस ret;
+			पूर्ण
+		पूर्ण
 
 		media_request_object_init(&vb->req_obj);
 
-		/* Make sure the request is in a safe state for updating. */
-		ret = media_request_lock_for_update(req);
-		if (ret)
-			return ret;
+		/* Make sure the request is in a safe state क्रम updating. */
+		ret = media_request_lock_क्रम_update(req);
+		अगर (ret)
+			वापस ret;
 		ret = media_request_object_bind(req, &vb2_core_req_ops,
 						q, true, &vb->req_obj);
-		media_request_unlock_for_update(req);
-		if (ret)
-			return ret;
+		media_request_unlock_क्रम_update(req);
+		अगर (ret)
+			वापस ret;
 
 		vb->state = VB2_BUF_STATE_IN_REQUEST;
 
 		/*
 		 * Increment the refcount and store the request.
 		 * The request refcount is decremented again when the
-		 * buffer is dequeued. This is to prevent vb2_buffer_done()
-		 * from freeing the request from interrupt context, which can
-		 * happen if the application closed the request fd after
+		 * buffer is dequeued. This is to prevent vb2_buffer_करोne()
+		 * from मुक्तing the request from पूर्णांकerrupt context, which can
+		 * happen अगर the application बंदd the request fd after
 		 * queueing the request.
 		 */
 		media_request_get(req);
 		vb->request = req;
 
-		/* Fill buffer information for the userspace */
-		if (pb) {
-			call_void_bufop(q, copy_timestamp, vb, pb);
-			call_void_bufop(q, fill_user_buffer, vb, pb);
-		}
+		/* Fill buffer inक्रमmation क्रम the userspace */
+		अगर (pb) अणु
+			call_व्योम_bufop(q, copy_बारtamp, vb, pb);
+			call_व्योम_bufop(q, fill_user_buffer, vb, pb);
+		पूर्ण
 
-		dprintk(q, 2, "qbuf of buffer %d succeeded\n", vb->index);
-		return 0;
-	}
+		dprपूर्णांकk(q, 2, "qbuf of buffer %d succeeded\n", vb->index);
+		वापस 0;
+	पूर्ण
 
-	if (vb->state != VB2_BUF_STATE_IN_REQUEST)
+	अगर (vb->state != VB2_BUF_STATE_IN_REQUEST)
 		q->uses_qbuf = 1;
 
-	switch (vb->state) {
-	case VB2_BUF_STATE_DEQUEUED:
-	case VB2_BUF_STATE_IN_REQUEST:
-		if (!vb->prepared) {
+	चयन (vb->state) अणु
+	हाल VB2_BUF_STATE_DEQUEUED:
+	हाल VB2_BUF_STATE_IN_REQUEST:
+		अगर (!vb->prepared) अणु
 			ret = __buf_prepare(vb);
-			if (ret)
-				return ret;
-		}
-		break;
-	case VB2_BUF_STATE_PREPARING:
-		dprintk(q, 1, "buffer still being prepared\n");
-		return -EINVAL;
-	default:
-		dprintk(q, 1, "invalid buffer state %s\n",
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+		अवरोध;
+	हाल VB2_BUF_STATE_PREPARING:
+		dprपूर्णांकk(q, 1, "buffer still being prepared\n");
+		वापस -EINVAL;
+	शेष:
+		dprपूर्णांकk(q, 1, "invalid buffer state %s\n",
 			vb2_state_name(vb->state));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Add to the queued buffers list, a buffer will stay on it until
@@ -1675,24 +1676,24 @@ int vb2_core_qbuf(struct vb2_queue *q, unsigned int index, void *pb,
 	 */
 	list_add_tail(&vb->queued_entry, &q->queued_list);
 	q->queued_count++;
-	q->waiting_for_buffers = false;
+	q->रुकोing_क्रम_buffers = false;
 	vb->state = VB2_BUF_STATE_QUEUED;
 
-	if (pb)
-		call_void_bufop(q, copy_timestamp, vb, pb);
+	अगर (pb)
+		call_व्योम_bufop(q, copy_बारtamp, vb, pb);
 
 	trace_vb2_qbuf(q, vb);
 
 	/*
-	 * If already streaming, give the buffer to driver for processing.
+	 * If alपढ़ोy streaming, give the buffer to driver क्रम processing.
 	 * If not, the buffer will be given to driver on next streamon.
 	 */
-	if (q->start_streaming_called)
+	अगर (q->start_streaming_called)
 		__enqueue_in_driver(vb);
 
-	/* Fill buffer information for the userspace */
-	if (pb)
-		call_void_bufop(q, fill_user_buffer, vb, pb);
+	/* Fill buffer inक्रमmation क्रम the userspace */
+	अगर (pb)
+		call_व्योम_bufop(q, fill_user_buffer, vb, pb);
 
 	/*
 	 * If streamon has been called, and we haven't yet called
@@ -1700,199 +1701,199 @@ int vb2_core_qbuf(struct vb2_queue *q, unsigned int index, void *pb,
 	 * we now have reached the minimum number of queued buffers,
 	 * then we can finally call start_streaming().
 	 */
-	if (q->streaming && !q->start_streaming_called &&
-	    q->queued_count >= q->min_buffers_needed) {
+	अगर (q->streaming && !q->start_streaming_called &&
+	    q->queued_count >= q->min_buffers_needed) अणु
 		ret = vb2_start_streaming(q);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	dprintk(q, 2, "qbuf of buffer %d succeeded\n", vb->index);
-	return 0;
-}
+	dprपूर्णांकk(q, 2, "qbuf of buffer %d succeeded\n", vb->index);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_core_qbuf);
 
 /*
- * __vb2_wait_for_done_vb() - wait for a buffer to become available
- * for dequeuing
+ * __vb2_रुको_क्रम_करोne_vb() - रुको क्रम a buffer to become available
+ * क्रम dequeuing
  *
- * Will sleep if required for nonblocking == false.
+ * Will sleep अगर required क्रम nonblocking == false.
  */
-static int __vb2_wait_for_done_vb(struct vb2_queue *q, int nonblocking)
-{
+अटल पूर्णांक __vb2_रुको_क्रम_करोne_vb(काष्ठा vb2_queue *q, पूर्णांक nonblocking)
+अणु
 	/*
-	 * All operations on vb_done_list are performed under done_lock
-	 * spinlock protection. However, buffers may be removed from
-	 * it and returned to userspace only while holding both driver's
-	 * lock and the done_lock spinlock. Thus we can be sure that as
-	 * long as we hold the driver's lock, the list will remain not
-	 * empty if list_empty() check succeeds.
+	 * All operations on vb_करोne_list are perक्रमmed under करोne_lock
+	 * spinlock protection. However, buffers may be हटाओd from
+	 * it and वापसed to userspace only जबतक holding both driver's
+	 * lock and the करोne_lock spinlock. Thus we can be sure that as
+	 * दीर्घ as we hold the driver's lock, the list will reमुख्य not
+	 * empty अगर list_empty() check succeeds.
 	 */
 
-	for (;;) {
-		int ret;
+	क्रम (;;) अणु
+		पूर्णांक ret;
 
-		if (q->waiting_in_dqbuf) {
-			dprintk(q, 1, "another dup()ped fd is waiting for a buffer\n");
-			return -EBUSY;
-		}
+		अगर (q->रुकोing_in_dqbuf) अणु
+			dprपूर्णांकk(q, 1, "another dup()ped fd is waiting for a buffer\n");
+			वापस -EBUSY;
+		पूर्ण
 
-		if (!q->streaming) {
-			dprintk(q, 1, "streaming off, will not wait for buffers\n");
-			return -EINVAL;
-		}
+		अगर (!q->streaming) अणु
+			dprपूर्णांकk(q, 1, "streaming off, will not wait for buffers\n");
+			वापस -EINVAL;
+		पूर्ण
 
-		if (q->error) {
-			dprintk(q, 1, "Queue in error state, will not wait for buffers\n");
-			return -EIO;
-		}
+		अगर (q->error) अणु
+			dprपूर्णांकk(q, 1, "Queue in error state, will not wait for buffers\n");
+			वापस -EIO;
+		पूर्ण
 
-		if (q->last_buffer_dequeued) {
-			dprintk(q, 3, "last buffer dequeued already, will not wait for buffers\n");
-			return -EPIPE;
-		}
+		अगर (q->last_buffer_dequeued) अणु
+			dprपूर्णांकk(q, 3, "last buffer dequeued already, will not wait for buffers\n");
+			वापस -EPIPE;
+		पूर्ण
 
-		if (!list_empty(&q->done_list)) {
+		अगर (!list_empty(&q->करोne_list)) अणु
 			/*
-			 * Found a buffer that we were waiting for.
+			 * Found a buffer that we were रुकोing क्रम.
 			 */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (nonblocking) {
-			dprintk(q, 3, "nonblocking and no buffers to dequeue, will not wait\n");
-			return -EAGAIN;
-		}
+		अगर (nonblocking) अणु
+			dprपूर्णांकk(q, 3, "nonblocking and no buffers to dequeue, will not wait\n");
+			वापस -EAGAIN;
+		पूर्ण
 
-		q->waiting_in_dqbuf = 1;
+		q->रुकोing_in_dqbuf = 1;
 		/*
-		 * We are streaming and blocking, wait for another buffer to
-		 * become ready or for streamoff. Driver's lock is released to
-		 * allow streamoff or qbuf to be called while waiting.
+		 * We are streaming and blocking, रुको क्रम another buffer to
+		 * become पढ़ोy or क्रम streamoff. Driver's lock is released to
+		 * allow streamoff or qbuf to be called जबतक रुकोing.
 		 */
-		call_void_qop(q, wait_prepare, q);
+		call_व्योम_qop(q, रुको_prepare, q);
 
 		/*
 		 * All locks have been released, it is safe to sleep now.
 		 */
-		dprintk(q, 3, "will sleep waiting for buffers\n");
-		ret = wait_event_interruptible(q->done_wq,
-				!list_empty(&q->done_list) || !q->streaming ||
+		dprपूर्णांकk(q, 3, "will sleep waiting for buffers\n");
+		ret = रुको_event_पूर्णांकerruptible(q->करोne_wq,
+				!list_empty(&q->करोne_list) || !q->streaming ||
 				q->error);
 
 		/*
 		 * We need to reevaluate both conditions again after reacquiring
-		 * the locks or return an error if one occurred.
+		 * the locks or वापस an error अगर one occurred.
 		 */
-		call_void_qop(q, wait_finish, q);
-		q->waiting_in_dqbuf = 0;
-		if (ret) {
-			dprintk(q, 1, "sleep was interrupted\n");
-			return ret;
-		}
-	}
-	return 0;
-}
+		call_व्योम_qop(q, रुको_finish, q);
+		q->रुकोing_in_dqbuf = 0;
+		अगर (ret) अणु
+			dprपूर्णांकk(q, 1, "sleep was interrupted\n");
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * __vb2_get_done_vb() - get a buffer ready for dequeuing
+ * __vb2_get_करोne_vb() - get a buffer पढ़ोy क्रम dequeuing
  *
- * Will sleep if required for nonblocking == false.
+ * Will sleep अगर required क्रम nonblocking == false.
  */
-static int __vb2_get_done_vb(struct vb2_queue *q, struct vb2_buffer **vb,
-			     void *pb, int nonblocking)
-{
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक __vb2_get_करोne_vb(काष्ठा vb2_queue *q, काष्ठा vb2_buffer **vb,
+			     व्योम *pb, पूर्णांक nonblocking)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	/*
-	 * Wait for at least one buffer to become available on the done_list.
+	 * Wait क्रम at least one buffer to become available on the करोne_list.
 	 */
-	ret = __vb2_wait_for_done_vb(q, nonblocking);
-	if (ret)
-		return ret;
+	ret = __vb2_रुको_क्रम_करोne_vb(q, nonblocking);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Driver's lock has been held since we last verified that done_list
-	 * is not empty, so no need for another list_empty(done_list) check.
+	 * Driver's lock has been held since we last verअगरied that करोne_list
+	 * is not empty, so no need क्रम another list_empty(करोne_list) check.
 	 */
-	spin_lock_irqsave(&q->done_lock, flags);
-	*vb = list_first_entry(&q->done_list, struct vb2_buffer, done_entry);
+	spin_lock_irqsave(&q->करोne_lock, flags);
+	*vb = list_first_entry(&q->करोne_list, काष्ठा vb2_buffer, करोne_entry);
 	/*
-	 * Only remove the buffer from done_list if all planes can be
-	 * handled. Some cases such as V4L2 file I/O and DVB have pb
-	 * == NULL; skip the check then as there's nothing to verify.
+	 * Only हटाओ the buffer from करोne_list अगर all planes can be
+	 * handled. Some हालs such as V4L2 file I/O and DVB have pb
+	 * == शून्य; skip the check then as there's nothing to verअगरy.
 	 */
-	if (pb)
-		ret = call_bufop(q, verify_planes_array, *vb, pb);
-	if (!ret)
-		list_del(&(*vb)->done_entry);
-	spin_unlock_irqrestore(&q->done_lock, flags);
+	अगर (pb)
+		ret = call_bufop(q, verअगरy_planes_array, *vb, pb);
+	अगर (!ret)
+		list_del(&(*vb)->करोne_entry);
+	spin_unlock_irqrestore(&q->करोne_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int vb2_wait_for_all_buffers(struct vb2_queue *q)
-{
-	if (!q->streaming) {
-		dprintk(q, 1, "streaming off, will not wait for buffers\n");
-		return -EINVAL;
-	}
+पूर्णांक vb2_रुको_क्रम_all_buffers(काष्ठा vb2_queue *q)
+अणु
+	अगर (!q->streaming) अणु
+		dprपूर्णांकk(q, 1, "streaming off, will not wait for buffers\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (q->start_streaming_called)
-		wait_event(q->done_wq, !atomic_read(&q->owned_by_drv_count));
-	return 0;
-}
-EXPORT_SYMBOL_GPL(vb2_wait_for_all_buffers);
+	अगर (q->start_streaming_called)
+		रुको_event(q->करोne_wq, !atomic_पढ़ो(&q->owned_by_drv_count));
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(vb2_रुको_क्रम_all_buffers);
 
 /*
  * __vb2_dqbuf() - bring back the buffer to the DEQUEUED state
  */
-static void __vb2_dqbuf(struct vb2_buffer *vb)
-{
-	struct vb2_queue *q = vb->vb2_queue;
+अटल व्योम __vb2_dqbuf(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_queue *q = vb->vb2_queue;
 
-	/* nothing to do if the buffer is already dequeued */
-	if (vb->state == VB2_BUF_STATE_DEQUEUED)
-		return;
+	/* nothing to करो अगर the buffer is alपढ़ोy dequeued */
+	अगर (vb->state == VB2_BUF_STATE_DEQUEUED)
+		वापस;
 
 	vb->state = VB2_BUF_STATE_DEQUEUED;
 
-	call_void_bufop(q, init_buffer, vb);
-}
+	call_व्योम_bufop(q, init_buffer, vb);
+पूर्ण
 
-int vb2_core_dqbuf(struct vb2_queue *q, unsigned int *pindex, void *pb,
+पूर्णांक vb2_core_dqbuf(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक *pindex, व्योम *pb,
 		   bool nonblocking)
-{
-	struct vb2_buffer *vb = NULL;
-	int ret;
+अणु
+	काष्ठा vb2_buffer *vb = शून्य;
+	पूर्णांक ret;
 
-	ret = __vb2_get_done_vb(q, &vb, pb, nonblocking);
-	if (ret < 0)
-		return ret;
+	ret = __vb2_get_करोne_vb(q, &vb, pb, nonblocking);
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (vb->state) {
-	case VB2_BUF_STATE_DONE:
-		dprintk(q, 3, "returning done buffer\n");
-		break;
-	case VB2_BUF_STATE_ERROR:
-		dprintk(q, 3, "returning done buffer with errors\n");
-		break;
-	default:
-		dprintk(q, 1, "invalid buffer state %s\n",
+	चयन (vb->state) अणु
+	हाल VB2_BUF_STATE_DONE:
+		dprपूर्णांकk(q, 3, "returning done buffer\n");
+		अवरोध;
+	हाल VB2_BUF_STATE_ERROR:
+		dprपूर्णांकk(q, 3, "returning done buffer with errors\n");
+		अवरोध;
+	शेष:
+		dprपूर्णांकk(q, 1, "invalid buffer state %s\n",
 			vb2_state_name(vb->state));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	call_void_vb_qop(vb, buf_finish, vb);
+	call_व्योम_vb_qop(vb, buf_finish, vb);
 	vb->prepared = 0;
 
-	if (pindex)
+	अगर (pindex)
 		*pindex = vb->index;
 
-	/* Fill buffer information for the userspace */
-	if (pb)
-		call_void_bufop(q, fill_user_buffer, vb, pb);
+	/* Fill buffer inक्रमmation क्रम the userspace */
+	अगर (pb)
+		call_व्योम_bufop(q, fill_user_buffer, vb, pb);
 
 	/* Remove from videobuf queue */
 	list_del(&vb->queued_entry);
@@ -1903,55 +1904,55 @@ int vb2_core_dqbuf(struct vb2_queue *q, unsigned int *pindex, void *pb,
 	/* go back to dequeued state */
 	__vb2_dqbuf(vb);
 
-	if (WARN_ON(vb->req_obj.req)) {
+	अगर (WARN_ON(vb->req_obj.req)) अणु
 		media_request_object_unbind(&vb->req_obj);
 		media_request_object_put(&vb->req_obj);
-	}
-	if (vb->request)
+	पूर्ण
+	अगर (vb->request)
 		media_request_put(vb->request);
-	vb->request = NULL;
+	vb->request = शून्य;
 
-	dprintk(q, 2, "dqbuf of buffer %d, state: %s\n",
+	dprपूर्णांकk(q, 2, "dqbuf of buffer %d, state: %s\n",
 		vb->index, vb2_state_name(vb->state));
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_core_dqbuf);
 
 /*
- * __vb2_queue_cancel() - cancel and stop (pause) streaming
+ * __vb2_queue_cancel() - cancel and stop (छोड़ो) streaming
  *
  * Removes all queued buffers from driver's queue and all buffers queued by
  * userspace from videobuf's queue. Returns to state after reqbufs.
  */
-static void __vb2_queue_cancel(struct vb2_queue *q)
-{
-	unsigned int i;
+अटल व्योम __vb2_queue_cancel(काष्ठा vb2_queue *q)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/*
 	 * Tell driver to stop all transactions and release all queued
 	 * buffers.
 	 */
-	if (q->start_streaming_called)
-		call_void_qop(q, stop_streaming, q);
+	अगर (q->start_streaming_called)
+		call_व्योम_qop(q, stop_streaming, q);
 
 	/*
 	 * If you see this warning, then the driver isn't cleaning up properly
-	 * in stop_streaming(). See the stop_streaming() documentation in
-	 * videobuf2-core.h for more information how buffers should be returned
+	 * in stop_streaming(). See the stop_streaming() करोcumentation in
+	 * videobuf2-core.h क्रम more inक्रमmation how buffers should be वापसed
 	 * to vb2 in stop_streaming().
 	 */
-	if (WARN_ON(atomic_read(&q->owned_by_drv_count))) {
-		for (i = 0; i < q->num_buffers; ++i)
-			if (q->bufs[i]->state == VB2_BUF_STATE_ACTIVE) {
+	अगर (WARN_ON(atomic_पढ़ो(&q->owned_by_drv_count))) अणु
+		क्रम (i = 0; i < q->num_buffers; ++i)
+			अगर (q->bufs[i]->state == VB2_BUF_STATE_ACTIVE) अणु
 				pr_warn("driver bug: stop_streaming operation is leaving buf %p in active state\n",
 					q->bufs[i]);
-				vb2_buffer_done(q->bufs[i], VB2_BUF_STATE_ERROR);
-			}
+				vb2_buffer_करोne(q->bufs[i], VB2_BUF_STATE_ERROR);
+			पूर्ण
 		/* Must be zero now */
-		WARN_ON(atomic_read(&q->owned_by_drv_count));
-	}
+		WARN_ON(atomic_पढ़ो(&q->owned_by_drv_count));
+	पूर्ण
 
 	q->streaming = 0;
 	q->start_streaming_called = 0;
@@ -1965,25 +1966,25 @@ static void __vb2_queue_cancel(struct vb2_queue *q)
 	 */
 	INIT_LIST_HEAD(&q->queued_list);
 	/*
-	 * ...and done list; userspace will not receive any buffers it
-	 * has not already dequeued before initiating cancel.
+	 * ...and करोne list; userspace will not receive any buffers it
+	 * has not alपढ़ोy dequeued beक्रमe initiating cancel.
 	 */
-	INIT_LIST_HEAD(&q->done_list);
+	INIT_LIST_HEAD(&q->करोne_list);
 	atomic_set(&q->owned_by_drv_count, 0);
-	wake_up_all(&q->done_wq);
+	wake_up_all(&q->करोne_wq);
 
 	/*
-	 * Reinitialize all buffers for next use.
-	 * Make sure to call buf_finish for any queued buffers. Normally
+	 * Reinitialize all buffers क्रम next use.
+	 * Make sure to call buf_finish क्रम any queued buffers. Normally
 	 * that's done in dqbuf, but that's not going to happen when we
-	 * cancel the whole queue. Note: this code belongs here, not in
+	 * cancel the whole queue. Note: this code beदीर्घs here, not in
 	 * __vb2_dqbuf() since in vb2_core_dqbuf() there is a critical
 	 * call to __fill_user_buffer() after buf_finish(). That order can't
 	 * be changed, so we can't move the buf_finish() to __vb2_dqbuf().
 	 */
-	for (i = 0; i < q->num_buffers; ++i) {
-		struct vb2_buffer *vb = q->bufs[i];
-		struct media_request *req = vb->req_obj.req;
+	क्रम (i = 0; i < q->num_buffers; ++i) अणु
+		काष्ठा vb2_buffer *vb = q->bufs[i];
+		काष्ठा media_request *req = vb->req_obj.req;
 
 		/*
 		 * If a request is associated with this buffer, then
@@ -1991,276 +1992,276 @@ static void __vb2_queue_cancel(struct vb2_queue *q)
 		 * related request objects. Otherwise those objects would
 		 * never complete.
 		 */
-		if (req) {
-			enum media_request_state state;
-			unsigned long flags;
+		अगर (req) अणु
+			क्रमागत media_request_state state;
+			अचिन्हित दीर्घ flags;
 
 			spin_lock_irqsave(&req->lock, flags);
 			state = req->state;
 			spin_unlock_irqrestore(&req->lock, flags);
 
-			if (state == MEDIA_REQUEST_STATE_QUEUED)
-				call_void_vb_qop(vb, buf_request_complete, vb);
-		}
+			अगर (state == MEDIA_REQUEST_STATE_QUEUED)
+				call_व्योम_vb_qop(vb, buf_request_complete, vb);
+		पूर्ण
 
 		__vb2_buf_mem_finish(vb);
 
-		if (vb->prepared) {
-			call_void_vb_qop(vb, buf_finish, vb);
+		अगर (vb->prepared) अणु
+			call_व्योम_vb_qop(vb, buf_finish, vb);
 			vb->prepared = 0;
-		}
+		पूर्ण
 		__vb2_dqbuf(vb);
 
-		if (vb->req_obj.req) {
+		अगर (vb->req_obj.req) अणु
 			media_request_object_unbind(&vb->req_obj);
 			media_request_object_put(&vb->req_obj);
-		}
-		if (vb->request)
+		पूर्ण
+		अगर (vb->request)
 			media_request_put(vb->request);
-		vb->request = NULL;
-		vb->copied_timestamp = 0;
-	}
-}
+		vb->request = शून्य;
+		vb->copied_बारtamp = 0;
+	पूर्ण
+पूर्ण
 
-int vb2_core_streamon(struct vb2_queue *q, unsigned int type)
-{
-	int ret;
+पूर्णांक vb2_core_streamon(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक type)
+अणु
+	पूर्णांक ret;
 
-	if (type != q->type) {
-		dprintk(q, 1, "invalid stream type\n");
-		return -EINVAL;
-	}
+	अगर (type != q->type) अणु
+		dprपूर्णांकk(q, 1, "invalid stream type\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (q->streaming) {
-		dprintk(q, 3, "already streaming\n");
-		return 0;
-	}
+	अगर (q->streaming) अणु
+		dprपूर्णांकk(q, 3, "already streaming\n");
+		वापस 0;
+	पूर्ण
 
-	if (!q->num_buffers) {
-		dprintk(q, 1, "no buffers have been allocated\n");
-		return -EINVAL;
-	}
+	अगर (!q->num_buffers) अणु
+		dprपूर्णांकk(q, 1, "no buffers have been allocated\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (q->num_buffers < q->min_buffers_needed) {
-		dprintk(q, 1, "need at least %u allocated buffers\n",
+	अगर (q->num_buffers < q->min_buffers_needed) अणु
+		dprपूर्णांकk(q, 1, "need at least %u allocated buffers\n",
 				q->min_buffers_needed);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Tell driver to start streaming provided sufficient buffers
 	 * are available.
 	 */
-	if (q->queued_count >= q->min_buffers_needed) {
+	अगर (q->queued_count >= q->min_buffers_needed) अणु
 		ret = v4l_vb2q_enable_media_source(q);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		ret = vb2_start_streaming(q);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	q->streaming = 1;
 
-	dprintk(q, 3, "successful\n");
-	return 0;
-}
+	dprपूर्णांकk(q, 3, "successful\n");
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_core_streamon);
 
-void vb2_queue_error(struct vb2_queue *q)
-{
+व्योम vb2_queue_error(काष्ठा vb2_queue *q)
+अणु
 	q->error = 1;
 
-	wake_up_all(&q->done_wq);
-}
+	wake_up_all(&q->करोne_wq);
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_queue_error);
 
-int vb2_core_streamoff(struct vb2_queue *q, unsigned int type)
-{
-	if (type != q->type) {
-		dprintk(q, 1, "invalid stream type\n");
-		return -EINVAL;
-	}
+पूर्णांक vb2_core_streamoff(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक type)
+अणु
+	अगर (type != q->type) अणु
+		dprपूर्णांकk(q, 1, "invalid stream type\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Cancel will pause streaming and remove all buffers from the driver
-	 * and videobuf, effectively returning control over them to userspace.
+	 * Cancel will छोड़ो streaming and हटाओ all buffers from the driver
+	 * and videobuf, effectively वापसing control over them to userspace.
 	 *
-	 * Note that we do this even if q->streaming == 0: if you prepare or
+	 * Note that we करो this even अगर q->streaming == 0: अगर you prepare or
 	 * queue buffers, and then call streamoff without ever having called
-	 * streamon, you would still expect those buffers to be returned to
+	 * streamon, you would still expect those buffers to be वापसed to
 	 * their normal dequeued state.
 	 */
 	__vb2_queue_cancel(q);
-	q->waiting_for_buffers = !q->is_output;
+	q->रुकोing_क्रम_buffers = !q->is_output;
 	q->last_buffer_dequeued = false;
 
-	dprintk(q, 3, "successful\n");
-	return 0;
-}
+	dprपूर्णांकk(q, 3, "successful\n");
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_core_streamoff);
 
 /*
  * __find_plane_by_offset() - find plane associated with the given offset off
  */
-static int __find_plane_by_offset(struct vb2_queue *q, unsigned long off,
-			unsigned int *_buffer, unsigned int *_plane)
-{
-	struct vb2_buffer *vb;
-	unsigned int buffer, plane;
+अटल पूर्णांक __find_plane_by_offset(काष्ठा vb2_queue *q, अचिन्हित दीर्घ off,
+			अचिन्हित पूर्णांक *_buffer, अचिन्हित पूर्णांक *_plane)
+अणु
+	काष्ठा vb2_buffer *vb;
+	अचिन्हित पूर्णांक buffer, plane;
 
 	/*
 	 * Go over all buffers and their planes, comparing the given offset
-	 * with an offset assigned to each plane. If a match is found,
-	 * return its buffer and plane numbers.
+	 * with an offset asचिन्हित to each plane. If a match is found,
+	 * वापस its buffer and plane numbers.
 	 */
-	for (buffer = 0; buffer < q->num_buffers; ++buffer) {
+	क्रम (buffer = 0; buffer < q->num_buffers; ++buffer) अणु
 		vb = q->bufs[buffer];
 
-		for (plane = 0; plane < vb->num_planes; ++plane) {
-			if (vb->planes[plane].m.offset == off) {
+		क्रम (plane = 0; plane < vb->num_planes; ++plane) अणु
+			अगर (vb->planes[plane].m.offset == off) अणु
 				*_buffer = buffer;
 				*_plane = plane;
-				return 0;
-			}
-		}
-	}
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int vb2_core_expbuf(struct vb2_queue *q, int *fd, unsigned int type,
-		unsigned int index, unsigned int plane, unsigned int flags)
-{
-	struct vb2_buffer *vb = NULL;
-	struct vb2_plane *vb_plane;
-	int ret;
-	struct dma_buf *dbuf;
+पूर्णांक vb2_core_expbuf(काष्ठा vb2_queue *q, पूर्णांक *fd, अचिन्हित पूर्णांक type,
+		अचिन्हित पूर्णांक index, अचिन्हित पूर्णांक plane, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा vb2_buffer *vb = शून्य;
+	काष्ठा vb2_plane *vb_plane;
+	पूर्णांक ret;
+	काष्ठा dma_buf *dbuf;
 
-	if (q->memory != VB2_MEMORY_MMAP) {
-		dprintk(q, 1, "queue is not currently set up for mmap\n");
-		return -EINVAL;
-	}
+	अगर (q->memory != VB2_MEMORY_MMAP) अणु
+		dprपूर्णांकk(q, 1, "queue is not currently set up for mmap\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!q->mem_ops->get_dmabuf) {
-		dprintk(q, 1, "queue does not support DMA buffer exporting\n");
-		return -EINVAL;
-	}
+	अगर (!q->mem_ops->get_dmabuf) अणु
+		dprपूर्णांकk(q, 1, "queue does not support DMA buffer exporting\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (flags & ~(O_CLOEXEC | O_ACCMODE)) {
-		dprintk(q, 1, "queue does support only O_CLOEXEC and access mode flags\n");
-		return -EINVAL;
-	}
+	अगर (flags & ~(O_CLOEXEC | O_ACCMODE)) अणु
+		dprपूर्णांकk(q, 1, "queue does support only O_CLOEXEC and access mode flags\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (type != q->type) {
-		dprintk(q, 1, "invalid buffer type\n");
-		return -EINVAL;
-	}
+	अगर (type != q->type) अणु
+		dprपूर्णांकk(q, 1, "invalid buffer type\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (index >= q->num_buffers) {
-		dprintk(q, 1, "buffer index out of range\n");
-		return -EINVAL;
-	}
+	अगर (index >= q->num_buffers) अणु
+		dprपूर्णांकk(q, 1, "buffer index out of range\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	vb = q->bufs[index];
 
-	if (plane >= vb->num_planes) {
-		dprintk(q, 1, "buffer plane out of range\n");
-		return -EINVAL;
-	}
+	अगर (plane >= vb->num_planes) अणु
+		dprपूर्णांकk(q, 1, "buffer plane out of range\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (vb2_fileio_is_active(q)) {
-		dprintk(q, 1, "expbuf: file io in progress\n");
-		return -EBUSY;
-	}
+	अगर (vb2_fileio_is_active(q)) अणु
+		dprपूर्णांकk(q, 1, "expbuf: file io in progress\n");
+		वापस -EBUSY;
+	पूर्ण
 
 	vb_plane = &vb->planes[plane];
 
 	dbuf = call_ptr_memop(vb, get_dmabuf, vb_plane->mem_priv,
 				flags & O_ACCMODE);
-	if (IS_ERR_OR_NULL(dbuf)) {
-		dprintk(q, 1, "failed to export buffer %d, plane %d\n",
+	अगर (IS_ERR_OR_शून्य(dbuf)) अणु
+		dprपूर्णांकk(q, 1, "failed to export buffer %d, plane %d\n",
 			index, plane);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = dma_buf_fd(dbuf, flags & ~O_ACCMODE);
-	if (ret < 0) {
-		dprintk(q, 3, "buffer %d, plane %d failed to export (%d)\n",
+	अगर (ret < 0) अणु
+		dprपूर्णांकk(q, 3, "buffer %d, plane %d failed to export (%d)\n",
 			index, plane, ret);
 		dma_buf_put(dbuf);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	dprintk(q, 3, "buffer %d, plane %d exported as %d descriptor\n",
+	dprपूर्णांकk(q, 3, "buffer %d, plane %d exported as %d descriptor\n",
 		index, plane, ret);
 	*fd = ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_core_expbuf);
 
-int vb2_mmap(struct vb2_queue *q, struct vm_area_struct *vma)
-{
-	unsigned long off = vma->vm_pgoff << PAGE_SHIFT;
-	struct vb2_buffer *vb;
-	unsigned int buffer = 0, plane = 0;
-	int ret;
-	unsigned long length;
+पूर्णांक vb2_mmap(काष्ठा vb2_queue *q, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अचिन्हित दीर्घ off = vma->vm_pgoff << PAGE_SHIFT;
+	काष्ठा vb2_buffer *vb;
+	अचिन्हित पूर्णांक buffer = 0, plane = 0;
+	पूर्णांक ret;
+	अचिन्हित दीर्घ length;
 
-	if (q->memory != VB2_MEMORY_MMAP) {
-		dprintk(q, 1, "queue is not currently set up for mmap\n");
-		return -EINVAL;
-	}
+	अगर (q->memory != VB2_MEMORY_MMAP) अणु
+		dprपूर्णांकk(q, 1, "queue is not currently set up for mmap\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Check memory area access mode.
 	 */
-	if (!(vma->vm_flags & VM_SHARED)) {
-		dprintk(q, 1, "invalid vma flags, VM_SHARED needed\n");
-		return -EINVAL;
-	}
-	if (q->is_output) {
-		if (!(vma->vm_flags & VM_WRITE)) {
-			dprintk(q, 1, "invalid vma flags, VM_WRITE needed\n");
-			return -EINVAL;
-		}
-	} else {
-		if (!(vma->vm_flags & VM_READ)) {
-			dprintk(q, 1, "invalid vma flags, VM_READ needed\n");
-			return -EINVAL;
-		}
-	}
+	अगर (!(vma->vm_flags & VM_SHARED)) अणु
+		dprपूर्णांकk(q, 1, "invalid vma flags, VM_SHARED needed\n");
+		वापस -EINVAL;
+	पूर्ण
+	अगर (q->is_output) अणु
+		अगर (!(vma->vm_flags & VM_WRITE)) अणु
+			dprपूर्णांकk(q, 1, "invalid vma flags, VM_WRITE needed\n");
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!(vma->vm_flags & VM_READ)) अणु
+			dprपूर्णांकk(q, 1, "invalid vma flags, VM_READ needed\n");
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	mutex_lock(&q->mmap_lock);
 
-	if (vb2_fileio_is_active(q)) {
-		dprintk(q, 1, "mmap: file io in progress\n");
+	अगर (vb2_fileio_is_active(q)) अणु
+		dprपूर्णांकk(q, 1, "mmap: file io in progress\n");
 		ret = -EBUSY;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	/*
 	 * Find the plane corresponding to the offset passed by userspace.
 	 */
 	ret = __find_plane_by_offset(q, off, &buffer, &plane);
-	if (ret)
-		goto unlock;
+	अगर (ret)
+		जाओ unlock;
 
 	vb = q->bufs[buffer];
 
 	/*
 	 * MMAP requires page_aligned buffers.
 	 * The buffer length was page_aligned at __vb2_buf_mem_alloc(),
-	 * so, we need to do the same here.
+	 * so, we need to करो the same here.
 	 */
 	length = PAGE_ALIGN(vb->planes[plane].length);
-	if (length < (vma->vm_end - vma->vm_start)) {
-		dprintk(q, 1,
+	अगर (length < (vma->vm_end - vma->vm_start)) अणु
+		dprपूर्णांकk(q, 1,
 			"MMAP invalid, as it would overflow buffer length\n");
 		ret = -EINVAL;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	/*
 	 * vm_pgoff is treated in V4L2 API as a 'cookie' to select a buffer,
@@ -2273,292 +2274,292 @@ int vb2_mmap(struct vb2_queue *q, struct vm_area_struct *vma)
 
 unlock:
 	mutex_unlock(&q->mmap_lock);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	dprintk(q, 3, "buffer %d, plane %d successfully mapped\n", buffer, plane);
-	return 0;
-}
+	dprपूर्णांकk(q, 3, "buffer %d, plane %d successfully mapped\n", buffer, plane);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_mmap);
 
-#ifndef CONFIG_MMU
-unsigned long vb2_get_unmapped_area(struct vb2_queue *q,
-				    unsigned long addr,
-				    unsigned long len,
-				    unsigned long pgoff,
-				    unsigned long flags)
-{
-	unsigned long off = pgoff << PAGE_SHIFT;
-	struct vb2_buffer *vb;
-	unsigned int buffer, plane;
-	void *vaddr;
-	int ret;
+#अगर_अघोषित CONFIG_MMU
+अचिन्हित दीर्घ vb2_get_unmapped_area(काष्ठा vb2_queue *q,
+				    अचिन्हित दीर्घ addr,
+				    अचिन्हित दीर्घ len,
+				    अचिन्हित दीर्घ pgoff,
+				    अचिन्हित दीर्घ flags)
+अणु
+	अचिन्हित दीर्घ off = pgoff << PAGE_SHIFT;
+	काष्ठा vb2_buffer *vb;
+	अचिन्हित पूर्णांक buffer, plane;
+	व्योम *vaddr;
+	पूर्णांक ret;
 
-	if (q->memory != VB2_MEMORY_MMAP) {
-		dprintk(q, 1, "queue is not currently set up for mmap\n");
-		return -EINVAL;
-	}
+	अगर (q->memory != VB2_MEMORY_MMAP) अणु
+		dprपूर्णांकk(q, 1, "queue is not currently set up for mmap\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Find the plane corresponding to the offset passed by userspace.
 	 */
 	ret = __find_plane_by_offset(q, off, &buffer, &plane);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	vb = q->bufs[buffer];
 
 	vaddr = vb2_plane_vaddr(vb, plane);
-	return vaddr ? (unsigned long)vaddr : -EINVAL;
-}
+	वापस vaddr ? (अचिन्हित दीर्घ)vaddr : -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_get_unmapped_area);
-#endif
+#पूर्ण_अगर
 
-int vb2_core_queue_init(struct vb2_queue *q)
-{
+पूर्णांक vb2_core_queue_init(काष्ठा vb2_queue *q)
+अणु
 	/*
 	 * Sanity check
 	 */
-	if (WARN_ON(!q)			  ||
+	अगर (WARN_ON(!q)			  ||
 	    WARN_ON(!q->ops)		  ||
 	    WARN_ON(!q->mem_ops)	  ||
 	    WARN_ON(!q->type)		  ||
 	    WARN_ON(!q->io_modes)	  ||
 	    WARN_ON(!q->ops->queue_setup) ||
 	    WARN_ON(!q->ops->buf_queue))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (WARN_ON(q->requires_requests && !q->supports_requests))
-		return -EINVAL;
+	अगर (WARN_ON(q->requires_requests && !q->supports_requests))
+		वापस -EINVAL;
 
 	INIT_LIST_HEAD(&q->queued_list);
-	INIT_LIST_HEAD(&q->done_list);
-	spin_lock_init(&q->done_lock);
+	INIT_LIST_HEAD(&q->करोne_list);
+	spin_lock_init(&q->करोne_lock);
 	mutex_init(&q->mmap_lock);
-	init_waitqueue_head(&q->done_wq);
+	init_रुकोqueue_head(&q->करोne_wq);
 
 	q->memory = VB2_MEMORY_UNKNOWN;
 
-	if (q->buf_struct_size == 0)
-		q->buf_struct_size = sizeof(struct vb2_buffer);
+	अगर (q->buf_काष्ठा_size == 0)
+		q->buf_काष्ठा_size = माप(काष्ठा vb2_buffer);
 
-	if (q->bidirectional)
-		q->dma_dir = DMA_BIDIRECTIONAL;
-	else
+	अगर (q->bidirectional)
+		q->dma_dir = DMA_BIसूचीECTIONAL;
+	अन्यथा
 		q->dma_dir = q->is_output ? DMA_TO_DEVICE : DMA_FROM_DEVICE;
 
-	if (q->name[0] == '\0')
-		snprintf(q->name, sizeof(q->name), "%s-%p",
+	अगर (q->name[0] == '\0')
+		snम_लिखो(q->name, माप(q->name), "%s-%p",
 			 q->is_output ? "out" : "cap", q);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_core_queue_init);
 
-static int __vb2_init_fileio(struct vb2_queue *q, int read);
-static int __vb2_cleanup_fileio(struct vb2_queue *q);
-void vb2_core_queue_release(struct vb2_queue *q)
-{
+अटल पूर्णांक __vb2_init_fileio(काष्ठा vb2_queue *q, पूर्णांक पढ़ो);
+अटल पूर्णांक __vb2_cleanup_fileio(काष्ठा vb2_queue *q);
+व्योम vb2_core_queue_release(काष्ठा vb2_queue *q)
+अणु
 	__vb2_cleanup_fileio(q);
 	__vb2_queue_cancel(q);
 	mutex_lock(&q->mmap_lock);
-	__vb2_queue_free(q, q->num_buffers);
+	__vb2_queue_मुक्त(q, q->num_buffers);
 	mutex_unlock(&q->mmap_lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_core_queue_release);
 
-__poll_t vb2_core_poll(struct vb2_queue *q, struct file *file,
-		poll_table *wait)
-{
-	__poll_t req_events = poll_requested_events(wait);
-	struct vb2_buffer *vb = NULL;
-	unsigned long flags;
+__poll_t vb2_core_poll(काष्ठा vb2_queue *q, काष्ठा file *file,
+		poll_table *रुको)
+अणु
+	__poll_t req_events = poll_requested_events(रुको);
+	काष्ठा vb2_buffer *vb = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * poll_wait() MUST be called on the first invocation on all the
-	 * potential queues of interest, even if we are not interested in their
-	 * events during this first call. Failure to do so will result in
+	 * poll_रुको() MUST be called on the first invocation on all the
+	 * potential queues of पूर्णांकerest, even अगर we are not पूर्णांकerested in their
+	 * events during this first call. Failure to करो so will result in
 	 * queue's events to be ignored because the poll_table won't be capable
-	 * of adding new wait queues thereafter.
+	 * of adding new रुको queues thereafter.
 	 */
-	poll_wait(file, &q->done_wq, wait);
+	poll_रुको(file, &q->करोne_wq, रुको);
 
-	if (!q->is_output && !(req_events & (EPOLLIN | EPOLLRDNORM)))
-		return 0;
-	if (q->is_output && !(req_events & (EPOLLOUT | EPOLLWRNORM)))
-		return 0;
+	अगर (!q->is_output && !(req_events & (EPOLLIN | EPOLLRDNORM)))
+		वापस 0;
+	अगर (q->is_output && !(req_events & (EPOLLOUT | EPOLLWRNORM)))
+		वापस 0;
 
 	/*
-	 * Start file I/O emulator only if streaming API has not been used yet.
+	 * Start file I/O emulator only अगर streaming API has not been used yet.
 	 */
-	if (q->num_buffers == 0 && !vb2_fileio_is_active(q)) {
-		if (!q->is_output && (q->io_modes & VB2_READ) &&
-				(req_events & (EPOLLIN | EPOLLRDNORM))) {
-			if (__vb2_init_fileio(q, 1))
-				return EPOLLERR;
-		}
-		if (q->is_output && (q->io_modes & VB2_WRITE) &&
-				(req_events & (EPOLLOUT | EPOLLWRNORM))) {
-			if (__vb2_init_fileio(q, 0))
-				return EPOLLERR;
+	अगर (q->num_buffers == 0 && !vb2_fileio_is_active(q)) अणु
+		अगर (!q->is_output && (q->io_modes & VB2_READ) &&
+				(req_events & (EPOLLIN | EPOLLRDNORM))) अणु
+			अगर (__vb2_init_fileio(q, 1))
+				वापस EPOLLERR;
+		पूर्ण
+		अगर (q->is_output && (q->io_modes & VB2_WRITE) &&
+				(req_events & (EPOLLOUT | EPOLLWRNORM))) अणु
+			अगर (__vb2_init_fileio(q, 0))
+				वापस EPOLLERR;
 			/*
-			 * Write to OUTPUT queue can be done immediately.
+			 * Write to OUTPUT queue can be करोne immediately.
 			 */
-			return EPOLLOUT | EPOLLWRNORM;
-		}
-	}
+			वापस EPOLLOUT | EPOLLWRNORM;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * There is nothing to wait for if the queue isn't streaming, or if the
+	 * There is nothing to रुको क्रम अगर the queue isn't streaming, or अगर the
 	 * error flag is set.
 	 */
-	if (!vb2_is_streaming(q) || q->error)
-		return EPOLLERR;
+	अगर (!vb2_is_streaming(q) || q->error)
+		वापस EPOLLERR;
 
 	/*
 	 * If this quirk is set and QBUF hasn't been called yet then
-	 * return EPOLLERR as well. This only affects capture queues, output
-	 * queues will always initialize waiting_for_buffers to false.
-	 * This quirk is set by V4L2 for backwards compatibility reasons.
+	 * वापस EPOLLERR as well. This only affects capture queues, output
+	 * queues will always initialize रुकोing_क्रम_buffers to false.
+	 * This quirk is set by V4L2 क्रम backwards compatibility reasons.
 	 */
-	if (q->quirk_poll_must_check_waiting_for_buffers &&
-	    q->waiting_for_buffers && (req_events & (EPOLLIN | EPOLLRDNORM)))
-		return EPOLLERR;
+	अगर (q->quirk_poll_must_check_रुकोing_क्रम_buffers &&
+	    q->रुकोing_क्रम_buffers && (req_events & (EPOLLIN | EPOLLRDNORM)))
+		वापस EPOLLERR;
 
 	/*
-	 * For output streams you can call write() as long as there are fewer
+	 * For output streams you can call ग_लिखो() as दीर्घ as there are fewer
 	 * buffers queued than there are buffers available.
 	 */
-	if (q->is_output && q->fileio && q->queued_count < q->num_buffers)
-		return EPOLLOUT | EPOLLWRNORM;
+	अगर (q->is_output && q->fileio && q->queued_count < q->num_buffers)
+		वापस EPOLLOUT | EPOLLWRNORM;
 
-	if (list_empty(&q->done_list)) {
+	अगर (list_empty(&q->करोne_list)) अणु
 		/*
 		 * If the last buffer was dequeued from a capture queue,
-		 * return immediately. DQBUF will return -EPIPE.
+		 * वापस immediately. DQBUF will वापस -EPIPE.
 		 */
-		if (q->last_buffer_dequeued)
-			return EPOLLIN | EPOLLRDNORM;
-	}
+		अगर (q->last_buffer_dequeued)
+			वापस EPOLLIN | EPOLLRDNORM;
+	पूर्ण
 
 	/*
-	 * Take first buffer available for dequeuing.
+	 * Take first buffer available क्रम dequeuing.
 	 */
-	spin_lock_irqsave(&q->done_lock, flags);
-	if (!list_empty(&q->done_list))
-		vb = list_first_entry(&q->done_list, struct vb2_buffer,
-					done_entry);
-	spin_unlock_irqrestore(&q->done_lock, flags);
+	spin_lock_irqsave(&q->करोne_lock, flags);
+	अगर (!list_empty(&q->करोne_list))
+		vb = list_first_entry(&q->करोne_list, काष्ठा vb2_buffer,
+					करोne_entry);
+	spin_unlock_irqrestore(&q->करोne_lock, flags);
 
-	if (vb && (vb->state == VB2_BUF_STATE_DONE
-			|| vb->state == VB2_BUF_STATE_ERROR)) {
-		return (q->is_output) ?
+	अगर (vb && (vb->state == VB2_BUF_STATE_DONE
+			|| vb->state == VB2_BUF_STATE_ERROR)) अणु
+		वापस (q->is_output) ?
 				EPOLLOUT | EPOLLWRNORM :
 				EPOLLIN | EPOLLRDNORM;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(vb2_core_poll);
 
 /*
- * struct vb2_fileio_buf - buffer context used by file io emulator
+ * काष्ठा vb2_fileio_buf - buffer context used by file io emulator
  *
- * vb2 provides a compatibility layer and emulator of file io (read and
- * write) calls on top of streaming API. This structure is used for
+ * vb2 provides a compatibility layer and emulator of file io (पढ़ो and
+ * ग_लिखो) calls on top of streaming API. This काष्ठाure is used क्रम
  * tracking context related to the buffers.
  */
-struct vb2_fileio_buf {
-	void *vaddr;
-	unsigned int size;
-	unsigned int pos;
-	unsigned int queued:1;
-};
+काष्ठा vb2_fileio_buf अणु
+	व्योम *vaddr;
+	अचिन्हित पूर्णांक size;
+	अचिन्हित पूर्णांक pos;
+	अचिन्हित पूर्णांक queued:1;
+पूर्ण;
 
 /*
- * struct vb2_fileio_data - queue context used by file io emulator
+ * काष्ठा vb2_fileio_data - queue context used by file io emulator
  *
- * @cur_index:	the index of the buffer currently being read from or
+ * @cur_index:	the index of the buffer currently being पढ़ो from or
  *		written to. If equal to q->num_buffers then a new buffer
  *		must be dequeued.
- * @initial_index: in the read() case all buffers are queued up immediately
- *		in __vb2_init_fileio() and __vb2_perform_fileio() just cycles
- *		buffers. However, in the write() case no buffers are initially
+ * @initial_index: in the पढ़ो() हाल all buffers are queued up immediately
+ *		in __vb2_init_fileio() and __vb2_perक्रमm_fileio() just cycles
+ *		buffers. However, in the ग_लिखो() हाल no buffers are initially
  *		queued, instead whenever a buffer is full it is queued up by
- *		__vb2_perform_fileio(). Only once all available buffers have
- *		been queued up will __vb2_perform_fileio() start to dequeue
- *		buffers. This means that initially __vb2_perform_fileio()
+ *		__vb2_perक्रमm_fileio(). Only once all available buffers have
+ *		been queued up will __vb2_perक्रमm_fileio() start to dequeue
+ *		buffers. This means that initially __vb2_perक्रमm_fileio()
  *		needs to know what buffer index to use when it is queuing up
- *		the buffers for the first time. That initial index is stored
+ *		the buffers क्रम the first समय. That initial index is stored
  *		in this field. Once it is equal to q->num_buffers all
- *		available buffers have been queued and __vb2_perform_fileio()
+ *		available buffers have been queued and __vb2_perक्रमm_fileio()
  *		should start the normal dequeue/queue cycle.
  *
- * vb2 provides a compatibility layer and emulator of file io (read and
- * write) calls on top of streaming API. For proper operation it required
- * this structure to save the driver state between each call of the read
- * or write function.
+ * vb2 provides a compatibility layer and emulator of file io (पढ़ो and
+ * ग_लिखो) calls on top of streaming API. For proper operation it required
+ * this काष्ठाure to save the driver state between each call of the पढ़ो
+ * or ग_लिखो function.
  */
-struct vb2_fileio_data {
-	unsigned int count;
-	unsigned int type;
-	unsigned int memory;
-	struct vb2_fileio_buf bufs[VB2_MAX_FRAME];
-	unsigned int cur_index;
-	unsigned int initial_index;
-	unsigned int q_count;
-	unsigned int dq_count;
-	unsigned read_once:1;
-	unsigned write_immediately:1;
-};
+काष्ठा vb2_fileio_data अणु
+	अचिन्हित पूर्णांक count;
+	अचिन्हित पूर्णांक type;
+	अचिन्हित पूर्णांक memory;
+	काष्ठा vb2_fileio_buf bufs[VB2_MAX_FRAME];
+	अचिन्हित पूर्णांक cur_index;
+	अचिन्हित पूर्णांक initial_index;
+	अचिन्हित पूर्णांक q_count;
+	अचिन्हित पूर्णांक dq_count;
+	अचिन्हित पढ़ो_once:1;
+	अचिन्हित ग_लिखो_immediately:1;
+पूर्ण;
 
 /*
  * __vb2_init_fileio() - initialize file io emulator
  * @q:		videobuf2 queue
- * @read:	mode selector (1 means read, 0 means write)
+ * @पढ़ो:	mode selector (1 means पढ़ो, 0 means ग_लिखो)
  */
-static int __vb2_init_fileio(struct vb2_queue *q, int read)
-{
-	struct vb2_fileio_data *fileio;
-	int i, ret;
-	unsigned int count = 0;
+अटल पूर्णांक __vb2_init_fileio(काष्ठा vb2_queue *q, पूर्णांक पढ़ो)
+अणु
+	काष्ठा vb2_fileio_data *fileio;
+	पूर्णांक i, ret;
+	अचिन्हित पूर्णांक count = 0;
 
 	/*
 	 * Sanity check
 	 */
-	if (WARN_ON((read && !(q->io_modes & VB2_READ)) ||
-		    (!read && !(q->io_modes & VB2_WRITE))))
-		return -EINVAL;
+	अगर (WARN_ON((पढ़ो && !(q->io_modes & VB2_READ)) ||
+		    (!पढ़ो && !(q->io_modes & VB2_WRITE))))
+		वापस -EINVAL;
 
 	/*
-	 * Check if device supports mapping buffers to kernel virtual space.
+	 * Check अगर device supports mapping buffers to kernel भव space.
 	 */
-	if (!q->mem_ops->vaddr)
-		return -EBUSY;
+	अगर (!q->mem_ops->vaddr)
+		वापस -EBUSY;
 
 	/*
-	 * Check if streaming api has not been already activated.
+	 * Check अगर streaming api has not been alपढ़ोy activated.
 	 */
-	if (q->streaming || q->num_buffers > 0)
-		return -EBUSY;
+	अगर (q->streaming || q->num_buffers > 0)
+		वापस -EBUSY;
 
 	/*
 	 * Start with count 1, driver can increase it in queue_setup()
 	 */
 	count = 1;
 
-	dprintk(q, 3, "setting up file io: mode %s, count %d, read_once %d, write_immediately %d\n",
-		(read) ? "read" : "write", count, q->fileio_read_once,
-		q->fileio_write_immediately);
+	dprपूर्णांकk(q, 3, "setting up file io: mode %s, count %d, read_once %d, write_immediately %d\n",
+		(पढ़ो) ? "read" : "write", count, q->fileio_पढ़ो_once,
+		q->fileio_ग_लिखो_immediately);
 
-	fileio = kzalloc(sizeof(*fileio), GFP_KERNEL);
-	if (fileio == NULL)
-		return -ENOMEM;
+	fileio = kzalloc(माप(*fileio), GFP_KERNEL);
+	अगर (fileio == शून्य)
+		वापस -ENOMEM;
 
-	fileio->read_once = q->fileio_read_once;
-	fileio->write_immediately = q->fileio_write_immediately;
+	fileio->पढ़ो_once = q->fileio_पढ़ो_once;
+	fileio->ग_लिखो_immediately = q->fileio_ग_लिखो_immediately;
 
 	/*
-	 * Request buffers and use MMAP type to force driver
+	 * Request buffers and use MMAP type to क्रमce driver
 	 * to allocate buffers by itself.
 	 */
 	fileio->count = count;
@@ -2566,151 +2567,151 @@ static int __vb2_init_fileio(struct vb2_queue *q, int read)
 	fileio->type = q->type;
 	q->fileio = fileio;
 	ret = vb2_core_reqbufs(q, fileio->memory, &fileio->count);
-	if (ret)
-		goto err_kfree;
+	अगर (ret)
+		जाओ err_kमुक्त;
 
 	/*
-	 * Check if plane_count is correct
+	 * Check अगर plane_count is correct
 	 * (multiplane buffers are not supported).
 	 */
-	if (q->bufs[0]->num_planes != 1) {
+	अगर (q->bufs[0]->num_planes != 1) अणु
 		ret = -EBUSY;
-		goto err_reqbufs;
-	}
+		जाओ err_reqbufs;
+	पूर्ण
 
 	/*
 	 * Get kernel address of each buffer.
 	 */
-	for (i = 0; i < q->num_buffers; i++) {
+	क्रम (i = 0; i < q->num_buffers; i++) अणु
 		fileio->bufs[i].vaddr = vb2_plane_vaddr(q->bufs[i], 0);
-		if (fileio->bufs[i].vaddr == NULL) {
+		अगर (fileio->bufs[i].vaddr == शून्य) अणु
 			ret = -EINVAL;
-			goto err_reqbufs;
-		}
+			जाओ err_reqbufs;
+		पूर्ण
 		fileio->bufs[i].size = vb2_plane_size(q->bufs[i], 0);
-	}
+	पूर्ण
 
 	/*
 	 * Read mode requires pre queuing of all buffers.
 	 */
-	if (read) {
+	अगर (पढ़ो) अणु
 		/*
 		 * Queue all buffers.
 		 */
-		for (i = 0; i < q->num_buffers; i++) {
-			ret = vb2_core_qbuf(q, i, NULL, NULL);
-			if (ret)
-				goto err_reqbufs;
+		क्रम (i = 0; i < q->num_buffers; i++) अणु
+			ret = vb2_core_qbuf(q, i, शून्य, शून्य);
+			अगर (ret)
+				जाओ err_reqbufs;
 			fileio->bufs[i].queued = 1;
-		}
+		पूर्ण
 		/*
 		 * All buffers have been queued, so mark that by setting
 		 * initial_index to q->num_buffers
 		 */
 		fileio->initial_index = q->num_buffers;
 		fileio->cur_index = q->num_buffers;
-	}
+	पूर्ण
 
 	/*
 	 * Start streaming.
 	 */
 	ret = vb2_core_streamon(q, q->type);
-	if (ret)
-		goto err_reqbufs;
+	अगर (ret)
+		जाओ err_reqbufs;
 
-	return ret;
+	वापस ret;
 
 err_reqbufs:
 	fileio->count = 0;
 	vb2_core_reqbufs(q, fileio->memory, &fileio->count);
 
-err_kfree:
-	q->fileio = NULL;
-	kfree(fileio);
-	return ret;
-}
+err_kमुक्त:
+	q->fileio = शून्य;
+	kमुक्त(fileio);
+	वापस ret;
+पूर्ण
 
 /*
- * __vb2_cleanup_fileio() - free resourced used by file io emulator
+ * __vb2_cleanup_fileio() - मुक्त resourced used by file io emulator
  * @q:		videobuf2 queue
  */
-static int __vb2_cleanup_fileio(struct vb2_queue *q)
-{
-	struct vb2_fileio_data *fileio = q->fileio;
+अटल पूर्णांक __vb2_cleanup_fileio(काष्ठा vb2_queue *q)
+अणु
+	काष्ठा vb2_fileio_data *fileio = q->fileio;
 
-	if (fileio) {
+	अगर (fileio) अणु
 		vb2_core_streamoff(q, q->type);
-		q->fileio = NULL;
+		q->fileio = शून्य;
 		fileio->count = 0;
 		vb2_core_reqbufs(q, fileio->memory, &fileio->count);
-		kfree(fileio);
-		dprintk(q, 3, "file io emulator closed\n");
-	}
-	return 0;
-}
+		kमुक्त(fileio);
+		dprपूर्णांकk(q, 3, "file io emulator closed\n");
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * __vb2_perform_fileio() - perform a single file io (read or write) operation
+ * __vb2_perक्रमm_fileio() - perक्रमm a single file io (पढ़ो or ग_लिखो) operation
  * @q:		videobuf2 queue
- * @data:	pointed to target userspace buffer
- * @count:	number of bytes to read or write
- * @ppos:	file handle position tracking pointer
+ * @data:	poपूर्णांकed to target userspace buffer
+ * @count:	number of bytes to पढ़ो or ग_लिखो
+ * @ppos:	file handle position tracking poपूर्णांकer
  * @nonblock:	mode selector (1 means blocking calls, 0 means nonblocking)
- * @read:	access mode selector (1 means read, 0 means write)
+ * @पढ़ो:	access mode selector (1 means पढ़ो, 0 means ग_लिखो)
  */
-static size_t __vb2_perform_fileio(struct vb2_queue *q, char __user *data, size_t count,
-		loff_t *ppos, int nonblock, int read)
-{
-	struct vb2_fileio_data *fileio;
-	struct vb2_fileio_buf *buf;
+अटल माप_प्रकार __vb2_perक्रमm_fileio(काष्ठा vb2_queue *q, अक्षर __user *data, माप_प्रकार count,
+		loff_t *ppos, पूर्णांक nonblock, पूर्णांक पढ़ो)
+अणु
+	काष्ठा vb2_fileio_data *fileio;
+	काष्ठा vb2_fileio_buf *buf;
 	bool is_multiplanar = q->is_multiplanar;
 	/*
-	 * When using write() to write data to an output video node the vb2 core
-	 * should copy timestamps if V4L2_BUF_FLAG_TIMESTAMP_COPY is set. Nobody
-	 * else is able to provide this information with the write() operation.
+	 * When using ग_लिखो() to ग_लिखो data to an output video node the vb2 core
+	 * should copy बारtamps अगर V4L2_BUF_FLAG_TIMESTAMP_COPY is set. Nobody
+	 * अन्यथा is able to provide this inक्रमmation with the ग_लिखो() operation.
 	 */
-	bool copy_timestamp = !read && q->copy_timestamp;
-	unsigned index;
-	int ret;
+	bool copy_बारtamp = !पढ़ो && q->copy_बारtamp;
+	अचिन्हित index;
+	पूर्णांक ret;
 
-	dprintk(q, 3, "mode %s, offset %ld, count %zd, %sblocking\n",
-		read ? "read" : "write", (long)*ppos, count,
+	dprपूर्णांकk(q, 3, "mode %s, offset %ld, count %zd, %sblocking\n",
+		पढ़ो ? "read" : "write", (दीर्घ)*ppos, count,
 		nonblock ? "non" : "");
 
-	if (!data)
-		return -EINVAL;
+	अगर (!data)
+		वापस -EINVAL;
 
-	if (q->waiting_in_dqbuf) {
-		dprintk(q, 3, "another dup()ped fd is %s\n",
-			read ? "reading" : "writing");
-		return -EBUSY;
-	}
+	अगर (q->रुकोing_in_dqbuf) अणु
+		dprपूर्णांकk(q, 3, "another dup()ped fd is %s\n",
+			पढ़ो ? "reading" : "writing");
+		वापस -EBUSY;
+	पूर्ण
 
 	/*
 	 * Initialize emulator on first call.
 	 */
-	if (!vb2_fileio_is_active(q)) {
-		ret = __vb2_init_fileio(q, read);
-		dprintk(q, 3, "vb2_init_fileio result: %d\n", ret);
-		if (ret)
-			return ret;
-	}
+	अगर (!vb2_fileio_is_active(q)) अणु
+		ret = __vb2_init_fileio(q, पढ़ो);
+		dprपूर्णांकk(q, 3, "vb2_init_fileio result: %d\n", ret);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 	fileio = q->fileio;
 
 	/*
-	 * Check if we need to dequeue the buffer.
+	 * Check अगर we need to dequeue the buffer.
 	 */
 	index = fileio->cur_index;
-	if (index >= q->num_buffers) {
-		struct vb2_buffer *b;
+	अगर (index >= q->num_buffers) अणु
+		काष्ठा vb2_buffer *b;
 
 		/*
 		 * Call vb2_dqbuf to get buffer back.
 		 */
-		ret = vb2_core_dqbuf(q, &index, NULL, nonblock);
-		dprintk(q, 5, "vb2_dqbuf result: %d\n", ret);
-		if (ret)
-			return ret;
+		ret = vb2_core_dqbuf(q, &index, शून्य, nonblock);
+		dprपूर्णांकk(q, 5, "vb2_dqbuf result: %d\n", ret);
+		अगर (ret)
+			वापस ret;
 		fileio->dq_count += 1;
 
 		fileio->cur_index = index;
@@ -2722,39 +2723,39 @@ static size_t __vb2_perform_fileio(struct vb2_queue *q, char __user *data, size_
 		 */
 		buf->pos = 0;
 		buf->queued = 0;
-		buf->size = read ? vb2_get_plane_payload(q->bufs[index], 0)
+		buf->size = पढ़ो ? vb2_get_plane_payload(q->bufs[index], 0)
 				 : vb2_plane_size(q->bufs[index], 0);
-		/* Compensate for data_offset on read in the multiplanar case. */
-		if (is_multiplanar && read &&
-				b->planes[0].data_offset < buf->size) {
+		/* Compensate क्रम data_offset on पढ़ो in the multiplanar हाल. */
+		अगर (is_multiplanar && पढ़ो &&
+				b->planes[0].data_offset < buf->size) अणु
 			buf->pos = b->planes[0].data_offset;
 			buf->size -= buf->pos;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		buf = &fileio->bufs[index];
-	}
+	पूर्ण
 
 	/*
 	 * Limit count on last few bytes of the buffer.
 	 */
-	if (buf->pos + count > buf->size) {
+	अगर (buf->pos + count > buf->size) अणु
 		count = buf->size - buf->pos;
-		dprintk(q, 5, "reducing read count: %zd\n", count);
-	}
+		dprपूर्णांकk(q, 5, "reducing read count: %zd\n", count);
+	पूर्ण
 
 	/*
 	 * Transfer data to userspace.
 	 */
-	dprintk(q, 3, "copying %zd bytes - buffer %d, offset %u\n",
+	dprपूर्णांकk(q, 3, "copying %zd bytes - buffer %d, offset %u\n",
 		count, index, buf->pos);
-	if (read)
+	अगर (पढ़ो)
 		ret = copy_to_user(data, buf->vaddr + buf->pos, count);
-	else
+	अन्यथा
 		ret = copy_from_user(buf->vaddr + buf->pos, data, count);
-	if (ret) {
-		dprintk(q, 3, "error copying data\n");
-		return -EFAULT;
-	}
+	अगर (ret) अणु
+		dprपूर्णांकk(q, 3, "error copying data\n");
+		वापस -EFAULT;
+	पूर्ण
 
 	/*
 	 * Update counters.
@@ -2763,30 +2764,30 @@ static size_t __vb2_perform_fileio(struct vb2_queue *q, char __user *data, size_
 	*ppos += count;
 
 	/*
-	 * Queue next buffer if required.
+	 * Queue next buffer अगर required.
 	 */
-	if (buf->pos == buf->size || (!read && fileio->write_immediately)) {
-		struct vb2_buffer *b = q->bufs[index];
+	अगर (buf->pos == buf->size || (!पढ़ो && fileio->ग_लिखो_immediately)) अणु
+		काष्ठा vb2_buffer *b = q->bufs[index];
 
 		/*
-		 * Check if this is the last buffer to read.
+		 * Check अगर this is the last buffer to पढ़ो.
 		 */
-		if (read && fileio->read_once && fileio->dq_count == 1) {
-			dprintk(q, 3, "read limit reached\n");
-			return __vb2_cleanup_fileio(q);
-		}
+		अगर (पढ़ो && fileio->पढ़ो_once && fileio->dq_count == 1) अणु
+			dprपूर्णांकk(q, 3, "read limit reached\n");
+			वापस __vb2_cleanup_fileio(q);
+		पूर्ण
 
 		/*
 		 * Call vb2_qbuf and give buffer to the driver.
 		 */
 		b->planes[0].bytesused = buf->pos;
 
-		if (copy_timestamp)
-			b->timestamp = ktime_get_ns();
-		ret = vb2_core_qbuf(q, index, NULL, NULL);
-		dprintk(q, 5, "vb2_dbuf result: %d\n", ret);
-		if (ret)
-			return ret;
+		अगर (copy_बारtamp)
+			b->बारtamp = kसमय_get_ns();
+		ret = vb2_core_qbuf(q, index, शून्य, शून्य);
+		dprपूर्णांकk(q, 5, "vb2_dbuf result: %d\n", ret);
+		अगर (ret)
+			वापस ret;
 
 		/*
 		 * Buffer has been queued, update the status
@@ -2796,173 +2797,173 @@ static size_t __vb2_perform_fileio(struct vb2_queue *q, char __user *data, size_
 		buf->size = vb2_plane_size(q->bufs[index], 0);
 		fileio->q_count += 1;
 		/*
-		 * If we are queuing up buffers for the first time, then
+		 * If we are queuing up buffers क्रम the first समय, then
 		 * increase initial_index by one.
 		 */
-		if (fileio->initial_index < q->num_buffers)
+		अगर (fileio->initial_index < q->num_buffers)
 			fileio->initial_index++;
 		/*
 		 * The next buffer to use is either a buffer that's going to be
-		 * queued for the first time (initial_index < q->num_buffers)
+		 * queued क्रम the first समय (initial_index < q->num_buffers)
 		 * or it is equal to q->num_buffers, meaning that the next
-		 * time we need to dequeue a buffer since we've now queued up
+		 * समय we need to dequeue a buffer since we've now queued up
 		 * all the 'first time' buffers.
 		 */
 		fileio->cur_index = fileio->initial_index;
-	}
+	पूर्ण
 
 	/*
 	 * Return proper number of bytes processed.
 	 */
-	if (ret == 0)
+	अगर (ret == 0)
 		ret = count;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-size_t vb2_read(struct vb2_queue *q, char __user *data, size_t count,
-		loff_t *ppos, int nonblocking)
-{
-	return __vb2_perform_fileio(q, data, count, ppos, nonblocking, 1);
-}
-EXPORT_SYMBOL_GPL(vb2_read);
+माप_प्रकार vb2_पढ़ो(काष्ठा vb2_queue *q, अक्षर __user *data, माप_प्रकार count,
+		loff_t *ppos, पूर्णांक nonblocking)
+अणु
+	वापस __vb2_perक्रमm_fileio(q, data, count, ppos, nonblocking, 1);
+पूर्ण
+EXPORT_SYMBOL_GPL(vb2_पढ़ो);
 
-size_t vb2_write(struct vb2_queue *q, const char __user *data, size_t count,
-		loff_t *ppos, int nonblocking)
-{
-	return __vb2_perform_fileio(q, (char __user *) data, count,
+माप_प्रकार vb2_ग_लिखो(काष्ठा vb2_queue *q, स्थिर अक्षर __user *data, माप_प्रकार count,
+		loff_t *ppos, पूर्णांक nonblocking)
+अणु
+	वापस __vb2_perक्रमm_fileio(q, (अक्षर __user *) data, count,
 							ppos, nonblocking, 0);
-}
-EXPORT_SYMBOL_GPL(vb2_write);
+पूर्ण
+EXPORT_SYMBOL_GPL(vb2_ग_लिखो);
 
-struct vb2_threadio_data {
-	struct task_struct *thread;
-	vb2_thread_fnc fnc;
-	void *priv;
+काष्ठा vb2_thपढ़ोio_data अणु
+	काष्ठा task_काष्ठा *thपढ़ो;
+	vb2_thपढ़ो_fnc fnc;
+	व्योम *priv;
 	bool stop;
-};
+पूर्ण;
 
-static int vb2_thread(void *data)
-{
-	struct vb2_queue *q = data;
-	struct vb2_threadio_data *threadio = q->threadio;
-	bool copy_timestamp = false;
-	unsigned prequeue = 0;
-	unsigned index = 0;
-	int ret = 0;
+अटल पूर्णांक vb2_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा vb2_queue *q = data;
+	काष्ठा vb2_thपढ़ोio_data *thपढ़ोio = q->thपढ़ोio;
+	bool copy_बारtamp = false;
+	अचिन्हित prequeue = 0;
+	अचिन्हित index = 0;
+	पूर्णांक ret = 0;
 
-	if (q->is_output) {
+	अगर (q->is_output) अणु
 		prequeue = q->num_buffers;
-		copy_timestamp = q->copy_timestamp;
-	}
+		copy_बारtamp = q->copy_बारtamp;
+	पूर्ण
 
-	set_freezable();
+	set_मुक्तzable();
 
-	for (;;) {
-		struct vb2_buffer *vb;
+	क्रम (;;) अणु
+		काष्ठा vb2_buffer *vb;
 
 		/*
 		 * Call vb2_dqbuf to get buffer back.
 		 */
-		if (prequeue) {
+		अगर (prequeue) अणु
 			vb = q->bufs[index++];
 			prequeue--;
-		} else {
-			call_void_qop(q, wait_finish, q);
-			if (!threadio->stop)
-				ret = vb2_core_dqbuf(q, &index, NULL, 0);
-			call_void_qop(q, wait_prepare, q);
-			dprintk(q, 5, "file io: vb2_dqbuf result: %d\n", ret);
-			if (!ret)
+		पूर्ण अन्यथा अणु
+			call_व्योम_qop(q, रुको_finish, q);
+			अगर (!thपढ़ोio->stop)
+				ret = vb2_core_dqbuf(q, &index, शून्य, 0);
+			call_व्योम_qop(q, रुको_prepare, q);
+			dprपूर्णांकk(q, 5, "file io: vb2_dqbuf result: %d\n", ret);
+			अगर (!ret)
 				vb = q->bufs[index];
-		}
-		if (ret || threadio->stop)
-			break;
-		try_to_freeze();
+		पूर्ण
+		अगर (ret || thपढ़ोio->stop)
+			अवरोध;
+		try_to_मुक्तze();
 
-		if (vb->state != VB2_BUF_STATE_ERROR)
-			if (threadio->fnc(vb, threadio->priv))
-				break;
-		call_void_qop(q, wait_finish, q);
-		if (copy_timestamp)
-			vb->timestamp = ktime_get_ns();
-		if (!threadio->stop)
-			ret = vb2_core_qbuf(q, vb->index, NULL, NULL);
-		call_void_qop(q, wait_prepare, q);
-		if (ret || threadio->stop)
-			break;
-	}
+		अगर (vb->state != VB2_BUF_STATE_ERROR)
+			अगर (thपढ़ोio->fnc(vb, thपढ़ोio->priv))
+				अवरोध;
+		call_व्योम_qop(q, रुको_finish, q);
+		अगर (copy_बारtamp)
+			vb->बारtamp = kसमय_get_ns();
+		अगर (!thपढ़ोio->stop)
+			ret = vb2_core_qbuf(q, vb->index, शून्य, शून्य);
+		call_व्योम_qop(q, रुको_prepare, q);
+		अगर (ret || thपढ़ोio->stop)
+			अवरोध;
+	पूर्ण
 
 	/* Hmm, linux becomes *very* unhappy without this ... */
-	while (!kthread_should_stop()) {
+	जबतक (!kthपढ़ो_should_stop()) अणु
 		set_current_state(TASK_INTERRUPTIBLE);
 		schedule();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * This function should not be used for anything else but the videobuf2-dvb
- * support. If you think you have another good use-case for this, then please
+ * This function should not be used क्रम anything अन्यथा but the videobuf2-dvb
+ * support. If you think you have another good use-हाल क्रम this, then please
  * contact the linux-media mailinglist first.
  */
-int vb2_thread_start(struct vb2_queue *q, vb2_thread_fnc fnc, void *priv,
-		     const char *thread_name)
-{
-	struct vb2_threadio_data *threadio;
-	int ret = 0;
+पूर्णांक vb2_thपढ़ो_start(काष्ठा vb2_queue *q, vb2_thपढ़ो_fnc fnc, व्योम *priv,
+		     स्थिर अक्षर *thपढ़ो_name)
+अणु
+	काष्ठा vb2_thपढ़ोio_data *thपढ़ोio;
+	पूर्णांक ret = 0;
 
-	if (q->threadio)
-		return -EBUSY;
-	if (vb2_is_busy(q))
-		return -EBUSY;
-	if (WARN_ON(q->fileio))
-		return -EBUSY;
+	अगर (q->thपढ़ोio)
+		वापस -EBUSY;
+	अगर (vb2_is_busy(q))
+		वापस -EBUSY;
+	अगर (WARN_ON(q->fileio))
+		वापस -EBUSY;
 
-	threadio = kzalloc(sizeof(*threadio), GFP_KERNEL);
-	if (threadio == NULL)
-		return -ENOMEM;
-	threadio->fnc = fnc;
-	threadio->priv = priv;
+	thपढ़ोio = kzalloc(माप(*thपढ़ोio), GFP_KERNEL);
+	अगर (thपढ़ोio == शून्य)
+		वापस -ENOMEM;
+	thपढ़ोio->fnc = fnc;
+	thपढ़ोio->priv = priv;
 
 	ret = __vb2_init_fileio(q, !q->is_output);
-	dprintk(q, 3, "file io: vb2_init_fileio result: %d\n", ret);
-	if (ret)
-		goto nomem;
-	q->threadio = threadio;
-	threadio->thread = kthread_run(vb2_thread, q, "vb2-%s", thread_name);
-	if (IS_ERR(threadio->thread)) {
-		ret = PTR_ERR(threadio->thread);
-		threadio->thread = NULL;
-		goto nothread;
-	}
-	return 0;
+	dprपूर्णांकk(q, 3, "file io: vb2_init_fileio result: %d\n", ret);
+	अगर (ret)
+		जाओ nomem;
+	q->thपढ़ोio = thपढ़ोio;
+	thपढ़ोio->thपढ़ो = kthपढ़ो_run(vb2_thपढ़ो, q, "vb2-%s", thपढ़ो_name);
+	अगर (IS_ERR(thपढ़ोio->thपढ़ो)) अणु
+		ret = PTR_ERR(thपढ़ोio->thपढ़ो);
+		thपढ़ोio->thपढ़ो = शून्य;
+		जाओ nothपढ़ो;
+	पूर्ण
+	वापस 0;
 
-nothread:
+nothपढ़ो:
 	__vb2_cleanup_fileio(q);
 nomem:
-	kfree(threadio);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(vb2_thread_start);
+	kमुक्त(thपढ़ोio);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(vb2_thपढ़ो_start);
 
-int vb2_thread_stop(struct vb2_queue *q)
-{
-	struct vb2_threadio_data *threadio = q->threadio;
-	int err;
+पूर्णांक vb2_thपढ़ो_stop(काष्ठा vb2_queue *q)
+अणु
+	काष्ठा vb2_thपढ़ोio_data *thपढ़ोio = q->thपढ़ोio;
+	पूर्णांक err;
 
-	if (threadio == NULL)
-		return 0;
-	threadio->stop = true;
-	/* Wake up all pending sleeps in the thread */
+	अगर (thपढ़ोio == शून्य)
+		वापस 0;
+	thपढ़ोio->stop = true;
+	/* Wake up all pending sleeps in the thपढ़ो */
 	vb2_queue_error(q);
-	err = kthread_stop(threadio->thread);
+	err = kthपढ़ो_stop(thपढ़ोio->thपढ़ो);
 	__vb2_cleanup_fileio(q);
-	threadio->thread = NULL;
-	kfree(threadio);
-	q->threadio = NULL;
-	return err;
-}
-EXPORT_SYMBOL_GPL(vb2_thread_stop);
+	thपढ़ोio->thपढ़ो = शून्य;
+	kमुक्त(thपढ़ोio);
+	q->thपढ़ोio = शून्य;
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(vb2_thपढ़ो_stop);
 
 MODULE_DESCRIPTION("Media buffer core framework");
 MODULE_AUTHOR("Pawel Osciak <pawel@osciak.com>, Marek Szyprowski");

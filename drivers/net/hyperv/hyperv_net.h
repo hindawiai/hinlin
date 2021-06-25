@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  * Copyright (c) 2011, Microsoft Corporation.
@@ -9,105 +10,105 @@
  *   K. Y. Srinivasan <kys@microsoft.com>
  */
 
-#ifndef _HYPERV_NET_H
-#define _HYPERV_NET_H
+#अगर_अघोषित _HYPERV_NET_H
+#घोषणा _HYPERV_NET_H
 
-#include <linux/list.h>
-#include <linux/hyperv.h>
-#include <linux/rndis.h>
+#समावेश <linux/list.h>
+#समावेश <linux/hyperv.h>
+#समावेश <linux/rndis.h>
 
 /* RSS related */
-#define OID_GEN_RECEIVE_SCALE_CAPABILITIES 0x00010203  /* query only */
-#define OID_GEN_RECEIVE_SCALE_PARAMETERS 0x00010204  /* query and set */
+#घोषणा OID_GEN_RECEIVE_SCALE_CAPABILITIES 0x00010203  /* query only */
+#घोषणा OID_GEN_RECEIVE_SCALE_PARAMETERS 0x00010204  /* query and set */
 
-#define NDIS_OBJECT_TYPE_RSS_CAPABILITIES 0x88
-#define NDIS_OBJECT_TYPE_RSS_PARAMETERS 0x89
-#define NDIS_OBJECT_TYPE_OFFLOAD	0xa7
+#घोषणा NDIS_OBJECT_TYPE_RSS_CAPABILITIES 0x88
+#घोषणा NDIS_OBJECT_TYPE_RSS_PARAMETERS 0x89
+#घोषणा NDIS_OBJECT_TYPE_OFFLOAD	0xa7
 
-#define NDIS_RECEIVE_SCALE_CAPABILITIES_REVISION_2 2
-#define NDIS_RECEIVE_SCALE_PARAMETERS_REVISION_2 2
+#घोषणा NDIS_RECEIVE_SCALE_CAPABILITIES_REVISION_2 2
+#घोषणा NDIS_RECEIVE_SCALE_PARAMETERS_REVISION_2 2
 
-struct ndis_obj_header {
+काष्ठा ndis_obj_header अणु
 	u8 type;
 	u8 rev;
 	u16 size;
-} __packed;
+पूर्ण __packed;
 
 /* ndis_recv_scale_cap/cap_flag */
-#define NDIS_RSS_CAPS_MESSAGE_SIGNALED_INTERRUPTS 0x01000000
-#define NDIS_RSS_CAPS_CLASSIFICATION_AT_ISR       0x02000000
-#define NDIS_RSS_CAPS_CLASSIFICATION_AT_DPC       0x04000000
-#define NDIS_RSS_CAPS_USING_MSI_X                 0x08000000
-#define NDIS_RSS_CAPS_RSS_AVAILABLE_ON_PORTS      0x10000000
-#define NDIS_RSS_CAPS_SUPPORTS_MSI_X              0x20000000
-#define NDIS_RSS_CAPS_HASH_TYPE_TCP_IPV4          0x00000100
-#define NDIS_RSS_CAPS_HASH_TYPE_TCP_IPV6          0x00000200
-#define NDIS_RSS_CAPS_HASH_TYPE_TCP_IPV6_EX       0x00000400
+#घोषणा NDIS_RSS_CAPS_MESSAGE_SIGNALED_INTERRUPTS 0x01000000
+#घोषणा NDIS_RSS_CAPS_CLASSIFICATION_AT_ISR       0x02000000
+#घोषणा NDIS_RSS_CAPS_CLASSIFICATION_AT_DPC       0x04000000
+#घोषणा NDIS_RSS_CAPS_USING_MSI_X                 0x08000000
+#घोषणा NDIS_RSS_CAPS_RSS_AVAILABLE_ON_PORTS      0x10000000
+#घोषणा NDIS_RSS_CAPS_SUPPORTS_MSI_X              0x20000000
+#घोषणा NDIS_RSS_CAPS_HASH_TYPE_TCP_IPV4          0x00000100
+#घोषणा NDIS_RSS_CAPS_HASH_TYPE_TCP_IPV6          0x00000200
+#घोषणा NDIS_RSS_CAPS_HASH_TYPE_TCP_IPV6_EX       0x00000400
 
-struct ndis_recv_scale_cap { /* NDIS_RECEIVE_SCALE_CAPABILITIES */
-	struct ndis_obj_header hdr;
+काष्ठा ndis_recv_scale_cap अणु /* NDIS_RECEIVE_SCALE_CAPABILITIES */
+	काष्ठा ndis_obj_header hdr;
 	u32 cap_flag;
-	u32 num_int_msg;
+	u32 num_पूर्णांक_msg;
 	u32 num_recv_que;
 	u16 num_indirect_tabent;
-} __packed;
+पूर्ण __packed;
 
 
 /* ndis_recv_scale_param flags */
-#define NDIS_RSS_PARAM_FLAG_BASE_CPU_UNCHANGED     0x0001
-#define NDIS_RSS_PARAM_FLAG_HASH_INFO_UNCHANGED    0x0002
-#define NDIS_RSS_PARAM_FLAG_ITABLE_UNCHANGED       0x0004
-#define NDIS_RSS_PARAM_FLAG_HASH_KEY_UNCHANGED     0x0008
-#define NDIS_RSS_PARAM_FLAG_DISABLE_RSS            0x0010
+#घोषणा NDIS_RSS_PARAM_FLAG_BASE_CPU_UNCHANGED     0x0001
+#घोषणा NDIS_RSS_PARAM_FLAG_HASH_INFO_UNCHANGED    0x0002
+#घोषणा NDIS_RSS_PARAM_FLAG_ITABLE_UNCHANGED       0x0004
+#घोषणा NDIS_RSS_PARAM_FLAG_HASH_KEY_UNCHANGED     0x0008
+#घोषणा NDIS_RSS_PARAM_FLAG_DISABLE_RSS            0x0010
 
 /* Hash info bits */
-#define NDIS_HASH_FUNC_TOEPLITZ 0x00000001
-#define NDIS_HASH_IPV4          0x00000100
-#define NDIS_HASH_TCP_IPV4      0x00000200
-#define NDIS_HASH_IPV6          0x00000400
-#define NDIS_HASH_IPV6_EX       0x00000800
-#define NDIS_HASH_TCP_IPV6      0x00001000
-#define NDIS_HASH_TCP_IPV6_EX   0x00002000
+#घोषणा NDIS_HASH_FUNC_TOEPLITZ 0x00000001
+#घोषणा NDIS_HASH_IPV4          0x00000100
+#घोषणा NDIS_HASH_TCP_IPV4      0x00000200
+#घोषणा NDIS_HASH_IPV6          0x00000400
+#घोषणा NDIS_HASH_IPV6_EX       0x00000800
+#घोषणा NDIS_HASH_TCP_IPV6      0x00001000
+#घोषणा NDIS_HASH_TCP_IPV6_EX   0x00002000
 
-#define NDIS_RSS_INDIRECTION_TABLE_MAX_SIZE_REVISION_2 (128 * 4)
-#define NDIS_RSS_HASH_SECRET_KEY_MAX_SIZE_REVISION_2   40
+#घोषणा NDIS_RSS_INसूचीECTION_TABLE_MAX_SIZE_REVISION_2 (128 * 4)
+#घोषणा NDIS_RSS_HASH_SECRET_KEY_MAX_SIZE_REVISION_2   40
 
-#define ITAB_NUM 128
+#घोषणा ITAB_NUM 128
 
-struct ndis_recv_scale_param { /* NDIS_RECEIVE_SCALE_PARAMETERS */
-	struct ndis_obj_header hdr;
+काष्ठा ndis_recv_scale_param अणु /* NDIS_RECEIVE_SCALE_PARAMETERS */
+	काष्ठा ndis_obj_header hdr;
 
-	/* Qualifies the rest of the information */
+	/* Qualअगरies the rest of the inक्रमmation */
 	u16 flag;
 
-	/* The base CPU number to do receive processing. not used */
+	/* The base CPU number to करो receive processing. not used */
 	u16 base_cpu_number;
 
 	/* This describes the hash function and type being enabled */
 	u32 hashinfo;
 
 	/* The size of indirection table array */
-	u16 indirect_tabsize;
+	u16 indirect_tअसलize;
 
 	/* The offset of the indirection table from the beginning of this
-	 * structure
+	 * काष्ठाure
 	 */
 	u32 indirect_taboffset;
 
 	/* The size of the hash secret key */
 	u16 hashkey_size;
 
-	/* The offset of the secret key from the beginning of this structure */
+	/* The offset of the secret key from the beginning of this काष्ठाure */
 	u32 hashkey_offset;
 
 	u32 processor_masks_offset;
 	u32 num_processor_masks;
 	u32 processor_masks_entry_size;
-};
+पूर्ण;
 
-struct ndis_tcp_ip_checksum_info {
-	union {
-		struct {
+काष्ठा ndis_tcp_ip_checksum_info अणु
+	जोड़ अणु
+		काष्ठा अणु
 			u32 is_ipv4:1;
 			u32 is_ipv6:1;
 			u32 tcp_checksum:1;
@@ -115,8 +116,8 @@ struct ndis_tcp_ip_checksum_info {
 			u32 ip_header_checksum:1;
 			u32 reserved:11;
 			u32 tcp_header_offset:10;
-		} transmit;
-		struct {
+		पूर्ण transmit;
+		काष्ठा अणु
 			u32 tcp_checksum_failed:1;
 			u32 udp_checksum_failed:1;
 			u32 ip_checksum_failed:1;
@@ -126,33 +127,33 @@ struct ndis_tcp_ip_checksum_info {
 			u32 loopback:1;
 			u32 tcp_checksum_value_invalid:1;
 			u32 ip_checksum_value_invalid:1;
-		} receive;
+		पूर्ण receive;
 		u32  value;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-struct ndis_pkt_8021q_info {
-	union {
-		struct {
+काष्ठा ndis_pkt_8021q_info अणु
+	जोड़ अणु
+		काष्ठा अणु
 			u32 pri:3; /* User Priority */
 			u32 cfi:1; /* Canonical Format ID */
 			u32 vlanid:12; /* VLAN ID */
 			u32 reserved:16;
-		};
+		पूर्ण;
 		u32 value;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
 /*
  * Represent netvsc packet which contains 1 RNDIS and 1 ethernet frame
  * within the RNDIS
  *
- * The size of this structure is less than 48 bytes and we can now
- * place this structure in the skb->cb field.
+ * The size of this काष्ठाure is less than 48 bytes and we can now
+ * place this काष्ठाure in the skb->cb field.
  */
-struct hv_netvsc_packet {
+काष्ठा hv_netvsc_packet अणु
 	/* Bookkeeping stuff */
-	u8 cp_partial; /* partial copy into send buffer */
+	u8 cp_partial; /* partial copy पूर्णांकo send buffer */
 
 	u8 rmsg_size; /* RNDIS header and PPI size */
 	u8 rmsg_pgcnt; /* page count of RNDIS header and PPI */
@@ -164,123 +165,123 @@ struct hv_netvsc_packet {
 	u32 total_bytes;
 	u32 send_buf_index;
 	u32 total_data_buflen;
-};
+पूर्ण;
 
-#define NETVSC_HASH_KEYLEN 40
+#घोषणा NETVSC_HASH_KEYLEN 40
 
-struct netvsc_device_info {
-	unsigned char mac_adr[ETH_ALEN];
+काष्ठा netvsc_device_info अणु
+	अचिन्हित अक्षर mac_adr[ETH_ALEN];
 	u32  num_chn;
 	u32  send_sections;
 	u32  recv_sections;
 	u32  send_section_size;
 	u32  recv_section_size;
 
-	struct bpf_prog *bprog;
+	काष्ठा bpf_prog *bprog;
 
 	u8 rss_key[NETVSC_HASH_KEYLEN];
-};
+पूर्ण;
 
-enum rndis_device_state {
+क्रमागत rndis_device_state अणु
 	RNDIS_DEV_UNINITIALIZED = 0,
 	RNDIS_DEV_INITIALIZING,
 	RNDIS_DEV_INITIALIZED,
 	RNDIS_DEV_DATAINITIALIZED,
-};
+पूर्ण;
 
-struct rndis_device {
-	struct net_device *ndev;
+काष्ठा rndis_device अणु
+	काष्ठा net_device *ndev;
 
-	enum rndis_device_state state;
+	क्रमागत rndis_device_state state;
 
 	atomic_t new_req_id;
 
 	spinlock_t request_lock;
-	struct list_head req_list;
+	काष्ठा list_head req_list;
 
-	struct work_struct mcast_work;
+	काष्ठा work_काष्ठा mcast_work;
 	u32 filter;
 
-	bool link_state;        /* 0 - link up, 1 - link down */
+	bool link_state;        /* 0 - link up, 1 - link करोwn */
 
 	u8 hw_mac_adr[ETH_ALEN];
 	u8 rss_key[NETVSC_HASH_KEYLEN];
-};
+पूर्ण;
 
 
 /* Interface */
-struct rndis_message;
-struct ndis_offload_params;
-struct netvsc_device;
-struct netvsc_channel;
-struct net_device_context;
+काष्ठा rndis_message;
+काष्ठा ndis_offload_params;
+काष्ठा netvsc_device;
+काष्ठा netvsc_channel;
+काष्ठा net_device_context;
 
-extern u32 netvsc_ring_bytes;
+बाह्य u32 netvsc_ring_bytes;
 
-struct netvsc_device *netvsc_device_add(struct hv_device *device,
-					const struct netvsc_device_info *info);
-int netvsc_alloc_recv_comp_ring(struct netvsc_device *net_device, u32 q_idx);
-void netvsc_device_remove(struct hv_device *device);
-int netvsc_send(struct net_device *net,
-		struct hv_netvsc_packet *packet,
-		struct rndis_message *rndis_msg,
-		struct hv_page_buffer *page_buffer,
-		struct sk_buff *skb,
+काष्ठा netvsc_device *netvsc_device_add(काष्ठा hv_device *device,
+					स्थिर काष्ठा netvsc_device_info *info);
+पूर्णांक netvsc_alloc_recv_comp_ring(काष्ठा netvsc_device *net_device, u32 q_idx);
+व्योम netvsc_device_हटाओ(काष्ठा hv_device *device);
+पूर्णांक netvsc_send(काष्ठा net_device *net,
+		काष्ठा hv_netvsc_packet *packet,
+		काष्ठा rndis_message *rndis_msg,
+		काष्ठा hv_page_buffer *page_buffer,
+		काष्ठा sk_buff *skb,
 		bool xdp_tx);
-void netvsc_linkstatus_callback(struct net_device *net,
-				struct rndis_message *resp,
-				void *data, u32 data_buflen);
-int netvsc_recv_callback(struct net_device *net,
-			 struct netvsc_device *nvdev,
-			 struct netvsc_channel *nvchan);
-void netvsc_channel_cb(void *context);
-int netvsc_poll(struct napi_struct *napi, int budget);
+व्योम netvsc_linkstatus_callback(काष्ठा net_device *net,
+				काष्ठा rndis_message *resp,
+				व्योम *data, u32 data_buflen);
+पूर्णांक netvsc_recv_callback(काष्ठा net_device *net,
+			 काष्ठा netvsc_device *nvdev,
+			 काष्ठा netvsc_channel *nvchan);
+व्योम netvsc_channel_cb(व्योम *context);
+पूर्णांक netvsc_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget);
 
-u32 netvsc_run_xdp(struct net_device *ndev, struct netvsc_channel *nvchan,
-		   struct xdp_buff *xdp);
-unsigned int netvsc_xdp_fraglen(unsigned int len);
-struct bpf_prog *netvsc_xdp_get(struct netvsc_device *nvdev);
-int netvsc_xdp_set(struct net_device *dev, struct bpf_prog *prog,
-		   struct netlink_ext_ack *extack,
-		   struct netvsc_device *nvdev);
-int netvsc_vf_setxdp(struct net_device *vf_netdev, struct bpf_prog *prog);
-int netvsc_bpf(struct net_device *dev, struct netdev_bpf *bpf);
+u32 netvsc_run_xdp(काष्ठा net_device *ndev, काष्ठा netvsc_channel *nvchan,
+		   काष्ठा xdp_buff *xdp);
+अचिन्हित पूर्णांक netvsc_xdp_fraglen(अचिन्हित पूर्णांक len);
+काष्ठा bpf_prog *netvsc_xdp_get(काष्ठा netvsc_device *nvdev);
+पूर्णांक netvsc_xdp_set(काष्ठा net_device *dev, काष्ठा bpf_prog *prog,
+		   काष्ठा netlink_ext_ack *extack,
+		   काष्ठा netvsc_device *nvdev);
+पूर्णांक netvsc_vf_setxdp(काष्ठा net_device *vf_netdev, काष्ठा bpf_prog *prog);
+पूर्णांक netvsc_bpf(काष्ठा net_device *dev, काष्ठा netdev_bpf *bpf);
 
-int rndis_set_subchannel(struct net_device *ndev,
-			 struct netvsc_device *nvdev,
-			 struct netvsc_device_info *dev_info);
-int rndis_filter_open(struct netvsc_device *nvdev);
-int rndis_filter_close(struct netvsc_device *nvdev);
-struct netvsc_device *rndis_filter_device_add(struct hv_device *dev,
-					      struct netvsc_device_info *info);
-void rndis_filter_update(struct netvsc_device *nvdev);
-void rndis_filter_device_remove(struct hv_device *dev,
-				struct netvsc_device *nvdev);
-int rndis_filter_set_rss_param(struct rndis_device *rdev,
-			       const u8 *key);
-int rndis_filter_set_offload_params(struct net_device *ndev,
-				    struct netvsc_device *nvdev,
-				    struct ndis_offload_params *req_offloads);
-int rndis_filter_receive(struct net_device *ndev,
-			 struct netvsc_device *net_dev,
-			 struct netvsc_channel *nvchan,
-			 void *data, u32 buflen);
+पूर्णांक rndis_set_subchannel(काष्ठा net_device *ndev,
+			 काष्ठा netvsc_device *nvdev,
+			 काष्ठा netvsc_device_info *dev_info);
+पूर्णांक rndis_filter_खोलो(काष्ठा netvsc_device *nvdev);
+पूर्णांक rndis_filter_बंद(काष्ठा netvsc_device *nvdev);
+काष्ठा netvsc_device *rndis_filter_device_add(काष्ठा hv_device *dev,
+					      काष्ठा netvsc_device_info *info);
+व्योम rndis_filter_update(काष्ठा netvsc_device *nvdev);
+व्योम rndis_filter_device_हटाओ(काष्ठा hv_device *dev,
+				काष्ठा netvsc_device *nvdev);
+पूर्णांक rndis_filter_set_rss_param(काष्ठा rndis_device *rdev,
+			       स्थिर u8 *key);
+पूर्णांक rndis_filter_set_offload_params(काष्ठा net_device *ndev,
+				    काष्ठा netvsc_device *nvdev,
+				    काष्ठा ndis_offload_params *req_offloads);
+पूर्णांक rndis_filter_receive(काष्ठा net_device *ndev,
+			 काष्ठा netvsc_device *net_dev,
+			 काष्ठा netvsc_channel *nvchan,
+			 व्योम *data, u32 buflen);
 
-int rndis_filter_set_device_mac(struct netvsc_device *ndev,
-				const char *mac);
+पूर्णांक rndis_filter_set_device_mac(काष्ठा netvsc_device *ndev,
+				स्थिर अक्षर *mac);
 
-int netvsc_switch_datapath(struct net_device *nv_dev, bool vf);
+पूर्णांक netvsc_चयन_datapath(काष्ठा net_device *nv_dev, bool vf);
 
-#define NVSP_INVALID_PROTOCOL_VERSION	((u32)0xFFFFFFFF)
+#घोषणा NVSP_INVALID_PROTOCOL_VERSION	((u32)0xFFFFFFFF)
 
-#define NVSP_PROTOCOL_VERSION_1		2
-#define NVSP_PROTOCOL_VERSION_2		0x30002
-#define NVSP_PROTOCOL_VERSION_4		0x40000
-#define NVSP_PROTOCOL_VERSION_5		0x50000
-#define NVSP_PROTOCOL_VERSION_6		0x60000
-#define NVSP_PROTOCOL_VERSION_61	0x60001
+#घोषणा NVSP_PROTOCOL_VERSION_1		2
+#घोषणा NVSP_PROTOCOL_VERSION_2		0x30002
+#घोषणा NVSP_PROTOCOL_VERSION_4		0x40000
+#घोषणा NVSP_PROTOCOL_VERSION_5		0x50000
+#घोषणा NVSP_PROTOCOL_VERSION_6		0x60000
+#घोषणा NVSP_PROTOCOL_VERSION_61	0x60001
 
-enum {
+क्रमागत अणु
 	NVSP_MSG_TYPE_NONE = 0,
 
 	/* Init Messages */
@@ -347,18 +348,18 @@ enum {
 	NVSP_MSG5_TYPE_OID_QUERY_EX,
 	NVSP_MSG5_TYPE_OID_QUERY_EX_COMP,
 	NVSP_MSG5_TYPE_SUBCHANNEL,
-	NVSP_MSG5_TYPE_SEND_INDIRECTION_TABLE,
+	NVSP_MSG5_TYPE_SEND_INसूचीECTION_TABLE,
 
-	NVSP_MSG5_MAX = NVSP_MSG5_TYPE_SEND_INDIRECTION_TABLE,
+	NVSP_MSG5_MAX = NVSP_MSG5_TYPE_SEND_INसूचीECTION_TABLE,
 
 	/* Version 6 messages */
 	NVSP_MSG6_TYPE_PD_API,
 	NVSP_MSG6_TYPE_PD_POST_BATCH,
 
 	NVSP_MSG6_MAX = NVSP_MSG6_TYPE_PD_POST_BATCH
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	NVSP_STAT_NONE = 0,
 	NVSP_STAT_SUCCESS,
 	NVSP_STAT_FAIL,
@@ -368,84 +369,84 @@ enum {
 	NVSP_STAT_BUSY,
 	NVSP_STAT_PROTOCOL_UNSUPPORTED,
 	NVSP_STAT_MAX,
-};
+पूर्ण;
 
-struct nvsp_message_header {
+काष्ठा nvsp_message_header अणु
 	u32 msg_type;
-};
+पूर्ण;
 
 /* Init Messages */
 
 /*
  * This message is used by the VSC to initialize the channel after the channels
- * has been opened. This message should never include anything other then
- * versioning (i.e. this message will be the same for ever).
+ * has been खोलोed. This message should never include anything other then
+ * versioning (i.e. this message will be the same क्रम ever).
  */
-struct nvsp_message_init {
+काष्ठा nvsp_message_init अणु
 	u32 min_protocol_ver;
 	u32 max_protocol_ver;
-} __packed;
+पूर्ण __packed;
 
 /*
  * This message is used by the VSP to complete the initialization of the
  * channel. This message should never include anything other then versioning
- * (i.e. this message will be the same for ever).
+ * (i.e. this message will be the same क्रम ever).
  */
-struct nvsp_message_init_complete {
+काष्ठा nvsp_message_init_complete अणु
 	u32 negotiated_protocol_ver;
 	u32 max_mdl_chain_len;
 	u32 status;
-} __packed;
+पूर्ण __packed;
 
-union nvsp_message_init_uber {
-	struct nvsp_message_init init;
-	struct nvsp_message_init_complete init_complete;
-} __packed;
+जोड़ nvsp_message_init_uber अणु
+	काष्ठा nvsp_message_init init;
+	काष्ठा nvsp_message_init_complete init_complete;
+पूर्ण __packed;
 
 /* Version 1 Messages */
 
 /*
  * This message is used by the VSC to send the NDIS version to the VSP. The VSP
- * can use this information when handling OIDs sent by the VSC.
+ * can use this inक्रमmation when handling OIDs sent by the VSC.
  */
-struct nvsp_1_message_send_ndis_version {
+काष्ठा nvsp_1_message_send_ndis_version अणु
 	u32 ndis_major_ver;
 	u32 ndis_minor_ver;
-} __packed;
+पूर्ण __packed;
 
 /*
  * This message is used by the VSC to send a receive buffer to the VSP. The VSP
  * can then use the receive buffer to send data to the VSC.
  */
-struct nvsp_1_message_send_receive_buffer {
+काष्ठा nvsp_1_message_send_receive_buffer अणु
 	u32 gpadl_handle;
 	u16 id;
-} __packed;
+पूर्ण __packed;
 
-struct nvsp_1_receive_buffer_section {
+काष्ठा nvsp_1_receive_buffer_section अणु
 	u32 offset;
 	u32 sub_alloc_size;
 	u32 num_sub_allocs;
 	u32 end_offset;
-} __packed;
+पूर्ण __packed;
 
 /*
  * This message is used by the VSP to acknowledge a receive buffer send by the
- * VSC. This message must be sent by the VSP before the VSP uses the receive
+ * VSC. This message must be sent by the VSP beक्रमe the VSP uses the receive
  * buffer.
  */
-struct nvsp_1_message_send_receive_buffer_complete {
+काष्ठा nvsp_1_message_send_receive_buffer_complete अणु
 	u32 status;
 	u32 num_sections;
 
 	/*
-	 * The receive buffer is split into two parts, a large suballocation
+	 * The receive buffer is split पूर्णांकo two parts, a large suballocation
 	 * section and a small suballocation section. These sections are then
 	 * suballocated by a certain size.
 	 */
 
 	/*
-	 * For example, the following break up of the receive buffer has 6
+	 * For example, the following अवरोध up of the receive buffer has 6
 	 * large suballocations and 10 small suballocations.
 	 */
 
@@ -457,108 +458,108 @@ struct nvsp_1_message_send_receive_buffer_complete {
 	 *  LargeOffset                            SmallOffset
 	 */
 
-	struct nvsp_1_receive_buffer_section sections[1];
-} __packed;
+	काष्ठा nvsp_1_receive_buffer_section sections[1];
+पूर्ण __packed;
 
 /*
  * This message is sent by the VSC to revoke the receive buffer.  After the VSP
  * completes this transaction, the vsp should never use the receive buffer
  * again.
  */
-struct nvsp_1_message_revoke_receive_buffer {
+काष्ठा nvsp_1_message_revoke_receive_buffer अणु
 	u16 id;
-};
+पूर्ण;
 
 /*
  * This message is used by the VSC to send a send buffer to the VSP. The VSC
  * can then use the send buffer to send data to the VSP.
  */
-struct nvsp_1_message_send_send_buffer {
+काष्ठा nvsp_1_message_send_send_buffer अणु
 	u32 gpadl_handle;
 	u16 id;
-} __packed;
+पूर्ण __packed;
 
 /*
  * This message is used by the VSP to acknowledge a send buffer sent by the
- * VSC. This message must be sent by the VSP before the VSP uses the sent
+ * VSC. This message must be sent by the VSP beक्रमe the VSP uses the sent
  * buffer.
  */
-struct nvsp_1_message_send_send_buffer_complete {
+काष्ठा nvsp_1_message_send_send_buffer_complete अणु
 	u32 status;
 
 	/*
-	 * The VSC gets to choose the size of the send buffer and the VSP gets
-	 * to choose the sections size of the buffer.  This was done to enable
+	 * The VSC माला_लो to choose the size of the send buffer and the VSP माला_लो
+	 * to choose the sections size of the buffer.  This was करोne to enable
 	 * dynamic reconfigurations when the cost of GPA-direct buffers
 	 * decreases.
 	 */
 	u32 section_size;
-} __packed;
+पूर्ण __packed;
 
 /*
  * This message is sent by the VSC to revoke the send buffer.  After the VSP
  * completes this transaction, the vsp should never use the send buffer again.
  */
-struct nvsp_1_message_revoke_send_buffer {
+काष्ठा nvsp_1_message_revoke_send_buffer अणु
 	u16 id;
-};
+पूर्ण;
 
 /*
  * This message is used by both the VSP and the VSC to send a RNDIS message to
- * the opposite channel endpoint.
+ * the opposite channel endpoपूर्णांक.
  */
-struct nvsp_1_message_send_rndis_packet {
+काष्ठा nvsp_1_message_send_rndis_packet अणु
 	/*
-	 * This field is specified by RNDIS. They assume there's two different
+	 * This field is specअगरied by RNDIS. They assume there's two dअगरferent
 	 * channels of communication. However, the Network VSP only has one.
-	 * Therefore, the channel travels with the RNDIS packet.
+	 * Thereक्रमe, the channel travels with the RNDIS packet.
 	 */
 	u32 channel_type;
 
 	/*
 	 * This field is used to send part or all of the data through a send
-	 * buffer. This values specifies an index into the send buffer. If the
+	 * buffer. This values specअगरies an index पूर्णांकo the send buffer. If the
 	 * index is 0xFFFFFFFF, then the send buffer is not being used and all
 	 * of the data was sent through other VMBus mechanisms.
 	 */
 	u32 send_buf_section_index;
 	u32 send_buf_section_size;
-} __packed;
+पूर्ण __packed;
 
 /*
  * This message is used by both the VSP and the VSC to complete a RNDIS message
- * to the opposite channel endpoint. At this point, the initiator of this
+ * to the opposite channel endpoपूर्णांक. At this poपूर्णांक, the initiator of this
  * message cannot use any resources associated with the original RNDIS packet.
  */
-struct nvsp_1_message_send_rndis_packet_complete {
+काष्ठा nvsp_1_message_send_rndis_packet_complete अणु
 	u32 status;
-};
+पूर्ण;
 
-union nvsp_1_message_uber {
-	struct nvsp_1_message_send_ndis_version send_ndis_ver;
+जोड़ nvsp_1_message_uber अणु
+	काष्ठा nvsp_1_message_send_ndis_version send_ndis_ver;
 
-	struct nvsp_1_message_send_receive_buffer send_recv_buf;
-	struct nvsp_1_message_send_receive_buffer_complete
+	काष्ठा nvsp_1_message_send_receive_buffer send_recv_buf;
+	काष्ठा nvsp_1_message_send_receive_buffer_complete
 						send_recv_buf_complete;
-	struct nvsp_1_message_revoke_receive_buffer revoke_recv_buf;
+	काष्ठा nvsp_1_message_revoke_receive_buffer revoke_recv_buf;
 
-	struct nvsp_1_message_send_send_buffer send_send_buf;
-	struct nvsp_1_message_send_send_buffer_complete send_send_buf_complete;
-	struct nvsp_1_message_revoke_send_buffer revoke_send_buf;
+	काष्ठा nvsp_1_message_send_send_buffer send_send_buf;
+	काष्ठा nvsp_1_message_send_send_buffer_complete send_send_buf_complete;
+	काष्ठा nvsp_1_message_revoke_send_buffer revoke_send_buf;
 
-	struct nvsp_1_message_send_rndis_packet send_rndis_pkt;
-	struct nvsp_1_message_send_rndis_packet_complete
+	काष्ठा nvsp_1_message_send_rndis_packet send_rndis_pkt;
+	काष्ठा nvsp_1_message_send_rndis_packet_complete
 						send_rndis_pkt_complete;
-} __packed;
+पूर्ण __packed;
 
 
 /*
  * Network VSP protocol version 2 messages:
  */
-struct nvsp_2_vsc_capability {
-	union {
+काष्ठा nvsp_2_vsc_capability अणु
+	जोड़ अणु
 		u64 data;
-		struct {
+		काष्ठा अणु
 			u64 vmq:1;
 			u64 chimney:1;
 			u64 sriov:1;
@@ -567,18 +568,18 @@ struct nvsp_2_vsc_capability {
 			u64 teaming:1;
 			u64 vsubnetid:1;
 			u64 rsc:1;
-		};
-	};
-} __packed;
+		पूर्ण;
+	पूर्ण;
+पूर्ण __packed;
 
-struct nvsp_2_send_ndis_config {
+काष्ठा nvsp_2_send_ndis_config अणु
 	u32 mtu;
 	u32 reserved;
-	struct nvsp_2_vsc_capability capability;
-} __packed;
+	काष्ठा nvsp_2_vsc_capability capability;
+पूर्ण __packed;
 
 /* Allocate receive buffer */
-struct nvsp_2_alloc_rxbuf {
+काष्ठा nvsp_2_alloc_rxbuf अणु
 	/* Allocation ID to match the allocation request and response */
 	u32 alloc_id;
 
@@ -586,91 +587,91 @@ struct nvsp_2_alloc_rxbuf {
 	 * be allocated
 	 */
 	u32 len;
-} __packed;
+पूर्ण __packed;
 
 /* Allocate receive buffer complete */
-struct nvsp_2_alloc_rxbuf_comp {
-	/* The NDIS_STATUS code for buffer allocation */
+काष्ठा nvsp_2_alloc_rxbuf_comp अणु
+	/* The NDIS_STATUS code क्रम buffer allocation */
 	u32 status;
 
 	u32 alloc_id;
 
-	/* GPADL handle for the allocated receive buffer */
+	/* GPADL handle क्रम the allocated receive buffer */
 	u32 gpadl_handle;
 
 	/* Receive buffer ID */
 	u64 recv_buf_id;
-} __packed;
+पूर्ण __packed;
 
-struct nvsp_2_free_rxbuf {
+काष्ठा nvsp_2_मुक्त_rxbuf अणु
 	u64 recv_buf_id;
-} __packed;
+पूर्ण __packed;
 
-union nvsp_2_message_uber {
-	struct nvsp_2_send_ndis_config send_ndis_config;
-	struct nvsp_2_alloc_rxbuf alloc_rxbuf;
-	struct nvsp_2_alloc_rxbuf_comp alloc_rxbuf_comp;
-	struct nvsp_2_free_rxbuf free_rxbuf;
-} __packed;
+जोड़ nvsp_2_message_uber अणु
+	काष्ठा nvsp_2_send_ndis_config send_ndis_config;
+	काष्ठा nvsp_2_alloc_rxbuf alloc_rxbuf;
+	काष्ठा nvsp_2_alloc_rxbuf_comp alloc_rxbuf_comp;
+	काष्ठा nvsp_2_मुक्त_rxbuf मुक्त_rxbuf;
+पूर्ण __packed;
 
-struct nvsp_4_send_vf_association {
+काष्ठा nvsp_4_send_vf_association अणु
 	/* 1: allocated, serial number is valid. 0: not allocated */
 	u32 allocated;
 
 	/* Serial number of the VF to team with */
 	u32 serial;
-} __packed;
+पूर्ण __packed;
 
-enum nvsp_vm_datapath {
+क्रमागत nvsp_vm_datapath अणु
 	NVSP_DATAPATH_SYNTHETIC = 0,
 	NVSP_DATAPATH_VF,
 	NVSP_DATAPATH_MAX
-};
+पूर्ण;
 
-struct nvsp_4_sw_datapath {
+काष्ठा nvsp_4_sw_datapath अणु
 	u32 active_datapath; /* active data path in VM */
-} __packed;
+पूर्ण __packed;
 
-union nvsp_4_message_uber {
-	struct nvsp_4_send_vf_association vf_assoc;
-	struct nvsp_4_sw_datapath active_dp;
-} __packed;
+जोड़ nvsp_4_message_uber अणु
+	काष्ठा nvsp_4_send_vf_association vf_assoc;
+	काष्ठा nvsp_4_sw_datapath active_dp;
+पूर्ण __packed;
 
-enum nvsp_subchannel_operation {
+क्रमागत nvsp_subchannel_operation अणु
 	NVSP_SUBCHANNEL_NONE = 0,
 	NVSP_SUBCHANNEL_ALLOCATE,
 	NVSP_SUBCHANNEL_MAX
-};
+पूर्ण;
 
-struct nvsp_5_subchannel_request {
+काष्ठा nvsp_5_subchannel_request अणु
 	u32 op;
 	u32 num_subchannels;
-} __packed;
+पूर्ण __packed;
 
-struct nvsp_5_subchannel_complete {
+काष्ठा nvsp_5_subchannel_complete अणु
 	u32 status;
 	u32 num_subchannels; /* Actual number of subchannels allocated */
-} __packed;
+पूर्ण __packed;
 
-struct nvsp_5_send_indirect_table {
+काष्ठा nvsp_5_send_indirect_table अणु
 	/* The number of entries in the send indirection table */
 	u32 count;
 
 	/* The offset of the send indirection table from the beginning of
-	 * struct nvsp_message.
+	 * काष्ठा nvsp_message.
 	 * The send indirection table tells which channel to put the send
 	 * traffic on. Each entry is a channel number.
 	 */
 	u32 offset;
-} __packed;
+पूर्ण __packed;
 
-union nvsp_5_message_uber {
-	struct nvsp_5_subchannel_request subchn_req;
-	struct nvsp_5_subchannel_complete subchn_comp;
-	struct nvsp_5_send_indirect_table send_table;
-} __packed;
+जोड़ nvsp_5_message_uber अणु
+	काष्ठा nvsp_5_subchannel_request subchn_req;
+	काष्ठा nvsp_5_subchannel_complete subchn_comp;
+	काष्ठा nvsp_5_send_indirect_table send_table;
+पूर्ण __packed;
 
-enum nvsp_6_pd_api_op {
+क्रमागत nvsp_6_pd_api_op अणु
 	PD_API_OP_CONFIG = 1,
 	PD_API_OP_SW_DATAPATH, /* Switch Datapath */
 	PD_API_OP_OPEN_PROVIDER,
@@ -681,94 +682,94 @@ enum nvsp_6_pd_api_op {
 	PD_API_OP_ALLOC_COM_BUF, /* Allocate Common Buffer */
 	PD_API_OP_FREE_COM_BUF, /* Free Common Buffer */
 	PD_API_OP_MAX
-};
+पूर्ण;
 
-struct grp_affinity {
+काष्ठा grp_affinity अणु
 	u64 mask;
 	u16 grp;
 	u16 reserved[3];
-} __packed;
+पूर्ण __packed;
 
-struct nvsp_6_pd_api_req {
+काष्ठा nvsp_6_pd_api_req अणु
 	u32 op;
 
-	union {
-		/* MMIO information is sent from the VM to VSP */
-		struct __packed {
+	जोड़ अणु
+		/* MMIO inक्रमmation is sent from the VM to VSP */
+		काष्ठा __packed अणु
 			u64 mmio_pa; /* MMIO Physical Address */
 			u32 mmio_len;
 
 			/* Number of PD queues a VM can support */
 			u16 num_subchn;
-		} config;
+		पूर्ण config;
 
 		/* Switch Datapath */
-		struct __packed {
+		काष्ठा __packed अणु
 			/* Host Datapath Is PacketDirect */
 			u8 host_dpath_is_pd;
 
 			/* Guest PacketDirect Is Enabled */
 			u8 guest_pd_enabled;
-		} sw_dpath;
+		पूर्ण sw_dpath;
 
 		/* Open Provider*/
-		struct __packed {
+		काष्ठा __packed अणु
 			u32 prov_id; /* Provider id */
 			u32 flag;
-		} open_prov;
+		पूर्ण खोलो_prov;
 
 		/* Close Provider */
-		struct __packed {
+		काष्ठा __packed अणु
 			u32 prov_id;
-		} cls_prov;
+		पूर्ण cls_prov;
 
 		/* Create Queue*/
-		struct __packed {
+		काष्ठा __packed अणु
 			u32 prov_id;
 			u16 q_id;
 			u16 q_size;
 			u8 is_recv_q;
 			u8 is_rss_q;
 			u32 recv_data_len;
-			struct grp_affinity affy;
-		} cr_q;
+			काष्ठा grp_affinity affy;
+		पूर्ण cr_q;
 
 		/* Delete Queue*/
-		struct __packed {
+		काष्ठा __packed अणु
 			u32 prov_id;
 			u16 q_id;
-		} del_q;
+		पूर्ण del_q;
 
 		/* Flush Queue */
-		struct __packed {
+		काष्ठा __packed अणु
 			u32 prov_id;
 			u16 q_id;
-		} flush_q;
+		पूर्ण flush_q;
 
 		/* Allocate Common Buffer */
-		struct __packed {
+		काष्ठा __packed अणु
 			u32 len;
 			u32 pf_node; /* Preferred Node */
 			u16 region_id;
-		} alloc_com_buf;
+		पूर्ण alloc_com_buf;
 
 		/* Free Common Buffer */
-		struct __packed {
+		काष्ठा __packed अणु
 			u32 len;
 			u64 pa; /* Physical Address */
 			u32 pf_node; /* Preferred Node */
 			u16 region_id;
 			u8 cache_type;
-		} free_com_buf;
-	} __packed;
-} __packed;
+		पूर्ण मुक्त_com_buf;
+	पूर्ण __packed;
+पूर्ण __packed;
 
-struct nvsp_6_pd_api_comp {
+काष्ठा nvsp_6_pd_api_comp अणु
 	u32 op;
 	u32 status;
 
-	union {
-		struct __packed {
+	जोड़ अणु
+		काष्ठा __packed अणु
 			/* actual number of PD queues allocated to the VM */
 			u16 num_pd_q;
 
@@ -777,187 +778,187 @@ struct nvsp_6_pd_api_comp {
 
 			u8 is_supported; /* Is supported by VSP */
 			u8 is_enabled; /* Is enabled by VSP */
-		} config;
+		पूर्ण config;
 
 		/* Open Provider */
-		struct __packed {
+		काष्ठा __packed अणु
 			u32 prov_id;
-		} open_prov;
+		पूर्ण खोलो_prov;
 
 		/* Create Queue */
-		struct __packed {
+		काष्ठा __packed अणु
 			u32 prov_id;
 			u16 q_id;
 			u16 q_size;
 			u32 recv_data_len;
-			struct grp_affinity affy;
-		} cr_q;
+			काष्ठा grp_affinity affy;
+		पूर्ण cr_q;
 
 		/* Allocate Common Buffer */
-		struct __packed {
+		काष्ठा __packed अणु
 			u64 pa; /* Physical Address */
 			u32 len;
 			u32 pf_node; /* Preferred Node */
 			u16 region_id;
 			u8 cache_type;
-		} alloc_com_buf;
-	} __packed;
-} __packed;
+		पूर्ण alloc_com_buf;
+	पूर्ण __packed;
+पूर्ण __packed;
 
-struct nvsp_6_pd_buf {
+काष्ठा nvsp_6_pd_buf अणु
 	u32 region_offset;
 	u16 region_id;
 	u16 is_partial:1;
 	u16 reserved:15;
-} __packed;
+पूर्ण __packed;
 
-struct nvsp_6_pd_batch_msg {
-	struct nvsp_message_header hdr;
+काष्ठा nvsp_6_pd_batch_msg अणु
+	काष्ठा nvsp_message_header hdr;
 	u16 count;
 	u16 guest2host:1;
 	u16 is_recv:1;
 	u16 reserved:14;
-	struct nvsp_6_pd_buf pd_buf[0];
-} __packed;
+	काष्ठा nvsp_6_pd_buf pd_buf[0];
+पूर्ण __packed;
 
-union nvsp_6_message_uber {
-	struct nvsp_6_pd_api_req pd_req;
-	struct nvsp_6_pd_api_comp pd_comp;
-} __packed;
+जोड़ nvsp_6_message_uber अणु
+	काष्ठा nvsp_6_pd_api_req pd_req;
+	काष्ठा nvsp_6_pd_api_comp pd_comp;
+पूर्ण __packed;
 
-union nvsp_all_messages {
-	union nvsp_message_init_uber init_msg;
-	union nvsp_1_message_uber v1_msg;
-	union nvsp_2_message_uber v2_msg;
-	union nvsp_4_message_uber v4_msg;
-	union nvsp_5_message_uber v5_msg;
-	union nvsp_6_message_uber v6_msg;
-} __packed;
+जोड़ nvsp_all_messages अणु
+	जोड़ nvsp_message_init_uber init_msg;
+	जोड़ nvsp_1_message_uber v1_msg;
+	जोड़ nvsp_2_message_uber v2_msg;
+	जोड़ nvsp_4_message_uber v4_msg;
+	जोड़ nvsp_5_message_uber v5_msg;
+	जोड़ nvsp_6_message_uber v6_msg;
+पूर्ण __packed;
 
 /* ALL Messages */
-struct nvsp_message {
-	struct nvsp_message_header hdr;
-	union nvsp_all_messages msg;
-} __packed;
+काष्ठा nvsp_message अणु
+	काष्ठा nvsp_message_header hdr;
+	जोड़ nvsp_all_messages msg;
+पूर्ण __packed;
 
 
-#define NETVSC_MTU 65535
-#define NETVSC_MTU_MIN ETH_MIN_MTU
+#घोषणा NETVSC_MTU 65535
+#घोषणा NETVSC_MTU_MIN ETH_MIN_MTU
 
 /* Max buffer sizes allowed by a host */
-#define NETVSC_RECEIVE_BUFFER_SIZE		(1024 * 1024 * 31) /* 31MB */
-#define NETVSC_RECEIVE_BUFFER_SIZE_LEGACY	(1024 * 1024 * 15) /* 15MB */
-#define NETVSC_RECEIVE_BUFFER_DEFAULT		(1024 * 1024 * 16)
+#घोषणा NETVSC_RECEIVE_BUFFER_SIZE		(1024 * 1024 * 31) /* 31MB */
+#घोषणा NETVSC_RECEIVE_BUFFER_SIZE_LEGACY	(1024 * 1024 * 15) /* 15MB */
+#घोषणा NETVSC_RECEIVE_BUFFER_DEFAULT		(1024 * 1024 * 16)
 
-#define NETVSC_SEND_BUFFER_SIZE			(1024 * 1024 * 15)  /* 15MB */
-#define NETVSC_SEND_BUFFER_DEFAULT		(1024 * 1024)
+#घोषणा NETVSC_SEND_BUFFER_SIZE			(1024 * 1024 * 15)  /* 15MB */
+#घोषणा NETVSC_SEND_BUFFER_DEFAULT		(1024 * 1024)
 
-#define NETVSC_INVALID_INDEX			-1
+#घोषणा NETVSC_INVALID_INDEX			-1
 
-#define NETVSC_SEND_SECTION_SIZE		6144
-#define NETVSC_RECV_SECTION_SIZE		1728
+#घोषणा NETVSC_SEND_SECTION_SIZE		6144
+#घोषणा NETVSC_RECV_SECTION_SIZE		1728
 
 /* Default size of TX buf: 1MB, RX buf: 16MB */
-#define NETVSC_MIN_TX_SECTIONS	10
-#define NETVSC_DEFAULT_TX	(NETVSC_SEND_BUFFER_DEFAULT \
+#घोषणा NETVSC_MIN_TX_SECTIONS	10
+#घोषणा NETVSC_DEFAULT_TX	(NETVSC_SEND_BUFFER_DEFAULT \
 				 / NETVSC_SEND_SECTION_SIZE)
-#define NETVSC_MIN_RX_SECTIONS	10
-#define NETVSC_DEFAULT_RX	(NETVSC_RECEIVE_BUFFER_DEFAULT \
+#घोषणा NETVSC_MIN_RX_SECTIONS	10
+#घोषणा NETVSC_DEFAULT_RX	(NETVSC_RECEIVE_BUFFER_DEFAULT \
 				 / NETVSC_RECV_SECTION_SIZE)
 
-#define NETVSC_RECEIVE_BUFFER_ID		0xcafe
-#define NETVSC_SEND_BUFFER_ID			0
+#घोषणा NETVSC_RECEIVE_BUFFER_ID		0xcafe
+#घोषणा NETVSC_SEND_BUFFER_ID			0
 
-#define NETVSC_SUPPORTED_HW_FEATURES (NETIF_F_RXCSUM | NETIF_F_IP_CSUM | \
+#घोषणा NETVSC_SUPPORTED_HW_FEATURES (NETIF_F_RXCSUM | NETIF_F_IP_CSUM | \
 				      NETIF_F_TSO | NETIF_F_IPV6_CSUM | \
 				      NETIF_F_TSO6 | NETIF_F_LRO | \
 				      NETIF_F_SG | NETIF_F_RXHASH)
 
-#define VRSS_SEND_TAB_SIZE 16  /* must be power of 2 */
-#define VRSS_CHANNEL_MAX 64
-#define VRSS_CHANNEL_DEFAULT 8
+#घोषणा VRSS_SEND_TAB_SIZE 16  /* must be घातer of 2 */
+#घोषणा VRSS_CHANNEL_MAX 64
+#घोषणा VRSS_CHANNEL_DEFAULT 8
 
-#define RNDIS_MAX_PKT_DEFAULT 8
-#define RNDIS_PKT_ALIGN_DEFAULT 8
+#घोषणा RNDIS_MAX_PKT_DEFAULT 8
+#घोषणा RNDIS_PKT_ALIGN_DEFAULT 8
 
-#define NETVSC_XDP_HDRM 256
+#घोषणा NETVSC_XDP_HDRM 256
 
-#define NETVSC_MIN_OUT_MSG_SIZE (sizeof(struct vmpacket_descriptor) + \
-				 sizeof(struct nvsp_message))
-#define NETVSC_MIN_IN_MSG_SIZE sizeof(struct vmpacket_descriptor)
+#घोषणा NETVSC_MIN_OUT_MSG_SIZE (माप(काष्ठा vmpacket_descriptor) + \
+				 माप(काष्ठा nvsp_message))
+#घोषणा NETVSC_MIN_IN_MSG_SIZE माप(काष्ठा vmpacket_descriptor)
 
 /* Estimated requestor size:
  * out_ring_size/min_out_msg_size + in_ring_size/min_in_msg_size
  */
-static inline u32 netvsc_rqstor_size(unsigned long ringbytes)
-{
-	return ringbytes / NETVSC_MIN_OUT_MSG_SIZE +
+अटल अंतरभूत u32 netvsc_rqstor_size(अचिन्हित दीर्घ ringbytes)
+अणु
+	वापस ringbytes / NETVSC_MIN_OUT_MSG_SIZE +
 		ringbytes / NETVSC_MIN_IN_MSG_SIZE;
-}
+पूर्ण
 
-#define NETVSC_XFER_HEADER_SIZE(rng_cnt) \
-		(offsetof(struct vmtransfer_page_packet_header, ranges) + \
-		(rng_cnt) * sizeof(struct vmtransfer_page_range))
+#घोषणा NETVSC_XFER_HEADER_SIZE(rng_cnt) \
+		(दुरत्व(काष्ठा vmtransfer_page_packet_header, ranges) + \
+		(rng_cnt) * माप(काष्ठा vmtransfer_page_range))
 
-struct multi_send_data {
-	struct sk_buff *skb; /* skb containing the pkt */
-	struct hv_netvsc_packet *pkt; /* netvsc pkt pending */
+काष्ठा multi_send_data अणु
+	काष्ठा sk_buff *skb; /* skb containing the pkt */
+	काष्ठा hv_netvsc_packet *pkt; /* netvsc pkt pending */
 	u32 count; /* counter of batched packets */
-};
+पूर्ण;
 
-struct recv_comp_data {
+काष्ठा recv_comp_data अणु
 	u64 tid; /* transaction id */
 	u32 status;
-};
+पूर्ण;
 
-struct multi_recv_comp {
-	struct recv_comp_data *slots;
+काष्ठा multi_recv_comp अणु
+	काष्ठा recv_comp_data *slots;
 	u32 first;	/* first data entry */
-	u32 next;	/* next entry for writing */
-};
+	u32 next;	/* next entry क्रम writing */
+पूर्ण;
 
-#define NVSP_RSC_MAX 562 /* Max #RSC frags in a vmbus xfer page pkt */
+#घोषणा NVSP_RSC_MAX 562 /* Max #RSC frags in a vmbus xfer page pkt */
 
-struct nvsc_rsc {
-	struct ndis_pkt_8021q_info vlan;
-	struct ndis_tcp_ip_checksum_info csum_info;
+काष्ठा nvsc_rsc अणु
+	काष्ठा ndis_pkt_8021q_info vlan;
+	काष्ठा ndis_tcp_ip_checksum_info csum_info;
 	u32 hash_info;
-	u8 ppi_flags; /* valid/present bits for the above PPIs */
+	u8 ppi_flags; /* valid/present bits क्रम the above PPIs */
 	u8 is_last; /* last RNDIS msg in a vmtransfer_page */
 	u32 cnt; /* #fragments in an RSC packet */
 	u32 pktlen; /* Full packet length */
-	void *data[NVSP_RSC_MAX];
+	व्योम *data[NVSP_RSC_MAX];
 	u32 len[NVSP_RSC_MAX];
-};
+पूर्ण;
 
-#define NVSC_RSC_VLAN		BIT(0)	/* valid/present bit for 'vlan' */
-#define NVSC_RSC_CSUM_INFO	BIT(1)	/* valid/present bit for 'csum_info' */
-#define NVSC_RSC_HASH_INFO	BIT(2)	/* valid/present bit for 'hash_info' */
+#घोषणा NVSC_RSC_VLAN		BIT(0)	/* valid/present bit क्रम 'vlan' */
+#घोषणा NVSC_RSC_CSUM_INFO	BIT(1)	/* valid/present bit क्रम 'csum_info' */
+#घोषणा NVSC_RSC_HASH_INFO	BIT(2)	/* valid/present bit क्रम 'hash_info' */
 
-struct netvsc_stats {
+काष्ठा netvsc_stats अणु
 	u64 packets;
 	u64 bytes;
 	u64 broadcast;
 	u64 multicast;
 	u64 xdp_drop;
-	struct u64_stats_sync syncp;
-};
+	काष्ठा u64_stats_sync syncp;
+पूर्ण;
 
-struct netvsc_ethtool_stats {
-	unsigned long tx_scattered;
-	unsigned long tx_no_memory;
-	unsigned long tx_no_space;
-	unsigned long tx_too_big;
-	unsigned long tx_busy;
-	unsigned long tx_send_full;
-	unsigned long rx_comp_busy;
-	unsigned long rx_no_memory;
-	unsigned long stop_queue;
-	unsigned long wake_queue;
-	unsigned long vlan_error;
-};
+काष्ठा netvsc_ethtool_stats अणु
+	अचिन्हित दीर्घ tx_scattered;
+	अचिन्हित दीर्घ tx_no_memory;
+	अचिन्हित दीर्घ tx_no_space;
+	अचिन्हित दीर्घ tx_too_big;
+	अचिन्हित दीर्घ tx_busy;
+	अचिन्हित दीर्घ tx_send_full;
+	अचिन्हित दीर्घ rx_comp_busy;
+	अचिन्हित दीर्घ rx_no_memory;
+	अचिन्हित दीर्घ stop_queue;
+	अचिन्हित दीर्घ wake_queue;
+	अचिन्हित दीर्घ vlan_error;
+पूर्ण;
 
-struct netvsc_ethtool_pcpu_stats {
+काष्ठा netvsc_ethtool_pcpu_stats अणु
 	u64     rx_packets;
 	u64     rx_bytes;
 	u64     tx_packets;
@@ -966,44 +967,44 @@ struct netvsc_ethtool_pcpu_stats {
 	u64     vf_rx_bytes;
 	u64     vf_tx_packets;
 	u64     vf_tx_bytes;
-};
+पूर्ण;
 
-struct netvsc_vf_pcpu_stats {
+काष्ठा netvsc_vf_pcpu_stats अणु
 	u64     rx_packets;
 	u64     rx_bytes;
 	u64     tx_packets;
 	u64     tx_bytes;
-	struct u64_stats_sync   syncp;
+	काष्ठा u64_stats_sync   syncp;
 	u32	tx_dropped;
-};
+पूर्ण;
 
-struct netvsc_reconfig {
-	struct list_head list;
+काष्ठा netvsc_reconfig अणु
+	काष्ठा list_head list;
 	u32 event;
-};
+पूर्ण;
 
-/* L4 hash bits for different protocols */
-#define HV_TCP4_L4HASH 1
-#define HV_TCP6_L4HASH 2
-#define HV_UDP4_L4HASH 4
-#define HV_UDP6_L4HASH 8
-#define HV_DEFAULT_L4HASH (HV_TCP4_L4HASH | HV_TCP6_L4HASH | HV_UDP4_L4HASH | \
+/* L4 hash bits क्रम dअगरferent protocols */
+#घोषणा HV_TCP4_L4HASH 1
+#घोषणा HV_TCP6_L4HASH 2
+#घोषणा HV_UDP4_L4HASH 4
+#घोषणा HV_UDP6_L4HASH 8
+#घोषणा HV_DEFAULT_L4HASH (HV_TCP4_L4HASH | HV_TCP6_L4HASH | HV_UDP4_L4HASH | \
 			   HV_UDP6_L4HASH)
 
 /* The context of the netvsc device  */
-struct net_device_context {
-	/* point back to our device context */
-	struct hv_device *device_ctx;
+काष्ठा net_device_context अणु
+	/* poपूर्णांक back to our device context */
+	काष्ठा hv_device *device_ctx;
 	/* netvsc_device */
-	struct netvsc_device __rcu *nvdev;
+	काष्ठा netvsc_device __rcu *nvdev;
 	/* list of netvsc net_devices */
-	struct list_head list;
+	काष्ठा list_head list;
 	/* reconfigure work */
-	struct delayed_work dwork;
-	/* last reconfig time */
-	unsigned long last_reconfig;
+	काष्ठा delayed_work dwork;
+	/* last reconfig समय */
+	अचिन्हित दीर्घ last_reconfig;
 	/* reconfig events */
-	struct list_head reconfig_events;
+	काष्ठा list_head reconfig_events;
 	/* list protection */
 	spinlock_t lock;
 
@@ -1019,12 +1020,12 @@ struct net_device_context {
 	u8 duplex;
 	u32 speed;
 	u32 l4_hash; /* L4 hash settings */
-	struct netvsc_ethtool_stats eth_stats;
+	काष्ठा netvsc_ethtool_stats eth_stats;
 
-	/* State to manage the associated VF interface. */
-	struct net_device __rcu *vf_netdev;
-	struct netvsc_vf_pcpu_stats __percpu *vf_stats;
-	struct delayed_work vf_takeover;
+	/* State to manage the associated VF पूर्णांकerface. */
+	काष्ठा net_device __rcu *vf_netdev;
+	काष्ठा netvsc_vf_pcpu_stats __percpu *vf_stats;
+	काष्ठा delayed_work vf_takeover;
 
 	/* 1: allocated, serial number is valid. 0: not allocated */
 	u32 vf_alloc;
@@ -1035,38 +1036,38 @@ struct net_device_context {
 	bool  data_path_is_vf;
 
 	/* Used to temporarily save the config info across hibernation */
-	struct netvsc_device_info *saved_netvsc_dev_info;
-};
+	काष्ठा netvsc_device_info *saved_netvsc_dev_info;
+पूर्ण;
 
 /* Per channel data */
-struct netvsc_channel {
-	struct vmbus_channel *channel;
-	struct netvsc_device *net_device;
-	void *recv_buf; /* buffer to copy packets out from the receive buffer */
-	const struct vmpacket_descriptor *desc;
-	struct napi_struct napi;
-	struct multi_send_data msd;
-	struct multi_recv_comp mrc;
+काष्ठा netvsc_channel अणु
+	काष्ठा vmbus_channel *channel;
+	काष्ठा netvsc_device *net_device;
+	व्योम *recv_buf; /* buffer to copy packets out from the receive buffer */
+	स्थिर काष्ठा vmpacket_descriptor *desc;
+	काष्ठा napi_काष्ठा napi;
+	काष्ठा multi_send_data msd;
+	काष्ठा multi_recv_comp mrc;
 	atomic_t queue_sends;
-	struct nvsc_rsc rsc;
+	काष्ठा nvsc_rsc rsc;
 
-	struct bpf_prog __rcu *bpf_prog;
-	struct xdp_rxq_info xdp_rxq;
+	काष्ठा bpf_prog __rcu *bpf_prog;
+	काष्ठा xdp_rxq_info xdp_rxq;
 
-	struct netvsc_stats tx_stats;
-	struct netvsc_stats rx_stats;
-};
+	काष्ठा netvsc_stats tx_stats;
+	काष्ठा netvsc_stats rx_stats;
+पूर्ण;
 
 /* Per netvsc device */
-struct netvsc_device {
+काष्ठा netvsc_device अणु
 	u32 nvsp_version;
 
-	wait_queue_head_t wait_drain;
+	रुको_queue_head_t रुको_drain;
 	bool destroy;
-	bool tx_disable; /* if true, do not wake up queue again */
+	bool tx_disable; /* अगर true, करो not wake up queue again */
 
 	/* Receive buffer allocated by us but manages by NetVSP */
-	void *recv_buf;
+	व्योम *recv_buf;
 	u32 recv_buf_size; /* allocated bytes */
 	u32 recv_buf_gpadl_handle;
 	u32 recv_section_cnt;
@@ -1074,45 +1075,45 @@ struct netvsc_device {
 	u32 recv_completion_cnt;
 
 	/* Send buffer allocated by us */
-	void *send_buf;
+	व्योम *send_buf;
 	u32 send_buf_gpadl_handle;
 	u32 send_section_cnt;
 	u32 send_section_size;
-	unsigned long *send_section_map;
+	अचिन्हित दीर्घ *send_section_map;
 
-	/* Used for NetVSP initialization protocol */
-	struct completion channel_init_wait;
-	struct nvsp_message channel_init_pkt;
+	/* Used क्रम NetVSP initialization protocol */
+	काष्ठा completion channel_init_रुको;
+	काष्ठा nvsp_message channel_init_pkt;
 
-	struct nvsp_message revoke_packet;
+	काष्ठा nvsp_message revoke_packet;
 
 	u32 max_chn;
 	u32 num_chn;
 
-	atomic_t open_chn;
-	struct work_struct subchan_work;
-	wait_queue_head_t subchan_open;
+	atomic_t खोलो_chn;
+	काष्ठा work_काष्ठा subchan_work;
+	रुको_queue_head_t subchan_खोलो;
 
-	struct rndis_device *extension;
+	काष्ठा rndis_device *extension;
 
 	u32 max_pkt; /* max number of pkt in one send, e.g. 8 */
 	u32 pkt_align; /* alignment bytes, e.g. 8 */
 
-	struct netvsc_channel chan_table[VRSS_CHANNEL_MAX];
+	काष्ठा netvsc_channel chan_table[VRSS_CHANNEL_MAX];
 
-	struct rcu_head rcu;
-};
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
 /* NdisInitialize message */
-struct rndis_initialize_request {
+काष्ठा rndis_initialize_request अणु
 	u32 req_id;
 	u32 major_ver;
 	u32 minor_ver;
 	u32 max_xfer_size;
-};
+पूर्ण;
 
 /* Response to NdisInitialize */
-struct rndis_initialize_complete {
+काष्ठा rndis_initialize_complete अणु
 	u32 req_id;
 	u32 status;
 	u32 major_ver;
@@ -1124,95 +1125,95 @@ struct rndis_initialize_complete {
 	u32 pkt_alignment_factor;
 	u32 af_list_offset;
 	u32 af_list_size;
-};
+पूर्ण;
 
-/* Call manager devices only: Information about an address family */
+/* Call manager devices only: Inक्रमmation about an address family */
 /* supported by the device is appended to the response to NdisInitialize. */
-struct rndis_co_address_family {
+काष्ठा rndis_co_address_family अणु
 	u32 address_family;
 	u32 major_ver;
 	u32 minor_ver;
-};
+पूर्ण;
 
 /* NdisHalt message */
-struct rndis_halt_request {
+काष्ठा rndis_halt_request अणु
 	u32 req_id;
-};
+पूर्ण;
 
 /* NdisQueryRequest message */
-struct rndis_query_request {
+काष्ठा rndis_query_request अणु
 	u32 req_id;
 	u32 oid;
 	u32 info_buflen;
 	u32 info_buf_offset;
 	u32 dev_vc_handle;
-};
+पूर्ण;
 
 /* Response to NdisQueryRequest */
-struct rndis_query_complete {
+काष्ठा rndis_query_complete अणु
 	u32 req_id;
 	u32 status;
 	u32 info_buflen;
 	u32 info_buf_offset;
-};
+पूर्ण;
 
 /* NdisSetRequest message */
-struct rndis_set_request {
+काष्ठा rndis_set_request अणु
 	u32 req_id;
 	u32 oid;
 	u32 info_buflen;
 	u32 info_buf_offset;
 	u32 dev_vc_handle;
-};
+पूर्ण;
 
 /* Response to NdisSetRequest */
-struct rndis_set_complete {
+काष्ठा rndis_set_complete अणु
 	u32 req_id;
 	u32 status;
-};
+पूर्ण;
 
 /* NdisReset message */
-struct rndis_reset_request {
+काष्ठा rndis_reset_request अणु
 	u32 reserved;
-};
+पूर्ण;
 
 /* Response to NdisReset */
-struct rndis_reset_complete {
+काष्ठा rndis_reset_complete अणु
 	u32 status;
 	u32 addressing_reset;
-};
+पूर्ण;
 
 /* NdisMIndicateStatus message */
-struct rndis_indicate_status {
+काष्ठा rndis_indicate_status अणु
 	u32 status;
 	u32 status_buflen;
 	u32 status_buf_offset;
-};
+पूर्ण;
 
-/* Diagnostic information passed as the status buffer in */
-/* struct rndis_indicate_status messages signifying error conditions. */
-struct rndis_diagnostic_info {
+/* Diagnostic inक्रमmation passed as the status buffer in */
+/* काष्ठा rndis_indicate_status messages signअगरying error conditions. */
+काष्ठा rndis_diagnostic_info अणु
 	u32 diag_status;
 	u32 error_offset;
-};
+पूर्ण;
 
 /* NdisKeepAlive message */
-struct rndis_keepalive_request {
+काष्ठा rndis_keepalive_request अणु
 	u32 req_id;
-};
+पूर्ण;
 
 /* Response to NdisKeepAlive */
-struct rndis_keepalive_complete {
+काष्ठा rndis_keepalive_complete अणु
 	u32 req_id;
 	u32 status;
-};
+पूर्ण;
 
 /*
  * Data message. All Offset fields contain byte offsets from the beginning of
- * struct rndis_packet. All Length fields are in bytes.  VcHandle is set
- * to 0 for connectionless data, otherwise it contains the VC handle.
+ * काष्ठा rndis_packet. All Length fields are in bytes.  VcHandle is set
+ * to 0 क्रम connectionless data, otherwise it contains the VC handle.
  */
-struct rndis_packet {
+काष्ठा rndis_packet अणु
 	u32 data_offset;
 	u32 data_len;
 	u32 oob_data_offset;
@@ -1222,24 +1223,24 @@ struct rndis_packet {
 	u32 per_pkt_info_len;
 	u32 vc_handle;
 	u32 reserved;
-};
+पूर्ण;
 
 /* Optional Out of Band data associated with a Data message. */
-struct rndis_oobd {
+काष्ठा rndis_oobd अणु
 	u32 size;
 	u32 type;
 	u32 class_info_offset;
-};
+पूर्ण;
 
 /* Packet extension field contents associated with a Data message. */
-struct rndis_per_packet_info {
+काष्ठा rndis_per_packet_info अणु
 	u32 size;
 	u32 type:31;
-	u32 internal:1;
+	u32 पूर्णांकernal:1;
 	u32 ppi_offset;
-};
+पूर्ण;
 
-enum ndis_per_pkt_info_type {
+क्रमागत ndis_per_pkt_info_type अणु
 	TCPIP_CHKSUM_PKTINFO,
 	IPSEC_PKTINFO,
 	TCP_LARGESEND_PKTINFO,
@@ -1254,120 +1255,120 @@ enum ndis_per_pkt_info_type {
 	CACHED_NET_BUFLIST,
 	SHORT_PKT_PADINFO,
 	MAX_PER_PKT_INFO
-};
+पूर्ण;
 
-enum rndis_per_pkt_info_interal_type {
+क्रमागत rndis_per_pkt_info_पूर्णांकeral_type अणु
 	RNDIS_PKTINFO_ID = 1,
 	/* Add more members here */
 
 	RNDIS_PKTINFO_MAX
-};
+पूर्ण;
 
-#define RNDIS_PKTINFO_SUBALLOC BIT(0)
-#define RNDIS_PKTINFO_1ST_FRAG BIT(1)
-#define RNDIS_PKTINFO_LAST_FRAG BIT(2)
+#घोषणा RNDIS_PKTINFO_SUBALLOC BIT(0)
+#घोषणा RNDIS_PKTINFO_1ST_FRAG BIT(1)
+#घोषणा RNDIS_PKTINFO_LAST_FRAG BIT(2)
 
-#define RNDIS_PKTINFO_ID_V1 1
+#घोषणा RNDIS_PKTINFO_ID_V1 1
 
-struct rndis_pktinfo_id {
+काष्ठा rndis_pktinfo_id अणु
 	u8 ver;
 	u8 flag;
 	u16 pkt_id;
-};
+पूर्ण;
 
-struct ndis_object_header {
+काष्ठा ndis_object_header अणु
 	u8 type;
 	u8 revision;
 	u16 size;
-};
+पूर्ण;
 
-#define NDIS_OBJECT_TYPE_DEFAULT	0x80
-#define NDIS_OFFLOAD_PARAMETERS_REVISION_3 3
-#define NDIS_OFFLOAD_PARAMETERS_REVISION_2 2
-#define NDIS_OFFLOAD_PARAMETERS_REVISION_1 1
+#घोषणा NDIS_OBJECT_TYPE_DEFAULT	0x80
+#घोषणा NDIS_OFFLOAD_PARAMETERS_REVISION_3 3
+#घोषणा NDIS_OFFLOAD_PARAMETERS_REVISION_2 2
+#घोषणा NDIS_OFFLOAD_PARAMETERS_REVISION_1 1
 
-#define NDIS_OFFLOAD_PARAMETERS_NO_CHANGE 0
-#define NDIS_OFFLOAD_PARAMETERS_LSOV2_DISABLED 1
-#define NDIS_OFFLOAD_PARAMETERS_LSOV2_ENABLED  2
-#define NDIS_OFFLOAD_PARAMETERS_LSOV1_ENABLED  2
-#define NDIS_OFFLOAD_PARAMETERS_RSC_DISABLED 1
-#define NDIS_OFFLOAD_PARAMETERS_RSC_ENABLED 2
-#define NDIS_OFFLOAD_PARAMETERS_TX_RX_DISABLED 1
-#define NDIS_OFFLOAD_PARAMETERS_TX_ENABLED_RX_DISABLED 2
-#define NDIS_OFFLOAD_PARAMETERS_RX_ENABLED_TX_DISABLED 3
-#define NDIS_OFFLOAD_PARAMETERS_TX_RX_ENABLED 4
+#घोषणा NDIS_OFFLOAD_PARAMETERS_NO_CHANGE 0
+#घोषणा NDIS_OFFLOAD_PARAMETERS_LSOV2_DISABLED 1
+#घोषणा NDIS_OFFLOAD_PARAMETERS_LSOV2_ENABLED  2
+#घोषणा NDIS_OFFLOAD_PARAMETERS_LSOV1_ENABLED  2
+#घोषणा NDIS_OFFLOAD_PARAMETERS_RSC_DISABLED 1
+#घोषणा NDIS_OFFLOAD_PARAMETERS_RSC_ENABLED 2
+#घोषणा NDIS_OFFLOAD_PARAMETERS_TX_RX_DISABLED 1
+#घोषणा NDIS_OFFLOAD_PARAMETERS_TX_ENABLED_RX_DISABLED 2
+#घोषणा NDIS_OFFLOAD_PARAMETERS_RX_ENABLED_TX_DISABLED 3
+#घोषणा NDIS_OFFLOAD_PARAMETERS_TX_RX_ENABLED 4
 
-#define NDIS_TCP_LARGE_SEND_OFFLOAD_V2_TYPE	1
-#define NDIS_TCP_LARGE_SEND_OFFLOAD_IPV4	0
-#define NDIS_TCP_LARGE_SEND_OFFLOAD_IPV6	1
+#घोषणा NDIS_TCP_LARGE_SEND_OFFLOAD_V2_TYPE	1
+#घोषणा NDIS_TCP_LARGE_SEND_OFFLOAD_IPV4	0
+#घोषणा NDIS_TCP_LARGE_SEND_OFFLOAD_IPV6	1
 
-#define VERSION_4_OFFLOAD_SIZE			22
+#घोषणा VERSION_4_OFFLOAD_SIZE			22
 /*
- * New offload OIDs for NDIS 6
+ * New offload OIDs क्रम NDIS 6
  */
-#define OID_TCP_OFFLOAD_CURRENT_CONFIG 0xFC01020B /* query only */
-#define OID_TCP_OFFLOAD_PARAMETERS 0xFC01020C		/* set only */
-#define OID_TCP_OFFLOAD_HARDWARE_CAPABILITIES 0xFC01020D/* query only */
-#define OID_TCP_CONNECTION_OFFLOAD_CURRENT_CONFIG 0xFC01020E /* query only */
-#define OID_TCP_CONNECTION_OFFLOAD_HARDWARE_CAPABILITIES 0xFC01020F /* query */
-#define OID_OFFLOAD_ENCAPSULATION 0x0101010A /* set/query */
+#घोषणा OID_TCP_OFFLOAD_CURRENT_CONFIG 0xFC01020B /* query only */
+#घोषणा OID_TCP_OFFLOAD_PARAMETERS 0xFC01020C		/* set only */
+#घोषणा OID_TCP_OFFLOAD_HARDWARE_CAPABILITIES 0xFC01020D/* query only */
+#घोषणा OID_TCP_CONNECTION_OFFLOAD_CURRENT_CONFIG 0xFC01020E /* query only */
+#घोषणा OID_TCP_CONNECTION_OFFLOAD_HARDWARE_CAPABILITIES 0xFC01020F /* query */
+#घोषणा OID_OFFLOAD_ENCAPSULATION 0x0101010A /* set/query */
 
 /*
  * OID_TCP_OFFLOAD_HARDWARE_CAPABILITIES
  * ndis_type: NDIS_OBJTYPE_OFFLOAD
  */
 
-#define	NDIS_OFFLOAD_ENCAP_NONE		0x0000
-#define	NDIS_OFFLOAD_ENCAP_NULL		0x0001
-#define	NDIS_OFFLOAD_ENCAP_8023		0x0002
-#define	NDIS_OFFLOAD_ENCAP_8023PQ	0x0004
-#define	NDIS_OFFLOAD_ENCAP_8023PQ_OOB	0x0008
-#define	NDIS_OFFLOAD_ENCAP_RFC1483	0x0010
+#घोषणा	NDIS_OFFLOAD_ENCAP_NONE		0x0000
+#घोषणा	NDIS_OFFLOAD_ENCAP_शून्य		0x0001
+#घोषणा	NDIS_OFFLOAD_ENCAP_8023		0x0002
+#घोषणा	NDIS_OFFLOAD_ENCAP_8023PQ	0x0004
+#घोषणा	NDIS_OFFLOAD_ENCAP_8023PQ_OOB	0x0008
+#घोषणा	NDIS_OFFLOAD_ENCAP_RFC1483	0x0010
 
-struct ndis_csum_offload {
+काष्ठा ndis_csum_offload अणु
 	u32	ip4_txenc;
 	u32	ip4_txcsum;
-#define	NDIS_TXCSUM_CAP_IP4OPT		0x001
-#define	NDIS_TXCSUM_CAP_TCP4OPT		0x004
-#define	NDIS_TXCSUM_CAP_TCP4		0x010
-#define	NDIS_TXCSUM_CAP_UDP4		0x040
-#define	NDIS_TXCSUM_CAP_IP4		0x100
+#घोषणा	NDIS_TXCSUM_CAP_IP4OPT		0x001
+#घोषणा	NDIS_TXCSUM_CAP_TCP4OPT		0x004
+#घोषणा	NDIS_TXCSUM_CAP_TCP4		0x010
+#घोषणा	NDIS_TXCSUM_CAP_UDP4		0x040
+#घोषणा	NDIS_TXCSUM_CAP_IP4		0x100
 
-#define NDIS_TXCSUM_ALL_TCP4	(NDIS_TXCSUM_CAP_TCP4 | NDIS_TXCSUM_CAP_TCP4OPT)
+#घोषणा NDIS_TXCSUM_ALL_TCP4	(NDIS_TXCSUM_CAP_TCP4 | NDIS_TXCSUM_CAP_TCP4OPT)
 
 	u32	ip4_rxenc;
 	u32	ip4_rxcsum;
-#define	NDIS_RXCSUM_CAP_IP4OPT		0x001
-#define	NDIS_RXCSUM_CAP_TCP4OPT		0x004
-#define	NDIS_RXCSUM_CAP_TCP4		0x010
-#define	NDIS_RXCSUM_CAP_UDP4		0x040
-#define	NDIS_RXCSUM_CAP_IP4		0x100
+#घोषणा	NDIS_RXCSUM_CAP_IP4OPT		0x001
+#घोषणा	NDIS_RXCSUM_CAP_TCP4OPT		0x004
+#घोषणा	NDIS_RXCSUM_CAP_TCP4		0x010
+#घोषणा	NDIS_RXCSUM_CAP_UDP4		0x040
+#घोषणा	NDIS_RXCSUM_CAP_IP4		0x100
 	u32	ip6_txenc;
 	u32	ip6_txcsum;
-#define	NDIS_TXCSUM_CAP_IP6EXT		0x001
-#define	NDIS_TXCSUM_CAP_TCP6OPT		0x004
-#define	NDIS_TXCSUM_CAP_TCP6		0x010
-#define	NDIS_TXCSUM_CAP_UDP6		0x040
+#घोषणा	NDIS_TXCSUM_CAP_IP6EXT		0x001
+#घोषणा	NDIS_TXCSUM_CAP_TCP6OPT		0x004
+#घोषणा	NDIS_TXCSUM_CAP_TCP6		0x010
+#घोषणा	NDIS_TXCSUM_CAP_UDP6		0x040
 	u32	ip6_rxenc;
 	u32	ip6_rxcsum;
-#define	NDIS_RXCSUM_CAP_IP6EXT		0x001
-#define	NDIS_RXCSUM_CAP_TCP6OPT		0x004
-#define	NDIS_RXCSUM_CAP_TCP6		0x010
-#define	NDIS_RXCSUM_CAP_UDP6		0x040
+#घोषणा	NDIS_RXCSUM_CAP_IP6EXT		0x001
+#घोषणा	NDIS_RXCSUM_CAP_TCP6OPT		0x004
+#घोषणा	NDIS_RXCSUM_CAP_TCP6		0x010
+#घोषणा	NDIS_RXCSUM_CAP_UDP6		0x040
 
-#define NDIS_TXCSUM_ALL_TCP6	(NDIS_TXCSUM_CAP_TCP6 |		\
+#घोषणा NDIS_TXCSUM_ALL_TCP6	(NDIS_TXCSUM_CAP_TCP6 |		\
 				 NDIS_TXCSUM_CAP_TCP6OPT |	\
 				 NDIS_TXCSUM_CAP_IP6EXT)
-};
+पूर्ण;
 
-struct ndis_lsov1_offload {
+काष्ठा ndis_lsov1_offload अणु
 	u32	encap;
 	u32	maxsize;
 	u32	minsegs;
 	u32	opts;
-};
+पूर्ण;
 
-struct ndis_ipsecv1_offload {
+काष्ठा ndis_ipsecv1_offload अणु
 	u32	encap;
 	u32	ah_esp;
 	u32	xport_tun;
@@ -1375,9 +1376,9 @@ struct ndis_ipsecv1_offload {
 	u32	flags;
 	u32	ip4_ah;
 	u32	ip4_esp;
-};
+पूर्ण;
 
-struct ndis_lsov2_offload {
+काष्ठा ndis_lsov2_offload अणु
 	u32	ip4_encap;
 	u32	ip4_maxsz;
 	u32	ip4_minsg;
@@ -1385,14 +1386,14 @@ struct ndis_lsov2_offload {
 	u32	ip6_maxsz;
 	u32	ip6_minsg;
 	u32	ip6_opts;
-#define	NDIS_LSOV2_CAP_IP6EXT		0x001
-#define	NDIS_LSOV2_CAP_TCP6OPT		0x004
+#घोषणा	NDIS_LSOV2_CAP_IP6EXT		0x001
+#घोषणा	NDIS_LSOV2_CAP_TCP6OPT		0x004
 
-#define NDIS_LSOV2_CAP_IP6		(NDIS_LSOV2_CAP_IP6EXT | \
+#घोषणा NDIS_LSOV2_CAP_IP6		(NDIS_LSOV2_CAP_IP6EXT | \
 					 NDIS_LSOV2_CAP_TCP6OPT)
-};
+पूर्ण;
 
-struct ndis_ipsecv2_offload {
+काष्ठा ndis_ipsecv2_offload अणु
 	u32	encap;
 	u8	ip6;
 	u8	ip4opt;
@@ -1409,38 +1410,38 @@ struct ndis_ipsecv2_offload {
 	u32	auth;
 	u32	crypto;
 	u32	sa_caps;
-};
+पूर्ण;
 
-struct ndis_rsc_offload {
+काष्ठा ndis_rsc_offload अणु
 	u8	ip4;
 	u8	ip6;
-};
+पूर्ण;
 
-struct ndis_encap_offload {
+काष्ठा ndis_encap_offload अणु
 	u32	flags;
 	u32	maxhdr;
-};
+पूर्ण;
 
-struct ndis_offload {
-	struct ndis_object_header	header;
-	struct ndis_csum_offload	csum;
-	struct ndis_lsov1_offload	lsov1;
-	struct ndis_ipsecv1_offload	ipsecv1;
-	struct ndis_lsov2_offload	lsov2;
+काष्ठा ndis_offload अणु
+	काष्ठा ndis_object_header	header;
+	काष्ठा ndis_csum_offload	csum;
+	काष्ठा ndis_lsov1_offload	lsov1;
+	काष्ठा ndis_ipsecv1_offload	ipsecv1;
+	काष्ठा ndis_lsov2_offload	lsov2;
 	u32				flags;
 	/* NDIS >= 6.1 */
-	struct ndis_ipsecv2_offload	ipsecv2;
+	काष्ठा ndis_ipsecv2_offload	ipsecv2;
 	/* NDIS >= 6.30 */
-	struct ndis_rsc_offload		rsc;
-	struct ndis_encap_offload	encap_gre;
-};
+	काष्ठा ndis_rsc_offload		rsc;
+	काष्ठा ndis_encap_offload	encap_gre;
+पूर्ण;
 
-#define	NDIS_OFFLOAD_SIZE		sizeof(struct ndis_offload)
-#define	NDIS_OFFLOAD_SIZE_6_0		offsetof(struct ndis_offload, ipsecv2)
-#define	NDIS_OFFLOAD_SIZE_6_1		offsetof(struct ndis_offload, rsc)
+#घोषणा	NDIS_OFFLOAD_SIZE		माप(काष्ठा ndis_offload)
+#घोषणा	NDIS_OFFLOAD_SIZE_6_0		दुरत्व(काष्ठा ndis_offload, ipsecv2)
+#घोषणा	NDIS_OFFLOAD_SIZE_6_1		दुरत्व(काष्ठा ndis_offload, rsc)
 
-struct ndis_offload_params {
-	struct ndis_object_header header;
+काष्ठा ndis_offload_params अणु
+	काष्ठा ndis_object_header header;
 	u8 ip_v4_csum;
 	u8 tcp_ip_v4_csum;
 	u8 udp_ip_v4_csum;
@@ -1455,150 +1456,150 @@ struct ndis_offload_params {
 	u32 flags;
 	u8 ip_sec_v2;
 	u8 ip_sec_v2_ip_v4;
-	struct {
+	काष्ठा अणु
 		u8 rsc_ip_v4;
 		u8 rsc_ip_v6;
-	};
-	struct {
+	पूर्ण;
+	काष्ठा अणु
 		u8 encapsulated_packet_task_offload;
 		u8 encapsulation_types;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-struct ndis_tcp_lso_info {
-	union {
-		struct {
+काष्ठा ndis_tcp_lso_info अणु
+	जोड़ अणु
+		काष्ठा अणु
 			u32 unused:30;
 			u32 type:1;
 			u32 reserved2:1;
-		} transmit;
-		struct {
+		पूर्ण transmit;
+		काष्ठा अणु
 			u32 mss:20;
 			u32 tcp_header_offset:10;
 			u32 type:1;
 			u32 reserved2:1;
-		} lso_v1_transmit;
-		struct {
+		पूर्ण lso_v1_transmit;
+		काष्ठा अणु
 			u32 tcp_payload:30;
 			u32 type:1;
 			u32 reserved2:1;
-		} lso_v1_transmit_complete;
-		struct {
+		पूर्ण lso_v1_transmit_complete;
+		काष्ठा अणु
 			u32 mss:20;
 			u32 tcp_header_offset:10;
 			u32 type:1;
 			u32 ip_version:1;
-		} lso_v2_transmit;
-		struct {
+		पूर्ण lso_v2_transmit;
+		काष्ठा अणु
 			u32 reserved:30;
 			u32 type:1;
 			u32 reserved2:1;
-		} lso_v2_transmit_complete;
+		पूर्ण lso_v2_transmit_complete;
 		u32  value;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-#define NDIS_VLAN_PPI_SIZE (sizeof(struct rndis_per_packet_info) + \
-		sizeof(struct ndis_pkt_8021q_info))
+#घोषणा NDIS_VLAN_PPI_SIZE (माप(काष्ठा rndis_per_packet_info) + \
+		माप(काष्ठा ndis_pkt_8021q_info))
 
-#define NDIS_CSUM_PPI_SIZE (sizeof(struct rndis_per_packet_info) + \
-		sizeof(struct ndis_tcp_ip_checksum_info))
+#घोषणा NDIS_CSUM_PPI_SIZE (माप(काष्ठा rndis_per_packet_info) + \
+		माप(काष्ठा ndis_tcp_ip_checksum_info))
 
-#define NDIS_LSO_PPI_SIZE (sizeof(struct rndis_per_packet_info) + \
-		sizeof(struct ndis_tcp_lso_info))
+#घोषणा NDIS_LSO_PPI_SIZE (माप(काष्ठा rndis_per_packet_info) + \
+		माप(काष्ठा ndis_tcp_lso_info))
 
-#define NDIS_HASH_PPI_SIZE (sizeof(struct rndis_per_packet_info) + \
-		sizeof(u32))
+#घोषणा NDIS_HASH_PPI_SIZE (माप(काष्ठा rndis_per_packet_info) + \
+		माप(u32))
 
 /* Total size of all PPI data */
-#define NDIS_ALL_PPI_SIZE (NDIS_VLAN_PPI_SIZE + NDIS_CSUM_PPI_SIZE + \
+#घोषणा NDIS_ALL_PPI_SIZE (NDIS_VLAN_PPI_SIZE + NDIS_CSUM_PPI_SIZE + \
 			   NDIS_LSO_PPI_SIZE + NDIS_HASH_PPI_SIZE)
 
-/* Format of Information buffer passed in a SetRequest for the OID */
+/* Format of Inक्रमmation buffer passed in a SetRequest क्रम the OID */
 /* OID_GEN_RNDIS_CONFIG_PARAMETER. */
-struct rndis_config_parameter_info {
+काष्ठा rndis_config_parameter_info अणु
 	u32 parameter_name_offset;
 	u32 parameter_name_length;
 	u32 parameter_type;
 	u32 parameter_value_offset;
 	u32 parameter_value_length;
-};
+पूर्ण;
 
-/* Values for ParameterType in struct rndis_config_parameter_info */
-#define RNDIS_CONFIG_PARAM_TYPE_INTEGER     0
-#define RNDIS_CONFIG_PARAM_TYPE_STRING      2
+/* Values क्रम ParameterType in काष्ठा rndis_config_parameter_info */
+#घोषणा RNDIS_CONFIG_PARAM_TYPE_INTEGER     0
+#घोषणा RNDIS_CONFIG_PARAM_TYPE_STRING      2
 
-/* CONDIS Miniport messages for connection oriented devices */
-/* that do not implement a call manager. */
+/* CONDIS Miniport messages क्रम connection oriented devices */
+/* that करो not implement a call manager. */
 
 /* CoNdisMiniportCreateVc message */
-struct rcondis_mp_create_vc {
+काष्ठा rcondis_mp_create_vc अणु
 	u32 req_id;
 	u32 ndis_vc_handle;
-};
+पूर्ण;
 
 /* Response to CoNdisMiniportCreateVc */
-struct rcondis_mp_create_vc_complete {
+काष्ठा rcondis_mp_create_vc_complete अणु
 	u32 req_id;
 	u32 dev_vc_handle;
 	u32 status;
-};
+पूर्ण;
 
 /* CoNdisMiniportDeleteVc message */
-struct rcondis_mp_delete_vc {
+काष्ठा rcondis_mp_delete_vc अणु
 	u32 req_id;
 	u32 dev_vc_handle;
-};
+पूर्ण;
 
 /* Response to CoNdisMiniportDeleteVc */
-struct rcondis_mp_delete_vc_complete {
+काष्ठा rcondis_mp_delete_vc_complete अणु
 	u32 req_id;
 	u32 status;
-};
+पूर्ण;
 
 /* CoNdisMiniportQueryRequest message */
-struct rcondis_mp_query_request {
+काष्ठा rcondis_mp_query_request अणु
 	u32 req_id;
 	u32 request_type;
 	u32 oid;
 	u32 dev_vc_handle;
 	u32 info_buflen;
 	u32 info_buf_offset;
-};
+पूर्ण;
 
 /* CoNdisMiniportSetRequest message */
-struct rcondis_mp_set_request {
+काष्ठा rcondis_mp_set_request अणु
 	u32 req_id;
 	u32 request_type;
 	u32 oid;
 	u32 dev_vc_handle;
 	u32 info_buflen;
 	u32 info_buf_offset;
-};
+पूर्ण;
 
 /* CoNdisIndicateStatus message */
-struct rcondis_indicate_status {
+काष्ठा rcondis_indicate_status अणु
 	u32 ndis_vc_handle;
 	u32 status;
 	u32 status_buflen;
 	u32 status_buf_offset;
-};
+पूर्ण;
 
 /* CONDIS Call/VC parameters */
-struct rcondis_specific_parameters {
+काष्ठा rcondis_specअगरic_parameters अणु
 	u32 parameter_type;
 	u32 parameter_length;
 	u32 parameter_lffset;
-};
+पूर्ण;
 
-struct rcondis_media_parameters {
+काष्ठा rcondis_media_parameters अणु
 	u32 flags;
 	u32 reserved1;
 	u32 reserved2;
-	struct rcondis_specific_parameters media_specific;
-};
+	काष्ठा rcondis_specअगरic_parameters media_specअगरic;
+पूर्ण;
 
-struct rndis_flowspec {
+काष्ठा rndis_flowspec अणु
 	u32 token_rate;
 	u32 token_bucket_size;
 	u32 peak_bandwidth;
@@ -1607,16 +1608,16 @@ struct rndis_flowspec {
 	u32 service_type;
 	u32 max_sdu_size;
 	u32 minimum_policed_size;
-};
+पूर्ण;
 
-struct rcondis_call_manager_parameters {
-	struct rndis_flowspec transmit;
-	struct rndis_flowspec receive;
-	struct rcondis_specific_parameters call_mgr_specific;
-};
+काष्ठा rcondis_call_manager_parameters अणु
+	काष्ठा rndis_flowspec transmit;
+	काष्ठा rndis_flowspec receive;
+	काष्ठा rcondis_specअगरic_parameters call_mgr_specअगरic;
+पूर्ण;
 
 /* CoNdisMiniportActivateVc message */
-struct rcondis_mp_activate_vc_request {
+काष्ठा rcondis_mp_activate_vc_request अणु
 	u32 req_id;
 	u32 flags;
 	u32 dev_vc_handle;
@@ -1624,102 +1625,102 @@ struct rcondis_mp_activate_vc_request {
 	u32 media_params_length;
 	u32 call_mgr_params_offset;
 	u32 call_mgr_params_length;
-};
+पूर्ण;
 
 /* Response to CoNdisMiniportActivateVc */
-struct rcondis_mp_activate_vc_complete {
+काष्ठा rcondis_mp_activate_vc_complete अणु
 	u32 req_id;
 	u32 status;
-};
+पूर्ण;
 
 /* CoNdisMiniportDeactivateVc message */
-struct rcondis_mp_deactivate_vc_request {
+काष्ठा rcondis_mp_deactivate_vc_request अणु
 	u32 req_id;
 	u32 flags;
 	u32 dev_vc_handle;
-};
+पूर्ण;
 
 /* Response to CoNdisMiniportDeactivateVc */
-struct rcondis_mp_deactivate_vc_complete {
+काष्ठा rcondis_mp_deactivate_vc_complete अणु
 	u32 req_id;
 	u32 status;
-};
+पूर्ण;
 
 
-/* union with all of the RNDIS messages */
-union rndis_message_container {
-	struct rndis_packet pkt;
-	struct rndis_initialize_request init_req;
-	struct rndis_halt_request halt_req;
-	struct rndis_query_request query_req;
-	struct rndis_set_request set_req;
-	struct rndis_reset_request reset_req;
-	struct rndis_keepalive_request keep_alive_req;
-	struct rndis_indicate_status indicate_status;
-	struct rndis_initialize_complete init_complete;
-	struct rndis_query_complete query_complete;
-	struct rndis_set_complete set_complete;
-	struct rndis_reset_complete reset_complete;
-	struct rndis_keepalive_complete keep_alive_complete;
-	struct rcondis_mp_create_vc co_miniport_create_vc;
-	struct rcondis_mp_delete_vc co_miniport_delete_vc;
-	struct rcondis_indicate_status co_indicate_status;
-	struct rcondis_mp_activate_vc_request co_miniport_activate_vc;
-	struct rcondis_mp_deactivate_vc_request co_miniport_deactivate_vc;
-	struct rcondis_mp_create_vc_complete co_miniport_create_vc_complete;
-	struct rcondis_mp_delete_vc_complete co_miniport_delete_vc_complete;
-	struct rcondis_mp_activate_vc_complete co_miniport_activate_vc_complete;
-	struct rcondis_mp_deactivate_vc_complete
+/* जोड़ with all of the RNDIS messages */
+जोड़ rndis_message_container अणु
+	काष्ठा rndis_packet pkt;
+	काष्ठा rndis_initialize_request init_req;
+	काष्ठा rndis_halt_request halt_req;
+	काष्ठा rndis_query_request query_req;
+	काष्ठा rndis_set_request set_req;
+	काष्ठा rndis_reset_request reset_req;
+	काष्ठा rndis_keepalive_request keep_alive_req;
+	काष्ठा rndis_indicate_status indicate_status;
+	काष्ठा rndis_initialize_complete init_complete;
+	काष्ठा rndis_query_complete query_complete;
+	काष्ठा rndis_set_complete set_complete;
+	काष्ठा rndis_reset_complete reset_complete;
+	काष्ठा rndis_keepalive_complete keep_alive_complete;
+	काष्ठा rcondis_mp_create_vc co_miniport_create_vc;
+	काष्ठा rcondis_mp_delete_vc co_miniport_delete_vc;
+	काष्ठा rcondis_indicate_status co_indicate_status;
+	काष्ठा rcondis_mp_activate_vc_request co_miniport_activate_vc;
+	काष्ठा rcondis_mp_deactivate_vc_request co_miniport_deactivate_vc;
+	काष्ठा rcondis_mp_create_vc_complete co_miniport_create_vc_complete;
+	काष्ठा rcondis_mp_delete_vc_complete co_miniport_delete_vc_complete;
+	काष्ठा rcondis_mp_activate_vc_complete co_miniport_activate_vc_complete;
+	काष्ठा rcondis_mp_deactivate_vc_complete
 		co_miniport_deactivate_vc_complete;
-};
+पूर्ण;
 
-/* Remote NDIS message format */
-struct rndis_message {
+/* Remote NDIS message क्रमmat */
+काष्ठा rndis_message अणु
 	u32 ndis_msg_type;
 
 	/* Total length of this message, from the beginning */
-	/* of the struct rndis_message, in bytes. */
+	/* of the काष्ठा rndis_message, in bytes. */
 	u32 msg_len;
 
 	/* Actual message */
-	union rndis_message_container msg;
-};
+	जोड़ rndis_message_container msg;
+पूर्ण;
 
 
 /* Handy macros */
 
 /* get the size of an RNDIS message. Pass in the message type, */
-/* struct rndis_set_request, struct rndis_packet for example */
-#define RNDIS_MESSAGE_SIZE(msg)				\
-	(sizeof(msg) + (sizeof(struct rndis_message) -	\
-	 sizeof(union rndis_message_container)))
+/* काष्ठा rndis_set_request, काष्ठा rndis_packet क्रम example */
+#घोषणा RNDIS_MESSAGE_SIZE(msg)				\
+	(माप(msg) + (माप(काष्ठा rndis_message) -	\
+	 माप(जोड़ rndis_message_container)))
 
-#define RNDIS_HEADER_SIZE	(sizeof(struct rndis_message) - \
-				 sizeof(union rndis_message_container))
+#घोषणा RNDIS_HEADER_SIZE	(माप(काष्ठा rndis_message) - \
+				 माप(जोड़ rndis_message_container))
 
-#define RNDIS_AND_PPI_SIZE (sizeof(struct rndis_message) + NDIS_ALL_PPI_SIZE)
+#घोषणा RNDIS_AND_PPI_SIZE (माप(काष्ठा rndis_message) + NDIS_ALL_PPI_SIZE)
 
-#define NDIS_PACKET_TYPE_DIRECTED	0x00000001
-#define NDIS_PACKET_TYPE_MULTICAST	0x00000002
-#define NDIS_PACKET_TYPE_ALL_MULTICAST	0x00000004
-#define NDIS_PACKET_TYPE_BROADCAST	0x00000008
-#define NDIS_PACKET_TYPE_SOURCE_ROUTING	0x00000010
-#define NDIS_PACKET_TYPE_PROMISCUOUS	0x00000020
-#define NDIS_PACKET_TYPE_SMT		0x00000040
-#define NDIS_PACKET_TYPE_ALL_LOCAL	0x00000080
-#define NDIS_PACKET_TYPE_GROUP		0x00000100
-#define NDIS_PACKET_TYPE_ALL_FUNCTIONAL	0x00000200
-#define NDIS_PACKET_TYPE_FUNCTIONAL	0x00000400
-#define NDIS_PACKET_TYPE_MAC_FRAME	0x00000800
+#घोषणा NDIS_PACKET_TYPE_सूचीECTED	0x00000001
+#घोषणा NDIS_PACKET_TYPE_MULTICAST	0x00000002
+#घोषणा NDIS_PACKET_TYPE_ALL_MULTICAST	0x00000004
+#घोषणा NDIS_PACKET_TYPE_BROADCAST	0x00000008
+#घोषणा NDIS_PACKET_TYPE_SOURCE_ROUTING	0x00000010
+#घोषणा NDIS_PACKET_TYPE_PROMISCUOUS	0x00000020
+#घोषणा NDIS_PACKET_TYPE_SMT		0x00000040
+#घोषणा NDIS_PACKET_TYPE_ALL_LOCAL	0x00000080
+#घोषणा NDIS_PACKET_TYPE_GROUP		0x00000100
+#घोषणा NDIS_PACKET_TYPE_ALL_FUNCTIONAL	0x00000200
+#घोषणा NDIS_PACKET_TYPE_FUNCTIONAL	0x00000400
+#घोषणा NDIS_PACKET_TYPE_MAC_FRAME	0x00000800
 
-#define TRANSPORT_INFO_NOT_IP   0
-#define TRANSPORT_INFO_IPV4_TCP 0x01
-#define TRANSPORT_INFO_IPV4_UDP 0x02
-#define TRANSPORT_INFO_IPV6_TCP 0x10
-#define TRANSPORT_INFO_IPV6_UDP 0x20
+#घोषणा TRANSPORT_INFO_NOT_IP   0
+#घोषणा TRANSPORT_INFO_IPV4_TCP 0x01
+#घोषणा TRANSPORT_INFO_IPV4_UDP 0x02
+#घोषणा TRANSPORT_INFO_IPV6_TCP 0x10
+#घोषणा TRANSPORT_INFO_IPV6_UDP 0x20
 
-#define RETRY_US_LO	5000
-#define RETRY_US_HI	10000
-#define RETRY_MAX	2000	/* >10 sec */
+#घोषणा RETRY_US_LO	5000
+#घोषणा RETRY_US_HI	10000
+#घोषणा RETRY_MAX	2000	/* >10 sec */
 
-#endif /* _HYPERV_NET_H */
+#पूर्ण_अगर /* _HYPERV_NET_H */

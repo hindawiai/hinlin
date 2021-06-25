@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2004
  */
 
-#include <linux/fs.h>
-#include <linux/quotaops.h>
-#include "jfs_incore.h"
-#include "jfs_inode.h"
-#include "jfs_superblock.h"
-#include "jfs_dmap.h"
-#include "jfs_extent.h"
-#include "jfs_debug.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/quotaops.h>
+#समावेश "jfs_incore.h"
+#समावेश "jfs_inode.h"
+#समावेश "jfs_superblock.h"
+#समावेश "jfs_dmap.h"
+#समावेश "jfs_extent.h"
+#समावेश "jfs_debug.h"
 
 /*
- * forward references
+ * क्रमward references
  */
-static int extBalloc(struct inode *, s64, s64 *, s64 *);
-#ifdef _NOTYET
-static int extBrealloc(struct inode *, s64, s64, s64 *, s64 *);
-#endif
-static s64 extRoundDown(s64 nb);
+अटल पूर्णांक extBalloc(काष्ठा inode *, s64, s64 *, s64 *);
+#अगर_घोषित _NOTYET
+अटल पूर्णांक extBपुनः_स्मृति(काष्ठा inode *, s64, s64, s64 *, s64 *);
+#पूर्ण_अगर
+अटल s64 extRoundDown(s64 nb);
 
-#define DPD(a)		(printk("(a): %d\n",(a)))
-#define DPC(a)		(printk("(a): %c\n",(a)))
-#define DPL1(a)					\
-{						\
-	if ((a) >> 32)				\
-		printk("(a): %x%08x  ",(a));	\
-	else					\
-		printk("(a): %x  ",(a) << 32);	\
-}
-#define DPL(a)					\
-{						\
-	if ((a) >> 32)				\
-		printk("(a): %x%08x\n",(a));	\
-	else					\
-		printk("(a): %x\n",(a) << 32);	\
-}
+#घोषणा DPD(a)		(prपूर्णांकk("(a): %d\n",(a)))
+#घोषणा DPC(a)		(prपूर्णांकk("(a): %c\n",(a)))
+#घोषणा DPL1(a)					\
+अणु						\
+	अगर ((a) >> 32)				\
+		prपूर्णांकk("(a): %x%08x  ",(a));	\
+	अन्यथा					\
+		prपूर्णांकk("(a): %x  ",(a) << 32);	\
+पूर्ण
+#घोषणा DPL(a)					\
+अणु						\
+	अगर ((a) >> 32)				\
+		prपूर्णांकk("(a): %x%08x\n",(a));	\
+	अन्यथा					\
+		prपूर्णांकk("(a): %x\n",(a) << 32);	\
+पूर्ण
 
-#define DPD1(a)		(printk("(a): %d  ",(a)))
-#define DPX(a)		(printk("(a): %08x\n",(a)))
-#define DPX1(a)		(printk("(a): %08x  ",(a)))
-#define DPS(a)		(printk("%s\n",(a)))
-#define DPE(a)		(printk("\nENTERING: %s\n",(a)))
-#define DPE1(a)		(printk("\nENTERING: %s",(a)))
-#define DPS1(a)		(printk("  %s  ",(a)))
+#घोषणा DPD1(a)		(prपूर्णांकk("(a): %d  ",(a)))
+#घोषणा DPX(a)		(prपूर्णांकk("(a): %08x\n",(a)))
+#घोषणा DPX1(a)		(prपूर्णांकk("(a): %08x  ",(a)))
+#घोषणा DPS(a)		(prपूर्णांकk("%s\n",(a)))
+#घोषणा DPE(a)		(prपूर्णांकk("\nENTERING: %s\n",(a)))
+#घोषणा DPE1(a)		(prपूर्णांकk("\nENTERING: %s",(a)))
+#घोषणा DPS1(a)		(prपूर्णांकk("  %s  ",(a)))
 
 
 /*
  * NAME:	extAlloc()
  *
- * FUNCTION:	allocate an extent for a specified page range within a
+ * FUNCTION:	allocate an extent क्रम a specअगरied page range within a
  *		file.
  *
  * PARAMETERS:
  *	ip	- the inode of the file.
  *	xlen	- requested extent length.
  *	pno	- the starting page number with the file.
- *	xp	- pointer to an xad.  on entry, xad describes an
- *		  extent that is used as an allocation hint if the
- *		  xaddr of the xad is non-zero.  on successful exit,
+ *	xp	- poपूर्णांकer to an xad.  on entry, xad describes an
+ *		  extent that is used as an allocation hपूर्णांक अगर the
+ *		  xaddr of the xad is non-zero.  on successful निकास,
  *		  the xad describes the newly allocated extent.
  *	abnr	- bool indicating whether the newly allocated extent
  *		  should be marked as allocated but not recorded.
@@ -69,93 +70,93 @@ static s64 extRoundDown(s64 nb);
  *	-EIO	- i/o error.
  *	-ENOSPC	- insufficient disk resources.
  */
-int
-extAlloc(struct inode *ip, s64 xlen, s64 pno, xad_t * xp, bool abnr)
-{
-	struct jfs_sb_info *sbi = JFS_SBI(ip->i_sb);
-	s64 nxlen, nxaddr, xoff, hint, xaddr = 0;
-	int rc;
-	int xflag;
+पूर्णांक
+extAlloc(काष्ठा inode *ip, s64 xlen, s64 pno, xad_t * xp, bool abnr)
+अणु
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(ip->i_sb);
+	s64 nxlen, nxaddr, xoff, hपूर्णांक, xaddr = 0;
+	पूर्णांक rc;
+	पूर्णांक xflag;
 
-	/* This blocks if we are low on resources */
+	/* This blocks अगर we are low on resources */
 	txBeginAnon(ip->i_sb);
 
-	/* Avoid race with jfs_commit_inode() */
+	/* Aव्योम race with jfs_commit_inode() */
 	mutex_lock(&JFS_IP(ip)->commit_mutex);
 
 	/* validate extent length */
-	if (xlen > MAXXLEN)
+	अगर (xlen > MAXXLEN)
 		xlen = MAXXLEN;
 
 	/* get the page's starting extent offset */
 	xoff = pno << sbi->l2nbperpage;
 
-	/* check if an allocation hint was provided */
-	if ((hint = addressXAD(xp))) {
-		/* get the size of the extent described by the hint */
+	/* check अगर an allocation hपूर्णांक was provided */
+	अगर ((hपूर्णांक = addressXAD(xp))) अणु
+		/* get the size of the extent described by the hपूर्णांक */
 		nxlen = lengthXAD(xp);
 
-		/* check if the hint is for the portion of the file
+		/* check अगर the hपूर्णांक is क्रम the portion of the file
 		 * immediately previous to the current allocation
-		 * request and if hint extent has the same abnr
-		 * value as the current request.  if so, we can
-		 * extend the hint extent to include the current
-		 * extent if we can allocate the blocks immediately
-		 * following the hint extent.
+		 * request and अगर hपूर्णांक extent has the same abnr
+		 * value as the current request.  अगर so, we can
+		 * extend the hपूर्णांक extent to include the current
+		 * extent अगर we can allocate the blocks immediately
+		 * following the hपूर्णांक extent.
 		 */
-		if (offsetXAD(xp) + nxlen == xoff &&
+		अगर (offsetXAD(xp) + nxlen == xoff &&
 		    abnr == ((xp->flag & XAD_NOTRECORDED) ? true : false))
-			xaddr = hint + nxlen;
+			xaddr = hपूर्णांक + nxlen;
 
-		/* adjust the hint to the last block of the extent */
-		hint += (nxlen - 1);
-	}
+		/* adjust the hपूर्णांक to the last block of the extent */
+		hपूर्णांक += (nxlen - 1);
+	पूर्ण
 
-	/* allocate the disk blocks for the extent.  initially, extBalloc()
-	 * will try to allocate disk blocks for the requested size (xlen).
-	 * if this fails (xlen contiguous free blocks not available), it'll
+	/* allocate the disk blocks क्रम the extent.  initially, extBalloc()
+	 * will try to allocate disk blocks क्रम the requested size (xlen).
+	 * अगर this fails (xlen contiguous मुक्त blocks not available), it'll
 	 * try to allocate a smaller number of blocks (producing a smaller
 	 * extent), with this smaller number of blocks consisting of the
-	 * requested number of blocks rounded down to the next smaller
-	 * power of 2 number (i.e. 16 -> 8).  it'll continue to round down
+	 * requested number of blocks rounded करोwn to the next smaller
+	 * घातer of 2 number (i.e. 16 -> 8).  it'll जारी to round करोwn
 	 * and retry the allocation until the number of blocks to allocate
 	 * is smaller than the number of blocks per page.
 	 */
 	nxlen = xlen;
-	if ((rc = extBalloc(ip, hint ? hint : INOHINT(ip), &nxlen, &nxaddr))) {
+	अगर ((rc = extBalloc(ip, hपूर्णांक ? hपूर्णांक : INOHINT(ip), &nxlen, &nxaddr))) अणु
 		mutex_unlock(&JFS_IP(ip)->commit_mutex);
-		return (rc);
-	}
+		वापस (rc);
+	पूर्ण
 
 	/* Allocate blocks to quota. */
 	rc = dquot_alloc_block(ip, nxlen);
-	if (rc) {
+	अगर (rc) अणु
 		dbFree(ip, nxaddr, (s64) nxlen);
 		mutex_unlock(&JFS_IP(ip)->commit_mutex);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/* determine the value of the extent flag */
 	xflag = abnr ? XAD_NOTRECORDED : 0;
 
-	/* if we can extend the hint extent to cover the current request,
+	/* अगर we can extend the hपूर्णांक extent to cover the current request,
 	 * extend it.  otherwise, insert a new extent to
 	 * cover the current request.
 	 */
-	if (xaddr && xaddr == nxaddr)
-		rc = xtExtend(0, ip, xoff, (int) nxlen, 0);
-	else
-		rc = xtInsert(0, ip, xflag, xoff, (int) nxlen, &nxaddr, 0);
+	अगर (xaddr && xaddr == nxaddr)
+		rc = xtExtend(0, ip, xoff, (पूर्णांक) nxlen, 0);
+	अन्यथा
+		rc = xtInsert(0, ip, xflag, xoff, (पूर्णांक) nxlen, &nxaddr, 0);
 
-	/* if the extend or insert failed,
-	 * free the newly allocated blocks and return the error.
+	/* अगर the extend or insert failed,
+	 * मुक्त the newly allocated blocks and वापस the error.
 	 */
-	if (rc) {
+	अगर (rc) अणु
 		dbFree(ip, nxaddr, nxlen);
-		dquot_free_block(ip, nxlen);
+		dquot_मुक्त_block(ip, nxlen);
 		mutex_unlock(&JFS_IP(ip)->commit_mutex);
-		return (rc);
-	}
+		वापस (rc);
+	पूर्ण
 
 	/* set the results of the extent allocation */
 	XADaddress(xp, nxaddr);
@@ -171,14 +172,14 @@ extAlloc(struct inode *ip, s64 xlen, s64 pno, xad_t * xp, bool abnr)
 	 * sync list.
 	 * We need to commit the inode to get the page written disk.
 	 */
-	if (test_and_clear_cflag(COMMIT_Synclist,ip))
+	अगर (test_and_clear_cflag(COMMIT_Synclist,ip))
 		jfs_commit_inode(ip, 0);
 
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
 
-#ifdef _NOTYET
+#अगर_घोषित _NOTYET
 /*
  * NAME:	extRealloc()
  *
@@ -187,9 +188,9 @@ extAlloc(struct inode *ip, s64 xlen, s64 pno, xad_t * xp, bool abnr)
  *
  * PARAMETERS:
  *	ip	- the inode of the file.
- *	cp	- cbuf for the partial backed last page.
+ *	cp	- cbuf क्रम the partial backed last page.
  *	xlen	- request size of the resulting extent.
- *	xp	- pointer to an xad. on successful exit, the xad
+ *	xp	- poपूर्णांकer to an xad. on successful निकास, the xad
  *		  describes the newly allocated extent.
  *	abnr	- bool indicating whether the newly allocated extent
  *		  should be marked as allocated but not recorded.
@@ -199,20 +200,20 @@ extAlloc(struct inode *ip, s64 xlen, s64 pno, xad_t * xp, bool abnr)
  *	-EIO	- i/o error.
  *	-ENOSPC	- insufficient disk resources.
  */
-int extRealloc(struct inode *ip, s64 nxlen, xad_t * xp, bool abnr)
-{
-	struct super_block *sb = ip->i_sb;
+पूर्णांक extRealloc(काष्ठा inode *ip, s64 nxlen, xad_t * xp, bool abnr)
+अणु
+	काष्ठा super_block *sb = ip->i_sb;
 	s64 xaddr, xlen, nxaddr, delta, xoff;
 	s64 ntail, nextend, ninsert;
-	int rc, nbperpage = JFS_SBI(sb)->nbperpage;
-	int xflag;
+	पूर्णांक rc, nbperpage = JFS_SBI(sb)->nbperpage;
+	पूर्णांक xflag;
 
-	/* This blocks if we are low on resources */
+	/* This blocks अगर we are low on resources */
 	txBeginAnon(ip->i_sb);
 
 	mutex_lock(&JFS_IP(ip)->commit_mutex);
 	/* validate extent length */
-	if (nxlen > MAXXLEN)
+	अगर (nxlen > MAXXLEN)
 		nxlen = MAXXLEN;
 
 	/* get the extend (partial) page's disk block address and
@@ -222,143 +223,143 @@ int extRealloc(struct inode *ip, s64 nxlen, xad_t * xp, bool abnr)
 	xlen = lengthXAD(xp);
 	xoff = offsetXAD(xp);
 
-	/* if the extend page is abnr and if the request is for
+	/* अगर the extend page is abnr and अगर the request is क्रम
 	 * the extent to be allocated and recorded,
 	 * make the page allocated and recorded.
 	 */
-	if ((xp->flag & XAD_NOTRECORDED) && !abnr) {
+	अगर ((xp->flag & XAD_NOTRECORDED) && !abnr) अणु
 		xp->flag = 0;
-		if ((rc = xtUpdate(0, ip, xp)))
-			goto exit;
-	}
+		अगर ((rc = xtUpdate(0, ip, xp)))
+			जाओ निकास;
+	पूर्ण
 
-	/* try to allocated the request number of blocks for the
+	/* try to allocated the request number of blocks क्रम the
 	 * extent.  dbRealloc() first tries to satisfy the request
 	 * by extending the allocation in place. otherwise, it will
-	 * try to allocate a new set of blocks large enough for the
+	 * try to allocate a new set of blocks large enough क्रम the
 	 * request.  in satisfying a request, dbReAlloc() may allocate
 	 * less than what was request but will always allocate enough
 	 * space as to satisfy the extend page.
 	 */
-	if ((rc = extBrealloc(ip, xaddr, xlen, &nxlen, &nxaddr)))
-		goto exit;
+	अगर ((rc = extBपुनः_स्मृति(ip, xaddr, xlen, &nxlen, &nxaddr)))
+		जाओ निकास;
 
 	/* Allocat blocks to quota. */
 	rc = dquot_alloc_block(ip, nxlen);
-	if (rc) {
+	अगर (rc) अणु
 		dbFree(ip, nxaddr, (s64) nxlen);
 		mutex_unlock(&JFS_IP(ip)->commit_mutex);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	delta = nxlen - xlen;
 
-	/* check if the extend page is not abnr but the request is abnr
-	 * and the allocated disk space is for more than one page.  if this
-	 * is the case, there is a miss match of abnr between the extend page
+	/* check अगर the extend page is not abnr but the request is abnr
+	 * and the allocated disk space is क्रम more than one page.  अगर this
+	 * is the हाल, there is a miss match of abnr between the extend page
 	 * and the one or more pages following the extend page.  as a result,
 	 * two extents will have to be manipulated. the first will be that
 	 * of the extent of the extend page and will be manipulated thru
 	 * an xtExtend() or an xtTailgate(), depending upon whether the
 	 * disk allocation occurred as an inplace extension.  the second
 	 * extent will be manipulated (created) through an xtInsert() and
-	 * will be for the pages following the extend page.
+	 * will be क्रम the pages following the extend page.
 	 */
-	if (abnr && (!(xp->flag & XAD_NOTRECORDED)) && (nxlen > nbperpage)) {
+	अगर (abnr && (!(xp->flag & XAD_NOTRECORDED)) && (nxlen > nbperpage)) अणु
 		ntail = nbperpage;
 		nextend = ntail - xlen;
 		ninsert = nxlen - nbperpage;
 
 		xflag = XAD_NOTRECORDED;
-	} else {
+	पूर्ण अन्यथा अणु
 		ntail = nxlen;
 		nextend = delta;
 		ninsert = 0;
 
 		xflag = xp->flag;
-	}
+	पूर्ण
 
-	/* if we were able to extend the disk allocation in place,
+	/* अगर we were able to extend the disk allocation in place,
 	 * extend the extent.  otherwise, move the extent to a
 	 * new disk location.
 	 */
-	if (xaddr == nxaddr) {
+	अगर (xaddr == nxaddr) अणु
 		/* extend the extent */
-		if ((rc = xtExtend(0, ip, xoff + xlen, (int) nextend, 0))) {
+		अगर ((rc = xtExtend(0, ip, xoff + xlen, (पूर्णांक) nextend, 0))) अणु
 			dbFree(ip, xaddr + xlen, delta);
-			dquot_free_block(ip, nxlen);
-			goto exit;
-		}
-	} else {
+			dquot_मुक्त_block(ip, nxlen);
+			जाओ निकास;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * move the extent to a new location:
 		 *
-		 * xtTailgate() accounts for relocated tail extent;
+		 * xtTailgate() accounts क्रम relocated tail extent;
 		 */
-		if ((rc = xtTailgate(0, ip, xoff, (int) ntail, nxaddr, 0))) {
+		अगर ((rc = xtTailgate(0, ip, xoff, (पूर्णांक) ntail, nxaddr, 0))) अणु
 			dbFree(ip, nxaddr, nxlen);
-			dquot_free_block(ip, nxlen);
-			goto exit;
-		}
-	}
+			dquot_मुक्त_block(ip, nxlen);
+			जाओ निकास;
+		पूर्ण
+	पूर्ण
 
 
-	/* check if we need to also insert a new extent */
-	if (ninsert) {
-		/* perform the insert.  if it fails, free the blocks
+	/* check अगर we need to also insert a new extent */
+	अगर (ninsert) अणु
+		/* perक्रमm the insert.  अगर it fails, मुक्त the blocks
 		 * to be inserted and make it appear that we only did
 		 * the xtExtend() or xtTailgate() above.
 		 */
 		xaddr = nxaddr + ntail;
-		if (xtInsert (0, ip, xflag, xoff + ntail, (int) ninsert,
-			      &xaddr, 0)) {
+		अगर (xtInsert (0, ip, xflag, xoff + ntail, (पूर्णांक) ninsert,
+			      &xaddr, 0)) अणु
 			dbFree(ip, xaddr, (s64) ninsert);
 			delta = nextend;
 			nxlen = ntail;
 			xflag = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* set the return results */
+	/* set the वापस results */
 	XADaddress(xp, nxaddr);
 	XADlength(xp, nxlen);
 	XADoffset(xp, xoff);
 	xp->flag = xflag;
 
 	mark_inode_dirty(ip);
-exit:
+निकास:
 	mutex_unlock(&JFS_IP(ip)->commit_mutex);
-	return (rc);
-}
-#endif			/* _NOTYET */
+	वापस (rc);
+पूर्ण
+#पूर्ण_अगर			/* _NOTYET */
 
 
 /*
- * NAME:	extHint()
+ * NAME:	extHपूर्णांक()
  *
- * FUNCTION:	produce an extent allocation hint for a file offset.
+ * FUNCTION:	produce an extent allocation hपूर्णांक क्रम a file offset.
  *
  * PARAMETERS:
  *	ip	- the inode of the file.
- *	offset  - file offset for which the hint is needed.
- *	xp	- pointer to the xad that is to be filled in with
- *		  the hint.
+ *	offset  - file offset क्रम which the hपूर्णांक is needed.
+ *	xp	- poपूर्णांकer to the xad that is to be filled in with
+ *		  the hपूर्णांक.
  *
  * RETURN VALUES:
  *	0	- success
  *	-EIO	- i/o error.
  */
-int extHint(struct inode *ip, s64 offset, xad_t * xp)
-{
-	struct super_block *sb = ip->i_sb;
-	int nbperpage = JFS_SBI(sb)->nbperpage;
+पूर्णांक extHपूर्णांक(काष्ठा inode *ip, s64 offset, xad_t * xp)
+अणु
+	काष्ठा super_block *sb = ip->i_sb;
+	पूर्णांक nbperpage = JFS_SBI(sb)->nbperpage;
 	s64 prev;
-	int rc = 0;
+	पूर्णांक rc = 0;
 	s64 xaddr;
-	int xlen;
-	int xflag;
+	पूर्णांक xlen;
+	पूर्णांक xflag;
 
-	/* init the hint as "no hint provided" */
+	/* init the hपूर्णांक as "no hint provided" */
 	XADaddress(xp, 0);
 
 	/* determine the starting extent offset of the page previous
@@ -366,32 +367,32 @@ int extHint(struct inode *ip, s64 offset, xad_t * xp)
 	 */
 	prev = ((offset & ~POFFSET) >> JFS_SBI(sb)->l2bsize) - nbperpage;
 
-	/* if the offset is in the first page of the file, no hint provided.
+	/* अगर the offset is in the first page of the file, no hपूर्णांक provided.
 	 */
-	if (prev < 0)
-		goto out;
+	अगर (prev < 0)
+		जाओ out;
 
 	rc = xtLookup(ip, prev, nbperpage, &xflag, &xaddr, &xlen, 0);
 
-	if ((rc == 0) && xlen) {
-		if (xlen != nbperpage) {
+	अगर ((rc == 0) && xlen) अणु
+		अगर (xlen != nbperpage) अणु
 			jfs_error(ip->i_sb, "corrupt xtree\n");
 			rc = -EIO;
-		}
+		पूर्ण
 		XADaddress(xp, xaddr);
 		XADlength(xp, xlen);
 		XADoffset(xp, prev);
 		/*
 		 * only preserve the abnr flag within the xad flags
-		 * of the returned hint.
+		 * of the वापसed hपूर्णांक.
 		 */
 		xp->flag  = xflag & XAD_NOTRECORDED;
-	} else
+	पूर्ण अन्यथा
 		rc = 0;
 
 out:
-	return (rc);
-}
+	वापस (rc);
+पूर्ण
 
 
 /*
@@ -408,9 +409,9 @@ out:
  *	-EIO	- i/o error.
  *	-ENOSPC	- insufficient disk resources.
  */
-int extRecord(struct inode *ip, xad_t * xp)
-{
-	int rc;
+पूर्णांक extRecord(काष्ठा inode *ip, xad_t * xp)
+अणु
+	पूर्णांक rc;
 
 	txBeginAnon(ip->i_sb);
 
@@ -420,15 +421,15 @@ int extRecord(struct inode *ip, xad_t * xp)
 	rc = xtUpdate(0, ip, xp);
 
 	mutex_unlock(&JFS_IP(ip)->commit_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
-#ifdef _NOTYET
+#अगर_घोषित _NOTYET
 /*
  * NAME:	extFill()
  *
- * FUNCTION:	allocate disk space for a file page that represents
+ * FUNCTION:	allocate disk space क्रम a file page that represents
  *		a file hole.
  *
  * PARAMETERS:
@@ -440,51 +441,51 @@ int extRecord(struct inode *ip, xad_t * xp)
  *	-EIO	- i/o error.
  *	-ENOSPC	- insufficient disk resources.
  */
-int extFill(struct inode *ip, xad_t * xp)
-{
-	int rc, nbperpage = JFS_SBI(ip->i_sb)->nbperpage;
+पूर्णांक extFill(काष्ठा inode *ip, xad_t * xp)
+अणु
+	पूर्णांक rc, nbperpage = JFS_SBI(ip->i_sb)->nbperpage;
 	s64 blkno = offsetXAD(xp) >> ip->i_blkbits;
 
-//	assert(ISSPARSE(ip));
+//	निश्चित(ISSPARSE(ip));
 
-	/* initialize the extent allocation hint */
+	/* initialize the extent allocation hपूर्णांक */
 	XADaddress(xp, 0);
 
 	/* allocate an extent to fill the hole */
-	if ((rc = extAlloc(ip, nbperpage, blkno, xp, false)))
-		return (rc);
+	अगर ((rc = extAlloc(ip, nbperpage, blkno, xp, false)))
+		वापस (rc);
 
-	assert(lengthPXD(xp) == nbperpage);
+	निश्चित(lengthPXD(xp) == nbperpage);
 
-	return (0);
-}
-#endif			/* _NOTYET */
+	वापस (0);
+पूर्ण
+#पूर्ण_अगर			/* _NOTYET */
 
 
 /*
  * NAME:	extBalloc()
  *
- * FUNCTION:	allocate disk blocks to form an extent.
+ * FUNCTION:	allocate disk blocks to क्रमm an extent.
  *
- *		initially, we will try to allocate disk blocks for the
- *		requested size (nblocks).  if this fails (nblocks
- *		contiguous free blocks not available), we'll try to allocate
+ *		initially, we will try to allocate disk blocks क्रम the
+ *		requested size (nblocks).  अगर this fails (nblocks
+ *		contiguous मुक्त blocks not available), we'll try to allocate
  *		a smaller number of blocks (producing a smaller extent), with
  *		this smaller number of blocks consisting of the requested
- *		number of blocks rounded down to the next smaller power of 2
- *		number (i.e. 16 -> 8).  we'll continue to round down and
+ *		number of blocks rounded करोwn to the next smaller घातer of 2
+ *		number (i.e. 16 -> 8).  we'll जारी to round करोwn and
  *		retry the allocation until the number of blocks to allocate
  *		is smaller than the number of blocks per page.
  *
  * PARAMETERS:
  *	ip	 - the inode of the file.
- *	hint	 - disk block number to be used as an allocation hint.
- *	*nblocks - pointer to an s64 value.  on entry, this value specifies
+ *	hपूर्णांक	 - disk block number to be used as an allocation hपूर्णांक.
+ *	*nblocks - poपूर्णांकer to an s64 value.  on entry, this value specअगरies
  *		   the desired number of block to be allocated. on successful
- *		   exit, this value is set to the number of blocks actually
+ *		   निकास, this value is set to the number of blocks actually
  *		   allocated.
- *	blkno	 - pointer to a block address that is filled in on successful
- *		   return with the starting block number of the newly
+ *	blkno	 - poपूर्णांकer to a block address that is filled in on successful
+ *		   वापस with the starting block number of the newly
  *		   allocated block range.
  *
  * RETURN VALUES:
@@ -492,81 +493,81 @@ int extFill(struct inode *ip, xad_t * xp)
  *	-EIO	- i/o error.
  *	-ENOSPC	- insufficient disk resources.
  */
-static int
-extBalloc(struct inode *ip, s64 hint, s64 * nblocks, s64 * blkno)
-{
-	struct jfs_inode_info *ji = JFS_IP(ip);
-	struct jfs_sb_info *sbi = JFS_SBI(ip->i_sb);
+अटल पूर्णांक
+extBalloc(काष्ठा inode *ip, s64 hपूर्णांक, s64 * nblocks, s64 * blkno)
+अणु
+	काष्ठा jfs_inode_info *ji = JFS_IP(ip);
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(ip->i_sb);
 	s64 nb, nblks, daddr, max;
-	int rc, nbperpage = sbi->nbperpage;
-	struct bmap *bmp = sbi->bmap;
-	int ag;
+	पूर्णांक rc, nbperpage = sbi->nbperpage;
+	काष्ठा bmap *bmp = sbi->bmap;
+	पूर्णांक ag;
 
 	/* get the number of blocks to initially attempt to allocate.
 	 * we'll first try the number of blocks requested unless this
-	 * number is greater than the maximum number of contiguous free
-	 * blocks in the map. in that case, we'll start off with the
-	 * maximum free.
+	 * number is greater than the maximum number of contiguous मुक्त
+	 * blocks in the map. in that हाल, we'll start off with the
+	 * maximum मुक्त.
 	 */
-	max = (s64) 1 << bmp->db_maxfreebud;
-	if (*nblocks >= max && *nblocks > nbperpage)
+	max = (s64) 1 << bmp->db_maxमुक्तbud;
+	अगर (*nblocks >= max && *nblocks > nbperpage)
 		nb = nblks = (max > nbperpage) ? max : nbperpage;
-	else
+	अन्यथा
 		nb = nblks = *nblocks;
 
 	/* try to allocate blocks */
-	while ((rc = dbAlloc(ip, hint, nb, &daddr)) != 0) {
-		/* if something other than an out of space error,
-		 * stop and return this error.
+	जबतक ((rc = dbAlloc(ip, hपूर्णांक, nb, &daddr)) != 0) अणु
+		/* अगर something other than an out of space error,
+		 * stop and वापस this error.
 		 */
-		if (rc != -ENOSPC)
-			return (rc);
+		अगर (rc != -ENOSPC)
+			वापस (rc);
 
 		/* decrease the allocation request size */
 		nb = min(nblks, extRoundDown(nb));
 
-		/* give up if we cannot cover a page */
-		if (nb < nbperpage)
-			return (rc);
-	}
+		/* give up अगर we cannot cover a page */
+		अगर (nb < nbperpage)
+			वापस (rc);
+	पूर्ण
 
 	*nblocks = nb;
 	*blkno = daddr;
 
-	if (S_ISREG(ip->i_mode) && (ji->fileset == FILESYSTEM_I)) {
+	अगर (S_ISREG(ip->i_mode) && (ji->fileset == खाताSYSTEM_I)) अणु
 		ag = BLKTOAG(daddr, sbi);
 		spin_lock_irq(&ji->ag_lock);
-		if (ji->active_ag == -1) {
+		अगर (ji->active_ag == -1) अणु
 			atomic_inc(&bmp->db_active[ag]);
 			ji->active_ag = ag;
-		} else if (ji->active_ag != ag) {
+		पूर्ण अन्यथा अगर (ji->active_ag != ag) अणु
 			atomic_dec(&bmp->db_active[ji->active_ag]);
 			atomic_inc(&bmp->db_active[ag]);
 			ji->active_ag = ag;
-		}
+		पूर्ण
 		spin_unlock_irq(&ji->ag_lock);
-	}
+	पूर्ण
 
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
 
-#ifdef _NOTYET
+#अगर_घोषित _NOTYET
 /*
- * NAME:	extBrealloc()
+ * NAME:	extBपुनः_स्मृति()
  *
  * FUNCTION:	attempt to extend an extent's allocation.
  *
  *		Initially, we will try to extend the extent's allocation
  *		in place.  If this fails, we'll try to move the extent
  *		to a new set of blocks.  If moving the extent, we initially
- *		will try to allocate disk blocks for the requested size
- *		(newnblks).  if this fails (new contiguous free blocks not
+ *		will try to allocate disk blocks क्रम the requested size
+ *		(newnblks).  अगर this fails (new contiguous मुक्त blocks not
  *		available), we'll try to allocate a smaller number of
  *		blocks (producing a smaller extent), with this smaller
  *		number of blocks consisting of the requested number of
- *		blocks rounded down to the next smaller power of 2
- *		number (i.e. 16 -> 8).  We'll continue to round down and
+ *		blocks rounded करोwn to the next smaller घातer of 2
+ *		number (i.e. 16 -> 8).  We'll जारी to round करोwn and
  *		retry the allocation until the number of blocks to allocate
  *		is smaller than the number of blocks per page.
  *
@@ -574,9 +575,9 @@ extBalloc(struct inode *ip, s64 hint, s64 * nblocks, s64 * blkno)
  *	ip	 - the inode of the file.
  *	blkno	 - starting block number of the extents current allocation.
  *	nblks	 - number of blocks within the extents current allocation.
- *	newnblks - pointer to a s64 value.  on entry, this value is the
+ *	newnblks - poपूर्णांकer to a s64 value.  on entry, this value is the
  *		   new desired extent size (number of blocks).  on
- *		   successful exit, this value is set to the extent's actual
+ *		   successful निकास, this value is set to the extent's actual
  *		   new size (new number of blocks).
  *	newblkno - the starting block number of the extents new allocation.
  *
@@ -585,54 +586,54 @@ extBalloc(struct inode *ip, s64 hint, s64 * nblocks, s64 * blkno)
  *	-EIO	- i/o error.
  *	-ENOSPC	- insufficient disk resources.
  */
-static int
-extBrealloc(struct inode *ip,
+अटल पूर्णांक
+extBपुनः_स्मृति(काष्ठा inode *ip,
 	    s64 blkno, s64 nblks, s64 * newnblks, s64 * newblkno)
-{
-	int rc;
+अणु
+	पूर्णांक rc;
 
 	/* try to extend in place */
-	if ((rc = dbExtend(ip, blkno, nblks, *newnblks - nblks)) == 0) {
+	अगर ((rc = dbExtend(ip, blkno, nblks, *newnblks - nblks)) == 0) अणु
 		*newblkno = blkno;
-		return (0);
-	} else {
-		if (rc != -ENOSPC)
-			return (rc);
-	}
+		वापस (0);
+	पूर्ण अन्यथा अणु
+		अगर (rc != -ENOSPC)
+			वापस (rc);
+	पूर्ण
 
 	/* in place extension not possible.
 	 * try to move the extent to a new set of blocks.
 	 */
-	return (extBalloc(ip, blkno, newnblks, newblkno));
-}
-#endif			/* _NOTYET */
+	वापस (extBalloc(ip, blkno, newnblks, newblkno));
+पूर्ण
+#पूर्ण_अगर			/* _NOTYET */
 
 
 /*
  * NAME:	extRoundDown()
  *
- * FUNCTION:	round down a specified number of blocks to the next
- *		smallest power of 2 number.
+ * FUNCTION:	round करोwn a specअगरied number of blocks to the next
+ *		smallest घातer of 2 number.
  *
  * PARAMETERS:
  *	nb	- the inode of the file.
  *
  * RETURN VALUES:
- *	next smallest power of 2 number.
+ *	next smallest घातer of 2 number.
  */
-static s64 extRoundDown(s64 nb)
-{
-	int i;
+अटल s64 extRoundDown(s64 nb)
+अणु
+	पूर्णांक i;
 	u64 m, k;
 
-	for (i = 0, m = (u64) 1 << 63; i < 64; i++, m >>= 1) {
-		if (m & nb)
-			break;
-	}
+	क्रम (i = 0, m = (u64) 1 << 63; i < 64; i++, m >>= 1) अणु
+		अगर (m & nb)
+			अवरोध;
+	पूर्ण
 
 	i = 63 - i;
 	k = (u64) 1 << i;
 	k = ((k - 1) & nb) ? k : k >> 1;
 
-	return (k);
-}
+	वापस (k);
+पूर्ण

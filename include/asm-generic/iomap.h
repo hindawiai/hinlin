@@ -1,125 +1,126 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __GENERIC_IO_H
-#define __GENERIC_IO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __GENERIC_IO_H
+#घोषणा __GENERIC_IO_H
 
-#include <linux/linkage.h>
-#include <asm/byteorder.h>
+#समावेश <linux/linkage.h>
+#समावेश <यंत्र/byteorder.h>
 
 /*
- * These are the "generic" interfaces for doing new-style
- * memory-mapped or PIO accesses. Architectures may do
+ * These are the "generic" पूर्णांकerfaces क्रम करोing new-style
+ * memory-mapped or PIO accesses. Architectures may करो
  * their own arch-optimized versions, these just act as
- * wrappers around the old-style IO register access functions:
- * read[bwl]/write[bwl]/in[bwl]/out[bwl]
+ * wrappers around the old-style IO रेजिस्टर access functions:
+ * पढ़ो[bwl]/ग_लिखो[bwl]/in[bwl]/out[bwl]
  *
- * Don't include this directly, include it from <asm/io.h>.
+ * Don't include this directly, include it from <यंत्र/पन.स>.
  */
 
 /*
- * Read/write from/to an (offsettable) iomem cookie. It might be a PIO
- * access or a MMIO access, these functions don't care. The info is
+ * Read/ग_लिखो from/to an (offsettable) iomem cookie. It might be a PIO
+ * access or a MMIO access, these functions करोn't care. The info is
  * encoded in the hardware mapping set up by the mapping functions
  * (or the cookie itself, depending on implementation and hw).
  *
  * The generic routines just encode the PIO/MMIO as part of the
  * cookie, and coldly assume that the MMIO IO mappings are not
- * in the low address range. Architectures for which this is not
+ * in the low address range. Architectures क्रम which this is not
  * true can't use this generic implementation.
  */
-extern unsigned int ioread8(const void __iomem *);
-extern unsigned int ioread16(const void __iomem *);
-extern unsigned int ioread16be(const void __iomem *);
-extern unsigned int ioread32(const void __iomem *);
-extern unsigned int ioread32be(const void __iomem *);
-#ifdef CONFIG_64BIT
-extern u64 ioread64(const void __iomem *);
-extern u64 ioread64be(const void __iomem *);
-#endif
+बाह्य अचिन्हित पूर्णांक ioपढ़ो8(स्थिर व्योम __iomem *);
+बाह्य अचिन्हित पूर्णांक ioपढ़ो16(स्थिर व्योम __iomem *);
+बाह्य अचिन्हित पूर्णांक ioपढ़ो16be(स्थिर व्योम __iomem *);
+बाह्य अचिन्हित पूर्णांक ioपढ़ो32(स्थिर व्योम __iomem *);
+बाह्य अचिन्हित पूर्णांक ioपढ़ो32be(स्थिर व्योम __iomem *);
+#अगर_घोषित CONFIG_64BIT
+बाह्य u64 ioपढ़ो64(स्थिर व्योम __iomem *);
+बाह्य u64 ioपढ़ो64be(स्थिर व्योम __iomem *);
+#पूर्ण_अगर
 
-#ifdef readq
-#define ioread64_lo_hi ioread64_lo_hi
-#define ioread64_hi_lo ioread64_hi_lo
-#define ioread64be_lo_hi ioread64be_lo_hi
-#define ioread64be_hi_lo ioread64be_hi_lo
-extern u64 ioread64_lo_hi(const void __iomem *addr);
-extern u64 ioread64_hi_lo(const void __iomem *addr);
-extern u64 ioread64be_lo_hi(const void __iomem *addr);
-extern u64 ioread64be_hi_lo(const void __iomem *addr);
-#endif
+#अगर_घोषित पढ़ोq
+#घोषणा ioपढ़ो64_lo_hi ioपढ़ो64_lo_hi
+#घोषणा ioपढ़ो64_hi_lo ioपढ़ो64_hi_lo
+#घोषणा ioपढ़ो64be_lo_hi ioपढ़ो64be_lo_hi
+#घोषणा ioपढ़ो64be_hi_lo ioपढ़ो64be_hi_lo
+बाह्य u64 ioपढ़ो64_lo_hi(स्थिर व्योम __iomem *addr);
+बाह्य u64 ioपढ़ो64_hi_lo(स्थिर व्योम __iomem *addr);
+बाह्य u64 ioपढ़ो64be_lo_hi(स्थिर व्योम __iomem *addr);
+बाह्य u64 ioपढ़ो64be_hi_lo(स्थिर व्योम __iomem *addr);
+#पूर्ण_अगर
 
-extern void iowrite8(u8, void __iomem *);
-extern void iowrite16(u16, void __iomem *);
-extern void iowrite16be(u16, void __iomem *);
-extern void iowrite32(u32, void __iomem *);
-extern void iowrite32be(u32, void __iomem *);
-#ifdef CONFIG_64BIT
-extern void iowrite64(u64, void __iomem *);
-extern void iowrite64be(u64, void __iomem *);
-#endif
+बाह्य व्योम ioग_लिखो8(u8, व्योम __iomem *);
+बाह्य व्योम ioग_लिखो16(u16, व्योम __iomem *);
+बाह्य व्योम ioग_लिखो16be(u16, व्योम __iomem *);
+बाह्य व्योम ioग_लिखो32(u32, व्योम __iomem *);
+बाह्य व्योम ioग_लिखो32be(u32, व्योम __iomem *);
+#अगर_घोषित CONFIG_64BIT
+बाह्य व्योम ioग_लिखो64(u64, व्योम __iomem *);
+बाह्य व्योम ioग_लिखो64be(u64, व्योम __iomem *);
+#पूर्ण_अगर
 
-#ifdef writeq
-#define iowrite64_lo_hi iowrite64_lo_hi
-#define iowrite64_hi_lo iowrite64_hi_lo
-#define iowrite64be_lo_hi iowrite64be_lo_hi
-#define iowrite64be_hi_lo iowrite64be_hi_lo
-extern void iowrite64_lo_hi(u64 val, void __iomem *addr);
-extern void iowrite64_hi_lo(u64 val, void __iomem *addr);
-extern void iowrite64be_lo_hi(u64 val, void __iomem *addr);
-extern void iowrite64be_hi_lo(u64 val, void __iomem *addr);
-#endif
+#अगर_घोषित ग_लिखोq
+#घोषणा ioग_लिखो64_lo_hi ioग_लिखो64_lo_hi
+#घोषणा ioग_लिखो64_hi_lo ioग_लिखो64_hi_lo
+#घोषणा ioग_लिखो64be_lo_hi ioग_लिखो64be_lo_hi
+#घोषणा ioग_लिखो64be_hi_lo ioग_लिखो64be_hi_lo
+बाह्य व्योम ioग_लिखो64_lo_hi(u64 val, व्योम __iomem *addr);
+बाह्य व्योम ioग_लिखो64_hi_lo(u64 val, व्योम __iomem *addr);
+बाह्य व्योम ioग_लिखो64be_lo_hi(u64 val, व्योम __iomem *addr);
+बाह्य व्योम ioग_लिखो64be_hi_lo(u64 val, व्योम __iomem *addr);
+#पूर्ण_अगर
 
 /*
  * "string" versions of the above. Note that they
- * use native byte ordering for the accesses (on
+ * use native byte ordering क्रम the accesses (on
  * the assumption that IO and memory agree on a
  * byte order, and CPU byteorder is irrelevant).
  *
- * They do _not_ update the port address. If you
+ * They करो _not_ update the port address. If you
  * want MMIO that copies stuff laid out in MMIO
  * memory across multiple ports, use "memcpy_toio()"
- * and friends.
+ * and मित्रs.
  */
-extern void ioread8_rep(const void __iomem *port, void *buf, unsigned long count);
-extern void ioread16_rep(const void __iomem *port, void *buf, unsigned long count);
-extern void ioread32_rep(const void __iomem *port, void *buf, unsigned long count);
+बाह्य व्योम ioपढ़ो8_rep(स्थिर व्योम __iomem *port, व्योम *buf, अचिन्हित दीर्घ count);
+बाह्य व्योम ioपढ़ो16_rep(स्थिर व्योम __iomem *port, व्योम *buf, अचिन्हित दीर्घ count);
+बाह्य व्योम ioपढ़ो32_rep(स्थिर व्योम __iomem *port, व्योम *buf, अचिन्हित दीर्घ count);
 
-extern void iowrite8_rep(void __iomem *port, const void *buf, unsigned long count);
-extern void iowrite16_rep(void __iomem *port, const void *buf, unsigned long count);
-extern void iowrite32_rep(void __iomem *port, const void *buf, unsigned long count);
+बाह्य व्योम ioग_लिखो8_rep(व्योम __iomem *port, स्थिर व्योम *buf, अचिन्हित दीर्घ count);
+बाह्य व्योम ioग_लिखो16_rep(व्योम __iomem *port, स्थिर व्योम *buf, अचिन्हित दीर्घ count);
+बाह्य व्योम ioग_लिखो32_rep(व्योम __iomem *port, स्थिर व्योम *buf, अचिन्हित दीर्घ count);
 
-#ifdef CONFIG_HAS_IOPORT_MAP
-/* Create a virtual mapping cookie for an IO port range */
-extern void __iomem *ioport_map(unsigned long port, unsigned int nr);
-extern void ioport_unmap(void __iomem *);
-#endif
+#अगर_घोषित CONFIG_HAS_IOPORT_MAP
+/* Create a भव mapping cookie क्रम an IO port range */
+बाह्य व्योम __iomem *ioport_map(अचिन्हित दीर्घ port, अचिन्हित पूर्णांक nr);
+बाह्य व्योम ioport_unmap(व्योम __iomem *);
+#पूर्ण_अगर
 
-#ifndef ARCH_HAS_IOREMAP_WC
-#define ioremap_wc ioremap
-#endif
+#अगर_अघोषित ARCH_HAS_IOREMAP_WC
+#घोषणा ioremap_wc ioremap
+#पूर्ण_अगर
 
-#ifndef ARCH_HAS_IOREMAP_WT
-#define ioremap_wt ioremap
-#endif
+#अगर_अघोषित ARCH_HAS_IOREMAP_WT
+#घोषणा ioremap_wt ioremap
+#पूर्ण_अगर
 
-#ifndef ARCH_HAS_IOREMAP_NP
-/* See the comment in asm-generic/io.h about ioremap_np(). */
-#define ioremap_np ioremap_np
-static inline void __iomem *ioremap_np(phys_addr_t offset, size_t size)
-{
-	return NULL;
-}
-#endif
+#अगर_अघोषित ARCH_HAS_IOREMAP_NP
+/* See the comment in यंत्र-generic/पन.स about ioremap_np(). */
+#घोषणा ioremap_np ioremap_np
+अटल अंतरभूत व्योम __iomem *ioremap_np(phys_addr_t offset, माप_प्रकार size)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PCI
-/* Destroy a virtual mapping cookie for a PCI BAR (memory or IO) */
-struct pci_dev;
-extern void pci_iounmap(struct pci_dev *dev, void __iomem *);
-#elif defined(CONFIG_GENERIC_IOMAP)
-struct pci_dev;
-static inline void pci_iounmap(struct pci_dev *dev, void __iomem *addr)
-{ }
-#endif
+#अगर_घोषित CONFIG_PCI
+/* Destroy a भव mapping cookie क्रम a PCI BAR (memory or IO) */
+काष्ठा pci_dev;
+बाह्य व्योम pci_iounmap(काष्ठा pci_dev *dev, व्योम __iomem *);
+#या_अगर defined(CONFIG_GENERIC_IOMAP)
+काष्ठा pci_dev;
+अटल अंतरभूत व्योम pci_iounmap(काष्ठा pci_dev *dev, व्योम __iomem *addr)
+अणु पूर्ण
+#पूर्ण_अगर
 
-#include <asm-generic/pci_iomap.h>
+#समावेश <यंत्र-generic/pci_iomap.h>
 
-#endif
+#पूर्ण_अगर

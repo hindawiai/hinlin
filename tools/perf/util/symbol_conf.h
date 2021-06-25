@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_SYMBOL_CONF
-#define __PERF_SYMBOL_CONF 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_SYMBOL_CONF
+#घोषणा __PERF_SYMBOL_CONF 1
 
-#include <stdbool.h>
+#समावेश <stdbool.h>
 
-struct strlist;
-struct intlist;
+काष्ठा strlist;
+काष्ठा पूर्णांकlist;
 
-struct symbol_conf {
+काष्ठा symbol_conf अणु
 	bool		nanosecs;
-	unsigned short	priv_size;
+	अचिन्हित लघु	priv_size;
 	bool		try_vmlinux_path,
 			init_annotation,
-			force,
+			क्रमce,
 			ignore_vmlinux,
 			ignore_vmlinux_buildid,
 			show_kernel_path,
@@ -40,28 +41,28 @@ struct symbol_conf {
 			raw_trace,
 			report_hierarchy,
 			report_block,
-			report_individual_block,
-			inline_name,
+			report_inभागidual_block,
+			अंतरभूत_name,
 			disable_add2line_warn,
 			buildid_mmap2;
-	const char	*vmlinux_name,
+	स्थिर अक्षर	*vmlinux_name,
 			*kallsyms_name,
 			*source_prefix,
 			*field_sep,
 			*graph_function;
-	const char	*default_guest_vmlinux_name,
-			*default_guest_kallsyms,
-			*default_guest_modules;
-	const char	*guestmount;
-	const char	*dso_list_str,
+	स्थिर अक्षर	*शेष_guest_vmlinux_name,
+			*शेष_guest_kallsyms,
+			*शेष_guest_modules;
+	स्थिर अक्षर	*guesपंचांगount;
+	स्थिर अक्षर	*dso_list_str,
 			*comm_list_str,
 			*pid_list_str,
 			*tid_list_str,
 			*sym_list_str,
 			*col_width_list_str,
 			*bt_stop_list_str;
-	unsigned long	time_quantum;
-       struct strlist	*dso_list,
+	अचिन्हित दीर्घ	समय_quantum;
+       काष्ठा strlist	*dso_list,
 			*comm_list,
 			*sym_list,
 			*dso_from_list,
@@ -69,16 +70,16 @@ struct symbol_conf {
 			*sym_from_list,
 			*sym_to_list,
 			*bt_stop_list;
-	struct intlist	*pid_list,
+	काष्ठा पूर्णांकlist	*pid_list,
 			*tid_list,
 			*addr_list;
-	const char	*symfs;
-	int		res_sample;
-	int		pad_output_len_dso;
-	int		group_sort_idx;
-	int		addr_range;
-};
+	स्थिर अक्षर	*symfs;
+	पूर्णांक		res_sample;
+	पूर्णांक		pad_output_len_dso;
+	पूर्णांक		group_sort_idx;
+	पूर्णांक		addr_range;
+पूर्ण;
 
-extern struct symbol_conf symbol_conf;
+बाह्य काष्ठा symbol_conf symbol_conf;
 
-#endif // __PERF_SYMBOL_CONF
+#पूर्ण_अगर // __PERF_SYMBOL_CONF

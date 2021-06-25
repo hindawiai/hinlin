@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
   File: fs/xattr.c
 
@@ -8,293 +9,293 @@
   Copyright (C) 2001 SGI - Silicon Graphics, Inc <linux-xfs@oss.sgi.com>
   Copyright (c) 2004 Red Hat, Inc., James Morris <jmorris@redhat.com>
  */
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include <linux/file.h>
-#include <linux/xattr.h>
-#include <linux/mount.h>
-#include <linux/namei.h>
-#include <linux/security.h>
-#include <linux/evm.h>
-#include <linux/syscalls.h>
-#include <linux/export.h>
-#include <linux/fsnotify.h>
-#include <linux/audit.h>
-#include <linux/vmalloc.h>
-#include <linux/posix_acl_xattr.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/file.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/security.h>
+#समावेश <linux/evm.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/export.h>
+#समावेश <linux/fsnotअगरy.h>
+#समावेश <linux/audit.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/posix_acl_xattr.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-static const char *
-strcmp_prefix(const char *a, const char *a_prefix)
-{
-	while (*a_prefix && *a == *a_prefix) {
+अटल स्थिर अक्षर *
+म_भेद_prefix(स्थिर अक्षर *a, स्थिर अक्षर *a_prefix)
+अणु
+	जबतक (*a_prefix && *a == *a_prefix) अणु
 		a++;
 		a_prefix++;
-	}
-	return *a_prefix ? NULL : a;
-}
+	पूर्ण
+	वापस *a_prefix ? शून्य : a;
+पूर्ण
 
 /*
- * In order to implement different sets of xattr operations for each xattr
- * prefix, a filesystem should create a null-terminated array of struct
- * xattr_handler (one for each prefix) and hang a pointer to it off of the
+ * In order to implement dअगरferent sets of xattr operations क्रम each xattr
+ * prefix, a fileप्रणाली should create a null-terminated array of काष्ठा
+ * xattr_handler (one क्रम each prefix) and hang a poपूर्णांकer to it off of the
  * s_xattr field of the superblock.
  */
-#define for_each_xattr_handler(handlers, handler)		\
-	if (handlers)						\
-		for ((handler) = *(handlers)++;			\
-			(handler) != NULL;			\
+#घोषणा क्रम_each_xattr_handler(handlers, handler)		\
+	अगर (handlers)						\
+		क्रम ((handler) = *(handlers)++;			\
+			(handler) != शून्य;			\
 			(handler) = *(handlers)++)
 
 /*
  * Find the xattr_handler with the matching prefix.
  */
-static const struct xattr_handler *
-xattr_resolve_name(struct inode *inode, const char **name)
-{
-	const struct xattr_handler **handlers = inode->i_sb->s_xattr;
-	const struct xattr_handler *handler;
+अटल स्थिर काष्ठा xattr_handler *
+xattr_resolve_name(काष्ठा inode *inode, स्थिर अक्षर **name)
+अणु
+	स्थिर काष्ठा xattr_handler **handlers = inode->i_sb->s_xattr;
+	स्थिर काष्ठा xattr_handler *handler;
 
-	if (!(inode->i_opflags & IOP_XATTR)) {
-		if (unlikely(is_bad_inode(inode)))
-			return ERR_PTR(-EIO);
-		return ERR_PTR(-EOPNOTSUPP);
-	}
-	for_each_xattr_handler(handlers, handler) {
-		const char *n;
+	अगर (!(inode->i_opflags & IOP_XATTR)) अणु
+		अगर (unlikely(is_bad_inode(inode)))
+			वापस ERR_PTR(-EIO);
+		वापस ERR_PTR(-EOPNOTSUPP);
+	पूर्ण
+	क्रम_each_xattr_handler(handlers, handler) अणु
+		स्थिर अक्षर *n;
 
-		n = strcmp_prefix(*name, xattr_prefix(handler));
-		if (n) {
-			if (!handler->prefix ^ !*n) {
-				if (*n)
-					continue;
-				return ERR_PTR(-EINVAL);
-			}
+		n = म_भेद_prefix(*name, xattr_prefix(handler));
+		अगर (n) अणु
+			अगर (!handler->prefix ^ !*n) अणु
+				अगर (*n)
+					जारी;
+				वापस ERR_PTR(-EINVAL);
+			पूर्ण
 			*name = n;
-			return handler;
-		}
-	}
-	return ERR_PTR(-EOPNOTSUPP);
-}
+			वापस handler;
+		पूर्ण
+	पूर्ण
+	वापस ERR_PTR(-EOPNOTSUPP);
+पूर्ण
 
 /*
- * Check permissions for extended attribute access.  This is a bit complicated
- * because different namespaces have very different rules.
+ * Check permissions क्रम extended attribute access.  This is a bit complicated
+ * because dअगरferent namespaces have very dअगरferent rules.
  */
-static int
-xattr_permission(struct user_namespace *mnt_userns, struct inode *inode,
-		 const char *name, int mask)
-{
+अटल पूर्णांक
+xattr_permission(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		 स्थिर अक्षर *name, पूर्णांक mask)
+अणु
 	/*
-	 * We can never set or remove an extended attribute on a read-only
-	 * filesystem  or on an immutable / append-only inode.
+	 * We can never set or हटाओ an extended attribute on a पढ़ो-only
+	 * fileप्रणाली  or on an immutable / append-only inode.
 	 */
-	if (mask & MAY_WRITE) {
-		if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
-			return -EPERM;
+	अगर (mask & MAY_WRITE) अणु
+		अगर (IS_IMMUTABLE(inode) || IS_APPEND(inode))
+			वापस -EPERM;
 		/*
 		 * Updating an xattr will likely cause i_uid and i_gid
-		 * to be writen back improperly if their true value is
+		 * to be ग_लिखोn back improperly अगर their true value is
 		 * unknown to the vfs.
 		 */
-		if (HAS_UNMAPPED_ID(mnt_userns, inode))
-			return -EPERM;
-	}
+		अगर (HAS_UNMAPPED_ID(mnt_userns, inode))
+			वापस -EPERM;
+	पूर्ण
 
 	/*
-	 * No restriction for security.* and system.* from the VFS.  Decision
-	 * on these is left to the underlying filesystem / security module.
+	 * No restriction क्रम security.* and प्रणाली.* from the VFS.  Decision
+	 * on these is left to the underlying fileप्रणाली / security module.
 	 */
-	if (!strncmp(name, XATTR_SECURITY_PREFIX, XATTR_SECURITY_PREFIX_LEN) ||
-	    !strncmp(name, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
-		return 0;
+	अगर (!म_भेदन(name, XATTR_SECURITY_PREFIX, XATTR_SECURITY_PREFIX_LEN) ||
+	    !म_भेदन(name, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
+		वापस 0;
 
 	/*
 	 * The trusted.* namespace can only be accessed by privileged users.
 	 */
-	if (!strncmp(name, XATTR_TRUSTED_PREFIX, XATTR_TRUSTED_PREFIX_LEN)) {
-		if (!capable(CAP_SYS_ADMIN))
-			return (mask & MAY_WRITE) ? -EPERM : -ENODATA;
-		return 0;
-	}
+	अगर (!म_भेदन(name, XATTR_TRUSTED_PREFIX, XATTR_TRUSTED_PREFIX_LEN)) अणु
+		अगर (!capable(CAP_SYS_ADMIN))
+			वापस (mask & MAY_WRITE) ? -EPERM : -ENODATA;
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * In the user.* namespace, only regular files and directories can have
 	 * extended attributes. For sticky directories, only the owner and
-	 * privileged users can write attributes.
+	 * privileged users can ग_लिखो attributes.
 	 */
-	if (!strncmp(name, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN)) {
-		if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
-			return (mask & MAY_WRITE) ? -EPERM : -ENODATA;
-		if (S_ISDIR(inode->i_mode) && (inode->i_mode & S_ISVTX) &&
+	अगर (!म_भेदन(name, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN)) अणु
+		अगर (!S_ISREG(inode->i_mode) && !S_ISसूची(inode->i_mode))
+			वापस (mask & MAY_WRITE) ? -EPERM : -ENODATA;
+		अगर (S_ISसूची(inode->i_mode) && (inode->i_mode & S_ISVTX) &&
 		    (mask & MAY_WRITE) &&
 		    !inode_owner_or_capable(mnt_userns, inode))
-			return -EPERM;
-	}
+			वापस -EPERM;
+	पूर्ण
 
-	return inode_permission(mnt_userns, inode, mask);
-}
+	वापस inode_permission(mnt_userns, inode, mask);
+पूर्ण
 
 /*
- * Look for any handler that deals with the specified namespace.
+ * Look क्रम any handler that deals with the specअगरied namespace.
  */
-int
-xattr_supported_namespace(struct inode *inode, const char *prefix)
-{
-	const struct xattr_handler **handlers = inode->i_sb->s_xattr;
-	const struct xattr_handler *handler;
-	size_t preflen;
+पूर्णांक
+xattr_supported_namespace(काष्ठा inode *inode, स्थिर अक्षर *prefix)
+अणु
+	स्थिर काष्ठा xattr_handler **handlers = inode->i_sb->s_xattr;
+	स्थिर काष्ठा xattr_handler *handler;
+	माप_प्रकार preflen;
 
-	if (!(inode->i_opflags & IOP_XATTR)) {
-		if (unlikely(is_bad_inode(inode)))
-			return -EIO;
-		return -EOPNOTSUPP;
-	}
+	अगर (!(inode->i_opflags & IOP_XATTR)) अणु
+		अगर (unlikely(is_bad_inode(inode)))
+			वापस -EIO;
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	preflen = strlen(prefix);
+	preflen = म_माप(prefix);
 
-	for_each_xattr_handler(handlers, handler) {
-		if (!strncmp(xattr_prefix(handler), prefix, preflen))
-			return 0;
-	}
+	क्रम_each_xattr_handler(handlers, handler) अणु
+		अगर (!म_भेदन(xattr_prefix(handler), prefix, preflen))
+			वापस 0;
+	पूर्ण
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 EXPORT_SYMBOL(xattr_supported_namespace);
 
-int
-__vfs_setxattr(struct user_namespace *mnt_userns, struct dentry *dentry,
-	       struct inode *inode, const char *name, const void *value,
-	       size_t size, int flags)
-{
-	const struct xattr_handler *handler;
+पूर्णांक
+__vfs_setxattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+	       काष्ठा inode *inode, स्थिर अक्षर *name, स्थिर व्योम *value,
+	       माप_प्रकार size, पूर्णांक flags)
+अणु
+	स्थिर काष्ठा xattr_handler *handler;
 
 	handler = xattr_resolve_name(inode, &name);
-	if (IS_ERR(handler))
-		return PTR_ERR(handler);
-	if (!handler->set)
-		return -EOPNOTSUPP;
-	if (size == 0)
-		value = "";  /* empty EA, do not remove */
-	return handler->set(handler, mnt_userns, dentry, inode, name, value,
+	अगर (IS_ERR(handler))
+		वापस PTR_ERR(handler);
+	अगर (!handler->set)
+		वापस -EOPNOTSUPP;
+	अगर (size == 0)
+		value = "";  /* empty EA, करो not हटाओ */
+	वापस handler->set(handler, mnt_userns, dentry, inode, name, value,
 			    size, flags);
-}
+पूर्ण
 EXPORT_SYMBOL(__vfs_setxattr);
 
 /**
- *  __vfs_setxattr_noperm - perform setxattr operation without performing
+ *  __vfs_setxattr_noperm - perक्रमm setxattr operation without perक्रमming
  *  permission checks.
  *
  *  @mnt_userns: user namespace of the mount the inode was found from
- *  @dentry: object to perform setxattr on
+ *  @dentry: object to perक्रमm setxattr on
  *  @name: xattr name to set
  *  @value: value to set @name to
  *  @size: size of @value
- *  @flags: flags to pass into filesystem operations
+ *  @flags: flags to pass पूर्णांकo fileप्रणाली operations
  *
- *  returns the result of the internal setxattr or setsecurity operations.
+ *  वापसs the result of the पूर्णांकernal setxattr or setsecurity operations.
  *
- *  This function requires the caller to lock the inode's i_mutex before it
+ *  This function requires the caller to lock the inode's i_mutex beक्रमe it
  *  is executed. It also assumes that the caller will make the appropriate
  *  permission checks.
  */
-int __vfs_setxattr_noperm(struct user_namespace *mnt_userns,
-			  struct dentry *dentry, const char *name,
-			  const void *value, size_t size, int flags)
-{
-	struct inode *inode = dentry->d_inode;
-	int error = -EAGAIN;
-	int issec = !strncmp(name, XATTR_SECURITY_PREFIX,
+पूर्णांक __vfs_setxattr_noperm(काष्ठा user_namespace *mnt_userns,
+			  काष्ठा dentry *dentry, स्थिर अक्षर *name,
+			  स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा inode *inode = dentry->d_inode;
+	पूर्णांक error = -EAGAIN;
+	पूर्णांक issec = !म_भेदन(name, XATTR_SECURITY_PREFIX,
 				   XATTR_SECURITY_PREFIX_LEN);
 
-	if (issec)
+	अगर (issec)
 		inode->i_flags &= ~S_NOSEC;
-	if (inode->i_opflags & IOP_XATTR) {
+	अगर (inode->i_opflags & IOP_XATTR) अणु
 		error = __vfs_setxattr(mnt_userns, dentry, inode, name, value,
 				       size, flags);
-		if (!error) {
-			fsnotify_xattr(dentry);
+		अगर (!error) अणु
+			fsnotअगरy_xattr(dentry);
 			security_inode_post_setxattr(dentry, name, value,
 						     size, flags);
-		}
-	} else {
-		if (unlikely(is_bad_inode(inode)))
-			return -EIO;
-	}
-	if (error == -EAGAIN) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (unlikely(is_bad_inode(inode)))
+			वापस -EIO;
+	पूर्ण
+	अगर (error == -EAGAIN) अणु
 		error = -EOPNOTSUPP;
 
-		if (issec) {
-			const char *suffix = name + XATTR_SECURITY_PREFIX_LEN;
+		अगर (issec) अणु
+			स्थिर अक्षर *suffix = name + XATTR_SECURITY_PREFIX_LEN;
 
 			error = security_inode_setsecurity(inode, suffix, value,
 							   size, flags);
-			if (!error)
-				fsnotify_xattr(dentry);
-		}
-	}
+			अगर (!error)
+				fsnotअगरy_xattr(dentry);
+		पूर्ण
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * __vfs_setxattr_locked - set an extended attribute while holding the inode
+ * __vfs_setxattr_locked - set an extended attribute जबतक holding the inode
  * lock
  *
  *  @mnt_userns: user namespace of the mount of the target inode
- *  @dentry: object to perform setxattr on
+ *  @dentry: object to perक्रमm setxattr on
  *  @name: xattr name to set
  *  @value: value to set @name to
  *  @size: size of @value
- *  @flags: flags to pass into filesystem operations
- *  @delegated_inode: on return, will contain an inode pointer that
- *  a delegation was broken on, NULL if none.
+ *  @flags: flags to pass पूर्णांकo fileप्रणाली operations
+ *  @delegated_inode: on वापस, will contain an inode poपूर्णांकer that
+ *  a delegation was broken on, शून्य अगर none.
  */
-int
-__vfs_setxattr_locked(struct user_namespace *mnt_userns, struct dentry *dentry,
-		      const char *name, const void *value, size_t size,
-		      int flags, struct inode **delegated_inode)
-{
-	struct inode *inode = dentry->d_inode;
-	int error;
+पूर्णांक
+__vfs_setxattr_locked(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		      स्थिर अक्षर *name, स्थिर व्योम *value, माप_प्रकार size,
+		      पूर्णांक flags, काष्ठा inode **delegated_inode)
+अणु
+	काष्ठा inode *inode = dentry->d_inode;
+	पूर्णांक error;
 
 	error = xattr_permission(mnt_userns, inode, name, MAY_WRITE);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = security_inode_setxattr(mnt_userns, dentry, name, value, size,
 					flags);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	error = try_break_deleg(inode, delegated_inode);
-	if (error)
-		goto out;
+	error = try_अवरोध_deleg(inode, delegated_inode);
+	अगर (error)
+		जाओ out;
 
 	error = __vfs_setxattr_noperm(mnt_userns, dentry, name, value,
 				      size, flags);
 
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 EXPORT_SYMBOL_GPL(__vfs_setxattr_locked);
 
-int
-vfs_setxattr(struct user_namespace *mnt_userns, struct dentry *dentry,
-	     const char *name, const void *value, size_t size, int flags)
-{
-	struct inode *inode = dentry->d_inode;
-	struct inode *delegated_inode = NULL;
-	const void  *orig_value = value;
-	int error;
+पूर्णांक
+vfs_setxattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+	     स्थिर अक्षर *name, स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा inode *inode = dentry->d_inode;
+	काष्ठा inode *delegated_inode = शून्य;
+	स्थिर व्योम  *orig_value = value;
+	पूर्णांक error;
 
-	if (size && strcmp(name, XATTR_NAME_CAPS) == 0) {
+	अगर (size && म_भेद(name, XATTR_NAME_CAPS) == 0) अणु
 		error = cap_convert_nscap(mnt_userns, dentry, &value, size);
-		if (error < 0)
-			return error;
+		अगर (error < 0)
+			वापस error;
 		size = error;
-	}
+	पूर्ण
 
 retry_deleg:
 	inode_lock(inode);
@@ -302,613 +303,613 @@ retry_deleg:
 				      flags, &delegated_inode);
 	inode_unlock(inode);
 
-	if (delegated_inode) {
-		error = break_deleg_wait(&delegated_inode);
-		if (!error)
-			goto retry_deleg;
-	}
-	if (value != orig_value)
-		kfree(value);
+	अगर (delegated_inode) अणु
+		error = अवरोध_deleg_रुको(&delegated_inode);
+		अगर (!error)
+			जाओ retry_deleg;
+	पूर्ण
+	अगर (value != orig_value)
+		kमुक्त(value);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 EXPORT_SYMBOL_GPL(vfs_setxattr);
 
-static ssize_t
-xattr_getsecurity(struct user_namespace *mnt_userns, struct inode *inode,
-		  const char *name, void *value, size_t size)
-{
-	void *buffer = NULL;
-	ssize_t len;
+अटल sमाप_प्रकार
+xattr_माला_लोecurity(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		  स्थिर अक्षर *name, व्योम *value, माप_प्रकार size)
+अणु
+	व्योम *buffer = शून्य;
+	sमाप_प्रकार len;
 
-	if (!value || !size) {
-		len = security_inode_getsecurity(mnt_userns, inode, name,
+	अगर (!value || !size) अणु
+		len = security_inode_माला_लोecurity(mnt_userns, inode, name,
 						 &buffer, false);
-		goto out_noalloc;
-	}
+		जाओ out_noalloc;
+	पूर्ण
 
-	len = security_inode_getsecurity(mnt_userns, inode, name, &buffer,
+	len = security_inode_माला_लोecurity(mnt_userns, inode, name, &buffer,
 					 true);
-	if (len < 0)
-		return len;
-	if (size < len) {
-		len = -ERANGE;
-		goto out;
-	}
-	memcpy(value, buffer, len);
+	अगर (len < 0)
+		वापस len;
+	अगर (size < len) अणु
+		len = -दुस्फल;
+		जाओ out;
+	पूर्ण
+	स_नकल(value, buffer, len);
 out:
-	kfree(buffer);
+	kमुक्त(buffer);
 out_noalloc:
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /*
- * vfs_getxattr_alloc - allocate memory, if necessary, before calling getxattr
+ * vfs_getxattr_alloc - allocate memory, अगर necessary, beक्रमe calling getxattr
  *
- * Allocate memory, if not already allocated, or re-allocate correct size,
- * before retrieving the extended attribute.
+ * Allocate memory, अगर not alपढ़ोy allocated, or re-allocate correct size,
+ * beक्रमe retrieving the extended attribute.
  *
- * Returns the result of alloc, if failed, or the getxattr operation.
+ * Returns the result of alloc, अगर failed, or the getxattr operation.
  */
-ssize_t
-vfs_getxattr_alloc(struct user_namespace *mnt_userns, struct dentry *dentry,
-		   const char *name, char **xattr_value, size_t xattr_size,
+sमाप_प्रकार
+vfs_getxattr_alloc(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		   स्थिर अक्षर *name, अक्षर **xattr_value, माप_प्रकार xattr_size,
 		   gfp_t flags)
-{
-	const struct xattr_handler *handler;
-	struct inode *inode = dentry->d_inode;
-	char *value = *xattr_value;
-	int error;
+अणु
+	स्थिर काष्ठा xattr_handler *handler;
+	काष्ठा inode *inode = dentry->d_inode;
+	अक्षर *value = *xattr_value;
+	पूर्णांक error;
 
 	error = xattr_permission(mnt_userns, inode, name, MAY_READ);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	handler = xattr_resolve_name(inode, &name);
-	if (IS_ERR(handler))
-		return PTR_ERR(handler);
-	if (!handler->get)
-		return -EOPNOTSUPP;
-	error = handler->get(handler, dentry, inode, name, NULL, 0);
-	if (error < 0)
-		return error;
+	अगर (IS_ERR(handler))
+		वापस PTR_ERR(handler);
+	अगर (!handler->get)
+		वापस -EOPNOTSUPP;
+	error = handler->get(handler, dentry, inode, name, शून्य, 0);
+	अगर (error < 0)
+		वापस error;
 
-	if (!value || (error > xattr_size)) {
-		value = krealloc(*xattr_value, error + 1, flags);
-		if (!value)
-			return -ENOMEM;
-		memset(value, 0, error + 1);
-	}
+	अगर (!value || (error > xattr_size)) अणु
+		value = kपुनः_स्मृति(*xattr_value, error + 1, flags);
+		अगर (!value)
+			वापस -ENOMEM;
+		स_रखो(value, 0, error + 1);
+	पूर्ण
 
 	error = handler->get(handler, dentry, inode, name, value, error);
 	*xattr_value = value;
-	return error;
-}
+	वापस error;
+पूर्ण
 
-ssize_t
-__vfs_getxattr(struct dentry *dentry, struct inode *inode, const char *name,
-	       void *value, size_t size)
-{
-	const struct xattr_handler *handler;
+sमाप_प्रकार
+__vfs_getxattr(काष्ठा dentry *dentry, काष्ठा inode *inode, स्थिर अक्षर *name,
+	       व्योम *value, माप_प्रकार size)
+अणु
+	स्थिर काष्ठा xattr_handler *handler;
 
 	handler = xattr_resolve_name(inode, &name);
-	if (IS_ERR(handler))
-		return PTR_ERR(handler);
-	if (!handler->get)
-		return -EOPNOTSUPP;
-	return handler->get(handler, dentry, inode, name, value, size);
-}
+	अगर (IS_ERR(handler))
+		वापस PTR_ERR(handler);
+	अगर (!handler->get)
+		वापस -EOPNOTSUPP;
+	वापस handler->get(handler, dentry, inode, name, value, size);
+पूर्ण
 EXPORT_SYMBOL(__vfs_getxattr);
 
-ssize_t
-vfs_getxattr(struct user_namespace *mnt_userns, struct dentry *dentry,
-	     const char *name, void *value, size_t size)
-{
-	struct inode *inode = dentry->d_inode;
-	int error;
+sमाप_प्रकार
+vfs_getxattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+	     स्थिर अक्षर *name, व्योम *value, माप_प्रकार size)
+अणु
+	काष्ठा inode *inode = dentry->d_inode;
+	पूर्णांक error;
 
 	error = xattr_permission(mnt_userns, inode, name, MAY_READ);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = security_inode_getxattr(dentry, name);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (!strncmp(name, XATTR_SECURITY_PREFIX,
-				XATTR_SECURITY_PREFIX_LEN)) {
-		const char *suffix = name + XATTR_SECURITY_PREFIX_LEN;
-		int ret = xattr_getsecurity(mnt_userns, inode, suffix, value,
+	अगर (!म_भेदन(name, XATTR_SECURITY_PREFIX,
+				XATTR_SECURITY_PREFIX_LEN)) अणु
+		स्थिर अक्षर *suffix = name + XATTR_SECURITY_PREFIX_LEN;
+		पूर्णांक ret = xattr_माला_लोecurity(mnt_userns, inode, suffix, value,
 					    size);
 		/*
-		 * Only overwrite the return value if a security module
+		 * Only overग_लिखो the वापस value अगर a security module
 		 * is actually active.
 		 */
-		if (ret == -EOPNOTSUPP)
-			goto nolsm;
-		return ret;
-	}
+		अगर (ret == -EOPNOTSUPP)
+			जाओ nolsm;
+		वापस ret;
+	पूर्ण
 nolsm:
-	return __vfs_getxattr(dentry, inode, name, value, size);
-}
+	वापस __vfs_getxattr(dentry, inode, name, value, size);
+पूर्ण
 EXPORT_SYMBOL_GPL(vfs_getxattr);
 
-ssize_t
-vfs_listxattr(struct dentry *dentry, char *list, size_t size)
-{
-	struct inode *inode = d_inode(dentry);
-	ssize_t error;
+sमाप_प्रकार
+vfs_listxattr(काष्ठा dentry *dentry, अक्षर *list, माप_प्रकार size)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	sमाप_प्रकार error;
 
 	error = security_inode_listxattr(dentry);
-	if (error)
-		return error;
-	if (inode->i_op->listxattr && (inode->i_opflags & IOP_XATTR)) {
+	अगर (error)
+		वापस error;
+	अगर (inode->i_op->listxattr && (inode->i_opflags & IOP_XATTR)) अणु
 		error = inode->i_op->listxattr(dentry, list, size);
-	} else {
+	पूर्ण अन्यथा अणु
 		error = security_inode_listsecurity(inode, list, size);
-		if (size && error > size)
-			error = -ERANGE;
-	}
-	return error;
-}
+		अगर (size && error > size)
+			error = -दुस्फल;
+	पूर्ण
+	वापस error;
+पूर्ण
 EXPORT_SYMBOL_GPL(vfs_listxattr);
 
-int
-__vfs_removexattr(struct user_namespace *mnt_userns, struct dentry *dentry,
-		  const char *name)
-{
-	struct inode *inode = d_inode(dentry);
-	const struct xattr_handler *handler;
+पूर्णांक
+__vfs_हटाओxattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		  स्थिर अक्षर *name)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	स्थिर काष्ठा xattr_handler *handler;
 
 	handler = xattr_resolve_name(inode, &name);
-	if (IS_ERR(handler))
-		return PTR_ERR(handler);
-	if (!handler->set)
-		return -EOPNOTSUPP;
-	return handler->set(handler, mnt_userns, dentry, inode, name, NULL, 0,
+	अगर (IS_ERR(handler))
+		वापस PTR_ERR(handler);
+	अगर (!handler->set)
+		वापस -EOPNOTSUPP;
+	वापस handler->set(handler, mnt_userns, dentry, inode, name, शून्य, 0,
 			    XATTR_REPLACE);
-}
-EXPORT_SYMBOL(__vfs_removexattr);
+पूर्ण
+EXPORT_SYMBOL(__vfs_हटाओxattr);
 
 /**
- * __vfs_removexattr_locked - set an extended attribute while holding the inode
+ * __vfs_हटाओxattr_locked - set an extended attribute जबतक holding the inode
  * lock
  *
  *  @mnt_userns: user namespace of the mount of the target inode
- *  @dentry: object to perform setxattr on
- *  @name: name of xattr to remove
- *  @delegated_inode: on return, will contain an inode pointer that
- *  a delegation was broken on, NULL if none.
+ *  @dentry: object to perक्रमm setxattr on
+ *  @name: name of xattr to हटाओ
+ *  @delegated_inode: on वापस, will contain an inode poपूर्णांकer that
+ *  a delegation was broken on, शून्य अगर none.
  */
-int
-__vfs_removexattr_locked(struct user_namespace *mnt_userns,
-			 struct dentry *dentry, const char *name,
-			 struct inode **delegated_inode)
-{
-	struct inode *inode = dentry->d_inode;
-	int error;
+पूर्णांक
+__vfs_हटाओxattr_locked(काष्ठा user_namespace *mnt_userns,
+			 काष्ठा dentry *dentry, स्थिर अक्षर *name,
+			 काष्ठा inode **delegated_inode)
+अणु
+	काष्ठा inode *inode = dentry->d_inode;
+	पूर्णांक error;
 
 	error = xattr_permission(mnt_userns, inode, name, MAY_WRITE);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = security_inode_removexattr(mnt_userns, dentry, name);
-	if (error)
-		goto out;
+	error = security_inode_हटाओxattr(mnt_userns, dentry, name);
+	अगर (error)
+		जाओ out;
 
-	error = try_break_deleg(inode, delegated_inode);
-	if (error)
-		goto out;
+	error = try_अवरोध_deleg(inode, delegated_inode);
+	अगर (error)
+		जाओ out;
 
-	error = __vfs_removexattr(mnt_userns, dentry, name);
+	error = __vfs_हटाओxattr(mnt_userns, dentry, name);
 
-	if (!error) {
-		fsnotify_xattr(dentry);
-		evm_inode_post_removexattr(dentry, name);
-	}
+	अगर (!error) अणु
+		fsnotअगरy_xattr(dentry);
+		evm_inode_post_हटाओxattr(dentry, name);
+	पूर्ण
 
 out:
-	return error;
-}
-EXPORT_SYMBOL_GPL(__vfs_removexattr_locked);
+	वापस error;
+पूर्ण
+EXPORT_SYMBOL_GPL(__vfs_हटाओxattr_locked);
 
-int
-vfs_removexattr(struct user_namespace *mnt_userns, struct dentry *dentry,
-		const char *name)
-{
-	struct inode *inode = dentry->d_inode;
-	struct inode *delegated_inode = NULL;
-	int error;
+पूर्णांक
+vfs_हटाओxattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		स्थिर अक्षर *name)
+अणु
+	काष्ठा inode *inode = dentry->d_inode;
+	काष्ठा inode *delegated_inode = शून्य;
+	पूर्णांक error;
 
 retry_deleg:
 	inode_lock(inode);
-	error = __vfs_removexattr_locked(mnt_userns, dentry,
+	error = __vfs_हटाओxattr_locked(mnt_userns, dentry,
 					 name, &delegated_inode);
 	inode_unlock(inode);
 
-	if (delegated_inode) {
-		error = break_deleg_wait(&delegated_inode);
-		if (!error)
-			goto retry_deleg;
-	}
+	अगर (delegated_inode) अणु
+		error = अवरोध_deleg_रुको(&delegated_inode);
+		अगर (!error)
+			जाओ retry_deleg;
+	पूर्ण
 
-	return error;
-}
-EXPORT_SYMBOL_GPL(vfs_removexattr);
+	वापस error;
+पूर्ण
+EXPORT_SYMBOL_GPL(vfs_हटाओxattr);
 
 /*
  * Extended attribute SET operations
  */
-static long
-setxattr(struct user_namespace *mnt_userns, struct dentry *d,
-	 const char __user *name, const void __user *value, size_t size,
-	 int flags)
-{
-	int error;
-	void *kvalue = NULL;
-	char kname[XATTR_NAME_MAX + 1];
+अटल दीर्घ
+setxattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *d,
+	 स्थिर अक्षर __user *name, स्थिर व्योम __user *value, माप_प्रकार size,
+	 पूर्णांक flags)
+अणु
+	पूर्णांक error;
+	व्योम *kvalue = शून्य;
+	अक्षर kname[XATTR_NAME_MAX + 1];
 
-	if (flags & ~(XATTR_CREATE|XATTR_REPLACE))
-		return -EINVAL;
+	अगर (flags & ~(XATTR_CREATE|XATTR_REPLACE))
+		वापस -EINVAL;
 
-	error = strncpy_from_user(kname, name, sizeof(kname));
-	if (error == 0 || error == sizeof(kname))
-		error = -ERANGE;
-	if (error < 0)
-		return error;
+	error = म_नकलन_from_user(kname, name, माप(kname));
+	अगर (error == 0 || error == माप(kname))
+		error = -दुस्फल;
+	अगर (error < 0)
+		वापस error;
 
-	if (size) {
-		if (size > XATTR_SIZE_MAX)
-			return -E2BIG;
-		kvalue = kvmalloc(size, GFP_KERNEL);
-		if (!kvalue)
-			return -ENOMEM;
-		if (copy_from_user(kvalue, value, size)) {
+	अगर (size) अणु
+		अगर (size > XATTR_SIZE_MAX)
+			वापस -E2BIG;
+		kvalue = kvदो_स्मृति(size, GFP_KERNEL);
+		अगर (!kvalue)
+			वापस -ENOMEM;
+		अगर (copy_from_user(kvalue, value, size)) अणु
 			error = -EFAULT;
-			goto out;
-		}
-		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
-		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
+			जाओ out;
+		पूर्ण
+		अगर ((म_भेद(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
+		    (म_भेद(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
 			posix_acl_fix_xattr_from_user(mnt_userns, kvalue, size);
-	}
+	पूर्ण
 
 	error = vfs_setxattr(mnt_userns, d, kname, kvalue, size, flags);
 out:
-	kvfree(kvalue);
+	kvमुक्त(kvalue);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int path_setxattr(const char __user *pathname,
-			 const char __user *name, const void __user *value,
-			 size_t size, int flags, unsigned int lookup_flags)
-{
-	struct path path;
-	int error;
+अटल पूर्णांक path_setxattr(स्थिर अक्षर __user *pathname,
+			 स्थिर अक्षर __user *name, स्थिर व्योम __user *value,
+			 माप_प्रकार size, पूर्णांक flags, अचिन्हित पूर्णांक lookup_flags)
+अणु
+	काष्ठा path path;
+	पूर्णांक error;
 
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
-	if (error)
-		return error;
-	error = mnt_want_write(path.mnt);
-	if (!error) {
+	अगर (error)
+		वापस error;
+	error = mnt_want_ग_लिखो(path.mnt);
+	अगर (!error) अणु
 		error = setxattr(mnt_user_ns(path.mnt), path.dentry, name,
 				 value, size, flags);
-		mnt_drop_write(path.mnt);
-	}
+		mnt_drop_ग_लिखो(path.mnt);
+	पूर्ण
 	path_put(&path);
-	if (retry_estale(error, lookup_flags)) {
+	अगर (retry_estale(error, lookup_flags)) अणु
 		lookup_flags |= LOOKUP_REVAL;
-		goto retry;
-	}
-	return error;
-}
+		जाओ retry;
+	पूर्ण
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE5(setxattr, const char __user *, pathname,
-		const char __user *, name, const void __user *, value,
-		size_t, size, int, flags)
-{
-	return path_setxattr(pathname, name, value, size, flags, LOOKUP_FOLLOW);
-}
+SYSCALL_DEFINE5(setxattr, स्थिर अक्षर __user *, pathname,
+		स्थिर अक्षर __user *, name, स्थिर व्योम __user *, value,
+		माप_प्रकार, size, पूर्णांक, flags)
+अणु
+	वापस path_setxattr(pathname, name, value, size, flags, LOOKUP_FOLLOW);
+पूर्ण
 
-SYSCALL_DEFINE5(lsetxattr, const char __user *, pathname,
-		const char __user *, name, const void __user *, value,
-		size_t, size, int, flags)
-{
-	return path_setxattr(pathname, name, value, size, flags, 0);
-}
+SYSCALL_DEFINE5(lsetxattr, स्थिर अक्षर __user *, pathname,
+		स्थिर अक्षर __user *, name, स्थिर व्योम __user *, value,
+		माप_प्रकार, size, पूर्णांक, flags)
+अणु
+	वापस path_setxattr(pathname, name, value, size, flags, 0);
+पूर्ण
 
-SYSCALL_DEFINE5(fsetxattr, int, fd, const char __user *, name,
-		const void __user *,value, size_t, size, int, flags)
-{
-	struct fd f = fdget(fd);
-	int error = -EBADF;
+SYSCALL_DEFINE5(fsetxattr, पूर्णांक, fd, स्थिर अक्षर __user *, name,
+		स्थिर व्योम __user *,value, माप_प्रकार, size, पूर्णांक, flags)
+अणु
+	काष्ठा fd f = fdget(fd);
+	पूर्णांक error = -EBADF;
 
-	if (!f.file)
-		return error;
+	अगर (!f.file)
+		वापस error;
 	audit_file(f.file);
-	error = mnt_want_write_file(f.file);
-	if (!error) {
+	error = mnt_want_ग_लिखो_file(f.file);
+	अगर (!error) अणु
 		error = setxattr(file_mnt_user_ns(f.file),
 				 f.file->f_path.dentry, name,
 				 value, size, flags);
-		mnt_drop_write_file(f.file);
-	}
+		mnt_drop_ग_लिखो_file(f.file);
+	पूर्ण
 	fdput(f);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * Extended attribute GET operations
  */
-static ssize_t
-getxattr(struct user_namespace *mnt_userns, struct dentry *d,
-	 const char __user *name, void __user *value, size_t size)
-{
-	ssize_t error;
-	void *kvalue = NULL;
-	char kname[XATTR_NAME_MAX + 1];
+अटल sमाप_प्रकार
+getxattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *d,
+	 स्थिर अक्षर __user *name, व्योम __user *value, माप_प्रकार size)
+अणु
+	sमाप_प्रकार error;
+	व्योम *kvalue = शून्य;
+	अक्षर kname[XATTR_NAME_MAX + 1];
 
-	error = strncpy_from_user(kname, name, sizeof(kname));
-	if (error == 0 || error == sizeof(kname))
-		error = -ERANGE;
-	if (error < 0)
-		return error;
+	error = म_नकलन_from_user(kname, name, माप(kname));
+	अगर (error == 0 || error == माप(kname))
+		error = -दुस्फल;
+	अगर (error < 0)
+		वापस error;
 
-	if (size) {
-		if (size > XATTR_SIZE_MAX)
+	अगर (size) अणु
+		अगर (size > XATTR_SIZE_MAX)
 			size = XATTR_SIZE_MAX;
 		kvalue = kvzalloc(size, GFP_KERNEL);
-		if (!kvalue)
-			return -ENOMEM;
-	}
+		अगर (!kvalue)
+			वापस -ENOMEM;
+	पूर्ण
 
 	error = vfs_getxattr(mnt_userns, d, kname, kvalue, size);
-	if (error > 0) {
-		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
-		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
+	अगर (error > 0) अणु
+		अगर ((म_भेद(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
+		    (म_भेद(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
 			posix_acl_fix_xattr_to_user(mnt_userns, kvalue, error);
-		if (size && copy_to_user(value, kvalue, error))
+		अगर (size && copy_to_user(value, kvalue, error))
 			error = -EFAULT;
-	} else if (error == -ERANGE && size >= XATTR_SIZE_MAX) {
-		/* The file system tried to returned a value bigger
+	पूर्ण अन्यथा अगर (error == -दुस्फल && size >= XATTR_SIZE_MAX) अणु
+		/* The file प्रणाली tried to वापसed a value bigger
 		   than XATTR_SIZE_MAX bytes. Not possible. */
 		error = -E2BIG;
-	}
+	पूर्ण
 
-	kvfree(kvalue);
+	kvमुक्त(kvalue);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static ssize_t path_getxattr(const char __user *pathname,
-			     const char __user *name, void __user *value,
-			     size_t size, unsigned int lookup_flags)
-{
-	struct path path;
-	ssize_t error;
+अटल sमाप_प्रकार path_getxattr(स्थिर अक्षर __user *pathname,
+			     स्थिर अक्षर __user *name, व्योम __user *value,
+			     माप_प्रकार size, अचिन्हित पूर्णांक lookup_flags)
+अणु
+	काष्ठा path path;
+	sमाप_प्रकार error;
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 	error = getxattr(mnt_user_ns(path.mnt), path.dentry, name, value, size);
 	path_put(&path);
-	if (retry_estale(error, lookup_flags)) {
+	अगर (retry_estale(error, lookup_flags)) अणु
 		lookup_flags |= LOOKUP_REVAL;
-		goto retry;
-	}
-	return error;
-}
+		जाओ retry;
+	पूर्ण
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE4(getxattr, const char __user *, pathname,
-		const char __user *, name, void __user *, value, size_t, size)
-{
-	return path_getxattr(pathname, name, value, size, LOOKUP_FOLLOW);
-}
+SYSCALL_DEFINE4(getxattr, स्थिर अक्षर __user *, pathname,
+		स्थिर अक्षर __user *, name, व्योम __user *, value, माप_प्रकार, size)
+अणु
+	वापस path_getxattr(pathname, name, value, size, LOOKUP_FOLLOW);
+पूर्ण
 
-SYSCALL_DEFINE4(lgetxattr, const char __user *, pathname,
-		const char __user *, name, void __user *, value, size_t, size)
-{
-	return path_getxattr(pathname, name, value, size, 0);
-}
+SYSCALL_DEFINE4(lgetxattr, स्थिर अक्षर __user *, pathname,
+		स्थिर अक्षर __user *, name, व्योम __user *, value, माप_प्रकार, size)
+अणु
+	वापस path_getxattr(pathname, name, value, size, 0);
+पूर्ण
 
-SYSCALL_DEFINE4(fgetxattr, int, fd, const char __user *, name,
-		void __user *, value, size_t, size)
-{
-	struct fd f = fdget(fd);
-	ssize_t error = -EBADF;
+SYSCALL_DEFINE4(fgetxattr, पूर्णांक, fd, स्थिर अक्षर __user *, name,
+		व्योम __user *, value, माप_प्रकार, size)
+अणु
+	काष्ठा fd f = fdget(fd);
+	sमाप_प्रकार error = -EBADF;
 
-	if (!f.file)
-		return error;
+	अगर (!f.file)
+		वापस error;
 	audit_file(f.file);
 	error = getxattr(file_mnt_user_ns(f.file), f.file->f_path.dentry,
 			 name, value, size);
 	fdput(f);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * Extended attribute LIST operations
  */
-static ssize_t
-listxattr(struct dentry *d, char __user *list, size_t size)
-{
-	ssize_t error;
-	char *klist = NULL;
+अटल sमाप_प्रकार
+listxattr(काष्ठा dentry *d, अक्षर __user *list, माप_प्रकार size)
+अणु
+	sमाप_प्रकार error;
+	अक्षर *klist = शून्य;
 
-	if (size) {
-		if (size > XATTR_LIST_MAX)
+	अगर (size) अणु
+		अगर (size > XATTR_LIST_MAX)
 			size = XATTR_LIST_MAX;
-		klist = kvmalloc(size, GFP_KERNEL);
-		if (!klist)
-			return -ENOMEM;
-	}
+		klist = kvदो_स्मृति(size, GFP_KERNEL);
+		अगर (!klist)
+			वापस -ENOMEM;
+	पूर्ण
 
 	error = vfs_listxattr(d, klist, size);
-	if (error > 0) {
-		if (size && copy_to_user(list, klist, error))
+	अगर (error > 0) अणु
+		अगर (size && copy_to_user(list, klist, error))
 			error = -EFAULT;
-	} else if (error == -ERANGE && size >= XATTR_LIST_MAX) {
-		/* The file system tried to returned a list bigger
+	पूर्ण अन्यथा अगर (error == -दुस्फल && size >= XATTR_LIST_MAX) अणु
+		/* The file प्रणाली tried to वापसed a list bigger
 		   than XATTR_LIST_MAX bytes. Not possible. */
 		error = -E2BIG;
-	}
+	पूर्ण
 
-	kvfree(klist);
+	kvमुक्त(klist);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static ssize_t path_listxattr(const char __user *pathname, char __user *list,
-			      size_t size, unsigned int lookup_flags)
-{
-	struct path path;
-	ssize_t error;
+अटल sमाप_प्रकार path_listxattr(स्थिर अक्षर __user *pathname, अक्षर __user *list,
+			      माप_प्रकार size, अचिन्हित पूर्णांक lookup_flags)
+अणु
+	काष्ठा path path;
+	sमाप_प्रकार error;
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 	error = listxattr(path.dentry, list, size);
 	path_put(&path);
-	if (retry_estale(error, lookup_flags)) {
+	अगर (retry_estale(error, lookup_flags)) अणु
 		lookup_flags |= LOOKUP_REVAL;
-		goto retry;
-	}
-	return error;
-}
+		जाओ retry;
+	पूर्ण
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE3(listxattr, const char __user *, pathname, char __user *, list,
-		size_t, size)
-{
-	return path_listxattr(pathname, list, size, LOOKUP_FOLLOW);
-}
+SYSCALL_DEFINE3(listxattr, स्थिर अक्षर __user *, pathname, अक्षर __user *, list,
+		माप_प्रकार, size)
+अणु
+	वापस path_listxattr(pathname, list, size, LOOKUP_FOLLOW);
+पूर्ण
 
-SYSCALL_DEFINE3(llistxattr, const char __user *, pathname, char __user *, list,
-		size_t, size)
-{
-	return path_listxattr(pathname, list, size, 0);
-}
+SYSCALL_DEFINE3(llistxattr, स्थिर अक्षर __user *, pathname, अक्षर __user *, list,
+		माप_प्रकार, size)
+अणु
+	वापस path_listxattr(pathname, list, size, 0);
+पूर्ण
 
-SYSCALL_DEFINE3(flistxattr, int, fd, char __user *, list, size_t, size)
-{
-	struct fd f = fdget(fd);
-	ssize_t error = -EBADF;
+SYSCALL_DEFINE3(flistxattr, पूर्णांक, fd, अक्षर __user *, list, माप_प्रकार, size)
+अणु
+	काष्ठा fd f = fdget(fd);
+	sमाप_प्रकार error = -EBADF;
 
-	if (!f.file)
-		return error;
+	अगर (!f.file)
+		वापस error;
 	audit_file(f.file);
 	error = listxattr(f.file->f_path.dentry, list, size);
 	fdput(f);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * Extended attribute REMOVE operations
  */
-static long
-removexattr(struct user_namespace *mnt_userns, struct dentry *d,
-	    const char __user *name)
-{
-	int error;
-	char kname[XATTR_NAME_MAX + 1];
+अटल दीर्घ
+हटाओxattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *d,
+	    स्थिर अक्षर __user *name)
+अणु
+	पूर्णांक error;
+	अक्षर kname[XATTR_NAME_MAX + 1];
 
-	error = strncpy_from_user(kname, name, sizeof(kname));
-	if (error == 0 || error == sizeof(kname))
-		error = -ERANGE;
-	if (error < 0)
-		return error;
+	error = म_नकलन_from_user(kname, name, माप(kname));
+	अगर (error == 0 || error == माप(kname))
+		error = -दुस्फल;
+	अगर (error < 0)
+		वापस error;
 
-	return vfs_removexattr(mnt_userns, d, kname);
-}
+	वापस vfs_हटाओxattr(mnt_userns, d, kname);
+पूर्ण
 
-static int path_removexattr(const char __user *pathname,
-			    const char __user *name, unsigned int lookup_flags)
-{
-	struct path path;
-	int error;
+अटल पूर्णांक path_हटाओxattr(स्थिर अक्षर __user *pathname,
+			    स्थिर अक्षर __user *name, अचिन्हित पूर्णांक lookup_flags)
+अणु
+	काष्ठा path path;
+	पूर्णांक error;
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
-	if (error)
-		return error;
-	error = mnt_want_write(path.mnt);
-	if (!error) {
-		error = removexattr(mnt_user_ns(path.mnt), path.dentry, name);
-		mnt_drop_write(path.mnt);
-	}
+	अगर (error)
+		वापस error;
+	error = mnt_want_ग_लिखो(path.mnt);
+	अगर (!error) अणु
+		error = हटाओxattr(mnt_user_ns(path.mnt), path.dentry, name);
+		mnt_drop_ग_लिखो(path.mnt);
+	पूर्ण
 	path_put(&path);
-	if (retry_estale(error, lookup_flags)) {
+	अगर (retry_estale(error, lookup_flags)) अणु
 		lookup_flags |= LOOKUP_REVAL;
-		goto retry;
-	}
-	return error;
-}
+		जाओ retry;
+	पूर्ण
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE2(removexattr, const char __user *, pathname,
-		const char __user *, name)
-{
-	return path_removexattr(pathname, name, LOOKUP_FOLLOW);
-}
+SYSCALL_DEFINE2(हटाओxattr, स्थिर अक्षर __user *, pathname,
+		स्थिर अक्षर __user *, name)
+अणु
+	वापस path_हटाओxattr(pathname, name, LOOKUP_FOLLOW);
+पूर्ण
 
-SYSCALL_DEFINE2(lremovexattr, const char __user *, pathname,
-		const char __user *, name)
-{
-	return path_removexattr(pathname, name, 0);
-}
+SYSCALL_DEFINE2(lहटाओxattr, स्थिर अक्षर __user *, pathname,
+		स्थिर अक्षर __user *, name)
+अणु
+	वापस path_हटाओxattr(pathname, name, 0);
+पूर्ण
 
-SYSCALL_DEFINE2(fremovexattr, int, fd, const char __user *, name)
-{
-	struct fd f = fdget(fd);
-	int error = -EBADF;
+SYSCALL_DEFINE2(fहटाओxattr, पूर्णांक, fd, स्थिर अक्षर __user *, name)
+अणु
+	काष्ठा fd f = fdget(fd);
+	पूर्णांक error = -EBADF;
 
-	if (!f.file)
-		return error;
+	अगर (!f.file)
+		वापस error;
 	audit_file(f.file);
-	error = mnt_want_write_file(f.file);
-	if (!error) {
-		error = removexattr(file_mnt_user_ns(f.file),
+	error = mnt_want_ग_लिखो_file(f.file);
+	अगर (!error) अणु
+		error = हटाओxattr(file_mnt_user_ns(f.file),
 				    f.file->f_path.dentry, name);
-		mnt_drop_write_file(f.file);
-	}
+		mnt_drop_ग_लिखो_file(f.file);
+	पूर्ण
 	fdput(f);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * Combine the results of the list() operation from every xattr_handler in the
  * list.
  */
-ssize_t
-generic_listxattr(struct dentry *dentry, char *buffer, size_t buffer_size)
-{
-	const struct xattr_handler *handler, **handlers = dentry->d_sb->s_xattr;
-	unsigned int size = 0;
+sमाप_प्रकार
+generic_listxattr(काष्ठा dentry *dentry, अक्षर *buffer, माप_प्रकार buffer_size)
+अणु
+	स्थिर काष्ठा xattr_handler *handler, **handlers = dentry->d_sb->s_xattr;
+	अचिन्हित पूर्णांक size = 0;
 
-	if (!buffer) {
-		for_each_xattr_handler(handlers, handler) {
-			if (!handler->name ||
+	अगर (!buffer) अणु
+		क्रम_each_xattr_handler(handlers, handler) अणु
+			अगर (!handler->name ||
 			    (handler->list && !handler->list(dentry)))
-				continue;
-			size += strlen(handler->name) + 1;
-		}
-	} else {
-		char *buf = buffer;
-		size_t len;
+				जारी;
+			size += म_माप(handler->name) + 1;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अक्षर *buf = buffer;
+		माप_प्रकार len;
 
-		for_each_xattr_handler(handlers, handler) {
-			if (!handler->name ||
+		क्रम_each_xattr_handler(handlers, handler) अणु
+			अगर (!handler->name ||
 			    (handler->list && !handler->list(dentry)))
-				continue;
-			len = strlen(handler->name);
-			if (len + 1 > buffer_size)
-				return -ERANGE;
-			memcpy(buf, handler->name, len + 1);
+				जारी;
+			len = म_माप(handler->name);
+			अगर (len + 1 > buffer_size)
+				वापस -दुस्फल;
+			स_नकल(buf, handler->name, len + 1);
 			buf += len + 1;
 			buffer_size -= len + 1;
-		}
+		पूर्ण
 		size = buf - buffer;
-	}
-	return size;
-}
+	पूर्ण
+	वापस size;
+पूर्ण
 EXPORT_SYMBOL(generic_listxattr);
 
 /**
@@ -917,216 +918,216 @@ EXPORT_SYMBOL(generic_listxattr);
  * @handler:	handler of the xattr_handler operation
  * @name:	name passed to the xattr_handler operation
  *
- * The get and set xattr handler operations are called with the remainder of
- * the attribute name after skipping the handler's prefix: for example, "foo"
+ * The get and set xattr handler operations are called with the reमुख्यder of
+ * the attribute name after skipping the handler's prefix: क्रम example, "foo"
  * is passed to the get operation of a handler with prefix "user." to get
  * attribute "user.foo".  The full name is still "there" in the name though.
  *
  * Note: the list xattr handler operation when called from the vfs is passed a
- * NULL name; some file systems use this operation internally, with varying
+ * शून्य name; some file प्रणालीs use this operation पूर्णांकernally, with varying
  * semantics.
  */
-const char *xattr_full_name(const struct xattr_handler *handler,
-			    const char *name)
-{
-	size_t prefix_len = strlen(xattr_prefix(handler));
+स्थिर अक्षर *xattr_full_name(स्थिर काष्ठा xattr_handler *handler,
+			    स्थिर अक्षर *name)
+अणु
+	माप_प्रकार prefix_len = म_माप(xattr_prefix(handler));
 
-	return name - prefix_len;
-}
+	वापस name - prefix_len;
+पूर्ण
 EXPORT_SYMBOL(xattr_full_name);
 
 /*
  * Allocate new xattr and copy in the value; but leave the name to callers.
  */
-struct simple_xattr *simple_xattr_alloc(const void *value, size_t size)
-{
-	struct simple_xattr *new_xattr;
-	size_t len;
+काष्ठा simple_xattr *simple_xattr_alloc(स्थिर व्योम *value, माप_प्रकार size)
+अणु
+	काष्ठा simple_xattr *new_xattr;
+	माप_प्रकार len;
 
 	/* wrap around? */
-	len = sizeof(*new_xattr) + size;
-	if (len < sizeof(*new_xattr))
-		return NULL;
+	len = माप(*new_xattr) + size;
+	अगर (len < माप(*new_xattr))
+		वापस शून्य;
 
-	new_xattr = kvmalloc(len, GFP_KERNEL);
-	if (!new_xattr)
-		return NULL;
+	new_xattr = kvदो_स्मृति(len, GFP_KERNEL);
+	अगर (!new_xattr)
+		वापस शून्य;
 
 	new_xattr->size = size;
-	memcpy(new_xattr->value, value, size);
-	return new_xattr;
-}
+	स_नकल(new_xattr->value, value, size);
+	वापस new_xattr;
+पूर्ण
 
 /*
- * xattr GET operation for in-memory/pseudo filesystems
+ * xattr GET operation क्रम in-memory/pseuकरो fileप्रणालीs
  */
-int simple_xattr_get(struct simple_xattrs *xattrs, const char *name,
-		     void *buffer, size_t size)
-{
-	struct simple_xattr *xattr;
-	int ret = -ENODATA;
+पूर्णांक simple_xattr_get(काष्ठा simple_xattrs *xattrs, स्थिर अक्षर *name,
+		     व्योम *buffer, माप_प्रकार size)
+अणु
+	काष्ठा simple_xattr *xattr;
+	पूर्णांक ret = -ENODATA;
 
 	spin_lock(&xattrs->lock);
-	list_for_each_entry(xattr, &xattrs->head, list) {
-		if (strcmp(name, xattr->name))
-			continue;
+	list_क्रम_each_entry(xattr, &xattrs->head, list) अणु
+		अगर (म_भेद(name, xattr->name))
+			जारी;
 
 		ret = xattr->size;
-		if (buffer) {
-			if (size < xattr->size)
-				ret = -ERANGE;
-			else
-				memcpy(buffer, xattr->value, xattr->size);
-		}
-		break;
-	}
+		अगर (buffer) अणु
+			अगर (size < xattr->size)
+				ret = -दुस्फल;
+			अन्यथा
+				स_नकल(buffer, xattr->value, xattr->size);
+		पूर्ण
+		अवरोध;
+	पूर्ण
 	spin_unlock(&xattrs->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * simple_xattr_set - xattr SET operation for in-memory/pseudo filesystems
+ * simple_xattr_set - xattr SET operation क्रम in-memory/pseuकरो fileप्रणालीs
  * @xattrs: target simple_xattr list
  * @name: name of the extended attribute
- * @value: value of the xattr. If %NULL, will remove the attribute.
+ * @value: value of the xattr. If %शून्य, will हटाओ the attribute.
  * @size: size of the new xattr
- * @flags: %XATTR_{CREATE|REPLACE}
- * @removed_size: returns size of the removed xattr, -1 if none removed
+ * @flags: %XATTR_अणुCREATE|REPLACEपूर्ण
+ * @हटाओd_size: वापसs size of the हटाओd xattr, -1 अगर none हटाओd
  *
- * %XATTR_CREATE is set, the xattr shouldn't exist already; otherwise fails
+ * %XATTR_CREATE is set, the xattr shouldn't exist alपढ़ोy; otherwise fails
  * with -EEXIST.  If %XATTR_REPLACE is set, the xattr should exist;
  * otherwise, fails with -ENODATA.
  *
- * Returns 0 on success, -errno on failure.
+ * Returns 0 on success, -त्रुटि_सं on failure.
  */
-int simple_xattr_set(struct simple_xattrs *xattrs, const char *name,
-		     const void *value, size_t size, int flags,
-		     ssize_t *removed_size)
-{
-	struct simple_xattr *xattr;
-	struct simple_xattr *new_xattr = NULL;
-	int err = 0;
+पूर्णांक simple_xattr_set(काष्ठा simple_xattrs *xattrs, स्थिर अक्षर *name,
+		     स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags,
+		     sमाप_प्रकार *हटाओd_size)
+अणु
+	काष्ठा simple_xattr *xattr;
+	काष्ठा simple_xattr *new_xattr = शून्य;
+	पूर्णांक err = 0;
 
-	if (removed_size)
-		*removed_size = -1;
+	अगर (हटाओd_size)
+		*हटाओd_size = -1;
 
-	/* value == NULL means remove */
-	if (value) {
+	/* value == शून्य means हटाओ */
+	अगर (value) अणु
 		new_xattr = simple_xattr_alloc(value, size);
-		if (!new_xattr)
-			return -ENOMEM;
+		अगर (!new_xattr)
+			वापस -ENOMEM;
 
 		new_xattr->name = kstrdup(name, GFP_KERNEL);
-		if (!new_xattr->name) {
-			kvfree(new_xattr);
-			return -ENOMEM;
-		}
-	}
+		अगर (!new_xattr->name) अणु
+			kvमुक्त(new_xattr);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	spin_lock(&xattrs->lock);
-	list_for_each_entry(xattr, &xattrs->head, list) {
-		if (!strcmp(name, xattr->name)) {
-			if (flags & XATTR_CREATE) {
+	list_क्रम_each_entry(xattr, &xattrs->head, list) अणु
+		अगर (!म_भेद(name, xattr->name)) अणु
+			अगर (flags & XATTR_CREATE) अणु
 				xattr = new_xattr;
 				err = -EEXIST;
-			} else if (new_xattr) {
+			पूर्ण अन्यथा अगर (new_xattr) अणु
 				list_replace(&xattr->list, &new_xattr->list);
-				if (removed_size)
-					*removed_size = xattr->size;
-			} else {
+				अगर (हटाओd_size)
+					*हटाओd_size = xattr->size;
+			पूर्ण अन्यथा अणु
 				list_del(&xattr->list);
-				if (removed_size)
-					*removed_size = xattr->size;
-			}
-			goto out;
-		}
-	}
-	if (flags & XATTR_REPLACE) {
+				अगर (हटाओd_size)
+					*हटाओd_size = xattr->size;
+			पूर्ण
+			जाओ out;
+		पूर्ण
+	पूर्ण
+	अगर (flags & XATTR_REPLACE) अणु
 		xattr = new_xattr;
 		err = -ENODATA;
-	} else {
+	पूर्ण अन्यथा अणु
 		list_add(&new_xattr->list, &xattrs->head);
-		xattr = NULL;
-	}
+		xattr = शून्य;
+	पूर्ण
 out:
 	spin_unlock(&xattrs->lock);
-	if (xattr) {
-		kfree(xattr->name);
-		kvfree(xattr);
-	}
-	return err;
+	अगर (xattr) अणु
+		kमुक्त(xattr->name);
+		kvमुक्त(xattr);
+	पूर्ण
+	वापस err;
 
-}
+पूर्ण
 
-static bool xattr_is_trusted(const char *name)
-{
-	return !strncmp(name, XATTR_TRUSTED_PREFIX, XATTR_TRUSTED_PREFIX_LEN);
-}
+अटल bool xattr_is_trusted(स्थिर अक्षर *name)
+अणु
+	वापस !म_भेदन(name, XATTR_TRUSTED_PREFIX, XATTR_TRUSTED_PREFIX_LEN);
+पूर्ण
 
-static int xattr_list_one(char **buffer, ssize_t *remaining_size,
-			  const char *name)
-{
-	size_t len = strlen(name) + 1;
-	if (*buffer) {
-		if (*remaining_size < len)
-			return -ERANGE;
-		memcpy(*buffer, name, len);
+अटल पूर्णांक xattr_list_one(अक्षर **buffer, sमाप_प्रकार *reमुख्यing_size,
+			  स्थिर अक्षर *name)
+अणु
+	माप_प्रकार len = म_माप(name) + 1;
+	अगर (*buffer) अणु
+		अगर (*reमुख्यing_size < len)
+			वापस -दुस्फल;
+		स_नकल(*buffer, name, len);
 		*buffer += len;
-	}
-	*remaining_size -= len;
-	return 0;
-}
+	पूर्ण
+	*reमुख्यing_size -= len;
+	वापस 0;
+पूर्ण
 
 /*
- * xattr LIST operation for in-memory/pseudo filesystems
+ * xattr LIST operation क्रम in-memory/pseuकरो fileप्रणालीs
  */
-ssize_t simple_xattr_list(struct inode *inode, struct simple_xattrs *xattrs,
-			  char *buffer, size_t size)
-{
+sमाप_प्रकार simple_xattr_list(काष्ठा inode *inode, काष्ठा simple_xattrs *xattrs,
+			  अक्षर *buffer, माप_प्रकार size)
+अणु
 	bool trusted = capable(CAP_SYS_ADMIN);
-	struct simple_xattr *xattr;
-	ssize_t remaining_size = size;
-	int err = 0;
+	काष्ठा simple_xattr *xattr;
+	sमाप_प्रकार reमुख्यing_size = size;
+	पूर्णांक err = 0;
 
-#ifdef CONFIG_FS_POSIX_ACL
-	if (IS_POSIXACL(inode)) {
-		if (inode->i_acl) {
-			err = xattr_list_one(&buffer, &remaining_size,
+#अगर_घोषित CONFIG_FS_POSIX_ACL
+	अगर (IS_POSIXACL(inode)) अणु
+		अगर (inode->i_acl) अणु
+			err = xattr_list_one(&buffer, &reमुख्यing_size,
 					     XATTR_NAME_POSIX_ACL_ACCESS);
-			if (err)
-				return err;
-		}
-		if (inode->i_default_acl) {
-			err = xattr_list_one(&buffer, &remaining_size,
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (inode->i_शेष_acl) अणु
+			err = xattr_list_one(&buffer, &reमुख्यing_size,
 					     XATTR_NAME_POSIX_ACL_DEFAULT);
-			if (err)
-				return err;
-		}
-	}
-#endif
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
 	spin_lock(&xattrs->lock);
-	list_for_each_entry(xattr, &xattrs->head, list) {
-		/* skip "trusted." attributes for unprivileged callers */
-		if (!trusted && xattr_is_trusted(xattr->name))
-			continue;
+	list_क्रम_each_entry(xattr, &xattrs->head, list) अणु
+		/* skip "trusted." attributes क्रम unprivileged callers */
+		अगर (!trusted && xattr_is_trusted(xattr->name))
+			जारी;
 
-		err = xattr_list_one(&buffer, &remaining_size, xattr->name);
-		if (err)
-			break;
-	}
+		err = xattr_list_one(&buffer, &reमुख्यing_size, xattr->name);
+		अगर (err)
+			अवरोध;
+	पूर्ण
 	spin_unlock(&xattrs->lock);
 
-	return err ? err : size - remaining_size;
-}
+	वापस err ? err : size - reमुख्यing_size;
+पूर्ण
 
 /*
  * Adds an extended attribute to the list
  */
-void simple_xattr_list_add(struct simple_xattrs *xattrs,
-			   struct simple_xattr *new_xattr)
-{
+व्योम simple_xattr_list_add(काष्ठा simple_xattrs *xattrs,
+			   काष्ठा simple_xattr *new_xattr)
+अणु
 	spin_lock(&xattrs->lock);
 	list_add(&new_xattr->list, &xattrs->head);
 	spin_unlock(&xattrs->lock);
-}
+पूर्ण

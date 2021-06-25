@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2018 HUAWEI, Inc.
  *             https://www.huawei.com/
  * Created by Gao Xiang <gaoxiang25@huawei.com>
  */
-#ifndef __EROFS_FS_ZPVEC_H
-#define __EROFS_FS_ZPVEC_H
+#अगर_अघोषित __EROFS_FS_ZPVEC_H
+#घोषणा __EROFS_FS_ZPVEC_H
 
-#include "tagptr.h"
+#समावेश "tagptr.h"
 
-/* page type in pagevec for decompress subsystem */
-enum z_erofs_page_type {
+/* page type in pagevec क्रम decompress subप्रणाली */
+क्रमागत z_erofs_page_type अणु
 	/* including Z_EROFS_VLE_PAGE_TAIL_EXCLUSIVE */
 	Z_EROFS_PAGE_TYPE_EXCLUSIVE,
 
@@ -18,140 +19,140 @@ enum z_erofs_page_type {
 
 	Z_EROFS_VLE_PAGE_TYPE_HEAD,
 	Z_EROFS_VLE_PAGE_TYPE_MAX
-};
+पूर्ण;
 
-extern void __compiletime_error("Z_EROFS_PAGE_TYPE_EXCLUSIVE != 0")
-	__bad_page_type_exclusive(void);
+बाह्य व्योम __compileसमय_error("Z_EROFS_PAGE_TYPE_EXCLUSIVE != 0")
+	__bad_page_type_exclusive(व्योम);
 
-/* pagevec tagged pointer */
-typedef tagptr2_t	erofs_vtptr_t;
+/* pagevec tagged poपूर्णांकer */
+प्रकार tagptr2_t	erofs_vtptr_t;
 
 /* pagevec collector */
-struct z_erofs_pagevec_ctor {
-	struct page *curr, *next;
+काष्ठा z_erofs_pagevec_ctor अणु
+	काष्ठा page *curr, *next;
 	erofs_vtptr_t *pages;
 
-	unsigned int nr, index;
-};
+	अचिन्हित पूर्णांक nr, index;
+पूर्ण;
 
-static inline void z_erofs_pagevec_ctor_exit(struct z_erofs_pagevec_ctor *ctor,
+अटल अंतरभूत व्योम z_erofs_pagevec_ctor_निकास(काष्ठा z_erofs_pagevec_ctor *ctor,
 					     bool atomic)
-{
-	if (!ctor->curr)
-		return;
+अणु
+	अगर (!ctor->curr)
+		वापस;
 
-	if (atomic)
+	अगर (atomic)
 		kunmap_atomic(ctor->pages);
-	else
+	अन्यथा
 		kunmap(ctor->curr);
-}
+पूर्ण
 
-static inline struct page *
-z_erofs_pagevec_ctor_next_page(struct z_erofs_pagevec_ctor *ctor,
-			       unsigned int nr)
-{
-	unsigned int index;
+अटल अंतरभूत काष्ठा page *
+z_erofs_pagevec_ctor_next_page(काष्ठा z_erofs_pagevec_ctor *ctor,
+			       अचिन्हित पूर्णांक nr)
+अणु
+	अचिन्हित पूर्णांक index;
 
 	/* keep away from occupied pages */
-	if (ctor->next)
-		return ctor->next;
+	अगर (ctor->next)
+		वापस ctor->next;
 
-	for (index = 0; index < nr; ++index) {
-		const erofs_vtptr_t t = ctor->pages[index];
-		const unsigned int tags = tagptr_unfold_tags(t);
+	क्रम (index = 0; index < nr; ++index) अणु
+		स्थिर erofs_vtptr_t t = ctor->pages[index];
+		स्थिर अचिन्हित पूर्णांक tags = tagptr_unfold_tags(t);
 
-		if (tags == Z_EROFS_PAGE_TYPE_EXCLUSIVE)
-			return tagptr_unfold_ptr(t);
-	}
+		अगर (tags == Z_EROFS_PAGE_TYPE_EXCLUSIVE)
+			वापस tagptr_unfold_ptr(t);
+	पूर्ण
 	DBG_BUGON(nr >= ctor->nr);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline void
-z_erofs_pagevec_ctor_pagedown(struct z_erofs_pagevec_ctor *ctor,
+अटल अंतरभूत व्योम
+z_erofs_pagevec_ctor_pageकरोwn(काष्ठा z_erofs_pagevec_ctor *ctor,
 			      bool atomic)
-{
-	struct page *next = z_erofs_pagevec_ctor_next_page(ctor, ctor->nr);
+अणु
+	काष्ठा page *next = z_erofs_pagevec_ctor_next_page(ctor, ctor->nr);
 
-	z_erofs_pagevec_ctor_exit(ctor, atomic);
+	z_erofs_pagevec_ctor_निकास(ctor, atomic);
 
 	ctor->curr = next;
-	ctor->next = NULL;
+	ctor->next = शून्य;
 	ctor->pages = atomic ?
 		kmap_atomic(ctor->curr) : kmap(ctor->curr);
 
-	ctor->nr = PAGE_SIZE / sizeof(struct page *);
+	ctor->nr = PAGE_SIZE / माप(काष्ठा page *);
 	ctor->index = 0;
-}
+पूर्ण
 
-static inline void z_erofs_pagevec_ctor_init(struct z_erofs_pagevec_ctor *ctor,
-					     unsigned int nr,
+अटल अंतरभूत व्योम z_erofs_pagevec_ctor_init(काष्ठा z_erofs_pagevec_ctor *ctor,
+					     अचिन्हित पूर्णांक nr,
 					     erofs_vtptr_t *pages,
-					     unsigned int i)
-{
+					     अचिन्हित पूर्णांक i)
+अणु
 	ctor->nr = nr;
-	ctor->curr = ctor->next = NULL;
+	ctor->curr = ctor->next = शून्य;
 	ctor->pages = pages;
 
-	if (i >= nr) {
+	अगर (i >= nr) अणु
 		i -= nr;
-		z_erofs_pagevec_ctor_pagedown(ctor, false);
-		while (i > ctor->nr) {
+		z_erofs_pagevec_ctor_pageकरोwn(ctor, false);
+		जबतक (i > ctor->nr) अणु
 			i -= ctor->nr;
-			z_erofs_pagevec_ctor_pagedown(ctor, false);
-		}
-	}
+			z_erofs_pagevec_ctor_pageकरोwn(ctor, false);
+		पूर्ण
+	पूर्ण
 	ctor->next = z_erofs_pagevec_ctor_next_page(ctor, i);
 	ctor->index = i;
-}
+पूर्ण
 
-static inline bool z_erofs_pagevec_enqueue(struct z_erofs_pagevec_ctor *ctor,
-					   struct page *page,
-					   enum z_erofs_page_type type,
+अटल अंतरभूत bool z_erofs_pagevec_enqueue(काष्ठा z_erofs_pagevec_ctor *ctor,
+					   काष्ठा page *page,
+					   क्रमागत z_erofs_page_type type,
 					   bool *occupied)
-{
+अणु
 	*occupied = false;
-	if (!ctor->next && type)
-		if (ctor->index + 1 == ctor->nr)
-			return false;
+	अगर (!ctor->next && type)
+		अगर (ctor->index + 1 == ctor->nr)
+			वापस false;
 
-	if (ctor->index >= ctor->nr)
-		z_erofs_pagevec_ctor_pagedown(ctor, false);
+	अगर (ctor->index >= ctor->nr)
+		z_erofs_pagevec_ctor_pageकरोwn(ctor, false);
 
 	/* exclusive page type must be 0 */
-	if (Z_EROFS_PAGE_TYPE_EXCLUSIVE != (uintptr_t)NULL)
+	अगर (Z_EROFS_PAGE_TYPE_EXCLUSIVE != (uपूर्णांकptr_t)शून्य)
 		__bad_page_type_exclusive();
 
 	/* should remind that collector->next never equal to 1, 2 */
-	if (type == (uintptr_t)ctor->next) {
+	अगर (type == (uपूर्णांकptr_t)ctor->next) अणु
 		ctor->next = page;
 		*occupied = true;
-	}
+	पूर्ण
 	ctor->pages[ctor->index++] = tagptr_fold(erofs_vtptr_t, page, type);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline struct page *
-z_erofs_pagevec_dequeue(struct z_erofs_pagevec_ctor *ctor,
-			enum z_erofs_page_type *type)
-{
+अटल अंतरभूत काष्ठा page *
+z_erofs_pagevec_dequeue(काष्ठा z_erofs_pagevec_ctor *ctor,
+			क्रमागत z_erofs_page_type *type)
+अणु
 	erofs_vtptr_t t;
 
-	if (ctor->index >= ctor->nr) {
+	अगर (ctor->index >= ctor->nr) अणु
 		DBG_BUGON(!ctor->next);
-		z_erofs_pagevec_ctor_pagedown(ctor, true);
-	}
+		z_erofs_pagevec_ctor_pageकरोwn(ctor, true);
+	पूर्ण
 
 	t = ctor->pages[ctor->index];
 
 	*type = tagptr_unfold_tags(t);
 
 	/* should remind that collector->next never equal to 1, 2 */
-	if (*type == (uintptr_t)ctor->next)
+	अगर (*type == (uपूर्णांकptr_t)ctor->next)
 		ctor->next = tagptr_unfold_ptr(t);
 
-	ctor->pages[ctor->index++] = tagptr_fold(erofs_vtptr_t, NULL, 0);
-	return tagptr_unfold_ptr(t);
-}
-#endif
+	ctor->pages[ctor->index++] = tagptr_fold(erofs_vtptr_t, शून्य, 0);
+	वापस tagptr_unfold_ptr(t);
+पूर्ण
+#पूर्ण_अगर
 

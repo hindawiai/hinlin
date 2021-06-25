@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2020 BAIKAL ELECTRONICS, JSC
  *
@@ -8,413 +9,413 @@
  * Baikal-T1 APB-bus driver
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/atomic.h>
-#include <linux/platform_device.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/nmi.h>
-#include <linux/of.h>
-#include <linux/regmap.h>
-#include <linux/clk.h>
-#include <linux/reset.h>
-#include <linux/time64.h>
-#include <linux/clk.h>
-#include <linux/sysfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/nmi.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/समय64.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/sysfs.h>
 
-#define APB_EHB_ISR			0x00
-#define APB_EHB_ISR_PENDING		BIT(0)
-#define APB_EHB_ISR_MASK		BIT(1)
-#define APB_EHB_ADDR			0x04
-#define APB_EHB_TIMEOUT			0x08
+#घोषणा APB_EHB_ISR			0x00
+#घोषणा APB_EHB_ISR_PENDING		BIT(0)
+#घोषणा APB_EHB_ISR_MASK		BIT(1)
+#घोषणा APB_EHB_ADDR			0x04
+#घोषणा APB_EHB_TIMEOUT			0x08
 
-#define APB_EHB_TIMEOUT_MIN		0x000003FFU
-#define APB_EHB_TIMEOUT_MAX		0xFFFFFFFFU
+#घोषणा APB_EHB_TIMEOUT_MIN		0x000003FFU
+#घोषणा APB_EHB_TIMEOUT_MAX		0xFFFFFFFFU
 
 /*
- * struct bt1_apb - Baikal-T1 APB EHB private data
- * @dev: Pointer to the device structure.
- * @regs: APB EHB registers map.
+ * काष्ठा bt1_apb - Baikal-T1 APB EHB निजी data
+ * @dev: Poपूर्णांकer to the device काष्ठाure.
+ * @regs: APB EHB रेजिस्टरs map.
  * @res: No-device error injection memory region.
  * @irq: Errors IRQ number.
- * @rate: APB-bus reference clock rate.
- * @pclk: APB-reference clock.
- * @prst: APB domain reset line.
+ * @rate: APB-bus reference घड़ी rate.
+ * @pclk: APB-reference घड़ी.
+ * @prst: APB करोमुख्य reset line.
  * @count: Number of errors detected.
  */
-struct bt1_apb {
-	struct device *dev;
+काष्ठा bt1_apb अणु
+	काष्ठा device *dev;
 
-	struct regmap *regs;
-	void __iomem *res;
-	int irq;
+	काष्ठा regmap *regs;
+	व्योम __iomem *res;
+	पूर्णांक irq;
 
-	unsigned long rate;
-	struct clk *pclk;
+	अचिन्हित दीर्घ rate;
+	काष्ठा clk *pclk;
 
-	struct reset_control *prst;
+	काष्ठा reset_control *prst;
 
 	atomic_t count;
-};
+पूर्ण;
 
-static const struct regmap_config bt1_apb_regmap_cfg = {
+अटल स्थिर काष्ठा regmap_config bt1_apb_regmap_cfg = अणु
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_register = APB_EHB_TIMEOUT,
+	.max_रेजिस्टर = APB_EHB_TIMEOUT,
 	.fast_io = true
-};
+पूर्ण;
 
-static inline unsigned long bt1_apb_n_to_timeout_us(struct bt1_apb *apb, u32 n)
-{
-	u64 timeout = (u64)n * USEC_PER_SEC;
+अटल अंतरभूत अचिन्हित दीर्घ bt1_apb_n_to_समयout_us(काष्ठा bt1_apb *apb, u32 n)
+अणु
+	u64 समयout = (u64)n * USEC_PER_SEC;
 
-	do_div(timeout, apb->rate);
+	करो_भाग(समयout, apb->rate);
 
-	return timeout;
+	वापस समयout;
 
-}
+पूर्ण
 
-static inline unsigned long bt1_apb_timeout_to_n_us(struct bt1_apb *apb,
-						    unsigned long timeout)
-{
-	u64 n = (u64)timeout * apb->rate;
+अटल अंतरभूत अचिन्हित दीर्घ bt1_apb_समयout_to_n_us(काष्ठा bt1_apb *apb,
+						    अचिन्हित दीर्घ समयout)
+अणु
+	u64 n = (u64)समयout * apb->rate;
 
-	do_div(n, USEC_PER_SEC);
+	करो_भाग(n, USEC_PER_SEC);
 
-	return n;
+	वापस n;
 
-}
+पूर्ण
 
-static irqreturn_t bt1_apb_isr(int irq, void *data)
-{
-	struct bt1_apb *apb = data;
+अटल irqवापस_t bt1_apb_isr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा bt1_apb *apb = data;
 	u32 addr = 0;
 
-	regmap_read(apb->regs, APB_EHB_ADDR, &addr);
+	regmap_पढ़ो(apb->regs, APB_EHB_ADDR, &addr);
 
 	dev_crit_ratelimited(apb->dev,
 		"APB-bus fault %d: Slave access timeout at 0x%08x\n",
-		atomic_inc_return(&apb->count),
+		atomic_inc_वापस(&apb->count),
 		addr);
 
 	/*
-	 * Print backtrace on each CPU. This might be pointless if the fault
+	 * Prपूर्णांक backtrace on each CPU. This might be poपूर्णांकless अगर the fault
 	 * has happened on the same CPU as the IRQ handler is executed or
 	 * the other core proceeded further execution despite the error.
-	 * But if it's not, by looking at the trace we would get straight to
+	 * But अगर it's not, by looking at the trace we would get straight to
 	 * the cause of the problem.
 	 */
 	trigger_all_cpu_backtrace();
 
 	regmap_update_bits(apb->regs, APB_EHB_ISR, APB_EHB_ISR_PENDING, 0);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void bt1_apb_clear_data(void *data)
-{
-	struct bt1_apb *apb = data;
-	struct platform_device *pdev = to_platform_device(apb->dev);
+अटल व्योम bt1_apb_clear_data(व्योम *data)
+अणु
+	काष्ठा bt1_apb *apb = data;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(apb->dev);
 
-	platform_set_drvdata(pdev, NULL);
-}
+	platक्रमm_set_drvdata(pdev, शून्य);
+पूर्ण
 
-static struct bt1_apb *bt1_apb_create_data(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct bt1_apb *apb;
-	int ret;
+अटल काष्ठा bt1_apb *bt1_apb_create_data(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा bt1_apb *apb;
+	पूर्णांक ret;
 
-	apb = devm_kzalloc(dev, sizeof(*apb), GFP_KERNEL);
-	if (!apb)
-		return ERR_PTR(-ENOMEM);
+	apb = devm_kzalloc(dev, माप(*apb), GFP_KERNEL);
+	अगर (!apb)
+		वापस ERR_PTR(-ENOMEM);
 
 	ret = devm_add_action(dev, bt1_apb_clear_data, apb);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Can't add APB EHB data clear action\n");
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	apb->dev = dev;
 	atomic_set(&apb->count, 0);
-	platform_set_drvdata(pdev, apb);
+	platक्रमm_set_drvdata(pdev, apb);
 
-	return apb;
-}
+	वापस apb;
+पूर्ण
 
-static int bt1_apb_request_regs(struct bt1_apb *apb)
-{
-	struct platform_device *pdev = to_platform_device(apb->dev);
-	void __iomem *regs;
+अटल पूर्णांक bt1_apb_request_regs(काष्ठा bt1_apb *apb)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(apb->dev);
+	व्योम __iomem *regs;
 
-	regs = devm_platform_ioremap_resource_byname(pdev, "ehb");
-	if (IS_ERR(regs)) {
+	regs = devm_platक्रमm_ioremap_resource_byname(pdev, "ehb");
+	अगर (IS_ERR(regs)) अणु
 		dev_err(apb->dev, "Couldn't map APB EHB registers\n");
-		return PTR_ERR(regs);
-	}
+		वापस PTR_ERR(regs);
+	पूर्ण
 
 	apb->regs = devm_regmap_init_mmio(apb->dev, regs, &bt1_apb_regmap_cfg);
-	if (IS_ERR(apb->regs)) {
+	अगर (IS_ERR(apb->regs)) अणु
 		dev_err(apb->dev, "Couldn't create APB EHB regmap\n");
-		return PTR_ERR(apb->regs);
-	}
+		वापस PTR_ERR(apb->regs);
+	पूर्ण
 
-	apb->res = devm_platform_ioremap_resource_byname(pdev, "nodev");
-	if (IS_ERR(apb->res))
+	apb->res = devm_platक्रमm_ioremap_resource_byname(pdev, "nodev");
+	अगर (IS_ERR(apb->res))
 		dev_err(apb->dev, "Couldn't map reserved region\n");
 
-	return PTR_ERR_OR_ZERO(apb->res);
-}
+	वापस PTR_ERR_OR_ZERO(apb->res);
+पूर्ण
 
-static int bt1_apb_request_rst(struct bt1_apb *apb)
-{
-	int ret;
+अटल पूर्णांक bt1_apb_request_rst(काष्ठा bt1_apb *apb)
+अणु
+	पूर्णांक ret;
 
 	apb->prst = devm_reset_control_get_optional_exclusive(apb->dev, "prst");
-	if (IS_ERR(apb->prst)) {
+	अगर (IS_ERR(apb->prst)) अणु
 		dev_warn(apb->dev, "Couldn't get reset control line\n");
-		return PTR_ERR(apb->prst);
-	}
+		वापस PTR_ERR(apb->prst);
+	पूर्ण
 
-	ret = reset_control_deassert(apb->prst);
-	if (ret)
+	ret = reset_control_deनिश्चित(apb->prst);
+	अगर (ret)
 		dev_err(apb->dev, "Failed to deassert the reset line\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void bt1_apb_disable_clk(void *data)
-{
-	struct bt1_apb *apb = data;
+अटल व्योम bt1_apb_disable_clk(व्योम *data)
+अणु
+	काष्ठा bt1_apb *apb = data;
 
 	clk_disable_unprepare(apb->pclk);
-}
+पूर्ण
 
-static int bt1_apb_request_clk(struct bt1_apb *apb)
-{
-	int ret;
+अटल पूर्णांक bt1_apb_request_clk(काष्ठा bt1_apb *apb)
+अणु
+	पूर्णांक ret;
 
 	apb->pclk = devm_clk_get(apb->dev, "pclk");
-	if (IS_ERR(apb->pclk)) {
+	अगर (IS_ERR(apb->pclk)) अणु
 		dev_err(apb->dev, "Couldn't get APB clock descriptor\n");
-		return PTR_ERR(apb->pclk);
-	}
+		वापस PTR_ERR(apb->pclk);
+	पूर्ण
 
 	ret = clk_prepare_enable(apb->pclk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(apb->dev, "Couldn't enable the APB clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = devm_add_action_or_reset(apb->dev, bt1_apb_disable_clk, apb);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(apb->dev, "Can't add APB EHB clocks disable action\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	apb->rate = clk_get_rate(apb->pclk);
-	if (!apb->rate) {
+	अगर (!apb->rate) अणु
 		dev_err(apb->dev, "Invalid clock rate\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bt1_apb_clear_irq(void *data)
-{
-	struct bt1_apb *apb = data;
+अटल व्योम bt1_apb_clear_irq(व्योम *data)
+अणु
+	काष्ठा bt1_apb *apb = data;
 
 	regmap_update_bits(apb->regs, APB_EHB_ISR, APB_EHB_ISR_MASK, 0);
-}
+पूर्ण
 
-static int bt1_apb_request_irq(struct bt1_apb *apb)
-{
-	struct platform_device *pdev = to_platform_device(apb->dev);
-	int ret;
+अटल पूर्णांक bt1_apb_request_irq(काष्ठा bt1_apb *apb)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(apb->dev);
+	पूर्णांक ret;
 
-	apb->irq = platform_get_irq(pdev, 0);
-	if (apb->irq < 0)
-		return apb->irq;
+	apb->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (apb->irq < 0)
+		वापस apb->irq;
 
 	ret = devm_request_irq(apb->dev, apb->irq, bt1_apb_isr, IRQF_SHARED,
 			       "bt1-apb", apb);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(apb->dev, "Couldn't request APB EHB IRQ\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = devm_add_action(apb->dev, bt1_apb_clear_irq, apb);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(apb->dev, "Can't add APB EHB IRQs clear action\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Unmask IRQ and clear it' pending flag. */
 	regmap_update_bits(apb->regs, APB_EHB_ISR,
 			   APB_EHB_ISR_PENDING | APB_EHB_ISR_MASK,
 			   APB_EHB_ISR_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t count_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
-	struct bt1_apb *apb = dev_get_drvdata(dev);
+अटल sमाप_प्रकार count_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	काष्ठा bt1_apb *apb = dev_get_drvdata(dev);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&apb->count));
-}
-static DEVICE_ATTR_RO(count);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", atomic_पढ़ो(&apb->count));
+पूर्ण
+अटल DEVICE_ATTR_RO(count);
 
-static ssize_t timeout_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
-{
-	struct bt1_apb *apb = dev_get_drvdata(dev);
-	unsigned long timeout;
-	int ret;
+अटल sमाप_प्रकार समयout_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा bt1_apb *apb = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक ret;
 	u32 n;
 
-	ret = regmap_read(apb->regs, APB_EHB_TIMEOUT, &n);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(apb->regs, APB_EHB_TIMEOUT, &n);
+	अगर (ret)
+		वापस ret;
 
-	timeout = bt1_apb_n_to_timeout_us(apb, n);
+	समयout = bt1_apb_n_to_समयout_us(apb, n);
 
-	return scnprintf(buf, PAGE_SIZE, "%lu\n", timeout);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%lu\n", समयout);
+पूर्ण
 
-static ssize_t timeout_store(struct device *dev,
-			     struct device_attribute *attr,
-			     const char *buf, size_t count)
-{
-	struct bt1_apb *apb = dev_get_drvdata(dev);
-	unsigned long timeout;
-	int ret;
+अटल sमाप_प्रकार समयout_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा bt1_apb *apb = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक ret;
 	u32 n;
 
-	if (kstrtoul(buf, 0, &timeout) < 0)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &समयout) < 0)
+		वापस -EINVAL;
 
-	n = bt1_apb_timeout_to_n_us(apb, timeout);
+	n = bt1_apb_समयout_to_n_us(apb, समयout);
 	n = clamp(n, APB_EHB_TIMEOUT_MIN, APB_EHB_TIMEOUT_MAX);
 
-	ret = regmap_write(apb->regs, APB_EHB_TIMEOUT, n);
+	ret = regmap_ग_लिखो(apb->regs, APB_EHB_TIMEOUT, n);
 
-	return ret ?: count;
-}
-static DEVICE_ATTR_RW(timeout);
+	वापस ret ?: count;
+पूर्ण
+अटल DEVICE_ATTR_RW(समयout);
 
-static ssize_t inject_error_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	return scnprintf(buf, PAGE_SIZE, "Error injection: nodev irq\n");
-}
+अटल sमाप_प्रकार inject_error_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस scnम_लिखो(buf, PAGE_SIZE, "Error injection: nodev irq\n");
+पूर्ण
 
-static ssize_t inject_error_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *data, size_t count)
-{
-	struct bt1_apb *apb = dev_get_drvdata(dev);
+अटल sमाप_प्रकार inject_error_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *data, माप_प्रकार count)
+अणु
+	काष्ठा bt1_apb *apb = dev_get_drvdata(dev);
 
 	/*
-	 * Either dummy read from the unmapped address in the APB IO area
+	 * Either dummy पढ़ो from the unmapped address in the APB IO area
 	 * or manually set the IRQ status.
 	 */
-	if (sysfs_streq(data, "nodev"))
-		readl(apb->res);
-	else if (sysfs_streq(data, "irq"))
+	अगर (sysfs_streq(data, "nodev"))
+		पढ़ोl(apb->res);
+	अन्यथा अगर (sysfs_streq(data, "irq"))
 		regmap_update_bits(apb->regs, APB_EHB_ISR, APB_EHB_ISR_PENDING,
 				   APB_EHB_ISR_PENDING);
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	return count;
-}
-static DEVICE_ATTR_RW(inject_error);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(inject_error);
 
-static struct attribute *bt1_apb_sysfs_attrs[] = {
+अटल काष्ठा attribute *bt1_apb_sysfs_attrs[] = अणु
 	&dev_attr_count.attr,
-	&dev_attr_timeout.attr,
+	&dev_attr_समयout.attr,
 	&dev_attr_inject_error.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(bt1_apb_sysfs);
 
-static void bt1_apb_remove_sysfs(void *data)
-{
-	struct bt1_apb *apb = data;
+अटल व्योम bt1_apb_हटाओ_sysfs(व्योम *data)
+अणु
+	काष्ठा bt1_apb *apb = data;
 
-	device_remove_groups(apb->dev, bt1_apb_sysfs_groups);
-}
+	device_हटाओ_groups(apb->dev, bt1_apb_sysfs_groups);
+पूर्ण
 
-static int bt1_apb_init_sysfs(struct bt1_apb *apb)
-{
-	int ret;
+अटल पूर्णांक bt1_apb_init_sysfs(काष्ठा bt1_apb *apb)
+अणु
+	पूर्णांक ret;
 
 	ret = device_add_groups(apb->dev, bt1_apb_sysfs_groups);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(apb->dev, "Failed to create EHB APB sysfs nodes\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = devm_add_action_or_reset(apb->dev, bt1_apb_remove_sysfs, apb);
-	if (ret)
+	ret = devm_add_action_or_reset(apb->dev, bt1_apb_हटाओ_sysfs, apb);
+	अगर (ret)
 		dev_err(apb->dev, "Can't add APB EHB sysfs remove action\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bt1_apb_probe(struct platform_device *pdev)
-{
-	struct bt1_apb *apb;
-	int ret;
+अटल पूर्णांक bt1_apb_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bt1_apb *apb;
+	पूर्णांक ret;
 
 	apb = bt1_apb_create_data(pdev);
-	if (IS_ERR(apb))
-		return PTR_ERR(apb);
+	अगर (IS_ERR(apb))
+		वापस PTR_ERR(apb);
 
 	ret = bt1_apb_request_regs(apb);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = bt1_apb_request_rst(apb);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = bt1_apb_request_clk(apb);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = bt1_apb_request_irq(apb);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = bt1_apb_init_sysfs(apb);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id bt1_apb_of_match[] = {
-	{ .compatible = "baikal,bt1-apb" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id bt1_apb_of_match[] = अणु
+	अणु .compatible = "baikal,bt1-apb" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bt1_apb_of_match);
 
-static struct platform_driver bt1_apb_driver = {
+अटल काष्ठा platक्रमm_driver bt1_apb_driver = अणु
 	.probe = bt1_apb_probe,
-	.driver = {
+	.driver = अणु
 		.name = "bt1-apb",
 		.of_match_table = bt1_apb_of_match
-	}
-};
-module_platform_driver(bt1_apb_driver);
+	पूर्ण
+पूर्ण;
+module_platक्रमm_driver(bt1_apb_driver);
 
 MODULE_AUTHOR("Serge Semin <Sergey.Semin@baikalelectronics.ru>");
 MODULE_DESCRIPTION("Baikal-T1 APB-bus driver");

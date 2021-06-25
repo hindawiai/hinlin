@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
  * System Control and Management Interface(SCMI) based IIO sensor driver
@@ -6,87 +7,87 @@
  * Copyright (C) 2021 Google LLC
  */
 
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/kfifo_buf.h>
-#include <linux/iio/sysfs.h>
-#include <linux/kernel.h>
-#include <linux/kthread.h>
-#include <linux/module.h>
-#include <linux/scmi_protocol.h>
-#include <linux/time.h>
-#include <linux/types.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/kfअगरo_buf.h>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/module.h>
+#समावेश <linux/scmi_protocol.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/types.h>
 
-#define SCMI_IIO_NUM_OF_AXIS 3
+#घोषणा SCMI_IIO_NUM_OF_AXIS 3
 
-struct scmi_iio_priv {
-	const struct scmi_sensor_proto_ops *sensor_ops;
-	struct scmi_protocol_handle *ph;
-	const struct scmi_sensor_info *sensor_info;
-	struct iio_dev *indio_dev;
-	/* adding one additional channel for timestamp */
+काष्ठा scmi_iio_priv अणु
+	स्थिर काष्ठा scmi_sensor_proto_ops *sensor_ops;
+	काष्ठा scmi_protocol_handle *ph;
+	स्थिर काष्ठा scmi_sensor_info *sensor_info;
+	काष्ठा iio_dev *indio_dev;
+	/* adding one additional channel क्रम बारtamp */
 	s64 iio_buf[SCMI_IIO_NUM_OF_AXIS + 1];
-	struct notifier_block sensor_update_nb;
+	काष्ठा notअगरier_block sensor_update_nb;
 	u32 *freq_avail;
-};
+पूर्ण;
 
-static int scmi_iio_sensor_update_cb(struct notifier_block *nb,
-				     unsigned long event, void *data)
-{
-	struct scmi_sensor_update_report *sensor_update = data;
-	struct iio_dev *scmi_iio_dev;
-	struct scmi_iio_priv *sensor;
+अटल पूर्णांक scmi_iio_sensor_update_cb(काष्ठा notअगरier_block *nb,
+				     अचिन्हित दीर्घ event, व्योम *data)
+अणु
+	काष्ठा scmi_sensor_update_report *sensor_update = data;
+	काष्ठा iio_dev *scmi_iio_dev;
+	काष्ठा scmi_iio_priv *sensor;
 	s8 tstamp_scale;
-	u64 time, time_ns;
-	int i;
+	u64 समय, समय_ns;
+	पूर्णांक i;
 
-	if (sensor_update->readings_count == 0)
-		return NOTIFY_DONE;
+	अगर (sensor_update->पढ़ोings_count == 0)
+		वापस NOTIFY_DONE;
 
-	sensor = container_of(nb, struct scmi_iio_priv, sensor_update_nb);
+	sensor = container_of(nb, काष्ठा scmi_iio_priv, sensor_update_nb);
 
-	for (i = 0; i < sensor_update->readings_count; i++)
-		sensor->iio_buf[i] = sensor_update->readings[i].value;
+	क्रम (i = 0; i < sensor_update->पढ़ोings_count; i++)
+		sensor->iio_buf[i] = sensor_update->पढ़ोings[i].value;
 
-	if (!sensor->sensor_info->timestamped) {
-		time_ns = ktime_to_ns(sensor_update->timestamp);
-	} else {
+	अगर (!sensor->sensor_info->बारtamped) अणु
+		समय_ns = kसमय_प्रकारo_ns(sensor_update->बारtamp);
+	पूर्ण अन्यथा अणु
 		/*
-		 *  All the axes are supposed to have the same value for timestamp.
+		 *  All the axes are supposed to have the same value क्रम बारtamp.
 		 *  We are just using the values from the Axis 0 here.
 		 */
-		time = sensor_update->readings[0].timestamp;
+		समय = sensor_update->पढ़ोings[0].बारtamp;
 
 		/*
-		 *  Timestamp returned by SCMI is in seconds and is equal to
-		 *  time * power-of-10 multiplier(tstamp_scale) seconds.
-		 *  Converting the timestamp to nanoseconds below.
+		 *  Timestamp वापसed by SCMI is in seconds and is equal to
+		 *  समय * घातer-of-10 multiplier(tstamp_scale) seconds.
+		 *  Converting the बारtamp to nanoseconds below.
 		 */
 		tstamp_scale = sensor->sensor_info->tstamp_scale +
-			       const_ilog2(NSEC_PER_SEC) / const_ilog2(10);
-		if (tstamp_scale < 0) {
-			do_div(time, int_pow(10, abs(tstamp_scale)));
-			time_ns = time;
-		} else {
-			time_ns = time * int_pow(10, tstamp_scale);
-		}
-	}
+			       स्थिर_ilog2(NSEC_PER_SEC) / स्थिर_ilog2(10);
+		अगर (tstamp_scale < 0) अणु
+			करो_भाग(समय, पूर्णांक_घात(10, असल(tstamp_scale)));
+			समय_ns = समय;
+		पूर्ण अन्यथा अणु
+			समय_ns = समय * पूर्णांक_घात(10, tstamp_scale);
+		पूर्ण
+	पूर्ण
 
 	scmi_iio_dev = sensor->indio_dev;
-	iio_push_to_buffers_with_timestamp(scmi_iio_dev, sensor->iio_buf,
-					   time_ns);
-	return NOTIFY_OK;
-}
+	iio_push_to_buffers_with_बारtamp(scmi_iio_dev, sensor->iio_buf,
+					   समय_ns);
+	वापस NOTIFY_OK;
+पूर्ण
 
-static int scmi_iio_buffer_preenable(struct iio_dev *iio_dev)
-{
-	struct scmi_iio_priv *sensor = iio_priv(iio_dev);
+अटल पूर्णांक scmi_iio_buffer_preenable(काष्ठा iio_dev *iio_dev)
+अणु
+	काष्ठा scmi_iio_priv *sensor = iio_priv(iio_dev);
 	u32 sensor_config = 0;
-	int err;
+	पूर्णांक err;
 
-	if (sensor->sensor_info->timestamped)
+	अगर (sensor->sensor_info->बारtamped)
 		sensor_config |= FIELD_PREP(SCMI_SENS_CFG_TSTAMP_ENABLED_MASK,
 					    SCMI_SENS_CFG_TSTAMP_ENABLE);
 
@@ -95,89 +96,89 @@ static int scmi_iio_buffer_preenable(struct iio_dev *iio_dev)
 	err = sensor->sensor_ops->config_set(sensor->ph,
 					     sensor->sensor_info->id,
 					     sensor_config);
-	if (err)
+	अगर (err)
 		dev_err(&iio_dev->dev, "Error in enabling sensor %s err %d",
 			sensor->sensor_info->name, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int scmi_iio_buffer_postdisable(struct iio_dev *iio_dev)
-{
-	struct scmi_iio_priv *sensor = iio_priv(iio_dev);
+अटल पूर्णांक scmi_iio_buffer_postdisable(काष्ठा iio_dev *iio_dev)
+अणु
+	काष्ठा scmi_iio_priv *sensor = iio_priv(iio_dev);
 	u32 sensor_config = 0;
-	int err;
+	पूर्णांक err;
 
 	sensor_config |= FIELD_PREP(SCMI_SENS_CFG_SENSOR_ENABLED_MASK,
 				    SCMI_SENS_CFG_SENSOR_DISABLE);
 	err = sensor->sensor_ops->config_set(sensor->ph,
 					     sensor->sensor_info->id,
 					     sensor_config);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&iio_dev->dev,
 			"Error in disabling sensor %s with err %d",
 			sensor->sensor_info->name, err);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct iio_buffer_setup_ops scmi_iio_buffer_ops = {
+अटल स्थिर काष्ठा iio_buffer_setup_ops scmi_iio_buffer_ops = अणु
 	.preenable = scmi_iio_buffer_preenable,
 	.postdisable = scmi_iio_buffer_postdisable,
-};
+पूर्ण;
 
-static int scmi_iio_set_odr_val(struct iio_dev *iio_dev, int val, int val2)
-{
-	struct scmi_iio_priv *sensor = iio_priv(iio_dev);
-	const unsigned long UHZ_PER_HZ = 1000000UL;
+अटल पूर्णांक scmi_iio_set_odr_val(काष्ठा iio_dev *iio_dev, पूर्णांक val, पूर्णांक val2)
+अणु
+	काष्ठा scmi_iio_priv *sensor = iio_priv(iio_dev);
+	स्थिर अचिन्हित दीर्घ UHZ_PER_HZ = 1000000UL;
 	u64 sec, mult, uHz, sf;
 	u32 sensor_config;
-	char buf[32];
+	अक्षर buf[32];
 
-	int err = sensor->sensor_ops->config_get(sensor->ph,
+	पूर्णांक err = sensor->sensor_ops->config_get(sensor->ph,
 						 sensor->sensor_info->id,
 						 &sensor_config);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&iio_dev->dev,
 			"Error in getting sensor config for sensor %s err %d",
 			sensor->sensor_info->name, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	uHz = val * UHZ_PER_HZ + val2;
 
 	/*
-	 * The seconds field in the sensor interval in SCMI is 16 bits long
-	 * Therefore seconds  = 1/Hz <= 0xFFFF. As floating point calculations are
+	 * The seconds field in the sensor पूर्णांकerval in SCMI is 16 bits दीर्घ
+	 * Thereक्रमe seconds  = 1/Hz <= 0xFFFF. As भग्नing poपूर्णांक calculations are
 	 * discouraged in the kernel driver code, to calculate the scale factor (sf)
-	 * (1* 1000000 * sf)/uHz <= 0xFFFF. Therefore, sf <= (uHz * 0xFFFF)/1000000
-	 * To calculate the multiplier,we convert the sf into char string  and
-	 * count the number of characters
+	 * (1* 1000000 * sf)/uHz <= 0xFFFF. Thereक्रमe, sf <= (uHz * 0xFFFF)/1000000
+	 * To calculate the multiplier,we convert the sf पूर्णांकo अक्षर string  and
+	 * count the number of अक्षरacters
 	 */
 	sf = (u64)uHz * 0xFFFF;
-	do_div(sf,  UHZ_PER_HZ);
-	mult = scnprintf(buf, sizeof(buf), "%llu", sf) - 1;
+	करो_भाग(sf,  UHZ_PER_HZ);
+	mult = scnम_लिखो(buf, माप(buf), "%llu", sf) - 1;
 
-	sec = int_pow(10, mult) * UHZ_PER_HZ;
-	do_div(sec, uHz);
-	if (sec == 0) {
+	sec = पूर्णांक_घात(10, mult) * UHZ_PER_HZ;
+	करो_भाग(sec, uHz);
+	अगर (sec == 0) अणु
 		dev_err(&iio_dev->dev,
 			"Trying to set invalid sensor update value for sensor %s",
 			sensor->sensor_info->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	sensor_config &= ~SCMI_SENS_CFG_UPDATE_SECS_MASK;
 	sensor_config |= FIELD_PREP(SCMI_SENS_CFG_UPDATE_SECS_MASK, sec);
 	sensor_config &= ~SCMI_SENS_CFG_UPDATE_EXP_MASK;
 	sensor_config |= FIELD_PREP(SCMI_SENS_CFG_UPDATE_EXP_MASK, -mult);
 
-	if (sensor->sensor_info->timestamped) {
+	अगर (sensor->sensor_info->बारtamped) अणु
 		sensor_config &= ~SCMI_SENS_CFG_TSTAMP_ENABLED_MASK;
 		sensor_config |= FIELD_PREP(SCMI_SENS_CFG_TSTAMP_ENABLED_MASK,
 					    SCMI_SENS_CFG_TSTAMP_ENABLE);
-	}
+	पूर्ण
 
 	sensor_config &= ~SCMI_SENS_CFG_ROUND_MASK;
 	sensor_config |=
@@ -186,147 +187,147 @@ static int scmi_iio_set_odr_val(struct iio_dev *iio_dev, int val, int val2)
 	err = sensor->sensor_ops->config_set(sensor->ph,
 					     sensor->sensor_info->id,
 					     sensor_config);
-	if (err)
+	अगर (err)
 		dev_err(&iio_dev->dev,
 			"Error in setting sensor update interval for sensor %s value %u err %d",
 			sensor->sensor_info->name, sensor_config, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int scmi_iio_write_raw(struct iio_dev *iio_dev,
-			      struct iio_chan_spec const *chan, int val,
-			      int val2, long mask)
-{
-	int err;
+अटल पूर्णांक scmi_iio_ग_लिखो_raw(काष्ठा iio_dev *iio_dev,
+			      काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val,
+			      पूर्णांक val2, दीर्घ mask)
+अणु
+	पूर्णांक err;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SAMP_FREQ:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
 		mutex_lock(&iio_dev->mlock);
 		err = scmi_iio_set_odr_val(iio_dev, val, val2);
 		mutex_unlock(&iio_dev->mlock);
-		return err;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस err;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int scmi_iio_read_avail(struct iio_dev *iio_dev,
-			       struct iio_chan_spec const *chan,
-			       const int **vals, int *type, int *length,
-			       long mask)
-{
-	struct scmi_iio_priv *sensor = iio_priv(iio_dev);
+अटल पूर्णांक scmi_iio_पढ़ो_avail(काष्ठा iio_dev *iio_dev,
+			       काष्ठा iio_chan_spec स्थिर *chan,
+			       स्थिर पूर्णांक **vals, पूर्णांक *type, पूर्णांक *length,
+			       दीर्घ mask)
+अणु
+	काष्ठा scmi_iio_priv *sensor = iio_priv(iio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SAMP_FREQ:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
 		*vals = sensor->freq_avail;
 		*type = IIO_VAL_INT_PLUS_MICRO;
-		*length = sensor->sensor_info->intervals.count * 2;
-		if (sensor->sensor_info->intervals.segmented)
-			return IIO_AVAIL_RANGE;
-		else
-			return IIO_AVAIL_LIST;
-	default:
-		return -EINVAL;
-	}
-}
+		*length = sensor->sensor_info->पूर्णांकervals.count * 2;
+		अगर (sensor->sensor_info->पूर्णांकervals.segmented)
+			वापस IIO_AVAIL_RANGE;
+		अन्यथा
+			वापस IIO_AVAIL_LIST;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void convert_ns_to_freq(u64 interval_ns, u64 *hz, u64 *uhz)
-{
+अटल व्योम convert_ns_to_freq(u64 पूर्णांकerval_ns, u64 *hz, u64 *uhz)
+अणु
 	u64 rem, freq;
 
 	freq = NSEC_PER_SEC;
-	rem = do_div(freq, interval_ns);
+	rem = करो_भाग(freq, पूर्णांकerval_ns);
 	*hz = freq;
 	*uhz = rem * 1000000UL;
-	do_div(*uhz, interval_ns);
-}
+	करो_भाग(*uhz, पूर्णांकerval_ns);
+पूर्ण
 
-static int scmi_iio_get_odr_val(struct iio_dev *iio_dev, int *val, int *val2)
-{
-	u64 sensor_update_interval, sensor_interval_mult, hz, uhz;
-	struct scmi_iio_priv *sensor = iio_priv(iio_dev);
+अटल पूर्णांक scmi_iio_get_odr_val(काष्ठा iio_dev *iio_dev, पूर्णांक *val, पूर्णांक *val2)
+अणु
+	u64 sensor_update_पूर्णांकerval, sensor_पूर्णांकerval_mult, hz, uhz;
+	काष्ठा scmi_iio_priv *sensor = iio_priv(iio_dev);
 	u32 sensor_config;
-	int mult;
+	पूर्णांक mult;
 
-	int err = sensor->sensor_ops->config_get(sensor->ph,
+	पूर्णांक err = sensor->sensor_ops->config_get(sensor->ph,
 						 sensor->sensor_info->id,
 						 &sensor_config);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&iio_dev->dev,
 			"Error in getting sensor config for sensor %s err %d",
 			sensor->sensor_info->name, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	sensor_update_interval =
+	sensor_update_पूर्णांकerval =
 		SCMI_SENS_CFG_GET_UPDATE_SECS(sensor_config) * NSEC_PER_SEC;
 
 	mult = SCMI_SENS_CFG_GET_UPDATE_EXP(sensor_config);
-	if (mult < 0) {
-		sensor_interval_mult = int_pow(10, abs(mult));
-		do_div(sensor_update_interval, sensor_interval_mult);
-	} else {
-		sensor_interval_mult = int_pow(10, mult);
-		sensor_update_interval =
-			sensor_update_interval * sensor_interval_mult;
-	}
+	अगर (mult < 0) अणु
+		sensor_पूर्णांकerval_mult = पूर्णांक_घात(10, असल(mult));
+		करो_भाग(sensor_update_पूर्णांकerval, sensor_पूर्णांकerval_mult);
+	पूर्ण अन्यथा अणु
+		sensor_पूर्णांकerval_mult = पूर्णांक_घात(10, mult);
+		sensor_update_पूर्णांकerval =
+			sensor_update_पूर्णांकerval * sensor_पूर्णांकerval_mult;
+	पूर्ण
 
-	convert_ns_to_freq(sensor_update_interval, &hz, &uhz);
+	convert_ns_to_freq(sensor_update_पूर्णांकerval, &hz, &uhz);
 	*val = hz;
 	*val2 = uhz;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int scmi_iio_read_raw(struct iio_dev *iio_dev,
-			     struct iio_chan_spec const *ch, int *val,
-			     int *val2, long mask)
-{
-	struct scmi_iio_priv *sensor = iio_priv(iio_dev);
+अटल पूर्णांक scmi_iio_पढ़ो_raw(काष्ठा iio_dev *iio_dev,
+			     काष्ठा iio_chan_spec स्थिर *ch, पूर्णांक *val,
+			     पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा scmi_iio_priv *sensor = iio_priv(iio_dev);
 	s8 scale;
-	int ret;
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SCALE:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SCALE:
 		scale = sensor->sensor_info->axis[ch->scan_index].scale;
-		if (scale < 0) {
+		अगर (scale < 0) अणु
 			*val = 1;
-			*val2 = int_pow(10, abs(scale));
-			return IIO_VAL_FRACTIONAL;
-		}
-		*val = int_pow(10, scale);
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SAMP_FREQ:
+			*val2 = पूर्णांक_घात(10, असल(scale));
+			वापस IIO_VAL_FRACTIONAL;
+		पूर्ण
+		*val = पूर्णांक_घात(10, scale);
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
 		ret = scmi_iio_get_odr_val(iio_dev, val, val2);
-		return ret ? ret : IIO_VAL_INT_PLUS_MICRO;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस ret ? ret : IIO_VAL_INT_PLUS_MICRO;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct iio_info scmi_iio_info = {
-	.read_raw = scmi_iio_read_raw,
-	.read_avail = scmi_iio_read_avail,
-	.write_raw = scmi_iio_write_raw,
-};
+अटल स्थिर काष्ठा iio_info scmi_iio_info = अणु
+	.पढ़ो_raw = scmi_iio_पढ़ो_raw,
+	.पढ़ो_avail = scmi_iio_पढ़ो_avail,
+	.ग_लिखो_raw = scmi_iio_ग_लिखो_raw,
+पूर्ण;
 
-static ssize_t scmi_iio_get_raw_available(struct iio_dev *iio_dev,
-					  uintptr_t private,
-					  const struct iio_chan_spec *chan,
-					  char *buf)
-{
-	struct scmi_iio_priv *sensor = iio_priv(iio_dev);
+अटल sमाप_प्रकार scmi_iio_get_raw_available(काष्ठा iio_dev *iio_dev,
+					  uपूर्णांकptr_t निजी,
+					  स्थिर काष्ठा iio_chan_spec *chan,
+					  अक्षर *buf)
+अणु
+	काष्ठा scmi_iio_priv *sensor = iio_priv(iio_dev);
 	u64 resolution, rem;
 	s64 min_range, max_range;
 	s8 exponent, scale;
-	int len = 0;
+	पूर्णांक len = 0;
 
 	/*
-	 * All the axes are supposed to have the same value for range and resolution.
+	 * All the axes are supposed to have the same value क्रम range and resolution.
 	 * We are just using the values from the Axis 0 here.
 	 */
-	if (sensor->sensor_info->axis[0].extended_attrs) {
+	अगर (sensor->sensor_info->axis[0].extended_attrs) अणु
 		min_range = sensor->sensor_info->axis[0].attrs.min_range;
 		max_range = sensor->sensor_info->axis[0].attrs.max_range;
 		resolution = sensor->sensor_info->axis[0].resolution;
@@ -334,52 +335,52 @@ static ssize_t scmi_iio_get_raw_available(struct iio_dev *iio_dev,
 		scale = sensor->sensor_info->axis[0].scale;
 
 		/*
-		 * To provide the raw value for the resolution to the userspace,
-		 * need to divide the resolution exponent by the sensor scale
+		 * To provide the raw value क्रम the resolution to the userspace,
+		 * need to भागide the resolution exponent by the sensor scale
 		 */
 		exponent = exponent - scale;
-		if (exponent < 0) {
-			rem = do_div(resolution,
-				     int_pow(10, abs(exponent))
+		अगर (exponent < 0) अणु
+			rem = करो_भाग(resolution,
+				     पूर्णांक_घात(10, असल(exponent))
 				     );
-			len = scnprintf(buf, PAGE_SIZE,
+			len = scnम_लिखो(buf, PAGE_SIZE,
 					"[%lld %llu.%llu %lld]\n", min_range,
 					resolution, rem, max_range);
-		} else {
-			resolution = resolution * int_pow(10, exponent);
-			len = scnprintf(buf, PAGE_SIZE, "[%lld %llu %lld]\n",
+		पूर्ण अन्यथा अणु
+			resolution = resolution * पूर्णांक_घात(10, exponent);
+			len = scnम_लिखो(buf, PAGE_SIZE, "[%lld %llu %lld]\n",
 					min_range, resolution, max_range);
-		}
-	}
-	return len;
-}
+		पूर्ण
+	पूर्ण
+	वापस len;
+पूर्ण
 
-static const struct iio_chan_spec_ext_info scmi_iio_ext_info[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec_ext_info scmi_iio_ext_info[] = अणु
+	अणु
 		.name = "raw_available",
-		.read = scmi_iio_get_raw_available,
+		.पढ़ो = scmi_iio_get_raw_available,
 		.shared = IIO_SHARED_BY_TYPE,
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static void scmi_iio_set_timestamp_channel(struct iio_chan_spec *iio_chan,
-					   int scan_index)
-{
+अटल व्योम scmi_iio_set_बारtamp_channel(काष्ठा iio_chan_spec *iio_chan,
+					   पूर्णांक scan_index)
+अणु
 	iio_chan->type = IIO_TIMESTAMP;
 	iio_chan->channel = -1;
 	iio_chan->scan_index = scan_index;
 	iio_chan->scan_type.sign = 'u';
 	iio_chan->scan_type.realbits = 64;
 	iio_chan->scan_type.storagebits = 64;
-}
+पूर्ण
 
-static void scmi_iio_set_data_channel(struct iio_chan_spec *iio_chan,
-				      enum iio_chan_type type,
-				      enum iio_modifier mod, int scan_index)
-{
+अटल व्योम scmi_iio_set_data_channel(काष्ठा iio_chan_spec *iio_chan,
+				      क्रमागत iio_chan_type type,
+				      क्रमागत iio_modअगरier mod, पूर्णांक scan_index)
+अणु
 	iio_chan->type = type;
-	iio_chan->modified = 1;
+	iio_chan->modअगरied = 1;
 	iio_chan->channel2 = mod;
 	iio_chan->info_mask_separate = BIT(IIO_CHAN_INFO_SCALE);
 	iio_chan->info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SAMP_FREQ);
@@ -391,279 +392,279 @@ static void scmi_iio_set_data_channel(struct iio_chan_spec *iio_chan,
 	iio_chan->scan_type.storagebits = 64;
 	iio_chan->scan_type.endianness = IIO_LE;
 	iio_chan->ext_info = scmi_iio_ext_info;
-}
+पूर्ण
 
-static int scmi_iio_get_chan_modifier(const char *name,
-				      enum iio_modifier *modifier)
-{
-	char *pch, mod;
+अटल पूर्णांक scmi_iio_get_chan_modअगरier(स्थिर अक्षर *name,
+				      क्रमागत iio_modअगरier *modअगरier)
+अणु
+	अक्षर *pch, mod;
 
-	if (!name)
-		return -EINVAL;
+	अगर (!name)
+		वापस -EINVAL;
 
-	pch = strrchr(name, '_');
-	if (!pch)
-		return -EINVAL;
+	pch = म_खोजप(name, '_');
+	अगर (!pch)
+		वापस -EINVAL;
 
 	mod = *(pch + 1);
-	switch (mod) {
-	case 'X':
-		*modifier = IIO_MOD_X;
-		return 0;
-	case 'Y':
-		*modifier = IIO_MOD_Y;
-		return 0;
-	case 'Z':
-		*modifier = IIO_MOD_Z;
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (mod) अणु
+	हाल 'X':
+		*modअगरier = IIO_MOD_X;
+		वापस 0;
+	हाल 'Y':
+		*modअगरier = IIO_MOD_Y;
+		वापस 0;
+	हाल 'Z':
+		*modअगरier = IIO_MOD_Z;
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int scmi_iio_get_chan_type(u8 scmi_type, enum iio_chan_type *iio_type)
-{
-	switch (scmi_type) {
-	case METERS_SEC_SQUARED:
+अटल पूर्णांक scmi_iio_get_chan_type(u8 scmi_type, क्रमागत iio_chan_type *iio_type)
+अणु
+	चयन (scmi_type) अणु
+	हाल METERS_SEC_SQUARED:
 		*iio_type = IIO_ACCEL;
-		return 0;
-	case RADIANS_SEC:
+		वापस 0;
+	हाल RADIANS_SEC:
 		*iio_type = IIO_ANGL_VEL;
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static u64 scmi_iio_convert_interval_to_ns(u32 val)
-{
-	u64 sensor_update_interval =
+अटल u64 scmi_iio_convert_पूर्णांकerval_to_ns(u32 val)
+अणु
+	u64 sensor_update_पूर्णांकerval =
 		SCMI_SENS_INTVL_GET_SECS(val) * NSEC_PER_SEC;
-	u64 sensor_interval_mult;
-	int mult;
+	u64 sensor_पूर्णांकerval_mult;
+	पूर्णांक mult;
 
 	mult = SCMI_SENS_INTVL_GET_EXP(val);
-	if (mult < 0) {
-		sensor_interval_mult = int_pow(10, abs(mult));
-		do_div(sensor_update_interval, sensor_interval_mult);
-	} else {
-		sensor_interval_mult = int_pow(10, mult);
-		sensor_update_interval =
-			sensor_update_interval * sensor_interval_mult;
-	}
-	return sensor_update_interval;
-}
+	अगर (mult < 0) अणु
+		sensor_पूर्णांकerval_mult = पूर्णांक_घात(10, असल(mult));
+		करो_भाग(sensor_update_पूर्णांकerval, sensor_पूर्णांकerval_mult);
+	पूर्ण अन्यथा अणु
+		sensor_पूर्णांकerval_mult = पूर्णांक_घात(10, mult);
+		sensor_update_पूर्णांकerval =
+			sensor_update_पूर्णांकerval * sensor_पूर्णांकerval_mult;
+	पूर्ण
+	वापस sensor_update_पूर्णांकerval;
+पूर्ण
 
-static int scmi_iio_set_sampling_freq_avail(struct iio_dev *iio_dev)
-{
-	u64 cur_interval_ns, low_interval_ns, high_interval_ns, step_size_ns,
+अटल पूर्णांक scmi_iio_set_sampling_freq_avail(काष्ठा iio_dev *iio_dev)
+अणु
+	u64 cur_पूर्णांकerval_ns, low_पूर्णांकerval_ns, high_पूर्णांकerval_ns, step_size_ns,
 		hz, uhz;
-	unsigned int cur_interval, low_interval, high_interval, step_size;
-	struct scmi_iio_priv *sensor = iio_priv(iio_dev);
-	int i;
+	अचिन्हित पूर्णांक cur_पूर्णांकerval, low_पूर्णांकerval, high_पूर्णांकerval, step_size;
+	काष्ठा scmi_iio_priv *sensor = iio_priv(iio_dev);
+	पूर्णांक i;
 
 	sensor->freq_avail =
 		devm_kzalloc(&iio_dev->dev,
-			     sizeof(*sensor->freq_avail) *
-				     (sensor->sensor_info->intervals.count * 2),
+			     माप(*sensor->freq_avail) *
+				     (sensor->sensor_info->पूर्णांकervals.count * 2),
 			     GFP_KERNEL);
-	if (!sensor->freq_avail)
-		return -ENOMEM;
+	अगर (!sensor->freq_avail)
+		वापस -ENOMEM;
 
-	if (sensor->sensor_info->intervals.segmented) {
-		low_interval = sensor->sensor_info->intervals
+	अगर (sensor->sensor_info->पूर्णांकervals.segmented) अणु
+		low_पूर्णांकerval = sensor->sensor_info->पूर्णांकervals
 				       .desc[SCMI_SENS_INTVL_SEGMENT_LOW];
-		low_interval_ns = scmi_iio_convert_interval_to_ns(low_interval);
-		convert_ns_to_freq(low_interval_ns, &hz, &uhz);
+		low_पूर्णांकerval_ns = scmi_iio_convert_पूर्णांकerval_to_ns(low_पूर्णांकerval);
+		convert_ns_to_freq(low_पूर्णांकerval_ns, &hz, &uhz);
 		sensor->freq_avail[0] = hz;
 		sensor->freq_avail[1] = uhz;
 
-		step_size = sensor->sensor_info->intervals
+		step_size = sensor->sensor_info->पूर्णांकervals
 				    .desc[SCMI_SENS_INTVL_SEGMENT_STEP];
-		step_size_ns = scmi_iio_convert_interval_to_ns(step_size);
+		step_size_ns = scmi_iio_convert_पूर्णांकerval_to_ns(step_size);
 		convert_ns_to_freq(step_size_ns, &hz, &uhz);
 		sensor->freq_avail[2] = hz;
 		sensor->freq_avail[3] = uhz;
 
-		high_interval = sensor->sensor_info->intervals
+		high_पूर्णांकerval = sensor->sensor_info->पूर्णांकervals
 					.desc[SCMI_SENS_INTVL_SEGMENT_HIGH];
-		high_interval_ns =
-			scmi_iio_convert_interval_to_ns(high_interval);
-		convert_ns_to_freq(high_interval_ns, &hz, &uhz);
+		high_पूर्णांकerval_ns =
+			scmi_iio_convert_पूर्णांकerval_to_ns(high_पूर्णांकerval);
+		convert_ns_to_freq(high_पूर्णांकerval_ns, &hz, &uhz);
 		sensor->freq_avail[4] = hz;
 		sensor->freq_avail[5] = uhz;
-	} else {
-		for (i = 0; i < sensor->sensor_info->intervals.count; i++) {
-			cur_interval = sensor->sensor_info->intervals.desc[i];
-			cur_interval_ns =
-				scmi_iio_convert_interval_to_ns(cur_interval);
-			convert_ns_to_freq(cur_interval_ns, &hz, &uhz);
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < sensor->sensor_info->पूर्णांकervals.count; i++) अणु
+			cur_पूर्णांकerval = sensor->sensor_info->पूर्णांकervals.desc[i];
+			cur_पूर्णांकerval_ns =
+				scmi_iio_convert_पूर्णांकerval_to_ns(cur_पूर्णांकerval);
+			convert_ns_to_freq(cur_पूर्णांकerval_ns, &hz, &uhz);
 			sensor->freq_avail[i * 2] = hz;
 			sensor->freq_avail[i * 2 + 1] = uhz;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct iio_dev *
-scmi_alloc_iiodev(struct scmi_device *sdev,
-		  const struct scmi_sensor_proto_ops *ops,
-		  struct scmi_protocol_handle *ph,
-		  const struct scmi_sensor_info *sensor_info)
-{
-	struct iio_chan_spec *iio_channels;
-	struct scmi_iio_priv *sensor;
-	enum iio_modifier modifier;
-	enum iio_chan_type type;
-	struct iio_dev *iiodev;
-	struct device *dev = &sdev->dev;
-	const struct scmi_handle *handle = sdev->handle;
-	int i, ret;
+अटल काष्ठा iio_dev *
+scmi_alloc_iiodev(काष्ठा scmi_device *sdev,
+		  स्थिर काष्ठा scmi_sensor_proto_ops *ops,
+		  काष्ठा scmi_protocol_handle *ph,
+		  स्थिर काष्ठा scmi_sensor_info *sensor_info)
+अणु
+	काष्ठा iio_chan_spec *iio_channels;
+	काष्ठा scmi_iio_priv *sensor;
+	क्रमागत iio_modअगरier modअगरier;
+	क्रमागत iio_chan_type type;
+	काष्ठा iio_dev *iiodev;
+	काष्ठा device *dev = &sdev->dev;
+	स्थिर काष्ठा scmi_handle *handle = sdev->handle;
+	पूर्णांक i, ret;
 
-	iiodev = devm_iio_device_alloc(dev, sizeof(*sensor));
-	if (!iiodev)
-		return ERR_PTR(-ENOMEM);
+	iiodev = devm_iio_device_alloc(dev, माप(*sensor));
+	अगर (!iiodev)
+		वापस ERR_PTR(-ENOMEM);
 
-	iiodev->modes = INDIO_DIRECT_MODE;
+	iiodev->modes = INDIO_सूचीECT_MODE;
 	iiodev->dev.parent = dev;
 	sensor = iio_priv(iiodev);
 	sensor->sensor_ops = ops;
 	sensor->ph = ph;
 	sensor->sensor_info = sensor_info;
-	sensor->sensor_update_nb.notifier_call = scmi_iio_sensor_update_cb;
+	sensor->sensor_update_nb.notअगरier_call = scmi_iio_sensor_update_cb;
 	sensor->indio_dev = iiodev;
 
-	/* adding one additional channel for timestamp */
+	/* adding one additional channel क्रम बारtamp */
 	iiodev->num_channels = sensor_info->num_axis + 1;
 	iiodev->name = sensor_info->name;
 	iiodev->info = &scmi_iio_info;
 
 	iio_channels =
 		devm_kzalloc(dev,
-			     sizeof(*iio_channels) * (iiodev->num_channels),
+			     माप(*iio_channels) * (iiodev->num_channels),
 			     GFP_KERNEL);
-	if (!iio_channels)
-		return ERR_PTR(-ENOMEM);
+	अगर (!iio_channels)
+		वापस ERR_PTR(-ENOMEM);
 
 	ret = scmi_iio_set_sampling_freq_avail(iiodev);
-	if (ret < 0)
-		return ERR_PTR(ret);
+	अगर (ret < 0)
+		वापस ERR_PTR(ret);
 
-	for (i = 0; i < sensor_info->num_axis; i++) {
+	क्रम (i = 0; i < sensor_info->num_axis; i++) अणु
 		ret = scmi_iio_get_chan_type(sensor_info->axis[i].type, &type);
-		if (ret < 0)
-			return ERR_PTR(ret);
+		अगर (ret < 0)
+			वापस ERR_PTR(ret);
 
-		ret = scmi_iio_get_chan_modifier(sensor_info->axis[i].name,
-						 &modifier);
-		if (ret < 0)
-			return ERR_PTR(ret);
+		ret = scmi_iio_get_chan_modअगरier(sensor_info->axis[i].name,
+						 &modअगरier);
+		अगर (ret < 0)
+			वापस ERR_PTR(ret);
 
-		scmi_iio_set_data_channel(&iio_channels[i], type, modifier,
+		scmi_iio_set_data_channel(&iio_channels[i], type, modअगरier,
 					  sensor_info->axis[i].id);
-	}
+	पूर्ण
 
-	ret = handle->notify_ops->devm_event_notifier_register(sdev,
+	ret = handle->notअगरy_ops->devm_event_notअगरier_रेजिस्टर(sdev,
 				SCMI_PROTOCOL_SENSOR, SCMI_EVENT_SENSOR_UPDATE,
 				&sensor->sensor_info->id,
 				&sensor->sensor_update_nb);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&iiodev->dev,
 			"Error in registering sensor update notifier for sensor %s err %d",
 			sensor->sensor_info->name, ret);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	scmi_iio_set_timestamp_channel(&iio_channels[i], i);
+	scmi_iio_set_बारtamp_channel(&iio_channels[i], i);
 	iiodev->channels = iio_channels;
-	return iiodev;
-}
+	वापस iiodev;
+पूर्ण
 
-static int scmi_iio_dev_probe(struct scmi_device *sdev)
-{
-	const struct scmi_sensor_info *sensor_info;
-	struct scmi_handle *handle = sdev->handle;
-	const struct scmi_sensor_proto_ops *sensor_ops;
-	struct scmi_protocol_handle *ph;
-	struct device *dev = &sdev->dev;
-	struct iio_dev *scmi_iio_dev;
+अटल पूर्णांक scmi_iio_dev_probe(काष्ठा scmi_device *sdev)
+अणु
+	स्थिर काष्ठा scmi_sensor_info *sensor_info;
+	काष्ठा scmi_handle *handle = sdev->handle;
+	स्थिर काष्ठा scmi_sensor_proto_ops *sensor_ops;
+	काष्ठा scmi_protocol_handle *ph;
+	काष्ठा device *dev = &sdev->dev;
+	काष्ठा iio_dev *scmi_iio_dev;
 	u16 nr_sensors;
-	int err = -ENODEV, i;
+	पूर्णांक err = -ENODEV, i;
 
-	if (!handle)
-		return -ENODEV;
+	अगर (!handle)
+		वापस -ENODEV;
 
 	sensor_ops = handle->devm_protocol_get(sdev, SCMI_PROTOCOL_SENSOR, &ph);
-	if (IS_ERR(sensor_ops)) {
+	अगर (IS_ERR(sensor_ops)) अणु
 		dev_err(dev, "SCMI device has no sensor interface\n");
-		return PTR_ERR(sensor_ops);
-	}
+		वापस PTR_ERR(sensor_ops);
+	पूर्ण
 
 	nr_sensors = sensor_ops->count_get(ph);
-	if (!nr_sensors) {
+	अगर (!nr_sensors) अणु
 		dev_dbg(dev, "0 sensors found via SCMI bus\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	for (i = 0; i < nr_sensors; i++) {
+	क्रम (i = 0; i < nr_sensors; i++) अणु
 		sensor_info = sensor_ops->info_get(ph, i);
-		if (!sensor_info) {
+		अगर (!sensor_info) अणु
 			dev_err(dev, "SCMI sensor %d has missing info\n", i);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* This driver only supports 3-axis accel and gyro, skipping other sensors */
-		if (sensor_info->num_axis != SCMI_IIO_NUM_OF_AXIS)
-			continue;
+		अगर (sensor_info->num_axis != SCMI_IIO_NUM_OF_AXIS)
+			जारी;
 
 		/* This driver only supports 3-axis accel and gyro, skipping other sensors */
-		if (sensor_info->axis[0].type != METERS_SEC_SQUARED &&
+		अगर (sensor_info->axis[0].type != METERS_SEC_SQUARED &&
 		    sensor_info->axis[0].type != RADIANS_SEC)
-			continue;
+			जारी;
 
 		scmi_iio_dev = scmi_alloc_iiodev(sdev, sensor_ops, ph,
 						 sensor_info);
-		if (IS_ERR(scmi_iio_dev)) {
+		अगर (IS_ERR(scmi_iio_dev)) अणु
 			dev_err(dev,
 				"failed to allocate IIO device for sensor %s: %ld\n",
 				sensor_info->name, PTR_ERR(scmi_iio_dev));
-			return PTR_ERR(scmi_iio_dev);
-		}
+			वापस PTR_ERR(scmi_iio_dev);
+		पूर्ण
 
-		err = devm_iio_kfifo_buffer_setup(&scmi_iio_dev->dev,
+		err = devm_iio_kfअगरo_buffer_setup(&scmi_iio_dev->dev,
 						  scmi_iio_dev,
 						  INDIO_BUFFER_SOFTWARE,
 						  &scmi_iio_buffer_ops);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(dev,
 				"IIO buffer setup error at sensor %s: %d\n",
 				sensor_info->name, err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		err = devm_iio_device_register(dev, scmi_iio_dev);
-		if (err) {
+		err = devm_iio_device_रेजिस्टर(dev, scmi_iio_dev);
+		अगर (err) अणु
 			dev_err(dev,
 				"IIO device registration failed at sensor %s: %d\n",
 				sensor_info->name, err);
-			return err;
-		}
-	}
-	return err;
-}
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static const struct scmi_device_id scmi_id_table[] = {
-	{ SCMI_PROTOCOL_SENSOR, "iiodev" },
-	{},
-};
+अटल स्थिर काष्ठा scmi_device_id scmi_id_table[] = अणु
+	अणु SCMI_PROTOCOL_SENSOR, "iiodev" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(scmi, scmi_id_table);
 
-static struct scmi_driver scmi_iiodev_driver = {
+अटल काष्ठा scmi_driver scmi_iiodev_driver = अणु
 	.name = "scmi-sensor-iiodev",
 	.probe = scmi_iio_dev_probe,
 	.id_table = scmi_id_table,
-};
+पूर्ण;
 
 module_scmi_driver(scmi_iiodev_driver);
 

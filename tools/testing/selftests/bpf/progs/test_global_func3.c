@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2020 Facebook */
-#include <stddef.h>
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <मानकघोष.स>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-__attribute__ ((noinline))
-int f1(struct __sk_buff *skb)
-{
-	return skb->len;
-}
+__attribute__ ((noअंतरभूत))
+पूर्णांक f1(काष्ठा __sk_buff *skb)
+अणु
+	वापस skb->len;
+पूर्ण
 
-__attribute__ ((noinline))
-int f2(int val, struct __sk_buff *skb)
-{
-	return f1(skb) + val;
-}
+__attribute__ ((noअंतरभूत))
+पूर्णांक f2(पूर्णांक val, काष्ठा __sk_buff *skb)
+अणु
+	वापस f1(skb) + val;
+पूर्ण
 
-__attribute__ ((noinline))
-int f3(int val, struct __sk_buff *skb, int var)
-{
-	return f2(var, skb) + val;
-}
+__attribute__ ((noअंतरभूत))
+पूर्णांक f3(पूर्णांक val, काष्ठा __sk_buff *skb, पूर्णांक var)
+अणु
+	वापस f2(var, skb) + val;
+पूर्ण
 
-__attribute__ ((noinline))
-int f4(struct __sk_buff *skb)
-{
-	return f3(1, skb, 2);
-}
+__attribute__ ((noअंतरभूत))
+पूर्णांक f4(काष्ठा __sk_buff *skb)
+अणु
+	वापस f3(1, skb, 2);
+पूर्ण
 
-__attribute__ ((noinline))
-int f5(struct __sk_buff *skb)
-{
-	return f4(skb);
-}
+__attribute__ ((noअंतरभूत))
+पूर्णांक f5(काष्ठा __sk_buff *skb)
+अणु
+	वापस f4(skb);
+पूर्ण
 
-__attribute__ ((noinline))
-int f6(struct __sk_buff *skb)
-{
-	return f5(skb);
-}
+__attribute__ ((noअंतरभूत))
+पूर्णांक f6(काष्ठा __sk_buff *skb)
+अणु
+	वापस f5(skb);
+पूर्ण
 
-__attribute__ ((noinline))
-int f7(struct __sk_buff *skb)
-{
-	return f6(skb);
-}
+__attribute__ ((noअंतरभूत))
+पूर्णांक f7(काष्ठा __sk_buff *skb)
+अणु
+	वापस f6(skb);
+पूर्ण
 
-#ifndef NO_FN8
-__attribute__ ((noinline))
-int f8(struct __sk_buff *skb)
-{
-	return f7(skb);
-}
-#endif
+#अगर_अघोषित NO_FN8
+__attribute__ ((noअंतरभूत))
+पूर्णांक f8(काष्ठा __sk_buff *skb)
+अणु
+	वापस f7(skb);
+पूर्ण
+#पूर्ण_अगर
 
 SEC("classifier/test")
-int test_cls(struct __sk_buff *skb)
-{
-#ifndef NO_FN8
-	return f8(skb);
-#else
-	return f7(skb);
-#endif
-}
+पूर्णांक test_cls(काष्ठा __sk_buff *skb)
+अणु
+#अगर_अघोषित NO_FN8
+	वापस f8(skb);
+#अन्यथा
+	वापस f7(skb);
+#पूर्ण_अगर
+पूर्ण

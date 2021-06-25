@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright (C) 2007 Jeff Dike (jdike@{addtoit.com,linux.intel.com})
+ * Copyright (C) 2007 Jeff Dike (jdike@अणुaddtoit.com,linux.पूर्णांकel.comपूर्ण)
  * Licensed under the GPL
  */
 
-#include <sys/ptrace.h>
-#include <asm/ptrace.h>
+#समावेश <sys/ptrace.h>
+#समावेश <यंत्र/ptrace.h>
 
-int os_arch_prctl(int pid, int option, unsigned long *arg2)
-{
-	return ptrace(PTRACE_ARCH_PRCTL, pid, (unsigned long) arg2, option);
-}
+पूर्णांक os_arch_prctl(पूर्णांक pid, पूर्णांक option, अचिन्हित दीर्घ *arg2)
+अणु
+	वापस ptrace(PTRACE_ARCH_PRCTL, pid, (अचिन्हित दीर्घ) arg2, option);
+पूर्ण

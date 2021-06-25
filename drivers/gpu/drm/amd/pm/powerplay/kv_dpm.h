@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,120 +21,120 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __KV_DPM_H__
-#define __KV_DPM_H__
+#अगर_अघोषित __KV_DPM_H__
+#घोषणा __KV_DPM_H__
 
-#define SMU__NUM_SCLK_DPM_STATE  8
-#define SMU__NUM_MCLK_DPM_LEVELS 4
-#define SMU__NUM_LCLK_DPM_LEVELS 8
-#define SMU__NUM_PCIE_DPM_LEVELS 0 /* ??? */
-#include "smu7_fusion.h"
-#include "ppsmc.h"
+#घोषणा SMU__NUM_SCLK_DPM_STATE  8
+#घोषणा SMU__NUM_MCLK_DPM_LEVELS 4
+#घोषणा SMU__NUM_LCLK_DPM_LEVELS 8
+#घोषणा SMU__NUM_PCIE_DPM_LEVELS 0 /* ??? */
+#समावेश "smu7_fusion.h"
+#समावेश "ppsmc.h"
 
-#define SUMO_MAX_HARDWARE_POWERLEVELS 5
+#घोषणा SUMO_MAX_HARDWARE_POWERLEVELS 5
 
-#define SUMO_MAX_NUMBER_VOLTAGES    4
+#घोषणा SUMO_MAX_NUMBER_VOLTAGES    4
 
-struct sumo_vid_mapping_entry {
+काष्ठा sumo_vid_mapping_entry अणु
 	u16 vid_2bit;
 	u16 vid_7bit;
-};
+पूर्ण;
 
-struct sumo_vid_mapping_table {
+काष्ठा sumo_vid_mapping_table अणु
 	u32 num_entries;
-	struct sumo_vid_mapping_entry entries[SUMO_MAX_NUMBER_VOLTAGES];
-};
+	काष्ठा sumo_vid_mapping_entry entries[SUMO_MAX_NUMBER_VOLTAGES];
+पूर्ण;
 
-struct sumo_sclk_voltage_mapping_entry {
+काष्ठा sumo_sclk_voltage_mapping_entry अणु
 	u32 sclk_frequency;
 	u16 vid_2bit;
 	u16 rsv;
-};
+पूर्ण;
 
-struct sumo_sclk_voltage_mapping_table {
+काष्ठा sumo_sclk_voltage_mapping_table अणु
 	u32 num_max_dpm_entries;
-	struct sumo_sclk_voltage_mapping_entry entries[SUMO_MAX_HARDWARE_POWERLEVELS];
-};
+	काष्ठा sumo_sclk_voltage_mapping_entry entries[SUMO_MAX_HARDWARE_POWERLEVELS];
+पूर्ण;
 
-#define TRINITY_AT_DFLT            30
+#घोषणा TRINITY_AT_DFLT            30
 
-#define KV_NUM_NBPSTATES   4
+#घोषणा KV_NUM_NBPSTATES   4
 
-enum kv_pt_config_reg_type {
+क्रमागत kv_pt_config_reg_type अणु
 	KV_CONFIGREG_MMR = 0,
 	KV_CONFIGREG_SMC_IND,
 	KV_CONFIGREG_DIDT_IND,
 	KV_CONFIGREG_CACHE,
 	KV_CONFIGREG_MAX
-};
+पूर्ण;
 
-struct kv_pt_config_reg {
+काष्ठा kv_pt_config_reg अणु
 	u32 offset;
 	u32 mask;
-	u32 shift;
+	u32 shअगरt;
 	u32 value;
-	enum kv_pt_config_reg_type type;
-};
+	क्रमागत kv_pt_config_reg_type type;
+पूर्ण;
 
-struct kv_lcac_config_values {
+काष्ठा kv_lcac_config_values अणु
 	u32 block_id;
-	u32 signal_id;
+	u32 संकेत_id;
 	u32 t;
-};
+पूर्ण;
 
-struct kv_lcac_config_reg {
+काष्ठा kv_lcac_config_reg अणु
 	u32 cntl;
 	u32 block_mask;
-	u32 block_shift;
-	u32 signal_mask;
-	u32 signal_shift;
+	u32 block_shअगरt;
+	u32 संकेत_mask;
+	u32 संकेत_shअगरt;
 	u32 t_mask;
-	u32 t_shift;
+	u32 t_shअगरt;
 	u32 enable_mask;
-	u32 enable_shift;
-};
+	u32 enable_shअगरt;
+पूर्ण;
 
-struct kv_pl {
+काष्ठा kv_pl अणु
 	u32 sclk;
 	u8 vddc_index;
-	u8 ds_divider_index;
-	u8 ss_divider_index;
+	u8 ds_भागider_index;
+	u8 ss_भागider_index;
 	u8 allow_gnb_slow;
-	u8 force_nbp_state;
+	u8 क्रमce_nbp_state;
 	u8 display_wm;
 	u8 vce_wm;
-};
+पूर्ण;
 
-struct kv_ps {
-	struct kv_pl levels[SUMO_MAX_HARDWARE_POWERLEVELS];
+काष्ठा kv_ps अणु
+	काष्ठा kv_pl levels[SUMO_MAX_HARDWARE_POWERLEVELS];
 	u32 num_levels;
 	bool need_dfs_bypass;
 	u8 dpm0_pg_nb_ps_lo;
 	u8 dpm0_pg_nb_ps_hi;
 	u8 dpmx_nb_ps_lo;
 	u8 dpmx_nb_ps_hi;
-};
+पूर्ण;
 
-struct kv_sys_info {
+काष्ठा kv_sys_info अणु
 	u32 bootup_uma_clk;
 	u32 bootup_sclk;
 	u32 dentist_vco_freq;
 	u32 nb_dpm_enable;
-	u32 nbp_memory_clock[KV_NUM_NBPSTATES];
-	u32 nbp_n_clock[KV_NUM_NBPSTATES];
+	u32 nbp_memory_घड़ी[KV_NUM_NBPSTATES];
+	u32 nbp_n_घड़ी[KV_NUM_NBPSTATES];
 	u16 bootup_nb_voltage_index;
-	u8 htc_tmp_lmt;
+	u8 htc_पंचांगp_lmt;
 	u8 htc_hyst_lmt;
-	struct sumo_sclk_voltage_mapping_table sclk_voltage_mapping_table;
-	struct sumo_vid_mapping_table vid_mapping_table;
+	काष्ठा sumo_sclk_voltage_mapping_table sclk_voltage_mapping_table;
+	काष्ठा sumo_vid_mapping_table vid_mapping_table;
 	u32 uma_channel_number;
-};
+पूर्ण;
 
-struct kv_power_info {
+काष्ठा kv_घातer_info अणु
 	u32 at[SUMO_MAX_HARDWARE_POWERLEVELS];
 	u32 voltage_drop_t;
-	struct kv_sys_info sys_info;
-	struct kv_pl boot_pl;
+	काष्ठा kv_sys_info sys_info;
+	काष्ठा kv_pl boot_pl;
 	bool enable_nb_ps_policy;
 	bool disable_nb_ps3_in_battery;
 	bool video_start;
@@ -164,36 +165,36 @@ struct kv_power_info {
 	u8 vce_boot_level;
 	u8 acp_boot_level;
 	u8 samu_boot_level;
-	u8 uvd_interval;
-	u8 vce_interval;
-	u8 acp_interval;
-	u8 samu_interval;
+	u8 uvd_पूर्णांकerval;
+	u8 vce_पूर्णांकerval;
+	u8 acp_पूर्णांकerval;
+	u8 samu_पूर्णांकerval;
 	u8 graphics_boot_level;
-	u8 graphics_interval;
+	u8 graphics_पूर्णांकerval;
 	u8 graphics_therm_throttle_enable;
 	u8 graphics_voltage_change_enable;
 	u8 graphics_clk_slow_enable;
-	u8 graphics_clk_slow_divider;
+	u8 graphics_clk_slow_भागider;
 	u8 fps_low_t;
-	u32 low_sclk_interrupt_t;
-	bool uvd_power_gated;
-	bool vce_power_gated;
-	bool acp_power_gated;
-	bool samu_power_gated;
+	u32 low_sclk_पूर्णांकerrupt_t;
+	bool uvd_घातer_gated;
+	bool vce_घातer_gated;
+	bool acp_घातer_gated;
+	bool samu_घातer_gated;
 	bool nb_dpm_enabled;
 	/* flags */
 	bool enable_didt;
 	bool enable_dpm;
-	bool enable_auto_thermal_throttling;
+	bool enable_स्वतः_thermal_throttling;
 	bool enable_nb_dpm;
 	/* caps */
 	bool caps_cac;
-	bool caps_power_containment;
+	bool caps_घातer_containment;
 	bool caps_sq_ramping;
 	bool caps_db_ramping;
 	bool caps_td_ramping;
 	bool caps_tcp_ramping;
-	bool caps_sclk_throttle_low_notification;
+	bool caps_sclk_throttle_low_notअगरication;
 	bool caps_fps;
 	bool caps_uvd_dpm;
 	bool caps_uvd_pg;
@@ -203,27 +204,27 @@ struct kv_power_info {
 	bool caps_stable_p_state;
 	bool caps_enable_dfs_bypass;
 	bool caps_sclk_ds;
-	struct amdgpu_ps current_rps;
-	struct kv_ps current_ps;
-	struct amdgpu_ps requested_rps;
-	struct kv_ps requested_ps;
-};
+	काष्ठा amdgpu_ps current_rps;
+	काष्ठा kv_ps current_ps;
+	काष्ठा amdgpu_ps requested_rps;
+	काष्ठा kv_ps requested_ps;
+पूर्ण;
 
 /* XXX are these ok? */
-#define KV_TEMP_RANGE_MIN (90 * 1000)
-#define KV_TEMP_RANGE_MAX (120 * 1000)
+#घोषणा KV_TEMP_RANGE_MIN (90 * 1000)
+#घोषणा KV_TEMP_RANGE_MAX (120 * 1000)
 
 /* kv_smc.c */
-int amdgpu_kv_notify_message_to_smu(struct amdgpu_device *adev, u32 id);
-int amdgpu_kv_dpm_get_enable_mask(struct amdgpu_device *adev, u32 *enable_mask);
-int amdgpu_kv_send_msg_to_smc_with_parameter(struct amdgpu_device *adev,
+पूर्णांक amdgpu_kv_notअगरy_message_to_smu(काष्ठा amdgpu_device *adev, u32 id);
+पूर्णांक amdgpu_kv_dpm_get_enable_mask(काष्ठा amdgpu_device *adev, u32 *enable_mask);
+पूर्णांक amdgpu_kv_send_msg_to_smc_with_parameter(काष्ठा amdgpu_device *adev,
 				      PPSMC_Msg msg, u32 parameter);
-int amdgpu_kv_read_smc_sram_dword(struct amdgpu_device *adev, u32 smc_address,
+पूर्णांक amdgpu_kv_पढ़ो_smc_sram_dword(काष्ठा amdgpu_device *adev, u32 smc_address,
 			   u32 *value, u32 limit);
-int amdgpu_kv_smc_dpm_enable(struct amdgpu_device *adev, bool enable);
-int amdgpu_kv_smc_bapm_enable(struct amdgpu_device *adev, bool enable);
-int amdgpu_kv_copy_bytes_to_smc(struct amdgpu_device *adev,
+पूर्णांक amdgpu_kv_smc_dpm_enable(काष्ठा amdgpu_device *adev, bool enable);
+पूर्णांक amdgpu_kv_smc_bapm_enable(काष्ठा amdgpu_device *adev, bool enable);
+पूर्णांक amdgpu_kv_copy_bytes_to_smc(काष्ठा amdgpu_device *adev,
 			 u32 smc_start_address,
-			 const u8 *src, u32 byte_count, u32 limit);
+			 स्थिर u8 *src, u32 byte_count, u32 limit);
 
-#endif
+#पूर्ण_अगर

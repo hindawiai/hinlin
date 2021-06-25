@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <stdarg.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <मानकतर्क.स>
 
 /* confdata.c */
-void conf_parse(const char *name);
-int conf_read(const char *name);
-int conf_read_simple(const char *name, int);
-int conf_write_defconfig(const char *name);
-int conf_write(const char *name);
-int conf_write_autoconf(int overwrite);
-void conf_set_changed(bool val);
-bool conf_get_changed(void);
-void conf_set_changed_callback(void (*fn)(void));
-void conf_set_message_callback(void (*fn)(const char *s));
+व्योम conf_parse(स्थिर अक्षर *name);
+पूर्णांक conf_पढ़ो(स्थिर अक्षर *name);
+पूर्णांक conf_पढ़ो_simple(स्थिर अक्षर *name, पूर्णांक);
+पूर्णांक conf_ग_लिखो_defconfig(स्थिर अक्षर *name);
+पूर्णांक conf_ग_लिखो(स्थिर अक्षर *name);
+पूर्णांक conf_ग_लिखो_स्वतःconf(पूर्णांक overग_लिखो);
+व्योम conf_set_changed(bool val);
+bool conf_get_changed(व्योम);
+व्योम conf_set_changed_callback(व्योम (*fn)(व्योम));
+व्योम conf_set_message_callback(व्योम (*fn)(स्थिर अक्षर *s));
 
 /* symbol.c */
-extern struct symbol * symbol_hash[SYMBOL_HASHSIZE];
+बाह्य काष्ठा symbol * symbol_hash[SYMBOL_HASHSIZE];
 
-struct symbol * sym_lookup(const char *name, int flags);
-struct symbol * sym_find(const char *name);
-const char * sym_escape_string_value(const char *in);
-struct symbol ** sym_re_search(const char *pattern);
-const char * sym_type_name(enum symbol_type type);
-void sym_calc_value(struct symbol *sym);
-enum symbol_type sym_get_type(struct symbol *sym);
-bool sym_tristate_within_range(struct symbol *sym,tristate tri);
-bool sym_set_tristate_value(struct symbol *sym,tristate tri);
-tristate sym_toggle_tristate_value(struct symbol *sym);
-bool sym_string_valid(struct symbol *sym, const char *newval);
-bool sym_string_within_range(struct symbol *sym, const char *str);
-bool sym_set_string_value(struct symbol *sym, const char *newval);
-bool sym_is_changeable(struct symbol *sym);
-struct property * sym_get_choice_prop(struct symbol *sym);
-const char * sym_get_string_value(struct symbol *sym);
+काष्ठा symbol * sym_lookup(स्थिर अक्षर *name, पूर्णांक flags);
+काष्ठा symbol * sym_find(स्थिर अक्षर *name);
+स्थिर अक्षर * sym_escape_string_value(स्थिर अक्षर *in);
+काष्ठा symbol ** sym_re_search(स्थिर अक्षर *pattern);
+स्थिर अक्षर * sym_type_name(क्रमागत symbol_type type);
+व्योम sym_calc_value(काष्ठा symbol *sym);
+क्रमागत symbol_type sym_get_type(काष्ठा symbol *sym);
+bool sym_tristate_within_range(काष्ठा symbol *sym,tristate tri);
+bool sym_set_tristate_value(काष्ठा symbol *sym,tristate tri);
+tristate sym_toggle_tristate_value(काष्ठा symbol *sym);
+bool sym_string_valid(काष्ठा symbol *sym, स्थिर अक्षर *newval);
+bool sym_string_within_range(काष्ठा symbol *sym, स्थिर अक्षर *str);
+bool sym_set_string_value(काष्ठा symbol *sym, स्थिर अक्षर *newval);
+bool sym_is_changeable(काष्ठा symbol *sym);
+काष्ठा property * sym_get_choice_prop(काष्ठा symbol *sym);
+स्थिर अक्षर * sym_get_string_value(काष्ठा symbol *sym);
 
-const char * prop_get_type_name(enum prop_type type);
+स्थिर अक्षर * prop_get_type_name(क्रमागत prop_type type);
 
 /* preprocess.c */
-enum variable_flavor {
+क्रमागत variable_flavor अणु
 	VAR_SIMPLE,
 	VAR_RECURSIVE,
 	VAR_APPEND,
-};
-void env_write_dep(FILE *f, const char *auto_conf_name);
-void variable_add(const char *name, const char *value,
-		  enum variable_flavor flavor);
-void variable_all_del(void);
-char *expand_dollar(const char **str);
-char *expand_one_token(const char **str);
+पूर्ण;
+व्योम env_ग_लिखो_dep(खाता *f, स्थिर अक्षर *स्वतः_conf_name);
+व्योम variable_add(स्थिर अक्षर *name, स्थिर अक्षर *value,
+		  क्रमागत variable_flavor flavor);
+व्योम variable_all_del(व्योम);
+अक्षर *expand_करोllar(स्थिर अक्षर **str);
+अक्षर *expand_one_token(स्थिर अक्षर **str);
 
 /* expr.c */
-void expr_print(struct expr *e, void (*fn)(void *, struct symbol *, const char *), void *data, int prevtoken);
+व्योम expr_prपूर्णांक(काष्ठा expr *e, व्योम (*fn)(व्योम *, काष्ठा symbol *, स्थिर अक्षर *), व्योम *data, पूर्णांक prevtoken);

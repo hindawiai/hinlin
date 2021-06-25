@@ -1,369 +1,370 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/slab.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
 
-#include <asm/addrspace.h>
-#include <asm/paccess.h>
-#include <asm/gio_device.h>
-#include <asm/sgi/gio.h>
-#include <asm/sgi/hpc3.h>
-#include <asm/sgi/mc.h>
-#include <asm/sgi/ip22.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/paccess.h>
+#समावेश <यंत्र/gio_device.h>
+#समावेश <यंत्र/sgi/gपन.स>
+#समावेश <यंत्र/sgi/hpc3.h>
+#समावेश <यंत्र/sgi/mc.h>
+#समावेश <यंत्र/sgi/ip22.h>
 
-static struct bus_type gio_bus_type;
+अटल काष्ठा bus_type gio_bus_type;
 
-static struct {
-	const char *name;
+अटल काष्ठा अणु
+	स्थिर अक्षर *name;
 	__u8	   id;
-} gio_name_table[] = {
-	{ .name = "SGI Impact", .id = 0x10 },
-	{ .name = "Phobos G160", .id = 0x35 },
-	{ .name = "Phobos G130", .id = 0x36 },
-	{ .name = "Phobos G100", .id = 0x37 },
-	{ .name = "Set Engineering GFE", .id = 0x38 },
+पूर्ण gio_name_table[] = अणु
+	अणु .name = "SGI Impact", .id = 0x10 पूर्ण,
+	अणु .name = "Phobos G160", .id = 0x35 पूर्ण,
+	अणु .name = "Phobos G130", .id = 0x36 पूर्ण,
+	अणु .name = "Phobos G100", .id = 0x37 पूर्ण,
+	अणु .name = "Set Engineering GFE", .id = 0x38 पूर्ण,
 	/* fake IDs */
-	{ .name = "SGI Newport", .id = 0x7e },
-	{ .name = "SGI GR2/GR3", .id = 0x7f },
-};
+	अणु .name = "SGI Newport", .id = 0x7e पूर्ण,
+	अणु .name = "SGI GR2/GR3", .id = 0x7f पूर्ण,
+पूर्ण;
 
-static void gio_bus_release(struct device *dev)
-{
-	kfree(dev);
-}
+अटल व्योम gio_bus_release(काष्ठा device *dev)
+अणु
+	kमुक्त(dev);
+पूर्ण
 
-static struct device gio_bus = {
+अटल काष्ठा device gio_bus = अणु
 	.init_name = "gio",
 	.release = &gio_bus_release,
-};
+पूर्ण;
 
 /**
- * gio_match_device - Tell if an of_device structure has a matching
- * gio_match structure
- * @ids: array of of device match structures to search in
- * @dev: the of device structure to match against
+ * gio_match_device - Tell अगर an of_device काष्ठाure has a matching
+ * gio_match काष्ठाure
+ * @ids: array of of device match काष्ठाures to search in
+ * @dev: the of device काष्ठाure to match against
  *
  * Used by a driver to check whether an of_device present in the
- * system is in its list of supported devices.
+ * प्रणाली is in its list of supported devices.
  */
-static const struct gio_device_id *
-gio_match_device(const struct gio_device_id *match,
-		 const struct gio_device *dev)
-{
-	const struct gio_device_id *ids;
+अटल स्थिर काष्ठा gio_device_id *
+gio_match_device(स्थिर काष्ठा gio_device_id *match,
+		 स्थिर काष्ठा gio_device *dev)
+अणु
+	स्थिर काष्ठा gio_device_id *ids;
 
-	for (ids = match; ids->id != 0xff; ids++)
-		if (ids->id == dev->id.id)
-			return ids;
+	क्रम (ids = match; ids->id != 0xff; ids++)
+		अगर (ids->id == dev->id.id)
+			वापस ids;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct gio_device *gio_dev_get(struct gio_device *dev)
-{
-	struct device *tmp;
+काष्ठा gio_device *gio_dev_get(काष्ठा gio_device *dev)
+अणु
+	काष्ठा device *पंचांगp;
 
-	if (!dev)
-		return NULL;
-	tmp = get_device(&dev->dev);
-	if (tmp)
-		return to_gio_device(tmp);
-	else
-		return NULL;
-}
+	अगर (!dev)
+		वापस शून्य;
+	पंचांगp = get_device(&dev->dev);
+	अगर (पंचांगp)
+		वापस to_gio_device(पंचांगp);
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(gio_dev_get);
 
-void gio_dev_put(struct gio_device *dev)
-{
-	if (dev)
+व्योम gio_dev_put(काष्ठा gio_device *dev)
+अणु
+	अगर (dev)
 		put_device(&dev->dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gio_dev_put);
 
 /**
- * gio_release_dev - free an gio device structure when all users of it are finished.
+ * gio_release_dev - मुक्त an gio device काष्ठाure when all users of it are finished.
  * @dev: device that's been disconnected
  *
  * Will be called only by the device core when all users of this gio device are
- * done.
+ * करोne.
  */
-void gio_release_dev(struct device *dev)
-{
-	struct gio_device *giodev;
+व्योम gio_release_dev(काष्ठा device *dev)
+अणु
+	काष्ठा gio_device *giodev;
 
 	giodev = to_gio_device(dev);
-	kfree(giodev);
-}
+	kमुक्त(giodev);
+पूर्ण
 EXPORT_SYMBOL_GPL(gio_release_dev);
 
-int gio_device_register(struct gio_device *giodev)
-{
+पूर्णांक gio_device_रेजिस्टर(काष्ठा gio_device *giodev)
+अणु
 	giodev->dev.bus = &gio_bus_type;
 	giodev->dev.parent = &gio_bus;
-	return device_register(&giodev->dev);
-}
-EXPORT_SYMBOL_GPL(gio_device_register);
+	वापस device_रेजिस्टर(&giodev->dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(gio_device_रेजिस्टर);
 
-void gio_device_unregister(struct gio_device *giodev)
-{
-	device_unregister(&giodev->dev);
-}
-EXPORT_SYMBOL_GPL(gio_device_unregister);
+व्योम gio_device_unरेजिस्टर(काष्ठा gio_device *giodev)
+अणु
+	device_unरेजिस्टर(&giodev->dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(gio_device_unरेजिस्टर);
 
-static int gio_bus_match(struct device *dev, struct device_driver *drv)
-{
-	struct gio_device *gio_dev = to_gio_device(dev);
-	struct gio_driver *gio_drv = to_gio_driver(drv);
+अटल पूर्णांक gio_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा gio_device *gio_dev = to_gio_device(dev);
+	काष्ठा gio_driver *gio_drv = to_gio_driver(drv);
 
-	return gio_match_device(gio_drv->id_table, gio_dev) != NULL;
-}
+	वापस gio_match_device(gio_drv->id_table, gio_dev) != शून्य;
+पूर्ण
 
-static int gio_device_probe(struct device *dev)
-{
-	int error = -ENODEV;
-	struct gio_driver *drv;
-	struct gio_device *gio_dev;
-	const struct gio_device_id *match;
+अटल पूर्णांक gio_device_probe(काष्ठा device *dev)
+अणु
+	पूर्णांक error = -ENODEV;
+	काष्ठा gio_driver *drv;
+	काष्ठा gio_device *gio_dev;
+	स्थिर काष्ठा gio_device_id *match;
 
 	drv = to_gio_driver(dev->driver);
 	gio_dev = to_gio_device(dev);
 
-	if (!drv->probe)
-		return error;
+	अगर (!drv->probe)
+		वापस error;
 
 	gio_dev_get(gio_dev);
 
 	match = gio_match_device(drv->id_table, gio_dev);
-	if (match)
+	अगर (match)
 		error = drv->probe(gio_dev, match);
-	if (error)
+	अगर (error)
 		gio_dev_put(gio_dev);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int gio_device_remove(struct device *dev)
-{
-	struct gio_device *gio_dev = to_gio_device(dev);
-	struct gio_driver *drv = to_gio_driver(dev->driver);
+अटल पूर्णांक gio_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा gio_device *gio_dev = to_gio_device(dev);
+	काष्ठा gio_driver *drv = to_gio_driver(dev->driver);
 
-	if (dev->driver && drv->remove)
-		drv->remove(gio_dev);
-	return 0;
-}
+	अगर (dev->driver && drv->हटाओ)
+		drv->हटाओ(gio_dev);
+	वापस 0;
+पूर्ण
 
-static void gio_device_shutdown(struct device *dev)
-{
-	struct gio_device *gio_dev = to_gio_device(dev);
-	struct gio_driver *drv = to_gio_driver(dev->driver);
+अटल व्योम gio_device_shutकरोwn(काष्ठा device *dev)
+अणु
+	काष्ठा gio_device *gio_dev = to_gio_device(dev);
+	काष्ठा gio_driver *drv = to_gio_driver(dev->driver);
 
-	if (dev->driver && drv->shutdown)
-		drv->shutdown(gio_dev);
-}
+	अगर (dev->driver && drv->shutकरोwn)
+		drv->shutकरोwn(gio_dev);
+पूर्ण
 
-static ssize_t modalias_show(struct device *dev, struct device_attribute *a,
-			     char *buf)
-{
-	struct gio_device *gio_dev = to_gio_device(dev);
-	int len = snprintf(buf, PAGE_SIZE, "gio:%x\n", gio_dev->id.id);
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *a,
+			     अक्षर *buf)
+अणु
+	काष्ठा gio_device *gio_dev = to_gio_device(dev);
+	पूर्णांक len = snम_लिखो(buf, PAGE_SIZE, "gio:%x\n", gio_dev->id.id);
 
-	return (len >= PAGE_SIZE) ? (PAGE_SIZE - 1) : len;
-}
-static DEVICE_ATTR_RO(modalias);
+	वापस (len >= PAGE_SIZE) ? (PAGE_SIZE - 1) : len;
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static ssize_t name_show(struct device *dev,
-			 struct device_attribute *attr, char *buf)
-{
-	struct gio_device *giodev;
-
-	giodev = to_gio_device(dev);
-	return sprintf(buf, "%s", giodev->name);
-}
-static DEVICE_ATTR_RO(name);
-
-static ssize_t id_show(struct device *dev,
-		       struct device_attribute *attr, char *buf)
-{
-	struct gio_device *giodev;
+अटल sमाप_प्रकार name_show(काष्ठा device *dev,
+			 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा gio_device *giodev;
 
 	giodev = to_gio_device(dev);
-	return sprintf(buf, "%x", giodev->id.id);
-}
-static DEVICE_ATTR_RO(id);
+	वापस प्र_लिखो(buf, "%s", giodev->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static struct attribute *gio_dev_attrs[] = {
+अटल sमाप_प्रकार id_show(काष्ठा device *dev,
+		       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा gio_device *giodev;
+
+	giodev = to_gio_device(dev);
+	वापस प्र_लिखो(buf, "%x", giodev->id.id);
+पूर्ण
+अटल DEVICE_ATTR_RO(id);
+
+अटल काष्ठा attribute *gio_dev_attrs[] = अणु
 	&dev_attr_modalias.attr,
 	&dev_attr_name.attr,
 	&dev_attr_id.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(gio_dev);
 
-static int gio_device_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct gio_device *gio_dev = to_gio_device(dev);
+अटल पूर्णांक gio_device_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा gio_device *gio_dev = to_gio_device(dev);
 
 	add_uevent_var(env, "MODALIAS=gio:%x", gio_dev->id.id);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int gio_register_driver(struct gio_driver *drv)
-{
+पूर्णांक gio_रेजिस्टर_driver(काष्ठा gio_driver *drv)
+अणु
 	/* initialize common driver fields */
-	if (!drv->driver.name)
+	अगर (!drv->driver.name)
 		drv->driver.name = drv->name;
-	if (!drv->driver.owner)
+	अगर (!drv->driver.owner)
 		drv->driver.owner = drv->owner;
 	drv->driver.bus = &gio_bus_type;
 
-	/* register with core */
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(gio_register_driver);
+	/* रेजिस्टर with core */
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(gio_रेजिस्टर_driver);
 
-void gio_unregister_driver(struct gio_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(gio_unregister_driver);
+व्योम gio_unरेजिस्टर_driver(काष्ठा gio_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(gio_unरेजिस्टर_driver);
 
-void gio_set_master(struct gio_device *dev)
-{
-	u32 tmp = sgimc->giopar;
+व्योम gio_set_master(काष्ठा gio_device *dev)
+अणु
+	u32 पंचांगp = sgimc->giopar;
 
-	switch (dev->slotno) {
-	case 0:
-		tmp |= SGIMC_GIOPAR_MASTERGFX;
-		break;
-	case 1:
-		tmp |= SGIMC_GIOPAR_MASTEREXP0;
-		break;
-	case 2:
-		tmp |= SGIMC_GIOPAR_MASTEREXP1;
-		break;
-	}
-	sgimc->giopar = tmp;
-}
+	चयन (dev->slotno) अणु
+	हाल 0:
+		पंचांगp |= SGIMC_GIOPAR_MASTERGFX;
+		अवरोध;
+	हाल 1:
+		पंचांगp |= SGIMC_GIOPAR_MASTEREXP0;
+		अवरोध;
+	हाल 2:
+		पंचांगp |= SGIMC_GIOPAR_MASTEREXP1;
+		अवरोध;
+	पूर्ण
+	sgimc->giopar = पंचांगp;
+पूर्ण
 EXPORT_SYMBOL_GPL(gio_set_master);
 
-void ip22_gio_set_64bit(int slotno)
-{
-	u32 tmp = sgimc->giopar;
+व्योम ip22_gio_set_64bit(पूर्णांक slotno)
+अणु
+	u32 पंचांगp = sgimc->giopar;
 
-	switch (slotno) {
-	case 0:
-		tmp |= SGIMC_GIOPAR_GFX64;
-		break;
-	case 1:
-		tmp |= SGIMC_GIOPAR_EXP064;
-		break;
-	case 2:
-		tmp |= SGIMC_GIOPAR_EXP164;
-		break;
-	}
-	sgimc->giopar = tmp;
-}
+	चयन (slotno) अणु
+	हाल 0:
+		पंचांगp |= SGIMC_GIOPAR_GFX64;
+		अवरोध;
+	हाल 1:
+		पंचांगp |= SGIMC_GIOPAR_EXP064;
+		अवरोध;
+	हाल 2:
+		पंचांगp |= SGIMC_GIOPAR_EXP164;
+		अवरोध;
+	पूर्ण
+	sgimc->giopar = पंचांगp;
+पूर्ण
 
-static int ip22_gio_id(unsigned long addr, u32 *res)
-{
-	u8 tmp8;
-	u8 tmp16;
-	u32 tmp32;
+अटल पूर्णांक ip22_gio_id(अचिन्हित दीर्घ addr, u32 *res)
+अणु
+	u8 पंचांगp8;
+	u8 पंचांगp16;
+	u32 पंचांगp32;
 	u8 *ptr8;
 	u16 *ptr16;
 	u32 *ptr32;
 
-	ptr32 = (void *)CKSEG1ADDR(addr);
-	if (!get_dbe(tmp32, ptr32)) {
+	ptr32 = (व्योम *)CKSEG1ADDR(addr);
+	अगर (!get_dbe(पंचांगp32, ptr32)) अणु
 		/*
-		 * We got no DBE, but this doesn't mean anything.
+		 * We got no DBE, but this करोesn't mean anything.
 		 * If GIO is pipelined (which can't be disabled
-		 * for GFX slot) we don't get a DBE, but we see
-		 * the transfer size as data. So we do an 8bit
+		 * क्रम GFX slot) we करोn't get a DBE, but we see
+		 * the transfer size as data. So we करो an 8bit
 		 * and a 16bit access and check whether the common
 		 * data matches
 		 */
-		ptr8 = (void *)CKSEG1ADDR(addr + 3);
-		if (get_dbe(tmp8, ptr8)) {
+		ptr8 = (व्योम *)CKSEG1ADDR(addr + 3);
+		अगर (get_dbe(पंचांगp8, ptr8)) अणु
 			/*
-			 * 32bit access worked, but 8bit doesn't
-			 * so we don't see phantom reads on
+			 * 32bit access worked, but 8bit करोesn't
+			 * so we करोn't see phantom पढ़ोs on
 			 * a pipelined bus, but a real card which
-			 * doesn't support 8 bit reads
+			 * करोesn't support 8 bit पढ़ोs
 			 */
-			*res = tmp32;
-			return 1;
-		}
-		ptr16 = (void *)CKSEG1ADDR(addr + 2);
-		get_dbe(tmp16, ptr16);
-		if (tmp8 == (tmp16 & 0xff) &&
-		    tmp8 == (tmp32 & 0xff) &&
-		    tmp16 == (tmp32 & 0xffff)) {
-			*res = tmp32;
-			return 1;
-		}
-	}
-	return 0; /* nothing here */
-}
+			*res = पंचांगp32;
+			वापस 1;
+		पूर्ण
+		ptr16 = (व्योम *)CKSEG1ADDR(addr + 2);
+		get_dbe(पंचांगp16, ptr16);
+		अगर (पंचांगp8 == (पंचांगp16 & 0xff) &&
+		    पंचांगp8 == (पंचांगp32 & 0xff) &&
+		    पंचांगp16 == (पंचांगp32 & 0xffff)) अणु
+			*res = पंचांगp32;
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0; /* nothing here */
+पूर्ण
 
-#define HQ2_MYSTERY_OFFS       0x6A07C
-#define NEWPORT_USTATUS_OFFS   0xF133C
+#घोषणा HQ2_MYSTERY_OFFS       0x6A07C
+#घोषणा NEWPORT_USTATUS_OFFS   0xF133C
 
-static int ip22_is_gr2(unsigned long addr)
-{
-	u32 tmp;
+अटल पूर्णांक ip22_is_gr2(अचिन्हित दीर्घ addr)
+अणु
+	u32 पंचांगp;
 	u32 *ptr;
 
 	/* HQ2 only allows 32bit accesses */
-	ptr = (void *)CKSEG1ADDR(addr + HQ2_MYSTERY_OFFS);
-	if (!get_dbe(tmp, ptr)) {
-		if (tmp == 0xdeadbeef)
-			return 1;
-	}
-	return 0;
-}
+	ptr = (व्योम *)CKSEG1ADDR(addr + HQ2_MYSTERY_OFFS);
+	अगर (!get_dbe(पंचांगp, ptr)) अणु
+		अगर (पंचांगp == 0xdeadbeef)
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-static void ip22_check_gio(int slotno, unsigned long addr, int irq)
-{
-	const char *name = "Unknown";
-	struct gio_device *gio_dev;
-	u32 tmp;
+अटल व्योम ip22_check_gio(पूर्णांक slotno, अचिन्हित दीर्घ addr, पूर्णांक irq)
+अणु
+	स्थिर अक्षर *name = "Unknown";
+	काष्ठा gio_device *gio_dev;
+	u32 पंचांगp;
 	__u8 id;
-	int i;
+	पूर्णांक i;
 
-	/* first look for GR2/GR3 by checking mystery register */
-	if (ip22_is_gr2(addr))
-		tmp = 0x7f;
-	else {
-		if (!ip22_gio_id(addr, &tmp)) {
+	/* first look क्रम GR2/GR3 by checking mystery रेजिस्टर */
+	अगर (ip22_is_gr2(addr))
+		पंचांगp = 0x7f;
+	अन्यथा अणु
+		अगर (!ip22_gio_id(addr, &पंचांगp)) अणु
 			/*
 			 * no GIO signature at start address of slot
-			 * since Newport doesn't have one, we check if
-			 * user status register is readable
+			 * since Newport करोesn't have one, we check अगर
+			 * user status रेजिस्टर is पढ़ोable
 			 */
-			if (ip22_gio_id(addr + NEWPORT_USTATUS_OFFS, &tmp))
-				tmp = 0x7e;
-			else
-				tmp = 0;
-		}
-	}
-	if (tmp) {
-		id = GIO_ID(tmp);
-		if (tmp & GIO_32BIT_ID) {
-			if (tmp & GIO_64BIT_IFACE)
+			अगर (ip22_gio_id(addr + NEWPORT_USTATUS_OFFS, &पंचांगp))
+				पंचांगp = 0x7e;
+			अन्यथा
+				पंचांगp = 0;
+		पूर्ण
+	पूर्ण
+	अगर (पंचांगp) अणु
+		id = GIO_ID(पंचांगp);
+		अगर (पंचांगp & GIO_32BIT_ID) अणु
+			अगर (पंचांगp & GIO_64BIT_IFACE)
 				ip22_gio_set_64bit(slotno);
-		}
-		for (i = 0; i < ARRAY_SIZE(gio_name_table); i++) {
-			if (id == gio_name_table[i].id) {
+		पूर्ण
+		क्रम (i = 0; i < ARRAY_SIZE(gio_name_table); i++) अणु
+			अगर (id == gio_name_table[i].id) अणु
 				name = gio_name_table[i].name;
-				break;
-			}
-		}
-		printk(KERN_INFO "GIO: slot %d : %s (id %x)\n",
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		prपूर्णांकk(KERN_INFO "GIO: slot %d : %s (id %x)\n",
 		       slotno, name, id);
-		gio_dev = kzalloc(sizeof *gio_dev, GFP_KERNEL);
+		gio_dev = kzalloc(माप *gio_dev, GFP_KERNEL);
 		gio_dev->name = name;
 		gio_dev->slotno = slotno;
 		gio_dev->id.id = id;
@@ -372,60 +373,60 @@ static void ip22_check_gio(int slotno, unsigned long addr, int irq)
 		gio_dev->resource.flags = IORESOURCE_MEM;
 		gio_dev->irq = irq;
 		dev_set_name(&gio_dev->dev, "%d", slotno);
-		gio_device_register(gio_dev);
-	} else
-		printk(KERN_INFO "GIO: slot %d : Empty\n", slotno);
-}
+		gio_device_रेजिस्टर(gio_dev);
+	पूर्ण अन्यथा
+		prपूर्णांकk(KERN_INFO "GIO: slot %d : Empty\n", slotno);
+पूर्ण
 
-static struct bus_type gio_bus_type = {
+अटल काष्ठा bus_type gio_bus_type = अणु
 	.name	   = "gio",
 	.dev_groups = gio_dev_groups,
 	.match	   = gio_bus_match,
 	.probe	   = gio_device_probe,
-	.remove	   = gio_device_remove,
-	.shutdown  = gio_device_shutdown,
+	.हटाओ	   = gio_device_हटाओ,
+	.shutकरोwn  = gio_device_shutकरोwn,
 	.uevent	   = gio_device_uevent,
-};
+पूर्ण;
 
-static struct resource gio_bus_resource = {
+अटल काष्ठा resource gio_bus_resource = अणु
 	.start = GIO_SLOT_GFX_BASE,
 	.end   = GIO_SLOT_GFX_BASE + 0x9fffff,
 	.name  = "GIO Bus",
 	.flags = IORESOURCE_MEM,
-};
+पूर्ण;
 
-int __init ip22_gio_init(void)
-{
-	unsigned int pbdma __maybe_unused;
-	int ret;
+पूर्णांक __init ip22_gio_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक pbdma __maybe_unused;
+	पूर्णांक ret;
 
-	ret = device_register(&gio_bus);
-	if (ret) {
+	ret = device_रेजिस्टर(&gio_bus);
+	अगर (ret) अणु
 		put_device(&gio_bus);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = bus_register(&gio_bus_type);
-	if (!ret) {
+	ret = bus_रेजिस्टर(&gio_bus_type);
+	अगर (!ret) अणु
 		request_resource(&iomem_resource, &gio_bus_resource);
-		printk(KERN_INFO "GIO: Probing bus...\n");
+		prपूर्णांकk(KERN_INFO "GIO: Probing bus...\n");
 
-		if (ip22_is_fullhouse()) {
+		अगर (ip22_is_fullhouse()) अणु
 			/* Indigo2 */
 			ip22_check_gio(0, GIO_SLOT_GFX_BASE, SGI_GIO_1_IRQ);
 			ip22_check_gio(1, GIO_SLOT_EXP0_BASE, SGI_GIO_1_IRQ);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Indy/Challenge S */
-			if (get_dbe(pbdma, (unsigned int *)&hpc3c1->pbdma[1]))
+			अगर (get_dbe(pbdma, (अचिन्हित पूर्णांक *)&hpc3c1->pbdma[1]))
 				ip22_check_gio(0, GIO_SLOT_GFX_BASE,
 					       SGI_GIO_0_IRQ);
 			ip22_check_gio(1, GIO_SLOT_EXP0_BASE, SGI_GIOEXP0_IRQ);
 			ip22_check_gio(2, GIO_SLOT_EXP1_BASE, SGI_GIOEXP1_IRQ);
-		}
-	} else
-		device_unregister(&gio_bus);
+		पूर्ण
+	पूर्ण अन्यथा
+		device_unरेजिस्टर(&gio_bus);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 subsys_initcall(ip22_gio_init);

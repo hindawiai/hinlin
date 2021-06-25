@@ -1,163 +1,164 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_TIME64_H
-#define _LINUX_TIME64_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_TIME64_H
+#घोषणा _LINUX_TIME64_H
 
-#include <linux/math64.h>
-#include <vdso/time64.h>
+#समावेश <linux/math64.h>
+#समावेश <vdso/समय64.h>
 
-typedef __s64 time64_t;
-typedef __u64 timeu64_t;
+प्रकार __s64 समय64_t;
+प्रकार __u64 समयu64_t;
 
-#include <uapi/linux/time.h>
+#समावेश <uapi/linux/समय.स>
 
-struct timespec64 {
-	time64_t	tv_sec;			/* seconds */
-	long		tv_nsec;		/* nanoseconds */
-};
+काष्ठा बारpec64 अणु
+	समय64_t	tv_sec;			/* seconds */
+	दीर्घ		tv_nsec;		/* nanoseconds */
+पूर्ण;
 
-struct itimerspec64 {
-	struct timespec64 it_interval;
-	struct timespec64 it_value;
-};
+काष्ठा iसमयrspec64 अणु
+	काष्ठा बारpec64 it_पूर्णांकerval;
+	काष्ठा बारpec64 it_value;
+पूर्ण;
 
-/* Located here for timespec[64]_valid_strict */
-#define TIME64_MAX			((s64)~((u64)1 << 63))
-#define TIME64_MIN			(-TIME64_MAX - 1)
+/* Located here क्रम बारpec[64]_valid_strict */
+#घोषणा TIME64_MAX			((s64)~((u64)1 << 63))
+#घोषणा TIME64_MIN			(-TIME64_MAX - 1)
 
-#define KTIME_MAX			((s64)~((u64)1 << 63))
-#define KTIME_SEC_MAX			(KTIME_MAX / NSEC_PER_SEC)
+#घोषणा KTIME_MAX			((s64)~((u64)1 << 63))
+#घोषणा KTIME_SEC_MAX			(KTIME_MAX / NSEC_PER_SEC)
 
 /*
- * Limits for settimeofday():
+ * Limits क्रम समय_रखोofday():
  *
- * To prevent setting the time close to the wraparound point time setting
- * is limited so a reasonable uptime can be accomodated. Uptime of 30 years
+ * To prevent setting the समय बंद to the wraparound poपूर्णांक समय setting
+ * is limited so a reasonable upसमय can be accomodated. Upसमय of 30 years
  * should be really sufficient, which means the cutoff is 2232. At that
- * point the cutoff is just a small part of the larger problem.
+ * poपूर्णांक the cutoff is just a small part of the larger problem.
  */
-#define TIME_UPTIME_SEC_MAX		(30LL * 365 * 24 *3600)
-#define TIME_SETTOD_SEC_MAX		(KTIME_SEC_MAX - TIME_UPTIME_SEC_MAX)
+#घोषणा TIME_UPTIME_SEC_MAX		(30LL * 365 * 24 *3600)
+#घोषणा TIME_SETTOD_SEC_MAX		(KTIME_SEC_MAX - TIME_UPTIME_SEC_MAX)
 
-static inline int timespec64_equal(const struct timespec64 *a,
-				   const struct timespec64 *b)
-{
-	return (a->tv_sec == b->tv_sec) && (a->tv_nsec == b->tv_nsec);
-}
+अटल अंतरभूत पूर्णांक बारpec64_equal(स्थिर काष्ठा बारpec64 *a,
+				   स्थिर काष्ठा बारpec64 *b)
+अणु
+	वापस (a->tv_sec == b->tv_sec) && (a->tv_nsec == b->tv_nsec);
+पूर्ण
 
 /*
- * lhs < rhs:  return <0
- * lhs == rhs: return 0
- * lhs > rhs:  return >0
+ * lhs < rhs:  वापस <0
+ * lhs == rhs: वापस 0
+ * lhs > rhs:  वापस >0
  */
-static inline int timespec64_compare(const struct timespec64 *lhs, const struct timespec64 *rhs)
-{
-	if (lhs->tv_sec < rhs->tv_sec)
-		return -1;
-	if (lhs->tv_sec > rhs->tv_sec)
-		return 1;
-	return lhs->tv_nsec - rhs->tv_nsec;
-}
+अटल अंतरभूत पूर्णांक बारpec64_compare(स्थिर काष्ठा बारpec64 *lhs, स्थिर काष्ठा बारpec64 *rhs)
+अणु
+	अगर (lhs->tv_sec < rhs->tv_sec)
+		वापस -1;
+	अगर (lhs->tv_sec > rhs->tv_sec)
+		वापस 1;
+	वापस lhs->tv_nsec - rhs->tv_nsec;
+पूर्ण
 
-extern void set_normalized_timespec64(struct timespec64 *ts, time64_t sec, s64 nsec);
+बाह्य व्योम set_normalized_बारpec64(काष्ठा बारpec64 *ts, समय64_t sec, s64 nsec);
 
-static inline struct timespec64 timespec64_add(struct timespec64 lhs,
-						struct timespec64 rhs)
-{
-	struct timespec64 ts_delta;
-	set_normalized_timespec64(&ts_delta, lhs.tv_sec + rhs.tv_sec,
+अटल अंतरभूत काष्ठा बारpec64 बारpec64_add(काष्ठा बारpec64 lhs,
+						काष्ठा बारpec64 rhs)
+अणु
+	काष्ठा बारpec64 ts_delta;
+	set_normalized_बारpec64(&ts_delta, lhs.tv_sec + rhs.tv_sec,
 				lhs.tv_nsec + rhs.tv_nsec);
-	return ts_delta;
-}
+	वापस ts_delta;
+पूर्ण
 
 /*
- * sub = lhs - rhs, in normalized form
+ * sub = lhs - rhs, in normalized क्रमm
  */
-static inline struct timespec64 timespec64_sub(struct timespec64 lhs,
-						struct timespec64 rhs)
-{
-	struct timespec64 ts_delta;
-	set_normalized_timespec64(&ts_delta, lhs.tv_sec - rhs.tv_sec,
+अटल अंतरभूत काष्ठा बारpec64 बारpec64_sub(काष्ठा बारpec64 lhs,
+						काष्ठा बारpec64 rhs)
+अणु
+	काष्ठा बारpec64 ts_delta;
+	set_normalized_बारpec64(&ts_delta, lhs.tv_sec - rhs.tv_sec,
 				lhs.tv_nsec - rhs.tv_nsec);
-	return ts_delta;
-}
+	वापस ts_delta;
+पूर्ण
 
 /*
- * Returns true if the timespec64 is norm, false if denorm:
+ * Returns true अगर the बारpec64 is norm, false अगर denorm:
  */
-static inline bool timespec64_valid(const struct timespec64 *ts)
-{
-	/* Dates before 1970 are bogus */
-	if (ts->tv_sec < 0)
-		return false;
+अटल अंतरभूत bool बारpec64_valid(स्थिर काष्ठा बारpec64 *ts)
+अणु
+	/* Dates beक्रमe 1970 are bogus */
+	अगर (ts->tv_sec < 0)
+		वापस false;
 	/* Can't have more nanoseconds then a second */
-	if ((unsigned long)ts->tv_nsec >= NSEC_PER_SEC)
-		return false;
-	return true;
-}
+	अगर ((अचिन्हित दीर्घ)ts->tv_nsec >= NSEC_PER_SEC)
+		वापस false;
+	वापस true;
+पूर्ण
 
-static inline bool timespec64_valid_strict(const struct timespec64 *ts)
-{
-	if (!timespec64_valid(ts))
-		return false;
-	/* Disallow values that could overflow ktime_t */
-	if ((unsigned long long)ts->tv_sec >= KTIME_SEC_MAX)
-		return false;
-	return true;
-}
+अटल अंतरभूत bool बारpec64_valid_strict(स्थिर काष्ठा बारpec64 *ts)
+अणु
+	अगर (!बारpec64_valid(ts))
+		वापस false;
+	/* Disallow values that could overflow kसमय_प्रकार */
+	अगर ((अचिन्हित दीर्घ दीर्घ)ts->tv_sec >= KTIME_SEC_MAX)
+		वापस false;
+	वापस true;
+पूर्ण
 
-static inline bool timespec64_valid_settod(const struct timespec64 *ts)
-{
-	if (!timespec64_valid(ts))
-		return false;
+अटल अंतरभूत bool बारpec64_valid_settod(स्थिर काष्ठा बारpec64 *ts)
+अणु
+	अगर (!बारpec64_valid(ts))
+		वापस false;
 	/* Disallow values which cause overflow issues vs. CLOCK_REALTIME */
-	if ((unsigned long long)ts->tv_sec >= TIME_SETTOD_SEC_MAX)
-		return false;
-	return true;
-}
+	अगर ((अचिन्हित दीर्घ दीर्घ)ts->tv_sec >= TIME_SETTOD_SEC_MAX)
+		वापस false;
+	वापस true;
+पूर्ण
 
 /**
- * timespec64_to_ns - Convert timespec64 to nanoseconds
- * @ts:		pointer to the timespec64 variable to be converted
+ * बारpec64_to_ns - Convert बारpec64 to nanoseconds
+ * @ts:		poपूर्णांकer to the बारpec64 variable to be converted
  *
- * Returns the scalar nanosecond representation of the timespec64
+ * Returns the scalar nanosecond representation of the बारpec64
  * parameter.
  */
-static inline s64 timespec64_to_ns(const struct timespec64 *ts)
-{
+अटल अंतरभूत s64 बारpec64_to_ns(स्थिर काष्ठा बारpec64 *ts)
+अणु
 	/* Prevent multiplication overflow */
-	if ((unsigned long long)ts->tv_sec >= KTIME_SEC_MAX)
-		return KTIME_MAX;
+	अगर ((अचिन्हित दीर्घ दीर्घ)ts->tv_sec >= KTIME_SEC_MAX)
+		वापस KTIME_MAX;
 
-	return ((s64) ts->tv_sec * NSEC_PER_SEC) + ts->tv_nsec;
-}
+	वापस ((s64) ts->tv_sec * NSEC_PER_SEC) + ts->tv_nsec;
+पूर्ण
 
 /**
- * ns_to_timespec64 - Convert nanoseconds to timespec64
+ * ns_to_बारpec64 - Convert nanoseconds to बारpec64
  * @nsec:	the nanoseconds value to be converted
  *
- * Returns the timespec64 representation of the nsec parameter.
+ * Returns the बारpec64 representation of the nsec parameter.
  */
-extern struct timespec64 ns_to_timespec64(const s64 nsec);
+बाह्य काष्ठा बारpec64 ns_to_बारpec64(स्थिर s64 nsec);
 
 /**
- * timespec64_add_ns - Adds nanoseconds to a timespec64
- * @a:		pointer to timespec64 to be incremented
- * @ns:		unsigned nanoseconds value to be added
+ * बारpec64_add_ns - Adds nanoseconds to a बारpec64
+ * @a:		poपूर्णांकer to बारpec64 to be incremented
+ * @ns:		अचिन्हित nanoseconds value to be added
  *
- * This must always be inlined because its used from the x86-64 vdso,
+ * This must always be अंतरभूतd because its used from the x86-64 vdso,
  * which cannot call other kernel functions.
  */
-static __always_inline void timespec64_add_ns(struct timespec64 *a, u64 ns)
-{
-	a->tv_sec += __iter_div_u64_rem(a->tv_nsec + ns, NSEC_PER_SEC, &ns);
+अटल __always_अंतरभूत व्योम बारpec64_add_ns(काष्ठा बारpec64 *a, u64 ns)
+अणु
+	a->tv_sec += __iter_भाग_u64_rem(a->tv_nsec + ns, NSEC_PER_SEC, &ns);
 	a->tv_nsec = ns;
-}
+पूर्ण
 
 /*
- * timespec64_add_safe assumes both values are positive and checks for
- * overflow. It will return TIME64_MAX in case of overflow.
+ * बारpec64_add_safe assumes both values are positive and checks क्रम
+ * overflow. It will वापस TIME64_MAX in हाल of overflow.
  */
-extern struct timespec64 timespec64_add_safe(const struct timespec64 lhs,
-					 const struct timespec64 rhs);
+बाह्य काष्ठा बारpec64 बारpec64_add_safe(स्थिर काष्ठा बारpec64 lhs,
+					 स्थिर काष्ठा बारpec64 rhs);
 
-#endif /* _LINUX_TIME64_H */
+#पूर्ण_अगर /* _LINUX_TIME64_H */

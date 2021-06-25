@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2017 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#ifndef __XFS_SCRUB_DABTREE_H__
-#define __XFS_SCRUB_DABTREE_H__
+#अगर_अघोषित __XFS_SCRUB_DABTREE_H__
+#घोषणा __XFS_SCRUB_DABTREE_H__
 
 /* dir/attr btree */
 
-struct xchk_da_btree {
-	struct xfs_da_args	dargs;
+काष्ठा xchk_da_btree अणु
+	काष्ठा xfs_da_args	dargs;
 	xfs_dahash_t		hashes[XFS_DA_NODE_MAXDEPTH];
-	int			maxrecs[XFS_DA_NODE_MAXDEPTH];
-	struct xfs_da_state	*state;
-	struct xfs_scrub	*sc;
-	void			*private;
+	पूर्णांक			maxrecs[XFS_DA_NODE_MAXDEPTH];
+	काष्ठा xfs_da_state	*state;
+	काष्ठा xfs_scrub	*sc;
+	व्योम			*निजी;
 
 	/*
 	 * Lowest and highest directory block address in which we expect
 	 * to find dir/attr btree node blocks.  For a directory this
-	 * (presumably) means between LEAF_OFFSET and FREE_OFFSET; for
+	 * (presumably) means between LEAF_OFFSET and FREE_OFFSET; क्रम
 	 * attributes there is no limit.
 	 */
 	xfs_dablk_t		lowest;
 	xfs_dablk_t		highest;
 
-	int			tree_level;
-};
+	पूर्णांक			tree_level;
+पूर्ण;
 
-typedef int (*xchk_da_btree_rec_fn)(struct xchk_da_btree *ds, int level);
+प्रकार पूर्णांक (*xchk_da_btree_rec_fn)(काष्ठा xchk_da_btree *ds, पूर्णांक level);
 
-/* Check for da btree operation errors. */
-bool xchk_da_process_error(struct xchk_da_btree *ds, int level, int *error);
+/* Check क्रम da btree operation errors. */
+bool xchk_da_process_error(काष्ठा xchk_da_btree *ds, पूर्णांक level, पूर्णांक *error);
 
-/* Check for da btree corruption. */
-void xchk_da_set_corrupt(struct xchk_da_btree *ds, int level);
+/* Check क्रम da btree corruption. */
+व्योम xchk_da_set_corrupt(काष्ठा xchk_da_btree *ds, पूर्णांक level);
 
-int xchk_da_btree_hash(struct xchk_da_btree *ds, int level, __be32 *hashp);
-int xchk_da_btree(struct xfs_scrub *sc, int whichfork,
-		xchk_da_btree_rec_fn scrub_fn, void *private);
+पूर्णांक xchk_da_btree_hash(काष्ठा xchk_da_btree *ds, पूर्णांक level, __be32 *hashp);
+पूर्णांक xchk_da_btree(काष्ठा xfs_scrub *sc, पूर्णांक whichविभाजन,
+		xchk_da_btree_rec_fn scrub_fn, व्योम *निजी);
 
-#endif /* __XFS_SCRUB_DABTREE_H__ */
+#पूर्ण_अगर /* __XFS_SCRUB_DABTREE_H__ */

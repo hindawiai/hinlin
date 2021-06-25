@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * DA9150 Fuel-Gauge Driver
  *
@@ -7,454 +8,454 @@
  * Author: Adam Thomson <Adam.Thomson.Opensource@diasemi.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/power_supply.h>
-#include <linux/list.h>
-#include <asm/div64.h>
-#include <linux/mfd/da9150/core.h>
-#include <linux/mfd/da9150/registers.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/list.h>
+#समावेश <यंत्र/भाग64.h>
+#समावेश <linux/mfd/da9150/core.h>
+#समावेश <linux/mfd/da9150/रेजिस्टरs.h>
 
 /* Core2Wire */
-#define DA9150_QIF_READ		(0x0 << 7)
-#define DA9150_QIF_WRITE	(0x1 << 7)
-#define DA9150_QIF_CODE_MASK	0x7F
+#घोषणा DA9150_QIF_READ		(0x0 << 7)
+#घोषणा DA9150_QIF_WRITE	(0x1 << 7)
+#घोषणा DA9150_QIF_CODE_MASK	0x7F
 
-#define DA9150_QIF_BYTE_SIZE	8
-#define DA9150_QIF_BYTE_MASK	0xFF
-#define DA9150_QIF_SHORT_SIZE	2
-#define DA9150_QIF_LONG_SIZE	4
+#घोषणा DA9150_QIF_BYTE_SIZE	8
+#घोषणा DA9150_QIF_BYTE_MASK	0xFF
+#घोषणा DA9150_QIF_SHORT_SIZE	2
+#घोषणा DA9150_QIF_LONG_SIZE	4
 
 /* QIF Codes */
-#define DA9150_QIF_UAVG			6
-#define DA9150_QIF_UAVG_SIZE		DA9150_QIF_LONG_SIZE
-#define DA9150_QIF_IAVG			8
-#define DA9150_QIF_IAVG_SIZE		DA9150_QIF_LONG_SIZE
-#define DA9150_QIF_NTCAVG		12
-#define DA9150_QIF_NTCAVG_SIZE		DA9150_QIF_LONG_SIZE
-#define DA9150_QIF_SHUNT_VAL		36
-#define DA9150_QIF_SHUNT_VAL_SIZE	DA9150_QIF_SHORT_SIZE
-#define DA9150_QIF_SD_GAIN		38
-#define DA9150_QIF_SD_GAIN_SIZE		DA9150_QIF_LONG_SIZE
-#define DA9150_QIF_FCC_MAH		40
-#define DA9150_QIF_FCC_MAH_SIZE		DA9150_QIF_SHORT_SIZE
-#define DA9150_QIF_SOC_PCT		43
-#define DA9150_QIF_SOC_PCT_SIZE		DA9150_QIF_SHORT_SIZE
-#define DA9150_QIF_CHARGE_LIMIT		44
-#define DA9150_QIF_CHARGE_LIMIT_SIZE	DA9150_QIF_SHORT_SIZE
-#define DA9150_QIF_DISCHARGE_LIMIT	45
-#define DA9150_QIF_DISCHARGE_LIMIT_SIZE	DA9150_QIF_SHORT_SIZE
-#define DA9150_QIF_FW_MAIN_VER		118
-#define DA9150_QIF_FW_MAIN_VER_SIZE	DA9150_QIF_SHORT_SIZE
-#define DA9150_QIF_E_FG_STATUS		126
-#define DA9150_QIF_E_FG_STATUS_SIZE	DA9150_QIF_SHORT_SIZE
-#define DA9150_QIF_SYNC			127
-#define DA9150_QIF_SYNC_SIZE		DA9150_QIF_SHORT_SIZE
-#define DA9150_QIF_MAX_CODES		128
+#घोषणा DA9150_QIF_UAVG			6
+#घोषणा DA9150_QIF_UAVG_SIZE		DA9150_QIF_LONG_SIZE
+#घोषणा DA9150_QIF_IAVG			8
+#घोषणा DA9150_QIF_IAVG_SIZE		DA9150_QIF_LONG_SIZE
+#घोषणा DA9150_QIF_NTCAVG		12
+#घोषणा DA9150_QIF_NTCAVG_SIZE		DA9150_QIF_LONG_SIZE
+#घोषणा DA9150_QIF_SHUNT_VAL		36
+#घोषणा DA9150_QIF_SHUNT_VAL_SIZE	DA9150_QIF_SHORT_SIZE
+#घोषणा DA9150_QIF_SD_GAIN		38
+#घोषणा DA9150_QIF_SD_GAIN_SIZE		DA9150_QIF_LONG_SIZE
+#घोषणा DA9150_QIF_FCC_MAH		40
+#घोषणा DA9150_QIF_FCC_MAH_SIZE		DA9150_QIF_SHORT_SIZE
+#घोषणा DA9150_QIF_SOC_PCT		43
+#घोषणा DA9150_QIF_SOC_PCT_SIZE		DA9150_QIF_SHORT_SIZE
+#घोषणा DA9150_QIF_CHARGE_LIMIT		44
+#घोषणा DA9150_QIF_CHARGE_LIMIT_SIZE	DA9150_QIF_SHORT_SIZE
+#घोषणा DA9150_QIF_DISCHARGE_LIMIT	45
+#घोषणा DA9150_QIF_DISCHARGE_LIMIT_SIZE	DA9150_QIF_SHORT_SIZE
+#घोषणा DA9150_QIF_FW_MAIN_VER		118
+#घोषणा DA9150_QIF_FW_MAIN_VER_SIZE	DA9150_QIF_SHORT_SIZE
+#घोषणा DA9150_QIF_E_FG_STATUS		126
+#घोषणा DA9150_QIF_E_FG_STATUS_SIZE	DA9150_QIF_SHORT_SIZE
+#घोषणा DA9150_QIF_SYNC			127
+#घोषणा DA9150_QIF_SYNC_SIZE		DA9150_QIF_SHORT_SIZE
+#घोषणा DA9150_QIF_MAX_CODES		128
 
 /* QIF Sync Timeout */
-#define DA9150_QIF_SYNC_TIMEOUT		1000
-#define DA9150_QIF_SYNC_RETRIES		10
+#घोषणा DA9150_QIF_SYNC_TIMEOUT		1000
+#घोषणा DA9150_QIF_SYNC_RETRIES		10
 
 /* QIF E_FG_STATUS */
-#define DA9150_FG_IRQ_LOW_SOC_MASK	(1 << 0)
-#define DA9150_FG_IRQ_HIGH_SOC_MASK	(1 << 1)
-#define DA9150_FG_IRQ_SOC_MASK	\
+#घोषणा DA9150_FG_IRQ_LOW_SOC_MASK	(1 << 0)
+#घोषणा DA9150_FG_IRQ_HIGH_SOC_MASK	(1 << 1)
+#घोषणा DA9150_FG_IRQ_SOC_MASK	\
 	(DA9150_FG_IRQ_LOW_SOC_MASK | DA9150_FG_IRQ_HIGH_SOC_MASK)
 
 /* Private data */
-struct da9150_fg {
-	struct da9150 *da9150;
-	struct device *dev;
+काष्ठा da9150_fg अणु
+	काष्ठा da9150 *da9150;
+	काष्ठा device *dev;
 
-	struct mutex io_lock;
+	काष्ठा mutex io_lock;
 
-	struct power_supply *battery;
-	struct delayed_work work;
-	u32 interval;
+	काष्ठा घातer_supply *battery;
+	काष्ठा delayed_work work;
+	u32 पूर्णांकerval;
 
-	int warn_soc;
-	int crit_soc;
-	int soc;
-};
+	पूर्णांक warn_soc;
+	पूर्णांक crit_soc;
+	पूर्णांक soc;
+पूर्ण;
 
 /* Battery Properties */
-static u32 da9150_fg_read_attr(struct da9150_fg *fg, u8 code, u8 size)
+अटल u32 da9150_fg_पढ़ो_attr(काष्ठा da9150_fg *fg, u8 code, u8 size)
 
-{
+अणु
 	u8 buf[DA9150_QIF_LONG_SIZE];
-	u8 read_addr;
+	u8 पढ़ो_addr;
 	u32 res = 0;
-	int i;
+	पूर्णांक i;
 
 	/* Set QIF code (READ mode) */
-	read_addr = (code & DA9150_QIF_CODE_MASK) | DA9150_QIF_READ;
+	पढ़ो_addr = (code & DA9150_QIF_CODE_MASK) | DA9150_QIF_READ;
 
-	da9150_read_qif(fg->da9150, read_addr, size, buf);
-	for (i = 0; i < size; ++i)
+	da9150_पढ़ो_qअगर(fg->da9150, पढ़ो_addr, size, buf);
+	क्रम (i = 0; i < size; ++i)
 		res |= (buf[i] << (i * DA9150_QIF_BYTE_SIZE));
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void da9150_fg_write_attr(struct da9150_fg *fg, u8 code, u8 size,
+अटल व्योम da9150_fg_ग_लिखो_attr(काष्ठा da9150_fg *fg, u8 code, u8 size,
 				 u32 val)
 
-{
+अणु
 	u8 buf[DA9150_QIF_LONG_SIZE];
-	u8 write_addr;
-	int i;
+	u8 ग_लिखो_addr;
+	पूर्णांक i;
 
 	/* Set QIF code (WRITE mode) */
-	write_addr = (code & DA9150_QIF_CODE_MASK) | DA9150_QIF_WRITE;
+	ग_लिखो_addr = (code & DA9150_QIF_CODE_MASK) | DA9150_QIF_WRITE;
 
-	for (i = 0; i < size; ++i) {
+	क्रम (i = 0; i < size; ++i) अणु
 		buf[i] = (val >> (i * DA9150_QIF_BYTE_SIZE)) &
 			 DA9150_QIF_BYTE_MASK;
-	}
-	da9150_write_qif(fg->da9150, write_addr, size, buf);
-}
+	पूर्ण
+	da9150_ग_लिखो_qअगर(fg->da9150, ग_लिखो_addr, size, buf);
+पूर्ण
 
-/* Trigger QIF Sync to update QIF readable data */
-static void da9150_fg_read_sync_start(struct da9150_fg *fg)
-{
-	int i = 0;
+/* Trigger QIF Sync to update QIF पढ़ोable data */
+अटल व्योम da9150_fg_पढ़ो_sync_start(काष्ठा da9150_fg *fg)
+अणु
+	पूर्णांक i = 0;
 	u32 res = 0;
 
 	mutex_lock(&fg->io_lock);
 
-	/* Check if QIF sync already requested, and write to sync if not */
-	res = da9150_fg_read_attr(fg, DA9150_QIF_SYNC,
+	/* Check अगर QIF sync alपढ़ोy requested, and ग_लिखो to sync अगर not */
+	res = da9150_fg_पढ़ो_attr(fg, DA9150_QIF_SYNC,
 				  DA9150_QIF_SYNC_SIZE);
-	if (res > 0)
-		da9150_fg_write_attr(fg, DA9150_QIF_SYNC,
+	अगर (res > 0)
+		da9150_fg_ग_लिखो_attr(fg, DA9150_QIF_SYNC,
 				     DA9150_QIF_SYNC_SIZE, 0);
 
-	/* Wait for sync to complete */
+	/* Wait क्रम sync to complete */
 	res = 0;
-	while ((res == 0) && (i++ < DA9150_QIF_SYNC_RETRIES)) {
+	जबतक ((res == 0) && (i++ < DA9150_QIF_SYNC_RETRIES)) अणु
 		usleep_range(DA9150_QIF_SYNC_TIMEOUT,
 			     DA9150_QIF_SYNC_TIMEOUT * 2);
-		res = da9150_fg_read_attr(fg, DA9150_QIF_SYNC,
+		res = da9150_fg_पढ़ो_attr(fg, DA9150_QIF_SYNC,
 					  DA9150_QIF_SYNC_SIZE);
-	}
+	पूर्ण
 
-	/* Check if sync completed */
-	if (res == 0)
+	/* Check अगर sync completed */
+	अगर (res == 0)
 		dev_err(fg->dev, "Failed to perform QIF read sync!\n");
-}
+पूर्ण
 
 /*
- * Should always be called after QIF sync read has been performed, and all
+ * Should always be called after QIF sync पढ़ो has been perक्रमmed, and all
  * attributes required have been accessed.
  */
-static inline void da9150_fg_read_sync_end(struct da9150_fg *fg)
-{
+अटल अंतरभूत व्योम da9150_fg_पढ़ो_sync_end(काष्ठा da9150_fg *fg)
+अणु
 	mutex_unlock(&fg->io_lock);
-}
+पूर्ण
 
-/* Sync read of single QIF attribute */
-static u32 da9150_fg_read_attr_sync(struct da9150_fg *fg, u8 code, u8 size)
-{
+/* Sync पढ़ो of single QIF attribute */
+अटल u32 da9150_fg_पढ़ो_attr_sync(काष्ठा da9150_fg *fg, u8 code, u8 size)
+अणु
 	u32 val;
 
-	da9150_fg_read_sync_start(fg);
-	val = da9150_fg_read_attr(fg, code, size);
-	da9150_fg_read_sync_end(fg);
+	da9150_fg_पढ़ो_sync_start(fg);
+	val = da9150_fg_पढ़ो_attr(fg, code, size);
+	da9150_fg_पढ़ो_sync_end(fg);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-/* Wait for QIF Sync, write QIF data and wait for ack */
-static void da9150_fg_write_attr_sync(struct da9150_fg *fg, u8 code, u8 size,
+/* Wait क्रम QIF Sync, ग_लिखो QIF data and रुको क्रम ack */
+अटल व्योम da9150_fg_ग_लिखो_attr_sync(काष्ठा da9150_fg *fg, u8 code, u8 size,
 				      u32 val)
-{
-	int i = 0;
+अणु
+	पूर्णांक i = 0;
 	u32 res = 0, sync_val;
 
 	mutex_lock(&fg->io_lock);
 
-	/* Check if QIF sync already requested */
-	res = da9150_fg_read_attr(fg, DA9150_QIF_SYNC,
+	/* Check अगर QIF sync alपढ़ोy requested */
+	res = da9150_fg_पढ़ो_attr(fg, DA9150_QIF_SYNC,
 				  DA9150_QIF_SYNC_SIZE);
 
-	/* Wait for an existing sync to complete */
-	while ((res == 0) && (i++ < DA9150_QIF_SYNC_RETRIES)) {
+	/* Wait क्रम an existing sync to complete */
+	जबतक ((res == 0) && (i++ < DA9150_QIF_SYNC_RETRIES)) अणु
 		usleep_range(DA9150_QIF_SYNC_TIMEOUT,
 			     DA9150_QIF_SYNC_TIMEOUT * 2);
-		res = da9150_fg_read_attr(fg, DA9150_QIF_SYNC,
+		res = da9150_fg_पढ़ो_attr(fg, DA9150_QIF_SYNC,
 					  DA9150_QIF_SYNC_SIZE);
-	}
+	पूर्ण
 
-	if (res == 0) {
+	अगर (res == 0) अणु
 		dev_err(fg->dev, "Timeout waiting for existing QIF sync!\n");
 		mutex_unlock(&fg->io_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Write value for QIF code */
-	da9150_fg_write_attr(fg, code, size, val);
+	/* Write value क्रम QIF code */
+	da9150_fg_ग_लिखो_attr(fg, code, size, val);
 
-	/* Wait for write acknowledgment */
+	/* Wait क्रम ग_लिखो acknowledgment */
 	i = 0;
 	sync_val = res;
-	while ((res == sync_val) && (i++ < DA9150_QIF_SYNC_RETRIES)) {
+	जबतक ((res == sync_val) && (i++ < DA9150_QIF_SYNC_RETRIES)) अणु
 		usleep_range(DA9150_QIF_SYNC_TIMEOUT,
 			     DA9150_QIF_SYNC_TIMEOUT * 2);
-		res = da9150_fg_read_attr(fg, DA9150_QIF_SYNC,
+		res = da9150_fg_पढ़ो_attr(fg, DA9150_QIF_SYNC,
 					  DA9150_QIF_SYNC_SIZE);
-	}
+	पूर्ण
 
 	mutex_unlock(&fg->io_lock);
 
-	/* Check write was actually successful */
-	if (res != (sync_val + 1))
+	/* Check ग_लिखो was actually successful */
+	अगर (res != (sync_val + 1))
 		dev_err(fg->dev, "Error performing QIF sync write for code %d\n",
 			code);
-}
+पूर्ण
 
 /* Power Supply attributes */
-static int da9150_fg_capacity(struct da9150_fg *fg,
-			      union power_supply_propval *val)
-{
-	val->intval = da9150_fg_read_attr_sync(fg, DA9150_QIF_SOC_PCT,
+अटल पूर्णांक da9150_fg_capacity(काष्ठा da9150_fg *fg,
+			      जोड़ घातer_supply_propval *val)
+अणु
+	val->पूर्णांकval = da9150_fg_पढ़ो_attr_sync(fg, DA9150_QIF_SOC_PCT,
 					       DA9150_QIF_SOC_PCT_SIZE);
 
-	if (val->intval > 100)
-		val->intval = 100;
+	अगर (val->पूर्णांकval > 100)
+		val->पूर्णांकval = 100;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9150_fg_current_avg(struct da9150_fg *fg,
-				 union power_supply_propval *val)
-{
+अटल पूर्णांक da9150_fg_current_avg(काष्ठा da9150_fg *fg,
+				 जोड़ घातer_supply_propval *val)
+अणु
 	u32 iavg, sd_gain, shunt_val;
-	u64 div, res;
+	u64 भाग, res;
 
-	da9150_fg_read_sync_start(fg);
-	iavg = da9150_fg_read_attr(fg, DA9150_QIF_IAVG,
+	da9150_fg_पढ़ो_sync_start(fg);
+	iavg = da9150_fg_पढ़ो_attr(fg, DA9150_QIF_IAVG,
 				   DA9150_QIF_IAVG_SIZE);
-	shunt_val = da9150_fg_read_attr(fg, DA9150_QIF_SHUNT_VAL,
+	shunt_val = da9150_fg_पढ़ो_attr(fg, DA9150_QIF_SHUNT_VAL,
 					DA9150_QIF_SHUNT_VAL_SIZE);
-	sd_gain = da9150_fg_read_attr(fg, DA9150_QIF_SD_GAIN,
+	sd_gain = da9150_fg_पढ़ो_attr(fg, DA9150_QIF_SD_GAIN,
 				      DA9150_QIF_SD_GAIN_SIZE);
-	da9150_fg_read_sync_end(fg);
+	da9150_fg_पढ़ो_sync_end(fg);
 
-	div = (u64) (sd_gain * shunt_val * 65536ULL);
-	do_div(div, 1000000);
+	भाग = (u64) (sd_gain * shunt_val * 65536ULL);
+	करो_भाग(भाग, 1000000);
 	res = (u64) (iavg * 1000000ULL);
-	do_div(res, div);
+	करो_भाग(res, भाग);
 
-	val->intval = (int) res;
+	val->पूर्णांकval = (पूर्णांक) res;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9150_fg_voltage_avg(struct da9150_fg *fg,
-				 union power_supply_propval *val)
-{
+अटल पूर्णांक da9150_fg_voltage_avg(काष्ठा da9150_fg *fg,
+				 जोड़ घातer_supply_propval *val)
+अणु
 	u64 res;
 
-	val->intval = da9150_fg_read_attr_sync(fg, DA9150_QIF_UAVG,
+	val->पूर्णांकval = da9150_fg_पढ़ो_attr_sync(fg, DA9150_QIF_UAVG,
 					       DA9150_QIF_UAVG_SIZE);
 
-	res = (u64) (val->intval * 186ULL);
-	do_div(res, 10000);
-	val->intval = (int) res;
+	res = (u64) (val->पूर्णांकval * 186ULL);
+	करो_भाग(res, 10000);
+	val->पूर्णांकval = (पूर्णांक) res;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9150_fg_charge_full(struct da9150_fg *fg,
-				 union power_supply_propval *val)
-{
-	val->intval = da9150_fg_read_attr_sync(fg, DA9150_QIF_FCC_MAH,
+अटल पूर्णांक da9150_fg_अक्षरge_full(काष्ठा da9150_fg *fg,
+				 जोड़ घातer_supply_propval *val)
+अणु
+	val->पूर्णांकval = da9150_fg_पढ़ो_attr_sync(fg, DA9150_QIF_FCC_MAH,
 					       DA9150_QIF_FCC_MAH_SIZE);
 
-	val->intval = val->intval * 1000;
+	val->पूर्णांकval = val->पूर्णांकval * 1000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Temperature reading from device is only valid if battery/system provides
+ * Temperature पढ़ोing from device is only valid अगर battery/प्रणाली provides
  * valid NTC to associated pin of DA9150 chip.
  */
-static int da9150_fg_temp(struct da9150_fg *fg,
-			  union power_supply_propval *val)
-{
-	val->intval = da9150_fg_read_attr_sync(fg, DA9150_QIF_NTCAVG,
+अटल पूर्णांक da9150_fg_temp(काष्ठा da9150_fg *fg,
+			  जोड़ घातer_supply_propval *val)
+अणु
+	val->पूर्णांकval = da9150_fg_पढ़ो_attr_sync(fg, DA9150_QIF_NTCAVG,
 					       DA9150_QIF_NTCAVG_SIZE);
 
-	val->intval = (val->intval * 10) / 1048576;
+	val->पूर्णांकval = (val->पूर्णांकval * 10) / 1048576;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum power_supply_property da9150_fg_props[] = {
+अटल क्रमागत घातer_supply_property da9150_fg_props[] = अणु
 	POWER_SUPPLY_PROP_CAPACITY,
 	POWER_SUPPLY_PROP_CURRENT_AVG,
 	POWER_SUPPLY_PROP_VOLTAGE_AVG,
 	POWER_SUPPLY_PROP_CHARGE_FULL,
 	POWER_SUPPLY_PROP_TEMP,
-};
+पूर्ण;
 
-static int da9150_fg_get_prop(struct power_supply *psy,
-			      enum power_supply_property psp,
-			      union power_supply_propval *val)
-{
-	struct da9150_fg *fg = dev_get_drvdata(psy->dev.parent);
-	int ret;
+अटल पूर्णांक da9150_fg_get_prop(काष्ठा घातer_supply *psy,
+			      क्रमागत घातer_supply_property psp,
+			      जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा da9150_fg *fg = dev_get_drvdata(psy->dev.parent);
+	पूर्णांक ret;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_CAPACITY:
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_CAPACITY:
 		ret = da9150_fg_capacity(fg, val);
-		break;
-	case POWER_SUPPLY_PROP_CURRENT_AVG:
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CURRENT_AVG:
 		ret = da9150_fg_current_avg(fg, val);
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_AVG:
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_AVG:
 		ret = da9150_fg_voltage_avg(fg, val);
-		break;
-	case POWER_SUPPLY_PROP_CHARGE_FULL:
-		ret = da9150_fg_charge_full(fg, val);
-		break;
-	case POWER_SUPPLY_PROP_TEMP:
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CHARGE_FULL:
+		ret = da9150_fg_अक्षरge_full(fg, val);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TEMP:
 		ret = da9150_fg_temp(fg, val);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Repeated SOC check */
-static bool da9150_fg_soc_changed(struct da9150_fg *fg)
-{
-	union power_supply_propval val;
+अटल bool da9150_fg_soc_changed(काष्ठा da9150_fg *fg)
+अणु
+	जोड़ घातer_supply_propval val;
 
 	da9150_fg_capacity(fg, &val);
-	if (val.intval != fg->soc) {
-		fg->soc = val.intval;
-		return true;
-	}
+	अगर (val.पूर्णांकval != fg->soc) अणु
+		fg->soc = val.पूर्णांकval;
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void da9150_fg_work(struct work_struct *work)
-{
-	struct da9150_fg *fg = container_of(work, struct da9150_fg, work.work);
+अटल व्योम da9150_fg_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा da9150_fg *fg = container_of(work, काष्ठा da9150_fg, work.work);
 
-	/* Report if SOC has changed */
-	if (da9150_fg_soc_changed(fg))
-		power_supply_changed(fg->battery);
+	/* Report अगर SOC has changed */
+	अगर (da9150_fg_soc_changed(fg))
+		घातer_supply_changed(fg->battery);
 
-	schedule_delayed_work(&fg->work, msecs_to_jiffies(fg->interval));
-}
+	schedule_delayed_work(&fg->work, msecs_to_jअगरfies(fg->पूर्णांकerval));
+पूर्ण
 
 /* SOC level event configuration */
-static void da9150_fg_soc_event_config(struct da9150_fg *fg)
-{
-	int soc;
+अटल व्योम da9150_fg_soc_event_config(काष्ठा da9150_fg *fg)
+अणु
+	पूर्णांक soc;
 
-	soc = da9150_fg_read_attr_sync(fg, DA9150_QIF_SOC_PCT,
+	soc = da9150_fg_पढ़ो_attr_sync(fg, DA9150_QIF_SOC_PCT,
 				       DA9150_QIF_SOC_PCT_SIZE);
 
-	if (soc > fg->warn_soc) {
-		/* If SOC > warn level, set discharge warn level event */
-		da9150_fg_write_attr_sync(fg, DA9150_QIF_DISCHARGE_LIMIT,
+	अगर (soc > fg->warn_soc) अणु
+		/* If SOC > warn level, set disअक्षरge warn level event */
+		da9150_fg_ग_लिखो_attr_sync(fg, DA9150_QIF_DISCHARGE_LIMIT,
 					  DA9150_QIF_DISCHARGE_LIMIT_SIZE,
 					  fg->warn_soc + 1);
-	} else if ((soc <= fg->warn_soc) && (soc > fg->crit_soc)) {
+	पूर्ण अन्यथा अगर ((soc <= fg->warn_soc) && (soc > fg->crit_soc)) अणु
 		/*
-		 * If SOC <= warn level, set discharge crit level event,
-		 * and set charge warn level event.
+		 * If SOC <= warn level, set disअक्षरge crit level event,
+		 * and set अक्षरge warn level event.
 		 */
-		da9150_fg_write_attr_sync(fg, DA9150_QIF_DISCHARGE_LIMIT,
+		da9150_fg_ग_लिखो_attr_sync(fg, DA9150_QIF_DISCHARGE_LIMIT,
 					  DA9150_QIF_DISCHARGE_LIMIT_SIZE,
 					  fg->crit_soc + 1);
 
-		da9150_fg_write_attr_sync(fg, DA9150_QIF_CHARGE_LIMIT,
+		da9150_fg_ग_लिखो_attr_sync(fg, DA9150_QIF_CHARGE_LIMIT,
 					  DA9150_QIF_CHARGE_LIMIT_SIZE,
 					  fg->warn_soc);
-	} else if (soc <= fg->crit_soc) {
-		/* If SOC <= crit level, set charge crit level event */
-		da9150_fg_write_attr_sync(fg, DA9150_QIF_CHARGE_LIMIT,
+	पूर्ण अन्यथा अगर (soc <= fg->crit_soc) अणु
+		/* If SOC <= crit level, set अक्षरge crit level event */
+		da9150_fg_ग_लिखो_attr_sync(fg, DA9150_QIF_CHARGE_LIMIT,
 					  DA9150_QIF_CHARGE_LIMIT_SIZE,
 					  fg->crit_soc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t da9150_fg_irq(int irq, void *data)
-{
-	struct da9150_fg *fg = data;
+अटल irqवापस_t da9150_fg_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा da9150_fg *fg = data;
 	u32 e_fg_status;
 
 	/* Read FG IRQ status info */
-	e_fg_status = da9150_fg_read_attr(fg, DA9150_QIF_E_FG_STATUS,
+	e_fg_status = da9150_fg_पढ़ो_attr(fg, DA9150_QIF_E_FG_STATUS,
 					  DA9150_QIF_E_FG_STATUS_SIZE);
 
 	/* Handle warning/critical threhold events */
-	if (e_fg_status & DA9150_FG_IRQ_SOC_MASK)
+	अगर (e_fg_status & DA9150_FG_IRQ_SOC_MASK)
 		da9150_fg_soc_event_config(fg);
 
 	/* Clear any FG IRQs */
-	da9150_fg_write_attr(fg, DA9150_QIF_E_FG_STATUS,
+	da9150_fg_ग_लिखो_attr(fg, DA9150_QIF_E_FG_STATUS,
 			     DA9150_QIF_E_FG_STATUS_SIZE, e_fg_status);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct da9150_fg_pdata *da9150_fg_dt_pdata(struct device *dev)
-{
-	struct device_node *fg_node = dev->of_node;
-	struct da9150_fg_pdata *pdata;
+अटल काष्ठा da9150_fg_pdata *da9150_fg_dt_pdata(काष्ठा device *dev)
+अणु
+	काष्ठा device_node *fg_node = dev->of_node;
+	काष्ठा da9150_fg_pdata *pdata;
 
-	pdata = devm_kzalloc(dev, sizeof(struct da9150_fg_pdata), GFP_KERNEL);
-	if (!pdata)
-		return NULL;
+	pdata = devm_kzalloc(dev, माप(काष्ठा da9150_fg_pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस शून्य;
 
-	of_property_read_u32(fg_node, "dlg,update-interval",
-			     &pdata->update_interval);
-	of_property_read_u8(fg_node, "dlg,warn-soc-level",
+	of_property_पढ़ो_u32(fg_node, "dlg,update-interval",
+			     &pdata->update_पूर्णांकerval);
+	of_property_पढ़ो_u8(fg_node, "dlg,warn-soc-level",
 			    &pdata->warn_soc_lvl);
-	of_property_read_u8(fg_node, "dlg,crit-soc-level",
+	of_property_पढ़ो_u8(fg_node, "dlg,crit-soc-level",
 			    &pdata->crit_soc_lvl);
 
-	return pdata;
-}
+	वापस pdata;
+पूर्ण
 
-static const struct power_supply_desc fg_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc fg_desc = अणु
 	.name		= "da9150-fg",
 	.type		= POWER_SUPPLY_TYPE_BATTERY,
 	.properties	= da9150_fg_props,
 	.num_properties	= ARRAY_SIZE(da9150_fg_props),
 	.get_property	= da9150_fg_get_prop,
-};
+पूर्ण;
 
-static int da9150_fg_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct da9150 *da9150 = dev_get_drvdata(dev->parent);
-	struct da9150_fg_pdata *fg_pdata = dev_get_platdata(dev);
-	struct da9150_fg *fg;
-	int ver, irq, ret = 0;
+अटल पूर्णांक da9150_fg_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा da9150 *da9150 = dev_get_drvdata(dev->parent);
+	काष्ठा da9150_fg_pdata *fg_pdata = dev_get_platdata(dev);
+	काष्ठा da9150_fg *fg;
+	पूर्णांक ver, irq, ret = 0;
 
-	fg = devm_kzalloc(dev, sizeof(*fg), GFP_KERNEL);
-	if (fg == NULL)
-		return -ENOMEM;
+	fg = devm_kzalloc(dev, माप(*fg), GFP_KERNEL);
+	अगर (fg == शून्य)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, fg);
+	platक्रमm_set_drvdata(pdev, fg);
 	fg->da9150 = da9150;
 	fg->dev = dev;
 
@@ -464,111 +465,111 @@ static int da9150_fg_probe(struct platform_device *pdev)
 	da9150_set_bits(da9150, DA9150_CORE2WIRE_CTRL_A, DA9150_FG_QIF_EN_MASK,
 			DA9150_FG_QIF_EN_MASK);
 
-	fg->battery = devm_power_supply_register(dev, &fg_desc, NULL);
-	if (IS_ERR(fg->battery)) {
+	fg->battery = devm_घातer_supply_रेजिस्टर(dev, &fg_desc, शून्य);
+	अगर (IS_ERR(fg->battery)) अणु
 		ret = PTR_ERR(fg->battery);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ver = da9150_fg_read_attr(fg, DA9150_QIF_FW_MAIN_VER,
+	ver = da9150_fg_पढ़ो_attr(fg, DA9150_QIF_FW_MAIN_VER,
 				  DA9150_QIF_FW_MAIN_VER_SIZE);
 	dev_info(dev, "Version: 0x%x\n", ver);
 
-	/* Handle DT data if provided */
-	if (dev->of_node) {
+	/* Handle DT data अगर provided */
+	अगर (dev->of_node) अणु
 		fg_pdata = da9150_fg_dt_pdata(dev);
-		dev->platform_data = fg_pdata;
-	}
+		dev->platक्रमm_data = fg_pdata;
+	पूर्ण
 
 	/* Handle any pdata provided */
-	if (fg_pdata) {
-		fg->interval = fg_pdata->update_interval;
+	अगर (fg_pdata) अणु
+		fg->पूर्णांकerval = fg_pdata->update_पूर्णांकerval;
 
-		if (fg_pdata->warn_soc_lvl > 100)
+		अगर (fg_pdata->warn_soc_lvl > 100)
 			dev_warn(dev, "Invalid SOC warning level provided, Ignoring");
-		else
+		अन्यथा
 			fg->warn_soc = fg_pdata->warn_soc_lvl;
 
-		if ((fg_pdata->crit_soc_lvl > 100) ||
+		अगर ((fg_pdata->crit_soc_lvl > 100) ||
 		    (fg_pdata->crit_soc_lvl >= fg_pdata->warn_soc_lvl))
 			dev_warn(dev, "Invalid SOC critical level provided, Ignoring");
-		else
+		अन्यथा
 			fg->crit_soc = fg_pdata->crit_soc_lvl;
 
 
-	}
+	पूर्ण
 
 	/* Configure initial SOC level events */
 	da9150_fg_soc_event_config(fg);
 
 	/*
-	 * If an interval period has been provided then setup repeating
-	 * work for reporting data updates.
+	 * If an पूर्णांकerval period has been provided then setup repeating
+	 * work क्रम reporting data updates.
 	 */
-	if (fg->interval) {
+	अगर (fg->पूर्णांकerval) अणु
 		INIT_DELAYED_WORK(&fg->work, da9150_fg_work);
 		schedule_delayed_work(&fg->work,
-				      msecs_to_jiffies(fg->interval));
-	}
+				      msecs_to_jअगरfies(fg->पूर्णांकerval));
+	पूर्ण
 
 	/* Register IRQ */
-	irq = platform_get_irq_byname(pdev, "FG");
-	if (irq < 0) {
+	irq = platक्रमm_get_irq_byname(pdev, "FG");
+	अगर (irq < 0) अणु
 		dev_err(dev, "Failed to get IRQ FG: %d\n", irq);
 		ret = irq;
-		goto irq_fail;
-	}
+		जाओ irq_fail;
+	पूर्ण
 
-	ret = devm_request_threaded_irq(dev, irq, NULL, da9150_fg_irq,
+	ret = devm_request_thपढ़ोed_irq(dev, irq, शून्य, da9150_fg_irq,
 					IRQF_ONESHOT, "FG", fg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to request IRQ %d: %d\n", irq, ret);
-		goto irq_fail;
-	}
+		जाओ irq_fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 irq_fail:
-	if (fg->interval)
+	अगर (fg->पूर्णांकerval)
 		cancel_delayed_work(&fg->work);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da9150_fg_remove(struct platform_device *pdev)
-{
-	struct da9150_fg *fg = platform_get_drvdata(pdev);
+अटल पूर्णांक da9150_fg_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा da9150_fg *fg = platक्रमm_get_drvdata(pdev);
 
-	if (fg->interval)
+	अगर (fg->पूर्णांकerval)
 		cancel_delayed_work(&fg->work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9150_fg_resume(struct platform_device *pdev)
-{
-	struct da9150_fg *fg = platform_get_drvdata(pdev);
+अटल पूर्णांक da9150_fg_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा da9150_fg *fg = platक्रमm_get_drvdata(pdev);
 
 	/*
 	 * Trigger SOC check to happen now so as to indicate any value change
-	 * since last check before suspend.
+	 * since last check beक्रमe suspend.
 	 */
-	if (fg->interval)
+	अगर (fg->पूर्णांकerval)
 		flush_delayed_work(&fg->work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver da9150_fg_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver da9150_fg_driver = अणु
+	.driver = अणु
 		.name = "da9150-fuel-gauge",
-	},
+	पूर्ण,
 	.probe = da9150_fg_probe,
-	.remove = da9150_fg_remove,
+	.हटाओ = da9150_fg_हटाओ,
 	.resume = da9150_fg_resume,
-};
+पूर्ण;
 
-module_platform_driver(da9150_fg_driver);
+module_platक्रमm_driver(da9150_fg_driver);
 
 MODULE_DESCRIPTION("Fuel-Gauge Driver for DA9150");
 MODULE_AUTHOR("Adam Thomson <Adam.Thomson.Opensource@diasemi.com>");

@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2000, 2001 Broadcom Corporation
  *
  * Copyright (C) 2002 MontaVista Software Inc.
  * Author: jsun@mvista.com or jsun@junsun.net
  */
-#include <linux/bcd.h>
-#include <linux/types.h>
-#include <linux/time.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/types.h>
+#समावेश <linux/समय.स>
 
-#include <asm/time.h>
-#include <asm/addrspace.h>
-#include <asm/io.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/पन.स>
 
-#include <asm/sibyte/sb1250.h>
-#include <asm/sibyte/sb1250_regs.h>
-#include <asm/sibyte/sb1250_smbus.h>
+#समावेश <यंत्र/sibyte/sb1250.h>
+#समावेश <यंत्र/sibyte/sb1250_regs.h>
+#समावेश <यंत्र/sibyte/sb1250_smbus.h>
 
 
 /* Xicor 1241 definitions */
@@ -24,167 +25,167 @@
  * Register bits
  */
 
-#define X1241REG_SR_BAT 0x80		/* currently on battery power */
-#define X1241REG_SR_RWEL 0x04		/* r/w latch is enabled, can write RTC */
-#define X1241REG_SR_WEL 0x02		/* r/w latch is unlocked, can enable r/w now */
-#define X1241REG_SR_RTCF 0x01		/* clock failed */
-#define X1241REG_BL_BP2 0x80		/* block protect 2 */
-#define X1241REG_BL_BP1 0x40		/* block protect 1 */
-#define X1241REG_BL_BP0 0x20		/* block protect 0 */
-#define X1241REG_BL_WD1 0x10
-#define X1241REG_BL_WD0 0x08
-#define X1241REG_HR_MIL 0x80		/* military time format */
+#घोषणा X1241REG_SR_BAT 0x80		/* currently on battery घातer */
+#घोषणा X1241REG_SR_RWEL 0x04		/* r/w latch is enabled, can ग_लिखो RTC */
+#घोषणा X1241REG_SR_WEL 0x02		/* r/w latch is unlocked, can enable r/w now */
+#घोषणा X1241REG_SR_RTCF 0x01		/* घड़ी failed */
+#घोषणा X1241REG_BL_BP2 0x80		/* block protect 2 */
+#घोषणा X1241REG_BL_BP1 0x40		/* block protect 1 */
+#घोषणा X1241REG_BL_BP0 0x20		/* block protect 0 */
+#घोषणा X1241REG_BL_WD1 0x10
+#घोषणा X1241REG_BL_WD0 0x08
+#घोषणा X1241REG_HR_MIL 0x80		/* military समय क्रमmat */
 
 /*
  * Register numbers
  */
 
-#define X1241REG_BL	0x10		/* block protect bits */
-#define X1241REG_INT	0x11		/*  */
-#define X1241REG_SC	0x30		/* Seconds */
-#define X1241REG_MN	0x31		/* Minutes */
-#define X1241REG_HR	0x32		/* Hours */
-#define X1241REG_DT	0x33		/* Day of month */
-#define X1241REG_MO	0x34		/* Month */
-#define X1241REG_YR	0x35		/* Year */
-#define X1241REG_DW	0x36		/* Day of Week */
-#define X1241REG_Y2K	0x37		/* Year 2K */
-#define X1241REG_SR	0x3F		/* Status register */
+#घोषणा X1241REG_BL	0x10		/* block protect bits */
+#घोषणा X1241REG_INT	0x11		/*  */
+#घोषणा X1241REG_SC	0x30		/* Seconds */
+#घोषणा X1241REG_MN	0x31		/* Minutes */
+#घोषणा X1241REG_HR	0x32		/* Hours */
+#घोषणा X1241REG_DT	0x33		/* Day of month */
+#घोषणा X1241REG_MO	0x34		/* Month */
+#घोषणा X1241REG_YR	0x35		/* Year */
+#घोषणा X1241REG_DW	0x36		/* Day of Week */
+#घोषणा X1241REG_Y2K	0x37		/* Year 2K */
+#घोषणा X1241REG_SR	0x3F		/* Status रेजिस्टर */
 
-#define X1241_CCR_ADDRESS	0x6F
+#घोषणा X1241_CCR_ADDRESS	0x6F
 
-#define SMB_CSR(reg)	IOADDR(A_SMB_REGISTER(1, reg))
+#घोषणा SMB_CSR(reg)	IOADDR(A_SMB_REGISTER(1, reg))
 
-static int xicor_read(uint8_t addr)
-{
-	while (__raw_readq(SMB_CSR(R_SMB_STATUS)) & M_SMB_BUSY)
+अटल पूर्णांक xicor_पढ़ो(uपूर्णांक8_t addr)
+अणु
+	जबतक (__raw_पढ़ोq(SMB_CSR(R_SMB_STATUS)) & M_SMB_BUSY)
 		;
 
-	__raw_writeq((addr >> 8) & 0x7, SMB_CSR(R_SMB_CMD));
-	__raw_writeq(addr & 0xff, SMB_CSR(R_SMB_DATA));
-	__raw_writeq(V_SMB_ADDR(X1241_CCR_ADDRESS) | V_SMB_TT_WR2BYTE,
+	__raw_ग_लिखोq((addr >> 8) & 0x7, SMB_CSR(R_SMB_CMD));
+	__raw_ग_लिखोq(addr & 0xff, SMB_CSR(R_SMB_DATA));
+	__raw_ग_लिखोq(V_SMB_ADDR(X1241_CCR_ADDRESS) | V_SMB_TT_WR2BYTE,
 		     SMB_CSR(R_SMB_START));
 
-	while (__raw_readq(SMB_CSR(R_SMB_STATUS)) & M_SMB_BUSY)
+	जबतक (__raw_पढ़ोq(SMB_CSR(R_SMB_STATUS)) & M_SMB_BUSY)
 		;
 
-	__raw_writeq(V_SMB_ADDR(X1241_CCR_ADDRESS) | V_SMB_TT_RD1BYTE,
+	__raw_ग_लिखोq(V_SMB_ADDR(X1241_CCR_ADDRESS) | V_SMB_TT_RD1BYTE,
 		     SMB_CSR(R_SMB_START));
 
-	while (__raw_readq(SMB_CSR(R_SMB_STATUS)) & M_SMB_BUSY)
+	जबतक (__raw_पढ़ोq(SMB_CSR(R_SMB_STATUS)) & M_SMB_BUSY)
 		;
 
-	if (__raw_readq(SMB_CSR(R_SMB_STATUS)) & M_SMB_ERROR) {
+	अगर (__raw_पढ़ोq(SMB_CSR(R_SMB_STATUS)) & M_SMB_ERROR) अणु
 		/* Clear error bit by writing a 1 */
-		__raw_writeq(M_SMB_ERROR, SMB_CSR(R_SMB_STATUS));
-		return -1;
-	}
+		__raw_ग_लिखोq(M_SMB_ERROR, SMB_CSR(R_SMB_STATUS));
+		वापस -1;
+	पूर्ण
 
-	return __raw_readq(SMB_CSR(R_SMB_DATA)) & 0xff;
-}
+	वापस __raw_पढ़ोq(SMB_CSR(R_SMB_DATA)) & 0xff;
+पूर्ण
 
-static int xicor_write(uint8_t addr, int b)
-{
-	while (__raw_readq(SMB_CSR(R_SMB_STATUS)) & M_SMB_BUSY)
+अटल पूर्णांक xicor_ग_लिखो(uपूर्णांक8_t addr, पूर्णांक b)
+अणु
+	जबतक (__raw_पढ़ोq(SMB_CSR(R_SMB_STATUS)) & M_SMB_BUSY)
 		;
 
-	__raw_writeq(addr, SMB_CSR(R_SMB_CMD));
-	__raw_writeq((addr & 0xff) | ((b & 0xff) << 8), SMB_CSR(R_SMB_DATA));
-	__raw_writeq(V_SMB_ADDR(X1241_CCR_ADDRESS) | V_SMB_TT_WR3BYTE,
+	__raw_ग_लिखोq(addr, SMB_CSR(R_SMB_CMD));
+	__raw_ग_लिखोq((addr & 0xff) | ((b & 0xff) << 8), SMB_CSR(R_SMB_DATA));
+	__raw_ग_लिखोq(V_SMB_ADDR(X1241_CCR_ADDRESS) | V_SMB_TT_WR3BYTE,
 		     SMB_CSR(R_SMB_START));
 
-	while (__raw_readq(SMB_CSR(R_SMB_STATUS)) & M_SMB_BUSY)
+	जबतक (__raw_पढ़ोq(SMB_CSR(R_SMB_STATUS)) & M_SMB_BUSY)
 		;
 
-	if (__raw_readq(SMB_CSR(R_SMB_STATUS)) & M_SMB_ERROR) {
+	अगर (__raw_पढ़ोq(SMB_CSR(R_SMB_STATUS)) & M_SMB_ERROR) अणु
 		/* Clear error bit by writing a 1 */
-		__raw_writeq(M_SMB_ERROR, SMB_CSR(R_SMB_STATUS));
-		return -1;
-	} else {
-		return 0;
-	}
-}
+		__raw_ग_लिखोq(M_SMB_ERROR, SMB_CSR(R_SMB_STATUS));
+		वापस -1;
+	पूर्ण अन्यथा अणु
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-int xicor_set_time(time64_t t)
-{
-	struct rtc_time tm;
-	int tmp;
-	unsigned long flags;
+पूर्णांक xicor_set_समय(समय64_t t)
+अणु
+	काष्ठा rtc_समय पंचांग;
+	पूर्णांक पंचांगp;
+	अचिन्हित दीर्घ flags;
 
-	rtc_time64_to_tm(t, &tm);
-	tm.tm_year += 1900;
+	rtc_समय64_to_पंचांग(t, &पंचांग);
+	पंचांग.पंचांग_year += 1900;
 
 	spin_lock_irqsave(&rtc_lock, flags);
-	/* unlock writes to the CCR */
-	xicor_write(X1241REG_SR, X1241REG_SR_WEL);
-	xicor_write(X1241REG_SR, X1241REG_SR_WEL | X1241REG_SR_RWEL);
+	/* unlock ग_लिखोs to the CCR */
+	xicor_ग_लिखो(X1241REG_SR, X1241REG_SR_WEL);
+	xicor_ग_लिखो(X1241REG_SR, X1241REG_SR_WEL | X1241REG_SR_RWEL);
 
 	/* trivial ones */
-	tm.tm_sec = bin2bcd(tm.tm_sec);
-	xicor_write(X1241REG_SC, tm.tm_sec);
+	पंचांग.पंचांग_sec = bin2bcd(पंचांग.पंचांग_sec);
+	xicor_ग_लिखो(X1241REG_SC, पंचांग.पंचांग_sec);
 
-	tm.tm_min = bin2bcd(tm.tm_min);
-	xicor_write(X1241REG_MN, tm.tm_min);
+	पंचांग.पंचांग_min = bin2bcd(पंचांग.पंचांग_min);
+	xicor_ग_लिखो(X1241REG_MN, पंचांग.पंचांग_min);
 
-	tm.tm_mday = bin2bcd(tm.tm_mday);
-	xicor_write(X1241REG_DT, tm.tm_mday);
+	पंचांग.पंचांग_mday = bin2bcd(पंचांग.पंचांग_mday);
+	xicor_ग_लिखो(X1241REG_DT, पंचांग.पंचांग_mday);
 
-	/* tm_mon starts from 0, *ick* */
-	tm.tm_mon ++;
-	tm.tm_mon = bin2bcd(tm.tm_mon);
-	xicor_write(X1241REG_MO, tm.tm_mon);
+	/* पंचांग_mon starts from 0, *ick* */
+	पंचांग.पंचांग_mon ++;
+	पंचांग.पंचांग_mon = bin2bcd(पंचांग.पंचांग_mon);
+	xicor_ग_लिखो(X1241REG_MO, पंचांग.पंचांग_mon);
 
 	/* year is split */
-	tmp = tm.tm_year / 100;
-	tm.tm_year %= 100;
-	xicor_write(X1241REG_YR, tm.tm_year);
-	xicor_write(X1241REG_Y2K, tmp);
+	पंचांगp = पंचांग.पंचांग_year / 100;
+	पंचांग.पंचांग_year %= 100;
+	xicor_ग_लिखो(X1241REG_YR, पंचांग.पंचांग_year);
+	xicor_ग_लिखो(X1241REG_Y2K, पंचांगp);
 
 	/* hour is the most tricky one */
-	tmp = xicor_read(X1241REG_HR);
-	if (tmp & X1241REG_HR_MIL) {
-		/* 24 hour format */
-		tm.tm_hour = bin2bcd(tm.tm_hour);
-		tmp = (tmp & ~0x3f) | (tm.tm_hour & 0x3f);
-	} else {
-		/* 12 hour format, with 0x2 for pm */
-		tmp = tmp & ~0x3f;
-		if (tm.tm_hour >= 12) {
-			tmp |= 0x20;
-			tm.tm_hour -= 12;
-		}
-		tm.tm_hour = bin2bcd(tm.tm_hour);
-		tmp |= tm.tm_hour;
-	}
-	xicor_write(X1241REG_HR, tmp);
+	पंचांगp = xicor_पढ़ो(X1241REG_HR);
+	अगर (पंचांगp & X1241REG_HR_MIL) अणु
+		/* 24 hour क्रमmat */
+		पंचांग.पंचांग_hour = bin2bcd(पंचांग.पंचांग_hour);
+		पंचांगp = (पंचांगp & ~0x3f) | (पंचांग.पंचांग_hour & 0x3f);
+	पूर्ण अन्यथा अणु
+		/* 12 hour क्रमmat, with 0x2 क्रम pm */
+		पंचांगp = पंचांगp & ~0x3f;
+		अगर (पंचांग.पंचांग_hour >= 12) अणु
+			पंचांगp |= 0x20;
+			पंचांग.पंचांग_hour -= 12;
+		पूर्ण
+		पंचांग.पंचांग_hour = bin2bcd(पंचांग.पंचांग_hour);
+		पंचांगp |= पंचांग.पंचांग_hour;
+	पूर्ण
+	xicor_ग_लिखो(X1241REG_HR, पंचांगp);
 
-	xicor_write(X1241REG_SR, 0);
+	xicor_ग_लिखो(X1241REG_SR, 0);
 	spin_unlock_irqrestore(&rtc_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-time64_t xicor_get_time(void)
-{
-	unsigned int year, mon, day, hour, min, sec, y2k;
-	unsigned long flags;
+समय64_t xicor_get_समय(व्योम)
+अणु
+	अचिन्हित पूर्णांक year, mon, day, hour, min, sec, y2k;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&rtc_lock, flags);
-	sec = xicor_read(X1241REG_SC);
-	min = xicor_read(X1241REG_MN);
-	hour = xicor_read(X1241REG_HR);
+	sec = xicor_पढ़ो(X1241REG_SC);
+	min = xicor_पढ़ो(X1241REG_MN);
+	hour = xicor_पढ़ो(X1241REG_HR);
 
-	if (hour & X1241REG_HR_MIL) {
+	अगर (hour & X1241REG_HR_MIL) अणु
 		hour &= 0x3f;
-	} else {
-		if (hour & 0x20)
+	पूर्ण अन्यथा अणु
+		अगर (hour & 0x20)
 			hour = (hour & 0xf) + 0x12;
-	}
+	पूर्ण
 
-	day = xicor_read(X1241REG_DT);
-	mon = xicor_read(X1241REG_MO);
-	year = xicor_read(X1241REG_YR);
-	y2k = xicor_read(X1241REG_Y2K);
+	day = xicor_पढ़ो(X1241REG_DT);
+	mon = xicor_पढ़ो(X1241REG_MO);
+	year = xicor_पढ़ो(X1241REG_YR);
+	y2k = xicor_पढ़ो(X1241REG_Y2K);
 	spin_unlock_irqrestore(&rtc_lock, flags);
 
 	sec = bcd2bin(sec);
@@ -197,10 +198,10 @@ time64_t xicor_get_time(void)
 
 	year += (y2k * 100);
 
-	return mktime64(year, mon, day, hour, min, sec);
-}
+	वापस स_गढ़ो64(year, mon, day, hour, min, sec);
+पूर्ण
 
-int xicor_probe(void)
-{
-	return xicor_read(X1241REG_SC) != -1;
-}
+पूर्णांक xicor_probe(व्योम)
+अणु
+	वापस xicor_पढ़ो(X1241REG_SC) != -1;
+पूर्ण

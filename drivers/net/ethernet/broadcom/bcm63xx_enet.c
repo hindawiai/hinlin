@@ -1,401 +1,402 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for BCM963xx builtin Ethernet mac
+ * Driver क्रम BCM963xx builtin Ethernet mac
  *
- * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
+ * Copyright (C) 2008 Maxime Bizon <mbizon@मुक्तbox.fr>
  */
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/clk.h>
-#include <linux/etherdevice.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/ethtool.h>
-#include <linux/crc32.h>
-#include <linux/err.h>
-#include <linux/dma-mapping.h>
-#include <linux/platform_device.h>
-#include <linux/if_vlan.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/err.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/अगर_vlan.h>
 
-#include <bcm63xx_dev_enet.h>
-#include "bcm63xx_enet.h"
+#समावेश <bcm63xx_dev_enet.h>
+#समावेश "bcm63xx_enet.h"
 
-static char bcm_enet_driver_name[] = "bcm63xx_enet";
+अटल अक्षर bcm_enet_driver_name[] = "bcm63xx_enet";
 
-static int copybreak __read_mostly = 128;
-module_param(copybreak, int, 0);
-MODULE_PARM_DESC(copybreak, "Receive copy threshold");
+अटल पूर्णांक copyअवरोध __पढ़ो_mostly = 128;
+module_param(copyअवरोध, पूर्णांक, 0);
+MODULE_PARM_DESC(copyअवरोध, "Receive copy threshold");
 
-/* io registers memory shared between all devices */
-static void __iomem *bcm_enet_shared_base[3];
+/* io रेजिस्टरs memory shared between all devices */
+अटल व्योम __iomem *bcm_enet_shared_base[3];
 
 /*
- * io helpers to access mac registers
+ * io helpers to access mac रेजिस्टरs
  */
-static inline u32 enet_readl(struct bcm_enet_priv *priv, u32 off)
-{
-	return bcm_readl(priv->base + off);
-}
+अटल अंतरभूत u32 enet_पढ़ोl(काष्ठा bcm_enet_priv *priv, u32 off)
+अणु
+	वापस bcm_पढ़ोl(priv->base + off);
+पूर्ण
 
-static inline void enet_writel(struct bcm_enet_priv *priv,
+अटल अंतरभूत व्योम enet_ग_लिखोl(काष्ठा bcm_enet_priv *priv,
 			       u32 val, u32 off)
-{
-	bcm_writel(val, priv->base + off);
-}
+अणु
+	bcm_ग_लिखोl(val, priv->base + off);
+पूर्ण
 
 /*
- * io helpers to access switch registers
+ * io helpers to access चयन रेजिस्टरs
  */
-static inline u32 enetsw_readl(struct bcm_enet_priv *priv, u32 off)
-{
-	return bcm_readl(priv->base + off);
-}
+अटल अंतरभूत u32 enetsw_पढ़ोl(काष्ठा bcm_enet_priv *priv, u32 off)
+अणु
+	वापस bcm_पढ़ोl(priv->base + off);
+पूर्ण
 
-static inline void enetsw_writel(struct bcm_enet_priv *priv,
+अटल अंतरभूत व्योम enetsw_ग_लिखोl(काष्ठा bcm_enet_priv *priv,
 				 u32 val, u32 off)
-{
-	bcm_writel(val, priv->base + off);
-}
+अणु
+	bcm_ग_लिखोl(val, priv->base + off);
+पूर्ण
 
-static inline u16 enetsw_readw(struct bcm_enet_priv *priv, u32 off)
-{
-	return bcm_readw(priv->base + off);
-}
+अटल अंतरभूत u16 enetsw_पढ़ोw(काष्ठा bcm_enet_priv *priv, u32 off)
+अणु
+	वापस bcm_पढ़ोw(priv->base + off);
+पूर्ण
 
-static inline void enetsw_writew(struct bcm_enet_priv *priv,
+अटल अंतरभूत व्योम enetsw_ग_लिखोw(काष्ठा bcm_enet_priv *priv,
 				 u16 val, u32 off)
-{
-	bcm_writew(val, priv->base + off);
-}
+अणु
+	bcm_ग_लिखोw(val, priv->base + off);
+पूर्ण
 
-static inline u8 enetsw_readb(struct bcm_enet_priv *priv, u32 off)
-{
-	return bcm_readb(priv->base + off);
-}
+अटल अंतरभूत u8 enetsw_पढ़ोb(काष्ठा bcm_enet_priv *priv, u32 off)
+अणु
+	वापस bcm_पढ़ोb(priv->base + off);
+पूर्ण
 
-static inline void enetsw_writeb(struct bcm_enet_priv *priv,
+अटल अंतरभूत व्योम enetsw_ग_लिखोb(काष्ठा bcm_enet_priv *priv,
 				 u8 val, u32 off)
-{
-	bcm_writeb(val, priv->base + off);
-}
+अणु
+	bcm_ग_लिखोb(val, priv->base + off);
+पूर्ण
 
 
-/* io helpers to access shared registers */
-static inline u32 enet_dma_readl(struct bcm_enet_priv *priv, u32 off)
-{
-	return bcm_readl(bcm_enet_shared_base[0] + off);
-}
+/* io helpers to access shared रेजिस्टरs */
+अटल अंतरभूत u32 enet_dma_पढ़ोl(काष्ठा bcm_enet_priv *priv, u32 off)
+अणु
+	वापस bcm_पढ़ोl(bcm_enet_shared_base[0] + off);
+पूर्ण
 
-static inline void enet_dma_writel(struct bcm_enet_priv *priv,
+अटल अंतरभूत व्योम enet_dma_ग_लिखोl(काष्ठा bcm_enet_priv *priv,
 				       u32 val, u32 off)
-{
-	bcm_writel(val, bcm_enet_shared_base[0] + off);
-}
+अणु
+	bcm_ग_लिखोl(val, bcm_enet_shared_base[0] + off);
+पूर्ण
 
-static inline u32 enet_dmac_readl(struct bcm_enet_priv *priv, u32 off, int chan)
-{
-	return bcm_readl(bcm_enet_shared_base[1] +
+अटल अंतरभूत u32 enet_dmac_पढ़ोl(काष्ठा bcm_enet_priv *priv, u32 off, पूर्णांक chan)
+अणु
+	वापस bcm_पढ़ोl(bcm_enet_shared_base[1] +
 		bcm63xx_enetdmacreg(off) + chan * priv->dma_chan_width);
-}
+पूर्ण
 
-static inline void enet_dmac_writel(struct bcm_enet_priv *priv,
-				       u32 val, u32 off, int chan)
-{
-	bcm_writel(val, bcm_enet_shared_base[1] +
+अटल अंतरभूत व्योम enet_dmac_ग_लिखोl(काष्ठा bcm_enet_priv *priv,
+				       u32 val, u32 off, पूर्णांक chan)
+अणु
+	bcm_ग_लिखोl(val, bcm_enet_shared_base[1] +
 		bcm63xx_enetdmacreg(off) + chan * priv->dma_chan_width);
-}
+पूर्ण
 
-static inline u32 enet_dmas_readl(struct bcm_enet_priv *priv, u32 off, int chan)
-{
-	return bcm_readl(bcm_enet_shared_base[2] + off + chan * priv->dma_chan_width);
-}
+अटल अंतरभूत u32 enet_dmas_पढ़ोl(काष्ठा bcm_enet_priv *priv, u32 off, पूर्णांक chan)
+अणु
+	वापस bcm_पढ़ोl(bcm_enet_shared_base[2] + off + chan * priv->dma_chan_width);
+पूर्ण
 
-static inline void enet_dmas_writel(struct bcm_enet_priv *priv,
-				       u32 val, u32 off, int chan)
-{
-	bcm_writel(val, bcm_enet_shared_base[2] + off + chan * priv->dma_chan_width);
-}
+अटल अंतरभूत व्योम enet_dmas_ग_लिखोl(काष्ठा bcm_enet_priv *priv,
+				       u32 val, u32 off, पूर्णांक chan)
+अणु
+	bcm_ग_लिखोl(val, bcm_enet_shared_base[2] + off + chan * priv->dma_chan_width);
+पूर्ण
 
 /*
- * write given data into mii register and wait for transfer to end
- * with timeout (average measured transfer time is 25us)
+ * ग_लिखो given data पूर्णांकo mii रेजिस्टर and रुको क्रम transfer to end
+ * with समयout (average measured transfer समय is 25us)
  */
-static int do_mdio_op(struct bcm_enet_priv *priv, unsigned int data)
-{
-	int limit;
+अटल पूर्णांक करो_mdio_op(काष्ठा bcm_enet_priv *priv, अचिन्हित पूर्णांक data)
+अणु
+	पूर्णांक limit;
 
-	/* make sure mii interrupt status is cleared */
-	enet_writel(priv, ENET_IR_MII, ENET_IR_REG);
+	/* make sure mii पूर्णांकerrupt status is cleared */
+	enet_ग_लिखोl(priv, ENET_IR_MII, ENET_IR_REG);
 
-	enet_writel(priv, data, ENET_MIIDATA_REG);
+	enet_ग_लिखोl(priv, data, ENET_MIIDATA_REG);
 	wmb();
 
-	/* busy wait on mii interrupt bit, with timeout */
+	/* busy रुको on mii पूर्णांकerrupt bit, with समयout */
 	limit = 1000;
-	do {
-		if (enet_readl(priv, ENET_IR_REG) & ENET_IR_MII)
-			break;
+	करो अणु
+		अगर (enet_पढ़ोl(priv, ENET_IR_REG) & ENET_IR_MII)
+			अवरोध;
 		udelay(1);
-	} while (limit-- > 0);
+	पूर्ण जबतक (limit-- > 0);
 
-	return (limit < 0) ? 1 : 0;
-}
+	वापस (limit < 0) ? 1 : 0;
+पूर्ण
 
 /*
- * MII internal read callback
+ * MII पूर्णांकernal पढ़ो callback
  */
-static int bcm_enet_mdio_read(struct bcm_enet_priv *priv, int mii_id,
-			      int regnum)
-{
-	u32 tmp, val;
+अटल पूर्णांक bcm_enet_mdio_पढ़ो(काष्ठा bcm_enet_priv *priv, पूर्णांक mii_id,
+			      पूर्णांक regnum)
+अणु
+	u32 पंचांगp, val;
 
-	tmp = regnum << ENET_MIIDATA_REG_SHIFT;
-	tmp |= 0x2 << ENET_MIIDATA_TA_SHIFT;
-	tmp |= mii_id << ENET_MIIDATA_PHYID_SHIFT;
-	tmp |= ENET_MIIDATA_OP_READ_MASK;
+	पंचांगp = regnum << ENET_MIIDATA_REG_SHIFT;
+	पंचांगp |= 0x2 << ENET_MIIDATA_TA_SHIFT;
+	पंचांगp |= mii_id << ENET_MIIDATA_PHYID_SHIFT;
+	पंचांगp |= ENET_MIIDATA_OP_READ_MASK;
 
-	if (do_mdio_op(priv, tmp))
-		return -1;
+	अगर (करो_mdio_op(priv, पंचांगp))
+		वापस -1;
 
-	val = enet_readl(priv, ENET_MIIDATA_REG);
+	val = enet_पढ़ोl(priv, ENET_MIIDATA_REG);
 	val &= 0xffff;
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /*
- * MII internal write callback
+ * MII पूर्णांकernal ग_लिखो callback
  */
-static int bcm_enet_mdio_write(struct bcm_enet_priv *priv, int mii_id,
-			       int regnum, u16 value)
-{
-	u32 tmp;
+अटल पूर्णांक bcm_enet_mdio_ग_लिखो(काष्ठा bcm_enet_priv *priv, पूर्णांक mii_id,
+			       पूर्णांक regnum, u16 value)
+अणु
+	u32 पंचांगp;
 
-	tmp = (value & 0xffff) << ENET_MIIDATA_DATA_SHIFT;
-	tmp |= 0x2 << ENET_MIIDATA_TA_SHIFT;
-	tmp |= regnum << ENET_MIIDATA_REG_SHIFT;
-	tmp |= mii_id << ENET_MIIDATA_PHYID_SHIFT;
-	tmp |= ENET_MIIDATA_OP_WRITE_MASK;
+	पंचांगp = (value & 0xffff) << ENET_MIIDATA_DATA_SHIFT;
+	पंचांगp |= 0x2 << ENET_MIIDATA_TA_SHIFT;
+	पंचांगp |= regnum << ENET_MIIDATA_REG_SHIFT;
+	पंचांगp |= mii_id << ENET_MIIDATA_PHYID_SHIFT;
+	पंचांगp |= ENET_MIIDATA_OP_WRITE_MASK;
 
-	(void)do_mdio_op(priv, tmp);
-	return 0;
-}
+	(व्योम)करो_mdio_op(priv, पंचांगp);
+	वापस 0;
+पूर्ण
 
 /*
- * MII read callback from phylib
+ * MII पढ़ो callback from phylib
  */
-static int bcm_enet_mdio_read_phylib(struct mii_bus *bus, int mii_id,
-				     int regnum)
-{
-	return bcm_enet_mdio_read(bus->priv, mii_id, regnum);
-}
+अटल पूर्णांक bcm_enet_mdio_पढ़ो_phylib(काष्ठा mii_bus *bus, पूर्णांक mii_id,
+				     पूर्णांक regnum)
+अणु
+	वापस bcm_enet_mdio_पढ़ो(bus->priv, mii_id, regnum);
+पूर्ण
 
 /*
- * MII write callback from phylib
+ * MII ग_लिखो callback from phylib
  */
-static int bcm_enet_mdio_write_phylib(struct mii_bus *bus, int mii_id,
-				      int regnum, u16 value)
-{
-	return bcm_enet_mdio_write(bus->priv, mii_id, regnum, value);
-}
+अटल पूर्णांक bcm_enet_mdio_ग_लिखो_phylib(काष्ठा mii_bus *bus, पूर्णांक mii_id,
+				      पूर्णांक regnum, u16 value)
+अणु
+	वापस bcm_enet_mdio_ग_लिखो(bus->priv, mii_id, regnum, value);
+पूर्ण
 
 /*
- * MII read callback from mii core
+ * MII पढ़ो callback from mii core
  */
-static int bcm_enet_mdio_read_mii(struct net_device *dev, int mii_id,
-				  int regnum)
-{
-	return bcm_enet_mdio_read(netdev_priv(dev), mii_id, regnum);
-}
+अटल पूर्णांक bcm_enet_mdio_पढ़ो_mii(काष्ठा net_device *dev, पूर्णांक mii_id,
+				  पूर्णांक regnum)
+अणु
+	वापस bcm_enet_mdio_पढ़ो(netdev_priv(dev), mii_id, regnum);
+पूर्ण
 
 /*
- * MII write callback from mii core
+ * MII ग_लिखो callback from mii core
  */
-static void bcm_enet_mdio_write_mii(struct net_device *dev, int mii_id,
-				    int regnum, int value)
-{
-	bcm_enet_mdio_write(netdev_priv(dev), mii_id, regnum, value);
-}
+अटल व्योम bcm_enet_mdio_ग_लिखो_mii(काष्ठा net_device *dev, पूर्णांक mii_id,
+				    पूर्णांक regnum, पूर्णांक value)
+अणु
+	bcm_enet_mdio_ग_लिखो(netdev_priv(dev), mii_id, regnum, value);
+पूर्ण
 
 /*
  * refill rx queue
  */
-static int bcm_enet_refill_rx(struct net_device *dev, bool napi_mode)
-{
-	struct bcm_enet_priv *priv;
+अटल पूर्णांक bcm_enet_refill_rx(काष्ठा net_device *dev, bool napi_mode)
+अणु
+	काष्ठा bcm_enet_priv *priv;
 
 	priv = netdev_priv(dev);
 
-	while (priv->rx_desc_count < priv->rx_ring_size) {
-		struct bcm_enet_desc *desc;
-		int desc_idx;
+	जबतक (priv->rx_desc_count < priv->rx_ring_size) अणु
+		काष्ठा bcm_enet_desc *desc;
+		पूर्णांक desc_idx;
 		u32 len_stat;
 
 		desc_idx = priv->rx_dirty_desc;
 		desc = &priv->rx_desc_cpu[desc_idx];
 
-		if (!priv->rx_buf[desc_idx]) {
-			void *buf;
+		अगर (!priv->rx_buf[desc_idx]) अणु
+			व्योम *buf;
 
-			if (likely(napi_mode))
+			अगर (likely(napi_mode))
 				buf = napi_alloc_frag(priv->rx_frag_size);
-			else
+			अन्यथा
 				buf = netdev_alloc_frag(priv->rx_frag_size);
-			if (unlikely(!buf))
-				break;
+			अगर (unlikely(!buf))
+				अवरोध;
 			priv->rx_buf[desc_idx] = buf;
 			desc->address = dma_map_single(&priv->pdev->dev,
 						       buf + priv->rx_buf_offset,
 						       priv->rx_buf_size,
 						       DMA_FROM_DEVICE);
-		}
+		पूर्ण
 
 		len_stat = priv->rx_buf_size << DMADESC_LENGTH_SHIFT;
 		len_stat |= DMADESC_OWNER_MASK;
-		if (priv->rx_dirty_desc == priv->rx_ring_size - 1) {
-			len_stat |= (DMADESC_WRAP_MASK >> priv->dma_desc_shift);
+		अगर (priv->rx_dirty_desc == priv->rx_ring_size - 1) अणु
+			len_stat |= (DMADESC_WRAP_MASK >> priv->dma_desc_shअगरt);
 			priv->rx_dirty_desc = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			priv->rx_dirty_desc++;
-		}
+		पूर्ण
 		wmb();
 		desc->len_stat = len_stat;
 
 		priv->rx_desc_count++;
 
 		/* tell dma engine we allocated one buffer */
-		if (priv->dma_has_sram)
-			enet_dma_writel(priv, 1, ENETDMA_BUFALLOC_REG(priv->rx_chan));
-		else
-			enet_dmac_writel(priv, 1, ENETDMAC_BUFALLOC, priv->rx_chan);
-	}
+		अगर (priv->dma_has_sram)
+			enet_dma_ग_लिखोl(priv, 1, ENETDMA_BUFALLOC_REG(priv->rx_chan));
+		अन्यथा
+			enet_dmac_ग_लिखोl(priv, 1, ENETDMAC_BUFALLOC, priv->rx_chan);
+	पूर्ण
 
-	/* If rx ring is still empty, set a timer to try allocating
-	 * again at a later time. */
-	if (priv->rx_desc_count == 0 && netif_running(dev)) {
+	/* If rx ring is still empty, set a समयr to try allocating
+	 * again at a later समय. */
+	अगर (priv->rx_desc_count == 0 && netअगर_running(dev)) अणु
 		dev_warn(&priv->pdev->dev, "unable to refill rx ring\n");
-		priv->rx_timeout.expires = jiffies + HZ;
-		add_timer(&priv->rx_timeout);
-	}
+		priv->rx_समयout.expires = jअगरfies + HZ;
+		add_समयr(&priv->rx_समयout);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * timer callback to defer refill rx queue in case we're OOM
+ * समयr callback to defer refill rx queue in हाल we're OOM
  */
-static void bcm_enet_refill_rx_timer(struct timer_list *t)
-{
-	struct bcm_enet_priv *priv = from_timer(priv, t, rx_timeout);
-	struct net_device *dev = priv->net_dev;
+अटल व्योम bcm_enet_refill_rx_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा bcm_enet_priv *priv = from_समयr(priv, t, rx_समयout);
+	काष्ठा net_device *dev = priv->net_dev;
 
 	spin_lock(&priv->rx_lock);
 	bcm_enet_refill_rx(dev, false);
 	spin_unlock(&priv->rx_lock);
-}
+पूर्ण
 
 /*
  * extract packet from rx queue
  */
-static int bcm_enet_receive_queue(struct net_device *dev, int budget)
-{
-	struct bcm_enet_priv *priv;
-	struct list_head rx_list;
-	struct device *kdev;
-	int processed;
+अटल पूर्णांक bcm_enet_receive_queue(काष्ठा net_device *dev, पूर्णांक budget)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा list_head rx_list;
+	काष्ठा device *kdev;
+	पूर्णांक processed;
 
 	priv = netdev_priv(dev);
 	INIT_LIST_HEAD(&rx_list);
 	kdev = &priv->pdev->dev;
 	processed = 0;
 
-	/* don't scan ring further than number of refilled
+	/* करोn't scan ring further than number of refilled
 	 * descriptor */
-	if (budget > priv->rx_desc_count)
+	अगर (budget > priv->rx_desc_count)
 		budget = priv->rx_desc_count;
 
-	do {
-		struct bcm_enet_desc *desc;
-		struct sk_buff *skb;
-		int desc_idx;
+	करो अणु
+		काष्ठा bcm_enet_desc *desc;
+		काष्ठा sk_buff *skb;
+		पूर्णांक desc_idx;
 		u32 len_stat;
-		unsigned int len;
-		void *buf;
+		अचिन्हित पूर्णांक len;
+		व्योम *buf;
 
 		desc_idx = priv->rx_curr_desc;
 		desc = &priv->rx_desc_cpu[desc_idx];
 
-		/* make sure we actually read the descriptor status at
+		/* make sure we actually पढ़ो the descriptor status at
 		 * each loop */
 		rmb();
 
 		len_stat = desc->len_stat;
 
-		/* break if dma ownership belongs to hw */
-		if (len_stat & DMADESC_OWNER_MASK)
-			break;
+		/* अवरोध अगर dma ownership beदीर्घs to hw */
+		अगर (len_stat & DMADESC_OWNER_MASK)
+			अवरोध;
 
 		processed++;
 		priv->rx_curr_desc++;
-		if (priv->rx_curr_desc == priv->rx_ring_size)
+		अगर (priv->rx_curr_desc == priv->rx_ring_size)
 			priv->rx_curr_desc = 0;
 
-		/* if the packet does not have start of packet _and_
+		/* अगर the packet करोes not have start of packet _and_
 		 * end of packet flag set, then just recycle it */
-		if ((len_stat & (DMADESC_ESOP_MASK >> priv->dma_desc_shift)) !=
-			(DMADESC_ESOP_MASK >> priv->dma_desc_shift)) {
+		अगर ((len_stat & (DMADESC_ESOP_MASK >> priv->dma_desc_shअगरt)) !=
+			(DMADESC_ESOP_MASK >> priv->dma_desc_shअगरt)) अणु
 			dev->stats.rx_dropped++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* recycle packet if it's marked as bad */
-		if (!priv->enet_is_sw &&
-		    unlikely(len_stat & DMADESC_ERR_MASK)) {
+		/* recycle packet अगर it's marked as bad */
+		अगर (!priv->enet_is_sw &&
+		    unlikely(len_stat & DMADESC_ERR_MASK)) अणु
 			dev->stats.rx_errors++;
 
-			if (len_stat & DMADESC_OVSIZE_MASK)
+			अगर (len_stat & DMADESC_OVSIZE_MASK)
 				dev->stats.rx_length_errors++;
-			if (len_stat & DMADESC_CRC_MASK)
+			अगर (len_stat & DMADESC_CRC_MASK)
 				dev->stats.rx_crc_errors++;
-			if (len_stat & DMADESC_UNDER_MASK)
+			अगर (len_stat & DMADESC_UNDER_MASK)
 				dev->stats.rx_frame_errors++;
-			if (len_stat & DMADESC_OV_MASK)
-				dev->stats.rx_fifo_errors++;
-			continue;
-		}
+			अगर (len_stat & DMADESC_OV_MASK)
+				dev->stats.rx_fअगरo_errors++;
+			जारी;
+		पूर्ण
 
 		/* valid packet */
 		buf = priv->rx_buf[desc_idx];
 		len = (len_stat & DMADESC_LENGTH_MASK) >> DMADESC_LENGTH_SHIFT;
-		/* don't include FCS */
+		/* करोn't include FCS */
 		len -= 4;
 
-		if (len < copybreak) {
+		अगर (len < copyअवरोध) अणु
 			skb = napi_alloc_skb(&priv->napi, len);
-			if (unlikely(!skb)) {
-				/* forget packet, just rearm desc */
+			अगर (unlikely(!skb)) अणु
+				/* क्रमget packet, just rearm desc */
 				dev->stats.rx_dropped++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			dma_sync_single_for_cpu(kdev, desc->address,
+			dma_sync_single_क्रम_cpu(kdev, desc->address,
 						len, DMA_FROM_DEVICE);
-			memcpy(skb->data, buf + priv->rx_buf_offset, len);
-			dma_sync_single_for_device(kdev, desc->address,
+			स_नकल(skb->data, buf + priv->rx_buf_offset, len);
+			dma_sync_single_क्रम_device(kdev, desc->address,
 						   len, DMA_FROM_DEVICE);
-		} else {
+		पूर्ण अन्यथा अणु
 			dma_unmap_single(kdev, desc->address,
 					 priv->rx_buf_size, DMA_FROM_DEVICE);
-			priv->rx_buf[desc_idx] = NULL;
+			priv->rx_buf[desc_idx] = शून्य;
 
 			skb = build_skb(buf, priv->rx_frag_size);
-			if (unlikely(!skb)) {
-				skb_free_frag(buf);
+			अगर (unlikely(!skb)) अणु
+				skb_मुक्त_frag(buf);
 				dev->stats.rx_dropped++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 			skb_reserve(skb, priv->rx_buf_offset);
-		}
+		पूर्ण
 
 		skb_put(skb, len);
 		skb->protocol = eth_type_trans(skb, dev);
@@ -403,39 +404,39 @@ static int bcm_enet_receive_queue(struct net_device *dev, int budget)
 		dev->stats.rx_bytes += len;
 		list_add_tail(&skb->list, &rx_list);
 
-	} while (processed < budget);
+	पूर्ण जबतक (processed < budget);
 
-	netif_receive_skb_list(&rx_list);
+	netअगर_receive_skb_list(&rx_list);
 	priv->rx_desc_count -= processed;
 
-	if (processed || !priv->rx_desc_count) {
+	अगर (processed || !priv->rx_desc_count) अणु
 		bcm_enet_refill_rx(dev, true);
 
 		/* kick rx dma */
-		enet_dmac_writel(priv, priv->dma_chan_en_mask,
+		enet_dmac_ग_लिखोl(priv, priv->dma_chan_en_mask,
 					 ENETDMAC_CHANCFG, priv->rx_chan);
-	}
+	पूर्ण
 
-	return processed;
-}
+	वापस processed;
+पूर्ण
 
 
 /*
- * try to or force reclaim of transmitted buffers
+ * try to or क्रमce reclaim of transmitted buffers
  */
-static int bcm_enet_tx_reclaim(struct net_device *dev, int force)
-{
-	struct bcm_enet_priv *priv;
-	unsigned int bytes;
-	int released;
+अटल पूर्णांक bcm_enet_tx_reclaim(काष्ठा net_device *dev, पूर्णांक क्रमce)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	अचिन्हित पूर्णांक bytes;
+	पूर्णांक released;
 
 	priv = netdev_priv(dev);
 	bytes = 0;
 	released = 0;
 
-	while (priv->tx_desc_count < priv->tx_ring_size) {
-		struct bcm_enet_desc *desc;
-		struct sk_buff *skb;
+	जबतक (priv->tx_desc_count < priv->tx_ring_size) अणु
+		काष्ठा bcm_enet_desc *desc;
+		काष्ठा sk_buff *skb;
 
 		/* We run in a bh and fight against start_xmit, which
 		 * is called with bh disabled  */
@@ -443,140 +444,140 @@ static int bcm_enet_tx_reclaim(struct net_device *dev, int force)
 
 		desc = &priv->tx_desc_cpu[priv->tx_dirty_desc];
 
-		if (!force && (desc->len_stat & DMADESC_OWNER_MASK)) {
+		अगर (!क्रमce && (desc->len_stat & DMADESC_OWNER_MASK)) अणु
 			spin_unlock(&priv->tx_lock);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* ensure other field of the descriptor were not read
-		 * before we checked ownership */
+		/* ensure other field of the descriptor were not पढ़ो
+		 * beक्रमe we checked ownership */
 		rmb();
 
 		skb = priv->tx_skb[priv->tx_dirty_desc];
-		priv->tx_skb[priv->tx_dirty_desc] = NULL;
+		priv->tx_skb[priv->tx_dirty_desc] = शून्य;
 		dma_unmap_single(&priv->pdev->dev, desc->address, skb->len,
 				 DMA_TO_DEVICE);
 
 		priv->tx_dirty_desc++;
-		if (priv->tx_dirty_desc == priv->tx_ring_size)
+		अगर (priv->tx_dirty_desc == priv->tx_ring_size)
 			priv->tx_dirty_desc = 0;
 		priv->tx_desc_count++;
 
 		spin_unlock(&priv->tx_lock);
 
-		if (desc->len_stat & DMADESC_UNDER_MASK)
+		अगर (desc->len_stat & DMADESC_UNDER_MASK)
 			dev->stats.tx_errors++;
 
 		bytes += skb->len;
-		dev_kfree_skb(skb);
+		dev_kमुक्त_skb(skb);
 		released++;
-	}
+	पूर्ण
 
 	netdev_completed_queue(dev, released, bytes);
 
-	if (netif_queue_stopped(dev) && released)
-		netif_wake_queue(dev);
+	अगर (netअगर_queue_stopped(dev) && released)
+		netअगर_wake_queue(dev);
 
-	return released;
-}
+	वापस released;
+पूर्ण
 
 /*
  * poll func, called by network core
  */
-static int bcm_enet_poll(struct napi_struct *napi, int budget)
-{
-	struct bcm_enet_priv *priv;
-	struct net_device *dev;
-	int rx_work_done;
+अटल पूर्णांक bcm_enet_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा net_device *dev;
+	पूर्णांक rx_work_करोne;
 
-	priv = container_of(napi, struct bcm_enet_priv, napi);
+	priv = container_of(napi, काष्ठा bcm_enet_priv, napi);
 	dev = priv->net_dev;
 
-	/* ack interrupts */
-	enet_dmac_writel(priv, priv->dma_chan_int_mask,
+	/* ack पूर्णांकerrupts */
+	enet_dmac_ग_लिखोl(priv, priv->dma_chan_पूर्णांक_mask,
 			 ENETDMAC_IR, priv->rx_chan);
-	enet_dmac_writel(priv, priv->dma_chan_int_mask,
+	enet_dmac_ग_लिखोl(priv, priv->dma_chan_पूर्णांक_mask,
 			 ENETDMAC_IR, priv->tx_chan);
 
 	/* reclaim sent skb */
 	bcm_enet_tx_reclaim(dev, 0);
 
 	spin_lock(&priv->rx_lock);
-	rx_work_done = bcm_enet_receive_queue(dev, budget);
+	rx_work_करोne = bcm_enet_receive_queue(dev, budget);
 	spin_unlock(&priv->rx_lock);
 
-	if (rx_work_done >= budget) {
+	अगर (rx_work_करोne >= budget) अणु
 		/* rx queue is not yet empty/clean */
-		return rx_work_done;
-	}
+		वापस rx_work_करोne;
+	पूर्ण
 
-	/* no more packet in rx/tx queue, remove device from poll
+	/* no more packet in rx/tx queue, हटाओ device from poll
 	 * queue */
-	napi_complete_done(napi, rx_work_done);
+	napi_complete_करोne(napi, rx_work_करोne);
 
-	/* restore rx/tx interrupt */
-	enet_dmac_writel(priv, priv->dma_chan_int_mask,
+	/* restore rx/tx पूर्णांकerrupt */
+	enet_dmac_ग_लिखोl(priv, priv->dma_chan_पूर्णांक_mask,
 			 ENETDMAC_IRMASK, priv->rx_chan);
-	enet_dmac_writel(priv, priv->dma_chan_int_mask,
+	enet_dmac_ग_लिखोl(priv, priv->dma_chan_पूर्णांक_mask,
 			 ENETDMAC_IRMASK, priv->tx_chan);
 
-	return rx_work_done;
-}
+	वापस rx_work_करोne;
+पूर्ण
 
 /*
- * mac interrupt handler
+ * mac पूर्णांकerrupt handler
  */
-static irqreturn_t bcm_enet_isr_mac(int irq, void *dev_id)
-{
-	struct net_device *dev;
-	struct bcm_enet_priv *priv;
+अटल irqवापस_t bcm_enet_isr_mac(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा bcm_enet_priv *priv;
 	u32 stat;
 
 	dev = dev_id;
 	priv = netdev_priv(dev);
 
-	stat = enet_readl(priv, ENET_IR_REG);
-	if (!(stat & ENET_IR_MIB))
-		return IRQ_NONE;
+	stat = enet_पढ़ोl(priv, ENET_IR_REG);
+	अगर (!(stat & ENET_IR_MIB))
+		वापस IRQ_NONE;
 
-	/* clear & mask interrupt */
-	enet_writel(priv, ENET_IR_MIB, ENET_IR_REG);
-	enet_writel(priv, 0, ENET_IRMASK_REG);
+	/* clear & mask पूर्णांकerrupt */
+	enet_ग_लिखोl(priv, ENET_IR_MIB, ENET_IR_REG);
+	enet_ग_लिखोl(priv, 0, ENET_IRMASK_REG);
 
-	/* read mib registers in workqueue */
+	/* पढ़ो mib रेजिस्टरs in workqueue */
 	schedule_work(&priv->mib_update_task);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * rx/tx dma interrupt handler
+ * rx/tx dma पूर्णांकerrupt handler
  */
-static irqreturn_t bcm_enet_isr_dma(int irq, void *dev_id)
-{
-	struct net_device *dev;
-	struct bcm_enet_priv *priv;
+अटल irqवापस_t bcm_enet_isr_dma(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा bcm_enet_priv *priv;
 
 	dev = dev_id;
 	priv = netdev_priv(dev);
 
-	/* mask rx/tx interrupts */
-	enet_dmac_writel(priv, 0, ENETDMAC_IRMASK, priv->rx_chan);
-	enet_dmac_writel(priv, 0, ENETDMAC_IRMASK, priv->tx_chan);
+	/* mask rx/tx पूर्णांकerrupts */
+	enet_dmac_ग_लिखोl(priv, 0, ENETDMAC_IRMASK, priv->rx_chan);
+	enet_dmac_ग_लिखोl(priv, 0, ENETDMAC_IRMASK, priv->tx_chan);
 
 	napi_schedule(&priv->napi);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
  * tx request callback
  */
-static netdev_tx_t
-bcm_enet_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct bcm_enet_priv *priv;
-	struct bcm_enet_desc *desc;
+अटल netdev_tx_t
+bcm_enet_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा bcm_enet_desc *desc;
 	u32 len_stat;
 	netdev_tx_t ret;
 
@@ -586,35 +587,35 @@ bcm_enet_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	spin_lock(&priv->tx_lock);
 
 	/* make sure  the tx hw queue  is not full,  should not happen
-	 * since we stop queue before it's the case */
-	if (unlikely(!priv->tx_desc_count)) {
-		netif_stop_queue(dev);
+	 * since we stop queue beक्रमe it's the हाल */
+	अगर (unlikely(!priv->tx_desc_count)) अणु
+		netअगर_stop_queue(dev);
 		dev_err(&priv->pdev->dev, "xmit called with no tx desc "
 			"available?\n");
 		ret = NETDEV_TX_BUSY;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	/* pad small packets sent on a switch device */
-	if (priv->enet_is_sw && skb->len < 64) {
-		int needed = 64 - skb->len;
-		char *data;
+	/* pad small packets sent on a चयन device */
+	अगर (priv->enet_is_sw && skb->len < 64) अणु
+		पूर्णांक needed = 64 - skb->len;
+		अक्षर *data;
 
-		if (unlikely(skb_tailroom(skb) < needed)) {
-			struct sk_buff *nskb;
+		अगर (unlikely(skb_tailroom(skb) < needed)) अणु
+			काष्ठा sk_buff *nskb;
 
 			nskb = skb_copy_expand(skb, 0, needed, GFP_ATOMIC);
-			if (!nskb) {
+			अगर (!nskb) अणु
 				ret = NETDEV_TX_BUSY;
-				goto out_unlock;
-			}
-			dev_kfree_skb(skb);
+				जाओ out_unlock;
+			पूर्ण
+			dev_kमुक्त_skb(skb);
 			skb = nskb;
-		}
+		पूर्ण
 		data = skb_put_zero(skb, needed);
-	}
+	पूर्ण
 
-	/* point to the next available desc */
+	/* poपूर्णांक to the next available desc */
 	desc = &priv->tx_desc_cpu[priv->tx_curr_desc];
 	priv->tx_skb[priv->tx_curr_desc] = skb;
 
@@ -623,18 +624,18 @@ bcm_enet_start_xmit(struct sk_buff *skb, struct net_device *dev)
 				       DMA_TO_DEVICE);
 
 	len_stat = (skb->len << DMADESC_LENGTH_SHIFT) & DMADESC_LENGTH_MASK;
-	len_stat |= (DMADESC_ESOP_MASK >> priv->dma_desc_shift) |
+	len_stat |= (DMADESC_ESOP_MASK >> priv->dma_desc_shअगरt) |
 		DMADESC_APPEND_CRC |
 		DMADESC_OWNER_MASK;
 
 	priv->tx_curr_desc++;
-	if (priv->tx_curr_desc == priv->tx_ring_size) {
+	अगर (priv->tx_curr_desc == priv->tx_ring_size) अणु
 		priv->tx_curr_desc = 0;
-		len_stat |= (DMADESC_WRAP_MASK >> priv->dma_desc_shift);
-	}
+		len_stat |= (DMADESC_WRAP_MASK >> priv->dma_desc_shअगरt);
+	पूर्ण
 	priv->tx_desc_count--;
 
-	/* dma might be already polling, make sure we update desc
+	/* dma might be alपढ़ोy polling, make sure we update desc
 	 * fields in correct order */
 	wmb();
 	desc->len_stat = len_stat;
@@ -643,13 +644,13 @@ bcm_enet_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	netdev_sent_queue(dev, skb->len);
 
 	/* kick tx dma */
-	if (!netdev_xmit_more() || !priv->tx_desc_count)
-		enet_dmac_writel(priv, priv->dma_chan_en_mask,
+	अगर (!netdev_xmit_more() || !priv->tx_desc_count)
+		enet_dmac_ग_लिखोl(priv, priv->dma_chan_en_mask,
 				 ENETDMAC_CHANCFG, priv->tx_chan);
 
-	/* stop queue if no more desc available */
-	if (!priv->tx_desc_count)
-		netif_stop_queue(dev);
+	/* stop queue अगर no more desc available */
+	अगर (!priv->tx_desc_count)
+		netअगर_stop_queue(dev);
 
 	dev->stats.tx_bytes += skb->len;
 	dev->stats.tx_packets++;
@@ -657,336 +658,336 @@ bcm_enet_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 out_unlock:
 	spin_unlock(&priv->tx_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Change the interface's mac address.
+ * Change the पूर्णांकerface's mac address.
  */
-static int bcm_enet_set_mac_address(struct net_device *dev, void *p)
-{
-	struct bcm_enet_priv *priv;
-	struct sockaddr *addr = p;
+अटल पूर्णांक bcm_enet_set_mac_address(काष्ठा net_device *dev, व्योम *p)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा sockaddr *addr = p;
 	u32 val;
 
 	priv = netdev_priv(dev);
-	memcpy(dev->dev_addr, addr->sa_data, ETH_ALEN);
+	स_नकल(dev->dev_addr, addr->sa_data, ETH_ALEN);
 
-	/* use perfect match register 0 to store my mac address */
+	/* use perfect match रेजिस्टर 0 to store my mac address */
 	val = (dev->dev_addr[2] << 24) | (dev->dev_addr[3] << 16) |
 		(dev->dev_addr[4] << 8) | dev->dev_addr[5];
-	enet_writel(priv, val, ENET_PML_REG(0));
+	enet_ग_लिखोl(priv, val, ENET_PML_REG(0));
 
 	val = (dev->dev_addr[0] << 8 | dev->dev_addr[1]);
 	val |= ENET_PMH_DATAVALID_MASK;
-	enet_writel(priv, val, ENET_PMH_REG(0));
+	enet_ग_लिखोl(priv, val, ENET_PMH_REG(0));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Change rx mode (promiscuous/allmulti) and update multicast list
  */
-static void bcm_enet_set_multicast_list(struct net_device *dev)
-{
-	struct bcm_enet_priv *priv;
-	struct netdev_hw_addr *ha;
+अटल व्योम bcm_enet_set_multicast_list(काष्ठा net_device *dev)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा netdev_hw_addr *ha;
 	u32 val;
-	int i;
+	पूर्णांक i;
 
 	priv = netdev_priv(dev);
 
-	val = enet_readl(priv, ENET_RXCFG_REG);
+	val = enet_पढ़ोl(priv, ENET_RXCFG_REG);
 
-	if (dev->flags & IFF_PROMISC)
+	अगर (dev->flags & IFF_PROMISC)
 		val |= ENET_RXCFG_PROMISC_MASK;
-	else
+	अन्यथा
 		val &= ~ENET_RXCFG_PROMISC_MASK;
 
-	/* only 3 perfect match registers left, first one is used for
+	/* only 3 perfect match रेजिस्टरs left, first one is used क्रम
 	 * own mac address */
-	if ((dev->flags & IFF_ALLMULTI) || netdev_mc_count(dev) > 3)
+	अगर ((dev->flags & IFF_ALLMULTI) || netdev_mc_count(dev) > 3)
 		val |= ENET_RXCFG_ALLMCAST_MASK;
-	else
+	अन्यथा
 		val &= ~ENET_RXCFG_ALLMCAST_MASK;
 
-	/* no need to set perfect match registers if we catch all
+	/* no need to set perfect match रेजिस्टरs अगर we catch all
 	 * multicast */
-	if (val & ENET_RXCFG_ALLMCAST_MASK) {
-		enet_writel(priv, val, ENET_RXCFG_REG);
-		return;
-	}
+	अगर (val & ENET_RXCFG_ALLMCAST_MASK) अणु
+		enet_ग_लिखोl(priv, val, ENET_RXCFG_REG);
+		वापस;
+	पूर्ण
 
 	i = 0;
-	netdev_for_each_mc_addr(ha, dev) {
+	netdev_क्रम_each_mc_addr(ha, dev) अणु
 		u8 *dmi_addr;
-		u32 tmp;
+		u32 पंचांगp;
 
-		if (i == 3)
-			break;
-		/* update perfect match registers */
+		अगर (i == 3)
+			अवरोध;
+		/* update perfect match रेजिस्टरs */
 		dmi_addr = ha->addr;
-		tmp = (dmi_addr[2] << 24) | (dmi_addr[3] << 16) |
+		पंचांगp = (dmi_addr[2] << 24) | (dmi_addr[3] << 16) |
 			(dmi_addr[4] << 8) | dmi_addr[5];
-		enet_writel(priv, tmp, ENET_PML_REG(i + 1));
+		enet_ग_लिखोl(priv, पंचांगp, ENET_PML_REG(i + 1));
 
-		tmp = (dmi_addr[0] << 8 | dmi_addr[1]);
-		tmp |= ENET_PMH_DATAVALID_MASK;
-		enet_writel(priv, tmp, ENET_PMH_REG(i++ + 1));
-	}
+		पंचांगp = (dmi_addr[0] << 8 | dmi_addr[1]);
+		पंचांगp |= ENET_PMH_DATAVALID_MASK;
+		enet_ग_लिखोl(priv, पंचांगp, ENET_PMH_REG(i++ + 1));
+	पूर्ण
 
-	for (; i < 3; i++) {
-		enet_writel(priv, 0, ENET_PML_REG(i + 1));
-		enet_writel(priv, 0, ENET_PMH_REG(i + 1));
-	}
+	क्रम (; i < 3; i++) अणु
+		enet_ग_लिखोl(priv, 0, ENET_PML_REG(i + 1));
+		enet_ग_लिखोl(priv, 0, ENET_PMH_REG(i + 1));
+	पूर्ण
 
-	enet_writel(priv, val, ENET_RXCFG_REG);
-}
+	enet_ग_लिखोl(priv, val, ENET_RXCFG_REG);
+पूर्ण
 
 /*
  * set mac duplex parameters
  */
-static void bcm_enet_set_duplex(struct bcm_enet_priv *priv, int fullduplex)
-{
+अटल व्योम bcm_enet_set_duplex(काष्ठा bcm_enet_priv *priv, पूर्णांक fullduplex)
+अणु
 	u32 val;
 
-	val = enet_readl(priv, ENET_TXCTL_REG);
-	if (fullduplex)
+	val = enet_पढ़ोl(priv, ENET_TXCTL_REG);
+	अगर (fullduplex)
 		val |= ENET_TXCTL_FD_MASK;
-	else
+	अन्यथा
 		val &= ~ENET_TXCTL_FD_MASK;
-	enet_writel(priv, val, ENET_TXCTL_REG);
-}
+	enet_ग_लिखोl(priv, val, ENET_TXCTL_REG);
+पूर्ण
 
 /*
  * set mac flow control parameters
  */
-static void bcm_enet_set_flow(struct bcm_enet_priv *priv, int rx_en, int tx_en)
-{
+अटल व्योम bcm_enet_set_flow(काष्ठा bcm_enet_priv *priv, पूर्णांक rx_en, पूर्णांक tx_en)
+अणु
 	u32 val;
 
-	/* rx flow control (pause frame handling) */
-	val = enet_readl(priv, ENET_RXCFG_REG);
-	if (rx_en)
+	/* rx flow control (छोड़ो frame handling) */
+	val = enet_पढ़ोl(priv, ENET_RXCFG_REG);
+	अगर (rx_en)
 		val |= ENET_RXCFG_ENFLOW_MASK;
-	else
+	अन्यथा
 		val &= ~ENET_RXCFG_ENFLOW_MASK;
-	enet_writel(priv, val, ENET_RXCFG_REG);
+	enet_ग_लिखोl(priv, val, ENET_RXCFG_REG);
 
-	if (!priv->dma_has_sram)
-		return;
+	अगर (!priv->dma_has_sram)
+		वापस;
 
-	/* tx flow control (pause frame generation) */
-	val = enet_dma_readl(priv, ENETDMA_CFG_REG);
-	if (tx_en)
+	/* tx flow control (छोड़ो frame generation) */
+	val = enet_dma_पढ़ोl(priv, ENETDMA_CFG_REG);
+	अगर (tx_en)
 		val |= ENETDMA_CFG_FLOWCH_MASK(priv->rx_chan);
-	else
+	अन्यथा
 		val &= ~ENETDMA_CFG_FLOWCH_MASK(priv->rx_chan);
-	enet_dma_writel(priv, val, ENETDMA_CFG_REG);
-}
+	enet_dma_ग_लिखोl(priv, val, ENETDMA_CFG_REG);
+पूर्ण
 
 /*
  * link changed callback (from phylib)
  */
-static void bcm_enet_adjust_phy_link(struct net_device *dev)
-{
-	struct bcm_enet_priv *priv;
-	struct phy_device *phydev;
-	int status_changed;
+अटल व्योम bcm_enet_adjust_phy_link(काष्ठा net_device *dev)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा phy_device *phydev;
+	पूर्णांक status_changed;
 
 	priv = netdev_priv(dev);
 	phydev = dev->phydev;
 	status_changed = 0;
 
-	if (priv->old_link != phydev->link) {
+	अगर (priv->old_link != phydev->link) अणु
 		status_changed = 1;
 		priv->old_link = phydev->link;
-	}
+	पूर्ण
 
 	/* reflect duplex change in mac configuration */
-	if (phydev->link && phydev->duplex != priv->old_duplex) {
+	अगर (phydev->link && phydev->duplex != priv->old_duplex) अणु
 		bcm_enet_set_duplex(priv,
 				    (phydev->duplex == DUPLEX_FULL) ? 1 : 0);
 		status_changed = 1;
 		priv->old_duplex = phydev->duplex;
-	}
+	पूर्ण
 
-	/* enable flow control if remote advertise it (trust phylib to
+	/* enable flow control अगर remote advertise it (trust phylib to
 	 * check that duplex is full */
-	if (phydev->link && phydev->pause != priv->old_pause) {
-		int rx_pause_en, tx_pause_en;
+	अगर (phydev->link && phydev->छोड़ो != priv->old_छोड़ो) अणु
+		पूर्णांक rx_छोड़ो_en, tx_छोड़ो_en;
 
-		if (phydev->pause) {
-			/* pause was advertised by lpa and us */
-			rx_pause_en = 1;
-			tx_pause_en = 1;
-		} else if (!priv->pause_auto) {
-			/* pause setting overridden by user */
-			rx_pause_en = priv->pause_rx;
-			tx_pause_en = priv->pause_tx;
-		} else {
-			rx_pause_en = 0;
-			tx_pause_en = 0;
-		}
+		अगर (phydev->छोड़ो) अणु
+			/* छोड़ो was advertised by lpa and us */
+			rx_छोड़ो_en = 1;
+			tx_छोड़ो_en = 1;
+		पूर्ण अन्यथा अगर (!priv->छोड़ो_स्वतः) अणु
+			/* छोड़ो setting overridden by user */
+			rx_छोड़ो_en = priv->छोड़ो_rx;
+			tx_छोड़ो_en = priv->छोड़ो_tx;
+		पूर्ण अन्यथा अणु
+			rx_छोड़ो_en = 0;
+			tx_छोड़ो_en = 0;
+		पूर्ण
 
-		bcm_enet_set_flow(priv, rx_pause_en, tx_pause_en);
+		bcm_enet_set_flow(priv, rx_छोड़ो_en, tx_छोड़ो_en);
 		status_changed = 1;
-		priv->old_pause = phydev->pause;
-	}
+		priv->old_छोड़ो = phydev->छोड़ो;
+	पूर्ण
 
-	if (status_changed) {
+	अगर (status_changed) अणु
 		pr_info("%s: link %s", dev->name, phydev->link ?
 			"UP" : "DOWN");
-		if (phydev->link)
+		अगर (phydev->link)
 			pr_cont(" - %d/%s - flow control %s", phydev->speed,
 			       DUPLEX_FULL == phydev->duplex ? "full" : "half",
-			       phydev->pause == 1 ? "rx&tx" : "off");
+			       phydev->छोड़ो == 1 ? "rx&tx" : "off");
 
 		pr_cont("\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * link changed callback (if phylib is not used)
+ * link changed callback (अगर phylib is not used)
  */
-static void bcm_enet_adjust_link(struct net_device *dev)
-{
-	struct bcm_enet_priv *priv;
+अटल व्योम bcm_enet_adjust_link(काष्ठा net_device *dev)
+अणु
+	काष्ठा bcm_enet_priv *priv;
 
 	priv = netdev_priv(dev);
-	bcm_enet_set_duplex(priv, priv->force_duplex_full);
-	bcm_enet_set_flow(priv, priv->pause_rx, priv->pause_tx);
-	netif_carrier_on(dev);
+	bcm_enet_set_duplex(priv, priv->क्रमce_duplex_full);
+	bcm_enet_set_flow(priv, priv->छोड़ो_rx, priv->छोड़ो_tx);
+	netअगर_carrier_on(dev);
 
 	pr_info("%s: link forced UP - %d/%s - flow control %s/%s\n",
 		dev->name,
-		priv->force_speed_100 ? 100 : 10,
-		priv->force_duplex_full ? "full" : "half",
-		priv->pause_rx ? "rx" : "off",
-		priv->pause_tx ? "tx" : "off");
-}
+		priv->क्रमce_speed_100 ? 100 : 10,
+		priv->क्रमce_duplex_full ? "full" : "half",
+		priv->छोड़ो_rx ? "rx" : "off",
+		priv->छोड़ो_tx ? "tx" : "off");
+पूर्ण
 
-static void bcm_enet_free_rx_buf_ring(struct device *kdev, struct bcm_enet_priv *priv)
-{
-	int i;
+अटल व्योम bcm_enet_मुक्त_rx_buf_ring(काष्ठा device *kdev, काष्ठा bcm_enet_priv *priv)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < priv->rx_ring_size; i++) {
-		struct bcm_enet_desc *desc;
+	क्रम (i = 0; i < priv->rx_ring_size; i++) अणु
+		काष्ठा bcm_enet_desc *desc;
 
-		if (!priv->rx_buf[i])
-			continue;
+		अगर (!priv->rx_buf[i])
+			जारी;
 
 		desc = &priv->rx_desc_cpu[i];
 		dma_unmap_single(kdev, desc->address, priv->rx_buf_size,
 				 DMA_FROM_DEVICE);
-		skb_free_frag(priv->rx_buf[i]);
-	}
-	kfree(priv->rx_buf);
-}
+		skb_मुक्त_frag(priv->rx_buf[i]);
+	पूर्ण
+	kमुक्त(priv->rx_buf);
+पूर्ण
 
 /*
- * open callback, allocate dma rings & buffers and start rx operation
+ * खोलो callback, allocate dma rings & buffers and start rx operation
  */
-static int bcm_enet_open(struct net_device *dev)
-{
-	struct bcm_enet_priv *priv;
-	struct sockaddr addr;
-	struct device *kdev;
-	struct phy_device *phydev;
-	int i, ret;
-	unsigned int size;
-	char phy_id[MII_BUS_ID_SIZE + 3];
-	void *p;
+अटल पूर्णांक bcm_enet_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा sockaddr addr;
+	काष्ठा device *kdev;
+	काष्ठा phy_device *phydev;
+	पूर्णांक i, ret;
+	अचिन्हित पूर्णांक size;
+	अक्षर phy_id[MII_BUS_ID_SIZE + 3];
+	व्योम *p;
 	u32 val;
 
 	priv = netdev_priv(dev);
 	kdev = &priv->pdev->dev;
 
-	if (priv->has_phy) {
+	अगर (priv->has_phy) अणु
 		/* connect to PHY */
-		snprintf(phy_id, sizeof(phy_id), PHY_ID_FMT,
+		snम_लिखो(phy_id, माप(phy_id), PHY_ID_FMT,
 			 priv->mii_bus->id, priv->phy_id);
 
 		phydev = phy_connect(dev, phy_id, bcm_enet_adjust_phy_link,
 				     PHY_INTERFACE_MODE_MII);
 
-		if (IS_ERR(phydev)) {
+		अगर (IS_ERR(phydev)) अणु
 			dev_err(kdev, "could not attach to PHY\n");
-			return PTR_ERR(phydev);
-		}
+			वापस PTR_ERR(phydev);
+		पूर्ण
 
 		/* mask with MAC supported features */
-		phy_support_sym_pause(phydev);
+		phy_support_sym_छोड़ो(phydev);
 		phy_set_max_speed(phydev, SPEED_100);
-		phy_set_sym_pause(phydev, priv->pause_rx, priv->pause_rx,
-				  priv->pause_auto);
+		phy_set_sym_छोड़ो(phydev, priv->छोड़ो_rx, priv->छोड़ो_rx,
+				  priv->छोड़ो_स्वतः);
 
 		phy_attached_info(phydev);
 
 		priv->old_link = 0;
 		priv->old_duplex = -1;
-		priv->old_pause = -1;
-	} else {
-		phydev = NULL;
-	}
+		priv->old_छोड़ो = -1;
+	पूर्ण अन्यथा अणु
+		phydev = शून्य;
+	पूर्ण
 
-	/* mask all interrupts and request them */
-	enet_writel(priv, 0, ENET_IRMASK_REG);
-	enet_dmac_writel(priv, 0, ENETDMAC_IRMASK, priv->rx_chan);
-	enet_dmac_writel(priv, 0, ENETDMAC_IRMASK, priv->tx_chan);
+	/* mask all पूर्णांकerrupts and request them */
+	enet_ग_लिखोl(priv, 0, ENET_IRMASK_REG);
+	enet_dmac_ग_लिखोl(priv, 0, ENETDMAC_IRMASK, priv->rx_chan);
+	enet_dmac_ग_लिखोl(priv, 0, ENETDMAC_IRMASK, priv->tx_chan);
 
 	ret = request_irq(dev->irq, bcm_enet_isr_mac, 0, dev->name, dev);
-	if (ret)
-		goto out_phy_disconnect;
+	अगर (ret)
+		जाओ out_phy_disconnect;
 
 	ret = request_irq(priv->irq_rx, bcm_enet_isr_dma, 0,
 			  dev->name, dev);
-	if (ret)
-		goto out_freeirq;
+	अगर (ret)
+		जाओ out_मुक्तirq;
 
 	ret = request_irq(priv->irq_tx, bcm_enet_isr_dma,
 			  0, dev->name, dev);
-	if (ret)
-		goto out_freeirq_rx;
+	अगर (ret)
+		जाओ out_मुक्तirq_rx;
 
-	/* initialize perfect match registers */
-	for (i = 0; i < 4; i++) {
-		enet_writel(priv, 0, ENET_PML_REG(i));
-		enet_writel(priv, 0, ENET_PMH_REG(i));
-	}
+	/* initialize perfect match रेजिस्टरs */
+	क्रम (i = 0; i < 4; i++) अणु
+		enet_ग_लिखोl(priv, 0, ENET_PML_REG(i));
+		enet_ग_लिखोl(priv, 0, ENET_PMH_REG(i));
+	पूर्ण
 
-	/* write device mac address */
-	memcpy(addr.sa_data, dev->dev_addr, ETH_ALEN);
+	/* ग_लिखो device mac address */
+	स_नकल(addr.sa_data, dev->dev_addr, ETH_ALEN);
 	bcm_enet_set_mac_address(dev, &addr);
 
 	/* allocate rx dma ring */
-	size = priv->rx_ring_size * sizeof(struct bcm_enet_desc);
+	size = priv->rx_ring_size * माप(काष्ठा bcm_enet_desc);
 	p = dma_alloc_coherent(kdev, size, &priv->rx_desc_dma, GFP_KERNEL);
-	if (!p) {
+	अगर (!p) अणु
 		ret = -ENOMEM;
-		goto out_freeirq_tx;
-	}
+		जाओ out_मुक्तirq_tx;
+	पूर्ण
 
 	priv->rx_desc_alloc_size = size;
 	priv->rx_desc_cpu = p;
 
 	/* allocate tx dma ring */
-	size = priv->tx_ring_size * sizeof(struct bcm_enet_desc);
+	size = priv->tx_ring_size * माप(काष्ठा bcm_enet_desc);
 	p = dma_alloc_coherent(kdev, size, &priv->tx_desc_dma, GFP_KERNEL);
-	if (!p) {
+	अगर (!p) अणु
 		ret = -ENOMEM;
-		goto out_free_rx_ring;
-	}
+		जाओ out_मुक्त_rx_ring;
+	पूर्ण
 
 	priv->tx_desc_alloc_size = size;
 	priv->tx_desc_cpu = p;
 
-	priv->tx_skb = kcalloc(priv->tx_ring_size, sizeof(struct sk_buff *),
+	priv->tx_skb = kसुस्मृति(priv->tx_ring_size, माप(काष्ठा sk_buff *),
 			       GFP_KERNEL);
-	if (!priv->tx_skb) {
+	अगर (!priv->tx_skb) अणु
 		ret = -ENOMEM;
-		goto out_free_tx_ring;
-	}
+		जाओ out_मुक्त_tx_ring;
+	पूर्ण
 
 	priv->tx_desc_count = priv->tx_ring_size;
 	priv->tx_dirty_desc = 0;
@@ -994,213 +995,213 @@ static int bcm_enet_open(struct net_device *dev)
 	spin_lock_init(&priv->tx_lock);
 
 	/* init & fill rx ring with buffers */
-	priv->rx_buf = kcalloc(priv->rx_ring_size, sizeof(void *),
+	priv->rx_buf = kसुस्मृति(priv->rx_ring_size, माप(व्योम *),
 			       GFP_KERNEL);
-	if (!priv->rx_buf) {
+	अगर (!priv->rx_buf) अणु
 		ret = -ENOMEM;
-		goto out_free_tx_skb;
-	}
+		जाओ out_मुक्त_tx_skb;
+	पूर्ण
 
 	priv->rx_desc_count = 0;
 	priv->rx_dirty_desc = 0;
 	priv->rx_curr_desc = 0;
 
 	/* initialize flow control buffer allocation */
-	if (priv->dma_has_sram)
-		enet_dma_writel(priv, ENETDMA_BUFALLOC_FORCE_MASK | 0,
+	अगर (priv->dma_has_sram)
+		enet_dma_ग_लिखोl(priv, ENETDMA_BUFALLOC_FORCE_MASK | 0,
 				ENETDMA_BUFALLOC_REG(priv->rx_chan));
-	else
-		enet_dmac_writel(priv, ENETDMA_BUFALLOC_FORCE_MASK | 0,
+	अन्यथा
+		enet_dmac_ग_लिखोl(priv, ENETDMA_BUFALLOC_FORCE_MASK | 0,
 				ENETDMAC_BUFALLOC, priv->rx_chan);
 
-	if (bcm_enet_refill_rx(dev, false)) {
+	अगर (bcm_enet_refill_rx(dev, false)) अणु
 		dev_err(kdev, "cannot allocate rx buffer queue\n");
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* write rx & tx ring addresses */
-	if (priv->dma_has_sram) {
-		enet_dmas_writel(priv, priv->rx_desc_dma,
+	/* ग_लिखो rx & tx ring addresses */
+	अगर (priv->dma_has_sram) अणु
+		enet_dmas_ग_लिखोl(priv, priv->rx_desc_dma,
 				 ENETDMAS_RSTART_REG, priv->rx_chan);
-		enet_dmas_writel(priv, priv->tx_desc_dma,
+		enet_dmas_ग_लिखोl(priv, priv->tx_desc_dma,
 			 ENETDMAS_RSTART_REG, priv->tx_chan);
-	} else {
-		enet_dmac_writel(priv, priv->rx_desc_dma,
+	पूर्ण अन्यथा अणु
+		enet_dmac_ग_लिखोl(priv, priv->rx_desc_dma,
 				ENETDMAC_RSTART, priv->rx_chan);
-		enet_dmac_writel(priv, priv->tx_desc_dma,
+		enet_dmac_ग_लिखोl(priv, priv->tx_desc_dma,
 				ENETDMAC_RSTART, priv->tx_chan);
-	}
+	पूर्ण
 
-	/* clear remaining state ram for rx & tx channel */
-	if (priv->dma_has_sram) {
-		enet_dmas_writel(priv, 0, ENETDMAS_SRAM2_REG, priv->rx_chan);
-		enet_dmas_writel(priv, 0, ENETDMAS_SRAM2_REG, priv->tx_chan);
-		enet_dmas_writel(priv, 0, ENETDMAS_SRAM3_REG, priv->rx_chan);
-		enet_dmas_writel(priv, 0, ENETDMAS_SRAM3_REG, priv->tx_chan);
-		enet_dmas_writel(priv, 0, ENETDMAS_SRAM4_REG, priv->rx_chan);
-		enet_dmas_writel(priv, 0, ENETDMAS_SRAM4_REG, priv->tx_chan);
-	} else {
-		enet_dmac_writel(priv, 0, ENETDMAC_FC, priv->rx_chan);
-		enet_dmac_writel(priv, 0, ENETDMAC_FC, priv->tx_chan);
-	}
+	/* clear reमुख्यing state ram क्रम rx & tx channel */
+	अगर (priv->dma_has_sram) अणु
+		enet_dmas_ग_लिखोl(priv, 0, ENETDMAS_SRAM2_REG, priv->rx_chan);
+		enet_dmas_ग_लिखोl(priv, 0, ENETDMAS_SRAM2_REG, priv->tx_chan);
+		enet_dmas_ग_लिखोl(priv, 0, ENETDMAS_SRAM3_REG, priv->rx_chan);
+		enet_dmas_ग_लिखोl(priv, 0, ENETDMAS_SRAM3_REG, priv->tx_chan);
+		enet_dmas_ग_लिखोl(priv, 0, ENETDMAS_SRAM4_REG, priv->rx_chan);
+		enet_dmas_ग_लिखोl(priv, 0, ENETDMAS_SRAM4_REG, priv->tx_chan);
+	पूर्ण अन्यथा अणु
+		enet_dmac_ग_लिखोl(priv, 0, ENETDMAC_FC, priv->rx_chan);
+		enet_dmac_ग_लिखोl(priv, 0, ENETDMAC_FC, priv->tx_chan);
+	पूर्ण
 
 	/* set max rx/tx length */
-	enet_writel(priv, priv->hw_mtu, ENET_RXMAXLEN_REG);
-	enet_writel(priv, priv->hw_mtu, ENET_TXMAXLEN_REG);
+	enet_ग_लिखोl(priv, priv->hw_mtu, ENET_RXMAXLEN_REG);
+	enet_ग_लिखोl(priv, priv->hw_mtu, ENET_TXMAXLEN_REG);
 
 	/* set dma maximum burst len */
-	enet_dmac_writel(priv, priv->dma_maxburst,
+	enet_dmac_ग_लिखोl(priv, priv->dma_maxburst,
 			 ENETDMAC_MAXBURST, priv->rx_chan);
-	enet_dmac_writel(priv, priv->dma_maxburst,
+	enet_dmac_ग_लिखोl(priv, priv->dma_maxburst,
 			 ENETDMAC_MAXBURST, priv->tx_chan);
 
-	/* set correct transmit fifo watermark */
-	enet_writel(priv, BCMENET_TX_FIFO_TRESH, ENET_TXWMARK_REG);
+	/* set correct transmit fअगरo watermark */
+	enet_ग_लिखोl(priv, BCMENET_TX_FIFO_TRESH, ENET_TXWMARK_REG);
 
 	/* set flow control low/high threshold to 1/3 / 2/3 */
-	if (priv->dma_has_sram) {
+	अगर (priv->dma_has_sram) अणु
 		val = priv->rx_ring_size / 3;
-		enet_dma_writel(priv, val, ENETDMA_FLOWCL_REG(priv->rx_chan));
+		enet_dma_ग_लिखोl(priv, val, ENETDMA_FLOWCL_REG(priv->rx_chan));
 		val = (priv->rx_ring_size * 2) / 3;
-		enet_dma_writel(priv, val, ENETDMA_FLOWCH_REG(priv->rx_chan));
-	} else {
-		enet_dmac_writel(priv, 5, ENETDMAC_FC, priv->rx_chan);
-		enet_dmac_writel(priv, priv->rx_ring_size, ENETDMAC_LEN, priv->rx_chan);
-		enet_dmac_writel(priv, priv->tx_ring_size, ENETDMAC_LEN, priv->tx_chan);
-	}
+		enet_dma_ग_लिखोl(priv, val, ENETDMA_FLOWCH_REG(priv->rx_chan));
+	पूर्ण अन्यथा अणु
+		enet_dmac_ग_लिखोl(priv, 5, ENETDMAC_FC, priv->rx_chan);
+		enet_dmac_ग_लिखोl(priv, priv->rx_ring_size, ENETDMAC_LEN, priv->rx_chan);
+		enet_dmac_ग_लिखोl(priv, priv->tx_ring_size, ENETDMAC_LEN, priv->tx_chan);
+	पूर्ण
 
-	/* all set, enable mac and interrupts, start dma engine and
+	/* all set, enable mac and पूर्णांकerrupts, start dma engine and
 	 * kick rx dma channel */
 	wmb();
-	val = enet_readl(priv, ENET_CTL_REG);
+	val = enet_पढ़ोl(priv, ENET_CTL_REG);
 	val |= ENET_CTL_ENABLE_MASK;
-	enet_writel(priv, val, ENET_CTL_REG);
-	if (priv->dma_has_sram)
-		enet_dma_writel(priv, ENETDMA_CFG_EN_MASK, ENETDMA_CFG_REG);
-	enet_dmac_writel(priv, priv->dma_chan_en_mask,
+	enet_ग_लिखोl(priv, val, ENET_CTL_REG);
+	अगर (priv->dma_has_sram)
+		enet_dma_ग_लिखोl(priv, ENETDMA_CFG_EN_MASK, ENETDMA_CFG_REG);
+	enet_dmac_ग_लिखोl(priv, priv->dma_chan_en_mask,
 			 ENETDMAC_CHANCFG, priv->rx_chan);
 
-	/* watch "mib counters about to overflow" interrupt */
-	enet_writel(priv, ENET_IR_MIB, ENET_IR_REG);
-	enet_writel(priv, ENET_IR_MIB, ENET_IRMASK_REG);
+	/* watch "mib counters about to overflow" पूर्णांकerrupt */
+	enet_ग_लिखोl(priv, ENET_IR_MIB, ENET_IR_REG);
+	enet_ग_लिखोl(priv, ENET_IR_MIB, ENET_IRMASK_REG);
 
-	/* watch "packet transferred" interrupt in rx and tx */
-	enet_dmac_writel(priv, priv->dma_chan_int_mask,
+	/* watch "packet transferred" पूर्णांकerrupt in rx and tx */
+	enet_dmac_ग_लिखोl(priv, priv->dma_chan_पूर्णांक_mask,
 			 ENETDMAC_IR, priv->rx_chan);
-	enet_dmac_writel(priv, priv->dma_chan_int_mask,
+	enet_dmac_ग_लिखोl(priv, priv->dma_chan_पूर्णांक_mask,
 			 ENETDMAC_IR, priv->tx_chan);
 
-	/* make sure we enable napi before rx interrupt  */
+	/* make sure we enable napi beक्रमe rx पूर्णांकerrupt  */
 	napi_enable(&priv->napi);
 
-	enet_dmac_writel(priv, priv->dma_chan_int_mask,
+	enet_dmac_ग_लिखोl(priv, priv->dma_chan_पूर्णांक_mask,
 			 ENETDMAC_IRMASK, priv->rx_chan);
-	enet_dmac_writel(priv, priv->dma_chan_int_mask,
+	enet_dmac_ग_लिखोl(priv, priv->dma_chan_पूर्णांक_mask,
 			 ENETDMAC_IRMASK, priv->tx_chan);
 
-	if (phydev)
+	अगर (phydev)
 		phy_start(phydev);
-	else
+	अन्यथा
 		bcm_enet_adjust_link(dev);
 
-	netif_start_queue(dev);
-	return 0;
+	netअगर_start_queue(dev);
+	वापस 0;
 
 out:
-	bcm_enet_free_rx_buf_ring(kdev, priv);
+	bcm_enet_मुक्त_rx_buf_ring(kdev, priv);
 
-out_free_tx_skb:
-	kfree(priv->tx_skb);
+out_मुक्त_tx_skb:
+	kमुक्त(priv->tx_skb);
 
-out_free_tx_ring:
-	dma_free_coherent(kdev, priv->tx_desc_alloc_size,
+out_मुक्त_tx_ring:
+	dma_मुक्त_coherent(kdev, priv->tx_desc_alloc_size,
 			  priv->tx_desc_cpu, priv->tx_desc_dma);
 
-out_free_rx_ring:
-	dma_free_coherent(kdev, priv->rx_desc_alloc_size,
+out_मुक्त_rx_ring:
+	dma_मुक्त_coherent(kdev, priv->rx_desc_alloc_size,
 			  priv->rx_desc_cpu, priv->rx_desc_dma);
 
-out_freeirq_tx:
-	free_irq(priv->irq_tx, dev);
+out_मुक्तirq_tx:
+	मुक्त_irq(priv->irq_tx, dev);
 
-out_freeirq_rx:
-	free_irq(priv->irq_rx, dev);
+out_मुक्तirq_rx:
+	मुक्त_irq(priv->irq_rx, dev);
 
-out_freeirq:
-	free_irq(dev->irq, dev);
+out_मुक्तirq:
+	मुक्त_irq(dev->irq, dev);
 
 out_phy_disconnect:
-	if (phydev)
+	अगर (phydev)
 		phy_disconnect(phydev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * disable mac
  */
-static void bcm_enet_disable_mac(struct bcm_enet_priv *priv)
-{
-	int limit;
+अटल व्योम bcm_enet_disable_mac(काष्ठा bcm_enet_priv *priv)
+अणु
+	पूर्णांक limit;
 	u32 val;
 
-	val = enet_readl(priv, ENET_CTL_REG);
+	val = enet_पढ़ोl(priv, ENET_CTL_REG);
 	val |= ENET_CTL_DISABLE_MASK;
-	enet_writel(priv, val, ENET_CTL_REG);
+	enet_ग_लिखोl(priv, val, ENET_CTL_REG);
 
 	limit = 1000;
-	do {
+	करो अणु
 		u32 val;
 
-		val = enet_readl(priv, ENET_CTL_REG);
-		if (!(val & ENET_CTL_DISABLE_MASK))
-			break;
+		val = enet_पढ़ोl(priv, ENET_CTL_REG);
+		अगर (!(val & ENET_CTL_DISABLE_MASK))
+			अवरोध;
 		udelay(1);
-	} while (limit--);
-}
+	पूर्ण जबतक (limit--);
+पूर्ण
 
 /*
  * disable dma in given channel
  */
-static void bcm_enet_disable_dma(struct bcm_enet_priv *priv, int chan)
-{
-	int limit;
+अटल व्योम bcm_enet_disable_dma(काष्ठा bcm_enet_priv *priv, पूर्णांक chan)
+अणु
+	पूर्णांक limit;
 
-	enet_dmac_writel(priv, 0, ENETDMAC_CHANCFG, chan);
+	enet_dmac_ग_लिखोl(priv, 0, ENETDMAC_CHANCFG, chan);
 
 	limit = 1000;
-	do {
+	करो अणु
 		u32 val;
 
-		val = enet_dmac_readl(priv, ENETDMAC_CHANCFG, chan);
-		if (!(val & ENETDMAC_CHANCFG_EN_MASK))
-			break;
+		val = enet_dmac_पढ़ोl(priv, ENETDMAC_CHANCFG, chan);
+		अगर (!(val & ENETDMAC_CHANCFG_EN_MASK))
+			अवरोध;
 		udelay(1);
-	} while (limit--);
-}
+	पूर्ण जबतक (limit--);
+पूर्ण
 
 /*
  * stop callback
  */
-static int bcm_enet_stop(struct net_device *dev)
-{
-	struct bcm_enet_priv *priv;
-	struct device *kdev;
+अटल पूर्णांक bcm_enet_stop(काष्ठा net_device *dev)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा device *kdev;
 
 	priv = netdev_priv(dev);
 	kdev = &priv->pdev->dev;
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 	napi_disable(&priv->napi);
-	if (priv->has_phy)
+	अगर (priv->has_phy)
 		phy_stop(dev->phydev);
-	del_timer_sync(&priv->rx_timeout);
+	del_समयr_sync(&priv->rx_समयout);
 
-	/* mask all interrupts */
-	enet_writel(priv, 0, ENET_IRMASK_REG);
-	enet_dmac_writel(priv, 0, ENETDMAC_IRMASK, priv->rx_chan);
-	enet_dmac_writel(priv, 0, ENETDMAC_IRMASK, priv->tx_chan);
+	/* mask all पूर्णांकerrupts */
+	enet_ग_लिखोl(priv, 0, ENET_IRMASK_REG);
+	enet_dmac_ग_लिखोl(priv, 0, ENETDMAC_IRMASK, priv->rx_chan);
+	enet_dmac_ग_लिखोl(priv, 0, ENETDMAC_IRMASK, priv->tx_chan);
 
 	/* make sure no mib update is scheduled */
 	cancel_work_sync(&priv->mib_update_task);
@@ -1210,249 +1211,249 @@ static int bcm_enet_stop(struct net_device *dev)
 	bcm_enet_disable_dma(priv, priv->rx_chan);
 	bcm_enet_disable_mac(priv);
 
-	/* force reclaim of all tx buffers */
+	/* क्रमce reclaim of all tx buffers */
 	bcm_enet_tx_reclaim(dev, 1);
 
-	/* free the rx buffer ring */
-	bcm_enet_free_rx_buf_ring(kdev, priv);
+	/* मुक्त the rx buffer ring */
+	bcm_enet_मुक्त_rx_buf_ring(kdev, priv);
 
-	/* free remaining allocated memory */
-	kfree(priv->tx_skb);
-	dma_free_coherent(kdev, priv->rx_desc_alloc_size,
+	/* मुक्त reमुख्यing allocated memory */
+	kमुक्त(priv->tx_skb);
+	dma_मुक्त_coherent(kdev, priv->rx_desc_alloc_size,
 			  priv->rx_desc_cpu, priv->rx_desc_dma);
-	dma_free_coherent(kdev, priv->tx_desc_alloc_size,
+	dma_मुक्त_coherent(kdev, priv->tx_desc_alloc_size,
 			  priv->tx_desc_cpu, priv->tx_desc_dma);
-	free_irq(priv->irq_tx, dev);
-	free_irq(priv->irq_rx, dev);
-	free_irq(dev->irq, dev);
+	मुक्त_irq(priv->irq_tx, dev);
+	मुक्त_irq(priv->irq_rx, dev);
+	मुक्त_irq(dev->irq, dev);
 
 	/* release phy */
-	if (priv->has_phy)
+	अगर (priv->has_phy)
 		phy_disconnect(dev->phydev);
 
-	/* reset BQL after forced tx reclaim to prevent kernel panic */
+	/* reset BQL after क्रमced tx reclaim to prevent kernel panic */
 	netdev_reset_queue(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * ethtool callbacks
  */
-struct bcm_enet_stats {
-	char stat_string[ETH_GSTRING_LEN];
-	int sizeof_stat;
-	int stat_offset;
-	int mib_reg;
-};
+काष्ठा bcm_enet_stats अणु
+	अक्षर stat_string[ETH_GSTRING_LEN];
+	पूर्णांक माप_stat;
+	पूर्णांक stat_offset;
+	पूर्णांक mib_reg;
+पूर्ण;
 
-#define GEN_STAT(m) sizeof(((struct bcm_enet_priv *)0)->m),		\
-		     offsetof(struct bcm_enet_priv, m)
-#define DEV_STAT(m) sizeof(((struct net_device_stats *)0)->m),		\
-		     offsetof(struct net_device_stats, m)
+#घोषणा GEN_STAT(m) माप(((काष्ठा bcm_enet_priv *)0)->m),		\
+		     दुरत्व(काष्ठा bcm_enet_priv, m)
+#घोषणा DEV_STAT(m) माप(((काष्ठा net_device_stats *)0)->m),		\
+		     दुरत्व(काष्ठा net_device_stats, m)
 
-static const struct bcm_enet_stats bcm_enet_gstrings_stats[] = {
-	{ "rx_packets", DEV_STAT(rx_packets), -1 },
-	{ "tx_packets",	DEV_STAT(tx_packets), -1 },
-	{ "rx_bytes", DEV_STAT(rx_bytes), -1 },
-	{ "tx_bytes", DEV_STAT(tx_bytes), -1 },
-	{ "rx_errors", DEV_STAT(rx_errors), -1 },
-	{ "tx_errors", DEV_STAT(tx_errors), -1 },
-	{ "rx_dropped",	DEV_STAT(rx_dropped), -1 },
-	{ "tx_dropped",	DEV_STAT(tx_dropped), -1 },
+अटल स्थिर काष्ठा bcm_enet_stats bcm_enet_gstrings_stats[] = अणु
+	अणु "rx_packets", DEV_STAT(rx_packets), -1 पूर्ण,
+	अणु "tx_packets",	DEV_STAT(tx_packets), -1 पूर्ण,
+	अणु "rx_bytes", DEV_STAT(rx_bytes), -1 पूर्ण,
+	अणु "tx_bytes", DEV_STAT(tx_bytes), -1 पूर्ण,
+	अणु "rx_errors", DEV_STAT(rx_errors), -1 पूर्ण,
+	अणु "tx_errors", DEV_STAT(tx_errors), -1 पूर्ण,
+	अणु "rx_dropped",	DEV_STAT(rx_dropped), -1 पूर्ण,
+	अणु "tx_dropped",	DEV_STAT(tx_dropped), -1 पूर्ण,
 
-	{ "rx_good_octets", GEN_STAT(mib.rx_gd_octets), ETH_MIB_RX_GD_OCTETS},
-	{ "rx_good_pkts", GEN_STAT(mib.rx_gd_pkts), ETH_MIB_RX_GD_PKTS },
-	{ "rx_broadcast", GEN_STAT(mib.rx_brdcast), ETH_MIB_RX_BRDCAST },
-	{ "rx_multicast", GEN_STAT(mib.rx_mult), ETH_MIB_RX_MULT },
-	{ "rx_64_octets", GEN_STAT(mib.rx_64), ETH_MIB_RX_64 },
-	{ "rx_65_127_oct", GEN_STAT(mib.rx_65_127), ETH_MIB_RX_65_127 },
-	{ "rx_128_255_oct", GEN_STAT(mib.rx_128_255), ETH_MIB_RX_128_255 },
-	{ "rx_256_511_oct", GEN_STAT(mib.rx_256_511), ETH_MIB_RX_256_511 },
-	{ "rx_512_1023_oct", GEN_STAT(mib.rx_512_1023), ETH_MIB_RX_512_1023 },
-	{ "rx_1024_max_oct", GEN_STAT(mib.rx_1024_max), ETH_MIB_RX_1024_MAX },
-	{ "rx_jabber", GEN_STAT(mib.rx_jab), ETH_MIB_RX_JAB },
-	{ "rx_oversize", GEN_STAT(mib.rx_ovr), ETH_MIB_RX_OVR },
-	{ "rx_fragment", GEN_STAT(mib.rx_frag), ETH_MIB_RX_FRAG },
-	{ "rx_dropped",	GEN_STAT(mib.rx_drop), ETH_MIB_RX_DROP },
-	{ "rx_crc_align", GEN_STAT(mib.rx_crc_align), ETH_MIB_RX_CRC_ALIGN },
-	{ "rx_undersize", GEN_STAT(mib.rx_und), ETH_MIB_RX_UND },
-	{ "rx_crc", GEN_STAT(mib.rx_crc), ETH_MIB_RX_CRC },
-	{ "rx_align", GEN_STAT(mib.rx_align), ETH_MIB_RX_ALIGN },
-	{ "rx_symbol_error", GEN_STAT(mib.rx_sym), ETH_MIB_RX_SYM },
-	{ "rx_pause", GEN_STAT(mib.rx_pause), ETH_MIB_RX_PAUSE },
-	{ "rx_control", GEN_STAT(mib.rx_cntrl), ETH_MIB_RX_CNTRL },
+	अणु "rx_good_octets", GEN_STAT(mib.rx_gd_octets), ETH_MIB_RX_GD_OCTETSपूर्ण,
+	अणु "rx_good_pkts", GEN_STAT(mib.rx_gd_pkts), ETH_MIB_RX_GD_PKTS पूर्ण,
+	अणु "rx_broadcast", GEN_STAT(mib.rx_brdcast), ETH_MIB_RX_BRDCAST पूर्ण,
+	अणु "rx_multicast", GEN_STAT(mib.rx_mult), ETH_MIB_RX_MULT पूर्ण,
+	अणु "rx_64_octets", GEN_STAT(mib.rx_64), ETH_MIB_RX_64 पूर्ण,
+	अणु "rx_65_127_oct", GEN_STAT(mib.rx_65_127), ETH_MIB_RX_65_127 पूर्ण,
+	अणु "rx_128_255_oct", GEN_STAT(mib.rx_128_255), ETH_MIB_RX_128_255 पूर्ण,
+	अणु "rx_256_511_oct", GEN_STAT(mib.rx_256_511), ETH_MIB_RX_256_511 पूर्ण,
+	अणु "rx_512_1023_oct", GEN_STAT(mib.rx_512_1023), ETH_MIB_RX_512_1023 पूर्ण,
+	अणु "rx_1024_max_oct", GEN_STAT(mib.rx_1024_max), ETH_MIB_RX_1024_MAX पूर्ण,
+	अणु "rx_jabber", GEN_STAT(mib.rx_jab), ETH_MIB_RX_JAB पूर्ण,
+	अणु "rx_oversize", GEN_STAT(mib.rx_ovr), ETH_MIB_RX_OVR पूर्ण,
+	अणु "rx_fragment", GEN_STAT(mib.rx_frag), ETH_MIB_RX_FRAG पूर्ण,
+	अणु "rx_dropped",	GEN_STAT(mib.rx_drop), ETH_MIB_RX_DROP पूर्ण,
+	अणु "rx_crc_align", GEN_STAT(mib.rx_crc_align), ETH_MIB_RX_CRC_ALIGN पूर्ण,
+	अणु "rx_undersize", GEN_STAT(mib.rx_und), ETH_MIB_RX_UND पूर्ण,
+	अणु "rx_crc", GEN_STAT(mib.rx_crc), ETH_MIB_RX_CRC पूर्ण,
+	अणु "rx_align", GEN_STAT(mib.rx_align), ETH_MIB_RX_ALIGN पूर्ण,
+	अणु "rx_symbol_error", GEN_STAT(mib.rx_sym), ETH_MIB_RX_SYM पूर्ण,
+	अणु "rx_pause", GEN_STAT(mib.rx_छोड़ो), ETH_MIB_RX_PAUSE पूर्ण,
+	अणु "rx_control", GEN_STAT(mib.rx_cntrl), ETH_MIB_RX_CNTRL पूर्ण,
 
-	{ "tx_good_octets", GEN_STAT(mib.tx_gd_octets), ETH_MIB_TX_GD_OCTETS },
-	{ "tx_good_pkts", GEN_STAT(mib.tx_gd_pkts), ETH_MIB_TX_GD_PKTS },
-	{ "tx_broadcast", GEN_STAT(mib.tx_brdcast), ETH_MIB_TX_BRDCAST },
-	{ "tx_multicast", GEN_STAT(mib.tx_mult), ETH_MIB_TX_MULT },
-	{ "tx_64_oct", GEN_STAT(mib.tx_64), ETH_MIB_TX_64 },
-	{ "tx_65_127_oct", GEN_STAT(mib.tx_65_127), ETH_MIB_TX_65_127 },
-	{ "tx_128_255_oct", GEN_STAT(mib.tx_128_255), ETH_MIB_TX_128_255 },
-	{ "tx_256_511_oct", GEN_STAT(mib.tx_256_511), ETH_MIB_TX_256_511 },
-	{ "tx_512_1023_oct", GEN_STAT(mib.tx_512_1023), ETH_MIB_TX_512_1023},
-	{ "tx_1024_max_oct", GEN_STAT(mib.tx_1024_max), ETH_MIB_TX_1024_MAX },
-	{ "tx_jabber", GEN_STAT(mib.tx_jab), ETH_MIB_TX_JAB },
-	{ "tx_oversize", GEN_STAT(mib.tx_ovr), ETH_MIB_TX_OVR },
-	{ "tx_fragment", GEN_STAT(mib.tx_frag), ETH_MIB_TX_FRAG },
-	{ "tx_underrun", GEN_STAT(mib.tx_underrun), ETH_MIB_TX_UNDERRUN },
-	{ "tx_collisions", GEN_STAT(mib.tx_col), ETH_MIB_TX_COL },
-	{ "tx_single_collision", GEN_STAT(mib.tx_1_col), ETH_MIB_TX_1_COL },
-	{ "tx_multiple_collision", GEN_STAT(mib.tx_m_col), ETH_MIB_TX_M_COL },
-	{ "tx_excess_collision", GEN_STAT(mib.tx_ex_col), ETH_MIB_TX_EX_COL },
-	{ "tx_late_collision", GEN_STAT(mib.tx_late), ETH_MIB_TX_LATE },
-	{ "tx_deferred", GEN_STAT(mib.tx_def), ETH_MIB_TX_DEF },
-	{ "tx_carrier_sense", GEN_STAT(mib.tx_crs), ETH_MIB_TX_CRS },
-	{ "tx_pause", GEN_STAT(mib.tx_pause), ETH_MIB_TX_PAUSE },
+	अणु "tx_good_octets", GEN_STAT(mib.tx_gd_octets), ETH_MIB_TX_GD_OCTETS पूर्ण,
+	अणु "tx_good_pkts", GEN_STAT(mib.tx_gd_pkts), ETH_MIB_TX_GD_PKTS पूर्ण,
+	अणु "tx_broadcast", GEN_STAT(mib.tx_brdcast), ETH_MIB_TX_BRDCAST पूर्ण,
+	अणु "tx_multicast", GEN_STAT(mib.tx_mult), ETH_MIB_TX_MULT पूर्ण,
+	अणु "tx_64_oct", GEN_STAT(mib.tx_64), ETH_MIB_TX_64 पूर्ण,
+	अणु "tx_65_127_oct", GEN_STAT(mib.tx_65_127), ETH_MIB_TX_65_127 पूर्ण,
+	अणु "tx_128_255_oct", GEN_STAT(mib.tx_128_255), ETH_MIB_TX_128_255 पूर्ण,
+	अणु "tx_256_511_oct", GEN_STAT(mib.tx_256_511), ETH_MIB_TX_256_511 पूर्ण,
+	अणु "tx_512_1023_oct", GEN_STAT(mib.tx_512_1023), ETH_MIB_TX_512_1023पूर्ण,
+	अणु "tx_1024_max_oct", GEN_STAT(mib.tx_1024_max), ETH_MIB_TX_1024_MAX पूर्ण,
+	अणु "tx_jabber", GEN_STAT(mib.tx_jab), ETH_MIB_TX_JAB पूर्ण,
+	अणु "tx_oversize", GEN_STAT(mib.tx_ovr), ETH_MIB_TX_OVR पूर्ण,
+	अणु "tx_fragment", GEN_STAT(mib.tx_frag), ETH_MIB_TX_FRAG पूर्ण,
+	अणु "tx_underrun", GEN_STAT(mib.tx_underrun), ETH_MIB_TX_UNDERRUN पूर्ण,
+	अणु "tx_collisions", GEN_STAT(mib.tx_col), ETH_MIB_TX_COL पूर्ण,
+	अणु "tx_single_collision", GEN_STAT(mib.tx_1_col), ETH_MIB_TX_1_COL पूर्ण,
+	अणु "tx_multiple_collision", GEN_STAT(mib.tx_m_col), ETH_MIB_TX_M_COL पूर्ण,
+	अणु "tx_excess_collision", GEN_STAT(mib.tx_ex_col), ETH_MIB_TX_EX_COL पूर्ण,
+	अणु "tx_late_collision", GEN_STAT(mib.tx_late), ETH_MIB_TX_LATE पूर्ण,
+	अणु "tx_deferred", GEN_STAT(mib.tx_def), ETH_MIB_TX_DEF पूर्ण,
+	अणु "tx_carrier_sense", GEN_STAT(mib.tx_crs), ETH_MIB_TX_CRS पूर्ण,
+	अणु "tx_pause", GEN_STAT(mib.tx_छोड़ो), ETH_MIB_TX_PAUSE पूर्ण,
 
-};
+पूर्ण;
 
-#define BCM_ENET_STATS_LEN	ARRAY_SIZE(bcm_enet_gstrings_stats)
+#घोषणा BCM_ENET_STATS_LEN	ARRAY_SIZE(bcm_enet_gstrings_stats)
 
-static const u32 unused_mib_regs[] = {
+अटल स्थिर u32 unused_mib_regs[] = अणु
 	ETH_MIB_TX_ALL_OCTETS,
 	ETH_MIB_TX_ALL_PKTS,
 	ETH_MIB_RX_ALL_OCTETS,
 	ETH_MIB_RX_ALL_PKTS,
-};
+पूर्ण;
 
 
-static void bcm_enet_get_drvinfo(struct net_device *netdev,
-				 struct ethtool_drvinfo *drvinfo)
-{
-	strlcpy(drvinfo->driver, bcm_enet_driver_name, sizeof(drvinfo->driver));
-	strlcpy(drvinfo->bus_info, "bcm63xx", sizeof(drvinfo->bus_info));
-}
+अटल व्योम bcm_enet_get_drvinfo(काष्ठा net_device *netdev,
+				 काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	strlcpy(drvinfo->driver, bcm_enet_driver_name, माप(drvinfo->driver));
+	strlcpy(drvinfo->bus_info, "bcm63xx", माप(drvinfo->bus_info));
+पूर्ण
 
-static int bcm_enet_get_sset_count(struct net_device *netdev,
-					int string_set)
-{
-	switch (string_set) {
-	case ETH_SS_STATS:
-		return BCM_ENET_STATS_LEN;
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक bcm_enet_get_sset_count(काष्ठा net_device *netdev,
+					पूर्णांक string_set)
+अणु
+	चयन (string_set) अणु
+	हाल ETH_SS_STATS:
+		वापस BCM_ENET_STATS_LEN;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void bcm_enet_get_strings(struct net_device *netdev,
+अटल व्योम bcm_enet_get_strings(काष्ठा net_device *netdev,
 				 u32 stringset, u8 *data)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
-		for (i = 0; i < BCM_ENET_STATS_LEN; i++) {
-			memcpy(data + i * ETH_GSTRING_LEN,
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < BCM_ENET_STATS_LEN; i++) अणु
+			स_नकल(data + i * ETH_GSTRING_LEN,
 			       bcm_enet_gstrings_stats[i].stat_string,
 			       ETH_GSTRING_LEN);
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void update_mib_counters(struct bcm_enet_priv *priv)
-{
-	int i;
+अटल व्योम update_mib_counters(काष्ठा bcm_enet_priv *priv)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < BCM_ENET_STATS_LEN; i++) {
-		const struct bcm_enet_stats *s;
+	क्रम (i = 0; i < BCM_ENET_STATS_LEN; i++) अणु
+		स्थिर काष्ठा bcm_enet_stats *s;
 		u32 val;
-		char *p;
+		अक्षर *p;
 
 		s = &bcm_enet_gstrings_stats[i];
-		if (s->mib_reg == -1)
-			continue;
+		अगर (s->mib_reg == -1)
+			जारी;
 
-		val = enet_readl(priv, ENET_MIB_REG(s->mib_reg));
-		p = (char *)priv + s->stat_offset;
+		val = enet_पढ़ोl(priv, ENET_MIB_REG(s->mib_reg));
+		p = (अक्षर *)priv + s->stat_offset;
 
-		if (s->sizeof_stat == sizeof(u64))
+		अगर (s->माप_stat == माप(u64))
 			*(u64 *)p += val;
-		else
+		अन्यथा
 			*(u32 *)p += val;
-	}
+	पूर्ण
 
 	/* also empty unused mib counters to make sure mib counter
-	 * overflow interrupt is cleared */
-	for (i = 0; i < ARRAY_SIZE(unused_mib_regs); i++)
-		(void)enet_readl(priv, ENET_MIB_REG(unused_mib_regs[i]));
-}
+	 * overflow पूर्णांकerrupt is cleared */
+	क्रम (i = 0; i < ARRAY_SIZE(unused_mib_regs); i++)
+		(व्योम)enet_पढ़ोl(priv, ENET_MIB_REG(unused_mib_regs[i]));
+पूर्ण
 
-static void bcm_enet_update_mib_counters_defer(struct work_struct *t)
-{
-	struct bcm_enet_priv *priv;
+अटल व्योम bcm_enet_update_mib_counters_defer(काष्ठा work_काष्ठा *t)
+अणु
+	काष्ठा bcm_enet_priv *priv;
 
-	priv = container_of(t, struct bcm_enet_priv, mib_update_task);
+	priv = container_of(t, काष्ठा bcm_enet_priv, mib_update_task);
 	mutex_lock(&priv->mib_update_lock);
 	update_mib_counters(priv);
 	mutex_unlock(&priv->mib_update_lock);
 
-	/* reenable mib interrupt */
-	if (netif_running(priv->net_dev))
-		enet_writel(priv, ENET_IR_MIB, ENET_IRMASK_REG);
-}
+	/* reenable mib पूर्णांकerrupt */
+	अगर (netअगर_running(priv->net_dev))
+		enet_ग_लिखोl(priv, ENET_IR_MIB, ENET_IRMASK_REG);
+पूर्ण
 
-static void bcm_enet_get_ethtool_stats(struct net_device *netdev,
-				       struct ethtool_stats *stats,
+अटल व्योम bcm_enet_get_ethtool_stats(काष्ठा net_device *netdev,
+				       काष्ठा ethtool_stats *stats,
 				       u64 *data)
-{
-	struct bcm_enet_priv *priv;
-	int i;
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	पूर्णांक i;
 
 	priv = netdev_priv(netdev);
 
 	mutex_lock(&priv->mib_update_lock);
 	update_mib_counters(priv);
 
-	for (i = 0; i < BCM_ENET_STATS_LEN; i++) {
-		const struct bcm_enet_stats *s;
-		char *p;
+	क्रम (i = 0; i < BCM_ENET_STATS_LEN; i++) अणु
+		स्थिर काष्ठा bcm_enet_stats *s;
+		अक्षर *p;
 
 		s = &bcm_enet_gstrings_stats[i];
-		if (s->mib_reg == -1)
-			p = (char *)&netdev->stats;
-		else
-			p = (char *)priv;
+		अगर (s->mib_reg == -1)
+			p = (अक्षर *)&netdev->stats;
+		अन्यथा
+			p = (अक्षर *)priv;
 		p += s->stat_offset;
-		data[i] = (s->sizeof_stat == sizeof(u64)) ?
+		data[i] = (s->माप_stat == माप(u64)) ?
 			*(u64 *)p : *(u32 *)p;
-	}
+	पूर्ण
 	mutex_unlock(&priv->mib_update_lock);
-}
+पूर्ण
 
-static int bcm_enet_nway_reset(struct net_device *dev)
-{
-	struct bcm_enet_priv *priv;
+अटल पूर्णांक bcm_enet_nway_reset(काष्ठा net_device *dev)
+अणु
+	काष्ठा bcm_enet_priv *priv;
 
 	priv = netdev_priv(dev);
-	if (priv->has_phy)
-		return phy_ethtool_nway_reset(dev);
+	अगर (priv->has_phy)
+		वापस phy_ethtool_nway_reset(dev);
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int bcm_enet_get_link_ksettings(struct net_device *dev,
-				       struct ethtool_link_ksettings *cmd)
-{
-	struct bcm_enet_priv *priv;
+अटल पूर्णांक bcm_enet_get_link_ksettings(काष्ठा net_device *dev,
+				       काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा bcm_enet_priv *priv;
 	u32 supported, advertising;
 
 	priv = netdev_priv(dev);
 
-	if (priv->has_phy) {
-		if (!dev->phydev)
-			return -ENODEV;
+	अगर (priv->has_phy) अणु
+		अगर (!dev->phydev)
+			वापस -ENODEV;
 
 		phy_ethtool_ksettings_get(dev->phydev, cmd);
 
-		return 0;
-	} else {
-		cmd->base.autoneg = 0;
-		cmd->base.speed = (priv->force_speed_100) ?
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		cmd->base.स्वतःneg = 0;
+		cmd->base.speed = (priv->क्रमce_speed_100) ?
 			SPEED_100 : SPEED_10;
-		cmd->base.duplex = (priv->force_duplex_full) ?
+		cmd->base.duplex = (priv->क्रमce_duplex_full) ?
 			DUPLEX_FULL : DUPLEX_HALF;
 		supported = ADVERTISED_10baseT_Half |
 			ADVERTISED_10baseT_Full |
@@ -1464,43 +1465,43 @@ static int bcm_enet_get_link_ksettings(struct net_device *dev,
 		ethtool_convert_legacy_u32_to_link_mode(
 			cmd->link_modes.advertising, advertising);
 		cmd->base.port = PORT_MII;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bcm_enet_set_link_ksettings(struct net_device *dev,
-				       const struct ethtool_link_ksettings *cmd)
-{
-	struct bcm_enet_priv *priv;
+अटल पूर्णांक bcm_enet_set_link_ksettings(काष्ठा net_device *dev,
+				       स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा bcm_enet_priv *priv;
 
 	priv = netdev_priv(dev);
-	if (priv->has_phy) {
-		if (!dev->phydev)
-			return -ENODEV;
-		return phy_ethtool_ksettings_set(dev->phydev, cmd);
-	} else {
+	अगर (priv->has_phy) अणु
+		अगर (!dev->phydev)
+			वापस -ENODEV;
+		वापस phy_ethtool_ksettings_set(dev->phydev, cmd);
+	पूर्ण अन्यथा अणु
 
-		if (cmd->base.autoneg ||
+		अगर (cmd->base.स्वतःneg ||
 		    (cmd->base.speed != SPEED_100 &&
 		     cmd->base.speed != SPEED_10) ||
 		    cmd->base.port != PORT_MII)
-			return -EINVAL;
+			वापस -EINVAL;
 
-		priv->force_speed_100 =
+		priv->क्रमce_speed_100 =
 			(cmd->base.speed == SPEED_100) ? 1 : 0;
-		priv->force_duplex_full =
+		priv->क्रमce_duplex_full =
 			(cmd->base.duplex == DUPLEX_FULL) ? 1 : 0;
 
-		if (netif_running(dev))
+		अगर (netअगर_running(dev))
 			bcm_enet_adjust_link(dev);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void bcm_enet_get_ringparam(struct net_device *dev,
-				   struct ethtool_ringparam *ering)
-{
-	struct bcm_enet_priv *priv;
+अटल व्योम bcm_enet_get_ringparam(काष्ठा net_device *dev,
+				   काष्ठा ethtool_ringparam *ering)
+अणु
+	काष्ठा bcm_enet_priv *priv;
 
 	priv = netdev_priv(dev);
 
@@ -1509,76 +1510,76 @@ static void bcm_enet_get_ringparam(struct net_device *dev,
 	ering->tx_max_pending = 8192;
 	ering->rx_pending = priv->rx_ring_size;
 	ering->tx_pending = priv->tx_ring_size;
-}
+पूर्ण
 
-static int bcm_enet_set_ringparam(struct net_device *dev,
-				  struct ethtool_ringparam *ering)
-{
-	struct bcm_enet_priv *priv;
-	int was_running;
+अटल पूर्णांक bcm_enet_set_ringparam(काष्ठा net_device *dev,
+				  काष्ठा ethtool_ringparam *ering)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	पूर्णांक was_running;
 
 	priv = netdev_priv(dev);
 
 	was_running = 0;
-	if (netif_running(dev)) {
+	अगर (netअगर_running(dev)) अणु
 		bcm_enet_stop(dev);
 		was_running = 1;
-	}
+	पूर्ण
 
 	priv->rx_ring_size = ering->rx_pending;
 	priv->tx_ring_size = ering->tx_pending;
 
-	if (was_running) {
-		int err;
+	अगर (was_running) अणु
+		पूर्णांक err;
 
-		err = bcm_enet_open(dev);
-		if (err)
-			dev_close(dev);
-		else
+		err = bcm_enet_खोलो(dev);
+		अगर (err)
+			dev_बंद(dev);
+		अन्यथा
 			bcm_enet_set_multicast_list(dev);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void bcm_enet_get_pauseparam(struct net_device *dev,
-				    struct ethtool_pauseparam *ecmd)
-{
-	struct bcm_enet_priv *priv;
-
-	priv = netdev_priv(dev);
-	ecmd->autoneg = priv->pause_auto;
-	ecmd->rx_pause = priv->pause_rx;
-	ecmd->tx_pause = priv->pause_tx;
-}
-
-static int bcm_enet_set_pauseparam(struct net_device *dev,
-				   struct ethtool_pauseparam *ecmd)
-{
-	struct bcm_enet_priv *priv;
+अटल व्योम bcm_enet_get_छोड़ोparam(काष्ठा net_device *dev,
+				    काष्ठा ethtool_छोड़ोparam *ecmd)
+अणु
+	काष्ठा bcm_enet_priv *priv;
 
 	priv = netdev_priv(dev);
+	ecmd->स्वतःneg = priv->छोड़ो_स्वतः;
+	ecmd->rx_छोड़ो = priv->छोड़ो_rx;
+	ecmd->tx_छोड़ो = priv->छोड़ो_tx;
+पूर्ण
 
-	if (priv->has_phy) {
-		if (ecmd->autoneg && (ecmd->rx_pause != ecmd->tx_pause)) {
-			/* asymetric pause mode not supported,
-			 * actually possible but integrated PHY has RO
-			 * asym_pause bit */
-			return -EINVAL;
-		}
-	} else {
-		/* no pause autoneg on direct mii connection */
-		if (ecmd->autoneg)
-			return -EINVAL;
-	}
+अटल पूर्णांक bcm_enet_set_छोड़ोparam(काष्ठा net_device *dev,
+				   काष्ठा ethtool_छोड़ोparam *ecmd)
+अणु
+	काष्ठा bcm_enet_priv *priv;
 
-	priv->pause_auto = ecmd->autoneg;
-	priv->pause_rx = ecmd->rx_pause;
-	priv->pause_tx = ecmd->tx_pause;
+	priv = netdev_priv(dev);
 
-	return 0;
-}
+	अगर (priv->has_phy) अणु
+		अगर (ecmd->स्वतःneg && (ecmd->rx_छोड़ो != ecmd->tx_छोड़ो)) अणु
+			/* asymetric छोड़ो mode not supported,
+			 * actually possible but पूर्णांकegrated PHY has RO
+			 * asym_छोड़ो bit */
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* no छोड़ो स्वतःneg on direct mii connection */
+		अगर (ecmd->स्वतःneg)
+			वापस -EINVAL;
+	पूर्ण
 
-static const struct ethtool_ops bcm_enet_ethtool_ops = {
+	priv->छोड़ो_स्वतः = ecmd->स्वतःneg;
+	priv->छोड़ो_rx = ecmd->rx_छोड़ो;
+	priv->छोड़ो_tx = ecmd->tx_छोड़ो;
+
+	वापस 0;
+पूर्ण
+
+अटल स्थिर काष्ठा ethtool_ops bcm_enet_ethtool_ops = अणु
 	.get_strings		= bcm_enet_get_strings,
 	.get_sset_count		= bcm_enet_get_sset_count,
 	.get_ethtool_stats      = bcm_enet_get_ethtool_stats,
@@ -1587,52 +1588,52 @@ static const struct ethtool_ops bcm_enet_ethtool_ops = {
 	.get_link		= ethtool_op_get_link,
 	.get_ringparam		= bcm_enet_get_ringparam,
 	.set_ringparam		= bcm_enet_set_ringparam,
-	.get_pauseparam		= bcm_enet_get_pauseparam,
-	.set_pauseparam		= bcm_enet_set_pauseparam,
+	.get_छोड़ोparam		= bcm_enet_get_छोड़ोparam,
+	.set_छोड़ोparam		= bcm_enet_set_छोड़ोparam,
 	.get_link_ksettings	= bcm_enet_get_link_ksettings,
 	.set_link_ksettings	= bcm_enet_set_link_ksettings,
-};
+पूर्ण;
 
-static int bcm_enet_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
-{
-	struct bcm_enet_priv *priv;
+अटल पूर्णांक bcm_enet_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+	काष्ठा bcm_enet_priv *priv;
 
 	priv = netdev_priv(dev);
-	if (priv->has_phy) {
-		if (!dev->phydev)
-			return -ENODEV;
-		return phy_mii_ioctl(dev->phydev, rq, cmd);
-	} else {
-		struct mii_if_info mii;
+	अगर (priv->has_phy) अणु
+		अगर (!dev->phydev)
+			वापस -ENODEV;
+		वापस phy_mii_ioctl(dev->phydev, rq, cmd);
+	पूर्ण अन्यथा अणु
+		काष्ठा mii_अगर_info mii;
 
 		mii.dev = dev;
-		mii.mdio_read = bcm_enet_mdio_read_mii;
-		mii.mdio_write = bcm_enet_mdio_write_mii;
+		mii.mdio_पढ़ो = bcm_enet_mdio_पढ़ो_mii;
+		mii.mdio_ग_लिखो = bcm_enet_mdio_ग_लिखो_mii;
 		mii.phy_id = 0;
 		mii.phy_id_mask = 0x3f;
 		mii.reg_num_mask = 0x1f;
-		return generic_mii_ioctl(&mii, if_mii(rq), cmd, NULL);
-	}
-}
+		वापस generic_mii_ioctl(&mii, अगर_mii(rq), cmd, शून्य);
+	पूर्ण
+पूर्ण
 
 /*
- * adjust mtu, can't be called while device is running
+ * adjust mtu, can't be called जबतक device is running
  */
-static int bcm_enet_change_mtu(struct net_device *dev, int new_mtu)
-{
-	struct bcm_enet_priv *priv = netdev_priv(dev);
-	int actual_mtu = new_mtu;
+अटल पूर्णांक bcm_enet_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
+अणु
+	काष्ठा bcm_enet_priv *priv = netdev_priv(dev);
+	पूर्णांक actual_mtu = new_mtu;
 
-	if (netif_running(dev))
-		return -EBUSY;
+	अगर (netअगर_running(dev))
+		वापस -EBUSY;
 
 	/* add ethernet header + vlan tag size */
 	actual_mtu += VLAN_ETH_HLEN;
 
 	/*
-	 * setup maximum size before we get overflow mark in
+	 * setup maximum size beक्रमe we get overflow mark in
 	 * descriptor, note that this will not prevent reception of
-	 * big frames, they will be split into multiple buffers
+	 * big frames, they will be split पूर्णांकo multiple buffers
 	 * anyway
 	 */
 	priv->hw_mtu = actual_mtu;
@@ -1645,88 +1646,88 @@ static int bcm_enet_change_mtu(struct net_device *dev, int new_mtu)
 				  priv->dma_maxburst * 4);
 
 	priv->rx_frag_size = SKB_DATA_ALIGN(priv->rx_buf_offset + priv->rx_buf_size) +
-					    SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
+					    SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info));
 
 	dev->mtu = new_mtu;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * preinit hardware to allow mii operation while device is down
+ * preinit hardware to allow mii operation जबतक device is करोwn
  */
-static void bcm_enet_hw_preinit(struct bcm_enet_priv *priv)
-{
+अटल व्योम bcm_enet_hw_preinit(काष्ठा bcm_enet_priv *priv)
+अणु
 	u32 val;
-	int limit;
+	पूर्णांक limit;
 
 	/* make sure mac is disabled */
 	bcm_enet_disable_mac(priv);
 
 	/* soft reset mac */
 	val = ENET_CTL_SRESET_MASK;
-	enet_writel(priv, val, ENET_CTL_REG);
+	enet_ग_लिखोl(priv, val, ENET_CTL_REG);
 	wmb();
 
 	limit = 1000;
-	do {
-		val = enet_readl(priv, ENET_CTL_REG);
-		if (!(val & ENET_CTL_SRESET_MASK))
-			break;
+	करो अणु
+		val = enet_पढ़ोl(priv, ENET_CTL_REG);
+		अगर (!(val & ENET_CTL_SRESET_MASK))
+			अवरोध;
 		udelay(1);
-	} while (limit--);
+	पूर्ण जबतक (limit--);
 
-	/* select correct mii interface */
-	val = enet_readl(priv, ENET_CTL_REG);
-	if (priv->use_external_mii)
+	/* select correct mii पूर्णांकerface */
+	val = enet_पढ़ोl(priv, ENET_CTL_REG);
+	अगर (priv->use_बाह्यal_mii)
 		val |= ENET_CTL_EPHYSEL_MASK;
-	else
+	अन्यथा
 		val &= ~ENET_CTL_EPHYSEL_MASK;
-	enet_writel(priv, val, ENET_CTL_REG);
+	enet_ग_लिखोl(priv, val, ENET_CTL_REG);
 
-	/* turn on mdc clock */
-	enet_writel(priv, (0x1f << ENET_MIISC_MDCFREQDIV_SHIFT) |
+	/* turn on mdc घड़ी */
+	enet_ग_लिखोl(priv, (0x1f << ENET_MIISC_MDCFREQDIV_SHIFT) |
 		    ENET_MIISC_PREAMBLEEN_MASK, ENET_MIISC_REG);
 
-	/* set mib counters to self-clear when read */
-	val = enet_readl(priv, ENET_MIBCTL_REG);
+	/* set mib counters to self-clear when पढ़ो */
+	val = enet_पढ़ोl(priv, ENET_MIBCTL_REG);
 	val |= ENET_MIBCTL_RDCLEAR_MASK;
-	enet_writel(priv, val, ENET_MIBCTL_REG);
-}
+	enet_ग_लिखोl(priv, val, ENET_MIBCTL_REG);
+पूर्ण
 
-static const struct net_device_ops bcm_enet_ops = {
-	.ndo_open		= bcm_enet_open,
-	.ndo_stop		= bcm_enet_stop,
-	.ndo_start_xmit		= bcm_enet_start_xmit,
-	.ndo_set_mac_address	= bcm_enet_set_mac_address,
-	.ndo_set_rx_mode	= bcm_enet_set_multicast_list,
-	.ndo_do_ioctl		= bcm_enet_ioctl,
-	.ndo_change_mtu		= bcm_enet_change_mtu,
-};
+अटल स्थिर काष्ठा net_device_ops bcm_enet_ops = अणु
+	.nकरो_खोलो		= bcm_enet_खोलो,
+	.nकरो_stop		= bcm_enet_stop,
+	.nकरो_start_xmit		= bcm_enet_start_xmit,
+	.nकरो_set_mac_address	= bcm_enet_set_mac_address,
+	.nकरो_set_rx_mode	= bcm_enet_set_multicast_list,
+	.nकरो_करो_ioctl		= bcm_enet_ioctl,
+	.nकरो_change_mtu		= bcm_enet_change_mtu,
+पूर्ण;
 
 /*
- * allocate netdevice, request register memory and register device.
+ * allocate netdevice, request रेजिस्टर memory and रेजिस्टर device.
  */
-static int bcm_enet_probe(struct platform_device *pdev)
-{
-	struct bcm_enet_priv *priv;
-	struct net_device *dev;
-	struct bcm63xx_enet_platform_data *pd;
-	struct resource *res_irq, *res_irq_rx, *res_irq_tx;
-	struct mii_bus *bus;
-	int i, ret;
+अटल पूर्णांक bcm_enet_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा net_device *dev;
+	काष्ठा bcm63xx_enet_platक्रमm_data *pd;
+	काष्ठा resource *res_irq, *res_irq_rx, *res_irq_tx;
+	काष्ठा mii_bus *bus;
+	पूर्णांक i, ret;
 
-	if (!bcm_enet_shared_base[0])
-		return -EPROBE_DEFER;
+	अगर (!bcm_enet_shared_base[0])
+		वापस -EPROBE_DEFER;
 
-	res_irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	res_irq_rx = platform_get_resource(pdev, IORESOURCE_IRQ, 1);
-	res_irq_tx = platform_get_resource(pdev, IORESOURCE_IRQ, 2);
-	if (!res_irq || !res_irq_rx || !res_irq_tx)
-		return -ENODEV;
+	res_irq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	res_irq_rx = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 1);
+	res_irq_tx = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 2);
+	अगर (!res_irq || !res_irq_rx || !res_irq_tx)
+		वापस -ENODEV;
 
-	dev = alloc_etherdev(sizeof(*priv));
-	if (!dev)
-		return -ENOMEM;
+	dev = alloc_etherdev(माप(*priv));
+	अगर (!dev)
+		वापस -ENOMEM;
 	priv = netdev_priv(dev);
 
 	priv->enet_is_sw = false;
@@ -1734,127 +1735,127 @@ static int bcm_enet_probe(struct platform_device *pdev)
 	priv->rx_buf_offset = NET_SKB_PAD;
 
 	ret = bcm_enet_change_mtu(dev, dev->mtu);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	priv->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(priv->base)) {
+	priv->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(priv->base)) अणु
 		ret = PTR_ERR(priv->base);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dev->irq = priv->irq = res_irq->start;
 	priv->irq_rx = res_irq_rx->start;
 	priv->irq_tx = res_irq_tx->start;
 
 	priv->mac_clk = devm_clk_get(&pdev->dev, "enet");
-	if (IS_ERR(priv->mac_clk)) {
+	अगर (IS_ERR(priv->mac_clk)) अणु
 		ret = PTR_ERR(priv->mac_clk);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	ret = clk_prepare_enable(priv->mac_clk);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	/* initialize default and fetch platform data */
+	/* initialize शेष and fetch platक्रमm data */
 	priv->rx_ring_size = BCMENET_DEF_RX_DESC;
 	priv->tx_ring_size = BCMENET_DEF_TX_DESC;
 
 	pd = dev_get_platdata(&pdev->dev);
-	if (pd) {
-		memcpy(dev->dev_addr, pd->mac_addr, ETH_ALEN);
+	अगर (pd) अणु
+		स_नकल(dev->dev_addr, pd->mac_addr, ETH_ALEN);
 		priv->has_phy = pd->has_phy;
 		priv->phy_id = pd->phy_id;
-		priv->has_phy_interrupt = pd->has_phy_interrupt;
-		priv->phy_interrupt = pd->phy_interrupt;
-		priv->use_external_mii = !pd->use_internal_phy;
-		priv->pause_auto = pd->pause_auto;
-		priv->pause_rx = pd->pause_rx;
-		priv->pause_tx = pd->pause_tx;
-		priv->force_duplex_full = pd->force_duplex_full;
-		priv->force_speed_100 = pd->force_speed_100;
+		priv->has_phy_पूर्णांकerrupt = pd->has_phy_पूर्णांकerrupt;
+		priv->phy_पूर्णांकerrupt = pd->phy_पूर्णांकerrupt;
+		priv->use_बाह्यal_mii = !pd->use_पूर्णांकernal_phy;
+		priv->छोड़ो_स्वतः = pd->छोड़ो_स्वतः;
+		priv->छोड़ो_rx = pd->छोड़ो_rx;
+		priv->छोड़ो_tx = pd->छोड़ो_tx;
+		priv->क्रमce_duplex_full = pd->क्रमce_duplex_full;
+		priv->क्रमce_speed_100 = pd->क्रमce_speed_100;
 		priv->dma_chan_en_mask = pd->dma_chan_en_mask;
-		priv->dma_chan_int_mask = pd->dma_chan_int_mask;
+		priv->dma_chan_पूर्णांक_mask = pd->dma_chan_पूर्णांक_mask;
 		priv->dma_chan_width = pd->dma_chan_width;
 		priv->dma_has_sram = pd->dma_has_sram;
-		priv->dma_desc_shift = pd->dma_desc_shift;
+		priv->dma_desc_shअगरt = pd->dma_desc_shअगरt;
 		priv->rx_chan = pd->rx_chan;
 		priv->tx_chan = pd->tx_chan;
-	}
+	पूर्ण
 
-	if (priv->has_phy && !priv->use_external_mii) {
-		/* using internal PHY, enable clock */
+	अगर (priv->has_phy && !priv->use_बाह्यal_mii) अणु
+		/* using पूर्णांकernal PHY, enable घड़ी */
 		priv->phy_clk = devm_clk_get(&pdev->dev, "ephy");
-		if (IS_ERR(priv->phy_clk)) {
+		अगर (IS_ERR(priv->phy_clk)) अणु
 			ret = PTR_ERR(priv->phy_clk);
-			priv->phy_clk = NULL;
-			goto out_disable_clk_mac;
-		}
+			priv->phy_clk = शून्य;
+			जाओ out_disable_clk_mac;
+		पूर्ण
 		ret = clk_prepare_enable(priv->phy_clk);
-		if (ret)
-			goto out_disable_clk_mac;
-	}
+		अगर (ret)
+			जाओ out_disable_clk_mac;
+	पूर्ण
 
-	/* do minimal hardware init to be able to probe mii bus */
+	/* करो minimal hardware init to be able to probe mii bus */
 	bcm_enet_hw_preinit(priv);
 
 	/* MII bus registration */
-	if (priv->has_phy) {
+	अगर (priv->has_phy) अणु
 
 		priv->mii_bus = mdiobus_alloc();
-		if (!priv->mii_bus) {
+		अगर (!priv->mii_bus) अणु
 			ret = -ENOMEM;
-			goto out_uninit_hw;
-		}
+			जाओ out_uninit_hw;
+		पूर्ण
 
 		bus = priv->mii_bus;
 		bus->name = "bcm63xx_enet MII bus";
 		bus->parent = &pdev->dev;
 		bus->priv = priv;
-		bus->read = bcm_enet_mdio_read_phylib;
-		bus->write = bcm_enet_mdio_write_phylib;
-		sprintf(bus->id, "%s-%d", pdev->name, pdev->id);
+		bus->पढ़ो = bcm_enet_mdio_पढ़ो_phylib;
+		bus->ग_लिखो = bcm_enet_mdio_ग_लिखो_phylib;
+		प्र_लिखो(bus->id, "%s-%d", pdev->name, pdev->id);
 
 		/* only probe bus where we think the PHY is, because
-		 * the mdio read operation return 0 instead of 0xffff
-		 * if a slave is not present on hw */
+		 * the mdio पढ़ो operation वापस 0 instead of 0xffff
+		 * अगर a slave is not present on hw */
 		bus->phy_mask = ~(1 << priv->phy_id);
 
-		if (priv->has_phy_interrupt)
-			bus->irq[priv->phy_id] = priv->phy_interrupt;
+		अगर (priv->has_phy_पूर्णांकerrupt)
+			bus->irq[priv->phy_id] = priv->phy_पूर्णांकerrupt;
 
-		ret = mdiobus_register(bus);
-		if (ret) {
+		ret = mdiobus_रेजिस्टर(bus);
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "unable to register mdio bus\n");
-			goto out_free_mdio;
-		}
-	} else {
+			जाओ out_मुक्त_mdio;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 
-		/* run platform code to initialize PHY device */
-		if (pd && pd->mii_config &&
-		    pd->mii_config(dev, 1, bcm_enet_mdio_read_mii,
-				   bcm_enet_mdio_write_mii)) {
+		/* run platक्रमm code to initialize PHY device */
+		अगर (pd && pd->mii_config &&
+		    pd->mii_config(dev, 1, bcm_enet_mdio_पढ़ो_mii,
+				   bcm_enet_mdio_ग_लिखो_mii)) अणु
 			dev_err(&pdev->dev, "unable to configure mdio bus\n");
-			goto out_uninit_hw;
-		}
-	}
+			जाओ out_uninit_hw;
+		पूर्ण
+	पूर्ण
 
 	spin_lock_init(&priv->rx_lock);
 
-	/* init rx timeout (used for oom) */
-	timer_setup(&priv->rx_timeout, bcm_enet_refill_rx_timer, 0);
+	/* init rx समयout (used क्रम oom) */
+	समयr_setup(&priv->rx_समयout, bcm_enet_refill_rx_समयr, 0);
 
 	/* init the mib update lock&work */
 	mutex_init(&priv->mib_update_lock);
 	INIT_WORK(&priv->mib_update_task, bcm_enet_update_mib_counters_defer);
 
 	/* zero mib counters */
-	for (i = 0; i < ENET_MIB_REG_COUNT; i++)
-		enet_writel(priv, 0, ENET_MIB_REG(i));
+	क्रम (i = 0; i < ENET_MIB_REG_COUNT; i++)
+		enet_ग_लिखोl(priv, 0, ENET_MIB_REG(i));
 
-	/* register netdevice */
+	/* रेजिस्टर netdevice */
 	dev->netdev_ops = &bcm_enet_ops;
-	netif_napi_add(dev, &priv->napi, bcm_enet_poll, 16);
+	netअगर_napi_add(dev, &priv->napi, bcm_enet_poll, 16);
 
 	dev->ethtool_ops = &bcm_enet_ethtool_ops;
 	/* MTU range: 46 - 2028 */
@@ -1862,212 +1863,212 @@ static int bcm_enet_probe(struct platform_device *pdev)
 	dev->max_mtu = BCMENET_MAX_MTU - VLAN_ETH_HLEN;
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
-	ret = register_netdev(dev);
-	if (ret)
-		goto out_unregister_mdio;
+	ret = रेजिस्टर_netdev(dev);
+	अगर (ret)
+		जाओ out_unरेजिस्टर_mdio;
 
-	netif_carrier_off(dev);
-	platform_set_drvdata(pdev, dev);
+	netअगर_carrier_off(dev);
+	platक्रमm_set_drvdata(pdev, dev);
 	priv->pdev = pdev;
 	priv->net_dev = dev;
 
-	return 0;
+	वापस 0;
 
-out_unregister_mdio:
-	if (priv->mii_bus)
-		mdiobus_unregister(priv->mii_bus);
+out_unरेजिस्टर_mdio:
+	अगर (priv->mii_bus)
+		mdiobus_unरेजिस्टर(priv->mii_bus);
 
-out_free_mdio:
-	if (priv->mii_bus)
-		mdiobus_free(priv->mii_bus);
+out_मुक्त_mdio:
+	अगर (priv->mii_bus)
+		mdiobus_मुक्त(priv->mii_bus);
 
 out_uninit_hw:
-	/* turn off mdc clock */
-	enet_writel(priv, 0, ENET_MIISC_REG);
+	/* turn off mdc घड़ी */
+	enet_ग_लिखोl(priv, 0, ENET_MIISC_REG);
 	clk_disable_unprepare(priv->phy_clk);
 
 out_disable_clk_mac:
 	clk_disable_unprepare(priv->mac_clk);
 out:
-	free_netdev(dev);
-	return ret;
-}
+	मुक्त_netdev(dev);
+	वापस ret;
+पूर्ण
 
 
 /*
- * exit func, stops hardware and unregisters netdevice
+ * निकास func, stops hardware and unरेजिस्टरs netdevice
  */
-static int bcm_enet_remove(struct platform_device *pdev)
-{
-	struct bcm_enet_priv *priv;
-	struct net_device *dev;
+अटल पूर्णांक bcm_enet_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा net_device *dev;
 
 	/* stop netdevice */
-	dev = platform_get_drvdata(pdev);
+	dev = platक्रमm_get_drvdata(pdev);
 	priv = netdev_priv(dev);
-	unregister_netdev(dev);
+	unरेजिस्टर_netdev(dev);
 
-	/* turn off mdc clock */
-	enet_writel(priv, 0, ENET_MIISC_REG);
+	/* turn off mdc घड़ी */
+	enet_ग_लिखोl(priv, 0, ENET_MIISC_REG);
 
-	if (priv->has_phy) {
-		mdiobus_unregister(priv->mii_bus);
-		mdiobus_free(priv->mii_bus);
-	} else {
-		struct bcm63xx_enet_platform_data *pd;
+	अगर (priv->has_phy) अणु
+		mdiobus_unरेजिस्टर(priv->mii_bus);
+		mdiobus_मुक्त(priv->mii_bus);
+	पूर्ण अन्यथा अणु
+		काष्ठा bcm63xx_enet_platक्रमm_data *pd;
 
 		pd = dev_get_platdata(&pdev->dev);
-		if (pd && pd->mii_config)
-			pd->mii_config(dev, 0, bcm_enet_mdio_read_mii,
-				       bcm_enet_mdio_write_mii);
-	}
+		अगर (pd && pd->mii_config)
+			pd->mii_config(dev, 0, bcm_enet_mdio_पढ़ो_mii,
+				       bcm_enet_mdio_ग_लिखो_mii);
+	पूर्ण
 
-	/* disable hw block clocks */
+	/* disable hw block घड़ीs */
 	clk_disable_unprepare(priv->phy_clk);
 	clk_disable_unprepare(priv->mac_clk);
 
-	free_netdev(dev);
-	return 0;
-}
+	मुक्त_netdev(dev);
+	वापस 0;
+पूर्ण
 
-struct platform_driver bcm63xx_enet_driver = {
+काष्ठा platक्रमm_driver bcm63xx_enet_driver = अणु
 	.probe	= bcm_enet_probe,
-	.remove	= bcm_enet_remove,
-	.driver	= {
+	.हटाओ	= bcm_enet_हटाओ,
+	.driver	= अणु
 		.name	= "bcm63xx_enet",
 		.owner  = THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * switch mii access callbacks
+ * चयन mii access callbacks
  */
-static int bcmenet_sw_mdio_read(struct bcm_enet_priv *priv,
-				int ext, int phy_id, int location)
-{
+अटल पूर्णांक bcmenet_sw_mdio_पढ़ो(काष्ठा bcm_enet_priv *priv,
+				पूर्णांक ext, पूर्णांक phy_id, पूर्णांक location)
+अणु
 	u32 reg;
-	int ret;
+	पूर्णांक ret;
 
 	spin_lock_bh(&priv->enetsw_mdio_lock);
-	enetsw_writel(priv, 0, ENETSW_MDIOC_REG);
+	enetsw_ग_लिखोl(priv, 0, ENETSW_MDIOC_REG);
 
 	reg = ENETSW_MDIOC_RD_MASK |
 		(phy_id << ENETSW_MDIOC_PHYID_SHIFT) |
 		(location << ENETSW_MDIOC_REG_SHIFT);
 
-	if (ext)
+	अगर (ext)
 		reg |= ENETSW_MDIOC_EXT_MASK;
 
-	enetsw_writel(priv, reg, ENETSW_MDIOC_REG);
+	enetsw_ग_लिखोl(priv, reg, ENETSW_MDIOC_REG);
 	udelay(50);
-	ret = enetsw_readw(priv, ENETSW_MDIOD_REG);
+	ret = enetsw_पढ़ोw(priv, ENETSW_MDIOD_REG);
 	spin_unlock_bh(&priv->enetsw_mdio_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void bcmenet_sw_mdio_write(struct bcm_enet_priv *priv,
-				 int ext, int phy_id, int location,
-				 uint16_t data)
-{
+अटल व्योम bcmenet_sw_mdio_ग_लिखो(काष्ठा bcm_enet_priv *priv,
+				 पूर्णांक ext, पूर्णांक phy_id, पूर्णांक location,
+				 uपूर्णांक16_t data)
+अणु
 	u32 reg;
 
 	spin_lock_bh(&priv->enetsw_mdio_lock);
-	enetsw_writel(priv, 0, ENETSW_MDIOC_REG);
+	enetsw_ग_लिखोl(priv, 0, ENETSW_MDIOC_REG);
 
 	reg = ENETSW_MDIOC_WR_MASK |
 		(phy_id << ENETSW_MDIOC_PHYID_SHIFT) |
 		(location << ENETSW_MDIOC_REG_SHIFT);
 
-	if (ext)
+	अगर (ext)
 		reg |= ENETSW_MDIOC_EXT_MASK;
 
 	reg |= data;
 
-	enetsw_writel(priv, reg, ENETSW_MDIOC_REG);
+	enetsw_ग_लिखोl(priv, reg, ENETSW_MDIOC_REG);
 	udelay(50);
 	spin_unlock_bh(&priv->enetsw_mdio_lock);
-}
+पूर्ण
 
-static inline int bcm_enet_port_is_rgmii(int portid)
-{
-	return portid >= ENETSW_RGMII_PORT0;
-}
+अटल अंतरभूत पूर्णांक bcm_enet_port_is_rgmii(पूर्णांक portid)
+अणु
+	वापस portid >= ENETSW_RGMII_PORT0;
+पूर्ण
 
 /*
  * enet sw PHY polling
  */
-static void swphy_poll_timer(struct timer_list *t)
-{
-	struct bcm_enet_priv *priv = from_timer(priv, t, swphy_poll);
-	unsigned int i;
+अटल व्योम swphy_poll_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा bcm_enet_priv *priv = from_समयr(priv, t, swphy_poll);
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < priv->num_ports; i++) {
-		struct bcm63xx_enetsw_port *port;
-		int val, j, up, advertise, lpa, speed, duplex, media;
-		int external_phy = bcm_enet_port_is_rgmii(i);
+	क्रम (i = 0; i < priv->num_ports; i++) अणु
+		काष्ठा bcm63xx_enetsw_port *port;
+		पूर्णांक val, j, up, advertise, lpa, speed, duplex, media;
+		पूर्णांक बाह्यal_phy = bcm_enet_port_is_rgmii(i);
 		u8 override;
 
 		port = &priv->used_ports[i];
-		if (!port->used)
-			continue;
+		अगर (!port->used)
+			जारी;
 
-		if (port->bypass_link)
-			continue;
+		अगर (port->bypass_link)
+			जारी;
 
-		/* dummy read to clear */
-		for (j = 0; j < 2; j++)
-			val = bcmenet_sw_mdio_read(priv, external_phy,
+		/* dummy पढ़ो to clear */
+		क्रम (j = 0; j < 2; j++)
+			val = bcmenet_sw_mdio_पढ़ो(priv, बाह्यal_phy,
 						   port->phy_id, MII_BMSR);
 
-		if (val == 0xffff)
-			continue;
+		अगर (val == 0xffff)
+			जारी;
 
 		up = (val & BMSR_LSTATUS) ? 1 : 0;
-		if (!(up ^ priv->sw_port_link[i]))
-			continue;
+		अगर (!(up ^ priv->sw_port_link[i]))
+			जारी;
 
 		priv->sw_port_link[i] = up;
 
 		/* link changed */
-		if (!up) {
+		अगर (!up) अणु
 			dev_info(&priv->pdev->dev, "link DOWN on %s\n",
 				 port->name);
-			enetsw_writeb(priv, ENETSW_PORTOV_ENABLE_MASK,
+			enetsw_ग_लिखोb(priv, ENETSW_PORTOV_ENABLE_MASK,
 				      ENETSW_PORTOV_REG(i));
-			enetsw_writeb(priv, ENETSW_PTCTRL_RXDIS_MASK |
+			enetsw_ग_लिखोb(priv, ENETSW_PTCTRL_RXDIS_MASK |
 				      ENETSW_PTCTRL_TXDIS_MASK,
 				      ENETSW_PTCTRL_REG(i));
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		advertise = bcmenet_sw_mdio_read(priv, external_phy,
+		advertise = bcmenet_sw_mdio_पढ़ो(priv, बाह्यal_phy,
 						 port->phy_id, MII_ADVERTISE);
 
-		lpa = bcmenet_sw_mdio_read(priv, external_phy, port->phy_id,
+		lpa = bcmenet_sw_mdio_पढ़ो(priv, बाह्यal_phy, port->phy_id,
 					   MII_LPA);
 
 		/* figure out media and duplex from advertise and LPA values */
 		media = mii_nway_result(lpa & advertise);
 		duplex = (media & ADVERTISE_FULL) ? 1 : 0;
 
-		if (media & (ADVERTISE_100FULL | ADVERTISE_100HALF))
+		अगर (media & (ADVERTISE_100FULL | ADVERTISE_100HALF))
 			speed = 100;
-		else
+		अन्यथा
 			speed = 10;
 
-		if (val & BMSR_ESTATEN) {
-			advertise = bcmenet_sw_mdio_read(priv, external_phy,
+		अगर (val & BMSR_ESTATEN) अणु
+			advertise = bcmenet_sw_mdio_पढ़ो(priv, बाह्यal_phy,
 						port->phy_id, MII_CTRL1000);
 
-			lpa = bcmenet_sw_mdio_read(priv, external_phy,
+			lpa = bcmenet_sw_mdio_पढ़ो(priv, बाह्यal_phy,
 						port->phy_id, MII_STAT1000);
 
-			if (advertise & (ADVERTISE_1000FULL | ADVERTISE_1000HALF)
-					&& lpa & (LPA_1000FULL | LPA_1000HALF)) {
+			अगर (advertise & (ADVERTISE_1000FULL | ADVERTISE_1000HALF)
+					&& lpa & (LPA_1000FULL | LPA_1000HALF)) अणु
 				speed = 1000;
 				duplex = (lpa & LPA_1000FULL);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		dev_info(&priv->pdev->dev,
 			 "link UP on %s, %dMbps, %s-duplex\n",
@@ -2076,83 +2077,83 @@ static void swphy_poll_timer(struct timer_list *t)
 		override = ENETSW_PORTOV_ENABLE_MASK |
 			ENETSW_PORTOV_LINKUP_MASK;
 
-		if (speed == 1000)
+		अगर (speed == 1000)
 			override |= ENETSW_IMPOV_1000_MASK;
-		else if (speed == 100)
+		अन्यथा अगर (speed == 100)
 			override |= ENETSW_IMPOV_100_MASK;
-		if (duplex)
+		अगर (duplex)
 			override |= ENETSW_IMPOV_FDX_MASK;
 
-		enetsw_writeb(priv, override, ENETSW_PORTOV_REG(i));
-		enetsw_writeb(priv, 0, ENETSW_PTCTRL_REG(i));
-	}
+		enetsw_ग_लिखोb(priv, override, ENETSW_PORTOV_REG(i));
+		enetsw_ग_लिखोb(priv, 0, ENETSW_PTCTRL_REG(i));
+	पूर्ण
 
-	priv->swphy_poll.expires = jiffies + HZ;
-	add_timer(&priv->swphy_poll);
-}
+	priv->swphy_poll.expires = jअगरfies + HZ;
+	add_समयr(&priv->swphy_poll);
+पूर्ण
 
 /*
- * open callback, allocate dma rings & buffers and start rx operation
+ * खोलो callback, allocate dma rings & buffers and start rx operation
  */
-static int bcm_enetsw_open(struct net_device *dev)
-{
-	struct bcm_enet_priv *priv;
-	struct device *kdev;
-	int i, ret;
-	unsigned int size;
-	void *p;
+अटल पूर्णांक bcm_enetsw_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा device *kdev;
+	पूर्णांक i, ret;
+	अचिन्हित पूर्णांक size;
+	व्योम *p;
 	u32 val;
 
 	priv = netdev_priv(dev);
 	kdev = &priv->pdev->dev;
 
-	/* mask all interrupts and request them */
-	enet_dmac_writel(priv, 0, ENETDMAC_IRMASK, priv->rx_chan);
-	enet_dmac_writel(priv, 0, ENETDMAC_IRMASK, priv->tx_chan);
+	/* mask all पूर्णांकerrupts and request them */
+	enet_dmac_ग_लिखोl(priv, 0, ENETDMAC_IRMASK, priv->rx_chan);
+	enet_dmac_ग_लिखोl(priv, 0, ENETDMAC_IRMASK, priv->tx_chan);
 
 	ret = request_irq(priv->irq_rx, bcm_enet_isr_dma,
 			  0, dev->name, dev);
-	if (ret)
-		goto out_freeirq;
+	अगर (ret)
+		जाओ out_मुक्तirq;
 
-	if (priv->irq_tx != -1) {
+	अगर (priv->irq_tx != -1) अणु
 		ret = request_irq(priv->irq_tx, bcm_enet_isr_dma,
 				  0, dev->name, dev);
-		if (ret)
-			goto out_freeirq_rx;
-	}
+		अगर (ret)
+			जाओ out_मुक्तirq_rx;
+	पूर्ण
 
 	/* allocate rx dma ring */
-	size = priv->rx_ring_size * sizeof(struct bcm_enet_desc);
+	size = priv->rx_ring_size * माप(काष्ठा bcm_enet_desc);
 	p = dma_alloc_coherent(kdev, size, &priv->rx_desc_dma, GFP_KERNEL);
-	if (!p) {
+	अगर (!p) अणु
 		dev_err(kdev, "cannot allocate rx ring %u\n", size);
 		ret = -ENOMEM;
-		goto out_freeirq_tx;
-	}
+		जाओ out_मुक्तirq_tx;
+	पूर्ण
 
 	priv->rx_desc_alloc_size = size;
 	priv->rx_desc_cpu = p;
 
 	/* allocate tx dma ring */
-	size = priv->tx_ring_size * sizeof(struct bcm_enet_desc);
+	size = priv->tx_ring_size * माप(काष्ठा bcm_enet_desc);
 	p = dma_alloc_coherent(kdev, size, &priv->tx_desc_dma, GFP_KERNEL);
-	if (!p) {
+	अगर (!p) अणु
 		dev_err(kdev, "cannot allocate tx ring\n");
 		ret = -ENOMEM;
-		goto out_free_rx_ring;
-	}
+		जाओ out_मुक्त_rx_ring;
+	पूर्ण
 
 	priv->tx_desc_alloc_size = size;
 	priv->tx_desc_cpu = p;
 
-	priv->tx_skb = kcalloc(priv->tx_ring_size, sizeof(struct sk_buff *),
+	priv->tx_skb = kसुस्मृति(priv->tx_ring_size, माप(काष्ठा sk_buff *),
 			       GFP_KERNEL);
-	if (!priv->tx_skb) {
+	अगर (!priv->tx_skb) अणु
 		dev_err(kdev, "cannot allocate tx skb queue\n");
 		ret = -ENOMEM;
-		goto out_free_tx_ring;
-	}
+		जाओ out_मुक्त_tx_ring;
+	पूर्ण
 
 	priv->tx_desc_count = priv->tx_ring_size;
 	priv->tx_dirty_desc = 0;
@@ -2160,429 +2161,429 @@ static int bcm_enetsw_open(struct net_device *dev)
 	spin_lock_init(&priv->tx_lock);
 
 	/* init & fill rx ring with buffers */
-	priv->rx_buf = kcalloc(priv->rx_ring_size, sizeof(void *),
+	priv->rx_buf = kसुस्मृति(priv->rx_ring_size, माप(व्योम *),
 			       GFP_KERNEL);
-	if (!priv->rx_buf) {
+	अगर (!priv->rx_buf) अणु
 		dev_err(kdev, "cannot allocate rx buffer queue\n");
 		ret = -ENOMEM;
-		goto out_free_tx_skb;
-	}
+		जाओ out_मुक्त_tx_skb;
+	पूर्ण
 
 	priv->rx_desc_count = 0;
 	priv->rx_dirty_desc = 0;
 	priv->rx_curr_desc = 0;
 
 	/* disable all ports */
-	for (i = 0; i < priv->num_ports; i++) {
-		enetsw_writeb(priv, ENETSW_PORTOV_ENABLE_MASK,
+	क्रम (i = 0; i < priv->num_ports; i++) अणु
+		enetsw_ग_लिखोb(priv, ENETSW_PORTOV_ENABLE_MASK,
 			      ENETSW_PORTOV_REG(i));
-		enetsw_writeb(priv, ENETSW_PTCTRL_RXDIS_MASK |
+		enetsw_ग_लिखोb(priv, ENETSW_PTCTRL_RXDIS_MASK |
 			      ENETSW_PTCTRL_TXDIS_MASK,
 			      ENETSW_PTCTRL_REG(i));
 
 		priv->sw_port_link[i] = 0;
-	}
+	पूर्ण
 
 	/* reset mib */
-	val = enetsw_readb(priv, ENETSW_GMCR_REG);
+	val = enetsw_पढ़ोb(priv, ENETSW_GMCR_REG);
 	val |= ENETSW_GMCR_RST_MIB_MASK;
-	enetsw_writeb(priv, val, ENETSW_GMCR_REG);
+	enetsw_ग_लिखोb(priv, val, ENETSW_GMCR_REG);
 	mdelay(1);
 	val &= ~ENETSW_GMCR_RST_MIB_MASK;
-	enetsw_writeb(priv, val, ENETSW_GMCR_REG);
+	enetsw_ग_लिखोb(priv, val, ENETSW_GMCR_REG);
 	mdelay(1);
 
-	/* force CPU port state */
-	val = enetsw_readb(priv, ENETSW_IMPOV_REG);
+	/* क्रमce CPU port state */
+	val = enetsw_पढ़ोb(priv, ENETSW_IMPOV_REG);
 	val |= ENETSW_IMPOV_FORCE_MASK | ENETSW_IMPOV_LINKUP_MASK;
-	enetsw_writeb(priv, val, ENETSW_IMPOV_REG);
+	enetsw_ग_लिखोb(priv, val, ENETSW_IMPOV_REG);
 
-	/* enable switch forward engine */
-	val = enetsw_readb(priv, ENETSW_SWMODE_REG);
+	/* enable चयन क्रमward engine */
+	val = enetsw_पढ़ोb(priv, ENETSW_SWMODE_REG);
 	val |= ENETSW_SWMODE_FWD_EN_MASK;
-	enetsw_writeb(priv, val, ENETSW_SWMODE_REG);
+	enetsw_ग_लिखोb(priv, val, ENETSW_SWMODE_REG);
 
 	/* enable jumbo on all ports */
-	enetsw_writel(priv, 0x1ff, ENETSW_JMBCTL_PORT_REG);
-	enetsw_writew(priv, 9728, ENETSW_JMBCTL_MAXSIZE_REG);
+	enetsw_ग_लिखोl(priv, 0x1ff, ENETSW_JMBCTL_PORT_REG);
+	enetsw_ग_लिखोw(priv, 9728, ENETSW_JMBCTL_MAXSIZE_REG);
 
 	/* initialize flow control buffer allocation */
-	enet_dma_writel(priv, ENETDMA_BUFALLOC_FORCE_MASK | 0,
+	enet_dma_ग_लिखोl(priv, ENETDMA_BUFALLOC_FORCE_MASK | 0,
 			ENETDMA_BUFALLOC_REG(priv->rx_chan));
 
-	if (bcm_enet_refill_rx(dev, false)) {
+	अगर (bcm_enet_refill_rx(dev, false)) अणु
 		dev_err(kdev, "cannot allocate rx buffer queue\n");
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* write rx & tx ring addresses */
-	enet_dmas_writel(priv, priv->rx_desc_dma,
+	/* ग_लिखो rx & tx ring addresses */
+	enet_dmas_ग_लिखोl(priv, priv->rx_desc_dma,
 			 ENETDMAS_RSTART_REG, priv->rx_chan);
-	enet_dmas_writel(priv, priv->tx_desc_dma,
+	enet_dmas_ग_लिखोl(priv, priv->tx_desc_dma,
 			 ENETDMAS_RSTART_REG, priv->tx_chan);
 
-	/* clear remaining state ram for rx & tx channel */
-	enet_dmas_writel(priv, 0, ENETDMAS_SRAM2_REG, priv->rx_chan);
-	enet_dmas_writel(priv, 0, ENETDMAS_SRAM2_REG, priv->tx_chan);
-	enet_dmas_writel(priv, 0, ENETDMAS_SRAM3_REG, priv->rx_chan);
-	enet_dmas_writel(priv, 0, ENETDMAS_SRAM3_REG, priv->tx_chan);
-	enet_dmas_writel(priv, 0, ENETDMAS_SRAM4_REG, priv->rx_chan);
-	enet_dmas_writel(priv, 0, ENETDMAS_SRAM4_REG, priv->tx_chan);
+	/* clear reमुख्यing state ram क्रम rx & tx channel */
+	enet_dmas_ग_लिखोl(priv, 0, ENETDMAS_SRAM2_REG, priv->rx_chan);
+	enet_dmas_ग_लिखोl(priv, 0, ENETDMAS_SRAM2_REG, priv->tx_chan);
+	enet_dmas_ग_लिखोl(priv, 0, ENETDMAS_SRAM3_REG, priv->rx_chan);
+	enet_dmas_ग_लिखोl(priv, 0, ENETDMAS_SRAM3_REG, priv->tx_chan);
+	enet_dmas_ग_लिखोl(priv, 0, ENETDMAS_SRAM4_REG, priv->rx_chan);
+	enet_dmas_ग_लिखोl(priv, 0, ENETDMAS_SRAM4_REG, priv->tx_chan);
 
 	/* set dma maximum burst len */
-	enet_dmac_writel(priv, priv->dma_maxburst,
+	enet_dmac_ग_लिखोl(priv, priv->dma_maxburst,
 			 ENETDMAC_MAXBURST, priv->rx_chan);
-	enet_dmac_writel(priv, priv->dma_maxburst,
+	enet_dmac_ग_लिखोl(priv, priv->dma_maxburst,
 			 ENETDMAC_MAXBURST, priv->tx_chan);
 
 	/* set flow control low/high threshold to 1/3 / 2/3 */
 	val = priv->rx_ring_size / 3;
-	enet_dma_writel(priv, val, ENETDMA_FLOWCL_REG(priv->rx_chan));
+	enet_dma_ग_लिखोl(priv, val, ENETDMA_FLOWCL_REG(priv->rx_chan));
 	val = (priv->rx_ring_size * 2) / 3;
-	enet_dma_writel(priv, val, ENETDMA_FLOWCH_REG(priv->rx_chan));
+	enet_dma_ग_लिखोl(priv, val, ENETDMA_FLOWCH_REG(priv->rx_chan));
 
-	/* all set, enable mac and interrupts, start dma engine and
+	/* all set, enable mac and पूर्णांकerrupts, start dma engine and
 	 * kick rx dma channel
 	 */
 	wmb();
-	enet_dma_writel(priv, ENETDMA_CFG_EN_MASK, ENETDMA_CFG_REG);
-	enet_dmac_writel(priv, ENETDMAC_CHANCFG_EN_MASK,
+	enet_dma_ग_लिखोl(priv, ENETDMA_CFG_EN_MASK, ENETDMA_CFG_REG);
+	enet_dmac_ग_लिखोl(priv, ENETDMAC_CHANCFG_EN_MASK,
 			 ENETDMAC_CHANCFG, priv->rx_chan);
 
-	/* watch "packet transferred" interrupt in rx and tx */
-	enet_dmac_writel(priv, ENETDMAC_IR_PKTDONE_MASK,
+	/* watch "packet transferred" पूर्णांकerrupt in rx and tx */
+	enet_dmac_ग_लिखोl(priv, ENETDMAC_IR_PKTDONE_MASK,
 			 ENETDMAC_IR, priv->rx_chan);
-	enet_dmac_writel(priv, ENETDMAC_IR_PKTDONE_MASK,
+	enet_dmac_ग_लिखोl(priv, ENETDMAC_IR_PKTDONE_MASK,
 			 ENETDMAC_IR, priv->tx_chan);
 
-	/* make sure we enable napi before rx interrupt  */
+	/* make sure we enable napi beक्रमe rx पूर्णांकerrupt  */
 	napi_enable(&priv->napi);
 
-	enet_dmac_writel(priv, ENETDMAC_IR_PKTDONE_MASK,
+	enet_dmac_ग_लिखोl(priv, ENETDMAC_IR_PKTDONE_MASK,
 			 ENETDMAC_IRMASK, priv->rx_chan);
-	enet_dmac_writel(priv, ENETDMAC_IR_PKTDONE_MASK,
+	enet_dmac_ग_लिखोl(priv, ENETDMAC_IR_PKTDONE_MASK,
 			 ENETDMAC_IRMASK, priv->tx_chan);
 
-	netif_carrier_on(dev);
-	netif_start_queue(dev);
+	netअगर_carrier_on(dev);
+	netअगर_start_queue(dev);
 
-	/* apply override config for bypass_link ports here. */
-	for (i = 0; i < priv->num_ports; i++) {
-		struct bcm63xx_enetsw_port *port;
+	/* apply override config क्रम bypass_link ports here. */
+	क्रम (i = 0; i < priv->num_ports; i++) अणु
+		काष्ठा bcm63xx_enetsw_port *port;
 		u8 override;
 		port = &priv->used_ports[i];
-		if (!port->used)
-			continue;
+		अगर (!port->used)
+			जारी;
 
-		if (!port->bypass_link)
-			continue;
+		अगर (!port->bypass_link)
+			जारी;
 
 		override = ENETSW_PORTOV_ENABLE_MASK |
 			ENETSW_PORTOV_LINKUP_MASK;
 
-		switch (port->force_speed) {
-		case 1000:
+		चयन (port->क्रमce_speed) अणु
+		हाल 1000:
 			override |= ENETSW_IMPOV_1000_MASK;
-			break;
-		case 100:
+			अवरोध;
+		हाल 100:
 			override |= ENETSW_IMPOV_100_MASK;
-			break;
-		case 10:
-			break;
-		default:
+			अवरोध;
+		हाल 10:
+			अवरोध;
+		शेष:
 			pr_warn("invalid forced speed on port %s: assume 10\n",
 			       port->name);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (port->force_duplex_full)
+		अगर (port->क्रमce_duplex_full)
 			override |= ENETSW_IMPOV_FDX_MASK;
 
 
-		enetsw_writeb(priv, override, ENETSW_PORTOV_REG(i));
-		enetsw_writeb(priv, 0, ENETSW_PTCTRL_REG(i));
-	}
+		enetsw_ग_लिखोb(priv, override, ENETSW_PORTOV_REG(i));
+		enetsw_ग_लिखोb(priv, 0, ENETSW_PTCTRL_REG(i));
+	पूर्ण
 
-	/* start phy polling timer */
-	timer_setup(&priv->swphy_poll, swphy_poll_timer, 0);
-	mod_timer(&priv->swphy_poll, jiffies);
-	return 0;
+	/* start phy polling समयr */
+	समयr_setup(&priv->swphy_poll, swphy_poll_समयr, 0);
+	mod_समयr(&priv->swphy_poll, jअगरfies);
+	वापस 0;
 
 out:
-	bcm_enet_free_rx_buf_ring(kdev, priv);
+	bcm_enet_मुक्त_rx_buf_ring(kdev, priv);
 
-out_free_tx_skb:
-	kfree(priv->tx_skb);
+out_मुक्त_tx_skb:
+	kमुक्त(priv->tx_skb);
 
-out_free_tx_ring:
-	dma_free_coherent(kdev, priv->tx_desc_alloc_size,
+out_मुक्त_tx_ring:
+	dma_मुक्त_coherent(kdev, priv->tx_desc_alloc_size,
 			  priv->tx_desc_cpu, priv->tx_desc_dma);
 
-out_free_rx_ring:
-	dma_free_coherent(kdev, priv->rx_desc_alloc_size,
+out_मुक्त_rx_ring:
+	dma_मुक्त_coherent(kdev, priv->rx_desc_alloc_size,
 			  priv->rx_desc_cpu, priv->rx_desc_dma);
 
-out_freeirq_tx:
-	if (priv->irq_tx != -1)
-		free_irq(priv->irq_tx, dev);
+out_मुक्तirq_tx:
+	अगर (priv->irq_tx != -1)
+		मुक्त_irq(priv->irq_tx, dev);
 
-out_freeirq_rx:
-	free_irq(priv->irq_rx, dev);
+out_मुक्तirq_rx:
+	मुक्त_irq(priv->irq_rx, dev);
 
-out_freeirq:
-	return ret;
-}
+out_मुक्तirq:
+	वापस ret;
+पूर्ण
 
 /* stop callback */
-static int bcm_enetsw_stop(struct net_device *dev)
-{
-	struct bcm_enet_priv *priv;
-	struct device *kdev;
+अटल पूर्णांक bcm_enetsw_stop(काष्ठा net_device *dev)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा device *kdev;
 
 	priv = netdev_priv(dev);
 	kdev = &priv->pdev->dev;
 
-	del_timer_sync(&priv->swphy_poll);
-	netif_stop_queue(dev);
+	del_समयr_sync(&priv->swphy_poll);
+	netअगर_stop_queue(dev);
 	napi_disable(&priv->napi);
-	del_timer_sync(&priv->rx_timeout);
+	del_समयr_sync(&priv->rx_समयout);
 
-	/* mask all interrupts */
-	enet_dmac_writel(priv, 0, ENETDMAC_IRMASK, priv->rx_chan);
-	enet_dmac_writel(priv, 0, ENETDMAC_IRMASK, priv->tx_chan);
+	/* mask all पूर्णांकerrupts */
+	enet_dmac_ग_लिखोl(priv, 0, ENETDMAC_IRMASK, priv->rx_chan);
+	enet_dmac_ग_लिखोl(priv, 0, ENETDMAC_IRMASK, priv->tx_chan);
 
 	/* disable dma & mac */
 	bcm_enet_disable_dma(priv, priv->tx_chan);
 	bcm_enet_disable_dma(priv, priv->rx_chan);
 
-	/* force reclaim of all tx buffers */
+	/* क्रमce reclaim of all tx buffers */
 	bcm_enet_tx_reclaim(dev, 1);
 
-	/* free the rx buffer ring */
-	bcm_enet_free_rx_buf_ring(kdev, priv);
+	/* मुक्त the rx buffer ring */
+	bcm_enet_मुक्त_rx_buf_ring(kdev, priv);
 
-	/* free remaining allocated memory */
-	kfree(priv->tx_skb);
-	dma_free_coherent(kdev, priv->rx_desc_alloc_size,
+	/* मुक्त reमुख्यing allocated memory */
+	kमुक्त(priv->tx_skb);
+	dma_मुक्त_coherent(kdev, priv->rx_desc_alloc_size,
 			  priv->rx_desc_cpu, priv->rx_desc_dma);
-	dma_free_coherent(kdev, priv->tx_desc_alloc_size,
+	dma_मुक्त_coherent(kdev, priv->tx_desc_alloc_size,
 			  priv->tx_desc_cpu, priv->tx_desc_dma);
-	if (priv->irq_tx != -1)
-		free_irq(priv->irq_tx, dev);
-	free_irq(priv->irq_rx, dev);
+	अगर (priv->irq_tx != -1)
+		मुक्त_irq(priv->irq_tx, dev);
+	मुक्त_irq(priv->irq_rx, dev);
 
-	/* reset BQL after forced tx reclaim to prevent kernel panic */
+	/* reset BQL after क्रमced tx reclaim to prevent kernel panic */
 	netdev_reset_queue(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* try to sort out phy external status by walking the used_port field
- * in the bcm_enet_priv structure. in case the phy address is not
- * assigned to any physical port on the switch, assume it is external
+/* try to sort out phy बाह्यal status by walking the used_port field
+ * in the bcm_enet_priv काष्ठाure. in हाल the phy address is not
+ * asचिन्हित to any physical port on the चयन, assume it is बाह्यal
  * (and yell at the user).
  */
-static int bcm_enetsw_phy_is_external(struct bcm_enet_priv *priv, int phy_id)
-{
-	int i;
+अटल पूर्णांक bcm_enetsw_phy_is_बाह्यal(काष्ठा bcm_enet_priv *priv, पूर्णांक phy_id)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < priv->num_ports; ++i) {
-		if (!priv->used_ports[i].used)
-			continue;
-		if (priv->used_ports[i].phy_id == phy_id)
-			return bcm_enet_port_is_rgmii(i);
-	}
+	क्रम (i = 0; i < priv->num_ports; ++i) अणु
+		अगर (!priv->used_ports[i].used)
+			जारी;
+		अगर (priv->used_ports[i].phy_id == phy_id)
+			वापस bcm_enet_port_is_rgmii(i);
+	पूर्ण
 
-	printk_once(KERN_WARNING  "bcm63xx_enet: could not find a used port with phy_id %i, assuming phy is external\n",
+	prपूर्णांकk_once(KERN_WARNING  "bcm63xx_enet: could not find a used port with phy_id %i, assuming phy is external\n",
 		    phy_id);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* can't use bcmenet_sw_mdio_read directly as we need to sort out
- * external/internal status of the given phy_id first.
+/* can't use bcmenet_sw_mdio_पढ़ो directly as we need to sort out
+ * बाह्यal/पूर्णांकernal status of the given phy_id first.
  */
-static int bcm_enetsw_mii_mdio_read(struct net_device *dev, int phy_id,
-				    int location)
-{
-	struct bcm_enet_priv *priv;
+अटल पूर्णांक bcm_enetsw_mii_mdio_पढ़ो(काष्ठा net_device *dev, पूर्णांक phy_id,
+				    पूर्णांक location)
+अणु
+	काष्ठा bcm_enet_priv *priv;
 
 	priv = netdev_priv(dev);
-	return bcmenet_sw_mdio_read(priv,
-				    bcm_enetsw_phy_is_external(priv, phy_id),
+	वापस bcmenet_sw_mdio_पढ़ो(priv,
+				    bcm_enetsw_phy_is_बाह्यal(priv, phy_id),
 				    phy_id, location);
-}
+पूर्ण
 
-/* can't use bcmenet_sw_mdio_write directly as we need to sort out
- * external/internal status of the given phy_id first.
+/* can't use bcmenet_sw_mdio_ग_लिखो directly as we need to sort out
+ * बाह्यal/पूर्णांकernal status of the given phy_id first.
  */
-static void bcm_enetsw_mii_mdio_write(struct net_device *dev, int phy_id,
-				      int location,
-				      int val)
-{
-	struct bcm_enet_priv *priv;
+अटल व्योम bcm_enetsw_mii_mdio_ग_लिखो(काष्ठा net_device *dev, पूर्णांक phy_id,
+				      पूर्णांक location,
+				      पूर्णांक val)
+अणु
+	काष्ठा bcm_enet_priv *priv;
 
 	priv = netdev_priv(dev);
-	bcmenet_sw_mdio_write(priv, bcm_enetsw_phy_is_external(priv, phy_id),
+	bcmenet_sw_mdio_ग_लिखो(priv, bcm_enetsw_phy_is_बाह्यal(priv, phy_id),
 			      phy_id, location, val);
-}
+पूर्ण
 
-static int bcm_enetsw_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
-{
-	struct mii_if_info mii;
+अटल पूर्णांक bcm_enetsw_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+	काष्ठा mii_अगर_info mii;
 
 	mii.dev = dev;
-	mii.mdio_read = bcm_enetsw_mii_mdio_read;
-	mii.mdio_write = bcm_enetsw_mii_mdio_write;
+	mii.mdio_पढ़ो = bcm_enetsw_mii_mdio_पढ़ो;
+	mii.mdio_ग_लिखो = bcm_enetsw_mii_mdio_ग_लिखो;
 	mii.phy_id = 0;
 	mii.phy_id_mask = 0x3f;
 	mii.reg_num_mask = 0x1f;
-	return generic_mii_ioctl(&mii, if_mii(rq), cmd, NULL);
+	वापस generic_mii_ioctl(&mii, अगर_mii(rq), cmd, शून्य);
 
-}
+पूर्ण
 
-static const struct net_device_ops bcm_enetsw_ops = {
-	.ndo_open		= bcm_enetsw_open,
-	.ndo_stop		= bcm_enetsw_stop,
-	.ndo_start_xmit		= bcm_enet_start_xmit,
-	.ndo_change_mtu		= bcm_enet_change_mtu,
-	.ndo_do_ioctl		= bcm_enetsw_ioctl,
-};
+अटल स्थिर काष्ठा net_device_ops bcm_enetsw_ops = अणु
+	.nकरो_खोलो		= bcm_enetsw_खोलो,
+	.nकरो_stop		= bcm_enetsw_stop,
+	.nकरो_start_xmit		= bcm_enet_start_xmit,
+	.nकरो_change_mtu		= bcm_enet_change_mtu,
+	.nकरो_करो_ioctl		= bcm_enetsw_ioctl,
+पूर्ण;
 
 
-static const struct bcm_enet_stats bcm_enetsw_gstrings_stats[] = {
-	{ "rx_packets", DEV_STAT(rx_packets), -1 },
-	{ "tx_packets",	DEV_STAT(tx_packets), -1 },
-	{ "rx_bytes", DEV_STAT(rx_bytes), -1 },
-	{ "tx_bytes", DEV_STAT(tx_bytes), -1 },
-	{ "rx_errors", DEV_STAT(rx_errors), -1 },
-	{ "tx_errors", DEV_STAT(tx_errors), -1 },
-	{ "rx_dropped",	DEV_STAT(rx_dropped), -1 },
-	{ "tx_dropped",	DEV_STAT(tx_dropped), -1 },
+अटल स्थिर काष्ठा bcm_enet_stats bcm_enetsw_gstrings_stats[] = अणु
+	अणु "rx_packets", DEV_STAT(rx_packets), -1 पूर्ण,
+	अणु "tx_packets",	DEV_STAT(tx_packets), -1 पूर्ण,
+	अणु "rx_bytes", DEV_STAT(rx_bytes), -1 पूर्ण,
+	अणु "tx_bytes", DEV_STAT(tx_bytes), -1 पूर्ण,
+	अणु "rx_errors", DEV_STAT(rx_errors), -1 पूर्ण,
+	अणु "tx_errors", DEV_STAT(tx_errors), -1 पूर्ण,
+	अणु "rx_dropped",	DEV_STAT(rx_dropped), -1 पूर्ण,
+	अणु "tx_dropped",	DEV_STAT(tx_dropped), -1 पूर्ण,
 
-	{ "tx_good_octets", GEN_STAT(mib.tx_gd_octets), ETHSW_MIB_RX_GD_OCT },
-	{ "tx_unicast", GEN_STAT(mib.tx_unicast), ETHSW_MIB_RX_BRDCAST },
-	{ "tx_broadcast", GEN_STAT(mib.tx_brdcast), ETHSW_MIB_RX_BRDCAST },
-	{ "tx_multicast", GEN_STAT(mib.tx_mult), ETHSW_MIB_RX_MULT },
-	{ "tx_64_octets", GEN_STAT(mib.tx_64), ETHSW_MIB_RX_64 },
-	{ "tx_65_127_oct", GEN_STAT(mib.tx_65_127), ETHSW_MIB_RX_65_127 },
-	{ "tx_128_255_oct", GEN_STAT(mib.tx_128_255), ETHSW_MIB_RX_128_255 },
-	{ "tx_256_511_oct", GEN_STAT(mib.tx_256_511), ETHSW_MIB_RX_256_511 },
-	{ "tx_512_1023_oct", GEN_STAT(mib.tx_512_1023), ETHSW_MIB_RX_512_1023},
-	{ "tx_1024_1522_oct", GEN_STAT(mib.tx_1024_max),
-	  ETHSW_MIB_RX_1024_1522 },
-	{ "tx_1523_2047_oct", GEN_STAT(mib.tx_1523_2047),
-	  ETHSW_MIB_RX_1523_2047 },
-	{ "tx_2048_4095_oct", GEN_STAT(mib.tx_2048_4095),
-	  ETHSW_MIB_RX_2048_4095 },
-	{ "tx_4096_8191_oct", GEN_STAT(mib.tx_4096_8191),
-	  ETHSW_MIB_RX_4096_8191 },
-	{ "tx_8192_9728_oct", GEN_STAT(mib.tx_8192_9728),
-	  ETHSW_MIB_RX_8192_9728 },
-	{ "tx_oversize", GEN_STAT(mib.tx_ovr), ETHSW_MIB_RX_OVR },
-	{ "tx_oversize_drop", GEN_STAT(mib.tx_ovr), ETHSW_MIB_RX_OVR_DISC },
-	{ "tx_dropped",	GEN_STAT(mib.tx_drop), ETHSW_MIB_RX_DROP },
-	{ "tx_undersize", GEN_STAT(mib.tx_underrun), ETHSW_MIB_RX_UND },
-	{ "tx_pause", GEN_STAT(mib.tx_pause), ETHSW_MIB_RX_PAUSE },
+	अणु "tx_good_octets", GEN_STAT(mib.tx_gd_octets), ETHSW_MIB_RX_GD_OCT पूर्ण,
+	अणु "tx_unicast", GEN_STAT(mib.tx_unicast), ETHSW_MIB_RX_BRDCAST पूर्ण,
+	अणु "tx_broadcast", GEN_STAT(mib.tx_brdcast), ETHSW_MIB_RX_BRDCAST पूर्ण,
+	अणु "tx_multicast", GEN_STAT(mib.tx_mult), ETHSW_MIB_RX_MULT पूर्ण,
+	अणु "tx_64_octets", GEN_STAT(mib.tx_64), ETHSW_MIB_RX_64 पूर्ण,
+	अणु "tx_65_127_oct", GEN_STAT(mib.tx_65_127), ETHSW_MIB_RX_65_127 पूर्ण,
+	अणु "tx_128_255_oct", GEN_STAT(mib.tx_128_255), ETHSW_MIB_RX_128_255 पूर्ण,
+	अणु "tx_256_511_oct", GEN_STAT(mib.tx_256_511), ETHSW_MIB_RX_256_511 पूर्ण,
+	अणु "tx_512_1023_oct", GEN_STAT(mib.tx_512_1023), ETHSW_MIB_RX_512_1023पूर्ण,
+	अणु "tx_1024_1522_oct", GEN_STAT(mib.tx_1024_max),
+	  ETHSW_MIB_RX_1024_1522 पूर्ण,
+	अणु "tx_1523_2047_oct", GEN_STAT(mib.tx_1523_2047),
+	  ETHSW_MIB_RX_1523_2047 पूर्ण,
+	अणु "tx_2048_4095_oct", GEN_STAT(mib.tx_2048_4095),
+	  ETHSW_MIB_RX_2048_4095 पूर्ण,
+	अणु "tx_4096_8191_oct", GEN_STAT(mib.tx_4096_8191),
+	  ETHSW_MIB_RX_4096_8191 पूर्ण,
+	अणु "tx_8192_9728_oct", GEN_STAT(mib.tx_8192_9728),
+	  ETHSW_MIB_RX_8192_9728 पूर्ण,
+	अणु "tx_oversize", GEN_STAT(mib.tx_ovr), ETHSW_MIB_RX_OVR पूर्ण,
+	अणु "tx_oversize_drop", GEN_STAT(mib.tx_ovr), ETHSW_MIB_RX_OVR_DISC पूर्ण,
+	अणु "tx_dropped",	GEN_STAT(mib.tx_drop), ETHSW_MIB_RX_DROP पूर्ण,
+	अणु "tx_undersize", GEN_STAT(mib.tx_underrun), ETHSW_MIB_RX_UND पूर्ण,
+	अणु "tx_pause", GEN_STAT(mib.tx_छोड़ो), ETHSW_MIB_RX_PAUSE पूर्ण,
 
-	{ "rx_good_octets", GEN_STAT(mib.rx_gd_octets), ETHSW_MIB_TX_ALL_OCT },
-	{ "rx_broadcast", GEN_STAT(mib.rx_brdcast), ETHSW_MIB_TX_BRDCAST },
-	{ "rx_multicast", GEN_STAT(mib.rx_mult), ETHSW_MIB_TX_MULT },
-	{ "rx_unicast", GEN_STAT(mib.rx_unicast), ETHSW_MIB_TX_MULT },
-	{ "rx_pause", GEN_STAT(mib.rx_pause), ETHSW_MIB_TX_PAUSE },
-	{ "rx_dropped", GEN_STAT(mib.rx_drop), ETHSW_MIB_TX_DROP_PKTS },
+	अणु "rx_good_octets", GEN_STAT(mib.rx_gd_octets), ETHSW_MIB_TX_ALL_OCT पूर्ण,
+	अणु "rx_broadcast", GEN_STAT(mib.rx_brdcast), ETHSW_MIB_TX_BRDCAST पूर्ण,
+	अणु "rx_multicast", GEN_STAT(mib.rx_mult), ETHSW_MIB_TX_MULT पूर्ण,
+	अणु "rx_unicast", GEN_STAT(mib.rx_unicast), ETHSW_MIB_TX_MULT पूर्ण,
+	अणु "rx_pause", GEN_STAT(mib.rx_छोड़ो), ETHSW_MIB_TX_PAUSE पूर्ण,
+	अणु "rx_dropped", GEN_STAT(mib.rx_drop), ETHSW_MIB_TX_DROP_PKTS पूर्ण,
 
-};
+पूर्ण;
 
-#define BCM_ENETSW_STATS_LEN	\
-	(sizeof(bcm_enetsw_gstrings_stats) / sizeof(struct bcm_enet_stats))
+#घोषणा BCM_ENETSW_STATS_LEN	\
+	(माप(bcm_enetsw_gstrings_stats) / माप(काष्ठा bcm_enet_stats))
 
-static void bcm_enetsw_get_strings(struct net_device *netdev,
+अटल व्योम bcm_enetsw_get_strings(काष्ठा net_device *netdev,
 				   u32 stringset, u8 *data)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
-		for (i = 0; i < BCM_ENETSW_STATS_LEN; i++) {
-			memcpy(data + i * ETH_GSTRING_LEN,
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < BCM_ENETSW_STATS_LEN; i++) अणु
+			स_नकल(data + i * ETH_GSTRING_LEN,
 			       bcm_enetsw_gstrings_stats[i].stat_string,
 			       ETH_GSTRING_LEN);
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int bcm_enetsw_get_sset_count(struct net_device *netdev,
-				     int string_set)
-{
-	switch (string_set) {
-	case ETH_SS_STATS:
-		return BCM_ENETSW_STATS_LEN;
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक bcm_enetsw_get_sset_count(काष्ठा net_device *netdev,
+				     पूर्णांक string_set)
+अणु
+	चयन (string_set) अणु
+	हाल ETH_SS_STATS:
+		वापस BCM_ENETSW_STATS_LEN;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void bcm_enetsw_get_drvinfo(struct net_device *netdev,
-				   struct ethtool_drvinfo *drvinfo)
-{
-	strncpy(drvinfo->driver, bcm_enet_driver_name, sizeof(drvinfo->driver));
-	strncpy(drvinfo->bus_info, "bcm63xx", sizeof(drvinfo->bus_info));
-}
+अटल व्योम bcm_enetsw_get_drvinfo(काष्ठा net_device *netdev,
+				   काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	म_नकलन(drvinfo->driver, bcm_enet_driver_name, माप(drvinfo->driver));
+	म_नकलन(drvinfo->bus_info, "bcm63xx", माप(drvinfo->bus_info));
+पूर्ण
 
-static void bcm_enetsw_get_ethtool_stats(struct net_device *netdev,
-					 struct ethtool_stats *stats,
+अटल व्योम bcm_enetsw_get_ethtool_stats(काष्ठा net_device *netdev,
+					 काष्ठा ethtool_stats *stats,
 					 u64 *data)
-{
-	struct bcm_enet_priv *priv;
-	int i;
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	पूर्णांक i;
 
 	priv = netdev_priv(netdev);
 
-	for (i = 0; i < BCM_ENETSW_STATS_LEN; i++) {
-		const struct bcm_enet_stats *s;
+	क्रम (i = 0; i < BCM_ENETSW_STATS_LEN; i++) अणु
+		स्थिर काष्ठा bcm_enet_stats *s;
 		u32 lo, hi;
-		char *p;
-		int reg;
+		अक्षर *p;
+		पूर्णांक reg;
 
 		s = &bcm_enetsw_gstrings_stats[i];
 
 		reg = s->mib_reg;
-		if (reg == -1)
-			continue;
+		अगर (reg == -1)
+			जारी;
 
-		lo = enetsw_readl(priv, ENETSW_MIB_REG(reg));
-		p = (char *)priv + s->stat_offset;
+		lo = enetsw_पढ़ोl(priv, ENETSW_MIB_REG(reg));
+		p = (अक्षर *)priv + s->stat_offset;
 
-		if (s->sizeof_stat == sizeof(u64)) {
-			hi = enetsw_readl(priv, ENETSW_MIB_REG(reg + 1));
+		अगर (s->माप_stat == माप(u64)) अणु
+			hi = enetsw_पढ़ोl(priv, ENETSW_MIB_REG(reg + 1));
 			*(u64 *)p = ((u64)hi << 32 | lo);
-		} else {
+		पूर्ण अन्यथा अणु
 			*(u32 *)p = lo;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < BCM_ENETSW_STATS_LEN; i++) {
-		const struct bcm_enet_stats *s;
-		char *p;
+	क्रम (i = 0; i < BCM_ENETSW_STATS_LEN; i++) अणु
+		स्थिर काष्ठा bcm_enet_stats *s;
+		अक्षर *p;
 
 		s = &bcm_enetsw_gstrings_stats[i];
 
-		if (s->mib_reg == -1)
-			p = (char *)&netdev->stats + s->stat_offset;
-		else
-			p = (char *)priv + s->stat_offset;
+		अगर (s->mib_reg == -1)
+			p = (अक्षर *)&netdev->stats + s->stat_offset;
+		अन्यथा
+			p = (अक्षर *)priv + s->stat_offset;
 
-		data[i] = (s->sizeof_stat == sizeof(u64)) ?
+		data[i] = (s->माप_stat == माप(u64)) ?
 			*(u64 *)p : *(u32 *)p;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bcm_enetsw_get_ringparam(struct net_device *dev,
-				     struct ethtool_ringparam *ering)
-{
-	struct bcm_enet_priv *priv;
+अटल व्योम bcm_enetsw_get_ringparam(काष्ठा net_device *dev,
+				     काष्ठा ethtool_ringparam *ering)
+अणु
+	काष्ठा bcm_enet_priv *priv;
 
 	priv = netdev_priv(dev);
 
@@ -2593,69 +2594,69 @@ static void bcm_enetsw_get_ringparam(struct net_device *dev,
 	ering->rx_jumbo_max_pending = 0;
 	ering->rx_pending = priv->rx_ring_size;
 	ering->tx_pending = priv->tx_ring_size;
-}
+पूर्ण
 
-static int bcm_enetsw_set_ringparam(struct net_device *dev,
-				    struct ethtool_ringparam *ering)
-{
-	struct bcm_enet_priv *priv;
-	int was_running;
+अटल पूर्णांक bcm_enetsw_set_ringparam(काष्ठा net_device *dev,
+				    काष्ठा ethtool_ringparam *ering)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	पूर्णांक was_running;
 
 	priv = netdev_priv(dev);
 
 	was_running = 0;
-	if (netif_running(dev)) {
+	अगर (netअगर_running(dev)) अणु
 		bcm_enetsw_stop(dev);
 		was_running = 1;
-	}
+	पूर्ण
 
 	priv->rx_ring_size = ering->rx_pending;
 	priv->tx_ring_size = ering->tx_pending;
 
-	if (was_running) {
-		int err;
+	अगर (was_running) अणु
+		पूर्णांक err;
 
-		err = bcm_enetsw_open(dev);
-		if (err)
-			dev_close(dev);
-	}
-	return 0;
-}
+		err = bcm_enetsw_खोलो(dev);
+		अगर (err)
+			dev_बंद(dev);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct ethtool_ops bcm_enetsw_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops bcm_enetsw_ethtool_ops = अणु
 	.get_strings		= bcm_enetsw_get_strings,
 	.get_sset_count		= bcm_enetsw_get_sset_count,
 	.get_ethtool_stats      = bcm_enetsw_get_ethtool_stats,
 	.get_drvinfo		= bcm_enetsw_get_drvinfo,
 	.get_ringparam		= bcm_enetsw_get_ringparam,
 	.set_ringparam		= bcm_enetsw_set_ringparam,
-};
+पूर्ण;
 
-/* allocate netdevice, request register memory and register device. */
-static int bcm_enetsw_probe(struct platform_device *pdev)
-{
-	struct bcm_enet_priv *priv;
-	struct net_device *dev;
-	struct bcm63xx_enetsw_platform_data *pd;
-	struct resource *res_mem;
-	int ret, irq_rx, irq_tx;
+/* allocate netdevice, request रेजिस्टर memory and रेजिस्टर device. */
+अटल पूर्णांक bcm_enetsw_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा net_device *dev;
+	काष्ठा bcm63xx_enetsw_platक्रमm_data *pd;
+	काष्ठा resource *res_mem;
+	पूर्णांक ret, irq_rx, irq_tx;
 
-	if (!bcm_enet_shared_base[0])
-		return -EPROBE_DEFER;
+	अगर (!bcm_enet_shared_base[0])
+		वापस -EPROBE_DEFER;
 
-	res_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	irq_rx = platform_get_irq(pdev, 0);
-	irq_tx = platform_get_irq(pdev, 1);
-	if (!res_mem || irq_rx < 0)
-		return -ENODEV;
+	res_mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	irq_rx = platक्रमm_get_irq(pdev, 0);
+	irq_tx = platक्रमm_get_irq(pdev, 1);
+	अगर (!res_mem || irq_rx < 0)
+		वापस -ENODEV;
 
 	ret = 0;
-	dev = alloc_etherdev(sizeof(*priv));
-	if (!dev)
-		return -ENOMEM;
+	dev = alloc_etherdev(माप(*priv));
+	अगर (!dev)
+		वापस -ENOMEM;
 	priv = netdev_priv(dev);
 
-	/* initialize default and fetch platform data */
+	/* initialize शेष and fetch platक्रमm data */
 	priv->enet_is_sw = true;
 	priv->irq_rx = irq_rx;
 	priv->irq_tx = irq_tx;
@@ -2665,152 +2666,152 @@ static int bcm_enetsw_probe(struct platform_device *pdev)
 	priv->rx_buf_offset = NET_SKB_PAD + NET_IP_ALIGN;
 
 	pd = dev_get_platdata(&pdev->dev);
-	if (pd) {
-		memcpy(dev->dev_addr, pd->mac_addr, ETH_ALEN);
-		memcpy(priv->used_ports, pd->used_ports,
-		       sizeof(pd->used_ports));
+	अगर (pd) अणु
+		स_नकल(dev->dev_addr, pd->mac_addr, ETH_ALEN);
+		स_नकल(priv->used_ports, pd->used_ports,
+		       माप(pd->used_ports));
 		priv->num_ports = pd->num_ports;
 		priv->dma_has_sram = pd->dma_has_sram;
 		priv->dma_chan_en_mask = pd->dma_chan_en_mask;
-		priv->dma_chan_int_mask = pd->dma_chan_int_mask;
+		priv->dma_chan_पूर्णांक_mask = pd->dma_chan_पूर्णांक_mask;
 		priv->dma_chan_width = pd->dma_chan_width;
-	}
+	पूर्ण
 
 	ret = bcm_enet_change_mtu(dev, dev->mtu);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	priv->base = devm_ioremap_resource(&pdev->dev, res_mem);
-	if (IS_ERR(priv->base)) {
+	अगर (IS_ERR(priv->base)) अणु
 		ret = PTR_ERR(priv->base);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	priv->mac_clk = devm_clk_get(&pdev->dev, "enetsw");
-	if (IS_ERR(priv->mac_clk)) {
+	अगर (IS_ERR(priv->mac_clk)) अणु
 		ret = PTR_ERR(priv->mac_clk);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	ret = clk_prepare_enable(priv->mac_clk);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	priv->rx_chan = 0;
 	priv->tx_chan = 1;
 	spin_lock_init(&priv->rx_lock);
 
-	/* init rx timeout (used for oom) */
-	timer_setup(&priv->rx_timeout, bcm_enet_refill_rx_timer, 0);
+	/* init rx समयout (used क्रम oom) */
+	समयr_setup(&priv->rx_समयout, bcm_enet_refill_rx_समयr, 0);
 
-	/* register netdevice */
+	/* रेजिस्टर netdevice */
 	dev->netdev_ops = &bcm_enetsw_ops;
-	netif_napi_add(dev, &priv->napi, bcm_enet_poll, 16);
+	netअगर_napi_add(dev, &priv->napi, bcm_enet_poll, 16);
 	dev->ethtool_ops = &bcm_enetsw_ethtool_ops;
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
 	spin_lock_init(&priv->enetsw_mdio_lock);
 
-	ret = register_netdev(dev);
-	if (ret)
-		goto out_disable_clk;
+	ret = रेजिस्टर_netdev(dev);
+	अगर (ret)
+		जाओ out_disable_clk;
 
-	netif_carrier_off(dev);
-	platform_set_drvdata(pdev, dev);
+	netअगर_carrier_off(dev);
+	platक्रमm_set_drvdata(pdev, dev);
 	priv->pdev = pdev;
 	priv->net_dev = dev;
 
-	return 0;
+	वापस 0;
 
 out_disable_clk:
 	clk_disable_unprepare(priv->mac_clk);
 out:
-	free_netdev(dev);
-	return ret;
-}
+	मुक्त_netdev(dev);
+	वापस ret;
+पूर्ण
 
 
-/* exit func, stops hardware and unregisters netdevice */
-static int bcm_enetsw_remove(struct platform_device *pdev)
-{
-	struct bcm_enet_priv *priv;
-	struct net_device *dev;
+/* निकास func, stops hardware and unरेजिस्टरs netdevice */
+अटल पूर्णांक bcm_enetsw_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm_enet_priv *priv;
+	काष्ठा net_device *dev;
 
 	/* stop netdevice */
-	dev = platform_get_drvdata(pdev);
+	dev = platक्रमm_get_drvdata(pdev);
 	priv = netdev_priv(dev);
-	unregister_netdev(dev);
+	unरेजिस्टर_netdev(dev);
 
 	clk_disable_unprepare(priv->mac_clk);
 
-	free_netdev(dev);
-	return 0;
-}
+	मुक्त_netdev(dev);
+	वापस 0;
+पूर्ण
 
-struct platform_driver bcm63xx_enetsw_driver = {
+काष्ठा platक्रमm_driver bcm63xx_enetsw_driver = अणु
 	.probe	= bcm_enetsw_probe,
-	.remove	= bcm_enetsw_remove,
-	.driver	= {
+	.हटाओ	= bcm_enetsw_हटाओ,
+	.driver	= अणु
 		.name	= "bcm63xx_enetsw",
 		.owner  = THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* reserve & remap memory space shared between all macs */
-static int bcm_enet_shared_probe(struct platform_device *pdev)
-{
-	void __iomem *p[3];
-	unsigned int i;
+अटल पूर्णांक bcm_enet_shared_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	व्योम __iomem *p[3];
+	अचिन्हित पूर्णांक i;
 
-	memset(bcm_enet_shared_base, 0, sizeof(bcm_enet_shared_base));
+	स_रखो(bcm_enet_shared_base, 0, माप(bcm_enet_shared_base));
 
-	for (i = 0; i < 3; i++) {
-		p[i] = devm_platform_ioremap_resource(pdev, i);
-		if (IS_ERR(p[i]))
-			return PTR_ERR(p[i]);
-	}
+	क्रम (i = 0; i < 3; i++) अणु
+		p[i] = devm_platक्रमm_ioremap_resource(pdev, i);
+		अगर (IS_ERR(p[i]))
+			वापस PTR_ERR(p[i]);
+	पूर्ण
 
-	memcpy(bcm_enet_shared_base, p, sizeof(bcm_enet_shared_base));
+	स_नकल(bcm_enet_shared_base, p, माप(bcm_enet_shared_base));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_enet_shared_remove(struct platform_device *pdev)
-{
-	return 0;
-}
+अटल पूर्णांक bcm_enet_shared_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस 0;
+पूर्ण
 
 /* this "shared" driver is needed because both macs share a single
  * address space
  */
-struct platform_driver bcm63xx_enet_shared_driver = {
+काष्ठा platक्रमm_driver bcm63xx_enet_shared_driver = अणु
 	.probe	= bcm_enet_shared_probe,
-	.remove	= bcm_enet_shared_remove,
-	.driver	= {
+	.हटाओ	= bcm_enet_shared_हटाओ,
+	.driver	= अणु
 		.name	= "bcm63xx_enet_shared",
 		.owner  = THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_driver * const drivers[] = {
+अटल काष्ठा platक्रमm_driver * स्थिर drivers[] = अणु
 	&bcm63xx_enet_shared_driver,
 	&bcm63xx_enet_driver,
 	&bcm63xx_enetsw_driver,
-};
+पूर्ण;
 
-/* entry point */
-static int __init bcm_enet_init(void)
-{
-	return platform_register_drivers(drivers, ARRAY_SIZE(drivers));
-}
+/* entry poपूर्णांक */
+अटल पूर्णांक __init bcm_enet_init(व्योम)
+अणु
+	वापस platक्रमm_रेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
+पूर्ण
 
-static void __exit bcm_enet_exit(void)
-{
-	platform_unregister_drivers(drivers, ARRAY_SIZE(drivers));
-}
+अटल व्योम __निकास bcm_enet_निकास(व्योम)
+अणु
+	platक्रमm_unरेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
+पूर्ण
 
 
 module_init(bcm_enet_init);
-module_exit(bcm_enet_exit);
+module_निकास(bcm_enet_निकास);
 
 MODULE_DESCRIPTION("BCM63xx internal ethernet mac driver");
 MODULE_AUTHOR("Maxime Bizon <mbizon@freebox.fr>");

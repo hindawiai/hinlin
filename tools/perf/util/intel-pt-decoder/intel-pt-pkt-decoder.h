@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * intel_pt_pkt_decoder.h: Intel Processor Trace support
+ * पूर्णांकel_pt_pkt_decoder.h: Intel Processor Trace support
  * Copyright (c) 2013-2014, Intel Corporation.
  */
 
-#ifndef INCLUDE__INTEL_PT_PKT_DECODER_H__
-#define INCLUDE__INTEL_PT_PKT_DECODER_H__
+#अगर_अघोषित INCLUDE__INTEL_PT_PKT_DECODER_H__
+#घोषणा INCLUDE__INTEL_PT_PKT_DECODER_H__
 
-#include <stddef.h>
-#include <stdint.h>
+#समावेश <मानकघोष.स>
+#समावेश <मानक_निवेशt.h>
 
-#define INTEL_PT_PKT_DESC_MAX	256
+#घोषणा INTEL_PT_PKT_DESC_MAX	256
 
-#define INTEL_PT_NEED_MORE_BYTES	-1
-#define INTEL_PT_BAD_PACKET		-2
+#घोषणा INTEL_PT_NEED_MORE_BYTES	-1
+#घोषणा INTEL_PT_BAD_PACKET		-2
 
-#define INTEL_PT_PSB_STR		"\002\202\002\202\002\202\002\202" \
+#घोषणा INTEL_PT_PSB_STR		"\002\202\002\202\002\202\002\202" \
 					"\002\202\002\202\002\202\002\202"
-#define INTEL_PT_PSB_LEN		16
+#घोषणा INTEL_PT_PSB_LEN		16
 
-#define INTEL_PT_PKT_MAX_SZ		16
+#घोषणा INTEL_PT_PKT_MAX_SZ		16
 
-#define INTEL_PT_VMX_NR_FLAG		1
+#घोषणा INTEL_PT_VMX_NR_FLAG		1
 
-enum intel_pt_pkt_type {
+क्रमागत पूर्णांकel_pt_pkt_type अणु
 	INTEL_PT_BAD,
 	INTEL_PT_PAD,
 	INTEL_PT_TNT,
@@ -56,34 +57,34 @@ enum intel_pt_pkt_type {
 	INTEL_PT_BIP,
 	INTEL_PT_BEP,
 	INTEL_PT_BEP_IP,
-};
+पूर्ण;
 
-struct intel_pt_pkt {
-	enum intel_pt_pkt_type	type;
-	int			count;
-	uint64_t		payload;
-};
+काष्ठा पूर्णांकel_pt_pkt अणु
+	क्रमागत पूर्णांकel_pt_pkt_type	type;
+	पूर्णांक			count;
+	uपूर्णांक64_t		payload;
+पूर्ण;
 
 /*
  * Decoding of BIP packets conflicts with single-byte TNT packets. Since BIP
  * packets only occur in the context of a block (i.e. between BBP and BEP), that
  * context must be recorded and passed to the packet decoder.
  */
-enum intel_pt_pkt_ctx {
+क्रमागत पूर्णांकel_pt_pkt_ctx अणु
 	INTEL_PT_NO_CTX,	/* BIP packets are invalid */
 	INTEL_PT_BLK_4_CTX,	/* 4-byte BIP packets */
 	INTEL_PT_BLK_8_CTX,	/* 8-byte BIP packets */
-};
+पूर्ण;
 
-const char *intel_pt_pkt_name(enum intel_pt_pkt_type);
+स्थिर अक्षर *पूर्णांकel_pt_pkt_name(क्रमागत पूर्णांकel_pt_pkt_type);
 
-int intel_pt_get_packet(const unsigned char *buf, size_t len,
-			struct intel_pt_pkt *packet,
-			enum intel_pt_pkt_ctx *ctx);
+पूर्णांक पूर्णांकel_pt_get_packet(स्थिर अचिन्हित अक्षर *buf, माप_प्रकार len,
+			काष्ठा पूर्णांकel_pt_pkt *packet,
+			क्रमागत पूर्णांकel_pt_pkt_ctx *ctx);
 
-void intel_pt_upd_pkt_ctx(const struct intel_pt_pkt *packet,
-			  enum intel_pt_pkt_ctx *ctx);
+व्योम पूर्णांकel_pt_upd_pkt_ctx(स्थिर काष्ठा पूर्णांकel_pt_pkt *packet,
+			  क्रमागत पूर्णांकel_pt_pkt_ctx *ctx);
 
-int intel_pt_pkt_desc(const struct intel_pt_pkt *packet, char *buf, size_t len);
+पूर्णांक पूर्णांकel_pt_pkt_desc(स्थिर काष्ठा पूर्णांकel_pt_pkt *packet, अक्षर *buf, माप_प्रकार len);
 
-#endif
+#पूर्ण_अगर

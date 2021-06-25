@@ -1,216 +1,217 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016, Linaro Ltd.
  * Copyright (c) 2015, Sony Mobile Communications Inc.
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/rpmsg.h>
-#include <linux/of.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/rpmsg.h>
+#समावेश <linux/of.h>
 
-#include <linux/soc/qcom/wcnss_ctrl.h>
-#include <linux/platform_device.h>
+#समावेश <linux/soc/qcom/wcnss_ctrl.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
 
-#include "btqca.h"
+#समावेश "btqca.h"
 
-struct btqcomsmd {
-	struct hci_dev *hdev;
+काष्ठा btqcomsmd अणु
+	काष्ठा hci_dev *hdev;
 
-	struct rpmsg_endpoint *acl_channel;
-	struct rpmsg_endpoint *cmd_channel;
-};
+	काष्ठा rpmsg_endpoपूर्णांक *acl_channel;
+	काष्ठा rpmsg_endpoपूर्णांक *cmd_channel;
+पूर्ण;
 
-static int btqcomsmd_recv(struct hci_dev *hdev, unsigned int type,
-			   const void *data, size_t count)
-{
-	struct sk_buff *skb;
+अटल पूर्णांक btqcomsmd_recv(काष्ठा hci_dev *hdev, अचिन्हित पूर्णांक type,
+			   स्थिर व्योम *data, माप_प्रकार count)
+अणु
+	काष्ठा sk_buff *skb;
 
 	/* Use GFP_ATOMIC as we're in IRQ context */
 	skb = bt_skb_alloc(count, GFP_ATOMIC);
-	if (!skb) {
+	अगर (!skb) अणु
 		hdev->stat.err_rx++;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	hci_skb_pkt_type(skb) = type;
 	skb_put_data(skb, data, count);
 
-	return hci_recv_frame(hdev, skb);
-}
+	वापस hci_recv_frame(hdev, skb);
+पूर्ण
 
-static int btqcomsmd_acl_callback(struct rpmsg_device *rpdev, void *data,
-				  int count, void *priv, u32 addr)
-{
-	struct btqcomsmd *btq = priv;
-
-	btq->hdev->stat.byte_rx += count;
-	return btqcomsmd_recv(btq->hdev, HCI_ACLDATA_PKT, data, count);
-}
-
-static int btqcomsmd_cmd_callback(struct rpmsg_device *rpdev, void *data,
-				  int count, void *priv, u32 addr)
-{
-	struct btqcomsmd *btq = priv;
+अटल पूर्णांक btqcomsmd_acl_callback(काष्ठा rpmsg_device *rpdev, व्योम *data,
+				  पूर्णांक count, व्योम *priv, u32 addr)
+अणु
+	काष्ठा btqcomsmd *btq = priv;
 
 	btq->hdev->stat.byte_rx += count;
-	return btqcomsmd_recv(btq->hdev, HCI_EVENT_PKT, data, count);
-}
+	वापस btqcomsmd_recv(btq->hdev, HCI_ACLDATA_PKT, data, count);
+पूर्ण
 
-static int btqcomsmd_send(struct hci_dev *hdev, struct sk_buff *skb)
-{
-	struct btqcomsmd *btq = hci_get_drvdata(hdev);
-	int ret;
+अटल पूर्णांक btqcomsmd_cmd_callback(काष्ठा rpmsg_device *rpdev, व्योम *data,
+				  पूर्णांक count, व्योम *priv, u32 addr)
+अणु
+	काष्ठा btqcomsmd *btq = priv;
 
-	switch (hci_skb_pkt_type(skb)) {
-	case HCI_ACLDATA_PKT:
+	btq->hdev->stat.byte_rx += count;
+	वापस btqcomsmd_recv(btq->hdev, HCI_EVENT_PKT, data, count);
+पूर्ण
+
+अटल पूर्णांक btqcomsmd_send(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा btqcomsmd *btq = hci_get_drvdata(hdev);
+	पूर्णांक ret;
+
+	चयन (hci_skb_pkt_type(skb)) अणु
+	हाल HCI_ACLDATA_PKT:
 		ret = rpmsg_send(btq->acl_channel, skb->data, skb->len);
-		if (ret) {
+		अगर (ret) अणु
 			hdev->stat.err_tx++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		hdev->stat.acl_tx++;
 		hdev->stat.byte_tx += skb->len;
-		break;
-	case HCI_COMMAND_PKT:
+		अवरोध;
+	हाल HCI_COMMAND_PKT:
 		ret = rpmsg_send(btq->cmd_channel, skb->data, skb->len);
-		if (ret) {
+		अगर (ret) अणु
 			hdev->stat.err_tx++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		hdev->stat.cmd_tx++;
 		hdev->stat.byte_tx += skb->len;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EILSEQ;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!ret)
-		kfree_skb(skb);
+	अगर (!ret)
+		kमुक्त_skb(skb);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btqcomsmd_open(struct hci_dev *hdev)
-{
-	return 0;
-}
+अटल पूर्णांक btqcomsmd_खोलो(काष्ठा hci_dev *hdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int btqcomsmd_close(struct hci_dev *hdev)
-{
-	return 0;
-}
+अटल पूर्णांक btqcomsmd_बंद(काष्ठा hci_dev *hdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int btqcomsmd_setup(struct hci_dev *hdev)
-{
-	struct sk_buff *skb;
+अटल पूर्णांक btqcomsmd_setup(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा sk_buff *skb;
 
-	skb = __hci_cmd_sync(hdev, HCI_OP_RESET, 0, NULL, HCI_INIT_TIMEOUT);
-	if (IS_ERR(skb))
-		return PTR_ERR(skb);
-	kfree_skb(skb);
+	skb = __hci_cmd_sync(hdev, HCI_OP_RESET, 0, शून्य, HCI_INIT_TIMEOUT);
+	अगर (IS_ERR(skb))
+		वापस PTR_ERR(skb);
+	kमुक्त_skb(skb);
 
-	/* Devices do not have persistent storage for BD address. Retrieve
+	/* Devices करो not have persistent storage क्रम BD address. Retrieve
 	 * it from the firmware node property.
 	 */
 	set_bit(HCI_QUIRK_USE_BDADDR_PROPERTY, &hdev->quirks);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int btqcomsmd_probe(struct platform_device *pdev)
-{
-	struct btqcomsmd *btq;
-	struct hci_dev *hdev;
-	void *wcnss;
-	int ret;
+अटल पूर्णांक btqcomsmd_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा btqcomsmd *btq;
+	काष्ठा hci_dev *hdev;
+	व्योम *wcnss;
+	पूर्णांक ret;
 
-	btq = devm_kzalloc(&pdev->dev, sizeof(*btq), GFP_KERNEL);
-	if (!btq)
-		return -ENOMEM;
+	btq = devm_kzalloc(&pdev->dev, माप(*btq), GFP_KERNEL);
+	अगर (!btq)
+		वापस -ENOMEM;
 
 	wcnss = dev_get_drvdata(pdev->dev.parent);
 
-	btq->acl_channel = qcom_wcnss_open_channel(wcnss, "APPS_RIVA_BT_ACL",
+	btq->acl_channel = qcom_wcnss_खोलो_channel(wcnss, "APPS_RIVA_BT_ACL",
 						   btqcomsmd_acl_callback, btq);
-	if (IS_ERR(btq->acl_channel))
-		return PTR_ERR(btq->acl_channel);
+	अगर (IS_ERR(btq->acl_channel))
+		वापस PTR_ERR(btq->acl_channel);
 
-	btq->cmd_channel = qcom_wcnss_open_channel(wcnss, "APPS_RIVA_BT_CMD",
+	btq->cmd_channel = qcom_wcnss_खोलो_channel(wcnss, "APPS_RIVA_BT_CMD",
 						   btqcomsmd_cmd_callback, btq);
-	if (IS_ERR(btq->cmd_channel)) {
+	अगर (IS_ERR(btq->cmd_channel)) अणु
 		ret = PTR_ERR(btq->cmd_channel);
-		goto destroy_acl_channel;
-	}
+		जाओ destroy_acl_channel;
+	पूर्ण
 
 	hdev = hci_alloc_dev();
-	if (!hdev) {
+	अगर (!hdev) अणु
 		ret = -ENOMEM;
-		goto destroy_cmd_channel;
-	}
+		जाओ destroy_cmd_channel;
+	पूर्ण
 
 	hci_set_drvdata(hdev, btq);
 	btq->hdev = hdev;
 	SET_HCIDEV_DEV(hdev, &pdev->dev);
 
 	hdev->bus = HCI_SMD;
-	hdev->open = btqcomsmd_open;
-	hdev->close = btqcomsmd_close;
+	hdev->खोलो = btqcomsmd_खोलो;
+	hdev->बंद = btqcomsmd_बंद;
 	hdev->send = btqcomsmd_send;
 	hdev->setup = btqcomsmd_setup;
 	hdev->set_bdaddr = qca_set_bdaddr_rome;
 
-	ret = hci_register_dev(hdev);
-	if (ret < 0)
-		goto hci_free_dev;
+	ret = hci_रेजिस्टर_dev(hdev);
+	अगर (ret < 0)
+		जाओ hci_मुक्त_dev;
 
-	platform_set_drvdata(pdev, btq);
+	platक्रमm_set_drvdata(pdev, btq);
 
-	return 0;
+	वापस 0;
 
-hci_free_dev:
-	hci_free_dev(hdev);
+hci_मुक्त_dev:
+	hci_मुक्त_dev(hdev);
 destroy_cmd_channel:
 	rpmsg_destroy_ept(btq->cmd_channel);
 destroy_acl_channel:
 	rpmsg_destroy_ept(btq->acl_channel);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btqcomsmd_remove(struct platform_device *pdev)
-{
-	struct btqcomsmd *btq = platform_get_drvdata(pdev);
+अटल पूर्णांक btqcomsmd_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा btqcomsmd *btq = platक्रमm_get_drvdata(pdev);
 
-	hci_unregister_dev(btq->hdev);
-	hci_free_dev(btq->hdev);
+	hci_unरेजिस्टर_dev(btq->hdev);
+	hci_मुक्त_dev(btq->hdev);
 
 	rpmsg_destroy_ept(btq->cmd_channel);
 	rpmsg_destroy_ept(btq->acl_channel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id btqcomsmd_of_match[] = {
-	{ .compatible = "qcom,wcnss-bt", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id btqcomsmd_of_match[] = अणु
+	अणु .compatible = "qcom,wcnss-bt", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, btqcomsmd_of_match);
 
-static struct platform_driver btqcomsmd_driver = {
+अटल काष्ठा platक्रमm_driver btqcomsmd_driver = अणु
 	.probe = btqcomsmd_probe,
-	.remove = btqcomsmd_remove,
-	.driver  = {
+	.हटाओ = btqcomsmd_हटाओ,
+	.driver  = अणु
 		.name  = "btqcomsmd",
 		.of_match_table = btqcomsmd_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(btqcomsmd_driver);
+module_platक्रमm_driver(btqcomsmd_driver);
 
 MODULE_AUTHOR("Bjorn Andersson <bjorn.andersson@sonymobile.com>");
 MODULE_DESCRIPTION("Qualcomm SMD HCI driver");

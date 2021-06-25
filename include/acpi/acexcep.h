@@ -1,208 +1,209 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /******************************************************************************
  *
- * Name: acexcep.h - Exception codes returned by the ACPI subsystem
+ * Name: acexcep.h - Exception codes वापसed by the ACPI subप्रणाली
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#ifndef __ACEXCEP_H__
-#define __ACEXCEP_H__
+#अगर_अघोषित __ACEXCEP_H__
+#घोषणा __ACEXCEP_H__
 
-/* This module contains all possible exception codes for acpi_status */
+/* This module contains all possible exception codes क्रम acpi_status */
 
 /*
  * Exception code classes
  */
-#define AE_CODE_ENVIRONMENTAL           0x0000	/* General ACPICA environment */
-#define AE_CODE_PROGRAMMER              0x1000	/* External ACPICA interface caller */
-#define AE_CODE_ACPI_TABLES             0x2000	/* ACPI tables */
-#define AE_CODE_AML                     0x3000	/* From executing AML code */
-#define AE_CODE_CONTROL                 0x4000	/* Internal control codes */
+#घोषणा AE_CODE_ENVIRONMENTAL           0x0000	/* General ACPICA environment */
+#घोषणा AE_CODE_PROGRAMMER              0x1000	/* External ACPICA पूर्णांकerface caller */
+#घोषणा AE_CODE_ACPI_TABLES             0x2000	/* ACPI tables */
+#घोषणा AE_CODE_AML                     0x3000	/* From executing AML code */
+#घोषणा AE_CODE_CONTROL                 0x4000	/* Internal control codes */
 
-#define AE_CODE_MAX                     0x4000
-#define AE_CODE_MASK                    0xF000
+#घोषणा AE_CODE_MAX                     0x4000
+#घोषणा AE_CODE_MASK                    0xF000
 
 /*
  * Macros to insert the exception code classes
  */
-#define EXCEP_ENV(code)                 ((acpi_status) (code | AE_CODE_ENVIRONMENTAL))
-#define EXCEP_PGM(code)                 ((acpi_status) (code | AE_CODE_PROGRAMMER))
-#define EXCEP_TBL(code)                 ((acpi_status) (code | AE_CODE_ACPI_TABLES))
-#define EXCEP_AML(code)                 ((acpi_status) (code | AE_CODE_AML))
-#define EXCEP_CTL(code)                 ((acpi_status) (code | AE_CODE_CONTROL))
+#घोषणा EXCEP_ENV(code)                 ((acpi_status) (code | AE_CODE_ENVIRONMENTAL))
+#घोषणा EXCEP_PGM(code)                 ((acpi_status) (code | AE_CODE_PROGRAMMER))
+#घोषणा EXCEP_TBL(code)                 ((acpi_status) (code | AE_CODE_ACPI_TABLES))
+#घोषणा EXCEP_AML(code)                 ((acpi_status) (code | AE_CODE_AML))
+#घोषणा EXCEP_CTL(code)                 ((acpi_status) (code | AE_CODE_CONTROL))
 
 /*
  * Exception info table. The "Description" field is used only by the
  * ACPICA help application (acpihelp).
  */
-struct acpi_exception_info {
-	char *name;
+काष्ठा acpi_exception_info अणु
+	अक्षर *name;
 
-#if defined (ACPI_HELP_APP) || defined (ACPI_ASL_COMPILER)
-	char *description;
-#endif
-};
+#अगर defined (ACPI_HELP_APP) || defined (ACPI_ASL_COMPILER)
+	अक्षर *description;
+#पूर्ण_अगर
+पूर्ण;
 
-#if defined (ACPI_HELP_APP) || defined (ACPI_ASL_COMPILER)
-#define EXCEP_TXT(name,description)     {name, description}
-#else
-#define EXCEP_TXT(name,description)     {name}
-#endif
+#अगर defined (ACPI_HELP_APP) || defined (ACPI_ASL_COMPILER)
+#घोषणा EXCEP_TXT(name,description)     अणुname, descriptionपूर्ण
+#अन्यथा
+#घोषणा EXCEP_TXT(name,description)     अणुnameपूर्ण
+#पूर्ण_अगर
 
 /*
  * Success is always zero, failure is non-zero
  */
-#define ACPI_SUCCESS(a)                 (!(a))
-#define ACPI_FAILURE(a)                 (a)
+#घोषणा ACPI_SUCCESS(a)                 (!(a))
+#घोषणा ACPI_FAILURE(a)                 (a)
 
-#define AE_OK                           (acpi_status) 0x0000
+#घोषणा AE_OK                           (acpi_status) 0x0000
 
-#define ACPI_ENV_EXCEPTION(status)      (((status) & AE_CODE_MASK) == AE_CODE_ENVIRONMENTAL)
-#define ACPI_AML_EXCEPTION(status)      (((status) & AE_CODE_MASK) == AE_CODE_AML)
-#define ACPI_PROG_EXCEPTION(status)     (((status) & AE_CODE_MASK) == AE_CODE_PROGRAMMER)
-#define ACPI_TABLE_EXCEPTION(status)    (((status) & AE_CODE_MASK) == AE_CODE_ACPI_TABLES)
-#define ACPI_CNTL_EXCEPTION(status)     (((status) & AE_CODE_MASK) == AE_CODE_CONTROL)
+#घोषणा ACPI_ENV_EXCEPTION(status)      (((status) & AE_CODE_MASK) == AE_CODE_ENVIRONMENTAL)
+#घोषणा ACPI_AML_EXCEPTION(status)      (((status) & AE_CODE_MASK) == AE_CODE_AML)
+#घोषणा ACPI_PROG_EXCEPTION(status)     (((status) & AE_CODE_MASK) == AE_CODE_PROGRAMMER)
+#घोषणा ACPI_TABLE_EXCEPTION(status)    (((status) & AE_CODE_MASK) == AE_CODE_ACPI_TABLES)
+#घोषणा ACPI_CNTL_EXCEPTION(status)     (((status) & AE_CODE_MASK) == AE_CODE_CONTROL)
 
 /*
  * Environmental exceptions
  */
-#define AE_ERROR                        EXCEP_ENV (0x0001)
-#define AE_NO_ACPI_TABLES               EXCEP_ENV (0x0002)
-#define AE_NO_NAMESPACE                 EXCEP_ENV (0x0003)
-#define AE_NO_MEMORY                    EXCEP_ENV (0x0004)
-#define AE_NOT_FOUND                    EXCEP_ENV (0x0005)
-#define AE_NOT_EXIST                    EXCEP_ENV (0x0006)
-#define AE_ALREADY_EXISTS               EXCEP_ENV (0x0007)
-#define AE_TYPE                         EXCEP_ENV (0x0008)
-#define AE_NULL_OBJECT                  EXCEP_ENV (0x0009)
-#define AE_NULL_ENTRY                   EXCEP_ENV (0x000A)
-#define AE_BUFFER_OVERFLOW              EXCEP_ENV (0x000B)
-#define AE_STACK_OVERFLOW               EXCEP_ENV (0x000C)
-#define AE_STACK_UNDERFLOW              EXCEP_ENV (0x000D)
-#define AE_NOT_IMPLEMENTED              EXCEP_ENV (0x000E)
-#define AE_SUPPORT                      EXCEP_ENV (0x000F)
-#define AE_LIMIT                        EXCEP_ENV (0x0010)
-#define AE_TIME                         EXCEP_ENV (0x0011)
-#define AE_ACQUIRE_DEADLOCK             EXCEP_ENV (0x0012)
-#define AE_RELEASE_DEADLOCK             EXCEP_ENV (0x0013)
-#define AE_NOT_ACQUIRED                 EXCEP_ENV (0x0014)
-#define AE_ALREADY_ACQUIRED             EXCEP_ENV (0x0015)
-#define AE_NO_HARDWARE_RESPONSE         EXCEP_ENV (0x0016)
-#define AE_NO_GLOBAL_LOCK               EXCEP_ENV (0x0017)
-#define AE_ABORT_METHOD                 EXCEP_ENV (0x0018)
-#define AE_SAME_HANDLER                 EXCEP_ENV (0x0019)
-#define AE_NO_HANDLER                   EXCEP_ENV (0x001A)
-#define AE_OWNER_ID_LIMIT               EXCEP_ENV (0x001B)
-#define AE_NOT_CONFIGURED               EXCEP_ENV (0x001C)
-#define AE_ACCESS                       EXCEP_ENV (0x001D)
-#define AE_IO_ERROR                     EXCEP_ENV (0x001E)
-#define AE_NUMERIC_OVERFLOW             EXCEP_ENV (0x001F)
-#define AE_HEX_OVERFLOW                 EXCEP_ENV (0x0020)
-#define AE_DECIMAL_OVERFLOW             EXCEP_ENV (0x0021)
-#define AE_OCTAL_OVERFLOW               EXCEP_ENV (0x0022)
-#define AE_END_OF_TABLE                 EXCEP_ENV (0x0023)
+#घोषणा AE_ERROR                        EXCEP_ENV (0x0001)
+#घोषणा AE_NO_ACPI_TABLES               EXCEP_ENV (0x0002)
+#घोषणा AE_NO_NAMESPACE                 EXCEP_ENV (0x0003)
+#घोषणा AE_NO_MEMORY                    EXCEP_ENV (0x0004)
+#घोषणा AE_NOT_FOUND                    EXCEP_ENV (0x0005)
+#घोषणा AE_NOT_EXIST                    EXCEP_ENV (0x0006)
+#घोषणा AE_ALREADY_EXISTS               EXCEP_ENV (0x0007)
+#घोषणा AE_TYPE                         EXCEP_ENV (0x0008)
+#घोषणा AE_शून्य_OBJECT                  EXCEP_ENV (0x0009)
+#घोषणा AE_शून्य_ENTRY                   EXCEP_ENV (0x000A)
+#घोषणा AE_BUFFER_OVERFLOW              EXCEP_ENV (0x000B)
+#घोषणा AE_STACK_OVERFLOW               EXCEP_ENV (0x000C)
+#घोषणा AE_STACK_UNDERFLOW              EXCEP_ENV (0x000D)
+#घोषणा AE_NOT_IMPLEMENTED              EXCEP_ENV (0x000E)
+#घोषणा AE_SUPPORT                      EXCEP_ENV (0x000F)
+#घोषणा AE_LIMIT                        EXCEP_ENV (0x0010)
+#घोषणा AE_TIME                         EXCEP_ENV (0x0011)
+#घोषणा AE_ACQUIRE_DEADLOCK             EXCEP_ENV (0x0012)
+#घोषणा AE_RELEASE_DEADLOCK             EXCEP_ENV (0x0013)
+#घोषणा AE_NOT_ACQUIRED                 EXCEP_ENV (0x0014)
+#घोषणा AE_ALREADY_ACQUIRED             EXCEP_ENV (0x0015)
+#घोषणा AE_NO_HARDWARE_RESPONSE         EXCEP_ENV (0x0016)
+#घोषणा AE_NO_GLOBAL_LOCK               EXCEP_ENV (0x0017)
+#घोषणा AE_ABORT_METHOD                 EXCEP_ENV (0x0018)
+#घोषणा AE_SAME_HANDLER                 EXCEP_ENV (0x0019)
+#घोषणा AE_NO_HANDLER                   EXCEP_ENV (0x001A)
+#घोषणा AE_OWNER_ID_LIMIT               EXCEP_ENV (0x001B)
+#घोषणा AE_NOT_CONFIGURED               EXCEP_ENV (0x001C)
+#घोषणा AE_ACCESS                       EXCEP_ENV (0x001D)
+#घोषणा AE_IO_ERROR                     EXCEP_ENV (0x001E)
+#घोषणा AE_NUMERIC_OVERFLOW             EXCEP_ENV (0x001F)
+#घोषणा AE_HEX_OVERFLOW                 EXCEP_ENV (0x0020)
+#घोषणा AE_DECIMAL_OVERFLOW             EXCEP_ENV (0x0021)
+#घोषणा AE_OCTAL_OVERFLOW               EXCEP_ENV (0x0022)
+#घोषणा AE_END_OF_TABLE                 EXCEP_ENV (0x0023)
 
-#define AE_CODE_ENV_MAX                 0x0023
+#घोषणा AE_CODE_ENV_MAX                 0x0023
 
 /*
  * Programmer exceptions
  */
-#define AE_BAD_PARAMETER                EXCEP_PGM (0x0001)
-#define AE_BAD_CHARACTER                EXCEP_PGM (0x0002)
-#define AE_BAD_PATHNAME                 EXCEP_PGM (0x0003)
-#define AE_BAD_DATA                     EXCEP_PGM (0x0004)
-#define AE_BAD_HEX_CONSTANT             EXCEP_PGM (0x0005)
-#define AE_BAD_OCTAL_CONSTANT           EXCEP_PGM (0x0006)
-#define AE_BAD_DECIMAL_CONSTANT         EXCEP_PGM (0x0007)
-#define AE_MISSING_ARGUMENTS            EXCEP_PGM (0x0008)
-#define AE_BAD_ADDRESS                  EXCEP_PGM (0x0009)
+#घोषणा AE_BAD_PARAMETER                EXCEP_PGM (0x0001)
+#घोषणा AE_BAD_CHARACTER                EXCEP_PGM (0x0002)
+#घोषणा AE_BAD_PATHNAME                 EXCEP_PGM (0x0003)
+#घोषणा AE_BAD_DATA                     EXCEP_PGM (0x0004)
+#घोषणा AE_BAD_HEX_CONSTANT             EXCEP_PGM (0x0005)
+#घोषणा AE_BAD_OCTAL_CONSTANT           EXCEP_PGM (0x0006)
+#घोषणा AE_BAD_DECIMAL_CONSTANT         EXCEP_PGM (0x0007)
+#घोषणा AE_MISSING_ARGUMENTS            EXCEP_PGM (0x0008)
+#घोषणा AE_BAD_ADDRESS                  EXCEP_PGM (0x0009)
 
-#define AE_CODE_PGM_MAX                 0x0009
+#घोषणा AE_CODE_PGM_MAX                 0x0009
 
 /*
  * Acpi table exceptions
  */
-#define AE_BAD_SIGNATURE                EXCEP_TBL (0x0001)
-#define AE_BAD_HEADER                   EXCEP_TBL (0x0002)
-#define AE_BAD_CHECKSUM                 EXCEP_TBL (0x0003)
-#define AE_BAD_VALUE                    EXCEP_TBL (0x0004)
-#define AE_INVALID_TABLE_LENGTH         EXCEP_TBL (0x0005)
+#घोषणा AE_BAD_SIGNATURE                EXCEP_TBL (0x0001)
+#घोषणा AE_BAD_HEADER                   EXCEP_TBL (0x0002)
+#घोषणा AE_BAD_CHECKSUM                 EXCEP_TBL (0x0003)
+#घोषणा AE_BAD_VALUE                    EXCEP_TBL (0x0004)
+#घोषणा AE_INVALID_TABLE_LENGTH         EXCEP_TBL (0x0005)
 
-#define AE_CODE_TBL_MAX                 0x0005
+#घोषणा AE_CODE_TBL_MAX                 0x0005
 
 /*
  * AML exceptions. These are caused by problems with
  * the actual AML byte stream
  */
-#define AE_AML_BAD_OPCODE               EXCEP_AML (0x0001)
-#define AE_AML_NO_OPERAND               EXCEP_AML (0x0002)
-#define AE_AML_OPERAND_TYPE             EXCEP_AML (0x0003)
-#define AE_AML_OPERAND_VALUE            EXCEP_AML (0x0004)
-#define AE_AML_UNINITIALIZED_LOCAL      EXCEP_AML (0x0005)
-#define AE_AML_UNINITIALIZED_ARG        EXCEP_AML (0x0006)
-#define AE_AML_UNINITIALIZED_ELEMENT    EXCEP_AML (0x0007)
-#define AE_AML_NUMERIC_OVERFLOW         EXCEP_AML (0x0008)
-#define AE_AML_REGION_LIMIT             EXCEP_AML (0x0009)
-#define AE_AML_BUFFER_LIMIT             EXCEP_AML (0x000A)
-#define AE_AML_PACKAGE_LIMIT            EXCEP_AML (0x000B)
-#define AE_AML_DIVIDE_BY_ZERO           EXCEP_AML (0x000C)
-#define AE_AML_BAD_NAME                 EXCEP_AML (0x000D)
-#define AE_AML_NAME_NOT_FOUND           EXCEP_AML (0x000E)
-#define AE_AML_INTERNAL                 EXCEP_AML (0x000F)
-#define AE_AML_INVALID_SPACE_ID         EXCEP_AML (0x0010)
-#define AE_AML_STRING_LIMIT             EXCEP_AML (0x0011)
-#define AE_AML_NO_RETURN_VALUE          EXCEP_AML (0x0012)
-#define AE_AML_METHOD_LIMIT             EXCEP_AML (0x0013)
-#define AE_AML_NOT_OWNER                EXCEP_AML (0x0014)
-#define AE_AML_MUTEX_ORDER              EXCEP_AML (0x0015)
-#define AE_AML_MUTEX_NOT_ACQUIRED       EXCEP_AML (0x0016)
-#define AE_AML_INVALID_RESOURCE_TYPE    EXCEP_AML (0x0017)
-#define AE_AML_INVALID_INDEX            EXCEP_AML (0x0018)
-#define AE_AML_REGISTER_LIMIT           EXCEP_AML (0x0019)
-#define AE_AML_NO_WHILE                 EXCEP_AML (0x001A)
-#define AE_AML_ALIGNMENT                EXCEP_AML (0x001B)
-#define AE_AML_NO_RESOURCE_END_TAG      EXCEP_AML (0x001C)
-#define AE_AML_BAD_RESOURCE_VALUE       EXCEP_AML (0x001D)
-#define AE_AML_CIRCULAR_REFERENCE       EXCEP_AML (0x001E)
-#define AE_AML_BAD_RESOURCE_LENGTH      EXCEP_AML (0x001F)
-#define AE_AML_ILLEGAL_ADDRESS          EXCEP_AML (0x0020)
-#define AE_AML_LOOP_TIMEOUT             EXCEP_AML (0x0021)
-#define AE_AML_UNINITIALIZED_NODE       EXCEP_AML (0x0022)
-#define AE_AML_TARGET_TYPE              EXCEP_AML (0x0023)
-#define AE_AML_PROTOCOL                 EXCEP_AML (0x0024)
-#define AE_AML_BUFFER_LENGTH            EXCEP_AML (0x0025)
+#घोषणा AE_AML_BAD_OPCODE               EXCEP_AML (0x0001)
+#घोषणा AE_AML_NO_OPERAND               EXCEP_AML (0x0002)
+#घोषणा AE_AML_OPERAND_TYPE             EXCEP_AML (0x0003)
+#घोषणा AE_AML_OPERAND_VALUE            EXCEP_AML (0x0004)
+#घोषणा AE_AML_UNINITIALIZED_LOCAL      EXCEP_AML (0x0005)
+#घोषणा AE_AML_UNINITIALIZED_ARG        EXCEP_AML (0x0006)
+#घोषणा AE_AML_UNINITIALIZED_ELEMENT    EXCEP_AML (0x0007)
+#घोषणा AE_AML_NUMERIC_OVERFLOW         EXCEP_AML (0x0008)
+#घोषणा AE_AML_REGION_LIMIT             EXCEP_AML (0x0009)
+#घोषणा AE_AML_BUFFER_LIMIT             EXCEP_AML (0x000A)
+#घोषणा AE_AML_PACKAGE_LIMIT            EXCEP_AML (0x000B)
+#घोषणा AE_AML_DIVIDE_BY_ZERO           EXCEP_AML (0x000C)
+#घोषणा AE_AML_BAD_NAME                 EXCEP_AML (0x000D)
+#घोषणा AE_AML_NAME_NOT_FOUND           EXCEP_AML (0x000E)
+#घोषणा AE_AML_INTERNAL                 EXCEP_AML (0x000F)
+#घोषणा AE_AML_INVALID_SPACE_ID         EXCEP_AML (0x0010)
+#घोषणा AE_AML_STRING_LIMIT             EXCEP_AML (0x0011)
+#घोषणा AE_AML_NO_RETURN_VALUE          EXCEP_AML (0x0012)
+#घोषणा AE_AML_METHOD_LIMIT             EXCEP_AML (0x0013)
+#घोषणा AE_AML_NOT_OWNER                EXCEP_AML (0x0014)
+#घोषणा AE_AML_MUTEX_ORDER              EXCEP_AML (0x0015)
+#घोषणा AE_AML_MUTEX_NOT_ACQUIRED       EXCEP_AML (0x0016)
+#घोषणा AE_AML_INVALID_RESOURCE_TYPE    EXCEP_AML (0x0017)
+#घोषणा AE_AML_INVALID_INDEX            EXCEP_AML (0x0018)
+#घोषणा AE_AML_REGISTER_LIMIT           EXCEP_AML (0x0019)
+#घोषणा AE_AML_NO_WHILE                 EXCEP_AML (0x001A)
+#घोषणा AE_AML_ALIGNMENT                EXCEP_AML (0x001B)
+#घोषणा AE_AML_NO_RESOURCE_END_TAG      EXCEP_AML (0x001C)
+#घोषणा AE_AML_BAD_RESOURCE_VALUE       EXCEP_AML (0x001D)
+#घोषणा AE_AML_CIRCULAR_REFERENCE       EXCEP_AML (0x001E)
+#घोषणा AE_AML_BAD_RESOURCE_LENGTH      EXCEP_AML (0x001F)
+#घोषणा AE_AML_ILLEGAL_ADDRESS          EXCEP_AML (0x0020)
+#घोषणा AE_AML_LOOP_TIMEOUT             EXCEP_AML (0x0021)
+#घोषणा AE_AML_UNINITIALIZED_NODE       EXCEP_AML (0x0022)
+#घोषणा AE_AML_TARGET_TYPE              EXCEP_AML (0x0023)
+#घोषणा AE_AML_PROTOCOL                 EXCEP_AML (0x0024)
+#घोषणा AE_AML_BUFFER_LENGTH            EXCEP_AML (0x0025)
 
-#define AE_CODE_AML_MAX                 0x0025
+#घोषणा AE_CODE_AML_MAX                 0x0025
 
 /*
- * Internal exceptions used for control
+ * Internal exceptions used क्रम control
  */
-#define AE_CTRL_RETURN_VALUE            EXCEP_CTL (0x0001)
-#define AE_CTRL_PENDING                 EXCEP_CTL (0x0002)
-#define AE_CTRL_TERMINATE               EXCEP_CTL (0x0003)
-#define AE_CTRL_TRUE                    EXCEP_CTL (0x0004)
-#define AE_CTRL_FALSE                   EXCEP_CTL (0x0005)
-#define AE_CTRL_DEPTH                   EXCEP_CTL (0x0006)
-#define AE_CTRL_END                     EXCEP_CTL (0x0007)
-#define AE_CTRL_TRANSFER                EXCEP_CTL (0x0008)
-#define AE_CTRL_BREAK                   EXCEP_CTL (0x0009)
-#define AE_CTRL_CONTINUE                EXCEP_CTL (0x000A)
-#define AE_CTRL_PARSE_CONTINUE          EXCEP_CTL (0x000B)
-#define AE_CTRL_PARSE_PENDING           EXCEP_CTL (0x000C)
+#घोषणा AE_CTRL_RETURN_VALUE            EXCEP_CTL (0x0001)
+#घोषणा AE_CTRL_PENDING                 EXCEP_CTL (0x0002)
+#घोषणा AE_CTRL_TERMINATE               EXCEP_CTL (0x0003)
+#घोषणा AE_CTRL_TRUE                    EXCEP_CTL (0x0004)
+#घोषणा AE_CTRL_FALSE                   EXCEP_CTL (0x0005)
+#घोषणा AE_CTRL_DEPTH                   EXCEP_CTL (0x0006)
+#घोषणा AE_CTRL_END                     EXCEP_CTL (0x0007)
+#घोषणा AE_CTRL_TRANSFER                EXCEP_CTL (0x0008)
+#घोषणा AE_CTRL_BREAK                   EXCEP_CTL (0x0009)
+#घोषणा AE_CTRL_CONTINUE                EXCEP_CTL (0x000A)
+#घोषणा AE_CTRL_PARSE_CONTINUE          EXCEP_CTL (0x000B)
+#घोषणा AE_CTRL_PARSE_PENDING           EXCEP_CTL (0x000C)
 
-#define AE_CODE_CTRL_MAX                0x000C
+#घोषणा AE_CODE_CTRL_MAX                0x000C
 
-/* Exception strings for acpi_format_exception */
+/* Exception strings क्रम acpi_क्रमmat_exception */
 
-#ifdef ACPI_DEFINE_EXCEPTION_TABLE
+#अगर_घोषित ACPI_DEFINE_EXCEPTION_TABLE
 
 /*
  * String versions of the exception codes above
  * These strings must match the corresponding defines exactly
  */
-static const struct acpi_exception_info acpi_gbl_exception_names_env[] = {
+अटल स्थिर काष्ठा acpi_exception_info acpi_gbl_exception_names_env[] = अणु
 	EXCEP_TXT("AE_OK", "No error"),
 	EXCEP_TXT("AE_ERROR", "Unspecified error"),
 	EXCEP_TXT("AE_NO_ACPI_TABLES", "ACPI tables could not be found"),
@@ -252,10 +253,10 @@ static const struct acpi_exception_info acpi_gbl_exception_names_env[] = {
 	EXCEP_TXT("AE_OCTAL_OVERFLOW",
 		  "Overflow during ASCII octal-to-binary conversion"),
 	EXCEP_TXT("AE_END_OF_TABLE", "Reached the end of table")
-};
+पूर्ण;
 
-static const struct acpi_exception_info acpi_gbl_exception_names_pgm[] = {
-	EXCEP_TXT(NULL, NULL),
+अटल स्थिर काष्ठा acpi_exception_info acpi_gbl_exception_names_pgm[] = अणु
+	EXCEP_TXT(शून्य, शून्य),
 	EXCEP_TXT("AE_BAD_PARAMETER", "A parameter is out of range or invalid"),
 	EXCEP_TXT("AE_BAD_CHARACTER",
 		  "An invalid character was found in a name"),
@@ -271,20 +272,20 @@ static const struct acpi_exception_info acpi_gbl_exception_names_pgm[] = {
 	EXCEP_TXT("AE_MISSING_ARGUMENTS",
 		  "Too few arguments were passed to a control method"),
 	EXCEP_TXT("AE_BAD_ADDRESS", "An illegal null I/O address")
-};
+पूर्ण;
 
-static const struct acpi_exception_info acpi_gbl_exception_names_tbl[] = {
-	EXCEP_TXT(NULL, NULL),
+अटल स्थिर काष्ठा acpi_exception_info acpi_gbl_exception_names_tbl[] = अणु
+	EXCEP_TXT(शून्य, शून्य),
 	EXCEP_TXT("AE_BAD_SIGNATURE", "An ACPI table has an invalid signature"),
 	EXCEP_TXT("AE_BAD_HEADER", "Invalid field in an ACPI table header"),
 	EXCEP_TXT("AE_BAD_CHECKSUM", "An ACPI table checksum is not correct"),
 	EXCEP_TXT("AE_BAD_VALUE", "An invalid value was found in a table"),
 	EXCEP_TXT("AE_INVALID_TABLE_LENGTH",
 		  "The FADT or FACS has improper length")
-};
+पूर्ण;
 
-static const struct acpi_exception_info acpi_gbl_exception_names_aml[] = {
-	EXCEP_TXT(NULL, NULL),
+अटल स्थिर काष्ठा acpi_exception_info acpi_gbl_exception_names_aml[] = अणु
+	EXCEP_TXT(शून्य, शून्य),
 	EXCEP_TXT("AE_AML_BAD_OPCODE", "Invalid AML opcode encountered"),
 	EXCEP_TXT("AE_AML_NO_OPERAND", "A required operand is missing"),
 	EXCEP_TXT("AE_AML_OPERAND_TYPE",
@@ -354,10 +355,10 @@ static const struct acpi_exception_info acpi_gbl_exception_names_aml[] = {
 	EXCEP_TXT("AE_AML_PROTOCOL", "Violation of a fixed ACPI protocol"),
 	EXCEP_TXT("AE_AML_BUFFER_LENGTH",
 		  "The length of the buffer is invalid/incorrect")
-};
+पूर्ण;
 
-static const struct acpi_exception_info acpi_gbl_exception_names_ctrl[] = {
-	EXCEP_TXT(NULL, NULL),
+अटल स्थिर काष्ठा acpi_exception_info acpi_gbl_exception_names_ctrl[] = अणु
+	EXCEP_TXT(शून्य, शून्य),
 	EXCEP_TXT("AE_CTRL_RETURN_VALUE", "A Method returned a value"),
 	EXCEP_TXT("AE_CTRL_PENDING", "Method is calling another method"),
 	EXCEP_TXT("AE_CTRL_TERMINATE", "Terminate the executing method"),
@@ -370,8 +371,8 @@ static const struct acpi_exception_info acpi_gbl_exception_names_ctrl[] = {
 	EXCEP_TXT("AE_CTRL_CONTINUE", "A Continue has been executed"),
 	EXCEP_TXT("AE_CTRL_PARSE_CONTINUE", "Used to skip over bad opcodes"),
 	EXCEP_TXT("AE_CTRL_PARSE_PENDING", "Used to implement AML While loops")
-};
+पूर्ण;
 
-#endif				/* EXCEPTION_TABLE */
+#पूर्ण_अगर				/* EXCEPTION_TABLE */
 
-#endif				/* __ACEXCEP_H__ */
+#पूर्ण_अगर				/* __ACEXCEP_H__ */

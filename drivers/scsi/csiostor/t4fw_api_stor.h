@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * This file is part of the Chelsio FCoE driver for Linux.
+ * This file is part of the Chelsio FCoE driver क्रम Linux.
  *
  * Copyright (c) 2009-2010 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,41 +33,41 @@
  * SOFTWARE.
  */
 
-#ifndef _T4FW_API_STOR_H_
-#define _T4FW_API_STOR_H_
+#अगर_अघोषित _T4FW_API_STOR_H_
+#घोषणा _T4FW_API_STOR_H_
 
 
 /******************************************************************************
  *   R E T U R N   V A L U E S
  ********************************/
 
-enum fw_fcoe_link_sub_op {
+क्रमागत fw_fcoe_link_sub_op अणु
 	FCOE_LINK_DOWN	= 0x0,
 	FCOE_LINK_UP	= 0x1,
 	FCOE_LINK_COND	= 0x2,
-};
+पूर्ण;
 
-enum fw_fcoe_link_status {
+क्रमागत fw_fcoe_link_status अणु
 	FCOE_LINKDOWN	= 0x0,
 	FCOE_LINKUP	= 0x1,
-};
+पूर्ण;
 
-enum fw_ofld_prot {
+क्रमागत fw_ofld_prot अणु
 	PROT_FCOE	= 0x1,
 	PROT_ISCSI	= 0x2,
-};
+पूर्ण;
 
-enum rport_type_fcoe {
+क्रमागत rport_type_fcoe अणु
 	FLOGI_VFPORT	= 0x1,		/* 0xfffffe */
 	FDISC_VFPORT	= 0x2,		/* 0xfffffe */
 	NS_VNPORT	= 0x3,		/* 0xfffffc */
 	REG_FC4_VNPORT	= 0x4,		/* any FC4 type VN_PORT */
-	REG_VNPORT	= 0x5,		/* 0xfffxxx - non FC4 port in switch */
+	REG_VNPORT	= 0x5,		/* 0xfffxxx - non FC4 port in चयन */
 	FDMI_VNPORT	= 0x6,		/* 0xfffffa */
 	FAB_CTLR_VNPORT	= 0x7,		/* 0xfffffd */
-};
+पूर्ण;
 
-enum event_cause_fcoe {
+क्रमागत event_cause_fcoe अणु
 	PLOGI_ACC_RCVD		= 0x01,
 	PLOGI_RJT_RCVD		= 0x02,
 	PLOGI_RCVD		= 0x03,
@@ -93,25 +94,25 @@ enum event_cause_fcoe {
 	ADISC_RJT_RCVD		= 0x18,
 	LOGO_SNT		= 0x19,
 	PROTO_ERR_IMPL_LOGO	= 0x1a,
-};
+पूर्ण;
 
-enum fcoe_cmn_type {
+क्रमागत fcoe_cmn_type अणु
 	FCOE_ELS,
 	FCOE_CT,
 	FCOE_SCSI_CMD,
 	FCOE_UNSOL_ELS,
-};
+पूर्ण;
 
-enum fw_wr_stor_opcodes {
+क्रमागत fw_wr_stor_opcodes अणु
 	FW_RDEV_WR                     = 0x38,
 	FW_FCOE_ELS_CT_WR              = 0x30,
 	FW_SCSI_WRITE_WR               = 0x31,
 	FW_SCSI_READ_WR                = 0x32,
 	FW_SCSI_CMD_WR                 = 0x33,
 	FW_SCSI_ABRT_CLS_WR            = 0x34,
-};
+पूर्ण;
 
-struct fw_rdev_wr {
+काष्ठा fw_rdev_wr अणु
 	__be32 op_to_immdlen;
 	__be32 alloc_to_len16;
 	__be64 cookie;
@@ -120,8 +121,8 @@ struct fw_rdev_wr {
 	u8     cur_state;
 	u8     prev_state;
 	__be32 flags_to_assoc_flowid;
-	union rdev_entry {
-		struct fcoe_rdev_entry {
+	जोड़ rdev_entry अणु
+		काष्ठा fcoe_rdev_entry अणु
 			__be32 flowid;
 			u8     protocol;
 			u8     event_cause;
@@ -139,8 +140,8 @@ struct fw_rdev_wr {
 			__be16 iqid;
 			u8     fc_oui[3];
 			u8     r_id[3];
-		} fcoe_rdev;
-		struct iscsi_rdev_entry {
+		पूर्ण fcoe_rdev;
+		काष्ठा iscsi_rdev_entry अणु
 			__be32 flowid;
 			u8     protocol;
 			u8     event_cause;
@@ -154,9 +155,9 @@ struct fw_rdev_wr {
 			__be16 first_brst_len;
 			__be16 max_brst_len;
 			__be16 r4;
-			__be16 def_time2wait;
-			__be16 def_time2ret;
-			__be16 nop_out_intrvl;
+			__be16 def_समय2रुको;
+			__be16 def_समय2ret;
+			__be16 nop_out_पूर्णांकrvl;
 			__be16 non_scsi_to;
 			__be16 isid;
 			__be16 tsid;
@@ -164,27 +165,27 @@ struct fw_rdev_wr {
 			__be16 tpgt;
 			u8     r5[6];
 			__be16 iqid;
-		} iscsi_rdev;
-	} u;
-};
+		पूर्ण iscsi_rdev;
+	पूर्ण u;
+पूर्ण;
 
-#define FW_RDEV_WR_FLOWID_GET(x)	(((x) >> 8) & 0xfffff)
-#define FW_RDEV_WR_ASSOC_FLOWID_GET(x)	(((x) >> 0) & 0xfffff)
-#define FW_RDEV_WR_RPORT_TYPE_GET(x)	(((x) >> 0) & 0x1f)
-#define FW_RDEV_WR_NPIV_GET(x)		(((x) >> 6) & 0x1)
-#define FW_RDEV_WR_CLASS_GET(x)		(((x) >> 4) & 0x3)
-#define FW_RDEV_WR_TASK_RETRY_ID_GET(x)	(((x) >> 5) & 0x1)
-#define FW_RDEV_WR_RETRY_GET(x)		(((x) >> 4) & 0x1)
-#define FW_RDEV_WR_CONF_CMPL_GET(x)	(((x) >> 3) & 0x1)
-#define FW_RDEV_WR_INI_GET(x)		(((x) >> 1) & 0x1)
-#define FW_RDEV_WR_TGT_GET(x)		(((x) >> 0) & 0x1)
+#घोषणा FW_RDEV_WR_FLOWID_GET(x)	(((x) >> 8) & 0xfffff)
+#घोषणा FW_RDEV_WR_ASSOC_FLOWID_GET(x)	(((x) >> 0) & 0xfffff)
+#घोषणा FW_RDEV_WR_RPORT_TYPE_GET(x)	(((x) >> 0) & 0x1f)
+#घोषणा FW_RDEV_WR_NPIV_GET(x)		(((x) >> 6) & 0x1)
+#घोषणा FW_RDEV_WR_CLASS_GET(x)		(((x) >> 4) & 0x3)
+#घोषणा FW_RDEV_WR_TASK_RETRY_ID_GET(x)	(((x) >> 5) & 0x1)
+#घोषणा FW_RDEV_WR_RETRY_GET(x)		(((x) >> 4) & 0x1)
+#घोषणा FW_RDEV_WR_CONF_CMPL_GET(x)	(((x) >> 3) & 0x1)
+#घोषणा FW_RDEV_WR_INI_GET(x)		(((x) >> 1) & 0x1)
+#घोषणा FW_RDEV_WR_TGT_GET(x)		(((x) >> 0) & 0x1)
 
-struct fw_fcoe_els_ct_wr {
+काष्ठा fw_fcoe_els_ct_wr अणु
 	__be32 op_immdlen;
 	__be32 flowid_len16;
 	u64    cookie;
 	__be16 iqid;
-	u8     tmo_val;
+	u8     पंचांगo_val;
 	u8     els_ct_type;
 	u8     ctl_pri;
 	u8     cp_en_class;
@@ -196,120 +197,120 @@ struct fw_fcoe_els_ct_wr {
 	__be64 rsp_dmaaddr;
 	__be32 rsp_dmalen;
 	__be32 r6;
-};
+पूर्ण;
 
-#define FW_FCOE_ELS_CT_WR_OPCODE(x)		((x) << 24)
-#define FW_FCOE_ELS_CT_WR_OPCODE_GET(x)		(((x) >> 24) & 0xff)
-#define FW_FCOE_ELS_CT_WR_IMMDLEN(x)		((x) << 0)
-#define FW_FCOE_ELS_CT_WR_IMMDLEN_GET(x)	(((x) >> 0) & 0xff)
-#define FW_FCOE_ELS_CT_WR_SP(x)			((x) << 0)
+#घोषणा FW_FCOE_ELS_CT_WR_OPCODE(x)		((x) << 24)
+#घोषणा FW_FCOE_ELS_CT_WR_OPCODE_GET(x)		(((x) >> 24) & 0xff)
+#घोषणा FW_FCOE_ELS_CT_WR_IMMDLEN(x)		((x) << 0)
+#घोषणा FW_FCOE_ELS_CT_WR_IMMDLEN_GET(x)	(((x) >> 0) & 0xff)
+#घोषणा FW_FCOE_ELS_CT_WR_SP(x)			((x) << 0)
 
-struct fw_scsi_write_wr {
+काष्ठा fw_scsi_ग_लिखो_wr अणु
 	__be32 op_immdlen;
 	__be32 flowid_len16;
 	u64    cookie;
 	__be16 iqid;
-	u8     tmo_val;
+	u8     पंचांगo_val;
 	u8     use_xfer_cnt;
-	union fw_scsi_write_priv {
-		struct fcoe_write_priv {
+	जोड़ fw_scsi_ग_लिखो_priv अणु
+		काष्ठा fcoe_ग_लिखो_priv अणु
 			u8   ctl_pri;
 			u8   cp_en_class;
 			u8   r3_lo[2];
-		} fcoe;
-		struct iscsi_write_priv {
+		पूर्ण fcoe;
+		काष्ठा iscsi_ग_लिखो_priv अणु
 			u8   r3[4];
-		} iscsi;
-	} u;
+		पूर्ण iscsi;
+	पूर्ण u;
 	__be32 xfer_cnt;
 	__be32 ini_xfer_cnt;
 	__be64 rsp_dmaaddr;
 	__be32 rsp_dmalen;
 	__be32 r4;
-};
+पूर्ण;
 
-#define FW_SCSI_WRITE_WR_IMMDLEN(x)	((x) << 0)
+#घोषणा FW_SCSI_WRITE_WR_IMMDLEN(x)	((x) << 0)
 
-struct fw_scsi_read_wr {
+काष्ठा fw_scsi_पढ़ो_wr अणु
 	__be32 op_immdlen;
 	__be32 flowid_len16;
 	u64    cookie;
 	__be16 iqid;
-	u8     tmo_val;
+	u8     पंचांगo_val;
 	u8     use_xfer_cnt;
-	union fw_scsi_read_priv {
-		struct fcoe_read_priv {
+	जोड़ fw_scsi_पढ़ो_priv अणु
+		काष्ठा fcoe_पढ़ो_priv अणु
 			u8   ctl_pri;
 			u8   cp_en_class;
 			u8   r3_lo[2];
-		} fcoe;
-		struct iscsi_read_priv {
+		पूर्ण fcoe;
+		काष्ठा iscsi_पढ़ो_priv अणु
 			u8   r3[4];
-		} iscsi;
-	} u;
+		पूर्ण iscsi;
+	पूर्ण u;
 	__be32 xfer_cnt;
 	__be32 ini_xfer_cnt;
 	__be64 rsp_dmaaddr;
 	__be32 rsp_dmalen;
 	__be32 r4;
-};
+पूर्ण;
 
-#define FW_SCSI_READ_WR_IMMDLEN(x)	((x) << 0)
+#घोषणा FW_SCSI_READ_WR_IMMDLEN(x)	((x) << 0)
 
-struct fw_scsi_cmd_wr {
+काष्ठा fw_scsi_cmd_wr अणु
 	__be32 op_immdlen;
 	__be32 flowid_len16;
 	u64    cookie;
 	__be16 iqid;
-	u8     tmo_val;
+	u8     पंचांगo_val;
 	u8     r3;
-	union fw_scsi_cmd_priv {
-		struct fcoe_cmd_priv {
+	जोड़ fw_scsi_cmd_priv अणु
+		काष्ठा fcoe_cmd_priv अणु
 			u8   ctl_pri;
 			u8   cp_en_class;
 			u8   r4_lo[2];
-		} fcoe;
-		struct iscsi_cmd_priv {
+		पूर्ण fcoe;
+		काष्ठा iscsi_cmd_priv अणु
 			u8   r4[4];
-		} iscsi;
-	} u;
+		पूर्ण iscsi;
+	पूर्ण u;
 	u8     r5[8];
 	__be64 rsp_dmaaddr;
 	__be32 rsp_dmalen;
 	__be32 r6;
-};
+पूर्ण;
 
-#define FW_SCSI_CMD_WR_IMMDLEN(x)	((x) << 0)
+#घोषणा FW_SCSI_CMD_WR_IMMDLEN(x)	((x) << 0)
 
-#define SCSI_ABORT 0
-#define SCSI_CLOSE 1
+#घोषणा SCSI_ABORT 0
+#घोषणा SCSI_CLOSE 1
 
-struct fw_scsi_abrt_cls_wr {
+काष्ठा fw_scsi_abrt_cls_wr अणु
 	__be32 op_immdlen;
 	__be32 flowid_len16;
 	u64    cookie;
 	__be16 iqid;
-	u8     tmo_val;
+	u8     पंचांगo_val;
 	u8     sub_opcode_to_chk_all_io;
 	u8     r3[4];
 	u64    t_cookie;
-};
+पूर्ण;
 
-#define FW_SCSI_ABRT_CLS_WR_SUB_OPCODE(x)	((x) << 2)
-#define FW_SCSI_ABRT_CLS_WR_SUB_OPCODE_GET(x)	(((x) >> 2) & 0x3f)
-#define FW_SCSI_ABRT_CLS_WR_CHK_ALL_IO(x)	((x) << 0)
+#घोषणा FW_SCSI_ABRT_CLS_WR_SUB_OPCODE(x)	((x) << 2)
+#घोषणा FW_SCSI_ABRT_CLS_WR_SUB_OPCODE_GET(x)	(((x) >> 2) & 0x3f)
+#घोषणा FW_SCSI_ABRT_CLS_WR_CHK_ALL_IO(x)	((x) << 0)
 
-enum fw_cmd_stor_opcodes {
+क्रमागत fw_cmd_stor_opcodes अणु
 	FW_FCOE_RES_INFO_CMD           = 0x31,
 	FW_FCOE_LINK_CMD               = 0x32,
 	FW_FCOE_VNP_CMD                = 0x33,
 	FW_FCOE_SPARAMS_CMD            = 0x35,
 	FW_FCOE_STATS_CMD              = 0x37,
 	FW_FCOE_FCF_CMD                = 0x38,
-};
+पूर्ण;
 
-struct fw_fcoe_res_info_cmd {
-	__be32 op_to_read;
+काष्ठा fw_fcoe_res_info_cmd अणु
+	__be32 op_to_पढ़ो;
 	__be32 retval_len16;
 	__be16 e_d_tov;
 	__be16 r_a_tov_seq;
@@ -323,9 +324,9 @@ struct fw_fcoe_res_info_cmd {
 	__be32 max_vnps;
 	__be32 used_fcfs;
 	__be32 used_vnps;
-};
+पूर्ण;
 
-struct fw_fcoe_link_cmd {
+काष्ठा fw_fcoe_link_cmd अणु
 	__be32 op_to_portid;
 	__be32 retval_len16;
 	__be32 sub_opcode_fcfi;
@@ -340,16 +341,16 @@ struct fw_fcoe_link_cmd {
 	u8     phy_mac[6];
 	u8     vnport_wwnn[8];
 	u8     vnport_wwpn[8];
-};
+पूर्ण;
 
-#define FW_FCOE_LINK_CMD_PORTID(x)	((x) << 0)
-#define FW_FCOE_LINK_CMD_PORTID_GET(x)	(((x) >> 0) & 0xf)
-#define FW_FCOE_LINK_CMD_SUB_OPCODE(x)  ((x) << 24U)
-#define FW_FCOE_LINK_CMD_FCFI(x)	((x) << 0)
-#define FW_FCOE_LINK_CMD_FCFI_GET(x)	(((x) >> 0) & 0xffffff)
-#define FW_FCOE_LINK_CMD_VNPI_GET(x)	(((x) >> 0) & 0xfffff)
+#घोषणा FW_FCOE_LINK_CMD_PORTID(x)	((x) << 0)
+#घोषणा FW_FCOE_LINK_CMD_PORTID_GET(x)	(((x) >> 0) & 0xf)
+#घोषणा FW_FCOE_LINK_CMD_SUB_OPCODE(x)  ((x) << 24U)
+#घोषणा FW_FCOE_LINK_CMD_FCFI(x)	((x) << 0)
+#घोषणा FW_FCOE_LINK_CMD_FCFI_GET(x)	(((x) >> 0) & 0xffffff)
+#घोषणा FW_FCOE_LINK_CMD_VNPI_GET(x)	(((x) >> 0) & 0xfffff)
 
-struct fw_fcoe_vnp_cmd {
+काष्ठा fw_fcoe_vnp_cmd अणु
 	__be32 op_to_fcfi;
 	__be32 alloc_to_len16;
 	__be32 gen_wwn_to_vnpi;
@@ -360,18 +361,18 @@ struct fw_fcoe_vnp_cmd {
 	u8   vnport_wwpn[8];
 	u8   cmn_srv_parms[16];
 	u8   clsp_word_0_1[8];
-};
+पूर्ण;
 
-#define FW_FCOE_VNP_CMD_FCFI(x)		((x) << 0)
-#define FW_FCOE_VNP_CMD_ALLOC		(1U << 31)
-#define FW_FCOE_VNP_CMD_FREE		(1U << 30)
-#define FW_FCOE_VNP_CMD_MODIFY		(1U << 29)
-#define FW_FCOE_VNP_CMD_GEN_WWN		(1U << 22)
-#define FW_FCOE_VNP_CMD_VFID_EN		(1U << 20)
-#define FW_FCOE_VNP_CMD_VNPI(x)		((x) << 0)
-#define FW_FCOE_VNP_CMD_VNPI_GET(x)	(((x) >> 0) & 0xfffff)
+#घोषणा FW_FCOE_VNP_CMD_FCFI(x)		((x) << 0)
+#घोषणा FW_FCOE_VNP_CMD_ALLOC		(1U << 31)
+#घोषणा FW_FCOE_VNP_CMD_FREE		(1U << 30)
+#घोषणा FW_FCOE_VNP_CMD_MODIFY		(1U << 29)
+#घोषणा FW_FCOE_VNP_CMD_GEN_WWN		(1U << 22)
+#घोषणा FW_FCOE_VNP_CMD_VFID_EN		(1U << 20)
+#घोषणा FW_FCOE_VNP_CMD_VNPI(x)		((x) << 0)
+#घोषणा FW_FCOE_VNP_CMD_VNPI_GET(x)	(((x) >> 0) & 0xfffff)
 
-struct fw_fcoe_sparams_cmd {
+काष्ठा fw_fcoe_sparams_cmd अणु
 	__be32 op_to_portid;
 	__be32 retval_len16;
 	u8     r3[7];
@@ -380,15 +381,15 @@ struct fw_fcoe_sparams_cmd {
 	u8     lport_wwpn[8];
 	u8     cmn_srv_parms[16];
 	u8     cls_srv_parms[16];
-};
+पूर्ण;
 
-#define FW_FCOE_SPARAMS_CMD_PORTID(x)	((x) << 0)
+#घोषणा FW_FCOE_SPARAMS_CMD_PORTID(x)	((x) << 0)
 
-struct fw_fcoe_stats_cmd {
+काष्ठा fw_fcoe_stats_cmd अणु
 	__be32 op_to_flowid;
-	__be32 free_to_len16;
-	union fw_fcoe_stats {
-		struct fw_fcoe_stats_ctl {
+	__be32 मुक्त_to_len16;
+	जोड़ fw_fcoe_stats अणु
+		काष्ठा fw_fcoe_stats_ctl अणु
 			u8   nstats_port;
 			u8   port_valid_ix;
 			__be16 r6;
@@ -399,8 +400,8 @@ struct fw_fcoe_stats_cmd {
 			__be64 stat3;
 			__be64 stat4;
 			__be64 stat5;
-		} ctl;
-		struct fw_fcoe_port_stats {
+		पूर्ण ctl;
+		काष्ठा fw_fcoe_port_stats अणु
 			__be64 tx_bcast_bytes;
 			__be64 tx_bcast_frames;
 			__be64 tx_mcast_bytes;
@@ -417,8 +418,8 @@ struct fw_fcoe_stats_cmd {
 			__be64 rx_ucast_bytes;
 			__be64 rx_ucast_frames;
 			__be64 rx_err_frames;
-		} port_stats;
-		struct fw_fcoe_fcf_stats {
+		पूर्ण port_stats;
+		काष्ठा fw_fcoe_fcf_stats अणु
 			__be32 fip_tx_bytes;
 			__be32 fip_tx_fr;
 			__be64 fcf_ka;
@@ -428,7 +429,7 @@ struct fw_fcoe_stats_cmd {
 			__be16 vlan_req;
 			__be16 vlan_rpl;
 			__be16 clr_vlink;
-			__be16 link_down;
+			__be16 link_करोwn;
 			__be16 link_up;
 			__be16 logo;
 			__be16 flogi_req;
@@ -440,8 +441,8 @@ struct fw_fcoe_stats_cmd {
 			__be16 vfid_chg;
 			u8   no_fka_req;
 			u8   no_vnp;
-		} fcf_stats;
-		struct fw_fcoe_pcb_stats {
+		पूर्ण fcf_stats;
+		काष्ठा fw_fcoe_pcb_stats अणु
 			__be64 tx_bytes;
 			__be64 tx_frames;
 			__be64 rx_bytes;
@@ -457,14 +458,14 @@ struct fw_fcoe_stats_cmd {
 			__be16 no_ssn;
 			__be16 mac_flt_fail;
 			__be16 inv_fr_rcvd;
-		} pcb_stats;
-		struct fw_fcoe_scb_stats {
+		पूर्ण pcb_stats;
+		काष्ठा fw_fcoe_scb_stats अणु
 			__be64 tx_bytes;
 			__be64 tx_frames;
 			__be64 rx_bytes;
 			__be64 rx_frames;
 			__be32 host_abrt_req;
-			__be32 adap_auto_abrt;
+			__be32 adap_स्वतः_abrt;
 			__be32 adap_abrt_rsp;
 			__be32 host_ios_req;
 			__be16 ssn_offl_ios;
@@ -474,12 +475,12 @@ struct fw_fcoe_stats_cmd {
 			__be16 rx_data_fr_err;
 			u8   bad_st_abrt_req;
 			u8   no_io_abrt_req;
-			u8   abort_tmo;
-			u8   abort_tmo_2;
-			__be32 abort_req;
-			u8   no_ppod_res_tmo;
-			u8   bp_tmo;
-			u8   adap_auto_cls;
+			u8   पात_पंचांगo;
+			u8   पात_पंचांगo_2;
+			__be32 पात_req;
+			u8   no_ppod_res_पंचांगo;
+			u8   bp_पंचांगo;
+			u8   adap_स्वतः_cls;
 			u8   no_io_cls_req;
 			__be32 host_cls_req;
 			__be64 unsol_cmd_rcvd;
@@ -498,18 +499,18 @@ struct fw_fcoe_stats_cmd {
 			u8   ct_rjt;
 			u8   inval_bls_rcvd;
 			__be32 ba_rjt_rcvd;
-		} scb_stats;
-	} u;
-};
+		पूर्ण scb_stats;
+	पूर्ण u;
+पूर्ण;
 
-#define FW_FCOE_STATS_CMD_FLOWID(x)	((x) << 0)
-#define FW_FCOE_STATS_CMD_FREE		(1U << 30)
-#define FW_FCOE_STATS_CMD_NSTATS(x)	((x) << 4)
-#define FW_FCOE_STATS_CMD_PORT(x)	((x) << 0)
-#define FW_FCOE_STATS_CMD_PORT_VALID	(1U << 7)
-#define FW_FCOE_STATS_CMD_IX(x)		((x) << 0)
+#घोषणा FW_FCOE_STATS_CMD_FLOWID(x)	((x) << 0)
+#घोषणा FW_FCOE_STATS_CMD_FREE		(1U << 30)
+#घोषणा FW_FCOE_STATS_CMD_NSTATS(x)	((x) << 4)
+#घोषणा FW_FCOE_STATS_CMD_PORT(x)	((x) << 0)
+#घोषणा FW_FCOE_STATS_CMD_PORT_VALID	(1U << 7)
+#घोषणा FW_FCOE_STATS_CMD_IX(x)		((x) << 0)
 
-struct fw_fcoe_fcf_cmd {
+काष्ठा fw_fcoe_fcf_cmd अणु
 	__be32 op_to_fcfi;
 	__be32 retval_len16;
 	__be16 priority_pkd;
@@ -526,14 +527,14 @@ struct fw_fcoe_fcf_cmd {
 	u8     fpma_to_portid;
 	u8     spma_mac[6];
 	__be64 r8;
-};
+पूर्ण;
 
-#define FW_FCOE_FCF_CMD_FCFI(x)		((x) << 0)
-#define FW_FCOE_FCF_CMD_FCFI_GET(x)	(((x) >> 0) & 0xfffff)
-#define FW_FCOE_FCF_CMD_PRIORITY_GET(x)	(((x) >> 0) & 0xff)
-#define FW_FCOE_FCF_CMD_FPMA_GET(x)	(((x) >> 6) & 0x1)
-#define FW_FCOE_FCF_CMD_SPMA_GET(x)	(((x) >> 5) & 0x1)
-#define FW_FCOE_FCF_CMD_LOGIN_GET(x)	(((x) >> 4) & 0x1)
-#define FW_FCOE_FCF_CMD_PORTID_GET(x)	(((x) >> 0) & 0xf)
+#घोषणा FW_FCOE_FCF_CMD_FCFI(x)		((x) << 0)
+#घोषणा FW_FCOE_FCF_CMD_FCFI_GET(x)	(((x) >> 0) & 0xfffff)
+#घोषणा FW_FCOE_FCF_CMD_PRIORITY_GET(x)	(((x) >> 0) & 0xff)
+#घोषणा FW_FCOE_FCF_CMD_FPMA_GET(x)	(((x) >> 6) & 0x1)
+#घोषणा FW_FCOE_FCF_CMD_SPMA_GET(x)	(((x) >> 5) & 0x1)
+#घोषणा FW_FCOE_FCF_CMD_LOGIN_GET(x)	(((x) >> 4) & 0x1)
+#घोषणा FW_FCOE_FCF_CMD_PORTID_GET(x)	(((x) >> 0) & 0xf)
 
-#endif /* _T4FW_API_STOR_H_ */
+#पूर्ण_अगर /* _T4FW_API_STOR_H_ */

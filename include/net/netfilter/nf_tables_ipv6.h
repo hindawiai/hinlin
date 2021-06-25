@@ -1,119 +1,120 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_TABLES_IPV6_H_
-#define _NF_TABLES_IPV6_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_TABLES_IPV6_H_
+#घोषणा _NF_TABLES_IPV6_H_
 
-#include <linux/netfilter_ipv6/ip6_tables.h>
-#include <net/ipv6.h>
-#include <net/netfilter/nf_tables.h>
+#समावेश <linux/netfilter_ipv6/ip6_tables.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/netfilter/nf_tables.h>
 
-static inline void nft_set_pktinfo_ipv6(struct nft_pktinfo *pkt,
-					struct sk_buff *skb)
-{
-	unsigned int flags = IP6_FH_F_AUTH;
-	int protohdr, thoff = 0;
-	unsigned short frag_off;
+अटल अंतरभूत व्योम nft_set_pktinfo_ipv6(काष्ठा nft_pktinfo *pkt,
+					काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक flags = IP6_FH_F_AUTH;
+	पूर्णांक protohdr, thoff = 0;
+	अचिन्हित लघु frag_off;
 
 	protohdr = ipv6_find_hdr(pkt->skb, &thoff, -1, &frag_off, &flags);
-	if (protohdr < 0) {
+	अगर (protohdr < 0) अणु
 		nft_set_pktinfo_unspec(pkt, skb);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pkt->tprot_set = true;
 	pkt->tprot = protohdr;
 	pkt->xt.thoff = thoff;
 	pkt->xt.fragoff = frag_off;
-}
+पूर्ण
 
-static inline int __nft_set_pktinfo_ipv6_validate(struct nft_pktinfo *pkt,
-						  struct sk_buff *skb)
-{
-#if IS_ENABLED(CONFIG_IPV6)
-	unsigned int flags = IP6_FH_F_AUTH;
-	struct ipv6hdr *ip6h, _ip6h;
-	unsigned int thoff = 0;
-	unsigned short frag_off;
-	int protohdr;
+अटल अंतरभूत पूर्णांक __nft_set_pktinfo_ipv6_validate(काष्ठा nft_pktinfo *pkt,
+						  काष्ठा sk_buff *skb)
+अणु
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अचिन्हित पूर्णांक flags = IP6_FH_F_AUTH;
+	काष्ठा ipv6hdr *ip6h, _ip6h;
+	अचिन्हित पूर्णांक thoff = 0;
+	अचिन्हित लघु frag_off;
+	पूर्णांक protohdr;
 	u32 pkt_len;
 
-	ip6h = skb_header_pointer(skb, skb_network_offset(skb), sizeof(*ip6h),
+	ip6h = skb_header_poपूर्णांकer(skb, skb_network_offset(skb), माप(*ip6h),
 				  &_ip6h);
-	if (!ip6h)
-		return -1;
+	अगर (!ip6h)
+		वापस -1;
 
-	if (ip6h->version != 6)
-		return -1;
+	अगर (ip6h->version != 6)
+		वापस -1;
 
 	pkt_len = ntohs(ip6h->payload_len);
-	if (pkt_len + sizeof(*ip6h) > skb->len)
-		return -1;
+	अगर (pkt_len + माप(*ip6h) > skb->len)
+		वापस -1;
 
 	protohdr = ipv6_find_hdr(pkt->skb, &thoff, -1, &frag_off, &flags);
-	if (protohdr < 0)
-		return -1;
+	अगर (protohdr < 0)
+		वापस -1;
 
 	pkt->tprot_set = true;
 	pkt->tprot = protohdr;
 	pkt->xt.thoff = thoff;
 	pkt->xt.fragoff = frag_off;
 
-	return 0;
-#else
-	return -1;
-#endif
-}
+	वापस 0;
+#अन्यथा
+	वापस -1;
+#पूर्ण_अगर
+पूर्ण
 
-static inline void nft_set_pktinfo_ipv6_validate(struct nft_pktinfo *pkt,
-						 struct sk_buff *skb)
-{
-	if (__nft_set_pktinfo_ipv6_validate(pkt, skb) < 0)
+अटल अंतरभूत व्योम nft_set_pktinfo_ipv6_validate(काष्ठा nft_pktinfo *pkt,
+						 काष्ठा sk_buff *skb)
+अणु
+	अगर (__nft_set_pktinfo_ipv6_validate(pkt, skb) < 0)
 		nft_set_pktinfo_unspec(pkt, skb);
-}
+पूर्ण
 
-static inline int nft_set_pktinfo_ipv6_ingress(struct nft_pktinfo *pkt,
-					       struct sk_buff *skb)
-{
-#if IS_ENABLED(CONFIG_IPV6)
-	unsigned int flags = IP6_FH_F_AUTH;
-	unsigned short frag_off;
-	unsigned int thoff = 0;
-	struct inet6_dev *idev;
-	struct ipv6hdr *ip6h;
-	int protohdr;
+अटल अंतरभूत पूर्णांक nft_set_pktinfo_ipv6_ingress(काष्ठा nft_pktinfo *pkt,
+					       काष्ठा sk_buff *skb)
+अणु
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अचिन्हित पूर्णांक flags = IP6_FH_F_AUTH;
+	अचिन्हित लघु frag_off;
+	अचिन्हित पूर्णांक thoff = 0;
+	काष्ठा inet6_dev *idev;
+	काष्ठा ipv6hdr *ip6h;
+	पूर्णांक protohdr;
 	u32 pkt_len;
 
-	if (!pskb_may_pull(skb, sizeof(*ip6h)))
-		return -1;
+	अगर (!pskb_may_pull(skb, माप(*ip6h)))
+		वापस -1;
 
 	ip6h = ipv6_hdr(skb);
-	if (ip6h->version != 6)
-		goto inhdr_error;
+	अगर (ip6h->version != 6)
+		जाओ inhdr_error;
 
 	pkt_len = ntohs(ip6h->payload_len);
-	if (pkt_len + sizeof(*ip6h) > skb->len) {
+	अगर (pkt_len + माप(*ip6h) > skb->len) अणु
 		idev = __in6_dev_get(nft_in(pkt));
 		__IP6_INC_STATS(nft_net(pkt), idev, IPSTATS_MIB_INTRUNCATEDPKTS);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	protohdr = ipv6_find_hdr(pkt->skb, &thoff, -1, &frag_off, &flags);
-	if (protohdr < 0)
-		goto inhdr_error;
+	अगर (protohdr < 0)
+		जाओ inhdr_error;
 
 	pkt->tprot_set = true;
 	pkt->tprot = protohdr;
 	pkt->xt.thoff = thoff;
 	pkt->xt.fragoff = frag_off;
 
-	return 0;
+	वापस 0;
 
 inhdr_error:
 	idev = __in6_dev_get(nft_in(pkt));
 	__IP6_INC_STATS(nft_net(pkt), idev, IPSTATS_MIB_INHDRERRORS);
-	return -1;
-#else
-	return -1;
-#endif
-}
+	वापस -1;
+#अन्यथा
+	वापस -1;
+#पूर्ण_अगर
+पूर्ण
 
-#endif
+#पूर्ण_अगर

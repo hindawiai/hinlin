@@ -1,334 +1,335 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Power supply driver for the Active-semi ACT8945A PMIC
+ * Power supply driver क्रम the Active-semi ACT8945A PMIC
  *
- * Copyright (C) 2015 Atmel Corporation
+ * Copyright (C) 2015 Aपंचांगel Corporation
  *
- * Author: Wenyou Yang <wenyou.yang@atmel.com>
+ * Author: Wenyou Yang <wenyou.yang@aपंचांगel.com>
  */
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/platform_device.h>
-#include <linux/power_supply.h>
-#include <linux/regmap.h>
-#include <linux/gpio/consumer.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/gpio/consumer.h>
 
-static const char *act8945a_charger_model = "ACT8945A";
-static const char *act8945a_charger_manufacturer = "Active-semi";
+अटल स्थिर अक्षर *act8945a_अक्षरger_model = "ACT8945A";
+अटल स्थिर अक्षर *act8945a_अक्षरger_manufacturer = "Active-semi";
 
 /*
  * ACT8945A Charger Register Map
  */
 
 /* 0x70: Reserved */
-#define ACT8945A_APCH_CFG		0x71
-#define ACT8945A_APCH_STATUS		0x78
-#define ACT8945A_APCH_CTRL		0x79
-#define ACT8945A_APCH_STATE		0x7A
+#घोषणा ACT8945A_APCH_CFG		0x71
+#घोषणा ACT8945A_APCH_STATUS		0x78
+#घोषणा ACT8945A_APCH_CTRL		0x79
+#घोषणा ACT8945A_APCH_STATE		0x7A
 
 /* ACT8945A_APCH_CFG */
-#define APCH_CFG_OVPSET			(0x3 << 0)
-#define APCH_CFG_OVPSET_6V6		(0x0 << 0)
-#define APCH_CFG_OVPSET_7V		(0x1 << 0)
-#define APCH_CFG_OVPSET_7V5		(0x2 << 0)
-#define APCH_CFG_OVPSET_8V		(0x3 << 0)
-#define APCH_CFG_PRETIMO		(0x3 << 2)
-#define APCH_CFG_PRETIMO_40_MIN		(0x0 << 2)
-#define APCH_CFG_PRETIMO_60_MIN		(0x1 << 2)
-#define APCH_CFG_PRETIMO_80_MIN		(0x2 << 2)
-#define APCH_CFG_PRETIMO_DISABLED	(0x3 << 2)
-#define APCH_CFG_TOTTIMO		(0x3 << 4)
-#define APCH_CFG_TOTTIMO_3_HOUR		(0x0 << 4)
-#define APCH_CFG_TOTTIMO_4_HOUR		(0x1 << 4)
-#define APCH_CFG_TOTTIMO_5_HOUR		(0x2 << 4)
-#define APCH_CFG_TOTTIMO_DISABLED	(0x3 << 4)
-#define APCH_CFG_SUSCHG			(0x1 << 7)
+#घोषणा APCH_CFG_OVPSET			(0x3 << 0)
+#घोषणा APCH_CFG_OVPSET_6V6		(0x0 << 0)
+#घोषणा APCH_CFG_OVPSET_7V		(0x1 << 0)
+#घोषणा APCH_CFG_OVPSET_7V5		(0x2 << 0)
+#घोषणा APCH_CFG_OVPSET_8V		(0x3 << 0)
+#घोषणा APCH_CFG_PRETIMO		(0x3 << 2)
+#घोषणा APCH_CFG_PRETIMO_40_MIN		(0x0 << 2)
+#घोषणा APCH_CFG_PRETIMO_60_MIN		(0x1 << 2)
+#घोषणा APCH_CFG_PRETIMO_80_MIN		(0x2 << 2)
+#घोषणा APCH_CFG_PRETIMO_DISABLED	(0x3 << 2)
+#घोषणा APCH_CFG_TOTTIMO		(0x3 << 4)
+#घोषणा APCH_CFG_TOTTIMO_3_HOUR		(0x0 << 4)
+#घोषणा APCH_CFG_TOTTIMO_4_HOUR		(0x1 << 4)
+#घोषणा APCH_CFG_TOTTIMO_5_HOUR		(0x2 << 4)
+#घोषणा APCH_CFG_TOTTIMO_DISABLED	(0x3 << 4)
+#घोषणा APCH_CFG_SUSCHG			(0x1 << 7)
 
-#define APCH_STATUS_CHGDAT		BIT(0)
-#define APCH_STATUS_INDAT		BIT(1)
-#define APCH_STATUS_TEMPDAT		BIT(2)
-#define APCH_STATUS_TIMRDAT		BIT(3)
-#define APCH_STATUS_CHGSTAT		BIT(4)
-#define APCH_STATUS_INSTAT		BIT(5)
-#define APCH_STATUS_TEMPSTAT		BIT(6)
-#define APCH_STATUS_TIMRSTAT		BIT(7)
+#घोषणा APCH_STATUS_CHGDAT		BIT(0)
+#घोषणा APCH_STATUS_INDAT		BIT(1)
+#घोषणा APCH_STATUS_TEMPDAT		BIT(2)
+#घोषणा APCH_STATUS_TIMRDAT		BIT(3)
+#घोषणा APCH_STATUS_CHGSTAT		BIT(4)
+#घोषणा APCH_STATUS_INSTAT		BIT(5)
+#घोषणा APCH_STATUS_TEMPSTAT		BIT(6)
+#घोषणा APCH_STATUS_TIMRSTAT		BIT(7)
 
-#define APCH_CTRL_CHGEOCOUT		BIT(0)
-#define APCH_CTRL_INDIS			BIT(1)
-#define APCH_CTRL_TEMPOUT		BIT(2)
-#define APCH_CTRL_TIMRPRE		BIT(3)
-#define APCH_CTRL_CHGEOCIN		BIT(4)
-#define APCH_CTRL_INCON			BIT(5)
-#define APCH_CTRL_TEMPIN		BIT(6)
-#define APCH_CTRL_TIMRTOT		BIT(7)
+#घोषणा APCH_CTRL_CHGEOCOUT		BIT(0)
+#घोषणा APCH_CTRL_INDIS			BIT(1)
+#घोषणा APCH_CTRL_TEMPOUT		BIT(2)
+#घोषणा APCH_CTRL_TIMRPRE		BIT(3)
+#घोषणा APCH_CTRL_CHGEOCIN		BIT(4)
+#घोषणा APCH_CTRL_INCON			BIT(5)
+#घोषणा APCH_CTRL_TEMPIN		BIT(6)
+#घोषणा APCH_CTRL_TIMRTOT		BIT(7)
 
-#define APCH_STATE_ACINSTAT		(0x1 << 1)
-#define APCH_STATE_CSTATE		(0x3 << 4)
-#define APCH_STATE_CSTATE_SHIFT		4
-#define APCH_STATE_CSTATE_DISABLED	0x00
-#define APCH_STATE_CSTATE_EOC		0x01
-#define APCH_STATE_CSTATE_FAST		0x02
-#define APCH_STATE_CSTATE_PRE		0x03
+#घोषणा APCH_STATE_ACINSTAT		(0x1 << 1)
+#घोषणा APCH_STATE_CSTATE		(0x3 << 4)
+#घोषणा APCH_STATE_CSTATE_SHIFT		4
+#घोषणा APCH_STATE_CSTATE_DISABLED	0x00
+#घोषणा APCH_STATE_CSTATE_EOC		0x01
+#घोषणा APCH_STATE_CSTATE_FAST		0x02
+#घोषणा APCH_STATE_CSTATE_PRE		0x03
 
-struct act8945a_charger {
-	struct power_supply *psy;
-	struct power_supply_desc desc;
-	struct regmap *regmap;
-	struct work_struct work;
+काष्ठा act8945a_अक्षरger अणु
+	काष्ठा घातer_supply *psy;
+	काष्ठा घातer_supply_desc desc;
+	काष्ठा regmap *regmap;
+	काष्ठा work_काष्ठा work;
 
-	bool init_done;
-	struct gpio_desc *lbo_gpio;
-	struct gpio_desc *chglev_gpio;
-};
+	bool init_करोne;
+	काष्ठा gpio_desc *lbo_gpio;
+	काष्ठा gpio_desc *chglev_gpio;
+पूर्ण;
 
-static int act8945a_get_charger_state(struct regmap *regmap, int *val)
-{
-	int ret;
-	unsigned int status, state;
+अटल पूर्णांक act8945a_get_अक्षरger_state(काष्ठा regmap *regmap, पूर्णांक *val)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक status, state;
 
-	ret = regmap_read(regmap, ACT8945A_APCH_STATUS, &status);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ACT8945A_APCH_STATUS, &status);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = regmap_read(regmap, ACT8945A_APCH_STATE, &state);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ACT8945A_APCH_STATE, &state);
+	अगर (ret < 0)
+		वापस ret;
 
 	state &= APCH_STATE_CSTATE;
 	state >>= APCH_STATE_CSTATE_SHIFT;
 
-	switch (state) {
-	case APCH_STATE_CSTATE_PRE:
-	case APCH_STATE_CSTATE_FAST:
+	चयन (state) अणु
+	हाल APCH_STATE_CSTATE_PRE:
+	हाल APCH_STATE_CSTATE_FAST:
 		*val = POWER_SUPPLY_STATUS_CHARGING;
-		break;
-	case APCH_STATE_CSTATE_EOC:
-		if (status & APCH_STATUS_CHGDAT)
+		अवरोध;
+	हाल APCH_STATE_CSTATE_EOC:
+		अगर (status & APCH_STATUS_CHGDAT)
 			*val = POWER_SUPPLY_STATUS_FULL;
-		else
+		अन्यथा
 			*val = POWER_SUPPLY_STATUS_CHARGING;
-		break;
-	case APCH_STATE_CSTATE_DISABLED:
-	default:
-		if (!(status & APCH_STATUS_INDAT))
+		अवरोध;
+	हाल APCH_STATE_CSTATE_DISABLED:
+	शेष:
+		अगर (!(status & APCH_STATUS_INDAT))
 			*val = POWER_SUPPLY_STATUS_DISCHARGING;
-		else
+		अन्यथा
 			*val = POWER_SUPPLY_STATUS_NOT_CHARGING;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int act8945a_get_charge_type(struct regmap *regmap, int *val)
-{
-	int ret;
-	unsigned int status, state;
+अटल पूर्णांक act8945a_get_अक्षरge_type(काष्ठा regmap *regmap, पूर्णांक *val)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक status, state;
 
-	ret = regmap_read(regmap, ACT8945A_APCH_STATUS, &status);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ACT8945A_APCH_STATUS, &status);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = regmap_read(regmap, ACT8945A_APCH_STATE, &state);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ACT8945A_APCH_STATE, &state);
+	अगर (ret < 0)
+		वापस ret;
 
 	state &= APCH_STATE_CSTATE;
 	state >>= APCH_STATE_CSTATE_SHIFT;
 
-	switch (state) {
-	case APCH_STATE_CSTATE_PRE:
+	चयन (state) अणु
+	हाल APCH_STATE_CSTATE_PRE:
 		*val = POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
-		break;
-	case APCH_STATE_CSTATE_FAST:
+		अवरोध;
+	हाल APCH_STATE_CSTATE_FAST:
 		*val = POWER_SUPPLY_CHARGE_TYPE_FAST;
-		break;
-	case APCH_STATE_CSTATE_EOC:
+		अवरोध;
+	हाल APCH_STATE_CSTATE_EOC:
 		*val = POWER_SUPPLY_CHARGE_TYPE_NONE;
-		break;
-	case APCH_STATE_CSTATE_DISABLED:
-	default:
-		if (!(status & APCH_STATUS_INDAT))
+		अवरोध;
+	हाल APCH_STATE_CSTATE_DISABLED:
+	शेष:
+		अगर (!(status & APCH_STATUS_INDAT))
 			*val = POWER_SUPPLY_CHARGE_TYPE_NONE;
-		else
+		अन्यथा
 			*val = POWER_SUPPLY_CHARGE_TYPE_UNKNOWN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int act8945a_get_battery_health(struct regmap *regmap, int *val)
-{
-	int ret;
-	unsigned int status, state, config;
+अटल पूर्णांक act8945a_get_battery_health(काष्ठा regmap *regmap, पूर्णांक *val)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक status, state, config;
 
-	ret = regmap_read(regmap, ACT8945A_APCH_STATUS, &status);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ACT8945A_APCH_STATUS, &status);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = regmap_read(regmap, ACT8945A_APCH_CFG, &config);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ACT8945A_APCH_CFG, &config);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = regmap_read(regmap, ACT8945A_APCH_STATE, &state);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ACT8945A_APCH_STATE, &state);
+	अगर (ret < 0)
+		वापस ret;
 
 	state &= APCH_STATE_CSTATE;
 	state >>= APCH_STATE_CSTATE_SHIFT;
 
-	switch (state) {
-	case APCH_STATE_CSTATE_DISABLED:
-		if (config & APCH_CFG_SUSCHG) {
+	चयन (state) अणु
+	हाल APCH_STATE_CSTATE_DISABLED:
+		अगर (config & APCH_CFG_SUSCHG) अणु
 			*val = POWER_SUPPLY_HEALTH_UNKNOWN;
-		} else if (status & APCH_STATUS_INDAT) {
-			if (!(status & APCH_STATUS_TEMPDAT))
+		पूर्ण अन्यथा अगर (status & APCH_STATUS_INDAT) अणु
+			अगर (!(status & APCH_STATUS_TEMPDAT))
 				*val = POWER_SUPPLY_HEALTH_OVERHEAT;
-			else if (status & APCH_STATUS_TIMRDAT)
+			अन्यथा अगर (status & APCH_STATUS_TIMRDAT)
 				*val = POWER_SUPPLY_HEALTH_SAFETY_TIMER_EXPIRE;
-			else
+			अन्यथा
 				*val = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
-		} else {
+		पूर्ण अन्यथा अणु
 			*val = POWER_SUPPLY_HEALTH_GOOD;
-		}
-		break;
-	case APCH_STATE_CSTATE_PRE:
-	case APCH_STATE_CSTATE_FAST:
-	case APCH_STATE_CSTATE_EOC:
-	default:
+		पूर्ण
+		अवरोध;
+	हाल APCH_STATE_CSTATE_PRE:
+	हाल APCH_STATE_CSTATE_FAST:
+	हाल APCH_STATE_CSTATE_EOC:
+	शेष:
 		*val = POWER_SUPPLY_HEALTH_GOOD;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int act8945a_get_capacity_level(struct act8945a_charger *charger,
-				       struct regmap *regmap, int *val)
-{
-	int ret;
-	unsigned int status, state, config;
-	int lbo_level = gpiod_get_value(charger->lbo_gpio);
+अटल पूर्णांक act8945a_get_capacity_level(काष्ठा act8945a_अक्षरger *अक्षरger,
+				       काष्ठा regmap *regmap, पूर्णांक *val)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक status, state, config;
+	पूर्णांक lbo_level = gpiod_get_value(अक्षरger->lbo_gpio);
 
-	ret = regmap_read(regmap, ACT8945A_APCH_STATUS, &status);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ACT8945A_APCH_STATUS, &status);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = regmap_read(regmap, ACT8945A_APCH_CFG, &config);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ACT8945A_APCH_CFG, &config);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = regmap_read(regmap, ACT8945A_APCH_STATE, &state);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ACT8945A_APCH_STATE, &state);
+	अगर (ret < 0)
+		वापस ret;
 
 	state &= APCH_STATE_CSTATE;
 	state >>= APCH_STATE_CSTATE_SHIFT;
 
-	switch (state) {
-	case APCH_STATE_CSTATE_PRE:
+	चयन (state) अणु
+	हाल APCH_STATE_CSTATE_PRE:
 		*val = POWER_SUPPLY_CAPACITY_LEVEL_LOW;
-		break;
-	case APCH_STATE_CSTATE_FAST:
-		if (lbo_level)
+		अवरोध;
+	हाल APCH_STATE_CSTATE_FAST:
+		अगर (lbo_level)
 			*val = POWER_SUPPLY_CAPACITY_LEVEL_HIGH;
-		else
+		अन्यथा
 			*val = POWER_SUPPLY_CAPACITY_LEVEL_LOW;
-		break;
-	case APCH_STATE_CSTATE_EOC:
-		if (status & APCH_STATUS_CHGDAT)
+		अवरोध;
+	हाल APCH_STATE_CSTATE_EOC:
+		अगर (status & APCH_STATUS_CHGDAT)
 			*val = POWER_SUPPLY_CAPACITY_LEVEL_FULL;
-		else
+		अन्यथा
 			*val = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
-		break;
-	case APCH_STATE_CSTATE_DISABLED:
-	default:
-		if (config & APCH_CFG_SUSCHG) {
+		अवरोध;
+	हाल APCH_STATE_CSTATE_DISABLED:
+	शेष:
+		अगर (config & APCH_CFG_SUSCHG) अणु
 			*val = POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN;
-		} else {
+		पूर्ण अन्यथा अणु
 			*val = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
-			if (!(status & APCH_STATUS_INDAT)) {
-				if (!lbo_level)
+			अगर (!(status & APCH_STATUS_INDAT)) अणु
+				अगर (!lbo_level)
 					*val = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
-			}
-		}
-		break;
-	}
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define MAX_CURRENT_USB_HIGH	450000
-#define MAX_CURRENT_USB_LOW	90000
-#define MAX_CURRENT_USB_PRE	45000
+#घोषणा MAX_CURRENT_USB_HIGH	450000
+#घोषणा MAX_CURRENT_USB_LOW	90000
+#घोषणा MAX_CURRENT_USB_PRE	45000
 /*
  * Riset(K) = 2336 * (1V/Ichg(mA)) - 0.205
  * Riset = 2.43K
  */
-#define MAX_CURRENT_AC_HIGH		886527
-#define MAX_CURRENT_AC_LOW		117305
-#define MAX_CURRENT_AC_HIGH_PRE		88653
-#define MAX_CURRENT_AC_LOW_PRE		11731
+#घोषणा MAX_CURRENT_AC_HIGH		886527
+#घोषणा MAX_CURRENT_AC_LOW		117305
+#घोषणा MAX_CURRENT_AC_HIGH_PRE		88653
+#घोषणा MAX_CURRENT_AC_LOW_PRE		11731
 
-static int act8945a_get_current_max(struct act8945a_charger *charger,
-				    struct regmap *regmap, int *val)
-{
-	int ret;
-	unsigned int status, state;
-	unsigned int acin_state;
-	int chgin_level = gpiod_get_value(charger->chglev_gpio);
+अटल पूर्णांक act8945a_get_current_max(काष्ठा act8945a_अक्षरger *अक्षरger,
+				    काष्ठा regmap *regmap, पूर्णांक *val)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक status, state;
+	अचिन्हित पूर्णांक acin_state;
+	पूर्णांक chgin_level = gpiod_get_value(अक्षरger->chglev_gpio);
 
-	ret = regmap_read(regmap, ACT8945A_APCH_STATUS, &status);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ACT8945A_APCH_STATUS, &status);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = regmap_read(regmap, ACT8945A_APCH_STATE, &state);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ACT8945A_APCH_STATE, &state);
+	अगर (ret < 0)
+		वापस ret;
 
 	acin_state = (state & APCH_STATE_ACINSTAT) >> 1;
 
 	state &= APCH_STATE_CSTATE;
 	state >>= APCH_STATE_CSTATE_SHIFT;
 
-	switch (state) {
-	case APCH_STATE_CSTATE_PRE:
-		if (acin_state) {
-			if (chgin_level)
+	चयन (state) अणु
+	हाल APCH_STATE_CSTATE_PRE:
+		अगर (acin_state) अणु
+			अगर (chgin_level)
 				*val = MAX_CURRENT_AC_HIGH_PRE;
-			else
+			अन्यथा
 				*val = MAX_CURRENT_AC_LOW_PRE;
-		} else {
+		पूर्ण अन्यथा अणु
 			*val = MAX_CURRENT_USB_PRE;
-		}
-		break;
-	case APCH_STATE_CSTATE_FAST:
-		if (acin_state) {
-			if (chgin_level)
+		पूर्ण
+		अवरोध;
+	हाल APCH_STATE_CSTATE_FAST:
+		अगर (acin_state) अणु
+			अगर (chgin_level)
 				*val = MAX_CURRENT_AC_HIGH;
-			else
+			अन्यथा
 				*val = MAX_CURRENT_AC_LOW;
-		} else {
-			if (chgin_level)
+		पूर्ण अन्यथा अणु
+			अगर (chgin_level)
 				*val = MAX_CURRENT_USB_HIGH;
-			else
+			अन्यथा
 				*val = MAX_CURRENT_USB_LOW;
-		}
-		break;
-	case APCH_STATE_CSTATE_EOC:
-	case APCH_STATE_CSTATE_DISABLED:
-	default:
+		पूर्ण
+		अवरोध;
+	हाल APCH_STATE_CSTATE_EOC:
+	हाल APCH_STATE_CSTATE_DISABLED:
+	शेष:
 		*val = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum power_supply_property act8945a_charger_props[] = {
+अटल क्रमागत घातer_supply_property act8945a_अक्षरger_props[] = अणु
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_CHARGE_TYPE,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
@@ -337,325 +338,325 @@ static enum power_supply_property act8945a_charger_props[] = {
 	POWER_SUPPLY_PROP_CURRENT_MAX,
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER
-};
+पूर्ण;
 
-static int act8945a_charger_get_property(struct power_supply *psy,
-					 enum power_supply_property prop,
-					 union power_supply_propval *val)
-{
-	struct act8945a_charger *charger = power_supply_get_drvdata(psy);
-	struct regmap *regmap = charger->regmap;
-	int ret = 0;
+अटल पूर्णांक act8945a_अक्षरger_get_property(काष्ठा घातer_supply *psy,
+					 क्रमागत घातer_supply_property prop,
+					 जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा act8945a_अक्षरger *अक्षरger = घातer_supply_get_drvdata(psy);
+	काष्ठा regmap *regmap = अक्षरger->regmap;
+	पूर्णांक ret = 0;
 
-	switch (prop) {
-	case POWER_SUPPLY_PROP_STATUS:
-		ret = act8945a_get_charger_state(regmap, &val->intval);
-		break;
-	case POWER_SUPPLY_PROP_CHARGE_TYPE:
-		ret = act8945a_get_charge_type(regmap, &val->intval);
-		break;
-	case POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
-		break;
-	case POWER_SUPPLY_PROP_HEALTH:
-		ret = act8945a_get_battery_health(regmap, &val->intval);
-		break;
-	case POWER_SUPPLY_PROP_CAPACITY_LEVEL:
-		ret = act8945a_get_capacity_level(charger,
-						  regmap, &val->intval);
-		break;
-	case POWER_SUPPLY_PROP_CURRENT_MAX:
-		ret = act8945a_get_current_max(charger,
-					       regmap, &val->intval);
-		break;
-	case POWER_SUPPLY_PROP_MODEL_NAME:
-		val->strval = act8945a_charger_model;
-		break;
-	case POWER_SUPPLY_PROP_MANUFACTURER:
-		val->strval = act8945a_charger_manufacturer;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (prop) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		ret = act8945a_get_अक्षरger_state(regmap, &val->पूर्णांकval);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CHARGE_TYPE:
+		ret = act8945a_get_अक्षरge_type(regmap, &val->पूर्णांकval);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TECHNOLOGY:
+		val->पूर्णांकval = POWER_SUPPLY_TECHNOLOGY_LION;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_HEALTH:
+		ret = act8945a_get_battery_health(regmap, &val->पूर्णांकval);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CAPACITY_LEVEL:
+		ret = act8945a_get_capacity_level(अक्षरger,
+						  regmap, &val->पूर्णांकval);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CURRENT_MAX:
+		ret = act8945a_get_current_max(अक्षरger,
+					       regmap, &val->पूर्णांकval);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_MODEL_NAME:
+		val->strval = act8945a_अक्षरger_model;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_MANUFACTURER:
+		val->strval = act8945a_अक्षरger_manufacturer;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int act8945a_enable_interrupt(struct act8945a_charger *charger)
-{
-	struct regmap *regmap = charger->regmap;
-	unsigned char ctrl;
-	int ret;
+अटल पूर्णांक act8945a_enable_पूर्णांकerrupt(काष्ठा act8945a_अक्षरger *अक्षरger)
+अणु
+	काष्ठा regmap *regmap = अक्षरger->regmap;
+	अचिन्हित अक्षर ctrl;
+	पूर्णांक ret;
 
 	ctrl = APCH_CTRL_CHGEOCOUT | APCH_CTRL_CHGEOCIN |
 	       APCH_CTRL_INDIS | APCH_CTRL_INCON |
 	       APCH_CTRL_TEMPOUT | APCH_CTRL_TEMPIN |
 	       APCH_CTRL_TIMRPRE | APCH_CTRL_TIMRTOT;
-	ret = regmap_write(regmap, ACT8945A_APCH_CTRL, ctrl);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(regmap, ACT8945A_APCH_CTRL, ctrl);
+	अगर (ret)
+		वापस ret;
 
 	ctrl = APCH_STATUS_CHGSTAT | APCH_STATUS_INSTAT |
 	       APCH_STATUS_TEMPSTAT | APCH_STATUS_TIMRSTAT;
-	ret = regmap_write(regmap, ACT8945A_APCH_STATUS, ctrl);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(regmap, ACT8945A_APCH_STATUS, ctrl);
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int act8945a_set_supply_type(struct act8945a_charger *charger,
-					     unsigned int *type)
-{
-	unsigned int status, state;
-	int ret;
+अटल अचिन्हित पूर्णांक act8945a_set_supply_type(काष्ठा act8945a_अक्षरger *अक्षरger,
+					     अचिन्हित पूर्णांक *type)
+अणु
+	अचिन्हित पूर्णांक status, state;
+	पूर्णांक ret;
 
-	ret = regmap_read(charger->regmap, ACT8945A_APCH_STATUS, &status);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(अक्षरger->regmap, ACT8945A_APCH_STATUS, &status);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = regmap_read(charger->regmap, ACT8945A_APCH_STATE, &state);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(अक्षरger->regmap, ACT8945A_APCH_STATE, &state);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (status & APCH_STATUS_INDAT) {
-		if (state & APCH_STATE_ACINSTAT)
+	अगर (status & APCH_STATUS_INDAT) अणु
+		अगर (state & APCH_STATE_ACINSTAT)
 			*type = POWER_SUPPLY_TYPE_MAINS;
-		else
+		अन्यथा
 			*type = POWER_SUPPLY_TYPE_USB;
-	} else {
+	पूर्ण अन्यथा अणु
 		*type = POWER_SUPPLY_TYPE_BATTERY;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void act8945a_work(struct work_struct *work)
-{
-	struct act8945a_charger *charger =
-			container_of(work, struct act8945a_charger, work);
+अटल व्योम act8945a_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा act8945a_अक्षरger *अक्षरger =
+			container_of(work, काष्ठा act8945a_अक्षरger, work);
 
-	act8945a_set_supply_type(charger, &charger->desc.type);
+	act8945a_set_supply_type(अक्षरger, &अक्षरger->desc.type);
 
-	power_supply_changed(charger->psy);
-}
+	घातer_supply_changed(अक्षरger->psy);
+पूर्ण
 
-static irqreturn_t act8945a_status_changed(int irq, void *dev_id)
-{
-	struct act8945a_charger *charger = dev_id;
+अटल irqवापस_t act8945a_status_changed(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा act8945a_अक्षरger *अक्षरger = dev_id;
 
-	if (charger->init_done)
-		schedule_work(&charger->work);
+	अगर (अक्षरger->init_करोne)
+		schedule_work(&अक्षरger->work);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-#define DEFAULT_TOTAL_TIME_OUT		3
-#define DEFAULT_PRE_TIME_OUT		40
-#define DEFAULT_INPUT_OVP_THRESHOLD	6600
+#घोषणा DEFAULT_TOTAL_TIME_OUT		3
+#घोषणा DEFAULT_PRE_TIME_OUT		40
+#घोषणा DEFAULT_INPUT_OVP_THRESHOLD	6600
 
-static int act8945a_charger_config(struct device *dev,
-				   struct act8945a_charger *charger)
-{
-	struct device_node *np = dev->of_node;
-	struct regmap *regmap = charger->regmap;
+अटल पूर्णांक act8945a_अक्षरger_config(काष्ठा device *dev,
+				   काष्ठा act8945a_अक्षरger *अक्षरger)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा regmap *regmap = अक्षरger->regmap;
 
-	u32 total_time_out;
-	u32 pre_time_out;
+	u32 total_समय_out;
+	u32 pre_समय_out;
 	u32 input_voltage_threshold;
-	int err, ret;
+	पूर्णांक err, ret;
 
-	unsigned int tmp;
-	unsigned int value = 0;
+	अचिन्हित पूर्णांक पंचांगp;
+	अचिन्हित पूर्णांक value = 0;
 
-	if (!np) {
+	अगर (!np) अणु
 		dev_err(dev, "no charger of node\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = regmap_read(regmap, ACT8945A_APCH_CFG, &tmp);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(regmap, ACT8945A_APCH_CFG, &पंचांगp);
+	अगर (ret)
+		वापस ret;
 
-	if (tmp & APCH_CFG_SUSCHG) {
+	अगर (पंचांगp & APCH_CFG_SUSCHG) अणु
 		value |= APCH_CFG_SUSCHG;
 		dev_info(dev, "have been suspended\n");
-	}
+	पूर्ण
 
-	charger->lbo_gpio = devm_gpiod_get_optional(dev, "active-semi,lbo",
+	अक्षरger->lbo_gpio = devm_gpiod_get_optional(dev, "active-semi,lbo",
 						    GPIOD_IN);
-	if (IS_ERR(charger->lbo_gpio)) {
-		err = PTR_ERR(charger->lbo_gpio);
+	अगर (IS_ERR(अक्षरger->lbo_gpio)) अणु
+		err = PTR_ERR(अक्षरger->lbo_gpio);
 		dev_err(dev, "unable to claim gpio \"lbo\": %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	ret = devm_request_irq(dev, gpiod_to_irq(charger->lbo_gpio),
+	ret = devm_request_irq(dev, gpiod_to_irq(अक्षरger->lbo_gpio),
 			       act8945a_status_changed,
 			       (IRQF_TRIGGER_FALLING | IRQF_TRIGGER_RISING),
-			       "act8945a_lbo_detect", charger);
-	if (ret)
+			       "act8945a_lbo_detect", अक्षरger);
+	अगर (ret)
 		dev_info(dev, "failed to request gpio \"lbo\" IRQ\n");
 
-	charger->chglev_gpio = devm_gpiod_get_optional(dev,
+	अक्षरger->chglev_gpio = devm_gpiod_get_optional(dev,
 						       "active-semi,chglev",
 						       GPIOD_IN);
-	if (IS_ERR(charger->chglev_gpio)) {
-		err = PTR_ERR(charger->chglev_gpio);
+	अगर (IS_ERR(अक्षरger->chglev_gpio)) अणु
+		err = PTR_ERR(अक्षरger->chglev_gpio);
 		dev_err(dev, "unable to claim gpio \"chglev\": %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (of_property_read_u32(np,
+	अगर (of_property_पढ़ो_u32(np,
 				 "active-semi,input-voltage-threshold-microvolt",
 				 &input_voltage_threshold))
 		input_voltage_threshold = DEFAULT_INPUT_OVP_THRESHOLD;
 
-	if (of_property_read_u32(np,
+	अगर (of_property_पढ़ो_u32(np,
 				 "active-semi,precondition-timeout",
-				 &pre_time_out))
-		pre_time_out = DEFAULT_PRE_TIME_OUT;
+				 &pre_समय_out))
+		pre_समय_out = DEFAULT_PRE_TIME_OUT;
 
-	if (of_property_read_u32(np, "active-semi,total-timeout",
-				 &total_time_out))
-		total_time_out = DEFAULT_TOTAL_TIME_OUT;
+	अगर (of_property_पढ़ो_u32(np, "active-semi,total-timeout",
+				 &total_समय_out))
+		total_समय_out = DEFAULT_TOTAL_TIME_OUT;
 
-	switch (input_voltage_threshold) {
-	case 8000:
+	चयन (input_voltage_threshold) अणु
+	हाल 8000:
 		value |= APCH_CFG_OVPSET_8V;
-		break;
-	case 7500:
+		अवरोध;
+	हाल 7500:
 		value |= APCH_CFG_OVPSET_7V5;
-		break;
-	case 7000:
+		अवरोध;
+	हाल 7000:
 		value |= APCH_CFG_OVPSET_7V;
-		break;
-	case 6600:
-	default:
+		अवरोध;
+	हाल 6600:
+	शेष:
 		value |= APCH_CFG_OVPSET_6V6;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (pre_time_out) {
-	case 60:
+	चयन (pre_समय_out) अणु
+	हाल 60:
 		value |= APCH_CFG_PRETIMO_60_MIN;
-		break;
-	case 80:
+		अवरोध;
+	हाल 80:
 		value |= APCH_CFG_PRETIMO_80_MIN;
-		break;
-	case 0:
+		अवरोध;
+	हाल 0:
 		value |= APCH_CFG_PRETIMO_DISABLED;
-		break;
-	case 40:
-	default:
+		अवरोध;
+	हाल 40:
+	शेष:
 		value |= APCH_CFG_PRETIMO_40_MIN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (total_time_out) {
-	case 4:
+	चयन (total_समय_out) अणु
+	हाल 4:
 		value |= APCH_CFG_TOTTIMO_4_HOUR;
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		value |= APCH_CFG_TOTTIMO_5_HOUR;
-		break;
-	case 0:
+		अवरोध;
+	हाल 0:
 		value |= APCH_CFG_TOTTIMO_DISABLED;
-		break;
-	case 3:
-	default:
+		अवरोध;
+	हाल 3:
+	शेष:
 		value |= APCH_CFG_TOTTIMO_3_HOUR;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return regmap_write(regmap, ACT8945A_APCH_CFG, value);
-}
+	वापस regmap_ग_लिखो(regmap, ACT8945A_APCH_CFG, value);
+पूर्ण
 
-static int act8945a_charger_probe(struct platform_device *pdev)
-{
-	struct act8945a_charger *charger;
-	struct power_supply_config psy_cfg = {};
-	int irq, ret;
+अटल पूर्णांक act8945a_अक्षरger_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा act8945a_अक्षरger *अक्षरger;
+	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
+	पूर्णांक irq, ret;
 
-	charger = devm_kzalloc(&pdev->dev, sizeof(*charger), GFP_KERNEL);
-	if (!charger)
-		return -ENOMEM;
+	अक्षरger = devm_kzalloc(&pdev->dev, माप(*अक्षरger), GFP_KERNEL);
+	अगर (!अक्षरger)
+		वापस -ENOMEM;
 
-	charger->regmap = dev_get_regmap(pdev->dev.parent, NULL);
-	if (!charger->regmap) {
+	अक्षरger->regmap = dev_get_regmap(pdev->dev.parent, शून्य);
+	अगर (!अक्षरger->regmap) अणु
 		dev_err(&pdev->dev, "Parent did not provide regmap\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = act8945a_charger_config(&pdev->dev, charger);
-	if (ret)
-		return ret;
+	ret = act8945a_अक्षरger_config(&pdev->dev, अक्षरger);
+	अगर (ret)
+		वापस ret;
 
 	irq = of_irq_get(pdev->dev.of_node, 0);
-	if (irq <= 0) {
+	अगर (irq <= 0) अणु
 		dev_err(&pdev->dev, "failed to find IRQ number\n");
-		return irq ?: -ENXIO;
-	}
+		वापस irq ?: -ENXIO;
+	पूर्ण
 
 	ret = devm_request_irq(&pdev->dev, irq, act8945a_status_changed,
 			       IRQF_TRIGGER_FALLING, "act8945a_interrupt",
-			       charger);
-	if (ret) {
+			       अक्षरger);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to request nIRQ pin IRQ\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	charger->desc.name = "act8945a-charger";
-	charger->desc.get_property = act8945a_charger_get_property;
-	charger->desc.properties = act8945a_charger_props;
-	charger->desc.num_properties = ARRAY_SIZE(act8945a_charger_props);
+	अक्षरger->desc.name = "act8945a-charger";
+	अक्षरger->desc.get_property = act8945a_अक्षरger_get_property;
+	अक्षरger->desc.properties = act8945a_अक्षरger_props;
+	अक्षरger->desc.num_properties = ARRAY_SIZE(act8945a_अक्षरger_props);
 
-	ret = act8945a_set_supply_type(charger, &charger->desc.type);
-	if (ret)
-		return -EINVAL;
+	ret = act8945a_set_supply_type(अक्षरger, &अक्षरger->desc.type);
+	अगर (ret)
+		वापस -EINVAL;
 
 	psy_cfg.of_node	= pdev->dev.of_node;
-	psy_cfg.drv_data = charger;
+	psy_cfg.drv_data = अक्षरger;
 
-	charger->psy = devm_power_supply_register(&pdev->dev,
-						  &charger->desc,
+	अक्षरger->psy = devm_घातer_supply_रेजिस्टर(&pdev->dev,
+						  &अक्षरger->desc,
 						  &psy_cfg);
-	if (IS_ERR(charger->psy)) {
+	अगर (IS_ERR(अक्षरger->psy)) अणु
 		dev_err(&pdev->dev, "failed to register power supply\n");
-		return PTR_ERR(charger->psy);
-	}
+		वापस PTR_ERR(अक्षरger->psy);
+	पूर्ण
 
-	platform_set_drvdata(pdev, charger);
+	platक्रमm_set_drvdata(pdev, अक्षरger);
 
-	INIT_WORK(&charger->work, act8945a_work);
+	INIT_WORK(&अक्षरger->work, act8945a_work);
 
-	ret = act8945a_enable_interrupt(charger);
-	if (ret)
-		return -EIO;
+	ret = act8945a_enable_पूर्णांकerrupt(अक्षरger);
+	अगर (ret)
+		वापस -EIO;
 
-	charger->init_done = true;
+	अक्षरger->init_करोne = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int act8945a_charger_remove(struct platform_device *pdev)
-{
-	struct act8945a_charger *charger = platform_get_drvdata(pdev);
+अटल पूर्णांक act8945a_अक्षरger_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा act8945a_अक्षरger *अक्षरger = platक्रमm_get_drvdata(pdev);
 
-	charger->init_done = false;
-	cancel_work_sync(&charger->work);
+	अक्षरger->init_करोne = false;
+	cancel_work_sync(&अक्षरger->work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver act8945a_charger_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver act8945a_अक्षरger_driver = अणु
+	.driver	= अणु
 		.name = "act8945a-charger",
-	},
-	.probe	= act8945a_charger_probe,
-	.remove = act8945a_charger_remove,
-};
-module_platform_driver(act8945a_charger_driver);
+	पूर्ण,
+	.probe	= act8945a_अक्षरger_probe,
+	.हटाओ = act8945a_अक्षरger_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(act8945a_अक्षरger_driver);
 
 MODULE_DESCRIPTION("Active-semi ACT8945A ActivePath charger driver");
 MODULE_AUTHOR("Wenyou Yang <wenyou.yang@atmel.com>");

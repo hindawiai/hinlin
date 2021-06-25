@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ALPHA_TERMBITS_H
-#define _ALPHA_TERMBITS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ALPHA_TERMBITS_H
+#घोषणा _ALPHA_TERMBITS_H
 
-#include <linux/posix_types.h>
+#समावेश <linux/posix_types.h>
 
-typedef unsigned char	cc_t;
-typedef unsigned int	speed_t;
-typedef unsigned int	tcflag_t;
+प्रकार अचिन्हित अक्षर	cc_t;
+प्रकार अचिन्हित पूर्णांक	speed_t;
+प्रकार अचिन्हित पूर्णांक	tcflag_t;
 
 /*
  * termios type and macro definitions.  Be careful about adding stuff
@@ -14,210 +15,210 @@ typedef unsigned int	tcflag_t;
  * concerning namespace pollution.
  */
 
-#define NCCS 19
-struct termios {
-	tcflag_t c_iflag;		/* input mode flags */
+#घोषणा NCCS 19
+काष्ठा termios अणु
+	tcflag_t c_अगरlag;		/* input mode flags */
 	tcflag_t c_oflag;		/* output mode flags */
 	tcflag_t c_cflag;		/* control mode flags */
 	tcflag_t c_lflag;		/* local mode flags */
-	cc_t c_cc[NCCS];		/* control characters */
+	cc_t c_cc[NCCS];		/* control अक्षरacters */
 	cc_t c_line;			/* line discipline (== c_cc[19]) */
 	speed_t c_ispeed;		/* input speed */
 	speed_t c_ospeed;		/* output speed */
-};
+पूर्ण;
 
 /* Alpha has identical termios and termios2 */
 
-struct termios2 {
-	tcflag_t c_iflag;		/* input mode flags */
+काष्ठा termios2 अणु
+	tcflag_t c_अगरlag;		/* input mode flags */
 	tcflag_t c_oflag;		/* output mode flags */
 	tcflag_t c_cflag;		/* control mode flags */
 	tcflag_t c_lflag;		/* local mode flags */
-	cc_t c_cc[NCCS];		/* control characters */
+	cc_t c_cc[NCCS];		/* control अक्षरacters */
 	cc_t c_line;			/* line discipline (== c_cc[19]) */
 	speed_t c_ispeed;		/* input speed */
 	speed_t c_ospeed;		/* output speed */
-};
+पूर्ण;
 
 /* Alpha has matching termios and ktermios */
 
-struct ktermios {
-	tcflag_t c_iflag;		/* input mode flags */
+काष्ठा ktermios अणु
+	tcflag_t c_अगरlag;		/* input mode flags */
 	tcflag_t c_oflag;		/* output mode flags */
 	tcflag_t c_cflag;		/* control mode flags */
 	tcflag_t c_lflag;		/* local mode flags */
-	cc_t c_cc[NCCS];		/* control characters */
+	cc_t c_cc[NCCS];		/* control अक्षरacters */
 	cc_t c_line;			/* line discipline (== c_cc[19]) */
 	speed_t c_ispeed;		/* input speed */
 	speed_t c_ospeed;		/* output speed */
-};
+पूर्ण;
 
-/* c_cc characters */
-#define VEOF 0
-#define VEOL 1
-#define VEOL2 2
-#define VERASE 3
-#define VWERASE 4
-#define VKILL 5
-#define VREPRINT 6
-#define VSWTC 7
-#define VINTR 8
-#define VQUIT 9
-#define VSUSP 10
-#define VSTART 12
-#define VSTOP 13
-#define VLNEXT 14
-#define VDISCARD 15
-#define VMIN 16
-#define VTIME 17
+/* c_cc अक्षरacters */
+#घोषणा Vखातापूर्ण 0
+#घोषणा VEOL 1
+#घोषणा VEOL2 2
+#घोषणा VERASE 3
+#घोषणा VWERASE 4
+#घोषणा VKILL 5
+#घोषणा VREPRINT 6
+#घोषणा VSWTC 7
+#घोषणा VINTR 8
+#घोषणा VQUIT 9
+#घोषणा VSUSP 10
+#घोषणा VSTART 12
+#घोषणा VSTOP 13
+#घोषणा VLNEXT 14
+#घोषणा VDISCARD 15
+#घोषणा VMIN 16
+#घोषणा VTIME 17
 
-/* c_iflag bits */
-#define IGNBRK	0000001
-#define BRKINT	0000002
-#define IGNPAR	0000004
-#define PARMRK	0000010
-#define INPCK	0000020
-#define ISTRIP	0000040
-#define INLCR	0000100
-#define IGNCR	0000200
-#define ICRNL	0000400
-#define IXON	0001000
-#define IXOFF	0002000
-#define IXANY	0004000
-#define IUCLC	0010000
-#define IMAXBEL	0020000
-#define IUTF8	0040000
+/* c_अगरlag bits */
+#घोषणा IGNBRK	0000001
+#घोषणा BRKINT	0000002
+#घोषणा IGNPAR	0000004
+#घोषणा PARMRK	0000010
+#घोषणा INPCK	0000020
+#घोषणा ISTRIP	0000040
+#घोषणा INLCR	0000100
+#घोषणा IGNCR	0000200
+#घोषणा ICRNL	0000400
+#घोषणा IXON	0001000
+#घोषणा IXOFF	0002000
+#घोषणा IXANY	0004000
+#घोषणा IUCLC	0010000
+#घोषणा IMAXBEL	0020000
+#घोषणा IUTF8	0040000
 
 /* c_oflag bits */
-#define OPOST	0000001
-#define ONLCR	0000002
-#define OLCUC	0000004
+#घोषणा OPOST	0000001
+#घोषणा ONLCR	0000002
+#घोषणा OLCUC	0000004
 
-#define OCRNL	0000010
-#define ONOCR	0000020
-#define ONLRET	0000040
+#घोषणा OCRNL	0000010
+#घोषणा ONOCR	0000020
+#घोषणा ONLRET	0000040
 
-#define OFILL	00000100
-#define OFDEL	00000200
-#define NLDLY	00001400
-#define   NL0	00000000
-#define   NL1	00000400
-#define   NL2	00001000
-#define   NL3	00001400
-#define TABDLY	00006000
-#define   TAB0	00000000
-#define   TAB1	00002000
-#define   TAB2	00004000
-#define   TAB3	00006000
-#define CRDLY	00030000
-#define   CR0	00000000
-#define   CR1	00010000
-#define   CR2	00020000
-#define   CR3	00030000
-#define FFDLY	00040000
-#define   FF0	00000000
-#define   FF1	00040000
-#define BSDLY	00100000
-#define   BS0	00000000
-#define   BS1	00100000
-#define VTDLY	00200000
-#define   VT0	00000000
-#define   VT1	00200000
+#घोषणा OFILL	00000100
+#घोषणा OFDEL	00000200
+#घोषणा NLDLY	00001400
+#घोषणा   NL0	00000000
+#घोषणा   NL1	00000400
+#घोषणा   NL2	00001000
+#घोषणा   NL3	00001400
+#घोषणा TABDLY	00006000
+#घोषणा   TAB0	00000000
+#घोषणा   TAB1	00002000
+#घोषणा   TAB2	00004000
+#घोषणा   TAB3	00006000
+#घोषणा CRDLY	00030000
+#घोषणा   CR0	00000000
+#घोषणा   CR1	00010000
+#घोषणा   CR2	00020000
+#घोषणा   CR3	00030000
+#घोषणा FFDLY	00040000
+#घोषणा   FF0	00000000
+#घोषणा   FF1	00040000
+#घोषणा BSDLY	00100000
+#घोषणा   BS0	00000000
+#घोषणा   BS1	00100000
+#घोषणा VTDLY	00200000
+#घोषणा   VT0	00000000
+#घोषणा   VT1	00200000
 /*
  * Should be equivalent to TAB3, see description of TAB3 in
  * POSIX.1-2008, Ch. 11.2.3 "Output Modes"
  */
-#define XTABS	TAB3
+#घोषणा XTABS	TAB3
 
 /* c_cflag bit meaning */
-#define CBAUD	0000037
-#define  B0	0000000		/* hang up */
-#define  B50	0000001
-#define  B75	0000002
-#define  B110	0000003
-#define  B134	0000004
-#define  B150	0000005
-#define  B200	0000006
-#define  B300	0000007
-#define  B600	0000010
-#define  B1200	0000011
-#define  B1800	0000012
-#define  B2400	0000013
-#define  B4800	0000014
-#define  B9600	0000015
-#define  B19200	0000016
-#define  B38400	0000017
-#define EXTA B19200
-#define EXTB B38400
-#define CBAUDEX 0000000
-#define  B57600   00020
-#define  B115200  00021
-#define  B230400  00022
-#define  B460800  00023
-#define  B500000  00024
-#define  B576000  00025
-#define  B921600  00026
-#define B1000000  00027
-#define B1152000  00030
-#define B1500000  00031
-#define B2000000  00032
-#define B2500000  00033
-#define B3000000  00034
-#define B3500000  00035
-#define B4000000  00036
-#define BOTHER    00037
+#घोषणा CBAUD	0000037
+#घोषणा  B0	0000000		/* hang up */
+#घोषणा  B50	0000001
+#घोषणा  B75	0000002
+#घोषणा  B110	0000003
+#घोषणा  B134	0000004
+#घोषणा  B150	0000005
+#घोषणा  B200	0000006
+#घोषणा  B300	0000007
+#घोषणा  B600	0000010
+#घोषणा  B1200	0000011
+#घोषणा  B1800	0000012
+#घोषणा  B2400	0000013
+#घोषणा  B4800	0000014
+#घोषणा  B9600	0000015
+#घोषणा  B19200	0000016
+#घोषणा  B38400	0000017
+#घोषणा EXTA B19200
+#घोषणा EXTB B38400
+#घोषणा CBAUDEX 0000000
+#घोषणा  B57600   00020
+#घोषणा  B115200  00021
+#घोषणा  B230400  00022
+#घोषणा  B460800  00023
+#घोषणा  B500000  00024
+#घोषणा  B576000  00025
+#घोषणा  B921600  00026
+#घोषणा B1000000  00027
+#घोषणा B1152000  00030
+#घोषणा B1500000  00031
+#घोषणा B2000000  00032
+#घोषणा B2500000  00033
+#घोषणा B3000000  00034
+#घोषणा B3500000  00035
+#घोषणा B4000000  00036
+#घोषणा BOTHER    00037
 
-#define CSIZE	00001400
-#define   CS5	00000000
-#define   CS6	00000400
-#define   CS7	00001000
-#define   CS8	00001400
+#घोषणा CSIZE	00001400
+#घोषणा   CS5	00000000
+#घोषणा   CS6	00000400
+#घोषणा   CS7	00001000
+#घोषणा   CS8	00001400
 
-#define CSTOPB	00002000
-#define CREAD	00004000
-#define PARENB	00010000
-#define PARODD	00020000
-#define HUPCL	00040000
+#घोषणा CSTOPB	00002000
+#घोषणा CREAD	00004000
+#घोषणा PARENB	00010000
+#घोषणा PARODD	00020000
+#घोषणा HUPCL	00040000
 
-#define CLOCAL	00100000
-#define CMSPAR	  010000000000		/* mark or space (stick) parity */
-#define CRTSCTS	  020000000000		/* flow control */
+#घोषणा CLOCAL	00100000
+#घोषणा CMSPAR	  010000000000		/* mark or space (stick) parity */
+#घोषणा CRTSCTS	  020000000000		/* flow control */
 
-#define CIBAUD	07600000
-#define IBSHIFT	16
+#घोषणा CIBAUD	07600000
+#घोषणा IBSHIFT	16
 
 /* c_lflag bits */
-#define ISIG	0x00000080
-#define ICANON	0x00000100
-#define XCASE	0x00004000
-#define ECHO	0x00000008
-#define ECHOE	0x00000002
-#define ECHOK	0x00000004
-#define ECHONL	0x00000010
-#define NOFLSH	0x80000000
-#define TOSTOP	0x00400000
-#define ECHOCTL	0x00000040
-#define ECHOPRT	0x00000020
-#define ECHOKE	0x00000001
-#define FLUSHO	0x00800000
-#define PENDIN	0x20000000
-#define IEXTEN	0x00000400
-#define EXTPROC	0x10000000
+#घोषणा ISIG	0x00000080
+#घोषणा ICANON	0x00000100
+#घोषणा XCASE	0x00004000
+#घोषणा ECHO	0x00000008
+#घोषणा ECHOE	0x00000002
+#घोषणा ECHOK	0x00000004
+#घोषणा ECHONL	0x00000010
+#घोषणा NOFLSH	0x80000000
+#घोषणा TOSTOP	0x00400000
+#घोषणा ECHOCTL	0x00000040
+#घोषणा ECHOPRT	0x00000020
+#घोषणा ECHOKE	0x00000001
+#घोषणा FLUSHO	0x00800000
+#घोषणा PENDIN	0x20000000
+#घोषणा IEXTEN	0x00000400
+#घोषणा EXTPROC	0x10000000
 
-/* Values for the ACTION argument to `tcflow'.  */
-#define	TCOOFF		0
-#define	TCOON		1
-#define	TCIOFF		2
-#define	TCION		3
+/* Values क्रम the ACTION argument to `tcflow'.  */
+#घोषणा	TCOOFF		0
+#घोषणा	TCOON		1
+#घोषणा	TCIOFF		2
+#घोषणा	TCION		3
 
-/* Values for the QUEUE_SELECTOR argument to `tcflush'.  */
-#define	TCIFLUSH	0
-#define	TCOFLUSH	1
-#define	TCIOFLUSH	2
+/* Values क्रम the QUEUE_SELECTOR argument to `tcflush'.  */
+#घोषणा	TCIFLUSH	0
+#घोषणा	TCOFLUSH	1
+#घोषणा	TCIOFLUSH	2
 
-/* Values for the OPTIONAL_ACTIONS argument to `tcsetattr'.  */
-#define	TCSANOW		0
-#define	TCSADRAIN	1
-#define	TCSAFLUSH	2
+/* Values क्रम the OPTIONAL_ACTIONS argument to `tcsetattr'.  */
+#घोषणा	TCSANOW		0
+#घोषणा	TCSADRAIN	1
+#घोषणा	TCSAFLUSH	2
 
-#endif /* _ALPHA_TERMBITS_H */
+#पूर्ण_अगर /* _ALPHA_TERMBITS_H */

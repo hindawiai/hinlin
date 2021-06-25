@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Cryptographic API.
  *
@@ -6,36 +7,36 @@
  * The Khazad algorithm was developed by Paulo S. L. M. Barreto and
  * Vincent Rijmen.  It was a finalist in the NESSIE encryption contest.
  *
- * The original authors have disclaimed all copyright interest in this
- * code and thus put it in the public domain. The subsequent authors
+ * The original authors have disclaimed all copyright पूर्णांकerest in this
+ * code and thus put it in the खुला करोमुख्य. The subsequent authors
  * have put this under the GNU General Public License.
  *
  * By Aaron Grothe ajgrothe@yahoo.com, August 1, 2004
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <asm/byteorder.h>
-#include <linux/crypto.h>
-#include <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/types.h>
 
-#define KHAZAD_KEY_SIZE		16
-#define KHAZAD_BLOCK_SIZE	8
-#define KHAZAD_ROUNDS		8
+#घोषणा KHAZAD_KEY_SIZE		16
+#घोषणा KHAZAD_BLOCK_SIZE	8
+#घोषणा KHAZAD_ROUNDS		8
 
-struct khazad_ctx {
+काष्ठा khazad_ctx अणु
 	u64 E[KHAZAD_ROUNDS + 1];
 	u64 D[KHAZAD_ROUNDS + 1];
-};
+पूर्ण;
 
-static const u64 T0[256] = {
+अटल स्थिर u64 T0[256] = अणु
 	0xbad3d268bbb96a01ULL, 0x54fc4d19e59a66b1ULL, 0x2f71bc93e26514cdULL,
 	0x749ccdb925871b51ULL, 0x53f55102f7a257a4ULL, 0xd3686bb8d0d6be03ULL,
 	0xd26b6fbdd6deb504ULL, 0x4dd72964b35285feULL, 0x50f05d0dfdba4aadULL,
@@ -122,9 +123,9 @@ static const u64 T0[256] = {
 	0xa2fbb210eb798249ULL, 0x809d3aba2774e9a7ULL, 0x4fd1216ebf4293f0ULL,
 	0x1f217c6342f8d95dULL, 0xca430fc5861e5d4cULL, 0xaae39238db39da71ULL,
 	0x42c61557912aecd3ULL
-};
+पूर्ण;
 
-static const u64 T1[256] = {
+अटल स्थिर u64 T1[256] = अणु
 	0xd3ba68d2b9bb016aULL, 0xfc54194d9ae5b166ULL, 0x712f93bc65e2cd14ULL,
 	0x9c74b9cd8725511bULL, 0xf5530251a2f7a457ULL, 0x68d3b86bd6d003beULL,
 	0x6bd2bd6fded604b5ULL, 0xd74d642952b3fe85ULL, 0xf0500d5dbafdad4aULL,
@@ -211,9 +212,9 @@ static const u64 T1[256] = {
 	0xfba210b279eb4982ULL, 0x9d80ba3a7427a7e9ULL, 0xd14f6e2142bff093ULL,
 	0x211f637cf8425dd9ULL, 0x43cac50f1e864c5dULL, 0xe3aa389239db71daULL,
 	0xc64257152a91d3ecULL
-};
+पूर्ण;
 
-static const u64 T2[256] = {
+अटल स्थिर u64 T2[256] = अणु
 	0xd268bad36a01bbb9ULL, 0x4d1954fc66b1e59aULL, 0xbc932f7114cde265ULL,
 	0xcdb9749c1b512587ULL, 0x510253f557a4f7a2ULL, 0x6bb8d368be03d0d6ULL,
 	0x6fbdd26bb504d6deULL, 0x29644dd785feb352ULL, 0x5d0d50f04aadfdbaULL,
@@ -300,9 +301,9 @@ static const u64 T2[256] = {
 	0xb210a2fb8249eb79ULL, 0x3aba809de9a72774ULL, 0x216e4fd193f0bf42ULL,
 	0x7c631f21d95d42f8ULL, 0x0fc5ca435d4c861eULL, 0x9238aae3da71db39ULL,
 	0x155742c6ecd3912aULL
-};
+पूर्ण;
 
-static const u64 T3[256] = {
+अटल स्थिर u64 T3[256] = अणु
 	0x68d2d3ba016ab9bbULL, 0x194dfc54b1669ae5ULL, 0x93bc712fcd1465e2ULL,
 	0xb9cd9c74511b8725ULL, 0x0251f553a457a2f7ULL, 0xb86b68d303bed6d0ULL,
 	0xbd6f6bd204b5ded6ULL, 0x6429d74dfe8552b3ULL, 0x0d5df050ad4abafdULL,
@@ -389,9 +390,9 @@ static const u64 T3[256] = {
 	0x10b2fba2498279ebULL, 0xba3a9d80a7e97427ULL, 0x6e21d14ff09342bfULL,
 	0x637c211f5dd9f842ULL, 0xc50f43ca4c5d1e86ULL, 0x3892e3aa71da39dbULL,
 	0x5715c642d3ec2a91ULL
-};
+पूर्ण;
 
-static const u64 T4[256] = {
+अटल स्थिर u64 T4[256] = अणु
 	0xbbb96a01bad3d268ULL, 0xe59a66b154fc4d19ULL, 0xe26514cd2f71bc93ULL,
 	0x25871b51749ccdb9ULL, 0xf7a257a453f55102ULL, 0xd0d6be03d3686bb8ULL,
 	0xd6deb504d26b6fbdULL, 0xb35285fe4dd72964ULL, 0xfdba4aad50f05d0dULL,
@@ -478,9 +479,9 @@ static const u64 T4[256] = {
 	0xeb798249a2fbb210ULL, 0x2774e9a7809d3abaULL, 0xbf4293f04fd1216eULL,
 	0x42f8d95d1f217c63ULL, 0x861e5d4cca430fc5ULL, 0xdb39da71aae39238ULL,
 	0x912aecd342c61557ULL
-};
+पूर्ण;
 
-static const u64 T5[256] = {
+अटल स्थिर u64 T5[256] = अणु
 	0xb9bb016ad3ba68d2ULL, 0x9ae5b166fc54194dULL, 0x65e2cd14712f93bcULL,
 	0x8725511b9c74b9cdULL, 0xa2f7a457f5530251ULL, 0xd6d003be68d3b86bULL,
 	0xded604b56bd2bd6fULL, 0x52b3fe85d74d6429ULL, 0xbafdad4af0500d5dULL,
@@ -567,9 +568,9 @@ static const u64 T5[256] = {
 	0x79eb4982fba210b2ULL, 0x7427a7e99d80ba3aULL, 0x42bff093d14f6e21ULL,
 	0xf8425dd9211f637cULL, 0x1e864c5d43cac50fULL, 0x39db71dae3aa3892ULL,
 	0x2a91d3ecc6425715ULL
-};
+पूर्ण;
 
-static const u64 T6[256] = {
+अटल स्थिर u64 T6[256] = अणु
 	0x6a01bbb9d268bad3ULL, 0x66b1e59a4d1954fcULL, 0x14cde265bc932f71ULL,
 	0x1b512587cdb9749cULL, 0x57a4f7a2510253f5ULL, 0xbe03d0d66bb8d368ULL,
 	0xb504d6de6fbdd26bULL, 0x85feb35229644dd7ULL, 0x4aadfdba5d0d50f0ULL,
@@ -656,9 +657,9 @@ static const u64 T6[256] = {
 	0x8249eb79b210a2fbULL, 0xe9a727743aba809dULL, 0x93f0bf42216e4fd1ULL,
 	0xd95d42f87c631f21ULL, 0x5d4c861e0fc5ca43ULL, 0xda71db399238aae3ULL,
 	0xecd3912a155742c6ULL
-};
+पूर्ण;
 
-static const u64 T7[256] = {
+अटल स्थिर u64 T7[256] = अणु
 	0x016ab9bb68d2d3baULL, 0xb1669ae5194dfc54ULL, 0xcd1465e293bc712fULL,
 	0x511b8725b9cd9c74ULL, 0xa457a2f70251f553ULL, 0x03bed6d0b86b68d3ULL,
 	0x04b5ded6bd6f6bd2ULL, 0xfe8552b36429d74dULL, 0xad4abafd0d5df050ULL,
@@ -745,21 +746,21 @@ static const u64 T7[256] = {
 	0x498279eb10b2fba2ULL, 0xa7e97427ba3a9d80ULL, 0xf09342bf6e21d14fULL,
 	0x5dd9f842637c211fULL, 0x4c5d1e86c50f43caULL, 0x71da39db3892e3aaULL,
 	0xd3ec2a915715c642ULL
-};
+पूर्ण;
 
-static const u64 c[KHAZAD_ROUNDS + 1] = {
+अटल स्थिर u64 c[KHAZAD_ROUNDS + 1] = अणु
 	0xba542f7453d3d24dULL, 0x50ac8dbf70529a4cULL, 0xead597d133515ba6ULL,
 	0xde48a899db32b7fcULL, 0xe39e919be2bb416eULL, 0xa5cb6b95a1f3b102ULL,
 	0xccc41d14c363da5dULL, 0x5fdc7dcd7f5a6c5cULL, 0xf726ffede89d6f8eULL
-};
+पूर्ण;
 
-static int khazad_setkey(struct crypto_tfm *tfm, const u8 *in_key,
-			 unsigned int key_len)
-{
-	struct khazad_ctx *ctx = crypto_tfm_ctx(tfm);
-	const __be32 *key = (const __be32 *)in_key;
-	int r;
-	const u64 *S = T7;
+अटल पूर्णांक khazad_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *in_key,
+			 अचिन्हित पूर्णांक key_len)
+अणु
+	काष्ठा khazad_ctx *ctx = crypto_tfm_ctx(tfm);
+	स्थिर __be32 *key = (स्थिर __be32 *)in_key;
+	पूर्णांक r;
+	स्थिर u64 *S = T7;
 	u64 K2, K1;
 
 	/* key is supposed to be 32-bit aligned */
@@ -767,117 +768,117 @@ static int khazad_setkey(struct crypto_tfm *tfm, const u8 *in_key,
 	K1 = ((u64)be32_to_cpu(key[2]) << 32) | be32_to_cpu(key[3]);
 
 	/* setup the encrypt key */
-	for (r = 0; r <= KHAZAD_ROUNDS; r++) {
-		ctx->E[r] = T0[(int)(K1 >> 56)       ] ^
-			    T1[(int)(K1 >> 48) & 0xff] ^
-			    T2[(int)(K1 >> 40) & 0xff] ^
-			    T3[(int)(K1 >> 32) & 0xff] ^
-			    T4[(int)(K1 >> 24) & 0xff] ^
-			    T5[(int)(K1 >> 16) & 0xff] ^
-			    T6[(int)(K1 >>  8) & 0xff] ^
-			    T7[(int)(K1      ) & 0xff] ^
+	क्रम (r = 0; r <= KHAZAD_ROUNDS; r++) अणु
+		ctx->E[r] = T0[(पूर्णांक)(K1 >> 56)       ] ^
+			    T1[(पूर्णांक)(K1 >> 48) & 0xff] ^
+			    T2[(पूर्णांक)(K1 >> 40) & 0xff] ^
+			    T3[(पूर्णांक)(K1 >> 32) & 0xff] ^
+			    T4[(पूर्णांक)(K1 >> 24) & 0xff] ^
+			    T5[(पूर्णांक)(K1 >> 16) & 0xff] ^
+			    T6[(पूर्णांक)(K1 >>  8) & 0xff] ^
+			    T7[(पूर्णांक)(K1      ) & 0xff] ^
 			    c[r] ^ K2;
 		K2 = K1; 
 		K1 = ctx->E[r];
-	}
+	पूर्ण
 	/* Setup the decrypt key */
 	ctx->D[0] = ctx->E[KHAZAD_ROUNDS];
-	for (r = 1; r < KHAZAD_ROUNDS; r++) {
+	क्रम (r = 1; r < KHAZAD_ROUNDS; r++) अणु
 		K1 = ctx->E[KHAZAD_ROUNDS - r];
-		ctx->D[r] = T0[(int)S[(int)(K1 >> 56)       ] & 0xff] ^
-			    T1[(int)S[(int)(K1 >> 48) & 0xff] & 0xff] ^
-			    T2[(int)S[(int)(K1 >> 40) & 0xff] & 0xff] ^
-			    T3[(int)S[(int)(K1 >> 32) & 0xff] & 0xff] ^
-			    T4[(int)S[(int)(K1 >> 24) & 0xff] & 0xff] ^
-			    T5[(int)S[(int)(K1 >> 16) & 0xff] & 0xff] ^
-			    T6[(int)S[(int)(K1 >>  8) & 0xff] & 0xff] ^
-			    T7[(int)S[(int)(K1      ) & 0xff] & 0xff];
-	}
+		ctx->D[r] = T0[(पूर्णांक)S[(पूर्णांक)(K1 >> 56)       ] & 0xff] ^
+			    T1[(पूर्णांक)S[(पूर्णांक)(K1 >> 48) & 0xff] & 0xff] ^
+			    T2[(पूर्णांक)S[(पूर्णांक)(K1 >> 40) & 0xff] & 0xff] ^
+			    T3[(पूर्णांक)S[(पूर्णांक)(K1 >> 32) & 0xff] & 0xff] ^
+			    T4[(पूर्णांक)S[(पूर्णांक)(K1 >> 24) & 0xff] & 0xff] ^
+			    T5[(पूर्णांक)S[(पूर्णांक)(K1 >> 16) & 0xff] & 0xff] ^
+			    T6[(पूर्णांक)S[(पूर्णांक)(K1 >>  8) & 0xff] & 0xff] ^
+			    T7[(पूर्णांक)S[(पूर्णांक)(K1      ) & 0xff] & 0xff];
+	पूर्ण
 	ctx->D[KHAZAD_ROUNDS] = ctx->E[0];
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static void khazad_crypt(const u64 roundKey[KHAZAD_ROUNDS + 1],
-		u8 *ciphertext, const u8 *plaintext)
-{
-	const __be64 *src = (const __be64 *)plaintext;
+अटल व्योम khazad_crypt(स्थिर u64 roundKey[KHAZAD_ROUNDS + 1],
+		u8 *ciphertext, स्थिर u8 *plaपूर्णांकext)
+अणु
+	स्थिर __be64 *src = (स्थिर __be64 *)plaपूर्णांकext;
 	__be64 *dst = (__be64 *)ciphertext;
-	int r;
+	पूर्णांक r;
 	u64 state;
 
 	state = be64_to_cpu(*src) ^ roundKey[0];
 
-	for (r = 1; r < KHAZAD_ROUNDS; r++) {
-		state = T0[(int)(state >> 56)       ] ^
-			T1[(int)(state >> 48) & 0xff] ^
-			T2[(int)(state >> 40) & 0xff] ^
-			T3[(int)(state >> 32) & 0xff] ^
-			T4[(int)(state >> 24) & 0xff] ^
-			T5[(int)(state >> 16) & 0xff] ^
-			T6[(int)(state >>  8) & 0xff] ^
-			T7[(int)(state      ) & 0xff] ^
+	क्रम (r = 1; r < KHAZAD_ROUNDS; r++) अणु
+		state = T0[(पूर्णांक)(state >> 56)       ] ^
+			T1[(पूर्णांक)(state >> 48) & 0xff] ^
+			T2[(पूर्णांक)(state >> 40) & 0xff] ^
+			T3[(पूर्णांक)(state >> 32) & 0xff] ^
+			T4[(पूर्णांक)(state >> 24) & 0xff] ^
+			T5[(पूर्णांक)(state >> 16) & 0xff] ^
+			T6[(पूर्णांक)(state >>  8) & 0xff] ^
+			T7[(पूर्णांक)(state      ) & 0xff] ^
 			roundKey[r];
-    	}
+    	पूर्ण
 
-	state = (T0[(int)(state >> 56)       ] & 0xff00000000000000ULL) ^
-		(T1[(int)(state >> 48) & 0xff] & 0x00ff000000000000ULL) ^
-		(T2[(int)(state >> 40) & 0xff] & 0x0000ff0000000000ULL) ^
-		(T3[(int)(state >> 32) & 0xff] & 0x000000ff00000000ULL) ^
-		(T4[(int)(state >> 24) & 0xff] & 0x00000000ff000000ULL) ^
-		(T5[(int)(state >> 16) & 0xff] & 0x0000000000ff0000ULL) ^
-		(T6[(int)(state >>  8) & 0xff] & 0x000000000000ff00ULL) ^
-		(T7[(int)(state      ) & 0xff] & 0x00000000000000ffULL) ^
+	state = (T0[(पूर्णांक)(state >> 56)       ] & 0xff00000000000000ULL) ^
+		(T1[(पूर्णांक)(state >> 48) & 0xff] & 0x00ff000000000000ULL) ^
+		(T2[(पूर्णांक)(state >> 40) & 0xff] & 0x0000ff0000000000ULL) ^
+		(T3[(पूर्णांक)(state >> 32) & 0xff] & 0x000000ff00000000ULL) ^
+		(T4[(पूर्णांक)(state >> 24) & 0xff] & 0x00000000ff000000ULL) ^
+		(T5[(पूर्णांक)(state >> 16) & 0xff] & 0x0000000000ff0000ULL) ^
+		(T6[(पूर्णांक)(state >>  8) & 0xff] & 0x000000000000ff00ULL) ^
+		(T7[(पूर्णांक)(state      ) & 0xff] & 0x00000000000000ffULL) ^
 		roundKey[KHAZAD_ROUNDS];
 
 	*dst = cpu_to_be64(state);
-}
+पूर्ण
 
-static void khazad_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
-	struct khazad_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम khazad_encrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
+	काष्ठा khazad_ctx *ctx = crypto_tfm_ctx(tfm);
 	khazad_crypt(ctx->E, dst, src);
-}
+पूर्ण
 
-static void khazad_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
-	struct khazad_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम khazad_decrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
+	काष्ठा khazad_ctx *ctx = crypto_tfm_ctx(tfm);
 	khazad_crypt(ctx->D, dst, src);
-}
+पूर्ण
 
-static struct crypto_alg khazad_alg = {
+अटल काष्ठा crypto_alg khazad_alg = अणु
 	.cra_name		=	"khazad",
 	.cra_driver_name	=	"khazad-generic",
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	KHAZAD_BLOCK_SIZE,
-	.cra_ctxsize		=	sizeof (struct khazad_ctx),
+	.cra_ctxsize		=	माप (काष्ठा khazad_ctx),
 	.cra_alignmask		=	7,
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	{ .cipher = {
+	.cra_u			=	अणु .cipher = अणु
 	.cia_min_keysize	=	KHAZAD_KEY_SIZE,
 	.cia_max_keysize	=	KHAZAD_KEY_SIZE,
 	.cia_setkey		= 	khazad_setkey,
 	.cia_encrypt		=	khazad_encrypt,
-	.cia_decrypt		=	khazad_decrypt } }
-};
+	.cia_decrypt		=	khazad_decrypt पूर्ण पूर्ण
+पूर्ण;
 
-static int __init khazad_mod_init(void)
-{
-	int ret = 0;
+अटल पूर्णांक __init khazad_mod_init(व्योम)
+अणु
+	पूर्णांक ret = 0;
 	
-	ret = crypto_register_alg(&khazad_alg);
-	return ret;
-}
+	ret = crypto_रेजिस्टर_alg(&khazad_alg);
+	वापस ret;
+पूर्ण
 
-static void __exit khazad_mod_fini(void)
-{
-	crypto_unregister_alg(&khazad_alg);
-}
+अटल व्योम __निकास khazad_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_alg(&khazad_alg);
+पूर्ण
 
 
 subsys_initcall(khazad_mod_init);
-module_exit(khazad_mod_fini);
+module_निकास(khazad_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Khazad Cryptographic Algorithm");

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* SCTP kernel implementation
  * (C) Copyright 2007 Hewlett-Packard Development Company, L.P.
  *
@@ -8,106 +9,106 @@
  * email address(es):
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modified by:
+ * Written or modअगरied by:
  *   Vlad Yasevich     <vladislav.yasevich@hp.com>
  */
 
-#ifndef __sctp_auth_h__
-#define __sctp_auth_h__
+#अगर_अघोषित __sctp_auth_h__
+#घोषणा __sctp_auth_h__
 
-#include <linux/list.h>
-#include <linux/refcount.h>
+#समावेश <linux/list.h>
+#समावेश <linux/refcount.h>
 
-struct sctp_endpoint;
-struct sctp_association;
-struct sctp_authkey;
-struct sctp_hmacalgo;
-struct crypto_shash;
+काष्ठा sctp_endpoपूर्णांक;
+काष्ठा sctp_association;
+काष्ठा sctp_authkey;
+काष्ठा sctp_hmacalgo;
+काष्ठा crypto_shash;
 
 /*
- * Define a generic struct that will hold all the info
- * necessary for an HMAC transform
+ * Define a generic काष्ठा that will hold all the info
+ * necessary क्रम an HMAC transक्रमm
  */
-struct sctp_hmac {
+काष्ठा sctp_hmac अणु
 	__u16 hmac_id;		/* one of the above ids */
-	char *hmac_name;	/* name for loading */
+	अक्षर *hmac_name;	/* name क्रम loading */
 	__u16 hmac_len;		/* length of the signature */
-};
+पूर्ण;
 
-/* This is generic structure that containst authentication bytes used
+/* This is generic काष्ठाure that containst authentication bytes used
  * as keying material.  It's a what is referred to as byte-vector all
  * over SCTP-AUTH
  */
-struct sctp_auth_bytes {
+काष्ठा sctp_auth_bytes अणु
 	refcount_t refcnt;
 	__u32 len;
 	__u8  data[];
-};
+पूर्ण;
 
-/* Definition for a shared key, weather endpoint or association */
-struct sctp_shared_key {
-	struct list_head key_list;
-	struct sctp_auth_bytes *key;
+/* Definition क्रम a shared key, weather endpoपूर्णांक or association */
+काष्ठा sctp_shared_key अणु
+	काष्ठा list_head key_list;
+	काष्ठा sctp_auth_bytes *key;
 	refcount_t refcnt;
 	__u16 key_id;
 	__u8 deactivated;
-};
+पूर्ण;
 
-#define key_for_each(__key, __list_head) \
-	list_for_each_entry(__key, __list_head, key_list)
+#घोषणा key_क्रम_each(__key, __list_head) \
+	list_क्रम_each_entry(__key, __list_head, key_list)
 
-#define key_for_each_safe(__key, __tmp, __list_head) \
-	list_for_each_entry_safe(__key, __tmp, __list_head, key_list)
+#घोषणा key_क्रम_each_safe(__key, __पंचांगp, __list_head) \
+	list_क्रम_each_entry_safe(__key, __पंचांगp, __list_head, key_list)
 
-static inline void sctp_auth_key_hold(struct sctp_auth_bytes *key)
-{
-	if (!key)
-		return;
+अटल अंतरभूत व्योम sctp_auth_key_hold(काष्ठा sctp_auth_bytes *key)
+अणु
+	अगर (!key)
+		वापस;
 
 	refcount_inc(&key->refcnt);
-}
+पूर्ण
 
-void sctp_auth_key_put(struct sctp_auth_bytes *key);
-struct sctp_shared_key *sctp_auth_shkey_create(__u16 key_id, gfp_t gfp);
-void sctp_auth_destroy_keys(struct list_head *keys);
-int sctp_auth_asoc_init_active_key(struct sctp_association *asoc, gfp_t gfp);
-struct sctp_shared_key *sctp_auth_get_shkey(
-				const struct sctp_association *asoc,
+व्योम sctp_auth_key_put(काष्ठा sctp_auth_bytes *key);
+काष्ठा sctp_shared_key *sctp_auth_shkey_create(__u16 key_id, gfp_t gfp);
+व्योम sctp_auth_destroy_keys(काष्ठा list_head *keys);
+पूर्णांक sctp_auth_asoc_init_active_key(काष्ठा sctp_association *asoc, gfp_t gfp);
+काष्ठा sctp_shared_key *sctp_auth_get_shkey(
+				स्थिर काष्ठा sctp_association *asoc,
 				__u16 key_id);
-int sctp_auth_asoc_copy_shkeys(const struct sctp_endpoint *ep,
-				struct sctp_association *asoc,
+पूर्णांक sctp_auth_asoc_copy_shkeys(स्थिर काष्ठा sctp_endpoपूर्णांक *ep,
+				काष्ठा sctp_association *asoc,
 				gfp_t gfp);
-int sctp_auth_init_hmacs(struct sctp_endpoint *ep, gfp_t gfp);
-void sctp_auth_destroy_hmacs(struct crypto_shash *auth_hmacs[]);
-struct sctp_hmac *sctp_auth_get_hmac(__u16 hmac_id);
-struct sctp_hmac *sctp_auth_asoc_get_hmac(const struct sctp_association *asoc);
-void sctp_auth_asoc_set_default_hmac(struct sctp_association *asoc,
-				     struct sctp_hmac_algo_param *hmacs);
-int sctp_auth_asoc_verify_hmac_id(const struct sctp_association *asoc,
+पूर्णांक sctp_auth_init_hmacs(काष्ठा sctp_endpoपूर्णांक *ep, gfp_t gfp);
+व्योम sctp_auth_destroy_hmacs(काष्ठा crypto_shash *auth_hmacs[]);
+काष्ठा sctp_hmac *sctp_auth_get_hmac(__u16 hmac_id);
+काष्ठा sctp_hmac *sctp_auth_asoc_get_hmac(स्थिर काष्ठा sctp_association *asoc);
+व्योम sctp_auth_asoc_set_शेष_hmac(काष्ठा sctp_association *asoc,
+				     काष्ठा sctp_hmac_algo_param *hmacs);
+पूर्णांक sctp_auth_asoc_verअगरy_hmac_id(स्थिर काष्ठा sctp_association *asoc,
 				    __be16 hmac_id);
-int sctp_auth_send_cid(enum sctp_cid chunk,
-		       const struct sctp_association *asoc);
-int sctp_auth_recv_cid(enum sctp_cid chunk,
-		       const struct sctp_association *asoc);
-void sctp_auth_calculate_hmac(const struct sctp_association *asoc,
-			      struct sk_buff *skb, struct sctp_auth_chunk *auth,
-			      struct sctp_shared_key *ep_key, gfp_t gfp);
-void sctp_auth_shkey_release(struct sctp_shared_key *sh_key);
-void sctp_auth_shkey_hold(struct sctp_shared_key *sh_key);
+पूर्णांक sctp_auth_send_cid(क्रमागत sctp_cid chunk,
+		       स्थिर काष्ठा sctp_association *asoc);
+पूर्णांक sctp_auth_recv_cid(क्रमागत sctp_cid chunk,
+		       स्थिर काष्ठा sctp_association *asoc);
+व्योम sctp_auth_calculate_hmac(स्थिर काष्ठा sctp_association *asoc,
+			      काष्ठा sk_buff *skb, काष्ठा sctp_auth_chunk *auth,
+			      काष्ठा sctp_shared_key *ep_key, gfp_t gfp);
+व्योम sctp_auth_shkey_release(काष्ठा sctp_shared_key *sh_key);
+व्योम sctp_auth_shkey_hold(काष्ठा sctp_shared_key *sh_key);
 
 /* API Helpers */
-int sctp_auth_ep_add_chunkid(struct sctp_endpoint *ep, __u8 chunk_id);
-int sctp_auth_ep_set_hmacs(struct sctp_endpoint *ep,
-			    struct sctp_hmacalgo *hmacs);
-int sctp_auth_set_key(struct sctp_endpoint *ep, struct sctp_association *asoc,
-		      struct sctp_authkey *auth_key);
-int sctp_auth_set_active_key(struct sctp_endpoint *ep,
-			     struct sctp_association *asoc, __u16 key_id);
-int sctp_auth_del_key_id(struct sctp_endpoint *ep,
-			 struct sctp_association *asoc, __u16 key_id);
-int sctp_auth_deact_key_id(struct sctp_endpoint *ep,
-			   struct sctp_association *asoc, __u16 key_id);
-int sctp_auth_init(struct sctp_endpoint *ep, gfp_t gfp);
-void sctp_auth_free(struct sctp_endpoint *ep);
+पूर्णांक sctp_auth_ep_add_chunkid(काष्ठा sctp_endpoपूर्णांक *ep, __u8 chunk_id);
+पूर्णांक sctp_auth_ep_set_hmacs(काष्ठा sctp_endpoपूर्णांक *ep,
+			    काष्ठा sctp_hmacalgo *hmacs);
+पूर्णांक sctp_auth_set_key(काष्ठा sctp_endpoपूर्णांक *ep, काष्ठा sctp_association *asoc,
+		      काष्ठा sctp_authkey *auth_key);
+पूर्णांक sctp_auth_set_active_key(काष्ठा sctp_endpoपूर्णांक *ep,
+			     काष्ठा sctp_association *asoc, __u16 key_id);
+पूर्णांक sctp_auth_del_key_id(काष्ठा sctp_endpoपूर्णांक *ep,
+			 काष्ठा sctp_association *asoc, __u16 key_id);
+पूर्णांक sctp_auth_deact_key_id(काष्ठा sctp_endpoपूर्णांक *ep,
+			   काष्ठा sctp_association *asoc, __u16 key_id);
+पूर्णांक sctp_auth_init(काष्ठा sctp_endpoपूर्णांक *ep, gfp_t gfp);
+व्योम sctp_auth_मुक्त(काष्ठा sctp_endpoपूर्णांक *ep);
 
-#endif
+#पूर्ण_अगर

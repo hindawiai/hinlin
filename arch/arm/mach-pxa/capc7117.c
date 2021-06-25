@@ -1,137 +1,138 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-pxa/capc7117.c
  *
- * Support for the Embedian CAPC-7117 Evaluation Kit
+ * Support क्रम the Embedian CAPC-7117 Evaluation Kit
  * based on the Embedian MXM-8x10 Computer on Module
  *
  * Copyright (C) 2009 Embedian Inc.
  * Copyright (C) 2009 TMT Services & Supplies (Pty) Ltd.
  *
  * 2007-09-04: eric miao <eric.y.miao@gmail.com>
- *             rewrite to align with latest kernel
+ *             reग_लिखो to align with latest kernel
  *
- * 2010-01-09: Edwin Peer <epeer@tmtservices.co.za>
- *             Hennie van der Merwe <hvdmerwe@tmtservices.co.za>
- *             rework for upstream merge
+ * 2010-01-09: Edwin Peer <epeer@पंचांगtservices.co.za>
+ *             Hennie van der Merwe <hvdmerwe@पंचांगtservices.co.za>
+ *             rework क्रम upstream merge
  */
 
-#include <linux/irq.h>
-#include <linux/platform_device.h>
-#include <linux/ata_platform.h>
-#include <linux/serial_8250.h>
-#include <linux/gpio.h>
-#include <linux/regulator/machine.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ata_platक्रमm.h>
+#समावेश <linux/serial_8250.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/regulator/machine.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "pxa320.h"
-#include "mxm8x10.h"
+#समावेश "pxa320.h"
+#समावेश "mxm8x10.h"
 
-#include "generic.h"
+#समावेश "generic.h"
 
 /* IDE (PATA) Support */
-static struct pata_platform_info pata_platform_data = {
-	.ioport_shift = 1
-};
+अटल काष्ठा pata_platक्रमm_info pata_platक्रमm_data = अणु
+	.ioport_shअगरt = 1
+पूर्ण;
 
-static struct resource capc7117_ide_resources[] = {
-	[0] = {
+अटल काष्ठा resource capc7117_ide_resources[] = अणु
+	[0] = अणु
 	       .start = 0x11000020,
 	       .end = 0x1100003f,
 	       .flags = IORESOURCE_MEM
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 	       .start = 0x1100001c,
 	       .end = 0x1100001c,
 	       .flags = IORESOURCE_MEM
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 	       .start = PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO76)),
 	       .end = PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO76)),
 	       .flags = IORESOURCE_IRQ | IRQF_TRIGGER_RISING
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct platform_device capc7117_ide_device = {
+अटल काष्ठा platक्रमm_device capc7117_ide_device = अणु
 	.name = "pata_platform",
 	.num_resources = ARRAY_SIZE(capc7117_ide_resources),
 	.resource = capc7117_ide_resources,
-	.dev = {
-		.platform_data = &pata_platform_data,
+	.dev = अणु
+		.platक्रमm_data = &pata_platक्रमm_data,
 		.coherent_dma_mask = ~0		/* grumble */
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static void __init capc7117_ide_init(void)
-{
-	platform_device_register(&capc7117_ide_device);
-}
+अटल व्योम __init capc7117_ide_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&capc7117_ide_device);
+पूर्ण
 
 /* TI16C752 UART support */
-#define	TI16C752_FLAGS		(UPF_BOOT_AUTOCONF | \
+#घोषणा	TI16C752_FLAGS		(UPF_BOOT_AUTOCONF | \
 					UPF_IOREMAP | \
 					UPF_BUGGY_UART | \
 					UPF_SKIP_TEST)
-#define	TI16C752_UARTCLK	(22118400)
-static struct plat_serial8250_port ti16c752_platform_data[] = {
-	[0] = {
+#घोषणा	TI16C752_UARTCLK	(22118400)
+अटल काष्ठा plat_serial8250_port ti16c752_platक्रमm_data[] = अणु
+	[0] = अणु
 	       .mapbase = 0x14000000,
 	       .irq = PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO78)),
 	       .irqflags = IRQF_TRIGGER_RISING,
 	       .flags = TI16C752_FLAGS,
 	       .iotype = UPIO_MEM,
-	       .regshift = 1,
+	       .regshअगरt = 1,
 	       .uartclk = TI16C752_UARTCLK
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 	       .mapbase = 0x14000040,
 	       .irq = PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO79)),
 	       .irqflags = IRQF_TRIGGER_RISING,
 	       .flags = TI16C752_FLAGS,
 	       .iotype = UPIO_MEM,
-	       .regshift = 1,
+	       .regshअगरt = 1,
 	       .uartclk = TI16C752_UARTCLK
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 	       .mapbase = 0x14000080,
 	       .irq = PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO80)),
 	       .irqflags = IRQF_TRIGGER_RISING,
 	       .flags = TI16C752_FLAGS,
 	       .iotype = UPIO_MEM,
-	       .regshift = 1,
+	       .regshअगरt = 1,
 	       .uartclk = TI16C752_UARTCLK
-	},
-	[3] = {
+	पूर्ण,
+	[3] = अणु
 	       .mapbase = 0x140000c0,
 	       .irq = PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO81)),
 	       .irqflags = IRQF_TRIGGER_RISING,
 	       .flags = TI16C752_FLAGS,
 	       .iotype = UPIO_MEM,
-	       .regshift = 1,
+	       .regshअगरt = 1,
 	       .uartclk = TI16C752_UARTCLK
-	},
-	[4] = {
+	पूर्ण,
+	[4] = अणु
 	       /* end of array */
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct platform_device ti16c752_device = {
+अटल काष्ठा platक्रमm_device ti16c752_device = अणु
 	.name = "serial8250",
 	.id = PLAT8250_DEV_PLATFORM,
-	.dev = {
-		.platform_data = ti16c752_platform_data
-	}
-};
+	.dev = अणु
+		.platक्रमm_data = ti16c752_platक्रमm_data
+	पूर्ण
+पूर्ण;
 
-static void __init capc7117_uarts_init(void)
-{
-	platform_device_register(&ti16c752_device);
-}
+अटल व्योम __init capc7117_uarts_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&ti16c752_device);
+पूर्ण
 
-static void __init capc7117_init(void)
-{
+अटल व्योम __init capc7117_init(व्योम)
+अणु
 	/* Init CoM */
 	mxm_8x10_barebones_init();
 
@@ -143,8 +144,8 @@ static void __init capc7117_init(void)
 	capc7117_uarts_init();
 	capc7117_ide_init();
 
-	regulator_has_full_constraints();
-}
+	regulator_has_full_स्थिरraपूर्णांकs();
+पूर्ण
 
 MACHINE_START(CAPC7117,
 	      "Embedian CAPC-7117 evaluation kit based on the MXM-8x10 CoM")
@@ -153,7 +154,7 @@ MACHINE_START(CAPC7117,
 	.nr_irqs = PXA_NR_IRQS,
 	.init_irq = pxa3xx_init_irq,
 	.handle_irq = pxa3xx_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine = capc7117_init,
 	.restart	= pxa_restart,
 MACHINE_END

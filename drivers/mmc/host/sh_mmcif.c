@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * MMCIF eMMC driver.
  *
@@ -12,197 +13,197 @@
  *
  * The MMCIF driver processes MMC requests in up to 3 stages: command, optional
  * data, and optional stop. To achieve asynchronous processing each of these
- * stages is split into two halves: a top and a bottom half. The top half
- * initialises the hardware, installs a timeout handler to handle completion
- * timeouts, and returns. In case of the command stage this immediately returns
+ * stages is split पूर्णांकo two halves: a top and a bottom half. The top half
+ * initialises the hardware, installs a समयout handler to handle completion
+ * समयouts, and वापसs. In हाल of the command stage this immediately वापसs
  * control to the caller, leaving all further processing to run asynchronously.
- * All further request processing is performed by the bottom halves.
+ * All further request processing is perक्रमmed by the bottom halves.
  *
  * The bottom half further consists of a "hard" IRQ handler, an IRQ handler
- * thread, a DMA completion callback, if DMA is used, a timeout work, and
- * request- and stage-specific handler methods.
+ * thपढ़ो, a DMA completion callback, अगर DMA is used, a समयout work, and
+ * request- and stage-specअगरic handler methods.
  *
- * Each bottom half run begins with either a hardware interrupt, a DMA callback
- * invocation, or a timeout work run. In case of an error or a successful
- * processing completion, the MMC core is informed and the request processing is
- * finished. In case processing has to continue, i.e., if data has to be read
- * from or written to the card, or if a stop command has to be sent, the next
- * top half is called, which performs the necessary hardware handling and
- * reschedules the timeout work. This returns the driver state machine into the
- * bottom half waiting state.
+ * Each bottom half run begins with either a hardware पूर्णांकerrupt, a DMA callback
+ * invocation, or a समयout work run. In हाल of an error or a successful
+ * processing completion, the MMC core is inक्रमmed and the request processing is
+ * finished. In हाल processing has to जारी, i.e., अगर data has to be पढ़ो
+ * from or written to the card, or अगर a stop command has to be sent, the next
+ * top half is called, which perक्रमms the necessary hardware handling and
+ * reschedules the समयout work. This वापसs the driver state machine पूर्णांकo the
+ * bottom half रुकोing state.
  */
 
-#include <linux/bitops.h>
-#include <linux/clk.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/mmc/card.h>
-#include <linux/mmc/core.h>
-#include <linux/mmc/host.h>
-#include <linux/mmc/mmc.h>
-#include <linux/mmc/sdio.h>
-#include <linux/mmc/sh_mmcif.h>
-#include <linux/mmc/slot-gpio.h>
-#include <linux/mod_devicetable.h>
-#include <linux/mutex.h>
-#include <linux/of_device.h>
-#include <linux/pagemap.h>
-#include <linux/platform_device.h>
-#include <linux/pm_qos.h>
-#include <linux/pm_runtime.h>
-#include <linux/sh_dma.h>
-#include <linux/spinlock.h>
-#include <linux/module.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/core.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/mmc.h>
+#समावेश <linux/mmc/sdपन.स>
+#समावेश <linux/mmc/sh_mmcअगर.h>
+#समावेश <linux/mmc/slot-gpपन.स>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_qos.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/sh_dma.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/module.h>
 
-#define DRIVER_NAME	"sh_mmcif"
+#घोषणा DRIVER_NAME	"sh_mmcif"
 
 /* CE_CMD_SET */
-#define CMD_MASK		0x3f000000
-#define CMD_SET_RTYP_NO		((0 << 23) | (0 << 22))
-#define CMD_SET_RTYP_6B		((0 << 23) | (1 << 22)) /* R1/R1b/R3/R4/R5 */
-#define CMD_SET_RTYP_17B	((1 << 23) | (0 << 22)) /* R2 */
-#define CMD_SET_RBSY		(1 << 21) /* R1b */
-#define CMD_SET_CCSEN		(1 << 20)
-#define CMD_SET_WDAT		(1 << 19) /* 1: on data, 0: no data */
-#define CMD_SET_DWEN		(1 << 18) /* 1: write, 0: read */
-#define CMD_SET_CMLTE		(1 << 17) /* 1: multi block trans, 0: single */
-#define CMD_SET_CMD12EN		(1 << 16) /* 1: CMD12 auto issue */
-#define CMD_SET_RIDXC_INDEX	((0 << 15) | (0 << 14)) /* index check */
-#define CMD_SET_RIDXC_BITS	((0 << 15) | (1 << 14)) /* check bits check */
-#define CMD_SET_RIDXC_NO	((1 << 15) | (0 << 14)) /* no check */
-#define CMD_SET_CRC7C		((0 << 13) | (0 << 12)) /* CRC7 check*/
-#define CMD_SET_CRC7C_BITS	((0 << 13) | (1 << 12)) /* check bits check*/
-#define CMD_SET_CRC7C_INTERNAL	((1 << 13) | (0 << 12)) /* internal CRC7 check*/
-#define CMD_SET_CRC16C		(1 << 10) /* 0: CRC16 check*/
-#define CMD_SET_CRCSTE		(1 << 8) /* 1: not receive CRC status */
-#define CMD_SET_TBIT		(1 << 7) /* 1: tran mission bit "Low" */
-#define CMD_SET_OPDM		(1 << 6) /* 1: open/drain */
-#define CMD_SET_CCSH		(1 << 5)
-#define CMD_SET_DARS		(1 << 2) /* Dual Data Rate */
-#define CMD_SET_DATW_1		((0 << 1) | (0 << 0)) /* 1bit */
-#define CMD_SET_DATW_4		((0 << 1) | (1 << 0)) /* 4bit */
-#define CMD_SET_DATW_8		((1 << 1) | (0 << 0)) /* 8bit */
+#घोषणा CMD_MASK		0x3f000000
+#घोषणा CMD_SET_RTYP_NO		((0 << 23) | (0 << 22))
+#घोषणा CMD_SET_RTYP_6B		((0 << 23) | (1 << 22)) /* R1/R1b/R3/R4/R5 */
+#घोषणा CMD_SET_RTYP_17B	((1 << 23) | (0 << 22)) /* R2 */
+#घोषणा CMD_SET_RBSY		(1 << 21) /* R1b */
+#घोषणा CMD_SET_CCSEN		(1 << 20)
+#घोषणा CMD_SET_WDAT		(1 << 19) /* 1: on data, 0: no data */
+#घोषणा CMD_SET_DWEN		(1 << 18) /* 1: ग_लिखो, 0: पढ़ो */
+#घोषणा CMD_SET_CMLTE		(1 << 17) /* 1: multi block trans, 0: single */
+#घोषणा CMD_SET_CMD12EN		(1 << 16) /* 1: CMD12 स्वतः issue */
+#घोषणा CMD_SET_RIDXC_INDEX	((0 << 15) | (0 << 14)) /* index check */
+#घोषणा CMD_SET_RIDXC_BITS	((0 << 15) | (1 << 14)) /* check bits check */
+#घोषणा CMD_SET_RIDXC_NO	((1 << 15) | (0 << 14)) /* no check */
+#घोषणा CMD_SET_CRC7C		((0 << 13) | (0 << 12)) /* CRC7 check*/
+#घोषणा CMD_SET_CRC7C_BITS	((0 << 13) | (1 << 12)) /* check bits check*/
+#घोषणा CMD_SET_CRC7C_INTERNAL	((1 << 13) | (0 << 12)) /* पूर्णांकernal CRC7 check*/
+#घोषणा CMD_SET_CRC16C		(1 << 10) /* 0: CRC16 check*/
+#घोषणा CMD_SET_CRCSTE		(1 << 8) /* 1: not receive CRC status */
+#घोषणा CMD_SET_TBIT		(1 << 7) /* 1: tran mission bit "Low" */
+#घोषणा CMD_SET_OPDM		(1 << 6) /* 1: खोलो/drain */
+#घोषणा CMD_SET_CCSH		(1 << 5)
+#घोषणा CMD_SET_DARS		(1 << 2) /* Dual Data Rate */
+#घोषणा CMD_SET_DATW_1		((0 << 1) | (0 << 0)) /* 1bit */
+#घोषणा CMD_SET_DATW_4		((0 << 1) | (1 << 0)) /* 4bit */
+#घोषणा CMD_SET_DATW_8		((1 << 1) | (0 << 0)) /* 8bit */
 
 /* CE_CMD_CTRL */
-#define CMD_CTRL_BREAK		(1 << 0)
+#घोषणा CMD_CTRL_BREAK		(1 << 0)
 
 /* CE_BLOCK_SET */
-#define BLOCK_SIZE_MASK		0x0000ffff
+#घोषणा BLOCK_SIZE_MASK		0x0000ffff
 
 /* CE_INT */
-#define INT_CCSDE		(1 << 29)
-#define INT_CMD12DRE		(1 << 26)
-#define INT_CMD12RBE		(1 << 25)
-#define INT_CMD12CRE		(1 << 24)
-#define INT_DTRANE		(1 << 23)
-#define INT_BUFRE		(1 << 22)
-#define INT_BUFWEN		(1 << 21)
-#define INT_BUFREN		(1 << 20)
-#define INT_CCSRCV		(1 << 19)
-#define INT_RBSYE		(1 << 17)
-#define INT_CRSPE		(1 << 16)
-#define INT_CMDVIO		(1 << 15)
-#define INT_BUFVIO		(1 << 14)
-#define INT_WDATERR		(1 << 11)
-#define INT_RDATERR		(1 << 10)
-#define INT_RIDXERR		(1 << 9)
-#define INT_RSPERR		(1 << 8)
-#define INT_CCSTO		(1 << 5)
-#define INT_CRCSTO		(1 << 4)
-#define INT_WDATTO		(1 << 3)
-#define INT_RDATTO		(1 << 2)
-#define INT_RBSYTO		(1 << 1)
-#define INT_RSPTO		(1 << 0)
-#define INT_ERR_STS		(INT_CMDVIO | INT_BUFVIO | INT_WDATERR |  \
+#घोषणा INT_CCSDE		(1 << 29)
+#घोषणा INT_CMD12DRE		(1 << 26)
+#घोषणा INT_CMD12RBE		(1 << 25)
+#घोषणा INT_CMD12CRE		(1 << 24)
+#घोषणा INT_DTRANE		(1 << 23)
+#घोषणा INT_BUFRE		(1 << 22)
+#घोषणा INT_BUFWEN		(1 << 21)
+#घोषणा INT_BUFREN		(1 << 20)
+#घोषणा INT_CCSRCV		(1 << 19)
+#घोषणा INT_RBSYE		(1 << 17)
+#घोषणा INT_CRSPE		(1 << 16)
+#घोषणा INT_CMDVIO		(1 << 15)
+#घोषणा INT_BUFVIO		(1 << 14)
+#घोषणा INT_WDATERR		(1 << 11)
+#घोषणा INT_RDATERR		(1 << 10)
+#घोषणा INT_RIDXERR		(1 << 9)
+#घोषणा INT_RSPERR		(1 << 8)
+#घोषणा INT_CCSTO		(1 << 5)
+#घोषणा INT_CRCSTO		(1 << 4)
+#घोषणा INT_WDATTO		(1 << 3)
+#घोषणा INT_RDATTO		(1 << 2)
+#घोषणा INT_RBSYTO		(1 << 1)
+#घोषणा INT_RSPTO		(1 << 0)
+#घोषणा INT_ERR_STS		(INT_CMDVIO | INT_BUFVIO | INT_WDATERR |  \
 				 INT_RDATERR | INT_RIDXERR | INT_RSPERR | \
 				 INT_CCSTO | INT_CRCSTO | INT_WDATTO |	  \
 				 INT_RDATTO | INT_RBSYTO | INT_RSPTO)
 
-#define INT_ALL			(INT_RBSYE | INT_CRSPE | INT_BUFREN |	 \
+#घोषणा INT_ALL			(INT_RBSYE | INT_CRSPE | INT_BUFREN |	 \
 				 INT_BUFWEN | INT_CMD12DRE | INT_BUFRE | \
 				 INT_DTRANE | INT_CMD12RBE | INT_CMD12CRE)
 
-#define INT_CCS			(INT_CCSTO | INT_CCSRCV | INT_CCSDE)
+#घोषणा INT_CCS			(INT_CCSTO | INT_CCSRCV | INT_CCSDE)
 
 /* CE_INT_MASK */
-#define MASK_ALL		0x00000000
-#define MASK_MCCSDE		(1 << 29)
-#define MASK_MCMD12DRE		(1 << 26)
-#define MASK_MCMD12RBE		(1 << 25)
-#define MASK_MCMD12CRE		(1 << 24)
-#define MASK_MDTRANE		(1 << 23)
-#define MASK_MBUFRE		(1 << 22)
-#define MASK_MBUFWEN		(1 << 21)
-#define MASK_MBUFREN		(1 << 20)
-#define MASK_MCCSRCV		(1 << 19)
-#define MASK_MRBSYE		(1 << 17)
-#define MASK_MCRSPE		(1 << 16)
-#define MASK_MCMDVIO		(1 << 15)
-#define MASK_MBUFVIO		(1 << 14)
-#define MASK_MWDATERR		(1 << 11)
-#define MASK_MRDATERR		(1 << 10)
-#define MASK_MRIDXERR		(1 << 9)
-#define MASK_MRSPERR		(1 << 8)
-#define MASK_MCCSTO		(1 << 5)
-#define MASK_MCRCSTO		(1 << 4)
-#define MASK_MWDATTO		(1 << 3)
-#define MASK_MRDATTO		(1 << 2)
-#define MASK_MRBSYTO		(1 << 1)
-#define MASK_MRSPTO		(1 << 0)
+#घोषणा MASK_ALL		0x00000000
+#घोषणा MASK_MCCSDE		(1 << 29)
+#घोषणा MASK_MCMD12DRE		(1 << 26)
+#घोषणा MASK_MCMD12RBE		(1 << 25)
+#घोषणा MASK_MCMD12CRE		(1 << 24)
+#घोषणा MASK_MDTRANE		(1 << 23)
+#घोषणा MASK_MBUFRE		(1 << 22)
+#घोषणा MASK_MBUFWEN		(1 << 21)
+#घोषणा MASK_MBUFREN		(1 << 20)
+#घोषणा MASK_MCCSRCV		(1 << 19)
+#घोषणा MASK_MRBSYE		(1 << 17)
+#घोषणा MASK_MCRSPE		(1 << 16)
+#घोषणा MASK_MCMDVIO		(1 << 15)
+#घोषणा MASK_MBUFVIO		(1 << 14)
+#घोषणा MASK_MWDATERR		(1 << 11)
+#घोषणा MASK_MRDATERR		(1 << 10)
+#घोषणा MASK_MRIDXERR		(1 << 9)
+#घोषणा MASK_MRSPERR		(1 << 8)
+#घोषणा MASK_MCCSTO		(1 << 5)
+#घोषणा MASK_MCRCSTO		(1 << 4)
+#घोषणा MASK_MWDATTO		(1 << 3)
+#घोषणा MASK_MRDATTO		(1 << 2)
+#घोषणा MASK_MRBSYTO		(1 << 1)
+#घोषणा MASK_MRSPTO		(1 << 0)
 
-#define MASK_START_CMD		(MASK_MCMDVIO | MASK_MBUFVIO | MASK_MWDATERR | \
+#घोषणा MASK_START_CMD		(MASK_MCMDVIO | MASK_MBUFVIO | MASK_MWDATERR | \
 				 MASK_MRDATERR | MASK_MRIDXERR | MASK_MRSPERR | \
 				 MASK_MCRCSTO | MASK_MWDATTO | \
 				 MASK_MRDATTO | MASK_MRBSYTO | MASK_MRSPTO)
 
-#define MASK_CLEAN		(INT_ERR_STS | MASK_MRBSYE | MASK_MCRSPE |	\
+#घोषणा MASK_CLEAN		(INT_ERR_STS | MASK_MRBSYE | MASK_MCRSPE |	\
 				 MASK_MBUFREN | MASK_MBUFWEN |			\
 				 MASK_MCMD12DRE | MASK_MBUFRE | MASK_MDTRANE |	\
 				 MASK_MCMD12RBE | MASK_MCMD12CRE)
 
 /* CE_HOST_STS1 */
-#define STS1_CMDSEQ		(1 << 31)
+#घोषणा STS1_CMDSEQ		(1 << 31)
 
 /* CE_HOST_STS2 */
-#define STS2_CRCSTE		(1 << 31)
-#define STS2_CRC16E		(1 << 30)
-#define STS2_AC12CRCE		(1 << 29)
-#define STS2_RSPCRC7E		(1 << 28)
-#define STS2_CRCSTEBE		(1 << 27)
-#define STS2_RDATEBE		(1 << 26)
-#define STS2_AC12REBE		(1 << 25)
-#define STS2_RSPEBE		(1 << 24)
-#define STS2_AC12IDXE		(1 << 23)
-#define STS2_RSPIDXE		(1 << 22)
-#define STS2_CCSTO		(1 << 15)
-#define STS2_RDATTO		(1 << 14)
-#define STS2_DATBSYTO		(1 << 13)
-#define STS2_CRCSTTO		(1 << 12)
-#define STS2_AC12BSYTO		(1 << 11)
-#define STS2_RSPBSYTO		(1 << 10)
-#define STS2_AC12RSPTO		(1 << 9)
-#define STS2_RSPTO		(1 << 8)
-#define STS2_CRC_ERR		(STS2_CRCSTE | STS2_CRC16E |		\
+#घोषणा STS2_CRCSTE		(1 << 31)
+#घोषणा STS2_CRC16E		(1 << 30)
+#घोषणा STS2_AC12CRCE		(1 << 29)
+#घोषणा STS2_RSPCRC7E		(1 << 28)
+#घोषणा STS2_CRCSTEBE		(1 << 27)
+#घोषणा STS2_RDATEBE		(1 << 26)
+#घोषणा STS2_AC12REBE		(1 << 25)
+#घोषणा STS2_RSPEBE		(1 << 24)
+#घोषणा STS2_AC12IDXE		(1 << 23)
+#घोषणा STS2_RSPIDXE		(1 << 22)
+#घोषणा STS2_CCSTO		(1 << 15)
+#घोषणा STS2_RDATTO		(1 << 14)
+#घोषणा STS2_DATBSYTO		(1 << 13)
+#घोषणा STS2_CRCSTTO		(1 << 12)
+#घोषणा STS2_AC12BSYTO		(1 << 11)
+#घोषणा STS2_RSPBSYTO		(1 << 10)
+#घोषणा STS2_AC12RSPTO		(1 << 9)
+#घोषणा STS2_RSPTO		(1 << 8)
+#घोषणा STS2_CRC_ERR		(STS2_CRCSTE | STS2_CRC16E |		\
 				 STS2_AC12CRCE | STS2_RSPCRC7E | STS2_CRCSTEBE)
-#define STS2_TIMEOUT_ERR	(STS2_CCSTO | STS2_RDATTO |		\
+#घोषणा STS2_TIMEOUT_ERR	(STS2_CCSTO | STS2_RDATTO |		\
 				 STS2_DATBSYTO | STS2_CRCSTTO |		\
 				 STS2_AC12BSYTO | STS2_RSPBSYTO |	\
 				 STS2_AC12RSPTO | STS2_RSPTO)
 
-#define CLKDEV_EMMC_DATA	52000000 /* 52 MHz */
-#define CLKDEV_MMC_DATA		20000000 /* 20 MHz */
-#define CLKDEV_INIT		400000   /* 400 kHz */
+#घोषणा CLKDEV_EMMC_DATA	52000000 /* 52 MHz */
+#घोषणा CLKDEV_MMC_DATA		20000000 /* 20 MHz */
+#घोषणा CLKDEV_INIT		400000   /* 400 kHz */
 
-enum sh_mmcif_state {
+क्रमागत sh_mmcअगर_state अणु
 	STATE_IDLE,
 	STATE_REQUEST,
 	STATE_IOS,
 	STATE_TIMEOUT,
-};
+पूर्ण;
 
-enum sh_mmcif_wait_for {
+क्रमागत sh_mmcअगर_रुको_क्रम अणु
 	MMCIF_WAIT_FOR_REQUEST,
 	MMCIF_WAIT_FOR_CMD,
 	MMCIF_WAIT_FOR_MREAD,
@@ -212,1129 +213,1129 @@ enum sh_mmcif_wait_for {
 	MMCIF_WAIT_FOR_READ_END,
 	MMCIF_WAIT_FOR_WRITE_END,
 	MMCIF_WAIT_FOR_STOP,
-};
+पूर्ण;
 
 /*
- * difference for each SoC
+ * dअगरference क्रम each SoC
  */
-struct sh_mmcif_host {
-	struct mmc_host *mmc;
-	struct mmc_request *mrq;
-	struct platform_device *pd;
-	struct clk *clk;
-	int bus_width;
-	unsigned char timing;
+काष्ठा sh_mmcअगर_host अणु
+	काष्ठा mmc_host *mmc;
+	काष्ठा mmc_request *mrq;
+	काष्ठा platक्रमm_device *pd;
+	काष्ठा clk *clk;
+	पूर्णांक bus_width;
+	अचिन्हित अक्षर timing;
 	bool sd_error;
 	bool dying;
-	long timeout;
-	void __iomem *addr;
+	दीर्घ समयout;
+	व्योम __iomem *addr;
 	u32 *pio_ptr;
-	spinlock_t lock;		/* protect sh_mmcif_host::state */
-	enum sh_mmcif_state state;
-	enum sh_mmcif_wait_for wait_for;
-	struct delayed_work timeout_work;
-	size_t blocksize;
-	int sg_idx;
-	int sg_blkidx;
-	bool power;
+	spinlock_t lock;		/* protect sh_mmcअगर_host::state */
+	क्रमागत sh_mmcअगर_state state;
+	क्रमागत sh_mmcअगर_रुको_क्रम रुको_क्रम;
+	काष्ठा delayed_work समयout_work;
+	माप_प्रकार blocksize;
+	पूर्णांक sg_idx;
+	पूर्णांक sg_blkidx;
+	bool घातer;
 	bool ccs_enable;		/* Command Completion Signal support */
 	bool clk_ctrl2_enable;
-	struct mutex thread_lock;
-	u32 clkdiv_map;         /* see CE_CLK_CTRL::CLKDIV */
+	काष्ठा mutex thपढ़ो_lock;
+	u32 clkभाग_map;         /* see CE_CLK_CTRL::CLKDIV */
 
 	/* DMA support */
-	struct dma_chan		*chan_rx;
-	struct dma_chan		*chan_tx;
-	struct completion	dma_complete;
+	काष्ठा dma_chan		*chan_rx;
+	काष्ठा dma_chan		*chan_tx;
+	काष्ठा completion	dma_complete;
 	bool			dma_active;
-};
+पूर्ण;
 
-static const struct of_device_id sh_mmcif_of_match[] = {
-	{ .compatible = "renesas,sh-mmcif" },
-	{ }
-};
-MODULE_DEVICE_TABLE(of, sh_mmcif_of_match);
+अटल स्थिर काष्ठा of_device_id sh_mmcअगर_of_match[] = अणु
+	अणु .compatible = "renesas,sh-mmcif" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, sh_mmcअगर_of_match);
 
-#define sh_mmcif_host_to_dev(host) (&host->pd->dev)
+#घोषणा sh_mmcअगर_host_to_dev(host) (&host->pd->dev)
 
-static inline void sh_mmcif_bitset(struct sh_mmcif_host *host,
-					unsigned int reg, u32 val)
-{
-	writel(val | readl(host->addr + reg), host->addr + reg);
-}
+अटल अंतरभूत व्योम sh_mmcअगर_bitset(काष्ठा sh_mmcअगर_host *host,
+					अचिन्हित पूर्णांक reg, u32 val)
+अणु
+	ग_लिखोl(val | पढ़ोl(host->addr + reg), host->addr + reg);
+पूर्ण
 
-static inline void sh_mmcif_bitclr(struct sh_mmcif_host *host,
-					unsigned int reg, u32 val)
-{
-	writel(~val & readl(host->addr + reg), host->addr + reg);
-}
+अटल अंतरभूत व्योम sh_mmcअगर_bitclr(काष्ठा sh_mmcअगर_host *host,
+					अचिन्हित पूर्णांक reg, u32 val)
+अणु
+	ग_लिखोl(~val & पढ़ोl(host->addr + reg), host->addr + reg);
+पूर्ण
 
-static void sh_mmcif_dma_complete(void *arg)
-{
-	struct sh_mmcif_host *host = arg;
-	struct mmc_request *mrq = host->mrq;
-	struct device *dev = sh_mmcif_host_to_dev(host);
+अटल व्योम sh_mmcअगर_dma_complete(व्योम *arg)
+अणु
+	काष्ठा sh_mmcअगर_host *host = arg;
+	काष्ठा mmc_request *mrq = host->mrq;
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
 
 	dev_dbg(dev, "Command completed\n");
 
-	if (WARN(!mrq || !mrq->data, "%s: NULL data in DMA completion!\n",
+	अगर (WARN(!mrq || !mrq->data, "%s: NULL data in DMA completion!\n",
 		 dev_name(dev)))
-		return;
+		वापस;
 
 	complete(&host->dma_complete);
-}
+पूर्ण
 
-static void sh_mmcif_start_dma_rx(struct sh_mmcif_host *host)
-{
-	struct mmc_data *data = host->mrq->data;
-	struct scatterlist *sg = data->sg;
-	struct dma_async_tx_descriptor *desc = NULL;
-	struct dma_chan *chan = host->chan_rx;
-	struct device *dev = sh_mmcif_host_to_dev(host);
+अटल व्योम sh_mmcअगर_start_dma_rx(काष्ठा sh_mmcअगर_host *host)
+अणु
+	काष्ठा mmc_data *data = host->mrq->data;
+	काष्ठा scatterlist *sg = data->sg;
+	काष्ठा dma_async_tx_descriptor *desc = शून्य;
+	काष्ठा dma_chan *chan = host->chan_rx;
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
 	dma_cookie_t cookie = -EINVAL;
-	int ret;
+	पूर्णांक ret;
 
 	ret = dma_map_sg(chan->device->dev, sg, data->sg_len,
 			 DMA_FROM_DEVICE);
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		host->dma_active = true;
 		desc = dmaengine_prep_slave_sg(chan, sg, ret,
 			DMA_DEV_TO_MEM, DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	}
+	पूर्ण
 
-	if (desc) {
-		desc->callback = sh_mmcif_dma_complete;
+	अगर (desc) अणु
+		desc->callback = sh_mmcअगर_dma_complete;
 		desc->callback_param = host;
 		cookie = dmaengine_submit(desc);
-		sh_mmcif_bitset(host, MMCIF_CE_BUF_ACC, BUF_ACC_DMAREN);
+		sh_mmcअगर_bitset(host, MMCIF_CE_BUF_ACC, BUF_ACC_DMAREN);
 		dma_async_issue_pending(chan);
-	}
+	पूर्ण
 	dev_dbg(dev, "%s(): mapped %d -> %d, cookie %d\n",
 		__func__, data->sg_len, ret, cookie);
 
-	if (!desc) {
+	अगर (!desc) अणु
 		/* DMA failed, fall back to PIO */
-		if (ret >= 0)
+		अगर (ret >= 0)
 			ret = -EIO;
-		host->chan_rx = NULL;
+		host->chan_rx = शून्य;
 		host->dma_active = false;
 		dma_release_channel(chan);
 		/* Free the Tx channel too */
 		chan = host->chan_tx;
-		if (chan) {
-			host->chan_tx = NULL;
+		अगर (chan) अणु
+			host->chan_tx = शून्य;
 			dma_release_channel(chan);
-		}
+		पूर्ण
 		dev_warn(dev,
 			 "DMA failed: %d, falling back to PIO\n", ret);
-		sh_mmcif_bitclr(host, MMCIF_CE_BUF_ACC, BUF_ACC_DMAREN | BUF_ACC_DMAWEN);
-	}
+		sh_mmcअगर_bitclr(host, MMCIF_CE_BUF_ACC, BUF_ACC_DMAREN | BUF_ACC_DMAWEN);
+	पूर्ण
 
 	dev_dbg(dev, "%s(): desc %p, cookie %d, sg[%d]\n", __func__,
 		desc, cookie, data->sg_len);
-}
+पूर्ण
 
-static void sh_mmcif_start_dma_tx(struct sh_mmcif_host *host)
-{
-	struct mmc_data *data = host->mrq->data;
-	struct scatterlist *sg = data->sg;
-	struct dma_async_tx_descriptor *desc = NULL;
-	struct dma_chan *chan = host->chan_tx;
-	struct device *dev = sh_mmcif_host_to_dev(host);
+अटल व्योम sh_mmcअगर_start_dma_tx(काष्ठा sh_mmcअगर_host *host)
+अणु
+	काष्ठा mmc_data *data = host->mrq->data;
+	काष्ठा scatterlist *sg = data->sg;
+	काष्ठा dma_async_tx_descriptor *desc = शून्य;
+	काष्ठा dma_chan *chan = host->chan_tx;
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
 	dma_cookie_t cookie = -EINVAL;
-	int ret;
+	पूर्णांक ret;
 
 	ret = dma_map_sg(chan->device->dev, sg, data->sg_len,
 			 DMA_TO_DEVICE);
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		host->dma_active = true;
 		desc = dmaengine_prep_slave_sg(chan, sg, ret,
 			DMA_MEM_TO_DEV, DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	}
+	पूर्ण
 
-	if (desc) {
-		desc->callback = sh_mmcif_dma_complete;
+	अगर (desc) अणु
+		desc->callback = sh_mmcअगर_dma_complete;
 		desc->callback_param = host;
 		cookie = dmaengine_submit(desc);
-		sh_mmcif_bitset(host, MMCIF_CE_BUF_ACC, BUF_ACC_DMAWEN);
+		sh_mmcअगर_bitset(host, MMCIF_CE_BUF_ACC, BUF_ACC_DMAWEN);
 		dma_async_issue_pending(chan);
-	}
+	पूर्ण
 	dev_dbg(dev, "%s(): mapped %d -> %d, cookie %d\n",
 		__func__, data->sg_len, ret, cookie);
 
-	if (!desc) {
+	अगर (!desc) अणु
 		/* DMA failed, fall back to PIO */
-		if (ret >= 0)
+		अगर (ret >= 0)
 			ret = -EIO;
-		host->chan_tx = NULL;
+		host->chan_tx = शून्य;
 		host->dma_active = false;
 		dma_release_channel(chan);
 		/* Free the Rx channel too */
 		chan = host->chan_rx;
-		if (chan) {
-			host->chan_rx = NULL;
+		अगर (chan) अणु
+			host->chan_rx = शून्य;
 			dma_release_channel(chan);
-		}
+		पूर्ण
 		dev_warn(dev,
 			 "DMA failed: %d, falling back to PIO\n", ret);
-		sh_mmcif_bitclr(host, MMCIF_CE_BUF_ACC, BUF_ACC_DMAREN | BUF_ACC_DMAWEN);
-	}
+		sh_mmcअगर_bitclr(host, MMCIF_CE_BUF_ACC, BUF_ACC_DMAREN | BUF_ACC_DMAWEN);
+	पूर्ण
 
 	dev_dbg(dev, "%s(): desc %p, cookie %d\n", __func__,
 		desc, cookie);
-}
+पूर्ण
 
-static struct dma_chan *
-sh_mmcif_request_dma_pdata(struct sh_mmcif_host *host, uintptr_t slave_id)
-{
+अटल काष्ठा dma_chan *
+sh_mmcअगर_request_dma_pdata(काष्ठा sh_mmcअगर_host *host, uपूर्णांकptr_t slave_id)
+अणु
 	dma_cap_mask_t mask;
 
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
-	if (slave_id <= 0)
-		return NULL;
+	अगर (slave_id <= 0)
+		वापस शून्य;
 
-	return dma_request_channel(mask, shdma_chan_filter, (void *)slave_id);
-}
+	वापस dma_request_channel(mask, shdma_chan_filter, (व्योम *)slave_id);
+पूर्ण
 
-static int sh_mmcif_dma_slave_config(struct sh_mmcif_host *host,
-				     struct dma_chan *chan,
-				     enum dma_transfer_direction direction)
-{
-	struct resource *res;
-	struct dma_slave_config cfg = { 0, };
+अटल पूर्णांक sh_mmcअगर_dma_slave_config(काष्ठा sh_mmcअगर_host *host,
+				     काष्ठा dma_chan *chan,
+				     क्रमागत dma_transfer_direction direction)
+अणु
+	काष्ठा resource *res;
+	काष्ठा dma_slave_config cfg = अणु 0, पूर्ण;
 
-	res = platform_get_resource(host->pd, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(host->pd, IORESOURCE_MEM, 0);
 	cfg.direction = direction;
 
-	if (direction == DMA_DEV_TO_MEM) {
+	अगर (direction == DMA_DEV_TO_MEM) अणु
 		cfg.src_addr = res->start + MMCIF_CE_DATA;
 		cfg.src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
-	} else {
+	पूर्ण अन्यथा अणु
 		cfg.dst_addr = res->start + MMCIF_CE_DATA;
 		cfg.dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
-	}
+	पूर्ण
 
-	return dmaengine_slave_config(chan, &cfg);
-}
+	वापस dmaengine_slave_config(chan, &cfg);
+पूर्ण
 
-static void sh_mmcif_request_dma(struct sh_mmcif_host *host)
-{
-	struct device *dev = sh_mmcif_host_to_dev(host);
+अटल व्योम sh_mmcअगर_request_dma(काष्ठा sh_mmcअगर_host *host)
+अणु
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
 	host->dma_active = false;
 
-	/* We can only either use DMA for both Tx and Rx or not use it at all */
-	if (IS_ENABLED(CONFIG_SUPERH) && dev->platform_data) {
-		struct sh_mmcif_plat_data *pdata = dev->platform_data;
+	/* We can only either use DMA क्रम both Tx and Rx or not use it at all */
+	अगर (IS_ENABLED(CONFIG_SUPERH) && dev->platक्रमm_data) अणु
+		काष्ठा sh_mmcअगर_plat_data *pdata = dev->platक्रमm_data;
 
-		host->chan_tx = sh_mmcif_request_dma_pdata(host,
+		host->chan_tx = sh_mmcअगर_request_dma_pdata(host,
 							pdata->slave_id_tx);
-		host->chan_rx = sh_mmcif_request_dma_pdata(host,
+		host->chan_rx = sh_mmcअगर_request_dma_pdata(host,
 							pdata->slave_id_rx);
-	} else {
+	पूर्ण अन्यथा अणु
 		host->chan_tx = dma_request_chan(dev, "tx");
-		if (IS_ERR(host->chan_tx))
-			host->chan_tx = NULL;
+		अगर (IS_ERR(host->chan_tx))
+			host->chan_tx = शून्य;
 		host->chan_rx = dma_request_chan(dev, "rx");
-		if (IS_ERR(host->chan_rx))
-			host->chan_rx = NULL;
-	}
+		अगर (IS_ERR(host->chan_rx))
+			host->chan_rx = शून्य;
+	पूर्ण
 	dev_dbg(dev, "%s: got channel TX %p RX %p\n", __func__, host->chan_tx,
 		host->chan_rx);
 
-	if (!host->chan_tx || !host->chan_rx ||
-	    sh_mmcif_dma_slave_config(host, host->chan_tx, DMA_MEM_TO_DEV) ||
-	    sh_mmcif_dma_slave_config(host, host->chan_rx, DMA_DEV_TO_MEM))
-		goto error;
+	अगर (!host->chan_tx || !host->chan_rx ||
+	    sh_mmcअगर_dma_slave_config(host, host->chan_tx, DMA_MEM_TO_DEV) ||
+	    sh_mmcअगर_dma_slave_config(host, host->chan_rx, DMA_DEV_TO_MEM))
+		जाओ error;
 
-	return;
+	वापस;
 
 error:
-	if (host->chan_tx)
+	अगर (host->chan_tx)
 		dma_release_channel(host->chan_tx);
-	if (host->chan_rx)
+	अगर (host->chan_rx)
 		dma_release_channel(host->chan_rx);
-	host->chan_tx = host->chan_rx = NULL;
-}
+	host->chan_tx = host->chan_rx = शून्य;
+पूर्ण
 
-static void sh_mmcif_release_dma(struct sh_mmcif_host *host)
-{
-	sh_mmcif_bitclr(host, MMCIF_CE_BUF_ACC, BUF_ACC_DMAREN | BUF_ACC_DMAWEN);
-	/* Descriptors are freed automatically */
-	if (host->chan_tx) {
-		struct dma_chan *chan = host->chan_tx;
-		host->chan_tx = NULL;
+अटल व्योम sh_mmcअगर_release_dma(काष्ठा sh_mmcअगर_host *host)
+अणु
+	sh_mmcअगर_bitclr(host, MMCIF_CE_BUF_ACC, BUF_ACC_DMAREN | BUF_ACC_DMAWEN);
+	/* Descriptors are मुक्तd स्वतःmatically */
+	अगर (host->chan_tx) अणु
+		काष्ठा dma_chan *chan = host->chan_tx;
+		host->chan_tx = शून्य;
 		dma_release_channel(chan);
-	}
-	if (host->chan_rx) {
-		struct dma_chan *chan = host->chan_rx;
-		host->chan_rx = NULL;
+	पूर्ण
+	अगर (host->chan_rx) अणु
+		काष्ठा dma_chan *chan = host->chan_rx;
+		host->chan_rx = शून्य;
 		dma_release_channel(chan);
-	}
+	पूर्ण
 
 	host->dma_active = false;
-}
+पूर्ण
 
-static void sh_mmcif_clock_control(struct sh_mmcif_host *host, unsigned int clk)
-{
-	struct device *dev = sh_mmcif_host_to_dev(host);
-	struct sh_mmcif_plat_data *p = dev->platform_data;
+अटल व्योम sh_mmcअगर_घड़ी_control(काष्ठा sh_mmcअगर_host *host, अचिन्हित पूर्णांक clk)
+अणु
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
+	काष्ठा sh_mmcअगर_plat_data *p = dev->platक्रमm_data;
 	bool sup_pclk = p ? p->sup_pclk : false;
-	unsigned int current_clk = clk_get_rate(host->clk);
-	unsigned int clkdiv;
+	अचिन्हित पूर्णांक current_clk = clk_get_rate(host->clk);
+	अचिन्हित पूर्णांक clkभाग;
 
-	sh_mmcif_bitclr(host, MMCIF_CE_CLK_CTRL, CLK_ENABLE);
-	sh_mmcif_bitclr(host, MMCIF_CE_CLK_CTRL, CLK_CLEAR);
+	sh_mmcअगर_bitclr(host, MMCIF_CE_CLK_CTRL, CLK_ENABLE);
+	sh_mmcअगर_bitclr(host, MMCIF_CE_CLK_CTRL, CLK_CLEAR);
 
-	if (!clk)
-		return;
+	अगर (!clk)
+		वापस;
 
-	if (host->clkdiv_map) {
-		unsigned int freq, best_freq, myclk, div, diff_min, diff;
-		int i;
+	अगर (host->clkभाग_map) अणु
+		अचिन्हित पूर्णांक freq, best_freq, myclk, भाग, dअगरf_min, dअगरf;
+		पूर्णांक i;
 
-		clkdiv = 0;
-		diff_min = ~0;
+		clkभाग = 0;
+		dअगरf_min = ~0;
 		best_freq = 0;
-		for (i = 31; i >= 0; i--) {
-			if (!((1 << i) & host->clkdiv_map))
-				continue;
+		क्रम (i = 31; i >= 0; i--) अणु
+			अगर (!((1 << i) & host->clkभाग_map))
+				जारी;
 
 			/*
-			 * clk = parent_freq / div
-			 * -> parent_freq = clk x div
+			 * clk = parent_freq / भाग
+			 * -> parent_freq = clk x भाग
 			 */
 
-			div = 1 << (i + 1);
-			freq = clk_round_rate(host->clk, clk * div);
-			myclk = freq / div;
-			diff = (myclk > clk) ? myclk - clk : clk - myclk;
+			भाग = 1 << (i + 1);
+			freq = clk_round_rate(host->clk, clk * भाग);
+			myclk = freq / भाग;
+			dअगरf = (myclk > clk) ? myclk - clk : clk - myclk;
 
-			if (diff <= diff_min) {
+			अगर (dअगरf <= dअगरf_min) अणु
 				best_freq = freq;
-				clkdiv = i;
-				diff_min = diff;
-			}
-		}
+				clkभाग = i;
+				dअगरf_min = dअगरf;
+			पूर्ण
+		पूर्ण
 
 		dev_dbg(dev, "clk %u/%u (%u, 0x%x)\n",
-			(best_freq / (1 << (clkdiv + 1))), clk,
-			best_freq, clkdiv);
+			(best_freq / (1 << (clkभाग + 1))), clk,
+			best_freq, clkभाग);
 
 		clk_set_rate(host->clk, best_freq);
-		clkdiv = clkdiv << 16;
-	} else if (sup_pclk && clk == current_clk) {
-		clkdiv = CLK_SUP_PCLK;
-	} else {
-		clkdiv = (fls(DIV_ROUND_UP(current_clk, clk) - 1) - 1) << 16;
-	}
+		clkभाग = clkभाग << 16;
+	पूर्ण अन्यथा अगर (sup_pclk && clk == current_clk) अणु
+		clkभाग = CLK_SUP_PCLK;
+	पूर्ण अन्यथा अणु
+		clkभाग = (fls(DIV_ROUND_UP(current_clk, clk) - 1) - 1) << 16;
+	पूर्ण
 
-	sh_mmcif_bitset(host, MMCIF_CE_CLK_CTRL, CLK_CLEAR & clkdiv);
-	sh_mmcif_bitset(host, MMCIF_CE_CLK_CTRL, CLK_ENABLE);
-}
+	sh_mmcअगर_bitset(host, MMCIF_CE_CLK_CTRL, CLK_CLEAR & clkभाग);
+	sh_mmcअगर_bitset(host, MMCIF_CE_CLK_CTRL, CLK_ENABLE);
+पूर्ण
 
-static void sh_mmcif_sync_reset(struct sh_mmcif_host *host)
-{
-	u32 tmp;
+अटल व्योम sh_mmcअगर_sync_reset(काष्ठा sh_mmcअगर_host *host)
+अणु
+	u32 पंचांगp;
 
-	tmp = 0x010f0000 & sh_mmcif_readl(host->addr, MMCIF_CE_CLK_CTRL);
+	पंचांगp = 0x010f0000 & sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_CLK_CTRL);
 
-	sh_mmcif_writel(host->addr, MMCIF_CE_VERSION, SOFT_RST_ON);
-	sh_mmcif_writel(host->addr, MMCIF_CE_VERSION, SOFT_RST_OFF);
-	if (host->ccs_enable)
-		tmp |= SCCSTO_29;
-	if (host->clk_ctrl2_enable)
-		sh_mmcif_writel(host->addr, MMCIF_CE_CLK_CTRL2, 0x0F0F0000);
-	sh_mmcif_bitset(host, MMCIF_CE_CLK_CTRL, tmp |
+	sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_VERSION, SOFT_RST_ON);
+	sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_VERSION, SOFT_RST_OFF);
+	अगर (host->ccs_enable)
+		पंचांगp |= SCCSTO_29;
+	अगर (host->clk_ctrl2_enable)
+		sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_CLK_CTRL2, 0x0F0F0000);
+	sh_mmcअगर_bitset(host, MMCIF_CE_CLK_CTRL, पंचांगp |
 		SRSPTO_256 | SRBSYTO_29 | SRWDTO_29);
 	/* byte swap on */
-	sh_mmcif_bitset(host, MMCIF_CE_BUF_ACC, BUF_ACC_ATYP);
-}
+	sh_mmcअगर_bitset(host, MMCIF_CE_BUF_ACC, BUF_ACC_ATYP);
+पूर्ण
 
-static int sh_mmcif_error_manage(struct sh_mmcif_host *host)
-{
-	struct device *dev = sh_mmcif_host_to_dev(host);
+अटल पूर्णांक sh_mmcअगर_error_manage(काष्ठा sh_mmcअगर_host *host)
+अणु
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
 	u32 state1, state2;
-	int ret, timeout;
+	पूर्णांक ret, समयout;
 
 	host->sd_error = false;
 
-	state1 = sh_mmcif_readl(host->addr, MMCIF_CE_HOST_STS1);
-	state2 = sh_mmcif_readl(host->addr, MMCIF_CE_HOST_STS2);
+	state1 = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_HOST_STS1);
+	state2 = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_HOST_STS2);
 	dev_dbg(dev, "ERR HOST_STS1 = %08x\n", state1);
 	dev_dbg(dev, "ERR HOST_STS2 = %08x\n", state2);
 
-	if (state1 & STS1_CMDSEQ) {
-		sh_mmcif_bitset(host, MMCIF_CE_CMD_CTRL, CMD_CTRL_BREAK);
-		sh_mmcif_bitset(host, MMCIF_CE_CMD_CTRL, ~CMD_CTRL_BREAK);
-		for (timeout = 10000; timeout; timeout--) {
-			if (!(sh_mmcif_readl(host->addr, MMCIF_CE_HOST_STS1)
+	अगर (state1 & STS1_CMDSEQ) अणु
+		sh_mmcअगर_bitset(host, MMCIF_CE_CMD_CTRL, CMD_CTRL_BREAK);
+		sh_mmcअगर_bitset(host, MMCIF_CE_CMD_CTRL, ~CMD_CTRL_BREAK);
+		क्रम (समयout = 10000; समयout; समयout--) अणु
+			अगर (!(sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_HOST_STS1)
 			      & STS1_CMDSEQ))
-				break;
+				अवरोध;
 			mdelay(1);
-		}
-		if (!timeout) {
+		पूर्ण
+		अगर (!समयout) अणु
 			dev_err(dev,
 				"Forced end of command sequence timeout err\n");
-			return -EIO;
-		}
-		sh_mmcif_sync_reset(host);
+			वापस -EIO;
+		पूर्ण
+		sh_mmcअगर_sync_reset(host);
 		dev_dbg(dev, "Forced end of command sequence\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (state2 & STS2_CRC_ERR) {
+	अगर (state2 & STS2_CRC_ERR) अणु
 		dev_err(dev, " CRC error: state %u, wait %u\n",
-			host->state, host->wait_for);
+			host->state, host->रुको_क्रम);
 		ret = -EIO;
-	} else if (state2 & STS2_TIMEOUT_ERR) {
+	पूर्ण अन्यथा अगर (state2 & STS2_TIMEOUT_ERR) अणु
 		dev_err(dev, " Timeout: state %u, wait %u\n",
-			host->state, host->wait_for);
+			host->state, host->रुको_क्रम);
 		ret = -ETIMEDOUT;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(dev, " End/Index error: state %u, wait %u\n",
-			host->state, host->wait_for);
+			host->state, host->रुको_क्रम);
 		ret = -EIO;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static bool sh_mmcif_next_block(struct sh_mmcif_host *host, u32 *p)
-{
-	struct mmc_data *data = host->mrq->data;
+अटल bool sh_mmcअगर_next_block(काष्ठा sh_mmcअगर_host *host, u32 *p)
+अणु
+	काष्ठा mmc_data *data = host->mrq->data;
 
 	host->sg_blkidx += host->blocksize;
 
 	/* data->sg->length must be a multiple of host->blocksize? */
 	BUG_ON(host->sg_blkidx > data->sg->length);
 
-	if (host->sg_blkidx == data->sg->length) {
+	अगर (host->sg_blkidx == data->sg->length) अणु
 		host->sg_blkidx = 0;
-		if (++host->sg_idx < data->sg_len)
+		अगर (++host->sg_idx < data->sg_len)
 			host->pio_ptr = sg_virt(++data->sg);
-	} else {
+	पूर्ण अन्यथा अणु
 		host->pio_ptr = p;
-	}
+	पूर्ण
 
-	return host->sg_idx != data->sg_len;
-}
+	वापस host->sg_idx != data->sg_len;
+पूर्ण
 
-static void sh_mmcif_single_read(struct sh_mmcif_host *host,
-				 struct mmc_request *mrq)
-{
-	host->blocksize = (sh_mmcif_readl(host->addr, MMCIF_CE_BLOCK_SET) &
+अटल व्योम sh_mmcअगर_single_पढ़ो(काष्ठा sh_mmcअगर_host *host,
+				 काष्ठा mmc_request *mrq)
+अणु
+	host->blocksize = (sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_BLOCK_SET) &
 			   BLOCK_SIZE_MASK) + 3;
 
-	host->wait_for = MMCIF_WAIT_FOR_READ;
+	host->रुको_क्रम = MMCIF_WAIT_FOR_READ;
 
-	/* buf read enable */
-	sh_mmcif_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFREN);
-}
+	/* buf पढ़ो enable */
+	sh_mmcअगर_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFREN);
+पूर्ण
 
-static bool sh_mmcif_read_block(struct sh_mmcif_host *host)
-{
-	struct device *dev = sh_mmcif_host_to_dev(host);
-	struct mmc_data *data = host->mrq->data;
+अटल bool sh_mmcअगर_पढ़ो_block(काष्ठा sh_mmcअगर_host *host)
+अणु
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
+	काष्ठा mmc_data *data = host->mrq->data;
 	u32 *p = sg_virt(data->sg);
-	int i;
+	पूर्णांक i;
 
-	if (host->sd_error) {
-		data->error = sh_mmcif_error_manage(host);
+	अगर (host->sd_error) अणु
+		data->error = sh_mmcअगर_error_manage(host);
 		dev_dbg(dev, "%s(): %d\n", __func__, data->error);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	for (i = 0; i < host->blocksize / 4; i++)
-		*p++ = sh_mmcif_readl(host->addr, MMCIF_CE_DATA);
+	क्रम (i = 0; i < host->blocksize / 4; i++)
+		*p++ = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_DATA);
 
-	/* buffer read end */
-	sh_mmcif_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFRE);
-	host->wait_for = MMCIF_WAIT_FOR_READ_END;
+	/* buffer पढ़ो end */
+	sh_mmcअगर_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFRE);
+	host->रुको_क्रम = MMCIF_WAIT_FOR_READ_END;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void sh_mmcif_multi_read(struct sh_mmcif_host *host,
-				struct mmc_request *mrq)
-{
-	struct mmc_data *data = mrq->data;
+अटल व्योम sh_mmcअगर_multi_पढ़ो(काष्ठा sh_mmcअगर_host *host,
+				काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा mmc_data *data = mrq->data;
 
-	if (!data->sg_len || !data->sg->length)
-		return;
+	अगर (!data->sg_len || !data->sg->length)
+		वापस;
 
-	host->blocksize = sh_mmcif_readl(host->addr, MMCIF_CE_BLOCK_SET) &
+	host->blocksize = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_BLOCK_SET) &
 		BLOCK_SIZE_MASK;
 
-	host->wait_for = MMCIF_WAIT_FOR_MREAD;
+	host->रुको_क्रम = MMCIF_WAIT_FOR_MREAD;
 	host->sg_idx = 0;
 	host->sg_blkidx = 0;
 	host->pio_ptr = sg_virt(data->sg);
 
-	sh_mmcif_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFREN);
-}
+	sh_mmcअगर_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFREN);
+पूर्ण
 
-static bool sh_mmcif_mread_block(struct sh_mmcif_host *host)
-{
-	struct device *dev = sh_mmcif_host_to_dev(host);
-	struct mmc_data *data = host->mrq->data;
+अटल bool sh_mmcअगर_mपढ़ो_block(काष्ठा sh_mmcअगर_host *host)
+अणु
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
+	काष्ठा mmc_data *data = host->mrq->data;
 	u32 *p = host->pio_ptr;
-	int i;
+	पूर्णांक i;
 
-	if (host->sd_error) {
-		data->error = sh_mmcif_error_manage(host);
+	अगर (host->sd_error) अणु
+		data->error = sh_mmcअगर_error_manage(host);
 		dev_dbg(dev, "%s(): %d\n", __func__, data->error);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	BUG_ON(!data->sg->length);
 
-	for (i = 0; i < host->blocksize / 4; i++)
-		*p++ = sh_mmcif_readl(host->addr, MMCIF_CE_DATA);
+	क्रम (i = 0; i < host->blocksize / 4; i++)
+		*p++ = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_DATA);
 
-	if (!sh_mmcif_next_block(host, p))
-		return false;
+	अगर (!sh_mmcअगर_next_block(host, p))
+		वापस false;
 
-	sh_mmcif_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFREN);
+	sh_mmcअगर_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFREN);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void sh_mmcif_single_write(struct sh_mmcif_host *host,
-					struct mmc_request *mrq)
-{
-	host->blocksize = (sh_mmcif_readl(host->addr, MMCIF_CE_BLOCK_SET) &
+अटल व्योम sh_mmcअगर_single_ग_लिखो(काष्ठा sh_mmcअगर_host *host,
+					काष्ठा mmc_request *mrq)
+अणु
+	host->blocksize = (sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_BLOCK_SET) &
 			   BLOCK_SIZE_MASK) + 3;
 
-	host->wait_for = MMCIF_WAIT_FOR_WRITE;
+	host->रुको_क्रम = MMCIF_WAIT_FOR_WRITE;
 
-	/* buf write enable */
-	sh_mmcif_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFWEN);
-}
+	/* buf ग_लिखो enable */
+	sh_mmcअगर_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFWEN);
+पूर्ण
 
-static bool sh_mmcif_write_block(struct sh_mmcif_host *host)
-{
-	struct device *dev = sh_mmcif_host_to_dev(host);
-	struct mmc_data *data = host->mrq->data;
+अटल bool sh_mmcअगर_ग_लिखो_block(काष्ठा sh_mmcअगर_host *host)
+अणु
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
+	काष्ठा mmc_data *data = host->mrq->data;
 	u32 *p = sg_virt(data->sg);
-	int i;
+	पूर्णांक i;
 
-	if (host->sd_error) {
-		data->error = sh_mmcif_error_manage(host);
+	अगर (host->sd_error) अणु
+		data->error = sh_mmcअगर_error_manage(host);
 		dev_dbg(dev, "%s(): %d\n", __func__, data->error);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	for (i = 0; i < host->blocksize / 4; i++)
-		sh_mmcif_writel(host->addr, MMCIF_CE_DATA, *p++);
+	क्रम (i = 0; i < host->blocksize / 4; i++)
+		sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_DATA, *p++);
 
-	/* buffer write end */
-	sh_mmcif_bitset(host, MMCIF_CE_INT_MASK, MASK_MDTRANE);
-	host->wait_for = MMCIF_WAIT_FOR_WRITE_END;
+	/* buffer ग_लिखो end */
+	sh_mmcअगर_bitset(host, MMCIF_CE_INT_MASK, MASK_MDTRANE);
+	host->रुको_क्रम = MMCIF_WAIT_FOR_WRITE_END;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void sh_mmcif_multi_write(struct sh_mmcif_host *host,
-				struct mmc_request *mrq)
-{
-	struct mmc_data *data = mrq->data;
+अटल व्योम sh_mmcअगर_multi_ग_लिखो(काष्ठा sh_mmcअगर_host *host,
+				काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा mmc_data *data = mrq->data;
 
-	if (!data->sg_len || !data->sg->length)
-		return;
+	अगर (!data->sg_len || !data->sg->length)
+		वापस;
 
-	host->blocksize = sh_mmcif_readl(host->addr, MMCIF_CE_BLOCK_SET) &
+	host->blocksize = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_BLOCK_SET) &
 		BLOCK_SIZE_MASK;
 
-	host->wait_for = MMCIF_WAIT_FOR_MWRITE;
+	host->रुको_क्रम = MMCIF_WAIT_FOR_MWRITE;
 	host->sg_idx = 0;
 	host->sg_blkidx = 0;
 	host->pio_ptr = sg_virt(data->sg);
 
-	sh_mmcif_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFWEN);
-}
+	sh_mmcअगर_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFWEN);
+पूर्ण
 
-static bool sh_mmcif_mwrite_block(struct sh_mmcif_host *host)
-{
-	struct device *dev = sh_mmcif_host_to_dev(host);
-	struct mmc_data *data = host->mrq->data;
+अटल bool sh_mmcअगर_mग_लिखो_block(काष्ठा sh_mmcअगर_host *host)
+अणु
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
+	काष्ठा mmc_data *data = host->mrq->data;
 	u32 *p = host->pio_ptr;
-	int i;
+	पूर्णांक i;
 
-	if (host->sd_error) {
-		data->error = sh_mmcif_error_manage(host);
+	अगर (host->sd_error) अणु
+		data->error = sh_mmcअगर_error_manage(host);
 		dev_dbg(dev, "%s(): %d\n", __func__, data->error);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	BUG_ON(!data->sg->length);
 
-	for (i = 0; i < host->blocksize / 4; i++)
-		sh_mmcif_writel(host->addr, MMCIF_CE_DATA, *p++);
+	क्रम (i = 0; i < host->blocksize / 4; i++)
+		sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_DATA, *p++);
 
-	if (!sh_mmcif_next_block(host, p))
-		return false;
+	अगर (!sh_mmcअगर_next_block(host, p))
+		वापस false;
 
-	sh_mmcif_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFWEN);
+	sh_mmcअगर_bitset(host, MMCIF_CE_INT_MASK, MASK_MBUFWEN);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void sh_mmcif_get_response(struct sh_mmcif_host *host,
-						struct mmc_command *cmd)
-{
-	if (cmd->flags & MMC_RSP_136) {
-		cmd->resp[0] = sh_mmcif_readl(host->addr, MMCIF_CE_RESP3);
-		cmd->resp[1] = sh_mmcif_readl(host->addr, MMCIF_CE_RESP2);
-		cmd->resp[2] = sh_mmcif_readl(host->addr, MMCIF_CE_RESP1);
-		cmd->resp[3] = sh_mmcif_readl(host->addr, MMCIF_CE_RESP0);
-	} else
-		cmd->resp[0] = sh_mmcif_readl(host->addr, MMCIF_CE_RESP0);
-}
+अटल व्योम sh_mmcअगर_get_response(काष्ठा sh_mmcअगर_host *host,
+						काष्ठा mmc_command *cmd)
+अणु
+	अगर (cmd->flags & MMC_RSP_136) अणु
+		cmd->resp[0] = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_RESP3);
+		cmd->resp[1] = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_RESP2);
+		cmd->resp[2] = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_RESP1);
+		cmd->resp[3] = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_RESP0);
+	पूर्ण अन्यथा
+		cmd->resp[0] = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_RESP0);
+पूर्ण
 
-static void sh_mmcif_get_cmd12response(struct sh_mmcif_host *host,
-						struct mmc_command *cmd)
-{
-	cmd->resp[0] = sh_mmcif_readl(host->addr, MMCIF_CE_RESP_CMD12);
-}
+अटल व्योम sh_mmcअगर_get_cmd12response(काष्ठा sh_mmcअगर_host *host,
+						काष्ठा mmc_command *cmd)
+अणु
+	cmd->resp[0] = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_RESP_CMD12);
+पूर्ण
 
-static u32 sh_mmcif_set_cmd(struct sh_mmcif_host *host,
-			    struct mmc_request *mrq)
-{
-	struct device *dev = sh_mmcif_host_to_dev(host);
-	struct mmc_data *data = mrq->data;
-	struct mmc_command *cmd = mrq->cmd;
+अटल u32 sh_mmcअगर_set_cmd(काष्ठा sh_mmcअगर_host *host,
+			    काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
+	काष्ठा mmc_data *data = mrq->data;
+	काष्ठा mmc_command *cmd = mrq->cmd;
 	u32 opc = cmd->opcode;
-	u32 tmp = 0;
+	u32 पंचांगp = 0;
 
 	/* Response Type check */
-	switch (mmc_resp_type(cmd)) {
-	case MMC_RSP_NONE:
-		tmp |= CMD_SET_RTYP_NO;
-		break;
-	case MMC_RSP_R1:
-	case MMC_RSP_R3:
-		tmp |= CMD_SET_RTYP_6B;
-		break;
-	case MMC_RSP_R1B:
-		tmp |= CMD_SET_RBSY | CMD_SET_RTYP_6B;
-		break;
-	case MMC_RSP_R2:
-		tmp |= CMD_SET_RTYP_17B;
-		break;
-	default:
+	चयन (mmc_resp_type(cmd)) अणु
+	हाल MMC_RSP_NONE:
+		पंचांगp |= CMD_SET_RTYP_NO;
+		अवरोध;
+	हाल MMC_RSP_R1:
+	हाल MMC_RSP_R3:
+		पंचांगp |= CMD_SET_RTYP_6B;
+		अवरोध;
+	हाल MMC_RSP_R1B:
+		पंचांगp |= CMD_SET_RBSY | CMD_SET_RTYP_6B;
+		अवरोध;
+	हाल MMC_RSP_R2:
+		पंचांगp |= CMD_SET_RTYP_17B;
+		अवरोध;
+	शेष:
 		dev_err(dev, "Unsupported response type.\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* WDAT / DATW */
-	if (data) {
-		tmp |= CMD_SET_WDAT;
-		switch (host->bus_width) {
-		case MMC_BUS_WIDTH_1:
-			tmp |= CMD_SET_DATW_1;
-			break;
-		case MMC_BUS_WIDTH_4:
-			tmp |= CMD_SET_DATW_4;
-			break;
-		case MMC_BUS_WIDTH_8:
-			tmp |= CMD_SET_DATW_8;
-			break;
-		default:
+	अगर (data) अणु
+		पंचांगp |= CMD_SET_WDAT;
+		चयन (host->bus_width) अणु
+		हाल MMC_BUS_WIDTH_1:
+			पंचांगp |= CMD_SET_DATW_1;
+			अवरोध;
+		हाल MMC_BUS_WIDTH_4:
+			पंचांगp |= CMD_SET_DATW_4;
+			अवरोध;
+		हाल MMC_BUS_WIDTH_8:
+			पंचांगp |= CMD_SET_DATW_8;
+			अवरोध;
+		शेष:
 			dev_err(dev, "Unsupported bus width.\n");
-			break;
-		}
-		switch (host->timing) {
-		case MMC_TIMING_MMC_DDR52:
+			अवरोध;
+		पूर्ण
+		चयन (host->timing) अणु
+		हाल MMC_TIMING_MMC_DDR52:
 			/*
-			 * MMC core will only set this timing, if the host
+			 * MMC core will only set this timing, अगर the host
 			 * advertises the MMC_CAP_1_8V_DDR/MMC_CAP_1_2V_DDR
 			 * capability. MMCIF implementations with this
 			 * capability, e.g. sh73a0, will have to set it
-			 * in their platform data.
+			 * in their platक्रमm data.
 			 */
-			tmp |= CMD_SET_DARS;
-			break;
-		}
-	}
+			पंचांगp |= CMD_SET_DARS;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	/* DWEN */
-	if (opc == MMC_WRITE_BLOCK || opc == MMC_WRITE_MULTIPLE_BLOCK)
-		tmp |= CMD_SET_DWEN;
+	अगर (opc == MMC_WRITE_BLOCK || opc == MMC_WRITE_MULTIPLE_BLOCK)
+		पंचांगp |= CMD_SET_DWEN;
 	/* CMLTE/CMD12EN */
-	if (opc == MMC_READ_MULTIPLE_BLOCK || opc == MMC_WRITE_MULTIPLE_BLOCK) {
-		tmp |= CMD_SET_CMLTE | CMD_SET_CMD12EN;
-		sh_mmcif_bitset(host, MMCIF_CE_BLOCK_SET,
+	अगर (opc == MMC_READ_MULTIPLE_BLOCK || opc == MMC_WRITE_MULTIPLE_BLOCK) अणु
+		पंचांगp |= CMD_SET_CMLTE | CMD_SET_CMD12EN;
+		sh_mmcअगर_bitset(host, MMCIF_CE_BLOCK_SET,
 				data->blocks << 16);
-	}
+	पूर्ण
 	/* RIDXC[1:0] check bits */
-	if (opc == MMC_SEND_OP_COND || opc == MMC_ALL_SEND_CID ||
+	अगर (opc == MMC_SEND_OP_COND || opc == MMC_ALL_SEND_CID ||
 	    opc == MMC_SEND_CSD || opc == MMC_SEND_CID)
-		tmp |= CMD_SET_RIDXC_BITS;
+		पंचांगp |= CMD_SET_RIDXC_BITS;
 	/* RCRC7C[1:0] check bits */
-	if (opc == MMC_SEND_OP_COND)
-		tmp |= CMD_SET_CRC7C_BITS;
-	/* RCRC7C[1:0] internal CRC7 */
-	if (opc == MMC_ALL_SEND_CID ||
+	अगर (opc == MMC_SEND_OP_COND)
+		पंचांगp |= CMD_SET_CRC7C_BITS;
+	/* RCRC7C[1:0] पूर्णांकernal CRC7 */
+	अगर (opc == MMC_ALL_SEND_CID ||
 		opc == MMC_SEND_CSD || opc == MMC_SEND_CID)
-		tmp |= CMD_SET_CRC7C_INTERNAL;
+		पंचांगp |= CMD_SET_CRC7C_INTERNAL;
 
-	return (opc << 24) | tmp;
-}
+	वापस (opc << 24) | पंचांगp;
+पूर्ण
 
-static int sh_mmcif_data_trans(struct sh_mmcif_host *host,
-			       struct mmc_request *mrq, u32 opc)
-{
-	struct device *dev = sh_mmcif_host_to_dev(host);
+अटल पूर्णांक sh_mmcअगर_data_trans(काष्ठा sh_mmcअगर_host *host,
+			       काष्ठा mmc_request *mrq, u32 opc)
+अणु
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
 
-	switch (opc) {
-	case MMC_READ_MULTIPLE_BLOCK:
-		sh_mmcif_multi_read(host, mrq);
-		return 0;
-	case MMC_WRITE_MULTIPLE_BLOCK:
-		sh_mmcif_multi_write(host, mrq);
-		return 0;
-	case MMC_WRITE_BLOCK:
-		sh_mmcif_single_write(host, mrq);
-		return 0;
-	case MMC_READ_SINGLE_BLOCK:
-	case MMC_SEND_EXT_CSD:
-		sh_mmcif_single_read(host, mrq);
-		return 0;
-	default:
+	चयन (opc) अणु
+	हाल MMC_READ_MULTIPLE_BLOCK:
+		sh_mmcअगर_multi_पढ़ो(host, mrq);
+		वापस 0;
+	हाल MMC_WRITE_MULTIPLE_BLOCK:
+		sh_mmcअगर_multi_ग_लिखो(host, mrq);
+		वापस 0;
+	हाल MMC_WRITE_BLOCK:
+		sh_mmcअगर_single_ग_लिखो(host, mrq);
+		वापस 0;
+	हाल MMC_READ_SINGLE_BLOCK:
+	हाल MMC_SEND_EXT_CSD:
+		sh_mmcअगर_single_पढ़ो(host, mrq);
+		वापस 0;
+	शेष:
 		dev_err(dev, "Unsupported CMD%d\n", opc);
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void sh_mmcif_start_cmd(struct sh_mmcif_host *host,
-			       struct mmc_request *mrq)
-{
-	struct mmc_command *cmd = mrq->cmd;
+अटल व्योम sh_mmcअगर_start_cmd(काष्ठा sh_mmcअगर_host *host,
+			       काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा mmc_command *cmd = mrq->cmd;
 	u32 opc;
 	u32 mask = 0;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (cmd->flags & MMC_RSP_BUSY)
+	अगर (cmd->flags & MMC_RSP_BUSY)
 		mask = MASK_START_CMD | MASK_MRBSYE;
-	else
+	अन्यथा
 		mask = MASK_START_CMD | MASK_MCRSPE;
 
-	if (host->ccs_enable)
+	अगर (host->ccs_enable)
 		mask |= MASK_MCCSTO;
 
-	if (mrq->data) {
-		sh_mmcif_writel(host->addr, MMCIF_CE_BLOCK_SET, 0);
-		sh_mmcif_writel(host->addr, MMCIF_CE_BLOCK_SET,
+	अगर (mrq->data) अणु
+		sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_BLOCK_SET, 0);
+		sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_BLOCK_SET,
 				mrq->data->blksz);
-	}
-	opc = sh_mmcif_set_cmd(host, mrq);
+	पूर्ण
+	opc = sh_mmcअगर_set_cmd(host, mrq);
 
-	if (host->ccs_enable)
-		sh_mmcif_writel(host->addr, MMCIF_CE_INT, 0xD80430C0);
-	else
-		sh_mmcif_writel(host->addr, MMCIF_CE_INT, 0xD80430C0 | INT_CCS);
-	sh_mmcif_writel(host->addr, MMCIF_CE_INT_MASK, mask);
+	अगर (host->ccs_enable)
+		sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_INT, 0xD80430C0);
+	अन्यथा
+		sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_INT, 0xD80430C0 | INT_CCS);
+	sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_INT_MASK, mask);
 	/* set arg */
-	sh_mmcif_writel(host->addr, MMCIF_CE_ARG, cmd->arg);
+	sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_ARG, cmd->arg);
 	/* set cmd */
 	spin_lock_irqsave(&host->lock, flags);
-	sh_mmcif_writel(host->addr, MMCIF_CE_CMD_SET, opc);
+	sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_CMD_SET, opc);
 
-	host->wait_for = MMCIF_WAIT_FOR_CMD;
-	schedule_delayed_work(&host->timeout_work, host->timeout);
+	host->रुको_क्रम = MMCIF_WAIT_FOR_CMD;
+	schedule_delayed_work(&host->समयout_work, host->समयout);
 	spin_unlock_irqrestore(&host->lock, flags);
-}
+पूर्ण
 
-static void sh_mmcif_stop_cmd(struct sh_mmcif_host *host,
-			      struct mmc_request *mrq)
-{
-	struct device *dev = sh_mmcif_host_to_dev(host);
+अटल व्योम sh_mmcअगर_stop_cmd(काष्ठा sh_mmcअगर_host *host,
+			      काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
 
-	switch (mrq->cmd->opcode) {
-	case MMC_READ_MULTIPLE_BLOCK:
-		sh_mmcif_bitset(host, MMCIF_CE_INT_MASK, MASK_MCMD12DRE);
-		break;
-	case MMC_WRITE_MULTIPLE_BLOCK:
-		sh_mmcif_bitset(host, MMCIF_CE_INT_MASK, MASK_MCMD12RBE);
-		break;
-	default:
+	चयन (mrq->cmd->opcode) अणु
+	हाल MMC_READ_MULTIPLE_BLOCK:
+		sh_mmcअगर_bitset(host, MMCIF_CE_INT_MASK, MASK_MCMD12DRE);
+		अवरोध;
+	हाल MMC_WRITE_MULTIPLE_BLOCK:
+		sh_mmcअगर_bitset(host, MMCIF_CE_INT_MASK, MASK_MCMD12RBE);
+		अवरोध;
+	शेष:
 		dev_err(dev, "unsupported stop cmd\n");
-		mrq->stop->error = sh_mmcif_error_manage(host);
-		return;
-	}
+		mrq->stop->error = sh_mmcअगर_error_manage(host);
+		वापस;
+	पूर्ण
 
-	host->wait_for = MMCIF_WAIT_FOR_STOP;
-}
+	host->रुको_क्रम = MMCIF_WAIT_FOR_STOP;
+पूर्ण
 
-static void sh_mmcif_request(struct mmc_host *mmc, struct mmc_request *mrq)
-{
-	struct sh_mmcif_host *host = mmc_priv(mmc);
-	struct device *dev = sh_mmcif_host_to_dev(host);
-	unsigned long flags;
+अटल व्योम sh_mmcअगर_request(काष्ठा mmc_host *mmc, काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा sh_mmcअगर_host *host = mmc_priv(mmc);
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&host->lock, flags);
-	if (host->state != STATE_IDLE) {
+	अगर (host->state != STATE_IDLE) अणु
 		dev_dbg(dev, "%s() rejected, state %u\n",
 			__func__, host->state);
 		spin_unlock_irqrestore(&host->lock, flags);
 		mrq->cmd->error = -EAGAIN;
-		mmc_request_done(mmc, mrq);
-		return;
-	}
+		mmc_request_करोne(mmc, mrq);
+		वापस;
+	पूर्ण
 
 	host->state = STATE_REQUEST;
 	spin_unlock_irqrestore(&host->lock, flags);
 
 	host->mrq = mrq;
 
-	sh_mmcif_start_cmd(host, mrq);
-}
+	sh_mmcअगर_start_cmd(host, mrq);
+पूर्ण
 
-static void sh_mmcif_clk_setup(struct sh_mmcif_host *host)
-{
-	struct device *dev = sh_mmcif_host_to_dev(host);
+अटल व्योम sh_mmcअगर_clk_setup(काष्ठा sh_mmcअगर_host *host)
+अणु
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
 
-	if (host->mmc->f_max) {
-		unsigned int f_max, f_min = 0, f_min_old;
+	अगर (host->mmc->f_max) अणु
+		अचिन्हित पूर्णांक f_max, f_min = 0, f_min_old;
 
 		f_max = host->mmc->f_max;
-		for (f_min_old = f_max; f_min_old > 2;) {
+		क्रम (f_min_old = f_max; f_min_old > 2;) अणु
 			f_min = clk_round_rate(host->clk, f_min_old / 2);
-			if (f_min == f_min_old)
-				break;
+			अगर (f_min == f_min_old)
+				अवरोध;
 			f_min_old = f_min;
-		}
+		पूर्ण
 
 		/*
 		 * This driver assumes this SoC is R-Car Gen2 or later
 		 */
-		host->clkdiv_map = 0x3ff;
+		host->clkभाग_map = 0x3ff;
 
-		host->mmc->f_max = f_max / (1 << ffs(host->clkdiv_map));
-		host->mmc->f_min = f_min / (1 << fls(host->clkdiv_map));
-	} else {
-		unsigned int clk = clk_get_rate(host->clk);
+		host->mmc->f_max = f_max / (1 << ffs(host->clkभाग_map));
+		host->mmc->f_min = f_min / (1 << fls(host->clkभाग_map));
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक clk = clk_get_rate(host->clk);
 
 		host->mmc->f_max = clk / 2;
 		host->mmc->f_min = clk / 512;
-	}
+	पूर्ण
 
 	dev_dbg(dev, "clk max/min = %d/%d\n",
 		host->mmc->f_max, host->mmc->f_min);
-}
+पूर्ण
 
-static void sh_mmcif_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
-{
-	struct sh_mmcif_host *host = mmc_priv(mmc);
-	struct device *dev = sh_mmcif_host_to_dev(host);
-	unsigned long flags;
+अटल व्योम sh_mmcअगर_set_ios(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
+अणु
+	काष्ठा sh_mmcअगर_host *host = mmc_priv(mmc);
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&host->lock, flags);
-	if (host->state != STATE_IDLE) {
+	अगर (host->state != STATE_IDLE) अणु
 		dev_dbg(dev, "%s() rejected, state %u\n",
 			__func__, host->state);
 		spin_unlock_irqrestore(&host->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	host->state = STATE_IOS;
 	spin_unlock_irqrestore(&host->lock, flags);
 
-	switch (ios->power_mode) {
-	case MMC_POWER_UP:
-		if (!IS_ERR(mmc->supply.vmmc))
+	चयन (ios->घातer_mode) अणु
+	हाल MMC_POWER_UP:
+		अगर (!IS_ERR(mmc->supply.vmmc))
 			mmc_regulator_set_ocr(mmc, mmc->supply.vmmc, ios->vdd);
-		if (!host->power) {
+		अगर (!host->घातer) अणु
 			clk_prepare_enable(host->clk);
-			pm_runtime_get_sync(dev);
-			sh_mmcif_sync_reset(host);
-			sh_mmcif_request_dma(host);
-			host->power = true;
-		}
-		break;
-	case MMC_POWER_OFF:
-		if (!IS_ERR(mmc->supply.vmmc))
+			pm_runसमय_get_sync(dev);
+			sh_mmcअगर_sync_reset(host);
+			sh_mmcअगर_request_dma(host);
+			host->घातer = true;
+		पूर्ण
+		अवरोध;
+	हाल MMC_POWER_OFF:
+		अगर (!IS_ERR(mmc->supply.vmmc))
 			mmc_regulator_set_ocr(mmc, mmc->supply.vmmc, 0);
-		if (host->power) {
-			sh_mmcif_clock_control(host, 0);
-			sh_mmcif_release_dma(host);
-			pm_runtime_put(dev);
+		अगर (host->घातer) अणु
+			sh_mmcअगर_घड़ी_control(host, 0);
+			sh_mmcअगर_release_dma(host);
+			pm_runसमय_put(dev);
 			clk_disable_unprepare(host->clk);
-			host->power = false;
-		}
-		break;
-	case MMC_POWER_ON:
-		sh_mmcif_clock_control(host, ios->clock);
-		break;
-	}
+			host->घातer = false;
+		पूर्ण
+		अवरोध;
+	हाल MMC_POWER_ON:
+		sh_mmcअगर_घड़ी_control(host, ios->घड़ी);
+		अवरोध;
+	पूर्ण
 
 	host->timing = ios->timing;
 	host->bus_width = ios->bus_width;
 	host->state = STATE_IDLE;
-}
+पूर्ण
 
-static const struct mmc_host_ops sh_mmcif_ops = {
-	.request	= sh_mmcif_request,
-	.set_ios	= sh_mmcif_set_ios,
+अटल स्थिर काष्ठा mmc_host_ops sh_mmcअगर_ops = अणु
+	.request	= sh_mmcअगर_request,
+	.set_ios	= sh_mmcअगर_set_ios,
 	.get_cd		= mmc_gpio_get_cd,
-};
+पूर्ण;
 
-static bool sh_mmcif_end_cmd(struct sh_mmcif_host *host)
-{
-	struct mmc_command *cmd = host->mrq->cmd;
-	struct mmc_data *data = host->mrq->data;
-	struct device *dev = sh_mmcif_host_to_dev(host);
-	long time;
+अटल bool sh_mmcअगर_end_cmd(काष्ठा sh_mmcअगर_host *host)
+अणु
+	काष्ठा mmc_command *cmd = host->mrq->cmd;
+	काष्ठा mmc_data *data = host->mrq->data;
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
+	दीर्घ समय;
 
-	if (host->sd_error) {
-		switch (cmd->opcode) {
-		case MMC_ALL_SEND_CID:
-		case MMC_SELECT_CARD:
-		case MMC_APP_CMD:
+	अगर (host->sd_error) अणु
+		चयन (cmd->opcode) अणु
+		हाल MMC_ALL_SEND_CID:
+		हाल MMC_SELECT_CARD:
+		हाल MMC_APP_CMD:
 			cmd->error = -ETIMEDOUT;
-			break;
-		default:
-			cmd->error = sh_mmcif_error_manage(host);
-			break;
-		}
+			अवरोध;
+		शेष:
+			cmd->error = sh_mmcअगर_error_manage(host);
+			अवरोध;
+		पूर्ण
 		dev_dbg(dev, "CMD%d error %d\n",
 			cmd->opcode, cmd->error);
 		host->sd_error = false;
-		return false;
-	}
-	if (!(cmd->flags & MMC_RSP_PRESENT)) {
+		वापस false;
+	पूर्ण
+	अगर (!(cmd->flags & MMC_RSP_PRESENT)) अणु
 		cmd->error = 0;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	sh_mmcif_get_response(host, cmd);
+	sh_mmcअगर_get_response(host, cmd);
 
-	if (!data)
-		return false;
+	अगर (!data)
+		वापस false;
 
 	/*
-	 * Completion can be signalled from DMA callback and error, so, have to
-	 * reset here, before setting .dma_active
+	 * Completion can be संकेतled from DMA callback and error, so, have to
+	 * reset here, beक्रमe setting .dma_active
 	 */
 	init_completion(&host->dma_complete);
 
-	if (data->flags & MMC_DATA_READ) {
-		if (host->chan_rx)
-			sh_mmcif_start_dma_rx(host);
-	} else {
-		if (host->chan_tx)
-			sh_mmcif_start_dma_tx(host);
-	}
+	अगर (data->flags & MMC_DATA_READ) अणु
+		अगर (host->chan_rx)
+			sh_mmcअगर_start_dma_rx(host);
+	पूर्ण अन्यथा अणु
+		अगर (host->chan_tx)
+			sh_mmcअगर_start_dma_tx(host);
+	पूर्ण
 
-	if (!host->dma_active) {
-		data->error = sh_mmcif_data_trans(host, host->mrq, cmd->opcode);
-		return !data->error;
-	}
+	अगर (!host->dma_active) अणु
+		data->error = sh_mmcअगर_data_trans(host, host->mrq, cmd->opcode);
+		वापस !data->error;
+	पूर्ण
 
-	/* Running in the IRQ thread, can sleep */
-	time = wait_for_completion_interruptible_timeout(&host->dma_complete,
-							 host->timeout);
+	/* Running in the IRQ thपढ़ो, can sleep */
+	समय = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&host->dma_complete,
+							 host->समयout);
 
-	if (data->flags & MMC_DATA_READ)
+	अगर (data->flags & MMC_DATA_READ)
 		dma_unmap_sg(host->chan_rx->device->dev,
 			     data->sg, data->sg_len,
 			     DMA_FROM_DEVICE);
-	else
+	अन्यथा
 		dma_unmap_sg(host->chan_tx->device->dev,
 			     data->sg, data->sg_len,
 			     DMA_TO_DEVICE);
 
-	if (host->sd_error) {
+	अगर (host->sd_error) अणु
 		dev_err(host->mmc->parent,
 			"Error IRQ while waiting for DMA completion!\n");
-		/* Woken up by an error IRQ: abort DMA */
-		data->error = sh_mmcif_error_manage(host);
-	} else if (!time) {
+		/* Woken up by an error IRQ: पात DMA */
+		data->error = sh_mmcअगर_error_manage(host);
+	पूर्ण अन्यथा अगर (!समय) अणु
 		dev_err(host->mmc->parent, "DMA timeout!\n");
 		data->error = -ETIMEDOUT;
-	} else if (time < 0) {
+	पूर्ण अन्यथा अगर (समय < 0) अणु
 		dev_err(host->mmc->parent,
-			"wait_for_completion_...() error %ld!\n", time);
-		data->error = time;
-	}
-	sh_mmcif_bitclr(host, MMCIF_CE_BUF_ACC,
+			"wait_for_completion_...() error %ld!\n", समय);
+		data->error = समय;
+	पूर्ण
+	sh_mmcअगर_bitclr(host, MMCIF_CE_BUF_ACC,
 			BUF_ACC_DMAREN | BUF_ACC_DMAWEN);
 	host->dma_active = false;
 
-	if (data->error) {
+	अगर (data->error) अणु
 		data->bytes_xfered = 0;
 		/* Abort DMA */
-		if (data->flags & MMC_DATA_READ)
+		अगर (data->flags & MMC_DATA_READ)
 			dmaengine_terminate_all(host->chan_rx);
-		else
+		अन्यथा
 			dmaengine_terminate_all(host->chan_tx);
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static irqreturn_t sh_mmcif_irqt(int irq, void *dev_id)
-{
-	struct sh_mmcif_host *host = dev_id;
-	struct mmc_request *mrq;
-	struct device *dev = sh_mmcif_host_to_dev(host);
-	bool wait = false;
-	unsigned long flags;
-	int wait_work;
+अटल irqवापस_t sh_mmcअगर_irqt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा sh_mmcअगर_host *host = dev_id;
+	काष्ठा mmc_request *mrq;
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
+	bool रुको = false;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक रुको_work;
 
 	spin_lock_irqsave(&host->lock, flags);
-	wait_work = host->wait_for;
+	रुको_work = host->रुको_क्रम;
 	spin_unlock_irqrestore(&host->lock, flags);
 
-	cancel_delayed_work_sync(&host->timeout_work);
+	cancel_delayed_work_sync(&host->समयout_work);
 
-	mutex_lock(&host->thread_lock);
+	mutex_lock(&host->thपढ़ो_lock);
 
 	mrq = host->mrq;
-	if (!mrq) {
+	अगर (!mrq) अणु
 		dev_dbg(dev, "IRQ thread state %u, wait %u: NULL mrq!\n",
-			host->state, host->wait_for);
-		mutex_unlock(&host->thread_lock);
-		return IRQ_HANDLED;
-	}
+			host->state, host->रुको_क्रम);
+		mutex_unlock(&host->thपढ़ो_lock);
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	/*
-	 * All handlers return true, if processing continues, and false, if the
+	 * All handlers वापस true, अगर processing जारीs, and false, अगर the
 	 * request has to be completed - successfully or not
 	 */
-	switch (wait_work) {
-	case MMCIF_WAIT_FOR_REQUEST:
-		/* We're too late, the timeout has already kicked in */
-		mutex_unlock(&host->thread_lock);
-		return IRQ_HANDLED;
-	case MMCIF_WAIT_FOR_CMD:
-		/* Wait for data? */
-		wait = sh_mmcif_end_cmd(host);
-		break;
-	case MMCIF_WAIT_FOR_MREAD:
-		/* Wait for more data? */
-		wait = sh_mmcif_mread_block(host);
-		break;
-	case MMCIF_WAIT_FOR_READ:
-		/* Wait for data end? */
-		wait = sh_mmcif_read_block(host);
-		break;
-	case MMCIF_WAIT_FOR_MWRITE:
-		/* Wait data to write? */
-		wait = sh_mmcif_mwrite_block(host);
-		break;
-	case MMCIF_WAIT_FOR_WRITE:
-		/* Wait for data end? */
-		wait = sh_mmcif_write_block(host);
-		break;
-	case MMCIF_WAIT_FOR_STOP:
-		if (host->sd_error) {
-			mrq->stop->error = sh_mmcif_error_manage(host);
+	चयन (रुको_work) अणु
+	हाल MMCIF_WAIT_FOR_REQUEST:
+		/* We're too late, the समयout has alपढ़ोy kicked in */
+		mutex_unlock(&host->thपढ़ो_lock);
+		वापस IRQ_HANDLED;
+	हाल MMCIF_WAIT_FOR_CMD:
+		/* Wait क्रम data? */
+		रुको = sh_mmcअगर_end_cmd(host);
+		अवरोध;
+	हाल MMCIF_WAIT_FOR_MREAD:
+		/* Wait क्रम more data? */
+		रुको = sh_mmcअगर_mपढ़ो_block(host);
+		अवरोध;
+	हाल MMCIF_WAIT_FOR_READ:
+		/* Wait क्रम data end? */
+		रुको = sh_mmcअगर_पढ़ो_block(host);
+		अवरोध;
+	हाल MMCIF_WAIT_FOR_MWRITE:
+		/* Wait data to ग_लिखो? */
+		रुको = sh_mmcअगर_mग_लिखो_block(host);
+		अवरोध;
+	हाल MMCIF_WAIT_FOR_WRITE:
+		/* Wait क्रम data end? */
+		रुको = sh_mmcअगर_ग_लिखो_block(host);
+		अवरोध;
+	हाल MMCIF_WAIT_FOR_STOP:
+		अगर (host->sd_error) अणु
+			mrq->stop->error = sh_mmcअगर_error_manage(host);
 			dev_dbg(dev, "%s(): %d\n", __func__, mrq->stop->error);
-			break;
-		}
-		sh_mmcif_get_cmd12response(host, mrq->stop);
+			अवरोध;
+		पूर्ण
+		sh_mmcअगर_get_cmd12response(host, mrq->stop);
 		mrq->stop->error = 0;
-		break;
-	case MMCIF_WAIT_FOR_READ_END:
-	case MMCIF_WAIT_FOR_WRITE_END:
-		if (host->sd_error) {
-			mrq->data->error = sh_mmcif_error_manage(host);
+		अवरोध;
+	हाल MMCIF_WAIT_FOR_READ_END:
+	हाल MMCIF_WAIT_FOR_WRITE_END:
+		अगर (host->sd_error) अणु
+			mrq->data->error = sh_mmcअगर_error_manage(host);
 			dev_dbg(dev, "%s(): %d\n", __func__, mrq->data->error);
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	if (wait) {
-		schedule_delayed_work(&host->timeout_work, host->timeout);
-		/* Wait for more data */
-		mutex_unlock(&host->thread_lock);
-		return IRQ_HANDLED;
-	}
+	अगर (रुको) अणु
+		schedule_delayed_work(&host->समयout_work, host->समयout);
+		/* Wait क्रम more data */
+		mutex_unlock(&host->thपढ़ो_lock);
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (host->wait_for != MMCIF_WAIT_FOR_STOP) {
-		struct mmc_data *data = mrq->data;
-		if (!mrq->cmd->error && data && !data->error)
+	अगर (host->रुको_क्रम != MMCIF_WAIT_FOR_STOP) अणु
+		काष्ठा mmc_data *data = mrq->data;
+		अगर (!mrq->cmd->error && data && !data->error)
 			data->bytes_xfered =
 				data->blocks * data->blksz;
 
-		if (mrq->stop && !mrq->cmd->error && (!data || !data->error)) {
-			sh_mmcif_stop_cmd(host, mrq);
-			if (!mrq->stop->error) {
-				schedule_delayed_work(&host->timeout_work, host->timeout);
-				mutex_unlock(&host->thread_lock);
-				return IRQ_HANDLED;
-			}
-		}
-	}
+		अगर (mrq->stop && !mrq->cmd->error && (!data || !data->error)) अणु
+			sh_mmcअगर_stop_cmd(host, mrq);
+			अगर (!mrq->stop->error) अणु
+				schedule_delayed_work(&host->समयout_work, host->समयout);
+				mutex_unlock(&host->thपढ़ो_lock);
+				वापस IRQ_HANDLED;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	host->wait_for = MMCIF_WAIT_FOR_REQUEST;
+	host->रुको_क्रम = MMCIF_WAIT_FOR_REQUEST;
 	host->state = STATE_IDLE;
-	host->mrq = NULL;
-	mmc_request_done(host->mmc, mrq);
+	host->mrq = शून्य;
+	mmc_request_करोne(host->mmc, mrq);
 
-	mutex_unlock(&host->thread_lock);
+	mutex_unlock(&host->thपढ़ो_lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t sh_mmcif_intr(int irq, void *dev_id)
-{
-	struct sh_mmcif_host *host = dev_id;
-	struct device *dev = sh_mmcif_host_to_dev(host);
+अटल irqवापस_t sh_mmcअगर_पूर्णांकr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा sh_mmcअगर_host *host = dev_id;
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
 	u32 state, mask;
 
-	state = sh_mmcif_readl(host->addr, MMCIF_CE_INT);
-	mask = sh_mmcif_readl(host->addr, MMCIF_CE_INT_MASK);
-	if (host->ccs_enable)
-		sh_mmcif_writel(host->addr, MMCIF_CE_INT, ~(state & mask));
-	else
-		sh_mmcif_writel(host->addr, MMCIF_CE_INT, INT_CCS | ~(state & mask));
-	sh_mmcif_bitclr(host, MMCIF_CE_INT_MASK, state & MASK_CLEAN);
+	state = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_INT);
+	mask = sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_INT_MASK);
+	अगर (host->ccs_enable)
+		sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_INT, ~(state & mask));
+	अन्यथा
+		sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_INT, INT_CCS | ~(state & mask));
+	sh_mmcअगर_bitclr(host, MMCIF_CE_INT_MASK, state & MASK_CLEAN);
 
-	if (state & ~MASK_CLEAN)
+	अगर (state & ~MASK_CLEAN)
 		dev_dbg(dev, "IRQ state = 0x%08x incompletely cleared\n",
 			state);
 
-	if (state & INT_ERR_STS || state & ~INT_ALL) {
+	अगर (state & INT_ERR_STS || state & ~INT_ALL) अणु
 		host->sd_error = true;
 		dev_dbg(dev, "int err state = 0x%08x\n", state);
-	}
-	if (state & ~(INT_CMD12RBE | INT_CMD12CRE)) {
-		if (!host->mrq)
+	पूर्ण
+	अगर (state & ~(INT_CMD12RBE | INT_CMD12CRE)) अणु
+		अगर (!host->mrq)
 			dev_dbg(dev, "NULL IRQ state = 0x%08x\n", state);
-		if (!host->dma_active)
-			return IRQ_WAKE_THREAD;
-		else if (host->sd_error)
-			sh_mmcif_dma_complete(host);
-	} else {
+		अगर (!host->dma_active)
+			वापस IRQ_WAKE_THREAD;
+		अन्यथा अगर (host->sd_error)
+			sh_mmcअगर_dma_complete(host);
+	पूर्ण अन्यथा अणु
 		dev_dbg(dev, "Unexpected IRQ 0x%x\n", state);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void sh_mmcif_timeout_work(struct work_struct *work)
-{
-	struct delayed_work *d = to_delayed_work(work);
-	struct sh_mmcif_host *host = container_of(d, struct sh_mmcif_host, timeout_work);
-	struct mmc_request *mrq = host->mrq;
-	struct device *dev = sh_mmcif_host_to_dev(host);
-	unsigned long flags;
+अटल व्योम sh_mmcअगर_समयout_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा delayed_work *d = to_delayed_work(work);
+	काष्ठा sh_mmcअगर_host *host = container_of(d, काष्ठा sh_mmcअगर_host, समयout_work);
+	काष्ठा mmc_request *mrq = host->mrq;
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
+	अचिन्हित दीर्घ flags;
 
-	if (host->dying)
-		/* Don't run after mmc_remove_host() */
-		return;
+	अगर (host->dying)
+		/* Don't run after mmc_हटाओ_host() */
+		वापस;
 
 	spin_lock_irqsave(&host->lock, flags);
-	if (host->state == STATE_IDLE) {
+	अगर (host->state == STATE_IDLE) अणु
 		spin_unlock_irqrestore(&host->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dev_err(dev, "Timeout waiting for %u on CMD%u\n",
-		host->wait_for, mrq->cmd->opcode);
+		host->रुको_क्रम, mrq->cmd->opcode);
 
 	host->state = STATE_TIMEOUT;
 	spin_unlock_irqrestore(&host->lock, flags);
@@ -1343,79 +1344,79 @@ static void sh_mmcif_timeout_work(struct work_struct *work)
 	 * Handle races with cancel_delayed_work(), unless
 	 * cancel_delayed_work_sync() is used
 	 */
-	switch (host->wait_for) {
-	case MMCIF_WAIT_FOR_CMD:
-		mrq->cmd->error = sh_mmcif_error_manage(host);
-		break;
-	case MMCIF_WAIT_FOR_STOP:
-		mrq->stop->error = sh_mmcif_error_manage(host);
-		break;
-	case MMCIF_WAIT_FOR_MREAD:
-	case MMCIF_WAIT_FOR_MWRITE:
-	case MMCIF_WAIT_FOR_READ:
-	case MMCIF_WAIT_FOR_WRITE:
-	case MMCIF_WAIT_FOR_READ_END:
-	case MMCIF_WAIT_FOR_WRITE_END:
-		mrq->data->error = sh_mmcif_error_manage(host);
-		break;
-	default:
+	चयन (host->रुको_क्रम) अणु
+	हाल MMCIF_WAIT_FOR_CMD:
+		mrq->cmd->error = sh_mmcअगर_error_manage(host);
+		अवरोध;
+	हाल MMCIF_WAIT_FOR_STOP:
+		mrq->stop->error = sh_mmcअगर_error_manage(host);
+		अवरोध;
+	हाल MMCIF_WAIT_FOR_MREAD:
+	हाल MMCIF_WAIT_FOR_MWRITE:
+	हाल MMCIF_WAIT_FOR_READ:
+	हाल MMCIF_WAIT_FOR_WRITE:
+	हाल MMCIF_WAIT_FOR_READ_END:
+	हाल MMCIF_WAIT_FOR_WRITE_END:
+		mrq->data->error = sh_mmcअगर_error_manage(host);
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	host->state = STATE_IDLE;
-	host->wait_for = MMCIF_WAIT_FOR_REQUEST;
-	host->mrq = NULL;
-	mmc_request_done(host->mmc, mrq);
-}
+	host->रुको_क्रम = MMCIF_WAIT_FOR_REQUEST;
+	host->mrq = शून्य;
+	mmc_request_करोne(host->mmc, mrq);
+पूर्ण
 
-static void sh_mmcif_init_ocr(struct sh_mmcif_host *host)
-{
-	struct device *dev = sh_mmcif_host_to_dev(host);
-	struct sh_mmcif_plat_data *pd = dev->platform_data;
-	struct mmc_host *mmc = host->mmc;
+अटल व्योम sh_mmcअगर_init_ocr(काष्ठा sh_mmcअगर_host *host)
+अणु
+	काष्ठा device *dev = sh_mmcअगर_host_to_dev(host);
+	काष्ठा sh_mmcअगर_plat_data *pd = dev->platक्रमm_data;
+	काष्ठा mmc_host *mmc = host->mmc;
 
 	mmc_regulator_get_supply(mmc);
 
-	if (!pd)
-		return;
+	अगर (!pd)
+		वापस;
 
-	if (!mmc->ocr_avail)
+	अगर (!mmc->ocr_avail)
 		mmc->ocr_avail = pd->ocr;
-	else if (pd->ocr)
+	अन्यथा अगर (pd->ocr)
 		dev_warn(mmc_dev(mmc), "Platform OCR mask is ignored\n");
-}
+पूर्ण
 
-static int sh_mmcif_probe(struct platform_device *pdev)
-{
-	int ret = 0, irq[2];
-	struct mmc_host *mmc;
-	struct sh_mmcif_host *host;
-	struct device *dev = &pdev->dev;
-	struct sh_mmcif_plat_data *pd = dev->platform_data;
-	void __iomem *reg;
-	const char *name;
+अटल पूर्णांक sh_mmcअगर_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret = 0, irq[2];
+	काष्ठा mmc_host *mmc;
+	काष्ठा sh_mmcअगर_host *host;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा sh_mmcअगर_plat_data *pd = dev->platक्रमm_data;
+	व्योम __iomem *reg;
+	स्थिर अक्षर *name;
 
-	irq[0] = platform_get_irq(pdev, 0);
-	irq[1] = platform_get_irq_optional(pdev, 1);
-	if (irq[0] < 0)
-		return -ENXIO;
+	irq[0] = platक्रमm_get_irq(pdev, 0);
+	irq[1] = platक्रमm_get_irq_optional(pdev, 1);
+	अगर (irq[0] < 0)
+		वापस -ENXIO;
 
-	reg = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(reg))
-		return PTR_ERR(reg);
+	reg = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(reg))
+		वापस PTR_ERR(reg);
 
-	mmc = mmc_alloc_host(sizeof(struct sh_mmcif_host), dev);
-	if (!mmc)
-		return -ENOMEM;
+	mmc = mmc_alloc_host(माप(काष्ठा sh_mmcअगर_host), dev);
+	अगर (!mmc)
+		वापस -ENOMEM;
 
 	ret = mmc_of_parse(mmc);
-	if (ret < 0)
-		goto err_host;
+	अगर (ret < 0)
+		जाओ err_host;
 
 	host		= mmc_priv(mmc);
 	host->mmc	= mmc;
 	host->addr	= reg;
-	host->timeout	= msecs_to_jiffies(10000);
+	host->समयout	= msecs_to_jअगरfies(10000);
 	host->ccs_enable = true;
 	host->clk_ctrl2_enable = false;
 
@@ -1423,14 +1424,14 @@ static int sh_mmcif_probe(struct platform_device *pdev)
 
 	spin_lock_init(&host->lock);
 
-	mmc->ops = &sh_mmcif_ops;
-	sh_mmcif_init_ocr(host);
+	mmc->ops = &sh_mmcअगर_ops;
+	sh_mmcअगर_init_ocr(host);
 
 	mmc->caps |= MMC_CAP_MMC_HIGHSPEED | MMC_CAP_WAIT_WHILE_BUSY;
 	mmc->caps2 |= MMC_CAP2_NO_SD | MMC_CAP2_NO_SDIO;
-	mmc->max_busy_timeout = 10000;
+	mmc->max_busy_समयout = 10000;
 
-	if (pd && pd->caps)
+	अगर (pd && pd->caps)
 		mmc->caps |= pd->caps;
 	mmc->max_segs = 32;
 	mmc->max_blk_size = 512;
@@ -1438,137 +1439,137 @@ static int sh_mmcif_probe(struct platform_device *pdev)
 	mmc->max_blk_count = mmc->max_req_size / mmc->max_blk_size;
 	mmc->max_seg_size = mmc->max_req_size;
 
-	platform_set_drvdata(pdev, host);
+	platक्रमm_set_drvdata(pdev, host);
 
-	host->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(host->clk)) {
+	host->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(host->clk)) अणु
 		ret = PTR_ERR(host->clk);
 		dev_err(dev, "cannot get clock: %d\n", ret);
-		goto err_host;
-	}
+		जाओ err_host;
+	पूर्ण
 
 	ret = clk_prepare_enable(host->clk);
-	if (ret < 0)
-		goto err_host;
+	अगर (ret < 0)
+		जाओ err_host;
 
-	sh_mmcif_clk_setup(host);
+	sh_mmcअगर_clk_setup(host);
 
-	pm_runtime_enable(dev);
-	host->power = false;
+	pm_runसमय_enable(dev);
+	host->घातer = false;
 
-	ret = pm_runtime_get_sync(dev);
-	if (ret < 0)
-		goto err_clk;
+	ret = pm_runसमय_get_sync(dev);
+	अगर (ret < 0)
+		जाओ err_clk;
 
-	INIT_DELAYED_WORK(&host->timeout_work, sh_mmcif_timeout_work);
+	INIT_DELAYED_WORK(&host->समयout_work, sh_mmcअगर_समयout_work);
 
-	sh_mmcif_sync_reset(host);
-	sh_mmcif_writel(host->addr, MMCIF_CE_INT_MASK, MASK_ALL);
+	sh_mmcअगर_sync_reset(host);
+	sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_INT_MASK, MASK_ALL);
 
 	name = irq[1] < 0 ? dev_name(dev) : "sh_mmc:error";
-	ret = devm_request_threaded_irq(dev, irq[0], sh_mmcif_intr,
-					sh_mmcif_irqt, 0, name, host);
-	if (ret) {
+	ret = devm_request_thपढ़ोed_irq(dev, irq[0], sh_mmcअगर_पूर्णांकr,
+					sh_mmcअगर_irqt, 0, name, host);
+	अगर (ret) अणु
 		dev_err(dev, "request_irq error (%s)\n", name);
-		goto err_clk;
-	}
-	if (irq[1] >= 0) {
-		ret = devm_request_threaded_irq(dev, irq[1],
-						sh_mmcif_intr, sh_mmcif_irqt,
+		जाओ err_clk;
+	पूर्ण
+	अगर (irq[1] >= 0) अणु
+		ret = devm_request_thपढ़ोed_irq(dev, irq[1],
+						sh_mmcअगर_पूर्णांकr, sh_mmcअगर_irqt,
 						0, "sh_mmc:int", host);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "request_irq error (sh_mmc:int)\n");
-			goto err_clk;
-		}
-	}
+			जाओ err_clk;
+		पूर्ण
+	पूर्ण
 
-	mutex_init(&host->thread_lock);
+	mutex_init(&host->thपढ़ो_lock);
 
 	ret = mmc_add_host(mmc);
-	if (ret < 0)
-		goto err_clk;
+	अगर (ret < 0)
+		जाओ err_clk;
 
 	dev_pm_qos_expose_latency_limit(dev, 100);
 
 	dev_info(dev, "Chip version 0x%04x, clock rate %luMHz\n",
-		 sh_mmcif_readl(host->addr, MMCIF_CE_VERSION) & 0xffff,
+		 sh_mmcअगर_पढ़ोl(host->addr, MMCIF_CE_VERSION) & 0xffff,
 		 clk_get_rate(host->clk) / 1000000UL);
 
-	pm_runtime_put(dev);
+	pm_runसमय_put(dev);
 	clk_disable_unprepare(host->clk);
-	return ret;
+	वापस ret;
 
 err_clk:
 	clk_disable_unprepare(host->clk);
-	pm_runtime_put_sync(dev);
-	pm_runtime_disable(dev);
+	pm_runसमय_put_sync(dev);
+	pm_runसमय_disable(dev);
 err_host:
-	mmc_free_host(mmc);
-	return ret;
-}
+	mmc_मुक्त_host(mmc);
+	वापस ret;
+पूर्ण
 
-static int sh_mmcif_remove(struct platform_device *pdev)
-{
-	struct sh_mmcif_host *host = platform_get_drvdata(pdev);
+अटल पूर्णांक sh_mmcअगर_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sh_mmcअगर_host *host = platक्रमm_get_drvdata(pdev);
 
 	host->dying = true;
 	clk_prepare_enable(host->clk);
-	pm_runtime_get_sync(&pdev->dev);
+	pm_runसमय_get_sync(&pdev->dev);
 
 	dev_pm_qos_hide_latency_limit(&pdev->dev);
 
-	mmc_remove_host(host->mmc);
-	sh_mmcif_writel(host->addr, MMCIF_CE_INT_MASK, MASK_ALL);
+	mmc_हटाओ_host(host->mmc);
+	sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_INT_MASK, MASK_ALL);
 
 	/*
-	 * FIXME: cancel_delayed_work(_sync)() and free_irq() race with the
-	 * mmc_remove_host() call above. But swapping order doesn't help either
+	 * FIXME: cancel_delayed_work(_sync)() and मुक्त_irq() race with the
+	 * mmc_हटाओ_host() call above. But swapping order करोesn't help either
 	 * (a query on the linux-mmc mailing list didn't bring any replies).
 	 */
-	cancel_delayed_work_sync(&host->timeout_work);
+	cancel_delayed_work_sync(&host->समयout_work);
 
 	clk_disable_unprepare(host->clk);
-	mmc_free_host(host->mmc);
-	pm_runtime_put_sync(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
+	mmc_मुक्त_host(host->mmc);
+	pm_runसमय_put_sync(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int sh_mmcif_suspend(struct device *dev)
-{
-	struct sh_mmcif_host *host = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक sh_mmcअगर_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sh_mmcअगर_host *host = dev_get_drvdata(dev);
 
-	pm_runtime_get_sync(dev);
-	sh_mmcif_writel(host->addr, MMCIF_CE_INT_MASK, MASK_ALL);
-	pm_runtime_put(dev);
+	pm_runसमय_get_sync(dev);
+	sh_mmcअगर_ग_लिखोl(host->addr, MMCIF_CE_INT_MASK, MASK_ALL);
+	pm_runसमय_put(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_mmcif_resume(struct device *dev)
-{
-	return 0;
-}
-#endif
+अटल पूर्णांक sh_mmcअगर_resume(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops sh_mmcif_dev_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(sh_mmcif_suspend, sh_mmcif_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops sh_mmcअगर_dev_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(sh_mmcअगर_suspend, sh_mmcअगर_resume)
+पूर्ण;
 
-static struct platform_driver sh_mmcif_driver = {
-	.probe		= sh_mmcif_probe,
-	.remove		= sh_mmcif_remove,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver sh_mmcअगर_driver = अणु
+	.probe		= sh_mmcअगर_probe,
+	.हटाओ		= sh_mmcअगर_हटाओ,
+	.driver		= अणु
 		.name	= DRIVER_NAME,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-		.pm	= &sh_mmcif_dev_pm_ops,
-		.of_match_table = sh_mmcif_of_match,
-	},
-};
+		.pm	= &sh_mmcअगर_dev_pm_ops,
+		.of_match_table = sh_mmcअगर_of_match,
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(sh_mmcif_driver);
+module_platक्रमm_driver(sh_mmcअगर_driver);
 
 MODULE_DESCRIPTION("SuperH on-chip MMC/eMMC interface driver");
 MODULE_LICENSE("GPL v2");

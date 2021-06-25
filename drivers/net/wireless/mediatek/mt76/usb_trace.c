@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#ifndef __CHECKER__
-#define CREATE_TRACE_POINTS
-#include "usb_trace.h"
+#अगर_अघोषित __CHECKER__
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "usb_trace.h"
 
-#endif
+#पूर्ण_अगर

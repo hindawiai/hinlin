@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,89 +23,89 @@
  * Authors: Ben Skeggs
  * 	    Martin Peres
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <core/option.h>
-#include <subdev/bios.h>
-#include <subdev/bios/fan.h>
-#include <subdev/gpio.h>
+#समावेश <core/option.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/fan.h>
+#समावेश <subdev/gpपन.स>
 
-struct nvkm_fanpwm {
-	struct nvkm_fan base;
-	struct dcb_gpio_func func;
-};
+काष्ठा nvkm_fanpwm अणु
+	काष्ठा nvkm_fan base;
+	काष्ठा dcb_gpio_func func;
+पूर्ण;
 
-static int
-nvkm_fanpwm_get(struct nvkm_therm *therm)
-{
-	struct nvkm_fanpwm *fan = (void *)therm->fan;
-	struct nvkm_device *device = therm->subdev.device;
-	struct nvkm_gpio *gpio = device->gpio;
-	int card_type = device->card_type;
-	u32 divs, duty;
-	int ret;
+अटल पूर्णांक
+nvkm_fanpwm_get(काष्ठा nvkm_therm *therm)
+अणु
+	काष्ठा nvkm_fanpwm *fan = (व्योम *)therm->fan;
+	काष्ठा nvkm_device *device = therm->subdev.device;
+	काष्ठा nvkm_gpio *gpio = device->gpio;
+	पूर्णांक card_type = device->card_type;
+	u32 भागs, duty;
+	पूर्णांक ret;
 
-	ret = therm->func->pwm_get(therm, fan->func.line, &divs, &duty);
-	if (ret == 0 && divs) {
-		divs = max(divs, duty);
-		if (card_type <= NV_40 || (fan->func.log[0] & 1))
-			duty = divs - duty;
-		return (duty * 100) / divs;
-	}
+	ret = therm->func->pwm_get(therm, fan->func.line, &भागs, &duty);
+	अगर (ret == 0 && भागs) अणु
+		भागs = max(भागs, duty);
+		अगर (card_type <= NV_40 || (fan->func.log[0] & 1))
+			duty = भागs - duty;
+		वापस (duty * 100) / भागs;
+	पूर्ण
 
-	return nvkm_gpio_get(gpio, 0, fan->func.func, fan->func.line) * 100;
-}
+	वापस nvkm_gpio_get(gpio, 0, fan->func.func, fan->func.line) * 100;
+पूर्ण
 
-static int
-nvkm_fanpwm_set(struct nvkm_therm *therm, int percent)
-{
-	struct nvkm_fanpwm *fan = (void *)therm->fan;
-	int card_type = therm->subdev.device->card_type;
-	u32 divs, duty;
-	int ret;
+अटल पूर्णांक
+nvkm_fanpwm_set(काष्ठा nvkm_therm *therm, पूर्णांक percent)
+अणु
+	काष्ठा nvkm_fanpwm *fan = (व्योम *)therm->fan;
+	पूर्णांक card_type = therm->subdev.device->card_type;
+	u32 भागs, duty;
+	पूर्णांक ret;
 
-	divs = fan->base.perf.pwm_divisor;
-	if (fan->base.bios.pwm_freq) {
-		divs = 1;
-		if (therm->func->pwm_clock)
-			divs = therm->func->pwm_clock(therm, fan->func.line);
-		divs /= fan->base.bios.pwm_freq;
-	}
+	भागs = fan->base.perf.pwm_भागisor;
+	अगर (fan->base.bios.pwm_freq) अणु
+		भागs = 1;
+		अगर (therm->func->pwm_घड़ी)
+			भागs = therm->func->pwm_घड़ी(therm, fan->func.line);
+		भागs /= fan->base.bios.pwm_freq;
+	पूर्ण
 
-	duty = ((divs * percent) + 99) / 100;
-	if (card_type <= NV_40 || (fan->func.log[0] & 1))
-		duty = divs - duty;
+	duty = ((भागs * percent) + 99) / 100;
+	अगर (card_type <= NV_40 || (fan->func.log[0] & 1))
+		duty = भागs - duty;
 
-	ret = therm->func->pwm_set(therm, fan->func.line, divs, duty);
-	if (ret == 0)
+	ret = therm->func->pwm_set(therm, fan->func.line, भागs, duty);
+	अगर (ret == 0)
 		ret = therm->func->pwm_ctrl(therm, fan->func.line, true);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-nvkm_fanpwm_create(struct nvkm_therm *therm, struct dcb_gpio_func *func)
-{
-	struct nvkm_device *device = therm->subdev.device;
-	struct nvkm_bios *bios = device->bios;
-	struct nvkm_fanpwm *fan;
-	struct nvbios_therm_fan info = {};
-	u32 divs, duty;
+पूर्णांक
+nvkm_fanpwm_create(काष्ठा nvkm_therm *therm, काष्ठा dcb_gpio_func *func)
+अणु
+	काष्ठा nvkm_device *device = therm->subdev.device;
+	काष्ठा nvkm_bios *bios = device->bios;
+	काष्ठा nvkm_fanpwm *fan;
+	काष्ठा nvbios_therm_fan info = अणुपूर्ण;
+	u32 भागs, duty;
 
 	nvbios_fan_parse(bios, &info);
 
-	if (!nvkm_boolopt(device->cfgopt, "NvFanPWM", func->param) ||
+	अगर (!nvkm_boolopt(device->cfgopt, "NvFanPWM", func->param) ||
 	    !therm->func->pwm_ctrl || info.type == NVBIOS_THERM_FAN_TOGGLE ||
-	     therm->func->pwm_get(therm, func->line, &divs, &duty) == -ENODEV)
-		return -ENODEV;
+	     therm->func->pwm_get(therm, func->line, &भागs, &duty) == -ENODEV)
+		वापस -ENODEV;
 
-	fan = kzalloc(sizeof(*fan), GFP_KERNEL);
+	fan = kzalloc(माप(*fan), GFP_KERNEL);
 	therm->fan = &fan->base;
-	if (!fan)
-		return -ENOMEM;
+	अगर (!fan)
+		वापस -ENOMEM;
 
 	fan->base.type = "PWM";
 	fan->base.get = nvkm_fanpwm_get;
 	fan->base.set = nvkm_fanpwm_set;
 	fan->func = *func;
-	return 0;
-}
+	वापस 0;
+पूर्ण

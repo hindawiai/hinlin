@@ -1,120 +1,121 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson SA 2010
  *
- * Authors: Sundar Iyer <sundar.iyer@stericsson.com> for ST-Ericsson
- *          Bengt Jonsson <bengt.g.jonsson@stericsson.com> for ST-Ericsson
+ * Authors: Sundar Iyer <sundar.iyer@stericsson.com> क्रम ST-Ericsson
+ *          Bengt Jonsson <bengt.g.jonsson@stericsson.com> क्रम ST-Ericsson
  *
- * UX500 common part of Power domain regulators
+ * UX500 common part of Power करोमुख्य regulators
  */
 
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/regulator/driver.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#include "dbx500-prcmu.h"
+#समावेश "dbx500-prcmu.h"
 
 /*
- * power state reference count
+ * घातer state reference count
  */
-static int power_state_active_cnt; /* will initialize to zero */
-static DEFINE_SPINLOCK(power_state_active_lock);
+अटल पूर्णांक घातer_state_active_cnt; /* will initialize to zero */
+अटल DEFINE_SPINLOCK(घातer_state_active_lock);
 
-void power_state_active_enable(void)
-{
-	unsigned long flags;
+व्योम घातer_state_active_enable(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&power_state_active_lock, flags);
-	power_state_active_cnt++;
-	spin_unlock_irqrestore(&power_state_active_lock, flags);
-}
+	spin_lock_irqsave(&घातer_state_active_lock, flags);
+	घातer_state_active_cnt++;
+	spin_unlock_irqrestore(&घातer_state_active_lock, flags);
+पूर्ण
 
-int power_state_active_disable(void)
-{
-	int ret = 0;
-	unsigned long flags;
+पूर्णांक घातer_state_active_disable(व्योम)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&power_state_active_lock, flags);
-	if (power_state_active_cnt <= 0) {
+	spin_lock_irqsave(&घातer_state_active_lock, flags);
+	अगर (घातer_state_active_cnt <= 0) अणु
 		pr_err("power state: unbalanced enable/disable calls\n");
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	power_state_active_cnt--;
+	घातer_state_active_cnt--;
 out:
-	spin_unlock_irqrestore(&power_state_active_lock, flags);
-	return ret;
-}
+	spin_unlock_irqrestore(&घातer_state_active_lock, flags);
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_REGULATOR_DEBUG
+#अगर_घोषित CONFIG_REGULATOR_DEBUG
 
-static int power_state_active_get(void)
-{
-	unsigned long flags;
-	int cnt;
+अटल पूर्णांक घातer_state_active_get(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक cnt;
 
-	spin_lock_irqsave(&power_state_active_lock, flags);
-	cnt = power_state_active_cnt;
-	spin_unlock_irqrestore(&power_state_active_lock, flags);
+	spin_lock_irqsave(&घातer_state_active_lock, flags);
+	cnt = घातer_state_active_cnt;
+	spin_unlock_irqrestore(&घातer_state_active_lock, flags);
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static struct ux500_regulator_debug {
-	struct dentry *dir;
-	struct dbx500_regulator_info *regulator_array;
-	int num_regulators;
-	u8 *state_before_suspend;
+अटल काष्ठा ux500_regulator_debug अणु
+	काष्ठा dentry *dir;
+	काष्ठा dbx500_regulator_info *regulator_array;
+	पूर्णांक num_regulators;
+	u8 *state_beक्रमe_suspend;
 	u8 *state_after_suspend;
-} rdebug;
+पूर्ण rdebug;
 
-static int ux500_regulator_power_state_cnt_show(struct seq_file *s, void *p)
-{
-	/* print power state count */
-	seq_printf(s, "ux500-regulator power state count: %i\n",
-		   power_state_active_get());
+अटल पूर्णांक ux500_regulator_घातer_state_cnt_show(काष्ठा seq_file *s, व्योम *p)
+अणु
+	/* prपूर्णांक घातer state count */
+	seq_म_लिखो(s, "ux500-regulator power state count: %i\n",
+		   घातer_state_active_get());
 
-	return 0;
-}
-DEFINE_SHOW_ATTRIBUTE(ux500_regulator_power_state_cnt);
+	वापस 0;
+पूर्ण
+DEFINE_SHOW_ATTRIBUTE(ux500_regulator_घातer_state_cnt);
 
-static int ux500_regulator_status_show(struct seq_file *s, void *p)
-{
-	int i;
+अटल पूर्णांक ux500_regulator_status_show(काष्ठा seq_file *s, व्योम *p)
+अणु
+	पूर्णांक i;
 
-	/* print dump header */
-	seq_puts(s, "ux500-regulator status:\n");
-	seq_printf(s, "%31s : %8s : %8s\n", "current", "before", "after");
+	/* prपूर्णांक dump header */
+	seq_माला_दो(s, "ux500-regulator status:\n");
+	seq_म_लिखो(s, "%31s : %8s : %8s\n", "current", "before", "after");
 
-	for (i = 0; i < rdebug.num_regulators; i++) {
-		struct dbx500_regulator_info *info;
+	क्रम (i = 0; i < rdebug.num_regulators; i++) अणु
+		काष्ठा dbx500_regulator_info *info;
 		/* Access per-regulator data */
 		info = &rdebug.regulator_array[i];
 
-		/* print status */
-		seq_printf(s, "%20s : %8s : %8s : %8s\n",
+		/* prपूर्णांक status */
+		seq_म_लिखो(s, "%20s : %8s : %8s : %8s\n",
 			   info->desc.name,
 			   info->is_enabled ? "enabled" : "disabled",
-			   rdebug.state_before_suspend[i] ? "enabled" : "disabled",
+			   rdebug.state_beक्रमe_suspend[i] ? "enabled" : "disabled",
 			   rdebug.state_after_suspend[i] ? "enabled" : "disabled");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(ux500_regulator_status);
 
-int
-ux500_regulator_debug_init(struct platform_device *pdev,
-	struct dbx500_regulator_info *regulator_info,
-	int num_regulators)
-{
+पूर्णांक
+ux500_regulator_debug_init(काष्ठा platक्रमm_device *pdev,
+	काष्ठा dbx500_regulator_info *regulator_info,
+	पूर्णांक num_regulators)
+अणु
 	/* create directory */
-	rdebug.dir = debugfs_create_dir("ux500-regulator", NULL);
+	rdebug.dir = debugfs_create_dir("ux500-regulator", शून्य);
 
 	/* create "status" file */
 	debugfs_create_file("status", S_IRUGO, rdebug.dir, &pdev->dev,
@@ -122,34 +123,34 @@ ux500_regulator_debug_init(struct platform_device *pdev,
 
 	/* create "power-state-count" file */
 	debugfs_create_file("power-state-count", S_IRUGO, rdebug.dir,
-			    &pdev->dev, &ux500_regulator_power_state_cnt_fops);
+			    &pdev->dev, &ux500_regulator_घातer_state_cnt_fops);
 
 	rdebug.regulator_array = regulator_info;
 	rdebug.num_regulators = num_regulators;
 
-	rdebug.state_before_suspend = kzalloc(num_regulators, GFP_KERNEL);
-	if (!rdebug.state_before_suspend)
-		goto exit_destroy_power_state;
+	rdebug.state_beक्रमe_suspend = kzalloc(num_regulators, GFP_KERNEL);
+	अगर (!rdebug.state_beक्रमe_suspend)
+		जाओ निकास_destroy_घातer_state;
 
 	rdebug.state_after_suspend = kzalloc(num_regulators, GFP_KERNEL);
-	if (!rdebug.state_after_suspend)
-		goto exit_free;
+	अगर (!rdebug.state_after_suspend)
+		जाओ निकास_मुक्त;
 
-	return 0;
+	वापस 0;
 
-exit_free:
-	kfree(rdebug.state_before_suspend);
-exit_destroy_power_state:
-	debugfs_remove_recursive(rdebug.dir);
-	return -ENOMEM;
-}
+निकास_मुक्त:
+	kमुक्त(rdebug.state_beक्रमe_suspend);
+निकास_destroy_घातer_state:
+	debugfs_हटाओ_recursive(rdebug.dir);
+	वापस -ENOMEM;
+पूर्ण
 
-int ux500_regulator_debug_exit(void)
-{
-	debugfs_remove_recursive(rdebug.dir);
-	kfree(rdebug.state_after_suspend);
-	kfree(rdebug.state_before_suspend);
+पूर्णांक ux500_regulator_debug_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(rdebug.dir);
+	kमुक्त(rdebug.state_after_suspend);
+	kमुक्त(rdebug.state_beक्रमe_suspend);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर

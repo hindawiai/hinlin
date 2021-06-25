@@ -1,232 +1,233 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Touchscreen driver for UCB1x00-based touchscreens
+ *  Touchscreen driver क्रम UCB1x00-based touchscreens
  *
  *  Copyright (C) 2001 Russell King, All Rights Reserved.
  *  Copyright (C) 2005 Pavel Machek
  *
  * 21-Jan-2002 <jco@ict.es> :
  *
- * Added support for synchronous A/D mode. This mode is useful to
- * avoid noise induced in the touchpanel by the LCD, provided that
- * the UCB1x00 has a valid LCD sync signal routed to its ADCSYNC pin.
- * It is important to note that the signal connected to the ADCSYNC
+ * Added support क्रम synchronous A/D mode. This mode is useful to
+ * aव्योम noise induced in the touchpanel by the LCD, provided that
+ * the UCB1x00 has a valid LCD sync संकेत routed to its ADCSYNC pin.
+ * It is important to note that the संकेत connected to the ADCSYNC
  * pin should provide pulses even when the LCD is blanked, otherwise
- * a pen touch needed to unblank the LCD will never be read.
+ * a pen touch needed to unblank the LCD will never be पढ़ो.
  */
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/sched.h>
-#include <linux/spinlock.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/string.h>
-#include <linux/input.h>
-#include <linux/device.h>
-#include <linux/freezer.h>
-#include <linux/slab.h>
-#include <linux/kthread.h>
-#include <linux/mfd/ucb1x00.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/input.h>
+#समावेश <linux/device.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/mfd/ucb1x00.h>
 
-#include <mach/collie.h>
-#include <asm/mach-types.h>
+#समावेश <mach/collie.h>
+#समावेश <यंत्र/mach-types.h>
 
 
 
-struct ucb1x00_ts {
-	struct input_dev	*idev;
-	struct ucb1x00		*ucb;
+काष्ठा ucb1x00_ts अणु
+	काष्ठा input_dev	*idev;
+	काष्ठा ucb1x00		*ucb;
 
 	spinlock_t		irq_lock;
-	unsigned		irq_disabled;
-	wait_queue_head_t	irq_wait;
-	struct task_struct	*rtask;
+	अचिन्हित		irq_disabled;
+	रुको_queue_head_t	irq_रुको;
+	काष्ठा task_काष्ठा	*rtask;
 	u16			x_res;
 	u16			y_res;
 
-	unsigned int		adcsync:1;
-};
+	अचिन्हित पूर्णांक		adcsync:1;
+पूर्ण;
 
-static int adcsync;
+अटल पूर्णांक adcsync;
 
-static inline void ucb1x00_ts_evt_add(struct ucb1x00_ts *ts, u16 pressure, u16 x, u16 y)
-{
-	struct input_dev *idev = ts->idev;
+अटल अंतरभूत व्योम ucb1x00_ts_evt_add(काष्ठा ucb1x00_ts *ts, u16 pressure, u16 x, u16 y)
+अणु
+	काष्ठा input_dev *idev = ts->idev;
 
-	input_report_abs(idev, ABS_X, x);
-	input_report_abs(idev, ABS_Y, y);
-	input_report_abs(idev, ABS_PRESSURE, pressure);
+	input_report_असल(idev, ABS_X, x);
+	input_report_असल(idev, ABS_Y, y);
+	input_report_असल(idev, ABS_PRESSURE, pressure);
 	input_report_key(idev, BTN_TOUCH, 1);
 	input_sync(idev);
-}
+पूर्ण
 
-static inline void ucb1x00_ts_event_release(struct ucb1x00_ts *ts)
-{
-	struct input_dev *idev = ts->idev;
+अटल अंतरभूत व्योम ucb1x00_ts_event_release(काष्ठा ucb1x00_ts *ts)
+अणु
+	काष्ठा input_dev *idev = ts->idev;
 
-	input_report_abs(idev, ABS_PRESSURE, 0);
+	input_report_असल(idev, ABS_PRESSURE, 0);
 	input_report_key(idev, BTN_TOUCH, 0);
 	input_sync(idev);
-}
+पूर्ण
 
 /*
- * Switch to interrupt mode.
+ * Switch to पूर्णांकerrupt mode.
  */
-static inline void ucb1x00_ts_mode_int(struct ucb1x00_ts *ts)
-{
-	ucb1x00_reg_write(ts->ucb, UCB_TS_CR,
+अटल अंतरभूत व्योम ucb1x00_ts_mode_पूर्णांक(काष्ठा ucb1x00_ts *ts)
+अणु
+	ucb1x00_reg_ग_लिखो(ts->ucb, UCB_TS_CR,
 			UCB_TS_CR_TSMX_POW | UCB_TS_CR_TSPX_POW |
 			UCB_TS_CR_TSMY_GND | UCB_TS_CR_TSPY_GND |
 			UCB_TS_CR_MODE_INT);
-}
+पूर्ण
 
 /*
- * Switch to pressure mode, and read pressure.  We don't need to wait
+ * Switch to pressure mode, and पढ़ो pressure.  We करोn't need to रुको
  * here, since both plates are being driven.
  */
-static inline unsigned int ucb1x00_ts_read_pressure(struct ucb1x00_ts *ts)
-{
-	if (machine_is_collie()) {
-		ucb1x00_io_write(ts->ucb, COLLIE_TC35143_GPIO_TBL_CHK, 0);
-		ucb1x00_reg_write(ts->ucb, UCB_TS_CR,
+अटल अंतरभूत अचिन्हित पूर्णांक ucb1x00_ts_पढ़ो_pressure(काष्ठा ucb1x00_ts *ts)
+अणु
+	अगर (machine_is_collie()) अणु
+		ucb1x00_io_ग_लिखो(ts->ucb, COLLIE_TC35143_GPIO_TBL_CHK, 0);
+		ucb1x00_reg_ग_लिखो(ts->ucb, UCB_TS_CR,
 				  UCB_TS_CR_TSPX_POW | UCB_TS_CR_TSMX_POW |
 				  UCB_TS_CR_MODE_POS | UCB_TS_CR_BIAS_ENA);
 
 		udelay(55);
 
-		return ucb1x00_adc_read(ts->ucb, UCB_ADC_INP_AD2, ts->adcsync);
-	} else {
-		ucb1x00_reg_write(ts->ucb, UCB_TS_CR,
+		वापस ucb1x00_adc_पढ़ो(ts->ucb, UCB_ADC_INP_AD2, ts->adcsync);
+	पूर्ण अन्यथा अणु
+		ucb1x00_reg_ग_लिखो(ts->ucb, UCB_TS_CR,
 				  UCB_TS_CR_TSMX_POW | UCB_TS_CR_TSPX_POW |
 				  UCB_TS_CR_TSMY_GND | UCB_TS_CR_TSPY_GND |
 				  UCB_TS_CR_MODE_PRES | UCB_TS_CR_BIAS_ENA);
 
-		return ucb1x00_adc_read(ts->ucb, UCB_ADC_INP_TSPY, ts->adcsync);
-	}
-}
+		वापस ucb1x00_adc_पढ़ो(ts->ucb, UCB_ADC_INP_TSPY, ts->adcsync);
+	पूर्ण
+पूर्ण
 
 /*
- * Switch to X position mode and measure Y plate.  We switch the plate
- * configuration in pressure mode, then switch to position mode.  This
- * gives a faster response time.  Even so, we need to wait about 55us
- * for things to stabilise.
+ * Switch to X position mode and measure Y plate.  We चयन the plate
+ * configuration in pressure mode, then चयन to position mode.  This
+ * gives a faster response समय.  Even so, we need to रुको about 55us
+ * क्रम things to stabilise.
  */
-static inline unsigned int ucb1x00_ts_read_xpos(struct ucb1x00_ts *ts)
-{
-	if (machine_is_collie())
-		ucb1x00_io_write(ts->ucb, 0, COLLIE_TC35143_GPIO_TBL_CHK);
-	else {
-		ucb1x00_reg_write(ts->ucb, UCB_TS_CR,
+अटल अंतरभूत अचिन्हित पूर्णांक ucb1x00_ts_पढ़ो_xpos(काष्ठा ucb1x00_ts *ts)
+अणु
+	अगर (machine_is_collie())
+		ucb1x00_io_ग_लिखो(ts->ucb, 0, COLLIE_TC35143_GPIO_TBL_CHK);
+	अन्यथा अणु
+		ucb1x00_reg_ग_लिखो(ts->ucb, UCB_TS_CR,
 				  UCB_TS_CR_TSMX_GND | UCB_TS_CR_TSPX_POW |
 				  UCB_TS_CR_MODE_PRES | UCB_TS_CR_BIAS_ENA);
-		ucb1x00_reg_write(ts->ucb, UCB_TS_CR,
+		ucb1x00_reg_ग_लिखो(ts->ucb, UCB_TS_CR,
 				  UCB_TS_CR_TSMX_GND | UCB_TS_CR_TSPX_POW |
 				  UCB_TS_CR_MODE_PRES | UCB_TS_CR_BIAS_ENA);
-	}
-	ucb1x00_reg_write(ts->ucb, UCB_TS_CR,
+	पूर्ण
+	ucb1x00_reg_ग_लिखो(ts->ucb, UCB_TS_CR,
 			UCB_TS_CR_TSMX_GND | UCB_TS_CR_TSPX_POW |
 			UCB_TS_CR_MODE_POS | UCB_TS_CR_BIAS_ENA);
 
 	udelay(55);
 
-	return ucb1x00_adc_read(ts->ucb, UCB_ADC_INP_TSPY, ts->adcsync);
-}
+	वापस ucb1x00_adc_पढ़ो(ts->ucb, UCB_ADC_INP_TSPY, ts->adcsync);
+पूर्ण
 
 /*
- * Switch to Y position mode and measure X plate.  We switch the plate
- * configuration in pressure mode, then switch to position mode.  This
- * gives a faster response time.  Even so, we need to wait about 55us
- * for things to stabilise.
+ * Switch to Y position mode and measure X plate.  We चयन the plate
+ * configuration in pressure mode, then चयन to position mode.  This
+ * gives a faster response समय.  Even so, we need to रुको about 55us
+ * क्रम things to stabilise.
  */
-static inline unsigned int ucb1x00_ts_read_ypos(struct ucb1x00_ts *ts)
-{
-	if (machine_is_collie())
-		ucb1x00_io_write(ts->ucb, 0, COLLIE_TC35143_GPIO_TBL_CHK);
-	else {
-		ucb1x00_reg_write(ts->ucb, UCB_TS_CR,
+अटल अंतरभूत अचिन्हित पूर्णांक ucb1x00_ts_पढ़ो_ypos(काष्ठा ucb1x00_ts *ts)
+अणु
+	अगर (machine_is_collie())
+		ucb1x00_io_ग_लिखो(ts->ucb, 0, COLLIE_TC35143_GPIO_TBL_CHK);
+	अन्यथा अणु
+		ucb1x00_reg_ग_लिखो(ts->ucb, UCB_TS_CR,
 				  UCB_TS_CR_TSMY_GND | UCB_TS_CR_TSPY_POW |
 				  UCB_TS_CR_MODE_PRES | UCB_TS_CR_BIAS_ENA);
-		ucb1x00_reg_write(ts->ucb, UCB_TS_CR,
+		ucb1x00_reg_ग_लिखो(ts->ucb, UCB_TS_CR,
 				  UCB_TS_CR_TSMY_GND | UCB_TS_CR_TSPY_POW |
 				  UCB_TS_CR_MODE_PRES | UCB_TS_CR_BIAS_ENA);
-	}
+	पूर्ण
 
-	ucb1x00_reg_write(ts->ucb, UCB_TS_CR,
+	ucb1x00_reg_ग_लिखो(ts->ucb, UCB_TS_CR,
 			UCB_TS_CR_TSMY_GND | UCB_TS_CR_TSPY_POW |
 			UCB_TS_CR_MODE_POS | UCB_TS_CR_BIAS_ENA);
 
 	udelay(55);
 
-	return ucb1x00_adc_read(ts->ucb, UCB_ADC_INP_TSPX, ts->adcsync);
-}
+	वापस ucb1x00_adc_पढ़ो(ts->ucb, UCB_ADC_INP_TSPX, ts->adcsync);
+पूर्ण
 
 /*
  * Switch to X plate resistance mode.  Set MX to ground, PX to
  * supply.  Measure current.
  */
-static inline unsigned int ucb1x00_ts_read_xres(struct ucb1x00_ts *ts)
-{
-	ucb1x00_reg_write(ts->ucb, UCB_TS_CR,
+अटल अंतरभूत अचिन्हित पूर्णांक ucb1x00_ts_पढ़ो_xres(काष्ठा ucb1x00_ts *ts)
+अणु
+	ucb1x00_reg_ग_लिखो(ts->ucb, UCB_TS_CR,
 			UCB_TS_CR_TSMX_GND | UCB_TS_CR_TSPX_POW |
 			UCB_TS_CR_MODE_PRES | UCB_TS_CR_BIAS_ENA);
-	return ucb1x00_adc_read(ts->ucb, 0, ts->adcsync);
-}
+	वापस ucb1x00_adc_पढ़ो(ts->ucb, 0, ts->adcsync);
+पूर्ण
 
 /*
  * Switch to Y plate resistance mode.  Set MY to ground, PY to
  * supply.  Measure current.
  */
-static inline unsigned int ucb1x00_ts_read_yres(struct ucb1x00_ts *ts)
-{
-	ucb1x00_reg_write(ts->ucb, UCB_TS_CR,
+अटल अंतरभूत अचिन्हित पूर्णांक ucb1x00_ts_पढ़ो_yres(काष्ठा ucb1x00_ts *ts)
+अणु
+	ucb1x00_reg_ग_लिखो(ts->ucb, UCB_TS_CR,
 			UCB_TS_CR_TSMY_GND | UCB_TS_CR_TSPY_POW |
 			UCB_TS_CR_MODE_PRES | UCB_TS_CR_BIAS_ENA);
-	return ucb1x00_adc_read(ts->ucb, 0, ts->adcsync);
-}
+	वापस ucb1x00_adc_पढ़ो(ts->ucb, 0, ts->adcsync);
+पूर्ण
 
-static inline int ucb1x00_ts_pen_down(struct ucb1x00_ts *ts)
-{
-	unsigned int val = ucb1x00_reg_read(ts->ucb, UCB_TS_CR);
+अटल अंतरभूत पूर्णांक ucb1x00_ts_pen_करोwn(काष्ठा ucb1x00_ts *ts)
+अणु
+	अचिन्हित पूर्णांक val = ucb1x00_reg_पढ़ो(ts->ucb, UCB_TS_CR);
 
-	if (machine_is_collie())
-		return (!(val & (UCB_TS_CR_TSPX_LOW)));
-	else
-		return (val & (UCB_TS_CR_TSPX_LOW | UCB_TS_CR_TSMX_LOW));
-}
+	अगर (machine_is_collie())
+		वापस (!(val & (UCB_TS_CR_TSPX_LOW)));
+	अन्यथा
+		वापस (val & (UCB_TS_CR_TSPX_LOW | UCB_TS_CR_TSMX_LOW));
+पूर्ण
 
 /*
- * This is a RT kernel thread that handles the ADC accesses
- * (mainly so we can use semaphores in the UCB1200 core code
+ * This is a RT kernel thपढ़ो that handles the ADC accesses
+ * (मुख्यly so we can use semaphores in the UCB1200 core code
  * to serialise accesses to the ADC).
  */
-static int ucb1x00_thread(void *_ts)
-{
-	struct ucb1x00_ts *ts = _ts;
-	DECLARE_WAITQUEUE(wait, current);
+अटल पूर्णांक ucb1x00_thपढ़ो(व्योम *_ts)
+अणु
+	काष्ठा ucb1x00_ts *ts = _ts;
+	DECLARE_WAITQUEUE(रुको, current);
 	bool frozen, ignore = false;
-	int valid = 0;
+	पूर्णांक valid = 0;
 
-	set_freezable();
-	add_wait_queue(&ts->irq_wait, &wait);
-	while (!kthread_freezable_should_stop(&frozen)) {
-		unsigned int x, y, p;
-		signed long timeout;
+	set_मुक्तzable();
+	add_रुको_queue(&ts->irq_रुको, &रुको);
+	जबतक (!kthपढ़ो_मुक्तzable_should_stop(&frozen)) अणु
+		अचिन्हित पूर्णांक x, y, p;
+		चिन्हित दीर्घ समयout;
 
-		if (frozen)
+		अगर (frozen)
 			ignore = true;
 
 		ucb1x00_adc_enable(ts->ucb);
 
-		x = ucb1x00_ts_read_xpos(ts);
-		y = ucb1x00_ts_read_ypos(ts);
-		p = ucb1x00_ts_read_pressure(ts);
+		x = ucb1x00_ts_पढ़ो_xpos(ts);
+		y = ucb1x00_ts_पढ़ो_ypos(ts);
+		p = ucb1x00_ts_पढ़ो_pressure(ts);
 
 		/*
-		 * Switch back to interrupt mode.
+		 * Switch back to पूर्णांकerrupt mode.
 		 */
-		ucb1x00_ts_mode_int(ts);
+		ucb1x00_ts_mode_पूर्णांक(ts);
 		ucb1x00_adc_disable(ts->ucb);
 
 		msleep(10);
@@ -234,145 +235,145 @@ static int ucb1x00_thread(void *_ts)
 		ucb1x00_enable(ts->ucb);
 
 
-		if (ucb1x00_ts_pen_down(ts)) {
+		अगर (ucb1x00_ts_pen_करोwn(ts)) अणु
 			set_current_state(TASK_INTERRUPTIBLE);
 
 			spin_lock_irq(&ts->irq_lock);
-			if (ts->irq_disabled) {
+			अगर (ts->irq_disabled) अणु
 				ts->irq_disabled = 0;
 				enable_irq(ts->ucb->irq_base + UCB_IRQ_TSPX);
-			}
+			पूर्ण
 			spin_unlock_irq(&ts->irq_lock);
 			ucb1x00_disable(ts->ucb);
 
 			/*
-			 * If we spat out a valid sample set last time,
+			 * If we spat out a valid sample set last समय,
 			 * spit out a "pen off" sample here.
 			 */
-			if (valid) {
+			अगर (valid) अणु
 				ucb1x00_ts_event_release(ts);
 				valid = 0;
-			}
+			पूर्ण
 
-			timeout = MAX_SCHEDULE_TIMEOUT;
-		} else {
+			समयout = MAX_SCHEDULE_TIMEOUT;
+		पूर्ण अन्यथा अणु
 			ucb1x00_disable(ts->ucb);
 
 			/*
-			 * Filtering is policy.  Policy belongs in user
-			 * space.  We therefore leave it to user space
-			 * to do any filtering they please.
+			 * Filtering is policy.  Policy beदीर्घs in user
+			 * space.  We thereक्रमe leave it to user space
+			 * to करो any filtering they please.
 			 */
-			if (!ignore) {
+			अगर (!ignore) अणु
 				ucb1x00_ts_evt_add(ts, p, x, y);
 				valid = 1;
-			}
+			पूर्ण
 
 			set_current_state(TASK_INTERRUPTIBLE);
-			timeout = HZ / 100;
-		}
+			समयout = HZ / 100;
+		पूर्ण
 
-		schedule_timeout(timeout);
-	}
+		schedule_समयout(समयout);
+	पूर्ण
 
-	remove_wait_queue(&ts->irq_wait, &wait);
+	हटाओ_रुको_queue(&ts->irq_रुको, &रुको);
 
-	ts->rtask = NULL;
-	return 0;
-}
+	ts->rtask = शून्य;
+	वापस 0;
+पूर्ण
 
 /*
- * We only detect touch screen _touches_ with this interrupt
+ * We only detect touch screen _touches_ with this पूर्णांकerrupt
  * handler, and even then we just schedule our task.
  */
-static irqreturn_t ucb1x00_ts_irq(int irq, void *id)
-{
-	struct ucb1x00_ts *ts = id;
+अटल irqवापस_t ucb1x00_ts_irq(पूर्णांक irq, व्योम *id)
+अणु
+	काष्ठा ucb1x00_ts *ts = id;
 
 	spin_lock(&ts->irq_lock);
 	ts->irq_disabled = 1;
 	disable_irq_nosync(ts->ucb->irq_base + UCB_IRQ_TSPX);
 	spin_unlock(&ts->irq_lock);
-	wake_up(&ts->irq_wait);
+	wake_up(&ts->irq_रुको);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int ucb1x00_ts_open(struct input_dev *idev)
-{
-	struct ucb1x00_ts *ts = input_get_drvdata(idev);
-	unsigned long flags = 0;
-	int ret = 0;
+अटल पूर्णांक ucb1x00_ts_खोलो(काष्ठा input_dev *idev)
+अणु
+	काष्ठा ucb1x00_ts *ts = input_get_drvdata(idev);
+	अचिन्हित दीर्घ flags = 0;
+	पूर्णांक ret = 0;
 
 	BUG_ON(ts->rtask);
 
-	if (machine_is_collie())
+	अगर (machine_is_collie())
 		flags = IRQF_TRIGGER_RISING;
-	else
+	अन्यथा
 		flags = IRQF_TRIGGER_FALLING;
 
 	ts->irq_disabled = 0;
 
-	init_waitqueue_head(&ts->irq_wait);
+	init_रुकोqueue_head(&ts->irq_रुको);
 	ret = request_irq(ts->ucb->irq_base + UCB_IRQ_TSPX, ucb1x00_ts_irq,
 			  flags, "ucb1x00-ts", ts);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	/*
-	 * If we do this at all, we should allow the user to
-	 * measure and read the X and Y resistance at any time.
+	 * If we करो this at all, we should allow the user to
+	 * measure and पढ़ो the X and Y resistance at any समय.
 	 */
 	ucb1x00_adc_enable(ts->ucb);
-	ts->x_res = ucb1x00_ts_read_xres(ts);
-	ts->y_res = ucb1x00_ts_read_yres(ts);
+	ts->x_res = ucb1x00_ts_पढ़ो_xres(ts);
+	ts->y_res = ucb1x00_ts_पढ़ो_yres(ts);
 	ucb1x00_adc_disable(ts->ucb);
 
-	ts->rtask = kthread_run(ucb1x00_thread, ts, "ktsd");
-	if (!IS_ERR(ts->rtask)) {
+	ts->rtask = kthपढ़ो_run(ucb1x00_thपढ़ो, ts, "ktsd");
+	अगर (!IS_ERR(ts->rtask)) अणु
 		ret = 0;
-	} else {
-		free_irq(ts->ucb->irq_base + UCB_IRQ_TSPX, ts);
-		ts->rtask = NULL;
+	पूर्ण अन्यथा अणु
+		मुक्त_irq(ts->ucb->irq_base + UCB_IRQ_TSPX, ts);
+		ts->rtask = शून्य;
 		ret = -EFAULT;
-	}
+	पूर्ण
 
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Release touchscreen resources.  Disable IRQs.
  */
-static void ucb1x00_ts_close(struct input_dev *idev)
-{
-	struct ucb1x00_ts *ts = input_get_drvdata(idev);
+अटल व्योम ucb1x00_ts_बंद(काष्ठा input_dev *idev)
+अणु
+	काष्ठा ucb1x00_ts *ts = input_get_drvdata(idev);
 
-	if (ts->rtask)
-		kthread_stop(ts->rtask);
+	अगर (ts->rtask)
+		kthपढ़ो_stop(ts->rtask);
 
 	ucb1x00_enable(ts->ucb);
-	free_irq(ts->ucb->irq_base + UCB_IRQ_TSPX, ts);
-	ucb1x00_reg_write(ts->ucb, UCB_TS_CR, 0);
+	मुक्त_irq(ts->ucb->irq_base + UCB_IRQ_TSPX, ts);
+	ucb1x00_reg_ग_लिखो(ts->ucb, UCB_TS_CR, 0);
 	ucb1x00_disable(ts->ucb);
-}
+पूर्ण
 
 
 /*
  * Initialisation.
  */
-static int ucb1x00_ts_add(struct ucb1x00_dev *dev)
-{
-	struct ucb1x00_ts *ts;
-	struct input_dev *idev;
-	int err;
+अटल पूर्णांक ucb1x00_ts_add(काष्ठा ucb1x00_dev *dev)
+अणु
+	काष्ठा ucb1x00_ts *ts;
+	काष्ठा input_dev *idev;
+	पूर्णांक err;
 
-	ts = kzalloc(sizeof(struct ucb1x00_ts), GFP_KERNEL);
+	ts = kzalloc(माप(काष्ठा ucb1x00_ts), GFP_KERNEL);
 	idev = input_allocate_device();
-	if (!ts || !idev) {
+	अगर (!ts || !idev) अणु
 		err = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	ts->ucb = dev->ucb;
 	ts->idev = idev;
@@ -381,8 +382,8 @@ static int ucb1x00_ts_add(struct ucb1x00_dev *dev)
 
 	idev->name       = "Touchscreen panel";
 	idev->id.product = ts->ucb->id;
-	idev->open       = ucb1x00_ts_open;
-	idev->close      = ucb1x00_ts_close;
+	idev->खोलो       = ucb1x00_ts_खोलो;
+	idev->बंद      = ucb1x00_ts_बंद;
 	idev->dev.parent = &ts->ucb->dev;
 
 	idev->evbit[0]   = BIT_MASK(EV_ABS) | BIT_MASK(EV_KEY);
@@ -391,54 +392,54 @@ static int ucb1x00_ts_add(struct ucb1x00_dev *dev)
 	input_set_drvdata(idev, ts);
 
 	ucb1x00_adc_enable(ts->ucb);
-	ts->x_res = ucb1x00_ts_read_xres(ts);
-	ts->y_res = ucb1x00_ts_read_yres(ts);
+	ts->x_res = ucb1x00_ts_पढ़ो_xres(ts);
+	ts->y_res = ucb1x00_ts_पढ़ो_yres(ts);
 	ucb1x00_adc_disable(ts->ucb);
 
-	input_set_abs_params(idev, ABS_X, 0, ts->x_res, 0, 0);
-	input_set_abs_params(idev, ABS_Y, 0, ts->y_res, 0, 0);
-	input_set_abs_params(idev, ABS_PRESSURE, 0, 0, 0, 0);
+	input_set_असल_params(idev, ABS_X, 0, ts->x_res, 0, 0);
+	input_set_असल_params(idev, ABS_Y, 0, ts->y_res, 0, 0);
+	input_set_असल_params(idev, ABS_PRESSURE, 0, 0, 0, 0);
 
-	err = input_register_device(idev);
-	if (err)
-		goto fail;
+	err = input_रेजिस्टर_device(idev);
+	अगर (err)
+		जाओ fail;
 
 	dev->priv = ts;
 
-	return 0;
+	वापस 0;
 
  fail:
-	input_free_device(idev);
-	kfree(ts);
-	return err;
-}
+	input_मुक्त_device(idev);
+	kमुक्त(ts);
+	वापस err;
+पूर्ण
 
-static void ucb1x00_ts_remove(struct ucb1x00_dev *dev)
-{
-	struct ucb1x00_ts *ts = dev->priv;
+अटल व्योम ucb1x00_ts_हटाओ(काष्ठा ucb1x00_dev *dev)
+अणु
+	काष्ठा ucb1x00_ts *ts = dev->priv;
 
-	input_unregister_device(ts->idev);
-	kfree(ts);
-}
+	input_unरेजिस्टर_device(ts->idev);
+	kमुक्त(ts);
+पूर्ण
 
-static struct ucb1x00_driver ucb1x00_ts_driver = {
+अटल काष्ठा ucb1x00_driver ucb1x00_ts_driver = अणु
 	.add		= ucb1x00_ts_add,
-	.remove		= ucb1x00_ts_remove,
-};
+	.हटाओ		= ucb1x00_ts_हटाओ,
+पूर्ण;
 
-static int __init ucb1x00_ts_init(void)
-{
-	return ucb1x00_register_driver(&ucb1x00_ts_driver);
-}
+अटल पूर्णांक __init ucb1x00_ts_init(व्योम)
+अणु
+	वापस ucb1x00_रेजिस्टर_driver(&ucb1x00_ts_driver);
+पूर्ण
 
-static void __exit ucb1x00_ts_exit(void)
-{
-	ucb1x00_unregister_driver(&ucb1x00_ts_driver);
-}
+अटल व्योम __निकास ucb1x00_ts_निकास(व्योम)
+अणु
+	ucb1x00_unरेजिस्टर_driver(&ucb1x00_ts_driver);
+पूर्ण
 
-module_param(adcsync, int, 0444);
+module_param(adcsync, पूर्णांक, 0444);
 module_init(ucb1x00_ts_init);
-module_exit(ucb1x00_ts_exit);
+module_निकास(ucb1x00_ts_निकास);
 
 MODULE_AUTHOR("Russell King <rmk@arm.linux.org.uk>");
 MODULE_DESCRIPTION("UCB1x00 touchscreen driver");

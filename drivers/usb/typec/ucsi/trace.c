@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0
-#define CREATE_TRACE_POINTS
-#include "ucsi.h"
-#include "trace.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "ucsi.h"
+#समावेश "trace.h"
 
-static const char * const ucsi_cmd_strs[] = {
+अटल स्थिर अक्षर * स्थिर ucsi_cmd_strs[] = अणु
 	[0]				= "Unknown command",
 	[UCSI_PPM_RESET]		= "PPM_RESET",
 	[UCSI_CANCEL]			= "CANCEL",
@@ -24,40 +25,40 @@ static const char * const ucsi_cmd_strs[] = {
 	[UCSI_GET_CABLE_PROPERTY]	= "GET_CABLE_PROPERTY",
 	[UCSI_GET_CONNECTOR_STATUS]	= "GET_CONNECTOR_STATUS",
 	[UCSI_GET_ERROR_STATUS]		= "GET_ERROR_STATUS",
-};
+पूर्ण;
 
-const char *ucsi_cmd_str(u64 raw_cmd)
-{
+स्थिर अक्षर *ucsi_cmd_str(u64 raw_cmd)
+अणु
 	u8 cmd = raw_cmd & GENMASK(7, 0);
 
-	return ucsi_cmd_strs[(cmd >= ARRAY_SIZE(ucsi_cmd_strs)) ? 0 : cmd];
-}
+	वापस ucsi_cmd_strs[(cmd >= ARRAY_SIZE(ucsi_cmd_strs)) ? 0 : cmd];
+पूर्ण
 
-const char *ucsi_cci_str(u32 cci)
-{
-	if (UCSI_CCI_CONNECTOR(cci)) {
-		if (cci & UCSI_CCI_ACK_COMPLETE)
-			return "Event pending (ACK completed)";
-		if (cci & UCSI_CCI_COMMAND_COMPLETE)
-			return "Event pending (command completed)";
-		return "Connector Change";
-	}
-	if (cci & UCSI_CCI_ACK_COMPLETE)
-		return "ACK completed";
-	if (cci & UCSI_CCI_COMMAND_COMPLETE)
-		return "Command completed";
+स्थिर अक्षर *ucsi_cci_str(u32 cci)
+अणु
+	अगर (UCSI_CCI_CONNECTOR(cci)) अणु
+		अगर (cci & UCSI_CCI_ACK_COMPLETE)
+			वापस "Event pending (ACK completed)";
+		अगर (cci & UCSI_CCI_COMMAND_COMPLETE)
+			वापस "Event pending (command completed)";
+		वापस "Connector Change";
+	पूर्ण
+	अगर (cci & UCSI_CCI_ACK_COMPLETE)
+		वापस "ACK completed";
+	अगर (cci & UCSI_CCI_COMMAND_COMPLETE)
+		वापस "Command completed";
 
-	return "";
-}
+	वापस "";
+पूर्ण
 
-static const char * const ucsi_recipient_strs[] = {
+अटल स्थिर अक्षर * स्थिर ucsi_recipient_strs[] = अणु
 	[UCSI_RECIPIENT_CON]		= "port",
 	[UCSI_RECIPIENT_SOP]		= "partner",
 	[UCSI_RECIPIENT_SOP_P]		= "plug (prime)",
 	[UCSI_RECIPIENT_SOP_PP]		= "plug (double prime)",
-};
+पूर्ण;
 
-const char *ucsi_recipient_str(u8 recipient)
-{
-	return ucsi_recipient_strs[recipient];
-}
+स्थिर अक्षर *ucsi_recipient_str(u8 recipient)
+अणु
+	वापस ucsi_recipient_strs[recipient];
+पूर्ण

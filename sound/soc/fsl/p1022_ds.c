@@ -1,106 +1,107 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Freescale P1022DS ALSA SoC Machine driver
 //
-// Author: Timur Tabi <timur@freescale.com>
+// Author: Timur Tabi <timur@मुक्तscale.com>
 //
 // Copyright 2010 Freescale Semiconductor, Inc.
 
-#include <linux/module.h>
-#include <linux/fsl/guts.h>
-#include <linux/interrupt.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/slab.h>
-#include <sound/soc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fsl/guts.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/soc.h>
 
-#include "fsl_dma.h"
-#include "fsl_ssi.h"
-#include "fsl_utils.h"
+#समावेश "fsl_dma.h"
+#समावेश "fsl_ssi.h"
+#समावेश "fsl_utils.h"
 
-/* P1022-specific PMUXCR and DMUXCR bit definitions */
+/* P1022-specअगरic PMUXCR and DMUXCR bit definitions */
 
-#define CCSR_GUTS_PMUXCR_UART0_I2C1_MASK	0x0001c000
-#define CCSR_GUTS_PMUXCR_UART0_I2C1_UART0_SSI	0x00010000
-#define CCSR_GUTS_PMUXCR_UART0_I2C1_SSI		0x00018000
+#घोषणा CCSR_GUTS_PMUXCR_UART0_I2C1_MASK	0x0001c000
+#घोषणा CCSR_GUTS_PMUXCR_UART0_I2C1_UART0_SSI	0x00010000
+#घोषणा CCSR_GUTS_PMUXCR_UART0_I2C1_SSI		0x00018000
 
-#define CCSR_GUTS_PMUXCR_SSI_DMA_TDM_MASK	0x00000c00
-#define CCSR_GUTS_PMUXCR_SSI_DMA_TDM_SSI	0x00000000
+#घोषणा CCSR_GUTS_PMUXCR_SSI_DMA_TDM_MASK	0x00000c00
+#घोषणा CCSR_GUTS_PMUXCR_SSI_DMA_TDM_SSI	0x00000000
 
-#define CCSR_GUTS_DMUXCR_PAD	1	/* DMA controller/channel set to pad */
-#define CCSR_GUTS_DMUXCR_SSI	2	/* DMA controller/channel set to SSI */
+#घोषणा CCSR_GUTS_DMUXCR_PAD	1	/* DMA controller/channel set to pad */
+#घोषणा CCSR_GUTS_DMUXCR_SSI	2	/* DMA controller/channel set to SSI */
 
 /*
- * Set the DMACR register in the GUTS
+ * Set the DMACR रेजिस्टर in the GUTS
  *
- * The DMACR register determines the source of initiated transfers for each
+ * The DMACR रेजिस्टर determines the source of initiated transfers क्रम each
  * channel on each DMA controller.  Rather than have a bunch of repetitive
- * macros for the bit patterns, we just have a function that calculates
+ * macros क्रम the bit patterns, we just have a function that calculates
  * them.
  *
- * guts: Pointer to GUTS structure
+ * guts: Poपूर्णांकer to GUTS काष्ठाure
  * co: The DMA controller (0 or 1)
  * ch: The channel on the DMA controller (0, 1, 2, or 3)
  * device: The device to set as the target (CCSR_GUTS_DMUXCR_xxx)
  */
-static inline void guts_set_dmuxcr(struct ccsr_guts __iomem *guts,
-	unsigned int co, unsigned int ch, unsigned int device)
-{
-	unsigned int shift = 16 + (8 * (1 - co) + 2 * (3 - ch));
+अटल अंतरभूत व्योम guts_set_dmuxcr(काष्ठा ccsr_guts __iomem *guts,
+	अचिन्हित पूर्णांक co, अचिन्हित पूर्णांक ch, अचिन्हित पूर्णांक device)
+अणु
+	अचिन्हित पूर्णांक shअगरt = 16 + (8 * (1 - co) + 2 * (3 - ch));
 
-	clrsetbits_be32(&guts->dmuxcr, 3 << shift, device << shift);
-}
+	clrsetbits_be32(&guts->dmuxcr, 3 << shअगरt, device << shअगरt);
+पूर्ण
 
-/* There's only one global utilities register */
-static phys_addr_t guts_phys;
+/* There's only one global utilities रेजिस्टर */
+अटल phys_addr_t guts_phys;
 
 /**
- * machine_data: machine-specific ASoC device data
+ * machine_data: machine-specअगरic ASoC device data
  *
- * This structure contains data for a single sound platform device on an
+ * This काष्ठाure contains data क्रम a single sound platक्रमm device on an
  * P1022 DS.  Some of the data is taken from the device tree.
  */
-struct machine_data {
-	struct snd_soc_dai_link dai[2];
-	struct snd_soc_card card;
-	unsigned int dai_format;
-	unsigned int codec_clk_direction;
-	unsigned int cpu_clk_direction;
-	unsigned int clk_frequency;
-	unsigned int ssi_id;		/* 0 = SSI1, 1 = SSI2, etc */
-	unsigned int dma_id[2];		/* 0 = DMA1, 1 = DMA2, etc */
-	unsigned int dma_channel_id[2]; /* 0 = ch 0, 1 = ch 1, etc*/
-	char platform_name[2][DAI_NAME_SIZE]; /* One for each DMA channel */
-};
+काष्ठा machine_data अणु
+	काष्ठा snd_soc_dai_link dai[2];
+	काष्ठा snd_soc_card card;
+	अचिन्हित पूर्णांक dai_क्रमmat;
+	अचिन्हित पूर्णांक codec_clk_direction;
+	अचिन्हित पूर्णांक cpu_clk_direction;
+	अचिन्हित पूर्णांक clk_frequency;
+	अचिन्हित पूर्णांक ssi_id;		/* 0 = SSI1, 1 = SSI2, etc */
+	अचिन्हित पूर्णांक dma_id[2];		/* 0 = DMA1, 1 = DMA2, etc */
+	अचिन्हित पूर्णांक dma_channel_id[2]; /* 0 = ch 0, 1 = ch 1, etc*/
+	अक्षर platक्रमm_name[2][DAI_NAME_SIZE]; /* One क्रम each DMA channel */
+पूर्ण;
 
 /**
  * p1022_ds_machine_probe: initialize the board
  *
- * This function is used to initialize the board-specific hardware.
+ * This function is used to initialize the board-specअगरic hardware.
  *
- * Here we program the DMACR and PMUXCR registers.
+ * Here we program the DMACR and PMUXCR रेजिस्टरs.
  */
-static int p1022_ds_machine_probe(struct snd_soc_card *card)
-{
-	struct machine_data *mdata =
-		container_of(card, struct machine_data, card);
-	struct ccsr_guts __iomem *guts;
+अटल पूर्णांक p1022_ds_machine_probe(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा machine_data *mdata =
+		container_of(card, काष्ठा machine_data, card);
+	काष्ठा ccsr_guts __iomem *guts;
 
-	guts = ioremap(guts_phys, sizeof(struct ccsr_guts));
-	if (!guts) {
+	guts = ioremap(guts_phys, माप(काष्ठा ccsr_guts));
+	अगर (!guts) अणु
 		dev_err(card->dev, "could not map global utilities\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* Enable SSI Tx signal */
+	/* Enable SSI Tx संकेत */
 	clrsetbits_be32(&guts->pmuxcr, CCSR_GUTS_PMUXCR_UART0_I2C1_MASK,
 			CCSR_GUTS_PMUXCR_UART0_I2C1_UART0_SSI);
 
-	/* Enable SSI Rx signal */
+	/* Enable SSI Rx संकेत */
 	clrsetbits_be32(&guts->pmuxcr, CCSR_GUTS_PMUXCR_SSI_DMA_TDM_MASK,
 			CCSR_GUTS_PMUXCR_SSI_DMA_TDM_SSI);
 
-	/* Enable DMA Channel for SSI */
+	/* Enable DMA Channel क्रम SSI */
 	guts_set_dmuxcr(guts, mdata->dma_id[0], mdata->dma_channel_id[0],
 			CCSR_GUTS_DMUXCR_SSI);
 
@@ -109,30 +110,30 @@ static int p1022_ds_machine_probe(struct snd_soc_card *card)
 
 	iounmap(guts);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * p1022_ds_startup: program the board with various hardware parameters
  *
- * This function takes board-specific information, like clock frequencies
- * and serial data formats, and passes that information to the codec and
+ * This function takes board-specअगरic inक्रमmation, like घड़ी frequencies
+ * and serial data क्रमmats, and passes that inक्रमmation to the codec and
  * transport drivers.
  */
-static int p1022_ds_startup(struct snd_pcm_substream *substream)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct machine_data *mdata =
-		container_of(rtd->card, struct machine_data, card);
-	struct device *dev = rtd->card->dev;
-	int ret = 0;
+अटल पूर्णांक p1022_ds_startup(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा machine_data *mdata =
+		container_of(rtd->card, काष्ठा machine_data, card);
+	काष्ठा device *dev = rtd->card->dev;
+	पूर्णांक ret = 0;
 
 	/* Tell the codec driver what the serial protocol is. */
-	ret = snd_soc_dai_set_fmt(asoc_rtd_to_codec(rtd, 0), mdata->dai_format);
-	if (ret < 0) {
+	ret = snd_soc_dai_set_fmt(asoc_rtd_to_codec(rtd, 0), mdata->dai_क्रमmat);
+	अगर (ret < 0) अणु
 		dev_err(dev, "could not set codec driver audio format\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Tell the codec driver what the MCLK frequency is, and whether it's
@@ -140,33 +141,33 @@ static int p1022_ds_startup(struct snd_pcm_substream *substream)
 	 */
 	ret = snd_soc_dai_set_sysclk(asoc_rtd_to_codec(rtd, 0), 0, mdata->clk_frequency,
 				     mdata->codec_clk_direction);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "could not set codec driver clock params\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * p1022_ds_machine_remove: Remove the sound device
+ * p1022_ds_machine_हटाओ: Remove the sound device
  *
- * This function is called to remove the sound device for one SSI.  We
- * de-program the DMACR and PMUXCR register.
+ * This function is called to हटाओ the sound device क्रम one SSI.  We
+ * de-program the DMACR and PMUXCR रेजिस्टर.
  */
-static int p1022_ds_machine_remove(struct snd_soc_card *card)
-{
-	struct machine_data *mdata =
-		container_of(card, struct machine_data, card);
-	struct ccsr_guts __iomem *guts;
+अटल पूर्णांक p1022_ds_machine_हटाओ(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा machine_data *mdata =
+		container_of(card, काष्ठा machine_data, card);
+	काष्ठा ccsr_guts __iomem *guts;
 
-	guts = ioremap(guts_phys, sizeof(struct ccsr_guts));
-	if (!guts) {
+	guts = ioremap(guts_phys, माप(काष्ठा ccsr_guts));
+	अगर (!guts) अणु
 		dev_err(card->dev, "could not map global utilities\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* Restore the signal routing */
+	/* Restore the संकेत routing */
 	clrbits32(&guts->pmuxcr, CCSR_GUTS_PMUXCR_UART0_I2C1_MASK);
 	clrbits32(&guts->pmuxcr, CCSR_GUTS_PMUXCR_SSI_DMA_TDM_MASK);
 	guts_set_dmuxcr(guts, mdata->dma_id[0], mdata->dma_channel_id[0], 0);
@@ -174,70 +175,70 @@ static int p1022_ds_machine_remove(struct snd_soc_card *card)
 
 	iounmap(guts);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * p1022_ds_ops: ASoC machine driver operations
  */
-static const struct snd_soc_ops p1022_ds_ops = {
+अटल स्थिर काष्ठा snd_soc_ops p1022_ds_ops = अणु
 	.startup = p1022_ds_startup,
-};
+पूर्ण;
 
 /**
- * p1022_ds_probe: platform probe function for the machine driver
+ * p1022_ds_probe: platक्रमm probe function क्रम the machine driver
  *
  * Although this is a machine driver, the SSI node is the "master" node with
- * respect to audio hardware connections.  Therefore, we create a new ASoC
- * device for each new SSI node that has a codec attached.
+ * respect to audio hardware connections.  Thereक्रमe, we create a new ASoC
+ * device क्रम each new SSI node that has a codec attached.
  */
-static int p1022_ds_probe(struct platform_device *pdev)
-{
-	struct device *dev = pdev->dev.parent;
-	/* ssi_pdev is the platform device for the SSI node that probed us */
-	struct platform_device *ssi_pdev = to_platform_device(dev);
-	struct device_node *np = ssi_pdev->dev.of_node;
-	struct device_node *codec_np = NULL;
-	struct machine_data *mdata;
-	struct snd_soc_dai_link_component *comp;
-	int ret;
-	const char *sprop;
-	const u32 *iprop;
+अटल पूर्णांक p1022_ds_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = pdev->dev.parent;
+	/* ssi_pdev is the platक्रमm device क्रम the SSI node that probed us */
+	काष्ठा platक्रमm_device *ssi_pdev = to_platक्रमm_device(dev);
+	काष्ठा device_node *np = ssi_pdev->dev.of_node;
+	काष्ठा device_node *codec_np = शून्य;
+	काष्ठा machine_data *mdata;
+	काष्ठा snd_soc_dai_link_component *comp;
+	पूर्णांक ret;
+	स्थिर अक्षर *sprop;
+	स्थिर u32 *iprop;
 
-	/* Find the codec node for this SSI. */
+	/* Find the codec node क्रम this SSI. */
 	codec_np = of_parse_phandle(np, "codec-handle", 0);
-	if (!codec_np) {
+	अगर (!codec_np) अणु
 		dev_err(dev, "could not find codec node\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	mdata = kzalloc(sizeof(struct machine_data), GFP_KERNEL);
-	if (!mdata) {
+	mdata = kzalloc(माप(काष्ठा machine_data), GFP_KERNEL);
+	अगर (!mdata) अणु
 		ret = -ENOMEM;
-		goto error_put;
-	}
+		जाओ error_put;
+	पूर्ण
 
-	comp = devm_kzalloc(&pdev->dev, 6 * sizeof(*comp), GFP_KERNEL);
-	if (!comp) {
+	comp = devm_kzalloc(&pdev->dev, 6 * माप(*comp), GFP_KERNEL);
+	अगर (!comp) अणु
 		ret = -ENOMEM;
-		goto error_put;
-	}
+		जाओ error_put;
+	पूर्ण
 
 	mdata->dai[0].cpus	= &comp[0];
 	mdata->dai[0].codecs	= &comp[1];
-	mdata->dai[0].platforms	= &comp[2];
+	mdata->dai[0].platक्रमms	= &comp[2];
 
 	mdata->dai[0].num_cpus		= 1;
 	mdata->dai[0].num_codecs	= 1;
-	mdata->dai[0].num_platforms	= 1;
+	mdata->dai[0].num_platक्रमms	= 1;
 
 	mdata->dai[1].cpus	= &comp[3];
 	mdata->dai[1].codecs	= &comp[4];
-	mdata->dai[1].platforms	= &comp[5];
+	mdata->dai[1].platक्रमms	= &comp[5];
 
 	mdata->dai[1].num_cpus		= 1;
 	mdata->dai[1].num_codecs	= 1;
-	mdata->dai[1].num_platforms	= 1;
+	mdata->dai[1].num_platक्रमms	= 1;
 
 
 	mdata->dai[0].cpus->dai_name = dev_name(&ssi_pdev->dev);
@@ -246,215 +247,215 @@ static int p1022_ds_probe(struct platform_device *pdev)
 	/* ASoC core can match codec with device node */
 	mdata->dai[0].codecs->of_node = codec_np;
 
-	/* We register two DAIs per SSI, one for playback and the other for
-	 * capture.  We support codecs that have separate DAIs for both playback
+	/* We रेजिस्टर two DAIs per SSI, one क्रम playback and the other क्रम
+	 * capture.  We support codecs that have separate DAIs क्रम both playback
 	 * and capture.
 	 */
-	memcpy(&mdata->dai[1], &mdata->dai[0], sizeof(struct snd_soc_dai_link));
+	स_नकल(&mdata->dai[1], &mdata->dai[0], माप(काष्ठा snd_soc_dai_link));
 
 	/* The DAI names from the codec (snd_soc_dai_driver.name) */
 	mdata->dai[0].codecs->dai_name = "wm8776-hifi-playback";
 	mdata->dai[1].codecs->dai_name = "wm8776-hifi-capture";
 
 	/* Get the device ID */
-	iprop = of_get_property(np, "cell-index", NULL);
-	if (!iprop) {
+	iprop = of_get_property(np, "cell-index", शून्य);
+	अगर (!iprop) अणु
 		dev_err(&pdev->dev, "cell-index property not found\n");
 		ret = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	mdata->ssi_id = be32_to_cpup(iprop);
 
-	/* Get the serial format and clock direction. */
-	sprop = of_get_property(np, "fsl,mode", NULL);
-	if (!sprop) {
+	/* Get the serial क्रमmat and घड़ी direction. */
+	sprop = of_get_property(np, "fsl,mode", शून्य);
+	अगर (!sprop) अणु
 		dev_err(&pdev->dev, "fsl,mode property not found\n");
 		ret = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (strcasecmp(sprop, "i2s-slave") == 0) {
-		mdata->dai_format = SND_SOC_DAIFMT_NB_NF |
+	अगर (strहालcmp(sprop, "i2s-slave") == 0) अणु
+		mdata->dai_क्रमmat = SND_SOC_DAIFMT_NB_NF |
 			SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_CBM_CFM;
 		mdata->codec_clk_direction = SND_SOC_CLOCK_OUT;
 		mdata->cpu_clk_direction = SND_SOC_CLOCK_IN;
 
-		/* In i2s-slave mode, the codec has its own clock source, so we
+		/* In i2s-slave mode, the codec has its own घड़ी source, so we
 		 * need to get the frequency from the device tree and pass it to
 		 * the codec driver.
 		 */
-		iprop = of_get_property(codec_np, "clock-frequency", NULL);
-		if (!iprop || !*iprop) {
+		iprop = of_get_property(codec_np, "clock-frequency", शून्य);
+		अगर (!iprop || !*iprop) अणु
 			dev_err(&pdev->dev, "codec bus-frequency "
 				"property is missing or invalid\n");
 			ret = -EINVAL;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		mdata->clk_frequency = be32_to_cpup(iprop);
-	} else if (strcasecmp(sprop, "i2s-master") == 0) {
-		mdata->dai_format = SND_SOC_DAIFMT_NB_NF |
+	पूर्ण अन्यथा अगर (strहालcmp(sprop, "i2s-master") == 0) अणु
+		mdata->dai_क्रमmat = SND_SOC_DAIFMT_NB_NF |
 			SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_CBS_CFS;
 		mdata->codec_clk_direction = SND_SOC_CLOCK_IN;
 		mdata->cpu_clk_direction = SND_SOC_CLOCK_OUT;
-	} else if (strcasecmp(sprop, "lj-slave") == 0) {
-		mdata->dai_format = SND_SOC_DAIFMT_NB_NF |
+	पूर्ण अन्यथा अगर (strहालcmp(sprop, "lj-slave") == 0) अणु
+		mdata->dai_क्रमmat = SND_SOC_DAIFMT_NB_NF |
 			SND_SOC_DAIFMT_LEFT_J | SND_SOC_DAIFMT_CBM_CFM;
 		mdata->codec_clk_direction = SND_SOC_CLOCK_OUT;
 		mdata->cpu_clk_direction = SND_SOC_CLOCK_IN;
-	} else if (strcasecmp(sprop, "lj-master") == 0) {
-		mdata->dai_format = SND_SOC_DAIFMT_NB_NF |
+	पूर्ण अन्यथा अगर (strहालcmp(sprop, "lj-master") == 0) अणु
+		mdata->dai_क्रमmat = SND_SOC_DAIFMT_NB_NF |
 			SND_SOC_DAIFMT_LEFT_J | SND_SOC_DAIFMT_CBS_CFS;
 		mdata->codec_clk_direction = SND_SOC_CLOCK_IN;
 		mdata->cpu_clk_direction = SND_SOC_CLOCK_OUT;
-	} else if (strcasecmp(sprop, "rj-slave") == 0) {
-		mdata->dai_format = SND_SOC_DAIFMT_NB_NF |
+	पूर्ण अन्यथा अगर (strहालcmp(sprop, "rj-slave") == 0) अणु
+		mdata->dai_क्रमmat = SND_SOC_DAIFMT_NB_NF |
 			SND_SOC_DAIFMT_RIGHT_J | SND_SOC_DAIFMT_CBM_CFM;
 		mdata->codec_clk_direction = SND_SOC_CLOCK_OUT;
 		mdata->cpu_clk_direction = SND_SOC_CLOCK_IN;
-	} else if (strcasecmp(sprop, "rj-master") == 0) {
-		mdata->dai_format = SND_SOC_DAIFMT_NB_NF |
+	पूर्ण अन्यथा अगर (strहालcmp(sprop, "rj-master") == 0) अणु
+		mdata->dai_क्रमmat = SND_SOC_DAIFMT_NB_NF |
 			SND_SOC_DAIFMT_RIGHT_J | SND_SOC_DAIFMT_CBS_CFS;
 		mdata->codec_clk_direction = SND_SOC_CLOCK_IN;
 		mdata->cpu_clk_direction = SND_SOC_CLOCK_OUT;
-	} else if (strcasecmp(sprop, "ac97-slave") == 0) {
-		mdata->dai_format = SND_SOC_DAIFMT_NB_NF |
+	पूर्ण अन्यथा अगर (strहालcmp(sprop, "ac97-slave") == 0) अणु
+		mdata->dai_क्रमmat = SND_SOC_DAIFMT_NB_NF |
 			SND_SOC_DAIFMT_AC97 | SND_SOC_DAIFMT_CBM_CFM;
 		mdata->codec_clk_direction = SND_SOC_CLOCK_OUT;
 		mdata->cpu_clk_direction = SND_SOC_CLOCK_IN;
-	} else if (strcasecmp(sprop, "ac97-master") == 0) {
-		mdata->dai_format = SND_SOC_DAIFMT_NB_NF |
+	पूर्ण अन्यथा अगर (strहालcmp(sprop, "ac97-master") == 0) अणु
+		mdata->dai_क्रमmat = SND_SOC_DAIFMT_NB_NF |
 			SND_SOC_DAIFMT_AC97 | SND_SOC_DAIFMT_CBS_CFS;
 		mdata->codec_clk_direction = SND_SOC_CLOCK_IN;
 		mdata->cpu_clk_direction = SND_SOC_CLOCK_OUT;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&pdev->dev,
 			"unrecognized fsl,mode property '%s'\n", sprop);
 		ret = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (!mdata->clk_frequency) {
+	अगर (!mdata->clk_frequency) अणु
 		dev_err(&pdev->dev, "unknown clock frequency\n");
 		ret = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* Find the playback DMA channel to use. */
-	mdata->dai[0].platforms->name = mdata->platform_name[0];
+	mdata->dai[0].platक्रमms->name = mdata->platक्रमm_name[0];
 	ret = fsl_asoc_get_dma_channel(np, "fsl,playback-dma", &mdata->dai[0],
 				       &mdata->dma_channel_id[0],
 				       &mdata->dma_id[0]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "missing/invalid playback DMA phandle\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* Find the capture DMA channel to use. */
-	mdata->dai[1].platforms->name = mdata->platform_name[1];
+	mdata->dai[1].platक्रमms->name = mdata->platक्रमm_name[1];
 	ret = fsl_asoc_get_dma_channel(np, "fsl,capture-dma", &mdata->dai[1],
 				       &mdata->dma_channel_id[1],
 				       &mdata->dma_id[1]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "missing/invalid capture DMA phandle\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	/* Initialize our DAI data structure.  */
+	/* Initialize our DAI data काष्ठाure.  */
 	mdata->dai[0].stream_name = "playback";
 	mdata->dai[1].stream_name = "capture";
 	mdata->dai[0].name = mdata->dai[0].stream_name;
 	mdata->dai[1].name = mdata->dai[1].stream_name;
 
 	mdata->card.probe = p1022_ds_machine_probe;
-	mdata->card.remove = p1022_ds_machine_remove;
-	mdata->card.name = pdev->name; /* The platform driver name */
+	mdata->card.हटाओ = p1022_ds_machine_हटाओ;
+	mdata->card.name = pdev->name; /* The platक्रमm driver name */
 	mdata->card.owner = THIS_MODULE;
 	mdata->card.dev = &pdev->dev;
 	mdata->card.num_links = 2;
 	mdata->card.dai_link = mdata->dai;
 
 	/* Register with ASoC */
-	ret = snd_soc_register_card(&mdata->card);
-	if (ret) {
+	ret = snd_soc_रेजिस्टर_card(&mdata->card);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "could not register card\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	of_node_put(codec_np);
 
-	return 0;
+	वापस 0;
 
 error:
-	kfree(mdata);
+	kमुक्त(mdata);
 error_put:
 	of_node_put(codec_np);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * p1022_ds_remove: remove the platform device
+ * p1022_ds_हटाओ: हटाओ the platक्रमm device
  *
- * This function is called when the platform device is removed.
+ * This function is called when the platक्रमm device is हटाओd.
  */
-static int p1022_ds_remove(struct platform_device *pdev)
-{
-	struct snd_soc_card *card = platform_get_drvdata(pdev);
-	struct machine_data *mdata =
-		container_of(card, struct machine_data, card);
+अटल पूर्णांक p1022_ds_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा snd_soc_card *card = platक्रमm_get_drvdata(pdev);
+	काष्ठा machine_data *mdata =
+		container_of(card, काष्ठा machine_data, card);
 
-	snd_soc_unregister_card(card);
-	kfree(mdata);
+	snd_soc_unरेजिस्टर_card(card);
+	kमुक्त(mdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver p1022_ds_driver = {
+अटल काष्ठा platक्रमm_driver p1022_ds_driver = अणु
 	.probe = p1022_ds_probe,
-	.remove = p1022_ds_remove,
-	.driver = {
+	.हटाओ = p1022_ds_हटाओ,
+	.driver = अणु
 		/*
 		 * The name must match 'compatible' property in the device tree,
-		 * in lowercase letters.
+		 * in lowerहाल letters.
 		 */
 		.name = "snd-soc-p1022ds",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /**
  * p1022_ds_init: machine driver initialization.
  *
  * This function is called when this module is loaded.
  */
-static int __init p1022_ds_init(void)
-{
-	struct device_node *guts_np;
-	struct resource res;
+अटल पूर्णांक __init p1022_ds_init(व्योम)
+अणु
+	काष्ठा device_node *guts_np;
+	काष्ठा resource res;
 
-	/* Get the physical address of the global utilities registers */
-	guts_np = of_find_compatible_node(NULL, NULL, "fsl,p1022-guts");
-	if (of_address_to_resource(guts_np, 0, &res)) {
+	/* Get the physical address of the global utilities रेजिस्टरs */
+	guts_np = of_find_compatible_node(शून्य, शून्य, "fsl,p1022-guts");
+	अगर (of_address_to_resource(guts_np, 0, &res)) अणु
 		pr_err("snd-soc-p1022ds: missing/invalid global utils node\n");
 		of_node_put(guts_np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	guts_phys = res.start;
 	of_node_put(guts_np);
 
-	return platform_driver_register(&p1022_ds_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&p1022_ds_driver);
+पूर्ण
 
 /**
- * p1022_ds_exit: machine driver exit
+ * p1022_ds_निकास: machine driver निकास
  *
  * This function is called when this driver is unloaded.
  */
-static void __exit p1022_ds_exit(void)
-{
-	platform_driver_unregister(&p1022_ds_driver);
-}
+अटल व्योम __निकास p1022_ds_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&p1022_ds_driver);
+पूर्ण
 
 module_init(p1022_ds_init);
-module_exit(p1022_ds_exit);
+module_निकास(p1022_ds_निकास);
 
 MODULE_AUTHOR("Timur Tabi <timur@freescale.com>");
 MODULE_DESCRIPTION("Freescale P1022 DS ALSA SoC machine driver");

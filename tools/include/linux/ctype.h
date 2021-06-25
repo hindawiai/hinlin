@@ -1,82 +1,83 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_CTYPE_H
-#define _LINUX_CTYPE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_CTYPE_H
+#घोषणा _LINUX_CTYPE_H
 
-#include <linux/compiler.h>
+#समावेश <linux/compiler.h>
 
 /*
- * NOTE! This ctype does not handle EOF like the standard C
+ * NOTE! This ctype करोes not handle खातापूर्ण like the standard C
  * library is required to.
  */
 
-#define _U	0x01	/* upper */
-#define _L	0x02	/* lower */
-#define _D	0x04	/* digit */
-#define _C	0x08	/* cntrl */
-#define _P	0x10	/* punct */
-#define _S	0x20	/* white space (space/lf/tab) */
-#define _X	0x40	/* hex digit */
-#define _SP	0x80	/* hard space (0x20) */
+#घोषणा _U	0x01	/* upper */
+#घोषणा _L	0x02	/* lower */
+#घोषणा _D	0x04	/* digit */
+#घोषणा _C	0x08	/* cntrl */
+#घोषणा _P	0x10	/* punct */
+#घोषणा _S	0x20	/* white space (space/lf/tab) */
+#घोषणा _X	0x40	/* hex digit */
+#घोषणा _SP	0x80	/* hard space (0x20) */
 
-extern const unsigned char _ctype[];
+बाह्य स्थिर अचिन्हित अक्षर _ctype[];
 
-#define __ismask(x) (_ctype[(int)(unsigned char)(x)])
+#घोषणा __ismask(x) (_ctype[(पूर्णांक)(अचिन्हित अक्षर)(x)])
 
-#define isalnum(c)	((__ismask(c)&(_U|_L|_D)) != 0)
-#define isalpha(c)	((__ismask(c)&(_U|_L)) != 0)
-#define iscntrl(c)	((__ismask(c)&(_C)) != 0)
-#define isgraph(c)	((__ismask(c)&(_P|_U|_L|_D)) != 0)
-#define islower(c)	((__ismask(c)&(_L)) != 0)
-#define isprint(c)	((__ismask(c)&(_P|_U|_L|_D|_SP)) != 0)
-#define ispunct(c)	((__ismask(c)&(_P)) != 0)
-/* Note: isspace() must return false for %NUL-terminator */
-#define isspace(c)	((__ismask(c)&(_S)) != 0)
-#define isupper(c)	((__ismask(c)&(_U)) != 0)
-#define isxdigit(c)	((__ismask(c)&(_D|_X)) != 0)
+#घोषणा है_अक्षर_अंक(c)	((__ismask(c)&(_U|_L|_D)) != 0)
+#घोषणा है_अक्षर(c)	((__ismask(c)&(_U|_L)) != 0)
+#घोषणा है_नियंत्रण(c)	((__ismask(c)&(_C)) != 0)
+#घोषणा है_चित्र(c)	((__ismask(c)&(_P|_U|_L|_D)) != 0)
+#घोषणा है_छोटा(c)	((__ismask(c)&(_L)) != 0)
+#घोषणा है_छाप(c)	((__ismask(c)&(_P|_U|_L|_D|_SP)) != 0)
+#घोषणा है_विराम(c)	((__ismask(c)&(_P)) != 0)
+/* Note: है_खाली() must वापस false क्रम %NUL-terminator */
+#घोषणा है_खाली(c)	((__ismask(c)&(_S)) != 0)
+#घोषणा है_बड़ा(c)	((__ismask(c)&(_U)) != 0)
+#घोषणा है_षष्ठादशक(c)	((__ismask(c)&(_D|_X)) != 0)
 
-#define isascii(c) (((unsigned char)(c))<=0x7f)
-#define toascii(c) (((unsigned char)(c))&0x7f)
+#घोषणा isascii(c) (((अचिन्हित अक्षर)(c))<=0x7f)
+#घोषणा toascii(c) (((अचिन्हित अक्षर)(c))&0x7f)
 
-#if __has_builtin(__builtin_isdigit)
-#define  isdigit(c) __builtin_isdigit(c)
-#else
-static inline int __isdigit(int c)
-{
-	return '0' <= c && c <= '9';
-}
-#define  isdigit(c) __isdigit(c)
-#endif
+#अगर __has_builtin(__builtin_है_अंक)
+#घोषणा  है_अंक(c) __builtin_है_अंक(c)
+#अन्यथा
+अटल अंतरभूत पूर्णांक __है_अंक(पूर्णांक c)
+अणु
+	वापस '0' <= c && c <= '9';
+पूर्ण
+#घोषणा  है_अंक(c) __है_अंक(c)
+#पूर्ण_अगर
 
-static inline unsigned char __tolower(unsigned char c)
-{
-	if (isupper(c))
+अटल अंतरभूत अचिन्हित अक्षर __छोटे(अचिन्हित अक्षर c)
+अणु
+	अगर (है_बड़ा(c))
 		c -= 'A'-'a';
-	return c;
-}
+	वापस c;
+पूर्ण
 
-static inline unsigned char __toupper(unsigned char c)
-{
-	if (islower(c))
+अटल अंतरभूत अचिन्हित अक्षर __बड़े(अचिन्हित अक्षर c)
+अणु
+	अगर (है_छोटा(c))
 		c -= 'a'-'A';
-	return c;
-}
+	वापस c;
+पूर्ण
 
-#define tolower(c) __tolower(c)
-#define toupper(c) __toupper(c)
+#घोषणा छोटे(c) __छोटे(c)
+#घोषणा बड़े(c) __बड़े(c)
 
 /*
- * Fast implementation of tolower() for internal usage. Do not use in your
+ * Fast implementation of छोटे() क्रम पूर्णांकernal usage. Do not use in your
  * code.
  */
-static inline char _tolower(const char c)
-{
-	return c | 0x20;
-}
+अटल अंतरभूत अक्षर _छोटे(स्थिर अक्षर c)
+अणु
+	वापस c | 0x20;
+पूर्ण
 
-/* Fast check for octal digit */
-static inline int isodigit(const char c)
-{
-	return c >= '0' && c <= '7';
-}
+/* Fast check क्रम octal digit */
+अटल अंतरभूत पूर्णांक है_अष्टक(स्थिर अक्षर c)
+अणु
+	वापस c >= '0' && c <= '7';
+पूर्ण
 
-#endif
+#पूर्ण_अगर

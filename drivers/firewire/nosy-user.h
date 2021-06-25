@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __nosy_user_h
-#define __nosy_user_h
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __nosy_user_h
+#घोषणा __nosy_user_h
 
-#include <linux/ioctl.h>
-#include <linux/types.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/types.h>
 
-#define NOSY_IOC_GET_STATS _IOR('&', 0, struct nosy_stats)
-#define NOSY_IOC_START     _IO('&', 1)
-#define NOSY_IOC_STOP      _IO('&', 2)
-#define NOSY_IOC_FILTER    _IOW('&', 2, __u32)
+#घोषणा NOSY_IOC_GET_STATS _IOR('&', 0, काष्ठा nosy_stats)
+#घोषणा NOSY_IOC_START     _IO('&', 1)
+#घोषणा NOSY_IOC_STOP      _IO('&', 2)
+#घोषणा NOSY_IOC_FILTER    _IOW('&', 2, __u32)
 
-struct nosy_stats {
+काष्ठा nosy_stats अणु
 	__u32 total_packet_count;
 	__u32 lost_packet_count;
-};
+पूर्ण;
 
 /*
- * Format of packets returned from the kernel driver:
+ * Format of packets वापसed from the kernel driver:
  *
- *	quadlet with timestamp		(microseconds, CPU endian)
+ *	quadlet with बारtamp		(microseconds, CPU endian)
  *	quadlet-padded packet data...	(little endian)
  *	quadlet with ack		(little endian)
  */
 
-#endif /* __nosy_user_h */
+#पूर्ण_अगर /* __nosy_user_h */

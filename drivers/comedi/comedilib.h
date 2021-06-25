@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * comedilib.h
- * Header file for kcomedilib
+ * Header file क्रम kcomedilib
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 1998-2001 David A. Schleef <ds@schleef.org>
  */
 
-#ifndef _LINUX_COMEDILIB_H
-#define _LINUX_COMEDILIB_H
+#अगर_अघोषित _LINUX_COMEDILIB_H
+#घोषणा _LINUX_COMEDILIB_H
 
-struct comedi_device *comedi_open(const char *path);
-int comedi_close(struct comedi_device *dev);
-int comedi_dio_get_config(struct comedi_device *dev, unsigned int subdev,
-			  unsigned int chan, unsigned int *io);
-int comedi_dio_config(struct comedi_device *dev, unsigned int subdev,
-		      unsigned int chan, unsigned int io);
-int comedi_dio_bitfield2(struct comedi_device *dev, unsigned int subdev,
-			 unsigned int mask, unsigned int *bits,
-			 unsigned int base_channel);
-int comedi_find_subdevice_by_type(struct comedi_device *dev, int type,
-				  unsigned int subd);
-int comedi_get_n_channels(struct comedi_device *dev, unsigned int subdevice);
+काष्ठा comedi_device *comedi_खोलो(स्थिर अक्षर *path);
+पूर्णांक comedi_बंद(काष्ठा comedi_device *dev);
+पूर्णांक comedi_dio_get_config(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक subdev,
+			  अचिन्हित पूर्णांक chan, अचिन्हित पूर्णांक *io);
+पूर्णांक comedi_dio_config(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक subdev,
+		      अचिन्हित पूर्णांक chan, अचिन्हित पूर्णांक io);
+पूर्णांक comedi_dio_bitfield2(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक subdev,
+			 अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक *bits,
+			 अचिन्हित पूर्णांक base_channel);
+पूर्णांक comedi_find_subdevice_by_type(काष्ठा comedi_device *dev, पूर्णांक type,
+				  अचिन्हित पूर्णांक subd);
+पूर्णांक comedi_get_n_channels(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक subdevice);
 
-#endif
+#पूर्ण_अगर

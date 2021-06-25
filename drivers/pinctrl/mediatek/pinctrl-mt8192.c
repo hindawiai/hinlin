@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2019 MediaTek Inc.
  * Author: Zhiyong Tao <zhiyong.tao@mediatek.com>
  *
  */
 
-#include <linux/module.h>
-#include "pinctrl-mtk-mt8192.h"
-#include "pinctrl-paris.h"
+#समावेश <linux/module.h>
+#समावेश "pinctrl-mtk-mt8192.h"
+#समावेश "pinctrl-paris.h"
 
 /* MT8192 have multiple bases to program pin configuration listed as the below:
  * iocfg0:0x10005000, iocfg_rm:0x11C20000, iocfg_bm:0x11D10000,
  * iocfg_bl:0x11D30000, iocfg_br:0x11D40000, iocfg_lm:0x11E20000,
  * iocfg_lb:0x11E70000, iocfg_rt:0x11EA0000, iocfg_lt:0x11F20000,
  * iocfg_tl:0x11F30000
- * _i_based could be used to indicate what base the pin should be mapped into.
+ * _i_based could be used to indicate what base the pin should be mapped पूर्णांकo.
  */
 
-#define PIN_FIELD_BASE(s_pin, e_pin, i_base, s_addr, x_addrs, s_bit, x_bits) \
+#घोषणा PIN_FIELD_BASE(s_pin, e_pin, i_base, s_addr, x_addrs, s_bit, x_bits) \
 	PIN_FIELD_CALC(s_pin, e_pin, i_base, s_addr, x_addrs, s_bit, x_bits, \
 		       32, 0)
 
-#define PINS_FIELD_BASE(s_pin, e_pin, i_base, s_addr, x_addrs, s_bit, x_bits) \
+#घोषणा PINS_FIELD_BASE(s_pin, e_pin, i_base, s_addr, x_addrs, s_bit, x_bits) \
 	PIN_FIELD_CALC(s_pin, e_pin, i_base, s_addr, x_addrs, s_bit, x_bits,  \
 		       32, 1)
 
-static const struct mtk_pin_field_calc mt8192_pin_mode_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_mode_range[] = अणु
 	PIN_FIELD(0, 228, 0x300, 0x10, 0, 4),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_dir_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_dir_range[] = अणु
 	PIN_FIELD(0, 228, 0x0, 0x10, 0, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_di_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_di_range[] = अणु
 	PIN_FIELD(0, 228, 0x200, 0x10, 0, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_do_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_करो_range[] = अणु
 	PIN_FIELD(0, 228, 0x100, 0x10, 0, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_smt_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_smt_range[] = अणु
 	PIN_FIELD_BASE(0, 0, 4, 0x00f0, 0x10, 8, 1),
 	PIN_FIELD_BASE(1, 1, 4, 0x00f0, 0x10, 8, 1),
 	PIN_FIELD_BASE(2, 2, 4, 0x00f0, 0x10, 8, 1),
@@ -262,9 +263,9 @@ static const struct mtk_pin_field_calc mt8192_pin_smt_range[] = {
 	PIN_FIELD_BASE(217, 217, 5, 0x0080, 0x10, 2, 1),
 	PIN_FIELD_BASE(218, 218, 5, 0x0080, 0x10, 3, 1),
 	PIN_FIELD_BASE(219, 219, 5, 0x0080, 0x10, 4, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_ies_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_ies_range[] = अणु
 	PIN_FIELD_BASE(0, 0, 4, 0x0070, 0x10, 9, 1),
 	PIN_FIELD_BASE(1, 1, 4, 0x0070, 0x10, 10, 1),
 	PIN_FIELD_BASE(2, 2, 4, 0x0070, 0x10, 11, 1),
@@ -485,9 +486,9 @@ static const struct mtk_pin_field_calc mt8192_pin_ies_range[] = {
 	PIN_FIELD_BASE(217, 217, 5, 0x0030, 0x10, 5, 1),
 	PIN_FIELD_BASE(218, 218, 5, 0x0030, 0x10, 1, 1),
 	PIN_FIELD_BASE(219, 219, 5, 0x0030, 0x10, 2, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_pu_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_pu_range[] = अणु
 	PIN_FIELD_BASE(0, 0, 4, 0x00b0, 0x10, 9, 1),
 	PIN_FIELD_BASE(1, 1, 4, 0x00b0, 0x10, 10, 1),
 	PIN_FIELD_BASE(2, 2, 4, 0x00b0, 0x10, 11, 1),
@@ -674,9 +675,9 @@ static const struct mtk_pin_field_calc mt8192_pin_pu_range[] = {
 	PIN_FIELD_BASE(217, 217, 5, 0x0050, 0x10, 5, 1),
 	PIN_FIELD_BASE(218, 218, 5, 0x0050, 0x10, 1, 1),
 	PIN_FIELD_BASE(219, 219, 5, 0x0050, 0x10, 2, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_pd_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_pd_range[] = अणु
 	PIN_FIELD_BASE(0, 0, 4, 0x0090, 0x10, 9, 1),
 	PIN_FIELD_BASE(1, 1, 4, 0x0090, 0x10, 10, 1),
 	PIN_FIELD_BASE(2, 2, 4, 0x0090, 0x10, 11, 1),
@@ -863,9 +864,9 @@ static const struct mtk_pin_field_calc mt8192_pin_pd_range[] = {
 	PIN_FIELD_BASE(217, 217, 5, 0x0040, 0x10, 5, 1),
 	PIN_FIELD_BASE(218, 218, 5, 0x0040, 0x10, 1, 1),
 	PIN_FIELD_BASE(219, 219, 5, 0x0040, 0x10, 2, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_drv_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_drv_range[] = अणु
 	PIN_FIELD_BASE(0, 0, 4, 0x0000, 0x10, 18, 3),
 	PIN_FIELD_BASE(1, 1, 4, 0x0000, 0x10, 21, 3),
 	PIN_FIELD_BASE(2, 2, 4, 0x0000, 0x10, 24, 3),
@@ -1086,9 +1087,9 @@ static const struct mtk_pin_field_calc mt8192_pin_drv_range[] = {
 	PIN_FIELD_BASE(217, 217, 5, 0x0000, 0x10, 15, 3),
 	PIN_FIELD_BASE(218, 218, 5, 0x0000, 0x10, 3, 3),
 	PIN_FIELD_BASE(219, 219, 5, 0x0000, 0x10, 6, 3),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_pupd_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_pupd_range[] = अणु
 	PIN_FIELD_BASE(10, 10, 6, 0x0020, 0x10, 0, 1),
 	PIN_FIELD_BASE(11, 11, 6, 0x0020, 0x10, 1, 1),
 	PIN_FIELD_BASE(12, 12, 6, 0x0020, 0x10, 2, 1),
@@ -1143,9 +1144,9 @@ static const struct mtk_pin_field_calc mt8192_pin_pupd_range[] = {
 	PIN_FIELD_BASE(203, 203, 5, 0x0070, 0x10, 31, 1),
 	PIN_FIELD_BASE(204, 204, 8, 0x0070, 0x10, 31, 1),
 	PIN_FIELD_BASE(205, 205, 8, 0x0070, 0x10, 31, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_r0_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_r0_range[] = अणु
 	PIN_FIELD_BASE(10, 10, 6, 0x0030, 0x10, 0, 1),
 	PIN_FIELD_BASE(11, 11, 6, 0x0030, 0x10, 1, 1),
 	PIN_FIELD_BASE(12, 12, 6, 0x0030, 0x10, 2, 1),
@@ -1200,9 +1201,9 @@ static const struct mtk_pin_field_calc mt8192_pin_r0_range[] = {
 	PIN_FIELD_BASE(203, 203, 5, 0x0070, 0x10, 2, 1),
 	PIN_FIELD_BASE(204, 204, 8, 0x0070, 0x10, 0, 1),
 	PIN_FIELD_BASE(205, 205, 8, 0x0070, 0x10, 4, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_r1_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_r1_range[] = अणु
 	PIN_FIELD_BASE(10, 10, 6, 0x0040, 0x10, 0, 1),
 	PIN_FIELD_BASE(11, 11, 6, 0x0040, 0x10, 1, 1),
 	PIN_FIELD_BASE(12, 12, 6, 0x0040, 0x10, 2, 1),
@@ -1257,9 +1258,9 @@ static const struct mtk_pin_field_calc mt8192_pin_r1_range[] = {
 	PIN_FIELD_BASE(203, 203, 5, 0x0070, 0x10, 3, 1),
 	PIN_FIELD_BASE(204, 204, 8, 0x0070, 0x10, 1, 1),
 	PIN_FIELD_BASE(205, 205, 8, 0x0070, 0x10, 5, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_e1e0en_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_e1e0en_range[] = अणु
 	PIN_FIELD_BASE(118, 118, 4, 0x0040, 0x10, 0, 1),
 	PIN_FIELD_BASE(119, 119, 4, 0x0040, 0x10, 18, 1),
 	PIN_FIELD_BASE(120, 120, 4, 0x0040, 0x10, 15, 1),
@@ -1280,9 +1281,9 @@ static const struct mtk_pin_field_calc mt8192_pin_e1e0en_range[] = {
 	PIN_FIELD_BASE(203, 203, 5, 0x0020, 0x10, 3, 1),
 	PIN_FIELD_BASE(204, 204, 8, 0x0010, 0x10, 0, 1),
 	PIN_FIELD_BASE(205, 205, 8, 0x0010, 0x10, 6, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_e0_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_e0_range[] = अणु
 	PIN_FIELD_BASE(118, 118, 4, 0x0040, 0x10, 1, 1),
 	PIN_FIELD_BASE(119, 119, 4, 0x0040, 0x10, 19, 1),
 	PIN_FIELD_BASE(120, 120, 4, 0x0040, 0x10, 16, 1),
@@ -1303,9 +1304,9 @@ static const struct mtk_pin_field_calc mt8192_pin_e0_range[] = {
 	PIN_FIELD_BASE(203, 203, 5, 0x0020, 0x10, 4, 1),
 	PIN_FIELD_BASE(204, 204, 8, 0x0010, 0x10, 1, 1),
 	PIN_FIELD_BASE(205, 205, 8, 0x0010, 0x10, 7, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt8192_pin_e1_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt8192_pin_e1_range[] = अणु
 	PIN_FIELD_BASE(118, 118, 4, 0x0040, 0x10, 2, 1),
 	PIN_FIELD_BASE(119, 119, 4, 0x0040, 0x10, 20, 1),
 	PIN_FIELD_BASE(120, 120, 4, 0x0040, 0x10, 17, 1),
@@ -1326,26 +1327,26 @@ static const struct mtk_pin_field_calc mt8192_pin_e1_range[] = {
 	PIN_FIELD_BASE(203, 203, 5, 0x0020, 0x10, 5, 1),
 	PIN_FIELD_BASE(204, 204, 8, 0x0010, 0x10, 2, 1),
 	PIN_FIELD_BASE(205, 205, 8, 0x0010, 0x10, 8, 1),
-};
+पूर्ण;
 
 
-static const char * const mt8192_pinctrl_register_base_names[] = {
+अटल स्थिर अक्षर * स्थिर mt8192_pinctrl_रेजिस्टर_base_names[] = अणु
 	"iocfg0", "iocfg_rm", "iocfg_bm", "iocfg_bl", "iocfg_br",
 	"iocfg_lm", "iocfg_lb", "iocfg_rt", "iocfg_lt", "iocfg_tl",
-};
+पूर्ण;
 
-static const struct mtk_eint_hw mt8192_eint_hw = {
+अटल स्थिर काष्ठा mtk_eपूर्णांक_hw mt8192_eपूर्णांक_hw = अणु
 	.port_mask = 7,
 	.ports     = 7,
 	.ap_num    = 224,
 	.db_cnt    = 32,
-};
+पूर्ण;
 
-static const struct mtk_pin_reg_calc mt8192_reg_cals[PINCTRL_PIN_REG_MAX] = {
+अटल स्थिर काष्ठा mtk_pin_reg_calc mt8192_reg_cals[PINCTRL_PIN_REG_MAX] = अणु
 	[PINCTRL_PIN_REG_MODE] = MTK_RANGE(mt8192_pin_mode_range),
-	[PINCTRL_PIN_REG_DIR] = MTK_RANGE(mt8192_pin_dir_range),
+	[PINCTRL_PIN_REG_सूची] = MTK_RANGE(mt8192_pin_dir_range),
 	[PINCTRL_PIN_REG_DI] = MTK_RANGE(mt8192_pin_di_range),
-	[PINCTRL_PIN_REG_DO] = MTK_RANGE(mt8192_pin_do_range),
+	[PINCTRL_PIN_REG_DO] = MTK_RANGE(mt8192_pin_करो_range),
 	[PINCTRL_PIN_REG_SR] = MTK_RANGE(mt8192_pin_dir_range),
 	[PINCTRL_PIN_REG_SMT] = MTK_RANGE(mt8192_pin_smt_range),
 	[PINCTRL_PIN_REG_IES] = MTK_RANGE(mt8192_pin_ies_range),
@@ -1358,16 +1359,16 @@ static const struct mtk_pin_reg_calc mt8192_reg_cals[PINCTRL_PIN_REG_MAX] = {
 	[PINCTRL_PIN_REG_DRV_EN] = MTK_RANGE(mt8192_pin_e1e0en_range),
 	[PINCTRL_PIN_REG_DRV_E0] = MTK_RANGE(mt8192_pin_e0_range),
 	[PINCTRL_PIN_REG_DRV_E1] = MTK_RANGE(mt8192_pin_e1_range),
-};
+पूर्ण;
 
-static const struct mtk_pin_soc mt8192_data = {
+अटल स्थिर काष्ठा mtk_pin_soc mt8192_data = अणु
 	.reg_cal = mt8192_reg_cals,
 	.pins = mtk_pins_mt8192,
 	.npins = ARRAY_SIZE(mtk_pins_mt8192),
 	.ngrps = ARRAY_SIZE(mtk_pins_mt8192),
-	.base_names = mt8192_pinctrl_register_base_names,
-	.nbase_names = ARRAY_SIZE(mt8192_pinctrl_register_base_names),
-	.eint_hw = &mt8192_eint_hw,
+	.base_names = mt8192_pinctrl_रेजिस्टर_base_names,
+	.nbase_names = ARRAY_SIZE(mt8192_pinctrl_रेजिस्टर_base_names),
+	.eपूर्णांक_hw = &mt8192_eपूर्णांक_hw,
 	.nfuncs = 8,
 	.gpio_m = 0,
 	.bias_set_combo = mtk_pinconf_bias_set_combo,
@@ -1378,31 +1379,31 @@ static const struct mtk_pin_soc mt8192_data = {
 	.adv_pull_set = mtk_pinconf_adv_pull_set,
 	.adv_drive_get = mtk_pinconf_adv_drive_get,
 	.adv_drive_set = mtk_pinconf_adv_drive_set,
-};
+पूर्ण;
 
-static const struct of_device_id mt8192_pinctrl_of_match[] = {
-	{ .compatible = "mediatek,mt8192-pinctrl", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id mt8192_pinctrl_of_match[] = अणु
+	अणु .compatible = "mediatek,mt8192-pinctrl", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static int mt8192_pinctrl_probe(struct platform_device *pdev)
-{
-	return mtk_paris_pinctrl_probe(pdev, &mt8192_data);
-}
+अटल पूर्णांक mt8192_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस mtk_paris_pinctrl_probe(pdev, &mt8192_data);
+पूर्ण
 
-static struct platform_driver mt8192_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mt8192_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "mt8192-pinctrl",
 		.of_match_table = mt8192_pinctrl_of_match,
 		.pm = &mtk_paris_pinctrl_pm_ops,
-	},
+	पूर्ण,
 	.probe = mt8192_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init mt8192_pinctrl_init(void)
-{
-	return platform_driver_register(&mt8192_pinctrl_driver);
-}
+अटल पूर्णांक __init mt8192_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&mt8192_pinctrl_driver);
+पूर्ण
 arch_initcall(mt8192_pinctrl_init);
 
 MODULE_LICENSE("GPL v2");

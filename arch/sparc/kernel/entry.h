@@ -1,194 +1,195 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ENTRY_H
-#define _ENTRY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ENTRY_H
+#घोषणा _ENTRY_H
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
 
 /* irq */
-void handler_irq(int irq, struct pt_regs *regs);
+व्योम handler_irq(पूर्णांक irq, काष्ठा pt_regs *regs);
 
-#ifdef CONFIG_SPARC32
+#अगर_घोषित CONFIG_SPARC32
 /* traps */
-void do_hw_interrupt(struct pt_regs *regs, unsigned long type);
-void do_illegal_instruction(struct pt_regs *regs, unsigned long pc,
-                            unsigned long npc, unsigned long psr);
+व्योम करो_hw_पूर्णांकerrupt(काष्ठा pt_regs *regs, अचिन्हित दीर्घ type);
+व्योम करो_illegal_inकाष्ठाion(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc,
+                            अचिन्हित दीर्घ npc, अचिन्हित दीर्घ psr);
 
-void do_priv_instruction(struct pt_regs *regs, unsigned long pc,
-                         unsigned long npc, unsigned long psr);
-void do_memaccess_unaligned(struct pt_regs *regs, unsigned long pc,
-                            unsigned long npc, unsigned long psr);
-void do_fpd_trap(struct pt_regs *regs, unsigned long pc,
-                 unsigned long npc, unsigned long psr);
-void do_fpe_trap(struct pt_regs *regs, unsigned long pc,
-                 unsigned long npc, unsigned long psr);
-void handle_tag_overflow(struct pt_regs *regs, unsigned long pc,
-                         unsigned long npc, unsigned long psr);
-void handle_watchpoint(struct pt_regs *regs, unsigned long pc,
-                       unsigned long npc, unsigned long psr);
-void handle_reg_access(struct pt_regs *regs, unsigned long pc,
-                       unsigned long npc, unsigned long psr);
-void handle_cp_disabled(struct pt_regs *regs, unsigned long pc,
-                        unsigned long npc, unsigned long psr);
-void handle_cp_exception(struct pt_regs *regs, unsigned long pc,
-                         unsigned long npc, unsigned long psr);
+व्योम करो_priv_inकाष्ठाion(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc,
+                         अचिन्हित दीर्घ npc, अचिन्हित दीर्घ psr);
+व्योम करो_memaccess_unaligned(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc,
+                            अचिन्हित दीर्घ npc, अचिन्हित दीर्घ psr);
+व्योम करो_fpd_trap(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc,
+                 अचिन्हित दीर्घ npc, अचिन्हित दीर्घ psr);
+व्योम करो_fpe_trap(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc,
+                 अचिन्हित दीर्घ npc, अचिन्हित दीर्घ psr);
+व्योम handle_tag_overflow(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc,
+                         अचिन्हित दीर्घ npc, अचिन्हित दीर्घ psr);
+व्योम handle_watchpoपूर्णांक(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc,
+                       अचिन्हित दीर्घ npc, अचिन्हित दीर्घ psr);
+व्योम handle_reg_access(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc,
+                       अचिन्हित दीर्घ npc, अचिन्हित दीर्घ psr);
+व्योम handle_cp_disabled(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc,
+                        अचिन्हित दीर्घ npc, अचिन्हित दीर्घ psr);
+व्योम handle_cp_exception(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc,
+                         अचिन्हित दीर्घ npc, अचिन्हित दीर्घ psr);
 
 
 
 /* entry.S */
-void fpsave(unsigned long *fpregs, unsigned long *fsr,
-            void *fpqueue, unsigned long *fpqdepth);
-void fpload(unsigned long *fpregs, unsigned long *fsr);
+व्योम fpsave(अचिन्हित दीर्घ *fpregs, अचिन्हित दीर्घ *fsr,
+            व्योम *fpqueue, अचिन्हित दीर्घ *fpqdepth);
+व्योम fpload(अचिन्हित दीर्घ *fpregs, अचिन्हित दीर्घ *fsr);
 
-#else /* CONFIG_SPARC32 */
+#अन्यथा /* CONFIG_SPARC32 */
 
-#include <asm/trap_block.h>
+#समावेश <यंत्र/trap_block.h>
 
-struct popc_3insn_patch_entry {
-	unsigned int	addr;
-	unsigned int	insns[3];
-};
-extern struct popc_3insn_patch_entry __popc_3insn_patch,
+काष्ठा popc_3insn_patch_entry अणु
+	अचिन्हित पूर्णांक	addr;
+	अचिन्हित पूर्णांक	insns[3];
+पूर्ण;
+बाह्य काष्ठा popc_3insn_patch_entry __popc_3insn_patch,
 	__popc_3insn_patch_end;
 
-struct popc_6insn_patch_entry {
-	unsigned int	addr;
-	unsigned int	insns[6];
-};
-extern struct popc_6insn_patch_entry __popc_6insn_patch,
+काष्ठा popc_6insn_patch_entry अणु
+	अचिन्हित पूर्णांक	addr;
+	अचिन्हित पूर्णांक	insns[6];
+पूर्ण;
+बाह्य काष्ठा popc_6insn_patch_entry __popc_6insn_patch,
 	__popc_6insn_patch_end;
 
-struct pause_patch_entry {
-	unsigned int	addr;
-	unsigned int	insns[3];
-};
-extern struct pause_patch_entry __pause_3insn_patch,
-	__pause_3insn_patch_end;
+काष्ठा छोड़ो_patch_entry अणु
+	अचिन्हित पूर्णांक	addr;
+	अचिन्हित पूर्णांक	insns[3];
+पूर्ण;
+बाह्य काष्ठा छोड़ो_patch_entry __छोड़ो_3insn_patch,
+	__छोड़ो_3insn_patch_end;
 
-void sun4v_patch_1insn_range(struct sun4v_1insn_patch_entry *,
-			     struct sun4v_1insn_patch_entry *);
-void sun4v_patch_2insn_range(struct sun4v_2insn_patch_entry *,
-			     struct sun4v_2insn_patch_entry *);
-void sun_m7_patch_2insn_range(struct sun4v_2insn_patch_entry *,
-			     struct sun4v_2insn_patch_entry *);
-extern unsigned int dcache_parity_tl1_occurred;
-extern unsigned int icache_parity_tl1_occurred;
+व्योम sun4v_patch_1insn_range(काष्ठा sun4v_1insn_patch_entry *,
+			     काष्ठा sun4v_1insn_patch_entry *);
+व्योम sun4v_patch_2insn_range(काष्ठा sun4v_2insn_patch_entry *,
+			     काष्ठा sun4v_2insn_patch_entry *);
+व्योम sun_m7_patch_2insn_range(काष्ठा sun4v_2insn_patch_entry *,
+			     काष्ठा sun4v_2insn_patch_entry *);
+बाह्य अचिन्हित पूर्णांक dcache_parity_tl1_occurred;
+बाह्य अचिन्हित पूर्णांक icache_parity_tl1_occurred;
 
-asmlinkage void sparc_breakpoint(struct pt_regs *regs);
-void timer_interrupt(int irq, struct pt_regs *regs);
+यंत्रlinkage व्योम sparc_अवरोधpoपूर्णांक(काष्ठा pt_regs *regs);
+व्योम समयr_पूर्णांकerrupt(पूर्णांक irq, काष्ठा pt_regs *regs);
 
-void do_notify_resume(struct pt_regs *regs,
-		      unsigned long orig_i0,
-		      unsigned long thread_info_flags);
+व्योम करो_notअगरy_resume(काष्ठा pt_regs *regs,
+		      अचिन्हित दीर्घ orig_i0,
+		      अचिन्हित दीर्घ thपढ़ो_info_flags);
 
-asmlinkage int syscall_trace_enter(struct pt_regs *regs);
-asmlinkage void syscall_trace_leave(struct pt_regs *regs);
+यंत्रlinkage पूर्णांक syscall_trace_enter(काष्ठा pt_regs *regs);
+यंत्रlinkage व्योम syscall_trace_leave(काष्ठा pt_regs *regs);
 
-void bad_trap_tl1(struct pt_regs *regs, long lvl);
+व्योम bad_trap_tl1(काष्ठा pt_regs *regs, दीर्घ lvl);
 
-void do_fpieee(struct pt_regs *regs);
-void do_fpother(struct pt_regs *regs);
-void do_tof(struct pt_regs *regs);
-void do_div0(struct pt_regs *regs);
-void do_illegal_instruction(struct pt_regs *regs);
-void mem_address_unaligned(struct pt_regs *regs,
-			   unsigned long sfar,
-			   unsigned long sfsr);
-void sun4v_do_mna(struct pt_regs *regs,
-		  unsigned long addr,
-		  unsigned long type_ctx);
-void do_privop(struct pt_regs *regs);
-void do_privact(struct pt_regs *regs);
-void do_cee(struct pt_regs *regs);
-void do_div0_tl1(struct pt_regs *regs);
-void do_fpieee_tl1(struct pt_regs *regs);
-void do_fpother_tl1(struct pt_regs *regs);
-void do_ill_tl1(struct pt_regs *regs);
-void do_irq_tl1(struct pt_regs *regs);
-void do_lddfmna_tl1(struct pt_regs *regs);
-void do_stdfmna_tl1(struct pt_regs *regs);
-void do_paw(struct pt_regs *regs);
-void do_paw_tl1(struct pt_regs *regs);
-void do_vaw(struct pt_regs *regs);
-void do_vaw_tl1(struct pt_regs *regs);
-void do_tof_tl1(struct pt_regs *regs);
-void do_getpsr(struct pt_regs *regs);
+व्योम करो_fpieee(काष्ठा pt_regs *regs);
+व्योम करो_fpother(काष्ठा pt_regs *regs);
+व्योम करो_tof(काष्ठा pt_regs *regs);
+व्योम करो_भाग0(काष्ठा pt_regs *regs);
+व्योम करो_illegal_inकाष्ठाion(काष्ठा pt_regs *regs);
+व्योम mem_address_unaligned(काष्ठा pt_regs *regs,
+			   अचिन्हित दीर्घ sfar,
+			   अचिन्हित दीर्घ sfsr);
+व्योम sun4v_करो_mna(काष्ठा pt_regs *regs,
+		  अचिन्हित दीर्घ addr,
+		  अचिन्हित दीर्घ type_ctx);
+व्योम करो_privop(काष्ठा pt_regs *regs);
+व्योम करो_privact(काष्ठा pt_regs *regs);
+व्योम करो_cee(काष्ठा pt_regs *regs);
+व्योम करो_भाग0_tl1(काष्ठा pt_regs *regs);
+व्योम करो_fpieee_tl1(काष्ठा pt_regs *regs);
+व्योम करो_fpother_tl1(काष्ठा pt_regs *regs);
+व्योम करो_ill_tl1(काष्ठा pt_regs *regs);
+व्योम करो_irq_tl1(काष्ठा pt_regs *regs);
+व्योम करो_lddfmna_tl1(काष्ठा pt_regs *regs);
+व्योम करो_stdfmna_tl1(काष्ठा pt_regs *regs);
+व्योम करो_paw(काष्ठा pt_regs *regs);
+व्योम करो_paw_tl1(काष्ठा pt_regs *regs);
+व्योम करो_vaw(काष्ठा pt_regs *regs);
+व्योम करो_vaw_tl1(काष्ठा pt_regs *regs);
+व्योम करो_tof_tl1(काष्ठा pt_regs *regs);
+व्योम करो_getpsr(काष्ठा pt_regs *regs);
 
-void spitfire_insn_access_exception(struct pt_regs *regs,
-				    unsigned long sfsr,
-				    unsigned long sfar);
-void spitfire_insn_access_exception_tl1(struct pt_regs *regs,
-				        unsigned long sfsr,
-				        unsigned long sfar);
-void spitfire_data_access_exception(struct pt_regs *regs,
-				    unsigned long sfsr,
-				    unsigned long sfar);
-void spitfire_data_access_exception_tl1(struct pt_regs *regs,
-				        unsigned long sfsr,
-				        unsigned long sfar);
-void spitfire_access_error(struct pt_regs *regs,
-			   unsigned long status_encoded,
-			   unsigned long afar);
+व्योम spitfire_insn_access_exception(काष्ठा pt_regs *regs,
+				    अचिन्हित दीर्घ sfsr,
+				    अचिन्हित दीर्घ sfar);
+व्योम spitfire_insn_access_exception_tl1(काष्ठा pt_regs *regs,
+				        अचिन्हित दीर्घ sfsr,
+				        अचिन्हित दीर्घ sfar);
+व्योम spitfire_data_access_exception(काष्ठा pt_regs *regs,
+				    अचिन्हित दीर्घ sfsr,
+				    अचिन्हित दीर्घ sfar);
+व्योम spitfire_data_access_exception_tl1(काष्ठा pt_regs *regs,
+				        अचिन्हित दीर्घ sfsr,
+				        अचिन्हित दीर्घ sfar);
+व्योम spitfire_access_error(काष्ठा pt_regs *regs,
+			   अचिन्हित दीर्घ status_encoded,
+			   अचिन्हित दीर्घ afar);
 
-void cheetah_fecc_handler(struct pt_regs *regs,
-			  unsigned long afsr,
-			  unsigned long afar);
-void cheetah_cee_handler(struct pt_regs *regs,
-			 unsigned long afsr,
-			 unsigned long afar);
-void cheetah_deferred_handler(struct pt_regs *regs,
-			      unsigned long afsr,
-			      unsigned long afar);
-void cheetah_plus_parity_error(int type, struct pt_regs *regs);
+व्योम cheetah_fecc_handler(काष्ठा pt_regs *regs,
+			  अचिन्हित दीर्घ afsr,
+			  अचिन्हित दीर्घ afar);
+व्योम cheetah_cee_handler(काष्ठा pt_regs *regs,
+			 अचिन्हित दीर्घ afsr,
+			 अचिन्हित दीर्घ afar);
+व्योम cheetah_deferred_handler(काष्ठा pt_regs *regs,
+			      अचिन्हित दीर्घ afsr,
+			      अचिन्हित दीर्घ afar);
+व्योम cheetah_plus_parity_error(पूर्णांक type, काष्ठा pt_regs *regs);
 
-void sun4v_insn_access_exception(struct pt_regs *regs,
-				 unsigned long addr,
-				 unsigned long type_ctx);
-void sun4v_insn_access_exception_tl1(struct pt_regs *regs,
-				     unsigned long addr,
-				     unsigned long type_ctx);
-void sun4v_data_access_exception(struct pt_regs *regs,
-				 unsigned long addr,
-				 unsigned long type_ctx);
-void sun4v_data_access_exception_tl1(struct pt_regs *regs,
-				     unsigned long addr,
-				     unsigned long type_ctx);
-void sun4v_resum_error(struct pt_regs *regs,
-		       unsigned long offset);
-void sun4v_resum_overflow(struct pt_regs *regs);
-void sun4v_nonresum_error(struct pt_regs *regs,
-			  unsigned long offset);
-void sun4v_nonresum_overflow(struct pt_regs *regs);
-void sun4v_mem_corrupt_detect_precise(struct pt_regs *regs,
-				      unsigned long addr,
-				      unsigned long context);
+व्योम sun4v_insn_access_exception(काष्ठा pt_regs *regs,
+				 अचिन्हित दीर्घ addr,
+				 अचिन्हित दीर्घ type_ctx);
+व्योम sun4v_insn_access_exception_tl1(काष्ठा pt_regs *regs,
+				     अचिन्हित दीर्घ addr,
+				     अचिन्हित दीर्घ type_ctx);
+व्योम sun4v_data_access_exception(काष्ठा pt_regs *regs,
+				 अचिन्हित दीर्घ addr,
+				 अचिन्हित दीर्घ type_ctx);
+व्योम sun4v_data_access_exception_tl1(काष्ठा pt_regs *regs,
+				     अचिन्हित दीर्घ addr,
+				     अचिन्हित दीर्घ type_ctx);
+व्योम sun4v_resum_error(काष्ठा pt_regs *regs,
+		       अचिन्हित दीर्घ offset);
+व्योम sun4v_resum_overflow(काष्ठा pt_regs *regs);
+व्योम sun4v_nonresum_error(काष्ठा pt_regs *regs,
+			  अचिन्हित दीर्घ offset);
+व्योम sun4v_nonresum_overflow(काष्ठा pt_regs *regs);
+व्योम sun4v_mem_corrupt_detect_precise(काष्ठा pt_regs *regs,
+				      अचिन्हित दीर्घ addr,
+				      अचिन्हित दीर्घ context);
 
-extern unsigned long sun4v_err_itlb_vaddr;
-extern unsigned long sun4v_err_itlb_ctx;
-extern unsigned long sun4v_err_itlb_pte;
-extern unsigned long sun4v_err_itlb_error;
+बाह्य अचिन्हित दीर्घ sun4v_err_itlb_vaddr;
+बाह्य अचिन्हित दीर्घ sun4v_err_itlb_ctx;
+बाह्य अचिन्हित दीर्घ sun4v_err_itlb_pte;
+बाह्य अचिन्हित दीर्घ sun4v_err_itlb_error;
 
-void sun4v_itlb_error_report(struct pt_regs *regs, int tl);
+व्योम sun4v_itlb_error_report(काष्ठा pt_regs *regs, पूर्णांक tl);
 
-extern unsigned long sun4v_err_dtlb_vaddr;
-extern unsigned long sun4v_err_dtlb_ctx;
-extern unsigned long sun4v_err_dtlb_pte;
-extern unsigned long sun4v_err_dtlb_error;
+बाह्य अचिन्हित दीर्घ sun4v_err_dtlb_vaddr;
+बाह्य अचिन्हित दीर्घ sun4v_err_dtlb_ctx;
+बाह्य अचिन्हित दीर्घ sun4v_err_dtlb_pte;
+बाह्य अचिन्हित दीर्घ sun4v_err_dtlb_error;
 
-void sun4v_dtlb_error_report(struct pt_regs *regs, int tl);
-void hypervisor_tlbop_error(unsigned long err,
-			    unsigned long op);
-void hypervisor_tlbop_error_xcall(unsigned long err,
-				  unsigned long op);
+व्योम sun4v_dtlb_error_report(काष्ठा pt_regs *regs, पूर्णांक tl);
+व्योम hypervisor_tlbop_error(अचिन्हित दीर्घ err,
+			    अचिन्हित दीर्घ op);
+व्योम hypervisor_tlbop_error_xcall(अचिन्हित दीर्घ err,
+				  अचिन्हित दीर्घ op);
 
 /* WARNING: The error trap handlers in assembly know the precise
- *	    layout of the following structure.
+ *	    layout of the following काष्ठाure.
  *
- * C-level handlers in traps.c use this information to log the
- * error and then determine how to recover (if possible).
+ * C-level handlers in traps.c use this inक्रमmation to log the
+ * error and then determine how to recover (अगर possible).
  */
-struct cheetah_err_info {
+काष्ठा cheetah_err_info अणु
 /*0x00*/u64 afsr;
 /*0x08*/u64 afar;
 
@@ -209,45 +210,45 @@ struct cheetah_err_info {
 /*0xb8*/u64 icache_lower;	/* I-cache lower-tag	*/
 
 	/* E-cache state */
-/*0xc0*/u64 ecache_data[4];	/* 32 bytes from staging registers */
+/*0xc0*/u64 ecache_data[4];	/* 32 bytes from staging रेजिस्टरs */
 /*0xe0*/u64 ecache_index;	/* E-cache index	*/
 /*0xe8*/u64 ecache_tag;		/* E-cache tag/state	*/
 
 /*0xf0*/u64 __pad[32 - 30];
-};
-#define CHAFSR_INVALID		((u64)-1L)
+पूर्ण;
+#घोषणा CHAFSR_INVALID		((u64)-1L)
 
-/* This is allocated at boot time based upon the largest hardware
- * cpu ID in the system.  We allocate two entries per cpu, one for
- * TL==0 logging and one for TL >= 1 logging.
+/* This is allocated at boot समय based upon the largest hardware
+ * cpu ID in the प्रणाली.  We allocate two entries per cpu, one क्रम
+ * TL==0 logging and one क्रम TL >= 1 logging.
  */
-extern struct cheetah_err_info *cheetah_error_log;
+बाह्य काष्ठा cheetah_err_info *cheetah_error_log;
 
-/* UPA nodes send interrupt packet to UltraSparc with first data reg
- * value low 5 (7 on Starfire) bits holding the IRQ identifier being
- * delivered.  We must translate this into a non-vector IRQ so we can
- * set the softint on this cpu.
+/* UPA nodes send पूर्णांकerrupt packet to UltraSparc with first data reg
+ * value low 5 (7 on Starfire) bits holding the IRQ identअगरier being
+ * delivered.  We must translate this पूर्णांकo a non-vector IRQ so we can
+ * set the softपूर्णांक on this cpu.
  *
- * To make processing these packets efficient and race free we use
- * an array of irq buckets below.  The interrupt vector handler in
- * entry.S feeds incoming packets into per-cpu pil-indexed lists.
+ * To make processing these packets efficient and race मुक्त we use
+ * an array of irq buckets below.  The पूर्णांकerrupt vector handler in
+ * entry.S feeds incoming packets पूर्णांकo per-cpu pil-indexed lists.
  *
  * If you make changes to ino_bucket, please update hand coded assembler
- * of the vectored interrupt trap handler(s) in entry.S and sun4v_ivec.S
+ * of the vectored पूर्णांकerrupt trap handler(s) in entry.S and sun4v_ivec.S
  */
-struct ino_bucket {
-/*0x00*/unsigned long __irq_chain_pa;
+काष्ठा ino_bucket अणु
+/*0x00*/अचिन्हित दीर्घ __irq_chain_pa;
 
-	/* Interrupt number assigned to this INO.  */
-/*0x08*/unsigned int __irq;
-/*0x0c*/unsigned int __pad;
-};
+	/* Interrupt number asचिन्हित to this INO.  */
+/*0x08*/अचिन्हित पूर्णांक __irq;
+/*0x0c*/अचिन्हित पूर्णांक __pad;
+पूर्ण;
 
-extern struct ino_bucket *ivector_table;
-extern unsigned long ivector_table_pa;
+बाह्य काष्ठा ino_bucket *ivector_table;
+बाह्य अचिन्हित दीर्घ ivector_table_pa;
 
-void init_irqwork_curcpu(void);
-void sun4v_register_mondo_queues(int this_cpu);
+व्योम init_irqwork_curcpu(व्योम);
+व्योम sun4v_रेजिस्टर_monकरो_queues(पूर्णांक this_cpu);
 
-#endif /* CONFIG_SPARC32 */
-#endif /* _ENTRY_H */
+#पूर्ण_अगर /* CONFIG_SPARC32 */
+#पूर्ण_अगर /* _ENTRY_H */

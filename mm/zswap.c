@@ -1,166 +1,167 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * zswap.c - zswap driver file
  *
- * zswap is a backend for frontswap that takes pages that are in the process
+ * zswap is a backend क्रम frontswap that takes pages that are in the process
  * of being swapped out and attempts to compress and store them in a
- * RAM-based memory pool.  This can result in a significant I/O reduction on
- * the swap device and, in the case where decompressing from RAM is faster
- * than reading from the swap device, can also improve workload performance.
+ * RAM-based memory pool.  This can result in a signअगरicant I/O reduction on
+ * the swap device and, in the हाल where decompressing from RAM is faster
+ * than पढ़ोing from the swap device, can also improve workload perक्रमmance.
  *
  * Copyright (C) 2012  Seth Jennings <sjenning@linux.vnet.ibm.com>
 */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/cpu.h>
-#include <linux/highmem.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
-#include <linux/atomic.h>
-#include <linux/frontswap.h>
-#include <linux/rbtree.h>
-#include <linux/swap.h>
-#include <linux/crypto.h>
-#include <linux/scatterlist.h>
-#include <linux/mempool.h>
-#include <linux/zpool.h>
-#include <crypto/acompress.h>
+#समावेश <linux/module.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/frontswap.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/zpool.h>
+#समावेश <crypto/acompress.h>
 
-#include <linux/mm_types.h>
-#include <linux/page-flags.h>
-#include <linux/swapops.h>
-#include <linux/writeback.h>
-#include <linux/pagemap.h>
-#include <linux/workqueue.h>
+#समावेश <linux/mm_types.h>
+#समावेश <linux/page-flags.h>
+#समावेश <linux/swapops.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/workqueue.h>
 
 /*********************************
 * statistics
 **********************************/
 /* Total bytes used by the compressed storage */
-static u64 zswap_pool_total_size;
+अटल u64 zswap_pool_total_size;
 /* The number of compressed pages currently stored in zswap */
-static atomic_t zswap_stored_pages = ATOMIC_INIT(0);
+अटल atomic_t zswap_stored_pages = ATOMIC_INIT(0);
 /* The number of same-value filled pages currently stored in zswap */
-static atomic_t zswap_same_filled_pages = ATOMIC_INIT(0);
+अटल atomic_t zswap_same_filled_pages = ATOMIC_INIT(0);
 
 /*
- * The statistics below are not protected from concurrent access for
- * performance reasons so they may not be a 100% accurate.  However,
- * they do provide useful information on roughly how many times a
+ * The statistics below are not रक्षित from concurrent access क्रम
+ * perक्रमmance reasons so they may not be a 100% accurate.  However,
+ * they करो provide useful inक्रमmation on roughly how many बार a
  * certain event is occurring.
 */
 
 /* Pool limit was hit (see zswap_max_pool_percent) */
-static u64 zswap_pool_limit_hit;
+अटल u64 zswap_pool_limit_hit;
 /* Pages written back when pool limit was reached */
-static u64 zswap_written_back_pages;
+अटल u64 zswap_written_back_pages;
 /* Store failed due to a reclaim failure after pool limit was reached */
-static u64 zswap_reject_reclaim_fail;
-/* Compressed page was too big for the allocator to (optimally) store */
-static u64 zswap_reject_compress_poor;
+अटल u64 zswap_reject_reclaim_fail;
+/* Compressed page was too big क्रम the allocator to (optimally) store */
+अटल u64 zswap_reject_compress_poor;
 /* Store failed because underlying allocator could not get memory */
-static u64 zswap_reject_alloc_fail;
+अटल u64 zswap_reject_alloc_fail;
 /* Store failed because the entry metadata could not be allocated (rare) */
-static u64 zswap_reject_kmemcache_fail;
+अटल u64 zswap_reject_kmemcache_fail;
 /* Duplicate store was encountered (rare) */
-static u64 zswap_duplicate_entry;
+अटल u64 zswap_duplicate_entry;
 
 /* Shrinker work queue */
-static struct workqueue_struct *shrink_wq;
-/* Pool limit was hit, we need to calm down */
-static bool zswap_pool_reached_full;
+अटल काष्ठा workqueue_काष्ठा *shrink_wq;
+/* Pool limit was hit, we need to calm करोwn */
+अटल bool zswap_pool_reached_full;
 
 /*********************************
 * tunables
 **********************************/
 
-#define ZSWAP_PARAM_UNSET ""
+#घोषणा ZSWAP_PARAM_UNSET ""
 
 /* Enable/disable zswap */
-static bool zswap_enabled = IS_ENABLED(CONFIG_ZSWAP_DEFAULT_ON);
-static int zswap_enabled_param_set(const char *,
-				   const struct kernel_param *);
-static const struct kernel_param_ops zswap_enabled_param_ops = {
+अटल bool zswap_enabled = IS_ENABLED(CONFIG_ZSWAP_DEFAULT_ON);
+अटल पूर्णांक zswap_enabled_param_set(स्थिर अक्षर *,
+				   स्थिर काष्ठा kernel_param *);
+अटल स्थिर काष्ठा kernel_param_ops zswap_enabled_param_ops = अणु
 	.set =		zswap_enabled_param_set,
 	.get =		param_get_bool,
-};
+पूर्ण;
 module_param_cb(enabled, &zswap_enabled_param_ops, &zswap_enabled, 0644);
 
 /* Crypto compressor to use */
-static char *zswap_compressor = CONFIG_ZSWAP_COMPRESSOR_DEFAULT;
-static int zswap_compressor_param_set(const char *,
-				      const struct kernel_param *);
-static const struct kernel_param_ops zswap_compressor_param_ops = {
+अटल अक्षर *zswap_compressor = CONFIG_ZSWAP_COMPRESSOR_DEFAULT;
+अटल पूर्णांक zswap_compressor_param_set(स्थिर अक्षर *,
+				      स्थिर काष्ठा kernel_param *);
+अटल स्थिर काष्ठा kernel_param_ops zswap_compressor_param_ops = अणु
 	.set =		zswap_compressor_param_set,
-	.get =		param_get_charp,
-	.free =		param_free_charp,
-};
+	.get =		param_get_अक्षरp,
+	.मुक्त =		param_मुक्त_अक्षरp,
+पूर्ण;
 module_param_cb(compressor, &zswap_compressor_param_ops,
 		&zswap_compressor, 0644);
 
 /* Compressed storage zpool to use */
-static char *zswap_zpool_type = CONFIG_ZSWAP_ZPOOL_DEFAULT;
-static int zswap_zpool_param_set(const char *, const struct kernel_param *);
-static const struct kernel_param_ops zswap_zpool_param_ops = {
+अटल अक्षर *zswap_zpool_type = CONFIG_ZSWAP_ZPOOL_DEFAULT;
+अटल पूर्णांक zswap_zpool_param_set(स्थिर अक्षर *, स्थिर काष्ठा kernel_param *);
+अटल स्थिर काष्ठा kernel_param_ops zswap_zpool_param_ops = अणु
 	.set =		zswap_zpool_param_set,
-	.get =		param_get_charp,
-	.free =		param_free_charp,
-};
+	.get =		param_get_अक्षरp,
+	.मुक्त =		param_मुक्त_अक्षरp,
+पूर्ण;
 module_param_cb(zpool, &zswap_zpool_param_ops, &zswap_zpool_type, 0644);
 
 /* The maximum percentage of memory that the compressed pool can occupy */
-static unsigned int zswap_max_pool_percent = 20;
-module_param_named(max_pool_percent, zswap_max_pool_percent, uint, 0644);
+अटल अचिन्हित पूर्णांक zswap_max_pool_percent = 20;
+module_param_named(max_pool_percent, zswap_max_pool_percent, uपूर्णांक, 0644);
 
-/* The threshold for accepting new pages after the max_pool_percent was hit */
-static unsigned int zswap_accept_thr_percent = 90; /* of max pool size */
+/* The threshold क्रम accepting new pages after the max_pool_percent was hit */
+अटल अचिन्हित पूर्णांक zswap_accept_thr_percent = 90; /* of max pool size */
 module_param_named(accept_threshold_percent, zswap_accept_thr_percent,
-		   uint, 0644);
+		   uपूर्णांक, 0644);
 
-/* Enable/disable handling same-value filled pages (enabled by default) */
-static bool zswap_same_filled_pages_enabled = true;
+/* Enable/disable handling same-value filled pages (enabled by शेष) */
+अटल bool zswap_same_filled_pages_enabled = true;
 module_param_named(same_filled_pages_enabled, zswap_same_filled_pages_enabled,
 		   bool, 0644);
 
 /*********************************
-* data structures
+* data काष्ठाures
 **********************************/
 
-struct crypto_acomp_ctx {
-	struct crypto_acomp *acomp;
-	struct acomp_req *req;
-	struct crypto_wait wait;
-	u8 *dstmem;
-	struct mutex *mutex;
-};
+काष्ठा crypto_acomp_ctx अणु
+	काष्ठा crypto_acomp *acomp;
+	काष्ठा acomp_req *req;
+	काष्ठा crypto_रुको रुको;
+	u8 *dsपंचांगem;
+	काष्ठा mutex *mutex;
+पूर्ण;
 
-struct zswap_pool {
-	struct zpool *zpool;
-	struct crypto_acomp_ctx __percpu *acomp_ctx;
-	struct kref kref;
-	struct list_head list;
-	struct work_struct release_work;
-	struct work_struct shrink_work;
-	struct hlist_node node;
-	char tfm_name[CRYPTO_MAX_ALG_NAME];
-};
+काष्ठा zswap_pool अणु
+	काष्ठा zpool *zpool;
+	काष्ठा crypto_acomp_ctx __percpu *acomp_ctx;
+	काष्ठा kref kref;
+	काष्ठा list_head list;
+	काष्ठा work_काष्ठा release_work;
+	काष्ठा work_काष्ठा shrink_work;
+	काष्ठा hlist_node node;
+	अक्षर tfm_name[CRYPTO_MAX_ALG_NAME];
+पूर्ण;
 
 /*
- * struct zswap_entry
+ * काष्ठा zswap_entry
  *
- * This structure contains the metadata for tracking a single compressed
+ * This काष्ठाure contains the metadata क्रम tracking a single compressed
  * page within zswap.
  *
- * rbnode - links the entry into red-black tree for the appropriate swap type
- * offset - the swap offset for the entry.  Index into the red-black tree.
+ * rbnode - links the entry पूर्णांकo red-black tree क्रम the appropriate swap type
+ * offset - the swap offset क्रम the entry.  Index पूर्णांकo the red-black tree.
  * refcount - the number of outstanding reference to the entry. This is needed
- *            to protect against premature freeing of the entry by code
- *            concurrent calls to load, invalidate, and writeback.  The lock
- *            for the zswap_tree structure that contains the entry must
- *            be held while changing the refcount.  Since the lock must
+ *            to protect against premature मुक्तing of the entry by code
+ *            concurrent calls to load, invalidate, and ग_लिखोback.  The lock
+ *            क्रम the zswap_tree काष्ठाure that contains the entry must
+ *            be held जबतक changing the refcount.  Since the lock must
  *            be held, there is no reason to also make refcount atomic.
  * length - the length in bytes of the compressed page data.  Needed during
  *          decompression. For a same value filled page length is 0.
@@ -168,464 +169,464 @@ struct zswap_pool {
  * handle - zpool allocation handle that stores the compressed page data
  * value - value of the same-value filled pages which have same content
  */
-struct zswap_entry {
-	struct rb_node rbnode;
+काष्ठा zswap_entry अणु
+	काष्ठा rb_node rbnode;
 	pgoff_t offset;
-	int refcount;
-	unsigned int length;
-	struct zswap_pool *pool;
-	union {
-		unsigned long handle;
-		unsigned long value;
-	};
-};
+	पूर्णांक refcount;
+	अचिन्हित पूर्णांक length;
+	काष्ठा zswap_pool *pool;
+	जोड़ अणु
+		अचिन्हित दीर्घ handle;
+		अचिन्हित दीर्घ value;
+	पूर्ण;
+पूर्ण;
 
-struct zswap_header {
+काष्ठा zswap_header अणु
 	swp_entry_t swpentry;
-};
+पूर्ण;
 
 /*
- * The tree lock in the zswap_tree struct protects a few things:
+ * The tree lock in the zswap_tree काष्ठा protects a few things:
  * - the rbtree
  * - the refcount field of each entry in the tree
  */
-struct zswap_tree {
-	struct rb_root rbroot;
+काष्ठा zswap_tree अणु
+	काष्ठा rb_root rbroot;
 	spinlock_t lock;
-};
+पूर्ण;
 
-static struct zswap_tree *zswap_trees[MAX_SWAPFILES];
+अटल काष्ठा zswap_tree *zswap_trees[MAX_SWAPखाताS];
 
-/* RCU-protected iteration */
-static LIST_HEAD(zswap_pools);
-/* protects zswap_pools list modification */
-static DEFINE_SPINLOCK(zswap_pools_lock);
+/* RCU-रक्षित iteration */
+अटल LIST_HEAD(zswap_pools);
+/* protects zswap_pools list modअगरication */
+अटल DEFINE_SPINLOCK(zswap_pools_lock);
 /* pool counter to provide unique names to zpool */
-static atomic_t zswap_pools_count = ATOMIC_INIT(0);
+अटल atomic_t zswap_pools_count = ATOMIC_INIT(0);
 
 /* used by param callback function */
-static bool zswap_init_started;
+अटल bool zswap_init_started;
 
 /* fatal error during init */
-static bool zswap_init_failed;
+अटल bool zswap_init_failed;
 
 /* init completed, but couldn't create the initial pool */
-static bool zswap_has_pool;
+अटल bool zswap_has_pool;
 
 /*********************************
 * helpers and fwd declarations
 **********************************/
 
-#define zswap_pool_debug(msg, p)				\
+#घोषणा zswap_pool_debug(msg, p)				\
 	pr_debug("%s pool %s/%s\n", msg, (p)->tfm_name,		\
 		 zpool_get_type((p)->zpool))
 
-static int zswap_writeback_entry(struct zpool *pool, unsigned long handle);
-static int zswap_pool_get(struct zswap_pool *pool);
-static void zswap_pool_put(struct zswap_pool *pool);
+अटल पूर्णांक zswap_ग_लिखोback_entry(काष्ठा zpool *pool, अचिन्हित दीर्घ handle);
+अटल पूर्णांक zswap_pool_get(काष्ठा zswap_pool *pool);
+अटल व्योम zswap_pool_put(काष्ठा zswap_pool *pool);
 
-static const struct zpool_ops zswap_zpool_ops = {
-	.evict = zswap_writeback_entry
-};
+अटल स्थिर काष्ठा zpool_ops zswap_zpool_ops = अणु
+	.evict = zswap_ग_लिखोback_entry
+पूर्ण;
 
-static bool zswap_is_full(void)
-{
-	return totalram_pages() * zswap_max_pool_percent / 100 <
+अटल bool zswap_is_full(व्योम)
+अणु
+	वापस totalram_pages() * zswap_max_pool_percent / 100 <
 			DIV_ROUND_UP(zswap_pool_total_size, PAGE_SIZE);
-}
+पूर्ण
 
-static bool zswap_can_accept(void)
-{
-	return totalram_pages() * zswap_accept_thr_percent / 100 *
+अटल bool zswap_can_accept(व्योम)
+अणु
+	वापस totalram_pages() * zswap_accept_thr_percent / 100 *
 				zswap_max_pool_percent / 100 >
 			DIV_ROUND_UP(zswap_pool_total_size, PAGE_SIZE);
-}
+पूर्ण
 
-static void zswap_update_total_size(void)
-{
-	struct zswap_pool *pool;
+अटल व्योम zswap_update_total_size(व्योम)
+अणु
+	काष्ठा zswap_pool *pool;
 	u64 total = 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(pool, &zswap_pools, list)
+	list_क्रम_each_entry_rcu(pool, &zswap_pools, list)
 		total += zpool_get_total_size(pool->zpool);
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	zswap_pool_total_size = total;
-}
+पूर्ण
 
 /*********************************
 * zswap entry functions
 **********************************/
-static struct kmem_cache *zswap_entry_cache;
+अटल काष्ठा kmem_cache *zswap_entry_cache;
 
-static int __init zswap_entry_cache_create(void)
-{
+अटल पूर्णांक __init zswap_entry_cache_create(व्योम)
+अणु
 	zswap_entry_cache = KMEM_CACHE(zswap_entry, 0);
-	return zswap_entry_cache == NULL;
-}
+	वापस zswap_entry_cache == शून्य;
+पूर्ण
 
-static void __init zswap_entry_cache_destroy(void)
-{
+अटल व्योम __init zswap_entry_cache_destroy(व्योम)
+अणु
 	kmem_cache_destroy(zswap_entry_cache);
-}
+पूर्ण
 
-static struct zswap_entry *zswap_entry_cache_alloc(gfp_t gfp)
-{
-	struct zswap_entry *entry;
+अटल काष्ठा zswap_entry *zswap_entry_cache_alloc(gfp_t gfp)
+अणु
+	काष्ठा zswap_entry *entry;
 	entry = kmem_cache_alloc(zswap_entry_cache, gfp);
-	if (!entry)
-		return NULL;
+	अगर (!entry)
+		वापस शून्य;
 	entry->refcount = 1;
 	RB_CLEAR_NODE(&entry->rbnode);
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
-static void zswap_entry_cache_free(struct zswap_entry *entry)
-{
-	kmem_cache_free(zswap_entry_cache, entry);
-}
+अटल व्योम zswap_entry_cache_मुक्त(काष्ठा zswap_entry *entry)
+अणु
+	kmem_cache_मुक्त(zswap_entry_cache, entry);
+पूर्ण
 
 /*********************************
 * rbtree functions
 **********************************/
-static struct zswap_entry *zswap_rb_search(struct rb_root *root, pgoff_t offset)
-{
-	struct rb_node *node = root->rb_node;
-	struct zswap_entry *entry;
+अटल काष्ठा zswap_entry *zswap_rb_search(काष्ठा rb_root *root, pgoff_t offset)
+अणु
+	काष्ठा rb_node *node = root->rb_node;
+	काष्ठा zswap_entry *entry;
 
-	while (node) {
-		entry = rb_entry(node, struct zswap_entry, rbnode);
-		if (entry->offset > offset)
+	जबतक (node) अणु
+		entry = rb_entry(node, काष्ठा zswap_entry, rbnode);
+		अगर (entry->offset > offset)
 			node = node->rb_left;
-		else if (entry->offset < offset)
+		अन्यथा अगर (entry->offset < offset)
 			node = node->rb_right;
-		else
-			return entry;
-	}
-	return NULL;
-}
+		अन्यथा
+			वापस entry;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
- * In the case that a entry with the same offset is found, a pointer to
- * the existing entry is stored in dupentry and the function returns -EEXIST
+ * In the हाल that a entry with the same offset is found, a poपूर्णांकer to
+ * the existing entry is stored in dupentry and the function वापसs -EEXIST
  */
-static int zswap_rb_insert(struct rb_root *root, struct zswap_entry *entry,
-			struct zswap_entry **dupentry)
-{
-	struct rb_node **link = &root->rb_node, *parent = NULL;
-	struct zswap_entry *myentry;
+अटल पूर्णांक zswap_rb_insert(काष्ठा rb_root *root, काष्ठा zswap_entry *entry,
+			काष्ठा zswap_entry **dupentry)
+अणु
+	काष्ठा rb_node **link = &root->rb_node, *parent = शून्य;
+	काष्ठा zswap_entry *myentry;
 
-	while (*link) {
+	जबतक (*link) अणु
 		parent = *link;
-		myentry = rb_entry(parent, struct zswap_entry, rbnode);
-		if (myentry->offset > entry->offset)
+		myentry = rb_entry(parent, काष्ठा zswap_entry, rbnode);
+		अगर (myentry->offset > entry->offset)
 			link = &(*link)->rb_left;
-		else if (myentry->offset < entry->offset)
+		अन्यथा अगर (myentry->offset < entry->offset)
 			link = &(*link)->rb_right;
-		else {
+		अन्यथा अणु
 			*dupentry = myentry;
-			return -EEXIST;
-		}
-	}
+			वापस -EEXIST;
+		पूर्ण
+	पूर्ण
 	rb_link_node(&entry->rbnode, parent, link);
 	rb_insert_color(&entry->rbnode, root);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void zswap_rb_erase(struct rb_root *root, struct zswap_entry *entry)
-{
-	if (!RB_EMPTY_NODE(&entry->rbnode)) {
+अटल व्योम zswap_rb_erase(काष्ठा rb_root *root, काष्ठा zswap_entry *entry)
+अणु
+	अगर (!RB_EMPTY_NODE(&entry->rbnode)) अणु
 		rb_erase(&entry->rbnode, root);
 		RB_CLEAR_NODE(&entry->rbnode);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Carries out the common pattern of freeing and entry's zpool allocation,
- * freeing the entry itself, and decrementing the number of stored pages.
+ * Carries out the common pattern of मुक्तing and entry's zpool allocation,
+ * मुक्तing the entry itself, and decrementing the number of stored pages.
  */
-static void zswap_free_entry(struct zswap_entry *entry)
-{
-	if (!entry->length)
+अटल व्योम zswap_मुक्त_entry(काष्ठा zswap_entry *entry)
+अणु
+	अगर (!entry->length)
 		atomic_dec(&zswap_same_filled_pages);
-	else {
-		zpool_free(entry->pool->zpool, entry->handle);
+	अन्यथा अणु
+		zpool_मुक्त(entry->pool->zpool, entry->handle);
 		zswap_pool_put(entry->pool);
-	}
-	zswap_entry_cache_free(entry);
+	पूर्ण
+	zswap_entry_cache_मुक्त(entry);
 	atomic_dec(&zswap_stored_pages);
 	zswap_update_total_size();
-}
+पूर्ण
 
 /* caller must hold the tree lock */
-static void zswap_entry_get(struct zswap_entry *entry)
-{
+अटल व्योम zswap_entry_get(काष्ठा zswap_entry *entry)
+अणु
 	entry->refcount++;
-}
+पूर्ण
 
 /* caller must hold the tree lock
-* remove from the tree and free it, if nobody reference the entry
+* हटाओ from the tree and मुक्त it, अगर nobody reference the entry
 */
-static void zswap_entry_put(struct zswap_tree *tree,
-			struct zswap_entry *entry)
-{
-	int refcount = --entry->refcount;
+अटल व्योम zswap_entry_put(काष्ठा zswap_tree *tree,
+			काष्ठा zswap_entry *entry)
+अणु
+	पूर्णांक refcount = --entry->refcount;
 
 	BUG_ON(refcount < 0);
-	if (refcount == 0) {
+	अगर (refcount == 0) अणु
 		zswap_rb_erase(&tree->rbroot, entry);
-		zswap_free_entry(entry);
-	}
-}
+		zswap_मुक्त_entry(entry);
+	पूर्ण
+पूर्ण
 
 /* caller must hold the tree lock */
-static struct zswap_entry *zswap_entry_find_get(struct rb_root *root,
+अटल काष्ठा zswap_entry *zswap_entry_find_get(काष्ठा rb_root *root,
 				pgoff_t offset)
-{
-	struct zswap_entry *entry;
+अणु
+	काष्ठा zswap_entry *entry;
 
 	entry = zswap_rb_search(root, offset);
-	if (entry)
+	अगर (entry)
 		zswap_entry_get(entry);
 
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
 /*********************************
 * per-cpu code
 **********************************/
-static DEFINE_PER_CPU(u8 *, zswap_dstmem);
+अटल DEFINE_PER_CPU(u8 *, zswap_dsपंचांगem);
 /*
- * If users dynamically change the zpool type and compressor at runtime, i.e.
+ * If users dynamically change the zpool type and compressor at runसमय, i.e.
  * zswap is running, zswap can have more than one zpool on one cpu, but they
  * are sharing dtsmem. So we need this mutex to be per-cpu.
  */
-static DEFINE_PER_CPU(struct mutex *, zswap_mutex);
+अटल DEFINE_PER_CPU(काष्ठा mutex *, zswap_mutex);
 
-static int zswap_dstmem_prepare(unsigned int cpu)
-{
-	struct mutex *mutex;
+अटल पूर्णांक zswap_dsपंचांगem_prepare(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा mutex *mutex;
 	u8 *dst;
 
-	dst = kmalloc_node(PAGE_SIZE * 2, GFP_KERNEL, cpu_to_node(cpu));
-	if (!dst)
-		return -ENOMEM;
+	dst = kदो_स्मृति_node(PAGE_SIZE * 2, GFP_KERNEL, cpu_to_node(cpu));
+	अगर (!dst)
+		वापस -ENOMEM;
 
-	mutex = kmalloc_node(sizeof(*mutex), GFP_KERNEL, cpu_to_node(cpu));
-	if (!mutex) {
-		kfree(dst);
-		return -ENOMEM;
-	}
+	mutex = kदो_स्मृति_node(माप(*mutex), GFP_KERNEL, cpu_to_node(cpu));
+	अगर (!mutex) अणु
+		kमुक्त(dst);
+		वापस -ENOMEM;
+	पूर्ण
 
 	mutex_init(mutex);
-	per_cpu(zswap_dstmem, cpu) = dst;
+	per_cpu(zswap_dsपंचांगem, cpu) = dst;
 	per_cpu(zswap_mutex, cpu) = mutex;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zswap_dstmem_dead(unsigned int cpu)
-{
-	struct mutex *mutex;
+अटल पूर्णांक zswap_dsपंचांगem_dead(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा mutex *mutex;
 	u8 *dst;
 
 	mutex = per_cpu(zswap_mutex, cpu);
-	kfree(mutex);
-	per_cpu(zswap_mutex, cpu) = NULL;
+	kमुक्त(mutex);
+	per_cpu(zswap_mutex, cpu) = शून्य;
 
-	dst = per_cpu(zswap_dstmem, cpu);
-	kfree(dst);
-	per_cpu(zswap_dstmem, cpu) = NULL;
+	dst = per_cpu(zswap_dsपंचांगem, cpu);
+	kमुक्त(dst);
+	per_cpu(zswap_dsपंचांगem, cpu) = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zswap_cpu_comp_prepare(unsigned int cpu, struct hlist_node *node)
-{
-	struct zswap_pool *pool = hlist_entry(node, struct zswap_pool, node);
-	struct crypto_acomp_ctx *acomp_ctx = per_cpu_ptr(pool->acomp_ctx, cpu);
-	struct crypto_acomp *acomp;
-	struct acomp_req *req;
+अटल पूर्णांक zswap_cpu_comp_prepare(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
+अणु
+	काष्ठा zswap_pool *pool = hlist_entry(node, काष्ठा zswap_pool, node);
+	काष्ठा crypto_acomp_ctx *acomp_ctx = per_cpu_ptr(pool->acomp_ctx, cpu);
+	काष्ठा crypto_acomp *acomp;
+	काष्ठा acomp_req *req;
 
 	acomp = crypto_alloc_acomp_node(pool->tfm_name, 0, 0, cpu_to_node(cpu));
-	if (IS_ERR(acomp)) {
+	अगर (IS_ERR(acomp)) अणु
 		pr_err("could not alloc crypto acomp %s : %ld\n",
 				pool->tfm_name, PTR_ERR(acomp));
-		return PTR_ERR(acomp);
-	}
+		वापस PTR_ERR(acomp);
+	पूर्ण
 	acomp_ctx->acomp = acomp;
 
 	req = acomp_request_alloc(acomp_ctx->acomp);
-	if (!req) {
+	अगर (!req) अणु
 		pr_err("could not alloc crypto acomp_request %s\n",
 		       pool->tfm_name);
-		crypto_free_acomp(acomp_ctx->acomp);
-		return -ENOMEM;
-	}
+		crypto_मुक्त_acomp(acomp_ctx->acomp);
+		वापस -ENOMEM;
+	पूर्ण
 	acomp_ctx->req = req;
 
-	crypto_init_wait(&acomp_ctx->wait);
+	crypto_init_रुको(&acomp_ctx->रुको);
 	/*
-	 * if the backend of acomp is async zip, crypto_req_done() will wakeup
-	 * crypto_wait_req(); if the backend of acomp is scomp, the callback
-	 * won't be called, crypto_wait_req() will return without blocking.
+	 * अगर the backend of acomp is async zip, crypto_req_करोne() will wakeup
+	 * crypto_रुको_req(); अगर the backend of acomp is scomp, the callback
+	 * won't be called, crypto_रुको_req() will वापस without blocking.
 	 */
 	acomp_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-				   crypto_req_done, &acomp_ctx->wait);
+				   crypto_req_करोne, &acomp_ctx->रुको);
 
 	acomp_ctx->mutex = per_cpu(zswap_mutex, cpu);
-	acomp_ctx->dstmem = per_cpu(zswap_dstmem, cpu);
+	acomp_ctx->dsपंचांगem = per_cpu(zswap_dsपंचांगem, cpu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zswap_cpu_comp_dead(unsigned int cpu, struct hlist_node *node)
-{
-	struct zswap_pool *pool = hlist_entry(node, struct zswap_pool, node);
-	struct crypto_acomp_ctx *acomp_ctx = per_cpu_ptr(pool->acomp_ctx, cpu);
+अटल पूर्णांक zswap_cpu_comp_dead(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
+अणु
+	काष्ठा zswap_pool *pool = hlist_entry(node, काष्ठा zswap_pool, node);
+	काष्ठा crypto_acomp_ctx *acomp_ctx = per_cpu_ptr(pool->acomp_ctx, cpu);
 
-	if (!IS_ERR_OR_NULL(acomp_ctx)) {
-		if (!IS_ERR_OR_NULL(acomp_ctx->req))
-			acomp_request_free(acomp_ctx->req);
-		if (!IS_ERR_OR_NULL(acomp_ctx->acomp))
-			crypto_free_acomp(acomp_ctx->acomp);
-	}
+	अगर (!IS_ERR_OR_शून्य(acomp_ctx)) अणु
+		अगर (!IS_ERR_OR_शून्य(acomp_ctx->req))
+			acomp_request_मुक्त(acomp_ctx->req);
+		अगर (!IS_ERR_OR_शून्य(acomp_ctx->acomp))
+			crypto_मुक्त_acomp(acomp_ctx->acomp);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*********************************
 * pool functions
 **********************************/
 
-static struct zswap_pool *__zswap_pool_current(void)
-{
-	struct zswap_pool *pool;
+अटल काष्ठा zswap_pool *__zswap_pool_current(व्योम)
+अणु
+	काष्ठा zswap_pool *pool;
 
 	pool = list_first_or_null_rcu(&zswap_pools, typeof(*pool), list);
 	WARN_ONCE(!pool && zswap_has_pool,
 		  "%s: no page storage pool!\n", __func__);
 
-	return pool;
-}
+	वापस pool;
+पूर्ण
 
-static struct zswap_pool *zswap_pool_current(void)
-{
-	assert_spin_locked(&zswap_pools_lock);
+अटल काष्ठा zswap_pool *zswap_pool_current(व्योम)
+अणु
+	निश्चित_spin_locked(&zswap_pools_lock);
 
-	return __zswap_pool_current();
-}
+	वापस __zswap_pool_current();
+पूर्ण
 
-static struct zswap_pool *zswap_pool_current_get(void)
-{
-	struct zswap_pool *pool;
+अटल काष्ठा zswap_pool *zswap_pool_current_get(व्योम)
+अणु
+	काष्ठा zswap_pool *pool;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	pool = __zswap_pool_current();
-	if (!zswap_pool_get(pool))
-		pool = NULL;
+	अगर (!zswap_pool_get(pool))
+		pool = शून्य;
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return pool;
-}
+	वापस pool;
+पूर्ण
 
-static struct zswap_pool *zswap_pool_last_get(void)
-{
-	struct zswap_pool *pool, *last = NULL;
+अटल काष्ठा zswap_pool *zswap_pool_last_get(व्योम)
+अणु
+	काष्ठा zswap_pool *pool, *last = शून्य;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(pool, &zswap_pools, list)
+	list_क्रम_each_entry_rcu(pool, &zswap_pools, list)
 		last = pool;
 	WARN_ONCE(!last && zswap_has_pool,
 		  "%s: no page storage pool!\n", __func__);
-	if (!zswap_pool_get(last))
-		last = NULL;
+	अगर (!zswap_pool_get(last))
+		last = शून्य;
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return last;
-}
+	वापस last;
+पूर्ण
 
 /* type and compressor must be null-terminated */
-static struct zswap_pool *zswap_pool_find_get(char *type, char *compressor)
-{
-	struct zswap_pool *pool;
+अटल काष्ठा zswap_pool *zswap_pool_find_get(अक्षर *type, अक्षर *compressor)
+अणु
+	काष्ठा zswap_pool *pool;
 
-	assert_spin_locked(&zswap_pools_lock);
+	निश्चित_spin_locked(&zswap_pools_lock);
 
-	list_for_each_entry_rcu(pool, &zswap_pools, list) {
-		if (strcmp(pool->tfm_name, compressor))
-			continue;
-		if (strcmp(zpool_get_type(pool->zpool), type))
-			continue;
-		/* if we can't get it, it's about to be destroyed */
-		if (!zswap_pool_get(pool))
-			continue;
-		return pool;
-	}
+	list_क्रम_each_entry_rcu(pool, &zswap_pools, list) अणु
+		अगर (म_भेद(pool->tfm_name, compressor))
+			जारी;
+		अगर (म_भेद(zpool_get_type(pool->zpool), type))
+			जारी;
+		/* अगर we can't get it, it's about to be destroyed */
+		अगर (!zswap_pool_get(pool))
+			जारी;
+		वापस pool;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void shrink_worker(struct work_struct *w)
-{
-	struct zswap_pool *pool = container_of(w, typeof(*pool),
+अटल व्योम shrink_worker(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा zswap_pool *pool = container_of(w, typeof(*pool),
 						shrink_work);
 
-	if (zpool_shrink(pool->zpool, 1, NULL))
+	अगर (zpool_shrink(pool->zpool, 1, शून्य))
 		zswap_reject_reclaim_fail++;
 	zswap_pool_put(pool);
-}
+पूर्ण
 
-static struct zswap_pool *zswap_pool_create(char *type, char *compressor)
-{
-	struct zswap_pool *pool;
-	char name[38]; /* 'zswap' + 32 char (max) num + \0 */
+अटल काष्ठा zswap_pool *zswap_pool_create(अक्षर *type, अक्षर *compressor)
+अणु
+	काष्ठा zswap_pool *pool;
+	अक्षर name[38]; /* 'zswap' + 32 अक्षर (max) num + \0 */
 	gfp_t gfp = __GFP_NORETRY | __GFP_NOWARN | __GFP_KSWAPD_RECLAIM;
-	int ret;
+	पूर्णांक ret;
 
-	if (!zswap_has_pool) {
-		/* if either are unset, pool initialization failed, and we
-		 * need both params to be set correctly before trying to
+	अगर (!zswap_has_pool) अणु
+		/* अगर either are unset, pool initialization failed, and we
+		 * need both params to be set correctly beक्रमe trying to
 		 * create a pool.
 		 */
-		if (!strcmp(type, ZSWAP_PARAM_UNSET))
-			return NULL;
-		if (!strcmp(compressor, ZSWAP_PARAM_UNSET))
-			return NULL;
-	}
+		अगर (!म_भेद(type, ZSWAP_PARAM_UNSET))
+			वापस शून्य;
+		अगर (!म_भेद(compressor, ZSWAP_PARAM_UNSET))
+			वापस शून्य;
+	पूर्ण
 
-	pool = kzalloc(sizeof(*pool), GFP_KERNEL);
-	if (!pool)
-		return NULL;
+	pool = kzalloc(माप(*pool), GFP_KERNEL);
+	अगर (!pool)
+		वापस शून्य;
 
-	/* unique name for each pool specifically required by zsmalloc */
-	snprintf(name, 38, "zswap%x", atomic_inc_return(&zswap_pools_count));
+	/* unique name क्रम each pool specअगरically required by zsदो_स्मृति */
+	snम_लिखो(name, 38, "zswap%x", atomic_inc_वापस(&zswap_pools_count));
 
 	pool->zpool = zpool_create_pool(type, name, gfp, &zswap_zpool_ops);
-	if (!pool->zpool) {
+	अगर (!pool->zpool) अणु
 		pr_err("%s zpool not available\n", type);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	pr_debug("using %s zpool\n", zpool_get_type(pool->zpool));
 
-	strscpy(pool->tfm_name, compressor, sizeof(pool->tfm_name));
+	strscpy(pool->tfm_name, compressor, माप(pool->tfm_name));
 
 	pool->acomp_ctx = alloc_percpu(*pool->acomp_ctx);
-	if (!pool->acomp_ctx) {
+	अगर (!pool->acomp_ctx) अणु
 		pr_err("percpu alloc failed\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	ret = cpuhp_state_add_instance(CPUHP_MM_ZSWP_POOL_PREPARE,
 				       &pool->node);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 	pr_debug("using %s compressor\n", pool->tfm_name);
 
 	/* being the current pool takes 1 ref; this func expects the
@@ -637,80 +638,80 @@ static struct zswap_pool *zswap_pool_create(char *type, char *compressor)
 
 	zswap_pool_debug("created", pool);
 
-	return pool;
+	वापस pool;
 
 error:
-	if (pool->acomp_ctx)
-		free_percpu(pool->acomp_ctx);
-	if (pool->zpool)
+	अगर (pool->acomp_ctx)
+		मुक्त_percpu(pool->acomp_ctx);
+	अगर (pool->zpool)
 		zpool_destroy_pool(pool->zpool);
-	kfree(pool);
-	return NULL;
-}
+	kमुक्त(pool);
+	वापस शून्य;
+पूर्ण
 
-static __init struct zswap_pool *__zswap_pool_create_fallback(void)
-{
+अटल __init काष्ठा zswap_pool *__zswap_pool_create_fallback(व्योम)
+अणु
 	bool has_comp, has_zpool;
 
 	has_comp = crypto_has_acomp(zswap_compressor, 0, 0);
-	if (!has_comp && strcmp(zswap_compressor,
-				CONFIG_ZSWAP_COMPRESSOR_DEFAULT)) {
+	अगर (!has_comp && म_भेद(zswap_compressor,
+				CONFIG_ZSWAP_COMPRESSOR_DEFAULT)) अणु
 		pr_err("compressor %s not available, using default %s\n",
 		       zswap_compressor, CONFIG_ZSWAP_COMPRESSOR_DEFAULT);
-		param_free_charp(&zswap_compressor);
+		param_मुक्त_अक्षरp(&zswap_compressor);
 		zswap_compressor = CONFIG_ZSWAP_COMPRESSOR_DEFAULT;
 		has_comp = crypto_has_acomp(zswap_compressor, 0, 0);
-	}
-	if (!has_comp) {
+	पूर्ण
+	अगर (!has_comp) अणु
 		pr_err("default compressor %s not available\n",
 		       zswap_compressor);
-		param_free_charp(&zswap_compressor);
+		param_मुक्त_अक्षरp(&zswap_compressor);
 		zswap_compressor = ZSWAP_PARAM_UNSET;
-	}
+	पूर्ण
 
 	has_zpool = zpool_has_pool(zswap_zpool_type);
-	if (!has_zpool && strcmp(zswap_zpool_type,
-				 CONFIG_ZSWAP_ZPOOL_DEFAULT)) {
+	अगर (!has_zpool && म_भेद(zswap_zpool_type,
+				 CONFIG_ZSWAP_ZPOOL_DEFAULT)) अणु
 		pr_err("zpool %s not available, using default %s\n",
 		       zswap_zpool_type, CONFIG_ZSWAP_ZPOOL_DEFAULT);
-		param_free_charp(&zswap_zpool_type);
+		param_मुक्त_अक्षरp(&zswap_zpool_type);
 		zswap_zpool_type = CONFIG_ZSWAP_ZPOOL_DEFAULT;
 		has_zpool = zpool_has_pool(zswap_zpool_type);
-	}
-	if (!has_zpool) {
+	पूर्ण
+	अगर (!has_zpool) अणु
 		pr_err("default zpool %s not available\n",
 		       zswap_zpool_type);
-		param_free_charp(&zswap_zpool_type);
+		param_मुक्त_अक्षरp(&zswap_zpool_type);
 		zswap_zpool_type = ZSWAP_PARAM_UNSET;
-	}
+	पूर्ण
 
-	if (!has_comp || !has_zpool)
-		return NULL;
+	अगर (!has_comp || !has_zpool)
+		वापस शून्य;
 
-	return zswap_pool_create(zswap_zpool_type, zswap_compressor);
-}
+	वापस zswap_pool_create(zswap_zpool_type, zswap_compressor);
+पूर्ण
 
-static void zswap_pool_destroy(struct zswap_pool *pool)
-{
+अटल व्योम zswap_pool_destroy(काष्ठा zswap_pool *pool)
+अणु
 	zswap_pool_debug("destroying", pool);
 
-	cpuhp_state_remove_instance(CPUHP_MM_ZSWP_POOL_PREPARE, &pool->node);
-	free_percpu(pool->acomp_ctx);
+	cpuhp_state_हटाओ_instance(CPUHP_MM_ZSWP_POOL_PREPARE, &pool->node);
+	मुक्त_percpu(pool->acomp_ctx);
 	zpool_destroy_pool(pool->zpool);
-	kfree(pool);
-}
+	kमुक्त(pool);
+पूर्ण
 
-static int __must_check zswap_pool_get(struct zswap_pool *pool)
-{
-	if (!pool)
-		return 0;
+अटल पूर्णांक __must_check zswap_pool_get(काष्ठा zswap_pool *pool)
+अणु
+	अगर (!pool)
+		वापस 0;
 
-	return kref_get_unless_zero(&pool->kref);
-}
+	वापस kref_get_unless_zero(&pool->kref);
+पूर्ण
 
-static void __zswap_pool_release(struct work_struct *work)
-{
-	struct zswap_pool *pool = container_of(work, typeof(*pool),
+अटल व्योम __zswap_pool_release(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा zswap_pool *pool = container_of(work, typeof(*pool),
 						release_work);
 
 	synchronize_rcu();
@@ -720,11 +721,11 @@ static void __zswap_pool_release(struct work_struct *work)
 
 	/* pool is now off zswap_pools list and has no references. */
 	zswap_pool_destroy(pool);
-}
+पूर्ण
 
-static void __zswap_pool_empty(struct kref *kref)
-{
-	struct zswap_pool *pool;
+अटल व्योम __zswap_pool_empty(काष्ठा kref *kref)
+अणु
+	काष्ठा zswap_pool *pool;
 
 	pool = container_of(kref, typeof(*pool), kref);
 
@@ -738,215 +739,215 @@ static void __zswap_pool_empty(struct kref *kref)
 	schedule_work(&pool->release_work);
 
 	spin_unlock(&zswap_pools_lock);
-}
+पूर्ण
 
-static void zswap_pool_put(struct zswap_pool *pool)
-{
+अटल व्योम zswap_pool_put(काष्ठा zswap_pool *pool)
+अणु
 	kref_put(&pool->kref, __zswap_pool_empty);
-}
+पूर्ण
 
 /*********************************
 * param callbacks
 **********************************/
 
 /* val must be a null-terminated string */
-static int __zswap_param_set(const char *val, const struct kernel_param *kp,
-			     char *type, char *compressor)
-{
-	struct zswap_pool *pool, *put_pool = NULL;
-	char *s = strstrip((char *)val);
-	int ret;
+अटल पूर्णांक __zswap_param_set(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp,
+			     अक्षर *type, अक्षर *compressor)
+अणु
+	काष्ठा zswap_pool *pool, *put_pool = शून्य;
+	अक्षर *s = म_मालाip((अक्षर *)val);
+	पूर्णांक ret;
 
-	if (zswap_init_failed) {
+	अगर (zswap_init_failed) अणु
 		pr_err("can't set param, initialization failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* no change required */
-	if (!strcmp(s, *(char **)kp->arg) && zswap_has_pool)
-		return 0;
+	अगर (!म_भेद(s, *(अक्षर **)kp->arg) && zswap_has_pool)
+		वापस 0;
 
-	/* if this is load-time (pre-init) param setting,
-	 * don't create a pool; that's done during init.
+	/* अगर this is load-समय (pre-init) param setting,
+	 * करोn't create a pool; that's करोne during init.
 	 */
-	if (!zswap_init_started)
-		return param_set_charp(s, kp);
+	अगर (!zswap_init_started)
+		वापस param_set_अक्षरp(s, kp);
 
-	if (!type) {
-		if (!zpool_has_pool(s)) {
+	अगर (!type) अणु
+		अगर (!zpool_has_pool(s)) अणु
 			pr_err("zpool %s not available\n", s);
-			return -ENOENT;
-		}
+			वापस -ENOENT;
+		पूर्ण
 		type = s;
-	} else if (!compressor) {
-		if (!crypto_has_acomp(s, 0, 0)) {
+	पूर्ण अन्यथा अगर (!compressor) अणु
+		अगर (!crypto_has_acomp(s, 0, 0)) अणु
 			pr_err("compressor %s not available\n", s);
-			return -ENOENT;
-		}
+			वापस -ENOENT;
+		पूर्ण
 		compressor = s;
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ON(1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock(&zswap_pools_lock);
 
 	pool = zswap_pool_find_get(type, compressor);
-	if (pool) {
+	अगर (pool) अणु
 		zswap_pool_debug("using existing", pool);
 		WARN_ON(pool == zswap_pool_current());
 		list_del_rcu(&pool->list);
-	}
+	पूर्ण
 
 	spin_unlock(&zswap_pools_lock);
 
-	if (!pool)
+	अगर (!pool)
 		pool = zswap_pool_create(type, compressor);
 
-	if (pool)
-		ret = param_set_charp(s, kp);
-	else
+	अगर (pool)
+		ret = param_set_अक्षरp(s, kp);
+	अन्यथा
 		ret = -EINVAL;
 
 	spin_lock(&zswap_pools_lock);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		put_pool = zswap_pool_current();
 		list_add_rcu(&pool->list, &zswap_pools);
 		zswap_has_pool = true;
-	} else if (pool) {
+	पूर्ण अन्यथा अगर (pool) अणु
 		/* add the possibly pre-existing pool to the end of the pools
-		 * list; if it's new (and empty) then it'll be removed and
+		 * list; अगर it's new (and empty) then it'll be हटाओd and
 		 * destroyed by the put after we drop the lock
 		 */
 		list_add_tail_rcu(&pool->list, &zswap_pools);
 		put_pool = pool;
-	}
+	पूर्ण
 
 	spin_unlock(&zswap_pools_lock);
 
-	if (!zswap_has_pool && !pool) {
-		/* if initial pool creation failed, and this pool creation also
+	अगर (!zswap_has_pool && !pool) अणु
+		/* अगर initial pool creation failed, and this pool creation also
 		 * failed, maybe both compressor and zpool params were bad.
 		 * Allow changing this param, so pool creation will succeed
-		 * when the other param is changed. We already verified this
+		 * when the other param is changed. We alपढ़ोy verअगरied this
 		 * param is ok in the zpool_has_pool() or crypto_has_acomp()
 		 * checks above.
 		 */
-		ret = param_set_charp(s, kp);
-	}
+		ret = param_set_अक्षरp(s, kp);
+	पूर्ण
 
 	/* drop the ref from either the old current pool,
 	 * or the new pool we failed to add
 	 */
-	if (put_pool)
+	अगर (put_pool)
 		zswap_pool_put(put_pool);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int zswap_compressor_param_set(const char *val,
-				      const struct kernel_param *kp)
-{
-	return __zswap_param_set(val, kp, zswap_zpool_type, NULL);
-}
+अटल पूर्णांक zswap_compressor_param_set(स्थिर अक्षर *val,
+				      स्थिर काष्ठा kernel_param *kp)
+अणु
+	वापस __zswap_param_set(val, kp, zswap_zpool_type, शून्य);
+पूर्ण
 
-static int zswap_zpool_param_set(const char *val,
-				 const struct kernel_param *kp)
-{
-	return __zswap_param_set(val, kp, NULL, zswap_compressor);
-}
+अटल पूर्णांक zswap_zpool_param_set(स्थिर अक्षर *val,
+				 स्थिर काष्ठा kernel_param *kp)
+अणु
+	वापस __zswap_param_set(val, kp, शून्य, zswap_compressor);
+पूर्ण
 
-static int zswap_enabled_param_set(const char *val,
-				   const struct kernel_param *kp)
-{
-	if (zswap_init_failed) {
+अटल पूर्णांक zswap_enabled_param_set(स्थिर अक्षर *val,
+				   स्थिर काष्ठा kernel_param *kp)
+अणु
+	अगर (zswap_init_failed) अणु
 		pr_err("can't enable, initialization failed\n");
-		return -ENODEV;
-	}
-	if (!zswap_has_pool && zswap_init_started) {
+		वापस -ENODEV;
+	पूर्ण
+	अगर (!zswap_has_pool && zswap_init_started) अणु
 		pr_err("can't enable, no pool configured\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return param_set_bool(val, kp);
-}
+	वापस param_set_bool(val, kp);
+पूर्ण
 
 /*********************************
-* writeback code
+* ग_लिखोback code
 **********************************/
-/* return enum for zswap_get_swap_cache_page */
-enum zswap_get_swap_ret {
+/* वापस क्रमागत क्रम zswap_get_swap_cache_page */
+क्रमागत zswap_get_swap_ret अणु
 	ZSWAP_SWAPCACHE_NEW,
 	ZSWAP_SWAPCACHE_EXIST,
 	ZSWAP_SWAPCACHE_FAIL,
-};
+पूर्ण;
 
 /*
  * zswap_get_swap_cache_page
  *
- * This is an adaption of read_swap_cache_async()
+ * This is an adaption of पढ़ो_swap_cache_async()
  *
  * This function tries to find a page with the given swap entry
  * in the swapper_space address space (the swap cache).  If the page
- * is found, it is returned in retpage.  Otherwise, a page is allocated,
- * added to the swap cache, and returned in retpage.
+ * is found, it is वापसed in retpage.  Otherwise, a page is allocated,
+ * added to the swap cache, and वापसed in retpage.
  *
- * If success, the swap cache page is returned in retpage
- * Returns ZSWAP_SWAPCACHE_EXIST if page was already in the swap cache
- * Returns ZSWAP_SWAPCACHE_NEW if the new page needs to be populated,
+ * If success, the swap cache page is वापसed in retpage
+ * Returns ZSWAP_SWAPCACHE_EXIST अगर page was alपढ़ोy in the swap cache
+ * Returns ZSWAP_SWAPCACHE_NEW अगर the new page needs to be populated,
  *     the new page is added to swapcache and locked
  * Returns ZSWAP_SWAPCACHE_FAIL on error
  */
-static int zswap_get_swap_cache_page(swp_entry_t entry,
-				struct page **retpage)
-{
+अटल पूर्णांक zswap_get_swap_cache_page(swp_entry_t entry,
+				काष्ठा page **retpage)
+अणु
 	bool page_was_allocated;
 
-	*retpage = __read_swap_cache_async(entry, GFP_KERNEL,
-			NULL, 0, &page_was_allocated);
-	if (page_was_allocated)
-		return ZSWAP_SWAPCACHE_NEW;
-	if (!*retpage)
-		return ZSWAP_SWAPCACHE_FAIL;
-	return ZSWAP_SWAPCACHE_EXIST;
-}
+	*retpage = __पढ़ो_swap_cache_async(entry, GFP_KERNEL,
+			शून्य, 0, &page_was_allocated);
+	अगर (page_was_allocated)
+		वापस ZSWAP_SWAPCACHE_NEW;
+	अगर (!*retpage)
+		वापस ZSWAP_SWAPCACHE_FAIL;
+	वापस ZSWAP_SWAPCACHE_EXIST;
+पूर्ण
 
 /*
- * Attempts to free an entry by adding a page to the swap cache,
- * decompressing the entry data into the page, and issuing a
- * bio write to write the page back to the swap device.
+ * Attempts to मुक्त an entry by adding a page to the swap cache,
+ * decompressing the entry data पूर्णांकo the page, and issuing a
+ * bio ग_लिखो to ग_लिखो the page back to the swap device.
  *
  * This can be thought of as a "resumed writeback" of the page
  * to the swap device.  We are basically resuming the same swap
- * writeback path that was intercepted with the frontswap_store()
- * in the first place.  After the page has been decompressed into
+ * ग_लिखोback path that was पूर्णांकercepted with the frontswap_store()
+ * in the first place.  After the page has been decompressed पूर्णांकo
  * the swap cache, the compressed version stored by zswap can be
- * freed.
+ * मुक्तd.
  */
-static int zswap_writeback_entry(struct zpool *pool, unsigned long handle)
-{
-	struct zswap_header *zhdr;
+अटल पूर्णांक zswap_ग_लिखोback_entry(काष्ठा zpool *pool, अचिन्हित दीर्घ handle)
+अणु
+	काष्ठा zswap_header *zhdr;
 	swp_entry_t swpentry;
-	struct zswap_tree *tree;
+	काष्ठा zswap_tree *tree;
 	pgoff_t offset;
-	struct zswap_entry *entry;
-	struct page *page;
-	struct scatterlist input, output;
-	struct crypto_acomp_ctx *acomp_ctx;
+	काष्ठा zswap_entry *entry;
+	काष्ठा page *page;
+	काष्ठा scatterlist input, output;
+	काष्ठा crypto_acomp_ctx *acomp_ctx;
 
-	u8 *src, *tmp = NULL;
-	unsigned int dlen;
-	int ret;
-	struct writeback_control wbc = {
+	u8 *src, *पंचांगp = शून्य;
+	अचिन्हित पूर्णांक dlen;
+	पूर्णांक ret;
+	काष्ठा ग_लिखोback_control wbc = अणु
 		.sync_mode = WB_SYNC_NONE,
-	};
+	पूर्ण;
 
-	if (!zpool_can_sleep_mapped(pool)) {
-		tmp = kmalloc(PAGE_SIZE, GFP_ATOMIC);
-		if (!tmp)
-			return -ENOMEM;
-	}
+	अगर (!zpool_can_sleep_mapped(pool)) अणु
+		पंचांगp = kदो_स्मृति(PAGE_SIZE, GFP_ATOMIC);
+		अगर (!पंचांगp)
+			वापस -ENOMEM;
+	पूर्ण
 
 	/* extract swpentry from data */
 	zhdr = zpool_map_handle(pool, handle, ZPOOL_MM_RO);
@@ -957,49 +958,49 @@ static int zswap_writeback_entry(struct zpool *pool, unsigned long handle)
 	/* find and ref zswap entry */
 	spin_lock(&tree->lock);
 	entry = zswap_entry_find_get(&tree->rbroot, offset);
-	if (!entry) {
+	अगर (!entry) अणु
 		/* entry was invalidated */
 		spin_unlock(&tree->lock);
 		zpool_unmap_handle(pool, handle);
-		kfree(tmp);
-		return 0;
-	}
+		kमुक्त(पंचांगp);
+		वापस 0;
+	पूर्ण
 	spin_unlock(&tree->lock);
 	BUG_ON(offset != entry->offset);
 
 	/* try to allocate swap cache page */
-	switch (zswap_get_swap_cache_page(swpentry, &page)) {
-	case ZSWAP_SWAPCACHE_FAIL: /* no memory or invalidate happened */
+	चयन (zswap_get_swap_cache_page(swpentry, &page)) अणु
+	हाल ZSWAP_SWAPCACHE_FAIL: /* no memory or invalidate happened */
 		ret = -ENOMEM;
-		goto fail;
+		जाओ fail;
 
-	case ZSWAP_SWAPCACHE_EXIST:
-		/* page is already in the swap cache, ignore for now */
+	हाल ZSWAP_SWAPCACHE_EXIST:
+		/* page is alपढ़ोy in the swap cache, ignore क्रम now */
 		put_page(page);
 		ret = -EEXIST;
-		goto fail;
+		जाओ fail;
 
-	case ZSWAP_SWAPCACHE_NEW: /* page is locked */
+	हाल ZSWAP_SWAPCACHE_NEW: /* page is locked */
 		/* decompress */
 		acomp_ctx = raw_cpu_ptr(entry->pool->acomp_ctx);
 
 		dlen = PAGE_SIZE;
-		src = (u8 *)zhdr + sizeof(struct zswap_header);
+		src = (u8 *)zhdr + माप(काष्ठा zswap_header);
 
-		if (!zpool_can_sleep_mapped(pool)) {
+		अगर (!zpool_can_sleep_mapped(pool)) अणु
 
-			memcpy(tmp, src, entry->length);
-			src = tmp;
+			स_नकल(पंचांगp, src, entry->length);
+			src = पंचांगp;
 
 			zpool_unmap_handle(pool, handle);
-		}
+		पूर्ण
 
 		mutex_lock(acomp_ctx->mutex);
 		sg_init_one(&input, src, entry->length);
 		sg_init_table(&output, 1);
 		sg_set_page(&output, page, PAGE_SIZE, 0);
 		acomp_request_set_params(acomp_ctx->req, &input, &output, entry->length, dlen);
-		ret = crypto_wait_req(crypto_acomp_decompress(acomp_ctx->req), &acomp_ctx->wait);
+		ret = crypto_रुको_req(crypto_acomp_decompress(acomp_ctx->req), &acomp_ctx->रुको);
 		dlen = acomp_ctx->req->dlen;
 		mutex_unlock(acomp_ctx->mutex);
 
@@ -1008,13 +1009,13 @@ static int zswap_writeback_entry(struct zpool *pool, unsigned long handle)
 
 		/* page is up to date */
 		SetPageUptodate(page);
-	}
+	पूर्ण
 
-	/* move it to the tail of the inactive list after end_writeback */
+	/* move it to the tail of the inactive list after end_ग_लिखोback */
 	SetPageReclaim(page);
 
-	/* start writeback */
-	__swap_writepage(page, &wbc, end_swap_bio_write);
+	/* start ग_लिखोback */
+	__swap_ग_लिखोpage(page, &wbc, end_swap_bio_ग_लिखो);
 	put_page(page);
 	zswap_written_back_pages++;
 
@@ -1023,24 +1024,24 @@ static int zswap_writeback_entry(struct zpool *pool, unsigned long handle)
 	zswap_entry_put(tree, entry);
 
 	/*
-	* There are two possible situations for entry here:
-	* (1) refcount is 1(normal case),  entry is valid and on the tree
-	* (2) refcount is 0, entry is freed and not on the tree
-	*     because invalidate happened during writeback
-	*  search the tree and free the entry if find entry
+	* There are two possible situations क्रम entry here:
+	* (1) refcount is 1(normal हाल),  entry is valid and on the tree
+	* (2) refcount is 0, entry is मुक्तd and not on the tree
+	*     because invalidate happened during ग_लिखोback
+	*  search the tree and मुक्त the entry अगर find entry
 	*/
-	if (entry == zswap_rb_search(&tree->rbroot, offset))
+	अगर (entry == zswap_rb_search(&tree->rbroot, offset))
 		zswap_entry_put(tree, entry);
 	spin_unlock(&tree->lock);
 
-	goto end;
+	जाओ end;
 
 	/*
-	* if we get here due to ZSWAP_SWAPCACHE_EXIST
+	* अगर we get here due to ZSWAP_SWAPCACHE_EXIST
 	* a load may be happening concurrently.
-	* it is safe and okay to not free the entry.
-	* if we free the entry in the following put
-	* it is also okay to return !0
+	* it is safe and okay to not मुक्त the entry.
+	* अगर we मुक्त the entry in the following put
+	* it is also okay to वापस !0
 	*/
 fail:
 	spin_lock(&tree->lock);
@@ -1048,164 +1049,164 @@ fail:
 	spin_unlock(&tree->lock);
 
 end:
-	if (zpool_can_sleep_mapped(pool))
+	अगर (zpool_can_sleep_mapped(pool))
 		zpool_unmap_handle(pool, handle);
-	else
-		kfree(tmp);
+	अन्यथा
+		kमुक्त(पंचांगp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int zswap_is_page_same_filled(void *ptr, unsigned long *value)
-{
-	unsigned int pos;
-	unsigned long *page;
+अटल पूर्णांक zswap_is_page_same_filled(व्योम *ptr, अचिन्हित दीर्घ *value)
+अणु
+	अचिन्हित पूर्णांक pos;
+	अचिन्हित दीर्घ *page;
 
-	page = (unsigned long *)ptr;
-	for (pos = 1; pos < PAGE_SIZE / sizeof(*page); pos++) {
-		if (page[pos] != page[0])
-			return 0;
-	}
+	page = (अचिन्हित दीर्घ *)ptr;
+	क्रम (pos = 1; pos < PAGE_SIZE / माप(*page); pos++) अणु
+		अगर (page[pos] != page[0])
+			वापस 0;
+	पूर्ण
 	*value = page[0];
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void zswap_fill_page(void *ptr, unsigned long value)
-{
-	unsigned long *page;
+अटल व्योम zswap_fill_page(व्योम *ptr, अचिन्हित दीर्घ value)
+अणु
+	अचिन्हित दीर्घ *page;
 
-	page = (unsigned long *)ptr;
-	memset_l(page, value, PAGE_SIZE / sizeof(unsigned long));
-}
+	page = (अचिन्हित दीर्घ *)ptr;
+	स_रखो_l(page, value, PAGE_SIZE / माप(अचिन्हित दीर्घ));
+पूर्ण
 
 /*********************************
 * frontswap hooks
 **********************************/
 /* attempts to compress and store an single page */
-static int zswap_frontswap_store(unsigned type, pgoff_t offset,
-				struct page *page)
-{
-	struct zswap_tree *tree = zswap_trees[type];
-	struct zswap_entry *entry, *dupentry;
-	struct scatterlist input, output;
-	struct crypto_acomp_ctx *acomp_ctx;
-	int ret;
-	unsigned int hlen, dlen = PAGE_SIZE;
-	unsigned long handle, value;
-	char *buf;
+अटल पूर्णांक zswap_frontswap_store(अचिन्हित type, pgoff_t offset,
+				काष्ठा page *page)
+अणु
+	काष्ठा zswap_tree *tree = zswap_trees[type];
+	काष्ठा zswap_entry *entry, *dupentry;
+	काष्ठा scatterlist input, output;
+	काष्ठा crypto_acomp_ctx *acomp_ctx;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक hlen, dlen = PAGE_SIZE;
+	अचिन्हित दीर्घ handle, value;
+	अक्षर *buf;
 	u8 *src, *dst;
-	struct zswap_header zhdr = { .swpentry = swp_entry(type, offset) };
+	काष्ठा zswap_header zhdr = अणु .swpentry = swp_entry(type, offset) पूर्ण;
 	gfp_t gfp;
 
 	/* THP isn't supported */
-	if (PageTransHuge(page)) {
+	अगर (PageTransHuge(page)) अणु
 		ret = -EINVAL;
-		goto reject;
-	}
+		जाओ reject;
+	पूर्ण
 
-	if (!zswap_enabled || !tree) {
+	अगर (!zswap_enabled || !tree) अणु
 		ret = -ENODEV;
-		goto reject;
-	}
+		जाओ reject;
+	पूर्ण
 
-	/* reclaim space if needed */
-	if (zswap_is_full()) {
-		struct zswap_pool *pool;
+	/* reclaim space अगर needed */
+	अगर (zswap_is_full()) अणु
+		काष्ठा zswap_pool *pool;
 
 		zswap_pool_limit_hit++;
 		zswap_pool_reached_full = true;
 		pool = zswap_pool_last_get();
-		if (pool)
+		अगर (pool)
 			queue_work(shrink_wq, &pool->shrink_work);
 		ret = -ENOMEM;
-		goto reject;
-	}
+		जाओ reject;
+	पूर्ण
 
-	if (zswap_pool_reached_full) {
-	       if (!zswap_can_accept()) {
+	अगर (zswap_pool_reached_full) अणु
+	       अगर (!zswap_can_accept()) अणु
 			ret = -ENOMEM;
-			goto reject;
-		} else
+			जाओ reject;
+		पूर्ण अन्यथा
 			zswap_pool_reached_full = false;
-	}
+	पूर्ण
 
 	/* allocate entry */
 	entry = zswap_entry_cache_alloc(GFP_KERNEL);
-	if (!entry) {
+	अगर (!entry) अणु
 		zswap_reject_kmemcache_fail++;
 		ret = -ENOMEM;
-		goto reject;
-	}
+		जाओ reject;
+	पूर्ण
 
-	if (zswap_same_filled_pages_enabled) {
+	अगर (zswap_same_filled_pages_enabled) अणु
 		src = kmap_atomic(page);
-		if (zswap_is_page_same_filled(src, &value)) {
+		अगर (zswap_is_page_same_filled(src, &value)) अणु
 			kunmap_atomic(src);
 			entry->offset = offset;
 			entry->length = 0;
 			entry->value = value;
 			atomic_inc(&zswap_same_filled_pages);
-			goto insert_entry;
-		}
+			जाओ insert_entry;
+		पूर्ण
 		kunmap_atomic(src);
-	}
+	पूर्ण
 
-	/* if entry is successfully added, it keeps the reference */
+	/* अगर entry is successfully added, it keeps the reference */
 	entry->pool = zswap_pool_current_get();
-	if (!entry->pool) {
+	अगर (!entry->pool) अणु
 		ret = -EINVAL;
-		goto freepage;
-	}
+		जाओ मुक्तpage;
+	पूर्ण
 
 	/* compress */
 	acomp_ctx = raw_cpu_ptr(entry->pool->acomp_ctx);
 
 	mutex_lock(acomp_ctx->mutex);
 
-	dst = acomp_ctx->dstmem;
+	dst = acomp_ctx->dsपंचांगem;
 	sg_init_table(&input, 1);
 	sg_set_page(&input, page, PAGE_SIZE, 0);
 
-	/* zswap_dstmem is of size (PAGE_SIZE * 2). Reflect same in sg_list */
+	/* zswap_dsपंचांगem is of size (PAGE_SIZE * 2). Reflect same in sg_list */
 	sg_init_one(&output, dst, PAGE_SIZE * 2);
 	acomp_request_set_params(acomp_ctx->req, &input, &output, PAGE_SIZE, dlen);
 	/*
 	 * it maybe looks a little bit silly that we send an asynchronous request,
-	 * then wait for its completion synchronously. This makes the process look
+	 * then रुको क्रम its completion synchronously. This makes the process look
 	 * synchronous in fact.
 	 * Theoretically, acomp supports users send multiple acomp requests in one
-	 * acomp instance, then get those requests done simultaneously. but in this
-	 * case, frontswap actually does store and load page by page, there is no
-	 * existing method to send the second page before the first page is done
-	 * in one thread doing frontswap.
-	 * but in different threads running on different cpu, we have different
-	 * acomp instance, so multiple threads can do (de)compression in parallel.
+	 * acomp instance, then get those requests करोne simultaneously. but in this
+	 * हाल, frontswap actually करोes store and load page by page, there is no
+	 * existing method to send the second page beक्रमe the first page is करोne
+	 * in one thपढ़ो करोing frontswap.
+	 * but in dअगरferent thपढ़ोs running on dअगरferent cpu, we have dअगरferent
+	 * acomp instance, so multiple thपढ़ोs can करो (de)compression in parallel.
 	 */
-	ret = crypto_wait_req(crypto_acomp_compress(acomp_ctx->req), &acomp_ctx->wait);
+	ret = crypto_रुको_req(crypto_acomp_compress(acomp_ctx->req), &acomp_ctx->रुको);
 	dlen = acomp_ctx->req->dlen;
 
-	if (ret) {
+	अगर (ret) अणु
 		ret = -EINVAL;
-		goto put_dstmem;
-	}
+		जाओ put_dsपंचांगem;
+	पूर्ण
 
 	/* store */
-	hlen = zpool_evictable(entry->pool->zpool) ? sizeof(zhdr) : 0;
+	hlen = zpool_evictable(entry->pool->zpool) ? माप(zhdr) : 0;
 	gfp = __GFP_NORETRY | __GFP_NOWARN | __GFP_KSWAPD_RECLAIM;
-	if (zpool_malloc_support_movable(entry->pool->zpool))
+	अगर (zpool_दो_स्मृति_support_movable(entry->pool->zpool))
 		gfp |= __GFP_HIGHMEM | __GFP_MOVABLE;
-	ret = zpool_malloc(entry->pool->zpool, hlen + dlen, gfp, &handle);
-	if (ret == -ENOSPC) {
+	ret = zpool_दो_स्मृति(entry->pool->zpool, hlen + dlen, gfp, &handle);
+	अगर (ret == -ENOSPC) अणु
 		zswap_reject_compress_poor++;
-		goto put_dstmem;
-	}
-	if (ret) {
+		जाओ put_dsपंचांगem;
+	पूर्ण
+	अगर (ret) अणु
 		zswap_reject_alloc_fail++;
-		goto put_dstmem;
-	}
+		जाओ put_dsपंचांगem;
+	पूर्ण
 	buf = zpool_map_handle(entry->pool->zpool, handle, ZPOOL_MM_RW);
-	memcpy(buf, &zhdr, hlen);
-	memcpy(buf + hlen, dst, dlen);
+	स_नकल(buf, &zhdr, hlen);
+	स_नकल(buf + hlen, dst, dlen);
 	zpool_unmap_handle(entry->pool->zpool, handle);
 	mutex_unlock(acomp_ctx->mutex);
 
@@ -1217,87 +1218,87 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
 insert_entry:
 	/* map */
 	spin_lock(&tree->lock);
-	do {
+	करो अणु
 		ret = zswap_rb_insert(&tree->rbroot, entry, &dupentry);
-		if (ret == -EEXIST) {
+		अगर (ret == -EEXIST) अणु
 			zswap_duplicate_entry++;
-			/* remove from rbtree */
+			/* हटाओ from rbtree */
 			zswap_rb_erase(&tree->rbroot, dupentry);
 			zswap_entry_put(tree, dupentry);
-		}
-	} while (ret == -EEXIST);
+		पूर्ण
+	पूर्ण जबतक (ret == -EEXIST);
 	spin_unlock(&tree->lock);
 
 	/* update stats */
 	atomic_inc(&zswap_stored_pages);
 	zswap_update_total_size();
 
-	return 0;
+	वापस 0;
 
-put_dstmem:
+put_dsपंचांगem:
 	mutex_unlock(acomp_ctx->mutex);
 	zswap_pool_put(entry->pool);
-freepage:
-	zswap_entry_cache_free(entry);
+मुक्तpage:
+	zswap_entry_cache_मुक्त(entry);
 reject:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * returns 0 if the page was successfully decompressed
- * return -1 on entry not found or error
+ * वापसs 0 अगर the page was successfully decompressed
+ * वापस -1 on entry not found or error
 */
-static int zswap_frontswap_load(unsigned type, pgoff_t offset,
-				struct page *page)
-{
-	struct zswap_tree *tree = zswap_trees[type];
-	struct zswap_entry *entry;
-	struct scatterlist input, output;
-	struct crypto_acomp_ctx *acomp_ctx;
-	u8 *src, *dst, *tmp;
-	unsigned int dlen;
-	int ret;
+अटल पूर्णांक zswap_frontswap_load(अचिन्हित type, pgoff_t offset,
+				काष्ठा page *page)
+अणु
+	काष्ठा zswap_tree *tree = zswap_trees[type];
+	काष्ठा zswap_entry *entry;
+	काष्ठा scatterlist input, output;
+	काष्ठा crypto_acomp_ctx *acomp_ctx;
+	u8 *src, *dst, *पंचांगp;
+	अचिन्हित पूर्णांक dlen;
+	पूर्णांक ret;
 
 	/* find */
 	spin_lock(&tree->lock);
 	entry = zswap_entry_find_get(&tree->rbroot, offset);
-	if (!entry) {
+	अगर (!entry) अणु
 		/* entry was written back */
 		spin_unlock(&tree->lock);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	spin_unlock(&tree->lock);
 
-	if (!entry->length) {
+	अगर (!entry->length) अणु
 		dst = kmap_atomic(page);
 		zswap_fill_page(dst, entry->value);
 		kunmap_atomic(dst);
 		ret = 0;
-		goto freeentry;
-	}
+		जाओ मुक्तentry;
+	पूर्ण
 
-	if (!zpool_can_sleep_mapped(entry->pool->zpool)) {
+	अगर (!zpool_can_sleep_mapped(entry->pool->zpool)) अणु
 
-		tmp = kmalloc(entry->length, GFP_ATOMIC);
-		if (!tmp) {
+		पंचांगp = kदो_स्मृति(entry->length, GFP_ATOMIC);
+		अगर (!पंचांगp) अणु
 			ret = -ENOMEM;
-			goto freeentry;
-		}
-	}
+			जाओ मुक्तentry;
+		पूर्ण
+	पूर्ण
 
 	/* decompress */
 	dlen = PAGE_SIZE;
 	src = zpool_map_handle(entry->pool->zpool, entry->handle, ZPOOL_MM_RO);
-	if (zpool_evictable(entry->pool->zpool))
-		src += sizeof(struct zswap_header);
+	अगर (zpool_evictable(entry->pool->zpool))
+		src += माप(काष्ठा zswap_header);
 
-	if (!zpool_can_sleep_mapped(entry->pool->zpool)) {
+	अगर (!zpool_can_sleep_mapped(entry->pool->zpool)) अणु
 
-		memcpy(tmp, src, entry->length);
-		src = tmp;
+		स_नकल(पंचांगp, src, entry->length);
+		src = पंचांगp;
 
 		zpool_unmap_handle(entry->pool->zpool, entry->handle);
-	}
+	पूर्ण
 
 	acomp_ctx = raw_cpu_ptr(entry->pool->acomp_ctx);
 	mutex_lock(acomp_ctx->mutex);
@@ -1305,104 +1306,104 @@ static int zswap_frontswap_load(unsigned type, pgoff_t offset,
 	sg_init_table(&output, 1);
 	sg_set_page(&output, page, PAGE_SIZE, 0);
 	acomp_request_set_params(acomp_ctx->req, &input, &output, entry->length, dlen);
-	ret = crypto_wait_req(crypto_acomp_decompress(acomp_ctx->req), &acomp_ctx->wait);
+	ret = crypto_रुको_req(crypto_acomp_decompress(acomp_ctx->req), &acomp_ctx->रुको);
 	mutex_unlock(acomp_ctx->mutex);
 
-	if (zpool_can_sleep_mapped(entry->pool->zpool))
+	अगर (zpool_can_sleep_mapped(entry->pool->zpool))
 		zpool_unmap_handle(entry->pool->zpool, entry->handle);
-	else
-		kfree(tmp);
+	अन्यथा
+		kमुक्त(पंचांगp);
 
 	BUG_ON(ret);
 
-freeentry:
+मुक्तentry:
 	spin_lock(&tree->lock);
 	zswap_entry_put(tree, entry);
 	spin_unlock(&tree->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* frees an entry in zswap */
-static void zswap_frontswap_invalidate_page(unsigned type, pgoff_t offset)
-{
-	struct zswap_tree *tree = zswap_trees[type];
-	struct zswap_entry *entry;
+/* मुक्तs an entry in zswap */
+अटल व्योम zswap_frontswap_invalidate_page(अचिन्हित type, pgoff_t offset)
+अणु
+	काष्ठा zswap_tree *tree = zswap_trees[type];
+	काष्ठा zswap_entry *entry;
 
 	/* find */
 	spin_lock(&tree->lock);
 	entry = zswap_rb_search(&tree->rbroot, offset);
-	if (!entry) {
+	अगर (!entry) अणु
 		/* entry was written back */
 		spin_unlock(&tree->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* remove from rbtree */
+	/* हटाओ from rbtree */
 	zswap_rb_erase(&tree->rbroot, entry);
 
 	/* drop the initial reference from entry creation */
 	zswap_entry_put(tree, entry);
 
 	spin_unlock(&tree->lock);
-}
+पूर्ण
 
-/* frees all zswap entries for the given swap type */
-static void zswap_frontswap_invalidate_area(unsigned type)
-{
-	struct zswap_tree *tree = zswap_trees[type];
-	struct zswap_entry *entry, *n;
+/* मुक्तs all zswap entries क्रम the given swap type */
+अटल व्योम zswap_frontswap_invalidate_area(अचिन्हित type)
+अणु
+	काष्ठा zswap_tree *tree = zswap_trees[type];
+	काष्ठा zswap_entry *entry, *n;
 
-	if (!tree)
-		return;
+	अगर (!tree)
+		वापस;
 
-	/* walk the tree and free everything */
+	/* walk the tree and मुक्त everything */
 	spin_lock(&tree->lock);
-	rbtree_postorder_for_each_entry_safe(entry, n, &tree->rbroot, rbnode)
-		zswap_free_entry(entry);
+	rbtree_postorder_क्रम_each_entry_safe(entry, n, &tree->rbroot, rbnode)
+		zswap_मुक्त_entry(entry);
 	tree->rbroot = RB_ROOT;
 	spin_unlock(&tree->lock);
-	kfree(tree);
-	zswap_trees[type] = NULL;
-}
+	kमुक्त(tree);
+	zswap_trees[type] = शून्य;
+पूर्ण
 
-static void zswap_frontswap_init(unsigned type)
-{
-	struct zswap_tree *tree;
+अटल व्योम zswap_frontswap_init(अचिन्हित type)
+अणु
+	काष्ठा zswap_tree *tree;
 
-	tree = kzalloc(sizeof(*tree), GFP_KERNEL);
-	if (!tree) {
+	tree = kzalloc(माप(*tree), GFP_KERNEL);
+	अगर (!tree) अणु
 		pr_err("alloc failed, zswap disabled for swap type %d\n", type);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	tree->rbroot = RB_ROOT;
 	spin_lock_init(&tree->lock);
 	zswap_trees[type] = tree;
-}
+पूर्ण
 
-static struct frontswap_ops zswap_frontswap_ops = {
+अटल काष्ठा frontswap_ops zswap_frontswap_ops = अणु
 	.store = zswap_frontswap_store,
 	.load = zswap_frontswap_load,
 	.invalidate_page = zswap_frontswap_invalidate_page,
 	.invalidate_area = zswap_frontswap_invalidate_area,
 	.init = zswap_frontswap_init
-};
+पूर्ण;
 
 /*********************************
 * debugfs functions
 **********************************/
-#ifdef CONFIG_DEBUG_FS
-#include <linux/debugfs.h>
+#अगर_घोषित CONFIG_DEBUG_FS
+#समावेश <linux/debugfs.h>
 
-static struct dentry *zswap_debugfs_root;
+अटल काष्ठा dentry *zswap_debugfs_root;
 
-static int __init zswap_debugfs_init(void)
-{
-	if (!debugfs_initialized())
-		return -ENODEV;
+अटल पूर्णांक __init zswap_debugfs_init(व्योम)
+अणु
+	अगर (!debugfs_initialized())
+		वापस -ENODEV;
 
-	zswap_debugfs_root = debugfs_create_dir("zswap", NULL);
+	zswap_debugfs_root = debugfs_create_dir("zswap", शून्य);
 
 	debugfs_create_u64("pool_limit_hit", 0444,
 			   zswap_debugfs_root, &zswap_pool_limit_hit);
@@ -1425,85 +1426,85 @@ static int __init zswap_debugfs_init(void)
 	debugfs_create_atomic_t("same_filled_pages", 0444,
 				zswap_debugfs_root, &zswap_same_filled_pages);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit zswap_debugfs_exit(void)
-{
-	debugfs_remove_recursive(zswap_debugfs_root);
-}
-#else
-static int __init zswap_debugfs_init(void)
-{
-	return 0;
-}
+अटल व्योम __निकास zswap_debugfs_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(zswap_debugfs_root);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक __init zswap_debugfs_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static void __exit zswap_debugfs_exit(void) { }
-#endif
+अटल व्योम __निकास zswap_debugfs_निकास(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
 /*********************************
-* module init and exit
+* module init and निकास
 **********************************/
-static int __init init_zswap(void)
-{
-	struct zswap_pool *pool;
-	int ret;
+अटल पूर्णांक __init init_zswap(व्योम)
+अणु
+	काष्ठा zswap_pool *pool;
+	पूर्णांक ret;
 
 	zswap_init_started = true;
 
-	if (zswap_entry_cache_create()) {
+	अगर (zswap_entry_cache_create()) अणु
 		pr_err("entry cache creation failed\n");
-		goto cache_fail;
-	}
+		जाओ cache_fail;
+	पूर्ण
 
 	ret = cpuhp_setup_state(CPUHP_MM_ZSWP_MEM_PREPARE, "mm/zswap:prepare",
-				zswap_dstmem_prepare, zswap_dstmem_dead);
-	if (ret) {
+				zswap_dsपंचांगem_prepare, zswap_dsपंचांगem_dead);
+	अगर (ret) अणु
 		pr_err("dstmem alloc failed\n");
-		goto dstmem_fail;
-	}
+		जाओ dsपंचांगem_fail;
+	पूर्ण
 
 	ret = cpuhp_setup_state_multi(CPUHP_MM_ZSWP_POOL_PREPARE,
 				      "mm/zswap_pool:prepare",
 				      zswap_cpu_comp_prepare,
 				      zswap_cpu_comp_dead);
-	if (ret)
-		goto hp_fail;
+	अगर (ret)
+		जाओ hp_fail;
 
 	pool = __zswap_pool_create_fallback();
-	if (pool) {
+	अगर (pool) अणु
 		pr_info("loaded using pool %s/%s\n", pool->tfm_name,
 			zpool_get_type(pool->zpool));
 		list_add(&pool->list, &zswap_pools);
 		zswap_has_pool = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("pool creation failed\n");
 		zswap_enabled = false;
-	}
+	पूर्ण
 
 	shrink_wq = create_workqueue("zswap-shrink");
-	if (!shrink_wq)
-		goto fallback_fail;
+	अगर (!shrink_wq)
+		जाओ fallback_fail;
 
-	frontswap_register_ops(&zswap_frontswap_ops);
-	if (zswap_debugfs_init())
+	frontswap_रेजिस्टर_ops(&zswap_frontswap_ops);
+	अगर (zswap_debugfs_init())
 		pr_warn("debugfs initialization failed\n");
-	return 0;
+	वापस 0;
 
 fallback_fail:
-	if (pool)
+	अगर (pool)
 		zswap_pool_destroy(pool);
 hp_fail:
-	cpuhp_remove_state(CPUHP_MM_ZSWP_MEM_PREPARE);
-dstmem_fail:
+	cpuhp_हटाओ_state(CPUHP_MM_ZSWP_MEM_PREPARE);
+dsपंचांगem_fail:
 	zswap_entry_cache_destroy();
 cache_fail:
-	/* if built-in, we aren't unloaded on failure; don't allow use */
+	/* अगर built-in, we aren't unloaded on failure; don't allow use */
 	zswap_init_failed = true;
 	zswap_enabled = false;
-	return -ENOMEM;
-}
-/* must be late so crypto has time to come up */
+	वापस -ENOMEM;
+पूर्ण
+/* must be late so crypto has समय to come up */
 late_initcall(init_zswap);
 
 MODULE_LICENSE("GPL");

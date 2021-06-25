@@ -1,268 +1,269 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * PCI VPD support
  *
  * Copyright (C) 2010 Broadcom Corporation.
  */
 
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <linux/export.h>
-#include <linux/sched/signal.h>
-#include "pci.h"
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश "pci.h"
 
 /* VPD access through PCI 2.2+ VPD capability */
 
-struct pci_vpd_ops {
-	ssize_t (*read)(struct pci_dev *dev, loff_t pos, size_t count, void *buf);
-	ssize_t (*write)(struct pci_dev *dev, loff_t pos, size_t count, const void *buf);
-};
+काष्ठा pci_vpd_ops अणु
+	sमाप_प्रकार (*पढ़ो)(काष्ठा pci_dev *dev, loff_t pos, माप_प्रकार count, व्योम *buf);
+	sमाप_प्रकार (*ग_लिखो)(काष्ठा pci_dev *dev, loff_t pos, माप_प्रकार count, स्थिर व्योम *buf);
+पूर्ण;
 
-struct pci_vpd {
-	const struct pci_vpd_ops *ops;
-	struct mutex	lock;
-	unsigned int	len;
+काष्ठा pci_vpd अणु
+	स्थिर काष्ठा pci_vpd_ops *ops;
+	काष्ठा mutex	lock;
+	अचिन्हित पूर्णांक	len;
 	u16		flag;
 	u8		cap;
-	unsigned int	busy:1;
-	unsigned int	valid:1;
-};
+	अचिन्हित पूर्णांक	busy:1;
+	अचिन्हित पूर्णांक	valid:1;
+पूर्ण;
 
-static struct pci_dev *pci_get_func0_dev(struct pci_dev *dev)
-{
-	return pci_get_slot(dev->bus, PCI_DEVFN(PCI_SLOT(dev->devfn), 0));
-}
-
-/**
- * pci_read_vpd - Read one entry from Vital Product Data
- * @dev:	pci device struct
- * @pos:	offset in vpd space
- * @count:	number of bytes to read
- * @buf:	pointer to where to store result
- */
-ssize_t pci_read_vpd(struct pci_dev *dev, loff_t pos, size_t count, void *buf)
-{
-	if (!dev->vpd || !dev->vpd->ops)
-		return -ENODEV;
-	return dev->vpd->ops->read(dev, pos, count, buf);
-}
-EXPORT_SYMBOL(pci_read_vpd);
+अटल काष्ठा pci_dev *pci_get_func0_dev(काष्ठा pci_dev *dev)
+अणु
+	वापस pci_get_slot(dev->bus, PCI_DEVFN(PCI_SLOT(dev->devfn), 0));
+पूर्ण
 
 /**
- * pci_write_vpd - Write entry to Vital Product Data
- * @dev:	pci device struct
+ * pci_पढ़ो_vpd - Read one entry from Vital Product Data
+ * @dev:	pci device काष्ठा
  * @pos:	offset in vpd space
- * @count:	number of bytes to write
- * @buf:	buffer containing write data
+ * @count:	number of bytes to पढ़ो
+ * @buf:	poपूर्णांकer to where to store result
  */
-ssize_t pci_write_vpd(struct pci_dev *dev, loff_t pos, size_t count, const void *buf)
-{
-	if (!dev->vpd || !dev->vpd->ops)
-		return -ENODEV;
-	return dev->vpd->ops->write(dev, pos, count, buf);
-}
-EXPORT_SYMBOL(pci_write_vpd);
+sमाप_प्रकार pci_पढ़ो_vpd(काष्ठा pci_dev *dev, loff_t pos, माप_प्रकार count, व्योम *buf)
+अणु
+	अगर (!dev->vpd || !dev->vpd->ops)
+		वापस -ENODEV;
+	वापस dev->vpd->ops->पढ़ो(dev, pos, count, buf);
+पूर्ण
+EXPORT_SYMBOL(pci_पढ़ो_vpd);
 
-#define PCI_VPD_MAX_SIZE (PCI_VPD_ADDR_MASK + 1)
+/**
+ * pci_ग_लिखो_vpd - Write entry to Vital Product Data
+ * @dev:	pci device काष्ठा
+ * @pos:	offset in vpd space
+ * @count:	number of bytes to ग_लिखो
+ * @buf:	buffer containing ग_लिखो data
+ */
+sमाप_प्रकार pci_ग_लिखो_vpd(काष्ठा pci_dev *dev, loff_t pos, माप_प्रकार count, स्थिर व्योम *buf)
+अणु
+	अगर (!dev->vpd || !dev->vpd->ops)
+		वापस -ENODEV;
+	वापस dev->vpd->ops->ग_लिखो(dev, pos, count, buf);
+पूर्ण
+EXPORT_SYMBOL(pci_ग_लिखो_vpd);
+
+#घोषणा PCI_VPD_MAX_SIZE (PCI_VPD_ADDR_MASK + 1)
 
 /**
  * pci_vpd_size - determine actual size of Vital Product Data
- * @dev:	pci device struct
+ * @dev:	pci device काष्ठा
  * @old_size:	current assumed size, also maximum allowed size
  */
-static size_t pci_vpd_size(struct pci_dev *dev, size_t old_size)
-{
-	size_t off = 0;
-	unsigned char header[1+2];	/* 1 byte tag, 2 bytes length */
+अटल माप_प्रकार pci_vpd_size(काष्ठा pci_dev *dev, माप_प्रकार old_size)
+अणु
+	माप_प्रकार off = 0;
+	अचिन्हित अक्षर header[1+2];	/* 1 byte tag, 2 bytes length */
 
-	while (off < old_size && pci_read_vpd(dev, off, 1, header) == 1) {
-		unsigned char tag;
+	जबतक (off < old_size && pci_पढ़ो_vpd(dev, off, 1, header) == 1) अणु
+		अचिन्हित अक्षर tag;
 
-		if (!header[0] && !off) {
+		अगर (!header[0] && !off) अणु
 			pci_info(dev, "Invalid VPD tag 00, assume missing optional VPD EPROM\n");
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		if (header[0] & PCI_VPD_LRDT) {
+		अगर (header[0] & PCI_VPD_LRDT) अणु
 			/* Large Resource Data Type Tag */
 			tag = pci_vpd_lrdt_tag(header);
-			/* Only read length from known tag items */
-			if ((tag == PCI_VPD_LTIN_ID_STRING) ||
+			/* Only पढ़ो length from known tag items */
+			अगर ((tag == PCI_VPD_LTIN_ID_STRING) ||
 			    (tag == PCI_VPD_LTIN_RO_DATA) ||
-			    (tag == PCI_VPD_LTIN_RW_DATA)) {
-				if (pci_read_vpd(dev, off+1, 2,
-						 &header[1]) != 2) {
+			    (tag == PCI_VPD_LTIN_RW_DATA)) अणु
+				अगर (pci_पढ़ो_vpd(dev, off+1, 2,
+						 &header[1]) != 2) अणु
 					pci_warn(dev, "invalid large VPD tag %02x size at offset %zu",
 						 tag, off + 1);
-					return 0;
-				}
+					वापस 0;
+				पूर्ण
 				off += PCI_VPD_LRDT_TAG_SIZE +
 					pci_vpd_lrdt_size(header);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* Short Resource Data Type Tag */
 			off += PCI_VPD_SRDT_TAG_SIZE +
 				pci_vpd_srdt_size(header);
 			tag = pci_vpd_srdt_tag(header);
-		}
+		पूर्ण
 
-		if (tag == PCI_VPD_STIN_END)	/* End tag descriptor */
-			return off;
+		अगर (tag == PCI_VPD_STIN_END)	/* End tag descriptor */
+			वापस off;
 
-		if ((tag != PCI_VPD_LTIN_ID_STRING) &&
+		अगर ((tag != PCI_VPD_LTIN_ID_STRING) &&
 		    (tag != PCI_VPD_LTIN_RO_DATA) &&
-		    (tag != PCI_VPD_LTIN_RW_DATA)) {
+		    (tag != PCI_VPD_LTIN_RW_DATA)) अणु
 			pci_warn(dev, "invalid %s VPD tag %02x at offset %zu",
 				 (header[0] & PCI_VPD_LRDT) ? "large" : "short",
 				 tag, off);
-			return 0;
-		}
-	}
-	return 0;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Wait for last operation to complete.
- * This code has to spin since there is no other notification from the PCI
+ * Wait क्रम last operation to complete.
+ * This code has to spin since there is no other notअगरication from the PCI
  * hardware. Since the VPD is often implemented by serial attachment to an
  * EEPROM, it may take many milliseconds to complete.
  *
  * Returns 0 on success, negative values indicate error.
  */
-static int pci_vpd_wait(struct pci_dev *dev)
-{
-	struct pci_vpd *vpd = dev->vpd;
-	unsigned long timeout = jiffies + msecs_to_jiffies(125);
-	unsigned long max_sleep = 16;
+अटल पूर्णांक pci_vpd_रुको(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा pci_vpd *vpd = dev->vpd;
+	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(125);
+	अचिन्हित दीर्घ max_sleep = 16;
 	u16 status;
-	int ret;
+	पूर्णांक ret;
 
-	if (!vpd->busy)
-		return 0;
+	अगर (!vpd->busy)
+		वापस 0;
 
-	do {
-		ret = pci_user_read_config_word(dev, vpd->cap + PCI_VPD_ADDR,
+	करो अणु
+		ret = pci_user_पढ़ो_config_word(dev, vpd->cap + PCI_VPD_ADDR,
 						&status);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		if ((status & PCI_VPD_ADDR_F) == vpd->flag) {
+		अगर ((status & PCI_VPD_ADDR_F) == vpd->flag) अणु
 			vpd->busy = 0;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		if (fatal_signal_pending(current))
-			return -EINTR;
+		अगर (fatal_संकेत_pending(current))
+			वापस -EINTR;
 
-		if (time_after(jiffies, timeout))
-			break;
+		अगर (समय_after(jअगरfies, समयout))
+			अवरोध;
 
 		usleep_range(10, max_sleep);
-		if (max_sleep < 1024)
+		अगर (max_sleep < 1024)
 			max_sleep *= 2;
-	} while (true);
+	पूर्ण जबतक (true);
 
 	pci_warn(dev, "VPD access failed.  This is likely a firmware bug on this device.  Contact the card vendor for a firmware update\n");
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static ssize_t pci_vpd_read(struct pci_dev *dev, loff_t pos, size_t count,
-			    void *arg)
-{
-	struct pci_vpd *vpd = dev->vpd;
-	int ret;
+अटल sमाप_प्रकार pci_vpd_पढ़ो(काष्ठा pci_dev *dev, loff_t pos, माप_प्रकार count,
+			    व्योम *arg)
+अणु
+	काष्ठा pci_vpd *vpd = dev->vpd;
+	पूर्णांक ret;
 	loff_t end = pos + count;
 	u8 *buf = arg;
 
-	if (pos < 0)
-		return -EINVAL;
+	अगर (pos < 0)
+		वापस -EINVAL;
 
-	if (!vpd->valid) {
+	अगर (!vpd->valid) अणु
 		vpd->valid = 1;
 		vpd->len = pci_vpd_size(dev, vpd->len);
-	}
+	पूर्ण
 
-	if (vpd->len == 0)
-		return -EIO;
+	अगर (vpd->len == 0)
+		वापस -EIO;
 
-	if (pos > vpd->len)
-		return 0;
+	अगर (pos > vpd->len)
+		वापस 0;
 
-	if (end > vpd->len) {
+	अगर (end > vpd->len) अणु
 		end = vpd->len;
 		count = end - pos;
-	}
+	पूर्ण
 
-	if (mutex_lock_killable(&vpd->lock))
-		return -EINTR;
+	अगर (mutex_lock_समाप्तable(&vpd->lock))
+		वापस -EINTR;
 
-	ret = pci_vpd_wait(dev);
-	if (ret < 0)
-		goto out;
+	ret = pci_vpd_रुको(dev);
+	अगर (ret < 0)
+		जाओ out;
 
-	while (pos < end) {
+	जबतक (pos < end) अणु
 		u32 val;
-		unsigned int i, skip;
+		अचिन्हित पूर्णांक i, skip;
 
-		ret = pci_user_write_config_word(dev, vpd->cap + PCI_VPD_ADDR,
+		ret = pci_user_ग_लिखो_config_word(dev, vpd->cap + PCI_VPD_ADDR,
 						 pos & ~3);
-		if (ret < 0)
-			break;
+		अगर (ret < 0)
+			अवरोध;
 		vpd->busy = 1;
 		vpd->flag = PCI_VPD_ADDR_F;
-		ret = pci_vpd_wait(dev);
-		if (ret < 0)
-			break;
+		ret = pci_vpd_रुको(dev);
+		अगर (ret < 0)
+			अवरोध;
 
-		ret = pci_user_read_config_dword(dev, vpd->cap + PCI_VPD_DATA, &val);
-		if (ret < 0)
-			break;
+		ret = pci_user_पढ़ो_config_dword(dev, vpd->cap + PCI_VPD_DATA, &val);
+		अगर (ret < 0)
+			अवरोध;
 
 		skip = pos & 3;
-		for (i = 0;  i < sizeof(u32); i++) {
-			if (i >= skip) {
+		क्रम (i = 0;  i < माप(u32); i++) अणु
+			अगर (i >= skip) अणु
 				*buf++ = val;
-				if (++pos == end)
-					break;
-			}
+				अगर (++pos == end)
+					अवरोध;
+			पूर्ण
 			val >>= 8;
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
 	mutex_unlock(&vpd->lock);
-	return ret ? ret : count;
-}
+	वापस ret ? ret : count;
+पूर्ण
 
-static ssize_t pci_vpd_write(struct pci_dev *dev, loff_t pos, size_t count,
-			     const void *arg)
-{
-	struct pci_vpd *vpd = dev->vpd;
-	const u8 *buf = arg;
+अटल sमाप_प्रकार pci_vpd_ग_लिखो(काष्ठा pci_dev *dev, loff_t pos, माप_प्रकार count,
+			     स्थिर व्योम *arg)
+अणु
+	काष्ठा pci_vpd *vpd = dev->vpd;
+	स्थिर u8 *buf = arg;
 	loff_t end = pos + count;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (pos < 0 || (pos & 3) || (count & 3))
-		return -EINVAL;
+	अगर (pos < 0 || (pos & 3) || (count & 3))
+		वापस -EINVAL;
 
-	if (!vpd->valid) {
+	अगर (!vpd->valid) अणु
 		vpd->valid = 1;
 		vpd->len = pci_vpd_size(dev, vpd->len);
-	}
+	पूर्ण
 
-	if (vpd->len == 0)
-		return -EIO;
+	अगर (vpd->len == 0)
+		वापस -EIO;
 
-	if (end > vpd->len)
-		return -EINVAL;
+	अगर (end > vpd->len)
+		वापस -EINVAL;
 
-	if (mutex_lock_killable(&vpd->lock))
-		return -EINTR;
+	अगर (mutex_lock_समाप्तable(&vpd->lock))
+		वापस -EINTR;
 
-	ret = pci_vpd_wait(dev);
-	if (ret < 0)
-		goto out;
+	ret = pci_vpd_रुको(dev);
+	अगर (ret < 0)
+		जाओ out;
 
-	while (pos < end) {
+	जबतक (pos < end) अणु
 		u32 val;
 
 		val = *buf++;
@@ -270,209 +271,209 @@ static ssize_t pci_vpd_write(struct pci_dev *dev, loff_t pos, size_t count,
 		val |= *buf++ << 16;
 		val |= *buf++ << 24;
 
-		ret = pci_user_write_config_dword(dev, vpd->cap + PCI_VPD_DATA, val);
-		if (ret < 0)
-			break;
-		ret = pci_user_write_config_word(dev, vpd->cap + PCI_VPD_ADDR,
+		ret = pci_user_ग_लिखो_config_dword(dev, vpd->cap + PCI_VPD_DATA, val);
+		अगर (ret < 0)
+			अवरोध;
+		ret = pci_user_ग_लिखो_config_word(dev, vpd->cap + PCI_VPD_ADDR,
 						 pos | PCI_VPD_ADDR_F);
-		if (ret < 0)
-			break;
+		अगर (ret < 0)
+			अवरोध;
 
 		vpd->busy = 1;
 		vpd->flag = 0;
-		ret = pci_vpd_wait(dev);
-		if (ret < 0)
-			break;
+		ret = pci_vpd_रुको(dev);
+		अगर (ret < 0)
+			अवरोध;
 
-		pos += sizeof(u32);
-	}
+		pos += माप(u32);
+	पूर्ण
 out:
 	mutex_unlock(&vpd->lock);
-	return ret ? ret : count;
-}
+	वापस ret ? ret : count;
+पूर्ण
 
-static const struct pci_vpd_ops pci_vpd_ops = {
-	.read = pci_vpd_read,
-	.write = pci_vpd_write,
-};
+अटल स्थिर काष्ठा pci_vpd_ops pci_vpd_ops = अणु
+	.पढ़ो = pci_vpd_पढ़ो,
+	.ग_लिखो = pci_vpd_ग_लिखो,
+पूर्ण;
 
-static ssize_t pci_vpd_f0_read(struct pci_dev *dev, loff_t pos, size_t count,
-			       void *arg)
-{
-	struct pci_dev *tdev = pci_get_func0_dev(dev);
-	ssize_t ret;
+अटल sमाप_प्रकार pci_vpd_f0_पढ़ो(काष्ठा pci_dev *dev, loff_t pos, माप_प्रकार count,
+			       व्योम *arg)
+अणु
+	काष्ठा pci_dev *tdev = pci_get_func0_dev(dev);
+	sमाप_प्रकार ret;
 
-	if (!tdev)
-		return -ENODEV;
+	अगर (!tdev)
+		वापस -ENODEV;
 
-	ret = pci_read_vpd(tdev, pos, count, arg);
+	ret = pci_पढ़ो_vpd(tdev, pos, count, arg);
 	pci_dev_put(tdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t pci_vpd_f0_write(struct pci_dev *dev, loff_t pos, size_t count,
-				const void *arg)
-{
-	struct pci_dev *tdev = pci_get_func0_dev(dev);
-	ssize_t ret;
+अटल sमाप_प्रकार pci_vpd_f0_ग_लिखो(काष्ठा pci_dev *dev, loff_t pos, माप_प्रकार count,
+				स्थिर व्योम *arg)
+अणु
+	काष्ठा pci_dev *tdev = pci_get_func0_dev(dev);
+	sमाप_प्रकार ret;
 
-	if (!tdev)
-		return -ENODEV;
+	अगर (!tdev)
+		वापस -ENODEV;
 
-	ret = pci_write_vpd(tdev, pos, count, arg);
+	ret = pci_ग_लिखो_vpd(tdev, pos, count, arg);
 	pci_dev_put(tdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct pci_vpd_ops pci_vpd_f0_ops = {
-	.read = pci_vpd_f0_read,
-	.write = pci_vpd_f0_write,
-};
+अटल स्थिर काष्ठा pci_vpd_ops pci_vpd_f0_ops = अणु
+	.पढ़ो = pci_vpd_f0_पढ़ो,
+	.ग_लिखो = pci_vpd_f0_ग_लिखो,
+पूर्ण;
 
-void pci_vpd_init(struct pci_dev *dev)
-{
-	struct pci_vpd *vpd;
+व्योम pci_vpd_init(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा pci_vpd *vpd;
 	u8 cap;
 
 	cap = pci_find_capability(dev, PCI_CAP_ID_VPD);
-	if (!cap)
-		return;
+	अगर (!cap)
+		वापस;
 
-	vpd = kzalloc(sizeof(*vpd), GFP_ATOMIC);
-	if (!vpd)
-		return;
+	vpd = kzalloc(माप(*vpd), GFP_ATOMIC);
+	अगर (!vpd)
+		वापस;
 
 	vpd->len = PCI_VPD_MAX_SIZE;
-	if (dev->dev_flags & PCI_DEV_FLAGS_VPD_REF_F0)
+	अगर (dev->dev_flags & PCI_DEV_FLAGS_VPD_REF_F0)
 		vpd->ops = &pci_vpd_f0_ops;
-	else
+	अन्यथा
 		vpd->ops = &pci_vpd_ops;
 	mutex_init(&vpd->lock);
 	vpd->cap = cap;
 	vpd->busy = 0;
 	vpd->valid = 0;
 	dev->vpd = vpd;
-}
+पूर्ण
 
-void pci_vpd_release(struct pci_dev *dev)
-{
-	kfree(dev->vpd);
-}
+व्योम pci_vpd_release(काष्ठा pci_dev *dev)
+अणु
+	kमुक्त(dev->vpd);
+पूर्ण
 
-static ssize_t vpd_read(struct file *filp, struct kobject *kobj,
-			struct bin_attribute *bin_attr, char *buf, loff_t off,
-			size_t count)
-{
-	struct pci_dev *dev = to_pci_dev(kobj_to_dev(kobj));
+अटल sमाप_प्रकार vpd_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+			काष्ठा bin_attribute *bin_attr, अक्षर *buf, loff_t off,
+			माप_प्रकार count)
+अणु
+	काष्ठा pci_dev *dev = to_pci_dev(kobj_to_dev(kobj));
 
-	return pci_read_vpd(dev, off, count, buf);
-}
+	वापस pci_पढ़ो_vpd(dev, off, count, buf);
+पूर्ण
 
-static ssize_t vpd_write(struct file *filp, struct kobject *kobj,
-			 struct bin_attribute *bin_attr, char *buf, loff_t off,
-			 size_t count)
-{
-	struct pci_dev *dev = to_pci_dev(kobj_to_dev(kobj));
+अटल sमाप_प्रकार vpd_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
+			 काष्ठा bin_attribute *bin_attr, अक्षर *buf, loff_t off,
+			 माप_प्रकार count)
+अणु
+	काष्ठा pci_dev *dev = to_pci_dev(kobj_to_dev(kobj));
 
-	return pci_write_vpd(dev, off, count, buf);
-}
-static BIN_ATTR(vpd, 0600, vpd_read, vpd_write, 0);
+	वापस pci_ग_लिखो_vpd(dev, off, count, buf);
+पूर्ण
+अटल BIN_ATTR(vpd, 0600, vpd_पढ़ो, vpd_ग_लिखो, 0);
 
-static struct bin_attribute *vpd_attrs[] = {
+अटल काष्ठा bin_attribute *vpd_attrs[] = अणु
 	&bin_attr_vpd,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static umode_t vpd_attr_is_visible(struct kobject *kobj,
-				   struct bin_attribute *a, int n)
-{
-	struct pci_dev *pdev = to_pci_dev(kobj_to_dev(kobj));
+अटल umode_t vpd_attr_is_visible(काष्ठा kobject *kobj,
+				   काष्ठा bin_attribute *a, पूर्णांक n)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(kobj_to_dev(kobj));
 
-	if (!pdev->vpd)
-		return 0;
+	अगर (!pdev->vpd)
+		वापस 0;
 
-	return a->attr.mode;
-}
+	वापस a->attr.mode;
+पूर्ण
 
-const struct attribute_group pci_dev_vpd_attr_group = {
+स्थिर काष्ठा attribute_group pci_dev_vpd_attr_group = अणु
 	.bin_attrs = vpd_attrs,
 	.is_bin_visible = vpd_attr_is_visible,
-};
+पूर्ण;
 
-int pci_vpd_find_tag(const u8 *buf, unsigned int len, u8 rdt)
-{
-	int i = 0;
+पूर्णांक pci_vpd_find_tag(स्थिर u8 *buf, अचिन्हित पूर्णांक len, u8 rdt)
+अणु
+	पूर्णांक i = 0;
 
-	/* look for LRDT tags only, end tag is the only SRDT tag */
-	while (i + PCI_VPD_LRDT_TAG_SIZE <= len && buf[i] & PCI_VPD_LRDT) {
-		if (buf[i] == rdt)
-			return i;
+	/* look क्रम LRDT tags only, end tag is the only SRDT tag */
+	जबतक (i + PCI_VPD_LRDT_TAG_SIZE <= len && buf[i] & PCI_VPD_LRDT) अणु
+		अगर (buf[i] == rdt)
+			वापस i;
 
 		i += PCI_VPD_LRDT_TAG_SIZE + pci_vpd_lrdt_size(buf + i);
-	}
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_vpd_find_tag);
 
-int pci_vpd_find_info_keyword(const u8 *buf, unsigned int off,
-			      unsigned int len, const char *kw)
-{
-	int i;
+पूर्णांक pci_vpd_find_info_keyword(स्थिर u8 *buf, अचिन्हित पूर्णांक off,
+			      अचिन्हित पूर्णांक len, स्थिर अक्षर *kw)
+अणु
+	पूर्णांक i;
 
-	for (i = off; i + PCI_VPD_INFO_FLD_HDR_SIZE <= off + len;) {
-		if (buf[i + 0] == kw[0] &&
+	क्रम (i = off; i + PCI_VPD_INFO_FLD_HDR_SIZE <= off + len;) अणु
+		अगर (buf[i + 0] == kw[0] &&
 		    buf[i + 1] == kw[1])
-			return i;
+			वापस i;
 
 		i += PCI_VPD_INFO_FLD_HDR_SIZE +
 		     pci_vpd_info_field_size(&buf[i]);
-	}
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_vpd_find_info_keyword);
 
-#ifdef CONFIG_PCI_QUIRKS
+#अगर_घोषित CONFIG_PCI_QUIRKS
 /*
- * Quirk non-zero PCI functions to route VPD access through function 0 for
+ * Quirk non-zero PCI functions to route VPD access through function 0 क्रम
  * devices that share VPD resources between functions.  The functions are
  * expected to be identical devices.
  */
-static void quirk_f0_vpd_link(struct pci_dev *dev)
-{
-	struct pci_dev *f0;
+अटल व्योम quirk_f0_vpd_link(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा pci_dev *f0;
 
-	if (!PCI_FUNC(dev->devfn))
-		return;
+	अगर (!PCI_FUNC(dev->devfn))
+		वापस;
 
 	f0 = pci_get_func0_dev(dev);
-	if (!f0)
-		return;
+	अगर (!f0)
+		वापस;
 
-	if (f0->vpd && dev->class == f0->class &&
-	    dev->vendor == f0->vendor && dev->device == f0->device)
+	अगर (f0->vpd && dev->class == f0->class &&
+	    dev->venकरोr == f0->venकरोr && dev->device == f0->device)
 		dev->dev_flags |= PCI_DEV_FLAGS_VPD_REF_F0;
 
 	pci_dev_put(f0);
-}
+पूर्ण
 DECLARE_PCI_FIXUP_CLASS_EARLY(PCI_VENDOR_ID_INTEL, PCI_ANY_ID,
 			      PCI_CLASS_NETWORK_ETHERNET, 8, quirk_f0_vpd_link);
 
 /*
- * If a device follows the VPD format spec, the PCI core will not read or
- * write past the VPD End Tag.  But some vendors do not follow the VPD
- * format spec, so we can't tell how much data is safe to access.  Devices
- * may behave unpredictably if we access too much.  Blacklist these devices
- * so we don't touch VPD at all.
+ * If a device follows the VPD क्रमmat spec, the PCI core will not पढ़ो or
+ * ग_लिखो past the VPD End Tag.  But some venकरोrs करो not follow the VPD
+ * क्रमmat spec, so we can't tell how much data is safe to access.  Devices
+ * may behave unpredictably अगर we access too much.  Blacklist these devices
+ * so we करोn't touch VPD at all.
  */
-static void quirk_blacklist_vpd(struct pci_dev *dev)
-{
-	if (dev->vpd) {
+अटल व्योम quirk_blacklist_vpd(काष्ठा pci_dev *dev)
+अणु
+	अगर (dev->vpd) अणु
 		dev->vpd->len = 0;
 		pci_warn(dev, FW_BUG "disabling VPD access (can't determine size of non-standard VPD format)\n");
-	}
-}
+	पूर्ण
+पूर्ण
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_LSI_LOGIC, 0x0060, quirk_blacklist_vpd);
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_LSI_LOGIC, 0x007c, quirk_blacklist_vpd);
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_LSI_LOGIC, 0x0413, quirk_blacklist_vpd);
@@ -487,33 +488,33 @@ DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_LSI_LOGIC, 0x005f, quirk_blacklist_vpd);
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_ATTANSIC, PCI_ANY_ID,
 		quirk_blacklist_vpd);
 /*
- * The Amazon Annapurna Labs 0x0031 device id is reused for other non Root Port
- * device types, so the quirk is registered for the PCI_CLASS_BRIDGE_PCI class.
+ * The Amazon Annapurna Lअसल 0x0031 device id is reused क्रम other non Root Port
+ * device types, so the quirk is रेजिस्टरed क्रम the PCI_CLASS_BRIDGE_PCI class.
  */
 DECLARE_PCI_FIXUP_CLASS_FINAL(PCI_VENDOR_ID_AMAZON_ANNAPURNA_LABS, 0x0031,
 			      PCI_CLASS_BRIDGE_PCI, 8, quirk_blacklist_vpd);
 
-static void pci_vpd_set_size(struct pci_dev *dev, size_t len)
-{
-	struct pci_vpd *vpd = dev->vpd;
+अटल व्योम pci_vpd_set_size(काष्ठा pci_dev *dev, माप_प्रकार len)
+अणु
+	काष्ठा pci_vpd *vpd = dev->vpd;
 
-	if (!vpd || len == 0 || len > PCI_VPD_MAX_SIZE)
-		return;
+	अगर (!vpd || len == 0 || len > PCI_VPD_MAX_SIZE)
+		वापस;
 
 	vpd->valid = 1;
 	vpd->len = len;
-}
+पूर्ण
 
-static void quirk_chelsio_extend_vpd(struct pci_dev *dev)
-{
-	int chip = (dev->device & 0xf000) >> 12;
-	int func = (dev->device & 0x0f00) >>  8;
-	int prod = (dev->device & 0x00ff) >>  0;
+अटल व्योम quirk_chelsio_extend_vpd(काष्ठा pci_dev *dev)
+अणु
+	पूर्णांक chip = (dev->device & 0xf000) >> 12;
+	पूर्णांक func = (dev->device & 0x0f00) >>  8;
+	पूर्णांक prod = (dev->device & 0x00ff) >>  0;
 
 	/*
 	 * If this is a T3-based adapter, there's a 1KB VPD area at offset
 	 * 0xc00 which contains the preferred VPD values.  If this is a T4 or
-	 * later based adapter, the special VPD is at offset 0x400 for the
+	 * later based adapter, the special VPD is at offset 0x400 क्रम the
 	 * Physical Functions (the SR-IOV Virtual Functions have no VPD
 	 * Capabilities).  The PCI VPD Access core routines will normally
 	 * compute the size of the VPD by parsing the VPD Data Structure at
@@ -521,13 +522,13 @@ static void quirk_chelsio_extend_vpd(struct pci_dev *dev)
 	 * to accesses these other VPD areas which are beyond those computed
 	 * limits.
 	 */
-	if (chip == 0x0 && prod >= 0x20)
+	अगर (chip == 0x0 && prod >= 0x20)
 		pci_vpd_set_size(dev, 8192);
-	else if (chip >= 0x4 && func < 0x8)
+	अन्यथा अगर (chip >= 0x4 && func < 0x8)
 		pci_vpd_set_size(dev, 2048);
-}
+पूर्ण
 
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_CHELSIO, PCI_ANY_ID,
 			quirk_chelsio_extend_vpd);
 
-#endif
+#पूर्ण_अगर

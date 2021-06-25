@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_SSEU_H__
-#define __INTEL_SSEU_H__
+#अगर_अघोषित __INTEL_SSEU_H__
+#घोषणा __INTEL_SSEU_H__
 
-#include <linux/types.h>
-#include <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
 
-#include "i915_gem.h"
+#समावेश "i915_gem.h"
 
-struct drm_i915_private;
-struct intel_gt;
-struct drm_printer;
+काष्ठा drm_i915_निजी;
+काष्ठा पूर्णांकel_gt;
+काष्ठा drm_prपूर्णांकer;
 
-#define GEN_MAX_SLICES		(6) /* CNL upper bound */
-#define GEN_MAX_SUBSLICES	(8) /* ICL upper bound */
-#define GEN_SSEU_STRIDE(max_entries) DIV_ROUND_UP(max_entries, BITS_PER_BYTE)
-#define GEN_MAX_SUBSLICE_STRIDE GEN_SSEU_STRIDE(GEN_MAX_SUBSLICES)
-#define GEN_MAX_EUS		(16) /* TGL upper bound */
-#define GEN_MAX_EU_STRIDE GEN_SSEU_STRIDE(GEN_MAX_EUS)
+#घोषणा GEN_MAX_SLICES		(6) /* CNL upper bound */
+#घोषणा GEN_MAX_SUBSLICES	(8) /* ICL upper bound */
+#घोषणा GEN_SSEU_STRIDE(max_entries) DIV_ROUND_UP(max_entries, BITS_PER_BYTE)
+#घोषणा GEN_MAX_SUBSLICE_STRIDE GEN_SSEU_STRIDE(GEN_MAX_SUBSLICES)
+#घोषणा GEN_MAX_EUS		(16) /* TGL upper bound */
+#घोषणा GEN_MAX_EU_STRIDE GEN_SSEU_STRIDE(GEN_MAX_EUS)
 
-struct sseu_dev_info {
+काष्ठा sseu_dev_info अणु
 	u8 slice_mask;
 	u8 subslice_mask[GEN_MAX_SLICES * GEN_MAX_SUBSLICE_STRIDE];
 	u8 eu_mask[GEN_MAX_SLICES * GEN_MAX_SUBSLICES * GEN_MAX_EU_STRIDE];
@@ -42,66 +43,66 @@ struct sseu_dev_info {
 
 	u8 ss_stride;
 	u8 eu_stride;
-};
+पूर्ण;
 
 /*
- * Powergating configuration for a particular (context,engine).
+ * Powergating configuration क्रम a particular (context,engine).
  */
-struct intel_sseu {
+काष्ठा पूर्णांकel_sseu अणु
 	u8 slice_mask;
 	u8 subslice_mask;
 	u8 min_eus_per_subslice;
 	u8 max_eus_per_subslice;
-};
+पूर्ण;
 
-static inline struct intel_sseu
-intel_sseu_from_device_info(const struct sseu_dev_info *sseu)
-{
-	struct intel_sseu value = {
+अटल अंतरभूत काष्ठा पूर्णांकel_sseu
+पूर्णांकel_sseu_from_device_info(स्थिर काष्ठा sseu_dev_info *sseu)
+अणु
+	काष्ठा पूर्णांकel_sseu value = अणु
 		.slice_mask = sseu->slice_mask,
 		.subslice_mask = sseu->subslice_mask[0],
 		.min_eus_per_subslice = sseu->max_eus_per_subslice,
 		.max_eus_per_subslice = sseu->max_eus_per_subslice,
-	};
+	पूर्ण;
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static inline bool
-intel_sseu_has_subslice(const struct sseu_dev_info *sseu, int slice,
-			int subslice)
-{
+अटल अंतरभूत bool
+पूर्णांकel_sseu_has_subslice(स्थिर काष्ठा sseu_dev_info *sseu, पूर्णांक slice,
+			पूर्णांक subslice)
+अणु
 	u8 mask;
-	int ss_idx = subslice / BITS_PER_BYTE;
+	पूर्णांक ss_idx = subslice / BITS_PER_BYTE;
 
 	GEM_BUG_ON(ss_idx >= sseu->ss_stride);
 
 	mask = sseu->subslice_mask[slice * sseu->ss_stride + ss_idx];
 
-	return mask & BIT(subslice % BITS_PER_BYTE);
-}
+	वापस mask & BIT(subslice % BITS_PER_BYTE);
+पूर्ण
 
-void intel_sseu_set_info(struct sseu_dev_info *sseu, u8 max_slices,
+व्योम पूर्णांकel_sseu_set_info(काष्ठा sseu_dev_info *sseu, u8 max_slices,
 			 u8 max_subslices, u8 max_eus_per_subslice);
 
-unsigned int
-intel_sseu_subslice_total(const struct sseu_dev_info *sseu);
+अचिन्हित पूर्णांक
+पूर्णांकel_sseu_subslice_total(स्थिर काष्ठा sseu_dev_info *sseu);
 
-unsigned int
-intel_sseu_subslices_per_slice(const struct sseu_dev_info *sseu, u8 slice);
+अचिन्हित पूर्णांक
+पूर्णांकel_sseu_subslices_per_slice(स्थिर काष्ठा sseu_dev_info *sseu, u8 slice);
 
-u32  intel_sseu_get_subslices(const struct sseu_dev_info *sseu, u8 slice);
+u32  पूर्णांकel_sseu_get_subslices(स्थिर काष्ठा sseu_dev_info *sseu, u8 slice);
 
-void intel_sseu_set_subslices(struct sseu_dev_info *sseu, int slice,
+व्योम पूर्णांकel_sseu_set_subslices(काष्ठा sseu_dev_info *sseu, पूर्णांक slice,
 			      u32 ss_mask);
 
-void intel_sseu_info_init(struct intel_gt *gt);
+व्योम पूर्णांकel_sseu_info_init(काष्ठा पूर्णांकel_gt *gt);
 
-u32 intel_sseu_make_rpcs(struct intel_gt *gt,
-			 const struct intel_sseu *req_sseu);
+u32 पूर्णांकel_sseu_make_rpcs(काष्ठा पूर्णांकel_gt *gt,
+			 स्थिर काष्ठा पूर्णांकel_sseu *req_sseu);
 
-void intel_sseu_dump(const struct sseu_dev_info *sseu, struct drm_printer *p);
-void intel_sseu_print_topology(const struct sseu_dev_info *sseu,
-			       struct drm_printer *p);
+व्योम पूर्णांकel_sseu_dump(स्थिर काष्ठा sseu_dev_info *sseu, काष्ठा drm_prपूर्णांकer *p);
+व्योम पूर्णांकel_sseu_prपूर्णांक_topology(स्थिर काष्ठा sseu_dev_info *sseu,
+			       काष्ठा drm_prपूर्णांकer *p);
 
-#endif /* __INTEL_SSEU_H__ */
+#पूर्ण_अगर /* __INTEL_SSEU_H__ */

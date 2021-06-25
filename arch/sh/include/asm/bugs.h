@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_BUGS_H
-#define __ASM_SH_BUGS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_BUGS_H
+#घोषणा __ASM_SH_BUGS_H
 
 /*
- * This is included by init/main.c to check for architecture-dependent bugs.
+ * This is included by init/मुख्य.c to check क्रम architecture-dependent bugs.
  *
  * Needs:
- *	void check_bugs(void);
+ *	व्योम check_bugs(व्योम);
  */
 
 /*
- * I don't know of any Super-H bugs yet.
+ * I करोn't know of any Super-H bugs yet.
  */
 
-#include <asm/processor.h>
+#समावेश <यंत्र/processor.h>
 
-extern void select_idle_routine(void);
+बाह्य व्योम select_idle_routine(व्योम);
 
-static void __init check_bugs(void)
-{
-	extern unsigned long loops_per_jiffy;
-	char *p = &init_utsname()->machine[2]; /* "sh" */
+अटल व्योम __init check_bugs(व्योम)
+अणु
+	बाह्य अचिन्हित दीर्घ loops_per_jअगरfy;
+	अक्षर *p = &init_utsname()->machine[2]; /* "sh" */
 
 	select_idle_routine();
 
-	current_cpu_data.loops_per_jiffy = loops_per_jiffy;
+	current_cpu_data.loops_per_jअगरfy = loops_per_jअगरfy;
 
-	switch (current_cpu_data.family) {
-	case CPU_FAMILY_SH2:
+	चयन (current_cpu_data.family) अणु
+	हाल CPU_FAMILY_SH2:
 		*p++ = '2';
-		break;
-	case CPU_FAMILY_SH2A:
+		अवरोध;
+	हाल CPU_FAMILY_SH2A:
 		*p++ = '2';
 		*p++ = 'a';
-		break;
-	case CPU_FAMILY_SH3:
+		अवरोध;
+	हाल CPU_FAMILY_SH3:
 		*p++ = '3';
-		break;
-	case CPU_FAMILY_SH4:
+		अवरोध;
+	हाल CPU_FAMILY_SH4:
 		*p++ = '4';
-		break;
-	case CPU_FAMILY_SH4A:
+		अवरोध;
+	हाल CPU_FAMILY_SH4A:
 		*p++ = '4';
 		*p++ = 'a';
-		break;
-	case CPU_FAMILY_SH4AL_DSP:
+		अवरोध;
+	हाल CPU_FAMILY_SH4AL_DSP:
 		*p++ = '4';
 		*p++ = 'a';
 		*p++ = 'l';
@@ -52,23 +53,23 @@ static void __init check_bugs(void)
 		*p++ = 'd';
 		*p++ = 's';
 		*p++ = 'p';
-		break;
-	case CPU_FAMILY_UNKNOWN:
+		अवरोध;
+	हाल CPU_FAMILY_UNKNOWN:
 		/*
-		 * Specifically use CPU_FAMILY_UNKNOWN rather than
-		 * default:, so we're able to have the compiler whine
-		 * about unhandled enumerations.
+		 * Specअगरically use CPU_FAMILY_UNKNOWN rather than
+		 * शेष:, so we're able to have the compiler whine
+		 * about unhandled क्रमागतerations.
 		 */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	printk("CPU: %s\n", get_cpu_subtype(&current_cpu_data));
+	prपूर्णांकk("CPU: %s\n", get_cpu_subtype(&current_cpu_data));
 
-#ifndef __LITTLE_ENDIAN__
+#अगर_अघोषित __LITTLE_ENDIAN__
 	/* 'eb' means 'Endian Big' */
 	*p++ = 'e';
 	*p++ = 'b';
-#endif
+#पूर्ण_अगर
 	*p = '\0';
-}
-#endif /* __ASM_SH_BUGS_H */
+पूर्ण
+#पूर्ण_अगर /* __ASM_SH_BUGS_H */

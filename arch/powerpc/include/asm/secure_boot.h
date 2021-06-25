@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Secure boot definitions
  *
  * Copyright (C) 2019 IBM Corporation
  * Author: Nayna Jain
  */
-#ifndef _ASM_POWER_SECURE_BOOT_H
-#define _ASM_POWER_SECURE_BOOT_H
+#अगर_अघोषित _ASM_POWER_SECURE_BOOT_H
+#घोषणा _ASM_POWER_SECURE_BOOT_H
 
-#ifdef CONFIG_PPC_SECURE_BOOT
+#अगर_घोषित CONFIG_PPC_SECURE_BOOT
 
-bool is_ppc_secureboot_enabled(void);
-bool is_ppc_trustedboot_enabled(void);
+bool is_ppc_secureboot_enabled(व्योम);
+bool is_ppc_trustedboot_enabled(व्योम);
 
-#else
+#अन्यथा
 
-static inline bool is_ppc_secureboot_enabled(void)
-{
-	return false;
-}
+अटल अंतरभूत bool is_ppc_secureboot_enabled(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool is_ppc_trustedboot_enabled(void)
-{
-	return false;
-}
+अटल अंतरभूत bool is_ppc_trustedboot_enabled(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर

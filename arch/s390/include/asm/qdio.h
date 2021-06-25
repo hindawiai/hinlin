@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright IBM Corp. 2000, 2008
  * Author(s): Utz Bacher <utz.bacher@de.ibm.com>
  *	      Jan Glauber <jang@linux.vnet.ibm.com>
  *
  */
-#ifndef __QDIO_H__
-#define __QDIO_H__
+#अगर_अघोषित __QDIO_H__
+#घोषणा __QDIO_H__
 
-#include <linux/interrupt.h>
-#include <asm/cio.h>
-#include <asm/ccwdev.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <यंत्र/cपन.स>
+#समावेश <यंत्र/ccwdev.h>
 
 /* only use 4 queues to save some cachelines */
-#define QDIO_MAX_QUEUES_PER_IRQ		4
-#define QDIO_MAX_BUFFERS_PER_Q		128
-#define QDIO_MAX_BUFFERS_MASK		(QDIO_MAX_BUFFERS_PER_Q - 1)
-#define QDIO_BUFNR(num)			((num) & QDIO_MAX_BUFFERS_MASK)
-#define QDIO_MAX_ELEMENTS_PER_BUFFER	16
-#define QDIO_SBAL_SIZE			256
+#घोषणा QDIO_MAX_QUEUES_PER_IRQ		4
+#घोषणा QDIO_MAX_BUFFERS_PER_Q		128
+#घोषणा QDIO_MAX_BUFFERS_MASK		(QDIO_MAX_BUFFERS_PER_Q - 1)
+#घोषणा QDIO_BUFNR(num)			((num) & QDIO_MAX_BUFFERS_MASK)
+#घोषणा QDIO_MAX_ELEMENTS_PER_BUFFER	16
+#घोषणा QDIO_SBAL_SIZE			256
 
-#define QDIO_QETH_QFMT			0
-#define QDIO_ZFCP_QFMT			1
-#define QDIO_IQDIO_QFMT			2
+#घोषणा QDIO_QETH_QFMT			0
+#घोषणा QDIO_ZFCP_QFMT			1
+#घोषणा QDIO_IQDIO_QFMT			2
 
 /**
- * struct qdesfmt0 - queue descriptor, format 0
- * @sliba: absolute address of storage list information block
- * @sla: absolute address of storage list
- * @slsba: absolute address of storage list state block
- * @akey: access key for SLIB
- * @bkey: access key for SL
- * @ckey: access key for SBALs
- * @dkey: access key for SLSB
+ * काष्ठा qdesfmt0 - queue descriptor, क्रमmat 0
+ * @sliba: असलolute address of storage list inक्रमmation block
+ * @sla: असलolute address of storage list
+ * @slsba: असलolute address of storage list state block
+ * @akey: access key क्रम SLIB
+ * @bkey: access key क्रम SL
+ * @ckey: access key क्रम SBALs
+ * @dkey: access key क्रम SLSB
  */
-struct qdesfmt0 {
+काष्ठा qdesfmt0 अणु
 	u64 sliba;
 	u64 sla;
 	u64 slsba;
@@ -44,23 +45,23 @@ struct qdesfmt0 {
 	u32 ckey : 4;
 	u32 dkey : 4;
 	u32	 : 16;
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
-#define QDR_AC_MULTI_BUFFER_ENABLE 0x01
+#घोषणा QDR_AC_MULTI_BUFFER_ENABLE 0x01
 
 /**
- * struct qdr - queue description record (QDR)
- * @qfmt: queue format
- * @ac: adapter characteristics
+ * काष्ठा qdr - queue description record (QDR)
+ * @qfmt: queue क्रमmat
+ * @ac: adapter अक्षरacteristics
  * @iqdcnt: input queue descriptor count
  * @oqdcnt: output queue descriptor count
  * @iqdsz: input queue descriptor size
  * @oqdsz: output queue descriptor size
- * @qiba: absolute address of queue information block
- * @qkey: queue information block key
+ * @qiba: असलolute address of queue inक्रमmation block
+ * @qkey: queue inक्रमmation block key
  * @qdf0: queue descriptions
  */
-struct qdr {
+काष्ठा qdr अणु
 	u32 qfmt   : 8;
 	u32	   : 16;
 	u32 ac	   : 8;
@@ -72,32 +73,32 @@ struct qdr {
 	u32 iqdsz  : 8;
 	u32	   : 8;
 	u32 oqdsz  : 8;
-	/* private: */
+	/* निजी: */
 	u32 res[9];
-	/* public: */
+	/* खुला: */
 	u64 qiba;
 	u32	   : 32;
 	u32 qkey   : 4;
 	u32	   : 28;
-	struct qdesfmt0 qdf0[126];
-} __packed __aligned(PAGE_SIZE);
+	काष्ठा qdesfmt0 qdf0[126];
+पूर्ण __packed __aligned(PAGE_SIZE);
 
-#define QIB_AC_OUTBOUND_PCI_SUPPORTED	0x40
-#define QIB_RFLAGS_ENABLE_QEBSM		0x80
-#define QIB_RFLAGS_ENABLE_DATA_DIV	0x02
+#घोषणा QIB_AC_OUTBOUND_PCI_SUPPORTED	0x40
+#घोषणा QIB_RFLAGS_ENABLE_QEBSM		0x80
+#घोषणा QIB_RFLAGS_ENABLE_DATA_DIV	0x02
 
 /**
- * struct qib - queue information block (QIB)
- * @qfmt: queue format
- * @pfmt: implementation dependent parameter format
+ * काष्ठा qib - queue inक्रमmation block (QIB)
+ * @qfmt: queue क्रमmat
+ * @pfmt: implementation dependent parameter क्रमmat
  * @rflags: QEBSM
- * @ac: adapter characteristics
- * @isliba: absolute address of first input SLIB
- * @osliba: absolute address of first output SLIB
- * @ebcnam: adapter identifier in EBCDIC
+ * @ac: adapter अक्षरacteristics
+ * @isliba: असलolute address of first input SLIB
+ * @osliba: असलolute address of first output SLIB
+ * @ebcnam: adapter identअगरier in EBCDIC
  * @parm: implementation dependent parameters
  */
-struct qib {
+काष्ठा qib अणु
 	u32 qfmt   : 8;
 	u32 pfmt   : 8;
 	u32 rflags : 8;
@@ -108,28 +109,28 @@ struct qib {
 	u32	   : 32;
 	u32	   : 32;
 	u8 ebcnam[8];
-	/* private: */
+	/* निजी: */
 	u8 res[88];
-	/* public: */
+	/* खुला: */
 	u8 parm[128];
-} __attribute__ ((packed, aligned(256)));
+पूर्ण __attribute__ ((packed, aligned(256)));
 
 /**
- * struct slibe - storage list information block element (SLIBE)
+ * काष्ठा slibe - storage list inक्रमmation block element (SLIBE)
  * @parms: implementation dependent parameters
  */
-struct slibe {
+काष्ठा slibe अणु
 	u64 parms;
-};
+पूर्ण;
 
 /**
- * struct qaob - queue asynchronous operation block
+ * काष्ठा qaob - queue asynchronous operation block
  * @res0: reserved parameters
  * @res1: reserved parameter
  * @res2: reserved parameter
  * @res3: reserved parameter
- * @aorc: asynchronous operation return code
- * @flags: internal flags
+ * @aorc: asynchronous operation वापस code
+ * @flags: पूर्णांकernal flags
  * @cbtbs: control block type
  * @sb_count: number of storage blocks
  * @sba: storage block element addresses
@@ -139,7 +140,7 @@ struct slibe {
  * @user1: user defineable value
  * @user2: user defineable value
  */
-struct qaob {
+काष्ठा qaob अणु
 	u64 res0[6];
 	u8 res1;
 	u8 res2;
@@ -154,117 +155,117 @@ struct qaob {
 	u64 res4[2];
 	u64 user1;
 	u64 user2;
-} __attribute__ ((packed, aligned(256)));
+पूर्ण __attribute__ ((packed, aligned(256)));
 
 /**
- * struct slib - storage list information block (SLIB)
- * @nsliba: next SLIB address (if any)
+ * काष्ठा slib - storage list inक्रमmation block (SLIB)
+ * @nsliba: next SLIB address (अगर any)
  * @sla: SL address
  * @slsba: SLSB address
  * @slibe: SLIB elements
  */
-struct slib {
+काष्ठा slib अणु
 	u64 nsliba;
 	u64 sla;
 	u64 slsba;
-	/* private: */
+	/* निजी: */
 	u8 res[1000];
-	/* public: */
-	struct slibe slibe[QDIO_MAX_BUFFERS_PER_Q];
-} __attribute__ ((packed, aligned(2048)));
+	/* खुला: */
+	काष्ठा slibe slibe[QDIO_MAX_BUFFERS_PER_Q];
+पूर्ण __attribute__ ((packed, aligned(2048)));
 
-#define SBAL_EFLAGS_LAST_ENTRY		0x40
-#define SBAL_EFLAGS_CONTIGUOUS		0x20
-#define SBAL_EFLAGS_FIRST_FRAG		0x04
-#define SBAL_EFLAGS_MIDDLE_FRAG		0x08
-#define SBAL_EFLAGS_LAST_FRAG		0x0c
-#define SBAL_EFLAGS_MASK		0x6f
+#घोषणा SBAL_EFLAGS_LAST_ENTRY		0x40
+#घोषणा SBAL_EFLAGS_CONTIGUOUS		0x20
+#घोषणा SBAL_EFLAGS_FIRST_FRAG		0x04
+#घोषणा SBAL_EFLAGS_MIDDLE_FRAG		0x08
+#घोषणा SBAL_EFLAGS_LAST_FRAG		0x0c
+#घोषणा SBAL_EFLAGS_MASK		0x6f
 
-#define SBAL_SFLAGS0_PCI_REQ		0x40
-#define SBAL_SFLAGS0_DATA_CONTINUATION	0x20
+#घोषणा SBAL_SFLAGS0_PCI_REQ		0x40
+#घोषणा SBAL_SFLAGS0_DATA_CONTINUATION	0x20
 
 /* Awesome OpenFCP extensions */
-#define SBAL_SFLAGS0_TYPE_STATUS	0x00
-#define SBAL_SFLAGS0_TYPE_WRITE		0x08
-#define SBAL_SFLAGS0_TYPE_READ		0x10
-#define SBAL_SFLAGS0_TYPE_WRITE_READ	0x18
-#define SBAL_SFLAGS0_MORE_SBALS		0x04
-#define SBAL_SFLAGS0_COMMAND		0x02
-#define SBAL_SFLAGS0_LAST_SBAL		0x00
-#define SBAL_SFLAGS0_ONLY_SBAL		SBAL_SFLAGS0_COMMAND
-#define SBAL_SFLAGS0_MIDDLE_SBAL	SBAL_SFLAGS0_MORE_SBALS
-#define SBAL_SFLAGS0_FIRST_SBAL (SBAL_SFLAGS0_MORE_SBALS | SBAL_SFLAGS0_COMMAND)
+#घोषणा SBAL_SFLAGS0_TYPE_STATUS	0x00
+#घोषणा SBAL_SFLAGS0_TYPE_WRITE		0x08
+#घोषणा SBAL_SFLAGS0_TYPE_READ		0x10
+#घोषणा SBAL_SFLAGS0_TYPE_WRITE_READ	0x18
+#घोषणा SBAL_SFLAGS0_MORE_SBALS		0x04
+#घोषणा SBAL_SFLAGS0_COMMAND		0x02
+#घोषणा SBAL_SFLAGS0_LAST_SBAL		0x00
+#घोषणा SBAL_SFLAGS0_ONLY_SBAL		SBAL_SFLAGS0_COMMAND
+#घोषणा SBAL_SFLAGS0_MIDDLE_SBAL	SBAL_SFLAGS0_MORE_SBALS
+#घोषणा SBAL_SFLAGS0_FIRST_SBAL (SBAL_SFLAGS0_MORE_SBALS | SBAL_SFLAGS0_COMMAND)
 
 /**
- * struct qdio_buffer_element - SBAL entry
+ * काष्ठा qdio_buffer_element - SBAL entry
  * @eflags: SBAL entry flags
  * @scount: SBAL count
  * @sflags: whole SBAL flags
  * @length: length
- * @addr: absolute data address
+ * @addr: असलolute data address
 */
-struct qdio_buffer_element {
+काष्ठा qdio_buffer_element अणु
 	u8 eflags;
-	/* private: */
+	/* निजी: */
 	u8 res1;
-	/* public: */
+	/* खुला: */
 	u8 scount;
 	u8 sflags;
 	u32 length;
 	u64 addr;
-} __attribute__ ((packed, aligned(16)));
+पूर्ण __attribute__ ((packed, aligned(16)));
 
 /**
- * struct qdio_buffer - storage block address list (SBAL)
+ * काष्ठा qdio_buffer - storage block address list (SBAL)
  * @element: SBAL entries
  */
-struct qdio_buffer {
-	struct qdio_buffer_element element[QDIO_MAX_ELEMENTS_PER_BUFFER];
-} __attribute__ ((packed, aligned(256)));
+काष्ठा qdio_buffer अणु
+	काष्ठा qdio_buffer_element element[QDIO_MAX_ELEMENTS_PER_BUFFER];
+पूर्ण __attribute__ ((packed, aligned(256)));
 
 /**
- * struct sl_element - storage list entry
- * @sbal: absolute SBAL address
+ * काष्ठा sl_element - storage list entry
+ * @sbal: असलolute SBAL address
  */
-struct sl_element {
+काष्ठा sl_element अणु
 	u64 sbal;
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
 /**
- * struct sl - storage list (SL)
+ * काष्ठा sl - storage list (SL)
  * @element: SL entries
  */
-struct sl {
-	struct sl_element element[QDIO_MAX_BUFFERS_PER_Q];
-} __attribute__ ((packed, aligned(1024)));
+काष्ठा sl अणु
+	काष्ठा sl_element element[QDIO_MAX_BUFFERS_PER_Q];
+पूर्ण __attribute__ ((packed, aligned(1024)));
 
 /**
- * struct slsb - storage list state block (SLSB)
+ * काष्ठा slsb - storage list state block (SLSB)
  * @val: state per buffer
  */
-struct slsb {
+काष्ठा slsb अणु
 	u8 val[QDIO_MAX_BUFFERS_PER_Q];
-} __attribute__ ((packed, aligned(256)));
+पूर्ण __attribute__ ((packed, aligned(256)));
 
-/* qdio adapter-characteristics-1 flag */
-#define CHSC_AC1_INITIATE_INPUTQ	0x80
-#define AC1_SIGA_INPUT_NEEDED		0x40	/* process input queues */
-#define AC1_SIGA_OUTPUT_NEEDED		0x20	/* process output queues */
-#define AC1_SIGA_SYNC_NEEDED		0x10	/* ask hypervisor to sync */
-#define AC1_AUTOMATIC_SYNC_ON_THININT	0x08	/* set by hypervisor */
-#define AC1_AUTOMATIC_SYNC_ON_OUT_PCI	0x04	/* set by hypervisor */
-#define AC1_SC_QEBSM_AVAILABLE		0x02	/* available for subchannel */
-#define AC1_SC_QEBSM_ENABLED		0x01	/* enabled for subchannel */
+/* qdio adapter-अक्षरacteristics-1 flag */
+#घोषणा CHSC_AC1_INITIATE_INPUTQ	0x80
+#घोषणा AC1_SIGA_INPUT_NEEDED		0x40	/* process input queues */
+#घोषणा AC1_SIGA_OUTPUT_NEEDED		0x20	/* process output queues */
+#घोषणा AC1_SIGA_SYNC_NEEDED		0x10	/* ask hypervisor to sync */
+#घोषणा AC1_AUTOMATIC_SYNC_ON_THININT	0x08	/* set by hypervisor */
+#घोषणा AC1_AUTOMATIC_SYNC_ON_OUT_PCI	0x04	/* set by hypervisor */
+#घोषणा AC1_SC_QEBSM_AVAILABLE		0x02	/* available क्रम subchannel */
+#घोषणा AC1_SC_QEBSM_ENABLED		0x01	/* enabled क्रम subchannel */
 
-#define CHSC_AC2_MULTI_BUFFER_AVAILABLE	0x0080
-#define CHSC_AC2_MULTI_BUFFER_ENABLED	0x0040
-#define CHSC_AC2_DATA_DIV_AVAILABLE	0x0010
-#define CHSC_AC2_SNIFFER_AVAILABLE	0x0008
-#define CHSC_AC2_DATA_DIV_ENABLED	0x0002
+#घोषणा CHSC_AC2_MULTI_BUFFER_AVAILABLE	0x0080
+#घोषणा CHSC_AC2_MULTI_BUFFER_ENABLED	0x0040
+#घोषणा CHSC_AC2_DATA_DIV_AVAILABLE	0x0010
+#घोषणा CHSC_AC2_SNIFFER_AVAILABLE	0x0008
+#घोषणा CHSC_AC2_DATA_DIV_ENABLED	0x0002
 
-#define CHSC_AC3_FORMAT2_CQ_AVAILABLE	0x8000
+#घोषणा CHSC_AC3_FORMAT2_CQ_AVAILABLE	0x8000
 
-struct qdio_ssqd_desc {
+काष्ठा qdio_ssqd_desc अणु
 	u8 flags;
 	u8:8;
 	u16 sch;
@@ -286,95 +287,95 @@ struct qdio_ssqd_desc {
 	u16:16;
 	u8:8;
 	u8 mmwc;
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
 /* params are: ccw_device, qdio_error, queue_number,
-   first element processed, number of elements processed, int_parm */
-typedef void qdio_handler_t(struct ccw_device *, unsigned int, int,
-			    int, int, unsigned long);
+   first element processed, number of elements processed, पूर्णांक_parm */
+प्रकार व्योम qdio_handler_t(काष्ठा ccw_device *, अचिन्हित पूर्णांक, पूर्णांक,
+			    पूर्णांक, पूर्णांक, अचिन्हित दीर्घ);
 
 /* qdio errors reported to the upper-layer program */
-#define QDIO_ERROR_ACTIVATE			0x0001
-#define QDIO_ERROR_GET_BUF_STATE		0x0002
-#define QDIO_ERROR_SET_BUF_STATE		0x0004
-#define QDIO_ERROR_SLSB_STATE			0x0100
-#define QDIO_ERROR_SLSB_PENDING			0x0200
+#घोषणा QDIO_ERROR_ACTIVATE			0x0001
+#घोषणा QDIO_ERROR_GET_BUF_STATE		0x0002
+#घोषणा QDIO_ERROR_SET_BUF_STATE		0x0004
+#घोषणा QDIO_ERROR_SLSB_STATE			0x0100
+#घोषणा QDIO_ERROR_SLSB_PENDING			0x0200
 
-#define QDIO_ERROR_FATAL			0x00ff
-#define QDIO_ERROR_TEMPORARY			0xff00
+#घोषणा QDIO_ERROR_FATAL			0x00ff
+#घोषणा QDIO_ERROR_TEMPORARY			0xff00
 
-/* for qdio_cleanup */
-#define QDIO_FLAG_CLEANUP_USING_CLEAR		0x01
-#define QDIO_FLAG_CLEANUP_USING_HALT		0x02
+/* क्रम qdio_cleanup */
+#घोषणा QDIO_FLAG_CLEANUP_USING_CLEAR		0x01
+#घोषणा QDIO_FLAG_CLEANUP_USING_HALT		0x02
 
 /**
- * struct qdio_initialize - qdio initialization data
- * @q_format: queue format
+ * काष्ठा qdio_initialize - qdio initialization data
+ * @q_क्रमmat: queue क्रमmat
  * @qdr_ac: feature flags to set
- * @qib_param_field_format: format for qib_parm_field
- * @qib_param_field: pointer to 128 bytes or NULL, if no param field
+ * @qib_param_field_क्रमmat: क्रमmat क्रम qib_parm_field
+ * @qib_param_field: poपूर्णांकer to 128 bytes or शून्य, अगर no param field
  * @qib_rflags: rflags to set
- * @input_slib_elements: pointer to no_input_qs * 128 words of data or NULL
- * @output_slib_elements: pointer to no_output_qs * 128 words of data or NULL
+ * @input_slib_elements: poपूर्णांकer to no_input_qs * 128 words of data or शून्य
+ * @output_slib_elements: poपूर्णांकer to no_output_qs * 128 words of data or शून्य
  * @no_input_qs: number of input queues
  * @no_output_qs: number of output queues
- * @input_handler: handler to be called for input queues
- * @output_handler: handler to be called for output queues
+ * @input_handler: handler to be called क्रम input queues
+ * @output_handler: handler to be called क्रम output queues
  * @irq_poll: Data IRQ polling handler
  * @scan_threshold: # of in-use buffers that triggers scan on output queue
- * @int_parm: interruption parameter
- * @input_sbal_addr_array:  per-queue array, each element points to 128 SBALs
- * @output_sbal_addr_array: per-queue array, each element points to 128 SBALs
+ * @पूर्णांक_parm: पूर्णांकerruption parameter
+ * @input_sbal_addr_array:  per-queue array, each element poपूर्णांकs to 128 SBALs
+ * @output_sbal_addr_array: per-queue array, each element poपूर्णांकs to 128 SBALs
  */
-struct qdio_initialize {
-	unsigned char q_format;
-	unsigned char qdr_ac;
-	unsigned int qib_param_field_format;
-	unsigned char *qib_param_field;
-	unsigned char qib_rflags;
-	unsigned long *input_slib_elements;
-	unsigned long *output_slib_elements;
-	unsigned int no_input_qs;
-	unsigned int no_output_qs;
+काष्ठा qdio_initialize अणु
+	अचिन्हित अक्षर q_क्रमmat;
+	अचिन्हित अक्षर qdr_ac;
+	अचिन्हित पूर्णांक qib_param_field_क्रमmat;
+	अचिन्हित अक्षर *qib_param_field;
+	अचिन्हित अक्षर qib_rflags;
+	अचिन्हित दीर्घ *input_slib_elements;
+	अचिन्हित दीर्घ *output_slib_elements;
+	अचिन्हित पूर्णांक no_input_qs;
+	अचिन्हित पूर्णांक no_output_qs;
 	qdio_handler_t *input_handler;
 	qdio_handler_t *output_handler;
-	void (*irq_poll)(struct ccw_device *cdev, unsigned long data);
-	unsigned int scan_threshold;
-	unsigned long int_parm;
-	struct qdio_buffer ***input_sbal_addr_array;
-	struct qdio_buffer ***output_sbal_addr_array;
-};
+	व्योम (*irq_poll)(काष्ठा ccw_device *cdev, अचिन्हित दीर्घ data);
+	अचिन्हित पूर्णांक scan_threshold;
+	अचिन्हित दीर्घ पूर्णांक_parm;
+	काष्ठा qdio_buffer ***input_sbal_addr_array;
+	काष्ठा qdio_buffer ***output_sbal_addr_array;
+पूर्ण;
 
-#define QDIO_STATE_INACTIVE		0x00000002 /* after qdio_cleanup */
-#define QDIO_STATE_ESTABLISHED		0x00000004 /* after qdio_establish */
-#define QDIO_STATE_ACTIVE		0x00000008 /* after qdio_activate */
-#define QDIO_STATE_STOPPED		0x00000010 /* after queues went down */
+#घोषणा QDIO_STATE_INACTIVE		0x00000002 /* after qdio_cleanup */
+#घोषणा QDIO_STATE_ESTABLISHED		0x00000004 /* after qdio_establish */
+#घोषणा QDIO_STATE_ACTIVE		0x00000008 /* after qdio_activate */
+#घोषणा QDIO_STATE_STOPPED		0x00000010 /* after queues went करोwn */
 
-#define QDIO_FLAG_SYNC_INPUT		0x01
-#define QDIO_FLAG_SYNC_OUTPUT		0x02
-#define QDIO_FLAG_PCI_OUT		0x10
+#घोषणा QDIO_FLAG_SYNC_INPUT		0x01
+#घोषणा QDIO_FLAG_SYNC_OUTPUT		0x02
+#घोषणा QDIO_FLAG_PCI_OUT		0x10
 
-int qdio_alloc_buffers(struct qdio_buffer **buf, unsigned int count);
-void qdio_free_buffers(struct qdio_buffer **buf, unsigned int count);
-void qdio_reset_buffers(struct qdio_buffer **buf, unsigned int count);
+पूर्णांक qdio_alloc_buffers(काष्ठा qdio_buffer **buf, अचिन्हित पूर्णांक count);
+व्योम qdio_मुक्त_buffers(काष्ठा qdio_buffer **buf, अचिन्हित पूर्णांक count);
+व्योम qdio_reset_buffers(काष्ठा qdio_buffer **buf, अचिन्हित पूर्णांक count);
 
-extern int qdio_allocate(struct ccw_device *cdev, unsigned int no_input_qs,
-			 unsigned int no_output_qs);
-extern int qdio_establish(struct ccw_device *cdev,
-			  struct qdio_initialize *init_data);
-extern int qdio_activate(struct ccw_device *);
-extern struct qaob *qdio_allocate_aob(void);
-extern void qdio_release_aob(struct qaob *);
-extern int do_QDIO(struct ccw_device *cdev, unsigned int callflags, int q_nr,
-		   unsigned int bufnr, unsigned int count, struct qaob *aob);
-extern int qdio_start_irq(struct ccw_device *cdev);
-extern int qdio_stop_irq(struct ccw_device *cdev);
-extern int qdio_get_next_buffers(struct ccw_device *, int, int *, int *);
-extern int qdio_inspect_queue(struct ccw_device *cdev, unsigned int nr,
-			      bool is_input, unsigned int *bufnr,
-			      unsigned int *error);
-extern int qdio_shutdown(struct ccw_device *, int);
-extern int qdio_free(struct ccw_device *);
-extern int qdio_get_ssqd_desc(struct ccw_device *, struct qdio_ssqd_desc *);
+बाह्य पूर्णांक qdio_allocate(काष्ठा ccw_device *cdev, अचिन्हित पूर्णांक no_input_qs,
+			 अचिन्हित पूर्णांक no_output_qs);
+बाह्य पूर्णांक qdio_establish(काष्ठा ccw_device *cdev,
+			  काष्ठा qdio_initialize *init_data);
+बाह्य पूर्णांक qdio_activate(काष्ठा ccw_device *);
+बाह्य काष्ठा qaob *qdio_allocate_aob(व्योम);
+बाह्य व्योम qdio_release_aob(काष्ठा qaob *);
+बाह्य पूर्णांक करो_QDIO(काष्ठा ccw_device *cdev, अचिन्हित पूर्णांक callflags, पूर्णांक q_nr,
+		   अचिन्हित पूर्णांक bufnr, अचिन्हित पूर्णांक count, काष्ठा qaob *aob);
+बाह्य पूर्णांक qdio_start_irq(काष्ठा ccw_device *cdev);
+बाह्य पूर्णांक qdio_stop_irq(काष्ठा ccw_device *cdev);
+बाह्य पूर्णांक qdio_get_next_buffers(काष्ठा ccw_device *, पूर्णांक, पूर्णांक *, पूर्णांक *);
+बाह्य पूर्णांक qdio_inspect_queue(काष्ठा ccw_device *cdev, अचिन्हित पूर्णांक nr,
+			      bool is_input, अचिन्हित पूर्णांक *bufnr,
+			      अचिन्हित पूर्णांक *error);
+बाह्य पूर्णांक qdio_shutकरोwn(काष्ठा ccw_device *, पूर्णांक);
+बाह्य पूर्णांक qdio_मुक्त(काष्ठा ccw_device *);
+बाह्य पूर्णांक qdio_get_ssqd_desc(काष्ठा ccw_device *, काष्ठा qdio_ssqd_desc *);
 
-#endif /* __QDIO_H__ */
+#पूर्ण_अगर /* __QDIO_H__ */

@@ -1,129 +1,130 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2016 Broadcom
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/math64.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pwm.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/math64.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pwm.h>
 
-#define IPROC_PWM_CTRL_OFFSET			0x00
-#define IPROC_PWM_CTRL_TYPE_SHIFT(ch)		(15 + (ch))
-#define IPROC_PWM_CTRL_POLARITY_SHIFT(ch)	(8 + (ch))
-#define IPROC_PWM_CTRL_EN_SHIFT(ch)		(ch)
+#घोषणा IPROC_PWM_CTRL_OFFSET			0x00
+#घोषणा IPROC_PWM_CTRL_TYPE_SHIFT(ch)		(15 + (ch))
+#घोषणा IPROC_PWM_CTRL_POLARITY_SHIFT(ch)	(8 + (ch))
+#घोषणा IPROC_PWM_CTRL_EN_SHIFT(ch)		(ch)
 
-#define IPROC_PWM_PERIOD_OFFSET(ch)		(0x04 + ((ch) << 3))
-#define IPROC_PWM_PERIOD_MIN			0x02
-#define IPROC_PWM_PERIOD_MAX			0xffff
+#घोषणा IPROC_PWM_PERIOD_OFFSET(ch)		(0x04 + ((ch) << 3))
+#घोषणा IPROC_PWM_PERIOD_MIN			0x02
+#घोषणा IPROC_PWM_PERIOD_MAX			0xffff
 
-#define IPROC_PWM_DUTY_CYCLE_OFFSET(ch)		(0x08 + ((ch) << 3))
-#define IPROC_PWM_DUTY_CYCLE_MIN		0x00
-#define IPROC_PWM_DUTY_CYCLE_MAX		0xffff
+#घोषणा IPROC_PWM_DUTY_CYCLE_OFFSET(ch)		(0x08 + ((ch) << 3))
+#घोषणा IPROC_PWM_DUTY_CYCLE_MIN		0x00
+#घोषणा IPROC_PWM_DUTY_CYCLE_MAX		0xffff
 
-#define IPROC_PWM_PRESCALE_OFFSET		0x24
-#define IPROC_PWM_PRESCALE_BITS			0x06
-#define IPROC_PWM_PRESCALE_SHIFT(ch)		((3 - (ch)) * \
+#घोषणा IPROC_PWM_PRESCALE_OFFSET		0x24
+#घोषणा IPROC_PWM_PRESCALE_BITS			0x06
+#घोषणा IPROC_PWM_PRESCALE_SHIFT(ch)		((3 - (ch)) * \
 						 IPROC_PWM_PRESCALE_BITS)
-#define IPROC_PWM_PRESCALE_MASK(ch)		(IPROC_PWM_PRESCALE_MAX << \
+#घोषणा IPROC_PWM_PRESCALE_MASK(ch)		(IPROC_PWM_PRESCALE_MAX << \
 						 IPROC_PWM_PRESCALE_SHIFT(ch))
-#define IPROC_PWM_PRESCALE_MIN			0x00
-#define IPROC_PWM_PRESCALE_MAX			0x3f
+#घोषणा IPROC_PWM_PRESCALE_MIN			0x00
+#घोषणा IPROC_PWM_PRESCALE_MAX			0x3f
 
-struct iproc_pwmc {
-	struct pwm_chip chip;
-	void __iomem *base;
-	struct clk *clk;
-};
+काष्ठा iproc_pwmc अणु
+	काष्ठा pwm_chip chip;
+	व्योम __iomem *base;
+	काष्ठा clk *clk;
+पूर्ण;
 
-static inline struct iproc_pwmc *to_iproc_pwmc(struct pwm_chip *chip)
-{
-	return container_of(chip, struct iproc_pwmc, chip);
-}
+अटल अंतरभूत काष्ठा iproc_pwmc *to_iproc_pwmc(काष्ठा pwm_chip *chip)
+अणु
+	वापस container_of(chip, काष्ठा iproc_pwmc, chip);
+पूर्ण
 
-static void iproc_pwmc_enable(struct iproc_pwmc *ip, unsigned int channel)
-{
+अटल व्योम iproc_pwmc_enable(काष्ठा iproc_pwmc *ip, अचिन्हित पूर्णांक channel)
+अणु
 	u32 value;
 
-	value = readl(ip->base + IPROC_PWM_CTRL_OFFSET);
+	value = पढ़ोl(ip->base + IPROC_PWM_CTRL_OFFSET);
 	value |= 1 << IPROC_PWM_CTRL_EN_SHIFT(channel);
-	writel(value, ip->base + IPROC_PWM_CTRL_OFFSET);
+	ग_लिखोl(value, ip->base + IPROC_PWM_CTRL_OFFSET);
 
 	/* must be a 400 ns delay between clearing and setting enable bit */
 	ndelay(400);
-}
+पूर्ण
 
-static void iproc_pwmc_disable(struct iproc_pwmc *ip, unsigned int channel)
-{
+अटल व्योम iproc_pwmc_disable(काष्ठा iproc_pwmc *ip, अचिन्हित पूर्णांक channel)
+अणु
 	u32 value;
 
-	value = readl(ip->base + IPROC_PWM_CTRL_OFFSET);
+	value = पढ़ोl(ip->base + IPROC_PWM_CTRL_OFFSET);
 	value &= ~(1 << IPROC_PWM_CTRL_EN_SHIFT(channel));
-	writel(value, ip->base + IPROC_PWM_CTRL_OFFSET);
+	ग_लिखोl(value, ip->base + IPROC_PWM_CTRL_OFFSET);
 
 	/* must be a 400 ns delay between clearing and setting enable bit */
 	ndelay(400);
-}
+पूर्ण
 
-static void iproc_pwmc_get_state(struct pwm_chip *chip, struct pwm_device *pwm,
-				 struct pwm_state *state)
-{
-	struct iproc_pwmc *ip = to_iproc_pwmc(chip);
-	u64 tmp, multi, rate;
+अटल व्योम iproc_pwmc_get_state(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+				 काष्ठा pwm_state *state)
+अणु
+	काष्ठा iproc_pwmc *ip = to_iproc_pwmc(chip);
+	u64 पंचांगp, multi, rate;
 	u32 value, prescale;
 
-	value = readl(ip->base + IPROC_PWM_CTRL_OFFSET);
+	value = पढ़ोl(ip->base + IPROC_PWM_CTRL_OFFSET);
 
-	if (value & BIT(IPROC_PWM_CTRL_EN_SHIFT(pwm->hwpwm)))
+	अगर (value & BIT(IPROC_PWM_CTRL_EN_SHIFT(pwm->hwpwm)))
 		state->enabled = true;
-	else
+	अन्यथा
 		state->enabled = false;
 
-	if (value & BIT(IPROC_PWM_CTRL_POLARITY_SHIFT(pwm->hwpwm)))
+	अगर (value & BIT(IPROC_PWM_CTRL_POLARITY_SHIFT(pwm->hwpwm)))
 		state->polarity = PWM_POLARITY_NORMAL;
-	else
+	अन्यथा
 		state->polarity = PWM_POLARITY_INVERSED;
 
 	rate = clk_get_rate(ip->clk);
-	if (rate == 0) {
+	अगर (rate == 0) अणु
 		state->period = 0;
 		state->duty_cycle = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	value = readl(ip->base + IPROC_PWM_PRESCALE_OFFSET);
+	value = पढ़ोl(ip->base + IPROC_PWM_PRESCALE_OFFSET);
 	prescale = value >> IPROC_PWM_PRESCALE_SHIFT(pwm->hwpwm);
 	prescale &= IPROC_PWM_PRESCALE_MAX;
 
 	multi = NSEC_PER_SEC * (prescale + 1);
 
-	value = readl(ip->base + IPROC_PWM_PERIOD_OFFSET(pwm->hwpwm));
-	tmp = (value & IPROC_PWM_PERIOD_MAX) * multi;
-	state->period = div64_u64(tmp, rate);
+	value = पढ़ोl(ip->base + IPROC_PWM_PERIOD_OFFSET(pwm->hwpwm));
+	पंचांगp = (value & IPROC_PWM_PERIOD_MAX) * multi;
+	state->period = भाग64_u64(पंचांगp, rate);
 
-	value = readl(ip->base + IPROC_PWM_DUTY_CYCLE_OFFSET(pwm->hwpwm));
-	tmp = (value & IPROC_PWM_PERIOD_MAX) * multi;
-	state->duty_cycle = div64_u64(tmp, rate);
-}
+	value = पढ़ोl(ip->base + IPROC_PWM_DUTY_CYCLE_OFFSET(pwm->hwpwm));
+	पंचांगp = (value & IPROC_PWM_PERIOD_MAX) * multi;
+	state->duty_cycle = भाग64_u64(पंचांगp, rate);
+पूर्ण
 
-static int iproc_pwmc_apply(struct pwm_chip *chip, struct pwm_device *pwm,
-			    const struct pwm_state *state)
-{
-	unsigned long prescale = IPROC_PWM_PRESCALE_MIN;
-	struct iproc_pwmc *ip = to_iproc_pwmc(chip);
+अटल पूर्णांक iproc_pwmc_apply(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+			    स्थिर काष्ठा pwm_state *state)
+अणु
+	अचिन्हित दीर्घ prescale = IPROC_PWM_PRESCALE_MIN;
+	काष्ठा iproc_pwmc *ip = to_iproc_pwmc(chip);
 	u32 value, period, duty;
 	u64 rate;
 
@@ -131,7 +132,7 @@ static int iproc_pwmc_apply(struct pwm_chip *chip, struct pwm_device *pwm,
 
 	/*
 	 * Find period count, duty count and prescale to suit duty_cycle and
-	 * period. This is done according to formulas described below:
+	 * period. This is करोne according to क्रमmulas described below:
 	 *
 	 * period_ns = 10^9 * (PRESCALE + 1) * PC / PWM_CLK_RATE
 	 * duty_ns = 10^9 * (PRESCALE + 1) * DC / PWM_CLK_RATE
@@ -139,73 +140,73 @@ static int iproc_pwmc_apply(struct pwm_chip *chip, struct pwm_device *pwm,
 	 * PC = (PWM_CLK_RATE * period_ns) / (10^9 * (PRESCALE + 1))
 	 * DC = (PWM_CLK_RATE * duty_ns) / (10^9 * (PRESCALE + 1))
 	 */
-	while (1) {
-		u64 value, div;
+	जबतक (1) अणु
+		u64 value, भाग;
 
-		div = NSEC_PER_SEC * (prescale + 1);
+		भाग = NSEC_PER_SEC * (prescale + 1);
 		value = rate * state->period;
-		period = div64_u64(value, div);
+		period = भाग64_u64(value, भाग);
 		value = rate * state->duty_cycle;
-		duty = div64_u64(value, div);
+		duty = भाग64_u64(value, भाग);
 
-		if (period < IPROC_PWM_PERIOD_MIN)
-			return -EINVAL;
+		अगर (period < IPROC_PWM_PERIOD_MIN)
+			वापस -EINVAL;
 
-		if (period <= IPROC_PWM_PERIOD_MAX &&
+		अगर (period <= IPROC_PWM_PERIOD_MAX &&
 		     duty <= IPROC_PWM_DUTY_CYCLE_MAX)
-			break;
+			अवरोध;
 
 		/* Otherwise, increase prescale and recalculate counts */
-		if (++prescale > IPROC_PWM_PRESCALE_MAX)
-			return -EINVAL;
-	}
+		अगर (++prescale > IPROC_PWM_PRESCALE_MAX)
+			वापस -EINVAL;
+	पूर्ण
 
 	iproc_pwmc_disable(ip, pwm->hwpwm);
 
 	/* Set prescale */
-	value = readl(ip->base + IPROC_PWM_PRESCALE_OFFSET);
+	value = पढ़ोl(ip->base + IPROC_PWM_PRESCALE_OFFSET);
 	value &= ~IPROC_PWM_PRESCALE_MASK(pwm->hwpwm);
 	value |= prescale << IPROC_PWM_PRESCALE_SHIFT(pwm->hwpwm);
-	writel(value, ip->base + IPROC_PWM_PRESCALE_OFFSET);
+	ग_लिखोl(value, ip->base + IPROC_PWM_PRESCALE_OFFSET);
 
 	/* set period and duty cycle */
-	writel(period, ip->base + IPROC_PWM_PERIOD_OFFSET(pwm->hwpwm));
-	writel(duty, ip->base + IPROC_PWM_DUTY_CYCLE_OFFSET(pwm->hwpwm));
+	ग_लिखोl(period, ip->base + IPROC_PWM_PERIOD_OFFSET(pwm->hwpwm));
+	ग_लिखोl(duty, ip->base + IPROC_PWM_DUTY_CYCLE_OFFSET(pwm->hwpwm));
 
 	/* set polarity */
-	value = readl(ip->base + IPROC_PWM_CTRL_OFFSET);
+	value = पढ़ोl(ip->base + IPROC_PWM_CTRL_OFFSET);
 
-	if (state->polarity == PWM_POLARITY_NORMAL)
+	अगर (state->polarity == PWM_POLARITY_NORMAL)
 		value |= 1 << IPROC_PWM_CTRL_POLARITY_SHIFT(pwm->hwpwm);
-	else
+	अन्यथा
 		value &= ~(1 << IPROC_PWM_CTRL_POLARITY_SHIFT(pwm->hwpwm));
 
-	writel(value, ip->base + IPROC_PWM_CTRL_OFFSET);
+	ग_लिखोl(value, ip->base + IPROC_PWM_CTRL_OFFSET);
 
-	if (state->enabled)
+	अगर (state->enabled)
 		iproc_pwmc_enable(ip, pwm->hwpwm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pwm_ops iproc_pwm_ops = {
+अटल स्थिर काष्ठा pwm_ops iproc_pwm_ops = अणु
 	.apply = iproc_pwmc_apply,
 	.get_state = iproc_pwmc_get_state,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int iproc_pwmc_probe(struct platform_device *pdev)
-{
-	struct iproc_pwmc *ip;
-	unsigned int i;
+अटल पूर्णांक iproc_pwmc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iproc_pwmc *ip;
+	अचिन्हित पूर्णांक i;
 	u32 value;
-	int ret;
+	पूर्णांक ret;
 
-	ip = devm_kzalloc(&pdev->dev, sizeof(*ip), GFP_KERNEL);
-	if (!ip)
-		return -ENOMEM;
+	ip = devm_kzalloc(&pdev->dev, माप(*ip), GFP_KERNEL);
+	अगर (!ip)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, ip);
+	platक्रमm_set_drvdata(pdev, ip);
 
 	ip->chip.dev = &pdev->dev;
 	ip->chip.ops = &iproc_pwm_ops;
@@ -213,68 +214,68 @@ static int iproc_pwmc_probe(struct platform_device *pdev)
 	ip->chip.of_xlate = of_pwm_xlate_with_flags;
 	ip->chip.of_pwm_n_cells = 3;
 
-	ip->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(ip->base))
-		return PTR_ERR(ip->base);
+	ip->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(ip->base))
+		वापस PTR_ERR(ip->base);
 
-	ip->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(ip->clk)) {
+	ip->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(ip->clk)) अणु
 		dev_err(&pdev->dev, "failed to get clock: %ld\n",
 			PTR_ERR(ip->clk));
-		return PTR_ERR(ip->clk);
-	}
+		वापस PTR_ERR(ip->clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(ip->clk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to enable clock: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Set full drive and normal polarity for all channels */
-	value = readl(ip->base + IPROC_PWM_CTRL_OFFSET);
+	/* Set full drive and normal polarity क्रम all channels */
+	value = पढ़ोl(ip->base + IPROC_PWM_CTRL_OFFSET);
 
-	for (i = 0; i < ip->chip.npwm; i++) {
+	क्रम (i = 0; i < ip->chip.npwm; i++) अणु
 		value &= ~(1 << IPROC_PWM_CTRL_TYPE_SHIFT(i));
 		value |= 1 << IPROC_PWM_CTRL_POLARITY_SHIFT(i);
-	}
+	पूर्ण
 
-	writel(value, ip->base + IPROC_PWM_CTRL_OFFSET);
+	ग_लिखोl(value, ip->base + IPROC_PWM_CTRL_OFFSET);
 
 	ret = pwmchip_add(&ip->chip);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to add PWM chip: %d\n", ret);
 		clk_disable_unprepare(ip->clk);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iproc_pwmc_remove(struct platform_device *pdev)
-{
-	struct iproc_pwmc *ip = platform_get_drvdata(pdev);
+अटल पूर्णांक iproc_pwmc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iproc_pwmc *ip = platक्रमm_get_drvdata(pdev);
 
-	pwmchip_remove(&ip->chip);
+	pwmchip_हटाओ(&ip->chip);
 
 	clk_disable_unprepare(ip->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id bcm_iproc_pwmc_dt[] = {
-	{ .compatible = "brcm,iproc-pwm" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id bcm_iproc_pwmc_dt[] = अणु
+	अणु .compatible = "brcm,iproc-pwm" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bcm_iproc_pwmc_dt);
 
-static struct platform_driver iproc_pwmc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver iproc_pwmc_driver = अणु
+	.driver = अणु
 		.name = "bcm-iproc-pwm",
 		.of_match_table = bcm_iproc_pwmc_dt,
-	},
+	पूर्ण,
 	.probe = iproc_pwmc_probe,
-	.remove = iproc_pwmc_remove,
-};
-module_platform_driver(iproc_pwmc_driver);
+	.हटाओ = iproc_pwmc_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(iproc_pwmc_driver);
 
 MODULE_AUTHOR("Yendapally Reddy Dhananjaya Reddy <yendapally.reddy@broadcom.com>");
 MODULE_DESCRIPTION("Broadcom iProc PWM driver");

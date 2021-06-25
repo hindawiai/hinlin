@@ -1,331 +1,332 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2018-2021 Linaro Ltd.
  */
 
-#include <linux/refcount.h>
-#include <linux/mutex.h>
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/interconnect.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerconnect.h>
 
-#include "ipa.h"
-#include "ipa_clock.h"
-#include "ipa_modem.h"
-#include "ipa_data.h"
+#समावेश "ipa.h"
+#समावेश "ipa_clock.h"
+#समावेश "ipa_modem.h"
+#समावेश "ipa_data.h"
 
 /**
  * DOC: IPA Clocking
  *
- * The "IPA Clock" manages both the IPA core clock and the interconnects
+ * The "IPA Clock" manages both the IPA core घड़ी and the पूर्णांकerconnects
  * (buses) the IPA depends on as a single logical entity.  A reference count
  * is incremented by "get" operations and decremented by "put" operations.
- * Transitions of that count from 0 to 1 result in the clock and interconnects
+ * Transitions of that count from 0 to 1 result in the घड़ी and पूर्णांकerconnects
  * being enabled, and transitions of the count from 1 to 0 cause them to be
- * disabled.  We currently operate the core clock at a fixed clock rate, and
+ * disabled.  We currently operate the core घड़ी at a fixed घड़ी rate, and
  * all buses at a fixed average and peak bandwidth.  As more advanced IPA
- * features are enabled, we can make better use of clock and bus scaling.
+ * features are enabled, we can make better use of घड़ी and bus scaling.
  *
- * An IPA clock reference must be held for any access to IPA hardware.
+ * An IPA घड़ी reference must be held क्रम any access to IPA hardware.
  */
 
 /**
- * struct ipa_interconnect - IPA interconnect information
+ * काष्ठा ipa_पूर्णांकerconnect - IPA पूर्णांकerconnect inक्रमmation
  * @path:		Interconnect path
- * @average_bandwidth:	Average interconnect bandwidth (KB/second)
- * @peak_bandwidth:	Peak interconnect bandwidth (KB/second)
+ * @average_bandwidth:	Average पूर्णांकerconnect bandwidth (KB/second)
+ * @peak_bandwidth:	Peak पूर्णांकerconnect bandwidth (KB/second)
  */
-struct ipa_interconnect {
-	struct icc_path *path;
+काष्ठा ipa_पूर्णांकerconnect अणु
+	काष्ठा icc_path *path;
 	u32 average_bandwidth;
 	u32 peak_bandwidth;
-};
+पूर्ण;
 
 /**
- * struct ipa_clock - IPA clocking information
+ * काष्ठा ipa_घड़ी - IPA घड़ीing inक्रमmation
  * @count:		Clocking reference count
- * @mutex:		Protects clock enable/disable
- * @core:		IPA core clock
- * @interconnect_count:	Number of elements in interconnect[]
- * @interconnect:	Interconnect array
+ * @mutex:		Protects घड़ी enable/disable
+ * @core:		IPA core घड़ी
+ * @पूर्णांकerconnect_count:	Number of elements in पूर्णांकerconnect[]
+ * @पूर्णांकerconnect:	Interconnect array
  */
-struct ipa_clock {
+काष्ठा ipa_घड़ी अणु
 	refcount_t count;
-	struct mutex mutex; /* protects clock enable/disable */
-	struct clk *core;
-	u32 interconnect_count;
-	struct ipa_interconnect *interconnect;
-};
+	काष्ठा mutex mutex; /* protects घड़ी enable/disable */
+	काष्ठा clk *core;
+	u32 पूर्णांकerconnect_count;
+	काष्ठा ipa_पूर्णांकerconnect *पूर्णांकerconnect;
+पूर्ण;
 
-static int ipa_interconnect_init_one(struct device *dev,
-				     struct ipa_interconnect *interconnect,
-				     const struct ipa_interconnect_data *data)
-{
-	struct icc_path *path;
+अटल पूर्णांक ipa_पूर्णांकerconnect_init_one(काष्ठा device *dev,
+				     काष्ठा ipa_पूर्णांकerconnect *पूर्णांकerconnect,
+				     स्थिर काष्ठा ipa_पूर्णांकerconnect_data *data)
+अणु
+	काष्ठा icc_path *path;
 
 	path = of_icc_get(dev, data->name);
-	if (IS_ERR(path)) {
-		int ret = PTR_ERR(path);
+	अगर (IS_ERR(path)) अणु
+		पूर्णांक ret = PTR_ERR(path);
 
 		dev_err_probe(dev, ret, "error getting %s interconnect\n",
 			      data->name);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	interconnect->path = path;
-	interconnect->average_bandwidth = data->average_bandwidth;
-	interconnect->peak_bandwidth = data->peak_bandwidth;
+	पूर्णांकerconnect->path = path;
+	पूर्णांकerconnect->average_bandwidth = data->average_bandwidth;
+	पूर्णांकerconnect->peak_bandwidth = data->peak_bandwidth;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ipa_interconnect_exit_one(struct ipa_interconnect *interconnect)
-{
-	icc_put(interconnect->path);
-	memset(interconnect, 0, sizeof(*interconnect));
-}
+अटल व्योम ipa_पूर्णांकerconnect_निकास_one(काष्ठा ipa_पूर्णांकerconnect *पूर्णांकerconnect)
+अणु
+	icc_put(पूर्णांकerconnect->path);
+	स_रखो(पूर्णांकerconnect, 0, माप(*पूर्णांकerconnect));
+पूर्ण
 
-/* Initialize interconnects required for IPA operation */
-static int ipa_interconnect_init(struct ipa_clock *clock, struct device *dev,
-				 const struct ipa_interconnect_data *data)
-{
-	struct ipa_interconnect *interconnect;
+/* Initialize पूर्णांकerconnects required क्रम IPA operation */
+अटल पूर्णांक ipa_पूर्णांकerconnect_init(काष्ठा ipa_घड़ी *घड़ी, काष्ठा device *dev,
+				 स्थिर काष्ठा ipa_पूर्णांकerconnect_data *data)
+अणु
+	काष्ठा ipa_पूर्णांकerconnect *पूर्णांकerconnect;
 	u32 count;
-	int ret;
+	पूर्णांक ret;
 
-	count = clock->interconnect_count;
-	interconnect = kcalloc(count, sizeof(*interconnect), GFP_KERNEL);
-	if (!interconnect)
-		return -ENOMEM;
-	clock->interconnect = interconnect;
+	count = घड़ी->पूर्णांकerconnect_count;
+	पूर्णांकerconnect = kसुस्मृति(count, माप(*पूर्णांकerconnect), GFP_KERNEL);
+	अगर (!पूर्णांकerconnect)
+		वापस -ENOMEM;
+	घड़ी->पूर्णांकerconnect = पूर्णांकerconnect;
 
-	while (count--) {
-		ret = ipa_interconnect_init_one(dev, interconnect, data++);
-		if (ret)
-			goto out_unwind;
-		interconnect++;
-	}
+	जबतक (count--) अणु
+		ret = ipa_पूर्णांकerconnect_init_one(dev, पूर्णांकerconnect, data++);
+		अगर (ret)
+			जाओ out_unwind;
+		पूर्णांकerconnect++;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_unwind:
-	while (interconnect-- > clock->interconnect)
-		ipa_interconnect_exit_one(interconnect);
-	kfree(clock->interconnect);
-	clock->interconnect = NULL;
+	जबतक (पूर्णांकerconnect-- > घड़ी->पूर्णांकerconnect)
+		ipa_पूर्णांकerconnect_निकास_one(पूर्णांकerconnect);
+	kमुक्त(घड़ी->पूर्णांकerconnect);
+	घड़ी->पूर्णांकerconnect = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Inverse of ipa_interconnect_init() */
-static void ipa_interconnect_exit(struct ipa_clock *clock)
-{
-	struct ipa_interconnect *interconnect;
+/* Inverse of ipa_पूर्णांकerconnect_init() */
+अटल व्योम ipa_पूर्णांकerconnect_निकास(काष्ठा ipa_घड़ी *घड़ी)
+अणु
+	काष्ठा ipa_पूर्णांकerconnect *पूर्णांकerconnect;
 
-	interconnect = clock->interconnect + clock->interconnect_count;
-	while (interconnect-- > clock->interconnect)
-		ipa_interconnect_exit_one(interconnect);
-	kfree(clock->interconnect);
-	clock->interconnect = NULL;
-}
+	पूर्णांकerconnect = घड़ी->पूर्णांकerconnect + घड़ी->पूर्णांकerconnect_count;
+	जबतक (पूर्णांकerconnect-- > घड़ी->पूर्णांकerconnect)
+		ipa_पूर्णांकerconnect_निकास_one(पूर्णांकerconnect);
+	kमुक्त(घड़ी->पूर्णांकerconnect);
+	घड़ी->पूर्णांकerconnect = शून्य;
+पूर्ण
 
-/* Currently we only use one bandwidth level, so just "enable" interconnects */
-static int ipa_interconnect_enable(struct ipa *ipa)
-{
-	struct ipa_interconnect *interconnect;
-	struct ipa_clock *clock = ipa->clock;
-	int ret;
+/* Currently we only use one bandwidth level, so just "enable" पूर्णांकerconnects */
+अटल पूर्णांक ipa_पूर्णांकerconnect_enable(काष्ठा ipa *ipa)
+अणु
+	काष्ठा ipa_पूर्णांकerconnect *पूर्णांकerconnect;
+	काष्ठा ipa_घड़ी *घड़ी = ipa->घड़ी;
+	पूर्णांक ret;
 	u32 i;
 
-	interconnect = clock->interconnect;
-	for (i = 0; i < clock->interconnect_count; i++) {
-		ret = icc_set_bw(interconnect->path,
-				 interconnect->average_bandwidth,
-				 interconnect->peak_bandwidth);
-		if (ret)
-			goto out_unwind;
-		interconnect++;
-	}
+	पूर्णांकerconnect = घड़ी->पूर्णांकerconnect;
+	क्रम (i = 0; i < घड़ी->पूर्णांकerconnect_count; i++) अणु
+		ret = icc_set_bw(पूर्णांकerconnect->path,
+				 पूर्णांकerconnect->average_bandwidth,
+				 पूर्णांकerconnect->peak_bandwidth);
+		अगर (ret)
+			जाओ out_unwind;
+		पूर्णांकerconnect++;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_unwind:
-	while (interconnect-- > clock->interconnect)
-		(void)icc_set_bw(interconnect->path, 0, 0);
+	जबतक (पूर्णांकerconnect-- > घड़ी->पूर्णांकerconnect)
+		(व्योम)icc_set_bw(पूर्णांकerconnect->path, 0, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* To disable an interconnect, we just its bandwidth to 0 */
-static void ipa_interconnect_disable(struct ipa *ipa)
-{
-	struct ipa_interconnect *interconnect;
-	struct ipa_clock *clock = ipa->clock;
-	int result = 0;
+/* To disable an पूर्णांकerconnect, we just its bandwidth to 0 */
+अटल व्योम ipa_पूर्णांकerconnect_disable(काष्ठा ipa *ipa)
+अणु
+	काष्ठा ipa_पूर्णांकerconnect *पूर्णांकerconnect;
+	काष्ठा ipa_घड़ी *घड़ी = ipa->घड़ी;
+	पूर्णांक result = 0;
 	u32 count;
-	int ret;
+	पूर्णांक ret;
 
-	count = clock->interconnect_count;
-	interconnect = clock->interconnect + count;
-	while (count--) {
-		interconnect--;
-		ret = icc_set_bw(interconnect->path, 0, 0);
-		if (ret && !result)
+	count = घड़ी->पूर्णांकerconnect_count;
+	पूर्णांकerconnect = घड़ी->पूर्णांकerconnect + count;
+	जबतक (count--) अणु
+		पूर्णांकerconnect--;
+		ret = icc_set_bw(पूर्णांकerconnect->path, 0, 0);
+		अगर (ret && !result)
 			result = ret;
-	}
+	पूर्ण
 
-	if (result)
+	अगर (result)
 		dev_err(&ipa->pdev->dev,
 			"error %d disabling IPA interconnects\n", ret);
-}
+पूर्ण
 
-/* Turn on IPA clocks, including interconnects */
-static int ipa_clock_enable(struct ipa *ipa)
-{
-	int ret;
+/* Turn on IPA घड़ीs, including पूर्णांकerconnects */
+अटल पूर्णांक ipa_घड़ी_enable(काष्ठा ipa *ipa)
+अणु
+	पूर्णांक ret;
 
-	ret = ipa_interconnect_enable(ipa);
-	if (ret)
-		return ret;
+	ret = ipa_पूर्णांकerconnect_enable(ipa);
+	अगर (ret)
+		वापस ret;
 
-	ret = clk_prepare_enable(ipa->clock->core);
-	if (ret)
-		ipa_interconnect_disable(ipa);
+	ret = clk_prepare_enable(ipa->घड़ी->core);
+	अगर (ret)
+		ipa_पूर्णांकerconnect_disable(ipa);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Inverse of ipa_clock_enable() */
-static void ipa_clock_disable(struct ipa *ipa)
-{
-	clk_disable_unprepare(ipa->clock->core);
-	ipa_interconnect_disable(ipa);
-}
+/* Inverse of ipa_घड़ी_enable() */
+अटल व्योम ipa_घड़ी_disable(काष्ठा ipa *ipa)
+अणु
+	clk_disable_unprepare(ipa->घड़ी->core);
+	ipa_पूर्णांकerconnect_disable(ipa);
+पूर्ण
 
-/* Get an IPA clock reference, but only if the reference count is
- * already non-zero.  Returns true if the additional reference was
+/* Get an IPA घड़ी reference, but only अगर the reference count is
+ * alपढ़ोy non-zero.  Returns true अगर the additional reference was
  * added successfully, or false otherwise.
  */
-bool ipa_clock_get_additional(struct ipa *ipa)
-{
-	return refcount_inc_not_zero(&ipa->clock->count);
-}
+bool ipa_घड़ी_get_additional(काष्ठा ipa *ipa)
+अणु
+	वापस refcount_inc_not_zero(&ipa->घड़ी->count);
+पूर्ण
 
-/* Get an IPA clock reference.  If the reference count is non-zero, it is
- * incremented and return is immediate.  Otherwise it is checked again
- * under protection of the mutex, and if appropriate the IPA clock
+/* Get an IPA घड़ी reference.  If the reference count is non-zero, it is
+ * incremented and वापस is immediate.  Otherwise it is checked again
+ * under protection of the mutex, and अगर appropriate the IPA घड़ी
  * is enabled.
  *
- * Incrementing the reference count is intentionally deferred until
- * after the clock is running and endpoints are resumed.
+ * Incrementing the reference count is पूर्णांकentionally deferred until
+ * after the घड़ी is running and endpoपूर्णांकs are resumed.
  */
-void ipa_clock_get(struct ipa *ipa)
-{
-	struct ipa_clock *clock = ipa->clock;
-	int ret;
+व्योम ipa_घड़ी_get(काष्ठा ipa *ipa)
+अणु
+	काष्ठा ipa_घड़ी *घड़ी = ipa->घड़ी;
+	पूर्णांक ret;
 
-	/* If the clock is running, just bump the reference count */
-	if (ipa_clock_get_additional(ipa))
-		return;
+	/* If the घड़ी is running, just bump the reference count */
+	अगर (ipa_घड़ी_get_additional(ipa))
+		वापस;
 
 	/* Otherwise get the mutex and check again */
-	mutex_lock(&clock->mutex);
+	mutex_lock(&घड़ी->mutex);
 
-	/* A reference might have been added before we got the mutex. */
-	if (ipa_clock_get_additional(ipa))
-		goto out_mutex_unlock;
+	/* A reference might have been added beक्रमe we got the mutex. */
+	अगर (ipa_घड़ी_get_additional(ipa))
+		जाओ out_mutex_unlock;
 
-	ret = ipa_clock_enable(ipa);
-	if (ret) {
+	ret = ipa_घड़ी_enable(ipa);
+	अगर (ret) अणु
 		dev_err(&ipa->pdev->dev, "error %d enabling IPA clock\n", ret);
-		goto out_mutex_unlock;
-	}
+		जाओ out_mutex_unlock;
+	पूर्ण
 
-	refcount_set(&clock->count, 1);
+	refcount_set(&घड़ी->count, 1);
 
 out_mutex_unlock:
-	mutex_unlock(&clock->mutex);
-}
+	mutex_unlock(&घड़ी->mutex);
+पूर्ण
 
-/* Attempt to remove an IPA clock reference.  If this represents the
- * last reference, disable the IPA clock under protection of the mutex.
+/* Attempt to हटाओ an IPA घड़ी reference.  If this represents the
+ * last reference, disable the IPA घड़ी under protection of the mutex.
  */
-void ipa_clock_put(struct ipa *ipa)
-{
-	struct ipa_clock *clock = ipa->clock;
+व्योम ipa_घड़ी_put(काष्ठा ipa *ipa)
+अणु
+	काष्ठा ipa_घड़ी *घड़ी = ipa->घड़ी;
 
-	/* If this is not the last reference there's nothing more to do */
-	if (!refcount_dec_and_mutex_lock(&clock->count, &clock->mutex))
-		return;
+	/* If this is not the last reference there's nothing more to करो */
+	अगर (!refcount_dec_and_mutex_lock(&घड़ी->count, &घड़ी->mutex))
+		वापस;
 
-	ipa_clock_disable(ipa);
+	ipa_घड़ी_disable(ipa);
 
-	mutex_unlock(&clock->mutex);
-}
+	mutex_unlock(&घड़ी->mutex);
+पूर्ण
 
-/* Return the current IPA core clock rate */
-u32 ipa_clock_rate(struct ipa *ipa)
-{
-	return ipa->clock ? (u32)clk_get_rate(ipa->clock->core) : 0;
-}
+/* Return the current IPA core घड़ी rate */
+u32 ipa_घड़ी_rate(काष्ठा ipa *ipa)
+अणु
+	वापस ipa->घड़ी ? (u32)clk_get_rate(ipa->घड़ी->core) : 0;
+पूर्ण
 
-/* Initialize IPA clocking */
-struct ipa_clock *
-ipa_clock_init(struct device *dev, const struct ipa_clock_data *data)
-{
-	struct ipa_clock *clock;
-	struct clk *clk;
-	int ret;
+/* Initialize IPA घड़ीing */
+काष्ठा ipa_घड़ी *
+ipa_घड़ी_init(काष्ठा device *dev, स्थिर काष्ठा ipa_घड़ी_data *data)
+अणु
+	काष्ठा ipa_घड़ी *घड़ी;
+	काष्ठा clk *clk;
+	पूर्णांक ret;
 
 	clk = clk_get(dev, "core");
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		dev_err_probe(dev, PTR_ERR(clk), "error getting core clock\n");
 
-		return ERR_CAST(clk);
-	}
+		वापस ERR_CAST(clk);
+	पूर्ण
 
-	ret = clk_set_rate(clk, data->core_clock_rate);
-	if (ret) {
+	ret = clk_set_rate(clk, data->core_घड़ी_rate);
+	अगर (ret) अणु
 		dev_err(dev, "error %d setting core clock rate to %u\n",
-			ret, data->core_clock_rate);
-		goto err_clk_put;
-	}
+			ret, data->core_घड़ी_rate);
+		जाओ err_clk_put;
+	पूर्ण
 
-	clock = kzalloc(sizeof(*clock), GFP_KERNEL);
-	if (!clock) {
+	घड़ी = kzalloc(माप(*घड़ी), GFP_KERNEL);
+	अगर (!घड़ी) अणु
 		ret = -ENOMEM;
-		goto err_clk_put;
-	}
-	clock->core = clk;
-	clock->interconnect_count = data->interconnect_count;
+		जाओ err_clk_put;
+	पूर्ण
+	घड़ी->core = clk;
+	घड़ी->पूर्णांकerconnect_count = data->पूर्णांकerconnect_count;
 
-	ret = ipa_interconnect_init(clock, dev, data->interconnect_data);
-	if (ret)
-		goto err_kfree;
+	ret = ipa_पूर्णांकerconnect_init(घड़ी, dev, data->पूर्णांकerconnect_data);
+	अगर (ret)
+		जाओ err_kमुक्त;
 
-	mutex_init(&clock->mutex);
-	refcount_set(&clock->count, 0);
+	mutex_init(&घड़ी->mutex);
+	refcount_set(&घड़ी->count, 0);
 
-	return clock;
+	वापस घड़ी;
 
-err_kfree:
-	kfree(clock);
+err_kमुक्त:
+	kमुक्त(घड़ी);
 err_clk_put:
 	clk_put(clk);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-/* Inverse of ipa_clock_init() */
-void ipa_clock_exit(struct ipa_clock *clock)
-{
-	struct clk *clk = clock->core;
+/* Inverse of ipa_घड़ी_init() */
+व्योम ipa_घड़ी_निकास(काष्ठा ipa_घड़ी *घड़ी)
+अणु
+	काष्ठा clk *clk = घड़ी->core;
 
-	WARN_ON(refcount_read(&clock->count) != 0);
-	mutex_destroy(&clock->mutex);
-	ipa_interconnect_exit(clock);
-	kfree(clock);
+	WARN_ON(refcount_पढ़ो(&घड़ी->count) != 0);
+	mutex_destroy(&घड़ी->mutex);
+	ipa_पूर्णांकerconnect_निकास(घड़ी);
+	kमुक्त(घड़ी);
 	clk_put(clk);
-}
+पूर्ण

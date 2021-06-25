@@ -1,3 +1,4 @@
+<शैली गुरु>
 /******************************************************************************
  * xenbus.h
  *
@@ -6,17 +7,17 @@
  * Copyright (C) 2005 Rusty Russell, IBM Corporation
  * Copyright (C) 2005 XenSource Ltd.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -31,221 +32,221 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef _XEN_XENBUS_H
-#define _XEN_XENBUS_H
+#अगर_अघोषित _XEN_XENBUS_H
+#घोषणा _XEN_XENBUS_H
 
-#include <linux/device.h>
-#include <linux/notifier.h>
-#include <linux/mutex.h>
-#include <linux/export.h>
-#include <linux/fs.h>
-#include <linux/completion.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/semaphore.h>
-#include <xen/interface/xen.h>
-#include <xen/interface/grant_table.h>
-#include <xen/interface/io/xenbus.h>
-#include <xen/interface/io/xs_wire.h>
-#include <xen/interface/event_channel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/export.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/semaphore.h>
+#समावेश <xen/पूर्णांकerface/xen.h>
+#समावेश <xen/पूर्णांकerface/grant_table.h>
+#समावेश <xen/पूर्णांकerface/io/xenbus.h>
+#समावेश <xen/पूर्णांकerface/io/xs_wire.h>
+#समावेश <xen/पूर्णांकerface/event_channel.h>
 
-#define XENBUS_MAX_RING_GRANT_ORDER 4
-#define XENBUS_MAX_RING_GRANTS      (1U << XENBUS_MAX_RING_GRANT_ORDER)
+#घोषणा XENBUS_MAX_RING_GRANT_ORDER 4
+#घोषणा XENBUS_MAX_RING_GRANTS      (1U << XENBUS_MAX_RING_GRANT_ORDER)
 
 /* Register callback to watch this node. */
-struct xenbus_watch
-{
-	struct list_head list;
+काष्ठा xenbus_watch
+अणु
+	काष्ठा list_head list;
 
 	/* Path being watched. */
-	const char *node;
+	स्थिर अक्षर *node;
 
-	unsigned int nr_pending;
+	अचिन्हित पूर्णांक nr_pending;
 
 	/*
-	 * Called just before enqueing new event while a spinlock is held.
-	 * The event will be discarded if this callback returns false.
+	 * Called just beक्रमe enqueing new event जबतक a spinlock is held.
+	 * The event will be discarded अगर this callback वापसs false.
 	 */
-	bool (*will_handle)(struct xenbus_watch *,
-			      const char *path, const char *token);
+	bool (*will_handle)(काष्ठा xenbus_watch *,
+			      स्थिर अक्षर *path, स्थिर अक्षर *token);
 
 	/* Callback (executed in a process context with no locks held). */
-	void (*callback)(struct xenbus_watch *,
-			 const char *path, const char *token);
-};
+	व्योम (*callback)(काष्ठा xenbus_watch *,
+			 स्थिर अक्षर *path, स्थिर अक्षर *token);
+पूर्ण;
 
 
 /* A xenbus device. */
-struct xenbus_device {
-	const char *devicetype;
-	const char *nodename;
-	const char *otherend;
-	int otherend_id;
-	struct xenbus_watch otherend_watch;
-	struct device dev;
-	enum xenbus_state state;
-	struct completion down;
-	struct work_struct work;
-	struct semaphore reclaim_sem;
+काष्ठा xenbus_device अणु
+	स्थिर अक्षर *devicetype;
+	स्थिर अक्षर *nodename;
+	स्थिर अक्षर *otherend;
+	पूर्णांक otherend_id;
+	काष्ठा xenbus_watch otherend_watch;
+	काष्ठा device dev;
+	क्रमागत xenbus_state state;
+	काष्ठा completion करोwn;
+	काष्ठा work_काष्ठा work;
+	काष्ठा semaphore reclaim_sem;
 
 	/* Event channel based statistics and settings. */
 	atomic_t event_channels;
 	atomic_t events;
 	atomic_t spurious_events;
-	atomic_t jiffies_eoi_delayed;
-	unsigned int spurious_threshold;
-};
+	atomic_t jअगरfies_eoi_delayed;
+	अचिन्हित पूर्णांक spurious_threshold;
+पूर्ण;
 
-static inline struct xenbus_device *to_xenbus_device(struct device *dev)
-{
-	return container_of(dev, struct xenbus_device, dev);
-}
+अटल अंतरभूत काष्ठा xenbus_device *to_xenbus_device(काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा xenbus_device, dev);
+पूर्ण
 
-struct xenbus_device_id
-{
-	/* .../device/<device_type>/<identifier> */
-	char devicetype[32]; 	/* General class of device. */
-};
+काष्ठा xenbus_device_id
+अणु
+	/* .../device/<device_type>/<identअगरier> */
+	अक्षर devicetype[32]; 	/* General class of device. */
+पूर्ण;
 
 /* A xenbus driver. */
-struct xenbus_driver {
-	const char *name;       /* defaults to ids[0].devicetype */
-	const struct xenbus_device_id *ids;
-	bool allow_rebind; /* avoid setting xenstore closed during remove */
-	int (*probe)(struct xenbus_device *dev,
-		     const struct xenbus_device_id *id);
-	void (*otherend_changed)(struct xenbus_device *dev,
-				 enum xenbus_state backend_state);
-	int (*remove)(struct xenbus_device *dev);
-	int (*suspend)(struct xenbus_device *dev);
-	int (*resume)(struct xenbus_device *dev);
-	int (*uevent)(struct xenbus_device *, struct kobj_uevent_env *);
-	struct device_driver driver;
-	int (*read_otherend_details)(struct xenbus_device *dev);
-	int (*is_ready)(struct xenbus_device *dev);
-	void (*reclaim_memory)(struct xenbus_device *dev);
-};
+काष्ठा xenbus_driver अणु
+	स्थिर अक्षर *name;       /* शेषs to ids[0].devicetype */
+	स्थिर काष्ठा xenbus_device_id *ids;
+	bool allow_rebind; /* aव्योम setting xenstore बंदd during हटाओ */
+	पूर्णांक (*probe)(काष्ठा xenbus_device *dev,
+		     स्थिर काष्ठा xenbus_device_id *id);
+	व्योम (*otherend_changed)(काष्ठा xenbus_device *dev,
+				 क्रमागत xenbus_state backend_state);
+	पूर्णांक (*हटाओ)(काष्ठा xenbus_device *dev);
+	पूर्णांक (*suspend)(काष्ठा xenbus_device *dev);
+	पूर्णांक (*resume)(काष्ठा xenbus_device *dev);
+	पूर्णांक (*uevent)(काष्ठा xenbus_device *, काष्ठा kobj_uevent_env *);
+	काष्ठा device_driver driver;
+	पूर्णांक (*पढ़ो_otherend_details)(काष्ठा xenbus_device *dev);
+	पूर्णांक (*is_पढ़ोy)(काष्ठा xenbus_device *dev);
+	व्योम (*reclaim_memory)(काष्ठा xenbus_device *dev);
+पूर्ण;
 
-static inline struct xenbus_driver *to_xenbus_driver(struct device_driver *drv)
-{
-	return container_of(drv, struct xenbus_driver, driver);
-}
+अटल अंतरभूत काष्ठा xenbus_driver *to_xenbus_driver(काष्ठा device_driver *drv)
+अणु
+	वापस container_of(drv, काष्ठा xenbus_driver, driver);
+पूर्ण
 
-int __must_check __xenbus_register_frontend(struct xenbus_driver *drv,
-					    struct module *owner,
-					    const char *mod_name);
-int __must_check __xenbus_register_backend(struct xenbus_driver *drv,
-					   struct module *owner,
-					   const char *mod_name);
+पूर्णांक __must_check __xenbus_रेजिस्टर_frontend(काष्ठा xenbus_driver *drv,
+					    काष्ठा module *owner,
+					    स्थिर अक्षर *mod_name);
+पूर्णांक __must_check __xenbus_रेजिस्टर_backend(काष्ठा xenbus_driver *drv,
+					   काष्ठा module *owner,
+					   स्थिर अक्षर *mod_name);
 
-#define xenbus_register_frontend(drv) \
-	__xenbus_register_frontend(drv, THIS_MODULE, KBUILD_MODNAME)
-#define xenbus_register_backend(drv) \
-	__xenbus_register_backend(drv, THIS_MODULE, KBUILD_MODNAME)
+#घोषणा xenbus_रेजिस्टर_frontend(drv) \
+	__xenbus_रेजिस्टर_frontend(drv, THIS_MODULE, KBUILD_MODNAME)
+#घोषणा xenbus_रेजिस्टर_backend(drv) \
+	__xenbus_रेजिस्टर_backend(drv, THIS_MODULE, KBUILD_MODNAME)
 
-void xenbus_unregister_driver(struct xenbus_driver *drv);
+व्योम xenbus_unरेजिस्टर_driver(काष्ठा xenbus_driver *drv);
 
-struct xenbus_transaction
-{
+काष्ठा xenbus_transaction
+अणु
 	u32 id;
-};
+पूर्ण;
 
 /* Nil transaction ID. */
-#define XBT_NIL ((struct xenbus_transaction) { 0 })
+#घोषणा XBT_NIL ((काष्ठा xenbus_transaction) अणु 0 पूर्ण)
 
-char **xenbus_directory(struct xenbus_transaction t,
-			const char *dir, const char *node, unsigned int *num);
-void *xenbus_read(struct xenbus_transaction t,
-		  const char *dir, const char *node, unsigned int *len);
-int xenbus_write(struct xenbus_transaction t,
-		 const char *dir, const char *node, const char *string);
-int xenbus_mkdir(struct xenbus_transaction t,
-		 const char *dir, const char *node);
-int xenbus_exists(struct xenbus_transaction t,
-		  const char *dir, const char *node);
-int xenbus_rm(struct xenbus_transaction t, const char *dir, const char *node);
-int xenbus_transaction_start(struct xenbus_transaction *t);
-int xenbus_transaction_end(struct xenbus_transaction t, int abort);
+अक्षर **xenbus_directory(काष्ठा xenbus_transaction t,
+			स्थिर अक्षर *dir, स्थिर अक्षर *node, अचिन्हित पूर्णांक *num);
+व्योम *xenbus_पढ़ो(काष्ठा xenbus_transaction t,
+		  स्थिर अक्षर *dir, स्थिर अक्षर *node, अचिन्हित पूर्णांक *len);
+पूर्णांक xenbus_ग_लिखो(काष्ठा xenbus_transaction t,
+		 स्थिर अक्षर *dir, स्थिर अक्षर *node, स्थिर अक्षर *string);
+पूर्णांक xenbus_सूची_गढ़ो(काष्ठा xenbus_transaction t,
+		 स्थिर अक्षर *dir, स्थिर अक्षर *node);
+पूर्णांक xenbus_exists(काष्ठा xenbus_transaction t,
+		  स्थिर अक्षर *dir, स्थिर अक्षर *node);
+पूर्णांक xenbus_rm(काष्ठा xenbus_transaction t, स्थिर अक्षर *dir, स्थिर अक्षर *node);
+पूर्णांक xenbus_transaction_start(काष्ठा xenbus_transaction *t);
+पूर्णांक xenbus_transaction_end(काष्ठा xenbus_transaction t, पूर्णांक पात);
 
-/* Single read and scanf: returns -errno or num scanned if > 0. */
-__scanf(4, 5)
-int xenbus_scanf(struct xenbus_transaction t,
-		 const char *dir, const char *node, const char *fmt, ...);
+/* Single पढ़ो and म_पूछो: वापसs -त्रुटि_सं or num scanned अगर > 0. */
+__म_पूछो(4, 5)
+पूर्णांक xenbus_म_पूछो(काष्ठा xenbus_transaction t,
+		 स्थिर अक्षर *dir, स्थिर अक्षर *node, स्थिर अक्षर *fmt, ...);
 
-/* Read an (optional) unsigned value. */
-unsigned int xenbus_read_unsigned(const char *dir, const char *node,
-				  unsigned int default_val);
+/* Read an (optional) अचिन्हित value. */
+अचिन्हित पूर्णांक xenbus_पढ़ो_अचिन्हित(स्थिर अक्षर *dir, स्थिर अक्षर *node,
+				  अचिन्हित पूर्णांक शेष_val);
 
-/* Single printf and write: returns -errno or 0. */
-__printf(4, 5)
-int xenbus_printf(struct xenbus_transaction t,
-		  const char *dir, const char *node, const char *fmt, ...);
+/* Single म_लिखो and ग_लिखो: वापसs -त्रुटि_सं or 0. */
+__म_लिखो(4, 5)
+पूर्णांक xenbus_म_लिखो(काष्ठा xenbus_transaction t,
+		  स्थिर अक्षर *dir, स्थिर अक्षर *node, स्थिर अक्षर *fmt, ...);
 
-/* Generic read function: NULL-terminated triples of name,
- * sprintf-style type string, and pointer. Returns 0 or errno.*/
-int xenbus_gather(struct xenbus_transaction t, const char *dir, ...);
+/* Generic पढ़ो function: शून्य-terminated triples of name,
+ * प्र_लिखो-style type string, and poपूर्णांकer. Returns 0 or त्रुटि_सं.*/
+पूर्णांक xenbus_gather(काष्ठा xenbus_transaction t, स्थिर अक्षर *dir, ...);
 
-/* notifer routines for when the xenstore comes up */
-extern int xenstored_ready;
-int register_xenstore_notifier(struct notifier_block *nb);
-void unregister_xenstore_notifier(struct notifier_block *nb);
+/* notअगरer routines क्रम when the xenstore comes up */
+बाह्य पूर्णांक xenstored_पढ़ोy;
+पूर्णांक रेजिस्टर_xenstore_notअगरier(काष्ठा notअगरier_block *nb);
+व्योम unरेजिस्टर_xenstore_notअगरier(काष्ठा notअगरier_block *nb);
 
-int register_xenbus_watch(struct xenbus_watch *watch);
-void unregister_xenbus_watch(struct xenbus_watch *watch);
-void xs_suspend(void);
-void xs_resume(void);
-void xs_suspend_cancel(void);
+पूर्णांक रेजिस्टर_xenbus_watch(काष्ठा xenbus_watch *watch);
+व्योम unरेजिस्टर_xenbus_watch(काष्ठा xenbus_watch *watch);
+व्योम xs_suspend(व्योम);
+व्योम xs_resume(व्योम);
+व्योम xs_suspend_cancel(व्योम);
 
-struct work_struct;
+काष्ठा work_काष्ठा;
 
-#define XENBUS_IS_ERR_READ(str) ({			\
-	if (!IS_ERR(str) && strlen(str) == 0) {		\
-		kfree(str);				\
-		str = ERR_PTR(-ERANGE);			\
-	}						\
+#घोषणा XENBUS_IS_ERR_READ(str) (अणु			\
+	अगर (!IS_ERR(str) && म_माप(str) == 0) अणु		\
+		kमुक्त(str);				\
+		str = ERR_PTR(-दुस्फल);			\
+	पूर्ण						\
 	IS_ERR(str);					\
-})
+पूर्ण)
 
-#define XENBUS_EXIST_ERR(err) ((err) == -ENOENT || (err) == -ERANGE)
+#घोषणा XENBUS_EXIST_ERR(err) ((err) == -ENOENT || (err) == -दुस्फल)
 
-int xenbus_watch_path(struct xenbus_device *dev, const char *path,
-		      struct xenbus_watch *watch,
-		      bool (*will_handle)(struct xenbus_watch *,
-					  const char *, const char *),
-		      void (*callback)(struct xenbus_watch *,
-				       const char *, const char *));
-__printf(5, 6)
-int xenbus_watch_pathfmt(struct xenbus_device *dev, struct xenbus_watch *watch,
-			 bool (*will_handle)(struct xenbus_watch *,
-					     const char *, const char *),
-			 void (*callback)(struct xenbus_watch *,
-					  const char *, const char *),
-			 const char *pathfmt, ...);
+पूर्णांक xenbus_watch_path(काष्ठा xenbus_device *dev, स्थिर अक्षर *path,
+		      काष्ठा xenbus_watch *watch,
+		      bool (*will_handle)(काष्ठा xenbus_watch *,
+					  स्थिर अक्षर *, स्थिर अक्षर *),
+		      व्योम (*callback)(काष्ठा xenbus_watch *,
+				       स्थिर अक्षर *, स्थिर अक्षर *));
+__म_लिखो(5, 6)
+पूर्णांक xenbus_watch_pathfmt(काष्ठा xenbus_device *dev, काष्ठा xenbus_watch *watch,
+			 bool (*will_handle)(काष्ठा xenbus_watch *,
+					     स्थिर अक्षर *, स्थिर अक्षर *),
+			 व्योम (*callback)(काष्ठा xenbus_watch *,
+					  स्थिर अक्षर *, स्थिर अक्षर *),
+			 स्थिर अक्षर *pathfmt, ...);
 
-int xenbus_switch_state(struct xenbus_device *dev, enum xenbus_state new_state);
-int xenbus_grant_ring(struct xenbus_device *dev, void *vaddr,
-		      unsigned int nr_pages, grant_ref_t *grefs);
-int xenbus_map_ring_valloc(struct xenbus_device *dev, grant_ref_t *gnt_refs,
-			   unsigned int nr_grefs, void **vaddr);
+पूर्णांक xenbus_चयन_state(काष्ठा xenbus_device *dev, क्रमागत xenbus_state new_state);
+पूर्णांक xenbus_grant_ring(काष्ठा xenbus_device *dev, व्योम *vaddr,
+		      अचिन्हित पूर्णांक nr_pages, grant_ref_t *grefs);
+पूर्णांक xenbus_map_ring_valloc(काष्ठा xenbus_device *dev, grant_ref_t *gnt_refs,
+			   अचिन्हित पूर्णांक nr_grefs, व्योम **vaddr);
 
-int xenbus_unmap_ring_vfree(struct xenbus_device *dev, void *vaddr);
+पूर्णांक xenbus_unmap_ring_vमुक्त(काष्ठा xenbus_device *dev, व्योम *vaddr);
 
-int xenbus_alloc_evtchn(struct xenbus_device *dev, evtchn_port_t *port);
-int xenbus_free_evtchn(struct xenbus_device *dev, evtchn_port_t port);
+पूर्णांक xenbus_alloc_evtchn(काष्ठा xenbus_device *dev, evtchn_port_t *port);
+पूर्णांक xenbus_मुक्त_evtchn(काष्ठा xenbus_device *dev, evtchn_port_t port);
 
-enum xenbus_state xenbus_read_driver_state(const char *path);
+क्रमागत xenbus_state xenbus_पढ़ो_driver_state(स्थिर अक्षर *path);
 
-__printf(3, 4)
-void xenbus_dev_error(struct xenbus_device *dev, int err, const char *fmt, ...);
-__printf(3, 4)
-void xenbus_dev_fatal(struct xenbus_device *dev, int err, const char *fmt, ...);
+__म_लिखो(3, 4)
+व्योम xenbus_dev_error(काष्ठा xenbus_device *dev, पूर्णांक err, स्थिर अक्षर *fmt, ...);
+__म_लिखो(3, 4)
+व्योम xenbus_dev_fatal(काष्ठा xenbus_device *dev, पूर्णांक err, स्थिर अक्षर *fmt, ...);
 
-const char *xenbus_strstate(enum xenbus_state state);
-int xenbus_dev_is_online(struct xenbus_device *dev);
-int xenbus_frontend_closed(struct xenbus_device *dev);
+स्थिर अक्षर *xenbus_strstate(क्रमागत xenbus_state state);
+पूर्णांक xenbus_dev_is_online(काष्ठा xenbus_device *dev);
+पूर्णांक xenbus_frontend_बंदd(काष्ठा xenbus_device *dev);
 
-extern const struct file_operations xen_xenbus_fops;
-extern struct xenstore_domain_interface *xen_store_interface;
-extern int xen_store_evtchn;
+बाह्य स्थिर काष्ठा file_operations xen_xenbus_fops;
+बाह्य काष्ठा xenstore_करोमुख्य_पूर्णांकerface *xen_store_पूर्णांकerface;
+बाह्य पूर्णांक xen_store_evtchn;
 
-#endif /* _XEN_XENBUS_H */
+#पूर्ण_अगर /* _XEN_XENBUS_H */

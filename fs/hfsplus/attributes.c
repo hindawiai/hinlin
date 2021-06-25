@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/fs/hfsplus/attributes.c
  *
@@ -7,380 +8,380 @@
  * Handling of records in attributes tree
  */
 
-#include "hfsplus_fs.h"
-#include "hfsplus_raw.h"
+#समावेश "hfsplus_fs.h"
+#समावेश "hfsplus_raw.h"
 
-static struct kmem_cache *hfsplus_attr_tree_cachep;
+अटल काष्ठा kmem_cache *hfsplus_attr_tree_cachep;
 
-int __init hfsplus_create_attr_tree_cache(void)
-{
-	if (hfsplus_attr_tree_cachep)
-		return -EEXIST;
+पूर्णांक __init hfsplus_create_attr_tree_cache(व्योम)
+अणु
+	अगर (hfsplus_attr_tree_cachep)
+		वापस -EEXIST;
 
 	hfsplus_attr_tree_cachep =
 		kmem_cache_create("hfsplus_attr_cache",
-			sizeof(hfsplus_attr_entry), 0,
-			SLAB_HWCACHE_ALIGN, NULL);
-	if (!hfsplus_attr_tree_cachep)
-		return -ENOMEM;
+			माप(hfsplus_attr_entry), 0,
+			SLAB_HWCACHE_ALIGN, शून्य);
+	अगर (!hfsplus_attr_tree_cachep)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void hfsplus_destroy_attr_tree_cache(void)
-{
+व्योम hfsplus_destroy_attr_tree_cache(व्योम)
+अणु
 	kmem_cache_destroy(hfsplus_attr_tree_cachep);
-}
+पूर्ण
 
-int hfsplus_attr_bin_cmp_key(const hfsplus_btree_key *k1,
-				const hfsplus_btree_key *k2)
-{
+पूर्णांक hfsplus_attr_bin_cmp_key(स्थिर hfsplus_btree_key *k1,
+				स्थिर hfsplus_btree_key *k2)
+अणु
 	__be32 k1_cnid, k2_cnid;
 
 	k1_cnid = k1->attr.cnid;
 	k2_cnid = k2->attr.cnid;
-	if (k1_cnid != k2_cnid)
-		return be32_to_cpu(k1_cnid) < be32_to_cpu(k2_cnid) ? -1 : 1;
+	अगर (k1_cnid != k2_cnid)
+		वापस be32_to_cpu(k1_cnid) < be32_to_cpu(k2_cnid) ? -1 : 1;
 
-	return hfsplus_strcmp(
-			(const struct hfsplus_unistr *)&k1->attr.key_name,
-			(const struct hfsplus_unistr *)&k2->attr.key_name);
-}
+	वापस hfsplus_म_भेद(
+			(स्थिर काष्ठा hfsplus_unistr *)&k1->attr.key_name,
+			(स्थिर काष्ठा hfsplus_unistr *)&k2->attr.key_name);
+पूर्ण
 
-int hfsplus_attr_build_key(struct super_block *sb, hfsplus_btree_key *key,
-			u32 cnid, const char *name)
-{
-	int len;
+पूर्णांक hfsplus_attr_build_key(काष्ठा super_block *sb, hfsplus_btree_key *key,
+			u32 cnid, स्थिर अक्षर *name)
+अणु
+	पूर्णांक len;
 
-	memset(key, 0, sizeof(struct hfsplus_attr_key));
+	स_रखो(key, 0, माप(काष्ठा hfsplus_attr_key));
 	key->attr.cnid = cpu_to_be32(cnid);
-	if (name) {
-		int res = hfsplus_asc2uni(sb,
-				(struct hfsplus_unistr *)&key->attr.key_name,
-				HFSPLUS_ATTR_MAX_STRLEN, name, strlen(name));
-		if (res)
-			return res;
+	अगर (name) अणु
+		पूर्णांक res = hfsplus_asc2uni(sb,
+				(काष्ठा hfsplus_unistr *)&key->attr.key_name,
+				HFSPLUS_ATTR_MAX_STRLEN, name, म_माप(name));
+		अगर (res)
+			वापस res;
 		len = be16_to_cpu(key->attr.key_name.length);
-	} else {
+	पूर्ण अन्यथा अणु
 		key->attr.key_name.length = 0;
 		len = 0;
-	}
+	पूर्ण
 
-	/* The length of the key, as stored in key_len field, does not include
+	/* The length of the key, as stored in key_len field, करोes not include
 	 * the size of the key_len field itself.
-	 * So, offsetof(hfsplus_attr_key, key_name) is a trick because
-	 * it takes into consideration key_len field (__be16) of
-	 * hfsplus_attr_key structure instead of length field (__be16) of
-	 * hfsplus_attr_unistr structure.
+	 * So, दुरत्व(hfsplus_attr_key, key_name) is a trick because
+	 * it takes पूर्णांकo consideration key_len field (__be16) of
+	 * hfsplus_attr_key काष्ठाure instead of length field (__be16) of
+	 * hfsplus_attr_unistr काष्ठाure.
 	 */
 	key->key_len =
-		cpu_to_be16(offsetof(struct hfsplus_attr_key, key_name) +
+		cpu_to_be16(दुरत्व(काष्ठा hfsplus_attr_key, key_name) +
 				2 * len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-hfsplus_attr_entry *hfsplus_alloc_attr_entry(void)
-{
-	return kmem_cache_alloc(hfsplus_attr_tree_cachep, GFP_KERNEL);
-}
+hfsplus_attr_entry *hfsplus_alloc_attr_entry(व्योम)
+अणु
+	वापस kmem_cache_alloc(hfsplus_attr_tree_cachep, GFP_KERNEL);
+पूर्ण
 
-void hfsplus_destroy_attr_entry(hfsplus_attr_entry *entry)
-{
-	if (entry)
-		kmem_cache_free(hfsplus_attr_tree_cachep, entry);
-}
+व्योम hfsplus_destroy_attr_entry(hfsplus_attr_entry *entry)
+अणु
+	अगर (entry)
+		kmem_cache_मुक्त(hfsplus_attr_tree_cachep, entry);
+पूर्ण
 
-#define HFSPLUS_INVALID_ATTR_RECORD -1
+#घोषणा HFSPLUS_INVALID_ATTR_RECORD -1
 
-static int hfsplus_attr_build_record(hfsplus_attr_entry *entry, int record_type,
-				u32 cnid, const void *value, size_t size)
-{
-	if (record_type == HFSPLUS_ATTR_FORK_DATA) {
+अटल पूर्णांक hfsplus_attr_build_record(hfsplus_attr_entry *entry, पूर्णांक record_type,
+				u32 cnid, स्थिर व्योम *value, माप_प्रकार size)
+अणु
+	अगर (record_type == HFSPLUS_ATTR_FORK_DATA) अणु
 		/*
-		 * Mac OS X supports only inline data attributes.
+		 * Mac OS X supports only अंतरभूत data attributes.
 		 * Do nothing
 		 */
-		memset(entry, 0, sizeof(*entry));
-		return sizeof(struct hfsplus_attr_fork_data);
-	} else if (record_type == HFSPLUS_ATTR_EXTENTS) {
+		स_रखो(entry, 0, माप(*entry));
+		वापस माप(काष्ठा hfsplus_attr_विभाजन_data);
+	पूर्ण अन्यथा अगर (record_type == HFSPLUS_ATTR_EXTENTS) अणु
 		/*
-		 * Mac OS X supports only inline data attributes.
+		 * Mac OS X supports only अंतरभूत data attributes.
 		 * Do nothing.
 		 */
-		memset(entry, 0, sizeof(*entry));
-		return sizeof(struct hfsplus_attr_extents);
-	} else if (record_type == HFSPLUS_ATTR_INLINE_DATA) {
+		स_रखो(entry, 0, माप(*entry));
+		वापस माप(काष्ठा hfsplus_attr_extents);
+	पूर्ण अन्यथा अगर (record_type == HFSPLUS_ATTR_INLINE_DATA) अणु
 		u16 len;
 
-		memset(entry, 0, sizeof(struct hfsplus_attr_inline_data));
-		entry->inline_data.record_type = cpu_to_be32(record_type);
-		if (size <= HFSPLUS_MAX_INLINE_DATA_SIZE)
+		स_रखो(entry, 0, माप(काष्ठा hfsplus_attr_अंतरभूत_data));
+		entry->अंतरभूत_data.record_type = cpu_to_be32(record_type);
+		अगर (size <= HFSPLUS_MAX_INLINE_DATA_SIZE)
 			len = size;
-		else
-			return HFSPLUS_INVALID_ATTR_RECORD;
-		entry->inline_data.length = cpu_to_be16(len);
-		memcpy(entry->inline_data.raw_bytes, value, len);
+		अन्यथा
+			वापस HFSPLUS_INVALID_ATTR_RECORD;
+		entry->अंतरभूत_data.length = cpu_to_be16(len);
+		स_नकल(entry->अंतरभूत_data.raw_bytes, value, len);
 		/*
 		 * Align len on two-byte boundary.
-		 * It needs to add pad byte if we have odd len.
+		 * It needs to add pad byte अगर we have odd len.
 		 */
 		len = round_up(len, 2);
-		return offsetof(struct hfsplus_attr_inline_data, raw_bytes) +
+		वापस दुरत्व(काष्ठा hfsplus_attr_अंतरभूत_data, raw_bytes) +
 					len;
-	} else /* invalid input */
-		memset(entry, 0, sizeof(*entry));
+	पूर्ण अन्यथा /* invalid input */
+		स_रखो(entry, 0, माप(*entry));
 
-	return HFSPLUS_INVALID_ATTR_RECORD;
-}
+	वापस HFSPLUS_INVALID_ATTR_RECORD;
+पूर्ण
 
-int hfsplus_find_attr(struct super_block *sb, u32 cnid,
-			const char *name, struct hfs_find_data *fd)
-{
-	int err = 0;
+पूर्णांक hfsplus_find_attr(काष्ठा super_block *sb, u32 cnid,
+			स्थिर अक्षर *name, काष्ठा hfs_find_data *fd)
+अणु
+	पूर्णांक err = 0;
 
-	hfs_dbg(ATTR_MOD, "find_attr: %s,%d\n", name ? name : NULL, cnid);
+	hfs_dbg(ATTR_MOD, "find_attr: %s,%d\n", name ? name : शून्य, cnid);
 
-	if (!HFSPLUS_SB(sb)->attr_tree) {
+	अगर (!HFSPLUS_SB(sb)->attr_tree) अणु
 		pr_err("attributes file doesn't exist\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (name) {
+	अगर (name) अणु
 		err = hfsplus_attr_build_key(sb, fd->search_key, cnid, name);
-		if (err)
-			goto failed_find_attr;
+		अगर (err)
+			जाओ failed_find_attr;
 		err = hfs_brec_find(fd, hfs_find_rec_by_key);
-		if (err)
-			goto failed_find_attr;
-	} else {
-		err = hfsplus_attr_build_key(sb, fd->search_key, cnid, NULL);
-		if (err)
-			goto failed_find_attr;
+		अगर (err)
+			जाओ failed_find_attr;
+	पूर्ण अन्यथा अणु
+		err = hfsplus_attr_build_key(sb, fd->search_key, cnid, शून्य);
+		अगर (err)
+			जाओ failed_find_attr;
 		err = hfs_brec_find(fd, hfs_find_1st_rec_by_cnid);
-		if (err)
-			goto failed_find_attr;
-	}
+		अगर (err)
+			जाओ failed_find_attr;
+	पूर्ण
 
 failed_find_attr:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int hfsplus_attr_exists(struct inode *inode, const char *name)
-{
-	int err = 0;
-	struct super_block *sb = inode->i_sb;
-	struct hfs_find_data fd;
+पूर्णांक hfsplus_attr_exists(काष्ठा inode *inode, स्थिर अक्षर *name)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा hfs_find_data fd;
 
-	if (!HFSPLUS_SB(sb)->attr_tree)
-		return 0;
+	अगर (!HFSPLUS_SB(sb)->attr_tree)
+		वापस 0;
 
 	err = hfs_find_init(HFSPLUS_SB(sb)->attr_tree, &fd);
-	if (err)
-		return 0;
+	अगर (err)
+		वापस 0;
 
 	err = hfsplus_find_attr(sb, inode->i_ino, name, &fd);
-	if (err)
-		goto attr_not_found;
+	अगर (err)
+		जाओ attr_not_found;
 
-	hfs_find_exit(&fd);
-	return 1;
+	hfs_find_निकास(&fd);
+	वापस 1;
 
 attr_not_found:
-	hfs_find_exit(&fd);
-	return 0;
-}
+	hfs_find_निकास(&fd);
+	वापस 0;
+पूर्ण
 
-int hfsplus_create_attr(struct inode *inode,
-				const char *name,
-				const void *value, size_t size)
-{
-	struct super_block *sb = inode->i_sb;
-	struct hfs_find_data fd;
+पूर्णांक hfsplus_create_attr(काष्ठा inode *inode,
+				स्थिर अक्षर *name,
+				स्थिर व्योम *value, माप_प्रकार size)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा hfs_find_data fd;
 	hfsplus_attr_entry *entry_ptr;
-	int entry_size;
-	int err;
+	पूर्णांक entry_size;
+	पूर्णांक err;
 
 	hfs_dbg(ATTR_MOD, "create_attr: %s,%ld\n",
-		name ? name : NULL, inode->i_ino);
+		name ? name : शून्य, inode->i_ino);
 
-	if (!HFSPLUS_SB(sb)->attr_tree) {
+	अगर (!HFSPLUS_SB(sb)->attr_tree) अणु
 		pr_err("attributes file doesn't exist\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	entry_ptr = hfsplus_alloc_attr_entry();
-	if (!entry_ptr)
-		return -ENOMEM;
+	अगर (!entry_ptr)
+		वापस -ENOMEM;
 
 	err = hfs_find_init(HFSPLUS_SB(sb)->attr_tree, &fd);
-	if (err)
-		goto failed_init_create_attr;
+	अगर (err)
+		जाओ failed_init_create_attr;
 
-	/* Fail early and avoid ENOSPC during the btree operation */
+	/* Fail early and aव्योम ENOSPC during the btree operation */
 	err = hfs_bmap_reserve(fd.tree, fd.tree->depth + 1);
-	if (err)
-		goto failed_create_attr;
+	अगर (err)
+		जाओ failed_create_attr;
 
-	if (name) {
+	अगर (name) अणु
 		err = hfsplus_attr_build_key(sb, fd.search_key,
 						inode->i_ino, name);
-		if (err)
-			goto failed_create_attr;
-	} else {
+		अगर (err)
+			जाओ failed_create_attr;
+	पूर्ण अन्यथा अणु
 		err = -EINVAL;
-		goto failed_create_attr;
-	}
+		जाओ failed_create_attr;
+	पूर्ण
 
-	/* Mac OS X supports only inline data attributes. */
+	/* Mac OS X supports only अंतरभूत data attributes. */
 	entry_size = hfsplus_attr_build_record(entry_ptr,
 					HFSPLUS_ATTR_INLINE_DATA,
 					inode->i_ino,
 					value, size);
-	if (entry_size == HFSPLUS_INVALID_ATTR_RECORD) {
+	अगर (entry_size == HFSPLUS_INVALID_ATTR_RECORD) अणु
 		err = -EINVAL;
-		goto failed_create_attr;
-	}
+		जाओ failed_create_attr;
+	पूर्ण
 
 	err = hfs_brec_find(&fd, hfs_find_rec_by_key);
-	if (err != -ENOENT) {
-		if (!err)
+	अगर (err != -ENOENT) अणु
+		अगर (!err)
 			err = -EEXIST;
-		goto failed_create_attr;
-	}
+		जाओ failed_create_attr;
+	पूर्ण
 
 	err = hfs_brec_insert(&fd, entry_ptr, entry_size);
-	if (err)
-		goto failed_create_attr;
+	अगर (err)
+		जाओ failed_create_attr;
 
-	hfsplus_mark_inode_dirty(inode, HFSPLUS_I_ATTR_DIRTY);
+	hfsplus_mark_inode_dirty(inode, HFSPLUS_I_ATTR_सूचीTY);
 
 failed_create_attr:
-	hfs_find_exit(&fd);
+	hfs_find_निकास(&fd);
 
 failed_init_create_attr:
 	hfsplus_destroy_attr_entry(entry_ptr);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __hfsplus_delete_attr(struct inode *inode, u32 cnid,
-					struct hfs_find_data *fd)
-{
-	int err = 0;
+अटल पूर्णांक __hfsplus_delete_attr(काष्ठा inode *inode, u32 cnid,
+					काष्ठा hfs_find_data *fd)
+अणु
+	पूर्णांक err = 0;
 	__be32 found_cnid, record_type;
 
-	hfs_bnode_read(fd->bnode, &found_cnid,
+	hfs_bnode_पढ़ो(fd->bnode, &found_cnid,
 			fd->keyoffset +
-			offsetof(struct hfsplus_attr_key, cnid),
-			sizeof(__be32));
-	if (cnid != be32_to_cpu(found_cnid))
-		return -ENOENT;
+			दुरत्व(काष्ठा hfsplus_attr_key, cnid),
+			माप(__be32));
+	अगर (cnid != be32_to_cpu(found_cnid))
+		वापस -ENOENT;
 
-	hfs_bnode_read(fd->bnode, &record_type,
-			fd->entryoffset, sizeof(record_type));
+	hfs_bnode_पढ़ो(fd->bnode, &record_type,
+			fd->entryoffset, माप(record_type));
 
-	switch (be32_to_cpu(record_type)) {
-	case HFSPLUS_ATTR_INLINE_DATA:
+	चयन (be32_to_cpu(record_type)) अणु
+	हाल HFSPLUS_ATTR_INLINE_DATA:
 		/* All is OK. Do nothing. */
-		break;
-	case HFSPLUS_ATTR_FORK_DATA:
-	case HFSPLUS_ATTR_EXTENTS:
+		अवरोध;
+	हाल HFSPLUS_ATTR_FORK_DATA:
+	हाल HFSPLUS_ATTR_EXTENTS:
 		pr_err("only inline data xattr are supported\n");
-		return -EOPNOTSUPP;
-	default:
+		वापस -EOPNOTSUPP;
+	शेष:
 		pr_err("invalid extended attribute record\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	/* Avoid btree corruption */
-	hfs_bnode_read(fd->bnode, fd->search_key,
+	/* Aव्योम btree corruption */
+	hfs_bnode_पढ़ो(fd->bnode, fd->search_key,
 			fd->keyoffset, fd->keylength);
 
-	err = hfs_brec_remove(fd);
-	if (err)
-		return err;
+	err = hfs_brec_हटाओ(fd);
+	अगर (err)
+		वापस err;
 
-	hfsplus_mark_inode_dirty(inode, HFSPLUS_I_ATTR_DIRTY);
-	return err;
-}
+	hfsplus_mark_inode_dirty(inode, HFSPLUS_I_ATTR_सूचीTY);
+	वापस err;
+पूर्ण
 
-int hfsplus_delete_attr(struct inode *inode, const char *name)
-{
-	int err = 0;
-	struct super_block *sb = inode->i_sb;
-	struct hfs_find_data fd;
+पूर्णांक hfsplus_delete_attr(काष्ठा inode *inode, स्थिर अक्षर *name)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा hfs_find_data fd;
 
 	hfs_dbg(ATTR_MOD, "delete_attr: %s,%ld\n",
-		name ? name : NULL, inode->i_ino);
+		name ? name : शून्य, inode->i_ino);
 
-	if (!HFSPLUS_SB(sb)->attr_tree) {
+	अगर (!HFSPLUS_SB(sb)->attr_tree) अणु
 		pr_err("attributes file doesn't exist\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = hfs_find_init(HFSPLUS_SB(sb)->attr_tree, &fd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* Fail early and avoid ENOSPC during the btree operation */
+	/* Fail early and aव्योम ENOSPC during the btree operation */
 	err = hfs_bmap_reserve(fd.tree, fd.tree->depth);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (name) {
+	अगर (name) अणु
 		err = hfsplus_attr_build_key(sb, fd.search_key,
 						inode->i_ino, name);
-		if (err)
-			goto out;
-	} else {
+		अगर (err)
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		pr_err("invalid extended attribute name\n");
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = hfs_brec_find(&fd, hfs_find_rec_by_key);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = __hfsplus_delete_attr(inode, inode->i_ino, &fd);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 out:
-	hfs_find_exit(&fd);
-	return err;
-}
+	hfs_find_निकास(&fd);
+	वापस err;
+पूर्ण
 
-int hfsplus_delete_all_attrs(struct inode *dir, u32 cnid)
-{
-	int err = 0;
-	struct hfs_find_data fd;
+पूर्णांक hfsplus_delete_all_attrs(काष्ठा inode *dir, u32 cnid)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा hfs_find_data fd;
 
 	hfs_dbg(ATTR_MOD, "delete_all_attrs: %d\n", cnid);
 
-	if (!HFSPLUS_SB(dir->i_sb)->attr_tree) {
+	अगर (!HFSPLUS_SB(dir->i_sb)->attr_tree) अणु
 		pr_err("attributes file doesn't exist\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = hfs_find_init(HFSPLUS_SB(dir->i_sb)->attr_tree, &fd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (;;) {
-		err = hfsplus_find_attr(dir->i_sb, cnid, NULL, &fd);
-		if (err) {
-			if (err != -ENOENT)
+	क्रम (;;) अणु
+		err = hfsplus_find_attr(dir->i_sb, cnid, शून्य, &fd);
+		अगर (err) अणु
+			अगर (err != -ENOENT)
 				pr_err("xattr search failed\n");
-			goto end_delete_all;
-		}
+			जाओ end_delete_all;
+		पूर्ण
 
 		err = __hfsplus_delete_attr(dir, cnid, &fd);
-		if (err)
-			goto end_delete_all;
-	}
+		अगर (err)
+			जाओ end_delete_all;
+	पूर्ण
 
 end_delete_all:
-	hfs_find_exit(&fd);
-	return err;
-}
+	hfs_find_निकास(&fd);
+	वापस err;
+पूर्ण

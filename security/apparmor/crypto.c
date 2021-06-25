@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AppArmor security module
  *
- * This file contains AppArmor policy loading interface function definitions.
+ * This file contains AppArmor policy loading पूर्णांकerface function definitions.
  *
  * Copyright 2013 Canonical Ltd.
  *
@@ -11,113 +12,113 @@
  * it should be.
  */
 
-#include <crypto/hash.h>
+#समावेश <crypto/hash.h>
 
-#include "include/apparmor.h"
-#include "include/crypto.h"
+#समावेश "include/apparmor.h"
+#समावेश "include/crypto.h"
 
-static unsigned int apparmor_hash_size;
+अटल अचिन्हित पूर्णांक apparmor_hash_size;
 
-static struct crypto_shash *apparmor_tfm;
+अटल काष्ठा crypto_shash *apparmor_tfm;
 
-unsigned int aa_hash_size(void)
-{
-	return apparmor_hash_size;
-}
+अचिन्हित पूर्णांक aa_hash_size(व्योम)
+अणु
+	वापस apparmor_hash_size;
+पूर्ण
 
-char *aa_calc_hash(void *data, size_t len)
-{
+अक्षर *aa_calc_hash(व्योम *data, माप_प्रकार len)
+अणु
 	SHASH_DESC_ON_STACK(desc, apparmor_tfm);
-	char *hash = NULL;
-	int error = -ENOMEM;
+	अक्षर *hash = शून्य;
+	पूर्णांक error = -ENOMEM;
 
-	if (!apparmor_tfm)
-		return NULL;
+	अगर (!apparmor_tfm)
+		वापस शून्य;
 
 	hash = kzalloc(apparmor_hash_size, GFP_KERNEL);
-	if (!hash)
-		goto fail;
+	अगर (!hash)
+		जाओ fail;
 
 	desc->tfm = apparmor_tfm;
 
 	error = crypto_shash_init(desc);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 	error = crypto_shash_update(desc, (u8 *) data, len);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 	error = crypto_shash_final(desc, hash);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 
-	return hash;
+	वापस hash;
 
 fail:
-	kfree(hash);
+	kमुक्त(hash);
 
-	return ERR_PTR(error);
-}
+	वापस ERR_PTR(error);
+पूर्ण
 
-int aa_calc_profile_hash(struct aa_profile *profile, u32 version, void *start,
-			 size_t len)
-{
+पूर्णांक aa_calc_profile_hash(काष्ठा aa_profile *profile, u32 version, व्योम *start,
+			 माप_प्रकार len)
+अणु
 	SHASH_DESC_ON_STACK(desc, apparmor_tfm);
-	int error = -ENOMEM;
+	पूर्णांक error = -ENOMEM;
 	__le32 le32_version = cpu_to_le32(version);
 
-	if (!aa_g_hash_policy)
-		return 0;
+	अगर (!aa_g_hash_policy)
+		वापस 0;
 
-	if (!apparmor_tfm)
-		return 0;
+	अगर (!apparmor_tfm)
+		वापस 0;
 
 	profile->hash = kzalloc(apparmor_hash_size, GFP_KERNEL);
-	if (!profile->hash)
-		goto fail;
+	अगर (!profile->hash)
+		जाओ fail;
 
 	desc->tfm = apparmor_tfm;
 
 	error = crypto_shash_init(desc);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 	error = crypto_shash_update(desc, (u8 *) &le32_version, 4);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 	error = crypto_shash_update(desc, (u8 *) start, len);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 	error = crypto_shash_final(desc, profile->hash);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 
-	return 0;
+	वापस 0;
 
 fail:
-	kfree(profile->hash);
-	profile->hash = NULL;
+	kमुक्त(profile->hash);
+	profile->hash = शून्य;
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int __init init_profile_hash(void)
-{
-	struct crypto_shash *tfm;
+अटल पूर्णांक __init init_profile_hash(व्योम)
+अणु
+	काष्ठा crypto_shash *tfm;
 
-	if (!apparmor_initialized)
-		return 0;
+	अगर (!apparmor_initialized)
+		वापस 0;
 
 	tfm = crypto_alloc_shash("sha1", 0, 0);
-	if (IS_ERR(tfm)) {
-		int error = PTR_ERR(tfm);
+	अगर (IS_ERR(tfm)) अणु
+		पूर्णांक error = PTR_ERR(tfm);
 		AA_ERROR("failed to setup profile sha1 hashing: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 	apparmor_tfm = tfm;
 	apparmor_hash_size = crypto_shash_digestsize(apparmor_tfm);
 
 	aa_info_message("AppArmor sha1 policy hashing enabled");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 late_initcall(init_profile_hash);

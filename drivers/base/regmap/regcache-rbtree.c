@@ -1,554 +1,555 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Register cache access API - rbtree caching support
 //
 // Copyright 2011 Wolfson Microelectronics plc
 //
-// Author: Dimitris Papastamos <dp@opensource.wolfsonmicro.com>
+// Author: Dimitris Papastamos <dp@खोलोsource.wolfsonmicro.com>
 
-#include <linux/debugfs.h>
-#include <linux/device.h>
-#include <linux/rbtree.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/device.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static int regcache_rbtree_write(struct regmap *map, unsigned int reg,
-				 unsigned int value);
-static int regcache_rbtree_exit(struct regmap *map);
+अटल पूर्णांक regcache_rbtree_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
+				 अचिन्हित पूर्णांक value);
+अटल पूर्णांक regcache_rbtree_निकास(काष्ठा regmap *map);
 
-struct regcache_rbtree_node {
-	/* block of adjacent registers */
-	void *block;
-	/* Which registers are present */
-	long *cache_present;
-	/* base register handled by this block */
-	unsigned int base_reg;
-	/* number of registers available in the block */
-	unsigned int blklen;
+काष्ठा regcache_rbtree_node अणु
+	/* block of adjacent रेजिस्टरs */
+	व्योम *block;
+	/* Which रेजिस्टरs are present */
+	दीर्घ *cache_present;
+	/* base रेजिस्टर handled by this block */
+	अचिन्हित पूर्णांक base_reg;
+	/* number of रेजिस्टरs available in the block */
+	अचिन्हित पूर्णांक blklen;
 	/* the actual rbtree node holding this block */
-	struct rb_node node;
-};
+	काष्ठा rb_node node;
+पूर्ण;
 
-struct regcache_rbtree_ctx {
-	struct rb_root root;
-	struct regcache_rbtree_node *cached_rbnode;
-};
+काष्ठा regcache_rbtree_ctx अणु
+	काष्ठा rb_root root;
+	काष्ठा regcache_rbtree_node *cached_rbnode;
+पूर्ण;
 
-static inline void regcache_rbtree_get_base_top_reg(
-	struct regmap *map,
-	struct regcache_rbtree_node *rbnode,
-	unsigned int *base, unsigned int *top)
-{
+अटल अंतरभूत व्योम regcache_rbtree_get_base_top_reg(
+	काष्ठा regmap *map,
+	काष्ठा regcache_rbtree_node *rbnode,
+	अचिन्हित पूर्णांक *base, अचिन्हित पूर्णांक *top)
+अणु
 	*base = rbnode->base_reg;
 	*top = rbnode->base_reg + ((rbnode->blklen - 1) * map->reg_stride);
-}
+पूर्ण
 
-static unsigned int regcache_rbtree_get_register(struct regmap *map,
-	struct regcache_rbtree_node *rbnode, unsigned int idx)
-{
-	return regcache_get_val(map, rbnode->block, idx);
-}
+अटल अचिन्हित पूर्णांक regcache_rbtree_get_रेजिस्टर(काष्ठा regmap *map,
+	काष्ठा regcache_rbtree_node *rbnode, अचिन्हित पूर्णांक idx)
+अणु
+	वापस regcache_get_val(map, rbnode->block, idx);
+पूर्ण
 
-static void regcache_rbtree_set_register(struct regmap *map,
-					 struct regcache_rbtree_node *rbnode,
-					 unsigned int idx, unsigned int val)
-{
+अटल व्योम regcache_rbtree_set_रेजिस्टर(काष्ठा regmap *map,
+					 काष्ठा regcache_rbtree_node *rbnode,
+					 अचिन्हित पूर्णांक idx, अचिन्हित पूर्णांक val)
+अणु
 	set_bit(idx, rbnode->cache_present);
 	regcache_set_val(map, rbnode->block, idx, val);
-}
+पूर्ण
 
-static struct regcache_rbtree_node *regcache_rbtree_lookup(struct regmap *map,
-							   unsigned int reg)
-{
-	struct regcache_rbtree_ctx *rbtree_ctx = map->cache;
-	struct rb_node *node;
-	struct regcache_rbtree_node *rbnode;
-	unsigned int base_reg, top_reg;
+अटल काष्ठा regcache_rbtree_node *regcache_rbtree_lookup(काष्ठा regmap *map,
+							   अचिन्हित पूर्णांक reg)
+अणु
+	काष्ठा regcache_rbtree_ctx *rbtree_ctx = map->cache;
+	काष्ठा rb_node *node;
+	काष्ठा regcache_rbtree_node *rbnode;
+	अचिन्हित पूर्णांक base_reg, top_reg;
 
 	rbnode = rbtree_ctx->cached_rbnode;
-	if (rbnode) {
+	अगर (rbnode) अणु
 		regcache_rbtree_get_base_top_reg(map, rbnode, &base_reg,
 						 &top_reg);
-		if (reg >= base_reg && reg <= top_reg)
-			return rbnode;
-	}
+		अगर (reg >= base_reg && reg <= top_reg)
+			वापस rbnode;
+	पूर्ण
 
 	node = rbtree_ctx->root.rb_node;
-	while (node) {
-		rbnode = rb_entry(node, struct regcache_rbtree_node, node);
+	जबतक (node) अणु
+		rbnode = rb_entry(node, काष्ठा regcache_rbtree_node, node);
 		regcache_rbtree_get_base_top_reg(map, rbnode, &base_reg,
 						 &top_reg);
-		if (reg >= base_reg && reg <= top_reg) {
+		अगर (reg >= base_reg && reg <= top_reg) अणु
 			rbtree_ctx->cached_rbnode = rbnode;
-			return rbnode;
-		} else if (reg > top_reg) {
+			वापस rbnode;
+		पूर्ण अन्यथा अगर (reg > top_reg) अणु
 			node = node->rb_right;
-		} else if (reg < base_reg) {
+		पूर्ण अन्यथा अगर (reg < base_reg) अणु
 			node = node->rb_left;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int regcache_rbtree_insert(struct regmap *map, struct rb_root *root,
-				  struct regcache_rbtree_node *rbnode)
-{
-	struct rb_node **new, *parent;
-	struct regcache_rbtree_node *rbnode_tmp;
-	unsigned int base_reg_tmp, top_reg_tmp;
-	unsigned int base_reg;
+अटल पूर्णांक regcache_rbtree_insert(काष्ठा regmap *map, काष्ठा rb_root *root,
+				  काष्ठा regcache_rbtree_node *rbnode)
+अणु
+	काष्ठा rb_node **new, *parent;
+	काष्ठा regcache_rbtree_node *rbnode_पंचांगp;
+	अचिन्हित पूर्णांक base_reg_पंचांगp, top_reg_पंचांगp;
+	अचिन्हित पूर्णांक base_reg;
 
-	parent = NULL;
+	parent = शून्य;
 	new = &root->rb_node;
-	while (*new) {
-		rbnode_tmp = rb_entry(*new, struct regcache_rbtree_node, node);
-		/* base and top registers of the current rbnode */
-		regcache_rbtree_get_base_top_reg(map, rbnode_tmp, &base_reg_tmp,
-						 &top_reg_tmp);
-		/* base register of the rbnode to be added */
+	जबतक (*new) अणु
+		rbnode_पंचांगp = rb_entry(*new, काष्ठा regcache_rbtree_node, node);
+		/* base and top रेजिस्टरs of the current rbnode */
+		regcache_rbtree_get_base_top_reg(map, rbnode_पंचांगp, &base_reg_पंचांगp,
+						 &top_reg_पंचांगp);
+		/* base रेजिस्टर of the rbnode to be added */
 		base_reg = rbnode->base_reg;
 		parent = *new;
-		/* if this register has already been inserted, just return */
-		if (base_reg >= base_reg_tmp &&
-		    base_reg <= top_reg_tmp)
-			return 0;
-		else if (base_reg > top_reg_tmp)
+		/* अगर this रेजिस्टर has alपढ़ोy been inserted, just वापस */
+		अगर (base_reg >= base_reg_पंचांगp &&
+		    base_reg <= top_reg_पंचांगp)
+			वापस 0;
+		अन्यथा अगर (base_reg > top_reg_पंचांगp)
 			new = &((*new)->rb_right);
-		else if (base_reg < base_reg_tmp)
+		अन्यथा अगर (base_reg < base_reg_पंचांगp)
 			new = &((*new)->rb_left);
-	}
+	पूर्ण
 
-	/* insert the node into the rbtree */
+	/* insert the node पूर्णांकo the rbtree */
 	rb_link_node(&rbnode->node, parent, new);
 	rb_insert_color(&rbnode->node, root);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-static int rbtree_show(struct seq_file *s, void *ignored)
-{
-	struct regmap *map = s->private;
-	struct regcache_rbtree_ctx *rbtree_ctx = map->cache;
-	struct regcache_rbtree_node *n;
-	struct rb_node *node;
-	unsigned int base, top;
-	size_t mem_size;
-	int nodes = 0;
-	int registers = 0;
-	int this_registers, average;
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल पूर्णांक rbtree_show(काष्ठा seq_file *s, व्योम *ignored)
+अणु
+	काष्ठा regmap *map = s->निजी;
+	काष्ठा regcache_rbtree_ctx *rbtree_ctx = map->cache;
+	काष्ठा regcache_rbtree_node *n;
+	काष्ठा rb_node *node;
+	अचिन्हित पूर्णांक base, top;
+	माप_प्रकार mem_size;
+	पूर्णांक nodes = 0;
+	पूर्णांक रेजिस्टरs = 0;
+	पूर्णांक this_रेजिस्टरs, average;
 
 	map->lock(map->lock_arg);
 
-	mem_size = sizeof(*rbtree_ctx);
+	mem_size = माप(*rbtree_ctx);
 
-	for (node = rb_first(&rbtree_ctx->root); node != NULL;
-	     node = rb_next(node)) {
-		n = rb_entry(node, struct regcache_rbtree_node, node);
-		mem_size += sizeof(*n);
+	क्रम (node = rb_first(&rbtree_ctx->root); node != शून्य;
+	     node = rb_next(node)) अणु
+		n = rb_entry(node, काष्ठा regcache_rbtree_node, node);
+		mem_size += माप(*n);
 		mem_size += (n->blklen * map->cache_word_size);
-		mem_size += BITS_TO_LONGS(n->blklen) * sizeof(long);
+		mem_size += BITS_TO_LONGS(n->blklen) * माप(दीर्घ);
 
 		regcache_rbtree_get_base_top_reg(map, n, &base, &top);
-		this_registers = ((top - base) / map->reg_stride) + 1;
-		seq_printf(s, "%x-%x (%d)\n", base, top, this_registers);
+		this_रेजिस्टरs = ((top - base) / map->reg_stride) + 1;
+		seq_म_लिखो(s, "%x-%x (%d)\n", base, top, this_रेजिस्टरs);
 
 		nodes++;
-		registers += this_registers;
-	}
+		रेजिस्टरs += this_रेजिस्टरs;
+	पूर्ण
 
-	if (nodes)
-		average = registers / nodes;
-	else
+	अगर (nodes)
+		average = रेजिस्टरs / nodes;
+	अन्यथा
 		average = 0;
 
-	seq_printf(s, "%d nodes, %d registers, average %d registers, used %zu bytes\n",
-		   nodes, registers, average, mem_size);
+	seq_म_लिखो(s, "%d nodes, %d registers, average %d registers, used %zu bytes\n",
+		   nodes, रेजिस्टरs, average, mem_size);
 
 	map->unlock(map->lock_arg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(rbtree);
 
-static void rbtree_debugfs_init(struct regmap *map)
-{
+अटल व्योम rbtree_debugfs_init(काष्ठा regmap *map)
+अणु
 	debugfs_create_file("rbtree", 0400, map->debugfs, map, &rbtree_fops);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int regcache_rbtree_init(struct regmap *map)
-{
-	struct regcache_rbtree_ctx *rbtree_ctx;
-	int i;
-	int ret;
+अटल पूर्णांक regcache_rbtree_init(काष्ठा regmap *map)
+अणु
+	काष्ठा regcache_rbtree_ctx *rbtree_ctx;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	map->cache = kmalloc(sizeof *rbtree_ctx, GFP_KERNEL);
-	if (!map->cache)
-		return -ENOMEM;
+	map->cache = kदो_स्मृति(माप *rbtree_ctx, GFP_KERNEL);
+	अगर (!map->cache)
+		वापस -ENOMEM;
 
 	rbtree_ctx = map->cache;
 	rbtree_ctx->root = RB_ROOT;
-	rbtree_ctx->cached_rbnode = NULL;
+	rbtree_ctx->cached_rbnode = शून्य;
 
-	for (i = 0; i < map->num_reg_defaults; i++) {
-		ret = regcache_rbtree_write(map,
-					    map->reg_defaults[i].reg,
-					    map->reg_defaults[i].def);
-		if (ret)
-			goto err;
-	}
+	क्रम (i = 0; i < map->num_reg_शेषs; i++) अणु
+		ret = regcache_rbtree_ग_लिखो(map,
+					    map->reg_शेषs[i].reg,
+					    map->reg_शेषs[i].def);
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	regcache_rbtree_exit(map);
-	return ret;
-}
+	regcache_rbtree_निकास(map);
+	वापस ret;
+पूर्ण
 
-static int regcache_rbtree_exit(struct regmap *map)
-{
-	struct rb_node *next;
-	struct regcache_rbtree_ctx *rbtree_ctx;
-	struct regcache_rbtree_node *rbtree_node;
+अटल पूर्णांक regcache_rbtree_निकास(काष्ठा regmap *map)
+अणु
+	काष्ठा rb_node *next;
+	काष्ठा regcache_rbtree_ctx *rbtree_ctx;
+	काष्ठा regcache_rbtree_node *rbtree_node;
 
-	/* if we've already been called then just return */
+	/* अगर we've alपढ़ोy been called then just वापस */
 	rbtree_ctx = map->cache;
-	if (!rbtree_ctx)
-		return 0;
+	अगर (!rbtree_ctx)
+		वापस 0;
 
-	/* free up the rbtree */
+	/* मुक्त up the rbtree */
 	next = rb_first(&rbtree_ctx->root);
-	while (next) {
-		rbtree_node = rb_entry(next, struct regcache_rbtree_node, node);
+	जबतक (next) अणु
+		rbtree_node = rb_entry(next, काष्ठा regcache_rbtree_node, node);
 		next = rb_next(&rbtree_node->node);
 		rb_erase(&rbtree_node->node, &rbtree_ctx->root);
-		kfree(rbtree_node->cache_present);
-		kfree(rbtree_node->block);
-		kfree(rbtree_node);
-	}
+		kमुक्त(rbtree_node->cache_present);
+		kमुक्त(rbtree_node->block);
+		kमुक्त(rbtree_node);
+	पूर्ण
 
 	/* release the resources */
-	kfree(map->cache);
-	map->cache = NULL;
+	kमुक्त(map->cache);
+	map->cache = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int regcache_rbtree_read(struct regmap *map,
-				unsigned int reg, unsigned int *value)
-{
-	struct regcache_rbtree_node *rbnode;
-	unsigned int reg_tmp;
+अटल पूर्णांक regcache_rbtree_पढ़ो(काष्ठा regmap *map,
+				अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *value)
+अणु
+	काष्ठा regcache_rbtree_node *rbnode;
+	अचिन्हित पूर्णांक reg_पंचांगp;
 
 	rbnode = regcache_rbtree_lookup(map, reg);
-	if (rbnode) {
-		reg_tmp = (reg - rbnode->base_reg) / map->reg_stride;
-		if (!test_bit(reg_tmp, rbnode->cache_present))
-			return -ENOENT;
-		*value = regcache_rbtree_get_register(map, rbnode, reg_tmp);
-	} else {
-		return -ENOENT;
-	}
+	अगर (rbnode) अणु
+		reg_पंचांगp = (reg - rbnode->base_reg) / map->reg_stride;
+		अगर (!test_bit(reg_पंचांगp, rbnode->cache_present))
+			वापस -ENOENT;
+		*value = regcache_rbtree_get_रेजिस्टर(map, rbnode, reg_पंचांगp);
+	पूर्ण अन्यथा अणु
+		वापस -ENOENT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int regcache_rbtree_insert_to_block(struct regmap *map,
-					   struct regcache_rbtree_node *rbnode,
-					   unsigned int base_reg,
-					   unsigned int top_reg,
-					   unsigned int reg,
-					   unsigned int value)
-{
-	unsigned int blklen;
-	unsigned int pos, offset;
-	unsigned long *present;
+अटल पूर्णांक regcache_rbtree_insert_to_block(काष्ठा regmap *map,
+					   काष्ठा regcache_rbtree_node *rbnode,
+					   अचिन्हित पूर्णांक base_reg,
+					   अचिन्हित पूर्णांक top_reg,
+					   अचिन्हित पूर्णांक reg,
+					   अचिन्हित पूर्णांक value)
+अणु
+	अचिन्हित पूर्णांक blklen;
+	अचिन्हित पूर्णांक pos, offset;
+	अचिन्हित दीर्घ *present;
 	u8 *blk;
 
 	blklen = (top_reg - base_reg) / map->reg_stride + 1;
 	pos = (reg - base_reg) / map->reg_stride;
 	offset = (rbnode->base_reg - base_reg) / map->reg_stride;
 
-	blk = krealloc(rbnode->block,
+	blk = kपुनः_स्मृति(rbnode->block,
 		       blklen * map->cache_word_size,
 		       GFP_KERNEL);
-	if (!blk)
-		return -ENOMEM;
+	अगर (!blk)
+		वापस -ENOMEM;
 
-	if (BITS_TO_LONGS(blklen) > BITS_TO_LONGS(rbnode->blklen)) {
-		present = krealloc(rbnode->cache_present,
-				   BITS_TO_LONGS(blklen) * sizeof(*present),
+	अगर (BITS_TO_LONGS(blklen) > BITS_TO_LONGS(rbnode->blklen)) अणु
+		present = kपुनः_स्मृति(rbnode->cache_present,
+				   BITS_TO_LONGS(blklen) * माप(*present),
 				   GFP_KERNEL);
-		if (!present) {
-			kfree(blk);
-			return -ENOMEM;
-		}
+		अगर (!present) अणु
+			kमुक्त(blk);
+			वापस -ENOMEM;
+		पूर्ण
 
-		memset(present + BITS_TO_LONGS(rbnode->blklen), 0,
+		स_रखो(present + BITS_TO_LONGS(rbnode->blklen), 0,
 		       (BITS_TO_LONGS(blklen) - BITS_TO_LONGS(rbnode->blklen))
-		       * sizeof(*present));
-	} else {
+		       * माप(*present));
+	पूर्ण अन्यथा अणु
 		present = rbnode->cache_present;
-	}
+	पूर्ण
 
-	/* insert the register value in the correct place in the rbnode block */
-	if (pos == 0) {
-		memmove(blk + offset * map->cache_word_size,
+	/* insert the रेजिस्टर value in the correct place in the rbnode block */
+	अगर (pos == 0) अणु
+		स_हटाओ(blk + offset * map->cache_word_size,
 			blk, rbnode->blklen * map->cache_word_size);
-		bitmap_shift_left(present, present, offset, blklen);
-	}
+		biपंचांगap_shअगरt_left(present, present, offset, blklen);
+	पूर्ण
 
-	/* update the rbnode block, its size and the base register */
+	/* update the rbnode block, its size and the base रेजिस्टर */
 	rbnode->block = blk;
 	rbnode->blklen = blklen;
 	rbnode->base_reg = base_reg;
 	rbnode->cache_present = present;
 
-	regcache_rbtree_set_register(map, rbnode, pos, value);
-	return 0;
-}
+	regcache_rbtree_set_रेजिस्टर(map, rbnode, pos, value);
+	वापस 0;
+पूर्ण
 
-static struct regcache_rbtree_node *
-regcache_rbtree_node_alloc(struct regmap *map, unsigned int reg)
-{
-	struct regcache_rbtree_node *rbnode;
-	const struct regmap_range *range;
-	int i;
+अटल काष्ठा regcache_rbtree_node *
+regcache_rbtree_node_alloc(काष्ठा regmap *map, अचिन्हित पूर्णांक reg)
+अणु
+	काष्ठा regcache_rbtree_node *rbnode;
+	स्थिर काष्ठा regmap_range *range;
+	पूर्णांक i;
 
-	rbnode = kzalloc(sizeof(*rbnode), GFP_KERNEL);
-	if (!rbnode)
-		return NULL;
+	rbnode = kzalloc(माप(*rbnode), GFP_KERNEL);
+	अगर (!rbnode)
+		वापस शून्य;
 
-	/* If there is a read table then use it to guess at an allocation */
-	if (map->rd_table) {
-		for (i = 0; i < map->rd_table->n_yes_ranges; i++) {
-			if (regmap_reg_in_range(reg,
+	/* If there is a पढ़ो table then use it to guess at an allocation */
+	अगर (map->rd_table) अणु
+		क्रम (i = 0; i < map->rd_table->n_yes_ranges; i++) अणु
+			अगर (regmap_reg_in_range(reg,
 						&map->rd_table->yes_ranges[i]))
-				break;
-		}
+				अवरोध;
+		पूर्ण
 
-		if (i != map->rd_table->n_yes_ranges) {
+		अगर (i != map->rd_table->n_yes_ranges) अणु
 			range = &map->rd_table->yes_ranges[i];
 			rbnode->blklen = (range->range_max - range->range_min) /
 				map->reg_stride	+ 1;
 			rbnode->base_reg = range->range_min;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!rbnode->blklen) {
+	अगर (!rbnode->blklen) अणु
 		rbnode->blklen = 1;
 		rbnode->base_reg = reg;
-	}
+	पूर्ण
 
-	rbnode->block = kmalloc_array(rbnode->blklen, map->cache_word_size,
+	rbnode->block = kदो_स्मृति_array(rbnode->blklen, map->cache_word_size,
 				      GFP_KERNEL);
-	if (!rbnode->block)
-		goto err_free;
+	अगर (!rbnode->block)
+		जाओ err_मुक्त;
 
-	rbnode->cache_present = kcalloc(BITS_TO_LONGS(rbnode->blklen),
-					sizeof(*rbnode->cache_present),
+	rbnode->cache_present = kसुस्मृति(BITS_TO_LONGS(rbnode->blklen),
+					माप(*rbnode->cache_present),
 					GFP_KERNEL);
-	if (!rbnode->cache_present)
-		goto err_free_block;
+	अगर (!rbnode->cache_present)
+		जाओ err_मुक्त_block;
 
-	return rbnode;
+	वापस rbnode;
 
-err_free_block:
-	kfree(rbnode->block);
-err_free:
-	kfree(rbnode);
-	return NULL;
-}
+err_मुक्त_block:
+	kमुक्त(rbnode->block);
+err_मुक्त:
+	kमुक्त(rbnode);
+	वापस शून्य;
+पूर्ण
 
-static int regcache_rbtree_write(struct regmap *map, unsigned int reg,
-				 unsigned int value)
-{
-	struct regcache_rbtree_ctx *rbtree_ctx;
-	struct regcache_rbtree_node *rbnode, *rbnode_tmp;
-	struct rb_node *node;
-	unsigned int reg_tmp;
-	int ret;
+अटल पूर्णांक regcache_rbtree_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
+				 अचिन्हित पूर्णांक value)
+अणु
+	काष्ठा regcache_rbtree_ctx *rbtree_ctx;
+	काष्ठा regcache_rbtree_node *rbnode, *rbnode_पंचांगp;
+	काष्ठा rb_node *node;
+	अचिन्हित पूर्णांक reg_पंचांगp;
+	पूर्णांक ret;
 
 	rbtree_ctx = map->cache;
 
-	/* if we can't locate it in the cached rbnode we'll have
-	 * to traverse the rbtree looking for it.
+	/* अगर we can't locate it in the cached rbnode we'll have
+	 * to traverse the rbtree looking क्रम it.
 	 */
 	rbnode = regcache_rbtree_lookup(map, reg);
-	if (rbnode) {
-		reg_tmp = (reg - rbnode->base_reg) / map->reg_stride;
-		regcache_rbtree_set_register(map, rbnode, reg_tmp, value);
-	} else {
-		unsigned int base_reg, top_reg;
-		unsigned int new_base_reg, new_top_reg;
-		unsigned int min, max;
-		unsigned int max_dist;
-		unsigned int dist, best_dist = UINT_MAX;
+	अगर (rbnode) अणु
+		reg_पंचांगp = (reg - rbnode->base_reg) / map->reg_stride;
+		regcache_rbtree_set_रेजिस्टर(map, rbnode, reg_पंचांगp, value);
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक base_reg, top_reg;
+		अचिन्हित पूर्णांक new_base_reg, new_top_reg;
+		अचिन्हित पूर्णांक min, max;
+		अचिन्हित पूर्णांक max_dist;
+		अचिन्हित पूर्णांक dist, best_dist = अच_पूर्णांक_उच्च;
 
-		max_dist = map->reg_stride * sizeof(*rbnode_tmp) /
+		max_dist = map->reg_stride * माप(*rbnode_पंचांगp) /
 			map->cache_word_size;
-		if (reg < max_dist)
+		अगर (reg < max_dist)
 			min = 0;
-		else
+		अन्यथा
 			min = reg - max_dist;
 		max = reg + max_dist;
 
-		/* look for an adjacent register to the one we are about to add */
+		/* look क्रम an adjacent रेजिस्टर to the one we are about to add */
 		node = rbtree_ctx->root.rb_node;
-		while (node) {
-			rbnode_tmp = rb_entry(node, struct regcache_rbtree_node,
+		जबतक (node) अणु
+			rbnode_पंचांगp = rb_entry(node, काष्ठा regcache_rbtree_node,
 					      node);
 
-			regcache_rbtree_get_base_top_reg(map, rbnode_tmp,
+			regcache_rbtree_get_base_top_reg(map, rbnode_पंचांगp,
 				&base_reg, &top_reg);
 
-			if (base_reg <= max && top_reg >= min) {
-				if (reg < base_reg)
+			अगर (base_reg <= max && top_reg >= min) अणु
+				अगर (reg < base_reg)
 					dist = base_reg - reg;
-				else if (reg > top_reg)
+				अन्यथा अगर (reg > top_reg)
 					dist = reg - top_reg;
-				else
+				अन्यथा
 					dist = 0;
-				if (dist < best_dist) {
-					rbnode = rbnode_tmp;
+				अगर (dist < best_dist) अणु
+					rbnode = rbnode_पंचांगp;
 					best_dist = dist;
 					new_base_reg = min(reg, base_reg);
 					new_top_reg = max(reg, top_reg);
-				}
-			}
+				पूर्ण
+			पूर्ण
 
 			/*
-			 * Keep looking, we want to choose the closest block,
+			 * Keep looking, we want to choose the बंदst block,
 			 * otherwise we might end up creating overlapping
-			 * blocks, which breaks the rbtree.
+			 * blocks, which अवरोधs the rbtree.
 			 */
-			if (reg < base_reg)
+			अगर (reg < base_reg)
 				node = node->rb_left;
-			else if (reg > top_reg)
+			अन्यथा अगर (reg > top_reg)
 				node = node->rb_right;
-			else
-				break;
-		}
+			अन्यथा
+				अवरोध;
+		पूर्ण
 
-		if (rbnode) {
+		अगर (rbnode) अणु
 			ret = regcache_rbtree_insert_to_block(map, rbnode,
 							      new_base_reg,
 							      new_top_reg, reg,
 							      value);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 			rbtree_ctx->cached_rbnode = rbnode;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/* We did not manage to find a place to insert it in
 		 * an existing block so create a new rbnode.
 		 */
 		rbnode = regcache_rbtree_node_alloc(map, reg);
-		if (!rbnode)
-			return -ENOMEM;
-		regcache_rbtree_set_register(map, rbnode,
+		अगर (!rbnode)
+			वापस -ENOMEM;
+		regcache_rbtree_set_रेजिस्टर(map, rbnode,
 					     reg - rbnode->base_reg, value);
 		regcache_rbtree_insert(map, &rbtree_ctx->root, rbnode);
 		rbtree_ctx->cached_rbnode = rbnode;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int regcache_rbtree_sync(struct regmap *map, unsigned int min,
-				unsigned int max)
-{
-	struct regcache_rbtree_ctx *rbtree_ctx;
-	struct rb_node *node;
-	struct regcache_rbtree_node *rbnode;
-	unsigned int base_reg, top_reg;
-	unsigned int start, end;
-	int ret;
+अटल पूर्णांक regcache_rbtree_sync(काष्ठा regmap *map, अचिन्हित पूर्णांक min,
+				अचिन्हित पूर्णांक max)
+अणु
+	काष्ठा regcache_rbtree_ctx *rbtree_ctx;
+	काष्ठा rb_node *node;
+	काष्ठा regcache_rbtree_node *rbnode;
+	अचिन्हित पूर्णांक base_reg, top_reg;
+	अचिन्हित पूर्णांक start, end;
+	पूर्णांक ret;
 
 	rbtree_ctx = map->cache;
-	for (node = rb_first(&rbtree_ctx->root); node; node = rb_next(node)) {
-		rbnode = rb_entry(node, struct regcache_rbtree_node, node);
+	क्रम (node = rb_first(&rbtree_ctx->root); node; node = rb_next(node)) अणु
+		rbnode = rb_entry(node, काष्ठा regcache_rbtree_node, node);
 
 		regcache_rbtree_get_base_top_reg(map, rbnode, &base_reg,
 			&top_reg);
-		if (base_reg > max)
-			break;
-		if (top_reg < min)
-			continue;
+		अगर (base_reg > max)
+			अवरोध;
+		अगर (top_reg < min)
+			जारी;
 
-		if (min > base_reg)
+		अगर (min > base_reg)
 			start = (min - base_reg) / map->reg_stride;
-		else
+		अन्यथा
 			start = 0;
 
-		if (max < top_reg)
+		अगर (max < top_reg)
 			end = (max - base_reg) / map->reg_stride + 1;
-		else
+		अन्यथा
 			end = rbnode->blklen;
 
 		ret = regcache_sync_block(map, rbnode->block,
 					  rbnode->cache_present,
 					  rbnode->base_reg, start, end);
-		if (ret != 0)
-			return ret;
-	}
+		अगर (ret != 0)
+			वापस ret;
+	पूर्ण
 
-	return regmap_async_complete(map);
-}
+	वापस regmap_async_complete(map);
+पूर्ण
 
-static int regcache_rbtree_drop(struct regmap *map, unsigned int min,
-				unsigned int max)
-{
-	struct regcache_rbtree_ctx *rbtree_ctx;
-	struct regcache_rbtree_node *rbnode;
-	struct rb_node *node;
-	unsigned int base_reg, top_reg;
-	unsigned int start, end;
+अटल पूर्णांक regcache_rbtree_drop(काष्ठा regmap *map, अचिन्हित पूर्णांक min,
+				अचिन्हित पूर्णांक max)
+अणु
+	काष्ठा regcache_rbtree_ctx *rbtree_ctx;
+	काष्ठा regcache_rbtree_node *rbnode;
+	काष्ठा rb_node *node;
+	अचिन्हित पूर्णांक base_reg, top_reg;
+	अचिन्हित पूर्णांक start, end;
 
 	rbtree_ctx = map->cache;
-	for (node = rb_first(&rbtree_ctx->root); node; node = rb_next(node)) {
-		rbnode = rb_entry(node, struct regcache_rbtree_node, node);
+	क्रम (node = rb_first(&rbtree_ctx->root); node; node = rb_next(node)) अणु
+		rbnode = rb_entry(node, काष्ठा regcache_rbtree_node, node);
 
 		regcache_rbtree_get_base_top_reg(map, rbnode, &base_reg,
 			&top_reg);
-		if (base_reg > max)
-			break;
-		if (top_reg < min)
-			continue;
+		अगर (base_reg > max)
+			अवरोध;
+		अगर (top_reg < min)
+			जारी;
 
-		if (min > base_reg)
+		अगर (min > base_reg)
 			start = (min - base_reg) / map->reg_stride;
-		else
+		अन्यथा
 			start = 0;
 
-		if (max < top_reg)
+		अगर (max < top_reg)
 			end = (max - base_reg) / map->reg_stride + 1;
-		else
+		अन्यथा
 			end = rbnode->blklen;
 
-		bitmap_clear(rbnode->cache_present, start, end - start);
-	}
+		biपंचांगap_clear(rbnode->cache_present, start, end - start);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct regcache_ops regcache_rbtree_ops = {
+काष्ठा regcache_ops regcache_rbtree_ops = अणु
 	.type = REGCACHE_RBTREE,
 	.name = "rbtree",
 	.init = regcache_rbtree_init,
-	.exit = regcache_rbtree_exit,
-#ifdef CONFIG_DEBUG_FS
+	.निकास = regcache_rbtree_निकास,
+#अगर_घोषित CONFIG_DEBUG_FS
 	.debugfs_init = rbtree_debugfs_init,
-#endif
-	.read = regcache_rbtree_read,
-	.write = regcache_rbtree_write,
+#पूर्ण_अगर
+	.पढ़ो = regcache_rbtree_पढ़ो,
+	.ग_लिखो = regcache_rbtree_ग_लिखो,
 	.sync = regcache_rbtree_sync,
 	.drop = regcache_rbtree_drop,
-};
+पूर्ण;

@@ -1,168 +1,169 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*  Marvell OcteonTx2 RVU Admin Function driver
  *
  * Copyright (C) 2018 Marvell International Ltd.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 
-#ifndef NPC_PROFILE_H
-#define NPC_PROFILE_H
+#अगर_अघोषित NPC_PROखाता_H
+#घोषणा NPC_PROखाता_H
 
-#define NPC_KPU_PROFILE_VER    0x0000000100050000
+#घोषणा NPC_KPU_PROखाता_VER    0x0000000100050000
 
-#define NPC_IH_W		0x8000
-#define NPC_IH_UTAG		0x2000
+#घोषणा NPC_IH_W		0x8000
+#घोषणा NPC_IH_UTAG		0x2000
 
-#define NPC_ETYPE_IP		0x0800
-#define NPC_ETYPE_IP6		0x86dd
-#define NPC_ETYPE_ARP		0x0806
-#define NPC_ETYPE_RARP		0x8035
-#define NPC_ETYPE_MPLSU		0x8847
-#define NPC_ETYPE_MPLSM		0x8848
-#define NPC_ETYPE_ETAG		0x893f
-#define NPC_ETYPE_CTAG		0x8100
-#define NPC_ETYPE_SBTAG		0x88a8
-#define NPC_ETYPE_ITAG		0x88e7
-#define NPC_ETYPE_PTP		0x88f7
-#define NPC_ETYPE_FCOE		0x8906
-#define NPC_ETYPE_QINQ		0x9100
-#define NPC_ETYPE_TRANS_ETH_BR	0x6558
-#define NPC_ETYPE_PPP		0x880b
-#define NPC_ETYPE_NSH		0x894f
-#define NPC_ETYPE_DSA		0xdada
+#घोषणा NPC_ETYPE_IP		0x0800
+#घोषणा NPC_ETYPE_IP6		0x86dd
+#घोषणा NPC_ETYPE_ARP		0x0806
+#घोषणा NPC_ETYPE_RARP		0x8035
+#घोषणा NPC_ETYPE_MPLSU		0x8847
+#घोषणा NPC_ETYPE_MPLSM		0x8848
+#घोषणा NPC_ETYPE_ETAG		0x893f
+#घोषणा NPC_ETYPE_CTAG		0x8100
+#घोषणा NPC_ETYPE_SBTAG		0x88a8
+#घोषणा NPC_ETYPE_ITAG		0x88e7
+#घोषणा NPC_ETYPE_PTP		0x88f7
+#घोषणा NPC_ETYPE_FCOE		0x8906
+#घोषणा NPC_ETYPE_QINQ		0x9100
+#घोषणा NPC_ETYPE_TRANS_ETH_BR	0x6558
+#घोषणा NPC_ETYPE_PPP		0x880b
+#घोषणा NPC_ETYPE_NSH		0x894f
+#घोषणा NPC_ETYPE_DSA		0xdada
 
-#define NPC_IPNH_HOP		0
-#define NPC_IPNH_ICMP		1
-#define NPC_IPNH_IGMP		2
-#define NPC_IPNH_IP		4
-#define NPC_IPNH_TCP		6
-#define NPC_IPNH_UDP		17
-#define NPC_IPNH_IP6		41
-#define NPC_IPNH_ROUT		43
-#define NPC_IPNH_FRAG		44
-#define NPC_IPNH_GRE		47
-#define NPC_IPNH_ESP		50
-#define NPC_IPNH_AH		51
-#define NPC_IPNH_ICMP6		58
-#define NPC_IPNH_NONH		59
-#define NPC_IPNH_DEST		60
-#define NPC_IPNH_SCTP		132
-#define NPC_IPNH_MOBILITY	135
-#define NPC_IPNH_MPLS		137
-#define NPC_IPNH_HOSTID		139
-#define NPC_IPNH_SHIM6		140
+#घोषणा NPC_IPNH_HOP		0
+#घोषणा NPC_IPNH_ICMP		1
+#घोषणा NPC_IPNH_IGMP		2
+#घोषणा NPC_IPNH_IP		4
+#घोषणा NPC_IPNH_TCP		6
+#घोषणा NPC_IPNH_UDP		17
+#घोषणा NPC_IPNH_IP6		41
+#घोषणा NPC_IPNH_ROUT		43
+#घोषणा NPC_IPNH_FRAG		44
+#घोषणा NPC_IPNH_GRE		47
+#घोषणा NPC_IPNH_ESP		50
+#घोषणा NPC_IPNH_AH		51
+#घोषणा NPC_IPNH_ICMP6		58
+#घोषणा NPC_IPNH_NONH		59
+#घोषणा NPC_IPNH_DEST		60
+#घोषणा NPC_IPNH_SCTP		132
+#घोषणा NPC_IPNH_MOBILITY	135
+#घोषणा NPC_IPNH_MPLS		137
+#घोषणा NPC_IPNH_HOSTID		139
+#घोषणा NPC_IPNH_SHIM6		140
 
-#define NPC_UDP_PORT_PTP_E	319
-#define NPC_UDP_PORT_PTP_G	320
-#define NPC_UDP_PORT_GTPC	2123
-#define NPC_UDP_PORT_GTPU	2152
-#define NPC_UDP_PORT_VXLAN	4789
-#define NPC_UDP_PORT_VXLANGPE	4790
-#define NPC_UDP_PORT_GENEVE	6081
-#define NPC_UDP_PORT_MPLS	6635
-#define NPC_UDP_PORT_ESP	4500
+#घोषणा NPC_UDP_PORT_PTP_E	319
+#घोषणा NPC_UDP_PORT_PTP_G	320
+#घोषणा NPC_UDP_PORT_GTPC	2123
+#घोषणा NPC_UDP_PORT_GTPU	2152
+#घोषणा NPC_UDP_PORT_VXLAN	4789
+#घोषणा NPC_UDP_PORT_VXLANGPE	4790
+#घोषणा NPC_UDP_PORT_GENEVE	6081
+#घोषणा NPC_UDP_PORT_MPLS	6635
+#घोषणा NPC_UDP_PORT_ESP	4500
 
-#define NPC_VXLANGPE_NP_IP	0x1
-#define NPC_VXLANGPE_NP_IP6	0x2
-#define NPC_VXLANGPE_NP_ETH	0x3
-#define NPC_VXLANGPE_NP_NSH	0x4
-#define NPC_VXLANGPE_NP_MPLS	0x5
-#define NPC_VXLANGPE_NP_GBP	0x6
-#define NPC_VXLANGPE_NP_VBNG	0x7
+#घोषणा NPC_VXLANGPE_NP_IP	0x1
+#घोषणा NPC_VXLANGPE_NP_IP6	0x2
+#घोषणा NPC_VXLANGPE_NP_ETH	0x3
+#घोषणा NPC_VXLANGPE_NP_NSH	0x4
+#घोषणा NPC_VXLANGPE_NP_MPLS	0x5
+#घोषणा NPC_VXLANGPE_NP_GBP	0x6
+#घोषणा NPC_VXLANGPE_NP_VBNG	0x7
 
-#define NPC_NSH_NP_IP		0x1
-#define NPC_NSH_NP_IP6		0x2
-#define NPC_NSH_NP_ETH		0x3
-#define NPC_NSH_NP_NSH		0x4
-#define NPC_NSH_NP_MPLS		0x5
+#घोषणा NPC_NSH_NP_IP		0x1
+#घोषणा NPC_NSH_NP_IP6		0x2
+#घोषणा NPC_NSH_NP_ETH		0x3
+#घोषणा NPC_NSH_NP_NSH		0x4
+#घोषणा NPC_NSH_NP_MPLS		0x5
 
-#define NPC_TCP_PORT_HTTP	80
-#define NPC_TCP_PORT_HTTPS	443
-#define NPC_TCP_PORT_PPTP	1723
+#घोषणा NPC_TCP_PORT_HTTP	80
+#घोषणा NPC_TCP_PORT_HTTPS	443
+#घोषणा NPC_TCP_PORT_PPTP	1723
 
-#define NPC_MPLS_S		0x0100
+#घोषणा NPC_MPLS_S		0x0100
 
-#define NPC_IP_TTL_MASK		0xff00
-#define NPC_IP_VER_4		0x4000
-#define NPC_IP_VER_6		0x6000
-#define NPC_IP_VER_MASK		0xf000
-#define NPC_IP_HDR_LEN_5	0x0500
-#define NPC_IP_HDR_LEN_MASK	0x0f00
-#define NPC_IP_HDR_MF		0x2000
-#define NPC_IP_HDR_FRAGOFF	0x1fff
+#घोषणा NPC_IP_TTL_MASK		0xff00
+#घोषणा NPC_IP_VER_4		0x4000
+#घोषणा NPC_IP_VER_6		0x6000
+#घोषणा NPC_IP_VER_MASK		0xf000
+#घोषणा NPC_IP_HDR_LEN_5	0x0500
+#घोषणा NPC_IP_HDR_LEN_MASK	0x0f00
+#घोषणा NPC_IP_HDR_MF		0x2000
+#घोषणा NPC_IP_HDR_FRAGOFF	0x1fff
 
-#define NPC_IP6_HOP_MASK	0x00ff
-#define NPC_IP6_FRAG_FRAGOFF	0xfff8
+#घोषणा NPC_IP6_HOP_MASK	0x00ff
+#घोषणा NPC_IP6_FRAG_FRAGOFF	0xfff8
 
-#define NPC_GRE_F_CSUM		(0x1 << 15)
-#define NPC_GRE_F_ROUTE		(0x1 << 14)
-#define NPC_GRE_F_KEY		(0x1 << 13)
-#define NPC_GRE_F_SEQ		(0x1 << 12)
-#define NPC_GRE_F_ACK		(0x1 << 7)
-#define NPC_GRE_FLAG_MASK	(NPC_GRE_F_CSUM | NPC_GRE_F_ROUTE | \
+#घोषणा NPC_GRE_F_CSUM		(0x1 << 15)
+#घोषणा NPC_GRE_F_ROUTE		(0x1 << 14)
+#घोषणा NPC_GRE_F_KEY		(0x1 << 13)
+#घोषणा NPC_GRE_F_SEQ		(0x1 << 12)
+#घोषणा NPC_GRE_F_ACK		(0x1 << 7)
+#घोषणा NPC_GRE_FLAG_MASK	(NPC_GRE_F_CSUM | NPC_GRE_F_ROUTE | \
 				 NPC_GRE_F_KEY | NPC_GRE_F_SEQ | NPC_GRE_F_ACK)
-#define NPC_GRE_VER_MASK	0x0003
-#define NPC_GRE_VER_1		0x0001
+#घोषणा NPC_GRE_VER_MASK	0x0003
+#घोषणा NPC_GRE_VER_1		0x0001
 
-#define NPC_VXLAN_I		0x0800
+#घोषणा NPC_VXLAN_I		0x0800
 
-#define NPC_VXLANGPE_VER	(0x3 << 12)
-#define NPC_VXLANGPE_I		(0x1 << 11)
-#define NPC_VXLANGPE_P		(0x1 << 10)
-#define NPC_VXLANGPE_B		(0x1 << 9)
-#define NPC_VXLANGPE_NP_MASK	0x00ff
+#घोषणा NPC_VXLANGPE_VER	(0x3 << 12)
+#घोषणा NPC_VXLANGPE_I		(0x1 << 11)
+#घोषणा NPC_VXLANGPE_P		(0x1 << 10)
+#घोषणा NPC_VXLANGPE_B		(0x1 << 9)
+#घोषणा NPC_VXLANGPE_NP_MASK	0x00ff
 
-#define NPC_NSH_NP_MASK		0x00ff
+#घोषणा NPC_NSH_NP_MASK		0x00ff
 
-#define NPC_GENEVE_F_OAM	(0x1 << 7)
-#define NPC_GENEVE_F_CRI_OPT	(0x1 << 6)
+#घोषणा NPC_GENEVE_F_OAM	(0x1 << 7)
+#घोषणा NPC_GENEVE_F_CRI_OPT	(0x1 << 6)
 
-#define NPC_GTP_PT_GTP		(0x1 << 12)
-#define NPC_GTP_PT_MASK		(0x1 << 12)
-#define NPC_GTP_VER1		(0x1 << 13)
-#define NPC_GTP_VER_MASK	(0x7 << 13)
-#define NPC_GTP_MT_G_PDU	0xff
-#define NPC_GTP_MT_MASK		0xff
+#घोषणा NPC_GTP_PT_GTP		(0x1 << 12)
+#घोषणा NPC_GTP_PT_MASK		(0x1 << 12)
+#घोषणा NPC_GTP_VER1		(0x1 << 13)
+#घोषणा NPC_GTP_VER_MASK	(0x7 << 13)
+#घोषणा NPC_GTP_MT_G_PDU	0xff
+#घोषणा NPC_GTP_MT_MASK		0xff
 
-#define NPC_TCP_FLAGS_FIN	0x0001
-#define NPC_TCP_FLAGS_SYN	0x0002
-#define NPC_TCP_FLAGS_RST	0x0004
-#define NPC_TCP_FLAGS_PSH	0x0008
-#define NPC_TCP_FLAGS_ACK	0x0010
-#define NPC_TCP_FLAGS_URG	0x0020
-#define NPC_TCP_FLAGS_MASK	0x003f
+#घोषणा NPC_TCP_FLAGS_FIN	0x0001
+#घोषणा NPC_TCP_FLAGS_SYN	0x0002
+#घोषणा NPC_TCP_FLAGS_RST	0x0004
+#घोषणा NPC_TCP_FLAGS_PSH	0x0008
+#घोषणा NPC_TCP_FLAGS_ACK	0x0010
+#घोषणा NPC_TCP_FLAGS_URG	0x0020
+#घोषणा NPC_TCP_FLAGS_MASK	0x003f
 
-#define NPC_TCP_DATA_OFFSET_5		0x5000
-#define NPC_TCP_DATA_OFFSET_MASK	0xf000
+#घोषणा NPC_TCP_DATA_OFFSET_5		0x5000
+#घोषणा NPC_TCP_DATA_OFFSET_MASK	0xf000
 
-#define NPC_DSA_EXTEND		0x1000
-#define NPC_DSA_EDSA		0x8000
-#define NPC_DSA_FDSA		0xc000
+#घोषणा NPC_DSA_EXTEND		0x1000
+#घोषणा NPC_DSA_EDSA		0x8000
+#घोषणा NPC_DSA_FDSA		0xc000
 
-#define NPC_KEXOF_DMAC	8
-#define MKEX_SIGN	0x19bbfdbd15f /* strtoull of "mkexprof" with base:36 */
-#define KEX_LD_CFG(bytesm1, hdr_ofs, ena, flags_ena, key_ofs)		\
+#घोषणा NPC_KEXOF_DMAC	8
+#घोषणा MKEX_SIGN	0x19bbfdbd15f /* म_से_अदीर्घl of "mkexprof" with base:36 */
+#घोषणा KEX_LD_CFG(bytesm1, hdr_ofs, ena, flags_ena, key_ofs)		\
 			(((bytesm1) << 16) | ((hdr_ofs) << 8) | ((ena) << 7) | \
 			 ((flags_ena) << 6) | ((key_ofs) & 0x3F))
 
 /* Rx parse key extract nibble enable */
-#define NPC_PARSE_NIBBLE_INTF_RX	(NPC_PARSE_NIBBLE_CHAN | \
+#घोषणा NPC_PARSE_NIBBLE_INTF_RX	(NPC_PARSE_NIBBLE_CHAN | \
 					 NPC_PARSE_NIBBLE_LA_LTYPE | \
 					 NPC_PARSE_NIBBLE_LB_LTYPE | \
 					 NPC_PARSE_NIBBLE_LC_LTYPE | \
 					 NPC_PARSE_NIBBLE_LD_LTYPE | \
 					 NPC_PARSE_NIBBLE_LE_LTYPE)
 /* Tx parse key extract nibble enable */
-#define NPC_PARSE_NIBBLE_INTF_TX	(NPC_PARSE_NIBBLE_LA_LTYPE | \
+#घोषणा NPC_PARSE_NIBBLE_INTF_TX	(NPC_PARSE_NIBBLE_LA_LTYPE | \
 					 NPC_PARSE_NIBBLE_LB_LTYPE | \
 					 NPC_PARSE_NIBBLE_LC_LTYPE | \
 					 NPC_PARSE_NIBBLE_LD_LTYPE | \
 					 NPC_PARSE_NIBBLE_LE_LTYPE)
 
-enum npc_kpu_parser_state {
+क्रमागत npc_kpu_parser_state अणु
 	NPC_S_NA = 0,
 	NPC_S_KPU1_ETHER,
 	NPC_S_KPU1_IH_NIX,
@@ -254,27 +255,27 @@ enum npc_kpu_parser_state {
 	NPC_S_KPU16_UDP_DATA,
 	NPC_S_KPU16_UDP_PTP,
 	NPC_S_LAST /* has to be the last item */
-};
+पूर्ण;
 
-enum npc_kpu_la_uflag {
+क्रमागत npc_kpu_la_uflag अणु
 	NPC_F_LA_U_HAS_TAG = 0x10,
 	NPC_F_LA_U_HAS_IH_NIX = 0x20,
 	NPC_F_LA_U_HAS_HIGIG2 = 0x40,
-};
-enum npc_kpu_la_lflag {
+पूर्ण;
+क्रमागत npc_kpu_la_lflag अणु
 	NPC_F_LA_L_UNK_ETYPE = 1,
 	NPC_F_LA_L_WITH_VLAN,
 	NPC_F_LA_L_WITH_ETAG,
 	NPC_F_LA_L_WITH_ITAG,
 	NPC_F_LA_L_WITH_MPLS,
 	NPC_F_LA_L_WITH_NSH,
-};
+पूर्ण;
 
-enum npc_kpu_lb_uflag {
+क्रमागत npc_kpu_lb_uflag अणु
 	NPC_F_LB_U_UNK_ETYPE = 0x80,
 	NPC_F_LB_U_MORE_TAG = 0x40,
-};
-enum npc_kpu_lb_lflag {
+पूर्ण;
+क्रमागत npc_kpu_lb_lflag अणु
 	NPC_F_LB_L_WITH_CTAG = 1,
 	NPC_F_LB_L_WITH_CTAG_UNK,
 	NPC_F_LB_L_WITH_STAG_CTAG,
@@ -295,14 +296,14 @@ enum npc_kpu_lb_lflag {
 	NPC_F_LB_L_EXDSA,
 	NPC_F_LB_L_EXDSA_VLAN,
 	NPC_F_LB_L_FDSA,
-};
+पूर्ण;
 
-enum npc_kpu_lc_uflag {
+क्रमागत npc_kpu_lc_uflag अणु
 	NPC_F_LC_U_UNK_PROTO = 0x10,
 	NPC_F_LC_U_IP_FRAG = 0x20,
 	NPC_F_LC_U_IP6_FRAG = 0x40,
-};
-enum npc_kpu_lc_lflag {
+पूर्ण;
+क्रमागत npc_kpu_lc_lflag अणु
 	NPC_F_LC_L_IP_IN_IP = 1,
 	NPC_F_LC_L_6TO4,
 	NPC_F_LC_L_MPLS_IN_IP,
@@ -317,9 +318,9 @@ enum npc_kpu_lc_lflag {
 	NPC_F_LC_L_EXT_MOBILITY,
 	NPC_F_LC_L_EXT_HOSTID,
 	NPC_F_LC_L_EXT_SHIM6,
-};
+पूर्ण;
 
-enum npc_kpu_ld_lflag {
+क्रमागत npc_kpu_ld_lflag अणु
 	NPC_F_LD_L_TCP_UNK_PORT = 1,
 	NPC_F_LD_L_TCP_HAS_OPTIONS,
 	NPC_F_LD_L_TCP_UNK_PORT_HAS_OPTIONS,
@@ -343,9 +344,9 @@ enum npc_kpu_ld_lflag {
 	NPC_F_LD_L_MPLS_4_LABELS,
 	NPC_F_LD_L_MPLS_3_LABELS,
 	NPC_F_LD_L_MPLS_2_LABELS,
-};
+पूर्ण;
 
-enum npc_kpu_le_lflag {
+क्रमागत npc_kpu_le_lflag अणु
 	NPC_F_LE_L_VXLAN_NOVNI,
 	NPC_F_LE_L_VXLANGPE_NOVNI,
 	NPC_F_LE_L_VXLANGPE_UNK,
@@ -355,40 +356,40 @@ enum npc_kpu_le_lflag {
 	NPC_F_LE_L_GENEVE_OAM_CRI_OPT,
 	NPC_F_LE_L_GTPU_G_PDU,
 	NPC_F_LE_L_GTPU_UNK,
-};
+पूर्ण;
 
-enum npc_kpu_lf_uflag {
+क्रमागत npc_kpu_lf_uflag अणु
 	NPC_F_LF_U_UNK_ETYPE = 0x10,
 	NPC_F_LF_U_HAS_TAG = 0x20,
-};
+पूर्ण;
 
-enum npc_kpu_lf_lflag {
+क्रमागत npc_kpu_lf_lflag अणु
 	NPC_F_LF_L_WITH_CTAG = 1,
 	NPC_F_LF_L_WITH_STAG_CTAG,
 	NPC_F_LF_L_WITH_STAG,
 	NPC_F_LF_L_WITH_QINQ_CTAG,
 	NPC_F_LF_L_WITH_QINQ,
-};
+पूर्ण;
 
-enum npc_kpu_lg_uflag {
+क्रमागत npc_kpu_lg_uflag अणु
 	NPC_F_LG_U_UNK_IP_PROTO = 0x10,
 	NPC_F_LG_U_IP_HAS_OPTIONS = 0x20,
 	NPC_F_LG_U_IP6_HAS_EXT = 0x40,
-};
+पूर्ण;
 
-enum npc_kpu_lh_uflag {
+क्रमागत npc_kpu_lh_uflag अणु
 	NPC_F_LH_U_TCP_HAS_OPTIONS = 0x80,
-};
+पूर्ण;
 
-enum npc_kpu_lh_lflag {
+क्रमागत npc_kpu_lh_lflag अणु
 	NPC_F_LH_L_TCP_HTTP = 1,
 	NPC_F_LH_L_TCP_HTTPS,
 	NPC_F_LH_L_TCP_PPTP,
 	NPC_F_LH_L_TCP_UNK_PORT,
 	NPC_F_LH_L_UDP_UNK_PORT,
-};
+पूर्ण;
 
-enum npc_kpu_err_code {
+क्रमागत npc_kpu_err_code अणु
 	NPC_EC_NOERR = 0, /* has to be zero */
 	NPC_EC_UNK,
 	NPC_EC_IH_LENGTH,
@@ -420,9 +421,9 @@ enum npc_kpu_err_code {
 	NPC_EC_OIP4_CSUM,
 	NPC_EC_IIP4_CSUM,
 	NPC_EC_LAST /* has to be the last item */
-};
+पूर्ण;
 
-enum NPC_ERRLEV_E {
+क्रमागत NPC_ERRLEV_E अणु
 	NPC_ERRLEV_RE = 0,
 	NPC_ERRLEV_LA = 1,
 	NPC_ERRLEV_LB = 2,
@@ -440,10 +441,10 @@ enum NPC_ERRLEV_E {
 	NPC_ERRLEV_R14 = 14,
 	NPC_ERRLEV_NIX = 15,
 	NPC_ERRLEV_ENUM_LAST = 16,
-};
+पूर्ण;
 
-static const struct npc_kpu_profile_action ikpu_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action ikpu_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -451,8 +452,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -460,8 +461,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -469,8 +470,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -478,8 +479,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -487,8 +488,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -496,8 +497,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -505,8 +506,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -514,8 +515,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -523,8 +524,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -532,8 +533,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -541,8 +542,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -550,8 +551,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -559,8 +560,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -568,8 +569,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -577,8 +578,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -586,8 +587,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -595,8 +596,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -604,8 +605,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -613,8 +614,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -622,8 +623,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -631,8 +632,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -640,8 +641,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -649,8 +650,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -658,8 +659,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -667,8 +668,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -676,8 +677,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -685,8 +686,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -694,8 +695,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -703,8 +704,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -712,8 +713,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -721,8 +722,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -730,8 +731,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -739,8 +740,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -748,8 +749,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -757,8 +758,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -766,8 +767,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -775,8 +776,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -784,8 +785,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -793,8 +794,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -802,8 +803,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -811,8 +812,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -820,8 +821,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -829,8 +830,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -838,8 +839,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -847,8 +848,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -856,8 +857,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -865,8 +866,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -874,8 +875,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -883,8 +884,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -892,8 +893,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -901,8 +902,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -910,8 +911,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -919,8 +920,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -928,8 +929,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -937,8 +938,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -946,8 +947,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -955,8 +956,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -964,8 +965,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -973,8 +974,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU1_ETHER, 0, 0,
@@ -982,8 +983,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		36, 40, 44, 0, 0,
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0, 0,
@@ -991,8 +992,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		28, 32, 36, 0, 0,
 		NPC_S_KPU1_HIGIG2, 0, 0,
@@ -1000,8 +1001,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 14, 20, 0, 0,
 		NPC_S_KPU1_EXDSA, 0, 0,
@@ -1009,8 +1010,8 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		20, 24, 28, 0, 0,
 		NPC_S_KPU1_IH_NIX, 0, 0,
@@ -1018,11 +1019,11 @@ static const struct npc_kpu_profile_action ikpu_action_entries[] = {
 		0,
 		0, 0, 0, 0,
 
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu1_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -1030,8 +1031,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -1039,8 +1040,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -1048,8 +1049,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -1057,8 +1058,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -1066,8 +1067,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -1075,8 +1076,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1084,8 +1085,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1093,8 +1094,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -1102,8 +1103,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -1111,8 +1112,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_ETAG,
 		0xffff,
@@ -1120,8 +1121,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1129,8 +1130,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -1138,8 +1139,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -1147,8 +1148,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -1156,8 +1157,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		NPC_ETYPE_DSA,
 		0xffff,
@@ -1165,8 +1166,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		0x0000,
 		0xfc00,
@@ -1174,8 +1175,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		0x0400,
 		0xfe00,
@@ -1183,8 +1184,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_ETHER, 0xff,
 		0x0000,
 		0x0000,
@@ -1192,8 +1193,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -1201,8 +1202,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -1210,8 +1211,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -1219,8 +1220,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -1228,8 +1229,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -1237,8 +1238,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -1246,8 +1247,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1255,8 +1256,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1264,8 +1265,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -1273,8 +1274,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -1282,8 +1283,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_ETAG,
 		0xffff,
@@ -1291,8 +1292,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1300,8 +1301,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -1309,8 +1310,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -1318,8 +1319,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -1327,8 +1328,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX, 0xff,
 		0x0000,
 		0x0000,
@@ -1336,8 +1337,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH, 0xff,
 		NPC_IH_W|NPC_IH_UTAG,
 		NPC_IH_W|NPC_IH_UTAG,
@@ -1345,8 +1346,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH, 0xff,
 		NPC_IH_W,
 		NPC_IH_W|NPC_IH_UTAG,
@@ -1354,8 +1355,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH, 0xff,
 		0x0000,
 		NPC_IH_W|NPC_IH_UTAG,
@@ -1363,8 +1364,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH, 0xff,
 		0x0000,
 		0x0000,
@@ -1372,8 +1373,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_EXDSA, 0xff,
 		0x0000,
 		0x0000,
@@ -1381,8 +1382,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		NPC_DSA_EXTEND,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_EXDSA, 0xff,
 		NPC_DSA_FDSA,
 		NPC_DSA_FDSA,
@@ -1390,8 +1391,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_EXDSA, 0xff,
 		0x0000,
 		NPC_DSA_EXTEND,
@@ -1399,8 +1400,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -1408,8 +1409,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -1417,8 +1418,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -1426,8 +1427,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -1435,8 +1436,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -1444,8 +1445,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -1453,8 +1454,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1462,8 +1463,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1471,8 +1472,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -1480,8 +1481,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -1489,8 +1490,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_ETAG,
 		0xffff,
@@ -1498,8 +1499,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1507,8 +1508,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -1516,8 +1517,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -1525,8 +1526,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -1534,8 +1535,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_HIGIG2, 0xff,
 		0x0000,
 		0x0000,
@@ -1543,8 +1544,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -1552,8 +1553,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -1561,8 +1562,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -1570,8 +1571,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -1579,8 +1580,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -1588,8 +1589,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -1597,8 +1598,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1606,8 +1607,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1615,8 +1616,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -1624,8 +1625,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -1633,8 +1634,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_ETAG,
 		0xffff,
@@ -1642,8 +1643,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1651,8 +1652,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -1660,8 +1661,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -1669,8 +1670,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -1678,8 +1679,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU1_IH_NIX_HIGIG2, 0xff,
 		0x0000,
 		0x0000,
@@ -1687,8 +1688,8 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_NA, 0X00,
 		0x0000,
 		0x0000,
@@ -1696,11 +1697,11 @@ static const struct npc_kpu_profile_cam kpu1_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu2_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU2_CTAG, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -1708,8 +1709,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -1717,8 +1718,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -1726,8 +1727,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -1735,8 +1736,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -1744,8 +1745,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -1753,8 +1754,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -1762,8 +1763,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -1771,8 +1772,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -1780,8 +1781,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG, 0xff,
 		0x0000,
 		0x0000,
@@ -1789,8 +1790,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1798,8 +1799,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1807,8 +1808,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1816,8 +1817,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1825,8 +1826,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1834,8 +1835,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1843,8 +1844,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1852,8 +1853,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1861,8 +1862,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1870,8 +1871,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -1879,8 +1880,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -1888,8 +1889,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -1897,8 +1898,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1906,8 +1907,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_IP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1915,8 +1916,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_IP6,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1924,8 +1925,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_ARP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1933,8 +1934,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_RARP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1942,8 +1943,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_PTP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1951,8 +1952,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_FCOE,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1960,8 +1961,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_MPLSU,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1969,8 +1970,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_MPLSM,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1978,8 +1979,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_NSH,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1987,8 +1988,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_SBTAG,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -1996,8 +1997,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_CTAG,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -2005,8 +2006,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_SBTAG, 0xff,
 		0x0000,
 		0x0000,
@@ -2014,8 +2015,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2023,8 +2024,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2032,8 +2033,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2041,8 +2042,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2050,8 +2051,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2059,8 +2060,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2068,8 +2069,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2077,8 +2078,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2086,8 +2087,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2095,8 +2096,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2104,8 +2105,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_QINQ, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -2113,8 +2114,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_QINQ, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -2122,8 +2123,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_QINQ, 0xff,
 		0x0000,
 		0x0000,
@@ -2131,8 +2132,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -2140,8 +2141,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -2149,8 +2150,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -2158,8 +2159,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -2167,8 +2168,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -2176,8 +2177,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -2185,8 +2186,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -2194,8 +2195,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -2203,8 +2204,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -2212,8 +2213,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2221,8 +2222,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -2230,8 +2231,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -2239,8 +2240,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -2248,8 +2249,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -2257,8 +2258,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_IP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -2266,8 +2267,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_IP6,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -2275,8 +2276,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_ARP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -2284,8 +2285,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_SBTAG,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -2293,8 +2294,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_CTAG,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		NPC_ETYPE_ITAG,
 		0xffff,
@@ -2302,8 +2303,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ETAG, 0xff,
 		0x0000,
 		0x0000,
@@ -2311,8 +2312,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -2320,8 +2321,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -2329,8 +2330,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -2338,8 +2339,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -2347,8 +2348,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -2356,8 +2357,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		NPC_ETYPE_IP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -2365,8 +2366,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		NPC_ETYPE_IP6,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -2374,8 +2375,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		NPC_ETYPE_ARP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -2383,8 +2384,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -2392,8 +2393,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -2401,8 +2402,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -2410,8 +2411,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -2419,8 +2420,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2428,8 +2429,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2437,8 +2438,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2446,8 +2447,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2455,8 +2456,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_ITAG, 0xff,
 		0x0000,
 		0x0000,
@@ -2464,8 +2465,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG2, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -2473,8 +2474,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG2, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -2482,8 +2483,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG2, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -2491,8 +2492,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG2, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -2500,8 +2501,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG2, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -2509,8 +2510,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG2, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -2518,8 +2519,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG2, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -2527,8 +2528,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG2, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -2536,8 +2537,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG2, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -2545,8 +2546,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG2, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2554,8 +2555,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_CTAG2, 0xff,
 		0x0000,
 		0x0000,
@@ -2563,8 +2564,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_PREHEADER, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -2572,8 +2573,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_PREHEADER, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -2581,8 +2582,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_PREHEADER, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -2590,8 +2591,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_PREHEADER, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -2599,8 +2600,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_PREHEADER, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -2608,8 +2609,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_PREHEADER, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -2617,8 +2618,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_PREHEADER, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2626,8 +2627,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_PREHEADER, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -2635,8 +2636,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_PREHEADER, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -2644,8 +2645,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_PREHEADER, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -2653,8 +2654,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_PREHEADER, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -2662,8 +2663,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_PREHEADER, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -2671,8 +2672,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		NPC_DSA_EDSA,
 		NPC_DSA_EDSA,
@@ -2680,8 +2681,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_IP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		NPC_DSA_EDSA,
 		NPC_DSA_EDSA,
@@ -2689,8 +2690,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_IP6,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		NPC_DSA_EDSA,
 		NPC_DSA_EDSA,
@@ -2698,8 +2699,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_ARP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		NPC_DSA_EDSA,
 		NPC_DSA_EDSA,
@@ -2707,8 +2708,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_RARP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		NPC_DSA_EDSA,
 		NPC_DSA_EDSA,
@@ -2716,8 +2717,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_PTP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		NPC_DSA_EDSA,
 		NPC_DSA_EDSA,
@@ -2725,8 +2726,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_FCOE,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		NPC_DSA_EDSA,
 		NPC_DSA_EDSA,
@@ -2734,8 +2735,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		NPC_ETYPE_CTAG,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		NPC_DSA_EDSA,
 		NPC_DSA_EDSA,
@@ -2743,8 +2744,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		0x0000,
 		NPC_DSA_EDSA,
@@ -2752,8 +2753,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		0x0000,
 		NPC_DSA_EDSA,
@@ -2761,8 +2762,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		0x0000,
 		NPC_DSA_EDSA,
@@ -2770,8 +2771,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		0x0000,
 		NPC_DSA_EDSA,
@@ -2779,8 +2780,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		0x0000,
 		NPC_DSA_EDSA,
@@ -2788,8 +2789,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		0x0000,
 		NPC_DSA_EDSA,
@@ -2797,8 +2798,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		0x0000,
 		NPC_DSA_EDSA,
@@ -2806,8 +2807,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU2_EXDSA, 0xff,
 		0x0000,
 		NPC_DSA_EDSA,
@@ -2815,8 +2816,8 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_NA, 0X00,
 		0x0000,
 		0x0000,
@@ -2824,11 +2825,11 @@ static const struct npc_kpu_profile_cam kpu2_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu3_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU3_CTAG, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -2836,8 +2837,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -2845,8 +2846,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -2854,8 +2855,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -2863,8 +2864,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -2872,8 +2873,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -2881,8 +2882,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -2890,8 +2891,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -2899,8 +2900,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -2908,8 +2909,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG, 0xff,
 		0x0000,
 		0x0000,
@@ -2917,8 +2918,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2926,8 +2927,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2935,8 +2936,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2944,8 +2945,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2953,8 +2954,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2962,8 +2963,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2971,8 +2972,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2980,8 +2981,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2989,8 +2990,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -2998,8 +2999,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -3007,8 +3008,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -3016,8 +3017,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -3025,8 +3026,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -3034,8 +3035,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -3043,8 +3044,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -3052,8 +3053,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -3061,8 +3062,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG, 0xff,
 		0x0000,
 		0x0000,
@@ -3070,8 +3071,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3079,8 +3080,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3088,8 +3089,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3097,8 +3098,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3106,8 +3107,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3115,8 +3116,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3124,8 +3125,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3133,8 +3134,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3142,8 +3143,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3151,8 +3152,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -3160,8 +3161,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -3169,8 +3170,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -3178,8 +3179,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -3187,8 +3188,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -3196,8 +3197,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -3205,8 +3206,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -3214,8 +3215,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -3223,8 +3224,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -3232,8 +3233,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ, 0xff,
 		0x0000,
 		0x0000,
@@ -3241,8 +3242,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -3250,8 +3251,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -3259,8 +3260,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -3268,8 +3269,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -3277,8 +3278,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -3286,8 +3287,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		NPC_ETYPE_IP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -3295,8 +3296,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		NPC_ETYPE_IP6,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -3304,8 +3305,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		NPC_ETYPE_ARP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -3313,8 +3314,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -3322,8 +3323,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -3331,8 +3332,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -3340,8 +3341,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -3349,8 +3350,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3358,8 +3359,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3367,8 +3368,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3376,8 +3377,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3385,8 +3386,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_ITAG, 0xff,
 		0x0000,
 		0x0000,
@@ -3394,8 +3395,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG_C, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -3403,8 +3404,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG_C, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -3412,8 +3413,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG_C, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -3421,8 +3422,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG_C, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -3430,8 +3431,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG_C, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -3439,8 +3440,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG_C, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -3448,8 +3449,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG_C, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -3457,8 +3458,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG_C, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -3466,8 +3467,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG_C, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -3475,8 +3476,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_CTAG_C, 0xff,
 		0x0000,
 		0x0000,
@@ -3484,8 +3485,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3493,8 +3494,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3502,8 +3503,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3511,8 +3512,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3520,8 +3521,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3529,8 +3530,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3538,8 +3539,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3547,8 +3548,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3556,8 +3557,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3565,8 +3566,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -3574,8 +3575,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -3583,8 +3584,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -3592,8 +3593,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -3601,8 +3602,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -3610,8 +3611,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -3619,8 +3620,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -3628,8 +3629,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_STAG_C, 0xff,
 		0x0000,
 		0x0000,
@@ -3637,8 +3638,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3646,8 +3647,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3655,8 +3656,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3664,8 +3665,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3673,8 +3674,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3682,8 +3683,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3691,8 +3692,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3700,8 +3701,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3709,8 +3710,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3718,8 +3719,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -3727,8 +3728,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -3736,8 +3737,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -3745,8 +3746,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -3754,8 +3755,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -3763,8 +3764,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -3772,8 +3773,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -3781,8 +3782,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -3790,8 +3791,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -3799,8 +3800,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_QINQ_C, 0xff,
 		0x0000,
 		0x0000,
@@ -3808,8 +3809,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -3817,8 +3818,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -3826,8 +3827,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -3835,8 +3836,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -3844,8 +3845,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -3853,8 +3854,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -3862,8 +3863,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3871,8 +3872,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3880,8 +3881,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3889,8 +3890,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3898,8 +3899,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3907,8 +3908,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3916,8 +3917,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -3925,8 +3926,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU3_DSA, 0xff,
 		0x0000,
 		0x0000,
@@ -3934,8 +3935,8 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_NA, 0X00,
 		0x0000,
 		0x0000,
@@ -3943,11 +3944,11 @@ static const struct npc_kpu_profile_cam kpu3_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu4_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU4_MPLS, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -3955,8 +3956,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_MPLS, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -3964,8 +3965,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		NPC_MPLS_S,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_MPLS, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -3973,8 +3974,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		NPC_MPLS_S,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_MPLS, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -3982,8 +3983,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		NPC_MPLS_S,
 		0x0000,
 		NPC_MPLS_S,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_NSH, 0xff,
 		NPC_NSH_NP_IP,
 		NPC_NSH_NP_MASK,
@@ -3991,8 +3992,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_NSH, 0xff,
 		NPC_NSH_NP_IP6,
 		NPC_NSH_NP_MASK,
@@ -4000,8 +4001,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_NSH, 0xff,
 		NPC_NSH_NP_ETH,
 		NPC_NSH_NP_MASK,
@@ -4009,8 +4010,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_NSH, 0xff,
 		NPC_NSH_NP_MPLS,
 		NPC_NSH_NP_MASK,
@@ -4018,8 +4019,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_NSH, 0xff,
 		0x0000,
 		0x0000,
@@ -4027,8 +4028,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_FDSA, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -4036,8 +4037,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_FDSA, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -4045,8 +4046,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_FDSA, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -4054,8 +4055,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_FDSA, 0xff,
 		NPC_ETYPE_RARP,
 		0xffff,
@@ -4063,8 +4064,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_FDSA, 0xff,
 		NPC_ETYPE_PTP,
 		0xffff,
@@ -4072,8 +4073,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_FDSA, 0xff,
 		NPC_ETYPE_FCOE,
 		0xffff,
@@ -4081,8 +4082,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU4_FDSA, 0xff,
 		0x0000,
 		NPC_DSA_FDSA,
@@ -4090,8 +4091,8 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_NA, 0X00,
 		0x0000,
 		0x0000,
@@ -4099,11 +4100,11 @@ static const struct npc_kpu_profile_cam kpu4_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu5_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		0x0000,
 		NPC_IP_TTL_MASK,
@@ -4111,8 +4112,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		0x0000,
 		0x0000,
@@ -4120,8 +4121,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0001,
 		NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_TCP,
 		0x00ff,
@@ -4129,8 +4130,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_UDP,
 		0x00ff,
@@ -4138,8 +4139,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_SCTP,
 		0x00ff,
@@ -4147,8 +4148,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_ICMP,
 		0x00ff,
@@ -4156,8 +4157,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_IGMP,
 		0x00ff,
@@ -4165,8 +4166,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_ESP,
 		0x00ff,
@@ -4174,8 +4175,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_AH,
 		0x00ff,
@@ -4183,8 +4184,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_GRE,
 		0x00ff,
@@ -4192,8 +4193,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_IP,
 		0x00ff,
@@ -4201,8 +4202,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_IP6,
 		0x00ff,
@@ -4210,8 +4211,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_MPLS,
 		0x00ff,
@@ -4219,8 +4220,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		0x0000,
 		0x0000,
@@ -4228,8 +4229,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		0x0000,
 		0x0000,
@@ -4237,8 +4238,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_TCP,
 		0x00ff,
@@ -4246,8 +4247,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_UDP,
 		0x00ff,
@@ -4255,8 +4256,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_SCTP,
 		0x00ff,
@@ -4264,8 +4265,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_ICMP,
 		0x00ff,
@@ -4273,8 +4274,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_IGMP,
 		0x00ff,
@@ -4282,8 +4283,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_ESP,
 		0x00ff,
@@ -4291,8 +4292,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_AH,
 		0x00ff,
@@ -4300,8 +4301,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_GRE,
 		0x00ff,
@@ -4309,8 +4310,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_IP,
 		0x00ff,
@@ -4318,8 +4319,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_IP6,
 		0x00ff,
@@ -4327,8 +4328,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		NPC_IPNH_MPLS,
 		0x00ff,
@@ -4336,8 +4337,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		0x0000,
 		0x0000,
@@ -4345,8 +4346,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		NPC_IP_HDR_MF|NPC_IP_HDR_FRAGOFF,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		0x0000,
 		0x0000,
@@ -4354,8 +4355,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP, 0xff,
 		0x0000,
 		0x0000,
@@ -4363,8 +4364,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_ARP, 0xff,
 		0x0000,
 		0x0000,
@@ -4372,8 +4373,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_RARP, 0xff,
 		0x0000,
 		0x0000,
@@ -4381,8 +4382,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_PTP, 0xff,
 		0x0000,
 		0x0000,
@@ -4390,8 +4391,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_FCOE, 0xff,
 		0x0000,
 		0x0000,
@@ -4399,8 +4400,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		0x0000,
 		NPC_IP6_HOP_MASK,
@@ -4408,8 +4409,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_TCP << 8,
 		0xff00,
@@ -4417,8 +4418,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_UDP << 8,
 		0xff00,
@@ -4426,8 +4427,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_SCTP << 8,
 		0xff00,
@@ -4435,8 +4436,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_ICMP << 8,
 		0xff00,
@@ -4444,8 +4445,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_ICMP6 << 8,
 		0xff00,
@@ -4453,8 +4454,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_GRE << 8,
 		0xff00,
@@ -4462,8 +4463,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_IP6 << 8,
 		0xff00,
@@ -4471,8 +4472,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_MPLS << 8,
 		0xff00,
@@ -4480,8 +4481,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_HOP << 8,
 		0xff00,
@@ -4489,8 +4490,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_DEST << 8,
 		0xff00,
@@ -4498,8 +4499,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_ROUT << 8,
 		0xff00,
@@ -4507,8 +4508,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_FRAG << 8,
 		0xff00,
@@ -4516,8 +4517,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_ESP << 8,
 		0xff00,
@@ -4525,8 +4526,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_AH << 8,
 		0xff00,
@@ -4534,8 +4535,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_MOBILITY << 8,
 		0xff00,
@@ -4543,8 +4544,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_HOSTID << 8,
 		0xff00,
@@ -4552,8 +4553,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		NPC_IPNH_SHIM6 << 8,
 		0xff00,
@@ -4561,8 +4562,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		0x0000,
 		0x0000,
@@ -4570,8 +4571,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_IP6, 0xff,
 		0x0000,
 		0x0000,
@@ -4579,8 +4580,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_MPLS, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -4588,8 +4589,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_MPLS, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -4597,8 +4598,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_MPLS, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -4606,8 +4607,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_MPLS, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -4615,8 +4616,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_MPLS, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -4624,8 +4625,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_MPLS_PL, 0xff,
 		NPC_IP_VER_4,
 		NPC_IP_VER_MASK,
@@ -4633,8 +4634,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_MPLS_PL, 0xff,
 		NPC_IP_VER_6,
 		NPC_IP_VER_MASK,
@@ -4642,8 +4643,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_MPLS_PL, 0xff,
 		0x0000,
 		0xffff,
@@ -4651,8 +4652,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU5_MPLS_PL, 0xff,
 		0x0000,
 		0x0000,
@@ -4660,8 +4661,8 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_NA, 0X00,
 		0x0000,
 		0x0000,
@@ -4669,11 +4670,11 @@ static const struct npc_kpu_profile_cam kpu5_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu6_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU6_IP6_EXT, 0xff,
 		0x0000,
 		0x0000,
@@ -4681,8 +4682,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_FRAG, 0xff,
 		NPC_IPNH_TCP << 8,
 		0xff00,
@@ -4690,8 +4691,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_FRAG, 0xff,
 		NPC_IPNH_UDP << 8,
 		0xff00,
@@ -4699,8 +4700,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_FRAG, 0xff,
 		NPC_IPNH_SCTP << 8,
 		0xff00,
@@ -4708,8 +4709,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_FRAG, 0xff,
 		NPC_IPNH_ICMP << 8,
 		0xff00,
@@ -4717,8 +4718,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_FRAG, 0xff,
 		NPC_IPNH_ICMP6 << 8,
 		0xff00,
@@ -4726,8 +4727,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_FRAG, 0xff,
 		NPC_IPNH_ESP << 8,
 		0xff00,
@@ -4735,8 +4736,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_FRAG, 0xff,
 		NPC_IPNH_AH << 8,
 		0xff00,
@@ -4744,8 +4745,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_FRAG, 0xff,
 		NPC_IPNH_GRE << 8,
 		0xff00,
@@ -4753,8 +4754,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_FRAG, 0xff,
 		NPC_IPNH_IP6 << 8,
 		0xff00,
@@ -4762,8 +4763,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_FRAG, 0xff,
 		NPC_IPNH_MPLS << 8,
 		0xff00,
@@ -4771,8 +4772,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_FRAG, 0xff,
 		0x0000,
 		0x0000,
@@ -4780,8 +4781,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_HOP_DEST, 0xff,
 		NPC_IPNH_TCP << 8,
 		0xff00,
@@ -4789,8 +4790,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_HOP_DEST, 0xff,
 		NPC_IPNH_UDP << 8,
 		0xff00,
@@ -4798,8 +4799,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_HOP_DEST, 0xff,
 		NPC_IPNH_SCTP << 8,
 		0xff00,
@@ -4807,8 +4808,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_HOP_DEST, 0xff,
 		NPC_IPNH_ICMP << 8,
 		0xff00,
@@ -4816,8 +4817,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_HOP_DEST, 0xff,
 		NPC_IPNH_ICMP6 << 8,
 		0xff00,
@@ -4825,8 +4826,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_HOP_DEST, 0xff,
 		NPC_IPNH_ESP << 8,
 		0xff00,
@@ -4834,8 +4835,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_HOP_DEST, 0xff,
 		NPC_IPNH_AH << 8,
 		0xff00,
@@ -4843,8 +4844,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_HOP_DEST, 0xff,
 		NPC_IPNH_GRE << 8,
 		0xff00,
@@ -4852,8 +4853,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_HOP_DEST, 0xff,
 		NPC_IPNH_IP6 << 8,
 		0xff00,
@@ -4861,8 +4862,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_HOP_DEST, 0xff,
 		NPC_IPNH_MPLS << 8,
 		0xff00,
@@ -4870,8 +4871,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_HOP_DEST, 0xff,
 		NPC_IPNH_ROUT << 8,
 		0xff00,
@@ -4879,8 +4880,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_HOP_DEST, 0xff,
 		NPC_IPNH_FRAG << 8,
 		0xff00,
@@ -4888,8 +4889,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_HOP_DEST, 0xff,
 		0x0000,
 		0x0000,
@@ -4897,8 +4898,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_ROUT, 0xff,
 		NPC_IPNH_TCP << 8,
 		0xff00,
@@ -4906,8 +4907,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_ROUT, 0xff,
 		NPC_IPNH_UDP << 8,
 		0xff00,
@@ -4915,8 +4916,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_ROUT, 0xff,
 		NPC_IPNH_SCTP << 8,
 		0xff00,
@@ -4924,8 +4925,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_ROUT, 0xff,
 		NPC_IPNH_ICMP << 8,
 		0xff00,
@@ -4933,8 +4934,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_ROUT, 0xff,
 		NPC_IPNH_ICMP6 << 8,
 		0xff00,
@@ -4942,8 +4943,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_ROUT, 0xff,
 		NPC_IPNH_ESP << 8,
 		0xff00,
@@ -4951,8 +4952,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_ROUT, 0xff,
 		NPC_IPNH_AH << 8,
 		0xff00,
@@ -4960,8 +4961,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_ROUT, 0xff,
 		NPC_IPNH_GRE << 8,
 		0xff00,
@@ -4969,8 +4970,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_ROUT, 0xff,
 		NPC_IPNH_IP6 << 8,
 		0xff00,
@@ -4978,8 +4979,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_ROUT, 0xff,
 		NPC_IPNH_MPLS << 8,
 		0xff00,
@@ -4987,8 +4988,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_ROUT, 0xff,
 		NPC_IPNH_FRAG << 8,
 		0xff00,
@@ -4996,8 +4997,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU6_IP6_ROUT, 0xff,
 		0x0000,
 		0x0000,
@@ -5005,8 +5006,8 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_NA, 0X00,
 		0x0000,
 		0x0000,
@@ -5014,11 +5015,11 @@ static const struct npc_kpu_profile_cam kpu6_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu7_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU7_IP6_EXT, 0xff,
 		0x0000,
 		0x0000,
@@ -5026,8 +5027,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_ROUT, 0xff,
 		NPC_IPNH_TCP << 8,
 		0xff00,
@@ -5035,8 +5036,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_ROUT, 0xff,
 		NPC_IPNH_UDP << 8,
 		0xff00,
@@ -5044,8 +5045,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_ROUT, 0xff,
 		NPC_IPNH_SCTP << 8,
 		0xff00,
@@ -5053,8 +5054,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_ROUT, 0xff,
 		NPC_IPNH_ICMP << 8,
 		0xff00,
@@ -5062,8 +5063,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_ROUT, 0xff,
 		NPC_IPNH_ICMP6 << 8,
 		0xff00,
@@ -5071,8 +5072,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_ROUT, 0xff,
 		NPC_IPNH_ESP << 8,
 		0xff00,
@@ -5080,8 +5081,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_ROUT, 0xff,
 		NPC_IPNH_AH << 8,
 		0xff00,
@@ -5089,8 +5090,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_ROUT, 0xff,
 		NPC_IPNH_GRE << 8,
 		0xff00,
@@ -5098,8 +5099,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_ROUT, 0xff,
 		NPC_IPNH_IP6 << 8,
 		0xff00,
@@ -5107,8 +5108,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_ROUT, 0xff,
 		NPC_IPNH_MPLS << 8,
 		0xff00,
@@ -5116,8 +5117,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_ROUT, 0xff,
 		0x0000,
 		0x0000,
@@ -5125,8 +5126,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_FRAG, 0xff,
 		NPC_IPNH_TCP << 8,
 		0xff00,
@@ -5134,8 +5135,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_FRAG, 0xff,
 		NPC_IPNH_UDP << 8,
 		0xff00,
@@ -5143,8 +5144,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_FRAG, 0xff,
 		NPC_IPNH_SCTP << 8,
 		0xff00,
@@ -5152,8 +5153,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_FRAG, 0xff,
 		NPC_IPNH_ICMP << 8,
 		0xff00,
@@ -5161,8 +5162,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_FRAG, 0xff,
 		NPC_IPNH_ICMP6 << 8,
 		0xff00,
@@ -5170,8 +5171,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_FRAG, 0xff,
 		NPC_IPNH_ESP << 8,
 		0xff00,
@@ -5179,8 +5180,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_FRAG, 0xff,
 		NPC_IPNH_AH << 8,
 		0xff00,
@@ -5188,8 +5189,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_FRAG, 0xff,
 		NPC_IPNH_GRE << 8,
 		0xff00,
@@ -5197,8 +5198,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_FRAG, 0xff,
 		NPC_IPNH_IP6 << 8,
 		0xff00,
@@ -5206,8 +5207,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_FRAG, 0xff,
 		NPC_IPNH_MPLS << 8,
 		0xff00,
@@ -5215,8 +5216,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		NPC_IP6_FRAG_FRAGOFF,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU7_IP6_FRAG, 0xff,
 		0x0000,
 		0x0000,
@@ -5224,8 +5225,8 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_NA, 0X00,
 		0x0000,
 		0x0000,
@@ -5233,11 +5234,11 @@ static const struct npc_kpu_profile_cam kpu7_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu8_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -5245,8 +5246,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		NPC_TCP_FLAGS_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -5254,8 +5255,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		NPC_TCP_FLAGS_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -5263,8 +5264,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		NPC_TCP_FLAGS_RST|NPC_TCP_FLAGS_FIN,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -5272,8 +5273,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		NPC_TCP_FLAGS_URG|NPC_TCP_FLAGS_SYN,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -5281,8 +5282,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		NPC_TCP_FLAGS_RST|NPC_TCP_FLAGS_SYN,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -5290,8 +5291,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		NPC_TCP_FLAGS_SYN|NPC_TCP_FLAGS_FIN,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		NPC_TCP_PORT_HTTP,
 		0xffff,
@@ -5299,8 +5300,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		NPC_TCP_DATA_OFFSET_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		NPC_TCP_PORT_HTTPS,
 		0xffff,
@@ -5308,8 +5309,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		NPC_TCP_DATA_OFFSET_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		NPC_TCP_PORT_PPTP,
 		0xffff,
@@ -5317,8 +5318,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		NPC_TCP_DATA_OFFSET_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -5326,8 +5327,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		NPC_TCP_DATA_OFFSET_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		NPC_TCP_PORT_HTTP,
 		0xffff,
@@ -5335,8 +5336,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		NPC_TCP_PORT_HTTPS,
 		0xffff,
@@ -5344,8 +5345,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		NPC_TCP_PORT_PPTP,
 		0xffff,
@@ -5353,8 +5354,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -5362,8 +5363,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_UDP, 0xff,
 		NPC_UDP_PORT_VXLAN,
 		0xffff,
@@ -5371,8 +5372,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_UDP, 0xff,
 		NPC_UDP_PORT_VXLANGPE,
 		0xffff,
@@ -5380,8 +5381,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_UDP, 0xff,
 		NPC_UDP_PORT_GENEVE,
 		0xffff,
@@ -5389,8 +5390,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_UDP, 0xff,
 		NPC_UDP_PORT_GTPC,
 		0xffff,
@@ -5398,8 +5399,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_UDP, 0xff,
 		NPC_UDP_PORT_GTPU,
 		0xffff,
@@ -5407,8 +5408,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_UDP, 0xff,
 		NPC_UDP_PORT_PTP_E,
 		0xffff,
@@ -5416,8 +5417,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_UDP, 0xff,
 		NPC_UDP_PORT_PTP_G,
 		0xffff,
@@ -5425,8 +5426,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_UDP, 0xff,
 		NPC_UDP_PORT_MPLS,
 		0xffff,
@@ -5434,8 +5435,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_UDP, 0xff,
 		NPC_UDP_PORT_ESP,
 		0xffff,
@@ -5443,8 +5444,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_UDP, 0xff,
 		0x0000,
 		0x0000,
@@ -5452,8 +5453,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_UDP, 0xff,
 		0x0000,
 		0x0000,
@@ -5461,8 +5462,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_SCTP, 0xff,
 		0x0000,
 		0x0000,
@@ -5470,8 +5471,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_ICMP, 0xff,
 		0x0000,
 		0x0000,
@@ -5479,8 +5480,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_IGMP, 0xff,
 		0x0000,
 		0x0000,
@@ -5488,8 +5489,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_ICMP6, 0xff,
 		0x0000,
 		0x0000,
@@ -5497,8 +5498,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_AH, 0xff,
 		0x0000,
 		0x0000,
@@ -5506,8 +5507,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_TRANS_ETH_BR,
 		0xffff,
@@ -5515,8 +5516,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_TRANS_ETH_BR,
 		0xffff,
@@ -5524,8 +5525,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -5533,8 +5534,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -5542,8 +5543,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -5551,8 +5552,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -5560,8 +5561,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -5569,8 +5570,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -5578,8 +5579,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -5587,8 +5588,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSU,
 		0xffff,
@@ -5596,8 +5597,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -5605,8 +5606,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -5614,8 +5615,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -5623,8 +5624,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -5632,8 +5633,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -5641,8 +5642,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -5650,8 +5651,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -5659,8 +5660,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_MPLSM,
 		0xffff,
@@ -5668,8 +5669,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -5677,8 +5678,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -5686,8 +5687,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -5695,8 +5696,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -5704,8 +5705,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -5713,8 +5714,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -5722,8 +5723,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -5731,8 +5732,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_NSH,
 		0xffff,
@@ -5740,8 +5741,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -5749,8 +5750,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -5758,8 +5759,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -5767,8 +5768,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -5776,8 +5777,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -5785,8 +5786,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -5794,8 +5795,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -5803,8 +5804,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -5812,8 +5813,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -5821,8 +5822,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -5830,8 +5831,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -5839,8 +5840,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -5848,8 +5849,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -5857,8 +5858,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -5866,8 +5867,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -5875,8 +5876,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -5884,8 +5885,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		0x0000,
 		0xffff,
@@ -5893,8 +5894,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x4fff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		0x0000,
 		0xffff,
@@ -5902,8 +5903,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x4fff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		0x0000,
 		0xffff,
@@ -5911,8 +5912,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0003,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_PPP,
 		0xffff,
@@ -5920,8 +5921,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_PPP,
 		0xffff,
@@ -5929,8 +5930,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_PPP,
 		0xffff,
@@ -5938,8 +5939,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		NPC_ETYPE_PPP,
 		0xffff,
@@ -5947,8 +5948,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		0x0000,
 		0xffff,
@@ -5956,8 +5957,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0xef7f,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU8_GRE, 0xff,
 		0x0000,
 		0xffff,
@@ -5965,8 +5966,8 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0003,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_NA, 0X00,
 		0x0000,
 		0x0000,
@@ -5974,11 +5975,11 @@ static const struct npc_kpu_profile_cam kpu8_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu9_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -5986,8 +5987,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -5995,8 +5996,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_MPLS_S,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6004,8 +6005,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_MPLS_S,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6013,8 +6014,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_MPLS_S,
 		0x0000,
 		NPC_MPLS_S,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_NSH, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -6022,8 +6023,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_NSH, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6031,8 +6032,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_MPLS_S,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_NSH, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6040,8 +6041,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_MPLS_S,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_NSH, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6049,8 +6050,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_MPLS_S,
 		0x0000,
 		NPC_MPLS_S,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_IP, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -6058,8 +6059,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_IP, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6067,8 +6068,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_MPLS_S,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_IP, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6076,8 +6077,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_MPLS_S,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_IP, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6085,8 +6086,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_MPLS_S,
 		0x0000,
 		NPC_MPLS_S,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_NSH_IN_GRE, 0xff,
 		NPC_NSH_NP_IP,
 		NPC_NSH_NP_MASK,
@@ -6094,8 +6095,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_NSH_IN_GRE, 0xff,
 		NPC_NSH_NP_IP6,
 		NPC_NSH_NP_MASK,
@@ -6103,8 +6104,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_NSH_IN_GRE, 0xff,
 		NPC_NSH_NP_ETH,
 		NPC_NSH_NP_MASK,
@@ -6112,8 +6113,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_NSH_IN_GRE, 0xff,
 		0x0000,
 		0x0000,
@@ -6121,8 +6122,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLAN, 0xff,
 		0x0000,
 		0x0000,
@@ -6130,8 +6131,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_VXLAN_I,
 		0x0000,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLAN, 0xff,
 		0x0000,
 		0x0000,
@@ -6139,8 +6140,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLAN, 0xff,
 		0x0000,
 		0x0000,
@@ -6148,8 +6149,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLANGPE, 0xff,
 		0x0000,
 		0x0000,
@@ -6157,8 +6158,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_VXLANGPE_P | NPC_VXLANGPE_I,
 		NPC_VXLANGPE_NP_IP,
 		NPC_VXLANGPE_NP_MASK,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLANGPE, 0xff,
 		0x0000,
 		0x0000,
@@ -6166,8 +6167,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_VXLANGPE_P | NPC_VXLANGPE_I,
 		NPC_VXLANGPE_NP_IP6,
 		NPC_VXLANGPE_NP_MASK,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLANGPE, 0xff,
 		0x0000,
 		0x0000,
@@ -6175,8 +6176,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_VXLANGPE_P | NPC_VXLANGPE_I,
 		NPC_VXLANGPE_NP_ETH,
 		NPC_VXLANGPE_NP_MASK,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLANGPE, 0xff,
 		0x0000,
 		0x0000,
@@ -6184,8 +6185,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_VXLANGPE_P | NPC_VXLANGPE_I,
 		NPC_VXLANGPE_NP_NSH,
 		NPC_VXLANGPE_NP_MASK,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLANGPE, 0xff,
 		0x0000,
 		0x0000,
@@ -6193,8 +6194,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_VXLANGPE_P | NPC_VXLANGPE_I,
 		NPC_VXLANGPE_NP_MPLS,
 		NPC_VXLANGPE_NP_MASK,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLANGPE, 0xff,
 		0x0000,
 		0x0000,
@@ -6202,8 +6203,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_VXLANGPE_P | NPC_VXLANGPE_I,
 		NPC_VXLANGPE_NP_IP,
 		NPC_VXLANGPE_NP_MASK,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLANGPE, 0xff,
 		0x0000,
 		0x0000,
@@ -6211,8 +6212,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_VXLANGPE_P | NPC_VXLANGPE_I,
 		NPC_VXLANGPE_NP_IP6,
 		NPC_VXLANGPE_NP_MASK,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLANGPE, 0xff,
 		0x0000,
 		0x0000,
@@ -6220,8 +6221,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_VXLANGPE_P | NPC_VXLANGPE_I,
 		NPC_VXLANGPE_NP_ETH,
 		NPC_VXLANGPE_NP_MASK,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLANGPE, 0xff,
 		0x0000,
 		0x0000,
@@ -6229,8 +6230,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_VXLANGPE_P | NPC_VXLANGPE_I,
 		NPC_VXLANGPE_NP_NSH,
 		NPC_VXLANGPE_NP_MASK,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLANGPE, 0xff,
 		0x0000,
 		0x0000,
@@ -6238,8 +6239,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_VXLANGPE_P | NPC_VXLANGPE_I,
 		NPC_VXLANGPE_NP_MPLS,
 		NPC_VXLANGPE_NP_MASK,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLANGPE, 0xff,
 		0x0000,
 		0x0000,
@@ -6247,8 +6248,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_VXLANGPE_P,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_VXLANGPE, 0xff,
 		0x0000,
 		0x0000,
@@ -6256,8 +6257,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_VXLANGPE_P,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GENEVE, 0xff,
 		0x0000,
 		0x0000,
@@ -6265,8 +6266,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_GENEVE_F_OAM | NPC_GENEVE_F_CRI_OPT,
 		NPC_ETYPE_TRANS_ETH_BR,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GENEVE, 0xff,
 		0x0000,
 		0x0000,
@@ -6274,8 +6275,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_GENEVE_F_OAM | NPC_GENEVE_F_CRI_OPT,
 		NPC_ETYPE_TRANS_ETH_BR,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GENEVE, 0xff,
 		0x0000,
 		0x0000,
@@ -6283,8 +6284,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_GENEVE_F_OAM | NPC_GENEVE_F_CRI_OPT,
 		NPC_ETYPE_TRANS_ETH_BR,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GENEVE, 0xff,
 		0x0000,
 		0x0000,
@@ -6292,8 +6293,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_GENEVE_F_OAM | NPC_GENEVE_F_CRI_OPT,
 		NPC_ETYPE_TRANS_ETH_BR,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GENEVE, 0xff,
 		0x0000,
 		0x0000,
@@ -6301,8 +6302,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_GENEVE_F_OAM | NPC_GENEVE_F_CRI_OPT,
 		NPC_ETYPE_IP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GENEVE, 0xff,
 		0x0000,
 		0x0000,
@@ -6310,8 +6311,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_GENEVE_F_OAM | NPC_GENEVE_F_CRI_OPT,
 		NPC_ETYPE_IP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GENEVE, 0xff,
 		0x0000,
 		0x0000,
@@ -6319,8 +6320,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_GENEVE_F_OAM | NPC_GENEVE_F_CRI_OPT,
 		NPC_ETYPE_IP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GENEVE, 0xff,
 		0x0000,
 		0x0000,
@@ -6328,8 +6329,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_GENEVE_F_OAM | NPC_GENEVE_F_CRI_OPT,
 		NPC_ETYPE_IP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GENEVE, 0xff,
 		0x0000,
 		0x0000,
@@ -6337,8 +6338,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_GENEVE_F_OAM | NPC_GENEVE_F_CRI_OPT,
 		NPC_ETYPE_IP6,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GENEVE, 0xff,
 		0x0000,
 		0x0000,
@@ -6346,8 +6347,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_GENEVE_F_OAM | NPC_GENEVE_F_CRI_OPT,
 		NPC_ETYPE_IP6,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GENEVE, 0xff,
 		0x0000,
 		0x0000,
@@ -6355,8 +6356,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_GENEVE_F_OAM | NPC_GENEVE_F_CRI_OPT,
 		NPC_ETYPE_IP6,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GENEVE, 0xff,
 		0x0000,
 		0x0000,
@@ -6364,8 +6365,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_GENEVE_F_OAM | NPC_GENEVE_F_CRI_OPT,
 		NPC_ETYPE_IP6,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GTPC, 0xff,
 		0x0000,
 		0x0000,
@@ -6373,8 +6374,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GTPU, 0xff,
 		0x0000,
 		0x0000,
@@ -6382,8 +6383,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_GTP_PT_MASK | NPC_GTP_VER_MASK | NPC_GTP_MT_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_GTPU, 0xff,
 		0x0000,
 		0x0000,
@@ -6391,8 +6392,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_UDP, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -6400,8 +6401,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_UDP, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6409,8 +6410,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_MPLS_S,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_UDP, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6418,8 +6419,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_MPLS_S,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_TU_MPLS_IN_UDP, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6427,8 +6428,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		NPC_MPLS_S,
 		0x0000,
 		NPC_MPLS_S,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU9_ESP, 0xff,
 		0x0000,
 		0x0000,
@@ -6436,8 +6437,8 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_NA, 0X00,
 		0x0000,
 		0x0000,
@@ -6445,11 +6446,11 @@ static const struct npc_kpu_profile_cam kpu9_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu10_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU10_TU_MPLS, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -6457,8 +6458,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_MPLS, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -6466,8 +6467,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_MPLS, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -6475,8 +6476,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_MPLS, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -6484,8 +6485,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_MPLS, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6493,8 +6494,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_MPLS_PL, 0xff,
 		NPC_IP_VER_4,
 		NPC_IP_VER_MASK,
@@ -6502,8 +6503,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_MPLS_PL, 0xff,
 		NPC_IP_VER_6,
 		NPC_IP_VER_MASK,
@@ -6511,8 +6512,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_MPLS_PL, 0xff,
 		0x0000,
 		0xffff,
@@ -6520,8 +6521,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_MPLS_PL, 0xff,
 		0x0000,
 		0x0000,
@@ -6529,8 +6530,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_MPLS_IN_VXLANGPE, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -6538,8 +6539,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_MPLS_IN_VXLANGPE, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6547,8 +6548,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		NPC_MPLS_S,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_MPLS_IN_VXLANGPE, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6556,8 +6557,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		NPC_MPLS_S,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_MPLS_IN_VXLANGPE, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6565,8 +6566,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		NPC_MPLS_S,
 		0x0000,
 		NPC_MPLS_S,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_NSH_IN_VXLANGPE, 0xff,
 		NPC_NSH_NP_IP,
 		NPC_NSH_NP_MASK,
@@ -6574,8 +6575,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_NSH_IN_VXLANGPE, 0xff,
 		NPC_NSH_NP_IP6,
 		NPC_NSH_NP_MASK,
@@ -6583,8 +6584,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_NSH_IN_VXLANGPE, 0xff,
 		NPC_NSH_NP_ETH,
 		NPC_NSH_NP_MASK,
@@ -6592,8 +6593,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU10_TU_NSH_IN_VXLANGPE, 0xff,
 		0x0000,
 		0x0000,
@@ -6601,8 +6602,8 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_NA, 0X00,
 		0x0000,
 		0x0000,
@@ -6610,11 +6611,11 @@ static const struct npc_kpu_profile_cam kpu10_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu11_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_IP,
 		0xffff,
@@ -6622,8 +6623,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_IP6,
 		0xffff,
@@ -6631,8 +6632,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_ARP,
 		0xffff,
@@ -6640,8 +6641,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -6649,8 +6650,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -6658,8 +6659,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -6667,8 +6668,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_CTAG,
 		0xffff,
@@ -6676,8 +6677,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -6685,8 +6686,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		NPC_ETYPE_IP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -6694,8 +6695,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		NPC_ETYPE_IP6,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -6703,8 +6704,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		NPC_ETYPE_ARP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -6712,8 +6713,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -6721,8 +6722,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -6730,8 +6731,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -6739,8 +6740,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_SBTAG,
 		0xffff,
@@ -6748,8 +6749,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -6757,8 +6758,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		NPC_ETYPE_IP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -6766,8 +6767,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		NPC_ETYPE_IP6,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -6775,8 +6776,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		NPC_ETYPE_ARP,
 		0xffff,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -6784,8 +6785,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -6793,8 +6794,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -6802,8 +6803,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -6811,8 +6812,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0xffff,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		NPC_ETYPE_QINQ,
 		0xffff,
@@ -6820,8 +6821,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER, 0xff,
 		0x0000,
 		0x0000,
@@ -6829,8 +6830,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_PPP, 0xff,
 		0x0000,
 		0x0000,
@@ -6838,8 +6839,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_MPLS, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -6847,8 +6848,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_MPLS, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -6856,8 +6857,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_MPLS, 0xff,
 		NPC_MPLS_S,
 		NPC_MPLS_S,
@@ -6865,8 +6866,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_MPLS, 0xff,
 		0x0000,
 		NPC_MPLS_S,
@@ -6874,8 +6875,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_MPLS_PL, 0xff,
 		NPC_IP_VER_4,
 		NPC_IP_VER_MASK,
@@ -6883,8 +6884,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_MPLS_PL, 0xff,
 		NPC_IP_VER_6,
 		NPC_IP_VER_MASK,
@@ -6892,8 +6893,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_MPLS_PL, 0xff,
 		0x0000,
 		0x0000,
@@ -6901,8 +6902,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU11_TU_ETHER_IN_NSH, 0xff,
 		0x0000,
 		0x0000,
@@ -6910,8 +6911,8 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_NA, 0X00,
 		0x0000,
 		0x0000,
@@ -6919,11 +6920,11 @@ static const struct npc_kpu_profile_cam kpu11_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu12_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_TCP,
 		0x00ff,
@@ -6931,8 +6932,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_UDP,
 		0x00ff,
@@ -6940,8 +6941,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_SCTP,
 		0x00ff,
@@ -6949,8 +6950,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_ICMP,
 		0x00ff,
@@ -6958,8 +6959,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_IGMP,
 		0x00ff,
@@ -6967,8 +6968,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_ESP,
 		0x00ff,
@@ -6976,8 +6977,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_AH,
 		0x00ff,
@@ -6985,8 +6986,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		0x0000,
 		0x0000,
@@ -6994,8 +6995,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK|NPC_IP_HDR_LEN_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_TCP,
 		0x00ff,
@@ -7003,8 +7004,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_UDP,
 		0x00ff,
@@ -7012,8 +7013,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_SCTP,
 		0x00ff,
@@ -7021,8 +7022,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_ICMP,
 		0x00ff,
@@ -7030,8 +7031,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_IGMP,
 		0x00ff,
@@ -7039,8 +7040,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_ESP,
 		0x00ff,
@@ -7048,8 +7049,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		NPC_IPNH_AH,
 		0x00ff,
@@ -7057,8 +7058,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		0x0000,
 		0x0000,
@@ -7066,8 +7067,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP, 0xff,
 		0x0000,
 		0x0000,
@@ -7075,8 +7076,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_ARP, 0xff,
 		0x0000,
 		0x0000,
@@ -7084,8 +7085,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP6, 0xff,
 		NPC_IPNH_TCP << 8,
 		0xff00,
@@ -7093,8 +7094,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP6, 0xff,
 		NPC_IPNH_UDP << 8,
 		0xff00,
@@ -7102,8 +7103,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP6, 0xff,
 		NPC_IPNH_SCTP << 8,
 		0xff00,
@@ -7111,8 +7112,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP6, 0xff,
 		NPC_IPNH_ICMP << 8,
 		0xff00,
@@ -7120,8 +7121,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP6, 0xff,
 		NPC_IPNH_ICMP6 << 8,
 		0xff00,
@@ -7129,8 +7130,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP6, 0xff,
 		NPC_IPNH_ESP << 8,
 		0xff00,
@@ -7138,8 +7139,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP6, 0xff,
 		NPC_IPNH_AH << 8,
 		0xff00,
@@ -7147,8 +7148,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP6, 0xff,
 		0x0000,
 		0x0000,
@@ -7156,8 +7157,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		NPC_IP_VER_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU12_TU_IP6, 0xff,
 		0x0000,
 		0x0000,
@@ -7165,8 +7166,8 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_NA, 0X00,
 		0x0000,
 		0x0000,
@@ -7174,11 +7175,11 @@ static const struct npc_kpu_profile_cam kpu12_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu13_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu13_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU13_TU_IP6_EXT, 0xff,
 		0x0000,
 		0x0000,
@@ -7186,11 +7187,11 @@ static const struct npc_kpu_profile_cam kpu13_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu14_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu14_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU14_TU_IP6_EXT, 0xff,
 		0x0000,
 		0x0000,
@@ -7198,11 +7199,11 @@ static const struct npc_kpu_profile_cam kpu14_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu15_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -7210,8 +7211,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		NPC_TCP_FLAGS_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -7219,8 +7220,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		NPC_TCP_FLAGS_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -7228,8 +7229,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		NPC_TCP_FLAGS_RST|NPC_TCP_FLAGS_FIN,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -7237,8 +7238,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		NPC_TCP_FLAGS_URG|NPC_TCP_FLAGS_SYN,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -7246,8 +7247,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		NPC_TCP_FLAGS_RST|NPC_TCP_FLAGS_SYN,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -7255,8 +7256,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		NPC_TCP_FLAGS_SYN|NPC_TCP_FLAGS_FIN,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		NPC_TCP_PORT_HTTP,
 		0xffff,
@@ -7264,8 +7265,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		NPC_TCP_DATA_OFFSET_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		NPC_TCP_PORT_HTTPS,
 		0xffff,
@@ -7273,8 +7274,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		NPC_TCP_DATA_OFFSET_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		NPC_TCP_PORT_PPTP,
 		0xffff,
@@ -7282,8 +7283,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		NPC_TCP_DATA_OFFSET_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -7291,8 +7292,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		NPC_TCP_DATA_OFFSET_MASK,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		NPC_TCP_PORT_HTTP,
 		0xffff,
@@ -7300,8 +7301,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		NPC_TCP_PORT_HTTPS,
 		0xffff,
@@ -7309,8 +7310,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		NPC_TCP_PORT_PPTP,
 		0xffff,
@@ -7318,8 +7319,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_TCP, 0xff,
 		0x0000,
 		0x0000,
@@ -7327,8 +7328,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_UDP, 0xff,
 		0x0000,
 		0x0000,
@@ -7336,8 +7337,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_SCTP, 0xff,
 		0x0000,
 		0x0000,
@@ -7345,8 +7346,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_ICMP, 0xff,
 		0x0000,
 		0x0000,
@@ -7354,8 +7355,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_IGMP, 0xff,
 		0x0000,
 		0x0000,
@@ -7363,8 +7364,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_ICMP6, 0xff,
 		0x0000,
 		0x0000,
@@ -7372,8 +7373,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_ESP, 0xff,
 		0x0000,
 		0x0000,
@@ -7381,8 +7382,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU15_TU_AH, 0xff,
 		0x0000,
 		0x0000,
@@ -7390,8 +7391,8 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_NA, 0X00,
 		0x0000,
 		0x0000,
@@ -7399,11 +7400,11 @@ static const struct npc_kpu_profile_cam kpu15_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_cam kpu16_cam_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_cam kpu16_cam_entries[] = अणु
+	अणु
 		NPC_S_KPU16_TCP_DATA, 0xff,
 		0x0000,
 		0x0000,
@@ -7411,8 +7412,8 @@ static const struct npc_kpu_profile_cam kpu16_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU16_HTTP_DATA, 0xff,
 		0x0000,
 		0x0000,
@@ -7420,8 +7421,8 @@ static const struct npc_kpu_profile_cam kpu16_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU16_HTTPS_DATA, 0xff,
 		0x0000,
 		0x0000,
@@ -7429,8 +7430,8 @@ static const struct npc_kpu_profile_cam kpu16_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU16_PPTP_DATA, 0xff,
 		0x0000,
 		0x0000,
@@ -7438,8 +7439,8 @@ static const struct npc_kpu_profile_cam kpu16_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU16_UDP_DATA, 0xff,
 		0x0000,
 		0x0000,
@@ -7447,8 +7448,8 @@ static const struct npc_kpu_profile_cam kpu16_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_S_KPU16_UDP_PTP, 0xff,
 		0x0000,
 		0x0000,
@@ -7456,211 +7457,211 @@ static const struct npc_kpu_profile_cam kpu16_cam_entries[] = {
 		0x0000,
 		0x0000,
 		0x0000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu1_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu1_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 3, 0,
 		NPC_S_KPU5_IP, 14, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 3, 0,
 		NPC_S_KPU5_IP6, 14, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_ARP, 14, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_RARP, 14, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_PTP, 14, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_FCOE, 14, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 12, 0, 0, 0,
 		NPC_S_KPU2_CTAG2, 12, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		NPC_F_LA_U_HAS_TAG | NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 0, 0, 0,
 		NPC_S_KPU2_CTAG, 12, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		NPC_F_LA_U_HAS_TAG | NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 22, 0, 0,
 		NPC_S_KPU2_SBTAG, 12, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		NPC_F_LA_U_HAS_TAG | NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 0, 0, 0,
 		NPC_S_KPU2_QINQ, 12, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		NPC_F_LA_U_HAS_TAG | NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 12, 26, 0, 0,
 		NPC_S_KPU2_ETAG, 12, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		NPC_F_LA_U_HAS_TAG | NPC_F_LA_L_WITH_ETAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		18, 22, 26, 0, 0,
 		NPC_S_KPU2_ITAG, 12, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		NPC_F_LA_U_HAS_TAG | NPC_F_LA_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 2, 0,
 		NPC_S_KPU4_MPLS, 14, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		NPC_F_LA_L_WITH_MPLS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 2, 0,
 		NPC_S_KPU4_MPLS, 14, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		NPC_F_LA_L_WITH_MPLS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 2, 0,
 		NPC_S_KPU4_NSH, 14, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		NPC_F_LA_L_WITH_NSH,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 12, 0, 1, 0,
 		NPC_S_KPU3_DSA, 12, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LA, NPC_LT_LA_8023,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LA, NPC_LT_LA_8023,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		NPC_F_LA_L_UNK_ETYPE,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 3, 0,
 		NPC_S_KPU5_IP, 22, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 3, 0,
 		NPC_S_KPU5_IP6, 22, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_ARP, 22, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_RARP, 22, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_PTP, 22, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_FCOE, 22, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 12, 0, 0, 0,
 		NPC_S_KPU2_CTAG2, 20, 1,
@@ -7668,8 +7669,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_TAG
 			| NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 0, 0, 0,
 		NPC_S_KPU2_CTAG, 20, 1,
@@ -7677,8 +7678,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_TAG
 			| NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 22, 0, 0,
 		NPC_S_KPU2_SBTAG, 20, 1,
@@ -7686,8 +7687,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_TAG
 			| NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 0, 0, 0,
 		NPC_S_KPU2_QINQ, 20, 1,
@@ -7695,8 +7696,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_TAG
 			| NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 12, 26, 0, 0,
 		NPC_S_KPU2_ETAG, 20, 1,
@@ -7704,8 +7705,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_TAG
 			| NPC_F_LA_L_WITH_ETAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		18, 22, 26, 0, 0,
 		NPC_S_KPU2_ITAG, 20, 1,
@@ -7713,144 +7714,144 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_TAG
 			| NPC_F_LA_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 2, 0,
 		NPC_S_KPU4_MPLS, 22, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_L_WITH_MPLS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 2, 0,
 		NPC_S_KPU4_MPLS, 22, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_L_WITH_MPLS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 2, 0,
 		NPC_S_KPU4_NSH, 22, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_L_WITH_NSH,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_L_UNK_ETYPE,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 14, 16, 0, 0,
 		NPC_S_KPU2_PREHEADER, 8, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_8_ETHER,
 		0,
 		1, 0xff, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 14, 16, 0, 0,
 		NPC_S_KPU2_PREHEADER, 4, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_4_ETHER,
 		0,
 		1, 0xff, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 14, 16, 0, 0,
 		NPC_S_KPU2_PREHEADER, 2, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_2_ETHER,
 		0,
 		1, 0xff, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LA, NPC_EC_IH_LENGTH,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		NPC_F_LA_L_UNK_ETYPE,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 16, 0, 0,
 		NPC_S_KPU2_EXDSA, 12, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 16, 2, 0,
 		NPC_S_KPU4_FDSA, 12, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LA, NPC_EC_EDSA_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LA, NPC_LT_LA_ETHER,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 3, 0,
 		NPC_S_KPU5_IP, 30, 1,
 		NPC_LID_LA, NPC_LT_LA_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_HIGIG2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 3, 0,
 		NPC_S_KPU5_IP6, 30, 1,
 		NPC_LID_LA, NPC_LT_LA_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_HIGIG2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_ARP, 30, 1,
 		NPC_LID_LA, NPC_LT_LA_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_HIGIG2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_RARP, 30, 1,
 		NPC_LID_LA, NPC_LT_LA_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_HIGIG2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_PTP, 30, 1,
 		NPC_LID_LA, NPC_LT_LA_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_HIGIG2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_FCOE, 30, 1,
 		NPC_LID_LA, NPC_LT_LA_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_HIGIG2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 12, 0, 0, 0,
 		NPC_S_KPU2_CTAG2, 28, 1,
@@ -7858,8 +7859,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_HIGIG2 | NPC_F_LA_U_HAS_TAG
 			| NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 0, 0, 0,
 		NPC_S_KPU2_CTAG, 28, 1,
@@ -7867,8 +7868,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_HIGIG2 | NPC_F_LA_U_HAS_TAG
 			| NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 22, 0, 0,
 		NPC_S_KPU2_SBTAG, 28, 1,
@@ -7876,8 +7877,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_HIGIG2 | NPC_F_LA_U_HAS_TAG
 			| NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 0, 0, 0,
 		NPC_S_KPU2_QINQ, 28, 1,
@@ -7885,8 +7886,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_HIGIG2 | NPC_F_LA_U_HAS_TAG
 			| NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 12, 26, 0, 0,
 		NPC_S_KPU2_ETAG, 28, 1,
@@ -7894,8 +7895,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_HIGIG2 | NPC_F_LA_U_HAS_TAG
 			| NPC_F_LA_L_WITH_ETAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		18, 22, 26, 0, 0,
 		NPC_S_KPU2_ITAG, 28, 1,
@@ -7903,88 +7904,88 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_HIGIG2 | NPC_F_LA_U_HAS_TAG
 			| NPC_F_LA_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 2, 0,
 		NPC_S_KPU4_MPLS, 30, 1,
 		NPC_LID_LA, NPC_LT_LA_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_HIGIG2 | NPC_F_LA_L_WITH_MPLS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 2, 0,
 		NPC_S_KPU4_MPLS, 30, 1,
 		NPC_LID_LA, NPC_LT_LA_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_HIGIG2 | NPC_F_LA_L_WITH_MPLS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 2, 0,
 		NPC_S_KPU4_NSH, 30, 1,
 		NPC_LID_LA, NPC_LT_LA_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_HIGIG2 | NPC_F_LA_L_WITH_NSH,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LA, NPC_LT_LA_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_HIGIG2 | NPC_F_LA_L_UNK_ETYPE,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 3, 0,
 		NPC_S_KPU5_IP, 38, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 3, 0,
 		NPC_S_KPU5_IP6, 38, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_ARP, 38, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_RARP, 38, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_PTP, 38, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU5_FCOE, 38, 1,
 		NPC_LID_LA, NPC_LT_LA_IH_NIX_HIGIG2_ETHER,
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 12, 0, 0, 0,
 		NPC_S_KPU2_CTAG2, 36, 1,
@@ -7992,8 +7993,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2
 			| NPC_F_LA_U_HAS_TAG | NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 0, 0, 0,
 		NPC_S_KPU2_CTAG, 36, 1,
@@ -8001,8 +8002,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2
 			| NPC_F_LA_U_HAS_TAG | NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 22, 0, 0,
 		NPC_S_KPU2_SBTAG, 36, 1,
@@ -8010,8 +8011,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2
 			| NPC_F_LA_U_HAS_TAG | NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 0, 0, 0,
 		NPC_S_KPU2_QINQ, 36, 1,
@@ -8019,8 +8020,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2
 			| NPC_F_LA_U_HAS_TAG | NPC_F_LA_L_WITH_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 12, 26, 0, 0,
 		NPC_S_KPU2_ETAG, 36, 1,
@@ -8028,8 +8029,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2
 			| NPC_F_LA_U_HAS_TAG | NPC_F_LA_L_WITH_ETAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		18, 22, 26, 0, 0,
 		NPC_S_KPU2_ITAG, 36, 1,
@@ -8037,8 +8038,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2
 			| NPC_F_LA_U_HAS_TAG | NPC_F_LA_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 2, 0,
 		NPC_S_KPU4_MPLS, 38, 1,
@@ -8046,8 +8047,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2
 			| NPC_F_LA_L_WITH_MPLS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 2, 0,
 		NPC_S_KPU4_MPLS, 38, 1,
@@ -8055,8 +8056,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2
 			| NPC_F_LA_L_WITH_MPLS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 2, 0,
 		NPC_S_KPU4_NSH, 38, 1,
@@ -8064,8 +8065,8 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2
 			| NPC_F_LA_L_WITH_NSH,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
@@ -8073,5453 +8074,5453 @@ static const struct npc_kpu_profile_action kpu1_action_entries[] = {
 		NPC_F_LA_U_HAS_IH_NIX | NPC_F_LA_U_HAS_HIGIG2
 			| NPC_F_LA_L_UNK_ETYPE,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LA, NPC_EC_L2_K1,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LA, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu2_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu2_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_RARP, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_PTP, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_FCOE, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 1, 0,
 		NPC_S_KPU4_NSH, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		NPC_F_LB_U_UNK_ETYPE,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_RARP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_PTP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_FCOE, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 1, 0,
 		NPC_S_KPU4_NSH, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG_UNK,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 0, 0, 0,
 		NPC_S_KPU3_CTAG, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_STAG_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 0, 0, 0,
 		NPC_S_KPU3_STAG, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_STAG_STAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_BTAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_BTAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_BTAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_RARP, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_BTAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_PTP, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_BTAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_FCOE, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_BTAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_BTAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_BTAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 1, 0,
 		NPC_S_KPU4_NSH, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_BTAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU3_STAG, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_BTAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG_STAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU3_CTAG, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_BTAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_BTAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG_UNK,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_UNK_ETYPE,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG | NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG | NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG | NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_RARP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG | NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_PTP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG | NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_FCOE, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG | NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG | NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG | NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 1, 0,
 		NPC_S_KPU4_NSH, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG | NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG | NPC_F_LB_L_WITH_CTAG_UNK,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 0, 0, 0,
 		NPC_S_KPU3_CTAG, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG | NPC_F_LB_L_WITH_QINQ_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 0, 0, 0,
 		NPC_S_KPU3_QINQ, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG | NPC_F_LB_L_WITH_QINQ_QINQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_UNK_ETYPE,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_RARP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_PTP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_FCOE, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		1,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_NSH, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		2,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU3_CTAG, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		16, 20, 24, 0, 0,
 		NPC_S_KPU3_ITAG, 14, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_BTAG_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 0, 0, 0,
 		NPC_S_KPU3_STAG, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_STAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 0, 0, 0,
 		NPC_S_KPU3_QINQ, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_QINQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 28, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 28, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 28, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU3_STAG, 28, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG_STAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU3_CTAG, 28, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_ITAG_UNK,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_ETAG,
 		NPC_F_LB_U_UNK_ETYPE,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 20, 1,
 		NPC_LID_LB, NPC_LT_LB_ITAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 20, 1,
 		NPC_LID_LB, NPC_LT_LB_ITAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 20, 1,
 		NPC_LID_LB, NPC_LT_LB_ITAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_RARP, 20, 1,
 		NPC_LID_LB, NPC_LT_LB_ITAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 28, 1,
 		NPC_LID_LB, NPC_LT_LB_ITAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_STAG_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 28, 1,
 		NPC_LID_LB, NPC_LT_LB_ITAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_STAG_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 28, 1,
 		NPC_LID_LB, NPC_LT_LB_ITAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_STAG_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_ITAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_STAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_ITAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_STAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_ITAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_STAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_ITAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_ITAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 24, 1,
 		NPC_LID_LB, NPC_LT_LB_ITAG,
 		NPC_F_LB_U_MORE_TAG|NPC_F_LB_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_RARP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_PTP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_FCOE, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 1, 0,
 		NPC_S_KPU4_NSH, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 0, 0, 0,
 		NPC_S_KPU3_QINQ, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_MORE_TAG | NPC_F_LB_L_WITH_QINQ_QINQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		NPC_F_LB_U_UNK_ETYPE,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 14, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 14, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 14, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_RARP, 14, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_PTP, 14, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_FCOE, 14, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 0, 0, 0,
 		NPC_S_KPU3_CTAG_C, 14, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 20, 0, 0,
 		NPC_S_KPU3_STAG_C, 14, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 0, 0, 0,
 		NPC_S_KPU3_QINQ_C, 14, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 14, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU4_MPLS, 14, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 1, 0,
 		NPC_S_KPU4_NSH, 14, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 18, 1,
 		NPC_LID_LB, NPC_LT_LB_EDSA,
 		NPC_F_LB_L_EDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 18, 1,
 		NPC_LID_LB, NPC_LT_LB_EDSA,
 		NPC_F_LB_L_EDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 18, 1,
 		NPC_LID_LB, NPC_LT_LB_EDSA,
 		NPC_F_LB_L_EDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_RARP, 18, 1,
 		NPC_LID_LB, NPC_LT_LB_EDSA,
 		NPC_F_LB_L_EDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_PTP, 18, 1,
 		NPC_LID_LB, NPC_LT_LB_EDSA,
 		NPC_F_LB_L_EDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_FCOE, 18, 1,
 		NPC_LID_LB, NPC_LT_LB_EDSA,
 		NPC_F_LB_L_EDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 0, 0, 0,
 		NPC_S_KPU3_CTAG, 16, 1,
 		NPC_LID_LB, NPC_LT_LB_EDSA_VLAN,
 		NPC_F_LB_L_EDSA_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_EDSA,
 		NPC_F_LB_U_UNK_ETYPE | NPC_F_LB_L_EDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_EXDSA,
 		NPC_F_LB_L_EXDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_EXDSA,
 		NPC_F_LB_L_EXDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_EXDSA,
 		NPC_F_LB_L_EXDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_RARP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_EXDSA,
 		NPC_F_LB_L_EXDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_PTP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_EXDSA,
 		NPC_F_LB_L_EXDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_FCOE, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_EXDSA,
 		NPC_F_LB_L_EXDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		4, 8, 0, 0, 0,
 		NPC_S_KPU3_CTAG, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_EXDSA_VLAN,
 		NPC_F_LB_L_EXDSA_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_EXDSA,
 		NPC_F_LB_U_UNK_ETYPE | NPC_F_LB_L_EXDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu3_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu3_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_RARP, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_PTP, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_FCOE, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU4_NSH, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_RARP, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_PTP, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_FCOE, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU4_NSH, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_RARP, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU4_NSH, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_RARP, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_PTP, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_FCOE, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU4_NSH, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_RARP, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_PTP, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_FCOE, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU4_NSH, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU5_IP, 18, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU5_IP6, 18, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_ARP, 18, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU5_RARP, 18, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 26, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 26, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 26, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 22, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 22, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 22, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 22, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 22, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 22, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_RARP, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_PTP, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_FCOE, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU4_NSH, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_CTAG,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_RARP, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_PTP, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_FCOE, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU4_NSH, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_RARP, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU4_NSH, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_RARP, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_PTP, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_FCOE, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU4_NSH, 8, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_RARP, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_PTP, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_FCOE, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU4_MPLS, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU4_NSH, 4, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3_ETYPE_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_STAG_QINQ,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA,
 		NPC_F_LB_L_DSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA,
 		NPC_F_LB_L_DSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA,
 		NPC_F_LB_L_DSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_RARP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA,
 		NPC_F_LB_L_DSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_PTP, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA,
 		NPC_F_LB_L_DSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_FCOE, 10, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA,
 		NPC_F_LB_L_DSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU5_IP, 14, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA_VLAN,
 		NPC_F_LB_L_DSA_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU5_IP6, 14, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA_VLAN,
 		NPC_F_LB_L_DSA_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_ARP, 14, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA_VLAN,
 		NPC_F_LB_L_DSA_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_RARP, 14, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA_VLAN,
 		NPC_F_LB_L_DSA_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_PTP, 14, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA_VLAN,
 		NPC_F_LB_L_DSA_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU5_FCOE, 14, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA_VLAN,
 		NPC_F_LB_L_DSA_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA_VLAN,
 		NPC_F_LB_U_UNK_ETYPE | NPC_F_LB_L_DSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_DSA,
 		NPC_F_LB_U_UNK_ETYPE | NPC_F_LB_L_DSA_VLAN,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K3,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu4_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu4_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU5_MPLS_PL, 4, 1,
 		NPC_LID_LC, NPC_LT_LC_MPLS,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU5_MPLS_PL, 8, 1,
 		NPC_LID_LC, NPC_LT_LC_MPLS,
 		NPC_F_LC_L_MPLS_2_LABELS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU5_MPLS_PL, 12, 1,
 		NPC_LID_LC, NPC_LT_LC_MPLS,
 		NPC_F_LC_L_MPLS_3_LABELS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 4, 0, 0, 0,
 		NPC_S_KPU5_MPLS, 12, 1,
 		NPC_LID_LC, NPC_LT_LC_MPLS,
 		NPC_F_LC_L_MPLS_4_LABELS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 7, 0,
 		NPC_S_KPU12_TU_IP, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_NSH,
 		0,
 		1, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 7, 0,
 		NPC_S_KPU12_TU_IP6, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_NSH,
 		0,
 		1, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 6, 0,
 		NPC_S_KPU11_TU_ETHER, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_NSH,
 		0,
 		1, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 4, 0,
 		NPC_S_KPU9_TU_MPLS_IN_NSH, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_NSH,
 		0,
 		1, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LC, NPC_EC_NSH_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_NSH,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 0, 0,
 		NPC_S_KPU5_IP, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_FDSA,
 		NPC_F_LB_L_FDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 0, 0,
 		NPC_S_KPU5_IP6, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_FDSA,
 		NPC_F_LB_L_FDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU5_ARP, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_FDSA,
 		NPC_F_LB_L_FDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 0, 0,
 		NPC_S_KPU5_RARP, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_FDSA,
 		NPC_F_LB_L_FDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 0, 0,
 		NPC_S_KPU5_PTP, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_FDSA,
 		NPC_F_LB_L_FDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU5_FCOE, 6, 1,
 		NPC_LID_LB, NPC_LT_LB_FDSA,
 		NPC_F_LB_L_FDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LB, NPC_LT_LB_FDSA,
 		NPC_F_LB_U_UNK_ETYPE | NPC_F_LB_L_FDSA,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_L2_K4,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu5_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu5_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_LC, NPC_EC_IP_TTL_0,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LC, NPC_EC_IP_FRAG_OFFSET_1,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		NPC_F_LC_U_IP_FRAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 12, 0, 2, 0,
 		NPC_S_KPU8_TCP, 20, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 2, 0,
 		NPC_S_KPU8_UDP, 20, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU8_SCTP, 20, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU8_ICMP, 20, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU8_IGMP, 20, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU9_ESP, 20, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU8_AH, 20, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 2, 0,
 		NPC_S_KPU8_GRE, 20, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 6, 0,
 		NPC_S_KPU12_TU_IP, 20, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		NPC_F_LC_L_IP_IN_IP,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 6, 0,
 		NPC_S_KPU12_TU_IP6, 20, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		NPC_F_LC_L_6TO4,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 3, 0,
 		NPC_S_KPU9_TU_MPLS_IN_IP, 20, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		NPC_F_LC_L_MPLS_IN_IP,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		NPC_F_LC_U_UNK_PROTO,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		NPC_F_LC_U_IP_FRAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 12, 0, 2, 0,
 		NPC_S_KPU8_TCP, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP_OPT,
 		0,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 8, 10, 2, 0,
 		NPC_S_KPU8_UDP, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP_OPT,
 		0,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU8_SCTP, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP_OPT,
 		0,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU8_ICMP, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP_OPT,
 		0,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU8_IGMP, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP_OPT,
 		0,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU9_ESP, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP_OPT,
 		0,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU8_AH, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP_OPT,
 		0,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 2, 0,
 		NPC_S_KPU8_GRE, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP_OPT,
 		0,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 6, 0,
 		NPC_S_KPU12_TU_IP, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP_OPT,
 		NPC_F_LC_L_IP_IN_IP,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 6, 0,
 		NPC_S_KPU12_TU_IP6, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP_OPT,
 		NPC_F_LC_L_6TO4,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 3, 0,
 		NPC_S_KPU9_TU_MPLS_IN_IP, 20, 1,
 		NPC_LID_LC, NPC_LT_LC_IP_OPT,
 		NPC_F_LC_L_MPLS_IN_IP,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP_OPT,
 		NPC_F_LC_U_UNK_PROTO,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP_OPT,
 		NPC_F_LC_U_IP_FRAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LC, NPC_EC_IP_VER,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_ARP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_RARP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_PTP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_FCOE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LC, NPC_EC_IP6_HOP_0,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 12, 0, 2, 0,
 		NPC_S_KPU8_TCP, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 2, 0,
 		NPC_S_KPU8_UDP, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU8_SCTP, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU8_ICMP, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU8_ICMP6, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU8_GRE, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 6, 0,
 		NPC_S_KPU12_TU_IP6, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6,
 		NPC_F_LC_L_IP6_TUN_IP6,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 3, 0,
 		NPC_S_KPU9_TU_MPLS_IN_IP, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6,
 		NPC_F_LC_L_IP6_MPLS_IN_IP,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU6_IP6_HOP_DEST, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6_EXT,
 		NPC_F_LC_L_EXT_HOP,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU6_IP6_HOP_DEST, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6_EXT,
 		NPC_F_LC_L_EXT_DEST,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU6_IP6_ROUT, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6_EXT,
 		NPC_F_LC_L_EXT_ROUT,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 2, 0, 0, 0,
 		NPC_S_KPU6_IP6_FRAG, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6_EXT,
 		NPC_F_LC_U_IP6_FRAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 3, 0,
 		NPC_S_KPU9_ESP, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6_EXT,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU8_AH, 40, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6_EXT,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6_EXT,
 		NPC_F_LC_L_EXT_MOBILITY,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6_EXT,
 		NPC_F_LC_L_EXT_HOSTID,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6_EXT,
 		NPC_F_LC_L_EXT_SHIM6,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6,
 		NPC_F_LC_U_UNK_PROTO,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LC, NPC_EC_IP6_VER,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LC, NPC_LT_LC_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 6, 0,
 		NPC_S_KPU12_TU_IP, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 6, 0,
 		NPC_S_KPU12_TU_IP6, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 5, 0,
 		NPC_S_KPU11_TU_ETHER, 8, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 5, 0,
 		NPC_S_KPU11_TU_ETHER, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LB, NPC_EC_MPLS_2MANY,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 6, 0,
 		NPC_S_KPU12_TU_IP, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 6, 0,
 		NPC_S_KPU12_TU_IP6, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 5, 0,
 		NPC_S_KPU11_TU_ETHER, 4, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 5, 0,
 		NPC_S_KPU11_TU_ETHER, 0, 0,
 		NPC_LID_LB, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LC, NPC_EC_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu6_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu6_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 12, 0, 1, 0,
 		NPC_S_KPU8_TCP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 8, 10, 1, 0,
 		NPC_S_KPU8_UDP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU8_SCTP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU8_ICMP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU8_ICMP6, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU9_ESP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU8_AH, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU8_GRE, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 5, 0,
 		NPC_S_KPU12_TU_IP6, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 2, 0,
 		NPC_S_KPU9_TU_MPLS_IN_IP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU7_IP6_ROUT, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 2, 0, 0, 0,
 		NPC_S_KPU7_IP6_FRAG, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 12, 0, 1, 0,
 		NPC_S_KPU8_TCP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 8, 10, 1, 0,
 		NPC_S_KPU8_UDP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU8_SCTP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU8_ICMP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU8_ICMP6, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU9_ESP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU8_AH, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU8_GRE, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 5, 0,
 		NPC_S_KPU12_TU_IP6, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 2, 0,
 		NPC_S_KPU9_TU_MPLS_IN_IP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 2, 0, 0, 0,
 		NPC_S_KPU7_IP6_FRAG, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LC, NPC_EC_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu7_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu7_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 12, 0, 0, 0,
 		NPC_S_KPU8_TCP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 8, 10, 0, 0,
 		NPC_S_KPU8_UDP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU8_SCTP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU8_ICMP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU8_ICMP6, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 1, 0,
 		NPC_S_KPU9_ESP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU8_AH, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU8_GRE, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 4, 0,
 		NPC_S_KPU12_TU_IP6, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 1, 0,
 		NPC_S_KPU9_TU_MPLS_IN_IP, 8, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		1, 0xff, 0, 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LC, NPC_EC_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu8_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu8_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_LD, NPC_EC_TCP_FLAGS_FIN_ONLY,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LD, NPC_EC_TCP_FLAGS_ZERO,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LD, NPC_EC_TCP_FLAGS_RST_FIN,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LD, NPC_EC_TCP_FLAGS_URG_SYN,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LD, NPC_EC_TCP_FLAGS_RST_SYN,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LD, NPC_EC_TCP_FLAGS_SYN_FIN,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 7, 0,
 		NPC_S_KPU16_HTTP_DATA, 20, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 7, 0,
 		NPC_S_KPU16_HTTPS_DATA, 20, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 7, 0,
 		NPC_S_KPU16_PPTP_DATA, 20, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 7, 0,
 		NPC_S_KPU16_TCP_DATA, 20, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		NPC_F_LD_L_TCP_UNK_PORT,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 7, 0,
 		NPC_S_KPU16_HTTP_DATA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		NPC_F_LD_L_TCP_HAS_OPTIONS,
 		12, 0xf0, 1, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 7, 0,
 		NPC_S_KPU16_HTTPS_DATA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		NPC_F_LD_L_TCP_HAS_OPTIONS,
 		12, 0xf0, 1, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 7, 0,
 		NPC_S_KPU16_PPTP_DATA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		NPC_F_LD_L_TCP_HAS_OPTIONS,
 		12, 0xf0, 1, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 7, 0,
 		NPC_S_KPU16_TCP_DATA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_TCP,
 		NPC_F_LD_L_TCP_UNK_PORT_HAS_OPTIONS,
 		12, 0xf0, 1, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 2, 0, 0,
 		NPC_S_KPU9_VXLAN, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 2, 0, 0,
 		NPC_S_KPU9_VXLANGPE, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 2, 0, 0,
 		NPC_S_KPU9_GENEVE, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 2, 0, 0,
 		NPC_S_KPU9_GTPC, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 2, 0, 0,
 		NPC_S_KPU9_GTPU, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_KPU16_UDP_PTP, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_KPU16_UDP_PTP, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_UDP, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU9_ESP, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU9_ESP, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 7, 0,
 		NPC_S_KPU16_UDP_DATA, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_SCTP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_ICMP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_IGMP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_ICMP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_AH,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 2, 0,
 		NPC_S_KPU11_TU_ETHER, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_NVGRE,
 		NPC_F_LD_L_GRE_NVGRE,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LD, NPC_EC_NVGRE,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LD, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 4, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_KEY,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_KEY,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_KEY_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 16, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_KEY_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 4, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_KEY,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_KEY,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_KEY_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU9_TU_MPLS_IN_GRE, 16, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_KEY_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU9_TU_NSH_IN_GRE, 4, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU9_TU_NSH_IN_GRE, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU9_TU_NSH_IN_GRE, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_KEY,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU9_TU_NSH_IN_GRE, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU9_TU_NSH_IN_GRE, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_KEY,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU9_TU_NSH_IN_GRE, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU9_TU_NSH_IN_GRE, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_KEY_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU9_TU_NSH_IN_GRE, 16, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_KEY_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 3, 0,
 		NPC_S_KPU12_TU_IP, 4, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 3, 0,
 		NPC_S_KPU12_TU_IP, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 3, 0,
 		NPC_S_KPU12_TU_IP, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_KEY,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 3, 0,
 		NPC_S_KPU12_TU_IP, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 3, 0,
 		NPC_S_KPU12_TU_IP, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_KEY,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 3, 0,
 		NPC_S_KPU12_TU_IP, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 3, 0,
 		NPC_S_KPU12_TU_IP, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_KEY_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 3, 0,
 		NPC_S_KPU12_TU_IP, 16, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_KEY_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 3, 0,
 		NPC_S_KPU12_TU_IP6, 4, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 3, 0,
 		NPC_S_KPU12_TU_IP6, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 3, 0,
 		NPC_S_KPU12_TU_IP6, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_KEY,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 3, 0,
 		NPC_S_KPU12_TU_IP6, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 3, 0,
 		NPC_S_KPU12_TU_IP6, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_KEY,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 3, 0,
 		NPC_S_KPU12_TU_IP6, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 3, 0,
 		NPC_S_KPU12_TU_IP6, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_KEY_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 3, 0,
 		NPC_S_KPU12_TU_IP6, 16, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_CSUM_KEY_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_HAS_ROUTE,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_UNK_PROTO,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LD, NPC_EC_GRE,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LD, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU11_TU_PPP, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_VER1,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU11_TU_PPP, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_VER1_HAS_SEQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU11_TU_PPP, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_VER1_HAS_ACK,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU11_TU_PPP, 16, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_VER1_HAS_SEQ_ACK,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LD, NPC_LT_LD_GRE,
 		NPC_F_LD_L_GRE_VER1_UNK_PROTO,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LD, NPC_EC_GRE_VER1,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LD, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LD, NPC_EC_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LD, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu9_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu9_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS_PL, 4, 1,
 		NPC_LID_LE, NPC_LT_LE_TU_MPLS_IN_GRE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS_PL, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_TU_MPLS_IN_GRE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS_PL, 12, 1,
 		NPC_LID_LE, NPC_LT_LE_TU_MPLS_IN_GRE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 4, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS, 12, 1,
 		NPC_LID_LE, NPC_LT_LE_TU_MPLS_IN_GRE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS_PL, 4, 1,
 		NPC_LID_LD, NPC_LT_LD_TU_MPLS_IN_NSH,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS_PL, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_TU_MPLS_IN_NSH,
 		NPC_F_LD_L_MPLS_2_LABELS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS_PL, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_TU_MPLS_IN_NSH,
 		NPC_F_LD_L_MPLS_3_LABELS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 4, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_TU_MPLS_IN_NSH,
 		NPC_F_LD_L_MPLS_4_LABELS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS_PL, 4, 1,
 		NPC_LID_LD, NPC_LT_LD_TU_MPLS_IN_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS_PL, 8, 1,
 		NPC_LID_LD, NPC_LT_LD_TU_MPLS_IN_IP,
 		NPC_F_LD_L_MPLS_2_LABELS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS_PL, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_TU_MPLS_IN_IP,
 		NPC_F_LD_L_MPLS_3_LABELS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 4, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS, 12, 1,
 		NPC_LID_LD, NPC_LT_LD_TU_MPLS_IN_IP,
 		NPC_F_LD_L_MPLS_4_LABELS,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU12_TU_IP, 0, 1,
 		NPC_LID_LE, NPC_LT_LE_TU_NSH_IN_GRE,
 		0,
 		1, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU12_TU_IP6, 0, 1,
 		NPC_LID_LE, NPC_LT_LE_TU_NSH_IN_GRE,
 		0,
 		1, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 1, 0,
 		NPC_S_KPU11_TU_ETHER, 0, 1,
 		NPC_LID_LE, NPC_LT_LE_TU_NSH_IN_GRE,
 		0,
 		1, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LE, NPC_EC_NSH_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LE, NPC_LT_LE_TU_NSH_IN_GRE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 1, 0,
 		NPC_S_KPU11_TU_ETHER, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLAN,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 1, 0,
 		NPC_S_KPU11_TU_ETHER, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLAN,
 		NPC_F_LE_L_VXLAN_NOVNI,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LE, NPC_EC_VXLAN,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LE, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU12_TU_IP, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLANGPE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU12_TU_IP6, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLANGPE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 1, 0,
 		NPC_S_KPU11_TU_ETHER, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLANGPE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_NSH_IN_VXLANGPE, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLANGPE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU10_TU_MPLS_IN_VXLANGPE, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLANGPE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU12_TU_IP, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLANGPE,
 		NPC_F_LE_L_VXLANGPE_NOVNI,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU12_TU_IP6, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLANGPE,
 		NPC_F_LE_L_VXLANGPE_NOVNI,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 1, 0,
 		NPC_S_KPU11_TU_ETHER, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLANGPE,
 		NPC_F_LE_L_VXLANGPE_NOVNI,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_NSH_IN_VXLANGPE, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLANGPE,
 		NPC_F_LE_L_VXLANGPE_NOVNI,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 6, 10, 0, 0,
 		NPC_S_KPU10_TU_MPLS_IN_VXLANGPE, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLANGPE,
 		NPC_F_LE_L_VXLANGPE_NOVNI,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLANGPE,
 		NPC_F_LE_L_VXLANGPE_UNK,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LE, NPC_LT_LE_VXLANGPE,
 		NPC_F_LE_L_VXLANGPE_NONP,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 1, 0,
 		NPC_S_KPU11_TU_ETHER, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_GENEVE,
 		0,
 		0, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 1, 0,
 		NPC_S_KPU11_TU_ETHER, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_GENEVE,
 		NPC_F_LE_L_GENEVE_OAM,
 		0, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 1, 0,
 		NPC_S_KPU11_TU_ETHER, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_GENEVE,
 		NPC_F_LE_L_GENEVE_CRI_OPT,
 		0, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 1, 0,
 		NPC_S_KPU11_TU_ETHER, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_GENEVE,
 		NPC_F_LE_L_GENEVE_OAM_CRI_OPT,
 		0, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU12_TU_IP, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_GENEVE,
 		0,
 		0, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU12_TU_IP, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_GENEVE,
 		NPC_F_LE_L_GENEVE_OAM,
 		0, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU12_TU_IP, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_GENEVE,
 		NPC_F_LE_L_GENEVE_CRI_OPT,
 		0, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU12_TU_IP, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_GENEVE,
 		NPC_F_LE_L_GENEVE_OAM_CRI_OPT,
 		0, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU12_TU_IP6, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_GENEVE,
 		0,
 		0, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU12_TU_IP6, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_GENEVE,
 		NPC_F_LE_L_GENEVE_OAM,
 		0, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU12_TU_IP6, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_GENEVE,
 		NPC_F_LE_L_GENEVE_CRI_OPT,
 		0, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 2, 0,
 		NPC_S_KPU12_TU_IP6, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_GENEVE,
 		NPC_F_LE_L_GENEVE_OAM_CRI_OPT,
 		0, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LE, NPC_LT_LE_GTPC,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 2, 0,
 		NPC_S_KPU12_TU_IP, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_GTPU,
 		NPC_F_LE_L_GTPU_G_PDU,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LE, NPC_LT_LE_GTPU,
 		NPC_F_LE_L_GTPU_UNK,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS_PL, 4, 1,
 		NPC_LID_LE, NPC_LT_LE_TU_MPLS_IN_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS_PL, 8, 1,
 		NPC_LID_LE, NPC_LT_LE_TU_MPLS_IN_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS_PL, 12, 1,
 		NPC_LID_LE, NPC_LT_LE_TU_MPLS_IN_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 4, 0, 0, 0,
 		NPC_S_KPU10_TU_MPLS, 12, 1,
 		NPC_LID_LE, NPC_LT_LE_TU_MPLS_IN_UDP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LE, NPC_LT_LE_ESP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LE, NPC_EC_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LE, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu10_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu10_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU12_TU_IP, 4, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU12_TU_IP6, 4, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU11_TU_ETHER, 8, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU11_TU_ETHER, 4, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LE, NPC_EC_MPLS_2MANY,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU12_TU_IP, 0, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU12_TU_IP6, 0, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU11_TU_ETHER, 4, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		12, 16, 20, 0, 0,
 		NPC_S_KPU11_TU_ETHER, 0, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU11_TU_MPLS_PL, 4, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_MPLS_IN_VXLANGPE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU11_TU_MPLS_PL, 8, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_MPLS_IN_VXLANGPE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU11_TU_MPLS_PL, 12, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_MPLS_IN_VXLANGPE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 4, 0, 0, 0,
 		NPC_S_KPU11_TU_MPLS, 12, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_MPLS_IN_VXLANGPE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 1, 0,
 		NPC_S_KPU12_TU_IP, 0, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_NSH_IN_VXLANGPE,
 		0,
 		1, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 1, 0,
 		NPC_S_KPU12_TU_IP6, 0, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_NSH_IN_VXLANGPE,
 		0,
 		1, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 0, 0,
 		NPC_S_KPU11_TU_ETHER_IN_NSH, 0, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_NSH_IN_VXLANGPE,
 		0,
 		1, 0x3f, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LF, NPC_EC_NSH_UNK,
 		6, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_NSH_IN_VXLANGPE,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LE, NPC_EC_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu11_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu11_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 0, 0,
 		NPC_S_KPU12_TU_IP, 14, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_IP6, 14, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_ARP, 14, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 0, 0,
 		NPC_S_KPU12_TU_IP, 18, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_IP6, 18, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_ARP, 18, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_U_UNK_ETYPE | NPC_F_LF_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 0, 0,
 		NPC_S_KPU12_TU_IP, 22, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_STAG_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_IP6, 22, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_STAG_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_ARP, 22, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_STAG_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_U_UNK_ETYPE | NPC_F_LF_L_WITH_STAG_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 0, 0,
 		NPC_S_KPU12_TU_IP, 18, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_IP6, 18, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_ARP, 18, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_U_UNK_ETYPE | NPC_F_LF_L_WITH_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 0, 0,
 		NPC_S_KPU12_TU_IP, 22, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_QINQ_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_IP6, 22, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_QINQ_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_ARP, 22, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_QINQ_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_U_UNK_ETYPE | NPC_F_LF_L_WITH_QINQ_CTAG,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 0, 0,
 		NPC_S_KPU12_TU_IP, 18, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_QINQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_IP6, 18, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_QINQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_ARP, 18, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_L_WITH_QINQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_U_UNK_ETYPE | NPC_F_LF_L_WITH_QINQ,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_ETHER,
 		NPC_F_LF_U_UNK_ETYPE,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LF, NPC_LT_LF_TU_PPP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 0, 0,
 		NPC_S_KPU12_TU_IP, 4, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_IP6, 4, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LF, NPC_EC_MPLS_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LF, NPC_EC_MPLS_2MANY,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		8, 0, 6, 0, 0,
 		NPC_S_KPU12_TU_IP, 0, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		6, 0, 0, 0, 0,
 		NPC_S_KPU12_TU_IP6, 0, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LF, NPC_EC_MPLS_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_ETHER_IN_NSH,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LF, NPC_EC_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LF, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu12_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu12_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 12, 0, 2, 0,
 		NPC_S_KPU15_TU_TCP, 20, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_UDP, 20, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_SCTP, 20, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_ICMP, 20, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_IGMP, 20, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_ESP, 20, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_AH, 20, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		NPC_F_LG_U_UNK_IP_PROTO,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 12, 0, 2, 0,
 		NPC_S_KPU15_TU_TCP, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		NPC_F_LG_U_IP_HAS_OPTIONS,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_UDP, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		NPC_F_LG_U_IP_HAS_OPTIONS,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_SCTP, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		NPC_F_LG_U_IP_HAS_OPTIONS,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_ICMP, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		NPC_F_LG_U_IP_HAS_OPTIONS,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_IGMP, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		NPC_F_LG_U_IP_HAS_OPTIONS,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_ESP, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		NPC_F_LG_U_IP_HAS_OPTIONS,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_AH, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		NPC_F_LG_U_IP_HAS_OPTIONS,
 		0, 0xf, 0, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		NPC_F_LG_U_IP_HAS_OPTIONS | NPC_F_LG_U_UNK_IP_PROTO,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LF, NPC_EC_IP_VER,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_ARP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 12, 0, 2, 0,
 		NPC_S_KPU15_TU_TCP, 40, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_UDP, 40, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_SCTP, 40, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_ICMP, 40, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_ICMP6, 40, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_ESP, 40, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 2, 0,
 		NPC_S_KPU15_TU_AH, 40, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		2, 0, 0, 0, 0,
 		NPC_S_KPU13_TU_IP6_EXT, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP6,
 		NPC_F_LG_U_IP6_HAS_EXT,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LF, NPC_EC_IP6_VER,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LG, NPC_LT_LG_TU_IP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LF, NPC_EC_UNK,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LG, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu13_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu13_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu14_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu14_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LC, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu15_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu15_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_LG, NPC_EC_TCP_FLAGS_FIN_ONLY,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LG, NPC_EC_TCP_FLAGS_ZERO,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LG, NPC_EC_TCP_FLAGS_RST_FIN,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LG, NPC_EC_TCP_FLAGS_URG_SYN,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LG, NPC_EC_TCP_FLAGS_RST_SYN,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LG, NPC_EC_TCP_FLAGS_SYN_FIN,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU16_HTTP_DATA, 20, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		NPC_F_LH_L_TCP_HTTP,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU16_HTTPS_DATA, 20, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		NPC_F_LH_L_TCP_HTTP,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU16_PPTP_DATA, 20, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		NPC_F_LH_L_TCP_PPTP,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU16_TCP_DATA, 20, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		NPC_F_LH_L_TCP_UNK_PORT,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU16_HTTP_DATA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		NPC_F_LH_U_TCP_HAS_OPTIONS | NPC_F_LH_L_TCP_HTTP,
 		12, 0xf0, 1, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU16_HTTPS_DATA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		NPC_F_LH_U_TCP_HAS_OPTIONS | NPC_F_LH_L_TCP_HTTPS,
 		12, 0xf0, 1, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU16_PPTP_DATA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		NPC_F_LH_U_TCP_HAS_OPTIONS | NPC_F_LH_L_TCP_PPTP,
 		12, 0xf0, 1, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU16_TCP_DATA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_TCP,
 		NPC_F_LH_U_TCP_HAS_OPTIONS | NPC_F_LH_L_TCP_UNK_PORT,
 		12, 0xf0, 1, 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 0,
 		NPC_S_KPU16_UDP_DATA, 8, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_UDP,
 		NPC_F_LH_L_UDP_UNK_PORT,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_SCTP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_ICMP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_IGMP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_ICMP6,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_ESP,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 1,
 		NPC_LID_LH, NPC_LT_LH_TU_AH,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_LG, NPC_EC_L4,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LH, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile_action kpu16_action_entries[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile_action kpu16_action_entries[] = अणु
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LH, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LH, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LH, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LH, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LH, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		NPC_ERRLEV_RE, NPC_EC_NOERR,
 		0, 0, 0, 0, 1,
 		NPC_S_NA, 0, 0,
 		NPC_LID_LH, NPC_LT_NA,
 		0,
 		0, 0, 0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_kpu_profile npc_kpu_profiles[] = {
-	{
+अटल स्थिर काष्ठा npc_kpu_profile npc_kpu_profiles[] = अणु
+	अणु
 		ARRAY_SIZE(kpu1_cam_entries),
 		ARRAY_SIZE(kpu1_action_entries),
 		&kpu1_cam_entries[0],
 		&kpu1_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu2_cam_entries),
 		ARRAY_SIZE(kpu2_action_entries),
 		&kpu2_cam_entries[0],
 		&kpu2_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu3_cam_entries),
 		ARRAY_SIZE(kpu3_action_entries),
 		&kpu3_cam_entries[0],
 		&kpu3_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu4_cam_entries),
 		ARRAY_SIZE(kpu4_action_entries),
 		&kpu4_cam_entries[0],
 		&kpu4_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu5_cam_entries),
 		ARRAY_SIZE(kpu5_action_entries),
 		&kpu5_cam_entries[0],
 		&kpu5_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu6_cam_entries),
 		ARRAY_SIZE(kpu6_action_entries),
 		&kpu6_cam_entries[0],
 		&kpu6_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu7_cam_entries),
 		ARRAY_SIZE(kpu7_action_entries),
 		&kpu7_cam_entries[0],
 		&kpu7_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu8_cam_entries),
 		ARRAY_SIZE(kpu8_action_entries),
 		&kpu8_cam_entries[0],
 		&kpu8_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu9_cam_entries),
 		ARRAY_SIZE(kpu9_action_entries),
 		&kpu9_cam_entries[0],
 		&kpu9_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu10_cam_entries),
 		ARRAY_SIZE(kpu10_action_entries),
 		&kpu10_cam_entries[0],
 		&kpu10_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu11_cam_entries),
 		ARRAY_SIZE(kpu11_action_entries),
 		&kpu11_cam_entries[0],
 		&kpu11_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu12_cam_entries),
 		ARRAY_SIZE(kpu12_action_entries),
 		&kpu12_cam_entries[0],
 		&kpu12_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu13_cam_entries),
 		ARRAY_SIZE(kpu13_action_entries),
 		&kpu13_cam_entries[0],
 		&kpu13_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu14_cam_entries),
 		ARRAY_SIZE(kpu14_action_entries),
 		&kpu14_cam_entries[0],
 		&kpu14_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu15_cam_entries),
 		ARRAY_SIZE(kpu15_action_entries),
 		&kpu15_cam_entries[0],
 		&kpu15_action_entries[0],
-	},
-	{
+	पूर्ण,
+	अणु
 		ARRAY_SIZE(kpu16_cam_entries),
 		ARRAY_SIZE(kpu16_action_entries),
 		&kpu16_cam_entries[0],
 		&kpu16_action_entries[0],
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct npc_lt_def_cfg npc_lt_defaults = {
-	.rx_ol2 = {
+अटल स्थिर काष्ठा npc_lt_def_cfg npc_lt_शेषs = अणु
+	.rx_ol2 = अणु
 		.lid = NPC_LID_LA,
 		.ltype_match = NPC_LT_LA_ETHER,
 		.ltype_mask = 0x0F,
-	},
-	.rx_oip4 = {
+	पूर्ण,
+	.rx_oip4 = अणु
 		.lid = NPC_LID_LC,
 		.ltype_match = NPC_LT_LC_IP,
 		.ltype_mask = 0x0E,
-	},
-	.rx_iip4 = {
+	पूर्ण,
+	.rx_iip4 = अणु
 		.lid = NPC_LID_LG,
 		.ltype_match = NPC_LT_LG_TU_IP,
 		.ltype_mask = 0x0F,
-	},
-	.rx_oip6 = {
+	पूर्ण,
+	.rx_oip6 = अणु
 		.lid = NPC_LID_LC,
 		.ltype_match = NPC_LT_LC_IP6,
 		.ltype_mask = 0x0E,
-	},
-	.rx_iip6 = {
+	पूर्ण,
+	.rx_iip6 = अणु
 		.lid = NPC_LID_LG,
 		.ltype_match = NPC_LT_LG_TU_IP6,
 		.ltype_mask = 0x0F,
-	},
-	.rx_otcp = {
+	पूर्ण,
+	.rx_otcp = अणु
 		.lid = NPC_LID_LD,
 		.ltype_match = NPC_LT_LD_TCP,
 		.ltype_mask = 0x0F,
-	},
-	.rx_itcp = {
+	पूर्ण,
+	.rx_itcp = अणु
 		.lid = NPC_LID_LH,
 		.ltype_match = NPC_LT_LH_TU_TCP,
 		.ltype_mask = 0x0F,
-	},
-	.rx_oudp = {
+	पूर्ण,
+	.rx_oudp = अणु
 		.lid = NPC_LID_LD,
 		.ltype_match = NPC_LT_LD_UDP,
 		.ltype_mask = 0x0F,
-	},
-	.rx_iudp = {
+	पूर्ण,
+	.rx_iudp = अणु
 		.lid = NPC_LID_LH,
 		.ltype_match = NPC_LT_LH_TU_UDP,
 		.ltype_mask = 0x0F,
-	},
-	.rx_osctp = {
+	पूर्ण,
+	.rx_osctp = अणु
 		.lid = NPC_LID_LD,
 		.ltype_match = NPC_LT_LD_SCTP,
 		.ltype_mask = 0x0F,
-	},
-	.rx_isctp = {
+	पूर्ण,
+	.rx_isctp = अणु
 		.lid = NPC_LID_LH,
 		.ltype_match = NPC_LT_LH_TU_SCTP,
 		.ltype_mask = 0x0F,
-	},
-	.rx_ipsec = {
-		{
+	पूर्ण,
+	.rx_ipsec = अणु
+		अणु
 			.lid = NPC_LID_LE,
 			.ltype_match = NPC_LT_LE_ESP,
 			.ltype_mask = 0x0F,
-		},
-		{
+		पूर्ण,
+		अणु
 			.spi_offset = 8,
 			.lid = NPC_LID_LH,
 			.ltype_match = NPC_LT_LH_TU_ESP,
 			.ltype_mask = 0x0F,
-		},
-	},
-	.pck_ol2 = {
+		पूर्ण,
+	पूर्ण,
+	.pck_ol2 = अणु
 			.lid = NPC_LID_LA,
 			.ltype_match = NPC_LT_LA_ETHER,
 			.ltype_mask = 0x0F,
-	},
-	.pck_oip4 = {
+	पूर्ण,
+	.pck_oip4 = अणु
 			.lid = NPC_LID_LC,
 			.ltype_match = NPC_LT_LC_IP,
 			.ltype_mask = 0x0E,
-	},
-	.pck_iip4 = {
+	पूर्ण,
+	.pck_iip4 = अणु
 			.lid = NPC_LID_LG,
 			.ltype_match = NPC_LT_LG_TU_IP,
 			.ltype_mask = 0x0F,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct npc_mcam_kex npc_mkex_default = {
+अटल काष्ठा npc_mcam_kex npc_mkex_शेष = अणु
 	.mkex_sign = MKEX_SIGN,
 	.name = "default",
-	.kpu_version = NPC_KPU_PROFILE_VER,
-	.keyx_cfg = {
+	.kpu_version = NPC_KPU_PROखाता_VER,
+	.keyx_cfg = अणु
 		/* nibble: LA..LE (ltype only) + channel */
 		[NIX_INTF_RX] = ((u64)NPC_MCAM_KEY_X2 << 32) | NPC_PARSE_NIBBLE_INTF_RX,
 		/* nibble: LA..LE (ltype only) */
 		[NIX_INTF_TX] = ((u64)NPC_MCAM_KEY_X2 << 32) | NPC_PARSE_NIBBLE_INTF_TX,
-	},
-	.intf_lid_lt_ld = {
+	पूर्ण,
+	.पूर्णांकf_lid_lt_ld = अणु
 	/* Default RX MCAM KEX profile */
-	[NIX_INTF_RX] = {
-		[NPC_LID_LA] = {
+	[NIX_INTF_RX] = अणु
+		[NPC_LID_LA] = अणु
 			/* Layer A: Ethernet: */
-			[NPC_LT_LA_ETHER] = {
+			[NPC_LT_LA_ETHER] = अणु
 				/* DMAC: 6 bytes, KW1[47:0] */
 				KEX_LD_CFG(0x05, 0x0, 0x1, 0x0, NPC_KEXOF_DMAC),
 				/* Ethertype: 2 bytes, KW0[47:32] */
 				KEX_LD_CFG(0x01, 0xc, 0x1, 0x0, 0x4),
-			},
-		},
-		[NPC_LID_LB] = {
+			पूर्ण,
+		पूर्ण,
+		[NPC_LID_LB] = अणु
 			/* Layer B: Single VLAN (CTAG) */
 			/* CTAG VLAN[2..3] + Ethertype, 4 bytes, KW0[63:32] */
-			[NPC_LT_LB_CTAG] = {
+			[NPC_LT_LB_CTAG] = अणु
 				KEX_LD_CFG(0x03, 0x2, 0x1, 0x0, 0x4),
-			},
+			पूर्ण,
 			/* Layer B: Stacked VLAN (STAG|QinQ) */
-			[NPC_LT_LB_STAG_QINQ] = {
+			[NPC_LT_LB_STAG_QINQ] = अणु
 				/* Outer VLAN: 2 bytes, KW0[63:48] */
 				KEX_LD_CFG(0x01, 0x2, 0x1, 0x0, 0x6),
 				/* Ethertype: 2 bytes, KW0[47:32] */
 				KEX_LD_CFG(0x01, 0x8, 0x1, 0x0, 0x4),
-			},
-			[NPC_LT_LB_FDSA] = {
+			पूर्ण,
+			[NPC_LT_LB_FDSA] = अणु
 				/* SWITCH PORT: 1 byte, KW0[63:48] */
 				KEX_LD_CFG(0x0, 0x1, 0x1, 0x0, 0x6),
 				/* Ethertype: 2 bytes, KW0[47:32] */
 				KEX_LD_CFG(0x01, 0x4, 0x1, 0x0, 0x4),
-			},
-		},
-		[NPC_LID_LC] = {
+			पूर्ण,
+		पूर्ण,
+		[NPC_LID_LC] = अणु
 			/* Layer C: IPv4 */
-			[NPC_LT_LC_IP] = {
+			[NPC_LT_LC_IP] = अणु
 				/* SIP+DIP: 8 bytes, KW2[63:0] */
 				KEX_LD_CFG(0x07, 0xc, 0x1, 0x0, 0x10),
 				/* TOS: 1 byte, KW1[63:56] */
 				KEX_LD_CFG(0x0, 0x1, 0x1, 0x0, 0xf),
-			},
+			पूर्ण,
 			/* Layer C: IPv6 */
-			[NPC_LT_LC_IP6] = {
+			[NPC_LT_LC_IP6] = अणु
 				/* Everything up to SADDR: 8 bytes, KW2[63:0] */
 				KEX_LD_CFG(0x07, 0x0, 0x1, 0x0, 0x10),
-			},
-		},
-		[NPC_LID_LD] = {
+			पूर्ण,
+		पूर्ण,
+		[NPC_LID_LD] = अणु
 			/* Layer D:UDP */
-			[NPC_LT_LD_UDP] = {
+			[NPC_LT_LD_UDP] = अणु
 				/* SPORT+DPORT: 4 bytes, KW3[31:0] */
 				KEX_LD_CFG(0x3, 0x0, 0x1, 0x0, 0x18),
-			},
+			पूर्ण,
 			/* Layer D:TCP */
-			[NPC_LT_LD_TCP] = {
+			[NPC_LT_LD_TCP] = अणु
 				/* SPORT+DPORT: 4 bytes, KW3[31:0] */
 				KEX_LD_CFG(0x3, 0x0, 0x1, 0x0, 0x18),
-			},
-		},
-	},
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
 
 	/* Default TX MCAM KEX profile */
-	[NIX_INTF_TX] = {
-		[NPC_LID_LA] = {
+	[NIX_INTF_TX] = अणु
+		[NPC_LID_LA] = अणु
 			/* Layer A: NIX_INST_HDR_S + Ethernet */
 			/* NIX appends 8 bytes of NIX_INST_HDR_S at the
 			 * start of each TX packet supplied to NPC.
 			 */
-			[NPC_LT_LA_IH_NIX_ETHER] = {
+			[NPC_LT_LA_IH_NIX_ETHER] = अणु
 				/* PF_FUNC: 2B , KW0 [47:32] */
 				KEX_LD_CFG(0x01, 0x0, 0x1, 0x0, 0x4),
 				/* DMAC: 6 bytes, KW1[63:16] */
 				KEX_LD_CFG(0x05, 0x8, 0x1, 0x0, 0xa),
-			},
-		},
-		[NPC_LID_LB] = {
+			पूर्ण,
+		पूर्ण,
+		[NPC_LID_LB] = अणु
 			/* Layer B: Single VLAN (CTAG) */
-			[NPC_LT_LB_CTAG] = {
+			[NPC_LT_LB_CTAG] = अणु
 				/* CTAG VLAN[2..3] KW0[63:48] */
 				KEX_LD_CFG(0x01, 0x2, 0x1, 0x0, 0x6),
 				/* CTAG VLAN[2..3] KW1[15:0] */
 				KEX_LD_CFG(0x01, 0x4, 0x1, 0x0, 0x8),
-			},
+			पूर्ण,
 			/* Layer B: Stacked VLAN (STAG|QinQ) */
-			[NPC_LT_LB_STAG_QINQ] = {
+			[NPC_LT_LB_STAG_QINQ] = अणु
 				/* Outer VLAN: 2 bytes, KW0[63:48] */
 				KEX_LD_CFG(0x01, 0x2, 0x1, 0x0, 0x6),
 				/* Outer VLAN: 2 Bytes, KW1[15:0] */
 				KEX_LD_CFG(0x01, 0x8, 0x1, 0x0, 0x8),
-			},
-		},
-		[NPC_LID_LC] = {
+			पूर्ण,
+		पूर्ण,
+		[NPC_LID_LC] = अणु
 			/* Layer C: IPv4 */
-			[NPC_LT_LC_IP] = {
+			[NPC_LT_LC_IP] = अणु
 				/* SIP+DIP: 8 bytes, KW2[63:0] */
 				KEX_LD_CFG(0x07, 0xc, 0x1, 0x0, 0x10),
-			},
+			पूर्ण,
 			/* Layer C: IPv6 */
-			[NPC_LT_LC_IP6] = {
+			[NPC_LT_LC_IP6] = अणु
 				/* Everything up to SADDR: 8 bytes, KW2[63:0] */
 				KEX_LD_CFG(0x07, 0x0, 0x1, 0x0, 0x10),
-			},
-		},
-		[NPC_LID_LD] = {
+			पूर्ण,
+		पूर्ण,
+		[NPC_LID_LD] = अणु
 			/* Layer D:UDP */
-			[NPC_LT_LD_UDP] = {
+			[NPC_LT_LD_UDP] = अणु
 				/* SPORT+DPORT: 4 bytes, KW3[31:0] */
 				KEX_LD_CFG(0x3, 0x0, 0x1, 0x0, 0x18),
-			},
+			पूर्ण,
 			/* Layer D:TCP */
-			[NPC_LT_LD_TCP] = {
+			[NPC_LT_LD_TCP] = अणु
 				/* SPORT+DPORT: 4 bytes, KW3[31:0] */
 				KEX_LD_CFG(0x3, 0x0, 0x1, 0x0, 0x18),
-			},
-		},
-	},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-#endif /* NPC_PROFILE_H */
+#पूर्ण_अगर /* NPC_PROखाता_H */

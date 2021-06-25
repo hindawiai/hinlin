@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __UM_TIMEX_H
-#define __UM_TIMEX_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __UM_TIMEX_H
+#घोषणा __UM_TIMEX_H
 
-typedef unsigned long cycles_t;
+प्रकार अचिन्हित दीर्घ cycles_t;
 
-static inline cycles_t get_cycles (void)
-{
-	return 0;
-}
+अटल अंतरभूत cycles_t get_cycles (व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-#define CLOCK_TICK_RATE (HZ)
+#घोषणा CLOCK_TICK_RATE (HZ)
 
-#endif
+#पूर्ण_अगर

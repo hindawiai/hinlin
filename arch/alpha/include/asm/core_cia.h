@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ALPHA_CIA__H__
-#define __ALPHA_CIA__H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ALPHA_CIA__H__
+#घोषणा __ALPHA_CIA__H__
 
-/* Define to experiment with fitting everything into one 512MB HAE window.  */
-#define CIA_ONE_HAE_WINDOW 1
+/* Define to experiment with fitting everything पूर्णांकo one 512MB HAE winकरोw.  */
+#घोषणा CIA_ONE_HAE_WINDOW 1
 
-#include <linux/types.h>
-#include <asm/compiler.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/compiler.h>
 
 /*
- * CIA is the internal name for the 21171 chipset which provides
- * memory controller and PCI access for the 21164 chip based systems.
+ * CIA is the पूर्णांकernal name क्रम the 21171 chipset which provides
+ * memory controller and PCI access क्रम the 21164 chip based प्रणालीs.
  * Also supported here is the 21172 (CIA-2) and 21174 (PYXIS).
  *
  * The lineage is a bit confused, since the 21174 was reportedly started
@@ -59,21 +60,21 @@
  *
  *      10        11      Longword  0000   0x058
  *
- *      Note that byte enables are asserted low.
+ *      Note that byte enables are निश्चितed low.
  *
  */
 
-#define CIA_MEM_R1_MASK 0x1fffffff  /* SPARSE Mem region 1 mask is 29 bits */
-#define CIA_MEM_R2_MASK 0x07ffffff  /* SPARSE Mem region 2 mask is 27 bits */
-#define CIA_MEM_R3_MASK 0x03ffffff  /* SPARSE Mem region 3 mask is 26 bits */
+#घोषणा CIA_MEM_R1_MASK 0x1fffffff  /* SPARSE Mem region 1 mask is 29 bits */
+#घोषणा CIA_MEM_R2_MASK 0x07ffffff  /* SPARSE Mem region 2 mask is 27 bits */
+#घोषणा CIA_MEM_R3_MASK 0x03ffffff  /* SPARSE Mem region 3 mask is 26 bits */
 
 /*
  * 21171-CA Control and Status Registers
  */
-#define CIA_IOC_CIA_REV			(IDENT_ADDR + 0x8740000080UL)
+#घोषणा CIA_IOC_CIA_REV			(IDENT_ADDR + 0x8740000080UL)
 #  define CIA_REV_MASK			0xff
-#define CIA_IOC_PCI_LAT			(IDENT_ADDR + 0x87400000C0UL)
-#define CIA_IOC_CIA_CTRL		(IDENT_ADDR + 0x8740000100UL)
+#घोषणा CIA_IOC_PCI_LAT			(IDENT_ADDR + 0x87400000C0UL)
+#घोषणा CIA_IOC_CIA_CTRL		(IDENT_ADDR + 0x8740000100UL)
 #  define CIA_CTRL_PCI_EN		(1 << 0)
 #  define CIA_CTRL_PCI_LOCK_EN		(1 << 1)
 #  define CIA_CTRL_PCI_LOOP_EN		(1 << 2)
@@ -98,40 +99,40 @@
 #  define CIA_CTRL_RL_TYPE_SHIFT	24
 #  define CIA_CTRL_RM_TYPE_SHIFT	28
 #  define CIA_CTRL_EN_DMA_RD_PERF	(1 << 31)
-#define CIA_IOC_CIA_CNFG		(IDENT_ADDR + 0x8740000140UL)
+#घोषणा CIA_IOC_CIA_CNFG		(IDENT_ADDR + 0x8740000140UL)
 #  define CIA_CNFG_IOA_BWEN		(1 << 0)
 #  define CIA_CNFG_PCI_MWEN		(1 << 4)
 #  define CIA_CNFG_PCI_DWEN		(1 << 5)
 #  define CIA_CNFG_PCI_WLEN		(1 << 8)
-#define CIA_IOC_FLASH_CTRL		(IDENT_ADDR + 0x8740000200UL)
-#define CIA_IOC_HAE_MEM			(IDENT_ADDR + 0x8740000400UL)
-#define CIA_IOC_HAE_IO			(IDENT_ADDR + 0x8740000440UL)
-#define CIA_IOC_CFG			(IDENT_ADDR + 0x8740000480UL)
-#define CIA_IOC_CACK_EN			(IDENT_ADDR + 0x8740000600UL)
+#घोषणा CIA_IOC_FLASH_CTRL		(IDENT_ADDR + 0x8740000200UL)
+#घोषणा CIA_IOC_HAE_MEM			(IDENT_ADDR + 0x8740000400UL)
+#घोषणा CIA_IOC_HAE_IO			(IDENT_ADDR + 0x8740000440UL)
+#घोषणा CIA_IOC_CFG			(IDENT_ADDR + 0x8740000480UL)
+#घोषणा CIA_IOC_CACK_EN			(IDENT_ADDR + 0x8740000600UL)
 #  define CIA_CACK_EN_LOCK_EN		(1 << 0)
 #  define CIA_CACK_EN_MB_EN		(1 << 1)
-#  define CIA_CACK_EN_SET_DIRTY_EN	(1 << 2)
+#  define CIA_CACK_EN_SET_सूचीTY_EN	(1 << 2)
 #  define CIA_CACK_EN_BC_VICTIM_EN	(1 << 3)
 
 
 /*
  * 21171-CA Diagnostic Registers
  */
-#define CIA_IOC_CIA_DIAG		(IDENT_ADDR + 0x8740002000UL)
-#define CIA_IOC_DIAG_CHECK		(IDENT_ADDR + 0x8740003000UL)
+#घोषणा CIA_IOC_CIA_DIAG		(IDENT_ADDR + 0x8740002000UL)
+#घोषणा CIA_IOC_DIAG_CHECK		(IDENT_ADDR + 0x8740003000UL)
 
 /*
- * 21171-CA Performance Monitor registers
+ * 21171-CA Perक्रमmance Monitor रेजिस्टरs
  */
-#define CIA_IOC_PERF_MONITOR		(IDENT_ADDR + 0x8740004000UL)
-#define CIA_IOC_PERF_CONTROL		(IDENT_ADDR + 0x8740004040UL)
+#घोषणा CIA_IOC_PERF_MONITOR		(IDENT_ADDR + 0x8740004000UL)
+#घोषणा CIA_IOC_PERF_CONTROL		(IDENT_ADDR + 0x8740004040UL)
 
 /*
- * 21171-CA Error registers
+ * 21171-CA Error रेजिस्टरs
  */
-#define CIA_IOC_CPU_ERR0		(IDENT_ADDR + 0x8740008000UL)
-#define CIA_IOC_CPU_ERR1		(IDENT_ADDR + 0x8740008040UL)
-#define CIA_IOC_CIA_ERR			(IDENT_ADDR + 0x8740008200UL)
+#घोषणा CIA_IOC_CPU_ERR0		(IDENT_ADDR + 0x8740008000UL)
+#घोषणा CIA_IOC_CPU_ERR1		(IDENT_ADDR + 0x8740008040UL)
+#घोषणा CIA_IOC_CIA_ERR			(IDENT_ADDR + 0x8740008200UL)
 #  define CIA_ERR_COR_ERR		(1 << 0)
 #  define CIA_ERR_UN_COR_ERR		(1 << 1)
 #  define CIA_ERR_CPU_PE		(1 << 2)
@@ -156,167 +157,167 @@
 #  define CIA_ERR_LOST_FROM_WRT_ERR	(1 << 26)
 #  define CIA_ERR_LOST_IOA_TIMEOUT	(1 << 27)
 #  define CIA_ERR_VALID			(1 << 31)
-#define CIA_IOC_CIA_STAT		(IDENT_ADDR + 0x8740008240UL)
-#define CIA_IOC_ERR_MASK		(IDENT_ADDR + 0x8740008280UL)
-#define CIA_IOC_CIA_SYN			(IDENT_ADDR + 0x8740008300UL)
-#define CIA_IOC_MEM_ERR0		(IDENT_ADDR + 0x8740008400UL)
-#define CIA_IOC_MEM_ERR1		(IDENT_ADDR + 0x8740008440UL)
-#define CIA_IOC_PCI_ERR0		(IDENT_ADDR + 0x8740008800UL)
-#define CIA_IOC_PCI_ERR1		(IDENT_ADDR + 0x8740008840UL)
-#define CIA_IOC_PCI_ERR3		(IDENT_ADDR + 0x8740008880UL)
+#घोषणा CIA_IOC_CIA_STAT		(IDENT_ADDR + 0x8740008240UL)
+#घोषणा CIA_IOC_ERR_MASK		(IDENT_ADDR + 0x8740008280UL)
+#घोषणा CIA_IOC_CIA_SYN			(IDENT_ADDR + 0x8740008300UL)
+#घोषणा CIA_IOC_MEM_ERR0		(IDENT_ADDR + 0x8740008400UL)
+#घोषणा CIA_IOC_MEM_ERR1		(IDENT_ADDR + 0x8740008440UL)
+#घोषणा CIA_IOC_PCI_ERR0		(IDENT_ADDR + 0x8740008800UL)
+#घोषणा CIA_IOC_PCI_ERR1		(IDENT_ADDR + 0x8740008840UL)
+#घोषणा CIA_IOC_PCI_ERR3		(IDENT_ADDR + 0x8740008880UL)
 
 /*
- * 21171-CA System configuration registers
+ * 21171-CA System configuration रेजिस्टरs
  */
-#define CIA_IOC_MCR			(IDENT_ADDR + 0x8750000000UL)
-#define CIA_IOC_MBA0			(IDENT_ADDR + 0x8750000600UL)
-#define CIA_IOC_MBA2			(IDENT_ADDR + 0x8750000680UL)
-#define CIA_IOC_MBA4			(IDENT_ADDR + 0x8750000700UL)
-#define CIA_IOC_MBA6			(IDENT_ADDR + 0x8750000780UL)
-#define CIA_IOC_MBA8			(IDENT_ADDR + 0x8750000800UL)
-#define CIA_IOC_MBAA			(IDENT_ADDR + 0x8750000880UL)
-#define CIA_IOC_MBAC			(IDENT_ADDR + 0x8750000900UL)
-#define CIA_IOC_MBAE			(IDENT_ADDR + 0x8750000980UL)
-#define CIA_IOC_TMG0			(IDENT_ADDR + 0x8750000B00UL)
-#define CIA_IOC_TMG1			(IDENT_ADDR + 0x8750000B40UL)
-#define CIA_IOC_TMG2			(IDENT_ADDR + 0x8750000B80UL)
+#घोषणा CIA_IOC_MCR			(IDENT_ADDR + 0x8750000000UL)
+#घोषणा CIA_IOC_MBA0			(IDENT_ADDR + 0x8750000600UL)
+#घोषणा CIA_IOC_MBA2			(IDENT_ADDR + 0x8750000680UL)
+#घोषणा CIA_IOC_MBA4			(IDENT_ADDR + 0x8750000700UL)
+#घोषणा CIA_IOC_MBA6			(IDENT_ADDR + 0x8750000780UL)
+#घोषणा CIA_IOC_MBA8			(IDENT_ADDR + 0x8750000800UL)
+#घोषणा CIA_IOC_MBAA			(IDENT_ADDR + 0x8750000880UL)
+#घोषणा CIA_IOC_MBAC			(IDENT_ADDR + 0x8750000900UL)
+#घोषणा CIA_IOC_MBAE			(IDENT_ADDR + 0x8750000980UL)
+#घोषणा CIA_IOC_TMG0			(IDENT_ADDR + 0x8750000B00UL)
+#घोषणा CIA_IOC_TMG1			(IDENT_ADDR + 0x8750000B40UL)
+#घोषणा CIA_IOC_TMG2			(IDENT_ADDR + 0x8750000B80UL)
 
 /*
  * 2117A-CA PCI Address and Scatter-Gather Registers.
  */
-#define CIA_IOC_PCI_TBIA		(IDENT_ADDR + 0x8760000100UL)
+#घोषणा CIA_IOC_PCI_TBIA		(IDENT_ADDR + 0x8760000100UL)
 
-#define CIA_IOC_PCI_W0_BASE		(IDENT_ADDR + 0x8760000400UL)
-#define CIA_IOC_PCI_W0_MASK		(IDENT_ADDR + 0x8760000440UL)
-#define CIA_IOC_PCI_T0_BASE		(IDENT_ADDR + 0x8760000480UL)
+#घोषणा CIA_IOC_PCI_W0_BASE		(IDENT_ADDR + 0x8760000400UL)
+#घोषणा CIA_IOC_PCI_W0_MASK		(IDENT_ADDR + 0x8760000440UL)
+#घोषणा CIA_IOC_PCI_T0_BASE		(IDENT_ADDR + 0x8760000480UL)
 
-#define CIA_IOC_PCI_W1_BASE		(IDENT_ADDR + 0x8760000500UL)
-#define CIA_IOC_PCI_W1_MASK		(IDENT_ADDR + 0x8760000540UL)
-#define CIA_IOC_PCI_T1_BASE		(IDENT_ADDR + 0x8760000580UL)
+#घोषणा CIA_IOC_PCI_W1_BASE		(IDENT_ADDR + 0x8760000500UL)
+#घोषणा CIA_IOC_PCI_W1_MASK		(IDENT_ADDR + 0x8760000540UL)
+#घोषणा CIA_IOC_PCI_T1_BASE		(IDENT_ADDR + 0x8760000580UL)
 
-#define CIA_IOC_PCI_W2_BASE		(IDENT_ADDR + 0x8760000600UL)
-#define CIA_IOC_PCI_W2_MASK		(IDENT_ADDR + 0x8760000640UL)
-#define CIA_IOC_PCI_T2_BASE		(IDENT_ADDR + 0x8760000680UL)
+#घोषणा CIA_IOC_PCI_W2_BASE		(IDENT_ADDR + 0x8760000600UL)
+#घोषणा CIA_IOC_PCI_W2_MASK		(IDENT_ADDR + 0x8760000640UL)
+#घोषणा CIA_IOC_PCI_T2_BASE		(IDENT_ADDR + 0x8760000680UL)
 
-#define CIA_IOC_PCI_W3_BASE		(IDENT_ADDR + 0x8760000700UL)
-#define CIA_IOC_PCI_W3_MASK		(IDENT_ADDR + 0x8760000740UL)
-#define CIA_IOC_PCI_T3_BASE		(IDENT_ADDR + 0x8760000780UL)
+#घोषणा CIA_IOC_PCI_W3_BASE		(IDENT_ADDR + 0x8760000700UL)
+#घोषणा CIA_IOC_PCI_W3_MASK		(IDENT_ADDR + 0x8760000740UL)
+#घोषणा CIA_IOC_PCI_T3_BASE		(IDENT_ADDR + 0x8760000780UL)
 
-#define CIA_IOC_PCI_Wn_BASE(N)	(IDENT_ADDR + 0x8760000400UL + (N)*0x100) 
-#define CIA_IOC_PCI_Wn_MASK(N)	(IDENT_ADDR + 0x8760000440UL + (N)*0x100) 
-#define CIA_IOC_PCI_Tn_BASE(N)	(IDENT_ADDR + 0x8760000480UL + (N)*0x100) 
+#घोषणा CIA_IOC_PCI_Wn_BASE(N)	(IDENT_ADDR + 0x8760000400UL + (N)*0x100) 
+#घोषणा CIA_IOC_PCI_Wn_MASK(N)	(IDENT_ADDR + 0x8760000440UL + (N)*0x100) 
+#घोषणा CIA_IOC_PCI_Tn_BASE(N)	(IDENT_ADDR + 0x8760000480UL + (N)*0x100) 
 
-#define CIA_IOC_PCI_W_DAC		(IDENT_ADDR + 0x87600007C0UL)
+#घोषणा CIA_IOC_PCI_W_DAC		(IDENT_ADDR + 0x87600007C0UL)
 
 /*
  * 2117A-CA Address Translation Registers.
  */
 
-/* 8 tag registers, the first 4 of which are lockable.  */
-#define CIA_IOC_TB_TAGn(n) \
+/* 8 tag रेजिस्टरs, the first 4 of which are lockable.  */
+#घोषणा CIA_IOC_TB_TAGn(n) \
 	(IDENT_ADDR + 0x8760000800UL + (n)*0x40)
 
-/* 4 page registers per tag register.  */
-#define CIA_IOC_TBn_PAGEm(n,m) \
+/* 4 page रेजिस्टरs per tag रेजिस्टर.  */
+#घोषणा CIA_IOC_TBn_PAGEm(n,m) \
 	(IDENT_ADDR + 0x8760001000UL + (n)*0x100 + (m)*0x40)
 
 /*
  * Memory spaces:
  */
-#define CIA_IACK_SC			(IDENT_ADDR + 0x8720000000UL)
-#define CIA_CONF			(IDENT_ADDR + 0x8700000000UL)
-#define CIA_IO				(IDENT_ADDR + 0x8580000000UL)
-#define CIA_SPARSE_MEM			(IDENT_ADDR + 0x8000000000UL)
-#define CIA_SPARSE_MEM_R2		(IDENT_ADDR + 0x8400000000UL)
-#define CIA_SPARSE_MEM_R3		(IDENT_ADDR + 0x8500000000UL)
-#define CIA_DENSE_MEM		        (IDENT_ADDR + 0x8600000000UL)
-#define CIA_BW_MEM			(IDENT_ADDR + 0x8800000000UL)
-#define CIA_BW_IO			(IDENT_ADDR + 0x8900000000UL)
-#define CIA_BW_CFG_0			(IDENT_ADDR + 0x8a00000000UL)
-#define CIA_BW_CFG_1			(IDENT_ADDR + 0x8b00000000UL)
+#घोषणा CIA_IACK_SC			(IDENT_ADDR + 0x8720000000UL)
+#घोषणा CIA_CONF			(IDENT_ADDR + 0x8700000000UL)
+#घोषणा CIA_IO				(IDENT_ADDR + 0x8580000000UL)
+#घोषणा CIA_SPARSE_MEM			(IDENT_ADDR + 0x8000000000UL)
+#घोषणा CIA_SPARSE_MEM_R2		(IDENT_ADDR + 0x8400000000UL)
+#घोषणा CIA_SPARSE_MEM_R3		(IDENT_ADDR + 0x8500000000UL)
+#घोषणा CIA_DENSE_MEM		        (IDENT_ADDR + 0x8600000000UL)
+#घोषणा CIA_BW_MEM			(IDENT_ADDR + 0x8800000000UL)
+#घोषणा CIA_BW_IO			(IDENT_ADDR + 0x8900000000UL)
+#घोषणा CIA_BW_CFG_0			(IDENT_ADDR + 0x8a00000000UL)
+#घोषणा CIA_BW_CFG_1			(IDENT_ADDR + 0x8b00000000UL)
 
 /*
- * ALCOR's GRU ASIC registers
+ * ALCOR's GRU ASIC रेजिस्टरs
  */
-#define GRU_INT_REQ			(IDENT_ADDR + 0x8780000000UL)
-#define GRU_INT_MASK			(IDENT_ADDR + 0x8780000040UL)
-#define GRU_INT_EDGE			(IDENT_ADDR + 0x8780000080UL)
-#define GRU_INT_HILO			(IDENT_ADDR + 0x87800000C0UL)
-#define GRU_INT_CLEAR			(IDENT_ADDR + 0x8780000100UL)
+#घोषणा GRU_INT_REQ			(IDENT_ADDR + 0x8780000000UL)
+#घोषणा GRU_INT_MASK			(IDENT_ADDR + 0x8780000040UL)
+#घोषणा GRU_INT_EDGE			(IDENT_ADDR + 0x8780000080UL)
+#घोषणा GRU_INT_HILO			(IDENT_ADDR + 0x87800000C0UL)
+#घोषणा GRU_INT_CLEAR			(IDENT_ADDR + 0x8780000100UL)
 
-#define GRU_CACHE_CNFG			(IDENT_ADDR + 0x8780000200UL)
-#define GRU_SCR				(IDENT_ADDR + 0x8780000300UL)
-#define GRU_LED				(IDENT_ADDR + 0x8780000800UL)
-#define GRU_RESET			(IDENT_ADDR + 0x8780000900UL)
+#घोषणा GRU_CACHE_CNFG			(IDENT_ADDR + 0x8780000200UL)
+#घोषणा GRU_SCR				(IDENT_ADDR + 0x8780000300UL)
+#घोषणा GRU_LED				(IDENT_ADDR + 0x8780000800UL)
+#घोषणा GRU_RESET			(IDENT_ADDR + 0x8780000900UL)
 
-#define ALCOR_GRU_INT_REQ_BITS		0x800fffffUL
-#define XLT_GRU_INT_REQ_BITS		0x80003fffUL
-#define GRU_INT_REQ_BITS		(alpha_mv.sys.cia.gru_int_req_bits+0)
+#घोषणा ALCOR_GRU_INT_REQ_BITS		0x800fffffUL
+#घोषणा XLT_GRU_INT_REQ_BITS		0x80003fffUL
+#घोषणा GRU_INT_REQ_BITS		(alpha_mv.sys.cia.gru_पूर्णांक_req_bits+0)
 
 /*
- * PYXIS interrupt control registers
+ * PYXIS पूर्णांकerrupt control रेजिस्टरs
  */
-#define PYXIS_INT_REQ			(IDENT_ADDR + 0x87A0000000UL)
-#define PYXIS_INT_MASK			(IDENT_ADDR + 0x87A0000040UL)
-#define PYXIS_INT_HILO			(IDENT_ADDR + 0x87A00000C0UL)
-#define PYXIS_INT_ROUTE			(IDENT_ADDR + 0x87A0000140UL)
-#define PYXIS_GPO			(IDENT_ADDR + 0x87A0000180UL)
-#define PYXIS_INT_CNFG			(IDENT_ADDR + 0x87A00001C0UL)
-#define PYXIS_RT_COUNT			(IDENT_ADDR + 0x87A0000200UL)
-#define PYXIS_INT_TIME			(IDENT_ADDR + 0x87A0000240UL)
-#define PYXIS_IIC_CTRL			(IDENT_ADDR + 0x87A00002C0UL)
-#define PYXIS_RESET			(IDENT_ADDR + 0x8780000900UL)
+#घोषणा PYXIS_INT_REQ			(IDENT_ADDR + 0x87A0000000UL)
+#घोषणा PYXIS_INT_MASK			(IDENT_ADDR + 0x87A0000040UL)
+#घोषणा PYXIS_INT_HILO			(IDENT_ADDR + 0x87A00000C0UL)
+#घोषणा PYXIS_INT_ROUTE			(IDENT_ADDR + 0x87A0000140UL)
+#घोषणा PYXIS_GPO			(IDENT_ADDR + 0x87A0000180UL)
+#घोषणा PYXIS_INT_CNFG			(IDENT_ADDR + 0x87A00001C0UL)
+#घोषणा PYXIS_RT_COUNT			(IDENT_ADDR + 0x87A0000200UL)
+#घोषणा PYXIS_INT_TIME			(IDENT_ADDR + 0x87A0000240UL)
+#घोषणा PYXIS_IIC_CTRL			(IDENT_ADDR + 0x87A00002C0UL)
+#घोषणा PYXIS_RESET			(IDENT_ADDR + 0x8780000900UL)
 
 /* Offset between ram physical addresses and pci64 DAC bus addresses.  */
-#define PYXIS_DAC_OFFSET		(1UL << 40)
+#घोषणा PYXIS_DAC_OFFSET		(1UL << 40)
 
 /*
- * Data structure for handling CIA machine checks.
+ * Data काष्ठाure क्रम handling CIA machine checks.
  */
 
-/* System-specific info.  */
-struct el_CIA_sysdata_mcheck {
-	unsigned long	cpu_err0;
-	unsigned long	cpu_err1;
-	unsigned long	cia_err;
-	unsigned long	cia_stat;
-	unsigned long	err_mask;
-	unsigned long	cia_syn;
-	unsigned long	mem_err0;
-	unsigned long	mem_err1;
-	unsigned long	pci_err0;
-	unsigned long	pci_err1;
-	unsigned long	pci_err2;
-};
+/* System-specअगरic info.  */
+काष्ठा el_CIA_sysdata_mcheck अणु
+	अचिन्हित दीर्घ	cpu_err0;
+	अचिन्हित दीर्घ	cpu_err1;
+	अचिन्हित दीर्घ	cia_err;
+	अचिन्हित दीर्घ	cia_stat;
+	अचिन्हित दीर्घ	err_mask;
+	अचिन्हित दीर्घ	cia_syn;
+	अचिन्हित दीर्घ	mem_err0;
+	अचिन्हित दीर्घ	mem_err1;
+	अचिन्हित दीर्घ	pci_err0;
+	अचिन्हित दीर्घ	pci_err1;
+	अचिन्हित दीर्घ	pci_err2;
+पूर्ण;
 
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#ifndef __EXTERN_INLINE
-/* Do not touch, this should *NOT* be static inline */
-#define __EXTERN_INLINE extern inline
-#define __IO_EXTERN_INLINE
-#endif
+#अगर_अघोषित __EXTERN_INLINE
+/* Do not touch, this should *NOT* be अटल अंतरभूत */
+#घोषणा __EXTERN_INLINE बाह्य अंतरभूत
+#घोषणा __IO_EXTERN_INLINE
+#पूर्ण_अगर
 
 /*
  * I/O functions:
  *
- * CIA (the 2117x PCI/memory support chipset for the EV5 (21164)
+ * CIA (the 2117x PCI/memory support chipset क्रम the EV5 (21164)
  * series of processors uses a sparse address mapping scheme to
  * get at PCI memory and I/O.
  */
 
 /*
- * Memory functions.  64-bit and 32-bit accesses are done through
- * dense memory space, everything else through sparse space.
+ * Memory functions.  64-bit and 32-bit accesses are करोne through
+ * dense memory space, everything अन्यथा through sparse space.
  *
- * For reading and writing 8 and 16 bit quantities we need to
+ * For पढ़ोing and writing 8 and 16 bit quantities we need to
  * go through one of the three sparse address mapping regions
  * and use the HAE_MEM CSR to provide some bits of the address.
  * The following few routines use only sparse address region 1
  * which gives 1Gbyte of accessible space which relates exactly
- * to the amount of PCI memory mapping *into* system address space.
- * See p 6-17 of the specification but it looks something like this:
+ * to the amount of PCI memory mapping *पूर्णांकo* प्रणाली address space.
+ * See p 6-17 of the specअगरication but it looks something like this:
  *
  * 21164 Address:
  *
@@ -338,164 +339,164 @@ struct el_CIA_sysdata_mcheck {
  *
  */
 
-#define vip	volatile int __force *
-#define vuip	volatile unsigned int __force *
-#define vulp	volatile unsigned long __force *
+#घोषणा vip	अस्थिर पूर्णांक __क्रमce *
+#घोषणा vuip	अस्थिर अचिन्हित पूर्णांक __क्रमce *
+#घोषणा vulp	अस्थिर अचिन्हित दीर्घ __क्रमce *
 
-__EXTERN_INLINE unsigned int cia_ioread8(const void __iomem *xaddr)
-{
-	unsigned long addr = (unsigned long) xaddr;
-	unsigned long result, base_and_type;
+__EXTERN_INLINE अचिन्हित पूर्णांक cia_ioपढ़ो8(स्थिर व्योम __iomem *xaddr)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) xaddr;
+	अचिन्हित दीर्घ result, base_and_type;
 
-	if (addr >= CIA_DENSE_MEM)
+	अगर (addr >= CIA_DENSE_MEM)
 		base_and_type = CIA_SPARSE_MEM + 0x00;
-	else
+	अन्यथा
 		base_and_type = CIA_IO + 0x00;
 
-	/* We can use CIA_MEM_R1_MASK for io ports too, since it is large
+	/* We can use CIA_MEM_R1_MASK क्रम io ports too, since it is large
 	   enough to cover all io ports, and smaller than CIA_IO.  */
 	addr &= CIA_MEM_R1_MASK;
 	result = *(vip) ((addr << 5) + base_and_type);
-	return __kernel_extbl(result, addr & 3);
-}
+	वापस __kernel_extbl(result, addr & 3);
+पूर्ण
 
-__EXTERN_INLINE void cia_iowrite8(u8 b, void __iomem *xaddr)
-{
-	unsigned long addr = (unsigned long) xaddr;
-	unsigned long w, base_and_type;
+__EXTERN_INLINE व्योम cia_ioग_लिखो8(u8 b, व्योम __iomem *xaddr)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) xaddr;
+	अचिन्हित दीर्घ w, base_and_type;
 
-	if (addr >= CIA_DENSE_MEM)
+	अगर (addr >= CIA_DENSE_MEM)
 		base_and_type = CIA_SPARSE_MEM + 0x00;
-	else
+	अन्यथा
 		base_and_type = CIA_IO + 0x00;
 
 	addr &= CIA_MEM_R1_MASK;
 	w = __kernel_insbl(b, addr & 3);
 	*(vuip) ((addr << 5) + base_and_type) = w;
-}
+पूर्ण
 
-__EXTERN_INLINE unsigned int cia_ioread16(const void __iomem *xaddr)
-{
-	unsigned long addr = (unsigned long) xaddr;
-	unsigned long result, base_and_type;
+__EXTERN_INLINE अचिन्हित पूर्णांक cia_ioपढ़ो16(स्थिर व्योम __iomem *xaddr)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) xaddr;
+	अचिन्हित दीर्घ result, base_and_type;
 
-	if (addr >= CIA_DENSE_MEM)
+	अगर (addr >= CIA_DENSE_MEM)
 		base_and_type = CIA_SPARSE_MEM + 0x08;
-	else
+	अन्यथा
 		base_and_type = CIA_IO + 0x08;
 
 	addr &= CIA_MEM_R1_MASK;
 	result = *(vip) ((addr << 5) + base_and_type);
-	return __kernel_extwl(result, addr & 3);
-}
+	वापस __kernel_extwl(result, addr & 3);
+पूर्ण
 
-__EXTERN_INLINE void cia_iowrite16(u16 b, void __iomem *xaddr)
-{
-	unsigned long addr = (unsigned long) xaddr;
-	unsigned long w, base_and_type;
+__EXTERN_INLINE व्योम cia_ioग_लिखो16(u16 b, व्योम __iomem *xaddr)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) xaddr;
+	अचिन्हित दीर्घ w, base_and_type;
 
-	if (addr >= CIA_DENSE_MEM)
+	अगर (addr >= CIA_DENSE_MEM)
 		base_and_type = CIA_SPARSE_MEM + 0x08;
-	else
+	अन्यथा
 		base_and_type = CIA_IO + 0x08;
 
 	addr &= CIA_MEM_R1_MASK;
 	w = __kernel_inswl(b, addr & 3);
 	*(vuip) ((addr << 5) + base_and_type) = w;
-}
+पूर्ण
 
-__EXTERN_INLINE unsigned int cia_ioread32(const void __iomem *xaddr)
-{
-	unsigned long addr = (unsigned long) xaddr;
-	if (addr < CIA_DENSE_MEM)
+__EXTERN_INLINE अचिन्हित पूर्णांक cia_ioपढ़ो32(स्थिर व्योम __iomem *xaddr)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) xaddr;
+	अगर (addr < CIA_DENSE_MEM)
 		addr = ((addr - CIA_IO) << 5) + CIA_IO + 0x18;
-	return *(vuip)addr;
-}
+	वापस *(vuip)addr;
+पूर्ण
 
-__EXTERN_INLINE void cia_iowrite32(u32 b, void __iomem *xaddr)
-{
-	unsigned long addr = (unsigned long) xaddr;
-	if (addr < CIA_DENSE_MEM)
+__EXTERN_INLINE व्योम cia_ioग_लिखो32(u32 b, व्योम __iomem *xaddr)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) xaddr;
+	अगर (addr < CIA_DENSE_MEM)
 		addr = ((addr - CIA_IO) << 5) + CIA_IO + 0x18;
 	*(vuip)addr = b;
-}
+पूर्ण
 
-__EXTERN_INLINE void __iomem *cia_ioportmap(unsigned long addr)
-{
-	return (void __iomem *)(addr + CIA_IO);
-}
+__EXTERN_INLINE व्योम __iomem *cia_ioporपंचांगap(अचिन्हित दीर्घ addr)
+अणु
+	वापस (व्योम __iomem *)(addr + CIA_IO);
+पूर्ण
 
-__EXTERN_INLINE void __iomem *cia_ioremap(unsigned long addr,
-					  unsigned long size)
-{
-	return (void __iomem *)(addr + CIA_DENSE_MEM);
-}
+__EXTERN_INLINE व्योम __iomem *cia_ioremap(अचिन्हित दीर्घ addr,
+					  अचिन्हित दीर्घ size)
+अणु
+	वापस (व्योम __iomem *)(addr + CIA_DENSE_MEM);
+पूर्ण
 
-__EXTERN_INLINE int cia_is_ioaddr(unsigned long addr)
-{
-	return addr >= IDENT_ADDR + 0x8000000000UL;
-}
+__EXTERN_INLINE पूर्णांक cia_is_ioaddr(अचिन्हित दीर्घ addr)
+अणु
+	वापस addr >= IDENT_ADDR + 0x8000000000UL;
+पूर्ण
 
-__EXTERN_INLINE int cia_is_mmio(const volatile void __iomem *addr)
-{
-	return (unsigned long)addr >= CIA_DENSE_MEM;
-}
+__EXTERN_INLINE पूर्णांक cia_is_mmio(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस (अचिन्हित दीर्घ)addr >= CIA_DENSE_MEM;
+पूर्ण
 
-__EXTERN_INLINE void __iomem *cia_bwx_ioportmap(unsigned long addr)
-{
-	return (void __iomem *)(addr + CIA_BW_IO);
-}
+__EXTERN_INLINE व्योम __iomem *cia_bwx_ioporपंचांगap(अचिन्हित दीर्घ addr)
+अणु
+	वापस (व्योम __iomem *)(addr + CIA_BW_IO);
+पूर्ण
 
-__EXTERN_INLINE void __iomem *cia_bwx_ioremap(unsigned long addr,
-					      unsigned long size)
-{
-	return (void __iomem *)(addr + CIA_BW_MEM);
-}
+__EXTERN_INLINE व्योम __iomem *cia_bwx_ioremap(अचिन्हित दीर्घ addr,
+					      अचिन्हित दीर्घ size)
+अणु
+	वापस (व्योम __iomem *)(addr + CIA_BW_MEM);
+पूर्ण
 
-__EXTERN_INLINE int cia_bwx_is_ioaddr(unsigned long addr)
-{
-	return addr >= IDENT_ADDR + 0x8000000000UL;
-}
+__EXTERN_INLINE पूर्णांक cia_bwx_is_ioaddr(अचिन्हित दीर्घ addr)
+अणु
+	वापस addr >= IDENT_ADDR + 0x8000000000UL;
+पूर्ण
 
-__EXTERN_INLINE int cia_bwx_is_mmio(const volatile void __iomem *addr)
-{
-	return (unsigned long)addr < CIA_BW_IO;
-}
+__EXTERN_INLINE पूर्णांक cia_bwx_is_mmio(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस (अचिन्हित दीर्घ)addr < CIA_BW_IO;
+पूर्ण
 
-#undef vip
-#undef vuip
-#undef vulp
+#अघोषित vip
+#अघोषित vuip
+#अघोषित vulp
 
-#undef __IO_PREFIX
-#define __IO_PREFIX		cia
-#define cia_trivial_rw_bw	2
-#define cia_trivial_rw_lq	1
-#define cia_trivial_io_bw	0
-#define cia_trivial_io_lq	0
-#define cia_trivial_iounmap	1
-#include <asm/io_trivial.h>
+#अघोषित __IO_PREFIX
+#घोषणा __IO_PREFIX		cia
+#घोषणा cia_trivial_rw_bw	2
+#घोषणा cia_trivial_rw_lq	1
+#घोषणा cia_trivial_io_bw	0
+#घोषणा cia_trivial_io_lq	0
+#घोषणा cia_trivial_iounmap	1
+#समावेश <यंत्र/io_trivial.h>
 
-#undef __IO_PREFIX
-#define __IO_PREFIX		cia_bwx
-#define cia_bwx_trivial_rw_bw	1
-#define cia_bwx_trivial_rw_lq	1
-#define cia_bwx_trivial_io_bw	1
-#define cia_bwx_trivial_io_lq	1
-#define cia_bwx_trivial_iounmap	1
-#include <asm/io_trivial.h>
+#अघोषित __IO_PREFIX
+#घोषणा __IO_PREFIX		cia_bwx
+#घोषणा cia_bwx_trivial_rw_bw	1
+#घोषणा cia_bwx_trivial_rw_lq	1
+#घोषणा cia_bwx_trivial_io_bw	1
+#घोषणा cia_bwx_trivial_io_lq	1
+#घोषणा cia_bwx_trivial_iounmap	1
+#समावेश <यंत्र/io_trivial.h>
 
-#undef __IO_PREFIX
-#ifdef CONFIG_ALPHA_PYXIS
-#define __IO_PREFIX		cia_bwx
-#else
-#define __IO_PREFIX		cia
-#endif
+#अघोषित __IO_PREFIX
+#अगर_घोषित CONFIG_ALPHA_PYXIS
+#घोषणा __IO_PREFIX		cia_bwx
+#अन्यथा
+#घोषणा __IO_PREFIX		cia
+#पूर्ण_अगर
 
-#ifdef __IO_EXTERN_INLINE
-#undef __EXTERN_INLINE
-#undef __IO_EXTERN_INLINE
-#endif
+#अगर_घोषित __IO_EXTERN_INLINE
+#अघोषित __EXTERN_INLINE
+#अघोषित __IO_EXTERN_INLINE
+#पूर्ण_अगर
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif /* __ALPHA_CIA__H__ */
+#पूर्ण_अगर /* __ALPHA_CIA__H__ */

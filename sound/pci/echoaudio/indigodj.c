@@ -1,74 +1,75 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  ALSA driver for Echoaudio soundcards.
+ *  ALSA driver क्रम Echoaudio soundcards.
  *  Copyright (C) 2003-2004 Giuliano Pochini <pochini@shiny.it>
  */
 
-#define INDIGO_FAMILY
-#define ECHOCARD_INDIGO_DJ
-#define ECHOCARD_NAME "Indigo DJ"
-#define ECHOCARD_HAS_SUPER_INTERLEAVE
-#define ECHOCARD_HAS_VMIXER
-#define ECHOCARD_HAS_STEREO_BIG_ENDIAN32
+#घोषणा INDIGO_FAMILY
+#घोषणा ECHOCARD_INDIGO_DJ
+#घोषणा ECHOCARD_NAME "Indigo DJ"
+#घोषणा ECHOCARD_HAS_SUPER_INTERLEAVE
+#घोषणा ECHOCARD_HAS_VMIXER
+#घोषणा ECHOCARD_HAS_STEREO_BIG_ENDIAN32
 
 /* Pipe indexes */
-#define PX_ANALOG_OUT	0	/* 8 */
-#define PX_DIGITAL_OUT	8	/* 0 */
-#define PX_ANALOG_IN	8	/* 0 */
-#define PX_DIGITAL_IN	8	/* 0 */
-#define PX_NUM		8
+#घोषणा PX_ANALOG_OUT	0	/* 8 */
+#घोषणा PX_DIGITAL_OUT	8	/* 0 */
+#घोषणा PX_ANALOG_IN	8	/* 0 */
+#घोषणा PX_DIGITAL_IN	8	/* 0 */
+#घोषणा PX_NUM		8
 
 /* Bus indexes */
-#define BX_ANALOG_OUT	0	/* 4 */
-#define BX_DIGITAL_OUT	4	/* 0 */
-#define BX_ANALOG_IN	4	/* 0 */
-#define BX_DIGITAL_IN	4	/* 0 */
-#define BX_NUM		4
+#घोषणा BX_ANALOG_OUT	0	/* 4 */
+#घोषणा BX_DIGITAL_OUT	4	/* 0 */
+#घोषणा BX_ANALOG_IN	4	/* 0 */
+#घोषणा BX_DIGITAL_IN	4	/* 0 */
+#घोषणा BX_NUM		4
 
 
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <linux/firmware.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <sound/core.h>
-#include <sound/info.h>
-#include <sound/control.h>
-#include <sound/tlv.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/asoundef.h>
-#include <sound/initval.h>
-#include <linux/atomic.h>
-#include "echoaudio.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <sound/core.h>
+#समावेश <sound/info.h>
+#समावेश <sound/control.h>
+#समावेश <sound/tlv.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/asoundef.h>
+#समावेश <sound/initval.h>
+#समावेश <linux/atomic.h>
+#समावेश "echoaudio.h"
 
 MODULE_FIRMWARE("ea/loader_dsp.fw");
 MODULE_FIRMWARE("ea/indigo_dj_dsp.fw");
 
-#define FW_361_LOADER		0
-#define FW_INDIGO_DJ_DSP	1
+#घोषणा FW_361_LOADER		0
+#घोषणा FW_INDIGO_DJ_DSP	1
 
-static const struct firmware card_fw[] = {
-	{0, "loader_dsp.fw"},
-	{0, "indigo_dj_dsp.fw"}
-};
+अटल स्थिर काष्ठा firmware card_fw[] = अणु
+	अणु0, "loader_dsp.fw"पूर्ण,
+	अणु0, "indigo_dj_dsp.fw"पूर्ण
+पूर्ण;
 
-static const struct pci_device_id snd_echo_ids[] = {
-	{0x1057, 0x3410, 0xECC0, 0x00B0, 0, 0, 0},	/* Indigo DJ*/
-	{0,}
-};
+अटल स्थिर काष्ठा pci_device_id snd_echo_ids[] = अणु
+	अणु0x1057, 0x3410, 0xECC0, 0x00B0, 0, 0, 0पूर्ण,	/* Indigo DJ*/
+	अणु0,पूर्ण
+पूर्ण;
 
-static const struct snd_pcm_hardware pcm_hardware_skel = {
+अटल स्थिर काष्ठा snd_pcm_hardware pcm_hardware_skel = अणु
 	.info = SNDRV_PCM_INFO_MMAP |
 		SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_MMAP_VALID |
 		SNDRV_PCM_INFO_PAUSE |
 		SNDRV_PCM_INFO_SYNC_START,
-	.formats =	SNDRV_PCM_FMTBIT_U8 |
+	.क्रमmats =	SNDRV_PCM_FMTBIT_U8 |
 			SNDRV_PCM_FMTBIT_S16_LE |
 			SNDRV_PCM_FMTBIT_S24_3LE |
 			SNDRV_PCM_FMTBIT_S32_LE |
@@ -87,9 +88,9 @@ static const struct snd_pcm_hardware pcm_hardware_skel = {
 	.period_bytes_max = 131072,
 	.periods_min = 2,
 	.periods_max = 220,
-};
+पूर्ण;
 
-#include "indigodj_dsp.c"
-#include "echoaudio_dsp.c"
-#include "echoaudio.c"
+#समावेश "indigodj_dsp.c"
+#समावेश "echoaudio_dsp.c"
+#समावेश "echoaudio.c"
 

@@ -1,156 +1,157 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * at91 pinctrl driver based on at91 pinmux core
  *
  * Copyright (C) 2011-2012 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
  */
 
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/gpio/driver.h>
-#include <linux/pinctrl/machine.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/pinctrl/machine.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
 /* Since we request GPIOs from ourself */
-#include <linux/pinctrl/consumer.h>
+#समावेश <linux/pinctrl/consumer.h>
 
-#include <soc/at91/pm.h>
+#समावेश <soc/at91/pm.h>
 
-#include "pinctrl-at91.h"
-#include "core.h"
+#समावेश "pinctrl-at91.h"
+#समावेश "core.h"
 
-#define MAX_GPIO_BANKS		5
-#define MAX_NB_GPIO_PER_BANK	32
+#घोषणा MAX_GPIO_BANKS		5
+#घोषणा MAX_NB_GPIO_PER_BANK	32
 
-struct at91_pinctrl_mux_ops;
+काष्ठा at91_pinctrl_mux_ops;
 
-struct at91_gpio_chip {
-	struct gpio_chip	chip;
-	struct pinctrl_gpio_range range;
-	struct at91_gpio_chip	*next;		/* Bank sharing same clock */
-	int			pioc_hwirq;	/* PIO bank interrupt identifier on AIC */
-	int			pioc_virq;	/* PIO bank Linux virtual interrupt */
-	int			pioc_idx;	/* PIO bank index */
-	void __iomem		*regbase;	/* PIO bank virtual address */
-	struct clk		*clock;		/* associated clock */
-	struct at91_pinctrl_mux_ops *ops;	/* ops */
-};
+काष्ठा at91_gpio_chip अणु
+	काष्ठा gpio_chip	chip;
+	काष्ठा pinctrl_gpio_range range;
+	काष्ठा at91_gpio_chip	*next;		/* Bank sharing same घड़ी */
+	पूर्णांक			pioc_hwirq;	/* PIO bank पूर्णांकerrupt identअगरier on AIC */
+	पूर्णांक			pioc_virq;	/* PIO bank Linux भव पूर्णांकerrupt */
+	पूर्णांक			pioc_idx;	/* PIO bank index */
+	व्योम __iomem		*regbase;	/* PIO bank भव address */
+	काष्ठा clk		*घड़ी;		/* associated घड़ी */
+	काष्ठा at91_pinctrl_mux_ops *ops;	/* ops */
+पूर्ण;
 
-static struct at91_gpio_chip *gpio_chips[MAX_GPIO_BANKS];
+अटल काष्ठा at91_gpio_chip *gpio_chips[MAX_GPIO_BANKS];
 
-static int gpio_banks;
+अटल पूर्णांक gpio_banks;
 
-#define PULL_UP		(1 << 0)
-#define MULTI_DRIVE	(1 << 1)
-#define DEGLITCH	(1 << 2)
-#define PULL_DOWN	(1 << 3)
-#define DIS_SCHMIT	(1 << 4)
-#define DRIVE_STRENGTH_SHIFT	5
-#define DRIVE_STRENGTH_MASK		0x3
-#define DRIVE_STRENGTH   (DRIVE_STRENGTH_MASK << DRIVE_STRENGTH_SHIFT)
-#define OUTPUT		(1 << 7)
-#define OUTPUT_VAL_SHIFT	8
-#define OUTPUT_VAL	(0x1 << OUTPUT_VAL_SHIFT)
-#define SLEWRATE_SHIFT	9
-#define SLEWRATE_MASK	0x1
-#define SLEWRATE	(SLEWRATE_MASK << SLEWRATE_SHIFT)
-#define DEBOUNCE	(1 << 16)
-#define DEBOUNCE_VAL_SHIFT	17
-#define DEBOUNCE_VAL	(0x3fff << DEBOUNCE_VAL_SHIFT)
+#घोषणा PULL_UP		(1 << 0)
+#घोषणा MULTI_DRIVE	(1 << 1)
+#घोषणा DEGLITCH	(1 << 2)
+#घोषणा PULL_DOWN	(1 << 3)
+#घोषणा DIS_SCHMIT	(1 << 4)
+#घोषणा DRIVE_STRENGTH_SHIFT	5
+#घोषणा DRIVE_STRENGTH_MASK		0x3
+#घोषणा DRIVE_STRENGTH   (DRIVE_STRENGTH_MASK << DRIVE_STRENGTH_SHIFT)
+#घोषणा OUTPUT		(1 << 7)
+#घोषणा OUTPUT_VAL_SHIFT	8
+#घोषणा OUTPUT_VAL	(0x1 << OUTPUT_VAL_SHIFT)
+#घोषणा SLEWRATE_SHIFT	9
+#घोषणा SLEWRATE_MASK	0x1
+#घोषणा SLEWRATE	(SLEWRATE_MASK << SLEWRATE_SHIFT)
+#घोषणा DEBOUNCE	(1 << 16)
+#घोषणा DEBOUNCE_VAL_SHIFT	17
+#घोषणा DEBOUNCE_VAL	(0x3fff << DEBOUNCE_VAL_SHIFT)
 
 /*
- * These defines will translated the dt binding settings to our internal
- * settings. They are not necessarily the same value as the register setting.
+ * These defines will translated the dt binding settings to our पूर्णांकernal
+ * settings. They are not necessarily the same value as the रेजिस्टर setting.
  * The actual drive strength current of low, medium and high must be looked up
- * from the corresponding device datasheet. This value is different for pins
+ * from the corresponding device datasheet. This value is dअगरferent क्रम pins
  * that are even in the same banks. It is also dependent on VCC.
- * DRIVE_STRENGTH_DEFAULT is just a placeholder to avoid changing the drive
- * strength when there is no dt config for it.
+ * DRIVE_STRENGTH_DEFAULT is just a placeholder to aव्योम changing the drive
+ * strength when there is no dt config क्रम it.
  */
-enum drive_strength_bit {
+क्रमागत drive_strength_bit अणु
 	DRIVE_STRENGTH_BIT_DEF,
 	DRIVE_STRENGTH_BIT_LOW,
 	DRIVE_STRENGTH_BIT_MED,
 	DRIVE_STRENGTH_BIT_HI,
-};
+पूर्ण;
 
-#define DRIVE_STRENGTH_BIT_MSK(name)	(DRIVE_STRENGTH_BIT_##name << \
+#घोषणा DRIVE_STRENGTH_BIT_MSK(name)	(DRIVE_STRENGTH_BIT_##name << \
 					 DRIVE_STRENGTH_SHIFT)
 
-enum slewrate_bit {
+क्रमागत slewrate_bit अणु
 	SLEWRATE_BIT_ENA,
 	SLEWRATE_BIT_DIS,
-};
+पूर्ण;
 
-#define SLEWRATE_BIT_MSK(name)		(SLEWRATE_BIT_##name << SLEWRATE_SHIFT)
+#घोषणा SLEWRATE_BIT_MSK(name)		(SLEWRATE_BIT_##name << SLEWRATE_SHIFT)
 
 /**
- * struct at91_pmx_func - describes AT91 pinmux functions
- * @name: the name of this specific function
+ * काष्ठा at91_pmx_func - describes AT91 pinmux functions
+ * @name: the name of this specअगरic function
  * @groups: corresponding pin groups
  * @ngroups: the number of groups
  */
-struct at91_pmx_func {
-	const char	*name;
-	const char	**groups;
-	unsigned	ngroups;
-};
+काष्ठा at91_pmx_func अणु
+	स्थिर अक्षर	*name;
+	स्थिर अक्षर	**groups;
+	अचिन्हित	ngroups;
+पूर्ण;
 
-enum at91_mux {
+क्रमागत at91_mux अणु
 	AT91_MUX_GPIO = 0,
 	AT91_MUX_PERIPH_A = 1,
 	AT91_MUX_PERIPH_B = 2,
 	AT91_MUX_PERIPH_C = 3,
 	AT91_MUX_PERIPH_D = 4,
-};
+पूर्ण;
 
 /**
- * struct at91_pmx_pin - describes an At91 pin mux
+ * काष्ठा at91_pmx_pin - describes an At91 pin mux
  * @bank: the bank of the pin
  * @pin: the pin number in the @bank
  * @mux: the mux mode : gpio or periph_x of the pin i.e. alternate function.
  * @conf: the configuration of the pin: PULL_UP, MULTIDRIVE etc...
  */
-struct at91_pmx_pin {
-	uint32_t	bank;
-	uint32_t	pin;
-	enum at91_mux	mux;
-	unsigned long	conf;
-};
+काष्ठा at91_pmx_pin अणु
+	uपूर्णांक32_t	bank;
+	uपूर्णांक32_t	pin;
+	क्रमागत at91_mux	mux;
+	अचिन्हित दीर्घ	conf;
+पूर्ण;
 
 /**
- * struct at91_pin_group - describes an At91 pin group
- * @name: the name of this specific pin group
- * @pins_conf: the mux mode for each pin in this group. The size of this
+ * काष्ठा at91_pin_group - describes an At91 pin group
+ * @name: the name of this specअगरic pin group
+ * @pins_conf: the mux mode क्रम each pin in this group. The size of this
  *	array is the same as pins.
  * @pins: an array of discrete physical pins used in this group, taken
- *	from the driver-local pin enumeration space
+ *	from the driver-local pin क्रमागतeration space
  * @npins: the number of pins in this group array, i.e. the number of
  *	elements in .pins so we can iterate over that array
  */
-struct at91_pin_group {
-	const char		*name;
-	struct at91_pmx_pin	*pins_conf;
-	unsigned int		*pins;
-	unsigned		npins;
-};
+काष्ठा at91_pin_group अणु
+	स्थिर अक्षर		*name;
+	काष्ठा at91_pmx_pin	*pins_conf;
+	अचिन्हित पूर्णांक		*pins;
+	अचिन्हित		npins;
+पूर्ण;
 
 /**
- * struct at91_pinctrl_mux_ops - describes an AT91 mux ops group
- * on new IP with support for periph C and D the way to mux in
+ * काष्ठा at91_pinctrl_mux_ops - describes an AT91 mux ops group
+ * on new IP with support क्रम periph C and D the way to mux in
  * periph A and B has changed
  * So provide the right call back
- * if not present means the IP does not support it
- * @get_periph: return the periph mode configured
+ * अगर not present means the IP करोes not support it
+ * @get_periph: वापस the periph mode configured
  * @mux_A_periph: mux as periph A
  * @mux_B_periph: mux as periph B
  * @mux_C_periph: mux as periph C
@@ -159,152 +160,152 @@ struct at91_pin_group {
  * @set_deglitch: enable/disable deglitch
  * @get_debounce: get debounce status
  * @set_debounce: enable/disable debounce
- * @get_pulldown: get pulldown status
- * @set_pulldown: enable/disable pulldown
+ * @get_pullकरोwn: get pullकरोwn status
+ * @set_pullकरोwn: enable/disable pullकरोwn
  * @get_schmitt_trig: get schmitt trigger status
  * @disable_schmitt_trig: disable schmitt trigger
  * @get_drivestrength: get driver strength
  * @set_drivestrength: set driver strength
  * @get_slewrate: get slew rate
  * @set_slewrate: set slew rate
- * @irq_type: return irq type
+ * @irq_type: वापस irq type
  */
-struct at91_pinctrl_mux_ops {
-	enum at91_mux (*get_periph)(void __iomem *pio, unsigned mask);
-	void (*mux_A_periph)(void __iomem *pio, unsigned mask);
-	void (*mux_B_periph)(void __iomem *pio, unsigned mask);
-	void (*mux_C_periph)(void __iomem *pio, unsigned mask);
-	void (*mux_D_periph)(void __iomem *pio, unsigned mask);
-	bool (*get_deglitch)(void __iomem *pio, unsigned pin);
-	void (*set_deglitch)(void __iomem *pio, unsigned mask, bool is_on);
-	bool (*get_debounce)(void __iomem *pio, unsigned pin, u32 *div);
-	void (*set_debounce)(void __iomem *pio, unsigned mask, bool is_on, u32 div);
-	bool (*get_pulldown)(void __iomem *pio, unsigned pin);
-	void (*set_pulldown)(void __iomem *pio, unsigned mask, bool is_on);
-	bool (*get_schmitt_trig)(void __iomem *pio, unsigned pin);
-	void (*disable_schmitt_trig)(void __iomem *pio, unsigned mask);
-	unsigned (*get_drivestrength)(void __iomem *pio, unsigned pin);
-	void (*set_drivestrength)(void __iomem *pio, unsigned pin,
+काष्ठा at91_pinctrl_mux_ops अणु
+	क्रमागत at91_mux (*get_periph)(व्योम __iomem *pio, अचिन्हित mask);
+	व्योम (*mux_A_periph)(व्योम __iomem *pio, अचिन्हित mask);
+	व्योम (*mux_B_periph)(व्योम __iomem *pio, अचिन्हित mask);
+	व्योम (*mux_C_periph)(व्योम __iomem *pio, अचिन्हित mask);
+	व्योम (*mux_D_periph)(व्योम __iomem *pio, अचिन्हित mask);
+	bool (*get_deglitch)(व्योम __iomem *pio, अचिन्हित pin);
+	व्योम (*set_deglitch)(व्योम __iomem *pio, अचिन्हित mask, bool is_on);
+	bool (*get_debounce)(व्योम __iomem *pio, अचिन्हित pin, u32 *भाग);
+	व्योम (*set_debounce)(व्योम __iomem *pio, अचिन्हित mask, bool is_on, u32 भाग);
+	bool (*get_pullकरोwn)(व्योम __iomem *pio, अचिन्हित pin);
+	व्योम (*set_pullकरोwn)(व्योम __iomem *pio, अचिन्हित mask, bool is_on);
+	bool (*get_schmitt_trig)(व्योम __iomem *pio, अचिन्हित pin);
+	व्योम (*disable_schmitt_trig)(व्योम __iomem *pio, अचिन्हित mask);
+	अचिन्हित (*get_drivestrength)(व्योम __iomem *pio, अचिन्हित pin);
+	व्योम (*set_drivestrength)(व्योम __iomem *pio, अचिन्हित pin,
 					u32 strength);
-	unsigned (*get_slewrate)(void __iomem *pio, unsigned pin);
-	void (*set_slewrate)(void __iomem *pio, unsigned pin, u32 slewrate);
+	अचिन्हित (*get_slewrate)(व्योम __iomem *pio, अचिन्हित pin);
+	व्योम (*set_slewrate)(व्योम __iomem *pio, अचिन्हित pin, u32 slewrate);
 	/* irq */
-	int (*irq_type)(struct irq_data *d, unsigned type);
-};
+	पूर्णांक (*irq_type)(काष्ठा irq_data *d, अचिन्हित type);
+पूर्ण;
 
-static int gpio_irq_type(struct irq_data *d, unsigned type);
-static int alt_gpio_irq_type(struct irq_data *d, unsigned type);
+अटल पूर्णांक gpio_irq_type(काष्ठा irq_data *d, अचिन्हित type);
+अटल पूर्णांक alt_gpio_irq_type(काष्ठा irq_data *d, अचिन्हित type);
 
-struct at91_pinctrl {
-	struct device		*dev;
-	struct pinctrl_dev	*pctl;
+काष्ठा at91_pinctrl अणु
+	काष्ठा device		*dev;
+	काष्ठा pinctrl_dev	*pctl;
 
-	int			nactive_banks;
+	पूर्णांक			nactive_banks;
 
-	uint32_t		*mux_mask;
-	int			nmux;
+	uपूर्णांक32_t		*mux_mask;
+	पूर्णांक			nmux;
 
-	struct at91_pmx_func	*functions;
-	int			nfunctions;
+	काष्ठा at91_pmx_func	*functions;
+	पूर्णांक			nfunctions;
 
-	struct at91_pin_group	*groups;
-	int			ngroups;
+	काष्ठा at91_pin_group	*groups;
+	पूर्णांक			ngroups;
 
-	struct at91_pinctrl_mux_ops *ops;
-};
+	काष्ठा at91_pinctrl_mux_ops *ops;
+पूर्ण;
 
-static inline const struct at91_pin_group *at91_pinctrl_find_group_by_name(
-				const struct at91_pinctrl *info,
-				const char *name)
-{
-	const struct at91_pin_group *grp = NULL;
-	int i;
+अटल अंतरभूत स्थिर काष्ठा at91_pin_group *at91_pinctrl_find_group_by_name(
+				स्थिर काष्ठा at91_pinctrl *info,
+				स्थिर अक्षर *name)
+अणु
+	स्थिर काष्ठा at91_pin_group *grp = शून्य;
+	पूर्णांक i;
 
-	for (i = 0; i < info->ngroups; i++) {
-		if (strcmp(info->groups[i].name, name))
-			continue;
+	क्रम (i = 0; i < info->ngroups; i++) अणु
+		अगर (म_भेद(info->groups[i].name, name))
+			जारी;
 
 		grp = &info->groups[i];
 		dev_dbg(info->dev, "%s: %d 0:%d\n", name, grp->npins, grp->pins[0]);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return grp;
-}
+	वापस grp;
+पूर्ण
 
-static int at91_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक at91_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	return info->ngroups;
-}
+	वापस info->ngroups;
+पूर्ण
 
-static const char *at91_get_group_name(struct pinctrl_dev *pctldev,
-				       unsigned selector)
-{
-	struct at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *at91_get_group_name(काष्ठा pinctrl_dev *pctldev,
+				       अचिन्हित selector)
+अणु
+	काष्ठा at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	return info->groups[selector].name;
-}
+	वापस info->groups[selector].name;
+पूर्ण
 
-static int at91_get_group_pins(struct pinctrl_dev *pctldev, unsigned selector,
-			       const unsigned **pins,
-			       unsigned *npins)
-{
-	struct at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक at91_get_group_pins(काष्ठा pinctrl_dev *pctldev, अचिन्हित selector,
+			       स्थिर अचिन्हित **pins,
+			       अचिन्हित *npins)
+अणु
+	काष्ठा at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	if (selector >= info->ngroups)
-		return -EINVAL;
+	अगर (selector >= info->ngroups)
+		वापस -EINVAL;
 
 	*pins = info->groups[selector].pins;
 	*npins = info->groups[selector].npins;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void at91_pin_dbg_show(struct pinctrl_dev *pctldev, struct seq_file *s,
-		   unsigned offset)
-{
-	seq_printf(s, "%s", dev_name(pctldev->dev));
-}
+अटल व्योम at91_pin_dbg_show(काष्ठा pinctrl_dev *pctldev, काष्ठा seq_file *s,
+		   अचिन्हित offset)
+अणु
+	seq_म_लिखो(s, "%s", dev_name(pctldev->dev));
+पूर्ण
 
-static int at91_dt_node_to_map(struct pinctrl_dev *pctldev,
-			struct device_node *np,
-			struct pinctrl_map **map, unsigned *num_maps)
-{
-	struct at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	const struct at91_pin_group *grp;
-	struct pinctrl_map *new_map;
-	struct device_node *parent;
-	int map_num = 1;
-	int i;
+अटल पूर्णांक at91_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
+			काष्ठा device_node *np,
+			काष्ठा pinctrl_map **map, अचिन्हित *num_maps)
+अणु
+	काष्ठा at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा at91_pin_group *grp;
+	काष्ठा pinctrl_map *new_map;
+	काष्ठा device_node *parent;
+	पूर्णांक map_num = 1;
+	पूर्णांक i;
 
 	/*
-	 * first find the group of this node and check if we need to create
-	 * config maps for pins
+	 * first find the group of this node and check अगर we need to create
+	 * config maps क्रम pins
 	 */
 	grp = at91_pinctrl_find_group_by_name(info, np->name);
-	if (!grp) {
+	अगर (!grp) अणु
 		dev_err(info->dev, "unable to find group for node %pOFn\n",
 			np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	map_num += grp->npins;
-	new_map = devm_kcalloc(pctldev->dev, map_num, sizeof(*new_map),
+	new_map = devm_kसुस्मृति(pctldev->dev, map_num, माप(*new_map),
 			       GFP_KERNEL);
-	if (!new_map)
-		return -ENOMEM;
+	अगर (!new_map)
+		वापस -ENOMEM;
 
 	*map = new_map;
 	*num_maps = map_num;
 
 	/* create mux map */
 	parent = of_get_parent(np);
-	if (!parent) {
-		devm_kfree(pctldev->dev, new_map);
-		return -EINVAL;
-	}
+	अगर (!parent) अणु
+		devm_kमुक्त(pctldev->dev, new_map);
+		वापस -EINVAL;
+	पूर्ण
 	new_map[0].type = PIN_MAP_TYPE_MUX_GROUP;
 	new_map[0].data.mux.function = parent->name;
 	new_map[0].data.mux.group = np->name;
@@ -312,392 +313,392 @@ static int at91_dt_node_to_map(struct pinctrl_dev *pctldev,
 
 	/* create config map */
 	new_map++;
-	for (i = 0; i < grp->npins; i++) {
+	क्रम (i = 0; i < grp->npins; i++) अणु
 		new_map[i].type = PIN_MAP_TYPE_CONFIGS_PIN;
 		new_map[i].data.configs.group_or_pin =
 				pin_get_name(pctldev, grp->pins[i]);
 		new_map[i].data.configs.configs = &grp->pins_conf[i].conf;
 		new_map[i].data.configs.num_configs = 1;
-	}
+	पूर्ण
 
 	dev_dbg(pctldev->dev, "maps: function %s group %s num %d\n",
 		(*map)->data.mux.function, (*map)->data.mux.group, map_num);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void at91_dt_free_map(struct pinctrl_dev *pctldev,
-				struct pinctrl_map *map, unsigned num_maps)
-{
-}
+अटल व्योम at91_dt_मुक्त_map(काष्ठा pinctrl_dev *pctldev,
+				काष्ठा pinctrl_map *map, अचिन्हित num_maps)
+अणु
+पूर्ण
 
-static const struct pinctrl_ops at91_pctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops at91_pctrl_ops = अणु
 	.get_groups_count	= at91_get_groups_count,
 	.get_group_name		= at91_get_group_name,
 	.get_group_pins		= at91_get_group_pins,
 	.pin_dbg_show		= at91_pin_dbg_show,
 	.dt_node_to_map		= at91_dt_node_to_map,
-	.dt_free_map		= at91_dt_free_map,
-};
+	.dt_मुक्त_map		= at91_dt_मुक्त_map,
+पूर्ण;
 
-static void __iomem *pin_to_controller(struct at91_pinctrl *info,
-				 unsigned int bank)
-{
-	if (!gpio_chips[bank])
-		return NULL;
+अटल व्योम __iomem *pin_to_controller(काष्ठा at91_pinctrl *info,
+				 अचिन्हित पूर्णांक bank)
+अणु
+	अगर (!gpio_chips[bank])
+		वापस शून्य;
 
-	return gpio_chips[bank]->regbase;
-}
+	वापस gpio_chips[bank]->regbase;
+पूर्ण
 
-static inline int pin_to_bank(unsigned pin)
-{
-	return pin /= MAX_NB_GPIO_PER_BANK;
-}
+अटल अंतरभूत पूर्णांक pin_to_bank(अचिन्हित pin)
+अणु
+	वापस pin /= MAX_NB_GPIO_PER_BANK;
+पूर्ण
 
-static unsigned pin_to_mask(unsigned int pin)
-{
-	return 1 << pin;
-}
+अटल अचिन्हित pin_to_mask(अचिन्हित पूर्णांक pin)
+अणु
+	वापस 1 << pin;
+पूर्ण
 
-static unsigned two_bit_pin_value_shift_amount(unsigned int pin)
-{
-	/* return the shift value for a pin for "two bit" per pin registers,
+अटल अचिन्हित two_bit_pin_value_shअगरt_amount(अचिन्हित पूर्णांक pin)
+अणु
+	/* वापस the shअगरt value क्रम a pin क्रम "two bit" per pin रेजिस्टरs,
 	 * i.e. drive strength */
-	return 2*((pin >= MAX_NB_GPIO_PER_BANK/2)
+	वापस 2*((pin >= MAX_NB_GPIO_PER_BANK/2)
 			? pin - MAX_NB_GPIO_PER_BANK/2 : pin);
-}
+पूर्ण
 
-static unsigned sama5d3_get_drive_register(unsigned int pin)
-{
-	/* drive strength is split between two registers
+अटल अचिन्हित sama5d3_get_drive_रेजिस्टर(अचिन्हित पूर्णांक pin)
+अणु
+	/* drive strength is split between two रेजिस्टरs
 	 * with two bits per pin */
-	return (pin >= MAX_NB_GPIO_PER_BANK/2)
+	वापस (pin >= MAX_NB_GPIO_PER_BANK/2)
 			? SAMA5D3_PIO_DRIVER2 : SAMA5D3_PIO_DRIVER1;
-}
+पूर्ण
 
-static unsigned at91sam9x5_get_drive_register(unsigned int pin)
-{
-	/* drive strength is split between two registers
+अटल अचिन्हित at91sam9x5_get_drive_रेजिस्टर(अचिन्हित पूर्णांक pin)
+अणु
+	/* drive strength is split between two रेजिस्टरs
 	 * with two bits per pin */
-	return (pin >= MAX_NB_GPIO_PER_BANK/2)
+	वापस (pin >= MAX_NB_GPIO_PER_BANK/2)
 			? AT91SAM9X5_PIO_DRIVER2 : AT91SAM9X5_PIO_DRIVER1;
-}
+पूर्ण
 
-static void at91_mux_disable_interrupt(void __iomem *pio, unsigned mask)
-{
-	writel_relaxed(mask, pio + PIO_IDR);
-}
+अटल व्योम at91_mux_disable_पूर्णांकerrupt(व्योम __iomem *pio, अचिन्हित mask)
+अणु
+	ग_लिखोl_relaxed(mask, pio + PIO_IDR);
+पूर्ण
 
-static unsigned at91_mux_get_pullup(void __iomem *pio, unsigned pin)
-{
-	return !((readl_relaxed(pio + PIO_PUSR) >> pin) & 0x1);
-}
+अटल अचिन्हित at91_mux_get_pullup(व्योम __iomem *pio, अचिन्हित pin)
+अणु
+	वापस !((पढ़ोl_relaxed(pio + PIO_PUSR) >> pin) & 0x1);
+पूर्ण
 
-static void at91_mux_set_pullup(void __iomem *pio, unsigned mask, bool on)
-{
-	if (on)
-		writel_relaxed(mask, pio + PIO_PPDDR);
+अटल व्योम at91_mux_set_pullup(व्योम __iomem *pio, अचिन्हित mask, bool on)
+अणु
+	अगर (on)
+		ग_लिखोl_relaxed(mask, pio + PIO_PPDDR);
 
-	writel_relaxed(mask, pio + (on ? PIO_PUER : PIO_PUDR));
-}
+	ग_लिखोl_relaxed(mask, pio + (on ? PIO_PUER : PIO_PUDR));
+पूर्ण
 
-static bool at91_mux_get_output(void __iomem *pio, unsigned int pin, bool *val)
-{
-	*val = (readl_relaxed(pio + PIO_ODSR) >> pin) & 0x1;
-	return (readl_relaxed(pio + PIO_OSR) >> pin) & 0x1;
-}
+अटल bool at91_mux_get_output(व्योम __iomem *pio, अचिन्हित पूर्णांक pin, bool *val)
+अणु
+	*val = (पढ़ोl_relaxed(pio + PIO_ODSR) >> pin) & 0x1;
+	वापस (पढ़ोl_relaxed(pio + PIO_OSR) >> pin) & 0x1;
+पूर्ण
 
-static void at91_mux_set_output(void __iomem *pio, unsigned int mask,
+अटल व्योम at91_mux_set_output(व्योम __iomem *pio, अचिन्हित पूर्णांक mask,
 				bool is_on, bool val)
-{
-	writel_relaxed(mask, pio + (val ? PIO_SODR : PIO_CODR));
-	writel_relaxed(mask, pio + (is_on ? PIO_OER : PIO_ODR));
-}
+अणु
+	ग_लिखोl_relaxed(mask, pio + (val ? PIO_SODR : PIO_CODR));
+	ग_लिखोl_relaxed(mask, pio + (is_on ? PIO_OER : PIO_ODR));
+पूर्ण
 
-static unsigned at91_mux_get_multidrive(void __iomem *pio, unsigned pin)
-{
-	return (readl_relaxed(pio + PIO_MDSR) >> pin) & 0x1;
-}
+अटल अचिन्हित at91_mux_get_multidrive(व्योम __iomem *pio, अचिन्हित pin)
+अणु
+	वापस (पढ़ोl_relaxed(pio + PIO_MDSR) >> pin) & 0x1;
+पूर्ण
 
-static void at91_mux_set_multidrive(void __iomem *pio, unsigned mask, bool on)
-{
-	writel_relaxed(mask, pio + (on ? PIO_MDER : PIO_MDDR));
-}
+अटल व्योम at91_mux_set_multidrive(व्योम __iomem *pio, अचिन्हित mask, bool on)
+अणु
+	ग_लिखोl_relaxed(mask, pio + (on ? PIO_MDER : PIO_MDDR));
+पूर्ण
 
-static void at91_mux_set_A_periph(void __iomem *pio, unsigned mask)
-{
-	writel_relaxed(mask, pio + PIO_ASR);
-}
+अटल व्योम at91_mux_set_A_periph(व्योम __iomem *pio, अचिन्हित mask)
+अणु
+	ग_लिखोl_relaxed(mask, pio + PIO_ASR);
+पूर्ण
 
-static void at91_mux_set_B_periph(void __iomem *pio, unsigned mask)
-{
-	writel_relaxed(mask, pio + PIO_BSR);
-}
+अटल व्योम at91_mux_set_B_periph(व्योम __iomem *pio, अचिन्हित mask)
+अणु
+	ग_लिखोl_relaxed(mask, pio + PIO_BSR);
+पूर्ण
 
-static void at91_mux_pio3_set_A_periph(void __iomem *pio, unsigned mask)
-{
+अटल व्योम at91_mux_pio3_set_A_periph(व्योम __iomem *pio, अचिन्हित mask)
+अणु
 
-	writel_relaxed(readl_relaxed(pio + PIO_ABCDSR1) & ~mask,
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(pio + PIO_ABCDSR1) & ~mask,
 						pio + PIO_ABCDSR1);
-	writel_relaxed(readl_relaxed(pio + PIO_ABCDSR2) & ~mask,
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(pio + PIO_ABCDSR2) & ~mask,
 						pio + PIO_ABCDSR2);
-}
+पूर्ण
 
-static void at91_mux_pio3_set_B_periph(void __iomem *pio, unsigned mask)
-{
-	writel_relaxed(readl_relaxed(pio + PIO_ABCDSR1) | mask,
+अटल व्योम at91_mux_pio3_set_B_periph(व्योम __iomem *pio, अचिन्हित mask)
+अणु
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(pio + PIO_ABCDSR1) | mask,
 						pio + PIO_ABCDSR1);
-	writel_relaxed(readl_relaxed(pio + PIO_ABCDSR2) & ~mask,
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(pio + PIO_ABCDSR2) & ~mask,
 						pio + PIO_ABCDSR2);
-}
+पूर्ण
 
-static void at91_mux_pio3_set_C_periph(void __iomem *pio, unsigned mask)
-{
-	writel_relaxed(readl_relaxed(pio + PIO_ABCDSR1) & ~mask, pio + PIO_ABCDSR1);
-	writel_relaxed(readl_relaxed(pio + PIO_ABCDSR2) | mask, pio + PIO_ABCDSR2);
-}
+अटल व्योम at91_mux_pio3_set_C_periph(व्योम __iomem *pio, अचिन्हित mask)
+अणु
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(pio + PIO_ABCDSR1) & ~mask, pio + PIO_ABCDSR1);
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(pio + PIO_ABCDSR2) | mask, pio + PIO_ABCDSR2);
+पूर्ण
 
-static void at91_mux_pio3_set_D_periph(void __iomem *pio, unsigned mask)
-{
-	writel_relaxed(readl_relaxed(pio + PIO_ABCDSR1) | mask, pio + PIO_ABCDSR1);
-	writel_relaxed(readl_relaxed(pio + PIO_ABCDSR2) | mask, pio + PIO_ABCDSR2);
-}
+अटल व्योम at91_mux_pio3_set_D_periph(व्योम __iomem *pio, अचिन्हित mask)
+अणु
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(pio + PIO_ABCDSR1) | mask, pio + PIO_ABCDSR1);
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(pio + PIO_ABCDSR2) | mask, pio + PIO_ABCDSR2);
+पूर्ण
 
-static enum at91_mux at91_mux_pio3_get_periph(void __iomem *pio, unsigned mask)
-{
-	unsigned select;
+अटल क्रमागत at91_mux at91_mux_pio3_get_periph(व्योम __iomem *pio, अचिन्हित mask)
+अणु
+	अचिन्हित select;
 
-	if (readl_relaxed(pio + PIO_PSR) & mask)
-		return AT91_MUX_GPIO;
+	अगर (पढ़ोl_relaxed(pio + PIO_PSR) & mask)
+		वापस AT91_MUX_GPIO;
 
-	select = !!(readl_relaxed(pio + PIO_ABCDSR1) & mask);
-	select |= (!!(readl_relaxed(pio + PIO_ABCDSR2) & mask) << 1);
+	select = !!(पढ़ोl_relaxed(pio + PIO_ABCDSR1) & mask);
+	select |= (!!(पढ़ोl_relaxed(pio + PIO_ABCDSR2) & mask) << 1);
 
-	return select + 1;
-}
+	वापस select + 1;
+पूर्ण
 
-static enum at91_mux at91_mux_get_periph(void __iomem *pio, unsigned mask)
-{
-	unsigned select;
+अटल क्रमागत at91_mux at91_mux_get_periph(व्योम __iomem *pio, अचिन्हित mask)
+अणु
+	अचिन्हित select;
 
-	if (readl_relaxed(pio + PIO_PSR) & mask)
-		return AT91_MUX_GPIO;
+	अगर (पढ़ोl_relaxed(pio + PIO_PSR) & mask)
+		वापस AT91_MUX_GPIO;
 
-	select = readl_relaxed(pio + PIO_ABSR) & mask;
+	select = पढ़ोl_relaxed(pio + PIO_ABSR) & mask;
 
-	return select + 1;
-}
+	वापस select + 1;
+पूर्ण
 
-static bool at91_mux_get_deglitch(void __iomem *pio, unsigned pin)
-{
-	return (readl_relaxed(pio + PIO_IFSR) >> pin) & 0x1;
-}
+अटल bool at91_mux_get_deglitch(व्योम __iomem *pio, अचिन्हित pin)
+अणु
+	वापस (पढ़ोl_relaxed(pio + PIO_IFSR) >> pin) & 0x1;
+पूर्ण
 
-static void at91_mux_set_deglitch(void __iomem *pio, unsigned mask, bool is_on)
-{
-	writel_relaxed(mask, pio + (is_on ? PIO_IFER : PIO_IFDR));
-}
+अटल व्योम at91_mux_set_deglitch(व्योम __iomem *pio, अचिन्हित mask, bool is_on)
+अणु
+	ग_लिखोl_relaxed(mask, pio + (is_on ? PIO_IFER : PIO_IFDR));
+पूर्ण
 
-static bool at91_mux_pio3_get_deglitch(void __iomem *pio, unsigned pin)
-{
-	if ((readl_relaxed(pio + PIO_IFSR) >> pin) & 0x1)
-		return !((readl_relaxed(pio + PIO_IFSCSR) >> pin) & 0x1);
+अटल bool at91_mux_pio3_get_deglitch(व्योम __iomem *pio, अचिन्हित pin)
+अणु
+	अगर ((पढ़ोl_relaxed(pio + PIO_IFSR) >> pin) & 0x1)
+		वापस !((पढ़ोl_relaxed(pio + PIO_IFSCSR) >> pin) & 0x1);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void at91_mux_pio3_set_deglitch(void __iomem *pio, unsigned mask, bool is_on)
-{
-	if (is_on)
-		writel_relaxed(mask, pio + PIO_IFSCDR);
+अटल व्योम at91_mux_pio3_set_deglitch(व्योम __iomem *pio, अचिन्हित mask, bool is_on)
+अणु
+	अगर (is_on)
+		ग_लिखोl_relaxed(mask, pio + PIO_IFSCDR);
 	at91_mux_set_deglitch(pio, mask, is_on);
-}
+पूर्ण
 
-static bool at91_mux_pio3_get_debounce(void __iomem *pio, unsigned pin, u32 *div)
-{
-	*div = readl_relaxed(pio + PIO_SCDR);
+अटल bool at91_mux_pio3_get_debounce(व्योम __iomem *pio, अचिन्हित pin, u32 *भाग)
+अणु
+	*भाग = पढ़ोl_relaxed(pio + PIO_SCDR);
 
-	return ((readl_relaxed(pio + PIO_IFSR) >> pin) & 0x1) &&
-	       ((readl_relaxed(pio + PIO_IFSCSR) >> pin) & 0x1);
-}
+	वापस ((पढ़ोl_relaxed(pio + PIO_IFSR) >> pin) & 0x1) &&
+	       ((पढ़ोl_relaxed(pio + PIO_IFSCSR) >> pin) & 0x1);
+पूर्ण
 
-static void at91_mux_pio3_set_debounce(void __iomem *pio, unsigned mask,
-				bool is_on, u32 div)
-{
-	if (is_on) {
-		writel_relaxed(mask, pio + PIO_IFSCER);
-		writel_relaxed(div & PIO_SCDR_DIV, pio + PIO_SCDR);
-		writel_relaxed(mask, pio + PIO_IFER);
-	} else
-		writel_relaxed(mask, pio + PIO_IFSCDR);
-}
+अटल व्योम at91_mux_pio3_set_debounce(व्योम __iomem *pio, अचिन्हित mask,
+				bool is_on, u32 भाग)
+अणु
+	अगर (is_on) अणु
+		ग_लिखोl_relaxed(mask, pio + PIO_IFSCER);
+		ग_लिखोl_relaxed(भाग & PIO_SCDR_DIV, pio + PIO_SCDR);
+		ग_लिखोl_relaxed(mask, pio + PIO_IFER);
+	पूर्ण अन्यथा
+		ग_लिखोl_relaxed(mask, pio + PIO_IFSCDR);
+पूर्ण
 
-static bool at91_mux_pio3_get_pulldown(void __iomem *pio, unsigned pin)
-{
-	return !((readl_relaxed(pio + PIO_PPDSR) >> pin) & 0x1);
-}
+अटल bool at91_mux_pio3_get_pullकरोwn(व्योम __iomem *pio, अचिन्हित pin)
+अणु
+	वापस !((पढ़ोl_relaxed(pio + PIO_PPDSR) >> pin) & 0x1);
+पूर्ण
 
-static void at91_mux_pio3_set_pulldown(void __iomem *pio, unsigned mask, bool is_on)
-{
-	if (is_on)
-		writel_relaxed(mask, pio + PIO_PUDR);
+अटल व्योम at91_mux_pio3_set_pullकरोwn(व्योम __iomem *pio, अचिन्हित mask, bool is_on)
+अणु
+	अगर (is_on)
+		ग_लिखोl_relaxed(mask, pio + PIO_PUDR);
 
-	writel_relaxed(mask, pio + (is_on ? PIO_PPDER : PIO_PPDDR));
-}
+	ग_लिखोl_relaxed(mask, pio + (is_on ? PIO_PPDER : PIO_PPDDR));
+पूर्ण
 
-static void at91_mux_pio3_disable_schmitt_trig(void __iomem *pio, unsigned mask)
-{
-	writel_relaxed(readl_relaxed(pio + PIO_SCHMITT) | mask, pio + PIO_SCHMITT);
-}
+अटल व्योम at91_mux_pio3_disable_schmitt_trig(व्योम __iomem *pio, अचिन्हित mask)
+अणु
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(pio + PIO_SCHMITT) | mask, pio + PIO_SCHMITT);
+पूर्ण
 
-static bool at91_mux_pio3_get_schmitt_trig(void __iomem *pio, unsigned pin)
-{
-	return (readl_relaxed(pio + PIO_SCHMITT) >> pin) & 0x1;
-}
+अटल bool at91_mux_pio3_get_schmitt_trig(व्योम __iomem *pio, अचिन्हित pin)
+अणु
+	वापस (पढ़ोl_relaxed(pio + PIO_SCHMITT) >> pin) & 0x1;
+पूर्ण
 
-static inline u32 read_drive_strength(void __iomem *reg, unsigned pin)
-{
-	unsigned tmp = readl_relaxed(reg);
+अटल अंतरभूत u32 पढ़ो_drive_strength(व्योम __iomem *reg, अचिन्हित pin)
+अणु
+	अचिन्हित पंचांगp = पढ़ोl_relaxed(reg);
 
-	tmp = tmp >> two_bit_pin_value_shift_amount(pin);
+	पंचांगp = पंचांगp >> two_bit_pin_value_shअगरt_amount(pin);
 
-	return tmp & DRIVE_STRENGTH_MASK;
-}
+	वापस पंचांगp & DRIVE_STRENGTH_MASK;
+पूर्ण
 
-static unsigned at91_mux_sama5d3_get_drivestrength(void __iomem *pio,
-							unsigned pin)
-{
-	unsigned tmp = read_drive_strength(pio +
-					sama5d3_get_drive_register(pin), pin);
+अटल अचिन्हित at91_mux_sama5d3_get_drivestrength(व्योम __iomem *pio,
+							अचिन्हित pin)
+अणु
+	अचिन्हित पंचांगp = पढ़ो_drive_strength(pio +
+					sama5d3_get_drive_रेजिस्टर(pin), pin);
 
 	/* SAMA5 strength is 1:1 with our defines,
 	 * except 0 is equivalent to low per datasheet */
-	if (!tmp)
-		tmp = DRIVE_STRENGTH_BIT_MSK(LOW);
+	अगर (!पंचांगp)
+		पंचांगp = DRIVE_STRENGTH_BIT_MSK(LOW);
 
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
-static unsigned at91_mux_sam9x5_get_drivestrength(void __iomem *pio,
-							unsigned pin)
-{
-	unsigned tmp = read_drive_strength(pio +
-				at91sam9x5_get_drive_register(pin), pin);
+अटल अचिन्हित at91_mux_sam9x5_get_drivestrength(व्योम __iomem *pio,
+							अचिन्हित pin)
+अणु
+	अचिन्हित पंचांगp = पढ़ो_drive_strength(pio +
+				at91sam9x5_get_drive_रेजिस्टर(pin), pin);
 
 	/* strength is inverse in SAM9x5s hardware with the pinctrl defines
 	 * hardware: 0 = hi, 1 = med, 2 = low, 3 = rsvd */
-	tmp = DRIVE_STRENGTH_BIT_MSK(HI) - tmp;
+	पंचांगp = DRIVE_STRENGTH_BIT_MSK(HI) - पंचांगp;
 
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
-static unsigned at91_mux_sam9x60_get_drivestrength(void __iomem *pio,
-						   unsigned pin)
-{
-	unsigned tmp = readl_relaxed(pio + SAM9X60_PIO_DRIVER1);
+अटल अचिन्हित at91_mux_sam9x60_get_drivestrength(व्योम __iomem *pio,
+						   अचिन्हित pin)
+अणु
+	अचिन्हित पंचांगp = पढ़ोl_relaxed(pio + SAM9X60_PIO_DRIVER1);
 
-	if (tmp & BIT(pin))
-		return DRIVE_STRENGTH_BIT_HI;
+	अगर (पंचांगp & BIT(pin))
+		वापस DRIVE_STRENGTH_BIT_HI;
 
-	return DRIVE_STRENGTH_BIT_LOW;
-}
+	वापस DRIVE_STRENGTH_BIT_LOW;
+पूर्ण
 
-static unsigned at91_mux_sam9x60_get_slewrate(void __iomem *pio, unsigned pin)
-{
-	unsigned tmp = readl_relaxed(pio + SAM9X60_PIO_SLEWR);
+अटल अचिन्हित at91_mux_sam9x60_get_slewrate(व्योम __iomem *pio, अचिन्हित pin)
+अणु
+	अचिन्हित पंचांगp = पढ़ोl_relaxed(pio + SAM9X60_PIO_SLEWR);
 
-	if ((tmp & BIT(pin)))
-		return SLEWRATE_BIT_ENA;
+	अगर ((पंचांगp & BIT(pin)))
+		वापस SLEWRATE_BIT_ENA;
 
-	return SLEWRATE_BIT_DIS;
-}
+	वापस SLEWRATE_BIT_DIS;
+पूर्ण
 
-static void set_drive_strength(void __iomem *reg, unsigned pin, u32 strength)
-{
-	unsigned tmp = readl_relaxed(reg);
-	unsigned shift = two_bit_pin_value_shift_amount(pin);
+अटल व्योम set_drive_strength(व्योम __iomem *reg, अचिन्हित pin, u32 strength)
+अणु
+	अचिन्हित पंचांगp = पढ़ोl_relaxed(reg);
+	अचिन्हित shअगरt = two_bit_pin_value_shअगरt_amount(pin);
 
-	tmp &= ~(DRIVE_STRENGTH_MASK  <<  shift);
-	tmp |= strength << shift;
+	पंचांगp &= ~(DRIVE_STRENGTH_MASK  <<  shअगरt);
+	पंचांगp |= strength << shअगरt;
 
-	writel_relaxed(tmp, reg);
-}
+	ग_लिखोl_relaxed(पंचांगp, reg);
+पूर्ण
 
-static void at91_mux_sama5d3_set_drivestrength(void __iomem *pio, unsigned pin,
+अटल व्योम at91_mux_sama5d3_set_drivestrength(व्योम __iomem *pio, अचिन्हित pin,
 						u32 setting)
-{
-	/* do nothing if setting is zero */
-	if (!setting)
-		return;
+अणु
+	/* करो nothing अगर setting is zero */
+	अगर (!setting)
+		वापस;
 
-	/* strength is 1 to 1 with setting for SAMA5 */
-	set_drive_strength(pio + sama5d3_get_drive_register(pin), pin, setting);
-}
+	/* strength is 1 to 1 with setting क्रम SAMA5 */
+	set_drive_strength(pio + sama5d3_get_drive_रेजिस्टर(pin), pin, setting);
+पूर्ण
 
-static void at91_mux_sam9x5_set_drivestrength(void __iomem *pio, unsigned pin,
+अटल व्योम at91_mux_sam9x5_set_drivestrength(व्योम __iomem *pio, अचिन्हित pin,
 						u32 setting)
-{
-	/* do nothing if setting is zero */
-	if (!setting)
-		return;
+अणु
+	/* करो nothing अगर setting is zero */
+	अगर (!setting)
+		वापस;
 
 	/* strength is inverse on SAM9x5s with our defines
 	 * 0 = hi, 1 = med, 2 = low, 3 = rsvd */
 	setting = DRIVE_STRENGTH_BIT_MSK(HI) - setting;
 
-	set_drive_strength(pio + at91sam9x5_get_drive_register(pin), pin,
+	set_drive_strength(pio + at91sam9x5_get_drive_रेजिस्टर(pin), pin,
 				setting);
-}
+पूर्ण
 
-static void at91_mux_sam9x60_set_drivestrength(void __iomem *pio, unsigned pin,
+अटल व्योम at91_mux_sam9x60_set_drivestrength(व्योम __iomem *pio, अचिन्हित pin,
 					       u32 setting)
-{
-	unsigned int tmp;
+अणु
+	अचिन्हित पूर्णांक पंचांगp;
 
-	if (setting <= DRIVE_STRENGTH_BIT_DEF ||
+	अगर (setting <= DRIVE_STRENGTH_BIT_DEF ||
 	    setting == DRIVE_STRENGTH_BIT_MED ||
 	    setting > DRIVE_STRENGTH_BIT_HI)
-		return;
+		वापस;
 
-	tmp = readl_relaxed(pio + SAM9X60_PIO_DRIVER1);
+	पंचांगp = पढ़ोl_relaxed(pio + SAM9X60_PIO_DRIVER1);
 
 	/* Strength is 0: low, 1: hi */
-	if (setting == DRIVE_STRENGTH_BIT_LOW)
-		tmp &= ~BIT(pin);
-	else
-		tmp |= BIT(pin);
+	अगर (setting == DRIVE_STRENGTH_BIT_LOW)
+		पंचांगp &= ~BIT(pin);
+	अन्यथा
+		पंचांगp |= BIT(pin);
 
-	writel_relaxed(tmp, pio + SAM9X60_PIO_DRIVER1);
-}
+	ग_लिखोl_relaxed(पंचांगp, pio + SAM9X60_PIO_DRIVER1);
+पूर्ण
 
-static void at91_mux_sam9x60_set_slewrate(void __iomem *pio, unsigned pin,
+अटल व्योम at91_mux_sam9x60_set_slewrate(व्योम __iomem *pio, अचिन्हित pin,
 					  u32 setting)
-{
-	unsigned int tmp;
+अणु
+	अचिन्हित पूर्णांक पंचांगp;
 
-	if (setting < SLEWRATE_BIT_ENA || setting > SLEWRATE_BIT_DIS)
-		return;
+	अगर (setting < SLEWRATE_BIT_ENA || setting > SLEWRATE_BIT_DIS)
+		वापस;
 
-	tmp = readl_relaxed(pio + SAM9X60_PIO_SLEWR);
+	पंचांगp = पढ़ोl_relaxed(pio + SAM9X60_PIO_SLEWR);
 
-	if (setting == SLEWRATE_BIT_DIS)
-		tmp &= ~BIT(pin);
-	else
-		tmp |= BIT(pin);
+	अगर (setting == SLEWRATE_BIT_DIS)
+		पंचांगp &= ~BIT(pin);
+	अन्यथा
+		पंचांगp |= BIT(pin);
 
-	writel_relaxed(tmp, pio + SAM9X60_PIO_SLEWR);
-}
+	ग_लिखोl_relaxed(पंचांगp, pio + SAM9X60_PIO_SLEWR);
+पूर्ण
 
-static struct at91_pinctrl_mux_ops at91rm9200_ops = {
+अटल काष्ठा at91_pinctrl_mux_ops at91rm9200_ops = अणु
 	.get_periph	= at91_mux_get_periph,
 	.mux_A_periph	= at91_mux_set_A_periph,
 	.mux_B_periph	= at91_mux_set_B_periph,
 	.get_deglitch	= at91_mux_get_deglitch,
 	.set_deglitch	= at91_mux_set_deglitch,
 	.irq_type	= gpio_irq_type,
-};
+पूर्ण;
 
-static struct at91_pinctrl_mux_ops at91sam9x5_ops = {
+अटल काष्ठा at91_pinctrl_mux_ops at91sam9x5_ops = अणु
 	.get_periph	= at91_mux_pio3_get_periph,
 	.mux_A_periph	= at91_mux_pio3_set_A_periph,
 	.mux_B_periph	= at91_mux_pio3_set_B_periph,
@@ -707,16 +708,16 @@ static struct at91_pinctrl_mux_ops at91sam9x5_ops = {
 	.set_deglitch	= at91_mux_pio3_set_deglitch,
 	.get_debounce	= at91_mux_pio3_get_debounce,
 	.set_debounce	= at91_mux_pio3_set_debounce,
-	.get_pulldown	= at91_mux_pio3_get_pulldown,
-	.set_pulldown	= at91_mux_pio3_set_pulldown,
+	.get_pullकरोwn	= at91_mux_pio3_get_pullकरोwn,
+	.set_pullकरोwn	= at91_mux_pio3_set_pullकरोwn,
 	.get_schmitt_trig = at91_mux_pio3_get_schmitt_trig,
 	.disable_schmitt_trig = at91_mux_pio3_disable_schmitt_trig,
 	.get_drivestrength = at91_mux_sam9x5_get_drivestrength,
 	.set_drivestrength = at91_mux_sam9x5_set_drivestrength,
 	.irq_type	= alt_gpio_irq_type,
-};
+पूर्ण;
 
-static const struct at91_pinctrl_mux_ops sam9x60_ops = {
+अटल स्थिर काष्ठा at91_pinctrl_mux_ops sam9x60_ops = अणु
 	.get_periph	= at91_mux_pio3_get_periph,
 	.mux_A_periph	= at91_mux_pio3_set_A_periph,
 	.mux_B_periph	= at91_mux_pio3_set_B_periph,
@@ -726,8 +727,8 @@ static const struct at91_pinctrl_mux_ops sam9x60_ops = {
 	.set_deglitch	= at91_mux_pio3_set_deglitch,
 	.get_debounce	= at91_mux_pio3_get_debounce,
 	.set_debounce	= at91_mux_pio3_set_debounce,
-	.get_pulldown	= at91_mux_pio3_get_pulldown,
-	.set_pulldown	= at91_mux_pio3_set_pulldown,
+	.get_pullकरोwn	= at91_mux_pio3_get_pullकरोwn,
+	.set_pullकरोwn	= at91_mux_pio3_set_pullकरोwn,
 	.get_schmitt_trig = at91_mux_pio3_get_schmitt_trig,
 	.disable_schmitt_trig = at91_mux_pio3_disable_schmitt_trig,
 	.get_drivestrength = at91_mux_sam9x60_get_drivestrength,
@@ -735,9 +736,9 @@ static const struct at91_pinctrl_mux_ops sam9x60_ops = {
 	.get_slewrate   = at91_mux_sam9x60_get_slewrate,
 	.set_slewrate   = at91_mux_sam9x60_set_slewrate,
 	.irq_type	= alt_gpio_irq_type,
-};
+पूर्ण;
 
-static struct at91_pinctrl_mux_ops sama5d3_ops = {
+अटल काष्ठा at91_pinctrl_mux_ops sama5d3_ops = अणु
 	.get_periph	= at91_mux_pio3_get_periph,
 	.mux_A_periph	= at91_mux_pio3_set_A_periph,
 	.mux_B_periph	= at91_mux_pio3_set_B_periph,
@@ -747,186 +748,186 @@ static struct at91_pinctrl_mux_ops sama5d3_ops = {
 	.set_deglitch	= at91_mux_pio3_set_deglitch,
 	.get_debounce	= at91_mux_pio3_get_debounce,
 	.set_debounce	= at91_mux_pio3_set_debounce,
-	.get_pulldown	= at91_mux_pio3_get_pulldown,
-	.set_pulldown	= at91_mux_pio3_set_pulldown,
+	.get_pullकरोwn	= at91_mux_pio3_get_pullकरोwn,
+	.set_pullकरोwn	= at91_mux_pio3_set_pullकरोwn,
 	.get_schmitt_trig = at91_mux_pio3_get_schmitt_trig,
 	.disable_schmitt_trig = at91_mux_pio3_disable_schmitt_trig,
 	.get_drivestrength = at91_mux_sama5d3_get_drivestrength,
 	.set_drivestrength = at91_mux_sama5d3_set_drivestrength,
 	.irq_type	= alt_gpio_irq_type,
-};
+पूर्ण;
 
-static void at91_pin_dbg(const struct device *dev, const struct at91_pmx_pin *pin)
-{
-	if (pin->mux) {
+अटल व्योम at91_pin_dbg(स्थिर काष्ठा device *dev, स्थिर काष्ठा at91_pmx_pin *pin)
+अणु
+	अगर (pin->mux) अणु
 		dev_dbg(dev, "pio%c%d configured as periph%c with conf = 0x%lx\n",
 			pin->bank + 'A', pin->pin, pin->mux - 1 + 'A', pin->conf);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(dev, "pio%c%d configured as gpio with conf = 0x%lx\n",
 			pin->bank + 'A', pin->pin, pin->conf);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pin_check_config(struct at91_pinctrl *info, const char *name,
-			    int index, const struct at91_pmx_pin *pin)
-{
-	int mux;
+अटल पूर्णांक pin_check_config(काष्ठा at91_pinctrl *info, स्थिर अक्षर *name,
+			    पूर्णांक index, स्थिर काष्ठा at91_pmx_pin *pin)
+अणु
+	पूर्णांक mux;
 
-	/* check if it's a valid config */
-	if (pin->bank >= gpio_banks) {
+	/* check अगर it's a valid config */
+	अगर (pin->bank >= gpio_banks) अणु
 		dev_err(info->dev, "%s: pin conf %d bank_id %d >= nbanks %d\n",
 			name, index, pin->bank, gpio_banks);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!gpio_chips[pin->bank]) {
+	अगर (!gpio_chips[pin->bank]) अणु
 		dev_err(info->dev, "%s: pin conf %d bank_id %d not enabled\n",
 			name, index, pin->bank);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (pin->pin >= MAX_NB_GPIO_PER_BANK) {
+	अगर (pin->pin >= MAX_NB_GPIO_PER_BANK) अणु
 		dev_err(info->dev, "%s: pin conf %d pin_bank_id %d >= %d\n",
 			name, index, pin->pin, MAX_NB_GPIO_PER_BANK);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!pin->mux)
-		return 0;
+	अगर (!pin->mux)
+		वापस 0;
 
 	mux = pin->mux - 1;
 
-	if (mux >= info->nmux) {
+	अगर (mux >= info->nmux) अणु
 		dev_err(info->dev, "%s: pin conf %d mux_id %d >= nmux %d\n",
 			name, index, mux, info->nmux);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!(info->mux_mask[pin->bank * info->nmux + mux] & 1 << pin->pin)) {
+	अगर (!(info->mux_mask[pin->bank * info->nmux + mux] & 1 << pin->pin)) अणु
 		dev_err(info->dev, "%s: pin conf %d mux_id %d not supported for pio%c%d\n",
 			name, index, mux, pin->bank + 'A', pin->pin);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void at91_mux_gpio_disable(void __iomem *pio, unsigned mask)
-{
-	writel_relaxed(mask, pio + PIO_PDR);
-}
+अटल व्योम at91_mux_gpio_disable(व्योम __iomem *pio, अचिन्हित mask)
+अणु
+	ग_लिखोl_relaxed(mask, pio + PIO_PDR);
+पूर्ण
 
-static void at91_mux_gpio_enable(void __iomem *pio, unsigned mask, bool input)
-{
-	writel_relaxed(mask, pio + PIO_PER);
-	writel_relaxed(mask, pio + (input ? PIO_ODR : PIO_OER));
-}
+अटल व्योम at91_mux_gpio_enable(व्योम __iomem *pio, अचिन्हित mask, bool input)
+अणु
+	ग_लिखोl_relaxed(mask, pio + PIO_PER);
+	ग_लिखोl_relaxed(mask, pio + (input ? PIO_ODR : PIO_OER));
+पूर्ण
 
-static int at91_pmx_set(struct pinctrl_dev *pctldev, unsigned selector,
-			unsigned group)
-{
-	struct at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	const struct at91_pmx_pin *pins_conf = info->groups[group].pins_conf;
-	const struct at91_pmx_pin *pin;
-	uint32_t npins = info->groups[group].npins;
-	int i, ret;
-	unsigned mask;
-	void __iomem *pio;
+अटल पूर्णांक at91_pmx_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित selector,
+			अचिन्हित group)
+अणु
+	काष्ठा at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा at91_pmx_pin *pins_conf = info->groups[group].pins_conf;
+	स्थिर काष्ठा at91_pmx_pin *pin;
+	uपूर्णांक32_t npins = info->groups[group].npins;
+	पूर्णांक i, ret;
+	अचिन्हित mask;
+	व्योम __iomem *pio;
 
 	dev_dbg(info->dev, "enable function %s group %s\n",
 		info->functions[selector].name, info->groups[group].name);
 
 	/* first check that all the pins of the group are valid with a valid
 	 * parameter */
-	for (i = 0; i < npins; i++) {
+	क्रम (i = 0; i < npins; i++) अणु
 		pin = &pins_conf[i];
 		ret = pin_check_config(info, info->groups[group].name, i, pin);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	for (i = 0; i < npins; i++) {
+	क्रम (i = 0; i < npins; i++) अणु
 		pin = &pins_conf[i];
 		at91_pin_dbg(info->dev, pin);
 		pio = pin_to_controller(info, pin->bank);
 
-		if (!pio)
-			continue;
+		अगर (!pio)
+			जारी;
 
 		mask = pin_to_mask(pin->pin);
-		at91_mux_disable_interrupt(pio, mask);
-		switch (pin->mux) {
-		case AT91_MUX_GPIO:
+		at91_mux_disable_पूर्णांकerrupt(pio, mask);
+		चयन (pin->mux) अणु
+		हाल AT91_MUX_GPIO:
 			at91_mux_gpio_enable(pio, mask, 1);
-			break;
-		case AT91_MUX_PERIPH_A:
+			अवरोध;
+		हाल AT91_MUX_PERIPH_A:
 			info->ops->mux_A_periph(pio, mask);
-			break;
-		case AT91_MUX_PERIPH_B:
+			अवरोध;
+		हाल AT91_MUX_PERIPH_B:
 			info->ops->mux_B_periph(pio, mask);
-			break;
-		case AT91_MUX_PERIPH_C:
-			if (!info->ops->mux_C_periph)
-				return -EINVAL;
+			अवरोध;
+		हाल AT91_MUX_PERIPH_C:
+			अगर (!info->ops->mux_C_periph)
+				वापस -EINVAL;
 			info->ops->mux_C_periph(pio, mask);
-			break;
-		case AT91_MUX_PERIPH_D:
-			if (!info->ops->mux_D_periph)
-				return -EINVAL;
+			अवरोध;
+		हाल AT91_MUX_PERIPH_D:
+			अगर (!info->ops->mux_D_periph)
+				वापस -EINVAL;
 			info->ops->mux_D_periph(pio, mask);
-			break;
-		}
-		if (pin->mux)
+			अवरोध;
+		पूर्ण
+		अगर (pin->mux)
 			at91_mux_gpio_disable(pio, mask);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int at91_pmx_get_funcs_count(struct pinctrl_dev *pctldev)
-{
-	struct at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक at91_pmx_get_funcs_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	return info->nfunctions;
-}
+	वापस info->nfunctions;
+पूर्ण
 
-static const char *at91_pmx_get_func_name(struct pinctrl_dev *pctldev,
-					  unsigned selector)
-{
-	struct at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *at91_pmx_get_func_name(काष्ठा pinctrl_dev *pctldev,
+					  अचिन्हित selector)
+अणु
+	काष्ठा at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	return info->functions[selector].name;
-}
+	वापस info->functions[selector].name;
+पूर्ण
 
-static int at91_pmx_get_groups(struct pinctrl_dev *pctldev, unsigned selector,
-			       const char * const **groups,
-			       unsigned * const num_groups)
-{
-	struct at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक at91_pmx_get_groups(काष्ठा pinctrl_dev *pctldev, अचिन्हित selector,
+			       स्थिर अक्षर * स्थिर **groups,
+			       अचिन्हित * स्थिर num_groups)
+अणु
+	काष्ठा at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = info->functions[selector].groups;
 	*num_groups = info->functions[selector].ngroups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int at91_gpio_request_enable(struct pinctrl_dev *pctldev,
-				    struct pinctrl_gpio_range *range,
-				    unsigned offset)
-{
-	struct at91_pinctrl *npct = pinctrl_dev_get_drvdata(pctldev);
-	struct at91_gpio_chip *at91_chip;
-	struct gpio_chip *chip;
-	unsigned mask;
+अटल पूर्णांक at91_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
+				    काष्ठा pinctrl_gpio_range *range,
+				    अचिन्हित offset)
+अणु
+	काष्ठा at91_pinctrl *npct = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा at91_gpio_chip *at91_chip;
+	काष्ठा gpio_chip *chip;
+	अचिन्हित mask;
 
-	if (!range) {
+	अगर (!range) अणु
 		dev_err(npct->dev, "invalid range\n");
-		return -EINVAL;
-	}
-	if (!range->gc) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!range->gc) अणु
 		dev_err(npct->dev, "missing GPIO chip in range\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	chip = range->gc;
 	at91_chip = gpiochip_get_data(chip);
 
@@ -937,85 +938,85 @@ static int at91_gpio_request_enable(struct pinctrl_dev *pctldev,
 	dev_dbg(npct->dev, "enable pin %u as PIO%c%d 0x%x\n",
 		offset, 'A' + range->id, offset - chip->base, mask);
 
-	writel_relaxed(mask, at91_chip->regbase + PIO_PER);
+	ग_लिखोl_relaxed(mask, at91_chip->regbase + PIO_PER);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void at91_gpio_disable_free(struct pinctrl_dev *pctldev,
-				   struct pinctrl_gpio_range *range,
-				   unsigned offset)
-{
-	struct at91_pinctrl *npct = pinctrl_dev_get_drvdata(pctldev);
+अटल व्योम at91_gpio_disable_मुक्त(काष्ठा pinctrl_dev *pctldev,
+				   काष्ठा pinctrl_gpio_range *range,
+				   अचिन्हित offset)
+अणु
+	काष्ठा at91_pinctrl *npct = pinctrl_dev_get_drvdata(pctldev);
 
 	dev_dbg(npct->dev, "disable pin %u as GPIO\n", offset);
-	/* Set the pin to some default state, GPIO is usually default */
-}
+	/* Set the pin to some शेष state, GPIO is usually शेष */
+पूर्ण
 
-static const struct pinmux_ops at91_pmx_ops = {
+अटल स्थिर काष्ठा pinmux_ops at91_pmx_ops = अणु
 	.get_functions_count	= at91_pmx_get_funcs_count,
 	.get_function_name	= at91_pmx_get_func_name,
 	.get_function_groups	= at91_pmx_get_groups,
 	.set_mux		= at91_pmx_set,
 	.gpio_request_enable	= at91_gpio_request_enable,
-	.gpio_disable_free	= at91_gpio_disable_free,
-};
+	.gpio_disable_मुक्त	= at91_gpio_disable_मुक्त,
+पूर्ण;
 
-static int at91_pinconf_get(struct pinctrl_dev *pctldev,
-			     unsigned pin_id, unsigned long *config)
-{
-	struct at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	void __iomem *pio;
-	unsigned pin;
-	int div;
+अटल पूर्णांक at91_pinconf_get(काष्ठा pinctrl_dev *pctldev,
+			     अचिन्हित pin_id, अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	व्योम __iomem *pio;
+	अचिन्हित pin;
+	पूर्णांक भाग;
 	bool out;
 
 	*config = 0;
 	dev_dbg(info->dev, "%s:%d, pin_id=%d", __func__, __LINE__, pin_id);
 	pio = pin_to_controller(info, pin_to_bank(pin_id));
 
-	if (!pio)
-		return -EINVAL;
+	अगर (!pio)
+		वापस -EINVAL;
 
 	pin = pin_id % MAX_NB_GPIO_PER_BANK;
 
-	if (at91_mux_get_multidrive(pio, pin))
+	अगर (at91_mux_get_multidrive(pio, pin))
 		*config |= MULTI_DRIVE;
 
-	if (at91_mux_get_pullup(pio, pin))
+	अगर (at91_mux_get_pullup(pio, pin))
 		*config |= PULL_UP;
 
-	if (info->ops->get_deglitch && info->ops->get_deglitch(pio, pin))
+	अगर (info->ops->get_deglitch && info->ops->get_deglitch(pio, pin))
 		*config |= DEGLITCH;
-	if (info->ops->get_debounce && info->ops->get_debounce(pio, pin, &div))
-		*config |= DEBOUNCE | (div << DEBOUNCE_VAL_SHIFT);
-	if (info->ops->get_pulldown && info->ops->get_pulldown(pio, pin))
+	अगर (info->ops->get_debounce && info->ops->get_debounce(pio, pin, &भाग))
+		*config |= DEBOUNCE | (भाग << DEBOUNCE_VAL_SHIFT);
+	अगर (info->ops->get_pullकरोwn && info->ops->get_pullकरोwn(pio, pin))
 		*config |= PULL_DOWN;
-	if (info->ops->get_schmitt_trig && info->ops->get_schmitt_trig(pio, pin))
+	अगर (info->ops->get_schmitt_trig && info->ops->get_schmitt_trig(pio, pin))
 		*config |= DIS_SCHMIT;
-	if (info->ops->get_drivestrength)
+	अगर (info->ops->get_drivestrength)
 		*config |= (info->ops->get_drivestrength(pio, pin)
 				<< DRIVE_STRENGTH_SHIFT);
-	if (info->ops->get_slewrate)
+	अगर (info->ops->get_slewrate)
 		*config |= (info->ops->get_slewrate(pio, pin) << SLEWRATE_SHIFT);
-	if (at91_mux_get_output(pio, pin, &out))
+	अगर (at91_mux_get_output(pio, pin, &out))
 		*config |= OUTPUT | (out << OUTPUT_VAL_SHIFT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int at91_pinconf_set(struct pinctrl_dev *pctldev,
-			     unsigned pin_id, unsigned long *configs,
-			     unsigned num_configs)
-{
-	struct at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	unsigned mask;
-	void __iomem *pio;
-	int i;
-	unsigned long config;
-	unsigned pin;
+अटल पूर्णांक at91_pinconf_set(काष्ठा pinctrl_dev *pctldev,
+			     अचिन्हित pin_id, अचिन्हित दीर्घ *configs,
+			     अचिन्हित num_configs)
+अणु
+	काष्ठा at91_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित mask;
+	व्योम __iomem *pio;
+	पूर्णांक i;
+	अचिन्हित दीर्घ config;
+	अचिन्हित pin;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		config = configs[i];
 
 		dev_dbg(info->dev,
@@ -1023,64 +1024,64 @@ static int at91_pinconf_set(struct pinctrl_dev *pctldev,
 			__func__, __LINE__, pin_id, config);
 		pio = pin_to_controller(info, pin_to_bank(pin_id));
 
-		if (!pio)
-			return -EINVAL;
+		अगर (!pio)
+			वापस -EINVAL;
 
 		pin = pin_id % MAX_NB_GPIO_PER_BANK;
 		mask = pin_to_mask(pin);
 
-		if (config & PULL_UP && config & PULL_DOWN)
-			return -EINVAL;
+		अगर (config & PULL_UP && config & PULL_DOWN)
+			वापस -EINVAL;
 
 		at91_mux_set_output(pio, mask, config & OUTPUT,
 				    (config & OUTPUT_VAL) >> OUTPUT_VAL_SHIFT);
 		at91_mux_set_pullup(pio, mask, config & PULL_UP);
 		at91_mux_set_multidrive(pio, mask, config & MULTI_DRIVE);
-		if (info->ops->set_deglitch)
+		अगर (info->ops->set_deglitch)
 			info->ops->set_deglitch(pio, mask, config & DEGLITCH);
-		if (info->ops->set_debounce)
+		अगर (info->ops->set_debounce)
 			info->ops->set_debounce(pio, mask, config & DEBOUNCE,
 				(config & DEBOUNCE_VAL) >> DEBOUNCE_VAL_SHIFT);
-		if (info->ops->set_pulldown)
-			info->ops->set_pulldown(pio, mask, config & PULL_DOWN);
-		if (info->ops->disable_schmitt_trig && config & DIS_SCHMIT)
+		अगर (info->ops->set_pullकरोwn)
+			info->ops->set_pullकरोwn(pio, mask, config & PULL_DOWN);
+		अगर (info->ops->disable_schmitt_trig && config & DIS_SCHMIT)
 			info->ops->disable_schmitt_trig(pio, mask);
-		if (info->ops->set_drivestrength)
+		अगर (info->ops->set_drivestrength)
 			info->ops->set_drivestrength(pio, pin,
 				(config & DRIVE_STRENGTH)
 					>> DRIVE_STRENGTH_SHIFT);
-		if (info->ops->set_slewrate)
+		अगर (info->ops->set_slewrate)
 			info->ops->set_slewrate(pio, pin,
 				(config & SLEWRATE) >> SLEWRATE_SHIFT);
 
-	} /* for each config */
+	पूर्ण /* क्रम each config */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define DBG_SHOW_FLAG(flag) do {		\
-	if (config & flag) {			\
-		if (num_conf)			\
-			seq_puts(s, "|");	\
-		seq_puts(s, #flag);		\
+#घोषणा DBG_SHOW_FLAG(flag) करो अणु		\
+	अगर (config & flag) अणु			\
+		अगर (num_conf)			\
+			seq_माला_दो(s, "|");	\
+		seq_माला_दो(s, #flag);		\
 		num_conf++;			\
-	}					\
-} while (0)
+	पूर्ण					\
+पूर्ण जबतक (0)
 
-#define DBG_SHOW_FLAG_MASKED(mask, flag, name) do { \
-	if ((config & mask) == flag) {		\
-		if (num_conf)			\
-			seq_puts(s, "|");	\
-		seq_puts(s, #name);		\
+#घोषणा DBG_SHOW_FLAG_MASKED(mask, flag, name) करो अणु \
+	अगर ((config & mask) == flag) अणु		\
+		अगर (num_conf)			\
+			seq_माला_दो(s, "|");	\
+		seq_माला_दो(s, #name);		\
 		num_conf++;			\
-	}					\
-} while (0)
+	पूर्ण					\
+पूर्ण जबतक (0)
 
-static void at91_pinconf_dbg_show(struct pinctrl_dev *pctldev,
-				   struct seq_file *s, unsigned pin_id)
-{
-	unsigned long config;
-	int val, num_conf = 0;
+अटल व्योम at91_pinconf_dbg_show(काष्ठा pinctrl_dev *pctldev,
+				   काष्ठा seq_file *s, अचिन्हित pin_id)
+अणु
+	अचिन्हित दीर्घ config;
+	पूर्णांक val, num_conf = 0;
 
 	at91_pinconf_get(pctldev, pin_id, &config);
 
@@ -1097,91 +1098,91 @@ static void at91_pinconf_dbg_show(struct pinctrl_dev *pctldev,
 			     DRIVE_STRENGTH_HI);
 	DBG_SHOW_FLAG(SLEWRATE);
 	DBG_SHOW_FLAG(DEBOUNCE);
-	if (config & DEBOUNCE) {
+	अगर (config & DEBOUNCE) अणु
 		val = config >> DEBOUNCE_VAL_SHIFT;
-		seq_printf(s, "(%d)", val);
-	}
+		seq_म_लिखो(s, "(%d)", val);
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static void at91_pinconf_group_dbg_show(struct pinctrl_dev *pctldev,
-					 struct seq_file *s, unsigned group)
-{
-}
+अटल व्योम at91_pinconf_group_dbg_show(काष्ठा pinctrl_dev *pctldev,
+					 काष्ठा seq_file *s, अचिन्हित group)
+अणु
+पूर्ण
 
-static const struct pinconf_ops at91_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops at91_pinconf_ops = अणु
 	.pin_config_get			= at91_pinconf_get,
 	.pin_config_set			= at91_pinconf_set,
 	.pin_config_dbg_show		= at91_pinconf_dbg_show,
 	.pin_config_group_dbg_show	= at91_pinconf_group_dbg_show,
-};
+पूर्ण;
 
-static struct pinctrl_desc at91_pinctrl_desc = {
+अटल काष्ठा pinctrl_desc at91_pinctrl_desc = अणु
 	.pctlops	= &at91_pctrl_ops,
 	.pmxops		= &at91_pmx_ops,
 	.confops	= &at91_pinconf_ops,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static const char *gpio_compat = "atmel,at91rm9200-gpio";
+अटल स्थिर अक्षर *gpio_compat = "atmel,at91rm9200-gpio";
 
-static void at91_pinctrl_child_count(struct at91_pinctrl *info,
-				     struct device_node *np)
-{
-	struct device_node *child;
+अटल व्योम at91_pinctrl_child_count(काष्ठा at91_pinctrl *info,
+				     काष्ठा device_node *np)
+अणु
+	काष्ठा device_node *child;
 
-	for_each_child_of_node(np, child) {
-		if (of_device_is_compatible(child, gpio_compat)) {
-			if (of_device_is_available(child))
+	क्रम_each_child_of_node(np, child) अणु
+		अगर (of_device_is_compatible(child, gpio_compat)) अणु
+			अगर (of_device_is_available(child))
 				info->nactive_banks++;
-		} else {
+		पूर्ण अन्यथा अणु
 			info->nfunctions++;
 			info->ngroups += of_get_child_count(child);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int at91_pinctrl_mux_mask(struct at91_pinctrl *info,
-				 struct device_node *np)
-{
-	int ret = 0;
-	int size;
-	const __be32 *list;
+अटल पूर्णांक at91_pinctrl_mux_mask(काष्ठा at91_pinctrl *info,
+				 काष्ठा device_node *np)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक size;
+	स्थिर __be32 *list;
 
 	list = of_get_property(np, "atmel,mux-mask", &size);
-	if (!list) {
+	अगर (!list) अणु
 		dev_err(info->dev, "can not read the mux-mask of %d\n", size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	size /= sizeof(*list);
-	if (!size || size % gpio_banks) {
+	size /= माप(*list);
+	अगर (!size || size % gpio_banks) अणु
 		dev_err(info->dev, "wrong mux mask array should be by %d\n", gpio_banks);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	info->nmux = size / gpio_banks;
 
-	info->mux_mask = devm_kcalloc(info->dev, size, sizeof(u32),
+	info->mux_mask = devm_kसुस्मृति(info->dev, size, माप(u32),
 				      GFP_KERNEL);
-	if (!info->mux_mask)
-		return -ENOMEM;
+	अगर (!info->mux_mask)
+		वापस -ENOMEM;
 
-	ret = of_property_read_u32_array(np, "atmel,mux-mask",
+	ret = of_property_पढ़ो_u32_array(np, "atmel,mux-mask",
 					  info->mux_mask, size);
-	if (ret)
+	अगर (ret)
 		dev_err(info->dev, "can not read the mux-mask of %d\n", size);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int at91_pinctrl_parse_groups(struct device_node *np,
-				     struct at91_pin_group *grp,
-				     struct at91_pinctrl *info, u32 index)
-{
-	struct at91_pmx_pin *pin;
-	int size;
-	const __be32 *list;
-	int i, j;
+अटल पूर्णांक at91_pinctrl_parse_groups(काष्ठा device_node *np,
+				     काष्ठा at91_pin_group *grp,
+				     काष्ठा at91_pinctrl *info, u32 index)
+अणु
+	काष्ठा at91_pmx_pin *pin;
+	पूर्णांक size;
+	स्थिर __be32 *list;
+	पूर्णांक i, j;
 
 	dev_dbg(info->dev, "group(%d): %pOFn\n", index, np);
 
@@ -1189,28 +1190,28 @@ static int at91_pinctrl_parse_groups(struct device_node *np,
 	grp->name = np->name;
 
 	/*
-	 * the binding format is atmel,pins = <bank pin mux CONFIG ...>,
-	 * do sanity check and calculate pins number
+	 * the binding क्रमmat is aपंचांगel,pins = <bank pin mux CONFIG ...>,
+	 * करो sanity check and calculate pins number
 	 */
 	list = of_get_property(np, "atmel,pins", &size);
-	/* we do not check return since it's safe node passed down */
-	size /= sizeof(*list);
-	if (!size || size % 4) {
+	/* we करो not check वापस since it's safe node passed करोwn */
+	size /= माप(*list);
+	अगर (!size || size % 4) अणु
 		dev_err(info->dev, "wrong pins number or pins and configs should be by 4\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	grp->npins = size / 4;
-	pin = grp->pins_conf = devm_kcalloc(info->dev,
+	pin = grp->pins_conf = devm_kसुस्मृति(info->dev,
 					    grp->npins,
-					    sizeof(struct at91_pmx_pin),
+					    माप(काष्ठा at91_pmx_pin),
 					    GFP_KERNEL);
-	grp->pins = devm_kcalloc(info->dev, grp->npins, sizeof(unsigned int),
+	grp->pins = devm_kसुस्मृति(info->dev, grp->npins, माप(अचिन्हित पूर्णांक),
 				 GFP_KERNEL);
-	if (!grp->pins_conf || !grp->pins)
-		return -ENOMEM;
+	अगर (!grp->pins_conf || !grp->pins)
+		वापस -ENOMEM;
 
-	for (i = 0, j = 0; i < size; i += 4, j++) {
+	क्रम (i = 0, j = 0; i < size; i += 4, j++) अणु
 		pin->bank = be32_to_cpu(*list++);
 		pin->pin = be32_to_cpu(*list++);
 		grp->pins[j] = pin->bank * MAX_NB_GPIO_PER_BANK + pin->pin;
@@ -1219,19 +1220,19 @@ static int at91_pinctrl_parse_groups(struct device_node *np,
 
 		at91_pin_dbg(info->dev, pin);
 		pin++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int at91_pinctrl_parse_functions(struct device_node *np,
-					struct at91_pinctrl *info, u32 index)
-{
-	struct device_node *child;
-	struct at91_pmx_func *func;
-	struct at91_pin_group *grp;
-	int ret;
-	static u32 grp_index;
+अटल पूर्णांक at91_pinctrl_parse_functions(काष्ठा device_node *np,
+					काष्ठा at91_pinctrl *info, u32 index)
+अणु
+	काष्ठा device_node *child;
+	काष्ठा at91_pmx_func *func;
+	काष्ठा at91_pin_group *grp;
+	पूर्णांक ret;
+	अटल u32 grp_index;
 	u32 i = 0;
 
 	dev_dbg(info->dev, "parse function(%d): %pOFn\n", index, np);
@@ -1241,87 +1242,87 @@ static int at91_pinctrl_parse_functions(struct device_node *np,
 	/* Initialise function */
 	func->name = np->name;
 	func->ngroups = of_get_child_count(np);
-	if (func->ngroups == 0) {
+	अगर (func->ngroups == 0) अणु
 		dev_err(info->dev, "no groups defined\n");
-		return -EINVAL;
-	}
-	func->groups = devm_kcalloc(info->dev,
-			func->ngroups, sizeof(char *), GFP_KERNEL);
-	if (!func->groups)
-		return -ENOMEM;
+		वापस -EINVAL;
+	पूर्ण
+	func->groups = devm_kसुस्मृति(info->dev,
+			func->ngroups, माप(अक्षर *), GFP_KERNEL);
+	अगर (!func->groups)
+		वापस -ENOMEM;
 
-	for_each_child_of_node(np, child) {
+	क्रम_each_child_of_node(np, child) अणु
 		func->groups[i] = child->name;
 		grp = &info->groups[grp_index++];
 		ret = at91_pinctrl_parse_groups(child, grp, info, i++);
-		if (ret) {
+		अगर (ret) अणु
 			of_node_put(child);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id at91_pinctrl_of_match[] = {
-	{ .compatible = "atmel,sama5d3-pinctrl", .data = &sama5d3_ops },
-	{ .compatible = "atmel,at91sam9x5-pinctrl", .data = &at91sam9x5_ops },
-	{ .compatible = "atmel,at91rm9200-pinctrl", .data = &at91rm9200_ops },
-	{ .compatible = "microchip,sam9x60-pinctrl", .data = &sam9x60_ops },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id at91_pinctrl_of_match[] = अणु
+	अणु .compatible = "atmel,sama5d3-pinctrl", .data = &sama5d3_ops पूर्ण,
+	अणु .compatible = "atmel,at91sam9x5-pinctrl", .data = &at91sam9x5_ops पूर्ण,
+	अणु .compatible = "atmel,at91rm9200-pinctrl", .data = &at91rm9200_ops पूर्ण,
+	अणु .compatible = "microchip,sam9x60-pinctrl", .data = &sam9x60_ops पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int at91_pinctrl_probe_dt(struct platform_device *pdev,
-				 struct at91_pinctrl *info)
-{
-	int ret = 0;
-	int i, j;
-	uint32_t *tmp;
-	struct device_node *np = pdev->dev.of_node;
-	struct device_node *child;
+अटल पूर्णांक at91_pinctrl_probe_dt(काष्ठा platक्रमm_device *pdev,
+				 काष्ठा at91_pinctrl *info)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक i, j;
+	uपूर्णांक32_t *पंचांगp;
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा device_node *child;
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
 	info->dev = &pdev->dev;
-	info->ops = (struct at91_pinctrl_mux_ops *)
+	info->ops = (काष्ठा at91_pinctrl_mux_ops *)
 		of_match_device(at91_pinctrl_of_match, &pdev->dev)->data;
 	at91_pinctrl_child_count(info, np);
 
-	if (gpio_banks < 1) {
+	अगर (gpio_banks < 1) अणु
 		dev_err(&pdev->dev, "you need to specify at least one gpio-controller\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = at91_pinctrl_mux_mask(info, np);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dev_dbg(&pdev->dev, "nmux = %d\n", info->nmux);
 
 	dev_dbg(&pdev->dev, "mux-mask\n");
-	tmp = info->mux_mask;
-	for (i = 0; i < gpio_banks; i++) {
-		for (j = 0; j < info->nmux; j++, tmp++) {
-			dev_dbg(&pdev->dev, "%d:%d\t0x%x\n", i, j, tmp[0]);
-		}
-	}
+	पंचांगp = info->mux_mask;
+	क्रम (i = 0; i < gpio_banks; i++) अणु
+		क्रम (j = 0; j < info->nmux; j++, पंचांगp++) अणु
+			dev_dbg(&pdev->dev, "%d:%d\t0x%x\n", i, j, पंचांगp[0]);
+		पूर्ण
+	पूर्ण
 
 	dev_dbg(&pdev->dev, "nfunctions = %d\n", info->nfunctions);
 	dev_dbg(&pdev->dev, "ngroups = %d\n", info->ngroups);
-	info->functions = devm_kcalloc(&pdev->dev,
+	info->functions = devm_kसुस्मृति(&pdev->dev,
 					info->nfunctions,
-					sizeof(struct at91_pmx_func),
+					माप(काष्ठा at91_pmx_func),
 					GFP_KERNEL);
-	if (!info->functions)
-		return -ENOMEM;
+	अगर (!info->functions)
+		वापस -ENOMEM;
 
-	info->groups = devm_kcalloc(&pdev->dev,
+	info->groups = devm_kसुस्मृति(&pdev->dev,
 					info->ngroups,
-					sizeof(struct at91_pin_group),
+					माप(काष्ठा at91_pin_group),
 					GFP_KERNEL);
-	if (!info->groups)
-		return -ENOMEM;
+	अगर (!info->groups)
+		वापस -ENOMEM;
 
 	dev_dbg(&pdev->dev, "nbanks = %d\n", gpio_banks);
 	dev_dbg(&pdev->dev, "nfunctions = %d\n", info->nfunctions);
@@ -1329,196 +1330,196 @@ static int at91_pinctrl_probe_dt(struct platform_device *pdev,
 
 	i = 0;
 
-	for_each_child_of_node(np, child) {
-		if (of_device_is_compatible(child, gpio_compat))
-			continue;
+	क्रम_each_child_of_node(np, child) अणु
+		अगर (of_device_is_compatible(child, gpio_compat))
+			जारी;
 		ret = at91_pinctrl_parse_functions(child, info, i++);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to parse function\n");
 			of_node_put(child);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int at91_pinctrl_probe(struct platform_device *pdev)
-{
-	struct at91_pinctrl *info;
-	struct pinctrl_pin_desc *pdesc;
-	int ret, i, j, k, ngpio_chips_enabled = 0;
+अटल पूर्णांक at91_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा at91_pinctrl *info;
+	काष्ठा pinctrl_pin_desc *pdesc;
+	पूर्णांक ret, i, j, k, ngpio_chips_enabled = 0;
 
-	info = devm_kzalloc(&pdev->dev, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kzalloc(&pdev->dev, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	ret = at91_pinctrl_probe_dt(pdev, info);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * We need all the GPIO drivers to probe FIRST, or we will not be able
-	 * to obtain references to the struct gpio_chip * for them, and we
+	 * to obtain references to the काष्ठा gpio_chip * क्रम them, and we
 	 * need this to proceed.
 	 */
-	for (i = 0; i < gpio_banks; i++)
-		if (gpio_chips[i])
+	क्रम (i = 0; i < gpio_banks; i++)
+		अगर (gpio_chips[i])
 			ngpio_chips_enabled++;
 
-	if (ngpio_chips_enabled < info->nactive_banks) {
+	अगर (ngpio_chips_enabled < info->nactive_banks) अणु
 		dev_warn(&pdev->dev,
 			 "All GPIO chips are not registered yet (%d/%d)\n",
 			 ngpio_chips_enabled, info->nactive_banks);
-		devm_kfree(&pdev->dev, info);
-		return -EPROBE_DEFER;
-	}
+		devm_kमुक्त(&pdev->dev, info);
+		वापस -EPROBE_DEFER;
+	पूर्ण
 
 	at91_pinctrl_desc.name = dev_name(&pdev->dev);
 	at91_pinctrl_desc.npins = gpio_banks * MAX_NB_GPIO_PER_BANK;
 	at91_pinctrl_desc.pins = pdesc =
-		devm_kcalloc(&pdev->dev,
-			     at91_pinctrl_desc.npins, sizeof(*pdesc),
+		devm_kसुस्मृति(&pdev->dev,
+			     at91_pinctrl_desc.npins, माप(*pdesc),
 			     GFP_KERNEL);
 
-	if (!at91_pinctrl_desc.pins)
-		return -ENOMEM;
+	अगर (!at91_pinctrl_desc.pins)
+		वापस -ENOMEM;
 
-	for (i = 0, k = 0; i < gpio_banks; i++) {
-		for (j = 0; j < MAX_NB_GPIO_PER_BANK; j++, k++) {
+	क्रम (i = 0, k = 0; i < gpio_banks; i++) अणु
+		क्रम (j = 0; j < MAX_NB_GPIO_PER_BANK; j++, k++) अणु
 			pdesc->number = k;
-			pdesc->name = kasprintf(GFP_KERNEL, "pio%c%d", i + 'A', j);
+			pdesc->name = kaप्र_लिखो(GFP_KERNEL, "pio%c%d", i + 'A', j);
 			pdesc++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	platform_set_drvdata(pdev, info);
-	info->pctl = devm_pinctrl_register(&pdev->dev, &at91_pinctrl_desc,
+	platक्रमm_set_drvdata(pdev, info);
+	info->pctl = devm_pinctrl_रेजिस्टर(&pdev->dev, &at91_pinctrl_desc,
 					   info);
 
-	if (IS_ERR(info->pctl)) {
+	अगर (IS_ERR(info->pctl)) अणु
 		dev_err(&pdev->dev, "could not register AT91 pinctrl driver\n");
-		return PTR_ERR(info->pctl);
-	}
+		वापस PTR_ERR(info->pctl);
+	पूर्ण
 
 	/* We will handle a range of GPIO pins */
-	for (i = 0; i < gpio_banks; i++)
-		if (gpio_chips[i])
+	क्रम (i = 0; i < gpio_banks; i++)
+		अगर (gpio_chips[i])
 			pinctrl_add_gpio_range(info->pctl, &gpio_chips[i]->range);
 
 	dev_info(&pdev->dev, "initialized AT91 pinctrl driver\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int at91_gpio_get_direction(struct gpio_chip *chip, unsigned offset)
-{
-	struct at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
-	void __iomem *pio = at91_gpio->regbase;
-	unsigned mask = 1 << offset;
+अटल पूर्णांक at91_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
+	व्योम __iomem *pio = at91_gpio->regbase;
+	अचिन्हित mask = 1 << offset;
 	u32 osr;
 
-	osr = readl_relaxed(pio + PIO_OSR);
-	if (osr & mask)
-		return GPIO_LINE_DIRECTION_OUT;
+	osr = पढ़ोl_relaxed(pio + PIO_OSR);
+	अगर (osr & mask)
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int at91_gpio_direction_input(struct gpio_chip *chip, unsigned offset)
-{
-	struct at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
-	void __iomem *pio = at91_gpio->regbase;
-	unsigned mask = 1 << offset;
+अटल पूर्णांक at91_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
+	व्योम __iomem *pio = at91_gpio->regbase;
+	अचिन्हित mask = 1 << offset;
 
-	writel_relaxed(mask, pio + PIO_ODR);
-	return 0;
-}
+	ग_लिखोl_relaxed(mask, pio + PIO_ODR);
+	वापस 0;
+पूर्ण
 
-static int at91_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
-	void __iomem *pio = at91_gpio->regbase;
-	unsigned mask = 1 << offset;
+अटल पूर्णांक at91_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
+	व्योम __iomem *pio = at91_gpio->regbase;
+	अचिन्हित mask = 1 << offset;
 	u32 pdsr;
 
-	pdsr = readl_relaxed(pio + PIO_PDSR);
-	return (pdsr & mask) != 0;
-}
+	pdsr = पढ़ोl_relaxed(pio + PIO_PDSR);
+	वापस (pdsr & mask) != 0;
+पूर्ण
 
-static void at91_gpio_set(struct gpio_chip *chip, unsigned offset,
-				int val)
-{
-	struct at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
-	void __iomem *pio = at91_gpio->regbase;
-	unsigned mask = 1 << offset;
+अटल व्योम at91_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset,
+				पूर्णांक val)
+अणु
+	काष्ठा at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
+	व्योम __iomem *pio = at91_gpio->regbase;
+	अचिन्हित mask = 1 << offset;
 
-	writel_relaxed(mask, pio + (val ? PIO_SODR : PIO_CODR));
-}
+	ग_लिखोl_relaxed(mask, pio + (val ? PIO_SODR : PIO_CODR));
+पूर्ण
 
-static void at91_gpio_set_multiple(struct gpio_chip *chip,
-				      unsigned long *mask, unsigned long *bits)
-{
-	struct at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
-	void __iomem *pio = at91_gpio->regbase;
+अटल व्योम at91_gpio_set_multiple(काष्ठा gpio_chip *chip,
+				      अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
+अणु
+	काष्ठा at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
+	व्योम __iomem *pio = at91_gpio->regbase;
 
-#define BITS_MASK(bits) (((bits) == 32) ? ~0U : (BIT(bits) - 1))
+#घोषणा BITS_MASK(bits) (((bits) == 32) ? ~0U : (BIT(bits) - 1))
 	/* Mask additionally to ngpio as not all GPIO controllers have 32 pins */
-	uint32_t set_mask = (*mask & *bits) & BITS_MASK(chip->ngpio);
-	uint32_t clear_mask = (*mask & ~(*bits)) & BITS_MASK(chip->ngpio);
+	uपूर्णांक32_t set_mask = (*mask & *bits) & BITS_MASK(chip->ngpio);
+	uपूर्णांक32_t clear_mask = (*mask & ~(*bits)) & BITS_MASK(chip->ngpio);
 
-	writel_relaxed(set_mask, pio + PIO_SODR);
-	writel_relaxed(clear_mask, pio + PIO_CODR);
-}
+	ग_लिखोl_relaxed(set_mask, pio + PIO_SODR);
+	ग_लिखोl_relaxed(clear_mask, pio + PIO_CODR);
+पूर्ण
 
-static int at91_gpio_direction_output(struct gpio_chip *chip, unsigned offset,
-				int val)
-{
-	struct at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
-	void __iomem *pio = at91_gpio->regbase;
-	unsigned mask = 1 << offset;
+अटल पूर्णांक at91_gpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित offset,
+				पूर्णांक val)
+अणु
+	काष्ठा at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
+	व्योम __iomem *pio = at91_gpio->regbase;
+	अचिन्हित mask = 1 << offset;
 
-	writel_relaxed(mask, pio + (val ? PIO_SODR : PIO_CODR));
-	writel_relaxed(mask, pio + PIO_OER);
+	ग_लिखोl_relaxed(mask, pio + (val ? PIO_SODR : PIO_CODR));
+	ग_लिखोl_relaxed(mask, pio + PIO_OER);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-static void at91_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
-{
-	enum at91_mux mode;
-	int i;
-	struct at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
-	void __iomem *pio = at91_gpio->regbase;
-	const char *gpio_label;
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल व्योम at91_gpio_dbg_show(काष्ठा seq_file *s, काष्ठा gpio_chip *chip)
+अणु
+	क्रमागत at91_mux mode;
+	पूर्णांक i;
+	काष्ठा at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
+	व्योम __iomem *pio = at91_gpio->regbase;
+	स्थिर अक्षर *gpio_label;
 
-	for_each_requested_gpio(chip, i, gpio_label) {
-		unsigned mask = pin_to_mask(i);
+	क्रम_each_requested_gpio(chip, i, gpio_label) अणु
+		अचिन्हित mask = pin_to_mask(i);
 
 		mode = at91_gpio->ops->get_periph(pio, mask);
-		seq_printf(s, "[%s] GPIO%s%d: ",
+		seq_म_लिखो(s, "[%s] GPIO%s%d: ",
 			   gpio_label, chip->label, i);
-		if (mode == AT91_MUX_GPIO) {
-			seq_printf(s, "[gpio] ");
-			seq_printf(s, "%s ",
-				      readl_relaxed(pio + PIO_OSR) & mask ?
+		अगर (mode == AT91_MUX_GPIO) अणु
+			seq_म_लिखो(s, "[gpio] ");
+			seq_म_लिखो(s, "%s ",
+				      पढ़ोl_relaxed(pio + PIO_OSR) & mask ?
 				      "output" : "input");
-			seq_printf(s, "%s\n",
-				      readl_relaxed(pio + PIO_PDSR) & mask ?
+			seq_म_लिखो(s, "%s\n",
+				      पढ़ोl_relaxed(pio + PIO_PDSR) & mask ?
 				      "set" : "clear");
-		} else {
-			seq_printf(s, "[periph %c]\n",
+		पूर्ण अन्यथा अणु
+			seq_म_लिखो(s, "[periph %c]\n",
 				   mode + 'A' - 1);
-		}
-	}
-}
-#else
-#define at91_gpio_dbg_show	NULL
-#endif
+		पूर्ण
+	पूर्ण
+पूर्ण
+#अन्यथा
+#घोषणा at91_gpio_dbg_show	शून्य
+#पूर्ण_अगर
 
 /* Several AIC controller irqs are dispatched through this GPIO handler.
- * To use any AT91_PIN_* as an externally triggered IRQ, first call
+ * To use any AT91_PIN_* as an बाह्यally triggered IRQ, first call
  * at91_set_gpio_input() then maybe enable its glitch filter.
  * Then just request_irq() with the pin ID; it works like any ARM IRQ
  * handler.
@@ -1531,210 +1532,210 @@ static void at91_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
  * IRQ0..IRQ6 should be configurable, e.g. level vs edge triggering.
  */
 
-static void gpio_irq_mask(struct irq_data *d)
-{
-	struct at91_gpio_chip *at91_gpio = irq_data_get_irq_chip_data(d);
-	void __iomem	*pio = at91_gpio->regbase;
-	unsigned	mask = 1 << d->hwirq;
+अटल व्योम gpio_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा at91_gpio_chip *at91_gpio = irq_data_get_irq_chip_data(d);
+	व्योम __iomem	*pio = at91_gpio->regbase;
+	अचिन्हित	mask = 1 << d->hwirq;
 
-	if (pio)
-		writel_relaxed(mask, pio + PIO_IDR);
-}
+	अगर (pio)
+		ग_लिखोl_relaxed(mask, pio + PIO_IDR);
+पूर्ण
 
-static void gpio_irq_unmask(struct irq_data *d)
-{
-	struct at91_gpio_chip *at91_gpio = irq_data_get_irq_chip_data(d);
-	void __iomem	*pio = at91_gpio->regbase;
-	unsigned	mask = 1 << d->hwirq;
+अटल व्योम gpio_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा at91_gpio_chip *at91_gpio = irq_data_get_irq_chip_data(d);
+	व्योम __iomem	*pio = at91_gpio->regbase;
+	अचिन्हित	mask = 1 << d->hwirq;
 
-	if (pio)
-		writel_relaxed(mask, pio + PIO_IER);
-}
+	अगर (pio)
+		ग_लिखोl_relaxed(mask, pio + PIO_IER);
+पूर्ण
 
-static int gpio_irq_type(struct irq_data *d, unsigned type)
-{
-	switch (type) {
-	case IRQ_TYPE_NONE:
-	case IRQ_TYPE_EDGE_BOTH:
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक gpio_irq_type(काष्ठा irq_data *d, अचिन्हित type)
+अणु
+	चयन (type) अणु
+	हाल IRQ_TYPE_NONE:
+	हाल IRQ_TYPE_EDGE_BOTH:
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-/* Alternate irq type for PIO3 support */
-static int alt_gpio_irq_type(struct irq_data *d, unsigned type)
-{
-	struct at91_gpio_chip *at91_gpio = irq_data_get_irq_chip_data(d);
-	void __iomem	*pio = at91_gpio->regbase;
-	unsigned	mask = 1 << d->hwirq;
+/* Alternate irq type क्रम PIO3 support */
+अटल पूर्णांक alt_gpio_irq_type(काष्ठा irq_data *d, अचिन्हित type)
+अणु
+	काष्ठा at91_gpio_chip *at91_gpio = irq_data_get_irq_chip_data(d);
+	व्योम __iomem	*pio = at91_gpio->regbase;
+	अचिन्हित	mask = 1 << d->hwirq;
 
-	switch (type) {
-	case IRQ_TYPE_EDGE_RISING:
+	चयन (type) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
 		irq_set_handler_locked(d, handle_simple_irq);
-		writel_relaxed(mask, pio + PIO_ESR);
-		writel_relaxed(mask, pio + PIO_REHLSR);
-		break;
-	case IRQ_TYPE_EDGE_FALLING:
+		ग_लिखोl_relaxed(mask, pio + PIO_ESR);
+		ग_लिखोl_relaxed(mask, pio + PIO_REHLSR);
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_FALLING:
 		irq_set_handler_locked(d, handle_simple_irq);
-		writel_relaxed(mask, pio + PIO_ESR);
-		writel_relaxed(mask, pio + PIO_FELLSR);
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
+		ग_लिखोl_relaxed(mask, pio + PIO_ESR);
+		ग_लिखोl_relaxed(mask, pio + PIO_FELLSR);
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
 		irq_set_handler_locked(d, handle_level_irq);
-		writel_relaxed(mask, pio + PIO_LSR);
-		writel_relaxed(mask, pio + PIO_FELLSR);
-		break;
-	case IRQ_TYPE_LEVEL_HIGH:
+		ग_लिखोl_relaxed(mask, pio + PIO_LSR);
+		ग_लिखोl_relaxed(mask, pio + PIO_FELLSR);
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		irq_set_handler_locked(d, handle_level_irq);
-		writel_relaxed(mask, pio + PIO_LSR);
-		writel_relaxed(mask, pio + PIO_REHLSR);
-		break;
-	case IRQ_TYPE_EDGE_BOTH:
+		ग_लिखोl_relaxed(mask, pio + PIO_LSR);
+		ग_लिखोl_relaxed(mask, pio + PIO_REHLSR);
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_BOTH:
 		/*
-		 * disable additional interrupt modes:
-		 * fall back to default behavior
+		 * disable additional पूर्णांकerrupt modes:
+		 * fall back to शेष behavior
 		 */
 		irq_set_handler_locked(d, handle_simple_irq);
-		writel_relaxed(mask, pio + PIO_AIMDR);
-		return 0;
-	case IRQ_TYPE_NONE:
-	default:
+		ग_लिखोl_relaxed(mask, pio + PIO_AIMDR);
+		वापस 0;
+	हाल IRQ_TYPE_NONE:
+	शेष:
 		pr_warn("AT91: No type for GPIO irq offset %d\n", d->irq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* enable additional interrupt modes */
-	writel_relaxed(mask, pio + PIO_AIMER);
+	/* enable additional पूर्णांकerrupt modes */
+	ग_लिखोl_relaxed(mask, pio + PIO_AIMER);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gpio_irq_ack(struct irq_data *d)
-{
-	/* the interrupt is already cleared before by reading ISR */
-}
+अटल व्योम gpio_irq_ack(काष्ठा irq_data *d)
+अणु
+	/* the पूर्णांकerrupt is alपढ़ोy cleared beक्रमe by पढ़ोing ISR */
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static u32 wakeups[MAX_GPIO_BANKS];
-static u32 backups[MAX_GPIO_BANKS];
+अटल u32 wakeups[MAX_GPIO_BANKS];
+अटल u32 backups[MAX_GPIO_BANKS];
 
-static int gpio_irq_set_wake(struct irq_data *d, unsigned state)
-{
-	struct at91_gpio_chip *at91_gpio = irq_data_get_irq_chip_data(d);
-	unsigned	bank = at91_gpio->pioc_idx;
-	unsigned mask = 1 << d->hwirq;
+अटल पूर्णांक gpio_irq_set_wake(काष्ठा irq_data *d, अचिन्हित state)
+अणु
+	काष्ठा at91_gpio_chip *at91_gpio = irq_data_get_irq_chip_data(d);
+	अचिन्हित	bank = at91_gpio->pioc_idx;
+	अचिन्हित mask = 1 << d->hwirq;
 
-	if (unlikely(bank >= MAX_GPIO_BANKS))
-		return -EINVAL;
+	अगर (unlikely(bank >= MAX_GPIO_BANKS))
+		वापस -EINVAL;
 
-	if (state)
+	अगर (state)
 		wakeups[bank] |= mask;
-	else
+	अन्यथा
 		wakeups[bank] &= ~mask;
 
 	irq_set_irq_wake(at91_gpio->pioc_virq, state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void at91_pinctrl_gpio_suspend(void)
-{
-	int i;
+व्योम at91_pinctrl_gpio_suspend(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < gpio_banks; i++) {
-		void __iomem  *pio;
+	क्रम (i = 0; i < gpio_banks; i++) अणु
+		व्योम __iomem  *pio;
 
-		if (!gpio_chips[i])
-			continue;
+		अगर (!gpio_chips[i])
+			जारी;
 
 		pio = gpio_chips[i]->regbase;
 
-		backups[i] = readl_relaxed(pio + PIO_IMR);
-		writel_relaxed(backups[i], pio + PIO_IDR);
-		writel_relaxed(wakeups[i], pio + PIO_IER);
+		backups[i] = पढ़ोl_relaxed(pio + PIO_IMR);
+		ग_लिखोl_relaxed(backups[i], pio + PIO_IDR);
+		ग_लिखोl_relaxed(wakeups[i], pio + PIO_IER);
 
-		if (!wakeups[i])
-			clk_disable_unprepare(gpio_chips[i]->clock);
-		else
-			printk(KERN_DEBUG "GPIO-%c may wake for %08x\n",
+		अगर (!wakeups[i])
+			clk_disable_unprepare(gpio_chips[i]->घड़ी);
+		अन्यथा
+			prपूर्णांकk(KERN_DEBUG "GPIO-%c may wake for %08x\n",
 			       'A'+i, wakeups[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void at91_pinctrl_gpio_resume(void)
-{
-	int i;
+व्योम at91_pinctrl_gpio_resume(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < gpio_banks; i++) {
-		void __iomem  *pio;
+	क्रम (i = 0; i < gpio_banks; i++) अणु
+		व्योम __iomem  *pio;
 
-		if (!gpio_chips[i])
-			continue;
+		अगर (!gpio_chips[i])
+			जारी;
 
 		pio = gpio_chips[i]->regbase;
 
-		if (!wakeups[i])
-			clk_prepare_enable(gpio_chips[i]->clock);
+		अगर (!wakeups[i])
+			clk_prepare_enable(gpio_chips[i]->घड़ी);
 
-		writel_relaxed(wakeups[i], pio + PIO_IDR);
-		writel_relaxed(backups[i], pio + PIO_IER);
-	}
-}
+		ग_लिखोl_relaxed(wakeups[i], pio + PIO_IDR);
+		ग_लिखोl_relaxed(backups[i], pio + PIO_IER);
+	पूर्ण
+पूर्ण
 
-#else
-#define gpio_irq_set_wake	NULL
-#endif /* CONFIG_PM */
+#अन्यथा
+#घोषणा gpio_irq_set_wake	शून्य
+#पूर्ण_अगर /* CONFIG_PM */
 
-static void gpio_irq_handler(struct irq_desc *desc)
-{
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	struct gpio_chip *gpio_chip = irq_desc_get_handler_data(desc);
-	struct at91_gpio_chip *at91_gpio = gpiochip_get_data(gpio_chip);
-	void __iomem	*pio = at91_gpio->regbase;
-	unsigned long	isr;
-	int		n;
+अटल व्योम gpio_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	काष्ठा gpio_chip *gpio_chip = irq_desc_get_handler_data(desc);
+	काष्ठा at91_gpio_chip *at91_gpio = gpiochip_get_data(gpio_chip);
+	व्योम __iomem	*pio = at91_gpio->regbase;
+	अचिन्हित दीर्घ	isr;
+	पूर्णांक		n;
 
 	chained_irq_enter(chip, desc);
-	for (;;) {
-		/* Reading ISR acks pending (edge triggered) GPIO interrupts.
+	क्रम (;;) अणु
+		/* Reading ISR acks pending (edge triggered) GPIO पूर्णांकerrupts.
 		 * When there are none pending, we're finished unless we need
 		 * to process multiple banks (like ID_PIOCDE on sam9263).
 		 */
-		isr = readl_relaxed(pio + PIO_ISR) & readl_relaxed(pio + PIO_IMR);
-		if (!isr) {
-			if (!at91_gpio->next)
-				break;
+		isr = पढ़ोl_relaxed(pio + PIO_ISR) & पढ़ोl_relaxed(pio + PIO_IMR);
+		अगर (!isr) अणु
+			अगर (!at91_gpio->next)
+				अवरोध;
 			at91_gpio = at91_gpio->next;
 			pio = at91_gpio->regbase;
 			gpio_chip = &at91_gpio->chip;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		for_each_set_bit(n, &isr, BITS_PER_LONG) {
+		क्रम_each_set_bit(n, &isr, BITS_PER_LONG) अणु
 			generic_handle_irq(irq_find_mapping(
-					   gpio_chip->irq.domain, n));
-		}
-	}
-	chained_irq_exit(chip, desc);
+					   gpio_chip->irq.करोमुख्य, n));
+		पूर्ण
+	पूर्ण
+	chained_irq_निकास(chip, desc);
 	/* now it may re-trigger */
-}
+पूर्ण
 
-static int at91_gpio_of_irq_setup(struct platform_device *pdev,
-				  struct at91_gpio_chip *at91_gpio)
-{
-	struct gpio_chip	*gpiochip_prev = NULL;
-	struct at91_gpio_chip   *prev = NULL;
-	struct irq_data		*d = irq_get_irq_data(at91_gpio->pioc_virq);
-	struct irq_chip		*gpio_irqchip;
-	struct gpio_irq_chip	*girq;
-	int i;
+अटल पूर्णांक at91_gpio_of_irq_setup(काष्ठा platक्रमm_device *pdev,
+				  काष्ठा at91_gpio_chip *at91_gpio)
+अणु
+	काष्ठा gpio_chip	*gpiochip_prev = शून्य;
+	काष्ठा at91_gpio_chip   *prev = शून्य;
+	काष्ठा irq_data		*d = irq_get_irq_data(at91_gpio->pioc_virq);
+	काष्ठा irq_chip		*gpio_irqchip;
+	काष्ठा gpio_irq_chip	*girq;
+	पूर्णांक i;
 
-	gpio_irqchip = devm_kzalloc(&pdev->dev, sizeof(*gpio_irqchip),
+	gpio_irqchip = devm_kzalloc(&pdev->dev, माप(*gpio_irqchip),
 				    GFP_KERNEL);
-	if (!gpio_irqchip)
-		return -ENOMEM;
+	अगर (!gpio_irqchip)
+		वापस -ENOMEM;
 
 	at91_gpio->pioc_hwirq = irqd_to_hwirq(d);
 
@@ -1747,54 +1748,54 @@ static int at91_gpio_of_irq_setup(struct platform_device *pdev,
 	gpio_irqchip->irq_set_type = at91_gpio->ops->irq_type;
 
 	/* Disable irqs of this PIO controller */
-	writel_relaxed(~0, at91_gpio->regbase + PIO_IDR);
+	ग_लिखोl_relaxed(~0, at91_gpio->regbase + PIO_IDR);
 
 	/*
 	 * Let the generic code handle this edge IRQ, the the chained
-	 * handler will perform the actual work of handling the parent
-	 * interrupt.
+	 * handler will perक्रमm the actual work of handling the parent
+	 * पूर्णांकerrupt.
 	 */
 	girq = &at91_gpio->chip.irq;
 	girq->chip = gpio_irqchip;
-	girq->default_type = IRQ_TYPE_NONE;
+	girq->शेष_type = IRQ_TYPE_NONE;
 	girq->handler = handle_edge_irq;
 
 	/*
 	 * The top level handler handles one bank of GPIOs, except
 	 * on some SoC it can handle up to three...
-	 * We only set up the handler for the first of the list.
+	 * We only set up the handler क्रम the first of the list.
 	 */
 	gpiochip_prev = irq_get_handler_data(at91_gpio->pioc_virq);
-	if (!gpiochip_prev) {
+	अगर (!gpiochip_prev) अणु
 		girq->parent_handler = gpio_irq_handler;
 		girq->num_parents = 1;
-		girq->parents = devm_kcalloc(&pdev->dev, 1,
-					     sizeof(*girq->parents),
+		girq->parents = devm_kसुस्मृति(&pdev->dev, 1,
+					     माप(*girq->parents),
 					     GFP_KERNEL);
-		if (!girq->parents)
-			return -ENOMEM;
+		अगर (!girq->parents)
+			वापस -ENOMEM;
 		girq->parents[0] = at91_gpio->pioc_virq;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	prev = gpiochip_get_data(gpiochip_prev);
-	/* we can only have 2 banks before */
-	for (i = 0; i < 2; i++) {
-		if (prev->next) {
+	/* we can only have 2 banks beक्रमe */
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (prev->next) अणु
 			prev = prev->next;
-		} else {
+		पूर्ण अन्यथा अणु
 			prev->next = at91_gpio;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-/* This structure is replicated for each GPIO block allocated at probe time */
-static const struct gpio_chip at91_gpio_template = {
+/* This काष्ठाure is replicated क्रम each GPIO block allocated at probe समय */
+अटल स्थिर काष्ठा gpio_chip at91_gpio_ढाँचा = अणु
 	.request		= gpiochip_generic_request,
-	.free			= gpiochip_generic_free,
+	.मुक्त			= gpiochip_generic_मुक्त,
 	.get_direction		= at91_gpio_get_direction,
 	.direction_input	= at91_gpio_direction_input,
 	.get			= at91_gpio_get,
@@ -1804,70 +1805,70 @@ static const struct gpio_chip at91_gpio_template = {
 	.dbg_show		= at91_gpio_dbg_show,
 	.can_sleep		= false,
 	.ngpio			= MAX_NB_GPIO_PER_BANK,
-};
+पूर्ण;
 
-static const struct of_device_id at91_gpio_of_match[] = {
-	{ .compatible = "atmel,at91sam9x5-gpio", .data = &at91sam9x5_ops, },
-	{ .compatible = "atmel,at91rm9200-gpio", .data = &at91rm9200_ops },
-	{ .compatible = "microchip,sam9x60-gpio", .data = &sam9x60_ops },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id at91_gpio_of_match[] = अणु
+	अणु .compatible = "atmel,at91sam9x5-gpio", .data = &at91sam9x5_ops, पूर्ण,
+	अणु .compatible = "atmel,at91rm9200-gpio", .data = &at91rm9200_ops पूर्ण,
+	अणु .compatible = "microchip,sam9x60-gpio", .data = &sam9x60_ops पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int at91_gpio_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct at91_gpio_chip *at91_chip = NULL;
-	struct gpio_chip *chip;
-	struct pinctrl_gpio_range *range;
-	int ret = 0;
-	int irq, i;
-	int alias_idx = of_alias_get_id(np, "gpio");
-	uint32_t ngpio;
-	char **names;
+अटल पूर्णांक at91_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा at91_gpio_chip *at91_chip = शून्य;
+	काष्ठा gpio_chip *chip;
+	काष्ठा pinctrl_gpio_range *range;
+	पूर्णांक ret = 0;
+	पूर्णांक irq, i;
+	पूर्णांक alias_idx = of_alias_get_id(np, "gpio");
+	uपूर्णांक32_t ngpio;
+	अक्षर **names;
 
 	BUG_ON(alias_idx >= ARRAY_SIZE(gpio_chips));
-	if (gpio_chips[alias_idx]) {
+	अगर (gpio_chips[alias_idx]) अणु
 		ret = -EBUSY;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0) अणु
 		ret = irq;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	at91_chip = devm_kzalloc(&pdev->dev, sizeof(*at91_chip), GFP_KERNEL);
-	if (!at91_chip) {
+	at91_chip = devm_kzalloc(&pdev->dev, माप(*at91_chip), GFP_KERNEL);
+	अगर (!at91_chip) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	at91_chip->regbase = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(at91_chip->regbase)) {
+	at91_chip->regbase = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(at91_chip->regbase)) अणु
 		ret = PTR_ERR(at91_chip->regbase);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	at91_chip->ops = (struct at91_pinctrl_mux_ops *)
+	at91_chip->ops = (काष्ठा at91_pinctrl_mux_ops *)
 		of_match_device(at91_gpio_of_match, &pdev->dev)->data;
 	at91_chip->pioc_virq = irq;
 	at91_chip->pioc_idx = alias_idx;
 
-	at91_chip->clock = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(at91_chip->clock)) {
+	at91_chip->घड़ी = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(at91_chip->घड़ी)) अणु
 		dev_err(&pdev->dev, "failed to get clock, ignoring.\n");
-		ret = PTR_ERR(at91_chip->clock);
-		goto err;
-	}
+		ret = PTR_ERR(at91_chip->घड़ी);
+		जाओ err;
+	पूर्ण
 
-	ret = clk_prepare_enable(at91_chip->clock);
-	if (ret) {
+	ret = clk_prepare_enable(at91_chip->घड़ी);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to prepare and enable clock, ignoring.\n");
-		goto clk_enable_err;
-	}
+		जाओ clk_enable_err;
+	पूर्ण
 
-	at91_chip->chip = at91_gpio_template;
+	at91_chip->chip = at91_gpio_ढाँचा;
 
 	chip = &at91_chip->chip;
 	chip->of_node = np;
@@ -1876,26 +1877,26 @@ static int at91_gpio_probe(struct platform_device *pdev)
 	chip->owner = THIS_MODULE;
 	chip->base = alias_idx * MAX_NB_GPIO_PER_BANK;
 
-	if (!of_property_read_u32(np, "#gpio-lines", &ngpio)) {
-		if (ngpio >= MAX_NB_GPIO_PER_BANK)
+	अगर (!of_property_पढ़ो_u32(np, "#gpio-lines", &ngpio)) अणु
+		अगर (ngpio >= MAX_NB_GPIO_PER_BANK)
 			pr_err("at91_gpio.%d, gpio-nb >= %d failback to %d\n",
 			       alias_idx, MAX_NB_GPIO_PER_BANK, MAX_NB_GPIO_PER_BANK);
-		else
+		अन्यथा
 			chip->ngpio = ngpio;
-	}
+	पूर्ण
 
-	names = devm_kcalloc(&pdev->dev, chip->ngpio, sizeof(char *),
+	names = devm_kसुस्मृति(&pdev->dev, chip->ngpio, माप(अक्षर *),
 			     GFP_KERNEL);
 
-	if (!names) {
+	अगर (!names) अणु
 		ret = -ENOMEM;
-		goto clk_enable_err;
-	}
+		जाओ clk_enable_err;
+	पूर्ण
 
-	for (i = 0; i < chip->ngpio; i++)
-		names[i] = kasprintf(GFP_KERNEL, "pio%c%d", alias_idx + 'A', i);
+	क्रम (i = 0; i < chip->ngpio; i++)
+		names[i] = kaप्र_लिखो(GFP_KERNEL, "pio%c%d", alias_idx + 'A', i);
 
-	chip->names = (const char *const *)names;
+	chip->names = (स्थिर अक्षर *स्थिर *)names;
 
 	range = &at91_chip->range;
 	range->name = chip->label;
@@ -1906,52 +1907,52 @@ static int at91_gpio_probe(struct platform_device *pdev)
 	range->gc = chip;
 
 	ret = at91_gpio_of_irq_setup(pdev, at91_chip);
-	if (ret)
-		goto gpiochip_add_err;
+	अगर (ret)
+		जाओ gpiochip_add_err;
 
 	ret = gpiochip_add_data(chip, at91_chip);
-	if (ret)
-		goto gpiochip_add_err;
+	अगर (ret)
+		जाओ gpiochip_add_err;
 
 	gpio_chips[alias_idx] = at91_chip;
 	gpio_banks = max(gpio_banks, alias_idx + 1);
 
 	dev_info(&pdev->dev, "at address %p\n", at91_chip->regbase);
 
-	return 0;
+	वापस 0;
 
 gpiochip_add_err:
 clk_enable_err:
-	clk_disable_unprepare(at91_chip->clock);
+	clk_disable_unprepare(at91_chip->घड़ी);
 err:
 	dev_err(&pdev->dev, "Failure %i for GPIO %i\n", ret, alias_idx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver at91_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver at91_gpio_driver = अणु
+	.driver = अणु
 		.name = "gpio-at91",
 		.of_match_table = at91_gpio_of_match,
-	},
+	पूर्ण,
 	.probe = at91_gpio_probe,
-};
+पूर्ण;
 
-static struct platform_driver at91_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver at91_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "pinctrl-at91",
 		.of_match_table = at91_pinctrl_of_match,
-	},
+	पूर्ण,
 	.probe = at91_pinctrl_probe,
-};
+पूर्ण;
 
-static struct platform_driver * const drivers[] = {
+अटल काष्ठा platक्रमm_driver * स्थिर drivers[] = अणु
 	&at91_gpio_driver,
 	&at91_pinctrl_driver,
-};
+पूर्ण;
 
-static int __init at91_pinctrl_init(void)
-{
-	return platform_register_drivers(drivers, ARRAY_SIZE(drivers));
-}
+अटल पूर्णांक __init at91_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_रेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
+पूर्ण
 arch_initcall(at91_pinctrl_init);

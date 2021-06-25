@@ -1,98 +1,99 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  Shared Memory Communications over RDMA (SMC-R) and RoCE
  *
- *  Definitions for the SMC module (socket related)
+ *  Definitions क्रम the SMC module (socket related)
  *
  *  Copyright IBM Corp. 2016
  *
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
-#ifndef _SMC_H
-#define _SMC_H
+#अगर_अघोषित _SMC_H
+#घोषणा _SMC_H
 
-#define SMC_MAX_PNETID_LEN	16	/* Max. length of PNET id */
+#घोषणा SMC_MAX_PNETID_LEN	16	/* Max. length of PNET id */
 
-struct smc_hashinfo {
+काष्ठा smc_hashinfo अणु
 	rwlock_t lock;
-	struct hlist_head ht;
-};
+	काष्ठा hlist_head ht;
+पूर्ण;
 
-int smc_hash_sk(struct sock *sk);
-void smc_unhash_sk(struct sock *sk);
+पूर्णांक smc_hash_sk(काष्ठा sock *sk);
+व्योम smc_unhash_sk(काष्ठा sock *sk);
 
-/* SMCD/ISM device driver interface */
-struct smcd_dmb {
+/* SMCD/ISM device driver पूर्णांकerface */
+काष्ठा smcd_dmb अणु
 	u64 dmb_tok;
 	u64 rgid;
 	u32 dmb_len;
 	u32 sba_idx;
 	u32 vlan_valid;
 	u32 vlan_id;
-	void *cpu_addr;
+	व्योम *cpu_addr;
 	dma_addr_t dma_addr;
-};
+पूर्ण;
 
-#define ISM_EVENT_DMB	0
-#define ISM_EVENT_GID	1
-#define ISM_EVENT_SWR	2
+#घोषणा ISM_EVENT_DMB	0
+#घोषणा ISM_EVENT_GID	1
+#घोषणा ISM_EVENT_SWR	2
 
-#define ISM_RESERVED_VLANID	0x1FFF
+#घोषणा ISM_RESERVED_VLANID	0x1FFF
 
-#define ISM_ERROR	0xFFFF
+#घोषणा ISM_ERROR	0xFFFF
 
-struct smcd_event {
+काष्ठा smcd_event अणु
 	u32 type;
 	u32 code;
 	u64 tok;
-	u64 time;
+	u64 समय;
 	u64 info;
-};
+पूर्ण;
 
-struct smcd_dev;
+काष्ठा smcd_dev;
 
-struct smcd_ops {
-	int (*query_remote_gid)(struct smcd_dev *dev, u64 rgid, u32 vid_valid,
+काष्ठा smcd_ops अणु
+	पूर्णांक (*query_remote_gid)(काष्ठा smcd_dev *dev, u64 rgid, u32 vid_valid,
 				u32 vid);
-	int (*register_dmb)(struct smcd_dev *dev, struct smcd_dmb *dmb);
-	int (*unregister_dmb)(struct smcd_dev *dev, struct smcd_dmb *dmb);
-	int (*add_vlan_id)(struct smcd_dev *dev, u64 vlan_id);
-	int (*del_vlan_id)(struct smcd_dev *dev, u64 vlan_id);
-	int (*set_vlan_required)(struct smcd_dev *dev);
-	int (*reset_vlan_required)(struct smcd_dev *dev);
-	int (*signal_event)(struct smcd_dev *dev, u64 rgid, u32 trigger_irq,
+	पूर्णांक (*रेजिस्टर_dmb)(काष्ठा smcd_dev *dev, काष्ठा smcd_dmb *dmb);
+	पूर्णांक (*unरेजिस्टर_dmb)(काष्ठा smcd_dev *dev, काष्ठा smcd_dmb *dmb);
+	पूर्णांक (*add_vlan_id)(काष्ठा smcd_dev *dev, u64 vlan_id);
+	पूर्णांक (*del_vlan_id)(काष्ठा smcd_dev *dev, u64 vlan_id);
+	पूर्णांक (*set_vlan_required)(काष्ठा smcd_dev *dev);
+	पूर्णांक (*reset_vlan_required)(काष्ठा smcd_dev *dev);
+	पूर्णांक (*संकेत_event)(काष्ठा smcd_dev *dev, u64 rgid, u32 trigger_irq,
 			    u32 event_code, u64 info);
-	int (*move_data)(struct smcd_dev *dev, u64 dmb_tok, unsigned int idx,
-			 bool sf, unsigned int offset, void *data,
-			 unsigned int size);
-	void (*get_system_eid)(struct smcd_dev *dev, u8 **eid);
-	u16 (*get_chid)(struct smcd_dev *dev);
-};
+	पूर्णांक (*move_data)(काष्ठा smcd_dev *dev, u64 dmb_tok, अचिन्हित पूर्णांक idx,
+			 bool sf, अचिन्हित पूर्णांक offset, व्योम *data,
+			 अचिन्हित पूर्णांक size);
+	व्योम (*get_प्रणाली_eid)(काष्ठा smcd_dev *dev, u8 **eid);
+	u16 (*get_chid)(काष्ठा smcd_dev *dev);
+पूर्ण;
 
-struct smcd_dev {
-	const struct smcd_ops *ops;
-	struct device dev;
-	void *priv;
+काष्ठा smcd_dev अणु
+	स्थिर काष्ठा smcd_ops *ops;
+	काष्ठा device dev;
+	व्योम *priv;
 	u64 local_gid;
-	struct list_head list;
+	काष्ठा list_head list;
 	spinlock_t lock;
-	struct smc_connection **conn;
-	struct list_head vlan;
-	struct workqueue_struct *event_wq;
+	काष्ठा smc_connection **conn;
+	काष्ठा list_head vlan;
+	काष्ठा workqueue_काष्ठा *event_wq;
 	u8 pnetid[SMC_MAX_PNETID_LEN];
 	bool pnetid_by_user;
-	struct list_head lgr_list;
+	काष्ठा list_head lgr_list;
 	spinlock_t lgr_lock;
 	atomic_t lgr_cnt;
-	wait_queue_head_t lgrs_deleted;
+	रुको_queue_head_t lgrs_deleted;
 	u8 going_away : 1;
-};
+पूर्ण;
 
-struct smcd_dev *smcd_alloc_dev(struct device *parent, const char *name,
-				const struct smcd_ops *ops, int max_dmbs);
-int smcd_register_dev(struct smcd_dev *smcd);
-void smcd_unregister_dev(struct smcd_dev *smcd);
-void smcd_free_dev(struct smcd_dev *smcd);
-void smcd_handle_event(struct smcd_dev *dev, struct smcd_event *event);
-void smcd_handle_irq(struct smcd_dev *dev, unsigned int bit);
-#endif	/* _SMC_H */
+काष्ठा smcd_dev *smcd_alloc_dev(काष्ठा device *parent, स्थिर अक्षर *name,
+				स्थिर काष्ठा smcd_ops *ops, पूर्णांक max_dmbs);
+पूर्णांक smcd_रेजिस्टर_dev(काष्ठा smcd_dev *smcd);
+व्योम smcd_unरेजिस्टर_dev(काष्ठा smcd_dev *smcd);
+व्योम smcd_मुक्त_dev(काष्ठा smcd_dev *smcd);
+व्योम smcd_handle_event(काष्ठा smcd_dev *dev, काष्ठा smcd_event *event);
+व्योम smcd_handle_irq(काष्ठा smcd_dev *dev, अचिन्हित पूर्णांक bit);
+#पूर्ण_अगर	/* _SMC_H */

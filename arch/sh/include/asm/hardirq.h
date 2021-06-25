@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_HARDIRQ_H
-#define __ASM_SH_HARDIRQ_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_HARसूचीQ_H
+#घोषणा __ASM_SH_HARसूचीQ_H
 
-extern void ack_bad_irq(unsigned int irq);
-#define ack_bad_irq ack_bad_irq
-#define ARCH_WANTS_NMI_IRQSTAT
+बाह्य व्योम ack_bad_irq(अचिन्हित पूर्णांक irq);
+#घोषणा ack_bad_irq ack_bad_irq
+#घोषणा ARCH_WANTS_NMI_IRQSTAT
 
-#include <asm-generic/hardirq.h>
+#समावेश <यंत्र-generic/hardirq.h>
 
-#endif /* __ASM_SH_HARDIRQ_H */
+#पूर्ण_अगर /* __ASM_SH_HARसूचीQ_H */

@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * lm8323.h - Configuration for LM8323 keypad driver.
+ * lm8323.h - Configuration क्रम LM8323 keypad driver.
  */
 
-#ifndef __LINUX_LM8323_H
-#define __LINUX_LM8323_H
+#अगर_अघोषित __LINUX_LM8323_H
+#घोषणा __LINUX_LM8323_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
  * Largest keycode that the chip can send, plus one,
  * so keys can be mapped directly at the index of the
  * LM8323 keycode instead of subtracting one.
  */
-#define LM8323_KEYMAP_SIZE	(0x7f + 1)
+#घोषणा LM8323_KEYMAP_SIZE	(0x7f + 1)
 
-#define LM8323_NUM_PWMS		3
+#घोषणा LM8323_NUM_PWMS		3
 
-struct lm8323_platform_data {
-	int debounce_time; /* Time to watch for key bouncing, in ms. */
-	int active_time; /* Idle time until sleep, in ms. */
+काष्ठा lm8323_platक्रमm_data अणु
+	पूर्णांक debounce_समय; /* Time to watch क्रम key bouncing, in ms. */
+	पूर्णांक active_समय; /* Idle समय until sleep, in ms. */
 
-	int size_x;
-	int size_y;
+	पूर्णांक size_x;
+	पूर्णांक size_y;
 	bool repeat;
-	const unsigned short *keymap;
+	स्थिर अचिन्हित लघु *keymap;
 
-	const char *pwm_names[LM8323_NUM_PWMS];
+	स्थिर अक्षर *pwm_names[LM8323_NUM_PWMS];
 
-	const char *name; /* Device name. */
-};
+	स्थिर अक्षर *name; /* Device name. */
+पूर्ण;
 
-#endif /* __LINUX_LM8323_H */
+#पूर्ण_अगर /* __LINUX_LM8323_H */

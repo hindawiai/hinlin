@@ -1,156 +1,157 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _INTELFB_H
-#define _INTELFB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _INTELFB_H
+#घोषणा _INTELFB_H
 
-/* $DHD: intelfb/intelfb.h,v 1.40 2003/06/27 15:06:25 dawes Exp $ */
+/* $DHD: पूर्णांकelfb/पूर्णांकelfb.h,v 1.40 2003/06/27 15:06:25 dawes Exp $ */
 
-#include <linux/agp_backend.h>
-#include <linux/fb.h>
+#समावेश <linux/agp_backend.h>
+#समावेश <linux/fb.h>
 
-#ifdef CONFIG_FB_INTEL_I2C
-#include <linux/i2c.h>
-#include <linux/i2c-algo-bit.h>
-#endif
+#अगर_घोषित CONFIG_FB_INTEL_I2C
+#समावेश <linux/i2c.h>
+#समावेश <linux/i2c-algo-bit.h>
+#पूर्ण_अगर
 
 /*** Version/name ***/
-#define INTELFB_VERSION			"0.9.6"
-#define INTELFB_MODULE_NAME		"intelfb"
-#define SUPPORTED_CHIPSETS		"830M/845G/852GM/855GM/865G/915G/915GM/945G/945GM/945GME/965G/965GM"
+#घोषणा INTELFB_VERSION			"0.9.6"
+#घोषणा INTELFB_MODULE_NAME		"intelfb"
+#घोषणा SUPPORTED_CHIPSETS		"830M/845G/852GM/855GM/865G/915G/915GM/945G/945GM/945GME/965G/965GM"
 
 
 /*** Debug/feature defines ***/
 
-#ifndef DEBUG
-#define DEBUG				0
-#endif
+#अगर_अघोषित DEBUG
+#घोषणा DEBUG				0
+#पूर्ण_अगर
 
-#ifndef VERBOSE
-#define VERBOSE				0
-#endif
+#अगर_अघोषित VERBOSE
+#घोषणा VERBOSE				0
+#पूर्ण_अगर
 
-#ifndef REGDUMP
-#define REGDUMP				0
-#endif
+#अगर_अघोषित REGDUMP
+#घोषणा REGDUMP				0
+#पूर्ण_अगर
 
-#ifndef DETECT_VGA_CLASS_ONLY
-#define DETECT_VGA_CLASS_ONLY		1
-#endif
+#अगर_अघोषित DETECT_VGA_CLASS_ONLY
+#घोषणा DETECT_VGA_CLASS_ONLY		1
+#पूर्ण_अगर
 
-#ifndef ALLOCATE_FOR_PANNING
-#define ALLOCATE_FOR_PANNING		1
-#endif
+#अगर_अघोषित ALLOCATE_FOR_PANNING
+#घोषणा ALLOCATE_FOR_PANNING		1
+#पूर्ण_अगर
 
-#ifndef PREFERRED_MODE
-#define PREFERRED_MODE			"1024x768-32@70"
-#endif
+#अगर_अघोषित PREFERRED_MODE
+#घोषणा PREFERRED_MODE			"1024x768-32@70"
+#पूर्ण_अगर
 
 /*** hw-related values ***/
 
 /* Resource Allocation */
-#define INTELFB_FB_ACQUIRED                 1
-#define INTELFB_MMIO_ACQUIRED               2
+#घोषणा INTELFB_FB_ACQUIRED                 1
+#घोषणा INTELFB_MMIO_ACQUIRED               2
 
-/* PCI ids for supported devices */
-#define PCI_DEVICE_ID_INTEL_830M	0x3577
-#define PCI_DEVICE_ID_INTEL_845G	0x2562
-#define PCI_DEVICE_ID_INTEL_85XGM	0x3582
-#define PCI_DEVICE_ID_INTEL_854		0x358E
-#define PCI_DEVICE_ID_INTEL_865G	0x2572
-#define PCI_DEVICE_ID_INTEL_915G	0x2582
-#define PCI_DEVICE_ID_INTEL_915GM	0x2592
-#define PCI_DEVICE_ID_INTEL_945G	0x2772
-#define PCI_DEVICE_ID_INTEL_945GM	0x27A2
-#define PCI_DEVICE_ID_INTEL_945GME	0x27AE
-#define PCI_DEVICE_ID_INTEL_965G	0x29A2
-#define PCI_DEVICE_ID_INTEL_965GM	0x2A02
+/* PCI ids क्रम supported devices */
+#घोषणा PCI_DEVICE_ID_INTEL_830M	0x3577
+#घोषणा PCI_DEVICE_ID_INTEL_845G	0x2562
+#घोषणा PCI_DEVICE_ID_INTEL_85XGM	0x3582
+#घोषणा PCI_DEVICE_ID_INTEL_854		0x358E
+#घोषणा PCI_DEVICE_ID_INTEL_865G	0x2572
+#घोषणा PCI_DEVICE_ID_INTEL_915G	0x2582
+#घोषणा PCI_DEVICE_ID_INTEL_915GM	0x2592
+#घोषणा PCI_DEVICE_ID_INTEL_945G	0x2772
+#घोषणा PCI_DEVICE_ID_INTEL_945GM	0x27A2
+#घोषणा PCI_DEVICE_ID_INTEL_945GME	0x27AE
+#घोषणा PCI_DEVICE_ID_INTEL_965G	0x29A2
+#घोषणा PCI_DEVICE_ID_INTEL_965GM	0x2A02
 
 /* Size of MMIO region */
-#define INTEL_REG_SIZE			0x80000
+#घोषणा INTEL_REG_SIZE			0x80000
 
-#define STRIDE_ALIGNMENT		16
-#define STRIDE_ALIGNMENT_I9XX		64
+#घोषणा STRIDE_ALIGNMENT		16
+#घोषणा STRIDE_ALIGNMENT_I9XX		64
 
-#define PALETTE_8_ENTRIES		256
+#घोषणा PALETTE_8_ENTRIES		256
 
 
 /*** Macros ***/
 
 /* basic arithmetic */
-#define KB(x)			((x) * 1024)
-#define MB(x)			((x) * 1024 * 1024)
-#define BtoKB(x)		((x) / 1024)
-#define BtoMB(x)		((x) / 1024 / 1024)
+#घोषणा KB(x)			((x) * 1024)
+#घोषणा MB(x)			((x) * 1024 * 1024)
+#घोषणा BtoKB(x)		((x) / 1024)
+#घोषणा BtoMB(x)		((x) / 1024 / 1024)
 
-#define GTT_PAGE_SIZE           KB(4)
+#घोषणा GTT_PAGE_SIZE           KB(4)
 
-#define ROUND_UP_TO(x, y)	(((x) + (y) - 1) / (y) * (y))
-#define ROUND_DOWN_TO(x, y)	((x) / (y) * (y))
-#define ROUND_UP_TO_PAGE(x)	ROUND_UP_TO((x), GTT_PAGE_SIZE)
-#define ROUND_DOWN_TO_PAGE(x)	ROUND_DOWN_TO((x), GTT_PAGE_SIZE)
+#घोषणा ROUND_UP_TO(x, y)	(((x) + (y) - 1) / (y) * (y))
+#घोषणा ROUND_DOWN_TO(x, y)	((x) / (y) * (y))
+#घोषणा ROUND_UP_TO_PAGE(x)	ROUND_UP_TO((x), GTT_PAGE_SIZE)
+#घोषणा ROUND_DOWN_TO_PAGE(x)	ROUND_DOWN_TO((x), GTT_PAGE_SIZE)
 
 /* messages */
-#define PFX			INTELFB_MODULE_NAME ": "
+#घोषणा PFX			INTELFB_MODULE_NAME ": "
 
-#define ERR_MSG(fmt, args...)	printk(KERN_ERR PFX fmt, ## args)
-#define WRN_MSG(fmt, args...)	printk(KERN_WARNING PFX fmt, ## args)
-#define NOT_MSG(fmt, args...)	printk(KERN_NOTICE PFX fmt, ## args)
-#define INF_MSG(fmt, args...)	printk(KERN_INFO PFX fmt, ## args)
-#if DEBUG
-#define DBG_MSG(fmt, args...)	printk(KERN_DEBUG PFX fmt, ## args)
-#else
-#define DBG_MSG(fmt, args...)	while (0) printk(fmt, ## args)
-#endif
+#घोषणा ERR_MSG(fmt, args...)	prपूर्णांकk(KERN_ERR PFX fmt, ## args)
+#घोषणा WRN_MSG(fmt, args...)	prपूर्णांकk(KERN_WARNING PFX fmt, ## args)
+#घोषणा NOT_MSG(fmt, args...)	prपूर्णांकk(KERN_NOTICE PFX fmt, ## args)
+#घोषणा INF_MSG(fmt, args...)	prपूर्णांकk(KERN_INFO PFX fmt, ## args)
+#अगर DEBUG
+#घोषणा DBG_MSG(fmt, args...)	prपूर्णांकk(KERN_DEBUG PFX fmt, ## args)
+#अन्यथा
+#घोषणा DBG_MSG(fmt, args...)	जबतक (0) prपूर्णांकk(fmt, ## args)
+#पूर्ण_अगर
 
-/* get commonly used pointers */
-#define GET_DINFO(info)		(info)->par
+/* get commonly used poपूर्णांकers */
+#घोषणा GET_DINFO(info)		(info)->par
 
 /* misc macros */
-#define ACCEL(d, i)                                                     \
+#घोषणा ACCEL(d, i)                                                     \
 	((d)->accel && !(d)->ring_lockup &&                             \
 	 ((i)->var.accel_flags & FB_ACCELF_TEXT))
 
-/*#define NOACCEL_CHIPSET(d)						\
+/*#घोषणा NOACCEL_CHIPSET(d)						\
 	((d)->chipset != INTEL_865G)*/
-#define NOACCEL_CHIPSET(d)						\
+#घोषणा NOACCEL_CHIPSET(d)						\
 	(0)
 
-#define FIXED_MODE(d) ((d)->fixed_mode)
+#घोषणा FIXED_MODE(d) ((d)->fixed_mode)
 
 /*** Driver parameters ***/
 
-#define RINGBUFFER_SIZE		KB(64)
-#define HW_CURSOR_SIZE		KB(4)
+#घोषणा RINGBUFFER_SIZE		KB(64)
+#घोषणा HW_CURSOR_SIZE		KB(4)
 
 /* Intel agpgart driver */
-#define AGP_PHYSICAL_MEMORY     2
+#घोषणा AGP_PHYSICAL_MEMORY     2
 
-/* store information about an Ixxx DVO */
+/* store inक्रमmation about an Ixxx DVO */
 /* The i830->i865 use multiple DVOs with multiple i2cs */
-/* the i915, i945 have a single sDVO i2c bus - which is different */
-#define MAX_OUTPUTS 6
+/* the i915, i945 have a single sDVO i2c bus - which is dअगरferent */
+#घोषणा MAX_OUTPUTS 6
 
-/* these are outputs from the chip - integrated only
-   external chips are via DVO or SDVO output */
-#define INTELFB_OUTPUT_UNUSED 0
-#define INTELFB_OUTPUT_ANALOG 1
-#define INTELFB_OUTPUT_DVO 2
-#define INTELFB_OUTPUT_SDVO 3
-#define INTELFB_OUTPUT_LVDS 4
-#define INTELFB_OUTPUT_TVOUT 5
+/* these are outमाला_दो from the chip - पूर्णांकegrated only
+   बाह्यal chips are via DVO or SDVO output */
+#घोषणा INTELFB_OUTPUT_UNUSED 0
+#घोषणा INTELFB_OUTPUT_ANALOG 1
+#घोषणा INTELFB_OUTPUT_DVO 2
+#घोषणा INTELFB_OUTPUT_SDVO 3
+#घोषणा INTELFB_OUTPUT_LVDS 4
+#घोषणा INTELFB_OUTPUT_TVOUT 5
 
-#define INTELFB_DVO_CHIP_NONE 0
-#define INTELFB_DVO_CHIP_LVDS 1
-#define INTELFB_DVO_CHIP_TMDS 2
-#define INTELFB_DVO_CHIP_TVOUT 4
+#घोषणा INTELFB_DVO_CHIP_NONE 0
+#घोषणा INTELFB_DVO_CHIP_LVDS 1
+#घोषणा INTELFB_DVO_CHIP_TMDS 2
+#घोषणा INTELFB_DVO_CHIP_TVOUT 4
 
-#define INTELFB_OUTPUT_PIPE_NC  0
-#define INTELFB_OUTPUT_PIPE_A   1
-#define INTELFB_OUTPUT_PIPE_B   2
+#घोषणा INTELFB_OUTPUT_PIPE_NC  0
+#घोषणा INTELFB_OUTPUT_PIPE_A   1
+#घोषणा INTELFB_OUTPUT_PIPE_B   2
 
 /*** Data Types ***/
 
 /* supported chipsets */
-enum intel_chips {
+क्रमागत पूर्णांकel_chips अणु
 	INTEL_830M,
 	INTEL_845G,
 	INTEL_85XGM,
@@ -167,11 +168,11 @@ enum intel_chips {
 	INTEL_945GME,
 	INTEL_965G,
 	INTEL_965GM,
-};
+पूर्ण;
 
-struct intelfb_hwstate {
-	u32 vga0_divisor;
-	u32 vga1_divisor;
+काष्ठा पूर्णांकelfb_hwstate अणु
+	u32 vga0_भागisor;
+	u32 vga1_भागisor;
 	u32 vga_pd;
 	u32 dpll_a;
 	u32 dpll_b;
@@ -235,64 +236,64 @@ struct intelfb_hwstate {
 	u16 ier;
 	u16 iir;
 	u16 imr;
-};
+पूर्ण;
 
-struct intelfb_heap_data {
+काष्ठा पूर्णांकelfb_heap_data अणु
 	u32 physical;
-	u8 __iomem *virtual;
+	u8 __iomem *भव;
 	u32 offset;		/* in GATT pages */
 	u32 size;		/* in bytes */
-};
+पूर्ण;
 
-#ifdef CONFIG_FB_INTEL_I2C
-struct intelfb_i2c_chan {
-    struct intelfb_info *dinfo;
+#अगर_घोषित CONFIG_FB_INTEL_I2C
+काष्ठा पूर्णांकelfb_i2c_chan अणु
+    काष्ठा पूर्णांकelfb_info *dinfo;
     u32 reg;
-    struct i2c_adapter adapter;
-    struct i2c_algo_bit_data algo;
-};
-#endif
+    काष्ठा i2c_adapter adapter;
+    काष्ठा i2c_algo_bit_data algo;
+पूर्ण;
+#पूर्ण_अगर
 
-struct intelfb_output_rec {
-    int type;
-    int pipe;
-    int flags;
+काष्ठा पूर्णांकelfb_output_rec अणु
+    पूर्णांक type;
+    पूर्णांक pipe;
+    पूर्णांक flags;
 
-#ifdef CONFIG_FB_INTEL_I2C
-    struct intelfb_i2c_chan i2c_bus;
-    struct intelfb_i2c_chan ddc_bus;
-#endif
-};
+#अगर_घोषित CONFIG_FB_INTEL_I2C
+    काष्ठा पूर्णांकelfb_i2c_chan i2c_bus;
+    काष्ठा पूर्णांकelfb_i2c_chan ddc_bus;
+#पूर्ण_अगर
+पूर्ण;
 
-struct intelfb_vsync {
-	wait_queue_head_t wait;
-	unsigned int count;
-	int pan_display;
+काष्ठा पूर्णांकelfb_vsync अणु
+	रुको_queue_head_t रुको;
+	अचिन्हित पूर्णांक count;
+	पूर्णांक pan_display;
 	u32 pan_offset;
-};
+पूर्ण;
 
-struct intelfb_info {
-	struct fb_info *info;
-	const struct fb_ops *fbops;
-	struct pci_dev *pdev;
+काष्ठा पूर्णांकelfb_info अणु
+	काष्ठा fb_info *info;
+	स्थिर काष्ठा fb_ops *fbops;
+	काष्ठा pci_dev *pdev;
 
-	struct intelfb_hwstate save_state;
+	काष्ठा पूर्णांकelfb_hwstate save_state;
 
-	/* agpgart structs */
-	struct agp_memory *gtt_fb_mem;     /* use all stolen memory or vram */
-	struct agp_memory *gtt_ring_mem;   /* ring buffer */
-	struct agp_memory *gtt_cursor_mem; /* hw cursor */
+	/* agpgart काष्ठाs */
+	काष्ठा agp_memory *gtt_fb_mem;     /* use all stolen memory or vram */
+	काष्ठा agp_memory *gtt_ring_mem;   /* ring buffer */
+	काष्ठा agp_memory *gtt_cursor_mem; /* hw cursor */
 
 	/* use a gart reserved fb mem */
 	u8 fbmem_gart;
 
-	int wc_cookie;
+	पूर्णांक wc_cookie;
 
 	/* heap data */
-	struct intelfb_heap_data aperture;
-	struct intelfb_heap_data fb;
-	struct intelfb_heap_data ring;
-	struct intelfb_heap_data cursor;
+	काष्ठा पूर्णांकelfb_heap_data aperture;
+	काष्ठा पूर्णांकelfb_heap_data fb;
+	काष्ठा पूर्णांकelfb_heap_data ring;
+	काष्ठा पूर्णांकelfb_heap_data cursor;
 
 	/* mmio regs */
 	u32 mmio_base_phys;
@@ -309,60 +310,60 @@ struct intelfb_info {
 	u32 ring_lockup;
 
 	/* palette */
-	u32 pseudo_palette[16];
+	u32 pseuकरो_palette[16];
 
 	/* chip info */
-	int pci_chipset;
-	int chipset;
-	const char *name;
-	int mobile;
+	पूर्णांक pci_chipset;
+	पूर्णांक chipset;
+	स्थिर अक्षर *name;
+	पूर्णांक mobile;
 
 	/* current mode */
-	int bpp, depth;
+	पूर्णांक bpp, depth;
 	u32 visual;
-	int xres, yres, pitch;
-	int pixclock;
+	पूर्णांक xres, yres, pitch;
+	पूर्णांक pixघड़ी;
 
 	/* current pipe */
-	int pipe;
+	पूर्णांक pipe;
 
 	/* some flags */
-	int accel;
-	int hwcursor;
-	int fixed_mode;
-	int ring_active;
-	int flag;
-	unsigned long irq_flags;
-	int open;
+	पूर्णांक accel;
+	पूर्णांक hwcursor;
+	पूर्णांक fixed_mode;
+	पूर्णांक ring_active;
+	पूर्णांक flag;
+	अचिन्हित दीर्घ irq_flags;
+	पूर्णांक खोलो;
 
 	/* vsync */
-	struct intelfb_vsync vsync;
-	spinlock_t int_lock;
+	काष्ठा पूर्णांकelfb_vsync vsync;
+	spinlock_t पूर्णांक_lock;
 
 	/* hw cursor */
-	int cursor_on;
-	int cursor_blanked;
+	पूर्णांक cursor_on;
+	पूर्णांक cursor_blanked;
 	u8  cursor_src[64];
 
 	/* initial parameters */
-	int initial_vga;
-	struct fb_var_screeninfo initial_var;
+	पूर्णांक initial_vga;
+	काष्ठा fb_var_screeninfo initial_var;
 	u32 initial_fb_base;
 	u32 initial_video_ram;
 	u32 initial_pitch;
 
-	/* driver registered */
-	int registered;
+	/* driver रेजिस्टरed */
+	पूर्णांक रेजिस्टरed;
 
-	/* index into plls */
-	int pll_index;
+	/* index पूर्णांकo plls */
+	पूर्णांक pll_index;
 
-	/* outputs */
-	int num_outputs;
-	struct intelfb_output_rec output[MAX_OUTPUTS];
-};
+	/* outमाला_दो */
+	पूर्णांक num_outमाला_दो;
+	काष्ठा पूर्णांकelfb_output_rec output[MAX_OUTPUTS];
+पूर्ण;
 
-#define IS_I9XX(dinfo) (((dinfo)->chipset == INTEL_915G) ||	\
+#घोषणा IS_I9XX(dinfo) (((dinfo)->chipset == INTEL_915G) ||	\
 			((dinfo)->chipset == INTEL_915GM) ||	\
 			((dinfo)->chipset == INTEL_945G) ||	\
 			((dinfo)->chipset == INTEL_945GM) ||	\
@@ -372,11 +373,11 @@ struct intelfb_info {
 
 /*** function prototypes ***/
 
-extern int intelfb_var_to_depth(const struct fb_var_screeninfo *var);
+बाह्य पूर्णांक पूर्णांकelfb_var_to_depth(स्थिर काष्ठा fb_var_screeninfo *var);
 
-#ifdef CONFIG_FB_INTEL_I2C
-extern void intelfb_create_i2c_busses(struct intelfb_info *dinfo);
-extern void intelfb_delete_i2c_busses(struct intelfb_info *dinfo);
-#endif
+#अगर_घोषित CONFIG_FB_INTEL_I2C
+बाह्य व्योम पूर्णांकelfb_create_i2c_busses(काष्ठा पूर्णांकelfb_info *dinfo);
+बाह्य व्योम पूर्णांकelfb_delete_i2c_busses(काष्ठा पूर्णांकelfb_info *dinfo);
+#पूर्ण_अगर
 
-#endif /* _INTELFB_H */
+#पूर्ण_अगर /* _INTELFB_H */

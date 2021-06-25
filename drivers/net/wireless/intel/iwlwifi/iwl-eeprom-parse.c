@@ -1,263 +1,264 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2005-2014, 2018-2020 Intel Corporation
  * Copyright (C) 2015 Intel Mobile Communications GmbH
  */
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include "iwl-drv.h"
-#include "iwl-modparams.h"
-#include "iwl-eeprom-parse.h"
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश "iwl-drv.h"
+#समावेश "iwl-modparams.h"
+#समावेश "iwl-eeprom-parse.h"
 
 /* EEPROM offset definitions */
 
 /* indirect access definitions */
-#define ADDRESS_MSK                 0x0000FFFF
-#define INDIRECT_TYPE_MSK           0x000F0000
-#define INDIRECT_HOST               0x00010000
-#define INDIRECT_GENERAL            0x00020000
-#define INDIRECT_REGULATORY         0x00030000
-#define INDIRECT_CALIBRATION        0x00040000
-#define INDIRECT_PROCESS_ADJST      0x00050000
-#define INDIRECT_OTHERS             0x00060000
-#define INDIRECT_TXP_LIMIT          0x00070000
-#define INDIRECT_TXP_LIMIT_SIZE     0x00080000
-#define INDIRECT_ADDRESS            0x00100000
+#घोषणा ADDRESS_MSK                 0x0000FFFF
+#घोषणा INसूचीECT_TYPE_MSK           0x000F0000
+#घोषणा INसूचीECT_HOST               0x00010000
+#घोषणा INसूचीECT_GENERAL            0x00020000
+#घोषणा INसूचीECT_REGULATORY         0x00030000
+#घोषणा INसूचीECT_CALIBRATION        0x00040000
+#घोषणा INसूचीECT_PROCESS_ADJST      0x00050000
+#घोषणा INसूचीECT_OTHERS             0x00060000
+#घोषणा INसूचीECT_TXP_LIMIT          0x00070000
+#घोषणा INसूचीECT_TXP_LIMIT_SIZE     0x00080000
+#घोषणा INसूचीECT_ADDRESS            0x00100000
 
 /* corresponding link offsets in EEPROM */
-#define EEPROM_LINK_HOST             (2*0x64)
-#define EEPROM_LINK_GENERAL          (2*0x65)
-#define EEPROM_LINK_REGULATORY       (2*0x66)
-#define EEPROM_LINK_CALIBRATION      (2*0x67)
-#define EEPROM_LINK_PROCESS_ADJST    (2*0x68)
-#define EEPROM_LINK_OTHERS           (2*0x69)
-#define EEPROM_LINK_TXP_LIMIT        (2*0x6a)
-#define EEPROM_LINK_TXP_LIMIT_SIZE   (2*0x6b)
+#घोषणा EEPROM_LINK_HOST             (2*0x64)
+#घोषणा EEPROM_LINK_GENERAL          (2*0x65)
+#घोषणा EEPROM_LINK_REGULATORY       (2*0x66)
+#घोषणा EEPROM_LINK_CALIBRATION      (2*0x67)
+#घोषणा EEPROM_LINK_PROCESS_ADJST    (2*0x68)
+#घोषणा EEPROM_LINK_OTHERS           (2*0x69)
+#घोषणा EEPROM_LINK_TXP_LIMIT        (2*0x6a)
+#घोषणा EEPROM_LINK_TXP_LIMIT_SIZE   (2*0x6b)
 
 /* General */
-#define EEPROM_DEVICE_ID                    (2*0x08)	/* 2 bytes */
-#define EEPROM_SUBSYSTEM_ID		    (2*0x0A)	/* 2 bytes */
-#define EEPROM_MAC_ADDRESS                  (2*0x15)	/* 6  bytes */
-#define EEPROM_BOARD_REVISION               (2*0x35)	/* 2  bytes */
-#define EEPROM_BOARD_PBA_NUMBER             (2*0x3B+1)	/* 9  bytes */
-#define EEPROM_VERSION                      (2*0x44)	/* 2  bytes */
-#define EEPROM_SKU_CAP                      (2*0x45)	/* 2  bytes */
-#define EEPROM_OEM_MODE                     (2*0x46)	/* 2  bytes */
-#define EEPROM_RADIO_CONFIG                 (2*0x48)	/* 2  bytes */
-#define EEPROM_NUM_MAC_ADDRESS              (2*0x4C)	/* 2  bytes */
+#घोषणा EEPROM_DEVICE_ID                    (2*0x08)	/* 2 bytes */
+#घोषणा EEPROM_SUBSYSTEM_ID		    (2*0x0A)	/* 2 bytes */
+#घोषणा EEPROM_MAC_ADDRESS                  (2*0x15)	/* 6  bytes */
+#घोषणा EEPROM_BOARD_REVISION               (2*0x35)	/* 2  bytes */
+#घोषणा EEPROM_BOARD_PBA_NUMBER             (2*0x3B+1)	/* 9  bytes */
+#घोषणा EEPROM_VERSION                      (2*0x44)	/* 2  bytes */
+#घोषणा EEPROM_SKU_CAP                      (2*0x45)	/* 2  bytes */
+#घोषणा EEPROM_OEM_MODE                     (2*0x46)	/* 2  bytes */
+#घोषणा EEPROM_RADIO_CONFIG                 (2*0x48)	/* 2  bytes */
+#घोषणा EEPROM_NUM_MAC_ADDRESS              (2*0x4C)	/* 2  bytes */
 
 /* calibration */
-struct iwl_eeprom_calib_hdr {
+काष्ठा iwl_eeprom_calib_hdr अणु
 	u8 version;
 	u8 pa_type;
 	__le16 voltage;
-} __packed;
+पूर्ण __packed;
 
-#define EEPROM_CALIB_ALL	(INDIRECT_ADDRESS | INDIRECT_CALIBRATION)
-#define EEPROM_XTAL		((2*0x128) | EEPROM_CALIB_ALL)
+#घोषणा EEPROM_CALIB_ALL	(INसूचीECT_ADDRESS | INसूचीECT_CALIBRATION)
+#घोषणा EEPROM_XTAL		((2*0x128) | EEPROM_CALIB_ALL)
 
 /* temperature */
-#define EEPROM_KELVIN_TEMPERATURE	((2*0x12A) | EEPROM_CALIB_ALL)
-#define EEPROM_RAW_TEMPERATURE		((2*0x12B) | EEPROM_CALIB_ALL)
+#घोषणा EEPROM_KELVIN_TEMPERATURE	((2*0x12A) | EEPROM_CALIB_ALL)
+#घोषणा EEPROM_RAW_TEMPERATURE		((2*0x12B) | EEPROM_CALIB_ALL)
 
 /* SKU Capabilities (actual values from EEPROM definition) */
-enum eeprom_sku_bits {
+क्रमागत eeprom_sku_bits अणु
 	EEPROM_SKU_CAP_BAND_24GHZ	= BIT(4),
 	EEPROM_SKU_CAP_BAND_52GHZ	= BIT(5),
 	EEPROM_SKU_CAP_11N_ENABLE	= BIT(6),
 	EEPROM_SKU_CAP_AMT_ENABLE	= BIT(7),
 	EEPROM_SKU_CAP_IPAN_ENABLE	= BIT(8)
-};
+पूर्ण;
 
 /* radio config bits (actual values from EEPROM definition) */
-#define EEPROM_RF_CFG_TYPE_MSK(x)   (x & 0x3)         /* bits 0-1   */
-#define EEPROM_RF_CFG_STEP_MSK(x)   ((x >> 2)  & 0x3) /* bits 2-3   */
-#define EEPROM_RF_CFG_DASH_MSK(x)   ((x >> 4)  & 0x3) /* bits 4-5   */
-#define EEPROM_RF_CFG_PNUM_MSK(x)   ((x >> 6)  & 0x3) /* bits 6-7   */
-#define EEPROM_RF_CFG_TX_ANT_MSK(x) ((x >> 8)  & 0xF) /* bits 8-11  */
-#define EEPROM_RF_CFG_RX_ANT_MSK(x) ((x >> 12) & 0xF) /* bits 12-15 */
+#घोषणा EEPROM_RF_CFG_TYPE_MSK(x)   (x & 0x3)         /* bits 0-1   */
+#घोषणा EEPROM_RF_CFG_STEP_MSK(x)   ((x >> 2)  & 0x3) /* bits 2-3   */
+#घोषणा EEPROM_RF_CFG_DASH_MSK(x)   ((x >> 4)  & 0x3) /* bits 4-5   */
+#घोषणा EEPROM_RF_CFG_PNUM_MSK(x)   ((x >> 6)  & 0x3) /* bits 6-7   */
+#घोषणा EEPROM_RF_CFG_TX_ANT_MSK(x) ((x >> 8)  & 0xF) /* bits 8-11  */
+#घोषणा EEPROM_RF_CFG_RX_ANT_MSK(x) ((x >> 12) & 0xF) /* bits 12-15 */
 
 
 /*
  * EEPROM bands
  * These are the channel numbers from each band in the order
- * that they are stored in the EEPROM band information. Note
+ * that they are stored in the EEPROM band inक्रमmation. Note
  * that EEPROM bands aren't the same as mac80211 bands, and
  * there are even special "ht40 bands" in the EEPROM.
  */
-static const u8 iwl_eeprom_band_1[14] = { /* 2.4 GHz */
+अटल स्थिर u8 iwl_eeprom_band_1[14] = अणु /* 2.4 GHz */
 	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
-};
+पूर्ण;
 
-static const u8 iwl_eeprom_band_2[] = {	/* 4915-5080MHz */
+अटल स्थिर u8 iwl_eeprom_band_2[] = अणु	/* 4915-5080MHz */
 	183, 184, 185, 187, 188, 189, 192, 196, 7, 8, 11, 12, 16
-};
+पूर्ण;
 
-static const u8 iwl_eeprom_band_3[] = {	/* 5170-5320MHz */
+अटल स्थिर u8 iwl_eeprom_band_3[] = अणु	/* 5170-5320MHz */
 	34, 36, 38, 40, 42, 44, 46, 48, 52, 56, 60, 64
-};
+पूर्ण;
 
-static const u8 iwl_eeprom_band_4[] = {	/* 5500-5700MHz */
+अटल स्थिर u8 iwl_eeprom_band_4[] = अणु	/* 5500-5700MHz */
 	100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140
-};
+पूर्ण;
 
-static const u8 iwl_eeprom_band_5[] = {	/* 5725-5825MHz */
+अटल स्थिर u8 iwl_eeprom_band_5[] = अणु	/* 5725-5825MHz */
 	145, 149, 153, 157, 161, 165
-};
+पूर्ण;
 
-static const u8 iwl_eeprom_band_6[] = {	/* 2.4 ht40 channel */
+अटल स्थिर u8 iwl_eeprom_band_6[] = अणु	/* 2.4 ht40 channel */
 	1, 2, 3, 4, 5, 6, 7
-};
+पूर्ण;
 
-static const u8 iwl_eeprom_band_7[] = {	/* 5.2 ht40 channel */
+अटल स्थिर u8 iwl_eeprom_band_7[] = अणु	/* 5.2 ht40 channel */
 	36, 44, 52, 60, 100, 108, 116, 124, 132, 149, 157
-};
+पूर्ण;
 
-#define IWL_NUM_CHANNELS	(ARRAY_SIZE(iwl_eeprom_band_1) + \
+#घोषणा IWL_NUM_CHANNELS	(ARRAY_SIZE(iwl_eeprom_band_1) + \
 				 ARRAY_SIZE(iwl_eeprom_band_2) + \
 				 ARRAY_SIZE(iwl_eeprom_band_3) + \
 				 ARRAY_SIZE(iwl_eeprom_band_4) + \
 				 ARRAY_SIZE(iwl_eeprom_band_5))
 
-/* rate data (static) */
-static struct ieee80211_rate iwl_cfg80211_rates[] = {
-	{ .bitrate = 1 * 10, .hw_value = 0, .hw_value_short = 0, },
-	{ .bitrate = 2 * 10, .hw_value = 1, .hw_value_short = 1,
-	  .flags = IEEE80211_RATE_SHORT_PREAMBLE, },
-	{ .bitrate = 5.5 * 10, .hw_value = 2, .hw_value_short = 2,
-	  .flags = IEEE80211_RATE_SHORT_PREAMBLE, },
-	{ .bitrate = 11 * 10, .hw_value = 3, .hw_value_short = 3,
-	  .flags = IEEE80211_RATE_SHORT_PREAMBLE, },
-	{ .bitrate = 6 * 10, .hw_value = 4, .hw_value_short = 4, },
-	{ .bitrate = 9 * 10, .hw_value = 5, .hw_value_short = 5, },
-	{ .bitrate = 12 * 10, .hw_value = 6, .hw_value_short = 6, },
-	{ .bitrate = 18 * 10, .hw_value = 7, .hw_value_short = 7, },
-	{ .bitrate = 24 * 10, .hw_value = 8, .hw_value_short = 8, },
-	{ .bitrate = 36 * 10, .hw_value = 9, .hw_value_short = 9, },
-	{ .bitrate = 48 * 10, .hw_value = 10, .hw_value_short = 10, },
-	{ .bitrate = 54 * 10, .hw_value = 11, .hw_value_short = 11, },
-};
-#define RATES_24_OFFS	0
-#define N_RATES_24	ARRAY_SIZE(iwl_cfg80211_rates)
-#define RATES_52_OFFS	4
-#define N_RATES_52	(N_RATES_24 - RATES_52_OFFS)
+/* rate data (अटल) */
+अटल काष्ठा ieee80211_rate iwl_cfg80211_rates[] = अणु
+	अणु .bitrate = 1 * 10, .hw_value = 0, .hw_value_लघु = 0, पूर्ण,
+	अणु .bitrate = 2 * 10, .hw_value = 1, .hw_value_लघु = 1,
+	  .flags = IEEE80211_RATE_SHORT_PREAMBLE, पूर्ण,
+	अणु .bitrate = 5.5 * 10, .hw_value = 2, .hw_value_लघु = 2,
+	  .flags = IEEE80211_RATE_SHORT_PREAMBLE, पूर्ण,
+	अणु .bitrate = 11 * 10, .hw_value = 3, .hw_value_लघु = 3,
+	  .flags = IEEE80211_RATE_SHORT_PREAMBLE, पूर्ण,
+	अणु .bitrate = 6 * 10, .hw_value = 4, .hw_value_लघु = 4, पूर्ण,
+	अणु .bitrate = 9 * 10, .hw_value = 5, .hw_value_लघु = 5, पूर्ण,
+	अणु .bitrate = 12 * 10, .hw_value = 6, .hw_value_लघु = 6, पूर्ण,
+	अणु .bitrate = 18 * 10, .hw_value = 7, .hw_value_लघु = 7, पूर्ण,
+	अणु .bitrate = 24 * 10, .hw_value = 8, .hw_value_लघु = 8, पूर्ण,
+	अणु .bitrate = 36 * 10, .hw_value = 9, .hw_value_लघु = 9, पूर्ण,
+	अणु .bitrate = 48 * 10, .hw_value = 10, .hw_value_लघु = 10, पूर्ण,
+	अणु .bitrate = 54 * 10, .hw_value = 11, .hw_value_लघु = 11, पूर्ण,
+पूर्ण;
+#घोषणा RATES_24_OFFS	0
+#घोषणा N_RATES_24	ARRAY_SIZE(iwl_cfg80211_rates)
+#घोषणा RATES_52_OFFS	4
+#घोषणा N_RATES_52	(N_RATES_24 - RATES_52_OFFS)
 
-/* EEPROM reading functions */
+/* EEPROM पढ़ोing functions */
 
-static u16 iwl_eeprom_query16(const u8 *eeprom, size_t eeprom_size, int offset)
-{
-	if (WARN_ON(offset + sizeof(u16) > eeprom_size))
-		return 0;
-	return le16_to_cpup((__le16 *)(eeprom + offset));
-}
+अटल u16 iwl_eeprom_query16(स्थिर u8 *eeprom, माप_प्रकार eeprom_size, पूर्णांक offset)
+अणु
+	अगर (WARN_ON(offset + माप(u16) > eeprom_size))
+		वापस 0;
+	वापस le16_to_cpup((__le16 *)(eeprom + offset));
+पूर्ण
 
-static u32 eeprom_indirect_address(const u8 *eeprom, size_t eeprom_size,
+अटल u32 eeprom_indirect_address(स्थिर u8 *eeprom, माप_प्रकार eeprom_size,
 				   u32 address)
-{
+अणु
 	u16 offset = 0;
 
-	if ((address & INDIRECT_ADDRESS) == 0)
-		return address;
+	अगर ((address & INसूचीECT_ADDRESS) == 0)
+		वापस address;
 
-	switch (address & INDIRECT_TYPE_MSK) {
-	case INDIRECT_HOST:
+	चयन (address & INसूचीECT_TYPE_MSK) अणु
+	हाल INसूचीECT_HOST:
 		offset = iwl_eeprom_query16(eeprom, eeprom_size,
 					    EEPROM_LINK_HOST);
-		break;
-	case INDIRECT_GENERAL:
+		अवरोध;
+	हाल INसूचीECT_GENERAL:
 		offset = iwl_eeprom_query16(eeprom, eeprom_size,
 					    EEPROM_LINK_GENERAL);
-		break;
-	case INDIRECT_REGULATORY:
+		अवरोध;
+	हाल INसूचीECT_REGULATORY:
 		offset = iwl_eeprom_query16(eeprom, eeprom_size,
 					    EEPROM_LINK_REGULATORY);
-		break;
-	case INDIRECT_TXP_LIMIT:
+		अवरोध;
+	हाल INसूचीECT_TXP_LIMIT:
 		offset = iwl_eeprom_query16(eeprom, eeprom_size,
 					    EEPROM_LINK_TXP_LIMIT);
-		break;
-	case INDIRECT_TXP_LIMIT_SIZE:
+		अवरोध;
+	हाल INसूचीECT_TXP_LIMIT_SIZE:
 		offset = iwl_eeprom_query16(eeprom, eeprom_size,
 					    EEPROM_LINK_TXP_LIMIT_SIZE);
-		break;
-	case INDIRECT_CALIBRATION:
+		अवरोध;
+	हाल INसूचीECT_CALIBRATION:
 		offset = iwl_eeprom_query16(eeprom, eeprom_size,
 					    EEPROM_LINK_CALIBRATION);
-		break;
-	case INDIRECT_PROCESS_ADJST:
+		अवरोध;
+	हाल INसूचीECT_PROCESS_ADJST:
 		offset = iwl_eeprom_query16(eeprom, eeprom_size,
 					    EEPROM_LINK_PROCESS_ADJST);
-		break;
-	case INDIRECT_OTHERS:
+		अवरोध;
+	हाल INसूचीECT_OTHERS:
 		offset = iwl_eeprom_query16(eeprom, eeprom_size,
 					    EEPROM_LINK_OTHERS);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* translate the offset from words to byte */
-	return (address & ADDRESS_MSK) + (offset << 1);
-}
+	वापस (address & ADDRESS_MSK) + (offset << 1);
+पूर्ण
 
-static const u8 *iwl_eeprom_query_addr(const u8 *eeprom, size_t eeprom_size,
+अटल स्थिर u8 *iwl_eeprom_query_addr(स्थिर u8 *eeprom, माप_प्रकार eeprom_size,
 				       u32 offset)
-{
+अणु
 	u32 address = eeprom_indirect_address(eeprom, eeprom_size, offset);
 
-	if (WARN_ON(address >= eeprom_size))
-		return NULL;
+	अगर (WARN_ON(address >= eeprom_size))
+		वापस शून्य;
 
-	return &eeprom[address];
-}
+	वापस &eeprom[address];
+पूर्ण
 
-static int iwl_eeprom_read_calib(const u8 *eeprom, size_t eeprom_size,
-				 struct iwl_nvm_data *data)
-{
-	struct iwl_eeprom_calib_hdr *hdr;
+अटल पूर्णांक iwl_eeprom_पढ़ो_calib(स्थिर u8 *eeprom, माप_प्रकार eeprom_size,
+				 काष्ठा iwl_nvm_data *data)
+अणु
+	काष्ठा iwl_eeprom_calib_hdr *hdr;
 
-	hdr = (void *)iwl_eeprom_query_addr(eeprom, eeprom_size,
+	hdr = (व्योम *)iwl_eeprom_query_addr(eeprom, eeprom_size,
 					    EEPROM_CALIB_ALL);
-	if (!hdr)
-		return -ENODATA;
+	अगर (!hdr)
+		वापस -ENODATA;
 	data->calib_version = hdr->version;
 	data->calib_voltage = hdr->voltage;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * enum iwl_eeprom_channel_flags - channel flags in EEPROM
- * @EEPROM_CHANNEL_VALID: channel is usable for this SKU/geo
+ * क्रमागत iwl_eeprom_channel_flags - channel flags in EEPROM
+ * @EEPROM_CHANNEL_VALID: channel is usable क्रम this SKU/geo
  * @EEPROM_CHANNEL_IBSS: usable as an IBSS channel
  * @EEPROM_CHANNEL_ACTIVE: active scanning allowed
  * @EEPROM_CHANNEL_RADAR: radar detection required
  * @EEPROM_CHANNEL_WIDE: 20 MHz channel okay (?)
  * @EEPROM_CHANNEL_DFS: dynamic freq selection candidate
  */
-enum iwl_eeprom_channel_flags {
+क्रमागत iwl_eeprom_channel_flags अणु
 	EEPROM_CHANNEL_VALID = BIT(0),
 	EEPROM_CHANNEL_IBSS = BIT(1),
 	EEPROM_CHANNEL_ACTIVE = BIT(3),
 	EEPROM_CHANNEL_RADAR = BIT(4),
 	EEPROM_CHANNEL_WIDE = BIT(5),
 	EEPROM_CHANNEL_DFS = BIT(7),
-};
+पूर्ण;
 
 /**
- * struct iwl_eeprom_channel - EEPROM channel data
+ * काष्ठा iwl_eeprom_channel - EEPROM channel data
  * @flags: %EEPROM_CHANNEL_* flags
- * @max_power_avg: max power (in dBm) on this channel, at most 31 dBm
+ * @max_घातer_avg: max घातer (in dBm) on this channel, at most 31 dBm
  */
-struct iwl_eeprom_channel {
+काष्ठा iwl_eeprom_channel अणु
 	u8 flags;
-	s8 max_power_avg;
-} __packed;
+	s8 max_घातer_avg;
+पूर्ण __packed;
 
 
-enum iwl_eeprom_enhanced_txpwr_flags {
+क्रमागत iwl_eeprom_enhanced_txpwr_flags अणु
 	IWL_EEPROM_ENH_TXP_FL_VALID = BIT(0),
 	IWL_EEPROM_ENH_TXP_FL_BAND_52G = BIT(1),
 	IWL_EEPROM_ENH_TXP_FL_OFDM = BIT(2),
@@ -266,23 +267,23 @@ enum iwl_eeprom_enhanced_txpwr_flags {
 	IWL_EEPROM_ENH_TXP_FL_RES1 = BIT(5),
 	IWL_EEPROM_ENH_TXP_FL_RES2 = BIT(6),
 	IWL_EEPROM_ENH_TXP_FL_COMMON_TYPE = BIT(7),
-};
+पूर्ण;
 
 /**
- * struct iwl_eeprom_enhanced_txpwr
+ * काष्ठा iwl_eeprom_enhanced_txpwr
  * @flags: entry flags
  * @channel: channel number
- * @chain_a_max: chain a max power in 1/2 dBm
- * @chain_b_max: chain b max power in 1/2 dBm
- * @chain_c_max: chain c max power in 1/2 dBm
+ * @chain_a_max: chain a max घातer in 1/2 dBm
+ * @chain_b_max: chain b max घातer in 1/2 dBm
+ * @chain_c_max: chain c max घातer in 1/2 dBm
  * @delta_20_in_40: 20-in-40 deltas (hi/lo)
- * @mimo2_max: mimo2 max power in 1/2 dBm
- * @mimo3_max: mimo3 max power in 1/2 dBm
+ * @mimo2_max: mimo2 max घातer in 1/2 dBm
+ * @mimo3_max: mimo3 max घातer in 1/2 dBm
  *
- * This structure presents the enhanced regulatory tx power limit layout
+ * This काष्ठाure presents the enhanced regulatory tx घातer limit layout
  * in an EEPROM image.
  */
-struct iwl_eeprom_enhanced_txpwr {
+काष्ठा iwl_eeprom_enhanced_txpwr अणु
 	u8 flags;
 	u8 channel;
 	s8 chain_a_max;
@@ -291,94 +292,94 @@ struct iwl_eeprom_enhanced_txpwr {
 	u8 delta_20_in_40;
 	s8 mimo2_max;
 	s8 mimo3_max;
-} __packed;
+पूर्ण __packed;
 
-static s8 iwl_get_max_txpwr_half_dbm(const struct iwl_nvm_data *data,
-				     struct iwl_eeprom_enhanced_txpwr *txp)
-{
+अटल s8 iwl_get_max_txpwr_half_dbm(स्थिर काष्ठा iwl_nvm_data *data,
+				     काष्ठा iwl_eeprom_enhanced_txpwr *txp)
+अणु
 	s8 result = 0; /* (.5 dBm) */
 
-	/* Take the highest tx power from any valid chains */
-	if (data->valid_tx_ant & ANT_A && txp->chain_a_max > result)
+	/* Take the highest tx घातer from any valid chains */
+	अगर (data->valid_tx_ant & ANT_A && txp->chain_a_max > result)
 		result = txp->chain_a_max;
 
-	if (data->valid_tx_ant & ANT_B && txp->chain_b_max > result)
+	अगर (data->valid_tx_ant & ANT_B && txp->chain_b_max > result)
 		result = txp->chain_b_max;
 
-	if (data->valid_tx_ant & ANT_C && txp->chain_c_max > result)
+	अगर (data->valid_tx_ant & ANT_C && txp->chain_c_max > result)
 		result = txp->chain_c_max;
 
-	if ((data->valid_tx_ant == ANT_AB ||
+	अगर ((data->valid_tx_ant == ANT_AB ||
 	     data->valid_tx_ant == ANT_BC ||
 	     data->valid_tx_ant == ANT_AC) && txp->mimo2_max > result)
 		result = txp->mimo2_max;
 
-	if (data->valid_tx_ant == ANT_ABC && txp->mimo3_max > result)
+	अगर (data->valid_tx_ant == ANT_ABC && txp->mimo3_max > result)
 		result = txp->mimo3_max;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-#define EEPROM_TXP_OFFS	(0x00 | INDIRECT_ADDRESS | INDIRECT_TXP_LIMIT)
-#define EEPROM_TXP_ENTRY_LEN sizeof(struct iwl_eeprom_enhanced_txpwr)
-#define EEPROM_TXP_SZ_OFFS (0x00 | INDIRECT_ADDRESS | INDIRECT_TXP_LIMIT_SIZE)
+#घोषणा EEPROM_TXP_OFFS	(0x00 | INसूचीECT_ADDRESS | INसूचीECT_TXP_LIMIT)
+#घोषणा EEPROM_TXP_ENTRY_LEN माप(काष्ठा iwl_eeprom_enhanced_txpwr)
+#घोषणा EEPROM_TXP_SZ_OFFS (0x00 | INसूचीECT_ADDRESS | INसूचीECT_TXP_LIMIT_SIZE)
 
-#define TXP_CHECK_AND_PRINT(x) \
+#घोषणा TXP_CHECK_AND_PRINT(x) \
 	((txp->flags & IWL_EEPROM_ENH_TXP_FL_##x) ? # x " " : "")
 
-static void
-iwl_eeprom_enh_txp_read_element(struct iwl_nvm_data *data,
-				struct iwl_eeprom_enhanced_txpwr *txp,
-				int n_channels, s8 max_txpower_avg)
-{
-	int ch_idx;
-	enum nl80211_band band;
+अटल व्योम
+iwl_eeprom_enh_txp_पढ़ो_element(काष्ठा iwl_nvm_data *data,
+				काष्ठा iwl_eeprom_enhanced_txpwr *txp,
+				पूर्णांक n_channels, s8 max_txघातer_avg)
+अणु
+	पूर्णांक ch_idx;
+	क्रमागत nl80211_band band;
 
 	band = txp->flags & IWL_EEPROM_ENH_TXP_FL_BAND_52G ?
 		NL80211_BAND_5GHZ : NL80211_BAND_2GHZ;
 
-	for (ch_idx = 0; ch_idx < n_channels; ch_idx++) {
-		struct ieee80211_channel *chan = &data->channels[ch_idx];
+	क्रम (ch_idx = 0; ch_idx < n_channels; ch_idx++) अणु
+		काष्ठा ieee80211_channel *chan = &data->channels[ch_idx];
 
 		/* update matching channel or from common data only */
-		if (txp->channel != 0 && chan->hw_value != txp->channel)
-			continue;
+		अगर (txp->channel != 0 && chan->hw_value != txp->channel)
+			जारी;
 
 		/* update matching band only */
-		if (band != chan->band)
-			continue;
+		अगर (band != chan->band)
+			जारी;
 
-		if (chan->max_power < max_txpower_avg &&
+		अगर (chan->max_घातer < max_txघातer_avg &&
 		    !(txp->flags & IWL_EEPROM_ENH_TXP_FL_40MHZ))
-			chan->max_power = max_txpower_avg;
-	}
-}
+			chan->max_घातer = max_txघातer_avg;
+	पूर्ण
+पूर्ण
 
-static void iwl_eeprom_enhanced_txpower(struct device *dev,
-					struct iwl_nvm_data *data,
-					const u8 *eeprom, size_t eeprom_size,
-					int n_channels)
-{
-	struct iwl_eeprom_enhanced_txpwr *txp_array, *txp;
-	int idx, entries;
+अटल व्योम iwl_eeprom_enhanced_txघातer(काष्ठा device *dev,
+					काष्ठा iwl_nvm_data *data,
+					स्थिर u8 *eeprom, माप_प्रकार eeprom_size,
+					पूर्णांक n_channels)
+अणु
+	काष्ठा iwl_eeprom_enhanced_txpwr *txp_array, *txp;
+	पूर्णांक idx, entries;
 	__le16 *txp_len;
 	s8 max_txp_avg_halfdbm;
 
-	BUILD_BUG_ON(sizeof(struct iwl_eeprom_enhanced_txpwr) != 8);
+	BUILD_BUG_ON(माप(काष्ठा iwl_eeprom_enhanced_txpwr) != 8);
 
 	/* the length is in 16-bit words, but we want entries */
 	txp_len = (__le16 *)iwl_eeprom_query_addr(eeprom, eeprom_size,
 						  EEPROM_TXP_SZ_OFFS);
 	entries = le16_to_cpup(txp_len) * 2 / EEPROM_TXP_ENTRY_LEN;
 
-	txp_array = (void *)iwl_eeprom_query_addr(eeprom, eeprom_size,
+	txp_array = (व्योम *)iwl_eeprom_query_addr(eeprom, eeprom_size,
 						  EEPROM_TXP_OFFS);
 
-	for (idx = 0; idx < entries; idx++) {
+	क्रम (idx = 0; idx < entries; idx++) अणु
 		txp = &txp_array[idx];
 		/* skip invalid entries */
-		if (!(txp->flags & IWL_EEPROM_ENH_TXP_FL_VALID))
-			continue;
+		अगर (!(txp->flags & IWL_EEPROM_ENH_TXP_FL_VALID))
+			जारी;
 
 		IWL_DEBUG_EEPROM(dev, "%s %d:\t %s%s%s%s%s%s%s%s (0x%02x)\n",
 				 (txp->channel && (txp->flags &
@@ -407,85 +408,85 @@ static void iwl_eeprom_enhanced_txpower(struct device *dev,
 
 		max_txp_avg_halfdbm = iwl_get_max_txpwr_half_dbm(data, txp);
 
-		iwl_eeprom_enh_txp_read_element(data, txp, n_channels,
+		iwl_eeprom_enh_txp_पढ़ो_element(data, txp, n_channels,
 				DIV_ROUND_UP(max_txp_avg_halfdbm, 2));
 
-		if (max_txp_avg_halfdbm > data->max_tx_pwr_half_dbm)
+		अगर (max_txp_avg_halfdbm > data->max_tx_pwr_half_dbm)
 			data->max_tx_pwr_half_dbm = max_txp_avg_halfdbm;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void iwl_init_band_reference(const struct iwl_cfg *cfg,
-				    const u8 *eeprom, size_t eeprom_size,
-				    int eeprom_band, int *eeprom_ch_count,
-				    const struct iwl_eeprom_channel **ch_info,
-				    const u8 **eeprom_ch_array)
-{
+अटल व्योम iwl_init_band_reference(स्थिर काष्ठा iwl_cfg *cfg,
+				    स्थिर u8 *eeprom, माप_प्रकार eeprom_size,
+				    पूर्णांक eeprom_band, पूर्णांक *eeprom_ch_count,
+				    स्थिर काष्ठा iwl_eeprom_channel **ch_info,
+				    स्थिर u8 **eeprom_ch_array)
+अणु
 	u32 offset = cfg->eeprom_params->regulatory_bands[eeprom_band - 1];
 
-	offset |= INDIRECT_ADDRESS | INDIRECT_REGULATORY;
+	offset |= INसूचीECT_ADDRESS | INसूचीECT_REGULATORY;
 
-	*ch_info = (void *)iwl_eeprom_query_addr(eeprom, eeprom_size, offset);
+	*ch_info = (व्योम *)iwl_eeprom_query_addr(eeprom, eeprom_size, offset);
 
-	switch (eeprom_band) {
-	case 1:		/* 2.4GHz band */
+	चयन (eeprom_band) अणु
+	हाल 1:		/* 2.4GHz band */
 		*eeprom_ch_count = ARRAY_SIZE(iwl_eeprom_band_1);
 		*eeprom_ch_array = iwl_eeprom_band_1;
-		break;
-	case 2:		/* 4.9GHz band */
+		अवरोध;
+	हाल 2:		/* 4.9GHz band */
 		*eeprom_ch_count = ARRAY_SIZE(iwl_eeprom_band_2);
 		*eeprom_ch_array = iwl_eeprom_band_2;
-		break;
-	case 3:		/* 5.2GHz band */
+		अवरोध;
+	हाल 3:		/* 5.2GHz band */
 		*eeprom_ch_count = ARRAY_SIZE(iwl_eeprom_band_3);
 		*eeprom_ch_array = iwl_eeprom_band_3;
-		break;
-	case 4:		/* 5.5GHz band */
+		अवरोध;
+	हाल 4:		/* 5.5GHz band */
 		*eeprom_ch_count = ARRAY_SIZE(iwl_eeprom_band_4);
 		*eeprom_ch_array = iwl_eeprom_band_4;
-		break;
-	case 5:		/* 5.7GHz band */
+		अवरोध;
+	हाल 5:		/* 5.7GHz band */
 		*eeprom_ch_count = ARRAY_SIZE(iwl_eeprom_band_5);
 		*eeprom_ch_array = iwl_eeprom_band_5;
-		break;
-	case 6:		/* 2.4GHz ht40 channels */
+		अवरोध;
+	हाल 6:		/* 2.4GHz ht40 channels */
 		*eeprom_ch_count = ARRAY_SIZE(iwl_eeprom_band_6);
 		*eeprom_ch_array = iwl_eeprom_band_6;
-		break;
-	case 7:		/* 5 GHz ht40 channels */
+		अवरोध;
+	हाल 7:		/* 5 GHz ht40 channels */
 		*eeprom_ch_count = ARRAY_SIZE(iwl_eeprom_band_7);
 		*eeprom_ch_array = iwl_eeprom_band_7;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*eeprom_ch_count = 0;
-		*eeprom_ch_array = NULL;
+		*eeprom_ch_array = शून्य;
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define CHECK_AND_PRINT(x) \
+#घोषणा CHECK_AND_PRINT(x) \
 	((eeprom_ch->flags & EEPROM_CHANNEL_##x) ? # x " " : "")
 
-static void iwl_mod_ht40_chan_info(struct device *dev,
-				   struct iwl_nvm_data *data, int n_channels,
-				   enum nl80211_band band, u16 channel,
-				   const struct iwl_eeprom_channel *eeprom_ch,
+अटल व्योम iwl_mod_ht40_chan_info(काष्ठा device *dev,
+				   काष्ठा iwl_nvm_data *data, पूर्णांक n_channels,
+				   क्रमागत nl80211_band band, u16 channel,
+				   स्थिर काष्ठा iwl_eeprom_channel *eeprom_ch,
 				   u8 clear_ht40_extension_channel)
-{
-	struct ieee80211_channel *chan = NULL;
-	int i;
+अणु
+	काष्ठा ieee80211_channel *chan = शून्य;
+	पूर्णांक i;
 
-	for (i = 0; i < n_channels; i++) {
-		if (data->channels[i].band != band)
-			continue;
-		if (data->channels[i].hw_value != channel)
-			continue;
+	क्रम (i = 0; i < n_channels; i++) अणु
+		अगर (data->channels[i].band != band)
+			जारी;
+		अगर (data->channels[i].hw_value != channel)
+			जारी;
 		chan = &data->channels[i];
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!chan)
-		return;
+	अगर (!chan)
+		वापस;
 
 	IWL_DEBUG_EEPROM(dev,
 			 "HT40 Ch. %d [%sGHz] %s%s%s%s%s(0x%02x %ddBm): Ad-Hoc %ssupported\n",
@@ -497,52 +498,52 @@ static void iwl_mod_ht40_chan_info(struct device *dev,
 			 CHECK_AND_PRINT(WIDE),
 			 CHECK_AND_PRINT(DFS),
 			 eeprom_ch->flags,
-			 eeprom_ch->max_power_avg,
+			 eeprom_ch->max_घातer_avg,
 			 ((eeprom_ch->flags & EEPROM_CHANNEL_IBSS) &&
 			  !(eeprom_ch->flags & EEPROM_CHANNEL_RADAR)) ? ""
 								      : "not ");
 
-	if (eeprom_ch->flags & EEPROM_CHANNEL_VALID)
+	अगर (eeprom_ch->flags & EEPROM_CHANNEL_VALID)
 		chan->flags &= ~clear_ht40_extension_channel;
-}
+पूर्ण
 
-#define CHECK_AND_PRINT_I(x)	\
+#घोषणा CHECK_AND_PRINT_I(x)	\
 	((eeprom_ch_info[ch_idx].flags & EEPROM_CHANNEL_##x) ? # x " " : "")
 
-static int iwl_init_channel_map(struct device *dev, const struct iwl_cfg *cfg,
-				struct iwl_nvm_data *data,
-				const u8 *eeprom, size_t eeprom_size)
-{
-	int band, ch_idx;
-	const struct iwl_eeprom_channel *eeprom_ch_info;
-	const u8 *eeprom_ch_array;
-	int eeprom_ch_count;
-	int n_channels = 0;
+अटल पूर्णांक iwl_init_channel_map(काष्ठा device *dev, स्थिर काष्ठा iwl_cfg *cfg,
+				काष्ठा iwl_nvm_data *data,
+				स्थिर u8 *eeprom, माप_प्रकार eeprom_size)
+अणु
+	पूर्णांक band, ch_idx;
+	स्थिर काष्ठा iwl_eeprom_channel *eeprom_ch_info;
+	स्थिर u8 *eeprom_ch_array;
+	पूर्णांक eeprom_ch_count;
+	पूर्णांक n_channels = 0;
 
 	/*
 	 * Loop through the 5 EEPROM bands and add them to the parse list
 	 */
-	for (band = 1; band <= 5; band++) {
-		struct ieee80211_channel *channel;
+	क्रम (band = 1; band <= 5; band++) अणु
+		काष्ठा ieee80211_channel *channel;
 
 		iwl_init_band_reference(cfg, eeprom, eeprom_size, band,
 					&eeprom_ch_count, &eeprom_ch_info,
 					&eeprom_ch_array);
 
 		/* Loop through each band adding each of the channels */
-		for (ch_idx = 0; ch_idx < eeprom_ch_count; ch_idx++) {
-			const struct iwl_eeprom_channel *eeprom_ch;
+		क्रम (ch_idx = 0; ch_idx < eeprom_ch_count; ch_idx++) अणु
+			स्थिर काष्ठा iwl_eeprom_channel *eeprom_ch;
 
 			eeprom_ch = &eeprom_ch_info[ch_idx];
 
-			if (!(eeprom_ch->flags & EEPROM_CHANNEL_VALID)) {
+			अगर (!(eeprom_ch->flags & EEPROM_CHANNEL_VALID)) अणु
 				IWL_DEBUG_EEPROM(dev,
 						 "Ch. %d Flags %x [%sGHz] - No traffic\n",
 						 eeprom_ch_array[ch_idx],
 						 eeprom_ch_info[ch_idx].flags,
 						 (band != 1) ? "5.2" : "2.4");
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			channel = &data->channels[n_channels];
 			n_channels++;
@@ -557,18 +558,18 @@ static int iwl_init_channel_map(struct device *dev, const struct iwl_cfg *cfg,
 			/* set no-HT40, will enable as appropriate later */
 			channel->flags = IEEE80211_CHAN_NO_HT40;
 
-			if (!(eeprom_ch->flags & EEPROM_CHANNEL_IBSS))
+			अगर (!(eeprom_ch->flags & EEPROM_CHANNEL_IBSS))
 				channel->flags |= IEEE80211_CHAN_NO_IR;
 
-			if (!(eeprom_ch->flags & EEPROM_CHANNEL_ACTIVE))
+			अगर (!(eeprom_ch->flags & EEPROM_CHANNEL_ACTIVE))
 				channel->flags |= IEEE80211_CHAN_NO_IR;
 
-			if (eeprom_ch->flags & EEPROM_CHANNEL_RADAR)
+			अगर (eeprom_ch->flags & EEPROM_CHANNEL_RADAR)
 				channel->flags |= IEEE80211_CHAN_RADAR;
 
-			/* Initialize regulatory-based run-time data */
-			channel->max_power =
-				eeprom_ch_info[ch_idx].max_power_avg;
+			/* Initialize regulatory-based run-समय data */
+			channel->max_घातer =
+				eeprom_ch_info[ch_idx].max_घातer_avg;
 			IWL_DEBUG_EEPROM(dev,
 					 "Ch. %d [%sGHz] %s%s%s%s%s%s(0x%02x %ddBm): Ad-Hoc %ssupported\n",
 					 channel->hw_value,
@@ -580,46 +581,46 @@ static int iwl_init_channel_map(struct device *dev, const struct iwl_cfg *cfg,
 					 CHECK_AND_PRINT_I(WIDE),
 					 CHECK_AND_PRINT_I(DFS),
 					 eeprom_ch_info[ch_idx].flags,
-					 eeprom_ch_info[ch_idx].max_power_avg,
+					 eeprom_ch_info[ch_idx].max_घातer_avg,
 					 ((eeprom_ch_info[ch_idx].flags &
 							EEPROM_CHANNEL_IBSS) &&
 					  !(eeprom_ch_info[ch_idx].flags &
 							EEPROM_CHANNEL_RADAR))
 						? "" : "not ");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (cfg->eeprom_params->enhanced_txpower) {
+	अगर (cfg->eeprom_params->enhanced_txघातer) अणु
 		/*
-		 * for newer device (6000 series and up)
-		 * EEPROM contain enhanced tx power information
-		 * driver need to process addition information
-		 * to determine the max channel tx power limits
+		 * क्रम newer device (6000 series and up)
+		 * EEPROM contain enhanced tx घातer inक्रमmation
+		 * driver need to process addition inक्रमmation
+		 * to determine the max channel tx घातer limits
 		 */
-		iwl_eeprom_enhanced_txpower(dev, data, eeprom, eeprom_size,
+		iwl_eeprom_enhanced_txघातer(dev, data, eeprom, eeprom_size,
 					    n_channels);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* All others use data from channel map */
-		int i;
+		पूर्णांक i;
 
 		data->max_tx_pwr_half_dbm = -128;
 
-		for (i = 0; i < n_channels; i++)
+		क्रम (i = 0; i < n_channels; i++)
 			data->max_tx_pwr_half_dbm =
 				max_t(s8, data->max_tx_pwr_half_dbm,
-				      data->channels[i].max_power * 2);
-	}
+				      data->channels[i].max_घातer * 2);
+	पूर्ण
 
-	/* Check if we do have HT40 channels */
-	if (cfg->eeprom_params->regulatory_bands[5] ==
+	/* Check अगर we करो have HT40 channels */
+	अगर (cfg->eeprom_params->regulatory_bands[5] ==
 				EEPROM_REGULATORY_BAND_NO_HT40 &&
 	    cfg->eeprom_params->regulatory_bands[6] ==
 				EEPROM_REGULATORY_BAND_NO_HT40)
-		return n_channels;
+		वापस n_channels;
 
-	/* Two additional EEPROM bands for 2.4 and 5 GHz HT40 channels */
-	for (band = 6; band <= 7; band++) {
-		enum nl80211_band ieeeband;
+	/* Two additional EEPROM bands क्रम 2.4 and 5 GHz HT40 channels */
+	क्रम (band = 6; band <= 7; band++) अणु
+		क्रमागत nl80211_band ieeeband;
 
 		iwl_init_band_reference(cfg, eeprom, eeprom_size, band,
 					&eeprom_ch_count, &eeprom_ch_info,
@@ -630,111 +631,111 @@ static int iwl_init_channel_map(struct device *dev, const struct iwl_cfg *cfg,
 				       : NL80211_BAND_5GHZ;
 
 		/* Loop through each band adding each of the channels */
-		for (ch_idx = 0; ch_idx < eeprom_ch_count; ch_idx++) {
-			/* Set up driver's info for lower half */
+		क्रम (ch_idx = 0; ch_idx < eeprom_ch_count; ch_idx++) अणु
+			/* Set up driver's info क्रम lower half */
 			iwl_mod_ht40_chan_info(dev, data, n_channels, ieeeband,
 					       eeprom_ch_array[ch_idx],
 					       &eeprom_ch_info[ch_idx],
 					       IEEE80211_CHAN_NO_HT40PLUS);
 
-			/* Set up driver's info for upper half */
+			/* Set up driver's info क्रम upper half */
 			iwl_mod_ht40_chan_info(dev, data, n_channels, ieeeband,
 					       eeprom_ch_array[ch_idx] + 4,
 					       &eeprom_ch_info[ch_idx],
 					       IEEE80211_CHAN_NO_HT40MINUS);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return n_channels;
-}
+	वापस n_channels;
+पूर्ण
 
-int iwl_init_sband_channels(struct iwl_nvm_data *data,
-			    struct ieee80211_supported_band *sband,
-			    int n_channels, enum nl80211_band band)
-{
-	struct ieee80211_channel *chan = &data->channels[0];
-	int n = 0, idx = 0;
+पूर्णांक iwl_init_sband_channels(काष्ठा iwl_nvm_data *data,
+			    काष्ठा ieee80211_supported_band *sband,
+			    पूर्णांक n_channels, क्रमागत nl80211_band band)
+अणु
+	काष्ठा ieee80211_channel *chan = &data->channels[0];
+	पूर्णांक n = 0, idx = 0;
 
-	while (idx < n_channels && chan->band != band)
+	जबतक (idx < n_channels && chan->band != band)
 		chan = &data->channels[++idx];
 
 	sband->channels = &data->channels[idx];
 
-	while (idx < n_channels && chan->band == band) {
+	जबतक (idx < n_channels && chan->band == band) अणु
 		chan = &data->channels[++idx];
 		n++;
-	}
+	पूर्ण
 
 	sband->n_channels = n;
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-#define MAX_BIT_RATE_40_MHZ	150 /* Mbps */
-#define MAX_BIT_RATE_20_MHZ	72 /* Mbps */
+#घोषणा MAX_BIT_RATE_40_MHZ	150 /* Mbps */
+#घोषणा MAX_BIT_RATE_20_MHZ	72 /* Mbps */
 
-void iwl_init_ht_hw_capab(struct iwl_trans *trans,
-			  struct iwl_nvm_data *data,
-			  struct ieee80211_sta_ht_cap *ht_info,
-			  enum nl80211_band band,
+व्योम iwl_init_ht_hw_capab(काष्ठा iwl_trans *trans,
+			  काष्ठा iwl_nvm_data *data,
+			  काष्ठा ieee80211_sta_ht_cap *ht_info,
+			  क्रमागत nl80211_band band,
 			  u8 tx_chains, u8 rx_chains)
-{
-	const struct iwl_cfg *cfg = trans->cfg;
-	int max_bit_rate = 0;
+अणु
+	स्थिर काष्ठा iwl_cfg *cfg = trans->cfg;
+	पूर्णांक max_bit_rate = 0;
 
 	tx_chains = hweight8(tx_chains);
-	if (cfg->rx_with_siso_diversity)
+	अगर (cfg->rx_with_siso_भागersity)
 		rx_chains = 1;
-	else
+	अन्यथा
 		rx_chains = hweight8(rx_chains);
 
-	if (!(data->sku_cap_11n_enable) ||
-	    (iwlwifi_mod_params.disable_11n & IWL_DISABLE_HT_ALL) ||
-	    !cfg->ht_params) {
+	अगर (!(data->sku_cap_11n_enable) ||
+	    (iwlwअगरi_mod_params.disable_11n & IWL_DISABLE_HT_ALL) ||
+	    !cfg->ht_params) अणु
 		ht_info->ht_supported = false;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (data->sku_cap_mimo_disabled)
+	अगर (data->sku_cap_mimo_disabled)
 		rx_chains = 1;
 
 	ht_info->ht_supported = true;
 	ht_info->cap = IEEE80211_HT_CAP_DSSSCCK40;
 
-	if (cfg->ht_params->stbc) {
+	अगर (cfg->ht_params->stbc) अणु
 		ht_info->cap |= (1 << IEEE80211_HT_CAP_RX_STBC_SHIFT);
 
-		if (tx_chains > 1)
+		अगर (tx_chains > 1)
 			ht_info->cap |= IEEE80211_HT_CAP_TX_STBC;
-	}
+	पूर्ण
 
-	if (cfg->ht_params->ldpc)
+	अगर (cfg->ht_params->ldpc)
 		ht_info->cap |= IEEE80211_HT_CAP_LDPC_CODING;
 
-	if (trans->trans_cfg->mq_rx_supported ||
-	    iwlwifi_mod_params.amsdu_size >= IWL_AMSDU_8K)
+	अगर (trans->trans_cfg->mq_rx_supported ||
+	    iwlwअगरi_mod_params.amsdu_size >= IWL_AMSDU_8K)
 		ht_info->cap |= IEEE80211_HT_CAP_MAX_AMSDU;
 
 	ht_info->ampdu_factor = IEEE80211_HT_MAX_AMPDU_64K;
 	ht_info->ampdu_density = IEEE80211_HT_MPDU_DENSITY_4;
 
 	ht_info->mcs.rx_mask[0] = 0xFF;
-	if (rx_chains >= 2)
+	अगर (rx_chains >= 2)
 		ht_info->mcs.rx_mask[1] = 0xFF;
-	if (rx_chains >= 3)
+	अगर (rx_chains >= 3)
 		ht_info->mcs.rx_mask[2] = 0xFF;
 
-	if (cfg->ht_params->ht_greenfield_support)
+	अगर (cfg->ht_params->ht_greenfield_support)
 		ht_info->cap |= IEEE80211_HT_CAP_GRN_FLD;
 	ht_info->cap |= IEEE80211_HT_CAP_SGI_20;
 
 	max_bit_rate = MAX_BIT_RATE_20_MHZ;
 
-	if (cfg->ht_params->ht40_bands & BIT(band)) {
+	अगर (cfg->ht_params->ht40_bands & BIT(band)) अणु
 		ht_info->cap |= IEEE80211_HT_CAP_SUP_WIDTH_20_40;
 		ht_info->cap |= IEEE80211_HT_CAP_SGI_40;
 		max_bit_rate = MAX_BIT_RATE_40_MHZ;
-	}
+	पूर्ण
 
 	/* Highest supported Rx data rate */
 	max_bit_rate *= rx_chains;
@@ -743,22 +744,22 @@ void iwl_init_ht_hw_capab(struct iwl_trans *trans,
 
 	/* Tx MCS capabilities */
 	ht_info->mcs.tx_params = IEEE80211_HT_MCS_TX_DEFINED;
-	if (tx_chains != rx_chains) {
+	अगर (tx_chains != rx_chains) अणु
 		ht_info->mcs.tx_params |= IEEE80211_HT_MCS_TX_RX_DIFF;
 		ht_info->mcs.tx_params |= ((tx_chains - 1) <<
 				IEEE80211_HT_MCS_TX_MAX_STREAMS_SHIFT);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void iwl_init_sbands(struct iwl_trans *trans, const struct iwl_cfg *cfg,
-			    struct iwl_nvm_data *data,
-			    const u8 *eeprom, size_t eeprom_size)
-{
-	struct device *dev = trans->dev;
-	int n_channels = iwl_init_channel_map(dev, cfg, data,
+अटल व्योम iwl_init_sbands(काष्ठा iwl_trans *trans, स्थिर काष्ठा iwl_cfg *cfg,
+			    काष्ठा iwl_nvm_data *data,
+			    स्थिर u8 *eeprom, माप_प्रकार eeprom_size)
+अणु
+	काष्ठा device *dev = trans->dev;
+	पूर्णांक n_channels = iwl_init_channel_map(dev, cfg, data,
 					      eeprom, eeprom_size);
-	int n_used = 0;
-	struct ieee80211_supported_band *sband;
+	पूर्णांक n_used = 0;
+	काष्ठा ieee80211_supported_band *sband;
 
 	sband = &data->bands[NL80211_BAND_2GHZ];
 	sband->band = NL80211_BAND_2GHZ;
@@ -778,58 +779,58 @@ static void iwl_init_sbands(struct iwl_trans *trans, const struct iwl_cfg *cfg,
 	iwl_init_ht_hw_capab(trans, data, &sband->ht_cap, NL80211_BAND_5GHZ,
 			     data->valid_tx_ant, data->valid_rx_ant);
 
-	if (n_channels != n_used)
+	अगर (n_channels != n_used)
 		IWL_ERR_DEV(dev, "EEPROM: used only %d of %d channels\n",
 			    n_used, n_channels);
-}
+पूर्ण
 
 /* EEPROM data functions */
 
-struct iwl_nvm_data *
-iwl_parse_eeprom_data(struct iwl_trans *trans, const struct iwl_cfg *cfg,
-		      const u8 *eeprom, size_t eeprom_size)
-{
-	struct iwl_nvm_data *data;
-	struct device *dev = trans->dev;
-	const void *tmp;
+काष्ठा iwl_nvm_data *
+iwl_parse_eeprom_data(काष्ठा iwl_trans *trans, स्थिर काष्ठा iwl_cfg *cfg,
+		      स्थिर u8 *eeprom, माप_प्रकार eeprom_size)
+अणु
+	काष्ठा iwl_nvm_data *data;
+	काष्ठा device *dev = trans->dev;
+	स्थिर व्योम *पंचांगp;
 	u16 radio_cfg, sku;
 
-	if (WARN_ON(!cfg || !cfg->eeprom_params))
-		return NULL;
+	अगर (WARN_ON(!cfg || !cfg->eeprom_params))
+		वापस शून्य;
 
-	data = kzalloc(struct_size(data, channels, IWL_NUM_CHANNELS),
+	data = kzalloc(काष्ठा_size(data, channels, IWL_NUM_CHANNELS),
 		       GFP_KERNEL);
-	if (!data)
-		return NULL;
+	अगर (!data)
+		वापस शून्य;
 
 	/* get MAC address(es) */
-	tmp = iwl_eeprom_query_addr(eeprom, eeprom_size, EEPROM_MAC_ADDRESS);
-	if (!tmp)
-		goto err_free;
-	memcpy(data->hw_addr, tmp, ETH_ALEN);
+	पंचांगp = iwl_eeprom_query_addr(eeprom, eeprom_size, EEPROM_MAC_ADDRESS);
+	अगर (!पंचांगp)
+		जाओ err_मुक्त;
+	स_नकल(data->hw_addr, पंचांगp, ETH_ALEN);
 	data->n_hw_addrs = iwl_eeprom_query16(eeprom, eeprom_size,
 					      EEPROM_NUM_MAC_ADDRESS);
 
-	if (iwl_eeprom_read_calib(eeprom, eeprom_size, data))
-		goto err_free;
+	अगर (iwl_eeprom_पढ़ो_calib(eeprom, eeprom_size, data))
+		जाओ err_मुक्त;
 
-	tmp = iwl_eeprom_query_addr(eeprom, eeprom_size, EEPROM_XTAL);
-	if (!tmp)
-		goto err_free;
-	memcpy(data->xtal_calib, tmp, sizeof(data->xtal_calib));
+	पंचांगp = iwl_eeprom_query_addr(eeprom, eeprom_size, EEPROM_XTAL);
+	अगर (!पंचांगp)
+		जाओ err_मुक्त;
+	स_नकल(data->xtal_calib, पंचांगp, माप(data->xtal_calib));
 
-	tmp = iwl_eeprom_query_addr(eeprom, eeprom_size,
+	पंचांगp = iwl_eeprom_query_addr(eeprom, eeprom_size,
 				    EEPROM_RAW_TEMPERATURE);
-	if (!tmp)
-		goto err_free;
-	data->raw_temperature = *(__le16 *)tmp;
+	अगर (!पंचांगp)
+		जाओ err_मुक्त;
+	data->raw_temperature = *(__le16 *)पंचांगp;
 
-	tmp = iwl_eeprom_query_addr(eeprom, eeprom_size,
+	पंचांगp = iwl_eeprom_query_addr(eeprom, eeprom_size,
 				    EEPROM_KELVIN_TEMPERATURE);
-	if (!tmp)
-		goto err_free;
-	data->kelvin_temperature = *(__le16 *)tmp;
-	data->kelvin_voltage = *((__le16 *)tmp + 1);
+	अगर (!पंचांगp)
+		जाओ err_मुक्त;
+	data->kelvin_temperature = *(__le16 *)पंचांगp;
+	data->kelvin_voltage = *((__le16 *)पंचांगp + 1);
 
 	radio_cfg = iwl_eeprom_query16(eeprom, eeprom_size,
 					     EEPROM_RADIO_CONFIG);
@@ -847,29 +848,29 @@ iwl_parse_eeprom_data(struct iwl_trans *trans, const struct iwl_cfg *cfg,
 	data->sku_cap_band_24ghz_enable = sku & EEPROM_SKU_CAP_BAND_24GHZ;
 	data->sku_cap_band_52ghz_enable = sku & EEPROM_SKU_CAP_BAND_52GHZ;
 	data->sku_cap_ipan_enable = sku & EEPROM_SKU_CAP_IPAN_ENABLE;
-	if (iwlwifi_mod_params.disable_11n & IWL_DISABLE_HT_ALL)
+	अगर (iwlwअगरi_mod_params.disable_11n & IWL_DISABLE_HT_ALL)
 		data->sku_cap_11n_enable = false;
 
 	data->nvm_version = iwl_eeprom_query16(eeprom, eeprom_size,
 					       EEPROM_VERSION);
 
 	/* check overrides (some devices have wrong EEPROM) */
-	if (cfg->valid_tx_ant)
+	अगर (cfg->valid_tx_ant)
 		data->valid_tx_ant = cfg->valid_tx_ant;
-	if (cfg->valid_rx_ant)
+	अगर (cfg->valid_rx_ant)
 		data->valid_rx_ant = cfg->valid_rx_ant;
 
-	if (!data->valid_tx_ant || !data->valid_rx_ant) {
+	अगर (!data->valid_tx_ant || !data->valid_rx_ant) अणु
 		IWL_ERR_DEV(dev, "invalid antennas (0x%x, 0x%x)\n",
 			    data->valid_tx_ant, data->valid_rx_ant);
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	iwl_init_sbands(trans, cfg, data, eeprom, eeprom_size);
 
-	return data;
- err_free:
-	kfree(data);
-	return NULL;
-}
+	वापस data;
+ err_मुक्त:
+	kमुक्त(data);
+	वापस शून्य;
+पूर्ण
 IWL_EXPORT_SYMBOL(iwl_parse_eeprom_data);

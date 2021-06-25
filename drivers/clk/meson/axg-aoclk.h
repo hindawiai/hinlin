@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: (GPL-2.0+ OR MIT) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0+ OR MIT) */
 /*
  * Copyright (c) 2017 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
@@ -7,12 +8,12 @@
  * Author: Qiufang Dai <qiufang.dai@amlogic.com>
  */
 
-#ifndef __AXG_AOCLKC_H
-#define __AXG_AOCLKC_H
+#अगर_अघोषित __AXG_AOCLKC_H
+#घोषणा __AXG_AOCLKC_H
 
-#define NR_CLKS	17
+#घोषणा NR_CLKS	17
 
-#include <dt-bindings/clock/axg-aoclkc.h>
-#include <dt-bindings/reset/axg-aoclkc.h>
+#समावेश <dt-bindings/घड़ी/axg-aoclkc.h>
+#समावेश <dt-bindings/reset/axg-aoclkc.h>
 
-#endif /* __AXG_AOCLKC_H */
+#पूर्ण_अगर /* __AXG_AOCLKC_H */

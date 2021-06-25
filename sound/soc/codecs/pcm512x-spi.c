@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for the PCM512x CODECs
+ * Driver क्रम the PCM512x CODECs
  *
  * Author:	Mark Brown <broonie@kernel.org>
  *		Copyright 2014 Linaro Ltd
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spi/spi.h>
 
-#include "pcm512x.h"
+#समावेश "pcm512x.h"
 
-static int pcm512x_spi_probe(struct spi_device *spi)
-{
-	struct regmap *regmap;
-	int ret;
+अटल पूर्णांक pcm512x_spi_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा regmap *regmap;
+	पूर्णांक ret;
 
 	regmap = devm_regmap_init_spi(spi, &pcm512x_regmap);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		ret = PTR_ERR(regmap);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return pcm512x_probe(&spi->dev, regmap);
-}
+	वापस pcm512x_probe(&spi->dev, regmap);
+पूर्ण
 
-static int pcm512x_spi_remove(struct spi_device *spi)
-{
-	pcm512x_remove(&spi->dev);
-	return 0;
-}
+अटल पूर्णांक pcm512x_spi_हटाओ(काष्ठा spi_device *spi)
+अणु
+	pcm512x_हटाओ(&spi->dev);
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id pcm512x_spi_id[] = {
-	{ "pcm5121", },
-	{ "pcm5122", },
-	{ "pcm5141", },
-	{ "pcm5142", },
-	{ },
-};
+अटल स्थिर काष्ठा spi_device_id pcm512x_spi_id[] = अणु
+	अणु "pcm5121", पूर्ण,
+	अणु "pcm5122", पूर्ण,
+	अणु "pcm5141", पूर्ण,
+	अणु "pcm5142", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, pcm512x_spi_id);
 
-static const struct of_device_id pcm512x_of_match[] = {
-	{ .compatible = "ti,pcm5121", },
-	{ .compatible = "ti,pcm5122", },
-	{ .compatible = "ti,pcm5141", },
-	{ .compatible = "ti,pcm5142", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id pcm512x_of_match[] = अणु
+	अणु .compatible = "ti,pcm5121", पूर्ण,
+	अणु .compatible = "ti,pcm5122", पूर्ण,
+	अणु .compatible = "ti,pcm5141", पूर्ण,
+	अणु .compatible = "ti,pcm5142", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pcm512x_of_match);
 
-static struct spi_driver pcm512x_spi_driver = {
+अटल काष्ठा spi_driver pcm512x_spi_driver = अणु
 	.probe		= pcm512x_spi_probe,
-	.remove		= pcm512x_spi_remove,
+	.हटाओ		= pcm512x_spi_हटाओ,
 	.id_table	= pcm512x_spi_id,
-	.driver = {
+	.driver = अणु
 		.name	= "pcm512x",
 		.of_match_table = pcm512x_of_match,
 		.pm     = &pcm512x_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 module_spi_driver(pcm512x_spi_driver);
 

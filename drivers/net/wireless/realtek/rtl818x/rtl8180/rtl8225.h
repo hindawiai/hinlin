@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef RTL8180_RTL8225_H
-#define RTL8180_RTL8225_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित RTL8180_RTL8225_H
+#घोषणा RTL8180_RTL8225_H
 
-#define RTL8225_ANAPARAM_ON	0xa0000b59
-#define RTL8225_ANAPARAM2_ON	0x860dec11
-#define RTL8225_ANAPARAM_OFF	0xa00beb59
-#define RTL8225_ANAPARAM2_OFF	0x840dec11
+#घोषणा RTL8225_ANAPARAM_ON	0xa0000b59
+#घोषणा RTL8225_ANAPARAM2_ON	0x860dec11
+#घोषणा RTL8225_ANAPARAM_OFF	0xa00beb59
+#घोषणा RTL8225_ANAPARAM2_OFF	0x840dec11
 
-const struct rtl818x_rf_ops * rtl8180_detect_rf(struct ieee80211_hw *);
+स्थिर काष्ठा rtl818x_rf_ops * rtl8180_detect_rf(काष्ठा ieee80211_hw *);
 
-static inline void rtl8225_write_phy_ofdm(struct ieee80211_hw *dev,
+अटल अंतरभूत व्योम rtl8225_ग_लिखो_phy_ofdm(काष्ठा ieee80211_hw *dev,
 					  u8 addr, u8 data)
-{
-	rtl8180_write_phy(dev, addr, data);
-}
+अणु
+	rtl8180_ग_लिखो_phy(dev, addr, data);
+पूर्ण
 
-static inline void rtl8225_write_phy_cck(struct ieee80211_hw *dev,
+अटल अंतरभूत व्योम rtl8225_ग_लिखो_phy_cck(काष्ठा ieee80211_hw *dev,
 					 u8 addr, u8 data)
-{
-	rtl8180_write_phy(dev, addr, data | 0x10000);
-}
+अणु
+	rtl8180_ग_लिखो_phy(dev, addr, data | 0x10000);
+पूर्ण
 
-#endif /* RTL8180_RTL8225_H */
+#पूर्ण_अगर /* RTL8180_RTL8225_H */

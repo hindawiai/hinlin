@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_IA32_UNISTD_H
-#define _ASM_X86_IA32_UNISTD_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_IA32_UNISTD_H
+#घोषणा _ASM_X86_IA32_UNISTD_H
 
 /*
- * This file contains the system call numbers of the ia32 compat ABI,
- * this is for the kernel only.
+ * This file contains the प्रणाली call numbers of the ia32 compat ABI,
+ * this is क्रम the kernel only.
  */
-#define __SYSCALL_ia32_NR(x) (x)
-#include <asm/unistd_32_ia32.h>
+#घोषणा __SYSCALL_ia32_NR(x) (x)
+#समावेश <यंत्र/unistd_32_ia32.h>
 
-#endif /* _ASM_X86_IA32_UNISTD_H */
+#पूर्ण_अगर /* _ASM_X86_IA32_UNISTD_H */

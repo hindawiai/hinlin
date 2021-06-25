@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_MCS_LOCK_H
-#define __ASM_MCS_LOCK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_MCS_LOCK_H
+#घोषणा __ASM_MCS_LOCK_H
 
-#ifdef CONFIG_SMP
-#include <asm/spinlock.h>
+#अगर_घोषित CONFIG_SMP
+#समावेश <यंत्र/spinlock.h>
 
 /* MCS spin-locking. */
-#define arch_mcs_spin_lock_contended(lock)				\
-do {									\
-	/* Ensure prior stores are observed before we enter wfe. */	\
+#घोषणा arch_mcs_spin_lock_contended(lock)				\
+करो अणु									\
+	/* Ensure prior stores are observed beक्रमe we enter wfe. */	\
 	smp_mb();							\
-	while (!(smp_load_acquire(lock)))				\
+	जबतक (!(smp_load_acquire(lock)))				\
 		wfe();							\
-} while (0)								\
+पूर्ण जबतक (0)								\
 
-#define arch_mcs_spin_unlock_contended(lock)				\
-do {									\
+#घोषणा arch_mcs_spin_unlock_contended(lock)				\
+करो अणु									\
 	smp_store_release(lock, 1);					\
 	dsb_sev();							\
-} while (0)
+पूर्ण जबतक (0)
 
-#endif	/* CONFIG_SMP */
-#endif	/* __ASM_MCS_LOCK_H */
+#पूर्ण_अगर	/* CONFIG_SMP */
+#पूर्ण_अगर	/* __ASM_MCS_LOCK_H */

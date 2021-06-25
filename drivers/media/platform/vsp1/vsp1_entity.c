@@ -1,344 +1,345 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * vsp1_entity.c  --  R-Car VSP1 Base Entity
  *
  * Copyright (C) 2013-2014 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
 
-#include <linux/device.h>
-#include <linux/gfp.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gfp.h>
 
-#include <media/media-entity.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-subdev.h>
+#समावेश <media/media-entity.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-subdev.h>
 
-#include "vsp1.h"
-#include "vsp1_dl.h"
-#include "vsp1_entity.h"
-#include "vsp1_pipe.h"
-#include "vsp1_rwpf.h"
+#समावेश "vsp1.h"
+#समावेश "vsp1_dl.h"
+#समावेश "vsp1_entity.h"
+#समावेश "vsp1_pipe.h"
+#समावेश "vsp1_rwpf.h"
 
-void vsp1_entity_route_setup(struct vsp1_entity *entity,
-			     struct vsp1_pipeline *pipe,
-			     struct vsp1_dl_body *dlb)
-{
-	struct vsp1_entity *source;
+व्योम vsp1_entity_route_setup(काष्ठा vsp1_entity *entity,
+			     काष्ठा vsp1_pipeline *pipe,
+			     काष्ठा vsp1_dl_body *dlb)
+अणु
+	काष्ठा vsp1_entity *source;
 	u32 route;
 
-	if (entity->type == VSP1_ENTITY_HGO) {
+	अगर (entity->type == VSP1_ENTITY_HGO) अणु
 		u32 smppt;
 
 		/*
-		 * The HGO is a special case, its routing is configured on the
+		 * The HGO is a special हाल, its routing is configured on the
 		 * sink pad.
 		 */
 		source = entity->sources[0];
 		smppt = (pipe->output->entity.index << VI6_DPR_SMPPT_TGW_SHIFT)
 		      | (source->route->output << VI6_DPR_SMPPT_PT_SHIFT);
 
-		vsp1_dl_body_write(dlb, VI6_DPR_HGO_SMPPT, smppt);
-		return;
-	} else if (entity->type == VSP1_ENTITY_HGT) {
+		vsp1_dl_body_ग_लिखो(dlb, VI6_DPR_HGO_SMPPT, smppt);
+		वापस;
+	पूर्ण अन्यथा अगर (entity->type == VSP1_ENTITY_HGT) अणु
 		u32 smppt;
 
 		/*
-		 * The HGT is a special case, its routing is configured on the
+		 * The HGT is a special हाल, its routing is configured on the
 		 * sink pad.
 		 */
 		source = entity->sources[0];
 		smppt = (pipe->output->entity.index << VI6_DPR_SMPPT_TGW_SHIFT)
 		      | (source->route->output << VI6_DPR_SMPPT_PT_SHIFT);
 
-		vsp1_dl_body_write(dlb, VI6_DPR_HGT_SMPPT, smppt);
-		return;
-	}
+		vsp1_dl_body_ग_लिखो(dlb, VI6_DPR_HGT_SMPPT, smppt);
+		वापस;
+	पूर्ण
 
 	source = entity;
-	if (source->route->reg == 0)
-		return;
+	अगर (source->route->reg == 0)
+		वापस;
 
-	route = source->sink->route->inputs[source->sink_pad];
+	route = source->sink->route->inमाला_दो[source->sink_pad];
 	/*
 	 * The ILV and BRS share the same data path route. The extra BRSSEL bit
 	 * selects between the ILV and BRS.
 	 */
-	if (source->type == VSP1_ENTITY_BRS)
+	अगर (source->type == VSP1_ENTITY_BRS)
 		route |= VI6_DPR_ROUTE_BRSSEL;
-	vsp1_dl_body_write(dlb, source->route->reg, route);
-}
+	vsp1_dl_body_ग_लिखो(dlb, source->route->reg, route);
+पूर्ण
 
-void vsp1_entity_configure_stream(struct vsp1_entity *entity,
-				  struct vsp1_pipeline *pipe,
-				  struct vsp1_dl_list *dl,
-				  struct vsp1_dl_body *dlb)
-{
-	if (entity->ops->configure_stream)
+व्योम vsp1_entity_configure_stream(काष्ठा vsp1_entity *entity,
+				  काष्ठा vsp1_pipeline *pipe,
+				  काष्ठा vsp1_dl_list *dl,
+				  काष्ठा vsp1_dl_body *dlb)
+अणु
+	अगर (entity->ops->configure_stream)
 		entity->ops->configure_stream(entity, pipe, dl, dlb);
-}
+पूर्ण
 
-void vsp1_entity_configure_frame(struct vsp1_entity *entity,
-				 struct vsp1_pipeline *pipe,
-				 struct vsp1_dl_list *dl,
-				 struct vsp1_dl_body *dlb)
-{
-	if (entity->ops->configure_frame)
+व्योम vsp1_entity_configure_frame(काष्ठा vsp1_entity *entity,
+				 काष्ठा vsp1_pipeline *pipe,
+				 काष्ठा vsp1_dl_list *dl,
+				 काष्ठा vsp1_dl_body *dlb)
+अणु
+	अगर (entity->ops->configure_frame)
 		entity->ops->configure_frame(entity, pipe, dl, dlb);
-}
+पूर्ण
 
-void vsp1_entity_configure_partition(struct vsp1_entity *entity,
-				     struct vsp1_pipeline *pipe,
-				     struct vsp1_dl_list *dl,
-				     struct vsp1_dl_body *dlb)
-{
-	if (entity->ops->configure_partition)
+व्योम vsp1_entity_configure_partition(काष्ठा vsp1_entity *entity,
+				     काष्ठा vsp1_pipeline *pipe,
+				     काष्ठा vsp1_dl_list *dl,
+				     काष्ठा vsp1_dl_body *dlb)
+अणु
+	अगर (entity->ops->configure_partition)
 		entity->ops->configure_partition(entity, pipe, dl, dlb);
-}
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * V4L2 Subdevice Operations
  */
 
 /**
- * vsp1_entity_get_pad_config - Get the pad configuration for an entity
+ * vsp1_entity_get_pad_config - Get the pad configuration क्रम an entity
  * @entity: the entity
  * @cfg: the TRY pad configuration
  * @which: configuration selector (ACTIVE or TRY)
  *
  * When called with which set to V4L2_SUBDEV_FORMAT_ACTIVE the caller must hold
- * the entity lock to access the returned configuration.
+ * the entity lock to access the वापसed configuration.
  *
  * Return the pad configuration requested by the which argument. The TRY
  * configuration is passed explicitly to the function through the cfg argument
- * and simply returned when requested. The ACTIVE configuration comes from the
- * entity structure.
+ * and simply वापसed when requested. The ACTIVE configuration comes from the
+ * entity काष्ठाure.
  */
-struct v4l2_subdev_pad_config *
-vsp1_entity_get_pad_config(struct vsp1_entity *entity,
-			   struct v4l2_subdev_pad_config *cfg,
-			   enum v4l2_subdev_format_whence which)
-{
-	switch (which) {
-	case V4L2_SUBDEV_FORMAT_ACTIVE:
-		return entity->config;
-	case V4L2_SUBDEV_FORMAT_TRY:
-	default:
-		return cfg;
-	}
-}
+काष्ठा v4l2_subdev_pad_config *
+vsp1_entity_get_pad_config(काष्ठा vsp1_entity *entity,
+			   काष्ठा v4l2_subdev_pad_config *cfg,
+			   क्रमागत v4l2_subdev_क्रमmat_whence which)
+अणु
+	चयन (which) अणु
+	हाल V4L2_SUBDEV_FORMAT_ACTIVE:
+		वापस entity->config;
+	हाल V4L2_SUBDEV_FORMAT_TRY:
+	शेष:
+		वापस cfg;
+	पूर्ण
+पूर्ण
 
 /**
- * vsp1_entity_get_pad_format - Get a pad format from storage for an entity
+ * vsp1_entity_get_pad_क्रमmat - Get a pad क्रमmat from storage क्रम an entity
  * @entity: the entity
  * @cfg: the configuration storage
  * @pad: the pad number
  *
- * Return the format stored in the given configuration for an entity's pad. The
+ * Return the क्रमmat stored in the given configuration क्रम an entity's pad. The
  * configuration can be an ACTIVE or TRY configuration.
  */
-struct v4l2_mbus_framefmt *
-vsp1_entity_get_pad_format(struct vsp1_entity *entity,
-			   struct v4l2_subdev_pad_config *cfg,
-			   unsigned int pad)
-{
-	return v4l2_subdev_get_try_format(&entity->subdev, cfg, pad);
-}
+काष्ठा v4l2_mbus_framefmt *
+vsp1_entity_get_pad_क्रमmat(काष्ठा vsp1_entity *entity,
+			   काष्ठा v4l2_subdev_pad_config *cfg,
+			   अचिन्हित पूर्णांक pad)
+अणु
+	वापस v4l2_subdev_get_try_क्रमmat(&entity->subdev, cfg, pad);
+पूर्ण
 
 /**
- * vsp1_entity_get_pad_selection - Get a pad selection from storage for entity
+ * vsp1_entity_get_pad_selection - Get a pad selection from storage क्रम entity
  * @entity: the entity
  * @cfg: the configuration storage
  * @pad: the pad number
  * @target: the selection target
  *
- * Return the selection rectangle stored in the given configuration for an
+ * Return the selection rectangle stored in the given configuration क्रम an
  * entity's pad. The configuration can be an ACTIVE or TRY configuration. The
  * selection target can be COMPOSE or CROP.
  */
-struct v4l2_rect *
-vsp1_entity_get_pad_selection(struct vsp1_entity *entity,
-			      struct v4l2_subdev_pad_config *cfg,
-			      unsigned int pad, unsigned int target)
-{
-	switch (target) {
-	case V4L2_SEL_TGT_COMPOSE:
-		return v4l2_subdev_get_try_compose(&entity->subdev, cfg, pad);
-	case V4L2_SEL_TGT_CROP:
-		return v4l2_subdev_get_try_crop(&entity->subdev, cfg, pad);
-	default:
-		return NULL;
-	}
-}
+काष्ठा v4l2_rect *
+vsp1_entity_get_pad_selection(काष्ठा vsp1_entity *entity,
+			      काष्ठा v4l2_subdev_pad_config *cfg,
+			      अचिन्हित पूर्णांक pad, अचिन्हित पूर्णांक target)
+अणु
+	चयन (target) अणु
+	हाल V4L2_SEL_TGT_COMPOSE:
+		वापस v4l2_subdev_get_try_compose(&entity->subdev, cfg, pad);
+	हाल V4L2_SEL_TGT_CROP:
+		वापस v4l2_subdev_get_try_crop(&entity->subdev, cfg, pad);
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
 /*
- * vsp1_entity_init_cfg - Initialize formats on all pads
+ * vsp1_entity_init_cfg - Initialize क्रमmats on all pads
  * @subdev: V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
  *
- * Initialize all pad formats with default values in the given pad config. This
- * function can be used as a handler for the subdev pad::init_cfg operation.
+ * Initialize all pad क्रमmats with शेष values in the given pad config. This
+ * function can be used as a handler क्रम the subdev pad::init_cfg operation.
  */
-int vsp1_entity_init_cfg(struct v4l2_subdev *subdev,
-			 struct v4l2_subdev_pad_config *cfg)
-{
-	struct v4l2_subdev_format format;
-	unsigned int pad;
+पूर्णांक vsp1_entity_init_cfg(काष्ठा v4l2_subdev *subdev,
+			 काष्ठा v4l2_subdev_pad_config *cfg)
+अणु
+	काष्ठा v4l2_subdev_क्रमmat क्रमmat;
+	अचिन्हित पूर्णांक pad;
 
-	for (pad = 0; pad < subdev->entity.num_pads - 1; ++pad) {
-		memset(&format, 0, sizeof(format));
+	क्रम (pad = 0; pad < subdev->entity.num_pads - 1; ++pad) अणु
+		स_रखो(&क्रमmat, 0, माप(क्रमmat));
 
-		format.pad = pad;
-		format.which = cfg ? V4L2_SUBDEV_FORMAT_TRY
+		क्रमmat.pad = pad;
+		क्रमmat.which = cfg ? V4L2_SUBDEV_FORMAT_TRY
 			     : V4L2_SUBDEV_FORMAT_ACTIVE;
 
-		v4l2_subdev_call(subdev, pad, set_fmt, cfg, &format);
-	}
+		v4l2_subdev_call(subdev, pad, set_fmt, cfg, &क्रमmat);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * vsp1_subdev_get_pad_format - Subdev pad get_fmt handler
+ * vsp1_subdev_get_pad_क्रमmat - Subdev pad get_fmt handler
  * @subdev: V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @fmt: V4L2 subdev format
+ * @fmt: V4L2 subdev क्रमmat
  *
  * This function implements the subdev get_fmt pad operation. It can be used as
- * a direct drop-in for the operation handler.
+ * a direct drop-in क्रम the operation handler.
  */
-int vsp1_subdev_get_pad_format(struct v4l2_subdev *subdev,
-			       struct v4l2_subdev_pad_config *cfg,
-			       struct v4l2_subdev_format *fmt)
-{
-	struct vsp1_entity *entity = to_vsp1_entity(subdev);
-	struct v4l2_subdev_pad_config *config;
+पूर्णांक vsp1_subdev_get_pad_क्रमmat(काष्ठा v4l2_subdev *subdev,
+			       काष्ठा v4l2_subdev_pad_config *cfg,
+			       काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा vsp1_entity *entity = to_vsp1_entity(subdev);
+	काष्ठा v4l2_subdev_pad_config *config;
 
 	config = vsp1_entity_get_pad_config(entity, cfg, fmt->which);
-	if (!config)
-		return -EINVAL;
+	अगर (!config)
+		वापस -EINVAL;
 
 	mutex_lock(&entity->lock);
-	fmt->format = *vsp1_entity_get_pad_format(entity, config, fmt->pad);
+	fmt->क्रमmat = *vsp1_entity_get_pad_क्रमmat(entity, config, fmt->pad);
 	mutex_unlock(&entity->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * vsp1_subdev_enum_mbus_code - Subdev pad enum_mbus_code handler
+ * vsp1_subdev_क्रमागत_mbus_code - Subdev pad क्रमागत_mbus_code handler
  * @subdev: V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @code: Media bus code enumeration
+ * @code: Media bus code क्रमागतeration
  * @codes: Array of supported media bus codes
  * @ncodes: Number of supported media bus codes
  *
- * This function implements the subdev enum_mbus_code pad operation for entities
- * that do not support format conversion. It enumerates the given supported
- * media bus codes on the sink pad and reports a source pad format identical to
+ * This function implements the subdev क्रमागत_mbus_code pad operation क्रम entities
+ * that करो not support क्रमmat conversion. It क्रमागतerates the given supported
+ * media bus codes on the sink pad and reports a source pad क्रमmat identical to
  * the sink pad.
  */
-int vsp1_subdev_enum_mbus_code(struct v4l2_subdev *subdev,
-			       struct v4l2_subdev_pad_config *cfg,
-			       struct v4l2_subdev_mbus_code_enum *code,
-			       const unsigned int *codes, unsigned int ncodes)
-{
-	struct vsp1_entity *entity = to_vsp1_entity(subdev);
+पूर्णांक vsp1_subdev_क्रमागत_mbus_code(काष्ठा v4l2_subdev *subdev,
+			       काष्ठा v4l2_subdev_pad_config *cfg,
+			       काष्ठा v4l2_subdev_mbus_code_क्रमागत *code,
+			       स्थिर अचिन्हित पूर्णांक *codes, अचिन्हित पूर्णांक ncodes)
+अणु
+	काष्ठा vsp1_entity *entity = to_vsp1_entity(subdev);
 
-	if (code->pad == 0) {
-		if (code->index >= ncodes)
-			return -EINVAL;
+	अगर (code->pad == 0) अणु
+		अगर (code->index >= ncodes)
+			वापस -EINVAL;
 
 		code->code = codes[code->index];
-	} else {
-		struct v4l2_subdev_pad_config *config;
-		struct v4l2_mbus_framefmt *format;
+	पूर्ण अन्यथा अणु
+		काष्ठा v4l2_subdev_pad_config *config;
+		काष्ठा v4l2_mbus_framefmt *क्रमmat;
 
 		/*
-		 * The entity can't perform format conversion, the sink format
-		 * is always identical to the source format.
+		 * The entity can't perक्रमm क्रमmat conversion, the sink क्रमmat
+		 * is always identical to the source क्रमmat.
 		 */
-		if (code->index)
-			return -EINVAL;
+		अगर (code->index)
+			वापस -EINVAL;
 
 		config = vsp1_entity_get_pad_config(entity, cfg, code->which);
-		if (!config)
-			return -EINVAL;
+		अगर (!config)
+			वापस -EINVAL;
 
 		mutex_lock(&entity->lock);
-		format = vsp1_entity_get_pad_format(entity, config, 0);
-		code->code = format->code;
+		क्रमmat = vsp1_entity_get_pad_क्रमmat(entity, config, 0);
+		code->code = क्रमmat->code;
 		mutex_unlock(&entity->lock);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * vsp1_subdev_enum_frame_size - Subdev pad enum_frame_size handler
+ * vsp1_subdev_क्रमागत_frame_size - Subdev pad क्रमागत_frame_size handler
  * @subdev: V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @fse: Frame size enumeration
+ * @fse: Frame size क्रमागतeration
  * @min_width: Minimum image width
  * @min_height: Minimum image height
  * @max_width: Maximum image width
  * @max_height: Maximum image height
  *
- * This function implements the subdev enum_frame_size pad operation for
- * entities that do not support scaling or cropping. It reports the given
+ * This function implements the subdev क्रमागत_frame_size pad operation क्रम
+ * entities that करो not support scaling or cropping. It reports the given
  * minimum and maximum frame width and height on the sink pad, and a fixed
  * source pad size identical to the sink pad.
  */
-int vsp1_subdev_enum_frame_size(struct v4l2_subdev *subdev,
-				struct v4l2_subdev_pad_config *cfg,
-				struct v4l2_subdev_frame_size_enum *fse,
-				unsigned int min_width, unsigned int min_height,
-				unsigned int max_width, unsigned int max_height)
-{
-	struct vsp1_entity *entity = to_vsp1_entity(subdev);
-	struct v4l2_subdev_pad_config *config;
-	struct v4l2_mbus_framefmt *format;
-	int ret = 0;
+पूर्णांक vsp1_subdev_क्रमागत_frame_size(काष्ठा v4l2_subdev *subdev,
+				काष्ठा v4l2_subdev_pad_config *cfg,
+				काष्ठा v4l2_subdev_frame_size_क्रमागत *fse,
+				अचिन्हित पूर्णांक min_width, अचिन्हित पूर्णांक min_height,
+				अचिन्हित पूर्णांक max_width, अचिन्हित पूर्णांक max_height)
+अणु
+	काष्ठा vsp1_entity *entity = to_vsp1_entity(subdev);
+	काष्ठा v4l2_subdev_pad_config *config;
+	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+	पूर्णांक ret = 0;
 
 	config = vsp1_entity_get_pad_config(entity, cfg, fse->which);
-	if (!config)
-		return -EINVAL;
+	अगर (!config)
+		वापस -EINVAL;
 
-	format = vsp1_entity_get_pad_format(entity, config, fse->pad);
+	क्रमmat = vsp1_entity_get_pad_क्रमmat(entity, config, fse->pad);
 
 	mutex_lock(&entity->lock);
 
-	if (fse->index || fse->code != format->code) {
+	अगर (fse->index || fse->code != क्रमmat->code) अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (fse->pad == 0) {
+	अगर (fse->pad == 0) अणु
 		fse->min_width = min_width;
 		fse->max_width = max_width;
 		fse->min_height = min_height;
 		fse->max_height = max_height;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * The size on the source pad are fixed and always identical to
 		 * the size on the sink pad.
 		 */
-		fse->min_width = format->width;
-		fse->max_width = format->width;
-		fse->min_height = format->height;
-		fse->max_height = format->height;
-	}
+		fse->min_width = क्रमmat->width;
+		fse->max_width = क्रमmat->width;
+		fse->min_height = क्रमmat->height;
+		fse->max_height = क्रमmat->height;
+	पूर्ण
 
-done:
+करोne:
 	mutex_unlock(&entity->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * vsp1_subdev_set_pad_format - Subdev pad set_fmt handler
+ * vsp1_subdev_set_pad_क्रमmat - Subdev pad set_fmt handler
  * @subdev: V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @fmt: V4L2 subdev format
+ * @fmt: V4L2 subdev क्रमmat
  * @codes: Array of supported media bus codes
  * @ncodes: Number of supported media bus codes
  * @min_width: Minimum image width
@@ -346,248 +347,248 @@ done:
  * @max_width: Maximum image width
  * @max_height: Maximum image height
  *
- * This function implements the subdev set_fmt pad operation for entities that
- * do not support scaling or cropping. It defaults to the first supplied media
- * bus code if the requested code isn't supported, clamps the size to the
- * supplied minimum and maximum, and propagates the sink pad format to the
+ * This function implements the subdev set_fmt pad operation क्रम entities that
+ * करो not support scaling or cropping. It शेषs to the first supplied media
+ * bus code अगर the requested code isn't supported, clamps the size to the
+ * supplied minimum and maximum, and propagates the sink pad क्रमmat to the
  * source pad.
  */
-int vsp1_subdev_set_pad_format(struct v4l2_subdev *subdev,
-			       struct v4l2_subdev_pad_config *cfg,
-			       struct v4l2_subdev_format *fmt,
-			       const unsigned int *codes, unsigned int ncodes,
-			       unsigned int min_width, unsigned int min_height,
-			       unsigned int max_width, unsigned int max_height)
-{
-	struct vsp1_entity *entity = to_vsp1_entity(subdev);
-	struct v4l2_subdev_pad_config *config;
-	struct v4l2_mbus_framefmt *format;
-	struct v4l2_rect *selection;
-	unsigned int i;
-	int ret = 0;
+पूर्णांक vsp1_subdev_set_pad_क्रमmat(काष्ठा v4l2_subdev *subdev,
+			       काष्ठा v4l2_subdev_pad_config *cfg,
+			       काष्ठा v4l2_subdev_क्रमmat *fmt,
+			       स्थिर अचिन्हित पूर्णांक *codes, अचिन्हित पूर्णांक ncodes,
+			       अचिन्हित पूर्णांक min_width, अचिन्हित पूर्णांक min_height,
+			       अचिन्हित पूर्णांक max_width, अचिन्हित पूर्णांक max_height)
+अणु
+	काष्ठा vsp1_entity *entity = to_vsp1_entity(subdev);
+	काष्ठा v4l2_subdev_pad_config *config;
+	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+	काष्ठा v4l2_rect *selection;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&entity->lock);
 
 	config = vsp1_entity_get_pad_config(entity, cfg, fmt->which);
-	if (!config) {
+	अगर (!config) अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	format = vsp1_entity_get_pad_format(entity, config, fmt->pad);
+	क्रमmat = vsp1_entity_get_pad_क्रमmat(entity, config, fmt->pad);
 
-	if (fmt->pad == entity->source_pad) {
-		/* The output format can't be modified. */
-		fmt->format = *format;
-		goto done;
-	}
+	अगर (fmt->pad == entity->source_pad) अणु
+		/* The output क्रमmat can't be modअगरied. */
+		fmt->क्रमmat = *क्रमmat;
+		जाओ करोne;
+	पूर्ण
 
 	/*
-	 * Default to the first media bus code if the requested format is not
+	 * Default to the first media bus code अगर the requested क्रमmat is not
 	 * supported.
 	 */
-	for (i = 0; i < ncodes; ++i) {
-		if (fmt->format.code == codes[i])
-			break;
-	}
+	क्रम (i = 0; i < ncodes; ++i) अणु
+		अगर (fmt->क्रमmat.code == codes[i])
+			अवरोध;
+	पूर्ण
 
-	format->code = i < ncodes ? codes[i] : codes[0];
-	format->width = clamp_t(unsigned int, fmt->format.width,
+	क्रमmat->code = i < ncodes ? codes[i] : codes[0];
+	क्रमmat->width = clamp_t(अचिन्हित पूर्णांक, fmt->क्रमmat.width,
 				min_width, max_width);
-	format->height = clamp_t(unsigned int, fmt->format.height,
+	क्रमmat->height = clamp_t(अचिन्हित पूर्णांक, fmt->क्रमmat.height,
 				 min_height, max_height);
-	format->field = V4L2_FIELD_NONE;
-	format->colorspace = V4L2_COLORSPACE_SRGB;
+	क्रमmat->field = V4L2_FIELD_NONE;
+	क्रमmat->colorspace = V4L2_COLORSPACE_SRGB;
 
-	fmt->format = *format;
+	fmt->क्रमmat = *क्रमmat;
 
-	/* Propagate the format to the source pad. */
-	format = vsp1_entity_get_pad_format(entity, config, entity->source_pad);
-	*format = fmt->format;
+	/* Propagate the क्रमmat to the source pad. */
+	क्रमmat = vsp1_entity_get_pad_क्रमmat(entity, config, entity->source_pad);
+	*क्रमmat = fmt->क्रमmat;
 
 	/* Reset the crop and compose rectangles. */
 	selection = vsp1_entity_get_pad_selection(entity, config, fmt->pad,
 						  V4L2_SEL_TGT_CROP);
 	selection->left = 0;
 	selection->top = 0;
-	selection->width = format->width;
-	selection->height = format->height;
+	selection->width = क्रमmat->width;
+	selection->height = क्रमmat->height;
 
 	selection = vsp1_entity_get_pad_selection(entity, config, fmt->pad,
 						  V4L2_SEL_TGT_COMPOSE);
 	selection->left = 0;
 	selection->top = 0;
-	selection->width = format->width;
-	selection->height = format->height;
+	selection->width = क्रमmat->width;
+	selection->height = क्रमmat->height;
 
-done:
+करोne:
 	mutex_unlock(&entity->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Media Operations
  */
 
-static inline struct vsp1_entity *
-media_entity_to_vsp1_entity(struct media_entity *entity)
-{
-	return container_of(entity, struct vsp1_entity, subdev.entity);
-}
+अटल अंतरभूत काष्ठा vsp1_entity *
+media_entity_to_vsp1_entity(काष्ठा media_entity *entity)
+अणु
+	वापस container_of(entity, काष्ठा vsp1_entity, subdev.entity);
+पूर्ण
 
-static int vsp1_entity_link_setup_source(const struct media_pad *source_pad,
-					 const struct media_pad *sink_pad,
+अटल पूर्णांक vsp1_entity_link_setup_source(स्थिर काष्ठा media_pad *source_pad,
+					 स्थिर काष्ठा media_pad *sink_pad,
 					 u32 flags)
-{
-	struct vsp1_entity *source;
+अणु
+	काष्ठा vsp1_entity *source;
 
 	source = media_entity_to_vsp1_entity(source_pad->entity);
 
-	if (!source->route)
-		return 0;
+	अगर (!source->route)
+		वापस 0;
 
-	if (flags & MEDIA_LNK_FL_ENABLED) {
-		struct vsp1_entity *sink
+	अगर (flags & MEDIA_LNK_FL_ENABLED) अणु
+		काष्ठा vsp1_entity *sink
 			= media_entity_to_vsp1_entity(sink_pad->entity);
 
 		/*
-		 * Fan-out is limited to one for the normal data path plus
+		 * Fan-out is limited to one क्रम the normal data path plus
 		 * optional HGO and HGT. We ignore the HGO and HGT here.
 		 */
-		if (sink->type != VSP1_ENTITY_HGO &&
-		    sink->type != VSP1_ENTITY_HGT) {
-			if (source->sink)
-				return -EBUSY;
+		अगर (sink->type != VSP1_ENTITY_HGO &&
+		    sink->type != VSP1_ENTITY_HGT) अणु
+			अगर (source->sink)
+				वापस -EBUSY;
 			source->sink = sink;
 			source->sink_pad = sink_pad->index;
-		}
-	} else {
-		source->sink = NULL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		source->sink = शून्य;
 		source->sink_pad = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vsp1_entity_link_setup_sink(const struct media_pad *source_pad,
-				       const struct media_pad *sink_pad,
+अटल पूर्णांक vsp1_entity_link_setup_sink(स्थिर काष्ठा media_pad *source_pad,
+				       स्थिर काष्ठा media_pad *sink_pad,
 				       u32 flags)
-{
-	struct vsp1_entity *sink;
-	struct vsp1_entity *source;
+अणु
+	काष्ठा vsp1_entity *sink;
+	काष्ठा vsp1_entity *source;
 
 	sink = media_entity_to_vsp1_entity(sink_pad->entity);
 	source = media_entity_to_vsp1_entity(source_pad->entity);
 
-	if (flags & MEDIA_LNK_FL_ENABLED) {
+	अगर (flags & MEDIA_LNK_FL_ENABLED) अणु
 		/* Fan-in is limited to one. */
-		if (sink->sources[sink_pad->index])
-			return -EBUSY;
+		अगर (sink->sources[sink_pad->index])
+			वापस -EBUSY;
 
 		sink->sources[sink_pad->index] = source;
-	} else {
-		sink->sources[sink_pad->index] = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		sink->sources[sink_pad->index] = शून्य;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vsp1_entity_link_setup(struct media_entity *entity,
-			   const struct media_pad *local,
-			   const struct media_pad *remote, u32 flags)
-{
-	if (local->flags & MEDIA_PAD_FL_SOURCE)
-		return vsp1_entity_link_setup_source(local, remote, flags);
-	else
-		return vsp1_entity_link_setup_sink(remote, local, flags);
-}
+पूर्णांक vsp1_entity_link_setup(काष्ठा media_entity *entity,
+			   स्थिर काष्ठा media_pad *local,
+			   स्थिर काष्ठा media_pad *remote, u32 flags)
+अणु
+	अगर (local->flags & MEDIA_PAD_FL_SOURCE)
+		वापस vsp1_entity_link_setup_source(local, remote, flags);
+	अन्यथा
+		वापस vsp1_entity_link_setup_sink(remote, local, flags);
+पूर्ण
 
 /**
  * vsp1_entity_remote_pad - Find the pad at the remote end of a link
  * @pad: Pad at the local end of the link
  *
- * Search for a remote pad connected to the given pad by iterating over all
+ * Search क्रम a remote pad connected to the given pad by iterating over all
  * links originating or terminating at that pad until an enabled link is found.
  *
  * Our link setup implementation guarantees that the output fan-out will not be
- * higher than one for the data pipelines, except for the links to the HGO and
+ * higher than one क्रम the data pipelines, except क्रम the links to the HGO and
  * HGT that can be enabled in addition to a regular data link. When traversing
  * outgoing links this function ignores HGO and HGT entities and should thus be
  * used in place of the generic media_entity_remote_pad() function to traverse
  * data pipelines.
  *
- * Return a pointer to the pad at the remote end of the first found enabled
- * link, or NULL if no enabled link has been found.
+ * Return a poपूर्णांकer to the pad at the remote end of the first found enabled
+ * link, or शून्य अगर no enabled link has been found.
  */
-struct media_pad *vsp1_entity_remote_pad(struct media_pad *pad)
-{
-	struct media_link *link;
+काष्ठा media_pad *vsp1_entity_remote_pad(काष्ठा media_pad *pad)
+अणु
+	काष्ठा media_link *link;
 
-	list_for_each_entry(link, &pad->entity->links, list) {
-		struct vsp1_entity *entity;
+	list_क्रम_each_entry(link, &pad->entity->links, list) अणु
+		काष्ठा vsp1_entity *entity;
 
-		if (!(link->flags & MEDIA_LNK_FL_ENABLED))
-			continue;
+		अगर (!(link->flags & MEDIA_LNK_FL_ENABLED))
+			जारी;
 
 		/* If we're the sink the source will never be an HGO or HGT. */
-		if (link->sink == pad)
-			return link->source;
+		अगर (link->sink == pad)
+			वापस link->source;
 
-		if (link->source != pad)
-			continue;
+		अगर (link->source != pad)
+			जारी;
 
 		/* If the sink isn't a subdevice it can't be an HGO or HGT. */
-		if (!is_media_entity_v4l2_subdev(link->sink->entity))
-			return link->sink;
+		अगर (!is_media_entity_v4l2_subdev(link->sink->entity))
+			वापस link->sink;
 
 		entity = media_entity_to_vsp1_entity(link->sink->entity);
-		if (entity->type != VSP1_ENTITY_HGO &&
+		अगर (entity->type != VSP1_ENTITY_HGO &&
 		    entity->type != VSP1_ENTITY_HGT)
-			return link->sink;
-	}
+			वापस link->sink;
+	पूर्ण
 
-	return NULL;
+	वापस शून्य;
 
-}
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Initialization
  */
 
-#define VSP1_ENTITY_ROUTE(ent)						\
-	{ VSP1_ENTITY_##ent, 0, VI6_DPR_##ent##_ROUTE,			\
-	  { VI6_DPR_NODE_##ent }, VI6_DPR_NODE_##ent }
+#घोषणा VSP1_ENTITY_ROUTE(ent)						\
+	अणु VSP1_ENTITY_##ent, 0, VI6_DPR_##ent##_ROUTE,			\
+	  अणु VI6_DPR_NODE_##ent पूर्ण, VI6_DPR_NODE_##ent पूर्ण
 
-#define VSP1_ENTITY_ROUTE_RPF(idx)					\
-	{ VSP1_ENTITY_RPF, idx, VI6_DPR_RPF_ROUTE(idx),			\
-	  { 0, }, VI6_DPR_NODE_RPF(idx) }
+#घोषणा VSP1_ENTITY_ROUTE_RPF(idx)					\
+	अणु VSP1_ENTITY_RPF, idx, VI6_DPR_RPF_ROUTE(idx),			\
+	  अणु 0, पूर्ण, VI6_DPR_NODE_RPF(idx) पूर्ण
 
-#define VSP1_ENTITY_ROUTE_UDS(idx)					\
-	{ VSP1_ENTITY_UDS, idx, VI6_DPR_UDS_ROUTE(idx),			\
-	  { VI6_DPR_NODE_UDS(idx) }, VI6_DPR_NODE_UDS(idx) }
+#घोषणा VSP1_ENTITY_ROUTE_UDS(idx)					\
+	अणु VSP1_ENTITY_UDS, idx, VI6_DPR_UDS_ROUTE(idx),			\
+	  अणु VI6_DPR_NODE_UDS(idx) पूर्ण, VI6_DPR_NODE_UDS(idx) पूर्ण
 
-#define VSP1_ENTITY_ROUTE_UIF(idx)					\
-	{ VSP1_ENTITY_UIF, idx, VI6_DPR_UIF_ROUTE(idx),			\
-	  { VI6_DPR_NODE_UIF(idx) }, VI6_DPR_NODE_UIF(idx) }
+#घोषणा VSP1_ENTITY_ROUTE_UIF(idx)					\
+	अणु VSP1_ENTITY_UIF, idx, VI6_DPR_UIF_ROUTE(idx),			\
+	  अणु VI6_DPR_NODE_UIF(idx) पूर्ण, VI6_DPR_NODE_UIF(idx) पूर्ण
 
-#define VSP1_ENTITY_ROUTE_WPF(idx)					\
-	{ VSP1_ENTITY_WPF, idx, 0,					\
-	  { VI6_DPR_NODE_WPF(idx) }, VI6_DPR_NODE_WPF(idx) }
+#घोषणा VSP1_ENTITY_ROUTE_WPF(idx)					\
+	अणु VSP1_ENTITY_WPF, idx, 0,					\
+	  अणु VI6_DPR_NODE_WPF(idx) पूर्ण, VI6_DPR_NODE_WPF(idx) पूर्ण
 
-static const struct vsp1_route vsp1_routes[] = {
-	{ VSP1_ENTITY_BRS, 0, VI6_DPR_ILV_BRS_ROUTE,
-	  { VI6_DPR_NODE_BRS_IN(0), VI6_DPR_NODE_BRS_IN(1) }, 0 },
-	{ VSP1_ENTITY_BRU, 0, VI6_DPR_BRU_ROUTE,
-	  { VI6_DPR_NODE_BRU_IN(0), VI6_DPR_NODE_BRU_IN(1),
+अटल स्थिर काष्ठा vsp1_route vsp1_routes[] = अणु
+	अणु VSP1_ENTITY_BRS, 0, VI6_DPR_ILV_BRS_ROUTE,
+	  अणु VI6_DPR_NODE_BRS_IN(0), VI6_DPR_NODE_BRS_IN(1) पूर्ण, 0 पूर्ण,
+	अणु VSP1_ENTITY_BRU, 0, VI6_DPR_BRU_ROUTE,
+	  अणु VI6_DPR_NODE_BRU_IN(0), VI6_DPR_NODE_BRU_IN(1),
 	    VI6_DPR_NODE_BRU_IN(2), VI6_DPR_NODE_BRU_IN(3),
-	    VI6_DPR_NODE_BRU_IN(4) }, VI6_DPR_NODE_BRU_OUT },
+	    VI6_DPR_NODE_BRU_IN(4) पूर्ण, VI6_DPR_NODE_BRU_OUT पूर्ण,
 	VSP1_ENTITY_ROUTE(CLU),
-	{ VSP1_ENTITY_HGO, 0, 0, { 0, }, 0 },
-	{ VSP1_ENTITY_HGT, 0, 0, { 0, }, 0 },
+	अणु VSP1_ENTITY_HGO, 0, 0, अणु 0, पूर्ण, 0 पूर्ण,
+	अणु VSP1_ENTITY_HGT, 0, 0, अणु 0, पूर्ण, 0 पूर्ण,
 	VSP1_ENTITY_ROUTE(HSI),
 	VSP1_ENTITY_ROUTE(HST),
-	{ VSP1_ENTITY_LIF, 0, 0, { 0, }, 0 },
-	{ VSP1_ENTITY_LIF, 1, 0, { 0, }, 0 },
+	अणु VSP1_ENTITY_LIF, 0, 0, अणु 0, पूर्ण, 0 पूर्ण,
+	अणु VSP1_ENTITY_LIF, 1, 0, अणु 0, पूर्ण, 0 पूर्ण,
 	VSP1_ENTITY_ROUTE(LUT),
 	VSP1_ENTITY_ROUTE_RPF(0),
 	VSP1_ENTITY_ROUTE_RPF(1),
@@ -598,32 +599,32 @@ static const struct vsp1_route vsp1_routes[] = {
 	VSP1_ENTITY_ROUTE_UDS(0),
 	VSP1_ENTITY_ROUTE_UDS(1),
 	VSP1_ENTITY_ROUTE_UDS(2),
-	VSP1_ENTITY_ROUTE_UIF(0),	/* Named UIF4 in the documentation */
-	VSP1_ENTITY_ROUTE_UIF(1),	/* Named UIF5 in the documentation */
+	VSP1_ENTITY_ROUTE_UIF(0),	/* Named UIF4 in the करोcumentation */
+	VSP1_ENTITY_ROUTE_UIF(1),	/* Named UIF5 in the करोcumentation */
 	VSP1_ENTITY_ROUTE_WPF(0),
 	VSP1_ENTITY_ROUTE_WPF(1),
 	VSP1_ENTITY_ROUTE_WPF(2),
 	VSP1_ENTITY_ROUTE_WPF(3),
-};
+पूर्ण;
 
-int vsp1_entity_init(struct vsp1_device *vsp1, struct vsp1_entity *entity,
-		     const char *name, unsigned int num_pads,
-		     const struct v4l2_subdev_ops *ops, u32 function)
-{
-	struct v4l2_subdev *subdev;
-	unsigned int i;
-	int ret;
+पूर्णांक vsp1_entity_init(काष्ठा vsp1_device *vsp1, काष्ठा vsp1_entity *entity,
+		     स्थिर अक्षर *name, अचिन्हित पूर्णांक num_pads,
+		     स्थिर काष्ठा v4l2_subdev_ops *ops, u32 function)
+अणु
+	काष्ठा v4l2_subdev *subdev;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = 0; i < ARRAY_SIZE(vsp1_routes); ++i) {
-		if (vsp1_routes[i].type == entity->type &&
-		    vsp1_routes[i].index == entity->index) {
+	क्रम (i = 0; i < ARRAY_SIZE(vsp1_routes); ++i) अणु
+		अगर (vsp1_routes[i].type == entity->type &&
+		    vsp1_routes[i].index == entity->index) अणु
 			entity->route = &vsp1_routes[i];
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i == ARRAY_SIZE(vsp1_routes))
-		return -EINVAL;
+	अगर (i == ARRAY_SIZE(vsp1_routes))
+		वापस -EINVAL;
 
 	mutex_init(&entity->lock);
 
@@ -631,19 +632,19 @@ int vsp1_entity_init(struct vsp1_device *vsp1, struct vsp1_entity *entity,
 	entity->source_pad = num_pads - 1;
 
 	/* Allocate and initialize pads. */
-	entity->pads = devm_kcalloc(vsp1->dev,
-				    num_pads, sizeof(*entity->pads),
+	entity->pads = devm_kसुस्मृति(vsp1->dev,
+				    num_pads, माप(*entity->pads),
 				    GFP_KERNEL);
-	if (entity->pads == NULL)
-		return -ENOMEM;
+	अगर (entity->pads == शून्य)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num_pads - 1; ++i)
+	क्रम (i = 0; i < num_pads - 1; ++i)
 		entity->pads[i].flags = MEDIA_PAD_FL_SINK;
 
-	entity->sources = devm_kcalloc(vsp1->dev, max(num_pads - 1, 1U),
-				       sizeof(*entity->sources), GFP_KERNEL);
-	if (entity->sources == NULL)
-		return -ENOMEM;
+	entity->sources = devm_kसुस्मृति(vsp1->dev, max(num_pads - 1, 1U),
+				       माप(*entity->sources), GFP_KERNEL);
+	अगर (entity->sources == शून्य)
+		वापस -ENOMEM;
 
 	/* Single-pad entities only have a sink. */
 	entity->pads[num_pads - 1].flags = num_pads > 1 ? MEDIA_PAD_FL_SOURCE
@@ -652,8 +653,8 @@ int vsp1_entity_init(struct vsp1_device *vsp1, struct vsp1_entity *entity,
 	/* Initialize the media entity. */
 	ret = media_entity_pads_init(&entity->subdev.entity, num_pads,
 				     entity->pads);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Initialize the V4L2 subdev. */
 	subdev = &entity->subdev;
@@ -663,30 +664,30 @@ int vsp1_entity_init(struct vsp1_device *vsp1, struct vsp1_entity *entity,
 	subdev->entity.ops = &vsp1->media_ops;
 	subdev->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 
-	snprintf(subdev->name, sizeof(subdev->name), "%s %s",
+	snम_लिखो(subdev->name, माप(subdev->name), "%s %s",
 		 dev_name(vsp1->dev), name);
 
-	vsp1_entity_init_cfg(subdev, NULL);
+	vsp1_entity_init_cfg(subdev, शून्य);
 
 	/*
-	 * Allocate the pad configuration to store formats and selection
+	 * Allocate the pad configuration to store क्रमmats and selection
 	 * rectangles.
 	 */
 	entity->config = v4l2_subdev_alloc_pad_config(&entity->subdev);
-	if (entity->config == NULL) {
+	अगर (entity->config == शून्य) अणु
 		media_entity_cleanup(&entity->subdev.entity);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void vsp1_entity_destroy(struct vsp1_entity *entity)
-{
-	if (entity->ops && entity->ops->destroy)
+व्योम vsp1_entity_destroy(काष्ठा vsp1_entity *entity)
+अणु
+	अगर (entity->ops && entity->ops->destroy)
 		entity->ops->destroy(entity);
-	if (entity->subdev.ctrl_handler)
-		v4l2_ctrl_handler_free(entity->subdev.ctrl_handler);
-	v4l2_subdev_free_pad_config(entity->config);
+	अगर (entity->subdev.ctrl_handler)
+		v4l2_ctrl_handler_मुक्त(entity->subdev.ctrl_handler);
+	v4l2_subdev_मुक्त_pad_config(entity->config);
 	media_entity_cleanup(&entity->subdev.entity);
-}
+पूर्ण

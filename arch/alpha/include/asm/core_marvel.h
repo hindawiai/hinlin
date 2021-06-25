@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Marvel systems use the IO7 I/O chip provides PCI/PCIX/AGP access
+ * Marvel प्रणालीs use the IO7 I/O chip provides PCI/PCIX/AGP access
  *
  * This file is based on:
  *
@@ -9,28 +10,28 @@
  * 14 May 2001
  */
 
-#ifndef __ALPHA_MARVEL__H__
-#define __ALPHA_MARVEL__H__
+#अगर_अघोषित __ALPHA_MARVEL__H__
+#घोषणा __ALPHA_MARVEL__H__
 
-#include <linux/types.h>
-#include <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/spinlock.h>
 
-#include <asm/compiler.h>
+#समावेश <यंत्र/compiler.h>
 
-#define MARVEL_MAX_PIDS		 32 /* as long as we rely on 43-bit superpage */
-#define MARVEL_IRQ_VEC_PE_SHIFT	(10)
-#define MARVEL_IRQ_VEC_IRQ_MASK	((1 << MARVEL_IRQ_VEC_PE_SHIFT) - 1)
-#define MARVEL_NR_IRQS		\
+#घोषणा MARVEL_MAX_PIDS		 32 /* as दीर्घ as we rely on 43-bit superpage */
+#घोषणा MARVEL_IRQ_VEC_PE_SHIFT	(10)
+#घोषणा MARVEL_IRQ_VEC_IRQ_MASK	((1 << MARVEL_IRQ_VEC_PE_SHIFT) - 1)
+#घोषणा MARVEL_NR_IRQS		\
 	(16 + (MARVEL_MAX_PIDS * (1 << MARVEL_IRQ_VEC_PE_SHIFT)))
 
 /*
  * EV7 RBOX Registers
  */
-typedef struct {
-	volatile unsigned long csr __attribute__((aligned(16)));
-} ev7_csr;
+प्रकार काष्ठा अणु
+	अस्थिर अचिन्हित दीर्घ csr __attribute__((aligned(16)));
+पूर्ण ev7_csr;
 
-typedef struct {
+प्रकार काष्ठा अणु
 	ev7_csr	RBOX_CFG;		/* 0x0000 */
 	ev7_csr	RBOX_NSVC;
 	ev7_csr	RBOX_EWVC;
@@ -45,33 +46,33 @@ typedef struct {
 	ev7_csr	RBOX_SCRATCH1;
 	ev7_csr	RBOX_SCRATCH2;		/* 0x00c0 */
 	ev7_csr	RBOX_L_ERR;
-} ev7_csrs;
+पूर्ण ev7_csrs;
 
 /*
  * EV7 CSR addressing macros
  */
-#define EV7_MASK40(addr)        ((addr) & ((1UL << 41) - 1))
-#define EV7_KERN_ADDR(addr)	((void *)(IDENT_ADDR | EV7_MASK40(addr)))
+#घोषणा EV7_MASK40(addr)        ((addr) & ((1UL << 41) - 1))
+#घोषणा EV7_KERN_ADDR(addr)	((व्योम *)(IDENT_ADDR | EV7_MASK40(addr)))
 
-#define EV7_PE_MASK		0x1ffUL /* 9 bits ( 256 + mem/io ) */
-#define EV7_IPE(pe)		((~((long)(pe)) & EV7_PE_MASK) << 35)
+#घोषणा EV7_PE_MASK		0x1ffUL /* 9 bits ( 256 + mem/io ) */
+#घोषणा EV7_IPE(pe)		((~((दीर्घ)(pe)) & EV7_PE_MASK) << 35)
 
-#define EV7_CSR_PHYS(pe, off)	(EV7_IPE(pe) | (0x7FFCUL << 20) | (off))
-#define EV7_CSRS_PHYS(pe)	(EV7_CSR_PHYS(pe, 0UL))
+#घोषणा EV7_CSR_PHYS(pe, off)	(EV7_IPE(pe) | (0x7FFCUL << 20) | (off))
+#घोषणा EV7_CSRS_PHYS(pe)	(EV7_CSR_PHYS(pe, 0UL))
 
-#define EV7_CSR_KERN(pe, off)	(EV7_KERN_ADDR(EV7_CSR_PHYS(pe, off)))
-#define EV7_CSRS_KERN(pe)	(EV7_KERN_ADDR(EV7_CSRS_PHYS(pe)))
+#घोषणा EV7_CSR_KERN(pe, off)	(EV7_KERN_ADDR(EV7_CSR_PHYS(pe, off)))
+#घोषणा EV7_CSRS_KERN(pe)	(EV7_KERN_ADDR(EV7_CSRS_PHYS(pe)))
 
-#define EV7_CSR_OFFSET(name)	((unsigned long)&((ev7_csrs *)NULL)->name.csr)
+#घोषणा EV7_CSR_OFFSET(name)	((अचिन्हित दीर्घ)&((ev7_csrs *)शून्य)->name.csr)
 
 /*
- * IO7 registers
+ * IO7 रेजिस्टरs
  */
-typedef struct {
-	volatile unsigned long csr __attribute__((aligned(64)));
-} io7_csr;
+प्रकार काष्ठा अणु
+	अस्थिर अचिन्हित दीर्घ csr __attribute__((aligned(64)));
+पूर्ण io7_csr;
 
-typedef struct {
+प्रकार काष्ठा अणु
 	/* I/O Port Control Registers */
 	io7_csr	POx_CTRL;	       	/* 0x0000 */
 	io7_csr	POx_CACHE_CTL;
@@ -79,7 +80,7 @@ typedef struct {
 	io7_csr POx_IO_ADR_EXT;
 	io7_csr	POx_MEM_ADR_EXT;	/* 0x0100 */
 	io7_csr POx_XCAL_CTRL;
-	io7_csr rsvd1[2];	/* ?? spec doesn't show 0x180 */
+	io7_csr rsvd1[2];	/* ?? spec करोesn't show 0x180 */
 	io7_csr POx_DM_SOURCE;		/* 0x0200 */
 	io7_csr POx_DM_DEST;
 	io7_csr POx_DM_SIZE;
@@ -106,7 +107,7 @@ typedef struct {
 	io7_csr POx_THRESHB;
 	io7_csr rsvd5[33];
 
-	/* System Address Space Window Control Registers */
+	/* System Address Space Winकरोw Control Registers */
 
 	io7_csr POx_WBASE[4];		/* 0x1000 */
 	io7_csr POx_WMASK[4];
@@ -131,9 +132,9 @@ typedef struct {
 	io7_csr rsvd8[7];
 	io7_csr POx_IACK_SPECIAL;
 	io7_csr rsvd9[103];
-} io7_ioport_csrs;
+पूर्ण io7_ioport_csrs;
 
-typedef struct {
+प्रकार काष्ठा अणु
 	io7_csr IO_ASIC_REV;		/* 0x30.0000 */
 	io7_csr IO_SYS_REV;
 	io7_csr SER_CHAIN3;
@@ -185,141 +186,141 @@ typedef struct {
 	/*
 	 * Interrupt Diagnostic / Test
 	 */
-	struct {
+	काष्ठा अणु
 		io7_csr INT_PND;
 		io7_csr INT_CLR;
 		io7_csr INT_EOI;
 		io7_csr rsvd[29];
-	} INT_DIAG[4];
+	पूर्ण INT_DIAG[4];
 	io7_csr rsvd5[125];	    	/* 0x31.a000 */
 	io7_csr MISC_PND;		/* 0x31.b800 */
 	io7_csr rsvd6[31];
 	io7_csr MSI_PND[16];		/* 0x31.c000 */
 	io7_csr rsvd7[16];
 	io7_csr MSI_CLR[16];		/* 0x31.c800 */
-} io7_port7_csrs;
+पूर्ण io7_port7_csrs;
 
 /* 
- * IO7 DMA Window Base register (POx_WBASEx)
+ * IO7 DMA Winकरोw Base रेजिस्टर (POx_WBASEx)
  */
-#define wbase_m_ena  0x1
-#define wbase_m_sg   0x2
-#define wbase_m_dac  0x4
-#define wbase_m_addr 0xFFF00000
-union IO7_POx_WBASE {
-	struct {
-		unsigned ena : 1;	/* <0>			*/
-		unsigned sg : 1;	/* <1>			*/
-		unsigned dac : 1;	/* <2> -- window 3 only */
-		unsigned rsvd1 : 17; 
-		unsigned addr : 12;	/* <31:20>		*/
-		unsigned rsvd2 : 32;
-	} bits;
-	unsigned as_long[2];
-	unsigned as_quad;
-};
+#घोषणा wbase_m_ena  0x1
+#घोषणा wbase_m_sg   0x2
+#घोषणा wbase_m_dac  0x4
+#घोषणा wbase_m_addr 0xFFF00000
+जोड़ IO7_POx_WBASE अणु
+	काष्ठा अणु
+		अचिन्हित ena : 1;	/* <0>			*/
+		अचिन्हित sg : 1;	/* <1>			*/
+		अचिन्हित dac : 1;	/* <2> -- winकरोw 3 only */
+		अचिन्हित rsvd1 : 17; 
+		अचिन्हित addr : 12;	/* <31:20>		*/
+		अचिन्हित rsvd2 : 32;
+	पूर्ण bits;
+	अचिन्हित as_दीर्घ[2];
+	अचिन्हित as_quad;
+पूर्ण;
 
 /*
- * IO7 IID (Interrupt IDentifier) format
+ * IO7 IID (Interrupt IDentअगरier) क्रमmat
  *
- * For level-sensative interrupts, int_num is encoded as:
+ * For level-sensative पूर्णांकerrupts, पूर्णांक_num is encoded as:
  *
  *	bus/port	slot/device	INTx
  *	<7:5>		<4:2>		<1:0>
  */
-union IO7_IID {
-	struct {
-		unsigned int_num : 9;		/* <8:0>    	*/
-		unsigned tpu_mask : 4;		/* <12:9> rsvd	*/
-		unsigned msi : 1;		/* 13		*/
-		unsigned ipe : 10;		/* <23:14>	*/
-		unsigned long rsvd : 40;		
-	} bits;
-	unsigned int as_long[2];
-	unsigned long as_quad;
-};
+जोड़ IO7_IID अणु
+	काष्ठा अणु
+		अचिन्हित पूर्णांक_num : 9;		/* <8:0>    	*/
+		अचिन्हित tpu_mask : 4;		/* <12:9> rsvd	*/
+		अचिन्हित msi : 1;		/* 13		*/
+		अचिन्हित ipe : 10;		/* <23:14>	*/
+		अचिन्हित दीर्घ rsvd : 40;		
+	पूर्ण bits;
+	अचिन्हित पूर्णांक as_दीर्घ[2];
+	अचिन्हित दीर्घ as_quad;
+पूर्ण;
 
 /*
  * IO7 addressing macros
  */
-#define IO7_KERN_ADDR(addr)	(EV7_KERN_ADDR(addr))
+#घोषणा IO7_KERN_ADDR(addr)	(EV7_KERN_ADDR(addr))
 
-#define IO7_PORT_MASK	   	0x07UL	/* 3 bits of port 	   */
+#घोषणा IO7_PORT_MASK	   	0x07UL	/* 3 bits of port 	   */
 
-#define IO7_IPE(pe)		(EV7_IPE(pe))
-#define IO7_IPORT(port)		((~((long)(port)) & IO7_PORT_MASK) << 32)
+#घोषणा IO7_IPE(pe)		(EV7_IPE(pe))
+#घोषणा IO7_IPORT(port)		((~((दीर्घ)(port)) & IO7_PORT_MASK) << 32)
 
-#define IO7_HOSE(pe, port)	(IO7_IPE(pe) | IO7_IPORT(port))
+#घोषणा IO7_HOSE(pe, port)	(IO7_IPE(pe) | IO7_IPORT(port))
 
-#define IO7_MEM_PHYS(pe, port)	(IO7_HOSE(pe, port) | 0x00000000UL)
-#define IO7_CONF_PHYS(pe, port)	(IO7_HOSE(pe, port) | 0xFE000000UL)
-#define IO7_IO_PHYS(pe, port)	(IO7_HOSE(pe, port) | 0xFF000000UL)
-#define IO7_CSR_PHYS(pe, port, off) \
+#घोषणा IO7_MEM_PHYS(pe, port)	(IO7_HOSE(pe, port) | 0x00000000UL)
+#घोषणा IO7_CONF_PHYS(pe, port)	(IO7_HOSE(pe, port) | 0xFE000000UL)
+#घोषणा IO7_IO_PHYS(pe, port)	(IO7_HOSE(pe, port) | 0xFF000000UL)
+#घोषणा IO7_CSR_PHYS(pe, port, off) \
                                 (IO7_HOSE(pe, port) | 0xFF800000UL | (off))
-#define IO7_CSRS_PHYS(pe, port)	(IO7_CSR_PHYS(pe, port, 0UL))
-#define IO7_PORT7_CSRS_PHYS(pe) (IO7_CSR_PHYS(pe, 7, 0x300000UL))
+#घोषणा IO7_CSRS_PHYS(pe, port)	(IO7_CSR_PHYS(pe, port, 0UL))
+#घोषणा IO7_PORT7_CSRS_PHYS(pe) (IO7_CSR_PHYS(pe, 7, 0x300000UL))
 
-#define IO7_MEM_KERN(pe, port)      (IO7_KERN_ADDR(IO7_MEM_PHYS(pe, port)))
-#define IO7_CONF_KERN(pe, port)     (IO7_KERN_ADDR(IO7_CONF_PHYS(pe, port)))
-#define IO7_IO_KERN(pe, port)       (IO7_KERN_ADDR(IO7_IO_PHYS(pe, port)))
-#define IO7_CSR_KERN(pe, port, off) (IO7_KERN_ADDR(IO7_CSR_PHYS(pe,port,off)))
-#define IO7_CSRS_KERN(pe, port)     (IO7_KERN_ADDR(IO7_CSRS_PHYS(pe, port)))
-#define IO7_PORT7_CSRS_KERN(pe)	    (IO7_KERN_ADDR(IO7_PORT7_CSRS_PHYS(pe)))
+#घोषणा IO7_MEM_KERN(pe, port)      (IO7_KERN_ADDR(IO7_MEM_PHYS(pe, port)))
+#घोषणा IO7_CONF_KERN(pe, port)     (IO7_KERN_ADDR(IO7_CONF_PHYS(pe, port)))
+#घोषणा IO7_IO_KERN(pe, port)       (IO7_KERN_ADDR(IO7_IO_PHYS(pe, port)))
+#घोषणा IO7_CSR_KERN(pe, port, off) (IO7_KERN_ADDR(IO7_CSR_PHYS(pe,port,off)))
+#घोषणा IO7_CSRS_KERN(pe, port)     (IO7_KERN_ADDR(IO7_CSRS_PHYS(pe, port)))
+#घोषणा IO7_PORT7_CSRS_KERN(pe)	    (IO7_KERN_ADDR(IO7_PORT7_CSRS_PHYS(pe)))
 
-#define IO7_PLL_RNGA(pll)	(((pll) >> 3) & 0x7)
-#define IO7_PLL_RNGB(pll)	(((pll) >> 6) & 0x7)
+#घोषणा IO7_PLL_RNGA(pll)	(((pll) >> 3) & 0x7)
+#घोषणा IO7_PLL_RNGB(pll)	(((pll) >> 6) & 0x7)
 
-#define IO7_MEM_SPACE		(2UL * 1024 * 1024 * 1024)	/* 2GB MEM */
-#define IO7_IO_SPACE		(8UL * 1024 * 1024)		/* 8MB I/O */
+#घोषणा IO7_MEM_SPACE		(2UL * 1024 * 1024 * 1024)	/* 2GB MEM */
+#घोषणा IO7_IO_SPACE		(8UL * 1024 * 1024)		/* 8MB I/O */
 
  
 /* 
  * Offset between ram physical addresses and pci64 DAC addresses
  */
-#define IO7_DAC_OFFSET		(1UL << 49)
+#घोषणा IO7_DAC_OFFSET		(1UL << 49)
 
 /*
- * This is needed to satisify the IO() macro used in initializing the machvec
+ * This is needed to satisअगरy the IO() macro used in initializing the machvec
  */
-#define MARVEL_IACK_SC 							\
-        ((unsigned long)						\
+#घोषणा MARVEL_IACK_SC 							\
+        ((अचिन्हित दीर्घ)						\
 	 (&(((io7_ioport_csrs *)IO7_CSRS_KERN(0, 0))->POx_IACK_SPECIAL)))
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
 /*
- * IO7 structs
+ * IO7 काष्ठाs
  */
-#define IO7_NUM_PORTS 4
-#define IO7_AGP_PORT  3
+#घोषणा IO7_NUM_PORTS 4
+#घोषणा IO7_AGP_PORT  3
 
-struct io7_port {
-	struct io7 *io7;
-	struct pci_controller *hose;
+काष्ठा io7_port अणु
+	काष्ठा io7 *io7;
+	काष्ठा pci_controller *hose;
 
-	int enabled;
-	unsigned int port;
+	पूर्णांक enabled;
+	अचिन्हित पूर्णांक port;
 	io7_ioport_csrs *csrs;
 
-	unsigned long saved_wbase[4];
-	unsigned long saved_wmask[4];
-	unsigned long saved_tbase[4];
-};
+	अचिन्हित दीर्घ saved_wbase[4];
+	अचिन्हित दीर्घ saved_wmask[4];
+	अचिन्हित दीर्घ saved_tbase[4];
+पूर्ण;
 
-struct io7 {
-	struct io7 *next;
+काष्ठा io7 अणु
+	काष्ठा io7 *next;
 
-	unsigned int pe;
+	अचिन्हित पूर्णांक pe;
 	io7_port7_csrs *csrs;
-	struct io7_port ports[IO7_NUM_PORTS];
+	काष्ठा io7_port ports[IO7_NUM_PORTS];
 
 	raw_spinlock_t irq_lock;
-};
+पूर्ण;
 
-#ifndef __EXTERN_INLINE
-# define __EXTERN_INLINE extern inline
+#अगर_अघोषित __EXTERN_INLINE
+# define __EXTERN_INLINE बाह्य अंतरभूत
 # define __IO_EXTERN_INLINE
-#endif
+#पूर्ण_अगर
 
 /*
  * I/O functions. All access through linear space.
@@ -329,50 +330,50 @@ struct io7 {
  * Memory functions.  All accesses through linear space.
  */
 
-#define vucp	volatile unsigned char __force *
-#define vusp	volatile unsigned short __force *
+#घोषणा vucp	अस्थिर अचिन्हित अक्षर __क्रमce *
+#घोषणा vusp	अस्थिर अचिन्हित लघु __क्रमce *
 
-extern unsigned int marvel_ioread8(const void __iomem *);
-extern void marvel_iowrite8(u8 b, void __iomem *);
+बाह्य अचिन्हित पूर्णांक marvel_ioपढ़ो8(स्थिर व्योम __iomem *);
+बाह्य व्योम marvel_ioग_लिखो8(u8 b, व्योम __iomem *);
 
-__EXTERN_INLINE unsigned int marvel_ioread16(const void __iomem *addr)
-{
-	return __kernel_ldwu(*(vusp)addr);
-}
+__EXTERN_INLINE अचिन्हित पूर्णांक marvel_ioपढ़ो16(स्थिर व्योम __iomem *addr)
+अणु
+	वापस __kernel_ldwu(*(vusp)addr);
+पूर्ण
 
-__EXTERN_INLINE void marvel_iowrite16(u16 b, void __iomem *addr)
-{
+__EXTERN_INLINE व्योम marvel_ioग_लिखो16(u16 b, व्योम __iomem *addr)
+अणु
 	__kernel_stw(b, *(vusp)addr);
-}
+पूर्ण
 
-extern void __iomem *marvel_ioremap(unsigned long addr, unsigned long size);
-extern void marvel_iounmap(volatile void __iomem *addr);
-extern void __iomem *marvel_ioportmap (unsigned long addr);
+बाह्य व्योम __iomem *marvel_ioremap(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size);
+बाह्य व्योम marvel_iounmap(अस्थिर व्योम __iomem *addr);
+बाह्य व्योम __iomem *marvel_ioporपंचांगap (अचिन्हित दीर्घ addr);
 
-__EXTERN_INLINE int marvel_is_ioaddr(unsigned long addr)
-{
-	return (addr >> 40) & 1;
-}
+__EXTERN_INLINE पूर्णांक marvel_is_ioaddr(अचिन्हित दीर्घ addr)
+अणु
+	वापस (addr >> 40) & 1;
+पूर्ण
 
-extern int marvel_is_mmio(const volatile void __iomem *);
+बाह्य पूर्णांक marvel_is_mmio(स्थिर अस्थिर व्योम __iomem *);
 
-#undef vucp
-#undef vusp
+#अघोषित vucp
+#अघोषित vusp
 
-#undef __IO_PREFIX
-#define __IO_PREFIX		marvel
-#define marvel_trivial_rw_bw	1
-#define marvel_trivial_rw_lq	1
-#define marvel_trivial_io_bw	0
-#define marvel_trivial_io_lq	1
-#define marvel_trivial_iounmap	0
-#include <asm/io_trivial.h>
+#अघोषित __IO_PREFIX
+#घोषणा __IO_PREFIX		marvel
+#घोषणा marvel_trivial_rw_bw	1
+#घोषणा marvel_trivial_rw_lq	1
+#घोषणा marvel_trivial_io_bw	0
+#घोषणा marvel_trivial_io_lq	1
+#घोषणा marvel_trivial_iounmap	0
+#समावेश <यंत्र/io_trivial.h>
 
-#ifdef __IO_EXTERN_INLINE
+#अगर_घोषित __IO_EXTERN_INLINE
 # undef __EXTERN_INLINE
 # undef __IO_EXTERN_INLINE
-#endif
+#पूर्ण_अगर
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif /* __ALPHA_MARVEL__H__ */
+#पूर्ण_अगर /* __ALPHA_MARVEL__H__ */

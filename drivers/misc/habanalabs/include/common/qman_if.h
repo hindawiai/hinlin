@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
- * Copyright 2016-2018 HabanaLabs, Ltd.
+ * Copyright 2016-2018 HabanaLअसल, Ltd.
  * All Rights Reserved.
  *
  */
 
-#ifndef QMAN_IF_H
-#define QMAN_IF_H
+#अगर_अघोषित QMAN_IF_H
+#घोषणा QMAN_IF_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
  * PRIMARY QUEUE
  */
 
-struct hl_bd {
+काष्ठा hl_bd अणु
 	__le64	ptr;
 	__le32	len;
 	__le32	ctl;
-};
+पूर्ण;
 
-#define HL_BD_SIZE			sizeof(struct hl_bd)
+#घोषणा HL_BD_SIZE			माप(काष्ठा hl_bd)
 
 /*
  * S/W CTL FIELDS.
@@ -29,40 +30,40 @@ struct hl_bd {
  * valid. 1 means the repeat field is valid, 0 means not-valid,
  * i.e. repeat == 1
  */
-#define BD_CTL_REPEAT_VALID_SHIFT	24
-#define BD_CTL_REPEAT_VALID_MASK	0x01000000
+#घोषणा BD_CTL_REPEAT_VALID_SHIFT	24
+#घोषणा BD_CTL_REPEAT_VALID_MASK	0x01000000
 
-#define BD_CTL_SHADOW_INDEX_SHIFT	0
-#define BD_CTL_SHADOW_INDEX_MASK	0x00000FFF
+#घोषणा BD_CTL_SHADOW_INDEX_SHIFT	0
+#घोषणा BD_CTL_SHADOW_INDEX_MASK	0x00000FFF
 
 /*
  * H/W CTL FIELDS
  */
 
-#define BD_CTL_COMP_OFFSET_SHIFT	16
-#define BD_CTL_COMP_OFFSET_MASK		0x0FFF0000
+#घोषणा BD_CTL_COMP_OFFSET_SHIFT	16
+#घोषणा BD_CTL_COMP_OFFSET_MASK		0x0FFF0000
 
-#define BD_CTL_COMP_DATA_SHIFT		0
-#define BD_CTL_COMP_DATA_MASK		0x0000FFFF
+#घोषणा BD_CTL_COMP_DATA_SHIFT		0
+#घोषणा BD_CTL_COMP_DATA_MASK		0x0000FFFF
 
 /*
  * COMPLETION QUEUE
  */
 
-struct hl_cq_entry {
+काष्ठा hl_cq_entry अणु
 	__le32	data;
-};
+पूर्ण;
 
-#define HL_CQ_ENTRY_SIZE		sizeof(struct hl_cq_entry)
+#घोषणा HL_CQ_ENTRY_SIZE		माप(काष्ठा hl_cq_entry)
 
-#define CQ_ENTRY_READY_SHIFT			31
-#define CQ_ENTRY_READY_MASK			0x80000000
+#घोषणा CQ_ENTRY_READY_SHIFT			31
+#घोषणा CQ_ENTRY_READY_MASK			0x80000000
 
-#define CQ_ENTRY_SHADOW_INDEX_VALID_SHIFT	30
-#define CQ_ENTRY_SHADOW_INDEX_VALID_MASK	0x40000000
+#घोषणा CQ_ENTRY_SHADOW_INDEX_VALID_SHIFT	30
+#घोषणा CQ_ENTRY_SHADOW_INDEX_VALID_MASK	0x40000000
 
-#define CQ_ENTRY_SHADOW_INDEX_SHIFT		BD_CTL_SHADOW_INDEX_SHIFT
-#define CQ_ENTRY_SHADOW_INDEX_MASK		BD_CTL_SHADOW_INDEX_MASK
+#घोषणा CQ_ENTRY_SHADOW_INDEX_SHIFT		BD_CTL_SHADOW_INDEX_SHIFT
+#घोषणा CQ_ENTRY_SHADOW_INDEX_MASK		BD_CTL_SHADOW_INDEX_MASK
 
 
-#endif /* QMAN_IF_H */
+#पूर्ण_अगर /* QMAN_IF_H */

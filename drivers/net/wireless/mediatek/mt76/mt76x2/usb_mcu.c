@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
-#include <linux/firmware.h>
+#समावेश <linux/firmware.h>
 
-#include "mt76x2u.h"
-#include "eeprom.h"
-#include "../mt76x02_usb.h"
+#समावेश "mt76x2u.h"
+#समावेश "eeprom.h"
+#समावेश "../mt76x02_usb.h"
 
-#define MT_CMD_HDR_LEN			4
+#घोषणा MT_CMD_HDR_LEN			4
 
-#define MCU_FW_URB_MAX_PAYLOAD		0x3900
-#define MCU_ROM_PATCH_MAX_PAYLOAD	2048
+#घोषणा MCU_FW_URB_MAX_PAYLOAD		0x3900
+#घोषणा MCU_ROM_PATCH_MAX_PAYLOAD	2048
 
-#define MT76U_MCU_ILM_OFFSET		0x80000
-#define MT76U_MCU_DLM_OFFSET		0x110000
-#define MT76U_MCU_ROM_PATCH_OFFSET	0x90000
+#घोषणा MT76U_MCU_ILM_OFFSET		0x80000
+#घोषणा MT76U_MCU_DLM_OFFSET		0x110000
+#घोषणा MT76U_MCU_ROM_PATCH_OFFSET	0x90000
 
-static void mt76x2u_mcu_load_ivb(struct mt76x02_dev *dev)
-{
-	mt76u_vendor_request(&dev->mt76, MT_VEND_DEV_MODE,
-			     USB_DIR_OUT | USB_TYPE_VENDOR,
-			     0x12, 0, NULL, 0);
-}
+अटल व्योम mt76x2u_mcu_load_ivb(काष्ठा mt76x02_dev *dev)
+अणु
+	mt76u_venकरोr_request(&dev->mt76, MT_VEND_DEV_MODE,
+			     USB_सूची_OUT | USB_TYPE_VENDOR,
+			     0x12, 0, शून्य, 0);
+पूर्ण
 
-static void mt76x2u_mcu_enable_patch(struct mt76x02_dev *dev)
-{
-	struct mt76_usb *usb = &dev->mt76.usb;
-	static const u8 data[] = {
+अटल व्योम mt76x2u_mcu_enable_patch(काष्ठा mt76x02_dev *dev)
+अणु
+	काष्ठा mt76_usb *usb = &dev->mt76.usb;
+	अटल स्थिर u8 data[] = अणु
 		0x6f, 0xfc, 0x08, 0x01,
 		0x20, 0x04, 0x00, 0x00,
 		0x00, 0x09, 0x00,
-	};
+	पूर्ण;
 
-	memcpy(usb->data, data, sizeof(data));
-	mt76u_vendor_request(&dev->mt76, MT_VEND_DEV_MODE,
-			     USB_DIR_OUT | USB_TYPE_CLASS,
-			     0x12, 0, usb->data, sizeof(data));
-}
+	स_नकल(usb->data, data, माप(data));
+	mt76u_venकरोr_request(&dev->mt76, MT_VEND_DEV_MODE,
+			     USB_सूची_OUT | USB_TYPE_CLASS,
+			     0x12, 0, usb->data, माप(data));
+पूर्ण
 
-static void mt76x2u_mcu_reset_wmt(struct mt76x02_dev *dev)
-{
-	struct mt76_usb *usb = &dev->mt76.usb;
-	u8 data[] = {
+अटल व्योम mt76x2u_mcu_reset_wmt(काष्ठा mt76x02_dev *dev)
+अणु
+	काष्ठा mt76_usb *usb = &dev->mt76.usb;
+	u8 data[] = अणु
 		0x6f, 0xfc, 0x05, 0x01,
 		0x07, 0x01, 0x00, 0x04
-	};
+	पूर्ण;
 
-	memcpy(usb->data, data, sizeof(data));
-	mt76u_vendor_request(&dev->mt76, MT_VEND_DEV_MODE,
-			     USB_DIR_OUT | USB_TYPE_CLASS,
-			     0x12, 0, usb->data, sizeof(data));
-}
+	स_नकल(usb->data, data, माप(data));
+	mt76u_venकरोr_request(&dev->mt76, MT_VEND_DEV_MODE,
+			     USB_सूची_OUT | USB_TYPE_CLASS,
+			     0x12, 0, usb->data, माप(data));
+पूर्ण
 
-static int mt76x2u_mcu_load_rom_patch(struct mt76x02_dev *dev)
-{
+अटल पूर्णांक mt76x2u_mcu_load_rom_patch(काष्ठा mt76x02_dev *dev)
+अणु
 	bool rom_protect = !is_mt7612(dev);
-	struct mt76x02_patch_header *hdr;
+	काष्ठा mt76x02_patch_header *hdr;
 	u32 val, patch_mask, patch_reg;
-	const struct firmware *fw;
-	int err;
+	स्थिर काष्ठा firmware *fw;
+	पूर्णांक err;
 
-	if (rom_protect &&
-	    !mt76_poll_msec(dev, MT_MCU_SEMAPHORE_03, 1, 1, 600)) {
+	अगर (rom_protect &&
+	    !mt76_poll_msec(dev, MT_MCU_SEMAPHORE_03, 1, 1, 600)) अणु
 		dev_err(dev->mt76.dev,
 			"could not get hardware semaphore for ROM PATCH\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	if (mt76xx_rev(dev) >= MT76XX_REV_E3) {
+	अगर (mt76xx_rev(dev) >= MT76XX_REV_E3) अणु
 		patch_mask = BIT(0);
 		patch_reg = MT_MCU_CLOCK_CTL;
-	} else {
+	पूर्ण अन्यथा अणु
 		patch_mask = BIT(1);
 		patch_reg = MT_MCU_COM_REG0;
-	}
+	पूर्ण
 
-	if (rom_protect && (mt76_rr(dev, patch_reg) & patch_mask)) {
+	अगर (rom_protect && (mt76_rr(dev, patch_reg) & patch_mask)) अणु
 		dev_info(dev->mt76.dev, "ROM patch already applied\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	err = request_firmware(&fw, MT7662_ROM_PATCH, dev->mt76.dev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (!fw || !fw->data || fw->size <= sizeof(*hdr)) {
+	अगर (!fw || !fw->data || fw->size <= माप(*hdr)) अणु
 		dev_err(dev->mt76.dev, "failed to load firmware\n");
 		err = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	hdr = (struct mt76x02_patch_header *)fw->data;
-	dev_info(dev->mt76.dev, "ROM patch build: %.15s\n", hdr->build_time);
+	hdr = (काष्ठा mt76x02_patch_header *)fw->data;
+	dev_info(dev->mt76.dev, "ROM patch build: %.15s\n", hdr->build_समय);
 
 	/* enable USB_DMA_CFG */
 	val = MT_USB_DMA_CFG_RX_BULK_EN |
@@ -101,7 +102,7 @@ static int mt76x2u_mcu_load_rom_patch(struct mt76x02_dev *dev)
 	      FIELD_PREP(MT_USB_DMA_CFG_RX_BULK_AGG_TOUT, 0x20);
 	mt76_wr(dev, MT_VEND_ADDR(CFG, MT_USB_U3DMA_CFG), val);
 
-	/* vendor reset */
+	/* venकरोr reset */
 	mt76x02u_mcu_fw_reset(dev);
 	usleep_range(5000, 10000);
 
@@ -116,55 +117,55 @@ static int mt76x2u_mcu_load_rom_patch(struct mt76x02_dev *dev)
 	/* FCE skip_fs_en */
 	mt76_wr(dev, MT_FCE_SKIP_FS, 0x3);
 
-	err = mt76x02u_mcu_fw_send_data(dev, fw->data + sizeof(*hdr),
-					fw->size - sizeof(*hdr),
+	err = mt76x02u_mcu_fw_send_data(dev, fw->data + माप(*hdr),
+					fw->size - माप(*hdr),
 					MCU_ROM_PATCH_MAX_PAYLOAD,
 					MT76U_MCU_ROM_PATCH_OFFSET);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		err = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mt76x2u_mcu_enable_patch(dev);
 	mt76x2u_mcu_reset_wmt(dev);
 	mdelay(20);
 
-	if (!mt76_poll_msec(dev, patch_reg, patch_mask, patch_mask, 100)) {
+	अगर (!mt76_poll_msec(dev, patch_reg, patch_mask, patch_mask, 100)) अणु
 		dev_err(dev->mt76.dev, "failed to load ROM patch\n");
 		err = -ETIMEDOUT;
-	}
+	पूर्ण
 
 out:
-	if (rom_protect)
+	अगर (rom_protect)
 		mt76_wr(dev, MT_MCU_SEMAPHORE_03, 1);
 	release_firmware(fw);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mt76x2u_mcu_load_firmware(struct mt76x02_dev *dev)
-{
+अटल पूर्णांक mt76x2u_mcu_load_firmware(काष्ठा mt76x02_dev *dev)
+अणु
 	u32 val, dlm_offset = MT76U_MCU_DLM_OFFSET;
-	const struct mt76x02_fw_header *hdr;
-	int err, len, ilm_len, dlm_len;
-	const struct firmware *fw;
+	स्थिर काष्ठा mt76x02_fw_header *hdr;
+	पूर्णांक err, len, ilm_len, dlm_len;
+	स्थिर काष्ठा firmware *fw;
 
 	err = request_firmware(&fw, MT7662_FIRMWARE, dev->mt76.dev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (!fw || !fw->data || fw->size < sizeof(*hdr)) {
+	अगर (!fw || !fw->data || fw->size < माप(*hdr)) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	hdr = (const struct mt76x02_fw_header *)fw->data;
+	hdr = (स्थिर काष्ठा mt76x02_fw_header *)fw->data;
 	ilm_len = le32_to_cpu(hdr->ilm_len);
 	dlm_len = le32_to_cpu(hdr->dlm_len);
-	len = sizeof(*hdr) + ilm_len + dlm_len;
-	if (fw->size != len) {
+	len = माप(*hdr) + ilm_len + dlm_len;
+	अगर (fw->size != len) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	val = le16_to_cpu(hdr->fw_ver);
 	dev_info(dev->mt76.dev, "Firmware Version: %d.%d.%02d\n",
@@ -172,9 +173,9 @@ static int mt76x2u_mcu_load_firmware(struct mt76x02_dev *dev)
 
 	val = le16_to_cpu(hdr->build_ver);
 	dev_info(dev->mt76.dev, "Build: %x\n", val);
-	dev_info(dev->mt76.dev, "Build Time: %.16s\n", hdr->build_time);
+	dev_info(dev->mt76.dev, "Build Time: %.16s\n", hdr->build_समय);
 
-	/* vendor reset */
+	/* venकरोr reset */
 	mt76x02u_mcu_fw_reset(dev);
 	usleep_range(5000, 10000);
 
@@ -195,31 +196,31 @@ static int mt76x2u_mcu_load_firmware(struct mt76x02_dev *dev)
 	mt76_wr(dev, MT_FCE_SKIP_FS, 0x3);
 
 	/* load ILM */
-	err = mt76x02u_mcu_fw_send_data(dev, fw->data + sizeof(*hdr),
+	err = mt76x02u_mcu_fw_send_data(dev, fw->data + माप(*hdr),
 					ilm_len, MCU_FW_URB_MAX_PAYLOAD,
 					MT76U_MCU_ILM_OFFSET);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		err = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* load DLM */
-	if (mt76xx_rev(dev) >= MT76XX_REV_E3)
+	अगर (mt76xx_rev(dev) >= MT76XX_REV_E3)
 		dlm_offset += 0x800;
-	err = mt76x02u_mcu_fw_send_data(dev, fw->data + sizeof(*hdr) + ilm_len,
+	err = mt76x02u_mcu_fw_send_data(dev, fw->data + माप(*hdr) + ilm_len,
 					dlm_len, MCU_FW_URB_MAX_PAYLOAD,
 					dlm_offset);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		err = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mt76x2u_mcu_load_ivb(dev);
-	if (!mt76_poll_msec(dev, MT_MCU_COM_REG0, 1, 1, 100)) {
+	अगर (!mt76_poll_msec(dev, MT_MCU_COM_REG0, 1, 1, 100)) अणु
 		dev_err(dev->mt76.dev, "firmware failed to start\n");
 		err = -ETIMEDOUT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mt76_set(dev, MT_MCU_COM_REG0, BIT(1));
 	/* enable FCE to send in-band cmd */
@@ -229,27 +230,27 @@ static int mt76x2u_mcu_load_firmware(struct mt76x02_dev *dev)
 
 out:
 	release_firmware(fw);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mt76x2u_mcu_fw_init(struct mt76x02_dev *dev)
-{
-	int err;
+पूर्णांक mt76x2u_mcu_fw_init(काष्ठा mt76x02_dev *dev)
+अणु
+	पूर्णांक err;
 
 	err = mt76x2u_mcu_load_rom_patch(dev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return mt76x2u_mcu_load_firmware(dev);
-}
+	वापस mt76x2u_mcu_load_firmware(dev);
+पूर्ण
 
-int mt76x2u_mcu_init(struct mt76x02_dev *dev)
-{
-	int err;
+पूर्णांक mt76x2u_mcu_init(काष्ठा mt76x02_dev *dev)
+अणु
+	पूर्णांक err;
 
 	err = mt76x02_mcu_function_select(dev, Q_SELECT, 1);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return mt76x02_mcu_set_radio_state(dev, true);
-}
+	वापस mt76x02_mcu_set_radio_state(dev, true);
+पूर्ण

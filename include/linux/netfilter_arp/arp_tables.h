@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * 	Format of an ARP firewall descriptor
  *
@@ -6,75 +7,75 @@
  *	network byte order.
  * 	flags are stored in host byte order (of course).
  */
-#ifndef _ARPTABLES_H
-#define _ARPTABLES_H
+#अगर_अघोषित _ARPTABLES_H
+#घोषणा _ARPTABLES_H
 
-#include <linux/if.h>
-#include <linux/in.h>
-#include <linux/if_arp.h>
-#include <linux/skbuff.h>
-#include <uapi/linux/netfilter_arp/arp_tables.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/in.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/skbuff.h>
+#समावेश <uapi/linux/netfilter_arp/arp_tables.h>
 
 /* Standard entry. */
-struct arpt_standard {
-	struct arpt_entry entry;
-	struct xt_standard_target target;
-};
+काष्ठा arpt_standard अणु
+	काष्ठा arpt_entry entry;
+	काष्ठा xt_standard_target target;
+पूर्ण;
 
-struct arpt_error {
-	struct arpt_entry entry;
-	struct xt_error_target target;
-};
+काष्ठा arpt_error अणु
+	काष्ठा arpt_entry entry;
+	काष्ठा xt_error_target target;
+पूर्ण;
 
-#define ARPT_ENTRY_INIT(__size)						       \
-{									       \
-	.target_offset	= sizeof(struct arpt_entry),			       \
+#घोषणा ARPT_ENTRY_INIT(__size)						       \
+अणु									       \
+	.target_offset	= माप(काष्ठा arpt_entry),			       \
 	.next_offset	= (__size),					       \
-}
+पूर्ण
 
-#define ARPT_STANDARD_INIT(__verdict)					       \
-{									       \
-	.entry		= ARPT_ENTRY_INIT(sizeof(struct arpt_standard)),       \
+#घोषणा ARPT_STANDARD_INIT(__verdict)					       \
+अणु									       \
+	.entry		= ARPT_ENTRY_INIT(माप(काष्ठा arpt_standard)),       \
 	.target		= XT_TARGET_INIT(XT_STANDARD_TARGET,		       \
-					 sizeof(struct xt_standard_target)), \
+					 माप(काष्ठा xt_standard_target)), \
 	.target.verdict	= -(__verdict) - 1,				       \
-}
+पूर्ण
 
-#define ARPT_ERROR_INIT							       \
-{									       \
-	.entry		= ARPT_ENTRY_INIT(sizeof(struct arpt_error)),	       \
+#घोषणा ARPT_ERROR_INIT							       \
+अणु									       \
+	.entry		= ARPT_ENTRY_INIT(माप(काष्ठा arpt_error)),	       \
 	.target		= XT_TARGET_INIT(XT_ERROR_TARGET,		       \
-					 sizeof(struct xt_error_target)),      \
+					 माप(काष्ठा xt_error_target)),      \
 	.target.errorname = "ERROR",					       \
-}
+पूर्ण
 
-extern void *arpt_alloc_initial_table(const struct xt_table *);
-int arpt_register_table(struct net *net, const struct xt_table *table,
-			const struct arpt_replace *repl,
-			const struct nf_hook_ops *ops);
-void arpt_unregister_table(struct net *net, const char *name);
-void arpt_unregister_table_pre_exit(struct net *net, const char *name);
-extern unsigned int arpt_do_table(struct sk_buff *skb,
-				  const struct nf_hook_state *state,
-				  struct xt_table *table);
+बाह्य व्योम *arpt_alloc_initial_table(स्थिर काष्ठा xt_table *);
+पूर्णांक arpt_रेजिस्टर_table(काष्ठा net *net, स्थिर काष्ठा xt_table *table,
+			स्थिर काष्ठा arpt_replace *repl,
+			स्थिर काष्ठा nf_hook_ops *ops);
+व्योम arpt_unरेजिस्टर_table(काष्ठा net *net, स्थिर अक्षर *name);
+व्योम arpt_unरेजिस्टर_table_pre_निकास(काष्ठा net *net, स्थिर अक्षर *name);
+बाह्य अचिन्हित पूर्णांक arpt_करो_table(काष्ठा sk_buff *skb,
+				  स्थिर काष्ठा nf_hook_state *state,
+				  काष्ठा xt_table *table);
 
-#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
-#include <net/compat.h>
+#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
+#समावेश <net/compat.h>
 
-struct compat_arpt_entry {
-	struct arpt_arp arp;
+काष्ठा compat_arpt_entry अणु
+	काष्ठा arpt_arp arp;
 	__u16 target_offset;
 	__u16 next_offset;
-	compat_uint_t comefrom;
-	struct compat_xt_counters counters;
-	unsigned char elems[];
-};
+	compat_uपूर्णांक_t comefrom;
+	काष्ठा compat_xt_counters counters;
+	अचिन्हित अक्षर elems[];
+पूर्ण;
 
-static inline struct xt_entry_target *
-compat_arpt_get_target(struct compat_arpt_entry *e)
-{
-	return (void *)e + e->target_offset;
-}
+अटल अंतरभूत काष्ठा xt_entry_target *
+compat_arpt_get_target(काष्ठा compat_arpt_entry *e)
+अणु
+	वापस (व्योम *)e + e->target_offset;
+पूर्ण
 
-#endif /* CONFIG_COMPAT */
-#endif /* _ARPTABLES_H */
+#पूर्ण_अगर /* CONFIG_COMPAT */
+#पूर्ण_अगर /* _ARPTABLES_H */

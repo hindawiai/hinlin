@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,29 +24,29 @@
  *
  */
 
-#ifndef __DAL_IRQ_SERVICE_INTERFACE_H__
-#define __DAL_IRQ_SERVICE_INTERFACE_H__
+#अगर_अघोषित __DAL_IRQ_SERVICE_INTERFACE_H__
+#घोषणा __DAL_IRQ_SERVICE_INTERFACE_H__
 
-struct irq_service_init_data {
-	struct dc_context *ctx;
-};
+काष्ठा irq_service_init_data अणु
+	काष्ठा dc_context *ctx;
+पूर्ण;
 
-struct irq_service;
+काष्ठा irq_service;
 
-void dal_irq_service_destroy(struct irq_service **irq_service);
+व्योम dal_irq_service_destroy(काष्ठा irq_service **irq_service);
 
 bool dal_irq_service_set(
-	struct irq_service *irq_service,
-	enum dc_irq_source source,
+	काष्ठा irq_service *irq_service,
+	क्रमागत dc_irq_source source,
 	bool enable);
 
 bool dal_irq_service_ack(
-	struct irq_service *irq_service,
-	enum dc_irq_source source);
+	काष्ठा irq_service *irq_service,
+	क्रमागत dc_irq_source source);
 
-enum dc_irq_source dal_irq_service_to_irq_source(
-		struct irq_service *irq_service,
-		uint32_t src_id,
-		uint32_t ext_id);
+क्रमागत dc_irq_source dal_irq_service_to_irq_source(
+		काष्ठा irq_service *irq_service,
+		uपूर्णांक32_t src_id,
+		uपूर्णांक32_t ext_id);
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* MPTCP socket monitoring support
  *
  * Copyright (c) 2019 Red Hat
@@ -6,54 +7,54 @@
  * Author: Davide Caratti <dcaratti@redhat.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/net.h>
-#include <linux/inet_diag.h>
-#include <net/netlink.h>
-#include <uapi/linux/mptcp.h>
-#include "protocol.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/net.h>
+#समावेश <linux/inet_diag.h>
+#समावेश <net/netlink.h>
+#समावेश <uapi/linux/mptcp.h>
+#समावेश "protocol.h"
 
-static int subflow_get_info(const struct sock *sk, struct sk_buff *skb)
-{
-	struct mptcp_subflow_context *sf;
-	struct nlattr *start;
+अटल पूर्णांक subflow_get_info(स्थिर काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mptcp_subflow_context *sf;
+	काष्ठा nlattr *start;
 	u32 flags = 0;
-	int err;
+	पूर्णांक err;
 
 	start = nla_nest_start_noflag(skb, INET_ULP_INFO_MPTCP);
-	if (!start)
-		return -EMSGSIZE;
+	अगर (!start)
+		वापस -EMSGSIZE;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	sf = rcu_dereference(inet_csk(sk)->icsk_ulp_data);
-	if (!sf) {
+	अगर (!sf) अणु
 		err = 0;
-		goto nla_failure;
-	}
+		जाओ nla_failure;
+	पूर्ण
 
-	if (sf->mp_capable)
+	अगर (sf->mp_capable)
 		flags |= MPTCP_SUBFLOW_FLAG_MCAP_REM;
-	if (sf->request_mptcp)
+	अगर (sf->request_mptcp)
 		flags |= MPTCP_SUBFLOW_FLAG_MCAP_LOC;
-	if (sf->mp_join)
+	अगर (sf->mp_join)
 		flags |= MPTCP_SUBFLOW_FLAG_JOIN_REM;
-	if (sf->request_join)
+	अगर (sf->request_join)
 		flags |= MPTCP_SUBFLOW_FLAG_JOIN_LOC;
-	if (sf->backup)
+	अगर (sf->backup)
 		flags |= MPTCP_SUBFLOW_FLAG_BKUP_REM;
-	if (sf->request_bkup)
+	अगर (sf->request_bkup)
 		flags |= MPTCP_SUBFLOW_FLAG_BKUP_LOC;
-	if (sf->fully_established)
+	अगर (sf->fully_established)
 		flags |= MPTCP_SUBFLOW_FLAG_FULLY_ESTABLISHED;
-	if (sf->conn_finished)
+	अगर (sf->conn_finished)
 		flags |= MPTCP_SUBFLOW_FLAG_CONNECTED;
-	if (sf->map_valid)
+	अगर (sf->map_valid)
 		flags |= MPTCP_SUBFLOW_FLAG_MAPVALID;
 
-	if (nla_put_u32(skb, MPTCP_SUBFLOW_ATTR_TOKEN_REM, sf->remote_token) ||
+	अगर (nla_put_u32(skb, MPTCP_SUBFLOW_ATTR_TOKEN_REM, sf->remote_token) ||
 	    nla_put_u32(skb, MPTCP_SUBFLOW_ATTR_TOKEN_LOC, sf->token) ||
 	    nla_put_u32(skb, MPTCP_SUBFLOW_ATTR_RELWRITE_SEQ,
-			sf->rel_write_seq) ||
+			sf->rel_ग_लिखो_seq) ||
 	    nla_put_u64_64bit(skb, MPTCP_SUBFLOW_ATTR_MAP_SEQ, sf->map_seq,
 			      MPTCP_SUBFLOW_ATTR_PAD) ||
 	    nla_put_u32(skb, MPTCP_SUBFLOW_ATTR_MAP_SFSEQ,
@@ -63,24 +64,24 @@ static int subflow_get_info(const struct sock *sk, struct sk_buff *skb)
 			sf->map_data_len) ||
 	    nla_put_u32(skb, MPTCP_SUBFLOW_ATTR_FLAGS, flags) ||
 	    nla_put_u8(skb, MPTCP_SUBFLOW_ATTR_ID_REM, sf->remote_id) ||
-	    nla_put_u8(skb, MPTCP_SUBFLOW_ATTR_ID_LOC, sf->local_id)) {
+	    nla_put_u8(skb, MPTCP_SUBFLOW_ATTR_ID_LOC, sf->local_id)) अणु
 		err = -EMSGSIZE;
-		goto nla_failure;
-	}
+		जाओ nla_failure;
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	nla_nest_end(skb, start);
-	return 0;
+	वापस 0;
 
 nla_failure:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	nla_nest_cancel(skb, start);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static size_t subflow_get_info_size(const struct sock *sk)
-{
-	size_t size = 0;
+अटल माप_प्रकार subflow_get_info_size(स्थिर काष्ठा sock *sk)
+अणु
+	माप_प्रकार size = 0;
 
 	size += nla_total_size(0) +	/* INET_ULP_INFO_MPTCP */
 		nla_total_size(4) +	/* MPTCP_SUBFLOW_ATTR_TOKEN_REM */
@@ -94,11 +95,11 @@ static size_t subflow_get_info_size(const struct sock *sk)
 		nla_total_size(1) +	/* MPTCP_SUBFLOW_ATTR_ID_REM */
 		nla_total_size(1) +	/* MPTCP_SUBFLOW_ATTR_ID_LOC */
 		0;
-	return size;
-}
+	वापस size;
+पूर्ण
 
-void mptcp_diag_subflow_init(struct tcp_ulp_ops *ops)
-{
+व्योम mptcp_diag_subflow_init(काष्ठा tcp_ulp_ops *ops)
+अणु
 	ops->get_info = subflow_get_info;
 	ops->get_info_size = subflow_get_info_size;
-}
+पूर्ण

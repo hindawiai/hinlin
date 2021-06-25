@@ -1,93 +1,94 @@
+<शैली गुरु>
 /*
- * 8250 UART probe driver for the BCM47XX platforms
+ * 8250 UART probe driver क्रम the BCM47XX platक्रमms
  * Author: Aurelien Jarno
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2007 Aurelien Jarno <aurelien@aurel32.net>
  */
 
-#include <linux/init.h>
-#include <linux/serial.h>
-#include <linux/serial_8250.h>
-#include <linux/ssb/ssb.h>
-#include <bcm47xx.h>
+#समावेश <linux/init.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_8250.h>
+#समावेश <linux/ssb/ssb.h>
+#समावेश <bcm47xx.h>
 
-static struct plat_serial8250_port uart8250_data[5];
+अटल काष्ठा plat_serial8250_port uart8250_data[5];
 
-static struct platform_device uart8250_device = {
+अटल काष्ठा platक्रमm_device uart8250_device = अणु
 	.name			= "serial8250",
 	.id			= PLAT8250_DEV_PLATFORM,
-	.dev			= {
-		.platform_data	= uart8250_data,
-	},
-};
+	.dev			= अणु
+		.platक्रमm_data	= uart8250_data,
+	पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_BCM47XX_SSB
-static int __init uart8250_init_ssb(void)
-{
-	int i;
-	struct ssb_mipscore *mcore = &(bcm47xx_bus.ssb.mipscore);
+#अगर_घोषित CONFIG_BCM47XX_SSB
+अटल पूर्णांक __init uart8250_init_ssb(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा ssb_mipscore *mcore = &(bcm47xx_bus.ssb.mipscore);
 
-	memset(&uart8250_data, 0,  sizeof(uart8250_data));
+	स_रखो(&uart8250_data, 0,  माप(uart8250_data));
 
-	for (i = 0; i < mcore->nr_serial_ports &&
-		    i < ARRAY_SIZE(uart8250_data) - 1; i++) {
-		struct plat_serial8250_port *p = &(uart8250_data[i]);
-		struct ssb_serial_port *ssb_port = &(mcore->serial_ports[i]);
+	क्रम (i = 0; i < mcore->nr_serial_ports &&
+		    i < ARRAY_SIZE(uart8250_data) - 1; i++) अणु
+		काष्ठा plat_serial8250_port *p = &(uart8250_data[i]);
+		काष्ठा ssb_serial_port *ssb_port = &(mcore->serial_ports[i]);
 
-		p->mapbase = (unsigned int)ssb_port->regs;
-		p->membase = (void *)ssb_port->regs;
+		p->mapbase = (अचिन्हित पूर्णांक)ssb_port->regs;
+		p->membase = (व्योम *)ssb_port->regs;
 		p->irq = ssb_port->irq + 2;
 		p->uartclk = ssb_port->baud_base;
-		p->regshift = ssb_port->reg_shift;
+		p->regshअगरt = ssb_port->reg_shअगरt;
 		p->iotype = UPIO_MEM;
 		p->flags = UPF_BOOT_AUTOCONF | UPF_SHARE_IRQ;
-	}
-	return platform_device_register(&uart8250_device);
-}
-#endif
+	पूर्ण
+	वापस platक्रमm_device_रेजिस्टर(&uart8250_device);
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_BCM47XX_BCMA
-static int __init uart8250_init_bcma(void)
-{
-	int i;
-	struct bcma_drv_cc *cc = &(bcm47xx_bus.bcma.bus.drv_cc);
+#अगर_घोषित CONFIG_BCM47XX_BCMA
+अटल पूर्णांक __init uart8250_init_bcma(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा bcma_drv_cc *cc = &(bcm47xx_bus.bcma.bus.drv_cc);
 
-	memset(&uart8250_data, 0,  sizeof(uart8250_data));
+	स_रखो(&uart8250_data, 0,  माप(uart8250_data));
 
-	for (i = 0; i < cc->nr_serial_ports &&
-		    i < ARRAY_SIZE(uart8250_data) - 1; i++) {
-		struct plat_serial8250_port *p = &(uart8250_data[i]);
-		struct bcma_serial_port *bcma_port;
+	क्रम (i = 0; i < cc->nr_serial_ports &&
+		    i < ARRAY_SIZE(uart8250_data) - 1; i++) अणु
+		काष्ठा plat_serial8250_port *p = &(uart8250_data[i]);
+		काष्ठा bcma_serial_port *bcma_port;
 		bcma_port = &(cc->serial_ports[i]);
 
-		p->mapbase = (unsigned int)bcma_port->regs;
-		p->membase = (void *)bcma_port->regs;
+		p->mapbase = (अचिन्हित पूर्णांक)bcma_port->regs;
+		p->membase = (व्योम *)bcma_port->regs;
 		p->irq = bcma_port->irq;
 		p->uartclk = bcma_port->baud_base;
-		p->regshift = bcma_port->reg_shift;
+		p->regshअगरt = bcma_port->reg_shअगरt;
 		p->iotype = UPIO_MEM;
 		p->flags = UPF_BOOT_AUTOCONF | UPF_SHARE_IRQ;
-	}
-	return platform_device_register(&uart8250_device);
-}
-#endif
+	पूर्ण
+	वापस platक्रमm_device_रेजिस्टर(&uart8250_device);
+पूर्ण
+#पूर्ण_अगर
 
-static int __init uart8250_init(void)
-{
-	switch (bcm47xx_bus_type) {
-#ifdef CONFIG_BCM47XX_SSB
-	case BCM47XX_BUS_TYPE_SSB:
-		return uart8250_init_ssb();
-#endif
-#ifdef CONFIG_BCM47XX_BCMA
-	case BCM47XX_BUS_TYPE_BCMA:
-		return uart8250_init_bcma();
-#endif
-	}
-	return -EINVAL;
-}
+अटल पूर्णांक __init uart8250_init(व्योम)
+अणु
+	चयन (bcm47xx_bus_type) अणु
+#अगर_घोषित CONFIG_BCM47XX_SSB
+	हाल BCM47XX_BUS_TYPE_SSB:
+		वापस uart8250_init_ssb();
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_BCM47XX_BCMA
+	हाल BCM47XX_BUS_TYPE_BCMA:
+		वापस uart8250_init_bcma();
+#पूर्ण_अगर
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 device_initcall(uart8250_init);

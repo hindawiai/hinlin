@@ -1,32 +1,33 @@
-/* Copyright © 2005 Agere Systems Inc.
+<शैली गुरु>
+/* Copyright तऊ 2005 Agere Systems Inc.
  * All rights reserved.
  *   http://www.agere.com
  *
  * SOFTWARE LICENSE
  *
  * This software is provided subject to the following terms and conditions,
- * which you should read carefully before using the software.  Using this
- * software indicates your acceptance of these terms and conditions.  If you do
- * not agree with these terms and conditions, do not use the software.
+ * which you should पढ़ो carefully beक्रमe using the software.  Using this
+ * software indicates your acceptance of these terms and conditions.  If you करो
+ * not agree with these terms and conditions, करो not use the software.
  *
- * Copyright © 2005 Agere Systems Inc.
+ * Copyright तऊ 2005 Agere Systems Inc.
  * All rights reserved.
  *
- * Redistribution and use in source or binary forms, with or without
- * modifications, are permitted provided that the following conditions are met:
+ * Redistribution and use in source or binary क्रमms, with or without
+ * modअगरications, are permitted provided that the following conditions are met:
  *
  * . Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following Disclaimer as comments in the code as
- *    well as in the documentation and/or other materials provided with the
+ *    well as in the करोcumentation and/or other materials provided with the
  *    distribution.
  *
- * . Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following Disclaimer in the documentation
+ * . Redistributions in binary क्रमm must reproduce the above copyright notice,
+ *    this list of conditions and the following Disclaimer in the करोcumentation
  *    and/or other materials provided with the distribution.
  *
  * . Neither the name of Agere Systems Inc. nor the names of the contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *    may be used to enकरोrse or promote products derived from this software
+ *    without specअगरic prior written permission.
  *
  * Disclaimer
  *
@@ -35,7 +36,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  ANY
  * USE, MODIFICATION OR DISTRIBUTION OF THIS SOFTWARE IS SOLELY AT THE USERS OWN
  * RISK. IN NO EVENT SHALL AGERE SYSTEMS INC. OR CONTRIBUTORS BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, INCLUDING, BUT NOT LIMITED TO, CONTRACT, STRICT
@@ -45,38 +46,38 @@
  *
  */
 
-#define DRIVER_NAME "et131x"
+#घोषणा DRIVER_NAME "et131x"
 
-/* EEPROM registers */
+/* EEPROM रेजिस्टरs */
 
 /* LBCIF Register Groups (addressed via 32-bit offsets) */
-#define LBCIF_DWORD0_GROUP       0xAC
-#define LBCIF_DWORD1_GROUP       0xB0
+#घोषणा LBCIF_DWORD0_GROUP       0xAC
+#घोषणा LBCIF_DWORD1_GROUP       0xB0
 
 /* LBCIF Registers (addressed via 8-bit offsets) */
-#define LBCIF_ADDRESS_REGISTER   0xAC
-#define LBCIF_DATA_REGISTER      0xB0
-#define LBCIF_CONTROL_REGISTER   0xB1
-#define LBCIF_STATUS_REGISTER    0xB2
+#घोषणा LBCIF_ADDRESS_REGISTER   0xAC
+#घोषणा LBCIF_DATA_REGISTER      0xB0
+#घोषणा LBCIF_CONTROL_REGISTER   0xB1
+#घोषणा LBCIF_STATUS_REGISTER    0xB2
 
 /* LBCIF Control Register Bits */
-#define LBCIF_CONTROL_SEQUENTIAL_READ   0x01
-#define LBCIF_CONTROL_PAGE_WRITE        0x02
-#define LBCIF_CONTROL_EEPROM_RELOAD     0x08
-#define LBCIF_CONTROL_TWO_BYTE_ADDR     0x20
-#define LBCIF_CONTROL_I2C_WRITE         0x40
-#define LBCIF_CONTROL_LBCIF_ENABLE      0x80
+#घोषणा LBCIF_CONTROL_SEQUENTIAL_READ   0x01
+#घोषणा LBCIF_CONTROL_PAGE_WRITE        0x02
+#घोषणा LBCIF_CONTROL_EEPROM_RELOAD     0x08
+#घोषणा LBCIF_CONTROL_TWO_BYTE_ADDR     0x20
+#घोषणा LBCIF_CONTROL_I2C_WRITE         0x40
+#घोषणा LBCIF_CONTROL_LBCIF_ENABLE      0x80
 
 /* LBCIF Status Register Bits */
-#define LBCIF_STATUS_PHY_QUEUE_AVAIL    0x01
-#define LBCIF_STATUS_I2C_IDLE           0x02
-#define LBCIF_STATUS_ACK_ERROR          0x04
-#define LBCIF_STATUS_GENERAL_ERROR      0x08
-#define LBCIF_STATUS_CHECKSUM_ERROR     0x40
-#define LBCIF_STATUS_EEPROM_PRESENT     0x80
+#घोषणा LBCIF_STATUS_PHY_QUEUE_AVAIL    0x01
+#घोषणा LBCIF_STATUS_I2C_IDLE           0x02
+#घोषणा LBCIF_STATUS_ACK_ERROR          0x04
+#घोषणा LBCIF_STATUS_GENERAL_ERROR      0x08
+#घोषणा LBCIF_STATUS_CHECKSUM_ERROR     0x40
+#घोषणा LBCIF_STATUS_EEPROM_PRESENT     0x80
 
 /* START OF GLOBAL REGISTER ADDRESS MAP */
-/* 10bit registers
+/* 10bit रेजिस्टरs
  *
  * Tx queue start address reg in global address map at address 0x0000
  * tx queue end address reg in global address map at address 0x0004
@@ -84,7 +85,7 @@
  * rx queue end address reg in global address map at address 0x000C
  */
 
-/* structure for power management control status reg in global address map
+/* काष्ठाure क्रम घातer management control status reg in global address map
  * located at address 0x0010
  *	jagcore_rx_rdy	bit 9
  *	jagcore_tx_rdy	bit 8
@@ -97,27 +98,27 @@
  *	jagcore_tx_en	bit 1
  *	gigephy_en	bit 0
  */
-#define ET_PM_PHY_SW_COMA		0x40
-#define ET_PMCSR_INIT			0x38
+#घोषणा ET_PM_PHY_SW_COMA		0x40
+#घोषणा ET_PMCSR_INIT			0x38
 
 /* Interrupt status reg at address 0x0018
  */
-#define	ET_INTR_TXDMA_ISR	0x00000008
-#define ET_INTR_TXDMA_ERR	0x00000010
-#define ET_INTR_RXDMA_XFR_DONE	0x00000020
-#define ET_INTR_RXDMA_FB_R0_LOW	0x00000040
-#define ET_INTR_RXDMA_FB_R1_LOW	0x00000080
-#define ET_INTR_RXDMA_STAT_LOW	0x00000100
-#define ET_INTR_RXDMA_ERR	0x00000200
-#define ET_INTR_WATCHDOG	0x00004000
-#define ET_INTR_WOL		0x00008000
-#define ET_INTR_PHY		0x00010000
-#define ET_INTR_TXMAC		0x00020000
-#define ET_INTR_RXMAC		0x00040000
-#define ET_INTR_MAC_STAT	0x00080000
-#define ET_INTR_SLV_TIMEOUT	0x00100000
+#घोषणा	ET_INTR_TXDMA_ISR	0x00000008
+#घोषणा ET_INTR_TXDMA_ERR	0x00000010
+#घोषणा ET_INTR_RXDMA_XFR_DONE	0x00000020
+#घोषणा ET_INTR_RXDMA_FB_R0_LOW	0x00000040
+#घोषणा ET_INTR_RXDMA_FB_R1_LOW	0x00000080
+#घोषणा ET_INTR_RXDMA_STAT_LOW	0x00000100
+#घोषणा ET_INTR_RXDMA_ERR	0x00000200
+#घोषणा ET_INTR_WATCHDOG	0x00004000
+#घोषणा ET_INTR_WOL		0x00008000
+#घोषणा ET_INTR_PHY		0x00010000
+#घोषणा ET_INTR_TXMAC		0x00020000
+#घोषणा ET_INTR_RXMAC		0x00040000
+#घोषणा ET_INTR_MAC_STAT	0x00080000
+#घोषणा ET_INTR_SLV_TIMEOUT	0x00100000
 
-/* Interrupt mask register at address 0x001C
+/* Interrupt mask रेजिस्टर at address 0x001C
  * Interrupt alias clear mask reg at address 0x0020
  * Interrupt status alias reg at address 0x0024
  *
@@ -134,95 +135,95 @@
  * 6:	mmc_sw_reset
  *31:	selfclr_disable
  */
-#define ET_RESET_ALL	0x007F
+#घोषणा ET_RESET_ALL	0x007F
 
 /* SLV Timer reg at address 0x002C (low 24 bits)
  */
 
 /* MSI Configuration reg at address 0x0030
  */
-#define ET_MSI_VECTOR	0x0000001F
-#define ET_MSI_TC	0x00070000
+#घोषणा ET_MSI_VECTOR	0x0000001F
+#घोषणा ET_MSI_TC	0x00070000
 
 /* Loopback reg located at address 0x0034
  */
-#define ET_LOOP_MAC	0x00000001
-#define ET_LOOP_DMA	0x00000002
+#घोषणा ET_LOOP_MAC	0x00000001
+#घोषणा ET_LOOP_DMA	0x00000002
 
 /* GLOBAL Module of JAGCore Address Mapping
  * Located at address 0x0000
  */
-struct global_regs {				/* Location: */
+काष्ठा global_regs अणु				/* Location: */
 	u32 txq_start_addr;			/*  0x0000 */
 	u32 txq_end_addr;			/*  0x0004 */
 	u32 rxq_start_addr;			/*  0x0008 */
 	u32 rxq_end_addr;			/*  0x000C */
 	u32 pm_csr;				/*  0x0010 */
 	u32 unused;				/*  0x0014 */
-	u32 int_status;				/*  0x0018 */
-	u32 int_mask;				/*  0x001C */
-	u32 int_alias_clr_en;			/*  0x0020 */
-	u32 int_status_alias;			/*  0x0024 */
+	u32 पूर्णांक_status;				/*  0x0018 */
+	u32 पूर्णांक_mask;				/*  0x001C */
+	u32 पूर्णांक_alias_clr_en;			/*  0x0020 */
+	u32 पूर्णांक_status_alias;			/*  0x0024 */
 	u32 sw_reset;				/*  0x0028 */
-	u32 slv_timer;				/*  0x002C */
+	u32 slv_समयr;				/*  0x002C */
 	u32 msi_config;				/*  0x0030 */
 	u32 loopback;				/*  0x0034 */
-	u32 watchdog_timer;			/*  0x0038 */
-};
+	u32 watchकरोg_समयr;			/*  0x0038 */
+पूर्ण;
 
 /* START OF TXDMA REGISTER ADDRESS MAP */
 /* txdma control status reg at address 0x1000
  */
-#define ET_TXDMA_CSR_HALT	0x00000001
-#define ET_TXDMA_DROP_TLP	0x00000002
-#define ET_TXDMA_CACHE_THRS	0x000000F0
-#define ET_TXDMA_CACHE_SHIFT	4
-#define ET_TXDMA_SNGL_EPKT	0x00000100
-#define ET_TXDMA_CLASS		0x00001E00
+#घोषणा ET_TXDMA_CSR_HALT	0x00000001
+#घोषणा ET_TXDMA_DROP_TLP	0x00000002
+#घोषणा ET_TXDMA_CACHE_THRS	0x000000F0
+#घोषणा ET_TXDMA_CACHE_SHIFT	4
+#घोषणा ET_TXDMA_SNGL_EPKT	0x00000100
+#घोषणा ET_TXDMA_CLASS		0x00001E00
 
-/* structure for txdma packet ring base address hi reg in txdma address map
+/* काष्ठाure क्रम txdma packet ring base address hi reg in txdma address map
  * located at address 0x1004
  * Defined earlier (u32)
  */
 
-/* structure for txdma packet ring base address low reg in txdma address map
+/* काष्ठाure क्रम txdma packet ring base address low reg in txdma address map
  * located at address 0x1008
  * Defined earlier (u32)
  */
 
-/* structure for txdma packet ring number of descriptor reg in txdma address
+/* काष्ठाure क्रम txdma packet ring number of descriptor reg in txdma address
  * map.  Located at address 0x100C
  *
  * 31-10: unused
  * 9-0: pr ndes
  */
-#define ET_DMA12_MASK		0x0FFF	/* 12 bit mask for DMA12W types */
-#define ET_DMA12_WRAP		0x1000
-#define ET_DMA10_MASK		0x03FF	/* 10 bit mask for DMA10W types */
-#define ET_DMA10_WRAP		0x0400
-#define ET_DMA4_MASK		0x000F	/* 4 bit mask for DMA4W types */
-#define ET_DMA4_WRAP		0x0010
+#घोषणा ET_DMA12_MASK		0x0FFF	/* 12 bit mask क्रम DMA12W types */
+#घोषणा ET_DMA12_WRAP		0x1000
+#घोषणा ET_DMA10_MASK		0x03FF	/* 10 bit mask क्रम DMA10W types */
+#घोषणा ET_DMA10_WRAP		0x0400
+#घोषणा ET_DMA4_MASK		0x000F	/* 4 bit mask क्रम DMA4W types */
+#घोषणा ET_DMA4_WRAP		0x0010
 
-#define INDEX12(x)	((x) & ET_DMA12_MASK)
-#define INDEX10(x)	((x) & ET_DMA10_MASK)
-#define INDEX4(x)	((x) & ET_DMA4_MASK)
+#घोषणा INDEX12(x)	((x) & ET_DMA12_MASK)
+#घोषणा INDEX10(x)	((x) & ET_DMA10_MASK)
+#घोषणा INDEX4(x)	((x) & ET_DMA4_MASK)
 
 /* 10bit DMA with wrap
- * txdma tx queue write address reg in txdma address map at 0x1010
- * txdma tx queue write address external reg in txdma address map at 0x1014
- * txdma tx queue read address reg in txdma address map at 0x1018
+ * txdma tx queue ग_लिखो address reg in txdma address map at 0x1010
+ * txdma tx queue ग_लिखो address बाह्यal reg in txdma address map at 0x1014
+ * txdma tx queue पढ़ो address reg in txdma address map at 0x1018
  *
  * u32
- * txdma status writeback address hi reg in txdma address map at0x101C
- * txdma status writeback address lo reg in txdma address map at 0x1020
+ * txdma status ग_लिखोback address hi reg in txdma address map at0x101C
+ * txdma status ग_लिखोback address lo reg in txdma address map at 0x1020
  *
  * 10bit DMA with wrap
  * txdma service request reg in txdma address map at 0x1024
- * structure for txdma service complete reg in txdma address map at 0x1028
+ * काष्ठाure क्रम txdma service complete reg in txdma address map at 0x1028
  *
  * 4bit DMA with wrap
- * txdma tx descriptor cache read index reg in txdma address map at 0x102C
- * txdma tx descriptor cache write index reg in txdma address map at 0x1030
+ * txdma tx descriptor cache पढ़ो index reg in txdma address map at 0x102C
+ * txdma tx descriptor cache ग_लिखो index reg in txdma address map at 0x1030
  *
  * txdma error reg in txdma address map at address 0x1034
  * 0: PyldResend
@@ -236,7 +237,7 @@ struct global_regs {				/* Location: */
 /* Tx DMA Module of JAGCore Address Mapping
  * Located at address 0x1000
  */
-struct txdma_regs {			/* Location: */
+काष्ठा txdma_regs अणु			/* Location: */
 	u32 csr;			/*  0x1000 */
 	u32 pr_base_hi;			/*  0x1004 */
 	u32 pr_base_lo;			/*  0x1008 */
@@ -251,24 +252,24 @@ struct txdma_regs {			/* Location: */
 	u32 cache_rd_index;		/*  0x102C */
 	u32 cache_wr_index;		/*  0x1030 */
 	u32 tx_dma_error;		/*  0x1034 */
-	u32 desc_abort_cnt;		/*  0x1038 */
-	u32 payload_abort_cnt;		/*  0x103c */
-	u32 writeback_abort_cnt;	/*  0x1040 */
-	u32 desc_timeout_cnt;		/*  0x1044 */
-	u32 payload_timeout_cnt;	/*  0x1048 */
-	u32 writeback_timeout_cnt;	/*  0x104c */
+	u32 desc_पात_cnt;		/*  0x1038 */
+	u32 payload_पात_cnt;		/*  0x103c */
+	u32 ग_लिखोback_पात_cnt;	/*  0x1040 */
+	u32 desc_समयout_cnt;		/*  0x1044 */
+	u32 payload_समयout_cnt;	/*  0x1048 */
+	u32 ग_लिखोback_समयout_cnt;	/*  0x104c */
 	u32 desc_error_cnt;		/*  0x1050 */
 	u32 payload_error_cnt;		/*  0x1054 */
-	u32 writeback_error_cnt;	/*  0x1058 */
+	u32 ग_लिखोback_error_cnt;	/*  0x1058 */
 	u32 dropped_tlp_cnt;		/*  0x105c */
 	u32 new_service_complete;	/*  0x1060 */
 	u32 ethernet_packet_cnt;	/*  0x1064 */
-};
+पूर्ण;
 
 /* END OF TXDMA REGISTER ADDRESS MAP */
 
 /* START OF RXDMA REGISTER ADDRESS MAP */
-/* structure for control status reg in rxdma address map
+/* काष्ठाure क्रम control status reg in rxdma address map
  * Located at address 0x2000
  *
  * CSR
@@ -284,77 +285,77 @@ struct txdma_regs {			/* Location: */
  * 13: fbr1_enable
  * 14: unused
  * 15: pkt_drop_disable
- * 16: pkt_done_flush
+ * 16: pkt_करोne_flush
  * 17: halt_status
  * 18-31: unused
  */
-#define ET_RXDMA_CSR_HALT		0x0001
-#define ET_RXDMA_CSR_FBR0_SIZE_LO	0x0100
-#define ET_RXDMA_CSR_FBR0_SIZE_HI	0x0200
-#define ET_RXDMA_CSR_FBR0_ENABLE	0x0400
-#define ET_RXDMA_CSR_FBR1_SIZE_LO	0x0800
-#define ET_RXDMA_CSR_FBR1_SIZE_HI	0x1000
-#define ET_RXDMA_CSR_FBR1_ENABLE	0x2000
-#define ET_RXDMA_CSR_HALT_STATUS	0x00020000
+#घोषणा ET_RXDMA_CSR_HALT		0x0001
+#घोषणा ET_RXDMA_CSR_FBR0_SIZE_LO	0x0100
+#घोषणा ET_RXDMA_CSR_FBR0_SIZE_HI	0x0200
+#घोषणा ET_RXDMA_CSR_FBR0_ENABLE	0x0400
+#घोषणा ET_RXDMA_CSR_FBR1_SIZE_LO	0x0800
+#घोषणा ET_RXDMA_CSR_FBR1_SIZE_HI	0x1000
+#घोषणा ET_RXDMA_CSR_FBR1_ENABLE	0x2000
+#घोषणा ET_RXDMA_CSR_HALT_STATUS	0x00020000
 
-/* structure for dma writeback lo reg in rxdma address map
+/* काष्ठाure क्रम dma ग_लिखोback lo reg in rxdma address map
  * located at address 0x2004
  * Defined earlier (u32)
  */
 
-/* structure for dma writeback hi reg in rxdma address map
+/* काष्ठाure क्रम dma ग_लिखोback hi reg in rxdma address map
  * located at address 0x2008
  * Defined earlier (u32)
  */
 
-/* structure for number of packets done reg in rxdma address map
+/* काष्ठाure क्रम number of packets करोne reg in rxdma address map
  * located at address 0x200C
  *
  * 31-8: unused
- * 7-0: num done
+ * 7-0: num करोne
  */
 
-/* structure for max packet time reg in rxdma address map
+/* काष्ठाure क्रम max packet समय reg in rxdma address map
  * located at address 0x2010
  *
  * 31-18: unused
- * 17-0: time done
+ * 17-0: समय करोne
  */
 
-/* structure for rx queue read address reg in rxdma address map
+/* काष्ठाure क्रम rx queue पढ़ो address reg in rxdma address map
  * located at address 0x2014
  * Defined earlier (u32)
  */
 
-/* structure for rx queue read address external reg in rxdma address map
+/* काष्ठाure क्रम rx queue पढ़ो address बाह्यal reg in rxdma address map
  * located at address 0x2018
  * Defined earlier (u32)
  */
 
-/* structure for rx queue write address reg in rxdma address map
+/* काष्ठाure क्रम rx queue ग_लिखो address reg in rxdma address map
  * located at address 0x201C
  * Defined earlier (u32)
  */
 
-/* structure for packet status ring base address lo reg in rxdma address map
+/* काष्ठाure क्रम packet status ring base address lo reg in rxdma address map
  * located at address 0x2020
  * Defined earlier (u32)
  */
 
-/* structure for packet status ring base address hi reg in rxdma address map
+/* काष्ठाure क्रम packet status ring base address hi reg in rxdma address map
  * located at address 0x2024
  * Defined earlier (u32)
  */
 
-/* structure for packet status ring number of descriptors reg in rxdma address
+/* काष्ठाure क्रम packet status ring number of descriptors reg in rxdma address
  * map.  Located at address 0x2028
  *
  * 31-12: unused
  * 11-0: psr ndes
  */
-#define ET_RXDMA_PSR_NUM_DES_MASK	0xFFF
+#घोषणा ET_RXDMA_PSR_NUM_DES_MASK	0xFFF
 
-/* structure for packet status ring available offset reg in rxdma address map
+/* काष्ठाure क्रम packet status ring available offset reg in rxdma address map
  * located at address 0x202C
  *
  * 31-13: unused
@@ -362,7 +363,7 @@ struct txdma_regs {			/* Location: */
  * 11-0: psr avail
  */
 
-/* structure for packet status ring full offset reg in rxdma address map
+/* काष्ठाure क्रम packet status ring full offset reg in rxdma address map
  * located at address 0x2030
  *
  * 31-13: unused
@@ -370,87 +371,87 @@ struct txdma_regs {			/* Location: */
  * 11-0: psr full
  */
 
-/* structure for packet status ring access index reg in rxdma address map
+/* काष्ठाure क्रम packet status ring access index reg in rxdma address map
  * located at address 0x2034
  *
  * 31-5: unused
  * 4-0: psr_ai
  */
 
-/* structure for packet status ring minimum descriptors reg in rxdma address
+/* काष्ठाure क्रम packet status ring minimum descriptors reg in rxdma address
  * map.  Located at address 0x2038
  *
  * 31-12: unused
  * 11-0: psr_min
  */
 
-/* structure for free buffer ring base lo address reg in rxdma address map
+/* काष्ठाure क्रम मुक्त buffer ring base lo address reg in rxdma address map
  * located at address 0x203C
  * Defined earlier (u32)
  */
 
-/* structure for free buffer ring base hi address reg in rxdma address map
+/* काष्ठाure क्रम मुक्त buffer ring base hi address reg in rxdma address map
  * located at address 0x2040
  * Defined earlier (u32)
  */
 
-/* structure for free buffer ring number of descriptors reg in rxdma address
+/* काष्ठाure क्रम मुक्त buffer ring number of descriptors reg in rxdma address
  * map.  Located at address 0x2044
  *
  * 31-10: unused
  * 9-0: fbr ndesc
  */
 
-/* structure for free buffer ring 0 available offset reg in rxdma address map
+/* काष्ठाure क्रम मुक्त buffer ring 0 available offset reg in rxdma address map
  * located at address 0x2048
  * Defined earlier (u32)
  */
 
-/* structure for free buffer ring 0 full offset reg in rxdma address map
+/* काष्ठाure क्रम मुक्त buffer ring 0 full offset reg in rxdma address map
  * located at address 0x204C
  * Defined earlier (u32)
  */
 
-/* structure for free buffer cache 0 full offset reg in rxdma address map
+/* काष्ठाure क्रम मुक्त buffer cache 0 full offset reg in rxdma address map
  * located at address 0x2050
  *
  * 31-5: unused
  * 4-0: fbc rdi
  */
 
-/* structure for free buffer ring 0 minimum descriptor reg in rxdma address map
+/* काष्ठाure क्रम मुक्त buffer ring 0 minimum descriptor reg in rxdma address map
  * located at address 0x2054
  *
  * 31-10: unused
  * 9-0: fbr min
  */
 
-/* structure for free buffer ring 1 base address lo reg in rxdma address map
+/* काष्ठाure क्रम मुक्त buffer ring 1 base address lo reg in rxdma address map
  * located at address 0x2058 - 0x205C
  * Defined earlier (RXDMA_FBR_BASE_LO_t and RXDMA_FBR_BASE_HI_t)
  */
 
-/* structure for free buffer ring 1 number of descriptors reg in rxdma address
+/* काष्ठाure क्रम मुक्त buffer ring 1 number of descriptors reg in rxdma address
  * map.  Located at address 0x2060
  * Defined earlier (RXDMA_FBR_NUM_DES_t)
  */
 
-/* structure for free buffer ring 1 available offset reg in rxdma address map
+/* काष्ठाure क्रम मुक्त buffer ring 1 available offset reg in rxdma address map
  * located at address 0x2064
  * Defined Earlier (RXDMA_FBR_AVAIL_OFFSET_t)
  */
 
-/* structure for free buffer ring 1 full offset reg in rxdma address map
+/* काष्ठाure क्रम मुक्त buffer ring 1 full offset reg in rxdma address map
  * located at address 0x2068
  * Defined Earlier (RXDMA_FBR_FULL_OFFSET_t)
  */
 
-/* structure for free buffer cache 1 read index reg in rxdma address map
+/* काष्ठाure क्रम मुक्त buffer cache 1 पढ़ो index reg in rxdma address map
  * located at address 0x206C
  * Defined Earlier (RXDMA_FBC_RD_INDEX_t)
  */
 
-/* structure for free buffer ring 1 minimum descriptor reg in rxdma address map
+/* काष्ठाure क्रम मुक्त buffer ring 1 minimum descriptor reg in rxdma address map
  * located at address 0x2070
  * Defined Earlier (RXDMA_FBR_MIN_DES_t)
  */
@@ -458,12 +459,12 @@ struct txdma_regs {			/* Location: */
 /* Rx DMA Module of JAGCore Address Mapping
  * Located at address 0x2000
  */
-struct rxdma_regs {					/* Location: */
+काष्ठा rxdma_regs अणु					/* Location: */
 	u32 csr;					/*  0x2000 */
 	u32 dma_wb_base_lo;				/*  0x2004 */
 	u32 dma_wb_base_hi;				/*  0x2008 */
-	u32 num_pkt_done;				/*  0x200C */
-	u32 max_pkt_time;				/*  0x2010 */
+	u32 num_pkt_करोne;				/*  0x200C */
+	u32 max_pkt_समय;				/*  0x2010 */
 	u32 rxq_rd_addr;				/*  0x2014 */
 	u32 rxq_rd_addr_ext;				/*  0x2018 */
 	u32 rxq_wr_addr;				/*  0x201C */
@@ -488,12 +489,12 @@ struct rxdma_regs {					/* Location: */
 	u32 fbr1_full_offset;				/*  0x2068 */
 	u32 fbr1_rd_index;				/*  0x206C */
 	u32 fbr1_min_des;				/*  0x2070 */
-};
+पूर्ण;
 
 /* END OF RXDMA REGISTER ADDRESS MAP */
 
 /* START OF TXMAC REGISTER ADDRESS MAP */
-/* structure for control reg in txmac address map
+/* काष्ठाure क्रम control reg in txmac address map
  * located at address 0x3000
  *
  * bits
@@ -503,14 +504,14 @@ struct rxdma_regs {					/* Location: */
  * 5: cksegnum
  * 4: async_disable
  * 3: fc_disable
- * 2: mcif_disable
- * 1: mif_disable
+ * 2: mcअगर_disable
+ * 1: mअगर_disable
  * 0: txmac_en
  */
-#define ET_TX_CTRL_FC_DISABLE	0x0008
-#define ET_TX_CTRL_TXMAC_ENABLE	0x0001
+#घोषणा ET_TX_CTRL_FC_DISABLE	0x0008
+#घोषणा ET_TX_CTRL_TXMAC_ENABLE	0x0001
 
-/* structure for shadow pointer reg in txmac address map
+/* काष्ठाure क्रम shaकरोw poपूर्णांकer reg in txmac address map
  * located at address 0x3004
  * 31-27: reserved
  * 26-16: txq rd ptr
@@ -518,41 +519,41 @@ struct rxdma_regs {					/* Location: */
  * 10-0: txq wr ptr
  */
 
-/* structure for error count reg in txmac address map
+/* काष्ठाure क्रम error count reg in txmac address map
  * located at address 0x3008
  *
  * 31-12: unused
  * 11-8: reserved
  * 7-4: txq_underrun
- * 3-0: fifo_underrun
+ * 3-0: fअगरo_underrun
  */
 
-/* structure for max fill reg in txmac address map
+/* काष्ठाure क्रम max fill reg in txmac address map
  * located at address 0x300C
  * 31-12: unused
  * 11-0: max fill
  */
 
-/* structure for cf parameter reg in txmac address map
+/* काष्ठाure क्रम cf parameter reg in txmac address map
  * located at address 0x3010
  * 31-16: cfep
  * 15-0: cfpt
  */
 
-/* structure for tx test reg in txmac address map
+/* काष्ठाure क्रम tx test reg in txmac address map
  * located at address 0x3014
  * 31-17: unused
  * 16: reserved
  * 15: txtest_en
  * 14-11: unused
- * 10-0: txq test pointer
+ * 10-0: txq test poपूर्णांकer
  */
 
-/* structure for error reg in txmac address map
+/* काष्ठाure क्रम error reg in txmac address map
  * located at address 0x3018
  *
  * 31-9: unused
- * 8: fifo_underrun
+ * 8: fअगरo_underrun
  * 7-6: unused
  * 5: ctrl2_err
  * 4: txq_underrun
@@ -562,11 +563,11 @@ struct rxdma_regs {					/* Location: */
  * 0: seg0_err
  */
 
-/* structure for error interrupt reg in txmac address map
+/* काष्ठाure क्रम error पूर्णांकerrupt reg in txmac address map
  * located at address 0x301C
  *
  * 31-9: unused
- * 8: fifo_underrun
+ * 8: fअगरo_underrun
  * 7-6: unused
  * 5: ctrl2_err
  * 4: txq_underrun
@@ -576,7 +577,7 @@ struct rxdma_regs {					/* Location: */
  * 0: seg0_err
  */
 
-/* structure for error interrupt reg in txmac address map
+/* काष्ठाure क्रम error पूर्णांकerrupt reg in txmac address map
  * located at address 0x3020
  *
  * 31-2: unused
@@ -586,44 +587,44 @@ struct rxdma_regs {					/* Location: */
 
 /* Tx MAC Module of JAGCore Address Mapping
  */
-struct txmac_regs {			/* Location: */
+काष्ठा txmac_regs अणु			/* Location: */
 	u32 ctl;			/*  0x3000 */
-	u32 shadow_ptr;			/*  0x3004 */
+	u32 shaकरोw_ptr;			/*  0x3004 */
 	u32 err_cnt;			/*  0x3008 */
 	u32 max_fill;			/*  0x300C */
 	u32 cf_param;			/*  0x3010 */
 	u32 tx_test;			/*  0x3014 */
 	u32 err;			/*  0x3018 */
-	u32 err_int;			/*  0x301C */
+	u32 err_पूर्णांक;			/*  0x301C */
 	u32 bp_ctrl;			/*  0x3020 */
-};
+पूर्ण;
 
 /* END OF TXMAC REGISTER ADDRESS MAP */
 
 /* START OF RXMAC REGISTER ADDRESS MAP */
 
-/* structure for rxmac control reg in rxmac address map
+/* काष्ठाure क्रम rxmac control reg in rxmac address map
  * located at address 0x4000
  *
  * 31-7: reserved
- * 6: rxmac_int_disable
+ * 6: rxmac_पूर्णांक_disable
  * 5: async_disable
- * 4: mif_disable
+ * 4: mअगर_disable
  * 3: wol_disable
  * 2: pkt_filter_disable
- * 1: mcif_disable
+ * 1: mcअगर_disable
  * 0: rxmac_en
  */
-#define ET_RX_CTRL_WOL_DISABLE	0x0008
-#define ET_RX_CTRL_RXMAC_ENABLE	0x0001
+#घोषणा ET_RX_CTRL_WOL_DISABLE	0x0008
+#घोषणा ET_RX_CTRL_RXMAC_ENABLE	0x0001
 
-/* structure for Wake On Lan Control and CRC 0 reg in rxmac address map
+/* काष्ठाure क्रम Wake On Lan Control and CRC 0 reg in rxmac address map
  * located at address 0x4004
  * 31-16: crc
  * 15-12: reserved
  * 11: ignore_pp
  * 10: ignore_mp
- * 9: clr_intr
+ * 9: clr_पूर्णांकr
  * 8: ignore_link_chg
  * 7: ignore_uni
  * 6: ignore_multi
@@ -631,21 +632,21 @@ struct txmac_regs {			/* Location: */
  * 4-0: valid_crc 4-0
  */
 
-/* structure for CRC 1 and CRC 2 reg in rxmac address map
+/* काष्ठाure क्रम CRC 1 and CRC 2 reg in rxmac address map
  * located at address 0x4008
  *
  * 31-16: crc2
  * 15-0: crc1
  */
 
-/* structure for CRC 3 and CRC 4 reg in rxmac address map
+/* काष्ठाure क्रम CRC 3 and CRC 4 reg in rxmac address map
  * located at address 0x400C
  *
  * 31-16: crc4
  * 15-0: crc3
  */
 
-/* structure for Wake On Lan Source Address Lo reg in rxmac address map
+/* काष्ठाure क्रम Wake On Lan Source Address Lo reg in rxmac address map
  * located at address 0x4010
  *
  * 31-24: sa3
@@ -653,25 +654,25 @@ struct txmac_regs {			/* Location: */
  * 15-8: sa5
  * 7-0: sa6
  */
-#define ET_RX_WOL_LO_SA3_SHIFT 24
-#define ET_RX_WOL_LO_SA4_SHIFT 16
-#define ET_RX_WOL_LO_SA5_SHIFT 8
+#घोषणा ET_RX_WOL_LO_SA3_SHIFT 24
+#घोषणा ET_RX_WOL_LO_SA4_SHIFT 16
+#घोषणा ET_RX_WOL_LO_SA5_SHIFT 8
 
-/* structure for Wake On Lan Source Address Hi reg in rxmac address map
+/* काष्ठाure क्रम Wake On Lan Source Address Hi reg in rxmac address map
  * located at address 0x4014
  *
  * 31-16: reserved
  * 15-8: sa1
  * 7-0: sa2
  */
-#define ET_RX_WOL_HI_SA1_SHIFT 8
+#घोषणा ET_RX_WOL_HI_SA1_SHIFT 8
 
-/* structure for Wake On Lan mask reg in rxmac address map
+/* काष्ठाure क्रम Wake On Lan mask reg in rxmac address map
  * located at address 0x4018 - 0x4064
  * Defined earlier (u32)
  */
 
-/* structure for Unicast Packet Filter Address 1 reg in rxmac address map
+/* काष्ठाure क्रम Unicast Packet Filter Address 1 reg in rxmac address map
  * located at address 0x4068
  *
  * 31-24: addr1_3
@@ -679,11 +680,11 @@ struct txmac_regs {			/* Location: */
  * 15-8: addr1_5
  * 7-0: addr1_6
  */
-#define ET_RX_UNI_PF_ADDR1_3_SHIFT 24
-#define ET_RX_UNI_PF_ADDR1_4_SHIFT 16
-#define ET_RX_UNI_PF_ADDR1_5_SHIFT 8
+#घोषणा ET_RX_UNI_PF_ADDR1_3_SHIFT 24
+#घोषणा ET_RX_UNI_PF_ADDR1_4_SHIFT 16
+#घोषणा ET_RX_UNI_PF_ADDR1_5_SHIFT 8
 
-/* structure for Unicast Packet Filter Address 2 reg in rxmac address map
+/* काष्ठाure क्रम Unicast Packet Filter Address 2 reg in rxmac address map
  * located at address 0x406C
  *
  * 31-24: addr2_3
@@ -691,11 +692,11 @@ struct txmac_regs {			/* Location: */
  * 15-8: addr2_5
  * 7-0: addr2_6
  */
-#define ET_RX_UNI_PF_ADDR2_3_SHIFT 24
-#define ET_RX_UNI_PF_ADDR2_4_SHIFT 16
-#define ET_RX_UNI_PF_ADDR2_5_SHIFT 8
+#घोषणा ET_RX_UNI_PF_ADDR2_3_SHIFT 24
+#घोषणा ET_RX_UNI_PF_ADDR2_4_SHIFT 16
+#घोषणा ET_RX_UNI_PF_ADDR2_5_SHIFT 8
 
-/* structure for Unicast Packet Filter Address 1 & 2 reg in rxmac address map
+/* काष्ठाure क्रम Unicast Packet Filter Address 1 & 2 reg in rxmac address map
  * located at address 0x4070
  *
  * 31-24: addr2_1
@@ -703,16 +704,16 @@ struct txmac_regs {			/* Location: */
  * 15-8: addr1_1
  * 7-0: addr1_2
  */
-#define ET_RX_UNI_PF_ADDR2_1_SHIFT 24
-#define ET_RX_UNI_PF_ADDR2_2_SHIFT 16
-#define ET_RX_UNI_PF_ADDR1_1_SHIFT 8
+#घोषणा ET_RX_UNI_PF_ADDR2_1_SHIFT 24
+#घोषणा ET_RX_UNI_PF_ADDR2_2_SHIFT 16
+#घोषणा ET_RX_UNI_PF_ADDR1_1_SHIFT 8
 
-/* structure for Multicast Hash reg in rxmac address map
+/* काष्ठाure क्रम Multicast Hash reg in rxmac address map
  * located at address 0x4074 - 0x4080
  * Defined earlier (u32)
  */
 
-/* structure for Packet Filter Control reg in rxmac address map
+/* काष्ठाure क्रम Packet Filter Control reg in rxmac address map
  * located at address 0x4084
  *
  * 31-23: unused
@@ -723,13 +724,13 @@ struct txmac_regs {			/* Location: */
  * 1: filter_multi_en
  * 0: filter_broad_en
  */
-#define ET_RX_PFCTRL_MIN_PKT_SZ_SHIFT		16
-#define ET_RX_PFCTRL_FRAG_FILTER_ENABLE		0x0008
-#define ET_RX_PFCTRL_UNICST_FILTER_ENABLE	0x0004
-#define ET_RX_PFCTRL_MLTCST_FILTER_ENABLE	0x0002
-#define ET_RX_PFCTRL_BRDCST_FILTER_ENABLE	0x0001
+#घोषणा ET_RX_PFCTRL_MIN_PKT_SZ_SHIFT		16
+#घोषणा ET_RX_PFCTRL_FRAG_FILTER_ENABLE		0x0008
+#घोषणा ET_RX_PFCTRL_UNICST_FILTER_ENABLE	0x0004
+#घोषणा ET_RX_PFCTRL_MLTCST_FILTER_ENABLE	0x0002
+#घोषणा ET_RX_PFCTRL_BRDCST_FILTER_ENABLE	0x0001
 
-/* structure for Memory Controller Interface Control Max Segment reg in rxmac
+/* काष्ठाure क्रम Memory Controller Interface Control Max Segment reg in rxmac
  * address map.  Located at address 0x4088
  *
  * 31-10: reserved
@@ -737,11 +738,11 @@ struct txmac_regs {			/* Location: */
  * 1: fc_en
  * 0: seg_en
  */
-#define ET_RX_MCIF_CTRL_MAX_SEG_SIZE_SHIFT	2
-#define ET_RX_MCIF_CTRL_MAX_SEG_FC_ENABLE	0x0002
-#define ET_RX_MCIF_CTRL_MAX_SEG_ENABLE		0x0001
+#घोषणा ET_RX_MCIF_CTRL_MAX_SEG_SIZE_SHIFT	2
+#घोषणा ET_RX_MCIF_CTRL_MAX_SEG_FC_ENABLE	0x0002
+#घोषणा ET_RX_MCIF_CTRL_MAX_SEG_ENABLE		0x0001
 
-/* structure for Memory Controller Interface Water Mark reg in rxmac address
+/* काष्ठाure क्रम Memory Controller Interface Water Mark reg in rxmac address
  * map.  Located at address 0x408C
  *
  * 31-26: unused
@@ -750,7 +751,7 @@ struct txmac_regs {			/* Location: */
  * 9-0: mark_lo
  */
 
-/* structure for Rx Queue Dialog reg in rxmac address map.
+/* काष्ठाure क्रम Rx Queue Dialog reg in rxmac address map.
  * located at address 0x4090
  *
  * 31-26: reserved
@@ -759,7 +760,7 @@ struct txmac_regs {			/* Location: */
  * 9-0: wr_ptr
  */
 
-/* structure for space available reg in rxmac address map.
+/* काष्ठाure क्रम space available reg in rxmac address map.
  * located at address 0x4094
  *
  * 31-17: reserved
@@ -768,7 +769,7 @@ struct txmac_regs {			/* Location: */
  * 9-0: space_avail
  */
 
-/* structure for management interface reg in rxmac address map.
+/* काष्ठाure क्रम management पूर्णांकerface reg in rxmac address map.
  * located at address 0x4098
  *
  * 31-18: reserved
@@ -776,19 +777,19 @@ struct txmac_regs {			/* Location: */
  * 16-0: drop_pkt_mask
  */
 
-/* structure for Error reg in rxmac address map.
+/* काष्ठाure क्रम Error reg in rxmac address map.
  * located at address 0x409C
  *
  * 31-4: unused
- * 3: mif
+ * 3: mअगर
  * 2: async
  * 1: pkt_filter
- * 0: mcif
+ * 0: mcअगर
  */
 
 /* Rx MAC Module of JAGCore Address Mapping
  */
-struct rxmac_regs {					/* Location: */
+काष्ठा rxmac_regs अणु					/* Location: */
 	u32 ctrl;					/*  0x4000 */
 	u32 crc0;					/*  0x4004 */
 	u32 crc12;					/*  0x4008 */
@@ -823,19 +824,19 @@ struct rxmac_regs {					/* Location: */
 	u32 multi_hash3;				/*  0x407C */
 	u32 multi_hash4;				/*  0x4080 */
 	u32 pf_ctrl;					/*  0x4084 */
-	u32 mcif_ctrl_max_seg;				/*  0x4088 */
-	u32 mcif_water_mark;				/*  0x408C */
+	u32 mcअगर_ctrl_max_seg;				/*  0x4088 */
+	u32 mcअगर_water_mark;				/*  0x408C */
 	u32 rxq_diag;					/*  0x4090 */
 	u32 space_avail;				/*  0x4094 */
 
-	u32 mif_ctrl;					/*  0x4098 */
+	u32 mअगर_ctrl;					/*  0x4098 */
 	u32 err_reg;					/*  0x409C */
-};
+पूर्ण;
 
 /* END OF RXMAC REGISTER ADDRESS MAP */
 
 /* START OF MAC REGISTER ADDRESS MAP */
-/* structure for configuration #1 reg in mac address map.
+/* काष्ठाure क्रम configuration #1 reg in mac address map.
  * located at address 0x5000
  *
  * 31: soft reset
@@ -855,25 +856,25 @@ struct rxmac_regs {					/* Location: */
  * 1: syncd tx en
  * 0: tx enable
  */
-#define ET_MAC_CFG1_SOFT_RESET		0x80000000
-#define ET_MAC_CFG1_SIM_RESET		0x40000000
-#define ET_MAC_CFG1_RESET_RXMC		0x00080000
-#define ET_MAC_CFG1_RESET_TXMC		0x00040000
-#define ET_MAC_CFG1_RESET_RXFUNC	0x00020000
-#define ET_MAC_CFG1_RESET_TXFUNC	0x00010000
-#define ET_MAC_CFG1_LOOPBACK		0x00000100
-#define ET_MAC_CFG1_RX_FLOW		0x00000020
-#define ET_MAC_CFG1_TX_FLOW		0x00000010
-#define ET_MAC_CFG1_RX_ENABLE		0x00000004
-#define ET_MAC_CFG1_TX_ENABLE		0x00000001
-#define ET_MAC_CFG1_WAIT		0x0000000A	/* RX & TX syncd */
+#घोषणा ET_MAC_CFG1_SOFT_RESET		0x80000000
+#घोषणा ET_MAC_CFG1_SIM_RESET		0x40000000
+#घोषणा ET_MAC_CFG1_RESET_RXMC		0x00080000
+#घोषणा ET_MAC_CFG1_RESET_TXMC		0x00040000
+#घोषणा ET_MAC_CFG1_RESET_RXFUNC	0x00020000
+#घोषणा ET_MAC_CFG1_RESET_TXFUNC	0x00010000
+#घोषणा ET_MAC_CFG1_LOOPBACK		0x00000100
+#घोषणा ET_MAC_CFG1_RX_FLOW		0x00000020
+#घोषणा ET_MAC_CFG1_TX_FLOW		0x00000010
+#घोषणा ET_MAC_CFG1_RX_ENABLE		0x00000004
+#घोषणा ET_MAC_CFG1_TX_ENABLE		0x00000001
+#घोषणा ET_MAC_CFG1_WAIT		0x0000000A	/* RX & TX syncd */
 
-/* structure for configuration #2 reg in mac address map.
+/* काष्ठाure क्रम configuration #2 reg in mac address map.
  * located at address 0x5004
  * 31-16: reserved
  * 15-12: preamble
  * 11-10: reserved
- * 9-8: if mode
+ * 9-8: अगर mode
  * 7-6: reserved
  * 5: huge frame
  * 4: length check
@@ -882,27 +883,27 @@ struct rxmac_regs {					/* Location: */
  * 1: crc enable
  * 0: full duplex
  */
-#define ET_MAC_CFG2_PREAMBLE_SHIFT	12
-#define ET_MAC_CFG2_IFMODE_MASK		0x0300
-#define ET_MAC_CFG2_IFMODE_1000		0x0200
-#define ET_MAC_CFG2_IFMODE_100		0x0100
-#define ET_MAC_CFG2_IFMODE_HUGE_FRAME	0x0020
-#define ET_MAC_CFG2_IFMODE_LEN_CHECK	0x0010
-#define ET_MAC_CFG2_IFMODE_PAD_CRC	0x0004
-#define ET_MAC_CFG2_IFMODE_CRC_ENABLE	0x0002
-#define ET_MAC_CFG2_IFMODE_FULL_DPLX	0x0001
+#घोषणा ET_MAC_CFG2_PREAMBLE_SHIFT	12
+#घोषणा ET_MAC_CFG2_IFMODE_MASK		0x0300
+#घोषणा ET_MAC_CFG2_IFMODE_1000		0x0200
+#घोषणा ET_MAC_CFG2_IFMODE_100		0x0100
+#घोषणा ET_MAC_CFG2_IFMODE_HUGE_FRAME	0x0020
+#घोषणा ET_MAC_CFG2_IFMODE_LEN_CHECK	0x0010
+#घोषणा ET_MAC_CFG2_IFMODE_PAD_CRC	0x0004
+#घोषणा ET_MAC_CFG2_IFMODE_CRC_ENABLE	0x0002
+#घोषणा ET_MAC_CFG2_IFMODE_FULL_DPLX	0x0001
 
-/* structure for Interpacket gap reg in mac address map.
+/* काष्ठाure क्रम Interpacket gap reg in mac address map.
  * located at address 0x5008
  *
  * 31: reserved
  * 30-24: non B2B ipg 1
  * 23: undefined
  * 22-16: non B2B ipg 2
- * 15-8: Min ifg enforce
+ * 15-8: Min अगरg enक्रमce
  * 7-0: B2B ipg
  *
- * structure for half duplex reg in mac address map.
+ * काष्ठाure क्रम half duplex reg in mac address map.
  * located at address 0x500C
  * 31-24: reserved
  * 23-20: Alt BEB trunc
@@ -912,77 +913,77 @@ struct rxmac_regs {					/* Location: */
  * 16: excess defer
  * 15-12: re-xmit max
  * 11-10: reserved
- * 9-0: collision window
+ * 9-0: collision winकरोw
  */
 
-/* structure for Maximum Frame Length reg in mac address map.
+/* काष्ठाure क्रम Maximum Frame Length reg in mac address map.
  * located at address 0x5010: bits 0-15 hold the length.
  */
 
-/* structure for Reserve 1 reg in mac address map.
+/* काष्ठाure क्रम Reserve 1 reg in mac address map.
  * located at address 0x5014 - 0x5018
  * Defined earlier (u32)
  */
 
-/* structure for Test reg in mac address map.
+/* काष्ठाure क्रम Test reg in mac address map.
  * located at address 0x501C
  * test: bits 0-2, rest unused
  */
 
-/* structure for MII Management Configuration reg in mac address map.
+/* काष्ठाure क्रम MII Management Configuration reg in mac address map.
  * located at address 0x5020
  *
  * 31: reset MII mgmt
  * 30-6: unused
- * 5: scan auto increment
+ * 5: scan स्वतः increment
  * 4: preamble suppress
  * 3: undefined
- * 2-0: mgmt clock reset
+ * 2-0: mgmt घड़ी reset
  */
-#define ET_MAC_MIIMGMT_CLK_RST	0x0007
+#घोषणा ET_MAC_MIIMGMT_CLK_RST	0x0007
 
-/* structure for MII Management Command reg in mac address map.
+/* काष्ठाure क्रम MII Management Command reg in mac address map.
  * located at address 0x5024
  * bit 1: scan cycle
- * bit 0: read cycle
+ * bit 0: पढ़ो cycle
  */
 
-/* structure for MII Management Address reg in mac address map.
+/* काष्ठाure क्रम MII Management Address reg in mac address map.
  * located at address 0x5028
  * 31-13: reserved
  * 12-8: phy addr
  * 7-5: reserved
- * 4-0: register
+ * 4-0: रेजिस्टर
  */
-#define ET_MAC_MII_ADDR(phy, reg)	((phy) << 8 | (reg))
+#घोषणा ET_MAC_MII_ADDR(phy, reg)	((phy) << 8 | (reg))
 
-/* structure for MII Management Control reg in mac address map.
+/* काष्ठाure क्रम MII Management Control reg in mac address map.
  * located at address 0x502C
  * 31-16: reserved
  * 15-0: phy control
  */
 
-/* structure for MII Management Status reg in mac address map.
+/* काष्ठाure क्रम MII Management Status reg in mac address map.
  * located at address 0x5030
  * 31-16: reserved
  * 15-0: phy control
  */
-#define ET_MAC_MIIMGMT_STAT_PHYCRTL_MASK 0xFFFF
+#घोषणा ET_MAC_MIIMGMT_STAT_PHYCRTL_MASK 0xFFFF
 
-/* structure for MII Management Indicators reg in mac address map.
+/* काष्ठाure क्रम MII Management Indicators reg in mac address map.
  * located at address 0x5034
  * 31-3: reserved
  * 2: not valid
  * 1: scanning
  * 0: busy
  */
-#define ET_MAC_MGMT_BUSY	0x00000001	/* busy */
-#define ET_MAC_MGMT_WAIT	0x00000005	/* busy | not valid */
+#घोषणा ET_MAC_MGMT_BUSY	0x00000001	/* busy */
+#घोषणा ET_MAC_MGMT_WAIT	0x00000005	/* busy | not valid */
 
-/* structure for Interface Control reg in mac address map.
+/* काष्ठाure क्रम Interface Control reg in mac address map.
  * located at address 0x5038
  *
- * 31: reset if module
+ * 31: reset अगर module
  * 30-28: reserved
  * 27: tbi mode
  * 26: ghd mode
@@ -993,17 +994,17 @@ struct rxmac_regs {					/* Location: */
  * 16: speed
  * 15: reset pe100x
  * 14-11: reserved
- * 10: force quiet
+ * 10: क्रमce quiet
  * 9: no cipher
  * 8: disable link fail
  * 7: reset gpsi
  * 6-1: reserved
  * 0: enable jabber protection
  */
-#define ET_MAC_IFCTRL_GHDMODE	(1 << 26)
-#define ET_MAC_IFCTRL_PHYMODE	(1 << 24)
+#घोषणा ET_MAC_IFCTRL_GHDMODE	(1 << 26)
+#घोषणा ET_MAC_IFCTRL_PHYMODE	(1 << 24)
 
-/* structure for Interface Status reg in mac address map.
+/* काष्ठाure क्रम Interface Status reg in mac address map.
  * located at address 0x503C
  *
  * 31-10: reserved
@@ -1019,7 +1020,7 @@ struct rxmac_regs {					/* Location: */
  * 0: pe10t_jabber
  */
 
-/* structure for Mac Station Address, Part 1 reg in mac address map.
+/* काष्ठाure क्रम Mac Station Address, Part 1 reg in mac address map.
  * located at address 0x5040
  *
  * 31-24: Octet6
@@ -1027,23 +1028,23 @@ struct rxmac_regs {					/* Location: */
  * 15-8: Octet4
  * 7-0: Octet3
  */
-#define ET_MAC_STATION_ADDR1_OC6_SHIFT 24
-#define ET_MAC_STATION_ADDR1_OC5_SHIFT 16
-#define ET_MAC_STATION_ADDR1_OC4_SHIFT 8
+#घोषणा ET_MAC_STATION_ADDR1_OC6_SHIFT 24
+#घोषणा ET_MAC_STATION_ADDR1_OC5_SHIFT 16
+#घोषणा ET_MAC_STATION_ADDR1_OC4_SHIFT 8
 
-/* structure for Mac Station Address, Part 2 reg in mac address map.
+/* काष्ठाure क्रम Mac Station Address, Part 2 reg in mac address map.
  * located at address 0x5044
  *
  * 31-24: Octet2
  * 23-16: Octet1
  * 15-0: reserved
  */
-#define ET_MAC_STATION_ADDR2_OC2_SHIFT 24
-#define ET_MAC_STATION_ADDR2_OC1_SHIFT 16
+#घोषणा ET_MAC_STATION_ADDR2_OC2_SHIFT 24
+#घोषणा ET_MAC_STATION_ADDR2_OC1_SHIFT 16
 
 /* MAC Module of JAGCore Address Mapping
  */
-struct mac_regs {					/* Location: */
+काष्ठा mac_regs अणु					/* Location: */
 	u32 cfg1;					/*  0x5000 */
 	u32 cfg2;					/*  0x5004 */
 	u32 ipg;					/*  0x5008 */
@@ -1058,16 +1059,16 @@ struct mac_regs {					/* Location: */
 	u32 mii_mgmt_ctrl;				/*  0x502C */
 	u32 mii_mgmt_stat;				/*  0x5030 */
 	u32 mii_mgmt_indicator;				/*  0x5034 */
-	u32 if_ctrl;					/*  0x5038 */
-	u32 if_stat;					/*  0x503C */
+	u32 अगर_ctrl;					/*  0x5038 */
+	u32 अगर_stat;					/*  0x503C */
 	u32 station_addr_1;				/*  0x5040 */
 	u32 station_addr_2;				/*  0x5044 */
-};
+पूर्ण;
 
 /* END OF MAC REGISTER ADDRESS MAP */
 
 /* START OF MAC STAT REGISTER ADDRESS MAP */
-/* structure for Carry Register One and it's Mask Register reg located in mac
+/* काष्ठाure क्रम Carry Register One and it's Mask Register reg located in mac
  * stat address map address 0x6130 and 0x6138.
  *
  * 31: tr64
@@ -1097,7 +1098,7 @@ struct mac_regs {					/* Location: */
  * 0: rdrp
  */
 
-/* structure for Carry Register Two Mask Register reg in mac stat address map.
+/* काष्ठाure क्रम Carry Register Two Mask Register reg in mac stat address map.
  * located at address 0x613C
  *
  * 31-20: unused
@@ -1109,13 +1110,13 @@ struct mac_regs {					/* Location: */
  * 14: trfg
  * 13: tbyt
  * 12: tpkt
- * 11: tmca
+ * 11: पंचांगca
  * 10: tbca
  * 9: txpf
  * 8: tdfr
  * 7: tedf
  * 6: tscl
- * 5: tmcl
+ * 5: पंचांगcl
  * 4: tlcl
  * 3: txcl
  * 2: tncl
@@ -1125,7 +1126,7 @@ struct mac_regs {					/* Location: */
 
 /* MAC STATS Module of JAGCore Address Mapping
  */
-struct macstat_regs {			/* Location: */
+काष्ठा macstat_regs अणु			/* Location: */
 	u32 pad[32];			/*  0x6000 - 607C */
 
 	/* counters */
@@ -1142,7 +1143,7 @@ struct macstat_regs {			/* Location: */
 	u32 rx_multicast_packets;	/*  0x60A8 */
 	u32 rx_broadcast_packets;	/*  0x60AC */
 	u32 rx_control_frames;		/*  0x60B0 */
-	u32 rx_pause_frames;		/*  0x60B4 */
+	u32 rx_छोड़ो_frames;		/*  0x60B4 */
 	u32 rx_unknown_opcodes;		/*  0x60B8 */
 	u32 rx_align_errs;		/*  0x60BC */
 	u32 rx_frame_len_errs;		/*  0x60C0 */
@@ -1157,7 +1158,7 @@ struct macstat_regs {			/* Location: */
 	u32 tx_packets;			/*  0x60E4 */
 	u32 tx_multicast_packets;	/*  0x60E8 */
 	u32 tx_broadcast_packets;	/*  0x60EC */
-	u32 tx_pause_frames;		/*  0x60F0 */
+	u32 tx_छोड़ो_frames;		/*  0x60F0 */
 	u32 tx_deferred;		/*  0x60F4 */
 	u32 tx_excessive_deferred;	/*  0x60F8 */
 	u32 tx_single_collisions;	/*  0x60FC */
@@ -1165,7 +1166,7 @@ struct macstat_regs {			/* Location: */
 	u32 tx_late_collisions;		/*  0x6104 */
 	u32 tx_excessive_collisions;	/*  0x6108 */
 	u32 tx_total_collisions;	/*  0x610C */
-	u32 tx_pause_honored_frames;	/*  0x6110 */
+	u32 tx_छोड़ो_honored_frames;	/*  0x6110 */
 	u32 tx_drops;			/*  0x6114 */
 	u32 tx_jabbers;			/*  0x6118 */
 	u32 tx_fcs_errs;		/*  0x611C */
@@ -1177,7 +1178,7 @@ struct macstat_regs {			/* Location: */
 	u32 carry_reg2;			/*  0x6134 */
 	u32 carry_reg1_mask;		/*  0x6138 */
 	u32 carry_reg2_mask;		/*  0x613C */
-};
+पूर्ण;
 
 /* END OF MAC STAT REGISTER ADDRESS MAP */
 
@@ -1185,96 +1186,96 @@ struct macstat_regs {			/* Location: */
 /* Main Memory Controller Control reg in mmc address map.
  * located at address 0x7000
  */
-#define ET_MMC_ENABLE		1
-#define ET_MMC_ARB_DISABLE	2
-#define ET_MMC_RXMAC_DISABLE	4
-#define ET_MMC_TXMAC_DISABLE	8
-#define ET_MMC_TXDMA_DISABLE	16
-#define ET_MMC_RXDMA_DISABLE	32
-#define ET_MMC_FORCE_CE		64
+#घोषणा ET_MMC_ENABLE		1
+#घोषणा ET_MMC_ARB_DISABLE	2
+#घोषणा ET_MMC_RXMAC_DISABLE	4
+#घोषणा ET_MMC_TXMAC_DISABLE	8
+#घोषणा ET_MMC_TXDMA_DISABLE	16
+#घोषणा ET_MMC_RXDMA_DISABLE	32
+#घोषणा ET_MMC_FORCE_CE		64
 
 /* Main Memory Controller Host Memory Access Address reg in mmc
  * address map.  Located at address 0x7004. Top 16 bits hold the address bits
  */
-#define ET_SRAM_REQ_ACCESS	1
-#define ET_SRAM_WR_ACCESS	2
-#define ET_SRAM_IS_CTRL		4
+#घोषणा ET_SRAM_REQ_ACCESS	1
+#घोषणा ET_SRAM_WR_ACCESS	2
+#घोषणा ET_SRAM_IS_CTRL		4
 
-/* structure for Main Memory Controller Host Memory Access Data reg in mmc
+/* काष्ठाure क्रम Main Memory Controller Host Memory Access Data reg in mmc
  * address map.  Located at address 0x7008 - 0x7014
  * Defined earlier (u32)
  */
 
 /* Memory Control Module of JAGCore Address Mapping
  */
-struct mmc_regs {		/* Location: */
+काष्ठा mmc_regs अणु		/* Location: */
 	u32 mmc_ctrl;		/*  0x7000 */
 	u32 sram_access;	/*  0x7004 */
 	u32 sram_word1;		/*  0x7008 */
 	u32 sram_word2;		/*  0x700C */
 	u32 sram_word3;		/*  0x7010 */
 	u32 sram_word4;		/*  0x7014 */
-};
+पूर्ण;
 
 /* END OF MMC REGISTER ADDRESS MAP */
 
 /* JAGCore Address Mapping
  */
-struct address_map {
-	struct global_regs global;
+काष्ठा address_map अणु
+	काष्ठा global_regs global;
 	/* unused section of global address map */
-	u8 unused_global[4096 - sizeof(struct global_regs)];
-	struct txdma_regs txdma;
+	u8 unused_global[4096 - माप(काष्ठा global_regs)];
+	काष्ठा txdma_regs txdma;
 	/* unused section of txdma address map */
-	u8 unused_txdma[4096 - sizeof(struct txdma_regs)];
-	struct rxdma_regs rxdma;
+	u8 unused_txdma[4096 - माप(काष्ठा txdma_regs)];
+	काष्ठा rxdma_regs rxdma;
 	/* unused section of rxdma address map */
-	u8 unused_rxdma[4096 - sizeof(struct rxdma_regs)];
-	struct txmac_regs txmac;
+	u8 unused_rxdma[4096 - माप(काष्ठा rxdma_regs)];
+	काष्ठा txmac_regs txmac;
 	/* unused section of txmac address map */
-	u8 unused_txmac[4096 - sizeof(struct txmac_regs)];
-	struct rxmac_regs rxmac;
+	u8 unused_txmac[4096 - माप(काष्ठा txmac_regs)];
+	काष्ठा rxmac_regs rxmac;
 	/* unused section of rxmac address map */
-	u8 unused_rxmac[4096 - sizeof(struct rxmac_regs)];
-	struct mac_regs mac;
+	u8 unused_rxmac[4096 - माप(काष्ठा rxmac_regs)];
+	काष्ठा mac_regs mac;
 	/* unused section of mac address map */
-	u8 unused_mac[4096 - sizeof(struct mac_regs)];
-	struct macstat_regs macstat;
+	u8 unused_mac[4096 - माप(काष्ठा mac_regs)];
+	काष्ठा macstat_regs macstat;
 	/* unused section of mac stat address map */
-	u8 unused_mac_stat[4096 - sizeof(struct macstat_regs)];
-	struct mmc_regs mmc;
+	u8 unused_mac_stat[4096 - माप(काष्ठा macstat_regs)];
+	काष्ठा mmc_regs mmc;
 	/* unused section of mmc address map */
-	u8 unused_mmc[4096 - sizeof(struct mmc_regs)];
+	u8 unused_mmc[4096 - माप(काष्ठा mmc_regs)];
 	/* unused section of address map */
 	u8 unused_[1015808];
 	u8 unused_exp_rom[4096];	/* MGS-size TBD */
 	u8 unused__[524288];	/* unused section of address map */
-};
+पूर्ण;
 
-/* Defines for generic MII registers 0x00 -> 0x0F can be found in
+/* Defines क्रम generic MII रेजिस्टरs 0x00 -> 0x0F can be found in
  * include/linux/mii.h
  */
-/* some defines for modem registers that seem to be 'reserved' */
-#define PHY_INDEX_REG              0x10
-#define PHY_DATA_REG               0x11
-#define PHY_MPHY_CONTROL_REG       0x12
+/* some defines क्रम modem रेजिस्टरs that seem to be 'reserved' */
+#घोषणा PHY_INDEX_REG              0x10
+#घोषणा PHY_DATA_REG               0x11
+#घोषणा PHY_MPHY_CONTROL_REG       0x12
 
-/* defines for specified registers */
-#define PHY_LOOPBACK_CONTROL       0x13	/* TRU_VMI_LOOPBACK_CONTROL_1_REG 19 */
+/* defines क्रम specअगरied रेजिस्टरs */
+#घोषणा PHY_LOOPBACK_CONTROL       0x13	/* TRU_VMI_LOOPBACK_CONTROL_1_REG 19 */
 					/* TRU_VMI_LOOPBACK_CONTROL_2_REG 20 */
-#define PHY_REGISTER_MGMT_CONTROL  0x15	/* TRU_VMI_MI_SEQ_CONTROL_REG     21 */
-#define PHY_CONFIG                 0x16	/* TRU_VMI_CONFIGURATION_REG      22 */
-#define PHY_PHY_CONTROL            0x17	/* TRU_VMI_PHY_CONTROL_REG        23 */
-#define PHY_INTERRUPT_MASK         0x18	/* TRU_VMI_INTERRUPT_MASK_REG     24 */
-#define PHY_INTERRUPT_STATUS       0x19	/* TRU_VMI_INTERRUPT_STATUS_REG   25 */
-#define PHY_PHY_STATUS             0x1A	/* TRU_VMI_PHY_STATUS_REG         26 */
-#define PHY_LED_1                  0x1B	/* TRU_VMI_LED_CONTROL_1_REG      27 */
-#define PHY_LED_2                  0x1C	/* TRU_VMI_LED_CONTROL_2_REG      28 */
+#घोषणा PHY_REGISTER_MGMT_CONTROL  0x15	/* TRU_VMI_MI_SEQ_CONTROL_REG     21 */
+#घोषणा PHY_CONFIG                 0x16	/* TRU_VMI_CONFIGURATION_REG      22 */
+#घोषणा PHY_PHY_CONTROL            0x17	/* TRU_VMI_PHY_CONTROL_REG        23 */
+#घोषणा PHY_INTERRUPT_MASK         0x18	/* TRU_VMI_INTERRUPT_MASK_REG     24 */
+#घोषणा PHY_INTERRUPT_STATUS       0x19	/* TRU_VMI_INTERRUPT_STATUS_REG   25 */
+#घोषणा PHY_PHY_STATUS             0x1A	/* TRU_VMI_PHY_STATUS_REG         26 */
+#घोषणा PHY_LED_1                  0x1B	/* TRU_VMI_LED_CONTROL_1_REG      27 */
+#घोषणा PHY_LED_2                  0x1C	/* TRU_VMI_LED_CONTROL_2_REG      28 */
 					/* TRU_VMI_LINK_CONTROL_REG       29 */
 					/* TRU_VMI_TIMING_CONTROL_REG        */
 
 /* MI Register 10: Gigabit basic mode status reg(Reg 0x0A) */
-#define ET_1000BT_MSTR_SLV 0x4000
+#घोषणा ET_1000BT_MSTR_SLV 0x4000
 
 /* MI Register 16 - 18: Reserved Reg(0x10-0x12) */
 
@@ -1302,70 +1303,70 @@ struct address_map {
 /* MI Register 22: PHY Configuration Reg(0x16)
  *	15:	crs_tx_en
  *	14:	reserved
- *	13-12:	tx_fifo_depth
- *	11-10:	speed_downshift
+ *	13-12:	tx_fअगरo_depth
+ *	11-10:	speed_करोwnshअगरt
  *	9:	pbi_detect
  *	8:	tbi_rate
  *	7:	alternate_np
  *	6:	group_mdio_en
- *	5:	tx_clock_en
- *	4:	sys_clock_en
+ *	5:	tx_घड़ी_en
+ *	4:	sys_घड़ी_en
  *	3:	reserved
- *	2-0:	mac_if_mode
+ *	2-0:	mac_अगर_mode
  */
-#define ET_PHY_CONFIG_TX_FIFO_DEPTH	0x3000
+#घोषणा ET_PHY_CONFIG_TX_FIFO_DEPTH	0x3000
 
-#define ET_PHY_CONFIG_FIFO_DEPTH_8	0x0000
-#define ET_PHY_CONFIG_FIFO_DEPTH_16	0x1000
-#define ET_PHY_CONFIG_FIFO_DEPTH_32	0x2000
-#define ET_PHY_CONFIG_FIFO_DEPTH_64	0x3000
+#घोषणा ET_PHY_CONFIG_FIFO_DEPTH_8	0x0000
+#घोषणा ET_PHY_CONFIG_FIFO_DEPTH_16	0x1000
+#घोषणा ET_PHY_CONFIG_FIFO_DEPTH_32	0x2000
+#घोषणा ET_PHY_CONFIG_FIFO_DEPTH_64	0x3000
 
 /* MI Register 23: PHY CONTROL Reg(0x17)
  *	15:	reserved
  *	14:	tdr_en
  *	13:	reserved
- *	12-11:	downshift_attempts
+ *	12-11:	करोwnshअगरt_attempts
  *	10-6:	reserved
  *	5:	jabber_10baseT
  *	4:	sqe_10baseT
  *	3:	tp_loopback_10baseT
  *	2:	preamble_gen_en
  *	1:	reserved
- *	0:	force_int
+ *	0:	क्रमce_पूर्णांक
  */
 
 /* MI Register 24: Interrupt Mask Reg(0x18)
  *	15-10:	reserved
  *	9:	mdio_sync_lost
- *	8:	autoneg_status
+ *	8:	स्वतःneg_status
  *	7:	hi_bit_err
  *	6:	np_rx
  *	5:	err_counter_full
- *	4:	fifo_over_underflow
+ *	4:	fअगरo_over_underflow
  *	3:	rx_status
  *	2:	link_status
- *	1:	automatic_speed
- *	0:	int_en
+ *	1:	स्वतःmatic_speed
+ *	0:	पूर्णांक_en
  */
 
 /* MI Register 25: Interrupt Status Reg(0x19)
  *	15-10:	reserved
  *	9:	mdio_sync_lost
- *	8:	autoneg_status
+ *	8:	स्वतःneg_status
  *	7:	hi_bit_err
  *	6:	np_rx
  *	5:	err_counter_full
- *	4:	fifo_over_underflow
+ *	4:	fअगरo_over_underflow
  *	3:	rx_status
  *	2:	link_status
- *	1:	automatic_speed
- *	0:	int_en
+ *	1:	स्वतःmatic_speed
+ *	0:	पूर्णांक_en
  */
 
 /* MI Register 26: PHY Status Reg(0x1A)
  *	15:	reserved
- *	14-13:	autoneg_fault
- *	12:	autoneg_status
+ *	14-13:	स्वतःneg_fault
+ *	12:	स्वतःneg_status
  *	11:	mdi_x_status
  *	10:	polarity_status
  *	9-8:	speed_status
@@ -1374,16 +1375,16 @@ struct address_map {
  *	5:	tx_status
  *	4:	rx_status
  *	3:	collision_status
- *	2:	autoneg_en
- *	1:	pause_en
+ *	2:	स्वतःneg_en
+ *	1:	छोड़ो_en
  *	0:	asymmetric_dir
  */
-#define ET_PHY_AUTONEG_STATUS	0x1000
-#define ET_PHY_POLARITY_STATUS	0x0400
-#define ET_PHY_SPEED_STATUS	0x0300
-#define ET_PHY_DUPLEX_STATUS	0x0080
-#define ET_PHY_LSTATUS		0x0040
-#define ET_PHY_AUTONEG_ENABLE	0x0020
+#घोषणा ET_PHY_AUTONEG_STATUS	0x1000
+#घोषणा ET_PHY_POLARITY_STATUS	0x0400
+#घोषणा ET_PHY_SPEED_STATUS	0x0300
+#घोषणा ET_PHY_DUPLEX_STATUS	0x0080
+#घोषणा ET_PHY_LSTATUS		0x0040
+#घोषणा ET_PHY_AUTONEG_ENABLE	0x0020
 
 /* MI Register 27: LED Control Reg 1(0x1B)
  *	15-14:	reserved
@@ -1402,31 +1403,31 @@ struct address_map {
  *	7-4:	led_100BaseTX
  *	3-0:	led_1000BaseT
  */
-#define ET_LED2_LED_LINK	0xF000
-#define ET_LED2_LED_TXRX	0x0F00
-#define ET_LED2_LED_100TX	0x00F0
-#define ET_LED2_LED_1000T	0x000F
+#घोषणा ET_LED2_LED_LINK	0xF000
+#घोषणा ET_LED2_LED_TXRX	0x0F00
+#घोषणा ET_LED2_LED_100TX	0x00F0
+#घोषणा ET_LED2_LED_1000T	0x000F
 
-/* defines for LED control reg 2 values */
-#define LED_VAL_1000BT			0x0
-#define LED_VAL_100BTX			0x1
-#define LED_VAL_10BT			0x2
-#define LED_VAL_1000BT_100BTX		0x3 /* 1000BT on, 100BTX blink */
-#define LED_VAL_LINKON			0x4
-#define LED_VAL_TX			0x5
-#define LED_VAL_RX			0x6
-#define LED_VAL_TXRX			0x7 /* TX or RX */
-#define LED_VAL_DUPLEXFULL		0x8
-#define LED_VAL_COLLISION		0x9
-#define LED_VAL_LINKON_ACTIVE		0xA /* Link on, activity blink */
-#define LED_VAL_LINKON_RECV		0xB /* Link on, receive blink */
-#define LED_VAL_DUPLEXFULL_COLLISION	0xC /* Duplex on, collision blink */
-#define LED_VAL_BLINK			0xD
-#define LED_VAL_ON			0xE
-#define LED_VAL_OFF			0xF
+/* defines क्रम LED control reg 2 values */
+#घोषणा LED_VAL_1000BT			0x0
+#घोषणा LED_VAL_100BTX			0x1
+#घोषणा LED_VAL_10BT			0x2
+#घोषणा LED_VAL_1000BT_100BTX		0x3 /* 1000BT on, 100BTX blink */
+#घोषणा LED_VAL_LINKON			0x4
+#घोषणा LED_VAL_TX			0x5
+#घोषणा LED_VAL_RX			0x6
+#घोषणा LED_VAL_TXRX			0x7 /* TX or RX */
+#घोषणा LED_VAL_DUPLEXFULL		0x8
+#घोषणा LED_VAL_COLLISION		0x9
+#घोषणा LED_VAL_LINKON_ACTIVE		0xA /* Link on, activity blink */
+#घोषणा LED_VAL_LINKON_RECV		0xB /* Link on, receive blink */
+#घोषणा LED_VAL_DUPLEXFULL_COLLISION	0xC /* Duplex on, collision blink */
+#घोषणा LED_VAL_BLINK			0xD
+#घोषणा LED_VAL_ON			0xE
+#घोषणा LED_VAL_OFF			0xF
 
-#define LED_LINK_SHIFT			12
-#define LED_TXRX_SHIFT			8
-#define LED_100TX_SHIFT			4
+#घोषणा LED_LINK_SHIFT			12
+#घोषणा LED_TXRX_SHIFT			8
+#घोषणा LED_100TX_SHIFT			4
 
 /* MI Register 29 - 31: Reserved Reg(0x1D - 0x1E) */

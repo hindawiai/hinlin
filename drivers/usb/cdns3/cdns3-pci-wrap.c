@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cadence USBSS PCI Glue driver
  *
@@ -7,104 +8,104 @@
  * Author: Pawel Laszczak <pawell@cadence.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/platform_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
 
-struct cdns3_wrap {
-	struct platform_device *plat_dev;
-	struct resource dev_res[6];
-	int devfn;
-};
+काष्ठा cdns3_wrap अणु
+	काष्ठा platक्रमm_device *plat_dev;
+	काष्ठा resource dev_res[6];
+	पूर्णांक devfn;
+पूर्ण;
 
-#define RES_IRQ_HOST_ID		0
-#define RES_IRQ_PERIPHERAL_ID	1
-#define RES_IRQ_OTG_ID		2
-#define RES_HOST_ID		3
-#define RES_DEV_ID		4
-#define RES_DRD_ID		5
+#घोषणा RES_IRQ_HOST_ID		0
+#घोषणा RES_IRQ_PERIPHERAL_ID	1
+#घोषणा RES_IRQ_OTG_ID		2
+#घोषणा RES_HOST_ID		3
+#घोषणा RES_DEV_ID		4
+#घोषणा RES_DRD_ID		5
 
-#define PCI_BAR_HOST		0
-#define PCI_BAR_DEV		2
-#define PCI_BAR_OTG		0
+#घोषणा PCI_BAR_HOST		0
+#घोषणा PCI_BAR_DEV		2
+#घोषणा PCI_BAR_OTG		0
 
-#define PCI_DEV_FN_HOST_DEVICE	0
-#define PCI_DEV_FN_OTG		1
+#घोषणा PCI_DEV_FN_HOST_DEVICE	0
+#घोषणा PCI_DEV_FN_OTG		1
 
-#define PCI_DRIVER_NAME		"cdns3-pci-usbss"
-#define PLAT_DRIVER_NAME	"cdns-usb3"
+#घोषणा PCI_DRIVER_NAME		"cdns3-pci-usbss"
+#घोषणा PLAT_DRIVER_NAME	"cdns-usb3"
 
-#define CDNS_VENDOR_ID		0x17cd
-#define CDNS_DEVICE_ID		0x0100
+#घोषणा CDNS_VENDOR_ID		0x17cd
+#घोषणा CDNS_DEVICE_ID		0x0100
 
-static struct pci_dev *cdns3_get_second_fun(struct pci_dev *pdev)
-{
-	struct pci_dev *func;
+अटल काष्ठा pci_dev *cdns3_get_second_fun(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pci_dev *func;
 
 	/*
 	 * Gets the second function.
-	 * It's little tricky, but this platform has two function.
-	 * The fist keeps resources for Host/Device while the second
-	 * keeps resources for DRD/OTG.
+	 * It's little tricky, but this platक्रमm has two function.
+	 * The fist keeps resources क्रम Host/Device जबतक the second
+	 * keeps resources क्रम DRD/OTG.
 	 */
-	func = pci_get_device(pdev->vendor, pdev->device, NULL);
-	if (unlikely(!func))
-		return NULL;
+	func = pci_get_device(pdev->venकरोr, pdev->device, शून्य);
+	अगर (unlikely(!func))
+		वापस शून्य;
 
-	if (func->devfn == pdev->devfn) {
-		func = pci_get_device(pdev->vendor, pdev->device, func);
-		if (unlikely(!func))
-			return NULL;
-	}
+	अगर (func->devfn == pdev->devfn) अणु
+		func = pci_get_device(pdev->venकरोr, pdev->device, func);
+		अगर (unlikely(!func))
+			वापस शून्य;
+	पूर्ण
 
-	return func;
-}
+	वापस func;
+पूर्ण
 
-static int cdns3_pci_probe(struct pci_dev *pdev,
-			   const struct pci_device_id *id)
-{
-	struct platform_device_info plat_info;
-	struct cdns3_wrap *wrap;
-	struct resource *res;
-	struct pci_dev *func;
-	int err;
+अटल पूर्णांक cdns3_pci_probe(काष्ठा pci_dev *pdev,
+			   स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा platक्रमm_device_info plat_info;
+	काष्ठा cdns3_wrap *wrap;
+	काष्ठा resource *res;
+	काष्ठा pci_dev *func;
+	पूर्णांक err;
 
 	/*
-	 * for GADGET/HOST PCI (devfn) function number is 0,
-	 * for OTG PCI (devfn) function number is 1
+	 * क्रम GADGET/HOST PCI (devfn) function number is 0,
+	 * क्रम OTG PCI (devfn) function number is 1
 	 */
-	if (!id || (pdev->devfn != PCI_DEV_FN_HOST_DEVICE &&
+	अगर (!id || (pdev->devfn != PCI_DEV_FN_HOST_DEVICE &&
 		    pdev->devfn != PCI_DEV_FN_OTG))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	func = cdns3_get_second_fun(pdev);
-	if (unlikely(!func))
-		return -EINVAL;
+	अगर (unlikely(!func))
+		वापस -EINVAL;
 
 	err = pcim_enable_device(pdev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Enabling PCI device has failed %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	pci_set_master(pdev);
 
-	if (pci_is_enabled(func)) {
+	अगर (pci_is_enabled(func)) अणु
 		wrap = pci_get_drvdata(func);
-	} else {
-		wrap = kzalloc(sizeof(*wrap), GFP_KERNEL);
-		if (!wrap) {
+	पूर्ण अन्यथा अणु
+		wrap = kzalloc(माप(*wrap), GFP_KERNEL);
+		अगर (!wrap) अणु
 			pci_disable_device(pdev);
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	res = wrap->dev_res;
 
-	if (pdev->devfn == PCI_DEV_FN_HOST_DEVICE) {
+	अगर (pdev->devfn == PCI_DEV_FN_HOST_DEVICE) अणु
 		/* function 0: host(BAR_0) + device(BAR_1).*/
 		dev_dbg(&pdev->dev, "Initialize Device resources\n");
 		res[RES_DEV_ID].start = pci_resource_start(pdev, PCI_BAR_DEV);
@@ -121,16 +122,16 @@ static int cdns3_pci_probe(struct pci_dev *pdev,
 		dev_dbg(&pdev->dev, "USBSS-XHCI physical base addr: %pa\n",
 			&res[RES_HOST_ID].start);
 
-		/* Interrupt for XHCI */
+		/* Interrupt क्रम XHCI */
 		wrap->dev_res[RES_IRQ_HOST_ID].start = pdev->irq;
 		wrap->dev_res[RES_IRQ_HOST_ID].name = "host";
 		wrap->dev_res[RES_IRQ_HOST_ID].flags = IORESOURCE_IRQ;
 
-		/* Interrupt device. It's the same as for HOST. */
+		/* Interrupt device. It's the same as क्रम HOST. */
 		wrap->dev_res[RES_IRQ_PERIPHERAL_ID].start = pdev->irq;
 		wrap->dev_res[RES_IRQ_PERIPHERAL_ID].name = "peripheral";
 		wrap->dev_res[RES_IRQ_PERIPHERAL_ID].flags = IORESOURCE_IRQ;
-	} else {
+	पूर्ण अन्यथा अणु
 		res[RES_DRD_ID].start = pci_resource_start(pdev, PCI_BAR_OTG);
 		res[RES_DRD_ID].end =   pci_resource_end(pdev, PCI_BAR_OTG);
 		res[RES_DRD_ID].name = "otg";
@@ -138,15 +139,15 @@ static int cdns3_pci_probe(struct pci_dev *pdev,
 		dev_dbg(&pdev->dev, "USBSS-DRD physical base addr: %pa\n",
 			&res[RES_DRD_ID].start);
 
-		/* Interrupt for OTG/DRD. */
+		/* Interrupt क्रम OTG/DRD. */
 		wrap->dev_res[RES_IRQ_OTG_ID].start = pdev->irq;
 		wrap->dev_res[RES_IRQ_OTG_ID].name = "otg";
 		wrap->dev_res[RES_IRQ_OTG_ID].flags = IORESOURCE_IRQ;
-	}
+	पूर्ण
 
-	if (pci_is_enabled(func)) {
-		/* set up platform device info */
-		memset(&plat_info, 0, sizeof(plat_info));
+	अगर (pci_is_enabled(func)) अणु
+		/* set up platक्रमm device info */
+		स_रखो(&plat_info, 0, माप(plat_info));
 		plat_info.parent = &pdev->dev;
 		plat_info.fwnode = pdev->dev.fwnode;
 		plat_info.name = PLAT_DRIVER_NAME;
@@ -155,46 +156,46 @@ static int cdns3_pci_probe(struct pci_dev *pdev,
 		plat_info.res = wrap->dev_res;
 		plat_info.num_res = ARRAY_SIZE(wrap->dev_res);
 		plat_info.dma_mask = pdev->dma_mask;
-		/* register platform device */
-		wrap->plat_dev = platform_device_register_full(&plat_info);
-		if (IS_ERR(wrap->plat_dev)) {
+		/* रेजिस्टर platक्रमm device */
+		wrap->plat_dev = platक्रमm_device_रेजिस्टर_full(&plat_info);
+		अगर (IS_ERR(wrap->plat_dev)) अणु
 			pci_disable_device(pdev);
 			err = PTR_ERR(wrap->plat_dev);
-			kfree(wrap);
-			return err;
-		}
-	}
+			kमुक्त(wrap);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	pci_set_drvdata(pdev, wrap);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void cdns3_pci_remove(struct pci_dev *pdev)
-{
-	struct cdns3_wrap *wrap;
-	struct pci_dev *func;
+अटल व्योम cdns3_pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा cdns3_wrap *wrap;
+	काष्ठा pci_dev *func;
 
 	func = cdns3_get_second_fun(pdev);
 
-	wrap = (struct cdns3_wrap *)pci_get_drvdata(pdev);
-	if (wrap->devfn == pdev->devfn)
-		platform_device_unregister(wrap->plat_dev);
+	wrap = (काष्ठा cdns3_wrap *)pci_get_drvdata(pdev);
+	अगर (wrap->devfn == pdev->devfn)
+		platक्रमm_device_unरेजिस्टर(wrap->plat_dev);
 
-	if (!pci_is_enabled(func))
-		kfree(wrap);
-}
+	अगर (!pci_is_enabled(func))
+		kमुक्त(wrap);
+पूर्ण
 
-static const struct pci_device_id cdns3_pci_ids[] = {
-	{ PCI_DEVICE(CDNS_VENDOR_ID, CDNS_DEVICE_ID), },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id cdns3_pci_ids[] = अणु
+	अणु PCI_DEVICE(CDNS_VENDOR_ID, CDNS_DEVICE_ID), पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
-static struct pci_driver cdns3_pci_driver = {
+अटल काष्ठा pci_driver cdns3_pci_driver = अणु
 	.name = PCI_DRIVER_NAME,
 	.id_table = cdns3_pci_ids,
 	.probe = cdns3_pci_probe,
-	.remove = cdns3_pci_remove,
-};
+	.हटाओ = cdns3_pci_हटाओ,
+पूर्ण;
 
 module_pci_driver(cdns3_pci_driver);
 MODULE_DEVICE_TABLE(pci, cdns3_pci_ids);

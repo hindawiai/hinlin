@@ -1,29 +1,30 @@
+<शैली गुरु>
 /*
- * Interface for NOR flash driver whose high address lines are latched
+ * Interface क्रम NOR flash driver whose high address lines are latched
  *
- * Copyright © 2008 MontaVista Software, Inc. <source@mvista.com>
+ * Copyright तऊ 2008 MontaVista Software, Inc. <source@mvista.com>
  *
  * This file is licensed under the terms of the GNU General Public License
  * version 2. This program is licensed "as is" without any warranty of any
  * kind, whether express or implied.
  */
-#ifndef __LATCH_ADDR_FLASH__
-#define __LATCH_ADDR_FLASH__
+#अगर_अघोषित __LATCH_ADDR_FLASH__
+#घोषणा __LATCH_ADDR_FLASH__
 
-struct map_info;
-struct mtd_partition;
+काष्ठा map_info;
+काष्ठा mtd_partition;
 
-struct latch_addr_flash_data {
-	unsigned int		width;
-	unsigned int		size;
+काष्ठा latch_addr_flash_data अणु
+	अचिन्हित पूर्णांक		width;
+	अचिन्हित पूर्णांक		size;
 
-	int			(*init)(void *data, int cs);
-	void			(*done)(void *data);
-	void			(*set_window)(unsigned long offset, void *data);
-	void			*data;
+	पूर्णांक			(*init)(व्योम *data, पूर्णांक cs);
+	व्योम			(*करोne)(व्योम *data);
+	व्योम			(*set_winकरोw)(अचिन्हित दीर्घ offset, व्योम *data);
+	व्योम			*data;
 
-	unsigned int		nr_parts;
-	struct mtd_partition	*parts;
-};
+	अचिन्हित पूर्णांक		nr_parts;
+	काष्ठा mtd_partition	*parts;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

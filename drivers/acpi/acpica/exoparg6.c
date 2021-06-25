@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: exoparg6 - AML execution - opcodes with 6 arguments
@@ -7,159 +8,159 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acinterp.h"
-#include "acparser.h"
-#include "amlcode.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acinterp.h"
+#समावेश "acparser.h"
+#समावेश "amlcode.h"
 
-#define _COMPONENT          ACPI_EXECUTER
+#घोषणा _COMPONENT          ACPI_EXECUTER
 ACPI_MODULE_NAME("exoparg6")
 
 /*!
- * Naming convention for AML interpreter execution routines.
+ * Naming convention क्रम AML पूर्णांकerpreter execution routines.
  *
  * The routines that begin execution of AML opcodes are named with a common
- * convention based upon the number of arguments, the number of target operands,
- * and whether or not a value is returned:
+ * convention based upon the number of arguments, the number of target opeअक्रमs,
+ * and whether or not a value is वापसed:
  *
  *      AcpiExOpcode_xA_yT_zR
  *
  * Where:
  *
- * xA - ARGUMENTS:    The number of arguments (input operands) that are
- *                    required for this opcode type (1 through 6 args).
- * yT - TARGETS:      The number of targets (output operands) that are required
- *                    for this opcode type (0, 1, or 2 targets).
- * zR - RETURN VALUE: Indicates whether this opcode type returns a value
- *                    as the function return (0 or 1).
+ * xA - ARGUMENTS:    The number of arguments (input opeअक्रमs) that are
+ *                    required क्रम this opcode type (1 through 6 args).
+ * yT - TARGETS:      The number of tarमाला_लो (output opeअक्रमs) that are required
+ *                    क्रम this opcode type (0, 1, or 2 tarमाला_लो).
+ * zR - RETURN VALUE: Indicates whether this opcode type वापसs a value
+ *                    as the function वापस (0 or 1).
  *
  * The AcpiExOpcode* functions are called via the Dispatcher component with
- * fully resolved operands.
+ * fully resolved opeअक्रमs.
 !*/
 /* Local prototypes */
-static u8
-acpi_ex_do_match(u32 match_op,
-		 union acpi_operand_object *package_obj,
-		 union acpi_operand_object *match_obj);
+अटल u8
+acpi_ex_करो_match(u32 match_op,
+		 जोड़ acpi_opeअक्रम_object *package_obj,
+		 जोड़ acpi_opeअक्रम_object *match_obj);
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_do_match
+ * FUNCTION:    acpi_ex_करो_match
  *
- * PARAMETERS:  match_op        - The AML match operand
+ * PARAMETERS:  match_op        - The AML match opeअक्रम
  *              package_obj     - Object from the target package
  *              match_obj       - Object to be matched
  *
- * RETURN:      TRUE if the match is successful, FALSE otherwise
+ * RETURN:      TRUE अगर the match is successful, FALSE otherwise
  *
- * DESCRIPTION: Implements the low-level match for the ASL Match operator.
+ * DESCRIPTION: Implements the low-level match क्रम the ASL Match चालक.
  *              Package elements will be implicitly converted to the type of
  *              the match object (Integer/Buffer/String).
  *
  ******************************************************************************/
 
-static u8
-acpi_ex_do_match(u32 match_op,
-		 union acpi_operand_object *package_obj,
-		 union acpi_operand_object *match_obj)
-{
+अटल u8
+acpi_ex_करो_match(u32 match_op,
+		 जोड़ acpi_opeअक्रम_object *package_obj,
+		 जोड़ acpi_opeअक्रम_object *match_obj)
+अणु
 	u8 logical_result = TRUE;
 	acpi_status status;
 
 	/*
 	 * Note: Since the package_obj/match_obj ordering is opposite to that of
-	 * the standard logical operators, we have to reverse them when we call
-	 * do_logical_op in order to make the implicit conversion rules work
+	 * the standard logical चालकs, we have to reverse them when we call
+	 * करो_logical_op in order to make the implicit conversion rules work
 	 * correctly. However, this means we have to flip the entire equation
 	 * also. A bit ugly perhaps, but overall, better than fussing the
-	 * parameters around at runtime, over and over again.
+	 * parameters around at runसमय, over and over again.
 	 *
 	 * Below, P[i] refers to the package element, M refers to the Match object.
 	 */
-	switch (match_op) {
-	case MATCH_MTR:
+	चयन (match_op) अणु
+	हाल MATCH_MTR:
 
 		/* Always true */
 
-		break;
+		अवरोध;
 
-	case MATCH_MEQ:
+	हाल MATCH_MEQ:
 		/*
-		 * True if equal: (P[i] == M)
+		 * True अगर equal: (P[i] == M)
 		 * Change to:     (M == P[i])
 		 */
 		status =
-		    acpi_ex_do_logical_op(AML_LOGICAL_EQUAL_OP, match_obj,
+		    acpi_ex_करो_logical_op(AML_LOGICAL_EQUAL_OP, match_obj,
 					  package_obj, &logical_result);
-		if (ACPI_FAILURE(status)) {
-			return (FALSE);
-		}
-		break;
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस (FALSE);
+		पूर्ण
+		अवरोध;
 
-	case MATCH_MLE:
+	हाल MATCH_MLE:
 		/*
-		 * True if less than or equal: (P[i] <= M) (P[i] not_greater than M)
+		 * True अगर less than or equal: (P[i] <= M) (P[i] not_greater than M)
 		 * Change to:                  (M >= P[i]) (M not_less than P[i])
 		 */
 		status =
-		    acpi_ex_do_logical_op(AML_LOGICAL_LESS_OP, match_obj,
+		    acpi_ex_करो_logical_op(AML_LOGICAL_LESS_OP, match_obj,
 					  package_obj, &logical_result);
-		if (ACPI_FAILURE(status)) {
-			return (FALSE);
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस (FALSE);
+		पूर्ण
 		logical_result = (u8) ! logical_result;
-		break;
+		अवरोध;
 
-	case MATCH_MLT:
+	हाल MATCH_MLT:
 		/*
-		 * True if less than: (P[i] < M)
+		 * True अगर less than: (P[i] < M)
 		 * Change to:         (M > P[i])
 		 */
 		status =
-		    acpi_ex_do_logical_op(AML_LOGICAL_GREATER_OP, match_obj,
+		    acpi_ex_करो_logical_op(AML_LOGICAL_GREATER_OP, match_obj,
 					  package_obj, &logical_result);
-		if (ACPI_FAILURE(status)) {
-			return (FALSE);
-		}
-		break;
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस (FALSE);
+		पूर्ण
+		अवरोध;
 
-	case MATCH_MGE:
+	हाल MATCH_MGE:
 		/*
-		 * True if greater than or equal: (P[i] >= M) (P[i] not_less than M)
+		 * True अगर greater than or equal: (P[i] >= M) (P[i] not_less than M)
 		 * Change to:                     (M <= P[i]) (M not_greater than P[i])
 		 */
 		status =
-		    acpi_ex_do_logical_op(AML_LOGICAL_GREATER_OP, match_obj,
+		    acpi_ex_करो_logical_op(AML_LOGICAL_GREATER_OP, match_obj,
 					  package_obj, &logical_result);
-		if (ACPI_FAILURE(status)) {
-			return (FALSE);
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस (FALSE);
+		पूर्ण
 		logical_result = (u8) ! logical_result;
-		break;
+		अवरोध;
 
-	case MATCH_MGT:
+	हाल MATCH_MGT:
 		/*
-		 * True if greater than: (P[i] > M)
+		 * True अगर greater than: (P[i] > M)
 		 * Change to:            (M < P[i])
 		 */
 		status =
-		    acpi_ex_do_logical_op(AML_LOGICAL_LESS_OP, match_obj,
+		    acpi_ex_करो_logical_op(AML_LOGICAL_LESS_OP, match_obj,
 					  package_obj, &logical_result);
-		if (ACPI_FAILURE(status)) {
-			return (FALSE);
-		}
-		break;
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस (FALSE);
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 
 		/* Undefined */
 
-		return (FALSE);
-	}
+		वापस (FALSE);
+	पूर्ण
 
-	return (logical_result);
-}
+	वापस (logical_result);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -169,23 +170,23 @@ acpi_ex_do_match(u32 match_op,
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Execute opcode with 6 arguments, no target, and a return value
+ * DESCRIPTION: Execute opcode with 6 arguments, no target, and a वापस value
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_opcode_6A_0T_1R(struct acpi_walk_state *walk_state)
-{
-	union acpi_operand_object **operand = &walk_state->operands[0];
-	union acpi_operand_object *return_desc = NULL;
+acpi_status acpi_ex_opcode_6A_0T_1R(काष्ठा acpi_walk_state *walk_state)
+अणु
+	जोड़ acpi_opeअक्रम_object **opeअक्रम = &walk_state->opeअक्रमs[0];
+	जोड़ acpi_opeअक्रम_object *वापस_desc = शून्य;
 	acpi_status status = AE_OK;
 	u64 index;
-	union acpi_operand_object *this_element;
+	जोड़ acpi_opeअक्रम_object *this_element;
 
 	ACPI_FUNCTION_TRACE_STR(ex_opcode_6A_0T_1R,
 				acpi_ps_get_opcode_name(walk_state->opcode));
 
-	switch (walk_state->opcode) {
-	case AML_MATCH_OP:
+	चयन (walk_state->opcode) अणु
+	हाल AML_MATCH_OP:
 		/*
 		 * Match (search_pkg[0], match_op1[1], match_obj1[2],
 		 *                      match_op2[3], match_obj2[4], start_index[5])
@@ -193,39 +194,39 @@ acpi_status acpi_ex_opcode_6A_0T_1R(struct acpi_walk_state *walk_state)
 
 		/* Validate both Match Term Operators (MTR, MEQ, etc.) */
 
-		if ((operand[1]->integer.value > MAX_MATCH_OPERATOR) ||
-		    (operand[3]->integer.value > MAX_MATCH_OPERATOR)) {
+		अगर ((opeअक्रम[1]->पूर्णांकeger.value > MAX_MATCH_OPERATOR) ||
+		    (opeअक्रम[3]->पूर्णांकeger.value > MAX_MATCH_OPERATOR)) अणु
 			ACPI_ERROR((AE_INFO, "Match operator out of range"));
 			status = AE_AML_OPERAND_VALUE;
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
 		/* Get the package start_index, validate against the package length */
 
-		index = operand[5]->integer.value;
-		if (index >= operand[0]->package.count) {
+		index = opeअक्रम[5]->पूर्णांकeger.value;
+		अगर (index >= opeअक्रम[0]->package.count) अणु
 			ACPI_ERROR((AE_INFO,
 				    "Index (0x%8.8X%8.8X) beyond package end (0x%X)",
 				    ACPI_FORMAT_UINT64(index),
-				    operand[0]->package.count));
+				    opeअक्रम[0]->package.count));
 			status = AE_AML_PACKAGE_LIMIT;
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
-		/* Create an integer for the return value */
-		/* Default return value is ACPI_UINT64_MAX if no match found */
+		/* Create an पूर्णांकeger क्रम the वापस value */
+		/* Default वापस value is ACPI_UINT64_MAX अगर no match found */
 
-		return_desc = acpi_ut_create_integer_object(ACPI_UINT64_MAX);
-		if (!return_desc) {
+		वापस_desc = acpi_ut_create_पूर्णांकeger_object(ACPI_UINT64_MAX);
+		अगर (!वापस_desc) अणु
 			status = AE_NO_MEMORY;
-			goto cleanup;
+			जाओ cleanup;
 
-		}
+		पूर्ण
 
 		/*
 		 * Examine each element until a match is found. Both match conditions
-		 * must be satisfied for a match to occur. Within the loop,
-		 * "continue" signifies that the current element does not match
+		 * must be satisfied क्रम a match to occur. Within the loop,
+		 * "continue" signअगरies that the current element करोes not match
 		 * and the next should be examined.
 		 *
 		 * Upon finding a match, the loop will terminate via "break" at
@@ -233,67 +234,67 @@ acpi_status acpi_ex_opcode_6A_0T_1R(struct acpi_walk_state *walk_state)
 		 * ACPI_UINT64_MAX (Ones) (its initial value) indicating that no
 		 * match was found.
 		 */
-		for (; index < operand[0]->package.count; index++) {
+		क्रम (; index < opeअक्रम[0]->package.count; index++) अणु
 
 			/* Get the current package element */
 
-			this_element = operand[0]->package.elements[index];
+			this_element = opeअक्रम[0]->package.elements[index];
 
-			/* Treat any uninitialized (NULL) elements as non-matching */
+			/* Treat any uninitialized (शून्य) elements as non-matching */
 
-			if (!this_element) {
-				continue;
-			}
+			अगर (!this_element) अणु
+				जारी;
+			पूर्ण
 
 			/*
-			 * Both match conditions must be satisfied. Execution of a continue
-			 * (proceed to next iteration of enclosing for loop) signifies a
+			 * Both match conditions must be satisfied. Execution of a जारी
+			 * (proceed to next iteration of enclosing क्रम loop) signअगरies a
 			 * non-match.
 			 */
-			if (!acpi_ex_do_match((u32) operand[1]->integer.value,
-					      this_element, operand[2])) {
-				continue;
-			}
+			अगर (!acpi_ex_करो_match((u32) opeअक्रम[1]->पूर्णांकeger.value,
+					      this_element, opeअक्रम[2])) अणु
+				जारी;
+			पूर्ण
 
-			if (!acpi_ex_do_match((u32) operand[3]->integer.value,
-					      this_element, operand[4])) {
-				continue;
-			}
+			अगर (!acpi_ex_करो_match((u32) opeअक्रम[3]->पूर्णांकeger.value,
+					      this_element, opeअक्रम[4])) अणु
+				जारी;
+			पूर्ण
 
-			/* Match found: Index is the return value */
+			/* Match found: Index is the वापस value */
 
-			return_desc->integer.value = index;
-			break;
-		}
-		break;
+			वापस_desc->पूर्णांकeger.value = index;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case AML_LOAD_TABLE_OP:
+	हाल AML_LOAD_TABLE_OP:
 
-		status = acpi_ex_load_table_op(walk_state, &return_desc);
-		break;
+		status = acpi_ex_load_table_op(walk_state, &वापस_desc);
+		अवरोध;
 
-	default:
+	शेष:
 
 		ACPI_ERROR((AE_INFO, "Unknown AML opcode 0x%X",
 			    walk_state->opcode));
 
 		status = AE_AML_BAD_OPCODE;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 cleanup:
 
-	/* Delete return object on error */
+	/* Delete वापस object on error */
 
-	if (ACPI_FAILURE(status)) {
-		acpi_ut_remove_reference(return_desc);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		acpi_ut_हटाओ_reference(वापस_desc);
+	पूर्ण
 
-	/* Save return object on success */
+	/* Save वापस object on success */
 
-	else {
-		walk_state->result_obj = return_desc;
-	}
+	अन्यथा अणु
+		walk_state->result_obj = वापस_desc;
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण

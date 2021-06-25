@@ -1,24 +1,25 @@
+<शैली गुरु>
 /*
- * \file drm_vm.c
- * Memory mapping for DRM
+ * \पile drm_vm.c
+ * Memory mapping क्रम DRM
  *
- * \author Rickard E. (Rik) Faith <faith@valinux.com>
- * \author Gareth Hughes <gareth@valinux.com>
+ * \चuthor Rickard E. (Rik) Faith <faith@valinux.com>
+ * \चuthor Gareth Hughes <gareth@valinux.com>
  */
 
 /*
  * Created: Mon Jan  4 08:58:31 1999 by faith@valinux.com
  *
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -33,137 +34,137 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <linux/export.h>
-#include <linux/pci.h>
-#include <linux/seq_file.h>
-#include <linux/vmalloc.h>
-#include <linux/pgtable.h>
+#समावेश <linux/export.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/pgtable.h>
 
-#if defined(__ia64__)
-#include <linux/efi.h>
-#include <linux/slab.h>
-#endif
-#include <linux/mem_encrypt.h>
+#अगर defined(__ia64__)
+#समावेश <linux/efi.h>
+#समावेश <linux/slab.h>
+#पूर्ण_अगर
+#समावेश <linux/mem_encrypt.h>
 
 
-#include <drm/drm_agpsupport.h>
-#include <drm/drm_device.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_file.h>
-#include <drm/drm_framebuffer.h>
-#include <drm/drm_print.h>
+#समावेश <drm/drm_agpsupport.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_file.h>
+#समावेश <drm/drm_framebuffer.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "drm_internal.h"
-#include "drm_legacy.h"
+#समावेश "drm_internal.h"
+#समावेश "drm_legacy.h"
 
-struct drm_vma_entry {
-	struct list_head head;
-	struct vm_area_struct *vma;
+काष्ठा drm_vma_entry अणु
+	काष्ठा list_head head;
+	काष्ठा vm_area_काष्ठा *vma;
 	pid_t pid;
-};
+पूर्ण;
 
-static void drm_vm_open(struct vm_area_struct *vma);
-static void drm_vm_close(struct vm_area_struct *vma);
+अटल व्योम drm_vm_खोलो(काष्ठा vm_area_काष्ठा *vma);
+अटल व्योम drm_vm_बंद(काष्ठा vm_area_काष्ठा *vma);
 
-static pgprot_t drm_io_prot(struct drm_local_map *map,
-			    struct vm_area_struct *vma)
-{
-	pgprot_t tmp = vm_get_page_prot(vma->vm_flags);
+अटल pgprot_t drm_io_prot(काष्ठा drm_local_map *map,
+			    काष्ठा vm_area_काष्ठा *vma)
+अणु
+	pgprot_t पंचांगp = vm_get_page_prot(vma->vm_flags);
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__) || \
+#अगर defined(__i386__) || defined(__x86_64__) || defined(__घातerpc__) || \
     defined(__mips__)
-	if (map->type == _DRM_REGISTERS && !(map->flags & _DRM_WRITE_COMBINING))
-		tmp = pgprot_noncached(tmp);
-	else
-		tmp = pgprot_writecombine(tmp);
-#elif defined(__ia64__)
-	if (efi_range_is_wc(vma->vm_start, vma->vm_end -
+	अगर (map->type == _DRM_REGISTERS && !(map->flags & _DRM_WRITE_COMBINING))
+		पंचांगp = pgprot_noncached(पंचांगp);
+	अन्यथा
+		पंचांगp = pgprot_ग_लिखोcombine(पंचांगp);
+#या_अगर defined(__ia64__)
+	अगर (efi_range_is_wc(vma->vm_start, vma->vm_end -
 				    vma->vm_start))
-		tmp = pgprot_writecombine(tmp);
-	else
-		tmp = pgprot_noncached(tmp);
-#elif defined(__sparc__) || defined(__arm__)
-	tmp = pgprot_noncached(tmp);
-#endif
-	return tmp;
-}
+		पंचांगp = pgprot_ग_लिखोcombine(पंचांगp);
+	अन्यथा
+		पंचांगp = pgprot_noncached(पंचांगp);
+#या_अगर defined(__sparc__) || defined(__arm__)
+	पंचांगp = pgprot_noncached(पंचांगp);
+#पूर्ण_अगर
+	वापस पंचांगp;
+पूर्ण
 
-static pgprot_t drm_dma_prot(uint32_t map_type, struct vm_area_struct *vma)
-{
-	pgprot_t tmp = vm_get_page_prot(vma->vm_flags);
+अटल pgprot_t drm_dma_prot(uपूर्णांक32_t map_type, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	pgprot_t पंचांगp = vm_get_page_prot(vma->vm_flags);
 
-#if defined(__powerpc__) && defined(CONFIG_NOT_COHERENT_CACHE)
-	tmp = pgprot_noncached_wc(tmp);
-#endif
-	return tmp;
-}
+#अगर defined(__घातerpc__) && defined(CONFIG_NOT_COHERENT_CACHE)
+	पंचांगp = pgprot_noncached_wc(पंचांगp);
+#पूर्ण_अगर
+	वापस पंचांगp;
+पूर्ण
 
 /*
- * \c fault method for AGP virtual memory.
+ * \c fault method क्रम AGP भव memory.
  *
- * \param vma virtual memory area.
+ * \param vma भव memory area.
  * \param address access address.
- * \return pointer to the page structure.
+ * \लeturn poपूर्णांकer to the page काष्ठाure.
  *
- * Find the right map and if it's AGP memory find the real physical page to
- * map, get the page, increment the use count and return it.
+ * Find the right map and अगर it's AGP memory find the real physical page to
+ * map, get the page, increment the use count and वापस it.
  */
-#if IS_ENABLED(CONFIG_AGP)
-static vm_fault_t drm_vm_fault(struct vm_fault *vmf)
-{
-	struct vm_area_struct *vma = vmf->vma;
-	struct drm_file *priv = vma->vm_file->private_data;
-	struct drm_device *dev = priv->minor->dev;
-	struct drm_local_map *map = NULL;
-	struct drm_map_list *r_list;
-	struct drm_hash_item *hash;
+#अगर IS_ENABLED(CONFIG_AGP)
+अटल vm_fault_t drm_vm_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+	काष्ठा drm_file *priv = vma->vm_file->निजी_data;
+	काष्ठा drm_device *dev = priv->minor->dev;
+	काष्ठा drm_local_map *map = शून्य;
+	काष्ठा drm_map_list *r_list;
+	काष्ठा drm_hash_item *hash;
 
 	/*
 	 * Find the right map
 	 */
-	if (!dev->agp)
-		goto vm_fault_error;
+	अगर (!dev->agp)
+		जाओ vm_fault_error;
 
-	if (!dev->agp || !dev->agp->cant_use_aperture)
-		goto vm_fault_error;
+	अगर (!dev->agp || !dev->agp->cant_use_aperture)
+		जाओ vm_fault_error;
 
-	if (drm_ht_find_item(&dev->map_hash, vma->vm_pgoff, &hash))
-		goto vm_fault_error;
+	अगर (drm_ht_find_item(&dev->map_hash, vma->vm_pgoff, &hash))
+		जाओ vm_fault_error;
 
-	r_list = drm_hash_entry(hash, struct drm_map_list, hash);
+	r_list = drm_hash_entry(hash, काष्ठा drm_map_list, hash);
 	map = r_list->map;
 
-	if (map && map->type == _DRM_AGP) {
+	अगर (map && map->type == _DRM_AGP) अणु
 		/*
-		 * Using vm_pgoff as a selector forces us to use this unusual
+		 * Using vm_pgoff as a selector क्रमces us to use this unusual
 		 * addressing scheme.
 		 */
-		resource_size_t offset = vmf->address - vma->vm_start;
-		resource_size_t baddr = map->offset + offset;
-		struct drm_agp_mem *agpmem;
-		struct page *page;
+		resource_माप_प्रकार offset = vmf->address - vma->vm_start;
+		resource_माप_प्रकार baddr = map->offset + offset;
+		काष्ठा drm_agp_mem *agpmem;
+		काष्ठा page *page;
 
-#ifdef __alpha__
+#अगर_घोषित __alpha__
 		/*
 		 * Adjust to a bus-relative address
 		 */
 		baddr -= dev->hose->mem_space->start;
-#endif
+#पूर्ण_अगर
 
 		/*
 		 * It's AGP memory - find the real physical page to map
 		 */
-		list_for_each_entry(agpmem, &dev->agp->memory, head) {
-			if (agpmem->bound <= baddr &&
+		list_क्रम_each_entry(agpmem, &dev->agp->memory, head) अणु
+			अगर (agpmem->bound <= baddr &&
 			    agpmem->bound + agpmem->pages * PAGE_SIZE > baddr)
-				break;
-		}
+				अवरोध;
+		पूर्ण
 
-		if (&agpmem->head == &dev->agp->memory)
-			goto vm_fault_error;
+		अगर (&agpmem->head == &dev->agp->memory)
+			जाओ vm_fault_error;
 
 		/*
-		 * Get the page, inc the use count, and return it
+		 * Get the page, inc the use count, and वापस it
 		 */
 		offset = (baddr - agpmem->bound) >> PAGE_SHIFT;
 		page = agpmem->memory->pages[offset];
@@ -172,299 +173,299 @@ static vm_fault_t drm_vm_fault(struct vm_fault *vmf)
 
 		DRM_DEBUG
 		    ("baddr = 0x%llx page = 0x%p, offset = 0x%llx, count=%d\n",
-		     (unsigned long long)baddr,
+		     (अचिन्हित दीर्घ दीर्घ)baddr,
 		     agpmem->memory->pages[offset],
-		     (unsigned long long)offset,
+		     (अचिन्हित दीर्घ दीर्घ)offset,
 		     page_count(page));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 vm_fault_error:
-	return VM_FAULT_SIGBUS;	/* Disallow mremap */
-}
-#else
-static vm_fault_t drm_vm_fault(struct vm_fault *vmf)
-{
-	return VM_FAULT_SIGBUS;
-}
-#endif
+	वापस VM_FAULT_SIGBUS;	/* Disallow mremap */
+पूर्ण
+#अन्यथा
+अटल vm_fault_t drm_vm_fault(काष्ठा vm_fault *vmf)
+अणु
+	वापस VM_FAULT_SIGBUS;
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * \c nopage method for shared virtual memory.
+ * \c nopage method क्रम shared भव memory.
  *
- * \param vma virtual memory area.
+ * \param vma भव memory area.
  * \param address access address.
- * \return pointer to the page structure.
+ * \लeturn poपूर्णांकer to the page काष्ठाure.
  *
  * Get the mapping, find the real physical page to map, get the page, and
- * return it.
+ * वापस it.
  */
-static vm_fault_t drm_vm_shm_fault(struct vm_fault *vmf)
-{
-	struct vm_area_struct *vma = vmf->vma;
-	struct drm_local_map *map = vma->vm_private_data;
-	unsigned long offset;
-	unsigned long i;
-	struct page *page;
+अटल vm_fault_t drm_vm_shm_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+	काष्ठा drm_local_map *map = vma->vm_निजी_data;
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ i;
+	काष्ठा page *page;
 
-	if (!map)
-		return VM_FAULT_SIGBUS;	/* Nothing allocated */
+	अगर (!map)
+		वापस VM_FAULT_SIGBUS;	/* Nothing allocated */
 
 	offset = vmf->address - vma->vm_start;
-	i = (unsigned long)map->handle + offset;
-	page = vmalloc_to_page((void *)i);
-	if (!page)
-		return VM_FAULT_SIGBUS;
+	i = (अचिन्हित दीर्घ)map->handle + offset;
+	page = vदो_स्मृति_to_page((व्योम *)i);
+	अगर (!page)
+		वापस VM_FAULT_SIGBUS;
 	get_page(page);
 	vmf->page = page;
 
 	DRM_DEBUG("shm_fault 0x%lx\n", offset);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * \c close method for shared virtual memory.
+ * \c बंद method क्रम shared भव memory.
  *
- * \param vma virtual memory area.
+ * \param vma भव memory area.
  *
- * Deletes map information if we are the last
- * person to close a mapping and it's not in the global maplist.
+ * Deletes map inक्रमmation अगर we are the last
+ * person to बंद a mapping and it's not in the global maplist.
  */
-static void drm_vm_shm_close(struct vm_area_struct *vma)
-{
-	struct drm_file *priv = vma->vm_file->private_data;
-	struct drm_device *dev = priv->minor->dev;
-	struct drm_vma_entry *pt, *temp;
-	struct drm_local_map *map;
-	struct drm_map_list *r_list;
-	int found_maps = 0;
+अटल व्योम drm_vm_shm_बंद(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा drm_file *priv = vma->vm_file->निजी_data;
+	काष्ठा drm_device *dev = priv->minor->dev;
+	काष्ठा drm_vma_entry *pt, *temp;
+	काष्ठा drm_local_map *map;
+	काष्ठा drm_map_list *r_list;
+	पूर्णांक found_maps = 0;
 
 	DRM_DEBUG("0x%08lx,0x%08lx\n",
 		  vma->vm_start, vma->vm_end - vma->vm_start);
 
-	map = vma->vm_private_data;
+	map = vma->vm_निजी_data;
 
-	mutex_lock(&dev->struct_mutex);
-	list_for_each_entry_safe(pt, temp, &dev->vmalist, head) {
-		if (pt->vma->vm_private_data == map)
+	mutex_lock(&dev->काष्ठा_mutex);
+	list_क्रम_each_entry_safe(pt, temp, &dev->vmalist, head) अणु
+		अगर (pt->vma->vm_निजी_data == map)
 			found_maps++;
-		if (pt->vma == vma) {
+		अगर (pt->vma == vma) अणु
 			list_del(&pt->head);
-			kfree(pt);
-		}
-	}
+			kमुक्त(pt);
+		पूर्ण
+	पूर्ण
 
 	/* We were the only map that was found */
-	if (found_maps == 1 && map->flags & _DRM_REMOVABLE) {
-		/* Check to see if we are in the maplist, if we are not, then
-		 * we delete this mappings information.
+	अगर (found_maps == 1 && map->flags & _DRM_REMOVABLE) अणु
+		/* Check to see अगर we are in the maplist, अगर we are not, then
+		 * we delete this mappings inक्रमmation.
 		 */
 		found_maps = 0;
-		list_for_each_entry(r_list, &dev->maplist, head) {
-			if (r_list->map == map)
+		list_क्रम_each_entry(r_list, &dev->maplist, head) अणु
+			अगर (r_list->map == map)
 				found_maps++;
-		}
+		पूर्ण
 
-		if (!found_maps) {
-			switch (map->type) {
-			case _DRM_REGISTERS:
-			case _DRM_FRAME_BUFFER:
+		अगर (!found_maps) अणु
+			चयन (map->type) अणु
+			हाल _DRM_REGISTERS:
+			हाल _DRM_FRAME_BUFFER:
 				arch_phys_wc_del(map->mtrr);
 				iounmap(map->handle);
-				break;
-			case _DRM_SHM:
-				vfree(map->handle);
-				break;
-			case _DRM_AGP:
-			case _DRM_SCATTER_GATHER:
-				break;
-			case _DRM_CONSISTENT:
-				dma_free_coherent(dev->dev,
+				अवरोध;
+			हाल _DRM_SHM:
+				vमुक्त(map->handle);
+				अवरोध;
+			हाल _DRM_AGP:
+			हाल _DRM_SCATTER_GATHER:
+				अवरोध;
+			हाल _DRM_CONSISTENT:
+				dma_मुक्त_coherent(dev->dev,
 						  map->size,
 						  map->handle,
 						  map->offset);
-				break;
-			}
-			kfree(map);
-		}
-	}
-	mutex_unlock(&dev->struct_mutex);
-}
+				अवरोध;
+			पूर्ण
+			kमुक्त(map);
+		पूर्ण
+	पूर्ण
+	mutex_unlock(&dev->काष्ठा_mutex);
+पूर्ण
 
 /*
- * \c fault method for DMA virtual memory.
+ * \c fault method क्रम DMA भव memory.
  *
  * \param address access address.
- * \return pointer to the page structure.
+ * \लeturn poपूर्णांकer to the page काष्ठाure.
  *
  * Determine the page number from the page offset and get it from drm_device_dma::pagelist.
  */
-static vm_fault_t drm_vm_dma_fault(struct vm_fault *vmf)
-{
-	struct vm_area_struct *vma = vmf->vma;
-	struct drm_file *priv = vma->vm_file->private_data;
-	struct drm_device *dev = priv->minor->dev;
-	struct drm_device_dma *dma = dev->dma;
-	unsigned long offset;
-	unsigned long page_nr;
-	struct page *page;
+अटल vm_fault_t drm_vm_dma_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+	काष्ठा drm_file *priv = vma->vm_file->निजी_data;
+	काष्ठा drm_device *dev = priv->minor->dev;
+	काष्ठा drm_device_dma *dma = dev->dma;
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ page_nr;
+	काष्ठा page *page;
 
-	if (!dma)
-		return VM_FAULT_SIGBUS;	/* Error */
-	if (!dma->pagelist)
-		return VM_FAULT_SIGBUS;	/* Nothing allocated */
+	अगर (!dma)
+		वापस VM_FAULT_SIGBUS;	/* Error */
+	अगर (!dma->pagelist)
+		वापस VM_FAULT_SIGBUS;	/* Nothing allocated */
 
 	offset = vmf->address - vma->vm_start;
 					/* vm_[pg]off[set] should be 0 */
 	page_nr = offset >> PAGE_SHIFT; /* page_nr could just be vmf->pgoff */
-	page = virt_to_page((void *)dma->pagelist[page_nr]);
+	page = virt_to_page((व्योम *)dma->pagelist[page_nr]);
 
 	get_page(page);
 	vmf->page = page;
 
 	DRM_DEBUG("dma_fault 0x%lx (page %lu)\n", offset, page_nr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * \c fault method for scatter-gather virtual memory.
+ * \c fault method क्रम scatter-gather भव memory.
  *
  * \param address access address.
- * \return pointer to the page structure.
+ * \लeturn poपूर्णांकer to the page काष्ठाure.
  *
  * Determine the map offset from the page offset and get it from drm_sg_mem::pagelist.
  */
-static vm_fault_t drm_vm_sg_fault(struct vm_fault *vmf)
-{
-	struct vm_area_struct *vma = vmf->vma;
-	struct drm_local_map *map = vma->vm_private_data;
-	struct drm_file *priv = vma->vm_file->private_data;
-	struct drm_device *dev = priv->minor->dev;
-	struct drm_sg_mem *entry = dev->sg;
-	unsigned long offset;
-	unsigned long map_offset;
-	unsigned long page_offset;
-	struct page *page;
+अटल vm_fault_t drm_vm_sg_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+	काष्ठा drm_local_map *map = vma->vm_निजी_data;
+	काष्ठा drm_file *priv = vma->vm_file->निजी_data;
+	काष्ठा drm_device *dev = priv->minor->dev;
+	काष्ठा drm_sg_mem *entry = dev->sg;
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ map_offset;
+	अचिन्हित दीर्घ page_offset;
+	काष्ठा page *page;
 
-	if (!entry)
-		return VM_FAULT_SIGBUS;	/* Error */
-	if (!entry->pagelist)
-		return VM_FAULT_SIGBUS;	/* Nothing allocated */
+	अगर (!entry)
+		वापस VM_FAULT_SIGBUS;	/* Error */
+	अगर (!entry->pagelist)
+		वापस VM_FAULT_SIGBUS;	/* Nothing allocated */
 
 	offset = vmf->address - vma->vm_start;
-	map_offset = map->offset - (unsigned long)dev->sg->virtual;
+	map_offset = map->offset - (अचिन्हित दीर्घ)dev->sg->भव;
 	page_offset = (offset >> PAGE_SHIFT) + (map_offset >> PAGE_SHIFT);
 	page = entry->pagelist[page_offset];
 	get_page(page);
 	vmf->page = page;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/** AGP virtual memory operations */
-static const struct vm_operations_struct drm_vm_ops = {
+/** AGP भव memory operations */
+अटल स्थिर काष्ठा vm_operations_काष्ठा drm_vm_ops = अणु
 	.fault = drm_vm_fault,
-	.open = drm_vm_open,
-	.close = drm_vm_close,
-};
+	.खोलो = drm_vm_खोलो,
+	.बंद = drm_vm_बंद,
+पूर्ण;
 
-/** Shared virtual memory operations */
-static const struct vm_operations_struct drm_vm_shm_ops = {
+/** Shared भव memory operations */
+अटल स्थिर काष्ठा vm_operations_काष्ठा drm_vm_shm_ops = अणु
 	.fault = drm_vm_shm_fault,
-	.open = drm_vm_open,
-	.close = drm_vm_shm_close,
-};
+	.खोलो = drm_vm_खोलो,
+	.बंद = drm_vm_shm_बंद,
+पूर्ण;
 
-/** DMA virtual memory operations */
-static const struct vm_operations_struct drm_vm_dma_ops = {
+/** DMA भव memory operations */
+अटल स्थिर काष्ठा vm_operations_काष्ठा drm_vm_dma_ops = अणु
 	.fault = drm_vm_dma_fault,
-	.open = drm_vm_open,
-	.close = drm_vm_close,
-};
+	.खोलो = drm_vm_खोलो,
+	.बंद = drm_vm_बंद,
+पूर्ण;
 
-/** Scatter-gather virtual memory operations */
-static const struct vm_operations_struct drm_vm_sg_ops = {
+/** Scatter-gather भव memory operations */
+अटल स्थिर काष्ठा vm_operations_काष्ठा drm_vm_sg_ops = अणु
 	.fault = drm_vm_sg_fault,
-	.open = drm_vm_open,
-	.close = drm_vm_close,
-};
+	.खोलो = drm_vm_खोलो,
+	.बंद = drm_vm_बंद,
+पूर्ण;
 
-static void drm_vm_open_locked(struct drm_device *dev,
-			       struct vm_area_struct *vma)
-{
-	struct drm_vma_entry *vma_entry;
+अटल व्योम drm_vm_खोलो_locked(काष्ठा drm_device *dev,
+			       काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा drm_vma_entry *vma_entry;
 
 	DRM_DEBUG("0x%08lx,0x%08lx\n",
 		  vma->vm_start, vma->vm_end - vma->vm_start);
 
-	vma_entry = kmalloc(sizeof(*vma_entry), GFP_KERNEL);
-	if (vma_entry) {
+	vma_entry = kदो_स्मृति(माप(*vma_entry), GFP_KERNEL);
+	अगर (vma_entry) अणु
 		vma_entry->vma = vma;
 		vma_entry->pid = current->pid;
 		list_add(&vma_entry->head, &dev->vmalist);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void drm_vm_open(struct vm_area_struct *vma)
-{
-	struct drm_file *priv = vma->vm_file->private_data;
-	struct drm_device *dev = priv->minor->dev;
+अटल व्योम drm_vm_खोलो(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा drm_file *priv = vma->vm_file->निजी_data;
+	काष्ठा drm_device *dev = priv->minor->dev;
 
-	mutex_lock(&dev->struct_mutex);
-	drm_vm_open_locked(dev, vma);
-	mutex_unlock(&dev->struct_mutex);
-}
+	mutex_lock(&dev->काष्ठा_mutex);
+	drm_vm_खोलो_locked(dev, vma);
+	mutex_unlock(&dev->काष्ठा_mutex);
+पूर्ण
 
-static void drm_vm_close_locked(struct drm_device *dev,
-				struct vm_area_struct *vma)
-{
-	struct drm_vma_entry *pt, *temp;
+अटल व्योम drm_vm_बंद_locked(काष्ठा drm_device *dev,
+				काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा drm_vma_entry *pt, *temp;
 
 	DRM_DEBUG("0x%08lx,0x%08lx\n",
 		  vma->vm_start, vma->vm_end - vma->vm_start);
 
-	list_for_each_entry_safe(pt, temp, &dev->vmalist, head) {
-		if (pt->vma == vma) {
+	list_क्रम_each_entry_safe(pt, temp, &dev->vmalist, head) अणु
+		अगर (pt->vma == vma) अणु
 			list_del(&pt->head);
-			kfree(pt);
-			break;
-		}
-	}
-}
+			kमुक्त(pt);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * \c close method for all virtual memory types.
+ * \c बंद method क्रम all भव memory types.
  *
- * \param vma virtual memory area.
+ * \param vma भव memory area.
  *
- * Search the \p vma private data entry in drm_device::vmalist, unlink it, and
- * free it.
+ * Search the \p vma निजी data entry in drm_device::vmalist, unlink it, and
+ * मुक्त it.
  */
-static void drm_vm_close(struct vm_area_struct *vma)
-{
-	struct drm_file *priv = vma->vm_file->private_data;
-	struct drm_device *dev = priv->minor->dev;
+अटल व्योम drm_vm_बंद(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा drm_file *priv = vma->vm_file->निजी_data;
+	काष्ठा drm_device *dev = priv->minor->dev;
 
-	mutex_lock(&dev->struct_mutex);
-	drm_vm_close_locked(dev, vma);
-	mutex_unlock(&dev->struct_mutex);
-}
+	mutex_lock(&dev->काष्ठा_mutex);
+	drm_vm_बंद_locked(dev, vma);
+	mutex_unlock(&dev->काष्ठा_mutex);
+पूर्ण
 
 /*
  * mmap DMA memory.
  *
- * \param file_priv DRM file private.
- * \param vma virtual memory area.
- * \return zero on success or a negative number on failure.
+ * \param file_priv DRM file निजी.
+ * \param vma भव memory area.
+ * \लeturn zero on success or a negative number on failure.
  *
- * Sets the virtual memory area operations structure to vm_dma_ops, the file
- * pointer, and calls vm_open().
+ * Sets the भव memory area operations काष्ठाure to vm_dma_ops, the file
+ * poपूर्णांकer, and calls vm_खोलो().
  */
-static int drm_mmap_dma(struct file *filp, struct vm_area_struct *vma)
-{
-	struct drm_file *priv = filp->private_data;
-	struct drm_device *dev;
-	struct drm_device_dma *dma;
-	unsigned long length = vma->vm_end - vma->vm_start;
+अटल पूर्णांक drm_mmap_dma(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा drm_file *priv = filp->निजी_data;
+	काष्ठा drm_device *dev;
+	काष्ठा drm_device_dma *dma;
+	अचिन्हित दीर्घ length = vma->vm_end - vma->vm_start;
 
 	dev = priv->minor->dev;
 	dma = dev->dma;
@@ -472,16 +473,16 @@ static int drm_mmap_dma(struct file *filp, struct vm_area_struct *vma)
 		  vma->vm_start, vma->vm_end, vma->vm_pgoff);
 
 	/* Length must match exact page count */
-	if (!dma || (length >> PAGE_SHIFT) != dma->page_count) {
-		return -EINVAL;
-	}
+	अगर (!dma || (length >> PAGE_SHIFT) != dma->page_count) अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!capable(CAP_SYS_ADMIN) &&
-	    (dma->flags & _DRM_DMA_USE_PCI_RO)) {
+	अगर (!capable(CAP_SYS_ADMIN) &&
+	    (dma->flags & _DRM_DMA_USE_PCI_RO)) अणु
 		vma->vm_flags &= ~(VM_WRITE | VM_MAYWRITE);
-#if defined(__i386__) || defined(__x86_64__)
+#अगर defined(__i386__) || defined(__x86_64__)
 		pgprot_val(vma->vm_page_prot) &= ~_PAGE_RW;
-#else
+#अन्यथा
 		/* Ye gads this is ugly.  With more thought
 		   we could move this up higher and use
 		   `protection_map' instead.  */
@@ -489,83 +490,83 @@ static int drm_mmap_dma(struct file *filp, struct vm_area_struct *vma)
 		    __pgprot(pte_val
 			     (pte_wrprotect
 			      (__pte(pgprot_val(vma->vm_page_prot)))));
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	vma->vm_ops = &drm_vm_dma_ops;
 
 	vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
 
-	drm_vm_open_locked(dev, vma);
-	return 0;
-}
+	drm_vm_खोलो_locked(dev, vma);
+	वापस 0;
+पूर्ण
 
-static resource_size_t drm_core_get_reg_ofs(struct drm_device *dev)
-{
-#ifdef __alpha__
-	return dev->hose->dense_mem_base;
-#else
-	return 0;
-#endif
-}
+अटल resource_माप_प्रकार drm_core_get_reg_ofs(काष्ठा drm_device *dev)
+अणु
+#अगर_घोषित __alpha__
+	वापस dev->hose->dense_mem_base;
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
 /*
  * mmap DMA memory.
  *
- * \param file_priv DRM file private.
- * \param vma virtual memory area.
- * \return zero on success or a negative number on failure.
+ * \param file_priv DRM file निजी.
+ * \param vma भव memory area.
+ * \लeturn zero on success or a negative number on failure.
  *
- * If the virtual memory area has no offset associated with it then it's a DMA
+ * If the भव memory area has no offset associated with it then it's a DMA
  * area, so calls mmap_dma(). Otherwise searches the map in drm_device::maplist,
- * checks that the restricted flag is not set, sets the virtual memory operations
+ * checks that the restricted flag is not set, sets the भव memory operations
  * according to the mapping type and remaps the pages. Finally sets the file
- * pointer and calls vm_open().
+ * poपूर्णांकer and calls vm_खोलो().
  */
-static int drm_mmap_locked(struct file *filp, struct vm_area_struct *vma)
-{
-	struct drm_file *priv = filp->private_data;
-	struct drm_device *dev = priv->minor->dev;
-	struct drm_local_map *map = NULL;
-	resource_size_t offset = 0;
-	struct drm_hash_item *hash;
+अटल पूर्णांक drm_mmap_locked(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा drm_file *priv = filp->निजी_data;
+	काष्ठा drm_device *dev = priv->minor->dev;
+	काष्ठा drm_local_map *map = शून्य;
+	resource_माप_प्रकार offset = 0;
+	काष्ठा drm_hash_item *hash;
 
 	DRM_DEBUG("start = 0x%lx, end = 0x%lx, page offset = 0x%lx\n",
 		  vma->vm_start, vma->vm_end, vma->vm_pgoff);
 
-	if (!priv->authenticated)
-		return -EACCES;
+	अगर (!priv->authenticated)
+		वापस -EACCES;
 
-	/* We check for "dma". On Apple's UniNorth, it's valid to have
+	/* We check क्रम "dma". On Apple's UniNorth, it's valid to have
 	 * the AGP mapped at physical address 0
 	 * --BenH.
 	 */
-	if (!vma->vm_pgoff
-#if IS_ENABLED(CONFIG_AGP)
+	अगर (!vma->vm_pgoff
+#अगर IS_ENABLED(CONFIG_AGP)
 	    && (!dev->agp
-		|| dev->agp->agp_info.device->vendor != PCI_VENDOR_ID_APPLE)
-#endif
+		|| dev->agp->agp_info.device->venकरोr != PCI_VENDOR_ID_APPLE)
+#पूर्ण_अगर
 	    )
-		return drm_mmap_dma(filp, vma);
+		वापस drm_mmap_dma(filp, vma);
 
-	if (drm_ht_find_item(&dev->map_hash, vma->vm_pgoff, &hash)) {
+	अगर (drm_ht_find_item(&dev->map_hash, vma->vm_pgoff, &hash)) अणु
 		DRM_ERROR("Could not find map\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	map = drm_hash_entry(hash, struct drm_map_list, hash)->map;
-	if (!map || ((map->flags & _DRM_RESTRICTED) && !capable(CAP_SYS_ADMIN)))
-		return -EPERM;
+	map = drm_hash_entry(hash, काष्ठा drm_map_list, hash)->map;
+	अगर (!map || ((map->flags & _DRM_RESTRICTED) && !capable(CAP_SYS_ADMIN)))
+		वापस -EPERM;
 
-	/* Check for valid size. */
-	if (map->size < vma->vm_end - vma->vm_start)
-		return -EINVAL;
+	/* Check क्रम valid size. */
+	अगर (map->size < vma->vm_end - vma->vm_start)
+		वापस -EINVAL;
 
-	if (!capable(CAP_SYS_ADMIN) && (map->flags & _DRM_READ_ONLY)) {
+	अगर (!capable(CAP_SYS_ADMIN) && (map->flags & _DRM_READ_ONLY)) अणु
 		vma->vm_flags &= ~(VM_WRITE | VM_MAYWRITE);
-#if defined(__i386__) || defined(__x86_64__)
+#अगर defined(__i386__) || defined(__x86_64__)
 		pgprot_val(vma->vm_page_prot) &= ~_PAGE_RW;
-#else
+#अन्यथा
 		/* Ye gads this is ugly.  With more thought
 		   we could move this up higher and use
 		   `protection_map' instead.  */
@@ -573,95 +574,95 @@ static int drm_mmap_locked(struct file *filp, struct vm_area_struct *vma)
 		    __pgprot(pte_val
 			     (pte_wrprotect
 			      (__pte(pgprot_val(vma->vm_page_prot)))));
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	switch (map->type) {
-#if !defined(__arm__)
-	case _DRM_AGP:
-		if (dev->agp && dev->agp->cant_use_aperture) {
+	चयन (map->type) अणु
+#अगर !defined(__arm__)
+	हाल _DRM_AGP:
+		अगर (dev->agp && dev->agp->cant_use_aperture) अणु
 			/*
-			 * On some platforms we can't talk to bus dma address from the CPU, so for
+			 * On some platक्रमms we can't talk to bus dma address from the CPU, so क्रम
 			 * memory of type DRM_AGP, we'll deal with sorting out the real physical
 			 * pages and mappings in fault()
 			 */
-#if defined(__powerpc__)
+#अगर defined(__घातerpc__)
 			vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-#endif
+#पूर्ण_अगर
 			vma->vm_ops = &drm_vm_ops;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;	/* to _DRM_FRAME_BUFFER... */
-#endif
-	case _DRM_FRAME_BUFFER:
-	case _DRM_REGISTERS:
+#पूर्ण_अगर
+	हाल _DRM_FRAME_BUFFER:
+	हाल _DRM_REGISTERS:
 		offset = drm_core_get_reg_ofs(dev);
 		vma->vm_page_prot = drm_io_prot(map, vma);
-		if (io_remap_pfn_range(vma, vma->vm_start,
+		अगर (io_remap_pfn_range(vma, vma->vm_start,
 				       (map->offset + offset) >> PAGE_SHIFT,
 				       vma->vm_end - vma->vm_start,
 				       vma->vm_page_prot))
-			return -EAGAIN;
+			वापस -EAGAIN;
 		DRM_DEBUG("   Type = %d; start = 0x%lx, end = 0x%lx,"
 			  " offset = 0x%llx\n",
 			  map->type,
-			  vma->vm_start, vma->vm_end, (unsigned long long)(map->offset + offset));
+			  vma->vm_start, vma->vm_end, (अचिन्हित दीर्घ दीर्घ)(map->offset + offset));
 
 		vma->vm_ops = &drm_vm_ops;
-		break;
-	case _DRM_CONSISTENT:
+		अवरोध;
+	हाल _DRM_CONSISTENT:
 		/* Consistent memory is really like shared memory. But
-		 * it's allocated in a different way, so avoid fault */
-		if (remap_pfn_range(vma, vma->vm_start,
+		 * it's allocated in a dअगरferent way, so aव्योम fault */
+		अगर (remap_pfn_range(vma, vma->vm_start,
 		    page_to_pfn(virt_to_page(map->handle)),
 		    vma->vm_end - vma->vm_start, vma->vm_page_prot))
-			return -EAGAIN;
+			वापस -EAGAIN;
 		vma->vm_page_prot = drm_dma_prot(map->type, vma);
 		fallthrough;	/* to _DRM_SHM */
-	case _DRM_SHM:
+	हाल _DRM_SHM:
 		vma->vm_ops = &drm_vm_shm_ops;
-		vma->vm_private_data = (void *)map;
-		break;
-	case _DRM_SCATTER_GATHER:
+		vma->vm_निजी_data = (व्योम *)map;
+		अवरोध;
+	हाल _DRM_SCATTER_GATHER:
 		vma->vm_ops = &drm_vm_sg_ops;
-		vma->vm_private_data = (void *)map;
+		vma->vm_निजी_data = (व्योम *)map;
 		vma->vm_page_prot = drm_dma_prot(map->type, vma);
-		break;
-	default:
-		return -EINVAL;	/* This should never happen. */
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;	/* This should never happen. */
+	पूर्ण
 	vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
 
-	drm_vm_open_locked(dev, vma);
-	return 0;
-}
+	drm_vm_खोलो_locked(dev, vma);
+	वापस 0;
+पूर्ण
 
-int drm_legacy_mmap(struct file *filp, struct vm_area_struct *vma)
-{
-	struct drm_file *priv = filp->private_data;
-	struct drm_device *dev = priv->minor->dev;
-	int ret;
+पूर्णांक drm_legacy_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा drm_file *priv = filp->निजी_data;
+	काष्ठा drm_device *dev = priv->minor->dev;
+	पूर्णांक ret;
 
-	if (drm_dev_is_unplugged(dev))
-		return -ENODEV;
+	अगर (drm_dev_is_unplugged(dev))
+		वापस -ENODEV;
 
-	mutex_lock(&dev->struct_mutex);
+	mutex_lock(&dev->काष्ठा_mutex);
 	ret = drm_mmap_locked(filp, vma);
-	mutex_unlock(&dev->struct_mutex);
+	mutex_unlock(&dev->काष्ठा_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(drm_legacy_mmap);
 
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-void drm_legacy_vma_flush(struct drm_device *dev)
-{
-	struct drm_vma_entry *vma, *vma_temp;
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+व्योम drm_legacy_vma_flush(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_vma_entry *vma, *vma_temp;
 
-	/* Clear vma list (only needed for legacy drivers) */
-	list_for_each_entry_safe(vma, vma_temp, &dev->vmalist, head) {
+	/* Clear vma list (only needed क्रम legacy drivers) */
+	list_क्रम_each_entry_safe(vma, vma_temp, &dev->vmalist, head) अणु
 		list_del(&vma->head);
-		kfree(vma);
-	}
-}
-#endif
+		kमुक्त(vma);
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर

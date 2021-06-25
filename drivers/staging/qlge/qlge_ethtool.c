@@ -1,403 +1,404 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/list.h>
-#include <linux/pci.h>
-#include <linux/dma-mapping.h>
-#include <linux/pagemap.h>
-#include <linux/sched.h>
-#include <linux/dmapool.h>
-#include <linux/mempool.h>
-#include <linux/spinlock.h>
-#include <linux/kthread.h>
-#include <linux/interrupt.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <net/ipv6.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/if_arp.h>
-#include <linux/if_ether.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/skbuff.h>
-#include <linux/rtnetlink.h>
-#include <linux/if_vlan.h>
-#include <linux/delay.h>
-#include <linux/mm.h>
-#include <linux/vmalloc.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/list.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <net/ipv6.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "qlge.h"
+#समावेश "qlge.h"
 
-struct qlge_stats {
-	char stat_string[ETH_GSTRING_LEN];
-	int sizeof_stat;
-	int stat_offset;
-};
+काष्ठा qlge_stats अणु
+	अक्षर stat_string[ETH_GSTRING_LEN];
+	पूर्णांक माप_stat;
+	पूर्णांक stat_offset;
+पूर्ण;
 
-#define QL_SIZEOF(m) sizeof_field(struct qlge_adapter, m)
-#define QL_OFF(m) offsetof(struct qlge_adapter, m)
+#घोषणा QL_SIZखातापूर्ण(m) माप_field(काष्ठा qlge_adapter, m)
+#घोषणा QL_OFF(m) दुरत्व(काष्ठा qlge_adapter, m)
 
-static const struct qlge_stats qlge_gstrings_stats[] = {
-	{"tx_pkts", QL_SIZEOF(nic_stats.tx_pkts), QL_OFF(nic_stats.tx_pkts)},
-	{"tx_bytes", QL_SIZEOF(nic_stats.tx_bytes), QL_OFF(nic_stats.tx_bytes)},
-	{"tx_mcast_pkts", QL_SIZEOF(nic_stats.tx_mcast_pkts),
-					QL_OFF(nic_stats.tx_mcast_pkts)},
-	{"tx_bcast_pkts", QL_SIZEOF(nic_stats.tx_bcast_pkts),
-					QL_OFF(nic_stats.tx_bcast_pkts)},
-	{"tx_ucast_pkts", QL_SIZEOF(nic_stats.tx_ucast_pkts),
-					QL_OFF(nic_stats.tx_ucast_pkts)},
-	{"tx_ctl_pkts", QL_SIZEOF(nic_stats.tx_ctl_pkts),
-					QL_OFF(nic_stats.tx_ctl_pkts)},
-	{"tx_pause_pkts", QL_SIZEOF(nic_stats.tx_pause_pkts),
-					QL_OFF(nic_stats.tx_pause_pkts)},
-	{"tx_64_pkts", QL_SIZEOF(nic_stats.tx_64_pkt),
-					QL_OFF(nic_stats.tx_64_pkt)},
-	{"tx_65_to_127_pkts", QL_SIZEOF(nic_stats.tx_65_to_127_pkt),
-					QL_OFF(nic_stats.tx_65_to_127_pkt)},
-	{"tx_128_to_255_pkts", QL_SIZEOF(nic_stats.tx_128_to_255_pkt),
-					QL_OFF(nic_stats.tx_128_to_255_pkt)},
-	{"tx_256_511_pkts", QL_SIZEOF(nic_stats.tx_256_511_pkt),
-					QL_OFF(nic_stats.tx_256_511_pkt)},
-	{"tx_512_to_1023_pkts",	QL_SIZEOF(nic_stats.tx_512_to_1023_pkt),
-					QL_OFF(nic_stats.tx_512_to_1023_pkt)},
-	{"tx_1024_to_1518_pkts", QL_SIZEOF(nic_stats.tx_1024_to_1518_pkt),
-					QL_OFF(nic_stats.tx_1024_to_1518_pkt)},
-	{"tx_1519_to_max_pkts",	QL_SIZEOF(nic_stats.tx_1519_to_max_pkt),
-					QL_OFF(nic_stats.tx_1519_to_max_pkt)},
-	{"tx_undersize_pkts", QL_SIZEOF(nic_stats.tx_undersize_pkt),
-					QL_OFF(nic_stats.tx_undersize_pkt)},
-	{"tx_oversize_pkts", QL_SIZEOF(nic_stats.tx_oversize_pkt),
-					QL_OFF(nic_stats.tx_oversize_pkt)},
-	{"rx_bytes", QL_SIZEOF(nic_stats.rx_bytes), QL_OFF(nic_stats.rx_bytes)},
-	{"rx_bytes_ok",	QL_SIZEOF(nic_stats.rx_bytes_ok),
-					QL_OFF(nic_stats.rx_bytes_ok)},
-	{"rx_pkts", QL_SIZEOF(nic_stats.rx_pkts), QL_OFF(nic_stats.rx_pkts)},
-	{"rx_pkts_ok", QL_SIZEOF(nic_stats.rx_pkts_ok),
-					QL_OFF(nic_stats.rx_pkts_ok)},
-	{"rx_bcast_pkts", QL_SIZEOF(nic_stats.rx_bcast_pkts),
-					QL_OFF(nic_stats.rx_bcast_pkts)},
-	{"rx_mcast_pkts", QL_SIZEOF(nic_stats.rx_mcast_pkts),
-					QL_OFF(nic_stats.rx_mcast_pkts)},
-	{"rx_ucast_pkts", QL_SIZEOF(nic_stats.rx_ucast_pkts),
-					QL_OFF(nic_stats.rx_ucast_pkts)},
-	{"rx_undersize_pkts", QL_SIZEOF(nic_stats.rx_undersize_pkts),
-					QL_OFF(nic_stats.rx_undersize_pkts)},
-	{"rx_oversize_pkts", QL_SIZEOF(nic_stats.rx_oversize_pkts),
-					QL_OFF(nic_stats.rx_oversize_pkts)},
-	{"rx_jabber_pkts", QL_SIZEOF(nic_stats.rx_jabber_pkts),
-					QL_OFF(nic_stats.rx_jabber_pkts)},
-	{"rx_undersize_fcerr_pkts",
-		QL_SIZEOF(nic_stats.rx_undersize_fcerr_pkts),
-				QL_OFF(nic_stats.rx_undersize_fcerr_pkts)},
-	{"rx_drop_events", QL_SIZEOF(nic_stats.rx_drop_events),
-					QL_OFF(nic_stats.rx_drop_events)},
-	{"rx_fcerr_pkts", QL_SIZEOF(nic_stats.rx_fcerr_pkts),
-					QL_OFF(nic_stats.rx_fcerr_pkts)},
-	{"rx_align_err", QL_SIZEOF(nic_stats.rx_align_err),
-					QL_OFF(nic_stats.rx_align_err)},
-	{"rx_symbol_err", QL_SIZEOF(nic_stats.rx_symbol_err),
-					QL_OFF(nic_stats.rx_symbol_err)},
-	{"rx_mac_err", QL_SIZEOF(nic_stats.rx_mac_err),
-					QL_OFF(nic_stats.rx_mac_err)},
-	{"rx_ctl_pkts",	QL_SIZEOF(nic_stats.rx_ctl_pkts),
-					QL_OFF(nic_stats.rx_ctl_pkts)},
-	{"rx_pause_pkts", QL_SIZEOF(nic_stats.rx_pause_pkts),
-					QL_OFF(nic_stats.rx_pause_pkts)},
-	{"rx_64_pkts", QL_SIZEOF(nic_stats.rx_64_pkts),
-					QL_OFF(nic_stats.rx_64_pkts)},
-	{"rx_65_to_127_pkts", QL_SIZEOF(nic_stats.rx_65_to_127_pkts),
-					QL_OFF(nic_stats.rx_65_to_127_pkts)},
-	{"rx_128_255_pkts", QL_SIZEOF(nic_stats.rx_128_255_pkts),
-					QL_OFF(nic_stats.rx_128_255_pkts)},
-	{"rx_256_511_pkts", QL_SIZEOF(nic_stats.rx_256_511_pkts),
-					QL_OFF(nic_stats.rx_256_511_pkts)},
-	{"rx_512_to_1023_pkts",	QL_SIZEOF(nic_stats.rx_512_to_1023_pkts),
-					QL_OFF(nic_stats.rx_512_to_1023_pkts)},
-	{"rx_1024_to_1518_pkts", QL_SIZEOF(nic_stats.rx_1024_to_1518_pkts),
-					QL_OFF(nic_stats.rx_1024_to_1518_pkts)},
-	{"rx_1519_to_max_pkts",	QL_SIZEOF(nic_stats.rx_1519_to_max_pkts),
-					QL_OFF(nic_stats.rx_1519_to_max_pkts)},
-	{"rx_len_err_pkts", QL_SIZEOF(nic_stats.rx_len_err_pkts),
-					QL_OFF(nic_stats.rx_len_err_pkts)},
-	{"rx_code_err",	QL_SIZEOF(nic_stats.rx_code_err),
-					QL_OFF(nic_stats.rx_code_err)},
-	{"rx_oversize_err", QL_SIZEOF(nic_stats.rx_oversize_err),
-					QL_OFF(nic_stats.rx_oversize_err)},
-	{"rx_undersize_err", QL_SIZEOF(nic_stats.rx_undersize_err),
-					QL_OFF(nic_stats.rx_undersize_err)},
-	{"rx_preamble_err", QL_SIZEOF(nic_stats.rx_preamble_err),
-					QL_OFF(nic_stats.rx_preamble_err)},
-	{"rx_frame_len_err", QL_SIZEOF(nic_stats.rx_frame_len_err),
-					QL_OFF(nic_stats.rx_frame_len_err)},
-	{"rx_crc_err", QL_SIZEOF(nic_stats.rx_crc_err),
-					QL_OFF(nic_stats.rx_crc_err)},
-	{"rx_err_count", QL_SIZEOF(nic_stats.rx_err_count),
-					QL_OFF(nic_stats.rx_err_count)},
-	{"tx_cbfc_pause_frames0", QL_SIZEOF(nic_stats.tx_cbfc_pause_frames0),
-				QL_OFF(nic_stats.tx_cbfc_pause_frames0)},
-	{"tx_cbfc_pause_frames1", QL_SIZEOF(nic_stats.tx_cbfc_pause_frames1),
-				QL_OFF(nic_stats.tx_cbfc_pause_frames1)},
-	{"tx_cbfc_pause_frames2", QL_SIZEOF(nic_stats.tx_cbfc_pause_frames2),
-				QL_OFF(nic_stats.tx_cbfc_pause_frames2)},
-	{"tx_cbfc_pause_frames3", QL_SIZEOF(nic_stats.tx_cbfc_pause_frames3),
-				QL_OFF(nic_stats.tx_cbfc_pause_frames3)},
-	{"tx_cbfc_pause_frames4", QL_SIZEOF(nic_stats.tx_cbfc_pause_frames4),
-				QL_OFF(nic_stats.tx_cbfc_pause_frames4)},
-	{"tx_cbfc_pause_frames5", QL_SIZEOF(nic_stats.tx_cbfc_pause_frames5),
-				QL_OFF(nic_stats.tx_cbfc_pause_frames5)},
-	{"tx_cbfc_pause_frames6", QL_SIZEOF(nic_stats.tx_cbfc_pause_frames6),
-				QL_OFF(nic_stats.tx_cbfc_pause_frames6)},
-	{"tx_cbfc_pause_frames7", QL_SIZEOF(nic_stats.tx_cbfc_pause_frames7),
-				QL_OFF(nic_stats.tx_cbfc_pause_frames7)},
-	{"rx_cbfc_pause_frames0", QL_SIZEOF(nic_stats.rx_cbfc_pause_frames0),
-				QL_OFF(nic_stats.rx_cbfc_pause_frames0)},
-	{"rx_cbfc_pause_frames1", QL_SIZEOF(nic_stats.rx_cbfc_pause_frames1),
-				QL_OFF(nic_stats.rx_cbfc_pause_frames1)},
-	{"rx_cbfc_pause_frames2", QL_SIZEOF(nic_stats.rx_cbfc_pause_frames2),
-				QL_OFF(nic_stats.rx_cbfc_pause_frames2)},
-	{"rx_cbfc_pause_frames3", QL_SIZEOF(nic_stats.rx_cbfc_pause_frames3),
-				QL_OFF(nic_stats.rx_cbfc_pause_frames3)},
-	{"rx_cbfc_pause_frames4", QL_SIZEOF(nic_stats.rx_cbfc_pause_frames4),
-				QL_OFF(nic_stats.rx_cbfc_pause_frames4)},
-	{"rx_cbfc_pause_frames5", QL_SIZEOF(nic_stats.rx_cbfc_pause_frames5),
-				QL_OFF(nic_stats.rx_cbfc_pause_frames5)},
-	{"rx_cbfc_pause_frames6", QL_SIZEOF(nic_stats.rx_cbfc_pause_frames6),
-				QL_OFF(nic_stats.rx_cbfc_pause_frames6)},
-	{"rx_cbfc_pause_frames7", QL_SIZEOF(nic_stats.rx_cbfc_pause_frames7),
-				QL_OFF(nic_stats.rx_cbfc_pause_frames7)},
-	{"rx_nic_fifo_drop", QL_SIZEOF(nic_stats.rx_nic_fifo_drop),
-					QL_OFF(nic_stats.rx_nic_fifo_drop)},
-};
+अटल स्थिर काष्ठा qlge_stats qlge_gstrings_stats[] = अणु
+	अणु"tx_pkts", QL_SIZखातापूर्ण(nic_stats.tx_pkts), QL_OFF(nic_stats.tx_pkts)पूर्ण,
+	अणु"tx_bytes", QL_SIZखातापूर्ण(nic_stats.tx_bytes), QL_OFF(nic_stats.tx_bytes)पूर्ण,
+	अणु"tx_mcast_pkts", QL_SIZखातापूर्ण(nic_stats.tx_mcast_pkts),
+					QL_OFF(nic_stats.tx_mcast_pkts)पूर्ण,
+	अणु"tx_bcast_pkts", QL_SIZखातापूर्ण(nic_stats.tx_bcast_pkts),
+					QL_OFF(nic_stats.tx_bcast_pkts)पूर्ण,
+	अणु"tx_ucast_pkts", QL_SIZखातापूर्ण(nic_stats.tx_ucast_pkts),
+					QL_OFF(nic_stats.tx_ucast_pkts)पूर्ण,
+	अणु"tx_ctl_pkts", QL_SIZखातापूर्ण(nic_stats.tx_ctl_pkts),
+					QL_OFF(nic_stats.tx_ctl_pkts)पूर्ण,
+	अणु"tx_pause_pkts", QL_SIZखातापूर्ण(nic_stats.tx_छोड़ो_pkts),
+					QL_OFF(nic_stats.tx_छोड़ो_pkts)पूर्ण,
+	अणु"tx_64_pkts", QL_SIZखातापूर्ण(nic_stats.tx_64_pkt),
+					QL_OFF(nic_stats.tx_64_pkt)पूर्ण,
+	अणु"tx_65_to_127_pkts", QL_SIZखातापूर्ण(nic_stats.tx_65_to_127_pkt),
+					QL_OFF(nic_stats.tx_65_to_127_pkt)पूर्ण,
+	अणु"tx_128_to_255_pkts", QL_SIZखातापूर्ण(nic_stats.tx_128_to_255_pkt),
+					QL_OFF(nic_stats.tx_128_to_255_pkt)पूर्ण,
+	अणु"tx_256_511_pkts", QL_SIZखातापूर्ण(nic_stats.tx_256_511_pkt),
+					QL_OFF(nic_stats.tx_256_511_pkt)पूर्ण,
+	अणु"tx_512_to_1023_pkts",	QL_SIZखातापूर्ण(nic_stats.tx_512_to_1023_pkt),
+					QL_OFF(nic_stats.tx_512_to_1023_pkt)पूर्ण,
+	अणु"tx_1024_to_1518_pkts", QL_SIZखातापूर्ण(nic_stats.tx_1024_to_1518_pkt),
+					QL_OFF(nic_stats.tx_1024_to_1518_pkt)पूर्ण,
+	अणु"tx_1519_to_max_pkts",	QL_SIZखातापूर्ण(nic_stats.tx_1519_to_max_pkt),
+					QL_OFF(nic_stats.tx_1519_to_max_pkt)पूर्ण,
+	अणु"tx_undersize_pkts", QL_SIZखातापूर्ण(nic_stats.tx_undersize_pkt),
+					QL_OFF(nic_stats.tx_undersize_pkt)पूर्ण,
+	अणु"tx_oversize_pkts", QL_SIZखातापूर्ण(nic_stats.tx_oversize_pkt),
+					QL_OFF(nic_stats.tx_oversize_pkt)पूर्ण,
+	अणु"rx_bytes", QL_SIZखातापूर्ण(nic_stats.rx_bytes), QL_OFF(nic_stats.rx_bytes)पूर्ण,
+	अणु"rx_bytes_ok",	QL_SIZखातापूर्ण(nic_stats.rx_bytes_ok),
+					QL_OFF(nic_stats.rx_bytes_ok)पूर्ण,
+	अणु"rx_pkts", QL_SIZखातापूर्ण(nic_stats.rx_pkts), QL_OFF(nic_stats.rx_pkts)पूर्ण,
+	अणु"rx_pkts_ok", QL_SIZखातापूर्ण(nic_stats.rx_pkts_ok),
+					QL_OFF(nic_stats.rx_pkts_ok)पूर्ण,
+	अणु"rx_bcast_pkts", QL_SIZखातापूर्ण(nic_stats.rx_bcast_pkts),
+					QL_OFF(nic_stats.rx_bcast_pkts)पूर्ण,
+	अणु"rx_mcast_pkts", QL_SIZखातापूर्ण(nic_stats.rx_mcast_pkts),
+					QL_OFF(nic_stats.rx_mcast_pkts)पूर्ण,
+	अणु"rx_ucast_pkts", QL_SIZखातापूर्ण(nic_stats.rx_ucast_pkts),
+					QL_OFF(nic_stats.rx_ucast_pkts)पूर्ण,
+	अणु"rx_undersize_pkts", QL_SIZखातापूर्ण(nic_stats.rx_undersize_pkts),
+					QL_OFF(nic_stats.rx_undersize_pkts)पूर्ण,
+	अणु"rx_oversize_pkts", QL_SIZखातापूर्ण(nic_stats.rx_oversize_pkts),
+					QL_OFF(nic_stats.rx_oversize_pkts)पूर्ण,
+	अणु"rx_jabber_pkts", QL_SIZखातापूर्ण(nic_stats.rx_jabber_pkts),
+					QL_OFF(nic_stats.rx_jabber_pkts)पूर्ण,
+	अणु"rx_undersize_fcerr_pkts",
+		QL_SIZखातापूर्ण(nic_stats.rx_undersize_fcerr_pkts),
+				QL_OFF(nic_stats.rx_undersize_fcerr_pkts)पूर्ण,
+	अणु"rx_drop_events", QL_SIZखातापूर्ण(nic_stats.rx_drop_events),
+					QL_OFF(nic_stats.rx_drop_events)पूर्ण,
+	अणु"rx_fcerr_pkts", QL_SIZखातापूर्ण(nic_stats.rx_fcerr_pkts),
+					QL_OFF(nic_stats.rx_fcerr_pkts)पूर्ण,
+	अणु"rx_align_err", QL_SIZखातापूर्ण(nic_stats.rx_align_err),
+					QL_OFF(nic_stats.rx_align_err)पूर्ण,
+	अणु"rx_symbol_err", QL_SIZखातापूर्ण(nic_stats.rx_symbol_err),
+					QL_OFF(nic_stats.rx_symbol_err)पूर्ण,
+	अणु"rx_mac_err", QL_SIZखातापूर्ण(nic_stats.rx_mac_err),
+					QL_OFF(nic_stats.rx_mac_err)पूर्ण,
+	अणु"rx_ctl_pkts",	QL_SIZखातापूर्ण(nic_stats.rx_ctl_pkts),
+					QL_OFF(nic_stats.rx_ctl_pkts)पूर्ण,
+	अणु"rx_pause_pkts", QL_SIZखातापूर्ण(nic_stats.rx_छोड़ो_pkts),
+					QL_OFF(nic_stats.rx_छोड़ो_pkts)पूर्ण,
+	अणु"rx_64_pkts", QL_SIZखातापूर्ण(nic_stats.rx_64_pkts),
+					QL_OFF(nic_stats.rx_64_pkts)पूर्ण,
+	अणु"rx_65_to_127_pkts", QL_SIZखातापूर्ण(nic_stats.rx_65_to_127_pkts),
+					QL_OFF(nic_stats.rx_65_to_127_pkts)पूर्ण,
+	अणु"rx_128_255_pkts", QL_SIZखातापूर्ण(nic_stats.rx_128_255_pkts),
+					QL_OFF(nic_stats.rx_128_255_pkts)पूर्ण,
+	अणु"rx_256_511_pkts", QL_SIZखातापूर्ण(nic_stats.rx_256_511_pkts),
+					QL_OFF(nic_stats.rx_256_511_pkts)पूर्ण,
+	अणु"rx_512_to_1023_pkts",	QL_SIZखातापूर्ण(nic_stats.rx_512_to_1023_pkts),
+					QL_OFF(nic_stats.rx_512_to_1023_pkts)पूर्ण,
+	अणु"rx_1024_to_1518_pkts", QL_SIZखातापूर्ण(nic_stats.rx_1024_to_1518_pkts),
+					QL_OFF(nic_stats.rx_1024_to_1518_pkts)पूर्ण,
+	अणु"rx_1519_to_max_pkts",	QL_SIZखातापूर्ण(nic_stats.rx_1519_to_max_pkts),
+					QL_OFF(nic_stats.rx_1519_to_max_pkts)पूर्ण,
+	अणु"rx_len_err_pkts", QL_SIZखातापूर्ण(nic_stats.rx_len_err_pkts),
+					QL_OFF(nic_stats.rx_len_err_pkts)पूर्ण,
+	अणु"rx_code_err",	QL_SIZखातापूर्ण(nic_stats.rx_code_err),
+					QL_OFF(nic_stats.rx_code_err)पूर्ण,
+	अणु"rx_oversize_err", QL_SIZखातापूर्ण(nic_stats.rx_oversize_err),
+					QL_OFF(nic_stats.rx_oversize_err)पूर्ण,
+	अणु"rx_undersize_err", QL_SIZखातापूर्ण(nic_stats.rx_undersize_err),
+					QL_OFF(nic_stats.rx_undersize_err)पूर्ण,
+	अणु"rx_preamble_err", QL_SIZखातापूर्ण(nic_stats.rx_preamble_err),
+					QL_OFF(nic_stats.rx_preamble_err)पूर्ण,
+	अणु"rx_frame_len_err", QL_SIZखातापूर्ण(nic_stats.rx_frame_len_err),
+					QL_OFF(nic_stats.rx_frame_len_err)पूर्ण,
+	अणु"rx_crc_err", QL_SIZखातापूर्ण(nic_stats.rx_crc_err),
+					QL_OFF(nic_stats.rx_crc_err)पूर्ण,
+	अणु"rx_err_count", QL_SIZखातापूर्ण(nic_stats.rx_err_count),
+					QL_OFF(nic_stats.rx_err_count)पूर्ण,
+	अणु"tx_cbfc_pause_frames0", QL_SIZखातापूर्ण(nic_stats.tx_cbfc_छोड़ो_frames0),
+				QL_OFF(nic_stats.tx_cbfc_छोड़ो_frames0)पूर्ण,
+	अणु"tx_cbfc_pause_frames1", QL_SIZखातापूर्ण(nic_stats.tx_cbfc_छोड़ो_frames1),
+				QL_OFF(nic_stats.tx_cbfc_छोड़ो_frames1)पूर्ण,
+	अणु"tx_cbfc_pause_frames2", QL_SIZखातापूर्ण(nic_stats.tx_cbfc_छोड़ो_frames2),
+				QL_OFF(nic_stats.tx_cbfc_छोड़ो_frames2)पूर्ण,
+	अणु"tx_cbfc_pause_frames3", QL_SIZखातापूर्ण(nic_stats.tx_cbfc_छोड़ो_frames3),
+				QL_OFF(nic_stats.tx_cbfc_छोड़ो_frames3)पूर्ण,
+	अणु"tx_cbfc_pause_frames4", QL_SIZखातापूर्ण(nic_stats.tx_cbfc_छोड़ो_frames4),
+				QL_OFF(nic_stats.tx_cbfc_छोड़ो_frames4)पूर्ण,
+	अणु"tx_cbfc_pause_frames5", QL_SIZखातापूर्ण(nic_stats.tx_cbfc_छोड़ो_frames5),
+				QL_OFF(nic_stats.tx_cbfc_छोड़ो_frames5)पूर्ण,
+	अणु"tx_cbfc_pause_frames6", QL_SIZखातापूर्ण(nic_stats.tx_cbfc_छोड़ो_frames6),
+				QL_OFF(nic_stats.tx_cbfc_छोड़ो_frames6)पूर्ण,
+	अणु"tx_cbfc_pause_frames7", QL_SIZखातापूर्ण(nic_stats.tx_cbfc_छोड़ो_frames7),
+				QL_OFF(nic_stats.tx_cbfc_छोड़ो_frames7)पूर्ण,
+	अणु"rx_cbfc_pause_frames0", QL_SIZखातापूर्ण(nic_stats.rx_cbfc_छोड़ो_frames0),
+				QL_OFF(nic_stats.rx_cbfc_छोड़ो_frames0)पूर्ण,
+	अणु"rx_cbfc_pause_frames1", QL_SIZखातापूर्ण(nic_stats.rx_cbfc_छोड़ो_frames1),
+				QL_OFF(nic_stats.rx_cbfc_छोड़ो_frames1)पूर्ण,
+	अणु"rx_cbfc_pause_frames2", QL_SIZखातापूर्ण(nic_stats.rx_cbfc_छोड़ो_frames2),
+				QL_OFF(nic_stats.rx_cbfc_छोड़ो_frames2)पूर्ण,
+	अणु"rx_cbfc_pause_frames3", QL_SIZखातापूर्ण(nic_stats.rx_cbfc_छोड़ो_frames3),
+				QL_OFF(nic_stats.rx_cbfc_छोड़ो_frames3)पूर्ण,
+	अणु"rx_cbfc_pause_frames4", QL_SIZखातापूर्ण(nic_stats.rx_cbfc_छोड़ो_frames4),
+				QL_OFF(nic_stats.rx_cbfc_छोड़ो_frames4)पूर्ण,
+	अणु"rx_cbfc_pause_frames5", QL_SIZखातापूर्ण(nic_stats.rx_cbfc_छोड़ो_frames5),
+				QL_OFF(nic_stats.rx_cbfc_छोड़ो_frames5)पूर्ण,
+	अणु"rx_cbfc_pause_frames6", QL_SIZखातापूर्ण(nic_stats.rx_cbfc_छोड़ो_frames6),
+				QL_OFF(nic_stats.rx_cbfc_छोड़ो_frames6)पूर्ण,
+	अणु"rx_cbfc_pause_frames7", QL_SIZखातापूर्ण(nic_stats.rx_cbfc_छोड़ो_frames7),
+				QL_OFF(nic_stats.rx_cbfc_छोड़ो_frames7)पूर्ण,
+	अणु"rx_nic_fifo_drop", QL_SIZखातापूर्ण(nic_stats.rx_nic_fअगरo_drop),
+					QL_OFF(nic_stats.rx_nic_fअगरo_drop)पूर्ण,
+पूर्ण;
 
-static const char qlge_gstrings_test[][ETH_GSTRING_LEN] = {
+अटल स्थिर अक्षर qlge_gstrings_test[][ETH_GSTRING_LEN] = अणु
 	"Loopback test  (offline)"
-};
+पूर्ण;
 
-#define QLGE_TEST_LEN (sizeof(qlge_gstrings_test) / ETH_GSTRING_LEN)
-#define QLGE_STATS_LEN ARRAY_SIZE(qlge_gstrings_stats)
-#define QLGE_RCV_MAC_ERR_STATS	7
+#घोषणा QLGE_TEST_LEN (माप(qlge_gstrings_test) / ETH_GSTRING_LEN)
+#घोषणा QLGE_STATS_LEN ARRAY_SIZE(qlge_gstrings_stats)
+#घोषणा QLGE_RCV_MAC_ERR_STATS	7
 
-static int qlge_update_ring_coalescing(struct qlge_adapter *qdev)
-{
-	int i, status = 0;
-	struct rx_ring *rx_ring;
-	struct cqicb *cqicb;
+अटल पूर्णांक qlge_update_ring_coalescing(काष्ठा qlge_adapter *qdev)
+अणु
+	पूर्णांक i, status = 0;
+	काष्ठा rx_ring *rx_ring;
+	काष्ठा cqicb *cqicb;
 
-	if (!netif_running(qdev->ndev))
-		return status;
+	अगर (!netअगर_running(qdev->ndev))
+		वापस status;
 
-	/* Skip the default queue, and update the outbound handler
-	 * queues if they changed.
+	/* Skip the शेष queue, and update the outbound handler
+	 * queues अगर they changed.
 	 */
-	cqicb = (struct cqicb *)&qdev->rx_ring[qdev->rss_ring_count];
-	if (le16_to_cpu(cqicb->irq_delay) != qdev->tx_coalesce_usecs ||
-	    le16_to_cpu(cqicb->pkt_delay) != qdev->tx_max_coalesced_frames) {
-		for (i = qdev->rss_ring_count; i < qdev->rx_ring_count; i++) {
+	cqicb = (काष्ठा cqicb *)&qdev->rx_ring[qdev->rss_ring_count];
+	अगर (le16_to_cpu(cqicb->irq_delay) != qdev->tx_coalesce_usecs ||
+	    le16_to_cpu(cqicb->pkt_delay) != qdev->tx_max_coalesced_frames) अणु
+		क्रम (i = qdev->rss_ring_count; i < qdev->rx_ring_count; i++) अणु
 			rx_ring = &qdev->rx_ring[i];
-			cqicb = (struct cqicb *)rx_ring;
+			cqicb = (काष्ठा cqicb *)rx_ring;
 			cqicb->irq_delay = cpu_to_le16(qdev->tx_coalesce_usecs);
 			cqicb->pkt_delay =
 				cpu_to_le16(qdev->tx_max_coalesced_frames);
 			cqicb->flags = FLAGS_LI;
-			status = qlge_write_cfg(qdev, cqicb, sizeof(*cqicb),
+			status = qlge_ग_लिखो_cfg(qdev, cqicb, माप(*cqicb),
 						CFG_LCQ, rx_ring->cq_id);
-			if (status) {
-				netif_err(qdev, ifup, qdev->ndev,
+			अगर (status) अणु
+				netअगर_err(qdev, अगरup, qdev->ndev,
 					  "Failed to load CQICB.\n");
-				goto exit;
-			}
-		}
-	}
+				जाओ निकास;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Update the inbound (RSS) handler queues if they changed. */
-	cqicb = (struct cqicb *)&qdev->rx_ring[0];
-	if (le16_to_cpu(cqicb->irq_delay) != qdev->rx_coalesce_usecs ||
-	    le16_to_cpu(cqicb->pkt_delay) != qdev->rx_max_coalesced_frames) {
-		for (i = 0; i < qdev->rss_ring_count; i++, rx_ring++) {
+	/* Update the inbound (RSS) handler queues अगर they changed. */
+	cqicb = (काष्ठा cqicb *)&qdev->rx_ring[0];
+	अगर (le16_to_cpu(cqicb->irq_delay) != qdev->rx_coalesce_usecs ||
+	    le16_to_cpu(cqicb->pkt_delay) != qdev->rx_max_coalesced_frames) अणु
+		क्रम (i = 0; i < qdev->rss_ring_count; i++, rx_ring++) अणु
 			rx_ring = &qdev->rx_ring[i];
-			cqicb = (struct cqicb *)rx_ring;
+			cqicb = (काष्ठा cqicb *)rx_ring;
 			cqicb->irq_delay = cpu_to_le16(qdev->rx_coalesce_usecs);
 			cqicb->pkt_delay =
 				cpu_to_le16(qdev->rx_max_coalesced_frames);
 			cqicb->flags = FLAGS_LI;
-			status = qlge_write_cfg(qdev, cqicb, sizeof(*cqicb),
+			status = qlge_ग_लिखो_cfg(qdev, cqicb, माप(*cqicb),
 						CFG_LCQ, rx_ring->cq_id);
-			if (status) {
-				netif_err(qdev, ifup, qdev->ndev,
+			अगर (status) अणु
+				netअगर_err(qdev, अगरup, qdev->ndev,
 					  "Failed to load CQICB.\n");
-				goto exit;
-			}
-		}
-	}
-exit:
-	return status;
-}
+				जाओ निकास;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+निकास:
+	वापस status;
+पूर्ण
 
-static void qlge_update_stats(struct qlge_adapter *qdev)
-{
+अटल व्योम qlge_update_stats(काष्ठा qlge_adapter *qdev)
+अणु
 	u32 i;
 	u64 data;
 	u64 *iter = &qdev->nic_stats.tx_pkts;
 
 	spin_lock(&qdev->stats_lock);
-	if (qlge_sem_spinlock(qdev, qdev->xg_sem_mask)) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (qlge_sem_spinlock(qdev, qdev->xg_sem_mask)) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Couldn't get xgmac sem.\n");
-		goto quit;
-	}
+		जाओ quit;
+	पूर्ण
 	/*
 	 * Get TX statistics.
 	 */
-	for (i = 0x200; i < 0x280; i += 8) {
-		if (qlge_read_xgmac_reg64(qdev, i, &data)) {
-			netif_err(qdev, drv, qdev->ndev,
+	क्रम (i = 0x200; i < 0x280; i += 8) अणु
+		अगर (qlge_पढ़ो_xgmac_reg64(qdev, i, &data)) अणु
+			netअगर_err(qdev, drv, qdev->ndev,
 				  "Error reading status register 0x%.04x.\n",
 				  i);
-			goto end;
-		} else {
+			जाओ end;
+		पूर्ण अन्यथा अणु
 			*iter = data;
-		}
+		पूर्ण
 		iter++;
-	}
+	पूर्ण
 
 	/*
 	 * Get RX statistics.
 	 */
-	for (i = 0x300; i < 0x3d0; i += 8) {
-		if (qlge_read_xgmac_reg64(qdev, i, &data)) {
-			netif_err(qdev, drv, qdev->ndev,
+	क्रम (i = 0x300; i < 0x3d0; i += 8) अणु
+		अगर (qlge_पढ़ो_xgmac_reg64(qdev, i, &data)) अणु
+			netअगर_err(qdev, drv, qdev->ndev,
 				  "Error reading status register 0x%.04x.\n",
 				  i);
-			goto end;
-		} else {
+			जाओ end;
+		पूर्ण अन्यथा अणु
 			*iter = data;
-		}
+		पूर्ण
 		iter++;
-	}
+	पूर्ण
 
 	/* Update receive mac error statistics */
 	iter += QLGE_RCV_MAC_ERR_STATS;
 
 	/*
-	 * Get Per-priority TX pause frame counter statistics.
+	 * Get Per-priority TX छोड़ो frame counter statistics.
 	 */
-	for (i = 0x500; i < 0x540; i += 8) {
-		if (qlge_read_xgmac_reg64(qdev, i, &data)) {
-			netif_err(qdev, drv, qdev->ndev,
+	क्रम (i = 0x500; i < 0x540; i += 8) अणु
+		अगर (qlge_पढ़ो_xgmac_reg64(qdev, i, &data)) अणु
+			netअगर_err(qdev, drv, qdev->ndev,
 				  "Error reading status register 0x%.04x.\n",
 				  i);
-			goto end;
-		} else {
+			जाओ end;
+		पूर्ण अन्यथा अणु
 			*iter = data;
-		}
+		पूर्ण
 		iter++;
-	}
+	पूर्ण
 
 	/*
-	 * Get Per-priority RX pause frame counter statistics.
+	 * Get Per-priority RX छोड़ो frame counter statistics.
 	 */
-	for (i = 0x568; i < 0x5a8; i += 8) {
-		if (qlge_read_xgmac_reg64(qdev, i, &data)) {
-			netif_err(qdev, drv, qdev->ndev,
+	क्रम (i = 0x568; i < 0x5a8; i += 8) अणु
+		अगर (qlge_पढ़ो_xgmac_reg64(qdev, i, &data)) अणु
+			netअगर_err(qdev, drv, qdev->ndev,
 				  "Error reading status register 0x%.04x.\n",
 				  i);
-			goto end;
-		} else {
+			जाओ end;
+		पूर्ण अन्यथा अणु
 			*iter = data;
-		}
+		पूर्ण
 		iter++;
-	}
+	पूर्ण
 
 	/*
 	 * Get RX NIC FIFO DROP statistics.
 	 */
-	if (qlge_read_xgmac_reg64(qdev, 0x5b8, &data)) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (qlge_पढ़ो_xgmac_reg64(qdev, 0x5b8, &data)) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Error reading status register 0x%.04x.\n", i);
-		goto end;
-	} else {
+		जाओ end;
+	पूर्ण अन्यथा अणु
 		*iter = data;
-	}
+	पूर्ण
 end:
 	qlge_sem_unlock(qdev, qdev->xg_sem_mask);
 quit:
 	spin_unlock(&qdev->stats_lock);
-}
+पूर्ण
 
-static void qlge_get_strings(struct net_device *dev, u32 stringset, u8 *buf)
-{
-	int index;
+अटल व्योम qlge_get_strings(काष्ठा net_device *dev, u32 stringset, u8 *buf)
+अणु
+	पूर्णांक index;
 
-	switch (stringset) {
-	case ETH_SS_TEST:
-		memcpy(buf, *qlge_gstrings_test, QLGE_TEST_LEN * ETH_GSTRING_LEN);
-		break;
-	case ETH_SS_STATS:
-		for (index = 0; index < QLGE_STATS_LEN; index++) {
-			memcpy(buf + index * ETH_GSTRING_LEN,
+	चयन (stringset) अणु
+	हाल ETH_SS_TEST:
+		स_नकल(buf, *qlge_gstrings_test, QLGE_TEST_LEN * ETH_GSTRING_LEN);
+		अवरोध;
+	हाल ETH_SS_STATS:
+		क्रम (index = 0; index < QLGE_STATS_LEN; index++) अणु
+			स_नकल(buf + index * ETH_GSTRING_LEN,
 			       qlge_gstrings_stats[index].stat_string,
 			       ETH_GSTRING_LEN);
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int qlge_get_sset_count(struct net_device *dev, int sset)
-{
-	switch (sset) {
-	case ETH_SS_TEST:
-		return QLGE_TEST_LEN;
-	case ETH_SS_STATS:
-		return QLGE_STATS_LEN;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक qlge_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
+अणु
+	चयन (sset) अणु
+	हाल ETH_SS_TEST:
+		वापस QLGE_TEST_LEN;
+	हाल ETH_SS_STATS:
+		वापस QLGE_STATS_LEN;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static void
-qlge_get_ethtool_stats(struct net_device *ndev,
-		       struct ethtool_stats *stats, u64 *data)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
-	int index, length;
+अटल व्योम
+qlge_get_ethtool_stats(काष्ठा net_device *ndev,
+		       काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
+	पूर्णांक index, length;
 
 	length = QLGE_STATS_LEN;
 	qlge_update_stats(qdev);
 
-	for (index = 0; index < length; index++) {
-		char *p = (char *)qdev +
+	क्रम (index = 0; index < length; index++) अणु
+		अक्षर *p = (अक्षर *)qdev +
 			qlge_gstrings_stats[index].stat_offset;
-		*data++ = (qlge_gstrings_stats[index].sizeof_stat ==
-			   sizeof(u64)) ? *(u64 *)p : (*(u32 *)p);
-	}
-}
+		*data++ = (qlge_gstrings_stats[index].माप_stat ==
+			   माप(u64)) ? *(u64 *)p : (*(u32 *)p);
+	पूर्ण
+पूर्ण
 
-static int qlge_get_link_ksettings(struct net_device *ndev,
-				   struct ethtool_link_ksettings *ecmd)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+अटल पूर्णांक qlge_get_link_ksettings(काष्ठा net_device *ndev,
+				   काष्ठा ethtool_link_ksettings *ecmd)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
 	u32 supported, advertising;
 
 	supported = SUPPORTED_10000baseT_Full;
 	advertising = ADVERTISED_10000baseT_Full;
 
-	if ((qdev->link_status & STS_LINK_TYPE_MASK) ==
-	    STS_LINK_TYPE_10GBASET) {
+	अगर ((qdev->link_status & STS_LINK_TYPE_MASK) ==
+	    STS_LINK_TYPE_10GBASET) अणु
 		supported |= (SUPPORTED_TP | SUPPORTED_Autoneg);
 		advertising |= (ADVERTISED_TP | ADVERTISED_Autoneg);
 		ecmd->base.port = PORT_TP;
-		ecmd->base.autoneg = AUTONEG_ENABLE;
-	} else {
+		ecmd->base.स्वतःneg = AUTONEG_ENABLE;
+	पूर्ण अन्यथा अणु
 		supported |= SUPPORTED_FIBRE;
 		advertising |= ADVERTISED_FIBRE;
 		ecmd->base.port = PORT_FIBRE;
-	}
+	पूर्ण
 
 	ecmd->base.speed = SPEED_10000;
 	ecmd->base.duplex = DUPLEX_FULL;
@@ -407,315 +408,315 @@ static int qlge_get_link_ksettings(struct net_device *ndev,
 	ethtool_convert_legacy_u32_to_link_mode(ecmd->link_modes.advertising,
 						advertising);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qlge_get_drvinfo(struct net_device *ndev,
-			     struct ethtool_drvinfo *drvinfo)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+अटल व्योम qlge_get_drvinfo(काष्ठा net_device *ndev,
+			     काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
 
-	strscpy(drvinfo->driver, qlge_driver_name, sizeof(drvinfo->driver));
+	strscpy(drvinfo->driver, qlge_driver_name, माप(drvinfo->driver));
 	strscpy(drvinfo->version, qlge_driver_version,
-		sizeof(drvinfo->version));
-	snprintf(drvinfo->fw_version, sizeof(drvinfo->fw_version),
+		माप(drvinfo->version));
+	snम_लिखो(drvinfo->fw_version, माप(drvinfo->fw_version),
 		 "v%d.%d.%d",
 		 (qdev->fw_rev_id & 0x00ff0000) >> 16,
 		 (qdev->fw_rev_id & 0x0000ff00) >> 8,
 		 (qdev->fw_rev_id & 0x000000ff));
 	strscpy(drvinfo->bus_info, pci_name(qdev->pdev),
-		sizeof(drvinfo->bus_info));
-}
+		माप(drvinfo->bus_info));
+पूर्ण
 
-static void qlge_get_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
-	unsigned short ssys_dev = qdev->pdev->subsystem_device;
+अटल व्योम qlge_get_wol(काष्ठा net_device *ndev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
+	अचिन्हित लघु ssys_dev = qdev->pdev->subप्रणाली_device;
 
-	/* WOL is only supported for mezz card. */
-	if (ssys_dev == QLGE_MEZZ_SSYS_ID_068 ||
-	    ssys_dev == QLGE_MEZZ_SSYS_ID_180) {
+	/* WOL is only supported क्रम mezz card. */
+	अगर (ssys_dev == QLGE_MEZZ_SSYS_ID_068 ||
+	    ssys_dev == QLGE_MEZZ_SSYS_ID_180) अणु
 		wol->supported = WAKE_MAGIC;
 		wol->wolopts = qdev->wol;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int qlge_set_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
-	unsigned short ssys_dev = qdev->pdev->subsystem_device;
+अटल पूर्णांक qlge_set_wol(काष्ठा net_device *ndev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
+	अचिन्हित लघु ssys_dev = qdev->pdev->subप्रणाली_device;
 
-	/* WOL is only supported for mezz card. */
-	if (ssys_dev != QLGE_MEZZ_SSYS_ID_068 &&
-	    ssys_dev != QLGE_MEZZ_SSYS_ID_180) {
-		netif_info(qdev, drv, qdev->ndev,
+	/* WOL is only supported क्रम mezz card. */
+	अगर (ssys_dev != QLGE_MEZZ_SSYS_ID_068 &&
+	    ssys_dev != QLGE_MEZZ_SSYS_ID_180) अणु
+		netअगर_info(qdev, drv, qdev->ndev,
 			   "WOL is only supported for mezz card\n");
-		return -EOPNOTSUPP;
-	}
-	if (wol->wolopts & ~WAKE_MAGIC)
-		return -EINVAL;
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	अगर (wol->wolopts & ~WAKE_MAGIC)
+		वापस -EINVAL;
 	qdev->wol = wol->wolopts;
 
-	netif_info(qdev, drv, qdev->ndev, "Set wol option 0x%x\n", qdev->wol);
-	return 0;
-}
+	netअगर_info(qdev, drv, qdev->ndev, "Set wol option 0x%x\n", qdev->wol);
+	वापस 0;
+पूर्ण
 
-static int qlge_set_phys_id(struct net_device *ndev,
-			    enum ethtool_phys_id_state state)
+अटल पूर्णांक qlge_set_phys_id(काष्ठा net_device *ndev,
+			    क्रमागत ethtool_phys_id_state state)
 
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
 
-	switch (state) {
-	case ETHTOOL_ID_ACTIVE:
+	चयन (state) अणु
+	हाल ETHTOOL_ID_ACTIVE:
 		/* Save the current LED settings */
-		if (qlge_mb_get_led_cfg(qdev))
-			return -EIO;
+		अगर (qlge_mb_get_led_cfg(qdev))
+			वापस -EIO;
 
 		/* Start blinking */
 		qlge_mb_set_led_cfg(qdev, QL_LED_BLINK);
-		return 0;
+		वापस 0;
 
-	case ETHTOOL_ID_INACTIVE:
+	हाल ETHTOOL_ID_INACTIVE:
 		/* Restore LED settings */
-		if (qlge_mb_set_led_cfg(qdev, qdev->led_config))
-			return -EIO;
-		return 0;
+		अगर (qlge_mb_set_led_cfg(qdev, qdev->led_config))
+			वापस -EIO;
+		वापस 0;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int qlge_start_loopback(struct qlge_adapter *qdev)
-{
-	if (netif_carrier_ok(qdev->ndev)) {
+अटल पूर्णांक qlge_start_loopback(काष्ठा qlge_adapter *qdev)
+अणु
+	अगर (netअगर_carrier_ok(qdev->ndev)) अणु
 		set_bit(QL_LB_LINK_UP, &qdev->flags);
-		netif_carrier_off(qdev->ndev);
-	} else {
+		netअगर_carrier_off(qdev->ndev);
+	पूर्ण अन्यथा अणु
 		clear_bit(QL_LB_LINK_UP, &qdev->flags);
-	}
+	पूर्ण
 	qdev->link_config |= CFG_LOOPBACK_PCS;
-	return qlge_mb_set_port_cfg(qdev);
-}
+	वापस qlge_mb_set_port_cfg(qdev);
+पूर्ण
 
-static void qlge_stop_loopback(struct qlge_adapter *qdev)
-{
+अटल व्योम qlge_stop_loopback(काष्ठा qlge_adapter *qdev)
+अणु
 	qdev->link_config &= ~CFG_LOOPBACK_PCS;
 	qlge_mb_set_port_cfg(qdev);
-	if (test_bit(QL_LB_LINK_UP, &qdev->flags)) {
-		netif_carrier_on(qdev->ndev);
+	अगर (test_bit(QL_LB_LINK_UP, &qdev->flags)) अणु
+		netअगर_carrier_on(qdev->ndev);
 		clear_bit(QL_LB_LINK_UP, &qdev->flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void qlge_create_lb_frame(struct sk_buff *skb,
-				 unsigned int frame_size)
-{
-	memset(skb->data, 0xFF, frame_size);
+अटल व्योम qlge_create_lb_frame(काष्ठा sk_buff *skb,
+				 अचिन्हित पूर्णांक frame_size)
+अणु
+	स_रखो(skb->data, 0xFF, frame_size);
 	frame_size &= ~1;
-	memset(&skb->data[frame_size / 2], 0xAA, frame_size / 2 - 1);
-	skb->data[frame_size / 2 + 10] = (unsigned char)0xBE;
-	skb->data[frame_size / 2 + 12] = (unsigned char)0xAF;
-}
+	स_रखो(&skb->data[frame_size / 2], 0xAA, frame_size / 2 - 1);
+	skb->data[frame_size / 2 + 10] = (अचिन्हित अक्षर)0xBE;
+	skb->data[frame_size / 2 + 12] = (अचिन्हित अक्षर)0xAF;
+पूर्ण
 
-void qlge_check_lb_frame(struct qlge_adapter *qdev,
-			 struct sk_buff *skb)
-{
-	unsigned int frame_size = skb->len;
+व्योम qlge_check_lb_frame(काष्ठा qlge_adapter *qdev,
+			 काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक frame_size = skb->len;
 
-	if ((*(skb->data + 3) == 0xFF) &&
+	अगर ((*(skb->data + 3) == 0xFF) &&
 	    (*(skb->data + frame_size / 2 + 10) == 0xBE) &&
-	    (*(skb->data + frame_size / 2 + 12) == 0xAF)) {
+	    (*(skb->data + frame_size / 2 + 12) == 0xAF)) अणु
 		atomic_dec(&qdev->lb_count);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static int qlge_run_loopback_test(struct qlge_adapter *qdev)
-{
-	int i;
+अटल पूर्णांक qlge_run_loopback_test(काष्ठा qlge_adapter *qdev)
+अणु
+	पूर्णांक i;
 	netdev_tx_t rc;
-	struct sk_buff *skb;
-	unsigned int size = SMALL_BUF_MAP_SIZE;
+	काष्ठा sk_buff *skb;
+	अचिन्हित पूर्णांक size = SMALL_BUF_MAP_SIZE;
 
-	for (i = 0; i < 64; i++) {
+	क्रम (i = 0; i < 64; i++) अणु
 		skb = netdev_alloc_skb(qdev->ndev, size);
-		if (!skb)
-			return -ENOMEM;
+		अगर (!skb)
+			वापस -ENOMEM;
 
 		skb->queue_mapping = 0;
 		skb_put(skb, size);
 		qlge_create_lb_frame(skb, size);
 		rc = qlge_lb_send(skb, qdev->ndev);
-		if (rc != NETDEV_TX_OK)
-			return -EPIPE;
+		अगर (rc != NETDEV_TX_OK)
+			वापस -EPIPE;
 		atomic_inc(&qdev->lb_count);
-	}
-	/* Give queue time to settle before testing results. */
+	पूर्ण
+	/* Give queue समय to settle beक्रमe testing results. */
 	msleep(2);
 	qlge_clean_lb_rx_ring(&qdev->rx_ring[0], 128);
-	return atomic_read(&qdev->lb_count) ? -EIO : 0;
-}
+	वापस atomic_पढ़ो(&qdev->lb_count) ? -EIO : 0;
+पूर्ण
 
-static int qlge_loopback_test(struct qlge_adapter *qdev, u64 *data)
-{
+अटल पूर्णांक qlge_loopback_test(काष्ठा qlge_adapter *qdev, u64 *data)
+अणु
 	*data = qlge_start_loopback(qdev);
-	if (*data)
-		goto out;
+	अगर (*data)
+		जाओ out;
 	*data = qlge_run_loopback_test(qdev);
 out:
 	qlge_stop_loopback(qdev);
-	return *data;
-}
+	वापस *data;
+पूर्ण
 
-static void qlge_self_test(struct net_device *ndev,
-			   struct ethtool_test *eth_test, u64 *data)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+अटल व्योम qlge_self_test(काष्ठा net_device *ndev,
+			   काष्ठा ethtool_test *eth_test, u64 *data)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
 
-	memset(data, 0, sizeof(u64) * QLGE_TEST_LEN);
+	स_रखो(data, 0, माप(u64) * QLGE_TEST_LEN);
 
-	if (netif_running(ndev)) {
+	अगर (netअगर_running(ndev)) अणु
 		set_bit(QL_SELFTEST, &qdev->flags);
-		if (eth_test->flags == ETH_TEST_FL_OFFLINE) {
+		अगर (eth_test->flags == ETH_TEST_FL_OFFLINE) अणु
 			/* Offline tests */
-			if (qlge_loopback_test(qdev, &data[0]))
+			अगर (qlge_loopback_test(qdev, &data[0]))
 				eth_test->flags |= ETH_TEST_FL_FAILED;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Online tests */
 			data[0] = 0;
-		}
+		पूर्ण
 		clear_bit(QL_SELFTEST, &qdev->flags);
-		/* Give link time to come up after
+		/* Give link समय to come up after
 		 * port configuration changes.
 		 */
-		msleep_interruptible(4 * 1000);
-	} else {
-		netif_err(qdev, drv, qdev->ndev,
+		msleep_पूर्णांकerruptible(4 * 1000);
+	पूर्ण अन्यथा अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "is down, Loopback test will fail.\n");
 		eth_test->flags |= ETH_TEST_FL_FAILED;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int qlge_get_regs_len(struct net_device *ndev)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+अटल पूर्णांक qlge_get_regs_len(काष्ठा net_device *ndev)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
 
-	if (!test_bit(QL_FRC_COREDUMP, &qdev->flags))
-		return sizeof(struct qlge_mpi_coredump);
-	else
-		return sizeof(struct qlge_reg_dump);
-}
+	अगर (!test_bit(QL_FRC_COREDUMP, &qdev->flags))
+		वापस माप(काष्ठा qlge_mpi_coredump);
+	अन्यथा
+		वापस माप(काष्ठा qlge_reg_dump);
+पूर्ण
 
-static void qlge_get_regs(struct net_device *ndev,
-			  struct ethtool_regs *regs, void *p)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+अटल व्योम qlge_get_regs(काष्ठा net_device *ndev,
+			  काष्ठा ethtool_regs *regs, व्योम *p)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
 
 	qlge_get_dump(qdev, p);
-	if (!test_bit(QL_FRC_COREDUMP, &qdev->flags))
-		regs->len = sizeof(struct qlge_mpi_coredump);
-	else
-		regs->len = sizeof(struct qlge_reg_dump);
-}
+	अगर (!test_bit(QL_FRC_COREDUMP, &qdev->flags))
+		regs->len = माप(काष्ठा qlge_mpi_coredump);
+	अन्यथा
+		regs->len = माप(काष्ठा qlge_reg_dump);
+पूर्ण
 
-static int qlge_get_coalesce(struct net_device *ndev, struct ethtool_coalesce *c)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+अटल पूर्णांक qlge_get_coalesce(काष्ठा net_device *ndev, काष्ठा ethtool_coalesce *c)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
 
 	c->rx_coalesce_usecs = qdev->rx_coalesce_usecs;
 	c->tx_coalesce_usecs = qdev->tx_coalesce_usecs;
 
 	/* This chip coalesces as follows:
-	 * If a packet arrives, hold off interrupts until
-	 * cqicb->int_delay expires, but if no other packets arrive don't
-	 * wait longer than cqicb->pkt_int_delay. But ethtool doesn't use a
-	 * timer to coalesce on a frame basis.  So, we have to take ethtool's
+	 * If a packet arrives, hold off पूर्णांकerrupts until
+	 * cqicb->पूर्णांक_delay expires, but अगर no other packets arrive करोn't
+	 * रुको दीर्घer than cqicb->pkt_पूर्णांक_delay. But ethtool करोesn't use a
+	 * समयr to coalesce on a frame basis.  So, we have to take ethtool's
 	 * max_coalesced_frames value and convert it to a delay in microseconds.
-	 * We do this by using a basic thoughput of 1,000,000 frames per
+	 * We करो this by using a basic thoughput of 1,000,000 frames per
 	 * second @ (1024 bytes).  This means one frame per usec. So it's a
 	 * simple one to one ratio.
 	 */
 	c->rx_max_coalesced_frames = qdev->rx_max_coalesced_frames;
 	c->tx_max_coalesced_frames = qdev->tx_max_coalesced_frames;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qlge_set_coalesce(struct net_device *ndev, struct ethtool_coalesce *c)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+अटल पूर्णांक qlge_set_coalesce(काष्ठा net_device *ndev, काष्ठा ethtool_coalesce *c)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
 
 	/* Validate user parameters. */
-	if (c->rx_coalesce_usecs > qdev->rx_ring_size / 2)
-		return -EINVAL;
-	/* Don't wait more than 10 usec. */
-	if (c->rx_max_coalesced_frames > MAX_INTER_FRAME_WAIT)
-		return -EINVAL;
-	if (c->tx_coalesce_usecs > qdev->tx_ring_size / 2)
-		return -EINVAL;
-	if (c->tx_max_coalesced_frames > MAX_INTER_FRAME_WAIT)
-		return -EINVAL;
+	अगर (c->rx_coalesce_usecs > qdev->rx_ring_size / 2)
+		वापस -EINVAL;
+	/* Don't रुको more than 10 usec. */
+	अगर (c->rx_max_coalesced_frames > MAX_INTER_FRAME_WAIT)
+		वापस -EINVAL;
+	अगर (c->tx_coalesce_usecs > qdev->tx_ring_size / 2)
+		वापस -EINVAL;
+	अगर (c->tx_max_coalesced_frames > MAX_INTER_FRAME_WAIT)
+		वापस -EINVAL;
 
-	/* Verify a change took place before updating the hardware. */
-	if (qdev->rx_coalesce_usecs == c->rx_coalesce_usecs &&
+	/* Verअगरy a change took place beक्रमe updating the hardware. */
+	अगर (qdev->rx_coalesce_usecs == c->rx_coalesce_usecs &&
 	    qdev->tx_coalesce_usecs == c->tx_coalesce_usecs &&
 	    qdev->rx_max_coalesced_frames == c->rx_max_coalesced_frames &&
 	    qdev->tx_max_coalesced_frames == c->tx_max_coalesced_frames)
-		return 0;
+		वापस 0;
 
 	qdev->rx_coalesce_usecs = c->rx_coalesce_usecs;
 	qdev->tx_coalesce_usecs = c->tx_coalesce_usecs;
 	qdev->rx_max_coalesced_frames = c->rx_max_coalesced_frames;
 	qdev->tx_max_coalesced_frames = c->tx_max_coalesced_frames;
 
-	return qlge_update_ring_coalescing(qdev);
-}
+	वापस qlge_update_ring_coalescing(qdev);
+पूर्ण
 
-static void qlge_get_pauseparam(struct net_device *ndev,
-				struct ethtool_pauseparam *pause)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+अटल व्योम qlge_get_छोड़ोparam(काष्ठा net_device *ndev,
+				काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
 
 	qlge_mb_get_port_cfg(qdev);
-	if (qdev->link_config & CFG_PAUSE_STD) {
-		pause->rx_pause = 1;
-		pause->tx_pause = 1;
-	}
-}
+	अगर (qdev->link_config & CFG_PAUSE_STD) अणु
+		छोड़ो->rx_छोड़ो = 1;
+		छोड़ो->tx_छोड़ो = 1;
+	पूर्ण
+पूर्ण
 
-static int qlge_set_pauseparam(struct net_device *ndev,
-			       struct ethtool_pauseparam *pause)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+अटल पूर्णांक qlge_set_छोड़ोparam(काष्ठा net_device *ndev,
+			       काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
 
-	if ((pause->rx_pause) && (pause->tx_pause))
+	अगर ((छोड़ो->rx_छोड़ो) && (छोड़ो->tx_छोड़ो))
 		qdev->link_config |= CFG_PAUSE_STD;
-	else if (!pause->rx_pause && !pause->tx_pause)
+	अन्यथा अगर (!छोड़ो->rx_छोड़ो && !छोड़ो->tx_छोड़ो)
 		qdev->link_config &= ~CFG_PAUSE_STD;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	return qlge_mb_set_port_cfg(qdev);
-}
+	वापस qlge_mb_set_port_cfg(qdev);
+पूर्ण
 
-static u32 qlge_get_msglevel(struct net_device *ndev)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+अटल u32 qlge_get_msglevel(काष्ठा net_device *ndev)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
 
-	return qdev->msg_enable;
-}
+	वापस qdev->msg_enable;
+पूर्ण
 
-static void qlge_set_msglevel(struct net_device *ndev, u32 value)
-{
-	struct qlge_adapter *qdev = netdev_to_qdev(ndev);
+अटल व्योम qlge_set_msglevel(काष्ठा net_device *ndev, u32 value)
+अणु
+	काष्ठा qlge_adapter *qdev = netdev_to_qdev(ndev);
 
 	qdev->msg_enable = value;
-}
+पूर्ण
 
-const struct ethtool_ops qlge_ethtool_ops = {
+स्थिर काष्ठा ethtool_ops qlge_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_MAX_FRAMES,
 	.get_drvinfo = qlge_get_drvinfo,
@@ -728,13 +729,13 @@ const struct ethtool_ops qlge_ethtool_ops = {
 	.get_link = ethtool_op_get_link,
 	.set_phys_id		 = qlge_set_phys_id,
 	.self_test		 = qlge_self_test,
-	.get_pauseparam		 = qlge_get_pauseparam,
-	.set_pauseparam		 = qlge_set_pauseparam,
+	.get_छोड़ोparam		 = qlge_get_छोड़ोparam,
+	.set_छोड़ोparam		 = qlge_set_छोड़ोparam,
 	.get_coalesce = qlge_get_coalesce,
 	.set_coalesce = qlge_set_coalesce,
 	.get_sset_count = qlge_get_sset_count,
 	.get_strings = qlge_get_strings,
 	.get_ethtool_stats = qlge_get_ethtool_stats,
 	.get_link_ksettings = qlge_get_link_ksettings,
-};
+पूर्ण;
 

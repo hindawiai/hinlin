@@ -1,19 +1,20 @@
+<शैली गुरु>
 /*
  * Xen SCSI frontend driver
  *
  * Copyright (c) 2008, FUJITSU Limited
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -28,179 +29,179 @@
  * IN THE SOFTWARE.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/wait.h>
-#include <linux/interrupt.h>
-#include <linux/mutex.h>
-#include <linux/spinlock.h>
-#include <linux/sched.h>
-#include <linux/blkdev.h>
-#include <linux/pfn.h>
-#include <linux/slab.h>
-#include <linux/bitops.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/pfn.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/bitops.h>
 
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi.h>
-#include <scsi/scsi_host.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_host.h>
 
-#include <xen/xen.h>
-#include <xen/xenbus.h>
-#include <xen/grant_table.h>
-#include <xen/events.h>
-#include <xen/page.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/xenbus.h>
+#समावेश <xen/grant_table.h>
+#समावेश <xen/events.h>
+#समावेश <xen/page.h>
 
-#include <xen/interface/grant_table.h>
-#include <xen/interface/io/vscsiif.h>
-#include <xen/interface/io/protocols.h>
+#समावेश <xen/पूर्णांकerface/grant_table.h>
+#समावेश <xen/पूर्णांकerface/io/vscsiअगर.h>
+#समावेश <xen/पूर्णांकerface/io/protocols.h>
 
-#include <asm/xen/hypervisor.h>
+#समावेश <यंत्र/xen/hypervisor.h>
 
 
-#define GRANT_INVALID_REF	0
+#घोषणा GRANT_INVALID_REF	0
 
-#define VSCSIFRONT_OP_ADD_LUN	1
-#define VSCSIFRONT_OP_DEL_LUN	2
-#define VSCSIFRONT_OP_READD_LUN	3
+#घोषणा VSCSIFRONT_OP_ADD_LUN	1
+#घोषणा VSCSIFRONT_OP_DEL_LUN	2
+#घोषणा VSCSIFRONT_OP_READD_LUN	3
 
-/* Tuning point. */
-#define VSCSIIF_DEFAULT_CMD_PER_LUN 10
-#define VSCSIIF_MAX_TARGET          64
-#define VSCSIIF_MAX_LUN             255
+/* Tuning poपूर्णांक. */
+#घोषणा VSCSIIF_DEFAULT_CMD_PER_LUN 10
+#घोषणा VSCSIIF_MAX_TARGET          64
+#घोषणा VSCSIIF_MAX_LUN             255
 
-#define VSCSIIF_RING_SIZE	__CONST_RING_SIZE(vscsiif, PAGE_SIZE)
-#define VSCSIIF_MAX_REQS	VSCSIIF_RING_SIZE
+#घोषणा VSCSIIF_RING_SIZE	__CONST_RING_SIZE(vscsiअगर, PAGE_SIZE)
+#घोषणा VSCSIIF_MAX_REQS	VSCSIIF_RING_SIZE
 
-#define vscsiif_grants_sg(_sg)	(PFN_UP((_sg) *		\
-				sizeof(struct scsiif_request_segment)))
+#घोषणा vscsiअगर_grants_sg(_sg)	(PFN_UP((_sg) *		\
+				माप(काष्ठा scsiअगर_request_segment)))
 
-struct vscsifrnt_shadow {
+काष्ठा vscsअगरrnt_shaकरोw अणु
 	/* command between backend and frontend */
-	unsigned char act;
-	uint8_t nr_segments;
-	uint16_t rqid;
-	uint16_t ref_rqid;
+	अचिन्हित अक्षर act;
+	uपूर्णांक8_t nr_segments;
+	uपूर्णांक16_t rqid;
+	uपूर्णांक16_t ref_rqid;
 
-	unsigned int nr_grants;		/* number of grants in gref[] */
-	struct scsiif_request_segment *sg;	/* scatter/gather elements */
-	struct scsiif_request_segment seg[VSCSIIF_SG_TABLESIZE];
+	अचिन्हित पूर्णांक nr_grants;		/* number of grants in gref[] */
+	काष्ठा scsiअगर_request_segment *sg;	/* scatter/gather elements */
+	काष्ठा scsiअगर_request_segment seg[VSCSIIF_SG_TABLESIZE];
 
-	/* Do reset or abort function. */
-	wait_queue_head_t wq_reset;	/* reset work queue           */
-	int wait_reset;			/* reset work queue condition */
-	int32_t rslt_reset;		/* reset response status:     */
+	/* Do reset or पात function. */
+	रुको_queue_head_t wq_reset;	/* reset work queue           */
+	पूर्णांक रुको_reset;			/* reset work queue condition */
+	पूर्णांक32_t rslt_reset;		/* reset response status:     */
 					/* SUCCESS or FAILED or:      */
-#define RSLT_RESET_WAITING	0
-#define RSLT_RESET_ERR		-1
+#घोषणा RSLT_RESET_WAITING	0
+#घोषणा RSLT_RESET_ERR		-1
 
-	/* Requested struct scsi_cmnd is stored from kernel. */
-	struct scsi_cmnd *sc;
-	int gref[vscsiif_grants_sg(SG_ALL) + SG_ALL];
-};
+	/* Requested काष्ठा scsi_cmnd is stored from kernel. */
+	काष्ठा scsi_cmnd *sc;
+	पूर्णांक gref[vscsiअगर_grants_sg(SG_ALL) + SG_ALL];
+पूर्ण;
 
-struct vscsifrnt_info {
-	struct xenbus_device *dev;
+काष्ठा vscsअगरrnt_info अणु
+	काष्ठा xenbus_device *dev;
 
-	struct Scsi_Host *host;
-	int host_active;
+	काष्ठा Scsi_Host *host;
+	पूर्णांक host_active;
 
-	unsigned int evtchn;
-	unsigned int irq;
+	अचिन्हित पूर्णांक evtchn;
+	अचिन्हित पूर्णांक irq;
 
 	grant_ref_t ring_ref;
-	struct vscsiif_front_ring ring;
-	struct vscsiif_response	ring_rsp;
+	काष्ठा vscsiअगर_front_ring ring;
+	काष्ठा vscsiअगर_response	ring_rsp;
 
-	spinlock_t shadow_lock;
-	DECLARE_BITMAP(shadow_free_bitmap, VSCSIIF_MAX_REQS);
-	struct vscsifrnt_shadow *shadow[VSCSIIF_MAX_REQS];
+	spinlock_t shaकरोw_lock;
+	DECLARE_BITMAP(shaकरोw_मुक्त_biपंचांगap, VSCSIIF_MAX_REQS);
+	काष्ठा vscsअगरrnt_shaकरोw *shaकरोw[VSCSIIF_MAX_REQS];
 
-	/* Following items are protected by the host lock. */
-	wait_queue_head_t wq_sync;
-	wait_queue_head_t wq_pause;
-	unsigned int wait_ring_available:1;
-	unsigned int waiting_pause:1;
-	unsigned int pause:1;
-	unsigned callers;
+	/* Following items are रक्षित by the host lock. */
+	रुको_queue_head_t wq_sync;
+	रुको_queue_head_t wq_छोड़ो;
+	अचिन्हित पूर्णांक रुको_ring_available:1;
+	अचिन्हित पूर्णांक रुकोing_छोड़ो:1;
+	अचिन्हित पूर्णांक छोड़ो:1;
+	अचिन्हित callers;
 
-	char dev_state_path[64];
-	struct task_struct *curr;
-};
+	अक्षर dev_state_path[64];
+	काष्ठा task_काष्ठा *curr;
+पूर्ण;
 
-static DEFINE_MUTEX(scsifront_mutex);
+अटल DEFINE_MUTEX(scsअगरront_mutex);
 
-static void scsifront_wake_up(struct vscsifrnt_info *info)
-{
-	info->wait_ring_available = 0;
+अटल व्योम scsअगरront_wake_up(काष्ठा vscsअगरrnt_info *info)
+अणु
+	info->रुको_ring_available = 0;
 	wake_up(&info->wq_sync);
-}
+पूर्ण
 
-static int scsifront_get_rqid(struct vscsifrnt_info *info)
-{
-	unsigned long flags;
-	int free;
+अटल पूर्णांक scsअगरront_get_rqid(काष्ठा vscsअगरrnt_info *info)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक मुक्त;
 
-	spin_lock_irqsave(&info->shadow_lock, flags);
+	spin_lock_irqsave(&info->shaकरोw_lock, flags);
 
-	free = find_first_bit(info->shadow_free_bitmap, VSCSIIF_MAX_REQS);
-	__clear_bit(free, info->shadow_free_bitmap);
+	मुक्त = find_first_bit(info->shaकरोw_मुक्त_biपंचांगap, VSCSIIF_MAX_REQS);
+	__clear_bit(मुक्त, info->shaकरोw_मुक्त_biपंचांगap);
 
-	spin_unlock_irqrestore(&info->shadow_lock, flags);
+	spin_unlock_irqrestore(&info->shaकरोw_lock, flags);
 
-	return free;
-}
+	वापस मुक्त;
+पूर्ण
 
-static int _scsifront_put_rqid(struct vscsifrnt_info *info, uint32_t id)
-{
-	int empty = bitmap_empty(info->shadow_free_bitmap, VSCSIIF_MAX_REQS);
+अटल पूर्णांक _scsअगरront_put_rqid(काष्ठा vscsअगरrnt_info *info, uपूर्णांक32_t id)
+अणु
+	पूर्णांक empty = biपंचांगap_empty(info->shaकरोw_मुक्त_biपंचांगap, VSCSIIF_MAX_REQS);
 
-	__set_bit(id, info->shadow_free_bitmap);
-	info->shadow[id] = NULL;
+	__set_bit(id, info->shaकरोw_मुक्त_biपंचांगap);
+	info->shaकरोw[id] = शून्य;
 
-	return empty || info->wait_ring_available;
-}
+	वापस empty || info->रुको_ring_available;
+पूर्ण
 
-static void scsifront_put_rqid(struct vscsifrnt_info *info, uint32_t id)
-{
-	unsigned long flags;
-	int kick;
+अटल व्योम scsअगरront_put_rqid(काष्ठा vscsअगरrnt_info *info, uपूर्णांक32_t id)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक kick;
 
-	spin_lock_irqsave(&info->shadow_lock, flags);
-	kick = _scsifront_put_rqid(info, id);
-	spin_unlock_irqrestore(&info->shadow_lock, flags);
+	spin_lock_irqsave(&info->shaकरोw_lock, flags);
+	kick = _scsअगरront_put_rqid(info, id);
+	spin_unlock_irqrestore(&info->shaकरोw_lock, flags);
 
-	if (kick)
-		scsifront_wake_up(info);
-}
+	अगर (kick)
+		scsअगरront_wake_up(info);
+पूर्ण
 
-static int scsifront_do_request(struct vscsifrnt_info *info,
-				struct vscsifrnt_shadow *shadow)
-{
-	struct vscsiif_front_ring *ring = &(info->ring);
-	struct vscsiif_request *ring_req;
-	struct scsi_cmnd *sc = shadow->sc;
-	uint32_t id;
-	int i, notify;
+अटल पूर्णांक scsअगरront_करो_request(काष्ठा vscsअगरrnt_info *info,
+				काष्ठा vscsअगरrnt_shaकरोw *shaकरोw)
+अणु
+	काष्ठा vscsiअगर_front_ring *ring = &(info->ring);
+	काष्ठा vscsiअगर_request *ring_req;
+	काष्ठा scsi_cmnd *sc = shaकरोw->sc;
+	uपूर्णांक32_t id;
+	पूर्णांक i, notअगरy;
 
-	if (RING_FULL(&info->ring))
-		return -EBUSY;
+	अगर (RING_FULL(&info->ring))
+		वापस -EBUSY;
 
-	id = scsifront_get_rqid(info);	/* use id in response */
-	if (id >= VSCSIIF_MAX_REQS)
-		return -EBUSY;
+	id = scsअगरront_get_rqid(info);	/* use id in response */
+	अगर (id >= VSCSIIF_MAX_REQS)
+		वापस -EBUSY;
 
-	info->shadow[id] = shadow;
-	shadow->rqid = id;
+	info->shaकरोw[id] = shaकरोw;
+	shaकरोw->rqid = id;
 
 	ring_req = RING_GET_REQUEST(&(info->ring), ring->req_prod_pvt);
 	ring->req_prod_pvt++;
 
 	ring_req->rqid        = id;
-	ring_req->act         = shadow->act;
-	ring_req->ref_rqid    = shadow->ref_rqid;
-	ring_req->nr_segments = shadow->nr_segments;
+	ring_req->act         = shaकरोw->act;
+	ring_req->ref_rqid    = shaकरोw->ref_rqid;
+	ring_req->nr_segments = shaकरोw->nr_segments;
 
 	ring_req->id      = sc->device->id;
 	ring_req->lun     = sc->device->lun;
@@ -209,282 +210,282 @@ static int scsifront_do_request(struct vscsifrnt_info *info,
 
 	BUG_ON(sc->cmd_len > VSCSIIF_MAX_COMMAND_SIZE);
 
-	memcpy(ring_req->cmnd, sc->cmnd, sc->cmd_len);
+	स_नकल(ring_req->cmnd, sc->cmnd, sc->cmd_len);
 
-	ring_req->sc_data_direction   = (uint8_t)sc->sc_data_direction;
-	ring_req->timeout_per_command = sc->request->timeout / HZ;
+	ring_req->sc_data_direction   = (uपूर्णांक8_t)sc->sc_data_direction;
+	ring_req->समयout_per_command = sc->request->समयout / HZ;
 
-	for (i = 0; i < (shadow->nr_segments & ~VSCSIIF_SG_GRANT); i++)
-		ring_req->seg[i] = shadow->seg[i];
+	क्रम (i = 0; i < (shaकरोw->nr_segments & ~VSCSIIF_SG_GRANT); i++)
+		ring_req->seg[i] = shaकरोw->seg[i];
 
-	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(ring, notify);
-	if (notify)
-		notify_remote_via_irq(info->irq);
+	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(ring, notअगरy);
+	अगर (notअगरy)
+		notअगरy_remote_via_irq(info->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scsifront_gnttab_done(struct vscsifrnt_info *info,
-				  struct vscsifrnt_shadow *shadow)
-{
-	int i;
+अटल व्योम scsअगरront_gnttab_करोne(काष्ठा vscsअगरrnt_info *info,
+				  काष्ठा vscsअगरrnt_shaकरोw *shaकरोw)
+अणु
+	पूर्णांक i;
 
-	if (shadow->sc->sc_data_direction == DMA_NONE)
-		return;
+	अगर (shaकरोw->sc->sc_data_direction == DMA_NONE)
+		वापस;
 
-	for (i = 0; i < shadow->nr_grants; i++) {
-		if (unlikely(gnttab_query_foreign_access(shadow->gref[i]))) {
-			shost_printk(KERN_ALERT, info->host, KBUILD_MODNAME
+	क्रम (i = 0; i < shaकरोw->nr_grants; i++) अणु
+		अगर (unlikely(gnttab_query_क्रमeign_access(shaकरोw->gref[i]))) अणु
+			shost_prपूर्णांकk(KERN_ALERT, info->host, KBUILD_MODNAME
 				     "grant still in use by backend\n");
 			BUG();
-		}
-		gnttab_end_foreign_access(shadow->gref[i], 0, 0UL);
-	}
+		पूर्ण
+		gnttab_end_क्रमeign_access(shaकरोw->gref[i], 0, 0UL);
+	पूर्ण
 
-	kfree(shadow->sg);
-}
+	kमुक्त(shaकरोw->sg);
+पूर्ण
 
-static void scsifront_cdb_cmd_done(struct vscsifrnt_info *info,
-				   struct vscsiif_response *ring_rsp)
-{
-	struct vscsifrnt_shadow *shadow;
-	struct scsi_cmnd *sc;
-	uint32_t id;
-	uint8_t sense_len;
+अटल व्योम scsअगरront_cdb_cmd_करोne(काष्ठा vscsअगरrnt_info *info,
+				   काष्ठा vscsiअगर_response *ring_rsp)
+अणु
+	काष्ठा vscsअगरrnt_shaकरोw *shaकरोw;
+	काष्ठा scsi_cmnd *sc;
+	uपूर्णांक32_t id;
+	uपूर्णांक8_t sense_len;
 
 	id = ring_rsp->rqid;
-	shadow = info->shadow[id];
-	sc = shadow->sc;
+	shaकरोw = info->shaकरोw[id];
+	sc = shaकरोw->sc;
 
-	BUG_ON(sc == NULL);
+	BUG_ON(sc == शून्य);
 
-	scsifront_gnttab_done(info, shadow);
-	scsifront_put_rqid(info, id);
+	scsअगरront_gnttab_करोne(info, shaकरोw);
+	scsअगरront_put_rqid(info, id);
 
 	sc->result = ring_rsp->rslt;
 	scsi_set_resid(sc, ring_rsp->residual_len);
 
-	sense_len = min_t(uint8_t, VSCSIIF_SENSE_BUFFERSIZE,
+	sense_len = min_t(uपूर्णांक8_t, VSCSIIF_SENSE_BUFFERSIZE,
 			  ring_rsp->sense_len);
 
-	if (sense_len)
-		memcpy(sc->sense_buffer, ring_rsp->sense_buffer, sense_len);
+	अगर (sense_len)
+		स_नकल(sc->sense_buffer, ring_rsp->sense_buffer, sense_len);
 
-	sc->scsi_done(sc);
-}
+	sc->scsi_करोne(sc);
+पूर्ण
 
-static void scsifront_sync_cmd_done(struct vscsifrnt_info *info,
-				    struct vscsiif_response *ring_rsp)
-{
-	uint16_t id = ring_rsp->rqid;
-	unsigned long flags;
-	struct vscsifrnt_shadow *shadow = info->shadow[id];
-	int kick;
+अटल व्योम scsअगरront_sync_cmd_करोne(काष्ठा vscsअगरrnt_info *info,
+				    काष्ठा vscsiअगर_response *ring_rsp)
+अणु
+	uपूर्णांक16_t id = ring_rsp->rqid;
+	अचिन्हित दीर्घ flags;
+	काष्ठा vscsअगरrnt_shaकरोw *shaकरोw = info->shaकरोw[id];
+	पूर्णांक kick;
 
-	spin_lock_irqsave(&info->shadow_lock, flags);
-	shadow->wait_reset = 1;
-	switch (shadow->rslt_reset) {
-	case RSLT_RESET_WAITING:
-		shadow->rslt_reset = ring_rsp->rslt;
-		break;
-	case RSLT_RESET_ERR:
-		kick = _scsifront_put_rqid(info, id);
-		spin_unlock_irqrestore(&info->shadow_lock, flags);
-		kfree(shadow);
-		if (kick)
-			scsifront_wake_up(info);
-		return;
-	default:
-		shost_printk(KERN_ERR, info->host, KBUILD_MODNAME
+	spin_lock_irqsave(&info->shaकरोw_lock, flags);
+	shaकरोw->रुको_reset = 1;
+	चयन (shaकरोw->rslt_reset) अणु
+	हाल RSLT_RESET_WAITING:
+		shaकरोw->rslt_reset = ring_rsp->rslt;
+		अवरोध;
+	हाल RSLT_RESET_ERR:
+		kick = _scsअगरront_put_rqid(info, id);
+		spin_unlock_irqrestore(&info->shaकरोw_lock, flags);
+		kमुक्त(shaकरोw);
+		अगर (kick)
+			scsअगरront_wake_up(info);
+		वापस;
+	शेष:
+		shost_prपूर्णांकk(KERN_ERR, info->host, KBUILD_MODNAME
 			     "bad reset state %d, possibly leaking %u\n",
-			     shadow->rslt_reset, id);
-		break;
-	}
-	spin_unlock_irqrestore(&info->shadow_lock, flags);
+			     shaकरोw->rslt_reset, id);
+		अवरोध;
+	पूर्ण
+	spin_unlock_irqrestore(&info->shaकरोw_lock, flags);
 
-	wake_up(&shadow->wq_reset);
-}
+	wake_up(&shaकरोw->wq_reset);
+पूर्ण
 
-static void scsifront_do_response(struct vscsifrnt_info *info,
-				  struct vscsiif_response *ring_rsp)
-{
-	if (WARN(ring_rsp->rqid >= VSCSIIF_MAX_REQS ||
-		 test_bit(ring_rsp->rqid, info->shadow_free_bitmap),
+अटल व्योम scsअगरront_करो_response(काष्ठा vscsअगरrnt_info *info,
+				  काष्ठा vscsiअगर_response *ring_rsp)
+अणु
+	अगर (WARN(ring_rsp->rqid >= VSCSIIF_MAX_REQS ||
+		 test_bit(ring_rsp->rqid, info->shaकरोw_मुक्त_biपंचांगap),
 		 "illegal rqid %u returned by backend!\n", ring_rsp->rqid))
-		return;
+		वापस;
 
-	if (info->shadow[ring_rsp->rqid]->act == VSCSIIF_ACT_SCSI_CDB)
-		scsifront_cdb_cmd_done(info, ring_rsp);
-	else
-		scsifront_sync_cmd_done(info, ring_rsp);
-}
+	अगर (info->shaकरोw[ring_rsp->rqid]->act == VSCSIIF_ACT_SCSI_CDB)
+		scsअगरront_cdb_cmd_करोne(info, ring_rsp);
+	अन्यथा
+		scsअगरront_sync_cmd_करोne(info, ring_rsp);
+पूर्ण
 
-static int scsifront_ring_drain(struct vscsifrnt_info *info)
-{
-	struct vscsiif_response *ring_rsp;
+अटल पूर्णांक scsअगरront_ring_drain(काष्ठा vscsअगरrnt_info *info)
+अणु
+	काष्ठा vscsiअगर_response *ring_rsp;
 	RING_IDX i, rp;
-	int more_to_do = 0;
+	पूर्णांक more_to_करो = 0;
 
 	rp = info->ring.sring->rsp_prod;
-	rmb();	/* ordering required respective to dom0 */
-	for (i = info->ring.rsp_cons; i != rp; i++) {
+	rmb();	/* ordering required respective to करोm0 */
+	क्रम (i = info->ring.rsp_cons; i != rp; i++) अणु
 		ring_rsp = RING_GET_RESPONSE(&info->ring, i);
-		scsifront_do_response(info, ring_rsp);
-	}
+		scsअगरront_करो_response(info, ring_rsp);
+	पूर्ण
 
 	info->ring.rsp_cons = i;
 
-	if (i != info->ring.req_prod_pvt)
-		RING_FINAL_CHECK_FOR_RESPONSES(&info->ring, more_to_do);
-	else
+	अगर (i != info->ring.req_prod_pvt)
+		RING_FINAL_CHECK_FOR_RESPONSES(&info->ring, more_to_करो);
+	अन्यथा
 		info->ring.sring->rsp_event = i + 1;
 
-	return more_to_do;
-}
+	वापस more_to_करो;
+पूर्ण
 
-static int scsifront_cmd_done(struct vscsifrnt_info *info)
-{
-	int more_to_do;
-	unsigned long flags;
+अटल पूर्णांक scsअगरront_cmd_करोne(काष्ठा vscsअगरrnt_info *info)
+अणु
+	पूर्णांक more_to_करो;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(info->host->host_lock, flags);
 
-	more_to_do = scsifront_ring_drain(info);
+	more_to_करो = scsअगरront_ring_drain(info);
 
-	info->wait_ring_available = 0;
+	info->रुको_ring_available = 0;
 
 	spin_unlock_irqrestore(info->host->host_lock, flags);
 
 	wake_up(&info->wq_sync);
 
-	return more_to_do;
-}
+	वापस more_to_करो;
+पूर्ण
 
-static irqreturn_t scsifront_irq_fn(int irq, void *dev_id)
-{
-	struct vscsifrnt_info *info = dev_id;
+अटल irqवापस_t scsअगरront_irq_fn(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा vscsअगरrnt_info *info = dev_id;
 
-	while (scsifront_cmd_done(info))
-		/* Yield point for this unbounded loop. */
+	जबतक (scsअगरront_cmd_करोne(info))
+		/* Yield poपूर्णांक क्रम this unbounded loop. */
 		cond_resched();
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void scsifront_finish_all(struct vscsifrnt_info *info)
-{
-	unsigned i;
-	struct vscsiif_response resp;
+अटल व्योम scsअगरront_finish_all(काष्ठा vscsअगरrnt_info *info)
+अणु
+	अचिन्हित i;
+	काष्ठा vscsiअगर_response resp;
 
-	scsifront_ring_drain(info);
+	scsअगरront_ring_drain(info);
 
-	for (i = 0; i < VSCSIIF_MAX_REQS; i++) {
-		if (test_bit(i, info->shadow_free_bitmap))
-			continue;
+	क्रम (i = 0; i < VSCSIIF_MAX_REQS; i++) अणु
+		अगर (test_bit(i, info->shaकरोw_मुक्त_biपंचांगap))
+			जारी;
 		resp.rqid = i;
 		resp.sense_len = 0;
 		resp.rslt = DID_RESET << 16;
 		resp.residual_len = 0;
-		scsifront_do_response(info, &resp);
-	}
-}
+		scsअगरront_करो_response(info, &resp);
+	पूर्ण
+पूर्ण
 
-static int map_data_for_request(struct vscsifrnt_info *info,
-				struct scsi_cmnd *sc,
-				struct vscsifrnt_shadow *shadow)
-{
+अटल पूर्णांक map_data_क्रम_request(काष्ठा vscsअगरrnt_info *info,
+				काष्ठा scsi_cmnd *sc,
+				काष्ठा vscsअगरrnt_shaकरोw *shaकरोw)
+अणु
 	grant_ref_t gref_head;
-	struct page *page;
-	int err, ref, ref_cnt = 0;
-	int grant_ro = (sc->sc_data_direction == DMA_TO_DEVICE);
-	unsigned int i, off, len, bytes;
-	unsigned int data_len = scsi_bufflen(sc);
-	unsigned int data_grants = 0, seg_grants = 0;
-	struct scatterlist *sg;
-	struct scsiif_request_segment *seg;
+	काष्ठा page *page;
+	पूर्णांक err, ref, ref_cnt = 0;
+	पूर्णांक grant_ro = (sc->sc_data_direction == DMA_TO_DEVICE);
+	अचिन्हित पूर्णांक i, off, len, bytes;
+	अचिन्हित पूर्णांक data_len = scsi_bufflen(sc);
+	अचिन्हित पूर्णांक data_grants = 0, seg_grants = 0;
+	काष्ठा scatterlist *sg;
+	काष्ठा scsiअगर_request_segment *seg;
 
-	if (sc->sc_data_direction == DMA_NONE || !data_len)
-		return 0;
+	अगर (sc->sc_data_direction == DMA_NONE || !data_len)
+		वापस 0;
 
-	scsi_for_each_sg(sc, sg, scsi_sg_count(sc), i)
+	scsi_क्रम_each_sg(sc, sg, scsi_sg_count(sc), i)
 		data_grants += PFN_UP(sg->offset + sg->length);
 
-	if (data_grants > VSCSIIF_SG_TABLESIZE) {
-		if (data_grants > info->host->sg_tablesize) {
-			shost_printk(KERN_ERR, info->host, KBUILD_MODNAME
+	अगर (data_grants > VSCSIIF_SG_TABLESIZE) अणु
+		अगर (data_grants > info->host->sg_tablesize) अणु
+			shost_prपूर्णांकk(KERN_ERR, info->host, KBUILD_MODNAME
 			     "Unable to map request_buffer for command!\n");
-			return -E2BIG;
-		}
-		seg_grants = vscsiif_grants_sg(data_grants);
-		shadow->sg = kcalloc(data_grants,
-			sizeof(struct scsiif_request_segment), GFP_ATOMIC);
-		if (!shadow->sg)
-			return -ENOMEM;
-	}
-	seg = shadow->sg ? : shadow->seg;
+			वापस -E2BIG;
+		पूर्ण
+		seg_grants = vscsiअगर_grants_sg(data_grants);
+		shaकरोw->sg = kसुस्मृति(data_grants,
+			माप(काष्ठा scsiअगर_request_segment), GFP_ATOMIC);
+		अगर (!shaकरोw->sg)
+			वापस -ENOMEM;
+	पूर्ण
+	seg = shaकरोw->sg ? : shaकरोw->seg;
 
 	err = gnttab_alloc_grant_references(seg_grants + data_grants,
 					    &gref_head);
-	if (err) {
-		kfree(shadow->sg);
-		shost_printk(KERN_ERR, info->host, KBUILD_MODNAME
+	अगर (err) अणु
+		kमुक्त(shaकरोw->sg);
+		shost_prपूर्णांकk(KERN_ERR, info->host, KBUILD_MODNAME
 			     "gnttab_alloc_grant_references() error\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (seg_grants) {
+	अगर (seg_grants) अणु
 		page = virt_to_page(seg);
 		off = offset_in_page(seg);
-		len = sizeof(struct scsiif_request_segment) * data_grants;
-		while (len > 0) {
-			bytes = min_t(unsigned int, len, PAGE_SIZE - off);
+		len = माप(काष्ठा scsiअगर_request_segment) * data_grants;
+		जबतक (len > 0) अणु
+			bytes = min_t(अचिन्हित पूर्णांक, len, PAGE_SIZE - off);
 
 			ref = gnttab_claim_grant_reference(&gref_head);
 			BUG_ON(ref == -ENOSPC);
 
-			gnttab_grant_foreign_access_ref(ref,
+			gnttab_grant_क्रमeign_access_ref(ref,
 				info->dev->otherend_id,
 				xen_page_to_gfn(page), 1);
-			shadow->gref[ref_cnt] = ref;
-			shadow->seg[ref_cnt].gref   = ref;
-			shadow->seg[ref_cnt].offset = (uint16_t)off;
-			shadow->seg[ref_cnt].length = (uint16_t)bytes;
+			shaकरोw->gref[ref_cnt] = ref;
+			shaकरोw->seg[ref_cnt].gref   = ref;
+			shaकरोw->seg[ref_cnt].offset = (uपूर्णांक16_t)off;
+			shaकरोw->seg[ref_cnt].length = (uपूर्णांक16_t)bytes;
 
 			page++;
 			len -= bytes;
 			off = 0;
 			ref_cnt++;
-		}
+		पूर्ण
 		BUG_ON(seg_grants < ref_cnt);
 		seg_grants = ref_cnt;
-	}
+	पूर्ण
 
-	scsi_for_each_sg(sc, sg, scsi_sg_count(sc), i) {
+	scsi_क्रम_each_sg(sc, sg, scsi_sg_count(sc), i) अणु
 		page = sg_page(sg);
 		off = sg->offset;
 		len = sg->length;
 
-		while (len > 0 && data_len > 0) {
+		जबतक (len > 0 && data_len > 0) अणु
 			/*
 			 * sg sends a scatterlist that is larger than
-			 * the data_len it wants transferred for certain
+			 * the data_len it wants transferred क्रम certain
 			 * IO sizes.
 			 */
-			bytes = min_t(unsigned int, len, PAGE_SIZE - off);
+			bytes = min_t(अचिन्हित पूर्णांक, len, PAGE_SIZE - off);
 			bytes = min(bytes, data_len);
 
 			ref = gnttab_claim_grant_reference(&gref_head);
 			BUG_ON(ref == -ENOSPC);
 
-			gnttab_grant_foreign_access_ref(ref,
+			gnttab_grant_क्रमeign_access_ref(ref,
 				info->dev->otherend_id,
 				xen_page_to_gfn(page),
 				grant_ro);
 
-			shadow->gref[ref_cnt] = ref;
+			shaकरोw->gref[ref_cnt] = ref;
 			seg->gref   = ref;
-			seg->offset = (uint16_t)off;
-			seg->length = (uint16_t)bytes;
+			seg->offset = (uपूर्णांक16_t)off;
+			seg->length = (uपूर्णांक16_t)bytes;
 
 			page++;
 			seg++;
@@ -492,362 +493,362 @@ static int map_data_for_request(struct vscsifrnt_info *info,
 			data_len -= bytes;
 			off = 0;
 			ref_cnt++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (seg_grants)
-		shadow->nr_segments = VSCSIIF_SG_GRANT | seg_grants;
-	else
-		shadow->nr_segments = (uint8_t)ref_cnt;
-	shadow->nr_grants = ref_cnt;
+	अगर (seg_grants)
+		shaकरोw->nr_segments = VSCSIIF_SG_GRANT | seg_grants;
+	अन्यथा
+		shaकरोw->nr_segments = (uपूर्णांक8_t)ref_cnt;
+	shaकरोw->nr_grants = ref_cnt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int scsifront_enter(struct vscsifrnt_info *info)
-{
-	if (info->pause)
-		return 1;
+अटल पूर्णांक scsअगरront_enter(काष्ठा vscsअगरrnt_info *info)
+अणु
+	अगर (info->छोड़ो)
+		वापस 1;
 	info->callers++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scsifront_return(struct vscsifrnt_info *info)
-{
+अटल व्योम scsअगरront_वापस(काष्ठा vscsअगरrnt_info *info)
+अणु
 	info->callers--;
-	if (info->callers)
-		return;
+	अगर (info->callers)
+		वापस;
 
-	if (!info->waiting_pause)
-		return;
+	अगर (!info->रुकोing_छोड़ो)
+		वापस;
 
-	info->waiting_pause = 0;
-	wake_up(&info->wq_pause);
-}
+	info->रुकोing_छोड़ो = 0;
+	wake_up(&info->wq_छोड़ो);
+पूर्ण
 
-static int scsifront_queuecommand(struct Scsi_Host *shost,
-				  struct scsi_cmnd *sc)
-{
-	struct vscsifrnt_info *info = shost_priv(shost);
-	struct vscsifrnt_shadow *shadow = scsi_cmd_priv(sc);
-	unsigned long flags;
-	int err;
+अटल पूर्णांक scsअगरront_queuecommand(काष्ठा Scsi_Host *shost,
+				  काष्ठा scsi_cmnd *sc)
+अणु
+	काष्ठा vscsअगरrnt_info *info = shost_priv(shost);
+	काष्ठा vscsअगरrnt_shaकरोw *shaकरोw = scsi_cmd_priv(sc);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
 	sc->result = 0;
 
-	shadow->sc  = sc;
-	shadow->act = VSCSIIF_ACT_SCSI_CDB;
+	shaकरोw->sc  = sc;
+	shaकरोw->act = VSCSIIF_ACT_SCSI_CDB;
 
 	spin_lock_irqsave(shost->host_lock, flags);
-	if (scsifront_enter(info)) {
+	अगर (scsअगरront_enter(info)) अणु
 		spin_unlock_irqrestore(shost->host_lock, flags);
-		return SCSI_MLQUEUE_HOST_BUSY;
-	}
+		वापस SCSI_MLQUEUE_HOST_BUSY;
+	पूर्ण
 
-	err = map_data_for_request(info, sc, shadow);
-	if (err < 0) {
+	err = map_data_क्रम_request(info, sc, shaकरोw);
+	अगर (err < 0) अणु
 		pr_debug("%s: err %d\n", __func__, err);
-		scsifront_return(info);
+		scsअगरront_वापस(info);
 		spin_unlock_irqrestore(shost->host_lock, flags);
-		if (err == -ENOMEM)
-			return SCSI_MLQUEUE_HOST_BUSY;
+		अगर (err == -ENOMEM)
+			वापस SCSI_MLQUEUE_HOST_BUSY;
 		sc->result = DID_ERROR << 16;
-		sc->scsi_done(sc);
-		return 0;
-	}
+		sc->scsi_करोne(sc);
+		वापस 0;
+	पूर्ण
 
-	if (scsifront_do_request(info, shadow)) {
-		scsifront_gnttab_done(info, shadow);
-		goto busy;
-	}
+	अगर (scsअगरront_करो_request(info, shaकरोw)) अणु
+		scsअगरront_gnttab_करोne(info, shaकरोw);
+		जाओ busy;
+	पूर्ण
 
-	scsifront_return(info);
+	scsअगरront_वापस(info);
 	spin_unlock_irqrestore(shost->host_lock, flags);
 
-	return 0;
+	वापस 0;
 
 busy:
-	scsifront_return(info);
+	scsअगरront_वापस(info);
 	spin_unlock_irqrestore(shost->host_lock, flags);
 	pr_debug("%s: busy\n", __func__);
-	return SCSI_MLQUEUE_HOST_BUSY;
-}
+	वापस SCSI_MLQUEUE_HOST_BUSY;
+पूर्ण
 
 /*
- * Any exception handling (reset or abort) must be forwarded to the backend.
- * We have to wait until an answer is returned. This answer contains the
- * result to be returned to the requestor.
+ * Any exception handling (reset or पात) must be क्रमwarded to the backend.
+ * We have to रुको until an answer is वापसed. This answer contains the
+ * result to be वापसed to the requestor.
  */
-static int scsifront_action_handler(struct scsi_cmnd *sc, uint8_t act)
-{
-	struct Scsi_Host *host = sc->device->host;
-	struct vscsifrnt_info *info = shost_priv(host);
-	struct vscsifrnt_shadow *shadow, *s = scsi_cmd_priv(sc);
-	int err = 0;
+अटल पूर्णांक scsअगरront_action_handler(काष्ठा scsi_cmnd *sc, uपूर्णांक8_t act)
+अणु
+	काष्ठा Scsi_Host *host = sc->device->host;
+	काष्ठा vscsअगरrnt_info *info = shost_priv(host);
+	काष्ठा vscsअगरrnt_shaकरोw *shaकरोw, *s = scsi_cmd_priv(sc);
+	पूर्णांक err = 0;
 
-	shadow = kzalloc(sizeof(*shadow), GFP_NOIO);
-	if (!shadow)
-		return FAILED;
+	shaकरोw = kzalloc(माप(*shaकरोw), GFP_NOIO);
+	अगर (!shaकरोw)
+		वापस FAILED;
 
-	shadow->act = act;
-	shadow->rslt_reset = RSLT_RESET_WAITING;
-	shadow->sc = sc;
-	shadow->ref_rqid = s->rqid;
-	init_waitqueue_head(&shadow->wq_reset);
+	shaकरोw->act = act;
+	shaकरोw->rslt_reset = RSLT_RESET_WAITING;
+	shaकरोw->sc = sc;
+	shaकरोw->ref_rqid = s->rqid;
+	init_रुकोqueue_head(&shaकरोw->wq_reset);
 
 	spin_lock_irq(host->host_lock);
 
-	for (;;) {
-		if (scsifront_enter(info))
-			goto fail;
+	क्रम (;;) अणु
+		अगर (scsअगरront_enter(info))
+			जाओ fail;
 
-		if (!scsifront_do_request(info, shadow))
-			break;
+		अगर (!scsअगरront_करो_request(info, shaकरोw))
+			अवरोध;
 
-		scsifront_return(info);
-		if (err)
-			goto fail;
-		info->wait_ring_available = 1;
+		scsअगरront_वापस(info);
+		अगर (err)
+			जाओ fail;
+		info->रुको_ring_available = 1;
 		spin_unlock_irq(host->host_lock);
-		err = wait_event_interruptible(info->wq_sync,
-					       !info->wait_ring_available);
+		err = रुको_event_पूर्णांकerruptible(info->wq_sync,
+					       !info->रुको_ring_available);
 		spin_lock_irq(host->host_lock);
-	}
+	पूर्ण
 
 	spin_unlock_irq(host->host_lock);
-	err = wait_event_interruptible(shadow->wq_reset, shadow->wait_reset);
+	err = रुको_event_पूर्णांकerruptible(shaकरोw->wq_reset, shaकरोw->रुको_reset);
 	spin_lock_irq(host->host_lock);
 
-	if (!err) {
-		err = shadow->rslt_reset;
-		scsifront_put_rqid(info, shadow->rqid);
-		kfree(shadow);
-	} else {
-		spin_lock(&info->shadow_lock);
-		shadow->rslt_reset = RSLT_RESET_ERR;
-		spin_unlock(&info->shadow_lock);
+	अगर (!err) अणु
+		err = shaकरोw->rslt_reset;
+		scsअगरront_put_rqid(info, shaकरोw->rqid);
+		kमुक्त(shaकरोw);
+	पूर्ण अन्यथा अणु
+		spin_lock(&info->shaकरोw_lock);
+		shaकरोw->rslt_reset = RSLT_RESET_ERR;
+		spin_unlock(&info->shaकरोw_lock);
 		err = FAILED;
-	}
+	पूर्ण
 
-	scsifront_return(info);
+	scsअगरront_वापस(info);
 	spin_unlock_irq(host->host_lock);
-	return err;
+	वापस err;
 
 fail:
 	spin_unlock_irq(host->host_lock);
-	kfree(shadow);
-	return FAILED;
-}
+	kमुक्त(shaकरोw);
+	वापस FAILED;
+पूर्ण
 
-static int scsifront_eh_abort_handler(struct scsi_cmnd *sc)
-{
+अटल पूर्णांक scsअगरront_eh_पात_handler(काष्ठा scsi_cmnd *sc)
+अणु
 	pr_debug("%s\n", __func__);
-	return scsifront_action_handler(sc, VSCSIIF_ACT_SCSI_ABORT);
-}
+	वापस scsअगरront_action_handler(sc, VSCSIIF_ACT_SCSI_ABORT);
+पूर्ण
 
-static int scsifront_dev_reset_handler(struct scsi_cmnd *sc)
-{
+अटल पूर्णांक scsअगरront_dev_reset_handler(काष्ठा scsi_cmnd *sc)
+अणु
 	pr_debug("%s\n", __func__);
-	return scsifront_action_handler(sc, VSCSIIF_ACT_SCSI_RESET);
-}
+	वापस scsअगरront_action_handler(sc, VSCSIIF_ACT_SCSI_RESET);
+पूर्ण
 
-static int scsifront_sdev_configure(struct scsi_device *sdev)
-{
-	struct vscsifrnt_info *info = shost_priv(sdev->host);
-	int err;
+अटल पूर्णांक scsअगरront_sdev_configure(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा vscsअगरrnt_info *info = shost_priv(sdev->host);
+	पूर्णांक err;
 
-	if (info && current == info->curr) {
-		err = xenbus_printf(XBT_NIL, info->dev->nodename,
+	अगर (info && current == info->curr) अणु
+		err = xenbus_म_लिखो(XBT_NIL, info->dev->nodename,
 			      info->dev_state_path, "%d", XenbusStateConnected);
-		if (err) {
+		अगर (err) अणु
 			xenbus_dev_error(info->dev, err,
 				"%s: writing dev_state_path", __func__);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scsifront_sdev_destroy(struct scsi_device *sdev)
-{
-	struct vscsifrnt_info *info = shost_priv(sdev->host);
-	int err;
+अटल व्योम scsअगरront_sdev_destroy(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा vscsअगरrnt_info *info = shost_priv(sdev->host);
+	पूर्णांक err;
 
-	if (info && current == info->curr) {
-		err = xenbus_printf(XBT_NIL, info->dev->nodename,
+	अगर (info && current == info->curr) अणु
+		err = xenbus_म_लिखो(XBT_NIL, info->dev->nodename,
 			      info->dev_state_path, "%d", XenbusStateClosed);
-		if (err)
+		अगर (err)
 			xenbus_dev_error(info->dev, err,
 				"%s: writing dev_state_path", __func__);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct scsi_host_template scsifront_sht = {
+अटल काष्ठा scsi_host_ढाँचा scsअगरront_sht = अणु
 	.module			= THIS_MODULE,
 	.name			= "Xen SCSI frontend driver",
-	.queuecommand		= scsifront_queuecommand,
-	.eh_abort_handler	= scsifront_eh_abort_handler,
-	.eh_device_reset_handler = scsifront_dev_reset_handler,
-	.slave_configure	= scsifront_sdev_configure,
-	.slave_destroy		= scsifront_sdev_destroy,
+	.queuecommand		= scsअगरront_queuecommand,
+	.eh_पात_handler	= scsअगरront_eh_पात_handler,
+	.eh_device_reset_handler = scsअगरront_dev_reset_handler,
+	.slave_configure	= scsअगरront_sdev_configure,
+	.slave_destroy		= scsअगरront_sdev_destroy,
 	.cmd_per_lun		= VSCSIIF_DEFAULT_CMD_PER_LUN,
 	.can_queue		= VSCSIIF_MAX_REQS,
 	.this_id		= -1,
-	.cmd_size		= sizeof(struct vscsifrnt_shadow),
+	.cmd_size		= माप(काष्ठा vscsअगरrnt_shaकरोw),
 	.sg_tablesize		= VSCSIIF_SG_TABLESIZE,
 	.proc_name		= "scsifront",
-};
+पूर्ण;
 
-static int scsifront_alloc_ring(struct vscsifrnt_info *info)
-{
-	struct xenbus_device *dev = info->dev;
-	struct vscsiif_sring *sring;
+अटल पूर्णांक scsअगरront_alloc_ring(काष्ठा vscsअगरrnt_info *info)
+अणु
+	काष्ठा xenbus_device *dev = info->dev;
+	काष्ठा vscsiअगर_sring *sring;
 	grant_ref_t gref;
-	int err = -ENOMEM;
+	पूर्णांक err = -ENOMEM;
 
 	/***** Frontend to Backend ring start *****/
-	sring = (struct vscsiif_sring *)__get_free_page(GFP_KERNEL);
-	if (!sring) {
+	sring = (काष्ठा vscsiअगर_sring *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (!sring) अणु
 		xenbus_dev_fatal(dev, err,
 			"fail to allocate shared ring (Front to Back)");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	SHARED_RING_INIT(sring);
 	FRONT_RING_INIT(&info->ring, sring, PAGE_SIZE);
 
 	err = xenbus_grant_ring(dev, sring, 1, &gref);
-	if (err < 0) {
-		free_page((unsigned long)sring);
+	अगर (err < 0) अणु
+		मुक्त_page((अचिन्हित दीर्घ)sring);
 		xenbus_dev_fatal(dev, err,
 			"fail to grant shared ring (Front to Back)");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	info->ring_ref = gref;
 
 	err = xenbus_alloc_evtchn(dev, &info->evtchn);
-	if (err) {
+	अगर (err) अणु
 		xenbus_dev_fatal(dev, err, "xenbus_alloc_evtchn");
-		goto free_gnttab;
-	}
+		जाओ मुक्त_gnttab;
+	पूर्ण
 
 	err = bind_evtchn_to_irq(info->evtchn);
-	if (err <= 0) {
+	अगर (err <= 0) अणु
 		xenbus_dev_fatal(dev, err, "bind_evtchn_to_irq");
-		goto free_gnttab;
-	}
+		जाओ मुक्त_gnttab;
+	पूर्ण
 
 	info->irq = err;
 
-	err = request_threaded_irq(info->irq, NULL, scsifront_irq_fn,
+	err = request_thपढ़ोed_irq(info->irq, शून्य, scsअगरront_irq_fn,
 				   IRQF_ONESHOT, "scsifront", info);
-	if (err) {
+	अगर (err) अणु
 		xenbus_dev_fatal(dev, err, "request_threaded_irq");
-		goto free_irq;
-	}
+		जाओ मुक्त_irq;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-/* free resource */
-free_irq:
+/* मुक्त resource */
+मुक्त_irq:
 	unbind_from_irqhandler(info->irq, info);
-free_gnttab:
-	gnttab_end_foreign_access(info->ring_ref, 0,
-				  (unsigned long)info->ring.sring);
+मुक्त_gnttab:
+	gnttab_end_क्रमeign_access(info->ring_ref, 0,
+				  (अचिन्हित दीर्घ)info->ring.sring);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void scsifront_free_ring(struct vscsifrnt_info *info)
-{
+अटल व्योम scsअगरront_मुक्त_ring(काष्ठा vscsअगरrnt_info *info)
+अणु
 	unbind_from_irqhandler(info->irq, info);
-	gnttab_end_foreign_access(info->ring_ref, 0,
-				  (unsigned long)info->ring.sring);
-}
+	gnttab_end_क्रमeign_access(info->ring_ref, 0,
+				  (अचिन्हित दीर्घ)info->ring.sring);
+पूर्ण
 
-static int scsifront_init_ring(struct vscsifrnt_info *info)
-{
-	struct xenbus_device *dev = info->dev;
-	struct xenbus_transaction xbt;
-	int err;
+अटल पूर्णांक scsअगरront_init_ring(काष्ठा vscsअगरrnt_info *info)
+अणु
+	काष्ठा xenbus_device *dev = info->dev;
+	काष्ठा xenbus_transaction xbt;
+	पूर्णांक err;
 
 	pr_debug("%s\n", __func__);
 
-	err = scsifront_alloc_ring(info);
-	if (err)
-		return err;
+	err = scsअगरront_alloc_ring(info);
+	अगर (err)
+		वापस err;
 	pr_debug("%s: %u %u\n", __func__, info->ring_ref, info->evtchn);
 
 again:
 	err = xenbus_transaction_start(&xbt);
-	if (err)
+	अगर (err)
 		xenbus_dev_fatal(dev, err, "starting transaction");
 
-	err = xenbus_printf(xbt, dev->nodename, "ring-ref", "%u",
+	err = xenbus_म_लिखो(xbt, dev->nodename, "ring-ref", "%u",
 			    info->ring_ref);
-	if (err) {
+	अगर (err) अणु
 		xenbus_dev_fatal(dev, err, "%s", "writing ring-ref");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	err = xenbus_printf(xbt, dev->nodename, "event-channel", "%u",
+	err = xenbus_म_लिखो(xbt, dev->nodename, "event-channel", "%u",
 			    info->evtchn);
 
-	if (err) {
+	अगर (err) अणु
 		xenbus_dev_fatal(dev, err, "%s", "writing event-channel");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	err = xenbus_transaction_end(xbt, 0);
-	if (err) {
-		if (err == -EAGAIN)
-			goto again;
+	अगर (err) अणु
+		अगर (err == -EAGAIN)
+			जाओ again;
 		xenbus_dev_fatal(dev, err, "completing transaction");
-		goto free_sring;
-	}
+		जाओ मुक्त_sring;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail:
 	xenbus_transaction_end(xbt, 1);
-free_sring:
-	scsifront_free_ring(info);
+मुक्त_sring:
+	scsअगरront_मुक्त_ring(info);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
-static int scsifront_probe(struct xenbus_device *dev,
-			   const struct xenbus_device_id *id)
-{
-	struct vscsifrnt_info *info;
-	struct Scsi_Host *host;
-	int err = -ENOMEM;
-	char name[TASK_COMM_LEN];
+अटल पूर्णांक scsअगरront_probe(काष्ठा xenbus_device *dev,
+			   स्थिर काष्ठा xenbus_device_id *id)
+अणु
+	काष्ठा vscsअगरrnt_info *info;
+	काष्ठा Scsi_Host *host;
+	पूर्णांक err = -ENOMEM;
+	अक्षर name[TASK_COMM_LEN];
 
-	host = scsi_host_alloc(&scsifront_sht, sizeof(*info));
-	if (!host) {
+	host = scsi_host_alloc(&scsअगरront_sht, माप(*info));
+	अगर (!host) अणु
 		xenbus_dev_fatal(dev, err, "fail to allocate scsi host");
-		return err;
-	}
-	info = (struct vscsifrnt_info *)host->hostdata;
+		वापस err;
+	पूर्ण
+	info = (काष्ठा vscsअगरrnt_info *)host->hostdata;
 
 	dev_set_drvdata(&dev->dev, info);
 	info->dev = dev;
 
-	bitmap_fill(info->shadow_free_bitmap, VSCSIIF_MAX_REQS);
+	biपंचांगap_fill(info->shaकरोw_मुक्त_biपंचांगap, VSCSIIF_MAX_REQS);
 
-	err = scsifront_init_ring(info);
-	if (err) {
+	err = scsअगरront_init_ring(info);
+	अगर (err) अणु
 		scsi_host_put(host);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	init_waitqueue_head(&info->wq_sync);
-	init_waitqueue_head(&info->wq_pause);
-	spin_lock_init(&info->shadow_lock);
+	init_रुकोqueue_head(&info->wq_sync);
+	init_रुकोqueue_head(&info->wq_छोड़ो);
+	spin_lock_init(&info->shaकरोw_lock);
 
-	snprintf(name, TASK_COMM_LEN, "vscsiif.%d", host->host_no);
+	snम_लिखो(name, TASK_COMM_LEN, "vscsiif.%d", host->host_no);
 
 	host->max_id      = VSCSIIF_MAX_TARGET;
 	host->max_channel = 0;
@@ -856,306 +857,306 @@ static int scsifront_probe(struct xenbus_device *dev,
 	host->max_cmd_len = VSCSIIF_MAX_COMMAND_SIZE;
 
 	err = scsi_add_host(host, &dev->dev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&dev->dev, "fail to add scsi host %d\n", err);
-		goto free_sring;
-	}
+		जाओ मुक्त_sring;
+	पूर्ण
 	info->host = host;
 	info->host_active = 1;
 
-	xenbus_switch_state(dev, XenbusStateInitialised);
+	xenbus_चयन_state(dev, XenbusStateInitialised);
 
-	return 0;
+	वापस 0;
 
-free_sring:
-	scsifront_free_ring(info);
+मुक्त_sring:
+	scsअगरront_मुक्त_ring(info);
 	scsi_host_put(host);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int scsifront_resume(struct xenbus_device *dev)
-{
-	struct vscsifrnt_info *info = dev_get_drvdata(&dev->dev);
-	struct Scsi_Host *host = info->host;
-	int err;
+अटल पूर्णांक scsअगरront_resume(काष्ठा xenbus_device *dev)
+अणु
+	काष्ठा vscsअगरrnt_info *info = dev_get_drvdata(&dev->dev);
+	काष्ठा Scsi_Host *host = info->host;
+	पूर्णांक err;
 
 	spin_lock_irq(host->host_lock);
 
 	/* Finish all still pending commands. */
-	scsifront_finish_all(info);
+	scsअगरront_finish_all(info);
 
 	spin_unlock_irq(host->host_lock);
 
-	/* Reconnect to dom0. */
-	scsifront_free_ring(info);
-	err = scsifront_init_ring(info);
-	if (err) {
+	/* Reconnect to करोm0. */
+	scsअगरront_मुक्त_ring(info);
+	err = scsअगरront_init_ring(info);
+	अगर (err) अणु
 		dev_err(&dev->dev, "fail to resume %d\n", err);
 		scsi_host_put(host);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	xenbus_switch_state(dev, XenbusStateInitialised);
+	xenbus_चयन_state(dev, XenbusStateInitialised);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int scsifront_suspend(struct xenbus_device *dev)
-{
-	struct vscsifrnt_info *info = dev_get_drvdata(&dev->dev);
-	struct Scsi_Host *host = info->host;
-	int err = 0;
+अटल पूर्णांक scsअगरront_suspend(काष्ठा xenbus_device *dev)
+अणु
+	काष्ठा vscsअगरrnt_info *info = dev_get_drvdata(&dev->dev);
+	काष्ठा Scsi_Host *host = info->host;
+	पूर्णांक err = 0;
 
-	/* No new commands for the backend. */
+	/* No new commands क्रम the backend. */
 	spin_lock_irq(host->host_lock);
-	info->pause = 1;
-	while (info->callers && !err) {
-		info->waiting_pause = 1;
-		info->wait_ring_available = 0;
+	info->छोड़ो = 1;
+	जबतक (info->callers && !err) अणु
+		info->रुकोing_छोड़ो = 1;
+		info->रुको_ring_available = 0;
 		spin_unlock_irq(host->host_lock);
 		wake_up(&info->wq_sync);
-		err = wait_event_interruptible(info->wq_pause,
-					       !info->waiting_pause);
+		err = रुको_event_पूर्णांकerruptible(info->wq_छोड़ो,
+					       !info->रुकोing_छोड़ो);
 		spin_lock_irq(host->host_lock);
-	}
+	पूर्ण
 	spin_unlock_irq(host->host_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int scsifront_remove(struct xenbus_device *dev)
-{
-	struct vscsifrnt_info *info = dev_get_drvdata(&dev->dev);
+अटल पूर्णांक scsअगरront_हटाओ(काष्ठा xenbus_device *dev)
+अणु
+	काष्ठा vscsअगरrnt_info *info = dev_get_drvdata(&dev->dev);
 
 	pr_debug("%s: %s removed\n", __func__, dev->nodename);
 
-	mutex_lock(&scsifront_mutex);
-	if (info->host_active) {
-		/* Scsi_host not yet removed */
-		scsi_remove_host(info->host);
+	mutex_lock(&scsअगरront_mutex);
+	अगर (info->host_active) अणु
+		/* Scsi_host not yet हटाओd */
+		scsi_हटाओ_host(info->host);
 		info->host_active = 0;
-	}
-	mutex_unlock(&scsifront_mutex);
+	पूर्ण
+	mutex_unlock(&scsअगरront_mutex);
 
-	scsifront_free_ring(info);
+	scsअगरront_मुक्त_ring(info);
 	scsi_host_put(info->host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scsifront_disconnect(struct vscsifrnt_info *info)
-{
-	struct xenbus_device *dev = info->dev;
-	struct Scsi_Host *host = info->host;
+अटल व्योम scsअगरront_disconnect(काष्ठा vscsअगरrnt_info *info)
+अणु
+	काष्ठा xenbus_device *dev = info->dev;
+	काष्ठा Scsi_Host *host = info->host;
 
 	pr_debug("%s: %s disconnect\n", __func__, dev->nodename);
 
 	/*
 	 * When this function is executed, all devices of
 	 * Frontend have been deleted.
-	 * Therefore, it need not block I/O before remove_host.
+	 * Thereक्रमe, it need not block I/O beक्रमe हटाओ_host.
 	 */
 
-	mutex_lock(&scsifront_mutex);
-	if (info->host_active) {
-		scsi_remove_host(host);
+	mutex_lock(&scsअगरront_mutex);
+	अगर (info->host_active) अणु
+		scsi_हटाओ_host(host);
 		info->host_active = 0;
-	}
-	mutex_unlock(&scsifront_mutex);
+	पूर्ण
+	mutex_unlock(&scsअगरront_mutex);
 
-	xenbus_frontend_closed(dev);
-}
+	xenbus_frontend_बंदd(dev);
+पूर्ण
 
-static void scsifront_do_lun_hotplug(struct vscsifrnt_info *info, int op)
-{
-	struct xenbus_device *dev = info->dev;
-	int i, err = 0;
-	char str[64];
-	char **dir;
-	unsigned int dir_n = 0;
-	unsigned int device_state;
-	unsigned int hst, chn, tgt, lun;
-	struct scsi_device *sdev;
+अटल व्योम scsअगरront_करो_lun_hotplug(काष्ठा vscsअगरrnt_info *info, पूर्णांक op)
+अणु
+	काष्ठा xenbus_device *dev = info->dev;
+	पूर्णांक i, err = 0;
+	अक्षर str[64];
+	अक्षर **dir;
+	अचिन्हित पूर्णांक dir_n = 0;
+	अचिन्हित पूर्णांक device_state;
+	अचिन्हित पूर्णांक hst, chn, tgt, lun;
+	काष्ठा scsi_device *sdev;
 
 	dir = xenbus_directory(XBT_NIL, dev->otherend, "vscsi-devs", &dir_n);
-	if (IS_ERR(dir))
-		return;
+	अगर (IS_ERR(dir))
+		वापस;
 
-	/* mark current task as the one allowed to modify device states */
+	/* mark current task as the one allowed to modअगरy device states */
 	BUG_ON(info->curr);
 	info->curr = current;
 
-	for (i = 0; i < dir_n; i++) {
-		/* read status */
-		snprintf(str, sizeof(str), "vscsi-devs/%s/state", dir[i]);
-		err = xenbus_scanf(XBT_NIL, dev->otherend, str, "%u",
+	क्रम (i = 0; i < dir_n; i++) अणु
+		/* पढ़ो status */
+		snम_लिखो(str, माप(str), "vscsi-devs/%s/state", dir[i]);
+		err = xenbus_म_पूछो(XBT_NIL, dev->otherend, str, "%u",
 				   &device_state);
-		if (XENBUS_EXIST_ERR(err))
-			continue;
+		अगर (XENBUS_EXIST_ERR(err))
+			जारी;
 
-		/* virtual SCSI device */
-		snprintf(str, sizeof(str), "vscsi-devs/%s/v-dev", dir[i]);
-		err = xenbus_scanf(XBT_NIL, dev->otherend, str,
+		/* भव SCSI device */
+		snम_लिखो(str, माप(str), "vscsi-devs/%s/v-dev", dir[i]);
+		err = xenbus_म_पूछो(XBT_NIL, dev->otherend, str,
 				   "%u:%u:%u:%u", &hst, &chn, &tgt, &lun);
-		if (XENBUS_EXIST_ERR(err))
-			continue;
+		अगर (XENBUS_EXIST_ERR(err))
+			जारी;
 
 		/*
 		 * Front device state path, used in slave_configure called
 		 * on successfull scsi_add_device, and in slave_destroy called
-		 * on remove of a device.
+		 * on हटाओ of a device.
 		 */
-		snprintf(info->dev_state_path, sizeof(info->dev_state_path),
+		snम_लिखो(info->dev_state_path, माप(info->dev_state_path),
 			 "vscsi-devs/%s/state", dir[i]);
 
-		switch (op) {
-		case VSCSIFRONT_OP_ADD_LUN:
-			if (device_state != XenbusStateInitialised)
-				break;
+		चयन (op) अणु
+		हाल VSCSIFRONT_OP_ADD_LUN:
+			अगर (device_state != XenbusStateInitialised)
+				अवरोध;
 
-			if (scsi_add_device(info->host, chn, tgt, lun)) {
+			अगर (scsi_add_device(info->host, chn, tgt, lun)) अणु
 				dev_err(&dev->dev, "scsi_add_device\n");
-				err = xenbus_printf(XBT_NIL, dev->nodename,
+				err = xenbus_म_लिखो(XBT_NIL, dev->nodename,
 					      info->dev_state_path,
 					      "%d", XenbusStateClosed);
-				if (err)
+				अगर (err)
 					xenbus_dev_error(dev, err,
 						"%s: writing dev_state_path", __func__);
-			}
-			break;
-		case VSCSIFRONT_OP_DEL_LUN:
-			if (device_state != XenbusStateClosing)
-				break;
+			पूर्ण
+			अवरोध;
+		हाल VSCSIFRONT_OP_DEL_LUN:
+			अगर (device_state != XenbusStateClosing)
+				अवरोध;
 
 			sdev = scsi_device_lookup(info->host, chn, tgt, lun);
-			if (sdev) {
-				scsi_remove_device(sdev);
+			अगर (sdev) अणु
+				scsi_हटाओ_device(sdev);
 				scsi_device_put(sdev);
-			}
-			break;
-		case VSCSIFRONT_OP_READD_LUN:
-			if (device_state == XenbusStateConnected) {
-				err = xenbus_printf(XBT_NIL, dev->nodename,
+			पूर्ण
+			अवरोध;
+		हाल VSCSIFRONT_OP_READD_LUN:
+			अगर (device_state == XenbusStateConnected) अणु
+				err = xenbus_म_लिखो(XBT_NIL, dev->nodename,
 					      info->dev_state_path,
 					      "%d", XenbusStateConnected);
-				if (err)
+				अगर (err)
 					xenbus_dev_error(dev, err,
 						"%s: writing dev_state_path", __func__);
-			}
-			break;
-		default:
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	info->curr = NULL;
+	info->curr = शून्य;
 
-	kfree(dir);
-}
+	kमुक्त(dir);
+पूर्ण
 
-static void scsifront_read_backend_params(struct xenbus_device *dev,
-					  struct vscsifrnt_info *info)
-{
-	unsigned int sg_grant, nr_segs;
-	struct Scsi_Host *host = info->host;
+अटल व्योम scsअगरront_पढ़ो_backend_params(काष्ठा xenbus_device *dev,
+					  काष्ठा vscsअगरrnt_info *info)
+अणु
+	अचिन्हित पूर्णांक sg_grant, nr_segs;
+	काष्ठा Scsi_Host *host = info->host;
 
-	sg_grant = xenbus_read_unsigned(dev->otherend, "feature-sg-grant", 0);
-	nr_segs = min_t(unsigned int, sg_grant, SG_ALL);
-	nr_segs = max_t(unsigned int, nr_segs, VSCSIIF_SG_TABLESIZE);
-	nr_segs = min_t(unsigned int, nr_segs,
+	sg_grant = xenbus_पढ़ो_अचिन्हित(dev->otherend, "feature-sg-grant", 0);
+	nr_segs = min_t(अचिन्हित पूर्णांक, sg_grant, SG_ALL);
+	nr_segs = max_t(अचिन्हित पूर्णांक, nr_segs, VSCSIIF_SG_TABLESIZE);
+	nr_segs = min_t(अचिन्हित पूर्णांक, nr_segs,
 			VSCSIIF_SG_TABLESIZE * PAGE_SIZE /
-			sizeof(struct scsiif_request_segment));
+			माप(काष्ठा scsiअगर_request_segment));
 
-	if (!info->pause && sg_grant)
+	अगर (!info->छोड़ो && sg_grant)
 		dev_info(&dev->dev, "using up to %d SG entries\n", nr_segs);
-	else if (info->pause && nr_segs < host->sg_tablesize)
+	अन्यथा अगर (info->छोड़ो && nr_segs < host->sg_tablesize)
 		dev_warn(&dev->dev,
 			 "SG entries decreased from %d to %u - device may not work properly anymore\n",
 			 host->sg_tablesize, nr_segs);
 
 	host->sg_tablesize = nr_segs;
 	host->max_sectors = (nr_segs - 1) * PAGE_SIZE / 512;
-}
+पूर्ण
 
-static void scsifront_backend_changed(struct xenbus_device *dev,
-				      enum xenbus_state backend_state)
-{
-	struct vscsifrnt_info *info = dev_get_drvdata(&dev->dev);
+अटल व्योम scsअगरront_backend_changed(काष्ठा xenbus_device *dev,
+				      क्रमागत xenbus_state backend_state)
+अणु
+	काष्ठा vscsअगरrnt_info *info = dev_get_drvdata(&dev->dev);
 
 	pr_debug("%s: %p %u %u\n", __func__, dev, dev->state, backend_state);
 
-	switch (backend_state) {
-	case XenbusStateUnknown:
-	case XenbusStateInitialising:
-	case XenbusStateInitWait:
-	case XenbusStateInitialised:
-		break;
+	चयन (backend_state) अणु
+	हाल XenbusStateUnknown:
+	हाल XenbusStateInitialising:
+	हाल XenbusStateInitWait:
+	हाल XenbusStateInitialised:
+		अवरोध;
 
-	case XenbusStateConnected:
-		scsifront_read_backend_params(dev, info);
+	हाल XenbusStateConnected:
+		scsअगरront_पढ़ो_backend_params(dev, info);
 
-		if (info->pause) {
-			scsifront_do_lun_hotplug(info, VSCSIFRONT_OP_READD_LUN);
-			xenbus_switch_state(dev, XenbusStateConnected);
-			info->pause = 0;
-			return;
-		}
+		अगर (info->छोड़ो) अणु
+			scsअगरront_करो_lun_hotplug(info, VSCSIFRONT_OP_READD_LUN);
+			xenbus_चयन_state(dev, XenbusStateConnected);
+			info->छोड़ो = 0;
+			वापस;
+		पूर्ण
 
-		if (xenbus_read_driver_state(dev->nodename) ==
+		अगर (xenbus_पढ़ो_driver_state(dev->nodename) ==
 		    XenbusStateInitialised)
-			scsifront_do_lun_hotplug(info, VSCSIFRONT_OP_ADD_LUN);
+			scsअगरront_करो_lun_hotplug(info, VSCSIFRONT_OP_ADD_LUN);
 
-		if (dev->state != XenbusStateConnected)
-			xenbus_switch_state(dev, XenbusStateConnected);
-		break;
+		अगर (dev->state != XenbusStateConnected)
+			xenbus_चयन_state(dev, XenbusStateConnected);
+		अवरोध;
 
-	case XenbusStateClosed:
-		if (dev->state == XenbusStateClosed)
-			break;
+	हाल XenbusStateClosed:
+		अगर (dev->state == XenbusStateClosed)
+			अवरोध;
 		fallthrough;	/* Missed the backend's Closing state */
-	case XenbusStateClosing:
-		scsifront_disconnect(info);
-		break;
+	हाल XenbusStateClosing:
+		scsअगरront_disconnect(info);
+		अवरोध;
 
-	case XenbusStateReconfiguring:
-		scsifront_do_lun_hotplug(info, VSCSIFRONT_OP_DEL_LUN);
-		xenbus_switch_state(dev, XenbusStateReconfiguring);
-		break;
+	हाल XenbusStateReconfiguring:
+		scsअगरront_करो_lun_hotplug(info, VSCSIFRONT_OP_DEL_LUN);
+		xenbus_चयन_state(dev, XenbusStateReconfiguring);
+		अवरोध;
 
-	case XenbusStateReconfigured:
-		scsifront_do_lun_hotplug(info, VSCSIFRONT_OP_ADD_LUN);
-		xenbus_switch_state(dev, XenbusStateConnected);
-		break;
-	}
-}
+	हाल XenbusStateReconfigured:
+		scsअगरront_करो_lun_hotplug(info, VSCSIFRONT_OP_ADD_LUN);
+		xenbus_चयन_state(dev, XenbusStateConnected);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static const struct xenbus_device_id scsifront_ids[] = {
-	{ "vscsi" },
-	{ "" }
-};
+अटल स्थिर काष्ठा xenbus_device_id scsअगरront_ids[] = अणु
+	अणु "vscsi" पूर्ण,
+	अणु "" पूर्ण
+पूर्ण;
 
-static struct xenbus_driver scsifront_driver = {
-	.ids			= scsifront_ids,
-	.probe			= scsifront_probe,
-	.remove			= scsifront_remove,
-	.resume			= scsifront_resume,
-	.suspend		= scsifront_suspend,
-	.otherend_changed	= scsifront_backend_changed,
-};
+अटल काष्ठा xenbus_driver scsअगरront_driver = अणु
+	.ids			= scsअगरront_ids,
+	.probe			= scsअगरront_probe,
+	.हटाओ			= scsअगरront_हटाओ,
+	.resume			= scsअगरront_resume,
+	.suspend		= scsअगरront_suspend,
+	.otherend_changed	= scsअगरront_backend_changed,
+पूर्ण;
 
-static int __init scsifront_init(void)
-{
-	if (!xen_domain())
-		return -ENODEV;
+अटल पूर्णांक __init scsअगरront_init(व्योम)
+अणु
+	अगर (!xen_करोमुख्य())
+		वापस -ENODEV;
 
-	return xenbus_register_frontend(&scsifront_driver);
-}
-module_init(scsifront_init);
+	वापस xenbus_रेजिस्टर_frontend(&scsअगरront_driver);
+पूर्ण
+module_init(scsअगरront_init);
 
-static void __exit scsifront_exit(void)
-{
-	xenbus_unregister_driver(&scsifront_driver);
-}
-module_exit(scsifront_exit);
+अटल व्योम __निकास scsअगरront_निकास(व्योम)
+अणु
+	xenbus_unरेजिस्टर_driver(&scsअगरront_driver);
+पूर्ण
+module_निकास(scsअगरront_निकास);
 
 MODULE_DESCRIPTION("Xen SCSI frontend driver");
 MODULE_LICENSE("GPL");

@@ -1,505 +1,506 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Politecnico di Torino, Italy
  *                    TORSEC group -- https://security.polito.it
  *
  * Author: Roberto Sassu <roberto.sassu@polito.it>
  *
- * File: ima_template.c
- *      Helpers to manage template descriptors.
+ * File: ima_ढाँचा.c
+ *      Helpers to manage ढाँचा descriptors.
  */
 
-#include <linux/rculist.h>
-#include "ima.h"
-#include "ima_template_lib.h"
+#समावेश <linux/rculist.h>
+#समावेश "ima.h"
+#समावेश "ima_template_lib.h"
 
-enum header_fields { HDR_PCR, HDR_DIGEST, HDR_TEMPLATE_NAME,
-		     HDR_TEMPLATE_DATA, HDR__LAST };
+क्रमागत header_fields अणु HDR_PCR, HDR_DIGEST, HDR_TEMPLATE_NAME,
+		     HDR_TEMPLATE_DATA, HDR__LAST पूर्ण;
 
-static struct ima_template_desc builtin_templates[] = {
-	{.name = IMA_TEMPLATE_IMA_NAME, .fmt = IMA_TEMPLATE_IMA_FMT},
-	{.name = "ima-ng", .fmt = "d-ng|n-ng"},
-	{.name = "ima-sig", .fmt = "d-ng|n-ng|sig"},
-	{.name = "ima-buf", .fmt = "d-ng|n-ng|buf"},
-	{.name = "ima-modsig", .fmt = "d-ng|n-ng|sig|d-modsig|modsig"},
-	{.name = "", .fmt = ""},	/* placeholder for a custom format */
-};
+अटल काष्ठा ima_ढाँचा_desc builtin_ढाँचाs[] = अणु
+	अणु.name = IMA_TEMPLATE_IMA_NAME, .fmt = IMA_TEMPLATE_IMA_FMTपूर्ण,
+	अणु.name = "ima-ng", .fmt = "d-ng|n-ng"पूर्ण,
+	अणु.name = "ima-sig", .fmt = "d-ng|n-ng|sig"पूर्ण,
+	अणु.name = "ima-buf", .fmt = "d-ng|n-ng|buf"पूर्ण,
+	अणु.name = "ima-modsig", .fmt = "d-ng|n-ng|sig|d-modsig|modsig"पूर्ण,
+	अणु.name = "", .fmt = ""पूर्ण,	/* placeholder क्रम a custom क्रमmat */
+पूर्ण;
 
-static LIST_HEAD(defined_templates);
-static DEFINE_SPINLOCK(template_list);
+अटल LIST_HEAD(defined_ढाँचाs);
+अटल DEFINE_SPINLOCK(ढाँचा_list);
 
-static const struct ima_template_field supported_fields[] = {
-	{.field_id = "d", .field_init = ima_eventdigest_init,
-	 .field_show = ima_show_template_digest},
-	{.field_id = "n", .field_init = ima_eventname_init,
-	 .field_show = ima_show_template_string},
-	{.field_id = "d-ng", .field_init = ima_eventdigest_ng_init,
-	 .field_show = ima_show_template_digest_ng},
-	{.field_id = "n-ng", .field_init = ima_eventname_ng_init,
-	 .field_show = ima_show_template_string},
-	{.field_id = "sig", .field_init = ima_eventsig_init,
-	 .field_show = ima_show_template_sig},
-	{.field_id = "buf", .field_init = ima_eventbuf_init,
-	 .field_show = ima_show_template_buf},
-	{.field_id = "d-modsig", .field_init = ima_eventdigest_modsig_init,
-	 .field_show = ima_show_template_digest_ng},
-	{.field_id = "modsig", .field_init = ima_eventmodsig_init,
-	 .field_show = ima_show_template_sig},
-};
+अटल स्थिर काष्ठा ima_ढाँचा_field supported_fields[] = अणु
+	अणु.field_id = "d", .field_init = ima_eventdigest_init,
+	 .field_show = ima_show_ढाँचा_digestपूर्ण,
+	अणु.field_id = "n", .field_init = ima_eventname_init,
+	 .field_show = ima_show_ढाँचा_stringपूर्ण,
+	अणु.field_id = "d-ng", .field_init = ima_eventdigest_ng_init,
+	 .field_show = ima_show_ढाँचा_digest_ngपूर्ण,
+	अणु.field_id = "n-ng", .field_init = ima_eventname_ng_init,
+	 .field_show = ima_show_ढाँचा_stringपूर्ण,
+	अणु.field_id = "sig", .field_init = ima_eventsig_init,
+	 .field_show = ima_show_ढाँचा_sigपूर्ण,
+	अणु.field_id = "buf", .field_init = ima_eventbuf_init,
+	 .field_show = ima_show_ढाँचा_bufपूर्ण,
+	अणु.field_id = "d-modsig", .field_init = ima_eventdigest_modsig_init,
+	 .field_show = ima_show_ढाँचा_digest_ngपूर्ण,
+	अणु.field_id = "modsig", .field_init = ima_evenपंचांगodsig_init,
+	 .field_show = ima_show_ढाँचा_sigपूर्ण,
+पूर्ण;
 
 /*
  * Used when restoring measurements carried over from a kexec. 'd' and 'n' don't
- * need to be accounted for since they shouldn't be defined in the same template
+ * need to be accounted क्रम since they shouldn't be defined in the same ढाँचा
  * description as 'd-ng' and 'n-ng' respectively.
  */
-#define MAX_TEMPLATE_NAME_LEN sizeof("d-ng|n-ng|sig|buf|d-modisg|modsig")
+#घोषणा MAX_TEMPLATE_NAME_LEN माप("d-ng|n-ng|sig|buf|d-modisg|modsig")
 
-static struct ima_template_desc *ima_template;
-static struct ima_template_desc *ima_buf_template;
+अटल काष्ठा ima_ढाँचा_desc *ima_ढाँचा;
+अटल काष्ठा ima_ढाँचा_desc *ima_buf_ढाँचा;
 
 /**
- * ima_template_has_modsig - Check whether template has modsig-related fields.
- * @ima_template: IMA template to check.
+ * ima_ढाँचा_has_modsig - Check whether ढाँचा has modsig-related fields.
+ * @ima_ढाँचा: IMA ढाँचा to check.
  *
- * Tells whether the given template has fields referencing a file's appended
+ * Tells whether the given ढाँचा has fields referencing a file's appended
  * signature.
  */
-bool ima_template_has_modsig(const struct ima_template_desc *ima_template)
-{
-	int i;
+bool ima_ढाँचा_has_modsig(स्थिर काष्ठा ima_ढाँचा_desc *ima_ढाँचा)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ima_template->num_fields; i++)
-		if (!strcmp(ima_template->fields[i]->field_id, "modsig") ||
-		    !strcmp(ima_template->fields[i]->field_id, "d-modsig"))
-			return true;
+	क्रम (i = 0; i < ima_ढाँचा->num_fields; i++)
+		अगर (!म_भेद(ima_ढाँचा->fields[i]->field_id, "modsig") ||
+		    !म_भेद(ima_ढाँचा->fields[i]->field_id, "d-modsig"))
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int __init ima_template_setup(char *str)
-{
-	struct ima_template_desc *template_desc;
-	int template_len = strlen(str);
+अटल पूर्णांक __init ima_ढाँचा_setup(अक्षर *str)
+अणु
+	काष्ठा ima_ढाँचा_desc *ढाँचा_desc;
+	पूर्णांक ढाँचा_len = म_माप(str);
 
-	if (ima_template)
-		return 1;
+	अगर (ima_ढाँचा)
+		वापस 1;
 
-	ima_init_template_list();
+	ima_init_ढाँचा_list();
 
 	/*
-	 * Verify that a template with the supplied name exists.
+	 * Verअगरy that a ढाँचा with the supplied name exists.
 	 * If not, use CONFIG_IMA_DEFAULT_TEMPLATE.
 	 */
-	template_desc = lookup_template_desc(str);
-	if (!template_desc) {
+	ढाँचा_desc = lookup_ढाँचा_desc(str);
+	अगर (!ढाँचा_desc) अणु
 		pr_err("template %s not found, using %s\n",
 		       str, CONFIG_IMA_DEFAULT_TEMPLATE);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/*
-	 * Verify whether the current hash algorithm is supported
-	 * by the 'ima' template.
+	 * Verअगरy whether the current hash algorithm is supported
+	 * by the 'ima' ढाँचा.
 	 */
-	if (template_len == 3 && strcmp(str, IMA_TEMPLATE_IMA_NAME) == 0 &&
-	    ima_hash_algo != HASH_ALGO_SHA1 && ima_hash_algo != HASH_ALGO_MD5) {
+	अगर (ढाँचा_len == 3 && म_भेद(str, IMA_TEMPLATE_IMA_NAME) == 0 &&
+	    ima_hash_algo != HASH_ALGO_SHA1 && ima_hash_algo != HASH_ALGO_MD5) अणु
 		pr_err("template does not support hash alg\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	ima_template = template_desc;
-	return 1;
-}
-__setup("ima_template=", ima_template_setup);
+	ima_ढाँचा = ढाँचा_desc;
+	वापस 1;
+पूर्ण
+__setup("ima_template=", ima_ढाँचा_setup);
 
-static int __init ima_template_fmt_setup(char *str)
-{
-	int num_templates = ARRAY_SIZE(builtin_templates);
+अटल पूर्णांक __init ima_ढाँचा_fmt_setup(अक्षर *str)
+अणु
+	पूर्णांक num_ढाँचाs = ARRAY_SIZE(builtin_ढाँचाs);
 
-	if (ima_template)
-		return 1;
+	अगर (ima_ढाँचा)
+		वापस 1;
 
-	if (template_desc_init_fields(str, NULL, NULL) < 0) {
+	अगर (ढाँचा_desc_init_fields(str, शून्य, शून्य) < 0) अणु
 		pr_err("format string '%s' not valid, using template %s\n",
 		       str, CONFIG_IMA_DEFAULT_TEMPLATE);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	builtin_templates[num_templates - 1].fmt = str;
-	ima_template = builtin_templates + num_templates - 1;
+	builtin_ढाँचाs[num_ढाँचाs - 1].fmt = str;
+	ima_ढाँचा = builtin_ढाँचाs + num_ढाँचाs - 1;
 
-	return 1;
-}
-__setup("ima_template_fmt=", ima_template_fmt_setup);
+	वापस 1;
+पूर्ण
+__setup("ima_template_fmt=", ima_ढाँचा_fmt_setup);
 
-struct ima_template_desc *lookup_template_desc(const char *name)
-{
-	struct ima_template_desc *template_desc;
-	int found = 0;
+काष्ठा ima_ढाँचा_desc *lookup_ढाँचा_desc(स्थिर अक्षर *name)
+अणु
+	काष्ठा ima_ढाँचा_desc *ढाँचा_desc;
+	पूर्णांक found = 0;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(template_desc, &defined_templates, list) {
-		if ((strcmp(template_desc->name, name) == 0) ||
-		    (strcmp(template_desc->fmt, name) == 0)) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(ढाँचा_desc, &defined_ढाँचाs, list) अणु
+		अगर ((म_भेद(ढाँचा_desc->name, name) == 0) ||
+		    (म_भेद(ढाँचा_desc->fmt, name) == 0)) अणु
 			found = 1;
-			break;
-		}
-	}
-	rcu_read_unlock();
-	return found ? template_desc : NULL;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस found ? ढाँचा_desc : शून्य;
+पूर्ण
 
-static const struct ima_template_field *
-lookup_template_field(const char *field_id)
-{
-	int i;
+अटल स्थिर काष्ठा ima_ढाँचा_field *
+lookup_ढाँचा_field(स्थिर अक्षर *field_id)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(supported_fields); i++)
-		if (strncmp(supported_fields[i].field_id, field_id,
+	क्रम (i = 0; i < ARRAY_SIZE(supported_fields); i++)
+		अगर (म_भेदन(supported_fields[i].field_id, field_id,
 			    IMA_TEMPLATE_FIELD_ID_MAX_LEN) == 0)
-			return &supported_fields[i];
-	return NULL;
-}
+			वापस &supported_fields[i];
+	वापस शून्य;
+पूर्ण
 
-static int template_fmt_size(const char *template_fmt)
-{
-	char c;
-	int template_fmt_len = strlen(template_fmt);
-	int i = 0, j = 0;
+अटल पूर्णांक ढाँचा_fmt_size(स्थिर अक्षर *ढाँचा_fmt)
+अणु
+	अक्षर c;
+	पूर्णांक ढाँचा_fmt_len = म_माप(ढाँचा_fmt);
+	पूर्णांक i = 0, j = 0;
 
-	while (i < template_fmt_len) {
-		c = template_fmt[i];
-		if (c == '|')
+	जबतक (i < ढाँचा_fmt_len) अणु
+		c = ढाँचा_fmt[i];
+		अगर (c == '|')
 			j++;
 		i++;
-	}
+	पूर्ण
 
-	return j + 1;
-}
+	वापस j + 1;
+पूर्ण
 
-int template_desc_init_fields(const char *template_fmt,
-			      const struct ima_template_field ***fields,
-			      int *num_fields)
-{
-	const char *template_fmt_ptr;
-	const struct ima_template_field *found_fields[IMA_TEMPLATE_NUM_FIELDS_MAX];
-	int template_num_fields;
-	int i, len;
+पूर्णांक ढाँचा_desc_init_fields(स्थिर अक्षर *ढाँचा_fmt,
+			      स्थिर काष्ठा ima_ढाँचा_field ***fields,
+			      पूर्णांक *num_fields)
+अणु
+	स्थिर अक्षर *ढाँचा_fmt_ptr;
+	स्थिर काष्ठा ima_ढाँचा_field *found_fields[IMA_TEMPLATE_NUM_FIELDS_MAX];
+	पूर्णांक ढाँचा_num_fields;
+	पूर्णांक i, len;
 
-	if (num_fields && *num_fields > 0) /* already initialized? */
-		return 0;
+	अगर (num_fields && *num_fields > 0) /* alपढ़ोy initialized? */
+		वापस 0;
 
-	template_num_fields = template_fmt_size(template_fmt);
+	ढाँचा_num_fields = ढाँचा_fmt_size(ढाँचा_fmt);
 
-	if (template_num_fields > IMA_TEMPLATE_NUM_FIELDS_MAX) {
+	अगर (ढाँचा_num_fields > IMA_TEMPLATE_NUM_FIELDS_MAX) अणु
 		pr_err("format string '%s' contains too many fields\n",
-		       template_fmt);
-		return -EINVAL;
-	}
+		       ढाँचा_fmt);
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0, template_fmt_ptr = template_fmt; i < template_num_fields;
-	     i++, template_fmt_ptr += len + 1) {
-		char tmp_field_id[IMA_TEMPLATE_FIELD_ID_MAX_LEN + 1];
+	क्रम (i = 0, ढाँचा_fmt_ptr = ढाँचा_fmt; i < ढाँचा_num_fields;
+	     i++, ढाँचा_fmt_ptr += len + 1) अणु
+		अक्षर पंचांगp_field_id[IMA_TEMPLATE_FIELD_ID_MAX_LEN + 1];
 
-		len = strchrnul(template_fmt_ptr, '|') - template_fmt_ptr;
-		if (len == 0 || len > IMA_TEMPLATE_FIELD_ID_MAX_LEN) {
+		len = म_अक्षरnul(ढाँचा_fmt_ptr, '|') - ढाँचा_fmt_ptr;
+		अगर (len == 0 || len > IMA_TEMPLATE_FIELD_ID_MAX_LEN) अणु
 			pr_err("Invalid field with length %d\n", len);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		memcpy(tmp_field_id, template_fmt_ptr, len);
-		tmp_field_id[len] = '\0';
-		found_fields[i] = lookup_template_field(tmp_field_id);
-		if (!found_fields[i]) {
-			pr_err("field '%s' not found\n", tmp_field_id);
-			return -ENOENT;
-		}
-	}
+		स_नकल(पंचांगp_field_id, ढाँचा_fmt_ptr, len);
+		पंचांगp_field_id[len] = '\0';
+		found_fields[i] = lookup_ढाँचा_field(पंचांगp_field_id);
+		अगर (!found_fields[i]) अणु
+			pr_err("field '%s' not found\n", पंचांगp_field_id);
+			वापस -ENOENT;
+		पूर्ण
+	पूर्ण
 
-	if (fields && num_fields) {
-		*fields = kmalloc_array(i, sizeof(*fields), GFP_KERNEL);
-		if (*fields == NULL)
-			return -ENOMEM;
+	अगर (fields && num_fields) अणु
+		*fields = kदो_स्मृति_array(i, माप(*fields), GFP_KERNEL);
+		अगर (*fields == शून्य)
+			वापस -ENOMEM;
 
-		memcpy(*fields, found_fields, i * sizeof(*fields));
+		स_नकल(*fields, found_fields, i * माप(*fields));
 		*num_fields = i;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ima_init_template_list(void)
-{
-	int i;
+व्योम ima_init_ढाँचा_list(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (!list_empty(&defined_templates))
-		return;
+	अगर (!list_empty(&defined_ढाँचाs))
+		वापस;
 
-	spin_lock(&template_list);
-	for (i = 0; i < ARRAY_SIZE(builtin_templates); i++) {
-		list_add_tail_rcu(&builtin_templates[i].list,
-				  &defined_templates);
-	}
-	spin_unlock(&template_list);
-}
+	spin_lock(&ढाँचा_list);
+	क्रम (i = 0; i < ARRAY_SIZE(builtin_ढाँचाs); i++) अणु
+		list_add_tail_rcu(&builtin_ढाँचाs[i].list,
+				  &defined_ढाँचाs);
+	पूर्ण
+	spin_unlock(&ढाँचा_list);
+पूर्ण
 
-struct ima_template_desc *ima_template_desc_current(void)
-{
-	if (!ima_template) {
-		ima_init_template_list();
-		ima_template =
-		    lookup_template_desc(CONFIG_IMA_DEFAULT_TEMPLATE);
-	}
-	return ima_template;
-}
+काष्ठा ima_ढाँचा_desc *ima_ढाँचा_desc_current(व्योम)
+अणु
+	अगर (!ima_ढाँचा) अणु
+		ima_init_ढाँचा_list();
+		ima_ढाँचा =
+		    lookup_ढाँचा_desc(CONFIG_IMA_DEFAULT_TEMPLATE);
+	पूर्ण
+	वापस ima_ढाँचा;
+पूर्ण
 
-struct ima_template_desc *ima_template_desc_buf(void)
-{
-	if (!ima_buf_template) {
-		ima_init_template_list();
-		ima_buf_template = lookup_template_desc("ima-buf");
-	}
-	return ima_buf_template;
-}
+काष्ठा ima_ढाँचा_desc *ima_ढाँचा_desc_buf(व्योम)
+अणु
+	अगर (!ima_buf_ढाँचा) अणु
+		ima_init_ढाँचा_list();
+		ima_buf_ढाँचा = lookup_ढाँचा_desc("ima-buf");
+	पूर्ण
+	वापस ima_buf_ढाँचा;
+पूर्ण
 
-int __init ima_init_template(void)
-{
-	struct ima_template_desc *template = ima_template_desc_current();
-	int result;
+पूर्णांक __init ima_init_ढाँचा(व्योम)
+अणु
+	काष्ठा ima_ढाँचा_desc *ढाँचा = ima_ढाँचा_desc_current();
+	पूर्णांक result;
 
-	result = template_desc_init_fields(template->fmt,
-					   &(template->fields),
-					   &(template->num_fields));
-	if (result < 0) {
+	result = ढाँचा_desc_init_fields(ढाँचा->fmt,
+					   &(ढाँचा->fields),
+					   &(ढाँचा->num_fields));
+	अगर (result < 0) अणु
 		pr_err("template %s init failed, result: %d\n",
-		       (strlen(template->name) ?
-		       template->name : template->fmt), result);
-		return result;
-	}
+		       (म_माप(ढाँचा->name) ?
+		       ढाँचा->name : ढाँचा->fmt), result);
+		वापस result;
+	पूर्ण
 
-	template = ima_template_desc_buf();
-	if (!template) {
+	ढाँचा = ima_ढाँचा_desc_buf();
+	अगर (!ढाँचा) अणु
 		pr_err("Failed to get ima-buf template\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	result = template_desc_init_fields(template->fmt,
-					   &(template->fields),
-					   &(template->num_fields));
-	if (result < 0)
+	result = ढाँचा_desc_init_fields(ढाँचा->fmt,
+					   &(ढाँचा->fields),
+					   &(ढाँचा->num_fields));
+	अगर (result < 0)
 		pr_err("template %s init failed, result: %d\n",
-		       (strlen(template->name) ?
-		       template->name : template->fmt), result);
+		       (म_माप(ढाँचा->name) ?
+		       ढाँचा->name : ढाँचा->fmt), result);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static struct ima_template_desc *restore_template_fmt(char *template_name)
-{
-	struct ima_template_desc *template_desc = NULL;
-	int ret;
+अटल काष्ठा ima_ढाँचा_desc *restore_ढाँचा_fmt(अक्षर *ढाँचा_name)
+अणु
+	काष्ठा ima_ढाँचा_desc *ढाँचा_desc = शून्य;
+	पूर्णांक ret;
 
-	ret = template_desc_init_fields(template_name, NULL, NULL);
-	if (ret < 0) {
+	ret = ढाँचा_desc_init_fields(ढाँचा_name, शून्य, शून्य);
+	अगर (ret < 0) अणु
 		pr_err("attempting to initialize the template \"%s\" failed\n",
-			template_name);
-		goto out;
-	}
+			ढाँचा_name);
+		जाओ out;
+	पूर्ण
 
-	template_desc = kzalloc(sizeof(*template_desc), GFP_KERNEL);
-	if (!template_desc)
-		goto out;
+	ढाँचा_desc = kzalloc(माप(*ढाँचा_desc), GFP_KERNEL);
+	अगर (!ढाँचा_desc)
+		जाओ out;
 
-	template_desc->name = "";
-	template_desc->fmt = kstrdup(template_name, GFP_KERNEL);
-	if (!template_desc->fmt)
-		goto out;
+	ढाँचा_desc->name = "";
+	ढाँचा_desc->fmt = kstrdup(ढाँचा_name, GFP_KERNEL);
+	अगर (!ढाँचा_desc->fmt)
+		जाओ out;
 
-	spin_lock(&template_list);
-	list_add_tail_rcu(&template_desc->list, &defined_templates);
-	spin_unlock(&template_list);
+	spin_lock(&ढाँचा_list);
+	list_add_tail_rcu(&ढाँचा_desc->list, &defined_ढाँचाs);
+	spin_unlock(&ढाँचा_list);
 out:
-	return template_desc;
-}
+	वापस ढाँचा_desc;
+पूर्ण
 
-static int ima_restore_template_data(struct ima_template_desc *template_desc,
-				     void *template_data,
-				     int template_data_size,
-				     struct ima_template_entry **entry)
-{
-	struct tpm_digest *digests;
-	int ret = 0;
-	int i;
+अटल पूर्णांक ima_restore_ढाँचा_data(काष्ठा ima_ढाँचा_desc *ढाँचा_desc,
+				     व्योम *ढाँचा_data,
+				     पूर्णांक ढाँचा_data_size,
+				     काष्ठा ima_ढाँचा_entry **entry)
+अणु
+	काष्ठा tpm_digest *digests;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	*entry = kzalloc(struct_size(*entry, template_data,
-				     template_desc->num_fields), GFP_NOFS);
-	if (!*entry)
-		return -ENOMEM;
+	*entry = kzalloc(काष्ठा_size(*entry, ढाँचा_data,
+				     ढाँचा_desc->num_fields), GFP_NOFS);
+	अगर (!*entry)
+		वापस -ENOMEM;
 
-	digests = kcalloc(NR_BANKS(ima_tpm_chip) + ima_extra_slots,
-			  sizeof(*digests), GFP_NOFS);
-	if (!digests) {
-		kfree(*entry);
-		return -ENOMEM;
-	}
+	digests = kसुस्मृति(NR_BANKS(ima_tpm_chip) + ima_extra_slots,
+			  माप(*digests), GFP_NOFS);
+	अगर (!digests) अणु
+		kमुक्त(*entry);
+		वापस -ENOMEM;
+	पूर्ण
 
 	(*entry)->digests = digests;
 
-	ret = ima_parse_buf(template_data, template_data + template_data_size,
-			    NULL, template_desc->num_fields,
-			    (*entry)->template_data, NULL, NULL,
+	ret = ima_parse_buf(ढाँचा_data, ढाँचा_data + ढाँचा_data_size,
+			    शून्य, ढाँचा_desc->num_fields,
+			    (*entry)->ढाँचा_data, शून्य, शून्य,
 			    ENFORCE_FIELDS | ENFORCE_BUFEND, "template data");
-	if (ret < 0) {
-		kfree((*entry)->digests);
-		kfree(*entry);
-		return ret;
-	}
+	अगर (ret < 0) अणु
+		kमुक्त((*entry)->digests);
+		kमुक्त(*entry);
+		वापस ret;
+	पूर्ण
 
-	(*entry)->template_desc = template_desc;
-	for (i = 0; i < template_desc->num_fields; i++) {
-		struct ima_field_data *field_data = &(*entry)->template_data[i];
+	(*entry)->ढाँचा_desc = ढाँचा_desc;
+	क्रम (i = 0; i < ढाँचा_desc->num_fields; i++) अणु
+		काष्ठा ima_field_data *field_data = &(*entry)->ढाँचा_data[i];
 		u8 *data = field_data->data;
 
-		(*entry)->template_data[i].data =
+		(*entry)->ढाँचा_data[i].data =
 			kzalloc(field_data->len + 1, GFP_KERNEL);
-		if (!(*entry)->template_data[i].data) {
+		अगर (!(*entry)->ढाँचा_data[i].data) अणु
 			ret = -ENOMEM;
-			break;
-		}
-		memcpy((*entry)->template_data[i].data, data, field_data->len);
-		(*entry)->template_data_len += sizeof(field_data->len);
-		(*entry)->template_data_len += field_data->len;
-	}
+			अवरोध;
+		पूर्ण
+		स_नकल((*entry)->ढाँचा_data[i].data, data, field_data->len);
+		(*entry)->ढाँचा_data_len += माप(field_data->len);
+		(*entry)->ढाँचा_data_len += field_data->len;
+	पूर्ण
 
-	if (ret < 0) {
-		ima_free_template_entry(*entry);
-		*entry = NULL;
-	}
+	अगर (ret < 0) अणु
+		ima_मुक्त_ढाँचा_entry(*entry);
+		*entry = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Restore the serialized binary measurement list without extending PCRs. */
-int ima_restore_measurement_list(loff_t size, void *buf)
-{
-	char template_name[MAX_TEMPLATE_NAME_LEN];
-	unsigned char zero[TPM_DIGEST_SIZE] = { 0 };
+पूर्णांक ima_restore_measurement_list(loff_t size, व्योम *buf)
+अणु
+	अक्षर ढाँचा_name[MAX_TEMPLATE_NAME_LEN];
+	अचिन्हित अक्षर zero[TPM_DIGEST_SIZE] = अणु 0 पूर्ण;
 
-	struct ima_kexec_hdr *khdr = buf;
-	struct ima_field_data hdr[HDR__LAST] = {
-		[HDR_PCR] = {.len = sizeof(u32)},
-		[HDR_DIGEST] = {.len = TPM_DIGEST_SIZE},
-	};
+	काष्ठा ima_kexec_hdr *khdr = buf;
+	काष्ठा ima_field_data hdr[HDR__LAST] = अणु
+		[HDR_PCR] = अणु.len = माप(u32)पूर्ण,
+		[HDR_DIGEST] = अणु.len = TPM_DIGEST_SIZEपूर्ण,
+	पूर्ण;
 
-	void *bufp = buf + sizeof(*khdr);
-	void *bufendp;
-	struct ima_template_entry *entry;
-	struct ima_template_desc *template_desc;
+	व्योम *bufp = buf + माप(*khdr);
+	व्योम *bufendp;
+	काष्ठा ima_ढाँचा_entry *entry;
+	काष्ठा ima_ढाँचा_desc *ढाँचा_desc;
 	DECLARE_BITMAP(hdr_mask, HDR__LAST);
-	unsigned long count = 0;
-	int ret = 0;
+	अचिन्हित दीर्घ count = 0;
+	पूर्णांक ret = 0;
 
-	if (!buf || size < sizeof(*khdr))
-		return 0;
+	अगर (!buf || size < माप(*khdr))
+		वापस 0;
 
-	if (ima_canonical_fmt) {
+	अगर (ima_canonical_fmt) अणु
 		khdr->version = le16_to_cpu(khdr->version);
 		khdr->count = le64_to_cpu(khdr->count);
 		khdr->buffer_size = le64_to_cpu(khdr->buffer_size);
-	}
+	पूर्ण
 
-	if (khdr->version != 1) {
+	अगर (khdr->version != 1) अणु
 		pr_err("attempting to restore a incompatible measurement list");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (khdr->count > ULONG_MAX - 1) {
+	अगर (khdr->count > अच_दीर्घ_उच्च - 1) अणु
 		pr_err("attempting to restore too many measurements");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	bitmap_zero(hdr_mask, HDR__LAST);
-	bitmap_set(hdr_mask, HDR_PCR, 1);
-	bitmap_set(hdr_mask, HDR_DIGEST, 1);
+	biपंचांगap_zero(hdr_mask, HDR__LAST);
+	biपंचांगap_set(hdr_mask, HDR_PCR, 1);
+	biपंचांगap_set(hdr_mask, HDR_DIGEST, 1);
 
 	/*
 	 * ima kexec buffer prefix: version, buffer size, count
-	 * v1 format: pcr, digest, template-name-len, template-name,
-	 *	      template-data-size, template-data
+	 * v1 क्रमmat: pcr, digest, ढाँचा-name-len, ढाँचा-name,
+	 *	      ढाँचा-data-size, ढाँचा-data
 	 */
 	bufendp = buf + khdr->buffer_size;
-	while ((bufp < bufendp) && (count++ < khdr->count)) {
-		int enforce_mask = ENFORCE_FIELDS;
+	जबतक ((bufp < bufendp) && (count++ < khdr->count)) अणु
+		पूर्णांक enक्रमce_mask = ENFORCE_FIELDS;
 
-		enforce_mask |= (count == khdr->count) ? ENFORCE_BUFEND : 0;
-		ret = ima_parse_buf(bufp, bufendp, &bufp, HDR__LAST, hdr, NULL,
-				    hdr_mask, enforce_mask, "entry header");
-		if (ret < 0)
-			break;
+		enक्रमce_mask |= (count == khdr->count) ? ENFORCE_BUFEND : 0;
+		ret = ima_parse_buf(bufp, bufendp, &bufp, HDR__LAST, hdr, शून्य,
+				    hdr_mask, enक्रमce_mask, "entry header");
+		अगर (ret < 0)
+			अवरोध;
 
-		if (hdr[HDR_TEMPLATE_NAME].len >= MAX_TEMPLATE_NAME_LEN) {
+		अगर (hdr[HDR_TEMPLATE_NAME].len >= MAX_TEMPLATE_NAME_LEN) अणु
 			pr_err("attempting to restore a template name that is too long\n");
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* template name is not null terminated */
-		memcpy(template_name, hdr[HDR_TEMPLATE_NAME].data,
+		/* ढाँचा name is not null terminated */
+		स_नकल(ढाँचा_name, hdr[HDR_TEMPLATE_NAME].data,
 		       hdr[HDR_TEMPLATE_NAME].len);
-		template_name[hdr[HDR_TEMPLATE_NAME].len] = 0;
+		ढाँचा_name[hdr[HDR_TEMPLATE_NAME].len] = 0;
 
-		if (strcmp(template_name, "ima") == 0) {
+		अगर (म_भेद(ढाँचा_name, "ima") == 0) अणु
 			pr_err("attempting to restore an unsupported template \"%s\" failed\n",
-			       template_name);
+			       ढाँचा_name);
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		template_desc = lookup_template_desc(template_name);
-		if (!template_desc) {
-			template_desc = restore_template_fmt(template_name);
-			if (!template_desc)
-				break;
-		}
+		ढाँचा_desc = lookup_ढाँचा_desc(ढाँचा_name);
+		अगर (!ढाँचा_desc) अणु
+			ढाँचा_desc = restore_ढाँचा_fmt(ढाँचा_name);
+			अगर (!ढाँचा_desc)
+				अवरोध;
+		पूर्ण
 
 		/*
-		 * Only the running system's template format is initialized
-		 * on boot.  As needed, initialize the other template formats.
+		 * Only the running प्रणाली's ढाँचा क्रमmat is initialized
+		 * on boot.  As needed, initialize the other ढाँचा क्रमmats.
 		 */
-		ret = template_desc_init_fields(template_desc->fmt,
-						&(template_desc->fields),
-						&(template_desc->num_fields));
-		if (ret < 0) {
+		ret = ढाँचा_desc_init_fields(ढाँचा_desc->fmt,
+						&(ढाँचा_desc->fields),
+						&(ढाँचा_desc->num_fields));
+		अगर (ret < 0) अणु
 			pr_err("attempting to restore the template fmt \"%s\" failed\n",
-			       template_desc->fmt);
+			       ढाँचा_desc->fmt);
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ret = ima_restore_template_data(template_desc,
+		ret = ima_restore_ढाँचा_data(ढाँचा_desc,
 						hdr[HDR_TEMPLATE_DATA].data,
 						hdr[HDR_TEMPLATE_DATA].len,
 						&entry);
-		if (ret < 0)
-			break;
+		अगर (ret < 0)
+			अवरोध;
 
-		if (memcmp(hdr[HDR_DIGEST].data, zero, sizeof(zero))) {
+		अगर (स_भेद(hdr[HDR_DIGEST].data, zero, माप(zero))) अणु
 			ret = ima_calc_field_array_hash(
-						&entry->template_data[0],
+						&entry->ढाँचा_data[0],
 						entry);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				pr_err("cannot calculate template digest\n");
 				ret = -EINVAL;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		entry->pcr = !ima_canonical_fmt ? *(u32 *)(hdr[HDR_PCR].data) :
 			     le32_to_cpu(*(u32 *)(hdr[HDR_PCR].data));
 		ret = ima_restore_measurement_entry(entry);
-		if (ret < 0)
-			break;
+		अगर (ret < 0)
+			अवरोध;
 
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण

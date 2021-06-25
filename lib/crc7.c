@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *      crc7.c
  */
 
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/crc7.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/crc7.h>
 
 
 /*
- * Table for CRC-7 (polynomial x^7 + x^3 + 1).
- * This is a big-endian CRC (msbit is highest power of x),
+ * Table क्रम CRC-7 (polynomial x^7 + x^3 + 1).
+ * This is a big-endian CRC (msbit is highest घातer of x),
  * aligned so the msbit of the byte is the x^6 coefficient
  * and the lsbit is not used.
  */
-const u8 crc7_be_syndrome_table[256] = {
+स्थिर u8 crc7_be_syndrome_table[256] = अणु
 	0x00, 0x12, 0x24, 0x36, 0x48, 0x5a, 0x6c, 0x7e,
 	0x90, 0x82, 0xb4, 0xa6, 0xd8, 0xca, 0xfc, 0xee,
 	0x32, 0x20, 0x16, 0x04, 0x7a, 0x68, 0x5e, 0x4c,
@@ -47,27 +48,27 @@ const u8 crc7_be_syndrome_table[256] = {
 	0xbe, 0xac, 0x9a, 0x88, 0xf6, 0xe4, 0xd2, 0xc0,
 	0x1c, 0x0e, 0x38, 0x2a, 0x54, 0x46, 0x70, 0x62,
 	0x8c, 0x9e, 0xa8, 0xba, 0xc4, 0xd6, 0xe0, 0xf2
-};
+पूर्ण;
 EXPORT_SYMBOL(crc7_be_syndrome_table);
 
 /**
- * crc7_be - update the CRC7 for the data buffer
+ * crc7_be - update the CRC7 क्रम the data buffer
  * @crc:     previous CRC7 value
- * @buffer:  data pointer
+ * @buffer:  data poपूर्णांकer
  * @len:     number of bytes in the buffer
  * Context: any
  *
  * Returns the updated CRC7 value.
  * The CRC7 is left-aligned in the byte (the lsbit is always 0), as that
- * makes the computation easier, and all callers want it in that form.
+ * makes the computation easier, and all callers want it in that क्रमm.
  *
  */
-u8 crc7_be(u8 crc, const u8 *buffer, size_t len)
-{
-	while (len--)
+u8 crc7_be(u8 crc, स्थिर u8 *buffer, माप_प्रकार len)
+अणु
+	जबतक (len--)
 		crc = crc7_be_byte(crc, *buffer++);
-	return crc;
-}
+	वापस crc;
+पूर्ण
 EXPORT_SYMBOL(crc7_be);
 
 MODULE_DESCRIPTION("CRC7 calculations");

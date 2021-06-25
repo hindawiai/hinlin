@@ -1,244 +1,245 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // CCI Cache Coherent Interconnect PMU driver
 // Copyright (C) 2013-2018 Arm Ltd.
 // Author: Punit Agrawal <punit.agrawal@arm.com>, Suzuki Poulose <suzuki.poulose@arm.com>
 
-#include <linux/arm-cci.h>
-#include <linux/io.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/perf_event.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
+#समावेश <linux/arm-cci.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
 
-#define DRIVER_NAME		"ARM-CCI PMU"
+#घोषणा DRIVER_NAME		"ARM-CCI PMU"
 
-#define CCI_PMCR		0x0100
-#define CCI_PID2		0x0fe8
+#घोषणा CCI_PMCR		0x0100
+#घोषणा CCI_PID2		0x0fe8
 
-#define CCI_PMCR_CEN		0x00000001
-#define CCI_PMCR_NCNT_MASK	0x0000f800
-#define CCI_PMCR_NCNT_SHIFT	11
+#घोषणा CCI_PMCR_CEN		0x00000001
+#घोषणा CCI_PMCR_NCNT_MASK	0x0000f800
+#घोषणा CCI_PMCR_NCNT_SHIFT	11
 
-#define CCI_PID2_REV_MASK	0xf0
-#define CCI_PID2_REV_SHIFT	4
+#घोषणा CCI_PID2_REV_MASK	0xf0
+#घोषणा CCI_PID2_REV_SHIFT	4
 
-#define CCI_PMU_EVT_SEL		0x000
-#define CCI_PMU_CNTR		0x004
-#define CCI_PMU_CNTR_CTRL	0x008
-#define CCI_PMU_OVRFLW		0x00c
+#घोषणा CCI_PMU_EVT_SEL		0x000
+#घोषणा CCI_PMU_CNTR		0x004
+#घोषणा CCI_PMU_CNTR_CTRL	0x008
+#घोषणा CCI_PMU_OVRFLW		0x00c
 
-#define CCI_PMU_OVRFLW_FLAG	1
+#घोषणा CCI_PMU_OVRFLW_FLAG	1
 
-#define CCI_PMU_CNTR_SIZE(model)	((model)->cntr_size)
-#define CCI_PMU_CNTR_BASE(model, idx)	((idx) * CCI_PMU_CNTR_SIZE(model))
-#define CCI_PMU_CNTR_MASK		((1ULL << 32) -1)
-#define CCI_PMU_CNTR_LAST(cci_pmu)	(cci_pmu->num_cntrs - 1)
+#घोषणा CCI_PMU_CNTR_SIZE(model)	((model)->cntr_size)
+#घोषणा CCI_PMU_CNTR_BASE(model, idx)	((idx) * CCI_PMU_CNTR_SIZE(model))
+#घोषणा CCI_PMU_CNTR_MASK		((1ULL << 32) -1)
+#घोषणा CCI_PMU_CNTR_LAST(cci_pmu)	(cci_pmu->num_cntrs - 1)
 
-#define CCI_PMU_MAX_HW_CNTRS(model) \
+#घोषणा CCI_PMU_MAX_HW_CNTRS(model) \
 	((model)->num_hw_cntrs + (model)->fixed_hw_cntrs)
 
-/* Types of interfaces that can generate events */
-enum {
+/* Types of पूर्णांकerfaces that can generate events */
+क्रमागत अणु
 	CCI_IF_SLAVE,
 	CCI_IF_MASTER,
-#ifdef CONFIG_ARM_CCI5xx_PMU
+#अगर_घोषित CONFIG_ARM_CCI5xx_PMU
 	CCI_IF_GLOBAL,
-#endif
+#पूर्ण_अगर
 	CCI_IF_MAX,
-};
+पूर्ण;
 
-#define NUM_HW_CNTRS_CII_4XX	4
-#define NUM_HW_CNTRS_CII_5XX	8
-#define NUM_HW_CNTRS_MAX	NUM_HW_CNTRS_CII_5XX
+#घोषणा NUM_HW_CNTRS_CII_4XX	4
+#घोषणा NUM_HW_CNTRS_CII_5XX	8
+#घोषणा NUM_HW_CNTRS_MAX	NUM_HW_CNTRS_CII_5XX
 
-#define FIXED_HW_CNTRS_CII_4XX	1
-#define FIXED_HW_CNTRS_CII_5XX	0
-#define FIXED_HW_CNTRS_MAX	FIXED_HW_CNTRS_CII_4XX
+#घोषणा FIXED_HW_CNTRS_CII_4XX	1
+#घोषणा FIXED_HW_CNTRS_CII_5XX	0
+#घोषणा FIXED_HW_CNTRS_MAX	FIXED_HW_CNTRS_CII_4XX
 
-#define HW_CNTRS_MAX		(NUM_HW_CNTRS_MAX + FIXED_HW_CNTRS_MAX)
+#घोषणा HW_CNTRS_MAX		(NUM_HW_CNTRS_MAX + FIXED_HW_CNTRS_MAX)
 
-struct event_range {
+काष्ठा event_range अणु
 	u32 min;
 	u32 max;
-};
+पूर्ण;
 
-struct cci_pmu_hw_events {
-	struct perf_event **events;
-	unsigned long *used_mask;
+काष्ठा cci_pmu_hw_events अणु
+	काष्ठा perf_event **events;
+	अचिन्हित दीर्घ *used_mask;
 	raw_spinlock_t pmu_lock;
-};
+पूर्ण;
 
-struct cci_pmu;
+काष्ठा cci_pmu;
 /*
- * struct cci_pmu_model:
+ * काष्ठा cci_pmu_model:
  * @fixed_hw_cntrs - Number of fixed event counters
  * @num_hw_cntrs - Maximum number of programmable event counters
  * @cntr_size - Size of an event counter mapping
  */
-struct cci_pmu_model {
-	char *name;
+काष्ठा cci_pmu_model अणु
+	अक्षर *name;
 	u32 fixed_hw_cntrs;
 	u32 num_hw_cntrs;
 	u32 cntr_size;
-	struct attribute **format_attrs;
-	struct attribute **event_attrs;
-	struct event_range event_ranges[CCI_IF_MAX];
-	int (*validate_hw_event)(struct cci_pmu *, unsigned long);
-	int (*get_event_idx)(struct cci_pmu *, struct cci_pmu_hw_events *, unsigned long);
-	void (*write_counters)(struct cci_pmu *, unsigned long *);
-};
+	काष्ठा attribute **क्रमmat_attrs;
+	काष्ठा attribute **event_attrs;
+	काष्ठा event_range event_ranges[CCI_IF_MAX];
+	पूर्णांक (*validate_hw_event)(काष्ठा cci_pmu *, अचिन्हित दीर्घ);
+	पूर्णांक (*get_event_idx)(काष्ठा cci_pmu *, काष्ठा cci_pmu_hw_events *, अचिन्हित दीर्घ);
+	व्योम (*ग_लिखो_counters)(काष्ठा cci_pmu *, अचिन्हित दीर्घ *);
+पूर्ण;
 
-static struct cci_pmu_model cci_pmu_models[];
+अटल काष्ठा cci_pmu_model cci_pmu_models[];
 
-struct cci_pmu {
-	void __iomem *base;
-	void __iomem *ctrl_base;
-	struct pmu pmu;
-	int cpu;
-	int nr_irqs;
-	int *irqs;
-	unsigned long active_irqs;
-	const struct cci_pmu_model *model;
-	struct cci_pmu_hw_events hw_events;
-	struct platform_device *plat_device;
-	int num_cntrs;
+काष्ठा cci_pmu अणु
+	व्योम __iomem *base;
+	व्योम __iomem *ctrl_base;
+	काष्ठा pmu pmu;
+	पूर्णांक cpu;
+	पूर्णांक nr_irqs;
+	पूर्णांक *irqs;
+	अचिन्हित दीर्घ active_irqs;
+	स्थिर काष्ठा cci_pmu_model *model;
+	काष्ठा cci_pmu_hw_events hw_events;
+	काष्ठा platक्रमm_device *plat_device;
+	पूर्णांक num_cntrs;
 	atomic_t active_events;
-	struct mutex reserve_mutex;
-};
+	काष्ठा mutex reserve_mutex;
+पूर्ण;
 
-#define to_cci_pmu(c)	(container_of(c, struct cci_pmu, pmu))
+#घोषणा to_cci_pmu(c)	(container_of(c, काष्ठा cci_pmu, pmu))
 
-static struct cci_pmu *g_cci_pmu;
+अटल काष्ठा cci_pmu *g_cci_pmu;
 
-enum cci_models {
-#ifdef CONFIG_ARM_CCI400_PMU
+क्रमागत cci_models अणु
+#अगर_घोषित CONFIG_ARM_CCI400_PMU
 	CCI400_R0,
 	CCI400_R1,
-#endif
-#ifdef CONFIG_ARM_CCI5xx_PMU
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARM_CCI5xx_PMU
 	CCI500_R0,
 	CCI550_R0,
-#endif
+#पूर्ण_अगर
 	CCI_MODEL_MAX
-};
+पूर्ण;
 
-static void pmu_write_counters(struct cci_pmu *cci_pmu,
-				 unsigned long *mask);
-static ssize_t __maybe_unused cci_pmu_format_show(struct device *dev,
-			struct device_attribute *attr, char *buf);
-static ssize_t __maybe_unused cci_pmu_event_show(struct device *dev,
-			struct device_attribute *attr, char *buf);
+अटल व्योम pmu_ग_लिखो_counters(काष्ठा cci_pmu *cci_pmu,
+				 अचिन्हित दीर्घ *mask);
+अटल sमाप_प्रकार __maybe_unused cci_pmu_क्रमmat_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf);
+अटल sमाप_प्रकार __maybe_unused cci_pmu_event_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf);
 
-#define CCI_EXT_ATTR_ENTRY(_name, _func, _config) 				\
-	&((struct dev_ext_attribute[]) {					\
-		{ __ATTR(_name, S_IRUGO, _func, NULL), (void *)_config }	\
-	})[0].attr.attr
+#घोषणा CCI_EXT_ATTR_ENTRY(_name, _func, _config) 				\
+	&((काष्ठा dev_ext_attribute[]) अणु					\
+		अणु __ATTR(_name, S_IRUGO, _func, शून्य), (व्योम *)_config पूर्ण	\
+	पूर्ण)[0].attr.attr
 
-#define CCI_FORMAT_EXT_ATTR_ENTRY(_name, _config) \
-	CCI_EXT_ATTR_ENTRY(_name, cci_pmu_format_show, (char *)_config)
-#define CCI_EVENT_EXT_ATTR_ENTRY(_name, _config) \
-	CCI_EXT_ATTR_ENTRY(_name, cci_pmu_event_show, (unsigned long)_config)
+#घोषणा CCI_FORMAT_EXT_ATTR_ENTRY(_name, _config) \
+	CCI_EXT_ATTR_ENTRY(_name, cci_pmu_क्रमmat_show, (अक्षर *)_config)
+#घोषणा CCI_EVENT_EXT_ATTR_ENTRY(_name, _config) \
+	CCI_EXT_ATTR_ENTRY(_name, cci_pmu_event_show, (अचिन्हित दीर्घ)_config)
 
-/* CCI400 PMU Specific definitions */
+/* CCI400 PMU Specअगरic definitions */
 
-#ifdef CONFIG_ARM_CCI400_PMU
+#अगर_घोषित CONFIG_ARM_CCI400_PMU
 
 /* Port ids */
-#define CCI400_PORT_S0		0
-#define CCI400_PORT_S1		1
-#define CCI400_PORT_S2		2
-#define CCI400_PORT_S3		3
-#define CCI400_PORT_S4		4
-#define CCI400_PORT_M0		5
-#define CCI400_PORT_M1		6
-#define CCI400_PORT_M2		7
+#घोषणा CCI400_PORT_S0		0
+#घोषणा CCI400_PORT_S1		1
+#घोषणा CCI400_PORT_S2		2
+#घोषणा CCI400_PORT_S3		3
+#घोषणा CCI400_PORT_S4		4
+#घोषणा CCI400_PORT_M0		5
+#घोषणा CCI400_PORT_M1		6
+#घोषणा CCI400_PORT_M2		7
 
-#define CCI400_R1_PX		5
+#घोषणा CCI400_R1_PX		5
 
 /*
  * Instead of an event id to monitor CCI cycles, a dedicated counter is
  * provided. Use 0xff to represent CCI cycles and hope that no future revisions
  * make use of this event in hardware.
  */
-enum cci400_perf_events {
+क्रमागत cci400_perf_events अणु
 	CCI400_PMU_CYCLES = 0xff
-};
+पूर्ण;
 
-#define CCI400_PMU_CYCLE_CNTR_IDX	0
-#define CCI400_PMU_CNTR0_IDX		1
+#घोषणा CCI400_PMU_CYCLE_CNTR_IDX	0
+#घोषणा CCI400_PMU_CNTR0_IDX		1
 
 /*
- * CCI PMU event id is an 8-bit value made of two parts - bits 7:5 for one of 8
- * ports and bits 4:0 are event codes. There are different event codes
+ * CCI PMU event id is an 8-bit value made of two parts - bits 7:5 क्रम one of 8
+ * ports and bits 4:0 are event codes. There are dअगरferent event codes
  * associated with each port type.
  *
  * Additionally, the range of events associated with the port types changed
  * between Rev0 and Rev1.
  *
- * The constants below define the range of valid codes for each port type for
- * the different revisions and are used to validate the event to be monitored.
+ * The स्थिरants below define the range of valid codes क्रम each port type क्रम
+ * the dअगरferent revisions and are used to validate the event to be monitored.
  */
 
-#define CCI400_PMU_EVENT_MASK		0xffUL
-#define CCI400_PMU_EVENT_SOURCE_SHIFT	5
-#define CCI400_PMU_EVENT_SOURCE_MASK	0x7
-#define CCI400_PMU_EVENT_CODE_SHIFT	0
-#define CCI400_PMU_EVENT_CODE_MASK	0x1f
-#define CCI400_PMU_EVENT_SOURCE(event) \
+#घोषणा CCI400_PMU_EVENT_MASK		0xffUL
+#घोषणा CCI400_PMU_EVENT_SOURCE_SHIFT	5
+#घोषणा CCI400_PMU_EVENT_SOURCE_MASK	0x7
+#घोषणा CCI400_PMU_EVENT_CODE_SHIFT	0
+#घोषणा CCI400_PMU_EVENT_CODE_MASK	0x1f
+#घोषणा CCI400_PMU_EVENT_SOURCE(event) \
 	((event >> CCI400_PMU_EVENT_SOURCE_SHIFT) & \
 			CCI400_PMU_EVENT_SOURCE_MASK)
-#define CCI400_PMU_EVENT_CODE(event) \
+#घोषणा CCI400_PMU_EVENT_CODE(event) \
 	((event >> CCI400_PMU_EVENT_CODE_SHIFT) & CCI400_PMU_EVENT_CODE_MASK)
 
-#define CCI400_R0_SLAVE_PORT_MIN_EV	0x00
-#define CCI400_R0_SLAVE_PORT_MAX_EV	0x13
-#define CCI400_R0_MASTER_PORT_MIN_EV	0x14
-#define CCI400_R0_MASTER_PORT_MAX_EV	0x1a
+#घोषणा CCI400_R0_SLAVE_PORT_MIN_EV	0x00
+#घोषणा CCI400_R0_SLAVE_PORT_MAX_EV	0x13
+#घोषणा CCI400_R0_MASTER_PORT_MIN_EV	0x14
+#घोषणा CCI400_R0_MASTER_PORT_MAX_EV	0x1a
 
-#define CCI400_R1_SLAVE_PORT_MIN_EV	0x00
-#define CCI400_R1_SLAVE_PORT_MAX_EV	0x14
-#define CCI400_R1_MASTER_PORT_MIN_EV	0x00
-#define CCI400_R1_MASTER_PORT_MAX_EV	0x11
+#घोषणा CCI400_R1_SLAVE_PORT_MIN_EV	0x00
+#घोषणा CCI400_R1_SLAVE_PORT_MAX_EV	0x14
+#घोषणा CCI400_R1_MASTER_PORT_MIN_EV	0x00
+#घोषणा CCI400_R1_MASTER_PORT_MAX_EV	0x11
 
-#define CCI400_CYCLE_EVENT_EXT_ATTR_ENTRY(_name, _config) \
+#घोषणा CCI400_CYCLE_EVENT_EXT_ATTR_ENTRY(_name, _config) \
 	CCI_EXT_ATTR_ENTRY(_name, cci400_pmu_cycle_event_show, \
-					(unsigned long)_config)
+					(अचिन्हित दीर्घ)_config)
 
-static ssize_t cci400_pmu_cycle_event_show(struct device *dev,
-			struct device_attribute *attr, char *buf);
+अटल sमाप_प्रकार cci400_pmu_cycle_event_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf);
 
-static struct attribute *cci400_pmu_format_attrs[] = {
+अटल काष्ठा attribute *cci400_pmu_क्रमmat_attrs[] = अणु
 	CCI_FORMAT_EXT_ATTR_ENTRY(event, "config:0-4"),
 	CCI_FORMAT_EXT_ATTR_ENTRY(source, "config:5-7"),
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct attribute *cci400_r0_pmu_event_attrs[] = {
+अटल काष्ठा attribute *cci400_r0_pmu_event_attrs[] = अणु
 	/* Slave events */
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_any, 0x0),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_device, 0x01),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_normal_or_nonshareable, 0x2),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_inner_or_outershareable, 0x3),
-	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_cache_maintenance, 0x4),
+	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_cache_मुख्यtenance, 0x4),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_mem_barrier, 0x5),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_sync_barrier, 0x6),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_dvm_msg, 0x7),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_dvm_msg_sync, 0x8),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_stall_tt_full, 0x9),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_r_data_last_hs_snoop, 0xA),
-	CCI_EVENT_EXT_ATTR_ENTRY(si_r_data_stall_rvalids_h_rready_l, 0xB),
+	CCI_EVENT_EXT_ATTR_ENTRY(si_r_data_stall_rvalids_h_rपढ़ोy_l, 0xB),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_any, 0xC),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_device, 0xD),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_normal_or_nonshareable, 0xE),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_inner_or_outershare_wback_wclean, 0xF),
-	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_write_unique, 0x10),
-	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_write_line_unique, 0x11),
+	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_ग_लिखो_unique, 0x10),
+	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_ग_लिखो_line_unique, 0x11),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_evict, 0x12),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_stall_tt_full, 0x13),
 	/* Master events */
@@ -249,31 +250,31 @@ static struct attribute *cci400_r0_pmu_event_attrs[] = {
 	CCI_EVENT_EXT_ATTR_ENTRY(mi_rrq_stall_barrier_hazard, 0x18),
 	CCI_EVENT_EXT_ATTR_ENTRY(mi_wrq_stall_barrier_hazard, 0x19),
 	CCI_EVENT_EXT_ATTR_ENTRY(mi_wrq_stall_tt_full, 0x1A),
-	/* Special event for cycles counter */
+	/* Special event क्रम cycles counter */
 	CCI400_CYCLE_EVENT_EXT_ATTR_ENTRY(cycles, 0xff),
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct attribute *cci400_r1_pmu_event_attrs[] = {
+अटल काष्ठा attribute *cci400_r1_pmu_event_attrs[] = अणु
 	/* Slave events */
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_any, 0x0),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_device, 0x01),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_normal_or_nonshareable, 0x2),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_inner_or_outershareable, 0x3),
-	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_cache_maintenance, 0x4),
+	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_cache_मुख्यtenance, 0x4),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_mem_barrier, 0x5),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_sync_barrier, 0x6),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_dvm_msg, 0x7),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_dvm_msg_sync, 0x8),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_stall_tt_full, 0x9),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_r_data_last_hs_snoop, 0xA),
-	CCI_EVENT_EXT_ATTR_ENTRY(si_r_data_stall_rvalids_h_rready_l, 0xB),
+	CCI_EVENT_EXT_ATTR_ENTRY(si_r_data_stall_rvalids_h_rपढ़ोy_l, 0xB),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_any, 0xC),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_device, 0xD),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_normal_or_nonshareable, 0xE),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_inner_or_outershare_wback_wclean, 0xF),
-	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_write_unique, 0x10),
-	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_write_line_unique, 0x11),
+	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_ग_लिखो_unique, 0x10),
+	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_ग_लिखो_line_unique, 0x11),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_hs_evict, 0x12),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_stall_tt_full, 0x13),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_stall_slave_id_hazard, 0x14),
@@ -296,166 +297,166 @@ static struct attribute *cci400_r1_pmu_event_attrs[] = {
 	CCI_EVENT_EXT_ATTR_ENTRY(mi_wrq_stall_qvn_vn2, 0xF),
 	CCI_EVENT_EXT_ATTR_ENTRY(mi_wrq_stall_qvn_vn3, 0x10),
 	CCI_EVENT_EXT_ATTR_ENTRY(mi_wrq_unique_or_line_unique_addr_hazard, 0x11),
-	/* Special event for cycles counter */
+	/* Special event क्रम cycles counter */
 	CCI400_CYCLE_EVENT_EXT_ATTR_ENTRY(cycles, 0xff),
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static ssize_t cci400_pmu_cycle_event_show(struct device *dev,
-			struct device_attribute *attr, char *buf)
-{
-	struct dev_ext_attribute *eattr = container_of(attr,
-				struct dev_ext_attribute, attr);
-	return sysfs_emit(buf, "config=0x%lx\n", (unsigned long)eattr->var);
-}
+अटल sमाप_प्रकार cci400_pmu_cycle_event_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा dev_ext_attribute *eattr = container_of(attr,
+				काष्ठा dev_ext_attribute, attr);
+	वापस sysfs_emit(buf, "config=0x%lx\n", (अचिन्हित दीर्घ)eattr->var);
+पूर्ण
 
-static int cci400_get_event_idx(struct cci_pmu *cci_pmu,
-				struct cci_pmu_hw_events *hw,
-				unsigned long cci_event)
-{
-	int idx;
+अटल पूर्णांक cci400_get_event_idx(काष्ठा cci_pmu *cci_pmu,
+				काष्ठा cci_pmu_hw_events *hw,
+				अचिन्हित दीर्घ cci_event)
+अणु
+	पूर्णांक idx;
 
 	/* cycles event idx is fixed */
-	if (cci_event == CCI400_PMU_CYCLES) {
-		if (test_and_set_bit(CCI400_PMU_CYCLE_CNTR_IDX, hw->used_mask))
-			return -EAGAIN;
+	अगर (cci_event == CCI400_PMU_CYCLES) अणु
+		अगर (test_and_set_bit(CCI400_PMU_CYCLE_CNTR_IDX, hw->used_mask))
+			वापस -EAGAIN;
 
-		return CCI400_PMU_CYCLE_CNTR_IDX;
-	}
+		वापस CCI400_PMU_CYCLE_CNTR_IDX;
+	पूर्ण
 
-	for (idx = CCI400_PMU_CNTR0_IDX; idx <= CCI_PMU_CNTR_LAST(cci_pmu); ++idx)
-		if (!test_and_set_bit(idx, hw->used_mask))
-			return idx;
+	क्रम (idx = CCI400_PMU_CNTR0_IDX; idx <= CCI_PMU_CNTR_LAST(cci_pmu); ++idx)
+		अगर (!test_and_set_bit(idx, hw->used_mask))
+			वापस idx;
 
 	/* No counters available */
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
-static int cci400_validate_hw_event(struct cci_pmu *cci_pmu, unsigned long hw_event)
-{
+अटल पूर्णांक cci400_validate_hw_event(काष्ठा cci_pmu *cci_pmu, अचिन्हित दीर्घ hw_event)
+अणु
 	u8 ev_source = CCI400_PMU_EVENT_SOURCE(hw_event);
 	u8 ev_code = CCI400_PMU_EVENT_CODE(hw_event);
-	int if_type;
+	पूर्णांक अगर_type;
 
-	if (hw_event & ~CCI400_PMU_EVENT_MASK)
-		return -ENOENT;
+	अगर (hw_event & ~CCI400_PMU_EVENT_MASK)
+		वापस -ENOENT;
 
-	if (hw_event == CCI400_PMU_CYCLES)
-		return hw_event;
+	अगर (hw_event == CCI400_PMU_CYCLES)
+		वापस hw_event;
 
-	switch (ev_source) {
-	case CCI400_PORT_S0:
-	case CCI400_PORT_S1:
-	case CCI400_PORT_S2:
-	case CCI400_PORT_S3:
-	case CCI400_PORT_S4:
+	चयन (ev_source) अणु
+	हाल CCI400_PORT_S0:
+	हाल CCI400_PORT_S1:
+	हाल CCI400_PORT_S2:
+	हाल CCI400_PORT_S3:
+	हाल CCI400_PORT_S4:
 		/* Slave Interface */
-		if_type = CCI_IF_SLAVE;
-		break;
-	case CCI400_PORT_M0:
-	case CCI400_PORT_M1:
-	case CCI400_PORT_M2:
+		अगर_type = CCI_IF_SLAVE;
+		अवरोध;
+	हाल CCI400_PORT_M0:
+	हाल CCI400_PORT_M1:
+	हाल CCI400_PORT_M2:
 		/* Master Interface */
-		if_type = CCI_IF_MASTER;
-		break;
-	default:
-		return -ENOENT;
-	}
+		अगर_type = CCI_IF_MASTER;
+		अवरोध;
+	शेष:
+		वापस -ENOENT;
+	पूर्ण
 
-	if (ev_code >= cci_pmu->model->event_ranges[if_type].min &&
-		ev_code <= cci_pmu->model->event_ranges[if_type].max)
-		return hw_event;
+	अगर (ev_code >= cci_pmu->model->event_ranges[अगर_type].min &&
+		ev_code <= cci_pmu->model->event_ranges[अगर_type].max)
+		वापस hw_event;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static int probe_cci400_revision(struct cci_pmu *cci_pmu)
-{
-	int rev;
-	rev = readl_relaxed(cci_pmu->ctrl_base + CCI_PID2) & CCI_PID2_REV_MASK;
+अटल पूर्णांक probe_cci400_revision(काष्ठा cci_pmu *cci_pmu)
+अणु
+	पूर्णांक rev;
+	rev = पढ़ोl_relaxed(cci_pmu->ctrl_base + CCI_PID2) & CCI_PID2_REV_MASK;
 	rev >>= CCI_PID2_REV_SHIFT;
 
-	if (rev < CCI400_R1_PX)
-		return CCI400_R0;
-	else
-		return CCI400_R1;
-}
+	अगर (rev < CCI400_R1_PX)
+		वापस CCI400_R0;
+	अन्यथा
+		वापस CCI400_R1;
+पूर्ण
 
-static const struct cci_pmu_model *probe_cci_model(struct cci_pmu *cci_pmu)
-{
-	if (platform_has_secure_cci_access())
-		return &cci_pmu_models[probe_cci400_revision(cci_pmu)];
-	return NULL;
-}
-#else	/* !CONFIG_ARM_CCI400_PMU */
-static inline struct cci_pmu_model *probe_cci_model(struct cci_pmu *cci_pmu)
-{
-	return NULL;
-}
-#endif	/* CONFIG_ARM_CCI400_PMU */
+अटल स्थिर काष्ठा cci_pmu_model *probe_cci_model(काष्ठा cci_pmu *cci_pmu)
+अणु
+	अगर (platक्रमm_has_secure_cci_access())
+		वापस &cci_pmu_models[probe_cci400_revision(cci_pmu)];
+	वापस शून्य;
+पूर्ण
+#अन्यथा	/* !CONFIG_ARM_CCI400_PMU */
+अटल अंतरभूत काष्ठा cci_pmu_model *probe_cci_model(काष्ठा cci_pmu *cci_pmu)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_ARM_CCI400_PMU */
 
-#ifdef CONFIG_ARM_CCI5xx_PMU
+#अगर_घोषित CONFIG_ARM_CCI5xx_PMU
 
 /*
  * CCI5xx PMU event id is an 9-bit value made of two parts.
- *	 bits [8:5] - Source for the event
- *	 bits [4:0] - Event code (specific to type of interface)
+ *	 bits [8:5] - Source क्रम the event
+ *	 bits [4:0] - Event code (specअगरic to type of पूर्णांकerface)
  *
  *
  */
 
 /* Port ids */
-#define CCI5xx_PORT_S0			0x0
-#define CCI5xx_PORT_S1			0x1
-#define CCI5xx_PORT_S2			0x2
-#define CCI5xx_PORT_S3			0x3
-#define CCI5xx_PORT_S4			0x4
-#define CCI5xx_PORT_S5			0x5
-#define CCI5xx_PORT_S6			0x6
+#घोषणा CCI5xx_PORT_S0			0x0
+#घोषणा CCI5xx_PORT_S1			0x1
+#घोषणा CCI5xx_PORT_S2			0x2
+#घोषणा CCI5xx_PORT_S3			0x3
+#घोषणा CCI5xx_PORT_S4			0x4
+#घोषणा CCI5xx_PORT_S5			0x5
+#घोषणा CCI5xx_PORT_S6			0x6
 
-#define CCI5xx_PORT_M0			0x8
-#define CCI5xx_PORT_M1			0x9
-#define CCI5xx_PORT_M2			0xa
-#define CCI5xx_PORT_M3			0xb
-#define CCI5xx_PORT_M4			0xc
-#define CCI5xx_PORT_M5			0xd
-#define CCI5xx_PORT_M6			0xe
+#घोषणा CCI5xx_PORT_M0			0x8
+#घोषणा CCI5xx_PORT_M1			0x9
+#घोषणा CCI5xx_PORT_M2			0xa
+#घोषणा CCI5xx_PORT_M3			0xb
+#घोषणा CCI5xx_PORT_M4			0xc
+#घोषणा CCI5xx_PORT_M5			0xd
+#घोषणा CCI5xx_PORT_M6			0xe
 
-#define CCI5xx_PORT_GLOBAL		0xf
+#घोषणा CCI5xx_PORT_GLOBAL		0xf
 
-#define CCI5xx_PMU_EVENT_MASK		0x1ffUL
-#define CCI5xx_PMU_EVENT_SOURCE_SHIFT	0x5
-#define CCI5xx_PMU_EVENT_SOURCE_MASK	0xf
-#define CCI5xx_PMU_EVENT_CODE_SHIFT	0x0
-#define CCI5xx_PMU_EVENT_CODE_MASK	0x1f
+#घोषणा CCI5xx_PMU_EVENT_MASK		0x1ffUL
+#घोषणा CCI5xx_PMU_EVENT_SOURCE_SHIFT	0x5
+#घोषणा CCI5xx_PMU_EVENT_SOURCE_MASK	0xf
+#घोषणा CCI5xx_PMU_EVENT_CODE_SHIFT	0x0
+#घोषणा CCI5xx_PMU_EVENT_CODE_MASK	0x1f
 
-#define CCI5xx_PMU_EVENT_SOURCE(event)	\
+#घोषणा CCI5xx_PMU_EVENT_SOURCE(event)	\
 	((event >> CCI5xx_PMU_EVENT_SOURCE_SHIFT) & CCI5xx_PMU_EVENT_SOURCE_MASK)
-#define CCI5xx_PMU_EVENT_CODE(event)	\
+#घोषणा CCI5xx_PMU_EVENT_CODE(event)	\
 	((event >> CCI5xx_PMU_EVENT_CODE_SHIFT) & CCI5xx_PMU_EVENT_CODE_MASK)
 
-#define CCI5xx_SLAVE_PORT_MIN_EV	0x00
-#define CCI5xx_SLAVE_PORT_MAX_EV	0x1f
-#define CCI5xx_MASTER_PORT_MIN_EV	0x00
-#define CCI5xx_MASTER_PORT_MAX_EV	0x06
-#define CCI5xx_GLOBAL_PORT_MIN_EV	0x00
-#define CCI5xx_GLOBAL_PORT_MAX_EV	0x0f
+#घोषणा CCI5xx_SLAVE_PORT_MIN_EV	0x00
+#घोषणा CCI5xx_SLAVE_PORT_MAX_EV	0x1f
+#घोषणा CCI5xx_MASTER_PORT_MIN_EV	0x00
+#घोषणा CCI5xx_MASTER_PORT_MAX_EV	0x06
+#घोषणा CCI5xx_GLOBAL_PORT_MIN_EV	0x00
+#घोषणा CCI5xx_GLOBAL_PORT_MAX_EV	0x0f
 
 
-#define CCI5xx_GLOBAL_EVENT_EXT_ATTR_ENTRY(_name, _config) \
+#घोषणा CCI5xx_GLOBAL_EVENT_EXT_ATTR_ENTRY(_name, _config) \
 	CCI_EXT_ATTR_ENTRY(_name, cci5xx_pmu_global_event_show, \
-					(unsigned long) _config)
+					(अचिन्हित दीर्घ) _config)
 
-static ssize_t cci5xx_pmu_global_event_show(struct device *dev,
-				struct device_attribute *attr, char *buf);
+अटल sमाप_प्रकार cci5xx_pmu_global_event_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf);
 
-static struct attribute *cci5xx_pmu_format_attrs[] = {
+अटल काष्ठा attribute *cci5xx_pmu_क्रमmat_attrs[] = अणु
 	CCI_FORMAT_EXT_ATTR_ENTRY(event, "config:0-4"),
 	CCI_FORMAT_EXT_ATTR_ENTRY(source, "config:5-8"),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *cci5xx_pmu_event_attrs[] = {
+अटल काष्ठा attribute *cci5xx_pmu_event_attrs[] = अणु
 	/* Slave events */
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_arvalid, 0x0),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_dev, 0x1),
@@ -463,7 +464,7 @@ static struct attribute *cci5xx_pmu_event_attrs[] = {
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_shareable_non_alloc, 0x3),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_shareable_alloc, 0x4),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_invalidate, 0x5),
-	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_cache_maint, 0x6),
+	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_cache_मुख्यt, 0x6),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_dvm_msg, 0x7),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_rval, 0x8),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_hs_rlast_snoop, 0x9),
@@ -477,7 +478,7 @@ static struct attribute *cci5xx_pmu_event_attrs[] = {
 	CCI_EVENT_EXT_ATTR_ENTRY(si_wrq_wrevict, 0x11),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_w_data_beat, 0x12),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_srq_acvalid, 0x13),
-	CCI_EVENT_EXT_ATTR_ENTRY(si_srq_read, 0x14),
+	CCI_EVENT_EXT_ATTR_ENTRY(si_srq_पढ़ो, 0x14),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_srq_clean, 0x15),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_srq_data_transfer_low, 0x16),
 	CCI_EVENT_EXT_ATTR_ENTRY(si_rrq_stall_arvalid, 0x17),
@@ -516,414 +517,414 @@ static struct attribute *cci5xx_pmu_event_attrs[] = {
 	CCI5xx_GLOBAL_EVENT_EXT_ATTR_ENTRY(cci_rq_stall_addr_hazard, 0xD),
 	CCI5xx_GLOBAL_EVENT_EXT_ATTR_ENTRY(cci_snoop_rq_stall_tt_full, 0xE),
 	CCI5xx_GLOBAL_EVENT_EXT_ATTR_ENTRY(cci_snoop_rq_tzmp1_prot, 0xF),
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static ssize_t cci5xx_pmu_global_event_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct dev_ext_attribute *eattr = container_of(attr,
-					struct dev_ext_attribute, attr);
+अटल sमाप_प्रकार cci5xx_pmu_global_event_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा dev_ext_attribute *eattr = container_of(attr,
+					काष्ठा dev_ext_attribute, attr);
 	/* Global events have single fixed source code */
-	return sysfs_emit(buf, "event=0x%lx,source=0x%x\n",
-			  (unsigned long)eattr->var, CCI5xx_PORT_GLOBAL);
-}
+	वापस sysfs_emit(buf, "event=0x%lx,source=0x%x\n",
+			  (अचिन्हित दीर्घ)eattr->var, CCI5xx_PORT_GLOBAL);
+पूर्ण
 
 /*
  * CCI500 provides 8 independent event counters that can count
  * any of the events available.
  * CCI500 PMU event source ids
- *	0x0-0x6 - Slave interfaces
- *	0x8-0xD - Master interfaces
+ *	0x0-0x6 - Slave पूर्णांकerfaces
+ *	0x8-0xD - Master पूर्णांकerfaces
  *	0xf     - Global Events
  *	0x7,0xe - Reserved
  */
-static int cci500_validate_hw_event(struct cci_pmu *cci_pmu,
-					unsigned long hw_event)
-{
+अटल पूर्णांक cci500_validate_hw_event(काष्ठा cci_pmu *cci_pmu,
+					अचिन्हित दीर्घ hw_event)
+अणु
 	u32 ev_source = CCI5xx_PMU_EVENT_SOURCE(hw_event);
 	u32 ev_code = CCI5xx_PMU_EVENT_CODE(hw_event);
-	int if_type;
+	पूर्णांक अगर_type;
 
-	if (hw_event & ~CCI5xx_PMU_EVENT_MASK)
-		return -ENOENT;
+	अगर (hw_event & ~CCI5xx_PMU_EVENT_MASK)
+		वापस -ENOENT;
 
-	switch (ev_source) {
-	case CCI5xx_PORT_S0:
-	case CCI5xx_PORT_S1:
-	case CCI5xx_PORT_S2:
-	case CCI5xx_PORT_S3:
-	case CCI5xx_PORT_S4:
-	case CCI5xx_PORT_S5:
-	case CCI5xx_PORT_S6:
-		if_type = CCI_IF_SLAVE;
-		break;
-	case CCI5xx_PORT_M0:
-	case CCI5xx_PORT_M1:
-	case CCI5xx_PORT_M2:
-	case CCI5xx_PORT_M3:
-	case CCI5xx_PORT_M4:
-	case CCI5xx_PORT_M5:
-		if_type = CCI_IF_MASTER;
-		break;
-	case CCI5xx_PORT_GLOBAL:
-		if_type = CCI_IF_GLOBAL;
-		break;
-	default:
-		return -ENOENT;
-	}
+	चयन (ev_source) अणु
+	हाल CCI5xx_PORT_S0:
+	हाल CCI5xx_PORT_S1:
+	हाल CCI5xx_PORT_S2:
+	हाल CCI5xx_PORT_S3:
+	हाल CCI5xx_PORT_S4:
+	हाल CCI5xx_PORT_S5:
+	हाल CCI5xx_PORT_S6:
+		अगर_type = CCI_IF_SLAVE;
+		अवरोध;
+	हाल CCI5xx_PORT_M0:
+	हाल CCI5xx_PORT_M1:
+	हाल CCI5xx_PORT_M2:
+	हाल CCI5xx_PORT_M3:
+	हाल CCI5xx_PORT_M4:
+	हाल CCI5xx_PORT_M5:
+		अगर_type = CCI_IF_MASTER;
+		अवरोध;
+	हाल CCI5xx_PORT_GLOBAL:
+		अगर_type = CCI_IF_GLOBAL;
+		अवरोध;
+	शेष:
+		वापस -ENOENT;
+	पूर्ण
 
-	if (ev_code >= cci_pmu->model->event_ranges[if_type].min &&
-		ev_code <= cci_pmu->model->event_ranges[if_type].max)
-		return hw_event;
+	अगर (ev_code >= cci_pmu->model->event_ranges[अगर_type].min &&
+		ev_code <= cci_pmu->model->event_ranges[अगर_type].max)
+		वापस hw_event;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
 /*
  * CCI550 provides 8 independent event counters that can count
  * any of the events available.
  * CCI550 PMU event source ids
- *	0x0-0x6 - Slave interfaces
- *	0x8-0xe - Master interfaces
+ *	0x0-0x6 - Slave पूर्णांकerfaces
+ *	0x8-0xe - Master पूर्णांकerfaces
  *	0xf     - Global Events
  *	0x7	- Reserved
  */
-static int cci550_validate_hw_event(struct cci_pmu *cci_pmu,
-					unsigned long hw_event)
-{
+अटल पूर्णांक cci550_validate_hw_event(काष्ठा cci_pmu *cci_pmu,
+					अचिन्हित दीर्घ hw_event)
+अणु
 	u32 ev_source = CCI5xx_PMU_EVENT_SOURCE(hw_event);
 	u32 ev_code = CCI5xx_PMU_EVENT_CODE(hw_event);
-	int if_type;
+	पूर्णांक अगर_type;
 
-	if (hw_event & ~CCI5xx_PMU_EVENT_MASK)
-		return -ENOENT;
+	अगर (hw_event & ~CCI5xx_PMU_EVENT_MASK)
+		वापस -ENOENT;
 
-	switch (ev_source) {
-	case CCI5xx_PORT_S0:
-	case CCI5xx_PORT_S1:
-	case CCI5xx_PORT_S2:
-	case CCI5xx_PORT_S3:
-	case CCI5xx_PORT_S4:
-	case CCI5xx_PORT_S5:
-	case CCI5xx_PORT_S6:
-		if_type = CCI_IF_SLAVE;
-		break;
-	case CCI5xx_PORT_M0:
-	case CCI5xx_PORT_M1:
-	case CCI5xx_PORT_M2:
-	case CCI5xx_PORT_M3:
-	case CCI5xx_PORT_M4:
-	case CCI5xx_PORT_M5:
-	case CCI5xx_PORT_M6:
-		if_type = CCI_IF_MASTER;
-		break;
-	case CCI5xx_PORT_GLOBAL:
-		if_type = CCI_IF_GLOBAL;
-		break;
-	default:
-		return -ENOENT;
-	}
+	चयन (ev_source) अणु
+	हाल CCI5xx_PORT_S0:
+	हाल CCI5xx_PORT_S1:
+	हाल CCI5xx_PORT_S2:
+	हाल CCI5xx_PORT_S3:
+	हाल CCI5xx_PORT_S4:
+	हाल CCI5xx_PORT_S5:
+	हाल CCI5xx_PORT_S6:
+		अगर_type = CCI_IF_SLAVE;
+		अवरोध;
+	हाल CCI5xx_PORT_M0:
+	हाल CCI5xx_PORT_M1:
+	हाल CCI5xx_PORT_M2:
+	हाल CCI5xx_PORT_M3:
+	हाल CCI5xx_PORT_M4:
+	हाल CCI5xx_PORT_M5:
+	हाल CCI5xx_PORT_M6:
+		अगर_type = CCI_IF_MASTER;
+		अवरोध;
+	हाल CCI5xx_PORT_GLOBAL:
+		अगर_type = CCI_IF_GLOBAL;
+		अवरोध;
+	शेष:
+		वापस -ENOENT;
+	पूर्ण
 
-	if (ev_code >= cci_pmu->model->event_ranges[if_type].min &&
-		ev_code <= cci_pmu->model->event_ranges[if_type].max)
-		return hw_event;
+	अगर (ev_code >= cci_pmu->model->event_ranges[अगर_type].min &&
+		ev_code <= cci_pmu->model->event_ranges[अगर_type].max)
+		वापस hw_event;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-#endif	/* CONFIG_ARM_CCI5xx_PMU */
+#पूर्ण_अगर	/* CONFIG_ARM_CCI5xx_PMU */
 
 /*
  * Program the CCI PMU counters which have PERF_HES_ARCH set
- * with the event period and mark them ready before we enable
+ * with the event period and mark them पढ़ोy beक्रमe we enable
  * PMU.
  */
-static void cci_pmu_sync_counters(struct cci_pmu *cci_pmu)
-{
-	int i;
-	struct cci_pmu_hw_events *cci_hw = &cci_pmu->hw_events;
+अटल व्योम cci_pmu_sync_counters(काष्ठा cci_pmu *cci_pmu)
+अणु
+	पूर्णांक i;
+	काष्ठा cci_pmu_hw_events *cci_hw = &cci_pmu->hw_events;
 	DECLARE_BITMAP(mask, HW_CNTRS_MAX);
 
-	bitmap_zero(mask, cci_pmu->num_cntrs);
-	for_each_set_bit(i, cci_pmu->hw_events.used_mask, cci_pmu->num_cntrs) {
-		struct perf_event *event = cci_hw->events[i];
+	biपंचांगap_zero(mask, cci_pmu->num_cntrs);
+	क्रम_each_set_bit(i, cci_pmu->hw_events.used_mask, cci_pmu->num_cntrs) अणु
+		काष्ठा perf_event *event = cci_hw->events[i];
 
-		if (WARN_ON(!event))
-			continue;
+		अगर (WARN_ON(!event))
+			जारी;
 
 		/* Leave the events which are not counting */
-		if (event->hw.state & PERF_HES_STOPPED)
-			continue;
-		if (event->hw.state & PERF_HES_ARCH) {
+		अगर (event->hw.state & PERF_HES_STOPPED)
+			जारी;
+		अगर (event->hw.state & PERF_HES_ARCH) अणु
 			set_bit(i, mask);
 			event->hw.state &= ~PERF_HES_ARCH;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	pmu_write_counters(cci_pmu, mask);
-}
+	pmu_ग_लिखो_counters(cci_pmu, mask);
+पूर्ण
 
 /* Should be called with cci_pmu->hw_events->pmu_lock held */
-static void __cci_pmu_enable_nosync(struct cci_pmu *cci_pmu)
-{
+अटल व्योम __cci_pmu_enable_nosync(काष्ठा cci_pmu *cci_pmu)
+अणु
 	u32 val;
 
 	/* Enable all the PMU counters. */
-	val = readl_relaxed(cci_pmu->ctrl_base + CCI_PMCR) | CCI_PMCR_CEN;
-	writel(val, cci_pmu->ctrl_base + CCI_PMCR);
-}
+	val = पढ़ोl_relaxed(cci_pmu->ctrl_base + CCI_PMCR) | CCI_PMCR_CEN;
+	ग_लिखोl(val, cci_pmu->ctrl_base + CCI_PMCR);
+पूर्ण
 
 /* Should be called with cci_pmu->hw_events->pmu_lock held */
-static void __cci_pmu_enable_sync(struct cci_pmu *cci_pmu)
-{
+अटल व्योम __cci_pmu_enable_sync(काष्ठा cci_pmu *cci_pmu)
+अणु
 	cci_pmu_sync_counters(cci_pmu);
 	__cci_pmu_enable_nosync(cci_pmu);
-}
+पूर्ण
 
 /* Should be called with cci_pmu->hw_events->pmu_lock held */
-static void __cci_pmu_disable(struct cci_pmu *cci_pmu)
-{
+अटल व्योम __cci_pmu_disable(काष्ठा cci_pmu *cci_pmu)
+अणु
 	u32 val;
 
 	/* Disable all the PMU counters. */
-	val = readl_relaxed(cci_pmu->ctrl_base + CCI_PMCR) & ~CCI_PMCR_CEN;
-	writel(val, cci_pmu->ctrl_base + CCI_PMCR);
-}
+	val = पढ़ोl_relaxed(cci_pmu->ctrl_base + CCI_PMCR) & ~CCI_PMCR_CEN;
+	ग_लिखोl(val, cci_pmu->ctrl_base + CCI_PMCR);
+पूर्ण
 
-static ssize_t cci_pmu_format_show(struct device *dev,
-			struct device_attribute *attr, char *buf)
-{
-	struct dev_ext_attribute *eattr = container_of(attr,
-				struct dev_ext_attribute, attr);
-	return sysfs_emit(buf, "%s\n", (char *)eattr->var);
-}
+अटल sमाप_प्रकार cci_pmu_क्रमmat_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा dev_ext_attribute *eattr = container_of(attr,
+				काष्ठा dev_ext_attribute, attr);
+	वापस sysfs_emit(buf, "%s\n", (अक्षर *)eattr->var);
+पूर्ण
 
-static ssize_t cci_pmu_event_show(struct device *dev,
-			struct device_attribute *attr, char *buf)
-{
-	struct dev_ext_attribute *eattr = container_of(attr,
-				struct dev_ext_attribute, attr);
-	/* source parameter is mandatory for normal PMU events */
-	return sysfs_emit(buf, "source=?,event=0x%lx\n",
-			  (unsigned long)eattr->var);
-}
+अटल sमाप_प्रकार cci_pmu_event_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा dev_ext_attribute *eattr = container_of(attr,
+				काष्ठा dev_ext_attribute, attr);
+	/* source parameter is mandatory क्रम normal PMU events */
+	वापस sysfs_emit(buf, "source=?,event=0x%lx\n",
+			  (अचिन्हित दीर्घ)eattr->var);
+पूर्ण
 
-static int pmu_is_valid_counter(struct cci_pmu *cci_pmu, int idx)
-{
-	return 0 <= idx && idx <= CCI_PMU_CNTR_LAST(cci_pmu);
-}
+अटल पूर्णांक pmu_is_valid_counter(काष्ठा cci_pmu *cci_pmu, पूर्णांक idx)
+अणु
+	वापस 0 <= idx && idx <= CCI_PMU_CNTR_LAST(cci_pmu);
+पूर्ण
 
-static u32 pmu_read_register(struct cci_pmu *cci_pmu, int idx, unsigned int offset)
-{
-	return readl_relaxed(cci_pmu->base +
+अटल u32 pmu_पढ़ो_रेजिस्टर(काष्ठा cci_pmu *cci_pmu, पूर्णांक idx, अचिन्हित पूर्णांक offset)
+अणु
+	वापस पढ़ोl_relaxed(cci_pmu->base +
 			     CCI_PMU_CNTR_BASE(cci_pmu->model, idx) + offset);
-}
+पूर्ण
 
-static void pmu_write_register(struct cci_pmu *cci_pmu, u32 value,
-			       int idx, unsigned int offset)
-{
-	writel_relaxed(value, cci_pmu->base +
+अटल व्योम pmu_ग_लिखो_रेजिस्टर(काष्ठा cci_pmu *cci_pmu, u32 value,
+			       पूर्णांक idx, अचिन्हित पूर्णांक offset)
+अणु
+	ग_लिखोl_relaxed(value, cci_pmu->base +
 		       CCI_PMU_CNTR_BASE(cci_pmu->model, idx) + offset);
-}
+पूर्ण
 
-static void pmu_disable_counter(struct cci_pmu *cci_pmu, int idx)
-{
-	pmu_write_register(cci_pmu, 0, idx, CCI_PMU_CNTR_CTRL);
-}
+अटल व्योम pmu_disable_counter(काष्ठा cci_pmu *cci_pmu, पूर्णांक idx)
+अणु
+	pmu_ग_लिखो_रेजिस्टर(cci_pmu, 0, idx, CCI_PMU_CNTR_CTRL);
+पूर्ण
 
-static void pmu_enable_counter(struct cci_pmu *cci_pmu, int idx)
-{
-	pmu_write_register(cci_pmu, 1, idx, CCI_PMU_CNTR_CTRL);
-}
+अटल व्योम pmu_enable_counter(काष्ठा cci_pmu *cci_pmu, पूर्णांक idx)
+अणु
+	pmu_ग_लिखो_रेजिस्टर(cci_pmu, 1, idx, CCI_PMU_CNTR_CTRL);
+पूर्ण
 
-static bool __maybe_unused
-pmu_counter_is_enabled(struct cci_pmu *cci_pmu, int idx)
-{
-	return (pmu_read_register(cci_pmu, idx, CCI_PMU_CNTR_CTRL) & 0x1) != 0;
-}
+अटल bool __maybe_unused
+pmu_counter_is_enabled(काष्ठा cci_pmu *cci_pmu, पूर्णांक idx)
+अणु
+	वापस (pmu_पढ़ो_रेजिस्टर(cci_pmu, idx, CCI_PMU_CNTR_CTRL) & 0x1) != 0;
+पूर्ण
 
-static void pmu_set_event(struct cci_pmu *cci_pmu, int idx, unsigned long event)
-{
-	pmu_write_register(cci_pmu, event, idx, CCI_PMU_EVT_SEL);
-}
+अटल व्योम pmu_set_event(काष्ठा cci_pmu *cci_pmu, पूर्णांक idx, अचिन्हित दीर्घ event)
+अणु
+	pmu_ग_लिखो_रेजिस्टर(cci_pmu, event, idx, CCI_PMU_EVT_SEL);
+पूर्ण
 
 /*
  * For all counters on the CCI-PMU, disable any 'enabled' counters,
  * saving the changed counters in the mask, so that we can restore
- * it later using pmu_restore_counters. The mask is private to the
- * caller. We cannot rely on the used_mask maintained by the CCI_PMU
- * as it only tells us if the counter is assigned to perf_event or not.
+ * it later using pmu_restore_counters. The mask is निजी to the
+ * caller. We cannot rely on the used_mask मुख्यtained by the CCI_PMU
+ * as it only tells us अगर the counter is asचिन्हित to perf_event or not.
  * The state of the perf_event cannot be locked by the PMU layer, hence
- * we check the individual counter status (which can be locked by
+ * we check the inभागidual counter status (which can be locked by
  * cci_pm->hw_events->pmu_lock).
  *
  * @mask should be initialised to empty by the caller.
  */
-static void __maybe_unused
-pmu_save_counters(struct cci_pmu *cci_pmu, unsigned long *mask)
-{
-	int i;
+अटल व्योम __maybe_unused
+pmu_save_counters(काष्ठा cci_pmu *cci_pmu, अचिन्हित दीर्घ *mask)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < cci_pmu->num_cntrs; i++) {
-		if (pmu_counter_is_enabled(cci_pmu, i)) {
+	क्रम (i = 0; i < cci_pmu->num_cntrs; i++) अणु
+		अगर (pmu_counter_is_enabled(cci_pmu, i)) अणु
 			set_bit(i, mask);
 			pmu_disable_counter(cci_pmu, i);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Restore the status of the counters. Reversal of the pmu_save_counters().
  * For each counter set in the mask, enable the counter back.
  */
-static void __maybe_unused
-pmu_restore_counters(struct cci_pmu *cci_pmu, unsigned long *mask)
-{
-	int i;
+अटल व्योम __maybe_unused
+pmu_restore_counters(काष्ठा cci_pmu *cci_pmu, अचिन्हित दीर्घ *mask)
+अणु
+	पूर्णांक i;
 
-	for_each_set_bit(i, mask, cci_pmu->num_cntrs)
+	क्रम_each_set_bit(i, mask, cci_pmu->num_cntrs)
 		pmu_enable_counter(cci_pmu, i);
-}
+पूर्ण
 
 /*
  * Returns the number of programmable counters actually implemented
  * by the cci
  */
-static u32 pmu_get_max_counters(struct cci_pmu *cci_pmu)
-{
-	return (readl_relaxed(cci_pmu->ctrl_base + CCI_PMCR) &
+अटल u32 pmu_get_max_counters(काष्ठा cci_pmu *cci_pmu)
+अणु
+	वापस (पढ़ोl_relaxed(cci_pmu->ctrl_base + CCI_PMCR) &
 		CCI_PMCR_NCNT_MASK) >> CCI_PMCR_NCNT_SHIFT;
-}
+पूर्ण
 
-static int pmu_get_event_idx(struct cci_pmu_hw_events *hw, struct perf_event *event)
-{
-	struct cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
-	unsigned long cci_event = event->hw.config_base;
-	int idx;
+अटल पूर्णांक pmu_get_event_idx(काष्ठा cci_pmu_hw_events *hw, काष्ठा perf_event *event)
+अणु
+	काष्ठा cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
+	अचिन्हित दीर्घ cci_event = event->hw.config_base;
+	पूर्णांक idx;
 
-	if (cci_pmu->model->get_event_idx)
-		return cci_pmu->model->get_event_idx(cci_pmu, hw, cci_event);
+	अगर (cci_pmu->model->get_event_idx)
+		वापस cci_pmu->model->get_event_idx(cci_pmu, hw, cci_event);
 
 	/* Generic code to find an unused idx from the mask */
-	for(idx = 0; idx <= CCI_PMU_CNTR_LAST(cci_pmu); idx++)
-		if (!test_and_set_bit(idx, hw->used_mask))
-			return idx;
+	क्रम(idx = 0; idx <= CCI_PMU_CNTR_LAST(cci_pmu); idx++)
+		अगर (!test_and_set_bit(idx, hw->used_mask))
+			वापस idx;
 
 	/* No counters available */
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
-static int pmu_map_event(struct perf_event *event)
-{
-	struct cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
+अटल पूर्णांक pmu_map_event(काष्ठा perf_event *event)
+अणु
+	काष्ठा cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
 
-	if (event->attr.type < PERF_TYPE_MAX ||
+	अगर (event->attr.type < PERF_TYPE_MAX ||
 			!cci_pmu->model->validate_hw_event)
-		return -ENOENT;
+		वापस -ENOENT;
 
-	return	cci_pmu->model->validate_hw_event(cci_pmu, event->attr.config);
-}
+	वापस	cci_pmu->model->validate_hw_event(cci_pmu, event->attr.config);
+पूर्ण
 
-static int pmu_request_irq(struct cci_pmu *cci_pmu, irq_handler_t handler)
-{
-	int i;
-	struct platform_device *pmu_device = cci_pmu->plat_device;
+अटल पूर्णांक pmu_request_irq(काष्ठा cci_pmu *cci_pmu, irq_handler_t handler)
+अणु
+	पूर्णांक i;
+	काष्ठा platक्रमm_device *pmu_device = cci_pmu->plat_device;
 
-	if (unlikely(!pmu_device))
-		return -ENODEV;
+	अगर (unlikely(!pmu_device))
+		वापस -ENODEV;
 
-	if (cci_pmu->nr_irqs < 1) {
+	अगर (cci_pmu->nr_irqs < 1) अणु
 		dev_err(&pmu_device->dev, "no irqs for CCI PMUs defined\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/*
-	 * Register all available CCI PMU interrupts. In the interrupt handler
-	 * we iterate over the counters checking for interrupt source (the
+	 * Register all available CCI PMU पूर्णांकerrupts. In the पूर्णांकerrupt handler
+	 * we iterate over the counters checking क्रम पूर्णांकerrupt source (the
 	 * overflowing counter) and clear it.
 	 *
-	 * This should allow handling of non-unique interrupt for the counters.
+	 * This should allow handling of non-unique पूर्णांकerrupt क्रम the counters.
 	 */
-	for (i = 0; i < cci_pmu->nr_irqs; i++) {
-		int err = request_irq(cci_pmu->irqs[i], handler, IRQF_SHARED,
+	क्रम (i = 0; i < cci_pmu->nr_irqs; i++) अणु
+		पूर्णांक err = request_irq(cci_pmu->irqs[i], handler, IRQF_SHARED,
 				"arm-cci-pmu", cci_pmu);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&pmu_device->dev, "unable to request IRQ%d for ARM CCI PMU counters\n",
 				cci_pmu->irqs[i]);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		set_bit(i, &cci_pmu->active_irqs);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pmu_free_irq(struct cci_pmu *cci_pmu)
-{
-	int i;
+अटल व्योम pmu_मुक्त_irq(काष्ठा cci_pmu *cci_pmu)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < cci_pmu->nr_irqs; i++) {
-		if (!test_and_clear_bit(i, &cci_pmu->active_irqs))
-			continue;
+	क्रम (i = 0; i < cci_pmu->nr_irqs; i++) अणु
+		अगर (!test_and_clear_bit(i, &cci_pmu->active_irqs))
+			जारी;
 
-		free_irq(cci_pmu->irqs[i], cci_pmu);
-	}
-}
+		मुक्त_irq(cci_pmu->irqs[i], cci_pmu);
+	पूर्ण
+पूर्ण
 
-static u32 pmu_read_counter(struct perf_event *event)
-{
-	struct cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
-	struct hw_perf_event *hw_counter = &event->hw;
-	int idx = hw_counter->idx;
+अटल u32 pmu_पढ़ो_counter(काष्ठा perf_event *event)
+अणु
+	काष्ठा cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
+	काष्ठा hw_perf_event *hw_counter = &event->hw;
+	पूर्णांक idx = hw_counter->idx;
 	u32 value;
 
-	if (unlikely(!pmu_is_valid_counter(cci_pmu, idx))) {
+	अगर (unlikely(!pmu_is_valid_counter(cci_pmu, idx))) अणु
 		dev_err(&cci_pmu->plat_device->dev, "Invalid CCI PMU counter %d\n", idx);
-		return 0;
-	}
-	value = pmu_read_register(cci_pmu, idx, CCI_PMU_CNTR);
+		वापस 0;
+	पूर्ण
+	value = pmu_पढ़ो_रेजिस्टर(cci_pmu, idx, CCI_PMU_CNTR);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static void pmu_write_counter(struct cci_pmu *cci_pmu, u32 value, int idx)
-{
-	pmu_write_register(cci_pmu, value, idx, CCI_PMU_CNTR);
-}
+अटल व्योम pmu_ग_लिखो_counter(काष्ठा cci_pmu *cci_pmu, u32 value, पूर्णांक idx)
+अणु
+	pmu_ग_लिखो_रेजिस्टर(cci_pmu, value, idx, CCI_PMU_CNTR);
+पूर्ण
 
-static void __pmu_write_counters(struct cci_pmu *cci_pmu, unsigned long *mask)
-{
-	int i;
-	struct cci_pmu_hw_events *cci_hw = &cci_pmu->hw_events;
+अटल व्योम __pmu_ग_लिखो_counters(काष्ठा cci_pmu *cci_pmu, अचिन्हित दीर्घ *mask)
+अणु
+	पूर्णांक i;
+	काष्ठा cci_pmu_hw_events *cci_hw = &cci_pmu->hw_events;
 
-	for_each_set_bit(i, mask, cci_pmu->num_cntrs) {
-		struct perf_event *event = cci_hw->events[i];
+	क्रम_each_set_bit(i, mask, cci_pmu->num_cntrs) अणु
+		काष्ठा perf_event *event = cci_hw->events[i];
 
-		if (WARN_ON(!event))
-			continue;
-		pmu_write_counter(cci_pmu, local64_read(&event->hw.prev_count), i);
-	}
-}
+		अगर (WARN_ON(!event))
+			जारी;
+		pmu_ग_लिखो_counter(cci_pmu, local64_पढ़ो(&event->hw.prev_count), i);
+	पूर्ण
+पूर्ण
 
-static void pmu_write_counters(struct cci_pmu *cci_pmu, unsigned long *mask)
-{
-	if (cci_pmu->model->write_counters)
-		cci_pmu->model->write_counters(cci_pmu, mask);
-	else
-		__pmu_write_counters(cci_pmu, mask);
-}
+अटल व्योम pmu_ग_लिखो_counters(काष्ठा cci_pmu *cci_pmu, अचिन्हित दीर्घ *mask)
+अणु
+	अगर (cci_pmu->model->ग_लिखो_counters)
+		cci_pmu->model->ग_लिखो_counters(cci_pmu, mask);
+	अन्यथा
+		__pmu_ग_लिखो_counters(cci_pmu, mask);
+पूर्ण
 
-#ifdef CONFIG_ARM_CCI5xx_PMU
+#अगर_घोषित CONFIG_ARM_CCI5xx_PMU
 
 /*
- * CCI-500/CCI-550 has advanced power saving policies, which could gate the
- * clocks to the PMU counters, which makes the writes to them ineffective.
- * The only way to write to those counters is when the global counters
+ * CCI-500/CCI-550 has advanced घातer saving policies, which could gate the
+ * घड़ीs to the PMU counters, which makes the ग_लिखोs to them ineffective.
+ * The only way to ग_लिखो to those counters is when the global counters
  * are enabled and the particular counter is enabled.
  *
- * So we do the following :
+ * So we करो the following :
  *
  * 1) Disable all the PMU counters, saving their current state
  * 2) Enable the global PMU profiling, now that all counters are
@@ -931,9 +932,9 @@ static void pmu_write_counters(struct cci_pmu *cci_pmu, unsigned long *mask)
  *
  * For each counter to be programmed, repeat steps 3-7:
  *
- * 3) Write an invalid event code to the event control register for the
-      counter, so that the counters are not modified.
- * 4) Enable the counter control for the counter.
+ * 3) Write an invalid event code to the event control रेजिस्टर क्रम the
+      counter, so that the counters are not modअगरied.
+ * 4) Enable the counter control क्रम the counter.
  * 5) Set the counter value
  * 6) Disable the counter
  * 7) Restore the event in the target counter
@@ -941,17 +942,17 @@ static void pmu_write_counters(struct cci_pmu *cci_pmu, unsigned long *mask)
  * 8) Disable the global PMU.
  * 9) Restore the status of the rest of the counters.
  *
- * We choose an event which for CCI-5xx is guaranteed not to count.
- * We use the highest possible event code (0x1f) for the master interface 0.
+ * We choose an event which क्रम CCI-5xx is guaranteed not to count.
+ * We use the highest possible event code (0x1f) क्रम the master पूर्णांकerface 0.
  */
-#define CCI5xx_INVALID_EVENT	((CCI5xx_PORT_M0 << CCI5xx_PMU_EVENT_SOURCE_SHIFT) | \
+#घोषणा CCI5xx_INVALID_EVENT	((CCI5xx_PORT_M0 << CCI5xx_PMU_EVENT_SOURCE_SHIFT) | \
 				 (CCI5xx_PMU_EVENT_CODE_MASK << CCI5xx_PMU_EVENT_CODE_SHIFT))
-static void cci5xx_pmu_write_counters(struct cci_pmu *cci_pmu, unsigned long *mask)
-{
-	int i;
+अटल व्योम cci5xx_pmu_ग_लिखो_counters(काष्ठा cci_pmu *cci_pmu, अचिन्हित दीर्घ *mask)
+अणु
+	पूर्णांक i;
 	DECLARE_BITMAP(saved_mask, HW_CNTRS_MAX);
 
-	bitmap_zero(saved_mask, cci_pmu->num_cntrs);
+	biपंचांगap_zero(saved_mask, cci_pmu->num_cntrs);
 	pmu_save_counters(cci_pmu, saved_mask);
 
 	/*
@@ -960,56 +961,56 @@ static void cci5xx_pmu_write_counters(struct cci_pmu *cci_pmu, unsigned long *ma
 	 */
 	__cci_pmu_enable_nosync(cci_pmu);
 
-	for_each_set_bit(i, mask, cci_pmu->num_cntrs) {
-		struct perf_event *event = cci_pmu->hw_events.events[i];
+	क्रम_each_set_bit(i, mask, cci_pmu->num_cntrs) अणु
+		काष्ठा perf_event *event = cci_pmu->hw_events.events[i];
 
-		if (WARN_ON(!event))
-			continue;
+		अगर (WARN_ON(!event))
+			जारी;
 
 		pmu_set_event(cci_pmu, i, CCI5xx_INVALID_EVENT);
 		pmu_enable_counter(cci_pmu, i);
-		pmu_write_counter(cci_pmu, local64_read(&event->hw.prev_count), i);
+		pmu_ग_लिखो_counter(cci_pmu, local64_पढ़ो(&event->hw.prev_count), i);
 		pmu_disable_counter(cci_pmu, i);
 		pmu_set_event(cci_pmu, i, event->hw.config_base);
-	}
+	पूर्ण
 
 	__cci_pmu_disable(cci_pmu);
 
 	pmu_restore_counters(cci_pmu, saved_mask);
-}
+पूर्ण
 
-#endif	/* CONFIG_ARM_CCI5xx_PMU */
+#पूर्ण_अगर	/* CONFIG_ARM_CCI5xx_PMU */
 
-static u64 pmu_event_update(struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
+अटल u64 pmu_event_update(काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
 	u64 delta, prev_raw_count, new_raw_count;
 
-	do {
-		prev_raw_count = local64_read(&hwc->prev_count);
-		new_raw_count = pmu_read_counter(event);
-	} while (local64_cmpxchg(&hwc->prev_count, prev_raw_count,
+	करो अणु
+		prev_raw_count = local64_पढ़ो(&hwc->prev_count);
+		new_raw_count = pmu_पढ़ो_counter(event);
+	पूर्ण जबतक (local64_cmpxchg(&hwc->prev_count, prev_raw_count,
 		 new_raw_count) != prev_raw_count);
 
 	delta = (new_raw_count - prev_raw_count) & CCI_PMU_CNTR_MASK;
 
 	local64_add(delta, &event->count);
 
-	return new_raw_count;
-}
+	वापस new_raw_count;
+पूर्ण
 
-static void pmu_read(struct perf_event *event)
-{
+अटल व्योम pmu_पढ़ो(काष्ठा perf_event *event)
+अणु
 	pmu_event_update(event);
-}
+पूर्ण
 
-static void pmu_event_set_period(struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
+अटल व्योम pmu_event_set_period(काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
 	/*
-	 * The CCI PMU counters have a period of 2^32. To account for the
-	 * possiblity of extreme interrupt latency we program for a period of
-	 * half that. Hopefully we can handle the interrupt before another 2^31
+	 * The CCI PMU counters have a period of 2^32. To account क्रम the
+	 * possiblity of extreme पूर्णांकerrupt latency we program क्रम a period of
+	 * half that. Hopefully we can handle the पूर्णांकerrupt beक्रमe another 2^31
 	 * events occur and the counter overtakes its previous value.
 	 */
 	u64 val = 1ULL << 31;
@@ -1017,165 +1018,165 @@ static void pmu_event_set_period(struct perf_event *event)
 
 	/*
 	 * CCI PMU uses PERF_HES_ARCH to keep track of the counters, whose
-	 * values needs to be sync-ed with the s/w state before the PMU is
+	 * values needs to be sync-ed with the s/w state beक्रमe the PMU is
 	 * enabled.
-	 * Mark this counter for sync.
+	 * Mark this counter क्रम sync.
 	 */
 	hwc->state |= PERF_HES_ARCH;
-}
+पूर्ण
 
-static irqreturn_t pmu_handle_irq(int irq_num, void *dev)
-{
-	struct cci_pmu *cci_pmu = dev;
-	struct cci_pmu_hw_events *events = &cci_pmu->hw_events;
-	int idx, handled = IRQ_NONE;
+अटल irqवापस_t pmu_handle_irq(पूर्णांक irq_num, व्योम *dev)
+अणु
+	काष्ठा cci_pmu *cci_pmu = dev;
+	काष्ठा cci_pmu_hw_events *events = &cci_pmu->hw_events;
+	पूर्णांक idx, handled = IRQ_NONE;
 
 	raw_spin_lock(&events->pmu_lock);
 
-	/* Disable the PMU while we walk through the counters */
+	/* Disable the PMU जबतक we walk through the counters */
 	__cci_pmu_disable(cci_pmu);
 	/*
 	 * Iterate over counters and update the corresponding perf events.
 	 * This should work regardless of whether we have per-counter overflow
-	 * interrupt or a combined overflow interrupt.
+	 * पूर्णांकerrupt or a combined overflow पूर्णांकerrupt.
 	 */
-	for (idx = 0; idx <= CCI_PMU_CNTR_LAST(cci_pmu); idx++) {
-		struct perf_event *event = events->events[idx];
+	क्रम (idx = 0; idx <= CCI_PMU_CNTR_LAST(cci_pmu); idx++) अणु
+		काष्ठा perf_event *event = events->events[idx];
 
-		if (!event)
-			continue;
+		अगर (!event)
+			जारी;
 
 		/* Did this counter overflow? */
-		if (!(pmu_read_register(cci_pmu, idx, CCI_PMU_OVRFLW) &
+		अगर (!(pmu_पढ़ो_रेजिस्टर(cci_pmu, idx, CCI_PMU_OVRFLW) &
 		      CCI_PMU_OVRFLW_FLAG))
-			continue;
+			जारी;
 
-		pmu_write_register(cci_pmu, CCI_PMU_OVRFLW_FLAG, idx,
+		pmu_ग_लिखो_रेजिस्टर(cci_pmu, CCI_PMU_OVRFLW_FLAG, idx,
 							CCI_PMU_OVRFLW);
 
 		pmu_event_update(event);
 		pmu_event_set_period(event);
 		handled = IRQ_HANDLED;
-	}
+	पूर्ण
 
 	/* Enable the PMU and sync possibly overflowed counters */
 	__cci_pmu_enable_sync(cci_pmu);
 	raw_spin_unlock(&events->pmu_lock);
 
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-static int cci_pmu_get_hw(struct cci_pmu *cci_pmu)
-{
-	int ret = pmu_request_irq(cci_pmu, pmu_handle_irq);
-	if (ret) {
-		pmu_free_irq(cci_pmu);
-		return ret;
-	}
-	return 0;
-}
+अटल पूर्णांक cci_pmu_get_hw(काष्ठा cci_pmu *cci_pmu)
+अणु
+	पूर्णांक ret = pmu_request_irq(cci_pmu, pmu_handle_irq);
+	अगर (ret) अणु
+		pmu_मुक्त_irq(cci_pmu);
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void cci_pmu_put_hw(struct cci_pmu *cci_pmu)
-{
-	pmu_free_irq(cci_pmu);
-}
+अटल व्योम cci_pmu_put_hw(काष्ठा cci_pmu *cci_pmu)
+अणु
+	pmu_मुक्त_irq(cci_pmu);
+पूर्ण
 
-static void hw_perf_event_destroy(struct perf_event *event)
-{
-	struct cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
+अटल व्योम hw_perf_event_destroy(काष्ठा perf_event *event)
+अणु
+	काष्ठा cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
 	atomic_t *active_events = &cci_pmu->active_events;
-	struct mutex *reserve_mutex = &cci_pmu->reserve_mutex;
+	काष्ठा mutex *reserve_mutex = &cci_pmu->reserve_mutex;
 
-	if (atomic_dec_and_mutex_lock(active_events, reserve_mutex)) {
+	अगर (atomic_dec_and_mutex_lock(active_events, reserve_mutex)) अणु
 		cci_pmu_put_hw(cci_pmu);
 		mutex_unlock(reserve_mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cci_pmu_enable(struct pmu *pmu)
-{
-	struct cci_pmu *cci_pmu = to_cci_pmu(pmu);
-	struct cci_pmu_hw_events *hw_events = &cci_pmu->hw_events;
-	int enabled = bitmap_weight(hw_events->used_mask, cci_pmu->num_cntrs);
-	unsigned long flags;
+अटल व्योम cci_pmu_enable(काष्ठा pmu *pmu)
+अणु
+	काष्ठा cci_pmu *cci_pmu = to_cci_pmu(pmu);
+	काष्ठा cci_pmu_hw_events *hw_events = &cci_pmu->hw_events;
+	पूर्णांक enabled = biपंचांगap_weight(hw_events->used_mask, cci_pmu->num_cntrs);
+	अचिन्हित दीर्घ flags;
 
-	if (!enabled)
-		return;
+	अगर (!enabled)
+		वापस;
 
 	raw_spin_lock_irqsave(&hw_events->pmu_lock, flags);
 	__cci_pmu_enable_sync(cci_pmu);
 	raw_spin_unlock_irqrestore(&hw_events->pmu_lock, flags);
 
-}
+पूर्ण
 
-static void cci_pmu_disable(struct pmu *pmu)
-{
-	struct cci_pmu *cci_pmu = to_cci_pmu(pmu);
-	struct cci_pmu_hw_events *hw_events = &cci_pmu->hw_events;
-	unsigned long flags;
+अटल व्योम cci_pmu_disable(काष्ठा pmu *pmu)
+अणु
+	काष्ठा cci_pmu *cci_pmu = to_cci_pmu(pmu);
+	काष्ठा cci_pmu_hw_events *hw_events = &cci_pmu->hw_events;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&hw_events->pmu_lock, flags);
 	__cci_pmu_disable(cci_pmu);
 	raw_spin_unlock_irqrestore(&hw_events->pmu_lock, flags);
-}
+पूर्ण
 
 /*
- * Check if the idx represents a non-programmable counter.
- * All the fixed event counters are mapped before the programmable
+ * Check अगर the idx represents a non-programmable counter.
+ * All the fixed event counters are mapped beक्रमe the programmable
  * counters.
  */
-static bool pmu_fixed_hw_idx(struct cci_pmu *cci_pmu, int idx)
-{
-	return (idx >= 0) && (idx < cci_pmu->model->fixed_hw_cntrs);
-}
+अटल bool pmu_fixed_hw_idx(काष्ठा cci_pmu *cci_pmu, पूर्णांक idx)
+अणु
+	वापस (idx >= 0) && (idx < cci_pmu->model->fixed_hw_cntrs);
+पूर्ण
 
-static void cci_pmu_start(struct perf_event *event, int pmu_flags)
-{
-	struct cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
-	struct cci_pmu_hw_events *hw_events = &cci_pmu->hw_events;
-	struct hw_perf_event *hwc = &event->hw;
-	int idx = hwc->idx;
-	unsigned long flags;
+अटल व्योम cci_pmu_start(काष्ठा perf_event *event, पूर्णांक pmu_flags)
+अणु
+	काष्ठा cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
+	काष्ठा cci_pmu_hw_events *hw_events = &cci_pmu->hw_events;
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx = hwc->idx;
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * To handle interrupt latency, we always reprogram the period
+	 * To handle पूर्णांकerrupt latency, we always reprogram the period
 	 * regardlesss of PERF_EF_RELOAD.
 	 */
-	if (pmu_flags & PERF_EF_RELOAD)
+	अगर (pmu_flags & PERF_EF_RELOAD)
 		WARN_ON_ONCE(!(hwc->state & PERF_HES_UPTODATE));
 
 	hwc->state = 0;
 
-	if (unlikely(!pmu_is_valid_counter(cci_pmu, idx))) {
+	अगर (unlikely(!pmu_is_valid_counter(cci_pmu, idx))) अणु
 		dev_err(&cci_pmu->plat_device->dev, "Invalid CCI PMU counter %d\n", idx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	raw_spin_lock_irqsave(&hw_events->pmu_lock, flags);
 
 	/* Configure the counter unless you are counting a fixed event */
-	if (!pmu_fixed_hw_idx(cci_pmu, idx))
+	अगर (!pmu_fixed_hw_idx(cci_pmu, idx))
 		pmu_set_event(cci_pmu, idx, hwc->config_base);
 
 	pmu_event_set_period(event);
 	pmu_enable_counter(cci_pmu, idx);
 
 	raw_spin_unlock_irqrestore(&hw_events->pmu_lock, flags);
-}
+पूर्ण
 
-static void cci_pmu_stop(struct perf_event *event, int pmu_flags)
-{
-	struct cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
-	int idx = hwc->idx;
+अटल व्योम cci_pmu_stop(काष्ठा perf_event *event, पूर्णांक pmu_flags)
+अणु
+	काष्ठा cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx = hwc->idx;
 
-	if (hwc->state & PERF_HES_STOPPED)
-		return;
+	अगर (hwc->state & PERF_HES_STOPPED)
+		वापस;
 
-	if (unlikely(!pmu_is_valid_counter(cci_pmu, idx))) {
+	अगर (unlikely(!pmu_is_valid_counter(cci_pmu, idx))) अणु
 		dev_err(&cci_pmu->plat_device->dev, "Invalid CCI PMU counter %d\n", idx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * We always reprogram the counter, so ignore PERF_EF_UPDATE. See
@@ -1184,115 +1185,115 @@ static void cci_pmu_stop(struct perf_event *event, int pmu_flags)
 	pmu_disable_counter(cci_pmu, idx);
 	pmu_event_update(event);
 	hwc->state |= PERF_HES_STOPPED | PERF_HES_UPTODATE;
-}
+पूर्ण
 
-static int cci_pmu_add(struct perf_event *event, int flags)
-{
-	struct cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
-	struct cci_pmu_hw_events *hw_events = &cci_pmu->hw_events;
-	struct hw_perf_event *hwc = &event->hw;
-	int idx;
+अटल पूर्णांक cci_pmu_add(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
+	काष्ठा cci_pmu_hw_events *hw_events = &cci_pmu->hw_events;
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx;
 
-	/* If we don't have a space for the counter then finish early. */
+	/* If we करोn't have a space क्रम the counter then finish early. */
 	idx = pmu_get_event_idx(hw_events, event);
-	if (idx < 0)
-		return idx;
+	अगर (idx < 0)
+		वापस idx;
 
 	event->hw.idx = idx;
 	hw_events->events[idx] = event;
 
 	hwc->state = PERF_HES_STOPPED | PERF_HES_UPTODATE;
-	if (flags & PERF_EF_START)
+	अगर (flags & PERF_EF_START)
 		cci_pmu_start(event, PERF_EF_RELOAD);
 
 	/* Propagate our changes to the userspace mapping. */
 	perf_event_update_userpage(event);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cci_pmu_del(struct perf_event *event, int flags)
-{
-	struct cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
-	struct cci_pmu_hw_events *hw_events = &cci_pmu->hw_events;
-	struct hw_perf_event *hwc = &event->hw;
-	int idx = hwc->idx;
+अटल व्योम cci_pmu_del(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
+	काष्ठा cci_pmu_hw_events *hw_events = &cci_pmu->hw_events;
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx = hwc->idx;
 
 	cci_pmu_stop(event, PERF_EF_UPDATE);
-	hw_events->events[idx] = NULL;
+	hw_events->events[idx] = शून्य;
 	clear_bit(idx, hw_events->used_mask);
 
 	perf_event_update_userpage(event);
-}
+पूर्ण
 
-static int validate_event(struct pmu *cci_pmu,
-			  struct cci_pmu_hw_events *hw_events,
-			  struct perf_event *event)
-{
-	if (is_software_event(event))
-		return 1;
+अटल पूर्णांक validate_event(काष्ठा pmu *cci_pmu,
+			  काष्ठा cci_pmu_hw_events *hw_events,
+			  काष्ठा perf_event *event)
+अणु
+	अगर (is_software_event(event))
+		वापस 1;
 
 	/*
 	 * Reject groups spanning multiple HW PMUs (e.g. CPU + CCI). The
 	 * core perf code won't check that the pmu->ctx == leader->ctx
 	 * until after pmu->event_init(event).
 	 */
-	if (event->pmu != cci_pmu)
-		return 0;
+	अगर (event->pmu != cci_pmu)
+		वापस 0;
 
-	if (event->state < PERF_EVENT_STATE_OFF)
-		return 1;
+	अगर (event->state < PERF_EVENT_STATE_OFF)
+		वापस 1;
 
-	if (event->state == PERF_EVENT_STATE_OFF && !event->attr.enable_on_exec)
-		return 1;
+	अगर (event->state == PERF_EVENT_STATE_OFF && !event->attr.enable_on_exec)
+		वापस 1;
 
-	return pmu_get_event_idx(hw_events, event) >= 0;
-}
+	वापस pmu_get_event_idx(hw_events, event) >= 0;
+पूर्ण
 
-static int validate_group(struct perf_event *event)
-{
-	struct perf_event *sibling, *leader = event->group_leader;
-	struct cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
-	unsigned long mask[BITS_TO_LONGS(HW_CNTRS_MAX)];
-	struct cci_pmu_hw_events fake_pmu = {
+अटल पूर्णांक validate_group(काष्ठा perf_event *event)
+अणु
+	काष्ठा perf_event *sibling, *leader = event->group_leader;
+	काष्ठा cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
+	अचिन्हित दीर्घ mask[BITS_TO_LONGS(HW_CNTRS_MAX)];
+	काष्ठा cci_pmu_hw_events fake_pmu = अणु
 		/*
 		 * Initialise the fake PMU. We only need to populate the
-		 * used_mask for the purposes of validation.
+		 * used_mask क्रम the purposes of validation.
 		 */
 		.used_mask = mask,
-	};
-	memset(mask, 0, BITS_TO_LONGS(cci_pmu->num_cntrs) * sizeof(unsigned long));
+	पूर्ण;
+	स_रखो(mask, 0, BITS_TO_LONGS(cci_pmu->num_cntrs) * माप(अचिन्हित दीर्घ));
 
-	if (!validate_event(event->pmu, &fake_pmu, leader))
-		return -EINVAL;
+	अगर (!validate_event(event->pmu, &fake_pmu, leader))
+		वापस -EINVAL;
 
-	for_each_sibling_event(sibling, leader) {
-		if (!validate_event(event->pmu, &fake_pmu, sibling))
-			return -EINVAL;
-	}
+	क्रम_each_sibling_event(sibling, leader) अणु
+		अगर (!validate_event(event->pmu, &fake_pmu, sibling))
+			वापस -EINVAL;
+	पूर्ण
 
-	if (!validate_event(event->pmu, &fake_pmu, event))
-		return -EINVAL;
+	अगर (!validate_event(event->pmu, &fake_pmu, event))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __hw_perf_event_init(struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	int mapping;
+अटल पूर्णांक __hw_perf_event_init(काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक mapping;
 
 	mapping = pmu_map_event(event);
 
-	if (mapping < 0) {
+	अगर (mapping < 0) अणु
 		pr_debug("event %x:%llx not supported\n", event->attr.type,
 			 event->attr.config);
-		return mapping;
-	}
+		वापस mapping;
+	पूर्ण
 
 	/*
-	 * We don't assign an index until we actually place the event onto
-	 * hardware. Use -1 to signify that we haven't decided where to put it
+	 * We करोn't assign an index until we actually place the event onto
+	 * hardware. Use -1 to signअगरy that we haven't decided where to put it
 	 * yet.
 	 */
 	hwc->idx		= -1;
@@ -1301,116 +1302,116 @@ static int __hw_perf_event_init(struct perf_event *event)
 	hwc->event_base		= 0;
 
 	/*
-	 * Store the event encoding into the config_base field.
+	 * Store the event encoding पूर्णांकo the config_base field.
 	 */
-	hwc->config_base	    |= (unsigned long)mapping;
+	hwc->config_base	    |= (अचिन्हित दीर्घ)mapping;
 
-	if (event->group_leader != event) {
-		if (validate_group(event) != 0)
-			return -EINVAL;
-	}
+	अगर (event->group_leader != event) अणु
+		अगर (validate_group(event) != 0)
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cci_pmu_event_init(struct perf_event *event)
-{
-	struct cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
+अटल पूर्णांक cci_pmu_event_init(काष्ठा perf_event *event)
+अणु
+	काष्ठा cci_pmu *cci_pmu = to_cci_pmu(event->pmu);
 	atomic_t *active_events = &cci_pmu->active_events;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (event->attr.type != event->pmu->type)
-		return -ENOENT;
+	अगर (event->attr.type != event->pmu->type)
+		वापस -ENOENT;
 
 	/* Shared by all CPUs, no meaningful state to sample */
-	if (is_sampling_event(event) || event->attach_state & PERF_ATTACH_TASK)
-		return -EOPNOTSUPP;
+	अगर (is_sampling_event(event) || event->attach_state & PERF_ATTACH_TASK)
+		वापस -EOPNOTSUPP;
 
 	/*
 	 * Following the example set by other "uncore" PMUs, we accept any CPU
-	 * and rewrite its affinity dynamically rather than having perf core
-	 * handle cpu == -1 and pid == -1 for this case.
+	 * and reग_लिखो its affinity dynamically rather than having perf core
+	 * handle cpu == -1 and pid == -1 क्रम this हाल.
 	 *
-	 * The perf core will pin online CPUs for the duration of this call and
-	 * the event being installed into its context, so the PMU's CPU can't
+	 * The perf core will pin online CPUs क्रम the duration of this call and
+	 * the event being installed पूर्णांकo its context, so the PMU's CPU can't
 	 * change under our feet.
 	 */
-	if (event->cpu < 0)
-		return -EINVAL;
+	अगर (event->cpu < 0)
+		वापस -EINVAL;
 	event->cpu = cci_pmu->cpu;
 
 	event->destroy = hw_perf_event_destroy;
-	if (!atomic_inc_not_zero(active_events)) {
+	अगर (!atomic_inc_not_zero(active_events)) अणु
 		mutex_lock(&cci_pmu->reserve_mutex);
-		if (atomic_read(active_events) == 0)
+		अगर (atomic_पढ़ो(active_events) == 0)
 			err = cci_pmu_get_hw(cci_pmu);
-		if (!err)
+		अगर (!err)
 			atomic_inc(active_events);
 		mutex_unlock(&cci_pmu->reserve_mutex);
-	}
-	if (err)
-		return err;
+	पूर्ण
+	अगर (err)
+		वापस err;
 
 	err = __hw_perf_event_init(event);
-	if (err)
+	अगर (err)
 		hw_perf_event_destroy(event);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static ssize_t pmu_cpumask_attr_show(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	struct pmu *pmu = dev_get_drvdata(dev);
-	struct cci_pmu *cci_pmu = to_cci_pmu(pmu);
+अटल sमाप_प्रकार pmu_cpumask_attr_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pmu *pmu = dev_get_drvdata(dev);
+	काष्ठा cci_pmu *cci_pmu = to_cci_pmu(pmu);
 
-	return cpumap_print_to_pagebuf(true, buf, cpumask_of(cci_pmu->cpu));
-}
+	वापस cpumap_prपूर्णांक_to_pagebuf(true, buf, cpumask_of(cci_pmu->cpu));
+पूर्ण
 
-static struct device_attribute pmu_cpumask_attr =
-	__ATTR(cpumask, S_IRUGO, pmu_cpumask_attr_show, NULL);
+अटल काष्ठा device_attribute pmu_cpumask_attr =
+	__ATTR(cpumask, S_IRUGO, pmu_cpumask_attr_show, शून्य);
 
-static struct attribute *pmu_attrs[] = {
+अटल काष्ठा attribute *pmu_attrs[] = अणु
 	&pmu_cpumask_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group pmu_attr_group = {
+अटल स्थिर काष्ठा attribute_group pmu_attr_group = अणु
 	.attrs = pmu_attrs,
-};
+पूर्ण;
 
-static struct attribute_group pmu_format_attr_group = {
+अटल काष्ठा attribute_group pmu_क्रमmat_attr_group = अणु
 	.name = "format",
-	.attrs = NULL,		/* Filled in cci_pmu_init_attrs */
-};
+	.attrs = शून्य,		/* Filled in cci_pmu_init_attrs */
+पूर्ण;
 
-static struct attribute_group pmu_event_attr_group = {
+अटल काष्ठा attribute_group pmu_event_attr_group = अणु
 	.name = "events",
-	.attrs = NULL,		/* Filled in cci_pmu_init_attrs */
-};
+	.attrs = शून्य,		/* Filled in cci_pmu_init_attrs */
+पूर्ण;
 
-static const struct attribute_group *pmu_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *pmu_attr_groups[] = अणु
 	&pmu_attr_group,
-	&pmu_format_attr_group,
+	&pmu_क्रमmat_attr_group,
 	&pmu_event_attr_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static int cci_pmu_init(struct cci_pmu *cci_pmu, struct platform_device *pdev)
-{
-	const struct cci_pmu_model *model = cci_pmu->model;
-	char *name = model->name;
+अटल पूर्णांक cci_pmu_init(काष्ठा cci_pmu *cci_pmu, काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा cci_pmu_model *model = cci_pmu->model;
+	अक्षर *name = model->name;
 	u32 num_cntrs;
 
-	if (WARN_ON(model->num_hw_cntrs > NUM_HW_CNTRS_MAX))
-		return -EINVAL;
-	if (WARN_ON(model->fixed_hw_cntrs > FIXED_HW_CNTRS_MAX))
-		return -EINVAL;
+	अगर (WARN_ON(model->num_hw_cntrs > NUM_HW_CNTRS_MAX))
+		वापस -EINVAL;
+	अगर (WARN_ON(model->fixed_hw_cntrs > FIXED_HW_CNTRS_MAX))
+		वापस -EINVAL;
 
 	pmu_event_attr_group.attrs = model->event_attrs;
-	pmu_format_attr_group.attrs = model->format_attrs;
+	pmu_क्रमmat_attr_group.attrs = model->क्रमmat_attrs;
 
-	cci_pmu->pmu = (struct pmu) {
+	cci_pmu->pmu = (काष्ठा pmu) अणु
 		.module		= THIS_MODULE,
 		.name		= cci_pmu->model->name,
 		.task_ctx_nr	= perf_invalid_context,
@@ -1421,262 +1422,262 @@ static int cci_pmu_init(struct cci_pmu *cci_pmu, struct platform_device *pdev)
 		.del		= cci_pmu_del,
 		.start		= cci_pmu_start,
 		.stop		= cci_pmu_stop,
-		.read		= pmu_read,
+		.पढ़ो		= pmu_पढ़ो,
 		.attr_groups	= pmu_attr_groups,
 		.capabilities	= PERF_PMU_CAP_NO_EXCLUDE,
-	};
+	पूर्ण;
 
 	cci_pmu->plat_device = pdev;
 	num_cntrs = pmu_get_max_counters(cci_pmu);
-	if (num_cntrs > cci_pmu->model->num_hw_cntrs) {
+	अगर (num_cntrs > cci_pmu->model->num_hw_cntrs) अणु
 		dev_warn(&pdev->dev,
 			"PMU implements more counters(%d) than supported by"
 			" the model(%d), truncated.",
 			num_cntrs, cci_pmu->model->num_hw_cntrs);
 		num_cntrs = cci_pmu->model->num_hw_cntrs;
-	}
+	पूर्ण
 	cci_pmu->num_cntrs = num_cntrs + cci_pmu->model->fixed_hw_cntrs;
 
-	return perf_pmu_register(&cci_pmu->pmu, name, -1);
-}
+	वापस perf_pmu_रेजिस्टर(&cci_pmu->pmu, name, -1);
+पूर्ण
 
-static int cci_pmu_offline_cpu(unsigned int cpu)
-{
-	int target;
+अटल पूर्णांक cci_pmu_offline_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक target;
 
-	if (!g_cci_pmu || cpu != g_cci_pmu->cpu)
-		return 0;
+	अगर (!g_cci_pmu || cpu != g_cci_pmu->cpu)
+		वापस 0;
 
 	target = cpumask_any_but(cpu_online_mask, cpu);
-	if (target >= nr_cpu_ids)
-		return 0;
+	अगर (target >= nr_cpu_ids)
+		वापस 0;
 
 	perf_pmu_migrate_context(&g_cci_pmu->pmu, cpu, target);
 	g_cci_pmu->cpu = target;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __maybe_unused struct cci_pmu_model cci_pmu_models[] = {
-#ifdef CONFIG_ARM_CCI400_PMU
-	[CCI400_R0] = {
+अटल __maybe_unused काष्ठा cci_pmu_model cci_pmu_models[] = अणु
+#अगर_घोषित CONFIG_ARM_CCI400_PMU
+	[CCI400_R0] = अणु
 		.name = "CCI_400",
 		.fixed_hw_cntrs = FIXED_HW_CNTRS_CII_4XX, /* Cycle counter */
 		.num_hw_cntrs = NUM_HW_CNTRS_CII_4XX,
 		.cntr_size = SZ_4K,
-		.format_attrs = cci400_pmu_format_attrs,
+		.क्रमmat_attrs = cci400_pmu_क्रमmat_attrs,
 		.event_attrs = cci400_r0_pmu_event_attrs,
-		.event_ranges = {
-			[CCI_IF_SLAVE] = {
+		.event_ranges = अणु
+			[CCI_IF_SLAVE] = अणु
 				CCI400_R0_SLAVE_PORT_MIN_EV,
 				CCI400_R0_SLAVE_PORT_MAX_EV,
-			},
-			[CCI_IF_MASTER] = {
+			पूर्ण,
+			[CCI_IF_MASTER] = अणु
 				CCI400_R0_MASTER_PORT_MIN_EV,
 				CCI400_R0_MASTER_PORT_MAX_EV,
-			},
-		},
+			पूर्ण,
+		पूर्ण,
 		.validate_hw_event = cci400_validate_hw_event,
 		.get_event_idx = cci400_get_event_idx,
-	},
-	[CCI400_R1] = {
+	पूर्ण,
+	[CCI400_R1] = अणु
 		.name = "CCI_400_r1",
 		.fixed_hw_cntrs = FIXED_HW_CNTRS_CII_4XX, /* Cycle counter */
 		.num_hw_cntrs = NUM_HW_CNTRS_CII_4XX,
 		.cntr_size = SZ_4K,
-		.format_attrs = cci400_pmu_format_attrs,
+		.क्रमmat_attrs = cci400_pmu_क्रमmat_attrs,
 		.event_attrs = cci400_r1_pmu_event_attrs,
-		.event_ranges = {
-			[CCI_IF_SLAVE] = {
+		.event_ranges = अणु
+			[CCI_IF_SLAVE] = अणु
 				CCI400_R1_SLAVE_PORT_MIN_EV,
 				CCI400_R1_SLAVE_PORT_MAX_EV,
-			},
-			[CCI_IF_MASTER] = {
+			पूर्ण,
+			[CCI_IF_MASTER] = अणु
 				CCI400_R1_MASTER_PORT_MIN_EV,
 				CCI400_R1_MASTER_PORT_MAX_EV,
-			},
-		},
+			पूर्ण,
+		पूर्ण,
 		.validate_hw_event = cci400_validate_hw_event,
 		.get_event_idx = cci400_get_event_idx,
-	},
-#endif
-#ifdef CONFIG_ARM_CCI5xx_PMU
-	[CCI500_R0] = {
+	पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARM_CCI5xx_PMU
+	[CCI500_R0] = अणु
 		.name = "CCI_500",
 		.fixed_hw_cntrs = FIXED_HW_CNTRS_CII_5XX,
 		.num_hw_cntrs = NUM_HW_CNTRS_CII_5XX,
 		.cntr_size = SZ_64K,
-		.format_attrs = cci5xx_pmu_format_attrs,
+		.क्रमmat_attrs = cci5xx_pmu_क्रमmat_attrs,
 		.event_attrs = cci5xx_pmu_event_attrs,
-		.event_ranges = {
-			[CCI_IF_SLAVE] = {
+		.event_ranges = अणु
+			[CCI_IF_SLAVE] = अणु
 				CCI5xx_SLAVE_PORT_MIN_EV,
 				CCI5xx_SLAVE_PORT_MAX_EV,
-			},
-			[CCI_IF_MASTER] = {
+			पूर्ण,
+			[CCI_IF_MASTER] = अणु
 				CCI5xx_MASTER_PORT_MIN_EV,
 				CCI5xx_MASTER_PORT_MAX_EV,
-			},
-			[CCI_IF_GLOBAL] = {
+			पूर्ण,
+			[CCI_IF_GLOBAL] = अणु
 				CCI5xx_GLOBAL_PORT_MIN_EV,
 				CCI5xx_GLOBAL_PORT_MAX_EV,
-			},
-		},
+			पूर्ण,
+		पूर्ण,
 		.validate_hw_event = cci500_validate_hw_event,
-		.write_counters	= cci5xx_pmu_write_counters,
-	},
-	[CCI550_R0] = {
+		.ग_लिखो_counters	= cci5xx_pmu_ग_लिखो_counters,
+	पूर्ण,
+	[CCI550_R0] = अणु
 		.name = "CCI_550",
 		.fixed_hw_cntrs = FIXED_HW_CNTRS_CII_5XX,
 		.num_hw_cntrs = NUM_HW_CNTRS_CII_5XX,
 		.cntr_size = SZ_64K,
-		.format_attrs = cci5xx_pmu_format_attrs,
+		.क्रमmat_attrs = cci5xx_pmu_क्रमmat_attrs,
 		.event_attrs = cci5xx_pmu_event_attrs,
-		.event_ranges = {
-			[CCI_IF_SLAVE] = {
+		.event_ranges = अणु
+			[CCI_IF_SLAVE] = अणु
 				CCI5xx_SLAVE_PORT_MIN_EV,
 				CCI5xx_SLAVE_PORT_MAX_EV,
-			},
-			[CCI_IF_MASTER] = {
+			पूर्ण,
+			[CCI_IF_MASTER] = अणु
 				CCI5xx_MASTER_PORT_MIN_EV,
 				CCI5xx_MASTER_PORT_MAX_EV,
-			},
-			[CCI_IF_GLOBAL] = {
+			पूर्ण,
+			[CCI_IF_GLOBAL] = अणु
 				CCI5xx_GLOBAL_PORT_MIN_EV,
 				CCI5xx_GLOBAL_PORT_MAX_EV,
-			},
-		},
+			पूर्ण,
+		पूर्ण,
 		.validate_hw_event = cci550_validate_hw_event,
-		.write_counters	= cci5xx_pmu_write_counters,
-	},
-#endif
-};
+		.ग_लिखो_counters	= cci5xx_pmu_ग_लिखो_counters,
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct of_device_id arm_cci_pmu_matches[] = {
-#ifdef CONFIG_ARM_CCI400_PMU
-	{
+अटल स्थिर काष्ठा of_device_id arm_cci_pmu_matches[] = अणु
+#अगर_घोषित CONFIG_ARM_CCI400_PMU
+	अणु
 		.compatible = "arm,cci-400-pmu",
-		.data	= NULL,
-	},
-	{
+		.data	= शून्य,
+	पूर्ण,
+	अणु
 		.compatible = "arm,cci-400-pmu,r0",
 		.data	= &cci_pmu_models[CCI400_R0],
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "arm,cci-400-pmu,r1",
 		.data	= &cci_pmu_models[CCI400_R1],
-	},
-#endif
-#ifdef CONFIG_ARM_CCI5xx_PMU
-	{
+	पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARM_CCI5xx_PMU
+	अणु
 		.compatible = "arm,cci-500-pmu,r0",
 		.data = &cci_pmu_models[CCI500_R0],
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "arm,cci-550-pmu,r0",
 		.data = &cci_pmu_models[CCI550_R0],
-	},
-#endif
-	{},
-};
+	पूर्ण,
+#पूर्ण_अगर
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, arm_cci_pmu_matches);
 
-static bool is_duplicate_irq(int irq, int *irqs, int nr_irqs)
-{
-	int i;
+अटल bool is_duplicate_irq(पूर्णांक irq, पूर्णांक *irqs, पूर्णांक nr_irqs)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < nr_irqs; i++)
-		if (irq == irqs[i])
-			return true;
+	क्रम (i = 0; i < nr_irqs; i++)
+		अगर (irq == irqs[i])
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static struct cci_pmu *cci_pmu_alloc(struct device *dev)
-{
-	struct cci_pmu *cci_pmu;
-	const struct cci_pmu_model *model;
+अटल काष्ठा cci_pmu *cci_pmu_alloc(काष्ठा device *dev)
+अणु
+	काष्ठा cci_pmu *cci_pmu;
+	स्थिर काष्ठा cci_pmu_model *model;
 
 	/*
-	 * All allocations are devm_* hence we don't have to free
+	 * All allocations are devm_* hence we करोn't have to मुक्त
 	 * them explicitly on an error, as it would end up in driver
 	 * detach.
 	 */
-	cci_pmu = devm_kzalloc(dev, sizeof(*cci_pmu), GFP_KERNEL);
-	if (!cci_pmu)
-		return ERR_PTR(-ENOMEM);
+	cci_pmu = devm_kzalloc(dev, माप(*cci_pmu), GFP_KERNEL);
+	अगर (!cci_pmu)
+		वापस ERR_PTR(-ENOMEM);
 
-	cci_pmu->ctrl_base = *(void __iomem **)dev->platform_data;
+	cci_pmu->ctrl_base = *(व्योम __iomem **)dev->platक्रमm_data;
 
 	model = of_device_get_match_data(dev);
-	if (!model) {
+	अगर (!model) अणु
 		dev_warn(dev,
 			 "DEPRECATED compatible property, requires secure access to CCI registers");
 		model = probe_cci_model(cci_pmu);
-	}
-	if (!model) {
+	पूर्ण
+	अगर (!model) अणु
 		dev_warn(dev, "CCI PMU version not supported\n");
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
 	cci_pmu->model = model;
-	cci_pmu->irqs = devm_kcalloc(dev, CCI_PMU_MAX_HW_CNTRS(model),
-					sizeof(*cci_pmu->irqs), GFP_KERNEL);
-	if (!cci_pmu->irqs)
-		return ERR_PTR(-ENOMEM);
-	cci_pmu->hw_events.events = devm_kcalloc(dev,
+	cci_pmu->irqs = devm_kसुस्मृति(dev, CCI_PMU_MAX_HW_CNTRS(model),
+					माप(*cci_pmu->irqs), GFP_KERNEL);
+	अगर (!cci_pmu->irqs)
+		वापस ERR_PTR(-ENOMEM);
+	cci_pmu->hw_events.events = devm_kसुस्मृति(dev,
 					     CCI_PMU_MAX_HW_CNTRS(model),
-					     sizeof(*cci_pmu->hw_events.events),
+					     माप(*cci_pmu->hw_events.events),
 					     GFP_KERNEL);
-	if (!cci_pmu->hw_events.events)
-		return ERR_PTR(-ENOMEM);
-	cci_pmu->hw_events.used_mask = devm_kcalloc(dev,
+	अगर (!cci_pmu->hw_events.events)
+		वापस ERR_PTR(-ENOMEM);
+	cci_pmu->hw_events.used_mask = devm_kसुस्मृति(dev,
 						BITS_TO_LONGS(CCI_PMU_MAX_HW_CNTRS(model)),
-						sizeof(*cci_pmu->hw_events.used_mask),
+						माप(*cci_pmu->hw_events.used_mask),
 						GFP_KERNEL);
-	if (!cci_pmu->hw_events.used_mask)
-		return ERR_PTR(-ENOMEM);
+	अगर (!cci_pmu->hw_events.used_mask)
+		वापस ERR_PTR(-ENOMEM);
 
-	return cci_pmu;
-}
+	वापस cci_pmu;
+पूर्ण
 
-static int cci_pmu_probe(struct platform_device *pdev)
-{
-	struct cci_pmu *cci_pmu;
-	int i, ret, irq;
+अटल पूर्णांक cci_pmu_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा cci_pmu *cci_pmu;
+	पूर्णांक i, ret, irq;
 
 	cci_pmu = cci_pmu_alloc(&pdev->dev);
-	if (IS_ERR(cci_pmu))
-		return PTR_ERR(cci_pmu);
+	अगर (IS_ERR(cci_pmu))
+		वापस PTR_ERR(cci_pmu);
 
-	cci_pmu->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(cci_pmu->base))
-		return -ENOMEM;
+	cci_pmu->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(cci_pmu->base))
+		वापस -ENOMEM;
 
 	/*
-	 * CCI PMU has one overflow interrupt per counter; but some may be tied
-	 * together to a common interrupt.
+	 * CCI PMU has one overflow पूर्णांकerrupt per counter; but some may be tied
+	 * together to a common पूर्णांकerrupt.
 	 */
 	cci_pmu->nr_irqs = 0;
-	for (i = 0; i < CCI_PMU_MAX_HW_CNTRS(cci_pmu->model); i++) {
-		irq = platform_get_irq(pdev, i);
-		if (irq < 0)
-			break;
+	क्रम (i = 0; i < CCI_PMU_MAX_HW_CNTRS(cci_pmu->model); i++) अणु
+		irq = platक्रमm_get_irq(pdev, i);
+		अगर (irq < 0)
+			अवरोध;
 
-		if (is_duplicate_irq(irq, cci_pmu->irqs, cci_pmu->nr_irqs))
-			continue;
+		अगर (is_duplicate_irq(irq, cci_pmu->irqs, cci_pmu->nr_irqs))
+			जारी;
 
 		cci_pmu->irqs[cci_pmu->nr_irqs++] = irq;
-	}
+	पूर्ण
 
 	/*
-	 * Ensure that the device tree has as many interrupts as the number
+	 * Ensure that the device tree has as many पूर्णांकerrupts as the number
 	 * of counters.
 	 */
-	if (i < CCI_PMU_MAX_HW_CNTRS(cci_pmu->model)) {
+	अगर (i < CCI_PMU_MAX_HW_CNTRS(cci_pmu->model)) अणु
 		dev_warn(&pdev->dev, "In-correct number of interrupts: %d, should be %d\n",
 			i, CCI_PMU_MAX_HW_CNTRS(cci_pmu->model));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	raw_spin_lock_init(&cci_pmu->hw_events.pmu_lock);
 	mutex_init(&cci_pmu->reserve_mutex);
@@ -1685,44 +1686,44 @@ static int cci_pmu_probe(struct platform_device *pdev)
 	cci_pmu->cpu = raw_smp_processor_id();
 	g_cci_pmu = cci_pmu;
 	cpuhp_setup_state_nocalls(CPUHP_AP_PERF_ARM_CCI_ONLINE,
-				  "perf/arm/cci:online", NULL,
+				  "perf/arm/cci:online", शून्य,
 				  cci_pmu_offline_cpu);
 
 	ret = cci_pmu_init(cci_pmu, pdev);
-	if (ret)
-		goto error_pmu_init;
+	अगर (ret)
+		जाओ error_pmu_init;
 
 	pr_info("ARM %s PMU driver probed", cci_pmu->model->name);
-	return 0;
+	वापस 0;
 
 error_pmu_init:
-	cpuhp_remove_state(CPUHP_AP_PERF_ARM_CCI_ONLINE);
-	g_cci_pmu = NULL;
-	return ret;
-}
+	cpuhp_हटाओ_state(CPUHP_AP_PERF_ARM_CCI_ONLINE);
+	g_cci_pmu = शून्य;
+	वापस ret;
+पूर्ण
 
-static int cci_pmu_remove(struct platform_device *pdev)
-{
-	if (!g_cci_pmu)
-		return 0;
+अटल पूर्णांक cci_pmu_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	अगर (!g_cci_pmu)
+		वापस 0;
 
-	cpuhp_remove_state(CPUHP_AP_PERF_ARM_CCI_ONLINE);
-	perf_pmu_unregister(&g_cci_pmu->pmu);
-	g_cci_pmu = NULL;
+	cpuhp_हटाओ_state(CPUHP_AP_PERF_ARM_CCI_ONLINE);
+	perf_pmu_unरेजिस्टर(&g_cci_pmu->pmu);
+	g_cci_pmu = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver cci_pmu_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver cci_pmu_driver = अणु
+	.driver = अणु
 		   .name = DRIVER_NAME,
 		   .of_match_table = arm_cci_pmu_matches,
 		   .suppress_bind_attrs = true,
-		  },
+		  पूर्ण,
 	.probe = cci_pmu_probe,
-	.remove = cci_pmu_remove,
-};
+	.हटाओ = cci_pmu_हटाओ,
+पूर्ण;
 
-module_platform_driver(cci_pmu_driver);
+module_platक्रमm_driver(cci_pmu_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("ARM CCI PMU support");

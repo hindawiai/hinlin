@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCIe host controller driver for Amazon's Annapurna Labs IP (used in chips
+ * PCIe host controller driver क्रम Amazon's Annapurna Lअसल IP (used in chips
  * such as Graviton and Alpine)
  *
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -8,259 +9,259 @@
  * Author: Jonathan Chocron <jonnyc@amazon.com>
  */
 
-#include <linux/pci.h>
-#include <linux/pci-ecam.h>
-#include <linux/pci-acpi.h>
-#include "../../pci.h"
+#समावेश <linux/pci.h>
+#समावेश <linux/pci-ecam.h>
+#समावेश <linux/pci-acpi.h>
+#समावेश "../../pci.h"
 
-#if defined(CONFIG_ACPI) && defined(CONFIG_PCI_QUIRKS)
+#अगर defined(CONFIG_ACPI) && defined(CONFIG_PCI_QUIRKS)
 
-struct al_pcie_acpi  {
-	void __iomem *dbi_base;
-};
+काष्ठा al_pcie_acpi  अणु
+	व्योम __iomem *dbi_base;
+पूर्ण;
 
-static void __iomem *al_pcie_map_bus(struct pci_bus *bus, unsigned int devfn,
-				     int where)
-{
-	struct pci_config_window *cfg = bus->sysdata;
-	struct al_pcie_acpi *pcie = cfg->priv;
-	void __iomem *dbi_base = pcie->dbi_base;
+अटल व्योम __iomem *al_pcie_map_bus(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+				     पूर्णांक where)
+अणु
+	काष्ठा pci_config_winकरोw *cfg = bus->sysdata;
+	काष्ठा al_pcie_acpi *pcie = cfg->priv;
+	व्योम __iomem *dbi_base = pcie->dbi_base;
 
-	if (bus->number == cfg->busr.start) {
+	अगर (bus->number == cfg->busr.start) अणु
 		/*
-		 * The DW PCIe core doesn't filter out transactions to other
-		 * devices/functions on the root bus num, so we do this here.
+		 * The DW PCIe core करोesn't filter out transactions to other
+		 * devices/functions on the root bus num, so we करो this here.
 		 */
-		if (PCI_SLOT(devfn) > 0)
-			return NULL;
-		else
-			return dbi_base + where;
-	}
+		अगर (PCI_SLOT(devfn) > 0)
+			वापस शून्य;
+		अन्यथा
+			वापस dbi_base + where;
+	पूर्ण
 
-	return pci_ecam_map_bus(bus, devfn, where);
-}
+	वापस pci_ecam_map_bus(bus, devfn, where);
+पूर्ण
 
-static int al_pcie_init(struct pci_config_window *cfg)
-{
-	struct device *dev = cfg->parent;
-	struct acpi_device *adev = to_acpi_device(dev);
-	struct acpi_pci_root *root = acpi_driver_data(adev);
-	struct al_pcie_acpi *al_pcie;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक al_pcie_init(काष्ठा pci_config_winकरोw *cfg)
+अणु
+	काष्ठा device *dev = cfg->parent;
+	काष्ठा acpi_device *adev = to_acpi_device(dev);
+	काष्ठा acpi_pci_root *root = acpi_driver_data(adev);
+	काष्ठा al_pcie_acpi *al_pcie;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	al_pcie = devm_kzalloc(dev, sizeof(*al_pcie), GFP_KERNEL);
-	if (!al_pcie)
-		return -ENOMEM;
+	al_pcie = devm_kzalloc(dev, माप(*al_pcie), GFP_KERNEL);
+	अगर (!al_pcie)
+		वापस -ENOMEM;
 
-	res = devm_kzalloc(dev, sizeof(*res), GFP_KERNEL);
-	if (!res)
-		return -ENOMEM;
+	res = devm_kzalloc(dev, माप(*res), GFP_KERNEL);
+	अगर (!res)
+		वापस -ENOMEM;
 
 	ret = acpi_get_rc_resources(dev, "AMZN0001", root->segment, res);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "can't get rc dbi base address for SEG %d\n",
 			root->segment);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_dbg(dev, "Root port dbi res: %pR\n", res);
 
 	al_pcie->dbi_base = devm_pci_remap_cfg_resource(dev, res);
-	if (IS_ERR(al_pcie->dbi_base))
-		return PTR_ERR(al_pcie->dbi_base);
+	अगर (IS_ERR(al_pcie->dbi_base))
+		वापस PTR_ERR(al_pcie->dbi_base);
 
 	cfg->priv = al_pcie;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct pci_ecam_ops al_pcie_ops = {
+स्थिर काष्ठा pci_ecam_ops al_pcie_ops = अणु
 	.init         =  al_pcie_init,
-	.pci_ops      = {
+	.pci_ops      = अणु
 		.map_bus    = al_pcie_map_bus,
-		.read       = pci_generic_config_read,
-		.write      = pci_generic_config_write,
-	}
-};
+		.पढ़ो       = pci_generic_config_पढ़ो,
+		.ग_लिखो      = pci_generic_config_ग_लिखो,
+	पूर्ण
+पूर्ण;
 
-#endif /* defined(CONFIG_ACPI) && defined(CONFIG_PCI_QUIRKS) */
+#पूर्ण_अगर /* defined(CONFIG_ACPI) && defined(CONFIG_PCI_QUIRKS) */
 
-#ifdef CONFIG_PCIE_AL
+#अगर_घोषित CONFIG_PCIE_AL
 
-#include <linux/of_pci.h>
-#include "pcie-designware.h"
+#समावेश <linux/of_pci.h>
+#समावेश "pcie-designware.h"
 
-#define AL_PCIE_REV_ID_2	2
-#define AL_PCIE_REV_ID_3	3
-#define AL_PCIE_REV_ID_4	4
+#घोषणा AL_PCIE_REV_ID_2	2
+#घोषणा AL_PCIE_REV_ID_3	3
+#घोषणा AL_PCIE_REV_ID_4	4
 
-#define AXI_BASE_OFFSET		0x0
+#घोषणा AXI_BASE_OFFSET		0x0
 
-#define DEVICE_ID_OFFSET	0x16c
+#घोषणा DEVICE_ID_OFFSET	0x16c
 
-#define DEVICE_REV_ID			0x0
-#define DEVICE_REV_ID_DEV_ID_MASK	GENMASK(31, 16)
+#घोषणा DEVICE_REV_ID			0x0
+#घोषणा DEVICE_REV_ID_DEV_ID_MASK	GENMASK(31, 16)
 
-#define DEVICE_REV_ID_DEV_ID_X4		0
-#define DEVICE_REV_ID_DEV_ID_X8		2
-#define DEVICE_REV_ID_DEV_ID_X16	4
+#घोषणा DEVICE_REV_ID_DEV_ID_X4		0
+#घोषणा DEVICE_REV_ID_DEV_ID_X8		2
+#घोषणा DEVICE_REV_ID_DEV_ID_X16	4
 
-#define OB_CTRL_REV1_2_OFFSET	0x0040
-#define OB_CTRL_REV3_5_OFFSET	0x0030
+#घोषणा OB_CTRL_REV1_2_OFFSET	0x0040
+#घोषणा OB_CTRL_REV3_5_OFFSET	0x0030
 
-#define CFG_TARGET_BUS			0x0
-#define CFG_TARGET_BUS_MASK_MASK	GENMASK(7, 0)
-#define CFG_TARGET_BUS_BUSNUM_MASK	GENMASK(15, 8)
+#घोषणा CFG_TARGET_BUS			0x0
+#घोषणा CFG_TARGET_BUS_MASK_MASK	GENMASK(7, 0)
+#घोषणा CFG_TARGET_BUS_BUSNUM_MASK	GENMASK(15, 8)
 
-#define CFG_CONTROL			0x4
-#define CFG_CONTROL_SUBBUS_MASK		GENMASK(15, 8)
-#define CFG_CONTROL_SEC_BUS_MASK	GENMASK(23, 16)
+#घोषणा CFG_CONTROL			0x4
+#घोषणा CFG_CONTROL_SUBBUS_MASK		GENMASK(15, 8)
+#घोषणा CFG_CONTROL_SEC_BUS_MASK	GENMASK(23, 16)
 
-struct al_pcie_reg_offsets {
-	unsigned int ob_ctrl;
-};
+काष्ठा al_pcie_reg_offsets अणु
+	अचिन्हित पूर्णांक ob_ctrl;
+पूर्ण;
 
-struct al_pcie_target_bus_cfg {
+काष्ठा al_pcie_target_bus_cfg अणु
 	u8 reg_val;
 	u8 reg_mask;
 	u8 ecam_mask;
-};
+पूर्ण;
 
-struct al_pcie {
-	struct dw_pcie *pci;
-	void __iomem *controller_base; /* base of PCIe unit (not DW core) */
-	struct device *dev;
-	resource_size_t ecam_size;
-	unsigned int controller_rev_id;
-	struct al_pcie_reg_offsets reg_offsets;
-	struct al_pcie_target_bus_cfg target_bus_cfg;
-};
+काष्ठा al_pcie अणु
+	काष्ठा dw_pcie *pci;
+	व्योम __iomem *controller_base; /* base of PCIe unit (not DW core) */
+	काष्ठा device *dev;
+	resource_माप_प्रकार ecam_size;
+	अचिन्हित पूर्णांक controller_rev_id;
+	काष्ठा al_pcie_reg_offsets reg_offsets;
+	काष्ठा al_pcie_target_bus_cfg target_bus_cfg;
+पूर्ण;
 
-#define to_al_pcie(x)		dev_get_drvdata((x)->dev)
+#घोषणा to_al_pcie(x)		dev_get_drvdata((x)->dev)
 
-static inline u32 al_pcie_controller_readl(struct al_pcie *pcie, u32 offset)
-{
-	return readl_relaxed(pcie->controller_base + offset);
-}
+अटल अंतरभूत u32 al_pcie_controller_पढ़ोl(काष्ठा al_pcie *pcie, u32 offset)
+अणु
+	वापस पढ़ोl_relaxed(pcie->controller_base + offset);
+पूर्ण
 
-static inline void al_pcie_controller_writel(struct al_pcie *pcie, u32 offset,
+अटल अंतरभूत व्योम al_pcie_controller_ग_लिखोl(काष्ठा al_pcie *pcie, u32 offset,
 					     u32 val)
-{
-	writel_relaxed(val, pcie->controller_base + offset);
-}
+अणु
+	ग_लिखोl_relaxed(val, pcie->controller_base + offset);
+पूर्ण
 
-static int al_pcie_rev_id_get(struct al_pcie *pcie, unsigned int *rev_id)
-{
+अटल पूर्णांक al_pcie_rev_id_get(काष्ठा al_pcie *pcie, अचिन्हित पूर्णांक *rev_id)
+अणु
 	u32 dev_rev_id_val;
 	u32 dev_id_val;
 
-	dev_rev_id_val = al_pcie_controller_readl(pcie, AXI_BASE_OFFSET +
+	dev_rev_id_val = al_pcie_controller_पढ़ोl(pcie, AXI_BASE_OFFSET +
 						  DEVICE_ID_OFFSET +
 						  DEVICE_REV_ID);
 	dev_id_val = FIELD_GET(DEVICE_REV_ID_DEV_ID_MASK, dev_rev_id_val);
 
-	switch (dev_id_val) {
-	case DEVICE_REV_ID_DEV_ID_X4:
+	चयन (dev_id_val) अणु
+	हाल DEVICE_REV_ID_DEV_ID_X4:
 		*rev_id = AL_PCIE_REV_ID_2;
-		break;
-	case DEVICE_REV_ID_DEV_ID_X8:
+		अवरोध;
+	हाल DEVICE_REV_ID_DEV_ID_X8:
 		*rev_id = AL_PCIE_REV_ID_3;
-		break;
-	case DEVICE_REV_ID_DEV_ID_X16:
+		अवरोध;
+	हाल DEVICE_REV_ID_DEV_ID_X16:
 		*rev_id = AL_PCIE_REV_ID_4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(pcie->dev, "Unsupported dev_id_val (0x%x)\n",
 			dev_id_val);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_dbg(pcie->dev, "dev_id_val: 0x%x\n", dev_id_val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int al_pcie_reg_offsets_set(struct al_pcie *pcie)
-{
-	switch (pcie->controller_rev_id) {
-	case AL_PCIE_REV_ID_2:
+अटल पूर्णांक al_pcie_reg_offsets_set(काष्ठा al_pcie *pcie)
+अणु
+	चयन (pcie->controller_rev_id) अणु
+	हाल AL_PCIE_REV_ID_2:
 		pcie->reg_offsets.ob_ctrl = OB_CTRL_REV1_2_OFFSET;
-		break;
-	case AL_PCIE_REV_ID_3:
-	case AL_PCIE_REV_ID_4:
+		अवरोध;
+	हाल AL_PCIE_REV_ID_3:
+	हाल AL_PCIE_REV_ID_4:
 		pcie->reg_offsets.ob_ctrl = OB_CTRL_REV3_5_OFFSET;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(pcie->dev, "Unsupported controller rev_id: 0x%x\n",
 			pcie->controller_rev_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void al_pcie_target_bus_set(struct al_pcie *pcie,
+अटल अंतरभूत व्योम al_pcie_target_bus_set(काष्ठा al_pcie *pcie,
 					  u8 target_bus,
 					  u8 mask_target_bus)
-{
+अणु
 	u32 reg;
 
 	reg = FIELD_PREP(CFG_TARGET_BUS_MASK_MASK, mask_target_bus) |
 	      FIELD_PREP(CFG_TARGET_BUS_BUSNUM_MASK, target_bus);
 
-	al_pcie_controller_writel(pcie, AXI_BASE_OFFSET +
+	al_pcie_controller_ग_लिखोl(pcie, AXI_BASE_OFFSET +
 				  pcie->reg_offsets.ob_ctrl + CFG_TARGET_BUS,
 				  reg);
-}
+पूर्ण
 
-static void __iomem *al_pcie_conf_addr_map_bus(struct pci_bus *bus,
-					       unsigned int devfn, int where)
-{
-	struct pcie_port *pp = bus->sysdata;
-	struct al_pcie *pcie = to_al_pcie(to_dw_pcie_from_pp(pp));
-	unsigned int busnr = bus->number;
-	struct al_pcie_target_bus_cfg *target_bus_cfg = &pcie->target_bus_cfg;
-	unsigned int busnr_ecam = busnr & target_bus_cfg->ecam_mask;
-	unsigned int busnr_reg = busnr & target_bus_cfg->reg_mask;
+अटल व्योम __iomem *al_pcie_conf_addr_map_bus(काष्ठा pci_bus *bus,
+					       अचिन्हित पूर्णांक devfn, पूर्णांक where)
+अणु
+	काष्ठा pcie_port *pp = bus->sysdata;
+	काष्ठा al_pcie *pcie = to_al_pcie(to_dw_pcie_from_pp(pp));
+	अचिन्हित पूर्णांक busnr = bus->number;
+	काष्ठा al_pcie_target_bus_cfg *target_bus_cfg = &pcie->target_bus_cfg;
+	अचिन्हित पूर्णांक busnr_ecam = busnr & target_bus_cfg->ecam_mask;
+	अचिन्हित पूर्णांक busnr_reg = busnr & target_bus_cfg->reg_mask;
 
-	if (busnr_reg != target_bus_cfg->reg_val) {
+	अगर (busnr_reg != target_bus_cfg->reg_val) अणु
 		dev_dbg(pcie->pci->dev, "Changing target bus busnum val from 0x%x to 0x%x\n",
 			target_bus_cfg->reg_val, busnr_reg);
 		target_bus_cfg->reg_val = busnr_reg;
 		al_pcie_target_bus_set(pcie,
 				       target_bus_cfg->reg_val,
 				       target_bus_cfg->reg_mask);
-	}
+	पूर्ण
 
-	return pp->va_cfg0_base + PCIE_ECAM_OFFSET(busnr_ecam, devfn, where);
-}
+	वापस pp->va_cfg0_base + PCIE_ECAM_OFFSET(busnr_ecam, devfn, where);
+पूर्ण
 
-static struct pci_ops al_child_pci_ops = {
+अटल काष्ठा pci_ops al_child_pci_ops = अणु
 	.map_bus = al_pcie_conf_addr_map_bus,
-	.read = pci_generic_config_read,
-	.write = pci_generic_config_write,
-};
+	.पढ़ो = pci_generic_config_पढ़ो,
+	.ग_लिखो = pci_generic_config_ग_लिखो,
+पूर्ण;
 
-static void al_pcie_config_prepare(struct al_pcie *pcie)
-{
-	struct al_pcie_target_bus_cfg *target_bus_cfg;
-	struct pcie_port *pp = &pcie->pci->pp;
-	unsigned int ecam_bus_mask;
+अटल व्योम al_pcie_config_prepare(काष्ठा al_pcie *pcie)
+अणु
+	काष्ठा al_pcie_target_bus_cfg *target_bus_cfg;
+	काष्ठा pcie_port *pp = &pcie->pci->pp;
+	अचिन्हित पूर्णांक ecam_bus_mask;
 	u32 cfg_control_offset;
 	u8 subordinate_bus;
 	u8 secondary_bus;
 	u32 cfg_control;
 	u32 reg;
-	struct resource *bus = resource_list_first_type(&pp->bridge->windows, IORESOURCE_BUS)->res;
+	काष्ठा resource *bus = resource_list_first_type(&pp->bridge->winकरोws, IORESOURCE_BUS)->res;
 
 	target_bus_cfg = &pcie->target_bus_cfg;
 
 	ecam_bus_mask = (pcie->ecam_size >> PCIE_ECAM_BUS_SHIFT) - 1;
-	if (ecam_bus_mask > 255) {
+	अगर (ecam_bus_mask > 255) अणु
 		dev_warn(pcie->dev, "ECAM window size is larger than 256MB. Cutting off at 256\n");
 		ecam_bus_mask = 255;
-	}
+	पूर्ण
 
 	/* This portion is taken from the transaction address */
 	target_bus_cfg->ecam_mask = ecam_bus_mask;
@@ -278,7 +279,7 @@ static void al_pcie_config_prepare(struct al_pcie *pcie)
 	cfg_control_offset = AXI_BASE_OFFSET + pcie->reg_offsets.ob_ctrl +
 			     CFG_CONTROL;
 
-	cfg_control = al_pcie_controller_readl(pcie, cfg_control_offset);
+	cfg_control = al_pcie_controller_पढ़ोl(pcie, cfg_control_offset);
 
 	reg = cfg_control &
 	      ~(CFG_CONTROL_SEC_BUS_MASK | CFG_CONTROL_SUBBUS_MASK);
@@ -286,49 +287,49 @@ static void al_pcie_config_prepare(struct al_pcie *pcie)
 	reg |= FIELD_PREP(CFG_CONTROL_SUBBUS_MASK, subordinate_bus) |
 	       FIELD_PREP(CFG_CONTROL_SEC_BUS_MASK, secondary_bus);
 
-	al_pcie_controller_writel(pcie, cfg_control_offset, reg);
-}
+	al_pcie_controller_ग_लिखोl(pcie, cfg_control_offset, reg);
+पूर्ण
 
-static int al_pcie_host_init(struct pcie_port *pp)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_pp(pp);
-	struct al_pcie *pcie = to_al_pcie(pci);
-	int rc;
+अटल पूर्णांक al_pcie_host_init(काष्ठा pcie_port *pp)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_pp(pp);
+	काष्ठा al_pcie *pcie = to_al_pcie(pci);
+	पूर्णांक rc;
 
 	pp->bridge->child_ops = &al_child_pci_ops;
 
 	rc = al_pcie_rev_id_get(pcie, &pcie->controller_rev_id);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = al_pcie_reg_offsets_set(pcie);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	al_pcie_config_prepare(pcie);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dw_pcie_host_ops al_pcie_host_ops = {
+अटल स्थिर काष्ठा dw_pcie_host_ops al_pcie_host_ops = अणु
 	.host_init = al_pcie_host_init,
-};
+पूर्ण;
 
-static int al_pcie_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource *controller_res;
-	struct resource *ecam_res;
-	struct al_pcie *al_pcie;
-	struct dw_pcie *pci;
+अटल पूर्णांक al_pcie_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *controller_res;
+	काष्ठा resource *ecam_res;
+	काष्ठा al_pcie *al_pcie;
+	काष्ठा dw_pcie *pci;
 
-	al_pcie = devm_kzalloc(dev, sizeof(*al_pcie), GFP_KERNEL);
-	if (!al_pcie)
-		return -ENOMEM;
+	al_pcie = devm_kzalloc(dev, माप(*al_pcie), GFP_KERNEL);
+	अगर (!al_pcie)
+		वापस -ENOMEM;
 
-	pci = devm_kzalloc(dev, sizeof(*pci), GFP_KERNEL);
-	if (!pci)
-		return -ENOMEM;
+	pci = devm_kzalloc(dev, माप(*pci), GFP_KERNEL);
+	अगर (!pci)
+		वापस -ENOMEM;
 
 	pci->dev = dev;
 	pci->pp.ops = &al_pcie_host_ops;
@@ -336,45 +337,45 @@ static int al_pcie_probe(struct platform_device *pdev)
 	al_pcie->pci = pci;
 	al_pcie->dev = dev;
 
-	ecam_res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "config");
-	if (!ecam_res) {
+	ecam_res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "config");
+	अगर (!ecam_res) अणु
 		dev_err(dev, "couldn't find 'config' reg in DT\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 	al_pcie->ecam_size = resource_size(ecam_res);
 
-	controller_res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
+	controller_res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM,
 						      "controller");
 	al_pcie->controller_base = devm_ioremap_resource(dev, controller_res);
-	if (IS_ERR(al_pcie->controller_base)) {
+	अगर (IS_ERR(al_pcie->controller_base)) अणु
 		dev_err(dev, "couldn't remap controller base %pR\n",
 			controller_res);
-		return PTR_ERR(al_pcie->controller_base);
-	}
+		वापस PTR_ERR(al_pcie->controller_base);
+	पूर्ण
 
 	dev_dbg(dev, "From DT: controller_base: %pR\n", controller_res);
 
-	platform_set_drvdata(pdev, al_pcie);
+	platक्रमm_set_drvdata(pdev, al_pcie);
 
-	return dw_pcie_host_init(&pci->pp);
-}
+	वापस dw_pcie_host_init(&pci->pp);
+पूर्ण
 
-static const struct of_device_id al_pcie_of_match[] = {
-	{ .compatible = "amazon,al-alpine-v2-pcie",
-	},
-	{ .compatible = "amazon,al-alpine-v3-pcie",
-	},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id al_pcie_of_match[] = अणु
+	अणु .compatible = "amazon,al-alpine-v2-pcie",
+	पूर्ण,
+	अणु .compatible = "amazon,al-alpine-v3-pcie",
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver al_pcie_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver al_pcie_driver = अणु
+	.driver = अणु
 		.name	= "al-pcie",
 		.of_match_table = al_pcie_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = al_pcie_probe,
-};
-builtin_platform_driver(al_pcie_driver);
+पूर्ण;
+builtin_platक्रमm_driver(al_pcie_driver);
 
-#endif /* CONFIG_PCIE_AL*/
+#पूर्ण_अगर /* CONFIG_PCIE_AL*/

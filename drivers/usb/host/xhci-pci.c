@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * xHCI host controller driver PCI Bus Glue.
  *
@@ -8,130 +9,130 @@
  * Some code borrowed from the Linux EHCI driver.
  */
 
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/acpi.h>
-#include <linux/reset.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/reset.h>
 
-#include "xhci.h"
-#include "xhci-trace.h"
-#include "xhci-pci.h"
+#समावेश "xhci.h"
+#समावेश "xhci-trace.h"
+#समावेश "xhci-pci.h"
 
-#define SSIC_PORT_NUM		2
-#define SSIC_PORT_CFG2		0x880c
-#define SSIC_PORT_CFG2_OFFSET	0x30
-#define PROG_DONE		(1 << 30)
-#define SSIC_PORT_UNUSED	(1 << 31)
-#define SPARSE_DISABLE_BIT	17
-#define SPARSE_CNTL_ENABLE	0xC12C
+#घोषणा SSIC_PORT_NUM		2
+#घोषणा SSIC_PORT_CFG2		0x880c
+#घोषणा SSIC_PORT_CFG2_OFFSET	0x30
+#घोषणा PROG_DONE		(1 << 30)
+#घोषणा SSIC_PORT_UNUSED	(1 << 31)
+#घोषणा SPARSE_DISABLE_BIT	17
+#घोषणा SPARSE_CNTL_ENABLE	0xC12C
 
-/* Device for a quirk */
-#define PCI_VENDOR_ID_FRESCO_LOGIC	0x1b73
-#define PCI_DEVICE_ID_FRESCO_LOGIC_PDK	0x1000
-#define PCI_DEVICE_ID_FRESCO_LOGIC_FL1009	0x1009
-#define PCI_DEVICE_ID_FRESCO_LOGIC_FL1400	0x1400
+/* Device क्रम a quirk */
+#घोषणा PCI_VENDOR_ID_FRESCO_LOGIC	0x1b73
+#घोषणा PCI_DEVICE_ID_FRESCO_LOGIC_PDK	0x1000
+#घोषणा PCI_DEVICE_ID_FRESCO_LOGIC_FL1009	0x1009
+#घोषणा PCI_DEVICE_ID_FRESCO_LOGIC_FL1400	0x1400
 
-#define PCI_VENDOR_ID_ETRON		0x1b6f
-#define PCI_DEVICE_ID_EJ168		0x7023
+#घोषणा PCI_VENDOR_ID_ETRON		0x1b6f
+#घोषणा PCI_DEVICE_ID_EJ168		0x7023
 
-#define PCI_DEVICE_ID_INTEL_LYNXPOINT_XHCI	0x8c31
-#define PCI_DEVICE_ID_INTEL_LYNXPOINT_LP_XHCI	0x9c31
-#define PCI_DEVICE_ID_INTEL_WILDCATPOINT_LP_XHCI	0x9cb1
-#define PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI		0x22b5
-#define PCI_DEVICE_ID_INTEL_SUNRISEPOINT_H_XHCI		0xa12f
-#define PCI_DEVICE_ID_INTEL_SUNRISEPOINT_LP_XHCI	0x9d2f
-#define PCI_DEVICE_ID_INTEL_BROXTON_M_XHCI		0x0aa8
-#define PCI_DEVICE_ID_INTEL_BROXTON_B_XHCI		0x1aa8
-#define PCI_DEVICE_ID_INTEL_APL_XHCI			0x5aa8
-#define PCI_DEVICE_ID_INTEL_DNV_XHCI			0x19d0
-#define PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_2C_XHCI	0x15b5
-#define PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_4C_XHCI	0x15b6
-#define PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_LP_XHCI	0x15c1
-#define PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_C_2C_XHCI	0x15db
-#define PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_C_4C_XHCI	0x15d4
-#define PCI_DEVICE_ID_INTEL_TITAN_RIDGE_2C_XHCI		0x15e9
-#define PCI_DEVICE_ID_INTEL_TITAN_RIDGE_4C_XHCI		0x15ec
-#define PCI_DEVICE_ID_INTEL_TITAN_RIDGE_DD_XHCI		0x15f0
-#define PCI_DEVICE_ID_INTEL_ICE_LAKE_XHCI		0x8a13
-#define PCI_DEVICE_ID_INTEL_CML_XHCI			0xa3af
-#define PCI_DEVICE_ID_INTEL_TIGER_LAKE_XHCI		0x9a13
-#define PCI_DEVICE_ID_INTEL_MAPLE_RIDGE_XHCI		0x1138
-#define PCI_DEVICE_ID_INTEL_ALDER_LAKE_XHCI		0x461e
+#घोषणा PCI_DEVICE_ID_INTEL_LYNXPOINT_XHCI	0x8c31
+#घोषणा PCI_DEVICE_ID_INTEL_LYNXPOINT_LP_XHCI	0x9c31
+#घोषणा PCI_DEVICE_ID_INTEL_WILDCATPOINT_LP_XHCI	0x9cb1
+#घोषणा PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI		0x22b5
+#घोषणा PCI_DEVICE_ID_INTEL_SUNRISEPOINT_H_XHCI		0xa12f
+#घोषणा PCI_DEVICE_ID_INTEL_SUNRISEPOINT_LP_XHCI	0x9d2f
+#घोषणा PCI_DEVICE_ID_INTEL_BROXTON_M_XHCI		0x0aa8
+#घोषणा PCI_DEVICE_ID_INTEL_BROXTON_B_XHCI		0x1aa8
+#घोषणा PCI_DEVICE_ID_INTEL_APL_XHCI			0x5aa8
+#घोषणा PCI_DEVICE_ID_INTEL_DNV_XHCI			0x19d0
+#घोषणा PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_2C_XHCI	0x15b5
+#घोषणा PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_4C_XHCI	0x15b6
+#घोषणा PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_LP_XHCI	0x15c1
+#घोषणा PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_C_2C_XHCI	0x15db
+#घोषणा PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_C_4C_XHCI	0x15d4
+#घोषणा PCI_DEVICE_ID_INTEL_TITAN_RIDGE_2C_XHCI		0x15e9
+#घोषणा PCI_DEVICE_ID_INTEL_TITAN_RIDGE_4C_XHCI		0x15ec
+#घोषणा PCI_DEVICE_ID_INTEL_TITAN_RIDGE_DD_XHCI		0x15f0
+#घोषणा PCI_DEVICE_ID_INTEL_ICE_LAKE_XHCI		0x8a13
+#घोषणा PCI_DEVICE_ID_INTEL_CML_XHCI			0xa3af
+#घोषणा PCI_DEVICE_ID_INTEL_TIGER_LAKE_XHCI		0x9a13
+#घोषणा PCI_DEVICE_ID_INTEL_MAPLE_RIDGE_XHCI		0x1138
+#घोषणा PCI_DEVICE_ID_INTEL_ALDER_LAKE_XHCI		0x461e
 
-#define PCI_DEVICE_ID_AMD_RENOIR_XHCI			0x1639
-#define PCI_DEVICE_ID_AMD_PROMONTORYA_4			0x43b9
-#define PCI_DEVICE_ID_AMD_PROMONTORYA_3			0x43ba
-#define PCI_DEVICE_ID_AMD_PROMONTORYA_2			0x43bb
-#define PCI_DEVICE_ID_AMD_PROMONTORYA_1			0x43bc
-#define PCI_DEVICE_ID_ASMEDIA_1042_XHCI			0x1042
-#define PCI_DEVICE_ID_ASMEDIA_1042A_XHCI		0x1142
-#define PCI_DEVICE_ID_ASMEDIA_1142_XHCI			0x1242
-#define PCI_DEVICE_ID_ASMEDIA_2142_XHCI			0x2142
-#define PCI_DEVICE_ID_ASMEDIA_3242_XHCI			0x3242
+#घोषणा PCI_DEVICE_ID_AMD_RENOIR_XHCI			0x1639
+#घोषणा PCI_DEVICE_ID_AMD_PROMONTORYA_4			0x43b9
+#घोषणा PCI_DEVICE_ID_AMD_PROMONTORYA_3			0x43ba
+#घोषणा PCI_DEVICE_ID_AMD_PROMONTORYA_2			0x43bb
+#घोषणा PCI_DEVICE_ID_AMD_PROMONTORYA_1			0x43bc
+#घोषणा PCI_DEVICE_ID_ASMEDIA_1042_XHCI			0x1042
+#घोषणा PCI_DEVICE_ID_ASMEDIA_1042A_XHCI		0x1142
+#घोषणा PCI_DEVICE_ID_ASMEDIA_1142_XHCI			0x1242
+#घोषणा PCI_DEVICE_ID_ASMEDIA_2142_XHCI			0x2142
+#घोषणा PCI_DEVICE_ID_ASMEDIA_3242_XHCI			0x3242
 
-static const char hcd_name[] = "xhci_hcd";
+अटल स्थिर अक्षर hcd_name[] = "xhci_hcd";
 
-static struct hc_driver __read_mostly xhci_pci_hc_driver;
+अटल काष्ठा hc_driver __पढ़ो_mostly xhci_pci_hc_driver;
 
-static int xhci_pci_setup(struct usb_hcd *hcd);
+अटल पूर्णांक xhci_pci_setup(काष्ठा usb_hcd *hcd);
 
-static const struct xhci_driver_overrides xhci_pci_overrides __initconst = {
+अटल स्थिर काष्ठा xhci_driver_overrides xhci_pci_overrides __initस्थिर = अणु
 	.reset = xhci_pci_setup,
-};
+पूर्ण;
 
-/* called after powerup, by probe or system-pm "wakeup" */
-static int xhci_pci_reinit(struct xhci_hcd *xhci, struct pci_dev *pdev)
-{
+/* called after घातerup, by probe or प्रणाली-pm "wakeup" */
+अटल पूर्णांक xhci_pci_reinit(काष्ठा xhci_hcd *xhci, काष्ठा pci_dev *pdev)
+अणु
 	/*
 	 * TODO: Implement finding debug ports later.
-	 * TODO: see if there are any quirks that need to be added to handle
+	 * TODO: see अगर there are any quirks that need to be added to handle
 	 * new extended capabilities.
 	 */
 
 	/* PCI Memory-Write-Invalidate cycle support is optional (uncommon) */
-	if (!pci_set_mwi(pdev))
+	अगर (!pci_set_mwi(pdev))
 		xhci_dbg(xhci, "MWI active\n");
 
 	xhci_dbg(xhci, "Finished xhci_pci_reinit\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xhci_pci_quirks(struct device *dev, struct xhci_hcd *xhci)
-{
-	struct pci_dev                  *pdev = to_pci_dev(dev);
-	struct xhci_driver_data         *driver_data;
-	const struct pci_device_id      *id;
+अटल व्योम xhci_pci_quirks(काष्ठा device *dev, काष्ठा xhci_hcd *xhci)
+अणु
+	काष्ठा pci_dev                  *pdev = to_pci_dev(dev);
+	काष्ठा xhci_driver_data         *driver_data;
+	स्थिर काष्ठा pci_device_id      *id;
 
 	id = pci_match_id(pdev->driver->id_table, pdev);
 
-	if (id && id->driver_data) {
-		driver_data = (struct xhci_driver_data *)id->driver_data;
+	अगर (id && id->driver_data) अणु
+		driver_data = (काष्ठा xhci_driver_data *)id->driver_data;
 		xhci->quirks |= driver_data->quirks;
-	}
+	पूर्ण
 
-	/* Look for vendor-specific quirks */
-	if (pdev->vendor == PCI_VENDOR_ID_FRESCO_LOGIC &&
+	/* Look क्रम venकरोr-specअगरic quirks */
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_FRESCO_LOGIC &&
 			(pdev->device == PCI_DEVICE_ID_FRESCO_LOGIC_PDK ||
-			 pdev->device == PCI_DEVICE_ID_FRESCO_LOGIC_FL1400)) {
-		if (pdev->device == PCI_DEVICE_ID_FRESCO_LOGIC_PDK &&
-				pdev->revision == 0x0) {
+			 pdev->device == PCI_DEVICE_ID_FRESCO_LOGIC_FL1400)) अणु
+		अगर (pdev->device == PCI_DEVICE_ID_FRESCO_LOGIC_PDK &&
+				pdev->revision == 0x0) अणु
 			xhci->quirks |= XHCI_RESET_EP_QUIRK;
 			xhci_dbg_trace(xhci, trace_xhci_dbg_quirks,
 				"QUIRK: Fresco Logic xHC needs configure"
 				" endpoint cmd after reset endpoint");
-		}
-		if (pdev->device == PCI_DEVICE_ID_FRESCO_LOGIC_PDK &&
-				pdev->revision == 0x4) {
+		पूर्ण
+		अगर (pdev->device == PCI_DEVICE_ID_FRESCO_LOGIC_PDK &&
+				pdev->revision == 0x4) अणु
 			xhci->quirks |= XHCI_SLOW_SUSPEND;
 			xhci_dbg_trace(xhci, trace_xhci_dbg_quirks,
 				"QUIRK: Fresco Logic xHC revision %u"
 				"must be suspended extra slowly",
 				pdev->revision);
-		}
-		if (pdev->device == PCI_DEVICE_ID_FRESCO_LOGIC_PDK)
+		पूर्ण
+		अगर (pdev->device == PCI_DEVICE_ID_FRESCO_LOGIC_PDK)
 			xhci->quirks |= XHCI_BROKEN_STREAMS;
-		/* Fresco Logic confirms: all revisions of this chip do not
+		/* Fresco Logic confirms: all revisions of this chip करो not
 		 * support MSI, even though some of them claim to in their PCI
 		 * capabilities.
 		 */
@@ -141,79 +142,79 @@ static void xhci_pci_quirks(struct device *dev, struct xhci_hcd *xhci)
 				"has broken MSI implementation",
 				pdev->revision);
 		xhci->quirks |= XHCI_TRUST_TX_LENGTH;
-	}
+	पूर्ण
 
-	if (pdev->vendor == PCI_VENDOR_ID_FRESCO_LOGIC &&
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_FRESCO_LOGIC &&
 			pdev->device == PCI_DEVICE_ID_FRESCO_LOGIC_FL1009)
 		xhci->quirks |= XHCI_BROKEN_STREAMS;
 
-	if (pdev->vendor == PCI_VENDOR_ID_NEC)
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_NEC)
 		xhci->quirks |= XHCI_NEC_HOST;
 
-	if (pdev->vendor == PCI_VENDOR_ID_AMD && xhci->hci_version == 0x96)
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_AMD && xhci->hci_version == 0x96)
 		xhci->quirks |= XHCI_AMD_0x96_HOST;
 
 	/* AMD PLL quirk */
-	if (pdev->vendor == PCI_VENDOR_ID_AMD && usb_amd_quirk_pll_check())
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_AMD && usb_amd_quirk_pll_check())
 		xhci->quirks |= XHCI_AMD_PLL_FIX;
 
-	if (pdev->vendor == PCI_VENDOR_ID_AMD &&
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_AMD &&
 		(pdev->device == 0x145c ||
 		 pdev->device == 0x15e0 ||
 		 pdev->device == 0x15e1 ||
 		 pdev->device == 0x43bb))
 		xhci->quirks |= XHCI_SUSPEND_DELAY;
 
-	if (pdev->vendor == PCI_VENDOR_ID_AMD &&
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_AMD &&
 	    (pdev->device == 0x15e0 || pdev->device == 0x15e1))
 		xhci->quirks |= XHCI_SNPS_BROKEN_SUSPEND;
 
-	if (pdev->vendor == PCI_VENDOR_ID_AMD && pdev->device == 0x15e5) {
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_AMD && pdev->device == 0x15e5) अणु
 		xhci->quirks |= XHCI_DISABLE_SPARSE;
 		xhci->quirks |= XHCI_RESET_ON_RESUME;
-	}
+	पूर्ण
 
-	if (pdev->vendor == PCI_VENDOR_ID_AMD)
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_AMD)
 		xhci->quirks |= XHCI_TRUST_TX_LENGTH;
 
-	if ((pdev->vendor == PCI_VENDOR_ID_AMD) &&
+	अगर ((pdev->venकरोr == PCI_VENDOR_ID_AMD) &&
 		((pdev->device == PCI_DEVICE_ID_AMD_PROMONTORYA_4) ||
 		(pdev->device == PCI_DEVICE_ID_AMD_PROMONTORYA_3) ||
 		(pdev->device == PCI_DEVICE_ID_AMD_PROMONTORYA_2) ||
 		(pdev->device == PCI_DEVICE_ID_AMD_PROMONTORYA_1)))
 		xhci->quirks |= XHCI_U2_DISABLE_WAKE;
 
-	if (pdev->vendor == PCI_VENDOR_ID_AMD &&
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_AMD &&
 		pdev->device == PCI_DEVICE_ID_AMD_RENOIR_XHCI)
 		xhci->quirks |= XHCI_BROKEN_D3COLD;
 
-	if (pdev->vendor == PCI_VENDOR_ID_INTEL) {
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_INTEL) अणु
 		xhci->quirks |= XHCI_LPM_SUPPORT;
 		xhci->quirks |= XHCI_INTEL_HOST;
 		xhci->quirks |= XHCI_AVOID_BEI;
-	}
-	if (pdev->vendor == PCI_VENDOR_ID_INTEL &&
-			pdev->device == PCI_DEVICE_ID_INTEL_PANTHERPOINT_XHCI) {
+	पूर्ण
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_INTEL &&
+			pdev->device == PCI_DEVICE_ID_INTEL_PANTHERPOINT_XHCI) अणु
 		xhci->quirks |= XHCI_EP_LIMIT_QUIRK;
 		xhci->limit_active_eps = 64;
 		xhci->quirks |= XHCI_SW_BW_CHECKING;
 		/*
-		 * PPT desktop boards DH77EB and DH77DF will power back on after
-		 * a few seconds of being shutdown.  The fix for this is to
-		 * switch the ports from xHCI to EHCI on shutdown.  We can't use
-		 * DMI information to find those particular boards (since each
-		 * vendor will change the board name), so we have to key off all
+		 * PPT desktop boards DH77EB and DH77DF will घातer back on after
+		 * a few seconds of being shutकरोwn.  The fix क्रम this is to
+		 * चयन the ports from xHCI to EHCI on shutकरोwn.  We can't use
+		 * DMI inक्रमmation to find those particular boards (since each
+		 * venकरोr will change the board name), so we have to key off all
 		 * PPT chipsets.
 		 */
 		xhci->quirks |= XHCI_SPURIOUS_REBOOT;
-	}
-	if (pdev->vendor == PCI_VENDOR_ID_INTEL &&
+	पूर्ण
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_INTEL &&
 		(pdev->device == PCI_DEVICE_ID_INTEL_LYNXPOINT_LP_XHCI ||
-		 pdev->device == PCI_DEVICE_ID_INTEL_WILDCATPOINT_LP_XHCI)) {
+		 pdev->device == PCI_DEVICE_ID_INTEL_WILDCATPOINT_LP_XHCI)) अणु
 		xhci->quirks |= XHCI_SPURIOUS_REBOOT;
 		xhci->quirks |= XHCI_SPURIOUS_WAKEUP;
-	}
-	if (pdev->vendor == PCI_VENDOR_ID_INTEL &&
+	पूर्ण
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_INTEL &&
 		(pdev->device == PCI_DEVICE_ID_INTEL_SUNRISEPOINT_LP_XHCI ||
 		 pdev->device == PCI_DEVICE_ID_INTEL_SUNRISEPOINT_H_XHCI ||
 		 pdev->device == PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI ||
@@ -221,18 +222,18 @@ static void xhci_pci_quirks(struct device *dev, struct xhci_hcd *xhci)
 		 pdev->device == PCI_DEVICE_ID_INTEL_BROXTON_B_XHCI ||
 		 pdev->device == PCI_DEVICE_ID_INTEL_APL_XHCI ||
 		 pdev->device == PCI_DEVICE_ID_INTEL_DNV_XHCI ||
-		 pdev->device == PCI_DEVICE_ID_INTEL_CML_XHCI)) {
+		 pdev->device == PCI_DEVICE_ID_INTEL_CML_XHCI)) अणु
 		xhci->quirks |= XHCI_PME_STUCK_QUIRK;
-	}
-	if (pdev->vendor == PCI_VENDOR_ID_INTEL &&
+	पूर्ण
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_INTEL &&
 	    pdev->device == PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI)
 		xhci->quirks |= XHCI_SSIC_PORT_UNUSED;
-	if (pdev->vendor == PCI_VENDOR_ID_INTEL &&
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_INTEL &&
 	    (pdev->device == PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI ||
 	     pdev->device == PCI_DEVICE_ID_INTEL_SUNRISEPOINT_LP_XHCI ||
 	     pdev->device == PCI_DEVICE_ID_INTEL_APL_XHCI))
 		xhci->quirks |= XHCI_INTEL_USB_ROLE_SW;
-	if (pdev->vendor == PCI_VENDOR_ID_INTEL &&
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_INTEL &&
 	    (pdev->device == PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI ||
 	     pdev->device == PCI_DEVICE_ID_INTEL_SUNRISEPOINT_LP_XHCI ||
 	     pdev->device == PCI_DEVICE_ID_INTEL_SUNRISEPOINT_H_XHCI ||
@@ -240,7 +241,7 @@ static void xhci_pci_quirks(struct device *dev, struct xhci_hcd *xhci)
 	     pdev->device == PCI_DEVICE_ID_INTEL_DNV_XHCI))
 		xhci->quirks |= XHCI_MISSING_CAS;
 
-	if (pdev->vendor == PCI_VENDOR_ID_INTEL &&
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_INTEL &&
 	    (pdev->device == PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_2C_XHCI ||
 	     pdev->device == PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_4C_XHCI ||
 	     pdev->device == PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_LP_XHCI ||
@@ -255,152 +256,152 @@ static void xhci_pci_quirks(struct device *dev, struct xhci_hcd *xhci)
 	     pdev->device == PCI_DEVICE_ID_INTEL_ALDER_LAKE_XHCI))
 		xhci->quirks |= XHCI_DEFAULT_PM_RUNTIME_ALLOW;
 
-	if (pdev->vendor == PCI_VENDOR_ID_ETRON &&
-			pdev->device == PCI_DEVICE_ID_EJ168) {
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_ETRON &&
+			pdev->device == PCI_DEVICE_ID_EJ168) अणु
 		xhci->quirks |= XHCI_RESET_ON_RESUME;
 		xhci->quirks |= XHCI_TRUST_TX_LENGTH;
 		xhci->quirks |= XHCI_BROKEN_STREAMS;
-	}
-	if (pdev->vendor == PCI_VENDOR_ID_RENESAS &&
-	    pdev->device == 0x0014) {
+	पूर्ण
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_RENESAS &&
+	    pdev->device == 0x0014) अणु
 		xhci->quirks |= XHCI_TRUST_TX_LENGTH;
 		xhci->quirks |= XHCI_ZERO_64B_REGS;
-	}
-	if (pdev->vendor == PCI_VENDOR_ID_RENESAS &&
-	    pdev->device == 0x0015) {
+	पूर्ण
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_RENESAS &&
+	    pdev->device == 0x0015) अणु
 		xhci->quirks |= XHCI_RESET_ON_RESUME;
 		xhci->quirks |= XHCI_ZERO_64B_REGS;
-	}
-	if (pdev->vendor == PCI_VENDOR_ID_VIA)
+	पूर्ण
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_VIA)
 		xhci->quirks |= XHCI_RESET_ON_RESUME;
 
 	/* See https://bugzilla.kernel.org/show_bug.cgi?id=79511 */
-	if (pdev->vendor == PCI_VENDOR_ID_VIA &&
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_VIA &&
 			pdev->device == 0x3432)
 		xhci->quirks |= XHCI_BROKEN_STREAMS;
 
-	if (pdev->vendor == PCI_VENDOR_ID_VIA && pdev->device == 0x3483)
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_VIA && pdev->device == 0x3483)
 		xhci->quirks |= XHCI_LPM_SUPPORT;
 
-	if (pdev->vendor == PCI_VENDOR_ID_ASMEDIA &&
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_ASMEDIA &&
 		pdev->device == PCI_DEVICE_ID_ASMEDIA_1042_XHCI)
 		xhci->quirks |= XHCI_BROKEN_STREAMS;
-	if (pdev->vendor == PCI_VENDOR_ID_ASMEDIA &&
-		pdev->device == PCI_DEVICE_ID_ASMEDIA_1042A_XHCI) {
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_ASMEDIA &&
+		pdev->device == PCI_DEVICE_ID_ASMEDIA_1042A_XHCI) अणु
 		xhci->quirks |= XHCI_TRUST_TX_LENGTH;
 		xhci->quirks |= XHCI_NO_64BIT_SUPPORT;
-	}
-	if (pdev->vendor == PCI_VENDOR_ID_ASMEDIA &&
+	पूर्ण
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_ASMEDIA &&
 	    (pdev->device == PCI_DEVICE_ID_ASMEDIA_1142_XHCI ||
 	     pdev->device == PCI_DEVICE_ID_ASMEDIA_2142_XHCI ||
 	     pdev->device == PCI_DEVICE_ID_ASMEDIA_3242_XHCI))
 		xhci->quirks |= XHCI_NO_64BIT_SUPPORT;
 
-	if (pdev->vendor == PCI_VENDOR_ID_ASMEDIA &&
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_ASMEDIA &&
 		pdev->device == PCI_DEVICE_ID_ASMEDIA_1042A_XHCI)
 		xhci->quirks |= XHCI_ASMEDIA_MODIFY_FLOWCONTROL;
 
-	if (pdev->vendor == PCI_VENDOR_ID_TI && pdev->device == 0x8241)
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_TI && pdev->device == 0x8241)
 		xhci->quirks |= XHCI_LIMIT_ENDPOINT_INTERVAL_7;
 
-	if ((pdev->vendor == PCI_VENDOR_ID_BROADCOM ||
-	     pdev->vendor == PCI_VENDOR_ID_CAVIUM) &&
+	अगर ((pdev->venकरोr == PCI_VENDOR_ID_BROADCOM ||
+	     pdev->venकरोr == PCI_VENDOR_ID_CAVIUM) &&
 	     pdev->device == 0x9026)
 		xhci->quirks |= XHCI_RESET_PLL_ON_DISCONNECT;
 
-	if (pdev->vendor == PCI_VENDOR_ID_AMD &&
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_AMD &&
 	    (pdev->device == PCI_DEVICE_ID_AMD_PROMONTORYA_2 ||
 	     pdev->device == PCI_DEVICE_ID_AMD_PROMONTORYA_4))
 		xhci->quirks |= XHCI_NO_SOFT_RETRY;
 
-	if (xhci->quirks & XHCI_RESET_ON_RESUME)
+	अगर (xhci->quirks & XHCI_RESET_ON_RESUME)
 		xhci_dbg_trace(xhci, trace_xhci_dbg_quirks,
 				"QUIRK: Resetting on resume");
-}
+पूर्ण
 
-#ifdef CONFIG_ACPI
-static void xhci_pme_acpi_rtd3_enable(struct pci_dev *dev)
-{
-	static const guid_t intel_dsm_guid =
+#अगर_घोषित CONFIG_ACPI
+अटल व्योम xhci_pme_acpi_rtd3_enable(काष्ठा pci_dev *dev)
+अणु
+	अटल स्थिर guid_t पूर्णांकel_dsm_guid =
 		GUID_INIT(0xac340cb7, 0xe901, 0x45bf,
 			  0xb7, 0xe6, 0x2b, 0x34, 0xec, 0x93, 0x1e, 0x23);
-	union acpi_object *obj;
+	जोड़ acpi_object *obj;
 
-	obj = acpi_evaluate_dsm(ACPI_HANDLE(&dev->dev), &intel_dsm_guid, 3, 1,
-				NULL);
+	obj = acpi_evaluate_dsm(ACPI_HANDLE(&dev->dev), &पूर्णांकel_dsm_guid, 3, 1,
+				शून्य);
 	ACPI_FREE(obj);
-}
-#else
-static void xhci_pme_acpi_rtd3_enable(struct pci_dev *dev) { }
-#endif /* CONFIG_ACPI */
+पूर्ण
+#अन्यथा
+अटल व्योम xhci_pme_acpi_rtd3_enable(काष्ठा pci_dev *dev) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_ACPI */
 
 /* called during probe() after chip reset completes */
-static int xhci_pci_setup(struct usb_hcd *hcd)
-{
-	struct xhci_hcd		*xhci;
-	struct pci_dev		*pdev = to_pci_dev(hcd->self.controller);
-	int			retval;
+अटल पूर्णांक xhci_pci_setup(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा xhci_hcd		*xhci;
+	काष्ठा pci_dev		*pdev = to_pci_dev(hcd->self.controller);
+	पूर्णांक			retval;
 
 	xhci = hcd_to_xhci(hcd);
-	if (!xhci->sbrn)
-		pci_read_config_byte(pdev, XHCI_SBRN_OFFSET, &xhci->sbrn);
+	अगर (!xhci->sbrn)
+		pci_पढ़ो_config_byte(pdev, XHCI_SBRN_OFFSET, &xhci->sbrn);
 
-	/* imod_interval is the interrupt moderation value in nanoseconds. */
-	xhci->imod_interval = 40000;
+	/* imod_पूर्णांकerval is the पूर्णांकerrupt moderation value in nanoseconds. */
+	xhci->imod_पूर्णांकerval = 40000;
 
 	retval = xhci_gen_setup(hcd, xhci_pci_quirks);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	if (!usb_hcd_is_primary_hcd(hcd))
-		return 0;
+	अगर (!usb_hcd_is_primary_hcd(hcd))
+		वापस 0;
 
-	if (xhci->quirks & XHCI_PME_STUCK_QUIRK)
+	अगर (xhci->quirks & XHCI_PME_STUCK_QUIRK)
 		xhci_pme_acpi_rtd3_enable(pdev);
 
-	xhci_dbg(xhci, "Got SBRN %u\n", (unsigned int) xhci->sbrn);
+	xhci_dbg(xhci, "Got SBRN %u\n", (अचिन्हित पूर्णांक) xhci->sbrn);
 
 	/* Find any debug ports */
-	return xhci_pci_reinit(xhci, pdev);
-}
+	वापस xhci_pci_reinit(xhci, pdev);
+पूर्ण
 
 /*
- * We need to register our own PCI probe function (instead of the USB core's
+ * We need to रेजिस्टर our own PCI probe function (instead of the USB core's
  * function) in order to create a second roothub under xHCI.
  */
-static int xhci_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
-{
-	int retval;
-	struct xhci_hcd *xhci;
-	struct usb_hcd *hcd;
-	struct xhci_driver_data *driver_data;
-	struct reset_control *reset;
+अटल पूर्णांक xhci_pci_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	पूर्णांक retval;
+	काष्ठा xhci_hcd *xhci;
+	काष्ठा usb_hcd *hcd;
+	काष्ठा xhci_driver_data *driver_data;
+	काष्ठा reset_control *reset;
 
-	driver_data = (struct xhci_driver_data *)id->driver_data;
-	if (driver_data && driver_data->quirks & XHCI_RENESAS_FW_QUIRK) {
+	driver_data = (काष्ठा xhci_driver_data *)id->driver_data;
+	अगर (driver_data && driver_data->quirks & XHCI_RENESAS_FW_QUIRK) अणु
 		retval = renesas_xhci_check_request_fw(dev, id);
-		if (retval)
-			return retval;
-	}
+		अगर (retval)
+			वापस retval;
+	पूर्ण
 
-	reset = devm_reset_control_get_optional_exclusive(&dev->dev, NULL);
-	if (IS_ERR(reset))
-		return PTR_ERR(reset);
+	reset = devm_reset_control_get_optional_exclusive(&dev->dev, शून्य);
+	अगर (IS_ERR(reset))
+		वापस PTR_ERR(reset);
 	reset_control_reset(reset);
 
-	/* Prevent runtime suspending between USB-2 and USB-3 initialization */
-	pm_runtime_get_noresume(&dev->dev);
+	/* Prevent runसमय suspending between USB-2 and USB-3 initialization */
+	pm_runसमय_get_noresume(&dev->dev);
 
 	/* Register the USB 2.0 roothub.
-	 * FIXME: USB core must know to register the USB 2.0 roothub first.
+	 * FIXME: USB core must know to रेजिस्टर the USB 2.0 roothub first.
 	 * This is sort of silly, because we could just set the HCD driver flags
 	 * to say USB 2.0, but I'm not sure what the implications would be in
 	 * the other parts of the HCD code.
 	 */
 	retval = usb_hcd_pci_probe(dev, id, &xhci_pci_hc_driver);
 
-	if (retval)
-		goto put_runtime_pm;
+	अगर (retval)
+		जाओ put_runसमय_pm;
 
 	/* USB 2.0 roothub is stored in the PCI device now. */
 	hcd = dev_get_drvdata(&dev->dev);
@@ -408,270 +409,270 @@ static int xhci_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 	xhci->reset = reset;
 	xhci->shared_hcd = usb_create_shared_hcd(&xhci_pci_hc_driver, &dev->dev,
 						 pci_name(dev), hcd);
-	if (!xhci->shared_hcd) {
+	अगर (!xhci->shared_hcd) अणु
 		retval = -ENOMEM;
-		goto dealloc_usb2_hcd;
-	}
+		जाओ dealloc_usb2_hcd;
+	पूर्ण
 
 	retval = xhci_ext_cap_init(xhci);
-	if (retval)
-		goto put_usb3_hcd;
+	अगर (retval)
+		जाओ put_usb3_hcd;
 
 	retval = usb_add_hcd(xhci->shared_hcd, dev->irq,
 			IRQF_SHARED);
-	if (retval)
-		goto put_usb3_hcd;
-	/* Roothub already marked as USB 3.0 speed */
+	अगर (retval)
+		जाओ put_usb3_hcd;
+	/* Roothub alपढ़ोy marked as USB 3.0 speed */
 
-	if (!(xhci->quirks & XHCI_BROKEN_STREAMS) &&
+	अगर (!(xhci->quirks & XHCI_BROKEN_STREAMS) &&
 			HCC_MAX_PSA(xhci->hcc_params) >= 4)
-		xhci->shared_hcd->can_do_streams = 1;
+		xhci->shared_hcd->can_करो_streams = 1;
 
-	/* USB-2 and USB-3 roothubs initialized, allow runtime pm suspend */
-	pm_runtime_put_noidle(&dev->dev);
+	/* USB-2 and USB-3 roothubs initialized, allow runसमय pm suspend */
+	pm_runसमय_put_noidle(&dev->dev);
 
-	if (xhci->quirks & XHCI_DEFAULT_PM_RUNTIME_ALLOW)
-		pm_runtime_allow(&dev->dev);
+	अगर (xhci->quirks & XHCI_DEFAULT_PM_RUNTIME_ALLOW)
+		pm_runसमय_allow(&dev->dev);
 
-	return 0;
+	वापस 0;
 
 put_usb3_hcd:
 	usb_put_hcd(xhci->shared_hcd);
 dealloc_usb2_hcd:
-	usb_hcd_pci_remove(dev);
-put_runtime_pm:
-	pm_runtime_put_noidle(&dev->dev);
-	return retval;
-}
+	usb_hcd_pci_हटाओ(dev);
+put_runसमय_pm:
+	pm_runसमय_put_noidle(&dev->dev);
+	वापस retval;
+पूर्ण
 
-static void xhci_pci_remove(struct pci_dev *dev)
-{
-	struct xhci_hcd *xhci;
+अटल व्योम xhci_pci_हटाओ(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा xhci_hcd *xhci;
 
 	xhci = hcd_to_xhci(pci_get_drvdata(dev));
-	if (xhci->quirks & XHCI_RENESAS_FW_QUIRK)
-		renesas_xhci_pci_exit(dev);
+	अगर (xhci->quirks & XHCI_RENESAS_FW_QUIRK)
+		renesas_xhci_pci_निकास(dev);
 
 	xhci->xhc_state |= XHCI_STATE_REMOVING;
 
-	if (xhci->quirks & XHCI_DEFAULT_PM_RUNTIME_ALLOW)
-		pm_runtime_forbid(&dev->dev);
+	अगर (xhci->quirks & XHCI_DEFAULT_PM_RUNTIME_ALLOW)
+		pm_runसमय_क्रमbid(&dev->dev);
 
-	if (xhci->shared_hcd) {
-		usb_remove_hcd(xhci->shared_hcd);
+	अगर (xhci->shared_hcd) अणु
+		usb_हटाओ_hcd(xhci->shared_hcd);
 		usb_put_hcd(xhci->shared_hcd);
-		xhci->shared_hcd = NULL;
-	}
+		xhci->shared_hcd = शून्य;
+	पूर्ण
 
-	/* Workaround for spurious wakeups at shutdown with HSW */
-	if (xhci->quirks & XHCI_SPURIOUS_WAKEUP)
-		pci_set_power_state(dev, PCI_D3hot);
+	/* Workaround क्रम spurious wakeups at shutकरोwn with HSW */
+	अगर (xhci->quirks & XHCI_SPURIOUS_WAKEUP)
+		pci_set_घातer_state(dev, PCI_D3hot);
 
-	usb_hcd_pci_remove(dev);
-}
+	usb_hcd_pci_हटाओ(dev);
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 /*
  * In some Intel xHCI controllers, in order to get D3 working,
- * through a vendor specific SSIC CONFIG register at offset 0x883c,
- * SSIC PORT need to be marked as "unused" before putting xHCI
- * into D3. After D3 exit, the SSIC port need to be marked as "used".
+ * through a venकरोr specअगरic SSIC CONFIG रेजिस्टर at offset 0x883c,
+ * SSIC PORT need to be marked as "unused" beक्रमe putting xHCI
+ * पूर्णांकo D3. After D3 निकास, the SSIC port need to be marked as "used".
  * Without this change, xHCI might not enter D3 state.
  */
-static void xhci_ssic_port_unused_quirk(struct usb_hcd *hcd, bool suspend)
-{
-	struct xhci_hcd	*xhci = hcd_to_xhci(hcd);
+अटल व्योम xhci_ssic_port_unused_quirk(काष्ठा usb_hcd *hcd, bool suspend)
+अणु
+	काष्ठा xhci_hcd	*xhci = hcd_to_xhci(hcd);
 	u32 val;
-	void __iomem *reg;
-	int i;
+	व्योम __iomem *reg;
+	पूर्णांक i;
 
-	for (i = 0; i < SSIC_PORT_NUM; i++) {
-		reg = (void __iomem *) xhci->cap_regs +
+	क्रम (i = 0; i < SSIC_PORT_NUM; i++) अणु
+		reg = (व्योम __iomem *) xhci->cap_regs +
 				SSIC_PORT_CFG2 +
 				i * SSIC_PORT_CFG2_OFFSET;
 
-		/* Notify SSIC that SSIC profile programming is not done. */
-		val = readl(reg) & ~PROG_DONE;
-		writel(val, reg);
+		/* Notअगरy SSIC that SSIC profile programming is not करोne. */
+		val = पढ़ोl(reg) & ~PROG_DONE;
+		ग_लिखोl(val, reg);
 
 		/* Mark SSIC port as unused(suspend) or used(resume) */
-		val = readl(reg);
-		if (suspend)
+		val = पढ़ोl(reg);
+		अगर (suspend)
 			val |= SSIC_PORT_UNUSED;
-		else
+		अन्यथा
 			val &= ~SSIC_PORT_UNUSED;
-		writel(val, reg);
+		ग_लिखोl(val, reg);
 
-		/* Notify SSIC that SSIC profile programming is done */
-		val = readl(reg) | PROG_DONE;
-		writel(val, reg);
-		readl(reg);
-	}
-}
+		/* Notअगरy SSIC that SSIC profile programming is करोne */
+		val = पढ़ोl(reg) | PROG_DONE;
+		ग_लिखोl(val, reg);
+		पढ़ोl(reg);
+	पूर्ण
+पूर्ण
 
 /*
  * Make sure PME works on some Intel xHCI controllers by writing 1 to clear
- * the Internal PME flag bit in vendor specific PMCTRL register at offset 0x80a4
+ * the Internal PME flag bit in venकरोr specअगरic PMCTRL रेजिस्टर at offset 0x80a4
  */
-static void xhci_pme_quirk(struct usb_hcd *hcd)
-{
-	struct xhci_hcd	*xhci = hcd_to_xhci(hcd);
-	void __iomem *reg;
+अटल व्योम xhci_pme_quirk(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा xhci_hcd	*xhci = hcd_to_xhci(hcd);
+	व्योम __iomem *reg;
 	u32 val;
 
-	reg = (void __iomem *) xhci->cap_regs + 0x80a4;
-	val = readl(reg);
-	writel(val | BIT(28), reg);
-	readl(reg);
-}
+	reg = (व्योम __iomem *) xhci->cap_regs + 0x80a4;
+	val = पढ़ोl(reg);
+	ग_लिखोl(val | BIT(28), reg);
+	पढ़ोl(reg);
+पूर्ण
 
-static void xhci_sparse_control_quirk(struct usb_hcd *hcd)
-{
+अटल व्योम xhci_sparse_control_quirk(काष्ठा usb_hcd *hcd)
+अणु
 	u32 reg;
 
-	reg = readl(hcd->regs + SPARSE_CNTL_ENABLE);
+	reg = पढ़ोl(hcd->regs + SPARSE_CNTL_ENABLE);
 	reg &= ~BIT(SPARSE_DISABLE_BIT);
-	writel(reg, hcd->regs + SPARSE_CNTL_ENABLE);
-}
+	ग_लिखोl(reg, hcd->regs + SPARSE_CNTL_ENABLE);
+पूर्ण
 
-static int xhci_pci_suspend(struct usb_hcd *hcd, bool do_wakeup)
-{
-	struct xhci_hcd	*xhci = hcd_to_xhci(hcd);
-	struct pci_dev		*pdev = to_pci_dev(hcd->self.controller);
-	int			ret;
+अटल पूर्णांक xhci_pci_suspend(काष्ठा usb_hcd *hcd, bool करो_wakeup)
+अणु
+	काष्ठा xhci_hcd	*xhci = hcd_to_xhci(hcd);
+	काष्ठा pci_dev		*pdev = to_pci_dev(hcd->self.controller);
+	पूर्णांक			ret;
 
 	/*
 	 * Systems with the TI redriver that loses port status change events
-	 * need to have the registers polled during D3, so avoid D3cold.
+	 * need to have the रेजिस्टरs polled during D3, so aव्योम D3cold.
 	 */
-	if (xhci->quirks & (XHCI_COMP_MODE_QUIRK | XHCI_BROKEN_D3COLD))
+	अगर (xhci->quirks & (XHCI_COMP_MODE_QUIRK | XHCI_BROKEN_D3COLD))
 		pci_d3cold_disable(pdev);
 
-	if (xhci->quirks & XHCI_PME_STUCK_QUIRK)
+	अगर (xhci->quirks & XHCI_PME_STUCK_QUIRK)
 		xhci_pme_quirk(hcd);
 
-	if (xhci->quirks & XHCI_SSIC_PORT_UNUSED)
+	अगर (xhci->quirks & XHCI_SSIC_PORT_UNUSED)
 		xhci_ssic_port_unused_quirk(hcd, true);
 
-	if (xhci->quirks & XHCI_DISABLE_SPARSE)
+	अगर (xhci->quirks & XHCI_DISABLE_SPARSE)
 		xhci_sparse_control_quirk(hcd);
 
-	ret = xhci_suspend(xhci, do_wakeup);
-	if (ret && (xhci->quirks & XHCI_SSIC_PORT_UNUSED))
+	ret = xhci_suspend(xhci, करो_wakeup);
+	अगर (ret && (xhci->quirks & XHCI_SSIC_PORT_UNUSED))
 		xhci_ssic_port_unused_quirk(hcd, false);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xhci_pci_resume(struct usb_hcd *hcd, bool hibernated)
-{
-	struct xhci_hcd		*xhci = hcd_to_xhci(hcd);
-	struct pci_dev		*pdev = to_pci_dev(hcd->self.controller);
-	int			retval = 0;
+अटल पूर्णांक xhci_pci_resume(काष्ठा usb_hcd *hcd, bool hibernated)
+अणु
+	काष्ठा xhci_hcd		*xhci = hcd_to_xhci(hcd);
+	काष्ठा pci_dev		*pdev = to_pci_dev(hcd->self.controller);
+	पूर्णांक			retval = 0;
 
 	reset_control_reset(xhci->reset);
 
-	/* The BIOS on systems with the Intel Panther Point chipset may or may
-	 * not support xHCI natively.  That means that during system resume, it
-	 * may switch the ports back to EHCI so that users can use their
+	/* The BIOS on प्रणालीs with the Intel Panther Poपूर्णांक chipset may or may
+	 * not support xHCI natively.  That means that during प्रणाली resume, it
+	 * may चयन the ports back to EHCI so that users can use their
 	 * keyboard to select a kernel from GRUB after resume from hibernate.
 	 *
 	 * The BIOS is supposed to remember whether the OS had xHCI ports
-	 * enabled before resume, and switch the ports back to xHCI when the
+	 * enabled beक्रमe resume, and चयन the ports back to xHCI when the
 	 * BIOS/OS semaphore is written, but we all know we can't trust BIOS
-	 * writers.
+	 * ग_लिखोrs.
 	 *
-	 * Unconditionally switch the ports back to xHCI after a system resume.
+	 * Unconditionally चयन the ports back to xHCI after a प्रणाली resume.
 	 * It should not matter whether the EHCI or xHCI controller is
-	 * resumed first. It's enough to do the switchover in xHCI because
+	 * resumed first. It's enough to करो the चयनover in xHCI because
 	 * USB core won't notice anything as the hub driver doesn't start
 	 * running again until after all the devices (including both EHCI and
 	 * xHCI host controllers) have been resumed.
 	 */
 
-	if (pdev->vendor == PCI_VENDOR_ID_INTEL)
-		usb_enable_intel_xhci_ports(pdev);
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_INTEL)
+		usb_enable_पूर्णांकel_xhci_ports(pdev);
 
-	if (xhci->quirks & XHCI_SSIC_PORT_UNUSED)
+	अगर (xhci->quirks & XHCI_SSIC_PORT_UNUSED)
 		xhci_ssic_port_unused_quirk(hcd, false);
 
-	if (xhci->quirks & XHCI_PME_STUCK_QUIRK)
+	अगर (xhci->quirks & XHCI_PME_STUCK_QUIRK)
 		xhci_pme_quirk(hcd);
 
 	retval = xhci_resume(xhci, hibernated);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void xhci_pci_shutdown(struct usb_hcd *hcd)
-{
-	struct xhci_hcd		*xhci = hcd_to_xhci(hcd);
-	struct pci_dev		*pdev = to_pci_dev(hcd->self.controller);
+अटल व्योम xhci_pci_shutकरोwn(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा xhci_hcd		*xhci = hcd_to_xhci(hcd);
+	काष्ठा pci_dev		*pdev = to_pci_dev(hcd->self.controller);
 
-	xhci_shutdown(hcd);
+	xhci_shutकरोwn(hcd);
 
-	/* Yet another workaround for spurious wakeups at shutdown with HSW */
-	if (xhci->quirks & XHCI_SPURIOUS_WAKEUP)
-		pci_set_power_state(pdev, PCI_D3hot);
-}
-#endif /* CONFIG_PM */
+	/* Yet another workaround क्रम spurious wakeups at shutकरोwn with HSW */
+	अगर (xhci->quirks & XHCI_SPURIOUS_WAKEUP)
+		pci_set_घातer_state(pdev, PCI_D3hot);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
 /*-------------------------------------------------------------------------*/
 
-static const struct xhci_driver_data reneses_data = {
+अटल स्थिर काष्ठा xhci_driver_data reneses_data = अणु
 	.quirks  = XHCI_RENESAS_FW_QUIRK,
 	.firmware = "renesas_usb_fw.mem",
-};
+पूर्ण;
 
 /* PCI driver selection metadata; PCI hotplugging uses this */
-static const struct pci_device_id pci_ids[] = {
-	{ PCI_DEVICE(0x1912, 0x0014),
-		.driver_data =  (unsigned long)&reneses_data,
-	},
-	{ PCI_DEVICE(0x1912, 0x0015),
-		.driver_data =  (unsigned long)&reneses_data,
-	},
+अटल स्थिर काष्ठा pci_device_id pci_ids[] = अणु
+	अणु PCI_DEVICE(0x1912, 0x0014),
+		.driver_data =  (अचिन्हित दीर्घ)&reneses_data,
+	पूर्ण,
+	अणु PCI_DEVICE(0x1912, 0x0015),
+		.driver_data =  (अचिन्हित दीर्घ)&reneses_data,
+	पूर्ण,
 	/* handle any USB 3.0 xHCI controller */
-	{ PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_USB_XHCI, ~0),
-	},
-	{ /* end: all zeroes */ }
-};
+	अणु PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_USB_XHCI, ~0),
+	पूर्ण,
+	अणु /* end: all zeroes */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, pci_ids);
 MODULE_FIRMWARE("renesas_usb_fw.mem");
 
 /* pci driver glue; this is a "new style" PCI driver module */
-static struct pci_driver xhci_pci_driver = {
+अटल काष्ठा pci_driver xhci_pci_driver = अणु
 	.name =		hcd_name,
 	.id_table =	pci_ids,
 
 	.probe =	xhci_pci_probe,
-	.remove =	xhci_pci_remove,
+	.हटाओ =	xhci_pci_हटाओ,
 	/* suspend and resume implemented later */
 
-	.shutdown = 	usb_hcd_pci_shutdown,
-#ifdef CONFIG_PM
-	.driver = {
+	.shutकरोwn = 	usb_hcd_pci_shutकरोwn,
+#अगर_घोषित CONFIG_PM
+	.driver = अणु
 		.pm = &usb_hcd_pci_pm_ops
-	},
-#endif
-};
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static int __init xhci_pci_init(void)
-{
+अटल पूर्णांक __init xhci_pci_init(व्योम)
+अणु
 	xhci_init_driver(&xhci_pci_hc_driver, &xhci_pci_overrides);
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	xhci_pci_hc_driver.pci_suspend = xhci_pci_suspend;
 	xhci_pci_hc_driver.pci_resume = xhci_pci_resume;
-	xhci_pci_hc_driver.shutdown = xhci_pci_shutdown;
-#endif
-	return pci_register_driver(&xhci_pci_driver);
-}
+	xhci_pci_hc_driver.shutकरोwn = xhci_pci_shutकरोwn;
+#पूर्ण_अगर
+	वापस pci_रेजिस्टर_driver(&xhci_pci_driver);
+पूर्ण
 module_init(xhci_pci_init);
 
-static void __exit xhci_pci_exit(void)
-{
-	pci_unregister_driver(&xhci_pci_driver);
-}
-module_exit(xhci_pci_exit);
+अटल व्योम __निकास xhci_pci_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&xhci_pci_driver);
+पूर्ण
+module_निकास(xhci_pci_निकास);
 
 MODULE_DESCRIPTION("xHCI PCI Host Controller Driver");
 MODULE_LICENSE("GPL");

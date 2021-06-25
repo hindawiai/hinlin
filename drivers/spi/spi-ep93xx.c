@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for Cirrus Logic EP93xx SPI controller.
+ * Driver क्रम Cirrus Logic EP93xx SPI controller.
  *
  * Copyright (C) 2010-2011 Mika Westerberg
  *
@@ -8,113 +9,113 @@
  *
  * Chip select support using other than built-in GPIOs by H. Hartley Sweeten.
  *
- * For more information about the SPI controller see documentation on Cirrus
+ * For more inक्रमmation about the SPI controller see करोcumentation on Cirrus
  * Logic web site:
  *     https://www.cirrus.com/en/pubs/manual/EP93xx_Users_Guide_UM1.pdf
  */
 
-#include <linux/io.h>
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/dmaengine.h>
-#include <linux/bitops.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/sched.h>
-#include <linux/scatterlist.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/spi/spi.h>
 
-#include <linux/platform_data/dma-ep93xx.h>
-#include <linux/platform_data/spi-ep93xx.h>
+#समावेश <linux/platक्रमm_data/dma-ep93xx.h>
+#समावेश <linux/platक्रमm_data/spi-ep93xx.h>
 
-#define SSPCR0			0x0000
-#define SSPCR0_SPO		BIT(6)
-#define SSPCR0_SPH		BIT(7)
-#define SSPCR0_SCR_SHIFT	8
+#घोषणा SSPCR0			0x0000
+#घोषणा SSPCR0_SPO		BIT(6)
+#घोषणा SSPCR0_SPH		BIT(7)
+#घोषणा SSPCR0_SCR_SHIFT	8
 
-#define SSPCR1			0x0004
-#define SSPCR1_RIE		BIT(0)
-#define SSPCR1_TIE		BIT(1)
-#define SSPCR1_RORIE		BIT(2)
-#define SSPCR1_LBM		BIT(3)
-#define SSPCR1_SSE		BIT(4)
-#define SSPCR1_MS		BIT(5)
-#define SSPCR1_SOD		BIT(6)
+#घोषणा SSPCR1			0x0004
+#घोषणा SSPCR1_RIE		BIT(0)
+#घोषणा SSPCR1_TIE		BIT(1)
+#घोषणा SSPCR1_RORIE		BIT(2)
+#घोषणा SSPCR1_LBM		BIT(3)
+#घोषणा SSPCR1_SSE		BIT(4)
+#घोषणा SSPCR1_MS		BIT(5)
+#घोषणा SSPCR1_SOD		BIT(6)
 
-#define SSPDR			0x0008
+#घोषणा SSPDR			0x0008
 
-#define SSPSR			0x000c
-#define SSPSR_TFE		BIT(0)
-#define SSPSR_TNF		BIT(1)
-#define SSPSR_RNE		BIT(2)
-#define SSPSR_RFF		BIT(3)
-#define SSPSR_BSY		BIT(4)
-#define SSPCPSR			0x0010
+#घोषणा SSPSR			0x000c
+#घोषणा SSPSR_TFE		BIT(0)
+#घोषणा SSPSR_TNF		BIT(1)
+#घोषणा SSPSR_RNE		BIT(2)
+#घोषणा SSPSR_RFF		BIT(3)
+#घोषणा SSPSR_BSY		BIT(4)
+#घोषणा SSPCPSR			0x0010
 
-#define SSPIIR			0x0014
-#define SSPIIR_RIS		BIT(0)
-#define SSPIIR_TIS		BIT(1)
-#define SSPIIR_RORIS		BIT(2)
-#define SSPICR			SSPIIR
+#घोषणा SSPIIR			0x0014
+#घोषणा SSPIIR_RIS		BIT(0)
+#घोषणा SSPIIR_TIS		BIT(1)
+#घोषणा SSPIIR_RORIS		BIT(2)
+#घोषणा SSPICR			SSPIIR
 
-/* timeout in milliseconds */
-#define SPI_TIMEOUT		5
+/* समयout in milliseconds */
+#घोषणा SPI_TIMEOUT		5
 /* maximum depth of RX/TX FIFO */
-#define SPI_FIFO_SIZE		8
+#घोषणा SPI_FIFO_SIZE		8
 
 /**
- * struct ep93xx_spi - EP93xx SPI controller structure
- * @clk: clock for the controller
- * @mmio: pointer to ioremap()'d registers
- * @sspdr_phys: physical address of the SSPDR register
+ * काष्ठा ep93xx_spi - EP93xx SPI controller काष्ठाure
+ * @clk: घड़ी क्रम the controller
+ * @mmio: poपूर्णांकer to ioremap()'d रेजिस्टरs
+ * @sspdr_phys: physical address of the SSPDR रेजिस्टर
  * @tx: current byte in transfer to transmit
  * @rx: current byte in transfer to receive
- * @fifo_level: how full is FIFO (%0..%SPI_FIFO_SIZE - %1). Receiving one
+ * @fअगरo_level: how full is FIFO (%0..%SPI_FIFO_SIZE - %1). Receiving one
  *              frame decreases this level and sending one frame increases it.
  * @dma_rx: RX DMA channel
  * @dma_tx: TX DMA channel
  * @dma_rx_data: RX parameters passed to the DMA engine
  * @dma_tx_data: TX parameters passed to the DMA engine
- * @rx_sgt: sg table for RX transfers
- * @tx_sgt: sg table for TX transfers
+ * @rx_sgt: sg table क्रम RX transfers
+ * @tx_sgt: sg table क्रम TX transfers
  * @zeropage: dummy page used as RX buffer when only TX buffer is passed in by
  *            the client
  */
-struct ep93xx_spi {
-	struct clk			*clk;
-	void __iomem			*mmio;
-	unsigned long			sspdr_phys;
-	size_t				tx;
-	size_t				rx;
-	size_t				fifo_level;
-	struct dma_chan			*dma_rx;
-	struct dma_chan			*dma_tx;
-	struct ep93xx_dma_data		dma_rx_data;
-	struct ep93xx_dma_data		dma_tx_data;
-	struct sg_table			rx_sgt;
-	struct sg_table			tx_sgt;
-	void				*zeropage;
-};
+काष्ठा ep93xx_spi अणु
+	काष्ठा clk			*clk;
+	व्योम __iomem			*mmio;
+	अचिन्हित दीर्घ			sspdr_phys;
+	माप_प्रकार				tx;
+	माप_प्रकार				rx;
+	माप_प्रकार				fअगरo_level;
+	काष्ठा dma_chan			*dma_rx;
+	काष्ठा dma_chan			*dma_tx;
+	काष्ठा ep93xx_dma_data		dma_rx_data;
+	काष्ठा ep93xx_dma_data		dma_tx_data;
+	काष्ठा sg_table			rx_sgt;
+	काष्ठा sg_table			tx_sgt;
+	व्योम				*zeropage;
+पूर्ण;
 
 /* converts bits per word to CR0.DSS value */
-#define bits_per_word_to_dss(bpw)	((bpw) - 1)
+#घोषणा bits_per_word_to_dss(bpw)	((bpw) - 1)
 
 /**
- * ep93xx_spi_calc_divisors() - calculates SPI clock divisors
+ * ep93xx_spi_calc_भागisors() - calculates SPI घड़ी भागisors
  * @master: SPI master
- * @rate: desired SPI output clock rate
- * @div_cpsr: pointer to return the cpsr (pre-scaler) divider
- * @div_scr: pointer to return the scr divider
+ * @rate: desired SPI output घड़ी rate
+ * @भाग_cpsr: poपूर्णांकer to वापस the cpsr (pre-scaler) भागider
+ * @भाग_scr: poपूर्णांकer to वापस the scr भागider
  */
-static int ep93xx_spi_calc_divisors(struct spi_master *master,
-				    u32 rate, u8 *div_cpsr, u8 *div_scr)
-{
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
-	unsigned long spi_clk_rate = clk_get_rate(espi->clk);
-	int cpsr, scr;
+अटल पूर्णांक ep93xx_spi_calc_भागisors(काष्ठा spi_master *master,
+				    u32 rate, u8 *भाग_cpsr, u8 *भाग_scr)
+अणु
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
+	अचिन्हित दीर्घ spi_clk_rate = clk_get_rate(espi->clk);
+	पूर्णांक cpsr, scr;
 
 	/*
 	 * Make sure that max value is between values supported by the
@@ -123,141 +124,141 @@ static int ep93xx_spi_calc_divisors(struct spi_master *master,
 	rate = clamp(rate, master->min_speed_hz, master->max_speed_hz);
 
 	/*
-	 * Calculate divisors so that we can get speed according the
-	 * following formula:
-	 *	rate = spi_clock_rate / (cpsr * (1 + scr))
+	 * Calculate भागisors so that we can get speed according the
+	 * following क्रमmula:
+	 *	rate = spi_घड़ी_rate / (cpsr * (1 + scr))
 	 *
 	 * cpsr must be even number and starts from 2, scr can be any number
 	 * between 0 and 255.
 	 */
-	for (cpsr = 2; cpsr <= 254; cpsr += 2) {
-		for (scr = 0; scr <= 255; scr++) {
-			if ((spi_clk_rate / (cpsr * (scr + 1))) <= rate) {
-				*div_scr = (u8)scr;
-				*div_cpsr = (u8)cpsr;
-				return 0;
-			}
-		}
-	}
+	क्रम (cpsr = 2; cpsr <= 254; cpsr += 2) अणु
+		क्रम (scr = 0; scr <= 255; scr++) अणु
+			अगर ((spi_clk_rate / (cpsr * (scr + 1))) <= rate) अणु
+				*भाग_scr = (u8)scr;
+				*भाग_cpsr = (u8)cpsr;
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int ep93xx_spi_chip_setup(struct spi_master *master,
-				 struct spi_device *spi,
-				 struct spi_transfer *xfer)
-{
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
+अटल पूर्णांक ep93xx_spi_chip_setup(काष्ठा spi_master *master,
+				 काष्ठा spi_device *spi,
+				 काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
 	u8 dss = bits_per_word_to_dss(xfer->bits_per_word);
-	u8 div_cpsr = 0;
-	u8 div_scr = 0;
+	u8 भाग_cpsr = 0;
+	u8 भाग_scr = 0;
 	u16 cr0;
-	int err;
+	पूर्णांक err;
 
-	err = ep93xx_spi_calc_divisors(master, xfer->speed_hz,
-				       &div_cpsr, &div_scr);
-	if (err)
-		return err;
+	err = ep93xx_spi_calc_भागisors(master, xfer->speed_hz,
+				       &भाग_cpsr, &भाग_scr);
+	अगर (err)
+		वापस err;
 
-	cr0 = div_scr << SSPCR0_SCR_SHIFT;
-	if (spi->mode & SPI_CPOL)
+	cr0 = भाग_scr << SSPCR0_SCR_SHIFT;
+	अगर (spi->mode & SPI_CPOL)
 		cr0 |= SSPCR0_SPO;
-	if (spi->mode & SPI_CPHA)
+	अगर (spi->mode & SPI_CPHA)
 		cr0 |= SSPCR0_SPH;
 	cr0 |= dss;
 
 	dev_dbg(&master->dev, "setup: mode %d, cpsr %d, scr %d, dss %d\n",
-		spi->mode, div_cpsr, div_scr, dss);
+		spi->mode, भाग_cpsr, भाग_scr, dss);
 	dev_dbg(&master->dev, "setup: cr0 %#x\n", cr0);
 
-	writel(div_cpsr, espi->mmio + SSPCPSR);
-	writel(cr0, espi->mmio + SSPCR0);
+	ग_लिखोl(भाग_cpsr, espi->mmio + SSPCPSR);
+	ग_लिखोl(cr0, espi->mmio + SSPCR0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ep93xx_do_write(struct spi_master *master)
-{
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
-	struct spi_transfer *xfer = master->cur_msg->state;
+अटल व्योम ep93xx_करो_ग_लिखो(काष्ठा spi_master *master)
+अणु
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
+	काष्ठा spi_transfer *xfer = master->cur_msg->state;
 	u32 val = 0;
 
-	if (xfer->bits_per_word > 8) {
-		if (xfer->tx_buf)
+	अगर (xfer->bits_per_word > 8) अणु
+		अगर (xfer->tx_buf)
 			val = ((u16 *)xfer->tx_buf)[espi->tx];
 		espi->tx += 2;
-	} else {
-		if (xfer->tx_buf)
+	पूर्ण अन्यथा अणु
+		अगर (xfer->tx_buf)
 			val = ((u8 *)xfer->tx_buf)[espi->tx];
 		espi->tx += 1;
-	}
-	writel(val, espi->mmio + SSPDR);
-}
+	पूर्ण
+	ग_लिखोl(val, espi->mmio + SSPDR);
+पूर्ण
 
-static void ep93xx_do_read(struct spi_master *master)
-{
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
-	struct spi_transfer *xfer = master->cur_msg->state;
+अटल व्योम ep93xx_करो_पढ़ो(काष्ठा spi_master *master)
+अणु
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
+	काष्ठा spi_transfer *xfer = master->cur_msg->state;
 	u32 val;
 
-	val = readl(espi->mmio + SSPDR);
-	if (xfer->bits_per_word > 8) {
-		if (xfer->rx_buf)
+	val = पढ़ोl(espi->mmio + SSPDR);
+	अगर (xfer->bits_per_word > 8) अणु
+		अगर (xfer->rx_buf)
 			((u16 *)xfer->rx_buf)[espi->rx] = val;
 		espi->rx += 2;
-	} else {
-		if (xfer->rx_buf)
+	पूर्ण अन्यथा अणु
+		अगर (xfer->rx_buf)
 			((u8 *)xfer->rx_buf)[espi->rx] = val;
 		espi->rx += 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ep93xx_spi_read_write() - perform next RX/TX transfer
+ * ep93xx_spi_पढ़ो_ग_लिखो() - perक्रमm next RX/TX transfer
  * @master: SPI master
  *
  * This function transfers next bytes (or half-words) to/from RX/TX FIFOs. If
- * called several times, the whole transfer will be completed. Returns
+ * called several बार, the whole transfer will be completed. Returns
  * %-EINPROGRESS when current transfer was not yet completed otherwise %0.
  *
  * When this function is finished, RX FIFO should be empty and TX FIFO should be
  * full.
  */
-static int ep93xx_spi_read_write(struct spi_master *master)
-{
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
-	struct spi_transfer *xfer = master->cur_msg->state;
+अटल पूर्णांक ep93xx_spi_पढ़ो_ग_लिखो(काष्ठा spi_master *master)
+अणु
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
+	काष्ठा spi_transfer *xfer = master->cur_msg->state;
 
-	/* read as long as RX FIFO has frames in it */
-	while ((readl(espi->mmio + SSPSR) & SSPSR_RNE)) {
-		ep93xx_do_read(master);
-		espi->fifo_level--;
-	}
+	/* पढ़ो as दीर्घ as RX FIFO has frames in it */
+	जबतक ((पढ़ोl(espi->mmio + SSPSR) & SSPSR_RNE)) अणु
+		ep93xx_करो_पढ़ो(master);
+		espi->fअगरo_level--;
+	पूर्ण
 
-	/* write as long as TX FIFO has room */
-	while (espi->fifo_level < SPI_FIFO_SIZE && espi->tx < xfer->len) {
-		ep93xx_do_write(master);
-		espi->fifo_level++;
-	}
+	/* ग_लिखो as दीर्घ as TX FIFO has room */
+	जबतक (espi->fअगरo_level < SPI_FIFO_SIZE && espi->tx < xfer->len) अणु
+		ep93xx_करो_ग_लिखो(master);
+		espi->fअगरo_level++;
+	पूर्ण
 
-	if (espi->rx == xfer->len)
-		return 0;
+	अगर (espi->rx == xfer->len)
+		वापस 0;
 
-	return -EINPROGRESS;
-}
+	वापस -EINPROGRESS;
+पूर्ण
 
-static enum dma_transfer_direction
-ep93xx_dma_data_to_trans_dir(enum dma_data_direction dir)
-{
-	switch (dir) {
-	case DMA_TO_DEVICE:
-		return DMA_MEM_TO_DEV;
-	case DMA_FROM_DEVICE:
-		return DMA_DEV_TO_MEM;
-	default:
-		return DMA_TRANS_NONE;
-	}
-}
+अटल क्रमागत dma_transfer_direction
+ep93xx_dma_data_to_trans_dir(क्रमागत dma_data_direction dir)
+अणु
+	चयन (dir) अणु
+	हाल DMA_TO_DEVICE:
+		वापस DMA_MEM_TO_DEV;
+	हाल DMA_FROM_DEVICE:
+		वापस DMA_DEV_TO_MEM;
+	शेष:
+		वापस DMA_TRANS_NONE;
+	पूर्ण
+पूर्ण
 
 /**
  * ep93xx_spi_dma_prepare() - prepares a DMA transfer
@@ -265,105 +266,105 @@ ep93xx_dma_data_to_trans_dir(enum dma_data_direction dir)
  * @dir: DMA transfer direction
  *
  * Function configures the DMA, maps the buffer and prepares the DMA
- * descriptor. Returns a valid DMA descriptor in case of success and ERR_PTR
- * in case of failure.
+ * descriptor. Returns a valid DMA descriptor in हाल of success and ERR_PTR
+ * in हाल of failure.
  */
-static struct dma_async_tx_descriptor *
-ep93xx_spi_dma_prepare(struct spi_master *master,
-		       enum dma_data_direction dir)
-{
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
-	struct spi_transfer *xfer = master->cur_msg->state;
-	struct dma_async_tx_descriptor *txd;
-	enum dma_slave_buswidth buswidth;
-	struct dma_slave_config conf;
-	struct scatterlist *sg;
-	struct sg_table *sgt;
-	struct dma_chan *chan;
-	const void *buf, *pbuf;
-	size_t len = xfer->len;
-	int i, ret, nents;
+अटल काष्ठा dma_async_tx_descriptor *
+ep93xx_spi_dma_prepare(काष्ठा spi_master *master,
+		       क्रमागत dma_data_direction dir)
+अणु
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
+	काष्ठा spi_transfer *xfer = master->cur_msg->state;
+	काष्ठा dma_async_tx_descriptor *txd;
+	क्रमागत dma_slave_buswidth buswidth;
+	काष्ठा dma_slave_config conf;
+	काष्ठा scatterlist *sg;
+	काष्ठा sg_table *sgt;
+	काष्ठा dma_chan *chan;
+	स्थिर व्योम *buf, *pbuf;
+	माप_प्रकार len = xfer->len;
+	पूर्णांक i, ret, nents;
 
-	if (xfer->bits_per_word > 8)
+	अगर (xfer->bits_per_word > 8)
 		buswidth = DMA_SLAVE_BUSWIDTH_2_BYTES;
-	else
+	अन्यथा
 		buswidth = DMA_SLAVE_BUSWIDTH_1_BYTE;
 
-	memset(&conf, 0, sizeof(conf));
+	स_रखो(&conf, 0, माप(conf));
 	conf.direction = ep93xx_dma_data_to_trans_dir(dir);
 
-	if (dir == DMA_FROM_DEVICE) {
+	अगर (dir == DMA_FROM_DEVICE) अणु
 		chan = espi->dma_rx;
 		buf = xfer->rx_buf;
 		sgt = &espi->rx_sgt;
 
 		conf.src_addr = espi->sspdr_phys;
 		conf.src_addr_width = buswidth;
-	} else {
+	पूर्ण अन्यथा अणु
 		chan = espi->dma_tx;
 		buf = xfer->tx_buf;
 		sgt = &espi->tx_sgt;
 
 		conf.dst_addr = espi->sspdr_phys;
 		conf.dst_addr_width = buswidth;
-	}
+	पूर्ण
 
 	ret = dmaengine_slave_config(chan, &conf);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
 	/*
-	 * We need to split the transfer into PAGE_SIZE'd chunks. This is
+	 * We need to split the transfer पूर्णांकo PAGE_SIZE'd chunks. This is
 	 * because we are using @espi->zeropage to provide a zero RX buffer
-	 * for the TX transfers and we have only allocated one page for that.
+	 * क्रम the TX transfers and we have only allocated one page क्रम that.
 	 *
-	 * For performance reasons we allocate a new sg_table only when
+	 * For perक्रमmance reasons we allocate a new sg_table only when
 	 * needed. Otherwise we will re-use the current one. Eventually the
 	 * last sg_table is released in ep93xx_spi_release_dma().
 	 */
 
 	nents = DIV_ROUND_UP(len, PAGE_SIZE);
-	if (nents != sgt->nents) {
-		sg_free_table(sgt);
+	अगर (nents != sgt->nents) अणु
+		sg_मुक्त_table(sgt);
 
 		ret = sg_alloc_table(sgt, nents, GFP_KERNEL);
-		if (ret)
-			return ERR_PTR(ret);
-	}
+		अगर (ret)
+			वापस ERR_PTR(ret);
+	पूर्ण
 
 	pbuf = buf;
-	for_each_sg(sgt->sgl, sg, sgt->nents, i) {
-		size_t bytes = min_t(size_t, len, PAGE_SIZE);
+	क्रम_each_sg(sgt->sgl, sg, sgt->nents, i) अणु
+		माप_प्रकार bytes = min_t(माप_प्रकार, len, PAGE_SIZE);
 
-		if (buf) {
+		अगर (buf) अणु
 			sg_set_page(sg, virt_to_page(pbuf), bytes,
 				    offset_in_page(pbuf));
-		} else {
+		पूर्ण अन्यथा अणु
 			sg_set_page(sg, virt_to_page(espi->zeropage),
 				    bytes, 0);
-		}
+		पूर्ण
 
 		pbuf += bytes;
 		len -= bytes;
-	}
+	पूर्ण
 
-	if (WARN_ON(len)) {
+	अगर (WARN_ON(len)) अणु
 		dev_warn(&master->dev, "len = %zu expected 0!\n", len);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	nents = dma_map_sg(chan->device->dev, sgt->sgl, sgt->nents, dir);
-	if (!nents)
-		return ERR_PTR(-ENOMEM);
+	अगर (!nents)
+		वापस ERR_PTR(-ENOMEM);
 
 	txd = dmaengine_prep_slave_sg(chan, sgt->sgl, nents, conf.direction,
 				      DMA_CTRL_ACK);
-	if (!txd) {
+	अगर (!txd) अणु
 		dma_unmap_sg(chan->device->dev, sgt->sgl, sgt->nents, dir);
-		return ERR_PTR(-ENOMEM);
-	}
-	return txd;
-}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
+	वापस txd;
+पूर्ण
 
 /**
  * ep93xx_spi_dma_finish() - finishes with a DMA transfer
@@ -373,53 +374,53 @@ ep93xx_spi_dma_prepare(struct spi_master *master,
  * Function finishes with the DMA transfer. After this, the DMA buffer is
  * unmapped.
  */
-static void ep93xx_spi_dma_finish(struct spi_master *master,
-				  enum dma_data_direction dir)
-{
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
-	struct dma_chan *chan;
-	struct sg_table *sgt;
+अटल व्योम ep93xx_spi_dma_finish(काष्ठा spi_master *master,
+				  क्रमागत dma_data_direction dir)
+अणु
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
+	काष्ठा dma_chan *chan;
+	काष्ठा sg_table *sgt;
 
-	if (dir == DMA_FROM_DEVICE) {
+	अगर (dir == DMA_FROM_DEVICE) अणु
 		chan = espi->dma_rx;
 		sgt = &espi->rx_sgt;
-	} else {
+	पूर्ण अन्यथा अणु
 		chan = espi->dma_tx;
 		sgt = &espi->tx_sgt;
-	}
+	पूर्ण
 
 	dma_unmap_sg(chan->device->dev, sgt->sgl, sgt->nents, dir);
-}
+पूर्ण
 
-static void ep93xx_spi_dma_callback(void *callback_param)
-{
-	struct spi_master *master = callback_param;
+अटल व्योम ep93xx_spi_dma_callback(व्योम *callback_param)
+अणु
+	काष्ठा spi_master *master = callback_param;
 
 	ep93xx_spi_dma_finish(master, DMA_TO_DEVICE);
 	ep93xx_spi_dma_finish(master, DMA_FROM_DEVICE);
 
 	spi_finalize_current_transfer(master);
-}
+पूर्ण
 
-static int ep93xx_spi_dma_transfer(struct spi_master *master)
-{
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
-	struct dma_async_tx_descriptor *rxd, *txd;
+अटल पूर्णांक ep93xx_spi_dma_transfer(काष्ठा spi_master *master)
+अणु
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
+	काष्ठा dma_async_tx_descriptor *rxd, *txd;
 
 	rxd = ep93xx_spi_dma_prepare(master, DMA_FROM_DEVICE);
-	if (IS_ERR(rxd)) {
+	अगर (IS_ERR(rxd)) अणु
 		dev_err(&master->dev, "DMA RX failed: %ld\n", PTR_ERR(rxd));
-		return PTR_ERR(rxd);
-	}
+		वापस PTR_ERR(rxd);
+	पूर्ण
 
 	txd = ep93xx_spi_dma_prepare(master, DMA_TO_DEVICE);
-	if (IS_ERR(txd)) {
+	अगर (IS_ERR(txd)) अणु
 		ep93xx_spi_dma_finish(master, DMA_FROM_DEVICE);
 		dev_err(&master->dev, "DMA TX failed: %ld\n", PTR_ERR(txd));
-		return PTR_ERR(txd);
-	}
+		वापस PTR_ERR(txd);
+	पूर्ण
 
-	/* We are ready when RX is done */
+	/* We are पढ़ोy when RX is करोne */
 	rxd->callback = ep93xx_spi_dma_callback;
 	rxd->callback_param = master;
 
@@ -430,168 +431,168 @@ static int ep93xx_spi_dma_transfer(struct spi_master *master)
 	dma_async_issue_pending(espi->dma_rx);
 	dma_async_issue_pending(espi->dma_tx);
 
-	/* signal that we need to wait for completion */
-	return 1;
-}
+	/* संकेत that we need to रुको क्रम completion */
+	वापस 1;
+पूर्ण
 
-static irqreturn_t ep93xx_spi_interrupt(int irq, void *dev_id)
-{
-	struct spi_master *master = dev_id;
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
+अटल irqवापस_t ep93xx_spi_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा spi_master *master = dev_id;
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
 	u32 val;
 
 	/*
-	 * If we got ROR (receive overrun) interrupt we know that something is
-	 * wrong. Just abort the message.
+	 * If we got ROR (receive overrun) पूर्णांकerrupt we know that something is
+	 * wrong. Just पात the message.
 	 */
-	if (readl(espi->mmio + SSPIIR) & SSPIIR_RORIS) {
-		/* clear the overrun interrupt */
-		writel(0, espi->mmio + SSPICR);
+	अगर (पढ़ोl(espi->mmio + SSPIIR) & SSPIIR_RORIS) अणु
+		/* clear the overrun पूर्णांकerrupt */
+		ग_लिखोl(0, espi->mmio + SSPICR);
 		dev_warn(&master->dev,
 			 "receive overrun, aborting the message\n");
 		master->cur_msg->status = -EIO;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Interrupt is either RX (RIS) or TX (TIS). For both cases we
+		 * Interrupt is either RX (RIS) or TX (TIS). For both हालs we
 		 * simply execute next data transfer.
 		 */
-		if (ep93xx_spi_read_write(master)) {
+		अगर (ep93xx_spi_पढ़ो_ग_लिखो(master)) अणु
 			/*
-			 * In normal case, there still is some processing left
-			 * for current transfer. Let's wait for the next
-			 * interrupt then.
+			 * In normal हाल, there still is some processing left
+			 * क्रम current transfer. Let's रुको क्रम the next
+			 * पूर्णांकerrupt then.
 			 */
-			return IRQ_HANDLED;
-		}
-	}
+			वापस IRQ_HANDLED;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Current transfer is finished, either with error or with success. In
-	 * any case we disable interrupts and notify the worker to handle
+	 * any हाल we disable पूर्णांकerrupts and notअगरy the worker to handle
 	 * any post-processing of the message.
 	 */
-	val = readl(espi->mmio + SSPCR1);
+	val = पढ़ोl(espi->mmio + SSPCR1);
 	val &= ~(SSPCR1_RORIE | SSPCR1_TIE | SSPCR1_RIE);
-	writel(val, espi->mmio + SSPCR1);
+	ग_लिखोl(val, espi->mmio + SSPCR1);
 
 	spi_finalize_current_transfer(master);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int ep93xx_spi_transfer_one(struct spi_master *master,
-				   struct spi_device *spi,
-				   struct spi_transfer *xfer)
-{
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
+अटल पूर्णांक ep93xx_spi_transfer_one(काष्ठा spi_master *master,
+				   काष्ठा spi_device *spi,
+				   काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
 	ret = ep93xx_spi_chip_setup(master, spi, xfer);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&master->dev, "failed to setup chip for transfer\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	master->cur_msg->state = xfer;
 	espi->rx = 0;
 	espi->tx = 0;
 
 	/*
-	 * There is no point of setting up DMA for the transfers which will
-	 * fit into the FIFO and can be transferred with a single interrupt.
-	 * So in these cases we will be using PIO and don't bother for DMA.
+	 * There is no poपूर्णांक of setting up DMA क्रम the transfers which will
+	 * fit पूर्णांकo the FIFO and can be transferred with a single पूर्णांकerrupt.
+	 * So in these हालs we will be using PIO and करोn't bother क्रम DMA.
 	 */
-	if (espi->dma_rx && xfer->len > SPI_FIFO_SIZE)
-		return ep93xx_spi_dma_transfer(master);
+	अगर (espi->dma_rx && xfer->len > SPI_FIFO_SIZE)
+		वापस ep93xx_spi_dma_transfer(master);
 
-	/* Using PIO so prime the TX FIFO and enable interrupts */
-	ep93xx_spi_read_write(master);
+	/* Using PIO so prime the TX FIFO and enable पूर्णांकerrupts */
+	ep93xx_spi_पढ़ो_ग_लिखो(master);
 
-	val = readl(espi->mmio + SSPCR1);
+	val = पढ़ोl(espi->mmio + SSPCR1);
 	val |= (SSPCR1_RORIE | SSPCR1_TIE | SSPCR1_RIE);
-	writel(val, espi->mmio + SSPCR1);
+	ग_लिखोl(val, espi->mmio + SSPCR1);
 
-	/* signal that we need to wait for completion */
-	return 1;
-}
+	/* संकेत that we need to रुको क्रम completion */
+	वापस 1;
+पूर्ण
 
-static int ep93xx_spi_prepare_message(struct spi_master *master,
-				      struct spi_message *msg)
-{
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
-	unsigned long timeout;
+अटल पूर्णांक ep93xx_spi_prepare_message(काष्ठा spi_master *master,
+				      काष्ठा spi_message *msg)
+अणु
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
+	अचिन्हित दीर्घ समयout;
 
 	/*
 	 * Just to be sure: flush any data from RX FIFO.
 	 */
-	timeout = jiffies + msecs_to_jiffies(SPI_TIMEOUT);
-	while (readl(espi->mmio + SSPSR) & SSPSR_RNE) {
-		if (time_after(jiffies, timeout)) {
+	समयout = jअगरfies + msecs_to_jअगरfies(SPI_TIMEOUT);
+	जबतक (पढ़ोl(espi->mmio + SSPSR) & SSPSR_RNE) अणु
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			dev_warn(&master->dev,
 				 "timeout while flushing RX FIFO\n");
-			return -ETIMEDOUT;
-		}
-		readl(espi->mmio + SSPDR);
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+		पढ़ोl(espi->mmio + SSPDR);
+	पूर्ण
 
 	/*
-	 * We explicitly handle FIFO level. This way we don't have to check TX
+	 * We explicitly handle FIFO level. This way we करोn't have to check TX
 	 * FIFO status using %SSPSR_TNF bit which may cause RX FIFO overruns.
 	 */
-	espi->fifo_level = 0;
+	espi->fअगरo_level = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ep93xx_spi_prepare_hardware(struct spi_master *master)
-{
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
+अटल पूर्णांक ep93xx_spi_prepare_hardware(काष्ठा spi_master *master)
+अणु
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
 	ret = clk_enable(espi->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	val = readl(espi->mmio + SSPCR1);
+	val = पढ़ोl(espi->mmio + SSPCR1);
 	val |= SSPCR1_SSE;
-	writel(val, espi->mmio + SSPCR1);
+	ग_लिखोl(val, espi->mmio + SSPCR1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ep93xx_spi_unprepare_hardware(struct spi_master *master)
-{
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
+अटल पूर्णांक ep93xx_spi_unprepare_hardware(काष्ठा spi_master *master)
+अणु
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
 	u32 val;
 
-	val = readl(espi->mmio + SSPCR1);
+	val = पढ़ोl(espi->mmio + SSPCR1);
 	val &= ~SSPCR1_SSE;
-	writel(val, espi->mmio + SSPCR1);
+	ग_लिखोl(val, espi->mmio + SSPCR1);
 
 	clk_disable(espi->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool ep93xx_spi_dma_filter(struct dma_chan *chan, void *filter_param)
-{
-	if (ep93xx_dma_chan_is_m2p(chan))
-		return false;
+अटल bool ep93xx_spi_dma_filter(काष्ठा dma_chan *chan, व्योम *filter_param)
+अणु
+	अगर (ep93xx_dma_chan_is_m2p(chan))
+		वापस false;
 
-	chan->private = filter_param;
-	return true;
-}
+	chan->निजी = filter_param;
+	वापस true;
+पूर्ण
 
-static int ep93xx_spi_setup_dma(struct ep93xx_spi *espi)
-{
+अटल पूर्णांक ep93xx_spi_setup_dma(काष्ठा ep93xx_spi *espi)
+अणु
 	dma_cap_mask_t mask;
-	int ret;
+	पूर्णांक ret;
 
-	espi->zeropage = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!espi->zeropage)
-		return -ENOMEM;
+	espi->zeropage = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!espi->zeropage)
+		वापस -ENOMEM;
 
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
@@ -602,10 +603,10 @@ static int ep93xx_spi_setup_dma(struct ep93xx_spi *espi)
 
 	espi->dma_rx = dma_request_channel(mask, ep93xx_spi_dma_filter,
 					   &espi->dma_rx_data);
-	if (!espi->dma_rx) {
+	अगर (!espi->dma_rx) अणु
 		ret = -ENODEV;
-		goto fail_free_page;
-	}
+		जाओ fail_मुक्त_page;
+	पूर्ण
 
 	espi->dma_tx_data.port = EP93XX_DMA_SSP;
 	espi->dma_tx_data.direction = DMA_MEM_TO_DEV;
@@ -613,65 +614,65 @@ static int ep93xx_spi_setup_dma(struct ep93xx_spi *espi)
 
 	espi->dma_tx = dma_request_channel(mask, ep93xx_spi_dma_filter,
 					   &espi->dma_tx_data);
-	if (!espi->dma_tx) {
+	अगर (!espi->dma_tx) अणु
 		ret = -ENODEV;
-		goto fail_release_rx;
-	}
+		जाओ fail_release_rx;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail_release_rx:
 	dma_release_channel(espi->dma_rx);
-	espi->dma_rx = NULL;
-fail_free_page:
-	free_page((unsigned long)espi->zeropage);
+	espi->dma_rx = शून्य;
+fail_मुक्त_page:
+	मुक्त_page((अचिन्हित दीर्घ)espi->zeropage);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ep93xx_spi_release_dma(struct ep93xx_spi *espi)
-{
-	if (espi->dma_rx) {
+अटल व्योम ep93xx_spi_release_dma(काष्ठा ep93xx_spi *espi)
+अणु
+	अगर (espi->dma_rx) अणु
 		dma_release_channel(espi->dma_rx);
-		sg_free_table(&espi->rx_sgt);
-	}
-	if (espi->dma_tx) {
+		sg_मुक्त_table(&espi->rx_sgt);
+	पूर्ण
+	अगर (espi->dma_tx) अणु
 		dma_release_channel(espi->dma_tx);
-		sg_free_table(&espi->tx_sgt);
-	}
+		sg_मुक्त_table(&espi->tx_sgt);
+	पूर्ण
 
-	if (espi->zeropage)
-		free_page((unsigned long)espi->zeropage);
-}
+	अगर (espi->zeropage)
+		मुक्त_page((अचिन्हित दीर्घ)espi->zeropage);
+पूर्ण
 
-static int ep93xx_spi_probe(struct platform_device *pdev)
-{
-	struct spi_master *master;
-	struct ep93xx_spi_info *info;
-	struct ep93xx_spi *espi;
-	struct resource *res;
-	int irq;
-	int error;
+अटल पूर्णांक ep93xx_spi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_master *master;
+	काष्ठा ep93xx_spi_info *info;
+	काष्ठा ep93xx_spi *espi;
+	काष्ठा resource *res;
+	पूर्णांक irq;
+	पूर्णांक error;
 
 	info = dev_get_platdata(&pdev->dev);
-	if (!info) {
+	अगर (!info) अणु
 		dev_err(&pdev->dev, "missing platform data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return -EBUSY;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस -EBUSY;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "unable to get iomem resource\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	master = spi_alloc_master(&pdev->dev, sizeof(*espi));
-	if (!master)
-		return -ENOMEM;
+	master = spi_alloc_master(&pdev->dev, माप(*espi));
+	अगर (!master)
+		वापस -ENOMEM;
 
 	master->use_gpio_descriptors = true;
 	master->prepare_transfer_hardware = ep93xx_spi_prepare_hardware;
@@ -683,24 +684,24 @@ static int ep93xx_spi_probe(struct platform_device *pdev)
 	master->bits_per_word_mask = SPI_BPW_RANGE_MASK(4, 16);
 	/*
 	 * The SPI core will count the number of GPIO descriptors to figure
-	 * out the number of chip selects available on the platform.
+	 * out the number of chip selects available on the platक्रमm.
 	 */
 	master->num_chipselect = 0;
 
-	platform_set_drvdata(pdev, master);
+	platक्रमm_set_drvdata(pdev, master);
 
 	espi = spi_master_get_devdata(master);
 
-	espi->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(espi->clk)) {
+	espi->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(espi->clk)) अणु
 		dev_err(&pdev->dev, "unable to get spi clock\n");
 		error = PTR_ERR(espi->clk);
-		goto fail_release_master;
-	}
+		जाओ fail_release_master;
+	पूर्ण
 
 	/*
-	 * Calculate maximum and minimum supported clock rates
-	 * for the controller.
+	 * Calculate maximum and minimum supported घड़ी rates
+	 * क्रम the controller.
 	 */
 	master->max_speed_hz = clk_get_rate(espi->clk) / 2;
 	master->min_speed_hz = clk_get_rate(espi->clk) / (254 * 256);
@@ -708,61 +709,61 @@ static int ep93xx_spi_probe(struct platform_device *pdev)
 	espi->sspdr_phys = res->start + SSPDR;
 
 	espi->mmio = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(espi->mmio)) {
+	अगर (IS_ERR(espi->mmio)) अणु
 		error = PTR_ERR(espi->mmio);
-		goto fail_release_master;
-	}
+		जाओ fail_release_master;
+	पूर्ण
 
-	error = devm_request_irq(&pdev->dev, irq, ep93xx_spi_interrupt,
+	error = devm_request_irq(&pdev->dev, irq, ep93xx_spi_पूर्णांकerrupt,
 				0, "ep93xx-spi", master);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&pdev->dev, "failed to request irq\n");
-		goto fail_release_master;
-	}
+		जाओ fail_release_master;
+	पूर्ण
 
-	if (info->use_dma && ep93xx_spi_setup_dma(espi))
+	अगर (info->use_dma && ep93xx_spi_setup_dma(espi))
 		dev_warn(&pdev->dev, "DMA setup failed. Falling back to PIO\n");
 
 	/* make sure that the hardware is disabled */
-	writel(0, espi->mmio + SSPCR1);
+	ग_लिखोl(0, espi->mmio + SSPCR1);
 
-	error = devm_spi_register_master(&pdev->dev, master);
-	if (error) {
+	error = devm_spi_रेजिस्टर_master(&pdev->dev, master);
+	अगर (error) अणु
 		dev_err(&pdev->dev, "failed to register SPI master\n");
-		goto fail_free_dma;
-	}
+		जाओ fail_मुक्त_dma;
+	पूर्ण
 
 	dev_info(&pdev->dev, "EP93xx SPI Controller at 0x%08lx irq %d\n",
-		 (unsigned long)res->start, irq);
+		 (अचिन्हित दीर्घ)res->start, irq);
 
-	return 0;
+	वापस 0;
 
-fail_free_dma:
+fail_मुक्त_dma:
 	ep93xx_spi_release_dma(espi);
 fail_release_master:
 	spi_master_put(master);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int ep93xx_spi_remove(struct platform_device *pdev)
-{
-	struct spi_master *master = platform_get_drvdata(pdev);
-	struct ep93xx_spi *espi = spi_master_get_devdata(master);
+अटल पूर्णांक ep93xx_spi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_master *master = platक्रमm_get_drvdata(pdev);
+	काष्ठा ep93xx_spi *espi = spi_master_get_devdata(master);
 
 	ep93xx_spi_release_dma(espi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver ep93xx_spi_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver ep93xx_spi_driver = अणु
+	.driver		= अणु
 		.name	= "ep93xx-spi",
-	},
+	पूर्ण,
 	.probe		= ep93xx_spi_probe,
-	.remove		= ep93xx_spi_remove,
-};
-module_platform_driver(ep93xx_spi_driver);
+	.हटाओ		= ep93xx_spi_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(ep93xx_spi_driver);
 
 MODULE_DESCRIPTION("EP93xx SPI Controller driver");
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@iki.fi>");

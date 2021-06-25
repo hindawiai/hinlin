@@ -1,132 +1,133 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Freescale QUICC Engine USB Host Controller Driver
  *
  * Copyright (c) Freescale Semicondutor, Inc. 2006.
- *               Shlomi Gridish <gridish@freescale.com>
- *               Jerry Huang <Chang-Ming.Huang@freescale.com>
+ *               Shlomi Gridish <gridish@मुक्तscale.com>
+ *               Jerry Huang <Chang-Ming.Huang@मुक्तscale.com>
  * Copyright (c) Logic Product Development, Inc. 2007
  *               Peter Barada <peterb@logicpd.com>
  * Copyright (c) MontaVista Software, Inc. 2008.
  *               Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/spinlock.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/io.h>
-#include <linux/usb.h>
-#include <linux/usb/hcd.h>
-#include <linux/gpio.h>
-#include <soc/fsl/qe/qe.h>
-#include "fhci.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पन.स>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/hcd.h>
+#समावेश <linux/gpपन.स>
+#समावेश <soc/fsl/qe/qe.h>
+#समावेश "fhci.h"
 
-/* virtual root hub specific descriptor */
-static u8 root_hub_des[] = {
+/* भव root hub specअगरic descriptor */
+अटल u8 root_hub_des[] = अणु
 	0x09, /* blength */
 	USB_DT_HUB, /* bDescriptorType;hub-descriptor */
 	0x01, /* bNbrPorts */
 	HUB_CHAR_INDV_PORT_LPSM | HUB_CHAR_NO_OCPM, /* wHubCharacteristics */
-	0x00, /* per-port power, no overcurrent */
+	0x00, /* per-port घातer, no overcurrent */
 	0x01, /* bPwrOn2pwrGood;2ms */
 	0x00, /* bHubContrCurrent;0mA */
 	0x00, /* DeviceRemoveable */
 	0xff, /* PortPwrCtrlMask */
-};
+पूर्ण;
 
-static void fhci_gpio_set_value(struct fhci_hcd *fhci, int gpio_nr, bool on)
-{
-	int gpio = fhci->gpios[gpio_nr];
+अटल व्योम fhci_gpio_set_value(काष्ठा fhci_hcd *fhci, पूर्णांक gpio_nr, bool on)
+अणु
+	पूर्णांक gpio = fhci->gpios[gpio_nr];
 	bool alow = fhci->alow_gpios[gpio_nr];
 
-	if (!gpio_is_valid(gpio))
-		return;
+	अगर (!gpio_is_valid(gpio))
+		वापस;
 
 	gpio_set_value(gpio, on ^ alow);
 	mdelay(5);
-}
+पूर्ण
 
-void fhci_config_transceiver(struct fhci_hcd *fhci,
-			     enum fhci_port_status status)
-{
+व्योम fhci_config_transceiver(काष्ठा fhci_hcd *fhci,
+			     क्रमागत fhci_port_status status)
+अणु
 	fhci_dbg(fhci, "-> %s: %d\n", __func__, status);
 
-	switch (status) {
-	case FHCI_PORT_POWER_OFF:
+	चयन (status) अणु
+	हाल FHCI_PORT_POWER_OFF:
 		fhci_gpio_set_value(fhci, GPIO_POWER, false);
-		break;
-	case FHCI_PORT_DISABLED:
-	case FHCI_PORT_WAITING:
+		अवरोध;
+	हाल FHCI_PORT_DISABLED:
+	हाल FHCI_PORT_WAITING:
 		fhci_gpio_set_value(fhci, GPIO_POWER, true);
-		break;
-	case FHCI_PORT_LOW:
+		अवरोध;
+	हाल FHCI_PORT_LOW:
 		fhci_gpio_set_value(fhci, GPIO_SPEED, false);
-		break;
-	case FHCI_PORT_FULL:
+		अवरोध;
+	हाल FHCI_PORT_FULL:
 		fhci_gpio_set_value(fhci, GPIO_SPEED, true);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	fhci_dbg(fhci, "<- %s: %d\n", __func__, status);
-}
+पूर्ण
 
-/* disable the USB port by clearing the EN bit in the USBMOD register */
-void fhci_port_disable(struct fhci_hcd *fhci)
-{
-	struct fhci_usb *usb = (struct fhci_usb *)fhci->usb_lld;
-	enum fhci_port_status port_status;
+/* disable the USB port by clearing the EN bit in the USBMOD रेजिस्टर */
+व्योम fhci_port_disable(काष्ठा fhci_hcd *fhci)
+अणु
+	काष्ठा fhci_usb *usb = (काष्ठा fhci_usb *)fhci->usb_lld;
+	क्रमागत fhci_port_status port_status;
 
 	fhci_dbg(fhci, "-> %s\n", __func__);
 
-	fhci_stop_sof_timer(fhci);
+	fhci_stop_sof_समयr(fhci);
 
 	fhci_flush_all_transmissions(usb);
 
-	fhci_usb_disable_interrupt((struct fhci_usb *)fhci->usb_lld);
+	fhci_usb_disable_पूर्णांकerrupt((काष्ठा fhci_usb *)fhci->usb_lld);
 	port_status = usb->port_status;
 	usb->port_status = FHCI_PORT_DISABLED;
 
-	/* Enable IDLE since we want to know if something comes along */
+	/* Enable IDLE since we want to know अगर something comes aदीर्घ */
 	usb->saved_msk |= USB_E_IDLE_MASK;
 	out_be16(&usb->fhci->regs->usb_usbmr, usb->saved_msk);
 
-	/* check if during the disconnection process attached new device */
-	if (port_status == FHCI_PORT_WAITING)
-		fhci_device_connected_interrupt(fhci);
+	/* check अगर during the disconnection process attached new device */
+	अगर (port_status == FHCI_PORT_WAITING)
+		fhci_device_connected_पूर्णांकerrupt(fhci);
 	usb->vroot_hub->port.wPortStatus &= ~USB_PORT_STAT_ENABLE;
 	usb->vroot_hub->port.wPortChange |= USB_PORT_STAT_C_ENABLE;
-	fhci_usb_enable_interrupt((struct fhci_usb *)fhci->usb_lld);
+	fhci_usb_enable_पूर्णांकerrupt((काष्ठा fhci_usb *)fhci->usb_lld);
 
 	fhci_dbg(fhci, "<- %s\n", __func__);
-}
+पूर्ण
 
-/* enable the USB port by setting the EN bit in the USBMOD register */
-void fhci_port_enable(void *lld)
-{
-	struct fhci_usb *usb = (struct fhci_usb *)lld;
-	struct fhci_hcd *fhci = usb->fhci;
+/* enable the USB port by setting the EN bit in the USBMOD रेजिस्टर */
+व्योम fhci_port_enable(व्योम *lld)
+अणु
+	काष्ठा fhci_usb *usb = (काष्ठा fhci_usb *)lld;
+	काष्ठा fhci_hcd *fhci = usb->fhci;
 
 	fhci_dbg(fhci, "-> %s\n", __func__);
 
 	fhci_config_transceiver(fhci, usb->port_status);
 
-	if ((usb->port_status != FHCI_PORT_FULL) &&
+	अगर ((usb->port_status != FHCI_PORT_FULL) &&
 			(usb->port_status != FHCI_PORT_LOW))
-		fhci_start_sof_timer(fhci);
+		fhci_start_sof_समयr(fhci);
 
 	usb->vroot_hub->port.wPortStatus |= USB_PORT_STAT_ENABLE;
 	usb->vroot_hub->port.wPortChange |= USB_PORT_STAT_C_ENABLE;
 
 	fhci_dbg(fhci, "<- %s\n", __func__);
-}
+पूर्ण
 
-void fhci_io_port_generate_reset(struct fhci_hcd *fhci)
-{
+व्योम fhci_io_port_generate_reset(काष्ठा fhci_hcd *fhci)
+अणु
 	fhci_dbg(fhci, "-> %s\n", __func__);
 
 	gpio_direction_output(fhci->gpios[GPIO_USBOE], 0);
@@ -140,172 +141,172 @@ void fhci_io_port_generate_reset(struct fhci_hcd *fhci)
 	qe_pin_set_dedicated(fhci->pins[PIN_USBTN]);
 
 	fhci_dbg(fhci, "<- %s\n", __func__);
-}
+पूर्ण
 
 /* generate the RESET condition on the bus */
-void fhci_port_reset(void *lld)
-{
-	struct fhci_usb *usb = (struct fhci_usb *)lld;
-	struct fhci_hcd *fhci = usb->fhci;
+व्योम fhci_port_reset(व्योम *lld)
+अणु
+	काष्ठा fhci_usb *usb = (काष्ठा fhci_usb *)lld;
+	काष्ठा fhci_hcd *fhci = usb->fhci;
 	u8 mode;
 	u16 mask;
 
 	fhci_dbg(fhci, "-> %s\n", __func__);
 
-	fhci_stop_sof_timer(fhci);
+	fhci_stop_sof_समयr(fhci);
 	/* disable the USB controller */
 	mode = in_8(&fhci->regs->usb_usmod);
 	out_8(&fhci->regs->usb_usmod, mode & (~USB_MODE_EN));
 
-	/* disable idle interrupts */
+	/* disable idle पूर्णांकerrupts */
 	mask = in_be16(&fhci->regs->usb_usbmr);
 	out_be16(&fhci->regs->usb_usbmr, mask & (~USB_E_IDLE_MASK));
 
 	fhci_io_port_generate_reset(fhci);
 
-	/* enable interrupt on this endpoint */
+	/* enable पूर्णांकerrupt on this endpoपूर्णांक */
 	out_be16(&fhci->regs->usb_usbmr, mask);
 
 	/* enable the USB controller */
 	mode = in_8(&fhci->regs->usb_usmod);
 	out_8(&fhci->regs->usb_usmod, mode | USB_MODE_EN);
-	fhci_start_sof_timer(fhci);
+	fhci_start_sof_समयr(fhci);
 
 	fhci_dbg(fhci, "<- %s\n", __func__);
-}
+पूर्ण
 
-int fhci_hub_status_data(struct usb_hcd *hcd, char *buf)
-{
-	struct fhci_hcd *fhci = hcd_to_fhci(hcd);
-	int ret = 0;
-	unsigned long flags;
+पूर्णांक fhci_hub_status_data(काष्ठा usb_hcd *hcd, अक्षर *buf)
+अणु
+	काष्ठा fhci_hcd *fhci = hcd_to_fhci(hcd);
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ flags;
 
 	fhci_dbg(fhci, "-> %s\n", __func__);
 
 	spin_lock_irqsave(&fhci->lock, flags);
 
-	if (fhci->vroot_hub->port.wPortChange & (USB_PORT_STAT_C_CONNECTION |
+	अगर (fhci->vroot_hub->port.wPortChange & (USB_PORT_STAT_C_CONNECTION |
 			USB_PORT_STAT_C_ENABLE | USB_PORT_STAT_C_SUSPEND |
-			USB_PORT_STAT_C_RESET | USB_PORT_STAT_C_OVERCURRENT)) {
+			USB_PORT_STAT_C_RESET | USB_PORT_STAT_C_OVERCURRENT)) अणु
 		*buf = 1 << 1;
 		ret = 1;
 		fhci_dbg(fhci, "-- %s\n", __func__);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&fhci->lock, flags);
 
 	fhci_dbg(fhci, "<- %s\n", __func__);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int fhci_hub_control(struct usb_hcd *hcd, u16 typeReq, u16 wValue,
-			    u16 wIndex, char *buf, u16 wLength)
-{
-	struct fhci_hcd *fhci = hcd_to_fhci(hcd);
-	int retval = 0;
-	struct usb_hub_status *hub_status;
-	struct usb_port_status *port_status;
-	unsigned long flags;
+पूर्णांक fhci_hub_control(काष्ठा usb_hcd *hcd, u16 typeReq, u16 wValue,
+			    u16 wIndex, अक्षर *buf, u16 wLength)
+अणु
+	काष्ठा fhci_hcd *fhci = hcd_to_fhci(hcd);
+	पूर्णांक retval = 0;
+	काष्ठा usb_hub_status *hub_status;
+	काष्ठा usb_port_status *port_status;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&fhci->lock, flags);
 
 	fhci_dbg(fhci, "-> %s\n", __func__);
 
-	switch (typeReq) {
-	case ClearHubFeature:
-		switch (wValue) {
-		case C_HUB_LOCAL_POWER:
-		case C_HUB_OVER_CURRENT:
-			break;
-		default:
-			goto error;
-		}
-		break;
-	case ClearPortFeature:
+	चयन (typeReq) अणु
+	हाल ClearHubFeature:
+		चयन (wValue) अणु
+		हाल C_HUB_LOCAL_POWER:
+		हाल C_HUB_OVER_CURRENT:
+			अवरोध;
+		शेष:
+			जाओ error;
+		पूर्ण
+		अवरोध;
+	हाल ClearPortFeature:
 		fhci->vroot_hub->feature &= (1 << wValue);
 
-		switch (wValue) {
-		case USB_PORT_FEAT_ENABLE:
+		चयन (wValue) अणु
+		हाल USB_PORT_FEAT_ENABLE:
 			fhci->vroot_hub->port.wPortStatus &=
 			    ~USB_PORT_STAT_ENABLE;
 			fhci_port_disable(fhci);
-			break;
-		case USB_PORT_FEAT_C_ENABLE:
+			अवरोध;
+		हाल USB_PORT_FEAT_C_ENABLE:
 			fhci->vroot_hub->port.wPortChange &=
 			    ~USB_PORT_STAT_C_ENABLE;
-			break;
-		case USB_PORT_FEAT_SUSPEND:
+			अवरोध;
+		हाल USB_PORT_FEAT_SUSPEND:
 			fhci->vroot_hub->port.wPortStatus &=
 			    ~USB_PORT_STAT_SUSPEND;
-			fhci_stop_sof_timer(fhci);
-			break;
-		case USB_PORT_FEAT_C_SUSPEND:
+			fhci_stop_sof_समयr(fhci);
+			अवरोध;
+		हाल USB_PORT_FEAT_C_SUSPEND:
 			fhci->vroot_hub->port.wPortChange &=
 			    ~USB_PORT_STAT_C_SUSPEND;
-			break;
-		case USB_PORT_FEAT_POWER:
+			अवरोध;
+		हाल USB_PORT_FEAT_POWER:
 			fhci->vroot_hub->port.wPortStatus &=
 			    ~USB_PORT_STAT_POWER;
 			fhci_config_transceiver(fhci, FHCI_PORT_POWER_OFF);
-			break;
-		case USB_PORT_FEAT_C_CONNECTION:
+			अवरोध;
+		हाल USB_PORT_FEAT_C_CONNECTION:
 			fhci->vroot_hub->port.wPortChange &=
 			    ~USB_PORT_STAT_C_CONNECTION;
-			break;
-		case USB_PORT_FEAT_C_OVER_CURRENT:
+			अवरोध;
+		हाल USB_PORT_FEAT_C_OVER_CURRENT:
 			fhci->vroot_hub->port.wPortChange &=
 			    ~USB_PORT_STAT_C_OVERCURRENT;
-			break;
-		case USB_PORT_FEAT_C_RESET:
+			अवरोध;
+		हाल USB_PORT_FEAT_C_RESET:
 			fhci->vroot_hub->port.wPortChange &=
 			    ~USB_PORT_STAT_C_RESET;
-			break;
-		default:
-			goto error;
-		}
-		break;
-	case GetHubDescriptor:
-		memcpy(buf, root_hub_des, sizeof(root_hub_des));
-		break;
-	case GetHubStatus:
-		hub_status = (struct usb_hub_status *)buf;
+			अवरोध;
+		शेष:
+			जाओ error;
+		पूर्ण
+		अवरोध;
+	हाल GetHubDescriptor:
+		स_नकल(buf, root_hub_des, माप(root_hub_des));
+		अवरोध;
+	हाल GetHubStatus:
+		hub_status = (काष्ठा usb_hub_status *)buf;
 		hub_status->wHubStatus =
 		    cpu_to_le16(fhci->vroot_hub->hub.wHubStatus);
 		hub_status->wHubChange =
 		    cpu_to_le16(fhci->vroot_hub->hub.wHubChange);
-		break;
-	case GetPortStatus:
-		port_status = (struct usb_port_status *)buf;
+		अवरोध;
+	हाल GetPortStatus:
+		port_status = (काष्ठा usb_port_status *)buf;
 		port_status->wPortStatus =
 		    cpu_to_le16(fhci->vroot_hub->port.wPortStatus);
 		port_status->wPortChange =
 		    cpu_to_le16(fhci->vroot_hub->port.wPortChange);
-		break;
-	case SetHubFeature:
-		switch (wValue) {
-		case C_HUB_OVER_CURRENT:
-		case C_HUB_LOCAL_POWER:
-			break;
-		default:
-			goto error;
-		}
-		break;
-	case SetPortFeature:
+		अवरोध;
+	हाल SetHubFeature:
+		चयन (wValue) अणु
+		हाल C_HUB_OVER_CURRENT:
+		हाल C_HUB_LOCAL_POWER:
+			अवरोध;
+		शेष:
+			जाओ error;
+		पूर्ण
+		अवरोध;
+	हाल SetPortFeature:
 		fhci->vroot_hub->feature |= (1 << wValue);
 
-		switch (wValue) {
-		case USB_PORT_FEAT_ENABLE:
+		चयन (wValue) अणु
+		हाल USB_PORT_FEAT_ENABLE:
 			fhci->vroot_hub->port.wPortStatus |=
 			    USB_PORT_STAT_ENABLE;
 			fhci_port_enable(fhci->usb_lld);
-			break;
-		case USB_PORT_FEAT_SUSPEND:
+			अवरोध;
+		हाल USB_PORT_FEAT_SUSPEND:
 			fhci->vroot_hub->port.wPortStatus |=
 			    USB_PORT_STAT_SUSPEND;
-			fhci_stop_sof_timer(fhci);
-			break;
-		case USB_PORT_FEAT_RESET:
+			fhci_stop_sof_समयr(fhci);
+			अवरोध;
+		हाल USB_PORT_FEAT_RESET:
 			fhci->vroot_hub->port.wPortStatus |=
 			    USB_PORT_STAT_RESET;
 			fhci_port_reset(fhci->usb_lld);
@@ -313,24 +314,24 @@ int fhci_hub_control(struct usb_hcd *hcd, u16 typeReq, u16 wValue,
 			    USB_PORT_STAT_ENABLE;
 			fhci->vroot_hub->port.wPortStatus &=
 			    ~USB_PORT_STAT_RESET;
-			break;
-		case USB_PORT_FEAT_POWER:
+			अवरोध;
+		हाल USB_PORT_FEAT_POWER:
 			fhci->vroot_hub->port.wPortStatus |=
 			    USB_PORT_STAT_POWER;
 			fhci_config_transceiver(fhci, FHCI_PORT_WAITING);
-			break;
-		default:
-			goto error;
-		}
-		break;
-	default:
+			अवरोध;
+		शेष:
+			जाओ error;
+		पूर्ण
+		अवरोध;
+	शेष:
 error:
 		retval = -EPIPE;
-	}
+	पूर्ण
 
 	fhci_dbg(fhci, "<- %s\n", __func__);
 
 	spin_unlock_irqrestore(&fhci->lock, flags);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण

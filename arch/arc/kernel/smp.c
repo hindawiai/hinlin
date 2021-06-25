@@ -1,172 +1,173 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  *
  * RajeshwarR: Dec 11, 2007
- *   -- Added support for Inter Processor Interrupts
+ *   -- Added support क्रम Inter Processor Interrupts
  *
  * Vineetg: Nov 1st, 2007
  *    -- Initial Write (Borrowed heavily from ARM)
  */
 
-#include <linux/spinlock.h>
-#include <linux/sched/mm.h>
-#include <linux/interrupt.h>
-#include <linux/profile.h>
-#include <linux/mm.h>
-#include <linux/cpu.h>
-#include <linux/irq.h>
-#include <linux/atomic.h>
-#include <linux/cpumask.h>
-#include <linux/reboot.h>
-#include <linux/irqdomain.h>
-#include <linux/export.h>
-#include <linux/of_fdt.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/profile.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/export.h>
+#समावेश <linux/of_fdt.h>
 
-#include <asm/processor.h>
-#include <asm/setup.h>
-#include <asm/mach_desc.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/mach_desc.h>
 
-#ifndef CONFIG_ARC_HAS_LLSC
+#अगर_अघोषित CONFIG_ARC_HAS_LLSC
 arch_spinlock_t smp_atomic_ops_lock = __ARCH_SPIN_LOCK_UNLOCKED;
 arch_spinlock_t smp_bitops_lock = __ARCH_SPIN_LOCK_UNLOCKED;
 
 EXPORT_SYMBOL_GPL(smp_atomic_ops_lock);
 EXPORT_SYMBOL_GPL(smp_bitops_lock);
-#endif
+#पूर्ण_अगर
 
-struct plat_smp_ops  __weak plat_smp_ops;
+काष्ठा plat_smp_ops  __weak plat_smp_ops;
 
 /* XXX: per cpu ? Only needed once in early seconday boot */
-struct task_struct *secondary_idle_tsk;
+काष्ठा task_काष्ठा *secondary_idle_tsk;
 
 /* Called from start_kernel */
-void __init smp_prepare_boot_cpu(void)
-{
-}
+व्योम __init smp_prepare_boot_cpu(व्योम)
+अणु
+पूर्ण
 
-static int __init arc_get_cpu_map(const char *name, struct cpumask *cpumask)
-{
-	unsigned long dt_root = of_get_flat_dt_root();
-	const char *buf;
+अटल पूर्णांक __init arc_get_cpu_map(स्थिर अक्षर *name, काष्ठा cpumask *cpumask)
+अणु
+	अचिन्हित दीर्घ dt_root = of_get_flat_dt_root();
+	स्थिर अक्षर *buf;
 
-	buf = of_get_flat_dt_prop(dt_root, name, NULL);
-	if (!buf)
-		return -EINVAL;
+	buf = of_get_flat_dt_prop(dt_root, name, शून्य);
+	अगर (!buf)
+		वापस -EINVAL;
 
-	if (cpulist_parse(buf, cpumask))
-		return -EINVAL;
+	अगर (cpulist_parse(buf, cpumask))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Read from DeviceTree and setup cpu possible mask. If there is no
  * "possible-cpus" property in DeviceTree pretend all [0..NR_CPUS-1] exist.
  */
-static void __init arc_init_cpu_possible(void)
-{
-	struct cpumask cpumask;
+अटल व्योम __init arc_init_cpu_possible(व्योम)
+अणु
+	काष्ठा cpumask cpumask;
 
-	if (arc_get_cpu_map("possible-cpus", &cpumask)) {
+	अगर (arc_get_cpu_map("possible-cpus", &cpumask)) अणु
 		pr_warn("Failed to get possible-cpus from dtb, pretending all %u cpus exist\n",
 			NR_CPUS);
 
 		cpumask_setall(&cpumask);
-	}
+	पूर्ण
 
-	if (!cpumask_test_cpu(0, &cpumask))
+	अगर (!cpumask_test_cpu(0, &cpumask))
 		panic("Master cpu (cpu[0]) is missed in cpu possible mask!");
 
 	init_cpu_possible(&cpumask);
-}
+पूर्ण
 
 /*
- * Called from setup_arch() before calling setup_processor()
+ * Called from setup_arch() beक्रमe calling setup_processor()
  *
  * - Initialise the CPU possible map early - this describes the CPUs
- *   which may be present or become present in the system.
- * - Call early smp init hook. This can initialize a specific multi-core
- *   IP which is say common to several platforms (hence not part of
- *   platform specific int_early() hook)
+ *   which may be present or become present in the प्रणाली.
+ * - Call early smp init hook. This can initialize a specअगरic multi-core
+ *   IP which is say common to several platक्रमms (hence not part of
+ *   platक्रमm specअगरic पूर्णांक_early() hook)
  */
-void __init smp_init_cpus(void)
-{
+व्योम __init smp_init_cpus(व्योम)
+अणु
 	arc_init_cpu_possible();
 
-	if (plat_smp_ops.init_early_smp)
+	अगर (plat_smp_ops.init_early_smp)
 		plat_smp_ops.init_early_smp();
-}
+पूर्ण
 
 /* called from init ( ) =>  process 1 */
-void __init smp_prepare_cpus(unsigned int max_cpus)
-{
+व्योम __init smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
 	/*
-	 * if platform didn't set the present map already, do it now
-	 * boot cpu is set to present already by init/main.c
+	 * अगर platक्रमm didn't set the present map alपढ़ोy, करो it now
+	 * boot cpu is set to present alपढ़ोy by init/मुख्य.c
 	 */
-	if (num_present_cpus() <= 1)
+	अगर (num_present_cpus() <= 1)
 		init_cpu_present(cpu_possible_mask);
-}
+पूर्ण
 
-void __init smp_cpus_done(unsigned int max_cpus)
-{
+व्योम __init smp_cpus_करोne(अचिन्हित पूर्णांक max_cpus)
+अणु
 
-}
+पूर्ण
 
 /*
- * Default smp boot helper for Run-on-reset case where all cores start off
- * together. Non-masters need to wait for Master to start running.
- * This is implemented using a flag in memory, which Non-masters spin-wait on.
+ * Default smp boot helper क्रम Run-on-reset हाल where all cores start off
+ * together. Non-masters need to रुको क्रम Master to start running.
+ * This is implemented using a flag in memory, which Non-masters spin-रुको on.
  * Master sets it to cpu-id of core to "ungate" it.
  */
-static volatile int wake_flag;
+अटल अस्थिर पूर्णांक wake_flag;
 
-#ifdef CONFIG_ISA_ARCOMPACT
+#अगर_घोषित CONFIG_ISA_ARCOMPACT
 
-#define __boot_read(f)		f
-#define __boot_write(f, v)	f = v
+#घोषणा __boot_पढ़ो(f)		f
+#घोषणा __boot_ग_लिखो(f, v)	f = v
 
-#else
+#अन्यथा
 
-#define __boot_read(f)		arc_read_uncached_32(&f)
-#define __boot_write(f, v)	arc_write_uncached_32(&f, v)
+#घोषणा __boot_पढ़ो(f)		arc_पढ़ो_uncached_32(&f)
+#घोषणा __boot_ग_लिखो(f, v)	arc_ग_लिखो_uncached_32(&f, v)
 
-#endif
+#पूर्ण_अगर
 
-static void arc_default_smp_cpu_kick(int cpu, unsigned long pc)
-{
+अटल व्योम arc_शेष_smp_cpu_kick(पूर्णांक cpu, अचिन्हित दीर्घ pc)
+अणु
 	BUG_ON(cpu == 0);
 
-	__boot_write(wake_flag, cpu);
-}
+	__boot_ग_लिखो(wake_flag, cpu);
+पूर्ण
 
-void arc_platform_smp_wait_to_boot(int cpu)
-{
-	/* for halt-on-reset, we've waited already */
-	if (IS_ENABLED(CONFIG_ARC_SMP_HALT_ON_RESET))
-		return;
+व्योम arc_platक्रमm_smp_रुको_to_boot(पूर्णांक cpu)
+अणु
+	/* क्रम halt-on-reset, we've रुकोed alपढ़ोy */
+	अगर (IS_ENABLED(CONFIG_ARC_SMP_HALT_ON_RESET))
+		वापस;
 
-	while (__boot_read(wake_flag) != cpu)
+	जबतक (__boot_पढ़ो(wake_flag) != cpu)
 		;
 
-	__boot_write(wake_flag, 0);
-}
+	__boot_ग_लिखो(wake_flag, 0);
+पूर्ण
 
-const char *arc_platform_smp_cpuinfo(void)
-{
-	return plat_smp_ops.info ? : "";
-}
+स्थिर अक्षर *arc_platक्रमm_smp_cpuinfo(व्योम)
+अणु
+	वापस plat_smp_ops.info ? : "";
+पूर्ण
 
 /*
  * The very first "C" code executed by secondary
- * Called from asm stub in head.S
- * "current"/R25 already setup by low level boot code
+ * Called from यंत्र stub in head.S
+ * "current"/R25 alपढ़ोy setup by low level boot code
  */
-void start_kernel_secondary(void)
-{
-	struct mm_struct *mm = &init_mm;
-	unsigned int cpu = smp_processor_id();
+व्योम start_kernel_secondary(व्योम)
+अणु
+	काष्ठा mm_काष्ठा *mm = &init_mm;
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
 	/* MMU, Caches, Vector Table, Interrupts etc */
 	setup_processor();
@@ -176,14 +177,14 @@ void start_kernel_secondary(void)
 	current->active_mm = mm;
 	cpumask_set_cpu(cpu, mm_cpumask(mm));
 
-	/* Some SMP H/w setup - for each cpu */
-	if (plat_smp_ops.init_per_cpu)
+	/* Some SMP H/w setup - क्रम each cpu */
+	अगर (plat_smp_ops.init_per_cpu)
 		plat_smp_ops.init_per_cpu(cpu);
 
-	if (machine_desc->init_per_cpu)
+	अगर (machine_desc->init_per_cpu)
 		machine_desc->init_per_cpu(cpu);
 
-	notify_cpu_starting(cpu);
+	notअगरy_cpu_starting(cpu);
 	set_cpu_online(cpu, true);
 
 	pr_info("## CPU%u LIVE ##: Executing Code...\n", cpu);
@@ -191,186 +192,186 @@ void start_kernel_secondary(void)
 	local_irq_enable();
 	preempt_disable();
 	cpu_startup_entry(CPUHP_AP_ONLINE_IDLE);
-}
+पूर्ण
 
 /*
- * Called from kernel_init( ) -> smp_init( ) - for each CPU
+ * Called from kernel_init( ) -> smp_init( ) - क्रम each CPU
  *
- * At this point, Secondary Processor  is "HALT"ed:
+ * At this poपूर्णांक, Secondary Processor  is "HALT"ed:
  *  -It booted, but was halted in head.S
  *  -It was configured to halt-on-reset
  *  So need to wake it up.
  *
  * Essential requirements being where to run from (PC) and stack (SP)
 */
-int __cpu_up(unsigned int cpu, struct task_struct *idle)
-{
-	unsigned long wait_till;
+पूर्णांक __cpu_up(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
+अणु
+	अचिन्हित दीर्घ रुको_till;
 
 	secondary_idle_tsk = idle;
 
 	pr_info("Idle Task [%d] %p", cpu, idle);
 	pr_info("Trying to bring up CPU%u ...\n", cpu);
 
-	if (plat_smp_ops.cpu_kick)
+	अगर (plat_smp_ops.cpu_kick)
 		plat_smp_ops.cpu_kick(cpu,
-				(unsigned long)first_lines_of_secondary);
-	else
-		arc_default_smp_cpu_kick(cpu, (unsigned long)NULL);
+				(अचिन्हित दीर्घ)first_lines_of_secondary);
+	अन्यथा
+		arc_शेष_smp_cpu_kick(cpu, (अचिन्हित दीर्घ)शून्य);
 
-	/* wait for 1 sec after kicking the secondary */
-	wait_till = jiffies + HZ;
-	while (time_before(jiffies, wait_till)) {
-		if (cpu_online(cpu))
-			break;
-	}
+	/* रुको क्रम 1 sec after kicking the secondary */
+	रुको_till = jअगरfies + HZ;
+	जबतक (समय_beक्रमe(jअगरfies, रुको_till)) अणु
+		अगर (cpu_online(cpu))
+			अवरोध;
+	पूर्ण
 
-	if (!cpu_online(cpu)) {
+	अगर (!cpu_online(cpu)) अणु
 		pr_info("Timeout: CPU%u FAILED to come up !!!\n", cpu);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	secondary_idle_tsk = NULL;
+	secondary_idle_tsk = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * not supported here
  */
-int setup_profiling_timer(unsigned int multiplier)
-{
-	return -EINVAL;
-}
+पूर्णांक setup_profiling_समयr(अचिन्हित पूर्णांक multiplier)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
 /*****************************************************************************/
 /*              Inter Processor Interrupt Handling                           */
 /*****************************************************************************/
 
-enum ipi_msg_type {
+क्रमागत ipi_msg_type अणु
 	IPI_EMPTY = 0,
 	IPI_RESCHEDULE = 1,
 	IPI_CALL_FUNC,
 	IPI_CPU_STOP,
-};
+पूर्ण;
 
 /*
- * In arches with IRQ for each msg type (above), receiver can use IRQ-id  to
- * figure out what msg was sent. For those which don't (ARC has dedicated IPI
+ * In arches with IRQ क्रम each msg type (above), receiver can use IRQ-id  to
+ * figure out what msg was sent. For those which करोn't (ARC has dedicated IPI
  * IRQ), the msg-type needs to be conveyed via per-cpu data
  */
 
-static DEFINE_PER_CPU(unsigned long, ipi_data);
+अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, ipi_data);
 
-static void ipi_send_msg_one(int cpu, enum ipi_msg_type msg)
-{
-	unsigned long __percpu *ipi_data_ptr = per_cpu_ptr(&ipi_data, cpu);
-	unsigned long old, new;
-	unsigned long flags;
+अटल व्योम ipi_send_msg_one(पूर्णांक cpu, क्रमागत ipi_msg_type msg)
+अणु
+	अचिन्हित दीर्घ __percpu *ipi_data_ptr = per_cpu_ptr(&ipi_data, cpu);
+	अचिन्हित दीर्घ old, new;
+	अचिन्हित दीर्घ flags;
 
 	pr_debug("%d Sending msg [%d] to %d\n", smp_processor_id(), msg, cpu);
 
 	local_irq_save(flags);
 
 	/*
-	 * Atomically write new msg bit (in case others are writing too),
-	 * and read back old value
+	 * Atomically ग_लिखो new msg bit (in हाल others are writing too),
+	 * and पढ़ो back old value
 	 */
-	do {
+	करो अणु
 		new = old = READ_ONCE(*ipi_data_ptr);
 		new |= 1U << msg;
-	} while (cmpxchg(ipi_data_ptr, old, new) != old);
+	पूर्ण जबतक (cmpxchg(ipi_data_ptr, old, new) != old);
 
 	/*
-	 * Call the platform specific IPI kick function, but avoid if possible:
-	 * Only do so if there's no pending msg from other concurrent sender(s).
+	 * Call the platक्रमm specअगरic IPI kick function, but aव्योम अगर possible:
+	 * Only करो so अगर there's no pending msg from other concurrent sender(s).
 	 * Otherwise, recevier will see this msg as well when it takes the
-	 * IPI corresponding to that msg. This is true, even if it is already in
+	 * IPI corresponding to that msg. This is true, even अगर it is alपढ़ोy in
 	 * IPI handler, because !@old means it has not yet dequeued the msg(s)
-	 * so @new msg can be a free-loader
+	 * so @new msg can be a मुक्त-loader
 	 */
-	if (plat_smp_ops.ipi_send && !old)
+	अगर (plat_smp_ops.ipi_send && !old)
 		plat_smp_ops.ipi_send(cpu);
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static void ipi_send_msg(const struct cpumask *callmap, enum ipi_msg_type msg)
-{
-	unsigned int cpu;
+अटल व्योम ipi_send_msg(स्थिर काष्ठा cpumask *callmap, क्रमागत ipi_msg_type msg)
+अणु
+	अचिन्हित पूर्णांक cpu;
 
-	for_each_cpu(cpu, callmap)
+	क्रम_each_cpu(cpu, callmap)
 		ipi_send_msg_one(cpu, msg);
-}
+पूर्ण
 
-void smp_send_reschedule(int cpu)
-{
+व्योम smp_send_reschedule(पूर्णांक cpu)
+अणु
 	ipi_send_msg_one(cpu, IPI_RESCHEDULE);
-}
+पूर्ण
 
-void smp_send_stop(void)
-{
-	struct cpumask targets;
-	cpumask_copy(&targets, cpu_online_mask);
-	cpumask_clear_cpu(smp_processor_id(), &targets);
-	ipi_send_msg(&targets, IPI_CPU_STOP);
-}
+व्योम smp_send_stop(व्योम)
+अणु
+	काष्ठा cpumask tarमाला_लो;
+	cpumask_copy(&tarमाला_लो, cpu_online_mask);
+	cpumask_clear_cpu(smp_processor_id(), &tarमाला_लो);
+	ipi_send_msg(&tarमाला_लो, IPI_CPU_STOP);
+पूर्ण
 
-void arch_send_call_function_single_ipi(int cpu)
-{
+व्योम arch_send_call_function_single_ipi(पूर्णांक cpu)
+अणु
 	ipi_send_msg_one(cpu, IPI_CALL_FUNC);
-}
+पूर्ण
 
-void arch_send_call_function_ipi_mask(const struct cpumask *mask)
-{
+व्योम arch_send_call_function_ipi_mask(स्थिर काष्ठा cpumask *mask)
+अणु
 	ipi_send_msg(mask, IPI_CALL_FUNC);
-}
+पूर्ण
 
 /*
  * ipi_cpu_stop - handle IPI from smp_send_stop()
  */
-static void ipi_cpu_stop(void)
-{
+अटल व्योम ipi_cpu_stop(व्योम)
+अणु
 	machine_halt();
-}
+पूर्ण
 
-static inline int __do_IPI(unsigned long msg)
-{
-	int rc = 0;
+अटल अंतरभूत पूर्णांक __करो_IPI(अचिन्हित दीर्घ msg)
+अणु
+	पूर्णांक rc = 0;
 
-	switch (msg) {
-	case IPI_RESCHEDULE:
+	चयन (msg) अणु
+	हाल IPI_RESCHEDULE:
 		scheduler_ipi();
-		break;
+		अवरोध;
 
-	case IPI_CALL_FUNC:
-		generic_smp_call_function_interrupt();
-		break;
+	हाल IPI_CALL_FUNC:
+		generic_smp_call_function_पूर्णांकerrupt();
+		अवरोध;
 
-	case IPI_CPU_STOP:
+	हाल IPI_CPU_STOP:
 		ipi_cpu_stop();
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		rc = 1;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * arch-common ISR to handle for inter-processor interrupts
- * Has hooks for platform specific IPI
+ * arch-common ISR to handle क्रम पूर्णांकer-processor पूर्णांकerrupts
+ * Has hooks क्रम platक्रमm specअगरic IPI
  */
-irqreturn_t do_IPI(int irq, void *dev_id)
-{
-	unsigned long pending;
-	unsigned long __maybe_unused copy;
+irqवापस_t करो_IPI(पूर्णांक irq, व्योम *dev_id)
+अणु
+	अचिन्हित दीर्घ pending;
+	अचिन्हित दीर्घ __maybe_unused copy;
 
 	pr_debug("IPI [%ld] received on cpu %d\n",
 		 *this_cpu_ptr(&ipi_data), smp_processor_id());
 
-	if (plat_smp_ops.ipi_clear)
+	अगर (plat_smp_ops.ipi_clear)
 		plat_smp_ops.ipi_clear(irq);
 
 	/*
@@ -379,46 +380,46 @@ irqreturn_t do_IPI(int irq, void *dev_id)
 	 */
 	copy = pending = xchg(this_cpu_ptr(&ipi_data), 0);
 
-	do {
-		unsigned long msg = __ffs(pending);
-		int rc;
+	करो अणु
+		अचिन्हित दीर्घ msg = __ffs(pending);
+		पूर्णांक rc;
 
-		rc = __do_IPI(msg);
-		if (rc)
+		rc = __करो_IPI(msg);
+		अगर (rc)
 			pr_info("IPI with bogus msg %ld in %ld\n", msg, copy);
 		pending &= ~(1U << msg);
-	} while (pending);
+	पूर्ण जबतक (pending);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * API called by platform code to hookup arch-common ISR to their IPI IRQ
+ * API called by platक्रमm code to hookup arch-common ISR to their IPI IRQ
  *
- * Note: If IPI is provided by platform (vs. say ARC MCIP), their intc setup/map
- * function needs to call call irq_set_percpu_devid() for IPI IRQ, otherwise
+ * Note: If IPI is provided by platक्रमm (vs. say ARC MCIP), their पूर्णांकc setup/map
+ * function needs to call call irq_set_percpu_devid() क्रम IPI IRQ, otherwise
  * request_percpu_irq() below will fail
  */
-static DEFINE_PER_CPU(int, ipi_dev);
+अटल DEFINE_PER_CPU(पूर्णांक, ipi_dev);
 
-int smp_ipi_irq_setup(int cpu, irq_hw_number_t hwirq)
-{
-	int *dev = per_cpu_ptr(&ipi_dev, cpu);
-	unsigned int virq = irq_find_mapping(NULL, hwirq);
+पूर्णांक smp_ipi_irq_setup(पूर्णांक cpu, irq_hw_number_t hwirq)
+अणु
+	पूर्णांक *dev = per_cpu_ptr(&ipi_dev, cpu);
+	अचिन्हित पूर्णांक virq = irq_find_mapping(शून्य, hwirq);
 
-	if (!virq)
+	अगर (!virq)
 		panic("Cannot find virq for root domain and hwirq=%lu", hwirq);
 
 	/* Boot cpu calls request, all call enable */
-	if (!cpu) {
-		int rc;
+	अगर (!cpu) अणु
+		पूर्णांक rc;
 
-		rc = request_percpu_irq(virq, do_IPI, "IPI Interrupt", dev);
-		if (rc)
+		rc = request_percpu_irq(virq, करो_IPI, "IPI Interrupt", dev);
+		अगर (rc)
 			panic("Percpu IRQ request failed for %u\n", virq);
-	}
+	पूर्ण
 
 	enable_percpu_irq(virq, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,22 +1,23 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#ifndef __MOCK_DMABUF_H__
-#define __MOCK_DMABUF_H__
+#अगर_अघोषित __MOCK_DMABUF_H__
+#घोषणा __MOCK_DMABUF_H__
 
-#include <linux/dma-buf.h>
+#समावेश <linux/dma-buf.h>
 
-struct mock_dmabuf {
-	int npages;
-	struct page *pages[];
-};
+काष्ठा mock_dmabuf अणु
+	पूर्णांक npages;
+	काष्ठा page *pages[];
+पूर्ण;
 
-static inline struct mock_dmabuf *to_mock(struct dma_buf *buf)
-{
-	return buf->priv;
-}
+अटल अंतरभूत काष्ठा mock_dmabuf *to_mock(काष्ठा dma_buf *buf)
+अणु
+	वापस buf->priv;
+पूर्ण
 
-#endif /* !__MOCK_DMABUF_H__ */
+#पूर्ण_अगर /* !__MOCK_DMABUF_H__ */

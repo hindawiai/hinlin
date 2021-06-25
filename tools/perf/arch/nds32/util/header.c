@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <api/fs/fs.h>
-#include "header.h"
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <api/fs/fs.h>
+#समावेश "header.h"
 
-#define STR_LEN 1024
+#घोषणा STR_LEN 1024
 
-char *get_cpuid_str(struct perf_pmu *pmu)
-{
+अक्षर *get_cpuid_str(काष्ठा perf_pmu *pmu)
+अणु
 	/* In nds32, we only have one cpu */
-	char *buf = NULL;
-	struct cpu_map *cpus;
-	const char *sysfs = sysfs__mountpoint();
+	अक्षर *buf = शून्य;
+	काष्ठा cpu_map *cpus;
+	स्थिर अक्षर *sysfs = sysfs__mountpoपूर्णांक();
 
-	if (!sysfs || !pmu || !pmu->cpus)
-		return NULL;
+	अगर (!sysfs || !pmu || !pmu->cpus)
+		वापस शून्य;
 
-	buf = malloc(STR_LEN);
-	if (!buf)
-		return NULL;
+	buf = दो_स्मृति(STR_LEN);
+	अगर (!buf)
+		वापस शून्य;
 
 	cpus = cpu_map__get(pmu->cpus);
-	sprintf(buf, "0x%x", cpus->nr - 1);
+	प्र_लिखो(buf, "0x%x", cpus->nr - 1);
 	cpu_map__put(cpus);
-	return buf;
-}
+	वापस buf;
+पूर्ण

@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /**
-Support for Intel Camera Imaging ISP subsystem.
+Support क्रम Intel Camera Imaging ISP subप्रणाली.
 Copyright (c) 2010 - 2015, Intel Corporation.
 
-This program is free software; you can redistribute it and/or modify it
+This program is मुक्त software; you can redistribute it and/or modअगरy it
 under the terms and conditions of the GNU General Public License,
 version 2, as published by the Free Software Foundation.
 
 This program is distributed in the hope it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
 more details.
 */
 
-#ifndef __IA_CSS_COMMON_IO_TYPES
-#define __IA_CSS_COMMON_IO_TYPES
+#अगर_अघोषित __IA_CSS_COMMON_IO_TYPES
+#घोषणा __IA_CSS_COMMON_IO_TYPES
 
-#define MAX_IO_DMA_CHANNELS 3
+#घोषणा MAX_IO_DMA_CHANNELS 3
 
-struct ia_css_common_io_config {
-	unsigned int base_address;
-	unsigned int width;
-	unsigned int height;
-	unsigned int stride;
-	unsigned int ddr_elems_per_word;
-	unsigned int dma_channel[MAX_IO_DMA_CHANNELS];
-};
+काष्ठा ia_css_common_io_config अणु
+	अचिन्हित पूर्णांक base_address;
+	अचिन्हित पूर्णांक width;
+	अचिन्हित पूर्णांक height;
+	अचिन्हित पूर्णांक stride;
+	अचिन्हित पूर्णांक ddr_elems_per_word;
+	अचिन्हित पूर्णांक dma_channel[MAX_IO_DMA_CHANNELS];
+पूर्ण;
 
-#endif /* __IA_CSS_COMMON_IO_TYPES */
+#पूर्ण_अगर /* __IA_CSS_COMMON_IO_TYPES */

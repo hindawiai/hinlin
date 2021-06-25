@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _M68K_SWAB_H
-#define _M68K_SWAB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _M68K_SWAB_H
+#घोषणा _M68K_SWAB_H
 
-#include <linux/types.h>
-#include <linux/compiler.h>
+#समावेश <linux/types.h>
+#समावेश <linux/compiler.h>
 
-#define __SWAB_64_THRU_32__
+#घोषणा __SWAB_64_THRU_32__
 
-#if defined (__mcfisaaplus__) || defined (__mcfisac__)
-static inline __attribute_const__ __u32 __arch_swab32(__u32 val)
-{
-	__asm__("byterev %0" : "=d" (val) : "0" (val));
-	return val;
-}
+#अगर defined (__mcfisaaplus__) || defined (__mcfisac__)
+अटल अंतरभूत __attribute_स्थिर__ __u32 __arch_swab32(__u32 val)
+अणु
+	__यंत्र__("byterev %0" : "=d" (val) : "0" (val));
+	वापस val;
+पूर्ण
 
-#define __arch_swab32 __arch_swab32
-#elif !defined(__mcoldfire__)
+#घोषणा __arch_swab32 __arch_swab32
+#या_अगर !defined(__mcoldfire__)
 
-static inline __attribute_const__ __u32 __arch_swab32(__u32 val)
-{
-	__asm__("rolw #8,%0; swap %0; rolw #8,%0" : "=d" (val) : "0" (val));
-	return val;
-}
-#define __arch_swab32 __arch_swab32
-#endif
+अटल अंतरभूत __attribute_स्थिर__ __u32 __arch_swab32(__u32 val)
+अणु
+	__यंत्र__("rolw #8,%0; swap %0; rolw #8,%0" : "=d" (val) : "0" (val));
+	वापस val;
+पूर्ण
+#घोषणा __arch_swab32 __arch_swab32
+#पूर्ण_अगर
 
-#endif /* _M68K_SWAB_H */
+#पूर्ण_अगर /* _M68K_SWAB_H */

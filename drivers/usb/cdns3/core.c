@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cadence USBSS and USBSSP DRD Driver.
  *
@@ -11,434 +12,434 @@
  *         Roger Quadros <rogerq@ti.com>
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/pm_runसमय.स>
 
-#include "core.h"
-#include "host-export.h"
-#include "drd.h"
+#समावेश "core.h"
+#समावेश "host-export.h"
+#समावेश "drd.h"
 
-static int cdns_idle_init(struct cdns *cdns);
+अटल पूर्णांक cdns_idle_init(काष्ठा cdns *cdns);
 
-static int cdns_role_start(struct cdns *cdns, enum usb_role role)
-{
-	int ret;
+अटल पूर्णांक cdns_role_start(काष्ठा cdns *cdns, क्रमागत usb_role role)
+अणु
+	पूर्णांक ret;
 
-	if (WARN_ON(role > USB_ROLE_DEVICE))
-		return 0;
+	अगर (WARN_ON(role > USB_ROLE_DEVICE))
+		वापस 0;
 
 	mutex_lock(&cdns->mutex);
 	cdns->role = role;
 	mutex_unlock(&cdns->mutex);
 
-	if (!cdns->roles[role])
-		return -ENXIO;
+	अगर (!cdns->roles[role])
+		वापस -ENXIO;
 
-	if (cdns->roles[role]->state == CDNS_ROLE_STATE_ACTIVE)
-		return 0;
+	अगर (cdns->roles[role]->state == CDNS_ROLE_STATE_ACTIVE)
+		वापस 0;
 
 	mutex_lock(&cdns->mutex);
 	ret = cdns->roles[role]->start(cdns);
-	if (!ret)
+	अगर (!ret)
 		cdns->roles[role]->state = CDNS_ROLE_STATE_ACTIVE;
 	mutex_unlock(&cdns->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cdns_role_stop(struct cdns *cdns)
-{
-	enum usb_role role = cdns->role;
+अटल व्योम cdns_role_stop(काष्ठा cdns *cdns)
+अणु
+	क्रमागत usb_role role = cdns->role;
 
-	if (WARN_ON(role > USB_ROLE_DEVICE))
-		return;
+	अगर (WARN_ON(role > USB_ROLE_DEVICE))
+		वापस;
 
-	if (cdns->roles[role]->state == CDNS_ROLE_STATE_INACTIVE)
-		return;
+	अगर (cdns->roles[role]->state == CDNS_ROLE_STATE_INACTIVE)
+		वापस;
 
 	mutex_lock(&cdns->mutex);
 	cdns->roles[role]->stop(cdns);
 	cdns->roles[role]->state = CDNS_ROLE_STATE_INACTIVE;
 	mutex_unlock(&cdns->mutex);
-}
+पूर्ण
 
-static void cdns_exit_roles(struct cdns *cdns)
-{
+अटल व्योम cdns_निकास_roles(काष्ठा cdns *cdns)
+अणु
 	cdns_role_stop(cdns);
-	cdns_drd_exit(cdns);
-}
+	cdns_drd_निकास(cdns);
+पूर्ण
 
 /**
  * cdns_core_init_role - initialize role of operation
- * @cdns: Pointer to cdns structure
+ * @cdns: Poपूर्णांकer to cdns काष्ठाure
  *
- * Returns 0 on success otherwise negative errno
+ * Returns 0 on success otherwise negative त्रुटि_सं
  */
-static int cdns_core_init_role(struct cdns *cdns)
-{
-	struct device *dev = cdns->dev;
-	enum usb_dr_mode best_dr_mode;
-	enum usb_dr_mode dr_mode;
-	int ret;
+अटल पूर्णांक cdns_core_init_role(काष्ठा cdns *cdns)
+अणु
+	काष्ठा device *dev = cdns->dev;
+	क्रमागत usb_dr_mode best_dr_mode;
+	क्रमागत usb_dr_mode dr_mode;
+	पूर्णांक ret;
 
 	dr_mode = usb_get_dr_mode(dev);
 	cdns->role = USB_ROLE_NONE;
 
 	/*
-	 * If driver can't read mode by means of usb_get_dr_mode function then
+	 * If driver can't पढ़ो mode by means of usb_get_dr_mode function then
 	 * chooses mode according with Kernel configuration. This setting
 	 * can be restricted later depending on strap pin configuration.
 	 */
-	if (dr_mode == USB_DR_MODE_UNKNOWN) {
-		if (cdns->version == CDNSP_CONTROLLER_V2) {
-			if (IS_ENABLED(CONFIG_USB_CDNSP_HOST) &&
+	अगर (dr_mode == USB_DR_MODE_UNKNOWN) अणु
+		अगर (cdns->version == CDNSP_CONTROLLER_V2) अणु
+			अगर (IS_ENABLED(CONFIG_USB_CDNSP_HOST) &&
 			    IS_ENABLED(CONFIG_USB_CDNSP_GADGET))
 				dr_mode = USB_DR_MODE_OTG;
-			else if (IS_ENABLED(CONFIG_USB_CDNSP_HOST))
+			अन्यथा अगर (IS_ENABLED(CONFIG_USB_CDNSP_HOST))
 				dr_mode = USB_DR_MODE_HOST;
-			else if (IS_ENABLED(CONFIG_USB_CDNSP_GADGET))
+			अन्यथा अगर (IS_ENABLED(CONFIG_USB_CDNSP_GADGET))
 				dr_mode = USB_DR_MODE_PERIPHERAL;
-		} else {
-			if (IS_ENABLED(CONFIG_USB_CDNS3_HOST) &&
+		पूर्ण अन्यथा अणु
+			अगर (IS_ENABLED(CONFIG_USB_CDNS3_HOST) &&
 			    IS_ENABLED(CONFIG_USB_CDNS3_GADGET))
 				dr_mode = USB_DR_MODE_OTG;
-			else if (IS_ENABLED(CONFIG_USB_CDNS3_HOST))
+			अन्यथा अगर (IS_ENABLED(CONFIG_USB_CDNS3_HOST))
 				dr_mode = USB_DR_MODE_HOST;
-			else if (IS_ENABLED(CONFIG_USB_CDNS3_GADGET))
+			अन्यथा अगर (IS_ENABLED(CONFIG_USB_CDNS3_GADGET))
 				dr_mode = USB_DR_MODE_PERIPHERAL;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * At this point cdns->dr_mode contains strap configuration.
+	 * At this poपूर्णांक cdns->dr_mode contains strap configuration.
 	 * Driver try update this setting considering kernel configuration
 	 */
 	best_dr_mode = cdns->dr_mode;
 
 	ret = cdns_idle_init(cdns);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (dr_mode == USB_DR_MODE_OTG) {
+	अगर (dr_mode == USB_DR_MODE_OTG) अणु
 		best_dr_mode = cdns->dr_mode;
-	} else if (cdns->dr_mode == USB_DR_MODE_OTG) {
+	पूर्ण अन्यथा अगर (cdns->dr_mode == USB_DR_MODE_OTG) अणु
 		best_dr_mode = dr_mode;
-	} else if (cdns->dr_mode != dr_mode) {
+	पूर्ण अन्यथा अगर (cdns->dr_mode != dr_mode) अणु
 		dev_err(dev, "Incorrect DRD configuration\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dr_mode = best_dr_mode;
 
-	if (dr_mode == USB_DR_MODE_OTG || dr_mode == USB_DR_MODE_HOST) {
-		if ((cdns->version == CDNSP_CONTROLLER_V2 &&
+	अगर (dr_mode == USB_DR_MODE_OTG || dr_mode == USB_DR_MODE_HOST) अणु
+		अगर ((cdns->version == CDNSP_CONTROLLER_V2 &&
 		     IS_ENABLED(CONFIG_USB_CDNSP_HOST)) ||
 		    (cdns->version < CDNSP_CONTROLLER_V2 &&
 		     IS_ENABLED(CONFIG_USB_CDNS3_HOST)))
 			ret = cdns_host_init(cdns);
-		else
+		अन्यथा
 			ret = -ENXIO;
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Host initialization failed with %d\n",
 				ret);
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	if (dr_mode == USB_DR_MODE_OTG || dr_mode == USB_DR_MODE_PERIPHERAL) {
-		if (cdns->gadget_init)
+	अगर (dr_mode == USB_DR_MODE_OTG || dr_mode == USB_DR_MODE_PERIPHERAL) अणु
+		अगर (cdns->gadget_init)
 			ret = cdns->gadget_init(cdns);
-		else
+		अन्यथा
 			ret = -ENXIO;
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Device initialization failed with %d\n",
 				ret);
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 	cdns->dr_mode = dr_mode;
 
 	ret = cdns_drd_update_mode(cdns);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	/* Initialize idle role to start with */
 	ret = cdns_role_start(cdns, USB_ROLE_NONE);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	switch (cdns->dr_mode) {
-	case USB_DR_MODE_OTG:
-		ret = cdns_hw_role_switch(cdns);
-		if (ret)
-			goto err;
-		break;
-	case USB_DR_MODE_PERIPHERAL:
+	चयन (cdns->dr_mode) अणु
+	हाल USB_DR_MODE_OTG:
+		ret = cdns_hw_role_चयन(cdns);
+		अगर (ret)
+			जाओ err;
+		अवरोध;
+	हाल USB_DR_MODE_PERIPHERAL:
 		ret = cdns_role_start(cdns, USB_ROLE_DEVICE);
-		if (ret)
-			goto err;
-		break;
-	case USB_DR_MODE_HOST:
+		अगर (ret)
+			जाओ err;
+		अवरोध;
+	हाल USB_DR_MODE_HOST:
 		ret = cdns_role_start(cdns, USB_ROLE_HOST);
-		if (ret)
-			goto err;
-		break;
-	default:
+		अगर (ret)
+			जाओ err;
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
-	cdns_exit_roles(cdns);
-	return ret;
-}
+	cdns_निकास_roles(cdns);
+	वापस ret;
+पूर्ण
 
 /**
- * cdns_hw_role_state_machine  - role switch state machine based on hw events.
- * @cdns: Pointer to controller structure.
+ * cdns_hw_role_state_machine  - role चयन state machine based on hw events.
+ * @cdns: Poपूर्णांकer to controller काष्ठाure.
  *
  * Returns next role to be entered based on hw events.
  */
-static enum usb_role cdns_hw_role_state_machine(struct cdns *cdns)
-{
-	enum usb_role role = USB_ROLE_NONE;
-	int id, vbus;
+अटल क्रमागत usb_role cdns_hw_role_state_machine(काष्ठा cdns *cdns)
+अणु
+	क्रमागत usb_role role = USB_ROLE_NONE;
+	पूर्णांक id, vbus;
 
-	if (cdns->dr_mode != USB_DR_MODE_OTG) {
-		if (cdns_is_host(cdns))
+	अगर (cdns->dr_mode != USB_DR_MODE_OTG) अणु
+		अगर (cdns_is_host(cdns))
 			role = USB_ROLE_HOST;
-		if (cdns_is_device(cdns))
+		अगर (cdns_is_device(cdns))
 			role = USB_ROLE_DEVICE;
 
-		return role;
-	}
+		वापस role;
+	पूर्ण
 
 	id = cdns_get_id(cdns);
 	vbus = cdns_get_vbus(cdns);
 
 	/*
 	 * Role change state machine
-	 * Inputs: ID, VBUS
+	 * Inमाला_दो: ID, VBUS
 	 * Previous state: cdns->role
 	 * Next state: role
 	 */
 	role = cdns->role;
 
-	switch (role) {
-	case USB_ROLE_NONE:
+	चयन (role) अणु
+	हाल USB_ROLE_NONE:
 		/*
 		 * Driver treats USB_ROLE_NONE synonymous to IDLE state from
-		 * controller specification.
+		 * controller specअगरication.
 		 */
-		if (!id)
+		अगर (!id)
 			role = USB_ROLE_HOST;
-		else if (vbus)
+		अन्यथा अगर (vbus)
 			role = USB_ROLE_DEVICE;
-		break;
-	case USB_ROLE_HOST: /* from HOST, we can only change to NONE */
-		if (id)
+		अवरोध;
+	हाल USB_ROLE_HOST: /* from HOST, we can only change to NONE */
+		अगर (id)
 			role = USB_ROLE_NONE;
-		break;
-	case USB_ROLE_DEVICE: /* from GADGET, we can only change to NONE*/
-		if (!vbus)
+		अवरोध;
+	हाल USB_ROLE_DEVICE: /* from GADGET, we can only change to NONE*/
+		अगर (!vbus)
 			role = USB_ROLE_NONE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	dev_dbg(cdns->dev, "role %d -> %d\n", cdns->role, role);
 
-	return role;
-}
+	वापस role;
+पूर्ण
 
-static int cdns_idle_role_start(struct cdns *cdns)
-{
-	return 0;
-}
+अटल पूर्णांक cdns_idle_role_start(काष्ठा cdns *cdns)
+अणु
+	वापस 0;
+पूर्ण
 
-static void cdns_idle_role_stop(struct cdns *cdns)
-{
+अटल व्योम cdns_idle_role_stop(काष्ठा cdns *cdns)
+अणु
 	/* Program Lane swap and bring PHY out of RESET */
 	phy_reset(cdns->usb3_phy);
-}
+पूर्ण
 
-static int cdns_idle_init(struct cdns *cdns)
-{
-	struct cdns_role_driver *rdrv;
+अटल पूर्णांक cdns_idle_init(काष्ठा cdns *cdns)
+अणु
+	काष्ठा cdns_role_driver *rdrv;
 
-	rdrv = devm_kzalloc(cdns->dev, sizeof(*rdrv), GFP_KERNEL);
-	if (!rdrv)
-		return -ENOMEM;
+	rdrv = devm_kzalloc(cdns->dev, माप(*rdrv), GFP_KERNEL);
+	अगर (!rdrv)
+		वापस -ENOMEM;
 
 	rdrv->start = cdns_idle_role_start;
 	rdrv->stop = cdns_idle_role_stop;
 	rdrv->state = CDNS_ROLE_STATE_INACTIVE;
-	rdrv->suspend = NULL;
-	rdrv->resume = NULL;
+	rdrv->suspend = शून्य;
+	rdrv->resume = शून्य;
 	rdrv->name = "idle";
 
 	cdns->roles[USB_ROLE_NONE] = rdrv;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cdns_hw_role_switch - switch roles based on HW state
+ * cdns_hw_role_चयन - चयन roles based on HW state
  * @cdns: controller
  */
-int cdns_hw_role_switch(struct cdns *cdns)
-{
-	enum usb_role real_role, current_role;
-	int ret = 0;
+पूर्णांक cdns_hw_role_चयन(काष्ठा cdns *cdns)
+अणु
+	क्रमागत usb_role real_role, current_role;
+	पूर्णांक ret = 0;
 
-	/* Depends on role switch class */
-	if (cdns->role_sw)
-		return 0;
+	/* Depends on role चयन class */
+	अगर (cdns->role_sw)
+		वापस 0;
 
-	pm_runtime_get_sync(cdns->dev);
+	pm_runसमय_get_sync(cdns->dev);
 
 	current_role = cdns->role;
 	real_role = cdns_hw_role_state_machine(cdns);
 
-	/* Do nothing if nothing changed */
-	if (current_role == real_role)
-		goto exit;
+	/* Do nothing अगर nothing changed */
+	अगर (current_role == real_role)
+		जाओ निकास;
 
 	cdns_role_stop(cdns);
 
 	dev_dbg(cdns->dev, "Switching role %d -> %d", current_role, real_role);
 
 	ret = cdns_role_start(cdns, real_role);
-	if (ret) {
+	अगर (ret) अणु
 		/* Back to current role */
 		dev_err(cdns->dev, "set %d has failed, back to %d\n",
 			real_role, current_role);
 		ret = cdns_role_start(cdns, current_role);
-		if (ret)
+		अगर (ret)
 			dev_err(cdns->dev, "back to %d failed too\n",
 				current_role);
-	}
-exit:
-	pm_runtime_put_sync(cdns->dev);
-	return ret;
-}
+	पूर्ण
+निकास:
+	pm_runसमय_put_sync(cdns->dev);
+	वापस ret;
+पूर्ण
 
 /**
  * cdsn3_role_get - get current role of controller.
  *
- * @sw: pointer to USB role switch structure
+ * @sw: poपूर्णांकer to USB role चयन काष्ठाure
  *
  * Returns role
  */
-static enum usb_role cdns_role_get(struct usb_role_switch *sw)
-{
-	struct cdns *cdns = usb_role_switch_get_drvdata(sw);
+अटल क्रमागत usb_role cdns_role_get(काष्ठा usb_role_चयन *sw)
+अणु
+	काष्ठा cdns *cdns = usb_role_चयन_get_drvdata(sw);
 
-	return cdns->role;
-}
+	वापस cdns->role;
+पूर्ण
 
 /**
  * cdns_role_set - set current role of controller.
  *
- * @sw: pointer to USB role switch structure
+ * @sw: poपूर्णांकer to USB role चयन काष्ठाure
  * @role: the previous role
  * Handles below events:
- * - Role switch for dual-role devices
- * - USB_ROLE_GADGET <--> USB_ROLE_NONE for peripheral-only devices
+ * - Role चयन क्रम dual-role devices
+ * - USB_ROLE_GADGET <--> USB_ROLE_NONE क्रम peripheral-only devices
  */
-static int cdns_role_set(struct usb_role_switch *sw, enum usb_role role)
-{
-	struct cdns *cdns = usb_role_switch_get_drvdata(sw);
-	int ret = 0;
+अटल पूर्णांक cdns_role_set(काष्ठा usb_role_चयन *sw, क्रमागत usb_role role)
+अणु
+	काष्ठा cdns *cdns = usb_role_चयन_get_drvdata(sw);
+	पूर्णांक ret = 0;
 
-	pm_runtime_get_sync(cdns->dev);
+	pm_runसमय_get_sync(cdns->dev);
 
-	if (cdns->role == role)
-		goto pm_put;
+	अगर (cdns->role == role)
+		जाओ pm_put;
 
-	if (cdns->dr_mode == USB_DR_MODE_HOST) {
-		switch (role) {
-		case USB_ROLE_NONE:
-		case USB_ROLE_HOST:
-			break;
-		default:
-			goto pm_put;
-		}
-	}
+	अगर (cdns->dr_mode == USB_DR_MODE_HOST) अणु
+		चयन (role) अणु
+		हाल USB_ROLE_NONE:
+		हाल USB_ROLE_HOST:
+			अवरोध;
+		शेष:
+			जाओ pm_put;
+		पूर्ण
+	पूर्ण
 
-	if (cdns->dr_mode == USB_DR_MODE_PERIPHERAL) {
-		switch (role) {
-		case USB_ROLE_NONE:
-		case USB_ROLE_DEVICE:
-			break;
-		default:
-			goto pm_put;
-		}
-	}
+	अगर (cdns->dr_mode == USB_DR_MODE_PERIPHERAL) अणु
+		चयन (role) अणु
+		हाल USB_ROLE_NONE:
+		हाल USB_ROLE_DEVICE:
+			अवरोध;
+		शेष:
+			जाओ pm_put;
+		पूर्ण
+	पूर्ण
 
 	cdns_role_stop(cdns);
 	ret = cdns_role_start(cdns, role);
-	if (ret)
+	अगर (ret)
 		dev_err(cdns->dev, "set role %d has failed\n", role);
 
 pm_put:
-	pm_runtime_put_sync(cdns->dev);
-	return ret;
-}
+	pm_runसमय_put_sync(cdns->dev);
+	वापस ret;
+पूर्ण
 
 
 /**
- * cdns_wakeup_irq - interrupt handler for wakeup events
- * @irq: irq number for cdns3/cdnsp core device
- * @data: structure of cdns
+ * cdns_wakeup_irq - पूर्णांकerrupt handler क्रम wakeup events
+ * @irq: irq number क्रम cdns3/cdnsp core device
+ * @data: काष्ठाure of cdns
  *
  * Returns IRQ_HANDLED or IRQ_NONE
  */
-static irqreturn_t cdns_wakeup_irq(int irq, void *data)
-{
-	struct cdns *cdns = data;
+अटल irqवापस_t cdns_wakeup_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा cdns *cdns = data;
 
-	if (cdns->in_lpm) {
+	अगर (cdns->in_lpm) अणु
 		disable_irq_nosync(irq);
 		cdns->wakeup_pending = true;
-		if ((cdns->role == USB_ROLE_HOST) && cdns->host_dev)
+		अगर ((cdns->role == USB_ROLE_HOST) && cdns->host_dev)
 			pm_request_resume(&cdns->host_dev->dev);
 
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
 /**
- * cdns_probe - probe for cdns3/cdnsp core device
- * @cdns: Pointer to cdns structure.
+ * cdns_probe - probe क्रम cdns3/cdnsp core device
+ * @cdns: Poपूर्णांकer to cdns काष्ठाure.
  *
- * Returns 0 on success otherwise negative errno
+ * Returns 0 on success otherwise negative त्रुटि_सं
  */
-int cdns_init(struct cdns *cdns)
-{
-	struct device *dev = cdns->dev;
-	int ret;
+पूर्णांक cdns_init(काष्ठा cdns *cdns)
+अणु
+	काष्ठा device *dev = cdns->dev;
+	पूर्णांक ret;
 
 	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "error setting dma mask: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	mutex_init(&cdns->mutex);
 
-	if (device_property_read_bool(dev, "usb-role-switch")) {
-		struct usb_role_switch_desc sw_desc = { };
+	अगर (device_property_पढ़ो_bool(dev, "usb-role-switch")) अणु
+		काष्ठा usb_role_चयन_desc sw_desc = अणु पूर्ण;
 
 		sw_desc.set = cdns_role_set;
 		sw_desc.get = cdns_role_get;
@@ -446,126 +447,126 @@ int cdns_init(struct cdns *cdns)
 		sw_desc.driver_data = cdns;
 		sw_desc.fwnode = dev->fwnode;
 
-		cdns->role_sw = usb_role_switch_register(dev, &sw_desc);
-		if (IS_ERR(cdns->role_sw)) {
+		cdns->role_sw = usb_role_चयन_रेजिस्टर(dev, &sw_desc);
+		अगर (IS_ERR(cdns->role_sw)) अणु
 			dev_warn(dev, "Unable to register Role Switch\n");
-			return PTR_ERR(cdns->role_sw);
-		}
-	}
+			वापस PTR_ERR(cdns->role_sw);
+		पूर्ण
+	पूर्ण
 
-	if (cdns->wakeup_irq) {
+	अगर (cdns->wakeup_irq) अणु
 		ret = devm_request_irq(cdns->dev, cdns->wakeup_irq,
 						cdns_wakeup_irq,
 						IRQF_SHARED,
 						dev_name(cdns->dev), cdns);
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(cdns->dev, "couldn't register wakeup irq handler\n");
-			goto role_switch_unregister;
-		}
-	}
+			जाओ role_चयन_unरेजिस्टर;
+		पूर्ण
+	पूर्ण
 
 	ret = cdns_drd_init(cdns);
-	if (ret)
-		goto init_failed;
+	अगर (ret)
+		जाओ init_failed;
 
 	ret = cdns_core_init_role(cdns);
-	if (ret)
-		goto init_failed;
+	अगर (ret)
+		जाओ init_failed;
 
 	spin_lock_init(&cdns->lock);
 
 	dev_dbg(dev, "Cadence USB3 core: probe succeed\n");
 
-	return 0;
+	वापस 0;
 init_failed:
-	cdns_drd_exit(cdns);
-role_switch_unregister:
-	if (cdns->role_sw)
-		usb_role_switch_unregister(cdns->role_sw);
+	cdns_drd_निकास(cdns);
+role_चयन_unरेजिस्टर:
+	अगर (cdns->role_sw)
+		usb_role_चयन_unरेजिस्टर(cdns->role_sw);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(cdns_init);
 
 /**
- * cdns_remove - unbind drd driver and clean up
- * @cdns: Pointer to cdns structure.
+ * cdns_हटाओ - unbind drd driver and clean up
+ * @cdns: Poपूर्णांकer to cdns काष्ठाure.
  *
- * Returns 0 on success otherwise negative errno
+ * Returns 0 on success otherwise negative त्रुटि_सं
  */
-int cdns_remove(struct cdns *cdns)
-{
-	cdns_exit_roles(cdns);
-	usb_role_switch_unregister(cdns->role_sw);
+पूर्णांक cdns_हटाओ(काष्ठा cdns *cdns)
+अणु
+	cdns_निकास_roles(cdns);
+	usb_role_चयन_unरेजिस्टर(cdns->role_sw);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(cdns_remove);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(cdns_हटाओ);
 
-#ifdef CONFIG_PM_SLEEP
-int cdns_suspend(struct cdns *cdns)
-{
-	struct device *dev = cdns->dev;
-	unsigned long flags;
+#अगर_घोषित CONFIG_PM_SLEEP
+पूर्णांक cdns_suspend(काष्ठा cdns *cdns)
+अणु
+	काष्ठा device *dev = cdns->dev;
+	अचिन्हित दीर्घ flags;
 
-	if (pm_runtime_status_suspended(dev))
-		pm_runtime_resume(dev);
+	अगर (pm_runसमय_status_suspended(dev))
+		pm_runसमय_resume(dev);
 
-	if (cdns->roles[cdns->role]->suspend) {
+	अगर (cdns->roles[cdns->role]->suspend) अणु
 		spin_lock_irqsave(&cdns->lock, flags);
 		cdns->roles[cdns->role]->suspend(cdns, false);
 		spin_unlock_irqrestore(&cdns->lock, flags);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(cdns_suspend);
 
-int cdns_resume(struct cdns *cdns, u8 set_active)
-{
-	struct device *dev = cdns->dev;
-	enum usb_role real_role;
+पूर्णांक cdns_resume(काष्ठा cdns *cdns, u8 set_active)
+अणु
+	काष्ठा device *dev = cdns->dev;
+	क्रमागत usb_role real_role;
 	bool role_changed = false;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (cdns_power_is_lost(cdns)) {
-		if (cdns->role_sw) {
+	अगर (cdns_घातer_is_lost(cdns)) अणु
+		अगर (cdns->role_sw) अणु
 			cdns->role = cdns_role_get(cdns->role_sw);
-		} else {
+		पूर्ण अन्यथा अणु
 			real_role = cdns_hw_role_state_machine(cdns);
-			if (real_role != cdns->role) {
-				ret = cdns_hw_role_switch(cdns);
-				if (ret)
-					return ret;
+			अगर (real_role != cdns->role) अणु
+				ret = cdns_hw_role_चयन(cdns);
+				अगर (ret)
+					वापस ret;
 				role_changed = true;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (!role_changed) {
-			if (cdns->role == USB_ROLE_HOST)
+		अगर (!role_changed) अणु
+			अगर (cdns->role == USB_ROLE_HOST)
 				ret = cdns_drd_host_on(cdns);
-			else if (cdns->role == USB_ROLE_DEVICE)
+			अन्यथा अगर (cdns->role == USB_ROLE_DEVICE)
 				ret = cdns_drd_gadget_on(cdns);
 
-			if (ret)
-				return ret;
-		}
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (cdns->roles[cdns->role]->resume)
-		cdns->roles[cdns->role]->resume(cdns, cdns_power_is_lost(cdns));
+	अगर (cdns->roles[cdns->role]->resume)
+		cdns->roles[cdns->role]->resume(cdns, cdns_घातer_is_lost(cdns));
 
-	if (set_active) {
-		pm_runtime_disable(dev);
-		pm_runtime_set_active(dev);
-		pm_runtime_enable(dev);
-	}
+	अगर (set_active) अणु
+		pm_runसमय_disable(dev);
+		pm_runसमय_set_active(dev);
+		pm_runसमय_enable(dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(cdns_resume);
-#endif /* CONFIG_PM_SLEEP */
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
 MODULE_AUTHOR("Peter Chen <peter.chen@nxp.com>");
 MODULE_AUTHOR("Pawel Laszczak <pawell@cadence.com>");

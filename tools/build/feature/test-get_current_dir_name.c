@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
-#define _GNU_SOURCE
-#include <unistd.h>
-#include <stdlib.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा _GNU_SOURCE
+#समावेश <unistd.h>
+#समावेश <मानककोष.स>
 
-int main(void)
-{
-	free(get_current_dir_name());
-	return 0;
-}
-#undef _GNU_SOURCE
+पूर्णांक मुख्य(व्योम)
+अणु
+	मुक्त(get_current_dir_name());
+	वापस 0;
+पूर्ण
+#अघोषित _GNU_SOURCE

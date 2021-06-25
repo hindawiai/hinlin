@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * common keywest i2c layer
  *
@@ -6,155 +7,155 @@
  */
 
 
-#include <linux/init.h>
-#include <linux/i2c.h>
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include "pmac.h"
+#समावेश <linux/init.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश "pmac.h"
 
-static struct pmac_keywest *keywest_ctx;
-static bool keywest_probed;
+अटल काष्ठा pmac_keywest *keywest_ctx;
+अटल bool keywest_probed;
 
-static int keywest_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
+अटल पूर्णांक keywest_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
 	keywest_probed = true;
-	/* If instantiated via i2c-powermac, we still need to set the client */
-	if (!keywest_ctx->client)
+	/* If instantiated via i2c-घातermac, we still need to set the client */
+	अगर (!keywest_ctx->client)
 		keywest_ctx->client = client;
 	i2c_set_clientdata(client, keywest_ctx);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * This is kind of a hack, best would be to turn powermac to fixed i2c
- * bus numbers and declare the sound device as part of platform
+ * This is kind of a hack, best would be to turn घातermac to fixed i2c
+ * bus numbers and declare the sound device as part of platक्रमm
  * initialization
  */
-static int keywest_attach_adapter(struct i2c_adapter *adapter)
-{
-	struct i2c_board_info info;
-	struct i2c_client *client;
+अटल पूर्णांक keywest_attach_adapter(काष्ठा i2c_adapter *adapter)
+अणु
+	काष्ठा i2c_board_info info;
+	काष्ठा i2c_client *client;
 
-	if (! keywest_ctx)
-		return -EINVAL;
+	अगर (! keywest_ctx)
+		वापस -EINVAL;
 
-	if (strncmp(adapter->name, "mac-io", 6))
-		return -EINVAL; /* ignored */
+	अगर (म_भेदन(adapter->name, "mac-io", 6))
+		वापस -EINVAL; /* ignored */
 
-	memset(&info, 0, sizeof(struct i2c_board_info));
+	स_रखो(&info, 0, माप(काष्ठा i2c_board_info));
 	strscpy(info.type, "keywest", I2C_NAME_SIZE);
 	info.addr = keywest_ctx->addr;
 	client = i2c_new_client_device(adapter, &info);
-	if (IS_ERR(client))
-		return PTR_ERR(client);
+	अगर (IS_ERR(client))
+		वापस PTR_ERR(client);
 	keywest_ctx->client = client;
 
 	/*
-	 * We know the driver is already loaded, so the device should be
-	 * already bound. If not it means binding failed, and then there
-	 * is no point in keeping the device instantiated.
+	 * We know the driver is alपढ़ोy loaded, so the device should be
+	 * alपढ़ोy bound. If not it means binding failed, and then there
+	 * is no poपूर्णांक in keeping the device instantiated.
 	 */
-	if (!keywest_ctx->client->dev.driver) {
-		i2c_unregister_device(keywest_ctx->client);
-		keywest_ctx->client = NULL;
-		return -ENODEV;
-	}
+	अगर (!keywest_ctx->client->dev.driver) अणु
+		i2c_unरेजिस्टर_device(keywest_ctx->client);
+		keywest_ctx->client = शून्य;
+		वापस -ENODEV;
+	पूर्ण
 	
 	/*
 	 * Let i2c-core delete that device on driver removal.
-	 * This is safe because i2c-core holds the core_lock mutex for us.
+	 * This is safe because i2c-core holds the core_lock mutex क्रम us.
 	 */
 	list_add_tail(&keywest_ctx->client->detected,
 		      &to_i2c_driver(keywest_ctx->client->dev.driver)->clients);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int keywest_remove(struct i2c_client *client)
-{
-	if (! keywest_ctx)
-		return 0;
-	if (client == keywest_ctx->client)
-		keywest_ctx->client = NULL;
+अटल पूर्णांक keywest_हटाओ(काष्ठा i2c_client *client)
+अणु
+	अगर (! keywest_ctx)
+		वापस 0;
+	अगर (client == keywest_ctx->client)
+		keywest_ctx->client = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct i2c_device_id keywest_i2c_id[] = {
-	{ "MAC,tas3004", 0 },		/* instantiated by i2c-powermac */
-	{ "keywest", 0 },		/* instantiated by us if needed */
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id keywest_i2c_id[] = अणु
+	अणु "MAC,tas3004", 0 पूर्ण,		/* instantiated by i2c-घातermac */
+	अणु "keywest", 0 पूर्ण,		/* instantiated by us अगर needed */
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, keywest_i2c_id);
 
-static struct i2c_driver keywest_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver keywest_driver = अणु
+	.driver = अणु
 		.name = "PMac Keywest Audio",
-	},
+	पूर्ण,
 	.probe = keywest_probe,
-	.remove = keywest_remove,
+	.हटाओ = keywest_हटाओ,
 	.id_table = keywest_i2c_id,
-};
+पूर्ण;
 
 /* exported */
-void snd_pmac_keywest_cleanup(struct pmac_keywest *i2c)
-{
-	if (keywest_ctx && keywest_ctx == i2c) {
+व्योम snd_pmac_keywest_cleanup(काष्ठा pmac_keywest *i2c)
+अणु
+	अगर (keywest_ctx && keywest_ctx == i2c) अणु
 		i2c_del_driver(&keywest_driver);
-		keywest_ctx = NULL;
-	}
-}
+		keywest_ctx = शून्य;
+	पूर्ण
+पूर्ण
 
-int snd_pmac_tumbler_post_init(void)
-{
-	int err;
+पूर्णांक snd_pmac_tumbler_post_init(व्योम)
+अणु
+	पूर्णांक err;
 	
-	if (!keywest_ctx || !keywest_ctx->client)
-		return -ENXIO;
+	अगर (!keywest_ctx || !keywest_ctx->client)
+		वापस -ENXIO;
 
-	if ((err = keywest_ctx->init_client(keywest_ctx)) < 0) {
-		snd_printk(KERN_ERR "tumbler: %i :cannot initialize the MCS\n", err);
-		return err;
-	}
-	return 0;
-}
+	अगर ((err = keywest_ctx->init_client(keywest_ctx)) < 0) अणु
+		snd_prपूर्णांकk(KERN_ERR "tumbler: %i :cannot initialize the MCS\n", err);
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* exported */
-int snd_pmac_keywest_init(struct pmac_keywest *i2c)
-{
-	struct i2c_adapter *adap;
-	int err, i = 0;
+पूर्णांक snd_pmac_keywest_init(काष्ठा pmac_keywest *i2c)
+अणु
+	काष्ठा i2c_adapter *adap;
+	पूर्णांक err, i = 0;
 
-	if (keywest_ctx)
-		return -EBUSY;
+	अगर (keywest_ctx)
+		वापस -EBUSY;
 
 	adap = i2c_get_adapter(0);
-	if (!adap)
-		return -EPROBE_DEFER;
+	अगर (!adap)
+		वापस -EPROBE_DEFER;
 
 	keywest_ctx = i2c;
 
-	if ((err = i2c_add_driver(&keywest_driver))) {
-		snd_printk(KERN_ERR "cannot register keywest i2c driver\n");
+	अगर ((err = i2c_add_driver(&keywest_driver))) अणु
+		snd_prपूर्णांकk(KERN_ERR "cannot register keywest i2c driver\n");
 		i2c_put_adapter(adap);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* There was already a device from i2c-powermac. Great, let's return */
-	if (keywest_probed)
-		return 0;
+	/* There was alपढ़ोy a device from i2c-घातermac. Great, let's वापस */
+	अगर (keywest_probed)
+		वापस 0;
 
 	/* We assume Macs have consecutive I2C bus numbers starting at 0 */
-	while (adap) {
-		/* Scan for devices to be bound to */
+	जबतक (adap) अणु
+		/* Scan क्रम devices to be bound to */
 		err = keywest_attach_adapter(adap);
-		if (!err)
-			return 0;
+		अगर (!err)
+			वापस 0;
 		i2c_put_adapter(adap);
 		adap = i2c_get_adapter(++i);
-	}
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण

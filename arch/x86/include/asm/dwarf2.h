@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_DWARF2_H
-#define _ASM_X86_DWARF2_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_DWARF2_H
+#घोषणा _ASM_X86_DWARF2_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 #warning "asm/dwarf2.h should be only included in pure assembly files"
-#endif
+#पूर्ण_अगर
 
-#define CFI_STARTPROC		.cfi_startproc
-#define CFI_ENDPROC		.cfi_endproc
-#define CFI_DEF_CFA		.cfi_def_cfa
-#define CFI_DEF_CFA_REGISTER	.cfi_def_cfa_register
-#define CFI_DEF_CFA_OFFSET	.cfi_def_cfa_offset
-#define CFI_ADJUST_CFA_OFFSET	.cfi_adjust_cfa_offset
-#define CFI_OFFSET		.cfi_offset
-#define CFI_REL_OFFSET		.cfi_rel_offset
-#define CFI_REGISTER		.cfi_register
-#define CFI_RESTORE		.cfi_restore
-#define CFI_REMEMBER_STATE	.cfi_remember_state
-#define CFI_RESTORE_STATE	.cfi_restore_state
-#define CFI_UNDEFINED		.cfi_undefined
-#define CFI_ESCAPE		.cfi_escape
+#घोषणा CFI_STARTPROC		.cfi_startproc
+#घोषणा CFI_ENDPROC		.cfi_endproc
+#घोषणा CFI_DEF_CFA		.cfi_def_cfa
+#घोषणा CFI_DEF_CFA_REGISTER	.cfi_def_cfa_रेजिस्टर
+#घोषणा CFI_DEF_CFA_OFFSET	.cfi_def_cfa_offset
+#घोषणा CFI_ADJUST_CFA_OFFSET	.cfi_adjust_cfa_offset
+#घोषणा CFI_OFFSET		.cfi_offset
+#घोषणा CFI_REL_OFFSET		.cfi_rel_offset
+#घोषणा CFI_REGISTER		.cfi_रेजिस्टर
+#घोषणा CFI_RESTORE		.cfi_restore
+#घोषणा CFI_REMEMBER_STATE	.cfi_remember_state
+#घोषणा CFI_RESTORE_STATE	.cfi_restore_state
+#घोषणा CFI_UNDEFINED		.cfi_undefined
+#घोषणा CFI_ESCAPE		.cfi_escape
 
-#ifndef BUILD_VDSO
+#अगर_अघोषित BUILD_VDSO
 	/*
 	 * Emit CFI data in .debug_frame sections, not .eh_frame sections.
-	 * The latter we currently just discard since we don't do DWARF
-	 * unwinding at runtime.  So only the offline DWARF information is
-	 * useful to anyone.  Note we should not use this directive if we
-	 * ever decide to enable DWARF unwinding at runtime.
+	 * The latter we currently just discard since we करोn't करो DWARF
+	 * unwinding at runसमय.  So only the offline DWARF inक्रमmation is
+	 * useful to anyone.  Note we should not use this directive अगर we
+	 * ever decide to enable DWARF unwinding at runसमय.
 	 */
 	.cfi_sections .debug_frame
-#else
+#अन्यथा
 	 /*
-	  * For the vDSO, emit both runtime unwind information and debug
-	  * symbols for the .dbg file.
+	  * For the vDSO, emit both runसमय unwind inक्रमmation and debug
+	  * symbols क्रम the .dbg file.
 	  */
 	.cfi_sections .eh_frame, .debug_frame
-#endif
+#पूर्ण_अगर
 
-#endif /* _ASM_X86_DWARF2_H */
+#पूर्ण_अगर /* _ASM_X86_DWARF2_H */

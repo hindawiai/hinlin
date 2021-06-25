@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * AppliedMicro X-Gene SoC Reboot Driver
  *
@@ -6,90 +7,90 @@
  * Author: Feng Kan <fkan@apm.com>
  * Author: Loc Ho <lho@apm.com>
  *
- * This driver provides system reboot functionality for APM X-Gene SoC.
- * For system shutdown, this is board specify. If a board designer
- * implements GPIO shutdown, use the gpio-poweroff.c driver.
+ * This driver provides प्रणाली reboot functionality क्रम APM X-Gene SoC.
+ * For प्रणाली shutकरोwn, this is board specअगरy. If a board designer
+ * implements GPIO shutकरोwn, use the gpio-घातeroff.c driver.
  */
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/notifier.h>
-#include <linux/of_device.h>
-#include <linux/of_address.h>
-#include <linux/platform_device.h>
-#include <linux/reboot.h>
-#include <linux/stat.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/slab.h>
 
-struct xgene_reboot_context {
-	struct device *dev;
-	void *csr;
+काष्ठा xgene_reboot_context अणु
+	काष्ठा device *dev;
+	व्योम *csr;
 	u32 mask;
-	struct notifier_block restart_handler;
-};
+	काष्ठा notअगरier_block restart_handler;
+पूर्ण;
 
-static int xgene_restart_handler(struct notifier_block *this,
-				 unsigned long mode, void *cmd)
-{
-	struct xgene_reboot_context *ctx =
-		container_of(this, struct xgene_reboot_context,
+अटल पूर्णांक xgene_restart_handler(काष्ठा notअगरier_block *this,
+				 अचिन्हित दीर्घ mode, व्योम *cmd)
+अणु
+	काष्ठा xgene_reboot_context *ctx =
+		container_of(this, काष्ठा xgene_reboot_context,
 			     restart_handler);
 
 	/* Issue the reboot */
-	writel(ctx->mask, ctx->csr);
+	ग_लिखोl(ctx->mask, ctx->csr);
 
 	mdelay(1000);
 
 	dev_emerg(ctx->dev, "Unable to restart system\n");
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int xgene_reboot_probe(struct platform_device *pdev)
-{
-	struct xgene_reboot_context *ctx;
-	struct device *dev = &pdev->dev;
-	int err;
+अटल पूर्णांक xgene_reboot_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा xgene_reboot_context *ctx;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक err;
 
-	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = devm_kzalloc(dev, माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	ctx->csr = of_iomap(dev->of_node, 0);
-	if (!ctx->csr) {
+	अगर (!ctx->csr) अणु
 		dev_err(dev, "can not map resource\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (of_property_read_u32(dev->of_node, "mask", &ctx->mask))
+	अगर (of_property_पढ़ो_u32(dev->of_node, "mask", &ctx->mask))
 		ctx->mask = 0xFFFFFFFF;
 
 	ctx->dev = dev;
-	ctx->restart_handler.notifier_call = xgene_restart_handler;
+	ctx->restart_handler.notअगरier_call = xgene_restart_handler;
 	ctx->restart_handler.priority = 128;
-	err = register_restart_handler(&ctx->restart_handler);
-	if (err) {
+	err = रेजिस्टर_restart_handler(&ctx->restart_handler);
+	अगर (err) अणु
 		iounmap(ctx->csr);
 		dev_err(dev, "cannot register restart handler (err=%d)\n", err);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct of_device_id xgene_reboot_of_match[] = {
-	{ .compatible = "apm,xgene-reboot" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id xgene_reboot_of_match[] = अणु
+	अणु .compatible = "apm,xgene-reboot" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver xgene_reboot_driver = {
+अटल काष्ठा platक्रमm_driver xgene_reboot_driver = अणु
 	.probe = xgene_reboot_probe,
-	.driver = {
+	.driver = अणु
 		.name = "xgene-reboot",
 		.of_match_table = xgene_reboot_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init xgene_reboot_init(void)
-{
-	return platform_driver_register(&xgene_reboot_driver);
-}
+अटल पूर्णांक __init xgene_reboot_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&xgene_reboot_driver);
+पूर्ण
 device_initcall(xgene_reboot_init);

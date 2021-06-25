@@ -1,5 +1,6 @@
+<शैली गुरु>
 /******************************************************************************
- * Xen balloon driver - enables returning/claiming memory to/from Xen.
+ * Xen balloon driver - enables वापसing/claiming memory to/from Xen.
  *
  * Copyright (c) 2003, B Dragovic
  * Copyright (c) 2003-2004, M Williamson, K Fraser
@@ -8,20 +9,20 @@
  *
  * Memory hotplug support was written by Daniel Kiper. Work on
  * it was sponsored by Google under Google Summer of Code 2010
- * program. Jeremy Fitzhardinge from Citrix was the mentor for
+ * program. Jeremy Fitzhardinge from Citrix was the mentor क्रम
  * this project.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -36,272 +37,272 @@
  * IN THE SOFTWARE.
  */
 
-#define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
-#include <linux/cpu.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/cred.h>
-#include <linux/errno.h>
-#include <linux/mm.h>
-#include <linux/memblock.h>
-#include <linux/pagemap.h>
-#include <linux/highmem.h>
-#include <linux/mutex.h>
-#include <linux/list.h>
-#include <linux/gfp.h>
-#include <linux/notifier.h>
-#include <linux/memory.h>
-#include <linux/memory_hotplug.h>
-#include <linux/percpu-defs.h>
-#include <linux/slab.h>
-#include <linux/sysctl.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/list.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/memory.h>
+#समावेश <linux/memory_hotplug.h>
+#समावेश <linux/percpu-defs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysctl.h>
 
-#include <asm/page.h>
-#include <asm/tlb.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/tlb.h>
 
-#include <asm/xen/hypervisor.h>
-#include <asm/xen/hypercall.h>
+#समावेश <यंत्र/xen/hypervisor.h>
+#समावेश <यंत्र/xen/hypercall.h>
 
-#include <xen/xen.h>
-#include <xen/interface/xen.h>
-#include <xen/interface/memory.h>
-#include <xen/balloon.h>
-#include <xen/features.h>
-#include <xen/page.h>
-#include <xen/mem-reservation.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/पूर्णांकerface/xen.h>
+#समावेश <xen/पूर्णांकerface/memory.h>
+#समावेश <xen/balloon.h>
+#समावेश <xen/features.h>
+#समावेश <xen/page.h>
+#समावेश <xen/mem-reservation.h>
 
-static int xen_hotplug_unpopulated;
+अटल पूर्णांक xen_hotplug_unpopulated;
 
-#ifdef CONFIG_XEN_BALLOON_MEMORY_HOTPLUG
+#अगर_घोषित CONFIG_XEN_BALLOON_MEMORY_HOTPLUG
 
-static struct ctl_table balloon_table[] = {
-	{
+अटल काष्ठा ctl_table balloon_table[] = अणु
+	अणु
 		.procname	= "hotplug_unpopulated",
 		.data		= &xen_hotplug_unpopulated,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1         = SYSCTL_ZERO,
 		.extra2         = SYSCTL_ONE,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table balloon_root[] = {
-	{
+अटल काष्ठा ctl_table balloon_root[] = अणु
+	अणु
 		.procname	= "balloon",
 		.mode		= 0555,
 		.child		= balloon_table,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table xen_root[] = {
-	{
+अटल काष्ठा ctl_table xen_root[] = अणु
+	अणु
 		.procname	= "xen",
 		.mode		= 0555,
 		.child		= balloon_root,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 
 /*
- * Use one extent per PAGE_SIZE to avoid to break down the page into
+ * Use one extent per PAGE_SIZE to aव्योम to अवरोध करोwn the page पूर्णांकo
  * multiple frame.
  */
-#define EXTENT_ORDER (fls(XEN_PFN_PER_PAGE) - 1)
+#घोषणा EXTENT_ORDER (fls(XEN_PFN_PER_PAGE) - 1)
 
 /*
  * balloon_process() state:
  *
- * BP_DONE: done or nothing to do,
- * BP_WAIT: wait to be rescheduled,
+ * BP_DONE: करोne or nothing to करो,
+ * BP_WAIT: रुको to be rescheduled,
  * BP_EAGAIN: error, go to sleep,
  * BP_ECANCELED: error, balloon operation canceled.
  */
 
-enum bp_state {
+क्रमागत bp_state अणु
 	BP_DONE,
 	BP_WAIT,
 	BP_EAGAIN,
 	BP_ECANCELED
-};
+पूर्ण;
 
 
-static DEFINE_MUTEX(balloon_mutex);
+अटल DEFINE_MUTEX(balloon_mutex);
 
-struct balloon_stats balloon_stats;
+काष्ठा balloon_stats balloon_stats;
 EXPORT_SYMBOL_GPL(balloon_stats);
 
 /* We increase/decrease in batches which fit in a page */
-static xen_pfn_t frame_list[PAGE_SIZE / sizeof(xen_pfn_t)];
+अटल xen_pfn_t frame_list[PAGE_SIZE / माप(xen_pfn_t)];
 
 
-/* List of ballooned pages, threaded through the mem_map array. */
-static LIST_HEAD(ballooned_pages);
-static DECLARE_WAIT_QUEUE_HEAD(balloon_wq);
+/* List of ballooned pages, thपढ़ोed through the mem_map array. */
+अटल LIST_HEAD(ballooned_pages);
+अटल DECLARE_WAIT_QUEUE_HEAD(balloon_wq);
 
 /* Main work function, always executed in process context. */
-static void balloon_process(struct work_struct *work);
-static DECLARE_DELAYED_WORK(balloon_worker, balloon_process);
+अटल व्योम balloon_process(काष्ठा work_काष्ठा *work);
+अटल DECLARE_DELAYED_WORK(balloon_worker, balloon_process);
 
-/* When ballooning out (allocating memory to return to Xen) we don't really
-   want the kernel to try too hard since that can trigger the oom killer. */
-#define GFP_BALLOON \
+/* When ballooning out (allocating memory to वापस to Xen) we करोn't really
+   want the kernel to try too hard since that can trigger the oom समाप्तer. */
+#घोषणा GFP_BALLOON \
 	(GFP_HIGHUSER | __GFP_NOWARN | __GFP_NORETRY | __GFP_NOMEMALLOC)
 
 /* balloon_append: add the given page to the balloon. */
-static void balloon_append(struct page *page)
-{
+अटल व्योम balloon_append(काष्ठा page *page)
+अणु
 	__SetPageOffline(page);
 
 	/* Lowmem is re-populated first, so highmem pages go at list tail. */
-	if (PageHighMem(page)) {
+	अगर (PageHighMem(page)) अणु
 		list_add_tail(&page->lru, &ballooned_pages);
 		balloon_stats.balloon_high++;
-	} else {
+	पूर्ण अन्यथा अणु
 		list_add(&page->lru, &ballooned_pages);
 		balloon_stats.balloon_low++;
-	}
+	पूर्ण
 	wake_up(&balloon_wq);
-}
+पूर्ण
 
-/* balloon_retrieve: rescue a page from the balloon, if it is not empty. */
-static struct page *balloon_retrieve(bool require_lowmem)
-{
-	struct page *page;
+/* balloon_retrieve: rescue a page from the balloon, अगर it is not empty. */
+अटल काष्ठा page *balloon_retrieve(bool require_lowmem)
+अणु
+	काष्ठा page *page;
 
-	if (list_empty(&ballooned_pages))
-		return NULL;
+	अगर (list_empty(&ballooned_pages))
+		वापस शून्य;
 
-	page = list_entry(ballooned_pages.next, struct page, lru);
-	if (require_lowmem && PageHighMem(page))
-		return NULL;
+	page = list_entry(ballooned_pages.next, काष्ठा page, lru);
+	अगर (require_lowmem && PageHighMem(page))
+		वापस शून्य;
 	list_del(&page->lru);
 
-	if (PageHighMem(page))
+	अगर (PageHighMem(page))
 		balloon_stats.balloon_high--;
-	else
+	अन्यथा
 		balloon_stats.balloon_low--;
 
 	__ClearPageOffline(page);
-	return page;
-}
+	वापस page;
+पूर्ण
 
-static struct page *balloon_next_page(struct page *page)
-{
-	struct list_head *next = page->lru.next;
-	if (next == &ballooned_pages)
-		return NULL;
-	return list_entry(next, struct page, lru);
-}
+अटल काष्ठा page *balloon_next_page(काष्ठा page *page)
+अणु
+	काष्ठा list_head *next = page->lru.next;
+	अगर (next == &ballooned_pages)
+		वापस शून्य;
+	वापस list_entry(next, काष्ठा page, lru);
+पूर्ण
 
-static enum bp_state update_schedule(enum bp_state state)
-{
-	if (state == BP_WAIT)
-		return BP_WAIT;
+अटल क्रमागत bp_state update_schedule(क्रमागत bp_state state)
+अणु
+	अगर (state == BP_WAIT)
+		वापस BP_WAIT;
 
-	if (state == BP_ECANCELED)
-		return BP_ECANCELED;
+	अगर (state == BP_ECANCELED)
+		वापस BP_ECANCELED;
 
-	if (state == BP_DONE) {
+	अगर (state == BP_DONE) अणु
 		balloon_stats.schedule_delay = 1;
 		balloon_stats.retry_count = 1;
-		return BP_DONE;
-	}
+		वापस BP_DONE;
+	पूर्ण
 
 	++balloon_stats.retry_count;
 
-	if (balloon_stats.max_retry_count != RETRY_UNLIMITED &&
-			balloon_stats.retry_count > balloon_stats.max_retry_count) {
+	अगर (balloon_stats.max_retry_count != RETRY_UNLIMITED &&
+			balloon_stats.retry_count > balloon_stats.max_retry_count) अणु
 		balloon_stats.schedule_delay = 1;
 		balloon_stats.retry_count = 1;
-		return BP_ECANCELED;
-	}
+		वापस BP_ECANCELED;
+	पूर्ण
 
 	balloon_stats.schedule_delay <<= 1;
 
-	if (balloon_stats.schedule_delay > balloon_stats.max_schedule_delay)
+	अगर (balloon_stats.schedule_delay > balloon_stats.max_schedule_delay)
 		balloon_stats.schedule_delay = balloon_stats.max_schedule_delay;
 
-	return BP_EAGAIN;
-}
+	वापस BP_EAGAIN;
+पूर्ण
 
-#ifdef CONFIG_XEN_BALLOON_MEMORY_HOTPLUG
-static void release_memory_resource(struct resource *resource)
-{
-	if (!resource)
-		return;
+#अगर_घोषित CONFIG_XEN_BALLOON_MEMORY_HOTPLUG
+अटल व्योम release_memory_resource(काष्ठा resource *resource)
+अणु
+	अगर (!resource)
+		वापस;
 
 	/*
 	 * No need to reset region to identity mapped since we now
 	 * know that no I/O can be in this region
 	 */
 	release_resource(resource);
-	kfree(resource);
-}
+	kमुक्त(resource);
+पूर्ण
 
-static struct resource *additional_memory_resource(phys_addr_t size)
-{
-	struct resource *res;
-	int ret;
+अटल काष्ठा resource *additional_memory_resource(phys_addr_t size)
+अणु
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	res = kzalloc(sizeof(*res), GFP_KERNEL);
-	if (!res)
-		return NULL;
+	res = kzalloc(माप(*res), GFP_KERNEL);
+	अगर (!res)
+		वापस शून्य;
 
 	res->name = "System RAM";
 	res->flags = IORESOURCE_SYSTEM_RAM | IORESOURCE_BUSY;
 
 	ret = allocate_resource(&iomem_resource, res,
 				size, 0, -1,
-				PAGES_PER_SECTION * PAGE_SIZE, NULL, NULL);
-	if (ret < 0) {
+				PAGES_PER_SECTION * PAGE_SIZE, शून्य, शून्य);
+	अगर (ret < 0) अणु
 		pr_err("Cannot allocate new System RAM resource\n");
-		kfree(res);
-		return NULL;
-	}
+		kमुक्त(res);
+		वापस शून्य;
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static enum bp_state reserve_additional_memory(void)
-{
-	long credit;
-	struct resource *resource;
-	int nid, rc;
-	unsigned long balloon_hotplug;
+अटल क्रमागत bp_state reserve_additional_memory(व्योम)
+अणु
+	दीर्घ credit;
+	काष्ठा resource *resource;
+	पूर्णांक nid, rc;
+	अचिन्हित दीर्घ balloon_hotplug;
 
 	credit = balloon_stats.target_pages + balloon_stats.target_unpopulated
 		- balloon_stats.total_pages;
 
 	/*
-	 * Already hotplugged enough pages?  Wait for them to be
+	 * Alपढ़ोy hotplugged enough pages?  Wait क्रम them to be
 	 * onlined.
 	 */
-	if (credit <= 0)
-		return BP_WAIT;
+	अगर (credit <= 0)
+		वापस BP_WAIT;
 
 	balloon_hotplug = round_up(credit, PAGES_PER_SECTION);
 
 	resource = additional_memory_resource(balloon_hotplug * PAGE_SIZE);
-	if (!resource)
-		goto err;
+	अगर (!resource)
+		जाओ err;
 
 	nid = memory_add_physaddr_to_nid(resource->start);
 
-#ifdef CONFIG_XEN_HAVE_PVMMU
+#अगर_घोषित CONFIG_XEN_HAVE_PVMMU
 	/*
-	 * We don't support PV MMU when Linux and Xen is using
-	 * different page granularity.
+	 * We करोn't support PV MMU when Linux and Xen is using
+	 * dअगरferent page granularity.
 	 */
 	BUILD_BUG_ON(XEN_PAGE_SIZE != PAGE_SIZE);
 
         /*
-         * add_memory() will build page tables for the new memory so
+         * add_memory() will build page tables क्रम the new memory so
          * the p2m must contain invalid entries so the correct
          * non-present PTEs will be written.
          *
@@ -309,24 +310,24 @@ static enum bp_state reserve_additional_memory(void)
          * are not restored since this region is now known not to
          * conflict with any devices.
          */ 
-	if (!xen_feature(XENFEAT_auto_translated_physmap)) {
-		unsigned long pfn, i;
+	अगर (!xen_feature(XENFEAT_स्वतः_translated_physmap)) अणु
+		अचिन्हित दीर्घ pfn, i;
 
 		pfn = PFN_DOWN(resource->start);
-		for (i = 0; i < balloon_hotplug; i++) {
-			if (!set_phys_to_machine(pfn + i, INVALID_P2M_ENTRY)) {
+		क्रम (i = 0; i < balloon_hotplug; i++) अणु
+			अगर (!set_phys_to_machine(pfn + i, INVALID_P2M_ENTRY)) अणु
 				pr_warn("set_phys_to_machine() failed, no memory added\n");
-				goto err;
-			}
-                }
-	}
-#endif
+				जाओ err;
+			पूर्ण
+                पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
 	 * add_memory_resource() will call online_pages() which in its turn
-	 * will call xen_online_page() callback causing deadlock if we don't
+	 * will call xen_online_page() callback causing deadlock अगर we करोn't
 	 * release balloon_mutex here. Unlocking here is safe because the
-	 * callers drop the mutex before trying again.
+	 * callers drop the mutex beक्रमe trying again.
 	 */
 	mutex_unlock(&balloon_mutex);
 	/* add_memory_resource() requires the device_hotplug lock */
@@ -335,132 +336,132 @@ static enum bp_state reserve_additional_memory(void)
 	unlock_device_hotplug();
 	mutex_lock(&balloon_mutex);
 
-	if (rc) {
+	अगर (rc) अणु
 		pr_warn("Cannot add additional memory (%i)\n", rc);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	balloon_stats.total_pages += balloon_hotplug;
 
-	return BP_WAIT;
+	वापस BP_WAIT;
   err:
 	release_memory_resource(resource);
-	return BP_ECANCELED;
-}
+	वापस BP_ECANCELED;
+पूर्ण
 
-static void xen_online_page(struct page *page, unsigned int order)
-{
-	unsigned long i, size = (1 << order);
-	unsigned long start_pfn = page_to_pfn(page);
-	struct page *p;
+अटल व्योम xen_online_page(काष्ठा page *page, अचिन्हित पूर्णांक order)
+अणु
+	अचिन्हित दीर्घ i, size = (1 << order);
+	अचिन्हित दीर्घ start_pfn = page_to_pfn(page);
+	काष्ठा page *p;
 
 	pr_debug("Online %lu pages starting at pfn 0x%lx\n", size, start_pfn);
 	mutex_lock(&balloon_mutex);
-	for (i = 0; i < size; i++) {
+	क्रम (i = 0; i < size; i++) अणु
 		p = pfn_to_page(start_pfn + i);
 		balloon_append(p);
-	}
+	पूर्ण
 	mutex_unlock(&balloon_mutex);
-}
+पूर्ण
 
-static int xen_memory_notifier(struct notifier_block *nb, unsigned long val, void *v)
-{
-	if (val == MEM_ONLINE)
+अटल पूर्णांक xen_memory_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val, व्योम *v)
+अणु
+	अगर (val == MEM_ONLINE)
 		schedule_delayed_work(&balloon_worker, 0);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block xen_memory_nb = {
-	.notifier_call = xen_memory_notifier,
+अटल काष्ठा notअगरier_block xen_memory_nb = अणु
+	.notअगरier_call = xen_memory_notअगरier,
 	.priority = 0
-};
-#else
-static enum bp_state reserve_additional_memory(void)
-{
+पूर्ण;
+#अन्यथा
+अटल क्रमागत bp_state reserve_additional_memory(व्योम)
+अणु
 	balloon_stats.target_pages = balloon_stats.current_pages +
 				     balloon_stats.target_unpopulated;
-	return BP_ECANCELED;
-}
-#endif /* CONFIG_XEN_BALLOON_MEMORY_HOTPLUG */
+	वापस BP_ECANCELED;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_XEN_BALLOON_MEMORY_HOTPLUG */
 
-static long current_credit(void)
-{
-	return balloon_stats.target_pages - balloon_stats.current_pages;
-}
+अटल दीर्घ current_credit(व्योम)
+अणु
+	वापस balloon_stats.target_pages - balloon_stats.current_pages;
+पूर्ण
 
-static bool balloon_is_inflated(void)
-{
-	return balloon_stats.balloon_low || balloon_stats.balloon_high;
-}
+अटल bool balloon_is_inflated(व्योम)
+अणु
+	वापस balloon_stats.balloon_low || balloon_stats.balloon_high;
+पूर्ण
 
-static enum bp_state increase_reservation(unsigned long nr_pages)
-{
-	int rc;
-	unsigned long i;
-	struct page   *page;
+अटल क्रमागत bp_state increase_reservation(अचिन्हित दीर्घ nr_pages)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ i;
+	काष्ठा page   *page;
 
-	if (nr_pages > ARRAY_SIZE(frame_list))
+	अगर (nr_pages > ARRAY_SIZE(frame_list))
 		nr_pages = ARRAY_SIZE(frame_list);
 
-	page = list_first_entry_or_null(&ballooned_pages, struct page, lru);
-	for (i = 0; i < nr_pages; i++) {
-		if (!page) {
+	page = list_first_entry_or_null(&ballooned_pages, काष्ठा page, lru);
+	क्रम (i = 0; i < nr_pages; i++) अणु
+		अगर (!page) अणु
 			nr_pages = i;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		frame_list[i] = page_to_xen_pfn(page);
 		page = balloon_next_page(page);
-	}
+	पूर्ण
 
 	rc = xenmem_reservation_increase(nr_pages, frame_list);
-	if (rc <= 0)
-		return BP_EAGAIN;
+	अगर (rc <= 0)
+		वापस BP_EAGAIN;
 
-	for (i = 0; i < rc; i++) {
+	क्रम (i = 0; i < rc; i++) अणु
 		page = balloon_retrieve(false);
-		BUG_ON(page == NULL);
+		BUG_ON(page == शून्य);
 
 		xenmem_reservation_va_mapping_update(1, &page, &frame_list[i]);
 
 		/* Relinquish the page back to the allocator. */
-		free_reserved_page(page);
-	}
+		मुक्त_reserved_page(page);
+	पूर्ण
 
 	balloon_stats.current_pages += rc;
 
-	return BP_DONE;
-}
+	वापस BP_DONE;
+पूर्ण
 
-static enum bp_state decrease_reservation(unsigned long nr_pages, gfp_t gfp)
-{
-	enum bp_state state = BP_DONE;
-	unsigned long i;
-	struct page *page, *tmp;
-	int ret;
+अटल क्रमागत bp_state decrease_reservation(अचिन्हित दीर्घ nr_pages, gfp_t gfp)
+अणु
+	क्रमागत bp_state state = BP_DONE;
+	अचिन्हित दीर्घ i;
+	काष्ठा page *page, *पंचांगp;
+	पूर्णांक ret;
 	LIST_HEAD(pages);
 
-	if (nr_pages > ARRAY_SIZE(frame_list))
+	अगर (nr_pages > ARRAY_SIZE(frame_list))
 		nr_pages = ARRAY_SIZE(frame_list);
 
-	for (i = 0; i < nr_pages; i++) {
+	क्रम (i = 0; i < nr_pages; i++) अणु
 		page = alloc_page(gfp);
-		if (page == NULL) {
+		अगर (page == शून्य) अणु
 			nr_pages = i;
 			state = BP_EAGAIN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		adjust_managed_page_count(page, -1);
 		xenmem_reservation_scrub_page(page);
 		list_add(&page->lru, &pages);
-	}
+	पूर्ण
 
 	/*
-	 * Ensure that ballooned highmem pages don't have kmaps.
+	 * Ensure that ballooned highmem pages करोn't have kmaps.
 	 *
-	 * Do this before changing the p2m as kmap_flush_unused()
-	 * reads PTEs to obtain pages (and hence needs the original
+	 * Do this beक्रमe changing the p2m as kmap_flush_unused()
+	 * पढ़ोs PTEs to obtain pages (and hence needs the original
 	 * p2m entry).
 	 */
 	kmap_flush_unused();
@@ -470,7 +471,7 @@ static enum bp_state decrease_reservation(unsigned long nr_pages, gfp_t gfp)
 	 * and add to balloon.
 	 */
 	i = 0;
-	list_for_each_entry_safe(page, tmp, &pages, lru) {
+	list_क्रम_each_entry_safe(page, पंचांगp, &pages, lru) अणु
 		frame_list[i++] = xen_page_to_gfn(page);
 
 		xenmem_reservation_va_mapping_reset(1, &page);
@@ -478,7 +479,7 @@ static enum bp_state decrease_reservation(unsigned long nr_pages, gfp_t gfp)
 		list_del(&page->lru);
 
 		balloon_append(page);
-	}
+	पूर्ण
 
 	flush_tlb_all();
 
@@ -487,42 +488,42 @@ static enum bp_state decrease_reservation(unsigned long nr_pages, gfp_t gfp)
 
 	balloon_stats.current_pages -= nr_pages;
 
-	return state;
-}
+	वापस state;
+पूर्ण
 
 /*
  * As this is a work item it is guaranteed to run as a single instance only.
- * We may of course race updates of the target counts (which are protected
+ * We may of course race updates of the target counts (which are रक्षित
  * by the balloon lock), or with changes to the Xen hard limit, but we will
- * recover from these in time.
+ * recover from these in समय.
  */
-static void balloon_process(struct work_struct *work)
-{
-	enum bp_state state = BP_DONE;
-	long credit;
+अटल व्योम balloon_process(काष्ठा work_काष्ठा *work)
+अणु
+	क्रमागत bp_state state = BP_DONE;
+	दीर्घ credit;
 
 
-	do {
+	करो अणु
 		mutex_lock(&balloon_mutex);
 
 		credit = current_credit();
 
-		if (credit > 0) {
-			if (balloon_is_inflated())
+		अगर (credit > 0) अणु
+			अगर (balloon_is_inflated())
 				state = increase_reservation(credit);
-			else
+			अन्यथा
 				state = reserve_additional_memory();
-		}
+		पूर्ण
 
-		if (credit < 0) {
-			long n_pages;
+		अगर (credit < 0) अणु
+			दीर्घ n_pages;
 
 			n_pages = min(-credit, si_mem_available());
 			state = decrease_reservation(n_pages, GFP_BALLOON);
-			if (state == BP_DONE && n_pages != -credit &&
+			अगर (state == BP_DONE && n_pages != -credit &&
 			    n_pages < totalreserve_pages)
 				state = BP_EAGAIN;
-		}
+		पूर्ण
 
 		state = update_schedule(state);
 
@@ -530,134 +531,134 @@ static void balloon_process(struct work_struct *work)
 
 		cond_resched();
 
-	} while (credit && state == BP_DONE);
+	पूर्ण जबतक (credit && state == BP_DONE);
 
-	/* Schedule more work if there is some still to be done. */
-	if (state == BP_EAGAIN)
+	/* Schedule more work अगर there is some still to be करोne. */
+	अगर (state == BP_EAGAIN)
 		schedule_delayed_work(&balloon_worker, balloon_stats.schedule_delay * HZ);
-}
+पूर्ण
 
 /* Resets the Xen limit, sets new target, and kicks off processing. */
-void balloon_set_new_target(unsigned long target)
-{
-	/* No need for lock. Not read-modify-write updates. */
+व्योम balloon_set_new_target(अचिन्हित दीर्घ target)
+अणु
+	/* No need क्रम lock. Not पढ़ो-modअगरy-ग_लिखो updates. */
 	balloon_stats.target_pages = target;
 	schedule_delayed_work(&balloon_worker, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(balloon_set_new_target);
 
-static int add_ballooned_pages(int nr_pages)
-{
-	enum bp_state st;
+अटल पूर्णांक add_ballooned_pages(पूर्णांक nr_pages)
+अणु
+	क्रमागत bp_state st;
 
-	if (xen_hotplug_unpopulated) {
+	अगर (xen_hotplug_unpopulated) अणु
 		st = reserve_additional_memory();
-		if (st != BP_ECANCELED) {
-			int rc;
+		अगर (st != BP_ECANCELED) अणु
+			पूर्णांक rc;
 
 			mutex_unlock(&balloon_mutex);
-			rc = wait_event_interruptible(balloon_wq,
+			rc = रुको_event_पूर्णांकerruptible(balloon_wq,
 				   !list_empty(&ballooned_pages));
 			mutex_lock(&balloon_mutex);
-			return rc ? -ENOMEM : 0;
-		}
-	}
+			वापस rc ? -ENOMEM : 0;
+		पूर्ण
+	पूर्ण
 
-	if (si_mem_available() < nr_pages)
-		return -ENOMEM;
+	अगर (si_mem_available() < nr_pages)
+		वापस -ENOMEM;
 
 	st = decrease_reservation(nr_pages, GFP_USER);
-	if (st != BP_DONE)
-		return -ENOMEM;
+	अगर (st != BP_DONE)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * alloc_xenballooned_pages - get pages that have been ballooned out
  * @nr_pages: Number of pages to get
- * @pages: pages returned
- * @return 0 on success, error otherwise
+ * @pages: pages वापसed
+ * @वापस 0 on success, error otherwise
  */
-int alloc_xenballooned_pages(int nr_pages, struct page **pages)
-{
-	int pgno = 0;
-	struct page *page;
-	int ret;
+पूर्णांक alloc_xenballooned_pages(पूर्णांक nr_pages, काष्ठा page **pages)
+अणु
+	पूर्णांक pgno = 0;
+	काष्ठा page *page;
+	पूर्णांक ret;
 
 	mutex_lock(&balloon_mutex);
 
 	balloon_stats.target_unpopulated += nr_pages;
 
-	while (pgno < nr_pages) {
+	जबतक (pgno < nr_pages) अणु
 		page = balloon_retrieve(true);
-		if (page) {
+		अगर (page) अणु
 			pages[pgno++] = page;
-#ifdef CONFIG_XEN_HAVE_PVMMU
+#अगर_घोषित CONFIG_XEN_HAVE_PVMMU
 			/*
-			 * We don't support PV MMU when Linux and Xen is using
-			 * different page granularity.
+			 * We करोn't support PV MMU when Linux and Xen is using
+			 * dअगरferent page granularity.
 			 */
 			BUILD_BUG_ON(XEN_PAGE_SIZE != PAGE_SIZE);
 
-			if (!xen_feature(XENFEAT_auto_translated_physmap)) {
+			अगर (!xen_feature(XENFEAT_स्वतः_translated_physmap)) अणु
 				ret = xen_alloc_p2m_entry(page_to_pfn(page));
-				if (ret < 0)
-					goto out_undo;
-			}
-#endif
-		} else {
+				अगर (ret < 0)
+					जाओ out_unकरो;
+			पूर्ण
+#पूर्ण_अगर
+		पूर्ण अन्यथा अणु
 			ret = add_ballooned_pages(nr_pages - pgno);
-			if (ret < 0)
-				goto out_undo;
-		}
-	}
+			अगर (ret < 0)
+				जाओ out_unकरो;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&balloon_mutex);
-	return 0;
- out_undo:
+	वापस 0;
+ out_unकरो:
 	mutex_unlock(&balloon_mutex);
-	free_xenballooned_pages(pgno, pages);
+	मुक्त_xenballooned_pages(pgno, pages);
 	/*
-	 * NB: free_xenballooned_pages will only subtract pgno pages, but since
+	 * NB: मुक्त_xenballooned_pages will only subtract pgno pages, but since
 	 * target_unpopulated is incremented with nr_pages at the start we need
-	 * to remove the remaining ones also, or accounting will be screwed.
+	 * to हटाओ the reमुख्यing ones also, or accounting will be screwed.
 	 */
 	balloon_stats.target_unpopulated -= nr_pages - pgno;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(alloc_xenballooned_pages);
 
 /**
- * free_xenballooned_pages - return pages retrieved with get_ballooned_pages
+ * मुक्त_xenballooned_pages - वापस pages retrieved with get_ballooned_pages
  * @nr_pages: Number of pages
- * @pages: pages to return
+ * @pages: pages to वापस
  */
-void free_xenballooned_pages(int nr_pages, struct page **pages)
-{
-	int i;
+व्योम मुक्त_xenballooned_pages(पूर्णांक nr_pages, काष्ठा page **pages)
+अणु
+	पूर्णांक i;
 
 	mutex_lock(&balloon_mutex);
 
-	for (i = 0; i < nr_pages; i++) {
-		if (pages[i])
+	क्रम (i = 0; i < nr_pages; i++) अणु
+		अगर (pages[i])
 			balloon_append(pages[i]);
-	}
+	पूर्ण
 
 	balloon_stats.target_unpopulated -= nr_pages;
 
-	/* The balloon may be too large now. Shrink it if needed. */
-	if (current_credit())
+	/* The balloon may be too large now. Shrink it अगर needed. */
+	अगर (current_credit())
 		schedule_delayed_work(&balloon_worker, 0);
 
 	mutex_unlock(&balloon_mutex);
-}
-EXPORT_SYMBOL(free_xenballooned_pages);
+पूर्ण
+EXPORT_SYMBOL(मुक्त_xenballooned_pages);
 
-#if defined(CONFIG_XEN_PV) && !defined(CONFIG_XEN_UNPOPULATED_ALLOC)
-static void __init balloon_add_region(unsigned long start_pfn,
-				      unsigned long pages)
-{
-	unsigned long pfn, extra_pfn_end;
+#अगर defined(CONFIG_XEN_PV) && !defined(CONFIG_XEN_UNPOPULATED_ALLOC)
+अटल व्योम __init balloon_add_region(अचिन्हित दीर्घ start_pfn,
+				      अचिन्हित दीर्घ pages)
+अणु
+	अचिन्हित दीर्घ pfn, extra_pfn_end;
 
 	/*
 	 * If the amount of usable memory has been limited (e.g., with
@@ -666,31 +667,31 @@ static void __init balloon_add_region(unsigned long start_pfn,
 	 */
 	extra_pfn_end = min(max_pfn, start_pfn + pages);
 
-	for (pfn = start_pfn; pfn < extra_pfn_end; pfn++) {
-		/* totalram_pages and totalhigh_pages do not
-		   include the boot-time balloon extension, so
-		   don't subtract from it. */
+	क्रम (pfn = start_pfn; pfn < extra_pfn_end; pfn++) अणु
+		/* totalram_pages and totalhigh_pages करो not
+		   include the boot-समय balloon extension, so
+		   करोn't subtract from it. */
 		balloon_append(pfn_to_page(pfn));
-	}
+	पूर्ण
 
 	balloon_stats.total_pages += extra_pfn_end - start_pfn;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int __init balloon_init(void)
-{
-	if (!xen_domain())
-		return -ENODEV;
+अटल पूर्णांक __init balloon_init(व्योम)
+अणु
+	अगर (!xen_करोमुख्य())
+		वापस -ENODEV;
 
 	pr_info("Initialising balloon driver\n");
 
-#ifdef CONFIG_XEN_PV
-	balloon_stats.current_pages = xen_pv_domain()
+#अगर_घोषित CONFIG_XEN_PV
+	balloon_stats.current_pages = xen_pv_करोमुख्य()
 		? min(xen_start_info->nr_pages - xen_released_pages, max_pfn)
 		: get_num_physpages();
-#else
+#अन्यथा
 	balloon_stats.current_pages = get_num_physpages();
-#endif
+#पूर्ण_अगर
 	balloon_stats.target_pages  = balloon_stats.current_pages;
 	balloon_stats.balloon_low   = 0;
 	balloon_stats.balloon_high  = 0;
@@ -701,30 +702,30 @@ static int __init balloon_init(void)
 	balloon_stats.retry_count = 1;
 	balloon_stats.max_retry_count = 4;
 
-#ifdef CONFIG_XEN_BALLOON_MEMORY_HOTPLUG
+#अगर_घोषित CONFIG_XEN_BALLOON_MEMORY_HOTPLUG
 	set_online_page_callback(&xen_online_page);
-	register_memory_notifier(&xen_memory_nb);
-	register_sysctl_table(xen_root);
-#endif
+	रेजिस्टर_memory_notअगरier(&xen_memory_nb);
+	रेजिस्टर_sysctl_table(xen_root);
+#पूर्ण_अगर
 
-#if defined(CONFIG_XEN_PV) && !defined(CONFIG_XEN_UNPOPULATED_ALLOC)
-	{
-		int i;
+#अगर defined(CONFIG_XEN_PV) && !defined(CONFIG_XEN_UNPOPULATED_ALLOC)
+	अणु
+		पूर्णांक i;
 
 		/*
 		 * Initialize the balloon with pages from the extra memory
 		 * regions (see arch/x86/xen/setup.c).
 		 */
-		for (i = 0; i < XEN_EXTRA_MEM_MAX_REGIONS; i++)
-			if (xen_extra_mem[i].n_pfns)
+		क्रम (i = 0; i < XEN_EXTRA_MEM_MAX_REGIONS; i++)
+			अगर (xen_extra_mem[i].n_pfns)
 				balloon_add_region(xen_extra_mem[i].start_pfn,
 						   xen_extra_mem[i].n_pfns);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	/* Init the xen-balloon driver. */
 	xen_balloon_init();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(balloon_init);

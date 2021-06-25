@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ELF_RANDOMIZE_H
-#define _ELF_RANDOMIZE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ELF_RANDOMIZE_H
+#घोषणा _ELF_RANDOMIZE_H
 
-struct mm_struct;
+काष्ठा mm_काष्ठा;
 
-#ifndef CONFIG_ARCH_HAS_ELF_RANDOMIZE
-static inline unsigned long arch_mmap_rnd(void) { return 0; }
-# if defined(arch_randomize_brk) && defined(CONFIG_COMPAT_BRK)
-#  define compat_brk_randomized
-# endif
-# ifndef arch_randomize_brk
-#  define arch_randomize_brk(mm)	(mm->brk)
-# endif
-#else
-extern unsigned long arch_mmap_rnd(void);
-extern unsigned long arch_randomize_brk(struct mm_struct *mm);
-# ifdef CONFIG_COMPAT_BRK
-#  define compat_brk_randomized
-# endif
-#endif
+#अगर_अघोषित CONFIG_ARCH_HAS_ELF_RANDOMIZE
+अटल अंतरभूत अचिन्हित दीर्घ arch_mmap_rnd(व्योम) अणु वापस 0; पूर्ण
+# अगर defined(arch_अक्रमomize_brk) && defined(CONFIG_COMPAT_BRK)
+#  define compat_brk_अक्रमomized
+# endअगर
+# अगरndef arch_अक्रमomize_brk
+#  define arch_अक्रमomize_brk(mm)	(mm->brk)
+# endअगर
+#अन्यथा
+बाह्य अचिन्हित दीर्घ arch_mmap_rnd(व्योम);
+बाह्य अचिन्हित दीर्घ arch_अक्रमomize_brk(काष्ठा mm_काष्ठा *mm);
+# अगरdef CONFIG_COMPAT_BRK
+#  define compat_brk_अक्रमomized
+# endअगर
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

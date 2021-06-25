@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Support for Sharp SL-C6000x PDAs
+ *  Support क्रम Sharp SL-C6000x PDAs
  *  Model: (Tosa)
  *
  *  Copyright (c) 2005 Dirk Opfer
  *
- *	Based on code written by Sharp/Lineo for 2.4 kernels
+ *	Based on code written by Sharp/Lineo क्रम 2.4 kernels
  */
 
-#include <linux/clkdev.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/major.h>
-#include <linux/fs.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/fb.h>
-#include <linux/mmc/host.h>
-#include <linux/mfd/tc6393xb.h>
-#include <linux/mfd/tmio.h>
-#include <linux/mtd/rawnand.h>
-#include <linux/mtd/partitions.h>
-#include <linux/mtd/physmap.h>
-#include <linux/pm.h>
-#include <linux/gpio_keys.h>
-#include <linux/input.h>
-#include <linux/gpio.h>
-#include <linux/gpio/machine.h>
-#include <linux/power/gpio-charger.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/pxa2xx_spi.h>
-#include <linux/input/matrix_keypad.h>
-#include <linux/platform_data/i2c-pxa.h>
-#include <linux/reboot.h>
-#include <linux/memblock.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/major.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mfd/tc6393xb.h>
+#समावेश <linux/mfd/पंचांगपन.स>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/gpio_keys.h>
+#समावेश <linux/input.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/घातer/gpio-अक्षरger.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/pxa2xx_spi.h>
+#समावेश <linux/input/matrix_keypad.h>
+#समावेश <linux/platक्रमm_data/i2c-pxa.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/memblock.h>
 
-#include <asm/setup.h>
-#include <asm/mach-types.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/mach-types.h>
 
-#include "pxa25x.h"
-#include <mach/reset.h>
-#include <linux/platform_data/irda-pxaficp.h>
-#include <linux/platform_data/mmc-pxamci.h>
-#include "udc.h"
-#include "tosa_bt.h"
-#include <mach/audio.h>
-#include <mach/smemc.h>
+#समावेश "pxa25x.h"
+#समावेश <mach/reset.h>
+#समावेश <linux/platक्रमm_data/irda-pxaficp.h>
+#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
+#समावेश "udc.h"
+#समावेश "tosa_bt.h"
+#समावेश <mach/audपन.स>
+#समावेश <mach/smemc.h>
 
-#include <asm/mach/arch.h>
-#include <mach/tosa.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <mach/tosa.h>
 
-#include <asm/hardware/scoop.h>
-#include <asm/mach/sharpsl_param.h>
+#समावेश <यंत्र/hardware/scoop.h>
+#समावेश <यंत्र/mach/sharpsl_param.h>
 
-#include "generic.h"
-#include "devices.h"
+#समावेश "generic.h"
+#समावेश "devices.h"
 
-static unsigned long tosa_pin_config[] = {
+अटल अचिन्हित दीर्घ tosa_pin_config[] = अणु
 	GPIO78_nCS_2, /* Scoop */
 	GPIO80_nCS_4, /* tg6393xb */
 	GPIO33_nCS_5, /* Scoop */
@@ -159,261 +160,261 @@ static unsigned long tosa_pin_config[] = {
 	/* IrDA is managed in other way */
 	GPIO46_GPIO,
 	GPIO47_GPIO,
-};
+पूर्ण;
 
 /*
  * SCOOP Device
  */
-static struct resource tosa_scoop_resources[] = {
-	[0] = {
+अटल काष्ठा resource tosa_scoop_resources[] = अणु
+	[0] = अणु
 		.start	= TOSA_CF_PHYS,
 		.end	= TOSA_CF_PHYS + 0xfff,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct scoop_config tosa_scoop_setup = {
-	.io_dir 	= TOSA_SCOOP_IO_DIR,
+अटल काष्ठा scoop_config tosa_scoop_setup = अणु
+	.io_dir 	= TOSA_SCOOP_IO_सूची,
 	.gpio_base	= TOSA_SCOOP_GPIO_BASE,
-};
+पूर्ण;
 
-static struct platform_device tosascoop_device = {
+अटल काष्ठा platक्रमm_device tosascoop_device = अणु
 	.name		= "sharp-scoop",
 	.id		= 0,
-	.dev		= {
- 		.platform_data	= &tosa_scoop_setup,
-	},
+	.dev		= अणु
+ 		.platक्रमm_data	= &tosa_scoop_setup,
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(tosa_scoop_resources),
 	.resource	= tosa_scoop_resources,
-};
+पूर्ण;
 
 
 /*
  * SCOOP Device Jacket
  */
-static struct resource tosa_scoop_jc_resources[] = {
-	[0] = {
+अटल काष्ठा resource tosa_scoop_jc_resources[] = अणु
+	[0] = अणु
 		.start		= TOSA_SCOOP_PHYS + 0x40,
 		.end		= TOSA_SCOOP_PHYS + 0xfff,
 		.flags		= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct scoop_config tosa_scoop_jc_setup = {
-	.io_dir 	= TOSA_SCOOP_JC_IO_DIR,
+अटल काष्ठा scoop_config tosa_scoop_jc_setup = अणु
+	.io_dir 	= TOSA_SCOOP_JC_IO_सूची,
 	.gpio_base	= TOSA_SCOOP_JC_GPIO_BASE,
-};
+पूर्ण;
 
-static struct platform_device tosascoop_jc_device = {
+अटल काष्ठा platक्रमm_device tosascoop_jc_device = अणु
 	.name		= "sharp-scoop",
 	.id		= 1,
-	.dev		= {
- 		.platform_data	= &tosa_scoop_jc_setup,
+	.dev		= अणु
+ 		.platक्रमm_data	= &tosa_scoop_jc_setup,
 		.parent 	= &tosascoop_device.dev,
-	},
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(tosa_scoop_jc_resources),
 	.resource	= tosa_scoop_jc_resources,
-};
+पूर्ण;
 
 /*
  * PCMCIA
  */
-static struct scoop_pcmcia_dev tosa_pcmcia_scoop[] = {
-{
+अटल काष्ठा scoop_pcmcia_dev tosa_pcmcia_scoop[] = अणु
+अणु
 	.dev        = &tosascoop_device.dev,
 	.irq        = TOSA_IRQ_GPIO_CF_IRQ,
 	.cd_irq     = TOSA_IRQ_GPIO_CF_CD,
 	.cd_irq_str = "PCMCIA0 CD",
-},{
+पूर्ण,अणु
 	.dev        = &tosascoop_jc_device.dev,
 	.irq        = TOSA_IRQ_GPIO_JC_CF_IRQ,
 	.cd_irq     = -1,
-},
-};
+पूर्ण,
+पूर्ण;
 
-static struct scoop_pcmcia_config tosa_pcmcia_config = {
+अटल काष्ठा scoop_pcmcia_config tosa_pcmcia_config = अणु
 	.devs         = &tosa_pcmcia_scoop[0],
 	.num_devs     = 2,
-};
+पूर्ण;
 
 /*
  * USB Device Controller
  */
-static struct gpiod_lookup_table tosa_udc_gpiod_table = {
+अटल काष्ठा gpiod_lookup_table tosa_udc_gpiod_table = अणु
 	.dev_id = "gpio-vbus",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", TOSA_GPIO_USB_IN,
 			    "vbus", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", TOSA_GPIO_USB_PULLUP,
 			    "pullup", GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device tosa_gpio_vbus = {
+अटल काष्ठा platक्रमm_device tosa_gpio_vbus = अणु
 	.name	= "gpio-vbus",
 	.id	= -1,
-};
+पूर्ण;
 
 /*
  * MMC/SD Device
  */
-static int tosa_mci_init(struct device *dev, irq_handler_t tosa_detect_int, void *data)
-{
-	int err;
+अटल पूर्णांक tosa_mci_init(काष्ठा device *dev, irq_handler_t tosa_detect_पूर्णांक, व्योम *data)
+अणु
+	पूर्णांक err;
 
 	err = gpio_request(TOSA_GPIO_nSD_INT, "SD Int");
-	if (err) {
-		printk(KERN_ERR "tosa_mci_init: can't request SD_PWR gpio\n");
-		goto err_gpio_int;
-	}
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "tosa_mci_init: can't request SD_PWR gpio\n");
+		जाओ err_gpio_पूर्णांक;
+	पूर्ण
 	err = gpio_direction_input(TOSA_GPIO_nSD_INT);
-	if (err)
-		goto err_gpio_int_dir;
+	अगर (err)
+		जाओ err_gpio_पूर्णांक_dir;
 
-	return 0;
+	वापस 0;
 
-err_gpio_int_dir:
-	gpio_free(TOSA_GPIO_nSD_INT);
-err_gpio_int:
-	return err;
-}
+err_gpio_पूर्णांक_dir:
+	gpio_मुक्त(TOSA_GPIO_nSD_INT);
+err_gpio_पूर्णांक:
+	वापस err;
+पूर्ण
 
-static void tosa_mci_exit(struct device *dev, void *data)
-{
-	gpio_free(TOSA_GPIO_nSD_INT);
-}
+अटल व्योम tosa_mci_निकास(काष्ठा device *dev, व्योम *data)
+अणु
+	gpio_मुक्त(TOSA_GPIO_nSD_INT);
+पूर्ण
 
-static struct pxamci_platform_data tosa_mci_platform_data = {
+अटल काष्ठा pxamci_platक्रमm_data tosa_mci_platक्रमm_data = अणु
 	.detect_delay_ms	= 250,
 	.ocr_mask       	= MMC_VDD_32_33|MMC_VDD_33_34,
 	.init           	= tosa_mci_init,
-	.exit           	= tosa_mci_exit,
-};
+	.निकास           	= tosa_mci_निकास,
+पूर्ण;
 
-static struct gpiod_lookup_table tosa_mci_gpio_table = {
+अटल काष्ठा gpiod_lookup_table tosa_mci_gpio_table = अणु
 	.dev_id = "pxa2xx-mci.0",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", TOSA_GPIO_nSD_DETECT,
 			    "cd", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", TOSA_GPIO_SD_WP,
 			    "wp", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", TOSA_GPIO_PWR_ON,
 			    "power", GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
 /*
  * Irda
  */
-static void tosa_irda_transceiver_mode(struct device *dev, int mode)
-{
-	if (mode & IR_OFF) {
+अटल व्योम tosa_irda_transceiver_mode(काष्ठा device *dev, पूर्णांक mode)
+अणु
+	अगर (mode & IR_OFF) अणु
 		gpio_set_value(TOSA_GPIO_IR_POWERDWN, 0);
 		pxa2xx_transceiver_mode(dev, mode);
 		gpio_direction_output(TOSA_GPIO_IRDA_TX, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		pxa2xx_transceiver_mode(dev, mode);
 		gpio_set_value(TOSA_GPIO_IR_POWERDWN, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int tosa_irda_startup(struct device *dev)
-{
-	int ret;
+अटल पूर्णांक tosa_irda_startup(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
 
 	ret = gpio_request(TOSA_GPIO_IRDA_TX, "IrDA TX");
-	if (ret)
-		goto err_tx;
+	अगर (ret)
+		जाओ err_tx;
 	ret = gpio_direction_output(TOSA_GPIO_IRDA_TX, 0);
-	if (ret)
-		goto err_tx_dir;
+	अगर (ret)
+		जाओ err_tx_dir;
 
 	ret = gpio_request(TOSA_GPIO_IR_POWERDWN, "IrDA powerdown");
-	if (ret)
-		goto err_pwr;
+	अगर (ret)
+		जाओ err_pwr;
 
 	ret = gpio_direction_output(TOSA_GPIO_IR_POWERDWN, 0);
-	if (ret)
-		goto err_pwr_dir;
+	अगर (ret)
+		जाओ err_pwr_dir;
 
 	tosa_irda_transceiver_mode(dev, IR_SIRMODE | IR_OFF);
 
-	return 0;
+	वापस 0;
 
 err_pwr_dir:
-	gpio_free(TOSA_GPIO_IR_POWERDWN);
+	gpio_मुक्त(TOSA_GPIO_IR_POWERDWN);
 err_pwr:
 err_tx_dir:
-	gpio_free(TOSA_GPIO_IRDA_TX);
+	gpio_मुक्त(TOSA_GPIO_IRDA_TX);
 err_tx:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void tosa_irda_shutdown(struct device *dev)
-{
+अटल व्योम tosa_irda_shutकरोwn(काष्ठा device *dev)
+अणु
 	tosa_irda_transceiver_mode(dev, IR_SIRMODE | IR_OFF);
-	gpio_free(TOSA_GPIO_IR_POWERDWN);
-	gpio_free(TOSA_GPIO_IRDA_TX);
-}
+	gpio_मुक्त(TOSA_GPIO_IR_POWERDWN);
+	gpio_मुक्त(TOSA_GPIO_IRDA_TX);
+पूर्ण
 
-static struct pxaficp_platform_data tosa_ficp_platform_data = {
-	.gpio_pwdown		= -1,
+अटल काष्ठा pxaficp_platक्रमm_data tosa_ficp_platक्रमm_data = अणु
+	.gpio_pwकरोwn		= -1,
 	.transceiver_cap	= IR_SIRMODE | IR_OFF,
 	.transceiver_mode	= tosa_irda_transceiver_mode,
 	.startup		= tosa_irda_startup,
-	.shutdown		= tosa_irda_shutdown,
-};
+	.shutकरोwn		= tosa_irda_shutकरोwn,
+पूर्ण;
 
 /*
  * Tosa AC IN
  */
-static struct gpiod_lookup_table tosa_power_gpiod_table = {
+अटल काष्ठा gpiod_lookup_table tosa_घातer_gpiod_table = अणु
 	.dev_id = "gpio-charger",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", TOSA_GPIO_AC_IN,
-			    NULL, GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
+			    शून्य, GPIO_ACTIVE_LOW),
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static char *tosa_ac_supplied_to[] = {
+अटल अक्षर *tosa_ac_supplied_to[] = अणु
 	"main-battery",
 	"backup-battery",
 	"jacket-battery",
-};
+पूर्ण;
 
-static struct gpio_charger_platform_data tosa_power_data = {
+अटल काष्ठा gpio_अक्षरger_platक्रमm_data tosa_घातer_data = अणु
 	.name			= "charger",
 	.type			= POWER_SUPPLY_TYPE_MAINS,
 	.supplied_to		= tosa_ac_supplied_to,
 	.num_supplicants	= ARRAY_SIZE(tosa_ac_supplied_to),
-};
+पूर्ण;
 
-static struct resource tosa_power_resource[] = {
-	{
+अटल काष्ठा resource tosa_घातer_resource[] = अणु
+	अणु
 		.name		= "ac",
 		.start		= PXA_GPIO_TO_IRQ(TOSA_GPIO_AC_IN),
 		.end		= PXA_GPIO_TO_IRQ(TOSA_GPIO_AC_IN),
 		.flags		= IORESOURCE_IRQ |
 				  IORESOURCE_IRQ_HIGHEDGE |
 				  IORESOURCE_IRQ_LOWEDGE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device tosa_power_device = {
+अटल काष्ठा platक्रमm_device tosa_घातer_device = अणु
 	.name			= "gpio-charger",
 	.id			= -1,
-	.dev.platform_data	= &tosa_power_data,
-	.resource		= tosa_power_resource,
-	.num_resources		= ARRAY_SIZE(tosa_power_resource),
-};
+	.dev.platक्रमm_data	= &tosa_घातer_data,
+	.resource		= tosa_घातer_resource,
+	.num_resources		= ARRAY_SIZE(tosa_घातer_resource),
+पूर्ण;
 
 /*
  * Tosa Keyboard
  */
-static const uint32_t tosakbd_keymap[] = {
+अटल स्थिर uपूर्णांक32_t tosakbd_keymap[] = अणु
 	KEY(0, 1, KEY_W),
 	KEY(0, 5, KEY_K),
 	KEY(0, 6, KEY_BACKSPACE),
@@ -465,19 +466,19 @@ static const uint32_t tosakbd_keymap[] = {
 	KEY(6, 5, KEY_LEFT),
 	KEY(6, 6, KEY_DOWN),
 	KEY(6, 7, KEY_RIGHT),
-};
+पूर्ण;
 
-static struct matrix_keymap_data tosakbd_keymap_data = {
+अटल काष्ठा matrix_keymap_data tosakbd_keymap_data = अणु
 	.keymap		= tosakbd_keymap,
 	.keymap_size	= ARRAY_SIZE(tosakbd_keymap),
-};
+पूर्ण;
 
-static const int tosakbd_col_gpios[] =
-			{ 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68 };
-static const int tosakbd_row_gpios[] =
-			{ 69, 70, 71, 72, 73, 74, 75 };
+अटल स्थिर पूर्णांक tosakbd_col_gpios[] =
+			अणु 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68 पूर्ण;
+अटल स्थिर पूर्णांक tosakbd_row_gpios[] =
+			अणु 69, 70, 71, 72, 73, 74, 75 पूर्ण;
 
-static struct matrix_keypad_platform_data tosakbd_pdata = {
+अटल काष्ठा matrix_keypad_platक्रमm_data tosakbd_pdata = अणु
 	.keymap_data		= &tosakbd_keymap_data,
 	.row_gpios		= tosakbd_row_gpios,
 	.col_gpios		= tosakbd_col_gpios,
@@ -486,31 +487,31 @@ static struct matrix_keypad_platform_data tosakbd_pdata = {
 	.col_scan_delay_us	= 10,
 	.debounce_ms		= 10,
 	.wakeup			= 1,
-};
+पूर्ण;
 
-static struct platform_device tosakbd_device = {
+अटल काष्ठा platक्रमm_device tosakbd_device = अणु
 	.name		= "matrix-keypad",
 	.id		= -1,
-	.dev		= {
-		.platform_data = &tosakbd_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data = &tosakbd_pdata,
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_keys_button tosa_gpio_keys[] = {
+अटल काष्ठा gpio_keys_button tosa_gpio_keys[] = अणु
 	/*
 	 * Two following keys are directly tied to "ON" button of tosa. Why?
 	 * The first one can be used as a wakeup source, the second can't;
-	 * also the first one is OR of ac_powered and on_button.
+	 * also the first one is OR of ac_घातered and on_button.
 	 */
-	{
+	अणु
 		.type	= EV_PWR,
 		.code	= KEY_RESERVED,
 		.gpio	= TOSA_GPIO_POWERON,
 		.desc	= "Poweron",
 		.wakeup	= 1,
 		.active_low = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type	= EV_PWR,
 		.code	= KEY_SUSPEND,
 		.gpio	= TOSA_GPIO_ON_KEY,
@@ -520,125 +521,125 @@ static struct gpio_keys_button tosa_gpio_keys[] = {
 		 * .wakeup	= 1,
 		 */
 		.active_low = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type	= EV_KEY,
 		.code	= TOSA_KEY_RECORD,
 		.gpio	= TOSA_GPIO_RECORD_BTN,
 		.desc	= "Record Button",
 		.wakeup	= 1,
 		.active_low = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type	= EV_KEY,
 		.code	= TOSA_KEY_SYNC,
 		.gpio	= TOSA_GPIO_SYNC,
 		.desc	= "Sync Button",
 		.wakeup	= 1,
 		.active_low = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type	= EV_SW,
 		.code	= SW_HEADPHONE_INSERT,
 		.gpio	= TOSA_GPIO_EAR_IN,
 		.desc	= "HeadPhone insert",
 		.active_low = 1,
-		.debounce_interval = 300,
-	},
-};
+		.debounce_पूर्णांकerval = 300,
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_keys_platform_data tosa_gpio_keys_platform_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data tosa_gpio_keys_platक्रमm_data = अणु
 	.buttons	= tosa_gpio_keys,
 	.nbuttons	= ARRAY_SIZE(tosa_gpio_keys),
-};
+पूर्ण;
 
-static struct platform_device tosa_gpio_keys_device = {
+अटल काष्ठा platक्रमm_device tosa_gpio_keys_device = अणु
 	.name	= "gpio-keys",
 	.id	= -1,
-	.dev	= {
-		.platform_data	= &tosa_gpio_keys_platform_data,
-	},
-};
+	.dev	= अणु
+		.platक्रमm_data	= &tosa_gpio_keys_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
 /*
  * Tosa LEDs
  */
-static struct gpio_led tosa_gpio_leds[] = {
-	{
+अटल काष्ठा gpio_led tosa_gpio_leds[] = अणु
+	अणु
 		.name			= "tosa:amber:charge",
-		.default_trigger	= "main-battery-charging",
+		.शेष_trigger	= "main-battery-charging",
 		.gpio			= TOSA_GPIO_CHRG_ERR_LED,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name			= "tosa:green:mail",
-		.default_trigger	= "nand-disk",
+		.शेष_trigger	= "nand-disk",
 		.gpio			= TOSA_GPIO_NOTE_LED,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name			= "tosa:dual:wlan",
-		.default_trigger	= "none",
+		.शेष_trigger	= "none",
 		.gpio			= TOSA_GPIO_WLAN_LED,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name			= "tosa:blue:bluetooth",
-		.default_trigger	= "tosa-bt",
+		.शेष_trigger	= "tosa-bt",
 		.gpio			= TOSA_GPIO_BT_LED,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_led_platform_data tosa_gpio_leds_platform_data = {
+अटल काष्ठा gpio_led_platक्रमm_data tosa_gpio_leds_platक्रमm_data = अणु
 	.leds		= tosa_gpio_leds,
 	.num_leds	= ARRAY_SIZE(tosa_gpio_leds),
-};
+पूर्ण;
 
-static struct platform_device tosaled_device = {
+अटल काष्ठा platक्रमm_device tosaled_device = अणु
 	.name	= "leds-gpio",
 	.id	= -1,
-	.dev	= {
-		.platform_data	= &tosa_gpio_leds_platform_data,
-	},
-};
+	.dev	= अणु
+		.platक्रमm_data	= &tosa_gpio_leds_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
 /*
  * Toshiba Mobile IO Controller
  */
-static struct resource tc6393xb_resources[] = {
-	[0] = {
+अटल काष्ठा resource tc6393xb_resources[] = अणु
+	[0] = अणु
 		.start	= TOSA_LCDC_PHYS,
 		.end	= TOSA_LCDC_PHYS + 0x3ffffff,
 		.flags	= IORESOURCE_MEM,
-	},
+	पूर्ण,
 
-	[1] = {
+	[1] = अणु
 		.start	= TOSA_IRQ_GPIO_TC6393XB_INT,
 		.end	= TOSA_IRQ_GPIO_TC6393XB_INT,
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 
-static int tosa_tc6393xb_enable(struct platform_device *dev)
-{
-	int rc;
+अटल पूर्णांक tosa_tc6393xb_enable(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक rc;
 
 	rc = gpio_request(TOSA_GPIO_TC6393XB_REST_IN, "tc6393xb #pclr");
-	if (rc)
-		goto err_req_pclr;
+	अगर (rc)
+		जाओ err_req_pclr;
 	rc = gpio_request(TOSA_GPIO_TC6393XB_SUSPEND, "tc6393xb #suspend");
-	if (rc)
-		goto err_req_suspend;
+	अगर (rc)
+		जाओ err_req_suspend;
 	rc = gpio_request(TOSA_GPIO_TC6393XB_L3V_ON, "tc6393xb l3v");
-	if (rc)
-		goto err_req_l3v;
+	अगर (rc)
+		जाओ err_req_l3v;
 	rc = gpio_direction_output(TOSA_GPIO_TC6393XB_L3V_ON, 0);
-	if (rc)
-		goto err_dir_l3v;
+	अगर (rc)
+		जाओ err_dir_l3v;
 	rc = gpio_direction_output(TOSA_GPIO_TC6393XB_SUSPEND, 0);
-	if (rc)
-		goto err_dir_suspend;
+	अगर (rc)
+		जाओ err_dir_suspend;
 	rc = gpio_direction_output(TOSA_GPIO_TC6393XB_REST_IN, 0);
-	if (rc)
-		goto err_dir_pclr;
+	अगर (rc)
+		जाओ err_dir_pclr;
 
 	mdelay(1);
 
@@ -649,97 +650,97 @@ static int tosa_tc6393xb_enable(struct platform_device *dev)
 	gpio_set_value(TOSA_GPIO_TC6393XB_REST_IN, 1);
 	gpio_set_value(TOSA_GPIO_TC6393XB_L3V_ON, 1);
 
-	return 0;
+	वापस 0;
 err_dir_pclr:
 err_dir_suspend:
 err_dir_l3v:
-	gpio_free(TOSA_GPIO_TC6393XB_L3V_ON);
+	gpio_मुक्त(TOSA_GPIO_TC6393XB_L3V_ON);
 err_req_l3v:
-	gpio_free(TOSA_GPIO_TC6393XB_SUSPEND);
+	gpio_मुक्त(TOSA_GPIO_TC6393XB_SUSPEND);
 err_req_suspend:
-	gpio_free(TOSA_GPIO_TC6393XB_REST_IN);
+	gpio_मुक्त(TOSA_GPIO_TC6393XB_REST_IN);
 err_req_pclr:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int tosa_tc6393xb_disable(struct platform_device *dev)
-{
-	gpio_free(TOSA_GPIO_TC6393XB_L3V_ON);
-	gpio_free(TOSA_GPIO_TC6393XB_SUSPEND);
-	gpio_free(TOSA_GPIO_TC6393XB_REST_IN);
+अटल पूर्णांक tosa_tc6393xb_disable(काष्ठा platक्रमm_device *dev)
+अणु
+	gpio_मुक्त(TOSA_GPIO_TC6393XB_L3V_ON);
+	gpio_मुक्त(TOSA_GPIO_TC6393XB_SUSPEND);
+	gpio_मुक्त(TOSA_GPIO_TC6393XB_REST_IN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tosa_tc6393xb_resume(struct platform_device *dev)
-{
+अटल पूर्णांक tosa_tc6393xb_resume(काष्ठा platक्रमm_device *dev)
+अणु
 	gpio_set_value(TOSA_GPIO_TC6393XB_SUSPEND, 1);
 	mdelay(10);
 	gpio_set_value(TOSA_GPIO_TC6393XB_L3V_ON, 1);
 	mdelay(10);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tosa_tc6393xb_suspend(struct platform_device *dev)
-{
+अटल पूर्णांक tosa_tc6393xb_suspend(काष्ठा platक्रमm_device *dev)
+अणु
 	gpio_set_value(TOSA_GPIO_TC6393XB_L3V_ON, 0);
 	gpio_set_value(TOSA_GPIO_TC6393XB_SUSPEND, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static uint8_t scan_ff_pattern[] = { 0xff, 0xff };
+अटल uपूर्णांक8_t scan_ff_pattern[] = अणु 0xff, 0xff पूर्ण;
 
-static struct nand_bbt_descr tosa_tc6393xb_nand_bbt = {
+अटल काष्ठा nand_bbt_descr tosa_tc6393xb_nand_bbt = अणु
 	.options	= 0,
 	.offs		= 4,
 	.len		= 2,
 	.pattern	= scan_ff_pattern
-};
+पूर्ण;
 
-static const char * const probes[] = {
+अटल स्थिर अक्षर * स्थिर probes[] = अणु
 	"cmdlinepart",
 	"ofpart",
 	"sharpslpart",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct tmio_nand_data tosa_tc6393xb_nand_config = {
+अटल काष्ठा पंचांगio_nand_data tosa_tc6393xb_nand_config = अणु
 	.badblock_pattern = &tosa_tc6393xb_nand_bbt,
 	.part_parsers = probes,
-};
+पूर्ण;
 
-static int tosa_tc6393xb_setup(struct platform_device *dev)
-{
-	int rc;
+अटल पूर्णांक tosa_tc6393xb_setup(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक rc;
 
 	rc = gpio_request(TOSA_GPIO_CARD_VCC_ON, "CARD_VCC_ON");
-	if (rc)
-		goto err_req;
+	अगर (rc)
+		जाओ err_req;
 
 	rc = gpio_direction_output(TOSA_GPIO_CARD_VCC_ON, 1);
-	if (rc)
-		goto err_dir;
+	अगर (rc)
+		जाओ err_dir;
 
-	return rc;
+	वापस rc;
 
 err_dir:
-	gpio_free(TOSA_GPIO_CARD_VCC_ON);
+	gpio_मुक्त(TOSA_GPIO_CARD_VCC_ON);
 err_req:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void tosa_tc6393xb_teardown(struct platform_device *dev)
-{
-	gpio_free(TOSA_GPIO_CARD_VCC_ON);
-}
+अटल व्योम tosa_tc6393xb_tearकरोwn(काष्ठा platक्रमm_device *dev)
+अणु
+	gpio_मुक्त(TOSA_GPIO_CARD_VCC_ON);
+पूर्ण
 
-#ifdef CONFIG_MFD_TC6393XB
-static struct fb_videomode tosa_tc6393xb_lcd_mode[] = {
-	{
+#अगर_घोषित CONFIG_MFD_TC6393XB
+अटल काष्ठा fb_videomode tosa_tc6393xb_lcd_mode[] = अणु
+	अणु
 		.xres = 480,
 		.yres = 640,
-		.pixclock = 0x002cdf00,/* PLL divisor */
+		.pixघड़ी = 0x002cdf00,/* PLL भागisor */
 		.left_margin = 0x004c,
 		.right_margin = 0x005b,
 		.upper_margin = 0x0001,
@@ -748,10 +749,10 @@ static struct fb_videomode tosa_tc6393xb_lcd_mode[] = {
 		.vsync_len = 0x0001,
 		.sync = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
 		.vmode = FB_VMODE_NONINTERLACED,
-	},{
+	पूर्ण,अणु
 		.xres = 240,
 		.yres = 320,
-		.pixclock = 0x00e7f203,/* PLL divisor */
+		.pixघड़ी = 0x00e7f203,/* PLL भागisor */
 		.left_margin = 0x0024,
 		.right_margin = 0x002f,
 		.upper_margin = 0x0001,
@@ -760,27 +761,27 @@ static struct fb_videomode tosa_tc6393xb_lcd_mode[] = {
 		.vsync_len = 0x0001,
 		.sync = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
 		.vmode = FB_VMODE_NONINTERLACED,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct tmio_fb_data tosa_tc6393xb_fb_config = {
-	.lcd_set_power	= tc6393xb_lcd_set_power,
+अटल काष्ठा पंचांगio_fb_data tosa_tc6393xb_fb_config = अणु
+	.lcd_set_घातer	= tc6393xb_lcd_set_घातer,
 	.lcd_mode	= tc6393xb_lcd_mode,
 	.num_modes	= ARRAY_SIZE(tosa_tc6393xb_lcd_mode),
 	.modes		= &tosa_tc6393xb_lcd_mode[0],
 	.height		= 82,
 	.width		= 60,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static struct tc6393xb_platform_data tosa_tc6393xb_data = {
+अटल काष्ठा tc6393xb_platक्रमm_data tosa_tc6393xb_data = अणु
 	.scr_pll2cr	= 0x0cc1,
 	.scr_gper	= 0x3300,
 
 	.irq_base	= IRQ_BOARD_START,
 	.gpio_base	= TOSA_TC6393XB_GPIO_BASE,
 	.setup		= tosa_tc6393xb_setup,
-	.teardown	= tosa_tc6393xb_teardown,
+	.tearकरोwn	= tosa_tc6393xb_tearकरोwn,
 
 	.enable		= tosa_tc6393xb_enable,
 	.disable	= tosa_tc6393xb_disable,
@@ -788,115 +789,115 @@ static struct tc6393xb_platform_data tosa_tc6393xb_data = {
 	.resume		= tosa_tc6393xb_resume,
 
 	.nand_data	= &tosa_tc6393xb_nand_config,
-#ifdef CONFIG_MFD_TC6393XB
+#अगर_घोषित CONFIG_MFD_TC6393XB
 	.fb_data	= &tosa_tc6393xb_fb_config,
-#endif
+#पूर्ण_अगर
 
 	.resume_restore = 1,
-};
+पूर्ण;
 
 
-static struct platform_device tc6393xb_device = {
+अटल काष्ठा platक्रमm_device tc6393xb_device = अणु
 	.name	= "tc6393xb",
 	.id	= -1,
-	.dev	= {
-		.platform_data	= &tosa_tc6393xb_data,
-	},
+	.dev	= अणु
+		.platक्रमm_data	= &tosa_tc6393xb_data,
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(tc6393xb_resources),
 	.resource	= tc6393xb_resources,
-};
+पूर्ण;
 
-static struct tosa_bt_data tosa_bt_data = {
+अटल काष्ठा tosa_bt_data tosa_bt_data = अणु
 	.gpio_pwr	= TOSA_GPIO_BT_PWR_EN,
 	.gpio_reset	= TOSA_GPIO_BT_RESET,
-};
+पूर्ण;
 
-static struct platform_device tosa_bt_device = {
+अटल काष्ठा platक्रमm_device tosa_bt_device = अणु
 	.name	= "tosa-bt",
 	.id	= -1,
-	.dev.platform_data = &tosa_bt_data,
-};
+	.dev.platक्रमm_data = &tosa_bt_data,
+पूर्ण;
 
-static struct pxa2xx_spi_controller pxa_ssp_master_info = {
+अटल काष्ठा pxa2xx_spi_controller pxa_ssp_master_info = अणु
 	.num_chipselect	= 1,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table tosa_lcd_gpio_table = {
+अटल काष्ठा gpiod_lookup_table tosa_lcd_gpio_table = अणु
 	.dev_id = "spi2.0",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("tc6393xb",
 			    TOSA_GPIO_TG_ON - TOSA_TC6393XB_GPIO_BASE,
 			    "tg #pwr", GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct gpiod_lookup_table tosa_lcd_bl_gpio_table = {
+अटल काष्ठा gpiod_lookup_table tosa_lcd_bl_gpio_table = अणु
 	.dev_id = "i2c-tosa-bl",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("tc6393xb",
 			    TOSA_GPIO_BL_C20MA - TOSA_TC6393XB_GPIO_BASE,
 			    "backlight", GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct spi_board_info spi_board_info[] __initdata = {
-	{
+अटल काष्ठा spi_board_info spi_board_info[] __initdata = अणु
+	अणु
 		.modalias	= "tosa-lcd",
-		// .platform_data
+		// .platक्रमm_data
 		.max_speed_hz	= 28750,
 		.bus_num	= 2,
 		.chip_select	= 0,
 		.mode		= SPI_MODE_0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct mtd_partition sharpsl_rom_parts[] = {
-	{
+अटल काष्ठा mtd_partition sharpsl_rom_parts[] = अणु
+	अणु
 		.name	="Boot PROM Filesystem",
 		.offset	= 0x00160000,
 		.size	= MTDPART_SIZ_FULL,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct physmap_flash_data sharpsl_rom_data = {
+अटल काष्ठा physmap_flash_data sharpsl_rom_data = अणु
 	.width		= 2,
 	.nr_parts	= ARRAY_SIZE(sharpsl_rom_parts),
 	.parts		= sharpsl_rom_parts,
-};
+पूर्ण;
 
-static struct resource sharpsl_rom_resources[] = {
-	{
+अटल काष्ठा resource sharpsl_rom_resources[] = अणु
+	अणु
 		.start	= 0x00000000,
 		.end	= 0x007fffff,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device sharpsl_rom_device = {
+अटल काष्ठा platक्रमm_device sharpsl_rom_device = अणु
 	.name	= "physmap-flash",
 	.id	= -1,
 	.resource = sharpsl_rom_resources,
 	.num_resources = ARRAY_SIZE(sharpsl_rom_resources),
-	.dev.platform_data = &sharpsl_rom_data,
-};
+	.dev.platक्रमm_data = &sharpsl_rom_data,
+पूर्ण;
 
-static struct platform_device wm9712_device = {
+अटल काष्ठा platक्रमm_device wm9712_device = अणु
 	.name	= "wm9712-codec",
 	.id	= -1,
-};
+पूर्ण;
 
-static struct platform_device tosa_audio_device = {
+अटल काष्ठा platक्रमm_device tosa_audio_device = अणु
 	.name	= "tosa-audio",
 	.id	= -1,
-};
+पूर्ण;
 
-static struct platform_device *devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *devices[] __initdata = अणु
 	&tosascoop_device,
 	&tosascoop_jc_device,
 	&tc6393xb_device,
-	&tosa_power_device,
+	&tosa_घातer_device,
 	&tosakbd_device,
 	&tosa_gpio_keys_device,
 	&tosaled_device,
@@ -905,38 +906,38 @@ static struct platform_device *devices[] __initdata = {
 	&wm9712_device,
 	&tosa_gpio_vbus,
 	&tosa_audio_device,
-};
+पूर्ण;
 
-static void tosa_poweroff(void)
-{
-	pxa_restart(REBOOT_GPIO, NULL);
-}
+अटल व्योम tosa_घातeroff(व्योम)
+अणु
+	pxa_restart(REBOOT_GPIO, शून्य);
+पूर्ण
 
-static void tosa_restart(enum reboot_mode mode, const char *cmd)
-{
-	uint32_t msc0 = __raw_readl(MSC0);
+अटल व्योम tosa_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
+अणु
+	uपूर्णांक32_t msc0 = __raw_पढ़ोl(MSC0);
 
-	/* Bootloader magic for a reboot */
-	if((msc0 & 0xffff0000) == 0x7ff00000)
-		__raw_writel((msc0 & 0xffff) | 0x7ee00000, MSC0);
+	/* Bootloader magic क्रम a reboot */
+	अगर((msc0 & 0xffff0000) == 0x7ff00000)
+		__raw_ग_लिखोl((msc0 & 0xffff) | 0x7ee00000, MSC0);
 
-	tosa_poweroff();
-}
+	tosa_घातeroff();
+पूर्ण
 
-static void __init tosa_init(void)
-{
+अटल व्योम __init tosa_init(व्योम)
+अणु
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(tosa_pin_config));
 
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 
 	gpio_set_wake(MFP_PIN_GPIO1, 1);
 	/* We can't pass to gpio-keys since it will drop the Reset altfunc */
 
 	init_gpio_reset(TOSA_GPIO_ON_RESET, 0, 0);
 
-	pm_power_off = tosa_poweroff;
+	pm_घातer_off = tosa_घातeroff;
 
 	PCFR |= PCFR_OPDE;
 
@@ -944,29 +945,29 @@ static void __init tosa_init(void)
 	PMCR = 0x01;
 
 	gpiod_add_lookup_table(&tosa_mci_gpio_table);
-	pxa_set_mci_info(&tosa_mci_platform_data);
-	pxa_set_ficp_info(&tosa_ficp_platform_data);
-	pxa_set_i2c_info(NULL);
-	pxa_set_ac97_info(NULL);
-	platform_scoop_config = &tosa_pcmcia_config;
+	pxa_set_mci_info(&tosa_mci_platक्रमm_data);
+	pxa_set_ficp_info(&tosa_ficp_platक्रमm_data);
+	pxa_set_i2c_info(शून्य);
+	pxa_set_ac97_info(शून्य);
+	platक्रमm_scoop_config = &tosa_pcmcia_config;
 
 	pxa2xx_set_spi_info(2, &pxa_ssp_master_info);
 	gpiod_add_lookup_table(&tosa_lcd_gpio_table);
 	gpiod_add_lookup_table(&tosa_lcd_bl_gpio_table);
-	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
+	spi_रेजिस्टर_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
 
-	clk_add_alias("CLK_CK3P6MI", tc6393xb_device.name, "GPIO11_CLK", NULL);
+	clk_add_alias("CLK_CK3P6MI", tc6393xb_device.name, "GPIO11_CLK", शून्य);
 
 	gpiod_add_lookup_table(&tosa_udc_gpiod_table);
-	gpiod_add_lookup_table(&tosa_power_gpiod_table);
-	platform_add_devices(devices, ARRAY_SIZE(devices));
-}
+	gpiod_add_lookup_table(&tosa_घातer_gpiod_table);
+	platक्रमm_add_devices(devices, ARRAY_SIZE(devices));
+पूर्ण
 
-static void __init fixup_tosa(struct tag *tags, char **cmdline)
-{
+अटल व्योम __init fixup_tosa(काष्ठा tag *tags, अक्षर **cmdline)
+अणु
 	sharpsl_save_param();
 	memblock_add(0xa0000000, SZ_64M);
-}
+पूर्ण
 
 MACHINE_START(TOSA, "SHARP Tosa")
 	.fixup          = fixup_tosa,
@@ -975,6 +976,6 @@ MACHINE_START(TOSA, "SHARP Tosa")
 	.init_irq       = pxa25x_init_irq,
 	.handle_irq       = pxa25x_handle_irq,
 	.init_machine   = tosa_init,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.restart	= tosa_restart,
 MACHINE_END

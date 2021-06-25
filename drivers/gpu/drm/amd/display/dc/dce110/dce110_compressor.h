@@ -1,11 +1,12 @@
+<शैली गुरु>
 /* Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,60 +23,60 @@
  *
  */
 
-#ifndef __DC_COMPRESSOR_DCE110_H__
-#define __DC_COMPRESSOR_DCE110_H__
+#अगर_अघोषित __DC_COMPRESSOR_DCE110_H__
+#घोषणा __DC_COMPRESSOR_DCE110_H__
 
-#include "../inc/compressor.h"
+#समावेश "../inc/compressor.h"
 
-#define TO_DCE110_COMPRESSOR(compressor)\
-	container_of(compressor, struct dce110_compressor, base)
+#घोषणा TO_DCE110_COMPRESSOR(compressor)\
+	container_of(compressor, काष्ठा dce110_compressor, base)
 
-struct dce110_compressor_reg_offsets {
-	uint32_t dcp_offset;
-	uint32_t dmif_offset;
-};
+काष्ठा dce110_compressor_reg_offsets अणु
+	uपूर्णांक32_t dcp_offset;
+	uपूर्णांक32_t dmअगर_offset;
+पूर्ण;
 
-struct dce110_compressor {
-	struct compressor base;
-	struct dce110_compressor_reg_offsets offsets;
-};
+काष्ठा dce110_compressor अणु
+	काष्ठा compressor base;
+	काष्ठा dce110_compressor_reg_offsets offsets;
+पूर्ण;
 
-struct compressor *dce110_compressor_create(struct dc_context *ctx);
+काष्ठा compressor *dce110_compressor_create(काष्ठा dc_context *ctx);
 
-void dce110_compressor_construct(struct dce110_compressor *cp110,
-	struct dc_context *ctx);
+व्योम dce110_compressor_स्थिरruct(काष्ठा dce110_compressor *cp110,
+	काष्ठा dc_context *ctx);
 
-void dce110_compressor_destroy(struct compressor **cp);
+व्योम dce110_compressor_destroy(काष्ठा compressor **cp);
 
 /* FBC RELATED */
-void dce110_compressor_power_up_fbc(struct compressor *cp);
+व्योम dce110_compressor_घातer_up_fbc(काष्ठा compressor *cp);
 
-void dce110_compressor_enable_fbc(struct compressor *cp,
-	struct compr_addr_and_pitch_params *params);
+व्योम dce110_compressor_enable_fbc(काष्ठा compressor *cp,
+	काष्ठा compr_addr_and_pitch_params *params);
 
-void dce110_compressor_disable_fbc(struct compressor *cp);
+व्योम dce110_compressor_disable_fbc(काष्ठा compressor *cp);
 
-void dce110_compressor_set_fbc_invalidation_triggers(struct compressor *cp,
-	uint32_t fbc_trigger);
+व्योम dce110_compressor_set_fbc_invalidation_triggers(काष्ठा compressor *cp,
+	uपूर्णांक32_t fbc_trigger);
 
-void dce110_compressor_program_compressed_surface_address_and_pitch(
-	struct compressor *cp,
-	struct compr_addr_and_pitch_params *params);
+व्योम dce110_compressor_program_compressed_surface_address_and_pitch(
+	काष्ठा compressor *cp,
+	काष्ठा compr_addr_and_pitch_params *params);
 
-bool dce110_compressor_is_fbc_enabled_in_hw(struct compressor *cp,
-	uint32_t *fbc_mapped_crtc_id);
+bool dce110_compressor_is_fbc_enabled_in_hw(काष्ठा compressor *cp,
+	uपूर्णांक32_t *fbc_mapped_crtc_id);
 
 /* LPT RELATED */
-void dce110_compressor_enable_lpt(struct compressor *cp);
+व्योम dce110_compressor_enable_lpt(काष्ठा compressor *cp);
 
-void dce110_compressor_disable_lpt(struct compressor *cp);
+व्योम dce110_compressor_disable_lpt(काष्ठा compressor *cp);
 
-void dce110_compressor_program_lpt_control(struct compressor *cp,
-	struct compr_addr_and_pitch_params *params);
+व्योम dce110_compressor_program_lpt_control(काष्ठा compressor *cp,
+	काष्ठा compr_addr_and_pitch_params *params);
 
-bool dce110_compressor_is_lpt_enabled_in_hw(struct compressor *cp);
+bool dce110_compressor_is_lpt_enabled_in_hw(काष्ठा compressor *cp);
 
-void get_max_support_fbc_buffersize(unsigned int *max_x, unsigned int *max_y);
+व्योम get_max_support_fbc_buffersize(अचिन्हित पूर्णांक *max_x, अचिन्हित पूर्णांक *max_y);
 
-#endif
+#पूर्ण_अगर
 

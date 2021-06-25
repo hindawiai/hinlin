@@ -1,118 +1,119 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Tegra host1x Syncpoints
+ * Tegra host1x Syncpoपूर्णांकs
  *
  * Copyright (c) 2010-2013, NVIDIA Corporation.
  */
 
-#ifndef __HOST1X_SYNCPT_H
-#define __HOST1X_SYNCPT_H
+#अगर_अघोषित __HOST1X_SYNCPT_H
+#घोषणा __HOST1X_SYNCPT_H
 
-#include <linux/atomic.h>
-#include <linux/host1x.h>
-#include <linux/kernel.h>
-#include <linux/kref.h>
-#include <linux/sched.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/host1x.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/sched.h>
 
-#include "intr.h"
+#समावेश "intr.h"
 
-struct host1x;
+काष्ठा host1x;
 
-/* Reserved for replacing an expired wait with a NOP */
-#define HOST1X_SYNCPT_RESERVED			0
+/* Reserved क्रम replacing an expired रुको with a NOP */
+#घोषणा HOST1X_SYNCPT_RESERVED			0
 
-struct host1x_syncpt_base {
-	unsigned int id;
+काष्ठा host1x_syncpt_base अणु
+	अचिन्हित पूर्णांक id;
 	bool requested;
-};
+पूर्ण;
 
-struct host1x_syncpt {
-	struct kref ref;
+काष्ठा host1x_syncpt अणु
+	काष्ठा kref ref;
 
-	unsigned int id;
+	अचिन्हित पूर्णांक id;
 	atomic_t min_val;
 	atomic_t max_val;
 	u32 base_val;
-	const char *name;
+	स्थिर अक्षर *name;
 	bool client_managed;
-	struct host1x *host;
-	struct host1x_syncpt_base *base;
+	काष्ठा host1x *host;
+	काष्ठा host1x_syncpt_base *base;
 
-	/* interrupt data */
-	struct host1x_syncpt_intr intr;
-};
+	/* पूर्णांकerrupt data */
+	काष्ठा host1x_syncpt_पूर्णांकr पूर्णांकr;
+पूर्ण;
 
-/* Initialize sync point array  */
-int host1x_syncpt_init(struct host1x *host);
+/* Initialize sync poपूर्णांक array  */
+पूर्णांक host1x_syncpt_init(काष्ठा host1x *host);
 
-/*  Free sync point array */
-void host1x_syncpt_deinit(struct host1x *host);
+/*  Free sync poपूर्णांक array */
+व्योम host1x_syncpt_deinit(काष्ठा host1x *host);
 
-/* Return number of sync point supported. */
-unsigned int host1x_syncpt_nb_pts(struct host1x *host);
+/* Return number of sync poपूर्णांक supported. */
+अचिन्हित पूर्णांक host1x_syncpt_nb_pts(काष्ठा host1x *host);
 
-/* Return number of wait bases supported. */
-unsigned int host1x_syncpt_nb_bases(struct host1x *host);
+/* Return number of रुको bases supported. */
+अचिन्हित पूर्णांक host1x_syncpt_nb_bases(काष्ठा host1x *host);
 
 /* Return number of mlocks supported. */
-unsigned int host1x_syncpt_nb_mlocks(struct host1x *host);
+अचिन्हित पूर्णांक host1x_syncpt_nb_mlocks(काष्ठा host1x *host);
 
 /*
- * Check sync point sanity. If max is larger than min, there have too many
- * sync point increments.
+ * Check sync poपूर्णांक sanity. If max is larger than min, there have too many
+ * sync poपूर्णांक increments.
  *
- * Client managed sync point are not tracked.
+ * Client managed sync poपूर्णांक are not tracked.
  * */
-static inline bool host1x_syncpt_check_max(struct host1x_syncpt *sp, u32 real)
-{
+अटल अंतरभूत bool host1x_syncpt_check_max(काष्ठा host1x_syncpt *sp, u32 real)
+अणु
 	u32 max;
-	if (sp->client_managed)
-		return true;
-	max = host1x_syncpt_read_max(sp);
-	return (s32)(max - real) >= 0;
-}
+	अगर (sp->client_managed)
+		वापस true;
+	max = host1x_syncpt_पढ़ो_max(sp);
+	वापस (s32)(max - real) >= 0;
+पूर्ण
 
-/* Return true if sync point is client managed. */
-static inline bool host1x_syncpt_client_managed(struct host1x_syncpt *sp)
-{
-	return sp->client_managed;
-}
+/* Return true अगर sync poपूर्णांक is client managed. */
+अटल अंतरभूत bool host1x_syncpt_client_managed(काष्ठा host1x_syncpt *sp)
+अणु
+	वापस sp->client_managed;
+पूर्ण
 
 /*
- * Returns true if syncpoint min == max, which means that there are no
+ * Returns true अगर syncpoपूर्णांक min == max, which means that there are no
  * outstanding operations.
  */
-static inline bool host1x_syncpt_idle(struct host1x_syncpt *sp)
-{
-	int min, max;
+अटल अंतरभूत bool host1x_syncpt_idle(काष्ठा host1x_syncpt *sp)
+अणु
+	पूर्णांक min, max;
 	smp_rmb();
-	min = atomic_read(&sp->min_val);
-	max = atomic_read(&sp->max_val);
-	return (min == max);
-}
+	min = atomic_पढ़ो(&sp->min_val);
+	max = atomic_पढ़ो(&sp->max_val);
+	वापस (min == max);
+पूर्ण
 
-/* Load current value from hardware to the shadow register. */
-u32 host1x_syncpt_load(struct host1x_syncpt *sp);
+/* Load current value from hardware to the shaकरोw रेजिस्टर. */
+u32 host1x_syncpt_load(काष्ठा host1x_syncpt *sp);
 
-/* Check if the given syncpoint value has already passed */
-bool host1x_syncpt_is_expired(struct host1x_syncpt *sp, u32 thresh);
+/* Check अगर the given syncpoपूर्णांक value has alपढ़ोy passed */
+bool host1x_syncpt_is_expired(काष्ठा host1x_syncpt *sp, u32 thresh);
 
-/* Save host1x sync point state into shadow registers. */
-void host1x_syncpt_save(struct host1x *host);
+/* Save host1x sync poपूर्णांक state पूर्णांकo shaकरोw रेजिस्टरs. */
+व्योम host1x_syncpt_save(काष्ठा host1x *host);
 
-/* Reset host1x sync point state from shadow registers. */
-void host1x_syncpt_restore(struct host1x *host);
+/* Reset host1x sync poपूर्णांक state from shaकरोw रेजिस्टरs. */
+व्योम host1x_syncpt_restore(काष्ठा host1x *host);
 
-/* Read current wait base value into shadow register and return it. */
-u32 host1x_syncpt_load_wait_base(struct host1x_syncpt *sp);
+/* Read current रुको base value पूर्णांकo shaकरोw रेजिस्टर and वापस it. */
+u32 host1x_syncpt_load_रुको_base(काष्ठा host1x_syncpt *sp);
 
-/* Indicate future operations by incrementing the sync point max. */
-u32 host1x_syncpt_incr_max(struct host1x_syncpt *sp, u32 incrs);
+/* Indicate future operations by incrementing the sync poपूर्णांक max. */
+u32 host1x_syncpt_incr_max(काष्ठा host1x_syncpt *sp, u32 incrs);
 
-/* Check if sync point id is valid. */
-static inline int host1x_syncpt_is_valid(struct host1x_syncpt *sp)
-{
-	return sp->id < host1x_syncpt_nb_pts(sp->host);
-}
+/* Check अगर sync poपूर्णांक id is valid. */
+अटल अंतरभूत पूर्णांक host1x_syncpt_is_valid(काष्ठा host1x_syncpt *sp)
+अणु
+	वापस sp->id < host1x_syncpt_nb_pts(sp->host);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

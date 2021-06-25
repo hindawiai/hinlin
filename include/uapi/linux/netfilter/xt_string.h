@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_STRING_H
-#define _XT_STRING_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_STRING_H
+#घोषणा _XT_STRING_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define XT_STRING_MAX_PATTERN_SIZE 128
-#define XT_STRING_MAX_ALGO_NAME_SIZE 16
+#घोषणा XT_STRING_MAX_PATTERN_SIZE 128
+#घोषणा XT_STRING_MAX_ALGO_NAME_SIZE 16
 
-enum {
+क्रमागत अणु
 	XT_STRING_FLAG_INVERT		= 0x01,
 	XT_STRING_FLAG_IGNORECASE	= 0x02
-};
+पूर्ण;
 
-struct xt_string_info {
+काष्ठा xt_string_info अणु
 	__u16 from_offset;
 	__u16 to_offset;
-	char	  algo[XT_STRING_MAX_ALGO_NAME_SIZE];
-	char 	  pattern[XT_STRING_MAX_PATTERN_SIZE];
+	अक्षर	  algo[XT_STRING_MAX_ALGO_NAME_SIZE];
+	अक्षर 	  pattern[XT_STRING_MAX_PATTERN_SIZE];
 	__u8  patlen;
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			__u8  invert;
-		} v0;
+		पूर्ण v0;
 
-		struct {
+		काष्ठा अणु
 			__u8  flags;
-		} v1;
-	} u;
+		पूर्ण v1;
+	पूर्ण u;
 
-	/* Used internally by the kernel */
-	struct ts_config __attribute__((aligned(8))) *config;
-};
+	/* Used पूर्णांकernally by the kernel */
+	काष्ठा ts_config __attribute__((aligned(8))) *config;
+पूर्ण;
 
-#endif /*_XT_STRING_H*/
+#पूर्ण_अगर /*_XT_STRING_H*/

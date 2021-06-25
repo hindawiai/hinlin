@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2019 SiFive
  */
 
-#ifndef _ASM_RISCV_SET_MEMORY_H
-#define _ASM_RISCV_SET_MEMORY_H
+#अगर_अघोषित _ASM_RISCV_SET_MEMORY_H
+#घोषणा _ASM_RISCV_SET_MEMORY_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 /*
  * Functions to change memory attributes.
  */
-#ifdef CONFIG_MMU
-int set_memory_ro(unsigned long addr, int numpages);
-int set_memory_rw(unsigned long addr, int numpages);
-int set_memory_x(unsigned long addr, int numpages);
-int set_memory_nx(unsigned long addr, int numpages);
-int set_memory_rw_nx(unsigned long addr, int numpages);
-void protect_kernel_text_data(void);
-#else
-static inline int set_memory_ro(unsigned long addr, int numpages) { return 0; }
-static inline int set_memory_rw(unsigned long addr, int numpages) { return 0; }
-static inline int set_memory_x(unsigned long addr, int numpages) { return 0; }
-static inline int set_memory_nx(unsigned long addr, int numpages) { return 0; }
-static inline void protect_kernel_text_data(void) {}
-static inline int set_memory_rw_nx(unsigned long addr, int numpages) { return 0; }
-#endif
+#अगर_घोषित CONFIG_MMU
+पूर्णांक set_memory_ro(अचिन्हित दीर्घ addr, पूर्णांक numpages);
+पूर्णांक set_memory_rw(अचिन्हित दीर्घ addr, पूर्णांक numpages);
+पूर्णांक set_memory_x(अचिन्हित दीर्घ addr, पूर्णांक numpages);
+पूर्णांक set_memory_nx(अचिन्हित दीर्घ addr, पूर्णांक numpages);
+पूर्णांक set_memory_rw_nx(अचिन्हित दीर्घ addr, पूर्णांक numpages);
+व्योम protect_kernel_text_data(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक set_memory_ro(अचिन्हित दीर्घ addr, पूर्णांक numpages) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक set_memory_rw(अचिन्हित दीर्घ addr, पूर्णांक numpages) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक set_memory_x(अचिन्हित दीर्घ addr, पूर्णांक numpages) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक set_memory_nx(अचिन्हित दीर्घ addr, पूर्णांक numpages) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम protect_kernel_text_data(व्योम) अणुपूर्ण
+अटल अंतरभूत पूर्णांक set_memory_rw_nx(अचिन्हित दीर्घ addr, पूर्णांक numpages) अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_64BIT) && defined(CONFIG_STRICT_KERNEL_RWX)
-void protect_kernel_linear_mapping_text_rodata(void);
-#else
-static inline void protect_kernel_linear_mapping_text_rodata(void) {}
-#endif
+#अगर defined(CONFIG_64BIT) && defined(CONFIG_STRICT_KERNEL_RWX)
+व्योम protect_kernel_linear_mapping_text_rodata(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम protect_kernel_linear_mapping_text_rodata(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-int set_direct_map_invalid_noflush(struct page *page);
-int set_direct_map_default_noflush(struct page *page);
-bool kernel_page_present(struct page *page);
+पूर्णांक set_direct_map_invalid_noflush(काष्ठा page *page);
+पूर्णांक set_direct_map_शेष_noflush(काष्ठा page *page);
+bool kernel_page_present(काष्ठा page *page);
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#ifdef CONFIG_STRICT_KERNEL_RWX
-#ifdef CONFIG_64BIT
-#define SECTION_ALIGN (1 << 21)
-#else
-#define SECTION_ALIGN (1 << 22)
-#endif
-#else /* !CONFIG_STRICT_KERNEL_RWX */
-#define SECTION_ALIGN L1_CACHE_BYTES
-#endif /* CONFIG_STRICT_KERNEL_RWX */
+#अगर_घोषित CONFIG_STRICT_KERNEL_RWX
+#अगर_घोषित CONFIG_64BIT
+#घोषणा SECTION_ALIGN (1 << 21)
+#अन्यथा
+#घोषणा SECTION_ALIGN (1 << 22)
+#पूर्ण_अगर
+#अन्यथा /* !CONFIG_STRICT_KERNEL_RWX */
+#घोषणा SECTION_ALIGN L1_CACHE_BYTES
+#पूर्ण_अगर /* CONFIG_STRICT_KERNEL_RWX */
 
-#endif /* _ASM_RISCV_SET_MEMORY_H */
+#पूर्ण_अगर /* _ASM_RISCV_SET_MEMORY_H */

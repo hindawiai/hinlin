@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* Values for NULL algorithms */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* Values क्रम शून्य algorithms */
 
-#ifndef _CRYPTO_NULL_H
-#define _CRYPTO_NULL_H
+#अगर_अघोषित _CRYPTO_शून्य_H
+#घोषणा _CRYPTO_शून्य_H
 
-#define NULL_KEY_SIZE		0
-#define NULL_BLOCK_SIZE		1
-#define NULL_DIGEST_SIZE	0
-#define NULL_IV_SIZE		0
+#घोषणा शून्य_KEY_SIZE		0
+#घोषणा शून्य_BLOCK_SIZE		1
+#घोषणा शून्य_DIGEST_SIZE	0
+#घोषणा शून्य_IV_SIZE		0
 
-struct crypto_sync_skcipher *crypto_get_default_null_skcipher(void);
-void crypto_put_default_null_skcipher(void);
+काष्ठा crypto_sync_skcipher *crypto_get_शेष_null_skcipher(व्योम);
+व्योम crypto_put_शेष_null_skcipher(व्योम);
 
-#endif
+#पूर्ण_अगर

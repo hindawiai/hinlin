@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2006, 2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007, 2008 Mellanox Technologies. All rights reserved.
@@ -5,20 +6,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,140 +32,140 @@
  * SOFTWARE.
  */
 
-#include <linux/string.h>
-#include <linux/etherdevice.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/etherdevice.h>
 
-#include <linux/mlx4/cmd.h>
-#include <linux/mlx4/qp.h>
-#include <linux/export.h>
+#समावेश <linux/mlx4/cmd.h>
+#समावेश <linux/mlx4/qp.h>
+#समावेश <linux/export.h>
 
-#include "mlx4.h"
+#समावेश "mlx4.h"
 
-int mlx4_get_mgm_entry_size(struct mlx4_dev *dev)
-{
-	return 1 << dev->oper_log_mgm_entry_size;
-}
+पूर्णांक mlx4_get_mgm_entry_size(काष्ठा mlx4_dev *dev)
+अणु
+	वापस 1 << dev->oper_log_mgm_entry_size;
+पूर्ण
 
-int mlx4_get_qp_per_mgm(struct mlx4_dev *dev)
-{
-	return 4 * (mlx4_get_mgm_entry_size(dev) / 16 - 2);
-}
+पूर्णांक mlx4_get_qp_per_mgm(काष्ठा mlx4_dev *dev)
+अणु
+	वापस 4 * (mlx4_get_mgm_entry_size(dev) / 16 - 2);
+पूर्ण
 
-static int mlx4_QP_FLOW_STEERING_ATTACH(struct mlx4_dev *dev,
-					struct mlx4_cmd_mailbox *mailbox,
+अटल पूर्णांक mlx4_QP_FLOW_STEERING_ATTACH(काष्ठा mlx4_dev *dev,
+					काष्ठा mlx4_cmd_mailbox *mailbox,
 					u32 size,
 					u64 *reg_id)
-{
+अणु
 	u64 imm;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	err = mlx4_cmd_imm(dev, mailbox->dma, &imm, size, 0,
 			   MLX4_QP_FLOW_STEERING_ATTACH, MLX4_CMD_TIME_CLASS_A,
 			   MLX4_CMD_NATIVE);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	*reg_id = imm;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlx4_QP_FLOW_STEERING_DETACH(struct mlx4_dev *dev, u64 regid)
-{
-	int err = 0;
+अटल पूर्णांक mlx4_QP_FLOW_STEERING_DETACH(काष्ठा mlx4_dev *dev, u64 regid)
+अणु
+	पूर्णांक err = 0;
 
 	err = mlx4_cmd(dev, regid, 0, 0,
 		       MLX4_QP_FLOW_STEERING_DETACH, MLX4_CMD_TIME_CLASS_A,
 		       MLX4_CMD_NATIVE);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlx4_READ_ENTRY(struct mlx4_dev *dev, int index,
-			   struct mlx4_cmd_mailbox *mailbox)
-{
-	return mlx4_cmd_box(dev, 0, mailbox->dma, index, 0, MLX4_CMD_READ_MCG,
+अटल पूर्णांक mlx4_READ_ENTRY(काष्ठा mlx4_dev *dev, पूर्णांक index,
+			   काष्ठा mlx4_cmd_mailbox *mailbox)
+अणु
+	वापस mlx4_cmd_box(dev, 0, mailbox->dma, index, 0, MLX4_CMD_READ_MCG,
 			    MLX4_CMD_TIME_CLASS_A, MLX4_CMD_NATIVE);
-}
+पूर्ण
 
-static int mlx4_WRITE_ENTRY(struct mlx4_dev *dev, int index,
-			    struct mlx4_cmd_mailbox *mailbox)
-{
-	return mlx4_cmd(dev, mailbox->dma, index, 0, MLX4_CMD_WRITE_MCG,
+अटल पूर्णांक mlx4_WRITE_ENTRY(काष्ठा mlx4_dev *dev, पूर्णांक index,
+			    काष्ठा mlx4_cmd_mailbox *mailbox)
+अणु
+	वापस mlx4_cmd(dev, mailbox->dma, index, 0, MLX4_CMD_WRITE_MCG,
 			MLX4_CMD_TIME_CLASS_A, MLX4_CMD_NATIVE);
-}
+पूर्ण
 
-static int mlx4_WRITE_PROMISC(struct mlx4_dev *dev, u8 port, u8 steer,
-			      struct mlx4_cmd_mailbox *mailbox)
-{
+अटल पूर्णांक mlx4_WRITE_PROMISC(काष्ठा mlx4_dev *dev, u8 port, u8 steer,
+			      काष्ठा mlx4_cmd_mailbox *mailbox)
+अणु
 	u32 in_mod;
 
 	in_mod = (u32) port << 16 | steer << 1;
-	return mlx4_cmd(dev, mailbox->dma, in_mod, 0x1,
+	वापस mlx4_cmd(dev, mailbox->dma, in_mod, 0x1,
 			MLX4_CMD_WRITE_MCG, MLX4_CMD_TIME_CLASS_A,
 			MLX4_CMD_NATIVE);
-}
+पूर्ण
 
-static int mlx4_GID_HASH(struct mlx4_dev *dev, struct mlx4_cmd_mailbox *mailbox,
+अटल पूर्णांक mlx4_GID_HASH(काष्ठा mlx4_dev *dev, काष्ठा mlx4_cmd_mailbox *mailbox,
 			 u16 *hash, u8 op_mod)
-{
+अणु
 	u64 imm;
-	int err;
+	पूर्णांक err;
 
 	err = mlx4_cmd_imm(dev, mailbox->dma, &imm, 0, op_mod,
 			   MLX4_CMD_MGID_HASH, MLX4_CMD_TIME_CLASS_A,
 			   MLX4_CMD_NATIVE);
 
-	if (!err)
+	अगर (!err)
 		*hash = imm;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct mlx4_promisc_qp *get_promisc_qp(struct mlx4_dev *dev, u8 port,
-					      enum mlx4_steer_type steer,
+अटल काष्ठा mlx4_promisc_qp *get_promisc_qp(काष्ठा mlx4_dev *dev, u8 port,
+					      क्रमागत mlx4_steer_type steer,
 					      u32 qpn)
-{
-	struct mlx4_steer *s_steer;
-	struct mlx4_promisc_qp *pqp;
+अणु
+	काष्ठा mlx4_steer *s_steer;
+	काष्ठा mlx4_promisc_qp *pqp;
 
-	if (port < 1 || port > dev->caps.num_ports)
-		return NULL;
+	अगर (port < 1 || port > dev->caps.num_ports)
+		वापस शून्य;
 
 	s_steer = &mlx4_priv(dev)->steer[port - 1];
 
-	list_for_each_entry(pqp, &s_steer->promisc_qps[steer], list) {
-		if (pqp->qpn == qpn)
-			return pqp;
-	}
+	list_क्रम_each_entry(pqp, &s_steer->promisc_qps[steer], list) अणु
+		अगर (pqp->qpn == qpn)
+			वापस pqp;
+	पूर्ण
 	/* not found */
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Add new entry to steering data structure.
+ * Add new entry to steering data काष्ठाure.
  * All promisc QPs should be added as well
  */
-static int new_steering_entry(struct mlx4_dev *dev, u8 port,
-			      enum mlx4_steer_type steer,
-			      unsigned int index, u32 qpn)
-{
-	struct mlx4_steer *s_steer;
-	struct mlx4_cmd_mailbox *mailbox;
-	struct mlx4_mgm *mgm;
+अटल पूर्णांक new_steering_entry(काष्ठा mlx4_dev *dev, u8 port,
+			      क्रमागत mlx4_steer_type steer,
+			      अचिन्हित पूर्णांक index, u32 qpn)
+अणु
+	काष्ठा mlx4_steer *s_steer;
+	काष्ठा mlx4_cmd_mailbox *mailbox;
+	काष्ठा mlx4_mgm *mgm;
 	u32 members_count;
-	struct mlx4_steer_index *new_entry;
-	struct mlx4_promisc_qp *pqp;
-	struct mlx4_promisc_qp *dqp = NULL;
+	काष्ठा mlx4_steer_index *new_entry;
+	काष्ठा mlx4_promisc_qp *pqp;
+	काष्ठा mlx4_promisc_qp *dqp = शून्य;
 	u32 prot;
-	int err;
+	पूर्णांक err;
 
-	if (port < 1 || port > dev->caps.num_ports)
-		return -EINVAL;
+	अगर (port < 1 || port > dev->caps.num_ports)
+		वापस -EINVAL;
 
 	s_steer = &mlx4_priv(dev)->steer[port - 1];
-	new_entry = kzalloc(sizeof(*new_entry), GFP_KERNEL);
-	if (!new_entry)
-		return -ENOMEM;
+	new_entry = kzalloc(माप(*new_entry), GFP_KERNEL);
+	अगर (!new_entry)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&new_entry->duplicates);
 	new_entry->index = index;
@@ -174,330 +175,330 @@ static int new_steering_entry(struct mlx4_dev *dev, u8 port,
 	 * it should be inserted to duplicates list
 	 */
 	pqp = get_promisc_qp(dev, port, steer, qpn);
-	if (pqp) {
-		dqp = kmalloc(sizeof(*dqp), GFP_KERNEL);
-		if (!dqp) {
+	अगर (pqp) अणु
+		dqp = kदो_स्मृति(माप(*dqp), GFP_KERNEL);
+		अगर (!dqp) अणु
 			err = -ENOMEM;
-			goto out_alloc;
-		}
+			जाओ out_alloc;
+		पूर्ण
 		dqp->qpn = qpn;
 		list_add_tail(&dqp->list, &new_entry->duplicates);
-	}
+	पूर्ण
 
-	/* if no promisc qps for this vep, we are done */
-	if (list_empty(&s_steer->promisc_qps[steer]))
-		return 0;
+	/* अगर no promisc qps क्रम this vep, we are करोne */
+	अगर (list_empty(&s_steer->promisc_qps[steer]))
+		वापस 0;
 
 	/* now need to add all the promisc qps to the new
 	 * steering entry, as they should also receive the packets
 	 * destined to this address */
 	mailbox = mlx4_alloc_cmd_mailbox(dev);
-	if (IS_ERR(mailbox)) {
+	अगर (IS_ERR(mailbox)) अणु
 		err = -ENOMEM;
-		goto out_alloc;
-	}
+		जाओ out_alloc;
+	पूर्ण
 	mgm = mailbox->buf;
 
 	err = mlx4_READ_ENTRY(dev, index, mailbox);
-	if (err)
-		goto out_mailbox;
+	अगर (err)
+		जाओ out_mailbox;
 
 	members_count = be32_to_cpu(mgm->members_count) & 0xffffff;
 	prot = be32_to_cpu(mgm->members_count) >> 30;
-	list_for_each_entry(pqp, &s_steer->promisc_qps[steer], list) {
-		/* don't add already existing qpn */
-		if (pqp->qpn == qpn)
-			continue;
-		if (members_count == dev->caps.num_qp_per_mgm) {
+	list_क्रम_each_entry(pqp, &s_steer->promisc_qps[steer], list) अणु
+		/* करोn't add alपढ़ोy existing qpn */
+		अगर (pqp->qpn == qpn)
+			जारी;
+		अगर (members_count == dev->caps.num_qp_per_mgm) अणु
 			/* out of space */
 			err = -ENOMEM;
-			goto out_mailbox;
-		}
+			जाओ out_mailbox;
+		पूर्ण
 
 		/* add the qpn */
 		mgm->qp[members_count++] = cpu_to_be32(pqp->qpn & MGM_QPN_MASK);
-	}
+	पूर्ण
 	/* update the qps count and update the entry with all the promisc qps*/
 	mgm->members_count = cpu_to_be32(members_count | (prot << 30));
 	err = mlx4_WRITE_ENTRY(dev, index, mailbox);
 
 out_mailbox:
-	mlx4_free_cmd_mailbox(dev, mailbox);
-	if (!err)
-		return 0;
+	mlx4_मुक्त_cmd_mailbox(dev, mailbox);
+	अगर (!err)
+		वापस 0;
 out_alloc:
-	if (dqp) {
+	अगर (dqp) अणु
 		list_del(&dqp->list);
-		kfree(dqp);
-	}
+		kमुक्त(dqp);
+	पूर्ण
 	list_del(&new_entry->list);
-	kfree(new_entry);
-	return err;
-}
+	kमुक्त(new_entry);
+	वापस err;
+पूर्ण
 
-/* update the data structures with existing steering entry */
-static int existing_steering_entry(struct mlx4_dev *dev, u8 port,
-				   enum mlx4_steer_type steer,
-				   unsigned int index, u32 qpn)
-{
-	struct mlx4_steer *s_steer;
-	struct mlx4_steer_index *tmp_entry, *entry = NULL;
-	struct mlx4_promisc_qp *pqp;
-	struct mlx4_promisc_qp *dqp;
+/* update the data काष्ठाures with existing steering entry */
+अटल पूर्णांक existing_steering_entry(काष्ठा mlx4_dev *dev, u8 port,
+				   क्रमागत mlx4_steer_type steer,
+				   अचिन्हित पूर्णांक index, u32 qpn)
+अणु
+	काष्ठा mlx4_steer *s_steer;
+	काष्ठा mlx4_steer_index *पंचांगp_entry, *entry = शून्य;
+	काष्ठा mlx4_promisc_qp *pqp;
+	काष्ठा mlx4_promisc_qp *dqp;
 
-	if (port < 1 || port > dev->caps.num_ports)
-		return -EINVAL;
+	अगर (port < 1 || port > dev->caps.num_ports)
+		वापस -EINVAL;
 
 	s_steer = &mlx4_priv(dev)->steer[port - 1];
 
 	pqp = get_promisc_qp(dev, port, steer, qpn);
-	if (!pqp)
-		return 0; /* nothing to do */
+	अगर (!pqp)
+		वापस 0; /* nothing to करो */
 
-	list_for_each_entry(tmp_entry, &s_steer->steer_entries[steer], list) {
-		if (tmp_entry->index == index) {
-			entry = tmp_entry;
-			break;
-		}
-	}
-	if (unlikely(!entry)) {
+	list_क्रम_each_entry(पंचांगp_entry, &s_steer->steer_entries[steer], list) अणु
+		अगर (पंचांगp_entry->index == index) अणु
+			entry = पंचांगp_entry;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (unlikely(!entry)) अणु
 		mlx4_warn(dev, "Steering entry at index %x is not registered\n", index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* the given qpn is listed as a promisc qpn
 	 * we need to add it as a duplicate to this entry
-	 * for future references */
-	list_for_each_entry(dqp, &entry->duplicates, list) {
-		if (qpn == dqp->qpn)
-			return 0; /* qp is already duplicated */
-	}
+	 * क्रम future references */
+	list_क्रम_each_entry(dqp, &entry->duplicates, list) अणु
+		अगर (qpn == dqp->qpn)
+			वापस 0; /* qp is alपढ़ोy duplicated */
+	पूर्ण
 
 	/* add the qp as a duplicate on this index */
-	dqp = kmalloc(sizeof(*dqp), GFP_KERNEL);
-	if (!dqp)
-		return -ENOMEM;
+	dqp = kदो_स्मृति(माप(*dqp), GFP_KERNEL);
+	अगर (!dqp)
+		वापस -ENOMEM;
 	dqp->qpn = qpn;
 	list_add_tail(&dqp->list, &entry->duplicates);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Check whether a qpn is a duplicate on steering entry
- * If so, it should not be removed from mgm */
-static bool check_duplicate_entry(struct mlx4_dev *dev, u8 port,
-				  enum mlx4_steer_type steer,
-				  unsigned int index, u32 qpn)
-{
-	struct mlx4_steer *s_steer;
-	struct mlx4_steer_index *tmp_entry, *entry = NULL;
-	struct mlx4_promisc_qp *dqp, *tmp_dqp;
+ * If so, it should not be हटाओd from mgm */
+अटल bool check_duplicate_entry(काष्ठा mlx4_dev *dev, u8 port,
+				  क्रमागत mlx4_steer_type steer,
+				  अचिन्हित पूर्णांक index, u32 qpn)
+अणु
+	काष्ठा mlx4_steer *s_steer;
+	काष्ठा mlx4_steer_index *पंचांगp_entry, *entry = शून्य;
+	काष्ठा mlx4_promisc_qp *dqp, *पंचांगp_dqp;
 
-	if (port < 1 || port > dev->caps.num_ports)
-		return NULL;
+	अगर (port < 1 || port > dev->caps.num_ports)
+		वापस शून्य;
 
 	s_steer = &mlx4_priv(dev)->steer[port - 1];
 
-	/* if qp is not promisc, it cannot be duplicated */
-	if (!get_promisc_qp(dev, port, steer, qpn))
-		return false;
+	/* अगर qp is not promisc, it cannot be duplicated */
+	अगर (!get_promisc_qp(dev, port, steer, qpn))
+		वापस false;
 
 	/* The qp is promisc qp so it is a duplicate on this index
-	 * Find the index entry, and remove the duplicate */
-	list_for_each_entry(tmp_entry, &s_steer->steer_entries[steer], list) {
-		if (tmp_entry->index == index) {
-			entry = tmp_entry;
-			break;
-		}
-	}
-	if (unlikely(!entry)) {
+	 * Find the index entry, and हटाओ the duplicate */
+	list_क्रम_each_entry(पंचांगp_entry, &s_steer->steer_entries[steer], list) अणु
+		अगर (पंचांगp_entry->index == index) अणु
+			entry = पंचांगp_entry;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (unlikely(!entry)) अणु
 		mlx4_warn(dev, "Steering entry for index %x is not registered\n", index);
-		return false;
-	}
-	list_for_each_entry_safe(dqp, tmp_dqp, &entry->duplicates, list) {
-		if (dqp->qpn == qpn) {
+		वापस false;
+	पूर्ण
+	list_क्रम_each_entry_safe(dqp, पंचांगp_dqp, &entry->duplicates, list) अणु
+		अगर (dqp->qpn == qpn) अणु
 			list_del(&dqp->list);
-			kfree(dqp);
-		}
-	}
-	return true;
-}
+			kमुक्त(dqp);
+		पूर्ण
+	पूर्ण
+	वापस true;
+पूर्ण
 
-/* Returns true if all the QPs != tqpn contained in this entry
+/* Returns true अगर all the QPs != tqpn contained in this entry
  * are Promisc QPs. Returns false otherwise.
  */
-static bool promisc_steering_entry(struct mlx4_dev *dev, u8 port,
-				   enum mlx4_steer_type steer,
-				   unsigned int index, u32 tqpn,
+अटल bool promisc_steering_entry(काष्ठा mlx4_dev *dev, u8 port,
+				   क्रमागत mlx4_steer_type steer,
+				   अचिन्हित पूर्णांक index, u32 tqpn,
 				   u32 *members_count)
-{
-	struct mlx4_cmd_mailbox *mailbox;
-	struct mlx4_mgm *mgm;
+अणु
+	काष्ठा mlx4_cmd_mailbox *mailbox;
+	काष्ठा mlx4_mgm *mgm;
 	u32 m_count;
 	bool ret = false;
-	int i;
+	पूर्णांक i;
 
-	if (port < 1 || port > dev->caps.num_ports)
-		return false;
+	अगर (port < 1 || port > dev->caps.num_ports)
+		वापस false;
 
 	mailbox = mlx4_alloc_cmd_mailbox(dev);
-	if (IS_ERR(mailbox))
-		return false;
+	अगर (IS_ERR(mailbox))
+		वापस false;
 	mgm = mailbox->buf;
 
-	if (mlx4_READ_ENTRY(dev, index, mailbox))
-		goto out;
+	अगर (mlx4_READ_ENTRY(dev, index, mailbox))
+		जाओ out;
 	m_count = be32_to_cpu(mgm->members_count) & 0xffffff;
-	if (members_count)
+	अगर (members_count)
 		*members_count = m_count;
 
-	for (i = 0;  i < m_count; i++) {
+	क्रम (i = 0;  i < m_count; i++) अणु
 		u32 qpn = be32_to_cpu(mgm->qp[i]) & MGM_QPN_MASK;
-		if (!get_promisc_qp(dev, port, steer, qpn) && qpn != tqpn) {
-			/* the qp is not promisc, the entry can't be removed */
-			goto out;
-		}
-	}
+		अगर (!get_promisc_qp(dev, port, steer, qpn) && qpn != tqpn) अणु
+			/* the qp is not promisc, the entry can't be हटाओd */
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	ret = true;
 out:
-	mlx4_free_cmd_mailbox(dev, mailbox);
-	return ret;
-}
+	mlx4_मुक्त_cmd_mailbox(dev, mailbox);
+	वापस ret;
+पूर्ण
 
-/* IF a steering entry contains only promisc QPs, it can be removed. */
-static bool can_remove_steering_entry(struct mlx4_dev *dev, u8 port,
-				      enum mlx4_steer_type steer,
-				      unsigned int index, u32 tqpn)
-{
-	struct mlx4_steer *s_steer;
-	struct mlx4_steer_index *entry = NULL, *tmp_entry;
+/* IF a steering entry contains only promisc QPs, it can be हटाओd. */
+अटल bool can_हटाओ_steering_entry(काष्ठा mlx4_dev *dev, u8 port,
+				      क्रमागत mlx4_steer_type steer,
+				      अचिन्हित पूर्णांक index, u32 tqpn)
+अणु
+	काष्ठा mlx4_steer *s_steer;
+	काष्ठा mlx4_steer_index *entry = शून्य, *पंचांगp_entry;
 	u32 members_count;
 	bool ret = false;
 
-	if (port < 1 || port > dev->caps.num_ports)
-		return NULL;
+	अगर (port < 1 || port > dev->caps.num_ports)
+		वापस शून्य;
 
 	s_steer = &mlx4_priv(dev)->steer[port - 1];
 
-	if (!promisc_steering_entry(dev, port, steer, index,
+	अगर (!promisc_steering_entry(dev, port, steer, index,
 				    tqpn, &members_count))
-		goto out;
+		जाओ out;
 
-	/* All the qps currently registered for this entry are promiscuous,
-	  * Checking for duplicates */
+	/* All the qps currently रेजिस्टरed क्रम this entry are promiscuous,
+	  * Checking क्रम duplicates */
 	ret = true;
-	list_for_each_entry_safe(entry, tmp_entry, &s_steer->steer_entries[steer], list) {
-		if (entry->index == index) {
-			if (list_empty(&entry->duplicates) ||
-			    members_count == 1) {
-				struct mlx4_promisc_qp *pqp, *tmp_pqp;
+	list_क्रम_each_entry_safe(entry, पंचांगp_entry, &s_steer->steer_entries[steer], list) अणु
+		अगर (entry->index == index) अणु
+			अगर (list_empty(&entry->duplicates) ||
+			    members_count == 1) अणु
+				काष्ठा mlx4_promisc_qp *pqp, *पंचांगp_pqp;
 				/* If there is only 1 entry in duplicates then
 				 * this is the QP we want to delete, going over
 				 * the list and deleting the entry.
 				 */
 				list_del(&entry->list);
-				list_for_each_entry_safe(pqp, tmp_pqp,
+				list_क्रम_each_entry_safe(pqp, पंचांगp_pqp,
 							 &entry->duplicates,
-							 list) {
+							 list) अणु
 					list_del(&pqp->list);
-					kfree(pqp);
-				}
-				kfree(entry);
-			} else {
-				/* This entry contains duplicates so it shouldn't be removed */
+					kमुक्त(pqp);
+				पूर्ण
+				kमुक्त(entry);
+			पूर्ण अन्यथा अणु
+				/* This entry contains duplicates so it shouldn't be हटाओd */
 				ret = false;
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int add_promisc_qp(struct mlx4_dev *dev, u8 port,
-			  enum mlx4_steer_type steer, u32 qpn)
-{
-	struct mlx4_steer *s_steer;
-	struct mlx4_cmd_mailbox *mailbox;
-	struct mlx4_mgm *mgm;
-	struct mlx4_steer_index *entry;
-	struct mlx4_promisc_qp *pqp;
-	struct mlx4_promisc_qp *dqp;
+अटल पूर्णांक add_promisc_qp(काष्ठा mlx4_dev *dev, u8 port,
+			  क्रमागत mlx4_steer_type steer, u32 qpn)
+अणु
+	काष्ठा mlx4_steer *s_steer;
+	काष्ठा mlx4_cmd_mailbox *mailbox;
+	काष्ठा mlx4_mgm *mgm;
+	काष्ठा mlx4_steer_index *entry;
+	काष्ठा mlx4_promisc_qp *pqp;
+	काष्ठा mlx4_promisc_qp *dqp;
 	u32 members_count;
 	u32 prot;
-	int i;
+	पूर्णांक i;
 	bool found;
-	int err;
-	struct mlx4_priv *priv = mlx4_priv(dev);
+	पूर्णांक err;
+	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
 
-	if (port < 1 || port > dev->caps.num_ports)
-		return -EINVAL;
+	अगर (port < 1 || port > dev->caps.num_ports)
+		वापस -EINVAL;
 
 	s_steer = &mlx4_priv(dev)->steer[port - 1];
 
 	mutex_lock(&priv->mcg_table.mutex);
 
-	if (get_promisc_qp(dev, port, steer, qpn)) {
-		err = 0;  /* Noting to do, already exists */
-		goto out_mutex;
-	}
+	अगर (get_promisc_qp(dev, port, steer, qpn)) अणु
+		err = 0;  /* Noting to करो, alपढ़ोy exists */
+		जाओ out_mutex;
+	पूर्ण
 
-	pqp = kmalloc(sizeof(*pqp), GFP_KERNEL);
-	if (!pqp) {
+	pqp = kदो_स्मृति(माप(*pqp), GFP_KERNEL);
+	अगर (!pqp) अणु
 		err = -ENOMEM;
-		goto out_mutex;
-	}
+		जाओ out_mutex;
+	पूर्ण
 	pqp->qpn = qpn;
 
 	mailbox = mlx4_alloc_cmd_mailbox(dev);
-	if (IS_ERR(mailbox)) {
+	अगर (IS_ERR(mailbox)) अणु
 		err = -ENOMEM;
-		goto out_alloc;
-	}
+		जाओ out_alloc;
+	पूर्ण
 	mgm = mailbox->buf;
 
-	if (!(mlx4_is_mfunc(dev) && steer == MLX4_UC_STEER)) {
-		/* The promisc QP needs to be added for each one of the steering
-		 * entries. If it already exists, needs to be added as
-		 * a duplicate for this entry.
+	अगर (!(mlx4_is_mfunc(dev) && steer == MLX4_UC_STEER)) अणु
+		/* The promisc QP needs to be added क्रम each one of the steering
+		 * entries. If it alपढ़ोy exists, needs to be added as
+		 * a duplicate क्रम this entry.
 		 */
-		list_for_each_entry(entry,
+		list_क्रम_each_entry(entry,
 				    &s_steer->steer_entries[steer],
-				    list) {
+				    list) अणु
 			err = mlx4_READ_ENTRY(dev, entry->index, mailbox);
-			if (err)
-				goto out_mailbox;
+			अगर (err)
+				जाओ out_mailbox;
 
 			members_count = be32_to_cpu(mgm->members_count) &
 					0xffffff;
 			prot = be32_to_cpu(mgm->members_count) >> 30;
 			found = false;
-			for (i = 0; i < members_count; i++) {
-				if ((be32_to_cpu(mgm->qp[i]) &
-				     MGM_QPN_MASK) == qpn) {
-					/* Entry already exists.
+			क्रम (i = 0; i < members_count; i++) अणु
+				अगर ((be32_to_cpu(mgm->qp[i]) &
+				     MGM_QPN_MASK) == qpn) अणु
+					/* Entry alपढ़ोy exists.
 					 * Add to duplicates.
 					 */
-					dqp = kmalloc(sizeof(*dqp), GFP_KERNEL);
-					if (!dqp) {
+					dqp = kदो_स्मृति(माप(*dqp), GFP_KERNEL);
+					अगर (!dqp) अणु
 						err = -ENOMEM;
-						goto out_mailbox;
-					}
+						जाओ out_mailbox;
+					पूर्ण
 					dqp->qpn = qpn;
 					list_add_tail(&dqp->list,
 						      &entry->duplicates);
 					found = true;
-				}
-			}
-			if (!found) {
+				पूर्ण
+			पूर्ण
+			अगर (!found) अणु
 				/* Need to add the qpn to mgm */
-				if (members_count ==
-				    dev->caps.num_qp_per_mgm) {
+				अगर (members_count ==
+				    dev->caps.num_qp_per_mgm) अणु
 					/* entry is full */
 					err = -ENOMEM;
-					goto out_mailbox;
-				}
+					जाओ out_mailbox;
+				पूर्ण
 				mgm->qp[members_count++] =
 					cpu_to_be32(qpn & MGM_QPN_MASK);
 				mgm->members_count =
@@ -505,149 +506,149 @@ static int add_promisc_qp(struct mlx4_dev *dev, u8 port,
 						    (prot << 30));
 				err = mlx4_WRITE_ENTRY(dev, entry->index,
 						       mailbox);
-				if (err)
-					goto out_mailbox;
-			}
-		}
-	}
+				अगर (err)
+					जाओ out_mailbox;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* add the new qpn to list of promisc qps */
 	list_add_tail(&pqp->list, &s_steer->promisc_qps[steer]);
-	/* now need to add all the promisc qps to default entry */
-	memset(mgm, 0, sizeof(*mgm));
+	/* now need to add all the promisc qps to शेष entry */
+	स_रखो(mgm, 0, माप(*mgm));
 	members_count = 0;
-	list_for_each_entry(dqp, &s_steer->promisc_qps[steer], list) {
-		if (members_count == dev->caps.num_qp_per_mgm) {
+	list_क्रम_each_entry(dqp, &s_steer->promisc_qps[steer], list) अणु
+		अगर (members_count == dev->caps.num_qp_per_mgm) अणु
 			/* entry is full */
 			err = -ENOMEM;
-			goto out_list;
-		}
+			जाओ out_list;
+		पूर्ण
 		mgm->qp[members_count++] = cpu_to_be32(dqp->qpn & MGM_QPN_MASK);
-	}
+	पूर्ण
 	mgm->members_count = cpu_to_be32(members_count | MLX4_PROT_ETH << 30);
 
 	err = mlx4_WRITE_PROMISC(dev, port, steer, mailbox);
-	if (err)
-		goto out_list;
+	अगर (err)
+		जाओ out_list;
 
-	mlx4_free_cmd_mailbox(dev, mailbox);
+	mlx4_मुक्त_cmd_mailbox(dev, mailbox);
 	mutex_unlock(&priv->mcg_table.mutex);
-	return 0;
+	वापस 0;
 
 out_list:
 	list_del(&pqp->list);
 out_mailbox:
-	mlx4_free_cmd_mailbox(dev, mailbox);
+	mlx4_मुक्त_cmd_mailbox(dev, mailbox);
 out_alloc:
-	kfree(pqp);
+	kमुक्त(pqp);
 out_mutex:
 	mutex_unlock(&priv->mcg_table.mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int remove_promisc_qp(struct mlx4_dev *dev, u8 port,
-			     enum mlx4_steer_type steer, u32 qpn)
-{
-	struct mlx4_priv *priv = mlx4_priv(dev);
-	struct mlx4_steer *s_steer;
-	struct mlx4_cmd_mailbox *mailbox;
-	struct mlx4_mgm *mgm;
-	struct mlx4_steer_index *entry, *tmp_entry;
-	struct mlx4_promisc_qp *pqp;
-	struct mlx4_promisc_qp *dqp;
+अटल पूर्णांक हटाओ_promisc_qp(काष्ठा mlx4_dev *dev, u8 port,
+			     क्रमागत mlx4_steer_type steer, u32 qpn)
+अणु
+	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
+	काष्ठा mlx4_steer *s_steer;
+	काष्ठा mlx4_cmd_mailbox *mailbox;
+	काष्ठा mlx4_mgm *mgm;
+	काष्ठा mlx4_steer_index *entry, *पंचांगp_entry;
+	काष्ठा mlx4_promisc_qp *pqp;
+	काष्ठा mlx4_promisc_qp *dqp;
 	u32 members_count;
 	bool found;
 	bool back_to_list = false;
-	int i;
-	int err;
+	पूर्णांक i;
+	पूर्णांक err;
 
-	if (port < 1 || port > dev->caps.num_ports)
-		return -EINVAL;
+	अगर (port < 1 || port > dev->caps.num_ports)
+		वापस -EINVAL;
 
 	s_steer = &mlx4_priv(dev)->steer[port - 1];
 	mutex_lock(&priv->mcg_table.mutex);
 
 	pqp = get_promisc_qp(dev, port, steer, qpn);
-	if (unlikely(!pqp)) {
+	अगर (unlikely(!pqp)) अणु
 		mlx4_warn(dev, "QP %x is not promiscuous QP\n", qpn);
-		/* nothing to do */
+		/* nothing to करो */
 		err = 0;
-		goto out_mutex;
-	}
+		जाओ out_mutex;
+	पूर्ण
 
-	/*remove from list of promisc qps */
+	/*हटाओ from list of promisc qps */
 	list_del(&pqp->list);
 
-	/* set the default entry not to include the removed one */
+	/* set the शेष entry not to include the हटाओd one */
 	mailbox = mlx4_alloc_cmd_mailbox(dev);
-	if (IS_ERR(mailbox)) {
+	अगर (IS_ERR(mailbox)) अणु
 		err = -ENOMEM;
 		back_to_list = true;
-		goto out_list;
-	}
+		जाओ out_list;
+	पूर्ण
 	mgm = mailbox->buf;
 	members_count = 0;
-	list_for_each_entry(dqp, &s_steer->promisc_qps[steer], list)
+	list_क्रम_each_entry(dqp, &s_steer->promisc_qps[steer], list)
 		mgm->qp[members_count++] = cpu_to_be32(dqp->qpn & MGM_QPN_MASK);
 	mgm->members_count = cpu_to_be32(members_count | MLX4_PROT_ETH << 30);
 
 	err = mlx4_WRITE_PROMISC(dev, port, steer, mailbox);
-	if (err)
-		goto out_mailbox;
+	अगर (err)
+		जाओ out_mailbox;
 
-	if (!(mlx4_is_mfunc(dev) && steer == MLX4_UC_STEER)) {
+	अगर (!(mlx4_is_mfunc(dev) && steer == MLX4_UC_STEER)) अणु
 		/* Remove the QP from all the steering entries */
-		list_for_each_entry_safe(entry, tmp_entry,
+		list_क्रम_each_entry_safe(entry, पंचांगp_entry,
 					 &s_steer->steer_entries[steer],
-					 list) {
+					 list) अणु
 			found = false;
-			list_for_each_entry(dqp, &entry->duplicates, list) {
-				if (dqp->qpn == qpn) {
+			list_क्रम_each_entry(dqp, &entry->duplicates, list) अणु
+				अगर (dqp->qpn == qpn) अणु
 					found = true;
-					break;
-				}
-			}
-			if (found) {
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			अगर (found) अणु
 				/* A duplicate, no need to change the MGM,
 				 * only update the duplicates list
 				 */
 				list_del(&dqp->list);
-				kfree(dqp);
-			} else {
-				int loc = -1;
+				kमुक्त(dqp);
+			पूर्ण अन्यथा अणु
+				पूर्णांक loc = -1;
 
 				err = mlx4_READ_ENTRY(dev,
 						      entry->index,
 						      mailbox);
-				if (err)
-					goto out_mailbox;
+				अगर (err)
+					जाओ out_mailbox;
 				members_count =
 					be32_to_cpu(mgm->members_count) &
 					0xffffff;
-				if (!members_count) {
+				अगर (!members_count) अणु
 					mlx4_warn(dev, "QP %06x wasn't found in entry %x mcount=0. deleting entry...\n",
 						  qpn, entry->index);
 					list_del(&entry->list);
-					kfree(entry);
-					continue;
-				}
+					kमुक्त(entry);
+					जारी;
+				पूर्ण
 
-				for (i = 0; i < members_count; ++i)
-					if ((be32_to_cpu(mgm->qp[i]) &
-					     MGM_QPN_MASK) == qpn) {
+				क्रम (i = 0; i < members_count; ++i)
+					अगर ((be32_to_cpu(mgm->qp[i]) &
+					     MGM_QPN_MASK) == qpn) अणु
 						loc = i;
-						break;
-					}
+						अवरोध;
+					पूर्ण
 
-				if (loc < 0) {
+				अगर (loc < 0) अणु
 					mlx4_err(dev, "QP %06x wasn't found in entry %d\n",
 						 qpn, entry->index);
 					err = -EINVAL;
-					goto out_mailbox;
-				}
+					जाओ out_mailbox;
+				पूर्ण
 
 				/* Copy the last QP in this MGM
-				 * over removed QP
+				 * over हटाओd QP
 				 */
 				mgm->qp[loc] = mgm->qp[members_count - 1];
 				mgm->qp[members_count - 1] = 0;
@@ -658,96 +659,96 @@ static int remove_promisc_qp(struct mlx4_dev *dev, u8 port,
 				err = mlx4_WRITE_ENTRY(dev,
 						       entry->index,
 						       mailbox);
-				if (err)
-					goto out_mailbox;
-			}
-		}
-	}
+				अगर (err)
+					जाओ out_mailbox;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 out_mailbox:
-	mlx4_free_cmd_mailbox(dev, mailbox);
+	mlx4_मुक्त_cmd_mailbox(dev, mailbox);
 out_list:
-	if (back_to_list)
+	अगर (back_to_list)
 		list_add_tail(&pqp->list, &s_steer->promisc_qps[steer]);
-	else
-		kfree(pqp);
+	अन्यथा
+		kमुक्त(pqp);
 out_mutex:
 	mutex_unlock(&priv->mcg_table.mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Caller must hold MCG table semaphore.  gid and mgm parameters must
- * be properly aligned for command interface.
+ * be properly aligned क्रम command पूर्णांकerface.
  *
  *  Returns 0 unless a firmware command error occurs.
  *
  * If GID is found in MGM or MGM is empty, *index = *hash, *prev = -1
  * and *mgm holds MGM entry.
  *
- * if GID is found in AMGM, *index = index in AMGM, *prev = index of
+ * अगर GID is found in AMGM, *index = index in AMGM, *prev = index of
  * previous entry in hash chain and *mgm holds AMGM entry.
  *
- * If no AMGM exists for given gid, *index = -1, *prev = index of last
+ * If no AMGM exists क्रम given gid, *index = -1, *prev = index of last
  * entry in hash chain and *mgm holds end of hash chain.
  */
-static int find_entry(struct mlx4_dev *dev, u8 port,
-		      u8 *gid, enum mlx4_protocol prot,
-		      struct mlx4_cmd_mailbox *mgm_mailbox,
-		      int *prev, int *index)
-{
-	struct mlx4_cmd_mailbox *mailbox;
-	struct mlx4_mgm *mgm = mgm_mailbox->buf;
+अटल पूर्णांक find_entry(काष्ठा mlx4_dev *dev, u8 port,
+		      u8 *gid, क्रमागत mlx4_protocol prot,
+		      काष्ठा mlx4_cmd_mailbox *mgm_mailbox,
+		      पूर्णांक *prev, पूर्णांक *index)
+अणु
+	काष्ठा mlx4_cmd_mailbox *mailbox;
+	काष्ठा mlx4_mgm *mgm = mgm_mailbox->buf;
 	u8 *mgid;
-	int err;
+	पूर्णांक err;
 	u16 hash;
 	u8 op_mod = (prot == MLX4_PROT_ETH) ?
 		!!(dev->caps.flags & MLX4_DEV_CAP_FLAG_VEP_MC_STEER) : 0;
 
 	mailbox = mlx4_alloc_cmd_mailbox(dev);
-	if (IS_ERR(mailbox))
-		return -ENOMEM;
+	अगर (IS_ERR(mailbox))
+		वापस -ENOMEM;
 	mgid = mailbox->buf;
 
-	memcpy(mgid, gid, 16);
+	स_नकल(mgid, gid, 16);
 
 	err = mlx4_GID_HASH(dev, mailbox, &hash, op_mod);
-	mlx4_free_cmd_mailbox(dev, mailbox);
-	if (err)
-		return err;
+	mlx4_मुक्त_cmd_mailbox(dev, mailbox);
+	अगर (err)
+		वापस err;
 
-	if (0)
+	अगर (0)
 		mlx4_dbg(dev, "Hash for %pI6 is %04x\n", gid, hash);
 
 	*index = hash;
 	*prev  = -1;
 
-	do {
+	करो अणु
 		err = mlx4_READ_ENTRY(dev, *index, mgm_mailbox);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		if (!(be32_to_cpu(mgm->members_count) & 0xffffff)) {
-			if (*index != hash) {
+		अगर (!(be32_to_cpu(mgm->members_count) & 0xffffff)) अणु
+			अगर (*index != hash) अणु
 				mlx4_err(dev, "Found zero MGID in AMGM\n");
 				err = -EINVAL;
-			}
-			return err;
-		}
+			पूर्ण
+			वापस err;
+		पूर्ण
 
-		if (!memcmp(mgm->gid, gid, 16) &&
+		अगर (!स_भेद(mgm->gid, gid, 16) &&
 		    be32_to_cpu(mgm->members_count) >> 30 == prot)
-			return err;
+			वापस err;
 
 		*prev = *index;
 		*index = be32_to_cpu(mgm->next_gid_index) >> 6;
-	} while (*index);
+	पूर्ण जबतक (*index);
 
 	*index = -1;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const u8 __promisc_mode[] = {
+अटल स्थिर u8 __promisc_mode[] = अणु
 	[MLX4_FS_REGULAR]   = 0x0,
 	[MLX4_FS_ALL_DEFAULT] = 0x1,
 	[MLX4_FS_MC_DEFAULT] = 0x3,
@@ -755,22 +756,22 @@ static const u8 __promisc_mode[] = {
 	[MLX4_FS_MIRROR_SX_PORT] = 0x5,
 	[MLX4_FS_UC_SNIFFER] = 0x6,
 	[MLX4_FS_MC_SNIFFER] = 0x7,
-};
+पूर्ण;
 
-int mlx4_map_sw_to_hw_steering_mode(struct mlx4_dev *dev,
-				    enum mlx4_net_trans_promisc_mode flow_type)
-{
-	if (flow_type >= MLX4_FS_MODE_NUM) {
+पूर्णांक mlx4_map_sw_to_hw_steering_mode(काष्ठा mlx4_dev *dev,
+				    क्रमागत mlx4_net_trans_promisc_mode flow_type)
+अणु
+	अगर (flow_type >= MLX4_FS_MODE_NUM) अणु
 		mlx4_err(dev, "Invalid flow type. type = %d\n", flow_type);
-		return -EINVAL;
-	}
-	return __promisc_mode[flow_type];
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस __promisc_mode[flow_type];
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx4_map_sw_to_hw_steering_mode);
 
-static void trans_rule_ctrl_to_hw(struct mlx4_net_trans_rule *ctrl,
-				  struct mlx4_net_trans_rule_hw_ctrl *hw)
-{
+अटल व्योम trans_rule_ctrl_to_hw(काष्ठा mlx4_net_trans_rule *ctrl,
+				  काष्ठा mlx4_net_trans_rule_hw_ctrl *hw)
+अणु
 	u8 flags = 0;
 
 	flags = ctrl->queue_mode == MLX4_NET_TRANS_Q_LIFO ? 1 : 0;
@@ -782,9 +783,9 @@ static void trans_rule_ctrl_to_hw(struct mlx4_net_trans_rule *ctrl,
 	hw->prio = cpu_to_be16(ctrl->priority);
 	hw->port = ctrl->port;
 	hw->qpn = cpu_to_be32(ctrl->qpn);
-}
+पूर्ण
 
-const u16 __sw_id_hw[] = {
+स्थिर u16 __sw_id_hw[] = अणु
 	[MLX4_NET_TRANS_RULE_ID_ETH]     = 0xE001,
 	[MLX4_NET_TRANS_RULE_ID_IB]      = 0xE005,
 	[MLX4_NET_TRANS_RULE_ID_IPV6]    = 0xE003,
@@ -792,274 +793,274 @@ const u16 __sw_id_hw[] = {
 	[MLX4_NET_TRANS_RULE_ID_TCP]     = 0xE004,
 	[MLX4_NET_TRANS_RULE_ID_UDP]     = 0xE006,
 	[MLX4_NET_TRANS_RULE_ID_VXLAN]	 = 0xE008
-};
+पूर्ण;
 
-int mlx4_map_sw_to_hw_steering_id(struct mlx4_dev *dev,
-				  enum mlx4_net_trans_rule_id id)
-{
-	if (id >= MLX4_NET_TRANS_RULE_NUM) {
+पूर्णांक mlx4_map_sw_to_hw_steering_id(काष्ठा mlx4_dev *dev,
+				  क्रमागत mlx4_net_trans_rule_id id)
+अणु
+	अगर (id >= MLX4_NET_TRANS_RULE_NUM) अणु
 		mlx4_err(dev, "Invalid network rule id. id = %d\n", id);
-		return -EINVAL;
-	}
-	return __sw_id_hw[id];
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस __sw_id_hw[id];
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx4_map_sw_to_hw_steering_id);
 
-static const int __rule_hw_sz[] = {
+अटल स्थिर पूर्णांक __rule_hw_sz[] = अणु
 	[MLX4_NET_TRANS_RULE_ID_ETH] =
-		sizeof(struct mlx4_net_trans_rule_hw_eth),
+		माप(काष्ठा mlx4_net_trans_rule_hw_eth),
 	[MLX4_NET_TRANS_RULE_ID_IB] =
-		sizeof(struct mlx4_net_trans_rule_hw_ib),
+		माप(काष्ठा mlx4_net_trans_rule_hw_ib),
 	[MLX4_NET_TRANS_RULE_ID_IPV6] = 0,
 	[MLX4_NET_TRANS_RULE_ID_IPV4] =
-		sizeof(struct mlx4_net_trans_rule_hw_ipv4),
+		माप(काष्ठा mlx4_net_trans_rule_hw_ipv4),
 	[MLX4_NET_TRANS_RULE_ID_TCP] =
-		sizeof(struct mlx4_net_trans_rule_hw_tcp_udp),
+		माप(काष्ठा mlx4_net_trans_rule_hw_tcp_udp),
 	[MLX4_NET_TRANS_RULE_ID_UDP] =
-		sizeof(struct mlx4_net_trans_rule_hw_tcp_udp),
+		माप(काष्ठा mlx4_net_trans_rule_hw_tcp_udp),
 	[MLX4_NET_TRANS_RULE_ID_VXLAN] =
-		sizeof(struct mlx4_net_trans_rule_hw_vxlan)
-};
+		माप(काष्ठा mlx4_net_trans_rule_hw_vxlan)
+पूर्ण;
 
-int mlx4_hw_rule_sz(struct mlx4_dev *dev,
-	       enum mlx4_net_trans_rule_id id)
-{
-	if (id >= MLX4_NET_TRANS_RULE_NUM) {
+पूर्णांक mlx4_hw_rule_sz(काष्ठा mlx4_dev *dev,
+	       क्रमागत mlx4_net_trans_rule_id id)
+अणु
+	अगर (id >= MLX4_NET_TRANS_RULE_NUM) अणु
 		mlx4_err(dev, "Invalid network rule id. id = %d\n", id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return __rule_hw_sz[id];
-}
+	वापस __rule_hw_sz[id];
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx4_hw_rule_sz);
 
-static int parse_trans_rule(struct mlx4_dev *dev, struct mlx4_spec_list *spec,
-			    struct _rule_hw *rule_hw)
-{
-	if (mlx4_hw_rule_sz(dev, spec->id) < 0)
-		return -EINVAL;
-	memset(rule_hw, 0, mlx4_hw_rule_sz(dev, spec->id));
+अटल पूर्णांक parse_trans_rule(काष्ठा mlx4_dev *dev, काष्ठा mlx4_spec_list *spec,
+			    काष्ठा _rule_hw *rule_hw)
+अणु
+	अगर (mlx4_hw_rule_sz(dev, spec->id) < 0)
+		वापस -EINVAL;
+	स_रखो(rule_hw, 0, mlx4_hw_rule_sz(dev, spec->id));
 	rule_hw->id = cpu_to_be16(__sw_id_hw[spec->id]);
 	rule_hw->size = mlx4_hw_rule_sz(dev, spec->id) >> 2;
 
-	switch (spec->id) {
-	case MLX4_NET_TRANS_RULE_ID_ETH:
-		memcpy(rule_hw->eth.dst_mac, spec->eth.dst_mac, ETH_ALEN);
-		memcpy(rule_hw->eth.dst_mac_msk, spec->eth.dst_mac_msk,
+	चयन (spec->id) अणु
+	हाल MLX4_NET_TRANS_RULE_ID_ETH:
+		स_नकल(rule_hw->eth.dst_mac, spec->eth.dst_mac, ETH_ALEN);
+		स_नकल(rule_hw->eth.dst_mac_msk, spec->eth.dst_mac_msk,
 		       ETH_ALEN);
-		memcpy(rule_hw->eth.src_mac, spec->eth.src_mac, ETH_ALEN);
-		memcpy(rule_hw->eth.src_mac_msk, spec->eth.src_mac_msk,
+		स_नकल(rule_hw->eth.src_mac, spec->eth.src_mac, ETH_ALEN);
+		स_नकल(rule_hw->eth.src_mac_msk, spec->eth.src_mac_msk,
 		       ETH_ALEN);
-		if (spec->eth.ether_type_enable) {
+		अगर (spec->eth.ether_type_enable) अणु
 			rule_hw->eth.ether_type_enable = 1;
 			rule_hw->eth.ether_type = spec->eth.ether_type;
-		}
+		पूर्ण
 		rule_hw->eth.vlan_tag = spec->eth.vlan_id;
 		rule_hw->eth.vlan_tag_msk = spec->eth.vlan_id_msk;
-		break;
+		अवरोध;
 
-	case MLX4_NET_TRANS_RULE_ID_IB:
+	हाल MLX4_NET_TRANS_RULE_ID_IB:
 		rule_hw->ib.l3_qpn = spec->ib.l3_qpn;
 		rule_hw->ib.qpn_mask = spec->ib.qpn_msk;
-		memcpy(&rule_hw->ib.dst_gid, &spec->ib.dst_gid, 16);
-		memcpy(&rule_hw->ib.dst_gid_msk, &spec->ib.dst_gid_msk, 16);
-		break;
+		स_नकल(&rule_hw->ib.dst_gid, &spec->ib.dst_gid, 16);
+		स_नकल(&rule_hw->ib.dst_gid_msk, &spec->ib.dst_gid_msk, 16);
+		अवरोध;
 
-	case MLX4_NET_TRANS_RULE_ID_IPV6:
-		return -EOPNOTSUPP;
+	हाल MLX4_NET_TRANS_RULE_ID_IPV6:
+		वापस -EOPNOTSUPP;
 
-	case MLX4_NET_TRANS_RULE_ID_IPV4:
+	हाल MLX4_NET_TRANS_RULE_ID_IPV4:
 		rule_hw->ipv4.src_ip = spec->ipv4.src_ip;
 		rule_hw->ipv4.src_ip_msk = spec->ipv4.src_ip_msk;
 		rule_hw->ipv4.dst_ip = spec->ipv4.dst_ip;
 		rule_hw->ipv4.dst_ip_msk = spec->ipv4.dst_ip_msk;
-		break;
+		अवरोध;
 
-	case MLX4_NET_TRANS_RULE_ID_TCP:
-	case MLX4_NET_TRANS_RULE_ID_UDP:
+	हाल MLX4_NET_TRANS_RULE_ID_TCP:
+	हाल MLX4_NET_TRANS_RULE_ID_UDP:
 		rule_hw->tcp_udp.dst_port = spec->tcp_udp.dst_port;
 		rule_hw->tcp_udp.dst_port_msk = spec->tcp_udp.dst_port_msk;
 		rule_hw->tcp_udp.src_port = spec->tcp_udp.src_port;
 		rule_hw->tcp_udp.src_port_msk = spec->tcp_udp.src_port_msk;
-		break;
+		अवरोध;
 
-	case MLX4_NET_TRANS_RULE_ID_VXLAN:
+	हाल MLX4_NET_TRANS_RULE_ID_VXLAN:
 		rule_hw->vxlan.vni =
 			cpu_to_be32(be32_to_cpu(spec->vxlan.vni) << 8);
 		rule_hw->vxlan.vni_mask =
 			cpu_to_be32(be32_to_cpu(spec->vxlan.vni_mask) << 8);
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return __rule_hw_sz[spec->id];
-}
+	वापस __rule_hw_sz[spec->id];
+पूर्ण
 
-static void mlx4_err_rule(struct mlx4_dev *dev, char *str,
-			  struct mlx4_net_trans_rule *rule)
-{
-#define BUF_SIZE 256
-	struct mlx4_spec_list *cur;
-	char buf[BUF_SIZE];
-	int len = 0;
+अटल व्योम mlx4_err_rule(काष्ठा mlx4_dev *dev, अक्षर *str,
+			  काष्ठा mlx4_net_trans_rule *rule)
+अणु
+#घोषणा BUF_SIZE 256
+	काष्ठा mlx4_spec_list *cur;
+	अक्षर buf[BUF_SIZE];
+	पूर्णांक len = 0;
 
 	mlx4_err(dev, "%s", str);
-	len += scnprintf(buf + len, BUF_SIZE - len,
+	len += scnम_लिखो(buf + len, BUF_SIZE - len,
 			 "port = %d prio = 0x%x qp = 0x%x ",
 			 rule->port, rule->priority, rule->qpn);
 
-	list_for_each_entry(cur, &rule->list, list) {
-		switch (cur->id) {
-		case MLX4_NET_TRANS_RULE_ID_ETH:
-			len += scnprintf(buf + len, BUF_SIZE - len,
+	list_क्रम_each_entry(cur, &rule->list, list) अणु
+		चयन (cur->id) अणु
+		हाल MLX4_NET_TRANS_RULE_ID_ETH:
+			len += scnम_लिखो(buf + len, BUF_SIZE - len,
 					 "dmac = %pM ", &cur->eth.dst_mac);
-			if (cur->eth.ether_type)
-				len += scnprintf(buf + len, BUF_SIZE - len,
+			अगर (cur->eth.ether_type)
+				len += scnम_लिखो(buf + len, BUF_SIZE - len,
 						 "ethertype = 0x%x ",
 						 be16_to_cpu(cur->eth.ether_type));
-			if (cur->eth.vlan_id)
-				len += scnprintf(buf + len, BUF_SIZE - len,
+			अगर (cur->eth.vlan_id)
+				len += scnम_लिखो(buf + len, BUF_SIZE - len,
 						 "vlan-id = %d ",
 						 be16_to_cpu(cur->eth.vlan_id));
-			break;
+			अवरोध;
 
-		case MLX4_NET_TRANS_RULE_ID_IPV4:
-			if (cur->ipv4.src_ip)
-				len += scnprintf(buf + len, BUF_SIZE - len,
+		हाल MLX4_NET_TRANS_RULE_ID_IPV4:
+			अगर (cur->ipv4.src_ip)
+				len += scnम_लिखो(buf + len, BUF_SIZE - len,
 						 "src-ip = %pI4 ",
 						 &cur->ipv4.src_ip);
-			if (cur->ipv4.dst_ip)
-				len += scnprintf(buf + len, BUF_SIZE - len,
+			अगर (cur->ipv4.dst_ip)
+				len += scnम_लिखो(buf + len, BUF_SIZE - len,
 						 "dst-ip = %pI4 ",
 						 &cur->ipv4.dst_ip);
-			break;
+			अवरोध;
 
-		case MLX4_NET_TRANS_RULE_ID_TCP:
-		case MLX4_NET_TRANS_RULE_ID_UDP:
-			if (cur->tcp_udp.src_port)
-				len += scnprintf(buf + len, BUF_SIZE - len,
+		हाल MLX4_NET_TRANS_RULE_ID_TCP:
+		हाल MLX4_NET_TRANS_RULE_ID_UDP:
+			अगर (cur->tcp_udp.src_port)
+				len += scnम_लिखो(buf + len, BUF_SIZE - len,
 						 "src-port = %d ",
 						 be16_to_cpu(cur->tcp_udp.src_port));
-			if (cur->tcp_udp.dst_port)
-				len += scnprintf(buf + len, BUF_SIZE - len,
+			अगर (cur->tcp_udp.dst_port)
+				len += scnम_लिखो(buf + len, BUF_SIZE - len,
 						 "dst-port = %d ",
 						 be16_to_cpu(cur->tcp_udp.dst_port));
-			break;
+			अवरोध;
 
-		case MLX4_NET_TRANS_RULE_ID_IB:
-			len += scnprintf(buf + len, BUF_SIZE - len,
+		हाल MLX4_NET_TRANS_RULE_ID_IB:
+			len += scnम_लिखो(buf + len, BUF_SIZE - len,
 					 "dst-gid = %pI6\n", cur->ib.dst_gid);
-			len += scnprintf(buf + len, BUF_SIZE - len,
+			len += scnम_लिखो(buf + len, BUF_SIZE - len,
 					 "dst-gid-mask = %pI6\n",
 					 cur->ib.dst_gid_msk);
-			break;
+			अवरोध;
 
-		case MLX4_NET_TRANS_RULE_ID_VXLAN:
-			len += scnprintf(buf + len, BUF_SIZE - len,
+		हाल MLX4_NET_TRANS_RULE_ID_VXLAN:
+			len += scnम_लिखो(buf + len, BUF_SIZE - len,
 					 "VNID = %d ", be32_to_cpu(cur->vxlan.vni));
-			break;
-		case MLX4_NET_TRANS_RULE_ID_IPV6:
-			break;
+			अवरोध;
+		हाल MLX4_NET_TRANS_RULE_ID_IPV6:
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
-	len += scnprintf(buf + len, BUF_SIZE - len, "\n");
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	len += scnम_लिखो(buf + len, BUF_SIZE - len, "\n");
 	mlx4_err(dev, "%s", buf);
 
-	if (len >= BUF_SIZE)
+	अगर (len >= BUF_SIZE)
 		mlx4_err(dev, "Network rule error message was truncated, print buffer is too small\n");
-}
+पूर्ण
 
-int mlx4_flow_attach(struct mlx4_dev *dev,
-		     struct mlx4_net_trans_rule *rule, u64 *reg_id)
-{
-	struct mlx4_cmd_mailbox *mailbox;
-	struct mlx4_spec_list *cur;
+पूर्णांक mlx4_flow_attach(काष्ठा mlx4_dev *dev,
+		     काष्ठा mlx4_net_trans_rule *rule, u64 *reg_id)
+अणु
+	काष्ठा mlx4_cmd_mailbox *mailbox;
+	काष्ठा mlx4_spec_list *cur;
 	u32 size = 0;
-	int ret;
+	पूर्णांक ret;
 
 	mailbox = mlx4_alloc_cmd_mailbox(dev);
-	if (IS_ERR(mailbox))
-		return PTR_ERR(mailbox);
+	अगर (IS_ERR(mailbox))
+		वापस PTR_ERR(mailbox);
 
-	if (!mlx4_qp_lookup(dev, rule->qpn)) {
+	अगर (!mlx4_qp_lookup(dev, rule->qpn)) अणु
 		mlx4_err_rule(dev, "QP doesn't exist\n", rule);
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	trans_rule_ctrl_to_hw(rule, mailbox->buf);
 
-	size += sizeof(struct mlx4_net_trans_rule_hw_ctrl);
+	size += माप(काष्ठा mlx4_net_trans_rule_hw_ctrl);
 
-	list_for_each_entry(cur, &rule->list, list) {
+	list_क्रम_each_entry(cur, &rule->list, list) अणु
 		ret = parse_trans_rule(dev, cur, mailbox->buf + size);
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 
 		size += ret;
-	}
+	पूर्ण
 
 	ret = mlx4_QP_FLOW_STEERING_ATTACH(dev, mailbox, size >> 2, reg_id);
-	if (ret == -ENOMEM) {
+	अगर (ret == -ENOMEM) अणु
 		mlx4_err_rule(dev,
 			      "mcg table is full. Fail to register network rule\n",
 			      rule);
-	} else if (ret) {
-		if (ret == -ENXIO) {
-			if (dev->caps.steering_mode != MLX4_STEERING_MODE_DEVICE_MANAGED)
+	पूर्ण अन्यथा अगर (ret) अणु
+		अगर (ret == -ENXIO) अणु
+			अगर (dev->caps.steering_mode != MLX4_STEERING_MODE_DEVICE_MANAGED)
 				mlx4_err_rule(dev,
 					      "DMFS is not enabled, "
 					      "failed to register network rule.\n",
 					      rule);
-			else
+			अन्यथा
 				mlx4_err_rule(dev,
 					      "Rule exceeds the dmfs_high_rate_mode limitations, "
 					      "failed to register network rule.\n",
 					      rule);
 
-		} else {
+		पूर्ण अन्यथा अणु
 			mlx4_err_rule(dev, "Fail to register network rule.\n", rule);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	mlx4_free_cmd_mailbox(dev, mailbox);
+	mlx4_मुक्त_cmd_mailbox(dev, mailbox);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx4_flow_attach);
 
-int mlx4_flow_detach(struct mlx4_dev *dev, u64 reg_id)
-{
-	int err;
+पूर्णांक mlx4_flow_detach(काष्ठा mlx4_dev *dev, u64 reg_id)
+अणु
+	पूर्णांक err;
 
 	err = mlx4_QP_FLOW_STEERING_DETACH(dev, reg_id);
-	if (err)
+	अगर (err)
 		mlx4_err(dev, "Fail to detach network rule. registration id = 0x%llx\n",
 			 reg_id);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx4_flow_detach);
 
-int mlx4_tunnel_steer_add(struct mlx4_dev *dev, unsigned char *addr,
-			  int port, int qpn, u16 prio, u64 *reg_id)
-{
-	int err;
-	struct mlx4_spec_list spec_eth_outer = { {NULL} };
-	struct mlx4_spec_list spec_vxlan     = { {NULL} };
-	struct mlx4_spec_list spec_eth_inner = { {NULL} };
+पूर्णांक mlx4_tunnel_steer_add(काष्ठा mlx4_dev *dev, अचिन्हित अक्षर *addr,
+			  पूर्णांक port, पूर्णांक qpn, u16 prio, u64 *reg_id)
+अणु
+	पूर्णांक err;
+	काष्ठा mlx4_spec_list spec_eth_outer = अणु अणुशून्यपूर्ण पूर्ण;
+	काष्ठा mlx4_spec_list spec_vxlan     = अणु अणुशून्यपूर्ण पूर्ण;
+	काष्ठा mlx4_spec_list spec_eth_inner = अणु अणुशून्यपूर्ण पूर्ण;
 
-	struct mlx4_net_trans_rule rule = {
+	काष्ठा mlx4_net_trans_rule rule = अणु
 		.queue_mode = MLX4_NET_TRANS_Q_FIFO,
 		.exclusive = 0,
 		.allow_loopback = 1,
 		.promisc_mode = MLX4_FS_REGULAR,
-	};
+	पूर्ण;
 
 	__be64 mac_mask = cpu_to_be64(MLX4_MAC_MASK << 16);
 
@@ -1069,8 +1070,8 @@ int mlx4_tunnel_steer_add(struct mlx4_dev *dev, unsigned char *addr,
 	INIT_LIST_HEAD(&rule.list);
 
 	spec_eth_outer.id = MLX4_NET_TRANS_RULE_ID_ETH;
-	memcpy(spec_eth_outer.eth.dst_mac, addr, ETH_ALEN);
-	memcpy(spec_eth_outer.eth.dst_mac_msk, &mac_mask, ETH_ALEN);
+	स_नकल(spec_eth_outer.eth.dst_mac, addr, ETH_ALEN);
+	स_नकल(spec_eth_outer.eth.dst_mac_msk, &mac_mask, ETH_ALEN);
 
 	spec_vxlan.id = MLX4_NET_TRANS_RULE_ID_VXLAN;    /* any vxlan header */
 	spec_eth_inner.id = MLX4_NET_TRANS_RULE_ID_ETH;	 /* any inner eth header */
@@ -1080,14 +1081,14 @@ int mlx4_tunnel_steer_add(struct mlx4_dev *dev, unsigned char *addr,
 	list_add_tail(&spec_eth_inner.list, &rule.list);
 
 	err = mlx4_flow_attach(dev, &rule, reg_id);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(mlx4_tunnel_steer_add);
 
-int mlx4_FLOW_STEERING_IB_UC_QP_RANGE(struct mlx4_dev *dev, u32 min_range_qpn,
+पूर्णांक mlx4_FLOW_STEERING_IB_UC_QP_RANGE(काष्ठा mlx4_dev *dev, u32 min_range_qpn,
 				      u32 max_range_qpn)
-{
-	int err;
+अणु
+	पूर्णांक err;
 	u64 in_param;
 
 	in_param = ((u64) min_range_qpn) << 32;
@@ -1097,396 +1098,396 @@ int mlx4_FLOW_STEERING_IB_UC_QP_RANGE(struct mlx4_dev *dev, u32 min_range_qpn,
 			MLX4_FLOW_STEERING_IB_UC_QP_RANGE,
 			MLX4_CMD_TIME_CLASS_A, MLX4_CMD_NATIVE);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx4_FLOW_STEERING_IB_UC_QP_RANGE);
 
-int mlx4_qp_attach_common(struct mlx4_dev *dev, struct mlx4_qp *qp, u8 gid[16],
-			  int block_mcast_loopback, enum mlx4_protocol prot,
-			  enum mlx4_steer_type steer)
-{
-	struct mlx4_priv *priv = mlx4_priv(dev);
-	struct mlx4_cmd_mailbox *mailbox;
-	struct mlx4_mgm *mgm;
+पूर्णांक mlx4_qp_attach_common(काष्ठा mlx4_dev *dev, काष्ठा mlx4_qp *qp, u8 gid[16],
+			  पूर्णांक block_mcast_loopback, क्रमागत mlx4_protocol prot,
+			  क्रमागत mlx4_steer_type steer)
+अणु
+	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
+	काष्ठा mlx4_cmd_mailbox *mailbox;
+	काष्ठा mlx4_mgm *mgm;
 	u32 members_count;
-	int index = -1, prev;
-	int link = 0;
-	int i;
-	int err;
+	पूर्णांक index = -1, prev;
+	पूर्णांक link = 0;
+	पूर्णांक i;
+	पूर्णांक err;
 	u8 port = gid[5];
 	u8 new_entry = 0;
 
 	mailbox = mlx4_alloc_cmd_mailbox(dev);
-	if (IS_ERR(mailbox))
-		return PTR_ERR(mailbox);
+	अगर (IS_ERR(mailbox))
+		वापस PTR_ERR(mailbox);
 	mgm = mailbox->buf;
 
 	mutex_lock(&priv->mcg_table.mutex);
 	err = find_entry(dev, port, gid, prot,
 			 mailbox, &prev, &index);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (index != -1) {
-		if (!(be32_to_cpu(mgm->members_count) & 0xffffff)) {
+	अगर (index != -1) अणु
+		अगर (!(be32_to_cpu(mgm->members_count) & 0xffffff)) अणु
 			new_entry = 1;
-			memcpy(mgm->gid, gid, 16);
-		}
-	} else {
+			स_नकल(mgm->gid, gid, 16);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		link = 1;
 
-		index = mlx4_bitmap_alloc(&priv->mcg_table.bitmap);
-		if (index == -1) {
+		index = mlx4_biपंचांगap_alloc(&priv->mcg_table.biपंचांगap);
+		अगर (index == -1) अणु
 			mlx4_err(dev, "No AMGM entries left\n");
 			err = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		index += dev->caps.num_mgms;
 
 		new_entry = 1;
-		memset(mgm, 0, sizeof(*mgm));
-		memcpy(mgm->gid, gid, 16);
-	}
+		स_रखो(mgm, 0, माप(*mgm));
+		स_नकल(mgm->gid, gid, 16);
+	पूर्ण
 
 	members_count = be32_to_cpu(mgm->members_count) & 0xffffff;
-	if (members_count == dev->caps.num_qp_per_mgm) {
+	अगर (members_count == dev->caps.num_qp_per_mgm) अणु
 		mlx4_err(dev, "MGM at index %x is full\n", index);
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < members_count; ++i)
-		if ((be32_to_cpu(mgm->qp[i]) & MGM_QPN_MASK) == qp->qpn) {
+	क्रम (i = 0; i < members_count; ++i)
+		अगर ((be32_to_cpu(mgm->qp[i]) & MGM_QPN_MASK) == qp->qpn) अणु
 			mlx4_dbg(dev, "QP %06x already a member of MGM\n", qp->qpn);
 			err = 0;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-	if (block_mcast_loopback)
+	अगर (block_mcast_loopback)
 		mgm->qp[members_count++] = cpu_to_be32((qp->qpn & MGM_QPN_MASK) |
 						       (1U << MGM_BLCK_LB_BIT));
-	else
+	अन्यथा
 		mgm->qp[members_count++] = cpu_to_be32(qp->qpn & MGM_QPN_MASK);
 
 	mgm->members_count = cpu_to_be32(members_count | (u32) prot << 30);
 
 	err = mlx4_WRITE_ENTRY(dev, index, mailbox);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (!link)
-		goto out;
+	अगर (!link)
+		जाओ out;
 
 	err = mlx4_READ_ENTRY(dev, prev, mailbox);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	mgm->next_gid_index = cpu_to_be32(index << 6);
 
 	err = mlx4_WRITE_ENTRY(dev, prev, mailbox);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 out:
-	if (prot == MLX4_PROT_ETH && index != -1) {
-		/* manage the steering entry for promisc mode */
-		if (new_entry)
+	अगर (prot == MLX4_PROT_ETH && index != -1) अणु
+		/* manage the steering entry क्रम promisc mode */
+		अगर (new_entry)
 			err = new_steering_entry(dev, port, steer,
 						 index, qp->qpn);
-		else
+		अन्यथा
 			err = existing_steering_entry(dev, port, steer,
 						      index, qp->qpn);
-	}
-	if (err && link && index != -1) {
-		if (index < dev->caps.num_mgms)
+	पूर्ण
+	अगर (err && link && index != -1) अणु
+		अगर (index < dev->caps.num_mgms)
 			mlx4_warn(dev, "Got AMGM index %d < %d\n",
 				  index, dev->caps.num_mgms);
-		else
-			mlx4_bitmap_free(&priv->mcg_table.bitmap,
+		अन्यथा
+			mlx4_biपंचांगap_मुक्त(&priv->mcg_table.biपंचांगap,
 					 index - dev->caps.num_mgms, MLX4_USE_RR);
-	}
+	पूर्ण
 	mutex_unlock(&priv->mcg_table.mutex);
 
-	mlx4_free_cmd_mailbox(dev, mailbox);
-	return err;
-}
+	mlx4_मुक्त_cmd_mailbox(dev, mailbox);
+	वापस err;
+पूर्ण
 
-int mlx4_qp_detach_common(struct mlx4_dev *dev, struct mlx4_qp *qp, u8 gid[16],
-			  enum mlx4_protocol prot, enum mlx4_steer_type steer)
-{
-	struct mlx4_priv *priv = mlx4_priv(dev);
-	struct mlx4_cmd_mailbox *mailbox;
-	struct mlx4_mgm *mgm;
+पूर्णांक mlx4_qp_detach_common(काष्ठा mlx4_dev *dev, काष्ठा mlx4_qp *qp, u8 gid[16],
+			  क्रमागत mlx4_protocol prot, क्रमागत mlx4_steer_type steer)
+अणु
+	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
+	काष्ठा mlx4_cmd_mailbox *mailbox;
+	काष्ठा mlx4_mgm *mgm;
 	u32 members_count;
-	int prev, index;
-	int i, loc = -1;
-	int err;
+	पूर्णांक prev, index;
+	पूर्णांक i, loc = -1;
+	पूर्णांक err;
 	u8 port = gid[5];
-	bool removed_entry = false;
+	bool हटाओd_entry = false;
 
 	mailbox = mlx4_alloc_cmd_mailbox(dev);
-	if (IS_ERR(mailbox))
-		return PTR_ERR(mailbox);
+	अगर (IS_ERR(mailbox))
+		वापस PTR_ERR(mailbox);
 	mgm = mailbox->buf;
 
 	mutex_lock(&priv->mcg_table.mutex);
 
 	err = find_entry(dev, port, gid, prot,
 			 mailbox, &prev, &index);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (index == -1) {
+	अगर (index == -1) अणु
 		mlx4_err(dev, "MGID %pI6 not found\n", gid);
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* If this QP is also a promisc QP, it shouldn't be removed only if
+	/* If this QP is also a promisc QP, it shouldn't be हटाओd only अगर
 	 * at least one none promisc QP is also attached to this MCG
 	 */
-	if (prot == MLX4_PROT_ETH &&
+	अगर (prot == MLX4_PROT_ETH &&
 	    check_duplicate_entry(dev, port, steer, index, qp->qpn) &&
-	    !promisc_steering_entry(dev, port, steer, index, qp->qpn, NULL))
-			goto out;
+	    !promisc_steering_entry(dev, port, steer, index, qp->qpn, शून्य))
+			जाओ out;
 
 	members_count = be32_to_cpu(mgm->members_count) & 0xffffff;
-	for (i = 0; i < members_count; ++i)
-		if ((be32_to_cpu(mgm->qp[i]) & MGM_QPN_MASK) == qp->qpn) {
+	क्रम (i = 0; i < members_count; ++i)
+		अगर ((be32_to_cpu(mgm->qp[i]) & MGM_QPN_MASK) == qp->qpn) अणु
 			loc = i;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	if (loc == -1) {
+	अगर (loc == -1) अणु
 		mlx4_err(dev, "QP %06x not found in MGM\n", qp->qpn);
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* copy the last QP in this MGM over removed QP */
+	/* copy the last QP in this MGM over हटाओd QP */
 	mgm->qp[loc] = mgm->qp[members_count - 1];
 	mgm->qp[members_count - 1] = 0;
 	mgm->members_count = cpu_to_be32(--members_count | (u32) prot << 30);
 
-	if (prot == MLX4_PROT_ETH)
-		removed_entry = can_remove_steering_entry(dev, port, steer,
+	अगर (prot == MLX4_PROT_ETH)
+		हटाओd_entry = can_हटाओ_steering_entry(dev, port, steer,
 								index, qp->qpn);
-	if (members_count && (prot != MLX4_PROT_ETH || !removed_entry)) {
+	अगर (members_count && (prot != MLX4_PROT_ETH || !हटाओd_entry)) अणु
 		err = mlx4_WRITE_ENTRY(dev, index, mailbox);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* We are going to delete the entry, members count should be 0 */
 	mgm->members_count = cpu_to_be32((u32) prot << 30);
 
-	if (prev == -1) {
+	अगर (prev == -1) अणु
 		/* Remove entry from MGM */
-		int amgm_index = be32_to_cpu(mgm->next_gid_index) >> 6;
-		if (amgm_index) {
+		पूर्णांक amgm_index = be32_to_cpu(mgm->next_gid_index) >> 6;
+		अगर (amgm_index) अणु
 			err = mlx4_READ_ENTRY(dev, amgm_index, mailbox);
-			if (err)
-				goto out;
-		} else
-			memset(mgm->gid, 0, 16);
+			अगर (err)
+				जाओ out;
+		पूर्ण अन्यथा
+			स_रखो(mgm->gid, 0, 16);
 
 		err = mlx4_WRITE_ENTRY(dev, index, mailbox);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
-		if (amgm_index) {
-			if (amgm_index < dev->caps.num_mgms)
+		अगर (amgm_index) अणु
+			अगर (amgm_index < dev->caps.num_mgms)
 				mlx4_warn(dev, "MGM entry %d had AMGM index %d < %d\n",
 					  index, amgm_index, dev->caps.num_mgms);
-			else
-				mlx4_bitmap_free(&priv->mcg_table.bitmap,
+			अन्यथा
+				mlx4_biपंचांगap_मुक्त(&priv->mcg_table.biपंचांगap,
 						 amgm_index - dev->caps.num_mgms, MLX4_USE_RR);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Remove entry from AMGM */
-		int cur_next_index = be32_to_cpu(mgm->next_gid_index) >> 6;
+		पूर्णांक cur_next_index = be32_to_cpu(mgm->next_gid_index) >> 6;
 		err = mlx4_READ_ENTRY(dev, prev, mailbox);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
 		mgm->next_gid_index = cpu_to_be32(cur_next_index << 6);
 
 		err = mlx4_WRITE_ENTRY(dev, prev, mailbox);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
-		if (index < dev->caps.num_mgms)
+		अगर (index < dev->caps.num_mgms)
 			mlx4_warn(dev, "entry %d had next AMGM index %d < %d\n",
 				  prev, index, dev->caps.num_mgms);
-		else
-			mlx4_bitmap_free(&priv->mcg_table.bitmap,
+		अन्यथा
+			mlx4_biपंचांगap_मुक्त(&priv->mcg_table.biपंचांगap,
 					 index - dev->caps.num_mgms, MLX4_USE_RR);
-	}
+	पूर्ण
 
 out:
 	mutex_unlock(&priv->mcg_table.mutex);
 
-	mlx4_free_cmd_mailbox(dev, mailbox);
-	if (err && dev->persist->state & MLX4_DEVICE_STATE_INTERNAL_ERROR)
-		/* In case device is under an error, return success as a closing command */
+	mlx4_मुक्त_cmd_mailbox(dev, mailbox);
+	अगर (err && dev->persist->state & MLX4_DEVICE_STATE_INTERNAL_ERROR)
+		/* In हाल device is under an error, वापस success as a closing command */
 		err = 0;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlx4_QP_ATTACH(struct mlx4_dev *dev, struct mlx4_qp *qp,
+अटल पूर्णांक mlx4_QP_ATTACH(काष्ठा mlx4_dev *dev, काष्ठा mlx4_qp *qp,
 			  u8 gid[16], u8 attach, u8 block_loopback,
-			  enum mlx4_protocol prot)
-{
-	struct mlx4_cmd_mailbox *mailbox;
-	int err = 0;
-	int qpn;
+			  क्रमागत mlx4_protocol prot)
+अणु
+	काष्ठा mlx4_cmd_mailbox *mailbox;
+	पूर्णांक err = 0;
+	पूर्णांक qpn;
 
-	if (!mlx4_is_mfunc(dev))
-		return -EBADF;
+	अगर (!mlx4_is_mfunc(dev))
+		वापस -EBADF;
 
 	mailbox = mlx4_alloc_cmd_mailbox(dev);
-	if (IS_ERR(mailbox))
-		return PTR_ERR(mailbox);
+	अगर (IS_ERR(mailbox))
+		वापस PTR_ERR(mailbox);
 
-	memcpy(mailbox->buf, gid, 16);
+	स_नकल(mailbox->buf, gid, 16);
 	qpn = qp->qpn;
 	qpn |= (prot << 28);
-	if (attach && block_loopback)
+	अगर (attach && block_loopback)
 		qpn |= (1 << 31);
 
 	err = mlx4_cmd(dev, mailbox->dma, qpn, attach,
 		       MLX4_CMD_QP_ATTACH, MLX4_CMD_TIME_CLASS_A,
 		       MLX4_CMD_WRAPPED);
 
-	mlx4_free_cmd_mailbox(dev, mailbox);
-	if (err && !attach &&
+	mlx4_मुक्त_cmd_mailbox(dev, mailbox);
+	अगर (err && !attach &&
 	    dev->persist->state & MLX4_DEVICE_STATE_INTERNAL_ERROR)
 		err = 0;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mlx4_trans_to_dmfs_attach(struct mlx4_dev *dev, struct mlx4_qp *qp,
+पूर्णांक mlx4_trans_to_dmfs_attach(काष्ठा mlx4_dev *dev, काष्ठा mlx4_qp *qp,
 			      u8 gid[16], u8 port,
-			      int block_mcast_loopback,
-			      enum mlx4_protocol prot, u64 *reg_id)
-{
-		struct mlx4_spec_list spec = { {NULL} };
+			      पूर्णांक block_mcast_loopback,
+			      क्रमागत mlx4_protocol prot, u64 *reg_id)
+अणु
+		काष्ठा mlx4_spec_list spec = अणु अणुशून्यपूर्ण पूर्ण;
 		__be64 mac_mask = cpu_to_be64(MLX4_MAC_MASK << 16);
 
-		struct mlx4_net_trans_rule rule = {
+		काष्ठा mlx4_net_trans_rule rule = अणु
 			.queue_mode = MLX4_NET_TRANS_Q_FIFO,
 			.exclusive = 0,
 			.promisc_mode = MLX4_FS_REGULAR,
 			.priority = MLX4_DOMAIN_NIC,
-		};
+		पूर्ण;
 
 		rule.allow_loopback = !block_mcast_loopback;
 		rule.port = port;
 		rule.qpn = qp->qpn;
 		INIT_LIST_HEAD(&rule.list);
 
-		switch (prot) {
-		case MLX4_PROT_ETH:
+		चयन (prot) अणु
+		हाल MLX4_PROT_ETH:
 			spec.id = MLX4_NET_TRANS_RULE_ID_ETH;
-			memcpy(spec.eth.dst_mac, &gid[10], ETH_ALEN);
-			memcpy(spec.eth.dst_mac_msk, &mac_mask, ETH_ALEN);
-			break;
+			स_नकल(spec.eth.dst_mac, &gid[10], ETH_ALEN);
+			स_नकल(spec.eth.dst_mac_msk, &mac_mask, ETH_ALEN);
+			अवरोध;
 
-		case MLX4_PROT_IB_IPV6:
+		हाल MLX4_PROT_IB_IPV6:
 			spec.id = MLX4_NET_TRANS_RULE_ID_IB;
-			memcpy(spec.ib.dst_gid, gid, 16);
-			memset(&spec.ib.dst_gid_msk, 0xff, 16);
-			break;
-		default:
-			return -EINVAL;
-		}
+			स_नकल(spec.ib.dst_gid, gid, 16);
+			स_रखो(&spec.ib.dst_gid_msk, 0xff, 16);
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 		list_add_tail(&spec.list, &rule.list);
 
-		return mlx4_flow_attach(dev, &rule, reg_id);
-}
+		वापस mlx4_flow_attach(dev, &rule, reg_id);
+पूर्ण
 
-int mlx4_multicast_attach(struct mlx4_dev *dev, struct mlx4_qp *qp, u8 gid[16],
-			  u8 port, int block_mcast_loopback,
-			  enum mlx4_protocol prot, u64 *reg_id)
-{
-	switch (dev->caps.steering_mode) {
-	case MLX4_STEERING_MODE_A0:
-		if (prot == MLX4_PROT_ETH)
-			return 0;
+पूर्णांक mlx4_multicast_attach(काष्ठा mlx4_dev *dev, काष्ठा mlx4_qp *qp, u8 gid[16],
+			  u8 port, पूर्णांक block_mcast_loopback,
+			  क्रमागत mlx4_protocol prot, u64 *reg_id)
+अणु
+	चयन (dev->caps.steering_mode) अणु
+	हाल MLX4_STEERING_MODE_A0:
+		अगर (prot == MLX4_PROT_ETH)
+			वापस 0;
 		fallthrough;
 
-	case MLX4_STEERING_MODE_B0:
-		if (prot == MLX4_PROT_ETH)
+	हाल MLX4_STEERING_MODE_B0:
+		अगर (prot == MLX4_PROT_ETH)
 			gid[7] |= (MLX4_MC_STEER << 1);
 
-		if (mlx4_is_mfunc(dev))
-			return mlx4_QP_ATTACH(dev, qp, gid, 1,
+		अगर (mlx4_is_mfunc(dev))
+			वापस mlx4_QP_ATTACH(dev, qp, gid, 1,
 					      block_mcast_loopback, prot);
-		return mlx4_qp_attach_common(dev, qp, gid,
+		वापस mlx4_qp_attach_common(dev, qp, gid,
 					     block_mcast_loopback, prot,
 					     MLX4_MC_STEER);
 
-	case MLX4_STEERING_MODE_DEVICE_MANAGED:
-		return mlx4_trans_to_dmfs_attach(dev, qp, gid, port,
+	हाल MLX4_STEERING_MODE_DEVICE_MANAGED:
+		वापस mlx4_trans_to_dmfs_attach(dev, qp, gid, port,
 						 block_mcast_loopback,
 						 prot, reg_id);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx4_multicast_attach);
 
-int mlx4_multicast_detach(struct mlx4_dev *dev, struct mlx4_qp *qp, u8 gid[16],
-			  enum mlx4_protocol prot, u64 reg_id)
-{
-	switch (dev->caps.steering_mode) {
-	case MLX4_STEERING_MODE_A0:
-		if (prot == MLX4_PROT_ETH)
-			return 0;
+पूर्णांक mlx4_multicast_detach(काष्ठा mlx4_dev *dev, काष्ठा mlx4_qp *qp, u8 gid[16],
+			  क्रमागत mlx4_protocol prot, u64 reg_id)
+अणु
+	चयन (dev->caps.steering_mode) अणु
+	हाल MLX4_STEERING_MODE_A0:
+		अगर (prot == MLX4_PROT_ETH)
+			वापस 0;
 		fallthrough;
 
-	case MLX4_STEERING_MODE_B0:
-		if (prot == MLX4_PROT_ETH)
+	हाल MLX4_STEERING_MODE_B0:
+		अगर (prot == MLX4_PROT_ETH)
 			gid[7] |= (MLX4_MC_STEER << 1);
 
-		if (mlx4_is_mfunc(dev))
-			return mlx4_QP_ATTACH(dev, qp, gid, 0, 0, prot);
+		अगर (mlx4_is_mfunc(dev))
+			वापस mlx4_QP_ATTACH(dev, qp, gid, 0, 0, prot);
 
-		return mlx4_qp_detach_common(dev, qp, gid, prot,
+		वापस mlx4_qp_detach_common(dev, qp, gid, prot,
 					     MLX4_MC_STEER);
 
-	case MLX4_STEERING_MODE_DEVICE_MANAGED:
-		return mlx4_flow_detach(dev, reg_id);
+	हाल MLX4_STEERING_MODE_DEVICE_MANAGED:
+		वापस mlx4_flow_detach(dev, reg_id);
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx4_multicast_detach);
 
-int mlx4_flow_steer_promisc_add(struct mlx4_dev *dev, u8 port,
-				u32 qpn, enum mlx4_net_trans_promisc_mode mode)
-{
-	struct mlx4_net_trans_rule rule = {
+पूर्णांक mlx4_flow_steer_promisc_add(काष्ठा mlx4_dev *dev, u8 port,
+				u32 qpn, क्रमागत mlx4_net_trans_promisc_mode mode)
+अणु
+	काष्ठा mlx4_net_trans_rule rule = अणु
 		.queue_mode = MLX4_NET_TRANS_Q_FIFO,
 		.exclusive = 0,
 		.allow_loopback = 1,
-	};
+	पूर्ण;
 
 	u64 *regid_p;
 
-	switch (mode) {
-	case MLX4_FS_ALL_DEFAULT:
+	चयन (mode) अणु
+	हाल MLX4_FS_ALL_DEFAULT:
 		regid_p = &dev->regid_promisc_array[port];
-		break;
-	case MLX4_FS_MC_DEFAULT:
+		अवरोध;
+	हाल MLX4_FS_MC_DEFAULT:
 		regid_p = &dev->regid_allmulti_array[port];
-		break;
-	default:
-		return -1;
-	}
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	if (*regid_p != 0)
-		return -1;
+	अगर (*regid_p != 0)
+		वापस -1;
 
 	rule.promisc_mode = mode;
 	rule.port = port;
@@ -1494,156 +1495,156 @@ int mlx4_flow_steer_promisc_add(struct mlx4_dev *dev, u8 port,
 	INIT_LIST_HEAD(&rule.list);
 	mlx4_info(dev, "going promisc on %x\n", port);
 
-	return  mlx4_flow_attach(dev, &rule, regid_p);
-}
+	वापस  mlx4_flow_attach(dev, &rule, regid_p);
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx4_flow_steer_promisc_add);
 
-int mlx4_flow_steer_promisc_remove(struct mlx4_dev *dev, u8 port,
-				   enum mlx4_net_trans_promisc_mode mode)
-{
-	int ret;
+पूर्णांक mlx4_flow_steer_promisc_हटाओ(काष्ठा mlx4_dev *dev, u8 port,
+				   क्रमागत mlx4_net_trans_promisc_mode mode)
+अणु
+	पूर्णांक ret;
 	u64 *regid_p;
 
-	switch (mode) {
-	case MLX4_FS_ALL_DEFAULT:
+	चयन (mode) अणु
+	हाल MLX4_FS_ALL_DEFAULT:
 		regid_p = &dev->regid_promisc_array[port];
-		break;
-	case MLX4_FS_MC_DEFAULT:
+		अवरोध;
+	हाल MLX4_FS_MC_DEFAULT:
 		regid_p = &dev->regid_allmulti_array[port];
-		break;
-	default:
-		return -1;
-	}
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	if (*regid_p == 0)
-		return -1;
+	अगर (*regid_p == 0)
+		वापस -1;
 
 	ret =  mlx4_flow_detach(dev, *regid_p);
-	if (ret == 0)
+	अगर (ret == 0)
 		*regid_p = 0;
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(mlx4_flow_steer_promisc_remove);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx4_flow_steer_promisc_हटाओ);
 
-int mlx4_unicast_attach(struct mlx4_dev *dev,
-			struct mlx4_qp *qp, u8 gid[16],
-			int block_mcast_loopback, enum mlx4_protocol prot)
-{
-	if (prot == MLX4_PROT_ETH)
+पूर्णांक mlx4_unicast_attach(काष्ठा mlx4_dev *dev,
+			काष्ठा mlx4_qp *qp, u8 gid[16],
+			पूर्णांक block_mcast_loopback, क्रमागत mlx4_protocol prot)
+अणु
+	अगर (prot == MLX4_PROT_ETH)
 		gid[7] |= (MLX4_UC_STEER << 1);
 
-	if (mlx4_is_mfunc(dev))
-		return mlx4_QP_ATTACH(dev, qp, gid, 1,
+	अगर (mlx4_is_mfunc(dev))
+		वापस mlx4_QP_ATTACH(dev, qp, gid, 1,
 					block_mcast_loopback, prot);
 
-	return mlx4_qp_attach_common(dev, qp, gid, block_mcast_loopback,
+	वापस mlx4_qp_attach_common(dev, qp, gid, block_mcast_loopback,
 					prot, MLX4_UC_STEER);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx4_unicast_attach);
 
-int mlx4_unicast_detach(struct mlx4_dev *dev, struct mlx4_qp *qp,
-			       u8 gid[16], enum mlx4_protocol prot)
-{
-	if (prot == MLX4_PROT_ETH)
+पूर्णांक mlx4_unicast_detach(काष्ठा mlx4_dev *dev, काष्ठा mlx4_qp *qp,
+			       u8 gid[16], क्रमागत mlx4_protocol prot)
+अणु
+	अगर (prot == MLX4_PROT_ETH)
 		gid[7] |= (MLX4_UC_STEER << 1);
 
-	if (mlx4_is_mfunc(dev))
-		return mlx4_QP_ATTACH(dev, qp, gid, 0, 0, prot);
+	अगर (mlx4_is_mfunc(dev))
+		वापस mlx4_QP_ATTACH(dev, qp, gid, 0, 0, prot);
 
-	return mlx4_qp_detach_common(dev, qp, gid, prot, MLX4_UC_STEER);
-}
+	वापस mlx4_qp_detach_common(dev, qp, gid, prot, MLX4_UC_STEER);
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx4_unicast_detach);
 
-int mlx4_PROMISC_wrapper(struct mlx4_dev *dev, int slave,
-			 struct mlx4_vhcr *vhcr,
-			 struct mlx4_cmd_mailbox *inbox,
-			 struct mlx4_cmd_mailbox *outbox,
-			 struct mlx4_cmd_info *cmd)
-{
+पूर्णांक mlx4_PROMISC_wrapper(काष्ठा mlx4_dev *dev, पूर्णांक slave,
+			 काष्ठा mlx4_vhcr *vhcr,
+			 काष्ठा mlx4_cmd_mailbox *inbox,
+			 काष्ठा mlx4_cmd_mailbox *outbox,
+			 काष्ठा mlx4_cmd_info *cmd)
+अणु
 	u32 qpn = (u32) vhcr->in_param & 0xffffffff;
-	int port = mlx4_slave_convert_port(dev, slave, vhcr->in_param >> 62);
-	enum mlx4_steer_type steer = vhcr->in_modifier;
+	पूर्णांक port = mlx4_slave_convert_port(dev, slave, vhcr->in_param >> 62);
+	क्रमागत mlx4_steer_type steer = vhcr->in_modअगरier;
 
-	if (port < 0)
-		return -EINVAL;
+	अगर (port < 0)
+		वापस -EINVAL;
 
 	/* Promiscuous unicast is not allowed in mfunc */
-	if (mlx4_is_mfunc(dev) && steer == MLX4_UC_STEER)
-		return 0;
+	अगर (mlx4_is_mfunc(dev) && steer == MLX4_UC_STEER)
+		वापस 0;
 
-	if (vhcr->op_modifier)
-		return add_promisc_qp(dev, port, steer, qpn);
-	else
-		return remove_promisc_qp(dev, port, steer, qpn);
-}
+	अगर (vhcr->op_modअगरier)
+		वापस add_promisc_qp(dev, port, steer, qpn);
+	अन्यथा
+		वापस हटाओ_promisc_qp(dev, port, steer, qpn);
+पूर्ण
 
-static int mlx4_PROMISC(struct mlx4_dev *dev, u32 qpn,
-			enum mlx4_steer_type steer, u8 add, u8 port)
-{
-	return mlx4_cmd(dev, (u64) qpn | (u64) port << 62, (u32) steer, add,
+अटल पूर्णांक mlx4_PROMISC(काष्ठा mlx4_dev *dev, u32 qpn,
+			क्रमागत mlx4_steer_type steer, u8 add, u8 port)
+अणु
+	वापस mlx4_cmd(dev, (u64) qpn | (u64) port << 62, (u32) steer, add,
 			MLX4_CMD_PROMISC, MLX4_CMD_TIME_CLASS_A,
 			MLX4_CMD_WRAPPED);
-}
+पूर्ण
 
-int mlx4_multicast_promisc_add(struct mlx4_dev *dev, u32 qpn, u8 port)
-{
-	if (mlx4_is_mfunc(dev))
-		return mlx4_PROMISC(dev, qpn, MLX4_MC_STEER, 1, port);
+पूर्णांक mlx4_multicast_promisc_add(काष्ठा mlx4_dev *dev, u32 qpn, u8 port)
+अणु
+	अगर (mlx4_is_mfunc(dev))
+		वापस mlx4_PROMISC(dev, qpn, MLX4_MC_STEER, 1, port);
 
-	return add_promisc_qp(dev, port, MLX4_MC_STEER, qpn);
-}
+	वापस add_promisc_qp(dev, port, MLX4_MC_STEER, qpn);
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx4_multicast_promisc_add);
 
-int mlx4_multicast_promisc_remove(struct mlx4_dev *dev, u32 qpn, u8 port)
-{
-	if (mlx4_is_mfunc(dev))
-		return mlx4_PROMISC(dev, qpn, MLX4_MC_STEER, 0, port);
+पूर्णांक mlx4_multicast_promisc_हटाओ(काष्ठा mlx4_dev *dev, u32 qpn, u8 port)
+अणु
+	अगर (mlx4_is_mfunc(dev))
+		वापस mlx4_PROMISC(dev, qpn, MLX4_MC_STEER, 0, port);
 
-	return remove_promisc_qp(dev, port, MLX4_MC_STEER, qpn);
-}
-EXPORT_SYMBOL_GPL(mlx4_multicast_promisc_remove);
+	वापस हटाओ_promisc_qp(dev, port, MLX4_MC_STEER, qpn);
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx4_multicast_promisc_हटाओ);
 
-int mlx4_unicast_promisc_add(struct mlx4_dev *dev, u32 qpn, u8 port)
-{
-	if (mlx4_is_mfunc(dev))
-		return mlx4_PROMISC(dev, qpn, MLX4_UC_STEER, 1, port);
+पूर्णांक mlx4_unicast_promisc_add(काष्ठा mlx4_dev *dev, u32 qpn, u8 port)
+अणु
+	अगर (mlx4_is_mfunc(dev))
+		वापस mlx4_PROMISC(dev, qpn, MLX4_UC_STEER, 1, port);
 
-	return add_promisc_qp(dev, port, MLX4_UC_STEER, qpn);
-}
+	वापस add_promisc_qp(dev, port, MLX4_UC_STEER, qpn);
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx4_unicast_promisc_add);
 
-int mlx4_unicast_promisc_remove(struct mlx4_dev *dev, u32 qpn, u8 port)
-{
-	if (mlx4_is_mfunc(dev))
-		return mlx4_PROMISC(dev, qpn, MLX4_UC_STEER, 0, port);
+पूर्णांक mlx4_unicast_promisc_हटाओ(काष्ठा mlx4_dev *dev, u32 qpn, u8 port)
+अणु
+	अगर (mlx4_is_mfunc(dev))
+		वापस mlx4_PROMISC(dev, qpn, MLX4_UC_STEER, 0, port);
 
-	return remove_promisc_qp(dev, port, MLX4_UC_STEER, qpn);
-}
-EXPORT_SYMBOL_GPL(mlx4_unicast_promisc_remove);
+	वापस हटाओ_promisc_qp(dev, port, MLX4_UC_STEER, qpn);
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx4_unicast_promisc_हटाओ);
 
-int mlx4_init_mcg_table(struct mlx4_dev *dev)
-{
-	struct mlx4_priv *priv = mlx4_priv(dev);
-	int err;
+पूर्णांक mlx4_init_mcg_table(काष्ठा mlx4_dev *dev)
+अणु
+	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
+	पूर्णांक err;
 
-	/* No need for mcg_table when fw managed the mcg table*/
-	if (dev->caps.steering_mode ==
+	/* No need क्रम mcg_table when fw managed the mcg table*/
+	अगर (dev->caps.steering_mode ==
 	    MLX4_STEERING_MODE_DEVICE_MANAGED)
-		return 0;
-	err = mlx4_bitmap_init(&priv->mcg_table.bitmap, dev->caps.num_amgms,
+		वापस 0;
+	err = mlx4_biपंचांगap_init(&priv->mcg_table.biपंचांगap, dev->caps.num_amgms,
 			       dev->caps.num_amgms - 1, 0, 0);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	mutex_init(&priv->mcg_table.mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mlx4_cleanup_mcg_table(struct mlx4_dev *dev)
-{
-	if (dev->caps.steering_mode !=
+व्योम mlx4_cleanup_mcg_table(काष्ठा mlx4_dev *dev)
+अणु
+	अगर (dev->caps.steering_mode !=
 	    MLX4_STEERING_MODE_DEVICE_MANAGED)
-		mlx4_bitmap_cleanup(&mlx4_priv(dev)->mcg_table.bitmap);
-}
+		mlx4_biपंचांगap_cleanup(&mlx4_priv(dev)->mcg_table.biपंचांगap);
+पूर्ण

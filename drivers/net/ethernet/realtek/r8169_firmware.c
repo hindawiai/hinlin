@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* r8169_firmware.c: RealTek 8169/8168/8101 ethernet driver.
  *
  * Copyright (c) 2002 ShuChen <shuchen@realtek.com.tw>
  * Copyright (c) 2003 - 2007 Francois Romieu <romieu@fr.zoreil.com>
  * Copyright (c) a lot of people too. Please respect their work.
  *
- * See MAINTAINERS file for support contact information.
+ * See MAINTAINERS file क्रम support contact inक्रमmation.
  */
 
-#include <linux/delay.h>
-#include <linux/firmware.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/firmware.h>
 
-#include "r8169_firmware.h"
+#समावेश "r8169_firmware.h"
 
-enum rtl_fw_opcode {
+क्रमागत rtl_fw_opcode अणु
 	PHY_READ		= 0x0,
 	PHY_DATA_OR		= 0x1,
 	PHY_DATA_AND		= 0x2,
@@ -27,210 +28,210 @@ enum rtl_fw_opcode {
 	PHY_WRITE_PREVIOUS	= 0xc,
 	PHY_SKIPN		= 0xd,
 	PHY_DELAY_MS		= 0xe,
-};
+पूर्ण;
 
-struct fw_info {
+काष्ठा fw_info अणु
 	u32	magic;
-	char	version[RTL_VER_SIZE];
+	अक्षर	version[RTL_VER_SIZE];
 	__le32	fw_start;
 	__le32	fw_len;
 	u8	chksum;
-} __packed;
+पूर्ण __packed;
 
-#define FW_OPCODE_SIZE sizeof_field(struct rtl_fw_phy_action, code[0])
+#घोषणा FW_OPCODE_SIZE माप_field(काष्ठा rtl_fw_phy_action, code[0])
 
-static bool rtl_fw_format_ok(struct rtl_fw *rtl_fw)
-{
-	const struct firmware *fw = rtl_fw->fw;
-	struct fw_info *fw_info = (struct fw_info *)fw->data;
-	struct rtl_fw_phy_action *pa = &rtl_fw->phy_action;
+अटल bool rtl_fw_क्रमmat_ok(काष्ठा rtl_fw *rtl_fw)
+अणु
+	स्थिर काष्ठा firmware *fw = rtl_fw->fw;
+	काष्ठा fw_info *fw_info = (काष्ठा fw_info *)fw->data;
+	काष्ठा rtl_fw_phy_action *pa = &rtl_fw->phy_action;
 
-	if (fw->size < FW_OPCODE_SIZE)
-		return false;
+	अगर (fw->size < FW_OPCODE_SIZE)
+		वापस false;
 
-	if (!fw_info->magic) {
-		size_t i, size, start;
+	अगर (!fw_info->magic) अणु
+		माप_प्रकार i, size, start;
 		u8 checksum = 0;
 
-		if (fw->size < sizeof(*fw_info))
-			return false;
+		अगर (fw->size < माप(*fw_info))
+			वापस false;
 
-		for (i = 0; i < fw->size; i++)
+		क्रम (i = 0; i < fw->size; i++)
 			checksum += fw->data[i];
-		if (checksum != 0)
-			return false;
+		अगर (checksum != 0)
+			वापस false;
 
 		start = le32_to_cpu(fw_info->fw_start);
-		if (start > fw->size)
-			return false;
+		अगर (start > fw->size)
+			वापस false;
 
 		size = le32_to_cpu(fw_info->fw_len);
-		if (size > (fw->size - start) / FW_OPCODE_SIZE)
-			return false;
+		अगर (size > (fw->size - start) / FW_OPCODE_SIZE)
+			वापस false;
 
 		strscpy(rtl_fw->version, fw_info->version, RTL_VER_SIZE);
 
 		pa->code = (__le32 *)(fw->data + start);
 		pa->size = size;
-	} else {
-		if (fw->size % FW_OPCODE_SIZE)
-			return false;
+	पूर्ण अन्यथा अणु
+		अगर (fw->size % FW_OPCODE_SIZE)
+			वापस false;
 
 		strscpy(rtl_fw->version, rtl_fw->fw_name, RTL_VER_SIZE);
 
 		pa->code = (__le32 *)fw->data;
 		pa->size = fw->size / FW_OPCODE_SIZE;
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool rtl_fw_data_ok(struct rtl_fw *rtl_fw)
-{
-	struct rtl_fw_phy_action *pa = &rtl_fw->phy_action;
-	size_t index;
+अटल bool rtl_fw_data_ok(काष्ठा rtl_fw *rtl_fw)
+अणु
+	काष्ठा rtl_fw_phy_action *pa = &rtl_fw->phy_action;
+	माप_प्रकार index;
 
-	for (index = 0; index < pa->size; index++) {
+	क्रम (index = 0; index < pa->size; index++) अणु
 		u32 action = le32_to_cpu(pa->code[index]);
 		u32 val = action & 0x0000ffff;
 		u32 regno = (action & 0x0fff0000) >> 16;
 
-		switch (action >> 28) {
-		case PHY_READ:
-		case PHY_DATA_OR:
-		case PHY_DATA_AND:
-		case PHY_CLEAR_READCOUNT:
-		case PHY_WRITE:
-		case PHY_WRITE_PREVIOUS:
-		case PHY_DELAY_MS:
-			break;
+		चयन (action >> 28) अणु
+		हाल PHY_READ:
+		हाल PHY_DATA_OR:
+		हाल PHY_DATA_AND:
+		हाल PHY_CLEAR_READCOUNT:
+		हाल PHY_WRITE:
+		हाल PHY_WRITE_PREVIOUS:
+		हाल PHY_DELAY_MS:
+			अवरोध;
 
-		case PHY_MDIO_CHG:
-			if (val > 1)
-				goto out;
-			break;
+		हाल PHY_MDIO_CHG:
+			अगर (val > 1)
+				जाओ out;
+			अवरोध;
 
-		case PHY_BJMPN:
-			if (regno > index)
-				goto out;
-			break;
-		case PHY_READCOUNT_EQ_SKIP:
-			if (index + 2 >= pa->size)
-				goto out;
-			break;
-		case PHY_COMP_EQ_SKIPN:
-		case PHY_COMP_NEQ_SKIPN:
-		case PHY_SKIPN:
-			if (index + 1 + regno >= pa->size)
-				goto out;
-			break;
+		हाल PHY_BJMPN:
+			अगर (regno > index)
+				जाओ out;
+			अवरोध;
+		हाल PHY_READCOUNT_EQ_SKIP:
+			अगर (index + 2 >= pa->size)
+				जाओ out;
+			अवरोध;
+		हाल PHY_COMP_EQ_SKIPN:
+		हाल PHY_COMP_NEQ_SKIPN:
+		हाल PHY_SKIPN:
+			अगर (index + 1 + regno >= pa->size)
+				जाओ out;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_err(rtl_fw->dev, "Invalid action 0x%08x\n", action);
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
+	वापस true;
 out:
 	dev_err(rtl_fw->dev, "Out of range of firmware\n");
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void rtl_fw_write_firmware(struct rtl8169_private *tp, struct rtl_fw *rtl_fw)
-{
-	struct rtl_fw_phy_action *pa = &rtl_fw->phy_action;
-	rtl_fw_write_t fw_write = rtl_fw->phy_write;
-	rtl_fw_read_t fw_read = rtl_fw->phy_read;
-	int predata = 0, count = 0;
-	size_t index;
+व्योम rtl_fw_ग_लिखो_firmware(काष्ठा rtl8169_निजी *tp, काष्ठा rtl_fw *rtl_fw)
+अणु
+	काष्ठा rtl_fw_phy_action *pa = &rtl_fw->phy_action;
+	rtl_fw_ग_लिखो_t fw_ग_लिखो = rtl_fw->phy_ग_लिखो;
+	rtl_fw_पढ़ो_t fw_पढ़ो = rtl_fw->phy_पढ़ो;
+	पूर्णांक predata = 0, count = 0;
+	माप_प्रकार index;
 
-	for (index = 0; index < pa->size; index++) {
+	क्रम (index = 0; index < pa->size; index++) अणु
 		u32 action = le32_to_cpu(pa->code[index]);
 		u32 data = action & 0x0000ffff;
 		u32 regno = (action & 0x0fff0000) >> 16;
-		enum rtl_fw_opcode opcode = action >> 28;
+		क्रमागत rtl_fw_opcode opcode = action >> 28;
 
-		if (!action)
-			break;
+		अगर (!action)
+			अवरोध;
 
-		switch (opcode) {
-		case PHY_READ:
-			predata = fw_read(tp, regno);
+		चयन (opcode) अणु
+		हाल PHY_READ:
+			predata = fw_पढ़ो(tp, regno);
 			count++;
-			break;
-		case PHY_DATA_OR:
+			अवरोध;
+		हाल PHY_DATA_OR:
 			predata |= data;
-			break;
-		case PHY_DATA_AND:
+			अवरोध;
+		हाल PHY_DATA_AND:
 			predata &= data;
-			break;
-		case PHY_BJMPN:
+			अवरोध;
+		हाल PHY_BJMPN:
 			index -= (regno + 1);
-			break;
-		case PHY_MDIO_CHG:
-			if (data) {
-				fw_write = rtl_fw->mac_mcu_write;
-				fw_read = rtl_fw->mac_mcu_read;
-			} else {
-				fw_write = rtl_fw->phy_write;
-				fw_read = rtl_fw->phy_read;
-			}
+			अवरोध;
+		हाल PHY_MDIO_CHG:
+			अगर (data) अणु
+				fw_ग_लिखो = rtl_fw->mac_mcu_ग_लिखो;
+				fw_पढ़ो = rtl_fw->mac_mcu_पढ़ो;
+			पूर्ण अन्यथा अणु
+				fw_ग_लिखो = rtl_fw->phy_ग_लिखो;
+				fw_पढ़ो = rtl_fw->phy_पढ़ो;
+			पूर्ण
 
-			break;
-		case PHY_CLEAR_READCOUNT:
+			अवरोध;
+		हाल PHY_CLEAR_READCOUNT:
 			count = 0;
-			break;
-		case PHY_WRITE:
-			fw_write(tp, regno, data);
-			break;
-		case PHY_READCOUNT_EQ_SKIP:
-			if (count == data)
+			अवरोध;
+		हाल PHY_WRITE:
+			fw_ग_लिखो(tp, regno, data);
+			अवरोध;
+		हाल PHY_READCOUNT_EQ_SKIP:
+			अगर (count == data)
 				index++;
-			break;
-		case PHY_COMP_EQ_SKIPN:
-			if (predata == data)
+			अवरोध;
+		हाल PHY_COMP_EQ_SKIPN:
+			अगर (predata == data)
 				index += regno;
-			break;
-		case PHY_COMP_NEQ_SKIPN:
-			if (predata != data)
+			अवरोध;
+		हाल PHY_COMP_NEQ_SKIPN:
+			अगर (predata != data)
 				index += regno;
-			break;
-		case PHY_WRITE_PREVIOUS:
-			fw_write(tp, regno, predata);
-			break;
-		case PHY_SKIPN:
+			अवरोध;
+		हाल PHY_WRITE_PREVIOUS:
+			fw_ग_लिखो(tp, regno, predata);
+			अवरोध;
+		हाल PHY_SKIPN:
 			index += regno;
-			break;
-		case PHY_DELAY_MS:
+			अवरोध;
+		हाल PHY_DELAY_MS:
 			msleep(data);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void rtl_fw_release_firmware(struct rtl_fw *rtl_fw)
-{
+व्योम rtl_fw_release_firmware(काष्ठा rtl_fw *rtl_fw)
+अणु
 	release_firmware(rtl_fw->fw);
-}
+पूर्ण
 
-int rtl_fw_request_firmware(struct rtl_fw *rtl_fw)
-{
-	int rc;
+पूर्णांक rtl_fw_request_firmware(काष्ठा rtl_fw *rtl_fw)
+अणु
+	पूर्णांक rc;
 
 	rc = request_firmware(&rtl_fw->fw, rtl_fw->fw_name, rtl_fw->dev);
-	if (rc < 0)
-		goto out;
+	अगर (rc < 0)
+		जाओ out;
 
-	if (!rtl_fw_format_ok(rtl_fw) || !rtl_fw_data_ok(rtl_fw)) {
+	अगर (!rtl_fw_क्रमmat_ok(rtl_fw) || !rtl_fw_data_ok(rtl_fw)) अणु
 		release_firmware(rtl_fw->fw);
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out:
 	dev_err(rtl_fw->dev, "Unable to load firmware %s (%d)\n",
 		rtl_fw->fw_name, rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण

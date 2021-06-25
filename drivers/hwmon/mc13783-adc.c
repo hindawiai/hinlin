@@ -1,101 +1,102 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for the ADC on Freescale Semiconductor MC13783 and MC13892 PMICs.
+ * Driver क्रम the ADC on Freescale Semiconductor MC13783 and MC13892 PMICs.
  *
  * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
  * Copyright (C) 2009 Sascha Hauer, Pengutronix
  */
 
-#include <linux/mfd/mc13xxx.h>
-#include <linux/platform_device.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/hwmon.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/err.h>
+#समावेश <linux/mfd/mc13xxx.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
 
-#define DRIVER_NAME	"mc13783-adc"
+#घोषणा DRIVER_NAME	"mc13783-adc"
 
-/* platform device id driver data */
-#define MC13783_ADC_16CHANS	1
-#define MC13783_ADC_BPDIV2	2
+/* platक्रमm device id driver data */
+#घोषणा MC13783_ADC_16CHANS	1
+#घोषणा MC13783_ADC_BPDIV2	2
 
-struct mc13783_adc_priv {
-	struct mc13xxx *mc13xxx;
-	struct device *hwmon_dev;
-	char name[PLATFORM_NAME_SIZE];
-};
+काष्ठा mc13783_adc_priv अणु
+	काष्ठा mc13xxx *mc13xxx;
+	काष्ठा device *hwmon_dev;
+	अक्षर name[PLATFORM_NAME_SIZE];
+पूर्ण;
 
-static ssize_t name_show(struct device *dev, struct device_attribute *devattr,
-			 char *buf)
-{
-	struct mc13783_adc_priv *priv = dev_get_drvdata(dev);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *devattr,
+			 अक्षर *buf)
+अणु
+	काष्ठा mc13783_adc_priv *priv = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s\n", priv->name);
-}
+	वापस प्र_लिखो(buf, "%s\n", priv->name);
+पूर्ण
 
-static int mc13783_adc_read(struct device *dev,
-		struct device_attribute *devattr, unsigned int *val)
-{
-	struct mc13783_adc_priv *priv = dev_get_drvdata(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	unsigned int channel = attr->index;
-	unsigned int sample[4];
-	int ret;
+अटल पूर्णांक mc13783_adc_पढ़ो(काष्ठा device *dev,
+		काष्ठा device_attribute *devattr, अचिन्हित पूर्णांक *val)
+अणु
+	काष्ठा mc13783_adc_priv *priv = dev_get_drvdata(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	अचिन्हित पूर्णांक channel = attr->index;
+	अचिन्हित पूर्णांक sample[4];
+	पूर्णांक ret;
 
-	ret = mc13xxx_adc_do_conversion(priv->mc13xxx,
+	ret = mc13xxx_adc_करो_conversion(priv->mc13xxx,
 			MC13XXX_ADC_MODE_MULT_CHAN,
 			channel, 0, 0, sample);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* ADIN7 subchannels */
-	if (channel >= 16)
+	अगर (channel >= 16)
 		channel = 7;
 
 	channel &= 0x7;
 
 	*val = (sample[channel % 4] >> (channel > 3 ? 14 : 2)) & 0x3ff;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t mc13783_adc_bp_show(struct device *dev,
-				   struct device_attribute *devattr,
-				   char *buf)
-{
-	unsigned val;
-	struct platform_device *pdev = to_platform_device(dev);
-	kernel_ulong_t driver_data = platform_get_device_id(pdev)->driver_data;
-	int ret = mc13783_adc_read(dev, devattr, &val);
+अटल sमाप_प्रकार mc13783_adc_bp_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *devattr,
+				   अक्षर *buf)
+अणु
+	अचिन्हित val;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	kernel_uदीर्घ_t driver_data = platक्रमm_get_device_id(pdev)->driver_data;
+	पूर्णांक ret = mc13783_adc_पढ़ो(dev, devattr, &val);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (driver_data & MC13783_ADC_BPDIV2)
+	अगर (driver_data & MC13783_ADC_BPDIV2)
 		val = DIV_ROUND_CLOSEST(val * 9, 2);
-	else
+	अन्यथा
 		/*
 		 * BP (channel 2) reports with offset 2.4V to the actual value
 		 * to fit the input range of the ADC.  unit = 2.25mV = 9/4 mV.
 		 */
 		val = DIV_ROUND_CLOSEST(val * 9, 4) + 2400;
 
-	return sprintf(buf, "%u\n", val);
-}
+	वापस प्र_लिखो(buf, "%u\n", val);
+पूर्ण
 
-static ssize_t mc13783_adc_gp_show(struct device *dev,
-				   struct device_attribute *devattr,
-				   char *buf)
-{
-	unsigned val;
-	int ret = mc13783_adc_read(dev, devattr, &val);
+अटल sमाप_प्रकार mc13783_adc_gp_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *devattr,
+				   अक्षर *buf)
+अणु
+	अचिन्हित val;
+	पूर्णांक ret = mc13783_adc_पढ़ो(dev, devattr, &val);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * input range is [0, 2.3V], val has 10 bits, so each bit
@@ -103,79 +104,79 @@ static ssize_t mc13783_adc_gp_show(struct device *dev,
 	 */
 	val = DIV_ROUND_CLOSEST(val * 9, 4);
 
-	return sprintf(buf, "%u\n", val);
-}
+	वापस प्र_लिखो(buf, "%u\n", val);
+पूर्ण
 
-static ssize_t mc13783_adc_uid_show(struct device *dev,
-				    struct device_attribute *devattr,
-				    char *buf)
-{
-	unsigned int val;
-	struct platform_device *pdev = to_platform_device(dev);
-	kernel_ulong_t driver_data = platform_get_device_id(pdev)->driver_data;
-	int ret = mc13783_adc_read(dev, devattr, &val);
+अटल sमाप_प्रकार mc13783_adc_uid_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *devattr,
+				    अक्षर *buf)
+अणु
+	अचिन्हित पूर्णांक val;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	kernel_uदीर्घ_t driver_data = platक्रमm_get_device_id(pdev)->driver_data;
+	पूर्णांक ret = mc13783_adc_पढ़ो(dev, devattr, &val);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (driver_data & MC13783_ADC_BPDIV2)
-		/* MC13892 have 1/2 divider, input range is [0, 4.800V] */
+	अगर (driver_data & MC13783_ADC_BPDIV2)
+		/* MC13892 have 1/2 भागider, input range is [0, 4.800V] */
 		val = DIV_ROUND_CLOSEST(val * 4800, 1024);
-	else
-		/* MC13783 have 0.9 divider, input range is [0, 2.555V] */
+	अन्यथा
+		/* MC13783 have 0.9 भागider, input range is [0, 2.555V] */
 		val = DIV_ROUND_CLOSEST(val * 2555, 1024);
 
-	return sprintf(buf, "%u\n", val);
-}
+	वापस प्र_लिखो(buf, "%u\n", val);
+पूर्ण
 
-static ssize_t mc13783_adc_temp_show(struct device *dev,
-				     struct device_attribute *devattr,
-				     char *buf)
-{
-	unsigned int val;
-	struct platform_device *pdev = to_platform_device(dev);
-	kernel_ulong_t driver_data = platform_get_device_id(pdev)->driver_data;
-	int ret = mc13783_adc_read(dev, devattr, &val);
+अटल sमाप_प्रकार mc13783_adc_temp_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *devattr,
+				     अक्षर *buf)
+अणु
+	अचिन्हित पूर्णांक val;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	kernel_uदीर्घ_t driver_data = platक्रमm_get_device_id(pdev)->driver_data;
+	पूर्णांक ret = mc13783_adc_पढ़ो(dev, devattr, &val);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (driver_data & MC13783_ADC_BPDIV2) {
+	अगर (driver_data & MC13783_ADC_BPDIV2) अणु
 		/*
 		 * MC13892:
 		 * Die Temperature Read Out Code at 25C 680
 		 * Temperature change per LSB +0.4244C
 		 */
 		ret = DIV_ROUND_CLOSEST(-2635920 + val * 4244, 10);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * MC13783:
 		 * Die Temperature Read Out Code at 25C 282
 		 * Temperature change per LSB -1.14C
 		 */
 		ret = 346480 - 1140 * val;
-	}
+	पूर्ण
 
-	return sprintf(buf, "%d\n", ret);
-}
+	वापस प्र_लिखो(buf, "%d\n", ret);
+पूर्ण
 
-static DEVICE_ATTR_RO(name);
-static SENSOR_DEVICE_ATTR_RO(in2_input, mc13783_adc_bp, 2);
-static SENSOR_DEVICE_ATTR_RO(in5_input, mc13783_adc_gp, 5);
-static SENSOR_DEVICE_ATTR_RO(in6_input, mc13783_adc_gp, 6);
-static SENSOR_DEVICE_ATTR_RO(in7_input, mc13783_adc_gp, 7);
-static SENSOR_DEVICE_ATTR_RO(in8_input, mc13783_adc_gp, 8);
-static SENSOR_DEVICE_ATTR_RO(in9_input, mc13783_adc_gp, 9);
-static SENSOR_DEVICE_ATTR_RO(in10_input, mc13783_adc_gp, 10);
-static SENSOR_DEVICE_ATTR_RO(in11_input, mc13783_adc_gp, 11);
-static SENSOR_DEVICE_ATTR_RO(in12_input, mc13783_adc_gp, 12);
-static SENSOR_DEVICE_ATTR_RO(in13_input, mc13783_adc_gp, 13);
-static SENSOR_DEVICE_ATTR_RO(in14_input, mc13783_adc_gp, 14);
-static SENSOR_DEVICE_ATTR_RO(in15_input, mc13783_adc_gp, 15);
-static SENSOR_DEVICE_ATTR_RO(in16_input, mc13783_adc_uid, 16);
-static SENSOR_DEVICE_ATTR_RO(temp1_input, mc13783_adc_temp, 17);
+अटल DEVICE_ATTR_RO(name);
+अटल SENSOR_DEVICE_ATTR_RO(in2_input, mc13783_adc_bp, 2);
+अटल SENSOR_DEVICE_ATTR_RO(in5_input, mc13783_adc_gp, 5);
+अटल SENSOR_DEVICE_ATTR_RO(in6_input, mc13783_adc_gp, 6);
+अटल SENSOR_DEVICE_ATTR_RO(in7_input, mc13783_adc_gp, 7);
+अटल SENSOR_DEVICE_ATTR_RO(in8_input, mc13783_adc_gp, 8);
+अटल SENSOR_DEVICE_ATTR_RO(in9_input, mc13783_adc_gp, 9);
+अटल SENSOR_DEVICE_ATTR_RO(in10_input, mc13783_adc_gp, 10);
+अटल SENSOR_DEVICE_ATTR_RO(in11_input, mc13783_adc_gp, 11);
+अटल SENSOR_DEVICE_ATTR_RO(in12_input, mc13783_adc_gp, 12);
+अटल SENSOR_DEVICE_ATTR_RO(in13_input, mc13783_adc_gp, 13);
+अटल SENSOR_DEVICE_ATTR_RO(in14_input, mc13783_adc_gp, 14);
+अटल SENSOR_DEVICE_ATTR_RO(in15_input, mc13783_adc_gp, 15);
+अटल SENSOR_DEVICE_ATTR_RO(in16_input, mc13783_adc_uid, 16);
+अटल SENSOR_DEVICE_ATTR_RO(temp1_input, mc13783_adc_temp, 17);
 
-static struct attribute *mc13783_attr_base[] = {
+अटल काष्ठा attribute *mc13783_attr_base[] = अणु
 	&dev_attr_name.attr,
 	&sensor_dev_attr_in2_input.dev_attr.attr,
 	&sensor_dev_attr_in5_input.dev_attr.attr,
@@ -183,148 +184,148 @@ static struct attribute *mc13783_attr_base[] = {
 	&sensor_dev_attr_in7_input.dev_attr.attr,
 	&sensor_dev_attr_in16_input.dev_attr.attr,
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group mc13783_group_base = {
+अटल स्थिर काष्ठा attribute_group mc13783_group_base = अणु
 	.attrs = mc13783_attr_base,
-};
+पूर्ण;
 
-/* these are only used if MC13783_ADC_16CHANS is provided in driver data */
-static struct attribute *mc13783_attr_16chans[] = {
+/* these are only used अगर MC13783_ADC_16CHANS is provided in driver data */
+अटल काष्ठा attribute *mc13783_attr_16chans[] = अणु
 	&sensor_dev_attr_in8_input.dev_attr.attr,
 	&sensor_dev_attr_in9_input.dev_attr.attr,
 	&sensor_dev_attr_in10_input.dev_attr.attr,
 	&sensor_dev_attr_in11_input.dev_attr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group mc13783_group_16chans = {
+अटल स्थिर काष्ठा attribute_group mc13783_group_16chans = अणु
 	.attrs = mc13783_attr_16chans,
-};
+पूर्ण;
 
 /* last four channels may be occupied by the touchscreen */
-static struct attribute *mc13783_attr_ts[] = {
+अटल काष्ठा attribute *mc13783_attr_ts[] = अणु
 	&sensor_dev_attr_in12_input.dev_attr.attr,
 	&sensor_dev_attr_in13_input.dev_attr.attr,
 	&sensor_dev_attr_in14_input.dev_attr.attr,
 	&sensor_dev_attr_in15_input.dev_attr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group mc13783_group_ts = {
+अटल स्थिर काष्ठा attribute_group mc13783_group_ts = अणु
 	.attrs = mc13783_attr_ts,
-};
+पूर्ण;
 
-static int mc13783_adc_use_touchscreen(struct platform_device *pdev)
-{
-	struct mc13783_adc_priv *priv = platform_get_drvdata(pdev);
-	unsigned flags = mc13xxx_get_flags(priv->mc13xxx);
+अटल पूर्णांक mc13783_adc_use_touchscreen(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mc13783_adc_priv *priv = platक्रमm_get_drvdata(pdev);
+	अचिन्हित flags = mc13xxx_get_flags(priv->mc13xxx);
 
-	return flags & MC13XXX_USE_TOUCHSCREEN;
-}
+	वापस flags & MC13XXX_USE_TOUCHSCREEN;
+पूर्ण
 
-static int __init mc13783_adc_probe(struct platform_device *pdev)
-{
-	struct mc13783_adc_priv *priv;
-	int ret;
-	const struct platform_device_id *id = platform_get_device_id(pdev);
-	char *dash;
+अटल पूर्णांक __init mc13783_adc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mc13783_adc_priv *priv;
+	पूर्णांक ret;
+	स्थिर काष्ठा platक्रमm_device_id *id = platक्रमm_get_device_id(pdev);
+	अक्षर *dash;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->mc13xxx = dev_get_drvdata(pdev->dev.parent);
-	snprintf(priv->name, ARRAY_SIZE(priv->name), "%s", id->name);
-	dash = strchr(priv->name, '-');
-	if (dash)
+	snम_लिखो(priv->name, ARRAY_SIZE(priv->name), "%s", id->name);
+	dash = म_अक्षर(priv->name, '-');
+	अगर (dash)
 		*dash = '\0';
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
 	/* Register sysfs hooks */
 	ret = sysfs_create_group(&pdev->dev.kobj, &mc13783_group_base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (id->driver_data & MC13783_ADC_16CHANS) {
+	अगर (id->driver_data & MC13783_ADC_16CHANS) अणु
 		ret = sysfs_create_group(&pdev->dev.kobj,
 				&mc13783_group_16chans);
-		if (ret)
-			goto out_err_create_16chans;
-	}
+		अगर (ret)
+			जाओ out_err_create_16chans;
+	पूर्ण
 
-	if (!mc13783_adc_use_touchscreen(pdev)) {
+	अगर (!mc13783_adc_use_touchscreen(pdev)) अणु
 		ret = sysfs_create_group(&pdev->dev.kobj, &mc13783_group_ts);
-		if (ret)
-			goto out_err_create_ts;
-	}
+		अगर (ret)
+			जाओ out_err_create_ts;
+	पूर्ण
 
-	priv->hwmon_dev = hwmon_device_register(&pdev->dev);
-	if (IS_ERR(priv->hwmon_dev)) {
+	priv->hwmon_dev = hwmon_device_रेजिस्टर(&pdev->dev);
+	अगर (IS_ERR(priv->hwmon_dev)) अणु
 		ret = PTR_ERR(priv->hwmon_dev);
 		dev_err(&pdev->dev,
 				"hwmon_device_register failed with %d.\n", ret);
-		goto out_err_register;
-	}
+		जाओ out_err_रेजिस्टर;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_err_register:
+out_err_रेजिस्टर:
 
-	if (!mc13783_adc_use_touchscreen(pdev))
-		sysfs_remove_group(&pdev->dev.kobj, &mc13783_group_ts);
+	अगर (!mc13783_adc_use_touchscreen(pdev))
+		sysfs_हटाओ_group(&pdev->dev.kobj, &mc13783_group_ts);
 out_err_create_ts:
 
-	if (id->driver_data & MC13783_ADC_16CHANS)
-		sysfs_remove_group(&pdev->dev.kobj, &mc13783_group_16chans);
+	अगर (id->driver_data & MC13783_ADC_16CHANS)
+		sysfs_हटाओ_group(&pdev->dev.kobj, &mc13783_group_16chans);
 out_err_create_16chans:
 
-	sysfs_remove_group(&pdev->dev.kobj, &mc13783_group_base);
-	return ret;
-}
+	sysfs_हटाओ_group(&pdev->dev.kobj, &mc13783_group_base);
+	वापस ret;
+पूर्ण
 
-static int mc13783_adc_remove(struct platform_device *pdev)
-{
-	struct mc13783_adc_priv *priv = platform_get_drvdata(pdev);
-	kernel_ulong_t driver_data = platform_get_device_id(pdev)->driver_data;
+अटल पूर्णांक mc13783_adc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mc13783_adc_priv *priv = platक्रमm_get_drvdata(pdev);
+	kernel_uदीर्घ_t driver_data = platक्रमm_get_device_id(pdev)->driver_data;
 
-	hwmon_device_unregister(priv->hwmon_dev);
+	hwmon_device_unरेजिस्टर(priv->hwmon_dev);
 
-	if (!mc13783_adc_use_touchscreen(pdev))
-		sysfs_remove_group(&pdev->dev.kobj, &mc13783_group_ts);
+	अगर (!mc13783_adc_use_touchscreen(pdev))
+		sysfs_हटाओ_group(&pdev->dev.kobj, &mc13783_group_ts);
 
-	if (driver_data & MC13783_ADC_16CHANS)
-		sysfs_remove_group(&pdev->dev.kobj, &mc13783_group_16chans);
+	अगर (driver_data & MC13783_ADC_16CHANS)
+		sysfs_हटाओ_group(&pdev->dev.kobj, &mc13783_group_16chans);
 
-	sysfs_remove_group(&pdev->dev.kobj, &mc13783_group_base);
+	sysfs_हटाओ_group(&pdev->dev.kobj, &mc13783_group_base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id mc13783_adc_idtable[] = {
-	{
+अटल स्थिर काष्ठा platक्रमm_device_id mc13783_adc_idtable[] = अणु
+	अणु
 		.name = "mc13783-adc",
 		.driver_data = MC13783_ADC_16CHANS,
-	}, {
+	पूर्ण, अणु
 		.name = "mc13892-adc",
 		.driver_data = MC13783_ADC_BPDIV2,
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
-MODULE_DEVICE_TABLE(platform, mc13783_adc_idtable);
+	पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, mc13783_adc_idtable);
 
-static struct platform_driver mc13783_adc_driver = {
-	.remove		= mc13783_adc_remove,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver mc13783_adc_driver = अणु
+	.हटाओ		= mc13783_adc_हटाओ,
+	.driver		= अणु
 		.name	= DRIVER_NAME,
-	},
+	पूर्ण,
 	.id_table	= mc13783_adc_idtable,
-};
+पूर्ण;
 
-module_platform_driver_probe(mc13783_adc_driver, mc13783_adc_probe);
+module_platक्रमm_driver_probe(mc13783_adc_driver, mc13783_adc_probe);
 
 MODULE_DESCRIPTION("MC13783 ADC driver");
 MODULE_AUTHOR("Luotao Fu <l.fu@pengutronix.de>");

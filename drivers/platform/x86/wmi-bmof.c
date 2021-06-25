@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * WMI embedded Binary MOF driver
  *
@@ -6,107 +7,107 @@
  * Copyright (C) 2017 VMware, Inc. All Rights Reserved.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/acpi.h>
-#include <linux/device.h>
-#include <linux/fs.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/sysfs.h>
-#include <linux/types.h>
-#include <linux/wmi.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/types.h>
+#समावेश <linux/wmi.h>
 
-#define WMI_BMOF_GUID "05901221-D566-11D1-B2F0-00A0C9062910"
+#घोषणा WMI_BMOF_GUID "05901221-D566-11D1-B2F0-00A0C9062910"
 
-struct bmof_priv {
-	union acpi_object *bmofdata;
-	struct bin_attribute bmof_bin_attr;
-};
+काष्ठा bmof_priv अणु
+	जोड़ acpi_object *bmofdata;
+	काष्ठा bin_attribute bmof_bin_attr;
+पूर्ण;
 
-static ssize_t
-read_bmof(struct file *filp, struct kobject *kobj,
-	 struct bin_attribute *attr,
-	 char *buf, loff_t off, size_t count)
-{
-	struct bmof_priv *priv =
-		container_of(attr, struct bmof_priv, bmof_bin_attr);
+अटल sमाप_प्रकार
+पढ़ो_bmof(काष्ठा file *filp, काष्ठा kobject *kobj,
+	 काष्ठा bin_attribute *attr,
+	 अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा bmof_priv *priv =
+		container_of(attr, काष्ठा bmof_priv, bmof_bin_attr);
 
-	if (off < 0)
-		return -EINVAL;
+	अगर (off < 0)
+		वापस -EINVAL;
 
-	if (off >= priv->bmofdata->buffer.length)
-		return 0;
+	अगर (off >= priv->bmofdata->buffer.length)
+		वापस 0;
 
-	if (count > priv->bmofdata->buffer.length - off)
+	अगर (count > priv->bmofdata->buffer.length - off)
 		count = priv->bmofdata->buffer.length - off;
 
-	memcpy(buf, priv->bmofdata->buffer.pointer + off, count);
-	return count;
-}
+	स_नकल(buf, priv->bmofdata->buffer.poपूर्णांकer + off, count);
+	वापस count;
+पूर्ण
 
-static int wmi_bmof_probe(struct wmi_device *wdev, const void *context)
-{
-	struct bmof_priv *priv;
-	int ret;
+अटल पूर्णांक wmi_bmof_probe(काष्ठा wmi_device *wdev, स्थिर व्योम *context)
+अणु
+	काष्ठा bmof_priv *priv;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(&wdev->dev, sizeof(struct bmof_priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&wdev->dev, माप(काष्ठा bmof_priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	dev_set_drvdata(&wdev->dev, priv);
 
 	priv->bmofdata = wmidev_block_query(wdev, 0);
-	if (!priv->bmofdata) {
+	अगर (!priv->bmofdata) अणु
 		dev_err(&wdev->dev, "failed to read Binary MOF\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (priv->bmofdata->type != ACPI_TYPE_BUFFER) {
+	अगर (priv->bmofdata->type != ACPI_TYPE_BUFFER) अणु
 		dev_err(&wdev->dev, "Binary MOF is not a buffer\n");
 		ret = -EIO;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	sysfs_bin_attr_init(&priv->bmof_bin_attr);
 	priv->bmof_bin_attr.attr.name = "bmof";
 	priv->bmof_bin_attr.attr.mode = 0400;
-	priv->bmof_bin_attr.read = read_bmof;
+	priv->bmof_bin_attr.पढ़ो = पढ़ो_bmof;
 	priv->bmof_bin_attr.size = priv->bmofdata->buffer.length;
 
 	ret = sysfs_create_bin_file(&wdev->dev.kobj, &priv->bmof_bin_attr);
-	if (ret)
-		goto err_free;
+	अगर (ret)
+		जाओ err_मुक्त;
 
-	return 0;
+	वापस 0;
 
- err_free:
-	kfree(priv->bmofdata);
-	return ret;
-}
+ err_मुक्त:
+	kमुक्त(priv->bmofdata);
+	वापस ret;
+पूर्ण
 
-static void wmi_bmof_remove(struct wmi_device *wdev)
-{
-	struct bmof_priv *priv = dev_get_drvdata(&wdev->dev);
+अटल व्योम wmi_bmof_हटाओ(काष्ठा wmi_device *wdev)
+अणु
+	काष्ठा bmof_priv *priv = dev_get_drvdata(&wdev->dev);
 
-	sysfs_remove_bin_file(&wdev->dev.kobj, &priv->bmof_bin_attr);
-	kfree(priv->bmofdata);
-}
+	sysfs_हटाओ_bin_file(&wdev->dev.kobj, &priv->bmof_bin_attr);
+	kमुक्त(priv->bmofdata);
+पूर्ण
 
-static const struct wmi_device_id wmi_bmof_id_table[] = {
-	{ .guid_string = WMI_BMOF_GUID },
-	{ },
-};
+अटल स्थिर काष्ठा wmi_device_id wmi_bmof_id_table[] = अणु
+	अणु .guid_string = WMI_BMOF_GUID पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct wmi_driver wmi_bmof_driver = {
-	.driver = {
+अटल काष्ठा wmi_driver wmi_bmof_driver = अणु
+	.driver = अणु
 		.name = "wmi-bmof",
-	},
+	पूर्ण,
 	.probe = wmi_bmof_probe,
-	.remove = wmi_bmof_remove,
+	.हटाओ = wmi_bmof_हटाओ,
 	.id_table = wmi_bmof_id_table,
-};
+पूर्ण;
 
 module_wmi_driver(wmi_bmof_driver);
 

@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  sun4m SMP support.
  *
  * Copyright (C) 1996 David S. Miller (davem@caip.rutgers.edu)
  */
 
-#include <linux/clockchips.h>
-#include <linux/interrupt.h>
-#include <linux/profile.h>
-#include <linux/delay.h>
-#include <linux/sched/mm.h>
-#include <linux/cpu.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/profile.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/cpu.h>
 
-#include <asm/cacheflush.h>
-#include <asm/switch_to.h>
-#include <asm/tlbflush.h>
-#include <asm/timer.h>
-#include <asm/oplib.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/चयन_to.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/समयr.h>
+#समावेश <यंत्र/oplib.h>
 
-#include "irq.h"
-#include "kernel.h"
+#समावेश "irq.h"
+#समावेश "kernel.h"
 
-#define IRQ_IPI_SINGLE		12
-#define IRQ_IPI_MASK		13
-#define IRQ_IPI_RESCHED		14
-#define IRQ_CROSS_CALL		15
+#घोषणा IRQ_IPI_SINGLE		12
+#घोषणा IRQ_IPI_MASK		13
+#घोषणा IRQ_IPI_RESCHED		14
+#घोषणा IRQ_CROSS_CALL		15
 
-static inline unsigned long
-swap_ulong(volatile unsigned long *ptr, unsigned long val)
-{
-	__asm__ __volatile__("swap [%1], %0\n\t" :
+अटल अंतरभूत अचिन्हित दीर्घ
+swap_uदीर्घ(अस्थिर अचिन्हित दीर्घ *ptr, अचिन्हित दीर्घ val)
+अणु
+	__यंत्र__ __अस्थिर__("swap [%1], %0\n\t" :
 			     "=&r" (val), "=&r" (ptr) :
 			     "0" (val), "1" (ptr));
-	return val;
-}
+	वापस val;
+पूर्ण
 
-void sun4m_cpu_pre_starting(void *arg)
-{
-}
+व्योम sun4m_cpu_pre_starting(व्योम *arg)
+अणु
+पूर्ण
 
-void sun4m_cpu_pre_online(void *arg)
-{
-	int cpuid = hard_smp_processor_id();
+व्योम sun4m_cpu_pre_online(व्योम *arg)
+अणु
+	पूर्णांक cpuid = hard_smp_processor_id();
 
-	/* Allow master to continue. The master will then give us the
-	 * go-ahead by setting the smp_commenced_mask and will wait without
-	 * timeouts until our setup is completed fully (signified by
+	/* Allow master to जारी. The master will then give us the
+	 * go-ahead by setting the smp_commenced_mask and will रुको without
+	 * समयouts until our setup is completed fully (signअगरied by
 	 * our bit being set in the cpu_online_mask).
 	 */
-	swap_ulong(&cpu_callin_map[cpuid], 1);
+	swap_uदीर्घ(&cpu_callin_map[cpuid], 1);
 
 	/* XXX: What's up with all the flushes? */
 	local_ops->cache_all();
 	local_ops->tlb_all();
 
-	/* Fix idle thread fields. */
-	__asm__ __volatile__("ld [%0], %%g6\n\t"
+	/* Fix idle thपढ़ो fields. */
+	__यंत्र__ __अस्थिर__("ld [%0], %%g6\n\t"
 			     : : "r" (&current_set[cpuid])
 			     : "memory" /* paranoid */);
 
@@ -63,119 +64,119 @@ void sun4m_cpu_pre_online(void *arg)
 	mmgrab(&init_mm);
 	current->active_mm = &init_mm;
 
-	while (!cpumask_test_cpu(cpuid, &smp_commenced_mask))
+	जबतक (!cpumask_test_cpu(cpuid, &smp_commenced_mask))
 		mb();
-}
+पूर्ण
 
 /*
  *	Cycle through the processors asking the PROM to start each one.
  */
-void __init smp4m_boot_cpus(void)
-{
+व्योम __init smp4m_boot_cpus(व्योम)
+अणु
 	sun4m_unmask_profile_irq();
 	local_ops->cache_all();
-}
+पूर्ण
 
-int smp4m_boot_one_cpu(int i, struct task_struct *idle)
-{
-	unsigned long *entry = &sun4m_cpu_startup;
-	int timeout;
-	int cpu_node;
+पूर्णांक smp4m_boot_one_cpu(पूर्णांक i, काष्ठा task_काष्ठा *idle)
+अणु
+	अचिन्हित दीर्घ *entry = &sun4m_cpu_startup;
+	पूर्णांक समयout;
+	पूर्णांक cpu_node;
 
 	cpu_find_by_mid(i, &cpu_node);
-	current_set[i] = task_thread_info(idle);
+	current_set[i] = task_thपढ़ो_info(idle);
 
-	/* See trampoline.S for details... */
+	/* See trampoline.S क्रम details... */
 	entry += ((i - 1) * 3);
 
 	/*
 	 * Initialize the contexts table
-	 * Since the call to prom_startcpu() trashes the structure,
-	 * we need to re-initialize it for each cpu
+	 * Since the call to prom_startcpu() trashes the काष्ठाure,
+	 * we need to re-initialize it क्रम each cpu
 	 */
 	smp_penguin_ctable.which_io = 0;
-	smp_penguin_ctable.phys_addr = (unsigned int) srmmu_ctx_table_phys;
+	smp_penguin_ctable.phys_addr = (अचिन्हित पूर्णांक) srmmu_ctx_table_phys;
 	smp_penguin_ctable.reg_size = 0;
 
 	/* whirrr, whirrr, whirrrrrrrrr... */
-	printk(KERN_INFO "Starting CPU %d at %p\n", i, entry);
+	prपूर्णांकk(KERN_INFO "Starting CPU %d at %p\n", i, entry);
 	local_ops->cache_all();
-	prom_startcpu(cpu_node, &smp_penguin_ctable, 0, (char *)entry);
+	prom_startcpu(cpu_node, &smp_penguin_ctable, 0, (अक्षर *)entry);
 
 	/* wheee... it's going... */
-	for (timeout = 0; timeout < 10000; timeout++) {
-		if (cpu_callin_map[i])
-			break;
+	क्रम (समयout = 0; समयout < 10000; समयout++) अणु
+		अगर (cpu_callin_map[i])
+			अवरोध;
 		udelay(200);
-	}
+	पूर्ण
 
-	if (!(cpu_callin_map[i])) {
-		printk(KERN_ERR "Processor %d is stuck.\n", i);
-		return -ENODEV;
-	}
+	अगर (!(cpu_callin_map[i])) अणु
+		prपूर्णांकk(KERN_ERR "Processor %d is stuck.\n", i);
+		वापस -ENODEV;
+	पूर्ण
 
 	local_ops->cache_all();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init smp4m_smp_done(void)
-{
-	int i, first;
-	int *prev;
+व्योम __init smp4m_smp_करोne(व्योम)
+अणु
+	पूर्णांक i, first;
+	पूर्णांक *prev;
 
-	/* setup cpu list for irq rotation */
+	/* setup cpu list क्रम irq rotation */
 	first = 0;
 	prev = &first;
-	for_each_online_cpu(i) {
+	क्रम_each_online_cpu(i) अणु
 		*prev = i;
 		prev = &cpu_data(i).next;
-	}
+	पूर्ण
 	*prev = first;
 	local_ops->cache_all();
 
-	/* Ok, they are spinning and ready to go. */
-}
+	/* Ok, they are spinning and पढ़ोy to go. */
+पूर्ण
 
-static void sun4m_send_ipi(int cpu, int level)
-{
-	sbus_writel(SUN4M_SOFT_INT(level), &sun4m_irq_percpu[cpu]->set);
-}
+अटल व्योम sun4m_send_ipi(पूर्णांक cpu, पूर्णांक level)
+अणु
+	sbus_ग_लिखोl(SUN4M_SOFT_INT(level), &sun4m_irq_percpu[cpu]->set);
+पूर्ण
 
-static void sun4m_ipi_resched(int cpu)
-{
+अटल व्योम sun4m_ipi_resched(पूर्णांक cpu)
+अणु
 	sun4m_send_ipi(cpu, IRQ_IPI_RESCHED);
-}
+पूर्ण
 
-static void sun4m_ipi_single(int cpu)
-{
+अटल व्योम sun4m_ipi_single(पूर्णांक cpu)
+अणु
 	sun4m_send_ipi(cpu, IRQ_IPI_SINGLE);
-}
+पूर्ण
 
-static void sun4m_ipi_mask_one(int cpu)
-{
+अटल व्योम sun4m_ipi_mask_one(पूर्णांक cpu)
+अणु
 	sun4m_send_ipi(cpu, IRQ_IPI_MASK);
-}
+पूर्ण
 
-static struct smp_funcall {
+अटल काष्ठा smp_funcall अणु
 	smpfunc_t func;
-	unsigned long arg1;
-	unsigned long arg2;
-	unsigned long arg3;
-	unsigned long arg4;
-	unsigned long arg5;
-	unsigned long processors_in[SUN4M_NCPUS];  /* Set when ipi entered. */
-	unsigned long processors_out[SUN4M_NCPUS]; /* Set when ipi exited. */
-} ccall_info;
+	अचिन्हित दीर्घ arg1;
+	अचिन्हित दीर्घ arg2;
+	अचिन्हित दीर्घ arg3;
+	अचिन्हित दीर्घ arg4;
+	अचिन्हित दीर्घ arg5;
+	अचिन्हित दीर्घ processors_in[SUN4M_NCPUS];  /* Set when ipi entered. */
+	अचिन्हित दीर्घ processors_out[SUN4M_NCPUS]; /* Set when ipi निकासed. */
+पूर्ण ccall_info;
 
-static DEFINE_SPINLOCK(cross_call_lock);
+अटल DEFINE_SPINLOCK(cross_call_lock);
 
 /* Cross calls must be serialized, at least currently. */
-static void sun4m_cross_call(smpfunc_t func, cpumask_t mask, unsigned long arg1,
-			     unsigned long arg2, unsigned long arg3,
-			     unsigned long arg4)
-{
-		register int ncpus = SUN4M_NCPUS;
-		unsigned long flags;
+अटल व्योम sun4m_cross_call(smpfunc_t func, cpumask_t mask, अचिन्हित दीर्घ arg1,
+			     अचिन्हित दीर्घ arg2, अचिन्हित दीर्घ arg3,
+			     अचिन्हित दीर्घ arg4)
+अणु
+		रेजिस्टर पूर्णांक ncpus = SUN4M_NCPUS;
+		अचिन्हित दीर्घ flags;
 
 		spin_lock_irqsave(&cross_call_lock, flags);
 
@@ -188,86 +189,86 @@ static void sun4m_cross_call(smpfunc_t func, cpumask_t mask, unsigned long arg1,
 		ccall_info.arg5 = 0;
 
 		/* Init receive/complete mapping, plus fire the IPI's off. */
-		{
-			register int i;
+		अणु
+			रेजिस्टर पूर्णांक i;
 
 			cpumask_clear_cpu(smp_processor_id(), &mask);
 			cpumask_and(&mask, cpu_online_mask, &mask);
-			for (i = 0; i < ncpus; i++) {
-				if (cpumask_test_cpu(i, &mask)) {
+			क्रम (i = 0; i < ncpus; i++) अणु
+				अगर (cpumask_test_cpu(i, &mask)) अणु
 					ccall_info.processors_in[i] = 0;
 					ccall_info.processors_out[i] = 0;
 					sun4m_send_ipi(i, IRQ_CROSS_CALL);
-				} else {
+				पूर्ण अन्यथा अणु
 					ccall_info.processors_in[i] = 1;
 					ccall_info.processors_out[i] = 1;
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		{
-			register int i;
-
-			i = 0;
-			do {
-				if (!cpumask_test_cpu(i, &mask))
-					continue;
-				while (!ccall_info.processors_in[i])
-					barrier();
-			} while (++i < ncpus);
+		अणु
+			रेजिस्टर पूर्णांक i;
 
 			i = 0;
-			do {
-				if (!cpumask_test_cpu(i, &mask))
-					continue;
-				while (!ccall_info.processors_out[i])
+			करो अणु
+				अगर (!cpumask_test_cpu(i, &mask))
+					जारी;
+				जबतक (!ccall_info.processors_in[i])
 					barrier();
-			} while (++i < ncpus);
-		}
+			पूर्ण जबतक (++i < ncpus);
+
+			i = 0;
+			करो अणु
+				अगर (!cpumask_test_cpu(i, &mask))
+					जारी;
+				जबतक (!ccall_info.processors_out[i])
+					barrier();
+			पूर्ण जबतक (++i < ncpus);
+		पूर्ण
 		spin_unlock_irqrestore(&cross_call_lock, flags);
-}
+पूर्ण
 
 /* Running cross calls. */
-void smp4m_cross_call_irq(void)
-{
-	int i = smp_processor_id();
+व्योम smp4m_cross_call_irq(व्योम)
+अणु
+	पूर्णांक i = smp_processor_id();
 
 	ccall_info.processors_in[i] = 1;
 	ccall_info.func(ccall_info.arg1, ccall_info.arg2, ccall_info.arg3,
 			ccall_info.arg4, ccall_info.arg5);
 	ccall_info.processors_out[i] = 1;
-}
+पूर्ण
 
-void smp4m_percpu_timer_interrupt(struct pt_regs *regs)
-{
-	struct pt_regs *old_regs;
-	struct clock_event_device *ce;
-	int cpu = smp_processor_id();
+व्योम smp4m_percpu_समयr_पूर्णांकerrupt(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा pt_regs *old_regs;
+	काष्ठा घड़ी_event_device *ce;
+	पूर्णांक cpu = smp_processor_id();
 
 	old_regs = set_irq_regs(regs);
 
-	ce = &per_cpu(sparc32_clockevent, cpu);
+	ce = &per_cpu(sparc32_घड़ीevent, cpu);
 
-	if (clockevent_state_periodic(ce))
+	अगर (घड़ीevent_state_periodic(ce))
 		sun4m_clear_profile_irq(cpu);
-	else
+	अन्यथा
 		sparc_config.load_profile_irq(cpu, 0); /* Is this needless? */
 
 	irq_enter();
 	ce->event_handler(ce);
-	irq_exit();
+	irq_निकास();
 
 	set_irq_regs(old_regs);
-}
+पूर्ण
 
-static const struct sparc32_ipi_ops sun4m_ipi_ops = {
+अटल स्थिर काष्ठा sparc32_ipi_ops sun4m_ipi_ops = अणु
 	.cross_call = sun4m_cross_call,
 	.resched    = sun4m_ipi_resched,
 	.single     = sun4m_ipi_single,
 	.mask_one   = sun4m_ipi_mask_one,
-};
+पूर्ण;
 
-void __init sun4m_init_smp(void)
-{
+व्योम __init sun4m_init_smp(व्योम)
+अणु
 	sparc32_ipi_ops = &sun4m_ipi_ops;
-}
+पूर्ण

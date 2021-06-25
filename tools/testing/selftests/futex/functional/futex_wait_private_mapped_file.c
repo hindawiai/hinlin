@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /******************************************************************************
  *
  * Copyright FUJITSU LIMITED 2010
  * Copyright KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
  *
  * DESCRIPTION
- *      Internally, Futex has two handling mode, anon and file. The private file
- *      mapping is special. At first it behave as file, but after write anything
- *      it behave as anon. This test is intent to test such case.
+ *      Internally, Futex has two handling mode, anon and file. The निजी file
+ *      mapping is special. At first it behave as file, but after ग_लिखो anything
+ *      it behave as anon. This test is पूर्णांकent to test such हाल.
  *
  * AUTHOR
  *      KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
@@ -17,109 +18,109 @@
  *
  *****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <syscall.h>
-#include <unistd.h>
-#include <errno.h>
-#include <linux/futex.h>
-#include <pthread.h>
-#include <libgen.h>
-#include <signal.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <syscall.h>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <linux/futex.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <libgen.h>
+#समावेश <संकेत.स>
 
-#include "logging.h"
-#include "futextest.h"
+#समावेश "logging.h"
+#समावेश "futextest.h"
 
-#define TEST_NAME "futex-wait-private-mapped-file"
-#define PAGE_SZ 4096
+#घोषणा TEST_NAME "futex-wait-private-mapped-file"
+#घोषणा PAGE_SZ 4096
 
-char pad[PAGE_SZ] = {1};
+अक्षर pad[PAGE_SZ] = अणु1पूर्ण;
 futex_t val = 1;
-char pad2[PAGE_SZ] = {1};
+अक्षर pad2[PAGE_SZ] = अणु1पूर्ण;
 
-#define WAKE_WAIT_US 3000000
-struct timespec wait_timeout = { .tv_sec = 5, .tv_nsec = 0};
+#घोषणा WAKE_WAIT_US 3000000
+काष्ठा बारpec रुको_समयout = अणु .tv_sec = 5, .tv_nsec = 0पूर्ण;
 
-void usage(char *prog)
-{
-	printf("Usage: %s\n", prog);
-	printf("  -c	Use color\n");
-	printf("  -h	Display this help message\n");
-	printf("  -v L	Verbosity level: %d=QUIET %d=CRITICAL %d=INFO\n",
+व्योम usage(अक्षर *prog)
+अणु
+	म_लिखो("Usage: %s\n", prog);
+	म_लिखो("  -c	Use color\n");
+	म_लिखो("  -h	Display this help message\n");
+	म_लिखो("  -v L	Verbosity level: %d=QUIET %d=CRITICAL %d=INFO\n",
 	       VQUIET, VCRITICAL, VINFO);
-}
+पूर्ण
 
-void *thr_futex_wait(void *arg)
-{
-	int ret;
+व्योम *thr_futex_रुको(व्योम *arg)
+अणु
+	पूर्णांक ret;
 
 	info("futex wait\n");
-	ret = futex_wait(&val, 1, &wait_timeout, 0);
-	if (ret && errno != EWOULDBLOCK && errno != ETIMEDOUT) {
-		error("futex error.\n", errno);
-		print_result(TEST_NAME, RET_ERROR);
-		exit(RET_ERROR);
-	}
+	ret = futex_रुको(&val, 1, &रुको_समयout, 0);
+	अगर (ret && त्रुटि_सं != EWOULDBLOCK && त्रुटि_सं != ETIMEDOUT) अणु
+		error("futex error.\n", त्रुटि_सं);
+		prपूर्णांक_result(TEST_NAME, RET_ERROR);
+		निकास(RET_ERROR);
+	पूर्ण
 
-	if (ret && errno == ETIMEDOUT)
+	अगर (ret && त्रुटि_सं == ETIMEDOUT)
 		fail("waiter timedout\n");
 
-	info("futex_wait: ret = %d, errno = %d\n", ret, errno);
+	info("futex_wait: ret = %d, errno = %d\n", ret, त्रुटि_सं);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	pthread_t thr;
-	int ret = RET_PASS;
-	int res;
-	int c;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	pthपढ़ो_t thr;
+	पूर्णांक ret = RET_PASS;
+	पूर्णांक res;
+	पूर्णांक c;
 
-	while ((c = getopt(argc, argv, "chv:")) != -1) {
-		switch (c) {
-		case 'c':
+	जबतक ((c = getopt(argc, argv, "chv:")) != -1) अणु
+		चयन (c) अणु
+		हाल 'c':
 			log_color(1);
-			break;
-		case 'h':
+			अवरोध;
+		हाल 'h':
 			usage(basename(argv[0]));
-			exit(0);
-		case 'v':
-			log_verbosity(atoi(optarg));
-			break;
-		default:
+			निकास(0);
+		हाल 'v':
+			log_verbosity(म_से_प(optarg));
+			अवरोध;
+		शेष:
 			usage(basename(argv[0]));
-			exit(1);
-		}
-	}
+			निकास(1);
+		पूर्ण
+	पूर्ण
 
-	ksft_print_header();
+	ksft_prपूर्णांक_header();
 	ksft_set_plan(1);
-	ksft_print_msg(
+	ksft_prपूर्णांक_msg(
 		"%s: Test the futex value of private file mappings in FUTEX_WAIT\n",
 		basename(argv[0]));
 
-	ret = pthread_create(&thr, NULL, thr_futex_wait, NULL);
-	if (ret < 0) {
-		fprintf(stderr, "pthread_create error\n");
+	ret = pthपढ़ो_create(&thr, शून्य, thr_futex_रुको, शून्य);
+	अगर (ret < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "pthread_create error\n");
 		ret = RET_ERROR;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	info("wait a while\n");
 	usleep(WAKE_WAIT_US);
 	val = 2;
 	res = futex_wake(&val, 1, 0);
 	info("futex_wake %d\n", res);
-	if (res != 1) {
+	अगर (res != 1) अणु
 		fail("FUTEX_WAKE didn't find the waiting thread.\n");
 		ret = RET_FAIL;
-	}
+	पूर्ण
 
 	info("join\n");
-	pthread_join(thr, NULL);
+	pthपढ़ो_join(thr, शून्य);
 
  out:
-	print_result(TEST_NAME, ret);
-	return ret;
-}
+	prपूर्णांक_result(TEST_NAME, ret);
+	वापस ret;
+पूर्ण

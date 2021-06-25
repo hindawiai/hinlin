@@ -1,177 +1,178 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * FPGA to SDRAM Bridge Driver for Altera SoCFPGA Devices
+ * FPGA to SDRAM Bridge Driver क्रम Altera SoCFPGA Devices
  *
  *  Copyright (C) 2013-2016 Altera Corporation, All Rights Reserved.
  */
 
 /*
  * This driver manages a bridge between an FPGA and the SDRAM used by the ARM
- * host processor system (HPS).
+ * host processor प्रणाली (HPS).
  *
- * The bridge contains 4 read ports, 4 write ports, and 6 command ports.
+ * The bridge contains 4 पढ़ो ports, 4 ग_लिखो ports, and 6 command ports.
  * Reconfiguring these ports requires that no SDRAM transactions occur during
  * reconfiguration.  The code reconfiguring the ports cannot run out of SDRAM
- * nor can the FPGA access the SDRAM during reconfiguration.  This driver does
+ * nor can the FPGA access the SDRAM during reconfiguration.  This driver करोes
  * not support reconfiguring the ports.  The ports are configured by code
- * running out of on chip ram before Linux is started and the configuration
- * is passed in a handoff register in the system manager.
+ * running out of on chip ram beक्रमe Linux is started and the configuration
+ * is passed in a hanकरोff रेजिस्टर in the प्रणाली manager.
  *
  * This driver supports enabling and disabling of the configured ports, which
- * allows for safe reprogramming of the FPGA, assuming that the new FPGA image
- * uses the same port configuration.  Bridges must be disabled before
+ * allows क्रम safe reprogramming of the FPGA, assuming that the new FPGA image
+ * uses the same port configuration.  Bridges must be disabled beक्रमe
  * reprogramming the FPGA and re-enabled after the FPGA has been programmed.
  */
 
-#include <linux/fpga/fpga-bridge.h>
-#include <linux/kernel.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/regmap.h>
+#समावेश <linux/fpga/fpga-bridge.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/regmap.h>
 
-#define ALT_SDR_CTL_FPGAPORTRST_OFST		0x80
-#define ALT_SDR_CTL_FPGAPORTRST_PORTRSTN_MSK	0x00003fff
-#define ALT_SDR_CTL_FPGAPORTRST_RD_SHIFT	0
-#define ALT_SDR_CTL_FPGAPORTRST_WR_SHIFT	4
-#define ALT_SDR_CTL_FPGAPORTRST_CTRL_SHIFT	8
+#घोषणा ALT_SDR_CTL_FPGAPORTRST_OFST		0x80
+#घोषणा ALT_SDR_CTL_FPGAPORTRST_PORTRSTN_MSK	0x00003fff
+#घोषणा ALT_SDR_CTL_FPGAPORTRST_RD_SHIFT	0
+#घोषणा ALT_SDR_CTL_FPGAPORTRST_WR_SHIFT	4
+#घोषणा ALT_SDR_CTL_FPGAPORTRST_CTRL_SHIFT	8
 
 /*
- * From the Cyclone V HPS Memory Map document:
- *   These registers are used to store handoff information between the
- *   preloader and the OS. These 8 registers can be used to store any
- *   information. The contents of these registers have no impact on
+ * From the Cyclone V HPS Memory Map करोcument:
+ *   These रेजिस्टरs are used to store hanकरोff inक्रमmation between the
+ *   preloader and the OS. These 8 रेजिस्टरs can be used to store any
+ *   inक्रमmation. The contents of these रेजिस्टरs have no impact on
  *   the state of the HPS hardware.
  */
-#define SYSMGR_ISWGRP_HANDOFF3          (0x8C)
+#घोषणा SYSMGR_ISWGRP_HANDOFF3          (0x8C)
 
-#define F2S_BRIDGE_NAME "fpga2sdram"
+#घोषणा F2S_BRIDGE_NAME "fpga2sdram"
 
-struct alt_fpga2sdram_data {
-	struct device *dev;
-	struct regmap *sdrctl;
-	int mask;
-};
+काष्ठा alt_fpga2sdram_data अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *sdrctl;
+	पूर्णांक mask;
+पूर्ण;
 
-static int alt_fpga2sdram_enable_show(struct fpga_bridge *bridge)
-{
-	struct alt_fpga2sdram_data *priv = bridge->priv;
-	int value;
+अटल पूर्णांक alt_fpga2sdram_enable_show(काष्ठा fpga_bridge *bridge)
+अणु
+	काष्ठा alt_fpga2sdram_data *priv = bridge->priv;
+	पूर्णांक value;
 
-	regmap_read(priv->sdrctl, ALT_SDR_CTL_FPGAPORTRST_OFST, &value);
+	regmap_पढ़ो(priv->sdrctl, ALT_SDR_CTL_FPGAPORTRST_OFST, &value);
 
-	return (value & priv->mask) == priv->mask;
-}
+	वापस (value & priv->mask) == priv->mask;
+पूर्ण
 
-static inline int _alt_fpga2sdram_enable_set(struct alt_fpga2sdram_data *priv,
+अटल अंतरभूत पूर्णांक _alt_fpga2sdram_enable_set(काष्ठा alt_fpga2sdram_data *priv,
 					     bool enable)
-{
-	return regmap_update_bits(priv->sdrctl, ALT_SDR_CTL_FPGAPORTRST_OFST,
+अणु
+	वापस regmap_update_bits(priv->sdrctl, ALT_SDR_CTL_FPGAPORTRST_OFST,
 				  priv->mask, enable ? priv->mask : 0);
-}
+पूर्ण
 
-static int alt_fpga2sdram_enable_set(struct fpga_bridge *bridge, bool enable)
-{
-	return _alt_fpga2sdram_enable_set(bridge->priv, enable);
-}
+अटल पूर्णांक alt_fpga2sdram_enable_set(काष्ठा fpga_bridge *bridge, bool enable)
+अणु
+	वापस _alt_fpga2sdram_enable_set(bridge->priv, enable);
+पूर्ण
 
-struct prop_map {
-	char *prop_name;
+काष्ठा prop_map अणु
+	अक्षर *prop_name;
 	u32 *prop_value;
 	u32 prop_max;
-};
+पूर्ण;
 
-static const struct fpga_bridge_ops altera_fpga2sdram_br_ops = {
+अटल स्थिर काष्ठा fpga_bridge_ops altera_fpga2sdram_br_ops = अणु
 	.enable_set = alt_fpga2sdram_enable_set,
 	.enable_show = alt_fpga2sdram_enable_show,
-};
+पूर्ण;
 
-static const struct of_device_id altera_fpga_of_match[] = {
-	{ .compatible = "altr,socfpga-fpga2sdram-bridge" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id altera_fpga_of_match[] = अणु
+	अणु .compatible = "altr,socfpga-fpga2sdram-bridge" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int alt_fpga_bridge_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct alt_fpga2sdram_data *priv;
-	struct fpga_bridge *br;
+अटल पूर्णांक alt_fpga_bridge_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा alt_fpga2sdram_data *priv;
+	काष्ठा fpga_bridge *br;
 	u32 enable;
-	struct regmap *sysmgr;
-	int ret = 0;
+	काष्ठा regmap *sysmgr;
+	पूर्णांक ret = 0;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->dev = dev;
 
 	priv->sdrctl = syscon_regmap_lookup_by_compatible("altr,sdr-ctl");
-	if (IS_ERR(priv->sdrctl)) {
+	अगर (IS_ERR(priv->sdrctl)) अणु
 		dev_err(dev, "regmap for altr,sdr-ctl lookup failed.\n");
-		return PTR_ERR(priv->sdrctl);
-	}
+		वापस PTR_ERR(priv->sdrctl);
+	पूर्ण
 
 	sysmgr = syscon_regmap_lookup_by_compatible("altr,sys-mgr");
-	if (IS_ERR(sysmgr)) {
+	अगर (IS_ERR(sysmgr)) अणु
 		dev_err(dev, "regmap for altr,sys-mgr lookup failed.\n");
-		return PTR_ERR(sysmgr);
-	}
+		वापस PTR_ERR(sysmgr);
+	पूर्ण
 
-	/* Get f2s bridge configuration saved in handoff register */
-	regmap_read(sysmgr, SYSMGR_ISWGRP_HANDOFF3, &priv->mask);
+	/* Get f2s bridge configuration saved in hanकरोff रेजिस्टर */
+	regmap_पढ़ो(sysmgr, SYSMGR_ISWGRP_HANDOFF3, &priv->mask);
 
 	br = devm_fpga_bridge_create(dev, F2S_BRIDGE_NAME,
 				     &altera_fpga2sdram_br_ops, priv);
-	if (!br)
-		return -ENOMEM;
+	अगर (!br)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, br);
+	platक्रमm_set_drvdata(pdev, br);
 
-	ret = fpga_bridge_register(br);
-	if (ret)
-		return ret;
+	ret = fpga_bridge_रेजिस्टर(br);
+	अगर (ret)
+		वापस ret;
 
 	dev_info(dev, "driver initialized with handoff %08x\n", priv->mask);
 
-	if (!of_property_read_u32(dev->of_node, "bridge-enable", &enable)) {
-		if (enable > 1) {
+	अगर (!of_property_पढ़ो_u32(dev->of_node, "bridge-enable", &enable)) अणु
+		अगर (enable > 1) अणु
 			dev_warn(dev, "invalid bridge-enable %u > 1\n", enable);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_info(dev, "%s bridge\n",
 				 (enable ? "enabling" : "disabling"));
 			ret = _alt_fpga2sdram_enable_set(priv, enable);
-			if (ret) {
-				fpga_bridge_unregister(br);
-				return ret;
-			}
-		}
-	}
+			अगर (ret) अणु
+				fpga_bridge_unरेजिस्टर(br);
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int alt_fpga_bridge_remove(struct platform_device *pdev)
-{
-	struct fpga_bridge *br = platform_get_drvdata(pdev);
+अटल पूर्णांक alt_fpga_bridge_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fpga_bridge *br = platक्रमm_get_drvdata(pdev);
 
-	fpga_bridge_unregister(br);
+	fpga_bridge_unरेजिस्टर(br);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 MODULE_DEVICE_TABLE(of, altera_fpga_of_match);
 
-static struct platform_driver altera_fpga_driver = {
+अटल काष्ठा platक्रमm_driver altera_fpga_driver = अणु
 	.probe = alt_fpga_bridge_probe,
-	.remove = alt_fpga_bridge_remove,
-	.driver = {
+	.हटाओ = alt_fpga_bridge_हटाओ,
+	.driver = अणु
 		.name	= "altera_fpga2sdram_bridge",
 		.of_match_table = of_match_ptr(altera_fpga_of_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(altera_fpga_driver);
+module_platक्रमm_driver(altera_fpga_driver);
 
 MODULE_DESCRIPTION("Altera SoCFPGA FPGA to SDRAM Bridge");
 MODULE_AUTHOR("Alan Tull <atull@opensource.altera.com>");

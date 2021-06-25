@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *  arch/arm/include/asm/hardware/vic.h
+ *  arch/arm/include/यंत्र/hardware/vic.h
  *
  *  Copyright (c) ARM Limited 2003.  All rights reserved.
  */
-#ifndef __ASM_ARM_HARDWARE_VIC_H
-#define __ASM_ARM_HARDWARE_VIC_H
+#अगर_अघोषित __ASM_ARM_HARDWARE_VIC_H
+#घोषणा __ASM_ARM_HARDWARE_VIC_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-void vic_init(void __iomem *base, unsigned int irq_start, u32 vic_sources, u32 resume_sources);
+व्योम vic_init(व्योम __iomem *base, अचिन्हित पूर्णांक irq_start, u32 vic_sources, u32 resume_sources);
 
-#endif
+#पूर्ण_अगर

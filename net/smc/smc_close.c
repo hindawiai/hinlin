@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Shared Memory Communications over RDMA (SMC-R) and RoCE
  *
@@ -9,481 +10,481 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
-#include <linux/workqueue.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <net/sock.h>
-#include <net/tcp.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp.h>
 
-#include "smc.h"
-#include "smc_tx.h"
-#include "smc_cdc.h"
-#include "smc_close.h"
+#समावेश "smc.h"
+#समावेश "smc_tx.h"
+#समावेश "smc_cdc.h"
+#समावेश "smc_close.h"
 
-/* release the clcsock that is assigned to the smc_sock */
-void smc_clcsock_release(struct smc_sock *smc)
-{
-	struct socket *tcp;
+/* release the clcsock that is asचिन्हित to the smc_sock */
+व्योम smc_clcsock_release(काष्ठा smc_sock *smc)
+अणु
+	काष्ठा socket *tcp;
 
-	if (smc->listen_smc && current_work() != &smc->smc_listen_work)
+	अगर (smc->listen_smc && current_work() != &smc->smc_listen_work)
 		cancel_work_sync(&smc->smc_listen_work);
 	mutex_lock(&smc->clcsock_release_lock);
-	if (smc->clcsock) {
+	अगर (smc->clcsock) अणु
 		tcp = smc->clcsock;
-		smc->clcsock = NULL;
+		smc->clcsock = शून्य;
 		sock_release(tcp);
-	}
+	पूर्ण
 	mutex_unlock(&smc->clcsock_release_lock);
-}
+पूर्ण
 
-static void smc_close_cleanup_listen(struct sock *parent)
-{
-	struct sock *sk;
+अटल व्योम smc_बंद_cleanup_listen(काष्ठा sock *parent)
+अणु
+	काष्ठा sock *sk;
 
 	/* Close non-accepted connections */
-	while ((sk = smc_accept_dequeue(parent, NULL)))
-		smc_close_non_accepted(sk);
-}
+	जबतक ((sk = smc_accept_dequeue(parent, शून्य)))
+		smc_बंद_non_accepted(sk);
+पूर्ण
 
-/* wait for sndbuf data being transmitted */
-static void smc_close_stream_wait(struct smc_sock *smc, long timeout)
-{
-	DEFINE_WAIT_FUNC(wait, woken_wake_function);
-	struct sock *sk = &smc->sk;
+/* रुको क्रम sndbuf data being transmitted */
+अटल व्योम smc_बंद_stream_रुको(काष्ठा smc_sock *smc, दीर्घ समयout)
+अणु
+	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+	काष्ठा sock *sk = &smc->sk;
 
-	if (!timeout)
-		return;
+	अगर (!समयout)
+		वापस;
 
-	if (!smc_tx_prepared_sends(&smc->conn))
-		return;
+	अगर (!smc_tx_prepared_sends(&smc->conn))
+		वापस;
 
-	smc->wait_close_tx_prepared = 1;
-	add_wait_queue(sk_sleep(sk), &wait);
-	while (!signal_pending(current) && timeout) {
-		int rc;
+	smc->रुको_बंद_tx_prepared = 1;
+	add_रुको_queue(sk_sleep(sk), &रुको);
+	जबतक (!संकेत_pending(current) && समयout) अणु
+		पूर्णांक rc;
 
-		rc = sk_wait_event(sk, &timeout,
+		rc = sk_रुको_event(sk, &समयout,
 				   !smc_tx_prepared_sends(&smc->conn) ||
 				   sk->sk_err == ECONNABORTED ||
 				   sk->sk_err == ECONNRESET ||
-				   smc->conn.killed,
-				   &wait);
-		if (rc)
-			break;
-	}
-	remove_wait_queue(sk_sleep(sk), &wait);
-	smc->wait_close_tx_prepared = 0;
-}
+				   smc->conn.समाप्तed,
+				   &रुको);
+		अगर (rc)
+			अवरोध;
+	पूर्ण
+	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
+	smc->रुको_बंद_tx_prepared = 0;
+पूर्ण
 
-void smc_close_wake_tx_prepared(struct smc_sock *smc)
-{
-	if (smc->wait_close_tx_prepared)
+व्योम smc_बंद_wake_tx_prepared(काष्ठा smc_sock *smc)
+अणु
+	अगर (smc->रुको_बंद_tx_prepared)
 		/* wake up socket closing */
 		smc->sk.sk_state_change(&smc->sk);
-}
+पूर्ण
 
-static int smc_close_wr(struct smc_connection *conn)
-{
-	conn->local_tx_ctrl.conn_state_flags.peer_done_writing = 1;
+अटल पूर्णांक smc_बंद_wr(काष्ठा smc_connection *conn)
+अणु
+	conn->local_tx_ctrl.conn_state_flags.peer_करोne_writing = 1;
 
-	return smc_cdc_get_slot_and_msg_send(conn);
-}
+	वापस smc_cdc_get_slot_and_msg_send(conn);
+पूर्ण
 
-static int smc_close_final(struct smc_connection *conn)
-{
-	if (atomic_read(&conn->bytes_to_rcv))
-		conn->local_tx_ctrl.conn_state_flags.peer_conn_abort = 1;
-	else
-		conn->local_tx_ctrl.conn_state_flags.peer_conn_closed = 1;
-	if (conn->killed)
-		return -EPIPE;
+अटल पूर्णांक smc_बंद_final(काष्ठा smc_connection *conn)
+अणु
+	अगर (atomic_पढ़ो(&conn->bytes_to_rcv))
+		conn->local_tx_ctrl.conn_state_flags.peer_conn_पात = 1;
+	अन्यथा
+		conn->local_tx_ctrl.conn_state_flags.peer_conn_बंदd = 1;
+	अगर (conn->समाप्तed)
+		वापस -EPIPE;
 
-	return smc_cdc_get_slot_and_msg_send(conn);
-}
+	वापस smc_cdc_get_slot_and_msg_send(conn);
+पूर्ण
 
-int smc_close_abort(struct smc_connection *conn)
-{
-	conn->local_tx_ctrl.conn_state_flags.peer_conn_abort = 1;
+पूर्णांक smc_बंद_पात(काष्ठा smc_connection *conn)
+अणु
+	conn->local_tx_ctrl.conn_state_flags.peer_conn_पात = 1;
 
-	return smc_cdc_get_slot_and_msg_send(conn);
-}
+	वापस smc_cdc_get_slot_and_msg_send(conn);
+पूर्ण
 
-static void smc_close_cancel_work(struct smc_sock *smc)
-{
-	struct sock *sk = &smc->sk;
+अटल व्योम smc_बंद_cancel_work(काष्ठा smc_sock *smc)
+अणु
+	काष्ठा sock *sk = &smc->sk;
 
 	release_sock(sk);
-	cancel_work_sync(&smc->conn.close_work);
+	cancel_work_sync(&smc->conn.बंद_work);
 	cancel_delayed_work_sync(&smc->conn.tx_work);
 	lock_sock(sk);
-}
+पूर्ण
 
-/* terminate smc socket abnormally - active abort
- * link group is terminated, i.e. RDMA communication no longer possible
+/* terminate smc socket abnormally - active पात
+ * link group is terminated, i.e. RDMA communication no दीर्घer possible
  */
-void smc_close_active_abort(struct smc_sock *smc)
-{
-	struct sock *sk = &smc->sk;
+व्योम smc_बंद_active_पात(काष्ठा smc_sock *smc)
+अणु
+	काष्ठा sock *sk = &smc->sk;
 	bool release_clcsock = false;
 
-	if (sk->sk_state != SMC_INIT && smc->clcsock && smc->clcsock->sk) {
+	अगर (sk->sk_state != SMC_INIT && smc->clcsock && smc->clcsock->sk) अणु
 		sk->sk_err = ECONNABORTED;
-		if (smc->clcsock && smc->clcsock->sk)
-			tcp_abort(smc->clcsock->sk, ECONNABORTED);
-	}
-	switch (sk->sk_state) {
-	case SMC_ACTIVE:
-	case SMC_APPCLOSEWAIT1:
-	case SMC_APPCLOSEWAIT2:
+		अगर (smc->clcsock && smc->clcsock->sk)
+			tcp_पात(smc->clcsock->sk, ECONNABORTED);
+	पूर्ण
+	चयन (sk->sk_state) अणु
+	हाल SMC_ACTIVE:
+	हाल SMC_APPCLOSEWAIT1:
+	हाल SMC_APPCLOSEWAIT2:
 		sk->sk_state = SMC_PEERABORTWAIT;
-		smc_close_cancel_work(smc);
-		if (sk->sk_state != SMC_PEERABORTWAIT)
-			break;
+		smc_बंद_cancel_work(smc);
+		अगर (sk->sk_state != SMC_PEERABORTWAIT)
+			अवरोध;
 		sk->sk_state = SMC_CLOSED;
 		sock_put(sk); /* (postponed) passive closing */
-		break;
-	case SMC_PEERCLOSEWAIT1:
-	case SMC_PEERCLOSEWAIT2:
-	case SMC_PEERFINCLOSEWAIT:
+		अवरोध;
+	हाल SMC_PEERCLOSEWAIT1:
+	हाल SMC_PEERCLOSEWAIT2:
+	हाल SMC_PEERFINCLOSEWAIT:
 		sk->sk_state = SMC_PEERABORTWAIT;
-		smc_close_cancel_work(smc);
-		if (sk->sk_state != SMC_PEERABORTWAIT)
-			break;
+		smc_बंद_cancel_work(smc);
+		अगर (sk->sk_state != SMC_PEERABORTWAIT)
+			अवरोध;
 		sk->sk_state = SMC_CLOSED;
-		smc_conn_free(&smc->conn);
+		smc_conn_मुक्त(&smc->conn);
 		release_clcsock = true;
 		sock_put(sk); /* passive closing */
-		break;
-	case SMC_PROCESSABORT:
-	case SMC_APPFINCLOSEWAIT:
+		अवरोध;
+	हाल SMC_PROCESSABORT:
+	हाल SMC_APPFINCLOSEWAIT:
 		sk->sk_state = SMC_PEERABORTWAIT;
-		smc_close_cancel_work(smc);
-		if (sk->sk_state != SMC_PEERABORTWAIT)
-			break;
+		smc_बंद_cancel_work(smc);
+		अगर (sk->sk_state != SMC_PEERABORTWAIT)
+			अवरोध;
 		sk->sk_state = SMC_CLOSED;
-		smc_conn_free(&smc->conn);
+		smc_conn_मुक्त(&smc->conn);
 		release_clcsock = true;
-		break;
-	case SMC_INIT:
-	case SMC_PEERABORTWAIT:
-	case SMC_CLOSED:
-		break;
-	}
+		अवरोध;
+	हाल SMC_INIT:
+	हाल SMC_PEERABORTWAIT:
+	हाल SMC_CLOSED:
+		अवरोध;
+	पूर्ण
 
 	sock_set_flag(sk, SOCK_DEAD);
 	sk->sk_state_change(sk);
 
-	if (release_clcsock) {
+	अगर (release_clcsock) अणु
 		release_sock(sk);
 		smc_clcsock_release(smc);
 		lock_sock(sk);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline bool smc_close_sent_any_close(struct smc_connection *conn)
-{
-	return conn->local_tx_ctrl.conn_state_flags.peer_conn_abort ||
-	       conn->local_tx_ctrl.conn_state_flags.peer_conn_closed;
-}
+अटल अंतरभूत bool smc_बंद_sent_any_बंद(काष्ठा smc_connection *conn)
+अणु
+	वापस conn->local_tx_ctrl.conn_state_flags.peer_conn_पात ||
+	       conn->local_tx_ctrl.conn_state_flags.peer_conn_बंदd;
+पूर्ण
 
-int smc_close_active(struct smc_sock *smc)
-{
-	struct smc_cdc_conn_state_flags *txflags =
+पूर्णांक smc_बंद_active(काष्ठा smc_sock *smc)
+अणु
+	काष्ठा smc_cdc_conn_state_flags *txflags =
 		&smc->conn.local_tx_ctrl.conn_state_flags;
-	struct smc_connection *conn = &smc->conn;
-	struct sock *sk = &smc->sk;
-	int old_state;
-	long timeout;
-	int rc = 0;
+	काष्ठा smc_connection *conn = &smc->conn;
+	काष्ठा sock *sk = &smc->sk;
+	पूर्णांक old_state;
+	दीर्घ समयout;
+	पूर्णांक rc = 0;
 
-	timeout = current->flags & PF_EXITING ?
+	समयout = current->flags & PF_EXITING ?
 		  0 : sock_flag(sk, SOCK_LINGER) ?
-		      sk->sk_lingertime : SMC_MAX_STREAM_WAIT_TIMEOUT;
+		      sk->sk_lingerसमय : SMC_MAX_STREAM_WAIT_TIMEOUT;
 
 	old_state = sk->sk_state;
 again:
-	switch (sk->sk_state) {
-	case SMC_INIT:
+	चयन (sk->sk_state) अणु
+	हाल SMC_INIT:
 		sk->sk_state = SMC_CLOSED;
-		break;
-	case SMC_LISTEN:
+		अवरोध;
+	हाल SMC_LISTEN:
 		sk->sk_state = SMC_CLOSED;
 		sk->sk_state_change(sk); /* wake up accept */
-		if (smc->clcsock && smc->clcsock->sk) {
-			smc->clcsock->sk->sk_data_ready = smc->clcsk_data_ready;
-			smc->clcsock->sk->sk_user_data = NULL;
-			rc = kernel_sock_shutdown(smc->clcsock, SHUT_RDWR);
-		}
-		smc_close_cleanup_listen(sk);
+		अगर (smc->clcsock && smc->clcsock->sk) अणु
+			smc->clcsock->sk->sk_data_पढ़ोy = smc->clcsk_data_पढ़ोy;
+			smc->clcsock->sk->sk_user_data = शून्य;
+			rc = kernel_sock_shutकरोwn(smc->clcsock, SHUT_RDWR);
+		पूर्ण
+		smc_बंद_cleanup_listen(sk);
 		release_sock(sk);
 		flush_work(&smc->tcp_listen_work);
 		lock_sock(sk);
-		break;
-	case SMC_ACTIVE:
-		smc_close_stream_wait(smc, timeout);
+		अवरोध;
+	हाल SMC_ACTIVE:
+		smc_बंद_stream_रुको(smc, समयout);
 		release_sock(sk);
 		cancel_delayed_work_sync(&conn->tx_work);
 		lock_sock(sk);
-		if (sk->sk_state == SMC_ACTIVE) {
-			/* send close request */
-			rc = smc_close_final(conn);
+		अगर (sk->sk_state == SMC_ACTIVE) अणु
+			/* send बंद request */
+			rc = smc_बंद_final(conn);
 			sk->sk_state = SMC_PEERCLOSEWAIT1;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* peer event has changed the state */
-			goto again;
-		}
-		break;
-	case SMC_APPFINCLOSEWAIT:
-		/* socket already shutdown wr or both (active close) */
-		if (txflags->peer_done_writing &&
-		    !smc_close_sent_any_close(conn)) {
-			/* just shutdown wr done, send close request */
-			rc = smc_close_final(conn);
-		}
+			जाओ again;
+		पूर्ण
+		अवरोध;
+	हाल SMC_APPFINCLOSEWAIT:
+		/* socket alपढ़ोy shutकरोwn wr or both (active बंद) */
+		अगर (txflags->peer_करोne_writing &&
+		    !smc_बंद_sent_any_बंद(conn)) अणु
+			/* just shutकरोwn wr करोne, send बंद request */
+			rc = smc_बंद_final(conn);
+		पूर्ण
 		sk->sk_state = SMC_CLOSED;
-		break;
-	case SMC_APPCLOSEWAIT1:
-	case SMC_APPCLOSEWAIT2:
-		if (!smc_cdc_rxed_any_close(conn))
-			smc_close_stream_wait(smc, timeout);
+		अवरोध;
+	हाल SMC_APPCLOSEWAIT1:
+	हाल SMC_APPCLOSEWAIT2:
+		अगर (!smc_cdc_rxed_any_बंद(conn))
+			smc_बंद_stream_रुको(smc, समयout);
 		release_sock(sk);
 		cancel_delayed_work_sync(&conn->tx_work);
 		lock_sock(sk);
-		if (sk->sk_state != SMC_APPCLOSEWAIT1 &&
+		अगर (sk->sk_state != SMC_APPCLOSEWAIT1 &&
 		    sk->sk_state != SMC_APPCLOSEWAIT2)
-			goto again;
-		/* confirm close from peer */
-		rc = smc_close_final(conn);
-		if (smc_cdc_rxed_any_close(conn)) {
-			/* peer has closed the socket already */
+			जाओ again;
+		/* confirm बंद from peer */
+		rc = smc_बंद_final(conn);
+		अगर (smc_cdc_rxed_any_बंद(conn)) अणु
+			/* peer has बंदd the socket alपढ़ोy */
 			sk->sk_state = SMC_CLOSED;
 			sock_put(sk); /* postponed passive closing */
-		} else {
-			/* peer has just issued a shutdown write */
+		पूर्ण अन्यथा अणु
+			/* peer has just issued a shutकरोwn ग_लिखो */
 			sk->sk_state = SMC_PEERFINCLOSEWAIT;
-		}
-		break;
-	case SMC_PEERCLOSEWAIT1:
-	case SMC_PEERCLOSEWAIT2:
-		if (txflags->peer_done_writing &&
-		    !smc_close_sent_any_close(conn)) {
-			/* just shutdown wr done, send close request */
-			rc = smc_close_final(conn);
-		}
+		पूर्ण
+		अवरोध;
+	हाल SMC_PEERCLOSEWAIT1:
+	हाल SMC_PEERCLOSEWAIT2:
+		अगर (txflags->peer_करोne_writing &&
+		    !smc_बंद_sent_any_बंद(conn)) अणु
+			/* just shutकरोwn wr करोne, send बंद request */
+			rc = smc_बंद_final(conn);
+		पूर्ण
 		/* peer sending PeerConnectionClosed will cause transition */
-		break;
-	case SMC_PEERFINCLOSEWAIT:
+		अवरोध;
+	हाल SMC_PEERFINCLOSEWAIT:
 		/* peer sending PeerConnectionClosed will cause transition */
-		break;
-	case SMC_PROCESSABORT:
-		rc = smc_close_abort(conn);
+		अवरोध;
+	हाल SMC_PROCESSABORT:
+		rc = smc_बंद_पात(conn);
 		sk->sk_state = SMC_CLOSED;
-		break;
-	case SMC_PEERABORTWAIT:
+		अवरोध;
+	हाल SMC_PEERABORTWAIT:
 		sk->sk_state = SMC_CLOSED;
-		break;
-	case SMC_CLOSED:
-		/* nothing to do, add tracing in future patch */
-		break;
-	}
+		अवरोध;
+	हाल SMC_CLOSED:
+		/* nothing to करो, add tracing in future patch */
+		अवरोध;
+	पूर्ण
 
-	if (old_state != sk->sk_state)
+	अगर (old_state != sk->sk_state)
 		sk->sk_state_change(sk);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void smc_close_passive_abort_received(struct smc_sock *smc)
-{
-	struct smc_cdc_conn_state_flags *txflags =
+अटल व्योम smc_बंद_passive_पात_received(काष्ठा smc_sock *smc)
+अणु
+	काष्ठा smc_cdc_conn_state_flags *txflags =
 		&smc->conn.local_tx_ctrl.conn_state_flags;
-	struct sock *sk = &smc->sk;
+	काष्ठा sock *sk = &smc->sk;
 
-	switch (sk->sk_state) {
-	case SMC_INIT:
-	case SMC_ACTIVE:
-	case SMC_APPCLOSEWAIT1:
+	चयन (sk->sk_state) अणु
+	हाल SMC_INIT:
+	हाल SMC_ACTIVE:
+	हाल SMC_APPCLOSEWAIT1:
 		sk->sk_state = SMC_PROCESSABORT;
 		sock_put(sk); /* passive closing */
-		break;
-	case SMC_APPFINCLOSEWAIT:
+		अवरोध;
+	हाल SMC_APPFINCLOSEWAIT:
 		sk->sk_state = SMC_PROCESSABORT;
-		break;
-	case SMC_PEERCLOSEWAIT1:
-	case SMC_PEERCLOSEWAIT2:
-		if (txflags->peer_done_writing &&
-		    !smc_close_sent_any_close(&smc->conn))
-			/* just shutdown, but not yet closed locally */
+		अवरोध;
+	हाल SMC_PEERCLOSEWAIT1:
+	हाल SMC_PEERCLOSEWAIT2:
+		अगर (txflags->peer_करोne_writing &&
+		    !smc_बंद_sent_any_बंद(&smc->conn))
+			/* just shutकरोwn, but not yet बंदd locally */
 			sk->sk_state = SMC_PROCESSABORT;
-		else
+		अन्यथा
 			sk->sk_state = SMC_CLOSED;
 		sock_put(sk); /* passive closing */
-		break;
-	case SMC_APPCLOSEWAIT2:
-	case SMC_PEERFINCLOSEWAIT:
+		अवरोध;
+	हाल SMC_APPCLOSEWAIT2:
+	हाल SMC_PEERFINCLOSEWAIT:
 		sk->sk_state = SMC_CLOSED;
 		sock_put(sk); /* passive closing */
-		break;
-	case SMC_PEERABORTWAIT:
+		अवरोध;
+	हाल SMC_PEERABORTWAIT:
 		sk->sk_state = SMC_CLOSED;
-		break;
-	case SMC_PROCESSABORT:
-	/* nothing to do, add tracing in future patch */
-		break;
-	}
-}
+		अवरोध;
+	हाल SMC_PROCESSABORT:
+	/* nothing to करो, add tracing in future patch */
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-/* Either some kind of closing has been received: peer_conn_closed,
- * peer_conn_abort, or peer_done_writing
+/* Either some kind of closing has been received: peer_conn_बंदd,
+ * peer_conn_पात, or peer_करोne_writing
  * or the link group of the connection terminates abnormally.
  */
-static void smc_close_passive_work(struct work_struct *work)
-{
-	struct smc_connection *conn = container_of(work,
-						   struct smc_connection,
-						   close_work);
-	struct smc_sock *smc = container_of(conn, struct smc_sock, conn);
-	struct smc_cdc_conn_state_flags *rxflags;
+अटल व्योम smc_बंद_passive_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा smc_connection *conn = container_of(work,
+						   काष्ठा smc_connection,
+						   बंद_work);
+	काष्ठा smc_sock *smc = container_of(conn, काष्ठा smc_sock, conn);
+	काष्ठा smc_cdc_conn_state_flags *rxflags;
 	bool release_clcsock = false;
-	struct sock *sk = &smc->sk;
-	int old_state;
+	काष्ठा sock *sk = &smc->sk;
+	पूर्णांक old_state;
 
 	lock_sock(sk);
 	old_state = sk->sk_state;
 
 	rxflags = &conn->local_rx_ctrl.conn_state_flags;
-	if (rxflags->peer_conn_abort) {
+	अगर (rxflags->peer_conn_पात) अणु
 		/* peer has not received all data */
-		smc_close_passive_abort_received(smc);
+		smc_बंद_passive_पात_received(smc);
 		release_sock(&smc->sk);
 		cancel_delayed_work_sync(&conn->tx_work);
 		lock_sock(&smc->sk);
-		goto wakeup;
-	}
+		जाओ wakeup;
+	पूर्ण
 
-	switch (sk->sk_state) {
-	case SMC_INIT:
+	चयन (sk->sk_state) अणु
+	हाल SMC_INIT:
 		sk->sk_state = SMC_APPCLOSEWAIT1;
-		break;
-	case SMC_ACTIVE:
+		अवरोध;
+	हाल SMC_ACTIVE:
 		sk->sk_state = SMC_APPCLOSEWAIT1;
-		/* postpone sock_put() for passive closing to cover
+		/* postpone sock_put() क्रम passive closing to cover
 		 * received SEND_SHUTDOWN as well
 		 */
-		break;
-	case SMC_PEERCLOSEWAIT1:
-		if (rxflags->peer_done_writing)
+		अवरोध;
+	हाल SMC_PEERCLOSEWAIT1:
+		अगर (rxflags->peer_करोne_writing)
 			sk->sk_state = SMC_PEERCLOSEWAIT2;
 		fallthrough;
-		/* to check for closing */
-	case SMC_PEERCLOSEWAIT2:
-		if (!smc_cdc_rxed_any_close(conn))
-			break;
-		if (sock_flag(sk, SOCK_DEAD) &&
-		    smc_close_sent_any_close(conn)) {
-			/* smc_release has already been called locally */
+		/* to check क्रम closing */
+	हाल SMC_PEERCLOSEWAIT2:
+		अगर (!smc_cdc_rxed_any_बंद(conn))
+			अवरोध;
+		अगर (sock_flag(sk, SOCK_DEAD) &&
+		    smc_बंद_sent_any_बंद(conn)) अणु
+			/* smc_release has alपढ़ोy been called locally */
 			sk->sk_state = SMC_CLOSED;
-		} else {
-			/* just shutdown, but not yet closed locally */
+		पूर्ण अन्यथा अणु
+			/* just shutकरोwn, but not yet बंदd locally */
 			sk->sk_state = SMC_APPFINCLOSEWAIT;
-		}
+		पूर्ण
 		sock_put(sk); /* passive closing */
-		break;
-	case SMC_PEERFINCLOSEWAIT:
-		if (smc_cdc_rxed_any_close(conn)) {
+		अवरोध;
+	हाल SMC_PEERFINCLOSEWAIT:
+		अगर (smc_cdc_rxed_any_बंद(conn)) अणु
 			sk->sk_state = SMC_CLOSED;
 			sock_put(sk); /* passive closing */
-		}
-		break;
-	case SMC_APPCLOSEWAIT1:
-	case SMC_APPCLOSEWAIT2:
-		/* postpone sock_put() for passive closing to cover
+		पूर्ण
+		अवरोध;
+	हाल SMC_APPCLOSEWAIT1:
+	हाल SMC_APPCLOSEWAIT2:
+		/* postpone sock_put() क्रम passive closing to cover
 		 * received SEND_SHUTDOWN as well
 		 */
-		break;
-	case SMC_APPFINCLOSEWAIT:
-	case SMC_PEERABORTWAIT:
-	case SMC_PROCESSABORT:
-	case SMC_CLOSED:
-		/* nothing to do, add tracing in future patch */
-		break;
-	}
+		अवरोध;
+	हाल SMC_APPFINCLOSEWAIT:
+	हाल SMC_PEERABORTWAIT:
+	हाल SMC_PROCESSABORT:
+	हाल SMC_CLOSED:
+		/* nothing to करो, add tracing in future patch */
+		अवरोध;
+	पूर्ण
 
 wakeup:
-	sk->sk_data_ready(sk); /* wakeup blocked rcvbuf consumers */
-	sk->sk_write_space(sk); /* wakeup blocked sndbuf producers */
+	sk->sk_data_पढ़ोy(sk); /* wakeup blocked rcvbuf consumers */
+	sk->sk_ग_लिखो_space(sk); /* wakeup blocked sndbuf producers */
 
-	if (old_state != sk->sk_state) {
+	अगर (old_state != sk->sk_state) अणु
 		sk->sk_state_change(sk);
-		if ((sk->sk_state == SMC_CLOSED) &&
-		    (sock_flag(sk, SOCK_DEAD) || !sk->sk_socket)) {
-			smc_conn_free(conn);
-			if (smc->clcsock)
+		अगर ((sk->sk_state == SMC_CLOSED) &&
+		    (sock_flag(sk, SOCK_DEAD) || !sk->sk_socket)) अणु
+			smc_conn_मुक्त(conn);
+			अगर (smc->clcsock)
 				release_clcsock = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	release_sock(sk);
-	if (release_clcsock)
+	अगर (release_clcsock)
 		smc_clcsock_release(smc);
-	sock_put(sk); /* sock_hold done by schedulers of close_work */
-}
+	sock_put(sk); /* sock_hold करोne by schedulers of बंद_work */
+पूर्ण
 
-int smc_close_shutdown_write(struct smc_sock *smc)
-{
-	struct smc_connection *conn = &smc->conn;
-	struct sock *sk = &smc->sk;
-	int old_state;
-	long timeout;
-	int rc = 0;
+पूर्णांक smc_बंद_shutकरोwn_ग_लिखो(काष्ठा smc_sock *smc)
+अणु
+	काष्ठा smc_connection *conn = &smc->conn;
+	काष्ठा sock *sk = &smc->sk;
+	पूर्णांक old_state;
+	दीर्घ समयout;
+	पूर्णांक rc = 0;
 
-	timeout = current->flags & PF_EXITING ?
+	समयout = current->flags & PF_EXITING ?
 		  0 : sock_flag(sk, SOCK_LINGER) ?
-		      sk->sk_lingertime : SMC_MAX_STREAM_WAIT_TIMEOUT;
+		      sk->sk_lingerसमय : SMC_MAX_STREAM_WAIT_TIMEOUT;
 
 	old_state = sk->sk_state;
 again:
-	switch (sk->sk_state) {
-	case SMC_ACTIVE:
-		smc_close_stream_wait(smc, timeout);
+	चयन (sk->sk_state) अणु
+	हाल SMC_ACTIVE:
+		smc_बंद_stream_रुको(smc, समयout);
 		release_sock(sk);
 		cancel_delayed_work_sync(&conn->tx_work);
 		lock_sock(sk);
-		if (sk->sk_state != SMC_ACTIVE)
-			goto again;
-		/* send close wr request */
-		rc = smc_close_wr(conn);
+		अगर (sk->sk_state != SMC_ACTIVE)
+			जाओ again;
+		/* send बंद wr request */
+		rc = smc_बंद_wr(conn);
 		sk->sk_state = SMC_PEERCLOSEWAIT1;
-		break;
-	case SMC_APPCLOSEWAIT1:
-		/* passive close */
-		if (!smc_cdc_rxed_any_close(conn))
-			smc_close_stream_wait(smc, timeout);
+		अवरोध;
+	हाल SMC_APPCLOSEWAIT1:
+		/* passive बंद */
+		अगर (!smc_cdc_rxed_any_बंद(conn))
+			smc_बंद_stream_रुको(smc, समयout);
 		release_sock(sk);
 		cancel_delayed_work_sync(&conn->tx_work);
 		lock_sock(sk);
-		if (sk->sk_state != SMC_APPCLOSEWAIT1)
-			goto again;
-		/* confirm close from peer */
-		rc = smc_close_wr(conn);
+		अगर (sk->sk_state != SMC_APPCLOSEWAIT1)
+			जाओ again;
+		/* confirm बंद from peer */
+		rc = smc_बंद_wr(conn);
 		sk->sk_state = SMC_APPCLOSEWAIT2;
-		break;
-	case SMC_APPCLOSEWAIT2:
-	case SMC_PEERFINCLOSEWAIT:
-	case SMC_PEERCLOSEWAIT1:
-	case SMC_PEERCLOSEWAIT2:
-	case SMC_APPFINCLOSEWAIT:
-	case SMC_PROCESSABORT:
-	case SMC_PEERABORTWAIT:
-		/* nothing to do, add tracing in future patch */
-		break;
-	}
+		अवरोध;
+	हाल SMC_APPCLOSEWAIT2:
+	हाल SMC_PEERFINCLOSEWAIT:
+	हाल SMC_PEERCLOSEWAIT1:
+	हाल SMC_PEERCLOSEWAIT2:
+	हाल SMC_APPFINCLOSEWAIT:
+	हाल SMC_PROCESSABORT:
+	हाल SMC_PEERABORTWAIT:
+		/* nothing to करो, add tracing in future patch */
+		अवरोध;
+	पूर्ण
 
-	if (old_state != sk->sk_state)
+	अगर (old_state != sk->sk_state)
 		sk->sk_state_change(sk);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* Initialize close properties on connection establishment. */
-void smc_close_init(struct smc_sock *smc)
-{
-	INIT_WORK(&smc->conn.close_work, smc_close_passive_work);
-}
+/* Initialize बंद properties on connection establishment. */
+व्योम smc_बंद_init(काष्ठा smc_sock *smc)
+अणु
+	INIT_WORK(&smc->conn.बंद_work, smc_बंद_passive_work);
+पूर्ण

@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,143 +27,143 @@
  *
  **************************************************************************/
 
-#include <drm/ttm/ttm_execbuf_util.h>
-#include <drm/ttm/ttm_bo_driver.h>
-#include <drm/ttm/ttm_placement.h>
-#include <linux/wait.h>
-#include <linux/sched.h>
-#include <linux/module.h>
+#समावेश <drm/tपंचांग/tपंचांग_execbuf_util.h>
+#समावेश <drm/tपंचांग/tपंचांग_bo_driver.h>
+#समावेश <drm/tपंचांग/tपंचांग_placement.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/module.h>
 
-static void ttm_eu_backoff_reservation_reverse(struct list_head *list,
-					      struct ttm_validate_buffer *entry)
-{
-	list_for_each_entry_continue_reverse(entry, list, head) {
-		struct ttm_buffer_object *bo = entry->bo;
+अटल व्योम tपंचांग_eu_backoff_reservation_reverse(काष्ठा list_head *list,
+					      काष्ठा tपंचांग_validate_buffer *entry)
+अणु
+	list_क्रम_each_entry_जारी_reverse(entry, list, head) अणु
+		काष्ठा tपंचांग_buffer_object *bo = entry->bo;
 
 		dma_resv_unlock(bo->base.resv);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ttm_eu_backoff_reservation(struct ww_acquire_ctx *ticket,
-				struct list_head *list)
-{
-	struct ttm_validate_buffer *entry;
+व्योम tपंचांग_eu_backoff_reservation(काष्ठा ww_acquire_ctx *ticket,
+				काष्ठा list_head *list)
+अणु
+	काष्ठा tपंचांग_validate_buffer *entry;
 
-	if (list_empty(list))
-		return;
+	अगर (list_empty(list))
+		वापस;
 
-	list_for_each_entry(entry, list, head) {
-		struct ttm_buffer_object *bo = entry->bo;
+	list_क्रम_each_entry(entry, list, head) अणु
+		काष्ठा tपंचांग_buffer_object *bo = entry->bo;
 
-		ttm_bo_move_to_lru_tail_unlocked(bo);
+		tपंचांग_bo_move_to_lru_tail_unlocked(bo);
 		dma_resv_unlock(bo->base.resv);
-	}
+	पूर्ण
 
-	if (ticket)
+	अगर (ticket)
 		ww_acquire_fini(ticket);
-}
-EXPORT_SYMBOL(ttm_eu_backoff_reservation);
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_eu_backoff_reservation);
 
 /*
- * Reserve buffers for validation.
+ * Reserve buffers क्रम validation.
  *
- * If a buffer in the list is marked for CPU access, we back off and
- * wait for that buffer to become free for GPU access.
+ * If a buffer in the list is marked क्रम CPU access, we back off and
+ * रुको क्रम that buffer to become मुक्त क्रम GPU access.
  *
- * If a buffer is reserved for another validation, the validator with
- * the highest validation sequence backs off and waits for that buffer
+ * If a buffer is reserved क्रम another validation, the validator with
+ * the highest validation sequence backs off and रुकोs क्रम that buffer
  * to become unreserved. This prevents deadlocks when validating multiple
- * buffers in different orders.
+ * buffers in dअगरferent orders.
  */
 
-int ttm_eu_reserve_buffers(struct ww_acquire_ctx *ticket,
-			   struct list_head *list, bool intr,
-			   struct list_head *dups)
-{
-	struct ttm_validate_buffer *entry;
-	int ret;
+पूर्णांक tपंचांग_eu_reserve_buffers(काष्ठा ww_acquire_ctx *ticket,
+			   काष्ठा list_head *list, bool पूर्णांकr,
+			   काष्ठा list_head *dups)
+अणु
+	काष्ठा tपंचांग_validate_buffer *entry;
+	पूर्णांक ret;
 
-	if (list_empty(list))
-		return 0;
+	अगर (list_empty(list))
+		वापस 0;
 
-	if (ticket)
+	अगर (ticket)
 		ww_acquire_init(ticket, &reservation_ww_class);
 
-	list_for_each_entry(entry, list, head) {
-		struct ttm_buffer_object *bo = entry->bo;
+	list_क्रम_each_entry(entry, list, head) अणु
+		काष्ठा tपंचांग_buffer_object *bo = entry->bo;
 
-		ret = ttm_bo_reserve(bo, intr, (ticket == NULL), ticket);
-		if (ret == -EALREADY && dups) {
-			struct ttm_validate_buffer *safe = entry;
+		ret = tपंचांग_bo_reserve(bo, पूर्णांकr, (ticket == शून्य), ticket);
+		अगर (ret == -EALREADY && dups) अणु
+			काष्ठा tपंचांग_validate_buffer *safe = entry;
 			entry = list_prev_entry(entry, head);
 			list_del(&safe->head);
 			list_add(&safe->head, dups);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!ret) {
-			if (!entry->num_shared)
-				continue;
+		अगर (!ret) अणु
+			अगर (!entry->num_shared)
+				जारी;
 
 			ret = dma_resv_reserve_shared(bo->base.resv,
 								entry->num_shared);
-			if (!ret)
-				continue;
-		}
+			अगर (!ret)
+				जारी;
+		पूर्ण
 
 		/* uh oh, we lost out, drop every reservation and try
-		 * to only reserve this buffer, then start over if
+		 * to only reserve this buffer, then start over अगर
 		 * this succeeds.
 		 */
-		ttm_eu_backoff_reservation_reverse(list, entry);
+		tपंचांग_eu_backoff_reservation_reverse(list, entry);
 
-		if (ret == -EDEADLK) {
-			ret = ttm_bo_reserve_slowpath(bo, intr, ticket);
-		}
+		अगर (ret == -EDEADLK) अणु
+			ret = tपंचांग_bo_reserve_slowpath(bo, पूर्णांकr, ticket);
+		पूर्ण
 
-		if (!ret && entry->num_shared)
+		अगर (!ret && entry->num_shared)
 			ret = dma_resv_reserve_shared(bo->base.resv,
 								entry->num_shared);
 
-		if (unlikely(ret != 0)) {
-			if (ticket) {
-				ww_acquire_done(ticket);
+		अगर (unlikely(ret != 0)) अणु
+			अगर (ticket) अणु
+				ww_acquire_करोne(ticket);
 				ww_acquire_fini(ticket);
-			}
-			return ret;
-		}
+			पूर्ण
+			वापस ret;
+		पूर्ण
 
 		/* move this item to the front of the list,
-		 * forces correct iteration of the loop without keeping track
+		 * क्रमces correct iteration of the loop without keeping track
 		 */
 		list_del(&entry->head);
 		list_add(&entry->head, list);
-	}
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(ttm_eu_reserve_buffers);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_eu_reserve_buffers);
 
-void ttm_eu_fence_buffer_objects(struct ww_acquire_ctx *ticket,
-				 struct list_head *list,
-				 struct dma_fence *fence)
-{
-	struct ttm_validate_buffer *entry;
+व्योम tपंचांग_eu_fence_buffer_objects(काष्ठा ww_acquire_ctx *ticket,
+				 काष्ठा list_head *list,
+				 काष्ठा dma_fence *fence)
+अणु
+	काष्ठा tपंचांग_validate_buffer *entry;
 
-	if (list_empty(list))
-		return;
+	अगर (list_empty(list))
+		वापस;
 
-	list_for_each_entry(entry, list, head) {
-		struct ttm_buffer_object *bo = entry->bo;
+	list_क्रम_each_entry(entry, list, head) अणु
+		काष्ठा tपंचांग_buffer_object *bo = entry->bo;
 
-		if (entry->num_shared)
+		अगर (entry->num_shared)
 			dma_resv_add_shared_fence(bo->base.resv, fence);
-		else
+		अन्यथा
 			dma_resv_add_excl_fence(bo->base.resv, fence);
-		ttm_bo_move_to_lru_tail_unlocked(bo);
+		tपंचांग_bo_move_to_lru_tail_unlocked(bo);
 		dma_resv_unlock(bo->base.resv);
-	}
-	if (ticket)
+	पूर्ण
+	अगर (ticket)
 		ww_acquire_fini(ticket);
-}
-EXPORT_SYMBOL(ttm_eu_fence_buffer_objects);
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_eu_fence_buffer_objects);

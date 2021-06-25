@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  SMP related functions
  *
@@ -11,205 +12,205 @@
  *    (c) 1995 Alan Cox, CymruNET Ltd  <alan@cymru.net>
  *    (c) 1998 Ingo Molnar
  *
- * The code outside of smp.c uses logical cpu numbers, only smp.c does
+ * The code outside of smp.c uses logical cpu numbers, only smp.c करोes
  * the translation of logical to physical cpu ids. All new code that
- * operates on physical cpu numbers needs to go into smp.c.
+ * operates on physical cpu numbers needs to go पूर्णांकo smp.c.
  */
 
-#define KMSG_COMPONENT "cpu"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "cpu"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/workqueue.h>
-#include <linux/memblock.h>
-#include <linux/export.h>
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/err.h>
-#include <linux/spinlock.h>
-#include <linux/kernel_stat.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/irqflags.h>
-#include <linux/irq_work.h>
-#include <linux/cpu.h>
-#include <linux/slab.h>
-#include <linux/sched/hotplug.h>
-#include <linux/sched/task_stack.h>
-#include <linux/crash_dump.h>
-#include <linux/kprobes.h>
-#include <asm/asm-offsets.h>
-#include <asm/diag.h>
-#include <asm/switch_to.h>
-#include <asm/facility.h>
-#include <asm/ipl.h>
-#include <asm/setup.h>
-#include <asm/irq.h>
-#include <asm/tlbflush.h>
-#include <asm/vtimer.h>
-#include <asm/lowcore.h>
-#include <asm/sclp.h>
-#include <asm/debug.h>
-#include <asm/os_info.h>
-#include <asm/sigp.h>
-#include <asm/idle.h>
-#include <asm/nmi.h>
-#include <asm/stacktrace.h>
-#include <asm/topology.h>
-#include <asm/vdso.h>
-#include "entry.h"
+#समावेश <linux/workqueue.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/err.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqflags.h>
+#समावेश <linux/irq_work.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/hotplug.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/crash_dump.h>
+#समावेश <linux/kprobes.h>
+#समावेश <यंत्र/यंत्र-offsets.h>
+#समावेश <यंत्र/diag.h>
+#समावेश <यंत्र/चयन_to.h>
+#समावेश <यंत्र/facility.h>
+#समावेश <यंत्र/ipl.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/vसमयr.h>
+#समावेश <यंत्र/lowcore.h>
+#समावेश <यंत्र/sclp.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <यंत्र/os_info.h>
+#समावेश <यंत्र/sigp.h>
+#समावेश <यंत्र/idle.h>
+#समावेश <यंत्र/nmi.h>
+#समावेश <यंत्र/stacktrace.h>
+#समावेश <यंत्र/topology.h>
+#समावेश <यंत्र/vdso.h>
+#समावेश "entry.h"
 
-enum {
+क्रमागत अणु
 	ec_schedule = 0,
 	ec_call_function_single,
 	ec_stop_cpu,
 	ec_mcck_pending,
 	ec_irq_work,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CPU_STATE_STANDBY,
 	CPU_STATE_CONFIGURED,
-};
+पूर्ण;
 
-static DEFINE_PER_CPU(struct cpu *, cpu_device);
+अटल DEFINE_PER_CPU(काष्ठा cpu *, cpu_device);
 
-struct pcpu {
-	struct lowcore *lowcore;	/* lowcore page(s) for the cpu */
-	unsigned long ec_mask;		/* bit mask for ec_xxx functions */
-	unsigned long ec_clk;		/* sigp timestamp for ec_xxx */
-	signed char state;		/* physical cpu state */
-	signed char polarization;	/* physical polarization */
+काष्ठा pcpu अणु
+	काष्ठा lowcore *lowcore;	/* lowcore page(s) क्रम the cpu */
+	अचिन्हित दीर्घ ec_mask;		/* bit mask क्रम ec_xxx functions */
+	अचिन्हित दीर्घ ec_clk;		/* sigp बारtamp क्रम ec_xxx */
+	चिन्हित अक्षर state;		/* physical cpu state */
+	चिन्हित अक्षर polarization;	/* physical polarization */
 	u16 address;			/* physical cpu address */
-};
+पूर्ण;
 
-static u8 boot_core_type;
-static struct pcpu pcpu_devices[NR_CPUS];
+अटल u8 boot_core_type;
+अटल काष्ठा pcpu pcpu_devices[NR_CPUS];
 
-unsigned int smp_cpu_mt_shift;
-EXPORT_SYMBOL(smp_cpu_mt_shift);
+अचिन्हित पूर्णांक smp_cpu_mt_shअगरt;
+EXPORT_SYMBOL(smp_cpu_mt_shअगरt);
 
-unsigned int smp_cpu_mtid;
+अचिन्हित पूर्णांक smp_cpu_mtid;
 EXPORT_SYMBOL(smp_cpu_mtid);
 
-#ifdef CONFIG_CRASH_DUMP
+#अगर_घोषित CONFIG_CRASH_DUMP
 __vector128 __initdata boot_cpu_vector_save_area[__NUM_VXRS];
-#endif
+#पूर्ण_अगर
 
-static unsigned int smp_max_threads __initdata = -1U;
+अटल अचिन्हित पूर्णांक smp_max_thपढ़ोs __initdata = -1U;
 
-static int __init early_nosmt(char *s)
-{
-	smp_max_threads = 1;
-	return 0;
-}
+अटल पूर्णांक __init early_nosmt(अक्षर *s)
+अणु
+	smp_max_thपढ़ोs = 1;
+	वापस 0;
+पूर्ण
 early_param("nosmt", early_nosmt);
 
-static int __init early_smt(char *s)
-{
-	get_option(&s, &smp_max_threads);
-	return 0;
-}
+अटल पूर्णांक __init early_smt(अक्षर *s)
+अणु
+	get_option(&s, &smp_max_thपढ़ोs);
+	वापस 0;
+पूर्ण
 early_param("smt", early_smt);
 
 /*
  * The smp_cpu_state_mutex must be held when changing the state or polarization
- * member of a pcpu data structure within the pcpu_devices arreay.
+ * member of a pcpu data काष्ठाure within the pcpu_devices arreay.
  */
 DEFINE_MUTEX(smp_cpu_state_mutex);
 
 /*
  * Signal processor helper functions.
  */
-static inline int __pcpu_sigp_relax(u16 addr, u8 order, unsigned long parm)
-{
-	int cc;
+अटल अंतरभूत पूर्णांक __pcpu_sigp_relax(u16 addr, u8 order, अचिन्हित दीर्घ parm)
+अणु
+	पूर्णांक cc;
 
-	while (1) {
-		cc = __pcpu_sigp(addr, order, parm, NULL);
-		if (cc != SIGP_CC_BUSY)
-			return cc;
+	जबतक (1) अणु
+		cc = __pcpu_sigp(addr, order, parm, शून्य);
+		अगर (cc != SIGP_CC_BUSY)
+			वापस cc;
 		cpu_relax();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pcpu_sigp_retry(struct pcpu *pcpu, u8 order, u32 parm)
-{
-	int cc, retry;
+अटल पूर्णांक pcpu_sigp_retry(काष्ठा pcpu *pcpu, u8 order, u32 parm)
+अणु
+	पूर्णांक cc, retry;
 
-	for (retry = 0; ; retry++) {
-		cc = __pcpu_sigp(pcpu->address, order, parm, NULL);
-		if (cc != SIGP_CC_BUSY)
-			break;
-		if (retry >= 3)
+	क्रम (retry = 0; ; retry++) अणु
+		cc = __pcpu_sigp(pcpu->address, order, parm, शून्य);
+		अगर (cc != SIGP_CC_BUSY)
+			अवरोध;
+		अगर (retry >= 3)
 			udelay(10);
-	}
-	return cc;
-}
+	पूर्ण
+	वापस cc;
+पूर्ण
 
-static inline int pcpu_stopped(struct pcpu *pcpu)
-{
+अटल अंतरभूत पूर्णांक pcpu_stopped(काष्ठा pcpu *pcpu)
+अणु
 	u32 status;
 
-	if (__pcpu_sigp(pcpu->address, SIGP_SENSE,
+	अगर (__pcpu_sigp(pcpu->address, SIGP_SENSE,
 			0, &status) != SIGP_CC_STATUS_STORED)
-		return 0;
-	return !!(status & (SIGP_STATUS_CHECK_STOP|SIGP_STATUS_STOPPED));
-}
+		वापस 0;
+	वापस !!(status & (SIGP_STATUS_CHECK_STOP|SIGP_STATUS_STOPPED));
+पूर्ण
 
-static inline int pcpu_running(struct pcpu *pcpu)
-{
-	if (__pcpu_sigp(pcpu->address, SIGP_SENSE_RUNNING,
-			0, NULL) != SIGP_CC_STATUS_STORED)
-		return 1;
+अटल अंतरभूत पूर्णांक pcpu_running(काष्ठा pcpu *pcpu)
+अणु
+	अगर (__pcpu_sigp(pcpu->address, SIGP_SENSE_RUNNING,
+			0, शून्य) != SIGP_CC_STATUS_STORED)
+		वापस 1;
 	/* Status stored condition code is equivalent to cpu not running. */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Find struct pcpu by cpu address.
+ * Find काष्ठा pcpu by cpu address.
  */
-static struct pcpu *pcpu_find_address(const struct cpumask *mask, u16 address)
-{
-	int cpu;
+अटल काष्ठा pcpu *pcpu_find_address(स्थिर काष्ठा cpumask *mask, u16 address)
+अणु
+	पूर्णांक cpu;
 
-	for_each_cpu(cpu, mask)
-		if (pcpu_devices[cpu].address == address)
-			return pcpu_devices + cpu;
-	return NULL;
-}
+	क्रम_each_cpu(cpu, mask)
+		अगर (pcpu_devices[cpu].address == address)
+			वापस pcpu_devices + cpu;
+	वापस शून्य;
+पूर्ण
 
-static void pcpu_ec_call(struct pcpu *pcpu, int ec_bit)
-{
-	int order;
+अटल व्योम pcpu_ec_call(काष्ठा pcpu *pcpu, पूर्णांक ec_bit)
+अणु
+	पूर्णांक order;
 
-	if (test_and_set_bit(ec_bit, &pcpu->ec_mask))
-		return;
+	अगर (test_and_set_bit(ec_bit, &pcpu->ec_mask))
+		वापस;
 	order = pcpu_running(pcpu) ? SIGP_EXTERNAL_CALL : SIGP_EMERGENCY_SIGNAL;
-	pcpu->ec_clk = get_tod_clock_fast();
+	pcpu->ec_clk = get_tod_घड़ी_fast();
 	pcpu_sigp_retry(pcpu, order, 0);
-}
+पूर्ण
 
-static int pcpu_alloc_lowcore(struct pcpu *pcpu, int cpu)
-{
-	unsigned long async_stack, nodat_stack, mcck_stack;
-	struct lowcore *lc;
+अटल पूर्णांक pcpu_alloc_lowcore(काष्ठा pcpu *pcpu, पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ async_stack, nodat_stack, mcck_stack;
+	काष्ठा lowcore *lc;
 
-	if (pcpu != &pcpu_devices[0]) {
-		pcpu->lowcore =	(struct lowcore *)
-			__get_free_pages(GFP_KERNEL | GFP_DMA, LC_ORDER);
-		nodat_stack = __get_free_pages(GFP_KERNEL, THREAD_SIZE_ORDER);
-		if (!pcpu->lowcore || !nodat_stack)
-			goto out;
-	} else {
+	अगर (pcpu != &pcpu_devices[0]) अणु
+		pcpu->lowcore =	(काष्ठा lowcore *)
+			__get_मुक्त_pages(GFP_KERNEL | GFP_DMA, LC_ORDER);
+		nodat_stack = __get_मुक्त_pages(GFP_KERNEL, THREAD_SIZE_ORDER);
+		अगर (!pcpu->lowcore || !nodat_stack)
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		nodat_stack = pcpu->lowcore->nodat_stack - STACK_INIT_OFFSET;
-	}
+	पूर्ण
 	async_stack = stack_alloc();
 	mcck_stack = stack_alloc();
-	if (!async_stack || !mcck_stack)
-		goto out_stack;
+	अगर (!async_stack || !mcck_stack)
+		जाओ out_stack;
 	lc = pcpu->lowcore;
-	memcpy(lc, &S390_lowcore, 512);
-	memset((char *) lc + 512, 0, sizeof(*lc) - 512);
+	स_नकल(lc, &S390_lowcore, 512);
+	स_रखो((अक्षर *) lc + 512, 0, माप(*lc) - 512);
 	lc->async_stack = async_stack + STACK_INIT_OFFSET;
 	lc->nodat_stack = nodat_stack + STACK_INIT_OFFSET;
 	lc->mcck_stack = mcck_stack + STACK_INIT_OFFSET;
@@ -217,48 +218,48 @@ static int pcpu_alloc_lowcore(struct pcpu *pcpu, int cpu)
 	lc->spinlock_lockval = arch_spin_lockval(cpu);
 	lc->spinlock_index = 0;
 	lc->br_r1_trampoline = 0x07f1;	/* br %r1 */
-	lc->return_lpswe = gen_lpswe(__LC_RETURN_PSW);
-	lc->return_mcck_lpswe = gen_lpswe(__LC_RETURN_MCCK_PSW);
-	if (nmi_alloc_per_cpu(lc))
-		goto out_stack;
+	lc->वापस_lpswe = gen_lpswe(__LC_RETURN_PSW);
+	lc->वापस_mcck_lpswe = gen_lpswe(__LC_RETURN_MCCK_PSW);
+	अगर (nmi_alloc_per_cpu(lc))
+		जाओ out_stack;
 	lowcore_ptr[cpu] = lc;
-	pcpu_sigp_retry(pcpu, SIGP_SET_PREFIX, (u32)(unsigned long) lc);
-	return 0;
+	pcpu_sigp_retry(pcpu, SIGP_SET_PREFIX, (u32)(अचिन्हित दीर्घ) lc);
+	वापस 0;
 
 out_stack:
-	stack_free(mcck_stack);
-	stack_free(async_stack);
+	stack_मुक्त(mcck_stack);
+	stack_मुक्त(async_stack);
 out:
-	if (pcpu != &pcpu_devices[0]) {
-		free_pages(nodat_stack, THREAD_SIZE_ORDER);
-		free_pages((unsigned long) pcpu->lowcore, LC_ORDER);
-	}
-	return -ENOMEM;
-}
+	अगर (pcpu != &pcpu_devices[0]) अणु
+		मुक्त_pages(nodat_stack, THREAD_SIZE_ORDER);
+		मुक्त_pages((अचिन्हित दीर्घ) pcpu->lowcore, LC_ORDER);
+	पूर्ण
+	वापस -ENOMEM;
+पूर्ण
 
-static void pcpu_free_lowcore(struct pcpu *pcpu)
-{
-	unsigned long async_stack, nodat_stack, mcck_stack, lowcore;
+अटल व्योम pcpu_मुक्त_lowcore(काष्ठा pcpu *pcpu)
+अणु
+	अचिन्हित दीर्घ async_stack, nodat_stack, mcck_stack, lowcore;
 
 	nodat_stack = pcpu->lowcore->nodat_stack - STACK_INIT_OFFSET;
 	async_stack = pcpu->lowcore->async_stack - STACK_INIT_OFFSET;
 	mcck_stack = pcpu->lowcore->mcck_stack - STACK_INIT_OFFSET;
-	lowcore = (unsigned long) pcpu->lowcore;
+	lowcore = (अचिन्हित दीर्घ) pcpu->lowcore;
 
 	pcpu_sigp_retry(pcpu, SIGP_SET_PREFIX, 0);
-	lowcore_ptr[pcpu - pcpu_devices] = NULL;
-	nmi_free_per_cpu(pcpu->lowcore);
-	stack_free(async_stack);
-	stack_free(mcck_stack);
-	if (pcpu == &pcpu_devices[0])
-		return;
-	free_pages(nodat_stack, THREAD_SIZE_ORDER);
-	free_pages(lowcore, LC_ORDER);
-}
+	lowcore_ptr[pcpu - pcpu_devices] = शून्य;
+	nmi_मुक्त_per_cpu(pcpu->lowcore);
+	stack_मुक्त(async_stack);
+	stack_मुक्त(mcck_stack);
+	अगर (pcpu == &pcpu_devices[0])
+		वापस;
+	मुक्त_pages(nodat_stack, THREAD_SIZE_ORDER);
+	मुक्त_pages(lowcore, LC_ORDER);
+पूर्ण
 
-static void pcpu_prepare_secondary(struct pcpu *pcpu, int cpu)
-{
-	struct lowcore *lc = pcpu->lowcore;
+अटल व्योम pcpu_prepare_secondary(काष्ठा pcpu *pcpu, पूर्णांक cpu)
+अणु
+	काष्ठा lowcore *lc = pcpu->lowcore;
 
 	cpumask_set_cpu(cpu, &init_mm.context.cpu_attach_mask);
 	cpumask_set_cpu(cpu, mm_cpumask(&init_mm));
@@ -269,74 +270,74 @@ static void pcpu_prepare_secondary(struct pcpu *pcpu, int cpu)
 	lc->kernel_asce = S390_lowcore.kernel_asce;
 	lc->user_asce = s390_invalid_asce;
 	lc->machine_flags = S390_lowcore.machine_flags;
-	lc->user_timer = lc->system_timer =
-		lc->steal_timer = lc->avg_steal_timer = 0;
+	lc->user_समयr = lc->प्रणाली_समयr =
+		lc->steal_समयr = lc->avg_steal_समयr = 0;
 	__ctl_store(lc->cregs_save_area, 0, 15);
 	lc->cregs_save_area[1] = lc->kernel_asce;
 	lc->cregs_save_area[7] = lc->user_asce;
-	save_access_regs((unsigned int *) lc->access_regs_save_area);
-	memcpy(lc->stfle_fac_list, S390_lowcore.stfle_fac_list,
-	       sizeof(lc->stfle_fac_list));
-	memcpy(lc->alt_stfle_fac_list, S390_lowcore.alt_stfle_fac_list,
-	       sizeof(lc->alt_stfle_fac_list));
+	save_access_regs((अचिन्हित पूर्णांक *) lc->access_regs_save_area);
+	स_नकल(lc->stfle_fac_list, S390_lowcore.stfle_fac_list,
+	       माप(lc->stfle_fac_list));
+	स_नकल(lc->alt_stfle_fac_list, S390_lowcore.alt_stfle_fac_list,
+	       माप(lc->alt_stfle_fac_list));
 	arch_spin_lock_setup(cpu);
-}
+पूर्ण
 
-static void pcpu_attach_task(struct pcpu *pcpu, struct task_struct *tsk)
-{
-	struct lowcore *lc = pcpu->lowcore;
+अटल व्योम pcpu_attach_task(काष्ठा pcpu *pcpu, काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा lowcore *lc = pcpu->lowcore;
 
-	lc->kernel_stack = (unsigned long) task_stack_page(tsk)
-		+ THREAD_SIZE - STACK_FRAME_OVERHEAD - sizeof(struct pt_regs);
-	lc->current_task = (unsigned long) tsk;
+	lc->kernel_stack = (अचिन्हित दीर्घ) task_stack_page(tsk)
+		+ THREAD_SIZE - STACK_FRAME_OVERHEAD - माप(काष्ठा pt_regs);
+	lc->current_task = (अचिन्हित दीर्घ) tsk;
 	lc->lpp = LPP_MAGIC;
 	lc->current_pid = tsk->pid;
-	lc->user_timer = tsk->thread.user_timer;
-	lc->guest_timer = tsk->thread.guest_timer;
-	lc->system_timer = tsk->thread.system_timer;
-	lc->hardirq_timer = tsk->thread.hardirq_timer;
-	lc->softirq_timer = tsk->thread.softirq_timer;
-	lc->steal_timer = 0;
-}
+	lc->user_समयr = tsk->thपढ़ो.user_समयr;
+	lc->guest_समयr = tsk->thपढ़ो.guest_समयr;
+	lc->प्रणाली_समयr = tsk->thपढ़ो.प्रणाली_समयr;
+	lc->hardirq_समयr = tsk->thपढ़ो.hardirq_समयr;
+	lc->softirq_समयr = tsk->thपढ़ो.softirq_समयr;
+	lc->steal_समयr = 0;
+पूर्ण
 
-static void pcpu_start_fn(struct pcpu *pcpu, void (*func)(void *), void *data)
-{
-	struct lowcore *lc = pcpu->lowcore;
+अटल व्योम pcpu_start_fn(काष्ठा pcpu *pcpu, व्योम (*func)(व्योम *), व्योम *data)
+अणु
+	काष्ठा lowcore *lc = pcpu->lowcore;
 
 	lc->restart_stack = lc->nodat_stack;
-	lc->restart_fn = (unsigned long) func;
-	lc->restart_data = (unsigned long) data;
+	lc->restart_fn = (अचिन्हित दीर्घ) func;
+	lc->restart_data = (अचिन्हित दीर्घ) data;
 	lc->restart_source = -1UL;
 	pcpu_sigp_retry(pcpu, SIGP_RESTART, 0);
-}
+पूर्ण
 
 /*
  * Call function via PSW restart on pcpu and stop the current cpu.
  */
-static void __pcpu_delegate(void (*func)(void*), void *data)
-{
-	func(data);	/* should not return */
-}
+अटल व्योम __pcpu_delegate(व्योम (*func)(व्योम*), व्योम *data)
+अणु
+	func(data);	/* should not वापस */
+पूर्ण
 
-static void __no_sanitize_address pcpu_delegate(struct pcpu *pcpu,
-						void (*func)(void *),
-						void *data, unsigned long stack)
-{
-	struct lowcore *lc = lowcore_ptr[pcpu - pcpu_devices];
-	unsigned long source_cpu = stap();
+अटल व्योम __no_sanitize_address pcpu_delegate(काष्ठा pcpu *pcpu,
+						व्योम (*func)(व्योम *),
+						व्योम *data, अचिन्हित दीर्घ stack)
+अणु
+	काष्ठा lowcore *lc = lowcore_ptr[pcpu - pcpu_devices];
+	अचिन्हित दीर्घ source_cpu = stap();
 
 	__load_psw_mask(PSW_KERNEL_BITS | PSW_MASK_DAT);
-	if (pcpu->address == source_cpu)
+	अगर (pcpu->address == source_cpu)
 		CALL_ON_STACK(__pcpu_delegate, stack, 2, func, data);
-	/* Stop target cpu (if func returns this stops the current cpu). */
+	/* Stop target cpu (अगर func वापसs this stops the current cpu). */
 	pcpu_sigp_retry(pcpu, SIGP_STOP, 0);
 	/* Restart func on the target cpu and stop the current cpu. */
-	mem_assign_absolute(lc->restart_stack, stack);
-	mem_assign_absolute(lc->restart_fn, (unsigned long) func);
-	mem_assign_absolute(lc->restart_data, (unsigned long) data);
-	mem_assign_absolute(lc->restart_source, source_cpu);
+	mem_assign_असलolute(lc->restart_stack, stack);
+	mem_assign_असलolute(lc->restart_fn, (अचिन्हित दीर्घ) func);
+	mem_assign_असलolute(lc->restart_data, (अचिन्हित दीर्घ) data);
+	mem_assign_असलolute(lc->restart_source, source_cpu);
 	__bpon();
-	asm volatile(
+	यंत्र अस्थिर(
 		"0:	sigp	0,%0,%2	# sigp restart to target cpu\n"
 		"	brc	2,0b	# busy, try again\n"
 		"1:	sigp	0,%1,%3	# sigp stop to current cpu\n"
@@ -344,456 +345,456 @@ static void __no_sanitize_address pcpu_delegate(struct pcpu *pcpu,
 		: : "d" (pcpu->address), "d" (source_cpu),
 		    "K" (SIGP_RESTART), "K" (SIGP_STOP)
 		: "0", "1", "cc");
-	for (;;) ;
-}
+	क्रम (;;) ;
+पूर्ण
 
 /*
- * Enable additional logical cpus for multi-threading.
+ * Enable additional logical cpus क्रम multi-thपढ़ोing.
  */
-static int pcpu_set_smt(unsigned int mtid)
-{
-	int cc;
+अटल पूर्णांक pcpu_set_smt(अचिन्हित पूर्णांक mtid)
+अणु
+	पूर्णांक cc;
 
-	if (smp_cpu_mtid == mtid)
-		return 0;
-	cc = __pcpu_sigp(0, SIGP_SET_MULTI_THREADING, mtid, NULL);
-	if (cc == 0) {
+	अगर (smp_cpu_mtid == mtid)
+		वापस 0;
+	cc = __pcpu_sigp(0, SIGP_SET_MULTI_THREADING, mtid, शून्य);
+	अगर (cc == 0) अणु
 		smp_cpu_mtid = mtid;
-		smp_cpu_mt_shift = 0;
-		while (smp_cpu_mtid >= (1U << smp_cpu_mt_shift))
-			smp_cpu_mt_shift++;
+		smp_cpu_mt_shअगरt = 0;
+		जबतक (smp_cpu_mtid >= (1U << smp_cpu_mt_shअगरt))
+			smp_cpu_mt_shअगरt++;
 		pcpu_devices[0].address = stap();
-	}
-	return cc;
-}
+	पूर्ण
+	वापस cc;
+पूर्ण
 
 /*
  * Call function on an online CPU.
  */
-void smp_call_online_cpu(void (*func)(void *), void *data)
-{
-	struct pcpu *pcpu;
+व्योम smp_call_online_cpu(व्योम (*func)(व्योम *), व्योम *data)
+अणु
+	काष्ठा pcpu *pcpu;
 
-	/* Use the current cpu if it is online. */
+	/* Use the current cpu अगर it is online. */
 	pcpu = pcpu_find_address(cpu_online_mask, stap());
-	if (!pcpu)
+	अगर (!pcpu)
 		/* Use the first online cpu. */
 		pcpu = pcpu_devices + cpumask_first(cpu_online_mask);
-	pcpu_delegate(pcpu, func, data, (unsigned long) restart_stack);
-}
+	pcpu_delegate(pcpu, func, data, (अचिन्हित दीर्घ) restart_stack);
+पूर्ण
 
 /*
  * Call function on the ipl CPU.
  */
-void smp_call_ipl_cpu(void (*func)(void *), void *data)
-{
-	struct lowcore *lc = pcpu_devices->lowcore;
+व्योम smp_call_ipl_cpu(व्योम (*func)(व्योम *), व्योम *data)
+अणु
+	काष्ठा lowcore *lc = pcpu_devices->lowcore;
 
-	if (pcpu_devices[0].address == stap())
+	अगर (pcpu_devices[0].address == stap())
 		lc = &S390_lowcore;
 
 	pcpu_delegate(&pcpu_devices[0], func, data,
 		      lc->nodat_stack);
-}
+पूर्ण
 
-int smp_find_processor_id(u16 address)
-{
-	int cpu;
+पूर्णांक smp_find_processor_id(u16 address)
+अणु
+	पूर्णांक cpu;
 
-	for_each_present_cpu(cpu)
-		if (pcpu_devices[cpu].address == address)
-			return cpu;
-	return -1;
-}
+	क्रम_each_present_cpu(cpu)
+		अगर (pcpu_devices[cpu].address == address)
+			वापस cpu;
+	वापस -1;
+पूर्ण
 
-void schedule_mcck_handler(void)
-{
+व्योम schedule_mcck_handler(व्योम)
+अणु
 	pcpu_ec_call(pcpu_devices + smp_processor_id(), ec_mcck_pending);
-}
+पूर्ण
 
-bool notrace arch_vcpu_is_preempted(int cpu)
-{
-	if (test_cpu_flag_of(CIF_ENABLED_WAIT, cpu))
-		return false;
-	if (pcpu_running(pcpu_devices + cpu))
-		return false;
-	return true;
-}
+bool notrace arch_vcpu_is_preempted(पूर्णांक cpu)
+अणु
+	अगर (test_cpu_flag_of(CIF_ENABLED_WAIT, cpu))
+		वापस false;
+	अगर (pcpu_running(pcpu_devices + cpu))
+		वापस false;
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL(arch_vcpu_is_preempted);
 
-void notrace smp_yield_cpu(int cpu)
-{
-	if (!MACHINE_HAS_DIAG9C)
-		return;
+व्योम notrace smp_yield_cpu(पूर्णांक cpu)
+अणु
+	अगर (!MACHINE_HAS_DIAG9C)
+		वापस;
 	diag_stat_inc_norecursion(DIAG_STAT_X09C);
-	asm volatile("diag %0,0,0x9c"
+	यंत्र अस्थिर("diag %0,0,0x9c"
 		     : : "d" (pcpu_devices[cpu].address));
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(smp_yield_cpu);
 
 /*
- * Send cpus emergency shutdown signal. This gives the cpus the
- * opportunity to complete outstanding interrupts.
+ * Send cpus emergency shutकरोwn संकेत. This gives the cpus the
+ * opportunity to complete outstanding पूर्णांकerrupts.
  */
-void notrace smp_emergency_stop(void)
-{
-	static arch_spinlock_t lock = __ARCH_SPIN_LOCK_UNLOCKED;
-	static cpumask_t cpumask;
+व्योम notrace smp_emergency_stop(व्योम)
+अणु
+	अटल arch_spinlock_t lock = __ARCH_SPIN_LOCK_UNLOCKED;
+	अटल cpumask_t cpumask;
 	u64 end;
-	int cpu;
+	पूर्णांक cpu;
 
 	arch_spin_lock(&lock);
 	cpumask_copy(&cpumask, cpu_online_mask);
 	cpumask_clear_cpu(smp_processor_id(), &cpumask);
 
-	end = get_tod_clock() + (1000000UL << 12);
-	for_each_cpu(cpu, &cpumask) {
-		struct pcpu *pcpu = pcpu_devices + cpu;
+	end = get_tod_घड़ी() + (1000000UL << 12);
+	क्रम_each_cpu(cpu, &cpumask) अणु
+		काष्ठा pcpu *pcpu = pcpu_devices + cpu;
 		set_bit(ec_stop_cpu, &pcpu->ec_mask);
-		while (__pcpu_sigp(pcpu->address, SIGP_EMERGENCY_SIGNAL,
-				   0, NULL) == SIGP_CC_BUSY &&
-		       get_tod_clock() < end)
+		जबतक (__pcpu_sigp(pcpu->address, SIGP_EMERGENCY_SIGNAL,
+				   0, शून्य) == SIGP_CC_BUSY &&
+		       get_tod_घड़ी() < end)
 			cpu_relax();
-	}
-	while (get_tod_clock() < end) {
-		for_each_cpu(cpu, &cpumask)
-			if (pcpu_stopped(pcpu_devices + cpu))
+	पूर्ण
+	जबतक (get_tod_घड़ी() < end) अणु
+		क्रम_each_cpu(cpu, &cpumask)
+			अगर (pcpu_stopped(pcpu_devices + cpu))
 				cpumask_clear_cpu(cpu, &cpumask);
-		if (cpumask_empty(&cpumask))
-			break;
+		अगर (cpumask_empty(&cpumask))
+			अवरोध;
 		cpu_relax();
-	}
+	पूर्ण
 	arch_spin_unlock(&lock);
-}
+पूर्ण
 NOKPROBE_SYMBOL(smp_emergency_stop);
 
 /*
  * Stop all cpus but the current one.
  */
-void smp_send_stop(void)
-{
-	int cpu;
+व्योम smp_send_stop(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	/* Disable all interrupts/machine checks */
+	/* Disable all पूर्णांकerrupts/machine checks */
 	__load_psw_mask(PSW_KERNEL_BITS | PSW_MASK_DAT);
 	trace_hardirqs_off();
 
 	debug_set_critical();
 
-	if (oops_in_progress)
+	अगर (oops_in_progress)
 		smp_emergency_stop();
 
 	/* stop all processors */
-	for_each_online_cpu(cpu) {
-		if (cpu == smp_processor_id())
-			continue;
+	क्रम_each_online_cpu(cpu) अणु
+		अगर (cpu == smp_processor_id())
+			जारी;
 		pcpu_sigp_retry(pcpu_devices + cpu, SIGP_STOP, 0);
-		while (!pcpu_stopped(pcpu_devices + cpu))
+		जबतक (!pcpu_stopped(pcpu_devices + cpu))
 			cpu_relax();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * This is the main routine where commands issued by other
+ * This is the मुख्य routine where commands issued by other
  * cpus are handled.
  */
-static void smp_handle_ext_call(void)
-{
-	unsigned long bits;
+अटल व्योम smp_handle_ext_call(व्योम)
+अणु
+	अचिन्हित दीर्घ bits;
 
-	/* handle bit signal external calls */
+	/* handle bit संकेत बाह्यal calls */
 	bits = xchg(&pcpu_devices[smp_processor_id()].ec_mask, 0);
-	if (test_bit(ec_stop_cpu, &bits))
+	अगर (test_bit(ec_stop_cpu, &bits))
 		smp_stop_cpu();
-	if (test_bit(ec_schedule, &bits))
+	अगर (test_bit(ec_schedule, &bits))
 		scheduler_ipi();
-	if (test_bit(ec_call_function_single, &bits))
-		generic_smp_call_function_single_interrupt();
-	if (test_bit(ec_mcck_pending, &bits))
+	अगर (test_bit(ec_call_function_single, &bits))
+		generic_smp_call_function_single_पूर्णांकerrupt();
+	अगर (test_bit(ec_mcck_pending, &bits))
 		__s390_handle_mcck();
-	if (test_bit(ec_irq_work, &bits))
+	अगर (test_bit(ec_irq_work, &bits))
 		irq_work_run();
-}
+पूर्ण
 
-static void do_ext_call_interrupt(struct ext_code ext_code,
-				  unsigned int param32, unsigned long param64)
-{
+अटल व्योम करो_ext_call_पूर्णांकerrupt(काष्ठा ext_code ext_code,
+				  अचिन्हित पूर्णांक param32, अचिन्हित दीर्घ param64)
+अणु
 	inc_irq_stat(ext_code.code == 0x1202 ? IRQEXT_EXC : IRQEXT_EMS);
 	smp_handle_ext_call();
-}
+पूर्ण
 
-void arch_send_call_function_ipi_mask(const struct cpumask *mask)
-{
-	int cpu;
+व्योम arch_send_call_function_ipi_mask(स्थिर काष्ठा cpumask *mask)
+अणु
+	पूर्णांक cpu;
 
-	for_each_cpu(cpu, mask)
+	क्रम_each_cpu(cpu, mask)
 		pcpu_ec_call(pcpu_devices + cpu, ec_call_function_single);
-}
+पूर्ण
 
-void arch_send_call_function_single_ipi(int cpu)
-{
+व्योम arch_send_call_function_single_ipi(पूर्णांक cpu)
+अणु
 	pcpu_ec_call(pcpu_devices + cpu, ec_call_function_single);
-}
+पूर्ण
 
 /*
  * this function sends a 'reschedule' IPI to another CPU.
- * it goes straight through and wastes no time serializing
- * anything. Worst case is that we lose a reschedule ...
+ * it goes straight through and wastes no समय serializing
+ * anything. Worst हाल is that we lose a reschedule ...
  */
-void smp_send_reschedule(int cpu)
-{
+व्योम smp_send_reschedule(पूर्णांक cpu)
+अणु
 	pcpu_ec_call(pcpu_devices + cpu, ec_schedule);
-}
+पूर्ण
 
-#ifdef CONFIG_IRQ_WORK
-void arch_irq_work_raise(void)
-{
+#अगर_घोषित CONFIG_IRQ_WORK
+व्योम arch_irq_work_उठाओ(व्योम)
+अणु
 	pcpu_ec_call(pcpu_devices + smp_processor_id(), ec_irq_work);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * parameter area for the set/clear control bit callbacks
+ * parameter area क्रम the set/clear control bit callbacks
  */
-struct ec_creg_mask_parms {
-	unsigned long orval;
-	unsigned long andval;
-	int cr;
-};
+काष्ठा ec_creg_mask_parms अणु
+	अचिन्हित दीर्घ orval;
+	अचिन्हित दीर्घ andval;
+	पूर्णांक cr;
+पूर्ण;
 
 /*
- * callback for setting/clearing control bits
+ * callback क्रम setting/clearing control bits
  */
-static void smp_ctl_bit_callback(void *info)
-{
-	struct ec_creg_mask_parms *pp = info;
-	unsigned long cregs[16];
+अटल व्योम smp_ctl_bit_callback(व्योम *info)
+अणु
+	काष्ठा ec_creg_mask_parms *pp = info;
+	अचिन्हित दीर्घ cregs[16];
 
 	__ctl_store(cregs, 0, 15);
 	cregs[pp->cr] = (cregs[pp->cr] & pp->andval) | pp->orval;
 	__ctl_load(cregs, 0, 15);
-}
+पूर्ण
 
 /*
- * Set a bit in a control register of all cpus
+ * Set a bit in a control रेजिस्टर of all cpus
  */
-void smp_ctl_set_bit(int cr, int bit)
-{
-	struct ec_creg_mask_parms parms = { 1UL << bit, -1UL, cr };
+व्योम smp_ctl_set_bit(पूर्णांक cr, पूर्णांक bit)
+अणु
+	काष्ठा ec_creg_mask_parms parms = अणु 1UL << bit, -1UL, cr पूर्ण;
 
 	on_each_cpu(smp_ctl_bit_callback, &parms, 1);
-}
+पूर्ण
 EXPORT_SYMBOL(smp_ctl_set_bit);
 
 /*
- * Clear a bit in a control register of all cpus
+ * Clear a bit in a control रेजिस्टर of all cpus
  */
-void smp_ctl_clear_bit(int cr, int bit)
-{
-	struct ec_creg_mask_parms parms = { 0, ~(1UL << bit), cr };
+व्योम smp_ctl_clear_bit(पूर्णांक cr, पूर्णांक bit)
+अणु
+	काष्ठा ec_creg_mask_parms parms = अणु 0, ~(1UL << bit), cr पूर्ण;
 
 	on_each_cpu(smp_ctl_bit_callback, &parms, 1);
-}
+पूर्ण
 EXPORT_SYMBOL(smp_ctl_clear_bit);
 
-#ifdef CONFIG_CRASH_DUMP
+#अगर_घोषित CONFIG_CRASH_DUMP
 
-int smp_store_status(int cpu)
-{
-	struct pcpu *pcpu = pcpu_devices + cpu;
-	unsigned long pa;
+पूर्णांक smp_store_status(पूर्णांक cpu)
+अणु
+	काष्ठा pcpu *pcpu = pcpu_devices + cpu;
+	अचिन्हित दीर्घ pa;
 
-	pa = __pa(&pcpu->lowcore->floating_pt_save_area);
-	if (__pcpu_sigp_relax(pcpu->address, SIGP_STORE_STATUS_AT_ADDRESS,
+	pa = __pa(&pcpu->lowcore->भग्नing_pt_save_area);
+	अगर (__pcpu_sigp_relax(pcpu->address, SIGP_STORE_STATUS_AT_ADDRESS,
 			      pa) != SIGP_CC_ORDER_CODE_ACCEPTED)
-		return -EIO;
-	if (!MACHINE_HAS_VX && !MACHINE_HAS_GS)
-		return 0;
+		वापस -EIO;
+	अगर (!MACHINE_HAS_VX && !MACHINE_HAS_GS)
+		वापस 0;
 	pa = __pa(pcpu->lowcore->mcesad & MCESA_ORIGIN_MASK);
-	if (MACHINE_HAS_GS)
+	अगर (MACHINE_HAS_GS)
 		pa |= pcpu->lowcore->mcesad & MCESA_LC_MASK;
-	if (__pcpu_sigp_relax(pcpu->address, SIGP_STORE_ADDITIONAL_STATUS,
+	अगर (__pcpu_sigp_relax(pcpu->address, SIGP_STORE_ADDITIONAL_STATUS,
 			      pa) != SIGP_CC_ORDER_CODE_ACCEPTED)
-		return -EIO;
-	return 0;
-}
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
 /*
- * Collect CPU state of the previous, crashed system.
- * There are four cases:
+ * Collect CPU state of the previous, crashed प्रणाली.
+ * There are four हालs:
  * 1) standard zfcp/nvme dump
- *    condition: OLDMEM_BASE == NULL && is_ipl_type_dump() == true
- *    The state for all CPUs except the boot CPU needs to be collected
+ *    condition: OLDMEM_BASE == शून्य && is_ipl_type_dump() == true
+ *    The state क्रम all CPUs except the boot CPU needs to be collected
  *    with sigp stop-and-store-status. The boot CPU state is located in
- *    the absolute lowcore of the memory stored in the HSA. The zcore code
+ *    the असलolute lowcore of the memory stored in the HSA. The zcore code
  *    will copy the boot CPU state from the HSA.
- * 2) stand-alone kdump for SCSI/NVMe (zfcp/nvme dump with swapped memory)
- *    condition: OLDMEM_BASE != NULL && is_ipl_type_dump() == true
- *    The state for all CPUs except the boot CPU needs to be collected
+ * 2) stand-alone kdump क्रम SCSI/NVMe (zfcp/nvme dump with swapped memory)
+ *    condition: OLDMEM_BASE != शून्य && is_ipl_type_dump() == true
+ *    The state क्रम all CPUs except the boot CPU needs to be collected
  *    with sigp stop-and-store-status. The firmware or the boot-loader
- *    stored the registers of the boot CPU in the absolute lowcore in the
- *    memory of the old system.
+ *    stored the रेजिस्टरs of the boot CPU in the असलolute lowcore in the
+ *    memory of the old प्रणाली.
  * 3) kdump and the old kernel did not store the CPU state,
- *    or stand-alone kdump for DASD
- *    condition: OLDMEM_BASE != NULL && !is_kdump_kernel()
- *    The state for all CPUs except the boot CPU needs to be collected
+ *    or stand-alone kdump क्रम DASD
+ *    condition: OLDMEM_BASE != शून्य && !is_kdump_kernel()
+ *    The state क्रम all CPUs except the boot CPU needs to be collected
  *    with sigp stop-and-store-status. The kexec code or the boot-loader
- *    stored the registers of the boot CPU in the memory of the old system.
+ *    stored the रेजिस्टरs of the boot CPU in the memory of the old प्रणाली.
  * 4) kdump and the old kernel stored the CPU state
- *    condition: OLDMEM_BASE != NULL && is_kdump_kernel()
- *    This case does not exist for s390 anymore, setup_arch explicitly
+ *    condition: OLDMEM_BASE != शून्य && is_kdump_kernel()
+ *    This हाल करोes not exist क्रम s390 anymore, setup_arch explicitly
  *    deactivates the elfcorehdr= kernel parameter
  */
-static __init void smp_save_cpu_vxrs(struct save_area *sa, u16 addr,
-				     bool is_boot_cpu, unsigned long page)
-{
+अटल __init व्योम smp_save_cpu_vxrs(काष्ठा save_area *sa, u16 addr,
+				     bool is_boot_cpu, अचिन्हित दीर्घ page)
+अणु
 	__vector128 *vxrs = (__vector128 *) page;
 
-	if (is_boot_cpu)
+	अगर (is_boot_cpu)
 		vxrs = boot_cpu_vector_save_area;
-	else
+	अन्यथा
 		__pcpu_sigp_relax(addr, SIGP_STORE_ADDITIONAL_STATUS, page);
 	save_area_add_vxrs(sa, vxrs);
-}
+पूर्ण
 
-static __init void smp_save_cpu_regs(struct save_area *sa, u16 addr,
-				     bool is_boot_cpu, unsigned long page)
-{
-	void *regs = (void *) page;
+अटल __init व्योम smp_save_cpu_regs(काष्ठा save_area *sa, u16 addr,
+				     bool is_boot_cpu, अचिन्हित दीर्घ page)
+अणु
+	व्योम *regs = (व्योम *) page;
 
-	if (is_boot_cpu)
-		copy_oldmem_kernel(regs, (void *) __LC_FPREGS_SAVE_AREA, 512);
-	else
+	अगर (is_boot_cpu)
+		copy_oldmem_kernel(regs, (व्योम *) __LC_FPREGS_SAVE_AREA, 512);
+	अन्यथा
 		__pcpu_sigp_relax(addr, SIGP_STORE_STATUS_AT_ADDRESS, page);
 	save_area_add_regs(sa, regs);
-}
+पूर्ण
 
-void __init smp_save_dump_cpus(void)
-{
-	int addr, boot_cpu_addr, max_cpu_addr;
-	struct save_area *sa;
-	unsigned long page;
+व्योम __init smp_save_dump_cpus(व्योम)
+अणु
+	पूर्णांक addr, boot_cpu_addr, max_cpu_addr;
+	काष्ठा save_area *sa;
+	अचिन्हित दीर्घ page;
 	bool is_boot_cpu;
 
-	if (!(OLDMEM_BASE || is_ipl_type_dump()))
-		/* No previous system present, normal boot. */
-		return;
-	/* Allocate a page as dumping area for the store status sigps */
+	अगर (!(OLDMEM_BASE || is_ipl_type_dump()))
+		/* No previous प्रणाली present, normal boot. */
+		वापस;
+	/* Allocate a page as dumping area क्रम the store status sigps */
 	page = memblock_phys_alloc_range(PAGE_SIZE, PAGE_SIZE, 0, 1UL << 31);
-	if (!page)
+	अगर (!page)
 		panic("ERROR: Failed to allocate %lx bytes below %lx\n",
 		      PAGE_SIZE, 1UL << 31);
 
-	/* Set multi-threading state to the previous system. */
+	/* Set multi-thपढ़ोing state to the previous प्रणाली. */
 	pcpu_set_smt(sclp.mtid_prev);
 	boot_cpu_addr = stap();
 	max_cpu_addr = SCLP_MAX_CORES << sclp.mtid_prev;
-	for (addr = 0; addr <= max_cpu_addr; addr++) {
-		if (__pcpu_sigp_relax(addr, SIGP_SENSE, 0) ==
+	क्रम (addr = 0; addr <= max_cpu_addr; addr++) अणु
+		अगर (__pcpu_sigp_relax(addr, SIGP_SENSE, 0) ==
 		    SIGP_CC_NOT_OPERATIONAL)
-			continue;
+			जारी;
 		is_boot_cpu = (addr == boot_cpu_addr);
 		/* Allocate save area */
 		sa = save_area_alloc(is_boot_cpu);
-		if (!sa)
+		अगर (!sa)
 			panic("could not allocate memory for save area\n");
-		if (MACHINE_HAS_VX)
-			/* Get the vector registers */
+		अगर (MACHINE_HAS_VX)
+			/* Get the vector रेजिस्टरs */
 			smp_save_cpu_vxrs(sa, addr, is_boot_cpu, page);
 		/*
-		 * For a zfcp/nvme dump OLDMEM_BASE == NULL and the registers
+		 * For a zfcp/nvme dump OLDMEM_BASE == शून्य and the रेजिस्टरs
 		 * of the boot CPU are stored in the HSA. To retrieve
-		 * these registers an SCLP request is required which is
-		 * done by drivers/s390/char/zcore.c:init_cpu_info()
+		 * these रेजिस्टरs an SCLP request is required which is
+		 * करोne by drivers/s390/अक्षर/zcore.c:init_cpu_info()
 		 */
-		if (!is_boot_cpu || OLDMEM_BASE)
-			/* Get the CPU registers */
+		अगर (!is_boot_cpu || OLDMEM_BASE)
+			/* Get the CPU रेजिस्टरs */
 			smp_save_cpu_regs(sa, addr, is_boot_cpu, page);
-	}
-	memblock_free(page, PAGE_SIZE);
+	पूर्ण
+	memblock_मुक्त(page, PAGE_SIZE);
 	diag_dma_ops.diag308_reset();
 	pcpu_set_smt(0);
-}
-#endif /* CONFIG_CRASH_DUMP */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_CRASH_DUMP */
 
-void smp_cpu_set_polarization(int cpu, int val)
-{
+व्योम smp_cpu_set_polarization(पूर्णांक cpu, पूर्णांक val)
+अणु
 	pcpu_devices[cpu].polarization = val;
-}
+पूर्ण
 
-int smp_cpu_get_polarization(int cpu)
-{
-	return pcpu_devices[cpu].polarization;
-}
+पूर्णांक smp_cpu_get_polarization(पूर्णांक cpu)
+अणु
+	वापस pcpu_devices[cpu].polarization;
+पूर्ण
 
-int smp_cpu_get_cpu_address(int cpu)
-{
-	return pcpu_devices[cpu].address;
-}
+पूर्णांक smp_cpu_get_cpu_address(पूर्णांक cpu)
+अणु
+	वापस pcpu_devices[cpu].address;
+पूर्ण
 
-static void __ref smp_get_core_info(struct sclp_core_info *info, int early)
-{
-	static int use_sigp_detection;
-	int address;
+अटल व्योम __ref smp_get_core_info(काष्ठा sclp_core_info *info, पूर्णांक early)
+अणु
+	अटल पूर्णांक use_sigp_detection;
+	पूर्णांक address;
 
-	if (use_sigp_detection || sclp_get_core_info(info, early)) {
+	अगर (use_sigp_detection || sclp_get_core_info(info, early)) अणु
 		use_sigp_detection = 1;
-		for (address = 0;
-		     address < (SCLP_MAX_CORES << smp_cpu_mt_shift);
-		     address += (1U << smp_cpu_mt_shift)) {
-			if (__pcpu_sigp_relax(address, SIGP_SENSE, 0) ==
+		क्रम (address = 0;
+		     address < (SCLP_MAX_CORES << smp_cpu_mt_shअगरt);
+		     address += (1U << smp_cpu_mt_shअगरt)) अणु
+			अगर (__pcpu_sigp_relax(address, SIGP_SENSE, 0) ==
 			    SIGP_CC_NOT_OPERATIONAL)
-				continue;
+				जारी;
 			info->core[info->configured].core_id =
-				address >> smp_cpu_mt_shift;
+				address >> smp_cpu_mt_shअगरt;
 			info->configured++;
-		}
+		पूर्ण
 		info->combined = info->configured;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int smp_add_present_cpu(int cpu);
+अटल पूर्णांक smp_add_present_cpu(पूर्णांक cpu);
 
-static int smp_add_core(struct sclp_core_entry *core, cpumask_t *avail,
+अटल पूर्णांक smp_add_core(काष्ठा sclp_core_entry *core, cpumask_t *avail,
 			bool configured, bool early)
-{
-	struct pcpu *pcpu;
-	int cpu, nr, i;
+अणु
+	काष्ठा pcpu *pcpu;
+	पूर्णांक cpu, nr, i;
 	u16 address;
 
 	nr = 0;
-	if (sclp.has_core_type && core->type != boot_core_type)
-		return nr;
+	अगर (sclp.has_core_type && core->type != boot_core_type)
+		वापस nr;
 	cpu = cpumask_first(avail);
-	address = core->core_id << smp_cpu_mt_shift;
-	for (i = 0; (i <= smp_cpu_mtid) && (cpu < nr_cpu_ids); i++) {
-		if (pcpu_find_address(cpu_present_mask, address + i))
-			continue;
+	address = core->core_id << smp_cpu_mt_shअगरt;
+	क्रम (i = 0; (i <= smp_cpu_mtid) && (cpu < nr_cpu_ids); i++) अणु
+		अगर (pcpu_find_address(cpu_present_mask, address + i))
+			जारी;
 		pcpu = pcpu_devices + cpu;
 		pcpu->address = address + i;
-		if (configured)
+		अगर (configured)
 			pcpu->state = CPU_STATE_CONFIGURED;
-		else
+		अन्यथा
 			pcpu->state = CPU_STATE_STANDBY;
 		smp_cpu_set_polarization(cpu, POLARIZATION_UNKNOWN);
 		set_cpu_present(cpu, true);
-		if (!early && smp_add_present_cpu(cpu) != 0)
+		अगर (!early && smp_add_present_cpu(cpu) != 0)
 			set_cpu_present(cpu, false);
-		else
+		अन्यथा
 			nr++;
 		cpumask_clear_cpu(cpu, avail);
 		cpu = cpumask_next(cpu, avail);
-	}
-	return nr;
-}
+	पूर्ण
+	वापस nr;
+पूर्ण
 
-static int __smp_rescan_cpus(struct sclp_core_info *info, bool early)
-{
-	struct sclp_core_entry *core;
-	static cpumask_t avail;
+अटल पूर्णांक __smp_rescan_cpus(काष्ठा sclp_core_info *info, bool early)
+अणु
+	काष्ठा sclp_core_entry *core;
+	अटल cpumask_t avail;
 	bool configured;
 	u16 core_id;
-	int nr, i;
+	पूर्णांक nr, i;
 
 	get_online_cpus();
 	mutex_lock(&smp_cpu_state_mutex);
@@ -801,440 +802,440 @@ static int __smp_rescan_cpus(struct sclp_core_info *info, bool early)
 	cpumask_xor(&avail, cpu_possible_mask, cpu_present_mask);
 	/*
 	 * Add IPL core first (which got logical CPU number 0) to make sure
-	 * that all SMT threads get subsequent logical CPU numbers.
+	 * that all SMT thपढ़ोs get subsequent logical CPU numbers.
 	 */
-	if (early) {
-		core_id = pcpu_devices[0].address >> smp_cpu_mt_shift;
-		for (i = 0; i < info->configured; i++) {
+	अगर (early) अणु
+		core_id = pcpu_devices[0].address >> smp_cpu_mt_shअगरt;
+		क्रम (i = 0; i < info->configured; i++) अणु
 			core = &info->core[i];
-			if (core->core_id == core_id) {
+			अगर (core->core_id == core_id) अणु
 				nr += smp_add_core(core, &avail, true, early);
-				break;
-			}
-		}
-	}
-	for (i = 0; i < info->combined; i++) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	क्रम (i = 0; i < info->combined; i++) अणु
 		configured = i < info->configured;
 		nr += smp_add_core(&info->core[i], &avail, configured, early);
-	}
+	पूर्ण
 	mutex_unlock(&smp_cpu_state_mutex);
 	put_online_cpus();
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
-void __init smp_detect_cpus(void)
-{
-	unsigned int cpu, mtid, c_cpus, s_cpus;
-	struct sclp_core_info *info;
+व्योम __init smp_detect_cpus(व्योम)
+अणु
+	अचिन्हित पूर्णांक cpu, mtid, c_cpus, s_cpus;
+	काष्ठा sclp_core_info *info;
 	u16 address;
 
-	/* Get CPU information */
-	info = memblock_alloc(sizeof(*info), 8);
-	if (!info)
+	/* Get CPU inक्रमmation */
+	info = memblock_alloc(माप(*info), 8);
+	अगर (!info)
 		panic("%s: Failed to allocate %zu bytes align=0x%x\n",
-		      __func__, sizeof(*info), 8);
+		      __func__, माप(*info), 8);
 	smp_get_core_info(info, 1);
 	/* Find boot CPU type */
-	if (sclp.has_core_type) {
+	अगर (sclp.has_core_type) अणु
 		address = stap();
-		for (cpu = 0; cpu < info->combined; cpu++)
-			if (info->core[cpu].core_id == address) {
+		क्रम (cpu = 0; cpu < info->combined; cpu++)
+			अगर (info->core[cpu].core_id == address) अणु
 				/* The boot cpu dictates the cpu type. */
 				boot_core_type = info->core[cpu].type;
-				break;
-			}
-		if (cpu >= info->combined)
+				अवरोध;
+			पूर्ण
+		अगर (cpu >= info->combined)
 			panic("Could not find boot CPU type");
-	}
+	पूर्ण
 
-	/* Set multi-threading state for the current system */
+	/* Set multi-thपढ़ोing state क्रम the current प्रणाली */
 	mtid = boot_core_type ? sclp.mtid : sclp.mtid_cp;
-	mtid = (mtid < smp_max_threads) ? mtid : smp_max_threads - 1;
+	mtid = (mtid < smp_max_thपढ़ोs) ? mtid : smp_max_thपढ़ोs - 1;
 	pcpu_set_smt(mtid);
 
-	/* Print number of CPUs */
+	/* Prपूर्णांक number of CPUs */
 	c_cpus = s_cpus = 0;
-	for (cpu = 0; cpu < info->combined; cpu++) {
-		if (sclp.has_core_type &&
+	क्रम (cpu = 0; cpu < info->combined; cpu++) अणु
+		अगर (sclp.has_core_type &&
 		    info->core[cpu].type != boot_core_type)
-			continue;
-		if (cpu < info->configured)
+			जारी;
+		अगर (cpu < info->configured)
 			c_cpus += smp_cpu_mtid + 1;
-		else
+		अन्यथा
 			s_cpus += smp_cpu_mtid + 1;
-	}
+	पूर्ण
 	pr_info("%d configured CPUs, %d standby CPUs\n", c_cpus, s_cpus);
 
 	/* Add CPUs present at boot */
 	__smp_rescan_cpus(info, true);
-	memblock_free_early((unsigned long)info, sizeof(*info));
-}
+	memblock_मुक्त_early((अचिन्हित दीर्घ)info, माप(*info));
+पूर्ण
 
-static void smp_init_secondary(void)
-{
-	int cpu = raw_smp_processor_id();
+अटल व्योम smp_init_secondary(व्योम)
+अणु
+	पूर्णांक cpu = raw_smp_processor_id();
 
-	S390_lowcore.last_update_clock = get_tod_clock();
+	S390_lowcore.last_update_घड़ी = get_tod_घड़ी();
 	restore_access_regs(S390_lowcore.access_regs_save_area);
 	cpu_init();
 	rcu_cpu_starting(cpu);
 	preempt_disable();
-	init_cpu_timer();
-	vtime_init();
-	vdso_getcpu_init();
+	init_cpu_समयr();
+	vसमय_init();
+	vdso_अ_लोpu_init();
 	pfault_init();
-	notify_cpu_starting(cpu);
-	if (topology_cpu_dedicated(cpu))
+	notअगरy_cpu_starting(cpu);
+	अगर (topology_cpu_dedicated(cpu))
 		set_cpu_flag(CIF_DEDICATED_CPU);
-	else
+	अन्यथा
 		clear_cpu_flag(CIF_DEDICATED_CPU);
 	set_cpu_online(cpu, true);
 	update_cpu_masks();
 	inc_irq_stat(CPU_RST);
 	local_irq_enable();
 	cpu_startup_entry(CPUHP_AP_ONLINE_IDLE);
-}
+पूर्ण
 
 /*
  *	Activate a secondary processor.
  */
-static void __no_sanitize_address smp_start_secondary(void *cpuvoid)
-{
-	S390_lowcore.restart_stack = (unsigned long) restart_stack;
-	S390_lowcore.restart_fn = (unsigned long) do_restart;
+अटल व्योम __no_sanitize_address smp_start_secondary(व्योम *cpuव्योम)
+अणु
+	S390_lowcore.restart_stack = (अचिन्हित दीर्घ) restart_stack;
+	S390_lowcore.restart_fn = (अचिन्हित दीर्घ) करो_restart;
 	S390_lowcore.restart_data = 0;
 	S390_lowcore.restart_source = -1UL;
 	__ctl_load(S390_lowcore.cregs_save_area, 0, 15);
 	__load_psw_mask(PSW_KERNEL_BITS | PSW_MASK_DAT);
 	CALL_ON_STACK_NORETURN(smp_init_secondary, S390_lowcore.kernel_stack);
-}
+पूर्ण
 
-/* Upping and downing of CPUs */
-int __cpu_up(unsigned int cpu, struct task_struct *tidle)
-{
-	struct pcpu *pcpu = pcpu_devices + cpu;
-	int rc;
+/* Upping and करोwning of CPUs */
+पूर्णांक __cpu_up(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *tidle)
+अणु
+	काष्ठा pcpu *pcpu = pcpu_devices + cpu;
+	पूर्णांक rc;
 
-	if (pcpu->state != CPU_STATE_CONFIGURED)
-		return -EIO;
-	if (pcpu_sigp_retry(pcpu, SIGP_INITIAL_CPU_RESET, 0) !=
+	अगर (pcpu->state != CPU_STATE_CONFIGURED)
+		वापस -EIO;
+	अगर (pcpu_sigp_retry(pcpu, SIGP_INITIAL_CPU_RESET, 0) !=
 	    SIGP_CC_ORDER_CODE_ACCEPTED)
-		return -EIO;
+		वापस -EIO;
 
 	rc = pcpu_alloc_lowcore(pcpu, cpu);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	pcpu_prepare_secondary(pcpu, cpu);
 	pcpu_attach_task(pcpu, tidle);
-	pcpu_start_fn(pcpu, smp_start_secondary, NULL);
-	/* Wait until cpu puts itself in the online & active maps */
-	while (!cpu_online(cpu))
+	pcpu_start_fn(pcpu, smp_start_secondary, शून्य);
+	/* Wait until cpu माला_दो itself in the online & active maps */
+	जबतक (!cpu_online(cpu))
 		cpu_relax();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int setup_possible_cpus __initdata;
+अटल अचिन्हित पूर्णांक setup_possible_cpus __initdata;
 
-static int __init _setup_possible_cpus(char *s)
-{
+अटल पूर्णांक __init _setup_possible_cpus(अक्षर *s)
+अणु
 	get_option(&s, &setup_possible_cpus);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("possible_cpus", _setup_possible_cpus);
 
-int __cpu_disable(void)
-{
-	unsigned long cregs[16];
+पूर्णांक __cpu_disable(व्योम)
+अणु
+	अचिन्हित दीर्घ cregs[16];
 
 	/* Handle possible pending IPIs */
 	smp_handle_ext_call();
 	set_cpu_online(smp_processor_id(), false);
 	update_cpu_masks();
-	/* Disable pseudo page faults on this cpu. */
+	/* Disable pseuकरो page faults on this cpu. */
 	pfault_fini();
-	/* Disable interrupt sources via control register. */
+	/* Disable पूर्णांकerrupt sources via control रेजिस्टर. */
 	__ctl_store(cregs, 0, 15);
-	cregs[0]  &= ~0x0000ee70UL;	/* disable all external interrupts */
-	cregs[6]  &= ~0xff000000UL;	/* disable all I/O interrupts */
+	cregs[0]  &= ~0x0000ee70UL;	/* disable all बाह्यal पूर्णांकerrupts */
+	cregs[6]  &= ~0xff000000UL;	/* disable all I/O पूर्णांकerrupts */
 	cregs[14] &= ~0x1f000000UL;	/* disable most machine checks */
 	__ctl_load(cregs, 0, 15);
 	clear_cpu_flag(CIF_NOHZ_DELAY);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __cpu_die(unsigned int cpu)
-{
-	struct pcpu *pcpu;
+व्योम __cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा pcpu *pcpu;
 
-	/* Wait until target cpu is down */
+	/* Wait until target cpu is करोwn */
 	pcpu = pcpu_devices + cpu;
-	while (!pcpu_stopped(pcpu))
+	जबतक (!pcpu_stopped(pcpu))
 		cpu_relax();
-	pcpu_free_lowcore(pcpu);
+	pcpu_मुक्त_lowcore(pcpu);
 	cpumask_clear_cpu(cpu, mm_cpumask(&init_mm));
 	cpumask_clear_cpu(cpu, &init_mm.context.cpu_attach_mask);
-}
+पूर्ण
 
-void __noreturn cpu_die(void)
-{
-	idle_task_exit();
+व्योम __noवापस cpu_die(व्योम)
+अणु
+	idle_task_निकास();
 	__bpon();
 	pcpu_sigp_retry(pcpu_devices + smp_processor_id(), SIGP_STOP, 0);
-	for (;;) ;
-}
+	क्रम (;;) ;
+पूर्ण
 
-void __init smp_fill_possible_mask(void)
-{
-	unsigned int possible, sclp_max, cpu;
+व्योम __init smp_fill_possible_mask(व्योम)
+अणु
+	अचिन्हित पूर्णांक possible, sclp_max, cpu;
 
 	sclp_max = max(sclp.mtid, sclp.mtid_cp) + 1;
-	sclp_max = min(smp_max_threads, sclp_max);
+	sclp_max = min(smp_max_thपढ़ोs, sclp_max);
 	sclp_max = (sclp.max_cores * sclp_max) ?: nr_cpu_ids;
 	possible = setup_possible_cpus ?: nr_cpu_ids;
 	possible = min(possible, sclp_max);
-	for (cpu = 0; cpu < possible && cpu < nr_cpu_ids; cpu++)
+	क्रम (cpu = 0; cpu < possible && cpu < nr_cpu_ids; cpu++)
 		set_cpu_possible(cpu, true);
-}
+पूर्ण
 
-void __init smp_prepare_cpus(unsigned int max_cpus)
-{
-	/* request the 0x1201 emergency signal external interrupt */
-	if (register_external_irq(EXT_IRQ_EMERGENCY_SIG, do_ext_call_interrupt))
+व्योम __init smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
+	/* request the 0x1201 emergency संकेत बाह्यal पूर्णांकerrupt */
+	अगर (रेजिस्टर_बाह्यal_irq(EXT_IRQ_EMERGENCY_SIG, करो_ext_call_पूर्णांकerrupt))
 		panic("Couldn't request external interrupt 0x1201");
-	/* request the 0x1202 external call external interrupt */
-	if (register_external_irq(EXT_IRQ_EXTERNAL_CALL, do_ext_call_interrupt))
+	/* request the 0x1202 बाह्यal call बाह्यal पूर्णांकerrupt */
+	अगर (रेजिस्टर_बाह्यal_irq(EXT_IRQ_EXTERNAL_CALL, करो_ext_call_पूर्णांकerrupt))
 		panic("Couldn't request external interrupt 0x1202");
-}
+पूर्ण
 
-void __init smp_prepare_boot_cpu(void)
-{
-	struct pcpu *pcpu = pcpu_devices;
+व्योम __init smp_prepare_boot_cpu(व्योम)
+अणु
+	काष्ठा pcpu *pcpu = pcpu_devices;
 
 	WARN_ON(!cpu_present(0) || !cpu_online(0));
 	pcpu->state = CPU_STATE_CONFIGURED;
-	pcpu->lowcore = (struct lowcore *)(unsigned long) store_prefix();
+	pcpu->lowcore = (काष्ठा lowcore *)(अचिन्हित दीर्घ) store_prefix();
 	S390_lowcore.percpu_offset = __per_cpu_offset[0];
 	smp_cpu_set_polarization(0, POLARIZATION_UNKNOWN);
-}
+पूर्ण
 
-void __init smp_setup_processor_id(void)
-{
+व्योम __init smp_setup_processor_id(व्योम)
+अणु
 	pcpu_devices[0].address = stap();
 	S390_lowcore.cpu_nr = 0;
 	S390_lowcore.spinlock_lockval = arch_spin_lockval(0);
 	S390_lowcore.spinlock_index = 0;
-}
+पूर्ण
 
 /*
- * the frequency of the profiling timer can be changed
- * by writing a multiplier value into /proc/profile.
+ * the frequency of the profiling समयr can be changed
+ * by writing a multiplier value पूर्णांकo /proc/profile.
  *
  * usually you want to run this on all CPUs ;)
  */
-int setup_profiling_timer(unsigned int multiplier)
-{
-	return 0;
-}
+पूर्णांक setup_profiling_समयr(अचिन्हित पूर्णांक multiplier)
+अणु
+	वापस 0;
+पूर्ण
 
-static ssize_t cpu_configure_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	ssize_t count;
+अटल sमाप_प्रकार cpu_configure_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	sमाप_प्रकार count;
 
 	mutex_lock(&smp_cpu_state_mutex);
-	count = sprintf(buf, "%d\n", pcpu_devices[dev->id].state);
+	count = प्र_लिखो(buf, "%d\n", pcpu_devices[dev->id].state);
 	mutex_unlock(&smp_cpu_state_mutex);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t cpu_configure_store(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *buf, size_t count)
-{
-	struct pcpu *pcpu;
-	int cpu, val, rc, i;
-	char delim;
+अटल sमाप_प्रकार cpu_configure_store(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा pcpu *pcpu;
+	पूर्णांक cpu, val, rc, i;
+	अक्षर delim;
 
-	if (sscanf(buf, "%d %c", &val, &delim) != 1)
-		return -EINVAL;
-	if (val != 0 && val != 1)
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%d %c", &val, &delim) != 1)
+		वापस -EINVAL;
+	अगर (val != 0 && val != 1)
+		वापस -EINVAL;
 	get_online_cpus();
 	mutex_lock(&smp_cpu_state_mutex);
 	rc = -EBUSY;
 	/* disallow configuration changes of online cpus and cpu 0 */
 	cpu = dev->id;
 	cpu = smp_get_base_cpu(cpu);
-	if (cpu == 0)
-		goto out;
-	for (i = 0; i <= smp_cpu_mtid; i++)
-		if (cpu_online(cpu + i))
-			goto out;
+	अगर (cpu == 0)
+		जाओ out;
+	क्रम (i = 0; i <= smp_cpu_mtid; i++)
+		अगर (cpu_online(cpu + i))
+			जाओ out;
 	pcpu = pcpu_devices + cpu;
 	rc = 0;
-	switch (val) {
-	case 0:
-		if (pcpu->state != CPU_STATE_CONFIGURED)
-			break;
-		rc = sclp_core_deconfigure(pcpu->address >> smp_cpu_mt_shift);
-		if (rc)
-			break;
-		for (i = 0; i <= smp_cpu_mtid; i++) {
-			if (cpu + i >= nr_cpu_ids || !cpu_present(cpu + i))
-				continue;
+	चयन (val) अणु
+	हाल 0:
+		अगर (pcpu->state != CPU_STATE_CONFIGURED)
+			अवरोध;
+		rc = sclp_core_deconfigure(pcpu->address >> smp_cpu_mt_shअगरt);
+		अगर (rc)
+			अवरोध;
+		क्रम (i = 0; i <= smp_cpu_mtid; i++) अणु
+			अगर (cpu + i >= nr_cpu_ids || !cpu_present(cpu + i))
+				जारी;
 			pcpu[i].state = CPU_STATE_STANDBY;
 			smp_cpu_set_polarization(cpu + i,
 						 POLARIZATION_UNKNOWN);
-		}
+		पूर्ण
 		topology_expect_change();
-		break;
-	case 1:
-		if (pcpu->state != CPU_STATE_STANDBY)
-			break;
-		rc = sclp_core_configure(pcpu->address >> smp_cpu_mt_shift);
-		if (rc)
-			break;
-		for (i = 0; i <= smp_cpu_mtid; i++) {
-			if (cpu + i >= nr_cpu_ids || !cpu_present(cpu + i))
-				continue;
+		अवरोध;
+	हाल 1:
+		अगर (pcpu->state != CPU_STATE_STANDBY)
+			अवरोध;
+		rc = sclp_core_configure(pcpu->address >> smp_cpu_mt_shअगरt);
+		अगर (rc)
+			अवरोध;
+		क्रम (i = 0; i <= smp_cpu_mtid; i++) अणु
+			अगर (cpu + i >= nr_cpu_ids || !cpu_present(cpu + i))
+				जारी;
 			pcpu[i].state = CPU_STATE_CONFIGURED;
 			smp_cpu_set_polarization(cpu + i,
 						 POLARIZATION_UNKNOWN);
-		}
+		पूर्ण
 		topology_expect_change();
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 out:
 	mutex_unlock(&smp_cpu_state_mutex);
 	put_online_cpus();
-	return rc ? rc : count;
-}
-static DEVICE_ATTR(configure, 0644, cpu_configure_show, cpu_configure_store);
+	वापस rc ? rc : count;
+पूर्ण
+अटल DEVICE_ATTR(configure, 0644, cpu_configure_show, cpu_configure_store);
 
-static ssize_t show_cpu_address(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", pcpu_devices[dev->id].address);
-}
-static DEVICE_ATTR(address, 0444, show_cpu_address, NULL);
+अटल sमाप_प्रकार show_cpu_address(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", pcpu_devices[dev->id].address);
+पूर्ण
+अटल DEVICE_ATTR(address, 0444, show_cpu_address, शून्य);
 
-static struct attribute *cpu_common_attrs[] = {
+अटल काष्ठा attribute *cpu_common_attrs[] = अणु
 	&dev_attr_configure.attr,
 	&dev_attr_address.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group cpu_common_attr_group = {
+अटल काष्ठा attribute_group cpu_common_attr_group = अणु
 	.attrs = cpu_common_attrs,
-};
+पूर्ण;
 
-static struct attribute *cpu_online_attrs[] = {
+अटल काष्ठा attribute *cpu_online_attrs[] = अणु
 	&dev_attr_idle_count.attr,
-	&dev_attr_idle_time_us.attr,
-	NULL,
-};
+	&dev_attr_idle_समय_us.attr,
+	शून्य,
+पूर्ण;
 
-static struct attribute_group cpu_online_attr_group = {
+अटल काष्ठा attribute_group cpu_online_attr_group = अणु
 	.attrs = cpu_online_attrs,
-};
+पूर्ण;
 
-static int smp_cpu_online(unsigned int cpu)
-{
-	struct device *s = &per_cpu(cpu_device, cpu)->dev;
+अटल पूर्णांक smp_cpu_online(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा device *s = &per_cpu(cpu_device, cpu)->dev;
 
-	return sysfs_create_group(&s->kobj, &cpu_online_attr_group);
-}
+	वापस sysfs_create_group(&s->kobj, &cpu_online_attr_group);
+पूर्ण
 
-static int smp_cpu_pre_down(unsigned int cpu)
-{
-	struct device *s = &per_cpu(cpu_device, cpu)->dev;
+अटल पूर्णांक smp_cpu_pre_करोwn(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा device *s = &per_cpu(cpu_device, cpu)->dev;
 
-	sysfs_remove_group(&s->kobj, &cpu_online_attr_group);
-	return 0;
-}
+	sysfs_हटाओ_group(&s->kobj, &cpu_online_attr_group);
+	वापस 0;
+पूर्ण
 
-static int smp_add_present_cpu(int cpu)
-{
-	struct device *s;
-	struct cpu *c;
-	int rc;
+अटल पूर्णांक smp_add_present_cpu(पूर्णांक cpu)
+अणु
+	काष्ठा device *s;
+	काष्ठा cpu *c;
+	पूर्णांक rc;
 
-	c = kzalloc(sizeof(*c), GFP_KERNEL);
-	if (!c)
-		return -ENOMEM;
+	c = kzalloc(माप(*c), GFP_KERNEL);
+	अगर (!c)
+		वापस -ENOMEM;
 	per_cpu(cpu_device, cpu) = c;
 	s = &c->dev;
 	c->hotpluggable = 1;
-	rc = register_cpu(c, cpu);
-	if (rc)
-		goto out;
+	rc = रेजिस्टर_cpu(c, cpu);
+	अगर (rc)
+		जाओ out;
 	rc = sysfs_create_group(&s->kobj, &cpu_common_attr_group);
-	if (rc)
-		goto out_cpu;
+	अगर (rc)
+		जाओ out_cpu;
 	rc = topology_cpu_init(c);
-	if (rc)
-		goto out_topology;
-	return 0;
+	अगर (rc)
+		जाओ out_topology;
+	वापस 0;
 
 out_topology:
-	sysfs_remove_group(&s->kobj, &cpu_common_attr_group);
+	sysfs_हटाओ_group(&s->kobj, &cpu_common_attr_group);
 out_cpu:
-	unregister_cpu(c);
+	unरेजिस्टर_cpu(c);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int __ref smp_rescan_cpus(void)
-{
-	struct sclp_core_info *info;
-	int nr;
+पूर्णांक __ref smp_rescan_cpus(व्योम)
+अणु
+	काष्ठा sclp_core_info *info;
+	पूर्णांक nr;
 
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = kzalloc(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 	smp_get_core_info(info, 0);
 	nr = __smp_rescan_cpus(info, false);
-	kfree(info);
-	if (nr)
+	kमुक्त(info);
+	अगर (nr)
 		topology_schedule_update();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t __ref rescan_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf,
-				  size_t count)
-{
-	int rc;
+अटल sमाप_प्रकार __ref rescan_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf,
+				  माप_प्रकार count)
+अणु
+	पूर्णांक rc;
 
 	rc = lock_device_hotplug_sysfs();
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	rc = smp_rescan_cpus();
 	unlock_device_hotplug();
-	return rc ? rc : count;
-}
-static DEVICE_ATTR_WO(rescan);
+	वापस rc ? rc : count;
+पूर्ण
+अटल DEVICE_ATTR_WO(rescan);
 
-static int __init s390_smp_init(void)
-{
-	int cpu, rc = 0;
+अटल पूर्णांक __init s390_smp_init(व्योम)
+अणु
+	पूर्णांक cpu, rc = 0;
 
 	rc = device_create_file(cpu_subsys.dev_root, &dev_attr_rescan);
-	if (rc)
-		return rc;
-	for_each_present_cpu(cpu) {
+	अगर (rc)
+		वापस rc;
+	क्रम_each_present_cpu(cpu) अणु
 		rc = smp_add_present_cpu(cpu);
-		if (rc)
-			goto out;
-	}
+		अगर (rc)
+			जाओ out;
+	पूर्ण
 
 	rc = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "s390/smp:online",
-			       smp_cpu_online, smp_cpu_pre_down);
+			       smp_cpu_online, smp_cpu_pre_करोwn);
 	rc = rc <= 0 ? rc : 0;
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 subsys_initcall(s390_smp_init);

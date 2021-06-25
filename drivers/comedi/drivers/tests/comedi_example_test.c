@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* vim: set ts=8 sw=8 noet tw=80 nowrap: */
 /*
  *  comedi/drivers/tests/comedi_example_test.c
@@ -7,7 +8,7 @@
  *  COMEDI - Linux Control and Measurement Device Interface
  *  Copyright (C) 2016 Spencer E. Olson <olsonse@umich.edu>
  *
- *  This program is free software; you can redistribute it and/or modify
+ *  This program is मुक्त software; you can redistribute it and/or modअगरy
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
@@ -15,58 +16,58 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  GNU General Public License क्रम more details.
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include "unittest.h"
+#समावेश "unittest.h"
 
 /* *** BEGIN fake board data *** */
-struct comedi_device {
-	const char *board_name;
-	int item;
-};
+काष्ठा comedi_device अणु
+	स्थिर अक्षर *board_name;
+	पूर्णांक item;
+पूर्ण;
 
-static struct comedi_device dev = {
+अटल काष्ठा comedi_device dev = अणु
 	.board_name = "fake_device",
-};
+पूर्ण;
 
 /* *** END fake board data *** */
 
 /* *** BEGIN fake data init *** */
-static void init_fake(void)
-{
+अटल व्योम init_fake(व्योम)
+अणु
 	dev.item = 10;
-}
+पूर्ण
 
 /* *** END fake data init *** */
 
-static void test0(void)
-{
+अटल व्योम test0(व्योम)
+अणु
 	init_fake();
 	unittest(dev.item != 11, "negative result\n");
 	unittest(dev.item == 10, "positive result\n");
-}
+पूर्ण
 
-/* **** BEGIN simple module entry/exit functions **** */
-static int __init unittest_enter(void)
-{
-	static const unittest_fptr unit_tests[] = {
+/* **** BEGIN simple module entry/निकास functions **** */
+अटल पूर्णांक __init unittest_enter(व्योम)
+अणु
+	अटल स्थिर unittest_fptr unit_tests[] = अणु
 		test0,
-		NULL,
-	};
+		शून्य,
+	पूर्ण;
 
 	exec_unittests("example", unit_tests);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit unittest_exit(void) { }
+अटल व्योम __निकास unittest_निकास(व्योम) अणु पूर्ण
 
 module_init(unittest_enter);
-module_exit(unittest_exit);
+module_निकास(unittest_निकास);
 
 MODULE_AUTHOR("Spencer Olson <olsonse@umich.edu>");
 MODULE_DESCRIPTION("Comedi unit-tests example");
 MODULE_LICENSE("GPL");
-/* **** END simple module entry/exit functions **** */
+/* **** END simple module entry/निकास functions **** */

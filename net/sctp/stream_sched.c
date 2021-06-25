@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* SCTP kernel implementation
  * (C) Copyright Red Hat Inc. 2017
  *
@@ -10,264 +11,264 @@
  * email addresched(es):
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modified by:
- *    Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
+ * Written or modअगरied by:
+ *    Marcelo Ricarकरो Leitner <marcelo.leitner@gmail.com>
  */
 
-#include <linux/list.h>
-#include <net/sctp/sctp.h>
-#include <net/sctp/sm.h>
-#include <net/sctp/stream_sched.h>
+#समावेश <linux/list.h>
+#समावेश <net/sctp/sctp.h>
+#समावेश <net/sctp/sm.h>
+#समावेश <net/sctp/stream_sched.h>
 
 /* First Come First Serve (a.k.a. FIFO)
  * RFC DRAFT ndata Section 3.1
  */
-static int sctp_sched_fcfs_set(struct sctp_stream *stream, __u16 sid,
+अटल पूर्णांक sctp_sched_fcfs_set(काष्ठा sctp_stream *stream, __u16 sid,
 			       __u16 value, gfp_t gfp)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static int sctp_sched_fcfs_get(struct sctp_stream *stream, __u16 sid,
+अटल पूर्णांक sctp_sched_fcfs_get(काष्ठा sctp_stream *stream, __u16 sid,
 			       __u16 *value)
-{
+अणु
 	*value = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_sched_fcfs_init(struct sctp_stream *stream)
-{
-	return 0;
-}
+अटल पूर्णांक sctp_sched_fcfs_init(काष्ठा sctp_stream *stream)
+अणु
+	वापस 0;
+पूर्ण
 
-static int sctp_sched_fcfs_init_sid(struct sctp_stream *stream, __u16 sid,
+अटल पूर्णांक sctp_sched_fcfs_init_sid(काष्ठा sctp_stream *stream, __u16 sid,
 				    gfp_t gfp)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static void sctp_sched_fcfs_free(struct sctp_stream *stream)
-{
-}
+अटल व्योम sctp_sched_fcfs_मुक्त(काष्ठा sctp_stream *stream)
+अणु
+पूर्ण
 
-static void sctp_sched_fcfs_enqueue(struct sctp_outq *q,
-				    struct sctp_datamsg *msg)
-{
-}
+अटल व्योम sctp_sched_fcfs_enqueue(काष्ठा sctp_outq *q,
+				    काष्ठा sctp_datamsg *msg)
+अणु
+पूर्ण
 
-static struct sctp_chunk *sctp_sched_fcfs_dequeue(struct sctp_outq *q)
-{
-	struct sctp_stream *stream = &q->asoc->stream;
-	struct sctp_chunk *ch = NULL;
-	struct list_head *entry;
+अटल काष्ठा sctp_chunk *sctp_sched_fcfs_dequeue(काष्ठा sctp_outq *q)
+अणु
+	काष्ठा sctp_stream *stream = &q->asoc->stream;
+	काष्ठा sctp_chunk *ch = शून्य;
+	काष्ठा list_head *entry;
 
-	if (list_empty(&q->out_chunk_list))
-		goto out;
+	अगर (list_empty(&q->out_chunk_list))
+		जाओ out;
 
-	if (stream->out_curr) {
+	अगर (stream->out_curr) अणु
 		ch = list_entry(stream->out_curr->ext->outq.next,
-				struct sctp_chunk, stream_list);
-	} else {
+				काष्ठा sctp_chunk, stream_list);
+	पूर्ण अन्यथा अणु
 		entry = q->out_chunk_list.next;
-		ch = list_entry(entry, struct sctp_chunk, list);
-	}
+		ch = list_entry(entry, काष्ठा sctp_chunk, list);
+	पूर्ण
 
 	sctp_sched_dequeue_common(q, ch);
 
 out:
-	return ch;
-}
+	वापस ch;
+पूर्ण
 
-static void sctp_sched_fcfs_dequeue_done(struct sctp_outq *q,
-					 struct sctp_chunk *chunk)
-{
-}
+अटल व्योम sctp_sched_fcfs_dequeue_करोne(काष्ठा sctp_outq *q,
+					 काष्ठा sctp_chunk *chunk)
+अणु
+पूर्ण
 
-static void sctp_sched_fcfs_sched_all(struct sctp_stream *stream)
-{
-}
+अटल व्योम sctp_sched_fcfs_sched_all(काष्ठा sctp_stream *stream)
+अणु
+पूर्ण
 
-static void sctp_sched_fcfs_unsched_all(struct sctp_stream *stream)
-{
-}
+अटल व्योम sctp_sched_fcfs_unsched_all(काष्ठा sctp_stream *stream)
+अणु
+पूर्ण
 
-static struct sctp_sched_ops sctp_sched_fcfs = {
+अटल काष्ठा sctp_sched_ops sctp_sched_fcfs = अणु
 	.set = sctp_sched_fcfs_set,
 	.get = sctp_sched_fcfs_get,
 	.init = sctp_sched_fcfs_init,
 	.init_sid = sctp_sched_fcfs_init_sid,
-	.free = sctp_sched_fcfs_free,
+	.मुक्त = sctp_sched_fcfs_मुक्त,
 	.enqueue = sctp_sched_fcfs_enqueue,
 	.dequeue = sctp_sched_fcfs_dequeue,
-	.dequeue_done = sctp_sched_fcfs_dequeue_done,
+	.dequeue_करोne = sctp_sched_fcfs_dequeue_करोne,
 	.sched_all = sctp_sched_fcfs_sched_all,
 	.unsched_all = sctp_sched_fcfs_unsched_all,
-};
+पूर्ण;
 
-static void sctp_sched_ops_fcfs_init(void)
-{
-	sctp_sched_ops_register(SCTP_SS_FCFS, &sctp_sched_fcfs);
-}
+अटल व्योम sctp_sched_ops_fcfs_init(व्योम)
+अणु
+	sctp_sched_ops_रेजिस्टर(SCTP_SS_FCFS, &sctp_sched_fcfs);
+पूर्ण
 
 /* API to other parts of the stack */
 
-static struct sctp_sched_ops *sctp_sched_ops[SCTP_SS_MAX + 1];
+अटल काष्ठा sctp_sched_ops *sctp_sched_ops[SCTP_SS_MAX + 1];
 
-void sctp_sched_ops_register(enum sctp_sched_type sched,
-			     struct sctp_sched_ops *sched_ops)
-{
+व्योम sctp_sched_ops_रेजिस्टर(क्रमागत sctp_sched_type sched,
+			     काष्ठा sctp_sched_ops *sched_ops)
+अणु
 	sctp_sched_ops[sched] = sched_ops;
-}
+पूर्ण
 
-void sctp_sched_ops_init(void)
-{
+व्योम sctp_sched_ops_init(व्योम)
+अणु
 	sctp_sched_ops_fcfs_init();
 	sctp_sched_ops_prio_init();
 	sctp_sched_ops_rr_init();
-}
+पूर्ण
 
-int sctp_sched_set_sched(struct sctp_association *asoc,
-			 enum sctp_sched_type sched)
-{
-	struct sctp_sched_ops *n = sctp_sched_ops[sched];
-	struct sctp_sched_ops *old = asoc->outqueue.sched;
-	struct sctp_datamsg *msg = NULL;
-	struct sctp_chunk *ch;
-	int i, ret = 0;
+पूर्णांक sctp_sched_set_sched(काष्ठा sctp_association *asoc,
+			 क्रमागत sctp_sched_type sched)
+अणु
+	काष्ठा sctp_sched_ops *n = sctp_sched_ops[sched];
+	काष्ठा sctp_sched_ops *old = asoc->outqueue.sched;
+	काष्ठा sctp_datamsg *msg = शून्य;
+	काष्ठा sctp_chunk *ch;
+	पूर्णांक i, ret = 0;
 
-	if (old == n)
-		return ret;
+	अगर (old == n)
+		वापस ret;
 
-	if (sched > SCTP_SS_MAX)
-		return -EINVAL;
+	अगर (sched > SCTP_SS_MAX)
+		वापस -EINVAL;
 
-	if (old) {
-		old->free(&asoc->stream);
+	अगर (old) अणु
+		old->मुक्त(&asoc->stream);
 
 		/* Give the next scheduler a clean slate. */
-		for (i = 0; i < asoc->stream.outcnt; i++) {
-			void *p = SCTP_SO(&asoc->stream, i)->ext;
+		क्रम (i = 0; i < asoc->stream.outcnt; i++) अणु
+			व्योम *p = SCTP_SO(&asoc->stream, i)->ext;
 
-			if (!p)
-				continue;
+			अगर (!p)
+				जारी;
 
-			p += offsetofend(struct sctp_stream_out_ext, outq);
-			memset(p, 0, sizeof(struct sctp_stream_out_ext) -
-				     offsetofend(struct sctp_stream_out_ext, outq));
-		}
-	}
+			p += दुरत्वend(काष्ठा sctp_stream_out_ext, outq);
+			स_रखो(p, 0, माप(काष्ठा sctp_stream_out_ext) -
+				     दुरत्वend(काष्ठा sctp_stream_out_ext, outq));
+		पूर्ण
+	पूर्ण
 
 	asoc->outqueue.sched = n;
 	n->init(&asoc->stream);
-	for (i = 0; i < asoc->stream.outcnt; i++) {
-		if (!SCTP_SO(&asoc->stream, i)->ext)
-			continue;
+	क्रम (i = 0; i < asoc->stream.outcnt; i++) अणु
+		अगर (!SCTP_SO(&asoc->stream, i)->ext)
+			जारी;
 
 		ret = n->init_sid(&asoc->stream, i, GFP_KERNEL);
-		if (ret)
-			goto err;
-	}
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	/* We have to requeue all chunks already queued. */
-	list_for_each_entry(ch, &asoc->outqueue.out_chunk_list, list) {
-		if (ch->msg == msg)
-			continue;
+	/* We have to requeue all chunks alपढ़ोy queued. */
+	list_क्रम_each_entry(ch, &asoc->outqueue.out_chunk_list, list) अणु
+		अगर (ch->msg == msg)
+			जारी;
 		msg = ch->msg;
 		n->enqueue(&asoc->outqueue, msg);
-	}
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
 err:
-	n->free(&asoc->stream);
+	n->मुक्त(&asoc->stream);
 	asoc->outqueue.sched = &sctp_sched_fcfs; /* Always safe */
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int sctp_sched_get_sched(struct sctp_association *asoc)
-{
-	int i;
+पूर्णांक sctp_sched_get_sched(काष्ठा sctp_association *asoc)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i <= SCTP_SS_MAX; i++)
-		if (asoc->outqueue.sched == sctp_sched_ops[i])
-			return i;
+	क्रम (i = 0; i <= SCTP_SS_MAX; i++)
+		अगर (asoc->outqueue.sched == sctp_sched_ops[i])
+			वापस i;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sctp_sched_set_value(struct sctp_association *asoc, __u16 sid,
+पूर्णांक sctp_sched_set_value(काष्ठा sctp_association *asoc, __u16 sid,
 			 __u16 value, gfp_t gfp)
-{
-	if (sid >= asoc->stream.outcnt)
-		return -EINVAL;
+अणु
+	अगर (sid >= asoc->stream.outcnt)
+		वापस -EINVAL;
 
-	if (!SCTP_SO(&asoc->stream, sid)->ext) {
-		int ret;
+	अगर (!SCTP_SO(&asoc->stream, sid)->ext) अणु
+		पूर्णांक ret;
 
 		ret = sctp_stream_init_ext(&asoc->stream, sid);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return asoc->outqueue.sched->set(&asoc->stream, sid, value, gfp);
-}
+	वापस asoc->outqueue.sched->set(&asoc->stream, sid, value, gfp);
+पूर्ण
 
-int sctp_sched_get_value(struct sctp_association *asoc, __u16 sid,
+पूर्णांक sctp_sched_get_value(काष्ठा sctp_association *asoc, __u16 sid,
 			 __u16 *value)
-{
-	if (sid >= asoc->stream.outcnt)
-		return -EINVAL;
+अणु
+	अगर (sid >= asoc->stream.outcnt)
+		वापस -EINVAL;
 
-	if (!SCTP_SO(&asoc->stream, sid)->ext)
-		return 0;
+	अगर (!SCTP_SO(&asoc->stream, sid)->ext)
+		वापस 0;
 
-	return asoc->outqueue.sched->get(&asoc->stream, sid, value);
-}
+	वापस asoc->outqueue.sched->get(&asoc->stream, sid, value);
+पूर्ण
 
-void sctp_sched_dequeue_done(struct sctp_outq *q, struct sctp_chunk *ch)
-{
-	if (!list_is_last(&ch->frag_list, &ch->msg->chunks) &&
-	    !q->asoc->peer.intl_capable) {
-		struct sctp_stream_out *sout;
+व्योम sctp_sched_dequeue_करोne(काष्ठा sctp_outq *q, काष्ठा sctp_chunk *ch)
+अणु
+	अगर (!list_is_last(&ch->frag_list, &ch->msg->chunks) &&
+	    !q->asoc->peer.पूर्णांकl_capable) अणु
+		काष्ठा sctp_stream_out *sout;
 		__u16 sid;
 
 		/* datamsg is not finish, so save it as current one,
-		 * in case application switch scheduler or a higher
+		 * in हाल application चयन scheduler or a higher
 		 * priority stream comes in.
 		 */
 		sid = sctp_chunk_stream_no(ch);
 		sout = SCTP_SO(&q->asoc->stream, sid);
 		q->asoc->stream.out_curr = sout;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	q->asoc->stream.out_curr = NULL;
-	q->sched->dequeue_done(q, ch);
-}
+	q->asoc->stream.out_curr = शून्य;
+	q->sched->dequeue_करोne(q, ch);
+पूर्ण
 
-/* Auxiliary functions for the schedulers */
-void sctp_sched_dequeue_common(struct sctp_outq *q, struct sctp_chunk *ch)
-{
+/* Auxiliary functions क्रम the schedulers */
+व्योम sctp_sched_dequeue_common(काष्ठा sctp_outq *q, काष्ठा sctp_chunk *ch)
+अणु
 	list_del_init(&ch->list);
 	list_del_init(&ch->stream_list);
 	q->out_qlen -= ch->skb->len;
-}
+पूर्ण
 
-int sctp_sched_init_sid(struct sctp_stream *stream, __u16 sid, gfp_t gfp)
-{
-	struct sctp_sched_ops *sched = sctp_sched_ops_from_stream(stream);
-	struct sctp_stream_out_ext *ext = SCTP_SO(stream, sid)->ext;
+पूर्णांक sctp_sched_init_sid(काष्ठा sctp_stream *stream, __u16 sid, gfp_t gfp)
+अणु
+	काष्ठा sctp_sched_ops *sched = sctp_sched_ops_from_stream(stream);
+	काष्ठा sctp_stream_out_ext *ext = SCTP_SO(stream, sid)->ext;
 
 	INIT_LIST_HEAD(&ext->outq);
-	return sched->init_sid(stream, sid, gfp);
-}
+	वापस sched->init_sid(stream, sid, gfp);
+पूर्ण
 
-struct sctp_sched_ops *sctp_sched_ops_from_stream(struct sctp_stream *stream)
-{
-	struct sctp_association *asoc;
+काष्ठा sctp_sched_ops *sctp_sched_ops_from_stream(काष्ठा sctp_stream *stream)
+अणु
+	काष्ठा sctp_association *asoc;
 
-	asoc = container_of(stream, struct sctp_association, stream);
+	asoc = container_of(stream, काष्ठा sctp_association, stream);
 
-	return asoc->outqueue.sched;
-}
+	वापस asoc->outqueue.sched;
+पूर्ण

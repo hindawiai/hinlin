@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for
+ * Driver क्रम
  *    Samsung S5H1420 and
  *    PnpNetwork PN1010 QPSK Demodulator
  *
@@ -8,875 +9,875 @@
  * Copyright (C) 2005-8 Patrick Boettcher <pb@linuxtv.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/jiffies.h>
-#include <asm/div64.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <यंत्र/भाग64.h>
 
-#include <linux/i2c.h>
+#समावेश <linux/i2c.h>
 
 
-#include <media/dvb_frontend.h>
-#include "s5h1420.h"
-#include "s5h1420_priv.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश "s5h1420.h"
+#समावेश "s5h1420_priv.h"
 
-#define TONE_FREQ 22000
+#घोषणा TONE_FREQ 22000
 
-struct s5h1420_state {
-	struct i2c_adapter* i2c;
-	const struct s5h1420_config* config;
+काष्ठा s5h1420_state अणु
+	काष्ठा i2c_adapter* i2c;
+	स्थिर काष्ठा s5h1420_config* config;
 
-	struct dvb_frontend frontend;
-	struct i2c_adapter tuner_i2c_adapter;
+	काष्ठा dvb_frontend frontend;
+	काष्ठा i2c_adapter tuner_i2c_adapter;
 
 	u8 CON_1_val;
 
 	u8 postlocked:1;
 	u32 fclk;
 	u32 tunedfreq;
-	enum fe_code_rate fec_inner;
+	क्रमागत fe_code_rate fec_inner;
 	u32 symbol_rate;
 
-	/* FIXME: ugly workaround for flexcop's incapable i2c-controller
-	 * it does not support repeated-start, workaround: write addr-1
-	 * and then read
+	/* FIXME: ugly workaround क्रम flexcop's incapable i2c-controller
+	 * it करोes not support repeated-start, workaround: ग_लिखो addr-1
+	 * and then पढ़ो
 	 */
-	u8 shadow[256];
-};
+	u8 shaकरोw[256];
+पूर्ण;
 
-static u32 s5h1420_getsymbolrate(struct s5h1420_state* state);
-static int s5h1420_get_tune_settings(struct dvb_frontend* fe,
-				     struct dvb_frontend_tune_settings* fesettings);
+अटल u32 s5h1420_माला_लोymbolrate(काष्ठा s5h1420_state* state);
+अटल पूर्णांक s5h1420_get_tune_settings(काष्ठा dvb_frontend* fe,
+				     काष्ठा dvb_frontend_tune_settings* fesettings);
 
 
-static int debug;
-module_param(debug, int, 0644);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "enable debugging");
 
-#define dprintk(x...) do { \
-	if (debug) \
-		printk(KERN_DEBUG "S5H1420: " x); \
-} while (0)
+#घोषणा dprपूर्णांकk(x...) करो अणु \
+	अगर (debug) \
+		prपूर्णांकk(KERN_DEBUG "S5H1420: " x); \
+पूर्ण जबतक (0)
 
-static u8 s5h1420_readreg(struct s5h1420_state *state, u8 reg)
-{
-	int ret;
+अटल u8 s5h1420_पढ़ोreg(काष्ठा s5h1420_state *state, u8 reg)
+अणु
+	पूर्णांक ret;
 	u8 b[2];
-	struct i2c_msg msg[] = {
-		{ .addr = state->config->demod_address, .flags = 0, .buf = b, .len = 2 },
-		{ .addr = state->config->demod_address, .flags = 0, .buf = &reg, .len = 1 },
-		{ .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b, .len = 1 },
-	};
+	काष्ठा i2c_msg msg[] = अणु
+		अणु .addr = state->config->demod_address, .flags = 0, .buf = b, .len = 2 पूर्ण,
+		अणु .addr = state->config->demod_address, .flags = 0, .buf = &reg, .len = 1 पूर्ण,
+		अणु .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b, .len = 1 पूर्ण,
+	पूर्ण;
 
 	b[0] = (reg - 1) & 0xff;
-	b[1] = state->shadow[(reg - 1) & 0xff];
+	b[1] = state->shaकरोw[(reg - 1) & 0xff];
 
-	if (state->config->repeated_start_workaround) {
+	अगर (state->config->repeated_start_workaround) अणु
 		ret = i2c_transfer(state->i2c, msg, 3);
-		if (ret != 3)
-			return ret;
-	} else {
+		अगर (ret != 3)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		ret = i2c_transfer(state->i2c, &msg[1], 1);
-		if (ret != 1)
-			return ret;
+		अगर (ret != 1)
+			वापस ret;
 		ret = i2c_transfer(state->i2c, &msg[2], 1);
-		if (ret != 1)
-			return ret;
-	}
+		अगर (ret != 1)
+			वापस ret;
+	पूर्ण
 
-	/* dprintk("rd(%02x): %02x %02x\n", state->config->demod_address, reg, b[0]); */
+	/* dprपूर्णांकk("rd(%02x): %02x %02x\n", state->config->demod_address, reg, b[0]); */
 
-	return b[0];
-}
+	वापस b[0];
+पूर्ण
 
-static int s5h1420_writereg (struct s5h1420_state* state, u8 reg, u8 data)
-{
-	u8 buf[] = { reg, data };
-	struct i2c_msg msg = { .addr = state->config->demod_address, .flags = 0, .buf = buf, .len = 2 };
-	int err;
+अटल पूर्णांक s5h1420_ग_लिखोreg (काष्ठा s5h1420_state* state, u8 reg, u8 data)
+अणु
+	u8 buf[] = अणु reg, data पूर्ण;
+	काष्ठा i2c_msg msg = अणु .addr = state->config->demod_address, .flags = 0, .buf = buf, .len = 2 पूर्ण;
+	पूर्णांक err;
 
-	/* dprintk("wr(%02x): %02x %02x\n", state->config->demod_address, reg, data); */
+	/* dprपूर्णांकk("wr(%02x): %02x %02x\n", state->config->demod_address, reg, data); */
 	err = i2c_transfer(state->i2c, &msg, 1);
-	if (err != 1) {
-		dprintk("%s: writereg error (err == %i, reg == 0x%02x, data == 0x%02x)\n", __func__, err, reg, data);
-		return -EREMOTEIO;
-	}
-	state->shadow[reg] = data;
+	अगर (err != 1) अणु
+		dprपूर्णांकk("%s: writereg error (err == %i, reg == 0x%02x, data == 0x%02x)\n", __func__, err, reg, data);
+		वापस -EREMOTEIO;
+	पूर्ण
+	state->shaकरोw[reg] = data;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5h1420_set_voltage(struct dvb_frontend *fe,
-			       enum fe_sec_voltage voltage)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल पूर्णांक s5h1420_set_voltage(काष्ठा dvb_frontend *fe,
+			       क्रमागत fe_sec_voltage voltage)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 
-	dprintk("enter %s\n", __func__);
+	dprपूर्णांकk("enter %s\n", __func__);
 
-	switch(voltage) {
-	case SEC_VOLTAGE_13:
-		s5h1420_writereg(state, 0x3c,
-				 (s5h1420_readreg(state, 0x3c) & 0xfe) | 0x02);
-		break;
+	चयन(voltage) अणु
+	हाल SEC_VOLTAGE_13:
+		s5h1420_ग_लिखोreg(state, 0x3c,
+				 (s5h1420_पढ़ोreg(state, 0x3c) & 0xfe) | 0x02);
+		अवरोध;
 
-	case SEC_VOLTAGE_18:
-		s5h1420_writereg(state, 0x3c, s5h1420_readreg(state, 0x3c) | 0x03);
-		break;
+	हाल SEC_VOLTAGE_18:
+		s5h1420_ग_लिखोreg(state, 0x3c, s5h1420_पढ़ोreg(state, 0x3c) | 0x03);
+		अवरोध;
 
-	case SEC_VOLTAGE_OFF:
-		s5h1420_writereg(state, 0x3c, s5h1420_readreg(state, 0x3c) & 0xfd);
-		break;
-	}
+	हाल SEC_VOLTAGE_OFF:
+		s5h1420_ग_लिखोreg(state, 0x3c, s5h1420_पढ़ोreg(state, 0x3c) & 0xfd);
+		अवरोध;
+	पूर्ण
 
-	dprintk("leave %s\n", __func__);
-	return 0;
-}
+	dprपूर्णांकk("leave %s\n", __func__);
+	वापस 0;
+पूर्ण
 
-static int s5h1420_set_tone(struct dvb_frontend *fe,
-			    enum fe_sec_tone_mode tone)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल पूर्णांक s5h1420_set_tone(काष्ठा dvb_frontend *fe,
+			    क्रमागत fe_sec_tone_mode tone)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 
-	dprintk("enter %s\n", __func__);
-	switch(tone) {
-	case SEC_TONE_ON:
-		s5h1420_writereg(state, 0x3b,
-				 (s5h1420_readreg(state, 0x3b) & 0x74) | 0x08);
-		break;
+	dprपूर्णांकk("enter %s\n", __func__);
+	चयन(tone) अणु
+	हाल SEC_TONE_ON:
+		s5h1420_ग_लिखोreg(state, 0x3b,
+				 (s5h1420_पढ़ोreg(state, 0x3b) & 0x74) | 0x08);
+		अवरोध;
 
-	case SEC_TONE_OFF:
-		s5h1420_writereg(state, 0x3b,
-				 (s5h1420_readreg(state, 0x3b) & 0x74) | 0x01);
-		break;
-	}
-	dprintk("leave %s\n", __func__);
+	हाल SEC_TONE_OFF:
+		s5h1420_ग_लिखोreg(state, 0x3b,
+				 (s5h1420_पढ़ोreg(state, 0x3b) & 0x74) | 0x01);
+		अवरोध;
+	पूर्ण
+	dprपूर्णांकk("leave %s\n", __func__);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5h1420_send_master_cmd (struct dvb_frontend* fe,
-				    struct dvb_diseqc_master_cmd* cmd)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल पूर्णांक s5h1420_send_master_cmd (काष्ठा dvb_frontend* fe,
+				    काष्ठा dvb_diseqc_master_cmd* cmd)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 	u8 val;
-	int i;
-	unsigned long timeout;
-	int result = 0;
+	पूर्णांक i;
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक result = 0;
 
-	dprintk("enter %s\n", __func__);
-	if (cmd->msg_len > sizeof(cmd->msg))
-		return -EINVAL;
+	dprपूर्णांकk("enter %s\n", __func__);
+	अगर (cmd->msg_len > माप(cmd->msg))
+		वापस -EINVAL;
 
-	/* setup for DISEQC */
-	val = s5h1420_readreg(state, 0x3b);
-	s5h1420_writereg(state, 0x3b, 0x02);
+	/* setup क्रम DISEQC */
+	val = s5h1420_पढ़ोreg(state, 0x3b);
+	s5h1420_ग_लिखोreg(state, 0x3b, 0x02);
 	msleep(15);
 
-	/* write the DISEQC command bytes */
-	for(i=0; i< cmd->msg_len; i++) {
-		s5h1420_writereg(state, 0x3d + i, cmd->msg[i]);
-	}
+	/* ग_लिखो the DISEQC command bytes */
+	क्रम(i=0; i< cmd->msg_len; i++) अणु
+		s5h1420_ग_लिखोreg(state, 0x3d + i, cmd->msg[i]);
+	पूर्ण
 
 	/* kick off transmission */
-	s5h1420_writereg(state, 0x3b, s5h1420_readreg(state, 0x3b) |
+	s5h1420_ग_लिखोreg(state, 0x3b, s5h1420_पढ़ोreg(state, 0x3b) |
 				      ((cmd->msg_len-1) << 4) | 0x08);
 
-	/* wait for transmission to complete */
-	timeout = jiffies + ((100*HZ) / 1000);
-	while(time_before(jiffies, timeout)) {
-		if (!(s5h1420_readreg(state, 0x3b) & 0x08))
-			break;
+	/* रुको क्रम transmission to complete */
+	समयout = jअगरfies + ((100*HZ) / 1000);
+	जबतक(समय_beक्रमe(jअगरfies, समयout)) अणु
+		अगर (!(s5h1420_पढ़ोreg(state, 0x3b) & 0x08))
+			अवरोध;
 
 		msleep(5);
-	}
-	if (time_after(jiffies, timeout))
+	पूर्ण
+	अगर (समय_after(jअगरfies, समयout))
 		result = -ETIMEDOUT;
 
 	/* restore original settings */
-	s5h1420_writereg(state, 0x3b, val);
+	s5h1420_ग_लिखोreg(state, 0x3b, val);
 	msleep(15);
-	dprintk("leave %s\n", __func__);
-	return result;
-}
+	dprपूर्णांकk("leave %s\n", __func__);
+	वापस result;
+पूर्ण
 
-static int s5h1420_recv_slave_reply (struct dvb_frontend* fe,
-				     struct dvb_diseqc_slave_reply* reply)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल पूर्णांक s5h1420_recv_slave_reply (काष्ठा dvb_frontend* fe,
+				     काष्ठा dvb_diseqc_slave_reply* reply)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 	u8 val;
-	int i;
-	int length;
-	unsigned long timeout;
-	int result = 0;
+	पूर्णांक i;
+	पूर्णांक length;
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक result = 0;
 
-	/* setup for DISEQC receive */
-	val = s5h1420_readreg(state, 0x3b);
-	s5h1420_writereg(state, 0x3b, 0x82); /* FIXME: guess - do we need to set DIS_RDY(0x08) in receive mode? */
+	/* setup क्रम DISEQC receive */
+	val = s5h1420_पढ़ोreg(state, 0x3b);
+	s5h1420_ग_लिखोreg(state, 0x3b, 0x82); /* FIXME: guess - करो we need to set DIS_RDY(0x08) in receive mode? */
 	msleep(15);
 
-	/* wait for reception to complete */
-	timeout = jiffies + ((reply->timeout*HZ) / 1000);
-	while(time_before(jiffies, timeout)) {
-		if (!(s5h1420_readreg(state, 0x3b) & 0x80)) /* FIXME: do we test DIS_RDY(0x08) or RCV_EN(0x80)? */
-			break;
+	/* रुको क्रम reception to complete */
+	समयout = jअगरfies + ((reply->समयout*HZ) / 1000);
+	जबतक(समय_beक्रमe(jअगरfies, समयout)) अणु
+		अगर (!(s5h1420_पढ़ोreg(state, 0x3b) & 0x80)) /* FIXME: करो we test DIS_RDY(0x08) or RCV_EN(0x80)? */
+			अवरोध;
 
 		msleep(5);
-	}
-	if (time_after(jiffies, timeout)) {
+	पूर्ण
+	अगर (समय_after(jअगरfies, समयout)) अणु
 		result = -ETIMEDOUT;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* check error flag - FIXME: not sure what this does - docs do not describe
-	 * beyond "error flag for diseqc receive data :( */
-	if (s5h1420_readreg(state, 0x49)) {
+	/* check error flag - FIXME: not sure what this करोes - करोcs करो not describe
+	 * beyond "error flag क्रम diseqc receive data :( */
+	अगर (s5h1420_पढ़ोreg(state, 0x49)) अणु
 		result = -EIO;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/* check length */
-	length = (s5h1420_readreg(state, 0x3b) & 0x70) >> 4;
-	if (length > sizeof(reply->msg)) {
+	length = (s5h1420_पढ़ोreg(state, 0x3b) & 0x70) >> 4;
+	अगर (length > माप(reply->msg)) अणु
 		result = -EOVERFLOW;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	reply->msg_len = length;
 
 	/* extract data */
-	for(i=0; i< length; i++) {
-		reply->msg[i] = s5h1420_readreg(state, 0x3d + i);
-	}
+	क्रम(i=0; i< length; i++) अणु
+		reply->msg[i] = s5h1420_पढ़ोreg(state, 0x3d + i);
+	पूर्ण
 
-exit:
+निकास:
 	/* restore original settings */
-	s5h1420_writereg(state, 0x3b, val);
+	s5h1420_ग_लिखोreg(state, 0x3b, val);
 	msleep(15);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int s5h1420_send_burst(struct dvb_frontend *fe,
-			      enum fe_sec_mini_cmd minicmd)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल पूर्णांक s5h1420_send_burst(काष्ठा dvb_frontend *fe,
+			      क्रमागत fe_sec_mini_cmd minicmd)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 	u8 val;
-	int result = 0;
-	unsigned long timeout;
+	पूर्णांक result = 0;
+	अचिन्हित दीर्घ समयout;
 
-	/* setup for tone burst */
-	val = s5h1420_readreg(state, 0x3b);
-	s5h1420_writereg(state, 0x3b, (s5h1420_readreg(state, 0x3b) & 0x70) | 0x01);
+	/* setup क्रम tone burst */
+	val = s5h1420_पढ़ोreg(state, 0x3b);
+	s5h1420_ग_लिखोreg(state, 0x3b, (s5h1420_पढ़ोreg(state, 0x3b) & 0x70) | 0x01);
 
-	/* set value for B position if requested */
-	if (minicmd == SEC_MINI_B) {
-		s5h1420_writereg(state, 0x3b, s5h1420_readreg(state, 0x3b) | 0x04);
-	}
+	/* set value क्रम B position अगर requested */
+	अगर (minicmd == SEC_MINI_B) अणु
+		s5h1420_ग_लिखोreg(state, 0x3b, s5h1420_पढ़ोreg(state, 0x3b) | 0x04);
+	पूर्ण
 	msleep(15);
 
 	/* start transmission */
-	s5h1420_writereg(state, 0x3b, s5h1420_readreg(state, 0x3b) | 0x08);
+	s5h1420_ग_लिखोreg(state, 0x3b, s5h1420_पढ़ोreg(state, 0x3b) | 0x08);
 
-	/* wait for transmission to complete */
-	timeout = jiffies + ((100*HZ) / 1000);
-	while(time_before(jiffies, timeout)) {
-		if (!(s5h1420_readreg(state, 0x3b) & 0x08))
-			break;
+	/* रुको क्रम transmission to complete */
+	समयout = jअगरfies + ((100*HZ) / 1000);
+	जबतक(समय_beक्रमe(jअगरfies, समयout)) अणु
+		अगर (!(s5h1420_पढ़ोreg(state, 0x3b) & 0x08))
+			अवरोध;
 
 		msleep(5);
-	}
-	if (time_after(jiffies, timeout))
+	पूर्ण
+	अगर (समय_after(jअगरfies, समयout))
 		result = -ETIMEDOUT;
 
 	/* restore original settings */
-	s5h1420_writereg(state, 0x3b, val);
+	s5h1420_ग_लिखोreg(state, 0x3b, val);
 	msleep(15);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static enum fe_status s5h1420_get_status_bits(struct s5h1420_state *state)
-{
+अटल क्रमागत fe_status s5h1420_get_status_bits(काष्ठा s5h1420_state *state)
+अणु
 	u8 val;
-	enum fe_status status = 0;
+	क्रमागत fe_status status = 0;
 
-	val = s5h1420_readreg(state, 0x14);
-	if (val & 0x02)
+	val = s5h1420_पढ़ोreg(state, 0x14);
+	अगर (val & 0x02)
 		status |=  FE_HAS_SIGNAL;
-	if (val & 0x01)
+	अगर (val & 0x01)
 		status |=  FE_HAS_CARRIER;
-	val = s5h1420_readreg(state, 0x36);
-	if (val & 0x01)
+	val = s5h1420_पढ़ोreg(state, 0x36);
+	अगर (val & 0x01)
 		status |=  FE_HAS_VITERBI;
-	if (val & 0x20)
+	अगर (val & 0x20)
 		status |=  FE_HAS_SYNC;
-	if (status == (FE_HAS_SIGNAL|FE_HAS_CARRIER|FE_HAS_VITERBI|FE_HAS_SYNC))
+	अगर (status == (FE_HAS_SIGNAL|FE_HAS_CARRIER|FE_HAS_VITERBI|FE_HAS_SYNC))
 		status |=  FE_HAS_LOCK;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int s5h1420_read_status(struct dvb_frontend *fe,
-			       enum fe_status *status)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल पूर्णांक s5h1420_पढ़ो_status(काष्ठा dvb_frontend *fe,
+			       क्रमागत fe_status *status)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 	u8 val;
 
-	dprintk("enter %s\n", __func__);
+	dprपूर्णांकk("enter %s\n", __func__);
 
-	if (status == NULL)
-		return -EINVAL;
+	अगर (status == शून्य)
+		वापस -EINVAL;
 
 	/* determine lock state */
 	*status = s5h1420_get_status_bits(state);
 
-	/* fix for FEC 5/6 inversion issue - if it doesn't quite lock, invert
-	the inversion, wait a bit and check again */
-	if (*status == (FE_HAS_SIGNAL | FE_HAS_CARRIER | FE_HAS_VITERBI)) {
-		val = s5h1420_readreg(state, Vit10);
-		if ((val & 0x07) == 0x03) {
-			if (val & 0x08)
-				s5h1420_writereg(state, Vit09, 0x13);
-			else
-				s5h1420_writereg(state, Vit09, 0x1b);
+	/* fix क्रम FEC 5/6 inversion issue - अगर it करोesn't quite lock, invert
+	the inversion, रुको a bit and check again */
+	अगर (*status == (FE_HAS_SIGNAL | FE_HAS_CARRIER | FE_HAS_VITERBI)) अणु
+		val = s5h1420_पढ़ोreg(state, Vit10);
+		अगर ((val & 0x07) == 0x03) अणु
+			अगर (val & 0x08)
+				s5h1420_ग_लिखोreg(state, Vit09, 0x13);
+			अन्यथा
+				s5h1420_ग_लिखोreg(state, Vit09, 0x1b);
 
-			/* wait a bit then update lock status */
+			/* रुको a bit then update lock status */
 			mdelay(200);
 			*status = s5h1420_get_status_bits(state);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* perform post lock setup */
-	if ((*status & FE_HAS_LOCK) && !state->postlocked) {
+	/* perक्रमm post lock setup */
+	अगर ((*status & FE_HAS_LOCK) && !state->postlocked) अणु
 
 		/* calculate the data rate */
-		u32 tmp = s5h1420_getsymbolrate(state);
-		switch (s5h1420_readreg(state, Vit10) & 0x07) {
-		case 0: tmp = (tmp * 2 * 1) / 2; break;
-		case 1: tmp = (tmp * 2 * 2) / 3; break;
-		case 2: tmp = (tmp * 2 * 3) / 4; break;
-		case 3: tmp = (tmp * 2 * 5) / 6; break;
-		case 4: tmp = (tmp * 2 * 6) / 7; break;
-		case 5: tmp = (tmp * 2 * 7) / 8; break;
-		}
+		u32 पंचांगp = s5h1420_माला_लोymbolrate(state);
+		चयन (s5h1420_पढ़ोreg(state, Vit10) & 0x07) अणु
+		हाल 0: पंचांगp = (पंचांगp * 2 * 1) / 2; अवरोध;
+		हाल 1: पंचांगp = (पंचांगp * 2 * 2) / 3; अवरोध;
+		हाल 2: पंचांगp = (पंचांगp * 2 * 3) / 4; अवरोध;
+		हाल 3: पंचांगp = (पंचांगp * 2 * 5) / 6; अवरोध;
+		हाल 4: पंचांगp = (पंचांगp * 2 * 6) / 7; अवरोध;
+		हाल 5: पंचांगp = (पंचांगp * 2 * 7) / 8; अवरोध;
+		पूर्ण
 
-		if (tmp == 0) {
-			printk(KERN_ERR "s5h1420: avoided division by 0\n");
-			tmp = 1;
-		}
-		tmp = state->fclk / tmp;
+		अगर (पंचांगp == 0) अणु
+			prपूर्णांकk(KERN_ERR "s5h1420: avoided division by 0\n");
+			पंचांगp = 1;
+		पूर्ण
+		पंचांगp = state->fclk / पंचांगp;
 
 
-		/* set the MPEG_CLK_INTL for the calculated data rate */
-		if (tmp < 2)
+		/* set the MPEG_CLK_INTL क्रम the calculated data rate */
+		अगर (पंचांगp < 2)
 			val = 0x00;
-		else if (tmp < 5)
+		अन्यथा अगर (पंचांगp < 5)
 			val = 0x01;
-		else if (tmp < 9)
+		अन्यथा अगर (पंचांगp < 9)
 			val = 0x02;
-		else if (tmp < 13)
+		अन्यथा अगर (पंचांगp < 13)
 			val = 0x03;
-		else if (tmp < 17)
+		अन्यथा अगर (पंचांगp < 17)
 			val = 0x04;
-		else if (tmp < 25)
+		अन्यथा अगर (पंचांगp < 25)
 			val = 0x05;
-		else if (tmp < 33)
+		अन्यथा अगर (पंचांगp < 33)
 			val = 0x06;
-		else
+		अन्यथा
 			val = 0x07;
-		dprintk("for MPEG_CLK_INTL %d %x\n", tmp, val);
+		dprपूर्णांकk("for MPEG_CLK_INTL %d %x\n", पंचांगp, val);
 
-		s5h1420_writereg(state, FEC01, 0x18);
-		s5h1420_writereg(state, FEC01, 0x10);
-		s5h1420_writereg(state, FEC01, val);
+		s5h1420_ग_लिखोreg(state, FEC01, 0x18);
+		s5h1420_ग_लिखोreg(state, FEC01, 0x10);
+		s5h1420_ग_लिखोreg(state, FEC01, val);
 
 		/* Enable "MPEG_Out" */
-		val = s5h1420_readreg(state, Mpeg02);
-		s5h1420_writereg(state, Mpeg02, val | (1 << 6));
+		val = s5h1420_पढ़ोreg(state, Mpeg02);
+		s5h1420_ग_लिखोreg(state, Mpeg02, val | (1 << 6));
 
 		/* kicker disable */
-		val = s5h1420_readreg(state, QPSK01) & 0x7f;
-		s5h1420_writereg(state, QPSK01, val);
+		val = s5h1420_पढ़ोreg(state, QPSK01) & 0x7f;
+		s5h1420_ग_लिखोreg(state, QPSK01, val);
 
-		/* DC freeze TODO it was never activated by default or it can stay activated */
+		/* DC मुक्तze TODO it was never activated by शेष or it can stay activated */
 
-		if (s5h1420_getsymbolrate(state) >= 20000000) {
-			s5h1420_writereg(state, Loop04, 0x8a);
-			s5h1420_writereg(state, Loop05, 0x6a);
-		} else {
-			s5h1420_writereg(state, Loop04, 0x58);
-			s5h1420_writereg(state, Loop05, 0x27);
-		}
+		अगर (s5h1420_माला_लोymbolrate(state) >= 20000000) अणु
+			s5h1420_ग_लिखोreg(state, Loop04, 0x8a);
+			s5h1420_ग_लिखोreg(state, Loop05, 0x6a);
+		पूर्ण अन्यथा अणु
+			s5h1420_ग_लिखोreg(state, Loop04, 0x58);
+			s5h1420_ग_लिखोreg(state, Loop05, 0x27);
+		पूर्ण
 
-		/* post-lock processing has been done! */
+		/* post-lock processing has been करोne! */
 		state->postlocked = 1;
-	}
+	पूर्ण
 
-	dprintk("leave %s\n", __func__);
+	dprपूर्णांकk("leave %s\n", __func__);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5h1420_read_ber(struct dvb_frontend* fe, u32* ber)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल पूर्णांक s5h1420_पढ़ो_ber(काष्ठा dvb_frontend* fe, u32* ber)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 
-	s5h1420_writereg(state, 0x46, 0x1d);
+	s5h1420_ग_लिखोreg(state, 0x46, 0x1d);
 	mdelay(25);
 
-	*ber = (s5h1420_readreg(state, 0x48) << 8) | s5h1420_readreg(state, 0x47);
+	*ber = (s5h1420_पढ़ोreg(state, 0x48) << 8) | s5h1420_पढ़ोreg(state, 0x47);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5h1420_read_signal_strength(struct dvb_frontend* fe, u16* strength)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल पूर्णांक s5h1420_पढ़ो_संकेत_strength(काष्ठा dvb_frontend* fe, u16* strength)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 
-	u8 val = s5h1420_readreg(state, 0x15);
+	u8 val = s5h1420_पढ़ोreg(state, 0x15);
 
 	*strength =  (u16) ((val << 8) | val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5h1420_read_ucblocks(struct dvb_frontend* fe, u32* ucblocks)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल पूर्णांक s5h1420_पढ़ो_ucblocks(काष्ठा dvb_frontend* fe, u32* ucblocks)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 
-	s5h1420_writereg(state, 0x46, 0x1f);
+	s5h1420_ग_लिखोreg(state, 0x46, 0x1f);
 	mdelay(25);
 
-	*ucblocks = (s5h1420_readreg(state, 0x48) << 8) | s5h1420_readreg(state, 0x47);
+	*ucblocks = (s5h1420_पढ़ोreg(state, 0x48) << 8) | s5h1420_पढ़ोreg(state, 0x47);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void s5h1420_reset(struct s5h1420_state* state)
-{
-	dprintk("%s\n", __func__);
-	s5h1420_writereg (state, 0x01, 0x08);
-	s5h1420_writereg (state, 0x01, 0x00);
+अटल व्योम s5h1420_reset(काष्ठा s5h1420_state* state)
+अणु
+	dprपूर्णांकk("%s\n", __func__);
+	s5h1420_ग_लिखोreg (state, 0x01, 0x08);
+	s5h1420_ग_लिखोreg (state, 0x01, 0x00);
 	udelay(10);
-}
+पूर्ण
 
-static void s5h1420_setsymbolrate(struct s5h1420_state* state,
-				  struct dtv_frontend_properties *p)
-{
+अटल व्योम s5h1420_setsymbolrate(काष्ठा s5h1420_state* state,
+				  काष्ठा dtv_frontend_properties *p)
+अणु
 	u8 v;
 	u64 val;
 
-	dprintk("enter %s\n", __func__);
+	dprपूर्णांकk("enter %s\n", __func__);
 
 	val = ((u64) p->symbol_rate / 1000ULL) * (1ULL<<24);
-	if (p->symbol_rate < 29000000)
+	अगर (p->symbol_rate < 29000000)
 		val *= 2;
-	do_div(val, (state->fclk / 1000));
+	करो_भाग(val, (state->fclk / 1000));
 
-	dprintk("symbol rate register: %06llx\n", (unsigned long long)val);
+	dprपूर्णांकk("symbol rate register: %06llx\n", (अचिन्हित दीर्घ दीर्घ)val);
 
-	v = s5h1420_readreg(state, Loop01);
-	s5h1420_writereg(state, Loop01, v & 0x7f);
-	s5h1420_writereg(state, Tnco01, val >> 16);
-	s5h1420_writereg(state, Tnco02, val >> 8);
-	s5h1420_writereg(state, Tnco03, val & 0xff);
-	s5h1420_writereg(state, Loop01,  v | 0x80);
-	dprintk("leave %s\n", __func__);
-}
+	v = s5h1420_पढ़ोreg(state, Loop01);
+	s5h1420_ग_लिखोreg(state, Loop01, v & 0x7f);
+	s5h1420_ग_लिखोreg(state, Tnco01, val >> 16);
+	s5h1420_ग_लिखोreg(state, Tnco02, val >> 8);
+	s5h1420_ग_लिखोreg(state, Tnco03, val & 0xff);
+	s5h1420_ग_लिखोreg(state, Loop01,  v | 0x80);
+	dprपूर्णांकk("leave %s\n", __func__);
+पूर्ण
 
-static u32 s5h1420_getsymbolrate(struct s5h1420_state* state)
-{
-	return state->symbol_rate;
-}
+अटल u32 s5h1420_माला_लोymbolrate(काष्ठा s5h1420_state* state)
+अणु
+	वापस state->symbol_rate;
+पूर्ण
 
-static void s5h1420_setfreqoffset(struct s5h1420_state* state, int freqoffset)
-{
-	int val;
+अटल व्योम s5h1420_setfreqoffset(काष्ठा s5h1420_state* state, पूर्णांक freqoffset)
+अणु
+	पूर्णांक val;
 	u8 v;
 
-	dprintk("enter %s\n", __func__);
+	dprपूर्णांकk("enter %s\n", __func__);
 
 	/* remember freqoffset is in kHz, but the chip wants the offset in Hz, so
-	 * divide fclk by 1000000 to get the correct value. */
-	val = -(int) ((freqoffset * (1<<24)) / (state->fclk / 1000000));
+	 * भागide fclk by 1000000 to get the correct value. */
+	val = -(पूर्णांक) ((freqoffset * (1<<24)) / (state->fclk / 1000000));
 
-	dprintk("phase rotator/freqoffset: %d %06x\n", freqoffset, val);
+	dprपूर्णांकk("phase rotator/freqoffset: %d %06x\n", freqoffset, val);
 
-	v = s5h1420_readreg(state, Loop01);
-	s5h1420_writereg(state, Loop01, v & 0xbf);
-	s5h1420_writereg(state, Pnco01, val >> 16);
-	s5h1420_writereg(state, Pnco02, val >> 8);
-	s5h1420_writereg(state, Pnco03, val & 0xff);
-	s5h1420_writereg(state, Loop01, v | 0x40);
-	dprintk("leave %s\n", __func__);
-}
+	v = s5h1420_पढ़ोreg(state, Loop01);
+	s5h1420_ग_लिखोreg(state, Loop01, v & 0xbf);
+	s5h1420_ग_लिखोreg(state, Pnco01, val >> 16);
+	s5h1420_ग_लिखोreg(state, Pnco02, val >> 8);
+	s5h1420_ग_लिखोreg(state, Pnco03, val & 0xff);
+	s5h1420_ग_लिखोreg(state, Loop01, v | 0x40);
+	dprपूर्णांकk("leave %s\n", __func__);
+पूर्ण
 
-static int s5h1420_getfreqoffset(struct s5h1420_state* state)
-{
-	int val;
+अटल पूर्णांक s5h1420_getfreqoffset(काष्ठा s5h1420_state* state)
+अणु
+	पूर्णांक val;
 
-	s5h1420_writereg(state, 0x06, s5h1420_readreg(state, 0x06) | 0x08);
-	val  = s5h1420_readreg(state, 0x0e) << 16;
-	val |= s5h1420_readreg(state, 0x0f) << 8;
-	val |= s5h1420_readreg(state, 0x10);
-	s5h1420_writereg(state, 0x06, s5h1420_readreg(state, 0x06) & 0xf7);
+	s5h1420_ग_लिखोreg(state, 0x06, s5h1420_पढ़ोreg(state, 0x06) | 0x08);
+	val  = s5h1420_पढ़ोreg(state, 0x0e) << 16;
+	val |= s5h1420_पढ़ोreg(state, 0x0f) << 8;
+	val |= s5h1420_पढ़ोreg(state, 0x10);
+	s5h1420_ग_लिखोreg(state, 0x06, s5h1420_पढ़ोreg(state, 0x06) & 0xf7);
 
-	if (val & 0x800000)
+	अगर (val & 0x800000)
 		val |= 0xff000000;
 
 	/* remember freqoffset is in kHz, but the chip wants the offset in Hz, so
-	 * divide fclk by 1000000 to get the correct value. */
+	 * भागide fclk by 1000000 to get the correct value. */
 	val = (((-val) * (state->fclk/1000000)) / (1<<24));
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void s5h1420_setfec_inversion(struct s5h1420_state* state,
-				     struct dtv_frontend_properties *p)
-{
+अटल व्योम s5h1420_setfec_inversion(काष्ठा s5h1420_state* state,
+				     काष्ठा dtv_frontend_properties *p)
+अणु
 	u8 inversion = 0;
 	u8 vit08, vit09;
 
-	dprintk("enter %s\n", __func__);
+	dprपूर्णांकk("enter %s\n", __func__);
 
-	if (p->inversion == INVERSION_OFF)
+	अगर (p->inversion == INVERSION_OFF)
 		inversion = state->config->invert ? 0x08 : 0;
-	else if (p->inversion == INVERSION_ON)
+	अन्यथा अगर (p->inversion == INVERSION_ON)
 		inversion = state->config->invert ? 0 : 0x08;
 
-	if ((p->fec_inner == FEC_AUTO) || (p->inversion == INVERSION_AUTO)) {
+	अगर ((p->fec_inner == FEC_AUTO) || (p->inversion == INVERSION_AUTO)) अणु
 		vit08 = 0x3f;
 		vit09 = 0;
-	} else {
-		switch (p->fec_inner) {
-		case FEC_1_2:
+	पूर्ण अन्यथा अणु
+		चयन (p->fec_inner) अणु
+		हाल FEC_1_2:
 			vit08 = 0x01;
 			vit09 = 0x10;
-			break;
+			अवरोध;
 
-		case FEC_2_3:
+		हाल FEC_2_3:
 			vit08 = 0x02;
 			vit09 = 0x11;
-			break;
+			अवरोध;
 
-		case FEC_3_4:
+		हाल FEC_3_4:
 			vit08 = 0x04;
 			vit09 = 0x12;
-			break;
+			अवरोध;
 
-		case FEC_5_6:
+		हाल FEC_5_6:
 			vit08 = 0x08;
 			vit09 = 0x13;
-			break;
+			अवरोध;
 
-		case FEC_6_7:
+		हाल FEC_6_7:
 			vit08 = 0x10;
 			vit09 = 0x14;
-			break;
+			अवरोध;
 
-		case FEC_7_8:
+		हाल FEC_7_8:
 			vit08 = 0x20;
 			vit09 = 0x15;
-			break;
+			अवरोध;
 
-		default:
-			return;
-		}
-	}
+		शेष:
+			वापस;
+		पूर्ण
+	पूर्ण
 	vit09 |= inversion;
-	dprintk("fec: %02x %02x\n", vit08, vit09);
-	s5h1420_writereg(state, Vit08, vit08);
-	s5h1420_writereg(state, Vit09, vit09);
-	dprintk("leave %s\n", __func__);
-}
+	dprपूर्णांकk("fec: %02x %02x\n", vit08, vit09);
+	s5h1420_ग_लिखोreg(state, Vit08, vit08);
+	s5h1420_ग_लिखोreg(state, Vit09, vit09);
+	dprपूर्णांकk("leave %s\n", __func__);
+पूर्ण
 
-static enum fe_code_rate s5h1420_getfec(struct s5h1420_state *state)
-{
-	switch(s5h1420_readreg(state, 0x32) & 0x07) {
-	case 0:
-		return FEC_1_2;
+अटल क्रमागत fe_code_rate s5h1420_getfec(काष्ठा s5h1420_state *state)
+अणु
+	चयन(s5h1420_पढ़ोreg(state, 0x32) & 0x07) अणु
+	हाल 0:
+		वापस FEC_1_2;
 
-	case 1:
-		return FEC_2_3;
+	हाल 1:
+		वापस FEC_2_3;
 
-	case 2:
-		return FEC_3_4;
+	हाल 2:
+		वापस FEC_3_4;
 
-	case 3:
-		return FEC_5_6;
+	हाल 3:
+		वापस FEC_5_6;
 
-	case 4:
-		return FEC_6_7;
+	हाल 4:
+		वापस FEC_6_7;
 
-	case 5:
-		return FEC_7_8;
-	}
+	हाल 5:
+		वापस FEC_7_8;
+	पूर्ण
 
-	return FEC_NONE;
-}
+	वापस FEC_NONE;
+पूर्ण
 
-static enum fe_spectral_inversion
-s5h1420_getinversion(struct s5h1420_state *state)
-{
-	if (s5h1420_readreg(state, 0x32) & 0x08)
-		return INVERSION_ON;
+अटल क्रमागत fe_spectral_inversion
+s5h1420_getinversion(काष्ठा s5h1420_state *state)
+अणु
+	अगर (s5h1420_पढ़ोreg(state, 0x32) & 0x08)
+		वापस INVERSION_ON;
 
-	return INVERSION_OFF;
-}
+	वापस INVERSION_OFF;
+पूर्ण
 
-static int s5h1420_set_frontend(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct s5h1420_state* state = fe->demodulator_priv;
-	int frequency_delta;
-	struct dvb_frontend_tune_settings fesettings;
+अटल पूर्णांक s5h1420_set_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
+	पूर्णांक frequency_delta;
+	काष्ठा dvb_frontend_tune_settings fesettings;
 
-	dprintk("enter %s\n", __func__);
+	dprपूर्णांकk("enter %s\n", __func__);
 
-	/* check if we should do a fast-tune */
+	/* check अगर we should करो a fast-tune */
 	s5h1420_get_tune_settings(fe, &fesettings);
 	frequency_delta = p->frequency - state->tunedfreq;
-	if ((frequency_delta > -fesettings.max_drift) &&
-			(frequency_delta < fesettings.max_drift) &&
+	अगर ((frequency_delta > -fesettings.max_drअगरt) &&
+			(frequency_delta < fesettings.max_drअगरt) &&
 			(frequency_delta != 0) &&
 			(state->fec_inner == p->fec_inner) &&
-			(state->symbol_rate == p->symbol_rate)) {
+			(state->symbol_rate == p->symbol_rate)) अणु
 
-		if (fe->ops.tuner_ops.set_params) {
+		अगर (fe->ops.tuner_ops.set_params) अणु
 			fe->ops.tuner_ops.set_params(fe);
-			if (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
-		}
-		if (fe->ops.tuner_ops.get_frequency) {
-			u32 tmp;
-			fe->ops.tuner_ops.get_frequency(fe, &tmp);
-			if (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
-			s5h1420_setfreqoffset(state, p->frequency - tmp);
-		} else {
+			अगर (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
+		पूर्ण
+		अगर (fe->ops.tuner_ops.get_frequency) अणु
+			u32 पंचांगp;
+			fe->ops.tuner_ops.get_frequency(fe, &पंचांगp);
+			अगर (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
+			s5h1420_setfreqoffset(state, p->frequency - पंचांगp);
+		पूर्ण अन्यथा अणु
 			s5h1420_setfreqoffset(state, 0);
-		}
-		dprintk("simple tune\n");
-		return 0;
-	}
-	dprintk("tuning demod\n");
+		पूर्ण
+		dprपूर्णांकk("simple tune\n");
+		वापस 0;
+	पूर्ण
+	dprपूर्णांकk("tuning demod\n");
 
 	/* first of all, software reset */
 	s5h1420_reset(state);
 
 	/* set s5h1420 fclk PLL according to desired symbol rate */
-	if (p->symbol_rate > 33000000)
+	अगर (p->symbol_rate > 33000000)
 		state->fclk = 80000000;
-	else if (p->symbol_rate > 28500000)
+	अन्यथा अगर (p->symbol_rate > 28500000)
 		state->fclk = 59000000;
-	else if (p->symbol_rate > 25000000)
+	अन्यथा अगर (p->symbol_rate > 25000000)
 		state->fclk = 86000000;
-	else if (p->symbol_rate > 1900000)
+	अन्यथा अगर (p->symbol_rate > 1900000)
 		state->fclk = 88000000;
-	else
+	अन्यथा
 		state->fclk = 44000000;
 
-	dprintk("pll01: %d, ToneFreq: %d\n", state->fclk/1000000 - 8, (state->fclk + (TONE_FREQ * 32) - 1) / (TONE_FREQ * 32));
-	s5h1420_writereg(state, PLL01, state->fclk/1000000 - 8);
-	s5h1420_writereg(state, PLL02, 0x40);
-	s5h1420_writereg(state, DiS01, (state->fclk + (TONE_FREQ * 32) - 1) / (TONE_FREQ * 32));
+	dprपूर्णांकk("pll01: %d, ToneFreq: %d\n", state->fclk/1000000 - 8, (state->fclk + (TONE_FREQ * 32) - 1) / (TONE_FREQ * 32));
+	s5h1420_ग_लिखोreg(state, PLL01, state->fclk/1000000 - 8);
+	s5h1420_ग_लिखोreg(state, PLL02, 0x40);
+	s5h1420_ग_लिखोreg(state, DiS01, (state->fclk + (TONE_FREQ * 32) - 1) / (TONE_FREQ * 32));
 
 	/* TODO DC offset removal, config parameter ? */
-	if (p->symbol_rate > 29000000)
-		s5h1420_writereg(state, QPSK01, 0xae | 0x10);
-	else
-		s5h1420_writereg(state, QPSK01, 0xac | 0x10);
+	अगर (p->symbol_rate > 29000000)
+		s5h1420_ग_लिखोreg(state, QPSK01, 0xae | 0x10);
+	अन्यथा
+		s5h1420_ग_लिखोreg(state, QPSK01, 0xac | 0x10);
 
-	/* set misc registers */
-	s5h1420_writereg(state, CON_1, 0x00);
-	s5h1420_writereg(state, QPSK02, 0x00);
-	s5h1420_writereg(state, Pre01, 0xb0);
+	/* set misc रेजिस्टरs */
+	s5h1420_ग_लिखोreg(state, CON_1, 0x00);
+	s5h1420_ग_लिखोreg(state, QPSK02, 0x00);
+	s5h1420_ग_लिखोreg(state, Pre01, 0xb0);
 
-	s5h1420_writereg(state, Loop01, 0xF0);
-	s5h1420_writereg(state, Loop02, 0x2a); /* e7 for s5h1420 */
-	s5h1420_writereg(state, Loop03, 0x79); /* 78 for s5h1420 */
-	if (p->symbol_rate > 20000000)
-		s5h1420_writereg(state, Loop04, 0x79);
-	else
-		s5h1420_writereg(state, Loop04, 0x58);
-	s5h1420_writereg(state, Loop05, 0x6b);
+	s5h1420_ग_लिखोreg(state, Loop01, 0xF0);
+	s5h1420_ग_लिखोreg(state, Loop02, 0x2a); /* e7 क्रम s5h1420 */
+	s5h1420_ग_लिखोreg(state, Loop03, 0x79); /* 78 क्रम s5h1420 */
+	अगर (p->symbol_rate > 20000000)
+		s5h1420_ग_लिखोreg(state, Loop04, 0x79);
+	अन्यथा
+		s5h1420_ग_लिखोreg(state, Loop04, 0x58);
+	s5h1420_ग_लिखोreg(state, Loop05, 0x6b);
 
-	if (p->symbol_rate >= 8000000)
-		s5h1420_writereg(state, Post01, (0 << 6) | 0x10);
-	else if (p->symbol_rate >= 4000000)
-		s5h1420_writereg(state, Post01, (1 << 6) | 0x10);
-	else
-		s5h1420_writereg(state, Post01, (3 << 6) | 0x10);
+	अगर (p->symbol_rate >= 8000000)
+		s5h1420_ग_लिखोreg(state, Post01, (0 << 6) | 0x10);
+	अन्यथा अगर (p->symbol_rate >= 4000000)
+		s5h1420_ग_लिखोreg(state, Post01, (1 << 6) | 0x10);
+	अन्यथा
+		s5h1420_ग_लिखोreg(state, Post01, (3 << 6) | 0x10);
 
-	s5h1420_writereg(state, Monitor12, 0x00); /* unfreeze DC compensation */
+	s5h1420_ग_लिखोreg(state, Monitor12, 0x00); /* unमुक्तze DC compensation */
 
-	s5h1420_writereg(state, Sync01, 0x33);
-	s5h1420_writereg(state, Mpeg01, state->config->cdclk_polarity);
-	s5h1420_writereg(state, Mpeg02, 0x3d); /* Parallel output more, disabled -> enabled later */
-	s5h1420_writereg(state, Err01, 0x03); /* 0x1d for s5h1420 */
+	s5h1420_ग_लिखोreg(state, Sync01, 0x33);
+	s5h1420_ग_लिखोreg(state, Mpeg01, state->config->cdclk_polarity);
+	s5h1420_ग_लिखोreg(state, Mpeg02, 0x3d); /* Parallel output more, disabled -> enabled later */
+	s5h1420_ग_लिखोreg(state, Err01, 0x03); /* 0x1d क्रम s5h1420 */
 
-	s5h1420_writereg(state, Vit06, 0x6e); /* 0x8e for s5h1420 */
-	s5h1420_writereg(state, DiS03, 0x00);
-	s5h1420_writereg(state, Rf01, 0x61); /* Tuner i2c address - for the gate controller */
+	s5h1420_ग_लिखोreg(state, Vit06, 0x6e); /* 0x8e क्रम s5h1420 */
+	s5h1420_ग_लिखोreg(state, DiS03, 0x00);
+	s5h1420_ग_लिखोreg(state, Rf01, 0x61); /* Tuner i2c address - क्रम the gate controller */
 
 	/* set tuner PLL */
-	if (fe->ops.tuner_ops.set_params) {
+	अगर (fe->ops.tuner_ops.set_params) अणु
 		fe->ops.tuner_ops.set_params(fe);
-		if (fe->ops.i2c_gate_ctrl)
+		अगर (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 0);
 		s5h1420_setfreqoffset(state, 0);
-	}
+	पूर्ण
 
 	/* set the reset of the parameters */
 	s5h1420_setsymbolrate(state, p);
 	s5h1420_setfec_inversion(state, p);
 
 	/* start QPSK */
-	s5h1420_writereg(state, QPSK01, s5h1420_readreg(state, QPSK01) | 1);
+	s5h1420_ग_लिखोreg(state, QPSK01, s5h1420_पढ़ोreg(state, QPSK01) | 1);
 
 	state->fec_inner = p->fec_inner;
 	state->symbol_rate = p->symbol_rate;
 	state->postlocked = 0;
 	state->tunedfreq = p->frequency;
 
-	dprintk("leave %s\n", __func__);
-	return 0;
-}
+	dprपूर्णांकk("leave %s\n", __func__);
+	वापस 0;
+पूर्ण
 
-static int s5h1420_get_frontend(struct dvb_frontend* fe,
-				struct dtv_frontend_properties *p)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल पूर्णांक s5h1420_get_frontend(काष्ठा dvb_frontend* fe,
+				काष्ठा dtv_frontend_properties *p)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 
 	p->frequency = state->tunedfreq + s5h1420_getfreqoffset(state);
 	p->inversion = s5h1420_getinversion(state);
-	p->symbol_rate = s5h1420_getsymbolrate(state);
+	p->symbol_rate = s5h1420_माला_लोymbolrate(state);
 	p->fec_inner = s5h1420_getfec(state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5h1420_get_tune_settings(struct dvb_frontend* fe,
-				     struct dvb_frontend_tune_settings* fesettings)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	if (p->symbol_rate > 20000000) {
+अटल पूर्णांक s5h1420_get_tune_settings(काष्ठा dvb_frontend* fe,
+				     काष्ठा dvb_frontend_tune_settings* fesettings)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	अगर (p->symbol_rate > 20000000) अणु
 		fesettings->min_delay_ms = 50;
 		fesettings->step_size = 2000;
-		fesettings->max_drift = 8000;
-	} else if (p->symbol_rate > 12000000) {
+		fesettings->max_drअगरt = 8000;
+	पूर्ण अन्यथा अगर (p->symbol_rate > 12000000) अणु
 		fesettings->min_delay_ms = 100;
 		fesettings->step_size = 1500;
-		fesettings->max_drift = 9000;
-	} else if (p->symbol_rate > 8000000) {
+		fesettings->max_drअगरt = 9000;
+	पूर्ण अन्यथा अगर (p->symbol_rate > 8000000) अणु
 		fesettings->min_delay_ms = 100;
 		fesettings->step_size = 1000;
-		fesettings->max_drift = 8000;
-	} else if (p->symbol_rate > 4000000) {
+		fesettings->max_drअगरt = 8000;
+	पूर्ण अन्यथा अगर (p->symbol_rate > 4000000) अणु
 		fesettings->min_delay_ms = 100;
 		fesettings->step_size = 500;
-		fesettings->max_drift = 7000;
-	} else if (p->symbol_rate > 2000000) {
+		fesettings->max_drअगरt = 7000;
+	पूर्ण अन्यथा अगर (p->symbol_rate > 2000000) अणु
 		fesettings->min_delay_ms = 200;
 		fesettings->step_size = (p->symbol_rate / 8000);
-		fesettings->max_drift = 14 * fesettings->step_size;
-	} else {
+		fesettings->max_drअगरt = 14 * fesettings->step_size;
+	पूर्ण अन्यथा अणु
 		fesettings->min_delay_ms = 200;
 		fesettings->step_size = (p->symbol_rate / 8000);
-		fesettings->max_drift = 18 * fesettings->step_size;
-	}
+		fesettings->max_drअगरt = 18 * fesettings->step_size;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5h1420_i2c_gate_ctrl(struct dvb_frontend* fe, int enable)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल पूर्णांक s5h1420_i2c_gate_ctrl(काष्ठा dvb_frontend* fe, पूर्णांक enable)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 
-	if (enable)
-		return s5h1420_writereg(state, 0x02, state->CON_1_val | 1);
-	else
-		return s5h1420_writereg(state, 0x02, state->CON_1_val & 0xfe);
-}
+	अगर (enable)
+		वापस s5h1420_ग_लिखोreg(state, 0x02, state->CON_1_val | 1);
+	अन्यथा
+		वापस s5h1420_ग_लिखोreg(state, 0x02, state->CON_1_val & 0xfe);
+पूर्ण
 
-static int s5h1420_init (struct dvb_frontend* fe)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल पूर्णांक s5h1420_init (काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 
-	/* disable power down and do reset */
+	/* disable घातer करोwn and करो reset */
 	state->CON_1_val = state->config->serial_mpeg << 4;
-	s5h1420_writereg(state, 0x02, state->CON_1_val);
+	s5h1420_ग_लिखोreg(state, 0x02, state->CON_1_val);
 	msleep(10);
 	s5h1420_reset(state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5h1420_sleep(struct dvb_frontend* fe)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल पूर्णांक s5h1420_sleep(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 	state->CON_1_val = 0x12;
-	return s5h1420_writereg(state, 0x02, state->CON_1_val);
-}
+	वापस s5h1420_ग_लिखोreg(state, 0x02, state->CON_1_val);
+पूर्ण
 
-static void s5h1420_release(struct dvb_frontend* fe)
-{
-	struct s5h1420_state* state = fe->demodulator_priv;
+अटल व्योम s5h1420_release(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा s5h1420_state* state = fe->demodulator_priv;
 	i2c_del_adapter(&state->tuner_i2c_adapter);
-	kfree(state);
-}
+	kमुक्त(state);
+पूर्ण
 
-static u32 s5h1420_tuner_i2c_func(struct i2c_adapter *adapter)
-{
-	return I2C_FUNC_I2C;
-}
+अटल u32 s5h1420_tuner_i2c_func(काष्ठा i2c_adapter *adapter)
+अणु
+	वापस I2C_FUNC_I2C;
+पूर्ण
 
-static int s5h1420_tuner_i2c_tuner_xfer(struct i2c_adapter *i2c_adap, struct i2c_msg msg[], int num)
-{
-	struct s5h1420_state *state = i2c_get_adapdata(i2c_adap);
-	struct i2c_msg m[3];
-	u8 tx_open[2] = { CON_1, state->CON_1_val | 1 }; /* repeater stops once there was a stop condition */
+अटल पूर्णांक s5h1420_tuner_i2c_tuner_xfer(काष्ठा i2c_adapter *i2c_adap, काष्ठा i2c_msg msg[], पूर्णांक num)
+अणु
+	काष्ठा s5h1420_state *state = i2c_get_adapdata(i2c_adap);
+	काष्ठा i2c_msg m[3];
+	u8 tx_खोलो[2] = अणु CON_1, state->CON_1_val | 1 पूर्ण; /* repeater stops once there was a stop condition */
 
-	if (1 + num > ARRAY_SIZE(m)) {
-		printk(KERN_WARNING
+	अगर (1 + num > ARRAY_SIZE(m)) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "%s: i2c xfer: num=%d is too big!\n",
 		       KBUILD_MODNAME, num);
-		return  -EOPNOTSUPP;
-	}
+		वापस  -EOPNOTSUPP;
+	पूर्ण
 
-	memset(m, 0, sizeof(struct i2c_msg) * (1 + num));
+	स_रखो(m, 0, माप(काष्ठा i2c_msg) * (1 + num));
 
 	m[0].addr = state->config->demod_address;
-	m[0].buf  = tx_open;
+	m[0].buf  = tx_खोलो;
 	m[0].len  = 2;
 
-	memcpy(&m[1], msg, sizeof(struct i2c_msg) * num);
+	स_नकल(&m[1], msg, माप(काष्ठा i2c_msg) * num);
 
-	return i2c_transfer(state->i2c, m, 1 + num) == 1 + num ? num : -EIO;
-}
+	वापस i2c_transfer(state->i2c, m, 1 + num) == 1 + num ? num : -EIO;
+पूर्ण
 
-static const struct i2c_algorithm s5h1420_tuner_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm s5h1420_tuner_i2c_algo = अणु
 	.master_xfer   = s5h1420_tuner_i2c_tuner_xfer,
 	.functionality = s5h1420_tuner_i2c_func,
-};
+पूर्ण;
 
-struct i2c_adapter *s5h1420_get_tuner_i2c_adapter(struct dvb_frontend *fe)
-{
-	struct s5h1420_state *state = fe->demodulator_priv;
-	return &state->tuner_i2c_adapter;
-}
+काष्ठा i2c_adapter *s5h1420_get_tuner_i2c_adapter(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा s5h1420_state *state = fe->demodulator_priv;
+	वापस &state->tuner_i2c_adapter;
+पूर्ण
 EXPORT_SYMBOL(s5h1420_get_tuner_i2c_adapter);
 
-static const struct dvb_frontend_ops s5h1420_ops;
+अटल स्थिर काष्ठा dvb_frontend_ops s5h1420_ops;
 
-struct dvb_frontend *s5h1420_attach(const struct s5h1420_config *config,
-				    struct i2c_adapter *i2c)
-{
-	/* allocate memory for the internal state */
-	struct s5h1420_state *state = kzalloc(sizeof(struct s5h1420_state), GFP_KERNEL);
+काष्ठा dvb_frontend *s5h1420_attach(स्थिर काष्ठा s5h1420_config *config,
+				    काष्ठा i2c_adapter *i2c)
+अणु
+	/* allocate memory क्रम the पूर्णांकernal state */
+	काष्ठा s5h1420_state *state = kzalloc(माप(काष्ठा s5h1420_state), GFP_KERNEL);
 	u8 i;
 
-	if (state == NULL)
-		goto error;
+	अगर (state == शून्य)
+		जाओ error;
 
 	/* setup the state */
 	state->config = config;
@@ -887,42 +888,42 @@ struct dvb_frontend *s5h1420_attach(const struct s5h1420_config *config,
 	state->fec_inner = FEC_NONE;
 	state->symbol_rate = 0;
 
-	/* check if the demod is there + identify it */
-	i = s5h1420_readreg(state, ID01);
-	if (i != 0x03)
-		goto error;
+	/* check अगर the demod is there + identअगरy it */
+	i = s5h1420_पढ़ोreg(state, ID01);
+	अगर (i != 0x03)
+		जाओ error;
 
-	memset(state->shadow, 0xff, sizeof(state->shadow));
+	स_रखो(state->shaकरोw, 0xff, माप(state->shaकरोw));
 
-	for (i = 0; i < 0x50; i++)
-		state->shadow[i] = s5h1420_readreg(state, i);
+	क्रम (i = 0; i < 0x50; i++)
+		state->shaकरोw[i] = s5h1420_पढ़ोreg(state, i);
 
 	/* create dvb_frontend */
-	memcpy(&state->frontend.ops, &s5h1420_ops, sizeof(struct dvb_frontend_ops));
+	स_नकल(&state->frontend.ops, &s5h1420_ops, माप(काष्ठा dvb_frontend_ops));
 	state->frontend.demodulator_priv = state;
 
 	/* create tuner i2c adapter */
 	strscpy(state->tuner_i2c_adapter.name, "S5H1420-PN1010 tuner I2C bus",
-		sizeof(state->tuner_i2c_adapter.name));
+		माप(state->tuner_i2c_adapter.name));
 	state->tuner_i2c_adapter.algo      = &s5h1420_tuner_i2c_algo;
-	state->tuner_i2c_adapter.algo_data = NULL;
+	state->tuner_i2c_adapter.algo_data = शून्य;
 	i2c_set_adapdata(&state->tuner_i2c_adapter, state);
-	if (i2c_add_adapter(&state->tuner_i2c_adapter) < 0) {
-		printk(KERN_ERR "S5H1420/PN1010: tuner i2c bus could not be initialized\n");
-		goto error;
-	}
+	अगर (i2c_add_adapter(&state->tuner_i2c_adapter) < 0) अणु
+		prपूर्णांकk(KERN_ERR "S5H1420/PN1010: tuner i2c bus could not be initialized\n");
+		जाओ error;
+	पूर्ण
 
-	return &state->frontend;
+	वापस &state->frontend;
 
 error:
-	kfree(state);
-	return NULL;
-}
+	kमुक्त(state);
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(s5h1420_attach);
 
-static const struct dvb_frontend_ops s5h1420_ops = {
-	.delsys = { SYS_DVBS },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops s5h1420_ops = अणु
+	.delsys = अणु SYS_DVBS पूर्ण,
+	.info = अणु
 		.name     = "Samsung S5H1420/PnpNetwork PN1010 DVB-S",
 		.frequency_min_hz    =  950 * MHz,
 		.frequency_max_hz    = 2150 * MHz,
@@ -935,7 +936,7 @@ static const struct dvb_frontend_ops s5h1420_ops = {
 		FE_CAN_FEC_1_2 | FE_CAN_FEC_2_3 | FE_CAN_FEC_3_4 |
 		FE_CAN_FEC_5_6 | FE_CAN_FEC_6_7 | FE_CAN_FEC_7_8 | FE_CAN_FEC_AUTO |
 		FE_CAN_QPSK
-	},
+	पूर्ण,
 
 	.release = s5h1420_release,
 
@@ -947,17 +948,17 @@ static const struct dvb_frontend_ops s5h1420_ops = {
 	.get_frontend = s5h1420_get_frontend,
 	.get_tune_settings = s5h1420_get_tune_settings,
 
-	.read_status = s5h1420_read_status,
-	.read_ber = s5h1420_read_ber,
-	.read_signal_strength = s5h1420_read_signal_strength,
-	.read_ucblocks = s5h1420_read_ucblocks,
+	.पढ़ो_status = s5h1420_पढ़ो_status,
+	.पढ़ो_ber = s5h1420_पढ़ो_ber,
+	.पढ़ो_संकेत_strength = s5h1420_पढ़ो_संकेत_strength,
+	.पढ़ो_ucblocks = s5h1420_पढ़ो_ucblocks,
 
 	.diseqc_send_master_cmd = s5h1420_send_master_cmd,
 	.diseqc_recv_slave_reply = s5h1420_recv_slave_reply,
 	.diseqc_send_burst = s5h1420_send_burst,
 	.set_tone = s5h1420_set_tone,
 	.set_voltage = s5h1420_set_voltage,
-};
+पूर्ण;
 
 MODULE_DESCRIPTION("Samsung S5H1420/PnpNetwork PN1010 DVB-S Demodulator driver");
 MODULE_AUTHOR("Andrew de Quincey, Patrick Boettcher");

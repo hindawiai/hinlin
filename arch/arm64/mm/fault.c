@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Based on arch/arm/mm/fault.c
  *
@@ -7,67 +8,67 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
-#include <linux/acpi.h>
-#include <linux/bitfield.h>
-#include <linux/extable.h>
-#include <linux/kfence.h>
-#include <linux/signal.h>
-#include <linux/mm.h>
-#include <linux/hardirq.h>
-#include <linux/init.h>
-#include <linux/kasan.h>
-#include <linux/kprobes.h>
-#include <linux/uaccess.h>
-#include <linux/page-flags.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/debug.h>
-#include <linux/highmem.h>
-#include <linux/perf_event.h>
-#include <linux/preempt.h>
-#include <linux/hugetlb.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/kfence.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kasan.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/page-flags.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/preempt.h>
+#समावेश <linux/hugetlb.h>
 
-#include <asm/acpi.h>
-#include <asm/bug.h>
-#include <asm/cmpxchg.h>
-#include <asm/cpufeature.h>
-#include <asm/exception.h>
-#include <asm/daifflags.h>
-#include <asm/debug-monitors.h>
-#include <asm/esr.h>
-#include <asm/kprobes.h>
-#include <asm/mte.h>
-#include <asm/processor.h>
-#include <asm/sysreg.h>
-#include <asm/system_misc.h>
-#include <asm/tlbflush.h>
-#include <asm/traps.h>
+#समावेश <यंत्र/acpi.h>
+#समावेश <यंत्र/bug.h>
+#समावेश <यंत्र/cmpxchg.h>
+#समावेश <यंत्र/cpufeature.h>
+#समावेश <यंत्र/exception.h>
+#समावेश <यंत्र/daअगरflags.h>
+#समावेश <यंत्र/debug-monitors.h>
+#समावेश <यंत्र/esr.h>
+#समावेश <यंत्र/kprobes.h>
+#समावेश <यंत्र/mte.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/sysreg.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/traps.h>
 
-struct fault_info {
-	int	(*fn)(unsigned long far, unsigned int esr,
-		      struct pt_regs *regs);
-	int	sig;
-	int	code;
-	const char *name;
-};
+काष्ठा fault_info अणु
+	पूर्णांक	(*fn)(अचिन्हित दीर्घ far, अचिन्हित पूर्णांक esr,
+		      काष्ठा pt_regs *regs);
+	पूर्णांक	sig;
+	पूर्णांक	code;
+	स्थिर अक्षर *name;
+पूर्ण;
 
-static const struct fault_info fault_info[];
-static struct fault_info debug_fault_info[];
+अटल स्थिर काष्ठा fault_info fault_info[];
+अटल काष्ठा fault_info debug_fault_info[];
 
-static inline const struct fault_info *esr_to_fault_info(unsigned int esr)
-{
-	return fault_info + (esr & ESR_ELx_FSC);
-}
+अटल अंतरभूत स्थिर काष्ठा fault_info *esr_to_fault_info(अचिन्हित पूर्णांक esr)
+अणु
+	वापस fault_info + (esr & ESR_ELx_FSC);
+पूर्ण
 
-static inline const struct fault_info *esr_to_debug_fault_info(unsigned int esr)
-{
-	return debug_fault_info + DBG_ESR_EVT(esr);
-}
+अटल अंतरभूत स्थिर काष्ठा fault_info *esr_to_debug_fault_info(अचिन्हित पूर्णांक esr)
+अणु
+	वापस debug_fault_info + DBG_ESR_EVT(esr);
+पूर्ण
 
-static void data_abort_decode(unsigned int esr)
-{
+अटल व्योम data_पात_decode(अचिन्हित पूर्णांक esr)
+अणु
 	pr_alert("Data abort info:\n");
 
-	if (esr & ESR_ELx_ISV) {
+	अगर (esr & ESR_ELx_ISV) अणु
 		pr_alert("  Access size = %u byte(s)\n",
 			 1U << ((esr & ESR_ELx_SAS) >> ESR_ELx_SAS_SHIFT));
 		pr_alert("  SSE = %lu, SRT = %lu\n",
@@ -76,17 +77,17 @@ static void data_abort_decode(unsigned int esr)
 		pr_alert("  SF = %lu, AR = %lu\n",
 			 (esr & ESR_ELx_SF) >> ESR_ELx_SF_SHIFT,
 			 (esr & ESR_ELx_AR) >> ESR_ELx_AR_SHIFT);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_alert("  ISV = 0, ISS = 0x%08lx\n", esr & ESR_ELx_ISS_MASK);
-	}
+	पूर्ण
 
 	pr_alert("  CM = %lu, WnR = %lu\n",
 		 (esr & ESR_ELx_CM) >> ESR_ELx_CM_SHIFT,
 		 (esr & ESR_ELx_WNR) >> ESR_ELx_WNR_SHIFT);
-}
+पूर्ण
 
-static void mem_abort_decode(unsigned int esr)
-{
+अटल व्योम mem_पात_decode(अचिन्हित पूर्णांक esr)
+अणु
 	pr_alert("Mem abort info:\n");
 
 	pr_alert("  ESR = 0x%08x\n", esr);
@@ -100,44 +101,44 @@ static void mem_abort_decode(unsigned int esr)
 		 (esr & ESR_ELx_EA) >> ESR_ELx_EA_SHIFT,
 		 (esr & ESR_ELx_S1PTW) >> ESR_ELx_S1PTW_SHIFT);
 
-	if (esr_is_data_abort(esr))
-		data_abort_decode(esr);
-}
+	अगर (esr_is_data_पात(esr))
+		data_पात_decode(esr);
+पूर्ण
 
-static inline unsigned long mm_to_pgd_phys(struct mm_struct *mm)
-{
+अटल अंतरभूत अचिन्हित दीर्घ mm_to_pgd_phys(काष्ठा mm_काष्ठा *mm)
+अणु
 	/* Either init_pg_dir or swapper_pg_dir */
-	if (mm == &init_mm)
-		return __pa_symbol(mm->pgd);
+	अगर (mm == &init_mm)
+		वापस __pa_symbol(mm->pgd);
 
-	return (unsigned long)virt_to_phys(mm->pgd);
-}
+	वापस (अचिन्हित दीर्घ)virt_to_phys(mm->pgd);
+पूर्ण
 
 /*
  * Dump out the page tables associated with 'addr' in the currently active mm.
  */
-static void show_pte(unsigned long addr)
-{
-	struct mm_struct *mm;
+अटल व्योम show_pte(अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा mm_काष्ठा *mm;
 	pgd_t *pgdp;
 	pgd_t pgd;
 
-	if (is_ttbr0_addr(addr)) {
+	अगर (is_ttbr0_addr(addr)) अणु
 		/* TTBR0 */
 		mm = current->active_mm;
-		if (mm == &init_mm) {
+		अगर (mm == &init_mm) अणु
 			pr_alert("[%016lx] user address but active_mm is swapper\n",
 				 addr);
-			return;
-		}
-	} else if (is_ttbr1_addr(addr)) {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अगर (is_ttbr1_addr(addr)) अणु
 		/* TTBR1 */
 		mm = &init_mm;
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_alert("[%016lx] address between user and kernel address ranges\n",
 			 addr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pr_alert("%s pgtable: %luk pages, %llu-bit VAs, pgdp=%016lx\n",
 		 mm == &init_mm ? "swapper" : "user", PAGE_SIZE / SZ_1K,
@@ -146,262 +147,262 @@ static void show_pte(unsigned long addr)
 	pgd = READ_ONCE(*pgdp);
 	pr_alert("[%016lx] pgd=%016llx", addr, pgd_val(pgd));
 
-	do {
+	करो अणु
 		p4d_t *p4dp, p4d;
 		pud_t *pudp, pud;
 		pmd_t *pmdp, pmd;
 		pte_t *ptep, pte;
 
-		if (pgd_none(pgd) || pgd_bad(pgd))
-			break;
+		अगर (pgd_none(pgd) || pgd_bad(pgd))
+			अवरोध;
 
 		p4dp = p4d_offset(pgdp, addr);
 		p4d = READ_ONCE(*p4dp);
 		pr_cont(", p4d=%016llx", p4d_val(p4d));
-		if (p4d_none(p4d) || p4d_bad(p4d))
-			break;
+		अगर (p4d_none(p4d) || p4d_bad(p4d))
+			अवरोध;
 
 		pudp = pud_offset(p4dp, addr);
 		pud = READ_ONCE(*pudp);
 		pr_cont(", pud=%016llx", pud_val(pud));
-		if (pud_none(pud) || pud_bad(pud))
-			break;
+		अगर (pud_none(pud) || pud_bad(pud))
+			अवरोध;
 
 		pmdp = pmd_offset(pudp, addr);
 		pmd = READ_ONCE(*pmdp);
 		pr_cont(", pmd=%016llx", pmd_val(pmd));
-		if (pmd_none(pmd) || pmd_bad(pmd))
-			break;
+		अगर (pmd_none(pmd) || pmd_bad(pmd))
+			अवरोध;
 
 		ptep = pte_offset_map(pmdp, addr);
 		pte = READ_ONCE(*ptep);
 		pr_cont(", pte=%016llx", pte_val(pte));
 		pte_unmap(ptep);
-	} while(0);
+	पूर्ण जबतक(0);
 
 	pr_cont("\n");
-}
+पूर्ण
 
 /*
- * This function sets the access flags (dirty, accessed), as well as write
+ * This function sets the access flags (dirty, accessed), as well as ग_लिखो
  * permission, and only to a more permissive setting.
  *
  * It needs to cope with hardware update of the accessed/dirty state by other
- * agents in the system and can safely skip the __sync_icache_dcache() call as,
+ * agents in the प्रणाली and can safely skip the __sync_icache_dcache() call as,
  * like set_pte_at(), the PTE is never changed from no-exec to exec here.
  *
  * Returns whether or not the PTE actually changed.
  */
-int ptep_set_access_flags(struct vm_area_struct *vma,
-			  unsigned long address, pte_t *ptep,
-			  pte_t entry, int dirty)
-{
+पूर्णांक ptep_set_access_flags(काष्ठा vm_area_काष्ठा *vma,
+			  अचिन्हित दीर्घ address, pte_t *ptep,
+			  pte_t entry, पूर्णांक dirty)
+अणु
 	pteval_t old_pteval, pteval;
 	pte_t pte = READ_ONCE(*ptep);
 
-	if (pte_same(pte, entry))
-		return 0;
+	अगर (pte_same(pte, entry))
+		वापस 0;
 
-	/* only preserve the access flags and write permission */
-	pte_val(entry) &= PTE_RDONLY | PTE_AF | PTE_WRITE | PTE_DIRTY;
+	/* only preserve the access flags and ग_लिखो permission */
+	pte_val(entry) &= PTE_RDONLY | PTE_AF | PTE_WRITE | PTE_सूचीTY;
 
 	/*
-	 * Setting the flags must be done atomically to avoid racing with the
+	 * Setting the flags must be करोne atomically to aव्योम racing with the
 	 * hardware update of the access/dirty state. The PTE_RDONLY bit must
 	 * be set to the most permissive (lowest value) of *ptep and entry
 	 * (calculated as: a & b == ~(~a | ~b)).
 	 */
 	pte_val(entry) ^= PTE_RDONLY;
 	pteval = pte_val(pte);
-	do {
+	करो अणु
 		old_pteval = pteval;
 		pteval ^= PTE_RDONLY;
 		pteval |= pte_val(entry);
 		pteval ^= PTE_RDONLY;
 		pteval = cmpxchg_relaxed(&pte_val(*ptep), old_pteval, pteval);
-	} while (pteval != old_pteval);
+	पूर्ण जबतक (pteval != old_pteval);
 
-	/* Invalidate a stale read-only entry */
-	if (dirty)
+	/* Invalidate a stale पढ़ो-only entry */
+	अगर (dirty)
 		flush_tlb_page(vma, address);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static bool is_el1_instruction_abort(unsigned int esr)
-{
-	return ESR_ELx_EC(esr) == ESR_ELx_EC_IABT_CUR;
-}
+अटल bool is_el1_inकाष्ठाion_पात(अचिन्हित पूर्णांक esr)
+अणु
+	वापस ESR_ELx_EC(esr) == ESR_ELx_EC_IABT_CUR;
+पूर्ण
 
-static inline bool is_el1_permission_fault(unsigned long addr, unsigned int esr,
-					   struct pt_regs *regs)
-{
-	unsigned int ec       = ESR_ELx_EC(esr);
-	unsigned int fsc_type = esr & ESR_ELx_FSC_TYPE;
+अटल अंतरभूत bool is_el1_permission_fault(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक esr,
+					   काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित पूर्णांक ec       = ESR_ELx_EC(esr);
+	अचिन्हित पूर्णांक fsc_type = esr & ESR_ELx_FSC_TYPE;
 
-	if (ec != ESR_ELx_EC_DABT_CUR && ec != ESR_ELx_EC_IABT_CUR)
-		return false;
+	अगर (ec != ESR_ELx_EC_DABT_CUR && ec != ESR_ELx_EC_IABT_CUR)
+		वापस false;
 
-	if (fsc_type == ESR_ELx_FSC_PERM)
-		return true;
+	अगर (fsc_type == ESR_ELx_FSC_PERM)
+		वापस true;
 
-	if (is_ttbr0_addr(addr) && system_uses_ttbr0_pan())
-		return fsc_type == ESR_ELx_FSC_FAULT &&
+	अगर (is_ttbr0_addr(addr) && प्रणाली_uses_ttbr0_pan())
+		वापस fsc_type == ESR_ELx_FSC_FAULT &&
 			(regs->pstate & PSR_PAN_BIT);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool __kprobes is_spurious_el1_translation_fault(unsigned long addr,
-							unsigned int esr,
-							struct pt_regs *regs)
-{
-	unsigned long flags;
+अटल bool __kprobes is_spurious_el1_translation_fault(अचिन्हित दीर्घ addr,
+							अचिन्हित पूर्णांक esr,
+							काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ flags;
 	u64 par, dfsc;
 
-	if (ESR_ELx_EC(esr) != ESR_ELx_EC_DABT_CUR ||
+	अगर (ESR_ELx_EC(esr) != ESR_ELx_EC_DABT_CUR ||
 	    (esr & ESR_ELx_FSC_TYPE) != ESR_ELx_FSC_FAULT)
-		return false;
+		वापस false;
 
 	local_irq_save(flags);
-	asm volatile("at s1e1r, %0" :: "r" (addr));
+	यंत्र अस्थिर("at s1e1r, %0" :: "r" (addr));
 	isb();
-	par = read_sysreg_par();
+	par = पढ़ो_sysreg_par();
 	local_irq_restore(flags);
 
 	/*
 	 * If we now have a valid translation, treat the translation fault as
 	 * spurious.
 	 */
-	if (!(par & SYS_PAR_EL1_F))
-		return true;
+	अगर (!(par & SYS_PAR_EL1_F))
+		वापस true;
 
 	/*
-	 * If we got a different type of fault from the AT instruction,
+	 * If we got a dअगरferent type of fault from the AT inकाष्ठाion,
 	 * treat the translation fault as spurious.
 	 */
 	dfsc = FIELD_GET(SYS_PAR_EL1_FST, par);
-	return (dfsc & ESR_ELx_FSC_TYPE) != ESR_ELx_FSC_FAULT;
-}
+	वापस (dfsc & ESR_ELx_FSC_TYPE) != ESR_ELx_FSC_FAULT;
+पूर्ण
 
-static void die_kernel_fault(const char *msg, unsigned long addr,
-			     unsigned int esr, struct pt_regs *regs)
-{
+अटल व्योम die_kernel_fault(स्थिर अक्षर *msg, अचिन्हित दीर्घ addr,
+			     अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs)
+अणु
 	bust_spinlocks(1);
 
 	pr_alert("Unable to handle kernel %s at virtual address %016lx\n", msg,
 		 addr);
 
-	mem_abort_decode(esr);
+	mem_पात_decode(esr);
 
 	show_pte(addr);
 	die("Oops", regs, esr);
 	bust_spinlocks(0);
-	do_exit(SIGKILL);
-}
+	करो_निकास(SIGKILL);
+पूर्ण
 
-#ifdef CONFIG_KASAN_HW_TAGS
-static void report_tag_fault(unsigned long addr, unsigned int esr,
-			     struct pt_regs *regs)
-{
-	static bool reported;
-	bool is_write;
+#अगर_घोषित CONFIG_KASAN_HW_TAGS
+अटल व्योम report_tag_fault(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक esr,
+			     काष्ठा pt_regs *regs)
+अणु
+	अटल bool reported;
+	bool is_ग_लिखो;
 
-	if (READ_ONCE(reported))
-		return;
+	अगर (READ_ONCE(reported))
+		वापस;
 
 	/*
-	 * This is used for KASAN tests and assumes that no MTE faults
-	 * happened before running the tests.
+	 * This is used क्रम KASAN tests and assumes that no MTE faults
+	 * happened beक्रमe running the tests.
 	 */
-	if (mte_report_once())
+	अगर (mte_report_once())
 		WRITE_ONCE(reported, true);
 
 	/*
 	 * SAS bits aren't set for all faults reported in EL1, so we can't
 	 * find out access size.
 	 */
-	is_write = !!(esr & ESR_ELx_WNR);
-	kasan_report(addr, 0, is_write, regs->pc);
-}
-#else
+	is_ग_लिखो = !!(esr & ESR_ELx_WNR);
+	kasan_report(addr, 0, is_ग_लिखो, regs->pc);
+पूर्ण
+#अन्यथा
 /* Tag faults aren't enabled without CONFIG_KASAN_HW_TAGS. */
-static inline void report_tag_fault(unsigned long addr, unsigned int esr,
-				    struct pt_regs *regs) { }
-#endif
+अटल अंतरभूत व्योम report_tag_fault(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक esr,
+				    काष्ठा pt_regs *regs) अणु पूर्ण
+#पूर्ण_अगर
 
-static void do_tag_recovery(unsigned long addr, unsigned int esr,
-			   struct pt_regs *regs)
-{
+अटल व्योम करो_tag_recovery(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक esr,
+			   काष्ठा pt_regs *regs)
+अणु
 
 	report_tag_fault(addr, esr, regs);
 
 	/*
-	 * Disable MTE Tag Checking on the local CPU for the current EL.
-	 * It will be done lazily on the other CPUs when they will hit a
+	 * Disable MTE Tag Checking on the local CPU क्रम the current EL.
+	 * It will be करोne lazily on the other CPUs when they will hit a
 	 * tag fault.
 	 */
 	sysreg_clear_set(sctlr_el1, SCTLR_ELx_TCF_MASK, SCTLR_ELx_TCF_NONE);
 	isb();
-}
+पूर्ण
 
-static bool is_el1_mte_sync_tag_check_fault(unsigned int esr)
-{
-	unsigned int ec = ESR_ELx_EC(esr);
-	unsigned int fsc = esr & ESR_ELx_FSC;
+अटल bool is_el1_mte_sync_tag_check_fault(अचिन्हित पूर्णांक esr)
+अणु
+	अचिन्हित पूर्णांक ec = ESR_ELx_EC(esr);
+	अचिन्हित पूर्णांक fsc = esr & ESR_ELx_FSC;
 
-	if (ec != ESR_ELx_EC_DABT_CUR)
-		return false;
+	अगर (ec != ESR_ELx_EC_DABT_CUR)
+		वापस false;
 
-	if (fsc == ESR_ELx_FSC_MTE)
-		return true;
+	अगर (fsc == ESR_ELx_FSC_MTE)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void __do_kernel_fault(unsigned long addr, unsigned int esr,
-			      struct pt_regs *regs)
-{
-	const char *msg;
+अटल व्योम __करो_kernel_fault(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक esr,
+			      काष्ठा pt_regs *regs)
+अणु
+	स्थिर अक्षर *msg;
 
 	/*
 	 * Are we prepared to handle this kernel fault?
-	 * We are almost certainly not prepared to handle instruction faults.
+	 * We are almost certainly not prepared to handle inकाष्ठाion faults.
 	 */
-	if (!is_el1_instruction_abort(esr) && fixup_exception(regs))
-		return;
+	अगर (!is_el1_inकाष्ठाion_पात(esr) && fixup_exception(regs))
+		वापस;
 
-	if (WARN_RATELIMIT(is_spurious_el1_translation_fault(addr, esr, regs),
+	अगर (WARN_RATELIMIT(is_spurious_el1_translation_fault(addr, esr, regs),
 	    "Ignoring spurious kernel translation fault at virtual address %016lx\n", addr))
-		return;
+		वापस;
 
-	if (is_el1_mte_sync_tag_check_fault(esr)) {
-		do_tag_recovery(addr, esr, regs);
+	अगर (is_el1_mte_sync_tag_check_fault(esr)) अणु
+		करो_tag_recovery(addr, esr, regs);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (is_el1_permission_fault(addr, esr, regs)) {
-		if (esr & ESR_ELx_WNR)
+	अगर (is_el1_permission_fault(addr, esr, regs)) अणु
+		अगर (esr & ESR_ELx_WNR)
 			msg = "write to read-only memory";
-		else if (is_el1_instruction_abort(esr))
+		अन्यथा अगर (is_el1_inकाष्ठाion_पात(esr))
 			msg = "execute from non-executable memory";
-		else
+		अन्यथा
 			msg = "read from unreadable memory";
-	} else if (addr < PAGE_SIZE) {
+	पूर्ण अन्यथा अगर (addr < PAGE_SIZE) अणु
 		msg = "NULL pointer dereference";
-	} else {
-		if (kfence_handle_page_fault(addr, esr & ESR_ELx_WNR, regs))
-			return;
+	पूर्ण अन्यथा अणु
+		अगर (kfence_handle_page_fault(addr, esr & ESR_ELx_WNR, regs))
+			वापस;
 
 		msg = "paging request";
-	}
+	पूर्ण
 
 	die_kernel_fault(msg, addr, esr, regs);
-}
+पूर्ण
 
-static void set_thread_esr(unsigned long address, unsigned int esr)
-{
-	current->thread.fault_address = address;
+अटल व्योम set_thपढ़ो_esr(अचिन्हित दीर्घ address, अचिन्हित पूर्णांक esr)
+अणु
+	current->thपढ़ो.fault_address = address;
 
 	/*
 	 * If the faulting address is in the kernel, we must sanitize the ESR.
@@ -409,515 +410,515 @@ static void set_thread_esr(unsigned long address, unsigned int esr)
 	 * at all, so we report them as level 0 translation faults.
 	 * (This is not quite the way that "no mapping there at all" behaves:
 	 * an alignment fault not caused by the memory type would take
-	 * precedence over translation fault for a real access to empty
-	 * space. Unfortunately we can't easily distinguish "alignment fault
+	 * precedence over translation fault क्रम a real access to empty
+	 * space. Unक्रमtunately we can't easily distinguish "alignment fault
 	 * not caused by memory type" from "alignment fault caused by memory
-	 * type", so we ignore this wrinkle and just return the translation
+	 * type", so we ignore this wrinkle and just वापस the translation
 	 * fault.)
 	 */
-	if (!is_ttbr0_addr(current->thread.fault_address)) {
-		switch (ESR_ELx_EC(esr)) {
-		case ESR_ELx_EC_DABT_LOW:
+	अगर (!is_ttbr0_addr(current->thपढ़ो.fault_address)) अणु
+		चयन (ESR_ELx_EC(esr)) अणु
+		हाल ESR_ELx_EC_DABT_LOW:
 			/*
-			 * These bits provide only information about the
-			 * faulting instruction, which userspace knows already.
+			 * These bits provide only inक्रमmation about the
+			 * faulting inकाष्ठाion, which userspace knows alपढ़ोy.
 			 * We explicitly clear bits which are architecturally
-			 * RES0 in case they are given meanings in future.
-			 * We always report the ESR as if the fault was taken
+			 * RES0 in हाल they are given meanings in future.
+			 * We always report the ESR as अगर the fault was taken
 			 * to EL1 and so ISV and the bits in ISS[23:14] are
 			 * clear. (In fact it always will be a fault to EL1.)
 			 */
 			esr &= ESR_ELx_EC_MASK | ESR_ELx_IL |
 				ESR_ELx_CM | ESR_ELx_WNR;
 			esr |= ESR_ELx_FSC_FAULT;
-			break;
-		case ESR_ELx_EC_IABT_LOW:
+			अवरोध;
+		हाल ESR_ELx_EC_IABT_LOW:
 			/*
 			 * Claim a level 0 translation fault.
-			 * All other bits are architecturally RES0 for faults
+			 * All other bits are architecturally RES0 क्रम faults
 			 * reported with that DFSC value, so we clear them.
 			 */
 			esr &= ESR_ELx_EC_MASK | ESR_ELx_IL;
 			esr |= ESR_ELx_FSC_FAULT;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/*
 			 * This should never happen (entry.S only brings us
-			 * into this code for insn and data aborts from a lower
+			 * पूर्णांकo this code क्रम insn and data पातs from a lower
 			 * exception level). Fail safe by not providing an ESR
 			 * context record at all.
 			 */
 			WARN(1, "ESR 0x%x is not DABT or IABT from EL0\n", esr);
 			esr = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	current->thread.fault_code = esr;
-}
+	current->thपढ़ो.fault_code = esr;
+पूर्ण
 
-static void do_bad_area(unsigned long far, unsigned int esr,
-			struct pt_regs *regs)
-{
-	unsigned long addr = untagged_addr(far);
+अटल व्योम करो_bad_area(अचिन्हित दीर्घ far, अचिन्हित पूर्णांक esr,
+			काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ addr = untagged_addr(far);
 
 	/*
-	 * If we are in kernel mode at this point, we have no context to
+	 * If we are in kernel mode at this poपूर्णांक, we have no context to
 	 * handle this fault with.
 	 */
-	if (user_mode(regs)) {
-		const struct fault_info *inf = esr_to_fault_info(esr);
+	अगर (user_mode(regs)) अणु
+		स्थिर काष्ठा fault_info *inf = esr_to_fault_info(esr);
 
-		set_thread_esr(addr, esr);
-		arm64_force_sig_fault(inf->sig, inf->code, far, inf->name);
-	} else {
-		__do_kernel_fault(addr, esr, regs);
-	}
-}
+		set_thपढ़ो_esr(addr, esr);
+		arm64_क्रमce_sig_fault(inf->sig, inf->code, far, inf->name);
+	पूर्ण अन्यथा अणु
+		__करो_kernel_fault(addr, esr, regs);
+	पूर्ण
+पूर्ण
 
-#define VM_FAULT_BADMAP		0x010000
-#define VM_FAULT_BADACCESS	0x020000
+#घोषणा VM_FAULT_BADMAP		0x010000
+#घोषणा VM_FAULT_BADACCESS	0x020000
 
-static vm_fault_t __do_page_fault(struct mm_struct *mm, unsigned long addr,
-				  unsigned int mm_flags, unsigned long vm_flags,
-				  struct pt_regs *regs)
-{
-	struct vm_area_struct *vma = find_vma(mm, addr);
+अटल vm_fault_t __करो_page_fault(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+				  अचिन्हित पूर्णांक mm_flags, अचिन्हित दीर्घ vm_flags,
+				  काष्ठा pt_regs *regs)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = find_vma(mm, addr);
 
-	if (unlikely(!vma))
-		return VM_FAULT_BADMAP;
+	अगर (unlikely(!vma))
+		वापस VM_FAULT_BADMAP;
 
 	/*
-	 * Ok, we have a good vm_area for this memory access, so we can handle
+	 * Ok, we have a good vm_area क्रम this memory access, so we can handle
 	 * it.
 	 */
-	if (unlikely(vma->vm_start > addr)) {
-		if (!(vma->vm_flags & VM_GROWSDOWN))
-			return VM_FAULT_BADMAP;
-		if (expand_stack(vma, addr))
-			return VM_FAULT_BADMAP;
-	}
+	अगर (unlikely(vma->vm_start > addr)) अणु
+		अगर (!(vma->vm_flags & VM_GROWSDOWN))
+			वापस VM_FAULT_BADMAP;
+		अगर (expand_stack(vma, addr))
+			वापस VM_FAULT_BADMAP;
+	पूर्ण
 
 	/*
-	 * Check that the permissions on the VMA allow for the fault which
+	 * Check that the permissions on the VMA allow क्रम the fault which
 	 * occurred.
 	 */
-	if (!(vma->vm_flags & vm_flags))
-		return VM_FAULT_BADACCESS;
-	return handle_mm_fault(vma, addr & PAGE_MASK, mm_flags, regs);
-}
+	अगर (!(vma->vm_flags & vm_flags))
+		वापस VM_FAULT_BADACCESS;
+	वापस handle_mm_fault(vma, addr & PAGE_MASK, mm_flags, regs);
+पूर्ण
 
-static bool is_el0_instruction_abort(unsigned int esr)
-{
-	return ESR_ELx_EC(esr) == ESR_ELx_EC_IABT_LOW;
-}
+अटल bool is_el0_inकाष्ठाion_पात(अचिन्हित पूर्णांक esr)
+अणु
+	वापस ESR_ELx_EC(esr) == ESR_ELx_EC_IABT_LOW;
+पूर्ण
 
 /*
- * Note: not valid for EL1 DC IVAC, but we never use that such that it
+ * Note: not valid क्रम EL1 DC IVAC, but we never use that such that it
  * should fault. EL0 cannot issue DC IVAC (undef).
  */
-static bool is_write_abort(unsigned int esr)
-{
-	return (esr & ESR_ELx_WNR) && !(esr & ESR_ELx_CM);
-}
+अटल bool is_ग_लिखो_पात(अचिन्हित पूर्णांक esr)
+अणु
+	वापस (esr & ESR_ELx_WNR) && !(esr & ESR_ELx_CM);
+पूर्ण
 
-static int __kprobes do_page_fault(unsigned long far, unsigned int esr,
-				   struct pt_regs *regs)
-{
-	const struct fault_info *inf;
-	struct mm_struct *mm = current->mm;
+अटल पूर्णांक __kprobes करो_page_fault(अचिन्हित दीर्घ far, अचिन्हित पूर्णांक esr,
+				   काष्ठा pt_regs *regs)
+अणु
+	स्थिर काष्ठा fault_info *inf;
+	काष्ठा mm_काष्ठा *mm = current->mm;
 	vm_fault_t fault;
-	unsigned long vm_flags;
-	unsigned int mm_flags = FAULT_FLAG_DEFAULT;
-	unsigned long addr = untagged_addr(far);
+	अचिन्हित दीर्घ vm_flags;
+	अचिन्हित पूर्णांक mm_flags = FAULT_FLAG_DEFAULT;
+	अचिन्हित दीर्घ addr = untagged_addr(far);
 
-	if (kprobe_page_fault(regs, esr))
-		return 0;
+	अगर (kprobe_page_fault(regs, esr))
+		वापस 0;
 
 	/*
-	 * If we're in an interrupt or have no user context, we must not take
+	 * If we're in an पूर्णांकerrupt or have no user context, we must not take
 	 * the fault.
 	 */
-	if (faulthandler_disabled() || !mm)
-		goto no_context;
+	अगर (faulthandler_disabled() || !mm)
+		जाओ no_context;
 
-	if (user_mode(regs))
+	अगर (user_mode(regs))
 		mm_flags |= FAULT_FLAG_USER;
 
 	/*
 	 * vm_flags tells us what bits we must have in vma->vm_flags
-	 * for the fault to be benign, __do_page_fault() would check
-	 * vma->vm_flags & vm_flags and returns an error if the
-	 * intersection is empty
+	 * क्रम the fault to be benign, __करो_page_fault() would check
+	 * vma->vm_flags & vm_flags and वापसs an error अगर the
+	 * पूर्णांकersection is empty
 	 */
-	if (is_el0_instruction_abort(esr)) {
+	अगर (is_el0_inकाष्ठाion_पात(esr)) अणु
 		/* It was exec fault */
 		vm_flags = VM_EXEC;
 		mm_flags |= FAULT_FLAG_INSTRUCTION;
-	} else if (is_write_abort(esr)) {
-		/* It was write fault */
+	पूर्ण अन्यथा अगर (is_ग_लिखो_पात(esr)) अणु
+		/* It was ग_लिखो fault */
 		vm_flags = VM_WRITE;
 		mm_flags |= FAULT_FLAG_WRITE;
-	} else {
-		/* It was read fault */
+	पूर्ण अन्यथा अणु
+		/* It was पढ़ो fault */
 		vm_flags = VM_READ;
-		/* Write implies read */
+		/* Write implies पढ़ो */
 		vm_flags |= VM_WRITE;
-		/* If EPAN is absent then exec implies read */
-		if (!cpus_have_const_cap(ARM64_HAS_EPAN))
+		/* If EPAN is असलent then exec implies पढ़ो */
+		अगर (!cpus_have_स्थिर_cap(ARM64_HAS_EPAN))
 			vm_flags |= VM_EXEC;
-	}
+	पूर्ण
 
-	if (is_ttbr0_addr(addr) && is_el1_permission_fault(addr, esr, regs)) {
-		if (is_el1_instruction_abort(esr))
+	अगर (is_ttbr0_addr(addr) && is_el1_permission_fault(addr, esr, regs)) अणु
+		अगर (is_el1_inकाष्ठाion_पात(esr))
 			die_kernel_fault("execution of user memory",
 					 addr, esr, regs);
 
-		if (!search_exception_tables(regs->pc))
+		अगर (!search_exception_tables(regs->pc))
 			die_kernel_fault("access to user memory outside uaccess routines",
 					 addr, esr, regs);
-	}
+	पूर्ण
 
 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, addr);
 
 	/*
 	 * As per x86, we may deadlock here. However, since the kernel only
 	 * validly references user space from well defined areas of the code,
-	 * we can bug out early if this is from code which shouldn't.
+	 * we can bug out early अगर this is from code which shouldn't.
 	 */
-	if (!mmap_read_trylock(mm)) {
-		if (!user_mode(regs) && !search_exception_tables(regs->pc))
-			goto no_context;
+	अगर (!mmap_पढ़ो_trylock(mm)) अणु
+		अगर (!user_mode(regs) && !search_exception_tables(regs->pc))
+			जाओ no_context;
 retry:
-		mmap_read_lock(mm);
-	} else {
+		mmap_पढ़ो_lock(mm);
+	पूर्ण अन्यथा अणु
 		/*
-		 * The above mmap_read_trylock() might have succeeded in which
-		 * case, we'll have missed the might_sleep() from down_read().
+		 * The above mmap_पढ़ो_trylock() might have succeeded in which
+		 * हाल, we'll have missed the might_sleep() from करोwn_पढ़ो().
 		 */
 		might_sleep();
-#ifdef CONFIG_DEBUG_VM
-		if (!user_mode(regs) && !search_exception_tables(regs->pc)) {
-			mmap_read_unlock(mm);
-			goto no_context;
-		}
-#endif
-	}
+#अगर_घोषित CONFIG_DEBUG_VM
+		अगर (!user_mode(regs) && !search_exception_tables(regs->pc)) अणु
+			mmap_पढ़ो_unlock(mm);
+			जाओ no_context;
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
-	fault = __do_page_fault(mm, addr, mm_flags, vm_flags, regs);
+	fault = __करो_page_fault(mm, addr, mm_flags, vm_flags, regs);
 
-	/* Quick path to respond to signals */
-	if (fault_signal_pending(fault, regs)) {
-		if (!user_mode(regs))
-			goto no_context;
-		return 0;
-	}
+	/* Quick path to respond to संकेतs */
+	अगर (fault_संकेत_pending(fault, regs)) अणु
+		अगर (!user_mode(regs))
+			जाओ no_context;
+		वापस 0;
+	पूर्ण
 
-	if (fault & VM_FAULT_RETRY) {
-		if (mm_flags & FAULT_FLAG_ALLOW_RETRY) {
+	अगर (fault & VM_FAULT_RETRY) अणु
+		अगर (mm_flags & FAULT_FLAG_ALLOW_RETRY) अणु
 			mm_flags |= FAULT_FLAG_TRIED;
-			goto retry;
-		}
-	}
-	mmap_read_unlock(mm);
+			जाओ retry;
+		पूर्ण
+	पूर्ण
+	mmap_पढ़ो_unlock(mm);
 
 	/*
-	 * Handle the "normal" (no error) case first.
+	 * Handle the "normal" (no error) हाल first.
 	 */
-	if (likely(!(fault & (VM_FAULT_ERROR | VM_FAULT_BADMAP |
+	अगर (likely(!(fault & (VM_FAULT_ERROR | VM_FAULT_BADMAP |
 			      VM_FAULT_BADACCESS))))
-		return 0;
+		वापस 0;
 
 	/*
-	 * If we are in kernel mode at this point, we have no context to
+	 * If we are in kernel mode at this poपूर्णांक, we have no context to
 	 * handle this fault with.
 	 */
-	if (!user_mode(regs))
-		goto no_context;
+	अगर (!user_mode(regs))
+		जाओ no_context;
 
-	if (fault & VM_FAULT_OOM) {
+	अगर (fault & VM_FAULT_OOM) अणु
 		/*
-		 * We ran out of memory, call the OOM killer, and return to
-		 * userspace (which will retry the fault, or kill us if we got
-		 * oom-killed).
+		 * We ran out of memory, call the OOM समाप्तer, and वापस to
+		 * userspace (which will retry the fault, or समाप्त us अगर we got
+		 * oom-समाप्तed).
 		 */
 		pagefault_out_of_memory();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	inf = esr_to_fault_info(esr);
-	set_thread_esr(addr, esr);
-	if (fault & VM_FAULT_SIGBUS) {
+	set_thपढ़ो_esr(addr, esr);
+	अगर (fault & VM_FAULT_SIGBUS) अणु
 		/*
 		 * We had some memory, but were unable to successfully fix up
 		 * this page fault.
 		 */
-		arm64_force_sig_fault(SIGBUS, BUS_ADRERR, far, inf->name);
-	} else if (fault & (VM_FAULT_HWPOISON_LARGE | VM_FAULT_HWPOISON)) {
-		unsigned int lsb;
+		arm64_क्रमce_sig_fault(SIGBUS, BUS_ADRERR, far, inf->name);
+	पूर्ण अन्यथा अगर (fault & (VM_FAULT_HWPOISON_LARGE | VM_FAULT_HWPOISON)) अणु
+		अचिन्हित पूर्णांक lsb;
 
 		lsb = PAGE_SHIFT;
-		if (fault & VM_FAULT_HWPOISON_LARGE)
-			lsb = hstate_index_to_shift(VM_FAULT_GET_HINDEX(fault));
+		अगर (fault & VM_FAULT_HWPOISON_LARGE)
+			lsb = hstate_index_to_shअगरt(VM_FAULT_GET_HINDEX(fault));
 
-		arm64_force_sig_mceerr(BUS_MCEERR_AR, far, lsb, inf->name);
-	} else {
+		arm64_क्रमce_sig_mceerr(BUS_MCEERR_AR, far, lsb, inf->name);
+	पूर्ण अन्यथा अणु
 		/*
 		 * Something tried to access memory that isn't in our memory
 		 * map.
 		 */
-		arm64_force_sig_fault(SIGSEGV,
+		arm64_क्रमce_sig_fault(संक_अंश,
 				      fault == VM_FAULT_BADACCESS ? SEGV_ACCERR : SEGV_MAPERR,
 				      far, inf->name);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 no_context:
-	__do_kernel_fault(addr, esr, regs);
-	return 0;
-}
+	__करो_kernel_fault(addr, esr, regs);
+	वापस 0;
+पूर्ण
 
-static int __kprobes do_translation_fault(unsigned long far,
-					  unsigned int esr,
-					  struct pt_regs *regs)
-{
-	unsigned long addr = untagged_addr(far);
+अटल पूर्णांक __kprobes करो_translation_fault(अचिन्हित दीर्घ far,
+					  अचिन्हित पूर्णांक esr,
+					  काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ addr = untagged_addr(far);
 
-	if (is_ttbr0_addr(addr))
-		return do_page_fault(far, esr, regs);
+	अगर (is_ttbr0_addr(addr))
+		वापस करो_page_fault(far, esr, regs);
 
-	do_bad_area(far, esr, regs);
-	return 0;
-}
+	करो_bad_area(far, esr, regs);
+	वापस 0;
+पूर्ण
 
-static int do_alignment_fault(unsigned long far, unsigned int esr,
-			      struct pt_regs *regs)
-{
-	do_bad_area(far, esr, regs);
-	return 0;
-}
+अटल पूर्णांक करो_alignment_fault(अचिन्हित दीर्घ far, अचिन्हित पूर्णांक esr,
+			      काष्ठा pt_regs *regs)
+अणु
+	करो_bad_area(far, esr, regs);
+	वापस 0;
+पूर्ण
 
-static int do_bad(unsigned long far, unsigned int esr, struct pt_regs *regs)
-{
-	return 1; /* "fault" */
-}
+अटल पूर्णांक करो_bad(अचिन्हित दीर्घ far, अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs)
+अणु
+	वापस 1; /* "fault" */
+पूर्ण
 
-static int do_sea(unsigned long far, unsigned int esr, struct pt_regs *regs)
-{
-	const struct fault_info *inf;
-	unsigned long siaddr;
+अटल पूर्णांक करो_sea(अचिन्हित दीर्घ far, अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs)
+अणु
+	स्थिर काष्ठा fault_info *inf;
+	अचिन्हित दीर्घ siaddr;
 
 	inf = esr_to_fault_info(esr);
 
-	if (user_mode(regs) && apei_claim_sea(regs) == 0) {
+	अगर (user_mode(regs) && apei_claim_sea(regs) == 0) अणु
 		/*
-		 * APEI claimed this as a firmware-first notification.
-		 * Some processing deferred to task_work before ret_to_user().
+		 * APEI claimed this as a firmware-first notअगरication.
+		 * Some processing deferred to task_work beक्रमe ret_to_user().
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (esr & ESR_ELx_FnV) {
+	अगर (esr & ESR_ELx_FnV) अणु
 		siaddr = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * The architecture specifies that the tag bits of FAR_EL1 are
-		 * UNKNOWN for synchronous external aborts. Mask them out now
-		 * so that userspace doesn't see them.
+		 * The architecture specअगरies that the tag bits of FAR_EL1 are
+		 * UNKNOWN क्रम synchronous बाह्यal पातs. Mask them out now
+		 * so that userspace करोesn't see them.
 		 */
 		siaddr  = untagged_addr(far);
-	}
-	arm64_notify_die(inf->name, regs, inf->sig, inf->code, siaddr, esr);
+	पूर्ण
+	arm64_notअगरy_die(inf->name, regs, inf->sig, inf->code, siaddr, esr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_tag_check_fault(unsigned long far, unsigned int esr,
-			      struct pt_regs *regs)
-{
+अटल पूर्णांक करो_tag_check_fault(अचिन्हित दीर्घ far, अचिन्हित पूर्णांक esr,
+			      काष्ठा pt_regs *regs)
+अणु
 	/*
-	 * The architecture specifies that bits 63:60 of FAR_EL1 are UNKNOWN
-	 * for tag check faults. Set them to corresponding bits in the untagged
+	 * The architecture specअगरies that bits 63:60 of FAR_EL1 are UNKNOWN
+	 * क्रम tag check faults. Set them to corresponding bits in the untagged
 	 * address.
 	 */
 	far = (__untagged_addr(far) & ~MTE_TAG_MASK) | (far & MTE_TAG_MASK);
-	do_bad_area(far, esr, regs);
-	return 0;
-}
+	करो_bad_area(far, esr, regs);
+	वापस 0;
+पूर्ण
 
-static const struct fault_info fault_info[] = {
-	{ do_bad,		SIGKILL, SI_KERNEL,	"ttbr address size fault"	},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"level 1 address size fault"	},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"level 2 address size fault"	},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"level 3 address size fault"	},
-	{ do_translation_fault,	SIGSEGV, SEGV_MAPERR,	"level 0 translation fault"	},
-	{ do_translation_fault,	SIGSEGV, SEGV_MAPERR,	"level 1 translation fault"	},
-	{ do_translation_fault,	SIGSEGV, SEGV_MAPERR,	"level 2 translation fault"	},
-	{ do_translation_fault,	SIGSEGV, SEGV_MAPERR,	"level 3 translation fault"	},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 8"			},
-	{ do_page_fault,	SIGSEGV, SEGV_ACCERR,	"level 1 access flag fault"	},
-	{ do_page_fault,	SIGSEGV, SEGV_ACCERR,	"level 2 access flag fault"	},
-	{ do_page_fault,	SIGSEGV, SEGV_ACCERR,	"level 3 access flag fault"	},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 12"			},
-	{ do_page_fault,	SIGSEGV, SEGV_ACCERR,	"level 1 permission fault"	},
-	{ do_page_fault,	SIGSEGV, SEGV_ACCERR,	"level 2 permission fault"	},
-	{ do_page_fault,	SIGSEGV, SEGV_ACCERR,	"level 3 permission fault"	},
-	{ do_sea,		SIGBUS,  BUS_OBJERR,	"synchronous external abort"	},
-	{ do_tag_check_fault,	SIGSEGV, SEGV_MTESERR,	"synchronous tag check fault"	},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 18"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 19"			},
-	{ do_sea,		SIGKILL, SI_KERNEL,	"level 0 (translation table walk)"	},
-	{ do_sea,		SIGKILL, SI_KERNEL,	"level 1 (translation table walk)"	},
-	{ do_sea,		SIGKILL, SI_KERNEL,	"level 2 (translation table walk)"	},
-	{ do_sea,		SIGKILL, SI_KERNEL,	"level 3 (translation table walk)"	},
-	{ do_sea,		SIGBUS,  BUS_OBJERR,	"synchronous parity or ECC error" },	// Reserved when RAS is implemented
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 25"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 26"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 27"			},
-	{ do_sea,		SIGKILL, SI_KERNEL,	"level 0 synchronous parity error (translation table walk)"	},	// Reserved when RAS is implemented
-	{ do_sea,		SIGKILL, SI_KERNEL,	"level 1 synchronous parity error (translation table walk)"	},	// Reserved when RAS is implemented
-	{ do_sea,		SIGKILL, SI_KERNEL,	"level 2 synchronous parity error (translation table walk)"	},	// Reserved when RAS is implemented
-	{ do_sea,		SIGKILL, SI_KERNEL,	"level 3 synchronous parity error (translation table walk)"	},	// Reserved when RAS is implemented
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 32"			},
-	{ do_alignment_fault,	SIGBUS,  BUS_ADRALN,	"alignment fault"		},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 34"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 35"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 36"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 37"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 38"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 39"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 40"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 41"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 42"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 43"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 44"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 45"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 46"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 47"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"TLB conflict abort"		},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"Unsupported atomic hardware update fault"	},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 50"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 51"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"implementation fault (lockdown abort)" },
-	{ do_bad,		SIGBUS,  BUS_OBJERR,	"implementation fault (unsupported exclusive)" },
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 54"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 55"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 56"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 57"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 58" 			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 59"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 60"			},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"section domain fault"		},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"page domain fault"		},
-	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 63"			},
-};
+अटल स्थिर काष्ठा fault_info fault_info[] = अणु
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"ttbr address size fault"	पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"level 1 address size fault"	पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"level 2 address size fault"	पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"level 3 address size fault"	पूर्ण,
+	अणु करो_translation_fault,	संक_अंश, SEGV_MAPERR,	"level 0 translation fault"	पूर्ण,
+	अणु करो_translation_fault,	संक_अंश, SEGV_MAPERR,	"level 1 translation fault"	पूर्ण,
+	अणु करो_translation_fault,	संक_अंश, SEGV_MAPERR,	"level 2 translation fault"	पूर्ण,
+	अणु करो_translation_fault,	संक_अंश, SEGV_MAPERR,	"level 3 translation fault"	पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 8"			पूर्ण,
+	अणु करो_page_fault,	संक_अंश, SEGV_ACCERR,	"level 1 access flag fault"	पूर्ण,
+	अणु करो_page_fault,	संक_अंश, SEGV_ACCERR,	"level 2 access flag fault"	पूर्ण,
+	अणु करो_page_fault,	संक_अंश, SEGV_ACCERR,	"level 3 access flag fault"	पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 12"			पूर्ण,
+	अणु करो_page_fault,	संक_अंश, SEGV_ACCERR,	"level 1 permission fault"	पूर्ण,
+	अणु करो_page_fault,	संक_अंश, SEGV_ACCERR,	"level 2 permission fault"	पूर्ण,
+	अणु करो_page_fault,	संक_अंश, SEGV_ACCERR,	"level 3 permission fault"	पूर्ण,
+	अणु करो_sea,		SIGBUS,  BUS_OBJERR,	"synchronous external abort"	पूर्ण,
+	अणु करो_tag_check_fault,	संक_अंश, SEGV_MTESERR,	"synchronous tag check fault"	पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 18"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 19"			पूर्ण,
+	अणु करो_sea,		SIGKILL, SI_KERNEL,	"level 0 (translation table walk)"	पूर्ण,
+	अणु करो_sea,		SIGKILL, SI_KERNEL,	"level 1 (translation table walk)"	पूर्ण,
+	अणु करो_sea,		SIGKILL, SI_KERNEL,	"level 2 (translation table walk)"	पूर्ण,
+	अणु करो_sea,		SIGKILL, SI_KERNEL,	"level 3 (translation table walk)"	पूर्ण,
+	अणु करो_sea,		SIGBUS,  BUS_OBJERR,	"synchronous parity or ECC error" पूर्ण,	// Reserved when RAS is implemented
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 25"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 26"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 27"			पूर्ण,
+	अणु करो_sea,		SIGKILL, SI_KERNEL,	"level 0 synchronous parity error (translation table walk)"	पूर्ण,	// Reserved when RAS is implemented
+	अणु करो_sea,		SIGKILL, SI_KERNEL,	"level 1 synchronous parity error (translation table walk)"	पूर्ण,	// Reserved when RAS is implemented
+	अणु करो_sea,		SIGKILL, SI_KERNEL,	"level 2 synchronous parity error (translation table walk)"	पूर्ण,	// Reserved when RAS is implemented
+	अणु करो_sea,		SIGKILL, SI_KERNEL,	"level 3 synchronous parity error (translation table walk)"	पूर्ण,	// Reserved when RAS is implemented
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 32"			पूर्ण,
+	अणु करो_alignment_fault,	SIGBUS,  BUS_ADRALN,	"alignment fault"		पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 34"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 35"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 36"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 37"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 38"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 39"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 40"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 41"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 42"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 43"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 44"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 45"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 46"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 47"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"TLB conflict abort"		पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"Unsupported atomic hardware update fault"	पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 50"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 51"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"implementation fault (lockdown abort)" पूर्ण,
+	अणु करो_bad,		SIGBUS,  BUS_OBJERR,	"implementation fault (unsupported exclusive)" पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 54"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 55"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 56"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 57"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 58" 			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 59"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 60"			पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"section domain fault"		पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"page domain fault"		पूर्ण,
+	अणु करो_bad,		SIGKILL, SI_KERNEL,	"unknown 63"			पूर्ण,
+पूर्ण;
 
-void do_mem_abort(unsigned long far, unsigned int esr, struct pt_regs *regs)
-{
-	const struct fault_info *inf = esr_to_fault_info(esr);
-	unsigned long addr = untagged_addr(far);
+व्योम करो_mem_पात(अचिन्हित दीर्घ far, अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs)
+अणु
+	स्थिर काष्ठा fault_info *inf = esr_to_fault_info(esr);
+	अचिन्हित दीर्घ addr = untagged_addr(far);
 
-	if (!inf->fn(far, esr, regs))
-		return;
+	अगर (!inf->fn(far, esr, regs))
+		वापस;
 
-	if (!user_mode(regs)) {
+	अगर (!user_mode(regs)) अणु
 		pr_alert("Unhandled fault at 0x%016lx\n", addr);
-		mem_abort_decode(esr);
+		mem_पात_decode(esr);
 		show_pte(addr);
-	}
+	पूर्ण
 
 	/*
-	 * At this point we have an unrecognized fault type whose tag bits may
-	 * have been defined as UNKNOWN. Therefore we only expose the untagged
-	 * address to the signal handler.
+	 * At this poपूर्णांक we have an unrecognized fault type whose tag bits may
+	 * have been defined as UNKNOWN. Thereक्रमe we only expose the untagged
+	 * address to the संकेत handler.
 	 */
-	arm64_notify_die(inf->name, regs, inf->sig, inf->code, addr, esr);
-}
-NOKPROBE_SYMBOL(do_mem_abort);
+	arm64_notअगरy_die(inf->name, regs, inf->sig, inf->code, addr, esr);
+पूर्ण
+NOKPROBE_SYMBOL(करो_mem_पात);
 
-void do_el0_irq_bp_hardening(void)
-{
-	/* PC has already been checked in entry.S */
+व्योम करो_el0_irq_bp_hardening(व्योम)
+अणु
+	/* PC has alपढ़ोy been checked in entry.S */
 	arm64_apply_bp_hardening();
-}
-NOKPROBE_SYMBOL(do_el0_irq_bp_hardening);
+पूर्ण
+NOKPROBE_SYMBOL(करो_el0_irq_bp_hardening);
 
-void do_sp_pc_abort(unsigned long addr, unsigned int esr, struct pt_regs *regs)
-{
-	arm64_notify_die("SP/PC alignment exception", regs, SIGBUS, BUS_ADRALN,
+व्योम करो_sp_pc_पात(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs)
+अणु
+	arm64_notअगरy_die("SP/PC alignment exception", regs, SIGBUS, BUS_ADRALN,
 			 addr, esr);
-}
-NOKPROBE_SYMBOL(do_sp_pc_abort);
+पूर्ण
+NOKPROBE_SYMBOL(करो_sp_pc_पात);
 
-int __init early_brk64(unsigned long addr, unsigned int esr,
-		       struct pt_regs *regs);
+पूर्णांक __init early_brk64(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक esr,
+		       काष्ठा pt_regs *regs);
 
 /*
  * __refdata because early_brk64 is __init, but the reference to it is
- * clobbered at arch_initcall time.
+ * clobbered at arch_initcall समय.
  * See traps.c and debug-monitors.c:debug_traps_init().
  */
-static struct fault_info __refdata debug_fault_info[] = {
-	{ do_bad,	SIGTRAP,	TRAP_HWBKPT,	"hardware breakpoint"	},
-	{ do_bad,	SIGTRAP,	TRAP_HWBKPT,	"hardware single-step"	},
-	{ do_bad,	SIGTRAP,	TRAP_HWBKPT,	"hardware watchpoint"	},
-	{ do_bad,	SIGKILL,	SI_KERNEL,	"unknown 3"		},
-	{ do_bad,	SIGTRAP,	TRAP_BRKPT,	"aarch32 BKPT"		},
-	{ do_bad,	SIGKILL,	SI_KERNEL,	"aarch32 vector catch"	},
-	{ early_brk64,	SIGTRAP,	TRAP_BRKPT,	"aarch64 BRK"		},
-	{ do_bad,	SIGKILL,	SI_KERNEL,	"unknown 7"		},
-};
+अटल काष्ठा fault_info __refdata debug_fault_info[] = अणु
+	अणु करो_bad,	SIGTRAP,	TRAP_HWBKPT,	"hardware breakpoint"	पूर्ण,
+	अणु करो_bad,	SIGTRAP,	TRAP_HWBKPT,	"hardware single-step"	पूर्ण,
+	अणु करो_bad,	SIGTRAP,	TRAP_HWBKPT,	"hardware watchpoint"	पूर्ण,
+	अणु करो_bad,	SIGKILL,	SI_KERNEL,	"unknown 3"		पूर्ण,
+	अणु करो_bad,	SIGTRAP,	TRAP_BRKPT,	"aarch32 BKPT"		पूर्ण,
+	अणु करो_bad,	SIGKILL,	SI_KERNEL,	"aarch32 vector catch"	पूर्ण,
+	अणु early_brk64,	SIGTRAP,	TRAP_BRKPT,	"aarch64 BRK"		पूर्ण,
+	अणु करो_bad,	SIGKILL,	SI_KERNEL,	"unknown 7"		पूर्ण,
+पूर्ण;
 
-void __init hook_debug_fault_code(int nr,
-				  int (*fn)(unsigned long, unsigned int, struct pt_regs *),
-				  int sig, int code, const char *name)
-{
+व्योम __init hook_debug_fault_code(पूर्णांक nr,
+				  पूर्णांक (*fn)(अचिन्हित दीर्घ, अचिन्हित पूर्णांक, काष्ठा pt_regs *),
+				  पूर्णांक sig, पूर्णांक code, स्थिर अक्षर *name)
+अणु
 	BUG_ON(nr < 0 || nr >= ARRAY_SIZE(debug_fault_info));
 
 	debug_fault_info[nr].fn		= fn;
 	debug_fault_info[nr].sig	= sig;
 	debug_fault_info[nr].code	= code;
 	debug_fault_info[nr].name	= name;
-}
+पूर्ण
 
 /*
  * In debug exception context, we explicitly disable preemption despite
- * having interrupts disabled.
+ * having पूर्णांकerrupts disabled.
  * This serves two purposes: it makes it much less likely that we would
- * accidentally schedule in exception context and it will force a warning
- * if we somehow manage to schedule by accident.
+ * accidentally schedule in exception context and it will क्रमce a warning
+ * अगर we somehow manage to schedule by accident.
  */
-static void debug_exception_enter(struct pt_regs *regs)
-{
+अटल व्योम debug_exception_enter(काष्ठा pt_regs *regs)
+अणु
 	preempt_disable();
 
 	/* This code is a bit fragile.  Test it. */
 	RCU_LOCKDEP_WARN(!rcu_is_watching(), "exception_enter didn't work");
-}
+पूर्ण
 NOKPROBE_SYMBOL(debug_exception_enter);
 
-static void debug_exception_exit(struct pt_regs *regs)
-{
+अटल व्योम debug_exception_निकास(काष्ठा pt_regs *regs)
+अणु
 	preempt_enable_no_resched();
-}
-NOKPROBE_SYMBOL(debug_exception_exit);
+पूर्ण
+NOKPROBE_SYMBOL(debug_exception_निकास);
 
-void do_debug_exception(unsigned long addr_if_watchpoint, unsigned int esr,
-			struct pt_regs *regs)
-{
-	const struct fault_info *inf = esr_to_debug_fault_info(esr);
-	unsigned long pc = instruction_pointer(regs);
+व्योम करो_debug_exception(अचिन्हित दीर्घ addr_अगर_watchpoपूर्णांक, अचिन्हित पूर्णांक esr,
+			काष्ठा pt_regs *regs)
+अणु
+	स्थिर काष्ठा fault_info *inf = esr_to_debug_fault_info(esr);
+	अचिन्हित दीर्घ pc = inकाष्ठाion_poपूर्णांकer(regs);
 
 	debug_exception_enter(regs);
 
-	if (user_mode(regs) && !is_ttbr0_addr(pc))
+	अगर (user_mode(regs) && !is_ttbr0_addr(pc))
 		arm64_apply_bp_hardening();
 
-	if (inf->fn(addr_if_watchpoint, esr, regs)) {
-		arm64_notify_die(inf->name, regs, inf->sig, inf->code, pc, esr);
-	}
+	अगर (inf->fn(addr_अगर_watchpoपूर्णांक, esr, regs)) अणु
+		arm64_notअगरy_die(inf->name, regs, inf->sig, inf->code, pc, esr);
+	पूर्ण
 
-	debug_exception_exit(regs);
-}
-NOKPROBE_SYMBOL(do_debug_exception);
+	debug_exception_निकास(regs);
+पूर्ण
+NOKPROBE_SYMBOL(करो_debug_exception);

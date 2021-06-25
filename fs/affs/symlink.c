@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/affs/symlink.c
  *
- *  1995  Hans-Joachim Widmaier - Modified for affs.
+ *  1995  Hans-Joachim Widmaier - Modअगरied क्रम affs.
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
  *  affs symlink handling code
  */
 
-#include "affs.h"
+#समावेश "affs.h"
 
-static int affs_symlink_readpage(struct file *file, struct page *page)
-{
-	struct buffer_head *bh;
-	struct inode *inode = page->mapping->host;
-	char *link = page_address(page);
-	struct slink_front *lf;
-	int			 i, j;
-	char			 c;
-	char			 lc;
+अटल पूर्णांक affs_symlink_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	काष्ठा buffer_head *bh;
+	काष्ठा inode *inode = page->mapping->host;
+	अक्षर *link = page_address(page);
+	काष्ठा slink_front *lf;
+	पूर्णांक			 i, j;
+	अक्षर			 c;
+	अक्षर			 lc;
 
 	pr_debug("get_link(ino=%lu)\n", inode->i_ino);
 
-	bh = affs_bread(inode->i_sb, inode->i_ino);
-	if (!bh)
-		goto fail;
+	bh = affs_bपढ़ो(inode->i_sb, inode->i_ino);
+	अगर (!bh)
+		जाओ fail;
 	i  = 0;
 	j  = 0;
-	lf = (struct slink_front *)bh->b_data;
+	lf = (काष्ठा slink_front *)bh->b_data;
 	lc = 0;
 
-	if (strchr(lf->symname,':')) {	/* Handle assign or volume name */
-		struct affs_sb_info *sbi = AFFS_SB(inode->i_sb);
-		char *pf;
+	अगर (म_अक्षर(lf->symname,':')) अणु	/* Handle assign or volume name */
+		काष्ठा affs_sb_info *sbi = AFFS_SB(inode->i_sb);
+		अक्षर *pf;
 		spin_lock(&sbi->symlink_lock);
 		pf = sbi->s_prefix ? sbi->s_prefix : "/";
-		while (i < 1023 && (c = pf[i]))
+		जबतक (i < 1023 && (c = pf[i]))
 			link[i++] = c;
 		spin_unlock(&sbi->symlink_lock);
-		while (i < 1023 && lf->symname[j] != ':')
+		जबतक (i < 1023 && lf->symname[j] != ':')
 			link[i++] = lf->symname[j++];
-		if (i < 1023)
+		अगर (i < 1023)
 			link[i++] = '/';
 		j++;
 		lc = '/';
-	}
-	while (i < 1023 && (c = lf->symname[j])) {
-		if (c == '/' && lc == '/' && i < 1020) {	/* parent dir */
+	पूर्ण
+	जबतक (i < 1023 && (c = lf->symname[j])) अणु
+		अगर (c == '/' && lc == '/' && i < 1020) अणु	/* parent dir */
 			link[i++] = '.';
 			link[i++] = '.';
-		}
+		पूर्ण
 		link[i++] = c;
 		lc = c;
 		j++;
-	}
+	पूर्ण
 	link[i] = '\0';
-	affs_brelse(bh);
+	affs_brअन्यथा(bh);
 	SetPageUptodate(page);
 	unlock_page(page);
-	return 0;
+	वापस 0;
 fail:
 	SetPageError(page);
 	unlock_page(page);
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-const struct address_space_operations affs_symlink_aops = {
-	.readpage	= affs_symlink_readpage,
-};
+स्थिर काष्ठा address_space_operations affs_symlink_aops = अणु
+	.पढ़ोpage	= affs_symlink_पढ़ोpage,
+पूर्ण;
 
-const struct inode_operations affs_symlink_inode_operations = {
+स्थिर काष्ठा inode_operations affs_symlink_inode_operations = अणु
 	.get_link	= page_get_link,
-	.setattr	= affs_notify_change,
-};
+	.setattr	= affs_notअगरy_change,
+पूर्ण;

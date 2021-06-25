@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdio.h>
-#include <pthread.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकपन.स>
+#समावेश <pthपढ़ो.h>
 
-pthread_mutex_t a = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t b = PTHREAD_MUTEX_INITIALIZER;
-pthread_barrier_t bar;
+pthपढ़ो_mutex_t a = PTHREAD_MUTEX_INITIALIZER;
+pthपढ़ो_mutex_t b = PTHREAD_MUTEX_INITIALIZER;
+pthपढ़ो_barrier_t bar;
 
-void *ba_lock(void *arg)
-{
-	int ret, i;
+व्योम *ba_lock(व्योम *arg)
+अणु
+	पूर्णांक ret, i;
 
-	pthread_mutex_lock(&b);
+	pthपढ़ो_mutex_lock(&b);
 
-	if (pthread_barrier_wait(&bar) == PTHREAD_BARRIER_SERIAL_THREAD)
-		pthread_barrier_destroy(&bar);
+	अगर (pthपढ़ो_barrier_रुको(&bar) == PTHREAD_BARRIER_SERIAL_THREAD)
+		pthपढ़ो_barrier_destroy(&bar);
 
-	pthread_mutex_lock(&a);
+	pthपढ़ो_mutex_lock(&a);
 
-	pthread_mutex_unlock(&a);
-	pthread_mutex_unlock(&b);
-}
+	pthपढ़ो_mutex_unlock(&a);
+	pthपढ़ो_mutex_unlock(&b);
+पूर्ण
 
-int main(void)
-{
-	pthread_t t;
+पूर्णांक मुख्य(व्योम)
+अणु
+	pthपढ़ो_t t;
 
-	pthread_barrier_init(&bar, NULL, 2);
+	pthपढ़ो_barrier_init(&bar, शून्य, 2);
 
-	if (pthread_create(&t, NULL, ba_lock, NULL)) {
-		fprintf(stderr, "pthread_create() failed\n");
-		return 1;
-	}
-	pthread_mutex_lock(&a);
+	अगर (pthपढ़ो_create(&t, शून्य, ba_lock, शून्य)) अणु
+		ख_लिखो(मानक_त्रुटि, "pthread_create() failed\n");
+		वापस 1;
+	पूर्ण
+	pthपढ़ो_mutex_lock(&a);
 
-	if (pthread_barrier_wait(&bar) == PTHREAD_BARRIER_SERIAL_THREAD)
-		pthread_barrier_destroy(&bar);
+	अगर (pthपढ़ो_barrier_रुको(&bar) == PTHREAD_BARRIER_SERIAL_THREAD)
+		pthपढ़ो_barrier_destroy(&bar);
 
-	pthread_mutex_lock(&b);
+	pthपढ़ो_mutex_lock(&b);
 
-	pthread_mutex_unlock(&b);
-	pthread_mutex_unlock(&a);
+	pthपढ़ो_mutex_unlock(&b);
+	pthपढ़ो_mutex_unlock(&a);
 
-	pthread_join(t, NULL);
+	pthपढ़ो_join(t, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

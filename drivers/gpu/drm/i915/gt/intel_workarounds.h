@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2014-2018 Intel Corporation
+ * Copyright तऊ 2014-2018 Intel Corporation
  */
 
-#ifndef _INTEL_WORKAROUNDS_H_
-#define _INTEL_WORKAROUNDS_H_
+#अगर_अघोषित _INTEL_WORKAROUNDS_H_
+#घोषणा _INTEL_WORKAROUNDS_H_
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-#include "intel_workarounds_types.h"
+#समावेश "intel_workarounds_types.h"
 
-struct drm_i915_private;
-struct i915_request;
-struct intel_engine_cs;
-struct intel_gt;
+काष्ठा drm_i915_निजी;
+काष्ठा i915_request;
+काष्ठा पूर्णांकel_engine_cs;
+काष्ठा पूर्णांकel_gt;
 
-static inline void intel_wa_list_free(struct i915_wa_list *wal)
-{
-	kfree(wal->list);
-	memset(wal, 0, sizeof(*wal));
-}
+अटल अंतरभूत व्योम पूर्णांकel_wa_list_मुक्त(काष्ठा i915_wa_list *wal)
+अणु
+	kमुक्त(wal->list);
+	स_रखो(wal, 0, माप(*wal));
+पूर्ण
 
-void intel_engine_init_ctx_wa(struct intel_engine_cs *engine);
-int intel_engine_emit_ctx_wa(struct i915_request *rq);
+व्योम पूर्णांकel_engine_init_ctx_wa(काष्ठा पूर्णांकel_engine_cs *engine);
+पूर्णांक पूर्णांकel_engine_emit_ctx_wa(काष्ठा i915_request *rq);
 
-void intel_gt_init_workarounds(struct drm_i915_private *i915);
-void intel_gt_apply_workarounds(struct intel_gt *gt);
-bool intel_gt_verify_workarounds(struct intel_gt *gt, const char *from);
+व्योम पूर्णांकel_gt_init_workarounds(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_gt_apply_workarounds(काष्ठा पूर्णांकel_gt *gt);
+bool पूर्णांकel_gt_verअगरy_workarounds(काष्ठा पूर्णांकel_gt *gt, स्थिर अक्षर *from);
 
-void intel_engine_init_whitelist(struct intel_engine_cs *engine);
-void intel_engine_apply_whitelist(struct intel_engine_cs *engine);
+व्योम पूर्णांकel_engine_init_whitelist(काष्ठा पूर्णांकel_engine_cs *engine);
+व्योम पूर्णांकel_engine_apply_whitelist(काष्ठा पूर्णांकel_engine_cs *engine);
 
-void intel_engine_init_workarounds(struct intel_engine_cs *engine);
-void intel_engine_apply_workarounds(struct intel_engine_cs *engine);
-int intel_engine_verify_workarounds(struct intel_engine_cs *engine,
-				    const char *from);
+व्योम पूर्णांकel_engine_init_workarounds(काष्ठा पूर्णांकel_engine_cs *engine);
+व्योम पूर्णांकel_engine_apply_workarounds(काष्ठा पूर्णांकel_engine_cs *engine);
+पूर्णांक पूर्णांकel_engine_verअगरy_workarounds(काष्ठा पूर्णांकel_engine_cs *engine,
+				    स्थिर अक्षर *from);
 
-#endif
+#पूर्ण_अगर

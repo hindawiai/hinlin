@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
- * TWL4030 MADC module driver-This driver monitors the real time
- * conversion of analog signals like battery temperature,
+ * TWL4030 MADC module driver-This driver monitors the real समय
+ * conversion of analog संकेतs like battery temperature,
  * battery type, battery level etc.
  *
  * Copyright (C) 2011 Texas Instruments Incorporated - https://www.ti.com/
@@ -15,169 +16,169 @@
  * Amit Kucheria <amit.kucheria@canonical.com>
  */
 
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/mfd/twl.h>
-#include <linux/module.h>
-#include <linux/stddef.h>
-#include <linux/mutex.h>
-#include <linux/bitops.h>
-#include <linux/jiffies.h>
-#include <linux/types.h>
-#include <linux/gfp.h>
-#include <linux/err.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mfd/twl.h>
+#समावेश <linux/module.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/types.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/err.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <linux/iio/iio.h>
+#समावेश <linux/iio/iपन.स>
 
-#define TWL4030_MADC_MAX_CHANNELS 16
+#घोषणा TWL4030_MADC_MAX_CHANNELS 16
 
-#define TWL4030_MADC_CTRL1		0x00
-#define TWL4030_MADC_CTRL2		0x01
+#घोषणा TWL4030_MADC_CTRL1		0x00
+#घोषणा TWL4030_MADC_CTRL2		0x01
 
-#define TWL4030_MADC_RTSELECT_LSB	0x02
-#define TWL4030_MADC_SW1SELECT_LSB	0x06
-#define TWL4030_MADC_SW2SELECT_LSB	0x0A
+#घोषणा TWL4030_MADC_RTSELECT_LSB	0x02
+#घोषणा TWL4030_MADC_SW1SELECT_LSB	0x06
+#घोषणा TWL4030_MADC_SW2SELECT_LSB	0x0A
 
-#define TWL4030_MADC_RTAVERAGE_LSB	0x04
-#define TWL4030_MADC_SW1AVERAGE_LSB	0x08
-#define TWL4030_MADC_SW2AVERAGE_LSB	0x0C
+#घोषणा TWL4030_MADC_RTAVERAGE_LSB	0x04
+#घोषणा TWL4030_MADC_SW1AVERAGE_LSB	0x08
+#घोषणा TWL4030_MADC_SW2AVERAGE_LSB	0x0C
 
-#define TWL4030_MADC_CTRL_SW1		0x12
-#define TWL4030_MADC_CTRL_SW2		0x13
+#घोषणा TWL4030_MADC_CTRL_SW1		0x12
+#घोषणा TWL4030_MADC_CTRL_SW2		0x13
 
-#define TWL4030_MADC_RTCH0_LSB		0x17
-#define TWL4030_MADC_GPCH0_LSB		0x37
+#घोषणा TWL4030_MADC_RTCH0_LSB		0x17
+#घोषणा TWL4030_MADC_GPCH0_LSB		0x37
 
-#define TWL4030_MADC_MADCON	(1 << 0)	/* MADC power on */
-#define TWL4030_MADC_BUSY	(1 << 0)	/* MADC busy */
+#घोषणा TWL4030_MADC_MADCON	(1 << 0)	/* MADC घातer on */
+#घोषणा TWL4030_MADC_BUSY	(1 << 0)	/* MADC busy */
 /* MADC conversion completion */
-#define TWL4030_MADC_EOC_SW	(1 << 1)
+#घोषणा TWL4030_MADC_EOC_SW	(1 << 1)
 /* MADC SWx start conversion */
-#define TWL4030_MADC_SW_START	(1 << 5)
-#define TWL4030_MADC_ADCIN0	(1 << 0)
-#define TWL4030_MADC_ADCIN1	(1 << 1)
-#define TWL4030_MADC_ADCIN2	(1 << 2)
-#define TWL4030_MADC_ADCIN3	(1 << 3)
-#define TWL4030_MADC_ADCIN4	(1 << 4)
-#define TWL4030_MADC_ADCIN5	(1 << 5)
-#define TWL4030_MADC_ADCIN6	(1 << 6)
-#define TWL4030_MADC_ADCIN7	(1 << 7)
-#define TWL4030_MADC_ADCIN8	(1 << 8)
-#define TWL4030_MADC_ADCIN9	(1 << 9)
-#define TWL4030_MADC_ADCIN10	(1 << 10)
-#define TWL4030_MADC_ADCIN11	(1 << 11)
-#define TWL4030_MADC_ADCIN12	(1 << 12)
-#define TWL4030_MADC_ADCIN13	(1 << 13)
-#define TWL4030_MADC_ADCIN14	(1 << 14)
-#define TWL4030_MADC_ADCIN15	(1 << 15)
+#घोषणा TWL4030_MADC_SW_START	(1 << 5)
+#घोषणा TWL4030_MADC_ADCIN0	(1 << 0)
+#घोषणा TWL4030_MADC_ADCIN1	(1 << 1)
+#घोषणा TWL4030_MADC_ADCIN2	(1 << 2)
+#घोषणा TWL4030_MADC_ADCIN3	(1 << 3)
+#घोषणा TWL4030_MADC_ADCIN4	(1 << 4)
+#घोषणा TWL4030_MADC_ADCIN5	(1 << 5)
+#घोषणा TWL4030_MADC_ADCIN6	(1 << 6)
+#घोषणा TWL4030_MADC_ADCIN7	(1 << 7)
+#घोषणा TWL4030_MADC_ADCIN8	(1 << 8)
+#घोषणा TWL4030_MADC_ADCIN9	(1 << 9)
+#घोषणा TWL4030_MADC_ADCIN10	(1 << 10)
+#घोषणा TWL4030_MADC_ADCIN11	(1 << 11)
+#घोषणा TWL4030_MADC_ADCIN12	(1 << 12)
+#घोषणा TWL4030_MADC_ADCIN13	(1 << 13)
+#घोषणा TWL4030_MADC_ADCIN14	(1 << 14)
+#घोषणा TWL4030_MADC_ADCIN15	(1 << 15)
 
 /* Fixed channels */
-#define TWL4030_MADC_BTEMP	TWL4030_MADC_ADCIN1
-#define TWL4030_MADC_VBUS	TWL4030_MADC_ADCIN8
-#define TWL4030_MADC_VBKB	TWL4030_MADC_ADCIN9
-#define TWL4030_MADC_ICHG	TWL4030_MADC_ADCIN10
-#define TWL4030_MADC_VCHG	TWL4030_MADC_ADCIN11
-#define TWL4030_MADC_VBAT	TWL4030_MADC_ADCIN12
+#घोषणा TWL4030_MADC_BTEMP	TWL4030_MADC_ADCIN1
+#घोषणा TWL4030_MADC_VBUS	TWL4030_MADC_ADCIN8
+#घोषणा TWL4030_MADC_VBKB	TWL4030_MADC_ADCIN9
+#घोषणा TWL4030_MADC_ICHG	TWL4030_MADC_ADCIN10
+#घोषणा TWL4030_MADC_VCHG	TWL4030_MADC_ADCIN11
+#घोषणा TWL4030_MADC_VBAT	TWL4030_MADC_ADCIN12
 
 /* Step size and prescaler ratio */
-#define TEMP_STEP_SIZE          147
-#define TEMP_PSR_R              100
-#define CURR_STEP_SIZE		147
-#define CURR_PSR_R1		44
-#define CURR_PSR_R2		88
+#घोषणा TEMP_STEP_SIZE          147
+#घोषणा TEMP_PSR_R              100
+#घोषणा CURR_STEP_SIZE		147
+#घोषणा CURR_PSR_R1		44
+#घोषणा CURR_PSR_R2		88
 
-#define TWL4030_BCI_BCICTL1	0x23
-#define TWL4030_BCI_CGAIN	0x020
-#define TWL4030_BCI_MESBAT	(1 << 1)
-#define TWL4030_BCI_TYPEN	(1 << 4)
-#define TWL4030_BCI_ITHEN	(1 << 3)
+#घोषणा TWL4030_BCI_BCICTL1	0x23
+#घोषणा TWL4030_BCI_CGAIN	0x020
+#घोषणा TWL4030_BCI_MESBAT	(1 << 1)
+#घोषणा TWL4030_BCI_TYPEN	(1 << 4)
+#घोषणा TWL4030_BCI_ITHEN	(1 << 3)
 
-#define REG_BCICTL2             0x024
-#define TWL4030_BCI_ITHSENS	0x007
+#घोषणा REG_BCICTL2             0x024
+#घोषणा TWL4030_BCI_ITHSENS	0x007
 
-/* Register and bits for GPBR1 register */
-#define TWL4030_REG_GPBR1		0x0c
-#define TWL4030_GPBR1_MADC_HFCLK_EN	(1 << 7)
+/* Register and bits क्रम GPBR1 रेजिस्टर */
+#घोषणा TWL4030_REG_GPBR1		0x0c
+#घोषणा TWL4030_GPBR1_MADC_HFCLK_EN	(1 << 7)
 
-#define TWL4030_USB_SEL_MADC_MCPC	(1<<3)
-#define TWL4030_USB_CARKIT_ANA_CTRL	0xBB
+#घोषणा TWL4030_USB_SEL_MADC_MCPC	(1<<3)
+#घोषणा TWL4030_USB_CARKIT_ANA_CTRL	0xBB
 
-struct twl4030_madc_conversion_method {
+काष्ठा twl4030_madc_conversion_method अणु
 	u8 sel;
 	u8 avg;
 	u8 rbase;
 	u8 ctrl;
-};
+पूर्ण;
 
 /**
- * struct twl4030_madc_request - madc request packet for channel conversion
- * @channels:	16 bit bitmap for individual channels
- * @do_avg:	sample the input channel for 4 consecutive cycles
+ * काष्ठा twl4030_madc_request - madc request packet क्रम channel conversion
+ * @channels:	16 bit biपंचांगap क्रम inभागidual channels
+ * @करो_avg:	sample the input channel क्रम 4 consecutive cycles
  * @method:	RT, SW1, SW2
- * @type:	Polling or interrupt based method
- * @active:	Flag if request is active
- * @result_pending: Flag from irq handler, that result is ready
- * @raw:	Return raw value, do not convert it
+ * @type:	Polling or पूर्णांकerrupt based method
+ * @active:	Flag अगर request is active
+ * @result_pending: Flag from irq handler, that result is पढ़ोy
+ * @raw:	Return raw value, करो not convert it
  * @rbuf:	Result buffer
  */
-struct twl4030_madc_request {
-	unsigned long channels;
-	bool do_avg;
+काष्ठा twl4030_madc_request अणु
+	अचिन्हित दीर्घ channels;
+	bool करो_avg;
 	u16 method;
 	u16 type;
 	bool active;
 	bool result_pending;
 	bool raw;
-	int rbuf[TWL4030_MADC_MAX_CHANNELS];
-};
+	पूर्णांक rbuf[TWL4030_MADC_MAX_CHANNELS];
+पूर्ण;
 
-enum conversion_methods {
+क्रमागत conversion_methods अणु
 	TWL4030_MADC_RT,
 	TWL4030_MADC_SW1,
 	TWL4030_MADC_SW2,
 	TWL4030_MADC_NUM_METHODS
-};
+पूर्ण;
 
-enum sample_type {
+क्रमागत sample_type अणु
 	TWL4030_MADC_WAIT,
 	TWL4030_MADC_IRQ_ONESHOT,
 	TWL4030_MADC_IRQ_REARM
-};
+पूर्ण;
 
 /**
- * struct twl4030_madc_data - a container for madc info
- * @dev:		Pointer to device structure for madc
- * @lock:		Mutex protecting this data structure
- * @usb3v1:		Pointer to bias regulator for madc
- * @requests:		Array of request struct corresponding to SW1, SW2 and RT
- * @use_second_irq:	IRQ selection (main or co-processor)
- * @imr:		Interrupt mask register of MADC
- * @isr:		Interrupt status register of MADC
+ * काष्ठा twl4030_madc_data - a container क्रम madc info
+ * @dev:		Poपूर्णांकer to device काष्ठाure क्रम madc
+ * @lock:		Mutex protecting this data काष्ठाure
+ * @usb3v1:		Poपूर्णांकer to bias regulator क्रम madc
+ * @requests:		Array of request काष्ठा corresponding to SW1, SW2 and RT
+ * @use_second_irq:	IRQ selection (मुख्य or co-processor)
+ * @imr:		Interrupt mask रेजिस्टर of MADC
+ * @isr:		Interrupt status रेजिस्टर of MADC
  */
-struct twl4030_madc_data {
-	struct device *dev;
-	struct mutex lock;
-	struct regulator *usb3v1;
-	struct twl4030_madc_request requests[TWL4030_MADC_NUM_METHODS];
+काष्ठा twl4030_madc_data अणु
+	काष्ठा device *dev;
+	काष्ठा mutex lock;
+	काष्ठा regulator *usb3v1;
+	काष्ठा twl4030_madc_request requests[TWL4030_MADC_NUM_METHODS];
 	bool use_second_irq;
 	u8 imr;
 	u8 isr;
-};
+पूर्ण;
 
-static int twl4030_madc_conversion(struct twl4030_madc_request *req);
+अटल पूर्णांक twl4030_madc_conversion(काष्ठा twl4030_madc_request *req);
 
-static int twl4030_madc_read(struct iio_dev *iio_dev,
-			     const struct iio_chan_spec *chan,
-			     int *val, int *val2, long mask)
-{
-	struct twl4030_madc_data *madc = iio_priv(iio_dev);
-	struct twl4030_madc_request req;
-	int ret;
+अटल पूर्णांक twl4030_madc_पढ़ो(काष्ठा iio_dev *iio_dev,
+			     स्थिर काष्ठा iio_chan_spec *chan,
+			     पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा twl4030_madc_data *madc = iio_priv(iio_dev);
+	काष्ठा twl4030_madc_request req;
+	पूर्णांक ret;
 
 	req.method = madc->use_second_irq ? TWL4030_MADC_SW2 : TWL4030_MADC_SW1;
 
@@ -185,22 +186,22 @@ static int twl4030_madc_read(struct iio_dev *iio_dev,
 	req.active = false;
 	req.type = TWL4030_MADC_WAIT;
 	req.raw = !(mask == IIO_CHAN_INFO_PROCESSED);
-	req.do_avg = (mask == IIO_CHAN_INFO_AVERAGE_RAW);
+	req.करो_avg = (mask == IIO_CHAN_INFO_AVERAGE_RAW);
 
 	ret = twl4030_madc_conversion(&req);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	*val = req.rbuf[chan->channel];
 
-	return IIO_VAL_INT;
-}
+	वापस IIO_VAL_INT;
+पूर्ण
 
-static const struct iio_info twl4030_madc_iio_info = {
-	.read_raw = &twl4030_madc_read,
-};
+अटल स्थिर काष्ठा iio_info twl4030_madc_iio_info = अणु
+	.पढ़ो_raw = &twl4030_madc_पढ़ो,
+पूर्ण;
 
-#define TWL4030_ADC_CHANNEL(_channel, _type, _name) {	\
+#घोषणा TWL4030_ADC_CHANNEL(_channel, _type, _name) अणु	\
 	.type = _type,					\
 	.channel = _channel,				\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |  \
@@ -208,9 +209,9 @@ static const struct iio_info twl4030_madc_iio_info = {
 			      BIT(IIO_CHAN_INFO_PROCESSED), \
 	.datasheet_name = _name,			\
 	.indexed = 1,					\
-}
+पूर्ण
 
-static const struct iio_chan_spec twl4030_madc_iio_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec twl4030_madc_iio_channels[] = अणु
 	TWL4030_ADC_CHANNEL(0, IIO_VOLTAGE, "ADCIN0"),
 	TWL4030_ADC_CHANNEL(1, IIO_TEMP, "ADCIN1"),
 	TWL4030_ADC_CHANNEL(2, IIO_VOLTAGE, "ADCIN2"),
@@ -227,38 +228,38 @@ static const struct iio_chan_spec twl4030_madc_iio_channels[] = {
 	TWL4030_ADC_CHANNEL(13, IIO_VOLTAGE, "ADCIN13"),
 	TWL4030_ADC_CHANNEL(14, IIO_VOLTAGE, "ADCIN14"),
 	TWL4030_ADC_CHANNEL(15, IIO_VOLTAGE, "ADCIN15"),
-};
+पूर्ण;
 
-static struct twl4030_madc_data *twl4030_madc;
+अटल काष्ठा twl4030_madc_data *twl4030_madc;
 
-struct twl4030_prescale_divider_ratios {
+काष्ठा twl4030_prescale_भागider_ratios अणु
 	s16 numerator;
 	s16 denominator;
-};
+पूर्ण;
 
-static const struct twl4030_prescale_divider_ratios
-twl4030_divider_ratios[16] = {
-	{1, 1},		/* CHANNEL 0 No Prescaler */
-	{1, 1},		/* CHANNEL 1 No Prescaler */
-	{6, 10},	/* CHANNEL 2 */
-	{6, 10},	/* CHANNEL 3 */
-	{6, 10},	/* CHANNEL 4 */
-	{6, 10},	/* CHANNEL 5 */
-	{6, 10},	/* CHANNEL 6 */
-	{6, 10},	/* CHANNEL 7 */
-	{3, 14},	/* CHANNEL 8 */
-	{1, 3},		/* CHANNEL 9 */
-	{1, 1},		/* CHANNEL 10 No Prescaler */
-	{15, 100},	/* CHANNEL 11 */
-	{1, 4},		/* CHANNEL 12 */
-	{1, 1},		/* CHANNEL 13 Reserved channels */
-	{1, 1},		/* CHANNEL 14 Reseved channels */
-	{5, 11},	/* CHANNEL 15 */
-};
+अटल स्थिर काष्ठा twl4030_prescale_भागider_ratios
+twl4030_भागider_ratios[16] = अणु
+	अणु1, 1पूर्ण,		/* CHANNEL 0 No Prescaler */
+	अणु1, 1पूर्ण,		/* CHANNEL 1 No Prescaler */
+	अणु6, 10पूर्ण,	/* CHANNEL 2 */
+	अणु6, 10पूर्ण,	/* CHANNEL 3 */
+	अणु6, 10पूर्ण,	/* CHANNEL 4 */
+	अणु6, 10पूर्ण,	/* CHANNEL 5 */
+	अणु6, 10पूर्ण,	/* CHANNEL 6 */
+	अणु6, 10पूर्ण,	/* CHANNEL 7 */
+	अणु3, 14पूर्ण,	/* CHANNEL 8 */
+	अणु1, 3पूर्ण,		/* CHANNEL 9 */
+	अणु1, 1पूर्ण,		/* CHANNEL 10 No Prescaler */
+	अणु15, 100पूर्ण,	/* CHANNEL 11 */
+	अणु1, 4पूर्ण,		/* CHANNEL 12 */
+	अणु1, 1पूर्ण,		/* CHANNEL 13 Reserved channels */
+	अणु1, 1पूर्ण,		/* CHANNEL 14 Reseved channels */
+	अणु5, 11पूर्ण,	/* CHANNEL 15 */
+पूर्ण;
 
 
 /* Conversion table from -3 to 55 degrees Celcius */
-static int twl4030_therm_tbl[] = {
+अटल पूर्णांक twl4030_therm_tbl[] = अणु
 	30800,	29500,	28300,	27100,
 	26000,	24900,	23900,	22900,	22000,	21100,	20300,	19400,	18700,
 	17900,	17200,	16500,	15900,	15300,	14700,	14100,	13600,	13100,
@@ -267,525 +268,525 @@ static int twl4030_therm_tbl[] = {
 	6470,	6250,	6040,	5830,	5640,	5450,	5260,	5090,	4920,
 	4760,	4600,	4450,	4310,	4170,	4040,	3910,	3790,	3670,
 	3550
-};
+पूर्ण;
 
 /*
- * Structure containing the registers
- * of different conversion methods supported by MADC.
- * Hardware or RT real time conversion request initiated by external host
- * processor for RT Signal conversions.
- * External host processors can also request for non RT conversions
+ * Structure containing the रेजिस्टरs
+ * of dअगरferent conversion methods supported by MADC.
+ * Hardware or RT real समय conversion request initiated by बाह्यal host
+ * processor क्रम RT Signal conversions.
+ * External host processors can also request क्रम non RT conversions
  * SW1 and SW2 software conversions also called asynchronous or GPC request.
  */
-static
-const struct twl4030_madc_conversion_method twl4030_conversion_methods[] = {
-	[TWL4030_MADC_RT] = {
+अटल
+स्थिर काष्ठा twl4030_madc_conversion_method twl4030_conversion_methods[] = अणु
+	[TWL4030_MADC_RT] = अणु
 			     .sel = TWL4030_MADC_RTSELECT_LSB,
 			     .avg = TWL4030_MADC_RTAVERAGE_LSB,
 			     .rbase = TWL4030_MADC_RTCH0_LSB,
-			     },
-	[TWL4030_MADC_SW1] = {
+			     पूर्ण,
+	[TWL4030_MADC_SW1] = अणु
 			      .sel = TWL4030_MADC_SW1SELECT_LSB,
 			      .avg = TWL4030_MADC_SW1AVERAGE_LSB,
 			      .rbase = TWL4030_MADC_GPCH0_LSB,
 			      .ctrl = TWL4030_MADC_CTRL_SW1,
-			      },
-	[TWL4030_MADC_SW2] = {
+			      पूर्ण,
+	[TWL4030_MADC_SW2] = अणु
 			      .sel = TWL4030_MADC_SW2SELECT_LSB,
 			      .avg = TWL4030_MADC_SW2AVERAGE_LSB,
 			      .rbase = TWL4030_MADC_GPCH0_LSB,
 			      .ctrl = TWL4030_MADC_CTRL_SW2,
-			      },
-};
+			      पूर्ण,
+पूर्ण;
 
 /**
- * twl4030_madc_channel_raw_read() - Function to read a particular channel value
- * @madc:	pointer to struct twl4030_madc_data
+ * twl4030_madc_channel_raw_पढ़ो() - Function to पढ़ो a particular channel value
+ * @madc:	poपूर्णांकer to काष्ठा twl4030_madc_data
  * @reg:	lsb of ADC Channel
  *
  * Return: 0 on success, an error code otherwise.
  */
-static int twl4030_madc_channel_raw_read(struct twl4030_madc_data *madc, u8 reg)
-{
+अटल पूर्णांक twl4030_madc_channel_raw_पढ़ो(काष्ठा twl4030_madc_data *madc, u8 reg)
+अणु
 	u16 val;
-	int ret;
+	पूर्णांक ret;
 	/*
-	 * For each ADC channel, we have MSB and LSB register pair. MSB address
-	 * is always LSB address+1. reg parameter is the address of LSB register
+	 * For each ADC channel, we have MSB and LSB रेजिस्टर pair. MSB address
+	 * is always LSB address+1. reg parameter is the address of LSB रेजिस्टर
 	 */
-	ret = twl_i2c_read_u16(TWL4030_MODULE_MADC, &val, reg);
-	if (ret) {
+	ret = twl_i2c_पढ़ो_u16(TWL4030_MODULE_MADC, &val, reg);
+	अगर (ret) अणु
 		dev_err(madc->dev, "unable to read register 0x%X\n", reg);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return (int)(val >> 6);
-}
+	वापस (पूर्णांक)(val >> 6);
+पूर्ण
 
 /*
  * Return battery temperature in degrees Celsius
  * Or < 0 on failure.
  */
-static int twl4030battery_temperature(int raw_volt)
-{
+अटल पूर्णांक twl4030battery_temperature(पूर्णांक raw_volt)
+अणु
 	u8 val;
-	int temp, curr, volt, res, ret;
+	पूर्णांक temp, curr, volt, res, ret;
 
 	volt = (raw_volt * TEMP_STEP_SIZE) / TEMP_PSR_R;
 	/* Getting and calculating the supply current in micro amperes */
-	ret = twl_i2c_read_u8(TWL_MODULE_MAIN_CHARGE, &val,
+	ret = twl_i2c_पढ़ो_u8(TWL_MODULE_MAIN_CHARGE, &val,
 		REG_BCICTL2);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	curr = ((val & TWL4030_BCI_ITHSENS) + 1) * 10;
 	/* Getting and calculating the thermistor resistance in ohms */
 	res = volt * 1000 / curr;
 	/* calculating temperature */
-	for (temp = 58; temp >= 0; temp--) {
-		int actual = twl4030_therm_tbl[temp];
-		if ((actual - res) >= 0)
-			break;
-	}
+	क्रम (temp = 58; temp >= 0; temp--) अणु
+		पूर्णांक actual = twl4030_therm_tbl[temp];
+		अगर ((actual - res) >= 0)
+			अवरोध;
+	पूर्ण
 
-	return temp + 1;
-}
+	वापस temp + 1;
+पूर्ण
 
-static int twl4030battery_current(int raw_volt)
-{
-	int ret;
+अटल पूर्णांक twl4030battery_current(पूर्णांक raw_volt)
+अणु
+	पूर्णांक ret;
 	u8 val;
 
-	ret = twl_i2c_read_u8(TWL_MODULE_MAIN_CHARGE, &val,
+	ret = twl_i2c_पढ़ो_u8(TWL_MODULE_MAIN_CHARGE, &val,
 		TWL4030_BCI_BCICTL1);
-	if (ret)
-		return ret;
-	if (val & TWL4030_BCI_CGAIN) /* slope of 0.44 mV/mA */
-		return (raw_volt * CURR_STEP_SIZE) / CURR_PSR_R1;
-	else /* slope of 0.88 mV/mA */
-		return (raw_volt * CURR_STEP_SIZE) / CURR_PSR_R2;
-}
+	अगर (ret)
+		वापस ret;
+	अगर (val & TWL4030_BCI_CGAIN) /* slope of 0.44 mV/mA */
+		वापस (raw_volt * CURR_STEP_SIZE) / CURR_PSR_R1;
+	अन्यथा /* slope of 0.88 mV/mA */
+		वापस (raw_volt * CURR_STEP_SIZE) / CURR_PSR_R2;
+पूर्ण
 
 /*
- * Function to read channel values
- * @madc - pointer to twl4030_madc_data struct
+ * Function to पढ़ो channel values
+ * @madc - poपूर्णांकer to twl4030_madc_data काष्ठा
  * @reg_base - Base address of the first channel
- * @Channels - 16 bit bitmap. If the bit is set, channel's value is read
- * @buf - The channel values are stored here. if read fails error
+ * @Channels - 16 bit biपंचांगap. If the bit is set, channel's value is पढ़ो
+ * @buf - The channel values are stored here. अगर पढ़ो fails error
  * @raw - Return raw values without conversion
  * value is stored
- * Returns the number of successfully read channels.
+ * Returns the number of successfully पढ़ो channels.
  */
-static int twl4030_madc_read_channels(struct twl4030_madc_data *madc,
-				      u8 reg_base, unsigned
-				      long channels, int *buf,
+अटल पूर्णांक twl4030_madc_पढ़ो_channels(काष्ठा twl4030_madc_data *madc,
+				      u8 reg_base, अचिन्हित
+				      दीर्घ channels, पूर्णांक *buf,
 				      bool raw)
-{
-	int count = 0;
-	int i;
+अणु
+	पूर्णांक count = 0;
+	पूर्णांक i;
 	u8 reg;
 
-	for_each_set_bit(i, &channels, TWL4030_MADC_MAX_CHANNELS) {
+	क्रम_each_set_bit(i, &channels, TWL4030_MADC_MAX_CHANNELS) अणु
 		reg = reg_base + (2 * i);
-		buf[i] = twl4030_madc_channel_raw_read(madc, reg);
-		if (buf[i] < 0) {
+		buf[i] = twl4030_madc_channel_raw_पढ़ो(madc, reg);
+		अगर (buf[i] < 0) अणु
 			dev_err(madc->dev, "Unable to read register 0x%X\n",
 				reg);
-			return buf[i];
-		}
-		if (raw) {
+			वापस buf[i];
+		पूर्ण
+		अगर (raw) अणु
 			count++;
-			continue;
-		}
-		switch (i) {
-		case 10:
+			जारी;
+		पूर्ण
+		चयन (i) अणु
+		हाल 10:
 			buf[i] = twl4030battery_current(buf[i]);
-			if (buf[i] < 0) {
+			अगर (buf[i] < 0) अणु
 				dev_err(madc->dev, "err reading current\n");
-				return buf[i];
-			} else {
+				वापस buf[i];
+			पूर्ण अन्यथा अणु
 				count++;
 				buf[i] = buf[i] - 750;
-			}
-			break;
-		case 1:
+			पूर्ण
+			अवरोध;
+		हाल 1:
 			buf[i] = twl4030battery_temperature(buf[i]);
-			if (buf[i] < 0) {
+			अगर (buf[i] < 0) अणु
 				dev_err(madc->dev, "err reading temperature\n");
-				return buf[i];
-			} else {
+				वापस buf[i];
+			पूर्ण अन्यथा अणु
 				buf[i] -= 3;
 				count++;
-			}
-			break;
-		default:
+			पूर्ण
+			अवरोध;
+		शेष:
 			count++;
 			/* Analog Input (V) = conv_result * step_size / R
 			 * conv_result = decimal value of 10-bit conversion
 			 *		 result
 			 * step size = 1.5 / (2 ^ 10 -1)
-			 * R = Prescaler ratio for input channels.
+			 * R = Prescaler ratio क्रम input channels.
 			 * Result given in mV hence multiplied by 1000.
 			 */
 			buf[i] = (buf[i] * 3 * 1000 *
-				 twl4030_divider_ratios[i].denominator)
+				 twl4030_भागider_ratios[i].denominator)
 				/ (2 * 1023 *
-				twl4030_divider_ratios[i].numerator);
-		}
-	}
+				twl4030_भागider_ratios[i].numerator);
+		पूर्ण
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
  * Disables irq.
- * @madc - pointer to twl4030_madc_data struct
+ * @madc - poपूर्णांकer to twl4030_madc_data काष्ठा
  * @id - irq number to be disabled
  * can take one of TWL4030_MADC_RT, TWL4030_MADC_SW1, TWL4030_MADC_SW2
  * corresponding to RT, SW1, SW2 conversion requests.
- * Returns error if i2c read/write fails.
+ * Returns error अगर i2c पढ़ो/ग_लिखो fails.
  */
-static int twl4030_madc_disable_irq(struct twl4030_madc_data *madc, u8 id)
-{
+अटल पूर्णांक twl4030_madc_disable_irq(काष्ठा twl4030_madc_data *madc, u8 id)
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = twl_i2c_read_u8(TWL4030_MODULE_MADC, &val, madc->imr);
-	if (ret) {
+	ret = twl_i2c_पढ़ो_u8(TWL4030_MODULE_MADC, &val, madc->imr);
+	अगर (ret) अणु
 		dev_err(madc->dev, "unable to read imr register 0x%X\n",
 			madc->imr);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	val |= (1 << id);
-	ret = twl_i2c_write_u8(TWL4030_MODULE_MADC, val, madc->imr);
-	if (ret) {
+	ret = twl_i2c_ग_लिखो_u8(TWL4030_MODULE_MADC, val, madc->imr);
+	अगर (ret) अणु
 		dev_err(madc->dev,
 			"unable to write imr register 0x%X\n", madc->imr);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t twl4030_madc_threaded_irq_handler(int irq, void *_madc)
-{
-	struct twl4030_madc_data *madc = _madc;
-	const struct twl4030_madc_conversion_method *method;
+अटल irqवापस_t twl4030_madc_thपढ़ोed_irq_handler(पूर्णांक irq, व्योम *_madc)
+अणु
+	काष्ठा twl4030_madc_data *madc = _madc;
+	स्थिर काष्ठा twl4030_madc_conversion_method *method;
 	u8 isr_val, imr_val;
-	int i, ret;
-	struct twl4030_madc_request *r;
+	पूर्णांक i, ret;
+	काष्ठा twl4030_madc_request *r;
 
 	mutex_lock(&madc->lock);
-	ret = twl_i2c_read_u8(TWL4030_MODULE_MADC, &isr_val, madc->isr);
-	if (ret) {
+	ret = twl_i2c_पढ़ो_u8(TWL4030_MODULE_MADC, &isr_val, madc->isr);
+	अगर (ret) अणु
 		dev_err(madc->dev, "unable to read isr register 0x%X\n",
 			madc->isr);
-		goto err_i2c;
-	}
-	ret = twl_i2c_read_u8(TWL4030_MODULE_MADC, &imr_val, madc->imr);
-	if (ret) {
+		जाओ err_i2c;
+	पूर्ण
+	ret = twl_i2c_पढ़ो_u8(TWL4030_MODULE_MADC, &imr_val, madc->imr);
+	अगर (ret) अणु
 		dev_err(madc->dev, "unable to read imr register 0x%X\n",
 			madc->imr);
-		goto err_i2c;
-	}
+		जाओ err_i2c;
+	पूर्ण
 	isr_val &= ~imr_val;
-	for (i = 0; i < TWL4030_MADC_NUM_METHODS; i++) {
-		if (!(isr_val & (1 << i)))
-			continue;
+	क्रम (i = 0; i < TWL4030_MADC_NUM_METHODS; i++) अणु
+		अगर (!(isr_val & (1 << i)))
+			जारी;
 		ret = twl4030_madc_disable_irq(madc, i);
-		if (ret < 0)
+		अगर (ret < 0)
 			dev_dbg(madc->dev, "Disable interrupt failed %d\n", i);
 		madc->requests[i].result_pending = true;
-	}
-	for (i = 0; i < TWL4030_MADC_NUM_METHODS; i++) {
+	पूर्ण
+	क्रम (i = 0; i < TWL4030_MADC_NUM_METHODS; i++) अणु
 		r = &madc->requests[i];
-		/* No pending results for this method, move to next one */
-		if (!r->result_pending)
-			continue;
+		/* No pending results क्रम this method, move to next one */
+		अगर (!r->result_pending)
+			जारी;
 		method = &twl4030_conversion_methods[r->method];
 		/* Read results */
-		twl4030_madc_read_channels(madc, method->rbase,
+		twl4030_madc_पढ़ो_channels(madc, method->rbase,
 					   r->channels, r->rbuf, r->raw);
 		/* Free request */
 		r->result_pending = false;
 		r->active = false;
-	}
+	पूर्ण
 	mutex_unlock(&madc->lock);
 
-	return IRQ_HANDLED;
+	वापस IRQ_HANDLED;
 
 err_i2c:
 	/*
-	 * In case of error check whichever request is active
+	 * In हाल of error check whichever request is active
 	 * and service the same.
 	 */
-	for (i = 0; i < TWL4030_MADC_NUM_METHODS; i++) {
+	क्रम (i = 0; i < TWL4030_MADC_NUM_METHODS; i++) अणु
 		r = &madc->requests[i];
-		if (!r->active)
-			continue;
+		अगर (!r->active)
+			जारी;
 		method = &twl4030_conversion_methods[r->method];
 		/* Read results */
-		twl4030_madc_read_channels(madc, method->rbase,
+		twl4030_madc_पढ़ो_channels(madc, method->rbase,
 					   r->channels, r->rbuf, r->raw);
 		/* Free request */
 		r->result_pending = false;
 		r->active = false;
-	}
+	पूर्ण
 	mutex_unlock(&madc->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
  * Function which enables the madc conversion
- * by writing to the control register.
- * @madc - pointer to twl4030_madc_data struct
+ * by writing to the control रेजिस्टर.
+ * @madc - poपूर्णांकer to twl4030_madc_data काष्ठा
  * @conv_method - can be TWL4030_MADC_RT, TWL4030_MADC_SW2, TWL4030_MADC_SW1
  * corresponding to RT SW1 or SW2 conversion methods.
- * Returns 0 if succeeds else a negative error value
+ * Returns 0 अगर succeeds अन्यथा a negative error value
  */
-static int twl4030_madc_start_conversion(struct twl4030_madc_data *madc,
-					 int conv_method)
-{
-	const struct twl4030_madc_conversion_method *method;
-	int ret = 0;
+अटल पूर्णांक twl4030_madc_start_conversion(काष्ठा twl4030_madc_data *madc,
+					 पूर्णांक conv_method)
+अणु
+	स्थिर काष्ठा twl4030_madc_conversion_method *method;
+	पूर्णांक ret = 0;
 
-	if (conv_method != TWL4030_MADC_SW1 && conv_method != TWL4030_MADC_SW2)
-		return -ENOTSUPP;
+	अगर (conv_method != TWL4030_MADC_SW1 && conv_method != TWL4030_MADC_SW2)
+		वापस -ENOTSUPP;
 
 	method = &twl4030_conversion_methods[conv_method];
-	ret = twl_i2c_write_u8(TWL4030_MODULE_MADC, TWL4030_MADC_SW_START,
+	ret = twl_i2c_ग_लिखो_u8(TWL4030_MODULE_MADC, TWL4030_MADC_SW_START,
 			       method->ctrl);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(madc->dev, "unable to write ctrl register 0x%X\n",
 			method->ctrl);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Function that waits for conversion to be ready
- * @madc - pointer to twl4030_madc_data struct
- * @timeout_ms - timeout value in milliseconds
- * @status_reg - ctrl register
- * returns 0 if succeeds else a negative error value
+ * Function that रुकोs क्रम conversion to be पढ़ोy
+ * @madc - poपूर्णांकer to twl4030_madc_data काष्ठा
+ * @समयout_ms - समयout value in milliseconds
+ * @status_reg - ctrl रेजिस्टर
+ * वापसs 0 अगर succeeds अन्यथा a negative error value
  */
-static int twl4030_madc_wait_conversion_ready(struct twl4030_madc_data *madc,
-					      unsigned int timeout_ms,
+अटल पूर्णांक twl4030_madc_रुको_conversion_पढ़ोy(काष्ठा twl4030_madc_data *madc,
+					      अचिन्हित पूर्णांक समयout_ms,
 					      u8 status_reg)
-{
-	unsigned long timeout;
-	int ret;
+अणु
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक ret;
 
-	timeout = jiffies + msecs_to_jiffies(timeout_ms);
-	do {
+	समयout = jअगरfies + msecs_to_jअगरfies(समयout_ms);
+	करो अणु
 		u8 reg;
 
-		ret = twl_i2c_read_u8(TWL4030_MODULE_MADC, &reg, status_reg);
-		if (ret) {
+		ret = twl_i2c_पढ़ो_u8(TWL4030_MODULE_MADC, &reg, status_reg);
+		अगर (ret) अणु
 			dev_err(madc->dev,
 				"unable to read status register 0x%X\n",
 				status_reg);
-			return ret;
-		}
-		if (!(reg & TWL4030_MADC_BUSY) && (reg & TWL4030_MADC_EOC_SW))
-			return 0;
+			वापस ret;
+		पूर्ण
+		अगर (!(reg & TWL4030_MADC_BUSY) && (reg & TWL4030_MADC_EOC_SW))
+			वापस 0;
 		usleep_range(500, 2000);
-	} while (!time_after(jiffies, timeout));
+	पूर्ण जबतक (!समय_after(jअगरfies, समयout));
 	dev_err(madc->dev, "conversion timeout!\n");
 
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
 /*
  * An exported function which can be called from other kernel drivers.
- * @req twl4030_madc_request structure
- * req->rbuf will be filled with read values of channels based on the
- * channel index. If a particular channel reading fails there will
+ * @req twl4030_madc_request काष्ठाure
+ * req->rbuf will be filled with पढ़ो values of channels based on the
+ * channel index. If a particular channel पढ़ोing fails there will
  * be a negative error value in the corresponding array element.
- * returns 0 if succeeds else error value
+ * वापसs 0 अगर succeeds अन्यथा error value
  */
-static int twl4030_madc_conversion(struct twl4030_madc_request *req)
-{
-	const struct twl4030_madc_conversion_method *method;
-	int ret;
+अटल पूर्णांक twl4030_madc_conversion(काष्ठा twl4030_madc_request *req)
+अणु
+	स्थिर काष्ठा twl4030_madc_conversion_method *method;
+	पूर्णांक ret;
 
-	if (!req || !twl4030_madc)
-		return -EINVAL;
+	अगर (!req || !twl4030_madc)
+		वापस -EINVAL;
 
 	mutex_lock(&twl4030_madc->lock);
-	if (req->method < TWL4030_MADC_RT || req->method > TWL4030_MADC_SW2) {
+	अगर (req->method < TWL4030_MADC_RT || req->method > TWL4030_MADC_SW2) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/* Do we have a conversion request ongoing */
-	if (twl4030_madc->requests[req->method].active) {
+	अगर (twl4030_madc->requests[req->method].active) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	method = &twl4030_conversion_methods[req->method];
 	/* Select channels to be converted */
-	ret = twl_i2c_write_u16(TWL4030_MODULE_MADC, req->channels, method->sel);
-	if (ret) {
+	ret = twl_i2c_ग_लिखो_u16(TWL4030_MODULE_MADC, req->channels, method->sel);
+	अगर (ret) अणु
 		dev_err(twl4030_madc->dev,
 			"unable to write sel register 0x%X\n", method->sel);
-		goto out;
-	}
-	/* Select averaging for all channels if do_avg is set */
-	if (req->do_avg) {
-		ret = twl_i2c_write_u16(TWL4030_MODULE_MADC, req->channels,
+		जाओ out;
+	पूर्ण
+	/* Select averaging क्रम all channels अगर करो_avg is set */
+	अगर (req->करो_avg) अणु
+		ret = twl_i2c_ग_लिखो_u16(TWL4030_MODULE_MADC, req->channels,
 				       method->avg);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(twl4030_madc->dev,
 				"unable to write avg register 0x%X\n",
 				method->avg);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	/* With RT method we should not be here anymore */
-	if (req->method == TWL4030_MADC_RT) {
+	अगर (req->method == TWL4030_MADC_RT) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	ret = twl4030_madc_start_conversion(twl4030_madc, req->method);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 	twl4030_madc->requests[req->method].active = true;
-	/* Wait until conversion is ready (ctrl register returns EOC) */
-	ret = twl4030_madc_wait_conversion_ready(twl4030_madc, 5, method->ctrl);
-	if (ret) {
+	/* Wait until conversion is पढ़ोy (ctrl रेजिस्टर वापसs EOC) */
+	ret = twl4030_madc_रुको_conversion_पढ़ोy(twl4030_madc, 5, method->ctrl);
+	अगर (ret) अणु
 		twl4030_madc->requests[req->method].active = false;
-		goto out;
-	}
-	ret = twl4030_madc_read_channels(twl4030_madc, method->rbase,
+		जाओ out;
+	पूर्ण
+	ret = twl4030_madc_पढ़ो_channels(twl4030_madc, method->rbase,
 					 req->channels, req->rbuf, req->raw);
 	twl4030_madc->requests[req->method].active = false;
 
 out:
 	mutex_unlock(&twl4030_madc->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * twl4030_madc_set_current_generator() - setup bias current
  *
- * @madc:	pointer to twl4030_madc_data struct
+ * @madc:	poपूर्णांकer to twl4030_madc_data काष्ठा
  * @chan:	can be one of the two values:
- *		0 - Enables bias current for main battery type reading
- *		1 - Enables bias current for main battery temperature sensing
+ *		0 - Enables bias current क्रम मुख्य battery type पढ़ोing
+ *		1 - Enables bias current क्रम मुख्य battery temperature sensing
  * @on:		enable or disable chan.
  *
- * Function to enable or disable bias current for
- * main battery type reading or temperature sensing
+ * Function to enable or disable bias current क्रम
+ * मुख्य battery type पढ़ोing or temperature sensing
  */
-static int twl4030_madc_set_current_generator(struct twl4030_madc_data *madc,
-					      int chan, int on)
-{
-	int ret;
-	int regmask;
+अटल पूर्णांक twl4030_madc_set_current_generator(काष्ठा twl4030_madc_data *madc,
+					      पूर्णांक chan, पूर्णांक on)
+अणु
+	पूर्णांक ret;
+	पूर्णांक regmask;
 	u8 regval;
 
-	ret = twl_i2c_read_u8(TWL_MODULE_MAIN_CHARGE,
+	ret = twl_i2c_पढ़ो_u8(TWL_MODULE_MAIN_CHARGE,
 			      &regval, TWL4030_BCI_BCICTL1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(madc->dev, "unable to read BCICTL1 reg 0x%X",
 			TWL4030_BCI_BCICTL1);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	regmask = chan ? TWL4030_BCI_ITHEN : TWL4030_BCI_TYPEN;
-	if (on)
+	अगर (on)
 		regval |= regmask;
-	else
+	अन्यथा
 		regval &= ~regmask;
 
-	ret = twl_i2c_write_u8(TWL_MODULE_MAIN_CHARGE,
+	ret = twl_i2c_ग_लिखो_u8(TWL_MODULE_MAIN_CHARGE,
 			       regval, TWL4030_BCI_BCICTL1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(madc->dev, "unable to write BCICTL1 reg 0x%X\n",
 			TWL4030_BCI_BCICTL1);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Function that sets MADC software power on bit to enable MADC
- * @madc - pointer to twl4030_madc_data struct
- * @on - Enable or disable MADC software power on bit.
- * returns error if i2c read/write fails else 0
+ * Function that sets MADC software घातer on bit to enable MADC
+ * @madc - poपूर्णांकer to twl4030_madc_data काष्ठा
+ * @on - Enable or disable MADC software घातer on bit.
+ * वापसs error अगर i2c पढ़ो/ग_लिखो fails अन्यथा 0
  */
-static int twl4030_madc_set_power(struct twl4030_madc_data *madc, int on)
-{
+अटल पूर्णांक twl4030_madc_set_घातer(काष्ठा twl4030_madc_data *madc, पूर्णांक on)
+अणु
 	u8 regval;
-	int ret;
+	पूर्णांक ret;
 
-	ret = twl_i2c_read_u8(TWL_MODULE_MAIN_CHARGE,
+	ret = twl_i2c_पढ़ो_u8(TWL_MODULE_MAIN_CHARGE,
 			      &regval, TWL4030_MADC_CTRL1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(madc->dev, "unable to read madc ctrl1 reg 0x%X\n",
 			TWL4030_MADC_CTRL1);
-		return ret;
-	}
-	if (on)
+		वापस ret;
+	पूर्ण
+	अगर (on)
 		regval |= TWL4030_MADC_MADCON;
-	else
+	अन्यथा
 		regval &= ~TWL4030_MADC_MADCON;
-	ret = twl_i2c_write_u8(TWL4030_MODULE_MADC, regval, TWL4030_MADC_CTRL1);
-	if (ret) {
+	ret = twl_i2c_ग_लिखो_u8(TWL4030_MODULE_MADC, regval, TWL4030_MADC_CTRL1);
+	अगर (ret) अणु
 		dev_err(madc->dev, "unable to write madc ctrl1 reg 0x%X\n",
 			TWL4030_MADC_CTRL1);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Initialize MADC and request for threaded irq
+ * Initialize MADC and request क्रम thपढ़ोed irq
  */
-static int twl4030_madc_probe(struct platform_device *pdev)
-{
-	struct twl4030_madc_data *madc;
-	struct twl4030_madc_platform_data *pdata = dev_get_platdata(&pdev->dev);
-	struct device_node *np = pdev->dev.of_node;
-	int irq, ret;
+अटल पूर्णांक twl4030_madc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा twl4030_madc_data *madc;
+	काष्ठा twl4030_madc_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा device_node *np = pdev->dev.of_node;
+	पूर्णांक irq, ret;
 	u8 regval;
-	struct iio_dev *iio_dev = NULL;
+	काष्ठा iio_dev *iio_dev = शून्य;
 
-	if (!pdata && !np) {
+	अगर (!pdata && !np) अणु
 		dev_err(&pdev->dev, "neither platform data nor Device Tree node available\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	iio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*madc));
-	if (!iio_dev) {
+	iio_dev = devm_iio_device_alloc(&pdev->dev, माप(*madc));
+	अगर (!iio_dev) अणु
 		dev_err(&pdev->dev, "failed allocating iio device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	madc = iio_priv(iio_dev);
 	madc->dev = &pdev->dev;
 
 	iio_dev->name = dev_name(&pdev->dev);
 	iio_dev->info = &twl4030_madc_iio_info;
-	iio_dev->modes = INDIO_DIRECT_MODE;
+	iio_dev->modes = INDIO_सूचीECT_MODE;
 	iio_dev->channels = twl4030_madc_iio_channels;
 	iio_dev->num_channels = ARRAY_SIZE(twl4030_madc_iio_channels);
 
 	/*
-	 * Phoenix provides 2 interrupt lines. The first one is connected to
+	 * Phoenix provides 2 पूर्णांकerrupt lines. The first one is connected to
 	 * the OMAP. The other one can be connected to the other processor such
-	 * as modem. Hence two separate ISR and IMR registers.
+	 * as modem. Hence two separate ISR and IMR रेजिस्टरs.
 	 */
-	if (pdata)
+	अगर (pdata)
 		madc->use_second_irq = (pdata->irq_line != 1);
-	else
-		madc->use_second_irq = of_property_read_bool(np,
+	अन्यथा
+		madc->use_second_irq = of_property_पढ़ो_bool(np,
 				       "ti,system-uses-second-madc-irq");
 
 	madc->imr = madc->use_second_irq ? TWL4030_MADC_IMR2 :
@@ -793,144 +794,144 @@ static int twl4030_madc_probe(struct platform_device *pdev)
 	madc->isr = madc->use_second_irq ? TWL4030_MADC_ISR2 :
 					   TWL4030_MADC_ISR1;
 
-	ret = twl4030_madc_set_power(madc, 1);
-	if (ret < 0)
-		return ret;
+	ret = twl4030_madc_set_घातer(madc, 1);
+	अगर (ret < 0)
+		वापस ret;
 	ret = twl4030_madc_set_current_generator(madc, 0, 1);
-	if (ret < 0)
-		goto err_current_generator;
+	अगर (ret < 0)
+		जाओ err_current_generator;
 
-	ret = twl_i2c_read_u8(TWL_MODULE_MAIN_CHARGE,
+	ret = twl_i2c_पढ़ो_u8(TWL_MODULE_MAIN_CHARGE,
 			      &regval, TWL4030_BCI_BCICTL1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "unable to read reg BCI CTL1 0x%X\n",
 			TWL4030_BCI_BCICTL1);
-		goto err_i2c;
-	}
+		जाओ err_i2c;
+	पूर्ण
 	regval |= TWL4030_BCI_MESBAT;
-	ret = twl_i2c_write_u8(TWL_MODULE_MAIN_CHARGE,
+	ret = twl_i2c_ग_लिखो_u8(TWL_MODULE_MAIN_CHARGE,
 			       regval, TWL4030_BCI_BCICTL1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "unable to write reg BCI Ctl1 0x%X\n",
 			TWL4030_BCI_BCICTL1);
-		goto err_i2c;
-	}
+		जाओ err_i2c;
+	पूर्ण
 
-	/* Check that MADC clock is on */
-	ret = twl_i2c_read_u8(TWL4030_MODULE_INTBR, &regval, TWL4030_REG_GPBR1);
-	if (ret) {
+	/* Check that MADC घड़ी is on */
+	ret = twl_i2c_पढ़ो_u8(TWL4030_MODULE_INTBR, &regval, TWL4030_REG_GPBR1);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "unable to read reg GPBR1 0x%X\n",
 				TWL4030_REG_GPBR1);
-		goto err_i2c;
-	}
+		जाओ err_i2c;
+	पूर्ण
 
 	/* If MADC clk is not on, turn it on */
-	if (!(regval & TWL4030_GPBR1_MADC_HFCLK_EN)) {
+	अगर (!(regval & TWL4030_GPBR1_MADC_HFCLK_EN)) अणु
 		dev_info(&pdev->dev, "clk disabled, enabling\n");
 		regval |= TWL4030_GPBR1_MADC_HFCLK_EN;
-		ret = twl_i2c_write_u8(TWL4030_MODULE_INTBR, regval,
+		ret = twl_i2c_ग_लिखो_u8(TWL4030_MODULE_INTBR, regval,
 				       TWL4030_REG_GPBR1);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "unable to write reg GPBR1 0x%X\n",
 					TWL4030_REG_GPBR1);
-			goto err_i2c;
-		}
-	}
+			जाओ err_i2c;
+		पूर्ण
+	पूर्ण
 
-	platform_set_drvdata(pdev, iio_dev);
+	platक्रमm_set_drvdata(pdev, iio_dev);
 	mutex_init(&madc->lock);
 
-	irq = platform_get_irq(pdev, 0);
-	ret = devm_request_threaded_irq(&pdev->dev, irq, NULL,
-				   twl4030_madc_threaded_irq_handler,
+	irq = platक्रमm_get_irq(pdev, 0);
+	ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
+				   twl4030_madc_thपढ़ोed_irq_handler,
 				   IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 				   "twl4030_madc", madc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "could not request irq\n");
-		goto err_i2c;
-	}
+		जाओ err_i2c;
+	पूर्ण
 	twl4030_madc = madc;
 
 	/* Configure MADC[3:6] */
-	ret = twl_i2c_read_u8(TWL_MODULE_USB, &regval,
+	ret = twl_i2c_पढ़ो_u8(TWL_MODULE_USB, &regval,
 			TWL4030_USB_CARKIT_ANA_CTRL);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "unable to read reg CARKIT_ANA_CTRL  0x%X\n",
 				TWL4030_USB_CARKIT_ANA_CTRL);
-		goto err_i2c;
-	}
+		जाओ err_i2c;
+	पूर्ण
 	regval |= TWL4030_USB_SEL_MADC_MCPC;
-	ret = twl_i2c_write_u8(TWL_MODULE_USB, regval,
+	ret = twl_i2c_ग_लिखो_u8(TWL_MODULE_USB, regval,
 				 TWL4030_USB_CARKIT_ANA_CTRL);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "unable to write reg CARKIT_ANA_CTRL 0x%X\n",
 				TWL4030_USB_CARKIT_ANA_CTRL);
-		goto err_i2c;
-	}
+		जाओ err_i2c;
+	पूर्ण
 
-	/* Enable 3v1 bias regulator for MADC[3:6] */
+	/* Enable 3v1 bias regulator क्रम MADC[3:6] */
 	madc->usb3v1 = devm_regulator_get(madc->dev, "vusb3v1");
-	if (IS_ERR(madc->usb3v1)) {
+	अगर (IS_ERR(madc->usb3v1)) अणु
 		ret = -ENODEV;
-		goto err_i2c;
-	}
+		जाओ err_i2c;
+	पूर्ण
 
 	ret = regulator_enable(madc->usb3v1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(madc->dev, "could not enable 3v1 bias regulator\n");
-		goto err_i2c;
-	}
+		जाओ err_i2c;
+	पूर्ण
 
-	ret = iio_device_register(iio_dev);
-	if (ret) {
+	ret = iio_device_रेजिस्टर(iio_dev);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "could not register iio device\n");
-		goto err_usb3v1;
-	}
+		जाओ err_usb3v1;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_usb3v1:
 	regulator_disable(madc->usb3v1);
 err_i2c:
 	twl4030_madc_set_current_generator(madc, 0, 0);
 err_current_generator:
-	twl4030_madc_set_power(madc, 0);
-	return ret;
-}
+	twl4030_madc_set_घातer(madc, 0);
+	वापस ret;
+पूर्ण
 
-static int twl4030_madc_remove(struct platform_device *pdev)
-{
-	struct iio_dev *iio_dev = platform_get_drvdata(pdev);
-	struct twl4030_madc_data *madc = iio_priv(iio_dev);
+अटल पूर्णांक twl4030_madc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iio_dev *iio_dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा twl4030_madc_data *madc = iio_priv(iio_dev);
 
-	iio_device_unregister(iio_dev);
+	iio_device_unरेजिस्टर(iio_dev);
 
 	twl4030_madc_set_current_generator(madc, 0, 0);
-	twl4030_madc_set_power(madc, 0);
+	twl4030_madc_set_घातer(madc, 0);
 
 	regulator_disable(madc->usb3v1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id twl_madc_of_match[] = {
-	{ .compatible = "ti,twl4030-madc", },
-	{ },
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id twl_madc_of_match[] = अणु
+	अणु .compatible = "ti,twl4030-madc", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, twl_madc_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver twl4030_madc_driver = {
+अटल काष्ठा platक्रमm_driver twl4030_madc_driver = अणु
 	.probe = twl4030_madc_probe,
-	.remove = twl4030_madc_remove,
-	.driver = {
+	.हटाओ = twl4030_madc_हटाओ,
+	.driver = अणु
 		   .name = "twl4030_madc",
 		   .of_match_table = of_match_ptr(twl_madc_of_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(twl4030_madc_driver);
+module_platक्रमm_driver(twl4030_madc_driver);
 
 MODULE_DESCRIPTION("TWL4030 ADC driver");
 MODULE_LICENSE("GPL");

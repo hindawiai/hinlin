@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2005-2006 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#ifndef __XFS_AOPS_H__
-#define __XFS_AOPS_H__
+#अगर_अघोषित __XFS_AOPS_H__
+#घोषणा __XFS_AOPS_H__
 
-extern const struct address_space_operations xfs_address_space_operations;
-extern const struct address_space_operations xfs_dax_aops;
+बाह्य स्थिर काष्ठा address_space_operations xfs_address_space_operations;
+बाह्य स्थिर काष्ठा address_space_operations xfs_dax_aops;
 
-int	xfs_setfilesize(struct xfs_inode *ip, xfs_off_t offset, size_t size);
+पूर्णांक	xfs_setfilesize(काष्ठा xfs_inode *ip, xfs_off_t offset, माप_प्रकार size);
 
-#endif /* __XFS_AOPS_H__ */
+#पूर्ण_अगर /* __XFS_AOPS_H__ */

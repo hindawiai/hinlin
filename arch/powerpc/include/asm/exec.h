@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 1999 Cort Dougan <cort@cs.nmt.edu>
  */
-#ifndef _ASM_POWERPC_EXEC_H
-#define _ASM_POWERPC_EXEC_H
+#अगर_अघोषित _ASM_POWERPC_EXEC_H
+#घोषणा _ASM_POWERPC_EXEC_H
 
-extern unsigned long arch_align_stack(unsigned long sp);
+बाह्य अचिन्हित दीर्घ arch_align_stack(अचिन्हित दीर्घ sp);
 
-#endif /* _ASM_POWERPC_EXEC_H */
+#पूर्ण_अगर /* _ASM_POWERPC_EXEC_H */

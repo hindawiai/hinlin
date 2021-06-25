@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <asm/tlbflush.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <यंत्र/tlbflush.h>
 
-extern int restore_image(void);
+बाह्य पूर्णांक restore_image(व्योम);
 
-int swsusp_arch_resume(void)
-{
-	/* Avoid TLB mismatch during and after kernel resume */
+पूर्णांक swsusp_arch_resume(व्योम)
+अणु
+	/* Aव्योम TLB mismatch during and after kernel resume */
 	local_flush_tlb_all();
-	return restore_image();
-}
+	वापस restore_image();
+पूर्ण

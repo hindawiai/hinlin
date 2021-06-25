@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * IBM PowerPC IBM eBus Infrastructure Support.
+ * IBM PowerPC IBM eBus Infraकाष्ठाure Support.
  *
  * Copyright (c) 2005 IBM Corporation
  *  Joachim Fenkes <fenkes@de.ibm.com>
@@ -12,14 +13,14 @@
  *
  * OpenIB BSD License
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are met:
  *
  * Redistributions of source code must retain the above copyright notice, this
  * list of conditions and the following disclaimer.
  *
- * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
+ * Redistributions in binary क्रमm must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the करोcumentation
  * and/or other materials
  * provided with the distribution.
  *
@@ -27,7 +28,7 @@
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
@@ -36,433 +37,433 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/console.h>
-#include <linux/kobject.h>
-#include <linux/dma-map-ops.h>
-#include <linux/interrupt.h>
-#include <linux/of.h>
-#include <linux/slab.h>
-#include <linux/stat.h>
-#include <linux/of_platform.h>
-#include <asm/ibmebus.h>
-#include <asm/machdep.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/console.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <यंत्र/ibmebus.h>
+#समावेश <यंत्र/machdep.h>
 
-static struct device ibmebus_bus_device = { /* fake "parent" device */
+अटल काष्ठा device ibmebus_bus_device = अणु /* fake "parent" device */
 	.init_name = "ibmebus",
-};
+पूर्ण;
 
-struct bus_type ibmebus_bus_type;
+काष्ठा bus_type ibmebus_bus_type;
 
-/* These devices will automatically be added to the bus during init */
-static const struct of_device_id ibmebus_matches[] __initconst = {
-	{ .compatible = "IBM,lhca" },
-	{ .compatible = "IBM,lhea" },
-	{},
-};
+/* These devices will स्वतःmatically be added to the bus during init */
+अटल स्थिर काष्ठा of_device_id ibmebus_matches[] __initस्थिर = अणु
+	अणु .compatible = "IBM,lhca" पूर्ण,
+	अणु .compatible = "IBM,lhea" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static void *ibmebus_alloc_coherent(struct device *dev,
-				    size_t size,
+अटल व्योम *ibmebus_alloc_coherent(काष्ठा device *dev,
+				    माप_प्रकार size,
 				    dma_addr_t *dma_handle,
 				    gfp_t flag,
-				    unsigned long attrs)
-{
-	void *mem;
+				    अचिन्हित दीर्घ attrs)
+अणु
+	व्योम *mem;
 
-	mem = kmalloc(size, flag);
+	mem = kदो_स्मृति(size, flag);
 	*dma_handle = (dma_addr_t)mem;
 
-	return mem;
-}
+	वापस mem;
+पूर्ण
 
-static void ibmebus_free_coherent(struct device *dev,
-				  size_t size, void *vaddr,
+अटल व्योम ibmebus_मुक्त_coherent(काष्ठा device *dev,
+				  माप_प्रकार size, व्योम *vaddr,
 				  dma_addr_t dma_handle,
-				  unsigned long attrs)
-{
-	kfree(vaddr);
-}
+				  अचिन्हित दीर्घ attrs)
+अणु
+	kमुक्त(vaddr);
+पूर्ण
 
-static dma_addr_t ibmebus_map_page(struct device *dev,
-				   struct page *page,
-				   unsigned long offset,
-				   size_t size,
-				   enum dma_data_direction direction,
-				   unsigned long attrs)
-{
-	return (dma_addr_t)(page_address(page) + offset);
-}
+अटल dma_addr_t ibmebus_map_page(काष्ठा device *dev,
+				   काष्ठा page *page,
+				   अचिन्हित दीर्घ offset,
+				   माप_प्रकार size,
+				   क्रमागत dma_data_direction direction,
+				   अचिन्हित दीर्घ attrs)
+अणु
+	वापस (dma_addr_t)(page_address(page) + offset);
+पूर्ण
 
-static void ibmebus_unmap_page(struct device *dev,
+अटल व्योम ibmebus_unmap_page(काष्ठा device *dev,
 			       dma_addr_t dma_addr,
-			       size_t size,
-			       enum dma_data_direction direction,
-			       unsigned long attrs)
-{
-	return;
-}
+			       माप_प्रकार size,
+			       क्रमागत dma_data_direction direction,
+			       अचिन्हित दीर्घ attrs)
+अणु
+	वापस;
+पूर्ण
 
-static int ibmebus_map_sg(struct device *dev,
-			  struct scatterlist *sgl,
-			  int nents, enum dma_data_direction direction,
-			  unsigned long attrs)
-{
-	struct scatterlist *sg;
-	int i;
+अटल पूर्णांक ibmebus_map_sg(काष्ठा device *dev,
+			  काष्ठा scatterlist *sgl,
+			  पूर्णांक nents, क्रमागत dma_data_direction direction,
+			  अचिन्हित दीर्घ attrs)
+अणु
+	काष्ठा scatterlist *sg;
+	पूर्णांक i;
 
-	for_each_sg(sgl, sg, nents, i) {
+	क्रम_each_sg(sgl, sg, nents, i) अणु
 		sg->dma_address = (dma_addr_t) sg_virt(sg);
 		sg->dma_length = sg->length;
-	}
+	पूर्ण
 
-	return nents;
-}
+	वापस nents;
+पूर्ण
 
-static void ibmebus_unmap_sg(struct device *dev,
-			     struct scatterlist *sg,
-			     int nents, enum dma_data_direction direction,
-			     unsigned long attrs)
-{
-	return;
-}
+अटल व्योम ibmebus_unmap_sg(काष्ठा device *dev,
+			     काष्ठा scatterlist *sg,
+			     पूर्णांक nents, क्रमागत dma_data_direction direction,
+			     अचिन्हित दीर्घ attrs)
+अणु
+	वापस;
+पूर्ण
 
-static int ibmebus_dma_supported(struct device *dev, u64 mask)
-{
-	return mask == DMA_BIT_MASK(64);
-}
+अटल पूर्णांक ibmebus_dma_supported(काष्ठा device *dev, u64 mask)
+अणु
+	वापस mask == DMA_BIT_MASK(64);
+पूर्ण
 
-static u64 ibmebus_dma_get_required_mask(struct device *dev)
-{
-	return DMA_BIT_MASK(64);
-}
+अटल u64 ibmebus_dma_get_required_mask(काष्ठा device *dev)
+अणु
+	वापस DMA_BIT_MASK(64);
+पूर्ण
 
-static const struct dma_map_ops ibmebus_dma_ops = {
+अटल स्थिर काष्ठा dma_map_ops ibmebus_dma_ops = अणु
 	.alloc              = ibmebus_alloc_coherent,
-	.free               = ibmebus_free_coherent,
+	.मुक्त               = ibmebus_मुक्त_coherent,
 	.map_sg             = ibmebus_map_sg,
 	.unmap_sg           = ibmebus_unmap_sg,
 	.dma_supported      = ibmebus_dma_supported,
 	.get_required_mask  = ibmebus_dma_get_required_mask,
 	.map_page           = ibmebus_map_page,
 	.unmap_page         = ibmebus_unmap_page,
-};
+पूर्ण;
 
-static int ibmebus_match_path(struct device *dev, const void *data)
-{
-	struct device_node *dn = to_platform_device(dev)->dev.of_node;
-	return (of_find_node_by_path(data) == dn);
-}
+अटल पूर्णांक ibmebus_match_path(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	काष्ठा device_node *dn = to_platक्रमm_device(dev)->dev.of_node;
+	वापस (of_find_node_by_path(data) == dn);
+पूर्ण
 
-static int ibmebus_match_node(struct device *dev, const void *data)
-{
-	return to_platform_device(dev)->dev.of_node == data;
-}
+अटल पूर्णांक ibmebus_match_node(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	वापस to_platक्रमm_device(dev)->dev.of_node == data;
+पूर्ण
 
-static int ibmebus_create_device(struct device_node *dn)
-{
-	struct platform_device *dev;
-	int ret;
+अटल पूर्णांक ibmebus_create_device(काष्ठा device_node *dn)
+अणु
+	काष्ठा platक्रमm_device *dev;
+	पूर्णांक ret;
 
-	dev = of_device_alloc(dn, NULL, &ibmebus_bus_device);
-	if (!dev)
-		return -ENOMEM;
+	dev = of_device_alloc(dn, शून्य, &ibmebus_bus_device);
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	dev->dev.bus = &ibmebus_bus_type;
 	dev->dev.dma_ops = &ibmebus_dma_ops;
 
 	ret = of_device_add(dev);
-	if (ret)
-		platform_device_put(dev);
-	return ret;
-}
+	अगर (ret)
+		platक्रमm_device_put(dev);
+	वापस ret;
+पूर्ण
 
-static int ibmebus_create_devices(const struct of_device_id *matches)
-{
-	struct device_node *root, *child;
-	struct device *dev;
-	int ret = 0;
+अटल पूर्णांक ibmebus_create_devices(स्थिर काष्ठा of_device_id *matches)
+अणु
+	काष्ठा device_node *root, *child;
+	काष्ठा device *dev;
+	पूर्णांक ret = 0;
 
 	root = of_find_node_by_path("/");
 
-	for_each_child_of_node(root, child) {
-		if (!of_match_node(matches, child))
-			continue;
+	क्रम_each_child_of_node(root, child) अणु
+		अगर (!of_match_node(matches, child))
+			जारी;
 
-		dev = bus_find_device(&ibmebus_bus_type, NULL, child,
+		dev = bus_find_device(&ibmebus_bus_type, शून्य, child,
 				      ibmebus_match_node);
-		if (dev) {
+		अगर (dev) अणु
 			put_device(dev);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		ret = ibmebus_create_device(child);
-		if (ret) {
-			printk(KERN_ERR "%s: failed to create device (%i)",
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "%s: failed to create device (%i)",
 			       __func__, ret);
 			of_node_put(child);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	of_node_put(root);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ibmebus_register_driver(struct platform_driver *drv)
-{
-	/* If the driver uses devices that ibmebus doesn't know, add them */
+पूर्णांक ibmebus_रेजिस्टर_driver(काष्ठा platक्रमm_driver *drv)
+अणु
+	/* If the driver uses devices that ibmebus करोesn't know, add them */
 	ibmebus_create_devices(drv->driver.of_match_table);
 
 	drv->driver.bus = &ibmebus_bus_type;
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL(ibmebus_register_driver);
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL(ibmebus_रेजिस्टर_driver);
 
-void ibmebus_unregister_driver(struct platform_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL(ibmebus_unregister_driver);
+व्योम ibmebus_unरेजिस्टर_driver(काष्ठा platक्रमm_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL(ibmebus_unरेजिस्टर_driver);
 
-int ibmebus_request_irq(u32 ist, irq_handler_t handler,
-			unsigned long irq_flags, const char *devname,
-			void *dev_id)
-{
-	unsigned int irq = irq_create_mapping(NULL, ist);
+पूर्णांक ibmebus_request_irq(u32 ist, irq_handler_t handler,
+			अचिन्हित दीर्घ irq_flags, स्थिर अक्षर *devname,
+			व्योम *dev_id)
+अणु
+	अचिन्हित पूर्णांक irq = irq_create_mapping(शून्य, ist);
 
-	if (!irq)
-		return -EINVAL;
+	अगर (!irq)
+		वापस -EINVAL;
 
-	return request_irq(irq, handler, irq_flags, devname, dev_id);
-}
+	वापस request_irq(irq, handler, irq_flags, devname, dev_id);
+पूर्ण
 EXPORT_SYMBOL(ibmebus_request_irq);
 
-void ibmebus_free_irq(u32 ist, void *dev_id)
-{
-	unsigned int irq = irq_find_mapping(NULL, ist);
+व्योम ibmebus_मुक्त_irq(u32 ist, व्योम *dev_id)
+अणु
+	अचिन्हित पूर्णांक irq = irq_find_mapping(शून्य, ist);
 
-	free_irq(irq, dev_id);
+	मुक्त_irq(irq, dev_id);
 	irq_dispose_mapping(irq);
-}
-EXPORT_SYMBOL(ibmebus_free_irq);
+पूर्ण
+EXPORT_SYMBOL(ibmebus_मुक्त_irq);
 
-static char *ibmebus_chomp(const char *in, size_t count)
-{
-	char *out = kmalloc(count + 1, GFP_KERNEL);
+अटल अक्षर *ibmebus_chomp(स्थिर अक्षर *in, माप_प्रकार count)
+अणु
+	अक्षर *out = kदो_स्मृति(count + 1, GFP_KERNEL);
 
-	if (!out)
-		return NULL;
+	अगर (!out)
+		वापस शून्य;
 
-	memcpy(out, in, count);
+	स_नकल(out, in, count);
 	out[count] = '\0';
-	if (out[count - 1] == '\n')
+	अगर (out[count - 1] == '\n')
 		out[count - 1] = '\0';
 
-	return out;
-}
+	वापस out;
+पूर्ण
 
-static ssize_t probe_store(struct bus_type *bus, const char *buf, size_t count)
-{
-	struct device_node *dn = NULL;
-	struct device *dev;
-	char *path;
-	ssize_t rc = 0;
+अटल sमाप_प्रकार probe_store(काष्ठा bus_type *bus, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा device_node *dn = शून्य;
+	काष्ठा device *dev;
+	अक्षर *path;
+	sमाप_प्रकार rc = 0;
 
 	path = ibmebus_chomp(buf, count);
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
-	dev = bus_find_device(&ibmebus_bus_type, NULL, path,
+	dev = bus_find_device(&ibmebus_bus_type, शून्य, path,
 			      ibmebus_match_path);
-	if (dev) {
+	अगर (dev) अणु
 		put_device(dev);
-		printk(KERN_WARNING "%s: %s has already been probed\n",
+		prपूर्णांकk(KERN_WARNING "%s: %s has already been probed\n",
 		       __func__, path);
 		rc = -EEXIST;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if ((dn = of_find_node_by_path(path))) {
+	अगर ((dn = of_find_node_by_path(path))) अणु
 		rc = ibmebus_create_device(dn);
 		of_node_put(dn);
-	} else {
-		printk(KERN_WARNING "%s: no such device node: %s\n",
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_WARNING "%s: no such device node: %s\n",
 		       __func__, path);
 		rc = -ENODEV;
-	}
+	पूर्ण
 
 out:
-	kfree(path);
-	if (rc)
-		return rc;
-	return count;
-}
-static BUS_ATTR_WO(probe);
+	kमुक्त(path);
+	अगर (rc)
+		वापस rc;
+	वापस count;
+पूर्ण
+अटल BUS_ATTR_WO(probe);
 
-static ssize_t remove_store(struct bus_type *bus, const char *buf, size_t count)
-{
-	struct device *dev;
-	char *path;
+अटल sमाप_प्रकार हटाओ_store(काष्ठा bus_type *bus, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा device *dev;
+	अक्षर *path;
 
 	path = ibmebus_chomp(buf, count);
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
-	if ((dev = bus_find_device(&ibmebus_bus_type, NULL, path,
-				   ibmebus_match_path))) {
-		of_device_unregister(to_platform_device(dev));
+	अगर ((dev = bus_find_device(&ibmebus_bus_type, शून्य, path,
+				   ibmebus_match_path))) अणु
+		of_device_unरेजिस्टर(to_platक्रमm_device(dev));
 		put_device(dev);
 
-		kfree(path);
-		return count;
-	} else {
-		printk(KERN_WARNING "%s: %s not on the bus\n",
+		kमुक्त(path);
+		वापस count;
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_WARNING "%s: %s not on the bus\n",
 		       __func__, path);
 
-		kfree(path);
-		return -ENODEV;
-	}
-}
-static BUS_ATTR_WO(remove);
+		kमुक्त(path);
+		वापस -ENODEV;
+	पूर्ण
+पूर्ण
+अटल BUS_ATTR_WO(हटाओ);
 
-static struct attribute *ibmbus_bus_attrs[] = {
+अटल काष्ठा attribute *ibmbus_bus_attrs[] = अणु
 	&bus_attr_probe.attr,
-	&bus_attr_remove.attr,
-	NULL,
-};
+	&bus_attr_हटाओ.attr,
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(ibmbus_bus);
 
-static int ibmebus_bus_bus_match(struct device *dev, struct device_driver *drv)
-{
-	const struct of_device_id *matches = drv->of_match_table;
+अटल पूर्णांक ibmebus_bus_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	स्थिर काष्ठा of_device_id *matches = drv->of_match_table;
 
-	if (!matches)
-		return 0;
+	अगर (!matches)
+		वापस 0;
 
-	return of_match_device(matches, dev) != NULL;
-}
+	वापस of_match_device(matches, dev) != शून्य;
+पूर्ण
 
-static int ibmebus_bus_device_probe(struct device *dev)
-{
-	int error = -ENODEV;
-	struct platform_driver *drv;
-	struct platform_device *of_dev;
+अटल पूर्णांक ibmebus_bus_device_probe(काष्ठा device *dev)
+अणु
+	पूर्णांक error = -ENODEV;
+	काष्ठा platक्रमm_driver *drv;
+	काष्ठा platक्रमm_device *of_dev;
 
-	drv = to_platform_driver(dev->driver);
-	of_dev = to_platform_device(dev);
+	drv = to_platक्रमm_driver(dev->driver);
+	of_dev = to_platक्रमm_device(dev);
 
-	if (!drv->probe)
-		return error;
+	अगर (!drv->probe)
+		वापस error;
 
 	get_device(dev);
 
-	if (of_driver_match_device(dev, dev->driver))
+	अगर (of_driver_match_device(dev, dev->driver))
 		error = drv->probe(of_dev);
-	if (error)
+	अगर (error)
 		put_device(dev);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int ibmebus_bus_device_remove(struct device *dev)
-{
-	struct platform_device *of_dev = to_platform_device(dev);
-	struct platform_driver *drv = to_platform_driver(dev->driver);
+अटल पूर्णांक ibmebus_bus_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *of_dev = to_platक्रमm_device(dev);
+	काष्ठा platक्रमm_driver *drv = to_platक्रमm_driver(dev->driver);
 
-	if (dev->driver && drv->remove)
-		drv->remove(of_dev);
-	return 0;
-}
+	अगर (dev->driver && drv->हटाओ)
+		drv->हटाओ(of_dev);
+	वापस 0;
+पूर्ण
 
-static void ibmebus_bus_device_shutdown(struct device *dev)
-{
-	struct platform_device *of_dev = to_platform_device(dev);
-	struct platform_driver *drv = to_platform_driver(dev->driver);
+अटल व्योम ibmebus_bus_device_shutकरोwn(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *of_dev = to_platक्रमm_device(dev);
+	काष्ठा platक्रमm_driver *drv = to_platक्रमm_driver(dev->driver);
 
-	if (dev->driver && drv->shutdown)
-		drv->shutdown(of_dev);
-}
+	अगर (dev->driver && drv->shutकरोwn)
+		drv->shutकरोwn(of_dev);
+पूर्ण
 
 /*
  * ibmebus_bus_device_attrs
  */
-static ssize_t devspec_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct platform_device *ofdev;
+अटल sमाप_प्रकार devspec_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा platक्रमm_device *ofdev;
 
-	ofdev = to_platform_device(dev);
-	return sprintf(buf, "%pOF\n", ofdev->dev.of_node);
-}
-static DEVICE_ATTR_RO(devspec);
+	ofdev = to_platक्रमm_device(dev);
+	वापस प्र_लिखो(buf, "%pOF\n", ofdev->dev.of_node);
+पूर्ण
+अटल DEVICE_ATTR_RO(devspec);
 
-static ssize_t name_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct platform_device *ofdev;
+अटल sमाप_प्रकार name_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा platक्रमm_device *ofdev;
 
-	ofdev = to_platform_device(dev);
-	return sprintf(buf, "%pOFn\n", ofdev->dev.of_node);
-}
-static DEVICE_ATTR_RO(name);
+	ofdev = to_platक्रमm_device(dev);
+	वापस प्र_लिखो(buf, "%pOFn\n", ofdev->dev.of_node);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static ssize_t modalias_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	return of_device_modalias(dev, buf, PAGE_SIZE);
-}
-static DEVICE_ATTR_RO(modalias);
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस of_device_modalias(dev, buf, PAGE_SIZE);
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static struct attribute *ibmebus_bus_device_attrs[] = {
+अटल काष्ठा attribute *ibmebus_bus_device_attrs[] = अणु
 	&dev_attr_devspec.attr,
 	&dev_attr_name.attr,
 	&dev_attr_modalias.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(ibmebus_bus_device);
 
-struct bus_type ibmebus_bus_type = {
+काष्ठा bus_type ibmebus_bus_type = अणु
 	.name      = "ibmebus",
 	.uevent    = of_device_uevent_modalias,
 	.bus_groups = ibmbus_bus_groups,
 	.match     = ibmebus_bus_bus_match,
 	.probe     = ibmebus_bus_device_probe,
-	.remove    = ibmebus_bus_device_remove,
-	.shutdown  = ibmebus_bus_device_shutdown,
+	.हटाओ    = ibmebus_bus_device_हटाओ,
+	.shutकरोwn  = ibmebus_bus_device_shutकरोwn,
 	.dev_groups = ibmebus_bus_device_groups,
-};
+पूर्ण;
 EXPORT_SYMBOL(ibmebus_bus_type);
 
-static int __init ibmebus_bus_init(void)
-{
-	int err;
+अटल पूर्णांक __init ibmebus_bus_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	printk(KERN_INFO "IBM eBus Device Driver\n");
+	prपूर्णांकk(KERN_INFO "IBM eBus Device Driver\n");
 
-	err = bus_register(&ibmebus_bus_type);
-	if (err) {
-		printk(KERN_ERR "%s: failed to register IBM eBus.\n",
+	err = bus_रेजिस्टर(&ibmebus_bus_type);
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "%s: failed to register IBM eBus.\n",
 		       __func__);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = device_register(&ibmebus_bus_device);
-	if (err) {
-		printk(KERN_WARNING "%s: device_register returned %i\n",
+	err = device_रेजिस्टर(&ibmebus_bus_device);
+	अगर (err) अणु
+		prपूर्णांकk(KERN_WARNING "%s: device_register returned %i\n",
 		       __func__, err);
-		bus_unregister(&ibmebus_bus_type);
+		bus_unरेजिस्टर(&ibmebus_bus_type);
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = ibmebus_create_devices(ibmebus_matches);
-	if (err) {
-		device_unregister(&ibmebus_bus_device);
-		bus_unregister(&ibmebus_bus_type);
-		return err;
-	}
+	अगर (err) अणु
+		device_unरेजिस्टर(&ibmebus_bus_device);
+		bus_unरेजिस्टर(&ibmebus_bus_type);
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 machine_postcore_initcall(pseries, ibmebus_bus_init);

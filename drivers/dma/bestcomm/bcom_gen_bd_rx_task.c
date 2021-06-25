@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Bestcomm GenBD RX task microcode
  *
@@ -10,7 +11,7 @@
  * on Tue Mar 4 10:14:12 2006 GMT
  */
 
-#include <asm/types.h>
+#समावेश <यंत्र/types.h>
 
 /*
  * The header consists of the following fields:
@@ -24,7 +25,7 @@
  * The size fields contain the number of 32-bit words.
  */
 
-u32 bcom_gen_bd_rx_task[] = {
+u32 bcom_gen_bd_rx_task[] = अणु
 	/* header */
 	0x4243544b,
 	0x0d020409,
@@ -55,5 +56,5 @@ u32 bcom_gen_bd_rx_task[] = {
 	0xe0000000,
 	0xa0000008,
 	0x20000000,
-};
+पूर्ण;
 

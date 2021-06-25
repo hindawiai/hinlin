@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
   * Copyright (C) 2010 Brian King IBM Corporation
   */
 
-#include <linux/cpu.h>
-#include <linux/delay.h>
-#include <linux/suspend.h>
-#include <linux/stat.h>
-#include <asm/firmware.h>
-#include <asm/hvcall.h>
-#include <asm/machdep.h>
-#include <asm/mmu.h>
-#include <asm/rtas.h>
-#include <asm/topology.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/hvcall.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/mmu.h>
+#समावेश <यंत्र/rtas.h>
+#समावेश <यंत्र/topology.h>
 
-static struct device suspend_dev;
+अटल काष्ठा device suspend_dev;
 
 /**
  * pseries_suspend_begin - First phase of hibernation
@@ -24,28 +25,28 @@ static struct device suspend_dev;
  * Return value:
  * 	0 on success / other on failure
  **/
-static int pseries_suspend_begin(u64 stream_id)
-{
-	long vasi_state, rc;
-	unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
+अटल पूर्णांक pseries_suspend_begin(u64 stream_id)
+अणु
+	दीर्घ vasi_state, rc;
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
 
 	/* Make sure the state is valid */
 	rc = plpar_hcall(H_VASI_STATE, retbuf, stream_id);
 
 	vasi_state = retbuf[0];
 
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("pseries_suspend_begin: vasi_state returned %ld\n",rc);
-		return rc;
-	} else if (vasi_state == H_VASI_ENABLED) {
-		return -EAGAIN;
-	} else if (vasi_state != H_VASI_SUSPENDING) {
+		वापस rc;
+	पूर्ण अन्यथा अगर (vasi_state == H_VASI_ENABLED) अणु
+		वापस -EAGAIN;
+	पूर्ण अन्यथा अगर (vasi_state != H_VASI_SUSPENDING) अणु
 		pr_err("pseries_suspend_begin: vasi_state returned state %ld\n",
 		       vasi_state);
-		return -EIO;
-	}
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * pseries_suspend_enter - Final phase of hibernation
@@ -53,15 +54,15 @@ static int pseries_suspend_begin(u64 stream_id)
  * Return value:
  * 	0 on success / other on failure
  **/
-static int pseries_suspend_enter(suspend_state_t state)
-{
-	return rtas_ibm_suspend_me(NULL);
-}
+अटल पूर्णांक pseries_suspend_enter(suspend_state_t state)
+अणु
+	वापस rtas_ibm_suspend_me(शून्य);
+पूर्ण
 
 /**
  * store_hibernate - Initiate partition hibernation
  * @dev:		subsys root device
- * @attr:		device attribute struct
+ * @attr:		device attribute काष्ठा
  * @buf:		buffer
  * @count:		buffer size
  *
@@ -69,115 +70,115 @@ static int pseries_suspend_enter(suspend_state_t state)
  * to trigger hibernating the partition
  *
  * Return value:
- * 	number of bytes printed to buffer / other on failure
+ * 	number of bytes prपूर्णांकed to buffer / other on failure
  **/
-static ssize_t store_hibernate(struct device *dev,
-			       struct device_attribute *attr,
-			       const char *buf, size_t count)
-{
+अटल sमाप_प्रकार store_hibernate(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	u64 stream_id;
-	int rc;
+	पूर्णांक rc;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	stream_id = simple_strtoul(buf, NULL, 16);
+	stream_id = simple_म_से_अदीर्घ(buf, शून्य, 16);
 
-	do {
+	करो अणु
 		rc = pseries_suspend_begin(stream_id);
-		if (rc == -EAGAIN)
+		अगर (rc == -EAGAIN)
 			ssleep(1);
-	} while (rc == -EAGAIN);
+	पूर्ण जबतक (rc == -EAGAIN);
 
-	if (!rc)
+	अगर (!rc)
 		rc = pm_suspend(PM_SUSPEND_MEM);
 
-	if (!rc) {
+	अगर (!rc) अणु
 		rc = count;
 		post_mobility_fixup();
-	}
+	पूर्ण
 
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#define USER_DT_UPDATE	0
-#define KERN_DT_UPDATE	1
+#घोषणा USER_DT_UPDATE	0
+#घोषणा KERN_DT_UPDATE	1
 
 /**
  * show_hibernate - Report device tree update responsibilty
  * @dev:		subsys root device
- * @attr:		device attribute struct
+ * @attr:		device attribute काष्ठा
  * @buf:		buffer
  *
- * Report whether a device tree update is performed by the kernel after a
- * resume, or if drmgr must coordinate the update from user space.
+ * Report whether a device tree update is perक्रमmed by the kernel after a
+ * resume, or अगर drmgr must coordinate the update from user space.
  *
  * Return value:
- *	0 if drmgr is to initiate update, and 1 otherwise
+ *	0 अगर drmgr is to initiate update, and 1 otherwise
  **/
-static ssize_t show_hibernate(struct device *dev,
-			      struct device_attribute *attr,
-			      char *buf)
-{
-	return sprintf(buf, "%d\n", KERN_DT_UPDATE);
-}
+अटल sमाप_प्रकार show_hibernate(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", KERN_DT_UPDATE);
+पूर्ण
 
-static DEVICE_ATTR(hibernate, 0644, show_hibernate, store_hibernate);
+अटल DEVICE_ATTR(hibernate, 0644, show_hibernate, store_hibernate);
 
-static struct bus_type suspend_subsys = {
+अटल काष्ठा bus_type suspend_subsys = अणु
 	.name = "power",
 	.dev_name = "power",
-};
+पूर्ण;
 
-static const struct platform_suspend_ops pseries_suspend_ops = {
+अटल स्थिर काष्ठा platक्रमm_suspend_ops pseries_suspend_ops = अणु
 	.valid		= suspend_valid_only_mem,
 	.enter		= pseries_suspend_enter,
-};
+पूर्ण;
 
 /**
- * pseries_suspend_sysfs_register - Register with sysfs
+ * pseries_suspend_sysfs_रेजिस्टर - Register with sysfs
  *
  * Return value:
  * 	0 on success / other on failure
  **/
-static int pseries_suspend_sysfs_register(struct device *dev)
-{
-	int rc;
+अटल पूर्णांक pseries_suspend_sysfs_रेजिस्टर(काष्ठा device *dev)
+अणु
+	पूर्णांक rc;
 
-	if ((rc = subsys_system_register(&suspend_subsys, NULL)))
-		return rc;
+	अगर ((rc = subsys_प्रणाली_रेजिस्टर(&suspend_subsys, शून्य)))
+		वापस rc;
 
 	dev->id = 0;
 	dev->bus = &suspend_subsys;
 
-	if ((rc = device_create_file(suspend_subsys.dev_root, &dev_attr_hibernate)))
-		goto subsys_unregister;
+	अगर ((rc = device_create_file(suspend_subsys.dev_root, &dev_attr_hibernate)))
+		जाओ subsys_unरेजिस्टर;
 
-	return 0;
+	वापस 0;
 
-subsys_unregister:
-	bus_unregister(&suspend_subsys);
-	return rc;
-}
+subsys_unरेजिस्टर:
+	bus_unरेजिस्टर(&suspend_subsys);
+	वापस rc;
+पूर्ण
 
 /**
- * pseries_suspend_init - initcall for pSeries suspend
+ * pseries_suspend_init - initcall क्रम pSeries suspend
  *
  * Return value:
  * 	0 on success / other on failure
  **/
-static int __init pseries_suspend_init(void)
-{
-	int rc;
+अटल पूर्णांक __init pseries_suspend_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	if (!firmware_has_feature(FW_FEATURE_LPAR))
-		return 0;
+	अगर (!firmware_has_feature(FW_FEATURE_LPAR))
+		वापस 0;
 
-	if ((rc = pseries_suspend_sysfs_register(&suspend_dev)))
-		return rc;
+	अगर ((rc = pseries_suspend_sysfs_रेजिस्टर(&suspend_dev)))
+		वापस rc;
 
 	suspend_set_ops(&pseries_suspend_ops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 machine_device_initcall(pseries, pseries_suspend_init);

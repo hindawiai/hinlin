@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
-#include <linux/phy.h>
-#include <linux/ethtool_netlink.h>
-#include "netlink.h"
-#include "common.h"
+#समावेश <linux/phy.h>
+#समावेश <linux/ethtool_netlink.h>
+#समावेश "netlink.h"
+#समावेश "common.h"
 
-/* 802.3 standard allows 100 meters for BaseT cables. However longer
+/* 802.3 standard allows 100 meters क्रम BaseT cables. However दीर्घer
  * cables might work, depending on the quality of the cables and the
- * PHY. So allow testing for up to 150 meters.
+ * PHY. So allow testing क्रम up to 150 meters.
  */
-#define MAX_CABLE_LENGTH_CM (150 * 100)
+#घोषणा MAX_CABLE_LENGTH_CM (150 * 100)
 
-const struct nla_policy ethnl_cable_test_act_policy[] = {
+स्थिर काष्ठा nla_policy ethnl_cable_test_act_policy[] = अणु
 	[ETHTOOL_A_CABLE_TEST_HEADER]		=
 		NLA_POLICY_NESTED(ethnl_header_policy),
-};
+पूर्ण;
 
-static int ethnl_cable_test_started(struct phy_device *phydev, u8 cmd)
-{
-	struct sk_buff *skb;
-	int err = -ENOMEM;
-	void *ehdr;
+अटल पूर्णांक ethnl_cable_test_started(काष्ठा phy_device *phydev, u8 cmd)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = -ENOMEM;
+	व्योम *ehdr;
 
 	skb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
-	ehdr = ethnl_bcastmsg_put(skb, cmd);
-	if (!ehdr) {
+	ehdr = ethnl_bcasपंचांगsg_put(skb, cmd);
+	अगर (!ehdr) अणु
 		err = -EMSGSIZE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = ethnl_fill_reply_header(skb, phydev->attached_dev,
 				      ETHTOOL_A_CABLE_TEST_NTF_HEADER);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = nla_put_u8(skb, ETHTOOL_A_CABLE_TEST_NTF_STATUS,
 			 ETHTOOL_A_CABLE_TEST_NTF_STATUS_STARTED);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	genlmsg_end(skb, ehdr);
 
-	return ethnl_multicast(skb, phydev->attached_dev);
+	वापस ethnl_multicast(skb, phydev->attached_dev);
 
 out:
-	nlmsg_free(skb);
+	nlmsg_मुक्त(skb);
 	phydev_err(phydev, "%s: Error %pe\n", __func__, ERR_PTR(err));
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ethnl_act_cable_test(struct sk_buff *skb, struct genl_info *info)
-{
-	struct ethnl_req_info req_info = {};
-	const struct ethtool_phy_ops *ops;
-	struct nlattr **tb = info->attrs;
-	struct net_device *dev;
-	int ret;
+पूर्णांक ethnl_act_cable_test(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा ethnl_req_info req_info = अणुपूर्ण;
+	स्थिर काष्ठा ethtool_phy_ops *ops;
+	काष्ठा nlattr **tb = info->attrs;
+	काष्ठा net_device *dev;
+	पूर्णांक ret;
 
 	ret = ethnl_parse_header_dev_get(&req_info,
 					 tb[ETHTOOL_A_CABLE_TEST_HEADER],
 					 genl_info_net(info), info->extack,
 					 true);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	dev = req_info.dev;
-	if (!dev->phydev) {
+	अगर (!dev->phydev) अणु
 		ret = -EOPNOTSUPP;
-		goto out_dev_put;
-	}
+		जाओ out_dev_put;
+	पूर्ण
 
 	rtnl_lock();
 	ops = ethtool_phy_ops;
-	if (!ops || !ops->start_cable_test) {
+	अगर (!ops || !ops->start_cable_test) अणु
 		ret = -EOPNOTSUPP;
-		goto out_rtnl;
-	}
+		जाओ out_rtnl;
+	पूर्ण
 
 	ret = ethnl_ops_begin(dev);
-	if (ret < 0)
-		goto out_rtnl;
+	अगर (ret < 0)
+		जाओ out_rtnl;
 
 	ret = ops->start_cable_test(dev->phydev, info->extack);
 
 	ethnl_ops_complete(dev);
 
-	if (!ret)
+	अगर (!ret)
 		ethnl_cable_test_started(dev->phydev,
 					 ETHTOOL_MSG_CABLE_TEST_NTF);
 
@@ -97,256 +98,256 @@ out_rtnl:
 	rtnl_unlock();
 out_dev_put:
 	dev_put(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ethnl_cable_test_alloc(struct phy_device *phydev, u8 cmd)
-{
-	int err = -ENOMEM;
+पूर्णांक ethnl_cable_test_alloc(काष्ठा phy_device *phydev, u8 cmd)
+अणु
+	पूर्णांक err = -ENOMEM;
 
 	/* One TDR sample occupies 20 bytes. For a 150 meter cable,
 	 * with four pairs, around 12K is needed.
 	 */
 	phydev->skb = genlmsg_new(SZ_16K, GFP_KERNEL);
-	if (!phydev->skb)
-		goto out;
+	अगर (!phydev->skb)
+		जाओ out;
 
-	phydev->ehdr = ethnl_bcastmsg_put(phydev->skb, cmd);
-	if (!phydev->ehdr) {
+	phydev->ehdr = ethnl_bcasपंचांगsg_put(phydev->skb, cmd);
+	अगर (!phydev->ehdr) अणु
 		err = -EMSGSIZE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = ethnl_fill_reply_header(phydev->skb, phydev->attached_dev,
 				      ETHTOOL_A_CABLE_TEST_NTF_HEADER);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = nla_put_u8(phydev->skb, ETHTOOL_A_CABLE_TEST_NTF_STATUS,
 			 ETHTOOL_A_CABLE_TEST_NTF_STATUS_COMPLETED);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	phydev->nest = nla_nest_start(phydev->skb,
 				      ETHTOOL_A_CABLE_TEST_NTF_NEST);
-	if (!phydev->nest) {
+	अगर (!phydev->nest) अणु
 		err = -EMSGSIZE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out:
-	nlmsg_free(phydev->skb);
-	phydev->skb = NULL;
-	return err;
-}
+	nlmsg_मुक्त(phydev->skb);
+	phydev->skb = शून्य;
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(ethnl_cable_test_alloc);
 
-void ethnl_cable_test_free(struct phy_device *phydev)
-{
-	nlmsg_free(phydev->skb);
-	phydev->skb = NULL;
-}
-EXPORT_SYMBOL_GPL(ethnl_cable_test_free);
+व्योम ethnl_cable_test_मुक्त(काष्ठा phy_device *phydev)
+अणु
+	nlmsg_मुक्त(phydev->skb);
+	phydev->skb = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(ethnl_cable_test_मुक्त);
 
-void ethnl_cable_test_finished(struct phy_device *phydev)
-{
+व्योम ethnl_cable_test_finished(काष्ठा phy_device *phydev)
+अणु
 	nla_nest_end(phydev->skb, phydev->nest);
 
 	genlmsg_end(phydev->skb, phydev->ehdr);
 
 	ethnl_multicast(phydev->skb, phydev->attached_dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ethnl_cable_test_finished);
 
-int ethnl_cable_test_result(struct phy_device *phydev, u8 pair, u8 result)
-{
-	struct nlattr *nest;
-	int ret = -EMSGSIZE;
+पूर्णांक ethnl_cable_test_result(काष्ठा phy_device *phydev, u8 pair, u8 result)
+अणु
+	काष्ठा nlattr *nest;
+	पूर्णांक ret = -EMSGSIZE;
 
 	nest = nla_nest_start(phydev->skb, ETHTOOL_A_CABLE_NEST_RESULT);
-	if (!nest)
-		return -EMSGSIZE;
+	अगर (!nest)
+		वापस -EMSGSIZE;
 
-	if (nla_put_u8(phydev->skb, ETHTOOL_A_CABLE_RESULT_PAIR, pair))
-		goto err;
-	if (nla_put_u8(phydev->skb, ETHTOOL_A_CABLE_RESULT_CODE, result))
-		goto err;
+	अगर (nla_put_u8(phydev->skb, ETHTOOL_A_CABLE_RESULT_PAIR, pair))
+		जाओ err;
+	अगर (nla_put_u8(phydev->skb, ETHTOOL_A_CABLE_RESULT_CODE, result))
+		जाओ err;
 
 	nla_nest_end(phydev->skb, nest);
-	return 0;
+	वापस 0;
 
 err:
 	nla_nest_cancel(phydev->skb, nest);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ethnl_cable_test_result);
 
-int ethnl_cable_test_fault_length(struct phy_device *phydev, u8 pair, u32 cm)
-{
-	struct nlattr *nest;
-	int ret = -EMSGSIZE;
+पूर्णांक ethnl_cable_test_fault_length(काष्ठा phy_device *phydev, u8 pair, u32 cm)
+अणु
+	काष्ठा nlattr *nest;
+	पूर्णांक ret = -EMSGSIZE;
 
 	nest = nla_nest_start(phydev->skb,
 			      ETHTOOL_A_CABLE_NEST_FAULT_LENGTH);
-	if (!nest)
-		return -EMSGSIZE;
+	अगर (!nest)
+		वापस -EMSGSIZE;
 
-	if (nla_put_u8(phydev->skb, ETHTOOL_A_CABLE_FAULT_LENGTH_PAIR, pair))
-		goto err;
-	if (nla_put_u32(phydev->skb, ETHTOOL_A_CABLE_FAULT_LENGTH_CM, cm))
-		goto err;
+	अगर (nla_put_u8(phydev->skb, ETHTOOL_A_CABLE_FAULT_LENGTH_PAIR, pair))
+		जाओ err;
+	अगर (nla_put_u32(phydev->skb, ETHTOOL_A_CABLE_FAULT_LENGTH_CM, cm))
+		जाओ err;
 
 	nla_nest_end(phydev->skb, nest);
-	return 0;
+	वापस 0;
 
 err:
 	nla_nest_cancel(phydev->skb, nest);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ethnl_cable_test_fault_length);
 
-struct cable_test_tdr_req_info {
-	struct ethnl_req_info		base;
-};
+काष्ठा cable_test_tdr_req_info अणु
+	काष्ठा ethnl_req_info		base;
+पूर्ण;
 
-static const struct nla_policy cable_test_tdr_act_cfg_policy[] = {
-	[ETHTOOL_A_CABLE_TEST_TDR_CFG_FIRST]	= { .type = NLA_U32 },
-	[ETHTOOL_A_CABLE_TEST_TDR_CFG_LAST]	= { .type = NLA_U32 },
-	[ETHTOOL_A_CABLE_TEST_TDR_CFG_STEP]	= { .type = NLA_U32 },
-	[ETHTOOL_A_CABLE_TEST_TDR_CFG_PAIR]	= { .type = NLA_U8 },
-};
+अटल स्थिर काष्ठा nla_policy cable_test_tdr_act_cfg_policy[] = अणु
+	[ETHTOOL_A_CABLE_TEST_TDR_CFG_FIRST]	= अणु .type = NLA_U32 पूर्ण,
+	[ETHTOOL_A_CABLE_TEST_TDR_CFG_LAST]	= अणु .type = NLA_U32 पूर्ण,
+	[ETHTOOL_A_CABLE_TEST_TDR_CFG_STEP]	= अणु .type = NLA_U32 पूर्ण,
+	[ETHTOOL_A_CABLE_TEST_TDR_CFG_PAIR]	= अणु .type = NLA_U8 पूर्ण,
+पूर्ण;
 
-const struct nla_policy ethnl_cable_test_tdr_act_policy[] = {
+स्थिर काष्ठा nla_policy ethnl_cable_test_tdr_act_policy[] = अणु
 	[ETHTOOL_A_CABLE_TEST_TDR_HEADER]	=
 		NLA_POLICY_NESTED(ethnl_header_policy),
-	[ETHTOOL_A_CABLE_TEST_TDR_CFG]		= { .type = NLA_NESTED },
-};
+	[ETHTOOL_A_CABLE_TEST_TDR_CFG]		= अणु .type = NLA_NESTED पूर्ण,
+पूर्ण;
 
 /* CABLE_TEST_TDR_ACT */
-static int ethnl_act_cable_test_tdr_cfg(const struct nlattr *nest,
-					struct genl_info *info,
-					struct phy_tdr_config *cfg)
-{
-	struct nlattr *tb[ARRAY_SIZE(cable_test_tdr_act_cfg_policy)];
-	int ret;
+अटल पूर्णांक ethnl_act_cable_test_tdr_cfg(स्थिर काष्ठा nlattr *nest,
+					काष्ठा genl_info *info,
+					काष्ठा phy_tdr_config *cfg)
+अणु
+	काष्ठा nlattr *tb[ARRAY_SIZE(cable_test_tdr_act_cfg_policy)];
+	पूर्णांक ret;
 
 	cfg->first = 100;
 	cfg->step = 100;
 	cfg->last = MAX_CABLE_LENGTH_CM;
 	cfg->pair = PHY_PAIR_ALL;
 
-	if (!nest)
-		return 0;
+	अगर (!nest)
+		वापस 0;
 
 	ret = nla_parse_nested(tb,
 			       ARRAY_SIZE(cable_test_tdr_act_cfg_policy) - 1,
 			       nest, cable_test_tdr_act_cfg_policy,
 			       info->extack);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_FIRST])
+	अगर (tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_FIRST])
 		cfg->first = nla_get_u32(
 			tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_FIRST]);
 
-	if (tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_LAST])
+	अगर (tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_LAST])
 		cfg->last = nla_get_u32(tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_LAST]);
 
-	if (tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_STEP])
+	अगर (tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_STEP])
 		cfg->step = nla_get_u32(tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_STEP]);
 
-	if (tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_PAIR]) {
+	अगर (tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_PAIR]) अणु
 		cfg->pair = nla_get_u8(tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_PAIR]);
-		if (cfg->pair > ETHTOOL_A_CABLE_PAIR_D) {
+		अगर (cfg->pair > ETHTOOL_A_CABLE_PAIR_D) अणु
 			NL_SET_ERR_MSG_ATTR(
 				info->extack,
 				tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_PAIR],
 				"invalid pair parameter");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (cfg->first > MAX_CABLE_LENGTH_CM) {
+	अगर (cfg->first > MAX_CABLE_LENGTH_CM) अणु
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_FIRST],
 				    "invalid first parameter");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cfg->last > MAX_CABLE_LENGTH_CM) {
+	अगर (cfg->last > MAX_CABLE_LENGTH_CM) अणु
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_LAST],
 				    "invalid last parameter");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cfg->first > cfg->last) {
+	अगर (cfg->first > cfg->last) अणु
 		NL_SET_ERR_MSG(info->extack, "invalid first/last parameter");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!cfg->step) {
+	अगर (!cfg->step) अणु
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_STEP],
 				    "invalid step parameter");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cfg->step > (cfg->last - cfg->first)) {
+	अगर (cfg->step > (cfg->last - cfg->first)) अणु
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_STEP],
 				    "step parameter too big");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ethnl_act_cable_test_tdr(struct sk_buff *skb, struct genl_info *info)
-{
-	struct ethnl_req_info req_info = {};
-	const struct ethtool_phy_ops *ops;
-	struct nlattr **tb = info->attrs;
-	struct phy_tdr_config cfg;
-	struct net_device *dev;
-	int ret;
+पूर्णांक ethnl_act_cable_test_tdr(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा ethnl_req_info req_info = अणुपूर्ण;
+	स्थिर काष्ठा ethtool_phy_ops *ops;
+	काष्ठा nlattr **tb = info->attrs;
+	काष्ठा phy_tdr_config cfg;
+	काष्ठा net_device *dev;
+	पूर्णांक ret;
 
 	ret = ethnl_parse_header_dev_get(&req_info,
 					 tb[ETHTOOL_A_CABLE_TEST_TDR_HEADER],
 					 genl_info_net(info), info->extack,
 					 true);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	dev = req_info.dev;
-	if (!dev->phydev) {
+	अगर (!dev->phydev) अणु
 		ret = -EOPNOTSUPP;
-		goto out_dev_put;
-	}
+		जाओ out_dev_put;
+	पूर्ण
 
 	ret = ethnl_act_cable_test_tdr_cfg(tb[ETHTOOL_A_CABLE_TEST_TDR_CFG],
 					   info, &cfg);
-	if (ret)
-		goto out_dev_put;
+	अगर (ret)
+		जाओ out_dev_put;
 
 	rtnl_lock();
 	ops = ethtool_phy_ops;
-	if (!ops || !ops->start_cable_test_tdr) {
+	अगर (!ops || !ops->start_cable_test_tdr) अणु
 		ret = -EOPNOTSUPP;
-		goto out_rtnl;
-	}
+		जाओ out_rtnl;
+	पूर्ण
 
 	ret = ethnl_ops_begin(dev);
-	if (ret < 0)
-		goto out_rtnl;
+	अगर (ret < 0)
+		जाओ out_rtnl;
 
 	ret = ops->start_cable_test_tdr(dev->phydev, info->extack, &cfg);
 
 	ethnl_ops_complete(dev);
 
-	if (!ret)
+	अगर (!ret)
 		ethnl_cable_test_started(dev->phydev,
 					 ETHTOOL_MSG_CABLE_TEST_TDR_NTF);
 
@@ -354,80 +355,80 @@ out_rtnl:
 	rtnl_unlock();
 out_dev_put:
 	dev_put(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
  
-int ethnl_cable_test_amplitude(struct phy_device *phydev,
+पूर्णांक ethnl_cable_test_amplitude(काष्ठा phy_device *phydev,
 			       u8 pair, s16 mV)
-{
-	struct nlattr *nest;
-	int ret = -EMSGSIZE;
+अणु
+	काष्ठा nlattr *nest;
+	पूर्णांक ret = -EMSGSIZE;
 
 	nest = nla_nest_start(phydev->skb,
 			      ETHTOOL_A_CABLE_TDR_NEST_AMPLITUDE);
-	if (!nest)
-		return -EMSGSIZE;
+	अगर (!nest)
+		वापस -EMSGSIZE;
 
-	if (nla_put_u8(phydev->skb, ETHTOOL_A_CABLE_AMPLITUDE_PAIR, pair))
-		goto err;
-	if (nla_put_u16(phydev->skb, ETHTOOL_A_CABLE_AMPLITUDE_mV, mV))
-		goto err;
+	अगर (nla_put_u8(phydev->skb, ETHTOOL_A_CABLE_AMPLITUDE_PAIR, pair))
+		जाओ err;
+	अगर (nla_put_u16(phydev->skb, ETHTOOL_A_CABLE_AMPLITUDE_mV, mV))
+		जाओ err;
 
 	nla_nest_end(phydev->skb, nest);
-	return 0;
+	वापस 0;
 
 err:
 	nla_nest_cancel(phydev->skb, nest);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ethnl_cable_test_amplitude);
 
-int ethnl_cable_test_pulse(struct phy_device *phydev, u16 mV)
-{
-	struct nlattr *nest;
-	int ret = -EMSGSIZE;
+पूर्णांक ethnl_cable_test_pulse(काष्ठा phy_device *phydev, u16 mV)
+अणु
+	काष्ठा nlattr *nest;
+	पूर्णांक ret = -EMSGSIZE;
 
 	nest = nla_nest_start(phydev->skb, ETHTOOL_A_CABLE_TDR_NEST_PULSE);
-	if (!nest)
-		return -EMSGSIZE;
+	अगर (!nest)
+		वापस -EMSGSIZE;
 
-	if (nla_put_u16(phydev->skb, ETHTOOL_A_CABLE_PULSE_mV, mV))
-		goto err;
+	अगर (nla_put_u16(phydev->skb, ETHTOOL_A_CABLE_PULSE_mV, mV))
+		जाओ err;
 
 	nla_nest_end(phydev->skb, nest);
-	return 0;
+	वापस 0;
 
 err:
 	nla_nest_cancel(phydev->skb, nest);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ethnl_cable_test_pulse);
 
-int ethnl_cable_test_step(struct phy_device *phydev, u32 first, u32 last,
+पूर्णांक ethnl_cable_test_step(काष्ठा phy_device *phydev, u32 first, u32 last,
 			  u32 step)
-{
-	struct nlattr *nest;
-	int ret = -EMSGSIZE;
+अणु
+	काष्ठा nlattr *nest;
+	पूर्णांक ret = -EMSGSIZE;
 
 	nest = nla_nest_start(phydev->skb, ETHTOOL_A_CABLE_TDR_NEST_STEP);
-	if (!nest)
-		return -EMSGSIZE;
+	अगर (!nest)
+		वापस -EMSGSIZE;
 
-	if (nla_put_u32(phydev->skb, ETHTOOL_A_CABLE_STEP_FIRST_DISTANCE,
+	अगर (nla_put_u32(phydev->skb, ETHTOOL_A_CABLE_STEP_FIRST_DISTANCE,
 			first))
-		goto err;
+		जाओ err;
 
-	if (nla_put_u32(phydev->skb, ETHTOOL_A_CABLE_STEP_LAST_DISTANCE, last))
-		goto err;
+	अगर (nla_put_u32(phydev->skb, ETHTOOL_A_CABLE_STEP_LAST_DISTANCE, last))
+		जाओ err;
 
-	if (nla_put_u32(phydev->skb, ETHTOOL_A_CABLE_STEP_STEP_DISTANCE, step))
-		goto err;
+	अगर (nla_put_u32(phydev->skb, ETHTOOL_A_CABLE_STEP_STEP_DISTANCE, step))
+		जाओ err;
 
 	nla_nest_end(phydev->skb, nest);
-	return 0;
+	वापस 0;
 
 err:
 	nla_nest_cancel(phydev->skb, nest);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ethnl_cable_test_step);

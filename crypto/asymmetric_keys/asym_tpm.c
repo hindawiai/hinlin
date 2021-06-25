@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0
-#define pr_fmt(fmt) "ASYM-TPM: "fmt
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/seq_file.h>
-#include <linux/scatterlist.h>
-#include <linux/tpm.h>
-#include <linux/tpm_command.h>
-#include <crypto/akcipher.h>
-#include <crypto/hash.h>
-#include <crypto/sha1.h>
-#include <asm/unaligned.h>
-#include <keys/asymmetric-subtype.h>
-#include <keys/trusted_tpm.h>
-#include <crypto/asym_tpm_subtype.h>
-#include <crypto/public_key.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा pr_fmt(fmt) "ASYM-TPM: "fmt
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/tpm.h>
+#समावेश <linux/tpm_command.h>
+#समावेश <crypto/akcipher.h>
+#समावेश <crypto/hash.h>
+#समावेश <crypto/sha1.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <keys/asymmetric-subtype.h>
+#समावेश <keys/trusted_tpm.h>
+#समावेश <crypto/asym_tpm_subtype.h>
+#समावेश <crypto/खुला_key.h>
 
-#define TPM_ORD_FLUSHSPECIFIC	186
-#define TPM_ORD_LOADKEY2	65
-#define TPM_ORD_UNBIND		30
-#define TPM_ORD_SIGN		60
+#घोषणा TPM_ORD_FLUSHSPECIFIC	186
+#घोषणा TPM_ORD_LOADKEY2	65
+#घोषणा TPM_ORD_UNBIND		30
+#घोषणा TPM_ORD_SIGN		60
 
-#define TPM_RT_KEY                      0x00000001
+#घोषणा TPM_RT_KEY                      0x00000001
 
 /*
  * Load a TPM key from the blob provided by userspace
  */
-static int tpm_loadkey2(struct tpm_buf *tb,
-			uint32_t keyhandle, unsigned char *keyauth,
-			const unsigned char *keyblob, int keybloblen,
-			uint32_t *newhandle)
-{
-	unsigned char nonceodd[TPM_NONCE_SIZE];
-	unsigned char enonce[TPM_NONCE_SIZE];
-	unsigned char authdata[SHA1_DIGEST_SIZE];
-	uint32_t authhandle = 0;
-	unsigned char cont = 0;
-	uint32_t ordinal;
-	int ret;
+अटल पूर्णांक tpm_loadkey2(काष्ठा tpm_buf *tb,
+			uपूर्णांक32_t keyhandle, अचिन्हित अक्षर *keyauth,
+			स्थिर अचिन्हित अक्षर *keyblob, पूर्णांक keybloblen,
+			uपूर्णांक32_t *newhandle)
+अणु
+	अचिन्हित अक्षर nonceodd[TPM_NONCE_SIZE];
+	अचिन्हित अक्षर enonce[TPM_NONCE_SIZE];
+	अचिन्हित अक्षर authdata[SHA1_DIGEST_SIZE];
+	uपूर्णांक32_t authhandle = 0;
+	अचिन्हित अक्षर cont = 0;
+	uपूर्णांक32_t ordinal;
+	पूर्णांक ret;
 
 	ordinal = htonl(TPM_ORD_LOADKEY2);
 
-	/* session for loading the key */
+	/* session क्रम loading the key */
 	ret = oiap(tb, &authhandle, enonce);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_info("oiap failed (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* generate odd nonce */
-	ret = tpm_get_random(NULL, nonceodd, TPM_NONCE_SIZE);
-	if (ret < 0) {
+	ret = tpm_get_अक्रमom(शून्य, nonceodd, TPM_NONCE_SIZE);
+	अगर (ret < 0) अणु
 		pr_info("tpm_get_random failed (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* calculate authorization HMAC value */
 	ret = TSS_authhmac(authdata, keyauth, SHA1_DIGEST_SIZE, enonce,
-			   nonceodd, cont, sizeof(uint32_t), &ordinal,
+			   nonceodd, cont, माप(uपूर्णांक32_t), &ordinal,
 			   keybloblen, keyblob, 0, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* build the request buffer */
 	tpm_buf_reset(tb, TPM_TAG_RQU_AUTH1_COMMAND, TPM_ORD_LOADKEY2);
@@ -73,76 +74,76 @@ static int tpm_loadkey2(struct tpm_buf *tb,
 	tpm_buf_append(tb, authdata, SHA1_DIGEST_SIZE);
 
 	ret = trusted_tpm_send(tb->data, MAX_BUF_SIZE);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_info("authhmac failed (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = TSS_checkhmac1(tb->data, ordinal, nonceodd, keyauth,
 			     SHA1_DIGEST_SIZE, 0, 0);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_info("TSS_checkhmac1 failed (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	*newhandle = LOAD32(tb->data, TPM_DATA_OFFSET);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Execute the FlushSpecific TPM command
+ * Execute the FlushSpecअगरic TPM command
  */
-static int tpm_flushspecific(struct tpm_buf *tb, uint32_t handle)
-{
+अटल पूर्णांक tpm_flushspecअगरic(काष्ठा tpm_buf *tb, uपूर्णांक32_t handle)
+अणु
 	tpm_buf_reset(tb, TPM_TAG_RQU_COMMAND, TPM_ORD_FLUSHSPECIFIC);
 	tpm_buf_append_u32(tb, handle);
 	tpm_buf_append_u32(tb, TPM_RT_KEY);
 
-	return trusted_tpm_send(tb->data, MAX_BUF_SIZE);
-}
+	वापस trusted_tpm_send(tb->data, MAX_BUF_SIZE);
+पूर्ण
 
 /*
- * Decrypt a blob provided by userspace using a specific key handle.
+ * Decrypt a blob provided by userspace using a specअगरic key handle.
  * The handle is a well known handle or previously loaded by e.g. LoadKey2
  */
-static int tpm_unbind(struct tpm_buf *tb,
-			uint32_t keyhandle, unsigned char *keyauth,
-			const unsigned char *blob, uint32_t bloblen,
-			void *out, uint32_t outlen)
-{
-	unsigned char nonceodd[TPM_NONCE_SIZE];
-	unsigned char enonce[TPM_NONCE_SIZE];
-	unsigned char authdata[SHA1_DIGEST_SIZE];
-	uint32_t authhandle = 0;
-	unsigned char cont = 0;
-	uint32_t ordinal;
-	uint32_t datalen;
-	int ret;
+अटल पूर्णांक tpm_unbind(काष्ठा tpm_buf *tb,
+			uपूर्णांक32_t keyhandle, अचिन्हित अक्षर *keyauth,
+			स्थिर अचिन्हित अक्षर *blob, uपूर्णांक32_t bloblen,
+			व्योम *out, uपूर्णांक32_t outlen)
+अणु
+	अचिन्हित अक्षर nonceodd[TPM_NONCE_SIZE];
+	अचिन्हित अक्षर enonce[TPM_NONCE_SIZE];
+	अचिन्हित अक्षर authdata[SHA1_DIGEST_SIZE];
+	uपूर्णांक32_t authhandle = 0;
+	अचिन्हित अक्षर cont = 0;
+	uपूर्णांक32_t ordinal;
+	uपूर्णांक32_t datalen;
+	पूर्णांक ret;
 
 	ordinal = htonl(TPM_ORD_UNBIND);
 	datalen = htonl(bloblen);
 
-	/* session for loading the key */
+	/* session क्रम loading the key */
 	ret = oiap(tb, &authhandle, enonce);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_info("oiap failed (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* generate odd nonce */
-	ret = tpm_get_random(NULL, nonceodd, TPM_NONCE_SIZE);
-	if (ret < 0) {
+	ret = tpm_get_अक्रमom(शून्य, nonceodd, TPM_NONCE_SIZE);
+	अगर (ret < 0) अणु
 		pr_info("tpm_get_random failed (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* calculate authorization HMAC value */
 	ret = TSS_authhmac(authdata, keyauth, SHA1_DIGEST_SIZE, enonce,
-			   nonceodd, cont, sizeof(uint32_t), &ordinal,
-			   sizeof(uint32_t), &datalen,
+			   nonceodd, cont, माप(uपूर्णांक32_t), &ordinal,
+			   माप(uपूर्णांक32_t), &datalen,
 			   bloblen, blob, 0, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* build the request buffer */
 	tpm_buf_reset(tb, TPM_TAG_RQU_AUTH1_COMMAND, TPM_ORD_UNBIND);
@@ -155,32 +156,32 @@ static int tpm_unbind(struct tpm_buf *tb,
 	tpm_buf_append(tb, authdata, SHA1_DIGEST_SIZE);
 
 	ret = trusted_tpm_send(tb->data, MAX_BUF_SIZE);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_info("authhmac failed (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	datalen = LOAD32(tb->data, TPM_DATA_OFFSET);
 
 	ret = TSS_checkhmac1(tb->data, ordinal, nonceodd,
 			     keyauth, SHA1_DIGEST_SIZE,
-			     sizeof(uint32_t), TPM_DATA_OFFSET,
-			     datalen, TPM_DATA_OFFSET + sizeof(uint32_t),
+			     माप(uपूर्णांक32_t), TPM_DATA_OFFSET,
+			     datalen, TPM_DATA_OFFSET + माप(uपूर्णांक32_t),
 			     0, 0);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_info("TSS_checkhmac1 failed (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	memcpy(out, tb->data + TPM_DATA_OFFSET + sizeof(uint32_t),
+	स_नकल(out, tb->data + TPM_DATA_OFFSET + माप(uपूर्णांक32_t),
 	       min(outlen, datalen));
 
-	return datalen;
-}
+	वापस datalen;
+पूर्ण
 
 /*
  * Sign a blob provided by userspace (that has had the hash function applied)
- * using a specific key handle.  The handle is assumed to have been previously
+ * using a specअगरic key handle.  The handle is assumed to have been previously
  * loaded by e.g. LoadKey2.
  *
  * Note that the key signature scheme of the used key should be set to
@@ -188,44 +189,44 @@ static int tpm_unbind(struct tpm_buf *tb,
  * up to key_length_in_bytes - 11 and not be limited to size 20 like the
  * TPM_SS_RSASSAPKCS1v15_SHA1 signature scheme.
  */
-static int tpm_sign(struct tpm_buf *tb,
-		    uint32_t keyhandle, unsigned char *keyauth,
-		    const unsigned char *blob, uint32_t bloblen,
-		    void *out, uint32_t outlen)
-{
-	unsigned char nonceodd[TPM_NONCE_SIZE];
-	unsigned char enonce[TPM_NONCE_SIZE];
-	unsigned char authdata[SHA1_DIGEST_SIZE];
-	uint32_t authhandle = 0;
-	unsigned char cont = 0;
-	uint32_t ordinal;
-	uint32_t datalen;
-	int ret;
+अटल पूर्णांक tpm_sign(काष्ठा tpm_buf *tb,
+		    uपूर्णांक32_t keyhandle, अचिन्हित अक्षर *keyauth,
+		    स्थिर अचिन्हित अक्षर *blob, uपूर्णांक32_t bloblen,
+		    व्योम *out, uपूर्णांक32_t outlen)
+अणु
+	अचिन्हित अक्षर nonceodd[TPM_NONCE_SIZE];
+	अचिन्हित अक्षर enonce[TPM_NONCE_SIZE];
+	अचिन्हित अक्षर authdata[SHA1_DIGEST_SIZE];
+	uपूर्णांक32_t authhandle = 0;
+	अचिन्हित अक्षर cont = 0;
+	uपूर्णांक32_t ordinal;
+	uपूर्णांक32_t datalen;
+	पूर्णांक ret;
 
 	ordinal = htonl(TPM_ORD_SIGN);
 	datalen = htonl(bloblen);
 
-	/* session for loading the key */
+	/* session क्रम loading the key */
 	ret = oiap(tb, &authhandle, enonce);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_info("oiap failed (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* generate odd nonce */
-	ret = tpm_get_random(NULL, nonceodd, TPM_NONCE_SIZE);
-	if (ret < 0) {
+	ret = tpm_get_अक्रमom(शून्य, nonceodd, TPM_NONCE_SIZE);
+	अगर (ret < 0) अणु
 		pr_info("tpm_get_random failed (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* calculate authorization HMAC value */
 	ret = TSS_authhmac(authdata, keyauth, SHA1_DIGEST_SIZE, enonce,
-			   nonceodd, cont, sizeof(uint32_t), &ordinal,
-			   sizeof(uint32_t), &datalen,
+			   nonceodd, cont, माप(uपूर्णांक32_t), &ordinal,
+			   माप(uपूर्णांक32_t), &datalen,
 			   bloblen, blob, 0, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* build the request buffer */
 	tpm_buf_reset(tb, TPM_TAG_RQU_AUTH1_COMMAND, TPM_ORD_SIGN);
@@ -238,183 +239,183 @@ static int tpm_sign(struct tpm_buf *tb,
 	tpm_buf_append(tb, authdata, SHA1_DIGEST_SIZE);
 
 	ret = trusted_tpm_send(tb->data, MAX_BUF_SIZE);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_info("authhmac failed (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	datalen = LOAD32(tb->data, TPM_DATA_OFFSET);
 
 	ret = TSS_checkhmac1(tb->data, ordinal, nonceodd,
 			     keyauth, SHA1_DIGEST_SIZE,
-			     sizeof(uint32_t), TPM_DATA_OFFSET,
-			     datalen, TPM_DATA_OFFSET + sizeof(uint32_t),
+			     माप(uपूर्णांक32_t), TPM_DATA_OFFSET,
+			     datalen, TPM_DATA_OFFSET + माप(uपूर्णांक32_t),
 			     0, 0);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_info("TSS_checkhmac1 failed (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	memcpy(out, tb->data + TPM_DATA_OFFSET + sizeof(uint32_t),
+	स_नकल(out, tb->data + TPM_DATA_OFFSET + माप(uपूर्णांक32_t),
 	       min(datalen, outlen));
 
-	return datalen;
-}
+	वापस datalen;
+पूर्ण
 
-/* Room to fit two u32 zeros for algo id and parameters length. */
-#define SETKEY_PARAMS_SIZE (sizeof(u32) * 2)
+/* Room to fit two u32 zeros क्रम algo id and parameters length. */
+#घोषणा SETKEY_PARAMS_SIZE (माप(u32) * 2)
 
 /*
- * Maximum buffer size for the BER/DER encoded public key.  The public key
- * is of the form SEQUENCE { INTEGER n, INTEGER e } where n is a maximum 2048
+ * Maximum buffer size क्रम the BER/DER encoded खुला key.  The खुला key
+ * is of the क्रमm SEQUENCE अणु INTEGER n, INTEGER e पूर्ण where n is a maximum 2048
  * bit key and e is usually 65537
  * The encoding overhead is:
- * - max 4 bytes for SEQUENCE
- *   - max 4 bytes for INTEGER n type/length
+ * - max 4 bytes क्रम SEQUENCE
+ *   - max 4 bytes क्रम INTEGER n type/length
  *     - 257 bytes of n
- *   - max 2 bytes for INTEGER e type/length
+ *   - max 2 bytes क्रम INTEGER e type/length
  *     - 3 bytes of e
- * - 4+4 of zeros for set_pub_key parameters (SETKEY_PARAMS_SIZE)
+ * - 4+4 of zeros क्रम set_pub_key parameters (SETKEY_PARAMS_SIZE)
  */
-#define PUB_KEY_BUF_SIZE (4 + 4 + 257 + 2 + 3 + SETKEY_PARAMS_SIZE)
+#घोषणा PUB_KEY_BUF_SIZE (4 + 4 + 257 + 2 + 3 + SETKEY_PARAMS_SIZE)
 
 /*
- * Provide a part of a description of the key for /proc/keys.
+ * Provide a part of a description of the key क्रम /proc/keys.
  */
-static void asym_tpm_describe(const struct key *asymmetric_key,
-			      struct seq_file *m)
-{
-	struct tpm_key *tk = asymmetric_key->payload.data[asym_crypto];
+अटल व्योम asym_tpm_describe(स्थिर काष्ठा key *asymmetric_key,
+			      काष्ठा seq_file *m)
+अणु
+	काष्ठा tpm_key *tk = asymmetric_key->payload.data[asym_crypto];
 
-	if (!tk)
-		return;
+	अगर (!tk)
+		वापस;
 
-	seq_printf(m, "TPM1.2/Blob");
-}
+	seq_म_लिखो(m, "TPM1.2/Blob");
+पूर्ण
 
-static void asym_tpm_destroy(void *payload0, void *payload3)
-{
-	struct tpm_key *tk = payload0;
+अटल व्योम asym_tpm_destroy(व्योम *payload0, व्योम *payload3)
+अणु
+	काष्ठा tpm_key *tk = payload0;
 
-	if (!tk)
-		return;
+	अगर (!tk)
+		वापस;
 
-	kfree(tk->blob);
+	kमुक्त(tk->blob);
 	tk->blob_len = 0;
 
-	kfree(tk);
-}
+	kमुक्त(tk);
+पूर्ण
 
 /* How many bytes will it take to encode the length */
-static inline uint32_t definite_length(uint32_t len)
-{
-	if (len <= 127)
-		return 1;
-	if (len <= 255)
-		return 2;
-	return 3;
-}
+अटल अंतरभूत uपूर्णांक32_t definite_length(uपूर्णांक32_t len)
+अणु
+	अगर (len <= 127)
+		वापस 1;
+	अगर (len <= 255)
+		वापस 2;
+	वापस 3;
+पूर्ण
 
-static inline uint8_t *encode_tag_length(uint8_t *buf, uint8_t tag,
-					 uint32_t len)
-{
+अटल अंतरभूत uपूर्णांक8_t *encode_tag_length(uपूर्णांक8_t *buf, uपूर्णांक8_t tag,
+					 uपूर्णांक32_t len)
+अणु
 	*buf++ = tag;
 
-	if (len <= 127) {
+	अगर (len <= 127) अणु
 		buf[0] = len;
-		return buf + 1;
-	}
+		वापस buf + 1;
+	पूर्ण
 
-	if (len <= 255) {
+	अगर (len <= 255) अणु
 		buf[0] = 0x81;
 		buf[1] = len;
-		return buf + 2;
-	}
+		वापस buf + 2;
+	पूर्ण
 
 	buf[0] = 0x82;
 	put_unaligned_be16(len, buf + 1);
-	return buf + 3;
-}
+	वापस buf + 3;
+पूर्ण
 
-static uint32_t derive_pub_key(const void *pub_key, uint32_t len, uint8_t *buf)
-{
-	uint8_t *cur = buf;
-	uint32_t n_len = definite_length(len) + 1 + len + 1;
-	uint32_t e_len = definite_length(3) + 1 + 3;
-	uint8_t e[3] = { 0x01, 0x00, 0x01 };
+अटल uपूर्णांक32_t derive_pub_key(स्थिर व्योम *pub_key, uपूर्णांक32_t len, uपूर्णांक8_t *buf)
+अणु
+	uपूर्णांक8_t *cur = buf;
+	uपूर्णांक32_t n_len = definite_length(len) + 1 + len + 1;
+	uपूर्णांक32_t e_len = definite_length(3) + 1 + 3;
+	uपूर्णांक8_t e[3] = अणु 0x01, 0x00, 0x01 पूर्ण;
 
 	/* SEQUENCE */
 	cur = encode_tag_length(cur, 0x30, n_len + e_len);
 	/* INTEGER n */
 	cur = encode_tag_length(cur, 0x02, len + 1);
 	cur[0] = 0x00;
-	memcpy(cur + 1, pub_key, len);
+	स_नकल(cur + 1, pub_key, len);
 	cur += len + 1;
-	cur = encode_tag_length(cur, 0x02, sizeof(e));
-	memcpy(cur, e, sizeof(e));
-	cur += sizeof(e);
+	cur = encode_tag_length(cur, 0x02, माप(e));
+	स_नकल(cur, e, माप(e));
+	cur += माप(e);
 	/* Zero parameters to satisfy set_pub_key ABI. */
 	memzero_explicit(cur, SETKEY_PARAMS_SIZE);
 
-	return cur - buf;
-}
+	वापस cur - buf;
+पूर्ण
 
 /*
  * Determine the crypto algorithm name.
  */
-static int determine_akcipher(const char *encoding, const char *hash_algo,
-			      char alg_name[CRYPTO_MAX_ALG_NAME])
-{
-	if (strcmp(encoding, "pkcs1") == 0) {
-		if (!hash_algo) {
-			strcpy(alg_name, "pkcs1pad(rsa)");
-			return 0;
-		}
+अटल पूर्णांक determine_akcipher(स्थिर अक्षर *encoding, स्थिर अक्षर *hash_algo,
+			      अक्षर alg_name[CRYPTO_MAX_ALG_NAME])
+अणु
+	अगर (म_भेद(encoding, "pkcs1") == 0) अणु
+		अगर (!hash_algo) अणु
+			म_नकल(alg_name, "pkcs1pad(rsa)");
+			वापस 0;
+		पूर्ण
 
-		if (snprintf(alg_name, CRYPTO_MAX_ALG_NAME, "pkcs1pad(rsa,%s)",
+		अगर (snम_लिखो(alg_name, CRYPTO_MAX_ALG_NAME, "pkcs1pad(rsa,%s)",
 			     hash_algo) >= CRYPTO_MAX_ALG_NAME)
-			return -EINVAL;
+			वापस -EINVAL;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (strcmp(encoding, "raw") == 0) {
-		strcpy(alg_name, "rsa");
-		return 0;
-	}
+	अगर (म_भेद(encoding, "raw") == 0) अणु
+		म_नकल(alg_name, "rsa");
+		वापस 0;
+	पूर्ण
 
-	return -ENOPKG;
-}
+	वापस -ENOPKG;
+पूर्ण
 
 /*
- * Query information about a key.
+ * Query inक्रमmation about a key.
  */
-static int tpm_key_query(const struct kernel_pkey_params *params,
-			 struct kernel_pkey_query *info)
-{
-	struct tpm_key *tk = params->key->payload.data[asym_crypto];
-	int ret;
-	char alg_name[CRYPTO_MAX_ALG_NAME];
-	struct crypto_akcipher *tfm;
-	uint8_t der_pub_key[PUB_KEY_BUF_SIZE];
-	uint32_t der_pub_key_len;
-	int len;
+अटल पूर्णांक tpm_key_query(स्थिर काष्ठा kernel_pkey_params *params,
+			 काष्ठा kernel_pkey_query *info)
+अणु
+	काष्ठा tpm_key *tk = params->key->payload.data[asym_crypto];
+	पूर्णांक ret;
+	अक्षर alg_name[CRYPTO_MAX_ALG_NAME];
+	काष्ठा crypto_akcipher *tfm;
+	uपूर्णांक8_t der_pub_key[PUB_KEY_BUF_SIZE];
+	uपूर्णांक32_t der_pub_key_len;
+	पूर्णांक len;
 
-	/* TPM only works on private keys, public keys still done in software */
+	/* TPM only works on निजी keys, खुला keys still करोne in software */
 	ret = determine_akcipher(params->encoding, params->hash_algo, alg_name);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	tfm = crypto_alloc_akcipher(alg_name, 0, 0);
-	if (IS_ERR(tfm))
-		return PTR_ERR(tfm);
+	अगर (IS_ERR(tfm))
+		वापस PTR_ERR(tfm);
 
 	der_pub_key_len = derive_pub_key(tk->pub_key, tk->pub_key_len,
 					 der_pub_key);
 
 	ret = crypto_akcipher_set_pub_key(tfm, der_pub_key, der_pub_key_len);
-	if (ret < 0)
-		goto error_free_tfm;
+	अगर (ret < 0)
+		जाओ error_मुक्त_tfm;
 
 	len = crypto_akcipher_maxsize(tfm);
 
@@ -430,176 +431,176 @@ static int tpm_key_query(const struct kernel_pkey_params *params,
 			      KEYCTL_SUPPORTS_SIGN;
 
 	ret = 0;
-error_free_tfm:
-	crypto_free_akcipher(tfm);
+error_मुक्त_tfm:
+	crypto_मुक्त_akcipher(tfm);
 	pr_devel("<==%s() = %d\n", __func__, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Encryption operation is performed with the public key.  Hence it is done
+ * Encryption operation is perक्रमmed with the खुला key.  Hence it is करोne
  * in software
  */
-static int tpm_key_encrypt(struct tpm_key *tk,
-			   struct kernel_pkey_params *params,
-			   const void *in, void *out)
-{
-	char alg_name[CRYPTO_MAX_ALG_NAME];
-	struct crypto_akcipher *tfm;
-	struct akcipher_request *req;
-	struct crypto_wait cwait;
-	struct scatterlist in_sg, out_sg;
-	uint8_t der_pub_key[PUB_KEY_BUF_SIZE];
-	uint32_t der_pub_key_len;
-	int ret;
+अटल पूर्णांक tpm_key_encrypt(काष्ठा tpm_key *tk,
+			   काष्ठा kernel_pkey_params *params,
+			   स्थिर व्योम *in, व्योम *out)
+अणु
+	अक्षर alg_name[CRYPTO_MAX_ALG_NAME];
+	काष्ठा crypto_akcipher *tfm;
+	काष्ठा akcipher_request *req;
+	काष्ठा crypto_रुको cरुको;
+	काष्ठा scatterlist in_sg, out_sg;
+	uपूर्णांक8_t der_pub_key[PUB_KEY_BUF_SIZE];
+	uपूर्णांक32_t der_pub_key_len;
+	पूर्णांक ret;
 
 	pr_devel("==>%s()\n", __func__);
 
 	ret = determine_akcipher(params->encoding, params->hash_algo, alg_name);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	tfm = crypto_alloc_akcipher(alg_name, 0, 0);
-	if (IS_ERR(tfm))
-		return PTR_ERR(tfm);
+	अगर (IS_ERR(tfm))
+		वापस PTR_ERR(tfm);
 
 	der_pub_key_len = derive_pub_key(tk->pub_key, tk->pub_key_len,
 					 der_pub_key);
 
 	ret = crypto_akcipher_set_pub_key(tfm, der_pub_key, der_pub_key_len);
-	if (ret < 0)
-		goto error_free_tfm;
+	अगर (ret < 0)
+		जाओ error_मुक्त_tfm;
 
 	ret = -ENOMEM;
 	req = akcipher_request_alloc(tfm, GFP_KERNEL);
-	if (!req)
-		goto error_free_tfm;
+	अगर (!req)
+		जाओ error_मुक्त_tfm;
 
 	sg_init_one(&in_sg, in, params->in_len);
 	sg_init_one(&out_sg, out, params->out_len);
 	akcipher_request_set_crypt(req, &in_sg, &out_sg, params->in_len,
 				   params->out_len);
-	crypto_init_wait(&cwait);
+	crypto_init_रुको(&cरुको);
 	akcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG |
 				      CRYPTO_TFM_REQ_MAY_SLEEP,
-				      crypto_req_done, &cwait);
+				      crypto_req_करोne, &cरुको);
 
 	ret = crypto_akcipher_encrypt(req);
-	ret = crypto_wait_req(ret, &cwait);
+	ret = crypto_रुको_req(ret, &cरुको);
 
-	if (ret == 0)
+	अगर (ret == 0)
 		ret = req->dst_len;
 
-	akcipher_request_free(req);
-error_free_tfm:
-	crypto_free_akcipher(tfm);
+	akcipher_request_मुक्त(req);
+error_मुक्त_tfm:
+	crypto_मुक्त_akcipher(tfm);
 	pr_devel("<==%s() = %d\n", __func__, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Decryption operation is performed with the private key in the TPM.
+ * Decryption operation is perक्रमmed with the निजी key in the TPM.
  */
-static int tpm_key_decrypt(struct tpm_key *tk,
-			   struct kernel_pkey_params *params,
-			   const void *in, void *out)
-{
-	struct tpm_buf tb;
-	uint32_t keyhandle;
-	uint8_t srkauth[SHA1_DIGEST_SIZE];
-	uint8_t keyauth[SHA1_DIGEST_SIZE];
-	int r;
+अटल पूर्णांक tpm_key_decrypt(काष्ठा tpm_key *tk,
+			   काष्ठा kernel_pkey_params *params,
+			   स्थिर व्योम *in, व्योम *out)
+अणु
+	काष्ठा tpm_buf tb;
+	uपूर्णांक32_t keyhandle;
+	uपूर्णांक8_t srkauth[SHA1_DIGEST_SIZE];
+	uपूर्णांक8_t keyauth[SHA1_DIGEST_SIZE];
+	पूर्णांक r;
 
 	pr_devel("==>%s()\n", __func__);
 
-	if (params->hash_algo)
-		return -ENOPKG;
+	अगर (params->hash_algo)
+		वापस -ENOPKG;
 
-	if (strcmp(params->encoding, "pkcs1"))
-		return -ENOPKG;
+	अगर (म_भेद(params->encoding, "pkcs1"))
+		वापस -ENOPKG;
 
 	r = tpm_buf_init(&tb, 0, 0);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* TODO: Handle a non-all zero SRK authorization */
-	memset(srkauth, 0, sizeof(srkauth));
+	स_रखो(srkauth, 0, माप(srkauth));
 
 	r = tpm_loadkey2(&tb, SRKHANDLE, srkauth,
 				tk->blob, tk->blob_len, &keyhandle);
-	if (r < 0) {
+	अगर (r < 0) अणु
 		pr_devel("loadkey2 failed (%d)\n", r);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* TODO: Handle a non-all zero key authorization */
-	memset(keyauth, 0, sizeof(keyauth));
+	स_रखो(keyauth, 0, माप(keyauth));
 
 	r = tpm_unbind(&tb, keyhandle, keyauth,
 		       in, params->in_len, out, params->out_len);
-	if (r < 0)
+	अगर (r < 0)
 		pr_devel("tpm_unbind failed (%d)\n", r);
 
-	if (tpm_flushspecific(&tb, keyhandle) < 0)
+	अगर (tpm_flushspecअगरic(&tb, keyhandle) < 0)
 		pr_devel("flushspecific failed (%d)\n", r);
 
 error:
 	tpm_buf_destroy(&tb);
 	pr_devel("<==%s() = %d\n", __func__, r);
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * Hash algorithm OIDs plus ASN.1 DER wrappings [RFC4880 sec 5.2.2].
  */
-static const u8 digest_info_md5[] = {
+अटल स्थिर u8 digest_info_md5[] = अणु
 	0x30, 0x20, 0x30, 0x0c, 0x06, 0x08,
 	0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x02, 0x05, /* OID */
 	0x05, 0x00, 0x04, 0x10
-};
+पूर्ण;
 
-static const u8 digest_info_sha1[] = {
+अटल स्थिर u8 digest_info_sha1[] = अणु
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05,
 	0x2b, 0x0e, 0x03, 0x02, 0x1a,
 	0x05, 0x00, 0x04, 0x14
-};
+पूर्ण;
 
-static const u8 digest_info_rmd160[] = {
+अटल स्थिर u8 digest_info_rmd160[] = अणु
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05,
 	0x2b, 0x24, 0x03, 0x02, 0x01,
 	0x05, 0x00, 0x04, 0x14
-};
+पूर्ण;
 
-static const u8 digest_info_sha224[] = {
+अटल स्थिर u8 digest_info_sha224[] = अणु
 	0x30, 0x2d, 0x30, 0x0d, 0x06, 0x09,
 	0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x04,
 	0x05, 0x00, 0x04, 0x1c
-};
+पूर्ण;
 
-static const u8 digest_info_sha256[] = {
+अटल स्थिर u8 digest_info_sha256[] = अणु
 	0x30, 0x31, 0x30, 0x0d, 0x06, 0x09,
 	0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01,
 	0x05, 0x00, 0x04, 0x20
-};
+पूर्ण;
 
-static const u8 digest_info_sha384[] = {
+अटल स्थिर u8 digest_info_sha384[] = अणु
 	0x30, 0x41, 0x30, 0x0d, 0x06, 0x09,
 	0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x02,
 	0x05, 0x00, 0x04, 0x30
-};
+पूर्ण;
 
-static const u8 digest_info_sha512[] = {
+अटल स्थिर u8 digest_info_sha512[] = अणु
 	0x30, 0x51, 0x30, 0x0d, 0x06, 0x09,
 	0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x03,
 	0x05, 0x00, 0x04, 0x40
-};
+पूर्ण;
 
-static const struct asn1_template {
-	const char	*name;
-	const u8	*data;
-	size_t		size;
-} asn1_templates[] = {
-#define _(X) { #X, digest_info_##X, sizeof(digest_info_##X) }
+अटल स्थिर काष्ठा asn1_ढाँचा अणु
+	स्थिर अक्षर	*name;
+	स्थिर u8	*data;
+	माप_प्रकार		size;
+पूर्ण asn1_ढाँचाs[] = अणु
+#घोषणा _(X) अणु #X, digest_info_##X, माप(digest_info_##X) पूर्ण
 	_(md5),
 	_(sha1),
 	_(rmd160),
@@ -607,139 +608,139 @@ static const struct asn1_template {
 	_(sha384),
 	_(sha512),
 	_(sha224),
-	{ NULL }
-#undef _
-};
+	अणु शून्य पूर्ण
+#अघोषित _
+पूर्ण;
 
-static const struct asn1_template *lookup_asn1(const char *name)
-{
-	const struct asn1_template *p;
+अटल स्थिर काष्ठा asn1_ढाँचा *lookup_asn1(स्थिर अक्षर *name)
+अणु
+	स्थिर काष्ठा asn1_ढाँचा *p;
 
-	for (p = asn1_templates; p->name; p++)
-		if (strcmp(name, p->name) == 0)
-			return p;
-	return NULL;
-}
+	क्रम (p = asn1_ढाँचाs; p->name; p++)
+		अगर (म_भेद(name, p->name) == 0)
+			वापस p;
+	वापस शून्य;
+पूर्ण
 
 /*
- * Sign operation is performed with the private key in the TPM.
+ * Sign operation is perक्रमmed with the निजी key in the TPM.
  */
-static int tpm_key_sign(struct tpm_key *tk,
-			struct kernel_pkey_params *params,
-			const void *in, void *out)
-{
-	struct tpm_buf tb;
-	uint32_t keyhandle;
-	uint8_t srkauth[SHA1_DIGEST_SIZE];
-	uint8_t keyauth[SHA1_DIGEST_SIZE];
-	void *asn1_wrapped = NULL;
-	uint32_t in_len = params->in_len;
-	int r;
+अटल पूर्णांक tpm_key_sign(काष्ठा tpm_key *tk,
+			काष्ठा kernel_pkey_params *params,
+			स्थिर व्योम *in, व्योम *out)
+अणु
+	काष्ठा tpm_buf tb;
+	uपूर्णांक32_t keyhandle;
+	uपूर्णांक8_t srkauth[SHA1_DIGEST_SIZE];
+	uपूर्णांक8_t keyauth[SHA1_DIGEST_SIZE];
+	व्योम *asn1_wrapped = शून्य;
+	uपूर्णांक32_t in_len = params->in_len;
+	पूर्णांक r;
 
 	pr_devel("==>%s()\n", __func__);
 
-	if (strcmp(params->encoding, "pkcs1"))
-		return -ENOPKG;
+	अगर (म_भेद(params->encoding, "pkcs1"))
+		वापस -ENOPKG;
 
-	if (params->hash_algo) {
-		const struct asn1_template *asn1 =
+	अगर (params->hash_algo) अणु
+		स्थिर काष्ठा asn1_ढाँचा *asn1 =
 						lookup_asn1(params->hash_algo);
 
-		if (!asn1)
-			return -ENOPKG;
+		अगर (!asn1)
+			वापस -ENOPKG;
 
-		/* request enough space for the ASN.1 template + input hash */
+		/* request enough space क्रम the ASN.1 ढाँचा + input hash */
 		asn1_wrapped = kzalloc(in_len + asn1->size, GFP_KERNEL);
-		if (!asn1_wrapped)
-			return -ENOMEM;
+		अगर (!asn1_wrapped)
+			वापस -ENOMEM;
 
-		/* Copy ASN.1 template, then the input */
-		memcpy(asn1_wrapped, asn1->data, asn1->size);
-		memcpy(asn1_wrapped + asn1->size, in, in_len);
+		/* Copy ASN.1 ढाँचा, then the input */
+		स_नकल(asn1_wrapped, asn1->data, asn1->size);
+		स_नकल(asn1_wrapped + asn1->size, in, in_len);
 
 		in = asn1_wrapped;
 		in_len += asn1->size;
-	}
+	पूर्ण
 
-	if (in_len > tk->key_len / 8 - 11) {
+	अगर (in_len > tk->key_len / 8 - 11) अणु
 		r = -EOVERFLOW;
-		goto error_free_asn1_wrapped;
-	}
+		जाओ error_मुक्त_asn1_wrapped;
+	पूर्ण
 
 	r = tpm_buf_init(&tb, 0, 0);
-	if (r)
-		goto error_free_asn1_wrapped;
+	अगर (r)
+		जाओ error_मुक्त_asn1_wrapped;
 
 	/* TODO: Handle a non-all zero SRK authorization */
-	memset(srkauth, 0, sizeof(srkauth));
+	स_रखो(srkauth, 0, माप(srkauth));
 
 	r = tpm_loadkey2(&tb, SRKHANDLE, srkauth,
 			 tk->blob, tk->blob_len, &keyhandle);
-	if (r < 0) {
+	अगर (r < 0) अणु
 		pr_devel("loadkey2 failed (%d)\n", r);
-		goto error_free_tb;
-	}
+		जाओ error_मुक्त_tb;
+	पूर्ण
 
 	/* TODO: Handle a non-all zero key authorization */
-	memset(keyauth, 0, sizeof(keyauth));
+	स_रखो(keyauth, 0, माप(keyauth));
 
 	r = tpm_sign(&tb, keyhandle, keyauth, in, in_len, out, params->out_len);
-	if (r < 0)
+	अगर (r < 0)
 		pr_devel("tpm_sign failed (%d)\n", r);
 
-	if (tpm_flushspecific(&tb, keyhandle) < 0)
+	अगर (tpm_flushspecअगरic(&tb, keyhandle) < 0)
 		pr_devel("flushspecific failed (%d)\n", r);
 
-error_free_tb:
+error_मुक्त_tb:
 	tpm_buf_destroy(&tb);
-error_free_asn1_wrapped:
-	kfree(asn1_wrapped);
+error_मुक्त_asn1_wrapped:
+	kमुक्त(asn1_wrapped);
 	pr_devel("<==%s() = %d\n", __func__, r);
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * Do encryption, decryption and signing ops.
  */
-static int tpm_key_eds_op(struct kernel_pkey_params *params,
-			  const void *in, void *out)
-{
-	struct tpm_key *tk = params->key->payload.data[asym_crypto];
-	int ret = -EOPNOTSUPP;
+अटल पूर्णांक tpm_key_eds_op(काष्ठा kernel_pkey_params *params,
+			  स्थिर व्योम *in, व्योम *out)
+अणु
+	काष्ठा tpm_key *tk = params->key->payload.data[asym_crypto];
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	/* Perform the encryption calculation. */
-	switch (params->op) {
-	case kernel_pkey_encrypt:
+	/* Perक्रमm the encryption calculation. */
+	चयन (params->op) अणु
+	हाल kernel_pkey_encrypt:
 		ret = tpm_key_encrypt(tk, params, in, out);
-		break;
-	case kernel_pkey_decrypt:
+		अवरोध;
+	हाल kernel_pkey_decrypt:
 		ret = tpm_key_decrypt(tk, params, in, out);
-		break;
-	case kernel_pkey_sign:
+		अवरोध;
+	हाल kernel_pkey_sign:
 		ret = tpm_key_sign(tk, params, in, out);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Verify a signature using a public key.
+ * Verअगरy a signature using a खुला key.
  */
-static int tpm_key_verify_signature(const struct key *key,
-				    const struct public_key_signature *sig)
-{
-	const struct tpm_key *tk = key->payload.data[asym_crypto];
-	struct crypto_wait cwait;
-	struct crypto_akcipher *tfm;
-	struct akcipher_request *req;
-	struct scatterlist src_sg[2];
-	char alg_name[CRYPTO_MAX_ALG_NAME];
-	uint8_t der_pub_key[PUB_KEY_BUF_SIZE];
-	uint32_t der_pub_key_len;
-	int ret;
+अटल पूर्णांक tpm_key_verअगरy_signature(स्थिर काष्ठा key *key,
+				    स्थिर काष्ठा खुला_key_signature *sig)
+अणु
+	स्थिर काष्ठा tpm_key *tk = key->payload.data[asym_crypto];
+	काष्ठा crypto_रुको cरुको;
+	काष्ठा crypto_akcipher *tfm;
+	काष्ठा akcipher_request *req;
+	काष्ठा scatterlist src_sg[2];
+	अक्षर alg_name[CRYPTO_MAX_ALG_NAME];
+	uपूर्णांक8_t der_pub_key[PUB_KEY_BUF_SIZE];
+	uपूर्णांक32_t der_pub_key_len;
+	पूर्णांक ret;
 
 	pr_devel("==>%s()\n", __func__);
 
@@ -747,51 +748,51 @@ static int tpm_key_verify_signature(const struct key *key,
 	BUG_ON(!sig);
 	BUG_ON(!sig->s);
 
-	if (!sig->digest)
-		return -ENOPKG;
+	अगर (!sig->digest)
+		वापस -ENOPKG;
 
 	ret = determine_akcipher(sig->encoding, sig->hash_algo, alg_name);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	tfm = crypto_alloc_akcipher(alg_name, 0, 0);
-	if (IS_ERR(tfm))
-		return PTR_ERR(tfm);
+	अगर (IS_ERR(tfm))
+		वापस PTR_ERR(tfm);
 
 	der_pub_key_len = derive_pub_key(tk->pub_key, tk->pub_key_len,
 					 der_pub_key);
 
 	ret = crypto_akcipher_set_pub_key(tfm, der_pub_key, der_pub_key_len);
-	if (ret < 0)
-		goto error_free_tfm;
+	अगर (ret < 0)
+		जाओ error_मुक्त_tfm;
 
 	ret = -ENOMEM;
 	req = akcipher_request_alloc(tfm, GFP_KERNEL);
-	if (!req)
-		goto error_free_tfm;
+	अगर (!req)
+		जाओ error_मुक्त_tfm;
 
 	sg_init_table(src_sg, 2);
 	sg_set_buf(&src_sg[0], sig->s, sig->s_size);
 	sg_set_buf(&src_sg[1], sig->digest, sig->digest_size);
-	akcipher_request_set_crypt(req, src_sg, NULL, sig->s_size,
+	akcipher_request_set_crypt(req, src_sg, शून्य, sig->s_size,
 				   sig->digest_size);
-	crypto_init_wait(&cwait);
+	crypto_init_रुको(&cरुको);
 	akcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG |
 				      CRYPTO_TFM_REQ_MAY_SLEEP,
-				      crypto_req_done, &cwait);
-	ret = crypto_wait_req(crypto_akcipher_verify(req), &cwait);
+				      crypto_req_करोne, &cरुको);
+	ret = crypto_रुको_req(crypto_akcipher_verअगरy(req), &cरुको);
 
-	akcipher_request_free(req);
-error_free_tfm:
-	crypto_free_akcipher(tfm);
+	akcipher_request_मुक्त(req);
+error_मुक्त_tfm:
+	crypto_मुक्त_akcipher(tfm);
 	pr_devel("<==%s() = %d\n", __func__, ret);
-	if (WARN_ON_ONCE(ret > 0))
+	अगर (WARN_ON_ONCE(ret > 0))
 		ret = -EINVAL;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Parse enough information out of TPM_KEY structure:
+ * Parse enough inक्रमmation out of TPM_KEY काष्ठाure:
  * TPM_STRUCT_VER -> 4 bytes
  * TPM_KEY_USAGE -> 2 bytes
  * TPM_KEY_FLAGS -> 4 bytes
@@ -810,43 +811,43 @@ error_free_tfm:
  * UINT32 parmSize -> 4 bytes
  * BYTE* -> variable
  */
-static int extract_key_parameters(struct tpm_key *tk)
-{
-	const void *cur = tk->blob;
-	uint32_t len = tk->blob_len;
-	const void *pub_key;
-	uint32_t sz;
-	uint32_t key_len;
+अटल पूर्णांक extract_key_parameters(काष्ठा tpm_key *tk)
+अणु
+	स्थिर व्योम *cur = tk->blob;
+	uपूर्णांक32_t len = tk->blob_len;
+	स्थिर व्योम *pub_key;
+	uपूर्णांक32_t sz;
+	uपूर्णांक32_t key_len;
 
-	if (len < 11)
-		return -EBADMSG;
+	अगर (len < 11)
+		वापस -EBADMSG;
 
 	/* Ensure this is a legacy key */
-	if (get_unaligned_be16(cur + 4) != 0x0015)
-		return -EBADMSG;
+	अगर (get_unaligned_be16(cur + 4) != 0x0015)
+		वापस -EBADMSG;
 
 	/* Skip to TPM_KEY_PARMS */
 	cur += 11;
 	len -= 11;
 
-	if (len < 12)
-		return -EBADMSG;
+	अगर (len < 12)
+		वापस -EBADMSG;
 
 	/* Make sure this is an RSA key */
-	if (get_unaligned_be32(cur) != 0x00000001)
-		return -EBADMSG;
+	अगर (get_unaligned_be32(cur) != 0x00000001)
+		वापस -EBADMSG;
 
 	/* Make sure this is TPM_ES_RSAESPKCSv15 encoding scheme */
-	if (get_unaligned_be16(cur + 4) != 0x0002)
-		return -EBADMSG;
+	अगर (get_unaligned_be16(cur + 4) != 0x0002)
+		वापस -EBADMSG;
 
 	/* Make sure this is TPM_SS_RSASSAPKCS1v15_DER signature scheme */
-	if (get_unaligned_be16(cur + 6) != 0x0003)
-		return -EBADMSG;
+	अगर (get_unaligned_be16(cur + 6) != 0x0003)
+		वापस -EBADMSG;
 
 	sz = get_unaligned_be32(cur + 8);
-	if (len < sz + 12)
-		return -EBADMSG;
+	अगर (len < sz + 12)
+		वापस -EBADMSG;
 
 	/* Move to TPM_RSA_KEY_PARMS */
 	len -= 12;
@@ -855,35 +856,35 @@ static int extract_key_parameters(struct tpm_key *tk)
 	/* Grab the RSA key length */
 	key_len = get_unaligned_be32(cur);
 
-	switch (key_len) {
-	case 512:
-	case 1024:
-	case 1536:
-	case 2048:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (key_len) अणु
+	हाल 512:
+	हाल 1024:
+	हाल 1536:
+	हाल 2048:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Move just past TPM_KEY_PARMS */
 	cur += sz;
 	len -= sz;
 
-	if (len < 4)
-		return -EBADMSG;
+	अगर (len < 4)
+		वापस -EBADMSG;
 
 	sz = get_unaligned_be32(cur);
-	if (len < 4 + sz)
-		return -EBADMSG;
+	अगर (len < 4 + sz)
+		वापस -EBADMSG;
 
 	/* Move to TPM_STORE_PUBKEY */
 	cur += 4 + sz;
 	len -= 4 + sz;
 
-	/* Grab the size of the public key, it should jive with the key size */
+	/* Grab the size of the खुला key, it should jive with the key size */
 	sz = get_unaligned_be32(cur);
-	if (sz > 256)
-		return -EINVAL;
+	अगर (sz > 256)
+		वापस -EINVAL;
 
 	pub_key = cur + 4;
 
@@ -891,65 +892,65 @@ static int extract_key_parameters(struct tpm_key *tk)
 	tk->pub_key = pub_key;
 	tk->pub_key_len = sz;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Given the blob, parse it and load it into the TPM */
-struct tpm_key *tpm_key_create(const void *blob, uint32_t blob_len)
-{
-	int r;
-	struct tpm_key *tk;
+/* Given the blob, parse it and load it पूर्णांकo the TPM */
+काष्ठा tpm_key *tpm_key_create(स्थिर व्योम *blob, uपूर्णांक32_t blob_len)
+अणु
+	पूर्णांक r;
+	काष्ठा tpm_key *tk;
 
-	r = tpm_is_tpm2(NULL);
-	if (r < 0)
-		goto error;
+	r = tpm_is_tpm2(शून्य);
+	अगर (r < 0)
+		जाओ error;
 
-	/* We don't support TPM2 yet */
-	if (r > 0) {
+	/* We करोn't support TPM2 yet */
+	अगर (r > 0) अणु
 		r = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	r = -ENOMEM;
-	tk = kzalloc(sizeof(struct tpm_key), GFP_KERNEL);
-	if (!tk)
-		goto error;
+	tk = kzalloc(माप(काष्ठा tpm_key), GFP_KERNEL);
+	अगर (!tk)
+		जाओ error;
 
 	tk->blob = kmemdup(blob, blob_len, GFP_KERNEL);
-	if (!tk->blob)
-		goto error_memdup;
+	अगर (!tk->blob)
+		जाओ error_memdup;
 
 	tk->blob_len = blob_len;
 
 	r = extract_key_parameters(tk);
-	if (r < 0)
-		goto error_extract;
+	अगर (r < 0)
+		जाओ error_extract;
 
-	return tk;
+	वापस tk;
 
 error_extract:
-	kfree(tk->blob);
+	kमुक्त(tk->blob);
 	tk->blob_len = 0;
 error_memdup:
-	kfree(tk);
+	kमुक्त(tk);
 error:
-	return ERR_PTR(r);
-}
+	वापस ERR_PTR(r);
+पूर्ण
 EXPORT_SYMBOL_GPL(tpm_key_create);
 
 /*
  * TPM-based asymmetric key subtype
  */
-struct asymmetric_key_subtype asym_tpm_subtype = {
+काष्ठा asymmetric_key_subtype asym_tpm_subtype = अणु
 	.owner			= THIS_MODULE,
 	.name			= "asym_tpm",
-	.name_len		= sizeof("asym_tpm") - 1,
+	.name_len		= माप("asym_tpm") - 1,
 	.describe		= asym_tpm_describe,
 	.destroy		= asym_tpm_destroy,
 	.query			= tpm_key_query,
 	.eds_op			= tpm_key_eds_op,
-	.verify_signature	= tpm_key_verify_signature,
-};
+	.verअगरy_signature	= tpm_key_verअगरy_signature,
+पूर्ण;
 EXPORT_SYMBOL_GPL(asym_tpm_subtype);
 
 MODULE_DESCRIPTION("TPM based asymmetric key subtype");

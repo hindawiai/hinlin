@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * dcache.h
  *
@@ -7,37 +8,37 @@
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
-#ifndef OCFS2_DCACHE_H
-#define OCFS2_DCACHE_H
+#अगर_अघोषित OCFS2_DCACHE_H
+#घोषणा OCFS2_DCACHE_H
 
-extern const struct dentry_operations ocfs2_dentry_ops;
+बाह्य स्थिर काष्ठा dentry_operations ocfs2_dentry_ops;
 
-struct ocfs2_dentry_lock {
-	unsigned int		dl_count;
+काष्ठा ocfs2_dentry_lock अणु
+	अचिन्हित पूर्णांक		dl_count;
 	u64			dl_parent_blkno;
 
 	/*
 	 * The ocfs2_dentry_lock keeps an inode reference until
-	 * dl_lockres has been destroyed. This is usually done in
+	 * dl_lockres has been destroyed. This is usually करोne in
 	 * ->d_iput() anyway, so there should be minimal impact.
 	 */
-	struct inode		*dl_inode;
-	struct ocfs2_lock_res	dl_lockres;
-};
+	काष्ठा inode		*dl_inode;
+	काष्ठा ocfs2_lock_res	dl_lockres;
+पूर्ण;
 
-int ocfs2_dentry_attach_lock(struct dentry *dentry, struct inode *inode,
+पूर्णांक ocfs2_dentry_attach_lock(काष्ठा dentry *dentry, काष्ठा inode *inode,
 			     u64 parent_blkno);
 
-void ocfs2_dentry_lock_put(struct ocfs2_super *osb,
-			   struct ocfs2_dentry_lock *dl);
+व्योम ocfs2_dentry_lock_put(काष्ठा ocfs2_super *osb,
+			   काष्ठा ocfs2_dentry_lock *dl);
 
-struct dentry *ocfs2_find_local_alias(struct inode *inode, u64 parent_blkno,
-				      int skip_unhashed);
+काष्ठा dentry *ocfs2_find_local_alias(काष्ठा inode *inode, u64 parent_blkno,
+				      पूर्णांक skip_unhashed);
 
-void ocfs2_dentry_move(struct dentry *dentry, struct dentry *target,
-		       struct inode *old_dir, struct inode *new_dir);
+व्योम ocfs2_dentry_move(काष्ठा dentry *dentry, काष्ठा dentry *target,
+		       काष्ठा inode *old_dir, काष्ठा inode *new_dir);
 
-extern spinlock_t dentry_attach_lock;
-void ocfs2_dentry_attach_gen(struct dentry *dentry);
+बाह्य spinlock_t dentry_attach_lock;
+व्योम ocfs2_dentry_attach_gen(काष्ठा dentry *dentry);
 
-#endif /* OCFS2_DCACHE_H */
+#पूर्ण_अगर /* OCFS2_DCACHE_H */

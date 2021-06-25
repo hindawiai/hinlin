@@ -1,74 +1,75 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * arch/arm/include/asm/bL_switcher.h
+ * arch/arm/include/यंत्र/bL_चयनer.h
  *
  * Created by:  Nicolas Pitre, April 2012
  * Copyright:   (C) 2012-2013  Linaro Limited
  */
 
-#ifndef ASM_BL_SWITCHER_H
-#define ASM_BL_SWITCHER_H
+#अगर_अघोषित ASM_BL_SWITCHER_H
+#घोषणा ASM_BL_SWITCHER_H
 
-#include <linux/compiler.h>
-#include <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/types.h>
 
-typedef void (*bL_switch_completion_handler)(void *cookie);
+प्रकार व्योम (*bL_चयन_completion_handler)(व्योम *cookie);
 
-int bL_switch_request_cb(unsigned int cpu, unsigned int new_cluster_id,
-			 bL_switch_completion_handler completer,
-			 void *completer_cookie);
-static inline int bL_switch_request(unsigned int cpu, unsigned int new_cluster_id)
-{
-	return bL_switch_request_cb(cpu, new_cluster_id, NULL, NULL);
-}
+पूर्णांक bL_चयन_request_cb(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक new_cluster_id,
+			 bL_चयन_completion_handler completer,
+			 व्योम *completer_cookie);
+अटल अंतरभूत पूर्णांक bL_चयन_request(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक new_cluster_id)
+अणु
+	वापस bL_चयन_request_cb(cpu, new_cluster_id, शून्य, शून्य);
+पूर्ण
 
 /*
- * Register here to be notified about runtime enabling/disabling of
- * the switcher.
+ * Register here to be notअगरied about runसमय enabling/disabling of
+ * the चयनer.
  *
- * The notifier chain is called with the switcher activation lock held:
- * the switcher will not be enabled or disabled during callbacks.
- * Callbacks must not call bL_switcher_{get,put}_enabled().
+ * The notअगरier chain is called with the चयनer activation lock held:
+ * the चयनer will not be enabled or disabled during callbacks.
+ * Callbacks must not call bL_चयनer_अणुget,putपूर्ण_enabled().
  */
-#define BL_NOTIFY_PRE_ENABLE	0
-#define BL_NOTIFY_POST_ENABLE	1
-#define BL_NOTIFY_PRE_DISABLE	2
-#define BL_NOTIFY_POST_DISABLE	3
+#घोषणा BL_NOTIFY_PRE_ENABLE	0
+#घोषणा BL_NOTIFY_POST_ENABLE	1
+#घोषणा BL_NOTIFY_PRE_DISABLE	2
+#घोषणा BL_NOTIFY_POST_DISABLE	3
 
-#ifdef CONFIG_BL_SWITCHER
+#अगर_घोषित CONFIG_BL_SWITCHER
 
-int bL_switcher_register_notifier(struct notifier_block *nb);
-int bL_switcher_unregister_notifier(struct notifier_block *nb);
+पूर्णांक bL_चयनer_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
+पूर्णांक bL_चयनer_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
 
 /*
  * Use these functions to temporarily prevent enabling/disabling of
- * the switcher.
- * bL_switcher_get_enabled() returns true if the switcher is currently
- * enabled.  Each call to bL_switcher_get_enabled() must be followed
- * by a call to bL_switcher_put_enabled().  These functions are not
+ * the चयनer.
+ * bL_चयनer_get_enabled() वापसs true अगर the चयनer is currently
+ * enabled.  Each call to bL_चयनer_get_enabled() must be followed
+ * by a call to bL_चयनer_put_enabled().  These functions are not
  * recursive.
  */
-bool bL_switcher_get_enabled(void);
-void bL_switcher_put_enabled(void);
+bool bL_चयनer_get_enabled(व्योम);
+व्योम bL_चयनer_put_enabled(व्योम);
 
-int bL_switcher_trace_trigger(void);
-int bL_switcher_get_logical_index(u32 mpidr);
+पूर्णांक bL_चयनer_trace_trigger(व्योम);
+पूर्णांक bL_चयनer_get_logical_index(u32 mpidr);
 
-#else
-static inline int bL_switcher_register_notifier(struct notifier_block *nb)
-{
-	return 0;
-}
+#अन्यथा
+अटल अंतरभूत पूर्णांक bL_चयनer_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int bL_switcher_unregister_notifier(struct notifier_block *nb)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक bL_चयनer_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline bool bL_switcher_get_enabled(void) { return false; }
-static inline void bL_switcher_put_enabled(void) { }
-static inline int bL_switcher_trace_trigger(void) { return 0; }
-static inline int bL_switcher_get_logical_index(u32 mpidr) { return -EUNATCH; }
-#endif /* CONFIG_BL_SWITCHER */
+अटल अंतरभूत bool bL_चयनer_get_enabled(व्योम) अणु वापस false; पूर्ण
+अटल अंतरभूत व्योम bL_चयनer_put_enabled(व्योम) अणु पूर्ण
+अटल अंतरभूत पूर्णांक bL_चयनer_trace_trigger(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक bL_चयनer_get_logical_index(u32 mpidr) अणु वापस -EUNATCH; पूर्ण
+#पूर्ण_अगर /* CONFIG_BL_SWITCHER */
 
-#endif
+#पूर्ण_अगर

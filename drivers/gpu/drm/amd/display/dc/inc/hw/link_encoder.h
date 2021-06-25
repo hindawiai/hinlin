@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -27,177 +28,177 @@
  *      Author: yonsun
  */
 
-#ifndef LINK_ENCODER_H_
-#define LINK_ENCODER_H_
+#अगर_अघोषित LINK_ENCODER_H_
+#घोषणा LINK_ENCODER_H_
 
-#include "grph_object_defs.h"
-#include "signal_types.h"
-#include "dc_types.h"
+#समावेश "grph_object_defs.h"
+#समावेश "signal_types.h"
+#समावेश "dc_types.h"
 
-struct dc_context;
-struct encoder_set_dp_phy_pattern_param;
-struct link_mst_stream_allocation_table;
-struct dc_link_settings;
-struct link_training_settings;
-struct pipe_ctx;
+काष्ठा dc_context;
+काष्ठा encoder_set_dp_phy_pattern_param;
+काष्ठा link_mst_stream_allocation_table;
+काष्ठा dc_link_settings;
+काष्ठा link_training_settings;
+काष्ठा pipe_ctx;
 
-struct encoder_init_data {
-	enum channel_id channel;
-	struct graphics_object_id connector;
-	enum hpd_source_id hpd_source;
-	/* TODO: in DAL2, here was pointer to EventManagerInterface */
-	struct graphics_object_id encoder;
-	struct dc_context *ctx;
-	enum transmitter transmitter;
-};
+काष्ठा encoder_init_data अणु
+	क्रमागत channel_id channel;
+	काष्ठा graphics_object_id connector;
+	क्रमागत hpd_source_id hpd_source;
+	/* TODO: in DAL2, here was poपूर्णांकer to EventManagerInterface */
+	काष्ठा graphics_object_id encoder;
+	काष्ठा dc_context *ctx;
+	क्रमागत transmitter transmitter;
+पूर्ण;
 
-struct encoder_feature_support {
-	union {
-		struct {
-			uint32_t IS_HBR2_CAPABLE:1;
-			uint32_t IS_HBR3_CAPABLE:1;
-			uint32_t IS_TPS3_CAPABLE:1;
-			uint32_t IS_TPS4_CAPABLE:1;
-			uint32_t HDMI_6GB_EN:1;
-			uint32_t DP_IS_USB_C:1;
-		} bits;
-		uint32_t raw;
-	} flags;
+काष्ठा encoder_feature_support अणु
+	जोड़ अणु
+		काष्ठा अणु
+			uपूर्णांक32_t IS_HBR2_CAPABLE:1;
+			uपूर्णांक32_t IS_HBR3_CAPABLE:1;
+			uपूर्णांक32_t IS_TPS3_CAPABLE:1;
+			uपूर्णांक32_t IS_TPS4_CAPABLE:1;
+			uपूर्णांक32_t HDMI_6GB_EN:1;
+			uपूर्णांक32_t DP_IS_USB_C:1;
+		पूर्ण bits;
+		uपूर्णांक32_t raw;
+	पूर्ण flags;
 
-	enum dc_color_depth max_hdmi_deep_color;
-	unsigned int max_hdmi_pixel_clock;
+	क्रमागत dc_color_depth max_hdmi_deep_color;
+	अचिन्हित पूर्णांक max_hdmi_pixel_घड़ी;
 	bool hdmi_ycbcr420_supported;
 	bool dp_ycbcr420_supported;
 	bool fec_supported;
-};
+पूर्ण;
 
-union dpcd_psr_configuration {
-	struct {
-		unsigned char ENABLE                    : 1;
-		unsigned char TRANSMITTER_ACTIVE_IN_PSR : 1;
-		unsigned char CRC_VERIFICATION          : 1;
-		unsigned char FRAME_CAPTURE_INDICATION  : 1;
+जोड़ dpcd_psr_configuration अणु
+	काष्ठा अणु
+		अचिन्हित अक्षर ENABLE                    : 1;
+		अचिन्हित अक्षर TRANSMITTER_ACTIVE_IN_PSR : 1;
+		अचिन्हित अक्षर CRC_VERIFICATION          : 1;
+		अचिन्हित अक्षर FRAME_CAPTURE_INDICATION  : 1;
 		/* For eDP 1.4, PSR v2*/
-		unsigned char LINE_CAPTURE_INDICATION   : 1;
+		अचिन्हित अक्षर LINE_CAPTURE_INDICATION   : 1;
 		/* For eDP 1.4, PSR v2*/
-		unsigned char IRQ_HPD_WITH_CRC_ERROR    : 1;
-		unsigned char RESERVED                  : 2;
-	} bits;
-	unsigned char raw;
-};
+		अचिन्हित अक्षर IRQ_HPD_WITH_CRC_ERROR    : 1;
+		अचिन्हित अक्षर RESERVED                  : 2;
+	पूर्ण bits;
+	अचिन्हित अक्षर raw;
+पूर्ण;
 
-union psr_error_status {
-	struct {
-		unsigned char LINK_CRC_ERROR        :1;
-		unsigned char RFB_STORAGE_ERROR     :1;
-		unsigned char VSC_SDP_ERROR         :1;
-		unsigned char RESERVED              :5;
-	} bits;
-	unsigned char raw;
-};
+जोड़ psr_error_status अणु
+	काष्ठा अणु
+		अचिन्हित अक्षर LINK_CRC_ERROR        :1;
+		अचिन्हित अक्षर RFB_STORAGE_ERROR     :1;
+		अचिन्हित अक्षर VSC_SDP_ERROR         :1;
+		अचिन्हित अक्षर RESERVED              :5;
+	पूर्ण bits;
+	अचिन्हित अक्षर raw;
+पूर्ण;
 
-union psr_sink_psr_status {
-	struct {
-	unsigned char SINK_SELF_REFRESH_STATUS  :3;
-	unsigned char RESERVED                  :5;
-	} bits;
-	unsigned char raw;
-};
+जोड़ psr_sink_psr_status अणु
+	काष्ठा अणु
+	अचिन्हित अक्षर SINK_SELF_REFRESH_STATUS  :3;
+	अचिन्हित अक्षर RESERVED                  :5;
+	पूर्ण bits;
+	अचिन्हित अक्षर raw;
+पूर्ण;
 
-struct link_encoder {
-	const struct link_encoder_funcs *funcs;
-	int32_t aux_channel_offset;
-	struct dc_context *ctx;
-	struct graphics_object_id id;
-	struct graphics_object_id connector;
-	uint32_t output_signals;
-	enum engine_id preferred_engine;
-	struct encoder_feature_support features;
-	enum transmitter transmitter;
-	enum hpd_source_id hpd_source;
+काष्ठा link_encoder अणु
+	स्थिर काष्ठा link_encoder_funcs *funcs;
+	पूर्णांक32_t aux_channel_offset;
+	काष्ठा dc_context *ctx;
+	काष्ठा graphics_object_id id;
+	काष्ठा graphics_object_id connector;
+	uपूर्णांक32_t output_संकेतs;
+	क्रमागत engine_id preferred_engine;
+	काष्ठा encoder_feature_support features;
+	क्रमागत transmitter transmitter;
+	क्रमागत hpd_source_id hpd_source;
 	bool usbc_combo_phy;
-};
+पूर्ण;
 
-struct link_enc_state {
+काष्ठा link_enc_state अणु
 
-		uint32_t dphy_fec_en;
-		uint32_t dphy_fec_ready_shadow;
-		uint32_t dphy_fec_active_status;
-		uint32_t dp_link_training_complete;
+		uपूर्णांक32_t dphy_fec_en;
+		uपूर्णांक32_t dphy_fec_पढ़ोy_shaकरोw;
+		uपूर्णांक32_t dphy_fec_active_status;
+		uपूर्णांक32_t dp_link_training_complete;
 
-};
+पूर्ण;
 
-struct link_encoder_funcs {
-	void (*read_state)(
-			struct link_encoder *enc, struct link_enc_state *s);
+काष्ठा link_encoder_funcs अणु
+	व्योम (*पढ़ो_state)(
+			काष्ठा link_encoder *enc, काष्ठा link_enc_state *s);
 	bool (*validate_output_with_stream)(
-		struct link_encoder *enc, const struct dc_stream_state *stream);
-	void (*hw_init)(struct link_encoder *enc);
-	void (*setup)(struct link_encoder *enc,
-		enum signal_type signal);
-	void (*enable_tmds_output)(struct link_encoder *enc,
-		enum clock_source_id clock_source,
-		enum dc_color_depth color_depth,
-		enum signal_type signal,
-		uint32_t pixel_clock);
-	void (*enable_dp_output)(struct link_encoder *enc,
-		const struct dc_link_settings *link_settings,
-		enum clock_source_id clock_source);
-	void (*enable_dp_mst_output)(struct link_encoder *enc,
-		const struct dc_link_settings *link_settings,
-		enum clock_source_id clock_source);
-	void (*enable_lvds_output)(struct link_encoder *enc,
-		enum clock_source_id clock_source,
-		uint32_t pixel_clock);
-	void (*disable_output)(struct link_encoder *link_enc,
-		enum signal_type signal);
-	void (*dp_set_lane_settings)(struct link_encoder *enc,
-		const struct link_training_settings *link_settings);
-	void (*dp_set_phy_pattern)(struct link_encoder *enc,
-		const struct encoder_set_dp_phy_pattern_param *para);
-	void (*update_mst_stream_allocation_table)(
-		struct link_encoder *enc,
-		const struct link_mst_stream_allocation_table *table);
-	void (*psr_program_dp_dphy_fast_training)(struct link_encoder *enc,
-			bool exit_link_training_required);
-	void (*psr_program_secondary_packet)(struct link_encoder *enc,
-				unsigned int sdp_transmit_line_num_deadline);
-	void (*connect_dig_be_to_fe)(struct link_encoder *enc,
-		enum engine_id engine,
+		काष्ठा link_encoder *enc, स्थिर काष्ठा dc_stream_state *stream);
+	व्योम (*hw_init)(काष्ठा link_encoder *enc);
+	व्योम (*setup)(काष्ठा link_encoder *enc,
+		क्रमागत संकेत_type संकेत);
+	व्योम (*enable_पंचांगds_output)(काष्ठा link_encoder *enc,
+		क्रमागत घड़ी_source_id घड़ी_source,
+		क्रमागत dc_color_depth color_depth,
+		क्रमागत संकेत_type संकेत,
+		uपूर्णांक32_t pixel_घड़ी);
+	व्योम (*enable_dp_output)(काष्ठा link_encoder *enc,
+		स्थिर काष्ठा dc_link_settings *link_settings,
+		क्रमागत घड़ी_source_id घड़ी_source);
+	व्योम (*enable_dp_mst_output)(काष्ठा link_encoder *enc,
+		स्थिर काष्ठा dc_link_settings *link_settings,
+		क्रमागत घड़ी_source_id घड़ी_source);
+	व्योम (*enable_lvds_output)(काष्ठा link_encoder *enc,
+		क्रमागत घड़ी_source_id घड़ी_source,
+		uपूर्णांक32_t pixel_घड़ी);
+	व्योम (*disable_output)(काष्ठा link_encoder *link_enc,
+		क्रमागत संकेत_type संकेत);
+	व्योम (*dp_set_lane_settings)(काष्ठा link_encoder *enc,
+		स्थिर काष्ठा link_training_settings *link_settings);
+	व्योम (*dp_set_phy_pattern)(काष्ठा link_encoder *enc,
+		स्थिर काष्ठा encoder_set_dp_phy_pattern_param *para);
+	व्योम (*update_mst_stream_allocation_table)(
+		काष्ठा link_encoder *enc,
+		स्थिर काष्ठा link_mst_stream_allocation_table *table);
+	व्योम (*psr_program_dp_dphy_fast_training)(काष्ठा link_encoder *enc,
+			bool निकास_link_training_required);
+	व्योम (*psr_program_secondary_packet)(काष्ठा link_encoder *enc,
+				अचिन्हित पूर्णांक sdp_transmit_line_num_deadline);
+	व्योम (*connect_dig_be_to_fe)(काष्ठा link_encoder *enc,
+		क्रमागत engine_id engine,
 		bool connect);
-	void (*enable_hpd)(struct link_encoder *enc);
-	void (*disable_hpd)(struct link_encoder *enc);
-	bool (*is_dig_enabled)(struct link_encoder *enc);
-	unsigned int (*get_dig_frontend)(struct link_encoder *enc);
-	void (*destroy)(struct link_encoder **enc);
+	व्योम (*enable_hpd)(काष्ठा link_encoder *enc);
+	व्योम (*disable_hpd)(काष्ठा link_encoder *enc);
+	bool (*is_dig_enabled)(काष्ठा link_encoder *enc);
+	अचिन्हित पूर्णांक (*get_dig_frontend)(काष्ठा link_encoder *enc);
+	व्योम (*destroy)(काष्ठा link_encoder **enc);
 
-	void (*fec_set_enable)(struct link_encoder *enc,
+	व्योम (*fec_set_enable)(काष्ठा link_encoder *enc,
 		bool enable);
 
-	void (*fec_set_ready)(struct link_encoder *enc,
-		bool ready);
+	व्योम (*fec_set_पढ़ोy)(काष्ठा link_encoder *enc,
+		bool पढ़ोy);
 
-	bool (*fec_is_active)(struct link_encoder *enc);
-	bool (*is_in_alt_mode) (struct link_encoder *enc);
+	bool (*fec_is_active)(काष्ठा link_encoder *enc);
+	bool (*is_in_alt_mode) (काष्ठा link_encoder *enc);
 
-	void (*get_max_link_cap)(struct link_encoder *enc,
-		struct dc_link_settings *link_settings);
+	व्योम (*get_max_link_cap)(काष्ठा link_encoder *enc,
+		काष्ठा dc_link_settings *link_settings);
 
-	enum signal_type (*get_dig_mode)(
-		struct link_encoder *enc);
-};
+	क्रमागत संकेत_type (*get_dig_mode)(
+		काष्ठा link_encoder *enc);
+पूर्ण;
 
 /*
- * Used to track assignments of links (display endpoints) to link encoders.
+ * Used to track assignments of links (display endpoपूर्णांकs) to link encoders.
  *
- * Entry in link_enc_assignments table in struct resource_context.
- * Entries only marked valid once encoder assigned to a link and invalidated once unassigned.
- * Uses engine ID as identifier since PHY ID not relevant for USB4 DPIA endpoint.
+ * Entry in link_enc_assignments table in काष्ठा resource_context.
+ * Entries only marked valid once encoder asचिन्हित to a link and invalidated once unasचिन्हित.
+ * Uses engine ID as identअगरier since PHY ID not relevant क्रम USB4 DPIA endpoपूर्णांक.
  */
-struct link_enc_assignment {
+काष्ठा link_enc_assignment अणु
 	bool valid;
-	struct display_endpoint_id ep_id;
-	enum engine_id eng_id;
-};
+	काष्ठा display_endpoपूर्णांक_id ep_id;
+	क्रमागत engine_id eng_id;
+पूर्ण;
 
-#endif /* LINK_ENCODER_H_ */
+#पूर्ण_अगर /* LINK_ENCODER_H_ */

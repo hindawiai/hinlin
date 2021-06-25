@@ -1,241 +1,242 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  ACPI-WMI mapping driver
  *
  *  Copyright (C) 2007-2008 Carlos Corbacho <carlos@strangeworlds.co.uk>
  *
  *  GUID parsing code from ldm.c is:
- *   Copyright (C) 2001,2002 Richard Russon <ldm@flatcap.org>
+ *   Copyright (C) 2001,2002 Riअक्षरd Russon <ldm@flatcap.org>
  *   Copyright (c) 2001-2007 Anton Altaparmakov
  *   Copyright (C) 2001,2002 Jakob Kemi <jakob.kemi@telia.com>
  *
- *  WMI bus infrastructure by Andrew Lutomirski and Darren Hart:
+ *  WMI bus infraकाष्ठाure by Andrew Lutomirski and Darren Hart:
  *    Copyright (C) 2015 Andrew Lutomirski
  *    Copyright (C) 2017 VMware, Inc. All Rights Reserved.
  */
 
-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#include <linux/acpi.h>
-#include <linux/device.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/miscdevice.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/uaccess.h>
-#include <linux/uuid.h>
-#include <linux/wmi.h>
-#include <linux/fs.h>
-#include <uapi/linux/wmi.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/uuid.h>
+#समावेश <linux/wmi.h>
+#समावेश <linux/fs.h>
+#समावेश <uapi/linux/wmi.h>
 
 MODULE_AUTHOR("Carlos Corbacho");
 MODULE_DESCRIPTION("ACPI-WMI Mapping Driver");
 MODULE_LICENSE("GPL");
 
-static LIST_HEAD(wmi_block_list);
+अटल LIST_HEAD(wmi_block_list);
 
-struct guid_block {
-	char guid[16];
-	union {
-		char object_id[2];
-		struct {
-			unsigned char notify_id;
-			unsigned char reserved;
-		};
-	};
+काष्ठा guid_block अणु
+	अक्षर guid[16];
+	जोड़ अणु
+		अक्षर object_id[2];
+		काष्ठा अणु
+			अचिन्हित अक्षर notअगरy_id;
+			अचिन्हित अक्षर reserved;
+		पूर्ण;
+	पूर्ण;
 	u8 instance_count;
 	u8 flags;
-};
+पूर्ण;
 
-struct wmi_block {
-	struct wmi_device dev;
-	struct list_head list;
-	struct guid_block gblock;
-	struct miscdevice char_dev;
-	struct mutex char_mutex;
-	struct acpi_device *acpi_device;
-	wmi_notify_handler handler;
-	void *handler_data;
+काष्ठा wmi_block अणु
+	काष्ठा wmi_device dev;
+	काष्ठा list_head list;
+	काष्ठा guid_block gblock;
+	काष्ठा miscdevice अक्षर_dev;
+	काष्ठा mutex अक्षर_mutex;
+	काष्ठा acpi_device *acpi_device;
+	wmi_notअगरy_handler handler;
+	व्योम *handler_data;
 	u64 req_buf_size;
 
-	bool read_takes_no_args;
-};
+	bool पढ़ो_takes_no_args;
+पूर्ण;
 
 
 /*
  * If the GUID data block is marked as expensive, we must enable and
  * explicitily disable data collection.
  */
-#define ACPI_WMI_EXPENSIVE   0x1
-#define ACPI_WMI_METHOD      0x2	/* GUID is a method */
-#define ACPI_WMI_STRING      0x4	/* GUID takes & returns a string */
-#define ACPI_WMI_EVENT       0x8	/* GUID is an event */
+#घोषणा ACPI_WMI_EXPENSIVE   0x1
+#घोषणा ACPI_WMI_METHOD      0x2	/* GUID is a method */
+#घोषणा ACPI_WMI_STRING      0x4	/* GUID takes & वापसs a string */
+#घोषणा ACPI_WMI_EVENT       0x8	/* GUID is an event */
 
-static bool debug_event;
+अटल bool debug_event;
 module_param(debug_event, bool, 0444);
 MODULE_PARM_DESC(debug_event,
 		 "Log WMI Events [0/1]");
 
-static bool debug_dump_wdg;
+अटल bool debug_dump_wdg;
 module_param(debug_dump_wdg, bool, 0444);
 MODULE_PARM_DESC(debug_dump_wdg,
 		 "Dump available WMI interfaces [0/1]");
 
-static int acpi_wmi_remove(struct platform_device *device);
-static int acpi_wmi_probe(struct platform_device *device);
+अटल पूर्णांक acpi_wmi_हटाओ(काष्ठा platक्रमm_device *device);
+अटल पूर्णांक acpi_wmi_probe(काष्ठा platक्रमm_device *device);
 
-static const struct acpi_device_id wmi_device_ids[] = {
-	{"PNP0C14", 0},
-	{"pnp0c14", 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id wmi_device_ids[] = अणु
+	अणु"PNP0C14", 0पूर्ण,
+	अणु"pnp0c14", 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, wmi_device_ids);
 
-static struct platform_driver acpi_wmi_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver acpi_wmi_driver = अणु
+	.driver = अणु
 		.name = "acpi-wmi",
 		.acpi_match_table = wmi_device_ids,
-	},
+	पूर्ण,
 	.probe = acpi_wmi_probe,
-	.remove = acpi_wmi_remove,
-};
+	.हटाओ = acpi_wmi_हटाओ,
+पूर्ण;
 
 /*
  * GUID parsing functions
  */
 
-static bool find_guid(const char *guid_string, struct wmi_block **out)
-{
+अटल bool find_guid(स्थिर अक्षर *guid_string, काष्ठा wmi_block **out)
+अणु
 	guid_t guid_input;
-	struct wmi_block *wblock;
-	struct guid_block *block;
+	काष्ठा wmi_block *wblock;
+	काष्ठा guid_block *block;
 
-	if (guid_parse(guid_string, &guid_input))
-		return false;
+	अगर (guid_parse(guid_string, &guid_input))
+		वापस false;
 
-	list_for_each_entry(wblock, &wmi_block_list, list) {
+	list_क्रम_each_entry(wblock, &wmi_block_list, list) अणु
 		block = &wblock->gblock;
 
-		if (memcmp(block->guid, &guid_input, 16) == 0) {
-			if (out)
+		अगर (स_भेद(block->guid, &guid_input, 16) == 0) अणु
+			अगर (out)
 				*out = wblock;
-			return true;
-		}
-	}
-	return false;
-}
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static const void *find_guid_context(struct wmi_block *wblock,
-				      struct wmi_driver *wdriver)
-{
-	const struct wmi_device_id *id;
+अटल स्थिर व्योम *find_guid_context(काष्ठा wmi_block *wblock,
+				      काष्ठा wmi_driver *wdriver)
+अणु
+	स्थिर काष्ठा wmi_device_id *id;
 	guid_t guid_input;
 
-	if (wblock == NULL || wdriver == NULL)
-		return NULL;
-	if (wdriver->id_table == NULL)
-		return NULL;
+	अगर (wblock == शून्य || wdriver == शून्य)
+		वापस शून्य;
+	अगर (wdriver->id_table == शून्य)
+		वापस शून्य;
 
 	id = wdriver->id_table;
-	while (*id->guid_string) {
-		if (guid_parse(id->guid_string, &guid_input))
-			continue;
-		if (!memcmp(wblock->gblock.guid, &guid_input, 16))
-			return id->context;
+	जबतक (*id->guid_string) अणु
+		अगर (guid_parse(id->guid_string, &guid_input))
+			जारी;
+		अगर (!स_भेद(wblock->gblock.guid, &guid_input, 16))
+			वापस id->context;
 		id++;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int get_subobj_info(acpi_handle handle, const char *pathname,
-			   struct acpi_device_info **info)
-{
-	struct acpi_device_info *dummy_info, **info_ptr;
+अटल पूर्णांक get_subobj_info(acpi_handle handle, स्थिर अक्षर *pathname,
+			   काष्ठा acpi_device_info **info)
+अणु
+	काष्ठा acpi_device_info *dummy_info, **info_ptr;
 	acpi_handle subobj_handle;
 	acpi_status status;
 
-	status = acpi_get_handle(handle, (char *)pathname, &subobj_handle);
-	if (status == AE_NOT_FOUND)
-		return -ENOENT;
-	else if (ACPI_FAILURE(status))
-		return -EIO;
+	status = acpi_get_handle(handle, (अक्षर *)pathname, &subobj_handle);
+	अगर (status == AE_NOT_FOUND)
+		वापस -ENOENT;
+	अन्यथा अगर (ACPI_FAILURE(status))
+		वापस -EIO;
 
 	info_ptr = info ? info : &dummy_info;
 	status = acpi_get_object_info(subobj_handle, info_ptr);
-	if (ACPI_FAILURE(status))
-		return -EIO;
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
 
-	if (!info)
-		kfree(dummy_info);
+	अगर (!info)
+		kमुक्त(dummy_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static acpi_status wmi_method_enable(struct wmi_block *wblock, int enable)
-{
-	struct guid_block *block = NULL;
-	char method[5];
+अटल acpi_status wmi_method_enable(काष्ठा wmi_block *wblock, पूर्णांक enable)
+अणु
+	काष्ठा guid_block *block = शून्य;
+	अक्षर method[5];
 	acpi_status status;
 	acpi_handle handle;
 
 	block = &wblock->gblock;
 	handle = wblock->acpi_device->handle;
 
-	snprintf(method, 5, "WE%02X", block->notify_id);
+	snम_लिखो(method, 5, "WE%02X", block->notअगरy_id);
 	status = acpi_execute_simple_method(handle, method, enable);
 
-	if (status != AE_OK && status != AE_NOT_FOUND)
-		return status;
-	else
-		return AE_OK;
-}
+	अगर (status != AE_OK && status != AE_NOT_FOUND)
+		वापस status;
+	अन्यथा
+		वापस AE_OK;
+पूर्ण
 
 /*
  * Exported WMI functions
  */
 
 /**
- * set_required_buffer_size - Sets the buffer size needed for performing IOCTL
+ * set_required_buffer_size - Sets the buffer size needed क्रम perक्रमming IOCTL
  * @wdev: A wmi bus device from a driver
  * @length: Required buffer size
  *
- * Allocates memory needed for buffer, stores the buffer size in that memory
+ * Allocates memory needed क्रम buffer, stores the buffer size in that memory
  */
-int set_required_buffer_size(struct wmi_device *wdev, u64 length)
-{
-	struct wmi_block *wblock;
+पूर्णांक set_required_buffer_size(काष्ठा wmi_device *wdev, u64 length)
+अणु
+	काष्ठा wmi_block *wblock;
 
-	wblock = container_of(wdev, struct wmi_block, dev);
+	wblock = container_of(wdev, काष्ठा wmi_block, dev);
 	wblock->req_buf_size = length;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(set_required_buffer_size);
 
 /**
  * wmi_evaluate_method - Evaluate a WMI method
- * @guid_string: 36 char string of the form fa50ff2b-f2e8-45de-83fa-65417f2f49ba
+ * @guid_string: 36 अक्षर string of the क्रमm fa50ff2b-f2e8-45de-83fa-65417f2f49ba
  * @instance: Instance index
  * @method_id: Method ID to call
- * @in: Buffer containing input for the method call
- * @out: Empty buffer to return the method results
+ * @in: Buffer containing input क्रम the method call
+ * @out: Empty buffer to वापस the method results
  *
  * Call an ACPI-WMI method
  */
-acpi_status wmi_evaluate_method(const char *guid_string, u8 instance,
-u32 method_id, const struct acpi_buffer *in, struct acpi_buffer *out)
-{
-	struct wmi_block *wblock = NULL;
+acpi_status wmi_evaluate_method(स्थिर अक्षर *guid_string, u8 instance,
+u32 method_id, स्थिर काष्ठा acpi_buffer *in, काष्ठा acpi_buffer *out)
+अणु
+	काष्ठा wmi_block *wblock = शून्य;
 
-	if (!find_guid(guid_string, &wblock))
-		return AE_ERROR;
-	return wmidev_evaluate_method(&wblock->dev, instance, method_id,
+	अगर (!find_guid(guid_string, &wblock))
+		वापस AE_ERROR;
+	वापस wmidev_evaluate_method(&wblock->dev, instance, method_id,
 				      in, out);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(wmi_evaluate_method);
 
 /**
@@ -243,853 +244,853 @@ EXPORT_SYMBOL_GPL(wmi_evaluate_method);
  * @wdev: A wmi bus device from a driver
  * @instance: Instance index
  * @method_id: Method ID to call
- * @in: Buffer containing input for the method call
- * @out: Empty buffer to return the method results
+ * @in: Buffer containing input क्रम the method call
+ * @out: Empty buffer to वापस the method results
  *
  * Call an ACPI-WMI method
  */
-acpi_status wmidev_evaluate_method(struct wmi_device *wdev, u8 instance,
-	u32 method_id, const struct acpi_buffer *in, struct acpi_buffer *out)
-{
-	struct guid_block *block = NULL;
-	struct wmi_block *wblock = NULL;
+acpi_status wmidev_evaluate_method(काष्ठा wmi_device *wdev, u8 instance,
+	u32 method_id, स्थिर काष्ठा acpi_buffer *in, काष्ठा acpi_buffer *out)
+अणु
+	काष्ठा guid_block *block = शून्य;
+	काष्ठा wmi_block *wblock = शून्य;
 	acpi_handle handle;
 	acpi_status status;
-	struct acpi_object_list input;
-	union acpi_object params[3];
-	char method[5] = "WM";
+	काष्ठा acpi_object_list input;
+	जोड़ acpi_object params[3];
+	अक्षर method[5] = "WM";
 
-	wblock = container_of(wdev, struct wmi_block, dev);
+	wblock = container_of(wdev, काष्ठा wmi_block, dev);
 	block = &wblock->gblock;
 	handle = wblock->acpi_device->handle;
 
-	if (!(block->flags & ACPI_WMI_METHOD))
-		return AE_BAD_DATA;
+	अगर (!(block->flags & ACPI_WMI_METHOD))
+		वापस AE_BAD_DATA;
 
-	if (block->instance_count <= instance)
-		return AE_BAD_PARAMETER;
+	अगर (block->instance_count <= instance)
+		वापस AE_BAD_PARAMETER;
 
 	input.count = 2;
-	input.pointer = params;
+	input.poपूर्णांकer = params;
 	params[0].type = ACPI_TYPE_INTEGER;
-	params[0].integer.value = instance;
+	params[0].पूर्णांकeger.value = instance;
 	params[1].type = ACPI_TYPE_INTEGER;
-	params[1].integer.value = method_id;
+	params[1].पूर्णांकeger.value = method_id;
 
-	if (in) {
+	अगर (in) अणु
 		input.count = 3;
 
-		if (block->flags & ACPI_WMI_STRING) {
+		अगर (block->flags & ACPI_WMI_STRING) अणु
 			params[2].type = ACPI_TYPE_STRING;
-		} else {
+		पूर्ण अन्यथा अणु
 			params[2].type = ACPI_TYPE_BUFFER;
-		}
+		पूर्ण
 		params[2].buffer.length = in->length;
-		params[2].buffer.pointer = in->pointer;
-	}
+		params[2].buffer.poपूर्णांकer = in->poपूर्णांकer;
+	पूर्ण
 
-	strncat(method, block->object_id, 2);
+	म_जोड़न(method, block->object_id, 2);
 
 	status = acpi_evaluate_object(handle, method, &input, out);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 EXPORT_SYMBOL_GPL(wmidev_evaluate_method);
 
-static acpi_status __query_block(struct wmi_block *wblock, u8 instance,
-				 struct acpi_buffer *out)
-{
-	struct guid_block *block = NULL;
+अटल acpi_status __query_block(काष्ठा wmi_block *wblock, u8 instance,
+				 काष्ठा acpi_buffer *out)
+अणु
+	काष्ठा guid_block *block = शून्य;
 	acpi_handle handle;
 	acpi_status status, wc_status = AE_ERROR;
-	struct acpi_object_list input;
-	union acpi_object wq_params[1];
-	char method[5];
-	char wc_method[5] = "WC";
+	काष्ठा acpi_object_list input;
+	जोड़ acpi_object wq_params[1];
+	अक्षर method[5];
+	अक्षर wc_method[5] = "WC";
 
-	if (!out)
-		return AE_BAD_PARAMETER;
+	अगर (!out)
+		वापस AE_BAD_PARAMETER;
 
 	block = &wblock->gblock;
 	handle = wblock->acpi_device->handle;
 
-	if (block->instance_count <= instance)
-		return AE_BAD_PARAMETER;
+	अगर (block->instance_count <= instance)
+		वापस AE_BAD_PARAMETER;
 
 	/* Check GUID is a data block */
-	if (block->flags & (ACPI_WMI_EVENT | ACPI_WMI_METHOD))
-		return AE_ERROR;
+	अगर (block->flags & (ACPI_WMI_EVENT | ACPI_WMI_METHOD))
+		वापस AE_ERROR;
 
 	input.count = 1;
-	input.pointer = wq_params;
+	input.poपूर्णांकer = wq_params;
 	wq_params[0].type = ACPI_TYPE_INTEGER;
-	wq_params[0].integer.value = instance;
+	wq_params[0].पूर्णांकeger.value = instance;
 
-	if (instance == 0 && wblock->read_takes_no_args)
+	अगर (instance == 0 && wblock->पढ़ो_takes_no_args)
 		input.count = 0;
 
 	/*
 	 * If ACPI_WMI_EXPENSIVE, call the relevant WCxx method first to
 	 * enable collection.
 	 */
-	if (block->flags & ACPI_WMI_EXPENSIVE) {
-		strncat(wc_method, block->object_id, 2);
+	अगर (block->flags & ACPI_WMI_EXPENSIVE) अणु
+		म_जोड़न(wc_method, block->object_id, 2);
 
 		/*
-		 * Some GUIDs break the specification by declaring themselves
+		 * Some GUIDs अवरोध the specअगरication by declaring themselves
 		 * expensive, but have no corresponding WCxx method. So we
-		 * should not fail if this happens.
+		 * should not fail अगर this happens.
 		 */
 		wc_status = acpi_execute_simple_method(handle, wc_method, 1);
-	}
+	पूर्ण
 
-	strcpy(method, "WQ");
-	strncat(method, block->object_id, 2);
+	म_नकल(method, "WQ");
+	म_जोड़न(method, block->object_id, 2);
 
 	status = acpi_evaluate_object(handle, method, &input, out);
 
 	/*
-	 * If ACPI_WMI_EXPENSIVE, call the relevant WCxx method, even if
+	 * If ACPI_WMI_EXPENSIVE, call the relevant WCxx method, even अगर
 	 * the WQxx method failed - we should disable collection anyway.
 	 */
-	if ((block->flags & ACPI_WMI_EXPENSIVE) && ACPI_SUCCESS(wc_status)) {
+	अगर ((block->flags & ACPI_WMI_EXPENSIVE) && ACPI_SUCCESS(wc_status)) अणु
 		status = acpi_execute_simple_method(handle, wc_method, 0);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
  * wmi_query_block - Return contents of a WMI block (deprecated)
- * @guid_string: 36 char string of the form fa50ff2b-f2e8-45de-83fa-65417f2f49ba
+ * @guid_string: 36 अक्षर string of the क्रमm fa50ff2b-f2e8-45de-83fa-65417f2f49ba
  * @instance: Instance index
- * @out: Empty buffer to return the contents of the data block to
+ * @out: Empty buffer to वापस the contents of the data block to
  *
  * Return the contents of an ACPI-WMI data block to a buffer
  */
-acpi_status wmi_query_block(const char *guid_string, u8 instance,
-			    struct acpi_buffer *out)
-{
-	struct wmi_block *wblock;
+acpi_status wmi_query_block(स्थिर अक्षर *guid_string, u8 instance,
+			    काष्ठा acpi_buffer *out)
+अणु
+	काष्ठा wmi_block *wblock;
 
-	if (!guid_string)
-		return AE_BAD_PARAMETER;
+	अगर (!guid_string)
+		वापस AE_BAD_PARAMETER;
 
-	if (!find_guid(guid_string, &wblock))
-		return AE_ERROR;
+	अगर (!find_guid(guid_string, &wblock))
+		वापस AE_ERROR;
 
-	return __query_block(wblock, instance, out);
-}
+	वापस __query_block(wblock, instance, out);
+पूर्ण
 EXPORT_SYMBOL_GPL(wmi_query_block);
 
-union acpi_object *wmidev_block_query(struct wmi_device *wdev, u8 instance)
-{
-	struct acpi_buffer out = { ACPI_ALLOCATE_BUFFER, NULL };
-	struct wmi_block *wblock = container_of(wdev, struct wmi_block, dev);
+जोड़ acpi_object *wmidev_block_query(काष्ठा wmi_device *wdev, u8 instance)
+अणु
+	काष्ठा acpi_buffer out = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	काष्ठा wmi_block *wblock = container_of(wdev, काष्ठा wmi_block, dev);
 
-	if (ACPI_FAILURE(__query_block(wblock, instance, &out)))
-		return NULL;
+	अगर (ACPI_FAILURE(__query_block(wblock, instance, &out)))
+		वापस शून्य;
 
-	return (union acpi_object *)out.pointer;
-}
+	वापस (जोड़ acpi_object *)out.poपूर्णांकer;
+पूर्ण
 EXPORT_SYMBOL_GPL(wmidev_block_query);
 
 /**
  * wmi_set_block - Write to a WMI block
- * @guid_string: 36 char string of the form fa50ff2b-f2e8-45de-83fa-65417f2f49ba
+ * @guid_string: 36 अक्षर string of the क्रमm fa50ff2b-f2e8-45de-83fa-65417f2f49ba
  * @instance: Instance index
- * @in: Buffer containing new values for the data block
+ * @in: Buffer containing new values क्रम the data block
  *
  * Write the contents of the input buffer to an ACPI-WMI data block
  */
-acpi_status wmi_set_block(const char *guid_string, u8 instance,
-			  const struct acpi_buffer *in)
-{
-	struct guid_block *block = NULL;
-	struct wmi_block *wblock = NULL;
+acpi_status wmi_set_block(स्थिर अक्षर *guid_string, u8 instance,
+			  स्थिर काष्ठा acpi_buffer *in)
+अणु
+	काष्ठा guid_block *block = शून्य;
+	काष्ठा wmi_block *wblock = शून्य;
 	acpi_handle handle;
-	struct acpi_object_list input;
-	union acpi_object params[2];
-	char method[5] = "WS";
+	काष्ठा acpi_object_list input;
+	जोड़ acpi_object params[2];
+	अक्षर method[5] = "WS";
 
-	if (!guid_string || !in)
-		return AE_BAD_DATA;
+	अगर (!guid_string || !in)
+		वापस AE_BAD_DATA;
 
-	if (!find_guid(guid_string, &wblock))
-		return AE_ERROR;
+	अगर (!find_guid(guid_string, &wblock))
+		वापस AE_ERROR;
 
 	block = &wblock->gblock;
 	handle = wblock->acpi_device->handle;
 
-	if (block->instance_count <= instance)
-		return AE_BAD_PARAMETER;
+	अगर (block->instance_count <= instance)
+		वापस AE_BAD_PARAMETER;
 
 	/* Check GUID is a data block */
-	if (block->flags & (ACPI_WMI_EVENT | ACPI_WMI_METHOD))
-		return AE_ERROR;
+	अगर (block->flags & (ACPI_WMI_EVENT | ACPI_WMI_METHOD))
+		वापस AE_ERROR;
 
 	input.count = 2;
-	input.pointer = params;
+	input.poपूर्णांकer = params;
 	params[0].type = ACPI_TYPE_INTEGER;
-	params[0].integer.value = instance;
+	params[0].पूर्णांकeger.value = instance;
 
-	if (block->flags & ACPI_WMI_STRING) {
+	अगर (block->flags & ACPI_WMI_STRING) अणु
 		params[1].type = ACPI_TYPE_STRING;
-	} else {
+	पूर्ण अन्यथा अणु
 		params[1].type = ACPI_TYPE_BUFFER;
-	}
+	पूर्ण
 	params[1].buffer.length = in->length;
-	params[1].buffer.pointer = in->pointer;
+	params[1].buffer.poपूर्णांकer = in->poपूर्णांकer;
 
-	strncat(method, block->object_id, 2);
+	म_जोड़न(method, block->object_id, 2);
 
-	return acpi_evaluate_object(handle, method, &input, NULL);
-}
+	वापस acpi_evaluate_object(handle, method, &input, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(wmi_set_block);
 
-static void wmi_dump_wdg(const struct guid_block *g)
-{
+अटल व्योम wmi_dump_wdg(स्थिर काष्ठा guid_block *g)
+अणु
 	pr_info("%pUL:\n", g->guid);
-	if (g->flags & ACPI_WMI_EVENT)
-		pr_info("\tnotify_id: 0x%02X\n", g->notify_id);
-	else
+	अगर (g->flags & ACPI_WMI_EVENT)
+		pr_info("\tnotify_id: 0x%02X\n", g->notअगरy_id);
+	अन्यथा
 		pr_info("\tobject_id: %2pE\n", g->object_id);
 	pr_info("\tinstance_count: %d\n", g->instance_count);
 	pr_info("\tflags: %#x", g->flags);
-	if (g->flags) {
-		if (g->flags & ACPI_WMI_EXPENSIVE)
+	अगर (g->flags) अणु
+		अगर (g->flags & ACPI_WMI_EXPENSIVE)
 			pr_cont(" ACPI_WMI_EXPENSIVE");
-		if (g->flags & ACPI_WMI_METHOD)
+		अगर (g->flags & ACPI_WMI_METHOD)
 			pr_cont(" ACPI_WMI_METHOD");
-		if (g->flags & ACPI_WMI_STRING)
+		अगर (g->flags & ACPI_WMI_STRING)
 			pr_cont(" ACPI_WMI_STRING");
-		if (g->flags & ACPI_WMI_EVENT)
+		अगर (g->flags & ACPI_WMI_EVENT)
 			pr_cont(" ACPI_WMI_EVENT");
-	}
+	पूर्ण
 	pr_cont("\n");
 
-}
+पूर्ण
 
-static void wmi_notify_debug(u32 value, void *context)
-{
-	struct acpi_buffer response = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *obj;
+अटल व्योम wmi_notअगरy_debug(u32 value, व्योम *context)
+अणु
+	काष्ठा acpi_buffer response = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *obj;
 	acpi_status status;
 
 	status = wmi_get_event_data(value, &response);
-	if (status != AE_OK) {
+	अगर (status != AE_OK) अणु
 		pr_info("bad event status 0x%x\n", status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	obj = (union acpi_object *)response.pointer;
+	obj = (जोड़ acpi_object *)response.poपूर्णांकer;
 
-	if (!obj)
-		return;
+	अगर (!obj)
+		वापस;
 
 	pr_info("DEBUG Event ");
-	switch(obj->type) {
-	case ACPI_TYPE_BUFFER:
+	चयन(obj->type) अणु
+	हाल ACPI_TYPE_BUFFER:
 		pr_cont("BUFFER_TYPE - length %d\n", obj->buffer.length);
-		break;
-	case ACPI_TYPE_STRING:
-		pr_cont("STRING_TYPE - %s\n", obj->string.pointer);
-		break;
-	case ACPI_TYPE_INTEGER:
-		pr_cont("INTEGER_TYPE - %llu\n", obj->integer.value);
-		break;
-	case ACPI_TYPE_PACKAGE:
+		अवरोध;
+	हाल ACPI_TYPE_STRING:
+		pr_cont("STRING_TYPE - %s\n", obj->string.poपूर्णांकer);
+		अवरोध;
+	हाल ACPI_TYPE_INTEGER:
+		pr_cont("INTEGER_TYPE - %llu\n", obj->पूर्णांकeger.value);
+		अवरोध;
+	हाल ACPI_TYPE_PACKAGE:
 		pr_cont("PACKAGE_TYPE - %d elements\n", obj->package.count);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_cont("object type 0x%X\n", obj->type);
-	}
-	kfree(obj);
-}
+	पूर्ण
+	kमुक्त(obj);
+पूर्ण
 
 /**
- * wmi_install_notify_handler - Register handler for WMI events
- * @guid: 36 char string of the form fa50ff2b-f2e8-45de-83fa-65417f2f49ba
- * @handler: Function to handle notifications
- * @data: Data to be returned to handler when event is fired
+ * wmi_install_notअगरy_handler - Register handler क्रम WMI events
+ * @guid: 36 अक्षर string of the क्रमm fa50ff2b-f2e8-45de-83fa-65417f2f49ba
+ * @handler: Function to handle notअगरications
+ * @data: Data to be वापसed to handler when event is fired
  *
- * Register a handler for events sent to the ACPI-WMI mapper device.
+ * Register a handler क्रम events sent to the ACPI-WMI mapper device.
  */
-acpi_status wmi_install_notify_handler(const char *guid,
-wmi_notify_handler handler, void *data)
-{
-	struct wmi_block *block;
+acpi_status wmi_install_notअगरy_handler(स्थिर अक्षर *guid,
+wmi_notअगरy_handler handler, व्योम *data)
+अणु
+	काष्ठा wmi_block *block;
 	acpi_status status = AE_NOT_EXIST;
 	guid_t guid_input;
 
-	if (!guid || !handler)
-		return AE_BAD_PARAMETER;
+	अगर (!guid || !handler)
+		वापस AE_BAD_PARAMETER;
 
-	if (guid_parse(guid, &guid_input))
-		return AE_BAD_PARAMETER;
+	अगर (guid_parse(guid, &guid_input))
+		वापस AE_BAD_PARAMETER;
 
-	list_for_each_entry(block, &wmi_block_list, list) {
+	list_क्रम_each_entry(block, &wmi_block_list, list) अणु
 		acpi_status wmi_status;
 
-		if (memcmp(block->gblock.guid, &guid_input, 16) == 0) {
-			if (block->handler &&
-			    block->handler != wmi_notify_debug)
-				return AE_ALREADY_ACQUIRED;
+		अगर (स_भेद(block->gblock.guid, &guid_input, 16) == 0) अणु
+			अगर (block->handler &&
+			    block->handler != wmi_notअगरy_debug)
+				वापस AE_ALREADY_ACQUIRED;
 
 			block->handler = handler;
 			block->handler_data = data;
 
 			wmi_status = wmi_method_enable(block, 1);
-			if ((wmi_status != AE_OK) ||
+			अगर ((wmi_status != AE_OK) ||
 			    ((wmi_status == AE_OK) && (status == AE_NOT_EXIST)))
 				status = wmi_status;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return status;
-}
-EXPORT_SYMBOL_GPL(wmi_install_notify_handler);
+	वापस status;
+पूर्ण
+EXPORT_SYMBOL_GPL(wmi_install_notअगरy_handler);
 
 /**
- * wmi_uninstall_notify_handler - Unregister handler for WMI events
- * @guid: 36 char string of the form fa50ff2b-f2e8-45de-83fa-65417f2f49ba
+ * wmi_uninstall_notअगरy_handler - Unरेजिस्टर handler क्रम WMI events
+ * @guid: 36 अक्षर string of the क्रमm fa50ff2b-f2e8-45de-83fa-65417f2f49ba
  *
- * Unregister handler for events sent to the ACPI-WMI mapper device.
+ * Unरेजिस्टर handler क्रम events sent to the ACPI-WMI mapper device.
  */
-acpi_status wmi_remove_notify_handler(const char *guid)
-{
-	struct wmi_block *block;
+acpi_status wmi_हटाओ_notअगरy_handler(स्थिर अक्षर *guid)
+अणु
+	काष्ठा wmi_block *block;
 	acpi_status status = AE_NOT_EXIST;
 	guid_t guid_input;
 
-	if (!guid)
-		return AE_BAD_PARAMETER;
+	अगर (!guid)
+		वापस AE_BAD_PARAMETER;
 
-	if (guid_parse(guid, &guid_input))
-		return AE_BAD_PARAMETER;
+	अगर (guid_parse(guid, &guid_input))
+		वापस AE_BAD_PARAMETER;
 
-	list_for_each_entry(block, &wmi_block_list, list) {
+	list_क्रम_each_entry(block, &wmi_block_list, list) अणु
 		acpi_status wmi_status;
 
-		if (memcmp(block->gblock.guid, &guid_input, 16) == 0) {
-			if (!block->handler ||
-			    block->handler == wmi_notify_debug)
-				return AE_NULL_ENTRY;
+		अगर (स_भेद(block->gblock.guid, &guid_input, 16) == 0) अणु
+			अगर (!block->handler ||
+			    block->handler == wmi_notअगरy_debug)
+				वापस AE_शून्य_ENTRY;
 
-			if (debug_event) {
-				block->handler = wmi_notify_debug;
+			अगर (debug_event) अणु
+				block->handler = wmi_notअगरy_debug;
 				status = AE_OK;
-			} else {
+			पूर्ण अन्यथा अणु
 				wmi_status = wmi_method_enable(block, 0);
-				block->handler = NULL;
-				block->handler_data = NULL;
-				if ((wmi_status != AE_OK) ||
+				block->handler = शून्य;
+				block->handler_data = शून्य;
+				अगर ((wmi_status != AE_OK) ||
 				    ((wmi_status == AE_OK) &&
 				     (status == AE_NOT_EXIST)))
 					status = wmi_status;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return status;
-}
-EXPORT_SYMBOL_GPL(wmi_remove_notify_handler);
+	वापस status;
+पूर्ण
+EXPORT_SYMBOL_GPL(wmi_हटाओ_notअगरy_handler);
 
 /**
  * wmi_get_event_data - Get WMI data associated with an event
  *
  * @event: Event to find
- * @out: Buffer to hold event data. out->pointer should be freed with kfree()
+ * @out: Buffer to hold event data. out->poपूर्णांकer should be मुक्तd with kमुक्त()
  *
  * Returns extra data associated with an event in WMI.
  */
-acpi_status wmi_get_event_data(u32 event, struct acpi_buffer *out)
-{
-	struct acpi_object_list input;
-	union acpi_object params[1];
-	struct guid_block *gblock;
-	struct wmi_block *wblock;
+acpi_status wmi_get_event_data(u32 event, काष्ठा acpi_buffer *out)
+अणु
+	काष्ठा acpi_object_list input;
+	जोड़ acpi_object params[1];
+	काष्ठा guid_block *gblock;
+	काष्ठा wmi_block *wblock;
 
 	input.count = 1;
-	input.pointer = params;
+	input.poपूर्णांकer = params;
 	params[0].type = ACPI_TYPE_INTEGER;
-	params[0].integer.value = event;
+	params[0].पूर्णांकeger.value = event;
 
-	list_for_each_entry(wblock, &wmi_block_list, list) {
+	list_क्रम_each_entry(wblock, &wmi_block_list, list) अणु
 		gblock = &wblock->gblock;
 
-		if ((gblock->flags & ACPI_WMI_EVENT) &&
-			(gblock->notify_id == event))
-			return acpi_evaluate_object(wblock->acpi_device->handle,
+		अगर ((gblock->flags & ACPI_WMI_EVENT) &&
+			(gblock->notअगरy_id == event))
+			वापस acpi_evaluate_object(wblock->acpi_device->handle,
 				"_WED", &input, out);
-	}
+	पूर्ण
 
-	return AE_NOT_FOUND;
-}
+	वापस AE_NOT_FOUND;
+पूर्ण
 EXPORT_SYMBOL_GPL(wmi_get_event_data);
 
 /**
- * wmi_has_guid - Check if a GUID is available
- * @guid_string: 36 char string of the form fa50ff2b-f2e8-45de-83fa-65417f2f49ba
+ * wmi_has_guid - Check अगर a GUID is available
+ * @guid_string: 36 अक्षर string of the क्रमm fa50ff2b-f2e8-45de-83fa-65417f2f49ba
  *
- * Check if a given GUID is defined by _WDG
+ * Check अगर a given GUID is defined by _WDG
  */
-bool wmi_has_guid(const char *guid_string)
-{
-	return find_guid(guid_string, NULL);
-}
+bool wmi_has_guid(स्थिर अक्षर *guid_string)
+अणु
+	वापस find_guid(guid_string, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(wmi_has_guid);
 
 /**
  * wmi_get_acpi_device_uid() - Get _UID name of ACPI device that defines GUID
- * @guid_string: 36 char string of the form fa50ff2b-f2e8-45de-83fa-65417f2f49ba
+ * @guid_string: 36 अक्षर string of the क्रमm fa50ff2b-f2e8-45de-83fa-65417f2f49ba
  *
  * Find the _UID of ACPI device associated with this WMI GUID.
  *
- * Return: The ACPI _UID field value or NULL if the WMI GUID was not found
+ * Return: The ACPI _UID field value or शून्य अगर the WMI GUID was not found
  */
-char *wmi_get_acpi_device_uid(const char *guid_string)
-{
-	struct wmi_block *wblock = NULL;
+अक्षर *wmi_get_acpi_device_uid(स्थिर अक्षर *guid_string)
+अणु
+	काष्ठा wmi_block *wblock = शून्य;
 
-	if (!find_guid(guid_string, &wblock))
-		return NULL;
+	अगर (!find_guid(guid_string, &wblock))
+		वापस शून्य;
 
-	return acpi_device_uid(wblock->acpi_device);
-}
+	वापस acpi_device_uid(wblock->acpi_device);
+पूर्ण
 EXPORT_SYMBOL_GPL(wmi_get_acpi_device_uid);
 
-static struct wmi_block *dev_to_wblock(struct device *dev)
-{
-	return container_of(dev, struct wmi_block, dev.dev);
-}
+अटल काष्ठा wmi_block *dev_to_wblock(काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा wmi_block, dev.dev);
+पूर्ण
 
-static struct wmi_device *dev_to_wdev(struct device *dev)
-{
-	return container_of(dev, struct wmi_device, dev);
-}
+अटल काष्ठा wmi_device *dev_to_wdev(काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा wmi_device, dev);
+पूर्ण
 
 /*
- * sysfs interface
+ * sysfs पूर्णांकerface
  */
-static ssize_t modalias_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	struct wmi_block *wblock = dev_to_wblock(dev);
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा wmi_block *wblock = dev_to_wblock(dev);
 
-	return sprintf(buf, "wmi:%pUL\n", wblock->gblock.guid);
-}
-static DEVICE_ATTR_RO(modalias);
+	वापस प्र_लिखो(buf, "wmi:%pUL\n", wblock->gblock.guid);
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static ssize_t guid_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct wmi_block *wblock = dev_to_wblock(dev);
+अटल sमाप_प्रकार guid_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा wmi_block *wblock = dev_to_wblock(dev);
 
-	return sprintf(buf, "%pUL\n", wblock->gblock.guid);
-}
-static DEVICE_ATTR_RO(guid);
+	वापस प्र_लिखो(buf, "%pUL\n", wblock->gblock.guid);
+पूर्ण
+अटल DEVICE_ATTR_RO(guid);
 
-static ssize_t instance_count_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct wmi_block *wblock = dev_to_wblock(dev);
+अटल sमाप_प्रकार instance_count_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा wmi_block *wblock = dev_to_wblock(dev);
 
-	return sprintf(buf, "%d\n", (int)wblock->gblock.instance_count);
-}
-static DEVICE_ATTR_RO(instance_count);
+	वापस प्र_लिखो(buf, "%d\n", (पूर्णांक)wblock->gblock.instance_count);
+पूर्ण
+अटल DEVICE_ATTR_RO(instance_count);
 
-static ssize_t expensive_show(struct device *dev,
-			      struct device_attribute *attr, char *buf)
-{
-	struct wmi_block *wblock = dev_to_wblock(dev);
+अटल sमाप_प्रकार expensive_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा wmi_block *wblock = dev_to_wblock(dev);
 
-	return sprintf(buf, "%d\n",
+	वापस प्र_लिखो(buf, "%d\n",
 		       (wblock->gblock.flags & ACPI_WMI_EXPENSIVE) != 0);
-}
-static DEVICE_ATTR_RO(expensive);
+पूर्ण
+अटल DEVICE_ATTR_RO(expensive);
 
-static struct attribute *wmi_attrs[] = {
+अटल काष्ठा attribute *wmi_attrs[] = अणु
 	&dev_attr_modalias.attr,
 	&dev_attr_guid.attr,
 	&dev_attr_instance_count.attr,
 	&dev_attr_expensive.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(wmi);
 
-static ssize_t notify_id_show(struct device *dev, struct device_attribute *attr,
-			      char *buf)
-{
-	struct wmi_block *wblock = dev_to_wblock(dev);
+अटल sमाप_प्रकार notअगरy_id_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा wmi_block *wblock = dev_to_wblock(dev);
 
-	return sprintf(buf, "%02X\n", (unsigned int)wblock->gblock.notify_id);
-}
-static DEVICE_ATTR_RO(notify_id);
+	वापस प्र_लिखो(buf, "%02X\n", (अचिन्हित पूर्णांक)wblock->gblock.notअगरy_id);
+पूर्ण
+अटल DEVICE_ATTR_RO(notअगरy_id);
 
-static struct attribute *wmi_event_attrs[] = {
-	&dev_attr_notify_id.attr,
-	NULL,
-};
+अटल काष्ठा attribute *wmi_event_attrs[] = अणु
+	&dev_attr_notअगरy_id.attr,
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(wmi_event);
 
-static ssize_t object_id_show(struct device *dev, struct device_attribute *attr,
-			      char *buf)
-{
-	struct wmi_block *wblock = dev_to_wblock(dev);
+अटल sमाप_प्रकार object_id_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा wmi_block *wblock = dev_to_wblock(dev);
 
-	return sprintf(buf, "%c%c\n", wblock->gblock.object_id[0],
+	वापस प्र_लिखो(buf, "%c%c\n", wblock->gblock.object_id[0],
 		       wblock->gblock.object_id[1]);
-}
-static DEVICE_ATTR_RO(object_id);
+पूर्ण
+अटल DEVICE_ATTR_RO(object_id);
 
-static ssize_t setable_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
-{
-	struct wmi_device *wdev = dev_to_wdev(dev);
+अटल sमाप_प्रकार setable_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा wmi_device *wdev = dev_to_wdev(dev);
 
-	return sprintf(buf, "%d\n", (int)wdev->setable);
-}
-static DEVICE_ATTR_RO(setable);
+	वापस प्र_लिखो(buf, "%d\n", (पूर्णांक)wdev->setable);
+पूर्ण
+अटल DEVICE_ATTR_RO(setable);
 
-static struct attribute *wmi_data_attrs[] = {
+अटल काष्ठा attribute *wmi_data_attrs[] = अणु
 	&dev_attr_object_id.attr,
 	&dev_attr_setable.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(wmi_data);
 
-static struct attribute *wmi_method_attrs[] = {
+अटल काष्ठा attribute *wmi_method_attrs[] = अणु
 	&dev_attr_object_id.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(wmi_method);
 
-static int wmi_dev_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct wmi_block *wblock = dev_to_wblock(dev);
+अटल पूर्णांक wmi_dev_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा wmi_block *wblock = dev_to_wblock(dev);
 
-	if (add_uevent_var(env, "MODALIAS=wmi:%pUL", wblock->gblock.guid))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "MODALIAS=wmi:%pUL", wblock->gblock.guid))
+		वापस -ENOMEM;
 
-	if (add_uevent_var(env, "WMI_GUID=%pUL", wblock->gblock.guid))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "WMI_GUID=%pUL", wblock->gblock.guid))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wmi_dev_release(struct device *dev)
-{
-	struct wmi_block *wblock = dev_to_wblock(dev);
+अटल व्योम wmi_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा wmi_block *wblock = dev_to_wblock(dev);
 
-	kfree(wblock);
-}
+	kमुक्त(wblock);
+पूर्ण
 
-static int wmi_dev_match(struct device *dev, struct device_driver *driver)
-{
-	struct wmi_driver *wmi_driver =
-		container_of(driver, struct wmi_driver, driver);
-	struct wmi_block *wblock = dev_to_wblock(dev);
-	const struct wmi_device_id *id = wmi_driver->id_table;
+अटल पूर्णांक wmi_dev_match(काष्ठा device *dev, काष्ठा device_driver *driver)
+अणु
+	काष्ठा wmi_driver *wmi_driver =
+		container_of(driver, काष्ठा wmi_driver, driver);
+	काष्ठा wmi_block *wblock = dev_to_wblock(dev);
+	स्थिर काष्ठा wmi_device_id *id = wmi_driver->id_table;
 
-	if (id == NULL)
-		return 0;
+	अगर (id == शून्य)
+		वापस 0;
 
-	while (*id->guid_string) {
+	जबतक (*id->guid_string) अणु
 		guid_t driver_guid;
 
-		if (WARN_ON(guid_parse(id->guid_string, &driver_guid)))
-			continue;
-		if (!memcmp(&driver_guid, wblock->gblock.guid, 16))
-			return 1;
+		अगर (WARN_ON(guid_parse(id->guid_string, &driver_guid)))
+			जारी;
+		अगर (!स_भेद(&driver_guid, wblock->gblock.guid, 16))
+			वापस 1;
 
 		id++;
-	}
+	पूर्ण
 
-	return 0;
-}
-static int wmi_char_open(struct inode *inode, struct file *filp)
-{
-	const char *driver_name = filp->f_path.dentry->d_iname;
-	struct wmi_block *wblock = NULL;
-	struct wmi_block *next = NULL;
+	वापस 0;
+पूर्ण
+अटल पूर्णांक wmi_अक्षर_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	स्थिर अक्षर *driver_name = filp->f_path.dentry->d_iname;
+	काष्ठा wmi_block *wblock = शून्य;
+	काष्ठा wmi_block *next = शून्य;
 
-	list_for_each_entry_safe(wblock, next, &wmi_block_list, list) {
-		if (!wblock->dev.dev.driver)
-			continue;
-		if (strcmp(driver_name, wblock->dev.dev.driver->name) == 0) {
-			filp->private_data = wblock;
-			break;
-		}
-	}
+	list_क्रम_each_entry_safe(wblock, next, &wmi_block_list, list) अणु
+		अगर (!wblock->dev.dev.driver)
+			जारी;
+		अगर (म_भेद(driver_name, wblock->dev.dev.driver->name) == 0) अणु
+			filp->निजी_data = wblock;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!filp->private_data)
-		return -ENODEV;
+	अगर (!filp->निजी_data)
+		वापस -ENODEV;
 
-	return nonseekable_open(inode, filp);
-}
+	वापस nonseekable_खोलो(inode, filp);
+पूर्ण
 
-static ssize_t wmi_char_read(struct file *filp, char __user *buffer,
-	size_t length, loff_t *offset)
-{
-	struct wmi_block *wblock = filp->private_data;
+अटल sमाप_प्रकार wmi_अक्षर_पढ़ो(काष्ठा file *filp, अक्षर __user *buffer,
+	माप_प्रकार length, loff_t *offset)
+अणु
+	काष्ठा wmi_block *wblock = filp->निजी_data;
 
-	return simple_read_from_buffer(buffer, length, offset,
+	वापस simple_पढ़ो_from_buffer(buffer, length, offset,
 				       &wblock->req_buf_size,
-				       sizeof(wblock->req_buf_size));
-}
+				       माप(wblock->req_buf_size));
+पूर्ण
 
-static long wmi_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	struct wmi_ioctl_buffer __user *input =
-		(struct wmi_ioctl_buffer __user *) arg;
-	struct wmi_block *wblock = filp->private_data;
-	struct wmi_ioctl_buffer *buf = NULL;
-	struct wmi_driver *wdriver = NULL;
-	int ret;
+अटल दीर्घ wmi_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा wmi_ioctl_buffer __user *input =
+		(काष्ठा wmi_ioctl_buffer __user *) arg;
+	काष्ठा wmi_block *wblock = filp->निजी_data;
+	काष्ठा wmi_ioctl_buffer *buf = शून्य;
+	काष्ठा wmi_driver *wdriver = शून्य;
+	पूर्णांक ret;
 
-	if (_IOC_TYPE(cmd) != WMI_IOC)
-		return -ENOTTY;
+	अगर (_IOC_TYPE(cmd) != WMI_IOC)
+		वापस -ENOTTY;
 
 	/* make sure we're not calling a higher instance than exists*/
-	if (_IOC_NR(cmd) >= wblock->gblock.instance_count)
-		return -EINVAL;
+	अगर (_IOC_NR(cmd) >= wblock->gblock.instance_count)
+		वापस -EINVAL;
 
-	mutex_lock(&wblock->char_mutex);
+	mutex_lock(&wblock->अक्षर_mutex);
 	buf = wblock->handler_data;
-	if (get_user(buf->length, &input->length)) {
+	अगर (get_user(buf->length, &input->length)) अणु
 		dev_dbg(&wblock->dev.dev, "Read length from user failed\n");
 		ret = -EFAULT;
-		goto out_ioctl;
-	}
-	/* if it's too small, abort */
-	if (buf->length < wblock->req_buf_size) {
+		जाओ out_ioctl;
+	पूर्ण
+	/* अगर it's too small, पात */
+	अगर (buf->length < wblock->req_buf_size) अणु
 		dev_err(&wblock->dev.dev,
 			"Buffer %lld too small, need at least %lld\n",
 			buf->length, wblock->req_buf_size);
 		ret = -EINVAL;
-		goto out_ioctl;
-	}
-	/* if it's too big, warn, driver will only use what is needed */
-	if (buf->length > wblock->req_buf_size)
+		जाओ out_ioctl;
+	पूर्ण
+	/* अगर it's too big, warn, driver will only use what is needed */
+	अगर (buf->length > wblock->req_buf_size)
 		dev_warn(&wblock->dev.dev,
 			"Buffer %lld is bigger than required %lld\n",
 			buf->length, wblock->req_buf_size);
 
-	/* copy the structure from userspace */
-	if (copy_from_user(buf, input, wblock->req_buf_size)) {
+	/* copy the काष्ठाure from userspace */
+	अगर (copy_from_user(buf, input, wblock->req_buf_size)) अणु
 		dev_dbg(&wblock->dev.dev, "Copy %llu from user failed\n",
 			wblock->req_buf_size);
 		ret = -EFAULT;
-		goto out_ioctl;
-	}
+		जाओ out_ioctl;
+	पूर्ण
 
-	/* let the driver do any filtering and do the call */
+	/* let the driver करो any filtering and करो the call */
 	wdriver = container_of(wblock->dev.dev.driver,
-			       struct wmi_driver, driver);
-	if (!try_module_get(wdriver->driver.owner)) {
+			       काष्ठा wmi_driver, driver);
+	अगर (!try_module_get(wdriver->driver.owner)) अणु
 		ret = -EBUSY;
-		goto out_ioctl;
-	}
+		जाओ out_ioctl;
+	पूर्ण
 	ret = wdriver->filter_callback(&wblock->dev, cmd, buf);
 	module_put(wdriver->driver.owner);
-	if (ret)
-		goto out_ioctl;
+	अगर (ret)
+		जाओ out_ioctl;
 
-	/* return the result (only up to our internal buffer size) */
-	if (copy_to_user(input, buf, wblock->req_buf_size)) {
+	/* वापस the result (only up to our पूर्णांकernal buffer size) */
+	अगर (copy_to_user(input, buf, wblock->req_buf_size)) अणु
 		dev_dbg(&wblock->dev.dev, "Copy %llu to user failed\n",
 			wblock->req_buf_size);
 		ret = -EFAULT;
-	}
+	पूर्ण
 
 out_ioctl:
-	mutex_unlock(&wblock->char_mutex);
-	return ret;
-}
+	mutex_unlock(&wblock->अक्षर_mutex);
+	वापस ret;
+पूर्ण
 
-static const struct file_operations wmi_fops = {
+अटल स्थिर काष्ठा file_operations wmi_fops = अणु
 	.owner		= THIS_MODULE,
-	.read		= wmi_char_read,
-	.open		= wmi_char_open,
+	.पढ़ो		= wmi_अक्षर_पढ़ो,
+	.खोलो		= wmi_अक्षर_खोलो,
 	.unlocked_ioctl	= wmi_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-};
+पूर्ण;
 
-static int wmi_dev_probe(struct device *dev)
-{
-	struct wmi_block *wblock = dev_to_wblock(dev);
-	struct wmi_driver *wdriver =
-		container_of(dev->driver, struct wmi_driver, driver);
-	int ret = 0;
-	char *buf;
+अटल पूर्णांक wmi_dev_probe(काष्ठा device *dev)
+अणु
+	काष्ठा wmi_block *wblock = dev_to_wblock(dev);
+	काष्ठा wmi_driver *wdriver =
+		container_of(dev->driver, काष्ठा wmi_driver, driver);
+	पूर्णांक ret = 0;
+	अक्षर *buf;
 
-	if (ACPI_FAILURE(wmi_method_enable(wblock, 1)))
+	अगर (ACPI_FAILURE(wmi_method_enable(wblock, 1)))
 		dev_warn(dev, "failed to enable device -- probing anyway\n");
 
-	if (wdriver->probe) {
+	अगर (wdriver->probe) अणु
 		ret = wdriver->probe(dev_to_wdev(dev),
 				find_guid_context(wblock, wdriver));
-		if (ret != 0)
-			goto probe_failure;
-	}
+		अगर (ret != 0)
+			जाओ probe_failure;
+	पूर्ण
 
-	/* driver wants a character device made */
-	if (wdriver->filter_callback) {
+	/* driver wants a अक्षरacter device made */
+	अगर (wdriver->filter_callback) अणु
 		/* check that required buffer size declared by driver or MOF */
-		if (!wblock->req_buf_size) {
+		अगर (!wblock->req_buf_size) अणु
 			dev_err(&wblock->dev.dev,
 				"Required buffer size not set\n");
 			ret = -EINVAL;
-			goto probe_failure;
-		}
+			जाओ probe_failure;
+		पूर्ण
 
-		wblock->handler_data = kmalloc(wblock->req_buf_size,
+		wblock->handler_data = kदो_स्मृति(wblock->req_buf_size,
 					       GFP_KERNEL);
-		if (!wblock->handler_data) {
+		अगर (!wblock->handler_data) अणु
 			ret = -ENOMEM;
-			goto probe_failure;
-		}
+			जाओ probe_failure;
+		पूर्ण
 
-		buf = kasprintf(GFP_KERNEL, "wmi/%s", wdriver->driver.name);
-		if (!buf) {
+		buf = kaप्र_लिखो(GFP_KERNEL, "wmi/%s", wdriver->driver.name);
+		अगर (!buf) अणु
 			ret = -ENOMEM;
-			goto probe_string_failure;
-		}
-		wblock->char_dev.minor = MISC_DYNAMIC_MINOR;
-		wblock->char_dev.name = buf;
-		wblock->char_dev.fops = &wmi_fops;
-		wblock->char_dev.mode = 0444;
-		ret = misc_register(&wblock->char_dev);
-		if (ret) {
+			जाओ probe_string_failure;
+		पूर्ण
+		wblock->अक्षर_dev.minor = MISC_DYNAMIC_MINOR;
+		wblock->अक्षर_dev.name = buf;
+		wblock->अक्षर_dev.fops = &wmi_fops;
+		wblock->अक्षर_dev.mode = 0444;
+		ret = misc_रेजिस्टर(&wblock->अक्षर_dev);
+		अगर (ret) अणु
 			dev_warn(dev, "failed to register char dev: %d\n", ret);
 			ret = -ENOMEM;
-			goto probe_misc_failure;
-		}
-	}
+			जाओ probe_misc_failure;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 probe_misc_failure:
-	kfree(buf);
+	kमुक्त(buf);
 probe_string_failure:
-	kfree(wblock->handler_data);
+	kमुक्त(wblock->handler_data);
 probe_failure:
-	if (ACPI_FAILURE(wmi_method_enable(wblock, 0)))
+	अगर (ACPI_FAILURE(wmi_method_enable(wblock, 0)))
 		dev_warn(dev, "failed to disable device\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wmi_dev_remove(struct device *dev)
-{
-	struct wmi_block *wblock = dev_to_wblock(dev);
-	struct wmi_driver *wdriver =
-		container_of(dev->driver, struct wmi_driver, driver);
+अटल पूर्णांक wmi_dev_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा wmi_block *wblock = dev_to_wblock(dev);
+	काष्ठा wmi_driver *wdriver =
+		container_of(dev->driver, काष्ठा wmi_driver, driver);
 
-	if (wdriver->filter_callback) {
-		misc_deregister(&wblock->char_dev);
-		kfree(wblock->char_dev.name);
-		kfree(wblock->handler_data);
-	}
+	अगर (wdriver->filter_callback) अणु
+		misc_deरेजिस्टर(&wblock->अक्षर_dev);
+		kमुक्त(wblock->अक्षर_dev.name);
+		kमुक्त(wblock->handler_data);
+	पूर्ण
 
-	if (wdriver->remove)
-		wdriver->remove(dev_to_wdev(dev));
+	अगर (wdriver->हटाओ)
+		wdriver->हटाओ(dev_to_wdev(dev));
 
-	if (ACPI_FAILURE(wmi_method_enable(wblock, 0)))
+	अगर (ACPI_FAILURE(wmi_method_enable(wblock, 0)))
 		dev_warn(dev, "failed to disable device\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct class wmi_bus_class = {
+अटल काष्ठा class wmi_bus_class = अणु
 	.name = "wmi_bus",
-};
+पूर्ण;
 
-static struct bus_type wmi_bus_type = {
+अटल काष्ठा bus_type wmi_bus_type = अणु
 	.name = "wmi",
 	.dev_groups = wmi_groups,
 	.match = wmi_dev_match,
 	.uevent = wmi_dev_uevent,
 	.probe = wmi_dev_probe,
-	.remove = wmi_dev_remove,
-};
+	.हटाओ = wmi_dev_हटाओ,
+पूर्ण;
 
-static const struct device_type wmi_type_event = {
+अटल स्थिर काष्ठा device_type wmi_type_event = अणु
 	.name = "event",
 	.groups = wmi_event_groups,
 	.release = wmi_dev_release,
-};
+पूर्ण;
 
-static const struct device_type wmi_type_method = {
+अटल स्थिर काष्ठा device_type wmi_type_method = अणु
 	.name = "method",
 	.groups = wmi_method_groups,
 	.release = wmi_dev_release,
-};
+पूर्ण;
 
-static const struct device_type wmi_type_data = {
+अटल स्थिर काष्ठा device_type wmi_type_data = अणु
 	.name = "data",
 	.groups = wmi_data_groups,
 	.release = wmi_dev_release,
-};
+पूर्ण;
 
-static int wmi_create_device(struct device *wmi_bus_dev,
-			     const struct guid_block *gblock,
-			     struct wmi_block *wblock,
-			     struct acpi_device *device)
-{
-	struct acpi_device_info *info;
-	char method[5];
-	int result;
+अटल पूर्णांक wmi_create_device(काष्ठा device *wmi_bus_dev,
+			     स्थिर काष्ठा guid_block *gblock,
+			     काष्ठा wmi_block *wblock,
+			     काष्ठा acpi_device *device)
+अणु
+	काष्ठा acpi_device_info *info;
+	अक्षर method[5];
+	पूर्णांक result;
 
-	if (gblock->flags & ACPI_WMI_EVENT) {
+	अगर (gblock->flags & ACPI_WMI_EVENT) अणु
 		wblock->dev.dev.type = &wmi_type_event;
-		goto out_init;
-	}
+		जाओ out_init;
+	पूर्ण
 
-	if (gblock->flags & ACPI_WMI_METHOD) {
+	अगर (gblock->flags & ACPI_WMI_METHOD) अणु
 		wblock->dev.dev.type = &wmi_type_method;
-		mutex_init(&wblock->char_mutex);
-		goto out_init;
-	}
+		mutex_init(&wblock->अक्षर_mutex);
+		जाओ out_init;
+	पूर्ण
 
 	/*
 	 * Data Block Query Control Method (WQxx by convention) is
-	 * required per the WMI documentation. If it is not present,
+	 * required per the WMI करोcumentation. If it is not present,
 	 * we ignore this data block.
 	 */
-	strcpy(method, "WQ");
-	strncat(method, wblock->gblock.object_id, 2);
+	म_नकल(method, "WQ");
+	म_जोड़न(method, wblock->gblock.object_id, 2);
 	result = get_subobj_info(device->handle, method, &info);
 
-	if (result) {
+	अगर (result) अणु
 		dev_warn(wmi_bus_dev,
 			 "%s data block query control method not found\n",
 			 method);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	wblock->dev.dev.type = &wmi_type_data;
 
 	/*
-	 * The Microsoft documentation specifically states:
+	 * The Microsoft करोcumentation specअगरically states:
 	 *
-	 *   Data blocks registered with only a single instance
+	 *   Data blocks रेजिस्टरed with only a single instance
 	 *   can ignore the parameter.
 	 *
-	 * ACPICA will get mad at us if we call the method with the wrong number
+	 * ACPICA will get mad at us अगर we call the method with the wrong number
 	 * of arguments, so check what our method expects.  (On some Dell
 	 * laptops, WQxx may not be a method at all.)
 	 */
-	if (info->type != ACPI_TYPE_METHOD || info->param_count == 0)
-		wblock->read_takes_no_args = true;
+	अगर (info->type != ACPI_TYPE_METHOD || info->param_count == 0)
+		wblock->पढ़ो_takes_no_args = true;
 
-	kfree(info);
+	kमुक्त(info);
 
-	strcpy(method, "WS");
-	strncat(method, wblock->gblock.object_id, 2);
-	result = get_subobj_info(device->handle, method, NULL);
+	म_नकल(method, "WS");
+	म_जोड़न(method, wblock->gblock.object_id, 2);
+	result = get_subobj_info(device->handle, method, शून्य);
 
-	if (result == 0)
+	अगर (result == 0)
 		wblock->dev.setable = true;
 
  out_init:
@@ -1100,230 +1101,230 @@ static int wmi_create_device(struct device *wmi_bus_dev,
 
 	device_initialize(&wblock->dev.dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wmi_free_devices(struct acpi_device *device)
-{
-	struct wmi_block *wblock, *next;
+अटल व्योम wmi_मुक्त_devices(काष्ठा acpi_device *device)
+अणु
+	काष्ठा wmi_block *wblock, *next;
 
-	/* Delete devices for all the GUIDs */
-	list_for_each_entry_safe(wblock, next, &wmi_block_list, list) {
-		if (wblock->acpi_device == device) {
+	/* Delete devices क्रम all the GUIDs */
+	list_क्रम_each_entry_safe(wblock, next, &wmi_block_list, list) अणु
+		अगर (wblock->acpi_device == device) अणु
 			list_del(&wblock->list);
-			device_unregister(&wblock->dev.dev);
-		}
-	}
-}
+			device_unरेजिस्टर(&wblock->dev.dev);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static bool guid_already_parsed(struct acpi_device *device, const u8 *guid)
-{
-	struct wmi_block *wblock;
+अटल bool guid_alपढ़ोy_parsed(काष्ठा acpi_device *device, स्थिर u8 *guid)
+अणु
+	काष्ठा wmi_block *wblock;
 
-	list_for_each_entry(wblock, &wmi_block_list, list) {
-		if (memcmp(wblock->gblock.guid, guid, 16) == 0) {
+	list_क्रम_each_entry(wblock, &wmi_block_list, list) अणु
+		अगर (स_भेद(wblock->gblock.guid, guid, 16) == 0) अणु
 			/*
 			 * Because we historically didn't track the relationship
-			 * between GUIDs and ACPI nodes, we don't know whether
+			 * between GUIDs and ACPI nodes, we करोn't know whether
 			 * we need to suppress GUIDs that are unique on a
 			 * given node but duplicated across nodes.
 			 */
 			dev_warn(&device->dev, "duplicate WMI GUID %pUL (first instance was on %s)\n",
 				 guid, dev_name(&wblock->acpi_device->dev));
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Parse the _WDG method for the GUID data blocks
+ * Parse the _WDG method क्रम the GUID data blocks
  */
-static int parse_wdg(struct device *wmi_bus_dev, struct acpi_device *device)
-{
-	struct acpi_buffer out = {ACPI_ALLOCATE_BUFFER, NULL};
-	const struct guid_block *gblock;
-	struct wmi_block *wblock, *next;
-	union acpi_object *obj;
+अटल पूर्णांक parse_wdg(काष्ठा device *wmi_bus_dev, काष्ठा acpi_device *device)
+अणु
+	काष्ठा acpi_buffer out = अणुACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
+	स्थिर काष्ठा guid_block *gblock;
+	काष्ठा wmi_block *wblock, *next;
+	जोड़ acpi_object *obj;
 	acpi_status status;
-	int retval = 0;
+	पूर्णांक retval = 0;
 	u32 i, total;
 
-	status = acpi_evaluate_object(device->handle, "_WDG", NULL, &out);
-	if (ACPI_FAILURE(status))
-		return -ENXIO;
+	status = acpi_evaluate_object(device->handle, "_WDG", शून्य, &out);
+	अगर (ACPI_FAILURE(status))
+		वापस -ENXIO;
 
-	obj = (union acpi_object *) out.pointer;
-	if (!obj)
-		return -ENXIO;
+	obj = (जोड़ acpi_object *) out.poपूर्णांकer;
+	अगर (!obj)
+		वापस -ENXIO;
 
-	if (obj->type != ACPI_TYPE_BUFFER) {
+	अगर (obj->type != ACPI_TYPE_BUFFER) अणु
 		retval = -ENXIO;
-		goto out_free_pointer;
-	}
+		जाओ out_मुक्त_poपूर्णांकer;
+	पूर्ण
 
-	gblock = (const struct guid_block *)obj->buffer.pointer;
-	total = obj->buffer.length / sizeof(struct guid_block);
+	gblock = (स्थिर काष्ठा guid_block *)obj->buffer.poपूर्णांकer;
+	total = obj->buffer.length / माप(काष्ठा guid_block);
 
-	for (i = 0; i < total; i++) {
-		if (debug_dump_wdg)
+	क्रम (i = 0; i < total; i++) अणु
+		अगर (debug_dump_wdg)
 			wmi_dump_wdg(&gblock[i]);
 
 		/*
-		 * Some WMI devices, like those for nVidia hooks, have a
-		 * duplicate GUID. It's not clear what we should do in this
-		 * case yet, so for now, we'll just ignore the duplicate
-		 * for device creation.
+		 * Some WMI devices, like those क्रम nVidia hooks, have a
+		 * duplicate GUID. It's not clear what we should करो in this
+		 * हाल yet, so क्रम now, we'll just ignore the duplicate
+		 * क्रम device creation.
 		 */
-		if (guid_already_parsed(device, gblock[i].guid))
-			continue;
+		अगर (guid_alपढ़ोy_parsed(device, gblock[i].guid))
+			जारी;
 
-		wblock = kzalloc(sizeof(struct wmi_block), GFP_KERNEL);
-		if (!wblock) {
+		wblock = kzalloc(माप(काष्ठा wmi_block), GFP_KERNEL);
+		अगर (!wblock) अणु
 			retval = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		wblock->acpi_device = device;
 		wblock->gblock = gblock[i];
 
 		retval = wmi_create_device(wmi_bus_dev, &gblock[i], wblock, device);
-		if (retval) {
-			kfree(wblock);
-			continue;
-		}
+		अगर (retval) अणु
+			kमुक्त(wblock);
+			जारी;
+		पूर्ण
 
 		list_add_tail(&wblock->list, &wmi_block_list);
 
-		if (debug_event) {
-			wblock->handler = wmi_notify_debug;
+		अगर (debug_event) अणु
+			wblock->handler = wmi_notअगरy_debug;
 			wmi_method_enable(wblock, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Now that all of the devices are created, add them to the
 	 * device tree and probe subdrivers.
 	 */
-	list_for_each_entry_safe(wblock, next, &wmi_block_list, list) {
-		if (wblock->acpi_device != device)
-			continue;
+	list_क्रम_each_entry_safe(wblock, next, &wmi_block_list, list) अणु
+		अगर (wblock->acpi_device != device)
+			जारी;
 
 		retval = device_add(&wblock->dev.dev);
-		if (retval) {
+		अगर (retval) अणु
 			dev_err(wmi_bus_dev, "failed to register %pUL\n",
 				wblock->gblock.guid);
-			if (debug_event)
+			अगर (debug_event)
 				wmi_method_enable(wblock, 0);
 			list_del(&wblock->list);
 			put_device(&wblock->dev.dev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-out_free_pointer:
-	kfree(out.pointer);
-	return retval;
-}
+out_मुक्त_poपूर्णांकer:
+	kमुक्त(out.poपूर्णांकer);
+	वापस retval;
+पूर्ण
 
 /*
- * WMI can have EmbeddedControl access regions. In which case, we just want to
+ * WMI can have EmbeddedControl access regions. In which हाल, we just want to
  * hand these off to the EC driver.
  */
-static acpi_status
+अटल acpi_status
 acpi_wmi_ec_space_handler(u32 function, acpi_physical_address address,
 		      u32 bits, u64 *value,
-		      void *handler_context, void *region_context)
-{
-	int result = 0, i = 0;
+		      व्योम *handler_context, व्योम *region_context)
+अणु
+	पूर्णांक result = 0, i = 0;
 	u8 temp = 0;
 
-	if ((address > 0xFF) || !value)
-		return AE_BAD_PARAMETER;
+	अगर ((address > 0xFF) || !value)
+		वापस AE_BAD_PARAMETER;
 
-	if (function != ACPI_READ && function != ACPI_WRITE)
-		return AE_BAD_PARAMETER;
+	अगर (function != ACPI_READ && function != ACPI_WRITE)
+		वापस AE_BAD_PARAMETER;
 
-	if (bits != 8)
-		return AE_BAD_PARAMETER;
+	अगर (bits != 8)
+		वापस AE_BAD_PARAMETER;
 
-	if (function == ACPI_READ) {
-		result = ec_read(address, &temp);
+	अगर (function == ACPI_READ) अणु
+		result = ec_पढ़ो(address, &temp);
 		(*value) |= ((u64)temp) << i;
-	} else {
+	पूर्ण अन्यथा अणु
 		temp = 0xff & ((*value) >> i);
-		result = ec_write(address, temp);
-	}
+		result = ec_ग_लिखो(address, temp);
+	पूर्ण
 
-	switch (result) {
-	case -EINVAL:
-		return AE_BAD_PARAMETER;
-	case -ENODEV:
-		return AE_NOT_FOUND;
-	case -ETIME:
-		return AE_TIME;
-	default:
-		return AE_OK;
-	}
-}
+	चयन (result) अणु
+	हाल -EINVAL:
+		वापस AE_BAD_PARAMETER;
+	हाल -ENODEV:
+		वापस AE_NOT_FOUND;
+	हाल -ETIME:
+		वापस AE_TIME;
+	शेष:
+		वापस AE_OK;
+	पूर्ण
+पूर्ण
 
-static void acpi_wmi_notify_handler(acpi_handle handle, u32 event,
-				    void *context)
-{
-	struct guid_block *block;
-	struct wmi_block *wblock;
+अटल व्योम acpi_wmi_notअगरy_handler(acpi_handle handle, u32 event,
+				    व्योम *context)
+अणु
+	काष्ठा guid_block *block;
+	काष्ठा wmi_block *wblock;
 	bool found_it = false;
 
-	list_for_each_entry(wblock, &wmi_block_list, list) {
+	list_क्रम_each_entry(wblock, &wmi_block_list, list) अणु
 		block = &wblock->gblock;
 
-		if (wblock->acpi_device->handle == handle &&
+		अगर (wblock->acpi_device->handle == handle &&
 		    (block->flags & ACPI_WMI_EVENT) &&
-		    (block->notify_id == event))
-		{
+		    (block->notअगरy_id == event))
+		अणु
 			found_it = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found_it)
-		return;
+	अगर (!found_it)
+		वापस;
 
-	/* If a driver is bound, then notify the driver. */
-	if (wblock->dev.dev.driver) {
-		struct wmi_driver *driver;
-		struct acpi_object_list input;
-		union acpi_object params[1];
-		struct acpi_buffer evdata = { ACPI_ALLOCATE_BUFFER, NULL };
+	/* If a driver is bound, then notअगरy the driver. */
+	अगर (wblock->dev.dev.driver) अणु
+		काष्ठा wmi_driver *driver;
+		काष्ठा acpi_object_list input;
+		जोड़ acpi_object params[1];
+		काष्ठा acpi_buffer evdata = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
 		acpi_status status;
 
 		driver = container_of(wblock->dev.dev.driver,
-				      struct wmi_driver, driver);
+				      काष्ठा wmi_driver, driver);
 
 		input.count = 1;
-		input.pointer = params;
+		input.poपूर्णांकer = params;
 		params[0].type = ACPI_TYPE_INTEGER;
-		params[0].integer.value = event;
+		params[0].पूर्णांकeger.value = event;
 
 		status = acpi_evaluate_object(wblock->acpi_device->handle,
 					      "_WED", &input, &evdata);
-		if (ACPI_FAILURE(status)) {
+		अगर (ACPI_FAILURE(status)) अणु
 			dev_warn(&wblock->dev.dev,
 				 "failed to get event data\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (driver->notify)
-			driver->notify(&wblock->dev,
-				       (union acpi_object *)evdata.pointer);
+		अगर (driver->notअगरy)
+			driver->notअगरy(&wblock->dev,
+				       (जोड़ acpi_object *)evdata.poपूर्णांकer);
 
-		kfree(evdata.pointer);
-	} else if (wblock->handler) {
+		kमुक्त(evdata.poपूर्णांकer);
+	पूर्ण अन्यथा अगर (wblock->handler) अणु
 		/* Legacy handler */
 		wblock->handler(event, wblock->handler_data);
-	}
+	पूर्ण
 
-	if (debug_event)
+	अगर (debug_event)
 		pr_info("DEBUG Event GUID: %pUL\n", wblock->gblock.guid);
 
 	acpi_bus_generate_netlink_event(
@@ -1331,139 +1332,139 @@ static void acpi_wmi_notify_handler(acpi_handle handle, u32 event,
 		dev_name(&wblock->dev.dev),
 		event, 0);
 
-}
+पूर्ण
 
-static int acpi_wmi_remove(struct platform_device *device)
-{
-	struct acpi_device *acpi_device = ACPI_COMPANION(&device->dev);
+अटल पूर्णांक acpi_wmi_हटाओ(काष्ठा platक्रमm_device *device)
+अणु
+	काष्ठा acpi_device *acpi_device = ACPI_COMPANION(&device->dev);
 
-	acpi_remove_notify_handler(acpi_device->handle, ACPI_DEVICE_NOTIFY,
-				   acpi_wmi_notify_handler);
-	acpi_remove_address_space_handler(acpi_device->handle,
+	acpi_हटाओ_notअगरy_handler(acpi_device->handle, ACPI_DEVICE_NOTIFY,
+				   acpi_wmi_notअगरy_handler);
+	acpi_हटाओ_address_space_handler(acpi_device->handle,
 				ACPI_ADR_SPACE_EC, &acpi_wmi_ec_space_handler);
-	wmi_free_devices(acpi_device);
-	device_unregister((struct device *)dev_get_drvdata(&device->dev));
+	wmi_मुक्त_devices(acpi_device);
+	device_unरेजिस्टर((काष्ठा device *)dev_get_drvdata(&device->dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_wmi_probe(struct platform_device *device)
-{
-	struct acpi_device *acpi_device;
-	struct device *wmi_bus_dev;
+अटल पूर्णांक acpi_wmi_probe(काष्ठा platक्रमm_device *device)
+अणु
+	काष्ठा acpi_device *acpi_device;
+	काष्ठा device *wmi_bus_dev;
 	acpi_status status;
-	int error;
+	पूर्णांक error;
 
 	acpi_device = ACPI_COMPANION(&device->dev);
-	if (!acpi_device) {
+	अगर (!acpi_device) अणु
 		dev_err(&device->dev, "ACPI companion is missing\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	status = acpi_install_address_space_handler(acpi_device->handle,
 						    ACPI_ADR_SPACE_EC,
 						    &acpi_wmi_ec_space_handler,
-						    NULL, NULL);
-	if (ACPI_FAILURE(status)) {
+						    शून्य, शून्य);
+	अगर (ACPI_FAILURE(status)) अणु
 		dev_err(&device->dev, "Error installing EC region handler\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	status = acpi_install_notify_handler(acpi_device->handle,
+	status = acpi_install_notअगरy_handler(acpi_device->handle,
 					     ACPI_DEVICE_NOTIFY,
-					     acpi_wmi_notify_handler,
-					     NULL);
-	if (ACPI_FAILURE(status)) {
+					     acpi_wmi_notअगरy_handler,
+					     शून्य);
+	अगर (ACPI_FAILURE(status)) अणु
 		dev_err(&device->dev, "Error installing notify handler\n");
 		error = -ENODEV;
-		goto err_remove_ec_handler;
-	}
+		जाओ err_हटाओ_ec_handler;
+	पूर्ण
 
 	wmi_bus_dev = device_create(&wmi_bus_class, &device->dev, MKDEV(0, 0),
-				    NULL, "wmi_bus-%s", dev_name(&device->dev));
-	if (IS_ERR(wmi_bus_dev)) {
+				    शून्य, "wmi_bus-%s", dev_name(&device->dev));
+	अगर (IS_ERR(wmi_bus_dev)) अणु
 		error = PTR_ERR(wmi_bus_dev);
-		goto err_remove_notify_handler;
-	}
+		जाओ err_हटाओ_notअगरy_handler;
+	पूर्ण
 	dev_set_drvdata(&device->dev, wmi_bus_dev);
 
 	error = parse_wdg(wmi_bus_dev, acpi_device);
-	if (error) {
+	अगर (error) अणु
 		pr_err("Failed to parse WDG method\n");
-		goto err_remove_busdev;
-	}
+		जाओ err_हटाओ_busdev;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_remove_busdev:
-	device_unregister(wmi_bus_dev);
+err_हटाओ_busdev:
+	device_unरेजिस्टर(wmi_bus_dev);
 
-err_remove_notify_handler:
-	acpi_remove_notify_handler(acpi_device->handle, ACPI_DEVICE_NOTIFY,
-				   acpi_wmi_notify_handler);
+err_हटाओ_notअगरy_handler:
+	acpi_हटाओ_notअगरy_handler(acpi_device->handle, ACPI_DEVICE_NOTIFY,
+				   acpi_wmi_notअगरy_handler);
 
-err_remove_ec_handler:
-	acpi_remove_address_space_handler(acpi_device->handle,
+err_हटाओ_ec_handler:
+	acpi_हटाओ_address_space_handler(acpi_device->handle,
 					  ACPI_ADR_SPACE_EC,
 					  &acpi_wmi_ec_space_handler);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-int __must_check __wmi_driver_register(struct wmi_driver *driver,
-				       struct module *owner)
-{
+पूर्णांक __must_check __wmi_driver_रेजिस्टर(काष्ठा wmi_driver *driver,
+				       काष्ठा module *owner)
+अणु
 	driver->driver.owner = owner;
 	driver->driver.bus = &wmi_bus_type;
 
-	return driver_register(&driver->driver);
-}
-EXPORT_SYMBOL(__wmi_driver_register);
+	वापस driver_रेजिस्टर(&driver->driver);
+पूर्ण
+EXPORT_SYMBOL(__wmi_driver_रेजिस्टर);
 
-void wmi_driver_unregister(struct wmi_driver *driver)
-{
-	driver_unregister(&driver->driver);
-}
-EXPORT_SYMBOL(wmi_driver_unregister);
+व्योम wmi_driver_unरेजिस्टर(काष्ठा wmi_driver *driver)
+अणु
+	driver_unरेजिस्टर(&driver->driver);
+पूर्ण
+EXPORT_SYMBOL(wmi_driver_unरेजिस्टर);
 
-static int __init acpi_wmi_init(void)
-{
-	int error;
+अटल पूर्णांक __init acpi_wmi_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	if (acpi_disabled)
-		return -ENODEV;
+	अगर (acpi_disabled)
+		वापस -ENODEV;
 
-	error = class_register(&wmi_bus_class);
-	if (error)
-		return error;
+	error = class_रेजिस्टर(&wmi_bus_class);
+	अगर (error)
+		वापस error;
 
-	error = bus_register(&wmi_bus_type);
-	if (error)
-		goto err_unreg_class;
+	error = bus_रेजिस्टर(&wmi_bus_type);
+	अगर (error)
+		जाओ err_unreg_class;
 
-	error = platform_driver_register(&acpi_wmi_driver);
-	if (error) {
+	error = platक्रमm_driver_रेजिस्टर(&acpi_wmi_driver);
+	अगर (error) अणु
 		pr_err("Error loading mapper\n");
-		goto err_unreg_bus;
-	}
+		जाओ err_unreg_bus;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_unreg_bus:
-	bus_unregister(&wmi_bus_type);
+	bus_unरेजिस्टर(&wmi_bus_type);
 
 err_unreg_class:
-	class_unregister(&wmi_bus_class);
+	class_unरेजिस्टर(&wmi_bus_class);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void __exit acpi_wmi_exit(void)
-{
-	platform_driver_unregister(&acpi_wmi_driver);
-	bus_unregister(&wmi_bus_type);
-	class_unregister(&wmi_bus_class);
-}
+अटल व्योम __निकास acpi_wmi_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&acpi_wmi_driver);
+	bus_unरेजिस्टर(&wmi_bus_type);
+	class_unरेजिस्टर(&wmi_bus_class);
+पूर्ण
 
 subsys_initcall_sync(acpi_wmi_init);
-module_exit(acpi_wmi_exit);
+module_निकास(acpi_wmi_निकास);

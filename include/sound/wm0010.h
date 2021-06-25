@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * wm0010.h -- Platform data for WM0010 DSP Driver
+ * wm0010.h -- Platक्रमm data क्रम WM0010 DSP Driver
  *
  * Copyright 2012 Wolfson Microelectronics PLC.
  *
- * Author: Dimitris Papastamos <dp@opensource.wolfsonmicro.com>
+ * Author: Dimitris Papastamos <dp@खोलोsource.wolfsonmicro.com>
  */
 
-#ifndef WM0010_PDATA_H
-#define WM0010_PDATA_H
+#अगर_अघोषित WM0010_PDATA_H
+#घोषणा WM0010_PDATA_H
 
-struct wm0010_pdata {
-	int gpio_reset;
+काष्ठा wm0010_pdata अणु
+	पूर्णांक gpio_reset;
 
-	/* Set if there is an inverter between the GPIO controlling
-	 * the reset signal and the device.
+	/* Set अगर there is an inverter between the GPIO controlling
+	 * the reset संकेत and the device.
 	 */
-	int reset_active_high;
-	int irq_flags;
-};
+	पूर्णांक reset_active_high;
+	पूर्णांक irq_flags;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

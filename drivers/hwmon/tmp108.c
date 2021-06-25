@@ -1,362 +1,363 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Texas Instruments TMP108 SMBus temperature sensor driver
  *
  * Copyright (C) 2016 John Muir <john@jmuir.com>
  */
 
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/jiffies.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-#define	DRIVER_NAME "tmp108"
+#घोषणा	DRIVER_NAME "tmp108"
 
-#define	TMP108_REG_TEMP		0x00
-#define	TMP108_REG_CONF		0x01
-#define	TMP108_REG_TLOW		0x02
-#define	TMP108_REG_THIGH	0x03
+#घोषणा	TMP108_REG_TEMP		0x00
+#घोषणा	TMP108_REG_CONF		0x01
+#घोषणा	TMP108_REG_TLOW		0x02
+#घोषणा	TMP108_REG_THIGH	0x03
 
-#define TMP108_TEMP_MIN_MC	-50000 /* Minimum millicelcius. */
-#define TMP108_TEMP_MAX_MC	127937 /* Maximum millicelcius. */
+#घोषणा TMP108_TEMP_MIN_MC	-50000 /* Minimum millicelcius. */
+#घोषणा TMP108_TEMP_MAX_MC	127937 /* Maximum millicelcius. */
 
-/* Configuration register bits.
+/* Configuration रेजिस्टर bits.
  * Note: these bit definitions are byte swapped.
  */
-#define TMP108_CONF_M0		0x0100 /* Sensor mode. */
-#define TMP108_CONF_M1		0x0200
-#define TMP108_CONF_TM		0x0400 /* Thermostat mode. */
-#define TMP108_CONF_FL		0x0800 /* Watchdog flag - TLOW */
-#define TMP108_CONF_FH		0x1000 /* Watchdog flag - THIGH */
-#define TMP108_CONF_CR0		0x2000 /* Conversion rate. */
-#define TMP108_CONF_CR1		0x4000
-#define TMP108_CONF_ID		0x8000
-#define TMP108_CONF_HYS0	0x0010 /* Hysteresis. */
-#define TMP108_CONF_HYS1	0x0020
-#define TMP108_CONF_POL		0x0080 /* Polarity of alert. */
+#घोषणा TMP108_CONF_M0		0x0100 /* Sensor mode. */
+#घोषणा TMP108_CONF_M1		0x0200
+#घोषणा TMP108_CONF_TM		0x0400 /* Thermostat mode. */
+#घोषणा TMP108_CONF_FL		0x0800 /* Watchकरोg flag - TLOW */
+#घोषणा TMP108_CONF_FH		0x1000 /* Watchकरोg flag - THIGH */
+#घोषणा TMP108_CONF_CR0		0x2000 /* Conversion rate. */
+#घोषणा TMP108_CONF_CR1		0x4000
+#घोषणा TMP108_CONF_ID		0x8000
+#घोषणा TMP108_CONF_HYS0	0x0010 /* Hysteresis. */
+#घोषणा TMP108_CONF_HYS1	0x0020
+#घोषणा TMP108_CONF_POL		0x0080 /* Polarity of alert. */
 
 /* Defaults set by the hardware upon reset. */
-#define TMP108_CONF_DEFAULTS		(TMP108_CONF_CR0 | TMP108_CONF_TM |\
+#घोषणा TMP108_CONF_DEFAULTS		(TMP108_CONF_CR0 | TMP108_CONF_TM |\
 					 TMP108_CONF_HYS0 | TMP108_CONF_M1)
-/* These bits are read-only. */
-#define TMP108_CONF_READ_ONLY		(TMP108_CONF_FL | TMP108_CONF_FH |\
+/* These bits are पढ़ो-only. */
+#घोषणा TMP108_CONF_READ_ONLY		(TMP108_CONF_FL | TMP108_CONF_FH |\
 					 TMP108_CONF_ID)
 
-#define TMP108_CONF_MODE_MASK		(TMP108_CONF_M0|TMP108_CONF_M1)
-#define TMP108_MODE_SHUTDOWN		0x0000
-#define TMP108_MODE_ONE_SHOT		TMP108_CONF_M0
-#define TMP108_MODE_CONTINUOUS		TMP108_CONF_M1		/* Default */
+#घोषणा TMP108_CONF_MODE_MASK		(TMP108_CONF_M0|TMP108_CONF_M1)
+#घोषणा TMP108_MODE_SHUTDOWN		0x0000
+#घोषणा TMP108_MODE_ONE_SHOT		TMP108_CONF_M0
+#घोषणा TMP108_MODE_CONTINUOUS		TMP108_CONF_M1		/* Default */
 					/* When M1 is set, M0 is ignored. */
 
-#define TMP108_CONF_CONVRATE_MASK	(TMP108_CONF_CR0|TMP108_CONF_CR1)
-#define TMP108_CONVRATE_0P25HZ		0x0000
-#define TMP108_CONVRATE_1HZ		TMP108_CONF_CR0		/* Default */
-#define TMP108_CONVRATE_4HZ		TMP108_CONF_CR1
-#define TMP108_CONVRATE_16HZ		(TMP108_CONF_CR0|TMP108_CONF_CR1)
+#घोषणा TMP108_CONF_CONVRATE_MASK	(TMP108_CONF_CR0|TMP108_CONF_CR1)
+#घोषणा TMP108_CONVRATE_0P25HZ		0x0000
+#घोषणा TMP108_CONVRATE_1HZ		TMP108_CONF_CR0		/* Default */
+#घोषणा TMP108_CONVRATE_4HZ		TMP108_CONF_CR1
+#घोषणा TMP108_CONVRATE_16HZ		(TMP108_CONF_CR0|TMP108_CONF_CR1)
 
-#define TMP108_CONF_HYSTERESIS_MASK	(TMP108_CONF_HYS0|TMP108_CONF_HYS1)
-#define TMP108_HYSTERESIS_0C		0x0000
-#define TMP108_HYSTERESIS_1C		TMP108_CONF_HYS0	/* Default */
-#define TMP108_HYSTERESIS_2C		TMP108_CONF_HYS1
-#define TMP108_HYSTERESIS_4C		(TMP108_CONF_HYS0|TMP108_CONF_HYS1)
+#घोषणा TMP108_CONF_HYSTERESIS_MASK	(TMP108_CONF_HYS0|TMP108_CONF_HYS1)
+#घोषणा TMP108_HYSTERESIS_0C		0x0000
+#घोषणा TMP108_HYSTERESIS_1C		TMP108_CONF_HYS0	/* Default */
+#घोषणा TMP108_HYSTERESIS_2C		TMP108_CONF_HYS1
+#घोषणा TMP108_HYSTERESIS_4C		(TMP108_CONF_HYS0|TMP108_CONF_HYS1)
 
-#define TMP108_CONVERSION_TIME_MS	30	/* in milli-seconds */
+#घोषणा TMP108_CONVERSION_TIME_MS	30	/* in milli-seconds */
 
-struct tmp108 {
-	struct regmap *regmap;
+काष्ठा पंचांगp108 अणु
+	काष्ठा regmap *regmap;
 	u16 orig_config;
-	unsigned long ready_time;
-};
+	अचिन्हित दीर्घ पढ़ोy_समय;
+पूर्ण;
 
-/* convert 12-bit TMP108 register value to milliCelsius */
-static inline int tmp108_temp_reg_to_mC(s16 val)
-{
-	return (val & ~0x0f) * 1000 / 256;
-}
+/* convert 12-bit TMP108 रेजिस्टर value to milliCelsius */
+अटल अंतरभूत पूर्णांक पंचांगp108_temp_reg_to_mC(s16 val)
+अणु
+	वापस (val & ~0x0f) * 1000 / 256;
+पूर्ण
 
-/* convert milliCelsius to left adjusted 12-bit TMP108 register value */
-static inline u16 tmp108_mC_to_temp_reg(int val)
-{
-	return (val * 256) / 1000;
-}
+/* convert milliCelsius to left adjusted 12-bit TMP108 रेजिस्टर value */
+अटल अंतरभूत u16 पंचांगp108_mC_to_temp_reg(पूर्णांक val)
+अणु
+	वापस (val * 256) / 1000;
+पूर्ण
 
-static int tmp108_read(struct device *dev, enum hwmon_sensor_types type,
-		       u32 attr, int channel, long *temp)
-{
-	struct tmp108 *tmp108 = dev_get_drvdata(dev);
-	unsigned int regval;
-	int err, hyst;
+अटल पूर्णांक पंचांगp108_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+		       u32 attr, पूर्णांक channel, दीर्घ *temp)
+अणु
+	काष्ठा पंचांगp108 *पंचांगp108 = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक regval;
+	पूर्णांक err, hyst;
 
-	if (type == hwmon_chip) {
-		if (attr == hwmon_chip_update_interval) {
-			err = regmap_read(tmp108->regmap, TMP108_REG_CONF,
+	अगर (type == hwmon_chip) अणु
+		अगर (attr == hwmon_chip_update_पूर्णांकerval) अणु
+			err = regmap_पढ़ो(पंचांगp108->regmap, TMP108_REG_CONF,
 					  &regval);
-			if (err < 0)
-				return err;
-			switch (regval & TMP108_CONF_CONVRATE_MASK) {
-			case TMP108_CONVRATE_0P25HZ:
-			default:
+			अगर (err < 0)
+				वापस err;
+			चयन (regval & TMP108_CONF_CONVRATE_MASK) अणु
+			हाल TMP108_CONVRATE_0P25HZ:
+			शेष:
 				*temp = 4000;
-				break;
-			case TMP108_CONVRATE_1HZ:
+				अवरोध;
+			हाल TMP108_CONVRATE_1HZ:
 				*temp = 1000;
-				break;
-			case TMP108_CONVRATE_4HZ:
+				अवरोध;
+			हाल TMP108_CONVRATE_4HZ:
 				*temp = 250;
-				break;
-			case TMP108_CONVRATE_16HZ:
+				अवरोध;
+			हाल TMP108_CONVRATE_16HZ:
 				*temp = 63;
-				break;
-			}
-			return 0;
-		}
-		return -EOPNOTSUPP;
-	}
+				अवरोध;
+			पूर्ण
+			वापस 0;
+		पूर्ण
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	switch (attr) {
-	case hwmon_temp_input:
-		/* Is it too early to return a conversion ? */
-		if (time_before(jiffies, tmp108->ready_time)) {
+	चयन (attr) अणु
+	हाल hwmon_temp_input:
+		/* Is it too early to वापस a conversion ? */
+		अगर (समय_beक्रमe(jअगरfies, पंचांगp108->पढ़ोy_समय)) अणु
 			dev_dbg(dev, "%s: Conversion not ready yet..\n",
 				__func__);
-			return -EAGAIN;
-		}
-		err = regmap_read(tmp108->regmap, TMP108_REG_TEMP, &regval);
-		if (err < 0)
-			return err;
-		*temp = tmp108_temp_reg_to_mC(regval);
-		break;
-	case hwmon_temp_min:
-	case hwmon_temp_max:
-		err = regmap_read(tmp108->regmap, attr == hwmon_temp_min ?
+			वापस -EAGAIN;
+		पूर्ण
+		err = regmap_पढ़ो(पंचांगp108->regmap, TMP108_REG_TEMP, &regval);
+		अगर (err < 0)
+			वापस err;
+		*temp = पंचांगp108_temp_reg_to_mC(regval);
+		अवरोध;
+	हाल hwmon_temp_min:
+	हाल hwmon_temp_max:
+		err = regmap_पढ़ो(पंचांगp108->regmap, attr == hwmon_temp_min ?
 				  TMP108_REG_TLOW : TMP108_REG_THIGH, &regval);
-		if (err < 0)
-			return err;
-		*temp = tmp108_temp_reg_to_mC(regval);
-		break;
-	case hwmon_temp_min_alarm:
-	case hwmon_temp_max_alarm:
-		err = regmap_read(tmp108->regmap, TMP108_REG_CONF, &regval);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
+		*temp = पंचांगp108_temp_reg_to_mC(regval);
+		अवरोध;
+	हाल hwmon_temp_min_alarm:
+	हाल hwmon_temp_max_alarm:
+		err = regmap_पढ़ो(पंचांगp108->regmap, TMP108_REG_CONF, &regval);
+		अगर (err < 0)
+			वापस err;
 		*temp = !!(regval & (attr == hwmon_temp_min_alarm ?
 				     TMP108_CONF_FL : TMP108_CONF_FH));
-		break;
-	case hwmon_temp_min_hyst:
-	case hwmon_temp_max_hyst:
-		err = regmap_read(tmp108->regmap, TMP108_REG_CONF, &regval);
-		if (err < 0)
-			return err;
-		switch (regval & TMP108_CONF_HYSTERESIS_MASK) {
-		case TMP108_HYSTERESIS_0C:
-		default:
+		अवरोध;
+	हाल hwmon_temp_min_hyst:
+	हाल hwmon_temp_max_hyst:
+		err = regmap_पढ़ो(पंचांगp108->regmap, TMP108_REG_CONF, &regval);
+		अगर (err < 0)
+			वापस err;
+		चयन (regval & TMP108_CONF_HYSTERESIS_MASK) अणु
+		हाल TMP108_HYSTERESIS_0C:
+		शेष:
 			hyst = 0;
-			break;
-		case TMP108_HYSTERESIS_1C:
+			अवरोध;
+		हाल TMP108_HYSTERESIS_1C:
 			hyst = 1000;
-			break;
-		case TMP108_HYSTERESIS_2C:
+			अवरोध;
+		हाल TMP108_HYSTERESIS_2C:
 			hyst = 2000;
-			break;
-		case TMP108_HYSTERESIS_4C:
+			अवरोध;
+		हाल TMP108_HYSTERESIS_4C:
 			hyst = 4000;
-			break;
-		}
-		err = regmap_read(tmp108->regmap, attr == hwmon_temp_min_hyst ?
+			अवरोध;
+		पूर्ण
+		err = regmap_पढ़ो(पंचांगp108->regmap, attr == hwmon_temp_min_hyst ?
 				  TMP108_REG_TLOW : TMP108_REG_THIGH, &regval);
-		if (err < 0)
-			return err;
-		*temp = tmp108_temp_reg_to_mC(regval);
-		if (attr == hwmon_temp_min_hyst)
+		अगर (err < 0)
+			वापस err;
+		*temp = पंचांगp108_temp_reg_to_mC(regval);
+		अगर (attr == hwmon_temp_min_hyst)
 			*temp += hyst;
-		else
+		अन्यथा
 			*temp -= hyst;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tmp108_write(struct device *dev, enum hwmon_sensor_types type,
-			u32 attr, int channel, long temp)
-{
-	struct tmp108 *tmp108 = dev_get_drvdata(dev);
+अटल पूर्णांक पंचांगp108_ग_लिखो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+			u32 attr, पूर्णांक channel, दीर्घ temp)
+अणु
+	काष्ठा पंचांगp108 *पंचांगp108 = dev_get_drvdata(dev);
 	u32 regval, mask;
-	int err;
+	पूर्णांक err;
 
-	if (type == hwmon_chip) {
-		if (attr == hwmon_chip_update_interval) {
-			if (temp < 156)
+	अगर (type == hwmon_chip) अणु
+		अगर (attr == hwmon_chip_update_पूर्णांकerval) अणु
+			अगर (temp < 156)
 				mask = TMP108_CONVRATE_16HZ;
-			else if (temp < 625)
+			अन्यथा अगर (temp < 625)
 				mask = TMP108_CONVRATE_4HZ;
-			else if (temp < 2500)
+			अन्यथा अगर (temp < 2500)
 				mask = TMP108_CONVRATE_1HZ;
-			else
+			अन्यथा
 				mask = TMP108_CONVRATE_0P25HZ;
-			return regmap_update_bits(tmp108->regmap,
+			वापस regmap_update_bits(पंचांगp108->regmap,
 						  TMP108_REG_CONF,
 						  TMP108_CONF_CONVRATE_MASK,
 						  mask);
-		}
-		return -EOPNOTSUPP;
-	}
+		पूर्ण
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	switch (attr) {
-	case hwmon_temp_min:
-	case hwmon_temp_max:
+	चयन (attr) अणु
+	हाल hwmon_temp_min:
+	हाल hwmon_temp_max:
 		temp = clamp_val(temp, TMP108_TEMP_MIN_MC, TMP108_TEMP_MAX_MC);
-		return regmap_write(tmp108->regmap,
+		वापस regmap_ग_लिखो(पंचांगp108->regmap,
 				    attr == hwmon_temp_min ?
 					TMP108_REG_TLOW : TMP108_REG_THIGH,
-				    tmp108_mC_to_temp_reg(temp));
-	case hwmon_temp_min_hyst:
-	case hwmon_temp_max_hyst:
+				    पंचांगp108_mC_to_temp_reg(temp));
+	हाल hwmon_temp_min_hyst:
+	हाल hwmon_temp_max_hyst:
 		temp = clamp_val(temp, TMP108_TEMP_MIN_MC, TMP108_TEMP_MAX_MC);
-		err = regmap_read(tmp108->regmap,
+		err = regmap_पढ़ो(पंचांगp108->regmap,
 				  attr == hwmon_temp_min_hyst ?
 					TMP108_REG_TLOW : TMP108_REG_THIGH,
 				  &regval);
-		if (err < 0)
-			return err;
-		if (attr == hwmon_temp_min_hyst)
-			temp -= tmp108_temp_reg_to_mC(regval);
-		else
-			temp = tmp108_temp_reg_to_mC(regval) - temp;
-		if (temp < 500)
+		अगर (err < 0)
+			वापस err;
+		अगर (attr == hwmon_temp_min_hyst)
+			temp -= पंचांगp108_temp_reg_to_mC(regval);
+		अन्यथा
+			temp = पंचांगp108_temp_reg_to_mC(regval) - temp;
+		अगर (temp < 500)
 			mask = TMP108_HYSTERESIS_0C;
-		else if (temp < 1500)
+		अन्यथा अगर (temp < 1500)
 			mask = TMP108_HYSTERESIS_1C;
-		else if (temp < 3000)
+		अन्यथा अगर (temp < 3000)
 			mask = TMP108_HYSTERESIS_2C;
-		else
+		अन्यथा
 			mask = TMP108_HYSTERESIS_4C;
-		return regmap_update_bits(tmp108->regmap, TMP108_REG_CONF,
+		वापस regmap_update_bits(पंचांगp108->regmap, TMP108_REG_CONF,
 					  TMP108_CONF_HYSTERESIS_MASK, mask);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static umode_t tmp108_is_visible(const void *data, enum hwmon_sensor_types type,
-				 u32 attr, int channel)
-{
-	if (type == hwmon_chip && attr == hwmon_chip_update_interval)
-		return 0644;
+अटल umode_t पंचांगp108_is_visible(स्थिर व्योम *data, क्रमागत hwmon_sensor_types type,
+				 u32 attr, पूर्णांक channel)
+अणु
+	अगर (type == hwmon_chip && attr == hwmon_chip_update_पूर्णांकerval)
+		वापस 0644;
 
-	if (type != hwmon_temp)
-		return 0;
+	अगर (type != hwmon_temp)
+		वापस 0;
 
-	switch (attr) {
-	case hwmon_temp_input:
-	case hwmon_temp_min_alarm:
-	case hwmon_temp_max_alarm:
-		return 0444;
-	case hwmon_temp_min:
-	case hwmon_temp_max:
-	case hwmon_temp_min_hyst:
-	case hwmon_temp_max_hyst:
-		return 0644;
-	default:
-		return 0;
-	}
-}
+	चयन (attr) अणु
+	हाल hwmon_temp_input:
+	हाल hwmon_temp_min_alarm:
+	हाल hwmon_temp_max_alarm:
+		वापस 0444;
+	हाल hwmon_temp_min:
+	हाल hwmon_temp_max:
+	हाल hwmon_temp_min_hyst:
+	हाल hwmon_temp_max_hyst:
+		वापस 0644;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static const struct hwmon_channel_info *tmp108_info[] = {
+अटल स्थिर काष्ठा hwmon_channel_info *पंचांगp108_info[] = अणु
 	HWMON_CHANNEL_INFO(chip,
 			   HWMON_C_REGISTER_TZ | HWMON_C_UPDATE_INTERVAL),
 	HWMON_CHANNEL_INFO(temp,
 			   HWMON_T_INPUT | HWMON_T_MAX | HWMON_T_MIN |
 			   HWMON_T_MIN_HYST | HWMON_T_MAX_HYST |
 			   HWMON_T_MIN_ALARM | HWMON_T_MAX_ALARM),
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct hwmon_ops tmp108_hwmon_ops = {
-	.is_visible = tmp108_is_visible,
-	.read = tmp108_read,
-	.write = tmp108_write,
-};
+अटल स्थिर काष्ठा hwmon_ops पंचांगp108_hwmon_ops = अणु
+	.is_visible = पंचांगp108_is_visible,
+	.पढ़ो = पंचांगp108_पढ़ो,
+	.ग_लिखो = पंचांगp108_ग_लिखो,
+पूर्ण;
 
-static const struct hwmon_chip_info tmp108_chip_info = {
-	.ops = &tmp108_hwmon_ops,
-	.info = tmp108_info,
-};
+अटल स्थिर काष्ठा hwmon_chip_info पंचांगp108_chip_info = अणु
+	.ops = &पंचांगp108_hwmon_ops,
+	.info = पंचांगp108_info,
+पूर्ण;
 
-static void tmp108_restore_config(void *data)
-{
-	struct tmp108 *tmp108 = data;
+अटल व्योम पंचांगp108_restore_config(व्योम *data)
+अणु
+	काष्ठा पंचांगp108 *पंचांगp108 = data;
 
-	regmap_write(tmp108->regmap, TMP108_REG_CONF, tmp108->orig_config);
-}
+	regmap_ग_लिखो(पंचांगp108->regmap, TMP108_REG_CONF, पंचांगp108->orig_config);
+पूर्ण
 
-static bool tmp108_is_writeable_reg(struct device *dev, unsigned int reg)
-{
-	return reg != TMP108_REG_TEMP;
-}
+अटल bool पंचांगp108_is_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	वापस reg != TMP108_REG_TEMP;
+पूर्ण
 
-static bool tmp108_is_volatile_reg(struct device *dev, unsigned int reg)
-{
-	/* Configuration register must be volatile to enable FL and FH. */
-	return reg == TMP108_REG_TEMP || reg == TMP108_REG_CONF;
-}
+अटल bool पंचांगp108_is_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	/* Configuration रेजिस्टर must be अस्थिर to enable FL and FH. */
+	वापस reg == TMP108_REG_TEMP || reg == TMP108_REG_CONF;
+पूर्ण
 
-static const struct regmap_config tmp108_regmap_config = {
+अटल स्थिर काष्ठा regmap_config पंचांगp108_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 16,
-	.max_register = TMP108_REG_THIGH,
-	.writeable_reg = tmp108_is_writeable_reg,
-	.volatile_reg = tmp108_is_volatile_reg,
-	.val_format_endian = REGMAP_ENDIAN_BIG,
+	.max_रेजिस्टर = TMP108_REG_THIGH,
+	.ग_लिखोable_reg = पंचांगp108_is_ग_लिखोable_reg,
+	.अस्थिर_reg = पंचांगp108_is_अस्थिर_reg,
+	.val_क्रमmat_endian = REGMAP_ENDIAN_BIG,
 	.cache_type = REGCACHE_RBTREE,
-	.use_single_read = true,
-	.use_single_write = true,
-};
+	.use_single_पढ़ो = true,
+	.use_single_ग_लिखो = true,
+पूर्ण;
 
-static int tmp108_probe(struct i2c_client *client)
-{
-	struct device *dev = &client->dev;
-	struct device *hwmon_dev;
-	struct tmp108 *tmp108;
-	int err;
+अटल पूर्णांक पंचांगp108_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा device *hwmon_dev;
+	काष्ठा पंचांगp108 *पंचांगp108;
+	पूर्णांक err;
 	u32 config;
 
-	if (!i2c_check_functionality(client->adapter,
-				     I2C_FUNC_SMBUS_WORD_DATA)) {
+	अगर (!i2c_check_functionality(client->adapter,
+				     I2C_FUNC_SMBUS_WORD_DATA)) अणु
 		dev_err(dev,
 			"adapter doesn't support SMBus word transactions\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	tmp108 = devm_kzalloc(dev, sizeof(*tmp108), GFP_KERNEL);
-	if (!tmp108)
-		return -ENOMEM;
+	पंचांगp108 = devm_kzalloc(dev, माप(*पंचांगp108), GFP_KERNEL);
+	अगर (!पंचांगp108)
+		वापस -ENOMEM;
 
-	dev_set_drvdata(dev, tmp108);
+	dev_set_drvdata(dev, पंचांगp108);
 
-	tmp108->regmap = devm_regmap_init_i2c(client, &tmp108_regmap_config);
-	if (IS_ERR(tmp108->regmap)) {
-		err = PTR_ERR(tmp108->regmap);
+	पंचांगp108->regmap = devm_regmap_init_i2c(client, &पंचांगp108_regmap_config);
+	अगर (IS_ERR(पंचांगp108->regmap)) अणु
+		err = PTR_ERR(पंचांगp108->regmap);
 		dev_err(dev, "regmap init failed: %d", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = regmap_read(tmp108->regmap, TMP108_REG_CONF, &config);
-	if (err < 0) {
+	err = regmap_पढ़ो(पंचांगp108->regmap, TMP108_REG_CONF, &config);
+	अगर (err < 0) अणु
 		dev_err(dev, "error reading config register: %d", err);
-		return err;
-	}
-	tmp108->orig_config = config;
+		वापस err;
+	पूर्ण
+	पंचांगp108->orig_config = config;
 
 	/* Only continuous mode is supported. */
 	config &= ~TMP108_CONF_MODE_MASK;
@@ -365,78 +366,78 @@ static int tmp108_probe(struct i2c_client *client)
 	/* Only comparator mode is supported. */
 	config &= ~TMP108_CONF_TM;
 
-	err = regmap_write(tmp108->regmap, TMP108_REG_CONF, config);
-	if (err < 0) {
+	err = regmap_ग_लिखो(पंचांगp108->regmap, TMP108_REG_CONF, config);
+	अगर (err < 0) अणु
 		dev_err(dev, "error writing config register: %d", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	tmp108->ready_time = jiffies;
-	if ((tmp108->orig_config & TMP108_CONF_MODE_MASK) ==
+	पंचांगp108->पढ़ोy_समय = jअगरfies;
+	अगर ((पंचांगp108->orig_config & TMP108_CONF_MODE_MASK) ==
 	    TMP108_MODE_SHUTDOWN)
-		tmp108->ready_time +=
-			msecs_to_jiffies(TMP108_CONVERSION_TIME_MS);
+		पंचांगp108->पढ़ोy_समय +=
+			msecs_to_jअगरfies(TMP108_CONVERSION_TIME_MS);
 
-	err = devm_add_action_or_reset(dev, tmp108_restore_config, tmp108);
-	if (err) {
+	err = devm_add_action_or_reset(dev, पंचांगp108_restore_config, पंचांगp108);
+	अगर (err) अणु
 		dev_err(dev, "add action or reset failed: %d", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	hwmon_dev = devm_hwmon_device_register_with_info(dev, client->name,
-							 tmp108,
-							 &tmp108_chip_info,
-							 NULL);
-	return PTR_ERR_OR_ZERO(hwmon_dev);
-}
+	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_info(dev, client->name,
+							 पंचांगp108,
+							 &पंचांगp108_chip_info,
+							 शून्य);
+	वापस PTR_ERR_OR_ZERO(hwmon_dev);
+पूर्ण
 
-static int __maybe_unused tmp108_suspend(struct device *dev)
-{
-	struct tmp108 *tmp108 = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused पंचांगp108_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा पंचांगp108 *पंचांगp108 = dev_get_drvdata(dev);
 
-	return regmap_update_bits(tmp108->regmap, TMP108_REG_CONF,
+	वापस regmap_update_bits(पंचांगp108->regmap, TMP108_REG_CONF,
 				  TMP108_CONF_MODE_MASK, TMP108_MODE_SHUTDOWN);
-}
+पूर्ण
 
-static int __maybe_unused tmp108_resume(struct device *dev)
-{
-	struct tmp108 *tmp108 = dev_get_drvdata(dev);
-	int err;
+अटल पूर्णांक __maybe_unused पंचांगp108_resume(काष्ठा device *dev)
+अणु
+	काष्ठा पंचांगp108 *पंचांगp108 = dev_get_drvdata(dev);
+	पूर्णांक err;
 
-	err = regmap_update_bits(tmp108->regmap, TMP108_REG_CONF,
+	err = regmap_update_bits(पंचांगp108->regmap, TMP108_REG_CONF,
 				 TMP108_CONF_MODE_MASK, TMP108_MODE_CONTINUOUS);
-	tmp108->ready_time = jiffies +
-			     msecs_to_jiffies(TMP108_CONVERSION_TIME_MS);
-	return err;
-}
+	पंचांगp108->पढ़ोy_समय = jअगरfies +
+			     msecs_to_jअगरfies(TMP108_CONVERSION_TIME_MS);
+	वापस err;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(tmp108_dev_pm_ops, tmp108_suspend, tmp108_resume);
+अटल SIMPLE_DEV_PM_OPS(पंचांगp108_dev_pm_ops, पंचांगp108_suspend, पंचांगp108_resume);
 
-static const struct i2c_device_id tmp108_i2c_ids[] = {
-	{ "tmp108", 0 },
-	{ }
-};
-MODULE_DEVICE_TABLE(i2c, tmp108_i2c_ids);
+अटल स्थिर काष्ठा i2c_device_id पंचांगp108_i2c_ids[] = अणु
+	अणु "tmp108", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(i2c, पंचांगp108_i2c_ids);
 
-#ifdef CONFIG_OF
-static const struct of_device_id tmp108_of_ids[] = {
-	{ .compatible = "ti,tmp108", },
-	{}
-};
-MODULE_DEVICE_TABLE(of, tmp108_of_ids);
-#endif
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id पंचांगp108_of_ids[] = अणु
+	अणु .compatible = "ti,tmp108", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, पंचांगp108_of_ids);
+#पूर्ण_अगर
 
-static struct i2c_driver tmp108_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver पंचांगp108_driver = अणु
+	.driver = अणु
 		.name	= DRIVER_NAME,
-		.pm	= &tmp108_dev_pm_ops,
-		.of_match_table = of_match_ptr(tmp108_of_ids),
-	},
-	.probe_new	= tmp108_probe,
-	.id_table	= tmp108_i2c_ids,
-};
+		.pm	= &पंचांगp108_dev_pm_ops,
+		.of_match_table = of_match_ptr(पंचांगp108_of_ids),
+	पूर्ण,
+	.probe_new	= पंचांगp108_probe,
+	.id_table	= पंचांगp108_i2c_ids,
+पूर्ण;
 
-module_i2c_driver(tmp108_driver);
+module_i2c_driver(पंचांगp108_driver);
 
 MODULE_AUTHOR("John Muir <john@jmuir.com>");
 MODULE_DESCRIPTION("Texas Instruments TMP108 temperature sensor driver");

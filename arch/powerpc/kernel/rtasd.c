@@ -1,582 +1,583 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Copyright (C) 2001 Anton Blanchard <anton@au.ibm.com>, IBM
+ * Copyright (C) 2001 Anton Blanअक्षरd <anton@au.ibm.com>, IBM
  *
- * Communication to userspace based on kernel/printk.c
+ * Communication to userspace based on kernel/prपूर्णांकk.c
  */
 
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/poll.h>
-#include <linux/proc_fs.h>
-#include <linux/init.h>
-#include <linux/vmalloc.h>
-#include <linux/spinlock.h>
-#include <linux/cpu.h>
-#include <linux/workqueue.h>
-#include <linux/slab.h>
-#include <linux/topology.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/topology.h>
 
-#include <linux/uaccess.h>
-#include <asm/io.h>
-#include <asm/rtas.h>
-#include <asm/prom.h>
-#include <asm/nvram.h>
-#include <linux/atomic.h>
-#include <asm/machdep.h>
-#include <asm/topology.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/rtas.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/nvram.h>
+#समावेश <linux/atomic.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/topology.h>
 
 
-static DEFINE_SPINLOCK(rtasd_log_lock);
+अटल DEFINE_SPINLOCK(rtasd_log_lock);
 
-static DECLARE_WAIT_QUEUE_HEAD(rtas_log_wait);
+अटल DECLARE_WAIT_QUEUE_HEAD(rtas_log_रुको);
 
-static char *rtas_log_buf;
-static unsigned long rtas_log_start;
-static unsigned long rtas_log_size;
+अटल अक्षर *rtas_log_buf;
+अटल अचिन्हित दीर्घ rtas_log_start;
+अटल अचिन्हित दीर्घ rtas_log_size;
 
-static int surveillance_timeout = -1;
+अटल पूर्णांक surveillance_समयout = -1;
 
-static unsigned int rtas_error_log_max;
-static unsigned int rtas_error_log_buffer_max;
+अटल अचिन्हित पूर्णांक rtas_error_log_max;
+अटल अचिन्हित पूर्णांक rtas_error_log_buffer_max;
 
 /* RTAS service tokens */
-static unsigned int event_scan;
-static unsigned int rtas_event_scan_rate;
+अटल अचिन्हित पूर्णांक event_scan;
+अटल अचिन्हित पूर्णांक rtas_event_scan_rate;
 
-static bool full_rtas_msgs;
+अटल bool full_rtas_msgs;
 
 /* Stop logging to nvram after first fatal error */
-static int logging_enabled; /* Until we initialize everything,
-                             * make sure we don't try logging
+अटल पूर्णांक logging_enabled; /* Until we initialize everything,
+                             * make sure we करोn't try logging
                              * anything */
-static int error_log_cnt;
+अटल पूर्णांक error_log_cnt;
 
 /*
  * Since we use 32 bit RTAS, the physical address of this must be below
- * 4G or else bad things happen. Allocate this in the kernel data and
+ * 4G or अन्यथा bad things happen. Allocate this in the kernel data and
  * make it big enough.
  */
-static unsigned char logdata[RTAS_ERROR_LOG_MAX];
+अटल अचिन्हित अक्षर logdata[RTAS_ERROR_LOG_MAX];
 
-static char *rtas_type[] = {
+अटल अक्षर *rtas_type[] = अणु
 	"Unknown", "Retry", "TCE Error", "Internal Device Failure",
 	"Timeout", "Data Parity", "Address Parity", "Cache Parity",
 	"Address Invalid", "ECC Uncorrected", "ECC Corrupted",
-};
+पूर्ण;
 
-static char *rtas_event_type(int type)
-{
-	if ((type > 0) && (type < 11))
-		return rtas_type[type];
+अटल अक्षर *rtas_event_type(पूर्णांक type)
+अणु
+	अगर ((type > 0) && (type < 11))
+		वापस rtas_type[type];
 
-	switch (type) {
-		case RTAS_TYPE_EPOW:
-			return "EPOW";
-		case RTAS_TYPE_PLATFORM:
-			return "Platform Error";
-		case RTAS_TYPE_IO:
-			return "I/O Event";
-		case RTAS_TYPE_INFO:
-			return "Platform Information Event";
-		case RTAS_TYPE_DEALLOC:
-			return "Resource Deallocation Event";
-		case RTAS_TYPE_DUMP:
-			return "Dump Notification Event";
-		case RTAS_TYPE_PRRN:
-			return "Platform Resource Reassignment Event";
-		case RTAS_TYPE_HOTPLUG:
-			return "Hotplug Event";
-	}
+	चयन (type) अणु
+		हाल RTAS_TYPE_EPOW:
+			वापस "EPOW";
+		हाल RTAS_TYPE_PLATFORM:
+			वापस "Platform Error";
+		हाल RTAS_TYPE_IO:
+			वापस "I/O Event";
+		हाल RTAS_TYPE_INFO:
+			वापस "Platform Information Event";
+		हाल RTAS_TYPE_DEALLOC:
+			वापस "Resource Deallocation Event";
+		हाल RTAS_TYPE_DUMP:
+			वापस "Dump Notification Event";
+		हाल RTAS_TYPE_PRRN:
+			वापस "Platform Resource Reassignment Event";
+		हाल RTAS_TYPE_HOTPLUG:
+			वापस "Hotplug Event";
+	पूर्ण
 
-	return rtas_type[0];
-}
+	वापस rtas_type[0];
+पूर्ण
 
 /* To see this info, grep RTAS /var/log/messages and each entry
  * will be collected together with obvious begin/end.
- * There will be a unique identifier on the begin and end lines.
+ * There will be a unique identअगरier on the begin and end lines.
  * This will persist across reboots.
  *
- * format of error logs returned from RTAS:
+ * क्रमmat of error logs वापसed from RTAS:
  * bytes	(size)	: contents
  * --------------------------------------------------------
  * 0-7		(8)	: rtas_error_log
  * 8-47		(40)	: extended info
- * 48-51	(4)	: vendor id
- * 52-1023 (vendor specific) : location code and debug data
+ * 48-51	(4)	: venकरोr id
+ * 52-1023 (venकरोr specअगरic) : location code and debug data
  */
-static void printk_log_rtas(char *buf, int len)
-{
+अटल व्योम prपूर्णांकk_log_rtas(अक्षर *buf, पूर्णांक len)
+अणु
 
-	int i,j,n = 0;
-	int perline = 16;
-	char buffer[64];
-	char * str = "RTAS event";
+	पूर्णांक i,j,n = 0;
+	पूर्णांक perline = 16;
+	अक्षर buffer[64];
+	अक्षर * str = "RTAS event";
 
-	if (full_rtas_msgs) {
-		printk(RTAS_DEBUG "%d -------- %s begin --------\n",
+	अगर (full_rtas_msgs) अणु
+		prपूर्णांकk(RTAS_DEBUG "%d -------- %s begin --------\n",
 		       error_log_cnt, str);
 
 		/*
-		 * Print perline bytes on each line, each line will start
+		 * Prपूर्णांक perline bytes on each line, each line will start
 		 * with RTAS and a changing number, so syslogd will
-		 * print lines that are otherwise the same.  Separate every
+		 * prपूर्णांक lines that are otherwise the same.  Separate every
 		 * 4 bytes with a space.
 		 */
-		for (i = 0; i < len; i++) {
+		क्रम (i = 0; i < len; i++) अणु
 			j = i % perline;
-			if (j == 0) {
-				memset(buffer, 0, sizeof(buffer));
-				n = sprintf(buffer, "RTAS %d:", i/perline);
-			}
+			अगर (j == 0) अणु
+				स_रखो(buffer, 0, माप(buffer));
+				n = प्र_लिखो(buffer, "RTAS %d:", i/perline);
+			पूर्ण
 
-			if ((i % 4) == 0)
-				n += sprintf(buffer+n, " ");
+			अगर ((i % 4) == 0)
+				n += प्र_लिखो(buffer+n, " ");
 
-			n += sprintf(buffer+n, "%02x", (unsigned char)buf[i]);
+			n += प्र_लिखो(buffer+n, "%02x", (अचिन्हित अक्षर)buf[i]);
 
-			if (j == (perline-1))
-				printk(KERN_DEBUG "%s\n", buffer);
-		}
-		if ((i % perline) != 0)
-			printk(KERN_DEBUG "%s\n", buffer);
+			अगर (j == (perline-1))
+				prपूर्णांकk(KERN_DEBUG "%s\n", buffer);
+		पूर्ण
+		अगर ((i % perline) != 0)
+			prपूर्णांकk(KERN_DEBUG "%s\n", buffer);
 
-		printk(RTAS_DEBUG "%d -------- %s end ----------\n",
+		prपूर्णांकk(RTAS_DEBUG "%d -------- %s end ----------\n",
 		       error_log_cnt, str);
-	} else {
-		struct rtas_error_log *errlog = (struct rtas_error_log *)buf;
+	पूर्ण अन्यथा अणु
+		काष्ठा rtas_error_log *errlog = (काष्ठा rtas_error_log *)buf;
 
-		printk(RTAS_DEBUG "event: %d, Type: %s (%d), Severity: %d\n",
+		prपूर्णांकk(RTAS_DEBUG "event: %d, Type: %s (%d), Severity: %d\n",
 		       error_log_cnt,
 		       rtas_event_type(rtas_error_type(errlog)),
 		       rtas_error_type(errlog),
 		       rtas_error_severity(errlog));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int log_rtas_len(char * buf)
-{
-	int len;
-	struct rtas_error_log *err;
-	uint32_t extended_log_length;
+अटल पूर्णांक log_rtas_len(अक्षर * buf)
+अणु
+	पूर्णांक len;
+	काष्ठा rtas_error_log *err;
+	uपूर्णांक32_t extended_log_length;
 
 	/* rtas fixed header */
 	len = 8;
-	err = (struct rtas_error_log *)buf;
+	err = (काष्ठा rtas_error_log *)buf;
 	extended_log_length = rtas_error_extended_log_length(err);
-	if (rtas_error_extended(err) && extended_log_length) {
+	अगर (rtas_error_extended(err) && extended_log_length) अणु
 
 		/* extended header */
 		len += extended_log_length;
-	}
+	पूर्ण
 
-	if (rtas_error_log_max == 0)
+	अगर (rtas_error_log_max == 0)
 		rtas_error_log_max = rtas_get_error_log_max();
 
-	if (len > rtas_error_log_max)
+	अगर (len > rtas_error_log_max)
 		len = rtas_error_log_max;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /*
- * First write to nvram, if fatal error, that is the only
+ * First ग_लिखो to nvram, अगर fatal error, that is the only
  * place we log the info.  The error will be picked up
  * on the next reboot by rtasd.  If not fatal, run the
- * method for the type of error.  Currently, only RTAS
+ * method क्रम the type of error.  Currently, only RTAS
  * errors have methods implemented, but in the future
- * there might be a need to store data in nvram before a
+ * there might be a need to store data in nvram beक्रमe a
  * call to panic().
  *
- * XXX We write to nvram periodically, to indicate error has
+ * XXX We ग_लिखो to nvram periodically, to indicate error has
  * been written and sync'd, but there is a possibility
- * that if we don't shutdown correctly, a duplicate error
+ * that अगर we करोn't shutकरोwn correctly, a duplicate error
  * record will be created on next reboot.
  */
-void pSeries_log_error(char *buf, unsigned int err_type, int fatal)
-{
-	unsigned long offset;
-	unsigned long s;
-	int len = 0;
+व्योम pSeries_log_error(अक्षर *buf, अचिन्हित पूर्णांक err_type, पूर्णांक fatal)
+अणु
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ s;
+	पूर्णांक len = 0;
 
 	pr_debug("rtasd: logging event\n");
-	if (buf == NULL)
-		return;
+	अगर (buf == शून्य)
+		वापस;
 
 	spin_lock_irqsave(&rtasd_log_lock, s);
 
 	/* get length and increase count */
-	switch (err_type & ERR_TYPE_MASK) {
-	case ERR_TYPE_RTAS_LOG:
+	चयन (err_type & ERR_TYPE_MASK) अणु
+	हाल ERR_TYPE_RTAS_LOG:
 		len = log_rtas_len(buf);
-		if (!(err_type & ERR_FLAG_BOOT))
+		अगर (!(err_type & ERR_FLAG_BOOT))
 			error_log_cnt++;
-		break;
-	case ERR_TYPE_KERNEL_PANIC:
-	default:
+		अवरोध;
+	हाल ERR_TYPE_KERNEL_PANIC:
+	शेष:
 		WARN_ON_ONCE(!irqs_disabled()); /* @@@ DEBUG @@@ */
 		spin_unlock_irqrestore(&rtasd_log_lock, s);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-#ifdef CONFIG_PPC64
+#अगर_घोषित CONFIG_PPC64
 	/* Write error to NVRAM */
-	if (logging_enabled && !(err_type & ERR_FLAG_BOOT))
-		nvram_write_error_log(buf, len, err_type, error_log_cnt);
-#endif /* CONFIG_PPC64 */
+	अगर (logging_enabled && !(err_type & ERR_FLAG_BOOT))
+		nvram_ग_लिखो_error_log(buf, len, err_type, error_log_cnt);
+#पूर्ण_अगर /* CONFIG_PPC64 */
 
 	/*
-	 * rtas errors can occur during boot, and we do want to capture
-	 * those somewhere, even if nvram isn't ready (why not?), and even
-	 * if rtasd isn't ready. Put them into the boot log, at least.
+	 * rtas errors can occur during boot, and we करो want to capture
+	 * those somewhere, even अगर nvram isn't पढ़ोy (why not?), and even
+	 * अगर rtasd isn't पढ़ोy. Put them पूर्णांकo the boot log, at least.
 	 */
-	if ((err_type & ERR_TYPE_MASK) == ERR_TYPE_RTAS_LOG)
-		printk_log_rtas(buf, len);
+	अगर ((err_type & ERR_TYPE_MASK) == ERR_TYPE_RTAS_LOG)
+		prपूर्णांकk_log_rtas(buf, len);
 
-	/* Check to see if we need to or have stopped logging */
-	if (fatal || !logging_enabled) {
+	/* Check to see अगर we need to or have stopped logging */
+	अगर (fatal || !logging_enabled) अणु
 		logging_enabled = 0;
 		WARN_ON_ONCE(!irqs_disabled()); /* @@@ DEBUG @@@ */
 		spin_unlock_irqrestore(&rtasd_log_lock, s);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* call type specific method for error */
-	switch (err_type & ERR_TYPE_MASK) {
-	case ERR_TYPE_RTAS_LOG:
+	/* call type specअगरic method क्रम error */
+	चयन (err_type & ERR_TYPE_MASK) अणु
+	हाल ERR_TYPE_RTAS_LOG:
 		offset = rtas_error_log_buffer_max *
 			((rtas_log_start+rtas_log_size) & LOG_NUMBER_MASK);
 
 		/* First copy over sequence number */
-		memcpy(&rtas_log_buf[offset], (void *) &error_log_cnt, sizeof(int));
+		स_नकल(&rtas_log_buf[offset], (व्योम *) &error_log_cnt, माप(पूर्णांक));
 
 		/* Second copy over error log data */
-		offset += sizeof(int);
-		memcpy(&rtas_log_buf[offset], buf, len);
+		offset += माप(पूर्णांक);
+		स_नकल(&rtas_log_buf[offset], buf, len);
 
-		if (rtas_log_size < LOG_NUMBER)
+		अगर (rtas_log_size < LOG_NUMBER)
 			rtas_log_size += 1;
-		else
+		अन्यथा
 			rtas_log_start += 1;
 
 		WARN_ON_ONCE(!irqs_disabled()); /* @@@ DEBUG @@@ */
 		spin_unlock_irqrestore(&rtasd_log_lock, s);
-		wake_up_interruptible(&rtas_log_wait);
-		break;
-	case ERR_TYPE_KERNEL_PANIC:
-	default:
+		wake_up_पूर्णांकerruptible(&rtas_log_रुको);
+		अवरोध;
+	हाल ERR_TYPE_KERNEL_PANIC:
+	शेष:
 		WARN_ON_ONCE(!irqs_disabled()); /* @@@ DEBUG @@@ */
 		spin_unlock_irqrestore(&rtasd_log_lock, s);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void handle_rtas_event(const struct rtas_error_log *log)
-{
-	if (!machine_is(pseries))
-		return;
+अटल व्योम handle_rtas_event(स्थिर काष्ठा rtas_error_log *log)
+अणु
+	अगर (!machine_is(pseries))
+		वापस;
 
-	if (rtas_error_type(log) == RTAS_TYPE_PRRN)
+	अगर (rtas_error_type(log) == RTAS_TYPE_PRRN)
 		pr_info_ratelimited("Platform resource reassignment ignored.\n");
-}
+पूर्ण
 
-static int rtas_log_open(struct inode * inode, struct file * file)
-{
-	return 0;
-}
+अटल पूर्णांक rtas_log_खोलो(काष्ठा inode * inode, काष्ठा file * file)
+अणु
+	वापस 0;
+पूर्ण
 
-static int rtas_log_release(struct inode * inode, struct file * file)
-{
-	return 0;
-}
+अटल पूर्णांक rtas_log_release(काष्ठा inode * inode, काष्ठा file * file)
+अणु
+	वापस 0;
+पूर्ण
 
-/* This will check if all events are logged, if they are then, we
+/* This will check अगर all events are logged, अगर they are then, we
  * know that we can safely clear the events in NVRAM.
- * Next we'll sit and wait for something else to log.
+ * Next we'll sit and रुको क्रम something अन्यथा to log.
  */
-static ssize_t rtas_log_read(struct file * file, char __user * buf,
-			 size_t count, loff_t *ppos)
-{
-	int error;
-	char *tmp;
-	unsigned long s;
-	unsigned long offset;
+अटल sमाप_प्रकार rtas_log_पढ़ो(काष्ठा file * file, अक्षर __user * buf,
+			 माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक error;
+	अक्षर *पंचांगp;
+	अचिन्हित दीर्घ s;
+	अचिन्हित दीर्घ offset;
 
-	if (!buf || count < rtas_error_log_buffer_max)
-		return -EINVAL;
+	अगर (!buf || count < rtas_error_log_buffer_max)
+		वापस -EINVAL;
 
 	count = rtas_error_log_buffer_max;
 
-	if (!access_ok(buf, count))
-		return -EFAULT;
+	अगर (!access_ok(buf, count))
+		वापस -EFAULT;
 
-	tmp = kmalloc(count, GFP_KERNEL);
-	if (!tmp)
-		return -ENOMEM;
+	पंचांगp = kदो_स्मृति(count, GFP_KERNEL);
+	अगर (!पंचांगp)
+		वापस -ENOMEM;
 
 	spin_lock_irqsave(&rtasd_log_lock, s);
 
-	/* if it's 0, then we know we got the last one (the one in NVRAM) */
-	while (rtas_log_size == 0) {
-		if (file->f_flags & O_NONBLOCK) {
+	/* अगर it's 0, then we know we got the last one (the one in NVRAM) */
+	जबतक (rtas_log_size == 0) अणु
+		अगर (file->f_flags & O_NONBLOCK) अणु
 			spin_unlock_irqrestore(&rtasd_log_lock, s);
 			error = -EAGAIN;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!logging_enabled) {
+		अगर (!logging_enabled) अणु
 			spin_unlock_irqrestore(&rtasd_log_lock, s);
 			error = -ENODATA;
-			goto out;
-		}
-#ifdef CONFIG_PPC64
+			जाओ out;
+		पूर्ण
+#अगर_घोषित CONFIG_PPC64
 		nvram_clear_error_log();
-#endif /* CONFIG_PPC64 */
+#पूर्ण_अगर /* CONFIG_PPC64 */
 
 		spin_unlock_irqrestore(&rtasd_log_lock, s);
-		error = wait_event_interruptible(rtas_log_wait, rtas_log_size);
-		if (error)
-			goto out;
+		error = रुको_event_पूर्णांकerruptible(rtas_log_रुको, rtas_log_size);
+		अगर (error)
+			जाओ out;
 		spin_lock_irqsave(&rtasd_log_lock, s);
-	}
+	पूर्ण
 
 	offset = rtas_error_log_buffer_max * (rtas_log_start & LOG_NUMBER_MASK);
-	memcpy(tmp, &rtas_log_buf[offset], count);
+	स_नकल(पंचांगp, &rtas_log_buf[offset], count);
 
 	rtas_log_start += 1;
 	rtas_log_size -= 1;
 	spin_unlock_irqrestore(&rtasd_log_lock, s);
 
-	error = copy_to_user(buf, tmp, count) ? -EFAULT : count;
+	error = copy_to_user(buf, पंचांगp, count) ? -EFAULT : count;
 out:
-	kfree(tmp);
-	return error;
-}
+	kमुक्त(पंचांगp);
+	वापस error;
+पूर्ण
 
-static __poll_t rtas_log_poll(struct file *file, poll_table * wait)
-{
-	poll_wait(file, &rtas_log_wait, wait);
-	if (rtas_log_size)
-		return EPOLLIN | EPOLLRDNORM;
-	return 0;
-}
+अटल __poll_t rtas_log_poll(काष्ठा file *file, poll_table * रुको)
+अणु
+	poll_रुको(file, &rtas_log_रुको, रुको);
+	अगर (rtas_log_size)
+		वापस EPOLLIN | EPOLLRDNORM;
+	वापस 0;
+पूर्ण
 
-static const struct proc_ops rtas_log_proc_ops = {
-	.proc_read	= rtas_log_read,
+अटल स्थिर काष्ठा proc_ops rtas_log_proc_ops = अणु
+	.proc_पढ़ो	= rtas_log_पढ़ो,
 	.proc_poll	= rtas_log_poll,
-	.proc_open	= rtas_log_open,
+	.proc_खोलो	= rtas_log_खोलो,
 	.proc_release	= rtas_log_release,
 	.proc_lseek	= noop_llseek,
-};
+पूर्ण;
 
-static int enable_surveillance(int timeout)
-{
-	int error;
+अटल पूर्णांक enable_surveillance(पूर्णांक समयout)
+अणु
+	पूर्णांक error;
 
-	error = rtas_set_indicator(SURVEILLANCE_TOKEN, 0, timeout);
+	error = rtas_set_indicator(SURVEILLANCE_TOKEN, 0, समयout);
 
-	if (error == 0)
-		return 0;
+	अगर (error == 0)
+		वापस 0;
 
-	if (error == -EINVAL) {
-		printk(KERN_DEBUG "rtasd: surveillance not supported\n");
-		return 0;
-	}
+	अगर (error == -EINVAL) अणु
+		prपूर्णांकk(KERN_DEBUG "rtasd: surveillance not supported\n");
+		वापस 0;
+	पूर्ण
 
-	printk(KERN_ERR "rtasd: could not update surveillance\n");
-	return -1;
-}
+	prपूर्णांकk(KERN_ERR "rtasd: could not update surveillance\n");
+	वापस -1;
+पूर्ण
 
-static void do_event_scan(void)
-{
-	int error;
-	do {
-		memset(logdata, 0, rtas_error_log_max);
-		error = rtas_call(event_scan, 4, 1, NULL,
+अटल व्योम करो_event_scan(व्योम)
+अणु
+	पूर्णांक error;
+	करो अणु
+		स_रखो(logdata, 0, rtas_error_log_max);
+		error = rtas_call(event_scan, 4, 1, शून्य,
 				  RTAS_EVENT_SCAN_ALL_EVENTS, 0,
 				  __pa(logdata), rtas_error_log_max);
-		if (error == -1) {
-			printk(KERN_ERR "event-scan failed\n");
-			break;
-		}
+		अगर (error == -1) अणु
+			prपूर्णांकk(KERN_ERR "event-scan failed\n");
+			अवरोध;
+		पूर्ण
 
-		if (error == 0) {
-			if (rtas_error_type((struct rtas_error_log *)logdata) !=
+		अगर (error == 0) अणु
+			अगर (rtas_error_type((काष्ठा rtas_error_log *)logdata) !=
 			    RTAS_TYPE_PRRN)
 				pSeries_log_error(logdata, ERR_TYPE_RTAS_LOG,
 						  0);
-			handle_rtas_event((struct rtas_error_log *)logdata);
-		}
+			handle_rtas_event((काष्ठा rtas_error_log *)logdata);
+		पूर्ण
 
-	} while(error == 0);
-}
+	पूर्ण जबतक(error == 0);
+पूर्ण
 
-static void rtas_event_scan(struct work_struct *w);
-static DECLARE_DELAYED_WORK(event_scan_work, rtas_event_scan);
+अटल व्योम rtas_event_scan(काष्ठा work_काष्ठा *w);
+अटल DECLARE_DELAYED_WORK(event_scan_work, rtas_event_scan);
 
 /*
- * Delay should be at least one second since some machines have problems if
+ * Delay should be at least one second since some machines have problems अगर
  * we call event-scan too quickly.
  */
-static unsigned long event_scan_delay = 1*HZ;
-static int first_pass = 1;
+अटल अचिन्हित दीर्घ event_scan_delay = 1*HZ;
+अटल पूर्णांक first_pass = 1;
 
-static void rtas_event_scan(struct work_struct *w)
-{
-	unsigned int cpu;
+अटल व्योम rtas_event_scan(काष्ठा work_काष्ठा *w)
+अणु
+	अचिन्हित पूर्णांक cpu;
 
-	do_event_scan();
+	करो_event_scan();
 
 	get_online_cpus();
 
-	/* raw_ OK because just using CPU as starting point. */
+	/* raw_ OK because just using CPU as starting poपूर्णांक. */
 	cpu = cpumask_next(raw_smp_processor_id(), cpu_online_mask);
-        if (cpu >= nr_cpu_ids) {
+        अगर (cpu >= nr_cpu_ids) अणु
 		cpu = cpumask_first(cpu_online_mask);
 
-		if (first_pass) {
+		अगर (first_pass) अणु
 			first_pass = 0;
 			event_scan_delay = 30*HZ/rtas_event_scan_rate;
 
-			if (surveillance_timeout != -1) {
+			अगर (surveillance_समयout != -1) अणु
 				pr_debug("rtasd: enabling surveillance\n");
-				enable_surveillance(surveillance_timeout);
+				enable_surveillance(surveillance_समयout);
 				pr_debug("rtasd: surveillance enabled\n");
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	schedule_delayed_work_on(cpu, &event_scan_work,
-		__round_jiffies_relative(event_scan_delay, cpu));
+		__round_jअगरfies_relative(event_scan_delay, cpu));
 
 	put_online_cpus();
-}
+पूर्ण
 
-#ifdef CONFIG_PPC64
-static void retrieve_nvram_error_log(void)
-{
-	unsigned int err_type ;
-	int rc ;
+#अगर_घोषित CONFIG_PPC64
+अटल व्योम retrieve_nvram_error_log(व्योम)
+अणु
+	अचिन्हित पूर्णांक err_type ;
+	पूर्णांक rc ;
 
-	/* See if we have any error stored in NVRAM */
-	memset(logdata, 0, rtas_error_log_max);
-	rc = nvram_read_error_log(logdata, rtas_error_log_max,
+	/* See अगर we have any error stored in NVRAM */
+	स_रखो(logdata, 0, rtas_error_log_max);
+	rc = nvram_पढ़ो_error_log(logdata, rtas_error_log_max,
 	                          &err_type, &error_log_cnt);
 	/* We can use rtas_log_buf now */
 	logging_enabled = 1;
-	if (!rc) {
-		if (err_type != ERR_FLAG_ALREADY_LOGGED) {
+	अगर (!rc) अणु
+		अगर (err_type != ERR_FLAG_ALREADY_LOGGED) अणु
 			pSeries_log_error(logdata, err_type | ERR_FLAG_BOOT, 0);
-		}
-	}
-}
-#else /* CONFIG_PPC64 */
-static void retrieve_nvram_error_log(void)
-{
-}
-#endif /* CONFIG_PPC64 */
+		पूर्ण
+	पूर्ण
+पूर्ण
+#अन्यथा /* CONFIG_PPC64 */
+अटल व्योम retrieve_nvram_error_log(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC64 */
 
-static void start_event_scan(void)
-{
-	printk(KERN_DEBUG "RTAS daemon started\n");
+अटल व्योम start_event_scan(व्योम)
+अणु
+	prपूर्णांकk(KERN_DEBUG "RTAS daemon started\n");
 	pr_debug("rtasd: will sleep for %d milliseconds\n",
 		 (30000 / rtas_event_scan_rate));
 
-	/* Retrieve errors from nvram if any */
+	/* Retrieve errors from nvram अगर any */
 	retrieve_nvram_error_log();
 
 	schedule_delayed_work_on(cpumask_first(cpu_online_mask),
 				 &event_scan_work, event_scan_delay);
-}
+पूर्ण
 
 /* Cancel the rtas event scan work */
-void rtas_cancel_event_scan(void)
-{
+व्योम rtas_cancel_event_scan(व्योम)
+अणु
 	cancel_delayed_work_sync(&event_scan_work);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rtas_cancel_event_scan);
 
-static int __init rtas_event_scan_init(void)
-{
-	if (!machine_is(pseries) && !machine_is(chrp))
-		return 0;
+अटल पूर्णांक __init rtas_event_scan_init(व्योम)
+अणु
+	अगर (!machine_is(pseries) && !machine_is(chrp))
+		वापस 0;
 
 	/* No RTAS */
 	event_scan = rtas_token("event-scan");
-	if (event_scan == RTAS_UNKNOWN_SERVICE) {
-		printk(KERN_INFO "rtasd: No event-scan on system\n");
-		return -ENODEV;
-	}
+	अगर (event_scan == RTAS_UNKNOWN_SERVICE) अणु
+		prपूर्णांकk(KERN_INFO "rtasd: No event-scan on system\n");
+		वापस -ENODEV;
+	पूर्ण
 
 	rtas_event_scan_rate = rtas_token("rtas-event-scan-rate");
-	if (rtas_event_scan_rate == RTAS_UNKNOWN_SERVICE) {
-		printk(KERN_ERR "rtasd: no rtas-event-scan-rate on system\n");
-		return -ENODEV;
-	}
+	अगर (rtas_event_scan_rate == RTAS_UNKNOWN_SERVICE) अणु
+		prपूर्णांकk(KERN_ERR "rtasd: no rtas-event-scan-rate on system\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!rtas_event_scan_rate) {
-		/* Broken firmware: take a rate of zero to mean don't scan */
-		printk(KERN_DEBUG "rtasd: scan rate is 0, not scanning\n");
-		return 0;
-	}
+	अगर (!rtas_event_scan_rate) अणु
+		/* Broken firmware: take a rate of zero to mean करोn't scan */
+		prपूर्णांकk(KERN_DEBUG "rtasd: scan rate is 0, not scanning\n");
+		वापस 0;
+	पूर्ण
 
-	/* Make room for the sequence number */
+	/* Make room क्रम the sequence number */
 	rtas_error_log_max = rtas_get_error_log_max();
-	rtas_error_log_buffer_max = rtas_error_log_max + sizeof(int);
+	rtas_error_log_buffer_max = rtas_error_log_max + माप(पूर्णांक);
 
-	rtas_log_buf = vmalloc(array_size(LOG_NUMBER,
+	rtas_log_buf = vदो_स्मृति(array_size(LOG_NUMBER,
 					  rtas_error_log_buffer_max));
-	if (!rtas_log_buf) {
-		printk(KERN_ERR "rtasd: no memory\n");
-		return -ENOMEM;
-	}
+	अगर (!rtas_log_buf) अणु
+		prपूर्णांकk(KERN_ERR "rtasd: no memory\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	start_event_scan();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 arch_initcall(rtas_event_scan_init);
 
-static int __init rtas_init(void)
-{
-	struct proc_dir_entry *entry;
+अटल पूर्णांक __init rtas_init(व्योम)
+अणु
+	काष्ठा proc_dir_entry *entry;
 
-	if (!machine_is(pseries) && !machine_is(chrp))
-		return 0;
+	अगर (!machine_is(pseries) && !machine_is(chrp))
+		वापस 0;
 
-	if (!rtas_log_buf)
-		return -ENODEV;
+	अगर (!rtas_log_buf)
+		वापस -ENODEV;
 
-	entry = proc_create("powerpc/rtas/error_log", 0400, NULL,
+	entry = proc_create("powerpc/rtas/error_log", 0400, शून्य,
 			    &rtas_log_proc_ops);
-	if (!entry)
-		printk(KERN_ERR "Failed to create error_log proc entry\n");
+	अगर (!entry)
+		prपूर्णांकk(KERN_ERR "Failed to create error_log proc entry\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 __initcall(rtas_init);
 
-static int __init surveillance_setup(char *str)
-{
-	int i;
+अटल पूर्णांक __init surveillance_setup(अक्षर *str)
+अणु
+	पूर्णांक i;
 
-	/* We only do surveillance on pseries */
-	if (!machine_is(pseries))
-		return 0;
+	/* We only करो surveillance on pseries */
+	अगर (!machine_is(pseries))
+		वापस 0;
 
-	if (get_option(&str,&i)) {
-		if (i >= 0 && i <= 255)
-			surveillance_timeout = i;
-	}
+	अगर (get_option(&str,&i)) अणु
+		अगर (i >= 0 && i <= 255)
+			surveillance_समयout = i;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("surveillance=", surveillance_setup);
 
-static int __init rtasmsgs_setup(char *str)
-{
-	return (kstrtobool(str, &full_rtas_msgs) == 0);
-}
-__setup("rtasmsgs=", rtasmsgs_setup);
+अटल पूर्णांक __init rtयंत्रsgs_setup(अक्षर *str)
+अणु
+	वापस (kstrtobool(str, &full_rtas_msgs) == 0);
+पूर्ण
+__setup("rtasmsgs=", rtयंत्रsgs_setup);

@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _MXS_DMA_H_
-#define _MXS_DMA_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _MXS_DMA_H_
+#घोषणा _MXS_DMA_H_
 
-#include <linux/dmaengine.h>
+#समावेश <linux/dmaengine.h>
 
-#define MXS_DMA_CTRL_WAIT4END	BIT(31)
-#define MXS_DMA_CTRL_WAIT4RDY	BIT(30)
+#घोषणा MXS_DMA_CTRL_WAIT4END	BIT(31)
+#घोषणा MXS_DMA_CTRL_WAIT4RDY	BIT(30)
 
 /*
- * The mxs dmaengine can do PIO transfers. We pass a pointer to the PIO words
+ * The mxs dmaengine can करो PIO transfers. We pass a poपूर्णांकer to the PIO words
  * in the second argument to dmaengine_prep_slave_sg when the direction is
- * set to DMA_TRANS_NONE. To make this clear and to prevent users from doing
+ * set to DMA_TRANS_NONE. To make this clear and to prevent users from करोing
  * the error prone casting we have this wrapper function
  */
-static inline struct dma_async_tx_descriptor *mxs_dmaengine_prep_pio(
-        struct dma_chan *chan, u32 *pio, unsigned int npio,
-        enum dma_transfer_direction dir, unsigned long flags)
-{
-	return dmaengine_prep_slave_sg(chan, (struct scatterlist *)pio, npio,
+अटल अंतरभूत काष्ठा dma_async_tx_descriptor *mxs_dmaengine_prep_pio(
+        काष्ठा dma_chan *chan, u32 *pio, अचिन्हित पूर्णांक npio,
+        क्रमागत dma_transfer_direction dir, अचिन्हित दीर्घ flags)
+अणु
+	वापस dmaengine_prep_slave_sg(chan, (काष्ठा scatterlist *)pio, npio,
 				       dir, flags);
-}
+पूर्ण
 
-#endif /* _MXS_DMA_H_ */
+#पूर्ण_अगर /* _MXS_DMA_H_ */

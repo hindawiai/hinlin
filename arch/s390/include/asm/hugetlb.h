@@ -1,123 +1,124 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  IBM System z Huge TLB Page Support for Kernel.
+ *  IBM System z Huge TLB Page Support क्रम Kernel.
  *
  *    Copyright IBM Corp. 2008
  *    Author(s): Gerald Schaefer <gerald.schaefer@de.ibm.com>
  */
 
-#ifndef _ASM_S390_HUGETLB_H
-#define _ASM_S390_HUGETLB_H
+#अगर_अघोषित _ASM_S390_HUGETLB_H
+#घोषणा _ASM_S390_HUGETLB_H
 
-#include <linux/pgtable.h>
-#include <asm/page.h>
+#समावेश <linux/pgtable.h>
+#समावेश <यंत्र/page.h>
 
-#define hugetlb_free_pgd_range			free_pgd_range
-#define hugepages_supported()			(MACHINE_HAS_EDAT1)
+#घोषणा hugetlb_मुक्त_pgd_range			मुक्त_pgd_range
+#घोषणा hugepages_supported()			(MACHINE_HAS_EDAT1)
 
-void set_huge_pte_at(struct mm_struct *mm, unsigned long addr,
+व्योम set_huge_pte_at(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 		     pte_t *ptep, pte_t pte);
 pte_t huge_ptep_get(pte_t *ptep);
-pte_t huge_ptep_get_and_clear(struct mm_struct *mm,
-			      unsigned long addr, pte_t *ptep);
+pte_t huge_ptep_get_and_clear(काष्ठा mm_काष्ठा *mm,
+			      अचिन्हित दीर्घ addr, pte_t *ptep);
 
 /*
- * If the arch doesn't supply something else, assume that hugepage
+ * If the arch करोesn't supply something अन्यथा, assume that hugepage
  * size aligned regions are ok without further preparation.
  */
-static inline int prepare_hugepage_range(struct file *file,
-			unsigned long addr, unsigned long len)
-{
-	if (len & ~HPAGE_MASK)
-		return -EINVAL;
-	if (addr & ~HPAGE_MASK)
-		return -EINVAL;
-	return 0;
-}
+अटल अंतरभूत पूर्णांक prepare_hugepage_range(काष्ठा file *file,
+			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len)
+अणु
+	अगर (len & ~HPAGE_MASK)
+		वापस -EINVAL;
+	अगर (addr & ~HPAGE_MASK)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static inline void arch_clear_hugepage_flags(struct page *page)
-{
+अटल अंतरभूत व्योम arch_clear_hugepage_flags(काष्ठा page *page)
+अणु
 	clear_bit(PG_arch_1, &page->flags);
-}
-#define arch_clear_hugepage_flags arch_clear_hugepage_flags
+पूर्ण
+#घोषणा arch_clear_hugepage_flags arch_clear_hugepage_flags
 
-static inline void huge_pte_clear(struct mm_struct *mm, unsigned long addr,
-				  pte_t *ptep, unsigned long sz)
-{
-	if ((pte_val(*ptep) & _REGION_ENTRY_TYPE_MASK) == _REGION_ENTRY_TYPE_R3)
+अटल अंतरभूत व्योम huge_pte_clear(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+				  pte_t *ptep, अचिन्हित दीर्घ sz)
+अणु
+	अगर ((pte_val(*ptep) & _REGION_ENTRY_TYPE_MASK) == _REGION_ENTRY_TYPE_R3)
 		pte_val(*ptep) = _REGION3_ENTRY_EMPTY;
-	else
+	अन्यथा
 		pte_val(*ptep) = _SEGMENT_ENTRY_EMPTY;
-}
+पूर्ण
 
-static inline void huge_ptep_clear_flush(struct vm_area_struct *vma,
-					 unsigned long address, pte_t *ptep)
-{
+अटल अंतरभूत व्योम huge_ptep_clear_flush(काष्ठा vm_area_काष्ठा *vma,
+					 अचिन्हित दीर्घ address, pte_t *ptep)
+अणु
 	huge_ptep_get_and_clear(vma->vm_mm, address, ptep);
-}
+पूर्ण
 
-static inline int huge_ptep_set_access_flags(struct vm_area_struct *vma,
-					     unsigned long addr, pte_t *ptep,
-					     pte_t pte, int dirty)
-{
-	int changed = !pte_same(huge_ptep_get(ptep), pte);
-	if (changed) {
+अटल अंतरभूत पूर्णांक huge_ptep_set_access_flags(काष्ठा vm_area_काष्ठा *vma,
+					     अचिन्हित दीर्घ addr, pte_t *ptep,
+					     pte_t pte, पूर्णांक dirty)
+अणु
+	पूर्णांक changed = !pte_same(huge_ptep_get(ptep), pte);
+	अगर (changed) अणु
 		huge_ptep_get_and_clear(vma->vm_mm, addr, ptep);
 		set_huge_pte_at(vma->vm_mm, addr, ptep, pte);
-	}
-	return changed;
-}
+	पूर्ण
+	वापस changed;
+पूर्ण
 
-static inline void huge_ptep_set_wrprotect(struct mm_struct *mm,
-					   unsigned long addr, pte_t *ptep)
-{
+अटल अंतरभूत व्योम huge_ptep_set_wrprotect(काष्ठा mm_काष्ठा *mm,
+					   अचिन्हित दीर्घ addr, pte_t *ptep)
+अणु
 	pte_t pte = huge_ptep_get_and_clear(mm, addr, ptep);
 	set_huge_pte_at(mm, addr, ptep, pte_wrprotect(pte));
-}
+पूर्ण
 
-static inline pte_t mk_huge_pte(struct page *page, pgprot_t pgprot)
-{
-	return mk_pte(page, pgprot);
-}
+अटल अंतरभूत pte_t mk_huge_pte(काष्ठा page *page, pgprot_t pgprot)
+अणु
+	वापस mk_pte(page, pgprot);
+पूर्ण
 
-static inline int huge_pte_none(pte_t pte)
-{
-	return pte_none(pte);
-}
+अटल अंतरभूत पूर्णांक huge_pte_none(pte_t pte)
+अणु
+	वापस pte_none(pte);
+पूर्ण
 
-static inline int huge_pte_write(pte_t pte)
-{
-	return pte_write(pte);
-}
+अटल अंतरभूत पूर्णांक huge_pte_ग_लिखो(pte_t pte)
+अणु
+	वापस pte_ग_लिखो(pte);
+पूर्ण
 
-static inline int huge_pte_dirty(pte_t pte)
-{
-	return pte_dirty(pte);
-}
+अटल अंतरभूत पूर्णांक huge_pte_dirty(pte_t pte)
+अणु
+	वापस pte_dirty(pte);
+पूर्ण
 
-static inline pte_t huge_pte_mkwrite(pte_t pte)
-{
-	return pte_mkwrite(pte);
-}
+अटल अंतरभूत pte_t huge_pte_mkग_लिखो(pte_t pte)
+अणु
+	वापस pte_mkग_लिखो(pte);
+पूर्ण
 
-static inline pte_t huge_pte_mkdirty(pte_t pte)
-{
-	return pte_mkdirty(pte);
-}
+अटल अंतरभूत pte_t huge_pte_सूची_गढ़ोty(pte_t pte)
+अणु
+	वापस pte_सूची_गढ़ोty(pte);
+पूर्ण
 
-static inline pte_t huge_pte_wrprotect(pte_t pte)
-{
-	return pte_wrprotect(pte);
-}
+अटल अंतरभूत pte_t huge_pte_wrprotect(pte_t pte)
+अणु
+	वापस pte_wrprotect(pte);
+पूर्ण
 
-static inline pte_t huge_pte_modify(pte_t pte, pgprot_t newprot)
-{
-	return pte_modify(pte, newprot);
-}
+अटल अंतरभूत pte_t huge_pte_modअगरy(pte_t pte, pgprot_t newprot)
+अणु
+	वापस pte_modअगरy(pte, newprot);
+पूर्ण
 
-static inline bool gigantic_page_runtime_supported(void)
-{
-	return true;
-}
+अटल अंतरभूत bool gigantic_page_runसमय_supported(व्योम)
+अणु
+	वापस true;
+पूर्ण
 
-#endif /* _ASM_S390_HUGETLB_H */
+#पूर्ण_अगर /* _ASM_S390_HUGETLB_H */

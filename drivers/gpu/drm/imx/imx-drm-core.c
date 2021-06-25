@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Freescale i.MX drm driver
  *
  * Copyright (C) 2011 Sascha Hauer, Pengutronix
  */
 
-#include <linux/component.h>
-#include <linux/device.h>
-#include <linux/dma-buf.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/component.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-buf.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <video/imx-ipu-v3.h>
+#समावेश <video/imx-ipu-v3.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_fb_cma_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_managed.h>
-#include <drm/drm_of.h>
-#include <drm/drm_plane_helper.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fb_cma_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_gem_framebuffer_helper.h>
+#समावेश <drm/drm_managed.h>
+#समावेश <drm/drm_of.h>
+#समावेश <drm/drm_plane_helper.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "imx-drm.h"
-#include "ipuv3-plane.h"
+#समावेश "imx-drm.h"
+#समावेश "ipuv3-plane.h"
 
-#define MAX_CRTC	4
+#घोषणा MAX_CRTC	4
 
-static int legacyfb_depth = 16;
-module_param(legacyfb_depth, int, 0444);
+अटल पूर्णांक legacyfb_depth = 16;
+module_param(legacyfb_depth, पूर्णांक, 0444);
 
 DEFINE_DRM_GEM_CMA_FOPS(imx_drm_driver_fops);
 
-void imx_drm_connector_destroy(struct drm_connector *connector)
-{
-	drm_connector_unregister(connector);
+व्योम imx_drm_connector_destroy(काष्ठा drm_connector *connector)
+अणु
+	drm_connector_unरेजिस्टर(connector);
 	drm_connector_cleanup(connector);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_drm_connector_destroy);
 
-static int imx_drm_atomic_check(struct drm_device *dev,
-				struct drm_atomic_state *state)
-{
-	int ret;
+अटल पूर्णांक imx_drm_atomic_check(काष्ठा drm_device *dev,
+				काष्ठा drm_atomic_state *state)
+अणु
+	पूर्णांक ret;
 
 	ret = drm_atomic_helper_check(dev, state);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Check modeset again in case crtc_state->mode_changed is
+	 * Check modeset again in हाल crtc_state->mode_changed is
 	 * updated in plane's ->atomic_check callback.
 	 */
 	ret = drm_atomic_helper_check_modeset(dev, state);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Assign PRG/PRE channels and check if all constrains are satisfied. */
+	/* Assign PRG/PRE channels and check अगर all स्थिरrains are satisfied. */
 	ret = ipu_planes_assign_pre(dev, state);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct drm_mode_config_funcs imx_drm_mode_config_funcs = {
+अटल स्थिर काष्ठा drm_mode_config_funcs imx_drm_mode_config_funcs = अणु
 	.fb_create = drm_gem_fb_create,
 	.atomic_check = imx_drm_atomic_check,
 	.atomic_commit = drm_atomic_helper_commit,
-};
+पूर्ण;
 
-static void imx_drm_atomic_commit_tail(struct drm_atomic_state *state)
-{
-	struct drm_device *dev = state->dev;
-	struct drm_plane *plane;
-	struct drm_plane_state *old_plane_state, *new_plane_state;
+अटल व्योम imx_drm_atomic_commit_tail(काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_device *dev = state->dev;
+	काष्ठा drm_plane *plane;
+	काष्ठा drm_plane_state *old_plane_state, *new_plane_state;
 	bool plane_disabling = false;
-	int i;
+	पूर्णांक i;
 
 	drm_atomic_helper_commit_modeset_disables(dev, state);
 
@@ -90,62 +91,62 @@ static void imx_drm_atomic_commit_tail(struct drm_atomic_state *state)
 
 	drm_atomic_helper_commit_modeset_enables(dev, state);
 
-	for_each_oldnew_plane_in_state(state, plane, old_plane_state, new_plane_state, i) {
-		if (drm_atomic_plane_disabling(old_plane_state, new_plane_state))
+	क्रम_each_oldnew_plane_in_state(state, plane, old_plane_state, new_plane_state, i) अणु
+		अगर (drm_atomic_plane_disabling(old_plane_state, new_plane_state))
 			plane_disabling = true;
-	}
+	पूर्ण
 
 	/*
-	 * The flip done wait is only strictly required by imx-drm if a deferred
+	 * The flip करोne रुको is only strictly required by imx-drm अगर a deferred
 	 * plane disable is in-flight. As the core requires blocking commits
-	 * to wait for the flip it is done here unconditionally. This keeps the
-	 * workitem around a bit longer than required for the majority of
-	 * non-blocking commits, but we accept that for the sake of simplicity.
+	 * to रुको क्रम the flip it is करोne here unconditionally. This keeps the
+	 * workitem around a bit दीर्घer than required क्रम the majority of
+	 * non-blocking commits, but we accept that क्रम the sake of simplicity.
 	 */
-	drm_atomic_helper_wait_for_flip_done(dev, state);
+	drm_atomic_helper_रुको_क्रम_flip_करोne(dev, state);
 
-	if (plane_disabling) {
-		for_each_old_plane_in_state(state, plane, old_plane_state, i)
+	अगर (plane_disabling) अणु
+		क्रम_each_old_plane_in_state(state, plane, old_plane_state, i)
 			ipu_plane_disable_deferred(plane);
 
-	}
+	पूर्ण
 
-	drm_atomic_helper_commit_hw_done(state);
-}
+	drm_atomic_helper_commit_hw_करोne(state);
+पूर्ण
 
-static const struct drm_mode_config_helper_funcs imx_drm_mode_config_helpers = {
+अटल स्थिर काष्ठा drm_mode_config_helper_funcs imx_drm_mode_config_helpers = अणु
 	.atomic_commit_tail = imx_drm_atomic_commit_tail,
-};
+पूर्ण;
 
 
-int imx_drm_encoder_parse_of(struct drm_device *drm,
-	struct drm_encoder *encoder, struct device_node *np)
-{
-	uint32_t crtc_mask = drm_of_find_possible_crtcs(drm, np);
+पूर्णांक imx_drm_encoder_parse_of(काष्ठा drm_device *drm,
+	काष्ठा drm_encoder *encoder, काष्ठा device_node *np)
+अणु
+	uपूर्णांक32_t crtc_mask = drm_of_find_possible_crtcs(drm, np);
 
 	/*
 	 * If we failed to find the CRTC(s) which this encoder is
 	 * supposed to be connected to, it's because the CRTC has
-	 * not been registered yet.  Defer probing, and hope that
+	 * not been रेजिस्टरed yet.  Defer probing, and hope that
 	 * the required CRTC is added later.
 	 */
-	if (crtc_mask == 0)
-		return -EPROBE_DEFER;
+	अगर (crtc_mask == 0)
+		वापस -EPROBE_DEFER;
 
 	encoder->possible_crtcs = crtc_mask;
 
-	/* FIXME: cloning support not clear, disable it all for now */
+	/* FIXME: cloning support not clear, disable it all क्रम now */
 	encoder->possible_clones = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_drm_encoder_parse_of);
 
-static const struct drm_ioctl_desc imx_drm_ioctls[] = {
+अटल स्थिर काष्ठा drm_ioctl_desc imx_drm_ioctls[] = अणु
 	/* none so far */
-};
+पूर्ण;
 
-static const struct drm_driver imx_drm_driver = {
+अटल स्थिर काष्ठा drm_driver imx_drm_driver = अणु
 	.driver_features	= DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
 	DRM_GEM_CMA_DRIVER_OPS,
 	.ioctls			= imx_drm_ioctls,
@@ -157,50 +158,50 @@ static const struct drm_driver imx_drm_driver = {
 	.major			= 1,
 	.minor			= 0,
 	.patchlevel		= 0,
-};
+पूर्ण;
 
-static int compare_of(struct device *dev, void *data)
-{
-	struct device_node *np = data;
+अटल पूर्णांक compare_of(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा device_node *np = data;
 
-	/* Special case for DI, dev->of_node may not be set yet */
-	if (strcmp(dev->driver->name, "imx-ipuv3-crtc") == 0) {
-		struct ipu_client_platformdata *pdata = dev->platform_data;
+	/* Special हाल क्रम DI, dev->of_node may not be set yet */
+	अगर (म_भेद(dev->driver->name, "imx-ipuv3-crtc") == 0) अणु
+		काष्ठा ipu_client_platक्रमmdata *pdata = dev->platक्रमm_data;
 
-		return pdata->of_node == np;
-	}
+		वापस pdata->of_node == np;
+	पूर्ण
 
-	/* Special case for LDB, one device for two channels */
-	if (of_node_name_eq(np, "lvds-channel")) {
+	/* Special हाल क्रम LDB, one device क्रम two channels */
+	अगर (of_node_name_eq(np, "lvds-channel")) अणु
 		np = of_get_parent(np);
 		of_node_put(np);
-	}
+	पूर्ण
 
-	return dev->of_node == np;
-}
+	वापस dev->of_node == np;
+पूर्ण
 
-static int imx_drm_bind(struct device *dev)
-{
-	struct drm_device *drm;
-	int ret;
+अटल पूर्णांक imx_drm_bind(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *drm;
+	पूर्णांक ret;
 
 	drm = drm_dev_alloc(&imx_drm_driver, dev);
-	if (IS_ERR(drm))
-		return PTR_ERR(drm);
+	अगर (IS_ERR(drm))
+		वापस PTR_ERR(drm);
 
 	/*
 	 * enable drm irq mode.
 	 * - with irq_enabled = true, we can use the vblank feature.
 	 *
 	 * P.S. note that we wouldn't use drm irq handler but
-	 *      just specific driver own one instead because
+	 *      just specअगरic driver own one instead because
 	 *      drm framework supports only one irq handler and
-	 *      drivers can well take care of their interrupts
+	 *      drivers can well take care of their पूर्णांकerrupts
 	 */
 	drm->irq_enabled = true;
 
 	/*
-	 * set max width and height as default value(4096x4096).
+	 * set max width and height as शेष value(4096x4096).
 	 * this value would be used to check framebuffer size limitation
 	 * at drm_mode_addfb().
 	 */
@@ -209,46 +210,46 @@ static int imx_drm_bind(struct device *dev)
 	drm->mode_config.max_width = 4096;
 	drm->mode_config.max_height = 4096;
 	drm->mode_config.funcs = &imx_drm_mode_config_funcs;
-	drm->mode_config.helper_private = &imx_drm_mode_config_helpers;
-	drm->mode_config.allow_fb_modifiers = true;
+	drm->mode_config.helper_निजी = &imx_drm_mode_config_helpers;
+	drm->mode_config.allow_fb_modअगरiers = true;
 	drm->mode_config.normalize_zpos = true;
 
 	ret = drmm_mode_config_init(drm);
-	if (ret)
-		goto err_kms;
+	अगर (ret)
+		जाओ err_kms;
 
 	ret = drm_vblank_init(drm, MAX_CRTC);
-	if (ret)
-		goto err_kms;
+	अगर (ret)
+		जाओ err_kms;
 
 	dev_set_drvdata(dev, drm);
 
 	/* Now try and bind all our sub-components */
 	ret = component_bind_all(dev, drm);
-	if (ret)
-		goto err_kms;
+	अगर (ret)
+		जाओ err_kms;
 
 	drm_mode_config_reset(drm);
 
 	/*
 	 * All components are now initialised, so setup the fb helper.
-	 * The fb helper takes copies of key hardware information, so the
-	 * crtcs/connectors/encoders must not change after this point.
+	 * The fb helper takes copies of key hardware inक्रमmation, so the
+	 * crtcs/connectors/encoders must not change after this poपूर्णांक.
 	 */
-	if (legacyfb_depth != 16 && legacyfb_depth != 32) {
+	अगर (legacyfb_depth != 16 && legacyfb_depth != 32) अणु
 		dev_warn(dev, "Invalid legacyfb_depth.  Defaulting to 16bpp\n");
 		legacyfb_depth = 16;
-	}
+	पूर्ण
 
 	drm_kms_helper_poll_init(drm);
 
-	ret = drm_dev_register(drm, 0);
-	if (ret)
-		goto err_poll_fini;
+	ret = drm_dev_रेजिस्टर(drm, 0);
+	अगर (ret)
+		जाओ err_poll_fini;
 
 	drm_fbdev_generic_setup(drm, legacyfb_depth);
 
-	return 0;
+	वापस 0;
 
 err_poll_fini:
 	drm_kms_helper_poll_fini(drm);
@@ -256,14 +257,14 @@ err_poll_fini:
 err_kms:
 	drm_dev_put(drm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void imx_drm_unbind(struct device *dev)
-{
-	struct drm_device *drm = dev_get_drvdata(dev);
+अटल व्योम imx_drm_unbind(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *drm = dev_get_drvdata(dev);
 
-	drm_dev_unregister(drm);
+	drm_dev_unरेजिस्टर(drm);
 
 	drm_kms_helper_poll_fini(drm);
 
@@ -271,80 +272,80 @@ static void imx_drm_unbind(struct device *dev)
 
 	drm_dev_put(drm);
 
-	dev_set_drvdata(dev, NULL);
-}
+	dev_set_drvdata(dev, शून्य);
+पूर्ण
 
-static const struct component_master_ops imx_drm_ops = {
+अटल स्थिर काष्ठा component_master_ops imx_drm_ops = अणु
 	.bind = imx_drm_bind,
 	.unbind = imx_drm_unbind,
-};
+पूर्ण;
 
-static int imx_drm_platform_probe(struct platform_device *pdev)
-{
-	int ret = drm_of_component_probe(&pdev->dev, compare_of, &imx_drm_ops);
+अटल पूर्णांक imx_drm_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret = drm_of_component_probe(&pdev->dev, compare_of, &imx_drm_ops);
 
-	if (!ret)
+	अगर (!ret)
 		ret = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int imx_drm_platform_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक imx_drm_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	component_master_del(&pdev->dev, &imx_drm_ops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int imx_drm_suspend(struct device *dev)
-{
-	struct drm_device *drm_dev = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक imx_drm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *drm_dev = dev_get_drvdata(dev);
 
-	return drm_mode_config_helper_suspend(drm_dev);
-}
+	वापस drm_mode_config_helper_suspend(drm_dev);
+पूर्ण
 
-static int imx_drm_resume(struct device *dev)
-{
-	struct drm_device *drm_dev = dev_get_drvdata(dev);
+अटल पूर्णांक imx_drm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *drm_dev = dev_get_drvdata(dev);
 
-	return drm_mode_config_helper_resume(drm_dev);
-}
-#endif
+	वापस drm_mode_config_helper_resume(drm_dev);
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(imx_drm_pm_ops, imx_drm_suspend, imx_drm_resume);
+अटल SIMPLE_DEV_PM_OPS(imx_drm_pm_ops, imx_drm_suspend, imx_drm_resume);
 
-static const struct of_device_id imx_drm_dt_ids[] = {
-	{ .compatible = "fsl,imx-display-subsystem", },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id imx_drm_dt_ids[] = अणु
+	अणु .compatible = "fsl,imx-display-subsystem", पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, imx_drm_dt_ids);
 
-static struct platform_driver imx_drm_pdrv = {
-	.probe		= imx_drm_platform_probe,
-	.remove		= imx_drm_platform_remove,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver imx_drm_pdrv = अणु
+	.probe		= imx_drm_platक्रमm_probe,
+	.हटाओ		= imx_drm_platक्रमm_हटाओ,
+	.driver		= अणु
 		.name	= "imx-drm",
 		.pm	= &imx_drm_pm_ops,
 		.of_match_table = imx_drm_dt_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_driver * const drivers[] = {
+अटल काष्ठा platक्रमm_driver * स्थिर drivers[] = अणु
 	&imx_drm_pdrv,
 	&ipu_drm_driver,
-};
+पूर्ण;
 
-static int __init imx_drm_init(void)
-{
-	return platform_register_drivers(drivers, ARRAY_SIZE(drivers));
-}
+अटल पूर्णांक __init imx_drm_init(व्योम)
+अणु
+	वापस platक्रमm_रेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
+पूर्ण
 module_init(imx_drm_init);
 
-static void __exit imx_drm_exit(void)
-{
-	platform_unregister_drivers(drivers, ARRAY_SIZE(drivers));
-}
-module_exit(imx_drm_exit);
+अटल व्योम __निकास imx_drm_निकास(व्योम)
+अणु
+	platक्रमm_unरेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
+पूर्ण
+module_निकास(imx_drm_निकास);
 
 MODULE_AUTHOR("Sascha Hauer <s.hauer@pengutronix.de>");
 MODULE_DESCRIPTION("i.MX drm driver core");

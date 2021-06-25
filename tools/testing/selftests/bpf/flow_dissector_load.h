@@ -1,73 +1,74 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
-#ifndef FLOW_DISSECTOR_LOAD
-#define FLOW_DISSECTOR_LOAD
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause) */
+#अगर_अघोषित FLOW_DISSECTOR_LOAD
+#घोषणा FLOW_DISSECTOR_LOAD
 
-#include <bpf/bpf.h>
-#include <bpf/libbpf.h>
+#समावेश <bpf/bpf.h>
+#समावेश <bpf/libbpf.h>
 
-static inline int bpf_flow_load(struct bpf_object **obj,
-				const char *path,
-				const char *section_name,
-				const char *map_name,
-				const char *keys_map_name,
-				int *prog_fd,
-				int *keys_fd)
-{
-	struct bpf_program *prog, *main_prog;
-	struct bpf_map *prog_array, *keys;
-	int prog_array_fd;
-	int ret, fd, i;
+अटल अंतरभूत पूर्णांक bpf_flow_load(काष्ठा bpf_object **obj,
+				स्थिर अक्षर *path,
+				स्थिर अक्षर *section_name,
+				स्थिर अक्षर *map_name,
+				स्थिर अक्षर *keys_map_name,
+				पूर्णांक *prog_fd,
+				पूर्णांक *keys_fd)
+अणु
+	काष्ठा bpf_program *prog, *मुख्य_prog;
+	काष्ठा bpf_map *prog_array, *keys;
+	पूर्णांक prog_array_fd;
+	पूर्णांक ret, fd, i;
 
 	ret = bpf_prog_load(path, BPF_PROG_TYPE_FLOW_DISSECTOR, obj,
 			    prog_fd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	main_prog = NULL;
-	bpf_object__for_each_program(prog, *obj) {
-		if (strcmp(section_name, bpf_program__section_name(prog)) == 0) {
-			main_prog = prog;
-			break;
-		}
-	}
-	if (!main_prog)
-		return -1;
+	मुख्य_prog = शून्य;
+	bpf_object__क्रम_each_program(prog, *obj) अणु
+		अगर (म_भेद(section_name, bpf_program__section_name(prog)) == 0) अणु
+			मुख्य_prog = prog;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!मुख्य_prog)
+		वापस -1;
 
-	*prog_fd = bpf_program__fd(main_prog);
-	if (*prog_fd < 0)
-		return -1;
+	*prog_fd = bpf_program__fd(मुख्य_prog);
+	अगर (*prog_fd < 0)
+		वापस -1;
 
 	prog_array = bpf_object__find_map_by_name(*obj, map_name);
-	if (!prog_array)
-		return -1;
+	अगर (!prog_array)
+		वापस -1;
 
 	prog_array_fd = bpf_map__fd(prog_array);
-	if (prog_array_fd < 0)
-		return -1;
+	अगर (prog_array_fd < 0)
+		वापस -1;
 
-	if (keys_map_name && keys_fd) {
+	अगर (keys_map_name && keys_fd) अणु
 		keys = bpf_object__find_map_by_name(*obj, keys_map_name);
-		if (!keys)
-			return -1;
+		अगर (!keys)
+			वापस -1;
 
 		*keys_fd = bpf_map__fd(keys);
-		if (*keys_fd < 0)
-			return -1;
-	}
+		अगर (*keys_fd < 0)
+			वापस -1;
+	पूर्ण
 
 	i = 0;
-	bpf_object__for_each_program(prog, *obj) {
+	bpf_object__क्रम_each_program(prog, *obj) अणु
 		fd = bpf_program__fd(prog);
-		if (fd < 0)
-			return fd;
+		अगर (fd < 0)
+			वापस fd;
 
-		if (fd != *prog_fd) {
+		अगर (fd != *prog_fd) अणु
 			bpf_map_update_elem(prog_array_fd, &i, &fd, BPF_ANY);
 			++i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif /* FLOW_DISSECTOR_LOAD */
+#पूर्ण_अगर /* FLOW_DISSECTOR_LOAD */

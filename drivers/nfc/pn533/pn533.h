@@ -1,107 +1,108 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Driver for NXP PN533 NFC Chip
+ * Driver क्रम NXP PN533 NFC Chip
  *
  * Copyright (C) 2011 Instituto Nokia de Tecnologia
  * Copyright (C) 2012-2013 Tieto Poland
  */
 
-#define PN533_DEVICE_STD		0x1
-#define PN533_DEVICE_PASORI		0x2
-#define PN533_DEVICE_ACR122U		0x3
-#define PN533_DEVICE_PN532		0x4
-#define PN533_DEVICE_PN532_AUTOPOLL	0x5
+#घोषणा PN533_DEVICE_STD		0x1
+#घोषणा PN533_DEVICE_PASORI		0x2
+#घोषणा PN533_DEVICE_ACR122U		0x3
+#घोषणा PN533_DEVICE_PN532		0x4
+#घोषणा PN533_DEVICE_PN532_AUTOPOLL	0x5
 
-#define PN533_ALL_PROTOCOLS (NFC_PROTO_JEWEL_MASK | NFC_PROTO_MIFARE_MASK |\
+#घोषणा PN533_ALL_PROTOCOLS (NFC_PROTO_JEWEL_MASK | NFC_PROTO_MIFARE_MASK |\
 			     NFC_PROTO_FELICA_MASK | NFC_PROTO_ISO14443_MASK |\
 			     NFC_PROTO_NFC_DEP_MASK |\
 			     NFC_PROTO_ISO14443_B_MASK)
 
-#define PN533_NO_TYPE_B_PROTOCOLS (NFC_PROTO_JEWEL_MASK | \
+#घोषणा PN533_NO_TYPE_B_PROTOCOLS (NFC_PROTO_JEWEL_MASK | \
 				   NFC_PROTO_MIFARE_MASK | \
 				   NFC_PROTO_FELICA_MASK | \
 				   NFC_PROTO_ISO14443_MASK | \
 				   NFC_PROTO_NFC_DEP_MASK)
 
 /* Standard pn533 frame definitions (standard and extended)*/
-#define PN533_STD_FRAME_HEADER_LEN (sizeof(struct pn533_std_frame) \
+#घोषणा PN533_STD_FRAME_HEADER_LEN (माप(काष्ठा pn533_std_frame) \
 					+ 2) /* data[0] TFI, data[1] CC */
-#define PN533_STD_FRAME_TAIL_LEN 2 /* data[len] DCS, data[len + 1] postamble*/
+#घोषणा PN533_STD_FRAME_TAIL_LEN 2 /* data[len] DCS, data[len + 1] postamble*/
 
-#define PN533_EXT_FRAME_HEADER_LEN (sizeof(struct pn533_ext_frame) \
+#घोषणा PN533_EXT_FRAME_HEADER_LEN (माप(काष्ठा pn533_ext_frame) \
 					+ 2) /* data[0] TFI, data[1] CC */
 
-#define PN533_CMD_DATAEXCH_HEAD_LEN 1
-#define PN533_CMD_DATAEXCH_DATA_MAXLEN	262
-#define PN533_CMD_DATAFRAME_MAXLEN	240	/* max data length (send) */
+#घोषणा PN533_CMD_DATAEXCH_HEAD_LEN 1
+#घोषणा PN533_CMD_DATAEXCH_DATA_MAXLEN	262
+#घोषणा PN533_CMD_DATAFRAME_MAXLEN	240	/* max data length (send) */
 
 /*
  * Max extended frame payload len, excluding TFI and CC
- * which are already in PN533_FRAME_HEADER_LEN.
+ * which are alपढ़ोy in PN533_FRAME_HEADER_LEN.
  */
-#define PN533_STD_FRAME_MAX_PAYLOAD_LEN 263
+#घोषणा PN533_STD_FRAME_MAX_PAYLOAD_LEN 263
 
 
 /* Preamble (1), SoPC (2), ACK Code (2), Postamble (1) */
-#define PN533_STD_FRAME_ACK_SIZE 6
+#घोषणा PN533_STD_FRAME_ACK_SIZE 6
 /*
  * Preamble (1), SoPC (2), Packet Length (1), Packet Length Checksum (1),
- * Specific Application Level Error Code (1) , Postamble (1)
+ * Specअगरic Application Level Error Code (1) , Postamble (1)
  */
-#define PN533_STD_ERROR_FRAME_SIZE 8
-#define PN533_STD_FRAME_CHECKSUM(f) (f->data[f->datalen])
-#define PN533_STD_FRAME_POSTAMBLE(f) (f->data[f->datalen + 1])
-/* Half start code (3), LEN (4) should be 0xffff for extended frame */
-#define PN533_STD_IS_EXTENDED(hdr) ((hdr)->datalen == 0xFF \
+#घोषणा PN533_STD_ERROR_FRAME_SIZE 8
+#घोषणा PN533_STD_FRAME_CHECKSUM(f) (f->data[f->datalen])
+#घोषणा PN533_STD_FRAME_POSTAMBLE(f) (f->data[f->datalen + 1])
+/* Half start code (3), LEN (4) should be 0xffff क्रम extended frame */
+#घोषणा PN533_STD_IS_EXTENDED(hdr) ((hdr)->datalen == 0xFF \
 					&& (hdr)->datalen_checksum == 0xFF)
-#define PN533_EXT_FRAME_CHECKSUM(f) (f->data[be16_to_cpu(f->datalen)])
+#घोषणा PN533_EXT_FRAME_CHECKSUM(f) (f->data[be16_to_cpu(f->datalen)])
 
 /* start of frame */
-#define PN533_STD_FRAME_SOF 0x00FF
+#घोषणा PN533_STD_FRAME_SOF 0x00FF
 
-/* standard frame identifier: in/out/error */
-#define PN533_STD_FRAME_IDENTIFIER(f) (f->data[0]) /* TFI */
-#define PN533_STD_FRAME_DIR_OUT 0xD4
-#define PN533_STD_FRAME_DIR_IN 0xD5
+/* standard frame identअगरier: in/out/error */
+#घोषणा PN533_STD_FRAME_IDENTIFIER(f) (f->data[0]) /* TFI */
+#घोषणा PN533_STD_FRAME_सूची_OUT 0xD4
+#घोषणा PN533_STD_FRAME_सूची_IN 0xD5
 
 /* PN533 Commands */
-#define PN533_FRAME_CMD(f) (f->data[1])
+#घोषणा PN533_FRAME_CMD(f) (f->data[1])
 
-#define PN533_CMD_GET_FIRMWARE_VERSION 0x02
-#define PN533_CMD_SAM_CONFIGURATION 0x14
-#define PN533_CMD_RF_CONFIGURATION 0x32
-#define PN533_CMD_IN_DATA_EXCHANGE 0x40
-#define PN533_CMD_IN_COMM_THRU     0x42
-#define PN533_CMD_IN_LIST_PASSIVE_TARGET 0x4A
-#define PN533_CMD_IN_ATR 0x50
-#define PN533_CMD_IN_RELEASE 0x52
-#define PN533_CMD_IN_JUMP_FOR_DEP 0x56
-#define PN533_CMD_IN_AUTOPOLL 0x60
+#घोषणा PN533_CMD_GET_FIRMWARE_VERSION 0x02
+#घोषणा PN533_CMD_SAM_CONFIGURATION 0x14
+#घोषणा PN533_CMD_RF_CONFIGURATION 0x32
+#घोषणा PN533_CMD_IN_DATA_EXCHANGE 0x40
+#घोषणा PN533_CMD_IN_COMM_THRU     0x42
+#घोषणा PN533_CMD_IN_LIST_PASSIVE_TARGET 0x4A
+#घोषणा PN533_CMD_IN_ATR 0x50
+#घोषणा PN533_CMD_IN_RELEASE 0x52
+#घोषणा PN533_CMD_IN_JUMP_FOR_DEP 0x56
+#घोषणा PN533_CMD_IN_AUTOPOLL 0x60
 
-#define PN533_CMD_TG_INIT_AS_TARGET 0x8c
-#define PN533_CMD_TG_GET_DATA 0x86
-#define PN533_CMD_TG_SET_DATA 0x8e
-#define PN533_CMD_TG_SET_META_DATA 0x94
-#define PN533_CMD_UNDEF 0xff
+#घोषणा PN533_CMD_TG_INIT_AS_TARGET 0x8c
+#घोषणा PN533_CMD_TG_GET_DATA 0x86
+#घोषणा PN533_CMD_TG_SET_DATA 0x8e
+#घोषणा PN533_CMD_TG_SET_META_DATA 0x94
+#घोषणा PN533_CMD_UNDEF 0xff
 
-#define PN533_CMD_RESPONSE(cmd) (cmd + 1)
+#घोषणा PN533_CMD_RESPONSE(cmd) (cmd + 1)
 
 /* PN533 Return codes */
-#define PN533_CMD_RET_MASK 0x3F
-#define PN533_CMD_MI_MASK 0x40
-#define PN533_CMD_RET_SUCCESS 0x00
+#घोषणा PN533_CMD_RET_MASK 0x3F
+#घोषणा PN533_CMD_MI_MASK 0x40
+#घोषणा PN533_CMD_RET_SUCCESS 0x00
 
-#define PN533_FRAME_DATALEN_ACK 0x00
-#define PN533_FRAME_DATALEN_ERROR 0x01
-#define PN533_FRAME_DATALEN_EXTENDED 0xFF
+#घोषणा PN533_FRAME_DATALEN_ACK 0x00
+#घोषणा PN533_FRAME_DATALEN_ERROR 0x01
+#घोषणा PN533_FRAME_DATALEN_EXTENDED 0xFF
 
-enum  pn533_protocol_type {
+क्रमागत  pn533_protocol_type अणु
 	PN533_PROTO_REQ_ACK_RESP = 0,
 	PN533_PROTO_REQ_RESP
-};
+पूर्ण;
 
 /* Poll modulations */
-enum {
+क्रमागत अणु
 	PN533_POLL_MOD_106KBPS_A,
 	PN533_POLL_MOD_212KBPS_FELICA,
 	PN533_POLL_MOD_424KBPS_FELICA,
@@ -110,140 +111,140 @@ enum {
 	PN533_LISTEN_MOD,
 
 	__PN533_POLL_MOD_AFTER_LAST,
-};
-#define PN533_POLL_MOD_MAX (__PN533_POLL_MOD_AFTER_LAST - 1)
+पूर्ण;
+#घोषणा PN533_POLL_MOD_MAX (__PN533_POLL_MOD_AFTER_LAST - 1)
 
-struct pn533_std_frame {
+काष्ठा pn533_std_frame अणु
 	u8 preamble;
 	__be16 start_frame;
 	u8 datalen;
 	u8 datalen_checksum;
 	u8 data[];
-} __packed;
+पूर्ण __packed;
 
-struct pn533_ext_frame {	/* Extended Information frame */
+काष्ठा pn533_ext_frame अणु	/* Extended Inक्रमmation frame */
 	u8 preamble;
 	__be16 start_frame;
-	__be16 eif_flag;	/* fixed to 0xFFFF */
+	__be16 eअगर_flag;	/* fixed to 0xFFFF */
 	__be16 datalen;
 	u8 datalen_checksum;
 	u8 data[];
-} __packed;
+पूर्ण __packed;
 
-struct pn533 {
-	struct nfc_dev *nfc_dev;
+काष्ठा pn533 अणु
+	काष्ठा nfc_dev *nfc_dev;
 	u32 device_type;
-	enum pn533_protocol_type protocol_type;
+	क्रमागत pn533_protocol_type protocol_type;
 
-	struct sk_buff_head resp_q;
-	struct sk_buff_head fragment_skb;
+	काष्ठा sk_buff_head resp_q;
+	काष्ठा sk_buff_head fragment_skb;
 
-	struct workqueue_struct	*wq;
-	struct work_struct cmd_work;
-	struct work_struct cmd_complete_work;
-	struct delayed_work poll_work;
-	struct work_struct mi_rx_work;
-	struct work_struct mi_tx_work;
-	struct work_struct mi_tm_rx_work;
-	struct work_struct mi_tm_tx_work;
-	struct work_struct tg_work;
-	struct work_struct rf_work;
+	काष्ठा workqueue_काष्ठा	*wq;
+	काष्ठा work_काष्ठा cmd_work;
+	काष्ठा work_काष्ठा cmd_complete_work;
+	काष्ठा delayed_work poll_work;
+	काष्ठा work_काष्ठा mi_rx_work;
+	काष्ठा work_काष्ठा mi_tx_work;
+	काष्ठा work_काष्ठा mi_पंचांग_rx_work;
+	काष्ठा work_काष्ठा mi_पंचांग_tx_work;
+	काष्ठा work_काष्ठा tg_work;
+	काष्ठा work_काष्ठा rf_work;
 
-	struct list_head cmd_queue;
-	struct pn533_cmd *cmd;
+	काष्ठा list_head cmd_queue;
+	काष्ठा pn533_cmd *cmd;
 	u8 cmd_pending;
-	struct mutex cmd_lock;  /* protects cmd queue */
+	काष्ठा mutex cmd_lock;  /* protects cmd queue */
 
-	void *cmd_complete_mi_arg;
-	void *cmd_complete_dep_arg;
+	व्योम *cmd_complete_mi_arg;
+	व्योम *cmd_complete_dep_arg;
 
-	struct pn533_poll_modulations *poll_mod_active[PN533_POLL_MOD_MAX + 1];
+	काष्ठा pn533_poll_modulations *poll_mod_active[PN533_POLL_MOD_MAX + 1];
 	u8 poll_mod_count;
 	u8 poll_mod_curr;
 	u8 poll_dep;
 	u32 poll_protocols;
 	u32 listen_protocols;
-	struct timer_list listen_timer;
-	int cancel_listen;
+	काष्ठा समयr_list listen_समयr;
+	पूर्णांक cancel_listen;
 
 	u8 *gb;
-	size_t gb_len;
+	माप_प्रकार gb_len;
 
 	u8 tgt_available_prots;
 	u8 tgt_active_prot;
 	u8 tgt_mode;
 
-	struct pn533_frame_ops *ops;
+	काष्ठा pn533_frame_ops *ops;
 
-	struct device *dev;
-	void *phy;
-	struct pn533_phy_ops *phy_ops;
-};
+	काष्ठा device *dev;
+	व्योम *phy;
+	काष्ठा pn533_phy_ops *phy_ops;
+पूर्ण;
 
-typedef int (*pn533_send_async_complete_t) (struct pn533 *dev, void *arg,
-					struct sk_buff *resp);
+प्रकार पूर्णांक (*pn533_send_async_complete_t) (काष्ठा pn533 *dev, व्योम *arg,
+					काष्ठा sk_buff *resp);
 
-struct pn533_cmd {
-	struct list_head queue;
+काष्ठा pn533_cmd अणु
+	काष्ठा list_head queue;
 	u8 code;
-	int status;
-	struct sk_buff *req;
-	struct sk_buff *resp;
+	पूर्णांक status;
+	काष्ठा sk_buff *req;
+	काष्ठा sk_buff *resp;
 	pn533_send_async_complete_t  complete_cb;
-	void *complete_cb_context;
-};
+	व्योम *complete_cb_context;
+पूर्ण;
 
 
-struct pn533_frame_ops {
-	void (*tx_frame_init)(void *frame, u8 cmd_code);
-	void (*tx_frame_finish)(void *frame);
-	void (*tx_update_payload_len)(void *frame, int len);
-	int tx_header_len;
-	int tx_tail_len;
+काष्ठा pn533_frame_ops अणु
+	व्योम (*tx_frame_init)(व्योम *frame, u8 cmd_code);
+	व्योम (*tx_frame_finish)(व्योम *frame);
+	व्योम (*tx_update_payload_len)(व्योम *frame, पूर्णांक len);
+	पूर्णांक tx_header_len;
+	पूर्णांक tx_tail_len;
 
-	bool (*rx_is_frame_valid)(void *frame, struct pn533 *dev);
-	bool (*rx_frame_is_ack)(void *frame);
-	int (*rx_frame_size)(void *frame);
-	int rx_header_len;
-	int rx_tail_len;
+	bool (*rx_is_frame_valid)(व्योम *frame, काष्ठा pn533 *dev);
+	bool (*rx_frame_is_ack)(व्योम *frame);
+	पूर्णांक (*rx_frame_size)(व्योम *frame);
+	पूर्णांक rx_header_len;
+	पूर्णांक rx_tail_len;
 
-	int max_payload_len;
-	u8 (*get_cmd_code)(void *frame);
-};
+	पूर्णांक max_payload_len;
+	u8 (*get_cmd_code)(व्योम *frame);
+पूर्ण;
 
 
-struct pn533_phy_ops {
-	int (*send_frame)(struct pn533 *priv,
-			  struct sk_buff *out);
-	int (*send_ack)(struct pn533 *dev, gfp_t flags);
-	void (*abort_cmd)(struct pn533 *priv, gfp_t flags);
+काष्ठा pn533_phy_ops अणु
+	पूर्णांक (*send_frame)(काष्ठा pn533 *priv,
+			  काष्ठा sk_buff *out);
+	पूर्णांक (*send_ack)(काष्ठा pn533 *dev, gfp_t flags);
+	व्योम (*पात_cmd)(काष्ठा pn533 *priv, gfp_t flags);
 	/*
-	 * dev_up and dev_down are optional.
-	 * They are used to inform the phy layer that the nfc chip
+	 * dev_up and dev_करोwn are optional.
+	 * They are used to inक्रमm the phy layer that the nfc chip
 	 * is going to be really used very soon. The phy layer can then
-	 * bring up it's interface to the chip and have it suspended for power
+	 * bring up it's पूर्णांकerface to the chip and have it suspended क्रम घातer
 	 * saving reasons otherwise.
 	 */
-	int (*dev_up)(struct pn533 *priv);
-	int (*dev_down)(struct pn533 *priv);
-};
+	पूर्णांक (*dev_up)(काष्ठा pn533 *priv);
+	पूर्णांक (*dev_करोwn)(काष्ठा pn533 *priv);
+पूर्ण;
 
 
-struct pn533 *pn53x_common_init(u32 device_type,
-				enum pn533_protocol_type protocol_type,
-				void *phy,
-				struct pn533_phy_ops *phy_ops,
-				struct pn533_frame_ops *fops,
-				struct device *dev);
+काष्ठा pn533 *pn53x_common_init(u32 device_type,
+				क्रमागत pn533_protocol_type protocol_type,
+				व्योम *phy,
+				काष्ठा pn533_phy_ops *phy_ops,
+				काष्ठा pn533_frame_ops *fops,
+				काष्ठा device *dev);
 
-int pn533_finalize_setup(struct pn533 *dev);
-void pn53x_common_clean(struct pn533 *priv);
-void pn533_recv_frame(struct pn533 *dev, struct sk_buff *skb, int status);
-int pn532_i2c_nfc_alloc(struct pn533 *priv, u32 protocols,
-			struct device *parent);
-int pn53x_register_nfc(struct pn533 *priv, u32 protocols,
-			struct device *parent);
-void pn53x_unregister_nfc(struct pn533 *priv);
+पूर्णांक pn533_finalize_setup(काष्ठा pn533 *dev);
+व्योम pn53x_common_clean(काष्ठा pn533 *priv);
+व्योम pn533_recv_frame(काष्ठा pn533 *dev, काष्ठा sk_buff *skb, पूर्णांक status);
+पूर्णांक pn532_i2c_nfc_alloc(काष्ठा pn533 *priv, u32 protocols,
+			काष्ठा device *parent);
+पूर्णांक pn53x_रेजिस्टर_nfc(काष्ठा pn533 *priv, u32 protocols,
+			काष्ठा device *parent);
+व्योम pn53x_unरेजिस्टर_nfc(काष्ठा pn533 *priv);
 
-bool pn533_rx_frame_is_cmd_response(struct pn533 *dev, void *frame);
-bool pn533_rx_frame_is_ack(void *_frame);
+bool pn533_rx_frame_is_cmd_response(काष्ठा pn533 *dev, व्योम *frame);
+bool pn533_rx_frame_is_ack(व्योम *_frame);

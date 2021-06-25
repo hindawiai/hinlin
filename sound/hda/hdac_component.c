@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0
-// hdac_component.c - routines for sync between HD-A core and DRM driver
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// hdac_component.c - routines क्रम sync between HD-A core and DRM driver
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/component.h>
-#include <sound/core.h>
-#include <sound/hdaudio.h>
-#include <sound/hda_component.h>
-#include <sound/hda_register.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/component.h>
+#समावेश <sound/core.h>
+#समावेश <sound/hdaudपन.स>
+#समावेश <sound/hda_component.h>
+#समावेश <sound/hda_रेजिस्टर.h>
 
-static void hdac_acomp_release(struct device *dev, void *res)
-{
-}
+अटल व्योम hdac_acomp_release(काष्ठा device *dev, व्योम *res)
+अणु
+पूर्ण
 
-static struct drm_audio_component *hdac_get_acomp(struct device *dev)
-{
-	return devres_find(dev, hdac_acomp_release, NULL, NULL);
-}
+अटल काष्ठा drm_audio_component *hdac_get_acomp(काष्ठा device *dev)
+अणु
+	वापस devres_find(dev, hdac_acomp_release, शून्य, शून्य);
+पूर्ण
 
 /**
  * snd_hdac_set_codec_wakeup - Enable / disable HDMI/DP codec wakeup
@@ -25,193 +26,193 @@ static struct drm_audio_component *hdac_get_acomp(struct device *dev)
  * @enable: enable or disable the wakeup
  *
  * This function is supposed to be used only by a HD-audio controller
- * driver that needs the interaction with graphics driver.
+ * driver that needs the पूर्णांकeraction with graphics driver.
  *
  * This function should be called during the chip reset, also called at
- * resume for updating STATESTS register read.
+ * resume क्रम updating STATESTS रेजिस्टर पढ़ो.
  *
- * Returns zero for success or a negative error code.
+ * Returns zero क्रम success or a negative error code.
  */
-int snd_hdac_set_codec_wakeup(struct hdac_bus *bus, bool enable)
-{
-	struct drm_audio_component *acomp = bus->audio_component;
+पूर्णांक snd_hdac_set_codec_wakeup(काष्ठा hdac_bus *bus, bool enable)
+अणु
+	काष्ठा drm_audio_component *acomp = bus->audio_component;
 
-	if (!acomp || !acomp->ops)
-		return -ENODEV;
+	अगर (!acomp || !acomp->ops)
+		वापस -ENODEV;
 
-	if (!acomp->ops->codec_wake_override)
-		return 0;
+	अगर (!acomp->ops->codec_wake_override)
+		वापस 0;
 
 	dev_dbg(bus->dev, "%s codec wakeup\n",
 		enable ? "enable" : "disable");
 
 	acomp->ops->codec_wake_override(acomp->dev, enable);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_set_codec_wakeup);
 
 /**
- * snd_hdac_display_power - Power up / down the power refcount
+ * snd_hdac_display_घातer - Power up / करोwn the घातer refcount
  * @bus: HDA core bus
- * @idx: HDA codec address, pass HDA_CODEC_IDX_CONTROLLER for controller
- * @enable: power up or down
+ * @idx: HDA codec address, pass HDA_CODEC_IDX_CONTROLLER क्रम controller
+ * @enable: घातer up or करोwn
  *
  * This function is used by either HD-audio controller or codec driver that
- * needs the interaction with graphics driver.
+ * needs the पूर्णांकeraction with graphics driver.
  *
- * This function updates the power status, and calls the get_power() and
- * put_power() ops accordingly, toggling the codec wakeup, too.
+ * This function updates the घातer status, and calls the get_घातer() and
+ * put_घातer() ops accordingly, toggling the codec wakeup, too.
  */
-void snd_hdac_display_power(struct hdac_bus *bus, unsigned int idx, bool enable)
-{
-	struct drm_audio_component *acomp = bus->audio_component;
+व्योम snd_hdac_display_घातer(काष्ठा hdac_bus *bus, अचिन्हित पूर्णांक idx, bool enable)
+अणु
+	काष्ठा drm_audio_component *acomp = bus->audio_component;
 
 	dev_dbg(bus->dev, "display power %s\n",
 		enable ? "enable" : "disable");
 
 	mutex_lock(&bus->lock);
-	if (enable)
-		set_bit(idx, &bus->display_power_status);
-	else
-		clear_bit(idx, &bus->display_power_status);
+	अगर (enable)
+		set_bit(idx, &bus->display_घातer_status);
+	अन्यथा
+		clear_bit(idx, &bus->display_घातer_status);
 
-	if (!acomp || !acomp->ops)
-		goto unlock;
+	अगर (!acomp || !acomp->ops)
+		जाओ unlock;
 
-	if (bus->display_power_status) {
-		if (!bus->display_power_active) {
-			unsigned long cookie = -1;
+	अगर (bus->display_घातer_status) अणु
+		अगर (!bus->display_घातer_active) अणु
+			अचिन्हित दीर्घ cookie = -1;
 
-			if (acomp->ops->get_power)
-				cookie = acomp->ops->get_power(acomp->dev);
+			अगर (acomp->ops->get_घातer)
+				cookie = acomp->ops->get_घातer(acomp->dev);
 
 			snd_hdac_set_codec_wakeup(bus, true);
 			snd_hdac_set_codec_wakeup(bus, false);
-			bus->display_power_active = cookie;
-		}
-	} else {
-		if (bus->display_power_active) {
-			unsigned long cookie = bus->display_power_active;
+			bus->display_घातer_active = cookie;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (bus->display_घातer_active) अणु
+			अचिन्हित दीर्घ cookie = bus->display_घातer_active;
 
-			if (acomp->ops->put_power)
-				acomp->ops->put_power(acomp->dev, cookie);
+			अगर (acomp->ops->put_घातer)
+				acomp->ops->put_घातer(acomp->dev, cookie);
 
-			bus->display_power_active = 0;
-		}
-	}
+			bus->display_घातer_active = 0;
+		पूर्ण
+	पूर्ण
  unlock:
 	mutex_unlock(&bus->lock);
-}
-EXPORT_SYMBOL_GPL(snd_hdac_display_power);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_display_घातer);
 
 /**
  * snd_hdac_sync_audio_rate - Set N/CTS based on the sample rate
  * @codec: HDA codec
  * @nid: the pin widget NID
- * @dev_id: device identifier
+ * @dev_id: device identअगरier
  * @rate: the sample rate to set
  *
  * This function is supposed to be used only by a HD-audio controller
- * driver that needs the interaction with graphics driver.
+ * driver that needs the पूर्णांकeraction with graphics driver.
  *
  * This function sets N/CTS value based on the given sample rate.
- * Returns zero for success, or a negative error code.
+ * Returns zero क्रम success, or a negative error code.
  */
-int snd_hdac_sync_audio_rate(struct hdac_device *codec, hda_nid_t nid,
-			     int dev_id, int rate)
-{
-	struct hdac_bus *bus = codec->bus;
-	struct drm_audio_component *acomp = bus->audio_component;
-	int port, pipe;
+पूर्णांक snd_hdac_sync_audio_rate(काष्ठा hdac_device *codec, hda_nid_t nid,
+			     पूर्णांक dev_id, पूर्णांक rate)
+अणु
+	काष्ठा hdac_bus *bus = codec->bus;
+	काष्ठा drm_audio_component *acomp = bus->audio_component;
+	पूर्णांक port, pipe;
 
-	if (!acomp || !acomp->ops || !acomp->ops->sync_audio_rate)
-		return -ENODEV;
+	अगर (!acomp || !acomp->ops || !acomp->ops->sync_audio_rate)
+		वापस -ENODEV;
 	port = nid;
-	if (acomp->audio_ops && acomp->audio_ops->pin2port) {
+	अगर (acomp->audio_ops && acomp->audio_ops->pin2port) अणु
 		port = acomp->audio_ops->pin2port(codec, nid);
-		if (port < 0)
-			return -EINVAL;
-	}
+		अगर (port < 0)
+			वापस -EINVAL;
+	पूर्ण
 	pipe = dev_id;
-	return acomp->ops->sync_audio_rate(acomp->dev, port, pipe, rate);
-}
+	वापस acomp->ops->sync_audio_rate(acomp->dev, port, pipe, rate);
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_sync_audio_rate);
 
 /**
  * snd_hdac_acomp_get_eld - Get the audio state and ELD via component
  * @codec: HDA codec
  * @nid: the pin widget NID
- * @dev_id: device identifier
- * @audio_enabled: the pointer to store the current audio state
- * @buffer: the buffer pointer to store ELD bytes
+ * @dev_id: device identअगरier
+ * @audio_enabled: the poपूर्णांकer to store the current audio state
+ * @buffer: the buffer poपूर्णांकer to store ELD bytes
  * @max_bytes: the max bytes to be stored on @buffer
  *
  * This function is supposed to be used only by a HD-audio controller
- * driver that needs the interaction with graphics driver.
+ * driver that needs the पूर्णांकeraction with graphics driver.
  *
  * This function queries the current state of the audio on the given
  * digital port and fetches the ELD bytes onto the given buffer.
- * It returns the number of bytes for the total ELD data, zero for
+ * It वापसs the number of bytes क्रम the total ELD data, zero क्रम
  * invalid ELD, or a negative error code.
  *
- * The return size is the total bytes required for the whole ELD bytes,
+ * The वापस size is the total bytes required क्रम the whole ELD bytes,
  * thus it may be over @max_bytes.  If it's over @max_bytes, it implies
  * that only a part of ELD bytes have been fetched.
  */
-int snd_hdac_acomp_get_eld(struct hdac_device *codec, hda_nid_t nid, int dev_id,
-			   bool *audio_enabled, char *buffer, int max_bytes)
-{
-	struct hdac_bus *bus = codec->bus;
-	struct drm_audio_component *acomp = bus->audio_component;
-	int port, pipe;
+पूर्णांक snd_hdac_acomp_get_eld(काष्ठा hdac_device *codec, hda_nid_t nid, पूर्णांक dev_id,
+			   bool *audio_enabled, अक्षर *buffer, पूर्णांक max_bytes)
+अणु
+	काष्ठा hdac_bus *bus = codec->bus;
+	काष्ठा drm_audio_component *acomp = bus->audio_component;
+	पूर्णांक port, pipe;
 
-	if (!acomp || !acomp->ops || !acomp->ops->get_eld)
-		return -ENODEV;
+	अगर (!acomp || !acomp->ops || !acomp->ops->get_eld)
+		वापस -ENODEV;
 
 	port = nid;
-	if (acomp->audio_ops && acomp->audio_ops->pin2port) {
+	अगर (acomp->audio_ops && acomp->audio_ops->pin2port) अणु
 		port = acomp->audio_ops->pin2port(codec, nid);
-		if (port < 0)
-			return -EINVAL;
-	}
+		अगर (port < 0)
+			वापस -EINVAL;
+	पूर्ण
 	pipe = dev_id;
-	return acomp->ops->get_eld(acomp->dev, port, pipe, audio_enabled,
+	वापस acomp->ops->get_eld(acomp->dev, port, pipe, audio_enabled,
 				   buffer, max_bytes);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_acomp_get_eld);
 
-static int hdac_component_master_bind(struct device *dev)
-{
-	struct drm_audio_component *acomp = hdac_get_acomp(dev);
-	int ret;
+अटल पूर्णांक hdac_component_master_bind(काष्ठा device *dev)
+अणु
+	काष्ठा drm_audio_component *acomp = hdac_get_acomp(dev);
+	पूर्णांक ret;
 
-	if (WARN_ON(!acomp))
-		return -EINVAL;
+	अगर (WARN_ON(!acomp))
+		वापस -EINVAL;
 
 	ret = component_bind_all(dev, acomp);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (WARN_ON(!(acomp->dev && acomp->ops))) {
+	अगर (WARN_ON(!(acomp->dev && acomp->ops))) अणु
 		ret = -EINVAL;
-		goto out_unbind;
-	}
+		जाओ out_unbind;
+	पूर्ण
 
-	/* pin the module to avoid dynamic unbinding, but only if given */
-	if (!try_module_get(acomp->ops->owner)) {
+	/* pin the module to aव्योम dynamic unbinding, but only अगर given */
+	अगर (!try_module_get(acomp->ops->owner)) अणु
 		ret = -ENODEV;
-		goto out_unbind;
-	}
+		जाओ out_unbind;
+	पूर्ण
 
-	if (acomp->audio_ops && acomp->audio_ops->master_bind) {
+	अगर (acomp->audio_ops && acomp->audio_ops->master_bind) अणु
 		ret = acomp->audio_ops->master_bind(dev, acomp);
-		if (ret < 0)
-			goto module_put;
-	}
+		अगर (ret < 0)
+			जाओ module_put;
+	पूर्ण
 
 	complete_all(&acomp->master_bind_complete);
-	return 0;
+	वापस 0;
 
  module_put:
 	module_put(acomp->ops->owner);
@@ -219,84 +220,84 @@ out_unbind:
 	component_unbind_all(dev, acomp);
 	complete_all(&acomp->master_bind_complete);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void hdac_component_master_unbind(struct device *dev)
-{
-	struct drm_audio_component *acomp = hdac_get_acomp(dev);
+अटल व्योम hdac_component_master_unbind(काष्ठा device *dev)
+अणु
+	काष्ठा drm_audio_component *acomp = hdac_get_acomp(dev);
 
-	if (acomp->audio_ops && acomp->audio_ops->master_unbind)
+	अगर (acomp->audio_ops && acomp->audio_ops->master_unbind)
 		acomp->audio_ops->master_unbind(dev, acomp);
 	module_put(acomp->ops->owner);
 	component_unbind_all(dev, acomp);
 	WARN_ON(acomp->ops || acomp->dev);
-}
+पूर्ण
 
-static const struct component_master_ops hdac_component_master_ops = {
+अटल स्थिर काष्ठा component_master_ops hdac_component_master_ops = अणु
 	.bind = hdac_component_master_bind,
 	.unbind = hdac_component_master_unbind,
-};
+पूर्ण;
 
 /**
- * snd_hdac_acomp_register_notifier - Register audio component ops
+ * snd_hdac_acomp_रेजिस्टर_notअगरier - Register audio component ops
  * @bus: HDA core bus
  * @aops: audio component ops
  *
  * This function is supposed to be used only by a HD-audio controller
- * driver that needs the interaction with graphics driver.
+ * driver that needs the पूर्णांकeraction with graphics driver.
  *
  * This function sets the given ops to be called by the graphics driver.
  *
- * Returns zero for success or a negative error code.
+ * Returns zero क्रम success or a negative error code.
  */
-int snd_hdac_acomp_register_notifier(struct hdac_bus *bus,
-				    const struct drm_audio_component_audio_ops *aops)
-{
-	if (!bus->audio_component)
-		return -ENODEV;
+पूर्णांक snd_hdac_acomp_रेजिस्टर_notअगरier(काष्ठा hdac_bus *bus,
+				    स्थिर काष्ठा drm_audio_component_audio_ops *aops)
+अणु
+	अगर (!bus->audio_component)
+		वापस -ENODEV;
 
 	bus->audio_component->audio_ops = aops;
-	return 0;
-}
-EXPORT_SYMBOL_GPL(snd_hdac_acomp_register_notifier);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_acomp_रेजिस्टर_notअगरier);
 
 /**
  * snd_hdac_acomp_init - Initialize audio component
  * @bus: HDA core bus
  * @aops: audio component ops
- * @match_master: match function for finding components
+ * @match_master: match function क्रम finding components
  * @extra_size: Extra bytes to allocate
  *
  * This function is supposed to be used only by a HD-audio controller
- * driver that needs the interaction with graphics driver.
+ * driver that needs the पूर्णांकeraction with graphics driver.
  *
  * This function initializes and sets up the audio component to communicate
  * with graphics driver.
  *
- * Unlike snd_hdac_i915_init(), this function doesn't synchronize with the
+ * Unlike snd_hdac_i915_init(), this function करोesn't synchronize with the
  * binding with the DRM component.  Each caller needs to sync via master_bind
  * audio_ops.
  *
- * Returns zero for success or a negative error code.
+ * Returns zero क्रम success or a negative error code.
  */
-int snd_hdac_acomp_init(struct hdac_bus *bus,
-			const struct drm_audio_component_audio_ops *aops,
-			int (*match_master)(struct device *, int, void *),
-			size_t extra_size)
-{
-	struct component_match *match = NULL;
-	struct device *dev = bus->dev;
-	struct drm_audio_component *acomp;
-	int ret;
+पूर्णांक snd_hdac_acomp_init(काष्ठा hdac_bus *bus,
+			स्थिर काष्ठा drm_audio_component_audio_ops *aops,
+			पूर्णांक (*match_master)(काष्ठा device *, पूर्णांक, व्योम *),
+			माप_प्रकार extra_size)
+अणु
+	काष्ठा component_match *match = शून्य;
+	काष्ठा device *dev = bus->dev;
+	काष्ठा drm_audio_component *acomp;
+	पूर्णांक ret;
 
-	if (WARN_ON(hdac_get_acomp(dev)))
-		return -EBUSY;
+	अगर (WARN_ON(hdac_get_acomp(dev)))
+		वापस -EBUSY;
 
-	acomp = devres_alloc(hdac_acomp_release, sizeof(*acomp) + extra_size,
+	acomp = devres_alloc(hdac_acomp_release, माप(*acomp) + extra_size,
 			     GFP_KERNEL);
-	if (!acomp)
-		return -ENOMEM;
+	अगर (!acomp)
+		वापस -ENOMEM;
 	acomp->audio_ops = aops;
 	init_completion(&acomp->master_bind_complete);
 	bus->audio_component = acomp;
@@ -305,50 +306,50 @@ int snd_hdac_acomp_init(struct hdac_bus *bus,
 	component_match_add_typed(dev, &match, match_master, bus);
 	ret = component_master_add_with_match(dev, &hdac_component_master_ops,
 					      match);
-	if (ret < 0)
-		goto out_err;
+	अगर (ret < 0)
+		जाओ out_err;
 
-	return 0;
+	वापस 0;
 
 out_err:
-	bus->audio_component = NULL;
-	devres_destroy(dev, hdac_acomp_release, NULL, NULL);
+	bus->audio_component = शून्य;
+	devres_destroy(dev, hdac_acomp_release, शून्य, शून्य);
 	dev_info(dev, "failed to add audio component master (%d)\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_acomp_init);
 
 /**
- * snd_hdac_acomp_exit - Finalize audio component
+ * snd_hdac_acomp_निकास - Finalize audio component
  * @bus: HDA core bus
  *
  * This function is supposed to be used only by a HD-audio controller
- * driver that needs the interaction with graphics driver.
+ * driver that needs the पूर्णांकeraction with graphics driver.
  *
  * This function releases the audio component that has been used.
  *
- * Returns zero for success or a negative error code.
+ * Returns zero क्रम success or a negative error code.
  */
-int snd_hdac_acomp_exit(struct hdac_bus *bus)
-{
-	struct device *dev = bus->dev;
-	struct drm_audio_component *acomp = bus->audio_component;
+पूर्णांक snd_hdac_acomp_निकास(काष्ठा hdac_bus *bus)
+अणु
+	काष्ठा device *dev = bus->dev;
+	काष्ठा drm_audio_component *acomp = bus->audio_component;
 
-	if (!acomp)
-		return 0;
+	अगर (!acomp)
+		वापस 0;
 
-	if (WARN_ON(bus->display_power_active) && acomp->ops)
-		acomp->ops->put_power(acomp->dev, bus->display_power_active);
+	अगर (WARN_ON(bus->display_घातer_active) && acomp->ops)
+		acomp->ops->put_घातer(acomp->dev, bus->display_घातer_active);
 
-	bus->display_power_active = 0;
-	bus->display_power_status = 0;
+	bus->display_घातer_active = 0;
+	bus->display_घातer_status = 0;
 
 	component_master_del(dev, &hdac_component_master_ops);
 
-	bus->audio_component = NULL;
-	devres_destroy(dev, hdac_acomp_release, NULL, NULL);
+	bus->audio_component = शून्य;
+	devres_destroy(dev, hdac_acomp_release, शून्य, शून्य);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(snd_hdac_acomp_exit);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_acomp_निकास);

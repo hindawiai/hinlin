@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 /* QLogic qedr NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#include <linux/pci.h>
-#include <linux/netdevice.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/qed/qede_rdma.h>
-#include "qede.h"
+#समावेश <linux/pci.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/qed/qede_rdma.h>
+#समावेश "qede.h"
 
-static struct qedr_driver *qedr_drv;
-static LIST_HEAD(qedr_dev_list);
-static DEFINE_MUTEX(qedr_dev_list_lock);
+अटल काष्ठा qedr_driver *qedr_drv;
+अटल LIST_HEAD(qedr_dev_list);
+अटल DEFINE_MUTEX(qedr_dev_list_lock);
 
-bool qede_rdma_supported(struct qede_dev *dev)
-{
-	return dev->dev_info.common.rdma_supported;
-}
+bool qede_rdma_supported(काष्ठा qede_dev *dev)
+अणु
+	वापस dev->dev_info.common.rdma_supported;
+पूर्ण
 
-static void _qede_rdma_dev_add(struct qede_dev *edev)
-{
-	if (!qedr_drv)
-		return;
+अटल व्योम _qede_rdma_dev_add(काष्ठा qede_dev *edev)
+अणु
+	अगर (!qedr_drv)
+		वापस;
 
 	/* Leftovers from previous error recovery */
 	edev->rdma_info.exp_recovery = false;
 	edev->rdma_info.qedr_dev = qedr_drv->add(edev->cdev, edev->pdev,
 						 edev->ndev);
-}
+पूर्ण
 
-static int qede_rdma_create_wq(struct qede_dev *edev)
-{
+अटल पूर्णांक qede_rdma_create_wq(काष्ठा qede_dev *edev)
+अणु
 	INIT_LIST_HEAD(&edev->rdma_info.rdma_event_list);
 	kref_init(&edev->rdma_info.refcnt);
 	init_completion(&edev->rdma_info.event_comp);
 
-	edev->rdma_info.rdma_wq = create_singlethread_workqueue("rdma_wq");
-	if (!edev->rdma_info.rdma_wq) {
+	edev->rdma_info.rdma_wq = create_singlethपढ़ो_workqueue("rdma_wq");
+	अगर (!edev->rdma_info.rdma_wq) अणु
 		DP_NOTICE(edev, "qedr: Could not create workqueue\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qede_rdma_cleanup_event(struct qede_dev *edev)
-{
-	struct list_head *head = &edev->rdma_info.rdma_event_list;
-	struct qede_rdma_event_work *event_node;
+अटल व्योम qede_rdma_cleanup_event(काष्ठा qede_dev *edev)
+अणु
+	काष्ठा list_head *head = &edev->rdma_info.rdma_event_list;
+	काष्ठा qede_rdma_event_work *event_node;
 
 	flush_workqueue(edev->rdma_info.rdma_wq);
-	while (!list_empty(head)) {
-		event_node = list_entry(head->next, struct qede_rdma_event_work,
+	जबतक (!list_empty(head)) अणु
+		event_node = list_entry(head->next, काष्ठा qede_rdma_event_work,
 					list);
 		cancel_work_sync(&event_node->work);
 		list_del(&event_node->list);
-		kfree(event_node);
-	}
-}
+		kमुक्त(event_node);
+	पूर्ण
+पूर्ण
 
-static void qede_rdma_complete_event(struct kref *ref)
-{
-	struct qede_rdma_dev *rdma_dev =
-		container_of(ref, struct qede_rdma_dev, refcnt);
+अटल व्योम qede_rdma_complete_event(काष्ठा kref *ref)
+अणु
+	काष्ठा qede_rdma_dev *rdma_dev =
+		container_of(ref, काष्ठा qede_rdma_dev, refcnt);
 
 	/* no more events will be added after this */
 	complete(&rdma_dev->event_comp);
-}
+पूर्ण
 
-static void qede_rdma_destroy_wq(struct qede_dev *edev)
-{
-	/* Avoid race with add_event flow, make sure it finishes before
+अटल व्योम qede_rdma_destroy_wq(काष्ठा qede_dev *edev)
+अणु
+	/* Aव्योम race with add_event flow, make sure it finishes beक्रमe
 	 * we start accessing the list and cleaning up the work
 	 */
 	kref_put(&edev->rdma_info.refcnt, qede_rdma_complete_event);
-	wait_for_completion(&edev->rdma_info.event_comp);
+	रुको_क्रम_completion(&edev->rdma_info.event_comp);
 
 	qede_rdma_cleanup_event(edev);
 	destroy_workqueue(edev->rdma_info.rdma_wq);
-	edev->rdma_info.rdma_wq = NULL;
-}
+	edev->rdma_info.rdma_wq = शून्य;
+पूर्ण
 
-int qede_rdma_dev_add(struct qede_dev *edev, bool recovery)
-{
-	int rc;
+पूर्णांक qede_rdma_dev_add(काष्ठा qede_dev *edev, bool recovery)
+अणु
+	पूर्णांक rc;
 
-	if (!qede_rdma_supported(edev))
-		return 0;
+	अगर (!qede_rdma_supported(edev))
+		वापस 0;
 
-	/* Cannot start qedr while recovering since it wasn't fully stopped */
-	if (recovery)
-		return 0;
+	/* Cannot start qedr जबतक recovering since it wasn't fully stopped */
+	अगर (recovery)
+		वापस 0;
 
 	rc = qede_rdma_create_wq(edev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	INIT_LIST_HEAD(&edev->rdma_info.entry);
 	mutex_lock(&qedr_dev_list_lock);
@@ -104,227 +105,227 @@ int qede_rdma_dev_add(struct qede_dev *edev, bool recovery)
 	_qede_rdma_dev_add(edev);
 	mutex_unlock(&qedr_dev_list_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void _qede_rdma_dev_remove(struct qede_dev *edev)
-{
-	if (qedr_drv && qedr_drv->remove && edev->rdma_info.qedr_dev)
-		qedr_drv->remove(edev->rdma_info.qedr_dev);
-}
+अटल व्योम _qede_rdma_dev_हटाओ(काष्ठा qede_dev *edev)
+अणु
+	अगर (qedr_drv && qedr_drv->हटाओ && edev->rdma_info.qedr_dev)
+		qedr_drv->हटाओ(edev->rdma_info.qedr_dev);
+पूर्ण
 
-void qede_rdma_dev_remove(struct qede_dev *edev, bool recovery)
-{
-	if (!qede_rdma_supported(edev))
-		return;
+व्योम qede_rdma_dev_हटाओ(काष्ठा qede_dev *edev, bool recovery)
+अणु
+	अगर (!qede_rdma_supported(edev))
+		वापस;
 
-	/* Cannot remove qedr while recovering since it wasn't fully stopped */
-	if (!recovery) {
+	/* Cannot हटाओ qedr जबतक recovering since it wasn't fully stopped */
+	अगर (!recovery) अणु
 		qede_rdma_destroy_wq(edev);
 		mutex_lock(&qedr_dev_list_lock);
-		if (!edev->rdma_info.exp_recovery)
-			_qede_rdma_dev_remove(edev);
-		edev->rdma_info.qedr_dev = NULL;
+		अगर (!edev->rdma_info.exp_recovery)
+			_qede_rdma_dev_हटाओ(edev);
+		edev->rdma_info.qedr_dev = शून्य;
 		list_del(&edev->rdma_info.entry);
 		mutex_unlock(&qedr_dev_list_lock);
-	} else {
-		if (!edev->rdma_info.exp_recovery) {
+	पूर्ण अन्यथा अणु
+		अगर (!edev->rdma_info.exp_recovery) अणु
 			mutex_lock(&qedr_dev_list_lock);
-			_qede_rdma_dev_remove(edev);
+			_qede_rdma_dev_हटाओ(edev);
 			mutex_unlock(&qedr_dev_list_lock);
-		}
+		पूर्ण
 		edev->rdma_info.exp_recovery = true;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void _qede_rdma_dev_open(struct qede_dev *edev)
-{
-	if (qedr_drv && edev->rdma_info.qedr_dev && qedr_drv->notify)
-		qedr_drv->notify(edev->rdma_info.qedr_dev, QEDE_UP);
-}
+अटल व्योम _qede_rdma_dev_खोलो(काष्ठा qede_dev *edev)
+अणु
+	अगर (qedr_drv && edev->rdma_info.qedr_dev && qedr_drv->notअगरy)
+		qedr_drv->notअगरy(edev->rdma_info.qedr_dev, QEDE_UP);
+पूर्ण
 
-static void qede_rdma_dev_open(struct qede_dev *edev)
-{
-	if (!qede_rdma_supported(edev))
-		return;
-
-	mutex_lock(&qedr_dev_list_lock);
-	_qede_rdma_dev_open(edev);
-	mutex_unlock(&qedr_dev_list_lock);
-}
-
-static void _qede_rdma_dev_close(struct qede_dev *edev)
-{
-	if (qedr_drv && edev->rdma_info.qedr_dev && qedr_drv->notify)
-		qedr_drv->notify(edev->rdma_info.qedr_dev, QEDE_DOWN);
-}
-
-static void qede_rdma_dev_close(struct qede_dev *edev)
-{
-	if (!qede_rdma_supported(edev))
-		return;
+अटल व्योम qede_rdma_dev_खोलो(काष्ठा qede_dev *edev)
+अणु
+	अगर (!qede_rdma_supported(edev))
+		वापस;
 
 	mutex_lock(&qedr_dev_list_lock);
-	_qede_rdma_dev_close(edev);
+	_qede_rdma_dev_खोलो(edev);
 	mutex_unlock(&qedr_dev_list_lock);
-}
+पूर्ण
 
-static void qede_rdma_dev_shutdown(struct qede_dev *edev)
-{
-	if (!qede_rdma_supported(edev))
-		return;
+अटल व्योम _qede_rdma_dev_बंद(काष्ठा qede_dev *edev)
+अणु
+	अगर (qedr_drv && edev->rdma_info.qedr_dev && qedr_drv->notअगरy)
+		qedr_drv->notअगरy(edev->rdma_info.qedr_dev, QEDE_DOWN);
+पूर्ण
+
+अटल व्योम qede_rdma_dev_बंद(काष्ठा qede_dev *edev)
+अणु
+	अगर (!qede_rdma_supported(edev))
+		वापस;
 
 	mutex_lock(&qedr_dev_list_lock);
-	if (qedr_drv && edev->rdma_info.qedr_dev && qedr_drv->notify)
-		qedr_drv->notify(edev->rdma_info.qedr_dev, QEDE_CLOSE);
+	_qede_rdma_dev_बंद(edev);
 	mutex_unlock(&qedr_dev_list_lock);
-}
+पूर्ण
 
-int qede_rdma_register_driver(struct qedr_driver *drv)
-{
-	struct qede_dev *edev;
+अटल व्योम qede_rdma_dev_shutकरोwn(काष्ठा qede_dev *edev)
+अणु
+	अगर (!qede_rdma_supported(edev))
+		वापस;
+
+	mutex_lock(&qedr_dev_list_lock);
+	अगर (qedr_drv && edev->rdma_info.qedr_dev && qedr_drv->notअगरy)
+		qedr_drv->notअगरy(edev->rdma_info.qedr_dev, QEDE_CLOSE);
+	mutex_unlock(&qedr_dev_list_lock);
+पूर्ण
+
+पूर्णांक qede_rdma_रेजिस्टर_driver(काष्ठा qedr_driver *drv)
+अणु
+	काष्ठा qede_dev *edev;
 	u8 qedr_counter = 0;
 
 	mutex_lock(&qedr_dev_list_lock);
-	if (qedr_drv) {
+	अगर (qedr_drv) अणु
 		mutex_unlock(&qedr_dev_list_lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	qedr_drv = drv;
 
-	list_for_each_entry(edev, &qedr_dev_list, rdma_info.entry) {
-		struct net_device *ndev;
+	list_क्रम_each_entry(edev, &qedr_dev_list, rdma_info.entry) अणु
+		काष्ठा net_device *ndev;
 
 		qedr_counter++;
 		_qede_rdma_dev_add(edev);
 		ndev = edev->ndev;
-		if (netif_running(ndev) && netif_oper_up(ndev))
-			_qede_rdma_dev_open(edev);
-	}
+		अगर (netअगर_running(ndev) && netअगर_oper_up(ndev))
+			_qede_rdma_dev_खोलो(edev);
+	पूर्ण
 	mutex_unlock(&qedr_dev_list_lock);
 
 	pr_notice("qedr: discovered and registered %d RDMA funcs\n",
 		  qedr_counter);
 
-	return 0;
-}
-EXPORT_SYMBOL(qede_rdma_register_driver);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(qede_rdma_रेजिस्टर_driver);
 
-void qede_rdma_unregister_driver(struct qedr_driver *drv)
-{
-	struct qede_dev *edev;
+व्योम qede_rdma_unरेजिस्टर_driver(काष्ठा qedr_driver *drv)
+अणु
+	काष्ठा qede_dev *edev;
 
 	mutex_lock(&qedr_dev_list_lock);
-	list_for_each_entry(edev, &qedr_dev_list, rdma_info.entry) {
-		/* If device has experienced recovery it was already removed */
-		if (edev->rdma_info.qedr_dev && !edev->rdma_info.exp_recovery)
-			_qede_rdma_dev_remove(edev);
-	}
-	qedr_drv = NULL;
+	list_क्रम_each_entry(edev, &qedr_dev_list, rdma_info.entry) अणु
+		/* If device has experienced recovery it was alपढ़ोy हटाओd */
+		अगर (edev->rdma_info.qedr_dev && !edev->rdma_info.exp_recovery)
+			_qede_rdma_dev_हटाओ(edev);
+	पूर्ण
+	qedr_drv = शून्य;
 	mutex_unlock(&qedr_dev_list_lock);
-}
-EXPORT_SYMBOL(qede_rdma_unregister_driver);
+पूर्ण
+EXPORT_SYMBOL(qede_rdma_unरेजिस्टर_driver);
 
-static void qede_rdma_changeaddr(struct qede_dev *edev)
-{
-	if (!qede_rdma_supported(edev))
-		return;
+अटल व्योम qede_rdma_changeaddr(काष्ठा qede_dev *edev)
+अणु
+	अगर (!qede_rdma_supported(edev))
+		वापस;
 
-	if (qedr_drv && edev->rdma_info.qedr_dev && qedr_drv->notify)
-		qedr_drv->notify(edev->rdma_info.qedr_dev, QEDE_CHANGE_ADDR);
-}
+	अगर (qedr_drv && edev->rdma_info.qedr_dev && qedr_drv->notअगरy)
+		qedr_drv->notअगरy(edev->rdma_info.qedr_dev, QEDE_CHANGE_ADDR);
+पूर्ण
 
-static void qede_rdma_change_mtu(struct qede_dev *edev)
-{
-	if (qede_rdma_supported(edev)) {
-		if (qedr_drv && edev->rdma_info.qedr_dev && qedr_drv->notify)
-			qedr_drv->notify(edev->rdma_info.qedr_dev,
+अटल व्योम qede_rdma_change_mtu(काष्ठा qede_dev *edev)
+अणु
+	अगर (qede_rdma_supported(edev)) अणु
+		अगर (qedr_drv && edev->rdma_info.qedr_dev && qedr_drv->notअगरy)
+			qedr_drv->notअगरy(edev->rdma_info.qedr_dev,
 					 QEDE_CHANGE_MTU);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct qede_rdma_event_work *
-qede_rdma_get_free_event_node(struct qede_dev *edev)
-{
-	struct qede_rdma_event_work *event_node = NULL;
-	struct list_head *list_node = NULL;
+अटल काष्ठा qede_rdma_event_work *
+qede_rdma_get_मुक्त_event_node(काष्ठा qede_dev *edev)
+अणु
+	काष्ठा qede_rdma_event_work *event_node = शून्य;
+	काष्ठा list_head *list_node = शून्य;
 	bool found = false;
 
-	list_for_each(list_node, &edev->rdma_info.rdma_event_list) {
-		event_node = list_entry(list_node, struct qede_rdma_event_work,
+	list_क्रम_each(list_node, &edev->rdma_info.rdma_event_list) अणु
+		event_node = list_entry(list_node, काष्ठा qede_rdma_event_work,
 					list);
-		if (!work_pending(&event_node->work)) {
+		अगर (!work_pending(&event_node->work)) अणु
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found) {
-		event_node = kzalloc(sizeof(*event_node), GFP_ATOMIC);
-		if (!event_node) {
+	अगर (!found) अणु
+		event_node = kzalloc(माप(*event_node), GFP_ATOMIC);
+		अगर (!event_node) अणु
 			DP_NOTICE(edev,
 				  "qedr: Could not allocate memory for rdma work\n");
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 		list_add_tail(&event_node->list,
 			      &edev->rdma_info.rdma_event_list);
-	}
+	पूर्ण
 
-	return event_node;
-}
+	वापस event_node;
+पूर्ण
 
-static void qede_rdma_handle_event(struct work_struct *work)
-{
-	struct qede_rdma_event_work *event_node;
-	enum qede_rdma_event event;
-	struct qede_dev *edev;
+अटल व्योम qede_rdma_handle_event(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qede_rdma_event_work *event_node;
+	क्रमागत qede_rdma_event event;
+	काष्ठा qede_dev *edev;
 
-	event_node = container_of(work, struct qede_rdma_event_work, work);
+	event_node = container_of(work, काष्ठा qede_rdma_event_work, work);
 	event = event_node->event;
 	edev = event_node->ptr;
 
-	switch (event) {
-	case QEDE_UP:
-		qede_rdma_dev_open(edev);
-		break;
-	case QEDE_DOWN:
-		qede_rdma_dev_close(edev);
-		break;
-	case QEDE_CLOSE:
-		qede_rdma_dev_shutdown(edev);
-		break;
-	case QEDE_CHANGE_ADDR:
+	चयन (event) अणु
+	हाल QEDE_UP:
+		qede_rdma_dev_खोलो(edev);
+		अवरोध;
+	हाल QEDE_DOWN:
+		qede_rdma_dev_बंद(edev);
+		अवरोध;
+	हाल QEDE_CLOSE:
+		qede_rdma_dev_shutकरोwn(edev);
+		अवरोध;
+	हाल QEDE_CHANGE_ADDR:
 		qede_rdma_changeaddr(edev);
-		break;
-	case QEDE_CHANGE_MTU:
+		अवरोध;
+	हाल QEDE_CHANGE_MTU:
 		qede_rdma_change_mtu(edev);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DP_NOTICE(edev, "Invalid rdma event %d", event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void qede_rdma_add_event(struct qede_dev *edev,
-				enum qede_rdma_event event)
-{
-	struct qede_rdma_event_work *event_node;
+अटल व्योम qede_rdma_add_event(काष्ठा qede_dev *edev,
+				क्रमागत qede_rdma_event event)
+अणु
+	काष्ठा qede_rdma_event_work *event_node;
 
-	/* If a recovery was experienced avoid adding the event */
-	if (edev->rdma_info.exp_recovery)
-		return;
+	/* If a recovery was experienced aव्योम adding the event */
+	अगर (edev->rdma_info.exp_recovery)
+		वापस;
 
-	if (!edev->rdma_info.qedr_dev || !edev->rdma_info.rdma_wq)
-		return;
+	अगर (!edev->rdma_info.qedr_dev || !edev->rdma_info.rdma_wq)
+		वापस;
 
-	/* We don't want the cleanup flow to start while we're allocating and
+	/* We करोn't want the cleanup flow to start while we're allocating and
 	 * scheduling the work
 	 */
-	if (!kref_get_unless_zero(&edev->rdma_info.refcnt))
-		return; /* already being destroyed */
+	अगर (!kref_get_unless_zero(&edev->rdma_info.refcnt))
+		वापस; /* alपढ़ोy being destroyed */
 
-	event_node = qede_rdma_get_free_event_node(edev);
-	if (!event_node)
-		goto out;
+	event_node = qede_rdma_get_मुक्त_event_node(edev);
+	अगर (!event_node)
+		जाओ out;
 
 	event_node->event = event;
 	event_node->ptr = edev;
@@ -334,24 +335,24 @@ static void qede_rdma_add_event(struct qede_dev *edev,
 
 out:
 	kref_put(&edev->rdma_info.refcnt, qede_rdma_complete_event);
-}
+पूर्ण
 
-void qede_rdma_dev_event_open(struct qede_dev *edev)
-{
+व्योम qede_rdma_dev_event_खोलो(काष्ठा qede_dev *edev)
+अणु
 	qede_rdma_add_event(edev, QEDE_UP);
-}
+पूर्ण
 
-void qede_rdma_dev_event_close(struct qede_dev *edev)
-{
+व्योम qede_rdma_dev_event_बंद(काष्ठा qede_dev *edev)
+अणु
 	qede_rdma_add_event(edev, QEDE_DOWN);
-}
+पूर्ण
 
-void qede_rdma_event_changeaddr(struct qede_dev *edev)
-{
+व्योम qede_rdma_event_changeaddr(काष्ठा qede_dev *edev)
+अणु
 	qede_rdma_add_event(edev, QEDE_CHANGE_ADDR);
-}
+पूर्ण
 
-void qede_rdma_event_change_mtu(struct qede_dev *edev)
-{
+व्योम qede_rdma_event_change_mtu(काष्ठा qede_dev *edev)
+अणु
 	qede_rdma_add_event(edev, QEDE_CHANGE_MTU);
-}
+पूर्ण

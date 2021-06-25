@@ -1,120 +1,121 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NITROX_DEV_H
-#define __NITROX_DEV_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NITROX_DEV_H
+#घोषणा __NITROX_DEV_H
 
-#include <linux/dma-mapping.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/if.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/अगर.h>
 
-#define VERSION_LEN 32
+#घोषणा VERSION_LEN 32
 /* Maximum queues in PF mode */
-#define MAX_PF_QUEUES	64
+#घोषणा MAX_PF_QUEUES	64
 /* Maximum device queues */
-#define MAX_DEV_QUEUES (MAX_PF_QUEUES)
+#घोषणा MAX_DEV_QUEUES (MAX_PF_QUEUES)
 /* Maximum UCD Blocks */
-#define CNN55XX_MAX_UCD_BLOCKS	8
+#घोषणा CNN55XX_MAX_UCD_BLOCKS	8
 
 /**
- * struct nitrox_cmdq - NITROX command queue
+ * काष्ठा nitrox_cmdq - NITROX command queue
  * @cmd_qlock: command queue lock
  * @resp_qlock: response queue lock
  * @backlog_qlock: backlog queue lock
  * @ndev: NITROX device
  * @response_head: submitted request list
  * @backlog_head: backlog queue
- * @dbell_csr_addr: doorbell register address for this queue
- * @compl_cnt_csr_addr: completion count register address of the slc port
+ * @dbell_csr_addr: करोorbell रेजिस्टर address क्रम this queue
+ * @compl_cnt_csr_addr: completion count रेजिस्टर address of the slc port
  * @base: command queue base address
  * @dma: dma address of the base
  * @pending_count: request pending at device
  * @backlog_count: backlog request count
- * @write_idx: next write index for the command
+ * @ग_लिखो_idx: next ग_लिखो index क्रम the command
  * @instr_size: command size
  * @qno: command queue number
  * @qsize: command queue size
  * @unalign_base: unaligned base address
  * @unalign_dma: unaligned dma address
  */
-struct nitrox_cmdq {
+काष्ठा nitrox_cmdq अणु
 	spinlock_t cmd_qlock;
 	spinlock_t resp_qlock;
 	spinlock_t backlog_qlock;
 
-	struct nitrox_device *ndev;
-	struct list_head response_head;
-	struct list_head backlog_head;
+	काष्ठा nitrox_device *ndev;
+	काष्ठा list_head response_head;
+	काष्ठा list_head backlog_head;
 
 	u8 __iomem *dbell_csr_addr;
 	u8 __iomem *compl_cnt_csr_addr;
 	u8 *base;
 	dma_addr_t dma;
 
-	struct work_struct backlog_qflush;
+	काष्ठा work_काष्ठा backlog_qflush;
 
 	atomic_t pending_count;
 	atomic_t backlog_count;
 
-	int write_idx;
+	पूर्णांक ग_लिखो_idx;
 	u8 instr_size;
 	u8 qno;
 	u32 qsize;
 
 	u8 *unalign_base;
 	dma_addr_t unalign_dma;
-};
+पूर्ण;
 
 /**
- * struct nitrox_hw - NITROX hardware information
+ * काष्ठा nitrox_hw - NITROX hardware inक्रमmation
  * @partname: partname ex: CNN55xxx-xxx
  * @fw_name: firmware version
  * @freq: NITROX frequency
- * @vendor_id: vendor ID
+ * @venकरोr_id: venकरोr ID
  * @device_id: device ID
  * @revision_id: revision ID
  * @se_cores: number of symmetric cores
  * @ae_cores: number of asymmetric cores
  * @zip_cores: number of zip cores
  */
-struct nitrox_hw {
-	char partname[IFNAMSIZ * 2];
-	char fw_name[CNN55XX_MAX_UCD_BLOCKS][VERSION_LEN];
+काष्ठा nitrox_hw अणु
+	अक्षर partname[IFNAMSIZ * 2];
+	अक्षर fw_name[CNN55XX_MAX_UCD_BLOCKS][VERSION_LEN];
 
-	int freq;
-	u16 vendor_id;
+	पूर्णांक freq;
+	u16 venकरोr_id;
 	u16 device_id;
 	u8 revision_id;
 
 	u8 se_cores;
 	u8 ae_cores;
 	u8 zip_cores;
-};
+पूर्ण;
 
-struct nitrox_stats {
+काष्ठा nitrox_stats अणु
 	atomic64_t posted;
 	atomic64_t completed;
 	atomic64_t dropped;
-};
+पूर्ण;
 
-#define IRQ_NAMESZ	32
+#घोषणा IRQ_NAMESZ	32
 
-struct nitrox_q_vector {
-	char name[IRQ_NAMESZ];
+काष्ठा nitrox_q_vector अणु
+	अक्षर name[IRQ_NAMESZ];
 	bool valid;
-	int ring;
-	struct tasklet_struct resp_tasklet;
-	union {
-		struct nitrox_cmdq *cmdq;
-		struct nitrox_device *ndev;
-	};
-};
+	पूर्णांक ring;
+	काष्ठा tasklet_काष्ठा resp_tasklet;
+	जोड़ अणु
+		काष्ठा nitrox_cmdq *cmdq;
+		काष्ठा nitrox_device *ndev;
+	पूर्ण;
+पूर्ण;
 
-enum mcode_type {
+क्रमागत mcode_type अणु
 	MCODE_TYPE_INVALID,
 	MCODE_TYPE_AE,
 	MCODE_TYPE_SE_SSL,
 	MCODE_TYPE_SE_IPSEC,
-};
+पूर्ण;
 
 /**
  * mbox_msg - Mailbox message data
@@ -122,28 +123,28 @@ enum mcode_type {
  * @opcode: message opcode
  * @data: message data
  */
-union mbox_msg {
+जोड़ mbox_msg अणु
 	u64 value;
-	struct {
+	काष्ठा अणु
 		u64 type: 2;
 		u64 opcode: 6;
 		u64 data: 58;
-	};
-	struct {
+	पूर्ण;
+	काष्ठा अणु
 		u64 type: 2;
 		u64 opcode: 6;
 		u64 chipid: 8;
 		u64 vfid: 8;
-	} id;
-	struct {
+	पूर्ण id;
+	काष्ठा अणु
 		u64 type: 2;
 		u64 opcode: 6;
 		u64 count: 4;
 		u64 info: 40;
 		u64 next_se_grp: 3;
 		u64 next_ae_grp: 3;
-	} mcode_info;
-};
+	पूर्ण mcode_info;
+पूर्ण;
 
 /**
  * nitrox_vfdev - NITROX VF device instance in PF
@@ -154,149 +155,149 @@ union mbox_msg {
  * @msg: Mailbox message data from VF
  * @mbx_resp: Mailbox counters
  */
-struct nitrox_vfdev {
+काष्ठा nitrox_vfdev अणु
 	atomic_t state;
-	int vfno;
-	int nr_queues;
-	int ring;
-	union mbox_msg msg;
+	पूर्णांक vfno;
+	पूर्णांक nr_queues;
+	पूर्णांक ring;
+	जोड़ mbox_msg msg;
 	atomic64_t mbx_resp;
-};
+पूर्ण;
 
 /**
- * struct nitrox_iov - SR-IOV information
+ * काष्ठा nitrox_iov - SR-IOV inक्रमmation
  * @num_vfs: number of VF(s) enabled
- * @max_vf_queues: Maximum number of queues allowed for VF
+ * @max_vf_queues: Maximum number of queues allowed क्रम VF
  * @vfdev: VF(s) devices
- * @pf2vf_wq: workqueue for PF2VF communication
- * @msix: MSI-X entry for PF in SR-IOV case
+ * @pf2vf_wq: workqueue क्रम PF2VF communication
+ * @msix: MSI-X entry क्रम PF in SR-IOV हाल
  */
-struct nitrox_iov {
-	int num_vfs;
-	int max_vf_queues;
-	struct nitrox_vfdev *vfdev;
-	struct workqueue_struct *pf2vf_wq;
-	struct msix_entry msix;
-};
+काष्ठा nitrox_iov अणु
+	पूर्णांक num_vfs;
+	पूर्णांक max_vf_queues;
+	काष्ठा nitrox_vfdev *vfdev;
+	काष्ठा workqueue_काष्ठा *pf2vf_wq;
+	काष्ठा msix_entry msix;
+पूर्ण;
 
 /*
  * NITROX Device states
  */
-enum ndev_state {
+क्रमागत ndev_state अणु
 	__NDEV_NOT_READY,
 	__NDEV_READY,
 	__NDEV_IN_RESET,
-};
+पूर्ण;
 
-/* NITROX support modes for VF(s) */
-enum vf_mode {
+/* NITROX support modes क्रम VF(s) */
+क्रमागत vf_mode अणु
 	__NDEV_MODE_PF,
 	__NDEV_MODE_VF16,
 	__NDEV_MODE_VF32,
 	__NDEV_MODE_VF64,
 	__NDEV_MODE_VF128,
-};
+पूर्ण;
 
-#define __NDEV_SRIOV_BIT 0
+#घोषणा __NDEV_SRIOV_BIT 0
 
 /* command queue size */
-#define DEFAULT_CMD_QLEN 2048
-/* command timeout in milliseconds */
-#define CMD_TIMEOUT 2000
+#घोषणा DEFAULT_CMD_QLEN 2048
+/* command समयout in milliseconds */
+#घोषणा CMD_TIMEOUT 2000
 
-#define DEV(ndev) ((struct device *)(&(ndev)->pdev->dev))
+#घोषणा DEV(ndev) ((काष्ठा device *)(&(ndev)->pdev->dev))
 
-#define NITROX_CSR_ADDR(ndev, offset) \
+#घोषणा NITROX_CSR_ADDR(ndev, offset) \
 	((ndev)->bar_addr + (offset))
 
 /**
- * struct nitrox_device - NITROX Device Information.
- * @list: pointer to linked list of devices
+ * काष्ठा nitrox_device - NITROX Device Inक्रमmation.
+ * @list: poपूर्णांकer to linked list of devices
  * @bar_addr: iomap address
- * @pdev: PCI device information
+ * @pdev: PCI device inक्रमmation
  * @state: NITROX device state
  * @flags: flags to indicate device the features
- * @timeout: Request timeout in jiffies
+ * @समयout: Request समयout in jअगरfies
  * @refcnt: Device usage count
  * @idx: device index (0..N)
  * @node: NUMA node id attached
  * @qlen: Command queue length
  * @nr_queues: Number of command queues
  * @mode: Device mode PF/VF
- * @ctx_pool: DMA pool for crypto context
+ * @ctx_pool: DMA pool क्रम crypto context
  * @pkt_inq: Packet input rings
  * @aqmq: AQM command queues
- * @qvec: MSI-X queue vectors information
- * @iov: SR-IOV informatin
+ * @qvec: MSI-X queue vectors inक्रमmation
+ * @iov: SR-IOV inक्रमmatin
  * @num_vecs: number of MSI-X vectors
  * @stats: request statistics
- * @hw: hardware information
+ * @hw: hardware inक्रमmation
  * @debugfs_dir: debugfs directory
  */
-struct nitrox_device {
-	struct list_head list;
+काष्ठा nitrox_device अणु
+	काष्ठा list_head list;
 
 	u8 __iomem *bar_addr;
-	struct pci_dev *pdev;
+	काष्ठा pci_dev *pdev;
 
 	atomic_t state;
-	unsigned long flags;
-	unsigned long timeout;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ समयout;
 	refcount_t refcnt;
 
 	u8 idx;
-	int node;
+	पूर्णांक node;
 	u16 qlen;
 	u16 nr_queues;
-	enum vf_mode mode;
+	क्रमागत vf_mode mode;
 
-	struct dma_pool *ctx_pool;
-	struct nitrox_cmdq *pkt_inq;
-	struct nitrox_cmdq *aqmq[MAX_DEV_QUEUES] ____cacheline_aligned_in_smp;
+	काष्ठा dma_pool *ctx_pool;
+	काष्ठा nitrox_cmdq *pkt_inq;
+	काष्ठा nitrox_cmdq *aqmq[MAX_DEV_QUEUES] ____cacheline_aligned_in_smp;
 
-	struct nitrox_q_vector *qvec;
-	struct nitrox_iov iov;
-	int num_vecs;
+	काष्ठा nitrox_q_vector *qvec;
+	काष्ठा nitrox_iov iov;
+	पूर्णांक num_vecs;
 
-	struct nitrox_stats stats;
-	struct nitrox_hw hw;
-#if IS_ENABLED(CONFIG_DEBUG_FS)
-	struct dentry *debugfs_dir;
-#endif
-};
+	काष्ठा nitrox_stats stats;
+	काष्ठा nitrox_hw hw;
+#अगर IS_ENABLED(CONFIG_DEBUG_FS)
+	काष्ठा dentry *debugfs_dir;
+#पूर्ण_अगर
+पूर्ण;
 
 /**
- * nitrox_read_csr - Read from device register
+ * nitrox_पढ़ो_csr - Read from device रेजिस्टर
  * @ndev: NITROX device
- * @offset: offset of the register to read
+ * @offset: offset of the रेजिस्टर to पढ़ो
  *
- * Returns: value read
+ * Returns: value पढ़ो
  */
-static inline u64 nitrox_read_csr(struct nitrox_device *ndev, u64 offset)
-{
-	return readq(ndev->bar_addr + offset);
-}
+अटल अंतरभूत u64 nitrox_पढ़ो_csr(काष्ठा nitrox_device *ndev, u64 offset)
+अणु
+	वापस पढ़ोq(ndev->bar_addr + offset);
+पूर्ण
 
 /**
- * nitrox_write_csr - Write to device register
+ * nitrox_ग_लिखो_csr - Write to device रेजिस्टर
  * @ndev: NITROX device
- * @offset: offset of the register to write
- * @value: value to write
+ * @offset: offset of the रेजिस्टर to ग_लिखो
+ * @value: value to ग_लिखो
  */
-static inline void nitrox_write_csr(struct nitrox_device *ndev, u64 offset,
+अटल अंतरभूत व्योम nitrox_ग_लिखो_csr(काष्ठा nitrox_device *ndev, u64 offset,
 				    u64 value)
-{
-	writeq(value, (ndev->bar_addr + offset));
-}
+अणु
+	ग_लिखोq(value, (ndev->bar_addr + offset));
+पूर्ण
 
-static inline bool nitrox_ready(struct nitrox_device *ndev)
-{
-	return atomic_read(&ndev->state) == __NDEV_READY;
-}
+अटल अंतरभूत bool nitrox_पढ़ोy(काष्ठा nitrox_device *ndev)
+अणु
+	वापस atomic_पढ़ो(&ndev->state) == __NDEV_READY;
+पूर्ण
 
-static inline bool nitrox_vfdev_ready(struct nitrox_vfdev *vfdev)
-{
-	return atomic_read(&vfdev->state) == __NDEV_READY;
-}
+अटल अंतरभूत bool nitrox_vfdev_पढ़ोy(काष्ठा nitrox_vfdev *vfdev)
+अणु
+	वापस atomic_पढ़ो(&vfdev->state) == __NDEV_READY;
+पूर्ण
 
-#endif /* __NITROX_DEV_H */
+#पूर्ण_अगर /* __NITROX_DEV_H */

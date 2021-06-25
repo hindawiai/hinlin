@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * BRIEF MODULE DESCRIPTION
- *	Defines for using and allocating DMA channels on the Alchemy
+ *	Defines क्रम using and allocating DMA channels on the Alchemy
  *      Au1x00 MIPS processors.
  *
  * Copyright 2000, 2008 MontaVista Software Inc.
  * Author: MontaVista Software, Inc. <source@mvista.com>
  *
- *  This program is free software; you can redistribute  it and/or modify it
+ *  This program is मुक्त software; you can redistribute  it and/or modअगरy it
  *  under  the terms of  the GNU General  Public License as published by the
  *  Free Software Foundation;  either version 2 of the  License, or (at your
  *  option) any later version.
@@ -14,7 +15,7 @@
  *  THIS  SOFTWARE  IS PROVIDED   ``AS  IS'' AND   ANY  EXPRESS OR IMPLIED
  *  WARRANTIES,   INCLUDING, BUT NOT  LIMITED  TO, THE IMPLIED WARRANTIES OF
  *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN
- *  NO  EVENT  SHALL   THE AUTHOR  BE    LIABLE FOR ANY   DIRECT, INDIRECT,
+ *  NO  EVENT  SHALL   THE AUTHOR  BE    LIABLE FOR ANY   सूचीECT, INसूचीECT,
  *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  *  NOT LIMITED   TO, PROCUREMENT OF  SUBSTITUTE GOODS  OR SERVICES; LOSS OF
  *  USE, DATA,  OR PROFITS; OR  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
@@ -22,59 +23,59 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *  You should have received a copy of the  GNU General Public License along
- *  with this program; if not, write  to the Free Software Foundation, Inc.,
+ *  You should have received a copy of the  GNU General Public License aदीर्घ
+ *  with this program; अगर not, ग_लिखो  to the Free Software Foundation, Inc.,
  *  675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-#ifndef __ASM_AU1000_DMA_H
-#define __ASM_AU1000_DMA_H
+#अगर_अघोषित __ASM_AU1000_DMA_H
+#घोषणा __ASM_AU1000_DMA_H
 
-#include <linux/io.h>		/* need byte IO */
-#include <linux/spinlock.h>	/* And spinlocks */
-#include <linux/delay.h>
+#समावेश <linux/पन.स>		/* need byte IO */
+#समावेश <linux/spinlock.h>	/* And spinlocks */
+#समावेश <linux/delay.h>
 
-#define NUM_AU1000_DMA_CHANNELS 8
+#घोषणा NUM_AU1000_DMA_CHANNELS 8
 
 /* DMA Channel Register Offsets */
-#define DMA_MODE_SET		0x00000000
-#define DMA_MODE_READ		DMA_MODE_SET
-#define DMA_MODE_CLEAR		0x00000004
-/* DMA Mode register bits follow */
-#define DMA_DAH_MASK		(0x0f << 20)
-#define DMA_DID_BIT		16
-#define DMA_DID_MASK		(0x0f << DMA_DID_BIT)
-#define DMA_DS			(1 << 15)
-#define DMA_BE			(1 << 13)
-#define DMA_DR			(1 << 12)
-#define DMA_TS8			(1 << 11)
-#define DMA_DW_BIT		9
-#define DMA_DW_MASK		(0x03 << DMA_DW_BIT)
-#define DMA_DW8			(0 << DMA_DW_BIT)
-#define DMA_DW16		(1 << DMA_DW_BIT)
-#define DMA_DW32		(2 << DMA_DW_BIT)
-#define DMA_NC			(1 << 8)
-#define DMA_IE			(1 << 7)
-#define DMA_HALT		(1 << 6)
-#define DMA_GO			(1 << 5)
-#define DMA_AB			(1 << 4)
-#define DMA_D1			(1 << 3)
-#define DMA_BE1			(1 << 2)
-#define DMA_D0			(1 << 1)
-#define DMA_BE0			(1 << 0)
+#घोषणा DMA_MODE_SET		0x00000000
+#घोषणा DMA_MODE_READ		DMA_MODE_SET
+#घोषणा DMA_MODE_CLEAR		0x00000004
+/* DMA Mode रेजिस्टर bits follow */
+#घोषणा DMA_DAH_MASK		(0x0f << 20)
+#घोषणा DMA_DID_BIT		16
+#घोषणा DMA_DID_MASK		(0x0f << DMA_DID_BIT)
+#घोषणा DMA_DS			(1 << 15)
+#घोषणा DMA_BE			(1 << 13)
+#घोषणा DMA_DR			(1 << 12)
+#घोषणा DMA_TS8			(1 << 11)
+#घोषणा DMA_DW_BIT		9
+#घोषणा DMA_DW_MASK		(0x03 << DMA_DW_BIT)
+#घोषणा DMA_DW8			(0 << DMA_DW_BIT)
+#घोषणा DMA_DW16		(1 << DMA_DW_BIT)
+#घोषणा DMA_DW32		(2 << DMA_DW_BIT)
+#घोषणा DMA_NC			(1 << 8)
+#घोषणा DMA_IE			(1 << 7)
+#घोषणा DMA_HALT		(1 << 6)
+#घोषणा DMA_GO			(1 << 5)
+#घोषणा DMA_AB			(1 << 4)
+#घोषणा DMA_D1			(1 << 3)
+#घोषणा DMA_BE1			(1 << 2)
+#घोषणा DMA_D0			(1 << 1)
+#घोषणा DMA_BE0			(1 << 0)
 
-#define DMA_PERIPHERAL_ADDR	0x00000008
-#define DMA_BUFFER0_START	0x0000000C
-#define DMA_BUFFER1_START	0x00000014
-#define DMA_BUFFER0_COUNT	0x00000010
-#define DMA_BUFFER1_COUNT	0x00000018
-#define DMA_BAH_BIT	16
-#define DMA_BAH_MASK	(0x0f << DMA_BAH_BIT)
-#define DMA_COUNT_BIT	0
-#define DMA_COUNT_MASK	(0xffff << DMA_COUNT_BIT)
+#घोषणा DMA_PERIPHERAL_ADDR	0x00000008
+#घोषणा DMA_BUFFER0_START	0x0000000C
+#घोषणा DMA_BUFFER1_START	0x00000014
+#घोषणा DMA_BUFFER0_COUNT	0x00000010
+#घोषणा DMA_BUFFER1_COUNT	0x00000018
+#घोषणा DMA_BAH_BIT	16
+#घोषणा DMA_BAH_MASK	(0x0f << DMA_BAH_BIT)
+#घोषणा DMA_COUNT_BIT	0
+#घोषणा DMA_COUNT_MASK	(0xffff << DMA_COUNT_BIT)
 
 /* DMA Device IDs follow */
-enum {
+क्रमागत अणु
 	DMA_ID_UART0_TX = 0,
 	DMA_ID_UART0_RX,
 	DMA_ID_GP04,
@@ -92,362 +93,362 @@ enum {
 	DMA_ID_I2S_TX,
 	DMA_ID_I2S_RX,
 	DMA_NUM_DEV
-};
+पूर्ण;
 
-/* DMA Device ID's for 2nd bank (AU1100) follow */
-enum {
+/* DMA Device ID's क्रम 2nd bank (AU1100) follow */
+क्रमागत अणु
 	DMA_ID_SD0_TX = 0,
 	DMA_ID_SD0_RX,
 	DMA_ID_SD1_TX,
 	DMA_ID_SD1_RX,
 	DMA_NUM_DEV_BANK2
-};
+पूर्ण;
 
-struct dma_chan {
-	int dev_id;		/* this channel is allocated if >= 0, */
-				/* free otherwise */
-	void __iomem *io;
-	const char *dev_str;
-	int irq;
-	void *irq_dev;
-	unsigned int fifo_addr;
-	unsigned int mode;
-};
+काष्ठा dma_chan अणु
+	पूर्णांक dev_id;		/* this channel is allocated अगर >= 0, */
+				/* मुक्त otherwise */
+	व्योम __iomem *io;
+	स्थिर अक्षर *dev_str;
+	पूर्णांक irq;
+	व्योम *irq_dev;
+	अचिन्हित पूर्णांक fअगरo_addr;
+	अचिन्हित पूर्णांक mode;
+पूर्ण;
 
 /* These are in arch/mips/au1000/common/dma.c */
-extern struct dma_chan au1000_dma_table[];
-extern int request_au1000_dma(int dev_id,
-			      const char *dev_str,
+बाह्य काष्ठा dma_chan au1000_dma_table[];
+बाह्य पूर्णांक request_au1000_dma(पूर्णांक dev_id,
+			      स्थिर अक्षर *dev_str,
 			      irq_handler_t irqhandler,
-			      unsigned long irqflags,
-			      void *irq_dev_id);
-extern void free_au1000_dma(unsigned int dmanr);
-extern int au1000_dma_read_proc(char *buf, char **start, off_t fpos,
-				int length, int *eof, void *data);
-extern void dump_au1000_dma_channel(unsigned int dmanr);
-extern spinlock_t au1000_dma_spin_lock;
+			      अचिन्हित दीर्घ irqflags,
+			      व्योम *irq_dev_id);
+बाह्य व्योम मुक्त_au1000_dma(अचिन्हित पूर्णांक dmanr);
+बाह्य पूर्णांक au1000_dma_पढ़ो_proc(अक्षर *buf, अक्षर **start, off_t fpos,
+				पूर्णांक length, पूर्णांक *eof, व्योम *data);
+बाह्य व्योम dump_au1000_dma_channel(अचिन्हित पूर्णांक dmanr);
+बाह्य spinlock_t au1000_dma_spin_lock;
 
-static inline struct dma_chan *get_dma_chan(unsigned int dmanr)
-{
-	if (dmanr >= NUM_AU1000_DMA_CHANNELS ||
+अटल अंतरभूत काष्ठा dma_chan *get_dma_chan(अचिन्हित पूर्णांक dmanr)
+अणु
+	अगर (dmanr >= NUM_AU1000_DMA_CHANNELS ||
 	    au1000_dma_table[dmanr].dev_id < 0)
-		return NULL;
-	return &au1000_dma_table[dmanr];
-}
+		वापस शून्य;
+	वापस &au1000_dma_table[dmanr];
+पूर्ण
 
-static inline unsigned long claim_dma_lock(void)
-{
-	unsigned long flags;
+अटल अंतरभूत अचिन्हित दीर्घ claim_dma_lock(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&au1000_dma_spin_lock, flags);
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static inline void release_dma_lock(unsigned long flags)
-{
+अटल अंतरभूत व्योम release_dma_lock(अचिन्हित दीर्घ flags)
+अणु
 	spin_unlock_irqrestore(&au1000_dma_spin_lock, flags);
-}
+पूर्ण
 
 /*
- * Set the DMA buffer enable bits in the mode register.
+ * Set the DMA buffer enable bits in the mode रेजिस्टर.
  */
-static inline void enable_dma_buffer0(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत व्योम enable_dma_buffer0(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return;
-	__raw_writel(DMA_BE0, chan->io + DMA_MODE_SET);
-}
+	अगर (!chan)
+		वापस;
+	__raw_ग_लिखोl(DMA_BE0, chan->io + DMA_MODE_SET);
+पूर्ण
 
-static inline void enable_dma_buffer1(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत व्योम enable_dma_buffer1(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return;
-	__raw_writel(DMA_BE1, chan->io + DMA_MODE_SET);
-}
-static inline void enable_dma_buffers(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+	अगर (!chan)
+		वापस;
+	__raw_ग_लिखोl(DMA_BE1, chan->io + DMA_MODE_SET);
+पूर्ण
+अटल अंतरभूत व्योम enable_dma_buffers(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return;
-	__raw_writel(DMA_BE0 | DMA_BE1, chan->io + DMA_MODE_SET);
-}
+	अगर (!chan)
+		वापस;
+	__raw_ग_लिखोl(DMA_BE0 | DMA_BE1, chan->io + DMA_MODE_SET);
+पूर्ण
 
-static inline void start_dma(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत व्योम start_dma(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return;
-	__raw_writel(DMA_GO, chan->io + DMA_MODE_SET);
-}
+	अगर (!chan)
+		वापस;
+	__raw_ग_लिखोl(DMA_GO, chan->io + DMA_MODE_SET);
+पूर्ण
 
-#define DMA_HALT_POLL 0x5000
+#घोषणा DMA_HALT_POLL 0x5000
 
-static inline void halt_dma(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
-	int i;
+अटल अंतरभूत व्योम halt_dma(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
+	पूर्णांक i;
 
-	if (!chan)
-		return;
-	__raw_writel(DMA_GO, chan->io + DMA_MODE_CLEAR);
+	अगर (!chan)
+		वापस;
+	__raw_ग_लिखोl(DMA_GO, chan->io + DMA_MODE_CLEAR);
 
 	/* Poll the halt bit */
-	for (i = 0; i < DMA_HALT_POLL; i++)
-		if (__raw_readl(chan->io + DMA_MODE_READ) & DMA_HALT)
-			break;
-	if (i == DMA_HALT_POLL)
-		printk(KERN_INFO "halt_dma: HALT poll expired!\n");
-}
+	क्रम (i = 0; i < DMA_HALT_POLL; i++)
+		अगर (__raw_पढ़ोl(chan->io + DMA_MODE_READ) & DMA_HALT)
+			अवरोध;
+	अगर (i == DMA_HALT_POLL)
+		prपूर्णांकk(KERN_INFO "halt_dma: HALT poll expired!\n");
+पूर्ण
 
-static inline void disable_dma(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत व्योम disable_dma(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return;
+	अगर (!chan)
+		वापस;
 
 	halt_dma(dmanr);
 
 	/* Now we can disable the buffers */
-	__raw_writel(~DMA_GO, chan->io + DMA_MODE_CLEAR);
-}
+	__raw_ग_लिखोl(~DMA_GO, chan->io + DMA_MODE_CLEAR);
+पूर्ण
 
-static inline int dma_halted(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत पूर्णांक dma_halted(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return 1;
-	return (__raw_readl(chan->io + DMA_MODE_READ) & DMA_HALT) ? 1 : 0;
-}
+	अगर (!chan)
+		वापस 1;
+	वापस (__raw_पढ़ोl(chan->io + DMA_MODE_READ) & DMA_HALT) ? 1 : 0;
+पूर्ण
 
 /* Initialize a DMA channel. */
-static inline void init_dma(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत व्योम init_dma(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 	u32 mode;
 
-	if (!chan)
-		return;
+	अगर (!chan)
+		वापस;
 
 	disable_dma(dmanr);
 
 	/* Set device FIFO address */
-	__raw_writel(CPHYSADDR(chan->fifo_addr), chan->io + DMA_PERIPHERAL_ADDR);
+	__raw_ग_लिखोl(CPHYSADDR(chan->fअगरo_addr), chan->io + DMA_PERIPHERAL_ADDR);
 
 	mode = chan->mode | (chan->dev_id << DMA_DID_BIT);
-	if (chan->irq)
+	अगर (chan->irq)
 		mode |= DMA_IE;
 
-	__raw_writel(~mode, chan->io + DMA_MODE_CLEAR);
-	__raw_writel(mode,	 chan->io + DMA_MODE_SET);
-}
+	__raw_ग_लिखोl(~mode, chan->io + DMA_MODE_CLEAR);
+	__raw_ग_लिखोl(mode,	 chan->io + DMA_MODE_SET);
+पूर्ण
 
 /*
- * Set mode for a specific DMA channel
+ * Set mode क्रम a specअगरic DMA channel
  */
-static inline void set_dma_mode(unsigned int dmanr, unsigned int mode)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत व्योम set_dma_mode(अचिन्हित पूर्णांक dmanr, अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return;
+	अगर (!chan)
+		वापस;
 	/*
 	 * set_dma_mode is only allowed to change endianess, direction,
 	 * transfer size, device FIFO width, and coherency settings.
-	 * Make sure anything else is masked off.
+	 * Make sure anything अन्यथा is masked off.
 	 */
 	mode &= (DMA_BE | DMA_DR | DMA_TS8 | DMA_DW_MASK | DMA_NC);
 	chan->mode &= ~(DMA_BE | DMA_DR | DMA_TS8 | DMA_DW_MASK | DMA_NC);
 	chan->mode |= mode;
-}
+पूर्ण
 
-static inline unsigned int get_dma_mode(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत अचिन्हित पूर्णांक get_dma_mode(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return 0;
-	return chan->mode;
-}
+	अगर (!chan)
+		वापस 0;
+	वापस chan->mode;
+पूर्ण
 
-static inline int get_dma_active_buffer(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत पूर्णांक get_dma_active_buffer(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return -1;
-	return (__raw_readl(chan->io + DMA_MODE_READ) & DMA_AB) ? 1 : 0;
-}
+	अगर (!chan)
+		वापस -1;
+	वापस (__raw_पढ़ोl(chan->io + DMA_MODE_READ) & DMA_AB) ? 1 : 0;
+पूर्ण
 
 /*
- * Set the device FIFO address for a specific DMA channel - only
+ * Set the device FIFO address क्रम a specअगरic DMA channel - only
  * applicable to GPO4 and GPO5. All the other devices have fixed
  * FIFO addresses.
  */
-static inline void set_dma_fifo_addr(unsigned int dmanr, unsigned int a)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत व्योम set_dma_fअगरo_addr(अचिन्हित पूर्णांक dmanr, अचिन्हित पूर्णांक a)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return;
+	अगर (!chan)
+		वापस;
 
-	if (chan->mode & DMA_DS)	/* second bank of device IDs */
-		return;
+	अगर (chan->mode & DMA_DS)	/* second bank of device IDs */
+		वापस;
 
-	if (chan->dev_id != DMA_ID_GP04 && chan->dev_id != DMA_ID_GP05)
-		return;
+	अगर (chan->dev_id != DMA_ID_GP04 && chan->dev_id != DMA_ID_GP05)
+		वापस;
 
-	__raw_writel(CPHYSADDR(a), chan->io + DMA_PERIPHERAL_ADDR);
-}
-
-/*
- * Clear the DMA buffer done bits in the mode register.
- */
-static inline void clear_dma_done0(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
-
-	if (!chan)
-		return;
-	__raw_writel(DMA_D0, chan->io + DMA_MODE_CLEAR);
-}
-
-static inline void clear_dma_done1(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
-
-	if (!chan)
-		return;
-	__raw_writel(DMA_D1, chan->io + DMA_MODE_CLEAR);
-}
+	__raw_ग_लिखोl(CPHYSADDR(a), chan->io + DMA_PERIPHERAL_ADDR);
+पूर्ण
 
 /*
- * This does nothing - not applicable to Au1000 DMA.
+ * Clear the DMA buffer करोne bits in the mode रेजिस्टर.
  */
-static inline void set_dma_page(unsigned int dmanr, char pagenr)
-{
-}
+अटल अंतरभूत व्योम clear_dma_करोne0(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
+
+	अगर (!chan)
+		वापस;
+	__raw_ग_लिखोl(DMA_D0, chan->io + DMA_MODE_CLEAR);
+पूर्ण
+
+अटल अंतरभूत व्योम clear_dma_करोne1(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
+
+	अगर (!chan)
+		वापस;
+	__raw_ग_लिखोl(DMA_D1, chan->io + DMA_MODE_CLEAR);
+पूर्ण
 
 /*
- * Set Buffer 0 transfer address for specific DMA channel.
+ * This करोes nothing - not applicable to Au1000 DMA.
  */
-static inline void set_dma_addr0(unsigned int dmanr, unsigned int a)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
-
-	if (!chan)
-		return;
-	__raw_writel(a, chan->io + DMA_BUFFER0_START);
-}
+अटल अंतरभूत व्योम set_dma_page(अचिन्हित पूर्णांक dmanr, अक्षर pagenr)
+अणु
+पूर्ण
 
 /*
- * Set Buffer 1 transfer address for specific DMA channel.
+ * Set Buffer 0 transfer address क्रम specअगरic DMA channel.
  */
-static inline void set_dma_addr1(unsigned int dmanr, unsigned int a)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत व्योम set_dma_addr0(अचिन्हित पूर्णांक dmanr, अचिन्हित पूर्णांक a)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return;
-	__raw_writel(a, chan->io + DMA_BUFFER1_START);
-}
+	अगर (!chan)
+		वापस;
+	__raw_ग_लिखोl(a, chan->io + DMA_BUFFER0_START);
+पूर्ण
+
+/*
+ * Set Buffer 1 transfer address क्रम specअगरic DMA channel.
+ */
+अटल अंतरभूत व्योम set_dma_addr1(अचिन्हित पूर्णांक dmanr, अचिन्हित पूर्णांक a)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
+
+	अगर (!chan)
+		वापस;
+	__raw_ग_लिखोl(a, chan->io + DMA_BUFFER1_START);
+पूर्ण
 
 
 /*
- * Set Buffer 0 transfer size (max 64k) for a specific DMA channel.
+ * Set Buffer 0 transfer size (max 64k) क्रम a specअगरic DMA channel.
  */
-static inline void set_dma_count0(unsigned int dmanr, unsigned int count)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत व्योम set_dma_count0(अचिन्हित पूर्णांक dmanr, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return;
+	अगर (!chan)
+		वापस;
 	count &= DMA_COUNT_MASK;
-	__raw_writel(count, chan->io + DMA_BUFFER0_COUNT);
-}
+	__raw_ग_लिखोl(count, chan->io + DMA_BUFFER0_COUNT);
+पूर्ण
 
 /*
- * Set Buffer 1 transfer size (max 64k) for a specific DMA channel.
+ * Set Buffer 1 transfer size (max 64k) क्रम a specअगरic DMA channel.
  */
-static inline void set_dma_count1(unsigned int dmanr, unsigned int count)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत व्योम set_dma_count1(अचिन्हित पूर्णांक dmanr, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return;
+	अगर (!chan)
+		वापस;
 	count &= DMA_COUNT_MASK;
-	__raw_writel(count, chan->io + DMA_BUFFER1_COUNT);
-}
+	__raw_ग_लिखोl(count, chan->io + DMA_BUFFER1_COUNT);
+पूर्ण
 
 /*
- * Set both buffer transfer sizes (max 64k) for a specific DMA channel.
+ * Set both buffer transfer sizes (max 64k) क्रम a specअगरic DMA channel.
  */
-static inline void set_dma_count(unsigned int dmanr, unsigned int count)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत व्योम set_dma_count(अचिन्हित पूर्णांक dmanr, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return;
+	अगर (!chan)
+		वापस;
 	count &= DMA_COUNT_MASK;
-	__raw_writel(count, chan->io + DMA_BUFFER0_COUNT);
-	__raw_writel(count, chan->io + DMA_BUFFER1_COUNT);
-}
+	__raw_ग_लिखोl(count, chan->io + DMA_BUFFER0_COUNT);
+	__raw_ग_लिखोl(count, chan->io + DMA_BUFFER1_COUNT);
+पूर्ण
 
 /*
- * Returns which buffer has its done bit set in the mode register.
- * Returns -1 if neither or both done bits set.
+ * Returns which buffer has its करोne bit set in the mode रेजिस्टर.
+ * Returns -1 अगर neither or both करोne bits set.
  */
-static inline unsigned int get_dma_buffer_done(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत अचिन्हित पूर्णांक get_dma_buffer_करोne(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return 0;
-	return __raw_readl(chan->io + DMA_MODE_READ) & (DMA_D0 | DMA_D1);
-}
+	अगर (!chan)
+		वापस 0;
+	वापस __raw_पढ़ोl(chan->io + DMA_MODE_READ) & (DMA_D0 | DMA_D1);
+पूर्ण
 
 
 /*
  * Returns the DMA channel's Buffer Done IRQ number.
  */
-static inline int get_dma_done_irq(unsigned int dmanr)
-{
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत पूर्णांक get_dma_करोne_irq(अचिन्हित पूर्णांक dmanr)
+अणु
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return -1;
-	return chan->irq;
-}
+	अगर (!chan)
+		वापस -1;
+	वापस chan->irq;
+पूर्ण
 
 /*
  * Get DMA residue count. Returns the number of _bytes_ left to transfer.
  */
-static inline int get_dma_residue(unsigned int dmanr)
-{
-	int curBufCntReg, count;
-	struct dma_chan *chan = get_dma_chan(dmanr);
+अटल अंतरभूत पूर्णांक get_dma_residue(अचिन्हित पूर्णांक dmanr)
+अणु
+	पूर्णांक curBufCntReg, count;
+	काष्ठा dma_chan *chan = get_dma_chan(dmanr);
 
-	if (!chan)
-		return 0;
+	अगर (!chan)
+		वापस 0;
 
-	curBufCntReg = (__raw_readl(chan->io + DMA_MODE_READ) & DMA_AB) ?
+	curBufCntReg = (__raw_पढ़ोl(chan->io + DMA_MODE_READ) & DMA_AB) ?
 	    DMA_BUFFER1_COUNT : DMA_BUFFER0_COUNT;
 
-	count = __raw_readl(chan->io + curBufCntReg) & DMA_COUNT_MASK;
+	count = __raw_पढ़ोl(chan->io + curBufCntReg) & DMA_COUNT_MASK;
 
-	if ((chan->mode & DMA_DW_MASK) == DMA_DW16)
+	अगर ((chan->mode & DMA_DW_MASK) == DMA_DW16)
 		count <<= 1;
-	else if ((chan->mode & DMA_DW_MASK) == DMA_DW32)
+	अन्यथा अगर ((chan->mode & DMA_DW_MASK) == DMA_DW32)
 		count <<= 2;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-#endif /* __ASM_AU1000_DMA_H */
+#पूर्ण_अगर /* __ASM_AU1000_DMA_H */

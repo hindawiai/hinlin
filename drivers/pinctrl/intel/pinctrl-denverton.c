@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel Denverton SoC pinctrl/GPIO driver
  *
  * Copyright (C) 2017, Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define DNV_PAD_OWN	0x020
-#define DNV_PADCFGLOCK	0x090
-#define DNV_HOSTSW_OWN	0x0C0
-#define DNV_GPI_IS	0x100
-#define DNV_GPI_IE	0x120
+#घोषणा DNV_PAD_OWN	0x020
+#घोषणा DNV_PADCFGLOCK	0x090
+#घोषणा DNV_HOSTSW_OWN	0x0C0
+#घोषणा DNV_GPI_IS	0x100
+#घोषणा DNV_GPI_IE	0x120
 
-#define DNV_GPP(n, s, e)				\
-	{						\
+#घोषणा DNV_GPP(n, s, e)				\
+	अणु						\
 		.reg_num = (n),				\
 		.base = (s),				\
 		.size = ((e) - (s) + 1),		\
-	}
+	पूर्ण
 
-#define DNV_COMMUNITY(b, s, e, g)			\
-	{						\
+#घोषणा DNV_COMMUNITY(b, s, e, g)			\
+	अणु						\
 		.barno = (b),				\
-		.padown_offset = DNV_PAD_OWN,		\
+		.paकरोwn_offset = DNV_PAD_OWN,		\
 		.padcfglock_offset = DNV_PADCFGLOCK,	\
 		.hostown_offset = DNV_HOSTSW_OWN,	\
 		.is_offset = DNV_GPI_IS,		\
@@ -39,10 +40,10 @@
 		.npins = ((e) - (s) + 1),		\
 		.gpps = (g),				\
 		.ngpps = ARRAY_SIZE(g),			\
-	}
+	पूर्ण
 
 /* Denverton */
-static const struct pinctrl_pin_desc dnv_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc dnv_pins[] = अणु
 	/* North ALL */
 	PINCTRL_PIN(0, "GBE0_SDP0"),
 	PINCTRL_PIN(1, "GBE1_SDP0"),
@@ -201,55 +202,55 @@ static const struct pinctrl_pin_desc dnv_pins[] = {
 	PINCTRL_PIN(151, "EMMC_D6"),
 	PINCTRL_PIN(152, "EMMC_D7"),
 	PINCTRL_PIN(153, "SPARE_3"),
-};
+पूर्ण;
 
-static const unsigned int dnv_uart0_pins[] = { 60, 61, 64, 65 };
-static const unsigned int dnv_uart0_modes[] = { 2, 3, 1, 1 };
-static const unsigned int dnv_uart1_pins[] = { 94, 95, 96, 97 };
-static const unsigned int dnv_uart2_pins[] = { 60, 61, 62, 63 };
-static const unsigned int dnv_uart2_modes[] = { 1, 2, 2, 2 };
-static const unsigned int dnv_emmc_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक dnv_uart0_pins[] = अणु 60, 61, 64, 65 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक dnv_uart0_modes[] = अणु 2, 3, 1, 1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक dnv_uart1_pins[] = अणु 94, 95, 96, 97 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक dnv_uart2_pins[] = अणु 60, 61, 62, 63 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक dnv_uart2_modes[] = अणु 1, 2, 2, 2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक dnv_emmc_pins[] = अणु
 	142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
-};
+पूर्ण;
 
-static const struct intel_pingroup dnv_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup dnv_groups[] = अणु
 	PIN_GROUP("uart0_grp", dnv_uart0_pins, dnv_uart0_modes),
 	PIN_GROUP("uart1_grp", dnv_uart1_pins, 1),
 	PIN_GROUP("uart2_grp", dnv_uart2_pins, dnv_uart2_modes),
 	PIN_GROUP("emmc_grp", dnv_emmc_pins, 1),
-};
+पूर्ण;
 
-static const char * const dnv_uart0_groups[] = { "uart0_grp" };
-static const char * const dnv_uart1_groups[] = { "uart1_grp" };
-static const char * const dnv_uart2_groups[] = { "uart2_grp" };
-static const char * const dnv_emmc_groups[] = { "emmc_grp" };
+अटल स्थिर अक्षर * स्थिर dnv_uart0_groups[] = अणु "uart0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर dnv_uart1_groups[] = अणु "uart1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर dnv_uart2_groups[] = अणु "uart2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर dnv_emmc_groups[] = अणु "emmc_grp" पूर्ण;
 
-static const struct intel_function dnv_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function dnv_functions[] = अणु
 	FUNCTION("uart0", dnv_uart0_groups),
 	FUNCTION("uart1", dnv_uart1_groups),
 	FUNCTION("uart2", dnv_uart2_groups),
 	FUNCTION("emmc", dnv_emmc_groups),
-};
+पूर्ण;
 
-static const struct intel_padgroup dnv_north_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup dnv_north_gpps[] = अणु
 	DNV_GPP(0, 0, 31),	/* North ALL_0 */
 	DNV_GPP(1, 32, 40),	/* North ALL_1 */
-};
+पूर्ण;
 
-static const struct intel_padgroup dnv_south_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup dnv_south_gpps[] = अणु
 	DNV_GPP(0, 41, 58),	/* South DFX */
 	DNV_GPP(1, 59, 90),	/* South GPP0_0 */
 	DNV_GPP(2, 91, 111),	/* South GPP0_1 */
 	DNV_GPP(3, 112, 143),	/* South GPP1_0 */
 	DNV_GPP(4, 144, 153),	/* South GPP1_1 */
-};
+पूर्ण;
 
-static const struct intel_community dnv_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community dnv_communities[] = अणु
 	DNV_COMMUNITY(0, 0, 40, dnv_north_gpps),
 	DNV_COMMUNITY(1, 41, 153, dnv_south_gpps),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data dnv_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data dnv_soc_data = अणु
 	.pins = dnv_pins,
 	.npins = ARRAY_SIZE(dnv_pins),
 	.groups = dnv_groups,
@@ -258,36 +259,36 @@ static const struct intel_pinctrl_soc_data dnv_soc_data = {
 	.nfunctions = ARRAY_SIZE(dnv_functions),
 	.communities = dnv_communities,
 	.ncommunities = ARRAY_SIZE(dnv_communities),
-};
+पूर्ण;
 
-static INTEL_PINCTRL_PM_OPS(dnv_pinctrl_pm_ops);
+अटल INTEL_PINCTRL_PM_OPS(dnv_pinctrl_pm_ops);
 
-static const struct acpi_device_id dnv_pinctrl_acpi_match[] = {
-	{ "INTC3000", (kernel_ulong_t)&dnv_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id dnv_pinctrl_acpi_match[] = अणु
+	अणु "INTC3000", (kernel_uदीर्घ_t)&dnv_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, dnv_pinctrl_acpi_match);
 
-static struct platform_driver dnv_pinctrl_driver = {
-	.probe = intel_pinctrl_probe_by_hid,
-	.driver = {
+अटल काष्ठा platक्रमm_driver dnv_pinctrl_driver = अणु
+	.probe = पूर्णांकel_pinctrl_probe_by_hid,
+	.driver = अणु
 		.name = "denverton-pinctrl",
 		.acpi_match_table = dnv_pinctrl_acpi_match,
 		.pm = &dnv_pinctrl_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init dnv_pinctrl_init(void)
-{
-	return platform_driver_register(&dnv_pinctrl_driver);
-}
+अटल पूर्णांक __init dnv_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&dnv_pinctrl_driver);
+पूर्ण
 subsys_initcall(dnv_pinctrl_init);
 
-static void __exit dnv_pinctrl_exit(void)
-{
-	platform_driver_unregister(&dnv_pinctrl_driver);
-}
-module_exit(dnv_pinctrl_exit);
+अटल व्योम __निकास dnv_pinctrl_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&dnv_pinctrl_driver);
+पूर्ण
+module_निकास(dnv_pinctrl_निकास);
 
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@linux.intel.com>");
 MODULE_DESCRIPTION("Intel Denverton SoC pinctrl/GPIO driver");

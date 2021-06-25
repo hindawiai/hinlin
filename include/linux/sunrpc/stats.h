@@ -1,85 +1,86 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * linux/include/linux/sunrpc/stats.h
  *
- * Client statistics collection for SUN RPC
+ * Client statistics collection क्रम SUN RPC
  *
  * Copyright (C) 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
-#ifndef _LINUX_SUNRPC_STATS_H
-#define _LINUX_SUNRPC_STATS_H
+#अगर_अघोषित _LINUX_SUNRPC_STATS_H
+#घोषणा _LINUX_SUNRPC_STATS_H
 
-#include <linux/proc_fs.h>
+#समावेश <linux/proc_fs.h>
 
-struct rpc_stat {
-	const struct rpc_program *program;
+काष्ठा rpc_stat अणु
+	स्थिर काष्ठा rpc_program *program;
 
-	unsigned int		netcnt,
+	अचिन्हित पूर्णांक		netcnt,
 				netudpcnt,
 				nettcpcnt,
 				nettcpconn,
 				netreconn;
-	unsigned int		rpccnt,
+	अचिन्हित पूर्णांक		rpccnt,
 				rpcretrans,
 				rpcauthrefresh,
 				rpcgarbage;
-};
+पूर्ण;
 
-struct svc_stat {
-	struct svc_program *	program;
+काष्ठा svc_stat अणु
+	काष्ठा svc_program *	program;
 
-	unsigned int		netcnt,
+	अचिन्हित पूर्णांक		netcnt,
 				netudpcnt,
 				nettcpcnt,
 				nettcpconn;
-	unsigned int		rpccnt,
+	अचिन्हित पूर्णांक		rpccnt,
 				rpcbadfmt,
 				rpcbadauth,
 				rpcbadclnt;
-};
+पूर्ण;
 
-struct net;
-#ifdef CONFIG_PROC_FS
-int			rpc_proc_init(struct net *);
-void			rpc_proc_exit(struct net *);
-#else
-static inline int rpc_proc_init(struct net *net)
-{
-	return 0;
-}
+काष्ठा net;
+#अगर_घोषित CONFIG_PROC_FS
+पूर्णांक			rpc_proc_init(काष्ठा net *);
+व्योम			rpc_proc_निकास(काष्ठा net *);
+#अन्यथा
+अटल अंतरभूत पूर्णांक rpc_proc_init(काष्ठा net *net)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void rpc_proc_exit(struct net *net)
-{
-}
-#endif
+अटल अंतरभूत व्योम rpc_proc_निकास(काष्ठा net *net)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef MODULE
-void			rpc_modcount(struct inode *, int);
-#endif
+#अगर_घोषित MODULE
+व्योम			rpc_modcount(काष्ठा inode *, पूर्णांक);
+#पूर्ण_अगर
 
-#ifdef CONFIG_PROC_FS
-struct proc_dir_entry *	rpc_proc_register(struct net *,struct rpc_stat *);
-void			rpc_proc_unregister(struct net *,const char *);
-void			rpc_proc_zero(const struct rpc_program *);
-struct proc_dir_entry *	svc_proc_register(struct net *, struct svc_stat *,
-					  const struct proc_ops *);
-void			svc_proc_unregister(struct net *, const char *);
+#अगर_घोषित CONFIG_PROC_FS
+काष्ठा proc_dir_entry *	rpc_proc_रेजिस्टर(काष्ठा net *,काष्ठा rpc_stat *);
+व्योम			rpc_proc_unरेजिस्टर(काष्ठा net *,स्थिर अक्षर *);
+व्योम			rpc_proc_zero(स्थिर काष्ठा rpc_program *);
+काष्ठा proc_dir_entry *	svc_proc_रेजिस्टर(काष्ठा net *, काष्ठा svc_stat *,
+					  स्थिर काष्ठा proc_ops *);
+व्योम			svc_proc_unरेजिस्टर(काष्ठा net *, स्थिर अक्षर *);
 
-void			svc_seq_show(struct seq_file *,
-				     const struct svc_stat *);
-#else
+व्योम			svc_seq_show(काष्ठा seq_file *,
+				     स्थिर काष्ठा svc_stat *);
+#अन्यथा
 
-static inline struct proc_dir_entry *rpc_proc_register(struct net *net, struct rpc_stat *s) { return NULL; }
-static inline void rpc_proc_unregister(struct net *net, const char *p) {}
-static inline void rpc_proc_zero(const struct rpc_program *p) {}
+अटल अंतरभूत काष्ठा proc_dir_entry *rpc_proc_रेजिस्टर(काष्ठा net *net, काष्ठा rpc_stat *s) अणु वापस शून्य; पूर्ण
+अटल अंतरभूत व्योम rpc_proc_unरेजिस्टर(काष्ठा net *net, स्थिर अक्षर *p) अणुपूर्ण
+अटल अंतरभूत व्योम rpc_proc_zero(स्थिर काष्ठा rpc_program *p) अणुपूर्ण
 
-static inline struct proc_dir_entry *svc_proc_register(struct net *net, struct svc_stat *s,
-						       const struct proc_ops *proc_ops) { return NULL; }
-static inline void svc_proc_unregister(struct net *net, const char *p) {}
+अटल अंतरभूत काष्ठा proc_dir_entry *svc_proc_रेजिस्टर(काष्ठा net *net, काष्ठा svc_stat *s,
+						       स्थिर काष्ठा proc_ops *proc_ops) अणु वापस शून्य; पूर्ण
+अटल अंतरभूत व्योम svc_proc_unरेजिस्टर(काष्ठा net *net, स्थिर अक्षर *p) अणुपूर्ण
 
-static inline void svc_seq_show(struct seq_file *seq,
-				const struct svc_stat *st) {}
-#endif
+अटल अंतरभूत व्योम svc_seq_show(काष्ठा seq_file *seq,
+				स्थिर काष्ठा svc_stat *st) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif /* _LINUX_SUNRPC_STATS_H */
+#पूर्ण_अगर /* _LINUX_SUNRPC_STATS_H */

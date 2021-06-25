@@ -1,178 +1,179 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Driver for Dummy Frontend
+ *  Driver क्रम Dummy Frontend
  *
  *  Written by Emard <emard@softhome.net>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
 
-#include <media/dvb_frontend.h>
-#include "dvb_dummy_fe.h"
-
-
-struct dvb_dummy_fe_state {
-	struct dvb_frontend frontend;
-};
+#समावेश <media/dvb_frontend.h>
+#समावेश "dvb_dummy_fe.h"
 
 
-static int dvb_dummy_fe_read_status(struct dvb_frontend *fe,
-				    enum fe_status *status)
-{
+काष्ठा dvb_dummy_fe_state अणु
+	काष्ठा dvb_frontend frontend;
+पूर्ण;
+
+
+अटल पूर्णांक dvb_dummy_fe_पढ़ो_status(काष्ठा dvb_frontend *fe,
+				    क्रमागत fe_status *status)
+अणु
 	*status = FE_HAS_SIGNAL
 		| FE_HAS_CARRIER
 		| FE_HAS_VITERBI
 		| FE_HAS_SYNC
 		| FE_HAS_LOCK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_dummy_fe_read_ber(struct dvb_frontend *fe, u32 *ber)
-{
+अटल पूर्णांक dvb_dummy_fe_पढ़ो_ber(काष्ठा dvb_frontend *fe, u32 *ber)
+अणु
 	*ber = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_dummy_fe_read_signal_strength(struct dvb_frontend *fe,
+अटल पूर्णांक dvb_dummy_fe_पढ़ो_संकेत_strength(काष्ठा dvb_frontend *fe,
 					     u16 *strength)
-{
+अणु
 	*strength = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_dummy_fe_read_snr(struct dvb_frontend *fe, u16 *snr)
-{
+अटल पूर्णांक dvb_dummy_fe_पढ़ो_snr(काष्ठा dvb_frontend *fe, u16 *snr)
+अणु
 	*snr = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_dummy_fe_read_ucblocks(struct dvb_frontend *fe, u32 *ucblocks)
-{
+अटल पूर्णांक dvb_dummy_fe_पढ़ो_ucblocks(काष्ठा dvb_frontend *fe, u32 *ucblocks)
+अणु
 	*ucblocks = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Should only be implemented if it actually reads something from the hardware.
- * Also, it should check for the locks, in order to avoid report wrong data
+ * Should only be implemented अगर it actually पढ़ोs something from the hardware.
+ * Also, it should check क्रम the locks, in order to aव्योम report wrong data
  * to userspace.
  */
-static int dvb_dummy_fe_get_frontend(struct dvb_frontend *fe,
-				     struct dtv_frontend_properties *p)
-{
-	return 0;
-}
+अटल पूर्णांक dvb_dummy_fe_get_frontend(काष्ठा dvb_frontend *fe,
+				     काष्ठा dtv_frontend_properties *p)
+अणु
+	वापस 0;
+पूर्ण
 
-static int dvb_dummy_fe_set_frontend(struct dvb_frontend *fe)
-{
-	if (fe->ops.tuner_ops.set_params) {
+अटल पूर्णांक dvb_dummy_fe_set_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	अगर (fe->ops.tuner_ops.set_params) अणु
 		fe->ops.tuner_ops.set_params(fe);
-		if (fe->ops.i2c_gate_ctrl)
+		अगर (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_dummy_fe_sleep(struct dvb_frontend *fe)
-{
-	return 0;
-}
+अटल पूर्णांक dvb_dummy_fe_sleep(काष्ठा dvb_frontend *fe)
+अणु
+	वापस 0;
+पूर्ण
 
-static int dvb_dummy_fe_init(struct dvb_frontend *fe)
-{
-	return 0;
-}
+अटल पूर्णांक dvb_dummy_fe_init(काष्ठा dvb_frontend *fe)
+अणु
+	वापस 0;
+पूर्ण
 
-static int dvb_dummy_fe_set_tone(struct dvb_frontend *fe,
-				 enum fe_sec_tone_mode tone)
-{
-	return 0;
-}
+अटल पूर्णांक dvb_dummy_fe_set_tone(काष्ठा dvb_frontend *fe,
+				 क्रमागत fe_sec_tone_mode tone)
+अणु
+	वापस 0;
+पूर्ण
 
-static int dvb_dummy_fe_set_voltage(struct dvb_frontend *fe,
-				    enum fe_sec_voltage voltage)
-{
-	return 0;
-}
+अटल पूर्णांक dvb_dummy_fe_set_voltage(काष्ठा dvb_frontend *fe,
+				    क्रमागत fe_sec_voltage voltage)
+अणु
+	वापस 0;
+पूर्ण
 
-static void dvb_dummy_fe_release(struct dvb_frontend *fe)
-{
-	struct dvb_dummy_fe_state *state = fe->demodulator_priv;
+अटल व्योम dvb_dummy_fe_release(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dvb_dummy_fe_state *state = fe->demodulator_priv;
 
-	kfree(state);
-}
+	kमुक्त(state);
+पूर्ण
 
-static const struct dvb_frontend_ops dvb_dummy_fe_ofdm_ops;
+अटल स्थिर काष्ठा dvb_frontend_ops dvb_dummy_fe_ofdm_ops;
 
-struct dvb_frontend *dvb_dummy_fe_ofdm_attach(void)
-{
-	struct dvb_dummy_fe_state *state = NULL;
+काष्ठा dvb_frontend *dvb_dummy_fe_ofdm_attach(व्योम)
+अणु
+	काष्ठा dvb_dummy_fe_state *state = शून्य;
 
-	/* allocate memory for the internal state */
-	state = kzalloc(sizeof(struct dvb_dummy_fe_state), GFP_KERNEL);
-	if (!state)
-		return NULL;
+	/* allocate memory क्रम the पूर्णांकernal state */
+	state = kzalloc(माप(काष्ठा dvb_dummy_fe_state), GFP_KERNEL);
+	अगर (!state)
+		वापस शून्य;
 
 	/* create dvb_frontend */
-	memcpy(&state->frontend.ops,
+	स_नकल(&state->frontend.ops,
 	       &dvb_dummy_fe_ofdm_ops,
-	       sizeof(struct dvb_frontend_ops));
+	       माप(काष्ठा dvb_frontend_ops));
 
 	state->frontend.demodulator_priv = state;
-	return &state->frontend;
-}
+	वापस &state->frontend;
+पूर्ण
 EXPORT_SYMBOL(dvb_dummy_fe_ofdm_attach);
 
-static const struct dvb_frontend_ops dvb_dummy_fe_qpsk_ops;
+अटल स्थिर काष्ठा dvb_frontend_ops dvb_dummy_fe_qpsk_ops;
 
-struct dvb_frontend *dvb_dummy_fe_qpsk_attach(void)
-{
-	struct dvb_dummy_fe_state *state = NULL;
+काष्ठा dvb_frontend *dvb_dummy_fe_qpsk_attach(व्योम)
+अणु
+	काष्ठा dvb_dummy_fe_state *state = शून्य;
 
-	/* allocate memory for the internal state */
-	state = kzalloc(sizeof(struct dvb_dummy_fe_state), GFP_KERNEL);
-	if (!state)
-		return NULL;
+	/* allocate memory क्रम the पूर्णांकernal state */
+	state = kzalloc(माप(काष्ठा dvb_dummy_fe_state), GFP_KERNEL);
+	अगर (!state)
+		वापस शून्य;
 
 	/* create dvb_frontend */
-	memcpy(&state->frontend.ops,
+	स_नकल(&state->frontend.ops,
 	       &dvb_dummy_fe_qpsk_ops,
-	       sizeof(struct dvb_frontend_ops));
+	       माप(काष्ठा dvb_frontend_ops));
 
 	state->frontend.demodulator_priv = state;
-	return &state->frontend;
-}
+	वापस &state->frontend;
+पूर्ण
 EXPORT_SYMBOL(dvb_dummy_fe_qpsk_attach);
 
-static const struct dvb_frontend_ops dvb_dummy_fe_qam_ops;
+अटल स्थिर काष्ठा dvb_frontend_ops dvb_dummy_fe_qam_ops;
 
-struct dvb_frontend *dvb_dummy_fe_qam_attach(void)
-{
-	struct dvb_dummy_fe_state *state = NULL;
+काष्ठा dvb_frontend *dvb_dummy_fe_qam_attach(व्योम)
+अणु
+	काष्ठा dvb_dummy_fe_state *state = शून्य;
 
-	/* allocate memory for the internal state */
-	state = kzalloc(sizeof(struct dvb_dummy_fe_state), GFP_KERNEL);
-	if (!state)
-		return NULL;
+	/* allocate memory क्रम the पूर्णांकernal state */
+	state = kzalloc(माप(काष्ठा dvb_dummy_fe_state), GFP_KERNEL);
+	अगर (!state)
+		वापस शून्य;
 
 	/* create dvb_frontend */
-	memcpy(&state->frontend.ops,
+	स_नकल(&state->frontend.ops,
 	       &dvb_dummy_fe_qam_ops,
-	       sizeof(struct dvb_frontend_ops));
+	       माप(काष्ठा dvb_frontend_ops));
 
 	state->frontend.demodulator_priv = state;
-	return &state->frontend;
-}
+	वापस &state->frontend;
+पूर्ण
 EXPORT_SYMBOL(dvb_dummy_fe_qam_attach);
 
-static const struct dvb_frontend_ops dvb_dummy_fe_ofdm_ops = {
-	.delsys = { SYS_DVBT },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops dvb_dummy_fe_ofdm_ops = अणु
+	.delsys = अणु SYS_DVBT पूर्ण,
+	.info = अणु
 		.name			= "Dummy DVB-T",
 		.frequency_min_hz	= 0,
 		.frequency_max_hz	= 863250 * kHz,
@@ -192,7 +193,7 @@ static const struct dvb_frontend_ops dvb_dummy_fe_ofdm_ops = {
 			FE_CAN_TRANSMISSION_MODE_AUTO |
 			FE_CAN_GUARD_INTERVAL_AUTO |
 			FE_CAN_HIERARCHY_AUTO,
-	},
+	पूर्ण,
 
 	.release = dvb_dummy_fe_release,
 
@@ -202,16 +203,16 @@ static const struct dvb_frontend_ops dvb_dummy_fe_ofdm_ops = {
 	.set_frontend = dvb_dummy_fe_set_frontend,
 	.get_frontend = dvb_dummy_fe_get_frontend,
 
-	.read_status = dvb_dummy_fe_read_status,
-	.read_ber = dvb_dummy_fe_read_ber,
-	.read_signal_strength = dvb_dummy_fe_read_signal_strength,
-	.read_snr = dvb_dummy_fe_read_snr,
-	.read_ucblocks = dvb_dummy_fe_read_ucblocks,
-};
+	.पढ़ो_status = dvb_dummy_fe_पढ़ो_status,
+	.पढ़ो_ber = dvb_dummy_fe_पढ़ो_ber,
+	.पढ़ो_संकेत_strength = dvb_dummy_fe_पढ़ो_संकेत_strength,
+	.पढ़ो_snr = dvb_dummy_fe_पढ़ो_snr,
+	.पढ़ो_ucblocks = dvb_dummy_fe_पढ़ो_ucblocks,
+पूर्ण;
 
-static const struct dvb_frontend_ops dvb_dummy_fe_qam_ops = {
-	.delsys = { SYS_DVBC_ANNEX_A },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops dvb_dummy_fe_qam_ops = अणु
+	.delsys = अणु SYS_DVBC_ANNEX_A पूर्ण,
+	.info = अणु
 		.name			= "Dummy DVB-C",
 		.frequency_min_hz	=  51 * MHz,
 		.frequency_max_hz	= 858 * MHz,
@@ -226,7 +227,7 @@ static const struct dvb_frontend_ops dvb_dummy_fe_qam_ops = {
 			FE_CAN_QAM_256 |
 			FE_CAN_FEC_AUTO |
 			FE_CAN_INVERSION_AUTO
-	},
+	पूर्ण,
 
 	.release = dvb_dummy_fe_release,
 
@@ -236,16 +237,16 @@ static const struct dvb_frontend_ops dvb_dummy_fe_qam_ops = {
 	.set_frontend = dvb_dummy_fe_set_frontend,
 	.get_frontend = dvb_dummy_fe_get_frontend,
 
-	.read_status = dvb_dummy_fe_read_status,
-	.read_ber = dvb_dummy_fe_read_ber,
-	.read_signal_strength = dvb_dummy_fe_read_signal_strength,
-	.read_snr = dvb_dummy_fe_read_snr,
-	.read_ucblocks = dvb_dummy_fe_read_ucblocks,
-};
+	.पढ़ो_status = dvb_dummy_fe_पढ़ो_status,
+	.पढ़ो_ber = dvb_dummy_fe_पढ़ो_ber,
+	.पढ़ो_संकेत_strength = dvb_dummy_fe_पढ़ो_संकेत_strength,
+	.पढ़ो_snr = dvb_dummy_fe_पढ़ो_snr,
+	.पढ़ो_ucblocks = dvb_dummy_fe_पढ़ो_ucblocks,
+पूर्ण;
 
-static const struct dvb_frontend_ops dvb_dummy_fe_qpsk_ops = {
-	.delsys = { SYS_DVBS },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops dvb_dummy_fe_qpsk_ops = अणु
+	.delsys = अणु SYS_DVBS पूर्ण,
+	.info = अणु
 		.name			= "Dummy DVB-S",
 		.frequency_min_hz	=  950 * MHz,
 		.frequency_max_hz	= 2150 * MHz,
@@ -261,7 +262,7 @@ static const struct dvb_frontend_ops dvb_dummy_fe_qpsk_ops = {
 			FE_CAN_FEC_7_8 |
 			FE_CAN_FEC_AUTO |
 			FE_CAN_QPSK
-	},
+	पूर्ण,
 
 	.release = dvb_dummy_fe_release,
 
@@ -271,15 +272,15 @@ static const struct dvb_frontend_ops dvb_dummy_fe_qpsk_ops = {
 	.set_frontend = dvb_dummy_fe_set_frontend,
 	.get_frontend = dvb_dummy_fe_get_frontend,
 
-	.read_status = dvb_dummy_fe_read_status,
-	.read_ber = dvb_dummy_fe_read_ber,
-	.read_signal_strength = dvb_dummy_fe_read_signal_strength,
-	.read_snr = dvb_dummy_fe_read_snr,
-	.read_ucblocks = dvb_dummy_fe_read_ucblocks,
+	.पढ़ो_status = dvb_dummy_fe_पढ़ो_status,
+	.पढ़ो_ber = dvb_dummy_fe_पढ़ो_ber,
+	.पढ़ो_संकेत_strength = dvb_dummy_fe_पढ़ो_संकेत_strength,
+	.पढ़ो_snr = dvb_dummy_fe_पढ़ो_snr,
+	.पढ़ो_ucblocks = dvb_dummy_fe_पढ़ो_ucblocks,
 
 	.set_voltage = dvb_dummy_fe_set_voltage,
 	.set_tone = dvb_dummy_fe_set_tone,
-};
+पूर्ण;
 
 MODULE_DESCRIPTION("DVB DUMMY Frontend");
 MODULE_AUTHOR("Emard");

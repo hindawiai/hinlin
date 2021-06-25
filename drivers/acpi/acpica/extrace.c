@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: extrace - Support for interpreter execution tracing
+ * Module Name: extrace - Support क्रम पूर्णांकerpreter execution tracing
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acnamesp.h"
-#include "acinterp.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acnamesp.h"
+#समावेश "acinterp.h"
 
-#define _COMPONENT          ACPI_EXECUTER
+#घोषणा _COMPONENT          ACPI_EXECUTER
 ACPI_MODULE_NAME("extrace")
 
-static union acpi_operand_object *acpi_gbl_trace_method_object = NULL;
+अटल जोड़ acpi_opeअक्रम_object *acpi_gbl_trace_method_object = शून्य;
 
 /* Local prototypes */
 
-#ifdef ACPI_DEBUG_OUTPUT
-static const char *acpi_ex_get_trace_event_name(acpi_trace_event_type type);
-#endif
+#अगर_घोषित ACPI_DEBUG_OUTPUT
+अटल स्थिर अक्षर *acpi_ex_get_trace_event_name(acpi_trace_event_type type);
+#पूर्ण_अगर
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_interpreter_trace_enabled
+ * FUNCTION:    acpi_ex_पूर्णांकerpreter_trace_enabled
  *
  * PARAMETERS:  name                - Whether method name should be matched,
- *                                    this should be checked before starting
+ *                                    this should be checked beक्रमe starting
  *                                    the tracer
  *
- * RETURN:      TRUE if interpreter trace is enabled.
+ * RETURN:      TRUE अगर पूर्णांकerpreter trace is enabled.
  *
- * DESCRIPTION: Check whether interpreter trace is enabled
+ * DESCRIPTION: Check whether पूर्णांकerpreter trace is enabled
  *
  ******************************************************************************/
 
-static u8 acpi_ex_interpreter_trace_enabled(char *name)
-{
+अटल u8 acpi_ex_पूर्णांकerpreter_trace_enabled(अक्षर *name)
+अणु
 
-	/* Check if tracing is enabled */
+	/* Check अगर tracing is enabled */
 
-	if (!(acpi_gbl_trace_flags & ACPI_TRACE_ENABLED)) {
-		return (FALSE);
-	}
+	अगर (!(acpi_gbl_trace_flags & ACPI_TRACE_ENABLED)) अणु
+		वापस (FALSE);
+	पूर्ण
 
 	/*
-	 * Check if tracing is filtered:
+	 * Check अगर tracing is filtered:
 	 *
 	 * 1. If the tracer is started, acpi_gbl_trace_method_object should have
 	 *    been filled by the trace starter
 	 * 2. If the tracer is not started, acpi_gbl_trace_method_name should be
-	 *    matched if it is specified
+	 *    matched अगर it is specअगरied
 	 * 3. If the tracer is oneshot style, acpi_gbl_trace_method_name should
 	 *    not be cleared by the trace stopper during the first match
 	 */
-	if (acpi_gbl_trace_method_object) {
-		return (TRUE);
-	}
+	अगर (acpi_gbl_trace_method_object) अणु
+		वापस (TRUE);
+	पूर्ण
 
-	if (name &&
+	अगर (name &&
 	    (acpi_gbl_trace_method_name &&
-	     strcmp(acpi_gbl_trace_method_name, name))) {
-		return (FALSE);
-	}
+	     म_भेद(acpi_gbl_trace_method_name, name))) अणु
+		वापस (FALSE);
+	पूर्ण
 
-	if ((acpi_gbl_trace_flags & ACPI_TRACE_ONESHOT) &&
-	    !acpi_gbl_trace_method_name) {
-		return (FALSE);
-	}
+	अगर ((acpi_gbl_trace_flags & ACPI_TRACE_ONESHOT) &&
+	    !acpi_gbl_trace_method_name) अणु
+		वापस (FALSE);
+	पूर्ण
 
-	return (TRUE);
-}
+	वापस (TRUE);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -86,66 +87,66 @@ static u8 acpi_ex_interpreter_trace_enabled(char *name)
  *
  ******************************************************************************/
 
-#ifdef ACPI_DEBUG_OUTPUT
+#अगर_घोषित ACPI_DEBUG_OUTPUT
 
-static const char *acpi_ex_get_trace_event_name(acpi_trace_event_type type)
-{
+अटल स्थिर अक्षर *acpi_ex_get_trace_event_name(acpi_trace_event_type type)
+अणु
 
-	switch (type) {
-	case ACPI_TRACE_AML_METHOD:
+	चयन (type) अणु
+	हाल ACPI_TRACE_AML_METHOD:
 
-		return "Method";
+		वापस "Method";
 
-	case ACPI_TRACE_AML_OPCODE:
+	हाल ACPI_TRACE_AML_OPCODE:
 
-		return "Opcode";
+		वापस "Opcode";
 
-	case ACPI_TRACE_AML_REGION:
+	हाल ACPI_TRACE_AML_REGION:
 
-		return "Region";
+		वापस "Region";
 
-	default:
+	शेष:
 
-		return "";
-	}
-}
+		वापस "";
+	पूर्ण
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_trace_point
+ * FUNCTION:    acpi_ex_trace_poपूर्णांक
  *
  * PARAMETERS:  type                - Trace event type
- *              begin               - TRUE if before execution
+ *              begin               - TRUE अगर beक्रमe execution
  *              aml                 - Executed AML address
  *              pathname            - Object path
  *
  * RETURN:      None
  *
- * DESCRIPTION: Internal interpreter execution trace.
+ * DESCRIPTION: Internal पूर्णांकerpreter execution trace.
  *
  ******************************************************************************/
 
-void
-acpi_ex_trace_point(acpi_trace_event_type type,
-		    u8 begin, u8 *aml, char *pathname)
-{
+व्योम
+acpi_ex_trace_poपूर्णांक(acpi_trace_event_type type,
+		    u8 begin, u8 *aml, अक्षर *pathname)
+अणु
 
-	ACPI_FUNCTION_NAME(ex_trace_point);
+	ACPI_FUNCTION_NAME(ex_trace_poपूर्णांक);
 
-	if (pathname) {
+	अगर (pathname) अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_TRACE_POINT,
 				  "%s %s [0x%p:%s] execution.\n",
 				  acpi_ex_get_trace_event_name(type),
 				  begin ? "Begin" : "End", aml, pathname));
-	} else {
+	पूर्ण अन्यथा अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_TRACE_POINT,
 				  "%s %s [0x%p] execution.\n",
 				  acpi_ex_get_trace_event_name(type),
 				  begin ? "Begin" : "End", aml));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
@@ -153,7 +154,7 @@ acpi_ex_trace_point(acpi_trace_event_type type,
  *
  * PARAMETERS:  method_node         - Node of the method
  *              obj_desc            - The method object
- *              walk_state          - current state, NULL if not yet executing
+ *              walk_state          - current state, शून्य अगर not yet executing
  *                                    a method.
  *
  * RETURN:      None
@@ -162,47 +163,47 @@ acpi_ex_trace_point(acpi_trace_event_type type,
  *
  ******************************************************************************/
 
-void
-acpi_ex_start_trace_method(struct acpi_namespace_node *method_node,
-			   union acpi_operand_object *obj_desc,
-			   struct acpi_walk_state *walk_state)
-{
-	char *pathname = NULL;
+व्योम
+acpi_ex_start_trace_method(काष्ठा acpi_namespace_node *method_node,
+			   जोड़ acpi_opeअक्रम_object *obj_desc,
+			   काष्ठा acpi_walk_state *walk_state)
+अणु
+	अक्षर *pathname = शून्य;
 	u8 enabled = FALSE;
 
 	ACPI_FUNCTION_NAME(ex_start_trace_method);
 
-	if (method_node) {
+	अगर (method_node) अणु
 		pathname = acpi_ns_get_normalized_pathname(method_node, TRUE);
-	}
+	पूर्ण
 
-	enabled = acpi_ex_interpreter_trace_enabled(pathname);
-	if (enabled && !acpi_gbl_trace_method_object) {
+	enabled = acpi_ex_पूर्णांकerpreter_trace_enabled(pathname);
+	अगर (enabled && !acpi_gbl_trace_method_object) अणु
 		acpi_gbl_trace_method_object = obj_desc;
 		acpi_gbl_original_dbg_level = acpi_dbg_level;
 		acpi_gbl_original_dbg_layer = acpi_dbg_layer;
 		acpi_dbg_level = ACPI_TRACE_LEVEL_ALL;
 		acpi_dbg_layer = ACPI_TRACE_LAYER_ALL;
 
-		if (acpi_gbl_trace_dbg_level) {
+		अगर (acpi_gbl_trace_dbg_level) अणु
 			acpi_dbg_level = acpi_gbl_trace_dbg_level;
-		}
+		पूर्ण
 
-		if (acpi_gbl_trace_dbg_layer) {
+		अगर (acpi_gbl_trace_dbg_layer) अणु
 			acpi_dbg_layer = acpi_gbl_trace_dbg_layer;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (enabled) {
+	अगर (enabled) अणु
 		ACPI_TRACE_POINT(ACPI_TRACE_AML_METHOD, TRUE,
-				 obj_desc ? obj_desc->method.aml_start : NULL,
+				 obj_desc ? obj_desc->method.aml_start : शून्य,
 				 pathname);
-	}
+	पूर्ण
 
-	if (pathname) {
+	अगर (pathname) अणु
 		ACPI_FREE(pathname);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
@@ -210,7 +211,7 @@ acpi_ex_start_trace_method(struct acpi_namespace_node *method_node,
  *
  * PARAMETERS:  method_node         - Node of the method
  *              obj_desc            - The method object
- *              walk_state          - current state, NULL if not yet executing
+ *              walk_state          - current state, शून्य अगर not yet executing
  *                                    a method.
  *
  * RETURN:      None
@@ -219,54 +220,54 @@ acpi_ex_start_trace_method(struct acpi_namespace_node *method_node,
  *
  ******************************************************************************/
 
-void
-acpi_ex_stop_trace_method(struct acpi_namespace_node *method_node,
-			  union acpi_operand_object *obj_desc,
-			  struct acpi_walk_state *walk_state)
-{
-	char *pathname = NULL;
+व्योम
+acpi_ex_stop_trace_method(काष्ठा acpi_namespace_node *method_node,
+			  जोड़ acpi_opeअक्रम_object *obj_desc,
+			  काष्ठा acpi_walk_state *walk_state)
+अणु
+	अक्षर *pathname = शून्य;
 	u8 enabled;
 
 	ACPI_FUNCTION_NAME(ex_stop_trace_method);
 
-	if (method_node) {
+	अगर (method_node) अणु
 		pathname = acpi_ns_get_normalized_pathname(method_node, TRUE);
-	}
+	पूर्ण
 
-	enabled = acpi_ex_interpreter_trace_enabled(NULL);
+	enabled = acpi_ex_पूर्णांकerpreter_trace_enabled(शून्य);
 
-	if (enabled) {
+	अगर (enabled) अणु
 		ACPI_TRACE_POINT(ACPI_TRACE_AML_METHOD, FALSE,
-				 obj_desc ? obj_desc->method.aml_start : NULL,
+				 obj_desc ? obj_desc->method.aml_start : शून्य,
 				 pathname);
-	}
+	पूर्ण
 
 	/* Check whether the tracer should be stopped */
 
-	if (acpi_gbl_trace_method_object == obj_desc) {
+	अगर (acpi_gbl_trace_method_object == obj_desc) अणु
 
-		/* Disable further tracing if type is one-shot */
+		/* Disable further tracing अगर type is one-shot */
 
-		if (acpi_gbl_trace_flags & ACPI_TRACE_ONESHOT) {
-			acpi_gbl_trace_method_name = NULL;
-		}
+		अगर (acpi_gbl_trace_flags & ACPI_TRACE_ONESHOT) अणु
+			acpi_gbl_trace_method_name = शून्य;
+		पूर्ण
 
 		acpi_dbg_level = acpi_gbl_original_dbg_level;
 		acpi_dbg_layer = acpi_gbl_original_dbg_layer;
-		acpi_gbl_trace_method_object = NULL;
-	}
+		acpi_gbl_trace_method_object = शून्य;
+	पूर्ण
 
-	if (pathname) {
+	अगर (pathname) अणु
 		ACPI_FREE(pathname);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_start_trace_opcode
  *
  * PARAMETERS:  op                  - The parser opcode object
- *              walk_state          - current state, NULL if not yet executing
+ *              walk_state          - current state, शून्य अगर not yet executing
  *                                    a method.
  *
  * RETURN:      None
@@ -275,26 +276,26 @@ acpi_ex_stop_trace_method(struct acpi_namespace_node *method_node,
  *
  ******************************************************************************/
 
-void
-acpi_ex_start_trace_opcode(union acpi_parse_object *op,
-			   struct acpi_walk_state *walk_state)
-{
+व्योम
+acpi_ex_start_trace_opcode(जोड़ acpi_parse_object *op,
+			   काष्ठा acpi_walk_state *walk_state)
+अणु
 
 	ACPI_FUNCTION_NAME(ex_start_trace_opcode);
 
-	if (acpi_ex_interpreter_trace_enabled(NULL) &&
-	    (acpi_gbl_trace_flags & ACPI_TRACE_OPCODE)) {
+	अगर (acpi_ex_पूर्णांकerpreter_trace_enabled(शून्य) &&
+	    (acpi_gbl_trace_flags & ACPI_TRACE_OPCODE)) अणु
 		ACPI_TRACE_POINT(ACPI_TRACE_AML_OPCODE, TRUE,
 				 op->common.aml, op->common.aml_op_name);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_stop_trace_opcode
  *
  * PARAMETERS:  op                  - The parser opcode object
- *              walk_state          - current state, NULL if not yet executing
+ *              walk_state          - current state, शून्य अगर not yet executing
  *                                    a method.
  *
  * RETURN:      None
@@ -303,16 +304,16 @@ acpi_ex_start_trace_opcode(union acpi_parse_object *op,
  *
  ******************************************************************************/
 
-void
-acpi_ex_stop_trace_opcode(union acpi_parse_object *op,
-			  struct acpi_walk_state *walk_state)
-{
+व्योम
+acpi_ex_stop_trace_opcode(जोड़ acpi_parse_object *op,
+			  काष्ठा acpi_walk_state *walk_state)
+अणु
 
 	ACPI_FUNCTION_NAME(ex_stop_trace_opcode);
 
-	if (acpi_ex_interpreter_trace_enabled(NULL) &&
-	    (acpi_gbl_trace_flags & ACPI_TRACE_OPCODE)) {
+	अगर (acpi_ex_पूर्णांकerpreter_trace_enabled(शून्य) &&
+	    (acpi_gbl_trace_flags & ACPI_TRACE_OPCODE)) अणु
 		ACPI_TRACE_POINT(ACPI_TRACE_AML_OPCODE, FALSE,
 				 op->common.aml, op->common.aml_op_name);
-	}
-}
+	पूर्ण
+पूर्ण

@@ -1,646 +1,647 @@
+<शैली गुरु>
 /*
- * Copyright (C) 2017 Spreadtrum Communications Inc.
+ * Copyright (C) 2017 Spपढ़ोtrum Communications Inc.
  *
- * SPDX-License-Identifier: GPL-2.0
+ * SPDX-License-Identअगरier: GPL-2.0
  */
 
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/rtc.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/rtc.h>
 
-#define SPRD_RTC_SEC_CNT_VALUE		0x0
-#define SPRD_RTC_MIN_CNT_VALUE		0x4
-#define SPRD_RTC_HOUR_CNT_VALUE		0x8
-#define SPRD_RTC_DAY_CNT_VALUE		0xc
-#define SPRD_RTC_SEC_CNT_UPD		0x10
-#define SPRD_RTC_MIN_CNT_UPD		0x14
-#define SPRD_RTC_HOUR_CNT_UPD		0x18
-#define SPRD_RTC_DAY_CNT_UPD		0x1c
-#define SPRD_RTC_SEC_ALM_UPD		0x20
-#define SPRD_RTC_MIN_ALM_UPD		0x24
-#define SPRD_RTC_HOUR_ALM_UPD		0x28
-#define SPRD_RTC_DAY_ALM_UPD		0x2c
-#define SPRD_RTC_INT_EN			0x30
-#define SPRD_RTC_INT_RAW_STS		0x34
-#define SPRD_RTC_INT_CLR		0x38
-#define SPRD_RTC_INT_MASK_STS		0x3C
-#define SPRD_RTC_SEC_ALM_VALUE		0x40
-#define SPRD_RTC_MIN_ALM_VALUE		0x44
-#define SPRD_RTC_HOUR_ALM_VALUE		0x48
-#define SPRD_RTC_DAY_ALM_VALUE		0x4c
-#define SPRD_RTC_SPG_VALUE		0x50
-#define SPRD_RTC_SPG_UPD		0x54
-#define SPRD_RTC_PWR_CTRL		0x58
-#define SPRD_RTC_PWR_STS		0x5c
-#define SPRD_RTC_SEC_AUXALM_UPD		0x60
-#define SPRD_RTC_MIN_AUXALM_UPD		0x64
-#define SPRD_RTC_HOUR_AUXALM_UPD	0x68
-#define SPRD_RTC_DAY_AUXALM_UPD		0x6c
+#घोषणा SPRD_RTC_SEC_CNT_VALUE		0x0
+#घोषणा SPRD_RTC_MIN_CNT_VALUE		0x4
+#घोषणा SPRD_RTC_HOUR_CNT_VALUE		0x8
+#घोषणा SPRD_RTC_DAY_CNT_VALUE		0xc
+#घोषणा SPRD_RTC_SEC_CNT_UPD		0x10
+#घोषणा SPRD_RTC_MIN_CNT_UPD		0x14
+#घोषणा SPRD_RTC_HOUR_CNT_UPD		0x18
+#घोषणा SPRD_RTC_DAY_CNT_UPD		0x1c
+#घोषणा SPRD_RTC_SEC_ALM_UPD		0x20
+#घोषणा SPRD_RTC_MIN_ALM_UPD		0x24
+#घोषणा SPRD_RTC_HOUR_ALM_UPD		0x28
+#घोषणा SPRD_RTC_DAY_ALM_UPD		0x2c
+#घोषणा SPRD_RTC_INT_EN			0x30
+#घोषणा SPRD_RTC_INT_RAW_STS		0x34
+#घोषणा SPRD_RTC_INT_CLR		0x38
+#घोषणा SPRD_RTC_INT_MASK_STS		0x3C
+#घोषणा SPRD_RTC_SEC_ALM_VALUE		0x40
+#घोषणा SPRD_RTC_MIN_ALM_VALUE		0x44
+#घोषणा SPRD_RTC_HOUR_ALM_VALUE		0x48
+#घोषणा SPRD_RTC_DAY_ALM_VALUE		0x4c
+#घोषणा SPRD_RTC_SPG_VALUE		0x50
+#घोषणा SPRD_RTC_SPG_UPD		0x54
+#घोषणा SPRD_RTC_PWR_CTRL		0x58
+#घोषणा SPRD_RTC_PWR_STS		0x5c
+#घोषणा SPRD_RTC_SEC_AUXALM_UPD		0x60
+#घोषणा SPRD_RTC_MIN_AUXALM_UPD		0x64
+#घोषणा SPRD_RTC_HOUR_AUXALM_UPD	0x68
+#घोषणा SPRD_RTC_DAY_AUXALM_UPD		0x6c
 
-/* BIT & MASK definition for SPRD_RTC_INT_* registers */
-#define SPRD_RTC_SEC_EN			BIT(0)
-#define SPRD_RTC_MIN_EN			BIT(1)
-#define SPRD_RTC_HOUR_EN		BIT(2)
-#define SPRD_RTC_DAY_EN			BIT(3)
-#define SPRD_RTC_ALARM_EN		BIT(4)
-#define SPRD_RTC_HRS_FORMAT_EN		BIT(5)
-#define SPRD_RTC_AUXALM_EN		BIT(6)
-#define SPRD_RTC_SPG_UPD_EN		BIT(7)
-#define SPRD_RTC_SEC_UPD_EN		BIT(8)
-#define SPRD_RTC_MIN_UPD_EN		BIT(9)
-#define SPRD_RTC_HOUR_UPD_EN		BIT(10)
-#define SPRD_RTC_DAY_UPD_EN		BIT(11)
-#define SPRD_RTC_ALMSEC_UPD_EN		BIT(12)
-#define SPRD_RTC_ALMMIN_UPD_EN		BIT(13)
-#define SPRD_RTC_ALMHOUR_UPD_EN		BIT(14)
-#define SPRD_RTC_ALMDAY_UPD_EN		BIT(15)
-#define SPRD_RTC_INT_MASK		GENMASK(15, 0)
+/* BIT & MASK definition क्रम SPRD_RTC_INT_* रेजिस्टरs */
+#घोषणा SPRD_RTC_SEC_EN			BIT(0)
+#घोषणा SPRD_RTC_MIN_EN			BIT(1)
+#घोषणा SPRD_RTC_HOUR_EN		BIT(2)
+#घोषणा SPRD_RTC_DAY_EN			BIT(3)
+#घोषणा SPRD_RTC_ALARM_EN		BIT(4)
+#घोषणा SPRD_RTC_HRS_FORMAT_EN		BIT(5)
+#घोषणा SPRD_RTC_AUXALM_EN		BIT(6)
+#घोषणा SPRD_RTC_SPG_UPD_EN		BIT(7)
+#घोषणा SPRD_RTC_SEC_UPD_EN		BIT(8)
+#घोषणा SPRD_RTC_MIN_UPD_EN		BIT(9)
+#घोषणा SPRD_RTC_HOUR_UPD_EN		BIT(10)
+#घोषणा SPRD_RTC_DAY_UPD_EN		BIT(11)
+#घोषणा SPRD_RTC_ALMSEC_UPD_EN		BIT(12)
+#घोषणा SPRD_RTC_ALMMIN_UPD_EN		BIT(13)
+#घोषणा SPRD_RTC_ALMHOUR_UPD_EN		BIT(14)
+#घोषणा SPRD_RTC_ALMDAY_UPD_EN		BIT(15)
+#घोषणा SPRD_RTC_INT_MASK		GENMASK(15, 0)
 
-#define SPRD_RTC_TIME_INT_MASK				\
+#घोषणा SPRD_RTC_TIME_INT_MASK				\
 	(SPRD_RTC_SEC_UPD_EN | SPRD_RTC_MIN_UPD_EN |	\
 	 SPRD_RTC_HOUR_UPD_EN | SPRD_RTC_DAY_UPD_EN)
 
-#define SPRD_RTC_ALMTIME_INT_MASK				\
+#घोषणा SPRD_RTC_ALMTIME_INT_MASK				\
 	(SPRD_RTC_ALMSEC_UPD_EN | SPRD_RTC_ALMMIN_UPD_EN |	\
 	 SPRD_RTC_ALMHOUR_UPD_EN | SPRD_RTC_ALMDAY_UPD_EN)
 
-#define SPRD_RTC_ALM_INT_MASK			\
+#घोषणा SPRD_RTC_ALM_INT_MASK			\
 	(SPRD_RTC_SEC_EN | SPRD_RTC_MIN_EN |	\
 	 SPRD_RTC_HOUR_EN | SPRD_RTC_DAY_EN |	\
 	 SPRD_RTC_ALARM_EN | SPRD_RTC_AUXALM_EN)
 
 /* second/minute/hour/day values mask definition */
-#define SPRD_RTC_SEC_MASK		GENMASK(5, 0)
-#define SPRD_RTC_MIN_MASK		GENMASK(5, 0)
-#define SPRD_RTC_HOUR_MASK		GENMASK(4, 0)
-#define SPRD_RTC_DAY_MASK		GENMASK(15, 0)
+#घोषणा SPRD_RTC_SEC_MASK		GENMASK(5, 0)
+#घोषणा SPRD_RTC_MIN_MASK		GENMASK(5, 0)
+#घोषणा SPRD_RTC_HOUR_MASK		GENMASK(4, 0)
+#घोषणा SPRD_RTC_DAY_MASK		GENMASK(15, 0)
 
-/* alarm lock definition for SPRD_RTC_SPG_UPD register */
-#define SPRD_RTC_ALMLOCK_MASK		GENMASK(7, 0)
-#define SPRD_RTC_ALM_UNLOCK		0xa5
-#define SPRD_RTC_ALM_LOCK		(~SPRD_RTC_ALM_UNLOCK &	\
+/* alarm lock definition क्रम SPRD_RTC_SPG_UPD रेजिस्टर */
+#घोषणा SPRD_RTC_ALMLOCK_MASK		GENMASK(7, 0)
+#घोषणा SPRD_RTC_ALM_UNLOCK		0xa5
+#घोषणा SPRD_RTC_ALM_LOCK		(~SPRD_RTC_ALM_UNLOCK &	\
 					 SPRD_RTC_ALMLOCK_MASK)
 
-/* SPG values definition for SPRD_RTC_SPG_UPD register */
-#define SPRD_RTC_POWEROFF_ALM_FLAG	BIT(8)
+/* SPG values definition क्रम SPRD_RTC_SPG_UPD रेजिस्टर */
+#घोषणा SPRD_RTC_POWEROFF_ALM_FLAG	BIT(8)
 
-/* power control/status definition */
-#define SPRD_RTC_POWER_RESET_VALUE	0x96
-#define SPRD_RTC_POWER_STS_CLEAR	GENMASK(7, 0)
-#define SPRD_RTC_POWER_STS_SHIFT	8
-#define SPRD_RTC_POWER_STS_VALID	\
+/* घातer control/status definition */
+#घोषणा SPRD_RTC_POWER_RESET_VALUE	0x96
+#घोषणा SPRD_RTC_POWER_STS_CLEAR	GENMASK(7, 0)
+#घोषणा SPRD_RTC_POWER_STS_SHIFT	8
+#घोषणा SPRD_RTC_POWER_STS_VALID	\
 	(~SPRD_RTC_POWER_RESET_VALUE << SPRD_RTC_POWER_STS_SHIFT)
 
-/* timeout of synchronizing time and alarm registers (us) */
-#define SPRD_RTC_POLL_TIMEOUT		200000
-#define SPRD_RTC_POLL_DELAY_US		20000
+/* समयout of synchronizing समय and alarm रेजिस्टरs (us) */
+#घोषणा SPRD_RTC_POLL_TIMEOUT		200000
+#घोषणा SPRD_RTC_POLL_DELAY_US		20000
 
-struct sprd_rtc {
-	struct rtc_device	*rtc;
-	struct regmap		*regmap;
-	struct device		*dev;
+काष्ठा sprd_rtc अणु
+	काष्ठा rtc_device	*rtc;
+	काष्ठा regmap		*regmap;
+	काष्ठा device		*dev;
 	u32			base;
-	int			irq;
+	पूर्णांक			irq;
 	bool			valid;
-};
+पूर्ण;
 
 /*
- * The Spreadtrum RTC controller has 3 groups registers, including time, normal
- * alarm and auxiliary alarm. The time group registers are used to set RTC time,
- * the normal alarm registers are used to set normal alarm, and the auxiliary
- * alarm registers are used to set auxiliary alarm. Both alarm event and
- * auxiliary alarm event can wake up system from deep sleep, but only alarm
- * event can power up system from power down status.
+ * The Spपढ़ोtrum RTC controller has 3 groups रेजिस्टरs, including समय, normal
+ * alarm and auxiliary alarm. The समय group रेजिस्टरs are used to set RTC समय,
+ * the normal alarm रेजिस्टरs are used to set normal alarm, and the auxiliary
+ * alarm रेजिस्टरs are used to set auxiliary alarm. Both alarm event and
+ * auxiliary alarm event can wake up प्रणाली from deep sleep, but only alarm
+ * event can घातer up प्रणाली from घातer करोwn status.
  */
-enum sprd_rtc_reg_types {
+क्रमागत sprd_rtc_reg_types अणु
 	SPRD_RTC_TIME,
 	SPRD_RTC_ALARM,
 	SPRD_RTC_AUX_ALARM,
-};
+पूर्ण;
 
-static int sprd_rtc_clear_alarm_ints(struct sprd_rtc *rtc)
-{
-	return regmap_write(rtc->regmap, rtc->base + SPRD_RTC_INT_CLR,
+अटल पूर्णांक sprd_rtc_clear_alarm_पूर्णांकs(काष्ठा sprd_rtc *rtc)
+अणु
+	वापस regmap_ग_लिखो(rtc->regmap, rtc->base + SPRD_RTC_INT_CLR,
 			    SPRD_RTC_ALM_INT_MASK);
-}
+पूर्ण
 
-static int sprd_rtc_lock_alarm(struct sprd_rtc *rtc, bool lock)
-{
-	int ret;
+अटल पूर्णांक sprd_rtc_lock_alarm(काष्ठा sprd_rtc *rtc, bool lock)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	ret = regmap_read(rtc->regmap, rtc->base + SPRD_RTC_SPG_VALUE, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(rtc->regmap, rtc->base + SPRD_RTC_SPG_VALUE, &val);
+	अगर (ret)
+		वापस ret;
 
 	val &= ~SPRD_RTC_ALMLOCK_MASK;
-	if (lock)
+	अगर (lock)
 		val |= SPRD_RTC_ALM_LOCK;
-	else
+	अन्यथा
 		val |= SPRD_RTC_ALM_UNLOCK | SPRD_RTC_POWEROFF_ALM_FLAG;
 
-	ret = regmap_write(rtc->regmap, rtc->base + SPRD_RTC_SPG_UPD, val);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(rtc->regmap, rtc->base + SPRD_RTC_SPG_UPD, val);
+	अगर (ret)
+		वापस ret;
 
-	/* wait until the SPG value is updated successfully */
-	ret = regmap_read_poll_timeout(rtc->regmap,
+	/* रुको until the SPG value is updated successfully */
+	ret = regmap_पढ़ो_poll_समयout(rtc->regmap,
 				       rtc->base + SPRD_RTC_INT_RAW_STS, val,
 				       (val & SPRD_RTC_SPG_UPD_EN),
 				       SPRD_RTC_POLL_DELAY_US,
 				       SPRD_RTC_POLL_TIMEOUT);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(rtc->dev, "failed to update SPG value:%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return regmap_write(rtc->regmap, rtc->base + SPRD_RTC_INT_CLR,
+	वापस regmap_ग_लिखो(rtc->regmap, rtc->base + SPRD_RTC_INT_CLR,
 			    SPRD_RTC_SPG_UPD_EN);
-}
+पूर्ण
 
-static int sprd_rtc_get_secs(struct sprd_rtc *rtc, enum sprd_rtc_reg_types type,
-			     time64_t *secs)
-{
+अटल पूर्णांक sprd_rtc_get_secs(काष्ठा sprd_rtc *rtc, क्रमागत sprd_rtc_reg_types type,
+			     समय64_t *secs)
+अणु
 	u32 sec_reg, min_reg, hour_reg, day_reg;
 	u32 val, sec, min, hour, day;
-	int ret;
+	पूर्णांक ret;
 
-	switch (type) {
-	case SPRD_RTC_TIME:
+	चयन (type) अणु
+	हाल SPRD_RTC_TIME:
 		sec_reg = SPRD_RTC_SEC_CNT_VALUE;
 		min_reg = SPRD_RTC_MIN_CNT_VALUE;
 		hour_reg = SPRD_RTC_HOUR_CNT_VALUE;
 		day_reg = SPRD_RTC_DAY_CNT_VALUE;
-		break;
-	case SPRD_RTC_ALARM:
+		अवरोध;
+	हाल SPRD_RTC_ALARM:
 		sec_reg = SPRD_RTC_SEC_ALM_VALUE;
 		min_reg = SPRD_RTC_MIN_ALM_VALUE;
 		hour_reg = SPRD_RTC_HOUR_ALM_VALUE;
 		day_reg = SPRD_RTC_DAY_ALM_VALUE;
-		break;
-	case SPRD_RTC_AUX_ALARM:
+		अवरोध;
+	हाल SPRD_RTC_AUX_ALARM:
 		sec_reg = SPRD_RTC_SEC_AUXALM_UPD;
 		min_reg = SPRD_RTC_MIN_AUXALM_UPD;
 		hour_reg = SPRD_RTC_HOUR_AUXALM_UPD;
 		day_reg = SPRD_RTC_DAY_AUXALM_UPD;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = regmap_read(rtc->regmap, rtc->base + sec_reg, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(rtc->regmap, rtc->base + sec_reg, &val);
+	अगर (ret)
+		वापस ret;
 
 	sec = val & SPRD_RTC_SEC_MASK;
 
-	ret = regmap_read(rtc->regmap, rtc->base + min_reg, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(rtc->regmap, rtc->base + min_reg, &val);
+	अगर (ret)
+		वापस ret;
 
 	min = val & SPRD_RTC_MIN_MASK;
 
-	ret = regmap_read(rtc->regmap, rtc->base + hour_reg, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(rtc->regmap, rtc->base + hour_reg, &val);
+	अगर (ret)
+		वापस ret;
 
 	hour = val & SPRD_RTC_HOUR_MASK;
 
-	ret = regmap_read(rtc->regmap, rtc->base + day_reg, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(rtc->regmap, rtc->base + day_reg, &val);
+	अगर (ret)
+		वापस ret;
 
 	day = val & SPRD_RTC_DAY_MASK;
-	*secs = (((time64_t)(day * 24) + hour) * 60 + min) * 60 + sec;
-	return 0;
-}
+	*secs = (((समय64_t)(day * 24) + hour) * 60 + min) * 60 + sec;
+	वापस 0;
+पूर्ण
 
-static int sprd_rtc_set_secs(struct sprd_rtc *rtc, enum sprd_rtc_reg_types type,
-			     time64_t secs)
-{
+अटल पूर्णांक sprd_rtc_set_secs(काष्ठा sprd_rtc *rtc, क्रमागत sprd_rtc_reg_types type,
+			     समय64_t secs)
+अणु
 	u32 sec_reg, min_reg, hour_reg, day_reg, sts_mask;
 	u32 sec, min, hour, day, val;
-	int ret, rem;
+	पूर्णांक ret, rem;
 
-	/* convert seconds to RTC time format */
-	day = div_s64_rem(secs, 86400, &rem);
+	/* convert seconds to RTC समय क्रमmat */
+	day = भाग_s64_rem(secs, 86400, &rem);
 	hour = rem / 3600;
 	rem -= hour * 3600;
 	min = rem / 60;
 	sec = rem - min * 60;
 
-	switch (type) {
-	case SPRD_RTC_TIME:
+	चयन (type) अणु
+	हाल SPRD_RTC_TIME:
 		sec_reg = SPRD_RTC_SEC_CNT_UPD;
 		min_reg = SPRD_RTC_MIN_CNT_UPD;
 		hour_reg = SPRD_RTC_HOUR_CNT_UPD;
 		day_reg = SPRD_RTC_DAY_CNT_UPD;
 		sts_mask = SPRD_RTC_TIME_INT_MASK;
-		break;
-	case SPRD_RTC_ALARM:
+		अवरोध;
+	हाल SPRD_RTC_ALARM:
 		sec_reg = SPRD_RTC_SEC_ALM_UPD;
 		min_reg = SPRD_RTC_MIN_ALM_UPD;
 		hour_reg = SPRD_RTC_HOUR_ALM_UPD;
 		day_reg = SPRD_RTC_DAY_ALM_UPD;
 		sts_mask = SPRD_RTC_ALMTIME_INT_MASK;
-		break;
-	case SPRD_RTC_AUX_ALARM:
+		अवरोध;
+	हाल SPRD_RTC_AUX_ALARM:
 		sec_reg = SPRD_RTC_SEC_AUXALM_UPD;
 		min_reg = SPRD_RTC_MIN_AUXALM_UPD;
 		hour_reg = SPRD_RTC_HOUR_AUXALM_UPD;
 		day_reg = SPRD_RTC_DAY_AUXALM_UPD;
 		sts_mask = 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = regmap_write(rtc->regmap, rtc->base + sec_reg, sec);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(rtc->regmap, rtc->base + sec_reg, sec);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(rtc->regmap, rtc->base + min_reg, min);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(rtc->regmap, rtc->base + min_reg, min);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(rtc->regmap, rtc->base + hour_reg, hour);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(rtc->regmap, rtc->base + hour_reg, hour);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(rtc->regmap, rtc->base + day_reg, day);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(rtc->regmap, rtc->base + day_reg, day);
+	अगर (ret)
+		वापस ret;
 
-	if (type == SPRD_RTC_AUX_ALARM)
-		return 0;
+	अगर (type == SPRD_RTC_AUX_ALARM)
+		वापस 0;
 
 	/*
-	 * Since the time and normal alarm registers are put in always-power-on
-	 * region supplied by VDDRTC, then these registers changing time will
-	 * be very long, about 125ms. Thus here we should wait until all
+	 * Since the समय and normal alarm रेजिस्टरs are put in always-घातer-on
+	 * region supplied by VDDRTC, then these रेजिस्टरs changing समय will
+	 * be very दीर्घ, about 125ms. Thus here we should रुको until all
 	 * values are updated successfully.
 	 */
-	ret = regmap_read_poll_timeout(rtc->regmap,
+	ret = regmap_पढ़ो_poll_समयout(rtc->regmap,
 				       rtc->base + SPRD_RTC_INT_RAW_STS, val,
 				       ((val & sts_mask) == sts_mask),
 				       SPRD_RTC_POLL_DELAY_US,
 				       SPRD_RTC_POLL_TIMEOUT);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(rtc->dev, "set time/alarm values timeout\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return regmap_write(rtc->regmap, rtc->base + SPRD_RTC_INT_CLR,
+	वापस regmap_ग_लिखो(rtc->regmap, rtc->base + SPRD_RTC_INT_CLR,
 			    sts_mask);
-}
+पूर्ण
 
-static int sprd_rtc_set_aux_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	struct sprd_rtc *rtc = dev_get_drvdata(dev);
-	time64_t secs = rtc_tm_to_time64(&alrm->time);
-	int ret;
+अटल पूर्णांक sprd_rtc_set_aux_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	काष्ठा sprd_rtc *rtc = dev_get_drvdata(dev);
+	समय64_t secs = rtc_पंचांग_to_समय64(&alrm->समय);
+	पूर्णांक ret;
 
-	/* clear the auxiliary alarm interrupt status */
-	ret = regmap_write(rtc->regmap, rtc->base + SPRD_RTC_INT_CLR,
+	/* clear the auxiliary alarm पूर्णांकerrupt status */
+	ret = regmap_ग_लिखो(rtc->regmap, rtc->base + SPRD_RTC_INT_CLR,
 			   SPRD_RTC_AUXALM_EN);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = sprd_rtc_set_secs(rtc, SPRD_RTC_AUX_ALARM, secs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (alrm->enabled) {
+	अगर (alrm->enabled) अणु
 		ret = regmap_update_bits(rtc->regmap,
 					 rtc->base + SPRD_RTC_INT_EN,
 					 SPRD_RTC_AUXALM_EN,
 					 SPRD_RTC_AUXALM_EN);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = regmap_update_bits(rtc->regmap,
 					 rtc->base + SPRD_RTC_INT_EN,
 					 SPRD_RTC_AUXALM_EN, 0);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sprd_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct sprd_rtc *rtc = dev_get_drvdata(dev);
-	time64_t secs;
-	int ret;
+अटल पूर्णांक sprd_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा sprd_rtc *rtc = dev_get_drvdata(dev);
+	समय64_t secs;
+	पूर्णांक ret;
 
-	if (!rtc->valid) {
+	अगर (!rtc->valid) अणु
 		dev_warn(dev, "RTC values are invalid\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = sprd_rtc_get_secs(rtc, SPRD_RTC_TIME, &secs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	rtc_time64_to_tm(secs, tm);
-	return 0;
-}
+	rtc_समय64_to_पंचांग(secs, पंचांग);
+	वापस 0;
+पूर्ण
 
-static int sprd_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct sprd_rtc *rtc = dev_get_drvdata(dev);
-	time64_t secs = rtc_tm_to_time64(tm);
-	int ret;
+अटल पूर्णांक sprd_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा sprd_rtc *rtc = dev_get_drvdata(dev);
+	समय64_t secs = rtc_पंचांग_to_समय64(पंचांग);
+	पूर्णांक ret;
 
 	ret = sprd_rtc_set_secs(rtc, SPRD_RTC_TIME, secs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!rtc->valid) {
-		/* Clear RTC power status firstly */
-		ret = regmap_write(rtc->regmap, rtc->base + SPRD_RTC_PWR_CTRL,
+	अगर (!rtc->valid) अणु
+		/* Clear RTC घातer status firstly */
+		ret = regmap_ग_लिखो(rtc->regmap, rtc->base + SPRD_RTC_PWR_CTRL,
 				   SPRD_RTC_POWER_STS_CLEAR);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/*
-		 * Set RTC power status to indicate now RTC has valid time
+		 * Set RTC घातer status to indicate now RTC has valid समय
 		 * values.
 		 */
-		ret = regmap_write(rtc->regmap, rtc->base + SPRD_RTC_PWR_CTRL,
+		ret = regmap_ग_लिखो(rtc->regmap, rtc->base + SPRD_RTC_PWR_CTRL,
 				   SPRD_RTC_POWER_STS_VALID);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		rtc->valid = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sprd_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	struct sprd_rtc *rtc = dev_get_drvdata(dev);
-	time64_t secs;
-	int ret;
+अटल पूर्णांक sprd_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	काष्ठा sprd_rtc *rtc = dev_get_drvdata(dev);
+	समय64_t secs;
+	पूर्णांक ret;
 	u32 val;
 
 	/*
-	 * The RTC core checks to see if there is an alarm already set in RTC
-	 * hardware, and we always read the normal alarm at this time.
+	 * The RTC core checks to see अगर there is an alarm alपढ़ोy set in RTC
+	 * hardware, and we always पढ़ो the normal alarm at this समय.
 	 */
 	ret = sprd_rtc_get_secs(rtc, SPRD_RTC_ALARM, &secs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	rtc_time64_to_tm(secs, &alrm->time);
+	rtc_समय64_to_पंचांग(secs, &alrm->समय);
 
-	ret = regmap_read(rtc->regmap, rtc->base + SPRD_RTC_INT_EN, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(rtc->regmap, rtc->base + SPRD_RTC_INT_EN, &val);
+	अगर (ret)
+		वापस ret;
 
 	alrm->enabled = !!(val & SPRD_RTC_ALARM_EN);
 
-	ret = regmap_read(rtc->regmap, rtc->base + SPRD_RTC_INT_RAW_STS, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(rtc->regmap, rtc->base + SPRD_RTC_INT_RAW_STS, &val);
+	अगर (ret)
+		वापस ret;
 
 	alrm->pending = !!(val & SPRD_RTC_ALARM_EN);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sprd_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	struct sprd_rtc *rtc = dev_get_drvdata(dev);
-	time64_t secs = rtc_tm_to_time64(&alrm->time);
-	struct rtc_time aie_time =
-		rtc_ktime_to_tm(rtc->rtc->aie_timer.node.expires);
-	int ret;
+अटल पूर्णांक sprd_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	काष्ठा sprd_rtc *rtc = dev_get_drvdata(dev);
+	समय64_t secs = rtc_पंचांग_to_समय64(&alrm->समय);
+	काष्ठा rtc_समय aie_समय =
+		rtc_kसमय_प्रकारo_पंचांग(rtc->rtc->aie_समयr.node.expires);
+	पूर्णांक ret;
 
 	/*
 	 * We have 2 groups alarms: normal alarm and auxiliary alarm. Since
-	 * both normal alarm event and auxiliary alarm event can wake up system
-	 * from deep sleep, but only alarm event can power up system from power
-	 * down status. Moreover we do not need to poll about 125ms when
-	 * updating auxiliary alarm registers. Thus we usually set auxiliary
-	 * alarm when wake up system from deep sleep, and for other scenarios,
+	 * both normal alarm event and auxiliary alarm event can wake up प्रणाली
+	 * from deep sleep, but only alarm event can घातer up प्रणाली from घातer
+	 * करोwn status. Moreover we करो not need to poll about 125ms when
+	 * updating auxiliary alarm रेजिस्टरs. Thus we usually set auxiliary
+	 * alarm when wake up प्रणाली from deep sleep, and क्रम other scenarios,
 	 * we should set normal alarm with polling status.
 	 *
-	 * So here we check if the alarm time is set by aie_timer, if yes, we
-	 * should set normal alarm, if not, we should set auxiliary alarm which
+	 * So here we check अगर the alarm समय is set by aie_समयr, अगर yes, we
+	 * should set normal alarm, अगर not, we should set auxiliary alarm which
 	 * means it is just a wake event.
 	 */
-	if (!rtc->rtc->aie_timer.enabled || rtc_tm_sub(&aie_time, &alrm->time))
-		return sprd_rtc_set_aux_alarm(dev, alrm);
+	अगर (!rtc->rtc->aie_समयr.enabled || rtc_पंचांग_sub(&aie_समय, &alrm->समय))
+		वापस sprd_rtc_set_aux_alarm(dev, alrm);
 
-	/* clear the alarm interrupt status firstly */
-	ret = regmap_write(rtc->regmap, rtc->base + SPRD_RTC_INT_CLR,
+	/* clear the alarm पूर्णांकerrupt status firstly */
+	ret = regmap_ग_लिखो(rtc->regmap, rtc->base + SPRD_RTC_INT_CLR,
 			   SPRD_RTC_ALARM_EN);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = sprd_rtc_set_secs(rtc, SPRD_RTC_ALARM, secs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (alrm->enabled) {
+	अगर (alrm->enabled) अणु
 		ret = regmap_update_bits(rtc->regmap,
 					 rtc->base + SPRD_RTC_INT_EN,
 					 SPRD_RTC_ALARM_EN,
 					 SPRD_RTC_ALARM_EN);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/* unlock the alarm to enable the alarm function. */
 		ret = sprd_rtc_lock_alarm(rtc, false);
-	} else {
+	पूर्ण अन्यथा अणु
 		regmap_update_bits(rtc->regmap,
 				   rtc->base + SPRD_RTC_INT_EN,
 				   SPRD_RTC_ALARM_EN, 0);
 
 		/*
-		 * Lock the alarm function in case fake alarm event will power
-		 * up systems.
+		 * Lock the alarm function in हाल fake alarm event will घातer
+		 * up प्रणालीs.
 		 */
 		ret = sprd_rtc_lock_alarm(rtc, true);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sprd_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
-{
-	struct sprd_rtc *rtc = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक sprd_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
+अणु
+	काष्ठा sprd_rtc *rtc = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if (enabled) {
+	अगर (enabled) अणु
 		ret = regmap_update_bits(rtc->regmap,
 					 rtc->base + SPRD_RTC_INT_EN,
 					 SPRD_RTC_ALARM_EN | SPRD_RTC_AUXALM_EN,
 					 SPRD_RTC_ALARM_EN | SPRD_RTC_AUXALM_EN);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = sprd_rtc_lock_alarm(rtc, false);
-	} else {
+	पूर्ण अन्यथा अणु
 		regmap_update_bits(rtc->regmap, rtc->base + SPRD_RTC_INT_EN,
 				   SPRD_RTC_ALARM_EN | SPRD_RTC_AUXALM_EN, 0);
 
 		ret = sprd_rtc_lock_alarm(rtc, true);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct rtc_class_ops sprd_rtc_ops = {
-	.read_time = sprd_rtc_read_time,
-	.set_time = sprd_rtc_set_time,
-	.read_alarm = sprd_rtc_read_alarm,
+अटल स्थिर काष्ठा rtc_class_ops sprd_rtc_ops = अणु
+	.पढ़ो_समय = sprd_rtc_पढ़ो_समय,
+	.set_समय = sprd_rtc_set_समय,
+	.पढ़ो_alarm = sprd_rtc_पढ़ो_alarm,
 	.set_alarm = sprd_rtc_set_alarm,
 	.alarm_irq_enable = sprd_rtc_alarm_irq_enable,
-};
+पूर्ण;
 
-static irqreturn_t sprd_rtc_handler(int irq, void *dev_id)
-{
-	struct sprd_rtc *rtc = dev_id;
-	int ret;
+अटल irqवापस_t sprd_rtc_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा sprd_rtc *rtc = dev_id;
+	पूर्णांक ret;
 
-	ret = sprd_rtc_clear_alarm_ints(rtc);
-	if (ret)
-		return IRQ_RETVAL(ret);
+	ret = sprd_rtc_clear_alarm_पूर्णांकs(rtc);
+	अगर (ret)
+		वापस IRQ_RETVAL(ret);
 
 	rtc_update_irq(rtc->rtc, 1, RTC_AF | RTC_IRQF);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int sprd_rtc_check_power_down(struct sprd_rtc *rtc)
-{
+अटल पूर्णांक sprd_rtc_check_घातer_करोwn(काष्ठा sprd_rtc *rtc)
+अणु
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_read(rtc->regmap, rtc->base + SPRD_RTC_PWR_STS, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(rtc->regmap, rtc->base + SPRD_RTC_PWR_STS, &val);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * If the RTC power status value is SPRD_RTC_POWER_RESET_VALUE, which
-	 * means the RTC has been powered down, so the RTC time values are
+	 * If the RTC घातer status value is SPRD_RTC_POWER_RESET_VALUE, which
+	 * means the RTC has been घातered करोwn, so the RTC समय values are
 	 * invalid.
 	 */
 	rtc->valid = val != SPRD_RTC_POWER_RESET_VALUE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sprd_rtc_check_alarm_int(struct sprd_rtc *rtc)
-{
+अटल पूर्णांक sprd_rtc_check_alarm_पूर्णांक(काष्ठा sprd_rtc *rtc)
+अणु
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_read(rtc->regmap, rtc->base + SPRD_RTC_SPG_VALUE, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(rtc->regmap, rtc->base + SPRD_RTC_SPG_VALUE, &val);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * The SPRD_RTC_INT_EN register is not put in always-power-on region
-	 * supplied by VDDRTC, so we should check if we need enable the alarm
-	 * interrupt when system booting.
+	 * The SPRD_RTC_INT_EN रेजिस्टर is not put in always-घातer-on region
+	 * supplied by VDDRTC, so we should check अगर we need enable the alarm
+	 * पूर्णांकerrupt when प्रणाली booting.
 	 *
 	 * If we have set SPRD_RTC_POWEROFF_ALM_FLAG which is saved in
-	 * always-power-on region, that means we have set one alarm last time,
-	 * so we should enable the alarm interrupt to help RTC core to see if
-	 * there is an alarm already set in RTC hardware.
+	 * always-घातer-on region, that means we have set one alarm last समय,
+	 * so we should enable the alarm पूर्णांकerrupt to help RTC core to see अगर
+	 * there is an alarm alपढ़ोy set in RTC hardware.
 	 */
-	if (!(val & SPRD_RTC_POWEROFF_ALM_FLAG))
-		return 0;
+	अगर (!(val & SPRD_RTC_POWEROFF_ALM_FLAG))
+		वापस 0;
 
-	return regmap_update_bits(rtc->regmap, rtc->base + SPRD_RTC_INT_EN,
+	वापस regmap_update_bits(rtc->regmap, rtc->base + SPRD_RTC_INT_EN,
 				  SPRD_RTC_ALARM_EN, SPRD_RTC_ALARM_EN);
-}
+पूर्ण
 
-static int sprd_rtc_probe(struct platform_device *pdev)
-{
-	struct device_node *node = pdev->dev.of_node;
-	struct sprd_rtc *rtc;
-	int ret;
+अटल पूर्णांक sprd_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा sprd_rtc *rtc;
+	पूर्णांक ret;
 
-	rtc = devm_kzalloc(&pdev->dev, sizeof(*rtc), GFP_KERNEL);
-	if (!rtc)
-		return -ENOMEM;
+	rtc = devm_kzalloc(&pdev->dev, माप(*rtc), GFP_KERNEL);
+	अगर (!rtc)
+		वापस -ENOMEM;
 
-	rtc->regmap = dev_get_regmap(pdev->dev.parent, NULL);
-	if (!rtc->regmap)
-		return -ENODEV;
+	rtc->regmap = dev_get_regmap(pdev->dev.parent, शून्य);
+	अगर (!rtc->regmap)
+		वापस -ENODEV;
 
-	ret = of_property_read_u32(node, "reg", &rtc->base);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(node, "reg", &rtc->base);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to get RTC base address\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	rtc->irq = platform_get_irq(pdev, 0);
-	if (rtc->irq < 0)
-		return rtc->irq;
+	rtc->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (rtc->irq < 0)
+		वापस rtc->irq;
 
 	rtc->rtc = devm_rtc_allocate_device(&pdev->dev);
-	if (IS_ERR(rtc->rtc))
-		return PTR_ERR(rtc->rtc);
+	अगर (IS_ERR(rtc->rtc))
+		वापस PTR_ERR(rtc->rtc);
 
 	rtc->dev = &pdev->dev;
-	platform_set_drvdata(pdev, rtc);
+	platक्रमm_set_drvdata(pdev, rtc);
 
-	/* check if we need set the alarm interrupt */
-	ret = sprd_rtc_check_alarm_int(rtc);
-	if (ret) {
+	/* check अगर we need set the alarm पूर्णांकerrupt */
+	ret = sprd_rtc_check_alarm_पूर्णांक(rtc);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to check RTC alarm interrupt\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* check if RTC time values are valid */
-	ret = sprd_rtc_check_power_down(rtc);
-	if (ret) {
+	/* check अगर RTC समय values are valid */
+	ret = sprd_rtc_check_घातer_करोwn(rtc);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to check RTC time values\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = devm_request_threaded_irq(&pdev->dev, rtc->irq, NULL,
+	ret = devm_request_thपढ़ोed_irq(&pdev->dev, rtc->irq, शून्य,
 					sprd_rtc_handler,
 					IRQF_ONESHOT | IRQF_EARLY_RESUME,
 					pdev->name, rtc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to request RTC irq\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	device_init_wakeup(&pdev->dev, 1);
 
 	rtc->rtc->ops = &sprd_rtc_ops;
 	rtc->rtc->range_min = 0;
 	rtc->rtc->range_max = 5662310399LL;
-	ret = devm_rtc_register_device(rtc->rtc);
-	if (ret) {
+	ret = devm_rtc_रेजिस्टर_device(rtc->rtc);
+	अगर (ret) अणु
 		device_init_wakeup(&pdev->dev, 0);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id sprd_rtc_of_match[] = {
-	{ .compatible = "sprd,sc2731-rtc", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id sprd_rtc_of_match[] = अणु
+	अणु .compatible = "sprd,sc2731-rtc", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sprd_rtc_of_match);
 
-static struct platform_driver sprd_rtc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sprd_rtc_driver = अणु
+	.driver = अणु
 		.name = "sprd-rtc",
 		.of_match_table = sprd_rtc_of_match,
-	},
+	पूर्ण,
 	.probe	= sprd_rtc_probe,
-};
-module_platform_driver(sprd_rtc_driver);
+पूर्ण;
+module_platक्रमm_driver(sprd_rtc_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Spreadtrum RTC Device Driver");

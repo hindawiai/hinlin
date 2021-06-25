@@ -1,208 +1,209 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Bitmain BM1880 SoC clock driver
+ * Biपंचांगain BM1880 SoC घड़ी driver
  *
  * Copyright (c) 2019 Linaro Ltd.
  * Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include <dt-bindings/clock/bm1880-clock.h>
+#समावेश <dt-bindings/घड़ी/bm1880-घड़ी.h>
 
-#define BM1880_CLK_MPLL_CTL	0x00
-#define BM1880_CLK_SPLL_CTL	0x04
-#define BM1880_CLK_FPLL_CTL	0x08
-#define BM1880_CLK_DDRPLL_CTL	0x0c
+#घोषणा BM1880_CLK_MPLL_CTL	0x00
+#घोषणा BM1880_CLK_SPLL_CTL	0x04
+#घोषणा BM1880_CLK_FPLL_CTL	0x08
+#घोषणा BM1880_CLK_DDRPLL_CTL	0x0c
 
-#define BM1880_CLK_ENABLE0	0x00
-#define BM1880_CLK_ENABLE1	0x04
-#define BM1880_CLK_SELECT	0x20
-#define BM1880_CLK_DIV0		0x40
-#define BM1880_CLK_DIV1		0x44
-#define BM1880_CLK_DIV2		0x48
-#define BM1880_CLK_DIV3		0x4c
-#define BM1880_CLK_DIV4		0x50
-#define BM1880_CLK_DIV5		0x54
-#define BM1880_CLK_DIV6		0x58
-#define BM1880_CLK_DIV7		0x5c
-#define BM1880_CLK_DIV8		0x60
-#define BM1880_CLK_DIV9		0x64
-#define BM1880_CLK_DIV10	0x68
-#define BM1880_CLK_DIV11	0x6c
-#define BM1880_CLK_DIV12	0x70
-#define BM1880_CLK_DIV13	0x74
-#define BM1880_CLK_DIV14	0x78
-#define BM1880_CLK_DIV15	0x7c
-#define BM1880_CLK_DIV16	0x80
-#define BM1880_CLK_DIV17	0x84
-#define BM1880_CLK_DIV18	0x88
-#define BM1880_CLK_DIV19	0x8c
-#define BM1880_CLK_DIV20	0x90
-#define BM1880_CLK_DIV21	0x94
-#define BM1880_CLK_DIV22	0x98
-#define BM1880_CLK_DIV23	0x9c
-#define BM1880_CLK_DIV24	0xa0
-#define BM1880_CLK_DIV25	0xa4
-#define BM1880_CLK_DIV26	0xa8
-#define BM1880_CLK_DIV27	0xac
-#define BM1880_CLK_DIV28	0xb0
+#घोषणा BM1880_CLK_ENABLE0	0x00
+#घोषणा BM1880_CLK_ENABLE1	0x04
+#घोषणा BM1880_CLK_SELECT	0x20
+#घोषणा BM1880_CLK_DIV0		0x40
+#घोषणा BM1880_CLK_DIV1		0x44
+#घोषणा BM1880_CLK_DIV2		0x48
+#घोषणा BM1880_CLK_DIV3		0x4c
+#घोषणा BM1880_CLK_DIV4		0x50
+#घोषणा BM1880_CLK_DIV5		0x54
+#घोषणा BM1880_CLK_DIV6		0x58
+#घोषणा BM1880_CLK_DIV7		0x5c
+#घोषणा BM1880_CLK_DIV8		0x60
+#घोषणा BM1880_CLK_DIV9		0x64
+#घोषणा BM1880_CLK_DIV10	0x68
+#घोषणा BM1880_CLK_DIV11	0x6c
+#घोषणा BM1880_CLK_DIV12	0x70
+#घोषणा BM1880_CLK_DIV13	0x74
+#घोषणा BM1880_CLK_DIV14	0x78
+#घोषणा BM1880_CLK_DIV15	0x7c
+#घोषणा BM1880_CLK_DIV16	0x80
+#घोषणा BM1880_CLK_DIV17	0x84
+#घोषणा BM1880_CLK_DIV18	0x88
+#घोषणा BM1880_CLK_DIV19	0x8c
+#घोषणा BM1880_CLK_DIV20	0x90
+#घोषणा BM1880_CLK_DIV21	0x94
+#घोषणा BM1880_CLK_DIV22	0x98
+#घोषणा BM1880_CLK_DIV23	0x9c
+#घोषणा BM1880_CLK_DIV24	0xa0
+#घोषणा BM1880_CLK_DIV25	0xa4
+#घोषणा BM1880_CLK_DIV26	0xa8
+#घोषणा BM1880_CLK_DIV27	0xac
+#घोषणा BM1880_CLK_DIV28	0xb0
 
-#define to_bm1880_pll_clk(_hw) container_of(_hw, struct bm1880_pll_hw_clock, hw)
-#define to_bm1880_div_clk(_hw) container_of(_hw, struct bm1880_div_hw_clock, hw)
+#घोषणा to_bm1880_pll_clk(_hw) container_of(_hw, काष्ठा bm1880_pll_hw_घड़ी, hw)
+#घोषणा to_bm1880_भाग_clk(_hw) container_of(_hw, काष्ठा bm1880_भाग_hw_घड़ी, hw)
 
-static DEFINE_SPINLOCK(bm1880_clk_lock);
+अटल DEFINE_SPINLOCK(bm1880_clk_lock);
 
-struct bm1880_clock_data {
-	void __iomem *pll_base;
-	void __iomem *sys_base;
-	struct clk_hw_onecell_data hw_data;
-};
+काष्ठा bm1880_घड़ी_data अणु
+	व्योम __iomem *pll_base;
+	व्योम __iomem *sys_base;
+	काष्ठा clk_hw_onecell_data hw_data;
+पूर्ण;
 
-struct bm1880_gate_clock {
-	unsigned int	id;
-	const char	*name;
-	const char      *parent;
+काष्ठा bm1880_gate_घड़ी अणु
+	अचिन्हित पूर्णांक	id;
+	स्थिर अक्षर	*name;
+	स्थिर अक्षर      *parent;
 	u32		gate_reg;
-	s8		gate_shift;
-	unsigned long	flags;
-};
+	s8		gate_shअगरt;
+	अचिन्हित दीर्घ	flags;
+पूर्ण;
 
-struct bm1880_mux_clock {
-	unsigned int	id;
-	const char	*name;
-	const char      * const *parents;
+काष्ठा bm1880_mux_घड़ी अणु
+	अचिन्हित पूर्णांक	id;
+	स्थिर अक्षर	*name;
+	स्थिर अक्षर      * स्थिर *parents;
 	s8		num_parents;
 	u32		reg;
-	s8		shift;
-	unsigned long	flags;
-};
+	s8		shअगरt;
+	अचिन्हित दीर्घ	flags;
+पूर्ण;
 
-struct bm1880_div_clock {
-	unsigned int	id;
-	const char	*name;
+काष्ठा bm1880_भाग_घड़ी अणु
+	अचिन्हित पूर्णांक	id;
+	स्थिर अक्षर	*name;
 	u32		reg;
-	u8		shift;
+	u8		shअगरt;
 	u8		width;
 	u32		initval;
-	const struct clk_div_table *table;
-	unsigned long flags;
-};
+	स्थिर काष्ठा clk_भाग_प्रकारable *table;
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
-struct bm1880_div_hw_clock {
-	struct bm1880_div_clock div;
-	void __iomem *base;
+काष्ठा bm1880_भाग_hw_घड़ी अणु
+	काष्ठा bm1880_भाग_घड़ी भाग;
+	व्योम __iomem *base;
 	spinlock_t *lock;
-	struct clk_hw hw;
-	struct clk_init_data init;
-};
+	काष्ठा clk_hw hw;
+	काष्ठा clk_init_data init;
+पूर्ण;
 
-struct bm1880_composite_clock {
-	unsigned int	id;
-	const char	*name;
-	const char	*parent;
-	const char      * const *parents;
-	unsigned int	num_parents;
-	unsigned long	flags;
+काष्ठा bm1880_composite_घड़ी अणु
+	अचिन्हित पूर्णांक	id;
+	स्थिर अक्षर	*name;
+	स्थिर अक्षर	*parent;
+	स्थिर अक्षर      * स्थिर *parents;
+	अचिन्हित पूर्णांक	num_parents;
+	अचिन्हित दीर्घ	flags;
 
 	u32		gate_reg;
 	u32		mux_reg;
-	u32		div_reg;
+	u32		भाग_reg;
 
-	s8		gate_shift;
-	s8		mux_shift;
-	s8		div_shift;
-	s8		div_width;
-	s16		div_initval;
-	const struct clk_div_table *table;
-};
+	s8		gate_shअगरt;
+	s8		mux_shअगरt;
+	s8		भाग_shअगरt;
+	s8		भाग_width;
+	s16		भाग_initval;
+	स्थिर काष्ठा clk_भाग_प्रकारable *table;
+पूर्ण;
 
-struct bm1880_pll_clock {
-	unsigned int	id;
-	const char	*name;
+काष्ठा bm1880_pll_घड़ी अणु
+	अचिन्हित पूर्णांक	id;
+	स्थिर अक्षर	*name;
 	u32		reg;
-	unsigned long	flags;
-};
+	अचिन्हित दीर्घ	flags;
+पूर्ण;
 
-struct bm1880_pll_hw_clock {
-	struct bm1880_pll_clock pll;
-	void __iomem *base;
-	struct clk_hw hw;
-	struct clk_init_data init;
-};
+काष्ठा bm1880_pll_hw_घड़ी अणु
+	काष्ठा bm1880_pll_घड़ी pll;
+	व्योम __iomem *base;
+	काष्ठा clk_hw hw;
+	काष्ठा clk_init_data init;
+पूर्ण;
 
-static const struct clk_ops bm1880_pll_ops;
-static const struct clk_ops bm1880_clk_div_ops;
+अटल स्थिर काष्ठा clk_ops bm1880_pll_ops;
+अटल स्थिर काष्ठा clk_ops bm1880_clk_भाग_ops;
 
-#define GATE_DIV(_id, _name, _parent, _gate_reg, _gate_shift, _div_reg,	\
-			_div_shift, _div_width, _div_initval, _table,	\
-			_flags) {					\
+#घोषणा GATE_DIV(_id, _name, _parent, _gate_reg, _gate_shअगरt, _भाग_reg,	\
+			_भाग_shअगरt, _भाग_width, _भाग_initval, _table,	\
+			_flags) अणु					\
 		.id = _id,						\
 		.parent = _parent,					\
 		.name = _name,						\
 		.gate_reg = _gate_reg,					\
-		.gate_shift = _gate_shift,				\
-		.div_reg = _div_reg,					\
-		.div_shift = _div_shift,				\
-		.div_width = _div_width,				\
-		.div_initval = _div_initval,				\
+		.gate_shअगरt = _gate_shअगरt,				\
+		.भाग_reg = _भाग_reg,					\
+		.भाग_shअगरt = _भाग_shअगरt,				\
+		.भाग_width = _भाग_width,				\
+		.भाग_initval = _भाग_initval,				\
 		.table = _table,					\
-		.mux_shift = -1,					\
+		.mux_shअगरt = -1,					\
 		.flags = _flags,					\
-	}
+	पूर्ण
 
-#define GATE_MUX(_id, _name, _parents, _gate_reg, _gate_shift,		\
-			_mux_reg, _mux_shift, _flags) {			\
+#घोषणा GATE_MUX(_id, _name, _parents, _gate_reg, _gate_shअगरt,		\
+			_mux_reg, _mux_shअगरt, _flags) अणु			\
 		.id = _id,						\
 		.parents = _parents,					\
 		.num_parents = ARRAY_SIZE(_parents),			\
 		.name = _name,						\
 		.gate_reg = _gate_reg,					\
-		.gate_shift = _gate_shift,				\
-		.div_shift = -1,					\
+		.gate_shअगरt = _gate_shअगरt,				\
+		.भाग_shअगरt = -1,					\
 		.mux_reg = _mux_reg,					\
-		.mux_shift = _mux_shift,				\
+		.mux_shअगरt = _mux_shअगरt,				\
 		.flags = _flags,					\
-	}
+	पूर्ण
 
-#define CLK_PLL(_id, _name, _parent, _reg, _flags) {			\
+#घोषणा CLK_PLL(_id, _name, _parent, _reg, _flags) अणु			\
 		.pll.id = _id,						\
 		.pll.name = _name,					\
 		.pll.reg = _reg,					\
 		.hw.init = CLK_HW_INIT_PARENTS_DATA(_name, _parent,	\
 						    &bm1880_pll_ops,	\
 						    _flags),		\
-	}
+	पूर्ण
 
-#define CLK_DIV(_id, _name, _parent, _reg, _shift, _width, _initval,	\
-				_table,	_flags) {			\
-		.div.id = _id,						\
-		.div.name = _name,					\
-		.div.reg = _reg,					\
-		.div.shift = _shift,					\
-		.div.width = _width,					\
-		.div.initval = _initval,				\
-		.div.table = _table,					\
+#घोषणा CLK_DIV(_id, _name, _parent, _reg, _shअगरt, _width, _initval,	\
+				_table,	_flags) अणु			\
+		.भाग.id = _id,						\
+		.भाग.name = _name,					\
+		.भाग.reg = _reg,					\
+		.भाग.shअगरt = _shअगरt,					\
+		.भाग.width = _width,					\
+		.भाग.initval = _initval,				\
+		.भाग.table = _table,					\
 		.hw.init = CLK_HW_INIT_HW(_name, _parent,		\
-					  &bm1880_clk_div_ops,		\
+					  &bm1880_clk_भाग_ops,		\
 					  _flags),			\
-	}
+	पूर्ण
 
-static struct clk_parent_data bm1880_pll_parent[] = {
-	{ .fw_name = "osc", .name = "osc" },
-};
+अटल काष्ठा clk_parent_data bm1880_pll_parent[] = अणु
+	अणु .fw_name = "osc", .name = "osc" पूर्ण,
+पूर्ण;
 
 /*
- * All PLL clocks are marked as CRITICAL, hence they are very crucial
- * for the functioning of the SoC
+ * All PLL घड़ीs are marked as CRITICAL, hence they are very crucial
+ * क्रम the functioning of the SoC
  */
-static struct bm1880_pll_hw_clock bm1880_pll_clks[] = {
+अटल काष्ठा bm1880_pll_hw_घड़ी bm1880_pll_clks[] = अणु
 	CLK_PLL(BM1880_CLK_MPLL, "clk_mpll", bm1880_pll_parent,
 		BM1880_CLK_MPLL_CTL, 0),
 	CLK_PLL(BM1880_CLK_SPLL, "clk_spll", bm1880_pll_parent,
@@ -211,757 +212,757 @@ static struct bm1880_pll_hw_clock bm1880_pll_clks[] = {
 		BM1880_CLK_FPLL_CTL, 0),
 	CLK_PLL(BM1880_CLK_DDRPLL, "clk_ddrpll", bm1880_pll_parent,
 		BM1880_CLK_DDRPLL_CTL, 0),
-};
+पूर्ण;
 
 /*
- * Clocks marked as CRITICAL are needed for the proper functioning
+ * Clocks marked as CRITICAL are needed क्रम the proper functioning
  * of the SoC.
  */
-static const struct bm1880_gate_clock bm1880_gate_clks[] = {
-	{ BM1880_CLK_AHB_ROM, "clk_ahb_rom", "clk_mux_axi6",
-	  BM1880_CLK_ENABLE0, 2, 0 },
-	{ BM1880_CLK_AXI_SRAM, "clk_axi_sram", "clk_axi1",
-	  BM1880_CLK_ENABLE0, 3, 0 },
+अटल स्थिर काष्ठा bm1880_gate_घड़ी bm1880_gate_clks[] = अणु
+	अणु BM1880_CLK_AHB_ROM, "clk_ahb_rom", "clk_mux_axi6",
+	  BM1880_CLK_ENABLE0, 2, 0 पूर्ण,
+	अणु BM1880_CLK_AXI_SRAM, "clk_axi_sram", "clk_axi1",
+	  BM1880_CLK_ENABLE0, 3, 0 पूर्ण,
 	/*
-	 * Since this clock is sourcing the DDR memory, let's mark it as
-	 * critical to avoid gating.
+	 * Since this घड़ी is sourcing the DDR memory, let's mark it as
+	 * critical to aव्योम gating.
 	 */
-	{ BM1880_CLK_DDR_AXI, "clk_ddr_axi", "clk_mux_axi6",
-	  BM1880_CLK_ENABLE0, 4, CLK_IS_CRITICAL },
-	{ BM1880_CLK_APB_EFUSE, "clk_apb_efuse", "clk_mux_axi6",
-	  BM1880_CLK_ENABLE0, 6, 0 },
-	{ BM1880_CLK_AXI5_EMMC, "clk_axi5_emmc", "clk_axi5",
-	  BM1880_CLK_ENABLE0, 7, 0 },
-	{ BM1880_CLK_AXI5_SD, "clk_axi5_sd", "clk_axi5",
-	  BM1880_CLK_ENABLE0, 10, 0 },
-	{ BM1880_CLK_AXI4_ETH0, "clk_axi4_eth0", "clk_axi4",
-	  BM1880_CLK_ENABLE0, 14, 0 },
-	{ BM1880_CLK_AXI4_ETH1, "clk_axi4_eth1", "clk_axi4",
-	  BM1880_CLK_ENABLE0, 16, 0 },
-	{ BM1880_CLK_AXI1_GDMA, "clk_axi1_gdma", "clk_axi1",
-	  BM1880_CLK_ENABLE0, 17, 0 },
-	/* Don't gate GPIO clocks as it is not owned by the GPIO driver */
-	{ BM1880_CLK_APB_GPIO, "clk_apb_gpio", "clk_mux_axi6",
-	  BM1880_CLK_ENABLE0, 18, CLK_IGNORE_UNUSED },
-	{ BM1880_CLK_APB_GPIO_INTR, "clk_apb_gpio_intr", "clk_mux_axi6",
-	  BM1880_CLK_ENABLE0, 19, CLK_IGNORE_UNUSED },
-	{ BM1880_CLK_AXI1_MINER, "clk_axi1_miner", "clk_axi1",
-	  BM1880_CLK_ENABLE0, 21, 0 },
-	{ BM1880_CLK_AHB_SF, "clk_ahb_sf", "clk_mux_axi6",
-	  BM1880_CLK_ENABLE0, 22, 0 },
+	अणु BM1880_CLK_DDR_AXI, "clk_ddr_axi", "clk_mux_axi6",
+	  BM1880_CLK_ENABLE0, 4, CLK_IS_CRITICAL पूर्ण,
+	अणु BM1880_CLK_APB_EFUSE, "clk_apb_efuse", "clk_mux_axi6",
+	  BM1880_CLK_ENABLE0, 6, 0 पूर्ण,
+	अणु BM1880_CLK_AXI5_EMMC, "clk_axi5_emmc", "clk_axi5",
+	  BM1880_CLK_ENABLE0, 7, 0 पूर्ण,
+	अणु BM1880_CLK_AXI5_SD, "clk_axi5_sd", "clk_axi5",
+	  BM1880_CLK_ENABLE0, 10, 0 पूर्ण,
+	अणु BM1880_CLK_AXI4_ETH0, "clk_axi4_eth0", "clk_axi4",
+	  BM1880_CLK_ENABLE0, 14, 0 पूर्ण,
+	अणु BM1880_CLK_AXI4_ETH1, "clk_axi4_eth1", "clk_axi4",
+	  BM1880_CLK_ENABLE0, 16, 0 पूर्ण,
+	अणु BM1880_CLK_AXI1_GDMA, "clk_axi1_gdma", "clk_axi1",
+	  BM1880_CLK_ENABLE0, 17, 0 पूर्ण,
+	/* Don't gate GPIO घड़ीs as it is not owned by the GPIO driver */
+	अणु BM1880_CLK_APB_GPIO, "clk_apb_gpio", "clk_mux_axi6",
+	  BM1880_CLK_ENABLE0, 18, CLK_IGNORE_UNUSED पूर्ण,
+	अणु BM1880_CLK_APB_GPIO_INTR, "clk_apb_gpio_intr", "clk_mux_axi6",
+	  BM1880_CLK_ENABLE0, 19, CLK_IGNORE_UNUSED पूर्ण,
+	अणु BM1880_CLK_AXI1_MINER, "clk_axi1_miner", "clk_axi1",
+	  BM1880_CLK_ENABLE0, 21, 0 पूर्ण,
+	अणु BM1880_CLK_AHB_SF, "clk_ahb_sf", "clk_mux_axi6",
+	  BM1880_CLK_ENABLE0, 22, 0 पूर्ण,
 	/*
-	 * Not sure which module this clock is sourcing but gating this clock
-	 * prevents the system from booting. So, let's mark it as critical.
+	 * Not sure which module this घड़ी is sourcing but gating this घड़ी
+	 * prevents the प्रणाली from booting. So, let's mark it as critical.
 	 */
-	{ BM1880_CLK_SDMA_AXI, "clk_sdma_axi", "clk_axi5",
-	  BM1880_CLK_ENABLE0, 23, CLK_IS_CRITICAL },
-	{ BM1880_CLK_APB_I2C, "clk_apb_i2c", "clk_mux_axi6",
-	  BM1880_CLK_ENABLE0, 25, 0 },
-	{ BM1880_CLK_APB_WDT, "clk_apb_wdt", "clk_mux_axi6",
-	  BM1880_CLK_ENABLE0, 26, 0 },
-	{ BM1880_CLK_APB_JPEG, "clk_apb_jpeg", "clk_axi6",
-	  BM1880_CLK_ENABLE0, 27, 0 },
-	{ BM1880_CLK_AXI5_NF, "clk_axi5_nf", "clk_axi5",
-	  BM1880_CLK_ENABLE0, 29, 0 },
-	{ BM1880_CLK_APB_NF, "clk_apb_nf", "clk_axi6",
-	  BM1880_CLK_ENABLE0, 30, 0 },
-	{ BM1880_CLK_APB_PWM, "clk_apb_pwm", "clk_mux_axi6",
-	  BM1880_CLK_ENABLE1, 0, 0 },
-	{ BM1880_CLK_RV, "clk_rv", "clk_mux_rv",
-	  BM1880_CLK_ENABLE1, 1, 0 },
-	{ BM1880_CLK_APB_SPI, "clk_apb_spi", "clk_mux_axi6",
-	  BM1880_CLK_ENABLE1, 2, 0 },
-	{ BM1880_CLK_UART_500M, "clk_uart_500m", "clk_div_uart_500m",
-	  BM1880_CLK_ENABLE1, 4, 0 },
-	{ BM1880_CLK_APB_UART, "clk_apb_uart", "clk_axi6",
-	  BM1880_CLK_ENABLE1, 5, 0 },
-	{ BM1880_CLK_APB_I2S, "clk_apb_i2s", "clk_axi6",
-	  BM1880_CLK_ENABLE1, 6, 0 },
-	{ BM1880_CLK_AXI4_USB, "clk_axi4_usb", "clk_axi4",
-	  BM1880_CLK_ENABLE1, 7, 0 },
-	{ BM1880_CLK_APB_USB, "clk_apb_usb", "clk_axi6",
-	  BM1880_CLK_ENABLE1, 8, 0 },
-	{ BM1880_CLK_12M_USB, "clk_12m_usb", "clk_div_12m_usb",
-	  BM1880_CLK_ENABLE1, 11, 0 },
-	{ BM1880_CLK_APB_VIDEO, "clk_apb_video", "clk_axi6",
-	  BM1880_CLK_ENABLE1, 12, 0 },
-	{ BM1880_CLK_APB_VPP, "clk_apb_vpp", "clk_axi6",
-	  BM1880_CLK_ENABLE1, 15, 0 },
-	{ BM1880_CLK_AXI6, "clk_axi6", "clk_mux_axi6",
-	  BM1880_CLK_ENABLE1, 21, 0 },
-};
+	अणु BM1880_CLK_SDMA_AXI, "clk_sdma_axi", "clk_axi5",
+	  BM1880_CLK_ENABLE0, 23, CLK_IS_CRITICAL पूर्ण,
+	अणु BM1880_CLK_APB_I2C, "clk_apb_i2c", "clk_mux_axi6",
+	  BM1880_CLK_ENABLE0, 25, 0 पूर्ण,
+	अणु BM1880_CLK_APB_WDT, "clk_apb_wdt", "clk_mux_axi6",
+	  BM1880_CLK_ENABLE0, 26, 0 पूर्ण,
+	अणु BM1880_CLK_APB_JPEG, "clk_apb_jpeg", "clk_axi6",
+	  BM1880_CLK_ENABLE0, 27, 0 पूर्ण,
+	अणु BM1880_CLK_AXI5_NF, "clk_axi5_nf", "clk_axi5",
+	  BM1880_CLK_ENABLE0, 29, 0 पूर्ण,
+	अणु BM1880_CLK_APB_NF, "clk_apb_nf", "clk_axi6",
+	  BM1880_CLK_ENABLE0, 30, 0 पूर्ण,
+	अणु BM1880_CLK_APB_PWM, "clk_apb_pwm", "clk_mux_axi6",
+	  BM1880_CLK_ENABLE1, 0, 0 पूर्ण,
+	अणु BM1880_CLK_RV, "clk_rv", "clk_mux_rv",
+	  BM1880_CLK_ENABLE1, 1, 0 पूर्ण,
+	अणु BM1880_CLK_APB_SPI, "clk_apb_spi", "clk_mux_axi6",
+	  BM1880_CLK_ENABLE1, 2, 0 पूर्ण,
+	अणु BM1880_CLK_UART_500M, "clk_uart_500m", "clk_div_uart_500m",
+	  BM1880_CLK_ENABLE1, 4, 0 पूर्ण,
+	अणु BM1880_CLK_APB_UART, "clk_apb_uart", "clk_axi6",
+	  BM1880_CLK_ENABLE1, 5, 0 पूर्ण,
+	अणु BM1880_CLK_APB_I2S, "clk_apb_i2s", "clk_axi6",
+	  BM1880_CLK_ENABLE1, 6, 0 पूर्ण,
+	अणु BM1880_CLK_AXI4_USB, "clk_axi4_usb", "clk_axi4",
+	  BM1880_CLK_ENABLE1, 7, 0 पूर्ण,
+	अणु BM1880_CLK_APB_USB, "clk_apb_usb", "clk_axi6",
+	  BM1880_CLK_ENABLE1, 8, 0 पूर्ण,
+	अणु BM1880_CLK_12M_USB, "clk_12m_usb", "clk_div_12m_usb",
+	  BM1880_CLK_ENABLE1, 11, 0 पूर्ण,
+	अणु BM1880_CLK_APB_VIDEO, "clk_apb_video", "clk_axi6",
+	  BM1880_CLK_ENABLE1, 12, 0 पूर्ण,
+	अणु BM1880_CLK_APB_VPP, "clk_apb_vpp", "clk_axi6",
+	  BM1880_CLK_ENABLE1, 15, 0 पूर्ण,
+	अणु BM1880_CLK_AXI6, "clk_axi6", "clk_mux_axi6",
+	  BM1880_CLK_ENABLE1, 21, 0 पूर्ण,
+पूर्ण;
 
-static const char * const clk_a53_parents[] = { "clk_spll", "clk_mpll" };
-static const char * const clk_rv_parents[] = { "clk_div_1_rv", "clk_div_0_rv" };
-static const char * const clk_axi1_parents[] = { "clk_div_1_axi1", "clk_div_0_axi1" };
-static const char * const clk_axi6_parents[] = { "clk_div_1_axi6", "clk_div_0_axi6" };
+अटल स्थिर अक्षर * स्थिर clk_a53_parents[] = अणु "clk_spll", "clk_mpll" पूर्ण;
+अटल स्थिर अक्षर * स्थिर clk_rv_parents[] = अणु "clk_div_1_rv", "clk_div_0_rv" पूर्ण;
+अटल स्थिर अक्षर * स्थिर clk_axi1_parents[] = अणु "clk_div_1_axi1", "clk_div_0_axi1" पूर्ण;
+अटल स्थिर अक्षर * स्थिर clk_axi6_parents[] = अणु "clk_div_1_axi6", "clk_div_0_axi6" पूर्ण;
 
-static const struct bm1880_mux_clock bm1880_mux_clks[] = {
-	{ BM1880_CLK_MUX_RV, "clk_mux_rv", clk_rv_parents, 2,
-	  BM1880_CLK_SELECT, 1, 0 },
-	{ BM1880_CLK_MUX_AXI6, "clk_mux_axi6", clk_axi6_parents, 2,
-	  BM1880_CLK_SELECT, 3, 0 },
-};
+अटल स्थिर काष्ठा bm1880_mux_घड़ी bm1880_mux_clks[] = अणु
+	अणु BM1880_CLK_MUX_RV, "clk_mux_rv", clk_rv_parents, 2,
+	  BM1880_CLK_SELECT, 1, 0 पूर्ण,
+	अणु BM1880_CLK_MUX_AXI6, "clk_mux_axi6", clk_axi6_parents, 2,
+	  BM1880_CLK_SELECT, 3, 0 पूर्ण,
+पूर्ण;
 
-static const struct clk_div_table bm1880_div_table_0[] = {
-	{ 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 },
-	{ 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 8 },
-	{ 8, 9 }, { 9, 10 }, { 10, 11 }, { 11, 12 },
-	{ 12, 13 }, { 13, 14 }, { 14, 15 }, { 15, 16 },
-	{ 16, 17 }, { 17, 18 }, { 18, 19 }, { 19, 20 },
-	{ 20, 21 }, { 21, 22 }, { 22, 23 }, { 23, 24 },
-	{ 24, 25 }, { 25, 26 }, { 26, 27 }, { 27, 28 },
-	{ 28, 29 }, { 29, 30 }, { 30, 31 }, { 31, 32 },
-	{ 0, 0 }
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable bm1880_भाग_प्रकारable_0[] = अणु
+	अणु 0, 1 पूर्ण, अणु 1, 2 पूर्ण, अणु 2, 3 पूर्ण, अणु 3, 4 पूर्ण,
+	अणु 4, 5 पूर्ण, अणु 5, 6 पूर्ण, अणु 6, 7 पूर्ण, अणु 7, 8 पूर्ण,
+	अणु 8, 9 पूर्ण, अणु 9, 10 पूर्ण, अणु 10, 11 पूर्ण, अणु 11, 12 पूर्ण,
+	अणु 12, 13 पूर्ण, अणु 13, 14 पूर्ण, अणु 14, 15 पूर्ण, अणु 15, 16 पूर्ण,
+	अणु 16, 17 पूर्ण, अणु 17, 18 पूर्ण, अणु 18, 19 पूर्ण, अणु 19, 20 पूर्ण,
+	अणु 20, 21 पूर्ण, अणु 21, 22 पूर्ण, अणु 22, 23 पूर्ण, अणु 23, 24 पूर्ण,
+	अणु 24, 25 पूर्ण, अणु 25, 26 पूर्ण, अणु 26, 27 पूर्ण, अणु 27, 28 पूर्ण,
+	अणु 28, 29 पूर्ण, अणु 29, 30 पूर्ण, अणु 30, 31 पूर्ण, अणु 31, 32 पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
-static const struct clk_div_table bm1880_div_table_1[] = {
-	{ 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 },
-	{ 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 8 },
-	{ 8, 9 }, { 9, 10 }, { 10, 11 }, { 11, 12 },
-	{ 12, 13 }, { 13, 14 }, { 14, 15 }, { 15, 16 },
-	{ 16, 17 }, { 17, 18 }, { 18, 19 }, { 19, 20 },
-	{ 20, 21 }, { 21, 22 }, { 22, 23 }, { 23, 24 },
-	{ 24, 25 }, { 25, 26 }, { 26, 27 }, { 27, 28 },
-	{ 28, 29 }, { 29, 30 }, { 30, 31 }, { 31, 32 },
-	{ 127, 128 }, { 0, 0 }
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable bm1880_भाग_प्रकारable_1[] = अणु
+	अणु 0, 1 पूर्ण, अणु 1, 2 पूर्ण, अणु 2, 3 पूर्ण, अणु 3, 4 पूर्ण,
+	अणु 4, 5 पूर्ण, अणु 5, 6 पूर्ण, अणु 6, 7 पूर्ण, अणु 7, 8 पूर्ण,
+	अणु 8, 9 पूर्ण, अणु 9, 10 पूर्ण, अणु 10, 11 पूर्ण, अणु 11, 12 पूर्ण,
+	अणु 12, 13 पूर्ण, अणु 13, 14 पूर्ण, अणु 14, 15 पूर्ण, अणु 15, 16 पूर्ण,
+	अणु 16, 17 पूर्ण, अणु 17, 18 पूर्ण, अणु 18, 19 पूर्ण, अणु 19, 20 पूर्ण,
+	अणु 20, 21 पूर्ण, अणु 21, 22 पूर्ण, अणु 22, 23 पूर्ण, अणु 23, 24 पूर्ण,
+	अणु 24, 25 पूर्ण, अणु 25, 26 पूर्ण, अणु 26, 27 पूर्ण, अणु 27, 28 पूर्ण,
+	अणु 28, 29 पूर्ण, अणु 29, 30 पूर्ण, अणु 30, 31 पूर्ण, अणु 31, 32 पूर्ण,
+	अणु 127, 128 पूर्ण, अणु 0, 0 पूर्ण
+पूर्ण;
 
-static const struct clk_div_table bm1880_div_table_2[] = {
-	{ 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 },
-	{ 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 8 },
-	{ 8, 9 }, { 9, 10 }, { 10, 11 }, { 11, 12 },
-	{ 12, 13 }, { 13, 14 }, { 14, 15 }, { 15, 16 },
-	{ 16, 17 }, { 17, 18 }, { 18, 19 }, { 19, 20 },
-	{ 20, 21 }, { 21, 22 }, { 22, 23 }, { 23, 24 },
-	{ 24, 25 }, { 25, 26 }, { 26, 27 }, { 27, 28 },
-	{ 28, 29 }, { 29, 30 }, { 30, 31 }, { 31, 32 },
-	{ 127, 128 }, { 255, 256 }, { 0, 0 }
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable bm1880_भाग_प्रकारable_2[] = अणु
+	अणु 0, 1 पूर्ण, अणु 1, 2 पूर्ण, अणु 2, 3 पूर्ण, अणु 3, 4 पूर्ण,
+	अणु 4, 5 पूर्ण, अणु 5, 6 पूर्ण, अणु 6, 7 पूर्ण, अणु 7, 8 पूर्ण,
+	अणु 8, 9 पूर्ण, अणु 9, 10 पूर्ण, अणु 10, 11 पूर्ण, अणु 11, 12 पूर्ण,
+	अणु 12, 13 पूर्ण, अणु 13, 14 पूर्ण, अणु 14, 15 पूर्ण, अणु 15, 16 पूर्ण,
+	अणु 16, 17 पूर्ण, अणु 17, 18 पूर्ण, अणु 18, 19 पूर्ण, अणु 19, 20 पूर्ण,
+	अणु 20, 21 पूर्ण, अणु 21, 22 पूर्ण, अणु 22, 23 पूर्ण, अणु 23, 24 पूर्ण,
+	अणु 24, 25 पूर्ण, अणु 25, 26 पूर्ण, अणु 26, 27 पूर्ण, अणु 27, 28 पूर्ण,
+	अणु 28, 29 पूर्ण, अणु 29, 30 पूर्ण, अणु 30, 31 पूर्ण, अणु 31, 32 पूर्ण,
+	अणु 127, 128 पूर्ण, अणु 255, 256 पूर्ण, अणु 0, 0 पूर्ण
+पूर्ण;
 
-static const struct clk_div_table bm1880_div_table_3[] = {
-	{ 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 },
-	{ 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 8 },
-	{ 8, 9 }, { 9, 10 }, { 10, 11 }, { 11, 12 },
-	{ 12, 13 }, { 13, 14 }, { 14, 15 }, { 15, 16 },
-	{ 16, 17 }, { 17, 18 }, { 18, 19 }, { 19, 20 },
-	{ 20, 21 }, { 21, 22 }, { 22, 23 }, { 23, 24 },
-	{ 24, 25 }, { 25, 26 }, { 26, 27 }, { 27, 28 },
-	{ 28, 29 }, { 29, 30 }, { 30, 31 }, { 31, 32 },
-	{ 127, 128 }, { 255, 256 }, { 511, 512 }, { 0, 0 }
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable bm1880_भाग_प्रकारable_3[] = अणु
+	अणु 0, 1 पूर्ण, अणु 1, 2 पूर्ण, अणु 2, 3 पूर्ण, अणु 3, 4 पूर्ण,
+	अणु 4, 5 पूर्ण, अणु 5, 6 पूर्ण, अणु 6, 7 पूर्ण, अणु 7, 8 पूर्ण,
+	अणु 8, 9 पूर्ण, अणु 9, 10 पूर्ण, अणु 10, 11 पूर्ण, अणु 11, 12 पूर्ण,
+	अणु 12, 13 पूर्ण, अणु 13, 14 पूर्ण, अणु 14, 15 पूर्ण, अणु 15, 16 पूर्ण,
+	अणु 16, 17 पूर्ण, अणु 17, 18 पूर्ण, अणु 18, 19 पूर्ण, अणु 19, 20 पूर्ण,
+	अणु 20, 21 पूर्ण, अणु 21, 22 पूर्ण, अणु 22, 23 पूर्ण, अणु 23, 24 पूर्ण,
+	अणु 24, 25 पूर्ण, अणु 25, 26 पूर्ण, अणु 26, 27 पूर्ण, अणु 27, 28 पूर्ण,
+	अणु 28, 29 पूर्ण, अणु 29, 30 पूर्ण, अणु 30, 31 पूर्ण, अणु 31, 32 पूर्ण,
+	अणु 127, 128 पूर्ण, अणु 255, 256 पूर्ण, अणु 511, 512 पूर्ण, अणु 0, 0 पूर्ण
+पूर्ण;
 
-static const struct clk_div_table bm1880_div_table_4[] = {
-	{ 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 },
-	{ 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 8 },
-	{ 8, 9 }, { 9, 10 }, { 10, 11 }, { 11, 12 },
-	{ 12, 13 }, { 13, 14 }, { 14, 15 }, { 15, 16 },
-	{ 16, 17 }, { 17, 18 }, { 18, 19 }, { 19, 20 },
-	{ 20, 21 }, { 21, 22 }, { 22, 23 }, { 23, 24 },
-	{ 24, 25 }, { 25, 26 }, { 26, 27 }, { 27, 28 },
-	{ 28, 29 }, { 29, 30 }, { 30, 31 }, { 31, 32 },
-	{ 127, 128 }, { 255, 256 }, { 511, 512 }, { 65535, 65536 },
-	{ 0, 0 }
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable bm1880_भाग_प्रकारable_4[] = अणु
+	अणु 0, 1 पूर्ण, अणु 1, 2 पूर्ण, अणु 2, 3 पूर्ण, अणु 3, 4 पूर्ण,
+	अणु 4, 5 पूर्ण, अणु 5, 6 पूर्ण, अणु 6, 7 पूर्ण, अणु 7, 8 पूर्ण,
+	अणु 8, 9 पूर्ण, अणु 9, 10 पूर्ण, अणु 10, 11 पूर्ण, अणु 11, 12 पूर्ण,
+	अणु 12, 13 पूर्ण, अणु 13, 14 पूर्ण, अणु 14, 15 पूर्ण, अणु 15, 16 पूर्ण,
+	अणु 16, 17 पूर्ण, अणु 17, 18 पूर्ण, अणु 18, 19 पूर्ण, अणु 19, 20 पूर्ण,
+	अणु 20, 21 पूर्ण, अणु 21, 22 पूर्ण, अणु 22, 23 पूर्ण, अणु 23, 24 पूर्ण,
+	अणु 24, 25 पूर्ण, अणु 25, 26 पूर्ण, अणु 26, 27 पूर्ण, अणु 27, 28 पूर्ण,
+	अणु 28, 29 पूर्ण, अणु 29, 30 पूर्ण, अणु 30, 31 पूर्ण, अणु 31, 32 पूर्ण,
+	अणु 127, 128 पूर्ण, अणु 255, 256 पूर्ण, अणु 511, 512 पूर्ण, अणु 65535, 65536 पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /*
- * Clocks marked as CRITICAL are needed for the proper functioning
+ * Clocks marked as CRITICAL are needed क्रम the proper functioning
  * of the SoC.
  */
-static struct bm1880_div_hw_clock bm1880_div_clks[] = {
+अटल काष्ठा bm1880_भाग_hw_घड़ी bm1880_भाग_clks[] = अणु
 	CLK_DIV(BM1880_CLK_DIV_0_RV, "clk_div_0_rv", &bm1880_pll_clks[1].hw,
-		BM1880_CLK_DIV12, 16, 5, 1, bm1880_div_table_0, 0),
+		BM1880_CLK_DIV12, 16, 5, 1, bm1880_भाग_प्रकारable_0, 0),
 	CLK_DIV(BM1880_CLK_DIV_1_RV, "clk_div_1_rv", &bm1880_pll_clks[2].hw,
-		BM1880_CLK_DIV13, 16, 5, 1, bm1880_div_table_0, 0),
+		BM1880_CLK_DIV13, 16, 5, 1, bm1880_भाग_प्रकारable_0, 0),
 	CLK_DIV(BM1880_CLK_DIV_UART_500M, "clk_div_uart_500m", &bm1880_pll_clks[2].hw,
-		BM1880_CLK_DIV15, 16, 7, 3, bm1880_div_table_1, 0),
+		BM1880_CLK_DIV15, 16, 7, 3, bm1880_भाग_प्रकारable_1, 0),
 	CLK_DIV(BM1880_CLK_DIV_0_AXI1, "clk_div_0_axi1", &bm1880_pll_clks[0].hw,
-		BM1880_CLK_DIV21, 16, 5, 2, bm1880_div_table_0,
+		BM1880_CLK_DIV21, 16, 5, 2, bm1880_भाग_प्रकारable_0,
 		0),
 	CLK_DIV(BM1880_CLK_DIV_1_AXI1, "clk_div_1_axi1", &bm1880_pll_clks[2].hw,
-		BM1880_CLK_DIV22, 16, 5, 3, bm1880_div_table_0,
+		BM1880_CLK_DIV22, 16, 5, 3, bm1880_भाग_प्रकारable_0,
 		0),
 	CLK_DIV(BM1880_CLK_DIV_0_AXI6, "clk_div_0_axi6", &bm1880_pll_clks[2].hw,
-		BM1880_CLK_DIV27, 16, 5, 15, bm1880_div_table_0,
+		BM1880_CLK_DIV27, 16, 5, 15, bm1880_भाग_प्रकारable_0,
 		0),
 	CLK_DIV(BM1880_CLK_DIV_1_AXI6, "clk_div_1_axi6", &bm1880_pll_clks[0].hw,
-		BM1880_CLK_DIV28, 16, 5, 11, bm1880_div_table_0,
+		BM1880_CLK_DIV28, 16, 5, 11, bm1880_भाग_प्रकारable_0,
 		0),
 	CLK_DIV(BM1880_CLK_DIV_12M_USB, "clk_div_12m_usb", &bm1880_pll_clks[2].hw,
-		BM1880_CLK_DIV18, 16, 7, 125, bm1880_div_table_1, 0),
-};
+		BM1880_CLK_DIV18, 16, 7, 125, bm1880_भाग_प्रकारable_1, 0),
+पूर्ण;
 
 /*
- * Clocks marked as CRITICAL are all needed for the proper functioning
+ * Clocks marked as CRITICAL are all needed क्रम the proper functioning
  * of the SoC.
  */
-static struct bm1880_composite_clock bm1880_composite_clks[] = {
+अटल काष्ठा bm1880_composite_घड़ी bm1880_composite_clks[] = अणु
 	/*
-	 * Since clk_a53 and clk_50m_a53 clocks are sourcing the CPU core,
-	 * let's mark them as critical to avoid gating.
+	 * Since clk_a53 and clk_50m_a53 घड़ीs are sourcing the CPU core,
+	 * let's mark them as critical to aव्योम gating.
 	 */
 	GATE_MUX(BM1880_CLK_A53, "clk_a53", clk_a53_parents,
 		 BM1880_CLK_ENABLE0, 0, BM1880_CLK_SELECT, 0,
 		 CLK_IS_CRITICAL),
 	GATE_DIV(BM1880_CLK_50M_A53, "clk_50m_a53", "clk_fpll",
 		 BM1880_CLK_ENABLE0, 1, BM1880_CLK_DIV0, 16, 5, 30,
-		 bm1880_div_table_0, CLK_IS_CRITICAL),
+		 bm1880_भाग_प्रकारable_0, CLK_IS_CRITICAL),
 	GATE_DIV(BM1880_CLK_EFUSE, "clk_efuse", "clk_fpll",
 		 BM1880_CLK_ENABLE0, 5, BM1880_CLK_DIV1, 16, 7, 60,
-		 bm1880_div_table_1, 0),
+		 bm1880_भाग_प्रकारable_1, 0),
 	GATE_DIV(BM1880_CLK_EMMC, "clk_emmc", "clk_fpll",
 		 BM1880_CLK_ENABLE0, 8, BM1880_CLK_DIV2, 16, 5, 15,
-		 bm1880_div_table_0, 0),
+		 bm1880_भाग_प्रकारable_0, 0),
 	GATE_DIV(BM1880_CLK_100K_EMMC, "clk_100k_emmc", "clk_div_12m_usb",
 		 BM1880_CLK_ENABLE0, 9, BM1880_CLK_DIV3, 16, 8, 120,
-		 bm1880_div_table_2, 0),
+		 bm1880_भाग_प्रकारable_2, 0),
 	GATE_DIV(BM1880_CLK_SD, "clk_sd", "clk_fpll",
 		 BM1880_CLK_ENABLE0, 11, BM1880_CLK_DIV4, 16, 5, 15,
-		 bm1880_div_table_0, 0),
+		 bm1880_भाग_प्रकारable_0, 0),
 	GATE_DIV(BM1880_CLK_100K_SD, "clk_100k_sd", "clk_div_12m_usb",
 		 BM1880_CLK_ENABLE0, 12, BM1880_CLK_DIV5, 16, 8, 120,
-		 bm1880_div_table_2, 0),
+		 bm1880_भाग_प्रकारable_2, 0),
 	GATE_DIV(BM1880_CLK_500M_ETH0, "clk_500m_eth0", "clk_fpll",
 		 BM1880_CLK_ENABLE0, 13, BM1880_CLK_DIV6, 16, 5, 3,
-		 bm1880_div_table_0, 0),
+		 bm1880_भाग_प्रकारable_0, 0),
 	GATE_DIV(BM1880_CLK_500M_ETH1, "clk_500m_eth1", "clk_fpll",
 		 BM1880_CLK_ENABLE0, 15, BM1880_CLK_DIV7, 16, 5, 3,
-		 bm1880_div_table_0, 0),
-	/* Don't gate GPIO clocks as it is not owned by the GPIO driver */
+		 bm1880_भाग_प्रकारable_0, 0),
+	/* Don't gate GPIO घड़ीs as it is not owned by the GPIO driver */
 	GATE_DIV(BM1880_CLK_GPIO_DB, "clk_gpio_db", "clk_div_12m_usb",
 		 BM1880_CLK_ENABLE0, 20, BM1880_CLK_DIV8, 16, 16, 120,
-		 bm1880_div_table_4, CLK_IGNORE_UNUSED),
+		 bm1880_भाग_प्रकारable_4, CLK_IGNORE_UNUSED),
 	GATE_DIV(BM1880_CLK_SDMA_AUD, "clk_sdma_aud", "clk_fpll",
 		 BM1880_CLK_ENABLE0, 24, BM1880_CLK_DIV9, 16, 7, 61,
-		 bm1880_div_table_1, 0),
+		 bm1880_भाग_प्रकारable_1, 0),
 	GATE_DIV(BM1880_CLK_JPEG_AXI, "clk_jpeg_axi", "clk_fpll",
 		 BM1880_CLK_ENABLE0, 28, BM1880_CLK_DIV10, 16, 5, 4,
-		 bm1880_div_table_0, 0),
+		 bm1880_भाग_प्रकारable_0, 0),
 	GATE_DIV(BM1880_CLK_NF, "clk_nf", "clk_fpll",
 		 BM1880_CLK_ENABLE0, 31, BM1880_CLK_DIV11, 16, 5, 30,
-		 bm1880_div_table_0, 0),
+		 bm1880_भाग_प्रकारable_0, 0),
 	GATE_DIV(BM1880_CLK_TPU_AXI, "clk_tpu_axi", "clk_spll",
 		 BM1880_CLK_ENABLE1, 3, BM1880_CLK_DIV14, 16, 5, 1,
-		 bm1880_div_table_0, 0),
+		 bm1880_भाग_प्रकारable_0, 0),
 	GATE_DIV(BM1880_CLK_125M_USB, "clk_125m_usb", "clk_fpll",
 		 BM1880_CLK_ENABLE1, 9, BM1880_CLK_DIV16, 16, 5, 12,
-		 bm1880_div_table_0, 0),
+		 bm1880_भाग_प्रकारable_0, 0),
 	GATE_DIV(BM1880_CLK_33K_USB, "clk_33k_usb", "clk_div_12m_usb",
 		 BM1880_CLK_ENABLE1, 10, BM1880_CLK_DIV17, 16, 9, 363,
-		 bm1880_div_table_3, 0),
+		 bm1880_भाग_प्रकारable_3, 0),
 	GATE_DIV(BM1880_CLK_VIDEO_AXI, "clk_video_axi", "clk_fpll",
 		 BM1880_CLK_ENABLE1, 13, BM1880_CLK_DIV19, 16, 5, 4,
-		 bm1880_div_table_0, 0),
+		 bm1880_भाग_प्रकारable_0, 0),
 	GATE_DIV(BM1880_CLK_VPP_AXI, "clk_vpp_axi", "clk_fpll",
 		 BM1880_CLK_ENABLE1, 14, BM1880_CLK_DIV20, 16, 5, 4,
-		 bm1880_div_table_0, 0),
+		 bm1880_भाग_प्रकारable_0, 0),
 	GATE_MUX(BM1880_CLK_AXI1, "clk_axi1", clk_axi1_parents,
 		 BM1880_CLK_ENABLE1, 15, BM1880_CLK_SELECT, 2, 0),
 	GATE_DIV(BM1880_CLK_AXI2, "clk_axi2", "clk_fpll",
 		 BM1880_CLK_ENABLE1, 17, BM1880_CLK_DIV23, 16, 5, 3,
-		 bm1880_div_table_0, 0),
+		 bm1880_भाग_प्रकारable_0, 0),
 	GATE_DIV(BM1880_CLK_AXI3, "clk_axi3", "clk_mux_rv",
 		 BM1880_CLK_ENABLE1, 18, BM1880_CLK_DIV24, 16, 5, 2,
-		 bm1880_div_table_0, 0),
+		 bm1880_भाग_प्रकारable_0, 0),
 	GATE_DIV(BM1880_CLK_AXI4, "clk_axi4", "clk_fpll",
 		 BM1880_CLK_ENABLE1, 19, BM1880_CLK_DIV25, 16, 5, 6,
-		 bm1880_div_table_0, 0),
+		 bm1880_भाग_प्रकारable_0, 0),
 	GATE_DIV(BM1880_CLK_AXI5, "clk_axi5", "clk_fpll",
 		 BM1880_CLK_ENABLE1, 20, BM1880_CLK_DIV26, 16, 5, 15,
-		 bm1880_div_table_0, 0),
-};
+		 bm1880_भाग_प्रकारable_0, 0),
+पूर्ण;
 
-static unsigned long bm1880_pll_rate_calc(u32 regval, unsigned long parent_rate)
-{
+अटल अचिन्हित दीर्घ bm1880_pll_rate_calc(u32 regval, अचिन्हित दीर्घ parent_rate)
+अणु
 	u64 numerator;
-	u32 fbdiv, refdiv;
-	u32 postdiv1, postdiv2, denominator;
+	u32 fbभाग, refभाग;
+	u32 postभाग1, postभाग2, denominator;
 
-	fbdiv = (regval >> 16) & 0xfff;
-	refdiv = regval & 0x1f;
-	postdiv1 = (regval >> 8) & 0x7;
-	postdiv2 = (regval >> 12) & 0x7;
+	fbभाग = (regval >> 16) & 0xfff;
+	refभाग = regval & 0x1f;
+	postभाग1 = (regval >> 8) & 0x7;
+	postभाग2 = (regval >> 12) & 0x7;
 
-	numerator = parent_rate * fbdiv;
-	denominator = refdiv * postdiv1 * postdiv2;
-	do_div(numerator, denominator);
+	numerator = parent_rate * fbभाग;
+	denominator = refभाग * postभाग1 * postभाग2;
+	करो_भाग(numerator, denominator);
 
-	return (unsigned long)numerator;
-}
+	वापस (अचिन्हित दीर्घ)numerator;
+पूर्ण
 
-static unsigned long bm1880_pll_recalc_rate(struct clk_hw *hw,
-					    unsigned long parent_rate)
-{
-	struct bm1880_pll_hw_clock *pll_hw = to_bm1880_pll_clk(hw);
-	unsigned long rate;
+अटल अचिन्हित दीर्घ bm1880_pll_recalc_rate(काष्ठा clk_hw *hw,
+					    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा bm1880_pll_hw_घड़ी *pll_hw = to_bm1880_pll_clk(hw);
+	अचिन्हित दीर्घ rate;
 	u32 regval;
 
-	regval = readl(pll_hw->base + pll_hw->pll.reg);
+	regval = पढ़ोl(pll_hw->base + pll_hw->pll.reg);
 	rate = bm1880_pll_rate_calc(regval, parent_rate);
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static const struct clk_ops bm1880_pll_ops = {
+अटल स्थिर काष्ठा clk_ops bm1880_pll_ops = अणु
 	.recalc_rate	= bm1880_pll_recalc_rate,
-};
+पूर्ण;
 
-static struct clk_hw *bm1880_clk_register_pll(struct bm1880_pll_hw_clock *pll_clk,
-					      void __iomem *sys_base)
-{
-	struct clk_hw *hw;
-	int err;
+अटल काष्ठा clk_hw *bm1880_clk_रेजिस्टर_pll(काष्ठा bm1880_pll_hw_घड़ी *pll_clk,
+					      व्योम __iomem *sys_base)
+अणु
+	काष्ठा clk_hw *hw;
+	पूर्णांक err;
 
 	pll_clk->base = sys_base;
 	hw = &pll_clk->hw;
 
-	err = clk_hw_register(NULL, hw);
-	if (err)
-		return ERR_PTR(err);
+	err = clk_hw_रेजिस्टर(शून्य, hw);
+	अगर (err)
+		वापस ERR_PTR(err);
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-static void bm1880_clk_unregister_pll(struct clk_hw *hw)
-{
-	struct bm1880_pll_hw_clock *pll_hw = to_bm1880_pll_clk(hw);
+अटल व्योम bm1880_clk_unरेजिस्टर_pll(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा bm1880_pll_hw_घड़ी *pll_hw = to_bm1880_pll_clk(hw);
 
-	clk_hw_unregister(hw);
-	kfree(pll_hw);
-}
+	clk_hw_unरेजिस्टर(hw);
+	kमुक्त(pll_hw);
+पूर्ण
 
-static int bm1880_clk_register_plls(struct bm1880_pll_hw_clock *clks,
-				    int num_clks,
-				    struct bm1880_clock_data *data)
-{
-	struct clk_hw *hw;
-	void __iomem *pll_base = data->pll_base;
-	int i;
+अटल पूर्णांक bm1880_clk_रेजिस्टर_plls(काष्ठा bm1880_pll_hw_घड़ी *clks,
+				    पूर्णांक num_clks,
+				    काष्ठा bm1880_घड़ी_data *data)
+अणु
+	काष्ठा clk_hw *hw;
+	व्योम __iomem *pll_base = data->pll_base;
+	पूर्णांक i;
 
-	for (i = 0; i < num_clks; i++) {
-		struct bm1880_pll_hw_clock *bm1880_clk = &clks[i];
+	क्रम (i = 0; i < num_clks; i++) अणु
+		काष्ठा bm1880_pll_hw_घड़ी *bm1880_clk = &clks[i];
 
-		hw = bm1880_clk_register_pll(bm1880_clk, pll_base);
-		if (IS_ERR(hw)) {
+		hw = bm1880_clk_रेजिस्टर_pll(bm1880_clk, pll_base);
+		अगर (IS_ERR(hw)) अणु
 			pr_err("%s: failed to register clock %s\n",
 			       __func__, bm1880_clk->pll.name);
-			goto err_clk;
-		}
+			जाओ err_clk;
+		पूर्ण
 
 		data->hw_data.hws[clks[i].pll.id] = hw;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_clk:
-	while (i--)
-		bm1880_clk_unregister_pll(data->hw_data.hws[clks[i].pll.id]);
+	जबतक (i--)
+		bm1880_clk_unरेजिस्टर_pll(data->hw_data.hws[clks[i].pll.id]);
 
-	return PTR_ERR(hw);
-}
+	वापस PTR_ERR(hw);
+पूर्ण
 
-static int bm1880_clk_register_mux(const struct bm1880_mux_clock *clks,
-				   int num_clks,
-				   struct bm1880_clock_data *data)
-{
-	struct clk_hw *hw;
-	void __iomem *sys_base = data->sys_base;
-	int i;
+अटल पूर्णांक bm1880_clk_रेजिस्टर_mux(स्थिर काष्ठा bm1880_mux_घड़ी *clks,
+				   पूर्णांक num_clks,
+				   काष्ठा bm1880_घड़ी_data *data)
+अणु
+	काष्ठा clk_hw *hw;
+	व्योम __iomem *sys_base = data->sys_base;
+	पूर्णांक i;
 
-	for (i = 0; i < num_clks; i++) {
-		hw = clk_hw_register_mux(NULL, clks[i].name,
+	क्रम (i = 0; i < num_clks; i++) अणु
+		hw = clk_hw_रेजिस्टर_mux(शून्य, clks[i].name,
 					 clks[i].parents,
 					 clks[i].num_parents,
 					 clks[i].flags,
 					 sys_base + clks[i].reg,
-					 clks[i].shift, 1, 0,
+					 clks[i].shअगरt, 1, 0,
 					 &bm1880_clk_lock);
-		if (IS_ERR(hw)) {
+		अगर (IS_ERR(hw)) अणु
 			pr_err("%s: failed to register clock %s\n",
 			       __func__, clks[i].name);
-			goto err_clk;
-		}
+			जाओ err_clk;
+		पूर्ण
 
 		data->hw_data.hws[clks[i].id] = hw;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_clk:
-	while (i--)
-		clk_hw_unregister_mux(data->hw_data.hws[clks[i].id]);
+	जबतक (i--)
+		clk_hw_unरेजिस्टर_mux(data->hw_data.hws[clks[i].id]);
 
-	return PTR_ERR(hw);
-}
+	वापस PTR_ERR(hw);
+पूर्ण
 
-static unsigned long bm1880_clk_div_recalc_rate(struct clk_hw *hw,
-						unsigned long parent_rate)
-{
-	struct bm1880_div_hw_clock *div_hw = to_bm1880_div_clk(hw);
-	struct bm1880_div_clock *div = &div_hw->div;
-	void __iomem *reg_addr = div_hw->base + div->reg;
-	unsigned int val;
-	unsigned long rate;
+अटल अचिन्हित दीर्घ bm1880_clk_भाग_recalc_rate(काष्ठा clk_hw *hw,
+						अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा bm1880_भाग_hw_घड़ी *भाग_hw = to_bm1880_भाग_clk(hw);
+	काष्ठा bm1880_भाग_घड़ी *भाग = &भाग_hw->भाग;
+	व्योम __iomem *reg_addr = भाग_hw->base + भाग->reg;
+	अचिन्हित पूर्णांक val;
+	अचिन्हित दीर्घ rate;
 
-	if (!(readl(reg_addr) & BIT(3))) {
-		val = div->initval;
-	} else {
-		val = readl(reg_addr) >> div->shift;
-		val &= clk_div_mask(div->width);
-	}
+	अगर (!(पढ़ोl(reg_addr) & BIT(3))) अणु
+		val = भाग->initval;
+	पूर्ण अन्यथा अणु
+		val = पढ़ोl(reg_addr) >> भाग->shअगरt;
+		val &= clk_भाग_mask(भाग->width);
+	पूर्ण
 
-	rate = divider_recalc_rate(hw, parent_rate, val, div->table,
-				   div->flags, div->width);
+	rate = भागider_recalc_rate(hw, parent_rate, val, भाग->table,
+				   भाग->flags, भाग->width);
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static long bm1880_clk_div_round_rate(struct clk_hw *hw, unsigned long rate,
-				      unsigned long *prate)
-{
-	struct bm1880_div_hw_clock *div_hw = to_bm1880_div_clk(hw);
-	struct bm1880_div_clock *div = &div_hw->div;
-	void __iomem *reg_addr = div_hw->base + div->reg;
+अटल दीर्घ bm1880_clk_भाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				      अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा bm1880_भाग_hw_घड़ी *भाग_hw = to_bm1880_भाग_clk(hw);
+	काष्ठा bm1880_भाग_घड़ी *भाग = &भाग_hw->भाग;
+	व्योम __iomem *reg_addr = भाग_hw->base + भाग->reg;
 
-	if (div->flags & CLK_DIVIDER_READ_ONLY) {
+	अगर (भाग->flags & CLK_DIVIDER_READ_ONLY) अणु
 		u32 val;
 
-		val = readl(reg_addr) >> div->shift;
-		val &= clk_div_mask(div->width);
+		val = पढ़ोl(reg_addr) >> भाग->shअगरt;
+		val &= clk_भाग_mask(भाग->width);
 
-		return divider_ro_round_rate(hw, rate, prate, div->table,
-					     div->width, div->flags,
+		वापस भागider_ro_round_rate(hw, rate, prate, भाग->table,
+					     भाग->width, भाग->flags,
 					     val);
-	}
+	पूर्ण
 
-	return divider_round_rate(hw, rate, prate, div->table,
-				  div->width, div->flags);
-}
+	वापस भागider_round_rate(hw, rate, prate, भाग->table,
+				  भाग->width, भाग->flags);
+पूर्ण
 
-static int bm1880_clk_div_set_rate(struct clk_hw *hw, unsigned long rate,
-				   unsigned long parent_rate)
-{
-	struct bm1880_div_hw_clock *div_hw = to_bm1880_div_clk(hw);
-	struct bm1880_div_clock *div = &div_hw->div;
-	void __iomem *reg_addr = div_hw->base + div->reg;
-	unsigned long flags = 0;
-	int value;
+अटल पूर्णांक bm1880_clk_भाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				   अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा bm1880_भाग_hw_घड़ी *भाग_hw = to_bm1880_भाग_clk(hw);
+	काष्ठा bm1880_भाग_घड़ी *भाग = &भाग_hw->भाग;
+	व्योम __iomem *reg_addr = भाग_hw->base + भाग->reg;
+	अचिन्हित दीर्घ flags = 0;
+	पूर्णांक value;
 	u32 val;
 
-	value = divider_get_val(rate, parent_rate, div->table,
-				div->width, div_hw->div.flags);
-	if (value < 0)
-		return value;
+	value = भागider_get_val(rate, parent_rate, भाग->table,
+				भाग->width, भाग_hw->भाग.flags);
+	अगर (value < 0)
+		वापस value;
 
-	if (div_hw->lock)
-		spin_lock_irqsave(div_hw->lock, flags);
-	else
-		__acquire(div_hw->lock);
+	अगर (भाग_hw->lock)
+		spin_lock_irqsave(भाग_hw->lock, flags);
+	अन्यथा
+		__acquire(भाग_hw->lock);
 
-	val = readl(reg_addr);
-	val &= ~(clk_div_mask(div->width) << div_hw->div.shift);
-	val |= (u32)value << div->shift;
-	writel(val, reg_addr);
+	val = पढ़ोl(reg_addr);
+	val &= ~(clk_भाग_mask(भाग->width) << भाग_hw->भाग.shअगरt);
+	val |= (u32)value << भाग->shअगरt;
+	ग_लिखोl(val, reg_addr);
 
-	if (div_hw->lock)
-		spin_unlock_irqrestore(div_hw->lock, flags);
-	else
-		__release(div_hw->lock);
+	अगर (भाग_hw->lock)
+		spin_unlock_irqrestore(भाग_hw->lock, flags);
+	अन्यथा
+		__release(भाग_hw->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops bm1880_clk_div_ops = {
-	.recalc_rate = bm1880_clk_div_recalc_rate,
-	.round_rate = bm1880_clk_div_round_rate,
-	.set_rate = bm1880_clk_div_set_rate,
-};
+अटल स्थिर काष्ठा clk_ops bm1880_clk_भाग_ops = अणु
+	.recalc_rate = bm1880_clk_भाग_recalc_rate,
+	.round_rate = bm1880_clk_भाग_round_rate,
+	.set_rate = bm1880_clk_भाग_set_rate,
+पूर्ण;
 
-static struct clk_hw *bm1880_clk_register_div(struct bm1880_div_hw_clock *div_clk,
-					      void __iomem *sys_base)
-{
-	struct clk_hw *hw;
-	int err;
+अटल काष्ठा clk_hw *bm1880_clk_रेजिस्टर_भाग(काष्ठा bm1880_भाग_hw_घड़ी *भाग_clk,
+					      व्योम __iomem *sys_base)
+अणु
+	काष्ठा clk_hw *hw;
+	पूर्णांक err;
 
-	div_clk->div.flags = CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO;
-	div_clk->base = sys_base;
-	div_clk->lock = &bm1880_clk_lock;
+	भाग_clk->भाग.flags = CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO;
+	भाग_clk->base = sys_base;
+	भाग_clk->lock = &bm1880_clk_lock;
 
-	hw = &div_clk->hw;
-	err = clk_hw_register(NULL, hw);
-	if (err)
-		return ERR_PTR(err);
+	hw = &भाग_clk->hw;
+	err = clk_hw_रेजिस्टर(शून्य, hw);
+	अगर (err)
+		वापस ERR_PTR(err);
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-static void bm1880_clk_unregister_div(struct clk_hw *hw)
-{
-	struct bm1880_div_hw_clock *div_hw = to_bm1880_div_clk(hw);
+अटल व्योम bm1880_clk_unरेजिस्टर_भाग(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा bm1880_भाग_hw_घड़ी *भाग_hw = to_bm1880_भाग_clk(hw);
 
-	clk_hw_unregister(hw);
-	kfree(div_hw);
-}
+	clk_hw_unरेजिस्टर(hw);
+	kमुक्त(भाग_hw);
+पूर्ण
 
-static int bm1880_clk_register_divs(struct bm1880_div_hw_clock *clks,
-				    int num_clks,
-				    struct bm1880_clock_data *data)
-{
-	struct clk_hw *hw;
-	void __iomem *sys_base = data->sys_base;
-	unsigned int i, id;
+अटल पूर्णांक bm1880_clk_रेजिस्टर_भागs(काष्ठा bm1880_भाग_hw_घड़ी *clks,
+				    पूर्णांक num_clks,
+				    काष्ठा bm1880_घड़ी_data *data)
+अणु
+	काष्ठा clk_hw *hw;
+	व्योम __iomem *sys_base = data->sys_base;
+	अचिन्हित पूर्णांक i, id;
 
-	for (i = 0; i < num_clks; i++) {
-		struct bm1880_div_hw_clock *bm1880_clk = &clks[i];
+	क्रम (i = 0; i < num_clks; i++) अणु
+		काष्ठा bm1880_भाग_hw_घड़ी *bm1880_clk = &clks[i];
 
-		hw = bm1880_clk_register_div(bm1880_clk, sys_base);
-		if (IS_ERR(hw)) {
+		hw = bm1880_clk_रेजिस्टर_भाग(bm1880_clk, sys_base);
+		अगर (IS_ERR(hw)) अणु
 			pr_err("%s: failed to register clock %s\n",
-			       __func__, bm1880_clk->div.name);
-			goto err_clk;
-		}
+			       __func__, bm1880_clk->भाग.name);
+			जाओ err_clk;
+		पूर्ण
 
-		id = clks[i].div.id;
+		id = clks[i].भाग.id;
 		data->hw_data.hws[id] = hw;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_clk:
-	while (i--)
-		bm1880_clk_unregister_div(data->hw_data.hws[clks[i].div.id]);
+	जबतक (i--)
+		bm1880_clk_unरेजिस्टर_भाग(data->hw_data.hws[clks[i].भाग.id]);
 
-	return PTR_ERR(hw);
-}
+	वापस PTR_ERR(hw);
+पूर्ण
 
-static int bm1880_clk_register_gate(const struct bm1880_gate_clock *clks,
-				    int num_clks,
-				    struct bm1880_clock_data *data)
-{
-	struct clk_hw *hw;
-	void __iomem *sys_base = data->sys_base;
-	int i;
+अटल पूर्णांक bm1880_clk_रेजिस्टर_gate(स्थिर काष्ठा bm1880_gate_घड़ी *clks,
+				    पूर्णांक num_clks,
+				    काष्ठा bm1880_घड़ी_data *data)
+अणु
+	काष्ठा clk_hw *hw;
+	व्योम __iomem *sys_base = data->sys_base;
+	पूर्णांक i;
 
-	for (i = 0; i < num_clks; i++) {
-		hw = clk_hw_register_gate(NULL, clks[i].name,
+	क्रम (i = 0; i < num_clks; i++) अणु
+		hw = clk_hw_रेजिस्टर_gate(शून्य, clks[i].name,
 					  clks[i].parent,
 					  clks[i].flags,
 					  sys_base + clks[i].gate_reg,
-					  clks[i].gate_shift, 0,
+					  clks[i].gate_shअगरt, 0,
 					  &bm1880_clk_lock);
-		if (IS_ERR(hw)) {
+		अगर (IS_ERR(hw)) अणु
 			pr_err("%s: failed to register clock %s\n",
 			       __func__, clks[i].name);
-			goto err_clk;
-		}
+			जाओ err_clk;
+		पूर्ण
 
 		data->hw_data.hws[clks[i].id] = hw;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_clk:
-	while (i--)
-		clk_hw_unregister_gate(data->hw_data.hws[clks[i].id]);
+	जबतक (i--)
+		clk_hw_unरेजिस्टर_gate(data->hw_data.hws[clks[i].id]);
 
-	return PTR_ERR(hw);
-}
+	वापस PTR_ERR(hw);
+पूर्ण
 
-static struct clk_hw *bm1880_clk_register_composite(struct bm1880_composite_clock *clks,
-						    void __iomem *sys_base)
-{
-	struct clk_hw *hw;
-	struct clk_mux *mux = NULL;
-	struct clk_gate *gate = NULL;
-	struct bm1880_div_hw_clock *div_hws = NULL;
-	struct clk_hw *mux_hw = NULL, *gate_hw = NULL, *div_hw = NULL;
-	const struct clk_ops *mux_ops = NULL, *gate_ops = NULL, *div_ops = NULL;
-	const char * const *parent_names;
-	const char *parent;
-	int num_parents;
-	int ret;
+अटल काष्ठा clk_hw *bm1880_clk_रेजिस्टर_composite(काष्ठा bm1880_composite_घड़ी *clks,
+						    व्योम __iomem *sys_base)
+अणु
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_mux *mux = शून्य;
+	काष्ठा clk_gate *gate = शून्य;
+	काष्ठा bm1880_भाग_hw_घड़ी *भाग_hws = शून्य;
+	काष्ठा clk_hw *mux_hw = शून्य, *gate_hw = शून्य, *भाग_hw = शून्य;
+	स्थिर काष्ठा clk_ops *mux_ops = शून्य, *gate_ops = शून्य, *भाग_ops = शून्य;
+	स्थिर अक्षर * स्थिर *parent_names;
+	स्थिर अक्षर *parent;
+	पूर्णांक num_parents;
+	पूर्णांक ret;
 
-	if (clks->mux_shift >= 0) {
-		mux = kzalloc(sizeof(*mux), GFP_KERNEL);
-		if (!mux)
-			return ERR_PTR(-ENOMEM);
+	अगर (clks->mux_shअगरt >= 0) अणु
+		mux = kzalloc(माप(*mux), GFP_KERNEL);
+		अगर (!mux)
+			वापस ERR_PTR(-ENOMEM);
 
 		mux->reg = sys_base + clks->mux_reg;
 		mux->mask = 1;
-		mux->shift = clks->mux_shift;
+		mux->shअगरt = clks->mux_shअगरt;
 		mux_hw = &mux->hw;
 		mux_ops = &clk_mux_ops;
 		mux->lock = &bm1880_clk_lock;
 
 		parent_names = clks->parents;
 		num_parents = clks->num_parents;
-	} else {
+	पूर्ण अन्यथा अणु
 		parent = clks->parent;
 		parent_names = &parent;
 		num_parents = 1;
-	}
+	पूर्ण
 
-	if (clks->gate_shift >= 0) {
-		gate = kzalloc(sizeof(*gate), GFP_KERNEL);
-		if (!gate) {
+	अगर (clks->gate_shअगरt >= 0) अणु
+		gate = kzalloc(माप(*gate), GFP_KERNEL);
+		अगर (!gate) अणु
 			ret = -ENOMEM;
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 
 		gate->reg = sys_base + clks->gate_reg;
-		gate->bit_idx = clks->gate_shift;
+		gate->bit_idx = clks->gate_shअगरt;
 		gate->lock = &bm1880_clk_lock;
 
 		gate_hw = &gate->hw;
 		gate_ops = &clk_gate_ops;
-	}
+	पूर्ण
 
-	if (clks->div_shift >= 0) {
-		div_hws = kzalloc(sizeof(*div_hws), GFP_KERNEL);
-		if (!div_hws) {
+	अगर (clks->भाग_shअगरt >= 0) अणु
+		भाग_hws = kzalloc(माप(*भाग_hws), GFP_KERNEL);
+		अगर (!भाग_hws) अणु
 			ret = -ENOMEM;
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 
-		div_hws->base = sys_base;
-		div_hws->div.reg = clks->div_reg;
-		div_hws->div.shift = clks->div_shift;
-		div_hws->div.width = clks->div_width;
-		div_hws->div.table = clks->table;
-		div_hws->div.initval = clks->div_initval;
-		div_hws->lock = &bm1880_clk_lock;
-		div_hws->div.flags = CLK_DIVIDER_ONE_BASED |
+		भाग_hws->base = sys_base;
+		भाग_hws->भाग.reg = clks->भाग_reg;
+		भाग_hws->भाग.shअगरt = clks->भाग_shअगरt;
+		भाग_hws->भाग.width = clks->भाग_width;
+		भाग_hws->भाग.table = clks->table;
+		भाग_hws->भाग.initval = clks->भाग_initval;
+		भाग_hws->lock = &bm1880_clk_lock;
+		भाग_hws->भाग.flags = CLK_DIVIDER_ONE_BASED |
 				     CLK_DIVIDER_ALLOW_ZERO;
 
-		div_hw = &div_hws->hw;
-		div_ops = &bm1880_clk_div_ops;
-	}
+		भाग_hw = &भाग_hws->hw;
+		भाग_ops = &bm1880_clk_भाग_ops;
+	पूर्ण
 
-	hw = clk_hw_register_composite(NULL, clks->name, parent_names,
-				       num_parents, mux_hw, mux_ops, div_hw,
-				       div_ops, gate_hw, gate_ops,
+	hw = clk_hw_रेजिस्टर_composite(शून्य, clks->name, parent_names,
+				       num_parents, mux_hw, mux_ops, भाग_hw,
+				       भाग_ops, gate_hw, gate_ops,
 				       clks->flags);
 
-	if (IS_ERR(hw)) {
+	अगर (IS_ERR(hw)) अणु
 		ret = PTR_ERR(hw);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	return hw;
+	वापस hw;
 
 err_out:
-	kfree(div_hws);
-	kfree(gate);
-	kfree(mux);
+	kमुक्त(भाग_hws);
+	kमुक्त(gate);
+	kमुक्त(mux);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static int bm1880_clk_register_composites(struct bm1880_composite_clock *clks,
-					  int num_clks,
-					  struct bm1880_clock_data *data)
-{
-	struct clk_hw *hw;
-	void __iomem *sys_base = data->sys_base;
-	int i;
+अटल पूर्णांक bm1880_clk_रेजिस्टर_composites(काष्ठा bm1880_composite_घड़ी *clks,
+					  पूर्णांक num_clks,
+					  काष्ठा bm1880_घड़ी_data *data)
+अणु
+	काष्ठा clk_hw *hw;
+	व्योम __iomem *sys_base = data->sys_base;
+	पूर्णांक i;
 
-	for (i = 0; i < num_clks; i++) {
-		struct bm1880_composite_clock *bm1880_clk = &clks[i];
+	क्रम (i = 0; i < num_clks; i++) अणु
+		काष्ठा bm1880_composite_घड़ी *bm1880_clk = &clks[i];
 
-		hw = bm1880_clk_register_composite(bm1880_clk, sys_base);
-		if (IS_ERR(hw)) {
+		hw = bm1880_clk_रेजिस्टर_composite(bm1880_clk, sys_base);
+		अगर (IS_ERR(hw)) अणु
 			pr_err("%s: failed to register clock %s\n",
 			       __func__, bm1880_clk->name);
-			goto err_clk;
-		}
+			जाओ err_clk;
+		पूर्ण
 
 		data->hw_data.hws[clks[i].id] = hw;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_clk:
-	while (i--)
-		clk_hw_unregister_composite(data->hw_data.hws[clks[i].id]);
+	जबतक (i--)
+		clk_hw_unरेजिस्टर_composite(data->hw_data.hws[clks[i].id]);
 
-	return PTR_ERR(hw);
-}
+	वापस PTR_ERR(hw);
+पूर्ण
 
-static int bm1880_clk_probe(struct platform_device *pdev)
-{
-	struct bm1880_clock_data *clk_data;
-	void __iomem *pll_base, *sys_base;
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	int num_clks, i;
+अटल पूर्णांक bm1880_clk_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bm1880_घड़ी_data *clk_data;
+	व्योम __iomem *pll_base, *sys_base;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	पूर्णांक num_clks, i;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	pll_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(pll_base))
-		return PTR_ERR(pll_base);
+	अगर (IS_ERR(pll_base))
+		वापस PTR_ERR(pll_base);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
 	sys_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(sys_base))
-		return PTR_ERR(sys_base);
+	अगर (IS_ERR(sys_base))
+		वापस PTR_ERR(sys_base);
 
 	num_clks = ARRAY_SIZE(bm1880_pll_clks) +
-		   ARRAY_SIZE(bm1880_div_clks) +
+		   ARRAY_SIZE(bm1880_भाग_clks) +
 		   ARRAY_SIZE(bm1880_mux_clks) +
 		   ARRAY_SIZE(bm1880_composite_clks) +
 		   ARRAY_SIZE(bm1880_gate_clks);
 
-	clk_data = devm_kzalloc(dev, struct_size(clk_data, hw_data.hws,
+	clk_data = devm_kzalloc(dev, काष्ठा_size(clk_data, hw_data.hws,
 						 num_clks), GFP_KERNEL);
-	if (!clk_data)
-		return -ENOMEM;
+	अगर (!clk_data)
+		वापस -ENOMEM;
 
 	clk_data->pll_base = pll_base;
 	clk_data->sys_base = sys_base;
 
-	for (i = 0; i < num_clks; i++)
+	क्रम (i = 0; i < num_clks; i++)
 		clk_data->hw_data.hws[i] = ERR_PTR(-ENOENT);
 
 	clk_data->hw_data.num = num_clks;
 
-	bm1880_clk_register_plls(bm1880_pll_clks,
+	bm1880_clk_रेजिस्टर_plls(bm1880_pll_clks,
 				 ARRAY_SIZE(bm1880_pll_clks),
 				 clk_data);
 
-	bm1880_clk_register_divs(bm1880_div_clks,
-				 ARRAY_SIZE(bm1880_div_clks),
+	bm1880_clk_रेजिस्टर_भागs(bm1880_भाग_clks,
+				 ARRAY_SIZE(bm1880_भाग_clks),
 				 clk_data);
 
-	bm1880_clk_register_mux(bm1880_mux_clks,
+	bm1880_clk_रेजिस्टर_mux(bm1880_mux_clks,
 				ARRAY_SIZE(bm1880_mux_clks),
 				clk_data);
 
-	bm1880_clk_register_composites(bm1880_composite_clks,
+	bm1880_clk_रेजिस्टर_composites(bm1880_composite_clks,
 				       ARRAY_SIZE(bm1880_composite_clks),
 				       clk_data);
 
-	bm1880_clk_register_gate(bm1880_gate_clks,
+	bm1880_clk_रेजिस्टर_gate(bm1880_gate_clks,
 				 ARRAY_SIZE(bm1880_gate_clks),
 				 clk_data);
 
-	return devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get,
+	वापस devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get,
 				      &clk_data->hw_data);
-}
+पूर्ण
 
-static const struct of_device_id bm1880_of_match[] = {
-	{ .compatible = "bitmain,bm1880-clk", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id bm1880_of_match[] = अणु
+	अणु .compatible = "bitmain,bm1880-clk", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bm1880_of_match);
 
-static struct platform_driver bm1880_clk_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver bm1880_clk_driver = अणु
+	.driver = अणु
 		.name = "bm1880-clk",
 		.of_match_table = bm1880_of_match,
-	},
+	पूर्ण,
 	.probe = bm1880_clk_probe,
-};
-module_platform_driver(bm1880_clk_driver);
+पूर्ण;
+module_platक्रमm_driver(bm1880_clk_driver);
 
 MODULE_AUTHOR("Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>");
 MODULE_DESCRIPTION("Clock driver for Bitmain BM1880 SoC");

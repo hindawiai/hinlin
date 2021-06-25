@@ -1,499 +1,500 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* drivers/atm/atmtcp.c - ATM over TCP "device" driver */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* drivers/aपंचांग/aपंचांगtcp.c - ATM over TCP "device" driver */
 
 /* Written 1997-2000 by Werner Almesberger, EPFL LRC/ICA */
 
 
-#include <linux/module.h>
-#include <linux/wait.h>
-#include <linux/atmdev.h>
-#include <linux/atm_tcp.h>
-#include <linux/bitops.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/atomic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/aपंचांगdev.h>
+#समावेश <linux/aपंचांग_tcp.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/atomic.h>
 
 
-extern int atm_init_aal5(struct atm_vcc *vcc); /* "raw" AAL5 transport */
+बाह्य पूर्णांक aपंचांग_init_aal5(काष्ठा aपंचांग_vcc *vcc); /* "raw" AAL5 transport */
 
 
-#define PRIV(dev) ((struct atmtcp_dev_data *) ((dev)->dev_data))
+#घोषणा PRIV(dev) ((काष्ठा aपंचांगtcp_dev_data *) ((dev)->dev_data))
 
 
-struct atmtcp_dev_data {
-	struct atm_vcc *vcc;	/* control VCC; NULL if detached */
-	int persist;		/* non-zero if persistent */
-};
+काष्ठा aपंचांगtcp_dev_data अणु
+	काष्ठा aपंचांग_vcc *vcc;	/* control VCC; शून्य अगर detached */
+	पूर्णांक persist;		/* non-zero अगर persistent */
+पूर्ण;
 
 
-#define DEV_LABEL    "atmtcp"
+#घोषणा DEV_LABEL    "atmtcp"
 
-#define MAX_VPI_BITS  8	/* simplifies life */
-#define MAX_VCI_BITS 16
+#घोषणा MAX_VPI_BITS  8	/* simplअगरies lअगरe */
+#घोषणा MAX_VCI_BITS 16
 
 
 /*
- * Hairy code ahead: the control VCC may be closed while we're still
- * waiting for an answer, so we need to re-validate out_vcc every once
- * in a while.
+ * Hairy code ahead: the control VCC may be बंदd जबतक we're still
+ * रुकोing क्रम an answer, so we need to re-validate out_vcc every once
+ * in a जबतक.
  */
 
 
-static int atmtcp_send_control(struct atm_vcc *vcc,int type,
-    const struct atmtcp_control *msg,int flag)
-{
-	DECLARE_WAITQUEUE(wait,current);
-	struct atm_vcc *out_vcc;
-	struct sk_buff *skb;
-	struct atmtcp_control *new_msg;
-	int old_test;
-	int error = 0;
+अटल पूर्णांक aपंचांगtcp_send_control(काष्ठा aपंचांग_vcc *vcc,पूर्णांक type,
+    स्थिर काष्ठा aपंचांगtcp_control *msg,पूर्णांक flag)
+अणु
+	DECLARE_WAITQUEUE(रुको,current);
+	काष्ठा aपंचांग_vcc *out_vcc;
+	काष्ठा sk_buff *skb;
+	काष्ठा aपंचांगtcp_control *new_msg;
+	पूर्णांक old_test;
+	पूर्णांक error = 0;
 
-	out_vcc = PRIV(vcc->dev) ? PRIV(vcc->dev)->vcc : NULL;
-	if (!out_vcc) return -EUNATCH;
-	skb = alloc_skb(sizeof(*msg),GFP_KERNEL);
-	if (!skb) return -ENOMEM;
+	out_vcc = PRIV(vcc->dev) ? PRIV(vcc->dev)->vcc : शून्य;
+	अगर (!out_vcc) वापस -EUNATCH;
+	skb = alloc_skb(माप(*msg),GFP_KERNEL);
+	अगर (!skb) वापस -ENOMEM;
 	mb();
-	out_vcc = PRIV(vcc->dev) ? PRIV(vcc->dev)->vcc : NULL;
-	if (!out_vcc) {
-		dev_kfree_skb(skb);
-		return -EUNATCH;
-	}
-	atm_force_charge(out_vcc,skb->truesize);
-	new_msg = skb_put(skb, sizeof(*new_msg));
+	out_vcc = PRIV(vcc->dev) ? PRIV(vcc->dev)->vcc : शून्य;
+	अगर (!out_vcc) अणु
+		dev_kमुक्त_skb(skb);
+		वापस -EUNATCH;
+	पूर्ण
+	aपंचांग_क्रमce_अक्षरge(out_vcc,skb->truesize);
+	new_msg = skb_put(skb, माप(*new_msg));
 	*new_msg = *msg;
 	new_msg->hdr.length = ATMTCP_HDR_MAGIC;
 	new_msg->type = type;
-	memset(&new_msg->vcc,0,sizeof(atm_kptr_t));
-	*(struct atm_vcc **) &new_msg->vcc = vcc;
+	स_रखो(&new_msg->vcc,0,माप(aपंचांग_kptr_t));
+	*(काष्ठा aपंचांग_vcc **) &new_msg->vcc = vcc;
 	old_test = test_bit(flag,&vcc->flags);
 	out_vcc->push(out_vcc,skb);
-	add_wait_queue(sk_sleep(sk_atm(vcc)), &wait);
-	while (test_bit(flag,&vcc->flags) == old_test) {
+	add_रुको_queue(sk_sleep(sk_aपंचांग(vcc)), &रुको);
+	जबतक (test_bit(flag,&vcc->flags) == old_test) अणु
 		mb();
-		out_vcc = PRIV(vcc->dev) ? PRIV(vcc->dev)->vcc : NULL;
-		if (!out_vcc) {
+		out_vcc = PRIV(vcc->dev) ? PRIV(vcc->dev)->vcc : शून्य;
+		अगर (!out_vcc) अणु
 			error = -EUNATCH;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule();
-	}
+	पूर्ण
 	set_current_state(TASK_RUNNING);
-	remove_wait_queue(sk_sleep(sk_atm(vcc)), &wait);
-	return error;
-}
+	हटाओ_रुको_queue(sk_sleep(sk_aपंचांग(vcc)), &रुको);
+	वापस error;
+पूर्ण
 
 
-static int atmtcp_recv_control(const struct atmtcp_control *msg)
-{
-	struct atm_vcc *vcc = *(struct atm_vcc **) &msg->vcc;
+अटल पूर्णांक aपंचांगtcp_recv_control(स्थिर काष्ठा aपंचांगtcp_control *msg)
+अणु
+	काष्ठा aपंचांग_vcc *vcc = *(काष्ठा aपंचांग_vcc **) &msg->vcc;
 
 	vcc->vpi = msg->addr.sap_addr.vpi;
 	vcc->vci = msg->addr.sap_addr.vci;
 	vcc->qos = msg->qos;
-	sk_atm(vcc)->sk_err = -msg->result;
-	switch (msg->type) {
-	    case ATMTCP_CTRL_OPEN:
+	sk_aपंचांग(vcc)->sk_err = -msg->result;
+	चयन (msg->type) अणु
+	    हाल ATMTCP_CTRL_OPEN:
 		change_bit(ATM_VF_READY,&vcc->flags);
-		break;
-	    case ATMTCP_CTRL_CLOSE:
+		अवरोध;
+	    हाल ATMTCP_CTRL_CLOSE:
 		change_bit(ATM_VF_ADDR,&vcc->flags);
-		break;
-	    default:
-		printk(KERN_ERR "atmtcp_recv_control: unknown type %d\n",
+		अवरोध;
+	    शेष:
+		prपूर्णांकk(KERN_ERR "atmtcp_recv_control: unknown type %d\n",
 		    msg->type);
-		return -EINVAL;
-	}
-	wake_up(sk_sleep(sk_atm(vcc)));
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	wake_up(sk_sleep(sk_aपंचांग(vcc)));
+	वापस 0;
+पूर्ण
 
 
-static void atmtcp_v_dev_close(struct atm_dev *dev)
-{
+अटल व्योम aपंचांगtcp_v_dev_बंद(काष्ठा aपंचांग_dev *dev)
+अणु
 	/* Nothing.... Isn't this simple :-)  -- REW */
-}
+पूर्ण
 
 
-static int atmtcp_v_open(struct atm_vcc *vcc)
-{
-	struct atmtcp_control msg;
-	int error;
-	short vpi = vcc->vpi;
-	int vci = vcc->vci;
+अटल पूर्णांक aपंचांगtcp_v_खोलो(काष्ठा aपंचांग_vcc *vcc)
+अणु
+	काष्ठा aपंचांगtcp_control msg;
+	पूर्णांक error;
+	लघु vpi = vcc->vpi;
+	पूर्णांक vci = vcc->vci;
 
-	memset(&msg,0,sizeof(msg));
+	स_रखो(&msg,0,माप(msg));
 	msg.addr.sap_family = AF_ATMPVC;
 	msg.hdr.vpi = htons(vpi);
 	msg.addr.sap_addr.vpi = vpi;
 	msg.hdr.vci = htons(vci);
 	msg.addr.sap_addr.vci = vci;
-	if (vpi == ATM_VPI_UNSPEC || vci == ATM_VCI_UNSPEC) return 0;
+	अगर (vpi == ATM_VPI_UNSPEC || vci == ATM_VCI_UNSPEC) वापस 0;
 	msg.type = ATMTCP_CTRL_OPEN;
 	msg.qos = vcc->qos;
 	set_bit(ATM_VF_ADDR,&vcc->flags);
-	clear_bit(ATM_VF_READY,&vcc->flags); /* just in case ... */
-	error = atmtcp_send_control(vcc,ATMTCP_CTRL_OPEN,&msg,ATM_VF_READY);
-	if (error) return error;
-	return -sk_atm(vcc)->sk_err;
-}
+	clear_bit(ATM_VF_READY,&vcc->flags); /* just in हाल ... */
+	error = aपंचांगtcp_send_control(vcc,ATMTCP_CTRL_OPEN,&msg,ATM_VF_READY);
+	अगर (error) वापस error;
+	वापस -sk_aपंचांग(vcc)->sk_err;
+पूर्ण
 
 
-static void atmtcp_v_close(struct atm_vcc *vcc)
-{
-	struct atmtcp_control msg;
+अटल व्योम aपंचांगtcp_v_बंद(काष्ठा aपंचांग_vcc *vcc)
+अणु
+	काष्ठा aपंचांगtcp_control msg;
 
-	memset(&msg,0,sizeof(msg));
+	स_रखो(&msg,0,माप(msg));
 	msg.addr.sap_family = AF_ATMPVC;
 	msg.addr.sap_addr.vpi = vcc->vpi;
 	msg.addr.sap_addr.vci = vcc->vci;
 	clear_bit(ATM_VF_READY,&vcc->flags);
-	(void) atmtcp_send_control(vcc,ATMTCP_CTRL_CLOSE,&msg,ATM_VF_ADDR);
-}
+	(व्योम) aपंचांगtcp_send_control(vcc,ATMTCP_CTRL_CLOSE,&msg,ATM_VF_ADDR);
+पूर्ण
 
 
-static int atmtcp_v_ioctl(struct atm_dev *dev,unsigned int cmd,void __user *arg)
-{
-	struct atm_cirange ci;
-	struct atm_vcc *vcc;
-	struct sock *s;
-	int i;
+अटल पूर्णांक aपंचांगtcp_v_ioctl(काष्ठा aपंचांग_dev *dev,अचिन्हित पूर्णांक cmd,व्योम __user *arg)
+अणु
+	काष्ठा aपंचांग_cirange ci;
+	काष्ठा aपंचांग_vcc *vcc;
+	काष्ठा sock *s;
+	पूर्णांक i;
 
-	if (cmd != ATM_SETCIRANGE) return -ENOIOCTLCMD;
-	if (copy_from_user(&ci, arg,sizeof(ci))) return -EFAULT;
-	if (ci.vpi_bits == ATM_CI_MAX) ci.vpi_bits = MAX_VPI_BITS;
-	if (ci.vci_bits == ATM_CI_MAX) ci.vci_bits = MAX_VCI_BITS;
-	if (ci.vpi_bits > MAX_VPI_BITS || ci.vpi_bits < 0 ||
-	    ci.vci_bits > MAX_VCI_BITS || ci.vci_bits < 0) return -EINVAL;
-	read_lock(&vcc_sklist_lock);
-	for(i = 0; i < VCC_HTABLE_SIZE; ++i) {
-		struct hlist_head *head = &vcc_hash[i];
+	अगर (cmd != ATM_SETCIRANGE) वापस -ENOIOCTLCMD;
+	अगर (copy_from_user(&ci, arg,माप(ci))) वापस -EFAULT;
+	अगर (ci.vpi_bits == ATM_CI_MAX) ci.vpi_bits = MAX_VPI_BITS;
+	अगर (ci.vci_bits == ATM_CI_MAX) ci.vci_bits = MAX_VCI_BITS;
+	अगर (ci.vpi_bits > MAX_VPI_BITS || ci.vpi_bits < 0 ||
+	    ci.vci_bits > MAX_VCI_BITS || ci.vci_bits < 0) वापस -EINVAL;
+	पढ़ो_lock(&vcc_sklist_lock);
+	क्रम(i = 0; i < VCC_HTABLE_SIZE; ++i) अणु
+		काष्ठा hlist_head *head = &vcc_hash[i];
 
-		sk_for_each(s, head) {
-			vcc = atm_sk(s);
-			if (vcc->dev != dev)
-				continue;
-			if ((vcc->vpi >> ci.vpi_bits) ||
-			    (vcc->vci >> ci.vci_bits)) {
-				read_unlock(&vcc_sklist_lock);
-				return -EBUSY;
-			}
-		}
-	}
-	read_unlock(&vcc_sklist_lock);
+		sk_क्रम_each(s, head) अणु
+			vcc = aपंचांग_sk(s);
+			अगर (vcc->dev != dev)
+				जारी;
+			अगर ((vcc->vpi >> ci.vpi_bits) ||
+			    (vcc->vci >> ci.vci_bits)) अणु
+				पढ़ो_unlock(&vcc_sklist_lock);
+				वापस -EBUSY;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&vcc_sklist_lock);
 	dev->ci_range = ci;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int atmtcp_v_send(struct atm_vcc *vcc,struct sk_buff *skb)
-{
-	struct atmtcp_dev_data *dev_data;
-	struct atm_vcc *out_vcc=NULL; /* Initializer quietens GCC warning */
-	struct sk_buff *new_skb;
-	struct atmtcp_hdr *hdr;
-	int size;
+अटल पूर्णांक aपंचांगtcp_v_send(काष्ठा aपंचांग_vcc *vcc,काष्ठा sk_buff *skb)
+अणु
+	काष्ठा aपंचांगtcp_dev_data *dev_data;
+	काष्ठा aपंचांग_vcc *out_vcc=शून्य; /* Initializer quietens GCC warning */
+	काष्ठा sk_buff *new_skb;
+	काष्ठा aपंचांगtcp_hdr *hdr;
+	पूर्णांक size;
 
-	if (vcc->qos.txtp.traffic_class == ATM_NONE) {
-		if (vcc->pop) vcc->pop(vcc,skb);
-		else dev_kfree_skb(skb);
-		return -EINVAL;
-	}
+	अगर (vcc->qos.txtp.traffic_class == ATM_NONE) अणु
+		अगर (vcc->pop) vcc->pop(vcc,skb);
+		अन्यथा dev_kमुक्त_skb(skb);
+		वापस -EINVAL;
+	पूर्ण
 	dev_data = PRIV(vcc->dev);
-	if (dev_data) out_vcc = dev_data->vcc;
-	if (!dev_data || !out_vcc) {
-		if (vcc->pop) vcc->pop(vcc,skb);
-		else dev_kfree_skb(skb);
-		if (dev_data) return 0;
+	अगर (dev_data) out_vcc = dev_data->vcc;
+	अगर (!dev_data || !out_vcc) अणु
+		अगर (vcc->pop) vcc->pop(vcc,skb);
+		अन्यथा dev_kमुक्त_skb(skb);
+		अगर (dev_data) वापस 0;
 		atomic_inc(&vcc->stats->tx_err);
-		return -ENOLINK;
-	}
-	size = skb->len+sizeof(struct atmtcp_hdr);
-	new_skb = atm_alloc_charge(out_vcc,size,GFP_ATOMIC);
-	if (!new_skb) {
-		if (vcc->pop) vcc->pop(vcc,skb);
-		else dev_kfree_skb(skb);
+		वापस -ENOLINK;
+	पूर्ण
+	size = skb->len+माप(काष्ठा aपंचांगtcp_hdr);
+	new_skb = aपंचांग_alloc_अक्षरge(out_vcc,size,GFP_ATOMIC);
+	अगर (!new_skb) अणु
+		अगर (vcc->pop) vcc->pop(vcc,skb);
+		अन्यथा dev_kमुक्त_skb(skb);
 		atomic_inc(&vcc->stats->tx_err);
-		return -ENOBUFS;
-	}
-	hdr = skb_put(new_skb, sizeof(struct atmtcp_hdr));
+		वापस -ENOBUFS;
+	पूर्ण
+	hdr = skb_put(new_skb, माप(काष्ठा aपंचांगtcp_hdr));
 	hdr->vpi = htons(vcc->vpi);
 	hdr->vci = htons(vcc->vci);
 	hdr->length = htonl(skb->len);
 	skb_copy_from_linear_data(skb, skb_put(new_skb, skb->len), skb->len);
-	if (vcc->pop) vcc->pop(vcc,skb);
-	else dev_kfree_skb(skb);
+	अगर (vcc->pop) vcc->pop(vcc,skb);
+	अन्यथा dev_kमुक्त_skb(skb);
 	out_vcc->push(out_vcc,new_skb);
 	atomic_inc(&vcc->stats->tx);
 	atomic_inc(&out_vcc->stats->rx);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int atmtcp_v_proc(struct atm_dev *dev,loff_t *pos,char *page)
-{
-	struct atmtcp_dev_data *dev_data = PRIV(dev);
+अटल पूर्णांक aपंचांगtcp_v_proc(काष्ठा aपंचांग_dev *dev,loff_t *pos,अक्षर *page)
+अणु
+	काष्ठा aपंचांगtcp_dev_data *dev_data = PRIV(dev);
 
-	if (*pos) return 0;
-	if (!dev_data->persist) return sprintf(page,"ephemeral\n");
-	return sprintf(page,"persistent, %sconnected\n",
+	अगर (*pos) वापस 0;
+	अगर (!dev_data->persist) वापस प्र_लिखो(page,"ephemeral\n");
+	वापस प्र_लिखो(page,"persistent, %sconnected\n",
 	    dev_data->vcc ? "" : "dis");
-}
+पूर्ण
 
 
-static void atmtcp_c_close(struct atm_vcc *vcc)
-{
-	struct atm_dev *atmtcp_dev;
-	struct atmtcp_dev_data *dev_data;
+अटल व्योम aपंचांगtcp_c_बंद(काष्ठा aपंचांग_vcc *vcc)
+अणु
+	काष्ठा aपंचांग_dev *aपंचांगtcp_dev;
+	काष्ठा aपंचांगtcp_dev_data *dev_data;
 
-	atmtcp_dev = (struct atm_dev *) vcc->dev_data;
-	dev_data = PRIV(atmtcp_dev);
-	dev_data->vcc = NULL;
-	if (dev_data->persist) return;
-	atmtcp_dev->dev_data = NULL;
-	kfree(dev_data);
-	atm_dev_deregister(atmtcp_dev);
-	vcc->dev_data = NULL;
+	aपंचांगtcp_dev = (काष्ठा aपंचांग_dev *) vcc->dev_data;
+	dev_data = PRIV(aपंचांगtcp_dev);
+	dev_data->vcc = शून्य;
+	अगर (dev_data->persist) वापस;
+	aपंचांगtcp_dev->dev_data = शून्य;
+	kमुक्त(dev_data);
+	aपंचांग_dev_deरेजिस्टर(aपंचांगtcp_dev);
+	vcc->dev_data = शून्य;
 	module_put(THIS_MODULE);
-}
+पूर्ण
 
 
-static struct atm_vcc *find_vcc(struct atm_dev *dev, short vpi, int vci)
-{
-        struct hlist_head *head;
-        struct atm_vcc *vcc;
-        struct sock *s;
+अटल काष्ठा aपंचांग_vcc *find_vcc(काष्ठा aपंचांग_dev *dev, लघु vpi, पूर्णांक vci)
+अणु
+        काष्ठा hlist_head *head;
+        काष्ठा aपंचांग_vcc *vcc;
+        काष्ठा sock *s;
 
         head = &vcc_hash[vci & (VCC_HTABLE_SIZE -1)];
 
-	sk_for_each(s, head) {
-                vcc = atm_sk(s);
-                if (vcc->dev == dev &&
+	sk_क्रम_each(s, head) अणु
+                vcc = aपंचांग_sk(s);
+                अगर (vcc->dev == dev &&
                     vcc->vci == vci && vcc->vpi == vpi &&
-                    vcc->qos.rxtp.traffic_class != ATM_NONE) {
-                                return vcc;
-                }
-        }
-        return NULL;
-}
+                    vcc->qos.rxtp.traffic_class != ATM_NONE) अणु
+                                वापस vcc;
+                पूर्ण
+        पूर्ण
+        वापस शून्य;
+पूर्ण
 
 
-static int atmtcp_c_send(struct atm_vcc *vcc,struct sk_buff *skb)
-{
-	struct atm_dev *dev;
-	struct atmtcp_hdr *hdr;
-	struct atm_vcc *out_vcc;
-	struct sk_buff *new_skb;
-	int result = 0;
+अटल पूर्णांक aपंचांगtcp_c_send(काष्ठा aपंचांग_vcc *vcc,काष्ठा sk_buff *skb)
+अणु
+	काष्ठा aपंचांग_dev *dev;
+	काष्ठा aपंचांगtcp_hdr *hdr;
+	काष्ठा aपंचांग_vcc *out_vcc;
+	काष्ठा sk_buff *new_skb;
+	पूर्णांक result = 0;
 
-	if (!skb->len) return 0;
+	अगर (!skb->len) वापस 0;
 	dev = vcc->dev_data;
-	hdr = (struct atmtcp_hdr *) skb->data;
-	if (hdr->length == ATMTCP_HDR_MAGIC) {
-		result = atmtcp_recv_control(
-		    (struct atmtcp_control *) skb->data);
-		goto done;
-	}
-	read_lock(&vcc_sklist_lock);
+	hdr = (काष्ठा aपंचांगtcp_hdr *) skb->data;
+	अगर (hdr->length == ATMTCP_HDR_MAGIC) अणु
+		result = aपंचांगtcp_recv_control(
+		    (काष्ठा aपंचांगtcp_control *) skb->data);
+		जाओ करोne;
+	पूर्ण
+	पढ़ो_lock(&vcc_sklist_lock);
 	out_vcc = find_vcc(dev, ntohs(hdr->vpi), ntohs(hdr->vci));
-	read_unlock(&vcc_sklist_lock);
-	if (!out_vcc) {
+	पढ़ो_unlock(&vcc_sklist_lock);
+	अगर (!out_vcc) अणु
 		result = -EUNATCH;
 		atomic_inc(&vcc->stats->tx_err);
-		goto done;
-	}
-	skb_pull(skb,sizeof(struct atmtcp_hdr));
-	new_skb = atm_alloc_charge(out_vcc,skb->len,GFP_KERNEL);
-	if (!new_skb) {
+		जाओ करोne;
+	पूर्ण
+	skb_pull(skb,माप(काष्ठा aपंचांगtcp_hdr));
+	new_skb = aपंचांग_alloc_अक्षरge(out_vcc,skb->len,GFP_KERNEL);
+	अगर (!new_skb) अणु
 		result = -ENOBUFS;
-		goto done;
-	}
-	__net_timestamp(new_skb);
+		जाओ करोne;
+	पूर्ण
+	__net_बारtamp(new_skb);
 	skb_copy_from_linear_data(skb, skb_put(new_skb, skb->len), skb->len);
 	out_vcc->push(out_vcc,new_skb);
 	atomic_inc(&vcc->stats->tx);
 	atomic_inc(&out_vcc->stats->rx);
-done:
-	if (vcc->pop) vcc->pop(vcc,skb);
-	else dev_kfree_skb(skb);
-	return result;
-}
+करोne:
+	अगर (vcc->pop) vcc->pop(vcc,skb);
+	अन्यथा dev_kमुक्त_skb(skb);
+	वापस result;
+पूर्ण
 
 
 /*
- * Device operations for the virtual ATM devices created by ATMTCP.
+ * Device operations क्रम the भव ATM devices created by ATMTCP.
  */
 
 
-static const struct atmdev_ops atmtcp_v_dev_ops = {
-	.dev_close	= atmtcp_v_dev_close,
-	.open		= atmtcp_v_open,
-	.close		= atmtcp_v_close,
-	.ioctl		= atmtcp_v_ioctl,
-	.send		= atmtcp_v_send,
-	.proc_read	= atmtcp_v_proc,
+अटल स्थिर काष्ठा aपंचांगdev_ops aपंचांगtcp_v_dev_ops = अणु
+	.dev_बंद	= aपंचांगtcp_v_dev_बंद,
+	.खोलो		= aपंचांगtcp_v_खोलो,
+	.बंद		= aपंचांगtcp_v_बंद,
+	.ioctl		= aपंचांगtcp_v_ioctl,
+	.send		= aपंचांगtcp_v_send,
+	.proc_पढ़ो	= aपंचांगtcp_v_proc,
 	.owner		= THIS_MODULE
-};
+पूर्ण;
 
 
 /*
- * Device operations for the ATMTCP control device.
+ * Device operations क्रम the ATMTCP control device.
  */
 
 
-static const struct atmdev_ops atmtcp_c_dev_ops = {
-	.close		= atmtcp_c_close,
-	.send		= atmtcp_c_send
-};
+अटल स्थिर काष्ठा aपंचांगdev_ops aपंचांगtcp_c_dev_ops = अणु
+	.बंद		= aपंचांगtcp_c_बंद,
+	.send		= aपंचांगtcp_c_send
+पूर्ण;
 
 
-static struct atm_dev atmtcp_control_dev = {
-	.ops		= &atmtcp_c_dev_ops,
+अटल काष्ठा aपंचांग_dev aपंचांगtcp_control_dev = अणु
+	.ops		= &aपंचांगtcp_c_dev_ops,
 	.type		= "atmtcp",
 	.number		= 999,
-	.lock		= __SPIN_LOCK_UNLOCKED(atmtcp_control_dev.lock)
-};
+	.lock		= __SPIN_LOCK_UNLOCKED(aपंचांगtcp_control_dev.lock)
+पूर्ण;
 
 
-static int atmtcp_create(int itf,int persist,struct atm_dev **result)
-{
-	struct atmtcp_dev_data *dev_data;
-	struct atm_dev *dev;
+अटल पूर्णांक aपंचांगtcp_create(पूर्णांक itf,पूर्णांक persist,काष्ठा aपंचांग_dev **result)
+अणु
+	काष्ठा aपंचांगtcp_dev_data *dev_data;
+	काष्ठा aपंचांग_dev *dev;
 
-	dev_data = kmalloc(sizeof(*dev_data),GFP_KERNEL);
-	if (!dev_data)
-		return -ENOMEM;
+	dev_data = kदो_स्मृति(माप(*dev_data),GFP_KERNEL);
+	अगर (!dev_data)
+		वापस -ENOMEM;
 
-	dev = atm_dev_register(DEV_LABEL,NULL,&atmtcp_v_dev_ops,itf,NULL);
-	if (!dev) {
-		kfree(dev_data);
-		return itf == -1 ? -ENOMEM : -EBUSY;
-	}
+	dev = aपंचांग_dev_रेजिस्टर(DEV_LABEL,शून्य,&aपंचांगtcp_v_dev_ops,itf,शून्य);
+	अगर (!dev) अणु
+		kमुक्त(dev_data);
+		वापस itf == -1 ? -ENOMEM : -EBUSY;
+	पूर्ण
 	dev->ci_range.vpi_bits = MAX_VPI_BITS;
 	dev->ci_range.vci_bits = MAX_VCI_BITS;
 	dev->dev_data = dev_data;
-	PRIV(dev)->vcc = NULL;
+	PRIV(dev)->vcc = शून्य;
 	PRIV(dev)->persist = persist;
-	if (result) *result = dev;
-	return 0;
-}
+	अगर (result) *result = dev;
+	वापस 0;
+पूर्ण
 
 
-static int atmtcp_attach(struct atm_vcc *vcc,int itf)
-{
-	struct atm_dev *dev;
+अटल पूर्णांक aपंचांगtcp_attach(काष्ठा aपंचांग_vcc *vcc,पूर्णांक itf)
+अणु
+	काष्ठा aपंचांग_dev *dev;
 
-	dev = NULL;
-	if (itf != -1) dev = atm_dev_lookup(itf);
-	if (dev) {
-		if (dev->ops != &atmtcp_v_dev_ops) {
-			atm_dev_put(dev);
-			return -EMEDIUMTYPE;
-		}
-		if (PRIV(dev)->vcc) {
-			atm_dev_put(dev);
-			return -EBUSY;
-		}
-	}
-	else {
-		int error;
+	dev = शून्य;
+	अगर (itf != -1) dev = aपंचांग_dev_lookup(itf);
+	अगर (dev) अणु
+		अगर (dev->ops != &aपंचांगtcp_v_dev_ops) अणु
+			aपंचांग_dev_put(dev);
+			वापस -EMEDIUMTYPE;
+		पूर्ण
+		अगर (PRIV(dev)->vcc) अणु
+			aपंचांग_dev_put(dev);
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
+	अन्यथा अणु
+		पूर्णांक error;
 
-		error = atmtcp_create(itf,0,&dev);
-		if (error) return error;
-	}
+		error = aपंचांगtcp_create(itf,0,&dev);
+		अगर (error) वापस error;
+	पूर्ण
 	PRIV(dev)->vcc = vcc;
-	vcc->dev = &atmtcp_control_dev;
-	vcc_insert_socket(sk_atm(vcc));
+	vcc->dev = &aपंचांगtcp_control_dev;
+	vcc_insert_socket(sk_aपंचांग(vcc));
 	set_bit(ATM_VF_META,&vcc->flags);
 	set_bit(ATM_VF_READY,&vcc->flags);
 	vcc->dev_data = dev;
-	(void) atm_init_aal5(vcc); /* @@@ losing AAL in transit ... */
-	vcc->stats = &atmtcp_control_dev.stats.aal5;
-	return dev->number;
-}
+	(व्योम) aपंचांग_init_aal5(vcc); /* @@@ losing AAL in transit ... */
+	vcc->stats = &aपंचांगtcp_control_dev.stats.aal5;
+	वापस dev->number;
+पूर्ण
 
 
-static int atmtcp_create_persistent(int itf)
-{
-	return atmtcp_create(itf,1,NULL);
-}
+अटल पूर्णांक aपंचांगtcp_create_persistent(पूर्णांक itf)
+अणु
+	वापस aपंचांगtcp_create(itf,1,शून्य);
+पूर्ण
 
 
-static int atmtcp_remove_persistent(int itf)
-{
-	struct atm_dev *dev;
-	struct atmtcp_dev_data *dev_data;
+अटल पूर्णांक aपंचांगtcp_हटाओ_persistent(पूर्णांक itf)
+अणु
+	काष्ठा aपंचांग_dev *dev;
+	काष्ठा aपंचांगtcp_dev_data *dev_data;
 
-	dev = atm_dev_lookup(itf);
-	if (!dev) return -ENODEV;
-	if (dev->ops != &atmtcp_v_dev_ops) {
-		atm_dev_put(dev);
-		return -EMEDIUMTYPE;
-	}
+	dev = aपंचांग_dev_lookup(itf);
+	अगर (!dev) वापस -ENODEV;
+	अगर (dev->ops != &aपंचांगtcp_v_dev_ops) अणु
+		aपंचांग_dev_put(dev);
+		वापस -EMEDIUMTYPE;
+	पूर्ण
 	dev_data = PRIV(dev);
-	if (!dev_data->persist) {
-		atm_dev_put(dev);
-		return 0;
-	}
+	अगर (!dev_data->persist) अणु
+		aपंचांग_dev_put(dev);
+		वापस 0;
+	पूर्ण
 	dev_data->persist = 0;
-	if (PRIV(dev)->vcc) {
-		atm_dev_put(dev);
-		return 0;
-	}
-	kfree(dev_data);
-	atm_dev_put(dev);
-	atm_dev_deregister(dev);
-	return 0;
-}
+	अगर (PRIV(dev)->vcc) अणु
+		aपंचांग_dev_put(dev);
+		वापस 0;
+	पूर्ण
+	kमुक्त(dev_data);
+	aपंचांग_dev_put(dev);
+	aपंचांग_dev_deरेजिस्टर(dev);
+	वापस 0;
+पूर्ण
 
-static int atmtcp_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
-{
-	int err = 0;
-	struct atm_vcc *vcc = ATM_SD(sock);
+अटल पूर्णांक aपंचांगtcp_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा aपंचांग_vcc *vcc = ATM_SD(sock);
 
-	if (cmd != SIOCSIFATMTCP && cmd != ATMTCP_CREATE && cmd != ATMTCP_REMOVE)
-		return -ENOIOCTLCMD;
+	अगर (cmd != SIOCSIFATMTCP && cmd != ATMTCP_CREATE && cmd != ATMTCP_REMOVE)
+		वापस -ENOIOCTLCMD;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	switch (cmd) {
-		case SIOCSIFATMTCP:
-			err = atmtcp_attach(vcc, (int) arg);
-			if (err >= 0) {
+	चयन (cmd) अणु
+		हाल SIOCSIFATMTCP:
+			err = aपंचांगtcp_attach(vcc, (पूर्णांक) arg);
+			अगर (err >= 0) अणु
 				sock->state = SS_CONNECTED;
 				__module_get(THIS_MODULE);
-			}
-			break;
-		case ATMTCP_CREATE:
-			err = atmtcp_create_persistent((int) arg);
-			break;
-		case ATMTCP_REMOVE:
-			err = atmtcp_remove_persistent((int) arg);
-			break;
-	}
-	return err;
-}
+			पूर्ण
+			अवरोध;
+		हाल ATMTCP_CREATE:
+			err = aपंचांगtcp_create_persistent((पूर्णांक) arg);
+			अवरोध;
+		हाल ATMTCP_REMOVE:
+			err = aपंचांगtcp_हटाओ_persistent((पूर्णांक) arg);
+			अवरोध;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static struct atm_ioctl atmtcp_ioctl_ops = {
+अटल काष्ठा aपंचांग_ioctl aपंचांगtcp_ioctl_ops = अणु
 	.owner 	= THIS_MODULE,
-	.ioctl	= atmtcp_ioctl,
-};
+	.ioctl	= aपंचांगtcp_ioctl,
+पूर्ण;
 
-static __init int atmtcp_init(void)
-{
-	register_atm_ioctl(&atmtcp_ioctl_ops);
-	return 0;
-}
+अटल __init पूर्णांक aपंचांगtcp_init(व्योम)
+अणु
+	रेजिस्टर_aपंचांग_ioctl(&aपंचांगtcp_ioctl_ops);
+	वापस 0;
+पूर्ण
 
 
-static void __exit atmtcp_exit(void)
-{
-	deregister_atm_ioctl(&atmtcp_ioctl_ops);
-}
+अटल व्योम __निकास aपंचांगtcp_निकास(व्योम)
+अणु
+	deरेजिस्टर_aपंचांग_ioctl(&aपंचांगtcp_ioctl_ops);
+पूर्ण
 
 MODULE_LICENSE("GPL");
-module_init(atmtcp_init);
-module_exit(atmtcp_exit);
+module_init(aपंचांगtcp_init);
+module_निकास(aपंचांगtcp_निकास);

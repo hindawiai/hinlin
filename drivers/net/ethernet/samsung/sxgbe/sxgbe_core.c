@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* 10G controller driver for Samsung SoCs
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* 10G controller driver क्रम Samsung SoCs
  *
  * Copyright (C) 2013 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -7,103 +8,103 @@
  * Author: Siva Reddy Kallam <siva.kallam@samsung.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/export.h>
-#include <linux/io.h>
-#include <linux/netdevice.h>
-#include <linux/phy.h>
+#समावेश <linux/export.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/phy.h>
 
-#include "sxgbe_common.h"
-#include "sxgbe_reg.h"
+#समावेश "sxgbe_common.h"
+#समावेश "sxgbe_reg.h"
 
 /* MAC core initialization */
-static void sxgbe_core_init(void __iomem *ioaddr)
-{
+अटल व्योम sxgbe_core_init(व्योम __iomem *ioaddr)
+अणु
 	u32 regval;
 
 	/* TX configuration */
-	regval = readl(ioaddr + SXGBE_CORE_TX_CONFIG_REG);
+	regval = पढ़ोl(ioaddr + SXGBE_CORE_TX_CONFIG_REG);
 	/* Other configurable parameters IFP, IPG, ISR, ISM
-	 * needs to be set if needed
+	 * needs to be set अगर needed
 	 */
 	regval |= SXGBE_TX_JABBER_DISABLE;
-	writel(regval, ioaddr + SXGBE_CORE_TX_CONFIG_REG);
+	ग_लिखोl(regval, ioaddr + SXGBE_CORE_TX_CONFIG_REG);
 
 	/* RX configuration */
-	regval = readl(ioaddr + SXGBE_CORE_RX_CONFIG_REG);
+	regval = पढ़ोl(ioaddr + SXGBE_CORE_RX_CONFIG_REG);
 	/* Other configurable parameters CST, SPEN, USP, GPSLCE
 	 * WD, LM, S2KP, HDSMS, GPSL, ELEN, ARPEN needs to be
-	 * set if needed
+	 * set अगर needed
 	 */
 	regval |= SXGBE_RX_JUMBPKT_ENABLE | SXGBE_RX_ACS_ENABLE;
-	writel(regval, ioaddr + SXGBE_CORE_RX_CONFIG_REG);
-}
+	ग_लिखोl(regval, ioaddr + SXGBE_CORE_RX_CONFIG_REG);
+पूर्ण
 
-/* Dump MAC registers */
-static void sxgbe_core_dump_regs(void __iomem *ioaddr)
-{
-}
+/* Dump MAC रेजिस्टरs */
+अटल व्योम sxgbe_core_dump_regs(व्योम __iomem *ioaddr)
+अणु
+पूर्ण
 
-static int sxgbe_get_lpi_status(void __iomem *ioaddr, const u32 irq_status)
-{
-	int status = 0;
-	int lpi_status;
+अटल पूर्णांक sxgbe_get_lpi_status(व्योम __iomem *ioaddr, स्थिर u32 irq_status)
+अणु
+	पूर्णांक status = 0;
+	पूर्णांक lpi_status;
 
-	/* Reading this register shall clear all the LPI status bits */
-	lpi_status = readl(ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
+	/* Reading this रेजिस्टर shall clear all the LPI status bits */
+	lpi_status = पढ़ोl(ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
 
-	if (lpi_status & LPI_CTRL_STATUS_TLPIEN)
+	अगर (lpi_status & LPI_CTRL_STATUS_TLPIEN)
 		status |= TX_ENTRY_LPI_MODE;
-	if (lpi_status & LPI_CTRL_STATUS_TLPIEX)
+	अगर (lpi_status & LPI_CTRL_STATUS_TLPIEX)
 		status |= TX_EXIT_LPI_MODE;
-	if (lpi_status & LPI_CTRL_STATUS_RLPIEN)
+	अगर (lpi_status & LPI_CTRL_STATUS_RLPIEN)
 		status |= RX_ENTRY_LPI_MODE;
-	if (lpi_status & LPI_CTRL_STATUS_RLPIEX)
+	अगर (lpi_status & LPI_CTRL_STATUS_RLPIEX)
 		status |= RX_EXIT_LPI_MODE;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-/* Handle extra events on specific interrupts hw dependent */
-static int sxgbe_core_host_irq_status(void __iomem *ioaddr,
-				      struct sxgbe_extra_stats *x)
-{
-	int irq_status, status = 0;
+/* Handle extra events on specअगरic पूर्णांकerrupts hw dependent */
+अटल पूर्णांक sxgbe_core_host_irq_status(व्योम __iomem *ioaddr,
+				      काष्ठा sxgbe_extra_stats *x)
+अणु
+	पूर्णांक irq_status, status = 0;
 
-	irq_status = readl(ioaddr + SXGBE_CORE_INT_STATUS_REG);
+	irq_status = पढ़ोl(ioaddr + SXGBE_CORE_INT_STATUS_REG);
 
-	if (unlikely(irq_status & LPI_INT_STATUS))
+	अगर (unlikely(irq_status & LPI_INT_STATUS))
 		status |= sxgbe_get_lpi_status(ioaddr, irq_status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-/* Set power management mode (e.g. magic frame) */
-static void sxgbe_core_pmt(void __iomem *ioaddr, unsigned long mode)
-{
-}
+/* Set घातer management mode (e.g. magic frame) */
+अटल व्योम sxgbe_core_pmt(व्योम __iomem *ioaddr, अचिन्हित दीर्घ mode)
+अणु
+पूर्ण
 
 /* Set/Get Unicast MAC addresses */
-static void sxgbe_core_set_umac_addr(void __iomem *ioaddr, unsigned char *addr,
-				     unsigned int reg_n)
-{
+अटल व्योम sxgbe_core_set_umac_addr(व्योम __iomem *ioaddr, अचिन्हित अक्षर *addr,
+				     अचिन्हित पूर्णांक reg_n)
+अणु
 	u32 high_word, low_word;
 
 	high_word = (addr[5] << 8) | (addr[4]);
 	low_word = (addr[3] << 24) | (addr[2] << 16) |
 		   (addr[1] << 8) | (addr[0]);
-	writel(high_word, ioaddr + SXGBE_CORE_ADD_HIGHOFFSET(reg_n));
-	writel(low_word, ioaddr + SXGBE_CORE_ADD_LOWOFFSET(reg_n));
-}
+	ग_लिखोl(high_word, ioaddr + SXGBE_CORE_ADD_HIGHOFFSET(reg_n));
+	ग_लिखोl(low_word, ioaddr + SXGBE_CORE_ADD_LOWOFFSET(reg_n));
+पूर्ण
 
-static void sxgbe_core_get_umac_addr(void __iomem *ioaddr, unsigned char *addr,
-				     unsigned int reg_n)
-{
+अटल व्योम sxgbe_core_get_umac_addr(व्योम __iomem *ioaddr, अचिन्हित अक्षर *addr,
+				     अचिन्हित पूर्णांक reg_n)
+अणु
 	u32 high_word, low_word;
 
-	high_word = readl(ioaddr + SXGBE_CORE_ADD_HIGHOFFSET(reg_n));
-	low_word = readl(ioaddr + SXGBE_CORE_ADD_LOWOFFSET(reg_n));
+	high_word = पढ़ोl(ioaddr + SXGBE_CORE_ADD_HIGHOFFSET(reg_n));
+	low_word = पढ़ोl(ioaddr + SXGBE_CORE_ADD_LOWOFFSET(reg_n));
 
 	/* extract and assign address */
 	addr[5] = (high_word & 0x0000FF00) >> 8;
@@ -112,148 +113,148 @@ static void sxgbe_core_get_umac_addr(void __iomem *ioaddr, unsigned char *addr,
 	addr[2] = (low_word & 0x00FF0000) >> 16;
 	addr[1] = (low_word & 0x0000FF00) >> 8;
 	addr[0] = (low_word & 0x000000FF);
-}
+पूर्ण
 
-static void sxgbe_enable_tx(void __iomem *ioaddr, bool enable)
-{
+अटल व्योम sxgbe_enable_tx(व्योम __iomem *ioaddr, bool enable)
+अणु
 	u32 tx_config;
 
-	tx_config = readl(ioaddr + SXGBE_CORE_TX_CONFIG_REG);
+	tx_config = पढ़ोl(ioaddr + SXGBE_CORE_TX_CONFIG_REG);
 	tx_config &= ~SXGBE_TX_ENABLE;
 
-	if (enable)
+	अगर (enable)
 		tx_config |= SXGBE_TX_ENABLE;
-	writel(tx_config, ioaddr + SXGBE_CORE_TX_CONFIG_REG);
-}
+	ग_लिखोl(tx_config, ioaddr + SXGBE_CORE_TX_CONFIG_REG);
+पूर्ण
 
-static void sxgbe_enable_rx(void __iomem *ioaddr, bool enable)
-{
+अटल व्योम sxgbe_enable_rx(व्योम __iomem *ioaddr, bool enable)
+अणु
 	u32 rx_config;
 
-	rx_config = readl(ioaddr + SXGBE_CORE_RX_CONFIG_REG);
+	rx_config = पढ़ोl(ioaddr + SXGBE_CORE_RX_CONFIG_REG);
 	rx_config &= ~SXGBE_RX_ENABLE;
 
-	if (enable)
+	अगर (enable)
 		rx_config |= SXGBE_RX_ENABLE;
-	writel(rx_config, ioaddr + SXGBE_CORE_RX_CONFIG_REG);
-}
+	ग_लिखोl(rx_config, ioaddr + SXGBE_CORE_RX_CONFIG_REG);
+पूर्ण
 
-static int sxgbe_get_controller_version(void __iomem *ioaddr)
-{
-	return readl(ioaddr + SXGBE_CORE_VERSION_REG);
-}
+अटल पूर्णांक sxgbe_get_controller_version(व्योम __iomem *ioaddr)
+अणु
+	वापस पढ़ोl(ioaddr + SXGBE_CORE_VERSION_REG);
+पूर्ण
 
 /* If supported then get the optional core features */
-static unsigned int sxgbe_get_hw_feature(void __iomem *ioaddr,
-					 unsigned char feature_index)
-{
-	return readl(ioaddr + (SXGBE_CORE_HW_FEA_REG(feature_index)));
-}
+अटल अचिन्हित पूर्णांक sxgbe_get_hw_feature(व्योम __iomem *ioaddr,
+					 अचिन्हित अक्षर feature_index)
+अणु
+	वापस पढ़ोl(ioaddr + (SXGBE_CORE_HW_FEA_REG(feature_index)));
+पूर्ण
 
-static void sxgbe_core_set_speed(void __iomem *ioaddr, unsigned char speed)
-{
-	u32 tx_cfg = readl(ioaddr + SXGBE_CORE_TX_CONFIG_REG);
+अटल व्योम sxgbe_core_set_speed(व्योम __iomem *ioaddr, अचिन्हित अक्षर speed)
+अणु
+	u32 tx_cfg = पढ़ोl(ioaddr + SXGBE_CORE_TX_CONFIG_REG);
 
 	/* clear the speed bits */
 	tx_cfg &= ~0x60000000;
 	tx_cfg |= (speed << SXGBE_SPEED_LSHIFT);
 
 	/* set the speed */
-	writel(tx_cfg, ioaddr + SXGBE_CORE_TX_CONFIG_REG);
-}
+	ग_लिखोl(tx_cfg, ioaddr + SXGBE_CORE_TX_CONFIG_REG);
+पूर्ण
 
-static void sxgbe_core_enable_rxqueue(void __iomem *ioaddr, int queue_num)
-{
+अटल व्योम sxgbe_core_enable_rxqueue(व्योम __iomem *ioaddr, पूर्णांक queue_num)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_CORE_RX_CTL0_REG);
+	reg_val = पढ़ोl(ioaddr + SXGBE_CORE_RX_CTL0_REG);
 	reg_val &= ~(SXGBE_CORE_RXQ_ENABLE_MASK << queue_num);
 	reg_val |= SXGBE_CORE_RXQ_ENABLE;
-	writel(reg_val, ioaddr + SXGBE_CORE_RX_CTL0_REG);
-}
+	ग_लिखोl(reg_val, ioaddr + SXGBE_CORE_RX_CTL0_REG);
+पूर्ण
 
-static void sxgbe_core_disable_rxqueue(void __iomem *ioaddr, int queue_num)
-{
+अटल व्योम sxgbe_core_disable_rxqueue(व्योम __iomem *ioaddr, पूर्णांक queue_num)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_CORE_RX_CTL0_REG);
+	reg_val = पढ़ोl(ioaddr + SXGBE_CORE_RX_CTL0_REG);
 	reg_val &= ~(SXGBE_CORE_RXQ_ENABLE_MASK << queue_num);
 	reg_val |= SXGBE_CORE_RXQ_DISABLE;
-	writel(reg_val, ioaddr + SXGBE_CORE_RX_CTL0_REG);
-}
+	ग_लिखोl(reg_val, ioaddr + SXGBE_CORE_RX_CTL0_REG);
+पूर्ण
 
-static void  sxgbe_set_eee_mode(void __iomem *ioaddr)
-{
+अटल व्योम  sxgbe_set_eee_mode(व्योम __iomem *ioaddr)
+अणु
 	u32 ctrl;
 
-	/* Enable the LPI mode for transmit path with Tx automate bit set.
-	 * When Tx Automate bit is set, MAC internally handles the entry
+	/* Enable the LPI mode क्रम transmit path with Tx स्वतःmate bit set.
+	 * When Tx Automate bit is set, MAC पूर्णांकernally handles the entry
 	 * to LPI mode after all outstanding and pending packets are
 	 * transmitted.
 	 */
-	ctrl = readl(ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
+	ctrl = पढ़ोl(ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
 	ctrl |= LPI_CTRL_STATUS_LPIEN | LPI_CTRL_STATUS_TXA;
-	writel(ctrl, ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
-}
+	ग_लिखोl(ctrl, ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
+पूर्ण
 
-static void  sxgbe_reset_eee_mode(void __iomem *ioaddr)
-{
+अटल व्योम  sxgbe_reset_eee_mode(व्योम __iomem *ioaddr)
+अणु
 	u32 ctrl;
 
-	ctrl = readl(ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
+	ctrl = पढ़ोl(ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
 	ctrl &= ~(LPI_CTRL_STATUS_LPIEN | LPI_CTRL_STATUS_TXA);
-	writel(ctrl, ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
-}
+	ग_लिखोl(ctrl, ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
+पूर्ण
 
-static void  sxgbe_set_eee_pls(void __iomem *ioaddr, const int link)
-{
+अटल व्योम  sxgbe_set_eee_pls(व्योम __iomem *ioaddr, स्थिर पूर्णांक link)
+अणु
 	u32 ctrl;
 
-	ctrl = readl(ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
+	ctrl = पढ़ोl(ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
 
 	/* If the PHY link status is UP then set PLS */
-	if (link)
+	अगर (link)
 		ctrl |= LPI_CTRL_STATUS_PLS;
-	else
+	अन्यथा
 		ctrl &= ~LPI_CTRL_STATUS_PLS;
 
-	writel(ctrl, ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
-}
+	ग_लिखोl(ctrl, ioaddr + SXGBE_CORE_LPI_CTRL_STATUS);
+पूर्ण
 
-static void  sxgbe_set_eee_timer(void __iomem *ioaddr,
-				 const int ls, const int tw)
-{
-	int value = ((tw & 0xffff)) | ((ls & 0x7ff) << 16);
+अटल व्योम  sxgbe_set_eee_समयr(व्योम __iomem *ioaddr,
+				 स्थिर पूर्णांक ls, स्थिर पूर्णांक tw)
+अणु
+	पूर्णांक value = ((tw & 0xffff)) | ((ls & 0x7ff) << 16);
 
-	/* Program the timers in the LPI timer control register:
-	 * LS: minimum time (ms) for which the link
-	 *  status from PHY should be ok before transmitting
+	/* Program the समयrs in the LPI समयr control रेजिस्टर:
+	 * LS: minimum समय (ms) क्रम which the link
+	 *  status from PHY should be ok beक्रमe transmitting
 	 *  the LPI pattern.
-	 * TW: minimum time (us) for which the core waits
+	 * TW: minimum समय (us) क्रम which the core रुकोs
 	 *  after it has stopped transmitting the LPI pattern.
 	 */
-	writel(value, ioaddr + SXGBE_CORE_LPI_TIMER_CTRL);
-}
+	ग_लिखोl(value, ioaddr + SXGBE_CORE_LPI_TIMER_CTRL);
+पूर्ण
 
-static void sxgbe_enable_rx_csum(void __iomem *ioaddr)
-{
+अटल व्योम sxgbe_enable_rx_csum(व्योम __iomem *ioaddr)
+अणु
 	u32 ctrl;
 
-	ctrl = readl(ioaddr + SXGBE_CORE_RX_CONFIG_REG);
+	ctrl = पढ़ोl(ioaddr + SXGBE_CORE_RX_CONFIG_REG);
 	ctrl |= SXGBE_RX_CSUMOFFLOAD_ENABLE;
-	writel(ctrl, ioaddr + SXGBE_CORE_RX_CONFIG_REG);
-}
+	ग_लिखोl(ctrl, ioaddr + SXGBE_CORE_RX_CONFIG_REG);
+पूर्ण
 
-static void sxgbe_disable_rx_csum(void __iomem *ioaddr)
-{
+अटल व्योम sxgbe_disable_rx_csum(व्योम __iomem *ioaddr)
+अणु
 	u32 ctrl;
 
-	ctrl = readl(ioaddr + SXGBE_CORE_RX_CONFIG_REG);
+	ctrl = पढ़ोl(ioaddr + SXGBE_CORE_RX_CONFIG_REG);
 	ctrl &= ~SXGBE_RX_CSUMOFFLOAD_ENABLE;
-	writel(ctrl, ioaddr + SXGBE_CORE_RX_CONFIG_REG);
-}
+	ग_लिखोl(ctrl, ioaddr + SXGBE_CORE_RX_CONFIG_REG);
+पूर्ण
 
-static const struct sxgbe_core_ops core_ops = {
+अटल स्थिर काष्ठा sxgbe_core_ops core_ops = अणु
 	.core_init		= sxgbe_core_init,
 	.dump_regs		= sxgbe_core_dump_regs,
 	.host_irq_status	= sxgbe_core_host_irq_status,
@@ -267,15 +268,15 @@ static const struct sxgbe_core_ops core_ops = {
 	.set_speed		= sxgbe_core_set_speed,
 	.set_eee_mode		= sxgbe_set_eee_mode,
 	.reset_eee_mode		= sxgbe_reset_eee_mode,
-	.set_eee_timer		= sxgbe_set_eee_timer,
+	.set_eee_समयr		= sxgbe_set_eee_समयr,
 	.set_eee_pls		= sxgbe_set_eee_pls,
 	.enable_rx_csum		= sxgbe_enable_rx_csum,
 	.disable_rx_csum	= sxgbe_disable_rx_csum,
 	.enable_rxqueue		= sxgbe_core_enable_rxqueue,
 	.disable_rxqueue	= sxgbe_core_disable_rxqueue,
-};
+पूर्ण;
 
-const struct sxgbe_core_ops *sxgbe_get_core_ops(void)
-{
-	return &core_ops;
-}
+स्थिर काष्ठा sxgbe_core_ops *sxgbe_get_core_ops(व्योम)
+अणु
+	वापस &core_ops;
+पूर्ण

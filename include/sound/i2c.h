@@ -1,88 +1,89 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __SOUND_I2C_H
-#define __SOUND_I2C_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __SOUND_I2C_H
+#घोषणा __SOUND_I2C_H
 
 /*
  */
 
-#define SND_I2C_DEVICE_ADDRTEN	(1<<0)	/* 10-bit I2C address */
+#घोषणा SND_I2C_DEVICE_ADDRTEN	(1<<0)	/* 10-bit I2C address */
 
-struct snd_i2c_device {
-	struct list_head list;
-	struct snd_i2c_bus *bus;	/* I2C bus */
-	char name[32];		/* some useful device name */
-	unsigned short flags;	/* device flags */
-	unsigned short addr;	/* device address (might be 10-bit) */
-	unsigned long private_value;
-	void *private_data;
-	void (*private_free)(struct snd_i2c_device *device);
-};
+काष्ठा snd_i2c_device अणु
+	काष्ठा list_head list;
+	काष्ठा snd_i2c_bus *bus;	/* I2C bus */
+	अक्षर name[32];		/* some useful device name */
+	अचिन्हित लघु flags;	/* device flags */
+	अचिन्हित लघु addr;	/* device address (might be 10-bit) */
+	अचिन्हित दीर्घ निजी_value;
+	व्योम *निजी_data;
+	व्योम (*निजी_मुक्त)(काष्ठा snd_i2c_device *device);
+पूर्ण;
 
-#define snd_i2c_device(n) list_entry(n, struct snd_i2c_device, list)
+#घोषणा snd_i2c_device(n) list_entry(n, काष्ठा snd_i2c_device, list)
 
-struct snd_i2c_bit_ops {
-	void (*start)(struct snd_i2c_bus *bus);	/* transfer start */
-	void (*stop)(struct snd_i2c_bus *bus);	/* transfer stop */
-	void (*direction)(struct snd_i2c_bus *bus, int clock, int data);  /* set line direction (0 = write, 1 = read) */
-	void (*setlines)(struct snd_i2c_bus *bus, int clock, int data);
-	int (*getclock)(struct snd_i2c_bus *bus);
-	int (*getdata)(struct snd_i2c_bus *bus, int ack);
-};
+काष्ठा snd_i2c_bit_ops अणु
+	व्योम (*start)(काष्ठा snd_i2c_bus *bus);	/* transfer start */
+	व्योम (*stop)(काष्ठा snd_i2c_bus *bus);	/* transfer stop */
+	व्योम (*direction)(काष्ठा snd_i2c_bus *bus, पूर्णांक घड़ी, पूर्णांक data);  /* set line direction (0 = ग_लिखो, 1 = पढ़ो) */
+	व्योम (*setlines)(काष्ठा snd_i2c_bus *bus, पूर्णांक घड़ी, पूर्णांक data);
+	पूर्णांक (*अ_लोlock)(काष्ठा snd_i2c_bus *bus);
+	पूर्णांक (*getdata)(काष्ठा snd_i2c_bus *bus, पूर्णांक ack);
+पूर्ण;
 
-struct snd_i2c_ops {
-	int (*sendbytes)(struct snd_i2c_device *device, unsigned char *bytes, int count);
-	int (*readbytes)(struct snd_i2c_device *device, unsigned char *bytes, int count);
-	int (*probeaddr)(struct snd_i2c_bus *bus, unsigned short addr);
-};
+काष्ठा snd_i2c_ops अणु
+	पूर्णांक (*sendbytes)(काष्ठा snd_i2c_device *device, अचिन्हित अक्षर *bytes, पूर्णांक count);
+	पूर्णांक (*पढ़ोbytes)(काष्ठा snd_i2c_device *device, अचिन्हित अक्षर *bytes, पूर्णांक count);
+	पूर्णांक (*probeaddr)(काष्ठा snd_i2c_bus *bus, अचिन्हित लघु addr);
+पूर्ण;
 
-struct snd_i2c_bus {
-	struct snd_card *card;	/* card which I2C belongs to */
-	char name[32];		/* some useful label */
+काष्ठा snd_i2c_bus अणु
+	काष्ठा snd_card *card;	/* card which I2C beदीर्घs to */
+	अक्षर name[32];		/* some useful label */
 
-	struct mutex lock_mutex;
+	काष्ठा mutex lock_mutex;
 
-	struct snd_i2c_bus *master;	/* master bus when SCK/SCL is shared */
-	struct list_head buses;	/* master: slave buses sharing SCK/SCL, slave: link list */
+	काष्ठा snd_i2c_bus *master;	/* master bus when SCK/SCL is shared */
+	काष्ठा list_head buses;	/* master: slave buses sharing SCK/SCL, slave: link list */
 
-	struct list_head devices; /* attached devices to this bus */
+	काष्ठा list_head devices; /* attached devices to this bus */
 
-	union {
-		struct snd_i2c_bit_ops *bit;
-		void *ops;
-	} hw_ops;		/* lowlevel operations */
-	const struct snd_i2c_ops *ops;	/* midlevel operations */
+	जोड़ अणु
+		काष्ठा snd_i2c_bit_ops *bit;
+		व्योम *ops;
+	पूर्ण hw_ops;		/* lowlevel operations */
+	स्थिर काष्ठा snd_i2c_ops *ops;	/* midlevel operations */
 
-	unsigned long private_value;
-	void *private_data;
-	void (*private_free)(struct snd_i2c_bus *bus);
-};
+	अचिन्हित दीर्घ निजी_value;
+	व्योम *निजी_data;
+	व्योम (*निजी_मुक्त)(काष्ठा snd_i2c_bus *bus);
+पूर्ण;
 
-#define snd_i2c_slave_bus(n) list_entry(n, struct snd_i2c_bus, buses)
+#घोषणा snd_i2c_slave_bus(n) list_entry(n, काष्ठा snd_i2c_bus, buses)
 
-int snd_i2c_bus_create(struct snd_card *card, const char *name,
-		       struct snd_i2c_bus *master, struct snd_i2c_bus **ri2c);
-int snd_i2c_device_create(struct snd_i2c_bus *bus, const char *name,
-			  unsigned char addr, struct snd_i2c_device **rdevice);
-int snd_i2c_device_free(struct snd_i2c_device *device);
+पूर्णांक snd_i2c_bus_create(काष्ठा snd_card *card, स्थिर अक्षर *name,
+		       काष्ठा snd_i2c_bus *master, काष्ठा snd_i2c_bus **ri2c);
+पूर्णांक snd_i2c_device_create(काष्ठा snd_i2c_bus *bus, स्थिर अक्षर *name,
+			  अचिन्हित अक्षर addr, काष्ठा snd_i2c_device **rdevice);
+पूर्णांक snd_i2c_device_मुक्त(काष्ठा snd_i2c_device *device);
 
-static inline void snd_i2c_lock(struct snd_i2c_bus *bus)
-{
-	if (bus->master)
+अटल अंतरभूत व्योम snd_i2c_lock(काष्ठा snd_i2c_bus *bus)
+अणु
+	अगर (bus->master)
 		mutex_lock(&bus->master->lock_mutex);
-	else
+	अन्यथा
 		mutex_lock(&bus->lock_mutex);
-}
+पूर्ण
 
-static inline void snd_i2c_unlock(struct snd_i2c_bus *bus)
-{
-	if (bus->master)
+अटल अंतरभूत व्योम snd_i2c_unlock(काष्ठा snd_i2c_bus *bus)
+अणु
+	अगर (bus->master)
 		mutex_unlock(&bus->master->lock_mutex);
-	else
+	अन्यथा
 		mutex_unlock(&bus->lock_mutex);
-}
+पूर्ण
 
-int snd_i2c_sendbytes(struct snd_i2c_device *device, unsigned char *bytes, int count);
-int snd_i2c_readbytes(struct snd_i2c_device *device, unsigned char *bytes, int count);
-int snd_i2c_probeaddr(struct snd_i2c_bus *bus, unsigned short addr);
+पूर्णांक snd_i2c_sendbytes(काष्ठा snd_i2c_device *device, अचिन्हित अक्षर *bytes, पूर्णांक count);
+पूर्णांक snd_i2c_पढ़ोbytes(काष्ठा snd_i2c_device *device, अचिन्हित अक्षर *bytes, पूर्णांक count);
+पूर्णांक snd_i2c_probeaddr(काष्ठा snd_i2c_bus *bus, अचिन्हित लघु addr);
 
-#endif /* __SOUND_I2C_H */
+#पूर्ण_अगर /* __SOUND_I2C_H */

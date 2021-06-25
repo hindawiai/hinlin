@@ -1,129 +1,130 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017, Fuzhou Rockchip Electronics Co., Ltd
  */
 
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <video/mipi_display.h>
+#समावेश <video/mipi_display.h>
 
-#include <drm/drm_crtc.h>
-#include <drm/drm_device.h>
-#include <drm/drm_mipi_dsi.h>
-#include <drm/drm_modes.h>
-#include <drm/drm_panel.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_mipi_dsi.h>
+#समावेश <drm/drm_modes.h>
+#समावेश <drm/drm_panel.h>
 
-struct panel_init_cmd {
-	size_t len;
-	const char *data;
-};
+काष्ठा panel_init_cmd अणु
+	माप_प्रकार len;
+	स्थिर अक्षर *data;
+पूर्ण;
 
-#define _INIT_CMD(...) { \
-	.len = sizeof((char[]){__VA_ARGS__}), \
-	.data = (char[]){__VA_ARGS__} }
+#घोषणा _INIT_CMD(...) अणु \
+	.len = माप((अक्षर[])अणु__VA_ARGS__पूर्ण), \
+	.data = (अक्षर[])अणु__VA_ARGS__पूर्ण पूर्ण
 
-struct panel_desc {
-	const struct drm_display_mode *mode;
-	unsigned int bpc;
-	struct {
-		unsigned int width;
-		unsigned int height;
-	} size;
+काष्ठा panel_desc अणु
+	स्थिर काष्ठा drm_display_mode *mode;
+	अचिन्हित पूर्णांक bpc;
+	काष्ठा अणु
+		अचिन्हित पूर्णांक width;
+		अचिन्हित पूर्णांक height;
+	पूर्ण size;
 
-	unsigned long flags;
-	enum mipi_dsi_pixel_format format;
-	const struct panel_init_cmd *init_cmds;
-	unsigned int lanes;
-	const char * const *supply_names;
-	unsigned int num_supplies;
-	unsigned int sleep_mode_delay;
-	unsigned int power_down_delay;
-};
+	अचिन्हित दीर्घ flags;
+	क्रमागत mipi_dsi_pixel_क्रमmat क्रमmat;
+	स्थिर काष्ठा panel_init_cmd *init_cmds;
+	अचिन्हित पूर्णांक lanes;
+	स्थिर अक्षर * स्थिर *supply_names;
+	अचिन्हित पूर्णांक num_supplies;
+	अचिन्हित पूर्णांक sleep_mode_delay;
+	अचिन्हित पूर्णांक घातer_करोwn_delay;
+पूर्ण;
 
-struct innolux_panel {
-	struct drm_panel base;
-	struct mipi_dsi_device *link;
-	const struct panel_desc *desc;
+काष्ठा innolux_panel अणु
+	काष्ठा drm_panel base;
+	काष्ठा mipi_dsi_device *link;
+	स्थिर काष्ठा panel_desc *desc;
 
-	struct regulator_bulk_data *supplies;
-	struct gpio_desc *enable_gpio;
+	काष्ठा regulator_bulk_data *supplies;
+	काष्ठा gpio_desc *enable_gpio;
 
 	bool prepared;
 	bool enabled;
-};
+पूर्ण;
 
-static inline struct innolux_panel *to_innolux_panel(struct drm_panel *panel)
-{
-	return container_of(panel, struct innolux_panel, base);
-}
+अटल अंतरभूत काष्ठा innolux_panel *to_innolux_panel(काष्ठा drm_panel *panel)
+अणु
+	वापस container_of(panel, काष्ठा innolux_panel, base);
+पूर्ण
 
-static int innolux_panel_disable(struct drm_panel *panel)
-{
-	struct innolux_panel *innolux = to_innolux_panel(panel);
+अटल पूर्णांक innolux_panel_disable(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा innolux_panel *innolux = to_innolux_panel(panel);
 
-	if (!innolux->enabled)
-		return 0;
+	अगर (!innolux->enabled)
+		वापस 0;
 
 	innolux->enabled = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int innolux_panel_unprepare(struct drm_panel *panel)
-{
-	struct innolux_panel *innolux = to_innolux_panel(panel);
-	int err;
+अटल पूर्णांक innolux_panel_unprepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा innolux_panel *innolux = to_innolux_panel(panel);
+	पूर्णांक err;
 
-	if (!innolux->prepared)
-		return 0;
+	अगर (!innolux->prepared)
+		वापस 0;
 
 	err = mipi_dsi_dcs_set_display_off(innolux->link);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(panel->dev, "failed to set display off: %d\n", err);
 
 	err = mipi_dsi_dcs_enter_sleep_mode(innolux->link);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(panel->dev, "failed to enter sleep mode: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (innolux->desc->sleep_mode_delay)
+	अगर (innolux->desc->sleep_mode_delay)
 		msleep(innolux->desc->sleep_mode_delay);
 
 	gpiod_set_value_cansleep(innolux->enable_gpio, 0);
 
-	if (innolux->desc->power_down_delay)
-		msleep(innolux->desc->power_down_delay);
+	अगर (innolux->desc->घातer_करोwn_delay)
+		msleep(innolux->desc->घातer_करोwn_delay);
 
 	err = regulator_bulk_disable(innolux->desc->num_supplies,
 				     innolux->supplies);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	innolux->prepared = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int innolux_panel_prepare(struct drm_panel *panel)
-{
-	struct innolux_panel *innolux = to_innolux_panel(panel);
-	int err;
+अटल पूर्णांक innolux_panel_prepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा innolux_panel *innolux = to_innolux_panel(panel);
+	पूर्णांक err;
 
-	if (innolux->prepared)
-		return 0;
+	अगर (innolux->prepared)
+		वापस 0;
 
 	gpiod_set_value_cansleep(innolux->enable_gpio, 0);
 
 	err = regulator_bulk_enable(innolux->desc->num_supplies,
 				    innolux->supplies);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* p079zca: t2 (20ms), p097pfg: t4 (15ms) */
 	usleep_range(20000, 21000);
@@ -133,81 +134,81 @@ static int innolux_panel_prepare(struct drm_panel *panel)
 	/* p079zca: t4, p097pfg: t5 */
 	usleep_range(20000, 21000);
 
-	if (innolux->desc->init_cmds) {
-		const struct panel_init_cmd *cmds =
+	अगर (innolux->desc->init_cmds) अणु
+		स्थिर काष्ठा panel_init_cmd *cmds =
 					innolux->desc->init_cmds;
-		unsigned int i;
+		अचिन्हित पूर्णांक i;
 
-		for (i = 0; cmds[i].len != 0; i++) {
-			const struct panel_init_cmd *cmd = &cmds[i];
+		क्रम (i = 0; cmds[i].len != 0; i++) अणु
+			स्थिर काष्ठा panel_init_cmd *cmd = &cmds[i];
 
-			err = mipi_dsi_generic_write(innolux->link, cmd->data,
+			err = mipi_dsi_generic_ग_लिखो(innolux->link, cmd->data,
 						     cmd->len);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				dev_err(panel->dev, "failed to write command %u\n", i);
-				goto poweroff;
-			}
+				जाओ घातeroff;
+			पूर्ण
 
 			/*
-			 * Included by random guessing, because without this
-			 * (or at least, some delay), the panel sometimes
+			 * Included by अक्रमom guessing, because without this
+			 * (or at least, some delay), the panel someबार
 			 * didn't appear to pick up the command sequence.
 			 */
 			err = mipi_dsi_dcs_nop(innolux->link);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				dev_err(panel->dev, "failed to send DCS nop: %d\n", err);
-				goto poweroff;
-			}
-		}
-	}
+				जाओ घातeroff;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	err = mipi_dsi_dcs_exit_sleep_mode(innolux->link);
-	if (err < 0) {
+	err = mipi_dsi_dcs_निकास_sleep_mode(innolux->link);
+	अगर (err < 0) अणु
 		dev_err(panel->dev, "failed to exit sleep mode: %d\n", err);
-		goto poweroff;
-	}
+		जाओ घातeroff;
+	पूर्ण
 
 	/* T6: 120ms - 1000ms*/
 	msleep(120);
 
 	err = mipi_dsi_dcs_set_display_on(innolux->link);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(panel->dev, "failed to set display on: %d\n", err);
-		goto poweroff;
-	}
+		जाओ घातeroff;
+	पूर्ण
 
 	/* T7: 5ms */
 	usleep_range(5000, 6000);
 
 	innolux->prepared = true;
 
-	return 0;
+	वापस 0;
 
-poweroff:
+घातeroff:
 	gpiod_set_value_cansleep(innolux->enable_gpio, 0);
 	regulator_bulk_disable(innolux->desc->num_supplies, innolux->supplies);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int innolux_panel_enable(struct drm_panel *panel)
-{
-	struct innolux_panel *innolux = to_innolux_panel(panel);
+अटल पूर्णांक innolux_panel_enable(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा innolux_panel *innolux = to_innolux_panel(panel);
 
-	if (innolux->enabled)
-		return 0;
+	अगर (innolux->enabled)
+		वापस 0;
 
 	innolux->enabled = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char * const innolux_p079zca_supply_names[] = {
+अटल स्थिर अक्षर * स्थिर innolux_p079zca_supply_names[] = अणु
 	"power",
-};
+पूर्ण;
 
-static const struct drm_display_mode innolux_p079zca_mode = {
-	.clock = 56900,
+अटल स्थिर काष्ठा drm_display_mode innolux_p079zca_mode = अणु
+	.घड़ी = 56900,
 	.hdisplay = 768,
 	.hsync_start = 768 + 40,
 	.hsync_end = 768 + 40 + 40,
@@ -216,31 +217,31 @@ static const struct drm_display_mode innolux_p079zca_mode = {
 	.vsync_start = 1024 + 20,
 	.vsync_end = 1024 + 20 + 4,
 	.vtotal = 1024 + 20 + 4 + 20,
-};
+पूर्ण;
 
-static const struct panel_desc innolux_p079zca_panel_desc = {
+अटल स्थिर काष्ठा panel_desc innolux_p079zca_panel_desc = अणु
 	.mode = &innolux_p079zca_mode,
 	.bpc = 8,
-	.size = {
+	.size = अणु
 		.width = 120,
 		.height = 160,
-	},
+	पूर्ण,
 	.flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
 		 MIPI_DSI_MODE_LPM,
-	.format = MIPI_DSI_FMT_RGB888,
+	.क्रमmat = MIPI_DSI_FMT_RGB888,
 	.lanes = 4,
 	.supply_names = innolux_p079zca_supply_names,
 	.num_supplies = ARRAY_SIZE(innolux_p079zca_supply_names),
-	.power_down_delay = 80, /* T8: 80ms - 1000ms */
-};
+	.घातer_करोwn_delay = 80, /* T8: 80ms - 1000ms */
+पूर्ण;
 
-static const char * const innolux_p097pfg_supply_names[] = {
+अटल स्थिर अक्षर * स्थिर innolux_p097pfg_supply_names[] = अणु
 	"avdd",
 	"avee",
-};
+पूर्ण;
 
-static const struct drm_display_mode innolux_p097pfg_mode = {
-	.clock = 229000,
+अटल स्थिर काष्ठा drm_display_mode innolux_p097pfg_mode = अणु
+	.घड़ी = 229000,
 	.hdisplay = 1536,
 	.hsync_start = 1536 + 100,
 	.hsync_end = 1536 + 100 + 24,
@@ -249,14 +250,14 @@ static const struct drm_display_mode innolux_p097pfg_mode = {
 	.vsync_start = 2048 + 100,
 	.vsync_end = 2048 + 100 + 2,
 	.vtotal = 2048 + 100 + 2 + 18,
-};
+पूर्ण;
 
 /*
  * Display manufacturer failed to provide init sequencing according to
  * https://chromium-review.googlesource.com/c/chromiumos/third_party/coreboot/+/892065/
- * so the init sequence stems from a register dump of a working panel.
+ * so the init sequence stems from a रेजिस्टर dump of a working panel.
  */
-static const struct panel_init_cmd innolux_p097pfg_init_cmds[] = {
+अटल स्थिर काष्ठा panel_init_cmd innolux_p097pfg_init_cmds[] = अणु
 	/* page 0 */
 	_INIT_CMD(0xF0, 0x55, 0xAA, 0x52, 0x08, 0x00),
 	_INIT_CMD(0xB1, 0xE8, 0x11),
@@ -362,39 +363,39 @@ static const struct panel_init_cmd innolux_p097pfg_init_cmds[] = {
 	_INIT_CMD(0xC8, 0x3D, 0x3D, 0x3D, 0x3D, 0x3D),
 	_INIT_CMD(0xC9, 0x3D, 0x32),
 
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 
-static const struct panel_desc innolux_p097pfg_panel_desc = {
+अटल स्थिर काष्ठा panel_desc innolux_p097pfg_panel_desc = अणु
 	.mode = &innolux_p097pfg_mode,
 	.bpc = 8,
-	.size = {
+	.size = अणु
 		.width = 147,
 		.height = 196,
-	},
+	पूर्ण,
 	.flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
 		 MIPI_DSI_MODE_LPM,
-	.format = MIPI_DSI_FMT_RGB888,
+	.क्रमmat = MIPI_DSI_FMT_RGB888,
 	.init_cmds = innolux_p097pfg_init_cmds,
 	.lanes = 4,
 	.supply_names = innolux_p097pfg_supply_names,
 	.num_supplies = ARRAY_SIZE(innolux_p097pfg_supply_names),
 	.sleep_mode_delay = 100, /* T15 */
-};
+पूर्ण;
 
-static int innolux_panel_get_modes(struct drm_panel *panel,
-				   struct drm_connector *connector)
-{
-	struct innolux_panel *innolux = to_innolux_panel(panel);
-	const struct drm_display_mode *m = innolux->desc->mode;
-	struct drm_display_mode *mode;
+अटल पूर्णांक innolux_panel_get_modes(काष्ठा drm_panel *panel,
+				   काष्ठा drm_connector *connector)
+अणु
+	काष्ठा innolux_panel *innolux = to_innolux_panel(panel);
+	स्थिर काष्ठा drm_display_mode *m = innolux->desc->mode;
+	काष्ठा drm_display_mode *mode;
 
 	mode = drm_mode_duplicate(connector->dev, m);
-	if (!mode) {
+	अगर (!mode) अणु
 		dev_err(panel->dev, "failed to add mode %ux%u@%u\n",
 			m->hdisplay, m->vdisplay, drm_mode_vrefresh(m));
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	drm_mode_set_name(mode);
 
@@ -404,139 +405,139 @@ static int innolux_panel_get_modes(struct drm_panel *panel,
 	connector->display_info.height_mm = innolux->desc->size.height;
 	connector->display_info.bpc = innolux->desc->bpc;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct drm_panel_funcs innolux_panel_funcs = {
+अटल स्थिर काष्ठा drm_panel_funcs innolux_panel_funcs = अणु
 	.disable = innolux_panel_disable,
 	.unprepare = innolux_panel_unprepare,
 	.prepare = innolux_panel_prepare,
 	.enable = innolux_panel_enable,
 	.get_modes = innolux_panel_get_modes,
-};
+पूर्ण;
 
-static const struct of_device_id innolux_of_match[] = {
-	{ .compatible = "innolux,p079zca",
+अटल स्थिर काष्ठा of_device_id innolux_of_match[] = अणु
+	अणु .compatible = "innolux,p079zca",
 	  .data = &innolux_p079zca_panel_desc
-	},
-	{ .compatible = "innolux,p097pfg",
+	पूर्ण,
+	अणु .compatible = "innolux,p097pfg",
 	  .data = &innolux_p097pfg_panel_desc
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, innolux_of_match);
 
-static int innolux_panel_add(struct mipi_dsi_device *dsi,
-			     const struct panel_desc *desc)
-{
-	struct innolux_panel *innolux;
-	struct device *dev = &dsi->dev;
-	int err, i;
+अटल पूर्णांक innolux_panel_add(काष्ठा mipi_dsi_device *dsi,
+			     स्थिर काष्ठा panel_desc *desc)
+अणु
+	काष्ठा innolux_panel *innolux;
+	काष्ठा device *dev = &dsi->dev;
+	पूर्णांक err, i;
 
-	innolux = devm_kzalloc(dev, sizeof(*innolux), GFP_KERNEL);
-	if (!innolux)
-		return -ENOMEM;
+	innolux = devm_kzalloc(dev, माप(*innolux), GFP_KERNEL);
+	अगर (!innolux)
+		वापस -ENOMEM;
 
 	innolux->desc = desc;
 
-	innolux->supplies = devm_kcalloc(dev, desc->num_supplies,
-					 sizeof(*innolux->supplies),
+	innolux->supplies = devm_kसुस्मृति(dev, desc->num_supplies,
+					 माप(*innolux->supplies),
 					 GFP_KERNEL);
-	if (!innolux->supplies)
-		return -ENOMEM;
+	अगर (!innolux->supplies)
+		वापस -ENOMEM;
 
-	for (i = 0; i < desc->num_supplies; i++)
+	क्रम (i = 0; i < desc->num_supplies; i++)
 		innolux->supplies[i].supply = desc->supply_names[i];
 
 	err = devm_regulator_bulk_get(dev, desc->num_supplies,
 				      innolux->supplies);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	innolux->enable_gpio = devm_gpiod_get_optional(dev, "enable",
 						       GPIOD_OUT_HIGH);
-	if (IS_ERR(innolux->enable_gpio)) {
+	अगर (IS_ERR(innolux->enable_gpio)) अणु
 		err = PTR_ERR(innolux->enable_gpio);
 		dev_dbg(dev, "failed to get enable gpio: %d\n", err);
-		innolux->enable_gpio = NULL;
-	}
+		innolux->enable_gpio = शून्य;
+	पूर्ण
 
 	drm_panel_init(&innolux->base, dev, &innolux_panel_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
 
 	err = drm_panel_of_backlight(&innolux->base);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	drm_panel_add(&innolux->base);
 
 	mipi_dsi_set_drvdata(dsi, innolux);
 	innolux->link = dsi;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void innolux_panel_del(struct innolux_panel *innolux)
-{
-	drm_panel_remove(&innolux->base);
-}
+अटल व्योम innolux_panel_del(काष्ठा innolux_panel *innolux)
+अणु
+	drm_panel_हटाओ(&innolux->base);
+पूर्ण
 
-static int innolux_panel_probe(struct mipi_dsi_device *dsi)
-{
-	const struct panel_desc *desc;
-	int err;
+अटल पूर्णांक innolux_panel_probe(काष्ठा mipi_dsi_device *dsi)
+अणु
+	स्थिर काष्ठा panel_desc *desc;
+	पूर्णांक err;
 
 	desc = of_device_get_match_data(&dsi->dev);
 	dsi->mode_flags = desc->flags;
-	dsi->format = desc->format;
+	dsi->क्रमmat = desc->क्रमmat;
 	dsi->lanes = desc->lanes;
 
 	err = innolux_panel_add(dsi, desc);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return mipi_dsi_attach(dsi);
-}
+	वापस mipi_dsi_attach(dsi);
+पूर्ण
 
-static int innolux_panel_remove(struct mipi_dsi_device *dsi)
-{
-	struct innolux_panel *innolux = mipi_dsi_get_drvdata(dsi);
-	int err;
+अटल पूर्णांक innolux_panel_हटाओ(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा innolux_panel *innolux = mipi_dsi_get_drvdata(dsi);
+	पूर्णांक err;
 
 	err = drm_panel_unprepare(&innolux->base);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(&dsi->dev, "failed to unprepare panel: %d\n", err);
 
 	err = drm_panel_disable(&innolux->base);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(&dsi->dev, "failed to disable panel: %d\n", err);
 
 	err = mipi_dsi_detach(dsi);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(&dsi->dev, "failed to detach from DSI host: %d\n", err);
 
 	innolux_panel_del(innolux);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void innolux_panel_shutdown(struct mipi_dsi_device *dsi)
-{
-	struct innolux_panel *innolux = mipi_dsi_get_drvdata(dsi);
+अटल व्योम innolux_panel_shutकरोwn(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा innolux_panel *innolux = mipi_dsi_get_drvdata(dsi);
 
 	drm_panel_unprepare(&innolux->base);
 	drm_panel_disable(&innolux->base);
-}
+पूर्ण
 
-static struct mipi_dsi_driver innolux_panel_driver = {
-	.driver = {
+अटल काष्ठा mipi_dsi_driver innolux_panel_driver = अणु
+	.driver = अणु
 		.name = "panel-innolux-p079zca",
 		.of_match_table = innolux_of_match,
-	},
+	पूर्ण,
 	.probe = innolux_panel_probe,
-	.remove = innolux_panel_remove,
-	.shutdown = innolux_panel_shutdown,
-};
+	.हटाओ = innolux_panel_हटाओ,
+	.shutकरोwn = innolux_panel_shutकरोwn,
+पूर्ण;
 module_mipi_dsi_driver(innolux_panel_driver);
 
 MODULE_AUTHOR("Chris Zhong <zyw@rock-chips.com>");

@@ -1,265 +1,266 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 IBM Corp.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include "pmbus.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश "pmbus.h"
 
-enum max31785_regs {
+क्रमागत max31785_regs अणु
 	MFR_REVISION		= 0x9b,
 	MFR_FAN_CONFIG		= 0xf1,
-};
+पूर्ण;
 
-#define MAX31785			0x3030
-#define MAX31785A			0x3040
-#define MAX31785B			0x3061
+#घोषणा MAX31785			0x3030
+#घोषणा MAX31785A			0x3040
+#घोषणा MAX31785B			0x3061
 
-#define MFR_FAN_CONFIG_DUAL_TACH	BIT(12)
+#घोषणा MFR_FAN_CONFIG_DUAL_TACH	BIT(12)
 
-#define MAX31785_NR_PAGES		23
-#define MAX31785_NR_FAN_PAGES		6
+#घोषणा MAX31785_NR_PAGES		23
+#घोषणा MAX31785_NR_FAN_PAGES		6
 
-static int max31785_read_byte_data(struct i2c_client *client, int page,
-				   int reg)
-{
-	if (page < MAX31785_NR_PAGES)
-		return -ENODATA;
+अटल पूर्णांक max31785_पढ़ो_byte_data(काष्ठा i2c_client *client, पूर्णांक page,
+				   पूर्णांक reg)
+अणु
+	अगर (page < MAX31785_NR_PAGES)
+		वापस -ENODATA;
 
-	switch (reg) {
-	case PMBUS_VOUT_MODE:
-		return -ENOTSUPP;
-	case PMBUS_FAN_CONFIG_12:
-		return pmbus_read_byte_data(client, page - MAX31785_NR_PAGES,
+	चयन (reg) अणु
+	हाल PMBUS_VOUT_MODE:
+		वापस -ENOTSUPP;
+	हाल PMBUS_FAN_CONFIG_12:
+		वापस pmbus_पढ़ो_byte_data(client, page - MAX31785_NR_PAGES,
 					    reg);
-	}
+	पूर्ण
 
-	return -ENODATA;
-}
+	वापस -ENODATA;
+पूर्ण
 
-static int max31785_write_byte(struct i2c_client *client, int page, u8 value)
-{
-	if (page < MAX31785_NR_PAGES)
-		return -ENODATA;
+अटल पूर्णांक max31785_ग_लिखो_byte(काष्ठा i2c_client *client, पूर्णांक page, u8 value)
+अणु
+	अगर (page < MAX31785_NR_PAGES)
+		वापस -ENODATA;
 
-	return -ENOTSUPP;
-}
+	वापस -ENOTSUPP;
+पूर्ण
 
-static int max31785_read_long_data(struct i2c_client *client, int page,
-				   int reg, u32 *data)
-{
-	unsigned char cmdbuf[1];
-	unsigned char rspbuf[4];
-	int rc;
+अटल पूर्णांक max31785_पढ़ो_दीर्घ_data(काष्ठा i2c_client *client, पूर्णांक page,
+				   पूर्णांक reg, u32 *data)
+अणु
+	अचिन्हित अक्षर cmdbuf[1];
+	अचिन्हित अक्षर rspbuf[4];
+	पूर्णांक rc;
 
-	struct i2c_msg msg[2] = {
-		{
+	काष्ठा i2c_msg msg[2] = अणु
+		अणु
 			.addr = client->addr,
 			.flags = 0,
-			.len = sizeof(cmdbuf),
+			.len = माप(cmdbuf),
 			.buf = cmdbuf,
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr = client->addr,
 			.flags = I2C_M_RD,
-			.len = sizeof(rspbuf),
+			.len = माप(rspbuf),
 			.buf = rspbuf,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
 	cmdbuf[0] = reg;
 
 	rc = pmbus_set_page(client, page, 0xff);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	rc = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	*data = (rspbuf[0] << (0 * 8)) | (rspbuf[1] << (1 * 8)) |
 		(rspbuf[2] << (2 * 8)) | (rspbuf[3] << (3 * 8));
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int max31785_get_pwm(struct i2c_client *client, int page)
-{
-	int rv;
+अटल पूर्णांक max31785_get_pwm(काष्ठा i2c_client *client, पूर्णांक page)
+अणु
+	पूर्णांक rv;
 
 	rv = pmbus_get_fan_rate_device(client, page, 0, percent);
-	if (rv < 0)
-		return rv;
-	else if (rv >= 0x8000)
-		return 0;
-	else if (rv >= 0x2711)
-		return 0x2710;
+	अगर (rv < 0)
+		वापस rv;
+	अन्यथा अगर (rv >= 0x8000)
+		वापस 0;
+	अन्यथा अगर (rv >= 0x2711)
+		वापस 0x2710;
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int max31785_get_pwm_mode(struct i2c_client *client, int page)
-{
-	int config;
-	int command;
+अटल पूर्णांक max31785_get_pwm_mode(काष्ठा i2c_client *client, पूर्णांक page)
+अणु
+	पूर्णांक config;
+	पूर्णांक command;
 
-	config = pmbus_read_byte_data(client, page, PMBUS_FAN_CONFIG_12);
-	if (config < 0)
-		return config;
+	config = pmbus_पढ़ो_byte_data(client, page, PMBUS_FAN_CONFIG_12);
+	अगर (config < 0)
+		वापस config;
 
-	command = pmbus_read_word_data(client, page, 0xff, PMBUS_FAN_COMMAND_1);
-	if (command < 0)
-		return command;
+	command = pmbus_पढ़ो_word_data(client, page, 0xff, PMBUS_FAN_COMMAND_1);
+	अगर (command < 0)
+		वापस command;
 
-	if (config & PB_FAN_1_RPM)
-		return (command >= 0x8000) ? 3 : 2;
+	अगर (config & PB_FAN_1_RPM)
+		वापस (command >= 0x8000) ? 3 : 2;
 
-	if (command >= 0x8000)
-		return 3;
-	else if (command >= 0x2711)
-		return 0;
+	अगर (command >= 0x8000)
+		वापस 3;
+	अन्यथा अगर (command >= 0x2711)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int max31785_read_word_data(struct i2c_client *client, int page,
-				   int phase, int reg)
-{
+अटल पूर्णांक max31785_पढ़ो_word_data(काष्ठा i2c_client *client, पूर्णांक page,
+				   पूर्णांक phase, पूर्णांक reg)
+अणु
 	u32 val;
-	int rv;
+	पूर्णांक rv;
 
-	switch (reg) {
-	case PMBUS_READ_FAN_SPEED_1:
-		if (page < MAX31785_NR_PAGES)
-			return -ENODATA;
+	चयन (reg) अणु
+	हाल PMBUS_READ_FAN_SPEED_1:
+		अगर (page < MAX31785_NR_PAGES)
+			वापस -ENODATA;
 
-		rv = max31785_read_long_data(client, page - MAX31785_NR_PAGES,
+		rv = max31785_पढ़ो_दीर्घ_data(client, page - MAX31785_NR_PAGES,
 					     reg, &val);
-		if (rv < 0)
-			return rv;
+		अगर (rv < 0)
+			वापस rv;
 
 		rv = (val >> 16) & 0xffff;
-		break;
-	case PMBUS_FAN_COMMAND_1:
+		अवरोध;
+	हाल PMBUS_FAN_COMMAND_1:
 		/*
 		 * PMBUS_FAN_COMMAND_x is probed to judge whether or not to
-		 * expose fan control registers.
+		 * expose fan control रेजिस्टरs.
 		 *
-		 * Don't expose fan_target attribute for virtual pages.
+		 * Don't expose fan_target attribute क्रम भव pages.
 		 */
 		rv = (page >= MAX31785_NR_PAGES) ? -ENOTSUPP : -ENODATA;
-		break;
-	case PMBUS_VIRT_PWM_1:
+		अवरोध;
+	हाल PMBUS_VIRT_PWM_1:
 		rv = max31785_get_pwm(client, page);
-		break;
-	case PMBUS_VIRT_PWM_ENABLE_1:
+		अवरोध;
+	हाल PMBUS_VIRT_PWM_ENABLE_1:
 		rv = max31785_get_pwm_mode(client, page);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rv = -ENODATA;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static inline u32 max31785_scale_pwm(u32 sensor_val)
-{
+अटल अंतरभूत u32 max31785_scale_pwm(u32 sensor_val)
+अणु
 	/*
-	 * The datasheet describes the accepted value range for manual PWM as
-	 * [0, 0x2710], while the hwmon pwmX sysfs interface accepts values in
-	 * [0, 255]. The MAX31785 uses DIRECT mode to scale the FAN_COMMAND
-	 * registers and in PWM mode the coefficients are m=1, b=0, R=2. The
+	 * The datasheet describes the accepted value range क्रम manual PWM as
+	 * [0, 0x2710], जबतक the hwmon pwmX sysfs पूर्णांकerface accepts values in
+	 * [0, 255]. The MAX31785 uses सूचीECT mode to scale the FAN_COMMAND
+	 * रेजिस्टरs and in PWM mode the coefficients are m=1, b=0, R=2. The
 	 * important observation here is that 0x2710 == 10000 == 100 * 100.
 	 *
-	 * R=2 (== 10^2 == 100) accounts for scaling the value provided at the
-	 * sysfs interface into the required hardware resolution, but it does
-	 * not yet yield a value that we can write to the device (this initial
+	 * R=2 (== 10^2 == 100) accounts क्रम scaling the value provided at the
+	 * sysfs पूर्णांकerface पूर्णांकo the required hardware resolution, but it करोes
+	 * not yet yield a value that we can ग_लिखो to the device (this initial
 	 * scaling is handled by pmbus_data2reg()). Multiplying by 100 below
-	 * translates the parameter value into the percentage units required by
+	 * translates the parameter value पूर्णांकo the percentage units required by
 	 * PMBus, and then we scale back by 255 as required by the hwmon pwmX
-	 * interface to yield the percentage value at the appropriate
-	 * resolution for hardware.
+	 * पूर्णांकerface to yield the percentage value at the appropriate
+	 * resolution क्रम hardware.
 	 */
-	return (sensor_val * 100) / 255;
-}
+	वापस (sensor_val * 100) / 255;
+पूर्ण
 
-static int max31785_pwm_enable(struct i2c_client *client, int page,
+अटल पूर्णांक max31785_pwm_enable(काष्ठा i2c_client *client, पूर्णांक page,
 				    u16 word)
-{
-	int config = 0;
-	int rate;
+अणु
+	पूर्णांक config = 0;
+	पूर्णांक rate;
 
-	switch (word) {
-	case 0:
+	चयन (word) अणु
+	हाल 0:
 		rate = 0x7fff;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		rate = pmbus_get_fan_rate_cached(client, page, 0, percent);
-		if (rate < 0)
-			return rate;
+		अगर (rate < 0)
+			वापस rate;
 		rate = max31785_scale_pwm(rate);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		config = PB_FAN_1_RPM;
 		rate = pmbus_get_fan_rate_cached(client, page, 0, rpm);
-		if (rate < 0)
-			return rate;
-		break;
-	case 3:
+		अगर (rate < 0)
+			वापस rate;
+		अवरोध;
+	हाल 3:
 		rate = 0xffff;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return pmbus_update_fan(client, page, 0, config, PB_FAN_1_RPM, rate);
-}
+	वापस pmbus_update_fan(client, page, 0, config, PB_FAN_1_RPM, rate);
+पूर्ण
 
-static int max31785_write_word_data(struct i2c_client *client, int page,
-				    int reg, u16 word)
-{
-	switch (reg) {
-	case PMBUS_VIRT_PWM_1:
-		return pmbus_update_fan(client, page, 0, 0, PB_FAN_1_RPM,
+अटल पूर्णांक max31785_ग_लिखो_word_data(काष्ठा i2c_client *client, पूर्णांक page,
+				    पूर्णांक reg, u16 word)
+अणु
+	चयन (reg) अणु
+	हाल PMBUS_VIRT_PWM_1:
+		वापस pmbus_update_fan(client, page, 0, 0, PB_FAN_1_RPM,
 					max31785_scale_pwm(word));
-	case PMBUS_VIRT_PWM_ENABLE_1:
-		return max31785_pwm_enable(client, page, word);
-	default:
-		break;
-	}
+	हाल PMBUS_VIRT_PWM_ENABLE_1:
+		वापस max31785_pwm_enable(client, page, word);
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -ENODATA;
-}
+	वापस -ENODATA;
+पूर्ण
 
-#define MAX31785_FAN_FUNCS \
+#घोषणा MAX31785_FAN_FUNCS \
 	(PMBUS_HAVE_FAN12 | PMBUS_HAVE_STATUS_FAN12 | PMBUS_HAVE_PWM12)
 
-#define MAX31785_TEMP_FUNCS \
+#घोषणा MAX31785_TEMP_FUNCS \
 	(PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP)
 
-#define MAX31785_VOUT_FUNCS \
+#घोषणा MAX31785_VOUT_FUNCS \
 	(PMBUS_HAVE_VOUT | PMBUS_HAVE_STATUS_VOUT)
 
-static const struct pmbus_driver_info max31785_info = {
+अटल स्थिर काष्ठा pmbus_driver_info max31785_info = अणु
 	.pages = MAX31785_NR_PAGES,
 
-	.write_word_data = max31785_write_word_data,
-	.read_byte_data = max31785_read_byte_data,
-	.read_word_data = max31785_read_word_data,
-	.write_byte = max31785_write_byte,
+	.ग_लिखो_word_data = max31785_ग_लिखो_word_data,
+	.पढ़ो_byte_data = max31785_पढ़ो_byte_data,
+	.पढ़ो_word_data = max31785_पढ़ो_word_data,
+	.ग_लिखो_byte = max31785_ग_लिखो_byte,
 
 	/* RPM */
-	.format[PSC_FAN] = direct,
+	.क्रमmat[PSC_FAN] = direct,
 	.m[PSC_FAN] = 1,
 	.b[PSC_FAN] = 0,
 	.R[PSC_FAN] = 0,
 	/* PWM */
-	.format[PSC_PWM] = direct,
+	.क्रमmat[PSC_PWM] = direct,
 	.m[PSC_PWM] = 1,
 	.b[PSC_PWM] = 0,
 	.R[PSC_PWM] = 2,
@@ -270,7 +271,7 @@ static const struct pmbus_driver_info max31785_info = {
 	.func[4] = MAX31785_FAN_FUNCS,
 	.func[5] = MAX31785_FAN_FUNCS,
 
-	.format[PSC_TEMPERATURE] = direct,
+	.क्रमmat[PSC_TEMPERATURE] = direct,
 	.m[PSC_TEMPERATURE] = 1,
 	.b[PSC_TEMPERATURE] = 0,
 	.R[PSC_TEMPERATURE] = 2,
@@ -286,7 +287,7 @@ static const struct pmbus_driver_info max31785_info = {
 	.func[15] = MAX31785_TEMP_FUNCS,
 	.func[16] = MAX31785_TEMP_FUNCS,
 
-	.format[PSC_VOLTAGE_OUT] = direct,
+	.क्रमmat[PSC_VOLTAGE_OUT] = direct,
 	.m[PSC_VOLTAGE_OUT] = 1,
 	.b[PSC_VOLTAGE_OUT] = 0,
 	.R[PSC_VOLTAGE_OUT] = 0,
@@ -296,107 +297,107 @@ static const struct pmbus_driver_info max31785_info = {
 	.func[20] = MAX31785_VOUT_FUNCS,
 	.func[21] = MAX31785_VOUT_FUNCS,
 	.func[22] = MAX31785_VOUT_FUNCS,
-};
+पूर्ण;
 
-static int max31785_configure_dual_tach(struct i2c_client *client,
-					struct pmbus_driver_info *info)
-{
-	int ret;
-	int i;
+अटल पूर्णांक max31785_configure_dual_tach(काष्ठा i2c_client *client,
+					काष्ठा pmbus_driver_info *info)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	for (i = 0; i < MAX31785_NR_FAN_PAGES; i++) {
-		ret = i2c_smbus_write_byte_data(client, PMBUS_PAGE, i);
-		if (ret < 0)
-			return ret;
+	क्रम (i = 0; i < MAX31785_NR_FAN_PAGES; i++) अणु
+		ret = i2c_smbus_ग_लिखो_byte_data(client, PMBUS_PAGE, i);
+		अगर (ret < 0)
+			वापस ret;
 
-		ret = i2c_smbus_read_word_data(client, MFR_FAN_CONFIG);
-		if (ret < 0)
-			return ret;
+		ret = i2c_smbus_पढ़ो_word_data(client, MFR_FAN_CONFIG);
+		अगर (ret < 0)
+			वापस ret;
 
-		if (ret & MFR_FAN_CONFIG_DUAL_TACH) {
-			int virtual = MAX31785_NR_PAGES + i;
+		अगर (ret & MFR_FAN_CONFIG_DUAL_TACH) अणु
+			पूर्णांक भव = MAX31785_NR_PAGES + i;
 
-			info->pages = virtual + 1;
-			info->func[virtual] |= PMBUS_HAVE_FAN12;
-			info->func[virtual] |= PMBUS_PAGE_VIRTUAL;
-		}
-	}
+			info->pages = भव + 1;
+			info->func[भव] |= PMBUS_HAVE_FAN12;
+			info->func[भव] |= PMBUS_PAGE_VIRTUAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max31785_probe(struct i2c_client *client)
-{
-	struct device *dev = &client->dev;
-	struct pmbus_driver_info *info;
+अटल पूर्णांक max31785_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा pmbus_driver_info *info;
 	bool dual_tach = false;
-	int ret;
+	पूर्णांक ret;
 
-	if (!i2c_check_functionality(client->adapter,
+	अगर (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_BYTE_DATA |
 				     I2C_FUNC_SMBUS_WORD_DATA))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	info = devm_kzalloc(dev, sizeof(struct pmbus_driver_info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kzalloc(dev, माप(काष्ठा pmbus_driver_info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	*info = max31785_info;
 
-	ret = i2c_smbus_write_byte_data(client, PMBUS_PAGE, 255);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_ग_लिखो_byte_data(client, PMBUS_PAGE, 255);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = i2c_smbus_read_word_data(client, MFR_REVISION);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_पढ़ो_word_data(client, MFR_REVISION);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret == MAX31785A || ret == MAX31785B) {
+	अगर (ret == MAX31785A || ret == MAX31785B) अणु
 		dual_tach = true;
-	} else if (ret == MAX31785) {
-		if (!strcmp("max31785a", client->name) ||
-		    !strcmp("max31785b", client->name))
+	पूर्ण अन्यथा अगर (ret == MAX31785) अणु
+		अगर (!म_भेद("max31785a", client->name) ||
+		    !म_भेद("max31785b", client->name))
 			dev_warn(dev, "Expected max31785a/b, found max31785: cannot provide secondary tachometer readings\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "Unrecognized MAX31785 revision: %x\n", ret);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (dual_tach) {
+	अगर (dual_tach) अणु
 		ret = max31785_configure_dual_tach(client, info);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return pmbus_do_probe(client, info);
-}
+	वापस pmbus_करो_probe(client, info);
+पूर्ण
 
-static const struct i2c_device_id max31785_id[] = {
-	{ "max31785", 0 },
-	{ "max31785a", 0 },
-	{ "max31785b", 0 },
-	{ },
-};
+अटल स्थिर काष्ठा i2c_device_id max31785_id[] = अणु
+	अणु "max31785", 0 पूर्ण,
+	अणु "max31785a", 0 पूर्ण,
+	अणु "max31785b", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, max31785_id);
 
-static const struct of_device_id max31785_of_match[] = {
-	{ .compatible = "maxim,max31785" },
-	{ .compatible = "maxim,max31785a" },
-	{ .compatible = "maxim,max31785b" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id max31785_of_match[] = अणु
+	अणु .compatible = "maxim,max31785" पूर्ण,
+	अणु .compatible = "maxim,max31785a" पूर्ण,
+	अणु .compatible = "maxim,max31785b" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, max31785_of_match);
 
-static struct i2c_driver max31785_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver max31785_driver = अणु
+	.driver = अणु
 		.name = "max31785",
 		.of_match_table = max31785_of_match,
-	},
+	पूर्ण,
 	.probe_new = max31785_probe,
 	.id_table = max31785_id,
-};
+पूर्ण;
 
 module_i2c_driver(max31785_driver);
 

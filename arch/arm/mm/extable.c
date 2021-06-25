@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/arch/arm/mm/extable.c
  */
-#include <linux/extable.h>
-#include <linux/uaccess.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/uaccess.h>
 
-int fixup_exception(struct pt_regs *regs)
-{
-	const struct exception_table_entry *fixup;
+पूर्णांक fixup_exception(काष्ठा pt_regs *regs)
+अणु
+	स्थिर काष्ठा exception_table_entry *fixup;
 
-	fixup = search_exception_tables(instruction_pointer(regs));
-	if (fixup) {
+	fixup = search_exception_tables(inकाष्ठाion_poपूर्णांकer(regs));
+	अगर (fixup) अणु
 		regs->ARM_pc = fixup->fixup;
-#ifdef CONFIG_THUMB2_KERNEL
-		/* Clear the IT state to avoid nasty surprises in the fixup */
+#अगर_घोषित CONFIG_THUMB2_KERNEL
+		/* Clear the IT state to aव्योम nasty surprises in the fixup */
 		regs->ARM_cpsr &= ~PSR_IT_MASK;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	return fixup != NULL;
-}
+	वापस fixup != शून्य;
+पूर्ण

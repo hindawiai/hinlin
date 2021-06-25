@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2012 ST Microelectronics
  * Viresh Kumar <vireshk@kernel.org>
@@ -9,31 +10,31 @@
  * SPEAr clk - Common routines
  */
 
-#include <linux/clk-provider.h>
-#include <linux/types.h>
-#include "clk.h"
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/types.h>
+#समावेश "clk.h"
 
-long clk_round_rate_index(struct clk_hw *hw, unsigned long drate,
-		unsigned long parent_rate, clk_calc_rate calc_rate, u8 rtbl_cnt,
-		int *index)
-{
-	unsigned long prev_rate, rate = 0;
+दीर्घ clk_round_rate_index(काष्ठा clk_hw *hw, अचिन्हित दीर्घ drate,
+		अचिन्हित दीर्घ parent_rate, clk_calc_rate calc_rate, u8 rtbl_cnt,
+		पूर्णांक *index)
+अणु
+	अचिन्हित दीर्घ prev_rate, rate = 0;
 
-	for (*index = 0; *index < rtbl_cnt; (*index)++) {
+	क्रम (*index = 0; *index < rtbl_cnt; (*index)++) अणु
 		prev_rate = rate;
 		rate = calc_rate(hw, parent_rate, *index);
-		if (drate < rate) {
-			/* previous clock was best */
-			if (*index) {
+		अगर (drate < rate) अणु
+			/* previous घड़ी was best */
+			अगर (*index) अणु
 				rate = prev_rate;
 				(*index)--;
-			}
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if ((*index) == rtbl_cnt)
+	अगर ((*index) == rtbl_cnt)
 		(*index)--;
 
-	return rate;
-}
+	वापस rate;
+पूर्ण

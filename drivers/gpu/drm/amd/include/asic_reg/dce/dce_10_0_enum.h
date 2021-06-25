@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
- * DCE_10_0 Register documentation
+ * DCE_10_0 Register करोcumentation
  *
  * Copyright (C) 2014  Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -21,10 +22,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef DCE_10_0_ENUM_H
-#define DCE_10_0_ENUM_H
+#अगर_अघोषित DCE_10_0_ENUM_H
+#घोषणा DCE_10_0_ENUM_H
 
-typedef enum DCIO_DC_GENERICA_SEL {
+प्रकार क्रमागत DCIO_DC_GENERICA_SEL अणु
 	DCIO_GENERICA_SEL_DACA_STEREOSYNC                = 0x0,
 	DCIO_GENERICA_SEL_STEREOSYNC                     = 0x1,
 	DCIO_GENERICA_SEL_DACA_PIXCLK                    = 0x2,
@@ -43,40 +44,40 @@ typedef enum DCIO_DC_GENERICA_SEL {
 	DCIO_GENERICA_SEL_RESERVED_VALUE15               = 0xf,
 	DCIO_GENERICA_SEL_GENERICA_DPRX                  = 0x10,
 	DCIO_GENERICA_SEL_GENERICB_DPRX                  = 0x11,
-} DCIO_DC_GENERICA_SEL;
-typedef enum DCIO_DC_GENERIC_UNIPHY_REFDIV_CLK_SEL {
+पूर्ण DCIO_DC_GENERICA_SEL;
+प्रकार क्रमागत DCIO_DC_GENERIC_UNIPHY_REFDIV_CLK_SEL अणु
 	DCIO_UNIPHYA_TEST_REFDIV_CLK                     = 0x0,
 	DCIO_UNIPHYB_TEST_REFDIV_CLK                     = 0x1,
 	DCIO_UNIPHYC_TEST_REFDIV_CLK                     = 0x2,
 	DCIO_UNIPHYD_TEST_REFDIV_CLK                     = 0x3,
 	DCIO_UNIPHYE_TEST_REFDIV_CLK                     = 0x4,
 	DCIO_UNIPHYF_TEST_REFDIV_CLK                     = 0x5,
-} DCIO_DC_GENERIC_UNIPHY_REFDIV_CLK_SEL;
-typedef enum DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_SEL {
+पूर्ण DCIO_DC_GENERIC_UNIPHY_REFDIV_CLK_SEL;
+प्रकार क्रमागत DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_SEL अणु
 	DCIO_UNIPHYA_FBDIV_CLK                           = 0x0,
 	DCIO_UNIPHYB_FBDIV_CLK                           = 0x1,
 	DCIO_UNIPHYC_FBDIV_CLK                           = 0x2,
 	DCIO_UNIPHYD_FBDIV_CLK                           = 0x3,
 	DCIO_UNIPHYE_FBDIV_CLK                           = 0x4,
 	DCIO_UNIPHYF_FBDIV_CLK                           = 0x5,
-} DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_SEL;
-typedef enum DCIO_DC_GENERIC_UNIPHY_FBDIV_SSC_CLK_SEL {
+पूर्ण DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_SEL;
+प्रकार क्रमागत DCIO_DC_GENERIC_UNIPHY_FBDIV_SSC_CLK_SEL अणु
 	DCIO_UNIPHYA_FBDIV_SSC_CLK                       = 0x0,
 	DCIO_UNIPHYB_FBDIV_SSC_CLK                       = 0x1,
 	DCIO_UNIPHYC_FBDIV_SSC_CLK                       = 0x2,
 	DCIO_UNIPHYD_FBDIV_SSC_CLK                       = 0x3,
 	DCIO_UNIPHYE_FBDIV_SSC_CLK                       = 0x4,
 	DCIO_UNIPHYF_FBDIV_SSC_CLK                       = 0x5,
-} DCIO_DC_GENERIC_UNIPHY_FBDIV_SSC_CLK_SEL;
-typedef enum DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_DIV2_SEL {
+पूर्ण DCIO_DC_GENERIC_UNIPHY_FBDIV_SSC_CLK_SEL;
+प्रकार क्रमागत DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_DIV2_SEL अणु
 	DCIO_UNIPHYA_TEST_FBDIV_CLK_DIV2                 = 0x0,
 	DCIO_UNIPHYB_TEST_FBDIV_CLK_DIV2                 = 0x1,
 	DCIO_UNIPHYC_TEST_FBDIV_CLK_DIV2                 = 0x2,
 	DCIO_UNIPHYD_TEST_FBDIV_CLK_DIV2                 = 0x3,
 	DCIO_UNIPHYE_TEST_FBDIV_CLK_DIV2                 = 0x4,
 	DCIO_UNIPHYF_TEST_FBDIV_CLK_DIV2                 = 0x5,
-} DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_DIV2_SEL;
-typedef enum DCIO_DC_GENERICB_SEL {
+पूर्ण DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_DIV2_SEL;
+प्रकार क्रमागत DCIO_DC_GENERICB_SEL अणु
 	DCIO_GENERICB_SEL_DACA_STEREOSYNC                = 0x0,
 	DCIO_GENERICB_SEL_STEREOSYNC                     = 0x1,
 	DCIO_GENERICB_SEL_DACA_PIXCLK                    = 0x2,
@@ -93,8 +94,8 @@ typedef enum DCIO_DC_GENERICB_SEL {
 	DCIO_GENERICB_SEL_RESERVED_VALUE13               = 0xd,
 	DCIO_GENERICB_SEL_RESERVED_VALUE14               = 0xe,
 	DCIO_GENERICB_SEL_RESERVED_VALUE15               = 0xf,
-} DCIO_DC_GENERICB_SEL;
-typedef enum DCIO_DC_PAD_EXTERN_SIG_SEL {
+पूर्ण DCIO_DC_GENERICB_SEL;
+प्रकार क्रमागत DCIO_DC_PAD_EXTERN_SIG_SEL अणु
 	DCIO_DC_PAD_EXTERN_SIG_SEL_MVP                   = 0x0,
 	DCIO_DC_PAD_EXTERN_SIG_SEL_VSYNCA                = 0x1,
 	DCIO_DC_PAD_EXTERN_SIG_SEL_GENLK_CLK             = 0x2,
@@ -111,48 +112,48 @@ typedef enum DCIO_DC_PAD_EXTERN_SIG_SEL {
 	DCIO_DC_PAD_EXTERN_SIG_SEL_VHAD1                 = 0xd,
 	DCIO_DC_PAD_EXTERN_SIG_SEL_VHAD0                 = 0xe,
 	DCIO_DC_PAD_EXTERN_SIG_SEL_VPHCTL                = 0xf,
-} DCIO_DC_PAD_EXTERN_SIG_SEL;
-typedef enum DCIO_DC_PAD_EXTERN_SIG_MVP_PIXEL_SRC_STATUS {
+पूर्ण DCIO_DC_PAD_EXTERN_SIG_SEL;
+प्रकार क्रमागत DCIO_DC_PAD_EXTERN_SIG_MVP_PIXEL_SRC_STATUS अणु
 	DCIO_MVP_PIXEL_SRC_STATUS_HSYNCA                 = 0x0,
 	DCIO_MVP_PIXEL_SRC_STATUS_HSYNCA_DUPLICATE       = 0x1,
 	DCIO_MVP_PIXEL_SRC_STATUS_CRTC                   = 0x2,
 	DCIO_MVP_PIXEL_SRC_STATUS_LB                     = 0x3,
-} DCIO_DC_PAD_EXTERN_SIG_MVP_PIXEL_SRC_STATUS;
-typedef enum DCIO_DC_REF_CLK_CNTL_HSYNCA_OUTPUT_SEL {
+पूर्ण DCIO_DC_PAD_EXTERN_SIG_MVP_PIXEL_SRC_STATUS;
+प्रकार क्रमागत DCIO_DC_REF_CLK_CNTL_HSYNCA_OUTPUT_SEL अणु
 	DCIO_HSYNCA_OUTPUT_SEL_DISABLE                   = 0x0,
 	DCIO_HSYNCA_OUTPUT_SEL_PPLL1                     = 0x1,
 	DCIO_HSYNCA_OUTPUT_SEL_PPLL2                     = 0x2,
 	DCIO_HSYNCA_OUTPUT_SEL_RESERVED                  = 0x3,
-} DCIO_DC_REF_CLK_CNTL_HSYNCA_OUTPUT_SEL;
-typedef enum DCIO_DC_REF_CLK_CNTL_GENLK_CLK_OUTPUT_SEL {
+पूर्ण DCIO_DC_REF_CLK_CNTL_HSYNCA_OUTPUT_SEL;
+प्रकार क्रमागत DCIO_DC_REF_CLK_CNTL_GENLK_CLK_OUTPUT_SEL अणु
 	DCIO_GENLK_CLK_OUTPUT_SEL_DISABLE                = 0x0,
 	DCIO_GENLK_CLK_OUTPUT_SEL_PPLL1                  = 0x1,
 	DCIO_GENLK_CLK_OUTPUT_SEL_PPLL2                  = 0x2,
 	DCIO_GENLK_CLK_OUTPUT_SEL_RESERVED_VALUE3        = 0x3,
-} DCIO_DC_REF_CLK_CNTL_GENLK_CLK_OUTPUT_SEL;
-typedef enum DCIO_DC_GPIO_VIP_DEBUG {
+पूर्ण DCIO_DC_REF_CLK_CNTL_GENLK_CLK_OUTPUT_SEL;
+प्रकार क्रमागत DCIO_DC_GPIO_VIP_DEBUG अणु
 	DCIO_DC_GPIO_VIP_DEBUG_NORMAL                    = 0x0,
 	DCIO_DC_GPIO_VIP_DEBUG_CG_BIG                    = 0x1,
-} DCIO_DC_GPIO_VIP_DEBUG;
-typedef enum DCIO_DC_GPIO_MACRO_DEBUG {
+पूर्ण DCIO_DC_GPIO_VIP_DEBUG;
+प्रकार क्रमागत DCIO_DC_GPIO_MACRO_DEBUG अणु
 	DCIO_DC_GPIO_MACRO_DEBUG_NORMAL                  = 0x0,
 	DCIO_DC_GPIO_MACRO_DEBUG_CHIP_BIF                = 0x1,
 	DCIO_DC_GPIO_MACRO_DEBUG_RESERVED_VALUE2         = 0x2,
 	DCIO_DC_GPIO_MACRO_DEBUG_RESERVED_VALUE3         = 0x3,
-} DCIO_DC_GPIO_MACRO_DEBUG;
-typedef enum DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL {
+पूर्ण DCIO_DC_GPIO_MACRO_DEBUG;
+प्रकार क्रमागत DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL अणु
 	DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL_NORMAL       = 0x0,
 	DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL_SWAP         = 0x1,
-} DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL;
-typedef enum DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN {
+पूर्ण DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL;
+प्रकार क्रमागत DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN अणु
 	DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN_BYPASS            = 0x0,
 	DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN_ENABLE            = 0x1,
-} DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN;
-typedef enum DCIO_DC_GPIO_DEBUG_DPRX_LOOPBACK_ENABLE {
+पूर्ण DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN;
+प्रकार क्रमागत DCIO_DC_GPIO_DEBUG_DPRX_LOOPBACK_ENABLE अणु
 	DCIO_DPRX_LOOPBACK_ENABLE_NORMAL                 = 0x0,
 	DCIO_DPRX_LOOPBACK_ENABLE_LOOP                   = 0x1,
-} DCIO_DC_GPIO_DEBUG_DPRX_LOOPBACK_ENABLE;
-typedef enum DCIO_UNIPHY_LINK_CNTL_MINIMUM_PIXVLD_LOW_DURATION {
+पूर्ण DCIO_DC_GPIO_DEBUG_DPRX_LOOPBACK_ENABLE;
+प्रकार क्रमागत DCIO_UNIPHY_LINK_CNTL_MINIMUM_PIXVLD_LOW_DURATION अणु
 	DCIO_UNIPHY_MINIMUM_PIXVLD_LOW_DURATION_3_CLOCKS = 0x0,
 	DCIO_UNIPHY_MINIMUM_PIXVLD_LOW_DURATION_7_CLOCKS = 0x1,
 	DCIO_UNIPHY_MINIMUM_PIXVLD_LOW_DURATION_11_CLOCKS= 0x2,
@@ -161,189 +162,189 @@ typedef enum DCIO_UNIPHY_LINK_CNTL_MINIMUM_PIXVLD_LOW_DURATION {
 	DCIO_UNIPHY_MINIMUM_PIXVLD_LOW_DURATION_23_CLOCKS= 0x5,
 	DCIO_UNIPHY_MINIMUM_PIXVLD_LOW_DURATION_27_CLOCKS= 0x6,
 	DCIO_UNIPHY_MINIMUM_PIXVLD_LOW_DURATION_31_CLOCKS= 0x7,
-} DCIO_UNIPHY_LINK_CNTL_MINIMUM_PIXVLD_LOW_DURATION;
-typedef enum DCIO_UNIPHY_LINK_CNTL_CHANNEL_INVERT {
+पूर्ण DCIO_UNIPHY_LINK_CNTL_MINIMUM_PIXVLD_LOW_DURATION;
+प्रकार क्रमागत DCIO_UNIPHY_LINK_CNTL_CHANNEL_INVERT अणु
 	DCIO_UNIPHY_CHANNEL_NO_INVERSION                 = 0x0,
 	DCIO_UNIPHY_CHANNEL_INVERTED                     = 0x1,
-} DCIO_UNIPHY_LINK_CNTL_CHANNEL_INVERT;
-typedef enum DCIO_UNIPHY_LINK_CNTL_ENABLE_HPD_MASK {
+पूर्ण DCIO_UNIPHY_LINK_CNTL_CHANNEL_INVERT;
+प्रकार क्रमागत DCIO_UNIPHY_LINK_CNTL_ENABLE_HPD_MASK अणु
 	DCIO_UNIPHY_LINK_ENABLE_HPD_MASK_DISALLOW        = 0x0,
 	DCIO_UNIPHY_LINK_ENABLE_HPD_MASK_ALLOW           = 0x1,
 	DCIO_UNIPHY_LINK_ENABLE_HPD_MASK_ALLOW_DEBOUNCED = 0x2,
 	DCIO_UNIPHY_LINK_ENABLE_HPD_MASK_ALLOW_TOGGLE_FILTERED= 0x3,
-} DCIO_UNIPHY_LINK_CNTL_ENABLE_HPD_MASK;
-typedef enum DCIO_UNIPHY_CHANNEL_XBAR_SOURCE {
+पूर्ण DCIO_UNIPHY_LINK_CNTL_ENABLE_HPD_MASK;
+प्रकार क्रमागत DCIO_UNIPHY_CHANNEL_XBAR_SOURCE अणु
 	DCIO_UNIPHY_CHANNEL_XBAR_SOURCE_CH0              = 0x0,
 	DCIO_UNIPHY_CHANNEL_XBAR_SOURCE_CH1              = 0x1,
 	DCIO_UNIPHY_CHANNEL_XBAR_SOURCE_CH2              = 0x2,
 	DCIO_UNIPHY_CHANNEL_XBAR_SOURCE_CH3              = 0x3,
-} DCIO_UNIPHY_CHANNEL_XBAR_SOURCE;
-typedef enum DCIO_DC_DVODATA_CONFIG_VIP_MUX_EN {
+पूर्ण DCIO_UNIPHY_CHANNEL_XBAR_SOURCE;
+प्रकार क्रमागत DCIO_DC_DVODATA_CONFIG_VIP_MUX_EN अणु
 	DCIO_VIP_MUX_EN_DVO                              = 0x0,
 	DCIO_VIP_MUX_EN_VIP                              = 0x1,
-} DCIO_DC_DVODATA_CONFIG_VIP_MUX_EN;
-typedef enum DCIO_DC_DVODATA_CONFIG_VIP_ALTER_MAPPING_EN {
+पूर्ण DCIO_DC_DVODATA_CONFIG_VIP_MUX_EN;
+प्रकार क्रमागत DCIO_DC_DVODATA_CONFIG_VIP_ALTER_MAPPING_EN अणु
 	DCIO_VIP_ALTER_MAPPING_EN_DEFAULT                = 0x0,
 	DCIO_VIP_ALTER_MAPPING_EN_ALTERNATIVE            = 0x1,
-} DCIO_DC_DVODATA_CONFIG_VIP_ALTER_MAPPING_EN;
-typedef enum DCIO_DC_DVODATA_CONFIG_DVO_ALTER_MAPPING_EN {
+पूर्ण DCIO_DC_DVODATA_CONFIG_VIP_ALTER_MAPPING_EN;
+प्रकार क्रमागत DCIO_DC_DVODATA_CONFIG_DVO_ALTER_MAPPING_EN अणु
 	DCIO_DVO_ALTER_MAPPING_EN_DEFAULT                = 0x0,
 	DCIO_DVO_ALTER_MAPPING_EN_ALTERNATIVE            = 0x1,
-} DCIO_DC_DVODATA_CONFIG_DVO_ALTER_MAPPING_EN;
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_DISABLE_SYNCEN_CONTROL_OF_TX_EN {
+पूर्ण DCIO_DC_DVODATA_CONFIG_DVO_ALTER_MAPPING_EN;
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_DISABLE_SYNCEN_CONTROL_OF_TX_EN अणु
 	DCIO_LVTMA_PWRSEQ_DISABLE_SYNCEN_CONTROL_OF_TX_ENABLE= 0x0,
 	DCIO_LVTMA_PWRSEQ_DISABLE_SYNCEN_CONTROL_OF_TX_DISABLE= 0x1,
-} DCIO_LVTMA_PWRSEQ_CNTL_DISABLE_SYNCEN_CONTROL_OF_TX_EN;
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_TARGET_STATE {
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_DISABLE_SYNCEN_CONTROL_OF_TX_EN;
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_TARGET_STATE अणु
 	DCIO_LVTMA_PWRSEQ_TARGET_STATE_LCD_OFF           = 0x0,
 	DCIO_LVTMA_PWRSEQ_TARGET_STATE_LCD_ON            = 0x1,
-} DCIO_LVTMA_PWRSEQ_CNTL_TARGET_STATE;
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_SYNCEN_POL {
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_TARGET_STATE;
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_SYNCEN_POL अणु
 	DCIO_LVTMA_SYNCEN_POL_NON_INVERT                 = 0x0,
 	DCIO_LVTMA_SYNCEN_POL_INVERT                     = 0x1,
-} DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_SYNCEN_POL;
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON {
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_SYNCEN_POL;
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON अणु
 	DCIO_LVTMA_DIGON_OFF                             = 0x0,
 	DCIO_LVTMA_DIGON_ON                              = 0x1,
-} DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON;
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON_POL {
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON;
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON_POL अणु
 	DCIO_LVTMA_DIGON_POL_NON_INVERT                  = 0x0,
 	DCIO_LVTMA_DIGON_POL_INVERT                      = 0x1,
-} DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON_POL;
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON {
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON_POL;
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON अणु
 	DCIO_LVTMA_BLON_OFF                              = 0x0,
 	DCIO_LVTMA_BLON_ON                               = 0x1,
-} DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON;
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON_POL {
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON;
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON_POL अणु
 	DCIO_LVTMA_BLON_POL_NON_INVERT                   = 0x0,
 	DCIO_LVTMA_BLON_POL_INVERT                       = 0x1,
-} DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON_POL;
-typedef enum DCIO_LVTMA_PWRSEQ_DELAY2_LVTMA_VARY_BL_OVERRIDE_EN {
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON_POL;
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_DELAY2_LVTMA_VARY_BL_OVERRIDE_EN अणु
 	DCIO_LVTMA_VARY_BL_OVERRIDE_EN_BLON              = 0x0,
 	DCIO_LVTMA_VARY_BL_OVERRIDE_EN_SEPARATE          = 0x1,
-} DCIO_LVTMA_PWRSEQ_DELAY2_LVTMA_VARY_BL_OVERRIDE_EN;
-typedef enum DCIO_BL_PWM_CNTL_BL_PWM_FRACTIONAL_EN {
+पूर्ण DCIO_LVTMA_PWRSEQ_DELAY2_LVTMA_VARY_BL_OVERRIDE_EN;
+प्रकार क्रमागत DCIO_BL_PWM_CNTL_BL_PWM_FRACTIONAL_EN अणु
 	DCIO_BL_PWM_FRACTIONAL_DISABLE                   = 0x0,
 	DCIO_BL_PWM_FRACTIONAL_ENABLE                    = 0x1,
-} DCIO_BL_PWM_CNTL_BL_PWM_FRACTIONAL_EN;
-typedef enum DCIO_BL_PWM_CNTL_BL_PWM_EN {
+पूर्ण DCIO_BL_PWM_CNTL_BL_PWM_FRACTIONAL_EN;
+प्रकार क्रमागत DCIO_BL_PWM_CNTL_BL_PWM_EN अणु
 	DCIO_BL_PWM_DISABLE                              = 0x0,
 	DCIO_BL_PWM_ENABLE                               = 0x1,
-} DCIO_BL_PWM_CNTL_BL_PWM_EN;
-typedef enum DCIO_BL_PWM_CNTL2_DBG_BL_PWM_INPUT_REFCLK_SELECT {
+पूर्ण DCIO_BL_PWM_CNTL_BL_PWM_EN;
+प्रकार क्रमागत DCIO_BL_PWM_CNTL2_DBG_BL_PWM_INPUT_REFCLK_SELECT अणु
 	DCIO_DBG_BL_PWM_INPUT_REFCLK_SELECT_NORMAL       = 0x0,
 	DCIO_DBG_BL_PWM_INPUT_REFCLK_SELECT_DEBUG1       = 0x1,
 	DCIO_DBG_BL_PWM_INPUT_REFCLK_SELECT_DEBUG2       = 0x2,
 	DCIO_DBG_BL_PWM_INPUT_REFCLK_SELECT_DEBUG3       = 0x3,
-} DCIO_BL_PWM_CNTL2_DBG_BL_PWM_INPUT_REFCLK_SELECT;
-typedef enum DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_BL_OUT_ENABLE {
+पूर्ण DCIO_BL_PWM_CNTL2_DBG_BL_PWM_INPUT_REFCLK_SELECT;
+प्रकार क्रमागत DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_BL_OUT_ENABLE अणु
 	DCIO_BL_PWM_OVERRIDE_BL_OUT_DISABLE              = 0x0,
 	DCIO_BL_PWM_OVERRIDE_BL_OUT_ENABLE               = 0x1,
-} DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_BL_OUT_ENABLE;
-typedef enum DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN {
+पूर्ण DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_BL_OUT_ENABLE;
+प्रकार क्रमागत DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN अणु
 	DCIO_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN_NORMAL      = 0x0,
 	DCIO_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN_PWM         = 0x1,
-} DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN;
-typedef enum DCIO_BL_PWM_GRP1_REG_LOCK {
+पूर्ण DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN;
+प्रकार क्रमागत DCIO_BL_PWM_GRP1_REG_LOCK अणु
 	DCIO_BL_PWM_GRP1_REG_LOCK_DISABLE                = 0x0,
 	DCIO_BL_PWM_GRP1_REG_LOCK_ENABLE                 = 0x1,
-} DCIO_BL_PWM_GRP1_REG_LOCK;
-typedef enum DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START {
+पूर्ण DCIO_BL_PWM_GRP1_REG_LOCK;
+प्रकार क्रमागत DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START अणु
 	DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START_DISABLE   = 0x0,
 	DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START_ENABLE    = 0x1,
-} DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START;
-typedef enum DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL {
+पूर्ण DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START;
+प्रकार क्रमागत DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL अणु
 	DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL_CONTROLLER1= 0x0,
 	DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL_CONTROLLER2= 0x1,
 	DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL_CONTROLLER3= 0x2,
 	DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL_CONTROLLER4= 0x3,
 	DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL_CONTROLLER5= 0x4,
 	DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL_CONTROLLER6= 0x5,
-} DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL;
-typedef enum DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN {
+पूर्ण DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL;
+प्रकार क्रमागत DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN अणु
 	DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN_BL_PWM = 0x0,
 	DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN_BL1_PWM= 0x1,
-} DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN;
-typedef enum DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_EN {
+पूर्ण DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN;
+प्रकार क्रमागत DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_EN अणु
 	DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_ENABLE       = 0x0,
 	DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_DISABLE      = 0x1,
-} DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_EN;
-typedef enum DCIO_GSL_SEL {
+पूर्ण DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_EN;
+प्रकार क्रमागत DCIO_GSL_SEL अणु
 	DCIO_GSL_SEL_GROUP_0                             = 0x0,
 	DCIO_GSL_SEL_GROUP_1                             = 0x1,
 	DCIO_GSL_SEL_GROUP_2                             = 0x2,
-} DCIO_GSL_SEL;
-typedef enum DCIO_GENLK_CLK_GSL_MASK {
+पूर्ण DCIO_GSL_SEL;
+प्रकार क्रमागत DCIO_GENLK_CLK_GSL_MASK अणु
 	DCIO_GENLK_CLK_GSL_MASK_NO                       = 0x0,
 	DCIO_GENLK_CLK_GSL_MASK_TIMING                   = 0x1,
 	DCIO_GENLK_CLK_GSL_MASK_STEREO                   = 0x2,
-} DCIO_GENLK_CLK_GSL_MASK;
-typedef enum DCIO_GENLK_VSYNC_GSL_MASK {
+पूर्ण DCIO_GENLK_CLK_GSL_MASK;
+प्रकार क्रमागत DCIO_GENLK_VSYNC_GSL_MASK अणु
 	DCIO_GENLK_VSYNC_GSL_MASK_NO                     = 0x0,
 	DCIO_GENLK_VSYNC_GSL_MASK_TIMING                 = 0x1,
 	DCIO_GENLK_VSYNC_GSL_MASK_STEREO                 = 0x2,
-} DCIO_GENLK_VSYNC_GSL_MASK;
-typedef enum DCIO_SWAPLOCK_A_GSL_MASK {
+पूर्ण DCIO_GENLK_VSYNC_GSL_MASK;
+प्रकार क्रमागत DCIO_SWAPLOCK_A_GSL_MASK अणु
 	DCIO_SWAPLOCK_A_GSL_MASK_NO                      = 0x0,
 	DCIO_SWAPLOCK_A_GSL_MASK_TIMING                  = 0x1,
 	DCIO_SWAPLOCK_A_GSL_MASK_STEREO                  = 0x2,
-} DCIO_SWAPLOCK_A_GSL_MASK;
-typedef enum DCIO_SWAPLOCK_B_GSL_MASK {
+पूर्ण DCIO_SWAPLOCK_A_GSL_MASK;
+प्रकार क्रमागत DCIO_SWAPLOCK_B_GSL_MASK अणु
 	DCIO_SWAPLOCK_B_GSL_MASK_NO                      = 0x0,
 	DCIO_SWAPLOCK_B_GSL_MASK_TIMING                  = 0x1,
 	DCIO_SWAPLOCK_B_GSL_MASK_STEREO                  = 0x2,
-} DCIO_SWAPLOCK_B_GSL_MASK;
-typedef enum DCIO_GSL_VSYNC_SEL {
+पूर्ण DCIO_SWAPLOCK_B_GSL_MASK;
+प्रकार क्रमागत DCIO_GSL_VSYNC_SEL अणु
 	DCIO_GSL_VSYNC_SEL_PIPE0                         = 0x0,
 	DCIO_GSL_VSYNC_SEL_PIPE1                         = 0x1,
 	DCIO_GSL_VSYNC_SEL_PIPE2                         = 0x2,
 	DCIO_GSL_VSYNC_SEL_PIPE3                         = 0x3,
 	DCIO_GSL_VSYNC_SEL_PIPE4                         = 0x4,
 	DCIO_GSL_VSYNC_SEL_PIPE5                         = 0x5,
-} DCIO_GSL_VSYNC_SEL;
-typedef enum DCIO_GSL0_TIMING_SYNC_SEL {
+पूर्ण DCIO_GSL_VSYNC_SEL;
+प्रकार क्रमागत DCIO_GSL0_TIMING_SYNC_SEL अणु
 	DCIO_GSL0_TIMING_SYNC_SEL_PIPE                   = 0x0,
 	DCIO_GSL0_TIMING_SYNC_SEL_GENCLK_VSYNC           = 0x1,
 	DCIO_GSL0_TIMING_SYNC_SEL_GENCLK_CLK             = 0x2,
 	DCIO_GSL0_TIMING_SYNC_SEL_SWAPLOCK_A             = 0x3,
 	DCIO_GSL0_TIMING_SYNC_SEL_SWAPLOCK_B             = 0x4,
-} DCIO_GSL0_TIMING_SYNC_SEL;
-typedef enum DCIO_GSL0_GLOBAL_UNLOCK_SEL {
+पूर्ण DCIO_GSL0_TIMING_SYNC_SEL;
+प्रकार क्रमागत DCIO_GSL0_GLOBAL_UNLOCK_SEL अणु
 	DCIO_GSL0_GLOBAL_UNLOCK_SEL_INVERSION            = 0x0,
 	DCIO_GSL0_GLOBAL_UNLOCK_SEL_GENCLK_VSYNC         = 0x1,
 	DCIO_GSL0_GLOBAL_UNLOCK_SEL_GENLK_CLK            = 0x2,
 	DCIO_GSL0_GLOBAL_UNLOCK_SEL_SWAPLOCK_A           = 0x3,
 	DCIO_GSL0_GLOBAL_UNLOCK_SEL_SWAPLOCK_B           = 0x4,
-} DCIO_GSL0_GLOBAL_UNLOCK_SEL;
-typedef enum DCIO_GSL1_TIMING_SYNC_SEL {
+पूर्ण DCIO_GSL0_GLOBAL_UNLOCK_SEL;
+प्रकार क्रमागत DCIO_GSL1_TIMING_SYNC_SEL अणु
 	DCIO_GSL1_TIMING_SYNC_SEL_PIPE                   = 0x0,
 	DCIO_GSL1_TIMING_SYNC_SEL_GENCLK_VSYNC           = 0x1,
 	DCIO_GSL1_TIMING_SYNC_SEL_GENCLK_CLK             = 0x2,
 	DCIO_GSL1_TIMING_SYNC_SEL_SWAPLOCK_A             = 0x3,
 	DCIO_GSL1_TIMING_SYNC_SEL_SWAPLOCK_B             = 0x4,
-} DCIO_GSL1_TIMING_SYNC_SEL;
-typedef enum DCIO_GSL1_GLOBAL_UNLOCK_SEL {
+पूर्ण DCIO_GSL1_TIMING_SYNC_SEL;
+प्रकार क्रमागत DCIO_GSL1_GLOBAL_UNLOCK_SEL अणु
 	DCIO_GSL1_GLOBAL_UNLOCK_SEL_INVERSION            = 0x0,
 	DCIO_GSL1_GLOBAL_UNLOCK_SEL_GENCLK_VSYNC         = 0x1,
 	DCIO_GSL1_GLOBAL_UNLOCK_SEL_GENLK_CLK            = 0x2,
 	DCIO_GSL1_GLOBAL_UNLOCK_SEL_SWAPLOCK_A           = 0x3,
 	DCIO_GSL1_GLOBAL_UNLOCK_SEL_SWAPLOCK_B           = 0x4,
-} DCIO_GSL1_GLOBAL_UNLOCK_SEL;
-typedef enum DCIO_GSL2_TIMING_SYNC_SEL {
+पूर्ण DCIO_GSL1_GLOBAL_UNLOCK_SEL;
+प्रकार क्रमागत DCIO_GSL2_TIMING_SYNC_SEL अणु
 	DCIO_GSL2_TIMING_SYNC_SEL_PIPE                   = 0x0,
 	DCIO_GSL2_TIMING_SYNC_SEL_GENCLK_VSYNC           = 0x1,
 	DCIO_GSL2_TIMING_SYNC_SEL_GENCLK_CLK             = 0x2,
 	DCIO_GSL2_TIMING_SYNC_SEL_SWAPLOCK_A             = 0x3,
 	DCIO_GSL2_TIMING_SYNC_SEL_SWAPLOCK_B             = 0x4,
-} DCIO_GSL2_TIMING_SYNC_SEL;
-typedef enum DCIO_GSL2_GLOBAL_UNLOCK_SEL {
+पूर्ण DCIO_GSL2_TIMING_SYNC_SEL;
+प्रकार क्रमागत DCIO_GSL2_GLOBAL_UNLOCK_SEL अणु
 	DCIO_GSL2_GLOBAL_UNLOCK_SEL_INVERSION            = 0x0,
 	DCIO_GSL2_GLOBAL_UNLOCK_SEL_GENCLK_VSYNC         = 0x1,
 	DCIO_GSL2_GLOBAL_UNLOCK_SEL_GENLK_CLK            = 0x2,
 	DCIO_GSL2_GLOBAL_UNLOCK_SEL_SWAPLOCK_A           = 0x3,
 	DCIO_GSL2_GLOBAL_UNLOCK_SEL_SWAPLOCK_B           = 0x4,
-} DCIO_GSL2_GLOBAL_UNLOCK_SEL;
-typedef enum DCIO_DC_GPU_TIMER_START_POSITION {
+पूर्ण DCIO_GSL2_GLOBAL_UNLOCK_SEL;
+प्रकार क्रमागत DCIO_DC_GPU_TIMER_START_POSITION अणु
 	DCIO_GPU_TIMER_START_0_END_27                    = 0x0,
 	DCIO_GPU_TIMER_START_1_END_28                    = 0x1,
 	DCIO_GPU_TIMER_START_2_END_29                    = 0x2,
@@ -352,21 +353,21 @@ typedef enum DCIO_DC_GPU_TIMER_START_POSITION {
 	DCIO_GPU_TIMER_START_6_END_33                    = 0x5,
 	DCIO_GPU_TIMER_START_8_END_35                    = 0x6,
 	DCIO_GPU_TIMER_START_10_END_37                   = 0x7,
-} DCIO_DC_GPU_TIMER_START_POSITION;
-typedef enum DCIO_CLOCK_CNTL_DCIO_TEST_CLK_SEL {
+पूर्ण DCIO_DC_GPU_TIMER_START_POSITION;
+प्रकार क्रमागत DCIO_CLOCK_CNTL_DCIO_TEST_CLK_SEL अणु
 	DCIO_TEST_CLK_SEL_DISPCLK                        = 0x0,
 	DCIO_TEST_CLK_SEL_GATED_DISPCLK                  = 0x1,
 	DCIO_TEST_CLK_SEL_SCLK                           = 0x2,
-} DCIO_CLOCK_CNTL_DCIO_TEST_CLK_SEL;
-typedef enum DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_GATE_DIS {
+पूर्ण DCIO_CLOCK_CNTL_DCIO_TEST_CLK_SEL;
+प्रकार क्रमागत DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_GATE_DIS अणु
 	DCIO_DISPCLK_R_DCIO_GATE_DISABLE                 = 0x0,
 	DCIO_DISPCLK_R_DCIO_GATE_ENABLE                  = 0x1,
-} DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_GATE_DIS;
-typedef enum DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_RAMP_DIS {
+पूर्ण DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_GATE_DIS;
+प्रकार क्रमागत DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_RAMP_DIS अणु
 	DCIO_DISPCLK_R_DCIO_RAMP_DISABLE                 = 0x0,
 	DCIO_DISPCLK_R_DCIO_RAMP_ENABLE                  = 0x1,
-} DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_RAMP_DIS;
-typedef enum DCIO_DCO_DCFE_EXT_VSYNC_MUX {
+पूर्ण DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_RAMP_DIS;
+प्रकार क्रमागत DCIO_DCO_DCFE_EXT_VSYNC_MUX अणु
 	DCIO_EXT_VSYNC_MUX_SWAPLOCKB                     = 0x0,
 	DCIO_EXT_VSYNC_MUX_CRTC0                         = 0x1,
 	DCIO_EXT_VSYNC_MUX_CRTC1                         = 0x2,
@@ -375,8 +376,8 @@ typedef enum DCIO_DCO_DCFE_EXT_VSYNC_MUX {
 	DCIO_EXT_VSYNC_MUX_CRTC4                         = 0x5,
 	DCIO_EXT_VSYNC_MUX_CRTC5                         = 0x6,
 	DCIO_EXT_VSYNC_MUX_GENERICB                      = 0x7,
-} DCIO_DCO_DCFE_EXT_VSYNC_MUX;
-typedef enum DCIO_DCO_EXT_VSYNC_MASK {
+पूर्ण DCIO_DCO_DCFE_EXT_VSYNC_MUX;
+प्रकार क्रमागत DCIO_DCO_EXT_VSYNC_MASK अणु
 	DCIO_EXT_VSYNC_MASK_NONE                         = 0x0,
 	DCIO_EXT_VSYNC_MASK_PIPE0                        = 0x1,
 	DCIO_EXT_VSYNC_MASK_PIPE1                        = 0x2,
@@ -385,36 +386,36 @@ typedef enum DCIO_DCO_EXT_VSYNC_MASK {
 	DCIO_EXT_VSYNC_MASK_PIPE4                        = 0x5,
 	DCIO_EXT_VSYNC_MASK_PIPE5                        = 0x6,
 	DCIO_EXT_VSYNC_MASK_NONE_DUPLICATE               = 0x7,
-} DCIO_DCO_EXT_VSYNC_MASK;
-typedef enum DCIO_DBG_OUT_PIN_SEL {
+पूर्ण DCIO_DCO_EXT_VSYNC_MASK;
+प्रकार क्रमागत DCIO_DBG_OUT_PIN_SEL अणु
 	DCIO_DBG_OUT_PIN_SEL_LOW_12BIT                   = 0x0,
 	DCIO_DBG_OUT_PIN_SEL_HIGH_12BIT                  = 0x1,
-} DCIO_DBG_OUT_PIN_SEL;
-typedef enum DCIO_DBG_OUT_12BIT_SEL {
+पूर्ण DCIO_DBG_OUT_PIN_SEL;
+प्रकार क्रमागत DCIO_DBG_OUT_12BIT_SEL अणु
 	DCIO_DBG_OUT_12BIT_SEL_LOW_12BIT                 = 0x0,
 	DCIO_DBG_OUT_12BIT_SEL_MID_12BIT                 = 0x1,
 	DCIO_DBG_OUT_12BIT_SEL_HIGH_12BIT                = 0x2,
 	DCIO_DBG_OUT_12BIT_SEL_OVERRIDE                  = 0x3,
-} DCIO_DBG_OUT_12BIT_SEL;
-typedef enum DCIO_DSYNC_SOFT_RESET {
+पूर्ण DCIO_DBG_OUT_12BIT_SEL;
+प्रकार क्रमागत DCIO_DSYNC_SOFT_RESET अणु
 	DCIO_DSYNC_SOFT_RESET_DEASSERT                   = 0x0,
 	DCIO_DSYNC_SOFT_RESET_ASSERT                     = 0x1,
-} DCIO_DSYNC_SOFT_RESET;
-typedef enum DCIO_DACA_SOFT_RESET {
+पूर्ण DCIO_DSYNC_SOFT_RESET;
+प्रकार क्रमागत DCIO_DACA_SOFT_RESET अणु
 	DCIO_DACA_SOFT_RESET_DEASSERT                    = 0x0,
 	DCIO_DACA_SOFT_RESET_ASSERT                      = 0x1,
-} DCIO_DACA_SOFT_RESET;
-typedef enum DCIO_DCRXPHY_SOFT_RESET {
+पूर्ण DCIO_DACA_SOFT_RESET;
+प्रकार क्रमागत DCIO_DCRXPHY_SOFT_RESET अणु
 	DCIO_DCRXPHY_SOFT_RESET_DEASSERT                 = 0x0,
 	DCIO_DCRXPHY_SOFT_RESET_ASSERT                   = 0x1,
-} DCIO_DCRXPHY_SOFT_RESET;
-typedef enum DCIO_DPHY_LANE_SEL {
+पूर्ण DCIO_DCRXPHY_SOFT_RESET;
+प्रकार क्रमागत DCIO_DPHY_LANE_SEL अणु
 	DCIO_DPHY_LANE_SEL_LANE0                         = 0x0,
 	DCIO_DPHY_LANE_SEL_LANE1                         = 0x1,
 	DCIO_DPHY_LANE_SEL_LANE2                         = 0x2,
 	DCIO_DPHY_LANE_SEL_LANE3                         = 0x3,
-} DCIO_DPHY_LANE_SEL;
-typedef enum DCIO_DC_GPU_TIMER_READ_SELECT {
+पूर्ण DCIO_DPHY_LANE_SEL;
+प्रकार क्रमागत DCIO_DC_GPU_TIMER_READ_SELECT अणु
 	DCIO_GPU_TIMER_READ_SELECT_LOWER_D1_V_UPDATE     = 0x0,
 	DCIO_GPU_TIMER_READ_SELECT_UPPER_D1_V_UPDATE     = 0x1,
 	DCIO_GPU_TIMER_READ_SELECT_LOWER_D2_V_UPDATE     = 0x2,
@@ -451,8 +452,8 @@ typedef enum DCIO_DC_GPU_TIMER_READ_SELECT {
 	DCIO_GPU_TIMER_READ_SELECT_UPPER_D5_VSYNC_NOM    = 0x21,
 	DCIO_GPU_TIMER_READ_SELECT_LOWER_D6_VSYNC_NOM    = 0x22,
 	DCIO_GPU_TIMER_READ_SELECT_UPPER_D6_VSYNC_NOM    = 0x23,
-} DCIO_DC_GPU_TIMER_READ_SELECT;
-typedef enum DCIO_IMPCAL_STEP_DELAY {
+पूर्ण DCIO_DC_GPU_TIMER_READ_SELECT;
+प्रकार क्रमागत DCIO_IMPCAL_STEP_DELAY अणु
 	DCIO_IMPCAL_STEP_DELAY_1us                       = 0x0,
 	DCIO_IMPCAL_STEP_DELAY_2us                       = 0x1,
 	DCIO_IMPCAL_STEP_DELAY_3us                       = 0x2,
@@ -469,143 +470,143 @@ typedef enum DCIO_IMPCAL_STEP_DELAY {
 	DCIO_IMPCAL_STEP_DELAY_14us                      = 0xd,
 	DCIO_IMPCAL_STEP_DELAY_15us                      = 0xe,
 	DCIO_IMPCAL_STEP_DELAY_16us                      = 0xf,
-} DCIO_IMPCAL_STEP_DELAY;
-typedef enum DCIO_UNIPHY_IMPCAL_SEL {
+पूर्ण DCIO_IMPCAL_STEP_DELAY;
+प्रकार क्रमागत DCIO_UNIPHY_IMPCAL_SEL अणु
 	DCIO_UNIPHY_IMPCAL_SEL_TEMPERATURE               = 0x0,
 	DCIO_UNIPHY_IMPCAL_SEL_BINARY                    = 0x1,
-} DCIO_UNIPHY_IMPCAL_SEL;
-typedef enum DCIOCHIP_HPD_SEL {
+पूर्ण DCIO_UNIPHY_IMPCAL_SEL;
+प्रकार क्रमागत DCIOCHIP_HPD_SEL अणु
 	DCIOCHIP_HPD_SEL_ASYNC                           = 0x0,
 	DCIOCHIP_HPD_SEL_CLOCKED                         = 0x1,
-} DCIOCHIP_HPD_SEL;
-typedef enum DCIOCHIP_PAD_MODE {
+पूर्ण DCIOCHIP_HPD_SEL;
+प्रकार क्रमागत DCIOCHIP_PAD_MODE अणु
 	DCIOCHIP_PAD_MODE_DDC                            = 0x0,
 	DCIOCHIP_PAD_MODE_DP                             = 0x1,
-} DCIOCHIP_PAD_MODE;
-typedef enum DCIOCHIP_AUXSLAVE_PAD_MODE {
+पूर्ण DCIOCHIP_PAD_MODE;
+प्रकार क्रमागत DCIOCHIP_AUXSLAVE_PAD_MODE अणु
 	DCIOCHIP_AUXSLAVE_PAD_MODE_I2C                   = 0x0,
 	DCIOCHIP_AUXSLAVE_PAD_MODE_AUX                   = 0x1,
-} DCIOCHIP_AUXSLAVE_PAD_MODE;
-typedef enum DCIOCHIP_INVERT {
+पूर्ण DCIOCHIP_AUXSLAVE_PAD_MODE;
+प्रकार क्रमागत DCIOCHIP_INVERT अणु
 	DCIOCHIP_POL_NON_INVERT                          = 0x0,
 	DCIOCHIP_POL_INVERT                              = 0x1,
-} DCIOCHIP_INVERT;
-typedef enum DCIOCHIP_PD_EN {
+पूर्ण DCIOCHIP_INVERT;
+प्रकार क्रमागत DCIOCHIP_PD_EN अणु
 	DCIOCHIP_PD_EN_NOTALLOW                          = 0x0,
 	DCIOCHIP_PD_EN_ALLOW                             = 0x1,
-} DCIOCHIP_PD_EN;
-typedef enum DCIOCHIP_GPIO_MASK_EN {
+पूर्ण DCIOCHIP_PD_EN;
+प्रकार क्रमागत DCIOCHIP_GPIO_MASK_EN अणु
 	DCIOCHIP_GPIO_MASK_EN_HARDWARE                   = 0x0,
 	DCIOCHIP_GPIO_MASK_EN_SOFTWARE                   = 0x1,
-} DCIOCHIP_GPIO_MASK_EN;
-typedef enum DCIOCHIP_MASK {
+पूर्ण DCIOCHIP_GPIO_MASK_EN;
+प्रकार क्रमागत DCIOCHIP_MASK अणु
 	DCIOCHIP_MASK_DISABLE                            = 0x0,
 	DCIOCHIP_MASK_ENABLE                             = 0x1,
-} DCIOCHIP_MASK;
-typedef enum DCIOCHIP_GPIO_I2C_MASK {
+पूर्ण DCIOCHIP_MASK;
+प्रकार क्रमागत DCIOCHIP_GPIO_I2C_MASK अणु
 	DCIOCHIP_GPIO_I2C_MASK_DISABLE                   = 0x0,
 	DCIOCHIP_GPIO_I2C_MASK_ENABLE                    = 0x1,
-} DCIOCHIP_GPIO_I2C_MASK;
-typedef enum DCIOCHIP_GPIO_I2C_DRIVE {
+पूर्ण DCIOCHIP_GPIO_I2C_MASK;
+प्रकार क्रमागत DCIOCHIP_GPIO_I2C_DRIVE अणु
 	DCIOCHIP_GPIO_I2C_DRIVE_LOW                      = 0x0,
 	DCIOCHIP_GPIO_I2C_DRIVE_HIGH                     = 0x1,
-} DCIOCHIP_GPIO_I2C_DRIVE;
-typedef enum DCIOCHIP_GPIO_I2C_EN {
+पूर्ण DCIOCHIP_GPIO_I2C_DRIVE;
+प्रकार क्रमागत DCIOCHIP_GPIO_I2C_EN अणु
 	DCIOCHIP_GPIO_I2C_DISABLE                        = 0x0,
 	DCIOCHIP_GPIO_I2C_ENABLE                         = 0x1,
-} DCIOCHIP_GPIO_I2C_EN;
-typedef enum DCIOCHIP_MASK_4BIT {
+पूर्ण DCIOCHIP_GPIO_I2C_EN;
+प्रकार क्रमागत DCIOCHIP_MASK_4BIT अणु
 	DCIOCHIP_MASK_4BIT_DISABLE                       = 0x0,
 	DCIOCHIP_MASK_4BIT_ENABLE                        = 0xf,
-} DCIOCHIP_MASK_4BIT;
-typedef enum DCIOCHIP_ENABLE_4BIT {
+पूर्ण DCIOCHIP_MASK_4BIT;
+प्रकार क्रमागत DCIOCHIP_ENABLE_4BIT अणु
 	DCIOCHIP_4BIT_DISABLE                            = 0x0,
 	DCIOCHIP_4BIT_ENABLE                             = 0xf,
-} DCIOCHIP_ENABLE_4BIT;
-typedef enum DCIOCHIP_MASK_5BIT {
+पूर्ण DCIOCHIP_ENABLE_4BIT;
+प्रकार क्रमागत DCIOCHIP_MASK_5BIT अणु
 	DCIOCHIP_MASIK_5BIT_DISABLE                      = 0x0,
 	DCIOCHIP_MASIK_5BIT_ENABLE                       = 0x1f,
-} DCIOCHIP_MASK_5BIT;
-typedef enum DCIOCHIP_ENABLE_5BIT {
+पूर्ण DCIOCHIP_MASK_5BIT;
+प्रकार क्रमागत DCIOCHIP_ENABLE_5BIT अणु
 	DCIOCHIP_5BIT_DISABLE                            = 0x0,
 	DCIOCHIP_5BIT_ENABLE                             = 0x1f,
-} DCIOCHIP_ENABLE_5BIT;
-typedef enum DCIOCHIP_MASK_2BIT {
+पूर्ण DCIOCHIP_ENABLE_5BIT;
+प्रकार क्रमागत DCIOCHIP_MASK_2BIT अणु
 	DCIOCHIP_MASK_2BIT_DISABLE                       = 0x0,
 	DCIOCHIP_MASK_2BIT_ENABLE                        = 0x3,
-} DCIOCHIP_MASK_2BIT;
-typedef enum DCIOCHIP_ENABLE_2BIT {
+पूर्ण DCIOCHIP_MASK_2BIT;
+प्रकार क्रमागत DCIOCHIP_ENABLE_2BIT अणु
 	DCIOCHIP_2BIT_DISABLE                            = 0x0,
 	DCIOCHIP_2BIT_ENABLE                             = 0x3,
-} DCIOCHIP_ENABLE_2BIT;
-typedef enum DCIOCHIP_REF_27_SRC_SEL {
+पूर्ण DCIOCHIP_ENABLE_2BIT;
+प्रकार क्रमागत DCIOCHIP_REF_27_SRC_SEL अणु
 	DCIOCHIP_REF_27_SRC_SEL_XTAL_DIVIDER             = 0x0,
 	DCIOCHIP_REF_27_SRC_SEL_DISP_CLKIN2_DIVIDER      = 0x1,
 	DCIOCHIP_REF_27_SRC_SEL_XTAL_BYPASS              = 0x2,
 	DCIOCHIP_REF_27_SRC_SEL_DISP_CLKIN2_BYPASS       = 0x3,
-} DCIOCHIP_REF_27_SRC_SEL;
-typedef enum DCIOCHIP_DVO_VREFPON {
+पूर्ण DCIOCHIP_REF_27_SRC_SEL;
+प्रकार क्रमागत DCIOCHIP_DVO_VREFPON अणु
 	DCIOCHIP_DVO_VREFPON_DISABLE                     = 0x0,
 	DCIOCHIP_DVO_VREFPON_ENABLE                      = 0x1,
-} DCIOCHIP_DVO_VREFPON;
-typedef enum DCIOCHIP_DVO_VREFSEL {
+पूर्ण DCIOCHIP_DVO_VREFPON;
+प्रकार क्रमागत DCIOCHIP_DVO_VREFSEL अणु
 	DCIOCHIP_DVO_VREFSEL_ONCHIP                      = 0x0,
 	DCIOCHIP_DVO_VREFSEL_EXTERNAL                    = 0x1,
-} DCIOCHIP_DVO_VREFSEL;
-typedef enum COL_MAN_UPDATE_LOCK {
+पूर्ण DCIOCHIP_DVO_VREFSEL;
+प्रकार क्रमागत COL_MAN_UPDATE_LOCK अणु
 	COL_MAN_UPDATE_UNLOCKED                          = 0x0,
 	COL_MAN_UPDATE_LOCKED                            = 0x1,
-} COL_MAN_UPDATE_LOCK;
-typedef enum COL_MAN_DISABLE_MULTIPLE_UPDATE {
+पूर्ण COL_MAN_UPDATE_LOCK;
+प्रकार क्रमागत COL_MAN_DISABLE_MULTIPLE_UPDATE अणु
 	COL_MAN_MULTIPLE_UPDATE                          = 0x0,
 	COL_MAN_MULTIPLE_UPDAT_EDISABLE                  = 0x1,
-} COL_MAN_DISABLE_MULTIPLE_UPDATE;
-typedef enum COL_MAN_INPUTCSC_MODE {
+पूर्ण COL_MAN_DISABLE_MULTIPLE_UPDATE;
+प्रकार क्रमागत COL_MAN_INPUTCSC_MODE अणु
 	INPUTCSC_MODE_BYPASS                             = 0x0,
 	INPUTCSC_MODE_A                                  = 0x1,
 	INPUTCSC_MODE_B                                  = 0x2,
 	INPUTCSC_MODE_UNITY                              = 0x3,
-} COL_MAN_INPUTCSC_MODE;
-typedef enum COL_MAN_INPUTCSC_TYPE {
+पूर्ण COL_MAN_INPUTCSC_MODE;
+प्रकार क्रमागत COL_MAN_INPUTCSC_TYPE अणु
 	INPUTCSC_TYPE_12_0                               = 0x0,
 	INPUTCSC_TYPE_10_2                               = 0x1,
 	INPUTCSC_TYPE_8_4                                = 0x2,
-} COL_MAN_INPUTCSC_TYPE;
-typedef enum COL_MAN_INPUTCSC_CONVERT {
+पूर्ण COL_MAN_INPUTCSC_TYPE;
+प्रकार क्रमागत COL_MAN_INPUTCSC_CONVERT अणु
 	INPUTCSC_ROUND                                   = 0x0,
 	INPUTCSC_TRUNCATE                                = 0x1,
-} COL_MAN_INPUTCSC_CONVERT;
-typedef enum COL_MAN_PRESCALE_MODE {
+पूर्ण COL_MAN_INPUTCSC_CONVERT;
+प्रकार क्रमागत COL_MAN_PRESCALE_MODE अणु
 	PRESCALE_MODE_BYPASS                             = 0x0,
 	PRESCALE_MODE_PROGRAM                            = 0x1,
 	PRESCALE_MODE_UNITY                              = 0x2,
-} COL_MAN_PRESCALE_MODE;
-typedef enum COL_MAN_OUTPUT_CSC_MODE {
+पूर्ण COL_MAN_PRESCALE_MODE;
+प्रकार क्रमागत COL_MAN_OUTPUT_CSC_MODE अणु
 	COL_MAN_OUTPUT_CSC_BYPASS                        = 0x0,
 	COL_MAN_OUTPUT_CSC_RGB                           = 0x1,
 	COL_MAN_OUTPUT_CSC_YCrCb601                      = 0x2,
 	COL_MAN_OUTPUT_CSC_YCrCb709                      = 0x3,
 	COL_MAN_OUTPUT_CSC_A                             = 0x4,
 	COL_MAN_OUTPUT_CSC_B                             = 0x5,
-} COL_MAN_OUTPUT_CSC_MODE;
-typedef enum COL_MAN_DENORM_CLAMP_CONTROL {
+पूर्ण COL_MAN_OUTPUT_CSC_MODE;
+प्रकार क्रमागत COL_MAN_DENORM_CLAMP_CONTROL अणु
 	DENORM_CLAMP_CONTROL_UNITY                       = 0x0,
 	DENORM_CLAMP_CONTROL_8                           = 0x1,
 	DENORM_CLAMP_CONTROL_10                          = 0x2,
 	DENORM_CLAMP_CONTROL_12                          = 0x3,
-} COL_MAN_DENORM_CLAMP_CONTROL;
-typedef enum COL_MAN_GAMMA_CORR_CONTROL {
+पूर्ण COL_MAN_DENORM_CLAMP_CONTROL;
+प्रकार क्रमागत COL_MAN_GAMMA_CORR_CONTROL अणु
 	GAMMA_CORR_CONTROL_BYPASS                        = 0x0,
 	GAMMA_CORR_CONTROL_A                             = 0x1,
 	GAMMA_CORR_CONTROL_B                             = 0x2,
-} COL_MAN_GAMMA_CORR_CONTROL;
-typedef enum SurfaceEndian {
+पूर्ण COL_MAN_GAMMA_CORR_CONTROL;
+प्रकार क्रमागत SurfaceEndian अणु
 	ENDIAN_NONE                                      = 0x0,
 	ENDIAN_8IN16                                     = 0x1,
 	ENDIAN_8IN32                                     = 0x2,
 	ENDIAN_8IN64                                     = 0x3,
-} SurfaceEndian;
-typedef enum ArrayMode {
+पूर्ण SurfaceEndian;
+प्रकार क्रमागत ArrayMode अणु
 	ARRAY_LINEAR_GENERAL                             = 0x0,
 	ARRAY_LINEAR_ALIGNED                             = 0x1,
 	ARRAY_1D_TILED_THIN1                             = 0x2,
@@ -622,22 +623,22 @@ typedef enum ArrayMode {
 	ARRAY_3D_TILED_THICK                             = 0xd,
 	ARRAY_3D_TILED_XTHICK                            = 0xe,
 	ARRAY_PRT_3D_TILED_THICK                         = 0xf,
-} ArrayMode;
-typedef enum PipeTiling {
+पूर्ण ArrayMode;
+प्रकार क्रमागत PipeTiling अणु
 	CONFIG_1_PIPE                                    = 0x0,
 	CONFIG_2_PIPE                                    = 0x1,
 	CONFIG_4_PIPE                                    = 0x2,
 	CONFIG_8_PIPE                                    = 0x3,
-} PipeTiling;
-typedef enum BankTiling {
+पूर्ण PipeTiling;
+प्रकार क्रमागत BankTiling अणु
 	CONFIG_4_BANK                                    = 0x0,
 	CONFIG_8_BANK                                    = 0x1,
-} BankTiling;
-typedef enum GroupInterleave {
+पूर्ण BankTiling;
+प्रकार क्रमागत GroupInterleave अणु
 	CONFIG_256B_GROUP                                = 0x0,
 	CONFIG_512B_GROUP                                = 0x1,
-} GroupInterleave;
-typedef enum RowTiling {
+पूर्ण GroupInterleave;
+प्रकार क्रमागत RowTiling अणु
 	CONFIG_1KB_ROW                                   = 0x0,
 	CONFIG_2KB_ROW                                   = 0x1,
 	CONFIG_4KB_ROW                                   = 0x2,
@@ -646,64 +647,64 @@ typedef enum RowTiling {
 	CONFIG_2KB_ROW_OPT                               = 0x5,
 	CONFIG_4KB_ROW_OPT                               = 0x6,
 	CONFIG_8KB_ROW_OPT                               = 0x7,
-} RowTiling;
-typedef enum BankSwapBytes {
+पूर्ण RowTiling;
+प्रकार क्रमागत BankSwapBytes अणु
 	CONFIG_128B_SWAPS                                = 0x0,
 	CONFIG_256B_SWAPS                                = 0x1,
 	CONFIG_512B_SWAPS                                = 0x2,
 	CONFIG_1KB_SWAPS                                 = 0x3,
-} BankSwapBytes;
-typedef enum SampleSplitBytes {
+पूर्ण BankSwapBytes;
+प्रकार क्रमागत SampleSplitBytes अणु
 	CONFIG_1KB_SPLIT                                 = 0x0,
 	CONFIG_2KB_SPLIT                                 = 0x1,
 	CONFIG_4KB_SPLIT                                 = 0x2,
 	CONFIG_8KB_SPLIT                                 = 0x3,
-} SampleSplitBytes;
-typedef enum NumPipes {
+पूर्ण SampleSplitBytes;
+प्रकार क्रमागत NumPipes अणु
 	ADDR_CONFIG_1_PIPE                               = 0x0,
 	ADDR_CONFIG_2_PIPE                               = 0x1,
 	ADDR_CONFIG_4_PIPE                               = 0x2,
 	ADDR_CONFIG_8_PIPE                               = 0x3,
-} NumPipes;
-typedef enum PipeInterleaveSize {
+पूर्ण NumPipes;
+प्रकार क्रमागत PipeInterleaveSize अणु
 	ADDR_CONFIG_PIPE_INTERLEAVE_256B                 = 0x0,
 	ADDR_CONFIG_PIPE_INTERLEAVE_512B                 = 0x1,
-} PipeInterleaveSize;
-typedef enum BankInterleaveSize {
+पूर्ण PipeInterleaveSize;
+प्रकार क्रमागत BankInterleaveSize अणु
 	ADDR_CONFIG_BANK_INTERLEAVE_1                    = 0x0,
 	ADDR_CONFIG_BANK_INTERLEAVE_2                    = 0x1,
 	ADDR_CONFIG_BANK_INTERLEAVE_4                    = 0x2,
 	ADDR_CONFIG_BANK_INTERLEAVE_8                    = 0x3,
-} BankInterleaveSize;
-typedef enum NumShaderEngines {
+पूर्ण BankInterleaveSize;
+प्रकार क्रमागत NumShaderEngines अणु
 	ADDR_CONFIG_1_SHADER_ENGINE                      = 0x0,
 	ADDR_CONFIG_2_SHADER_ENGINE                      = 0x1,
-} NumShaderEngines;
-typedef enum ShaderEngineTileSize {
+पूर्ण NumShaderEngines;
+प्रकार क्रमागत ShaderEngineTileSize अणु
 	ADDR_CONFIG_SE_TILE_16                           = 0x0,
 	ADDR_CONFIG_SE_TILE_32                           = 0x1,
-} ShaderEngineTileSize;
-typedef enum NumGPUs {
+पूर्ण ShaderEngineTileSize;
+प्रकार क्रमागत NumGPUs अणु
 	ADDR_CONFIG_1_GPU                                = 0x0,
 	ADDR_CONFIG_2_GPU                                = 0x1,
 	ADDR_CONFIG_4_GPU                                = 0x2,
-} NumGPUs;
-typedef enum MultiGPUTileSize {
+पूर्ण NumGPUs;
+प्रकार क्रमागत MultiGPUTileSize अणु
 	ADDR_CONFIG_GPU_TILE_16                          = 0x0,
 	ADDR_CONFIG_GPU_TILE_32                          = 0x1,
 	ADDR_CONFIG_GPU_TILE_64                          = 0x2,
 	ADDR_CONFIG_GPU_TILE_128                         = 0x3,
-} MultiGPUTileSize;
-typedef enum RowSize {
+पूर्ण MultiGPUTileSize;
+प्रकार क्रमागत RowSize अणु
 	ADDR_CONFIG_1KB_ROW                              = 0x0,
 	ADDR_CONFIG_2KB_ROW                              = 0x1,
 	ADDR_CONFIG_4KB_ROW                              = 0x2,
-} RowSize;
-typedef enum NumLowerPipes {
+पूर्ण RowSize;
+प्रकार क्रमागत NumLowerPipes अणु
 	ADDR_CONFIG_1_LOWER_PIPES                        = 0x0,
 	ADDR_CONFIG_2_LOWER_PIPES                        = 0x1,
-} NumLowerPipes;
-typedef enum DebugBlockId {
+पूर्ण NumLowerPipes;
+प्रकार क्रमागत DebugBlockId अणु
 	DBG_CLIENT_BLKID_RESERVED                        = 0x0,
 	DBG_CLIENT_BLKID_dbg                             = 0x1,
 	DBG_CLIENT_BLKID_scf2                            = 0x2,
@@ -723,11 +724,11 @@ typedef enum DebugBlockId {
 	DBG_CLIENT_BLKID_cb100                           = 0x10,
 	DBG_CLIENT_BLKID_cb001                           = 0x11,
 	DBG_CLIENT_BLKID_mcd4                            = 0x12,
-	DBG_CLIENT_BLKID_tmonw00                         = 0x13,
+	DBG_CLIENT_BLKID_पंचांगonw00                         = 0x13,
 	DBG_CLIENT_BLKID_cb101                           = 0x14,
 	DBG_CLIENT_BLKID_sx10                            = 0x15,
 	DBG_CLIENT_BLKID_cb301                           = 0x16,
-	DBG_CLIENT_BLKID_tmonw01                         = 0x17,
+	DBG_CLIENT_BLKID_पंचांगonw01                         = 0x17,
 	DBG_CLIENT_BLKID_vcea0_0                         = 0x18,
 	DBG_CLIENT_BLKID_vcea0_1                         = 0x19,
 	DBG_CLIENT_BLKID_vcea0_2                         = 0x1a,
@@ -862,8 +863,8 @@ typedef enum DebugBlockId {
 	DBG_CLIENT_BLKID_dcfe05_0                        = 0x9b,
 	DBG_CLIENT_BLKID_dcfe06_0                        = 0x9c,
 	DBG_CLIENT_BLKID_RESERVED_LAST                   = 0x9d,
-} DebugBlockId;
-typedef enum DebugBlockId_OLD {
+पूर्ण DebugBlockId;
+प्रकार क्रमागत DebugBlockId_OLD अणु
 	DBG_BLOCK_ID_RESERVED                            = 0x0,
 	DBG_BLOCK_ID_DBG                                 = 0x1,
 	DBG_BLOCK_ID_VMC                                 = 0x2,
@@ -1096,8 +1097,8 @@ typedef enum DebugBlockId_OLD {
 	DBG_BLOCK_ID_MCD5                                = 0xe5,
 	DBG_BLOCK_ID_UNUSED51                            = 0xe6,
 	DBG_BLOCK_ID_UNUSED52                            = 0xe7,
-} DebugBlockId_OLD;
-typedef enum DebugBlockId_BY2 {
+पूर्ण DebugBlockId_OLD;
+प्रकार क्रमागत DebugBlockId_BY2 अणु
 	DBG_BLOCK_ID_RESERVED_BY2                        = 0x0,
 	DBG_BLOCK_ID_VMC_BY2                             = 0x1,
 	DBG_BLOCK_ID_CG_BY2                              = 0x2,
@@ -1214,8 +1215,8 @@ typedef enum DebugBlockId_BY2 {
 	DBG_BLOCK_ID_MCD2_BY2                            = 0x71,
 	DBG_BLOCK_ID_MCD4_BY2                            = 0x72,
 	DBG_BLOCK_ID_UNUSED51_BY2                        = 0x73,
-} DebugBlockId_BY2;
-typedef enum DebugBlockId_BY4 {
+पूर्ण DebugBlockId_BY2;
+प्रकार क्रमागत DebugBlockId_BY4 अणु
 	DBG_BLOCK_ID_RESERVED_BY4                        = 0x0,
 	DBG_BLOCK_ID_CG_BY4                              = 0x1,
 	DBG_BLOCK_ID_CSC_BY4                             = 0x2,
@@ -1274,8 +1275,8 @@ typedef enum DebugBlockId_BY4 {
 	DBG_BLOCK_ID_UNUSED47_BY4                        = 0x37,
 	DBG_BLOCK_ID_MCD0_BY4                            = 0x38,
 	DBG_BLOCK_ID_MCD4_BY4                            = 0x39,
-} DebugBlockId_BY4;
-typedef enum DebugBlockId_BY8 {
+पूर्ण DebugBlockId_BY4;
+प्रकार क्रमागत DebugBlockId_BY8 अणु
 	DBG_BLOCK_ID_RESERVED_BY8                        = 0x0,
 	DBG_BLOCK_ID_CSC_BY8                             = 0x1,
 	DBG_BLOCK_ID_DMA0_BY8                            = 0x2,
@@ -1305,8 +1306,8 @@ typedef enum DebugBlockId_BY8 {
 	DBG_BLOCK_ID_TD10_BY8                            = 0x1a,
 	DBG_BLOCK_ID_TD18_BY8                            = 0x1b,
 	DBG_BLOCK_ID_MCD0_BY8                            = 0x1c,
-} DebugBlockId_BY8;
-typedef enum DebugBlockId_BY16 {
+पूर्ण DebugBlockId_BY8;
+प्रकार क्रमागत DebugBlockId_BY16 अणु
 	DBG_BLOCK_ID_RESERVED_BY16                       = 0x0,
 	DBG_BLOCK_ID_DMA0_BY16                           = 0x1,
 	DBG_BLOCK_ID_VGT0_BY16                           = 0x2,
@@ -1322,14 +1323,14 @@ typedef enum DebugBlockId_BY16 {
 	DBG_BLOCK_ID_TD00_BY16                           = 0xc,
 	DBG_BLOCK_ID_TD10_BY16                           = 0xd,
 	DBG_BLOCK_ID_MCD0_BY16                           = 0xe,
-} DebugBlockId_BY16;
-typedef enum ColorTransform {
+पूर्ण DebugBlockId_BY16;
+प्रकार क्रमागत ColorTransक्रमm अणु
 	DCC_CT_AUTO                                      = 0x0,
 	DCC_CT_NONE                                      = 0x1,
 	ABGR_TO_A_BG_G_RB                                = 0x2,
 	BGRA_TO_BG_G_RB_A                                = 0x3,
-} ColorTransform;
-typedef enum CompareRef {
+पूर्ण ColorTransक्रमm;
+प्रकार क्रमागत CompareRef अणु
 	REF_NEVER                                        = 0x0,
 	REF_LESS                                         = 0x1,
 	REF_EQUAL                                        = 0x2,
@@ -1338,12 +1339,12 @@ typedef enum CompareRef {
 	REF_NOTEQUAL                                     = 0x5,
 	REF_GEQUAL                                       = 0x6,
 	REF_ALWAYS                                       = 0x7,
-} CompareRef;
-typedef enum ReadSize {
+पूर्ण CompareRef;
+प्रकार क्रमागत ReadSize अणु
 	READ_256_BITS                                    = 0x0,
 	READ_512_BITS                                    = 0x1,
-} ReadSize;
-typedef enum DepthFormat {
+पूर्ण ReadSize;
+प्रकार क्रमागत DepthFormat अणु
 	DEPTH_INVALID                                    = 0x0,
 	DEPTH_16                                         = 0x1,
 	DEPTH_X8_24                                      = 0x2,
@@ -1352,18 +1353,18 @@ typedef enum DepthFormat {
 	DEPTH_8_24_FLOAT                                 = 0x5,
 	DEPTH_32_FLOAT                                   = 0x6,
 	DEPTH_X24_8_32_FLOAT                             = 0x7,
-} DepthFormat;
-typedef enum ZFormat {
+पूर्ण DepthFormat;
+प्रकार क्रमागत ZFormat अणु
 	Z_INVALID                                        = 0x0,
 	Z_16                                             = 0x1,
 	Z_24                                             = 0x2,
 	Z_32_FLOAT                                       = 0x3,
-} ZFormat;
-typedef enum StencilFormat {
+पूर्ण ZFormat;
+प्रकार क्रमागत StencilFormat अणु
 	STENCIL_INVALID                                  = 0x0,
 	STENCIL_8                                        = 0x1,
-} StencilFormat;
-typedef enum CmaskMode {
+पूर्ण StencilFormat;
+प्रकार क्रमागत CmaskMode अणु
 	CMASK_CLEAR_NONE                                 = 0x0,
 	CMASK_CLEAR_ONE                                  = 0x1,
 	CMASK_CLEAR_ALL                                  = 0x2,
@@ -1380,8 +1381,8 @@ typedef enum CmaskMode {
 	CMASK_ALPHAX_FRAG2                               = 0xd,
 	CMASK_ALPHAX_FRAG4                               = 0xe,
 	CMASK_ALPHAX_FRAGS                               = 0xf,
-} CmaskMode;
-typedef enum QuadExportFormat {
+पूर्ण CmaskMode;
+प्रकार क्रमागत QuadExportFormat अणु
 	EXPORT_UNUSED                                    = 0x0,
 	EXPORT_32_R                                      = 0x1,
 	EXPORT_32_GR                                     = 0x2,
@@ -1390,16 +1391,16 @@ typedef enum QuadExportFormat {
 	EXPORT_UNSIGNED16_ABGR                           = 0x5,
 	EXPORT_SIGNED16_ABGR                             = 0x6,
 	EXPORT_32_ABGR                                   = 0x7,
-} QuadExportFormat;
-typedef enum QuadExportFormatOld {
+पूर्ण QuadExportFormat;
+प्रकार क्रमागत QuadExportFormatOld अणु
 	EXPORT_4P_32BPC_ABGR                             = 0x0,
 	EXPORT_4P_16BPC_ABGR                             = 0x1,
 	EXPORT_4P_32BPC_GR                               = 0x2,
 	EXPORT_4P_32BPC_AR                               = 0x3,
 	EXPORT_2P_32BPC_ABGR                             = 0x4,
 	EXPORT_8P_32BPC_R                                = 0x5,
-} QuadExportFormatOld;
-typedef enum ColorFormat {
+पूर्ण QuadExportFormatOld;
+प्रकार क्रमागत ColorFormat अणु
 	COLOR_INVALID                                    = 0x0,
 	COLOR_8                                          = 0x1,
 	COLOR_16                                         = 0x2,
@@ -1424,8 +1425,8 @@ typedef enum ColorFormat {
 	COLOR_24_8                                       = 0x15,
 	COLOR_X24_8_32_FLOAT                             = 0x16,
 	COLOR_RESERVED_23                                = 0x17,
-} ColorFormat;
-typedef enum SurfaceFormat {
+पूर्ण ColorFormat;
+प्रकार क्रमागत SurfaceFormat अणु
 	FMT_INVALID                                      = 0x0,
 	FMT_8                                            = 0x1,
 	FMT_16                                           = 0x2,
@@ -1490,8 +1491,8 @@ typedef enum SurfaceFormat {
 	FMT_APC7                                         = 0x3d,
 	FMT_CTX1                                         = 0x3e,
 	FMT_RESERVED_63                                  = 0x3f,
-} SurfaceFormat;
-typedef enum BUF_DATA_FORMAT {
+पूर्ण SurfaceFormat;
+प्रकार क्रमागत BUF_DATA_FORMAT अणु
 	BUF_DATA_FORMAT_INVALID                          = 0x0,
 	BUF_DATA_FORMAT_8                                = 0x1,
 	BUF_DATA_FORMAT_16                               = 0x2,
@@ -1508,8 +1509,8 @@ typedef enum BUF_DATA_FORMAT {
 	BUF_DATA_FORMAT_32_32_32                         = 0xd,
 	BUF_DATA_FORMAT_32_32_32_32                      = 0xe,
 	BUF_DATA_FORMAT_RESERVED_15                      = 0xf,
-} BUF_DATA_FORMAT;
-typedef enum IMG_DATA_FORMAT {
+पूर्ण BUF_DATA_FORMAT;
+प्रकार क्रमागत IMG_DATA_FORMAT अणु
 	IMG_DATA_FORMAT_INVALID                          = 0x0,
 	IMG_DATA_FORMAT_8                                = 0x1,
 	IMG_DATA_FORMAT_16                               = 0x2,
@@ -1574,8 +1575,8 @@ typedef enum IMG_DATA_FORMAT {
 	IMG_DATA_FORMAT_32_AS_8                          = 0x3d,
 	IMG_DATA_FORMAT_32_AS_8_8                        = 0x3e,
 	IMG_DATA_FORMAT_32_AS_32_32_32_32                = 0x3f,
-} IMG_DATA_FORMAT;
-typedef enum BUF_NUM_FORMAT {
+पूर्ण IMG_DATA_FORMAT;
+प्रकार क्रमागत BUF_NUM_FORMAT अणु
 	BUF_NUM_FORMAT_UNORM                             = 0x0,
 	BUF_NUM_FORMAT_SNORM                             = 0x1,
 	BUF_NUM_FORMAT_USCALED                           = 0x2,
@@ -1584,8 +1585,8 @@ typedef enum BUF_NUM_FORMAT {
 	BUF_NUM_FORMAT_SINT                              = 0x5,
 	BUF_NUM_FORMAT_RESERVED_6                        = 0x6,
 	BUF_NUM_FORMAT_FLOAT                             = 0x7,
-} BUF_NUM_FORMAT;
-typedef enum IMG_NUM_FORMAT {
+पूर्ण BUF_NUM_FORMAT;
+प्रकार क्रमागत IMG_NUM_FORMAT अणु
 	IMG_NUM_FORMAT_UNORM                             = 0x0,
 	IMG_NUM_FORMAT_SNORM                             = 0x1,
 	IMG_NUM_FORMAT_USCALED                           = 0x2,
@@ -1602,23 +1603,23 @@ typedef enum IMG_NUM_FORMAT {
 	IMG_NUM_FORMAT_RESERVED_13                       = 0xd,
 	IMG_NUM_FORMAT_RESERVED_14                       = 0xe,
 	IMG_NUM_FORMAT_RESERVED_15                       = 0xf,
-} IMG_NUM_FORMAT;
-typedef enum TileType {
+पूर्ण IMG_NUM_FORMAT;
+प्रकार क्रमागत TileType अणु
 	ARRAY_COLOR_TILE                                 = 0x0,
 	ARRAY_DEPTH_TILE                                 = 0x1,
-} TileType;
-typedef enum NonDispTilingOrder {
+पूर्ण TileType;
+प्रकार क्रमागत NonDispTilingOrder अणु
 	ADDR_SURF_MICRO_TILING_DISPLAY                   = 0x0,
 	ADDR_SURF_MICRO_TILING_NON_DISPLAY               = 0x1,
-} NonDispTilingOrder;
-typedef enum MicroTileMode {
+पूर्ण NonDispTilingOrder;
+प्रकार क्रमागत MicroTileMode अणु
 	ADDR_SURF_DISPLAY_MICRO_TILING                   = 0x0,
 	ADDR_SURF_THIN_MICRO_TILING                      = 0x1,
 	ADDR_SURF_DEPTH_MICRO_TILING                     = 0x2,
 	ADDR_SURF_ROTATED_MICRO_TILING                   = 0x3,
 	ADDR_SURF_THICK_MICRO_TILING                     = 0x4,
-} MicroTileMode;
-typedef enum TileSplit {
+पूर्ण MicroTileMode;
+प्रकार क्रमागत TileSplit अणु
 	ADDR_SURF_TILE_SPLIT_64B                         = 0x0,
 	ADDR_SURF_TILE_SPLIT_128B                        = 0x1,
 	ADDR_SURF_TILE_SPLIT_256B                        = 0x2,
@@ -1626,14 +1627,14 @@ typedef enum TileSplit {
 	ADDR_SURF_TILE_SPLIT_1KB                         = 0x4,
 	ADDR_SURF_TILE_SPLIT_2KB                         = 0x5,
 	ADDR_SURF_TILE_SPLIT_4KB                         = 0x6,
-} TileSplit;
-typedef enum SampleSplit {
+पूर्ण TileSplit;
+प्रकार क्रमागत SampleSplit अणु
 	ADDR_SURF_SAMPLE_SPLIT_1                         = 0x0,
 	ADDR_SURF_SAMPLE_SPLIT_2                         = 0x1,
 	ADDR_SURF_SAMPLE_SPLIT_4                         = 0x2,
 	ADDR_SURF_SAMPLE_SPLIT_8                         = 0x3,
-} SampleSplit;
-typedef enum PipeConfig {
+पूर्ण SampleSplit;
+प्रकार क्रमागत PipeConfig अणु
 	ADDR_SURF_P2                                     = 0x0,
 	ADDR_SURF_P2_RESERVED0                           = 0x1,
 	ADDR_SURF_P2_RESERVED1                           = 0x2,
@@ -1652,57 +1653,57 @@ typedef enum PipeConfig {
 	ADDR_SURF_P8_RESERVED0                           = 0xf,
 	ADDR_SURF_P16_32x32_8x16                         = 0x10,
 	ADDR_SURF_P16_32x32_16x16                        = 0x11,
-} PipeConfig;
-typedef enum NumBanks {
+पूर्ण PipeConfig;
+प्रकार क्रमागत NumBanks अणु
 	ADDR_SURF_2_BANK                                 = 0x0,
 	ADDR_SURF_4_BANK                                 = 0x1,
 	ADDR_SURF_8_BANK                                 = 0x2,
 	ADDR_SURF_16_BANK                                = 0x3,
-} NumBanks;
-typedef enum BankWidth {
+पूर्ण NumBanks;
+प्रकार क्रमागत BankWidth अणु
 	ADDR_SURF_BANK_WIDTH_1                           = 0x0,
 	ADDR_SURF_BANK_WIDTH_2                           = 0x1,
 	ADDR_SURF_BANK_WIDTH_4                           = 0x2,
 	ADDR_SURF_BANK_WIDTH_8                           = 0x3,
-} BankWidth;
-typedef enum BankHeight {
+पूर्ण BankWidth;
+प्रकार क्रमागत BankHeight अणु
 	ADDR_SURF_BANK_HEIGHT_1                          = 0x0,
 	ADDR_SURF_BANK_HEIGHT_2                          = 0x1,
 	ADDR_SURF_BANK_HEIGHT_4                          = 0x2,
 	ADDR_SURF_BANK_HEIGHT_8                          = 0x3,
-} BankHeight;
-typedef enum BankWidthHeight {
+पूर्ण BankHeight;
+प्रकार क्रमागत BankWidthHeight अणु
 	ADDR_SURF_BANK_WH_1                              = 0x0,
 	ADDR_SURF_BANK_WH_2                              = 0x1,
 	ADDR_SURF_BANK_WH_4                              = 0x2,
 	ADDR_SURF_BANK_WH_8                              = 0x3,
-} BankWidthHeight;
-typedef enum MacroTileAspect {
+पूर्ण BankWidthHeight;
+प्रकार क्रमागत MacroTileAspect अणु
 	ADDR_SURF_MACRO_ASPECT_1                         = 0x0,
 	ADDR_SURF_MACRO_ASPECT_2                         = 0x1,
 	ADDR_SURF_MACRO_ASPECT_4                         = 0x2,
 	ADDR_SURF_MACRO_ASPECT_8                         = 0x3,
-} MacroTileAspect;
-typedef enum GATCL1RequestType {
+पूर्ण MacroTileAspect;
+प्रकार क्रमागत GATCL1RequestType अणु
 	GATCL1_TYPE_NORMAL                               = 0x0,
 	GATCL1_TYPE_SHOOTDOWN                            = 0x1,
 	GATCL1_TYPE_BYPASS                               = 0x2,
-} GATCL1RequestType;
-typedef enum TCC_CACHE_POLICIES {
+पूर्ण GATCL1RequestType;
+प्रकार क्रमागत TCC_CACHE_POLICIES अणु
 	TCC_CACHE_POLICY_LRU                             = 0x0,
 	TCC_CACHE_POLICY_STREAM                          = 0x1,
-} TCC_CACHE_POLICIES;
-typedef enum MTYPE {
+पूर्ण TCC_CACHE_POLICIES;
+प्रकार क्रमागत MTYPE अणु
 	MTYPE_NC_NV                                      = 0x0,
 	MTYPE_NC                                         = 0x1,
 	MTYPE_CC                                         = 0x2,
 	MTYPE_UC                                         = 0x3,
-} MTYPE;
-typedef enum PERFMON_COUNTER_MODE {
+पूर्ण MTYPE;
+प्रकार क्रमागत PERFMON_COUNTER_MODE अणु
 	PERFMON_COUNTER_MODE_ACCUM                       = 0x0,
 	PERFMON_COUNTER_MODE_ACTIVE_CYCLES               = 0x1,
 	PERFMON_COUNTER_MODE_MAX                         = 0x2,
-	PERFMON_COUNTER_MODE_DIRTY                       = 0x3,
+	PERFMON_COUNTER_MODE_सूचीTY                       = 0x3,
 	PERFMON_COUNTER_MODE_SAMPLE                      = 0x4,
 	PERFMON_COUNTER_MODE_CYCLES_SINCE_FIRST_EVENT    = 0x5,
 	PERFMON_COUNTER_MODE_CYCLES_SINCE_LAST_EVENT     = 0x6,
@@ -1710,8 +1711,8 @@ typedef enum PERFMON_COUNTER_MODE {
 	PERFMON_COUNTER_MODE_CYCLES_EQ_HI                = 0x8,
 	PERFMON_COUNTER_MODE_INACTIVE_CYCLES             = 0x9,
 	PERFMON_COUNTER_MODE_RESERVED                    = 0xf,
-} PERFMON_COUNTER_MODE;
-typedef enum PERFMON_SPM_MODE {
+पूर्ण PERFMON_COUNTER_MODE;
+प्रकार क्रमागत PERFMON_SPM_MODE अणु
 	PERFMON_SPM_MODE_OFF                             = 0x0,
 	PERFMON_SPM_MODE_16BIT_CLAMP                     = 0x1,
 	PERFMON_SPM_MODE_16BIT_NO_CLAMP                  = 0x2,
@@ -1723,51 +1724,51 @@ typedef enum PERFMON_SPM_MODE {
 	PERFMON_SPM_MODE_TEST_MODE_0                     = 0x8,
 	PERFMON_SPM_MODE_TEST_MODE_1                     = 0x9,
 	PERFMON_SPM_MODE_TEST_MODE_2                     = 0xa,
-} PERFMON_SPM_MODE;
-typedef enum SurfaceTiling {
+पूर्ण PERFMON_SPM_MODE;
+प्रकार क्रमागत SurfaceTiling अणु
 	ARRAY_LINEAR                                     = 0x0,
 	ARRAY_TILED                                      = 0x1,
-} SurfaceTiling;
-typedef enum SurfaceArray {
+पूर्ण SurfaceTiling;
+प्रकार क्रमागत SurfaceArray अणु
 	ARRAY_1D                                         = 0x0,
 	ARRAY_2D                                         = 0x1,
 	ARRAY_3D                                         = 0x2,
 	ARRAY_3D_SLICE                                   = 0x3,
-} SurfaceArray;
-typedef enum ColorArray {
+पूर्ण SurfaceArray;
+प्रकार क्रमागत ColorArray अणु
 	ARRAY_2D_ALT_COLOR                               = 0x0,
 	ARRAY_2D_COLOR                                   = 0x1,
 	ARRAY_3D_SLICE_COLOR                             = 0x3,
-} ColorArray;
-typedef enum DepthArray {
+पूर्ण ColorArray;
+प्रकार क्रमागत DepthArray अणु
 	ARRAY_2D_ALT_DEPTH                               = 0x0,
 	ARRAY_2D_DEPTH                                   = 0x1,
-} DepthArray;
-typedef enum ENUM_NUM_SIMD_PER_CU {
+पूर्ण DepthArray;
+प्रकार क्रमागत ENUM_NUM_SIMD_PER_CU अणु
 	NUM_SIMD_PER_CU                                  = 0x4,
-} ENUM_NUM_SIMD_PER_CU;
-typedef enum MEM_PWR_FORCE_CTRL {
+पूर्ण ENUM_NUM_SIMD_PER_CU;
+प्रकार क्रमागत MEM_PWR_FORCE_CTRL अणु
 	NO_FORCE_REQUEST                                 = 0x0,
 	FORCE_LIGHT_SLEEP_REQUEST                        = 0x1,
 	FORCE_DEEP_SLEEP_REQUEST                         = 0x2,
 	FORCE_SHUT_DOWN_REQUEST                          = 0x3,
-} MEM_PWR_FORCE_CTRL;
-typedef enum MEM_PWR_FORCE_CTRL2 {
+पूर्ण MEM_PWR_FORCE_CTRL;
+प्रकार क्रमागत MEM_PWR_FORCE_CTRL2 अणु
 	NO_FORCE_REQ                                     = 0x0,
 	FORCE_LIGHT_SLEEP_REQ                            = 0x1,
-} MEM_PWR_FORCE_CTRL2;
-typedef enum MEM_PWR_DIS_CTRL {
+पूर्ण MEM_PWR_FORCE_CTRL2;
+प्रकार क्रमागत MEM_PWR_DIS_CTRL अणु
 	ENABLE_MEM_PWR_CTRL                              = 0x0,
 	DISABLE_MEM_PWR_CTRL                             = 0x1,
-} MEM_PWR_DIS_CTRL;
-typedef enum MEM_PWR_SEL_CTRL {
+पूर्ण MEM_PWR_DIS_CTRL;
+प्रकार क्रमागत MEM_PWR_SEL_CTRL अणु
 	DYNAMIC_SHUT_DOWN_ENABLE                         = 0x0,
 	DYNAMIC_DEEP_SLEEP_ENABLE                        = 0x1,
 	DYNAMIC_LIGHT_SLEEP_ENABLE                       = 0x2,
-} MEM_PWR_SEL_CTRL;
-typedef enum MEM_PWR_SEL_CTRL2 {
+पूर्ण MEM_PWR_SEL_CTRL;
+प्रकार क्रमागत MEM_PWR_SEL_CTRL2 अणु
 	DYNAMIC_DEEP_SLEEP_EN                            = 0x0,
 	DYNAMIC_LIGHT_SLEEP_EN                           = 0x1,
-} MEM_PWR_SEL_CTRL2;
+पूर्ण MEM_PWR_SEL_CTRL2;
 
-#endif /* DCE_10_0_ENUM_H */
+#पूर्ण_अगर /* DCE_10_0_ENUM_H */

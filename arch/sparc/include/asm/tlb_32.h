@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SPARC_TLB_H
-#define _SPARC_TLB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SPARC_TLB_H
+#घोषणा _SPARC_TLB_H
 
-#include <asm-generic/tlb.h>
+#समावेश <यंत्र-generic/tlb.h>
 
-#endif /* _SPARC_TLB_H */
+#पूर्ण_अगर /* _SPARC_TLB_H */

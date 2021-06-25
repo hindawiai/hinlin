@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,93 +23,93 @@
  *
  * Authors:
  *    Ke Yu
- *    Kevin Tian <kevin.tian@intel.com>
+ *    Kevin Tian <kevin.tian@पूर्णांकel.com>
  *    Dexuan Cui
  *
  * Contributors:
- *    Tina Zhang <tina.zhang@intel.com>
- *    Min He <min.he@intel.com>
- *    Niu Bing <bing.niu@intel.com>
- *    Zhi Wang <zhi.a.wang@intel.com>
+ *    Tina Zhang <tina.zhang@पूर्णांकel.com>
+ *    Min He <min.he@पूर्णांकel.com>
+ *    Niu Bing <bing.niu@पूर्णांकel.com>
+ *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
  *
  */
 
-#ifndef _GVT_MMIO_H_
-#define _GVT_MMIO_H_
+#अगर_अघोषित _GVT_MMIO_H_
+#घोषणा _GVT_MMIO_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct intel_gvt;
-struct intel_vgpu;
+काष्ठा पूर्णांकel_gvt;
+काष्ठा पूर्णांकel_vgpu;
 
-#define D_BDW   (1 << 0)
-#define D_SKL	(1 << 1)
-#define D_KBL	(1 << 2)
-#define D_BXT	(1 << 3)
-#define D_CFL	(1 << 4)
+#घोषणा D_BDW   (1 << 0)
+#घोषणा D_SKL	(1 << 1)
+#घोषणा D_KBL	(1 << 2)
+#घोषणा D_BXT	(1 << 3)
+#घोषणा D_CFL	(1 << 4)
 
-#define D_GEN9PLUS	(D_SKL | D_KBL | D_BXT | D_CFL)
-#define D_GEN8PLUS	(D_BDW | D_SKL | D_KBL | D_BXT | D_CFL)
+#घोषणा D_GEN9PLUS	(D_SKL | D_KBL | D_BXT | D_CFL)
+#घोषणा D_GEN8PLUS	(D_BDW | D_SKL | D_KBL | D_BXT | D_CFL)
 
-#define D_SKL_PLUS	(D_SKL | D_KBL | D_BXT | D_CFL)
-#define D_BDW_PLUS	(D_BDW | D_SKL | D_KBL | D_BXT | D_CFL)
+#घोषणा D_SKL_PLUS	(D_SKL | D_KBL | D_BXT | D_CFL)
+#घोषणा D_BDW_PLUS	(D_BDW | D_SKL | D_KBL | D_BXT | D_CFL)
 
-#define D_PRE_SKL	(D_BDW)
-#define D_ALL		(D_BDW | D_SKL | D_KBL | D_BXT | D_CFL)
+#घोषणा D_PRE_SKL	(D_BDW)
+#घोषणा D_ALL		(D_BDW | D_SKL | D_KBL | D_BXT | D_CFL)
 
-typedef int (*gvt_mmio_func)(struct intel_vgpu *, unsigned int, void *,
-			     unsigned int);
+प्रकार पूर्णांक (*gvt_mmio_func)(काष्ठा पूर्णांकel_vgpu *, अचिन्हित पूर्णांक, व्योम *,
+			     अचिन्हित पूर्णांक);
 
-struct intel_gvt_mmio_info {
+काष्ठा पूर्णांकel_gvt_mmio_info अणु
 	u32 offset;
 	u64 ro_mask;
 	u32 device;
-	gvt_mmio_func read;
-	gvt_mmio_func write;
+	gvt_mmio_func पढ़ो;
+	gvt_mmio_func ग_लिखो;
 	u32 addr_range;
-	struct hlist_node node;
-};
+	काष्ठा hlist_node node;
+पूर्ण;
 
-const struct intel_engine_cs *
-intel_gvt_render_mmio_to_engine(struct intel_gvt *gvt, unsigned int reg);
-unsigned long intel_gvt_get_device_type(struct intel_gvt *gvt);
-bool intel_gvt_match_device(struct intel_gvt *gvt, unsigned long device);
+स्थिर काष्ठा पूर्णांकel_engine_cs *
+पूर्णांकel_gvt_render_mmio_to_engine(काष्ठा पूर्णांकel_gvt *gvt, अचिन्हित पूर्णांक reg);
+अचिन्हित दीर्घ पूर्णांकel_gvt_get_device_type(काष्ठा पूर्णांकel_gvt *gvt);
+bool पूर्णांकel_gvt_match_device(काष्ठा पूर्णांकel_gvt *gvt, अचिन्हित दीर्घ device);
 
-int intel_gvt_setup_mmio_info(struct intel_gvt *gvt);
-void intel_gvt_clean_mmio_info(struct intel_gvt *gvt);
-int intel_gvt_for_each_tracked_mmio(struct intel_gvt *gvt,
-	int (*handler)(struct intel_gvt *gvt, u32 offset, void *data),
-	void *data);
+पूर्णांक पूर्णांकel_gvt_setup_mmio_info(काष्ठा पूर्णांकel_gvt *gvt);
+व्योम पूर्णांकel_gvt_clean_mmio_info(काष्ठा पूर्णांकel_gvt *gvt);
+पूर्णांक पूर्णांकel_gvt_क्रम_each_tracked_mmio(काष्ठा पूर्णांकel_gvt *gvt,
+	पूर्णांक (*handler)(काष्ठा पूर्णांकel_gvt *gvt, u32 offset, व्योम *data),
+	व्योम *data);
 
-struct intel_gvt_mmio_info *intel_gvt_find_mmio_info(struct intel_gvt *gvt,
-						  unsigned int offset);
+काष्ठा पूर्णांकel_gvt_mmio_info *पूर्णांकel_gvt_find_mmio_info(काष्ठा पूर्णांकel_gvt *gvt,
+						  अचिन्हित पूर्णांक offset);
 
-int intel_vgpu_init_mmio(struct intel_vgpu *vgpu);
-void intel_vgpu_reset_mmio(struct intel_vgpu *vgpu, bool dmlr);
-void intel_vgpu_clean_mmio(struct intel_vgpu *vgpu);
+पूर्णांक पूर्णांकel_vgpu_init_mmio(काष्ठा पूर्णांकel_vgpu *vgpu);
+व्योम पूर्णांकel_vgpu_reset_mmio(काष्ठा पूर्णांकel_vgpu *vgpu, bool dmlr);
+व्योम पूर्णांकel_vgpu_clean_mmio(काष्ठा पूर्णांकel_vgpu *vgpu);
 
-int intel_vgpu_gpa_to_mmio_offset(struct intel_vgpu *vgpu, u64 gpa);
+पूर्णांक पूर्णांकel_vgpu_gpa_to_mmio_offset(काष्ठा पूर्णांकel_vgpu *vgpu, u64 gpa);
 
-int intel_vgpu_emulate_mmio_read(struct intel_vgpu *vgpu, u64 pa,
-				void *p_data, unsigned int bytes);
-int intel_vgpu_emulate_mmio_write(struct intel_vgpu *vgpu, u64 pa,
-				void *p_data, unsigned int bytes);
+पूर्णांक पूर्णांकel_vgpu_emulate_mmio_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu, u64 pa,
+				व्योम *p_data, अचिन्हित पूर्णांक bytes);
+पूर्णांक पूर्णांकel_vgpu_emulate_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, u64 pa,
+				व्योम *p_data, अचिन्हित पूर्णांक bytes);
 
-int intel_vgpu_default_mmio_read(struct intel_vgpu *vgpu, unsigned int offset,
-				 void *p_data, unsigned int bytes);
-int intel_vgpu_default_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
-				  void *p_data, unsigned int bytes);
+पूर्णांक पूर्णांकel_vgpu_शेष_mmio_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
+				 व्योम *p_data, अचिन्हित पूर्णांक bytes);
+पूर्णांक पूर्णांकel_vgpu_शेष_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
+				  व्योम *p_data, अचिन्हित पूर्णांक bytes);
 
-bool intel_gvt_in_force_nonpriv_whitelist(struct intel_gvt *gvt,
-					  unsigned int offset);
+bool पूर्णांकel_gvt_in_क्रमce_nonpriv_whitelist(काष्ठा पूर्णांकel_gvt *gvt,
+					  अचिन्हित पूर्णांक offset);
 
-int intel_vgpu_mmio_reg_rw(struct intel_vgpu *vgpu, unsigned int offset,
-			   void *pdata, unsigned int bytes, bool is_read);
+पूर्णांक पूर्णांकel_vgpu_mmio_reg_rw(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
+			   व्योम *pdata, अचिन्हित पूर्णांक bytes, bool is_पढ़ो);
 
-int intel_vgpu_mask_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
-				  void *p_data, unsigned int bytes);
+पूर्णांक पूर्णांकel_vgpu_mask_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
+				  व्योम *p_data, अचिन्हित पूर्णांक bytes);
 
-void intel_gvt_restore_fence(struct intel_gvt *gvt);
-void intel_gvt_restore_mmio(struct intel_gvt *gvt);
+व्योम पूर्णांकel_gvt_restore_fence(काष्ठा पूर्णांकel_gvt *gvt);
+व्योम पूर्णांकel_gvt_restore_mmio(काष्ठा पूर्णांकel_gvt *gvt);
 
-#endif
+#पूर्ण_अगर

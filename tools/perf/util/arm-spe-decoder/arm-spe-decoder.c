@@ -1,236 +1,237 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arm_spe_decoder.c: ARM SPE support
  */
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#include <errno.h>
-#include <inttypes.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <linux/bitops.h>
-#include <linux/compiler.h>
-#include <linux/zalloc.h>
+#अगर_अघोषित _GNU_SOURCE
+#घोषणा _GNU_SOURCE
+#पूर्ण_अगर
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <stdbool.h>
+#समावेश <माला.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानककोष.स>
+#समावेश <linux/bitops.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/zभाग.स>
 
-#include "../auxtrace.h"
-#include "../debug.h"
-#include "../util.h"
+#समावेश "../auxtrace.h"
+#समावेश "../debug.h"
+#समावेश "../util.h"
 
-#include "arm-spe-decoder.h"
+#समावेश "arm-spe-decoder.h"
 
-static u64 arm_spe_calc_ip(int index, u64 payload)
-{
+अटल u64 arm_spe_calc_ip(पूर्णांक index, u64 payload)
+अणु
 	u64 ns, el, val;
 
-	/* Instruction virtual address or Branch target address */
-	if (index == SPE_ADDR_PKT_HDR_INDEX_INS ||
-	    index == SPE_ADDR_PKT_HDR_INDEX_BRANCH) {
+	/* Inकाष्ठाion भव address or Branch target address */
+	अगर (index == SPE_ADDR_PKT_HDR_INDEX_INS ||
+	    index == SPE_ADDR_PKT_HDR_INDEX_BRANCH) अणु
 		ns = SPE_ADDR_PKT_GET_NS(payload);
 		el = SPE_ADDR_PKT_GET_EL(payload);
 
 		/* Clean highest byte */
 		payload = SPE_ADDR_PKT_ADDR_GET_BYTES_0_6(payload);
 
-		/* Fill highest byte for EL1 or EL2 (VHE) mode */
-		if (ns && (el == SPE_ADDR_PKT_EL1 || el == SPE_ADDR_PKT_EL2))
+		/* Fill highest byte क्रम EL1 or EL2 (VHE) mode */
+		अगर (ns && (el == SPE_ADDR_PKT_EL1 || el == SPE_ADDR_PKT_EL2))
 			payload |= 0xffULL << SPE_ADDR_PKT_ADDR_BYTE7_SHIFT;
 
-	/* Data access virtual address */
-	} else if (index == SPE_ADDR_PKT_HDR_INDEX_DATA_VIRT) {
+	/* Data access भव address */
+	पूर्ण अन्यथा अगर (index == SPE_ADDR_PKT_HDR_INDEX_DATA_VIRT) अणु
 
 		/* Clean tags */
 		payload = SPE_ADDR_PKT_ADDR_GET_BYTES_0_6(payload);
 
 		/*
 		 * Armv8 ARM (ARM DDI 0487F.c), chapter "D10.2.1 Address packet"
-		 * defines the data virtual address payload format, the top byte
-		 * (bits [63:56]) is assigned as top-byte tag; so we only can
+		 * defines the data भव address payload क्रमmat, the top byte
+		 * (bits [63:56]) is asचिन्हित as top-byte tag; so we only can
 		 * retrieve address value from bits [55:0].
 		 *
-		 * According to Documentation/arm64/memory.rst, if detects the
-		 * specific pattern in bits [55:52] of payload which falls in
+		 * According to Documentation/arm64/memory.rst, अगर detects the
+		 * specअगरic pattern in bits [55:52] of payload which falls in
 		 * the kernel space, should fixup the top byte and this allows
-		 * perf tool to parse DSO symbol for data address correctly.
+		 * perf tool to parse DSO symbol क्रम data address correctly.
 		 *
-		 * For this reason, if detects the bits [55:52] is 0xf, will
-		 * fill 0xff into the top byte.
+		 * For this reason, अगर detects the bits [55:52] is 0xf, will
+		 * fill 0xff पूर्णांकo the top byte.
 		 */
 		val = SPE_ADDR_PKT_ADDR_GET_BYTE_6(payload);
-		if ((val & 0xf0ULL) == 0xf0ULL)
+		अगर ((val & 0xf0ULL) == 0xf0ULL)
 			payload |= 0xffULL << SPE_ADDR_PKT_ADDR_BYTE7_SHIFT;
 
 	/* Data access physical address */
-	} else if (index == SPE_ADDR_PKT_HDR_INDEX_DATA_PHYS) {
+	पूर्ण अन्यथा अगर (index == SPE_ADDR_PKT_HDR_INDEX_DATA_PHYS) अणु
 		/* Clean highest byte */
 		payload = SPE_ADDR_PKT_ADDR_GET_BYTES_0_6(payload);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("unsupported address packet index: 0x%x\n", index);
-	}
+	पूर्ण
 
-	return payload;
-}
+	वापस payload;
+पूर्ण
 
-struct arm_spe_decoder *arm_spe_decoder_new(struct arm_spe_params *params)
-{
-	struct arm_spe_decoder *decoder;
+काष्ठा arm_spe_decoder *arm_spe_decoder_new(काष्ठा arm_spe_params *params)
+अणु
+	काष्ठा arm_spe_decoder *decoder;
 
-	if (!params->get_trace)
-		return NULL;
+	अगर (!params->get_trace)
+		वापस शून्य;
 
-	decoder = zalloc(sizeof(struct arm_spe_decoder));
-	if (!decoder)
-		return NULL;
+	decoder = zalloc(माप(काष्ठा arm_spe_decoder));
+	अगर (!decoder)
+		वापस शून्य;
 
 	decoder->get_trace = params->get_trace;
 	decoder->data = params->data;
 
-	return decoder;
-}
+	वापस decoder;
+पूर्ण
 
-void arm_spe_decoder_free(struct arm_spe_decoder *decoder)
-{
-	free(decoder);
-}
+व्योम arm_spe_decoder_मुक्त(काष्ठा arm_spe_decoder *decoder)
+अणु
+	मुक्त(decoder);
+पूर्ण
 
-static int arm_spe_get_data(struct arm_spe_decoder *decoder)
-{
-	struct arm_spe_buffer buffer = { .buf = 0, };
-	int ret;
+अटल पूर्णांक arm_spe_get_data(काष्ठा arm_spe_decoder *decoder)
+अणु
+	काष्ठा arm_spe_buffer buffer = अणु .buf = 0, पूर्ण;
+	पूर्णांक ret;
 
 	pr_debug("Getting more data\n");
 	ret = decoder->get_trace(&buffer, decoder->data);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	decoder->buf = buffer.buf;
 	decoder->len = buffer.len;
 
-	if (!decoder->len)
+	अगर (!decoder->len)
 		pr_debug("No more data\n");
 
-	return decoder->len;
-}
+	वापस decoder->len;
+पूर्ण
 
-static int arm_spe_get_next_packet(struct arm_spe_decoder *decoder)
-{
-	int ret;
+अटल पूर्णांक arm_spe_get_next_packet(काष्ठा arm_spe_decoder *decoder)
+अणु
+	पूर्णांक ret;
 
-	do {
-		if (!decoder->len) {
+	करो अणु
+		अगर (!decoder->len) अणु
 			ret = arm_spe_get_data(decoder);
 
-			/* Failed to read out trace data */
-			if (ret <= 0)
-				return ret;
-		}
+			/* Failed to पढ़ो out trace data */
+			अगर (ret <= 0)
+				वापस ret;
+		पूर्ण
 
 		ret = arm_spe_get_packet(decoder->buf, decoder->len,
 					 &decoder->packet);
-		if (ret <= 0) {
-			/* Move forward for 1 byte */
+		अगर (ret <= 0) अणु
+			/* Move क्रमward क्रम 1 byte */
 			decoder->buf += 1;
 			decoder->len -= 1;
-			return -EBADMSG;
-		}
+			वापस -EBADMSG;
+		पूर्ण
 
 		decoder->buf += ret;
 		decoder->len -= ret;
-	} while (decoder->packet.type == ARM_SPE_PAD);
+	पूर्ण जबतक (decoder->packet.type == ARM_SPE_PAD);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int arm_spe_read_record(struct arm_spe_decoder *decoder)
-{
-	int err;
-	int idx;
+अटल पूर्णांक arm_spe_पढ़ो_record(काष्ठा arm_spe_decoder *decoder)
+अणु
+	पूर्णांक err;
+	पूर्णांक idx;
 	u64 payload, ip;
 
-	memset(&decoder->record, 0x0, sizeof(decoder->record));
+	स_रखो(&decoder->record, 0x0, माप(decoder->record));
 
-	while (1) {
+	जबतक (1) अणु
 		err = arm_spe_get_next_packet(decoder);
-		if (err <= 0)
-			return err;
+		अगर (err <= 0)
+			वापस err;
 
 		idx = decoder->packet.index;
 		payload = decoder->packet.payload;
 
-		switch (decoder->packet.type) {
-		case ARM_SPE_TIMESTAMP:
-			decoder->record.timestamp = payload;
-			return 1;
-		case ARM_SPE_END:
-			return 1;
-		case ARM_SPE_ADDRESS:
+		चयन (decoder->packet.type) अणु
+		हाल ARM_SPE_TIMESTAMP:
+			decoder->record.बारtamp = payload;
+			वापस 1;
+		हाल ARM_SPE_END:
+			वापस 1;
+		हाल ARM_SPE_ADDRESS:
 			ip = arm_spe_calc_ip(idx, payload);
-			if (idx == SPE_ADDR_PKT_HDR_INDEX_INS)
+			अगर (idx == SPE_ADDR_PKT_HDR_INDEX_INS)
 				decoder->record.from_ip = ip;
-			else if (idx == SPE_ADDR_PKT_HDR_INDEX_BRANCH)
+			अन्यथा अगर (idx == SPE_ADDR_PKT_HDR_INDEX_BRANCH)
 				decoder->record.to_ip = ip;
-			else if (idx == SPE_ADDR_PKT_HDR_INDEX_DATA_VIRT)
+			अन्यथा अगर (idx == SPE_ADDR_PKT_HDR_INDEX_DATA_VIRT)
 				decoder->record.virt_addr = ip;
-			else if (idx == SPE_ADDR_PKT_HDR_INDEX_DATA_PHYS)
+			अन्यथा अगर (idx == SPE_ADDR_PKT_HDR_INDEX_DATA_PHYS)
 				decoder->record.phys_addr = ip;
-			break;
-		case ARM_SPE_COUNTER:
-			break;
-		case ARM_SPE_CONTEXT:
-			break;
-		case ARM_SPE_OP_TYPE:
-			if (idx == SPE_OP_PKT_HDR_CLASS_LD_ST_ATOMIC) {
-				if (payload & 0x1)
+			अवरोध;
+		हाल ARM_SPE_COUNTER:
+			अवरोध;
+		हाल ARM_SPE_CONTEXT:
+			अवरोध;
+		हाल ARM_SPE_OP_TYPE:
+			अगर (idx == SPE_OP_PKT_HDR_CLASS_LD_ST_ATOMIC) अणु
+				अगर (payload & 0x1)
 					decoder->record.op = ARM_SPE_ST;
-				else
+				अन्यथा
 					decoder->record.op = ARM_SPE_LD;
-			}
-			break;
-		case ARM_SPE_EVENTS:
-			if (payload & BIT(EV_L1D_REFILL))
+			पूर्ण
+			अवरोध;
+		हाल ARM_SPE_EVENTS:
+			अगर (payload & BIT(EV_L1D_REFILL))
 				decoder->record.type |= ARM_SPE_L1D_MISS;
 
-			if (payload & BIT(EV_L1D_ACCESS))
+			अगर (payload & BIT(EV_L1D_ACCESS))
 				decoder->record.type |= ARM_SPE_L1D_ACCESS;
 
-			if (payload & BIT(EV_TLB_WALK))
+			अगर (payload & BIT(EV_TLB_WALK))
 				decoder->record.type |= ARM_SPE_TLB_MISS;
 
-			if (payload & BIT(EV_TLB_ACCESS))
+			अगर (payload & BIT(EV_TLB_ACCESS))
 				decoder->record.type |= ARM_SPE_TLB_ACCESS;
 
-			if (payload & BIT(EV_LLC_MISS))
+			अगर (payload & BIT(EV_LLC_MISS))
 				decoder->record.type |= ARM_SPE_LLC_MISS;
 
-			if (payload & BIT(EV_LLC_ACCESS))
+			अगर (payload & BIT(EV_LLC_ACCESS))
 				decoder->record.type |= ARM_SPE_LLC_ACCESS;
 
-			if (payload & BIT(EV_REMOTE_ACCESS))
+			अगर (payload & BIT(EV_REMOTE_ACCESS))
 				decoder->record.type |= ARM_SPE_REMOTE_ACCESS;
 
-			if (payload & BIT(EV_MISPRED))
+			अगर (payload & BIT(EV_MISPRED))
 				decoder->record.type |= ARM_SPE_BRANCH_MISS;
 
-			break;
-		case ARM_SPE_DATA_SOURCE:
-			break;
-		case ARM_SPE_BAD:
-			break;
-		case ARM_SPE_PAD:
-			break;
-		default:
+			अवरोध;
+		हाल ARM_SPE_DATA_SOURCE:
+			अवरोध;
+		हाल ARM_SPE_BAD:
+			अवरोध;
+		हाल ARM_SPE_PAD:
+			अवरोध;
+		शेष:
 			pr_err("Get packet error!\n");
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int arm_spe_decode(struct arm_spe_decoder *decoder)
-{
-	return arm_spe_read_record(decoder);
-}
+पूर्णांक arm_spe_decode(काष्ठा arm_spe_decoder *decoder)
+अणु
+	वापस arm_spe_पढ़ो_record(decoder);
+पूर्ण

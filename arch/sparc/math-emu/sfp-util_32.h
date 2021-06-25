@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <asm/byteorder.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/byteorder.h>
 
-#define add_ssaaaa(sh, sl, ah, al, bh, bl) 				\
-  __asm__ ("addcc %r4,%5,%1\n\t"					\
+#घोषणा add_ssaaaa(sh, sl, ah, al, bh, bl) 				\
+  __यंत्र__ ("addcc %r4,%5,%1\n\t"					\
 	   "addx %r2,%3,%0\n"						\
 	   : "=r" (sh),							\
 	     "=&r" (sl)							\
@@ -14,8 +15,8 @@
 	     "%rJ" ((USItype)(al)),					\
 	     "rI" ((USItype)(bl))					\
 	   : "cc")
-#define sub_ddmmss(sh, sl, ah, al, bh, bl) 				\
-  __asm__ ("subcc %r4,%5,%1\n\t"					\
+#घोषणा sub_ddmmss(sh, sl, ah, al, bh, bl) 				\
+  __यंत्र__ ("subcc %r4,%5,%1\n\t"					\
 	   "subx %r2,%3,%0\n"						\
 	   : "=r" (sh),							\
 	     "=&r" (sl)							\
@@ -25,8 +26,8 @@
 	     "rI" ((USItype)(bl))					\
 	   : "cc")
 
-#define umul_ppmm(w1, w0, u, v) \
-  __asm__ ("! Inlined umul_ppmm\n\t"					\
+#घोषणा umul_ppmm(w1, w0, u, v) \
+  __यंत्र__ ("! Inlined umul_ppmm\n\t"					\
 	"wr	%%g0,%2,%%y	! SPARC has 0-3 delay insn after a wr\n\t" \
 	"sra	%3,31,%%g2	! Don't move this insn\n\t"		\
 	"and	%2,%%g2,%%g2	! Don't move this insn\n\t"		\
@@ -72,10 +73,10 @@
 	     "r" ((USItype)(v))						\
 	   : "%g1", "%g2", "cc")
 
-/* It's quite necessary to add this much assembler for the sparc.
-   The default udiv_qrnnd (in C) is more than 10 times slower!  */
-#define udiv_qrnnd(q, r, n1, n0, d) \
-  __asm__ ("! Inlined udiv_qrnnd\n\t"					\
+/* It's quite necessary to add this much assembler क्रम the sparc.
+   The शेष uभाग_qrnnd (in C) is more than 10 बार slower!  */
+#घोषणा uभाग_qrnnd(q, r, n1, n0, d) \
+  __यंत्र__ ("! Inlined udiv_qrnnd\n\t"					\
 	   "mov	32,%%g1\n\t"						\
 	   "subcc	%1,%2,%%g0\n\t"					\
 	   "1:	bcs	5f\n\t"						\
@@ -104,13 +105,13 @@
 	   : "r" ((USItype)(d)),					\
 	     "1" ((USItype)(n1)),					\
 	     "0" ((USItype)(n0)) : "%g1", "cc")
-#define UDIV_NEEDS_NORMALIZATION 0
+#घोषणा UDIV_NEEDS_NORMALIZATION 0
 
-#define abort()								\
-	return 0
+#घोषणा पात()								\
+	वापस 0
 
-#ifdef __BIG_ENDIAN
-#define __BYTE_ORDER __BIG_ENDIAN
-#else
-#define __BYTE_ORDER __LITTLE_ENDIAN
-#endif
+#अगर_घोषित __BIG_ENDIAN
+#घोषणा __BYTE_ORDER __BIG_ENDIAN
+#अन्यथा
+#घोषणा __BYTE_ORDER __LITTLE_ENDIAN
+#पूर्ण_अगर

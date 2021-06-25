@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Driver for the Conexant CX25821 PCIe bridge
+ *  Driver क्रम the Conexant CX25821 PCIe bridge
  *
  *  Copyright (C) 2009 Conexant Systems Inc.
  *  Authors  <shu.lin@conexant.com>, <hiep.huynh@conexant.com>
  *	Based on Steven Toth <stoth@linuxtv.org> cx23885 driver
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
 
-#include "cx25821.h"
+#समावेश "cx25821.h"
 
 /* board config info */
 
-struct cx25821_board cx25821_boards[] = {
-	[UNKNOWN_BOARD] = {
+काष्ठा cx25821_board cx25821_boards[] = अणु
+	[UNKNOWN_BOARD] = अणु
 		.name = "UNKNOWN/GENERIC",
-		/* Ensure safe default for unknown boards */
+		/* Ensure safe शेष क्रम unknown boards */
 		.clk_freq = 0,
-	},
+	पूर्ण,
 
-	[CX25821_BOARD] = {
+	[CX25821_BOARD] = अणु
 		.name = "CX25821",
 		.portb = CX25821_RAW,
 		.portc = CX25821_264,
-	},
+	पूर्ण,
 
-};
+पूर्ण;

@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * CPM serial console support.
  *
  * Copyright 2007 Freescale Semiconductor, Inc.
- * Author: Scott Wood <scottwood@freescale.com>
+ * Author: Scott Wood <scottwood@मुक्तscale.com>
  *
- * It is assumed that the firmware (or the platform file) has already set
+ * It is assumed that the firmware (or the platक्रमm file) has alपढ़ोy set
  * up the port.
  */
 
-#include "types.h"
-#include "io.h"
-#include "ops.h"
-#include "page.h"
+#समावेश "types.h"
+#समावेश "io.h"
+#समावेश "ops.h"
+#समावेश "page.h"
 
-struct cpm_scc {
+काष्ठा cpm_scc अणु
 	u32 gsmrl;
 	u32 gsmrh;
 	u16 psmr;
@@ -27,9 +28,9 @@ struct cpm_scc {
 	u8 res3;
 	u8 sccs;
 	u8 res4[8];
-};
+पूर्ण;
 
-struct cpm_smc {
+काष्ठा cpm_smc अणु
 	u8 res1[2];
 	u16 smcmr;
 	u8 res2[2];
@@ -37,9 +38,9 @@ struct cpm_smc {
 	u8 res3[3];
 	u8 smcm;
 	u8 res4[5];
-};
+पूर्ण;
 
-struct cpm_param {
+काष्ठा cpm_param अणु
 	u16 rbase;
 	u16 tbase;
 	u8 rfcr;
@@ -60,79 +61,79 @@ struct cpm_param {
 	u16 brkcr;
 	u16 rmask;
 	u8 res5[4];
-};
+पूर्ण;
 
-struct cpm_bd {
+काष्ठा cpm_bd अणु
 	u16 sc;   /* Status and Control */
 	u16 len;  /* Data length in buffer */
 	u8 *addr; /* Buffer address in host memory */
-};
+पूर्ण;
 
-static void *cpcr;
-static struct cpm_param *param;
-static struct cpm_smc *smc;
-static struct cpm_scc *scc;
-static struct cpm_bd *tbdf, *rbdf;
-static u32 cpm_cmd;
-static void *cbd_addr;
-static u32 cbd_offset;
+अटल व्योम *cpcr;
+अटल काष्ठा cpm_param *param;
+अटल काष्ठा cpm_smc *smc;
+अटल काष्ठा cpm_scc *scc;
+अटल काष्ठा cpm_bd *tbdf, *rbdf;
+अटल u32 cpm_cmd;
+अटल व्योम *cbd_addr;
+अटल u32 cbd_offset;
 
-static void (*do_cmd)(int op);
-static void (*enable_port)(void);
-static void (*disable_port)(void);
+अटल व्योम (*करो_cmd)(पूर्णांक op);
+अटल व्योम (*enable_port)(व्योम);
+अटल व्योम (*disable_port)(व्योम);
 
-#define CPM_CMD_STOP_TX     4
-#define CPM_CMD_RESTART_TX  6
-#define CPM_CMD_INIT_RX_TX  0
+#घोषणा CPM_CMD_STOP_TX     4
+#घोषणा CPM_CMD_RESTART_TX  6
+#घोषणा CPM_CMD_INIT_RX_TX  0
 
-static void cpm1_cmd(int op)
-{
-	while (in_be16(cpcr) & 1)
+अटल व्योम cpm1_cmd(पूर्णांक op)
+अणु
+	जबतक (in_be16(cpcr) & 1)
 		;
 
 	out_be16(cpcr, (op << 8) | cpm_cmd | 1);
 
-	while (in_be16(cpcr) & 1)
+	जबतक (in_be16(cpcr) & 1)
 		;
-}
+पूर्ण
 
-static void cpm2_cmd(int op)
-{
-	while (in_be32(cpcr) & 0x10000)
+अटल व्योम cpm2_cmd(पूर्णांक op)
+अणु
+	जबतक (in_be32(cpcr) & 0x10000)
 		;
 
 	out_be32(cpcr, op | cpm_cmd | 0x10000);
 
-	while (in_be32(cpcr) & 0x10000)
+	जबतक (in_be32(cpcr) & 0x10000)
 		;
-}
+पूर्ण
 
-static void smc_disable_port(void)
-{
-	do_cmd(CPM_CMD_STOP_TX);
+अटल व्योम smc_disable_port(व्योम)
+अणु
+	करो_cmd(CPM_CMD_STOP_TX);
 	out_be16(&smc->smcmr, in_be16(&smc->smcmr) & ~3);
-}
+पूर्ण
 
-static void scc_disable_port(void)
-{
-	do_cmd(CPM_CMD_STOP_TX);
+अटल व्योम scc_disable_port(व्योम)
+अणु
+	करो_cmd(CPM_CMD_STOP_TX);
 	out_be32(&scc->gsmrl, in_be32(&scc->gsmrl) & ~0x30);
-}
+पूर्ण
 
-static void smc_enable_port(void)
-{
+अटल व्योम smc_enable_port(व्योम)
+अणु
 	out_be16(&smc->smcmr, in_be16(&smc->smcmr) | 3);
-	do_cmd(CPM_CMD_RESTART_TX);
-}
+	करो_cmd(CPM_CMD_RESTART_TX);
+पूर्ण
 
-static void scc_enable_port(void)
-{
+अटल व्योम scc_enable_port(व्योम)
+अणु
 	out_be32(&scc->gsmrl, in_be32(&scc->gsmrl) | 0x30);
-	do_cmd(CPM_CMD_RESTART_TX);
-}
+	करो_cmd(CPM_CMD_RESTART_TX);
+पूर्ण
 
-static int cpm_serial_open(void)
-{
+अटल पूर्णांक cpm_serial_खोलो(व्योम)
+अणु
 	disable_port();
 
 	out_8(&param->rfcr, 0x10);
@@ -155,17 +156,17 @@ static int cpm_serial_open(void)
 
 	sync();
 	out_be16(&param->rbase, cbd_offset);
-	out_be16(&param->tbase, cbd_offset + sizeof(struct cpm_bd));
+	out_be16(&param->tbase, cbd_offset + माप(काष्ठा cpm_bd));
 
-	do_cmd(CPM_CMD_INIT_RX_TX);
+	करो_cmd(CPM_CMD_INIT_RX_TX);
 
 	enable_port();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cpm_serial_putc(unsigned char c)
-{
-	while (tbdf->sc & 0x8000)
+अटल व्योम cpm_serial_अ_दो(अचिन्हित अक्षर c)
+अणु
+	जबतक (tbdf->sc & 0x8000)
 		barrier();
 
 	sync();
@@ -173,19 +174,19 @@ static void cpm_serial_putc(unsigned char c)
 	tbdf->addr[0] = c;
 	eieio();
 	tbdf->sc |= 0x8000;
-}
+पूर्ण
 
-static unsigned char cpm_serial_tstc(void)
-{
+अटल अचिन्हित अक्षर cpm_serial_tstc(व्योम)
+अणु
 	barrier();
-	return !(rbdf->sc & 0x8000);
-}
+	वापस !(rbdf->sc & 0x8000);
+पूर्ण
 
-static unsigned char cpm_serial_getc(void)
-{
-	unsigned char c;
+अटल अचिन्हित अक्षर cpm_serial_अ_लो(व्योम)
+अणु
+	अचिन्हित अक्षर c;
 
-	while (!cpm_serial_tstc())
+	जबतक (!cpm_serial_tstc())
 		;
 
 	sync();
@@ -193,86 +194,86 @@ static unsigned char cpm_serial_getc(void)
 	eieio();
 	rbdf->sc |= 0x8000;
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-int cpm_console_init(void *devp, struct serial_console_data *scdp)
-{
-	void *vreg[2];
+पूर्णांक cpm_console_init(व्योम *devp, काष्ठा serial_console_data *scdp)
+अणु
+	व्योम *vreg[2];
 	u32 reg[2];
-	int is_smc = 0, is_cpm2 = 0;
-	void *parent, *muram;
-	void *muram_addr;
-	unsigned long muram_offset, muram_size;
+	पूर्णांक is_smc = 0, is_cpm2 = 0;
+	व्योम *parent, *muram;
+	व्योम *muram_addr;
+	अचिन्हित दीर्घ muram_offset, muram_size;
 
-	if (dt_is_compatible(devp, "fsl,cpm1-smc-uart")) {
+	अगर (dt_is_compatible(devp, "fsl,cpm1-smc-uart")) अणु
 		is_smc = 1;
-	} else if (dt_is_compatible(devp, "fsl,cpm2-scc-uart")) {
+	पूर्ण अन्यथा अगर (dt_is_compatible(devp, "fsl,cpm2-scc-uart")) अणु
 		is_cpm2 = 1;
-	} else if (dt_is_compatible(devp, "fsl,cpm2-smc-uart")) {
+	पूर्ण अन्यथा अगर (dt_is_compatible(devp, "fsl,cpm2-smc-uart")) अणु
 		is_cpm2 = 1;
 		is_smc = 1;
-	}
+	पूर्ण
 
-	if (is_smc) {
+	अगर (is_smc) अणु
 		enable_port = smc_enable_port;
 		disable_port = smc_disable_port;
-	} else {
+	पूर्ण अन्यथा अणु
 		enable_port = scc_enable_port;
 		disable_port = scc_disable_port;
-	}
+	पूर्ण
 
-	if (is_cpm2)
-		do_cmd = cpm2_cmd;
-	else
-		do_cmd = cpm1_cmd;
+	अगर (is_cpm2)
+		करो_cmd = cpm2_cmd;
+	अन्यथा
+		करो_cmd = cpm1_cmd;
 
-	if (getprop(devp, "fsl,cpm-command", &cpm_cmd, 4) < 4)
-		return -1;
+	अगर (getprop(devp, "fsl,cpm-command", &cpm_cmd, 4) < 4)
+		वापस -1;
 
-	if (dt_get_virtual_reg(devp, vreg, 2) < 2)
-		return -1;
+	अगर (dt_get_भव_reg(devp, vreg, 2) < 2)
+		वापस -1;
 
-	if (is_smc)
+	अगर (is_smc)
 		smc = vreg[0];
-	else
+	अन्यथा
 		scc = vreg[0];
 
 	param = vreg[1];
 
 	parent = get_parent(devp);
-	if (!parent)
-		return -1;
+	अगर (!parent)
+		वापस -1;
 
-	if (dt_get_virtual_reg(parent, &cpcr, 1) < 1)
-		return -1;
+	अगर (dt_get_भव_reg(parent, &cpcr, 1) < 1)
+		वापस -1;
 
 	muram = finddevice("/soc/cpm/muram/data");
-	if (!muram)
-		return -1;
+	अगर (!muram)
+		वापस -1;
 
 	/* For bootwrapper-compatible device trees, we assume that the first
 	 * entry has at least 128 bytes, and that #address-cells/#data-cells
-	 * is one for both parent and child.
+	 * is one क्रम both parent and child.
 	 */
 
-	if (dt_get_virtual_reg(muram, &muram_addr, 1) < 1)
-		return -1;
+	अगर (dt_get_भव_reg(muram, &muram_addr, 1) < 1)
+		वापस -1;
 
-	if (getprop(muram, "reg", reg, 8) < 8)
-		return -1;
+	अगर (getprop(muram, "reg", reg, 8) < 8)
+		वापस -1;
 
 	muram_offset = reg[0];
 	muram_size = reg[1];
 
 	/* Store the buffer descriptors at the end of the first muram chunk.
-	 * For SMC ports on CPM2-based platforms, relocate the parameter RAM
-	 * just before the buffer descriptors.
+	 * For SMC ports on CPM2-based platक्रमms, relocate the parameter RAM
+	 * just beक्रमe the buffer descriptors.
 	 */
 
-	cbd_offset = muram_offset + muram_size - 2 * sizeof(struct cpm_bd);
+	cbd_offset = muram_offset + muram_size - 2 * माप(काष्ठा cpm_bd);
 
-	if (is_cpm2 && is_smc) {
+	अगर (is_cpm2 && is_smc) अणु
 		u16 *smc_base = (u16 *)param;
 		u16 pram_offset;
 
@@ -282,14 +283,14 @@ int cpm_console_init(void *devp, struct serial_console_data *scdp)
 		disable_port();
 		out_be16(smc_base, pram_offset);
 		param = muram_addr - muram_offset + pram_offset;
-	}
+	पूर्ण
 
 	cbd_addr = muram_addr - muram_offset + cbd_offset;
 
-	scdp->open = cpm_serial_open;
-	scdp->putc = cpm_serial_putc;
-	scdp->getc = cpm_serial_getc;
+	scdp->खोलो = cpm_serial_खोलो;
+	scdp->अ_दो = cpm_serial_अ_दो;
+	scdp->अ_लो = cpm_serial_अ_लो;
 	scdp->tstc = cpm_serial_tstc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

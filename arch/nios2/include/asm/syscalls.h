@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright Altera Corporation (C) 2013. All rights reserved
  */
-#ifndef __ASM_NIOS2_SYSCALLS_H
-#define __ASM_NIOS2_SYSCALLS_H
+#अगर_अघोषित __ASM_NIOS2_SYSCALLS_H
+#घोषणा __ASM_NIOS2_SYSCALLS_H
 
-int sys_cacheflush(unsigned long addr, unsigned long len,
-				unsigned int op);
+पूर्णांक sys_cacheflush(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+				अचिन्हित पूर्णांक op);
 
-#include <asm-generic/syscalls.h>
+#समावेश <यंत्र-generic/syscalls.h>
 
-#endif /* __ASM_NIOS2_SYSCALLS_H */
+#पूर्ण_अगर /* __ASM_NIOS2_SYSCALLS_H */

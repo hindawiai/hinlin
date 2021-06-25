@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * An integer based power function
+ * An पूर्णांकeger based घातer function
  *
  * Derived from drivers/video/backlight/pwm_bl.c
  */
 
-#include <linux/export.h>
-#include <linux/math.h>
-#include <linux/types.h>
+#समावेश <linux/export.h>
+#समावेश <linux/गणित.स>
+#समावेश <linux/types.h>
 
 /**
- * int_pow - computes the exponentiation of the given base and exponent
- * @base: base which will be raised to the given power
- * @exp: power to be raised to
+ * पूर्णांक_घात - computes the exponentiation of the given base and exponent
+ * @base: base which will be उठाओd to the given घातer
+ * @exp: घातer to be उठाओd to
  *
- * Computes: pow(base, exp), i.e. @base raised to the @exp power
+ * Computes: घात(base, exp), i.e. @base उठाओd to the @exp घातer
  */
-u64 int_pow(u64 base, unsigned int exp)
-{
+u64 पूर्णांक_घात(u64 base, अचिन्हित पूर्णांक exp)
+अणु
 	u64 result = 1;
 
-	while (exp) {
-		if (exp & 1)
+	जबतक (exp) अणु
+		अगर (exp & 1)
 			result *= base;
 		exp >>= 1;
 		base *= base;
-	}
+	पूर्ण
 
-	return result;
-}
-EXPORT_SYMBOL_GPL(int_pow);
+	वापस result;
+पूर्ण
+EXPORT_SYMBOL_GPL(पूर्णांक_घात);

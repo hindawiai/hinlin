@@ -1,772 +1,773 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *   Copyright (C) 2000 Tilmann Bitterberg
  *   (tilmann@bitterberg.de)
  *
- *   RTAS (Runtime Abstraction Services) stuff
- *   Intention is to provide a clean user interface
+ *   RTAS (Runसमय Abstraction Services) stuff
+ *   Intention is to provide a clean user पूर्णांकerface
  *   to use the RTAS.
  *
  *   TODO:
- *   Split off a header file and maybe move it to a different
+ *   Split off a header file and maybe move it to a dअगरferent
  *   location. Write Documentation on what the /proc/rtas/ entries
- *   actually do.
+ *   actually करो.
  */
 
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <linux/proc_fs.h>
-#include <linux/stat.h>
-#include <linux/ctype.h>
-#include <linux/time.h>
-#include <linux/string.h>
-#include <linux/init.h>
-#include <linux/seq_file.h>
-#include <linux/bitops.h>
-#include <linux/rtc.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/समय.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/init.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/rtc.h>
 
-#include <linux/uaccess.h>
-#include <asm/processor.h>
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/rtas.h>
-#include <asm/machdep.h> /* for ppc_md */
-#include <asm/time.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/rtas.h>
+#समावेश <यंत्र/machdep.h> /* क्रम ppc_md */
+#समावेश <यंत्र/समय.स>
 
-/* Token for Sensors */
-#define KEY_SWITCH		0x0001
-#define ENCLOSURE_SWITCH	0x0002
-#define THERMAL_SENSOR		0x0003
-#define LID_STATUS		0x0004
-#define POWER_SOURCE		0x0005
-#define BATTERY_VOLTAGE		0x0006
-#define BATTERY_REMAINING	0x0007
-#define BATTERY_PERCENTAGE	0x0008
-#define EPOW_SENSOR		0x0009
-#define BATTERY_CYCLESTATE	0x000a
-#define BATTERY_CHARGING	0x000b
+/* Token क्रम Sensors */
+#घोषणा KEY_SWITCH		0x0001
+#घोषणा ENCLOSURE_SWITCH	0x0002
+#घोषणा THERMAL_SENSOR		0x0003
+#घोषणा LID_STATUS		0x0004
+#घोषणा POWER_SOURCE		0x0005
+#घोषणा BATTERY_VOLTAGE		0x0006
+#घोषणा BATTERY_REMAINING	0x0007
+#घोषणा BATTERY_PERCENTAGE	0x0008
+#घोषणा EPOW_SENSOR		0x0009
+#घोषणा BATTERY_CYCLESTATE	0x000a
+#घोषणा BATTERY_CHARGING	0x000b
 
-/* IBM specific sensors */
-#define IBM_SURVEILLANCE	0x2328 /* 9000 */
-#define IBM_FANRPM		0x2329 /* 9001 */
-#define IBM_VOLTAGE		0x232a /* 9002 */
-#define IBM_DRCONNECTOR		0x232b /* 9003 */
-#define IBM_POWERSUPPLY		0x232c /* 9004 */
+/* IBM specअगरic sensors */
+#घोषणा IBM_SURVEILLANCE	0x2328 /* 9000 */
+#घोषणा IBM_FANRPM		0x2329 /* 9001 */
+#घोषणा IBM_VOLTAGE		0x232a /* 9002 */
+#घोषणा IBM_DRCONNECTOR		0x232b /* 9003 */
+#घोषणा IBM_POWERSUPPLY		0x232c /* 9004 */
 
-/* Status return values */
-#define SENSOR_CRITICAL_HIGH	13
-#define SENSOR_WARNING_HIGH	12
-#define SENSOR_NORMAL		11
-#define SENSOR_WARNING_LOW	10
-#define SENSOR_CRITICAL_LOW	 9
-#define SENSOR_SUCCESS		 0
-#define SENSOR_HW_ERROR		-1
-#define SENSOR_BUSY		-2
-#define SENSOR_NOT_EXIST	-3
-#define SENSOR_DR_ENTITY	-9000
+/* Status वापस values */
+#घोषणा SENSOR_CRITICAL_HIGH	13
+#घोषणा SENSOR_WARNING_HIGH	12
+#घोषणा SENSOR_NORMAL		11
+#घोषणा SENSOR_WARNING_LOW	10
+#घोषणा SENSOR_CRITICAL_LOW	 9
+#घोषणा SENSOR_SUCCESS		 0
+#घोषणा SENSOR_HW_ERROR		-1
+#घोषणा SENSOR_BUSY		-2
+#घोषणा SENSOR_NOT_EXIST	-3
+#घोषणा SENSOR_DR_ENTITY	-9000
 
 /* Location Codes */
-#define LOC_SCSI_DEV_ADDR	'A'
-#define LOC_SCSI_DEV_LOC	'B'
-#define LOC_CPU			'C'
-#define LOC_DISKETTE		'D'
-#define LOC_ETHERNET		'E'
-#define LOC_FAN			'F'
-#define LOC_GRAPHICS		'G'
+#घोषणा LOC_SCSI_DEV_ADDR	'A'
+#घोषणा LOC_SCSI_DEV_LOC	'B'
+#घोषणा LOC_CPU			'C'
+#घोषणा LOC_DISKETTE		'D'
+#घोषणा LOC_ETHERNET		'E'
+#घोषणा LOC_FAN			'F'
+#घोषणा LOC_GRAPHICS		'G'
 /* reserved / not used		'H' */
-#define LOC_IO_ADAPTER		'I'
+#घोषणा LOC_IO_ADAPTER		'I'
 /* reserved / not used		'J' */
-#define LOC_KEYBOARD		'K'
-#define LOC_LCD			'L'
-#define LOC_MEMORY		'M'
-#define LOC_NV_MEMORY		'N'
-#define LOC_MOUSE		'O'
-#define LOC_PLANAR		'P'
-#define LOC_OTHER_IO		'Q'
-#define LOC_PARALLEL		'R'
-#define LOC_SERIAL		'S'
-#define LOC_DEAD_RING		'T'
-#define LOC_RACKMOUNTED		'U' /* for _u_nit is rack mounted */
-#define LOC_VOLTAGE		'V'
-#define LOC_SWITCH_ADAPTER	'W'
-#define LOC_OTHER		'X'
-#define LOC_FIRMWARE		'Y'
-#define LOC_SCSI		'Z'
+#घोषणा LOC_KEYBOARD		'K'
+#घोषणा LOC_LCD			'L'
+#घोषणा LOC_MEMORY		'M'
+#घोषणा LOC_NV_MEMORY		'N'
+#घोषणा LOC_MOUSE		'O'
+#घोषणा LOC_PLANAR		'P'
+#घोषणा LOC_OTHER_IO		'Q'
+#घोषणा LOC_PARALLEL		'R'
+#घोषणा LOC_SERIAL		'S'
+#घोषणा LOC_DEAD_RING		'T'
+#घोषणा LOC_RACKMOUNTED		'U' /* क्रम _u_nit is rack mounted */
+#घोषणा LOC_VOLTAGE		'V'
+#घोषणा LOC_SWITCH_ADAPTER	'W'
+#घोषणा LOC_OTHER		'X'
+#घोषणा LOC_FIRMWARE		'Y'
+#घोषणा LOC_SCSI		'Z'
 
-/* Tokens for indicators */
-#define TONE_FREQUENCY		0x0001 /* 0 - 1000 (HZ)*/
-#define TONE_VOLUME		0x0002 /* 0 - 100 (%) */
-#define SYSTEM_POWER_STATE	0x0003 
-#define WARNING_LIGHT		0x0004
-#define DISK_ACTIVITY_LIGHT	0x0005
-#define HEX_DISPLAY_UNIT	0x0006
-#define BATTERY_WARNING_TIME	0x0007
-#define CONDITION_CYCLE_REQUEST	0x0008
-#define SURVEILLANCE_INDICATOR	0x2328 /* 9000 */
-#define DR_ACTION		0x2329 /* 9001 */
-#define DR_INDICATOR		0x232a /* 9002 */
-/* 9003 - 9004: Vendor specific */
-/* 9006 - 9999: Vendor specific */
+/* Tokens क्रम indicators */
+#घोषणा TONE_FREQUENCY		0x0001 /* 0 - 1000 (HZ)*/
+#घोषणा TONE_VOLUME		0x0002 /* 0 - 100 (%) */
+#घोषणा SYSTEM_POWER_STATE	0x0003 
+#घोषणा WARNING_LIGHT		0x0004
+#घोषणा DISK_ACTIVITY_LIGHT	0x0005
+#घोषणा HEX_DISPLAY_UNIT	0x0006
+#घोषणा BATTERY_WARNING_TIME	0x0007
+#घोषणा CONDITION_CYCLE_REQUEST	0x0008
+#घोषणा SURVEILLANCE_INDICATOR	0x2328 /* 9000 */
+#घोषणा DR_ACTION		0x2329 /* 9001 */
+#घोषणा DR_INDICATOR		0x232a /* 9002 */
+/* 9003 - 9004: Venकरोr specअगरic */
+/* 9006 - 9999: Venकरोr specअगरic */
 
 /* other */
-#define MAX_SENSORS		 17  /* I only know of 17 sensors */    
-#define MAX_LINELENGTH          256
-#define SENSOR_PREFIX		"ibm,sensor-"
-#define cel_to_fahr(x)		((x*9/5)+32)
+#घोषणा MAX_SENSORS		 17  /* I only know of 17 sensors */    
+#घोषणा MAX_LINELENGTH          256
+#घोषणा SENSOR_PREFIX		"ibm,sensor-"
+#घोषणा cel_to_fahr(x)		((x*9/5)+32)
 
-struct individual_sensor {
-	unsigned int token;
-	unsigned int quant;
-};
+काष्ठा inभागidual_sensor अणु
+	अचिन्हित पूर्णांक token;
+	अचिन्हित पूर्णांक quant;
+पूर्ण;
 
-struct rtas_sensors {
-        struct individual_sensor sensor[MAX_SENSORS];
-	unsigned int quant;
-};
+काष्ठा rtas_sensors अणु
+        काष्ठा inभागidual_sensor sensor[MAX_SENSORS];
+	अचिन्हित पूर्णांक quant;
+पूर्ण;
 
 /* Globals */
-static struct rtas_sensors sensors;
-static struct device_node *rtas_node = NULL;
-static unsigned long power_on_time = 0; /* Save the time the user set */
-static char progress_led[MAX_LINELENGTH];
+अटल काष्ठा rtas_sensors sensors;
+अटल काष्ठा device_node *rtas_node = शून्य;
+अटल अचिन्हित दीर्घ घातer_on_समय = 0; /* Save the समय the user set */
+अटल अक्षर progress_led[MAX_LINELENGTH];
 
-static unsigned long rtas_tone_frequency = 1000;
-static unsigned long rtas_tone_volume = 0;
+अटल अचिन्हित दीर्घ rtas_tone_frequency = 1000;
+अटल अचिन्हित दीर्घ rtas_tone_volume = 0;
 
 /* ****************************************************************** */
 /* Declarations */
-static int ppc_rtas_sensors_show(struct seq_file *m, void *v);
-static int ppc_rtas_clock_show(struct seq_file *m, void *v);
-static ssize_t ppc_rtas_clock_write(struct file *file,
-		const char __user *buf, size_t count, loff_t *ppos);
-static int ppc_rtas_progress_show(struct seq_file *m, void *v);
-static ssize_t ppc_rtas_progress_write(struct file *file,
-		const char __user *buf, size_t count, loff_t *ppos);
-static int ppc_rtas_poweron_show(struct seq_file *m, void *v);
-static ssize_t ppc_rtas_poweron_write(struct file *file,
-		const char __user *buf, size_t count, loff_t *ppos);
+अटल पूर्णांक ppc_rtas_sensors_show(काष्ठा seq_file *m, व्योम *v);
+अटल पूर्णांक ppc_rtas_घड़ी_show(काष्ठा seq_file *m, व्योम *v);
+अटल sमाप_प्रकार ppc_rtas_घड़ी_ग_लिखो(काष्ठा file *file,
+		स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos);
+अटल पूर्णांक ppc_rtas_progress_show(काष्ठा seq_file *m, व्योम *v);
+अटल sमाप_प्रकार ppc_rtas_progress_ग_लिखो(काष्ठा file *file,
+		स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos);
+अटल पूर्णांक ppc_rtas_घातeron_show(काष्ठा seq_file *m, व्योम *v);
+अटल sमाप_प्रकार ppc_rtas_घातeron_ग_लिखो(काष्ठा file *file,
+		स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos);
 
-static ssize_t ppc_rtas_tone_freq_write(struct file *file,
-		const char __user *buf, size_t count, loff_t *ppos);
-static int ppc_rtas_tone_freq_show(struct seq_file *m, void *v);
-static ssize_t ppc_rtas_tone_volume_write(struct file *file,
-		const char __user *buf, size_t count, loff_t *ppos);
-static int ppc_rtas_tone_volume_show(struct seq_file *m, void *v);
-static int ppc_rtas_rmo_buf_show(struct seq_file *m, void *v);
+अटल sमाप_प्रकार ppc_rtas_tone_freq_ग_लिखो(काष्ठा file *file,
+		स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos);
+अटल पूर्णांक ppc_rtas_tone_freq_show(काष्ठा seq_file *m, व्योम *v);
+अटल sमाप_प्रकार ppc_rtas_tone_volume_ग_लिखो(काष्ठा file *file,
+		स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos);
+अटल पूर्णांक ppc_rtas_tone_volume_show(काष्ठा seq_file *m, व्योम *v);
+अटल पूर्णांक ppc_rtas_rmo_buf_show(काष्ठा seq_file *m, व्योम *v);
 
-static int poweron_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, ppc_rtas_poweron_show, NULL);
-}
+अटल पूर्णांक घातeron_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, ppc_rtas_घातeron_show, शून्य);
+पूर्ण
 
-static const struct proc_ops ppc_rtas_poweron_proc_ops = {
-	.proc_open	= poweron_open,
-	.proc_read	= seq_read,
+अटल स्थिर काष्ठा proc_ops ppc_rtas_घातeron_proc_ops = अणु
+	.proc_खोलो	= घातeron_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
-	.proc_write	= ppc_rtas_poweron_write,
+	.proc_ग_लिखो	= ppc_rtas_घातeron_ग_लिखो,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-static int progress_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, ppc_rtas_progress_show, NULL);
-}
+अटल पूर्णांक progress_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, ppc_rtas_progress_show, शून्य);
+पूर्ण
 
-static const struct proc_ops ppc_rtas_progress_proc_ops = {
-	.proc_open	= progress_open,
-	.proc_read	= seq_read,
+अटल स्थिर काष्ठा proc_ops ppc_rtas_progress_proc_ops = अणु
+	.proc_खोलो	= progress_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
-	.proc_write	= ppc_rtas_progress_write,
+	.proc_ग_लिखो	= ppc_rtas_progress_ग_लिखो,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-static int clock_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, ppc_rtas_clock_show, NULL);
-}
+अटल पूर्णांक घड़ी_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, ppc_rtas_घड़ी_show, शून्य);
+पूर्ण
 
-static const struct proc_ops ppc_rtas_clock_proc_ops = {
-	.proc_open	= clock_open,
-	.proc_read	= seq_read,
+अटल स्थिर काष्ठा proc_ops ppc_rtas_घड़ी_proc_ops = अणु
+	.proc_खोलो	= घड़ी_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
-	.proc_write	= ppc_rtas_clock_write,
+	.proc_ग_लिखो	= ppc_rtas_घड़ी_ग_लिखो,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-static int tone_freq_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, ppc_rtas_tone_freq_show, NULL);
-}
+अटल पूर्णांक tone_freq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, ppc_rtas_tone_freq_show, शून्य);
+पूर्ण
 
-static const struct proc_ops ppc_rtas_tone_freq_proc_ops = {
-	.proc_open	= tone_freq_open,
-	.proc_read	= seq_read,
+अटल स्थिर काष्ठा proc_ops ppc_rtas_tone_freq_proc_ops = अणु
+	.proc_खोलो	= tone_freq_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
-	.proc_write	= ppc_rtas_tone_freq_write,
+	.proc_ग_लिखो	= ppc_rtas_tone_freq_ग_लिखो,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-static int tone_volume_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, ppc_rtas_tone_volume_show, NULL);
-}
+अटल पूर्णांक tone_volume_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, ppc_rtas_tone_volume_show, शून्य);
+पूर्ण
 
-static const struct proc_ops ppc_rtas_tone_volume_proc_ops = {
-	.proc_open	= tone_volume_open,
-	.proc_read	= seq_read,
+अटल स्थिर काष्ठा proc_ops ppc_rtas_tone_volume_proc_ops = अणु
+	.proc_खोलो	= tone_volume_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
-	.proc_write	= ppc_rtas_tone_volume_write,
+	.proc_ग_लिखो	= ppc_rtas_tone_volume_ग_लिखो,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-static int ppc_rtas_find_all_sensors(void);
-static void ppc_rtas_process_sensor(struct seq_file *m,
-	struct individual_sensor *s, int state, int error, const char *loc);
-static char *ppc_rtas_process_error(int error);
-static void get_location_code(struct seq_file *m,
-	struct individual_sensor *s, const char *loc);
-static void check_location_string(struct seq_file *m, const char *c);
-static void check_location(struct seq_file *m, const char *c);
+अटल पूर्णांक ppc_rtas_find_all_sensors(व्योम);
+अटल व्योम ppc_rtas_process_sensor(काष्ठा seq_file *m,
+	काष्ठा inभागidual_sensor *s, पूर्णांक state, पूर्णांक error, स्थिर अक्षर *loc);
+अटल अक्षर *ppc_rtas_process_error(पूर्णांक error);
+अटल व्योम get_location_code(काष्ठा seq_file *m,
+	काष्ठा inभागidual_sensor *s, स्थिर अक्षर *loc);
+अटल व्योम check_location_string(काष्ठा seq_file *m, स्थिर अक्षर *c);
+अटल व्योम check_location(काष्ठा seq_file *m, स्थिर अक्षर *c);
 
-static int __init proc_rtas_init(void)
-{
-	if (!machine_is(pseries))
-		return -ENODEV;
+अटल पूर्णांक __init proc_rtas_init(व्योम)
+अणु
+	अगर (!machine_is(pseries))
+		वापस -ENODEV;
 
-	rtas_node = of_find_node_by_name(NULL, "rtas");
-	if (rtas_node == NULL)
-		return -ENODEV;
+	rtas_node = of_find_node_by_name(शून्य, "rtas");
+	अगर (rtas_node == शून्य)
+		वापस -ENODEV;
 
-	proc_create("powerpc/rtas/progress", 0644, NULL,
+	proc_create("powerpc/rtas/progress", 0644, शून्य,
 		    &ppc_rtas_progress_proc_ops);
-	proc_create("powerpc/rtas/clock", 0644, NULL,
-		    &ppc_rtas_clock_proc_ops);
-	proc_create("powerpc/rtas/poweron", 0644, NULL,
-		    &ppc_rtas_poweron_proc_ops);
-	proc_create_single("powerpc/rtas/sensors", 0444, NULL,
+	proc_create("powerpc/rtas/clock", 0644, शून्य,
+		    &ppc_rtas_घड़ी_proc_ops);
+	proc_create("powerpc/rtas/poweron", 0644, शून्य,
+		    &ppc_rtas_घातeron_proc_ops);
+	proc_create_single("powerpc/rtas/sensors", 0444, शून्य,
 			ppc_rtas_sensors_show);
-	proc_create("powerpc/rtas/frequency", 0644, NULL,
+	proc_create("powerpc/rtas/frequency", 0644, शून्य,
 		    &ppc_rtas_tone_freq_proc_ops);
-	proc_create("powerpc/rtas/volume", 0644, NULL,
+	proc_create("powerpc/rtas/volume", 0644, शून्य,
 		    &ppc_rtas_tone_volume_proc_ops);
-	proc_create_single("powerpc/rtas/rmo_buffer", 0400, NULL,
+	proc_create_single("powerpc/rtas/rmo_buffer", 0400, शून्य,
 			ppc_rtas_rmo_buf_show);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 __initcall(proc_rtas_init);
 
-static int parse_number(const char __user *p, size_t count, u64 *val)
-{
-	char buf[40];
-	char *end;
+अटल पूर्णांक parse_number(स्थिर अक्षर __user *p, माप_प्रकार count, u64 *val)
+अणु
+	अक्षर buf[40];
+	अक्षर *end;
 
-	if (count > 39)
-		return -EINVAL;
+	अगर (count > 39)
+		वापस -EINVAL;
 
-	if (copy_from_user(buf, p, count))
-		return -EFAULT;
+	अगर (copy_from_user(buf, p, count))
+		वापस -EFAULT;
 
 	buf[count] = 0;
 
-	*val = simple_strtoull(buf, &end, 10);
-	if (*end && *end != '\n')
-		return -EINVAL;
+	*val = simple_म_से_अदीर्घl(buf, &end, 10);
+	अगर (*end && *end != '\n')
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ****************************************************************** */
 /* POWER-ON-TIME                                                      */
 /* ****************************************************************** */
-static ssize_t ppc_rtas_poweron_write(struct file *file,
-		const char __user *buf, size_t count, loff_t *ppos)
-{
-	struct rtc_time tm;
-	time64_t nowtime;
-	int error = parse_number(buf, count, &nowtime);
-	if (error)
-		return error;
+अटल sमाप_प्रकार ppc_rtas_घातeron_ग_लिखो(काष्ठा file *file,
+		स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा rtc_समय पंचांग;
+	समय64_t nowसमय;
+	पूर्णांक error = parse_number(buf, count, &nowसमय);
+	अगर (error)
+		वापस error;
 
-	power_on_time = nowtime; /* save the time */
+	घातer_on_समय = nowसमय; /* save the समय */
 
-	rtc_time64_to_tm(nowtime, &tm);
+	rtc_समय64_to_पंचांग(nowसमय, &पंचांग);
 
-	error = rtas_call(rtas_token("set-time-for-power-on"), 7, 1, NULL, 
-			tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-			tm.tm_hour, tm.tm_min, tm.tm_sec, 0 /* nano */);
-	if (error)
-		printk(KERN_WARNING "error: setting poweron time returned: %s\n", 
+	error = rtas_call(rtas_token("set-time-for-power-on"), 7, 1, शून्य, 
+			पंचांग.पंचांग_year + 1900, पंचांग.पंचांग_mon + 1, पंचांग.पंचांग_mday,
+			पंचांग.पंचांग_hour, पंचांग.पंचांग_min, पंचांग.पंचांग_sec, 0 /* nano */);
+	अगर (error)
+		prपूर्णांकk(KERN_WARNING "error: setting poweron time returned: %s\n", 
 				ppc_rtas_process_error(error));
-	return count;
-}
+	वापस count;
+पूर्ण
 /* ****************************************************************** */
-static int ppc_rtas_poweron_show(struct seq_file *m, void *v)
-{
-	if (power_on_time == 0)
-		seq_printf(m, "Power on time not set\n");
-	else
-		seq_printf(m, "%lu\n",power_on_time);
-	return 0;
-}
+अटल पूर्णांक ppc_rtas_घातeron_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	अगर (घातer_on_समय == 0)
+		seq_म_लिखो(m, "Power on time not set\n");
+	अन्यथा
+		seq_म_लिखो(m, "%lu\n",घातer_on_समय);
+	वापस 0;
+पूर्ण
 
 /* ****************************************************************** */
 /* PROGRESS                                                           */
 /* ****************************************************************** */
-static ssize_t ppc_rtas_progress_write(struct file *file,
-		const char __user *buf, size_t count, loff_t *ppos)
-{
-	unsigned long hex;
+अटल sमाप_प्रकार ppc_rtas_progress_ग_लिखो(काष्ठा file *file,
+		स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
+अणु
+	अचिन्हित दीर्घ hex;
 
-	if (count >= MAX_LINELENGTH)
+	अगर (count >= MAX_LINELENGTH)
 		count = MAX_LINELENGTH -1;
-	if (copy_from_user(progress_led, buf, count)) { /* save the string */
-		return -EFAULT;
-	}
+	अगर (copy_from_user(progress_led, buf, count)) अणु /* save the string */
+		वापस -EFAULT;
+	पूर्ण
 	progress_led[count] = 0;
 
-	/* Lets see if the user passed hexdigits */
-	hex = simple_strtoul(progress_led, NULL, 10);
+	/* Lets see अगर the user passed hexdigits */
+	hex = simple_म_से_अदीर्घ(progress_led, शून्य, 10);
 
-	rtas_progress ((char *)progress_led, hex);
-	return count;
+	rtas_progress ((अक्षर *)progress_led, hex);
+	वापस count;
 
 	/* clear the line */
 	/* rtas_progress("                   ", 0xffff);*/
-}
+पूर्ण
 /* ****************************************************************** */
-static int ppc_rtas_progress_show(struct seq_file *m, void *v)
-{
-	if (progress_led[0])
-		seq_printf(m, "%s\n", progress_led);
-	return 0;
-}
+अटल पूर्णांक ppc_rtas_progress_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	अगर (progress_led[0])
+		seq_म_लिखो(m, "%s\n", progress_led);
+	वापस 0;
+पूर्ण
 
 /* ****************************************************************** */
 /* CLOCK                                                              */
 /* ****************************************************************** */
-static ssize_t ppc_rtas_clock_write(struct file *file,
-		const char __user *buf, size_t count, loff_t *ppos)
-{
-	struct rtc_time tm;
-	time64_t nowtime;
-	int error = parse_number(buf, count, &nowtime);
-	if (error)
-		return error;
+अटल sमाप_प्रकार ppc_rtas_घड़ी_ग_लिखो(काष्ठा file *file,
+		स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा rtc_समय पंचांग;
+	समय64_t nowसमय;
+	पूर्णांक error = parse_number(buf, count, &nowसमय);
+	अगर (error)
+		वापस error;
 
-	rtc_time64_to_tm(nowtime, &tm);
-	error = rtas_call(rtas_token("set-time-of-day"), 7, 1, NULL, 
-			tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-			tm.tm_hour, tm.tm_min, tm.tm_sec, 0);
-	if (error)
-		printk(KERN_WARNING "error: setting the clock returned: %s\n", 
+	rtc_समय64_to_पंचांग(nowसमय, &पंचांग);
+	error = rtas_call(rtas_token("set-time-of-day"), 7, 1, शून्य, 
+			पंचांग.पंचांग_year + 1900, पंचांग.पंचांग_mon + 1, पंचांग.पंचांग_mday,
+			पंचांग.पंचांग_hour, पंचांग.पंचांग_min, पंचांग.पंचांग_sec, 0);
+	अगर (error)
+		prपूर्णांकk(KERN_WARNING "error: setting the clock returned: %s\n", 
 				ppc_rtas_process_error(error));
-	return count;
-}
+	वापस count;
+पूर्ण
 /* ****************************************************************** */
-static int ppc_rtas_clock_show(struct seq_file *m, void *v)
-{
-	int ret[8];
-	int error = rtas_call(rtas_token("get-time-of-day"), 0, 8, ret);
+अटल पूर्णांक ppc_rtas_घड़ी_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	पूर्णांक ret[8];
+	पूर्णांक error = rtas_call(rtas_token("get-time-of-day"), 0, 8, ret);
 
-	if (error) {
-		printk(KERN_WARNING "error: reading the clock returned: %s\n", 
+	अगर (error) अणु
+		prपूर्णांकk(KERN_WARNING "error: reading the clock returned: %s\n", 
 				ppc_rtas_process_error(error));
-		seq_printf(m, "0");
-	} else { 
-		unsigned int year, mon, day, hour, min, sec;
+		seq_म_लिखो(m, "0");
+	पूर्ण अन्यथा अणु 
+		अचिन्हित पूर्णांक year, mon, day, hour, min, sec;
 		year = ret[0]; mon  = ret[1]; day  = ret[2];
 		hour = ret[3]; min  = ret[4]; sec  = ret[5];
-		seq_printf(m, "%lld\n",
-				mktime64(year, mon, day, hour, min, sec));
-	}
-	return 0;
-}
+		seq_म_लिखो(m, "%lld\n",
+				स_गढ़ो64(year, mon, day, hour, min, sec));
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* ****************************************************************** */
 /* SENSOR STUFF                                                       */
 /* ****************************************************************** */
-static int ppc_rtas_sensors_show(struct seq_file *m, void *v)
-{
-	int i,j;
-	int state, error;
-	int get_sensor_state = rtas_token("get-sensor-state");
+अटल पूर्णांक ppc_rtas_sensors_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	पूर्णांक i,j;
+	पूर्णांक state, error;
+	पूर्णांक get_sensor_state = rtas_token("get-sensor-state");
 
-	seq_printf(m, "RTAS (RunTime Abstraction Services) Sensor Information\n");
-	seq_printf(m, "Sensor\t\tValue\t\tCondition\tLocation\n");
-	seq_printf(m, "********************************************************\n");
+	seq_म_लिखो(m, "RTAS (RunTime Abstraction Services) Sensor Information\n");
+	seq_म_लिखो(m, "Sensor\t\tValue\t\tCondition\tLocation\n");
+	seq_म_लिखो(m, "********************************************************\n");
 
-	if (ppc_rtas_find_all_sensors() != 0) {
-		seq_printf(m, "\nNo sensors are available\n");
-		return 0;
-	}
+	अगर (ppc_rtas_find_all_sensors() != 0) अणु
+		seq_म_लिखो(m, "\nNo sensors are available\n");
+		वापस 0;
+	पूर्ण
 
-	for (i=0; i<sensors.quant; i++) {
-		struct individual_sensor *p = &sensors.sensor[i];
-		char rstr[64];
-		const char *loc;
-		int llen, offs;
+	क्रम (i=0; i<sensors.quant; i++) अणु
+		काष्ठा inभागidual_sensor *p = &sensors.sensor[i];
+		अक्षर rstr[64];
+		स्थिर अक्षर *loc;
+		पूर्णांक llen, offs;
 
-		sprintf (rstr, SENSOR_PREFIX"%04d", p->token);
+		प्र_लिखो (rstr, SENSOR_PREFIX"%04d", p->token);
 		loc = of_get_property(rtas_node, rstr, &llen);
 
 		/* A sensor may have multiple instances */
-		for (j = 0, offs = 0; j <= p->quant; j++) {
+		क्रम (j = 0, offs = 0; j <= p->quant; j++) अणु
 			error =	rtas_call(get_sensor_state, 2, 2, &state, 
 				  	  p->token, j);
 
 			ppc_rtas_process_sensor(m, p, state, error, loc);
-			seq_putc(m, '\n');
-			if (loc) {
-				offs += strlen(loc) + 1;
-				loc += strlen(loc) + 1;
-				if (offs >= llen)
-					loc = NULL;
-			}
-		}
-	}
-	return 0;
-}
+			seq_अ_दो(m, '\n');
+			अगर (loc) अणु
+				offs += म_माप(loc) + 1;
+				loc += म_माप(loc) + 1;
+				अगर (offs >= llen)
+					loc = शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* ****************************************************************** */
 
-static int ppc_rtas_find_all_sensors(void)
-{
-	const unsigned int *utmp;
-	int len, i;
+अटल पूर्णांक ppc_rtas_find_all_sensors(व्योम)
+अणु
+	स्थिर अचिन्हित पूर्णांक *uपंचांगp;
+	पूर्णांक len, i;
 
-	utmp = of_get_property(rtas_node, "rtas-sensors", &len);
-	if (utmp == NULL) {
-		printk (KERN_ERR "error: could not get rtas-sensors\n");
-		return 1;
-	}
+	uपंचांगp = of_get_property(rtas_node, "rtas-sensors", &len);
+	अगर (uपंचांगp == शून्य) अणु
+		prपूर्णांकk (KERN_ERR "error: could not get rtas-sensors\n");
+		वापस 1;
+	पूर्ण
 
-	sensors.quant = len / 8;      /* int + int */
+	sensors.quant = len / 8;      /* पूर्णांक + पूर्णांक */
 
-	for (i=0; i<sensors.quant; i++) {
-		sensors.sensor[i].token = *utmp++;
-		sensors.sensor[i].quant = *utmp++;
-	}
-	return 0;
-}
+	क्रम (i=0; i<sensors.quant; i++) अणु
+		sensors.sensor[i].token = *uपंचांगp++;
+		sensors.sensor[i].quant = *uपंचांगp++;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* ****************************************************************** */
 /*
- * Builds a string of what rtas returned
+ * Builds a string of what rtas वापसed
  */
-static char *ppc_rtas_process_error(int error)
-{
-	switch (error) {
-		case SENSOR_CRITICAL_HIGH:
-			return "(critical high)";
-		case SENSOR_WARNING_HIGH:
-			return "(warning high)";
-		case SENSOR_NORMAL:
-			return "(normal)";
-		case SENSOR_WARNING_LOW:
-			return "(warning low)";
-		case SENSOR_CRITICAL_LOW:
-			return "(critical low)";
-		case SENSOR_SUCCESS:
-			return "(read ok)";
-		case SENSOR_HW_ERROR:
-			return "(hardware error)";
-		case SENSOR_BUSY:
-			return "(busy)";
-		case SENSOR_NOT_EXIST:
-			return "(non existent)";
-		case SENSOR_DR_ENTITY:
-			return "(dr entity removed)";
-		default:
-			return "(UNKNOWN)";
-	}
-}
+अटल अक्षर *ppc_rtas_process_error(पूर्णांक error)
+अणु
+	चयन (error) अणु
+		हाल SENSOR_CRITICAL_HIGH:
+			वापस "(critical high)";
+		हाल SENSOR_WARNING_HIGH:
+			वापस "(warning high)";
+		हाल SENSOR_NORMAL:
+			वापस "(normal)";
+		हाल SENSOR_WARNING_LOW:
+			वापस "(warning low)";
+		हाल SENSOR_CRITICAL_LOW:
+			वापस "(critical low)";
+		हाल SENSOR_SUCCESS:
+			वापस "(read ok)";
+		हाल SENSOR_HW_ERROR:
+			वापस "(hardware error)";
+		हाल SENSOR_BUSY:
+			वापस "(busy)";
+		हाल SENSOR_NOT_EXIST:
+			वापस "(non existent)";
+		हाल SENSOR_DR_ENTITY:
+			वापस "(dr entity removed)";
+		शेष:
+			वापस "(UNKNOWN)";
+	पूर्ण
+पूर्ण
 
 /* ****************************************************************** */
 /*
  * Builds a string out of what the sensor said
  */
 
-static void ppc_rtas_process_sensor(struct seq_file *m,
-	struct individual_sensor *s, int state, int error, const char *loc)
-{
-	/* Defined return vales */
-	const char * key_switch[]        = { "Off\t", "Normal\t", "Secure\t", 
-						"Maintenance" };
-	const char * enclosure_switch[]  = { "Closed", "Open" };
-	const char * lid_status[]        = { " ", "Open", "Closed" };
-	const char * power_source[]      = { "AC\t", "Battery", 
-		  				"AC & Battery" };
-	const char * battery_remaining[] = { "Very Low", "Low", "Mid", "High" };
-	const char * epow_sensor[]       = { 
+अटल व्योम ppc_rtas_process_sensor(काष्ठा seq_file *m,
+	काष्ठा inभागidual_sensor *s, पूर्णांक state, पूर्णांक error, स्थिर अक्षर *loc)
+अणु
+	/* Defined वापस vales */
+	स्थिर अक्षर * key_चयन[]        = अणु "Off\t", "Normal\t", "Secure\t", 
+						"Maintenance" पूर्ण;
+	स्थिर अक्षर * enclosure_चयन[]  = अणु "Closed", "Open" पूर्ण;
+	स्थिर अक्षर * lid_status[]        = अणु " ", "Open", "Closed" पूर्ण;
+	स्थिर अक्षर * घातer_source[]      = अणु "AC\t", "Battery", 
+		  				"AC & Battery" पूर्ण;
+	स्थिर अक्षर * battery_reमुख्यing[] = अणु "Very Low", "Low", "Mid", "High" पूर्ण;
+	स्थिर अक्षर * eघात_sensor[]       = अणु 
 		"EPOW Reset", "Cooling warning", "Power warning",
 		"System shutdown", "System halt", "EPOW main enclosure",
-		"EPOW power off" };
-	const char * battery_cyclestate[]  = { "None", "In progress", 
-						"Requested" };
-	const char * battery_charging[]    = { "Charging", "Discharging",
-						"No current flow" };
-	const char * ibm_drconnector[]     = { "Empty", "Present", "Unusable", 
-						"Exchange" };
+		"EPOW power off" पूर्ण;
+	स्थिर अक्षर * battery_cyclestate[]  = अणु "None", "In progress", 
+						"Requested" पूर्ण;
+	स्थिर अक्षर * battery_अक्षरging[]    = अणु "Charging", "Discharging",
+						"No current flow" पूर्ण;
+	स्थिर अक्षर * ibm_drconnector[]     = अणु "Empty", "Present", "Unusable", 
+						"Exchange" पूर्ण;
 
-	int have_strings = 0;
-	int num_states = 0;
-	int temperature = 0;
-	int unknown = 0;
+	पूर्णांक have_strings = 0;
+	पूर्णांक num_states = 0;
+	पूर्णांक temperature = 0;
+	पूर्णांक unknown = 0;
 
-	/* What kind of sensor do we have here? */
+	/* What kind of sensor करो we have here? */
 	
-	switch (s->token) {
-		case KEY_SWITCH:
-			seq_printf(m, "Key switch:\t");
-			num_states = sizeof(key_switch) / sizeof(char *);
-			if (state < num_states) {
-				seq_printf(m, "%s\t", key_switch[state]);
+	चयन (s->token) अणु
+		हाल KEY_SWITCH:
+			seq_म_लिखो(m, "Key switch:\t");
+			num_states = माप(key_चयन) / माप(अक्षर *);
+			अगर (state < num_states) अणु
+				seq_म_लिखो(m, "%s\t", key_चयन[state]);
 				have_strings = 1;
-			}
-			break;
-		case ENCLOSURE_SWITCH:
-			seq_printf(m, "Enclosure switch:\t");
-			num_states = sizeof(enclosure_switch) / sizeof(char *);
-			if (state < num_states) {
-				seq_printf(m, "%s\t", 
-						enclosure_switch[state]);
+			पूर्ण
+			अवरोध;
+		हाल ENCLOSURE_SWITCH:
+			seq_म_लिखो(m, "Enclosure switch:\t");
+			num_states = माप(enclosure_चयन) / माप(अक्षर *);
+			अगर (state < num_states) अणु
+				seq_म_लिखो(m, "%s\t", 
+						enclosure_चयन[state]);
 				have_strings = 1;
-			}
-			break;
-		case THERMAL_SENSOR:
-			seq_printf(m, "Temp. (C/F):\t");
+			पूर्ण
+			अवरोध;
+		हाल THERMAL_SENSOR:
+			seq_म_लिखो(m, "Temp. (C/F):\t");
 			temperature = 1;
-			break;
-		case LID_STATUS:
-			seq_printf(m, "Lid status:\t");
-			num_states = sizeof(lid_status) / sizeof(char *);
-			if (state < num_states) {
-				seq_printf(m, "%s\t", lid_status[state]);
+			अवरोध;
+		हाल LID_STATUS:
+			seq_म_लिखो(m, "Lid status:\t");
+			num_states = माप(lid_status) / माप(अक्षर *);
+			अगर (state < num_states) अणु
+				seq_म_लिखो(m, "%s\t", lid_status[state]);
 				have_strings = 1;
-			}
-			break;
-		case POWER_SOURCE:
-			seq_printf(m, "Power source:\t");
-			num_states = sizeof(power_source) / sizeof(char *);
-			if (state < num_states) {
-				seq_printf(m, "%s\t", 
-						power_source[state]);
+			पूर्ण
+			अवरोध;
+		हाल POWER_SOURCE:
+			seq_म_लिखो(m, "Power source:\t");
+			num_states = माप(घातer_source) / माप(अक्षर *);
+			अगर (state < num_states) अणु
+				seq_म_लिखो(m, "%s\t", 
+						घातer_source[state]);
 				have_strings = 1;
-			}
-			break;
-		case BATTERY_VOLTAGE:
-			seq_printf(m, "Battery voltage:\t");
-			break;
-		case BATTERY_REMAINING:
-			seq_printf(m, "Battery remaining:\t");
-			num_states = sizeof(battery_remaining) / sizeof(char *);
-			if (state < num_states)
-			{
-				seq_printf(m, "%s\t", 
-						battery_remaining[state]);
+			पूर्ण
+			अवरोध;
+		हाल BATTERY_VOLTAGE:
+			seq_म_लिखो(m, "Battery voltage:\t");
+			अवरोध;
+		हाल BATTERY_REMAINING:
+			seq_म_लिखो(m, "Battery remaining:\t");
+			num_states = माप(battery_reमुख्यing) / माप(अक्षर *);
+			अगर (state < num_states)
+			अणु
+				seq_म_लिखो(m, "%s\t", 
+						battery_reमुख्यing[state]);
 				have_strings = 1;
-			}
-			break;
-		case BATTERY_PERCENTAGE:
-			seq_printf(m, "Battery percentage:\t");
-			break;
-		case EPOW_SENSOR:
-			seq_printf(m, "EPOW Sensor:\t");
-			num_states = sizeof(epow_sensor) / sizeof(char *);
-			if (state < num_states) {
-				seq_printf(m, "%s\t", epow_sensor[state]);
+			पूर्ण
+			अवरोध;
+		हाल BATTERY_PERCENTAGE:
+			seq_म_लिखो(m, "Battery percentage:\t");
+			अवरोध;
+		हाल EPOW_SENSOR:
+			seq_म_लिखो(m, "EPOW Sensor:\t");
+			num_states = माप(eघात_sensor) / माप(अक्षर *);
+			अगर (state < num_states) अणु
+				seq_म_लिखो(m, "%s\t", eघात_sensor[state]);
 				have_strings = 1;
-			}
-			break;
-		case BATTERY_CYCLESTATE:
-			seq_printf(m, "Battery cyclestate:\t");
-			num_states = sizeof(battery_cyclestate) / 
-				     	sizeof(char *);
-			if (state < num_states) {
-				seq_printf(m, "%s\t", 
+			पूर्ण
+			अवरोध;
+		हाल BATTERY_CYCLESTATE:
+			seq_म_लिखो(m, "Battery cyclestate:\t");
+			num_states = माप(battery_cyclestate) / 
+				     	माप(अक्षर *);
+			अगर (state < num_states) अणु
+				seq_म_लिखो(m, "%s\t", 
 						battery_cyclestate[state]);
 				have_strings = 1;
-			}
-			break;
-		case BATTERY_CHARGING:
-			seq_printf(m, "Battery Charging:\t");
-			num_states = sizeof(battery_charging) / sizeof(char *);
-			if (state < num_states) {
-				seq_printf(m, "%s\t", 
-						battery_charging[state]);
+			पूर्ण
+			अवरोध;
+		हाल BATTERY_CHARGING:
+			seq_म_लिखो(m, "Battery Charging:\t");
+			num_states = माप(battery_अक्षरging) / माप(अक्षर *);
+			अगर (state < num_states) अणु
+				seq_म_लिखो(m, "%s\t", 
+						battery_अक्षरging[state]);
 				have_strings = 1;
-			}
-			break;
-		case IBM_SURVEILLANCE:
-			seq_printf(m, "Surveillance:\t");
-			break;
-		case IBM_FANRPM:
-			seq_printf(m, "Fan (rpm):\t");
-			break;
-		case IBM_VOLTAGE:
-			seq_printf(m, "Voltage (mv):\t");
-			break;
-		case IBM_DRCONNECTOR:
-			seq_printf(m, "DR connector:\t");
-			num_states = sizeof(ibm_drconnector) / sizeof(char *);
-			if (state < num_states) {
-				seq_printf(m, "%s\t", 
+			पूर्ण
+			अवरोध;
+		हाल IBM_SURVEILLANCE:
+			seq_म_लिखो(m, "Surveillance:\t");
+			अवरोध;
+		हाल IBM_FANRPM:
+			seq_म_लिखो(m, "Fan (rpm):\t");
+			अवरोध;
+		हाल IBM_VOLTAGE:
+			seq_म_लिखो(m, "Voltage (mv):\t");
+			अवरोध;
+		हाल IBM_DRCONNECTOR:
+			seq_म_लिखो(m, "DR connector:\t");
+			num_states = माप(ibm_drconnector) / माप(अक्षर *);
+			अगर (state < num_states) अणु
+				seq_म_लिखो(m, "%s\t", 
 						ibm_drconnector[state]);
 				have_strings = 1;
-			}
-			break;
-		case IBM_POWERSUPPLY:
-			seq_printf(m, "Powersupply:\t");
-			break;
-		default:
-			seq_printf(m,  "Unknown sensor (type %d), ignoring it\n",
+			पूर्ण
+			अवरोध;
+		हाल IBM_POWERSUPPLY:
+			seq_म_लिखो(m, "Powersupply:\t");
+			अवरोध;
+		शेष:
+			seq_म_लिखो(m,  "Unknown sensor (type %d), ignoring it\n",
 					s->token);
 			unknown = 1;
 			have_strings = 1;
-			break;
-	}
-	if (have_strings == 0) {
-		if (temperature) {
-			seq_printf(m, "%4d /%4d\t", state, cel_to_fahr(state));
-		} else
-			seq_printf(m, "%10d\t", state);
-	}
-	if (unknown == 0) {
-		seq_printf(m, "%s\t", ppc_rtas_process_error(error));
+			अवरोध;
+	पूर्ण
+	अगर (have_strings == 0) अणु
+		अगर (temperature) अणु
+			seq_म_लिखो(m, "%4d /%4d\t", state, cel_to_fahr(state));
+		पूर्ण अन्यथा
+			seq_म_लिखो(m, "%10d\t", state);
+	पूर्ण
+	अगर (unknown == 0) अणु
+		seq_म_लिखो(m, "%s\t", ppc_rtas_process_error(error));
 		get_location_code(m, s, loc);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* ****************************************************************** */
 
-static void check_location(struct seq_file *m, const char *c)
-{
-	switch (c[0]) {
-		case LOC_PLANAR:
-			seq_printf(m, "Planar #%c", c[1]);
-			break;
-		case LOC_CPU:
-			seq_printf(m, "CPU #%c", c[1]);
-			break;
-		case LOC_FAN:
-			seq_printf(m, "Fan #%c", c[1]);
-			break;
-		case LOC_RACKMOUNTED:
-			seq_printf(m, "Rack #%c", c[1]);
-			break;
-		case LOC_VOLTAGE:
-			seq_printf(m, "Voltage #%c", c[1]);
-			break;
-		case LOC_LCD:
-			seq_printf(m, "LCD #%c", c[1]);
-			break;
-		case '.':
-			seq_printf(m, "- %c", c[1]);
-			break;
-		default:
-			seq_printf(m, "Unknown location");
-			break;
-	}
-}
+अटल व्योम check_location(काष्ठा seq_file *m, स्थिर अक्षर *c)
+अणु
+	चयन (c[0]) अणु
+		हाल LOC_PLANAR:
+			seq_म_लिखो(m, "Planar #%c", c[1]);
+			अवरोध;
+		हाल LOC_CPU:
+			seq_म_लिखो(m, "CPU #%c", c[1]);
+			अवरोध;
+		हाल LOC_FAN:
+			seq_म_लिखो(m, "Fan #%c", c[1]);
+			अवरोध;
+		हाल LOC_RACKMOUNTED:
+			seq_म_लिखो(m, "Rack #%c", c[1]);
+			अवरोध;
+		हाल LOC_VOLTAGE:
+			seq_म_लिखो(m, "Voltage #%c", c[1]);
+			अवरोध;
+		हाल LOC_LCD:
+			seq_म_लिखो(m, "LCD #%c", c[1]);
+			अवरोध;
+		हाल '.':
+			seq_म_लिखो(m, "- %c", c[1]);
+			अवरोध;
+		शेष:
+			seq_म_लिखो(m, "Unknown location");
+			अवरोध;
+	पूर्ण
+पूर्ण
 
 
 /* ****************************************************************** */
 /* 
  * Format: 
- * ${LETTER}${NUMBER}[[-/]${LETTER}${NUMBER} [ ... ] ]
+ * $अणुLETTERपूर्ण$अणुNUMBERपूर्ण[[-/]$अणुLETTERपूर्ण$अणुNUMBERपूर्ण [ ... ] ]
  * the '.' may be an abbreviation
  */
-static void check_location_string(struct seq_file *m, const char *c)
-{
-	while (*c) {
-		if (isalpha(*c) || *c == '.')
+अटल व्योम check_location_string(काष्ठा seq_file *m, स्थिर अक्षर *c)
+अणु
+	जबतक (*c) अणु
+		अगर (है_अक्षर(*c) || *c == '.')
 			check_location(m, c);
-		else if (*c == '/' || *c == '-')
-			seq_printf(m, " at ");
+		अन्यथा अगर (*c == '/' || *c == '-')
+			seq_म_लिखो(m, " at ");
 		c++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /* ****************************************************************** */
 
-static void get_location_code(struct seq_file *m, struct individual_sensor *s,
-		const char *loc)
-{
-	if (!loc || !*loc) {
-		seq_printf(m, "---");/* does not have a location */
-	} else {
+अटल व्योम get_location_code(काष्ठा seq_file *m, काष्ठा inभागidual_sensor *s,
+		स्थिर अक्षर *loc)
+अणु
+	अगर (!loc || !*loc) अणु
+		seq_म_लिखो(m, "---");/* करोes not have a location */
+	पूर्ण अन्यथा अणु
 		check_location_string(m, loc);
-	}
-	seq_putc(m, ' ');
-}
+	पूर्ण
+	seq_अ_दो(m, ' ');
+पूर्ण
 /* ****************************************************************** */
 /* INDICATORS - Tone Frequency                                        */
 /* ****************************************************************** */
-static ssize_t ppc_rtas_tone_freq_write(struct file *file,
-		const char __user *buf, size_t count, loff_t *ppos)
-{
+अटल sमाप_प्रकार ppc_rtas_tone_freq_ग_लिखो(काष्ठा file *file,
+		स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
+अणु
 	u64 freq;
-	int error = parse_number(buf, count, &freq);
-	if (error)
-		return error;
+	पूर्णांक error = parse_number(buf, count, &freq);
+	अगर (error)
+		वापस error;
 
-	rtas_tone_frequency = freq; /* save it for later */
-	error = rtas_call(rtas_token("set-indicator"), 3, 1, NULL,
+	rtas_tone_frequency = freq; /* save it क्रम later */
+	error = rtas_call(rtas_token("set-indicator"), 3, 1, शून्य,
 			TONE_FREQUENCY, 0, freq);
-	if (error)
-		printk(KERN_WARNING "error: setting tone frequency returned: %s\n", 
+	अगर (error)
+		prपूर्णांकk(KERN_WARNING "error: setting tone frequency returned: %s\n", 
 				ppc_rtas_process_error(error));
-	return count;
-}
+	वापस count;
+पूर्ण
 /* ****************************************************************** */
-static int ppc_rtas_tone_freq_show(struct seq_file *m, void *v)
-{
-	seq_printf(m, "%lu\n", rtas_tone_frequency);
-	return 0;
-}
+अटल पूर्णांक ppc_rtas_tone_freq_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	seq_म_लिखो(m, "%lu\n", rtas_tone_frequency);
+	वापस 0;
+पूर्ण
 /* ****************************************************************** */
 /* INDICATORS - Tone Volume                                           */
 /* ****************************************************************** */
-static ssize_t ppc_rtas_tone_volume_write(struct file *file,
-		const char __user *buf, size_t count, loff_t *ppos)
-{
+अटल sमाप_प्रकार ppc_rtas_tone_volume_ग_लिखो(काष्ठा file *file,
+		स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
+अणु
 	u64 volume;
-	int error = parse_number(buf, count, &volume);
-	if (error)
-		return error;
+	पूर्णांक error = parse_number(buf, count, &volume);
+	अगर (error)
+		वापस error;
 
-	if (volume > 100)
+	अगर (volume > 100)
 		volume = 100;
 	
-        rtas_tone_volume = volume; /* save it for later */
-	error = rtas_call(rtas_token("set-indicator"), 3, 1, NULL,
+        rtas_tone_volume = volume; /* save it क्रम later */
+	error = rtas_call(rtas_token("set-indicator"), 3, 1, शून्य,
 			TONE_VOLUME, 0, volume);
-	if (error)
-		printk(KERN_WARNING "error: setting tone volume returned: %s\n", 
+	अगर (error)
+		prपूर्णांकk(KERN_WARNING "error: setting tone volume returned: %s\n", 
 				ppc_rtas_process_error(error));
-	return count;
-}
+	वापस count;
+पूर्ण
 /* ****************************************************************** */
-static int ppc_rtas_tone_volume_show(struct seq_file *m, void *v)
-{
-	seq_printf(m, "%lu\n", rtas_tone_volume);
-	return 0;
-}
+अटल पूर्णांक ppc_rtas_tone_volume_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	seq_म_लिखो(m, "%lu\n", rtas_tone_volume);
+	वापस 0;
+पूर्ण
 
 /**
- * ppc_rtas_rmo_buf_show() - Describe RTAS-addressable region for user space.
+ * ppc_rtas_rmo_buf_show() - Describe RTAS-addressable region क्रम user space.
  *
  * Base + size description of a range of RTAS-addressable memory set
- * aside for user space to use as work area(s) for certain RTAS
+ * aside क्रम user space to use as work area(s) क्रम certain RTAS
  * functions. User space accesses this region via /dev/mem. Apart from
- * security policies, the kernel does not arbitrate or serialize
+ * security policies, the kernel करोes not arbitrate or serialize
  * access to this region, and user space must ensure that concurrent
- * users do not interfere with each other.
+ * users करो not पूर्णांकerfere with each other.
  */
-static int ppc_rtas_rmo_buf_show(struct seq_file *m, void *v)
-{
-	seq_printf(m, "%016lx %x\n", rtas_rmo_buf, RTAS_USER_REGION_SIZE);
-	return 0;
-}
+अटल पूर्णांक ppc_rtas_rmo_buf_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	seq_म_लिखो(m, "%016lx %x\n", rtas_rmo_buf, RTAS_USER_REGION_SIZE);
+	वापस 0;
+पूर्ण

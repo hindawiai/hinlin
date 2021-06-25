@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2014, Samsung Electronics Co. Ltd. All Rights Reserved.
  */
 
-#include "ssp.h"
+#समावेश "ssp.h"
 
-#define SSP_DEV (&data->spi->dev)
-#define SSP_GET_MESSAGE_TYPE(data) (data & (3 << SSP_RW))
+#घोषणा SSP_DEV (&data->spi->dev)
+#घोषणा SSP_GET_MESSAGE_TYPE(data) (data & (3 << SSP_RW))
 
 /*
- * SSP -> AP Instruction
+ * SSP -> AP Inकाष्ठाion
  * They tell what packet type can be expected. In the future there will
  * be less of them. BYPASS means common sensor packets with accel, gyro,
- * hrm etc. data. LIBRARY and META are mock-up's for now.
+ * hrm etc. data. LIBRARY and META are mock-up's क्रम now.
  */
-#define SSP_MSG2AP_INST_BYPASS_DATA		0x37
-#define SSP_MSG2AP_INST_LIBRARY_DATA		0x01
-#define SSP_MSG2AP_INST_DEBUG_DATA		0x03
-#define SSP_MSG2AP_INST_BIG_DATA		0x04
-#define SSP_MSG2AP_INST_META_DATA		0x05
-#define SSP_MSG2AP_INST_TIME_SYNC		0x06
-#define SSP_MSG2AP_INST_RESET			0x07
+#घोषणा SSP_MSG2AP_INST_BYPASS_DATA		0x37
+#घोषणा SSP_MSG2AP_INST_LIBRARY_DATA		0x01
+#घोषणा SSP_MSG2AP_INST_DEBUG_DATA		0x03
+#घोषणा SSP_MSG2AP_INST_BIG_DATA		0x04
+#घोषणा SSP_MSG2AP_INST_META_DATA		0x05
+#घोषणा SSP_MSG2AP_INST_TIME_SYNC		0x06
+#घोषणा SSP_MSG2AP_INST_RESET			0x07
 
-#define SSP_UNIMPLEMENTED -1
+#घोषणा SSP_UNIMPLEMENTED -1
 
-struct ssp_msg_header {
+काष्ठा ssp_msg_header अणु
 	u8 cmd;
 	__le16 length;
 	__le16 options;
 	__le32 data;
-} __attribute__((__packed__));
+पूर्ण __attribute__((__packed__));
 
-struct ssp_msg {
+काष्ठा ssp_msg अणु
 	u16 length;
 	u16 options;
-	struct list_head list;
-	struct completion *done;
-	struct ssp_msg_header *h;
-	char *buffer;
-};
+	काष्ठा list_head list;
+	काष्ठा completion *करोne;
+	काष्ठा ssp_msg_header *h;
+	अक्षर *buffer;
+पूर्ण;
 
-static const int ssp_offset_map[SSP_SENSOR_MAX] = {
+अटल स्थिर पूर्णांक ssp_offset_map[SSP_SENSOR_MAX] = अणु
 	[SSP_ACCELEROMETER_SENSOR] =		SSP_ACCELEROMETER_SIZE +
 						SSP_TIME_SIZE,
 	[SSP_GYROSCOPE_SENSOR] =		SSP_GYROSCOPE_SIZE +
@@ -67,19 +68,19 @@ static const int ssp_offset_map[SSP_SENSOR_MAX] = {
 						SSP_TIME_SIZE,
 	[SSP_BIO_HRM_LIB] =			SSP_BIO_HRM_LIB_SIZE +
 						SSP_TIME_SIZE,
-};
+पूर्ण;
 
-#define SSP_HEADER_SIZE		(sizeof(struct ssp_msg_header))
-#define SSP_HEADER_SIZE_ALIGNED	(ALIGN(SSP_HEADER_SIZE, 4))
+#घोषणा SSP_HEADER_SIZE		(माप(काष्ठा ssp_msg_header))
+#घोषणा SSP_HEADER_SIZE_ALIGNED	(ALIGN(SSP_HEADER_SIZE, 4))
 
-static struct ssp_msg *ssp_create_msg(u8 cmd, u16 len, u16 opt, u32 data)
-{
-	struct ssp_msg_header h;
-	struct ssp_msg *msg;
+अटल काष्ठा ssp_msg *ssp_create_msg(u8 cmd, u16 len, u16 opt, u32 data)
+अणु
+	काष्ठा ssp_msg_header h;
+	काष्ठा ssp_msg *msg;
 
-	msg = kzalloc(sizeof(*msg), GFP_KERNEL);
-	if (!msg)
-		return NULL;
+	msg = kzalloc(माप(*msg), GFP_KERNEL);
+	अगर (!msg)
+		वापस शून्य;
 
 	h.cmd = cmd;
 	h.length = cpu_to_le16(len);
@@ -88,408 +89,408 @@ static struct ssp_msg *ssp_create_msg(u8 cmd, u16 len, u16 opt, u32 data)
 
 	msg->buffer = kzalloc(SSP_HEADER_SIZE_ALIGNED + len,
 			      GFP_KERNEL | GFP_DMA);
-	if (!msg->buffer) {
-		kfree(msg);
-		return NULL;
-	}
+	अगर (!msg->buffer) अणु
+		kमुक्त(msg);
+		वापस शून्य;
+	पूर्ण
 
 	msg->length = len;
 	msg->options = opt;
 
-	memcpy(msg->buffer, &h, SSP_HEADER_SIZE);
+	स_नकल(msg->buffer, &h, SSP_HEADER_SIZE);
 
-	return msg;
-}
+	वापस msg;
+पूर्ण
 
 /*
- * It is a bit heavy to do it this way but often the function is used to compose
+ * It is a bit heavy to करो it this way but often the function is used to compose
  * the message from smaller chunks which are placed on the stack.  Often the
- * chunks are small so memcpy should be optimalized.
+ * chunks are small so स_नकल should be optimalized.
  */
-static inline void ssp_fill_buffer(struct ssp_msg *m, unsigned int offset,
-				   const void *src, unsigned int len)
-{
-	memcpy(&m->buffer[SSP_HEADER_SIZE_ALIGNED + offset], src, len);
-}
+अटल अंतरभूत व्योम ssp_fill_buffer(काष्ठा ssp_msg *m, अचिन्हित पूर्णांक offset,
+				   स्थिर व्योम *src, अचिन्हित पूर्णांक len)
+अणु
+	स_नकल(&m->buffer[SSP_HEADER_SIZE_ALIGNED + offset], src, len);
+पूर्ण
 
-static inline void ssp_get_buffer(struct ssp_msg *m, unsigned int offset,
-				  void *dest, unsigned int len)
-{
-	memcpy(dest, &m->buffer[SSP_HEADER_SIZE_ALIGNED + offset],  len);
-}
+अटल अंतरभूत व्योम ssp_get_buffer(काष्ठा ssp_msg *m, अचिन्हित पूर्णांक offset,
+				  व्योम *dest, अचिन्हित पूर्णांक len)
+अणु
+	स_नकल(dest, &m->buffer[SSP_HEADER_SIZE_ALIGNED + offset],  len);
+पूर्ण
 
-#define SSP_GET_BUFFER_AT_INDEX(m, index) \
+#घोषणा SSP_GET_BUFFER_AT_INDEX(m, index) \
 	(m->buffer[SSP_HEADER_SIZE_ALIGNED + index])
-#define SSP_SET_BUFFER_AT_INDEX(m, index, val) \
+#घोषणा SSP_SET_BUFFER_AT_INDEX(m, index, val) \
 	(m->buffer[SSP_HEADER_SIZE_ALIGNED + index] = val)
 
-static void ssp_clean_msg(struct ssp_msg *m)
-{
-	kfree(m->buffer);
-	kfree(m);
-}
+अटल व्योम ssp_clean_msg(काष्ठा ssp_msg *m)
+अणु
+	kमुक्त(m->buffer);
+	kमुक्त(m);
+पूर्ण
 
-static int ssp_print_mcu_debug(char *data_frame, int *data_index,
-			       int received_len)
-{
-	int length = data_frame[(*data_index)++];
+अटल पूर्णांक ssp_prपूर्णांक_mcu_debug(अक्षर *data_frame, पूर्णांक *data_index,
+			       पूर्णांक received_len)
+अणु
+	पूर्णांक length = data_frame[(*data_index)++];
 
-	if (length > received_len - *data_index || length <= 0) {
+	अगर (length > received_len - *data_index || length <= 0) अणु
 		ssp_dbg("[SSP]: MSG From MCU-invalid debug length(%d/%d)\n",
 			length, received_len);
-		return length ? length : -EPROTO;
-	}
+		वापस length ? length : -EPROTO;
+	पूर्ण
 
 	ssp_dbg("[SSP]: MSG From MCU - %s\n", &data_frame[*data_index]);
 
 	*data_index += length;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * It was designed that way - additional lines to some kind of handshake,
- * please do not ask why - only the firmware guy can know it.
+ * It was deचिन्हित that way - additional lines to some kind of handshake,
+ * please करो not ask why - only the firmware guy can know it.
  */
-static int ssp_check_lines(struct ssp_data *data, bool state)
-{
-	int delay_cnt = 0;
+अटल पूर्णांक ssp_check_lines(काष्ठा ssp_data *data, bool state)
+अणु
+	पूर्णांक delay_cnt = 0;
 
 	gpiod_set_value_cansleep(data->ap_mcu_gpiod, state);
 
-	while (gpiod_get_value_cansleep(data->mcu_ap_gpiod) != state) {
+	जबतक (gpiod_get_value_cansleep(data->mcu_ap_gpiod) != state) अणु
 		usleep_range(3000, 3500);
 
-		if (data->shut_down || delay_cnt++ > 500) {
+		अगर (data->shut_करोwn || delay_cnt++ > 500) अणु
 			dev_err(SSP_DEV, "%s:timeout, hw ack wait fail %d\n",
 				__func__, state);
 
-			if (!state)
+			अगर (!state)
 				gpiod_set_value_cansleep(data->ap_mcu_gpiod, 1);
 
-			return -ETIMEDOUT;
-		}
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ssp_do_transfer(struct ssp_data *data, struct ssp_msg *msg,
-			   struct completion *done, int timeout)
-{
-	int status;
+अटल पूर्णांक ssp_करो_transfer(काष्ठा ssp_data *data, काष्ठा ssp_msg *msg,
+			   काष्ठा completion *करोne, पूर्णांक समयout)
+अणु
+	पूर्णांक status;
 	/*
-	 * check if this is a short one way message or the whole transfer has
-	 * second part after an interrupt
+	 * check अगर this is a लघु one way message or the whole transfer has
+	 * second part after an पूर्णांकerrupt
 	 */
-	const bool use_no_irq = msg->length == 0;
+	स्थिर bool use_no_irq = msg->length == 0;
 
-	if (data->shut_down)
-		return -EPERM;
+	अगर (data->shut_करोwn)
+		वापस -EPERM;
 
-	msg->done = done;
+	msg->करोne = करोne;
 
 	mutex_lock(&data->comm_lock);
 
 	status = ssp_check_lines(data, false);
-	if (status < 0)
-		goto _error_locked;
+	अगर (status < 0)
+		जाओ _error_locked;
 
-	status = spi_write(data->spi, msg->buffer, SSP_HEADER_SIZE);
-	if (status < 0) {
+	status = spi_ग_लिखो(data->spi, msg->buffer, SSP_HEADER_SIZE);
+	अगर (status < 0) अणु
 		gpiod_set_value_cansleep(data->ap_mcu_gpiod, 1);
 		dev_err(SSP_DEV, "%s spi_write fail\n", __func__);
-		goto _error_locked;
-	}
+		जाओ _error_locked;
+	पूर्ण
 
-	if (!use_no_irq) {
+	अगर (!use_no_irq) अणु
 		mutex_lock(&data->pending_lock);
 		list_add_tail(&msg->list, &data->pending_list);
 		mutex_unlock(&data->pending_lock);
-	}
+	पूर्ण
 
 	status = ssp_check_lines(data, true);
-	if (status < 0) {
-		if (!use_no_irq) {
+	अगर (status < 0) अणु
+		अगर (!use_no_irq) अणु
 			mutex_lock(&data->pending_lock);
 			list_del(&msg->list);
 			mutex_unlock(&data->pending_lock);
-		}
-		goto _error_locked;
-	}
+		पूर्ण
+		जाओ _error_locked;
+	पूर्ण
 
 	mutex_unlock(&data->comm_lock);
 
-	if (!use_no_irq && done)
-		if (wait_for_completion_timeout(done,
-						msecs_to_jiffies(timeout)) ==
-		    0) {
+	अगर (!use_no_irq && करोne)
+		अगर (रुको_क्रम_completion_समयout(करोne,
+						msecs_to_jअगरfies(समयout)) ==
+		    0) अणु
 			mutex_lock(&data->pending_lock);
 			list_del(&msg->list);
 			mutex_unlock(&data->pending_lock);
 
-			data->timeout_cnt++;
-			return -ETIMEDOUT;
-		}
+			data->समयout_cnt++;
+			वापस -ETIMEDOUT;
+		पूर्ण
 
-	return 0;
+	वापस 0;
 
 _error_locked:
 	mutex_unlock(&data->comm_lock);
-	data->timeout_cnt++;
-	return status;
-}
+	data->समयout_cnt++;
+	वापस status;
+पूर्ण
 
-static inline int ssp_spi_sync_command(struct ssp_data *data,
-				       struct ssp_msg *msg)
-{
-	return ssp_do_transfer(data, msg, NULL, 0);
-}
+अटल अंतरभूत पूर्णांक ssp_spi_sync_command(काष्ठा ssp_data *data,
+				       काष्ठा ssp_msg *msg)
+अणु
+	वापस ssp_करो_transfer(data, msg, शून्य, 0);
+पूर्ण
 
-static int ssp_spi_sync(struct ssp_data *data, struct ssp_msg *msg,
-			int timeout)
-{
-	DECLARE_COMPLETION_ONSTACK(done);
+अटल पूर्णांक ssp_spi_sync(काष्ठा ssp_data *data, काष्ठा ssp_msg *msg,
+			पूर्णांक समयout)
+अणु
+	DECLARE_COMPLETION_ONSTACK(करोne);
 
-	if (WARN_ON(!msg->length))
-		return -EPERM;
+	अगर (WARN_ON(!msg->length))
+		वापस -EPERM;
 
-	return ssp_do_transfer(data, msg, &done, timeout);
-}
+	वापस ssp_करो_transfer(data, msg, &करोne, समयout);
+पूर्ण
 
-static int ssp_handle_big_data(struct ssp_data *data, char *dataframe, int *idx)
-{
+अटल पूर्णांक ssp_handle_big_data(काष्ठा ssp_data *data, अक्षर *dataframe, पूर्णांक *idx)
+अणु
 	/* mock-up, it will be changed with adding another sensor types */
 	*idx += 8;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ssp_parse_dataframe(struct ssp_data *data, char *dataframe, int len)
-{
-	int idx, sd;
-	struct ssp_sensor_data *spd;
-	struct iio_dev **indio_devs = data->sensor_devs;
+अटल पूर्णांक ssp_parse_dataframe(काष्ठा ssp_data *data, अक्षर *dataframe, पूर्णांक len)
+अणु
+	पूर्णांक idx, sd;
+	काष्ठा ssp_sensor_data *spd;
+	काष्ठा iio_dev **indio_devs = data->sensor_devs;
 
-	for (idx = 0; idx < len;) {
-		switch (dataframe[idx++]) {
-		case SSP_MSG2AP_INST_BYPASS_DATA:
+	क्रम (idx = 0; idx < len;) अणु
+		चयन (dataframe[idx++]) अणु
+		हाल SSP_MSG2AP_INST_BYPASS_DATA:
 			sd = dataframe[idx++];
-			if (sd < 0 || sd >= SSP_SENSOR_MAX) {
+			अगर (sd < 0 || sd >= SSP_SENSOR_MAX) अणु
 				dev_err(SSP_DEV,
 					"Mcu data frame1 error %d\n", sd);
-				return -EPROTO;
-			}
+				वापस -EPROTO;
+			पूर्ण
 
-			if (indio_devs[sd]) {
+			अगर (indio_devs[sd]) अणु
 				spd = iio_priv(indio_devs[sd]);
-				if (spd->process_data)
+				अगर (spd->process_data)
 					spd->process_data(indio_devs[sd],
 							  &dataframe[idx],
-							  data->timestamp);
-			} else {
+							  data->बारtamp);
+			पूर्ण अन्यथा अणु
 				dev_err(SSP_DEV, "no client for frame\n");
-			}
+			पूर्ण
 
 			idx += ssp_offset_map[sd];
-			break;
-		case SSP_MSG2AP_INST_DEBUG_DATA:
-			sd = ssp_print_mcu_debug(dataframe, &idx, len);
-			if (sd) {
+			अवरोध;
+		हाल SSP_MSG2AP_INST_DEBUG_DATA:
+			sd = ssp_prपूर्णांक_mcu_debug(dataframe, &idx, len);
+			अगर (sd) अणु
 				dev_err(SSP_DEV,
 					"Mcu data frame3 error %d\n", sd);
-				return sd;
-			}
-			break;
-		case SSP_MSG2AP_INST_LIBRARY_DATA:
+				वापस sd;
+			पूर्ण
+			अवरोध;
+		हाल SSP_MSG2AP_INST_LIBRARY_DATA:
 			idx += len;
-			break;
-		case SSP_MSG2AP_INST_BIG_DATA:
+			अवरोध;
+		हाल SSP_MSG2AP_INST_BIG_DATA:
 			ssp_handle_big_data(data, dataframe, &idx);
-			break;
-		case SSP_MSG2AP_INST_TIME_SYNC:
-			data->time_syncing = true;
-			break;
-		case SSP_MSG2AP_INST_RESET:
+			अवरोध;
+		हाल SSP_MSG2AP_INST_TIME_SYNC:
+			data->समय_syncing = true;
+			अवरोध;
+		हाल SSP_MSG2AP_INST_RESET:
 			ssp_queue_ssp_refresh_task(data, 0);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (data->time_syncing)
-		data->timestamp = ktime_get_real_ns();
+	अगर (data->समय_syncing)
+		data->बारtamp = kसमय_get_real_ns();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* threaded irq */
-int ssp_irq_msg(struct ssp_data *data)
-{
+/* thपढ़ोed irq */
+पूर्णांक ssp_irq_msg(काष्ठा ssp_data *data)
+अणु
 	bool found = false;
-	char *buffer;
+	अक्षर *buffer;
 	u8 msg_type;
-	int ret;
+	पूर्णांक ret;
 	u16 length, msg_options;
-	struct ssp_msg *msg, *n;
+	काष्ठा ssp_msg *msg, *n;
 
-	ret = spi_read(data->spi, data->header_buffer, SSP_HEADER_BUFFER_SIZE);
-	if (ret < 0) {
+	ret = spi_पढ़ो(data->spi, data->header_buffer, SSP_HEADER_BUFFER_SIZE);
+	अगर (ret < 0) अणु
 		dev_err(SSP_DEV, "header read fail\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	length = le16_to_cpu(data->header_buffer[1]);
 	msg_options = le16_to_cpu(data->header_buffer[0]);
 
-	if (length == 0) {
+	अगर (length == 0) अणु
 		dev_err(SSP_DEV, "length received from mcu is 0\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	msg_type = SSP_GET_MESSAGE_TYPE(msg_options);
 
-	switch (msg_type) {
-	case SSP_AP2HUB_READ:
-	case SSP_AP2HUB_WRITE:
+	चयन (msg_type) अणु
+	हाल SSP_AP2HUB_READ:
+	हाल SSP_AP2HUB_WRITE:
 		/*
 		 * this is a small list, a few elements - the packets can be
 		 * received with no order
 		 */
 		mutex_lock(&data->pending_lock);
-		list_for_each_entry_safe(msg, n, &data->pending_list, list) {
-			if (msg->options == msg_options) {
+		list_क्रम_each_entry_safe(msg, n, &data->pending_list, list) अणु
+			अगर (msg->options == msg_options) अणु
 				list_del(&msg->list);
 				found = true;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (!found) {
+		अगर (!found) अणु
 			/*
 			 * here can be implemented dead messages handling
 			 * but the slave should not send such ones - it is to
 			 * check but let's handle this
 			 */
-			buffer = kmalloc(length, GFP_KERNEL | GFP_DMA);
-			if (!buffer) {
+			buffer = kदो_स्मृति(length, GFP_KERNEL | GFP_DMA);
+			अगर (!buffer) अणु
 				ret = -ENOMEM;
-				goto _unlock;
-			}
+				जाओ _unlock;
+			पूर्ण
 
 			/* got dead packet so it is always an error */
-			ret = spi_read(data->spi, buffer, length);
-			if (ret >= 0)
+			ret = spi_पढ़ो(data->spi, buffer, length);
+			अगर (ret >= 0)
 				ret = -EPROTO;
 
-			kfree(buffer);
+			kमुक्त(buffer);
 
 			dev_err(SSP_DEV, "No match error %x\n",
 				msg_options);
 
-			goto _unlock;
-		}
+			जाओ _unlock;
+		पूर्ण
 
-		if (msg_type == SSP_AP2HUB_READ)
-			ret = spi_read(data->spi,
+		अगर (msg_type == SSP_AP2HUB_READ)
+			ret = spi_पढ़ो(data->spi,
 				       &msg->buffer[SSP_HEADER_SIZE_ALIGNED],
 				       msg->length);
 
-		if (msg_type == SSP_AP2HUB_WRITE) {
-			ret = spi_write(data->spi,
+		अगर (msg_type == SSP_AP2HUB_WRITE) अणु
+			ret = spi_ग_लिखो(data->spi,
 					&msg->buffer[SSP_HEADER_SIZE_ALIGNED],
 					msg->length);
-			if (msg_options & SSP_AP2HUB_RETURN) {
+			अगर (msg_options & SSP_AP2HUB_RETURN) अणु
 				msg->options =
 					SSP_AP2HUB_READ | SSP_AP2HUB_RETURN;
 				msg->length = 1;
 
 				list_add_tail(&msg->list, &data->pending_list);
-				goto _unlock;
-			}
-		}
+				जाओ _unlock;
+			पूर्ण
+		पूर्ण
 
-		if (msg->done)
-			if (!completion_done(msg->done))
-				complete(msg->done);
+		अगर (msg->करोne)
+			अगर (!completion_करोne(msg->करोne))
+				complete(msg->करोne);
 _unlock:
 		mutex_unlock(&data->pending_lock);
-		break;
-	case SSP_HUB2AP_WRITE:
+		अवरोध;
+	हाल SSP_HUB2AP_WRITE:
 		buffer = kzalloc(length, GFP_KERNEL | GFP_DMA);
-		if (!buffer)
-			return -ENOMEM;
+		अगर (!buffer)
+			वापस -ENOMEM;
 
-		ret = spi_read(data->spi, buffer, length);
-		if (ret < 0) {
+		ret = spi_पढ़ो(data->spi, buffer, length);
+		अगर (ret < 0) अणु
 			dev_err(SSP_DEV, "spi read fail\n");
-			kfree(buffer);
-			break;
-		}
+			kमुक्त(buffer);
+			अवरोध;
+		पूर्ण
 
 		ret = ssp_parse_dataframe(data, buffer, length);
 
-		kfree(buffer);
-		break;
+		kमुक्त(buffer);
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(SSP_DEV, "unknown msg type\n");
-		return -EPROTO;
-	}
+		वापस -EPROTO;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void ssp_clean_pending_list(struct ssp_data *data)
-{
-	struct ssp_msg *msg, *n;
+व्योम ssp_clean_pending_list(काष्ठा ssp_data *data)
+अणु
+	काष्ठा ssp_msg *msg, *n;
 
 	mutex_lock(&data->pending_lock);
-	list_for_each_entry_safe(msg, n, &data->pending_list, list) {
+	list_क्रम_each_entry_safe(msg, n, &data->pending_list, list) अणु
 		list_del(&msg->list);
 
-		if (msg->done)
-			if (!completion_done(msg->done))
-				complete(msg->done);
-	}
+		अगर (msg->करोne)
+			अगर (!completion_करोne(msg->करोne))
+				complete(msg->करोne);
+	पूर्ण
 	mutex_unlock(&data->pending_lock);
-}
+पूर्ण
 
-int ssp_command(struct ssp_data *data, char command, int arg)
-{
-	int ret;
-	struct ssp_msg *msg;
+पूर्णांक ssp_command(काष्ठा ssp_data *data, अक्षर command, पूर्णांक arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा ssp_msg *msg;
 
 	msg = ssp_create_msg(command, 0, SSP_AP2HUB_WRITE, arg);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	ssp_dbg("%s - command 0x%x %d\n", __func__, command, arg);
 
 	ret = ssp_spi_sync_command(data, msg);
 	ssp_clean_msg(msg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ssp_send_instruction(struct ssp_data *data, u8 inst, u8 sensor_type,
+पूर्णांक ssp_send_inकाष्ठाion(काष्ठा ssp_data *data, u8 inst, u8 sensor_type,
 			 u8 *send_buf, u8 length)
-{
-	int ret;
-	struct ssp_msg *msg;
+अणु
+	पूर्णांक ret;
+	काष्ठा ssp_msg *msg;
 
-	if (data->fw_dl_state == SSP_FW_DL_STATE_DOWNLOADING) {
+	अगर (data->fw_dl_state == SSP_FW_DL_STATE_DOWNLOADING) अणु
 		dev_err(SSP_DEV, "%s - Skip Inst! DL state = %d\n",
 			__func__, data->fw_dl_state);
-		return -EBUSY;
-	} else if (!(data->available_sensors & BIT(sensor_type)) &&
-		   (inst <= SSP_MSG2SSP_INST_CHANGE_DELAY)) {
+		वापस -EBUSY;
+	पूर्ण अन्यथा अगर (!(data->available_sensors & BIT(sensor_type)) &&
+		   (inst <= SSP_MSG2SSP_INST_CHANGE_DELAY)) अणु
 		dev_err(SSP_DEV, "%s - Bypass Inst Skip! - %u\n",
 			__func__, sensor_type);
-		return -EIO; /* just fail */
-	}
+		वापस -EIO; /* just fail */
+	पूर्ण
 
 	msg = ssp_create_msg(inst, length + 2, SSP_AP2HUB_WRITE, 0);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	ssp_fill_buffer(msg, 0, &sensor_type, 1);
 	ssp_fill_buffer(msg, 1, send_buf, length);
@@ -500,18 +501,18 @@ int ssp_send_instruction(struct ssp_data *data, u8 inst, u8 sensor_type,
 	ret = ssp_spi_sync(data, msg, 1000);
 	ssp_clean_msg(msg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ssp_get_chipid(struct ssp_data *data)
-{
-	int ret;
-	char buffer;
-	struct ssp_msg *msg;
+पूर्णांक ssp_get_chipid(काष्ठा ssp_data *data)
+अणु
+	पूर्णांक ret;
+	अक्षर buffer;
+	काष्ठा ssp_msg *msg;
 
 	msg = ssp_create_msg(SSP_MSG2SSP_AP_WHOAMI, 1, SSP_AP2HUB_READ, 0);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	ret = ssp_spi_sync(data, msg, 1000);
 
@@ -519,19 +520,19 @@ int ssp_get_chipid(struct ssp_data *data)
 
 	ssp_clean_msg(msg);
 
-	return ret < 0 ? ret : buffer;
-}
+	वापस ret < 0 ? ret : buffer;
+पूर्ण
 
-int ssp_set_magnetic_matrix(struct ssp_data *data)
-{
-	int ret;
-	struct ssp_msg *msg;
+पूर्णांक ssp_set_magnetic_matrix(काष्ठा ssp_data *data)
+अणु
+	पूर्णांक ret;
+	काष्ठा ssp_msg *msg;
 
 	msg = ssp_create_msg(SSP_MSG2SSP_AP_SET_MAGNETIC_STATIC_MATRIX,
 			     data->sensorhub_info->mag_length, SSP_AP2HUB_WRITE,
 			     0);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	ssp_fill_buffer(msg, 0, data->sensorhub_info->mag_table,
 			data->sensorhub_info->mag_length);
@@ -539,57 +540,57 @@ int ssp_set_magnetic_matrix(struct ssp_data *data)
 	ret = ssp_spi_sync(data, msg, 1000);
 	ssp_clean_msg(msg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-unsigned int ssp_get_sensor_scanning_info(struct ssp_data *data)
-{
-	int ret;
+अचिन्हित पूर्णांक ssp_get_sensor_scanning_info(काष्ठा ssp_data *data)
+अणु
+	पूर्णांक ret;
 	__le32 result;
 	u32 cpu_result = 0;
 
-	struct ssp_msg *msg = ssp_create_msg(SSP_MSG2SSP_AP_SENSOR_SCANNING, 4,
+	काष्ठा ssp_msg *msg = ssp_create_msg(SSP_MSG2SSP_AP_SENSOR_SCANNING, 4,
 					     SSP_AP2HUB_READ, 0);
-	if (!msg)
-		return 0;
+	अगर (!msg)
+		वापस 0;
 
 	ret = ssp_spi_sync(data, msg, 1000);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(SSP_DEV, "%s - spi read fail %d\n", __func__, ret);
-		goto _exit;
-	}
+		जाओ _निकास;
+	पूर्ण
 
 	ssp_get_buffer(msg, 0, &result, 4);
 	cpu_result = le32_to_cpu(result);
 
 	dev_info(SSP_DEV, "%s state: 0x%08x\n", __func__, cpu_result);
 
-_exit:
+_निकास:
 	ssp_clean_msg(msg);
-	return cpu_result;
-}
+	वापस cpu_result;
+पूर्ण
 
-unsigned int ssp_get_firmware_rev(struct ssp_data *data)
-{
-	int ret;
+अचिन्हित पूर्णांक ssp_get_firmware_rev(काष्ठा ssp_data *data)
+अणु
+	पूर्णांक ret;
 	__le32 result;
 
-	struct ssp_msg *msg = ssp_create_msg(SSP_MSG2SSP_AP_FIRMWARE_REV, 4,
+	काष्ठा ssp_msg *msg = ssp_create_msg(SSP_MSG2SSP_AP_FIRMWARE_REV, 4,
 					     SSP_AP2HUB_READ, 0);
-	if (!msg)
-		return SSP_INVALID_REVISION;
+	अगर (!msg)
+		वापस SSP_INVALID_REVISION;
 
 	ret = ssp_spi_sync(data, msg, 1000);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(SSP_DEV, "%s - transfer fail %d\n", __func__, ret);
 		ret = SSP_INVALID_REVISION;
-		goto _exit;
-	}
+		जाओ _निकास;
+	पूर्ण
 
 	ssp_get_buffer(msg, 0, &result, 4);
 	ret = le32_to_cpu(result);
 
-_exit:
+_निकास:
 	ssp_clean_msg(msg);
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* sunvnet.c: Sun LDOM Virtual Network Driver.
  *
  * Copyright (C) 2007, 2008 David S. Miller <davem@davemloft.net>
  * Copyright (C) 2016-2017 Oracle. All rights reserved.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/netdevice.h>
-#include <linux/ethtool.h>
-#include <linux/etherdevice.h>
-#include <linux/mutex.h>
-#include <linux/highmem.h>
-#include <linux/if_vlan.h>
-#define CREATE_TRACE_POINTS
-#include <trace/events/sunvnet.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/अगर_vlan.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/sunvnet.h>
 
-#if IS_ENABLED(CONFIG_IPV6)
-#include <linux/icmpv6.h>
-#endif
+#अगर IS_ENABLED(CONFIG_IPV6)
+#समावेश <linux/icmpv6.h>
+#पूर्ण_अगर
 
-#include <net/ip.h>
-#include <net/icmp.h>
-#include <net/route.h>
+#समावेश <net/ip.h>
+#समावेश <net/icmp.h>
+#समावेश <net/route.h>
 
-#include <asm/vio.h>
-#include <asm/ldc.h>
+#समावेश <यंत्र/vपन.स>
+#समावेश <यंत्र/ldc.h>
 
-#include "sunvnet_common.h"
+#समावेश "sunvnet_common.h"
 
-/* Heuristic for the number of times to exponentially backoff and
+/* Heuristic क्रम the number of बार to exponentially backoff and
  * retry sending an LDC trigger when EAGAIN is encountered
  */
-#define	VNET_MAX_RETRIES	10
+#घोषणा	VNET_MAX_RETRIES	10
 
 MODULE_AUTHOR("David S. Miller (davem@davemloft.net)");
 MODULE_DESCRIPTION("Sun LDOM virtual network support library");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("1.1");
 
-static int __vnet_tx_trigger(struct vnet_port *port, u32 start);
+अटल पूर्णांक __vnet_tx_trigger(काष्ठा vnet_port *port, u32 start);
 
-static inline u32 vnet_tx_dring_avail(struct vio_dring_state *dr)
-{
-	return vio_dring_avail(dr, VNET_TX_RING_SIZE);
-}
+अटल अंतरभूत u32 vnet_tx_dring_avail(काष्ठा vio_dring_state *dr)
+अणु
+	वापस vio_dring_avail(dr, VNET_TX_RING_SIZE);
+पूर्ण
 
-static int vnet_handle_unknown(struct vnet_port *port, void *arg)
-{
-	struct vio_msg_tag *pkt = arg;
+अटल पूर्णांक vnet_handle_unknown(काष्ठा vnet_port *port, व्योम *arg)
+अणु
+	काष्ठा vio_msg_tag *pkt = arg;
 
 	pr_err("Received unknown msg [%02x:%02x:%04x:%08x]\n",
 	       pkt->type, pkt->stype, pkt->stype_env, pkt->sid);
@@ -60,59 +61,59 @@ static int vnet_handle_unknown(struct vnet_port *port, void *arg)
 
 	ldc_disconnect(port->vio.lp);
 
-	return -ECONNRESET;
-}
+	वापस -ECONNRESET;
+पूर्ण
 
-static int vnet_port_alloc_tx_ring(struct vnet_port *port);
+अटल पूर्णांक vnet_port_alloc_tx_ring(काष्ठा vnet_port *port);
 
-int sunvnet_send_attr_common(struct vio_driver_state *vio)
-{
-	struct vnet_port *port = to_vnet_port(vio);
-	struct net_device *dev = VNET_PORT_TO_NET_DEVICE(port);
-	struct vio_net_attr_info pkt;
-	int framelen = ETH_FRAME_LEN;
-	int i, err;
+पूर्णांक sunvnet_send_attr_common(काष्ठा vio_driver_state *vio)
+अणु
+	काष्ठा vnet_port *port = to_vnet_port(vio);
+	काष्ठा net_device *dev = VNET_PORT_TO_NET_DEVICE(port);
+	काष्ठा vio_net_attr_info pkt;
+	पूर्णांक framelen = ETH_FRAME_LEN;
+	पूर्णांक i, err;
 
 	err = vnet_port_alloc_tx_ring(to_vnet_port(vio));
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 	pkt.tag.type = VIO_TYPE_CTRL;
 	pkt.tag.stype = VIO_SUBTYPE_INFO;
 	pkt.tag.stype_env = VIO_ATTR_INFO;
 	pkt.tag.sid = vio_send_sid(vio);
-	if (vio_version_before(vio, 1, 2))
+	अगर (vio_version_beक्रमe(vio, 1, 2))
 		pkt.xfer_mode = VIO_DRING_MODE;
-	else
+	अन्यथा
 		pkt.xfer_mode = VIO_NEW_DRING_MODE;
 	pkt.addr_type = VNET_ADDR_ETHERMAC;
 	pkt.ack_freq = 0;
-	for (i = 0; i < 6; i++)
+	क्रम (i = 0; i < 6; i++)
 		pkt.addr |= (u64)dev->dev_addr[i] << ((5 - i) * 8);
-	if (vio_version_after(vio, 1, 3)) {
-		if (port->rmtu) {
+	अगर (vio_version_after(vio, 1, 3)) अणु
+		अगर (port->rmtu) अणु
 			port->rmtu = min(VNET_MAXPACKET, port->rmtu);
 			pkt.mtu = port->rmtu;
-		} else {
+		पूर्ण अन्यथा अणु
 			port->rmtu = VNET_MAXPACKET;
 			pkt.mtu = port->rmtu;
-		}
-		if (vio_version_after_eq(vio, 1, 6))
+		पूर्ण
+		अगर (vio_version_after_eq(vio, 1, 6))
 			pkt.options = VIO_TX_DRING;
-	} else if (vio_version_before(vio, 1, 3)) {
+	पूर्ण अन्यथा अगर (vio_version_beक्रमe(vio, 1, 3)) अणु
 		pkt.mtu = framelen;
-	} else { /* v1.3 */
+	पूर्ण अन्यथा अणु /* v1.3 */
 		pkt.mtu = framelen + VLAN_HLEN;
-	}
+	पूर्ण
 
 	pkt.cflags = 0;
-	if (vio_version_after_eq(vio, 1, 7) && port->tso) {
+	अगर (vio_version_after_eq(vio, 1, 7) && port->tso) अणु
 		pkt.cflags |= VNET_LSO_IPV4_CAPAB;
-		if (!port->tsolen)
+		अगर (!port->tsolen)
 			port->tsolen = VNET_MAXTSO;
 		pkt.ipv4_lso_maxlen = port->tsolen;
-	}
+	पूर्ण
 
 	pkt.plnk_updt = PHYSLINK_UPDATE_NONE;
 
@@ -120,18 +121,18 @@ int sunvnet_send_attr_common(struct vio_driver_state *vio)
 	       "ackfreq[%u] plnk_updt[0x%02x] opts[0x%02x] mtu[%llu] "
 	       "cflags[0x%04x] lso_max[%u]\n",
 	       pkt.xfer_mode, pkt.addr_type,
-	       (unsigned long long)pkt.addr,
+	       (अचिन्हित दीर्घ दीर्घ)pkt.addr,
 	       pkt.ack_freq, pkt.plnk_updt, pkt.options,
-	       (unsigned long long)pkt.mtu, pkt.cflags, pkt.ipv4_lso_maxlen);
+	       (अचिन्हित दीर्घ दीर्घ)pkt.mtu, pkt.cflags, pkt.ipv4_lso_maxlen);
 
-	return vio_ldc_send(vio, &pkt, sizeof(pkt));
-}
+	वापस vio_ldc_send(vio, &pkt, माप(pkt));
+पूर्ण
 EXPORT_SYMBOL_GPL(sunvnet_send_attr_common);
 
-static int handle_attr_info(struct vio_driver_state *vio,
-			    struct vio_net_attr_info *pkt)
-{
-	struct vnet_port *port = to_vnet_port(vio);
+अटल पूर्णांक handle_attr_info(काष्ठा vio_driver_state *vio,
+			    काष्ठा vio_net_attr_info *pkt)
+अणु
+	काष्ठा vnet_port *port = to_vnet_port(vio);
 	u64	localmtu;
 	u8	xfer_mode;
 
@@ -139,127 +140,127 @@ static int handle_attr_info(struct vio_driver_state *vio,
 	       "ackfreq[%u] plnk_updt[0x%02x] opts[0x%02x] mtu[%llu] "
 	       " (rmtu[%llu]) cflags[0x%04x] lso_max[%u]\n",
 	       pkt->xfer_mode, pkt->addr_type,
-	       (unsigned long long)pkt->addr,
+	       (अचिन्हित दीर्घ दीर्घ)pkt->addr,
 	       pkt->ack_freq, pkt->plnk_updt, pkt->options,
-	       (unsigned long long)pkt->mtu, port->rmtu, pkt->cflags,
+	       (अचिन्हित दीर्घ दीर्घ)pkt->mtu, port->rmtu, pkt->cflags,
 	       pkt->ipv4_lso_maxlen);
 
 	pkt->tag.sid = vio_send_sid(vio);
 
 	xfer_mode = pkt->xfer_mode;
-	/* for version < 1.2, VIO_DRING_MODE = 0x3 and no bitmask */
-	if (vio_version_before(vio, 1, 2) && xfer_mode == VIO_DRING_MODE)
+	/* क्रम version < 1.2, VIO_DRING_MODE = 0x3 and no biपंचांगask */
+	अगर (vio_version_beक्रमe(vio, 1, 2) && xfer_mode == VIO_DRING_MODE)
 		xfer_mode = VIO_NEW_DRING_MODE;
 
 	/* MTU negotiation:
 	 *	< v1.3 - ETH_FRAME_LEN exactly
 	 *	> v1.3 - MIN(pkt.mtu, VNET_MAXPACKET, port->rmtu) and change
-	 *			pkt->mtu for ACK
+	 *			pkt->mtu क्रम ACK
 	 *	= v1.3 - ETH_FRAME_LEN + VLAN_HLEN exactly
 	 */
-	if (vio_version_before(vio, 1, 3)) {
+	अगर (vio_version_beक्रमe(vio, 1, 3)) अणु
 		localmtu = ETH_FRAME_LEN;
-	} else if (vio_version_after(vio, 1, 3)) {
+	पूर्ण अन्यथा अगर (vio_version_after(vio, 1, 3)) अणु
 		localmtu = port->rmtu ? port->rmtu : VNET_MAXPACKET;
 		localmtu = min(pkt->mtu, localmtu);
 		pkt->mtu = localmtu;
-	} else { /* v1.3 */
+	पूर्ण अन्यथा अणु /* v1.3 */
 		localmtu = ETH_FRAME_LEN + VLAN_HLEN;
-	}
+	पूर्ण
 	port->rmtu = localmtu;
 
 	/* LSO negotiation */
-	if (vio_version_after_eq(vio, 1, 7))
+	अगर (vio_version_after_eq(vio, 1, 7))
 		port->tso &= !!(pkt->cflags & VNET_LSO_IPV4_CAPAB);
-	else
+	अन्यथा
 		port->tso = false;
-	if (port->tso) {
-		if (!port->tsolen)
+	अगर (port->tso) अणु
+		अगर (!port->tsolen)
 			port->tsolen = VNET_MAXTSO;
 		port->tsolen = min(port->tsolen, pkt->ipv4_lso_maxlen);
-		if (port->tsolen < VNET_MINTSO) {
+		अगर (port->tsolen < VNET_MINTSO) अणु
 			port->tso = false;
 			port->tsolen = 0;
 			pkt->cflags &= ~VNET_LSO_IPV4_CAPAB;
-		}
+		पूर्ण
 		pkt->ipv4_lso_maxlen = port->tsolen;
-	} else {
+	पूर्ण अन्यथा अणु
 		pkt->cflags &= ~VNET_LSO_IPV4_CAPAB;
 		pkt->ipv4_lso_maxlen = 0;
 		port->tsolen = 0;
-	}
+	पूर्ण
 
-	/* for version >= 1.6, ACK packet mode we support */
-	if (vio_version_after_eq(vio, 1, 6)) {
+	/* क्रम version >= 1.6, ACK packet mode we support */
+	अगर (vio_version_after_eq(vio, 1, 6)) अणु
 		pkt->xfer_mode = VIO_NEW_DRING_MODE;
 		pkt->options = VIO_TX_DRING;
-	}
+	पूर्ण
 
-	if (!(xfer_mode | VIO_NEW_DRING_MODE) ||
+	अगर (!(xfer_mode | VIO_NEW_DRING_MODE) ||
 	    pkt->addr_type != VNET_ADDR_ETHERMAC ||
-	    pkt->mtu != localmtu) {
+	    pkt->mtu != localmtu) अणु
 		viodbg(HS, "SEND NET ATTR NACK\n");
 
 		pkt->tag.stype = VIO_SUBTYPE_NACK;
 
-		(void)vio_ldc_send(vio, pkt, sizeof(*pkt));
+		(व्योम)vio_ldc_send(vio, pkt, माप(*pkt));
 
-		return -ECONNRESET;
-	}
+		वापस -ECONNRESET;
+	पूर्ण
 
 	viodbg(HS, "SEND NET ATTR ACK xmode[0x%x] atype[0x%x] "
 	       "addr[%llx] ackfreq[%u] plnk_updt[0x%02x] opts[0x%02x] "
 	       "mtu[%llu] (rmtu[%llu]) cflags[0x%04x] lso_max[%u]\n",
 	       pkt->xfer_mode, pkt->addr_type,
-	       (unsigned long long)pkt->addr,
+	       (अचिन्हित दीर्घ दीर्घ)pkt->addr,
 	       pkt->ack_freq, pkt->plnk_updt, pkt->options,
-	       (unsigned long long)pkt->mtu, port->rmtu, pkt->cflags,
+	       (अचिन्हित दीर्घ दीर्घ)pkt->mtu, port->rmtu, pkt->cflags,
 	       pkt->ipv4_lso_maxlen);
 
 	pkt->tag.stype = VIO_SUBTYPE_ACK;
 
-	return vio_ldc_send(vio, pkt, sizeof(*pkt));
-}
+	वापस vio_ldc_send(vio, pkt, माप(*pkt));
+पूर्ण
 
-static int handle_attr_ack(struct vio_driver_state *vio,
-			   struct vio_net_attr_info *pkt)
-{
+अटल पूर्णांक handle_attr_ack(काष्ठा vio_driver_state *vio,
+			   काष्ठा vio_net_attr_info *pkt)
+अणु
 	viodbg(HS, "GOT NET ATTR ACK\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int handle_attr_nack(struct vio_driver_state *vio,
-			    struct vio_net_attr_info *pkt)
-{
+अटल पूर्णांक handle_attr_nack(काष्ठा vio_driver_state *vio,
+			    काष्ठा vio_net_attr_info *pkt)
+अणु
 	viodbg(HS, "GOT NET ATTR NACK\n");
 
-	return -ECONNRESET;
-}
+	वापस -ECONNRESET;
+पूर्ण
 
-int sunvnet_handle_attr_common(struct vio_driver_state *vio, void *arg)
-{
-	struct vio_net_attr_info *pkt = arg;
+पूर्णांक sunvnet_handle_attr_common(काष्ठा vio_driver_state *vio, व्योम *arg)
+अणु
+	काष्ठा vio_net_attr_info *pkt = arg;
 
-	switch (pkt->tag.stype) {
-	case VIO_SUBTYPE_INFO:
-		return handle_attr_info(vio, pkt);
+	चयन (pkt->tag.stype) अणु
+	हाल VIO_SUBTYPE_INFO:
+		वापस handle_attr_info(vio, pkt);
 
-	case VIO_SUBTYPE_ACK:
-		return handle_attr_ack(vio, pkt);
+	हाल VIO_SUBTYPE_ACK:
+		वापस handle_attr_ack(vio, pkt);
 
-	case VIO_SUBTYPE_NACK:
-		return handle_attr_nack(vio, pkt);
+	हाल VIO_SUBTYPE_NACK:
+		वापस handle_attr_nack(vio, pkt);
 
-	default:
-		return -ECONNRESET;
-	}
-}
+	शेष:
+		वापस -ECONNRESET;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(sunvnet_handle_attr_common);
 
-void sunvnet_handshake_complete_common(struct vio_driver_state *vio)
-{
-	struct vio_dring_state *dr;
+व्योम sunvnet_handshake_complete_common(काष्ठा vio_driver_state *vio)
+अणु
+	काष्ठा vio_dring_state *dr;
 
 	dr = &vio->drings[VIO_DRIVER_RX_RING];
 	dr->rcv_nxt = 1;
@@ -268,299 +269,299 @@ void sunvnet_handshake_complete_common(struct vio_driver_state *vio)
 	dr = &vio->drings[VIO_DRIVER_TX_RING];
 	dr->rcv_nxt = 1;
 	dr->snd_nxt = 1;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sunvnet_handshake_complete_common);
 
-/* The hypervisor interface that implements copying to/from imported
- * memory from another domain requires that copies are done to 8-byte
+/* The hypervisor पूर्णांकerface that implements copying to/from imported
+ * memory from another करोमुख्य requires that copies are करोne to 8-byte
  * aligned buffers, and that the lengths of such copies are also 8-byte
  * multiples.
  *
  * So we align skb->data to an 8-byte multiple and pad-out the data
  * area so we can round the copy length up to the next multiple of
- * 8 for the copy.
+ * 8 क्रम the copy.
  *
- * The transmitter puts the actual start of the packet 6 bytes into
+ * The transmitter माला_दो the actual start of the packet 6 bytes पूर्णांकo
  * the buffer it sends over, so that the IP headers after the ethernet
  * header are aligned properly.  These 6 bytes are not in the descriptor
  * length, they are simply implied.  This offset is represented using
  * the VNET_PACKET_SKIP macro.
  */
-static struct sk_buff *alloc_and_align_skb(struct net_device *dev,
-					   unsigned int len)
-{
-	struct sk_buff *skb;
-	unsigned long addr, off;
+अटल काष्ठा sk_buff *alloc_and_align_skb(काष्ठा net_device *dev,
+					   अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ addr, off;
 
 	skb = netdev_alloc_skb(dev, len + VNET_PACKET_SKIP + 8 + 8);
-	if (unlikely(!skb))
-		return NULL;
+	अगर (unlikely(!skb))
+		वापस शून्य;
 
-	addr = (unsigned long)skb->data;
+	addr = (अचिन्हित दीर्घ)skb->data;
 	off = ((addr + 7UL) & ~7UL) - addr;
-	if (off)
+	अगर (off)
 		skb_reserve(skb, off);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static inline void vnet_fullcsum_ipv4(struct sk_buff *skb)
-{
-	struct iphdr *iph = ip_hdr(skb);
-	int offset = skb_transport_offset(skb);
+अटल अंतरभूत व्योम vnet_fullcsum_ipv4(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा iphdr *iph = ip_hdr(skb);
+	पूर्णांक offset = skb_transport_offset(skb);
 
-	if (skb->protocol != htons(ETH_P_IP))
-		return;
-	if (iph->protocol != IPPROTO_TCP &&
+	अगर (skb->protocol != htons(ETH_P_IP))
+		वापस;
+	अगर (iph->protocol != IPPROTO_TCP &&
 	    iph->protocol != IPPROTO_UDP)
-		return;
+		वापस;
 	skb->ip_summed = CHECKSUM_NONE;
 	skb->csum_level = 1;
 	skb->csum = 0;
-	if (iph->protocol == IPPROTO_TCP) {
-		struct tcphdr *ptcp = tcp_hdr(skb);
+	अगर (iph->protocol == IPPROTO_TCP) अणु
+		काष्ठा tcphdr *ptcp = tcp_hdr(skb);
 
 		ptcp->check = 0;
 		skb->csum = skb_checksum(skb, offset, skb->len - offset, 0);
 		ptcp->check = csum_tcpudp_magic(iph->saddr, iph->daddr,
 						skb->len - offset, IPPROTO_TCP,
 						skb->csum);
-	} else if (iph->protocol == IPPROTO_UDP) {
-		struct udphdr *pudp = udp_hdr(skb);
+	पूर्ण अन्यथा अगर (iph->protocol == IPPROTO_UDP) अणु
+		काष्ठा udphdr *pudp = udp_hdr(skb);
 
 		pudp->check = 0;
 		skb->csum = skb_checksum(skb, offset, skb->len - offset, 0);
 		pudp->check = csum_tcpudp_magic(iph->saddr, iph->daddr,
 						skb->len - offset, IPPROTO_UDP,
 						skb->csum);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-static inline void vnet_fullcsum_ipv6(struct sk_buff *skb)
-{
-	struct ipv6hdr *ip6h = ipv6_hdr(skb);
-	int offset = skb_transport_offset(skb);
+#अगर IS_ENABLED(CONFIG_IPV6)
+अटल अंतरभूत व्योम vnet_fullcsum_ipv6(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ipv6hdr *ip6h = ipv6_hdr(skb);
+	पूर्णांक offset = skb_transport_offset(skb);
 
-	if (skb->protocol != htons(ETH_P_IPV6))
-		return;
-	if (ip6h->nexthdr != IPPROTO_TCP &&
+	अगर (skb->protocol != htons(ETH_P_IPV6))
+		वापस;
+	अगर (ip6h->nexthdr != IPPROTO_TCP &&
 	    ip6h->nexthdr != IPPROTO_UDP)
-		return;
+		वापस;
 	skb->ip_summed = CHECKSUM_NONE;
 	skb->csum_level = 1;
 	skb->csum = 0;
-	if (ip6h->nexthdr == IPPROTO_TCP) {
-		struct tcphdr *ptcp = tcp_hdr(skb);
+	अगर (ip6h->nexthdr == IPPROTO_TCP) अणु
+		काष्ठा tcphdr *ptcp = tcp_hdr(skb);
 
 		ptcp->check = 0;
 		skb->csum = skb_checksum(skb, offset, skb->len - offset, 0);
 		ptcp->check = csum_ipv6_magic(&ip6h->saddr, &ip6h->daddr,
 					      skb->len - offset, IPPROTO_TCP,
 					      skb->csum);
-	} else if (ip6h->nexthdr == IPPROTO_UDP) {
-		struct udphdr *pudp = udp_hdr(skb);
+	पूर्ण अन्यथा अगर (ip6h->nexthdr == IPPROTO_UDP) अणु
+		काष्ठा udphdr *pudp = udp_hdr(skb);
 
 		pudp->check = 0;
 		skb->csum = skb_checksum(skb, offset, skb->len - offset, 0);
 		pudp->check = csum_ipv6_magic(&ip6h->saddr, &ip6h->daddr,
 					      skb->len - offset, IPPROTO_UDP,
 					      skb->csum);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static int vnet_rx_one(struct vnet_port *port, struct vio_net_desc *desc)
-{
-	struct net_device *dev = VNET_PORT_TO_NET_DEVICE(port);
-	unsigned int len = desc->size;
-	unsigned int copy_len;
-	struct sk_buff *skb;
-	int maxlen;
-	int err;
+अटल पूर्णांक vnet_rx_one(काष्ठा vnet_port *port, काष्ठा vio_net_desc *desc)
+अणु
+	काष्ठा net_device *dev = VNET_PORT_TO_NET_DEVICE(port);
+	अचिन्हित पूर्णांक len = desc->size;
+	अचिन्हित पूर्णांक copy_len;
+	काष्ठा sk_buff *skb;
+	पूर्णांक maxlen;
+	पूर्णांक err;
 
 	err = -EMSGSIZE;
-	if (port->tso && port->tsolen > port->rmtu)
+	अगर (port->tso && port->tsolen > port->rmtu)
 		maxlen = port->tsolen;
-	else
+	अन्यथा
 		maxlen = port->rmtu;
-	if (unlikely(len < ETH_ZLEN || len > maxlen)) {
+	अगर (unlikely(len < ETH_ZLEN || len > maxlen)) अणु
 		dev->stats.rx_length_errors++;
-		goto out_dropped;
-	}
+		जाओ out_dropped;
+	पूर्ण
 
 	skb = alloc_and_align_skb(dev, len);
 	err = -ENOMEM;
-	if (unlikely(!skb)) {
+	अगर (unlikely(!skb)) अणु
 		dev->stats.rx_missed_errors++;
-		goto out_dropped;
-	}
+		जाओ out_dropped;
+	पूर्ण
 
 	copy_len = (len + VNET_PACKET_SKIP + 7U) & ~7U;
 	skb_put(skb, copy_len);
 	err = ldc_copy(port->vio.lp, LDC_COPY_IN,
 		       skb->data, copy_len, 0,
 		       desc->cookies, desc->ncookies);
-	if (unlikely(err < 0)) {
+	अगर (unlikely(err < 0)) अणु
 		dev->stats.rx_frame_errors++;
-		goto out_free_skb;
-	}
+		जाओ out_मुक्त_skb;
+	पूर्ण
 
 	skb_pull(skb, VNET_PACKET_SKIP);
 	skb_trim(skb, len);
 	skb->protocol = eth_type_trans(skb, dev);
 
-	if (vio_version_after_eq(&port->vio, 1, 8)) {
-		struct vio_net_dext *dext = vio_net_ext(desc);
+	अगर (vio_version_after_eq(&port->vio, 1, 8)) अणु
+		काष्ठा vio_net_dext *dext = vio_net_ext(desc);
 
 		skb_reset_network_header(skb);
 
-		if (dext->flags & VNET_PKT_HCK_IPV4_HDRCKSUM) {
-			if (skb->protocol == ETH_P_IP) {
-				struct iphdr *iph = ip_hdr(skb);
+		अगर (dext->flags & VNET_PKT_HCK_IPV4_HDRCKSUM) अणु
+			अगर (skb->protocol == ETH_P_IP) अणु
+				काष्ठा iphdr *iph = ip_hdr(skb);
 
 				iph->check = 0;
 				ip_send_check(iph);
-			}
-		}
-		if ((dext->flags & VNET_PKT_HCK_FULLCKSUM) &&
-		    skb->ip_summed == CHECKSUM_NONE) {
-			if (skb->protocol == htons(ETH_P_IP)) {
-				struct iphdr *iph = ip_hdr(skb);
-				int ihl = iph->ihl * 4;
+			पूर्ण
+		पूर्ण
+		अगर ((dext->flags & VNET_PKT_HCK_FULLCKSUM) &&
+		    skb->ip_summed == CHECKSUM_NONE) अणु
+			अगर (skb->protocol == htons(ETH_P_IP)) अणु
+				काष्ठा iphdr *iph = ip_hdr(skb);
+				पूर्णांक ihl = iph->ihl * 4;
 
 				skb_set_transport_header(skb, ihl);
 				vnet_fullcsum_ipv4(skb);
-#if IS_ENABLED(CONFIG_IPV6)
-			} else if (skb->protocol == htons(ETH_P_IPV6)) {
+#अगर IS_ENABLED(CONFIG_IPV6)
+			पूर्ण अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6)) अणु
 				skb_set_transport_header(skb,
-							 sizeof(struct ipv6hdr));
+							 माप(काष्ठा ipv6hdr));
 				vnet_fullcsum_ipv6(skb);
-#endif
-			}
-		}
-		if (dext->flags & VNET_PKT_HCK_IPV4_HDRCKSUM_OK) {
+#पूर्ण_अगर
+			पूर्ण
+		पूर्ण
+		अगर (dext->flags & VNET_PKT_HCK_IPV4_HDRCKSUM_OK) अणु
 			skb->ip_summed = CHECKSUM_PARTIAL;
 			skb->csum_level = 0;
-			if (dext->flags & VNET_PKT_HCK_FULLCKSUM_OK)
+			अगर (dext->flags & VNET_PKT_HCK_FULLCKSUM_OK)
 				skb->csum_level = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	skb->ip_summed = port->switch_port ? CHECKSUM_NONE : CHECKSUM_PARTIAL;
+	skb->ip_summed = port->चयन_port ? CHECKSUM_NONE : CHECKSUM_PARTIAL;
 
-	if (unlikely(is_multicast_ether_addr(eth_hdr(skb)->h_dest)))
+	अगर (unlikely(is_multicast_ether_addr(eth_hdr(skb)->h_dest)))
 		dev->stats.multicast++;
 	dev->stats.rx_packets++;
 	dev->stats.rx_bytes += len;
 	port->stats.rx_packets++;
 	port->stats.rx_bytes += len;
 	napi_gro_receive(&port->napi, skb);
-	return 0;
+	वापस 0;
 
-out_free_skb:
-	kfree_skb(skb);
+out_मुक्त_skb:
+	kमुक्त_skb(skb);
 
 out_dropped:
 	dev->stats.rx_dropped++;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int vnet_send_ack(struct vnet_port *port, struct vio_dring_state *dr,
+अटल पूर्णांक vnet_send_ack(काष्ठा vnet_port *port, काष्ठा vio_dring_state *dr,
 			 u32 start, u32 end, u8 vio_dring_state)
-{
-	struct vio_dring_data hdr = {
-		.tag = {
+अणु
+	काष्ठा vio_dring_data hdr = अणु
+		.tag = अणु
 			.type		= VIO_TYPE_DATA,
 			.stype		= VIO_SUBTYPE_ACK,
 			.stype_env	= VIO_DRING_DATA,
 			.sid		= vio_send_sid(&port->vio),
-		},
+		पूर्ण,
 		.dring_ident		= dr->ident,
 		.start_idx		= start,
 		.end_idx		= end,
 		.state			= vio_dring_state,
-	};
-	int err, delay;
-	int retries = 0;
+	पूर्ण;
+	पूर्णांक err, delay;
+	पूर्णांक retries = 0;
 
 	hdr.seq = dr->snd_nxt;
 	delay = 1;
-	do {
-		err = vio_ldc_send(&port->vio, &hdr, sizeof(hdr));
-		if (err > 0) {
+	करो अणु
+		err = vio_ldc_send(&port->vio, &hdr, माप(hdr));
+		अगर (err > 0) अणु
 			dr->snd_nxt++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		udelay(delay);
-		if ((delay <<= 1) > 128)
+		अगर ((delay <<= 1) > 128)
 			delay = 128;
-		if (retries++ > VNET_MAX_RETRIES) {
+		अगर (retries++ > VNET_MAX_RETRIES) अणु
 			pr_info("ECONNRESET %x:%x:%x:%x:%x:%x\n",
 				port->raddr[0], port->raddr[1],
 				port->raddr[2], port->raddr[3],
 				port->raddr[4], port->raddr[5]);
-			break;
-		}
-	} while (err == -EAGAIN);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (err == -EAGAIN);
 
-	if (err <= 0 && vio_dring_state == VIO_DRING_STOPPED) {
+	अगर (err <= 0 && vio_dring_state == VIO_DRING_STOPPED) अणु
 		port->stop_rx_idx = end;
 		port->stop_rx = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		port->stop_rx_idx = 0;
 		port->stop_rx = false;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct vio_net_desc *get_rx_desc(struct vnet_port *port,
-					struct vio_dring_state *dr,
+अटल काष्ठा vio_net_desc *get_rx_desc(काष्ठा vnet_port *port,
+					काष्ठा vio_dring_state *dr,
 					u32 index)
-{
-	struct vio_net_desc *desc = port->vio.desc_buf;
-	int err;
+अणु
+	काष्ठा vio_net_desc *desc = port->vio.desc_buf;
+	पूर्णांक err;
 
 	err = ldc_get_dring_entry(port->vio.lp, desc, dr->entry_size,
 				  (index * dr->entry_size),
 				  dr->cookies, dr->ncookies);
-	if (err < 0)
-		return ERR_PTR(err);
+	अगर (err < 0)
+		वापस ERR_PTR(err);
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
-static int put_rx_desc(struct vnet_port *port,
-		       struct vio_dring_state *dr,
-		       struct vio_net_desc *desc,
+अटल पूर्णांक put_rx_desc(काष्ठा vnet_port *port,
+		       काष्ठा vio_dring_state *dr,
+		       काष्ठा vio_net_desc *desc,
 		       u32 index)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
 	err = ldc_put_dring_entry(port->vio.lp, desc, dr->entry_size,
 				  (index * dr->entry_size),
 				  dr->cookies, dr->ncookies);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vnet_walk_rx_one(struct vnet_port *port,
-			    struct vio_dring_state *dr,
-			    u32 index, int *needs_ack)
-{
-	struct vio_net_desc *desc = get_rx_desc(port, dr, index);
-	struct vio_driver_state *vio = &port->vio;
-	int err;
+अटल पूर्णांक vnet_walk_rx_one(काष्ठा vnet_port *port,
+			    काष्ठा vio_dring_state *dr,
+			    u32 index, पूर्णांक *needs_ack)
+अणु
+	काष्ठा vio_net_desc *desc = get_rx_desc(port, dr, index);
+	काष्ठा vio_driver_state *vio = &port->vio;
+	पूर्णांक err;
 
 	BUG_ON(!desc);
-	if (IS_ERR(desc))
-		return PTR_ERR(desc);
+	अगर (IS_ERR(desc))
+		वापस PTR_ERR(desc);
 
-	if (desc->hdr.state != VIO_DESC_READY)
-		return 1;
+	अगर (desc->hdr.state != VIO_DESC_READY)
+		वापस 1;
 
 	dma_rmb();
 
@@ -571,23 +572,23 @@ static int vnet_walk_rx_one(struct vnet_port *port,
 	       desc->cookies[0].cookie_size);
 
 	err = vnet_rx_one(port, desc);
-	if (err == -ECONNRESET)
-		return err;
+	अगर (err == -ECONNRESET)
+		वापस err;
 	trace_vnet_rx_one(port->vio._local_sid, port->vio._peer_sid,
 			  index, desc->hdr.ack);
 	desc->hdr.state = VIO_DESC_DONE;
 	err = put_rx_desc(port, dr, desc, index);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	*needs_ack = desc->hdr.ack;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vnet_walk_rx(struct vnet_port *port, struct vio_dring_state *dr,
-			u32 start, u32 end, int *npkts, int budget)
-{
-	struct vio_driver_state *vio = &port->vio;
-	int ack_start = -1, ack_end = -1;
+अटल पूर्णांक vnet_walk_rx(काष्ठा vnet_port *port, काष्ठा vio_dring_state *dr,
+			u32 start, u32 end, पूर्णांक *npkts, पूर्णांक budget)
+अणु
+	काष्ठा vio_driver_state *vio = &port->vio;
+	पूर्णांक ack_start = -1, ack_end = -1;
 	bool send_ack = true;
 
 	end = (end == (u32)-1) ? vio_dring_prev(dr, start)
@@ -595,154 +596,154 @@ static int vnet_walk_rx(struct vnet_port *port, struct vio_dring_state *dr,
 
 	viodbg(DATA, "vnet_walk_rx start[%08x] end[%08x]\n", start, end);
 
-	while (start != end) {
-		int ack = 0, err = vnet_walk_rx_one(port, dr, start, &ack);
+	जबतक (start != end) अणु
+		पूर्णांक ack = 0, err = vnet_walk_rx_one(port, dr, start, &ack);
 
-		if (err == -ECONNRESET)
-			return err;
-		if (err != 0)
-			break;
+		अगर (err == -ECONNRESET)
+			वापस err;
+		अगर (err != 0)
+			अवरोध;
 		(*npkts)++;
-		if (ack_start == -1)
+		अगर (ack_start == -1)
 			ack_start = start;
 		ack_end = start;
 		start = vio_dring_next(dr, start);
-		if (ack && start != end) {
+		अगर (ack && start != end) अणु
 			err = vnet_send_ack(port, dr, ack_start, ack_end,
 					    VIO_DRING_ACTIVE);
-			if (err == -ECONNRESET)
-				return err;
+			अगर (err == -ECONNRESET)
+				वापस err;
 			ack_start = -1;
-		}
-		if ((*npkts) >= budget) {
+		पूर्ण
+		अगर ((*npkts) >= budget) अणु
 			send_ack = false;
-			break;
-		}
-	}
-	if (unlikely(ack_start == -1)) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (unlikely(ack_start == -1)) अणु
 		ack_end = vio_dring_prev(dr, start);
 		ack_start = ack_end;
-	}
-	if (send_ack) {
+	पूर्ण
+	अगर (send_ack) अणु
 		port->napi_resume = false;
 		trace_vnet_tx_send_stopped_ack(port->vio._local_sid,
 					       port->vio._peer_sid,
 					       ack_end, *npkts);
-		return vnet_send_ack(port, dr, ack_start, ack_end,
+		वापस vnet_send_ack(port, dr, ack_start, ack_end,
 				     VIO_DRING_STOPPED);
-	} else  {
+	पूर्ण अन्यथा  अणु
 		trace_vnet_tx_defer_stopped_ack(port->vio._local_sid,
 						port->vio._peer_sid,
 						ack_end, *npkts);
 		port->napi_resume = true;
 		port->napi_stop_idx = ack_end;
-		return 1;
-	}
-}
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-static int vnet_rx(struct vnet_port *port, void *msgbuf, int *npkts,
-		   int budget)
-{
-	struct vio_dring_data *pkt = msgbuf;
-	struct vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_RX_RING];
-	struct vio_driver_state *vio = &port->vio;
+अटल पूर्णांक vnet_rx(काष्ठा vnet_port *port, व्योम *msgbuf, पूर्णांक *npkts,
+		   पूर्णांक budget)
+अणु
+	काष्ठा vio_dring_data *pkt = msgbuf;
+	काष्ठा vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_RX_RING];
+	काष्ठा vio_driver_state *vio = &port->vio;
 
 	viodbg(DATA, "vnet_rx stype_env[%04x] seq[%016llx] rcv_nxt[%016llx]\n",
 	       pkt->tag.stype_env, pkt->seq, dr->rcv_nxt);
 
-	if (unlikely(pkt->tag.stype_env != VIO_DRING_DATA))
-		return 0;
-	if (unlikely(pkt->seq != dr->rcv_nxt)) {
+	अगर (unlikely(pkt->tag.stype_env != VIO_DRING_DATA))
+		वापस 0;
+	अगर (unlikely(pkt->seq != dr->rcv_nxt)) अणु
 		pr_err("RX out of sequence seq[0x%llx] rcv_nxt[0x%llx]\n",
 		       pkt->seq, dr->rcv_nxt);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!port->napi_resume)
+	अगर (!port->napi_resume)
 		dr->rcv_nxt++;
 
 	/* XXX Validate pkt->start_idx and pkt->end_idx XXX */
 
-	return vnet_walk_rx(port, dr, pkt->start_idx, pkt->end_idx,
+	वापस vnet_walk_rx(port, dr, pkt->start_idx, pkt->end_idx,
 			    npkts, budget);
-}
+पूर्ण
 
-static int idx_is_pending(struct vio_dring_state *dr, u32 end)
-{
+अटल पूर्णांक idx_is_pending(काष्ठा vio_dring_state *dr, u32 end)
+अणु
 	u32 idx = dr->cons;
-	int found = 0;
+	पूर्णांक found = 0;
 
-	while (idx != dr->prod) {
-		if (idx == end) {
+	जबतक (idx != dr->prod) अणु
+		अगर (idx == end) अणु
 			found = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		idx = vio_dring_next(dr, idx);
-	}
-	return found;
-}
+	पूर्ण
+	वापस found;
+पूर्ण
 
-static int vnet_ack(struct vnet_port *port, void *msgbuf)
-{
-	struct vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
-	struct vio_dring_data *pkt = msgbuf;
-	struct net_device *dev;
+अटल पूर्णांक vnet_ack(काष्ठा vnet_port *port, व्योम *msgbuf)
+अणु
+	काष्ठा vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
+	काष्ठा vio_dring_data *pkt = msgbuf;
+	काष्ठा net_device *dev;
 	u32 end;
-	struct vio_net_desc *desc;
-	struct netdev_queue *txq;
+	काष्ठा vio_net_desc *desc;
+	काष्ठा netdev_queue *txq;
 
-	if (unlikely(pkt->tag.stype_env != VIO_DRING_DATA))
-		return 0;
+	अगर (unlikely(pkt->tag.stype_env != VIO_DRING_DATA))
+		वापस 0;
 
 	end = pkt->end_idx;
 	dev = VNET_PORT_TO_NET_DEVICE(port);
-	netif_tx_lock(dev);
-	if (unlikely(!idx_is_pending(dr, end))) {
-		netif_tx_unlock(dev);
-		return 0;
-	}
+	netअगर_tx_lock(dev);
+	अगर (unlikely(!idx_is_pending(dr, end))) अणु
+		netअगर_tx_unlock(dev);
+		वापस 0;
+	पूर्ण
 
-	/* sync for race conditions with vnet_start_xmit() and tell xmit it
-	 * is time to send a trigger.
+	/* sync क्रम race conditions with vnet_start_xmit() and tell xmit it
+	 * is समय to send a trigger.
 	 */
 	trace_vnet_rx_stopped_ack(port->vio._local_sid,
 				  port->vio._peer_sid, end);
 	dr->cons = vio_dring_next(dr, end);
 	desc = vio_dring_entry(dr, dr->cons);
-	if (desc->hdr.state == VIO_DESC_READY && !port->start_cons) {
+	अगर (desc->hdr.state == VIO_DESC_READY && !port->start_cons) अणु
 		/* vnet_start_xmit() just populated this dring but missed
 		 * sending the "start" LDC message to the consumer.
 		 * Send a "start" trigger on its behalf.
 		 */
-		if (__vnet_tx_trigger(port, dr->cons) > 0)
+		अगर (__vnet_tx_trigger(port, dr->cons) > 0)
 			port->start_cons = false;
-		else
+		अन्यथा
 			port->start_cons = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		port->start_cons = true;
-	}
-	netif_tx_unlock(dev);
+	पूर्ण
+	netअगर_tx_unlock(dev);
 
 	txq = netdev_get_tx_queue(dev, port->q_index);
-	if (unlikely(netif_tx_queue_stopped(txq) &&
+	अगर (unlikely(netअगर_tx_queue_stopped(txq) &&
 		     vnet_tx_dring_avail(dr) >= VNET_TX_WAKEUP_THRESH(dr)))
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vnet_nack(struct vnet_port *port, void *msgbuf)
-{
+अटल पूर्णांक vnet_nack(काष्ठा vnet_port *port, व्योम *msgbuf)
+अणु
 	/* XXX just reset or similar XXX */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int handle_mcast(struct vnet_port *port, void *msgbuf)
-{
-	struct vio_net_mcast_info *pkt = msgbuf;
-	struct net_device *dev = VNET_PORT_TO_NET_DEVICE(port);
+अटल पूर्णांक handle_mcast(काष्ठा vnet_port *port, व्योम *msgbuf)
+अणु
+	काष्ठा vio_net_mcast_info *pkt = msgbuf;
+	काष्ठा net_device *dev = VNET_PORT_TO_NET_DEVICE(port);
 
-	if (pkt->tag.stype != VIO_SUBTYPE_ACK)
+	अगर (pkt->tag.stype != VIO_SUBTYPE_ACK)
 		pr_err("%s: Got unexpected MCAST reply [%02x:%02x:%04x:%08x]\n",
 		       dev->name,
 		       pkt->tag.type,
@@ -750,52 +751,52 @@ static int handle_mcast(struct vnet_port *port, void *msgbuf)
 		       pkt->tag.stype_env,
 		       pkt->tag.sid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* If the queue is stopped, wake it up so that we'll
  * send out another START message at the next TX.
  */
-static void maybe_tx_wakeup(struct vnet_port *port)
-{
-	struct netdev_queue *txq;
+अटल व्योम maybe_tx_wakeup(काष्ठा vnet_port *port)
+अणु
+	काष्ठा netdev_queue *txq;
 
 	txq = netdev_get_tx_queue(VNET_PORT_TO_NET_DEVICE(port),
 				  port->q_index);
-	__netif_tx_lock(txq, smp_processor_id());
-	if (likely(netif_tx_queue_stopped(txq)))
-		netif_tx_wake_queue(txq);
-	__netif_tx_unlock(txq);
-}
+	__netअगर_tx_lock(txq, smp_processor_id());
+	अगर (likely(netअगर_tx_queue_stopped(txq)))
+		netअगर_tx_wake_queue(txq);
+	__netअगर_tx_unlock(txq);
+पूर्ण
 
-bool sunvnet_port_is_up_common(struct vnet_port *vnet)
-{
-	struct vio_driver_state *vio = &vnet->vio;
+bool sunvnet_port_is_up_common(काष्ठा vnet_port *vnet)
+अणु
+	काष्ठा vio_driver_state *vio = &vnet->vio;
 
-	return !!(vio->hs_state & VIO_HS_COMPLETE);
-}
+	वापस !!(vio->hs_state & VIO_HS_COMPLETE);
+पूर्ण
 EXPORT_SYMBOL_GPL(sunvnet_port_is_up_common);
 
-static int vnet_event_napi(struct vnet_port *port, int budget)
-{
-	struct net_device *dev = VNET_PORT_TO_NET_DEVICE(port);
-	struct vio_driver_state *vio = &port->vio;
-	int tx_wakeup, err;
-	int npkts = 0;
+अटल पूर्णांक vnet_event_napi(काष्ठा vnet_port *port, पूर्णांक budget)
+अणु
+	काष्ठा net_device *dev = VNET_PORT_TO_NET_DEVICE(port);
+	काष्ठा vio_driver_state *vio = &port->vio;
+	पूर्णांक tx_wakeup, err;
+	पूर्णांक npkts = 0;
 
-	/* we don't expect any other bits */
+	/* we करोn't expect any other bits */
 	BUG_ON(port->rx_event & ~(LDC_EVENT_DATA_READY |
 				  LDC_EVENT_RESET |
 				  LDC_EVENT_UP));
 
 	/* RESET takes precedent over any other event */
-	if (port->rx_event & LDC_EVENT_RESET) {
-		/* a link went down */
+	अगर (port->rx_event & LDC_EVENT_RESET) अणु
+		/* a link went करोwn */
 
-		if (port->vsw == 1) {
-			netif_tx_stop_all_queues(dev);
-			netif_carrier_off(dev);
-		}
+		अगर (port->vsw == 1) अणु
+			netअगर_tx_stop_all_queues(dev);
+			netअगर_carrier_off(dev);
+		पूर्ण
 
 		vio_link_state_change(vio, LDC_EVENT_RESET);
 		vnet_port_reset(port);
@@ -808,40 +809,40 @@ static int vnet_event_napi(struct vnet_port *port, int budget)
 		 * back a VIO_TYPE_DATA ACK packet - which is
 		 * the normal mechanism to restart the tx queue.
 		 */
-		if (netif_running(dev))
+		अगर (netअगर_running(dev))
 			maybe_tx_wakeup(port);
 
 		port->rx_event = 0;
 		port->stats.event_reset++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (port->rx_event & LDC_EVENT_UP) {
+	अगर (port->rx_event & LDC_EVENT_UP) अणु
 		/* a link came up */
 
-		if (port->vsw == 1) {
-			netif_carrier_on(port->dev);
-			netif_tx_start_all_queues(port->dev);
-		}
+		अगर (port->vsw == 1) अणु
+			netअगर_carrier_on(port->dev);
+			netअगर_tx_start_all_queues(port->dev);
+		पूर्ण
 
 		vio_link_state_change(vio, LDC_EVENT_UP);
 		port->rx_event = 0;
 		port->stats.event_up++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	err = 0;
 	tx_wakeup = 0;
-	while (1) {
-		union {
-			struct vio_msg_tag tag;
+	जबतक (1) अणु
+		जोड़ अणु
+			काष्ठा vio_msg_tag tag;
 			u64 raw[8];
-		} msgbuf;
+		पूर्ण msgbuf;
 
-		if (port->napi_resume) {
-			struct vio_dring_data *pkt =
-				(struct vio_dring_data *)&msgbuf;
-			struct vio_dring_state *dr =
+		अगर (port->napi_resume) अणु
+			काष्ठा vio_dring_data *pkt =
+				(काष्ठा vio_dring_data *)&msgbuf;
+			काष्ठा vio_dring_state *dr =
 				&port->vio.drings[VIO_DRIVER_RX_RING];
 
 			pkt->tag.type = VIO_TYPE_DATA;
@@ -851,109 +852,109 @@ static int vnet_event_napi(struct vnet_port *port, int budget)
 			pkt->start_idx = vio_dring_next(dr,
 							port->napi_stop_idx);
 			pkt->end_idx = -1;
-		} else {
-			err = ldc_read(vio->lp, &msgbuf, sizeof(msgbuf));
-			if (unlikely(err < 0)) {
-				if (err == -ECONNRESET)
+		पूर्ण अन्यथा अणु
+			err = ldc_पढ़ो(vio->lp, &msgbuf, माप(msgbuf));
+			अगर (unlikely(err < 0)) अणु
+				अगर (err == -ECONNRESET)
 					vio_conn_reset(vio);
-				break;
-			}
-			if (err == 0)
-				break;
+				अवरोध;
+			पूर्ण
+			अगर (err == 0)
+				अवरोध;
 			viodbg(DATA, "TAG [%02x:%02x:%04x:%08x]\n",
 			       msgbuf.tag.type,
 			       msgbuf.tag.stype,
 			       msgbuf.tag.stype_env,
 			       msgbuf.tag.sid);
 			err = vio_validate_sid(vio, &msgbuf.tag);
-			if (err < 0)
-				break;
-		}
+			अगर (err < 0)
+				अवरोध;
+		पूर्ण
 
-		if (likely(msgbuf.tag.type == VIO_TYPE_DATA)) {
-			if (msgbuf.tag.stype == VIO_SUBTYPE_INFO) {
-				if (!sunvnet_port_is_up_common(port)) {
+		अगर (likely(msgbuf.tag.type == VIO_TYPE_DATA)) अणु
+			अगर (msgbuf.tag.stype == VIO_SUBTYPE_INFO) अणु
+				अगर (!sunvnet_port_is_up_common(port)) अणु
 					/* failures like handshake_failure()
 					 * may have cleaned up dring, but
 					 * NAPI polling may bring us here.
 					 */
 					err = -ECONNRESET;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				err = vnet_rx(port, &msgbuf, &npkts, budget);
-				if (npkts >= budget)
-					break;
-				if (npkts == 0)
-					break;
-			} else if (msgbuf.tag.stype == VIO_SUBTYPE_ACK) {
+				अगर (npkts >= budget)
+					अवरोध;
+				अगर (npkts == 0)
+					अवरोध;
+			पूर्ण अन्यथा अगर (msgbuf.tag.stype == VIO_SUBTYPE_ACK) अणु
 				err = vnet_ack(port, &msgbuf);
-				if (err > 0)
+				अगर (err > 0)
 					tx_wakeup |= err;
-			} else if (msgbuf.tag.stype == VIO_SUBTYPE_NACK) {
+			पूर्ण अन्यथा अगर (msgbuf.tag.stype == VIO_SUBTYPE_NACK) अणु
 				err = vnet_nack(port, &msgbuf);
-			}
-		} else if (msgbuf.tag.type == VIO_TYPE_CTRL) {
-			if (msgbuf.tag.stype_env == VNET_MCAST_INFO)
+			पूर्ण
+		पूर्ण अन्यथा अगर (msgbuf.tag.type == VIO_TYPE_CTRL) अणु
+			अगर (msgbuf.tag.stype_env == VNET_MCAST_INFO)
 				err = handle_mcast(port, &msgbuf);
-			else
+			अन्यथा
 				err = vio_control_pkt_engine(vio, &msgbuf);
-			if (err)
-				break;
-		} else {
+			अगर (err)
+				अवरोध;
+		पूर्ण अन्यथा अणु
 			err = vnet_handle_unknown(port, &msgbuf);
-		}
-		if (err == -ECONNRESET)
-			break;
-	}
-	if (unlikely(tx_wakeup && err != -ECONNRESET))
+		पूर्ण
+		अगर (err == -ECONNRESET)
+			अवरोध;
+	पूर्ण
+	अगर (unlikely(tx_wakeup && err != -ECONNRESET))
 		maybe_tx_wakeup(port);
-	return npkts;
-}
+	वापस npkts;
+पूर्ण
 
-int sunvnet_poll_common(struct napi_struct *napi, int budget)
-{
-	struct vnet_port *port = container_of(napi, struct vnet_port, napi);
-	struct vio_driver_state *vio = &port->vio;
-	int processed = vnet_event_napi(port, budget);
+पूर्णांक sunvnet_poll_common(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा vnet_port *port = container_of(napi, काष्ठा vnet_port, napi);
+	काष्ठा vio_driver_state *vio = &port->vio;
+	पूर्णांक processed = vnet_event_napi(port, budget);
 
-	if (processed < budget) {
-		napi_complete_done(napi, processed);
+	अगर (processed < budget) अणु
+		napi_complete_करोne(napi, processed);
 		port->rx_event &= ~LDC_EVENT_DATA_READY;
-		vio_set_intr(vio->vdev->rx_ino, HV_INTR_ENABLED);
-	}
-	return processed;
-}
+		vio_set_पूर्णांकr(vio->vdev->rx_ino, HV_INTR_ENABLED);
+	पूर्ण
+	वापस processed;
+पूर्ण
 EXPORT_SYMBOL_GPL(sunvnet_poll_common);
 
-void sunvnet_event_common(void *arg, int event)
-{
-	struct vnet_port *port = arg;
-	struct vio_driver_state *vio = &port->vio;
+व्योम sunvnet_event_common(व्योम *arg, पूर्णांक event)
+अणु
+	काष्ठा vnet_port *port = arg;
+	काष्ठा vio_driver_state *vio = &port->vio;
 
 	port->rx_event |= event;
-	vio_set_intr(vio->vdev->rx_ino, HV_INTR_DISABLED);
+	vio_set_पूर्णांकr(vio->vdev->rx_ino, HV_INTR_DISABLED);
 	napi_schedule(&port->napi);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sunvnet_event_common);
 
-static int __vnet_tx_trigger(struct vnet_port *port, u32 start)
-{
-	struct vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
-	struct vio_dring_data hdr = {
-		.tag = {
+अटल पूर्णांक __vnet_tx_trigger(काष्ठा vnet_port *port, u32 start)
+अणु
+	काष्ठा vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
+	काष्ठा vio_dring_data hdr = अणु
+		.tag = अणु
 			.type		= VIO_TYPE_DATA,
 			.stype		= VIO_SUBTYPE_INFO,
 			.stype_env	= VIO_DRING_DATA,
 			.sid		= vio_send_sid(&port->vio),
-		},
+		पूर्ण,
 		.dring_ident		= dr->ident,
 		.start_idx		= start,
 		.end_idx		= (u32)-1,
-	};
-	int err, delay;
-	int retries = 0;
+	पूर्ण;
+	पूर्णांक err, delay;
+	पूर्णांक retries = 0;
 
-	if (port->stop_rx) {
+	अगर (port->stop_rx) अणु
 		trace_vnet_tx_pending_stopped_ack(port->vio._local_sid,
 						  port->vio._peer_sid,
 						  port->stop_rx_idx, -1);
@@ -961,130 +962,130 @@ static int __vnet_tx_trigger(struct vnet_port *port, u32 start)
 				    &port->vio.drings[VIO_DRIVER_RX_RING],
 				    port->stop_rx_idx, -1,
 				    VIO_DRING_STOPPED);
-		if (err <= 0)
-			return err;
-	}
+		अगर (err <= 0)
+			वापस err;
+	पूर्ण
 
 	hdr.seq = dr->snd_nxt;
 	delay = 1;
-	do {
-		err = vio_ldc_send(&port->vio, &hdr, sizeof(hdr));
-		if (err > 0) {
+	करो अणु
+		err = vio_ldc_send(&port->vio, &hdr, माप(hdr));
+		अगर (err > 0) अणु
 			dr->snd_nxt++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		udelay(delay);
-		if ((delay <<= 1) > 128)
+		अगर ((delay <<= 1) > 128)
 			delay = 128;
-		if (retries++ > VNET_MAX_RETRIES)
-			break;
-	} while (err == -EAGAIN);
+		अगर (retries++ > VNET_MAX_RETRIES)
+			अवरोध;
+	पूर्ण जबतक (err == -EAGAIN);
 	trace_vnet_tx_trigger(port->vio._local_sid,
 			      port->vio._peer_sid, start, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct sk_buff *vnet_clean_tx_ring(struct vnet_port *port,
-					  unsigned *pending)
-{
-	struct vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
-	struct sk_buff *skb = NULL;
-	int i, txi;
+अटल काष्ठा sk_buff *vnet_clean_tx_ring(काष्ठा vnet_port *port,
+					  अचिन्हित *pending)
+अणु
+	काष्ठा vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
+	काष्ठा sk_buff *skb = शून्य;
+	पूर्णांक i, txi;
 
 	*pending = 0;
 
 	txi = dr->prod;
-	for (i = 0; i < VNET_TX_RING_SIZE; ++i) {
-		struct vio_net_desc *d;
+	क्रम (i = 0; i < VNET_TX_RING_SIZE; ++i) अणु
+		काष्ठा vio_net_desc *d;
 
 		--txi;
-		if (txi < 0)
+		अगर (txi < 0)
 			txi = VNET_TX_RING_SIZE - 1;
 
 		d = vio_dring_entry(dr, txi);
 
-		if (d->hdr.state == VIO_DESC_READY) {
+		अगर (d->hdr.state == VIO_DESC_READY) अणु
 			(*pending)++;
-			continue;
-		}
-		if (port->tx_bufs[txi].skb) {
-			if (d->hdr.state != VIO_DESC_DONE)
+			जारी;
+		पूर्ण
+		अगर (port->tx_bufs[txi].skb) अणु
+			अगर (d->hdr.state != VIO_DESC_DONE)
 				pr_notice("invalid ring buffer state %d\n",
 					  d->hdr.state);
 			BUG_ON(port->tx_bufs[txi].skb->next);
 
 			port->tx_bufs[txi].skb->next = skb;
 			skb = port->tx_bufs[txi].skb;
-			port->tx_bufs[txi].skb = NULL;
+			port->tx_bufs[txi].skb = शून्य;
 
 			ldc_unmap(port->vio.lp,
 				  port->tx_bufs[txi].cookies,
 				  port->tx_bufs[txi].ncookies);
-		} else if (d->hdr.state == VIO_DESC_FREE) {
-			break;
-		}
+		पूर्ण अन्यथा अगर (d->hdr.state == VIO_DESC_FREE) अणु
+			अवरोध;
+		पूर्ण
 		d->hdr.state = VIO_DESC_FREE;
-	}
-	return skb;
-}
+	पूर्ण
+	वापस skb;
+पूर्ण
 
-static inline void vnet_free_skbs(struct sk_buff *skb)
-{
-	struct sk_buff *next;
+अटल अंतरभूत व्योम vnet_मुक्त_skbs(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sk_buff *next;
 
-	while (skb) {
+	जबतक (skb) अणु
 		next = skb->next;
-		skb->next = NULL;
-		dev_kfree_skb(skb);
+		skb->next = शून्य;
+		dev_kमुक्त_skb(skb);
 		skb = next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void sunvnet_clean_timer_expire_common(struct timer_list *t)
-{
-	struct vnet_port *port = from_timer(port, t, clean_timer);
-	struct sk_buff *freeskbs;
-	unsigned pending;
+व्योम sunvnet_clean_समयr_expire_common(काष्ठा समयr_list *t)
+अणु
+	काष्ठा vnet_port *port = from_समयr(port, t, clean_समयr);
+	काष्ठा sk_buff *मुक्तskbs;
+	अचिन्हित pending;
 
-	netif_tx_lock(VNET_PORT_TO_NET_DEVICE(port));
-	freeskbs = vnet_clean_tx_ring(port, &pending);
-	netif_tx_unlock(VNET_PORT_TO_NET_DEVICE(port));
+	netअगर_tx_lock(VNET_PORT_TO_NET_DEVICE(port));
+	मुक्तskbs = vnet_clean_tx_ring(port, &pending);
+	netअगर_tx_unlock(VNET_PORT_TO_NET_DEVICE(port));
 
-	vnet_free_skbs(freeskbs);
+	vnet_मुक्त_skbs(मुक्तskbs);
 
-	if (pending)
-		(void)mod_timer(&port->clean_timer,
-				jiffies + VNET_CLEAN_TIMEOUT);
-	 else
-		del_timer(&port->clean_timer);
-}
-EXPORT_SYMBOL_GPL(sunvnet_clean_timer_expire_common);
+	अगर (pending)
+		(व्योम)mod_समयr(&port->clean_समयr,
+				jअगरfies + VNET_CLEAN_TIMEOUT);
+	 अन्यथा
+		del_समयr(&port->clean_समयr);
+पूर्ण
+EXPORT_SYMBOL_GPL(sunvnet_clean_समयr_expire_common);
 
-static inline int vnet_skb_map(struct ldc_channel *lp, struct sk_buff *skb,
-			       struct ldc_trans_cookie *cookies, int ncookies,
-			       unsigned int map_perm)
-{
-	int i, nc, err, blen;
+अटल अंतरभूत पूर्णांक vnet_skb_map(काष्ठा ldc_channel *lp, काष्ठा sk_buff *skb,
+			       काष्ठा ldc_trans_cookie *cookies, पूर्णांक ncookies,
+			       अचिन्हित पूर्णांक map_perm)
+अणु
+	पूर्णांक i, nc, err, blen;
 
 	/* header */
 	blen = skb_headlen(skb);
-	if (blen < ETH_ZLEN)
+	अगर (blen < ETH_ZLEN)
 		blen = ETH_ZLEN;
 	blen += VNET_PACKET_SKIP;
 	blen += 8 - (blen & 7);
 
 	err = ldc_map_single(lp, skb->data - VNET_PACKET_SKIP, blen, cookies,
 			     ncookies, map_perm);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	nc = err;
 
-	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
+	क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
 		skb_frag_t *f = &skb_shinfo(skb)->frags[i];
 		u8 *vaddr;
 
-		if (nc < ncookies) {
+		अगर (nc < ncookies) अणु
 			vaddr = kmap_atomic(skb_frag_page(f));
 			blen = skb_frag_size(f);
 			blen += 8 - (blen & 7);
@@ -1092,52 +1093,52 @@ static inline int vnet_skb_map(struct ldc_channel *lp, struct sk_buff *skb,
 					     blen, cookies + nc, ncookies - nc,
 					     map_perm);
 			kunmap_atomic(vaddr);
-		} else {
+		पूर्ण अन्यथा अणु
 			err = -EMSGSIZE;
-		}
+		पूर्ण
 
-		if (err < 0) {
+		अगर (err < 0) अणु
 			ldc_unmap(lp, cookies, nc);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		nc += err;
-	}
-	return nc;
-}
+	पूर्ण
+	वापस nc;
+पूर्ण
 
-static inline struct sk_buff *vnet_skb_shape(struct sk_buff *skb, int ncookies)
-{
-	struct sk_buff *nskb;
-	int i, len, pad, docopy;
+अटल अंतरभूत काष्ठा sk_buff *vnet_skb_shape(काष्ठा sk_buff *skb, पूर्णांक ncookies)
+अणु
+	काष्ठा sk_buff *nskb;
+	पूर्णांक i, len, pad, करोcopy;
 
 	len = skb->len;
 	pad = 0;
-	if (len < ETH_ZLEN) {
+	अगर (len < ETH_ZLEN) अणु
 		pad += ETH_ZLEN - skb->len;
 		len += pad;
-	}
+	पूर्ण
 	len += VNET_PACKET_SKIP;
 	pad += 8 - (len & 7);
 
 	/* make sure we have enough cookies and alignment in every frag */
-	docopy = skb_shinfo(skb)->nr_frags >= ncookies;
-	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
+	करोcopy = skb_shinfo(skb)->nr_frags >= ncookies;
+	क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
 		skb_frag_t *f = &skb_shinfo(skb)->frags[i];
 
-		docopy |= skb_frag_off(f) & 7;
-	}
-	if (((unsigned long)skb->data & 7) != VNET_PACKET_SKIP ||
+		करोcopy |= skb_frag_off(f) & 7;
+	पूर्ण
+	अगर (((अचिन्हित दीर्घ)skb->data & 7) != VNET_PACKET_SKIP ||
 	    skb_tailroom(skb) < pad ||
-	    skb_headroom(skb) < VNET_PACKET_SKIP || docopy) {
-		int start = 0, offset;
+	    skb_headroom(skb) < VNET_PACKET_SKIP || करोcopy) अणु
+		पूर्णांक start = 0, offset;
 		__wsum csum;
 
 		len = skb->len > ETH_ZLEN ? skb->len : ETH_ZLEN;
 		nskb = alloc_and_align_skb(skb->dev, len);
-		if (!nskb) {
-			dev_kfree_skb(skb);
-			return NULL;
-		}
+		अगर (!nskb) अणु
+			dev_kमुक्त_skb(skb);
+			वापस शून्य;
+		पूर्ण
 		skb_reserve(nskb, VNET_PACKET_SKIP);
 
 		nskb->protocol = skb->protocol;
@@ -1152,17 +1153,17 @@ static inline struct sk_buff *vnet_skb_shape(struct sk_buff *skb, int ncookies)
 		nskb->csum_offset = skb->csum_offset;
 		nskb->ip_summed = skb->ip_summed;
 
-		if (skb->ip_summed == CHECKSUM_PARTIAL)
+		अगर (skb->ip_summed == CHECKSUM_PARTIAL)
 			start = skb_checksum_start_offset(skb);
-		if (start) {
-			int offset = start + nskb->csum_offset;
+		अगर (start) अणु
+			पूर्णांक offset = start + nskb->csum_offset;
 
 			/* copy the headers, no csum here */
-			if (skb_copy_bits(skb, 0, nskb->data, start)) {
-				dev_kfree_skb(nskb);
-				dev_kfree_skb(skb);
-				return NULL;
-			}
+			अगर (skb_copy_bits(skb, 0, nskb->data, start)) अणु
+				dev_kमुक्त_skb(nskb);
+				dev_kमुक्त_skb(skb);
+				वापस शून्य;
+			पूर्ण
 
 			/* copy the rest, with csum calculation */
 			*(__sum16 *)(skb->data + offset) = 0;
@@ -1171,320 +1172,320 @@ static inline struct sk_buff *vnet_skb_shape(struct sk_buff *skb, int ncookies)
 						      skb->len - start);
 
 			/* add in the header checksums */
-			if (skb->protocol == htons(ETH_P_IP)) {
-				struct iphdr *iph = ip_hdr(nskb);
+			अगर (skb->protocol == htons(ETH_P_IP)) अणु
+				काष्ठा iphdr *iph = ip_hdr(nskb);
 
-				if (iph->protocol == IPPROTO_TCP ||
-				    iph->protocol == IPPROTO_UDP) {
+				अगर (iph->protocol == IPPROTO_TCP ||
+				    iph->protocol == IPPROTO_UDP) अणु
 					csum = csum_tcpudp_magic(iph->saddr,
 								 iph->daddr,
 								 skb->len - start,
 								 iph->protocol,
 								 csum);
-				}
-			} else if (skb->protocol == htons(ETH_P_IPV6)) {
-				struct ipv6hdr *ip6h = ipv6_hdr(nskb);
+				पूर्ण
+			पूर्ण अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6)) अणु
+				काष्ठा ipv6hdr *ip6h = ipv6_hdr(nskb);
 
-				if (ip6h->nexthdr == IPPROTO_TCP ||
-				    ip6h->nexthdr == IPPROTO_UDP) {
+				अगर (ip6h->nexthdr == IPPROTO_TCP ||
+				    ip6h->nexthdr == IPPROTO_UDP) अणु
 					csum = csum_ipv6_magic(&ip6h->saddr,
 							       &ip6h->daddr,
 							       skb->len - start,
 							       ip6h->nexthdr,
 							       csum);
-				}
-			}
+				पूर्ण
+			पूर्ण
 
 			/* save the final result */
 			*(__sum16 *)(nskb->data + offset) = csum;
 
 			nskb->ip_summed = CHECKSUM_NONE;
-		} else if (skb_copy_bits(skb, 0, nskb->data, skb->len)) {
-			dev_kfree_skb(nskb);
-			dev_kfree_skb(skb);
-			return NULL;
-		}
-		(void)skb_put(nskb, skb->len);
-		if (skb_is_gso(skb)) {
+		पूर्ण अन्यथा अगर (skb_copy_bits(skb, 0, nskb->data, skb->len)) अणु
+			dev_kमुक्त_skb(nskb);
+			dev_kमुक्त_skb(skb);
+			वापस शून्य;
+		पूर्ण
+		(व्योम)skb_put(nskb, skb->len);
+		अगर (skb_is_gso(skb)) अणु
 			skb_shinfo(nskb)->gso_size = skb_shinfo(skb)->gso_size;
 			skb_shinfo(nskb)->gso_type = skb_shinfo(skb)->gso_type;
-		}
+		पूर्ण
 		nskb->queue_mapping = skb->queue_mapping;
-		dev_kfree_skb(skb);
+		dev_kमुक्त_skb(skb);
 		skb = nskb;
-	}
-	return skb;
-}
+	पूर्ण
+	वापस skb;
+पूर्ण
 
-static netdev_tx_t
-vnet_handle_offloads(struct vnet_port *port, struct sk_buff *skb,
-		     struct vnet_port *(*vnet_tx_port)
-		     (struct sk_buff *, struct net_device *))
-{
-	struct net_device *dev = VNET_PORT_TO_NET_DEVICE(port);
-	struct vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
-	struct sk_buff *segs, *curr, *next;
-	int maclen, datalen;
-	int status;
-	int gso_size, gso_type, gso_segs;
-	int hlen = skb_transport_header(skb) - skb_mac_header(skb);
-	int proto = IPPROTO_IP;
+अटल netdev_tx_t
+vnet_handle_offloads(काष्ठा vnet_port *port, काष्ठा sk_buff *skb,
+		     काष्ठा vnet_port *(*vnet_tx_port)
+		     (काष्ठा sk_buff *, काष्ठा net_device *))
+अणु
+	काष्ठा net_device *dev = VNET_PORT_TO_NET_DEVICE(port);
+	काष्ठा vio_dring_state *dr = &port->vio.drings[VIO_DRIVER_TX_RING];
+	काष्ठा sk_buff *segs, *curr, *next;
+	पूर्णांक maclen, datalen;
+	पूर्णांक status;
+	पूर्णांक gso_size, gso_type, gso_segs;
+	पूर्णांक hlen = skb_transport_header(skb) - skb_mac_header(skb);
+	पूर्णांक proto = IPPROTO_IP;
 
-	if (skb->protocol == htons(ETH_P_IP))
+	अगर (skb->protocol == htons(ETH_P_IP))
 		proto = ip_hdr(skb)->protocol;
-	else if (skb->protocol == htons(ETH_P_IPV6))
+	अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6))
 		proto = ipv6_hdr(skb)->nexthdr;
 
-	if (proto == IPPROTO_TCP) {
-		hlen += tcp_hdr(skb)->doff * 4;
-	} else if (proto == IPPROTO_UDP) {
-		hlen += sizeof(struct udphdr);
-	} else {
+	अगर (proto == IPPROTO_TCP) अणु
+		hlen += tcp_hdr(skb)->करोff * 4;
+	पूर्ण अन्यथा अगर (proto == IPPROTO_UDP) अणु
+		hlen += माप(काष्ठा udphdr);
+	पूर्ण अन्यथा अणु
 		pr_err("vnet_handle_offloads GSO with unknown transport "
 		       "protocol %d tproto %d\n", skb->protocol, proto);
 		hlen = 128; /* XXX */
-	}
+	पूर्ण
 	datalen = port->tsolen - hlen;
 
 	gso_size = skb_shinfo(skb)->gso_size;
 	gso_type = skb_shinfo(skb)->gso_type;
 	gso_segs = skb_shinfo(skb)->gso_segs;
 
-	if (port->tso && gso_size < datalen)
+	अगर (port->tso && gso_size < datalen)
 		gso_segs = DIV_ROUND_UP(skb->len - hlen, datalen);
 
-	if (unlikely(vnet_tx_dring_avail(dr) < gso_segs)) {
-		struct netdev_queue *txq;
+	अगर (unlikely(vnet_tx_dring_avail(dr) < gso_segs)) अणु
+		काष्ठा netdev_queue *txq;
 
 		txq  = netdev_get_tx_queue(dev, port->q_index);
-		netif_tx_stop_queue(txq);
-		if (vnet_tx_dring_avail(dr) < skb_shinfo(skb)->gso_segs)
-			return NETDEV_TX_BUSY;
-		netif_tx_wake_queue(txq);
-	}
+		netअगर_tx_stop_queue(txq);
+		अगर (vnet_tx_dring_avail(dr) < skb_shinfo(skb)->gso_segs)
+			वापस NETDEV_TX_BUSY;
+		netअगर_tx_wake_queue(txq);
+	पूर्ण
 
 	maclen = skb_network_header(skb) - skb_mac_header(skb);
 	skb_pull(skb, maclen);
 
-	if (port->tso && gso_size < datalen) {
-		if (skb_unclone(skb, GFP_ATOMIC))
-			goto out_dropped;
+	अगर (port->tso && gso_size < datalen) अणु
+		अगर (skb_unclone(skb, GFP_ATOMIC))
+			जाओ out_dropped;
 
 		/* segment to TSO size */
 		skb_shinfo(skb)->gso_size = datalen;
 		skb_shinfo(skb)->gso_segs = gso_segs;
-	}
+	पूर्ण
 	segs = skb_gso_segment(skb, dev->features & ~NETIF_F_TSO);
-	if (IS_ERR(segs))
-		goto out_dropped;
+	अगर (IS_ERR(segs))
+		जाओ out_dropped;
 
 	skb_push(skb, maclen);
 	skb_reset_mac_header(skb);
 
 	status = 0;
-	skb_list_walk_safe(segs, curr, next) {
+	skb_list_walk_safe(segs, curr, next) अणु
 		skb_mark_not_on_list(curr);
-		if (port->tso && curr->len > dev->mtu) {
+		अगर (port->tso && curr->len > dev->mtu) अणु
 			skb_shinfo(curr)->gso_size = gso_size;
 			skb_shinfo(curr)->gso_type = gso_type;
 			skb_shinfo(curr)->gso_segs =
 				DIV_ROUND_UP(curr->len - hlen, gso_size);
-		} else {
+		पूर्ण अन्यथा अणु
 			skb_shinfo(curr)->gso_size = 0;
-		}
+		पूर्ण
 
 		skb_push(curr, maclen);
 		skb_reset_mac_header(curr);
-		memcpy(skb_mac_header(curr), skb_mac_header(skb),
+		स_नकल(skb_mac_header(curr), skb_mac_header(skb),
 		       maclen);
 		curr->csum_start = skb_transport_header(curr) - curr->head;
-		if (ip_hdr(curr)->protocol == IPPROTO_TCP)
-			curr->csum_offset = offsetof(struct tcphdr, check);
-		else if (ip_hdr(curr)->protocol == IPPROTO_UDP)
-			curr->csum_offset = offsetof(struct udphdr, check);
+		अगर (ip_hdr(curr)->protocol == IPPROTO_TCP)
+			curr->csum_offset = दुरत्व(काष्ठा tcphdr, check);
+		अन्यथा अगर (ip_hdr(curr)->protocol == IPPROTO_UDP)
+			curr->csum_offset = दुरत्व(काष्ठा udphdr, check);
 
-		if (!(status & NETDEV_TX_MASK))
+		अगर (!(status & NETDEV_TX_MASK))
 			status = sunvnet_start_xmit_common(curr, dev,
 							   vnet_tx_port);
-		if (status & NETDEV_TX_MASK)
-			dev_kfree_skb_any(curr);
-	}
+		अगर (status & NETDEV_TX_MASK)
+			dev_kमुक्त_skb_any(curr);
+	पूर्ण
 
-	if (!(status & NETDEV_TX_MASK))
-		dev_kfree_skb_any(skb);
-	return status;
+	अगर (!(status & NETDEV_TX_MASK))
+		dev_kमुक्त_skb_any(skb);
+	वापस status;
 out_dropped:
 	dev->stats.tx_dropped++;
-	dev_kfree_skb_any(skb);
-	return NETDEV_TX_OK;
-}
+	dev_kमुक्त_skb_any(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 netdev_tx_t
-sunvnet_start_xmit_common(struct sk_buff *skb, struct net_device *dev,
-			  struct vnet_port *(*vnet_tx_port)
-			  (struct sk_buff *, struct net_device *))
-{
-	struct vnet_port *port = NULL;
-	struct vio_dring_state *dr;
-	struct vio_net_desc *d;
-	unsigned int len;
-	struct sk_buff *freeskbs = NULL;
-	int i, err, txi;
-	unsigned pending = 0;
-	struct netdev_queue *txq;
+sunvnet_start_xmit_common(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+			  काष्ठा vnet_port *(*vnet_tx_port)
+			  (काष्ठा sk_buff *, काष्ठा net_device *))
+अणु
+	काष्ठा vnet_port *port = शून्य;
+	काष्ठा vio_dring_state *dr;
+	काष्ठा vio_net_desc *d;
+	अचिन्हित पूर्णांक len;
+	काष्ठा sk_buff *मुक्तskbs = शून्य;
+	पूर्णांक i, err, txi;
+	अचिन्हित pending = 0;
+	काष्ठा netdev_queue *txq;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	port = vnet_tx_port(skb, dev);
-	if (unlikely(!port))
-		goto out_dropped;
+	अगर (unlikely(!port))
+		जाओ out_dropped;
 
-	if (skb_is_gso(skb) && skb->len > port->tsolen) {
+	अगर (skb_is_gso(skb) && skb->len > port->tsolen) अणु
 		err = vnet_handle_offloads(port, skb, vnet_tx_port);
-		rcu_read_unlock();
-		return err;
-	}
+		rcu_पढ़ो_unlock();
+		वापस err;
+	पूर्ण
 
-	if (!skb_is_gso(skb) && skb->len > port->rmtu) {
-		unsigned long localmtu = port->rmtu - ETH_HLEN;
+	अगर (!skb_is_gso(skb) && skb->len > port->rmtu) अणु
+		अचिन्हित दीर्घ localmtu = port->rmtu - ETH_HLEN;
 
-		if (vio_version_after_eq(&port->vio, 1, 3))
+		अगर (vio_version_after_eq(&port->vio, 1, 3))
 			localmtu -= VLAN_HLEN;
 
-		if (skb->protocol == htons(ETH_P_IP))
-			icmp_ndo_send(skb, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED,
+		अगर (skb->protocol == htons(ETH_P_IP))
+			icmp_nकरो_send(skb, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED,
 				      htonl(localmtu));
-#if IS_ENABLED(CONFIG_IPV6)
-		else if (skb->protocol == htons(ETH_P_IPV6))
-			icmpv6_ndo_send(skb, ICMPV6_PKT_TOOBIG, 0, localmtu);
-#endif
-		goto out_dropped;
-	}
+#अगर IS_ENABLED(CONFIG_IPV6)
+		अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6))
+			icmpv6_nकरो_send(skb, ICMPV6_PKT_TOOBIG, 0, localmtu);
+#पूर्ण_अगर
+		जाओ out_dropped;
+	पूर्ण
 
 	skb = vnet_skb_shape(skb, 2);
 
-	if (unlikely(!skb))
-		goto out_dropped;
+	अगर (unlikely(!skb))
+		जाओ out_dropped;
 
-	if (skb->ip_summed == CHECKSUM_PARTIAL) {
-		if (skb->protocol == htons(ETH_P_IP))
+	अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
+		अगर (skb->protocol == htons(ETH_P_IP))
 			vnet_fullcsum_ipv4(skb);
-#if IS_ENABLED(CONFIG_IPV6)
-		else if (skb->protocol == htons(ETH_P_IPV6))
+#अगर IS_ENABLED(CONFIG_IPV6)
+		अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6))
 			vnet_fullcsum_ipv6(skb);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	dr = &port->vio.drings[VIO_DRIVER_TX_RING];
 	i = skb_get_queue_mapping(skb);
 	txq = netdev_get_tx_queue(dev, i);
-	if (unlikely(vnet_tx_dring_avail(dr) < 1)) {
-		if (!netif_tx_queue_stopped(txq)) {
-			netif_tx_stop_queue(txq);
+	अगर (unlikely(vnet_tx_dring_avail(dr) < 1)) अणु
+		अगर (!netअगर_tx_queue_stopped(txq)) अणु
+			netअगर_tx_stop_queue(txq);
 
 			/* This is a hard error, log it. */
 			netdev_err(dev, "BUG! Tx Ring full when queue awake!\n");
 			dev->stats.tx_errors++;
-		}
-		rcu_read_unlock();
-		return NETDEV_TX_BUSY;
-	}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	d = vio_dring_cur(dr);
 
 	txi = dr->prod;
 
-	freeskbs = vnet_clean_tx_ring(port, &pending);
+	मुक्तskbs = vnet_clean_tx_ring(port, &pending);
 
 	BUG_ON(port->tx_bufs[txi].skb);
 
 	len = skb->len;
-	if (len < ETH_ZLEN)
+	अगर (len < ETH_ZLEN)
 		len = ETH_ZLEN;
 
 	err = vnet_skb_map(port->vio.lp, skb, port->tx_bufs[txi].cookies, 2,
-			   (LDC_MAP_SHADOW | LDC_MAP_DIRECT | LDC_MAP_RW));
-	if (err < 0) {
+			   (LDC_MAP_SHADOW | LDC_MAP_सूचीECT | LDC_MAP_RW));
+	अगर (err < 0) अणु
 		netdev_info(dev, "tx buffer map error %d\n", err);
-		goto out_dropped;
-	}
+		जाओ out_dropped;
+	पूर्ण
 
 	port->tx_bufs[txi].skb = skb;
-	skb = NULL;
+	skb = शून्य;
 	port->tx_bufs[txi].ncookies = err;
 
-	/* We don't rely on the ACKs to free the skb in vnet_start_xmit(),
-	 * thus it is safe to not set VIO_ACK_ENABLE for each transmission:
-	 * the protocol itself does not require it as long as the peer
-	 * sends a VIO_SUBTYPE_ACK for VIO_DRING_STOPPED.
+	/* We करोn't rely on the ACKs to मुक्त the skb in vnet_start_xmit(),
+	 * thus it is safe to not set VIO_ACK_ENABLE क्रम each transmission:
+	 * the protocol itself करोes not require it as दीर्घ as the peer
+	 * sends a VIO_SUBTYPE_ACK क्रम VIO_DRING_STOPPED.
 	 *
-	 * An ACK for every packet in the ring is expensive as the
-	 * sending of LDC messages is slow and affects performance.
+	 * An ACK क्रम every packet in the ring is expensive as the
+	 * sending of LDC messages is slow and affects perक्रमmance.
 	 */
 	d->hdr.ack = VIO_ACK_DISABLE;
 	d->size = len;
 	d->ncookies = port->tx_bufs[txi].ncookies;
-	for (i = 0; i < d->ncookies; i++)
+	क्रम (i = 0; i < d->ncookies; i++)
 		d->cookies[i] = port->tx_bufs[txi].cookies[i];
-	if (vio_version_after_eq(&port->vio, 1, 7)) {
-		struct vio_net_dext *dext = vio_net_ext(d);
+	अगर (vio_version_after_eq(&port->vio, 1, 7)) अणु
+		काष्ठा vio_net_dext *dext = vio_net_ext(d);
 
-		memset(dext, 0, sizeof(*dext));
-		if (skb_is_gso(port->tx_bufs[txi].skb)) {
+		स_रखो(dext, 0, माप(*dext));
+		अगर (skb_is_gso(port->tx_bufs[txi].skb)) अणु
 			dext->ipv4_lso_mss = skb_shinfo(port->tx_bufs[txi].skb)
 					     ->gso_size;
 			dext->flags |= VNET_PKT_IPV4_LSO;
-		}
-		if (vio_version_after_eq(&port->vio, 1, 8) &&
-		    !port->switch_port) {
+		पूर्ण
+		अगर (vio_version_after_eq(&port->vio, 1, 8) &&
+		    !port->चयन_port) अणु
 			dext->flags |= VNET_PKT_HCK_IPV4_HDRCKSUM_OK;
 			dext->flags |= VNET_PKT_HCK_FULLCKSUM_OK;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* This has to be a non-SMP write barrier because we are writing
+	/* This has to be a non-SMP ग_लिखो barrier because we are writing
 	 * to memory which is shared with the peer LDOM.
 	 */
 	dma_wmb();
 
 	d->hdr.state = VIO_DESC_READY;
 
-	/* Exactly one ldc "start" trigger (for dr->cons) needs to be sent
-	 * to notify the consumer that some descriptors are READY.
+	/* Exactly one ldc "start" trigger (क्रम dr->cons) needs to be sent
+	 * to notअगरy the consumer that some descriptors are READY.
 	 * After that "start" trigger, no additional triggers are needed until
 	 * a DRING_STOPPED is received from the consumer. The dr->cons field
 	 * (set up by vnet_ack()) has the value of the next dring index
 	 * that has not yet been ack-ed. We send a "start" trigger here
-	 * if, and only if, start_cons is true (reset it afterward). Conversely,
-	 * vnet_ack() should check if the dring corresponding to cons
+	 * अगर, and only अगर, start_cons is true (reset it afterward). Conversely,
+	 * vnet_ack() should check अगर the dring corresponding to cons
 	 * is marked READY, but start_cons was false.
 	 * If so, vnet_ack() should send out the missed "start" trigger.
 	 *
 	 * Note that the dma_wmb() above makes sure the cookies et al. are
-	 * not globally visible before the VIO_DESC_READY, and that the
+	 * not globally visible beक्रमe the VIO_DESC_READY, and that the
 	 * stores are ordered correctly by the compiler. The consumer will
 	 * not proceed until the VIO_DESC_READY is visible assuring that
-	 * the consumer does not observe anything related to descriptors
+	 * the consumer करोes not observe anything related to descriptors
 	 * out of order. The HV trap from the LDC start trigger is the
 	 * producer to consumer announcement that work is available to the
 	 * consumer
 	 */
-	if (!port->start_cons) { /* previous trigger suffices */
+	अगर (!port->start_cons) अणु /* previous trigger suffices */
 		trace_vnet_skip_tx_trigger(port->vio._local_sid,
 					   port->vio._peer_sid, dr->cons);
-		goto ldc_start_done;
-	}
+		जाओ ldc_start_करोne;
+	पूर्ण
 
 	err = __vnet_tx_trigger(port, dr->cons);
-	if (unlikely(err < 0)) {
+	अगर (unlikely(err < 0)) अणु
 		netdev_info(dev, "TX trigger error %d\n", err);
 		d->hdr.state = VIO_DESC_FREE;
 		skb = port->tx_bufs[txi].skb;
-		port->tx_bufs[txi].skb = NULL;
+		port->tx_bufs[txi].skb = शून्य;
 		dev->stats.tx_carrier_errors++;
-		goto out_dropped;
-	}
+		जाओ out_dropped;
+	पूर्ण
 
-ldc_start_done:
+ldc_start_करोne:
 	port->start_cons = false;
 
 	dev->stats.tx_packets++;
@@ -1493,102 +1494,102 @@ ldc_start_done:
 	port->stats.tx_bytes += port->tx_bufs[txi].skb->len;
 
 	dr->prod = (dr->prod + 1) & (VNET_TX_RING_SIZE - 1);
-	if (unlikely(vnet_tx_dring_avail(dr) < 1)) {
-		netif_tx_stop_queue(txq);
+	अगर (unlikely(vnet_tx_dring_avail(dr) < 1)) अणु
+		netअगर_tx_stop_queue(txq);
 		smp_rmb();
-		if (vnet_tx_dring_avail(dr) > VNET_TX_WAKEUP_THRESH(dr))
-			netif_tx_wake_queue(txq);
-	}
+		अगर (vnet_tx_dring_avail(dr) > VNET_TX_WAKEUP_THRESH(dr))
+			netअगर_tx_wake_queue(txq);
+	पूर्ण
 
-	(void)mod_timer(&port->clean_timer, jiffies + VNET_CLEAN_TIMEOUT);
-	rcu_read_unlock();
+	(व्योम)mod_समयr(&port->clean_समयr, jअगरfies + VNET_CLEAN_TIMEOUT);
+	rcu_पढ़ो_unlock();
 
-	vnet_free_skbs(freeskbs);
+	vnet_मुक्त_skbs(मुक्तskbs);
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 out_dropped:
-	if (pending)
-		(void)mod_timer(&port->clean_timer,
-				jiffies + VNET_CLEAN_TIMEOUT);
-	else if (port)
-		del_timer(&port->clean_timer);
-	rcu_read_unlock();
-	dev_kfree_skb(skb);
-	vnet_free_skbs(freeskbs);
+	अगर (pending)
+		(व्योम)mod_समयr(&port->clean_समयr,
+				jअगरfies + VNET_CLEAN_TIMEOUT);
+	अन्यथा अगर (port)
+		del_समयr(&port->clean_समयr);
+	rcu_पढ़ो_unlock();
+	dev_kमुक्त_skb(skb);
+	vnet_मुक्त_skbs(मुक्तskbs);
 	dev->stats.tx_dropped++;
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 EXPORT_SYMBOL_GPL(sunvnet_start_xmit_common);
 
-void sunvnet_tx_timeout_common(struct net_device *dev, unsigned int txqueue)
-{
+व्योम sunvnet_tx_समयout_common(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
 	/* XXX Implement me XXX */
-}
-EXPORT_SYMBOL_GPL(sunvnet_tx_timeout_common);
+पूर्ण
+EXPORT_SYMBOL_GPL(sunvnet_tx_समयout_common);
 
-int sunvnet_open_common(struct net_device *dev)
-{
-	netif_carrier_on(dev);
-	netif_tx_start_all_queues(dev);
+पूर्णांक sunvnet_खोलो_common(काष्ठा net_device *dev)
+अणु
+	netअगर_carrier_on(dev);
+	netअगर_tx_start_all_queues(dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(sunvnet_open_common);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(sunvnet_खोलो_common);
 
-int sunvnet_close_common(struct net_device *dev)
-{
-	netif_tx_stop_all_queues(dev);
-	netif_carrier_off(dev);
+पूर्णांक sunvnet_बंद_common(काष्ठा net_device *dev)
+अणु
+	netअगर_tx_stop_all_queues(dev);
+	netअगर_carrier_off(dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(sunvnet_close_common);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(sunvnet_बंद_common);
 
-static struct vnet_mcast_entry *__vnet_mc_find(struct vnet *vp, u8 *addr)
-{
-	struct vnet_mcast_entry *m;
+अटल काष्ठा vnet_mcast_entry *__vnet_mc_find(काष्ठा vnet *vp, u8 *addr)
+अणु
+	काष्ठा vnet_mcast_entry *m;
 
-	for (m = vp->mcast_list; m; m = m->next) {
-		if (ether_addr_equal(m->addr, addr))
-			return m;
-	}
-	return NULL;
-}
+	क्रम (m = vp->mcast_list; m; m = m->next) अणु
+		अगर (ether_addr_equal(m->addr, addr))
+			वापस m;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void __update_mc_list(struct vnet *vp, struct net_device *dev)
-{
-	struct netdev_hw_addr *ha;
+अटल व्योम __update_mc_list(काष्ठा vnet *vp, काष्ठा net_device *dev)
+अणु
+	काष्ठा netdev_hw_addr *ha;
 
-	netdev_for_each_mc_addr(ha, dev) {
-		struct vnet_mcast_entry *m;
+	netdev_क्रम_each_mc_addr(ha, dev) अणु
+		काष्ठा vnet_mcast_entry *m;
 
 		m = __vnet_mc_find(vp, ha->addr);
-		if (m) {
+		अगर (m) अणु
 			m->hit = 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!m) {
-			m = kzalloc(sizeof(*m), GFP_ATOMIC);
-			if (!m)
-				continue;
-			memcpy(m->addr, ha->addr, ETH_ALEN);
+		अगर (!m) अणु
+			m = kzalloc(माप(*m), GFP_ATOMIC);
+			अगर (!m)
+				जारी;
+			स_नकल(m->addr, ha->addr, ETH_ALEN);
 			m->hit = 1;
 
 			m->next = vp->mcast_list;
 			vp->mcast_list = m;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void __send_mc_list(struct vnet *vp, struct vnet_port *port)
-{
-	struct vio_net_mcast_info info;
-	struct vnet_mcast_entry *m, **pp;
-	int n_addrs;
+अटल व्योम __send_mc_list(काष्ठा vnet *vp, काष्ठा vnet_port *port)
+अणु
+	काष्ठा vio_net_mcast_info info;
+	काष्ठा vnet_mcast_entry *m, **pp;
+	पूर्णांक n_addrs;
 
-	memset(&info, 0, sizeof(info));
+	स_रखो(&info, 0, माप(info));
 
 	info.tag.type = VIO_TYPE_CTRL;
 	info.tag.stype = VIO_SUBTYPE_INFO;
@@ -1597,148 +1598,148 @@ static void __send_mc_list(struct vnet *vp, struct vnet_port *port)
 	info.set = 1;
 
 	n_addrs = 0;
-	for (m = vp->mcast_list; m; m = m->next) {
-		if (m->sent)
-			continue;
+	क्रम (m = vp->mcast_list; m; m = m->next) अणु
+		अगर (m->sent)
+			जारी;
 		m->sent = 1;
-		memcpy(&info.mcast_addr[n_addrs * ETH_ALEN],
+		स_नकल(&info.mcast_addr[n_addrs * ETH_ALEN],
 		       m->addr, ETH_ALEN);
-		if (++n_addrs == VNET_NUM_MCAST) {
+		अगर (++n_addrs == VNET_NUM_MCAST) अणु
 			info.count = n_addrs;
 
-			(void)vio_ldc_send(&port->vio, &info,
-					   sizeof(info));
+			(व्योम)vio_ldc_send(&port->vio, &info,
+					   माप(info));
 			n_addrs = 0;
-		}
-	}
-	if (n_addrs) {
+		पूर्ण
+	पूर्ण
+	अगर (n_addrs) अणु
 		info.count = n_addrs;
-		(void)vio_ldc_send(&port->vio, &info, sizeof(info));
-	}
+		(व्योम)vio_ldc_send(&port->vio, &info, माप(info));
+	पूर्ण
 
 	info.set = 0;
 
 	n_addrs = 0;
 	pp = &vp->mcast_list;
-	while ((m = *pp) != NULL) {
-		if (m->hit) {
+	जबतक ((m = *pp) != शून्य) अणु
+		अगर (m->hit) अणु
 			m->hit = 0;
 			pp = &m->next;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		memcpy(&info.mcast_addr[n_addrs * ETH_ALEN],
+		स_नकल(&info.mcast_addr[n_addrs * ETH_ALEN],
 		       m->addr, ETH_ALEN);
-		if (++n_addrs == VNET_NUM_MCAST) {
+		अगर (++n_addrs == VNET_NUM_MCAST) अणु
 			info.count = n_addrs;
-			(void)vio_ldc_send(&port->vio, &info,
-					   sizeof(info));
+			(व्योम)vio_ldc_send(&port->vio, &info,
+					   माप(info));
 			n_addrs = 0;
-		}
+		पूर्ण
 
 		*pp = m->next;
-		kfree(m);
-	}
-	if (n_addrs) {
+		kमुक्त(m);
+	पूर्ण
+	अगर (n_addrs) अणु
 		info.count = n_addrs;
-		(void)vio_ldc_send(&port->vio, &info, sizeof(info));
-	}
-}
+		(व्योम)vio_ldc_send(&port->vio, &info, माप(info));
+	पूर्ण
+पूर्ण
 
-void sunvnet_set_rx_mode_common(struct net_device *dev, struct vnet *vp)
-{
-	struct vnet_port *port;
+व्योम sunvnet_set_rx_mode_common(काष्ठा net_device *dev, काष्ठा vnet *vp)
+अणु
+	काष्ठा vnet_port *port;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(port, &vp->port_list, list) {
-		if (port->switch_port) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(port, &vp->port_list, list) अणु
+		अगर (port->चयन_port) अणु
 			__update_mc_list(vp, dev);
 			__send_mc_list(vp, port);
-			break;
-		}
-	}
-	rcu_read_unlock();
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 EXPORT_SYMBOL_GPL(sunvnet_set_rx_mode_common);
 
-int sunvnet_set_mac_addr_common(struct net_device *dev, void *p)
-{
-	return -EINVAL;
-}
+पूर्णांक sunvnet_set_mac_addr_common(काष्ठा net_device *dev, व्योम *p)
+अणु
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(sunvnet_set_mac_addr_common);
 
-void sunvnet_port_free_tx_bufs_common(struct vnet_port *port)
-{
-	struct vio_dring_state *dr;
-	int i;
+व्योम sunvnet_port_मुक्त_tx_bufs_common(काष्ठा vnet_port *port)
+अणु
+	काष्ठा vio_dring_state *dr;
+	पूर्णांक i;
 
 	dr = &port->vio.drings[VIO_DRIVER_TX_RING];
 
-	if (!dr->base)
-		return;
+	अगर (!dr->base)
+		वापस;
 
-	for (i = 0; i < VNET_TX_RING_SIZE; i++) {
-		struct vio_net_desc *d;
-		void *skb = port->tx_bufs[i].skb;
+	क्रम (i = 0; i < VNET_TX_RING_SIZE; i++) अणु
+		काष्ठा vio_net_desc *d;
+		व्योम *skb = port->tx_bufs[i].skb;
 
-		if (!skb)
-			continue;
+		अगर (!skb)
+			जारी;
 
 		d = vio_dring_entry(dr, i);
 
 		ldc_unmap(port->vio.lp,
 			  port->tx_bufs[i].cookies,
 			  port->tx_bufs[i].ncookies);
-		dev_kfree_skb(skb);
-		port->tx_bufs[i].skb = NULL;
+		dev_kमुक्त_skb(skb);
+		port->tx_bufs[i].skb = शून्य;
 		d->hdr.state = VIO_DESC_FREE;
-	}
-	ldc_free_exp_dring(port->vio.lp, dr->base,
+	पूर्ण
+	ldc_मुक्त_exp_dring(port->vio.lp, dr->base,
 			   (dr->entry_size * dr->num_entries),
 			   dr->cookies, dr->ncookies);
-	dr->base = NULL;
+	dr->base = शून्य;
 	dr->entry_size = 0;
 	dr->num_entries = 0;
 	dr->pending = 0;
 	dr->ncookies = 0;
-}
-EXPORT_SYMBOL_GPL(sunvnet_port_free_tx_bufs_common);
+पूर्ण
+EXPORT_SYMBOL_GPL(sunvnet_port_मुक्त_tx_bufs_common);
 
-void vnet_port_reset(struct vnet_port *port)
-{
-	del_timer(&port->clean_timer);
-	sunvnet_port_free_tx_bufs_common(port);
+व्योम vnet_port_reset(काष्ठा vnet_port *port)
+अणु
+	del_समयr(&port->clean_समयr);
+	sunvnet_port_मुक्त_tx_bufs_common(port);
 	port->rmtu = 0;
 	port->tso = (port->vsw == 0);  /* no tso in vsw, misbehaves in bridge */
 	port->tsolen = 0;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vnet_port_reset);
 
-static int vnet_port_alloc_tx_ring(struct vnet_port *port)
-{
-	struct vio_dring_state *dr;
-	unsigned long len, elen;
-	int i, err, ncookies;
-	void *dring;
+अटल पूर्णांक vnet_port_alloc_tx_ring(काष्ठा vnet_port *port)
+अणु
+	काष्ठा vio_dring_state *dr;
+	अचिन्हित दीर्घ len, elen;
+	पूर्णांक i, err, ncookies;
+	व्योम *dring;
 
 	dr = &port->vio.drings[VIO_DRIVER_TX_RING];
 
-	elen = sizeof(struct vio_net_desc) +
-	       sizeof(struct ldc_trans_cookie) * 2;
-	if (vio_version_after_eq(&port->vio, 1, 7))
-		elen += sizeof(struct vio_net_dext);
+	elen = माप(काष्ठा vio_net_desc) +
+	       माप(काष्ठा ldc_trans_cookie) * 2;
+	अगर (vio_version_after_eq(&port->vio, 1, 7))
+		elen += माप(काष्ठा vio_net_dext);
 	len = VNET_TX_RING_SIZE * elen;
 
 	ncookies = VIO_MAX_RING_COOKIES;
 	dring = ldc_alloc_exp_dring(port->vio.lp, len,
 				    dr->cookies, &ncookies,
 				    (LDC_MAP_SHADOW |
-				     LDC_MAP_DIRECT |
+				     LDC_MAP_सूचीECT |
 				     LDC_MAP_RW));
-	if (IS_ERR(dring)) {
+	अगर (IS_ERR(dring)) अणु
 		err = PTR_ERR(dring);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	dr->base = dring;
 	dr->entry_size = elen;
@@ -1749,65 +1750,65 @@ static int vnet_port_alloc_tx_ring(struct vnet_port *port)
 	dr->pending = VNET_TX_RING_SIZE;
 	dr->ncookies = ncookies;
 
-	for (i = 0; i < VNET_TX_RING_SIZE; ++i) {
-		struct vio_net_desc *d;
+	क्रम (i = 0; i < VNET_TX_RING_SIZE; ++i) अणु
+		काष्ठा vio_net_desc *d;
 
 		d = vio_dring_entry(dr, i);
 		d->hdr.state = VIO_DESC_FREE;
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 err_out:
-	sunvnet_port_free_tx_bufs_common(port);
+	sunvnet_port_मुक्त_tx_bufs_common(port);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
-void sunvnet_poll_controller_common(struct net_device *dev, struct vnet *vp)
-{
-	struct vnet_port *port;
-	unsigned long flags;
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+व्योम sunvnet_poll_controller_common(काष्ठा net_device *dev, काष्ठा vnet *vp)
+अणु
+	काष्ठा vnet_port *port;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vp->lock, flags);
-	if (!list_empty(&vp->port_list)) {
-		port = list_entry(vp->port_list.next, struct vnet_port, list);
+	अगर (!list_empty(&vp->port_list)) अणु
+		port = list_entry(vp->port_list.next, काष्ठा vnet_port, list);
 		napi_schedule(&port->napi);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&vp->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sunvnet_poll_controller_common);
-#endif
+#पूर्ण_अगर
 
-void sunvnet_port_add_txq_common(struct vnet_port *port)
-{
-	struct vnet *vp = port->vp;
-	int smallest = 0;
-	int i;
+व्योम sunvnet_port_add_txq_common(काष्ठा vnet_port *port)
+अणु
+	काष्ठा vnet *vp = port->vp;
+	पूर्णांक smallest = 0;
+	पूर्णांक i;
 
 	/* find the first least-used q
-	 * When there are more ldoms than q's, we start to
-	 * double up on ports per queue.
+	 * When there are more lकरोms than q's, we start to
+	 * द्विगुन up on ports per queue.
 	 */
-	for (i = 0; i < VNET_MAX_TXQS; i++) {
-		if (vp->q_used[i] == 0) {
+	क्रम (i = 0; i < VNET_MAX_TXQS; i++) अणु
+		अगर (vp->q_used[i] == 0) अणु
 			smallest = i;
-			break;
-		}
-		if (vp->q_used[i] < vp->q_used[smallest])
+			अवरोध;
+		पूर्ण
+		अगर (vp->q_used[i] < vp->q_used[smallest])
 			smallest = i;
-	}
+	पूर्ण
 
 	vp->nports++;
 	vp->q_used[smallest]++;
 	port->q_index = smallest;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sunvnet_port_add_txq_common);
 
-void sunvnet_port_rm_txq_common(struct vnet_port *port)
-{
+व्योम sunvnet_port_rm_txq_common(काष्ठा vnet_port *port)
+अणु
 	port->vp->nports--;
 	port->vp->q_used[port->q_index]--;
 	port->q_index = 0;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sunvnet_port_rm_txq_common);

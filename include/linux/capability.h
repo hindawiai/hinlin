@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * This is <linux/capability.h>
  *
@@ -6,58 +7,58 @@
  * Alexander Kjeldaas <astor@guardian.no>
  * with help from Aleph1, Roland Buresund and Andrew Main.
  *
- * See here for the libcap library ("POSIX draft" compliance):
+ * See here क्रम the libcap library ("POSIX draft" compliance):
  *
  * ftp://www.kernel.org/pub/linux/libs/security/linux-privs/kernel-2.6/
  */
-#ifndef _LINUX_CAPABILITY_H
-#define _LINUX_CAPABILITY_H
+#अगर_अघोषित _LINUX_CAPABILITY_H
+#घोषणा _LINUX_CAPABILITY_H
 
-#include <uapi/linux/capability.h>
-#include <linux/uidgid.h>
+#समावेश <uapi/linux/capability.h>
+#समावेश <linux/uidgid.h>
 
-#define _KERNEL_CAPABILITY_VERSION _LINUX_CAPABILITY_VERSION_3
-#define _KERNEL_CAPABILITY_U32S    _LINUX_CAPABILITY_U32S_3
+#घोषणा _KERNEL_CAPABILITY_VERSION _LINUX_CAPABILITY_VERSION_3
+#घोषणा _KERNEL_CAPABILITY_U32S    _LINUX_CAPABILITY_U32S_3
 
-extern int file_caps_enabled;
+बाह्य पूर्णांक file_caps_enabled;
 
-typedef struct kernel_cap_struct {
+प्रकार काष्ठा kernel_cap_काष्ठा अणु
 	__u32 cap[_KERNEL_CAPABILITY_U32S];
-} kernel_cap_t;
+पूर्ण kernel_cap_t;
 
 /* same as vfs_ns_cap_data but in cpu endian and always filled completely */
-struct cpu_vfs_cap_data {
+काष्ठा cpu_vfs_cap_data अणु
 	__u32 magic_etc;
 	kernel_cap_t permitted;
 	kernel_cap_t inheritable;
 	kuid_t rootid;
-};
+पूर्ण;
 
-#define _USER_CAP_HEADER_SIZE  (sizeof(struct __user_cap_header_struct))
-#define _KERNEL_CAP_T_SIZE     (sizeof(kernel_cap_t))
+#घोषणा _USER_CAP_HEADER_SIZE  (माप(काष्ठा __user_cap_header_काष्ठा))
+#घोषणा _KERNEL_CAP_T_SIZE     (माप(kernel_cap_t))
 
 
-struct file;
-struct inode;
-struct dentry;
-struct task_struct;
-struct user_namespace;
+काष्ठा file;
+काष्ठा inode;
+काष्ठा dentry;
+काष्ठा task_काष्ठा;
+काष्ठा user_namespace;
 
-extern const kernel_cap_t __cap_empty_set;
-extern const kernel_cap_t __cap_init_eff_set;
+बाह्य स्थिर kernel_cap_t __cap_empty_set;
+बाह्य स्थिर kernel_cap_t __cap_init_eff_set;
 
 /*
  * Internal kernel functions only
  */
 
-#define CAP_FOR_EACH_U32(__capi)  \
-	for (__capi = 0; __capi < _KERNEL_CAPABILITY_U32S; ++__capi)
+#घोषणा CAP_FOR_EACH_U32(__capi)  \
+	क्रम (__capi = 0; __capi < _KERNEL_CAPABILITY_U32S; ++__capi)
 
 /*
  * CAP_FS_MASK and CAP_NFSD_MASKS:
  *
  * The fs mask is all the privileges that fsuid==0 historically meant.
- * At one time in the past, that included CAP_MKNOD and CAP_LINUX_IMMUTABLE.
+ * At one समय in the past, that included CAP_MKNOD and CAP_LINUX_IMMUTABLE.
  *
  * It has never meant setting security.* and trusted.* xattrs.
  *
@@ -75,207 +76,207 @@ extern const kernel_cap_t __cap_init_eff_set;
 
 # define CAP_FS_MASK_B1     (CAP_TO_MASK(CAP_MAC_OVERRIDE))
 
-#if _KERNEL_CAPABILITY_U32S != 2
+#अगर _KERNEL_CAPABILITY_U32S != 2
 # error Fix up hand-coded capability macro initializers
-#else /* HAND-CODED capability initializers */
+#अन्यथा /* HAND-CODED capability initializers */
 
-#define CAP_LAST_U32			((_KERNEL_CAPABILITY_U32S) - 1)
-#define CAP_LAST_U32_VALID_MASK		(CAP_TO_MASK(CAP_LAST_CAP + 1) -1)
+#घोषणा CAP_LAST_U32			((_KERNEL_CAPABILITY_U32S) - 1)
+#घोषणा CAP_LAST_U32_VALID_MASK		(CAP_TO_MASK(CAP_LAST_CAP + 1) -1)
 
-# define CAP_EMPTY_SET    ((kernel_cap_t){{ 0, 0 }})
-# define CAP_FULL_SET     ((kernel_cap_t){{ ~0, CAP_LAST_U32_VALID_MASK }})
-# define CAP_FS_SET       ((kernel_cap_t){{ CAP_FS_MASK_B0 \
+# define CAP_EMPTY_SET    ((kernel_cap_t)अणुअणु 0, 0 पूर्णपूर्ण)
+# define CAP_FULL_SET     ((kernel_cap_t)अणुअणु ~0, CAP_LAST_U32_VALID_MASK पूर्णपूर्ण)
+# define CAP_FS_SET       ((kernel_cap_t)अणुअणु CAP_FS_MASK_B0 \
 				    | CAP_TO_MASK(CAP_LINUX_IMMUTABLE), \
-				    CAP_FS_MASK_B1 } })
-# define CAP_NFSD_SET     ((kernel_cap_t){{ CAP_FS_MASK_B0 \
+				    CAP_FS_MASK_B1 पूर्ण पूर्ण)
+# define CAP_NFSD_SET     ((kernel_cap_t)अणुअणु CAP_FS_MASK_B0 \
 				    | CAP_TO_MASK(CAP_SYS_RESOURCE), \
-				    CAP_FS_MASK_B1 } })
+				    CAP_FS_MASK_B1 पूर्ण पूर्ण)
 
-#endif /* _KERNEL_CAPABILITY_U32S != 2 */
+#पूर्ण_अगर /* _KERNEL_CAPABILITY_U32S != 2 */
 
-# define cap_clear(c)         do { (c) = __cap_empty_set; } while (0)
+# define cap_clear(c)         करो अणु (c) = __cap_empty_set; पूर्ण जबतक (0)
 
-#define cap_raise(c, flag)  ((c).cap[CAP_TO_INDEX(flag)] |= CAP_TO_MASK(flag))
-#define cap_lower(c, flag)  ((c).cap[CAP_TO_INDEX(flag)] &= ~CAP_TO_MASK(flag))
-#define cap_raised(c, flag) ((c).cap[CAP_TO_INDEX(flag)] & CAP_TO_MASK(flag))
+#घोषणा cap_उठाओ(c, flag)  ((c).cap[CAP_TO_INDEX(flag)] |= CAP_TO_MASK(flag))
+#घोषणा cap_lower(c, flag)  ((c).cap[CAP_TO_INDEX(flag)] &= ~CAP_TO_MASK(flag))
+#घोषणा cap_उठाओd(c, flag) ((c).cap[CAP_TO_INDEX(flag)] & CAP_TO_MASK(flag))
 
-#define CAP_BOP_ALL(c, a, b, OP)                                    \
-do {                                                                \
-	unsigned __capi;                                            \
-	CAP_FOR_EACH_U32(__capi) {                                  \
+#घोषणा CAP_BOP_ALL(c, a, b, OP)                                    \
+करो अणु                                                                \
+	अचिन्हित __capi;                                            \
+	CAP_FOR_EACH_U32(__capi) अणु                                  \
 		c.cap[__capi] = a.cap[__capi] OP b.cap[__capi];     \
-	}                                                           \
-} while (0)
+	पूर्ण                                                           \
+पूर्ण जबतक (0)
 
-#define CAP_UOP_ALL(c, a, OP)                                       \
-do {                                                                \
-	unsigned __capi;                                            \
-	CAP_FOR_EACH_U32(__capi) {                                  \
+#घोषणा CAP_UOP_ALL(c, a, OP)                                       \
+करो अणु                                                                \
+	अचिन्हित __capi;                                            \
+	CAP_FOR_EACH_U32(__capi) अणु                                  \
 		c.cap[__capi] = OP a.cap[__capi];                   \
-	}                                                           \
-} while (0)
+	पूर्ण                                                           \
+पूर्ण जबतक (0)
 
-static inline kernel_cap_t cap_combine(const kernel_cap_t a,
-				       const kernel_cap_t b)
-{
+अटल अंतरभूत kernel_cap_t cap_combine(स्थिर kernel_cap_t a,
+				       स्थिर kernel_cap_t b)
+अणु
 	kernel_cap_t dest;
 	CAP_BOP_ALL(dest, a, b, |);
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-static inline kernel_cap_t cap_intersect(const kernel_cap_t a,
-					 const kernel_cap_t b)
-{
+अटल अंतरभूत kernel_cap_t cap_पूर्णांकersect(स्थिर kernel_cap_t a,
+					 स्थिर kernel_cap_t b)
+अणु
 	kernel_cap_t dest;
 	CAP_BOP_ALL(dest, a, b, &);
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-static inline kernel_cap_t cap_drop(const kernel_cap_t a,
-				    const kernel_cap_t drop)
-{
+अटल अंतरभूत kernel_cap_t cap_drop(स्थिर kernel_cap_t a,
+				    स्थिर kernel_cap_t drop)
+अणु
 	kernel_cap_t dest;
 	CAP_BOP_ALL(dest, a, drop, &~);
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-static inline kernel_cap_t cap_invert(const kernel_cap_t c)
-{
+अटल अंतरभूत kernel_cap_t cap_invert(स्थिर kernel_cap_t c)
+अणु
 	kernel_cap_t dest;
 	CAP_UOP_ALL(dest, c, ~);
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-static inline bool cap_isclear(const kernel_cap_t a)
-{
-	unsigned __capi;
-	CAP_FOR_EACH_U32(__capi) {
-		if (a.cap[__capi] != 0)
-			return false;
-	}
-	return true;
-}
+अटल अंतरभूत bool cap_isclear(स्थिर kernel_cap_t a)
+अणु
+	अचिन्हित __capi;
+	CAP_FOR_EACH_U32(__capi) अणु
+		अगर (a.cap[__capi] != 0)
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /*
- * Check if "a" is a subset of "set".
- * return true if ALL of the capabilities in "a" are also in "set"
- *	cap_issubset(0101, 1111) will return true
- * return false if ANY of the capabilities in "a" are not in "set"
- *	cap_issubset(1111, 0101) will return false
+ * Check अगर "a" is a subset of "set".
+ * वापस true अगर ALL of the capabilities in "a" are also in "set"
+ *	cap_issubset(0101, 1111) will वापस true
+ * वापस false अगर ANY of the capabilities in "a" are not in "set"
+ *	cap_issubset(1111, 0101) will वापस false
  */
-static inline bool cap_issubset(const kernel_cap_t a, const kernel_cap_t set)
-{
+अटल अंतरभूत bool cap_issubset(स्थिर kernel_cap_t a, स्थिर kernel_cap_t set)
+अणु
 	kernel_cap_t dest;
 	dest = cap_drop(a, set);
-	return cap_isclear(dest);
-}
+	वापस cap_isclear(dest);
+पूर्ण
 
 /* Used to decide between falling back on the old suser() or fsuser(). */
 
-static inline kernel_cap_t cap_drop_fs_set(const kernel_cap_t a)
-{
-	const kernel_cap_t __cap_fs_set = CAP_FS_SET;
-	return cap_drop(a, __cap_fs_set);
-}
+अटल अंतरभूत kernel_cap_t cap_drop_fs_set(स्थिर kernel_cap_t a)
+अणु
+	स्थिर kernel_cap_t __cap_fs_set = CAP_FS_SET;
+	वापस cap_drop(a, __cap_fs_set);
+पूर्ण
 
-static inline kernel_cap_t cap_raise_fs_set(const kernel_cap_t a,
-					    const kernel_cap_t permitted)
-{
-	const kernel_cap_t __cap_fs_set = CAP_FS_SET;
-	return cap_combine(a,
-			   cap_intersect(permitted, __cap_fs_set));
-}
+अटल अंतरभूत kernel_cap_t cap_उठाओ_fs_set(स्थिर kernel_cap_t a,
+					    स्थिर kernel_cap_t permitted)
+अणु
+	स्थिर kernel_cap_t __cap_fs_set = CAP_FS_SET;
+	वापस cap_combine(a,
+			   cap_पूर्णांकersect(permitted, __cap_fs_set));
+पूर्ण
 
-static inline kernel_cap_t cap_drop_nfsd_set(const kernel_cap_t a)
-{
-	const kernel_cap_t __cap_fs_set = CAP_NFSD_SET;
-	return cap_drop(a, __cap_fs_set);
-}
+अटल अंतरभूत kernel_cap_t cap_drop_nfsd_set(स्थिर kernel_cap_t a)
+अणु
+	स्थिर kernel_cap_t __cap_fs_set = CAP_NFSD_SET;
+	वापस cap_drop(a, __cap_fs_set);
+पूर्ण
 
-static inline kernel_cap_t cap_raise_nfsd_set(const kernel_cap_t a,
-					      const kernel_cap_t permitted)
-{
-	const kernel_cap_t __cap_nfsd_set = CAP_NFSD_SET;
-	return cap_combine(a,
-			   cap_intersect(permitted, __cap_nfsd_set));
-}
+अटल अंतरभूत kernel_cap_t cap_उठाओ_nfsd_set(स्थिर kernel_cap_t a,
+					      स्थिर kernel_cap_t permitted)
+अणु
+	स्थिर kernel_cap_t __cap_nfsd_set = CAP_NFSD_SET;
+	वापस cap_combine(a,
+			   cap_पूर्णांकersect(permitted, __cap_nfsd_set));
+पूर्ण
 
-#ifdef CONFIG_MULTIUSER
-extern bool has_capability(struct task_struct *t, int cap);
-extern bool has_ns_capability(struct task_struct *t,
-			      struct user_namespace *ns, int cap);
-extern bool has_capability_noaudit(struct task_struct *t, int cap);
-extern bool has_ns_capability_noaudit(struct task_struct *t,
-				      struct user_namespace *ns, int cap);
-extern bool capable(int cap);
-extern bool ns_capable(struct user_namespace *ns, int cap);
-extern bool ns_capable_noaudit(struct user_namespace *ns, int cap);
-extern bool ns_capable_setid(struct user_namespace *ns, int cap);
-#else
-static inline bool has_capability(struct task_struct *t, int cap)
-{
-	return true;
-}
-static inline bool has_ns_capability(struct task_struct *t,
-			      struct user_namespace *ns, int cap)
-{
-	return true;
-}
-static inline bool has_capability_noaudit(struct task_struct *t, int cap)
-{
-	return true;
-}
-static inline bool has_ns_capability_noaudit(struct task_struct *t,
-				      struct user_namespace *ns, int cap)
-{
-	return true;
-}
-static inline bool capable(int cap)
-{
-	return true;
-}
-static inline bool ns_capable(struct user_namespace *ns, int cap)
-{
-	return true;
-}
-static inline bool ns_capable_noaudit(struct user_namespace *ns, int cap)
-{
-	return true;
-}
-static inline bool ns_capable_setid(struct user_namespace *ns, int cap)
-{
-	return true;
-}
-#endif /* CONFIG_MULTIUSER */
-bool privileged_wrt_inode_uidgid(struct user_namespace *ns,
-				 struct user_namespace *mnt_userns,
-				 const struct inode *inode);
-bool capable_wrt_inode_uidgid(struct user_namespace *mnt_userns,
-			      const struct inode *inode, int cap);
-extern bool file_ns_capable(const struct file *file, struct user_namespace *ns, int cap);
-extern bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns);
-static inline bool perfmon_capable(void)
-{
-	return capable(CAP_PERFMON) || capable(CAP_SYS_ADMIN);
-}
+#अगर_घोषित CONFIG_MULTIUSER
+बाह्य bool has_capability(काष्ठा task_काष्ठा *t, पूर्णांक cap);
+बाह्य bool has_ns_capability(काष्ठा task_काष्ठा *t,
+			      काष्ठा user_namespace *ns, पूर्णांक cap);
+बाह्य bool has_capability_noaudit(काष्ठा task_काष्ठा *t, पूर्णांक cap);
+बाह्य bool has_ns_capability_noaudit(काष्ठा task_काष्ठा *t,
+				      काष्ठा user_namespace *ns, पूर्णांक cap);
+बाह्य bool capable(पूर्णांक cap);
+बाह्य bool ns_capable(काष्ठा user_namespace *ns, पूर्णांक cap);
+बाह्य bool ns_capable_noaudit(काष्ठा user_namespace *ns, पूर्णांक cap);
+बाह्य bool ns_capable_setid(काष्ठा user_namespace *ns, पूर्णांक cap);
+#अन्यथा
+अटल अंतरभूत bool has_capability(काष्ठा task_काष्ठा *t, पूर्णांक cap)
+अणु
+	वापस true;
+पूर्ण
+अटल अंतरभूत bool has_ns_capability(काष्ठा task_काष्ठा *t,
+			      काष्ठा user_namespace *ns, पूर्णांक cap)
+अणु
+	वापस true;
+पूर्ण
+अटल अंतरभूत bool has_capability_noaudit(काष्ठा task_काष्ठा *t, पूर्णांक cap)
+अणु
+	वापस true;
+पूर्ण
+अटल अंतरभूत bool has_ns_capability_noaudit(काष्ठा task_काष्ठा *t,
+				      काष्ठा user_namespace *ns, पूर्णांक cap)
+अणु
+	वापस true;
+पूर्ण
+अटल अंतरभूत bool capable(पूर्णांक cap)
+अणु
+	वापस true;
+पूर्ण
+अटल अंतरभूत bool ns_capable(काष्ठा user_namespace *ns, पूर्णांक cap)
+अणु
+	वापस true;
+पूर्ण
+अटल अंतरभूत bool ns_capable_noaudit(काष्ठा user_namespace *ns, पूर्णांक cap)
+अणु
+	वापस true;
+पूर्ण
+अटल अंतरभूत bool ns_capable_setid(काष्ठा user_namespace *ns, पूर्णांक cap)
+अणु
+	वापस true;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MULTIUSER */
+bool privileged_wrt_inode_uidgid(काष्ठा user_namespace *ns,
+				 काष्ठा user_namespace *mnt_userns,
+				 स्थिर काष्ठा inode *inode);
+bool capable_wrt_inode_uidgid(काष्ठा user_namespace *mnt_userns,
+			      स्थिर काष्ठा inode *inode, पूर्णांक cap);
+बाह्य bool file_ns_capable(स्थिर काष्ठा file *file, काष्ठा user_namespace *ns, पूर्णांक cap);
+बाह्य bool ptracer_capable(काष्ठा task_काष्ठा *tsk, काष्ठा user_namespace *ns);
+अटल अंतरभूत bool perfmon_capable(व्योम)
+अणु
+	वापस capable(CAP_PERFMON) || capable(CAP_SYS_ADMIN);
+पूर्ण
 
-static inline bool bpf_capable(void)
-{
-	return capable(CAP_BPF) || capable(CAP_SYS_ADMIN);
-}
+अटल अंतरभूत bool bpf_capable(व्योम)
+अणु
+	वापस capable(CAP_BPF) || capable(CAP_SYS_ADMIN);
+पूर्ण
 
-static inline bool checkpoint_restore_ns_capable(struct user_namespace *ns)
-{
-	return ns_capable(ns, CAP_CHECKPOINT_RESTORE) ||
+अटल अंतरभूत bool checkpoपूर्णांक_restore_ns_capable(काष्ठा user_namespace *ns)
+अणु
+	वापस ns_capable(ns, CAP_CHECKPOINT_RESTORE) ||
 		ns_capable(ns, CAP_SYS_ADMIN);
-}
+पूर्ण
 
-/* audit system wants to get cap info from files as well */
-int get_vfs_caps_from_disk(struct user_namespace *mnt_userns,
-			   const struct dentry *dentry,
-			   struct cpu_vfs_cap_data *cpu_caps);
+/* audit प्रणाली wants to get cap info from files as well */
+पूर्णांक get_vfs_caps_from_disk(काष्ठा user_namespace *mnt_userns,
+			   स्थिर काष्ठा dentry *dentry,
+			   काष्ठा cpu_vfs_cap_data *cpu_caps);
 
-int cap_convert_nscap(struct user_namespace *mnt_userns, struct dentry *dentry,
-		      const void **ivalue, size_t size);
+पूर्णांक cap_convert_nscap(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		      स्थिर व्योम **ivalue, माप_प्रकार size);
 
-#endif /* !_LINUX_CAPABILITY_H */
+#पूर्ण_अगर /* !_LINUX_CAPABILITY_H */

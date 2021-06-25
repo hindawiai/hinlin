@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASMSPARC_SHMPARAM_H
-#define _ASMSPARC_SHMPARAM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASMSPARC_SHMPARAM_H
+#घोषणा _ASMSPARC_SHMPARAM_H
 
-#define __ARCH_FORCE_SHMLBA 	1
+#घोषणा __ARCH_FORCE_SHMLBA 	1
 
-extern int vac_cache_size;
-#define SHMLBA (vac_cache_size ? vac_cache_size : PAGE_SIZE)
+बाह्य पूर्णांक vac_cache_size;
+#घोषणा SHMLBA (vac_cache_size ? vac_cache_size : PAGE_SIZE)
 
-#endif /* _ASMSPARC_SHMPARAM_H */
+#पूर्ण_अगर /* _ASMSPARC_SHMPARAM_H */

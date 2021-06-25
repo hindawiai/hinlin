@@ -1,402 +1,403 @@
-// SPDX-License-Identifier: GPL-2.0
-#define _GNU_SOURCE
-#include <sys/mman.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <stdbool.h>
-#include "mlock2.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा _GNU_SOURCE
+#समावेश <sys/mman.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <unistd.h>
+#समावेश <माला.स>
+#समावेश <sys/समय.स>
+#समावेश <sys/resource.h>
+#समावेश <stdbool.h>
+#समावेश "mlock2.h"
 
-#include "../kselftest.h"
+#समावेश "../kselftest.h"
 
-struct vm_boundaries {
-	unsigned long start;
-	unsigned long end;
-};
+काष्ठा vm_boundaries अणु
+	अचिन्हित दीर्घ start;
+	अचिन्हित दीर्घ end;
+पूर्ण;
 
-static int get_vm_area(unsigned long addr, struct vm_boundaries *area)
-{
-	FILE *file;
-	int ret = 1;
-	char line[1024] = {0};
-	char *end_addr;
-	char *stop;
-	unsigned long start;
-	unsigned long end;
+अटल पूर्णांक get_vm_area(अचिन्हित दीर्घ addr, काष्ठा vm_boundaries *area)
+अणु
+	खाता *file;
+	पूर्णांक ret = 1;
+	अक्षर line[1024] = अणु0पूर्ण;
+	अक्षर *end_addr;
+	अक्षर *stop;
+	अचिन्हित दीर्घ start;
+	अचिन्हित दीर्घ end;
 
-	if (!area)
-		return ret;
+	अगर (!area)
+		वापस ret;
 
-	file = fopen("/proc/self/maps", "r");
-	if (!file) {
-		perror("fopen");
-		return ret;
-	}
+	file = ख_खोलो("/proc/self/maps", "r");
+	अगर (!file) अणु
+		लिखो_त्रुटि("fopen");
+		वापस ret;
+	पूर्ण
 
-	memset(area, 0, sizeof(struct vm_boundaries));
+	स_रखो(area, 0, माप(काष्ठा vm_boundaries));
 
-	while(fgets(line, 1024, file)) {
-		end_addr = strchr(line, '-');
-		if (!end_addr) {
-			printf("cannot parse /proc/self/maps\n");
-			goto out;
-		}
+	जबतक(ख_माला_लो(line, 1024, file)) अणु
+		end_addr = म_अक्षर(line, '-');
+		अगर (!end_addr) अणु
+			म_लिखो("cannot parse /proc/self/maps\n");
+			जाओ out;
+		पूर्ण
 		*end_addr = '\0';
 		end_addr++;
-		stop = strchr(end_addr, ' ');
-		if (!stop) {
-			printf("cannot parse /proc/self/maps\n");
-			goto out;
-		}
+		stop = म_अक्षर(end_addr, ' ');
+		अगर (!stop) अणु
+			म_लिखो("cannot parse /proc/self/maps\n");
+			जाओ out;
+		पूर्ण
 		stop = '\0';
 
-		sscanf(line, "%lx", &start);
-		sscanf(end_addr, "%lx", &end);
+		माला_पूछो(line, "%lx", &start);
+		माला_पूछो(end_addr, "%lx", &end);
 
-		if (start <= addr && end > addr) {
+		अगर (start <= addr && end > addr) अणु
 			area->start = start;
 			area->end = end;
 			ret = 0;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 out:
-	fclose(file);
-	return ret;
-}
+	ख_बंद(file);
+	वापस ret;
+पूर्ण
 
-#define VMFLAGS "VmFlags:"
+#घोषणा VMFLAGS "VmFlags:"
 
-static bool is_vmflag_set(unsigned long addr, const char *vmflag)
-{
-	char *line = NULL;
-	char *flags;
-	size_t size = 0;
+अटल bool is_vmflag_set(अचिन्हित दीर्घ addr, स्थिर अक्षर *vmflag)
+अणु
+	अक्षर *line = शून्य;
+	अक्षर *flags;
+	माप_प्रकार size = 0;
 	bool ret = false;
-	FILE *smaps;
+	खाता *smaps;
 
 	smaps = seek_to_smaps_entry(addr);
-	if (!smaps) {
-		printf("Unable to parse /proc/self/smaps\n");
-		goto out;
-	}
+	अगर (!smaps) अणु
+		म_लिखो("Unable to parse /proc/self/smaps\n");
+		जाओ out;
+	पूर्ण
 
-	while (getline(&line, &size, smaps) > 0) {
-		if (!strstr(line, VMFLAGS)) {
-			free(line);
-			line = NULL;
+	जबतक (getline(&line, &size, smaps) > 0) अणु
+		अगर (!म_माला(line, VMFLAGS)) अणु
+			मुक्त(line);
+			line = शून्य;
 			size = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		flags = line + strlen(VMFLAGS);
-		ret = (strstr(flags, vmflag) != NULL);
-		goto out;
-	}
+		flags = line + म_माप(VMFLAGS);
+		ret = (म_माला(flags, vmflag) != शून्य);
+		जाओ out;
+	पूर्ण
 
 out:
-	free(line);
-	fclose(smaps);
-	return ret;
-}
+	मुक्त(line);
+	ख_बंद(smaps);
+	वापस ret;
+पूर्ण
 
-#define SIZE "Size:"
-#define RSS  "Rss:"
-#define LOCKED "lo"
+#घोषणा SIZE "Size:"
+#घोषणा RSS  "Rss:"
+#घोषणा LOCKED "lo"
 
-static unsigned long get_value_for_name(unsigned long addr, const char *name)
-{
-	char *line = NULL;
-	size_t size = 0;
-	char *value_ptr;
-	FILE *smaps = NULL;
-	unsigned long value = -1UL;
+अटल अचिन्हित दीर्घ get_value_क्रम_name(अचिन्हित दीर्घ addr, स्थिर अक्षर *name)
+अणु
+	अक्षर *line = शून्य;
+	माप_प्रकार size = 0;
+	अक्षर *value_ptr;
+	खाता *smaps = शून्य;
+	अचिन्हित दीर्घ value = -1UL;
 
 	smaps = seek_to_smaps_entry(addr);
-	if (!smaps) {
-		printf("Unable to parse /proc/self/smaps\n");
-		goto out;
-	}
+	अगर (!smaps) अणु
+		म_लिखो("Unable to parse /proc/self/smaps\n");
+		जाओ out;
+	पूर्ण
 
-	while (getline(&line, &size, smaps) > 0) {
-		if (!strstr(line, name)) {
-			free(line);
-			line = NULL;
+	जबतक (getline(&line, &size, smaps) > 0) अणु
+		अगर (!म_माला(line, name)) अणु
+			मुक्त(line);
+			line = शून्य;
 			size = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		value_ptr = line + strlen(name);
-		if (sscanf(value_ptr, "%lu kB", &value) < 1) {
-			printf("Unable to parse smaps entry for Size\n");
-			goto out;
-		}
-		break;
-	}
+		value_ptr = line + म_माप(name);
+		अगर (माला_पूछो(value_ptr, "%lu kB", &value) < 1) अणु
+			म_लिखो("Unable to parse smaps entry for Size\n");
+			जाओ out;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 out:
-	if (smaps)
-		fclose(smaps);
-	free(line);
-	return value;
-}
+	अगर (smaps)
+		ख_बंद(smaps);
+	मुक्त(line);
+	वापस value;
+पूर्ण
 
-static bool is_vma_lock_on_fault(unsigned long addr)
-{
+अटल bool is_vma_lock_on_fault(अचिन्हित दीर्घ addr)
+अणु
 	bool locked;
-	unsigned long vma_size, vma_rss;
+	अचिन्हित दीर्घ vma_size, vma_rss;
 
 	locked = is_vmflag_set(addr, LOCKED);
-	if (!locked)
-		return false;
+	अगर (!locked)
+		वापस false;
 
-	vma_size = get_value_for_name(addr, SIZE);
-	vma_rss = get_value_for_name(addr, RSS);
+	vma_size = get_value_क्रम_name(addr, SIZE);
+	vma_rss = get_value_क्रम_name(addr, RSS);
 
 	/* only one page is faulted in */
-	return (vma_rss < vma_size);
-}
+	वापस (vma_rss < vma_size);
+पूर्ण
 
-#define PRESENT_BIT     0x8000000000000000ULL
-#define PFN_MASK        0x007FFFFFFFFFFFFFULL
-#define UNEVICTABLE_BIT (1UL << 18)
+#घोषणा PRESENT_BIT     0x8000000000000000ULL
+#घोषणा PFN_MASK        0x007FFFFFFFFFFFFFULL
+#घोषणा UNEVICTABLE_BIT (1UL << 18)
 
-static int lock_check(unsigned long addr)
-{
+अटल पूर्णांक lock_check(अचिन्हित दीर्घ addr)
+अणु
 	bool locked;
-	unsigned long vma_size, vma_rss;
+	अचिन्हित दीर्घ vma_size, vma_rss;
 
 	locked = is_vmflag_set(addr, LOCKED);
-	if (!locked)
-		return false;
+	अगर (!locked)
+		वापस false;
 
-	vma_size = get_value_for_name(addr, SIZE);
-	vma_rss = get_value_for_name(addr, RSS);
+	vma_size = get_value_क्रम_name(addr, SIZE);
+	vma_rss = get_value_क्रम_name(addr, RSS);
 
-	return (vma_rss == vma_size);
-}
+	वापस (vma_rss == vma_size);
+पूर्ण
 
-static int unlock_lock_check(char *map)
-{
-	if (is_vmflag_set((unsigned long)map, LOCKED)) {
-		printf("VMA flag %s is present on page 1 after unlock\n", LOCKED);
-		return 1;
-	}
+अटल पूर्णांक unlock_lock_check(अक्षर *map)
+अणु
+	अगर (is_vmflag_set((अचिन्हित दीर्घ)map, LOCKED)) अणु
+		म_लिखो("VMA flag %s is present on page 1 after unlock\n", LOCKED);
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int test_mlock_lock()
-{
-	char *map;
-	int ret = 1;
-	unsigned long page_size = getpagesize();
+अटल पूर्णांक test_mlock_lock()
+अणु
+	अक्षर *map;
+	पूर्णांक ret = 1;
+	अचिन्हित दीर्घ page_size = getpagesize();
 
-	map = mmap(NULL, 2 * page_size, PROT_READ | PROT_WRITE,
+	map = mmap(शून्य, 2 * page_size, PROT_READ | PROT_WRITE,
 		   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-	if (map == MAP_FAILED) {
-		perror("test_mlock_locked mmap");
-		goto out;
-	}
+	अगर (map == MAP_FAILED) अणु
+		लिखो_त्रुटि("test_mlock_locked mmap");
+		जाओ out;
+	पूर्ण
 
-	if (mlock2_(map, 2 * page_size, 0)) {
-		if (errno == ENOSYS) {
-			printf("Cannot call new mlock family, skipping test\n");
-			_exit(KSFT_SKIP);
-		}
-		perror("mlock2(0)");
-		goto unmap;
-	}
+	अगर (mlock2_(map, 2 * page_size, 0)) अणु
+		अगर (त्रुटि_सं == ENOSYS) अणु
+			म_लिखो("Cannot call new mlock family, skipping test\n");
+			_निकास(KSFT_SKIP);
+		पूर्ण
+		लिखो_त्रुटि("mlock2(0)");
+		जाओ unmap;
+	पूर्ण
 
-	if (!lock_check((unsigned long)map))
-		goto unmap;
+	अगर (!lock_check((अचिन्हित दीर्घ)map))
+		जाओ unmap;
 
 	/* Now unlock and recheck attributes */
-	if (munlock(map, 2 * page_size)) {
-		perror("munlock()");
-		goto unmap;
-	}
+	अगर (munlock(map, 2 * page_size)) अणु
+		लिखो_त्रुटि("munlock()");
+		जाओ unmap;
+	पूर्ण
 
 	ret = unlock_lock_check(map);
 
 unmap:
 	munmap(map, 2 * page_size);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int onfault_check(char *map)
-{
+अटल पूर्णांक onfault_check(अक्षर *map)
+अणु
 	*map = 'a';
-	if (!is_vma_lock_on_fault((unsigned long)map)) {
-		printf("VMA is not marked for lock on fault\n");
-		return 1;
-	}
+	अगर (!is_vma_lock_on_fault((अचिन्हित दीर्घ)map)) अणु
+		म_लिखो("VMA is not marked for lock on fault\n");
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int unlock_onfault_check(char *map)
-{
-	unsigned long page_size = getpagesize();
+अटल पूर्णांक unlock_onfault_check(अक्षर *map)
+अणु
+	अचिन्हित दीर्घ page_size = getpagesize();
 
-	if (is_vma_lock_on_fault((unsigned long)map) ||
-	    is_vma_lock_on_fault((unsigned long)map + page_size)) {
-		printf("VMA is still lock on fault after unlock\n");
-		return 1;
-	}
+	अगर (is_vma_lock_on_fault((अचिन्हित दीर्घ)map) ||
+	    is_vma_lock_on_fault((अचिन्हित दीर्घ)map + page_size)) अणु
+		म_लिखो("VMA is still lock on fault after unlock\n");
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int test_mlock_onfault()
-{
-	char *map;
-	int ret = 1;
-	unsigned long page_size = getpagesize();
+अटल पूर्णांक test_mlock_onfault()
+अणु
+	अक्षर *map;
+	पूर्णांक ret = 1;
+	अचिन्हित दीर्घ page_size = getpagesize();
 
-	map = mmap(NULL, 2 * page_size, PROT_READ | PROT_WRITE,
+	map = mmap(शून्य, 2 * page_size, PROT_READ | PROT_WRITE,
 		   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-	if (map == MAP_FAILED) {
-		perror("test_mlock_locked mmap");
-		goto out;
-	}
+	अगर (map == MAP_FAILED) अणु
+		लिखो_त्रुटि("test_mlock_locked mmap");
+		जाओ out;
+	पूर्ण
 
-	if (mlock2_(map, 2 * page_size, MLOCK_ONFAULT)) {
-		if (errno == ENOSYS) {
-			printf("Cannot call new mlock family, skipping test\n");
-			_exit(KSFT_SKIP);
-		}
-		perror("mlock2(MLOCK_ONFAULT)");
-		goto unmap;
-	}
+	अगर (mlock2_(map, 2 * page_size, MLOCK_ONFAULT)) अणु
+		अगर (त्रुटि_सं == ENOSYS) अणु
+			म_लिखो("Cannot call new mlock family, skipping test\n");
+			_निकास(KSFT_SKIP);
+		पूर्ण
+		लिखो_त्रुटि("mlock2(MLOCK_ONFAULT)");
+		जाओ unmap;
+	पूर्ण
 
-	if (onfault_check(map))
-		goto unmap;
+	अगर (onfault_check(map))
+		जाओ unmap;
 
 	/* Now unlock and recheck attributes */
-	if (munlock(map, 2 * page_size)) {
-		if (errno == ENOSYS) {
-			printf("Cannot call new mlock family, skipping test\n");
-			_exit(KSFT_SKIP);
-		}
-		perror("munlock()");
-		goto unmap;
-	}
+	अगर (munlock(map, 2 * page_size)) अणु
+		अगर (त्रुटि_सं == ENOSYS) अणु
+			म_लिखो("Cannot call new mlock family, skipping test\n");
+			_निकास(KSFT_SKIP);
+		पूर्ण
+		लिखो_त्रुटि("munlock()");
+		जाओ unmap;
+	पूर्ण
 
 	ret = unlock_onfault_check(map);
 unmap:
 	munmap(map, 2 * page_size);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test_lock_onfault_of_present()
-{
-	char *map;
-	int ret = 1;
-	unsigned long page_size = getpagesize();
+अटल पूर्णांक test_lock_onfault_of_present()
+अणु
+	अक्षर *map;
+	पूर्णांक ret = 1;
+	अचिन्हित दीर्घ page_size = getpagesize();
 
-	map = mmap(NULL, 2 * page_size, PROT_READ | PROT_WRITE,
+	map = mmap(शून्य, 2 * page_size, PROT_READ | PROT_WRITE,
 		   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-	if (map == MAP_FAILED) {
-		perror("test_mlock_locked mmap");
-		goto out;
-	}
+	अगर (map == MAP_FAILED) अणु
+		लिखो_त्रुटि("test_mlock_locked mmap");
+		जाओ out;
+	पूर्ण
 
 	*map = 'a';
 
-	if (mlock2_(map, 2 * page_size, MLOCK_ONFAULT)) {
-		if (errno == ENOSYS) {
-			printf("Cannot call new mlock family, skipping test\n");
-			_exit(KSFT_SKIP);
-		}
-		perror("mlock2(MLOCK_ONFAULT)");
-		goto unmap;
-	}
+	अगर (mlock2_(map, 2 * page_size, MLOCK_ONFAULT)) अणु
+		अगर (त्रुटि_सं == ENOSYS) अणु
+			म_लिखो("Cannot call new mlock family, skipping test\n");
+			_निकास(KSFT_SKIP);
+		पूर्ण
+		लिखो_त्रुटि("mlock2(MLOCK_ONFAULT)");
+		जाओ unmap;
+	पूर्ण
 
-	if (!is_vma_lock_on_fault((unsigned long)map) ||
-	    !is_vma_lock_on_fault((unsigned long)map + page_size)) {
-		printf("VMA with present pages is not marked lock on fault\n");
-		goto unmap;
-	}
+	अगर (!is_vma_lock_on_fault((अचिन्हित दीर्घ)map) ||
+	    !is_vma_lock_on_fault((अचिन्हित दीर्घ)map + page_size)) अणु
+		म_लिखो("VMA with present pages is not marked lock on fault\n");
+		जाओ unmap;
+	पूर्ण
 	ret = 0;
 unmap:
 	munmap(map, 2 * page_size);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test_munlockall()
-{
-	char *map;
-	int ret = 1;
-	unsigned long page_size = getpagesize();
+अटल पूर्णांक test_munlockall()
+अणु
+	अक्षर *map;
+	पूर्णांक ret = 1;
+	अचिन्हित दीर्घ page_size = getpagesize();
 
-	map = mmap(NULL, 2 * page_size, PROT_READ | PROT_WRITE,
+	map = mmap(शून्य, 2 * page_size, PROT_READ | PROT_WRITE,
 		   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
-	if (map == MAP_FAILED) {
-		perror("test_munlockall mmap");
-		goto out;
-	}
+	अगर (map == MAP_FAILED) अणु
+		लिखो_त्रुटि("test_munlockall mmap");
+		जाओ out;
+	पूर्ण
 
-	if (mlockall(MCL_CURRENT)) {
-		perror("mlockall(MCL_CURRENT)");
-		goto out;
-	}
+	अगर (mlockall(MCL_CURRENT)) अणु
+		लिखो_त्रुटि("mlockall(MCL_CURRENT)");
+		जाओ out;
+	पूर्ण
 
-	if (!lock_check((unsigned long)map))
-		goto unmap;
+	अगर (!lock_check((अचिन्हित दीर्घ)map))
+		जाओ unmap;
 
-	if (munlockall()) {
-		perror("munlockall()");
-		goto unmap;
-	}
+	अगर (munlockall()) अणु
+		लिखो_त्रुटि("munlockall()");
+		जाओ unmap;
+	पूर्ण
 
-	if (unlock_lock_check(map))
-		goto unmap;
+	अगर (unlock_lock_check(map))
+		जाओ unmap;
 
 	munmap(map, 2 * page_size);
 
-	map = mmap(NULL, 2 * page_size, PROT_READ | PROT_WRITE,
+	map = mmap(शून्य, 2 * page_size, PROT_READ | PROT_WRITE,
 		   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
-	if (map == MAP_FAILED) {
-		perror("test_munlockall second mmap");
-		goto out;
-	}
+	अगर (map == MAP_FAILED) अणु
+		लिखो_त्रुटि("test_munlockall second mmap");
+		जाओ out;
+	पूर्ण
 
-	if (mlockall(MCL_CURRENT | MCL_ONFAULT)) {
-		perror("mlockall(MCL_CURRENT | MCL_ONFAULT)");
-		goto unmap;
-	}
+	अगर (mlockall(MCL_CURRENT | MCL_ONFAULT)) अणु
+		लिखो_त्रुटि("mlockall(MCL_CURRENT | MCL_ONFAULT)");
+		जाओ unmap;
+	पूर्ण
 
-	if (onfault_check(map))
-		goto unmap;
+	अगर (onfault_check(map))
+		जाओ unmap;
 
-	if (munlockall()) {
-		perror("munlockall()");
-		goto unmap;
-	}
+	अगर (munlockall()) अणु
+		लिखो_त्रुटि("munlockall()");
+		जाओ unmap;
+	पूर्ण
 
-	if (unlock_onfault_check(map))
-		goto unmap;
+	अगर (unlock_onfault_check(map))
+		जाओ unmap;
 
-	if (mlockall(MCL_CURRENT | MCL_FUTURE)) {
-		perror("mlockall(MCL_CURRENT | MCL_FUTURE)");
-		goto out;
-	}
+	अगर (mlockall(MCL_CURRENT | MCL_FUTURE)) अणु
+		लिखो_त्रुटि("mlockall(MCL_CURRENT | MCL_FUTURE)");
+		जाओ out;
+	पूर्ण
 
-	if (!lock_check((unsigned long)map))
-		goto unmap;
+	अगर (!lock_check((अचिन्हित दीर्घ)map))
+		जाओ unmap;
 
-	if (munlockall()) {
-		perror("munlockall()");
-		goto unmap;
-	}
+	अगर (munlockall()) अणु
+		लिखो_त्रुटि("munlockall()");
+		जाओ unmap;
+	पूर्ण
 
 	ret = unlock_lock_check(map);
 
@@ -404,117 +405,117 @@ unmap:
 	munmap(map, 2 * page_size);
 out:
 	munlockall();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test_vma_management(bool call_mlock)
-{
-	int ret = 1;
-	void *map;
-	unsigned long page_size = getpagesize();
-	struct vm_boundaries page1;
-	struct vm_boundaries page2;
-	struct vm_boundaries page3;
+अटल पूर्णांक test_vma_management(bool call_mlock)
+अणु
+	पूर्णांक ret = 1;
+	व्योम *map;
+	अचिन्हित दीर्घ page_size = getpagesize();
+	काष्ठा vm_boundaries page1;
+	काष्ठा vm_boundaries page2;
+	काष्ठा vm_boundaries page3;
 
-	map = mmap(NULL, 3 * page_size, PROT_READ | PROT_WRITE,
+	map = mmap(शून्य, 3 * page_size, PROT_READ | PROT_WRITE,
 		   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-	if (map == MAP_FAILED) {
-		perror("mmap()");
-		return ret;
-	}
+	अगर (map == MAP_FAILED) अणु
+		लिखो_त्रुटि("mmap()");
+		वापस ret;
+	पूर्ण
 
-	if (call_mlock && mlock2_(map, 3 * page_size, MLOCK_ONFAULT)) {
-		if (errno == ENOSYS) {
-			printf("Cannot call new mlock family, skipping test\n");
-			_exit(KSFT_SKIP);
-		}
-		perror("mlock(ONFAULT)\n");
-		goto out;
-	}
+	अगर (call_mlock && mlock2_(map, 3 * page_size, MLOCK_ONFAULT)) अणु
+		अगर (त्रुटि_सं == ENOSYS) अणु
+			म_लिखो("Cannot call new mlock family, skipping test\n");
+			_निकास(KSFT_SKIP);
+		पूर्ण
+		लिखो_त्रुटि("mlock(ONFAULT)\n");
+		जाओ out;
+	पूर्ण
 
-	if (get_vm_area((unsigned long)map, &page1) ||
-	    get_vm_area((unsigned long)map + page_size, &page2) ||
-	    get_vm_area((unsigned long)map + page_size * 2, &page3)) {
-		printf("couldn't find mapping in /proc/self/maps\n");
-		goto out;
-	}
+	अगर (get_vm_area((अचिन्हित दीर्घ)map, &page1) ||
+	    get_vm_area((अचिन्हित दीर्घ)map + page_size, &page2) ||
+	    get_vm_area((अचिन्हित दीर्घ)map + page_size * 2, &page3)) अणु
+		म_लिखो("couldn't find mapping in /proc/self/maps\n");
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Before we unlock a portion, we need to that all three pages are in
-	 * the same VMA.  If they are not we abort this test (Note that this is
+	 * Beक्रमe we unlock a portion, we need to that all three pages are in
+	 * the same VMA.  If they are not we पात this test (Note that this is
 	 * not a failure)
 	 */
-	if (page1.start != page2.start || page2.start != page3.start) {
-		printf("VMAs are not merged to start, aborting test\n");
+	अगर (page1.start != page2.start || page2.start != page3.start) अणु
+		म_लिखो("VMAs are not merged to start, aborting test\n");
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (munlock(map + page_size, page_size)) {
-		perror("munlock()");
-		goto out;
-	}
+	अगर (munlock(map + page_size, page_size)) अणु
+		लिखो_त्रुटि("munlock()");
+		जाओ out;
+	पूर्ण
 
-	if (get_vm_area((unsigned long)map, &page1) ||
-	    get_vm_area((unsigned long)map + page_size, &page2) ||
-	    get_vm_area((unsigned long)map + page_size * 2, &page3)) {
-		printf("couldn't find mapping in /proc/self/maps\n");
-		goto out;
-	}
+	अगर (get_vm_area((अचिन्हित दीर्घ)map, &page1) ||
+	    get_vm_area((अचिन्हित दीर्घ)map + page_size, &page2) ||
+	    get_vm_area((अचिन्हित दीर्घ)map + page_size * 2, &page3)) अणु
+		म_लिखो("couldn't find mapping in /proc/self/maps\n");
+		जाओ out;
+	पूर्ण
 
-	/* All three VMAs should be different */
-	if (page1.start == page2.start || page2.start == page3.start) {
-		printf("failed to split VMA for munlock\n");
-		goto out;
-	}
+	/* All three VMAs should be dअगरferent */
+	अगर (page1.start == page2.start || page2.start == page3.start) अणु
+		म_लिखो("failed to split VMA for munlock\n");
+		जाओ out;
+	पूर्ण
 
 	/* Now unlock the first and third page and check the VMAs again */
-	if (munlock(map, page_size * 3)) {
-		perror("munlock()");
-		goto out;
-	}
+	अगर (munlock(map, page_size * 3)) अणु
+		लिखो_त्रुटि("munlock()");
+		जाओ out;
+	पूर्ण
 
-	if (get_vm_area((unsigned long)map, &page1) ||
-	    get_vm_area((unsigned long)map + page_size, &page2) ||
-	    get_vm_area((unsigned long)map + page_size * 2, &page3)) {
-		printf("couldn't find mapping in /proc/self/maps\n");
-		goto out;
-	}
+	अगर (get_vm_area((अचिन्हित दीर्घ)map, &page1) ||
+	    get_vm_area((अचिन्हित दीर्घ)map + page_size, &page2) ||
+	    get_vm_area((अचिन्हित दीर्घ)map + page_size * 2, &page3)) अणु
+		म_लिखो("couldn't find mapping in /proc/self/maps\n");
+		जाओ out;
+	पूर्ण
 
 	/* Now all three VMAs should be the same */
-	if (page1.start != page2.start || page2.start != page3.start) {
-		printf("failed to merge VMAs after munlock\n");
-		goto out;
-	}
+	अगर (page1.start != page2.start || page2.start != page3.start) अणु
+		म_लिखो("failed to merge VMAs after munlock\n");
+		जाओ out;
+	पूर्ण
 
 	ret = 0;
 out:
 	munmap(map, 3 * page_size);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test_mlockall(int (test_function)(bool call_mlock))
-{
-	int ret = 1;
+अटल पूर्णांक test_mlockall(पूर्णांक (test_function)(bool call_mlock))
+अणु
+	पूर्णांक ret = 1;
 
-	if (mlockall(MCL_CURRENT | MCL_ONFAULT | MCL_FUTURE)) {
-		perror("mlockall");
-		return ret;
-	}
+	अगर (mlockall(MCL_CURRENT | MCL_ONFAULT | MCL_FUTURE)) अणु
+		लिखो_त्रुटि("mlockall");
+		वापस ret;
+	पूर्ण
 
 	ret = test_function(false);
 	munlockall();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	int ret = 0;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक ret = 0;
 	ret += test_mlock_lock();
 	ret += test_mlock_onfault();
 	ret += test_munlockall();
 	ret += test_lock_onfault_of_present();
 	ret += test_vma_management(true);
 	ret += test_mlockall(test_vma_management);
-	return ret;
-}
+	वापस ret;
+पूर्ण

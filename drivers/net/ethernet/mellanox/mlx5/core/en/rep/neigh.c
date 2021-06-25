@@ -1,318 +1,319 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020 Mellanox Technologies. */
 
-#include <linux/refcount.h>
-#include <linux/list.h>
-#include <linux/rculist.h>
-#include <linux/rtnetlink.h>
-#include <linux/workqueue.h>
-#include <linux/spinlock.h>
-#include <linux/notifier.h>
-#include <net/netevent.h>
-#include <net/arp.h>
-#include "neigh.h"
-#include "tc.h"
-#include "en_rep.h"
-#include "fs_core.h"
-#include "diag/en_rep_tracepoint.h"
+#समावेश <linux/refcount.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <net/netevent.h>
+#समावेश <net/arp.h>
+#समावेश "neigh.h"
+#समावेश "tc.h"
+#समावेश "en_rep.h"
+#समावेश "fs_core.h"
+#समावेश "diag/en_rep_tracepoint.h"
 
-static unsigned long mlx5e_rep_ipv6_interval(void)
-{
-	if (IS_ENABLED(CONFIG_IPV6) && ipv6_stub->nd_tbl)
-		return NEIGH_VAR(&ipv6_stub->nd_tbl->parms, DELAY_PROBE_TIME);
+अटल अचिन्हित दीर्घ mlx5e_rep_ipv6_पूर्णांकerval(व्योम)
+अणु
+	अगर (IS_ENABLED(CONFIG_IPV6) && ipv6_stub->nd_tbl)
+		वापस NEIGH_VAR(&ipv6_stub->nd_tbl->parms, DELAY_PROBE_TIME);
 
-	return ~0UL;
-}
+	वापस ~0UL;
+पूर्ण
 
-static void mlx5e_rep_neigh_update_init_interval(struct mlx5e_rep_priv *rpriv)
-{
-	unsigned long ipv4_interval = NEIGH_VAR(&arp_tbl.parms, DELAY_PROBE_TIME);
-	unsigned long ipv6_interval = mlx5e_rep_ipv6_interval();
-	struct net_device *netdev = rpriv->netdev;
-	struct mlx5e_priv *priv = netdev_priv(netdev);
+अटल व्योम mlx5e_rep_neigh_update_init_पूर्णांकerval(काष्ठा mlx5e_rep_priv *rpriv)
+अणु
+	अचिन्हित दीर्घ ipv4_पूर्णांकerval = NEIGH_VAR(&arp_tbl.parms, DELAY_PROBE_TIME);
+	अचिन्हित दीर्घ ipv6_पूर्णांकerval = mlx5e_rep_ipv6_पूर्णांकerval();
+	काष्ठा net_device *netdev = rpriv->netdev;
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
 
-	rpriv->neigh_update.min_interval = min_t(unsigned long, ipv6_interval, ipv4_interval);
-	mlx5_fc_update_sampling_interval(priv->mdev, rpriv->neigh_update.min_interval);
-}
+	rpriv->neigh_update.min_पूर्णांकerval = min_t(अचिन्हित दीर्घ, ipv6_पूर्णांकerval, ipv4_पूर्णांकerval);
+	mlx5_fc_update_sampling_पूर्णांकerval(priv->mdev, rpriv->neigh_update.min_पूर्णांकerval);
+पूर्ण
 
-void mlx5e_rep_queue_neigh_stats_work(struct mlx5e_priv *priv)
-{
-	struct mlx5e_rep_priv *rpriv = priv->ppriv;
-	struct mlx5e_neigh_update_table *neigh_update = &rpriv->neigh_update;
+व्योम mlx5e_rep_queue_neigh_stats_work(काष्ठा mlx5e_priv *priv)
+अणु
+	काष्ठा mlx5e_rep_priv *rpriv = priv->ppriv;
+	काष्ठा mlx5e_neigh_update_table *neigh_update = &rpriv->neigh_update;
 
 	mlx5_fc_queue_stats_work(priv->mdev,
 				 &neigh_update->neigh_stats_work,
-				 neigh_update->min_interval);
-}
+				 neigh_update->min_पूर्णांकerval);
+पूर्ण
 
-static bool mlx5e_rep_neigh_entry_hold(struct mlx5e_neigh_hash_entry *nhe)
-{
-	return refcount_inc_not_zero(&nhe->refcnt);
-}
+अटल bool mlx5e_rep_neigh_entry_hold(काष्ठा mlx5e_neigh_hash_entry *nhe)
+अणु
+	वापस refcount_inc_not_zero(&nhe->refcnt);
+पूर्ण
 
-static void mlx5e_rep_neigh_entry_remove(struct mlx5e_neigh_hash_entry *nhe);
+अटल व्योम mlx5e_rep_neigh_entry_हटाओ(काष्ठा mlx5e_neigh_hash_entry *nhe);
 
-void mlx5e_rep_neigh_entry_release(struct mlx5e_neigh_hash_entry *nhe)
-{
-	if (refcount_dec_and_test(&nhe->refcnt)) {
-		mlx5e_rep_neigh_entry_remove(nhe);
-		kfree_rcu(nhe, rcu);
-	}
-}
+व्योम mlx5e_rep_neigh_entry_release(काष्ठा mlx5e_neigh_hash_entry *nhe)
+अणु
+	अगर (refcount_dec_and_test(&nhe->refcnt)) अणु
+		mlx5e_rep_neigh_entry_हटाओ(nhe);
+		kमुक्त_rcu(nhe, rcu);
+	पूर्ण
+पूर्ण
 
-static struct mlx5e_neigh_hash_entry *
-mlx5e_get_next_nhe(struct mlx5e_rep_priv *rpriv,
-		   struct mlx5e_neigh_hash_entry *nhe)
-{
-	struct mlx5e_neigh_hash_entry *next = NULL;
+अटल काष्ठा mlx5e_neigh_hash_entry *
+mlx5e_get_next_nhe(काष्ठा mlx5e_rep_priv *rpriv,
+		   काष्ठा mlx5e_neigh_hash_entry *nhe)
+अणु
+	काष्ठा mlx5e_neigh_hash_entry *next = शून्य;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	for (next = nhe ?
+	क्रम (next = nhe ?
 		     list_next_or_null_rcu(&rpriv->neigh_update.neigh_list,
 					   &nhe->neigh_list,
-					   struct mlx5e_neigh_hash_entry,
+					   काष्ठा mlx5e_neigh_hash_entry,
 					   neigh_list) :
 		     list_first_or_null_rcu(&rpriv->neigh_update.neigh_list,
-					    struct mlx5e_neigh_hash_entry,
+					    काष्ठा mlx5e_neigh_hash_entry,
 					    neigh_list);
 	     next;
 	     next = list_next_or_null_rcu(&rpriv->neigh_update.neigh_list,
 					  &next->neigh_list,
-					  struct mlx5e_neigh_hash_entry,
+					  काष्ठा mlx5e_neigh_hash_entry,
 					  neigh_list))
-		if (mlx5e_rep_neigh_entry_hold(next))
-			break;
+		अगर (mlx5e_rep_neigh_entry_hold(next))
+			अवरोध;
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (nhe)
+	अगर (nhe)
 		mlx5e_rep_neigh_entry_release(nhe);
 
-	return next;
-}
+	वापस next;
+पूर्ण
 
-static void mlx5e_rep_neigh_stats_work(struct work_struct *work)
-{
-	struct mlx5e_rep_priv *rpriv = container_of(work, struct mlx5e_rep_priv,
+अटल व्योम mlx5e_rep_neigh_stats_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mlx5e_rep_priv *rpriv = container_of(work, काष्ठा mlx5e_rep_priv,
 						    neigh_update.neigh_stats_work.work);
-	struct net_device *netdev = rpriv->netdev;
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct mlx5e_neigh_hash_entry *nhe = NULL;
+	काष्ठा net_device *netdev = rpriv->netdev;
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	काष्ठा mlx5e_neigh_hash_entry *nhe = शून्य;
 
 	rtnl_lock();
-	if (!list_empty(&rpriv->neigh_update.neigh_list))
+	अगर (!list_empty(&rpriv->neigh_update.neigh_list))
 		mlx5e_rep_queue_neigh_stats_work(priv);
 
-	while ((nhe = mlx5e_get_next_nhe(rpriv, nhe)) != NULL)
+	जबतक ((nhe = mlx5e_get_next_nhe(rpriv, nhe)) != शून्य)
 		mlx5e_tc_update_neigh_used_value(nhe);
 
 	rtnl_unlock();
-}
+पूर्ण
 
-struct neigh_update_work {
-	struct work_struct work;
-	struct neighbour *n;
-	struct mlx5e_neigh_hash_entry *nhe;
-};
+काष्ठा neigh_update_work अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा neighbour *n;
+	काष्ठा mlx5e_neigh_hash_entry *nhe;
+पूर्ण;
 
-static void mlx5e_release_neigh_update_work(struct neigh_update_work *update_work)
-{
+अटल व्योम mlx5e_release_neigh_update_work(काष्ठा neigh_update_work *update_work)
+अणु
 	neigh_release(update_work->n);
 	mlx5e_rep_neigh_entry_release(update_work->nhe);
-	kfree(update_work);
-}
+	kमुक्त(update_work);
+पूर्ण
 
-static void mlx5e_rep_neigh_update(struct work_struct *work)
-{
-	struct neigh_update_work *update_work = container_of(work, struct neigh_update_work,
+अटल व्योम mlx5e_rep_neigh_update(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा neigh_update_work *update_work = container_of(work, काष्ठा neigh_update_work,
 							     work);
-	struct mlx5e_neigh_hash_entry *nhe = update_work->nhe;
-	struct neighbour *n = update_work->n;
-	struct mlx5e_encap_entry *e = NULL;
+	काष्ठा mlx5e_neigh_hash_entry *nhe = update_work->nhe;
+	काष्ठा neighbour *n = update_work->n;
+	काष्ठा mlx5e_encap_entry *e = शून्य;
 	bool neigh_connected, same_dev;
-	unsigned char ha[ETH_ALEN];
+	अचिन्हित अक्षर ha[ETH_ALEN];
 	u8 nud_state, dead;
 
 	rtnl_lock();
 
 	/* If these parameters are changed after we release the lock,
 	 * we'll receive another event letting us know about it.
-	 * We use this lock to avoid inconsistency between the neigh validity
+	 * We use this lock to aव्योम inconsistency between the neigh validity
 	 * and it's hw address.
 	 */
-	read_lock_bh(&n->lock);
-	memcpy(ha, n->ha, ETH_ALEN);
+	पढ़ो_lock_bh(&n->lock);
+	स_नकल(ha, n->ha, ETH_ALEN);
 	nud_state = n->nud_state;
 	dead = n->dead;
 	same_dev = READ_ONCE(nhe->neigh_dev) == n->dev;
-	read_unlock_bh(&n->lock);
+	पढ़ो_unlock_bh(&n->lock);
 
 	neigh_connected = (nud_state & NUD_VALID) && !dead;
 
 	trace_mlx5e_rep_neigh_update(nhe, ha, neigh_connected);
 
-	if (!same_dev)
-		goto out;
+	अगर (!same_dev)
+		जाओ out;
 
-	/* mlx5e_get_next_init_encap() releases previous encap before returning
+	/* mlx5e_get_next_init_encap() releases previous encap beक्रमe वापसing
 	 * the next one.
 	 */
-	while ((e = mlx5e_get_next_init_encap(nhe, e)) != NULL)
+	जबतक ((e = mlx5e_get_next_init_encap(nhe, e)) != शून्य)
 		mlx5e_rep_update_flows(netdev_priv(e->out_dev), e, neigh_connected, ha);
 
 out:
 	rtnl_unlock();
 	mlx5e_release_neigh_update_work(update_work);
-}
+पूर्ण
 
-static struct neigh_update_work *mlx5e_alloc_neigh_update_work(struct mlx5e_priv *priv,
-							       struct neighbour *n)
-{
-	struct neigh_update_work *update_work;
-	struct mlx5e_neigh_hash_entry *nhe;
-	struct mlx5e_neigh m_neigh = {};
+अटल काष्ठा neigh_update_work *mlx5e_alloc_neigh_update_work(काष्ठा mlx5e_priv *priv,
+							       काष्ठा neighbour *n)
+अणु
+	काष्ठा neigh_update_work *update_work;
+	काष्ठा mlx5e_neigh_hash_entry *nhe;
+	काष्ठा mlx5e_neigh m_neigh = अणुपूर्ण;
 
-	update_work = kzalloc(sizeof(*update_work), GFP_ATOMIC);
-	if (WARN_ON(!update_work))
-		return NULL;
+	update_work = kzalloc(माप(*update_work), GFP_ATOMIC);
+	अगर (WARN_ON(!update_work))
+		वापस शून्य;
 
 	m_neigh.family = n->ops->family;
-	memcpy(&m_neigh.dst_ip, n->primary_key, n->tbl->key_len);
+	स_नकल(&m_neigh.dst_ip, n->primary_key, n->tbl->key_len);
 
 	/* Obtain reference to nhe as last step in order not to release it in
 	 * atomic context.
 	 */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	nhe = mlx5e_rep_neigh_entry_lookup(priv, &m_neigh);
-	rcu_read_unlock();
-	if (!nhe) {
-		kfree(update_work);
-		return NULL;
-	}
+	rcu_पढ़ो_unlock();
+	अगर (!nhe) अणु
+		kमुक्त(update_work);
+		वापस शून्य;
+	पूर्ण
 
 	INIT_WORK(&update_work->work, mlx5e_rep_neigh_update);
 	neigh_hold(n);
 	update_work->n = n;
 	update_work->nhe = nhe;
 
-	return update_work;
-}
+	वापस update_work;
+पूर्ण
 
-static int mlx5e_rep_netevent_event(struct notifier_block *nb,
-				    unsigned long event, void *ptr)
-{
-	struct mlx5e_rep_priv *rpriv = container_of(nb, struct mlx5e_rep_priv,
+अटल पूर्णांक mlx5e_rep_netevent_event(काष्ठा notअगरier_block *nb,
+				    अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा mlx5e_rep_priv *rpriv = container_of(nb, काष्ठा mlx5e_rep_priv,
 						    neigh_update.netevent_nb);
-	struct mlx5e_neigh_update_table *neigh_update = &rpriv->neigh_update;
-	struct net_device *netdev = rpriv->netdev;
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct mlx5e_neigh_hash_entry *nhe = NULL;
-	struct neigh_update_work *update_work;
-	struct neigh_parms *p;
-	struct neighbour *n;
+	काष्ठा mlx5e_neigh_update_table *neigh_update = &rpriv->neigh_update;
+	काष्ठा net_device *netdev = rpriv->netdev;
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	काष्ठा mlx5e_neigh_hash_entry *nhe = शून्य;
+	काष्ठा neigh_update_work *update_work;
+	काष्ठा neigh_parms *p;
+	काष्ठा neighbour *n;
 	bool found = false;
 
-	switch (event) {
-	case NETEVENT_NEIGH_UPDATE:
+	चयन (event) अणु
+	हाल NETEVENT_NEIGH_UPDATE:
 		n = ptr;
-#if IS_ENABLED(CONFIG_IPV6)
-		if (n->tbl != ipv6_stub->nd_tbl && n->tbl != &arp_tbl)
-#else
-		if (n->tbl != &arp_tbl)
-#endif
-			return NOTIFY_DONE;
+#अगर IS_ENABLED(CONFIG_IPV6)
+		अगर (n->tbl != ipv6_stub->nd_tbl && n->tbl != &arp_tbl)
+#अन्यथा
+		अगर (n->tbl != &arp_tbl)
+#पूर्ण_अगर
+			वापस NOTIFY_DONE;
 
 		update_work = mlx5e_alloc_neigh_update_work(priv, n);
-		if (!update_work)
-			return NOTIFY_DONE;
+		अगर (!update_work)
+			वापस NOTIFY_DONE;
 
 		queue_work(priv->wq, &update_work->work);
-		break;
+		अवरोध;
 
-	case NETEVENT_DELAY_PROBE_TIME_UPDATE:
+	हाल NETEVENT_DELAY_PROBE_TIME_UPDATE:
 		p = ptr;
 
-		/* We check the device is present since we don't care about
-		 * changes in the default table, we only care about changes
-		 * done per device delay prob time parameter.
+		/* We check the device is present since we करोn't care about
+		 * changes in the शेष table, we only care about changes
+		 * करोne per device delay prob समय parameter.
 		 */
-#if IS_ENABLED(CONFIG_IPV6)
-		if (!p->dev || (p->tbl != ipv6_stub->nd_tbl && p->tbl != &arp_tbl))
-#else
-		if (!p->dev || p->tbl != &arp_tbl)
-#endif
-			return NOTIFY_DONE;
+#अगर IS_ENABLED(CONFIG_IPV6)
+		अगर (!p->dev || (p->tbl != ipv6_stub->nd_tbl && p->tbl != &arp_tbl))
+#अन्यथा
+		अगर (!p->dev || p->tbl != &arp_tbl)
+#पूर्ण_अगर
+			वापस NOTIFY_DONE;
 
-		rcu_read_lock();
-		list_for_each_entry_rcu(nhe, &neigh_update->neigh_list,
-					neigh_list) {
-			if (p->dev == READ_ONCE(nhe->neigh_dev)) {
+		rcu_पढ़ो_lock();
+		list_क्रम_each_entry_rcu(nhe, &neigh_update->neigh_list,
+					neigh_list) अणु
+			अगर (p->dev == READ_ONCE(nhe->neigh_dev)) अणु
 				found = true;
-				break;
-			}
-		}
-		rcu_read_unlock();
-		if (!found)
-			return NOTIFY_DONE;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		rcu_पढ़ो_unlock();
+		अगर (!found)
+			वापस NOTIFY_DONE;
 
-		neigh_update->min_interval = min_t(unsigned long,
+		neigh_update->min_पूर्णांकerval = min_t(अचिन्हित दीर्घ,
 						   NEIGH_VAR(p, DELAY_PROBE_TIME),
-						   neigh_update->min_interval);
-		mlx5_fc_update_sampling_interval(priv->mdev,
-						 neigh_update->min_interval);
-		break;
-	}
-	return NOTIFY_DONE;
-}
+						   neigh_update->min_पूर्णांकerval);
+		mlx5_fc_update_sampling_पूर्णांकerval(priv->mdev,
+						 neigh_update->min_पूर्णांकerval);
+		अवरोध;
+	पूर्ण
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static const struct rhashtable_params mlx5e_neigh_ht_params = {
-	.head_offset = offsetof(struct mlx5e_neigh_hash_entry, rhash_node),
-	.key_offset = offsetof(struct mlx5e_neigh_hash_entry, m_neigh),
-	.key_len = sizeof(struct mlx5e_neigh),
-	.automatic_shrinking = true,
-};
+अटल स्थिर काष्ठा rhashtable_params mlx5e_neigh_ht_params = अणु
+	.head_offset = दुरत्व(काष्ठा mlx5e_neigh_hash_entry, rhash_node),
+	.key_offset = दुरत्व(काष्ठा mlx5e_neigh_hash_entry, m_neigh),
+	.key_len = माप(काष्ठा mlx5e_neigh),
+	.स्वतःmatic_shrinking = true,
+पूर्ण;
 
-int mlx5e_rep_neigh_init(struct mlx5e_rep_priv *rpriv)
-{
-	struct mlx5e_neigh_update_table *neigh_update = &rpriv->neigh_update;
-	int err;
+पूर्णांक mlx5e_rep_neigh_init(काष्ठा mlx5e_rep_priv *rpriv)
+अणु
+	काष्ठा mlx5e_neigh_update_table *neigh_update = &rpriv->neigh_update;
+	पूर्णांक err;
 
 	err = rhashtable_init(&neigh_update->neigh_ht, &mlx5e_neigh_ht_params);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
 	INIT_LIST_HEAD(&neigh_update->neigh_list);
 	mutex_init(&neigh_update->encap_lock);
 	INIT_DELAYED_WORK(&neigh_update->neigh_stats_work,
 			  mlx5e_rep_neigh_stats_work);
-	mlx5e_rep_neigh_update_init_interval(rpriv);
+	mlx5e_rep_neigh_update_init_पूर्णांकerval(rpriv);
 
-	neigh_update->netevent_nb.notifier_call = mlx5e_rep_netevent_event;
-	err = register_netevent_notifier(&neigh_update->netevent_nb);
-	if (err)
-		goto out_notifier;
-	return 0;
+	neigh_update->netevent_nb.notअगरier_call = mlx5e_rep_netevent_event;
+	err = रेजिस्टर_netevent_notअगरier(&neigh_update->netevent_nb);
+	अगर (err)
+		जाओ out_notअगरier;
+	वापस 0;
 
-out_notifier:
-	neigh_update->netevent_nb.notifier_call = NULL;
+out_notअगरier:
+	neigh_update->netevent_nb.notअगरier_call = शून्य;
 	rhashtable_destroy(&neigh_update->neigh_ht);
 out_err:
 	netdev_warn(rpriv->netdev,
 		    "Failed to initialize neighbours handling for vport %d\n",
 		    rpriv->rep->vport);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void mlx5e_rep_neigh_cleanup(struct mlx5e_rep_priv *rpriv)
-{
-	struct mlx5e_neigh_update_table *neigh_update = &rpriv->neigh_update;
-	struct mlx5e_priv *priv = netdev_priv(rpriv->netdev);
+व्योम mlx5e_rep_neigh_cleanup(काष्ठा mlx5e_rep_priv *rpriv)
+अणु
+	काष्ठा mlx5e_neigh_update_table *neigh_update = &rpriv->neigh_update;
+	काष्ठा mlx5e_priv *priv = netdev_priv(rpriv->netdev);
 
-	if (!rpriv->neigh_update.netevent_nb.notifier_call)
-		return;
+	अगर (!rpriv->neigh_update.netevent_nb.notअगरier_call)
+		वापस;
 
-	unregister_netevent_notifier(&neigh_update->netevent_nb);
+	unरेजिस्टर_netevent_notअगरier(&neigh_update->netevent_nb);
 
 	flush_workqueue(priv->wq); /* flush neigh update works */
 
@@ -320,79 +321,79 @@ void mlx5e_rep_neigh_cleanup(struct mlx5e_rep_priv *rpriv)
 
 	mutex_destroy(&neigh_update->encap_lock);
 	rhashtable_destroy(&neigh_update->neigh_ht);
-}
+पूर्ण
 
-static int mlx5e_rep_neigh_entry_insert(struct mlx5e_priv *priv,
-					struct mlx5e_neigh_hash_entry *nhe)
-{
-	struct mlx5e_rep_priv *rpriv = priv->ppriv;
-	int err;
+अटल पूर्णांक mlx5e_rep_neigh_entry_insert(काष्ठा mlx5e_priv *priv,
+					काष्ठा mlx5e_neigh_hash_entry *nhe)
+अणु
+	काष्ठा mlx5e_rep_priv *rpriv = priv->ppriv;
+	पूर्णांक err;
 
 	err = rhashtable_insert_fast(&rpriv->neigh_update.neigh_ht,
 				     &nhe->rhash_node,
 				     mlx5e_neigh_ht_params);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	list_add_rcu(&nhe->neigh_list, &rpriv->neigh_update.neigh_list);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void mlx5e_rep_neigh_entry_remove(struct mlx5e_neigh_hash_entry *nhe)
-{
-	struct mlx5e_rep_priv *rpriv = nhe->priv->ppriv;
+अटल व्योम mlx5e_rep_neigh_entry_हटाओ(काष्ठा mlx5e_neigh_hash_entry *nhe)
+अणु
+	काष्ठा mlx5e_rep_priv *rpriv = nhe->priv->ppriv;
 
 	mutex_lock(&rpriv->neigh_update.encap_lock);
 
 	list_del_rcu(&nhe->neigh_list);
 
-	rhashtable_remove_fast(&rpriv->neigh_update.neigh_ht,
+	rhashtable_हटाओ_fast(&rpriv->neigh_update.neigh_ht,
 			       &nhe->rhash_node,
 			       mlx5e_neigh_ht_params);
 	mutex_unlock(&rpriv->neigh_update.encap_lock);
-}
+पूर्ण
 
 /* This function must only be called under the representor's encap_lock or
- * inside rcu read lock section.
+ * inside rcu पढ़ो lock section.
  */
-struct mlx5e_neigh_hash_entry *
-mlx5e_rep_neigh_entry_lookup(struct mlx5e_priv *priv,
-			     struct mlx5e_neigh *m_neigh)
-{
-	struct mlx5e_rep_priv *rpriv = priv->ppriv;
-	struct mlx5e_neigh_update_table *neigh_update = &rpriv->neigh_update;
-	struct mlx5e_neigh_hash_entry *nhe;
+काष्ठा mlx5e_neigh_hash_entry *
+mlx5e_rep_neigh_entry_lookup(काष्ठा mlx5e_priv *priv,
+			     काष्ठा mlx5e_neigh *m_neigh)
+अणु
+	काष्ठा mlx5e_rep_priv *rpriv = priv->ppriv;
+	काष्ठा mlx5e_neigh_update_table *neigh_update = &rpriv->neigh_update;
+	काष्ठा mlx5e_neigh_hash_entry *nhe;
 
 	nhe = rhashtable_lookup_fast(&neigh_update->neigh_ht, m_neigh,
 				     mlx5e_neigh_ht_params);
-	return nhe && mlx5e_rep_neigh_entry_hold(nhe) ? nhe : NULL;
-}
+	वापस nhe && mlx5e_rep_neigh_entry_hold(nhe) ? nhe : शून्य;
+पूर्ण
 
-int mlx5e_rep_neigh_entry_create(struct mlx5e_priv *priv,
-				 struct mlx5e_neigh *m_neigh,
-				 struct net_device *neigh_dev,
-				 struct mlx5e_neigh_hash_entry **nhe)
-{
-	int err;
+पूर्णांक mlx5e_rep_neigh_entry_create(काष्ठा mlx5e_priv *priv,
+				 काष्ठा mlx5e_neigh *m_neigh,
+				 काष्ठा net_device *neigh_dev,
+				 काष्ठा mlx5e_neigh_hash_entry **nhe)
+अणु
+	पूर्णांक err;
 
-	*nhe = kzalloc(sizeof(**nhe), GFP_KERNEL);
-	if (!*nhe)
-		return -ENOMEM;
+	*nhe = kzalloc(माप(**nhe), GFP_KERNEL);
+	अगर (!*nhe)
+		वापस -ENOMEM;
 
 	(*nhe)->priv = priv;
-	memcpy(&(*nhe)->m_neigh, m_neigh, sizeof(*m_neigh));
+	स_नकल(&(*nhe)->m_neigh, m_neigh, माप(*m_neigh));
 	spin_lock_init(&(*nhe)->encap_list_lock);
 	INIT_LIST_HEAD(&(*nhe)->encap_list);
 	refcount_set(&(*nhe)->refcnt, 1);
 	WRITE_ONCE((*nhe)->neigh_dev, neigh_dev);
 
 	err = mlx5e_rep_neigh_entry_insert(priv, *nhe);
-	if (err)
-		goto out_free;
-	return 0;
+	अगर (err)
+		जाओ out_मुक्त;
+	वापस 0;
 
-out_free:
-	kfree(*nhe);
-	return err;
-}
+out_मुक्त:
+	kमुक्त(*nhe);
+	वापस err;
+पूर्ण

@@ -1,19 +1,20 @@
-#ifndef __LINUX_USERMODE_DRIVER_H__
-#define __LINUX_USERMODE_DRIVER_H__
+<शैली गुरु>
+#अगर_अघोषित __LINUX_USERMODE_DRIVER_H__
+#घोषणा __LINUX_USERMODE_DRIVER_H__
 
-#include <linux/umh.h>
-#include <linux/path.h>
+#समावेश <linux/umh.h>
+#समावेश <linux/path.h>
 
-struct umd_info {
-	const char *driver_name;
-	struct file *pipe_to_umh;
-	struct file *pipe_from_umh;
-	struct path wd;
-	struct pid *tgid;
-};
-int umd_load_blob(struct umd_info *info, const void *data, size_t len);
-int umd_unload_blob(struct umd_info *info);
-int fork_usermode_driver(struct umd_info *info);
-void umd_cleanup_helper(struct umd_info *info);
+काष्ठा umd_info अणु
+	स्थिर अक्षर *driver_name;
+	काष्ठा file *pipe_to_umh;
+	काष्ठा file *pipe_from_umh;
+	काष्ठा path wd;
+	काष्ठा pid *tgid;
+पूर्ण;
+पूर्णांक umd_load_blob(काष्ठा umd_info *info, स्थिर व्योम *data, माप_प्रकार len);
+पूर्णांक umd_unload_blob(काष्ठा umd_info *info);
+पूर्णांक विभाजन_usermode_driver(काष्ठा umd_info *info);
+व्योम umd_cleanup_helper(काष्ठा umd_info *info);
 
-#endif /* __LINUX_USERMODE_DRIVER_H__ */
+#पूर्ण_अगर /* __LINUX_USERMODE_DRIVER_H__ */

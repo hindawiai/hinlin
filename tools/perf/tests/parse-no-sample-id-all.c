@@ -1,105 +1,106 @@
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <stddef.h>
+<शैली गुरु>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <मानकघोष.स>
 
-#include "tests.h"
+#समावेश "tests.h"
 
-#include "event.h"
-#include "evlist.h"
-#include "header.h"
-#include "debug.h"
+#समावेश "event.h"
+#समावेश "evlist.h"
+#समावेश "header.h"
+#समावेश "debug.h"
 
-static int process_event(struct evlist **pevlist, union perf_event *event)
-{
-	struct perf_sample sample;
+अटल पूर्णांक process_event(काष्ठा evlist **pevlist, जोड़ perf_event *event)
+अणु
+	काष्ठा perf_sample sample;
 
-	if (event->header.type == PERF_RECORD_HEADER_ATTR) {
-		if (perf_event__process_attr(NULL, event, pevlist)) {
+	अगर (event->header.type == PERF_RECORD_HEADER_ATTR) अणु
+		अगर (perf_event__process_attr(शून्य, event, pevlist)) अणु
 			pr_debug("perf_event__process_attr failed\n");
-			return -1;
-		}
-		return 0;
-	}
+			वापस -1;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	if (event->header.type >= PERF_RECORD_USER_TYPE_START)
-		return -1;
+	अगर (event->header.type >= PERF_RECORD_USER_TYPE_START)
+		वापस -1;
 
-	if (!*pevlist)
-		return -1;
+	अगर (!*pevlist)
+		वापस -1;
 
-	if (evlist__parse_sample(*pevlist, event, &sample)) {
+	अगर (evlist__parse_sample(*pevlist, event, &sample)) अणु
 		pr_debug("evlist__parse_sample failed\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_events(union perf_event **events, size_t count)
-{
-	struct evlist *evlist = NULL;
-	int err = 0;
-	size_t i;
+अटल पूर्णांक process_events(जोड़ perf_event **events, माप_प्रकार count)
+अणु
+	काष्ठा evlist *evlist = शून्य;
+	पूर्णांक err = 0;
+	माप_प्रकार i;
 
-	for (i = 0; i < count && !err; i++)
+	क्रम (i = 0; i < count && !err; i++)
 		err = process_event(&evlist, events[i]);
 
 	evlist__delete(evlist);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct test_attr_event {
-	struct perf_event_header header;
-	struct perf_event_attr	 attr;
+काष्ठा test_attr_event अणु
+	काष्ठा perf_event_header header;
+	काष्ठा perf_event_attr	 attr;
 	u64 id;
-};
+पूर्ण;
 
 /**
  * test__parse_no_sample_id_all - test parsing with no sample_id_all bit set.
  *
- * This function tests parsing data produced on kernel's that do not support the
+ * This function tests parsing data produced on kernel's that करो not support the
  * sample_id_all bit.  Without the sample_id_all bit, non-sample events (such as
- * mmap events) do not have an id sample appended, and consequently logic
- * designed to determine the id will not work.  That case happens when there is
+ * mmap events) करो not have an id sample appended, and consequently logic
+ * deचिन्हित to determine the id will not work.  That हाल happens when there is
  * more than one selected event, so this test processes three events: 2
  * attributes representing the selected events and one mmap event.
  *
- * Return: %0 on success, %-1 if the test fails.
+ * Return: %0 on success, %-1 अगर the test fails.
  */
-int test__parse_no_sample_id_all(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	int err;
+पूर्णांक test__parse_no_sample_id_all(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	पूर्णांक err;
 
-	struct test_attr_event event1 = {
-		.header = {
+	काष्ठा test_attr_event event1 = अणु
+		.header = अणु
 			.type = PERF_RECORD_HEADER_ATTR,
-			.size = sizeof(struct test_attr_event),
-		},
+			.size = माप(काष्ठा test_attr_event),
+		पूर्ण,
 		.id = 1,
-	};
-	struct test_attr_event event2 = {
-		.header = {
+	पूर्ण;
+	काष्ठा test_attr_event event2 = अणु
+		.header = अणु
 			.type = PERF_RECORD_HEADER_ATTR,
-			.size = sizeof(struct test_attr_event),
-		},
+			.size = माप(काष्ठा test_attr_event),
+		पूर्ण,
 		.id = 2,
-	};
-	struct perf_record_mmap event3 = {
-		.header = {
+	पूर्ण;
+	काष्ठा perf_record_mmap event3 = अणु
+		.header = अणु
 			.type = PERF_RECORD_MMAP,
-			.size = sizeof(struct perf_record_mmap),
-		},
-	};
-	union perf_event *events[] = {
-		(union perf_event *)&event1,
-		(union perf_event *)&event2,
-		(union perf_event *)&event3,
-	};
+			.size = माप(काष्ठा perf_record_mmap),
+		पूर्ण,
+	पूर्ण;
+	जोड़ perf_event *events[] = अणु
+		(जोड़ perf_event *)&event1,
+		(जोड़ perf_event *)&event2,
+		(जोड़ perf_event *)&event3,
+	पूर्ण;
 
 	err = process_events(events, ARRAY_SIZE(events));
-	if (err)
-		return -1;
+	अगर (err)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

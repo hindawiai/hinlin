@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,20 +24,20 @@
  *
  */
 
-#ifndef MOD_INFO_PACKET_H_
-#define MOD_INFO_PACKET_H_
+#अगर_अघोषित MOD_INFO_PACKET_H_
+#घोषणा MOD_INFO_PACKET_H_
 
-#include "dm_services.h"
-#include "mod_shared.h"
+#समावेश "dm_services.h"
+#समावेश "mod_shared.h"
 //Forward Declarations
-struct dc_stream_state;
-struct dc_info_packet;
-struct mod_vrr_params;
+काष्ठा dc_stream_state;
+काष्ठा dc_info_packet;
+काष्ठा mod_vrr_params;
 
-void mod_build_vsc_infopacket(const struct dc_stream_state *stream,
-		struct dc_info_packet *info_packet);
+व्योम mod_build_vsc_infopacket(स्थिर काष्ठा dc_stream_state *stream,
+		काष्ठा dc_info_packet *info_packet);
 
-void mod_build_hf_vsif_infopacket(const struct dc_stream_state *stream,
-		struct dc_info_packet *info_packet);
+व्योम mod_build_hf_vsअगर_infopacket(स्थिर काष्ठा dc_stream_state *stream,
+		काष्ठा dc_info_packet *info_packet);
 
-#endif
+#पूर्ण_अगर

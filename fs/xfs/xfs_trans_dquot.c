@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2002 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
-#include "xfs_inode.h"
-#include "xfs_trans.h"
-#include "xfs_trans_priv.h"
-#include "xfs_quota.h"
-#include "xfs_qm.h"
-#include "xfs_trace.h"
-#include "xfs_error.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_trans.h"
+#समावेश "xfs_trans_priv.h"
+#समावेश "xfs_quota.h"
+#समावेश "xfs_qm.h"
+#समावेश "xfs_trace.h"
+#समावेश "xfs_error.h"
 
-STATIC void	xfs_trans_alloc_dqinfo(xfs_trans_t *);
+STATIC व्योम	xfs_trans_alloc_dqinfo(xfs_trans_t *);
 
 /*
  * Add the locked dquot to the transaction.
  * The dquot must be locked, and it cannot be associated with any
  * transaction.
  */
-void
+व्योम
 xfs_trans_dqjoin(
-	struct xfs_trans	*tp,
-	struct xfs_dquot	*dqp)
-{
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_dquot	*dqp)
+अणु
 	ASSERT(XFS_DQ_IS_LOCKED(dqp));
 	ASSERT(dqp->q_logitem.qli_dquot == dqp);
 
 	/*
-	 * Get a log_item_desc to point at the new item.
+	 * Get a log_item_desc to poपूर्णांक at the new item.
 	 */
 	xfs_trans_add_item(tp, &dqp->q_logitem.qli_item);
-}
+पूर्ण
 
 /*
  * This is called to mark the dquot as needing
  * to be logged when the transaction is committed.  The dquot must
- * already be associated with the given transaction.
+ * alपढ़ोy be associated with the given transaction.
  * Note that it marks the entire transaction as dirty. In the ordinary
- * case, this gets called via xfs_trans_commit, after the transaction
- * is already dirty. However, there's nothing stop this from getting
- * called directly, as done by xfs_qm_scall_setqlim. Hence, the TRANS_DIRTY
+ * हाल, this माला_लो called via xfs_trans_commit, after the transaction
+ * is alपढ़ोy dirty. However, there's nothing stop this from getting
+ * called directly, as करोne by xfs_qm_scall_setqlim. Hence, the TRANS_सूचीTY
  * flag.
  */
-void
+व्योम
 xfs_trans_log_dquot(
-	struct xfs_trans	*tp,
-	struct xfs_dquot	*dqp)
-{
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_dquot	*dqp)
+अणु
 	ASSERT(XFS_DQ_IS_LOCKED(dqp));
 
-	/* Upgrade the dquot to bigtime format if possible. */
-	if (dqp->q_id != 0 &&
-	    xfs_sb_version_hasbigtime(&tp->t_mountp->m_sb) &&
+	/* Upgrade the dquot to bigसमय क्रमmat अगर possible. */
+	अगर (dqp->q_id != 0 &&
+	    xfs_sb_version_hasbigसमय(&tp->t_mountp->m_sb) &&
 	    !(dqp->q_type & XFS_DQTYPE_BIGTIME))
 		dqp->q_type |= XFS_DQTYPE_BIGTIME;
 
-	tp->t_flags |= XFS_TRANS_DIRTY;
-	set_bit(XFS_LI_DIRTY, &dqp->q_logitem.qli_item.li_flags);
-}
+	tp->t_flags |= XFS_TRANS_सूचीTY;
+	set_bit(XFS_LI_सूचीTY, &dqp->q_logitem.qli_item.li_flags);
+पूर्ण
 
 /*
- * Carry forward whatever is left of the quota blk reservation to
+ * Carry क्रमward whatever is left of the quota blk reservation to
  * the spanky new transaction
  */
-void
+व्योम
 xfs_trans_dup_dqinfo(
-	struct xfs_trans	*otp,
-	struct xfs_trans	*ntp)
-{
-	struct xfs_dqtrx	*oq, *nq;
-	int			i, j;
-	struct xfs_dqtrx	*oqa, *nqa;
-	uint64_t		blk_res_used;
+	काष्ठा xfs_trans	*otp,
+	काष्ठा xfs_trans	*ntp)
+अणु
+	काष्ठा xfs_dqtrx	*oq, *nq;
+	पूर्णांक			i, j;
+	काष्ठा xfs_dqtrx	*oqa, *nqa;
+	uपूर्णांक64_t		blk_res_used;
 
-	if (!otp->t_dqinfo)
-		return;
+	अगर (!otp->t_dqinfo)
+		वापस;
 
 	xfs_trans_alloc_dqinfo(ntp);
 
-	for (j = 0; j < XFS_QM_TRANS_DQTYPES; j++) {
+	क्रम (j = 0; j < XFS_QM_TRANS_DQTYPES; j++) अणु
 		oqa = otp->t_dqinfo->dqs[j];
 		nqa = ntp->t_dqinfo->dqs[j];
-		for (i = 0; i < XFS_QM_TRANS_MAXDQS; i++) {
+		क्रम (i = 0; i < XFS_QM_TRANS_MAXDQS; i++) अणु
 			blk_res_used = 0;
 
-			if (oqa[i].qt_dquot == NULL)
-				break;
+			अगर (oqa[i].qt_dquot == शून्य)
+				अवरोध;
 			oq = &oqa[i];
 			nq = &nqa[i];
 
-			if (oq->qt_blk_res && oq->qt_bcount_delta > 0)
+			अगर (oq->qt_blk_res && oq->qt_bcount_delta > 0)
 				blk_res_used = oq->qt_bcount_delta;
 
 			nq->qt_dquot = oq->qt_dquot;
@@ -116,254 +117,254 @@ xfs_trans_dup_dqinfo(
 			nq->qt_ino_res = oq->qt_ino_res - oq->qt_ino_res_used;
 			oq->qt_ino_res = oq->qt_ino_res_used;
 
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Wrap around mod_dquot to account for both user and group quotas.
+ * Wrap around mod_dquot to account क्रम both user and group quotas.
  */
-void
+व्योम
 xfs_trans_mod_dquot_byino(
 	xfs_trans_t	*tp,
 	xfs_inode_t	*ip,
-	uint		field,
-	int64_t		delta)
-{
+	uपूर्णांक		field,
+	पूर्णांक64_t		delta)
+अणु
 	xfs_mount_t	*mp = tp->t_mountp;
 
-	if (!XFS_IS_QUOTA_RUNNING(mp) ||
+	अगर (!XFS_IS_QUOTA_RUNNING(mp) ||
 	    !XFS_IS_QUOTA_ON(mp) ||
 	    xfs_is_quota_inode(&mp->m_sb, ip->i_ino))
-		return;
+		वापस;
 
-	if (XFS_IS_UQUOTA_ON(mp) && ip->i_udquot)
-		(void) xfs_trans_mod_dquot(tp, ip->i_udquot, field, delta);
-	if (XFS_IS_GQUOTA_ON(mp) && ip->i_gdquot)
-		(void) xfs_trans_mod_dquot(tp, ip->i_gdquot, field, delta);
-	if (XFS_IS_PQUOTA_ON(mp) && ip->i_pdquot)
-		(void) xfs_trans_mod_dquot(tp, ip->i_pdquot, field, delta);
-}
+	अगर (XFS_IS_UQUOTA_ON(mp) && ip->i_udquot)
+		(व्योम) xfs_trans_mod_dquot(tp, ip->i_udquot, field, delta);
+	अगर (XFS_IS_GQUOTA_ON(mp) && ip->i_gdquot)
+		(व्योम) xfs_trans_mod_dquot(tp, ip->i_gdquot, field, delta);
+	अगर (XFS_IS_PQUOTA_ON(mp) && ip->i_pdquot)
+		(व्योम) xfs_trans_mod_dquot(tp, ip->i_pdquot, field, delta);
+पूर्ण
 
-STATIC struct xfs_dqtrx *
+STATIC काष्ठा xfs_dqtrx *
 xfs_trans_get_dqtrx(
-	struct xfs_trans	*tp,
-	struct xfs_dquot	*dqp)
-{
-	int			i;
-	struct xfs_dqtrx	*qa;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_dquot	*dqp)
+अणु
+	पूर्णांक			i;
+	काष्ठा xfs_dqtrx	*qa;
 
-	switch (xfs_dquot_type(dqp)) {
-	case XFS_DQTYPE_USER:
+	चयन (xfs_dquot_type(dqp)) अणु
+	हाल XFS_DQTYPE_USER:
 		qa = tp->t_dqinfo->dqs[XFS_QM_TRANS_USR];
-		break;
-	case XFS_DQTYPE_GROUP:
+		अवरोध;
+	हाल XFS_DQTYPE_GROUP:
 		qa = tp->t_dqinfo->dqs[XFS_QM_TRANS_GRP];
-		break;
-	case XFS_DQTYPE_PROJ:
+		अवरोध;
+	हाल XFS_DQTYPE_PROJ:
 		qa = tp->t_dqinfo->dqs[XFS_QM_TRANS_PRJ];
-		break;
-	default:
-		return NULL;
-	}
+		अवरोध;
+	शेष:
+		वापस शून्य;
+	पूर्ण
 
-	for (i = 0; i < XFS_QM_TRANS_MAXDQS; i++) {
-		if (qa[i].qt_dquot == NULL ||
+	क्रम (i = 0; i < XFS_QM_TRANS_MAXDQS; i++) अणु
+		अगर (qa[i].qt_dquot == शून्य ||
 		    qa[i].qt_dquot == dqp)
-			return &qa[i];
-	}
+			वापस &qa[i];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Make the changes in the transaction structure.
+ * Make the changes in the transaction काष्ठाure.
  * The moral equivalent to xfs_trans_mod_sb().
- * We don't touch any fields in the dquot, so we don't care
- * if it's locked or not (most of the time it won't be).
+ * We करोn't touch any fields in the dquot, so we don't care
+ * अगर it's locked or not (most of the time it won't be).
  */
-void
+व्योम
 xfs_trans_mod_dquot(
-	struct xfs_trans	*tp,
-	struct xfs_dquot	*dqp,
-	uint			field,
-	int64_t			delta)
-{
-	struct xfs_dqtrx	*qtrx;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_dquot	*dqp,
+	uपूर्णांक			field,
+	पूर्णांक64_t			delta)
+अणु
+	काष्ठा xfs_dqtrx	*qtrx;
 
 	ASSERT(tp);
 	ASSERT(XFS_IS_QUOTA_RUNNING(tp->t_mountp));
-	qtrx = NULL;
+	qtrx = शून्य;
 
-	if (!delta)
-		return;
+	अगर (!delta)
+		वापस;
 
-	if (tp->t_dqinfo == NULL)
+	अगर (tp->t_dqinfo == शून्य)
 		xfs_trans_alloc_dqinfo(tp);
 	/*
-	 * Find either the first free slot or the slot that belongs
+	 * Find either the first मुक्त slot or the slot that beदीर्घs
 	 * to this dquot.
 	 */
 	qtrx = xfs_trans_get_dqtrx(tp, dqp);
 	ASSERT(qtrx);
-	if (qtrx->qt_dquot == NULL)
+	अगर (qtrx->qt_dquot == शून्य)
 		qtrx->qt_dquot = dqp;
 
-	trace_xfs_trans_mod_dquot_before(qtrx);
+	trace_xfs_trans_mod_dquot_beक्रमe(qtrx);
 	trace_xfs_trans_mod_dquot(tp, dqp, field, delta);
 
-	switch (field) {
+	चयन (field) अणु
 	/* regular disk blk reservation */
-	case XFS_TRANS_DQ_RES_BLKS:
+	हाल XFS_TRANS_DQ_RES_BLKS:
 		qtrx->qt_blk_res += delta;
-		break;
+		अवरोध;
 
 	/* inode reservation */
-	case XFS_TRANS_DQ_RES_INOS:
+	हाल XFS_TRANS_DQ_RES_INOS:
 		qtrx->qt_ino_res += delta;
-		break;
+		अवरोध;
 
 	/* disk blocks used. */
-	case XFS_TRANS_DQ_BCOUNT:
+	हाल XFS_TRANS_DQ_BCOUNT:
 		qtrx->qt_bcount_delta += delta;
-		break;
+		अवरोध;
 
-	case XFS_TRANS_DQ_DELBCOUNT:
+	हाल XFS_TRANS_DQ_DELBCOUNT:
 		qtrx->qt_delbcnt_delta += delta;
-		break;
+		अवरोध;
 
 	/* Inode Count */
-	case XFS_TRANS_DQ_ICOUNT:
-		if (qtrx->qt_ino_res && delta > 0) {
+	हाल XFS_TRANS_DQ_ICOUNT:
+		अगर (qtrx->qt_ino_res && delta > 0) अणु
 			qtrx->qt_ino_res_used += delta;
 			ASSERT(qtrx->qt_ino_res >= qtrx->qt_ino_res_used);
-		}
+		पूर्ण
 		qtrx->qt_icount_delta += delta;
-		break;
+		अवरोध;
 
 	/* rtblk reservation */
-	case XFS_TRANS_DQ_RES_RTBLKS:
+	हाल XFS_TRANS_DQ_RES_RTBLKS:
 		qtrx->qt_rtblk_res += delta;
-		break;
+		अवरोध;
 
 	/* rtblk count */
-	case XFS_TRANS_DQ_RTBCOUNT:
-		if (qtrx->qt_rtblk_res && delta > 0) {
+	हाल XFS_TRANS_DQ_RTBCOUNT:
+		अगर (qtrx->qt_rtblk_res && delta > 0) अणु
 			qtrx->qt_rtblk_res_used += delta;
 			ASSERT(qtrx->qt_rtblk_res >= qtrx->qt_rtblk_res_used);
-		}
+		पूर्ण
 		qtrx->qt_rtbcount_delta += delta;
-		break;
+		अवरोध;
 
-	case XFS_TRANS_DQ_DELRTBCOUNT:
+	हाल XFS_TRANS_DQ_DELRTBCOUNT:
 		qtrx->qt_delrtb_delta += delta;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		ASSERT(0);
-	}
+	पूर्ण
 
 	trace_xfs_trans_mod_dquot_after(qtrx);
-}
+पूर्ण
 
 
 /*
- * Given an array of dqtrx structures, lock all the dquots associated and join
- * them to the transaction, provided they have been modified.  We know that the
+ * Given an array of dqtrx काष्ठाures, lock all the dquots associated and join
+ * them to the transaction, provided they have been modअगरied.  We know that the
  * highest number of dquots of one type - usr, grp and prj - involved in a
- * transaction is 3 so we don't need to make this very generic.
+ * transaction is 3 so we करोn't need to make this very generic.
  */
-STATIC void
+STATIC व्योम
 xfs_trans_dqlockedjoin(
-	struct xfs_trans	*tp,
-	struct xfs_dqtrx	*q)
-{
-	ASSERT(q[0].qt_dquot != NULL);
-	if (q[1].qt_dquot == NULL) {
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_dqtrx	*q)
+अणु
+	ASSERT(q[0].qt_dquot != शून्य);
+	अगर (q[1].qt_dquot == शून्य) अणु
 		xfs_dqlock(q[0].qt_dquot);
 		xfs_trans_dqjoin(tp, q[0].qt_dquot);
-	} else {
+	पूर्ण अन्यथा अणु
 		ASSERT(XFS_QM_TRANS_MAXDQS == 2);
 		xfs_dqlock2(q[0].qt_dquot, q[1].qt_dquot);
 		xfs_trans_dqjoin(tp, q[0].qt_dquot);
 		xfs_trans_dqjoin(tp, q[1].qt_dquot);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Apply dqtrx changes to the quota reservation counters. */
-static inline void
+अटल अंतरभूत व्योम
 xfs_apply_quota_reservation_deltas(
-	struct xfs_dquot_res	*res,
-	uint64_t		reserved,
-	int64_t			res_used,
-	int64_t			count_delta)
-{
-	if (reserved != 0) {
+	काष्ठा xfs_dquot_res	*res,
+	uपूर्णांक64_t		reserved,
+	पूर्णांक64_t			res_used,
+	पूर्णांक64_t			count_delta)
+अणु
+	अगर (reserved != 0) अणु
 		/*
-		 * Subtle math here: If reserved > res_used (the normal case),
+		 * Subtle math here: If reserved > res_used (the normal हाल),
 		 * we're simply subtracting the unused transaction quota
 		 * reservation from the dquot reservation.
 		 *
 		 * If, however, res_used > reserved, then we have allocated
-		 * more quota blocks than were reserved for the transaction.
+		 * more quota blocks than were reserved क्रम the transaction.
 		 * We must add that excess to the dquot reservation since it
 		 * tracks (usage + resv) and by definition we didn't reserve
 		 * that excess.
 		 */
-		res->reserved -= abs(reserved - res_used);
-	} else if (count_delta != 0) {
+		res->reserved -= असल(reserved - res_used);
+	पूर्ण अन्यथा अगर (count_delta != 0) अणु
 		/*
 		 * These blks were never reserved, either inside a transaction
 		 * or outside one (in a delayed allocation). Also, this isn't
-		 * always a negative number since we sometimes deliberately
+		 * always a negative number since we someबार deliberately
 		 * skip quota reservations.
 		 */
 		res->reserved += count_delta;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Called by xfs_trans_commit() and similar in spirit to
  * xfs_trans_apply_sb_deltas().
- * Go thru all the dquots belonging to this transaction and modify the
+ * Go thru all the dquots beदीर्घing to this transaction and modअगरy the
  * INCORE dquot to reflect the actual usages.
- * Unreserve just the reservations done by this transaction.
- * dquot is still left locked at exit.
+ * Unreserve just the reservations करोne by this transaction.
+ * dquot is still left locked at निकास.
  */
-void
+व्योम
 xfs_trans_apply_dquot_deltas(
-	struct xfs_trans	*tp)
-{
-	int			i, j;
-	struct xfs_dquot	*dqp;
-	struct xfs_dqtrx	*qtrx, *qa;
-	int64_t			totalbdelta;
-	int64_t			totalrtbdelta;
+	काष्ठा xfs_trans	*tp)
+अणु
+	पूर्णांक			i, j;
+	काष्ठा xfs_dquot	*dqp;
+	काष्ठा xfs_dqtrx	*qtrx, *qa;
+	पूर्णांक64_t			totalbdelta;
+	पूर्णांक64_t			totalrtbdelta;
 
-	if (!tp->t_dqinfo)
-		return;
+	अगर (!tp->t_dqinfo)
+		वापस;
 
 	ASSERT(tp->t_dqinfo);
-	for (j = 0; j < XFS_QM_TRANS_DQTYPES; j++) {
+	क्रम (j = 0; j < XFS_QM_TRANS_DQTYPES; j++) अणु
 		qa = tp->t_dqinfo->dqs[j];
-		if (qa[0].qt_dquot == NULL)
-			continue;
+		अगर (qa[0].qt_dquot == शून्य)
+			जारी;
 
 		/*
 		 * Lock all of the dquots and join them to the transaction.
 		 */
 		xfs_trans_dqlockedjoin(tp, qa);
 
-		for (i = 0; i < XFS_QM_TRANS_MAXDQS; i++) {
-			uint64_t	blk_res_used;
+		क्रम (i = 0; i < XFS_QM_TRANS_MAXDQS; i++) अणु
+			uपूर्णांक64_t	blk_res_used;
 
 			qtrx = &qa[i];
 			/*
 			 * The array of dquots is filled
 			 * sequentially, not sparsely.
 			 */
-			if ((dqp = qtrx->qt_dquot) == NULL)
-				break;
+			अगर ((dqp = qtrx->qt_dquot) == शून्य)
+				अवरोध;
 
 			ASSERT(XFS_DQ_IS_LOCKED(dqp));
 
@@ -372,10 +373,10 @@ xfs_trans_apply_dquot_deltas(
 			 */
 
 			/*
-			 * The issue here is - sometimes we don't make a blkquota
-			 * reservation intentionally to be fair to users
+			 * The issue here is - someबार we करोn't make a blkquota
+			 * reservation पूर्णांकentionally to be fair to users
 			 * (when the amount is small). On the other hand,
-			 * delayed allocs do make reservations, but that's
+			 * delayed allocs करो make reservations, but that's
 			 * outside of a transaction, so we have no
 			 * idea how much was really reserved.
 			 * So, here we've accumulated delayed allocation blks and
@@ -389,55 +390,55 @@ xfs_trans_apply_dquot_deltas(
 			totalrtbdelta = qtrx->qt_rtbcount_delta +
 				qtrx->qt_delrtb_delta;
 
-			if (totalbdelta != 0 || totalrtbdelta != 0 ||
-			    qtrx->qt_icount_delta != 0) {
-				trace_xfs_trans_apply_dquot_deltas_before(dqp);
+			अगर (totalbdelta != 0 || totalrtbdelta != 0 ||
+			    qtrx->qt_icount_delta != 0) अणु
+				trace_xfs_trans_apply_dquot_deltas_beक्रमe(dqp);
 				trace_xfs_trans_apply_dquot_deltas(qtrx);
-			}
+			पूर्ण
 
-#ifdef DEBUG
-			if (totalbdelta < 0)
+#अगर_घोषित DEBUG
+			अगर (totalbdelta < 0)
 				ASSERT(dqp->q_blk.count >= -totalbdelta);
 
-			if (totalrtbdelta < 0)
+			अगर (totalrtbdelta < 0)
 				ASSERT(dqp->q_rtb.count >= -totalrtbdelta);
 
-			if (qtrx->qt_icount_delta < 0)
+			अगर (qtrx->qt_icount_delta < 0)
 				ASSERT(dqp->q_ino.count >= -qtrx->qt_icount_delta);
-#endif
-			if (totalbdelta)
+#पूर्ण_अगर
+			अगर (totalbdelta)
 				dqp->q_blk.count += totalbdelta;
 
-			if (qtrx->qt_icount_delta)
+			अगर (qtrx->qt_icount_delta)
 				dqp->q_ino.count += qtrx->qt_icount_delta;
 
-			if (totalrtbdelta)
+			अगर (totalrtbdelta)
 				dqp->q_rtb.count += totalrtbdelta;
 
-			if (totalbdelta != 0 || totalrtbdelta != 0 ||
+			अगर (totalbdelta != 0 || totalrtbdelta != 0 ||
 			    qtrx->qt_icount_delta != 0)
 				trace_xfs_trans_apply_dquot_deltas_after(dqp);
 
 			/*
-			 * Get any default limits in use.
-			 * Start/reset the timer(s) if needed.
+			 * Get any शेष limits in use.
+			 * Start/reset the समयr(s) अगर needed.
 			 */
-			if (dqp->q_id) {
+			अगर (dqp->q_id) अणु
 				xfs_qm_adjust_dqlimits(dqp);
-				xfs_qm_adjust_dqtimers(dqp);
-			}
+				xfs_qm_adjust_dqसमयrs(dqp);
+			पूर्ण
 
-			dqp->q_flags |= XFS_DQFLAG_DIRTY;
+			dqp->q_flags |= XFS_DQFLAG_सूचीTY;
 			/*
 			 * add this to the list of items to get logged
 			 */
 			xfs_trans_log_dquot(tp, dqp);
 			/*
 			 * Take off what's left of the original reservation.
-			 * In case of delayed allocations, there's no
-			 * reservation that a transaction structure knows of.
+			 * In हाल of delayed allocations, there's no
+			 * reservation that a transaction काष्ठाure knows of.
 			 */
-			blk_res_used = max_t(int64_t, 0, qtrx->qt_bcount_delta);
+			blk_res_used = max_t(पूर्णांक64_t, 0, qtrx->qt_bcount_delta);
 			xfs_apply_quota_reservation_deltas(&dqp->q_blk,
 					qtrx->qt_blk_res, blk_res_used,
 					qtrx->qt_bcount_delta);
@@ -462,117 +463,117 @@ xfs_trans_apply_dquot_deltas(
 			ASSERT(dqp->q_blk.reserved >= dqp->q_blk.count);
 			ASSERT(dqp->q_ino.reserved >= dqp->q_ino.count);
 			ASSERT(dqp->q_rtb.reserved >= dqp->q_rtb.count);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Release the reservations, and adjust the dquots accordingly.
- * This is called only when the transaction is being aborted. If by
- * any chance we have done dquot modifications incore (ie. deltas) already,
+ * This is called only when the transaction is being पातed. If by
+ * any chance we have करोne dquot modअगरications incore (ie. deltas) alपढ़ोy,
  * we simply throw those away, since that's the expected behavior
  * when a transaction is curtailed without a commit.
  */
-void
+व्योम
 xfs_trans_unreserve_and_mod_dquots(
-	struct xfs_trans	*tp)
-{
-	int			i, j;
-	struct xfs_dquot	*dqp;
-	struct xfs_dqtrx	*qtrx, *qa;
+	काष्ठा xfs_trans	*tp)
+अणु
+	पूर्णांक			i, j;
+	काष्ठा xfs_dquot	*dqp;
+	काष्ठा xfs_dqtrx	*qtrx, *qa;
 	bool			locked;
 
-	if (!tp->t_dqinfo)
-		return;
+	अगर (!tp->t_dqinfo)
+		वापस;
 
-	for (j = 0; j < XFS_QM_TRANS_DQTYPES; j++) {
+	क्रम (j = 0; j < XFS_QM_TRANS_DQTYPES; j++) अणु
 		qa = tp->t_dqinfo->dqs[j];
 
-		for (i = 0; i < XFS_QM_TRANS_MAXDQS; i++) {
+		क्रम (i = 0; i < XFS_QM_TRANS_MAXDQS; i++) अणु
 			qtrx = &qa[i];
 			/*
 			 * We assume that the array of dquots is filled
 			 * sequentially, not sparsely.
 			 */
-			if ((dqp = qtrx->qt_dquot) == NULL)
-				break;
+			अगर ((dqp = qtrx->qt_dquot) == शून्य)
+				अवरोध;
 			/*
-			 * Unreserve the original reservation. We don't care
+			 * Unreserve the original reservation. We करोn't care
 			 * about the number of blocks used field, or deltas.
-			 * Also we don't bother to zero the fields.
+			 * Also we करोn't bother to zero the fields.
 			 */
 			locked = false;
-			if (qtrx->qt_blk_res) {
+			अगर (qtrx->qt_blk_res) अणु
 				xfs_dqlock(dqp);
 				locked = true;
 				dqp->q_blk.reserved -=
 					(xfs_qcnt_t)qtrx->qt_blk_res;
-			}
-			if (qtrx->qt_ino_res) {
-				if (!locked) {
+			पूर्ण
+			अगर (qtrx->qt_ino_res) अणु
+				अगर (!locked) अणु
 					xfs_dqlock(dqp);
 					locked = true;
-				}
+				पूर्ण
 				dqp->q_ino.reserved -=
 					(xfs_qcnt_t)qtrx->qt_ino_res;
-			}
+			पूर्ण
 
-			if (qtrx->qt_rtblk_res) {
-				if (!locked) {
+			अगर (qtrx->qt_rtblk_res) अणु
+				अगर (!locked) अणु
 					xfs_dqlock(dqp);
 					locked = true;
-				}
+				पूर्ण
 				dqp->q_rtb.reserved -=
 					(xfs_qcnt_t)qtrx->qt_rtblk_res;
-			}
-			if (locked)
+			पूर्ण
+			अगर (locked)
 				xfs_dqunlock(dqp);
 
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-STATIC void
+STATIC व्योम
 xfs_quota_warn(
-	struct xfs_mount	*mp,
-	struct xfs_dquot	*dqp,
-	int			type)
-{
-	enum quota_type		qtype;
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_dquot	*dqp,
+	पूर्णांक			type)
+अणु
+	क्रमागत quota_type		qtype;
 
-	switch (xfs_dquot_type(dqp)) {
-	case XFS_DQTYPE_PROJ:
+	चयन (xfs_dquot_type(dqp)) अणु
+	हाल XFS_DQTYPE_PROJ:
 		qtype = PRJQUOTA;
-		break;
-	case XFS_DQTYPE_USER:
+		अवरोध;
+	हाल XFS_DQTYPE_USER:
 		qtype = USRQUOTA;
-		break;
-	case XFS_DQTYPE_GROUP:
+		अवरोध;
+	हाल XFS_DQTYPE_GROUP:
 		qtype = GRPQUOTA;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
 	quota_send_warning(make_kqid(&init_user_ns, qtype, dqp->q_id),
 			   mp->m_super->s_dev, type);
-}
+पूर्ण
 
 /*
- * Decide if we can make an additional reservation against a quota resource.
+ * Decide अगर we can make an additional reservation against a quota resource.
  * Returns an inode QUOTA_NL_ warning code and whether or not it's fatal.
  *
- * Note that we assume that the numeric difference between the inode and block
+ * Note that we assume that the numeric dअगरference between the inode and block
  * warning codes will always be 3 since it's userspace ABI now, and will never
  * decrease the quota reservation, so the *BELOW messages are irrelevant.
  */
-static inline int
+अटल अंतरभूत पूर्णांक
 xfs_dqresv_check(
-	struct xfs_dquot_res	*res,
-	struct xfs_quota_limits	*qlim,
-	int64_t			delta,
+	काष्ठा xfs_dquot_res	*res,
+	काष्ठा xfs_quota_limits	*qlim,
+	पूर्णांक64_t			delta,
 	bool			*fatal)
-{
+अणु
 	xfs_qcnt_t		hardlimit = res->hardlimit;
 	xfs_qcnt_t		softlimit = res->softlimit;
 	xfs_qcnt_t		total_count = res->reserved + delta;
@@ -582,95 +583,95 @@ xfs_dqresv_check(
 	BUILD_BUG_ON(QUOTA_NL_BSOFTWARN     != QUOTA_NL_ISOFTWARN + 3);
 
 	*fatal = false;
-	if (delta <= 0)
-		return QUOTA_NL_NOWARN;
+	अगर (delta <= 0)
+		वापस QUOTA_NL_NOWARN;
 
-	if (!hardlimit)
+	अगर (!hardlimit)
 		hardlimit = qlim->hard;
-	if (!softlimit)
+	अगर (!softlimit)
 		softlimit = qlim->soft;
 
-	if (hardlimit && total_count > hardlimit) {
+	अगर (hardlimit && total_count > hardlimit) अणु
 		*fatal = true;
-		return QUOTA_NL_IHARDWARN;
-	}
+		वापस QUOTA_NL_IHARDWARN;
+	पूर्ण
 
-	if (softlimit && total_count > softlimit) {
-		time64_t	now = ktime_get_real_seconds();
+	अगर (softlimit && total_count > softlimit) अणु
+		समय64_t	now = kसमय_get_real_seconds();
 
-		if ((res->timer != 0 && now > res->timer) ||
-		    (res->warnings != 0 && res->warnings >= qlim->warn)) {
+		अगर ((res->समयr != 0 && now > res->समयr) ||
+		    (res->warnings != 0 && res->warnings >= qlim->warn)) अणु
 			*fatal = true;
-			return QUOTA_NL_ISOFTLONGWARN;
-		}
+			वापस QUOTA_NL_ISOFTLONGWARN;
+		पूर्ण
 
 		res->warnings++;
-		return QUOTA_NL_ISOFTWARN;
-	}
+		वापस QUOTA_NL_ISOFTWARN;
+	पूर्ण
 
-	return QUOTA_NL_NOWARN;
-}
+	वापस QUOTA_NL_NOWARN;
+पूर्ण
 
 /*
  * This reserves disk blocks and inodes against a dquot.
- * Flags indicate if the dquot is to be locked here and also
- * if the blk reservation is for RT or regular blocks.
+ * Flags indicate अगर the dquot is to be locked here and also
+ * अगर the blk reservation is क्रम RT or regular blocks.
  * Sending in XFS_QMOPT_FORCE_RES flag skips the quota check.
  */
-STATIC int
+STATIC पूर्णांक
 xfs_trans_dqresv(
-	struct xfs_trans	*tp,
-	struct xfs_mount	*mp,
-	struct xfs_dquot	*dqp,
-	int64_t			nblks,
-	long			ninos,
-	uint			flags)
-{
-	struct xfs_quotainfo	*q = mp->m_quotainfo;
-	struct xfs_def_quota	*defq;
-	struct xfs_dquot_res	*blkres;
-	struct xfs_quota_limits	*qlim;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_dquot	*dqp,
+	पूर्णांक64_t			nblks,
+	दीर्घ			ninos,
+	uपूर्णांक			flags)
+अणु
+	काष्ठा xfs_quotainfo	*q = mp->m_quotainfo;
+	काष्ठा xfs_def_quota	*defq;
+	काष्ठा xfs_dquot_res	*blkres;
+	काष्ठा xfs_quota_limits	*qlim;
 
 	xfs_dqlock(dqp);
 
 	defq = xfs_get_defquota(q, xfs_dquot_type(dqp));
 
-	if (flags & XFS_TRANS_DQ_RES_BLKS) {
+	अगर (flags & XFS_TRANS_DQ_RES_BLKS) अणु
 		blkres = &dqp->q_blk;
 		qlim = &defq->blk;
-	} else {
+	पूर्ण अन्यथा अणु
 		blkres = &dqp->q_rtb;
 		qlim = &defq->rtb;
-	}
+	पूर्ण
 
-	if ((flags & XFS_QMOPT_FORCE_RES) == 0 && dqp->q_id &&
-	    xfs_dquot_is_enforced(dqp)) {
-		int		quota_nl;
+	अगर ((flags & XFS_QMOPT_FORCE_RES) == 0 && dqp->q_id &&
+	    xfs_dquot_is_enक्रमced(dqp)) अणु
+		पूर्णांक		quota_nl;
 		bool		fatal;
 
 		/*
-		 * dquot is locked already. See if we'd go over the hardlimit
-		 * or exceed the timelimit if we'd reserve resources.
+		 * dquot is locked alपढ़ोy. See अगर we'd go over the hardlimit
+		 * or exceed the समयlimit अगर we'd reserve resources.
 		 */
 		quota_nl = xfs_dqresv_check(blkres, qlim, nblks, &fatal);
-		if (quota_nl != QUOTA_NL_NOWARN) {
+		अगर (quota_nl != QUOTA_NL_NOWARN) अणु
 			/*
 			 * Quota block warning codes are 3 more than the inode
 			 * codes, which we check above.
 			 */
 			xfs_quota_warn(mp, dqp, quota_nl + 3);
-			if (fatal)
-				goto error_return;
-		}
+			अगर (fatal)
+				जाओ error_वापस;
+		पूर्ण
 
 		quota_nl = xfs_dqresv_check(&dqp->q_ino, &defq->ino, ninos,
 				&fatal);
-		if (quota_nl != QUOTA_NL_NOWARN) {
+		अगर (quota_nl != QUOTA_NL_NOWARN) अणु
 			xfs_quota_warn(mp, dqp, quota_nl);
-			if (fatal)
-				goto error_return;
-		}
-	}
+			अगर (fatal)
+				जाओ error_वापस;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Change the reservation, but not the actual usage.
@@ -680,221 +681,221 @@ xfs_trans_dqresv(
 	dqp->q_ino.reserved += (xfs_qcnt_t)ninos;
 
 	/*
-	 * note the reservation amt in the trans struct too,
+	 * note the reservation amt in the trans काष्ठा too,
 	 * so that the transaction knows how much was reserved by
 	 * it against this particular dquot.
-	 * We don't do this when we are reserving for a delayed allocation,
-	 * because we don't have the luxury of a transaction envelope then.
+	 * We करोn't करो this when we are reserving क्रम a delayed allocation,
+	 * because we करोn't have the luxury of a transaction envelope then.
 	 */
-	if (tp) {
+	अगर (tp) अणु
 		ASSERT(flags & XFS_QMOPT_RESBLK_MASK);
 		xfs_trans_mod_dquot(tp, dqp, flags & XFS_QMOPT_RESBLK_MASK,
 				    nblks);
 		xfs_trans_mod_dquot(tp, dqp, XFS_TRANS_DQ_RES_INOS, ninos);
-	}
+	पूर्ण
 
-	if (XFS_IS_CORRUPT(mp, dqp->q_blk.reserved < dqp->q_blk.count) ||
+	अगर (XFS_IS_CORRUPT(mp, dqp->q_blk.reserved < dqp->q_blk.count) ||
 	    XFS_IS_CORRUPT(mp, dqp->q_rtb.reserved < dqp->q_rtb.count) ||
 	    XFS_IS_CORRUPT(mp, dqp->q_ino.reserved < dqp->q_ino.count))
-		goto error_corrupt;
+		जाओ error_corrupt;
 
 	xfs_dqunlock(dqp);
-	return 0;
+	वापस 0;
 
-error_return:
+error_वापस:
 	xfs_dqunlock(dqp);
-	if (xfs_dquot_type(dqp) == XFS_DQTYPE_PROJ)
-		return -ENOSPC;
-	return -EDQUOT;
+	अगर (xfs_dquot_type(dqp) == XFS_DQTYPE_PROJ)
+		वापस -ENOSPC;
+	वापस -EDQUOT;
 error_corrupt:
 	xfs_dqunlock(dqp);
-	xfs_force_shutdown(mp, SHUTDOWN_CORRUPT_INCORE);
-	return -EFSCORRUPTED;
-}
+	xfs_क्रमce_shutकरोwn(mp, SHUTDOWN_CORRUPT_INCORE);
+	वापस -EFSCORRUPTED;
+पूर्ण
 
 
 /*
  * Given dquot(s), make disk block and/or inode reservations against them.
- * The fact that this does the reservation against user, group and
+ * The fact that this करोes the reservation against user, group and
  * project quotas is important, because this follows a all-or-nothing
  * approach.
  *
- * flags = XFS_QMOPT_FORCE_RES evades limit enforcement. Used by chown.
- *	   XFS_QMOPT_ENOSPC returns ENOSPC not EDQUOT.  Used by pquota.
+ * flags = XFS_QMOPT_FORCE_RES evades limit enक्रमcement. Used by chown.
+ *	   XFS_QMOPT_ENOSPC वापसs ENOSPC not EDQUOT.  Used by pquota.
  *	   XFS_TRANS_DQ_RES_BLKS reserves regular disk blocks
- *	   XFS_TRANS_DQ_RES_RTBLKS reserves realtime disk blocks
- * dquots are unlocked on return, if they were not locked by caller.
+ *	   XFS_TRANS_DQ_RES_RTBLKS reserves realसमय disk blocks
+ * dquots are unlocked on वापस, अगर they were not locked by caller.
  */
-int
+पूर्णांक
 xfs_trans_reserve_quota_bydquots(
-	struct xfs_trans	*tp,
-	struct xfs_mount	*mp,
-	struct xfs_dquot	*udqp,
-	struct xfs_dquot	*gdqp,
-	struct xfs_dquot	*pdqp,
-	int64_t			nblks,
-	long			ninos,
-	uint			flags)
-{
-	int		error;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_dquot	*udqp,
+	काष्ठा xfs_dquot	*gdqp,
+	काष्ठा xfs_dquot	*pdqp,
+	पूर्णांक64_t			nblks,
+	दीर्घ			ninos,
+	uपूर्णांक			flags)
+अणु
+	पूर्णांक		error;
 
-	if (!XFS_IS_QUOTA_RUNNING(mp) || !XFS_IS_QUOTA_ON(mp))
-		return 0;
+	अगर (!XFS_IS_QUOTA_RUNNING(mp) || !XFS_IS_QUOTA_ON(mp))
+		वापस 0;
 
 	ASSERT(flags & XFS_QMOPT_RESBLK_MASK);
 
-	if (udqp) {
+	अगर (udqp) अणु
 		error = xfs_trans_dqresv(tp, mp, udqp, nblks, ninos, flags);
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 
-	if (gdqp) {
+	अगर (gdqp) अणु
 		error = xfs_trans_dqresv(tp, mp, gdqp, nblks, ninos, flags);
-		if (error)
-			goto unwind_usr;
-	}
+		अगर (error)
+			जाओ unwind_usr;
+	पूर्ण
 
-	if (pdqp) {
+	अगर (pdqp) अणु
 		error = xfs_trans_dqresv(tp, mp, pdqp, nblks, ninos, flags);
-		if (error)
-			goto unwind_grp;
-	}
+		अगर (error)
+			जाओ unwind_grp;
+	पूर्ण
 
 	/*
 	 * Didn't change anything critical, so, no need to log
 	 */
-	return 0;
+	वापस 0;
 
 unwind_grp:
 	flags |= XFS_QMOPT_FORCE_RES;
-	if (gdqp)
+	अगर (gdqp)
 		xfs_trans_dqresv(tp, mp, gdqp, -nblks, -ninos, flags);
 unwind_usr:
 	flags |= XFS_QMOPT_FORCE_RES;
-	if (udqp)
+	अगर (udqp)
 		xfs_trans_dqresv(tp, mp, udqp, -nblks, -ninos, flags);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 
 /*
- * Lock the dquot and change the reservation if we can.
- * This doesn't change the actual usage, just the reservation.
+ * Lock the dquot and change the reservation अगर we can.
+ * This करोesn't change the actual usage, just the reservation.
  * The inode sent in is locked.
  */
-int
+पूर्णांक
 xfs_trans_reserve_quota_nblks(
-	struct xfs_trans	*tp,
-	struct xfs_inode	*ip,
-	int64_t			dblocks,
-	int64_t			rblocks,
-	bool			force)
-{
-	struct xfs_mount	*mp = ip->i_mount;
-	unsigned int		qflags = 0;
-	int			error;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_inode	*ip,
+	पूर्णांक64_t			dblocks,
+	पूर्णांक64_t			rblocks,
+	bool			क्रमce)
+अणु
+	काष्ठा xfs_mount	*mp = ip->i_mount;
+	अचिन्हित पूर्णांक		qflags = 0;
+	पूर्णांक			error;
 
-	if (!XFS_IS_QUOTA_RUNNING(mp) || !XFS_IS_QUOTA_ON(mp))
-		return 0;
+	अगर (!XFS_IS_QUOTA_RUNNING(mp) || !XFS_IS_QUOTA_ON(mp))
+		वापस 0;
 
 	ASSERT(!xfs_is_quota_inode(&mp->m_sb, ip->i_ino));
 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
 
-	if (force)
+	अगर (क्रमce)
 		qflags |= XFS_QMOPT_FORCE_RES;
 
 	/* Reserve data device quota against the inode's dquots. */
 	error = xfs_trans_reserve_quota_bydquots(tp, mp, ip->i_udquot,
 			ip->i_gdquot, ip->i_pdquot, dblocks, 0,
 			XFS_QMOPT_RES_REGBLKS | qflags);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	/* Do the same but for realtime blocks. */
+	/* Do the same but क्रम realसमय blocks. */
 	error = xfs_trans_reserve_quota_bydquots(tp, mp, ip->i_udquot,
 			ip->i_gdquot, ip->i_pdquot, rblocks, 0,
 			XFS_QMOPT_RES_RTBLKS | qflags);
-	if (error) {
+	अगर (error) अणु
 		xfs_trans_reserve_quota_bydquots(tp, mp, ip->i_udquot,
 				ip->i_gdquot, ip->i_pdquot, -dblocks, 0,
 				XFS_QMOPT_RES_REGBLKS);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Change the quota reservations for an inode creation activity. */
-int
+/* Change the quota reservations क्रम an inode creation activity. */
+पूर्णांक
 xfs_trans_reserve_quota_icreate(
-	struct xfs_trans	*tp,
-	struct xfs_dquot	*udqp,
-	struct xfs_dquot	*gdqp,
-	struct xfs_dquot	*pdqp,
-	int64_t			dblocks)
-{
-	struct xfs_mount	*mp = tp->t_mountp;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_dquot	*udqp,
+	काष्ठा xfs_dquot	*gdqp,
+	काष्ठा xfs_dquot	*pdqp,
+	पूर्णांक64_t			dblocks)
+अणु
+	काष्ठा xfs_mount	*mp = tp->t_mountp;
 
-	if (!XFS_IS_QUOTA_RUNNING(mp) || !XFS_IS_QUOTA_ON(mp))
-		return 0;
+	अगर (!XFS_IS_QUOTA_RUNNING(mp) || !XFS_IS_QUOTA_ON(mp))
+		वापस 0;
 
-	return xfs_trans_reserve_quota_bydquots(tp, mp, udqp, gdqp, pdqp,
+	वापस xfs_trans_reserve_quota_bydquots(tp, mp, udqp, gdqp, pdqp,
 			dblocks, 1, XFS_QMOPT_RES_REGBLKS);
-}
+पूर्ण
 
 /*
  * This routine is called to allocate a quotaoff log item.
  */
-struct xfs_qoff_logitem *
+काष्ठा xfs_qoff_logitem *
 xfs_trans_get_qoff_item(
-	struct xfs_trans	*tp,
-	struct xfs_qoff_logitem	*startqoff,
-	uint			flags)
-{
-	struct xfs_qoff_logitem	*q;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_qoff_logitem	*startqoff,
+	uपूर्णांक			flags)
+अणु
+	काष्ठा xfs_qoff_logitem	*q;
 
-	ASSERT(tp != NULL);
+	ASSERT(tp != शून्य);
 
 	q = xfs_qm_qoff_logitem_init(tp->t_mountp, startqoff, flags);
-	ASSERT(q != NULL);
+	ASSERT(q != शून्य);
 
 	/*
-	 * Get a log_item_desc to point at the new item.
+	 * Get a log_item_desc to poपूर्णांक at the new item.
 	 */
 	xfs_trans_add_item(tp, &q->qql_item);
-	return q;
-}
+	वापस q;
+पूर्ण
 
 
 /*
  * This is called to mark the quotaoff logitem as needing
  * to be logged when the transaction is committed.  The logitem must
- * already be associated with the given transaction.
+ * alपढ़ोy be associated with the given transaction.
  */
-void
+व्योम
 xfs_trans_log_quotaoff_item(
-	struct xfs_trans	*tp,
-	struct xfs_qoff_logitem	*qlp)
-{
-	tp->t_flags |= XFS_TRANS_DIRTY;
-	set_bit(XFS_LI_DIRTY, &qlp->qql_item.li_flags);
-}
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_qoff_logitem	*qlp)
+अणु
+	tp->t_flags |= XFS_TRANS_सूचीTY;
+	set_bit(XFS_LI_सूचीTY, &qlp->qql_item.li_flags);
+पूर्ण
 
-STATIC void
+STATIC व्योम
 xfs_trans_alloc_dqinfo(
 	xfs_trans_t	*tp)
-{
+अणु
 	tp->t_dqinfo = kmem_cache_zalloc(xfs_qm_dqtrxzone,
 					 GFP_KERNEL | __GFP_NOFAIL);
-}
+पूर्ण
 
-void
-xfs_trans_free_dqinfo(
+व्योम
+xfs_trans_मुक्त_dqinfo(
 	xfs_trans_t	*tp)
-{
-	if (!tp->t_dqinfo)
-		return;
-	kmem_cache_free(xfs_qm_dqtrxzone, tp->t_dqinfo);
-	tp->t_dqinfo = NULL;
-}
+अणु
+	अगर (!tp->t_dqinfo)
+		वापस;
+	kmem_cache_मुक्त(xfs_qm_dqtrxzone, tp->t_dqinfo);
+	tp->t_dqinfo = शून्य;
+पूर्ण

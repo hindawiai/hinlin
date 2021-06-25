@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2016 Broadcom
  */
@@ -8,208 +9,208 @@
  *
  * The VEC encoder generates PAL or NTSC composite video output.
  *
- * TV mode selection is done by an atomic property on the encoder,
+ * TV mode selection is करोne by an atomic property on the encoder,
  * because a drm_mode_modeinfo is insufficient to distinguish between
  * PAL and PAL-M or NTSC and NTSC-J.
  */
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_edid.h>
-#include <drm/drm_panel.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_simple_kms_helper.h>
-#include <linux/clk.h>
-#include <linux/component.h>
-#include <linux/of_graph.h>
-#include <linux/of_platform.h>
-#include <linux/pm_runtime.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_edid.h>
+#समावेश <drm/drm_panel.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_simple_kms_helper.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/component.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "vc4_drv.h"
-#include "vc4_regs.h"
+#समावेश "vc4_drv.h"
+#समावेश "vc4_regs.h"
 
 /* WSE Registers */
-#define VEC_WSE_RESET			0xc0
+#घोषणा VEC_WSE_RESET			0xc0
 
-#define VEC_WSE_CONTROL			0xc4
-#define VEC_WSE_WSS_ENABLE		BIT(7)
+#घोषणा VEC_WSE_CONTROL			0xc4
+#घोषणा VEC_WSE_WSS_ENABLE		BIT(7)
 
-#define VEC_WSE_WSS_DATA		0xc8
-#define VEC_WSE_VPS_DATA1		0xcc
-#define VEC_WSE_VPS_CONTROL		0xd0
+#घोषणा VEC_WSE_WSS_DATA		0xc8
+#घोषणा VEC_WSE_VPS_DATA1		0xcc
+#घोषणा VEC_WSE_VPS_CONTROL		0xd0
 
 /* VEC Registers */
-#define VEC_REVID			0x100
+#घोषणा VEC_REVID			0x100
 
-#define VEC_CONFIG0			0x104
-#define VEC_CONFIG0_YDEL_MASK		GENMASK(28, 26)
-#define VEC_CONFIG0_YDEL(x)		((x) << 26)
-#define VEC_CONFIG0_CDEL_MASK		GENMASK(25, 24)
-#define VEC_CONFIG0_CDEL(x)		((x) << 24)
-#define VEC_CONFIG0_PBPR_FIL		BIT(18)
-#define VEC_CONFIG0_CHROMA_GAIN_MASK	GENMASK(17, 16)
-#define VEC_CONFIG0_CHROMA_GAIN_UNITY	(0 << 16)
-#define VEC_CONFIG0_CHROMA_GAIN_1_32	(1 << 16)
-#define VEC_CONFIG0_CHROMA_GAIN_1_16	(2 << 16)
-#define VEC_CONFIG0_CHROMA_GAIN_1_8	(3 << 16)
-#define VEC_CONFIG0_CBURST_GAIN_MASK	GENMASK(14, 13)
-#define VEC_CONFIG0_CBURST_GAIN_UNITY	(0 << 13)
-#define VEC_CONFIG0_CBURST_GAIN_1_128	(1 << 13)
-#define VEC_CONFIG0_CBURST_GAIN_1_64	(2 << 13)
-#define VEC_CONFIG0_CBURST_GAIN_1_32	(3 << 13)
-#define VEC_CONFIG0_CHRBW1		BIT(11)
-#define VEC_CONFIG0_CHRBW0		BIT(10)
-#define VEC_CONFIG0_SYNCDIS		BIT(9)
-#define VEC_CONFIG0_BURDIS		BIT(8)
-#define VEC_CONFIG0_CHRDIS		BIT(7)
-#define VEC_CONFIG0_PDEN		BIT(6)
-#define VEC_CONFIG0_YCDELAY		BIT(4)
-#define VEC_CONFIG0_RAMPEN		BIT(2)
-#define VEC_CONFIG0_YCDIS		BIT(2)
-#define VEC_CONFIG0_STD_MASK		GENMASK(1, 0)
-#define VEC_CONFIG0_NTSC_STD		0
-#define VEC_CONFIG0_PAL_BDGHI_STD	1
-#define VEC_CONFIG0_PAL_N_STD		3
+#घोषणा VEC_CONFIG0			0x104
+#घोषणा VEC_CONFIG0_YDEL_MASK		GENMASK(28, 26)
+#घोषणा VEC_CONFIG0_YDEL(x)		((x) << 26)
+#घोषणा VEC_CONFIG0_CDEL_MASK		GENMASK(25, 24)
+#घोषणा VEC_CONFIG0_CDEL(x)		((x) << 24)
+#घोषणा VEC_CONFIG0_PBPR_FIL		BIT(18)
+#घोषणा VEC_CONFIG0_CHROMA_GAIN_MASK	GENMASK(17, 16)
+#घोषणा VEC_CONFIG0_CHROMA_GAIN_UNITY	(0 << 16)
+#घोषणा VEC_CONFIG0_CHROMA_GAIN_1_32	(1 << 16)
+#घोषणा VEC_CONFIG0_CHROMA_GAIN_1_16	(2 << 16)
+#घोषणा VEC_CONFIG0_CHROMA_GAIN_1_8	(3 << 16)
+#घोषणा VEC_CONFIG0_CBURST_GAIN_MASK	GENMASK(14, 13)
+#घोषणा VEC_CONFIG0_CBURST_GAIN_UNITY	(0 << 13)
+#घोषणा VEC_CONFIG0_CBURST_GAIN_1_128	(1 << 13)
+#घोषणा VEC_CONFIG0_CBURST_GAIN_1_64	(2 << 13)
+#घोषणा VEC_CONFIG0_CBURST_GAIN_1_32	(3 << 13)
+#घोषणा VEC_CONFIG0_CHRBW1		BIT(11)
+#घोषणा VEC_CONFIG0_CHRBW0		BIT(10)
+#घोषणा VEC_CONFIG0_SYNCDIS		BIT(9)
+#घोषणा VEC_CONFIG0_BURDIS		BIT(8)
+#घोषणा VEC_CONFIG0_CHRDIS		BIT(7)
+#घोषणा VEC_CONFIG0_PDEN		BIT(6)
+#घोषणा VEC_CONFIG0_YCDELAY		BIT(4)
+#घोषणा VEC_CONFIG0_RAMPEN		BIT(2)
+#घोषणा VEC_CONFIG0_YCDIS		BIT(2)
+#घोषणा VEC_CONFIG0_STD_MASK		GENMASK(1, 0)
+#घोषणा VEC_CONFIG0_NTSC_STD		0
+#घोषणा VEC_CONFIG0_PAL_BDGHI_STD	1
+#घोषणा VEC_CONFIG0_PAL_N_STD		3
 
-#define VEC_SCHPH			0x108
-#define VEC_SOFT_RESET			0x10c
-#define VEC_CLMP0_START			0x144
-#define VEC_CLMP0_END			0x148
-#define VEC_FREQ3_2			0x180
-#define VEC_FREQ1_0			0x184
+#घोषणा VEC_SCHPH			0x108
+#घोषणा VEC_SOFT_RESET			0x10c
+#घोषणा VEC_CLMP0_START			0x144
+#घोषणा VEC_CLMP0_END			0x148
+#घोषणा VEC_FREQ3_2			0x180
+#घोषणा VEC_FREQ1_0			0x184
 
-#define VEC_CONFIG1			0x188
-#define VEC_CONFIG_VEC_RESYNC_OFF	BIT(18)
-#define VEC_CONFIG_RGB219		BIT(17)
-#define VEC_CONFIG_CBAR_EN		BIT(16)
-#define VEC_CONFIG_TC_OBB		BIT(15)
-#define VEC_CONFIG1_OUTPUT_MODE_MASK	GENMASK(12, 10)
-#define VEC_CONFIG1_C_Y_CVBS		(0 << 10)
-#define VEC_CONFIG1_CVBS_Y_C		(1 << 10)
-#define VEC_CONFIG1_PR_Y_PB		(2 << 10)
-#define VEC_CONFIG1_RGB			(4 << 10)
-#define VEC_CONFIG1_Y_C_CVBS		(5 << 10)
-#define VEC_CONFIG1_C_CVBS_Y		(6 << 10)
-#define VEC_CONFIG1_C_CVBS_CVBS		(7 << 10)
-#define VEC_CONFIG1_DIS_CHR		BIT(9)
-#define VEC_CONFIG1_DIS_LUMA		BIT(8)
-#define VEC_CONFIG1_YCBCR_IN		BIT(6)
-#define VEC_CONFIG1_DITHER_TYPE_LFSR	0
-#define VEC_CONFIG1_DITHER_TYPE_COUNTER	BIT(5)
-#define VEC_CONFIG1_DITHER_EN		BIT(4)
-#define VEC_CONFIG1_CYDELAY		BIT(3)
-#define VEC_CONFIG1_LUMADIS		BIT(2)
-#define VEC_CONFIG1_COMPDIS		BIT(1)
-#define VEC_CONFIG1_CUSTOM_FREQ		BIT(0)
+#घोषणा VEC_CONFIG1			0x188
+#घोषणा VEC_CONFIG_VEC_RESYNC_OFF	BIT(18)
+#घोषणा VEC_CONFIG_RGB219		BIT(17)
+#घोषणा VEC_CONFIG_CBAR_EN		BIT(16)
+#घोषणा VEC_CONFIG_TC_OBB		BIT(15)
+#घोषणा VEC_CONFIG1_OUTPUT_MODE_MASK	GENMASK(12, 10)
+#घोषणा VEC_CONFIG1_C_Y_CVBS		(0 << 10)
+#घोषणा VEC_CONFIG1_CVBS_Y_C		(1 << 10)
+#घोषणा VEC_CONFIG1_PR_Y_PB		(2 << 10)
+#घोषणा VEC_CONFIG1_RGB			(4 << 10)
+#घोषणा VEC_CONFIG1_Y_C_CVBS		(5 << 10)
+#घोषणा VEC_CONFIG1_C_CVBS_Y		(6 << 10)
+#घोषणा VEC_CONFIG1_C_CVBS_CVBS		(7 << 10)
+#घोषणा VEC_CONFIG1_DIS_CHR		BIT(9)
+#घोषणा VEC_CONFIG1_DIS_LUMA		BIT(8)
+#घोषणा VEC_CONFIG1_YCBCR_IN		BIT(6)
+#घोषणा VEC_CONFIG1_DITHER_TYPE_LFSR	0
+#घोषणा VEC_CONFIG1_DITHER_TYPE_COUNTER	BIT(5)
+#घोषणा VEC_CONFIG1_DITHER_EN		BIT(4)
+#घोषणा VEC_CONFIG1_CYDELAY		BIT(3)
+#घोषणा VEC_CONFIG1_LUMADIS		BIT(2)
+#घोषणा VEC_CONFIG1_COMPDIS		BIT(1)
+#घोषणा VEC_CONFIG1_CUSTOM_FREQ		BIT(0)
 
-#define VEC_CONFIG2			0x18c
-#define VEC_CONFIG2_PROG_SCAN		BIT(15)
-#define VEC_CONFIG2_SYNC_ADJ_MASK	GENMASK(14, 12)
-#define VEC_CONFIG2_SYNC_ADJ(x)		(((x) / 2) << 12)
-#define VEC_CONFIG2_PBPR_EN		BIT(10)
-#define VEC_CONFIG2_UV_DIG_DIS		BIT(6)
-#define VEC_CONFIG2_RGB_DIG_DIS		BIT(5)
-#define VEC_CONFIG2_TMUX_MASK		GENMASK(3, 2)
-#define VEC_CONFIG2_TMUX_DRIVE0		(0 << 2)
-#define VEC_CONFIG2_TMUX_RG_COMP	(1 << 2)
-#define VEC_CONFIG2_TMUX_UV_YC		(2 << 2)
-#define VEC_CONFIG2_TMUX_SYNC_YC	(3 << 2)
+#घोषणा VEC_CONFIG2			0x18c
+#घोषणा VEC_CONFIG2_PROG_SCAN		BIT(15)
+#घोषणा VEC_CONFIG2_SYNC_ADJ_MASK	GENMASK(14, 12)
+#घोषणा VEC_CONFIG2_SYNC_ADJ(x)		(((x) / 2) << 12)
+#घोषणा VEC_CONFIG2_PBPR_EN		BIT(10)
+#घोषणा VEC_CONFIG2_UV_DIG_DIS		BIT(6)
+#घोषणा VEC_CONFIG2_RGB_DIG_DIS		BIT(5)
+#घोषणा VEC_CONFIG2_TMUX_MASK		GENMASK(3, 2)
+#घोषणा VEC_CONFIG2_TMUX_DRIVE0		(0 << 2)
+#घोषणा VEC_CONFIG2_TMUX_RG_COMP	(1 << 2)
+#घोषणा VEC_CONFIG2_TMUX_UV_YC		(2 << 2)
+#घोषणा VEC_CONFIG2_TMUX_SYNC_YC	(3 << 2)
 
-#define VEC_INTERRUPT_CONTROL		0x190
-#define VEC_INTERRUPT_STATUS		0x194
-#define VEC_FCW_SECAM_B			0x198
-#define VEC_SECAM_GAIN_VAL		0x19c
+#घोषणा VEC_INTERRUPT_CONTROL		0x190
+#घोषणा VEC_INTERRUPT_STATUS		0x194
+#घोषणा VEC_FCW_SECAM_B			0x198
+#घोषणा VEC_SECAM_GAIN_VAL		0x19c
 
-#define VEC_CONFIG3			0x1a0
-#define VEC_CONFIG3_HORIZ_LEN_STD	(0 << 0)
-#define VEC_CONFIG3_HORIZ_LEN_MPEG1_SIF	(1 << 0)
-#define VEC_CONFIG3_SHAPE_NON_LINEAR	BIT(1)
+#घोषणा VEC_CONFIG3			0x1a0
+#घोषणा VEC_CONFIG3_HORIZ_LEN_STD	(0 << 0)
+#घोषणा VEC_CONFIG3_HORIZ_LEN_MPEG1_SIF	(1 << 0)
+#घोषणा VEC_CONFIG3_SHAPE_NON_LINEAR	BIT(1)
 
-#define VEC_STATUS0			0x200
-#define VEC_MASK0			0x204
+#घोषणा VEC_STATUS0			0x200
+#घोषणा VEC_MASK0			0x204
 
-#define VEC_CFG				0x208
-#define VEC_CFG_SG_MODE_MASK		GENMASK(6, 5)
-#define VEC_CFG_SG_MODE(x)		((x) << 5)
-#define VEC_CFG_SG_EN			BIT(4)
-#define VEC_CFG_VEC_EN			BIT(3)
-#define VEC_CFG_MB_EN			BIT(2)
-#define VEC_CFG_ENABLE			BIT(1)
-#define VEC_CFG_TB_EN			BIT(0)
+#घोषणा VEC_CFG				0x208
+#घोषणा VEC_CFG_SG_MODE_MASK		GENMASK(6, 5)
+#घोषणा VEC_CFG_SG_MODE(x)		((x) << 5)
+#घोषणा VEC_CFG_SG_EN			BIT(4)
+#घोषणा VEC_CFG_VEC_EN			BIT(3)
+#घोषणा VEC_CFG_MB_EN			BIT(2)
+#घोषणा VEC_CFG_ENABLE			BIT(1)
+#घोषणा VEC_CFG_TB_EN			BIT(0)
 
-#define VEC_DAC_TEST			0x20c
+#घोषणा VEC_DAC_TEST			0x20c
 
-#define VEC_DAC_CONFIG			0x210
-#define VEC_DAC_CONFIG_LDO_BIAS_CTRL(x)	((x) << 24)
-#define VEC_DAC_CONFIG_DRIVER_CTRL(x)	((x) << 16)
-#define VEC_DAC_CONFIG_DAC_CTRL(x)	(x)
+#घोषणा VEC_DAC_CONFIG			0x210
+#घोषणा VEC_DAC_CONFIG_LDO_BIAS_CTRL(x)	((x) << 24)
+#घोषणा VEC_DAC_CONFIG_DRIVER_CTRL(x)	((x) << 16)
+#घोषणा VEC_DAC_CONFIG_DAC_CTRL(x)	(x)
 
-#define VEC_DAC_MISC			0x214
-#define VEC_DAC_MISC_VCD_CTRL_MASK	GENMASK(31, 16)
-#define VEC_DAC_MISC_VCD_CTRL(x)	((x) << 16)
-#define VEC_DAC_MISC_VID_ACT		BIT(8)
-#define VEC_DAC_MISC_VCD_PWRDN		BIT(6)
-#define VEC_DAC_MISC_BIAS_PWRDN		BIT(5)
-#define VEC_DAC_MISC_DAC_PWRDN		BIT(2)
-#define VEC_DAC_MISC_LDO_PWRDN		BIT(1)
-#define VEC_DAC_MISC_DAC_RST_N		BIT(0)
+#घोषणा VEC_DAC_MISC			0x214
+#घोषणा VEC_DAC_MISC_VCD_CTRL_MASK	GENMASK(31, 16)
+#घोषणा VEC_DAC_MISC_VCD_CTRL(x)	((x) << 16)
+#घोषणा VEC_DAC_MISC_VID_ACT		BIT(8)
+#घोषणा VEC_DAC_MISC_VCD_PWRDN		BIT(6)
+#घोषणा VEC_DAC_MISC_BIAS_PWRDN		BIT(5)
+#घोषणा VEC_DAC_MISC_DAC_PWRDN		BIT(2)
+#घोषणा VEC_DAC_MISC_LDO_PWRDN		BIT(1)
+#घोषणा VEC_DAC_MISC_DAC_RST_N		BIT(0)
 
 
 /* General VEC hardware state. */
-struct vc4_vec {
-	struct platform_device *pdev;
+काष्ठा vc4_vec अणु
+	काष्ठा platक्रमm_device *pdev;
 
-	struct drm_encoder *encoder;
-	struct drm_connector *connector;
+	काष्ठा drm_encoder *encoder;
+	काष्ठा drm_connector *connector;
 
-	void __iomem *regs;
+	व्योम __iomem *regs;
 
-	struct clk *clock;
+	काष्ठा clk *घड़ी;
 
-	const struct vc4_vec_tv_mode *tv_mode;
+	स्थिर काष्ठा vc4_vec_tv_mode *tv_mode;
 
-	struct debugfs_regset32 regset;
-};
+	काष्ठा debugfs_regset32 regset;
+पूर्ण;
 
-#define VEC_READ(offset) readl(vec->regs + (offset))
-#define VEC_WRITE(offset, val) writel(val, vec->regs + (offset))
+#घोषणा VEC_READ(offset) पढ़ोl(vec->regs + (offset))
+#घोषणा VEC_WRITE(offset, val) ग_लिखोl(val, vec->regs + (offset))
 
-/* VC4 VEC encoder KMS struct */
-struct vc4_vec_encoder {
-	struct vc4_encoder base;
-	struct vc4_vec *vec;
-};
+/* VC4 VEC encoder KMS काष्ठा */
+काष्ठा vc4_vec_encoder अणु
+	काष्ठा vc4_encoder base;
+	काष्ठा vc4_vec *vec;
+पूर्ण;
 
-static inline struct vc4_vec_encoder *
-to_vc4_vec_encoder(struct drm_encoder *encoder)
-{
-	return container_of(encoder, struct vc4_vec_encoder, base.base);
-}
+अटल अंतरभूत काष्ठा vc4_vec_encoder *
+to_vc4_vec_encoder(काष्ठा drm_encoder *encoder)
+अणु
+	वापस container_of(encoder, काष्ठा vc4_vec_encoder, base.base);
+पूर्ण
 
-/* VC4 VEC connector KMS struct */
-struct vc4_vec_connector {
-	struct drm_connector base;
-	struct vc4_vec *vec;
+/* VC4 VEC connector KMS काष्ठा */
+काष्ठा vc4_vec_connector अणु
+	काष्ठा drm_connector base;
+	काष्ठा vc4_vec *vec;
 
 	/* Since the connector is attached to just the one encoder,
-	 * this is the reference to it so we can do the best_encoder()
+	 * this is the reference to it so we can करो the best_encoder()
 	 * hook.
 	 */
-	struct drm_encoder *encoder;
-};
+	काष्ठा drm_encoder *encoder;
+पूर्ण;
 
-enum vc4_vec_tv_mode_id {
+क्रमागत vc4_vec_tv_mode_id अणु
 	VC4_VEC_TV_MODE_NTSC,
 	VC4_VEC_TV_MODE_NTSC_J,
 	VC4_VEC_TV_MODE_PAL,
 	VC4_VEC_TV_MODE_PAL_M,
-};
+पूर्ण;
 
-struct vc4_vec_tv_mode {
-	const struct drm_display_mode *mode;
-	void (*mode_set)(struct vc4_vec *vec);
-};
+काष्ठा vc4_vec_tv_mode अणु
+	स्थिर काष्ठा drm_display_mode *mode;
+	व्योम (*mode_set)(काष्ठा vc4_vec *vec);
+पूर्ण;
 
-static const struct debugfs_reg32 vec_regs[] = {
+अटल स्थिर काष्ठा debugfs_reg32 vec_regs[] = अणु
 	VC4_REG32(VEC_WSE_CONTROL),
 	VC4_REG32(VEC_WSE_WSS_DATA),
 	VC4_REG32(VEC_WSE_VPS_DATA1),
@@ -234,123 +235,123 @@ static const struct debugfs_reg32 vec_regs[] = {
 	VC4_REG32(VEC_DAC_TEST),
 	VC4_REG32(VEC_DAC_CONFIG),
 	VC4_REG32(VEC_DAC_MISC),
-};
+पूर्ण;
 
-static void vc4_vec_ntsc_mode_set(struct vc4_vec *vec)
-{
+अटल व्योम vc4_vec_ntsc_mode_set(काष्ठा vc4_vec *vec)
+अणु
 	VEC_WRITE(VEC_CONFIG0, VEC_CONFIG0_NTSC_STD | VEC_CONFIG0_PDEN);
 	VEC_WRITE(VEC_CONFIG1, VEC_CONFIG1_C_CVBS_CVBS);
-}
+पूर्ण
 
-static void vc4_vec_ntsc_j_mode_set(struct vc4_vec *vec)
-{
+अटल व्योम vc4_vec_ntsc_j_mode_set(काष्ठा vc4_vec *vec)
+अणु
 	VEC_WRITE(VEC_CONFIG0, VEC_CONFIG0_NTSC_STD);
 	VEC_WRITE(VEC_CONFIG1, VEC_CONFIG1_C_CVBS_CVBS);
-}
+पूर्ण
 
-static const struct drm_display_mode ntsc_mode = {
+अटल स्थिर काष्ठा drm_display_mode ntsc_mode = अणु
 	DRM_MODE("720x480", DRM_MODE_TYPE_DRIVER, 13500,
 		 720, 720 + 14, 720 + 14 + 64, 720 + 14 + 64 + 60, 0,
 		 480, 480 + 3, 480 + 3 + 3, 480 + 3 + 3 + 16, 0,
 		 DRM_MODE_FLAG_INTERLACE)
-};
+पूर्ण;
 
-static void vc4_vec_pal_mode_set(struct vc4_vec *vec)
-{
+अटल व्योम vc4_vec_pal_mode_set(काष्ठा vc4_vec *vec)
+अणु
 	VEC_WRITE(VEC_CONFIG0, VEC_CONFIG0_PAL_BDGHI_STD);
 	VEC_WRITE(VEC_CONFIG1, VEC_CONFIG1_C_CVBS_CVBS);
-}
+पूर्ण
 
-static void vc4_vec_pal_m_mode_set(struct vc4_vec *vec)
-{
+अटल व्योम vc4_vec_pal_m_mode_set(काष्ठा vc4_vec *vec)
+अणु
 	VEC_WRITE(VEC_CONFIG0, VEC_CONFIG0_PAL_BDGHI_STD);
 	VEC_WRITE(VEC_CONFIG1,
 		  VEC_CONFIG1_C_CVBS_CVBS | VEC_CONFIG1_CUSTOM_FREQ);
 	VEC_WRITE(VEC_FREQ3_2, 0x223b);
 	VEC_WRITE(VEC_FREQ1_0, 0x61d1);
-}
+पूर्ण
 
-static const struct drm_display_mode pal_mode = {
+अटल स्थिर काष्ठा drm_display_mode pal_mode = अणु
 	DRM_MODE("720x576", DRM_MODE_TYPE_DRIVER, 13500,
 		 720, 720 + 20, 720 + 20 + 64, 720 + 20 + 64 + 60, 0,
 		 576, 576 + 2, 576 + 2 + 3, 576 + 2 + 3 + 20, 0,
 		 DRM_MODE_FLAG_INTERLACE)
-};
+पूर्ण;
 
-static const struct vc4_vec_tv_mode vc4_vec_tv_modes[] = {
-	[VC4_VEC_TV_MODE_NTSC] = {
+अटल स्थिर काष्ठा vc4_vec_tv_mode vc4_vec_tv_modes[] = अणु
+	[VC4_VEC_TV_MODE_NTSC] = अणु
 		.mode = &ntsc_mode,
 		.mode_set = vc4_vec_ntsc_mode_set,
-	},
-	[VC4_VEC_TV_MODE_NTSC_J] = {
+	पूर्ण,
+	[VC4_VEC_TV_MODE_NTSC_J] = अणु
 		.mode = &ntsc_mode,
 		.mode_set = vc4_vec_ntsc_j_mode_set,
-	},
-	[VC4_VEC_TV_MODE_PAL] = {
+	पूर्ण,
+	[VC4_VEC_TV_MODE_PAL] = अणु
 		.mode = &pal_mode,
 		.mode_set = vc4_vec_pal_mode_set,
-	},
-	[VC4_VEC_TV_MODE_PAL_M] = {
+	पूर्ण,
+	[VC4_VEC_TV_MODE_PAL_M] = अणु
 		.mode = &pal_mode,
 		.mode_set = vc4_vec_pal_m_mode_set,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static enum drm_connector_status
-vc4_vec_connector_detect(struct drm_connector *connector, bool force)
-{
-	return connector_status_unknown;
-}
+अटल क्रमागत drm_connector_status
+vc4_vec_connector_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	वापस connector_status_unknown;
+पूर्ण
 
-static void vc4_vec_connector_destroy(struct drm_connector *connector)
-{
-	drm_connector_unregister(connector);
+अटल व्योम vc4_vec_connector_destroy(काष्ठा drm_connector *connector)
+अणु
+	drm_connector_unरेजिस्टर(connector);
 	drm_connector_cleanup(connector);
-}
+पूर्ण
 
-static int vc4_vec_connector_get_modes(struct drm_connector *connector)
-{
-	struct drm_connector_state *state = connector->state;
-	struct drm_display_mode *mode;
+अटल पूर्णांक vc4_vec_connector_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_connector_state *state = connector->state;
+	काष्ठा drm_display_mode *mode;
 
 	mode = drm_mode_duplicate(connector->dev,
 				  vc4_vec_tv_modes[state->tv.mode].mode);
-	if (!mode) {
+	अगर (!mode) अणु
 		DRM_ERROR("Failed to create a new display mode\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	drm_mode_probed_add(connector, mode);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct drm_connector_funcs vc4_vec_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs vc4_vec_connector_funcs = अणु
 	.detect = vc4_vec_connector_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = vc4_vec_connector_destroy,
 	.reset = drm_atomic_helper_connector_reset,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-};
+पूर्ण;
 
-static const struct drm_connector_helper_funcs vc4_vec_connector_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs vc4_vec_connector_helper_funcs = अणु
 	.get_modes = vc4_vec_connector_get_modes,
-};
+पूर्ण;
 
-static struct drm_connector *vc4_vec_connector_init(struct drm_device *dev,
-						    struct vc4_vec *vec)
-{
-	struct drm_connector *connector = NULL;
-	struct vc4_vec_connector *vec_connector;
+अटल काष्ठा drm_connector *vc4_vec_connector_init(काष्ठा drm_device *dev,
+						    काष्ठा vc4_vec *vec)
+अणु
+	काष्ठा drm_connector *connector = शून्य;
+	काष्ठा vc4_vec_connector *vec_connector;
 
-	vec_connector = devm_kzalloc(dev->dev, sizeof(*vec_connector),
+	vec_connector = devm_kzalloc(dev->dev, माप(*vec_connector),
 				     GFP_KERNEL);
-	if (!vec_connector)
-		return ERR_PTR(-ENOMEM);
+	अगर (!vec_connector)
+		वापस ERR_PTR(-ENOMEM);
 
 	connector = &vec_connector->base;
-	connector->interlace_allowed = true;
+	connector->पूर्णांकerlace_allowed = true;
 
 	vec_connector->encoder = vec->encoder;
 	vec_connector->vec = vec;
@@ -366,14 +367,14 @@ static struct drm_connector *vc4_vec_connector_init(struct drm_device *dev,
 
 	drm_connector_attach_encoder(connector, vec->encoder);
 
-	return connector;
-}
+	वापस connector;
+पूर्ण
 
-static void vc4_vec_encoder_disable(struct drm_encoder *encoder)
-{
-	struct vc4_vec_encoder *vc4_vec_encoder = to_vc4_vec_encoder(encoder);
-	struct vc4_vec *vec = vc4_vec_encoder->vec;
-	int ret;
+अटल व्योम vc4_vec_encoder_disable(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा vc4_vec_encoder *vc4_vec_encoder = to_vc4_vec_encoder(encoder);
+	काष्ठा vc4_vec *vec = vc4_vec_encoder->vec;
+	पूर्णांक ret;
 
 	VEC_WRITE(VEC_CFG, 0);
 	VEC_WRITE(VEC_DAC_MISC,
@@ -382,47 +383,47 @@ static void vc4_vec_encoder_disable(struct drm_encoder *encoder)
 		  VEC_DAC_MISC_DAC_PWRDN |
 		  VEC_DAC_MISC_LDO_PWRDN);
 
-	clk_disable_unprepare(vec->clock);
+	clk_disable_unprepare(vec->घड़ी);
 
-	ret = pm_runtime_put(&vec->pdev->dev);
-	if (ret < 0) {
+	ret = pm_runसमय_put(&vec->pdev->dev);
+	अगर (ret < 0) अणु
 		DRM_ERROR("Failed to release power domain: %d\n", ret);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void vc4_vec_encoder_enable(struct drm_encoder *encoder)
-{
-	struct vc4_vec_encoder *vc4_vec_encoder = to_vc4_vec_encoder(encoder);
-	struct vc4_vec *vec = vc4_vec_encoder->vec;
-	int ret;
+अटल व्योम vc4_vec_encoder_enable(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा vc4_vec_encoder *vc4_vec_encoder = to_vc4_vec_encoder(encoder);
+	काष्ठा vc4_vec *vec = vc4_vec_encoder->vec;
+	पूर्णांक ret;
 
-	ret = pm_runtime_get_sync(&vec->pdev->dev);
-	if (ret < 0) {
+	ret = pm_runसमय_get_sync(&vec->pdev->dev);
+	अगर (ret < 0) अणु
 		DRM_ERROR("Failed to retain power domain: %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * We need to set the clock rate each time we enable the encoder
+	 * We need to set the घड़ी rate each समय we enable the encoder
 	 * because there's a chance we share the same parent with the HDMI
-	 * clock, and both drivers are requesting different rates.
+	 * घड़ी, and both drivers are requesting dअगरferent rates.
 	 * The good news is, these 2 encoders cannot be enabled at the same
-	 * time, thus preventing incompatible rate requests.
+	 * समय, thus preventing incompatible rate requests.
 	 */
-	ret = clk_set_rate(vec->clock, 108000000);
-	if (ret) {
+	ret = clk_set_rate(vec->घड़ी, 108000000);
+	अगर (ret) अणु
 		DRM_ERROR("Failed to set clock rate: %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ret = clk_prepare_enable(vec->clock);
-	if (ret) {
+	ret = clk_prepare_enable(vec->घड़ी);
+	अगर (ret) अणु
 		DRM_ERROR("Failed to turn on core clock: %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Reset the different blocks */
+	/* Reset the dअगरferent blocks */
 	VEC_WRITE(VEC_WSE_RESET, 1);
 	VEC_WRITE(VEC_SOFT_RESET, 1);
 
@@ -438,7 +439,7 @@ static void vc4_vec_encoder_enable(struct drm_encoder *encoder)
 	VEC_WRITE(VEC_SCHPH, 0x28);
 
 	/*
-	 * Reset to default values.
+	 * Reset to शेष values.
 	 */
 	VEC_WRITE(VEC_CLMP0_START, 0xac);
 	VEC_WRITE(VEC_CLMP0_END, 0xec);
@@ -450,7 +451,7 @@ static void vc4_vec_encoder_enable(struct drm_encoder *encoder)
 		  VEC_DAC_CONFIG_DRIVER_CTRL(0xc) |
 		  VEC_DAC_CONFIG_LDO_BIAS_CTRL(0x46));
 
-	/* Mask all interrupts. */
+	/* Mask all पूर्णांकerrupts. */
 	VEC_WRITE(VEC_MASK0, 0);
 
 	vec->tv_mode->mode_set(vec);
@@ -458,113 +459,113 @@ static void vc4_vec_encoder_enable(struct drm_encoder *encoder)
 	VEC_WRITE(VEC_DAC_MISC,
 		  VEC_DAC_MISC_VID_ACT | VEC_DAC_MISC_DAC_RST_N);
 	VEC_WRITE(VEC_CFG, VEC_CFG_VEC_EN);
-}
+पूर्ण
 
 
-static bool vc4_vec_encoder_mode_fixup(struct drm_encoder *encoder,
-				       const struct drm_display_mode *mode,
-				       struct drm_display_mode *adjusted_mode)
-{
-	return true;
-}
+अटल bool vc4_vec_encoder_mode_fixup(काष्ठा drm_encoder *encoder,
+				       स्थिर काष्ठा drm_display_mode *mode,
+				       काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	वापस true;
+पूर्ण
 
-static void vc4_vec_encoder_atomic_mode_set(struct drm_encoder *encoder,
-					struct drm_crtc_state *crtc_state,
-					struct drm_connector_state *conn_state)
-{
-	struct vc4_vec_encoder *vc4_vec_encoder = to_vc4_vec_encoder(encoder);
-	struct vc4_vec *vec = vc4_vec_encoder->vec;
+अटल व्योम vc4_vec_encoder_atomic_mode_set(काष्ठा drm_encoder *encoder,
+					काष्ठा drm_crtc_state *crtc_state,
+					काष्ठा drm_connector_state *conn_state)
+अणु
+	काष्ठा vc4_vec_encoder *vc4_vec_encoder = to_vc4_vec_encoder(encoder);
+	काष्ठा vc4_vec *vec = vc4_vec_encoder->vec;
 
 	vec->tv_mode = &vc4_vec_tv_modes[conn_state->tv.mode];
-}
+पूर्ण
 
-static int vc4_vec_encoder_atomic_check(struct drm_encoder *encoder,
-					struct drm_crtc_state *crtc_state,
-					struct drm_connector_state *conn_state)
-{
-	const struct vc4_vec_tv_mode *vec_mode;
+अटल पूर्णांक vc4_vec_encoder_atomic_check(काष्ठा drm_encoder *encoder,
+					काष्ठा drm_crtc_state *crtc_state,
+					काष्ठा drm_connector_state *conn_state)
+अणु
+	स्थिर काष्ठा vc4_vec_tv_mode *vec_mode;
 
 	vec_mode = &vc4_vec_tv_modes[conn_state->tv.mode];
 
-	if (conn_state->crtc &&
+	अगर (conn_state->crtc &&
 	    !drm_mode_equal(vec_mode->mode, &crtc_state->adjusted_mode))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct drm_encoder_helper_funcs vc4_vec_encoder_helper_funcs = {
+अटल स्थिर काष्ठा drm_encoder_helper_funcs vc4_vec_encoder_helper_funcs = अणु
 	.disable = vc4_vec_encoder_disable,
 	.enable = vc4_vec_encoder_enable,
 	.mode_fixup = vc4_vec_encoder_mode_fixup,
 	.atomic_check = vc4_vec_encoder_atomic_check,
 	.atomic_mode_set = vc4_vec_encoder_atomic_mode_set,
-};
+पूर्ण;
 
-static const struct of_device_id vc4_vec_dt_match[] = {
-	{ .compatible = "brcm,bcm2835-vec", .data = NULL },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id vc4_vec_dt_match[] = अणु
+	अणु .compatible = "brcm,bcm2835-vec", .data = शून्य पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 
-static const char * const tv_mode_names[] = {
+अटल स्थिर अक्षर * स्थिर tv_mode_names[] = अणु
 	[VC4_VEC_TV_MODE_NTSC] = "NTSC",
 	[VC4_VEC_TV_MODE_NTSC_J] = "NTSC-J",
 	[VC4_VEC_TV_MODE_PAL] = "PAL",
 	[VC4_VEC_TV_MODE_PAL_M] = "PAL-M",
-};
+पूर्ण;
 
-static int vc4_vec_bind(struct device *dev, struct device *master, void *data)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct drm_device *drm = dev_get_drvdata(master);
-	struct vc4_dev *vc4 = to_vc4_dev(drm);
-	struct vc4_vec *vec;
-	struct vc4_vec_encoder *vc4_vec_encoder;
-	int ret;
+अटल पूर्णांक vc4_vec_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा drm_device *drm = dev_get_drvdata(master);
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(drm);
+	काष्ठा vc4_vec *vec;
+	काष्ठा vc4_vec_encoder *vc4_vec_encoder;
+	पूर्णांक ret;
 
 	ret = drm_mode_create_tv_properties(drm, ARRAY_SIZE(tv_mode_names),
 					    tv_mode_names);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	vec = devm_kzalloc(dev, sizeof(*vec), GFP_KERNEL);
-	if (!vec)
-		return -ENOMEM;
+	vec = devm_kzalloc(dev, माप(*vec), GFP_KERNEL);
+	अगर (!vec)
+		वापस -ENOMEM;
 
-	vc4_vec_encoder = devm_kzalloc(dev, sizeof(*vc4_vec_encoder),
+	vc4_vec_encoder = devm_kzalloc(dev, माप(*vc4_vec_encoder),
 				       GFP_KERNEL);
-	if (!vc4_vec_encoder)
-		return -ENOMEM;
+	अगर (!vc4_vec_encoder)
+		वापस -ENOMEM;
 	vc4_vec_encoder->base.type = VC4_ENCODER_TYPE_VEC;
 	vc4_vec_encoder->vec = vec;
 	vec->encoder = &vc4_vec_encoder->base.base;
 
 	vec->pdev = pdev;
 	vec->regs = vc4_ioremap_regs(pdev, 0);
-	if (IS_ERR(vec->regs))
-		return PTR_ERR(vec->regs);
+	अगर (IS_ERR(vec->regs))
+		वापस PTR_ERR(vec->regs);
 	vec->regset.base = vec->regs;
 	vec->regset.regs = vec_regs;
 	vec->regset.nregs = ARRAY_SIZE(vec_regs);
 
-	vec->clock = devm_clk_get(dev, NULL);
-	if (IS_ERR(vec->clock)) {
-		ret = PTR_ERR(vec->clock);
-		if (ret != -EPROBE_DEFER)
+	vec->घड़ी = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(vec->घड़ी)) अणु
+		ret = PTR_ERR(vec->घड़ी);
+		अगर (ret != -EPROBE_DEFER)
 			DRM_ERROR("Failed to get clock: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pm_runtime_enable(dev);
+	pm_runसमय_enable(dev);
 
 	drm_simple_encoder_init(drm, vec->encoder, DRM_MODE_ENCODER_TVDAC);
 	drm_encoder_helper_add(vec->encoder, &vc4_vec_encoder_helper_funcs);
 
 	vec->connector = vc4_vec_connector_init(drm, vec);
-	if (IS_ERR(vec->connector)) {
+	अगर (IS_ERR(vec->connector)) अणु
 		ret = PTR_ERR(vec->connector);
-		goto err_destroy_encoder;
-	}
+		जाओ err_destroy_encoder;
+	पूर्ण
 
 	dev_set_drvdata(dev, vec);
 
@@ -572,50 +573,50 @@ static int vc4_vec_bind(struct device *dev, struct device *master, void *data)
 
 	vc4_debugfs_add_regset32(drm, "vec_regs", &vec->regset);
 
-	return 0;
+	वापस 0;
 
 err_destroy_encoder:
 	drm_encoder_cleanup(vec->encoder);
-	pm_runtime_disable(dev);
+	pm_runसमय_disable(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vc4_vec_unbind(struct device *dev, struct device *master,
-			   void *data)
-{
-	struct drm_device *drm = dev_get_drvdata(master);
-	struct vc4_dev *vc4 = to_vc4_dev(drm);
-	struct vc4_vec *vec = dev_get_drvdata(dev);
+अटल व्योम vc4_vec_unbind(काष्ठा device *dev, काष्ठा device *master,
+			   व्योम *data)
+अणु
+	काष्ठा drm_device *drm = dev_get_drvdata(master);
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(drm);
+	काष्ठा vc4_vec *vec = dev_get_drvdata(dev);
 
 	vc4_vec_connector_destroy(vec->connector);
 	drm_encoder_cleanup(vec->encoder);
-	pm_runtime_disable(dev);
+	pm_runसमय_disable(dev);
 
-	vc4->vec = NULL;
-}
+	vc4->vec = शून्य;
+पूर्ण
 
-static const struct component_ops vc4_vec_ops = {
+अटल स्थिर काष्ठा component_ops vc4_vec_ops = अणु
 	.bind   = vc4_vec_bind,
 	.unbind = vc4_vec_unbind,
-};
+पूर्ण;
 
-static int vc4_vec_dev_probe(struct platform_device *pdev)
-{
-	return component_add(&pdev->dev, &vc4_vec_ops);
-}
+अटल पूर्णांक vc4_vec_dev_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस component_add(&pdev->dev, &vc4_vec_ops);
+पूर्ण
 
-static int vc4_vec_dev_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक vc4_vec_dev_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	component_del(&pdev->dev, &vc4_vec_ops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct platform_driver vc4_vec_driver = {
+काष्ठा platक्रमm_driver vc4_vec_driver = अणु
 	.probe = vc4_vec_dev_probe,
-	.remove = vc4_vec_dev_remove,
-	.driver = {
+	.हटाओ = vc4_vec_dev_हटाओ,
+	.driver = अणु
 		.name = "vc4_vec",
 		.of_match_table = vc4_vec_dt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;

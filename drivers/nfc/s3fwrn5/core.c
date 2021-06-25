@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * NCI based driver for Samsung S3FWRN5 NFC chip
+ * NCI based driver क्रम Samsung S3FWRN5 NFC chip
  *
  * Copyright (C) 2015 Samsung Electrnoics
  * Robert Baldyga <r.baldyga@samsung.com>
  */
 
-#include <linux/module.h>
-#include <net/nfc/nci_core.h>
+#समावेश <linux/module.h>
+#समावेश <net/nfc/nci_core.h>
 
-#include "s3fwrn5.h"
-#include "firmware.h"
-#include "nci.h"
+#समावेश "s3fwrn5.h"
+#समावेश "firmware.h"
+#समावेश "nci.h"
 
-#define S3FWRN5_NFC_PROTOCOLS  (NFC_PROTO_JEWEL_MASK | \
+#घोषणा S3FWRN5_NFC_PROTOCOLS  (NFC_PROTO_JEWEL_MASK | \
 				NFC_PROTO_MIFARE_MASK | \
 				NFC_PROTO_FELICA_MASK | \
 				NFC_PROTO_ISO14443_MASK | \
 				NFC_PROTO_ISO14443_B_MASK | \
 				NFC_PROTO_ISO15693_MASK)
 
-static int s3fwrn5_firmware_init(struct s3fwrn5_info *info)
-{
-	struct s3fwrn5_fw_info *fw_info = &info->fw_info;
-	int ret;
+अटल पूर्णांक s3fwrn5_firmware_init(काष्ठा s3fwrn5_info *info)
+अणु
+	काष्ठा s3fwrn5_fw_info *fw_info = &info->fw_info;
+	पूर्णांक ret;
 
 	s3fwrn5_fw_init(fw_info, "sec_s3fwrn5_firmware.bin");
 
 	/* Get firmware data */
 	ret = s3fwrn5_fw_request_firmware(fw_info);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&fw_info->ndev->nfc_dev->dev,
 			"Failed to get fw file, ret=%02x\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int s3fwrn5_firmware_update(struct s3fwrn5_info *info)
-{
+अटल पूर्णांक s3fwrn5_firmware_update(काष्ठा s3fwrn5_info *info)
+अणु
 	bool need_update;
-	int ret;
+	पूर्णांक ret;
 
 	/* Update firmware */
 
@@ -46,19 +47,19 @@ static int s3fwrn5_firmware_update(struct s3fwrn5_info *info)
 	s3fwrn5_set_mode(info, S3FWRN5_MODE_FW);
 
 	ret = s3fwrn5_fw_setup(&info->fw_info);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	need_update = s3fwrn5_fw_check_version(&info->fw_info,
-		info->ndev->manufact_specific_info);
-	if (!need_update)
-		goto out;
+		info->ndev->manufact_specअगरic_info);
+	अगर (!need_update)
+		जाओ out;
 
 	dev_info(&info->ndev->nfc_dev->dev, "Detected new firmware version\n");
 
-	ret = s3fwrn5_fw_download(&info->fw_info);
-	if (ret < 0)
-		goto out;
+	ret = s3fwrn5_fw_करोwnload(&info->fw_info);
+	अगर (ret < 0)
+		जाओ out;
 
 	/* Update RF configuration */
 
@@ -71,65 +72,65 @@ static int s3fwrn5_firmware_update(struct s3fwrn5_info *info)
 out:
 	s3fwrn5_set_mode(info, S3FWRN5_MODE_COLD);
 	s3fwrn5_fw_cleanup(&info->fw_info);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int s3fwrn5_nci_open(struct nci_dev *ndev)
-{
-	struct s3fwrn5_info *info = nci_get_drvdata(ndev);
+अटल पूर्णांक s3fwrn5_nci_खोलो(काष्ठा nci_dev *ndev)
+अणु
+	काष्ठा s3fwrn5_info *info = nci_get_drvdata(ndev);
 
-	if (s3fwrn5_get_mode(info) != S3FWRN5_MODE_COLD)
-		return  -EBUSY;
+	अगर (s3fwrn5_get_mode(info) != S3FWRN5_MODE_COLD)
+		वापस  -EBUSY;
 
 	s3fwrn5_set_mode(info, S3FWRN5_MODE_NCI);
 	s3fwrn5_set_wake(info, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3fwrn5_nci_close(struct nci_dev *ndev)
-{
-	struct s3fwrn5_info *info = nci_get_drvdata(ndev);
+अटल पूर्णांक s3fwrn5_nci_बंद(काष्ठा nci_dev *ndev)
+अणु
+	काष्ठा s3fwrn5_info *info = nci_get_drvdata(ndev);
 
 	s3fwrn5_set_wake(info, false);
 	s3fwrn5_set_mode(info, S3FWRN5_MODE_COLD);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3fwrn5_nci_send(struct nci_dev *ndev, struct sk_buff *skb)
-{
-	struct s3fwrn5_info *info = nci_get_drvdata(ndev);
-	int ret;
+अटल पूर्णांक s3fwrn5_nci_send(काष्ठा nci_dev *ndev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा s3fwrn5_info *info = nci_get_drvdata(ndev);
+	पूर्णांक ret;
 
 	mutex_lock(&info->mutex);
 
-	if (s3fwrn5_get_mode(info) != S3FWRN5_MODE_NCI) {
+	अगर (s3fwrn5_get_mode(info) != S3FWRN5_MODE_NCI) अणु
 		mutex_unlock(&info->mutex);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = s3fwrn5_write(info, skb);
-	if (ret < 0)
-		kfree_skb(skb);
+	ret = s3fwrn5_ग_लिखो(info, skb);
+	अगर (ret < 0)
+		kमुक्त_skb(skb);
 
 	mutex_unlock(&info->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int s3fwrn5_nci_post_setup(struct nci_dev *ndev)
-{
-	struct s3fwrn5_info *info = nci_get_drvdata(ndev);
-	int ret;
+अटल पूर्णांक s3fwrn5_nci_post_setup(काष्ठा nci_dev *ndev)
+अणु
+	काष्ठा s3fwrn5_info *info = nci_get_drvdata(ndev);
+	पूर्णांक ret;
 
-	if (s3fwrn5_firmware_init(info)) {
+	अगर (s3fwrn5_firmware_init(info)) अणु
 		//skip bootloader mode
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = s3fwrn5_firmware_update(info);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* NCI core reset */
 
@@ -137,28 +138,28 @@ static int s3fwrn5_nci_post_setup(struct nci_dev *ndev)
 	s3fwrn5_set_wake(info, true);
 
 	ret = nci_core_reset(info->ndev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return nci_core_init(info->ndev);
-}
+	वापस nci_core_init(info->ndev);
+पूर्ण
 
-static struct nci_ops s3fwrn5_nci_ops = {
-	.open = s3fwrn5_nci_open,
-	.close = s3fwrn5_nci_close,
+अटल काष्ठा nci_ops s3fwrn5_nci_ops = अणु
+	.खोलो = s3fwrn5_nci_खोलो,
+	.बंद = s3fwrn5_nci_बंद,
 	.send = s3fwrn5_nci_send,
 	.post_setup = s3fwrn5_nci_post_setup,
-};
+पूर्ण;
 
-int s3fwrn5_probe(struct nci_dev **ndev, void *phy_id, struct device *pdev,
-	const struct s3fwrn5_phy_ops *phy_ops)
-{
-	struct s3fwrn5_info *info;
-	int ret;
+पूर्णांक s3fwrn5_probe(काष्ठा nci_dev **ndev, व्योम *phy_id, काष्ठा device *pdev,
+	स्थिर काष्ठा s3fwrn5_phy_ops *phy_ops)
+अणु
+	काष्ठा s3fwrn5_info *info;
+	पूर्णांक ret;
 
-	info = devm_kzalloc(pdev, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kzalloc(pdev, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	info->phy_id = phy_id;
 	info->pdev = pdev;
@@ -172,50 +173,50 @@ int s3fwrn5_probe(struct nci_dev **ndev, void *phy_id, struct device *pdev,
 
 	info->ndev = nci_allocate_device(&s3fwrn5_nci_ops,
 		S3FWRN5_NFC_PROTOCOLS, 0, 0);
-	if (!info->ndev)
-		return -ENOMEM;
+	अगर (!info->ndev)
+		वापस -ENOMEM;
 
 	nci_set_parent_dev(info->ndev, pdev);
 	nci_set_drvdata(info->ndev, info);
 
-	ret = nci_register_device(info->ndev);
-	if (ret < 0) {
-		nci_free_device(info->ndev);
-		return ret;
-	}
+	ret = nci_रेजिस्टर_device(info->ndev);
+	अगर (ret < 0) अणु
+		nci_मुक्त_device(info->ndev);
+		वापस ret;
+	पूर्ण
 
 	info->fw_info.ndev = info->ndev;
 
 	*ndev = info->ndev;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(s3fwrn5_probe);
 
-void s3fwrn5_remove(struct nci_dev *ndev)
-{
-	struct s3fwrn5_info *info = nci_get_drvdata(ndev);
+व्योम s3fwrn5_हटाओ(काष्ठा nci_dev *ndev)
+अणु
+	काष्ठा s3fwrn5_info *info = nci_get_drvdata(ndev);
 
 	s3fwrn5_set_mode(info, S3FWRN5_MODE_COLD);
 
-	nci_unregister_device(ndev);
-	nci_free_device(ndev);
-}
-EXPORT_SYMBOL(s3fwrn5_remove);
+	nci_unरेजिस्टर_device(ndev);
+	nci_मुक्त_device(ndev);
+पूर्ण
+EXPORT_SYMBOL(s3fwrn5_हटाओ);
 
-int s3fwrn5_recv_frame(struct nci_dev *ndev, struct sk_buff *skb,
-	enum s3fwrn5_mode mode)
-{
-	switch (mode) {
-	case S3FWRN5_MODE_NCI:
-		return nci_recv_frame(ndev, skb);
-	case S3FWRN5_MODE_FW:
-		return s3fwrn5_fw_recv_frame(ndev, skb);
-	default:
-		kfree_skb(skb);
-		return -ENODEV;
-	}
-}
+पूर्णांक s3fwrn5_recv_frame(काष्ठा nci_dev *ndev, काष्ठा sk_buff *skb,
+	क्रमागत s3fwrn5_mode mode)
+अणु
+	चयन (mode) अणु
+	हाल S3FWRN5_MODE_NCI:
+		वापस nci_recv_frame(ndev, skb);
+	हाल S3FWRN5_MODE_FW:
+		वापस s3fwrn5_fw_recv_frame(ndev, skb);
+	शेष:
+		kमुक्त_skb(skb);
+		वापस -ENODEV;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(s3fwrn5_recv_frame);
 
 MODULE_LICENSE("GPL");

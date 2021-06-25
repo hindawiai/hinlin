@@ -1,452 +1,453 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // iPAQ h1930/h1940/rx1950 battery controller driver
 // Copyright (c) Vasily Khoruzhick
 // Based on h1940_battery.c by Arnaud Patard
 
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/power_supply.h>
-#include <linux/leds.h>
-#include <linux/gpio/consumer.h>
-#include <linux/err.h>
-#include <linux/timer.h>
-#include <linux/jiffies.h>
-#include <linux/s3c_adc_battery.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/err.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/s3c_adc_battery.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
 
-#include <linux/soc/samsung/s3c-adc.h>
+#समावेश <linux/soc/samsung/s3c-adc.h>
 
-#define BAT_POLL_INTERVAL		10000 /* ms */
-#define JITTER_DELAY			500 /* ms */
+#घोषणा BAT_POLL_INTERVAL		10000 /* ms */
+#घोषणा JITTER_DELAY			500 /* ms */
 
-struct s3c_adc_bat {
-	struct power_supply		*psy;
-	struct s3c_adc_client		*client;
-	struct s3c_adc_bat_pdata	*pdata;
-	struct gpio_desc		*charge_finished;
-	int				volt_value;
-	int				cur_value;
-	unsigned int			timestamp;
-	int				level;
-	int				status;
-	int				cable_plugged:1;
-};
+काष्ठा s3c_adc_bat अणु
+	काष्ठा घातer_supply		*psy;
+	काष्ठा s3c_adc_client		*client;
+	काष्ठा s3c_adc_bat_pdata	*pdata;
+	काष्ठा gpio_desc		*अक्षरge_finished;
+	पूर्णांक				volt_value;
+	पूर्णांक				cur_value;
+	अचिन्हित पूर्णांक			बारtamp;
+	पूर्णांक				level;
+	पूर्णांक				status;
+	पूर्णांक				cable_plugged:1;
+पूर्ण;
 
-static struct delayed_work bat_work;
+अटल काष्ठा delayed_work bat_work;
 
-static void s3c_adc_bat_ext_power_changed(struct power_supply *psy)
-{
+अटल व्योम s3c_adc_bat_ext_घातer_changed(काष्ठा घातer_supply *psy)
+अणु
 	schedule_delayed_work(&bat_work,
-		msecs_to_jiffies(JITTER_DELAY));
-}
+		msecs_to_jअगरfies(JITTER_DELAY));
+पूर्ण
 
-static int gather_samples(struct s3c_adc_client *client, int num, int channel)
-{
-	int value, i;
+अटल पूर्णांक gather_samples(काष्ठा s3c_adc_client *client, पूर्णांक num, पूर्णांक channel)
+अणु
+	पूर्णांक value, i;
 
-	/* default to 1 if nothing is set */
-	if (num < 1)
+	/* शेष to 1 अगर nothing is set */
+	अगर (num < 1)
 		num = 1;
 
 	value = 0;
-	for (i = 0; i < num; i++)
-		value += s3c_adc_read(client, channel);
+	क्रम (i = 0; i < num; i++)
+		value += s3c_adc_पढ़ो(client, channel);
 	value /= num;
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static enum power_supply_property s3c_adc_backup_bat_props[] = {
+अटल क्रमागत घातer_supply_property s3c_adc_backup_bat_props[] = अणु
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_VOLTAGE_MIN,
 	POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN,
-};
+पूर्ण;
 
-static int s3c_adc_backup_bat_get_property(struct power_supply *psy,
-				enum power_supply_property psp,
-				union power_supply_propval *val)
-{
-	struct s3c_adc_bat *bat = power_supply_get_drvdata(psy);
+अटल पूर्णांक s3c_adc_backup_bat_get_property(काष्ठा घातer_supply *psy,
+				क्रमागत घातer_supply_property psp,
+				जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा s3c_adc_bat *bat = घातer_supply_get_drvdata(psy);
 
-	if (!bat) {
+	अगर (!bat) अणु
 		dev_err(&psy->dev, "%s: no battery infos ?!\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (bat->volt_value < 0 ||
-		jiffies_to_msecs(jiffies - bat->timestamp) >
-			BAT_POLL_INTERVAL) {
+	अगर (bat->volt_value < 0 ||
+		jअगरfies_to_msecs(jअगरfies - bat->बारtamp) >
+			BAT_POLL_INTERVAL) अणु
 		bat->volt_value = gather_samples(bat->client,
 			bat->pdata->backup_volt_samples,
 			bat->pdata->backup_volt_channel);
 		bat->volt_value *= bat->pdata->backup_volt_mult;
-		bat->timestamp = jiffies;
-	}
+		bat->बारtamp = jअगरfies;
+	पूर्ण
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->intval = bat->volt_value;
-		return 0;
-	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
-		val->intval = bat->pdata->backup_volt_min;
-		return 0;
-	case POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
-		val->intval = bat->pdata->backup_volt_max;
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		val->पूर्णांकval = bat->volt_value;
+		वापस 0;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_MIN:
+		val->पूर्णांकval = bat->pdata->backup_volt_min;
+		वापस 0;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
+		val->पूर्णांकval = bat->pdata->backup_volt_max;
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct power_supply_desc backup_bat_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc backup_bat_desc = अणु
 	.name		= "backup-battery",
 	.type		= POWER_SUPPLY_TYPE_BATTERY,
 	.properties	= s3c_adc_backup_bat_props,
 	.num_properties = ARRAY_SIZE(s3c_adc_backup_bat_props),
 	.get_property	= s3c_adc_backup_bat_get_property,
-	.use_for_apm	= 1,
-};
+	.use_क्रम_apm	= 1,
+पूर्ण;
 
-static struct s3c_adc_bat backup_bat;
+अटल काष्ठा s3c_adc_bat backup_bat;
 
-static enum power_supply_property s3c_adc_main_bat_props[] = {
+अटल क्रमागत घातer_supply_property s3c_adc_मुख्य_bat_props[] = अणु
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
 	POWER_SUPPLY_PROP_CHARGE_EMPTY_DESIGN,
 	POWER_SUPPLY_PROP_CHARGE_NOW,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
-};
+पूर्ण;
 
-static int calc_full_volt(int volt_val, int cur_val, int impedance)
-{
-	return volt_val + cur_val * impedance / 1000;
-}
+अटल पूर्णांक calc_full_volt(पूर्णांक volt_val, पूर्णांक cur_val, पूर्णांक impedance)
+अणु
+	वापस volt_val + cur_val * impedance / 1000;
+पूर्ण
 
-static int charge_finished(struct s3c_adc_bat *bat)
-{
-	return gpiod_get_value(bat->charge_finished);
-}
+अटल पूर्णांक अक्षरge_finished(काष्ठा s3c_adc_bat *bat)
+अणु
+	वापस gpiod_get_value(bat->अक्षरge_finished);
+पूर्ण
 
-static int s3c_adc_bat_get_property(struct power_supply *psy,
-				    enum power_supply_property psp,
-				    union power_supply_propval *val)
-{
-	struct s3c_adc_bat *bat = power_supply_get_drvdata(psy);
+अटल पूर्णांक s3c_adc_bat_get_property(काष्ठा घातer_supply *psy,
+				    क्रमागत घातer_supply_property psp,
+				    जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा s3c_adc_bat *bat = घातer_supply_get_drvdata(psy);
 
-	int new_level;
-	int full_volt;
-	const struct s3c_adc_bat_thresh *lut;
-	unsigned int lut_size;
+	पूर्णांक new_level;
+	पूर्णांक full_volt;
+	स्थिर काष्ठा s3c_adc_bat_thresh *lut;
+	अचिन्हित पूर्णांक lut_size;
 
-	if (!bat) {
+	अगर (!bat) अणु
 		dev_err(&psy->dev, "no battery infos ?!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	lut = bat->pdata->lut_noac;
 	lut_size = bat->pdata->lut_noac_cnt;
 
-	if (bat->volt_value < 0 || bat->cur_value < 0 ||
-		jiffies_to_msecs(jiffies - bat->timestamp) >
-			BAT_POLL_INTERVAL) {
+	अगर (bat->volt_value < 0 || bat->cur_value < 0 ||
+		jअगरfies_to_msecs(jअगरfies - bat->बारtamp) >
+			BAT_POLL_INTERVAL) अणु
 		bat->volt_value = gather_samples(bat->client,
 			bat->pdata->volt_samples,
 			bat->pdata->volt_channel) * bat->pdata->volt_mult;
 		bat->cur_value = gather_samples(bat->client,
 			bat->pdata->current_samples,
 			bat->pdata->current_channel) * bat->pdata->current_mult;
-		bat->timestamp = jiffies;
-	}
+		bat->बारtamp = jअगरfies;
+	पूर्ण
 
-	if (bat->cable_plugged &&
-		(!bat->charge_finished ||
-		!charge_finished(bat))) {
+	अगर (bat->cable_plugged &&
+		(!bat->अक्षरge_finished ||
+		!अक्षरge_finished(bat))) अणु
 		lut = bat->pdata->lut_acin;
 		lut_size = bat->pdata->lut_acin_cnt;
-	}
+	पूर्ण
 
 	new_level = 100000;
 	full_volt = calc_full_volt((bat->volt_value / 1000),
-		(bat->cur_value / 1000), bat->pdata->internal_impedance);
+		(bat->cur_value / 1000), bat->pdata->पूर्णांकernal_impedance);
 
-	if (full_volt < calc_full_volt(lut->volt, lut->cur,
-		bat->pdata->internal_impedance)) {
+	अगर (full_volt < calc_full_volt(lut->volt, lut->cur,
+		bat->pdata->पूर्णांकernal_impedance)) अणु
 		lut_size--;
-		while (lut_size--) {
-			int lut_volt1;
-			int lut_volt2;
+		जबतक (lut_size--) अणु
+			पूर्णांक lut_volt1;
+			पूर्णांक lut_volt2;
 
 			lut_volt1 = calc_full_volt(lut[0].volt, lut[0].cur,
-				bat->pdata->internal_impedance);
+				bat->pdata->पूर्णांकernal_impedance);
 			lut_volt2 = calc_full_volt(lut[1].volt, lut[1].cur,
-				bat->pdata->internal_impedance);
-			if (full_volt < lut_volt1 && full_volt >= lut_volt2) {
+				bat->pdata->पूर्णांकernal_impedance);
+			अगर (full_volt < lut_volt1 && full_volt >= lut_volt2) अणु
 				new_level = (lut[1].level +
 					(lut[0].level - lut[1].level) *
 					(full_volt - lut_volt2) /
 					(lut_volt1 - lut_volt2)) * 1000;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			new_level = lut[1].level * 1000;
 			lut++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	bat->level = new_level;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		if (!bat->charge_finished)
-			val->intval = bat->level == 100000 ?
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		अगर (!bat->अक्षरge_finished)
+			val->पूर्णांकval = bat->level == 100000 ?
 				POWER_SUPPLY_STATUS_FULL : bat->status;
-		else
-			val->intval = bat->status;
-		return 0;
-	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-		val->intval = 100000;
-		return 0;
-	case POWER_SUPPLY_PROP_CHARGE_EMPTY_DESIGN:
-		val->intval = 0;
-		return 0;
-	case POWER_SUPPLY_PROP_CHARGE_NOW:
-		val->intval = bat->level;
-		return 0;
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->intval = bat->volt_value;
-		return 0;
-	case POWER_SUPPLY_PROP_CURRENT_NOW:
-		val->intval = bat->cur_value;
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+		अन्यथा
+			val->पूर्णांकval = bat->status;
+		वापस 0;
+	हाल POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+		val->पूर्णांकval = 100000;
+		वापस 0;
+	हाल POWER_SUPPLY_PROP_CHARGE_EMPTY_DESIGN:
+		val->पूर्णांकval = 0;
+		वापस 0;
+	हाल POWER_SUPPLY_PROP_CHARGE_NOW:
+		val->पूर्णांकval = bat->level;
+		वापस 0;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		val->पूर्णांकval = bat->volt_value;
+		वापस 0;
+	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
+		val->पूर्णांकval = bat->cur_value;
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct power_supply_desc main_bat_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc मुख्य_bat_desc = अणु
 	.name			= "main-battery",
 	.type			= POWER_SUPPLY_TYPE_BATTERY,
-	.properties		= s3c_adc_main_bat_props,
-	.num_properties		= ARRAY_SIZE(s3c_adc_main_bat_props),
+	.properties		= s3c_adc_मुख्य_bat_props,
+	.num_properties		= ARRAY_SIZE(s3c_adc_मुख्य_bat_props),
 	.get_property		= s3c_adc_bat_get_property,
-	.external_power_changed = s3c_adc_bat_ext_power_changed,
-	.use_for_apm		= 1,
-};
+	.बाह्यal_घातer_changed = s3c_adc_bat_ext_घातer_changed,
+	.use_क्रम_apm		= 1,
+पूर्ण;
 
-static struct s3c_adc_bat main_bat;
+अटल काष्ठा s3c_adc_bat मुख्य_bat;
 
-static void s3c_adc_bat_work(struct work_struct *work)
-{
-	struct s3c_adc_bat *bat = &main_bat;
-	int is_charged;
-	int is_plugged;
-	static int was_plugged;
+अटल व्योम s3c_adc_bat_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा s3c_adc_bat *bat = &मुख्य_bat;
+	पूर्णांक is_अक्षरged;
+	पूर्णांक is_plugged;
+	अटल पूर्णांक was_plugged;
 
-	is_plugged = power_supply_am_i_supplied(bat->psy);
+	is_plugged = घातer_supply_am_i_supplied(bat->psy);
 	bat->cable_plugged = is_plugged;
-	if (is_plugged != was_plugged) {
+	अगर (is_plugged != was_plugged) अणु
 		was_plugged = is_plugged;
-		if (is_plugged) {
-			if (bat->pdata->enable_charger)
-				bat->pdata->enable_charger();
+		अगर (is_plugged) अणु
+			अगर (bat->pdata->enable_अक्षरger)
+				bat->pdata->enable_अक्षरger();
 			bat->status = POWER_SUPPLY_STATUS_CHARGING;
-		} else {
-			if (bat->pdata->disable_charger)
-				bat->pdata->disable_charger();
+		पूर्ण अन्यथा अणु
+			अगर (bat->pdata->disable_अक्षरger)
+				bat->pdata->disable_अक्षरger();
 			bat->status = POWER_SUPPLY_STATUS_DISCHARGING;
-		}
-	} else {
-		if (bat->charge_finished && is_plugged) {
-			is_charged = charge_finished(&main_bat);
-			if (is_charged) {
-				if (bat->pdata->disable_charger)
-					bat->pdata->disable_charger();
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (bat->अक्षरge_finished && is_plugged) अणु
+			is_अक्षरged = अक्षरge_finished(&मुख्य_bat);
+			अगर (is_अक्षरged) अणु
+				अगर (bat->pdata->disable_अक्षरger)
+					bat->pdata->disable_अक्षरger();
 				bat->status = POWER_SUPPLY_STATUS_FULL;
-			} else {
-				if (bat->pdata->enable_charger)
-					bat->pdata->enable_charger();
+			पूर्ण अन्यथा अणु
+				अगर (bat->pdata->enable_अक्षरger)
+					bat->pdata->enable_अक्षरger();
 				bat->status = POWER_SUPPLY_STATUS_CHARGING;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	power_supply_changed(bat->psy);
-}
+	घातer_supply_changed(bat->psy);
+पूर्ण
 
-static irqreturn_t s3c_adc_bat_charged(int irq, void *dev_id)
-{
+अटल irqवापस_t s3c_adc_bat_अक्षरged(पूर्णांक irq, व्योम *dev_id)
+अणु
 	schedule_delayed_work(&bat_work,
-		msecs_to_jiffies(JITTER_DELAY));
-	return IRQ_HANDLED;
-}
+		msecs_to_jअगरfies(JITTER_DELAY));
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int s3c_adc_bat_probe(struct platform_device *pdev)
-{
-	struct s3c_adc_client	*client;
-	struct s3c_adc_bat_pdata *pdata = pdev->dev.platform_data;
-	struct power_supply_config psy_cfg = {};
-	struct gpio_desc *gpiod;
-	int ret;
+अटल पूर्णांक s3c_adc_bat_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा s3c_adc_client	*client;
+	काष्ठा s3c_adc_bat_pdata *pdata = pdev->dev.platक्रमm_data;
+	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
+	काष्ठा gpio_desc *gpiod;
+	पूर्णांक ret;
 
-	client = s3c_adc_register(pdev, NULL, NULL, 0);
-	if (IS_ERR(client)) {
+	client = s3c_adc_रेजिस्टर(pdev, शून्य, शून्य, 0);
+	अगर (IS_ERR(client)) अणु
 		dev_err(&pdev->dev, "cannot register adc\n");
-		return PTR_ERR(client);
-	}
+		वापस PTR_ERR(client);
+	पूर्ण
 
-	platform_set_drvdata(pdev, client);
+	platक्रमm_set_drvdata(pdev, client);
 
 	gpiod = devm_gpiod_get_optional(&pdev->dev, "charge-status", GPIOD_IN);
-	if (IS_ERR(gpiod)) {
+	अगर (IS_ERR(gpiod)) अणु
 		/* Could be probe deferral etc */
 		ret = PTR_ERR(gpiod);
 		dev_err(&pdev->dev, "no GPIO %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	main_bat.client = client;
-	main_bat.pdata = pdata;
-	main_bat.charge_finished = gpiod;
-	main_bat.volt_value = -1;
-	main_bat.cur_value = -1;
-	main_bat.cable_plugged = 0;
-	main_bat.status = POWER_SUPPLY_STATUS_DISCHARGING;
-	psy_cfg.drv_data = &main_bat;
+	मुख्य_bat.client = client;
+	मुख्य_bat.pdata = pdata;
+	मुख्य_bat.अक्षरge_finished = gpiod;
+	मुख्य_bat.volt_value = -1;
+	मुख्य_bat.cur_value = -1;
+	मुख्य_bat.cable_plugged = 0;
+	मुख्य_bat.status = POWER_SUPPLY_STATUS_DISCHARGING;
+	psy_cfg.drv_data = &मुख्य_bat;
 
-	main_bat.psy = power_supply_register(&pdev->dev, &main_bat_desc, &psy_cfg);
-	if (IS_ERR(main_bat.psy)) {
-		ret = PTR_ERR(main_bat.psy);
-		goto err_reg_main;
-	}
-	if (pdata->backup_volt_mult) {
-		const struct power_supply_config backup_psy_cfg
-						= { .drv_data = &backup_bat, };
+	मुख्य_bat.psy = घातer_supply_रेजिस्टर(&pdev->dev, &मुख्य_bat_desc, &psy_cfg);
+	अगर (IS_ERR(मुख्य_bat.psy)) अणु
+		ret = PTR_ERR(मुख्य_bat.psy);
+		जाओ err_reg_मुख्य;
+	पूर्ण
+	अगर (pdata->backup_volt_mult) अणु
+		स्थिर काष्ठा घातer_supply_config backup_psy_cfg
+						= अणु .drv_data = &backup_bat, पूर्ण;
 
 		backup_bat.client = client;
-		backup_bat.pdata = pdev->dev.platform_data;
-		backup_bat.charge_finished = gpiod;
+		backup_bat.pdata = pdev->dev.platक्रमm_data;
+		backup_bat.अक्षरge_finished = gpiod;
 		backup_bat.volt_value = -1;
-		backup_bat.psy = power_supply_register(&pdev->dev,
+		backup_bat.psy = घातer_supply_रेजिस्टर(&pdev->dev,
 						       &backup_bat_desc,
 						       &backup_psy_cfg);
-		if (IS_ERR(backup_bat.psy)) {
+		अगर (IS_ERR(backup_bat.psy)) अणु
 			ret = PTR_ERR(backup_bat.psy);
-			goto err_reg_backup;
-		}
-	}
+			जाओ err_reg_backup;
+		पूर्ण
+	पूर्ण
 
 	INIT_DELAYED_WORK(&bat_work, s3c_adc_bat_work);
 
-	if (gpiod) {
+	अगर (gpiod) अणु
 		ret = request_irq(gpiod_to_irq(gpiod),
-				s3c_adc_bat_charged,
+				s3c_adc_bat_अक्षरged,
 				IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
-				"battery charged", NULL);
-		if (ret)
-			goto err_irq;
-	}
+				"battery charged", शून्य);
+		अगर (ret)
+			जाओ err_irq;
+	पूर्ण
 
-	if (pdata->init) {
+	अगर (pdata->init) अणु
 		ret = pdata->init();
-		if (ret)
-			goto err_platform;
-	}
+		अगर (ret)
+			जाओ err_platक्रमm;
+	पूर्ण
 
 	dev_info(&pdev->dev, "successfully loaded\n");
 	device_init_wakeup(&pdev->dev, 1);
 
-	/* Schedule timer to check current status */
+	/* Schedule समयr to check current status */
 	schedule_delayed_work(&bat_work,
-		msecs_to_jiffies(JITTER_DELAY));
+		msecs_to_jअगरfies(JITTER_DELAY));
 
-	return 0;
+	वापस 0;
 
-err_platform:
-	if (gpiod)
-		free_irq(gpiod_to_irq(gpiod), NULL);
+err_platक्रमm:
+	अगर (gpiod)
+		मुक्त_irq(gpiod_to_irq(gpiod), शून्य);
 err_irq:
-	if (pdata->backup_volt_mult)
-		power_supply_unregister(backup_bat.psy);
+	अगर (pdata->backup_volt_mult)
+		घातer_supply_unरेजिस्टर(backup_bat.psy);
 err_reg_backup:
-	power_supply_unregister(main_bat.psy);
-err_reg_main:
-	return ret;
-}
+	घातer_supply_unरेजिस्टर(मुख्य_bat.psy);
+err_reg_मुख्य:
+	वापस ret;
+पूर्ण
 
-static int s3c_adc_bat_remove(struct platform_device *pdev)
-{
-	struct s3c_adc_client *client = platform_get_drvdata(pdev);
-	struct s3c_adc_bat_pdata *pdata = pdev->dev.platform_data;
+अटल पूर्णांक s3c_adc_bat_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा s3c_adc_client *client = platक्रमm_get_drvdata(pdev);
+	काष्ठा s3c_adc_bat_pdata *pdata = pdev->dev.platक्रमm_data;
 
-	power_supply_unregister(main_bat.psy);
-	if (pdata->backup_volt_mult)
-		power_supply_unregister(backup_bat.psy);
+	घातer_supply_unरेजिस्टर(मुख्य_bat.psy);
+	अगर (pdata->backup_volt_mult)
+		घातer_supply_unरेजिस्टर(backup_bat.psy);
 
 	s3c_adc_release(client);
 
-	if (main_bat.charge_finished)
-		free_irq(gpiod_to_irq(main_bat.charge_finished), NULL);
+	अगर (मुख्य_bat.अक्षरge_finished)
+		मुक्त_irq(gpiod_to_irq(मुख्य_bat.अक्षरge_finished), शून्य);
 
 	cancel_delayed_work_sync(&bat_work);
 
-	if (pdata->exit)
-		pdata->exit();
+	अगर (pdata->निकास)
+		pdata->निकास();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int s3c_adc_bat_suspend(struct platform_device *pdev,
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक s3c_adc_bat_suspend(काष्ठा platक्रमm_device *pdev,
 	pm_message_t state)
-{
-	if (main_bat.charge_finished) {
-		if (device_may_wakeup(&pdev->dev))
+अणु
+	अगर (मुख्य_bat.अक्षरge_finished) अणु
+		अगर (device_may_wakeup(&pdev->dev))
 			enable_irq_wake(
-				gpiod_to_irq(main_bat.charge_finished));
-		else {
-			disable_irq(gpiod_to_irq(main_bat.charge_finished));
-			main_bat.pdata->disable_charger();
-		}
-	}
+				gpiod_to_irq(मुख्य_bat.अक्षरge_finished));
+		अन्यथा अणु
+			disable_irq(gpiod_to_irq(मुख्य_bat.अक्षरge_finished));
+			मुख्य_bat.pdata->disable_अक्षरger();
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3c_adc_bat_resume(struct platform_device *pdev)
-{
-	if (main_bat.charge_finished) {
-		if (device_may_wakeup(&pdev->dev))
+अटल पूर्णांक s3c_adc_bat_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	अगर (मुख्य_bat.अक्षरge_finished) अणु
+		अगर (device_may_wakeup(&pdev->dev))
 			disable_irq_wake(
-				gpiod_to_irq(main_bat.charge_finished));
-		else
-			enable_irq(gpiod_to_irq(main_bat.charge_finished));
-	}
+				gpiod_to_irq(मुख्य_bat.अक्षरge_finished));
+		अन्यथा
+			enable_irq(gpiod_to_irq(मुख्य_bat.अक्षरge_finished));
+	पूर्ण
 
-	/* Schedule timer to check current status */
+	/* Schedule समयr to check current status */
 	schedule_delayed_work(&bat_work,
-		msecs_to_jiffies(JITTER_DELAY));
+		msecs_to_jअगरfies(JITTER_DELAY));
 
-	return 0;
-}
-#else
-#define s3c_adc_bat_suspend NULL
-#define s3c_adc_bat_resume NULL
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा s3c_adc_bat_suspend शून्य
+#घोषणा s3c_adc_bat_resume शून्य
+#पूर्ण_अगर
 
-static struct platform_driver s3c_adc_bat_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver s3c_adc_bat_driver = अणु
+	.driver		= अणु
 		.name	= "s3c-adc-battery",
-	},
+	पूर्ण,
 	.probe		= s3c_adc_bat_probe,
-	.remove		= s3c_adc_bat_remove,
+	.हटाओ		= s3c_adc_bat_हटाओ,
 	.suspend	= s3c_adc_bat_suspend,
 	.resume		= s3c_adc_bat_resume,
-};
+पूर्ण;
 
-module_platform_driver(s3c_adc_bat_driver);
+module_platक्रमm_driver(s3c_adc_bat_driver);
 
 MODULE_AUTHOR("Vasily Khoruzhick <anarsoul@gmail.com>");
 MODULE_DESCRIPTION("iPAQ H1930/H1940/RX1950 battery controller driver");

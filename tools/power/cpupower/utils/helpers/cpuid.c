@@ -1,200 +1,201 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकपन.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <मानककोष.स>
 
-#include "helpers/helpers.h"
+#समावेश "helpers/helpers.h"
 
-static const char *cpu_vendor_table[X86_VENDOR_MAX] = {
+अटल स्थिर अक्षर *cpu_venकरोr_table[X86_VENDOR_MAX] = अणु
 	"Unknown", "GenuineIntel", "AuthenticAMD", "HygonGenuine",
-};
+पूर्ण;
 
-#if defined(__i386__) || defined(__x86_64__)
+#अगर defined(__i386__) || defined(__x86_64__)
 
 /* from gcc */
-#include <cpuid.h>
+#समावेश <cpuid.h>
 
 /*
- * CPUID functions returning a single datum
+ * CPUID functions वापसing a single datum
  *
- * Define unsigned int cpuid_e[abcd]x(unsigned int op)
+ * Define अचिन्हित पूर्णांक cpuid_e[abcd]x(अचिन्हित पूर्णांक op)
  */
-#define cpuid_func(reg)					\
-	unsigned int cpuid_##reg(unsigned int op)	\
-	{						\
-	unsigned int eax, ebx, ecx, edx;		\
+#घोषणा cpuid_func(reg)					\
+	अचिन्हित पूर्णांक cpuid_##reg(अचिन्हित पूर्णांक op)	\
+	अणु						\
+	अचिन्हित पूर्णांक eax, ebx, ecx, edx;		\
 	__cpuid(op, eax, ebx, ecx, edx);		\
-	return reg;					\
-	}
+	वापस reg;					\
+	पूर्ण
 cpuid_func(eax);
 cpuid_func(ebx);
 cpuid_func(ecx);
 cpuid_func(edx);
 
-#endif /* defined(__i386__) || defined(__x86_64__) */
+#पूर्ण_अगर /* defined(__i386__) || defined(__x86_64__) */
 
 /* get_cpu_info
  *
- * Extract CPU vendor, family, model, stepping info from /proc/cpuinfo
+ * Extract CPU venकरोr, family, model, stepping info from /proc/cpuinfo
  *
  * Returns 0 on success or a negativ error code
  *
- * TBD: Should there be a cpuid alternative for this if /proc is not mounted?
+ * TBD: Should there be a cpuid alternative क्रम this अगर /proc is not mounted?
  */
-int get_cpu_info(struct cpupower_cpu_info *cpu_info)
-{
-	FILE *fp;
-	char value[64];
-	unsigned int proc, x;
-	unsigned int unknown = 0xffffff;
-	unsigned int cpuid_level, ext_cpuid_level;
+पूर्णांक get_cpu_info(काष्ठा cpuघातer_cpu_info *cpu_info)
+अणु
+	खाता *fp;
+	अक्षर value[64];
+	अचिन्हित पूर्णांक proc, x;
+	अचिन्हित पूर्णांक unknown = 0xffffff;
+	अचिन्हित पूर्णांक cpuid_level, ext_cpuid_level;
 
-	int ret = -EINVAL;
+	पूर्णांक ret = -EINVAL;
 
-	cpu_info->vendor		= X86_VENDOR_UNKNOWN;
+	cpu_info->venकरोr		= X86_VENDOR_UNKNOWN;
 	cpu_info->family		= unknown;
 	cpu_info->model			= unknown;
 	cpu_info->stepping		= unknown;
 	cpu_info->caps			= 0;
 
-	fp = fopen("/proc/cpuinfo", "r");
-	if (!fp)
-		return -EIO;
+	fp = ख_खोलो("/proc/cpuinfo", "r");
+	अगर (!fp)
+		वापस -EIO;
 
-	while (!feof(fp)) {
-		if (!fgets(value, 64, fp))
-			continue;
+	जबतक (!ख_पूर्ण(fp)) अणु
+		अगर (!ख_माला_लो(value, 64, fp))
+			जारी;
 		value[63 - 1] = '\0';
 
-		if (!strncmp(value, "processor\t: ", 12))
-			sscanf(value, "processor\t: %u", &proc);
+		अगर (!म_भेदन(value, "processor\t: ", 12))
+			माला_पूछो(value, "processor\t: %u", &proc);
 
-		if (proc != (unsigned int)base_cpu)
-			continue;
+		अगर (proc != (अचिन्हित पूर्णांक)base_cpu)
+			जारी;
 
-		/* Get CPU vendor */
-		if (!strncmp(value, "vendor_id", 9)) {
-			for (x = 1; x < X86_VENDOR_MAX; x++) {
-				if (strstr(value, cpu_vendor_table[x]))
-					cpu_info->vendor = x;
-			}
+		/* Get CPU venकरोr */
+		अगर (!म_भेदन(value, "vendor_id", 9)) अणु
+			क्रम (x = 1; x < X86_VENDOR_MAX; x++) अणु
+				अगर (म_माला(value, cpu_venकरोr_table[x]))
+					cpu_info->venकरोr = x;
+			पूर्ण
 		/* Get CPU family, etc. */
-		} else if (!strncmp(value, "cpu family\t: ", 13)) {
-			sscanf(value, "cpu family\t: %u",
+		पूर्ण अन्यथा अगर (!म_भेदन(value, "cpu family\t: ", 13)) अणु
+			माला_पूछो(value, "cpu family\t: %u",
 			       &cpu_info->family);
-		} else if (!strncmp(value, "model\t\t: ", 9)) {
-			sscanf(value, "model\t\t: %u",
+		पूर्ण अन्यथा अगर (!म_भेदन(value, "model\t\t: ", 9)) अणु
+			माला_पूछो(value, "model\t\t: %u",
 			       &cpu_info->model);
-		} else if (!strncmp(value, "stepping\t: ", 10)) {
-			sscanf(value, "stepping\t: %u",
+		पूर्ण अन्यथा अगर (!म_भेदन(value, "stepping\t: ", 10)) अणु
+			माला_पूछो(value, "stepping\t: %u",
 			       &cpu_info->stepping);
 
 			/* Exit -> all values must have been set */
-			if (cpu_info->vendor == X86_VENDOR_UNKNOWN ||
+			अगर (cpu_info->venकरोr == X86_VENDOR_UNKNOWN ||
 			    cpu_info->family == unknown ||
 			    cpu_info->model == unknown ||
-			    cpu_info->stepping == unknown) {
+			    cpu_info->stepping == unknown) अणु
 				ret = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			ret = 0;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	ret = -ENODEV;
 out:
-	fclose(fp);
+	ख_बंद(fp);
 	/* Get some useful CPU capabilities from cpuid */
-	if (cpu_info->vendor != X86_VENDOR_AMD &&
-	    cpu_info->vendor != X86_VENDOR_HYGON &&
-	    cpu_info->vendor != X86_VENDOR_INTEL)
-		return ret;
+	अगर (cpu_info->venकरोr != X86_VENDOR_AMD &&
+	    cpu_info->venकरोr != X86_VENDOR_HYGON &&
+	    cpu_info->venकरोr != X86_VENDOR_INTEL)
+		वापस ret;
 
 	cpuid_level	= cpuid_eax(0);
 	ext_cpuid_level	= cpuid_eax(0x80000000);
 
 	/* Invariant TSC */
-	if (ext_cpuid_level >= 0x80000007 &&
+	अगर (ext_cpuid_level >= 0x80000007 &&
 	    (cpuid_edx(0x80000007) & (1 << 8)))
 		cpu_info->caps |= CPUPOWER_CAP_INV_TSC;
 
-	/* Aperf/Mperf registers support */
-	if (cpuid_level >= 6 && (cpuid_ecx(6) & 0x1))
+	/* Aperf/Mperf रेजिस्टरs support */
+	अगर (cpuid_level >= 6 && (cpuid_ecx(6) & 0x1))
 		cpu_info->caps |= CPUPOWER_CAP_APERF;
 
-	/* AMD or Hygon Boost state enable/disable register */
-	if (cpu_info->vendor == X86_VENDOR_AMD ||
-	    cpu_info->vendor == X86_VENDOR_HYGON) {
-		if (ext_cpuid_level >= 0x80000007) {
-			if (cpuid_edx(0x80000007) & (1 << 9)) {
+	/* AMD or Hygon Boost state enable/disable रेजिस्टर */
+	अगर (cpu_info->venकरोr == X86_VENDOR_AMD ||
+	    cpu_info->venकरोr == X86_VENDOR_HYGON) अणु
+		अगर (ext_cpuid_level >= 0x80000007) अणु
+			अगर (cpuid_edx(0x80000007) & (1 << 9)) अणु
 				cpu_info->caps |= CPUPOWER_CAP_AMD_CPB;
 
-				if (cpu_info->family >= 0x17)
+				अगर (cpu_info->family >= 0x17)
 					cpu_info->caps |= CPUPOWER_CAP_AMD_CPB_MSR;
-			}
+			पूर्ण
 
-			if ((cpuid_edx(0x80000007) & (1 << 7)) &&
-			    cpu_info->family != 0x14) {
+			अगर ((cpuid_edx(0x80000007) & (1 << 7)) &&
+			    cpu_info->family != 0x14) अणु
 				/* HW pstate was not implemented in family 0x14 */
 				cpu_info->caps |= CPUPOWER_CAP_AMD_HW_PSTATE;
 
-				if (cpu_info->family >= 0x17)
+				अगर (cpu_info->family >= 0x17)
 					cpu_info->caps |= CPUPOWER_CAP_AMD_PSTATEDEF;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (ext_cpuid_level >= 0x80000008 &&
+		अगर (ext_cpuid_level >= 0x80000008 &&
 		    cpuid_ebx(0x80000008) & (1 << 4))
 			cpu_info->caps |= CPUPOWER_CAP_AMD_RDPRU;
-	}
+	पूर्ण
 
-	if (cpu_info->vendor == X86_VENDOR_INTEL) {
-		if (cpuid_level >= 6 &&
+	अगर (cpu_info->venकरोr == X86_VENDOR_INTEL) अणु
+		अगर (cpuid_level >= 6 &&
 		    (cpuid_eax(6) & (1 << 1)))
 			cpu_info->caps |= CPUPOWER_CAP_INTEL_IDA;
-	}
+	पूर्ण
 
-	if (cpu_info->vendor == X86_VENDOR_INTEL) {
+	अगर (cpu_info->venकरोr == X86_VENDOR_INTEL) अणु
 		/* Intel's perf-bias MSR support */
-		if (cpuid_level >= 6 && (cpuid_ecx(6) & (1 << 3)))
+		अगर (cpuid_level >= 6 && (cpuid_ecx(6) & (1 << 3)))
 			cpu_info->caps |= CPUPOWER_CAP_PERF_BIAS;
 
 		/* Intel's Turbo Ratio Limit support */
-		if (cpu_info->family == 6) {
-			switch (cpu_info->model) {
-			case 0x1A:	/* Core i7, Xeon 5500 series
+		अगर (cpu_info->family == 6) अणु
+			चयन (cpu_info->model) अणु
+			हाल 0x1A:	/* Core i7, Xeon 5500 series
 					 * Bloomfield, Gainstown NHM-EP
 					 */
-			case 0x1E:	/* Core i7 and i5 Processor
+			हाल 0x1E:	/* Core i7 and i5 Processor
 					 * Clarksfield, Lynnfield, Jasper Forest
 					 */
-			case 0x1F:	/* Core i7 and i5 Processor - Nehalem */
-			case 0x25:	/* Westmere Client
-					 * Clarkdale, Arrandale
+			हाल 0x1F:	/* Core i7 and i5 Processor - Nehalem */
+			हाल 0x25:	/* Wesपंचांगere Client
+					 * Clarkdale, Arअक्रमale
 					 */
-			case 0x2C:	/* Westmere EP - Gulftown */
+			हाल 0x2C:	/* Wesपंचांगere EP - Gulftown */
 				cpu_info->caps |= CPUPOWER_CAP_HAS_TURBO_RATIO;
-				break;
-			case 0x2A:	/* SNB */
-			case 0x2D:	/* SNB Xeon */
-			case 0x3A:	/* IVB */
-			case 0x3E:	/* IVB Xeon */
+				अवरोध;
+			हाल 0x2A:	/* SNB */
+			हाल 0x2D:	/* SNB Xeon */
+			हाल 0x3A:	/* IVB */
+			हाल 0x3E:	/* IVB Xeon */
 				cpu_info->caps |= CPUPOWER_CAP_HAS_TURBO_RATIO;
 				cpu_info->caps |= CPUPOWER_CAP_IS_SNB;
-				break;
-			case 0x2E:	/* Nehalem-EX Xeon - Beckton */
-			case 0x2F:	/* Westmere-EX Xeon - Eagleton */
-			default:
-				break;
-			}
-		}
-	}
+				अवरोध;
+			हाल 0x2E:	/* Nehalem-EX Xeon - Beckton */
+			हाल 0x2F:	/* Wesपंचांगere-EX Xeon - Eagleton */
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/*	printf("ID: %u - Extid: 0x%x - Caps: 0x%llx\n",
+	/*	म_लिखो("ID: %u - Extid: 0x%x - Caps: 0x%llx\n",
 		cpuid_level, ext_cpuid_level, cpu_info->caps);
 	*/
-	return ret;
-}
+	वापस ret;
+पूर्ण

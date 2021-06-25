@@ -1,69 +1,70 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /**
-Support for Intel Camera Imaging ISP subsystem.
+Support क्रम Intel Camera Imaging ISP subप्रणाली.
 Copyright (c) 2010 - 2015, Intel Corporation.
 
-This program is free software; you can redistribute it and/or modify it
+This program is मुक्त software; you can redistribute it and/or modअगरy it
 under the terms and conditions of the GNU General Public License,
 version 2, as published by the Free Software Foundation.
 
 This program is distributed in the hope it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
 more details.
 */
 
-#ifndef __IA_CSS_TIMER_H
-#define __IA_CSS_TIMER_H
+#अगर_अघोषित __IA_CSS_TIMER_H
+#घोषणा __IA_CSS_TIMER_H
 
 /* @file
- * Timer interface definitions
+ * Timer पूर्णांकerface definitions
  */
-#include <type_support.h>		/* for uint32_t */
-#include "ia_css_err.h"
+#समावेश <type_support.h>		/* क्रम uपूर्णांक32_t */
+#समावेश "ia_css_err.h"
 
-/* @brief timer reading definition */
-typedef u32 clock_value_t;
+/* @brief समयr पढ़ोing definition */
+प्रकार u32 घड़ी_value_t;
 
-/* @brief 32 bit clock tick,(timestamp based on timer-value of CSS-internal timer)*/
-struct ia_css_clock_tick {
-	clock_value_t ticks; /** measured time in ticks.*/
-};
+/* @brief 32 bit घड़ी tick,(बारtamp based on समयr-value of CSS-पूर्णांकernal समयr)*/
+काष्ठा ia_css_घड़ी_प्रकारick अणु
+	घड़ी_value_t ticks; /** measured समय in ticks.*/
+पूर्ण;
 
 /* @brief TIMER event codes */
-enum ia_css_tm_event {
+क्रमागत ia_css_पंचांग_event अणु
 	IA_CSS_TM_EVENT_AFTER_INIT,
 	/** Timer Event after Initialization */
 	IA_CSS_TM_EVENT_MAIN_END,
 	/** Timer Event after end of Main */
 	IA_CSS_TM_EVENT_THREAD_START,
-	/** Timer Event after thread start */
+	/** Timer Event after thपढ़ो start */
 	IA_CSS_TM_EVENT_FRAME_PROC_START,
 	/** Timer Event after Frame Process Start */
 	IA_CSS_TM_EVENT_FRAME_PROC_END
 	/** Timer Event after Frame Process End */
-};
+पूर्ण;
 
-/* @brief code measurement common struct */
-struct ia_css_time_meas {
-	clock_value_t	start_timer_value;	/** measured time in ticks */
-	clock_value_t	end_timer_value;	/** measured time in ticks */
-};
+/* @brief code measurement common काष्ठा */
+काष्ठा ia_css_समय_meas अणु
+	घड़ी_value_t	start_समयr_value;	/** measured समय in ticks */
+	घड़ी_value_t	end_समयr_value;	/** measured समय in ticks */
+पूर्ण;
 
-/**@brief SIZE_OF_IA_CSS_CLOCK_TICK_STRUCT checks to ensure correct alignment for struct ia_css_clock_tick. */
-#define SIZE_OF_IA_CSS_CLOCK_TICK_STRUCT sizeof(clock_value_t)
-/* @brief checks to ensure correct alignment for ia_css_time_meas. */
-#define SIZE_OF_IA_CSS_TIME_MEAS_STRUCT (sizeof(clock_value_t) \
-					+ sizeof(clock_value_t))
+/**@brief SIZE_OF_IA_CSS_CLOCK_TICK_STRUCT checks to ensure correct alignment क्रम काष्ठा ia_css_घड़ी_प्रकारick. */
+#घोषणा SIZE_OF_IA_CSS_CLOCK_TICK_STRUCT माप(घड़ी_value_t)
+/* @brief checks to ensure correct alignment क्रम ia_css_समय_meas. */
+#घोषणा SIZE_OF_IA_CSS_TIME_MEAS_STRUCT (माप(घड़ी_value_t) \
+					+ माप(घड़ी_value_t))
 
-/* @brief API to fetch timer count directly
+/* @brief API to fetch समयr count directly
 *
 * @param curr_ts [out] measured count value
-* @return 0 if success
+* @वापस 0 अगर success
 *
 */
-int
-ia_css_timer_get_current_tick(
-    struct ia_css_clock_tick *curr_ts);
+पूर्णांक
+ia_css_समयr_get_current_tick(
+    काष्ठा ia_css_घड़ी_प्रकारick *curr_ts);
 
-#endif  /* __IA_CSS_TIMER_H */
+#पूर्ण_अगर  /* __IA_CSS_TIMER_H */

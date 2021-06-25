@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 
     bttv-gpio.c  --  gpio sub drivers
 
-    sysfs-based sub driver interface for bttv
-    mainly intended for gpio access
+    sysfs-based sub driver पूर्णांकerface क्रम bttv
+    मुख्यly पूर्णांकended क्रम gpio access
 
 
     Copyright (C) 1996,97,98 Ralph  Metzler (rjkm@thp.uni-koeln.de)
@@ -14,69 +15,69 @@
 
 */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <asm/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/पन.स>
 
-#include "bttvp.h"
+#समावेश "bttvp.h"
 
 /* ----------------------------------------------------------------------- */
-/* internal: the bttv "bus"                                                */
+/* पूर्णांकernal: the bttv "bus"                                                */
 
-static int bttv_sub_bus_match(struct device *dev, struct device_driver *drv)
-{
-	struct bttv_sub_driver *sub = to_bttv_sub_drv(drv);
-	int len = strlen(sub->wanted);
+अटल पूर्णांक bttv_sub_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा bttv_sub_driver *sub = to_bttv_sub_drv(drv);
+	पूर्णांक len = म_माप(sub->wanted);
 
-	if (0 == strncmp(dev_name(dev), sub->wanted, len))
-		return 1;
-	return 0;
-}
+	अगर (0 == म_भेदन(dev_name(dev), sub->wanted, len))
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int bttv_sub_probe(struct device *dev)
-{
-	struct bttv_sub_device *sdev = to_bttv_sub_dev(dev);
-	struct bttv_sub_driver *sub = to_bttv_sub_drv(dev->driver);
+अटल पूर्णांक bttv_sub_probe(काष्ठा device *dev)
+अणु
+	काष्ठा bttv_sub_device *sdev = to_bttv_sub_dev(dev);
+	काष्ठा bttv_sub_driver *sub = to_bttv_sub_drv(dev->driver);
 
-	return sub->probe ? sub->probe(sdev) : -ENODEV;
-}
+	वापस sub->probe ? sub->probe(sdev) : -ENODEV;
+पूर्ण
 
-static int bttv_sub_remove(struct device *dev)
-{
-	struct bttv_sub_device *sdev = to_bttv_sub_dev(dev);
-	struct bttv_sub_driver *sub = to_bttv_sub_drv(dev->driver);
+अटल पूर्णांक bttv_sub_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा bttv_sub_device *sdev = to_bttv_sub_dev(dev);
+	काष्ठा bttv_sub_driver *sub = to_bttv_sub_drv(dev->driver);
 
-	if (sub->remove)
-		sub->remove(sdev);
-	return 0;
-}
+	अगर (sub->हटाओ)
+		sub->हटाओ(sdev);
+	वापस 0;
+पूर्ण
 
-struct bus_type bttv_sub_bus_type = {
+काष्ठा bus_type bttv_sub_bus_type = अणु
 	.name   = "bttv-sub",
 	.match  = &bttv_sub_bus_match,
 	.probe  = bttv_sub_probe,
-	.remove = bttv_sub_remove,
-};
+	.हटाओ = bttv_sub_हटाओ,
+पूर्ण;
 
-static void release_sub_device(struct device *dev)
-{
-	struct bttv_sub_device *sub = to_bttv_sub_dev(dev);
-	kfree(sub);
-}
+अटल व्योम release_sub_device(काष्ठा device *dev)
+अणु
+	काष्ठा bttv_sub_device *sub = to_bttv_sub_dev(dev);
+	kमुक्त(sub);
+पूर्ण
 
-int bttv_sub_add_device(struct bttv_core *core, char *name)
-{
-	struct bttv_sub_device *sub;
-	int err;
+पूर्णांक bttv_sub_add_device(काष्ठा bttv_core *core, अक्षर *name)
+अणु
+	काष्ठा bttv_sub_device *sub;
+	पूर्णांक err;
 
-	sub = kzalloc(sizeof(*sub),GFP_KERNEL);
-	if (NULL == sub)
-		return -ENOMEM;
+	sub = kzalloc(माप(*sub),GFP_KERNEL);
+	अगर (शून्य == sub)
+		वापस -ENOMEM;
 
 	sub->core        = core;
 	sub->dev.parent  = &core->pci->dev;
@@ -84,88 +85,88 @@ int bttv_sub_add_device(struct bttv_core *core, char *name)
 	sub->dev.release = release_sub_device;
 	dev_set_name(&sub->dev, "%s%d", name, core->nr);
 
-	err = device_register(&sub->dev);
-	if (0 != err) {
+	err = device_रेजिस्टर(&sub->dev);
+	अगर (0 != err) अणु
 		put_device(&sub->dev);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	pr_info("%d: add subdevice \"%s\"\n", core->nr, dev_name(&sub->dev));
 	list_add_tail(&sub->list,&core->subs);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bttv_sub_del_devices(struct bttv_core *core)
-{
-	struct bttv_sub_device *sub, *save;
+पूर्णांक bttv_sub_del_devices(काष्ठा bttv_core *core)
+अणु
+	काष्ठा bttv_sub_device *sub, *save;
 
-	list_for_each_entry_safe(sub, save, &core->subs, list) {
+	list_क्रम_each_entry_safe(sub, save, &core->subs, list) अणु
 		list_del(&sub->list);
-		device_unregister(&sub->dev);
-	}
-	return 0;
-}
+		device_unरेजिस्टर(&sub->dev);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
-/* external: sub-driver register/unregister                                */
+/* बाह्यal: sub-driver रेजिस्टर/unरेजिस्टर                                */
 
-int bttv_sub_register(struct bttv_sub_driver *sub, char *wanted)
-{
+पूर्णांक bttv_sub_रेजिस्टर(काष्ठा bttv_sub_driver *sub, अक्षर *wanted)
+अणु
 	sub->drv.bus = &bttv_sub_bus_type;
-	snprintf(sub->wanted,sizeof(sub->wanted),"%s",wanted);
-	return driver_register(&sub->drv);
-}
-EXPORT_SYMBOL(bttv_sub_register);
+	snम_लिखो(sub->wanted,माप(sub->wanted),"%s",wanted);
+	वापस driver_रेजिस्टर(&sub->drv);
+पूर्ण
+EXPORT_SYMBOL(bttv_sub_रेजिस्टर);
 
-int bttv_sub_unregister(struct bttv_sub_driver *sub)
-{
-	driver_unregister(&sub->drv);
-	return 0;
-}
-EXPORT_SYMBOL(bttv_sub_unregister);
+पूर्णांक bttv_sub_unरेजिस्टर(काष्ठा bttv_sub_driver *sub)
+अणु
+	driver_unरेजिस्टर(&sub->drv);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(bttv_sub_unरेजिस्टर);
 
 /* ----------------------------------------------------------------------- */
-/* external: gpio access functions                                         */
+/* बाह्यal: gpio access functions                                         */
 
-void bttv_gpio_inout(struct bttv_core *core, u32 mask, u32 outbits)
-{
-	struct bttv *btv = container_of(core, struct bttv, c);
-	unsigned long flags;
+व्योम bttv_gpio_inout(काष्ठा bttv_core *core, u32 mask, u32 outbits)
+अणु
+	काष्ठा bttv *btv = container_of(core, काष्ठा bttv, c);
+	अचिन्हित दीर्घ flags;
 	u32 data;
 
 	spin_lock_irqsave(&btv->gpio_lock,flags);
-	data = btread(BT848_GPIO_OUT_EN);
+	data = btपढ़ो(BT848_GPIO_OUT_EN);
 	data = data & ~mask;
 	data = data | (mask & outbits);
-	btwrite(data,BT848_GPIO_OUT_EN);
+	btग_लिखो(data,BT848_GPIO_OUT_EN);
 	spin_unlock_irqrestore(&btv->gpio_lock,flags);
-}
+पूर्ण
 
-u32 bttv_gpio_read(struct bttv_core *core)
-{
-	struct bttv *btv = container_of(core, struct bttv, c);
+u32 bttv_gpio_पढ़ो(काष्ठा bttv_core *core)
+अणु
+	काष्ठा bttv *btv = container_of(core, काष्ठा bttv, c);
 	u32 value;
 
-	value = btread(BT848_GPIO_DATA);
-	return value;
-}
+	value = btपढ़ो(BT848_GPIO_DATA);
+	वापस value;
+पूर्ण
 
-void bttv_gpio_write(struct bttv_core *core, u32 value)
-{
-	struct bttv *btv = container_of(core, struct bttv, c);
+व्योम bttv_gpio_ग_लिखो(काष्ठा bttv_core *core, u32 value)
+अणु
+	काष्ठा bttv *btv = container_of(core, काष्ठा bttv, c);
 
-	btwrite(value,BT848_GPIO_DATA);
-}
+	btग_लिखो(value,BT848_GPIO_DATA);
+पूर्ण
 
-void bttv_gpio_bits(struct bttv_core *core, u32 mask, u32 bits)
-{
-	struct bttv *btv = container_of(core, struct bttv, c);
-	unsigned long flags;
+व्योम bttv_gpio_bits(काष्ठा bttv_core *core, u32 mask, u32 bits)
+अणु
+	काष्ठा bttv *btv = container_of(core, काष्ठा bttv, c);
+	अचिन्हित दीर्घ flags;
 	u32 data;
 
 	spin_lock_irqsave(&btv->gpio_lock,flags);
-	data = btread(BT848_GPIO_DATA);
+	data = btपढ़ो(BT848_GPIO_DATA);
 	data = data & ~mask;
 	data = data | (mask & bits);
-	btwrite(data,BT848_GPIO_DATA);
+	btग_लिखो(data,BT848_GPIO_DATA);
 	spin_unlock_irqrestore(&btv->gpio_lock,flags);
-}
+पूर्ण

@@ -1,248 +1,249 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- *      Driver for the MTX-1 Watchdog.
+ *      Driver क्रम the MTX-1 Watchकरोg.
  *
- *      (C) Copyright 2005 4G Systems <info@4g-systems.biz>,
+ *      (C) Copyright 2005 4G Systems <info@4g-प्रणालीs.biz>,
  *							All Rights Reserved.
- *                              http://www.4g-systems.biz
+ *                              http://www.4g-प्रणालीs.biz
  *
- *	(C) Copyright 2007 OpenWrt.org, Florian Fainelli <florian@openwrt.org>
- *      (c) Copyright 2005    4G Systems <info@4g-systems.biz>
+ *	(C) Copyright 2007 OpenWrt.org, Florian Fainelli <florian@खोलोwrt.org>
+ *      (c) Copyright 2005    4G Systems <info@4g-प्रणालीs.biz>
  *
  *      Release 0.01.
- *      Author: Michael Stickel  michael.stickel@4g-systems.biz
+ *      Author: Michael Stickel  michael.stickel@4g-प्रणालीs.biz
  *
  *      Release 0.02.
- *	Author: Florian Fainelli florian@openwrt.org
- *		use the Linux watchdog/timer APIs
+ *	Author: Florian Fainelli florian@खोलोwrt.org
+ *		use the Linux watchकरोg/समयr APIs
  *
- *      The Watchdog is configured to reset the MTX-1
- *      if it is not triggered for 100 seconds.
+ *      The Watchकरोg is configured to reset the MTX-1
+ *      अगर it is not triggered क्रम 100 seconds.
  *      It should not be triggered more often than 1.6 seconds.
  *
- *      A timer triggers the watchdog every 5 seconds, until
- *      it is opened for the first time. After the first open
+ *      A समयr triggers the watchकरोg every 5 seconds, until
+ *      it is खोलोed क्रम the first समय. After the first खोलो
  *      it MUST be triggered every 2..95 seconds.
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/miscdevice.h>
-#include <linux/fs.h>
-#include <linux/ioport.h>
-#include <linux/timer.h>
-#include <linux/completion.h>
-#include <linux/jiffies.h>
-#include <linux/watchdog.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/uaccess.h>
-#include <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/gpio/consumer.h>
 
-#include <asm/mach-au1x00/au1000.h>
+#समावेश <यंत्र/mach-au1x00/au1000.h>
 
-#define MTX1_WDT_INTERVAL	(5 * HZ)
+#घोषणा MTX1_WDT_INTERVAL	(5 * HZ)
 
-static int ticks = 100 * HZ;
+अटल पूर्णांक ticks = 100 * HZ;
 
-static struct {
-	struct completion stop;
+अटल काष्ठा अणु
+	काष्ठा completion stop;
 	spinlock_t lock;
-	int running;
-	struct timer_list timer;
-	int queue;
-	int default_ticks;
-	unsigned long inuse;
-	struct gpio_desc *gpiod;
-	unsigned int gstate;
-} mtx1_wdt_device;
+	पूर्णांक running;
+	काष्ठा समयr_list समयr;
+	पूर्णांक queue;
+	पूर्णांक शेष_ticks;
+	अचिन्हित दीर्घ inuse;
+	काष्ठा gpio_desc *gpiod;
+	अचिन्हित पूर्णांक gstate;
+पूर्ण mtx1_wdt_device;
 
-static void mtx1_wdt_trigger(struct timer_list *unused)
-{
+अटल व्योम mtx1_wdt_trigger(काष्ठा समयr_list *unused)
+अणु
 	spin_lock(&mtx1_wdt_device.lock);
-	if (mtx1_wdt_device.running)
+	अगर (mtx1_wdt_device.running)
 		ticks--;
 
 	/* toggle wdt gpio */
 	mtx1_wdt_device.gstate = !mtx1_wdt_device.gstate;
 	gpiod_set_value(mtx1_wdt_device.gpiod, mtx1_wdt_device.gstate);
 
-	if (mtx1_wdt_device.queue && ticks)
-		mod_timer(&mtx1_wdt_device.timer, jiffies + MTX1_WDT_INTERVAL);
-	else
+	अगर (mtx1_wdt_device.queue && ticks)
+		mod_समयr(&mtx1_wdt_device.समयr, jअगरfies + MTX1_WDT_INTERVAL);
+	अन्यथा
 		complete(&mtx1_wdt_device.stop);
 	spin_unlock(&mtx1_wdt_device.lock);
-}
+पूर्ण
 
-static void mtx1_wdt_reset(void)
-{
-	ticks = mtx1_wdt_device.default_ticks;
-}
+अटल व्योम mtx1_wdt_reset(व्योम)
+अणु
+	ticks = mtx1_wdt_device.शेष_ticks;
+पूर्ण
 
 
-static void mtx1_wdt_start(void)
-{
-	unsigned long flags;
+अटल व्योम mtx1_wdt_start(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mtx1_wdt_device.lock, flags);
-	if (!mtx1_wdt_device.queue) {
+	अगर (!mtx1_wdt_device.queue) अणु
 		mtx1_wdt_device.queue = 1;
 		mtx1_wdt_device.gstate = 1;
 		gpiod_set_value(mtx1_wdt_device.gpiod, 1);
-		mod_timer(&mtx1_wdt_device.timer, jiffies + MTX1_WDT_INTERVAL);
-	}
+		mod_समयr(&mtx1_wdt_device.समयr, jअगरfies + MTX1_WDT_INTERVAL);
+	पूर्ण
 	mtx1_wdt_device.running++;
 	spin_unlock_irqrestore(&mtx1_wdt_device.lock, flags);
-}
+पूर्ण
 
-static int mtx1_wdt_stop(void)
-{
-	unsigned long flags;
+अटल पूर्णांक mtx1_wdt_stop(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mtx1_wdt_device.lock, flags);
-	if (mtx1_wdt_device.queue) {
+	अगर (mtx1_wdt_device.queue) अणु
 		mtx1_wdt_device.queue = 0;
 		mtx1_wdt_device.gstate = 0;
 		gpiod_set_value(mtx1_wdt_device.gpiod, 0);
-	}
-	ticks = mtx1_wdt_device.default_ticks;
+	पूर्ण
+	ticks = mtx1_wdt_device.शेष_ticks;
 	spin_unlock_irqrestore(&mtx1_wdt_device.lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Filesystem functions */
+/* Fileप्रणाली functions */
 
-static int mtx1_wdt_open(struct inode *inode, struct file *file)
-{
-	if (test_and_set_bit(0, &mtx1_wdt_device.inuse))
-		return -EBUSY;
-	return stream_open(inode, file);
-}
+अटल पूर्णांक mtx1_wdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (test_and_set_bit(0, &mtx1_wdt_device.inuse))
+		वापस -EBUSY;
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
 
-static int mtx1_wdt_release(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक mtx1_wdt_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	clear_bit(0, &mtx1_wdt_device.inuse);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long mtx1_wdt_ioctl(struct file *file, unsigned int cmd,
-							unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
-	int __user *p = (int __user *)argp;
-	unsigned int value;
-	static const struct watchdog_info ident = {
+अटल दीर्घ mtx1_wdt_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+							अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक __user *p = (पूर्णांक __user *)argp;
+	अचिन्हित पूर्णांक value;
+	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
 		.options = WDIOF_CARDRESET,
 		.identity = "MTX-1 WDT",
-	};
+	पूर्ण;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		if (copy_to_user(argp, &ident, sizeof(ident)))
-			return -EFAULT;
-		break;
-	case WDIOC_GETSTATUS:
-	case WDIOC_GETBOOTSTATUS:
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		अगर (copy_to_user(argp, &ident, माप(ident)))
+			वापस -EFAULT;
+		अवरोध;
+	हाल WDIOC_GETSTATUS:
+	हाल WDIOC_GETBOOTSTATUS:
 		put_user(0, p);
-		break;
-	case WDIOC_SETOPTIONS:
-		if (get_user(value, p))
-			return -EFAULT;
-		if (value & WDIOS_ENABLECARD)
+		अवरोध;
+	हाल WDIOC_SETOPTIONS:
+		अगर (get_user(value, p))
+			वापस -EFAULT;
+		अगर (value & WDIOS_ENABLECARD)
 			mtx1_wdt_start();
-		else if (value & WDIOS_DISABLECARD)
+		अन्यथा अगर (value & WDIOS_DISABLECARD)
 			mtx1_wdt_stop();
-		else
-			return -EINVAL;
-		return 0;
-	case WDIOC_KEEPALIVE:
+		अन्यथा
+			वापस -EINVAL;
+		वापस 0;
+	हाल WDIOC_KEEPALIVE:
 		mtx1_wdt_reset();
-		break;
-	default:
-		return -ENOTTY;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-static ssize_t mtx1_wdt_write(struct file *file, const char *buf,
-						size_t count, loff_t *ppos)
-{
-	if (!count)
-		return -EIO;
+अटल sमाप_प्रकार mtx1_wdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर *buf,
+						माप_प्रकार count, loff_t *ppos)
+अणु
+	अगर (!count)
+		वापस -EIO;
 	mtx1_wdt_reset();
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations mtx1_wdt_fops = {
+अटल स्थिर काष्ठा file_operations mtx1_wdt_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
 	.unlocked_ioctl	= mtx1_wdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.open		= mtx1_wdt_open,
-	.write		= mtx1_wdt_write,
+	.खोलो		= mtx1_wdt_खोलो,
+	.ग_लिखो		= mtx1_wdt_ग_लिखो,
 	.release	= mtx1_wdt_release,
-};
+पूर्ण;
 
 
-static struct miscdevice mtx1_wdt_misc = {
+अटल काष्ठा miscdevice mtx1_wdt_misc = अणु
 	.minor	= WATCHDOG_MINOR,
 	.name	= "watchdog",
 	.fops	= &mtx1_wdt_fops,
-};
+पूर्ण;
 
 
-static int mtx1_wdt_probe(struct platform_device *pdev)
-{
-	int ret;
+अटल पूर्णांक mtx1_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
 
 	mtx1_wdt_device.gpiod = devm_gpiod_get(&pdev->dev,
-					       NULL, GPIOD_OUT_HIGH);
-	if (IS_ERR(mtx1_wdt_device.gpiod)) {
+					       शून्य, GPIOD_OUT_HIGH);
+	अगर (IS_ERR(mtx1_wdt_device.gpiod)) अणु
 		dev_err(&pdev->dev, "failed to request gpio");
-		return PTR_ERR(mtx1_wdt_device.gpiod);
-	}
+		वापस PTR_ERR(mtx1_wdt_device.gpiod);
+	पूर्ण
 
 	spin_lock_init(&mtx1_wdt_device.lock);
 	init_completion(&mtx1_wdt_device.stop);
 	mtx1_wdt_device.queue = 0;
 	clear_bit(0, &mtx1_wdt_device.inuse);
-	timer_setup(&mtx1_wdt_device.timer, mtx1_wdt_trigger, 0);
-	mtx1_wdt_device.default_ticks = ticks;
+	समयr_setup(&mtx1_wdt_device.समयr, mtx1_wdt_trigger, 0);
+	mtx1_wdt_device.शेष_ticks = ticks;
 
-	ret = misc_register(&mtx1_wdt_misc);
-	if (ret < 0) {
+	ret = misc_रेजिस्टर(&mtx1_wdt_misc);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to register\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	mtx1_wdt_start();
 	dev_info(&pdev->dev, "MTX-1 Watchdog driver\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtx1_wdt_remove(struct platform_device *pdev)
-{
-	/* FIXME: do we need to lock this test ? */
-	if (mtx1_wdt_device.queue) {
+अटल पूर्णांक mtx1_wdt_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	/* FIXME: करो we need to lock this test ? */
+	अगर (mtx1_wdt_device.queue) अणु
 		mtx1_wdt_device.queue = 0;
-		wait_for_completion(&mtx1_wdt_device.stop);
-	}
+		रुको_क्रम_completion(&mtx1_wdt_device.stop);
+	पूर्ण
 
-	misc_deregister(&mtx1_wdt_misc);
-	return 0;
-}
+	misc_deरेजिस्टर(&mtx1_wdt_misc);
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mtx1_wdt_driver = {
+अटल काष्ठा platक्रमm_driver mtx1_wdt_driver = अणु
 	.probe = mtx1_wdt_probe,
-	.remove = mtx1_wdt_remove,
+	.हटाओ = mtx1_wdt_हटाओ,
 	.driver.name = "mtx1-wdt",
 	.driver.owner = THIS_MODULE,
-};
+पूर्ण;
 
-module_platform_driver(mtx1_wdt_driver);
+module_platक्रमm_driver(mtx1_wdt_driver);
 
 MODULE_AUTHOR("Michael Stickel, Florian Fainelli");
 MODULE_DESCRIPTION("Driver for the MTX-1 watchdog");

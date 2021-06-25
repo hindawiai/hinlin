@@ -1,27 +1,28 @@
-#ifndef __NVIF_IFB00D_H__
-#define __NVIF_IFB00D_H__
-#include "if000c.h"
+<शैली गुरु>
+#अगर_अघोषित __NVIF_IFB00D_H__
+#घोषणा __NVIF_IFB00D_H__
+#समावेश "if000c.h"
 
-struct gm200_vmm_vn {
-	/* nvif_vmm_vX ... */
-};
+काष्ठा gm200_vmm_vn अणु
+	/* nvअगर_vmm_vX ... */
+पूर्ण;
 
-struct gm200_vmm_v0 {
-	/* nvif_vmm_vX ... */
+काष्ठा gm200_vmm_v0 अणु
+	/* nvअगर_vmm_vX ... */
 	__u8  version;
 	__u8  bigpage;
-};
+पूर्ण;
 
-struct gm200_vmm_map_vn {
-	/* nvif_vmm_map_vX ... */
-};
+काष्ठा gm200_vmm_map_vn अणु
+	/* nvअगर_vmm_map_vX ... */
+पूर्ण;
 
-struct gm200_vmm_map_v0 {
-	/* nvif_vmm_map_vX ... */
+काष्ठा gm200_vmm_map_v0 अणु
+	/* nvअगर_vmm_map_vX ... */
 	__u8  version;
 	__u8  vol;
 	__u8  ro;
 	__u8  priv;
 	__u8  kind;
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर

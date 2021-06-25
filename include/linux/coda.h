@@ -1,3 +1,4 @@
+<शैली गुरु>
 /* 
    You may distribute this file under either of the two licenses that
    follow at your discretion.
@@ -28,37 +29,37 @@ CREDITS.
           Copyright (c) 1987-1999 Carnegie Mellon University
                          All Rights Reserved
 
-Permission  to  use, copy, modify and distribute this software and its
-documentation is hereby granted,  provided  that  both  the  copyright
+Permission  to  use, copy, modअगरy and distribute this software and its
+करोcumentation is hereby granted,  provided  that  both  the  copyright
 notice  and  this  permission  notice  appear  in  all  copies  of the
-software, derivative works or  modified  versions,  and  any  portions
-thereof, and that both notices appear in supporting documentation, and
-that credit is given to Carnegie Mellon University  in  all  documents
-and publicity pertaining to direct or indirect use of this code or its
+software, derivative works or  modअगरied  versions,  and  any  portions
+thereof, and that both notices appear in supporting करोcumentation, and
+that credit is given to Carnegie Mellon University  in  all  करोcuments
+and खुलाity pertaining to direct or indirect use of this code or its
 derivatives.
 
 CODA IS AN EXPERIMENTAL SOFTWARE SYSTEM AND IS  KNOWN  TO  HAVE  BUGS,
 SOME  OF  WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON ALLOWS
 FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.   CARNEGIE  MELLON
 DISCLAIMS  ANY  LIABILITY  OF  ANY  KIND  FOR  ANY  DAMAGES WHATSOEVER
-RESULTING DIRECTLY OR INDIRECTLY FROM THE USE OF THIS SOFTWARE  OR  OF
+RESULTING सूचीECTLY OR INसूचीECTLY FROM THE USE OF THIS SOFTWARE  OR  OF
 ANY DERIVATIVE WORK.
 
-Carnegie  Mellon  encourages  users  of  this  software  to return any
+Carnegie  Mellon  encourages  users  of  this  software  to वापस any
 improvements or extensions that  they  make,  and  to  grant  Carnegie
 Mellon the rights to redistribute these changes without encumbrance.
 */
 
 /*
  *
- * Based on cfs.h from Mach, but revamped for increased simplicity.
- * Linux modifications by 
+ * Based on cfs.h from Mach, but revamped क्रम increased simplicity.
+ * Linux modअगरications by 
  * Peter Braam, Aug 1996
  */
-#ifndef _CODA_HEADER_
-#define _CODA_HEADER_
+#अगर_अघोषित _CODA_HEADER_
+#घोषणा _CODA_HEADER_
 
-typedef unsigned long long u_quad_t;
+प्रकार अचिन्हित दीर्घ दीर्घ u_quad_t;
 
-#include <uapi/linux/coda.h>
-#endif 
+#समावेश <uapi/linux/coda.h>
+#पूर्ण_अगर 

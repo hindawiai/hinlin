@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
  * Copyright (C) 2019 NVIDIA Corporation
  */
 
-#include <linux/bug.h>
+#समावेश <linux/bug.h>
 
-#include <sound/hda_verbs.h>
+#समावेश <sound/hda_verbs.h>
 
-#include "hda.h"
+#समावेश "hda.h"
 
-void tegra_hda_parse_format(unsigned int format, struct tegra_hda_format *fmt)
-{
-	unsigned int mul, div, bits, channels;
+व्योम tegra_hda_parse_क्रमmat(अचिन्हित पूर्णांक क्रमmat, काष्ठा tegra_hda_क्रमmat *fmt)
+अणु
+	अचिन्हित पूर्णांक mul, भाग, bits, channels;
 
-	if (format & AC_FMT_TYPE_NON_PCM)
+	अगर (क्रमmat & AC_FMT_TYPE_NON_PCM)
 		fmt->pcm = false;
-	else
+	अन्यथा
 		fmt->pcm = true;
 
-	if (format & AC_FMT_BASE_44K)
+	अगर (क्रमmat & AC_FMT_BASE_44K)
 		fmt->sample_rate = 44100;
-	else
+	अन्यथा
 		fmt->sample_rate = 48000;
 
-	mul = (format & AC_FMT_MULT_MASK) >> AC_FMT_MULT_SHIFT;
-	div = (format & AC_FMT_DIV_MASK) >> AC_FMT_DIV_SHIFT;
+	mul = (क्रमmat & AC_FMT_MULT_MASK) >> AC_FMT_MULT_SHIFT;
+	भाग = (क्रमmat & AC_FMT_DIV_MASK) >> AC_FMT_DIV_SHIFT;
 
-	fmt->sample_rate *= (mul + 1) / (div + 1);
+	fmt->sample_rate *= (mul + 1) / (भाग + 1);
 
-	switch (format & AC_FMT_BITS_MASK) {
-	case AC_FMT_BITS_8:
+	चयन (क्रमmat & AC_FMT_BITS_MASK) अणु
+	हाल AC_FMT_BITS_8:
 		fmt->bits = 8;
-		break;
+		अवरोध;
 
-	case AC_FMT_BITS_16:
+	हाल AC_FMT_BITS_16:
 		fmt->bits = 16;
-		break;
+		अवरोध;
 
-	case AC_FMT_BITS_20:
+	हाल AC_FMT_BITS_20:
 		fmt->bits = 20;
-		break;
+		अवरोध;
 
-	case AC_FMT_BITS_24:
+	हाल AC_FMT_BITS_24:
 		fmt->bits = 24;
-		break;
+		अवरोध;
 
-	case AC_FMT_BITS_32:
+	हाल AC_FMT_BITS_32:
 		fmt->bits = 32;
-		break;
+		अवरोध;
 
-	default:
-		bits = (format & AC_FMT_BITS_MASK) >> AC_FMT_BITS_SHIFT;
+	शेष:
+		bits = (क्रमmat & AC_FMT_BITS_MASK) >> AC_FMT_BITS_SHIFT;
 		WARN(1, "invalid number of bits: %#x\n", bits);
 		fmt->bits = 8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	channels = (format & AC_FMT_CHAN_MASK) >> AC_FMT_CHAN_SHIFT;
+	channels = (क्रमmat & AC_FMT_CHAN_MASK) >> AC_FMT_CHAN_SHIFT;
 
 	/* channels are encoded as n - 1 */
 	fmt->channels = channels + 1;
-}
+पूर्ण

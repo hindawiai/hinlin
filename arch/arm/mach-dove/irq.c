@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * arch/arm/mach-dove/irq.c
+ * arch/arm/mach-करोve/irq.c
  *
  * Dove IRQ handling.
  *
@@ -7,78 +8,78 @@
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/io.h>
-#include <asm/exception.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/exception.h>
 
-#include <plat/irq.h>
-#include <plat/orion-gpio.h>
+#समावेश <plat/irq.h>
+#समावेश <plat/orion-gpपन.स>
 
-#include "pm.h"
-#include "bridge-regs.h"
-#include "common.h"
+#समावेश "pm.h"
+#समावेश "bridge-regs.h"
+#समावेश "common.h"
 
-static int __initdata gpio0_irqs[4] = {
+अटल पूर्णांक __initdata gpio0_irqs[4] = अणु
 	IRQ_DOVE_GPIO_0_7,
 	IRQ_DOVE_GPIO_8_15,
 	IRQ_DOVE_GPIO_16_23,
 	IRQ_DOVE_GPIO_24_31,
-};
+पूर्ण;
 
-static int __initdata gpio1_irqs[4] = {
+अटल पूर्णांक __initdata gpio1_irqs[4] = अणु
 	IRQ_DOVE_HIGH_GPIO,
 	0,
 	0,
 	0,
-};
+पूर्ण;
 
-static int __initdata gpio2_irqs[4] = {
+अटल पूर्णांक __initdata gpio2_irqs[4] = अणु
 	0,
 	0,
 	0,
 	0,
-};
+पूर्ण;
 
-static void __iomem *dove_irq_base = IRQ_VIRT_BASE;
+अटल व्योम __iomem *करोve_irq_base = IRQ_VIRT_BASE;
 
-static asmlinkage void
-__exception_irq_entry dove_legacy_handle_irq(struct pt_regs *regs)
-{
+अटल यंत्रlinkage व्योम
+__exception_irq_entry करोve_legacy_handle_irq(काष्ठा pt_regs *regs)
+अणु
 	u32 stat;
 
-	stat = readl_relaxed(dove_irq_base + IRQ_CAUSE_LOW_OFF);
-	stat &= readl_relaxed(dove_irq_base + IRQ_MASK_LOW_OFF);
-	if (stat) {
-		unsigned int hwirq = 1 + __fls(stat);
+	stat = पढ़ोl_relaxed(करोve_irq_base + IRQ_CAUSE_LOW_OFF);
+	stat &= पढ़ोl_relaxed(करोve_irq_base + IRQ_MASK_LOW_OFF);
+	अगर (stat) अणु
+		अचिन्हित पूर्णांक hwirq = 1 + __fls(stat);
 		handle_IRQ(hwirq, regs);
-		return;
-	}
-	stat = readl_relaxed(dove_irq_base + IRQ_CAUSE_HIGH_OFF);
-	stat &= readl_relaxed(dove_irq_base + IRQ_MASK_HIGH_OFF);
-	if (stat) {
-		unsigned int hwirq = 33 + __fls(stat);
+		वापस;
+	पूर्ण
+	stat = पढ़ोl_relaxed(करोve_irq_base + IRQ_CAUSE_HIGH_OFF);
+	stat &= पढ़ोl_relaxed(करोve_irq_base + IRQ_MASK_HIGH_OFF);
+	अगर (stat) अणु
+		अचिन्हित पूर्णांक hwirq = 33 + __fls(stat);
 		handle_IRQ(hwirq, regs);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-void __init dove_init_irq(void)
-{
+व्योम __init करोve_init_irq(व्योम)
+अणु
 	orion_irq_init(1, IRQ_VIRT_BASE + IRQ_MASK_LOW_OFF);
 	orion_irq_init(33, IRQ_VIRT_BASE + IRQ_MASK_HIGH_OFF);
 
-	set_handle_irq(dove_legacy_handle_irq);
+	set_handle_irq(करोve_legacy_handle_irq);
 
 	/*
-	 * Initialize gpiolib for GPIOs 0-71.
+	 * Initialize gpiolib क्रम GPIOs 0-71.
 	 */
-	orion_gpio_init(NULL, 0, 32, DOVE_GPIO_LO_VIRT_BASE, 0,
+	orion_gpio_init(शून्य, 0, 32, DOVE_GPIO_LO_VIRT_BASE, 0,
 			IRQ_DOVE_GPIO_START, gpio0_irqs);
 
-	orion_gpio_init(NULL, 32, 32, DOVE_GPIO_HI_VIRT_BASE, 0,
+	orion_gpio_init(शून्य, 32, 32, DOVE_GPIO_HI_VIRT_BASE, 0,
 			IRQ_DOVE_GPIO_START + 32, gpio1_irqs);
 
-	orion_gpio_init(NULL, 64, 8, DOVE_GPIO2_VIRT_BASE, 0,
+	orion_gpio_init(शून्य, 64, 8, DOVE_GPIO2_VIRT_BASE, 0,
 			IRQ_DOVE_GPIO_START + 64, gpio2_irqs);
-}
+पूर्ण

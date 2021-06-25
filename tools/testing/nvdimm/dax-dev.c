@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016, Intel Corporation.
  */
-#include "test/nfit_test.h"
-#include <linux/mm.h>
-#include "../../../drivers/dax/dax-private.h"
+#समावेश "test/nfit_test.h"
+#समावेश <linux/mm.h>
+#समावेश "../../../drivers/dax/dax-private.h"
 
-phys_addr_t dax_pgoff_to_phys(struct dev_dax *dev_dax, pgoff_t pgoff,
-		unsigned long size)
-{
-	int i;
+phys_addr_t dax_pgoff_to_phys(काष्ठा dev_dax *dev_dax, pgoff_t pgoff,
+		अचिन्हित दीर्घ size)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < dev_dax->nr_range; i++) {
-		struct dev_dax_range *dax_range = &dev_dax->ranges[i];
-		struct range *range = &dax_range->range;
-		unsigned long long pgoff_end;
+	क्रम (i = 0; i < dev_dax->nr_range; i++) अणु
+		काष्ठा dev_dax_range *dax_range = &dev_dax->ranges[i];
+		काष्ठा range *range = &dax_range->range;
+		अचिन्हित दीर्घ दीर्घ pgoff_end;
 		phys_addr_t addr;
 
 		pgoff_end = dax_range->pgoff + PHYS_PFN(range_len(range)) - 1;
-		if (pgoff < dax_range->pgoff || pgoff > pgoff_end)
-			continue;
+		अगर (pgoff < dax_range->pgoff || pgoff > pgoff_end)
+			जारी;
 		addr = PFN_PHYS(pgoff - dax_range->pgoff) + range->start;
-		if (addr + size - 1 <= range->end) {
-			if (get_nfit_res(addr)) {
-				struct page *page;
+		अगर (addr + size - 1 <= range->end) अणु
+			अगर (get_nfit_res(addr)) अणु
+				काष्ठा page *page;
 
-				if (dev_dax->region->align > PAGE_SIZE)
-					return -1;
+				अगर (dev_dax->region->align > PAGE_SIZE)
+					वापस -1;
 
-				page = vmalloc_to_page((void *)addr);
-				return PFN_PHYS(page_to_pfn(page));
-			}
-			return addr;
-		}
-		break;
-	}
-	return -1;
-}
+				page = vदो_स्मृति_to_page((व्योम *)addr);
+				वापस PFN_PHYS(page_to_pfn(page));
+			पूर्ण
+			वापस addr;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	वापस -1;
+पूर्ण

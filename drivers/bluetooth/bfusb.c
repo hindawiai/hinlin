@@ -1,126 +1,127 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  *  AVM BlueFRITZ! USB driver
  *
- *  Copyright (C) 2003-2006  Marcel Holtmann <marcel@holtmann.org>
+ *  Copyright (C) 2003-2006  Marcel Holपंचांगann <marcel@holपंचांगann.org>
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/skbuff.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/skbuff.h>
 
-#include <linux/device.h>
-#include <linux/firmware.h>
+#समावेश <linux/device.h>
+#समावेश <linux/firmware.h>
 
-#include <linux/usb.h>
+#समावेश <linux/usb.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
 
-#define VERSION "1.2"
+#घोषणा VERSION "1.2"
 
-static struct usb_driver bfusb_driver;
+अटल काष्ठा usb_driver bfusb_driver;
 
-static const struct usb_device_id bfusb_table[] = {
+अटल स्थिर काष्ठा usb_device_id bfusb_table[] = अणु
 	/* AVM BlueFRITZ! USB */
-	{ USB_DEVICE(0x057c, 0x2200) },
+	अणु USB_DEVICE(0x057c, 0x2200) पूर्ण,
 
-	{ }	/* Terminating entry */
-};
+	अणु पूर्ण	/* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, bfusb_table);
 
-#define BFUSB_MAX_BLOCK_SIZE	256
+#घोषणा BFUSB_MAX_BLOCK_SIZE	256
 
-#define BFUSB_BLOCK_TIMEOUT	3000
+#घोषणा BFUSB_BLOCK_TIMEOUT	3000
 
-#define BFUSB_TX_PROCESS	1
-#define BFUSB_TX_WAKEUP		2
+#घोषणा BFUSB_TX_PROCESS	1
+#घोषणा BFUSB_TX_WAKEUP		2
 
-#define BFUSB_MAX_BULK_TX	2
-#define BFUSB_MAX_BULK_RX	2
+#घोषणा BFUSB_MAX_BULK_TX	2
+#घोषणा BFUSB_MAX_BULK_RX	2
 
-struct bfusb_data {
-	struct hci_dev		*hdev;
+काष्ठा bfusb_data अणु
+	काष्ठा hci_dev		*hdev;
 
-	unsigned long		state;
+	अचिन्हित दीर्घ		state;
 
-	struct usb_device	*udev;
+	काष्ठा usb_device	*udev;
 
-	unsigned int		bulk_in_ep;
-	unsigned int		bulk_out_ep;
-	unsigned int		bulk_pkt_size;
+	अचिन्हित पूर्णांक		bulk_in_ep;
+	अचिन्हित पूर्णांक		bulk_out_ep;
+	अचिन्हित पूर्णांक		bulk_pkt_size;
 
 	rwlock_t		lock;
 
-	struct sk_buff_head	transmit_q;
+	काष्ठा sk_buff_head	transmit_q;
 
-	struct sk_buff		*reassembly;
+	काष्ठा sk_buff		*reassembly;
 
 	atomic_t		pending_tx;
-	struct sk_buff_head	pending_q;
-	struct sk_buff_head	completed_q;
-};
+	काष्ठा sk_buff_head	pending_q;
+	काष्ठा sk_buff_head	completed_q;
+पूर्ण;
 
-struct bfusb_data_scb {
-	struct urb *urb;
-};
+काष्ठा bfusb_data_scb अणु
+	काष्ठा urb *urb;
+पूर्ण;
 
-static void bfusb_tx_complete(struct urb *urb);
-static void bfusb_rx_complete(struct urb *urb);
+अटल व्योम bfusb_tx_complete(काष्ठा urb *urb);
+अटल व्योम bfusb_rx_complete(काष्ठा urb *urb);
 
-static struct urb *bfusb_get_completed(struct bfusb_data *data)
-{
-	struct sk_buff *skb;
-	struct urb *urb = NULL;
+अटल काष्ठा urb *bfusb_get_completed(काष्ठा bfusb_data *data)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा urb *urb = शून्य;
 
 	BT_DBG("bfusb %p", data);
 
 	skb = skb_dequeue(&data->completed_q);
-	if (skb) {
-		urb = ((struct bfusb_data_scb *) skb->cb)->urb;
-		kfree_skb(skb);
-	}
+	अगर (skb) अणु
+		urb = ((काष्ठा bfusb_data_scb *) skb->cb)->urb;
+		kमुक्त_skb(skb);
+	पूर्ण
 
-	return urb;
-}
+	वापस urb;
+पूर्ण
 
-static void bfusb_unlink_urbs(struct bfusb_data *data)
-{
-	struct sk_buff *skb;
-	struct urb *urb;
+अटल व्योम bfusb_unlink_urbs(काष्ठा bfusb_data *data)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा urb *urb;
 
 	BT_DBG("bfusb %p", data);
 
-	while ((skb = skb_dequeue(&data->pending_q))) {
-		urb = ((struct bfusb_data_scb *) skb->cb)->urb;
-		usb_kill_urb(urb);
+	जबतक ((skb = skb_dequeue(&data->pending_q))) अणु
+		urb = ((काष्ठा bfusb_data_scb *) skb->cb)->urb;
+		usb_समाप्त_urb(urb);
 		skb_queue_tail(&data->completed_q, skb);
-	}
+	पूर्ण
 
-	while ((urb = bfusb_get_completed(data)))
-		usb_free_urb(urb);
-}
+	जबतक ((urb = bfusb_get_completed(data)))
+		usb_मुक्त_urb(urb);
+पूर्ण
 
-static int bfusb_send_bulk(struct bfusb_data *data, struct sk_buff *skb)
-{
-	struct bfusb_data_scb *scb = (void *) skb->cb;
-	struct urb *urb = bfusb_get_completed(data);
-	int err, pipe;
+अटल पूर्णांक bfusb_send_bulk(काष्ठा bfusb_data *data, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा bfusb_data_scb *scb = (व्योम *) skb->cb;
+	काष्ठा urb *urb = bfusb_get_completed(data);
+	पूर्णांक err, pipe;
 
 	BT_DBG("bfusb %p skb %p len %d", data, skb, skb->len);
 
-	if (!urb) {
+	अगर (!urb) अणु
 		urb = usb_alloc_urb(0, GFP_ATOMIC);
-		if (!urb)
-			return -ENOMEM;
-	}
+		अगर (!urb)
+			वापस -ENOMEM;
+	पूर्ण
 
 	pipe = usb_sndbulkpipe(data->udev, data->bulk_out_ep);
 
@@ -132,95 +133,95 @@ static int bfusb_send_bulk(struct bfusb_data *data, struct sk_buff *skb)
 	skb_queue_tail(&data->pending_q, skb);
 
 	err = usb_submit_urb(urb, GFP_ATOMIC);
-	if (err) {
+	अगर (err) अणु
 		bt_dev_err(data->hdev, "bulk tx submit failed urb %p err %d",
 			   urb, err);
 		skb_unlink(skb, &data->pending_q);
-		usb_free_urb(urb);
-	} else
+		usb_मुक्त_urb(urb);
+	पूर्ण अन्यथा
 		atomic_inc(&data->pending_tx);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void bfusb_tx_wakeup(struct bfusb_data *data)
-{
-	struct sk_buff *skb;
+अटल व्योम bfusb_tx_wakeup(काष्ठा bfusb_data *data)
+अणु
+	काष्ठा sk_buff *skb;
 
 	BT_DBG("bfusb %p", data);
 
-	if (test_and_set_bit(BFUSB_TX_PROCESS, &data->state)) {
+	अगर (test_and_set_bit(BFUSB_TX_PROCESS, &data->state)) अणु
 		set_bit(BFUSB_TX_WAKEUP, &data->state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	do {
+	करो अणु
 		clear_bit(BFUSB_TX_WAKEUP, &data->state);
 
-		while ((atomic_read(&data->pending_tx) < BFUSB_MAX_BULK_TX) &&
-				(skb = skb_dequeue(&data->transmit_q))) {
-			if (bfusb_send_bulk(data, skb) < 0) {
+		जबतक ((atomic_पढ़ो(&data->pending_tx) < BFUSB_MAX_BULK_TX) &&
+				(skb = skb_dequeue(&data->transmit_q))) अणु
+			अगर (bfusb_send_bulk(data, skb) < 0) अणु
 				skb_queue_head(&data->transmit_q, skb);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-	} while (test_bit(BFUSB_TX_WAKEUP, &data->state));
+	पूर्ण जबतक (test_bit(BFUSB_TX_WAKEUP, &data->state));
 
 	clear_bit(BFUSB_TX_PROCESS, &data->state);
-}
+पूर्ण
 
-static void bfusb_tx_complete(struct urb *urb)
-{
-	struct sk_buff *skb = (struct sk_buff *) urb->context;
-	struct bfusb_data *data = (struct bfusb_data *) skb->dev;
+अटल व्योम bfusb_tx_complete(काष्ठा urb *urb)
+अणु
+	काष्ठा sk_buff *skb = (काष्ठा sk_buff *) urb->context;
+	काष्ठा bfusb_data *data = (काष्ठा bfusb_data *) skb->dev;
 
 	BT_DBG("bfusb %p urb %p skb %p len %d", data, urb, skb, skb->len);
 
 	atomic_dec(&data->pending_tx);
 
-	if (!test_bit(HCI_RUNNING, &data->hdev->flags))
-		return;
+	अगर (!test_bit(HCI_RUNNING, &data->hdev->flags))
+		वापस;
 
-	if (!urb->status)
+	अगर (!urb->status)
 		data->hdev->stat.byte_tx += skb->len;
-	else
+	अन्यथा
 		data->hdev->stat.err_tx++;
 
-	read_lock(&data->lock);
+	पढ़ो_lock(&data->lock);
 
 	skb_unlink(skb, &data->pending_q);
 	skb_queue_tail(&data->completed_q, skb);
 
 	bfusb_tx_wakeup(data);
 
-	read_unlock(&data->lock);
-}
+	पढ़ो_unlock(&data->lock);
+पूर्ण
 
 
-static int bfusb_rx_submit(struct bfusb_data *data, struct urb *urb)
-{
-	struct bfusb_data_scb *scb;
-	struct sk_buff *skb;
-	int err, pipe, size = HCI_MAX_FRAME_SIZE + 32;
+अटल पूर्णांक bfusb_rx_submit(काष्ठा bfusb_data *data, काष्ठा urb *urb)
+अणु
+	काष्ठा bfusb_data_scb *scb;
+	काष्ठा sk_buff *skb;
+	पूर्णांक err, pipe, size = HCI_MAX_FRAME_SIZE + 32;
 
 	BT_DBG("bfusb %p urb %p", data, urb);
 
-	if (!urb) {
+	अगर (!urb) अणु
 		urb = usb_alloc_urb(0, GFP_ATOMIC);
-		if (!urb)
-			return -ENOMEM;
-	}
+		अगर (!urb)
+			वापस -ENOMEM;
+	पूर्ण
 
 	skb = bt_skb_alloc(size, GFP_ATOMIC);
-	if (!skb) {
-		usb_free_urb(urb);
-		return -ENOMEM;
-	}
+	अगर (!skb) अणु
+		usb_मुक्त_urb(urb);
+		वापस -ENOMEM;
+	पूर्ण
 
-	skb->dev = (void *) data;
+	skb->dev = (व्योम *) data;
 
-	scb = (struct bfusb_data_scb *) skb->cb;
+	scb = (काष्ठा bfusb_data_scb *) skb->cb;
 	scb->urb = urb;
 
 	pipe = usb_rcvbulkpipe(data->udev, data->bulk_in_ep);
@@ -231,259 +232,259 @@ static int bfusb_rx_submit(struct bfusb_data *data, struct urb *urb)
 	skb_queue_tail(&data->pending_q, skb);
 
 	err = usb_submit_urb(urb, GFP_ATOMIC);
-	if (err) {
+	अगर (err) अणु
 		bt_dev_err(data->hdev, "bulk rx submit failed urb %p err %d",
 			   urb, err);
 		skb_unlink(skb, &data->pending_q);
-		kfree_skb(skb);
-		usb_free_urb(urb);
-	}
+		kमुक्त_skb(skb);
+		usb_मुक्त_urb(urb);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline int bfusb_recv_block(struct bfusb_data *data, int hdr, unsigned char *buf, int len)
-{
+अटल अंतरभूत पूर्णांक bfusb_recv_block(काष्ठा bfusb_data *data, पूर्णांक hdr, अचिन्हित अक्षर *buf, पूर्णांक len)
+अणु
 	BT_DBG("bfusb %p hdr 0x%02x data %p len %d", data, hdr, buf, len);
 
-	if (hdr & 0x10) {
+	अगर (hdr & 0x10) अणु
 		bt_dev_err(data->hdev, "error in block");
-		kfree_skb(data->reassembly);
-		data->reassembly = NULL;
-		return -EIO;
-	}
+		kमुक्त_skb(data->reassembly);
+		data->reassembly = शून्य;
+		वापस -EIO;
+	पूर्ण
 
-	if (hdr & 0x04) {
-		struct sk_buff *skb;
-		unsigned char pkt_type;
-		int pkt_len = 0;
+	अगर (hdr & 0x04) अणु
+		काष्ठा sk_buff *skb;
+		अचिन्हित अक्षर pkt_type;
+		पूर्णांक pkt_len = 0;
 
-		if (data->reassembly) {
+		अगर (data->reassembly) अणु
 			bt_dev_err(data->hdev, "unexpected start block");
-			kfree_skb(data->reassembly);
-			data->reassembly = NULL;
-		}
+			kमुक्त_skb(data->reassembly);
+			data->reassembly = शून्य;
+		पूर्ण
 
-		if (len < 1) {
+		अगर (len < 1) अणु
 			bt_dev_err(data->hdev, "no packet type found");
-			return -EPROTO;
-		}
+			वापस -EPROTO;
+		पूर्ण
 
 		pkt_type = *buf++; len--;
 
-		switch (pkt_type) {
-		case HCI_EVENT_PKT:
-			if (len >= HCI_EVENT_HDR_SIZE) {
-				struct hci_event_hdr *hdr = (struct hci_event_hdr *) buf;
+		चयन (pkt_type) अणु
+		हाल HCI_EVENT_PKT:
+			अगर (len >= HCI_EVENT_HDR_SIZE) अणु
+				काष्ठा hci_event_hdr *hdr = (काष्ठा hci_event_hdr *) buf;
 				pkt_len = HCI_EVENT_HDR_SIZE + hdr->plen;
-			} else {
+			पूर्ण अन्यथा अणु
 				bt_dev_err(data->hdev, "event block is too short");
-				return -EILSEQ;
-			}
-			break;
+				वापस -EILSEQ;
+			पूर्ण
+			अवरोध;
 
-		case HCI_ACLDATA_PKT:
-			if (len >= HCI_ACL_HDR_SIZE) {
-				struct hci_acl_hdr *hdr = (struct hci_acl_hdr *) buf;
+		हाल HCI_ACLDATA_PKT:
+			अगर (len >= HCI_ACL_HDR_SIZE) अणु
+				काष्ठा hci_acl_hdr *hdr = (काष्ठा hci_acl_hdr *) buf;
 				pkt_len = HCI_ACL_HDR_SIZE + __le16_to_cpu(hdr->dlen);
-			} else {
+			पूर्ण अन्यथा अणु
 				bt_dev_err(data->hdev, "data block is too short");
-				return -EILSEQ;
-			}
-			break;
+				वापस -EILSEQ;
+			पूर्ण
+			अवरोध;
 
-		case HCI_SCODATA_PKT:
-			if (len >= HCI_SCO_HDR_SIZE) {
-				struct hci_sco_hdr *hdr = (struct hci_sco_hdr *) buf;
+		हाल HCI_SCODATA_PKT:
+			अगर (len >= HCI_SCO_HDR_SIZE) अणु
+				काष्ठा hci_sco_hdr *hdr = (काष्ठा hci_sco_hdr *) buf;
 				pkt_len = HCI_SCO_HDR_SIZE + hdr->dlen;
-			} else {
+			पूर्ण अन्यथा अणु
 				bt_dev_err(data->hdev, "audio block is too short");
-				return -EILSEQ;
-			}
-			break;
-		}
+				वापस -EILSEQ;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		skb = bt_skb_alloc(pkt_len, GFP_ATOMIC);
-		if (!skb) {
+		अगर (!skb) अणु
 			bt_dev_err(data->hdev, "no memory for the packet");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		hci_skb_pkt_type(skb) = pkt_type;
 
 		data->reassembly = skb;
-	} else {
-		if (!data->reassembly) {
+	पूर्ण अन्यथा अणु
+		अगर (!data->reassembly) अणु
 			bt_dev_err(data->hdev, "unexpected continuation block");
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	if (len > 0)
+	अगर (len > 0)
 		skb_put_data(data->reassembly, buf, len);
 
-	if (hdr & 0x08) {
+	अगर (hdr & 0x08) अणु
 		hci_recv_frame(data->hdev, data->reassembly);
-		data->reassembly = NULL;
-	}
+		data->reassembly = शून्य;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bfusb_rx_complete(struct urb *urb)
-{
-	struct sk_buff *skb = (struct sk_buff *) urb->context;
-	struct bfusb_data *data = (struct bfusb_data *) skb->dev;
-	unsigned char *buf = urb->transfer_buffer;
-	int count = urb->actual_length;
-	int err, hdr, len;
+अटल व्योम bfusb_rx_complete(काष्ठा urb *urb)
+अणु
+	काष्ठा sk_buff *skb = (काष्ठा sk_buff *) urb->context;
+	काष्ठा bfusb_data *data = (काष्ठा bfusb_data *) skb->dev;
+	अचिन्हित अक्षर *buf = urb->transfer_buffer;
+	पूर्णांक count = urb->actual_length;
+	पूर्णांक err, hdr, len;
 
 	BT_DBG("bfusb %p urb %p skb %p len %d", data, urb, skb, skb->len);
 
-	read_lock(&data->lock);
+	पढ़ो_lock(&data->lock);
 
-	if (!test_bit(HCI_RUNNING, &data->hdev->flags))
-		goto unlock;
+	अगर (!test_bit(HCI_RUNNING, &data->hdev->flags))
+		जाओ unlock;
 
-	if (urb->status || !count)
-		goto resubmit;
+	अगर (urb->status || !count)
+		जाओ resubmit;
 
 	data->hdev->stat.byte_rx += count;
 
 	skb_put(skb, count);
 
-	while (count) {
+	जबतक (count) अणु
 		hdr = buf[0] | (buf[1] << 8);
 
-		if (hdr & 0x4000) {
+		अगर (hdr & 0x4000) अणु
 			len = 0;
 			count -= 2;
 			buf   += 2;
-		} else {
+		पूर्ण अन्यथा अणु
 			len = (buf[2] == 0) ? 256 : buf[2];
 			count -= 3;
 			buf   += 3;
-		}
+		पूर्ण
 
-		if (count < len) {
+		अगर (count < len) अणु
 			bt_dev_err(data->hdev, "block extends over URB buffer ranges");
-		}
+		पूर्ण
 
-		if ((hdr & 0xe1) == 0xc1)
+		अगर ((hdr & 0xe1) == 0xc1)
 			bfusb_recv_block(data, hdr, buf, len);
 
 		count -= len;
 		buf   += len;
-	}
+	पूर्ण
 
 	skb_unlink(skb, &data->pending_q);
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
 	bfusb_rx_submit(data, urb);
 
-	read_unlock(&data->lock);
+	पढ़ो_unlock(&data->lock);
 
-	return;
+	वापस;
 
 resubmit:
 	urb->dev = data->udev;
 
 	err = usb_submit_urb(urb, GFP_ATOMIC);
-	if (err) {
+	अगर (err) अणु
 		bt_dev_err(data->hdev, "bulk resubmit failed urb %p err %d",
 			   urb, err);
-	}
+	पूर्ण
 
 unlock:
-	read_unlock(&data->lock);
-}
+	पढ़ो_unlock(&data->lock);
+पूर्ण
 
-static int bfusb_open(struct hci_dev *hdev)
-{
-	struct bfusb_data *data = hci_get_drvdata(hdev);
-	unsigned long flags;
-	int i, err;
+अटल पूर्णांक bfusb_खोलो(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा bfusb_data *data = hci_get_drvdata(hdev);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, err;
 
 	BT_DBG("hdev %p bfusb %p", hdev, data);
 
-	write_lock_irqsave(&data->lock, flags);
+	ग_लिखो_lock_irqsave(&data->lock, flags);
 
-	err = bfusb_rx_submit(data, NULL);
-	if (!err) {
-		for (i = 1; i < BFUSB_MAX_BULK_RX; i++)
-			bfusb_rx_submit(data, NULL);
-	}
+	err = bfusb_rx_submit(data, शून्य);
+	अगर (!err) अणु
+		क्रम (i = 1; i < BFUSB_MAX_BULK_RX; i++)
+			bfusb_rx_submit(data, शून्य);
+	पूर्ण
 
-	write_unlock_irqrestore(&data->lock, flags);
+	ग_लिखो_unlock_irqrestore(&data->lock, flags);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bfusb_flush(struct hci_dev *hdev)
-{
-	struct bfusb_data *data = hci_get_drvdata(hdev);
+अटल पूर्णांक bfusb_flush(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा bfusb_data *data = hci_get_drvdata(hdev);
 
 	BT_DBG("hdev %p bfusb %p", hdev, data);
 
 	skb_queue_purge(&data->transmit_q);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bfusb_close(struct hci_dev *hdev)
-{
-	struct bfusb_data *data = hci_get_drvdata(hdev);
-	unsigned long flags;
+अटल पूर्णांक bfusb_बंद(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा bfusb_data *data = hci_get_drvdata(hdev);
+	अचिन्हित दीर्घ flags;
 
 	BT_DBG("hdev %p bfusb %p", hdev, data);
 
-	write_lock_irqsave(&data->lock, flags);
-	write_unlock_irqrestore(&data->lock, flags);
+	ग_लिखो_lock_irqsave(&data->lock, flags);
+	ग_लिखो_unlock_irqrestore(&data->lock, flags);
 
 	bfusb_unlink_urbs(data);
 	bfusb_flush(hdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bfusb_send_frame(struct hci_dev *hdev, struct sk_buff *skb)
-{
-	struct bfusb_data *data = hci_get_drvdata(hdev);
-	struct sk_buff *nskb;
-	unsigned char buf[3];
-	int sent = 0, size, count;
+अटल पूर्णांक bfusb_send_frame(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा bfusb_data *data = hci_get_drvdata(hdev);
+	काष्ठा sk_buff *nskb;
+	अचिन्हित अक्षर buf[3];
+	पूर्णांक sent = 0, size, count;
 
 	BT_DBG("hdev %p skb %p type %d len %d", hdev, skb,
 	       hci_skb_pkt_type(skb), skb->len);
 
-	switch (hci_skb_pkt_type(skb)) {
-	case HCI_COMMAND_PKT:
+	चयन (hci_skb_pkt_type(skb)) अणु
+	हाल HCI_COMMAND_PKT:
 		hdev->stat.cmd_tx++;
-		break;
-	case HCI_ACLDATA_PKT:
+		अवरोध;
+	हाल HCI_ACLDATA_PKT:
 		hdev->stat.acl_tx++;
-		break;
-	case HCI_SCODATA_PKT:
+		अवरोध;
+	हाल HCI_SCODATA_PKT:
 		hdev->stat.sco_tx++;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Prepend skb with frame type */
-	memcpy(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
+	स_नकल(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
 
 	count = skb->len;
 
 	/* Max HCI frame size seems to be 1511 + 1 */
 	nskb = bt_skb_alloc(count + 32, GFP_KERNEL);
-	if (!nskb) {
+	अगर (!nskb) अणु
 		bt_dev_err(hdev, "Can't allocate memory for new packet");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	nskb->dev = (void *) data;
+	nskb->dev = (व्योम *) data;
 
-	while (count) {
-		size = min_t(uint, count, BFUSB_MAX_BLOCK_SIZE);
+	जबतक (count) अणु
+		size = min_t(uपूर्णांक, count, BFUSB_MAX_BLOCK_SIZE);
 
 		buf[0] = 0xc1 | ((sent == 0) ? 0x04 : 0) | ((count == size) ? 0x08 : 0);
 		buf[1] = 0x00;
@@ -494,224 +495,224 @@ static int bfusb_send_frame(struct hci_dev *hdev, struct sk_buff *skb)
 
 		sent  += size;
 		count -= size;
-	}
+	पूर्ण
 
 	/* Don't send frame with multiple size of bulk max packet */
-	if ((nskb->len % data->bulk_pkt_size) == 0) {
+	अगर ((nskb->len % data->bulk_pkt_size) == 0) अणु
 		buf[0] = 0xdd;
 		buf[1] = 0x00;
 		skb_put_data(nskb, buf, 2);
-	}
+	पूर्ण
 
-	read_lock(&data->lock);
+	पढ़ो_lock(&data->lock);
 
 	skb_queue_tail(&data->transmit_q, nskb);
 	bfusb_tx_wakeup(data);
 
-	read_unlock(&data->lock);
+	पढ़ो_unlock(&data->lock);
 
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bfusb_load_firmware(struct bfusb_data *data,
-			       const unsigned char *firmware, int count)
-{
-	unsigned char *buf;
-	int err, pipe, len, size, sent = 0;
+अटल पूर्णांक bfusb_load_firmware(काष्ठा bfusb_data *data,
+			       स्थिर अचिन्हित अक्षर *firmware, पूर्णांक count)
+अणु
+	अचिन्हित अक्षर *buf;
+	पूर्णांक err, pipe, len, size, sent = 0;
 
 	BT_DBG("bfusb %p udev %p", data, data->udev);
 
 	BT_INFO("BlueFRITZ! USB loading firmware");
 
-	buf = kmalloc(BFUSB_MAX_BLOCK_SIZE + 3, GFP_KERNEL);
-	if (!buf) {
+	buf = kदो_स्मृति(BFUSB_MAX_BLOCK_SIZE + 3, GFP_KERNEL);
+	अगर (!buf) अणु
 		BT_ERR("Can't allocate memory chunk for firmware");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	pipe = usb_sndctrlpipe(data->udev, 0);
 
-	if (usb_control_msg(data->udev, pipe, USB_REQ_SET_CONFIGURATION,
-				0, 1, 0, NULL, 0, USB_CTRL_SET_TIMEOUT) < 0) {
+	अगर (usb_control_msg(data->udev, pipe, USB_REQ_SET_CONFIGURATION,
+				0, 1, 0, शून्य, 0, USB_CTRL_SET_TIMEOUT) < 0) अणु
 		BT_ERR("Can't change to loading configuration");
-		kfree(buf);
-		return -EBUSY;
-	}
+		kमुक्त(buf);
+		वापस -EBUSY;
+	पूर्ण
 
 	data->udev->toggle[0] = data->udev->toggle[1] = 0;
 
 	pipe = usb_sndbulkpipe(data->udev, data->bulk_out_ep);
 
-	while (count) {
-		size = min_t(uint, count, BFUSB_MAX_BLOCK_SIZE + 3);
+	जबतक (count) अणु
+		size = min_t(uपूर्णांक, count, BFUSB_MAX_BLOCK_SIZE + 3);
 
-		memcpy(buf, firmware + sent, size);
+		स_नकल(buf, firmware + sent, size);
 
 		err = usb_bulk_msg(data->udev, pipe, buf, size,
 					&len, BFUSB_BLOCK_TIMEOUT);
 
-		if (err || (len != size)) {
+		अगर (err || (len != size)) अणु
 			BT_ERR("Error in firmware loading");
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		sent  += size;
 		count -= size;
-	}
+	पूर्ण
 
-	err = usb_bulk_msg(data->udev, pipe, NULL, 0,
+	err = usb_bulk_msg(data->udev, pipe, शून्य, 0,
 					&len, BFUSB_BLOCK_TIMEOUT);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		BT_ERR("Error in null packet request");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	pipe = usb_sndctrlpipe(data->udev, 0);
 
 	err = usb_control_msg(data->udev, pipe, USB_REQ_SET_CONFIGURATION,
-				0, 2, 0, NULL, 0, USB_CTRL_SET_TIMEOUT);
-	if (err < 0) {
+				0, 2, 0, शून्य, 0, USB_CTRL_SET_TIMEOUT);
+	अगर (err < 0) अणु
 		BT_ERR("Can't change to running configuration");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	data->udev->toggle[0] = data->udev->toggle[1] = 0;
 
 	BT_INFO("BlueFRITZ! USB device ready");
 
-	kfree(buf);
-	return 0;
+	kमुक्त(buf);
+	वापस 0;
 
 error:
-	kfree(buf);
+	kमुक्त(buf);
 
 	pipe = usb_sndctrlpipe(data->udev, 0);
 
 	usb_control_msg(data->udev, pipe, USB_REQ_SET_CONFIGURATION,
-				0, 0, 0, NULL, 0, USB_CTRL_SET_TIMEOUT);
+				0, 0, 0, शून्य, 0, USB_CTRL_SET_TIMEOUT);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bfusb_probe(struct usb_interface *intf, const struct usb_device_id *id)
-{
-	const struct firmware *firmware;
-	struct usb_device *udev = interface_to_usbdev(intf);
-	struct usb_host_endpoint *bulk_out_ep;
-	struct usb_host_endpoint *bulk_in_ep;
-	struct hci_dev *hdev;
-	struct bfusb_data *data;
+अटल पूर्णांक bfusb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर काष्ठा usb_device_id *id)
+अणु
+	स्थिर काष्ठा firmware *firmware;
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	काष्ठा usb_host_endpoपूर्णांक *bulk_out_ep;
+	काष्ठा usb_host_endpoपूर्णांक *bulk_in_ep;
+	काष्ठा hci_dev *hdev;
+	काष्ठा bfusb_data *data;
 
-	BT_DBG("intf %p id %p", intf, id);
+	BT_DBG("intf %p id %p", पूर्णांकf, id);
 
-	/* Check number of endpoints */
-	if (intf->cur_altsetting->desc.bNumEndpoints < 2)
-		return -EIO;
+	/* Check number of endpoपूर्णांकs */
+	अगर (पूर्णांकf->cur_altsetting->desc.bNumEndpoपूर्णांकs < 2)
+		वापस -EIO;
 
-	bulk_out_ep = &intf->cur_altsetting->endpoint[0];
-	bulk_in_ep  = &intf->cur_altsetting->endpoint[1];
+	bulk_out_ep = &पूर्णांकf->cur_altsetting->endpoपूर्णांक[0];
+	bulk_in_ep  = &पूर्णांकf->cur_altsetting->endpoपूर्णांक[1];
 
-	if (!bulk_out_ep || !bulk_in_ep) {
+	अगर (!bulk_out_ep || !bulk_in_ep) अणु
 		BT_ERR("Bulk endpoints not found");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* Initialize control structure and load firmware */
-	data = devm_kzalloc(&intf->dev, sizeof(struct bfusb_data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	/* Initialize control काष्ठाure and load firmware */
+	data = devm_kzalloc(&पूर्णांकf->dev, माप(काष्ठा bfusb_data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->udev = udev;
-	data->bulk_in_ep    = bulk_in_ep->desc.bEndpointAddress;
-	data->bulk_out_ep   = bulk_out_ep->desc.bEndpointAddress;
+	data->bulk_in_ep    = bulk_in_ep->desc.bEndpoपूर्णांकAddress;
+	data->bulk_out_ep   = bulk_out_ep->desc.bEndpoपूर्णांकAddress;
 	data->bulk_pkt_size = le16_to_cpu(bulk_out_ep->desc.wMaxPacketSize);
 
 	rwlock_init(&data->lock);
 
-	data->reassembly = NULL;
+	data->reassembly = शून्य;
 
 	skb_queue_head_init(&data->transmit_q);
 	skb_queue_head_init(&data->pending_q);
 	skb_queue_head_init(&data->completed_q);
 
-	if (request_firmware(&firmware, "bfubase.frm", &udev->dev) < 0) {
+	अगर (request_firmware(&firmware, "bfubase.frm", &udev->dev) < 0) अणु
 		BT_ERR("Firmware request failed");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	BT_DBG("firmware data %p size %zu", firmware->data, firmware->size);
 
-	if (bfusb_load_firmware(data, firmware->data, firmware->size) < 0) {
+	अगर (bfusb_load_firmware(data, firmware->data, firmware->size) < 0) अणु
 		BT_ERR("Firmware loading failed");
-		goto release;
-	}
+		जाओ release;
+	पूर्ण
 
 	release_firmware(firmware);
 
-	/* Initialize and register HCI device */
+	/* Initialize and रेजिस्टर HCI device */
 	hdev = hci_alloc_dev();
-	if (!hdev) {
+	अगर (!hdev) अणु
 		BT_ERR("Can't allocate HCI device");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	data->hdev = hdev;
 
 	hdev->bus = HCI_USB;
 	hci_set_drvdata(hdev, data);
-	SET_HCIDEV_DEV(hdev, &intf->dev);
+	SET_HCIDEV_DEV(hdev, &पूर्णांकf->dev);
 
-	hdev->open  = bfusb_open;
-	hdev->close = bfusb_close;
+	hdev->खोलो  = bfusb_खोलो;
+	hdev->बंद = bfusb_बंद;
 	hdev->flush = bfusb_flush;
 	hdev->send  = bfusb_send_frame;
 
 	set_bit(HCI_QUIRK_BROKEN_LOCAL_COMMANDS, &hdev->quirks);
 
-	if (hci_register_dev(hdev) < 0) {
+	अगर (hci_रेजिस्टर_dev(hdev) < 0) अणु
 		BT_ERR("Can't register HCI device");
-		hci_free_dev(hdev);
-		goto done;
-	}
+		hci_मुक्त_dev(hdev);
+		जाओ करोne;
+	पूर्ण
 
-	usb_set_intfdata(intf, data);
+	usb_set_पूर्णांकfdata(पूर्णांकf, data);
 
-	return 0;
+	वापस 0;
 
 release:
 	release_firmware(firmware);
 
-done:
-	return -EIO;
-}
+करोne:
+	वापस -EIO;
+पूर्ण
 
-static void bfusb_disconnect(struct usb_interface *intf)
-{
-	struct bfusb_data *data = usb_get_intfdata(intf);
-	struct hci_dev *hdev = data->hdev;
+अटल व्योम bfusb_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा bfusb_data *data = usb_get_पूर्णांकfdata(पूर्णांकf);
+	काष्ठा hci_dev *hdev = data->hdev;
 
-	BT_DBG("intf %p", intf);
+	BT_DBG("intf %p", पूर्णांकf);
 
-	if (!hdev)
-		return;
+	अगर (!hdev)
+		वापस;
 
-	usb_set_intfdata(intf, NULL);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
 
-	bfusb_close(hdev);
+	bfusb_बंद(hdev);
 
-	hci_unregister_dev(hdev);
-	hci_free_dev(hdev);
-}
+	hci_unरेजिस्टर_dev(hdev);
+	hci_मुक्त_dev(hdev);
+पूर्ण
 
-static struct usb_driver bfusb_driver = {
+अटल काष्ठा usb_driver bfusb_driver = अणु
 	.name		= "bfusb",
 	.probe		= bfusb_probe,
 	.disconnect	= bfusb_disconnect,
 	.id_table	= bfusb_table,
 	.disable_hub_initiated_lpm = 1,
-};
+पूर्ण;
 
 module_usb_driver(bfusb_driver);
 

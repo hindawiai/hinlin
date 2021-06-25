@@ -1,291 +1,292 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#include <linux/extable.h>
-#include <linux/module.h>
-#include <linux/signal.h>
-#include <linux/ptrace.h>
-#include <linux/mm.h>
-#include <linux/init.h>
-#include <linux/hardirq.h>
-#include <linux/uaccess.h>
-#include <linux/perf_event.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/perf_event.h>
 
-#include <asm/tlbflush.h>
+#समावेश <यंत्र/tlbflush.h>
 
-extern void die(const char *str, struct pt_regs *regs, long err);
+बाह्य व्योम die(स्थिर अक्षर *str, काष्ठा pt_regs *regs, दीर्घ err);
 
 /*
  * This is useful to dump out the page tables associated with
  * 'addr' in mm 'mm'.
  */
-void show_pte(struct mm_struct *mm, unsigned long addr)
-{
+व्योम show_pte(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
+अणु
 	pgd_t *pgd;
-	if (!mm)
+	अगर (!mm)
 		mm = &init_mm;
 
 	pr_alert("pgd = %p\n", mm->pgd);
 	pgd = pgd_offset(mm, addr);
 	pr_alert("[%08lx] *pgd=%08lx", addr, pgd_val(*pgd));
 
-	do {
+	करो अणु
 		p4d_t *p4d;
 		pud_t *pud;
 		pmd_t *pmd;
 
-		if (pgd_none(*pgd))
-			break;
+		अगर (pgd_none(*pgd))
+			अवरोध;
 
-		if (pgd_bad(*pgd)) {
+		अगर (pgd_bad(*pgd)) अणु
 			pr_alert("(bad)");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		p4d = p4d_offset(pgd, addr);
 		pud = pud_offset(p4d, addr);
 		pmd = pmd_offset(pud, addr);
-#if PTRS_PER_PMD != 1
+#अगर PTRS_PER_PMD != 1
 		pr_alert(", *pmd=%08lx", pmd_val(*pmd));
-#endif
+#पूर्ण_अगर
 
-		if (pmd_none(*pmd))
-			break;
+		अगर (pmd_none(*pmd))
+			अवरोध;
 
-		if (pmd_bad(*pmd)) {
+		अगर (pmd_bad(*pmd)) अणु
 			pr_alert("(bad)");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (IS_ENABLED(CONFIG_HIGHMEM))
-		{
+		अगर (IS_ENABLED(CONFIG_HIGHMEM))
+		अणु
 			pte_t *pte;
-			/* We must not map this if we have highmem enabled */
+			/* We must not map this अगर we have highmem enabled */
 			pte = pte_offset_map(pmd, addr);
 			pr_alert(", *pte=%08lx", pte_val(*pte));
 			pte_unmap(pte);
-		}
-	} while (0);
+		पूर्ण
+	पूर्ण जबतक (0);
 
 	pr_alert("\n");
-}
+पूर्ण
 
-void do_page_fault(unsigned long entry, unsigned long addr,
-		   unsigned int error_code, struct pt_regs *regs)
-{
-	struct task_struct *tsk;
-	struct mm_struct *mm;
-	struct vm_area_struct *vma;
-	int si_code;
+व्योम करो_page_fault(अचिन्हित दीर्घ entry, अचिन्हित दीर्घ addr,
+		   अचिन्हित पूर्णांक error_code, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा task_काष्ठा *tsk;
+	काष्ठा mm_काष्ठा *mm;
+	काष्ठा vm_area_काष्ठा *vma;
+	पूर्णांक si_code;
 	vm_fault_t fault;
-	unsigned int mask = VM_ACCESS_FLAGS;
-	unsigned int flags = FAULT_FLAG_DEFAULT;
+	अचिन्हित पूर्णांक mask = VM_ACCESS_FLAGS;
+	अचिन्हित पूर्णांक flags = FAULT_FLAG_DEFAULT;
 
 	error_code = error_code & (ITYPE_mskINST | ITYPE_mskETYPE);
 	tsk = current;
 	mm = tsk->mm;
 	si_code = SEGV_MAPERR;
 	/*
-	 * We fault-in kernel-space virtual memory on-demand. The
+	 * We fault-in kernel-space भव memory on-demand. The
 	 * 'reference' page table is init_mm.pgd.
 	 *
-	 * NOTE! We MUST NOT take any locks for this case. We may
-	 * be in an interrupt or a critical region, and should
-	 * only copy the information from the master page table,
+	 * NOTE! We MUST NOT take any locks क्रम this हाल. We may
+	 * be in an पूर्णांकerrupt or a critical region, and should
+	 * only copy the inक्रमmation from the master page table,
 	 * nothing more.
 	 */
-	if (addr >= TASK_SIZE) {
-		if (user_mode(regs))
-			goto bad_area_nosemaphore;
+	अगर (addr >= TASK_SIZE) अणु
+		अगर (user_mode(regs))
+			जाओ bad_area_nosemaphore;
 
-		if (addr >= TASK_SIZE && addr < VMALLOC_END
+		अगर (addr >= TASK_SIZE && addr < VMALLOC_END
 		    && (entry == ENTRY_PTE_NOT_PRESENT))
-			goto vmalloc_fault;
-		else
-			goto no_context;
-	}
+			जाओ vदो_स्मृति_fault;
+		अन्यथा
+			जाओ no_context;
+	पूर्ण
 
-	/* Send a signal to the task for handling the unalignment access. */
-	if (entry == ENTRY_GENERAL_EXCPETION
-	    && error_code == ETYPE_ALIGNMENT_CHECK) {
-		if (user_mode(regs))
-			goto bad_area_nosemaphore;
-		else
-			goto no_context;
-	}
+	/* Send a संकेत to the task क्रम handling the unalignment access. */
+	अगर (entry == ENTRY_GENERAL_EXCPETION
+	    && error_code == ETYPE_ALIGNMENT_CHECK) अणु
+		अगर (user_mode(regs))
+			जाओ bad_area_nosemaphore;
+		अन्यथा
+			जाओ no_context;
+	पूर्ण
 
 	/*
-	 * If we're in an interrupt or have no user
+	 * If we're in an पूर्णांकerrupt or have no user
 	 * context, we must not take the fault..
 	 */
-	if (unlikely(faulthandler_disabled() || !mm))
-		goto no_context;
+	अगर (unlikely(faulthandler_disabled() || !mm))
+		जाओ no_context;
 
 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, addr);
 
 	/*
 	 * As per x86, we may deadlock here. However, since the kernel only
 	 * validly references user space from well defined areas of the code,
-	 * we can bug out early if this is from code which shouldn't.
+	 * we can bug out early अगर this is from code which shouldn't.
 	 */
-	if (unlikely(!mmap_read_trylock(mm))) {
-		if (!user_mode(regs) &&
-		    !search_exception_tables(instruction_pointer(regs)))
-			goto no_context;
+	अगर (unlikely(!mmap_पढ़ो_trylock(mm))) अणु
+		अगर (!user_mode(regs) &&
+		    !search_exception_tables(inकाष्ठाion_poपूर्णांकer(regs)))
+			जाओ no_context;
 retry:
-		mmap_read_lock(mm);
-	} else {
+		mmap_पढ़ो_lock(mm);
+	पूर्ण अन्यथा अणु
 		/*
-		 * The above down_read_trylock() might have succeeded in which
-		 * case, we'll have missed the might_sleep() from down_read().
+		 * The above करोwn_पढ़ो_trylock() might have succeeded in which
+		 * हाल, we'll have missed the might_sleep() from करोwn_पढ़ो().
 		 */
 		might_sleep();
-		if (IS_ENABLED(CONFIG_DEBUG_VM)) {
-			if (!user_mode(regs) &&
-			    !search_exception_tables(instruction_pointer(regs)))
-				goto no_context;
-		}
-	}
+		अगर (IS_ENABLED(CONFIG_DEBUG_VM)) अणु
+			अगर (!user_mode(regs) &&
+			    !search_exception_tables(inकाष्ठाion_poपूर्णांकer(regs)))
+				जाओ no_context;
+		पूर्ण
+	पूर्ण
 
 	vma = find_vma(mm, addr);
 
-	if (unlikely(!vma))
-		goto bad_area;
+	अगर (unlikely(!vma))
+		जाओ bad_area;
 
-	if (vma->vm_start <= addr)
-		goto good_area;
+	अगर (vma->vm_start <= addr)
+		जाओ good_area;
 
-	if (unlikely(!(vma->vm_flags & VM_GROWSDOWN)))
-		goto bad_area;
+	अगर (unlikely(!(vma->vm_flags & VM_GROWSDOWN)))
+		जाओ bad_area;
 
-	if (unlikely(expand_stack(vma, addr)))
-		goto bad_area;
+	अगर (unlikely(expand_stack(vma, addr)))
+		जाओ bad_area;
 
 	/*
-	 * Ok, we have a good vm_area for this memory access, so
+	 * Ok, we have a good vm_area क्रम this memory access, so
 	 * we can handle it..
 	 */
 
 good_area:
 	si_code = SEGV_ACCERR;
 
-	/* first do some preliminary protection checks */
-	if (entry == ENTRY_PTE_NOT_PRESENT) {
-		if (error_code & ITYPE_mskINST)
+	/* first करो some preliminary protection checks */
+	अगर (entry == ENTRY_PTE_NOT_PRESENT) अणु
+		अगर (error_code & ITYPE_mskINST)
 			mask = VM_EXEC;
-		else {
+		अन्यथा अणु
 			mask = VM_READ | VM_WRITE;
-		}
-	} else if (entry == ENTRY_TLB_MISC) {
-		switch (error_code & ITYPE_mskETYPE) {
-		case RD_PROT:
+		पूर्ण
+	पूर्ण अन्यथा अगर (entry == ENTRY_TLB_MISC) अणु
+		चयन (error_code & ITYPE_mskETYPE) अणु
+		हाल RD_PROT:
 			mask = VM_READ;
-			break;
-		case WRT_PROT:
+			अवरोध;
+		हाल WRT_PROT:
 			mask = VM_WRITE;
 			flags |= FAULT_FLAG_WRITE;
-			break;
-		case NOEXEC:
+			अवरोध;
+		हाल NOEXEC:
 			mask = VM_EXEC;
-			break;
-		case PAGE_MODIFY:
+			अवरोध;
+		हाल PAGE_MODIFY:
 			mask = VM_WRITE;
 			flags |= FAULT_FLAG_WRITE;
-			break;
-		case ACC_BIT:
+			अवरोध;
+		हाल ACC_BIT:
 			BUG();
-		default:
-			break;
-		}
+		शेष:
+			अवरोध;
+		पूर्ण
 
-	}
-	if (!(vma->vm_flags & mask))
-		goto bad_area;
+	पूर्ण
+	अगर (!(vma->vm_flags & mask))
+		जाओ bad_area;
 
 	/*
-	 * If for any reason at all we couldn't handle the fault,
-	 * make sure we exit gracefully rather than endlessly redo
+	 * If क्रम any reason at all we couldn't handle the fault,
+	 * make sure we निकास gracefully rather than endlessly reकरो
 	 * the fault.
 	 */
 
 	fault = handle_mm_fault(vma, addr, flags, regs);
 
 	/*
-	 * If we need to retry but a fatal signal is pending, handle the
-	 * signal first. We do not need to release the mmap_lock because it
-	 * would already be released in __lock_page_or_retry in mm/filemap.c.
+	 * If we need to retry but a fatal संकेत is pending, handle the
+	 * संकेत first. We करो not need to release the mmap_lock because it
+	 * would alपढ़ोy be released in __lock_page_or_retry in mm/filemap.c.
 	 */
-	if (fault_signal_pending(fault, regs)) {
-		if (!user_mode(regs))
-			goto no_context;
-		return;
-	}
+	अगर (fault_संकेत_pending(fault, regs)) अणु
+		अगर (!user_mode(regs))
+			जाओ no_context;
+		वापस;
+	पूर्ण
 
-	if (unlikely(fault & VM_FAULT_ERROR)) {
-		if (fault & VM_FAULT_OOM)
-			goto out_of_memory;
-		else if (fault & VM_FAULT_SIGBUS)
-			goto do_sigbus;
-		else
-			goto bad_area;
-	}
+	अगर (unlikely(fault & VM_FAULT_ERROR)) अणु
+		अगर (fault & VM_FAULT_OOM)
+			जाओ out_of_memory;
+		अन्यथा अगर (fault & VM_FAULT_SIGBUS)
+			जाओ करो_sigbus;
+		अन्यथा
+			जाओ bad_area;
+	पूर्ण
 
-	if (flags & FAULT_FLAG_ALLOW_RETRY) {
-		if (fault & VM_FAULT_RETRY) {
+	अगर (flags & FAULT_FLAG_ALLOW_RETRY) अणु
+		अगर (fault & VM_FAULT_RETRY) अणु
 			flags |= FAULT_FLAG_TRIED;
 
-			/* No need to mmap_read_unlock(mm) as we would
-			 * have already released it in __lock_page_or_retry
+			/* No need to mmap_पढ़ो_unlock(mm) as we would
+			 * have alपढ़ोy released it in __lock_page_or_retry
 			 * in mm/filemap.c.
 			 */
-			goto retry;
-		}
-	}
+			जाओ retry;
+		पूर्ण
+	पूर्ण
 
-	mmap_read_unlock(mm);
-	return;
+	mmap_पढ़ो_unlock(mm);
+	वापस;
 
 	/*
 	 * Something tried to access memory that isn't in our memory map..
-	 * Fix it, but check if it's kernel or user first..
+	 * Fix it, but check अगर it's kernel or user first..
 	 */
 bad_area:
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 
 bad_area_nosemaphore:
 
-	/* User mode accesses just cause a SIGSEGV */
+	/* User mode accesses just cause a संक_अंश */
 
-	if (user_mode(regs)) {
-		tsk->thread.address = addr;
-		tsk->thread.error_code = error_code;
-		tsk->thread.trap_no = entry;
-		force_sig_fault(SIGSEGV, si_code, (void __user *)addr);
-		return;
-	}
+	अगर (user_mode(regs)) अणु
+		tsk->thपढ़ो.address = addr;
+		tsk->thपढ़ो.error_code = error_code;
+		tsk->thपढ़ो.trap_no = entry;
+		क्रमce_sig_fault(संक_अंश, si_code, (व्योम __user *)addr);
+		वापस;
+	पूर्ण
 
 no_context:
 
 	/* Are we prepared to handle this kernel fault?
 	 *
-	 * (The kernel has valid exception-points in the source
+	 * (The kernel has valid exception-poपूर्णांकs in the source
 	 *  when it acesses user-memory. When it fails in one
-	 *  of those points, we find it in a table and do a jump
+	 *  of those poपूर्णांकs, we find it in a table and करो a jump
 	 *  to some fixup code that loads an appropriate error
 	 *  code)
 	 */
 
-	{
-		const struct exception_table_entry *entry;
+	अणु
+		स्थिर काष्ठा exception_table_entry *entry;
 
-		if ((entry =
-		     search_exception_tables(instruction_pointer(regs))) !=
-		    NULL) {
-			/* Adjust the instruction pointer in the stackframe */
-			instruction_pointer(regs) = entry->fixup;
-			return;
-		}
-	}
+		अगर ((entry =
+		     search_exception_tables(inकाष्ठाion_poपूर्णांकer(regs))) !=
+		    शून्य) अणु
+			/* Adjust the inकाष्ठाion poपूर्णांकer in the stackframe */
+			inकाष्ठाion_poपूर्णांकer(regs) = entry->fixup;
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Oops. The kernel tried to access some bad page. We'll have to
@@ -300,9 +301,9 @@ no_context:
 	show_pte(mm, addr);
 	die("Oops", regs, error_code);
 	bust_spinlocks(0);
-	do_exit(SIGKILL);
+	करो_निकास(SIGKILL);
 
-	return;
+	वापस;
 
 	/*
 	 * We ran out of memory, or some other thing happened to us that made
@@ -310,43 +311,43 @@ no_context:
 	 */
 
 out_of_memory:
-	mmap_read_unlock(mm);
-	if (!user_mode(regs))
-		goto no_context;
+	mmap_पढ़ो_unlock(mm);
+	अगर (!user_mode(regs))
+		जाओ no_context;
 	pagefault_out_of_memory();
-	return;
+	वापस;
 
-do_sigbus:
-	mmap_read_unlock(mm);
+करो_sigbus:
+	mmap_पढ़ो_unlock(mm);
 
 	/* Kernel mode? Handle exceptions or die */
-	if (!user_mode(regs))
-		goto no_context;
+	अगर (!user_mode(regs))
+		जाओ no_context;
 
 	/*
 	 * Send a sigbus
 	 */
-	tsk->thread.address = addr;
-	tsk->thread.error_code = error_code;
-	tsk->thread.trap_no = entry;
-	force_sig_fault(SIGBUS, BUS_ADRERR, (void __user *)addr);
+	tsk->thपढ़ो.address = addr;
+	tsk->thपढ़ो.error_code = error_code;
+	tsk->thपढ़ो.trap_no = entry;
+	क्रमce_sig_fault(SIGBUS, BUS_ADRERR, (व्योम __user *)addr);
 
-	return;
+	वापस;
 
-vmalloc_fault:
-	{
+vदो_स्मृति_fault:
+	अणु
 		/*
 		 * Synchronize this task's top level page-table
 		 * with the 'reference' page table.
 		 *
 		 * Use current_pgd instead of tsk->active_mm->pgd
-		 * since the latter might be unavailable if this
-		 * code is executed in a misfortunately run irq
-		 * (like inside schedule() between switch_mm and
-		 *  switch_to...).
+		 * since the latter might be unavailable अगर this
+		 * code is executed in a misक्रमtunately run irq
+		 * (like inside schedule() between चयन_mm and
+		 *  चयन_to...).
 		 */
 
-		unsigned int index = pgd_index(addr);
+		अचिन्हित पूर्णांक index = pgd_index(addr);
 		pgd_t *pgd, *pgd_k;
 		p4d_t *p4d, *p4d_k;
 		pud_t *pud, *pud_k;
@@ -356,47 +357,47 @@ vmalloc_fault:
 		pgd = (pgd_t *) __va(__nds32__mfsr(NDS32_SR_L1_PPTB)) + index;
 		pgd_k = init_mm.pgd + index;
 
-		if (!pgd_present(*pgd_k))
-			goto no_context;
+		अगर (!pgd_present(*pgd_k))
+			जाओ no_context;
 
 		p4d = p4d_offset(pgd, addr);
 		p4d_k = p4d_offset(pgd_k, addr);
-		if (!p4d_present(*p4d_k))
-			goto no_context;
+		अगर (!p4d_present(*p4d_k))
+			जाओ no_context;
 
 		pud = pud_offset(p4d, addr);
 		pud_k = pud_offset(p4d_k, addr);
-		if (!pud_present(*pud_k))
-			goto no_context;
+		अगर (!pud_present(*pud_k))
+			जाओ no_context;
 
 		pmd = pmd_offset(pud, addr);
 		pmd_k = pmd_offset(pud_k, addr);
-		if (!pmd_present(*pmd_k))
-			goto no_context;
+		अगर (!pmd_present(*pmd_k))
+			जाओ no_context;
 
-		if (!pmd_present(*pmd))
+		अगर (!pmd_present(*pmd))
 			set_pmd(pmd, *pmd_k);
-		else
+		अन्यथा
 			BUG_ON(pmd_page(*pmd) != pmd_page(*pmd_k));
 
 		/*
-		 * Since the vmalloc area is global, we don't
-		 * need to copy individual PTE's, it is enough to
-		 * copy the pgd pointer into the pte page of the
-		 * root task. If that is there, we'll find our pte if
+		 * Since the vदो_स्मृति area is global, we करोn't
+		 * need to copy inभागidual PTE's, it is enough to
+		 * copy the pgd poपूर्णांकer पूर्णांकo the pte page of the
+		 * root task. If that is there, we'll find our pte अगर
 		 * it exists.
 		 */
 
 		/* Make sure the actual PTE exists as well to
-		 * catch kernel vmalloc-area accesses to non-mapped
-		 * addres. If we don't do this, this will just
-		 * silently loop forever.
+		 * catch kernel vदो_स्मृति-area accesses to non-mapped
+		 * addres. If we करोn't करो this, this will just
+		 * silently loop क्रमever.
 		 */
 
 		pte_k = pte_offset_kernel(pmd_k, addr);
-		if (!pte_present(*pte_k))
-			goto no_context;
+		अगर (!pte_present(*pte_k))
+			जाओ no_context;
 
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण

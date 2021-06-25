@@ -1,453 +1,454 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2015 ARM Limited
  */
 
-#define pr_fmt(fmt) "psci: " fmt
+#घोषणा pr_fmt(fmt) "psci: " fmt
 
-#include <linux/acpi.h>
-#include <linux/arm-smccc.h>
-#include <linux/cpuidle.h>
-#include <linux/errno.h>
-#include <linux/linkage.h>
-#include <linux/of.h>
-#include <linux/pm.h>
-#include <linux/printk.h>
-#include <linux/psci.h>
-#include <linux/reboot.h>
-#include <linux/slab.h>
-#include <linux/suspend.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/arm-smccc.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/linkage.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/psci.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/suspend.h>
 
-#include <uapi/linux/psci.h>
+#समावेश <uapi/linux/psci.h>
 
-#include <asm/cpuidle.h>
-#include <asm/cputype.h>
-#include <asm/hypervisor.h>
-#include <asm/system_misc.h>
-#include <asm/smp_plat.h>
-#include <asm/suspend.h>
+#समावेश <यंत्र/cpuidle.h>
+#समावेश <यंत्र/cputype.h>
+#समावेश <यंत्र/hypervisor.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
+#समावेश <यंत्र/smp_plat.h>
+#समावेश <यंत्र/suspend.h>
 
 /*
- * While a 64-bit OS can make calls with SMC32 calling conventions, for some
- * calls it is necessary to use SMC64 to pass or return 64-bit values.
+ * While a 64-bit OS can make calls with SMC32 calling conventions, क्रम some
+ * calls it is necessary to use SMC64 to pass or वापस 64-bit values.
  * For such calls PSCI_FN_NATIVE(version, name) will choose the appropriate
  * (native-width) function ID.
  */
-#ifdef CONFIG_64BIT
-#define PSCI_FN_NATIVE(version, name)	PSCI_##version##_FN64_##name
-#else
-#define PSCI_FN_NATIVE(version, name)	PSCI_##version##_FN_##name
-#endif
+#अगर_घोषित CONFIG_64BIT
+#घोषणा PSCI_FN_NATIVE(version, name)	PSCI_##version##_FN64_##name
+#अन्यथा
+#घोषणा PSCI_FN_NATIVE(version, name)	PSCI_##version##_FN_##name
+#पूर्ण_अगर
 
 /*
  * The CPU any Trusted OS is resident on. The trusted OS may reject CPU_OFF
- * calls to its resident CPU, so we must avoid issuing those. We never migrate
- * a Trusted OS even if it claims to be capable of migration -- doing so will
+ * calls to its resident CPU, so we must aव्योम issuing those. We never migrate
+ * a Trusted OS even अगर it claims to be capable of migration -- करोing so will
  * require cooperation with a Trusted OS driver.
  */
-static int resident_cpu = -1;
-struct psci_operations psci_ops;
-static enum arm_smccc_conduit psci_conduit = SMCCC_CONDUIT_NONE;
+अटल पूर्णांक resident_cpu = -1;
+काष्ठा psci_operations psci_ops;
+अटल क्रमागत arm_smccc_conduit psci_conduit = SMCCC_CONDUIT_NONE;
 
-bool psci_tos_resident_on(int cpu)
-{
-	return cpu == resident_cpu;
-}
+bool psci_tos_resident_on(पूर्णांक cpu)
+अणु
+	वापस cpu == resident_cpu;
+पूर्ण
 
-typedef unsigned long (psci_fn)(unsigned long, unsigned long,
-				unsigned long, unsigned long);
-static psci_fn *invoke_psci_fn;
+प्रकार अचिन्हित दीर्घ (psci_fn)(अचिन्हित दीर्घ, अचिन्हित दीर्घ,
+				अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+अटल psci_fn *invoke_psci_fn;
 
-static struct psci_0_1_function_ids psci_0_1_function_ids;
+अटल काष्ठा psci_0_1_function_ids psci_0_1_function_ids;
 
-struct psci_0_1_function_ids get_psci_0_1_function_ids(void)
-{
-	return psci_0_1_function_ids;
-}
+काष्ठा psci_0_1_function_ids get_psci_0_1_function_ids(व्योम)
+अणु
+	वापस psci_0_1_function_ids;
+पूर्ण
 
-#define PSCI_0_2_POWER_STATE_MASK		\
+#घोषणा PSCI_0_2_POWER_STATE_MASK		\
 				(PSCI_0_2_POWER_STATE_ID_MASK | \
 				PSCI_0_2_POWER_STATE_TYPE_MASK | \
 				PSCI_0_2_POWER_STATE_AFFL_MASK)
 
-#define PSCI_1_0_EXT_POWER_STATE_MASK		\
+#घोषणा PSCI_1_0_EXT_POWER_STATE_MASK		\
 				(PSCI_1_0_EXT_POWER_STATE_ID_MASK | \
 				PSCI_1_0_EXT_POWER_STATE_TYPE_MASK)
 
-static u32 psci_cpu_suspend_feature;
-static bool psci_system_reset2_supported;
+अटल u32 psci_cpu_suspend_feature;
+अटल bool psci_प्रणाली_reset2_supported;
 
-static inline bool psci_has_ext_power_state(void)
-{
-	return psci_cpu_suspend_feature &
+अटल अंतरभूत bool psci_has_ext_घातer_state(व्योम)
+अणु
+	वापस psci_cpu_suspend_feature &
 				PSCI_1_0_FEATURES_CPU_SUSPEND_PF_MASK;
-}
+पूर्ण
 
-bool psci_has_osi_support(void)
-{
-	return psci_cpu_suspend_feature & PSCI_1_0_OS_INITIATED;
-}
+bool psci_has_osi_support(व्योम)
+अणु
+	वापस psci_cpu_suspend_feature & PSCI_1_0_OS_INITIATED;
+पूर्ण
 
-static inline bool psci_power_state_loses_context(u32 state)
-{
-	const u32 mask = psci_has_ext_power_state() ?
+अटल अंतरभूत bool psci_घातer_state_loses_context(u32 state)
+अणु
+	स्थिर u32 mask = psci_has_ext_घातer_state() ?
 					PSCI_1_0_EXT_POWER_STATE_TYPE_MASK :
 					PSCI_0_2_POWER_STATE_TYPE_MASK;
 
-	return state & mask;
-}
+	वापस state & mask;
+पूर्ण
 
-bool psci_power_state_is_valid(u32 state)
-{
-	const u32 valid_mask = psci_has_ext_power_state() ?
+bool psci_घातer_state_is_valid(u32 state)
+अणु
+	स्थिर u32 valid_mask = psci_has_ext_घातer_state() ?
 			       PSCI_1_0_EXT_POWER_STATE_MASK :
 			       PSCI_0_2_POWER_STATE_MASK;
 
-	return !(state & ~valid_mask);
-}
+	वापस !(state & ~valid_mask);
+पूर्ण
 
-static unsigned long __invoke_psci_fn_hvc(unsigned long function_id,
-			unsigned long arg0, unsigned long arg1,
-			unsigned long arg2)
-{
-	struct arm_smccc_res res;
+अटल अचिन्हित दीर्घ __invoke_psci_fn_hvc(अचिन्हित दीर्घ function_id,
+			अचिन्हित दीर्घ arg0, अचिन्हित दीर्घ arg1,
+			अचिन्हित दीर्घ arg2)
+अणु
+	काष्ठा arm_smccc_res res;
 
 	arm_smccc_hvc(function_id, arg0, arg1, arg2, 0, 0, 0, 0, &res);
-	return res.a0;
-}
+	वापस res.a0;
+पूर्ण
 
-static unsigned long __invoke_psci_fn_smc(unsigned long function_id,
-			unsigned long arg0, unsigned long arg1,
-			unsigned long arg2)
-{
-	struct arm_smccc_res res;
+अटल अचिन्हित दीर्घ __invoke_psci_fn_smc(अचिन्हित दीर्घ function_id,
+			अचिन्हित दीर्घ arg0, अचिन्हित दीर्घ arg1,
+			अचिन्हित दीर्घ arg2)
+अणु
+	काष्ठा arm_smccc_res res;
 
 	arm_smccc_smc(function_id, arg0, arg1, arg2, 0, 0, 0, 0, &res);
-	return res.a0;
-}
+	वापस res.a0;
+पूर्ण
 
-static int psci_to_linux_errno(int errno)
-{
-	switch (errno) {
-	case PSCI_RET_SUCCESS:
-		return 0;
-	case PSCI_RET_NOT_SUPPORTED:
-		return -EOPNOTSUPP;
-	case PSCI_RET_INVALID_PARAMS:
-	case PSCI_RET_INVALID_ADDRESS:
-		return -EINVAL;
-	case PSCI_RET_DENIED:
-		return -EPERM;
-	}
+अटल पूर्णांक psci_to_linux_त्रुटि_सं(पूर्णांक त्रुटि_सं)
+अणु
+	चयन (त्रुटि_सं) अणु
+	हाल PSCI_RET_SUCCESS:
+		वापस 0;
+	हाल PSCI_RET_NOT_SUPPORTED:
+		वापस -EOPNOTSUPP;
+	हाल PSCI_RET_INVALID_PARAMS:
+	हाल PSCI_RET_INVALID_ADDRESS:
+		वापस -EINVAL;
+	हाल PSCI_RET_DENIED:
+		वापस -EPERM;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static u32 psci_0_1_get_version(void)
-{
-	return PSCI_VERSION(0, 1);
-}
+अटल u32 psci_0_1_get_version(व्योम)
+अणु
+	वापस PSCI_VERSION(0, 1);
+पूर्ण
 
-static u32 psci_0_2_get_version(void)
-{
-	return invoke_psci_fn(PSCI_0_2_FN_PSCI_VERSION, 0, 0, 0);
-}
+अटल u32 psci_0_2_get_version(व्योम)
+अणु
+	वापस invoke_psci_fn(PSCI_0_2_FN_PSCI_VERSION, 0, 0, 0);
+पूर्ण
 
-int psci_set_osi_mode(bool enable)
-{
-	unsigned long suspend_mode;
-	int err;
+पूर्णांक psci_set_osi_mode(bool enable)
+अणु
+	अचिन्हित दीर्घ suspend_mode;
+	पूर्णांक err;
 
 	suspend_mode = enable ? PSCI_1_0_SUSPEND_MODE_OSI :
 			PSCI_1_0_SUSPEND_MODE_PC;
 
 	err = invoke_psci_fn(PSCI_1_0_FN_SET_SUSPEND_MODE, suspend_mode, 0, 0);
-	return psci_to_linux_errno(err);
-}
+	वापस psci_to_linux_त्रुटि_सं(err);
+पूर्ण
 
-static int __psci_cpu_suspend(u32 fn, u32 state, unsigned long entry_point)
-{
-	int err;
+अटल पूर्णांक __psci_cpu_suspend(u32 fn, u32 state, अचिन्हित दीर्घ entry_poपूर्णांक)
+अणु
+	पूर्णांक err;
 
-	err = invoke_psci_fn(fn, state, entry_point, 0);
-	return psci_to_linux_errno(err);
-}
+	err = invoke_psci_fn(fn, state, entry_poपूर्णांक, 0);
+	वापस psci_to_linux_त्रुटि_सं(err);
+पूर्ण
 
-static int psci_0_1_cpu_suspend(u32 state, unsigned long entry_point)
-{
-	return __psci_cpu_suspend(psci_0_1_function_ids.cpu_suspend,
-				  state, entry_point);
-}
+अटल पूर्णांक psci_0_1_cpu_suspend(u32 state, अचिन्हित दीर्घ entry_poपूर्णांक)
+अणु
+	वापस __psci_cpu_suspend(psci_0_1_function_ids.cpu_suspend,
+				  state, entry_poपूर्णांक);
+पूर्ण
 
-static int psci_0_2_cpu_suspend(u32 state, unsigned long entry_point)
-{
-	return __psci_cpu_suspend(PSCI_FN_NATIVE(0_2, CPU_SUSPEND),
-				  state, entry_point);
-}
+अटल पूर्णांक psci_0_2_cpu_suspend(u32 state, अचिन्हित दीर्घ entry_poपूर्णांक)
+अणु
+	वापस __psci_cpu_suspend(PSCI_FN_NATIVE(0_2, CPU_SUSPEND),
+				  state, entry_poपूर्णांक);
+पूर्ण
 
-static int __psci_cpu_off(u32 fn, u32 state)
-{
-	int err;
+अटल पूर्णांक __psci_cpu_off(u32 fn, u32 state)
+अणु
+	पूर्णांक err;
 
 	err = invoke_psci_fn(fn, state, 0, 0);
-	return psci_to_linux_errno(err);
-}
+	वापस psci_to_linux_त्रुटि_सं(err);
+पूर्ण
 
-static int psci_0_1_cpu_off(u32 state)
-{
-	return __psci_cpu_off(psci_0_1_function_ids.cpu_off, state);
-}
+अटल पूर्णांक psci_0_1_cpu_off(u32 state)
+अणु
+	वापस __psci_cpu_off(psci_0_1_function_ids.cpu_off, state);
+पूर्ण
 
-static int psci_0_2_cpu_off(u32 state)
-{
-	return __psci_cpu_off(PSCI_0_2_FN_CPU_OFF, state);
-}
+अटल पूर्णांक psci_0_2_cpu_off(u32 state)
+अणु
+	वापस __psci_cpu_off(PSCI_0_2_FN_CPU_OFF, state);
+पूर्ण
 
-static int __psci_cpu_on(u32 fn, unsigned long cpuid, unsigned long entry_point)
-{
-	int err;
+अटल पूर्णांक __psci_cpu_on(u32 fn, अचिन्हित दीर्घ cpuid, अचिन्हित दीर्घ entry_poपूर्णांक)
+अणु
+	पूर्णांक err;
 
-	err = invoke_psci_fn(fn, cpuid, entry_point, 0);
-	return psci_to_linux_errno(err);
-}
+	err = invoke_psci_fn(fn, cpuid, entry_poपूर्णांक, 0);
+	वापस psci_to_linux_त्रुटि_सं(err);
+पूर्ण
 
-static int psci_0_1_cpu_on(unsigned long cpuid, unsigned long entry_point)
-{
-	return __psci_cpu_on(psci_0_1_function_ids.cpu_on, cpuid, entry_point);
-}
+अटल पूर्णांक psci_0_1_cpu_on(अचिन्हित दीर्घ cpuid, अचिन्हित दीर्घ entry_poपूर्णांक)
+अणु
+	वापस __psci_cpu_on(psci_0_1_function_ids.cpu_on, cpuid, entry_poपूर्णांक);
+पूर्ण
 
-static int psci_0_2_cpu_on(unsigned long cpuid, unsigned long entry_point)
-{
-	return __psci_cpu_on(PSCI_FN_NATIVE(0_2, CPU_ON), cpuid, entry_point);
-}
+अटल पूर्णांक psci_0_2_cpu_on(अचिन्हित दीर्घ cpuid, अचिन्हित दीर्घ entry_poपूर्णांक)
+अणु
+	वापस __psci_cpu_on(PSCI_FN_NATIVE(0_2, CPU_ON), cpuid, entry_poपूर्णांक);
+पूर्ण
 
-static int __psci_migrate(u32 fn, unsigned long cpuid)
-{
-	int err;
+अटल पूर्णांक __psci_migrate(u32 fn, अचिन्हित दीर्घ cpuid)
+अणु
+	पूर्णांक err;
 
 	err = invoke_psci_fn(fn, cpuid, 0, 0);
-	return psci_to_linux_errno(err);
-}
+	वापस psci_to_linux_त्रुटि_सं(err);
+पूर्ण
 
-static int psci_0_1_migrate(unsigned long cpuid)
-{
-	return __psci_migrate(psci_0_1_function_ids.migrate, cpuid);
-}
+अटल पूर्णांक psci_0_1_migrate(अचिन्हित दीर्घ cpuid)
+अणु
+	वापस __psci_migrate(psci_0_1_function_ids.migrate, cpuid);
+पूर्ण
 
-static int psci_0_2_migrate(unsigned long cpuid)
-{
-	return __psci_migrate(PSCI_FN_NATIVE(0_2, MIGRATE), cpuid);
-}
+अटल पूर्णांक psci_0_2_migrate(अचिन्हित दीर्घ cpuid)
+अणु
+	वापस __psci_migrate(PSCI_FN_NATIVE(0_2, MIGRATE), cpuid);
+पूर्ण
 
-static int psci_affinity_info(unsigned long target_affinity,
-		unsigned long lowest_affinity_level)
-{
-	return invoke_psci_fn(PSCI_FN_NATIVE(0_2, AFFINITY_INFO),
+अटल पूर्णांक psci_affinity_info(अचिन्हित दीर्घ target_affinity,
+		अचिन्हित दीर्घ lowest_affinity_level)
+अणु
+	वापस invoke_psci_fn(PSCI_FN_NATIVE(0_2, AFFINITY_INFO),
 			      target_affinity, lowest_affinity_level, 0);
-}
+पूर्ण
 
-static int psci_migrate_info_type(void)
-{
-	return invoke_psci_fn(PSCI_0_2_FN_MIGRATE_INFO_TYPE, 0, 0, 0);
-}
+अटल पूर्णांक psci_migrate_info_type(व्योम)
+अणु
+	वापस invoke_psci_fn(PSCI_0_2_FN_MIGRATE_INFO_TYPE, 0, 0, 0);
+पूर्ण
 
-static unsigned long psci_migrate_info_up_cpu(void)
-{
-	return invoke_psci_fn(PSCI_FN_NATIVE(0_2, MIGRATE_INFO_UP_CPU),
+अटल अचिन्हित दीर्घ psci_migrate_info_up_cpu(व्योम)
+अणु
+	वापस invoke_psci_fn(PSCI_FN_NATIVE(0_2, MIGRATE_INFO_UP_CPU),
 			      0, 0, 0);
-}
+पूर्ण
 
-static void set_conduit(enum arm_smccc_conduit conduit)
-{
-	switch (conduit) {
-	case SMCCC_CONDUIT_HVC:
+अटल व्योम set_conduit(क्रमागत arm_smccc_conduit conduit)
+अणु
+	चयन (conduit) अणु
+	हाल SMCCC_CONDUIT_HVC:
 		invoke_psci_fn = __invoke_psci_fn_hvc;
-		break;
-	case SMCCC_CONDUIT_SMC:
+		अवरोध;
+	हाल SMCCC_CONDUIT_SMC:
 		invoke_psci_fn = __invoke_psci_fn_smc;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN(1, "Unexpected PSCI conduit %d\n", conduit);
-	}
+	पूर्ण
 
 	psci_conduit = conduit;
-}
+पूर्ण
 
-static int get_set_conduit_method(struct device_node *np)
-{
-	const char *method;
+अटल पूर्णांक get_set_conduit_method(काष्ठा device_node *np)
+अणु
+	स्थिर अक्षर *method;
 
 	pr_info("probing for conduit method from DT.\n");
 
-	if (of_property_read_string(np, "method", &method)) {
+	अगर (of_property_पढ़ो_string(np, "method", &method)) अणु
 		pr_warn("missing \"method\" property\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (!strcmp("hvc", method)) {
+	अगर (!म_भेद("hvc", method)) अणु
 		set_conduit(SMCCC_CONDUIT_HVC);
-	} else if (!strcmp("smc", method)) {
+	पूर्ण अन्यथा अगर (!म_भेद("smc", method)) अणु
 		set_conduit(SMCCC_CONDUIT_SMC);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_warn("invalid \"method\" property: %s\n", method);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void psci_sys_reset(enum reboot_mode reboot_mode, const char *cmd)
-{
-	if ((reboot_mode == REBOOT_WARM || reboot_mode == REBOOT_SOFT) &&
-	    psci_system_reset2_supported) {
+अटल व्योम psci_sys_reset(क्रमागत reboot_mode reboot_mode, स्थिर अक्षर *cmd)
+अणु
+	अगर ((reboot_mode == REBOOT_WARM || reboot_mode == REBOOT_SOFT) &&
+	    psci_प्रणाली_reset2_supported) अणु
 		/*
 		 * reset_type[31] = 0 (architectural)
 		 * reset_type[30:0] = 0 (SYSTEM_WARM_RESET)
 		 * cookie = 0 (ignored by the implementation)
 		 */
 		invoke_psci_fn(PSCI_FN_NATIVE(1_1, SYSTEM_RESET2), 0, 0, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		invoke_psci_fn(PSCI_0_2_FN_SYSTEM_RESET, 0, 0, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void psci_sys_poweroff(void)
-{
+अटल व्योम psci_sys_घातeroff(व्योम)
+अणु
 	invoke_psci_fn(PSCI_0_2_FN_SYSTEM_OFF, 0, 0, 0);
-}
+पूर्ण
 
-static int __init psci_features(u32 psci_func_id)
-{
-	return invoke_psci_fn(PSCI_1_0_FN_PSCI_FEATURES,
+अटल पूर्णांक __init psci_features(u32 psci_func_id)
+अणु
+	वापस invoke_psci_fn(PSCI_1_0_FN_PSCI_FEATURES,
 			      psci_func_id, 0, 0);
-}
+पूर्ण
 
-#ifdef CONFIG_CPU_IDLE
-static int psci_suspend_finisher(unsigned long state)
-{
-	u32 power_state = state;
+#अगर_घोषित CONFIG_CPU_IDLE
+अटल पूर्णांक psci_suspend_finisher(अचिन्हित दीर्घ state)
+अणु
+	u32 घातer_state = state;
 	phys_addr_t pa_cpu_resume = __pa_symbol(function_nocfi(cpu_resume));
 
-	return psci_ops.cpu_suspend(power_state, pa_cpu_resume);
-}
+	वापस psci_ops.cpu_suspend(घातer_state, pa_cpu_resume);
+पूर्ण
 
-int psci_cpu_suspend_enter(u32 state)
-{
-	int ret;
+पूर्णांक psci_cpu_suspend_enter(u32 state)
+अणु
+	पूर्णांक ret;
 
-	if (!psci_power_state_loses_context(state))
+	अगर (!psci_घातer_state_loses_context(state))
 		ret = psci_ops.cpu_suspend(state, 0);
-	else
+	अन्यथा
 		ret = cpu_suspend(state, psci_suspend_finisher);
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static int psci_system_suspend(unsigned long unused)
-{
+अटल पूर्णांक psci_प्रणाली_suspend(अचिन्हित दीर्घ unused)
+अणु
 	phys_addr_t pa_cpu_resume = __pa_symbol(function_nocfi(cpu_resume));
 
-	return invoke_psci_fn(PSCI_FN_NATIVE(1_0, SYSTEM_SUSPEND),
+	वापस invoke_psci_fn(PSCI_FN_NATIVE(1_0, SYSTEM_SUSPEND),
 			      pa_cpu_resume, 0, 0);
-}
+पूर्ण
 
-static int psci_system_suspend_enter(suspend_state_t state)
-{
-	return cpu_suspend(0, psci_system_suspend);
-}
+अटल पूर्णांक psci_प्रणाली_suspend_enter(suspend_state_t state)
+अणु
+	वापस cpu_suspend(0, psci_प्रणाली_suspend);
+पूर्ण
 
-static const struct platform_suspend_ops psci_suspend_ops = {
+अटल स्थिर काष्ठा platक्रमm_suspend_ops psci_suspend_ops = अणु
 	.valid          = suspend_valid_only_mem,
-	.enter          = psci_system_suspend_enter,
-};
+	.enter          = psci_प्रणाली_suspend_enter,
+पूर्ण;
 
-static void __init psci_init_system_reset2(void)
-{
-	int ret;
+अटल व्योम __init psci_init_प्रणाली_reset2(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = psci_features(PSCI_FN_NATIVE(1_1, SYSTEM_RESET2));
 
-	if (ret != PSCI_RET_NOT_SUPPORTED)
-		psci_system_reset2_supported = true;
-}
+	अगर (ret != PSCI_RET_NOT_SUPPORTED)
+		psci_प्रणाली_reset2_supported = true;
+पूर्ण
 
-static void __init psci_init_system_suspend(void)
-{
-	int ret;
+अटल व्योम __init psci_init_प्रणाली_suspend(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!IS_ENABLED(CONFIG_SUSPEND))
-		return;
+	अगर (!IS_ENABLED(CONFIG_SUSPEND))
+		वापस;
 
 	ret = psci_features(PSCI_FN_NATIVE(1_0, SYSTEM_SUSPEND));
 
-	if (ret != PSCI_RET_NOT_SUPPORTED)
+	अगर (ret != PSCI_RET_NOT_SUPPORTED)
 		suspend_set_ops(&psci_suspend_ops);
-}
+पूर्ण
 
-static void __init psci_init_cpu_suspend(void)
-{
-	int feature = psci_features(PSCI_FN_NATIVE(0_2, CPU_SUSPEND));
+अटल व्योम __init psci_init_cpu_suspend(व्योम)
+अणु
+	पूर्णांक feature = psci_features(PSCI_FN_NATIVE(0_2, CPU_SUSPEND));
 
-	if (feature != PSCI_RET_NOT_SUPPORTED)
+	अगर (feature != PSCI_RET_NOT_SUPPORTED)
 		psci_cpu_suspend_feature = feature;
-}
+पूर्ण
 
 /*
  * Detect the presence of a resident Trusted OS which may cause CPU_OFF to
- * return DENIED (which would be fatal).
+ * वापस DENIED (which would be fatal).
  */
-static void __init psci_init_migrate(void)
-{
-	unsigned long cpuid;
-	int type, cpu = -1;
+अटल व्योम __init psci_init_migrate(व्योम)
+अणु
+	अचिन्हित दीर्घ cpuid;
+	पूर्णांक type, cpu = -1;
 
 	type = psci_ops.migrate_info_type();
 
-	if (type == PSCI_0_2_TOS_MP) {
+	अगर (type == PSCI_0_2_TOS_MP) अणु
 		pr_info("Trusted OS migration not required\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (type == PSCI_RET_NOT_SUPPORTED) {
+	अगर (type == PSCI_RET_NOT_SUPPORTED) अणु
 		pr_info("MIGRATE_INFO_TYPE not supported.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (type != PSCI_0_2_TOS_UP_MIGRATE &&
-	    type != PSCI_0_2_TOS_UP_NO_MIGRATE) {
+	अगर (type != PSCI_0_2_TOS_UP_MIGRATE &&
+	    type != PSCI_0_2_TOS_UP_NO_MIGRATE) अणु
 		pr_err("MIGRATE_INFO_TYPE returned unknown type (%d)\n", type);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cpuid = psci_migrate_info_up_cpu();
-	if (cpuid & ~MPIDR_HWID_BITMASK) {
+	अगर (cpuid & ~MPIDR_HWID_BITMASK) अणु
 		pr_warn("MIGRATE_INFO_UP_CPU reported invalid physical ID (0x%lx)\n",
 			cpuid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cpu = get_logical_index(cpuid);
 	resident_cpu = cpu >= 0 ? cpu : -1;
 
 	pr_info("Trusted OS resident on physical CPU 0x%lx\n", cpuid);
-}
+पूर्ण
 
-static void __init psci_init_smccc(void)
-{
+अटल व्योम __init psci_init_smccc(व्योम)
+अणु
 	u32 ver = ARM_SMCCC_VERSION_1_0;
-	int feature;
+	पूर्णांक feature;
 
 	feature = psci_features(ARM_SMCCC_VERSION_FUNC_ID);
 
-	if (feature != PSCI_RET_NOT_SUPPORTED) {
+	अगर (feature != PSCI_RET_NOT_SUPPORTED) अणु
 		u32 ret;
 		ret = invoke_psci_fn(ARM_SMCCC_VERSION_FUNC_ID, 0, 0, 0);
-		if (ret >= ARM_SMCCC_VERSION_1_1) {
+		अगर (ret >= ARM_SMCCC_VERSION_1_1) अणु
 			arm_smccc_version_init(ret, psci_conduit);
 			ver = ret;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Conveniently, the SMCCC and PSCI versions are encoded the
@@ -456,13 +457,13 @@ static void __init psci_init_smccc(void)
 	pr_info("SMC Calling Convention v%d.%d\n",
 		PSCI_VERSION_MAJOR(ver), PSCI_VERSION_MINOR(ver));
 
-}
+पूर्ण
 
-static void __init psci_0_2_set_functions(void)
-{
+अटल व्योम __init psci_0_2_set_functions(व्योम)
+अणु
 	pr_info("Using standard PSCI v0.2 function IDs\n");
 
-	psci_ops = (struct psci_operations){
+	psci_ops = (काष्ठा psci_operations)अणु
 		.get_version = psci_0_2_get_version,
 		.cpu_suspend = psci_0_2_cpu_suspend,
 		.cpu_off = psci_0_2_cpu_off,
@@ -470,171 +471,171 @@ static void __init psci_0_2_set_functions(void)
 		.migrate = psci_0_2_migrate,
 		.affinity_info = psci_affinity_info,
 		.migrate_info_type = psci_migrate_info_type,
-	};
+	पूर्ण;
 
 	arm_pm_restart = psci_sys_reset;
 
-	pm_power_off = psci_sys_poweroff;
-}
+	pm_घातer_off = psci_sys_घातeroff;
+पूर्ण
 
 /*
- * Probe function for PSCI firmware versions >= 0.2
+ * Probe function क्रम PSCI firmware versions >= 0.2
  */
-static int __init psci_probe(void)
-{
+अटल पूर्णांक __init psci_probe(व्योम)
+अणु
 	u32 ver = psci_0_2_get_version();
 
 	pr_info("PSCIv%d.%d detected in firmware.\n",
 			PSCI_VERSION_MAJOR(ver),
 			PSCI_VERSION_MINOR(ver));
 
-	if (PSCI_VERSION_MAJOR(ver) == 0 && PSCI_VERSION_MINOR(ver) < 2) {
+	अगर (PSCI_VERSION_MAJOR(ver) == 0 && PSCI_VERSION_MINOR(ver) < 2) अणु
 		pr_err("Conflicting PSCI version detected.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	psci_0_2_set_functions();
 
 	psci_init_migrate();
 
-	if (PSCI_VERSION_MAJOR(ver) >= 1) {
+	अगर (PSCI_VERSION_MAJOR(ver) >= 1) अणु
 		psci_init_smccc();
 		psci_init_cpu_suspend();
-		psci_init_system_suspend();
-		psci_init_system_reset2();
+		psci_init_प्रणाली_suspend();
+		psci_init_प्रणाली_reset2();
 		kvm_init_hyp_services();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-typedef int (*psci_initcall_t)(const struct device_node *);
+प्रकार पूर्णांक (*psci_initcall_t)(स्थिर काष्ठा device_node *);
 
 /*
- * PSCI init function for PSCI versions >=0.2
+ * PSCI init function क्रम PSCI versions >=0.2
  *
  * Probe based on PSCI PSCI_VERSION function
  */
-static int __init psci_0_2_init(struct device_node *np)
-{
-	int err;
+अटल पूर्णांक __init psci_0_2_init(काष्ठा device_node *np)
+अणु
+	पूर्णांक err;
 
 	err = get_set_conduit_method(np);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/*
-	 * Starting with v0.2, the PSCI specification introduced a call
+	 * Starting with v0.2, the PSCI specअगरication पूर्णांकroduced a call
 	 * (PSCI_VERSION) that allows probing the firmware version, so
-	 * that PSCI function IDs and version specific initialization
-	 * can be carried out according to the specific version reported
+	 * that PSCI function IDs and version specअगरic initialization
+	 * can be carried out according to the specअगरic version reported
 	 * by firmware
 	 */
-	return psci_probe();
-}
+	वापस psci_probe();
+पूर्ण
 
 /*
  * PSCI < v0.2 get PSCI Function IDs via DT.
  */
-static int __init psci_0_1_init(struct device_node *np)
-{
+अटल पूर्णांक __init psci_0_1_init(काष्ठा device_node *np)
+अणु
 	u32 id;
-	int err;
+	पूर्णांक err;
 
 	err = get_set_conduit_method(np);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	pr_info("Using PSCI v0.1 Function IDs from DT\n");
 
 	psci_ops.get_version = psci_0_1_get_version;
 
-	if (!of_property_read_u32(np, "cpu_suspend", &id)) {
+	अगर (!of_property_पढ़ो_u32(np, "cpu_suspend", &id)) अणु
 		psci_0_1_function_ids.cpu_suspend = id;
 		psci_ops.cpu_suspend = psci_0_1_cpu_suspend;
-	}
+	पूर्ण
 
-	if (!of_property_read_u32(np, "cpu_off", &id)) {
+	अगर (!of_property_पढ़ो_u32(np, "cpu_off", &id)) अणु
 		psci_0_1_function_ids.cpu_off = id;
 		psci_ops.cpu_off = psci_0_1_cpu_off;
-	}
+	पूर्ण
 
-	if (!of_property_read_u32(np, "cpu_on", &id)) {
+	अगर (!of_property_पढ़ो_u32(np, "cpu_on", &id)) अणु
 		psci_0_1_function_ids.cpu_on = id;
 		psci_ops.cpu_on = psci_0_1_cpu_on;
-	}
+	पूर्ण
 
-	if (!of_property_read_u32(np, "migrate", &id)) {
+	अगर (!of_property_पढ़ो_u32(np, "migrate", &id)) अणु
 		psci_0_1_function_ids.migrate = id;
 		psci_ops.migrate = psci_0_1_migrate;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init psci_1_0_init(struct device_node *np)
-{
-	int err;
+अटल पूर्णांक __init psci_1_0_init(काष्ठा device_node *np)
+अणु
+	पूर्णांक err;
 
 	err = psci_0_2_init(np);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (psci_has_osi_support()) {
+	अगर (psci_has_osi_support()) अणु
 		pr_info("OSI mode supported.\n");
 
 		/* Default to PC mode. */
 		psci_set_osi_mode(false);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id psci_of_match[] __initconst = {
-	{ .compatible = "arm,psci",	.data = psci_0_1_init},
-	{ .compatible = "arm,psci-0.2",	.data = psci_0_2_init},
-	{ .compatible = "arm,psci-1.0",	.data = psci_1_0_init},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id psci_of_match[] __initस्थिर = अणु
+	अणु .compatible = "arm,psci",	.data = psci_0_1_initपूर्ण,
+	अणु .compatible = "arm,psci-0.2",	.data = psci_0_2_initपूर्ण,
+	अणु .compatible = "arm,psci-1.0",	.data = psci_1_0_initपूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-int __init psci_dt_init(void)
-{
-	struct device_node *np;
-	const struct of_device_id *matched_np;
+पूर्णांक __init psci_dt_init(व्योम)
+अणु
+	काष्ठा device_node *np;
+	स्थिर काष्ठा of_device_id *matched_np;
 	psci_initcall_t init_fn;
-	int ret;
+	पूर्णांक ret;
 
-	np = of_find_matching_node_and_match(NULL, psci_of_match, &matched_np);
+	np = of_find_matching_node_and_match(शून्य, psci_of_match, &matched_np);
 
-	if (!np || !of_device_is_available(np))
-		return -ENODEV;
+	अगर (!np || !of_device_is_available(np))
+		वापस -ENODEV;
 
 	init_fn = (psci_initcall_t)matched_np->data;
 	ret = init_fn(np);
 
 	of_node_put(np);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_ACPI
+#अगर_घोषित CONFIG_ACPI
 /*
  * We use PSCI 0.2+ when ACPI is deployed on ARM64 and it's
- * explicitly clarified in SBBR
+ * explicitly clarअगरied in SBBR
  */
-int __init psci_acpi_init(void)
-{
-	if (!acpi_psci_present()) {
+पूर्णांक __init psci_acpi_init(व्योम)
+अणु
+	अगर (!acpi_psci_present()) अणु
 		pr_info("is not implemented in ACPI.\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	pr_info("probing for conduit method from ACPI.\n");
 
-	if (acpi_psci_use_hvc())
+	अगर (acpi_psci_use_hvc())
 		set_conduit(SMCCC_CONDUIT_HVC);
-	else
+	अन्यथा
 		set_conduit(SMCCC_CONDUIT_SMC);
 
-	return psci_probe();
-}
-#endif
+	वापस psci_probe();
+पूर्ण
+#पूर्ण_अगर

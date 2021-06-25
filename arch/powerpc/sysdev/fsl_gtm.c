@@ -1,434 +1,435 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Freescale General-purpose Timers Module
  *
  * Copyright (c) Freescale Semiconductor, Inc. 2006.
- *               Shlomi Gridish <gridish@freescale.com>
- *               Jerry Huang <Chang-Ming.Huang@freescale.com>
+ *               Shlomi Gridish <gridish@मुक्तscale.com>
+ *               Jerry Huang <Chang-Ming.Huang@मुक्तscale.com>
  * Copyright (c) MontaVista Software, Inc. 2008.
  *               Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/list.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/spinlock.h>
-#include <linux/bitops.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <asm/fsl_gtm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/list.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <यंत्र/fsl_gपंचांग.h>
 
-#define GTCFR_STP(x)		((x) & 1 ? 1 << 5 : 1 << 1)
-#define GTCFR_RST(x)		((x) & 1 ? 1 << 4 : 1 << 0)
+#घोषणा GTCFR_STP(x)		((x) & 1 ? 1 << 5 : 1 << 1)
+#घोषणा GTCFR_RST(x)		((x) & 1 ? 1 << 4 : 1 << 0)
 
-#define GTMDR_ICLK_MASK		(3 << 1)
-#define GTMDR_ICLK_ICAS		(0 << 1)
-#define GTMDR_ICLK_ICLK		(1 << 1)
-#define GTMDR_ICLK_SLGO		(2 << 1)
-#define GTMDR_FRR		(1 << 3)
-#define GTMDR_ORI		(1 << 4)
-#define GTMDR_SPS(x)		((x) << 8)
+#घोषणा GTMDR_ICLK_MASK		(3 << 1)
+#घोषणा GTMDR_ICLK_ICAS		(0 << 1)
+#घोषणा GTMDR_ICLK_ICLK		(1 << 1)
+#घोषणा GTMDR_ICLK_SLGO		(2 << 1)
+#घोषणा GTMDR_FRR		(1 << 3)
+#घोषणा GTMDR_ORI		(1 << 4)
+#घोषणा GTMDR_SPS(x)		((x) << 8)
 
-struct gtm_timers_regs {
-	u8	gtcfr1;		/* Timer 1, Timer 2 global config register */
+काष्ठा gपंचांग_समयrs_regs अणु
+	u8	gtcfr1;		/* Timer 1, Timer 2 global config रेजिस्टर */
 	u8	res0[0x3];
-	u8	gtcfr2;		/* Timer 3, timer 4 global config register */
+	u8	gtcfr2;		/* Timer 3, समयr 4 global config रेजिस्टर */
 	u8	res1[0xB];
-	__be16	gtmdr1;		/* Timer 1 mode register */
-	__be16	gtmdr2;		/* Timer 2 mode register */
-	__be16	gtrfr1;		/* Timer 1 reference register */
-	__be16	gtrfr2;		/* Timer 2 reference register */
-	__be16	gtcpr1;		/* Timer 1 capture register */
-	__be16	gtcpr2;		/* Timer 2 capture register */
+	__be16	gपंचांगdr1;		/* Timer 1 mode रेजिस्टर */
+	__be16	gपंचांगdr2;		/* Timer 2 mode रेजिस्टर */
+	__be16	gtrfr1;		/* Timer 1 reference रेजिस्टर */
+	__be16	gtrfr2;		/* Timer 2 reference रेजिस्टर */
+	__be16	gtcpr1;		/* Timer 1 capture रेजिस्टर */
+	__be16	gtcpr2;		/* Timer 2 capture रेजिस्टर */
 	__be16	gtcnr1;		/* Timer 1 counter */
 	__be16	gtcnr2;		/* Timer 2 counter */
-	__be16	gtmdr3;		/* Timer 3 mode register */
-	__be16	gtmdr4;		/* Timer 4 mode register */
-	__be16	gtrfr3;		/* Timer 3 reference register */
-	__be16	gtrfr4;		/* Timer 4 reference register */
-	__be16	gtcpr3;		/* Timer 3 capture register */
-	__be16	gtcpr4;		/* Timer 4 capture register */
+	__be16	gपंचांगdr3;		/* Timer 3 mode रेजिस्टर */
+	__be16	gपंचांगdr4;		/* Timer 4 mode रेजिस्टर */
+	__be16	gtrfr3;		/* Timer 3 reference रेजिस्टर */
+	__be16	gtrfr4;		/* Timer 4 reference रेजिस्टर */
+	__be16	gtcpr3;		/* Timer 3 capture रेजिस्टर */
+	__be16	gtcpr4;		/* Timer 4 capture रेजिस्टर */
 	__be16	gtcnr3;		/* Timer 3 counter */
 	__be16	gtcnr4;		/* Timer 4 counter */
-	__be16	gtevr1;		/* Timer 1 event register */
-	__be16	gtevr2;		/* Timer 2 event register */
-	__be16	gtevr3;		/* Timer 3 event register */
-	__be16	gtevr4;		/* Timer 4 event register */
-	__be16	gtpsr1;		/* Timer 1 prescale register */
-	__be16	gtpsr2;		/* Timer 2 prescale register */
-	__be16	gtpsr3;		/* Timer 3 prescale register */
-	__be16	gtpsr4;		/* Timer 4 prescale register */
+	__be16	gtevr1;		/* Timer 1 event रेजिस्टर */
+	__be16	gtevr2;		/* Timer 2 event रेजिस्टर */
+	__be16	gtevr3;		/* Timer 3 event रेजिस्टर */
+	__be16	gtevr4;		/* Timer 4 event रेजिस्टर */
+	__be16	gtpsr1;		/* Timer 1 prescale रेजिस्टर */
+	__be16	gtpsr2;		/* Timer 2 prescale रेजिस्टर */
+	__be16	gtpsr3;		/* Timer 3 prescale रेजिस्टर */
+	__be16	gtpsr4;		/* Timer 4 prescale रेजिस्टर */
 	u8 res2[0x40];
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
-struct gtm {
-	unsigned int clock;
-	struct gtm_timers_regs __iomem *regs;
-	struct gtm_timer timers[4];
+काष्ठा gपंचांग अणु
+	अचिन्हित पूर्णांक घड़ी;
+	काष्ठा gपंचांग_समयrs_regs __iomem *regs;
+	काष्ठा gपंचांग_समयr समयrs[4];
 	spinlock_t lock;
-	struct list_head list_node;
-};
+	काष्ठा list_head list_node;
+पूर्ण;
 
-static LIST_HEAD(gtms);
-
-/**
- * gtm_get_timer - request GTM timer to use it with the rest of GTM API
- * Context:	non-IRQ
- *
- * This function reserves GTM timer for later use. It returns gtm_timer
- * structure to use with the rest of GTM API, you should use timer->irq
- * to manage timer interrupt.
- */
-struct gtm_timer *gtm_get_timer16(void)
-{
-	struct gtm *gtm = NULL;
-	int i;
-
-	list_for_each_entry(gtm, &gtms, list_node) {
-		spin_lock_irq(&gtm->lock);
-
-		for (i = 0; i < ARRAY_SIZE(gtm->timers); i++) {
-			if (!gtm->timers[i].requested) {
-				gtm->timers[i].requested = true;
-				spin_unlock_irq(&gtm->lock);
-				return &gtm->timers[i];
-			}
-		}
-
-		spin_unlock_irq(&gtm->lock);
-	}
-
-	if (gtm)
-		return ERR_PTR(-EBUSY);
-	return ERR_PTR(-ENODEV);
-}
-EXPORT_SYMBOL(gtm_get_timer16);
+अटल LIST_HEAD(gपंचांगs);
 
 /**
- * gtm_get_specific_timer - request specific GTM timer
- * @gtm:	specific GTM, pass here GTM's device_node->data
- * @timer:	specific timer number, Timer1 is 0.
+ * gपंचांग_get_समयr - request GTM समयr to use it with the rest of GTM API
  * Context:	non-IRQ
  *
- * This function reserves GTM timer for later use. It returns gtm_timer
- * structure to use with the rest of GTM API, you should use timer->irq
- * to manage timer interrupt.
+ * This function reserves GTM समयr क्रम later use. It वापसs gपंचांग_समयr
+ * काष्ठाure to use with the rest of GTM API, you should use समयr->irq
+ * to manage समयr पूर्णांकerrupt.
  */
-struct gtm_timer *gtm_get_specific_timer16(struct gtm *gtm,
-					   unsigned int timer)
-{
-	struct gtm_timer *ret = ERR_PTR(-EBUSY);
+काष्ठा gपंचांग_समयr *gपंचांग_get_समयr16(व्योम)
+अणु
+	काष्ठा gपंचांग *gपंचांग = शून्य;
+	पूर्णांक i;
 
-	if (timer > 3)
-		return ERR_PTR(-EINVAL);
+	list_क्रम_each_entry(gपंचांग, &gपंचांगs, list_node) अणु
+		spin_lock_irq(&gपंचांग->lock);
 
-	spin_lock_irq(&gtm->lock);
+		क्रम (i = 0; i < ARRAY_SIZE(gपंचांग->समयrs); i++) अणु
+			अगर (!gपंचांग->समयrs[i].requested) अणु
+				gपंचांग->समयrs[i].requested = true;
+				spin_unlock_irq(&gपंचांग->lock);
+				वापस &gपंचांग->समयrs[i];
+			पूर्ण
+		पूर्ण
 
-	if (gtm->timers[timer].requested)
-		goto out;
+		spin_unlock_irq(&gपंचांग->lock);
+	पूर्ण
 
-	ret = &gtm->timers[timer];
+	अगर (gपंचांग)
+		वापस ERR_PTR(-EBUSY);
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
+EXPORT_SYMBOL(gपंचांग_get_समयr16);
+
+/**
+ * gपंचांग_get_specअगरic_समयr - request specअगरic GTM समयr
+ * @gपंचांग:	specअगरic GTM, pass here GTM's device_node->data
+ * @समयr:	specअगरic समयr number, Timer1 is 0.
+ * Context:	non-IRQ
+ *
+ * This function reserves GTM समयr क्रम later use. It वापसs gपंचांग_समयr
+ * काष्ठाure to use with the rest of GTM API, you should use समयr->irq
+ * to manage समयr पूर्णांकerrupt.
+ */
+काष्ठा gपंचांग_समयr *gपंचांग_get_specअगरic_समयr16(काष्ठा gपंचांग *gपंचांग,
+					   अचिन्हित पूर्णांक समयr)
+अणु
+	काष्ठा gपंचांग_समयr *ret = ERR_PTR(-EBUSY);
+
+	अगर (समयr > 3)
+		वापस ERR_PTR(-EINVAL);
+
+	spin_lock_irq(&gपंचांग->lock);
+
+	अगर (gपंचांग->समयrs[समयr].requested)
+		जाओ out;
+
+	ret = &gपंचांग->समयrs[समयr];
 	ret->requested = true;
 
 out:
-	spin_unlock_irq(&gtm->lock);
-	return ret;
-}
-EXPORT_SYMBOL(gtm_get_specific_timer16);
+	spin_unlock_irq(&gपंचांग->lock);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(gपंचांग_get_specअगरic_समयr16);
 
 /**
- * gtm_put_timer16 - release 16 bits GTM timer
- * @tmr:	pointer to the gtm_timer structure obtained from gtm_get_timer
+ * gपंचांग_put_समयr16 - release 16 bits GTM समयr
+ * @पंचांगr:	poपूर्णांकer to the gपंचांग_समयr काष्ठाure obtained from gपंचांग_get_समयr
  * Context:	any
  *
- * This function releases GTM timer so others may request it.
+ * This function releases GTM समयr so others may request it.
  */
-void gtm_put_timer16(struct gtm_timer *tmr)
-{
-	gtm_stop_timer16(tmr);
+व्योम gपंचांग_put_समयr16(काष्ठा gपंचांग_समयr *पंचांगr)
+अणु
+	gपंचांग_stop_समयr16(पंचांगr);
 
-	spin_lock_irq(&tmr->gtm->lock);
-	tmr->requested = false;
-	spin_unlock_irq(&tmr->gtm->lock);
-}
-EXPORT_SYMBOL(gtm_put_timer16);
+	spin_lock_irq(&पंचांगr->gपंचांग->lock);
+	पंचांगr->requested = false;
+	spin_unlock_irq(&पंचांगr->gपंचांग->lock);
+पूर्ण
+EXPORT_SYMBOL(gपंचांग_put_समयr16);
 
 /*
- * This is back-end for the exported functions, it's used to reset single
- * timer in reference mode.
+ * This is back-end क्रम the exported functions, it's used to reset single
+ * समयr in reference mode.
  */
-static int gtm_set_ref_timer16(struct gtm_timer *tmr, int frequency,
-			       int reference_value, bool free_run)
-{
-	struct gtm *gtm = tmr->gtm;
-	int num = tmr - &gtm->timers[0];
-	unsigned int prescaler;
+अटल पूर्णांक gपंचांग_set_ref_समयr16(काष्ठा gपंचांग_समयr *पंचांगr, पूर्णांक frequency,
+			       पूर्णांक reference_value, bool मुक्त_run)
+अणु
+	काष्ठा gपंचांग *gपंचांग = पंचांगr->gपंचांग;
+	पूर्णांक num = पंचांगr - &gपंचांग->समयrs[0];
+	अचिन्हित पूर्णांक prescaler;
 	u8 iclk = GTMDR_ICLK_ICLK;
 	u8 psr;
 	u8 sps;
-	unsigned long flags;
-	int max_prescaler = 256 * 256 * 16;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक max_prescaler = 256 * 256 * 16;
 
-	/* CPM2 doesn't have primary prescaler */
-	if (!tmr->gtpsr)
+	/* CPM2 करोesn't have primary prescaler */
+	अगर (!पंचांगr->gtpsr)
 		max_prescaler /= 256;
 
-	prescaler = gtm->clock / frequency;
+	prescaler = gपंचांग->घड़ी / frequency;
 	/*
 	 * We have two 8 bit prescalers -- primary and secondary (psr, sps),
 	 * plus "slow go" mode (clk / 16). So, total prescale value is
-	 * 16 * (psr + 1) * (sps + 1). Though, for CPM2 GTMs we losing psr.
+	 * 16 * (psr + 1) * (sps + 1). Though, क्रम CPM2 GTMs we losing psr.
 	 */
-	if (prescaler > max_prescaler)
-		return -EINVAL;
+	अगर (prescaler > max_prescaler)
+		वापस -EINVAL;
 
-	if (prescaler > max_prescaler / 16) {
+	अगर (prescaler > max_prescaler / 16) अणु
 		iclk = GTMDR_ICLK_SLGO;
 		prescaler /= 16;
-	}
+	पूर्ण
 
-	if (prescaler <= 256) {
+	अगर (prescaler <= 256) अणु
 		psr = 0;
 		sps = prescaler - 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		psr = 256 - 1;
 		sps = prescaler / 256 - 1;
-	}
+	पूर्ण
 
-	spin_lock_irqsave(&gtm->lock, flags);
+	spin_lock_irqsave(&gपंचांग->lock, flags);
 
 	/*
-	 * Properly reset timers: stop, reset, set up prescalers, reference
-	 * value and clear event register.
+	 * Properly reset समयrs: stop, reset, set up prescalers, reference
+	 * value and clear event रेजिस्टर.
 	 */
-	clrsetbits_8(tmr->gtcfr, ~(GTCFR_STP(num) | GTCFR_RST(num)),
+	clrsetbits_8(पंचांगr->gtcfr, ~(GTCFR_STP(num) | GTCFR_RST(num)),
 				 GTCFR_STP(num) | GTCFR_RST(num));
 
-	setbits8(tmr->gtcfr, GTCFR_STP(num));
+	setbits8(पंचांगr->gtcfr, GTCFR_STP(num));
 
-	if (tmr->gtpsr)
-		out_be16(tmr->gtpsr, psr);
-	clrsetbits_be16(tmr->gtmdr, 0xFFFF, iclk | GTMDR_SPS(sps) |
-			GTMDR_ORI | (free_run ? GTMDR_FRR : 0));
-	out_be16(tmr->gtcnr, 0);
-	out_be16(tmr->gtrfr, reference_value);
-	out_be16(tmr->gtevr, 0xFFFF);
+	अगर (पंचांगr->gtpsr)
+		out_be16(पंचांगr->gtpsr, psr);
+	clrsetbits_be16(पंचांगr->gपंचांगdr, 0xFFFF, iclk | GTMDR_SPS(sps) |
+			GTMDR_ORI | (मुक्त_run ? GTMDR_FRR : 0));
+	out_be16(पंचांगr->gtcnr, 0);
+	out_be16(पंचांगr->gtrfr, reference_value);
+	out_be16(पंचांगr->gtevr, 0xFFFF);
 
 	/* Let it be. */
-	clrbits8(tmr->gtcfr, GTCFR_STP(num));
+	clrbits8(पंचांगr->gtcfr, GTCFR_STP(num));
 
-	spin_unlock_irqrestore(&gtm->lock, flags);
+	spin_unlock_irqrestore(&gपंचांग->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * gtm_set_timer16 - (re)set 16 bit timer with arbitrary precision
- * @tmr:	pointer to the gtm_timer structure obtained from gtm_get_timer
- * @usec:	timer interval in microseconds
- * @reload:	if set, the timer will reset upon expiry rather than
- *         	continue running free.
+ * gपंचांग_set_समयr16 - (re)set 16 bit समयr with arbitrary precision
+ * @पंचांगr:	poपूर्णांकer to the gपंचांग_समयr काष्ठाure obtained from gपंचांग_get_समयr
+ * @usec:	समयr पूर्णांकerval in microseconds
+ * @reload:	अगर set, the समयr will reset upon expiry rather than
+ *         	जारी running मुक्त.
  * Context:	any
  *
- * This function (re)sets the GTM timer so that it counts up to the requested
- * interval value, and fires the interrupt when the value is reached. This
- * function will reduce the precision of the timer as needed in order for the
- * requested timeout to fit in a 16-bit register.
+ * This function (re)sets the GTM समयr so that it counts up to the requested
+ * पूर्णांकerval value, and fires the पूर्णांकerrupt when the value is reached. This
+ * function will reduce the precision of the समयr as needed in order क्रम the
+ * requested समयout to fit in a 16-bit रेजिस्टर.
  */
-int gtm_set_timer16(struct gtm_timer *tmr, unsigned long usec, bool reload)
-{
-	/* quite obvious, frequency which is enough for µSec precision */
-	int freq = 1000000;
-	unsigned int bit;
+पूर्णांक gपंचांग_set_समयr16(काष्ठा gपंचांग_समयr *पंचांगr, अचिन्हित दीर्घ usec, bool reload)
+अणु
+	/* quite obvious, frequency which is enough क्रम तगSec precision */
+	पूर्णांक freq = 1000000;
+	अचिन्हित पूर्णांक bit;
 
-	bit = fls_long(usec);
-	if (bit > 15) {
+	bit = fls_दीर्घ(usec);
+	अगर (bit > 15) अणु
 		freq >>= bit - 15;
 		usec >>= bit - 15;
-	}
+	पूर्ण
 
-	if (!freq)
-		return -EINVAL;
+	अगर (!freq)
+		वापस -EINVAL;
 
-	return gtm_set_ref_timer16(tmr, freq, usec, reload);
-}
-EXPORT_SYMBOL(gtm_set_timer16);
+	वापस gपंचांग_set_ref_समयr16(पंचांगr, freq, usec, reload);
+पूर्ण
+EXPORT_SYMBOL(gपंचांग_set_समयr16);
 
 /**
- * gtm_set_exact_utimer16 - (re)set 16 bits timer
- * @tmr:	pointer to the gtm_timer structure obtained from gtm_get_timer
- * @usec:	timer interval in microseconds
- * @reload:	if set, the timer will reset upon expiry rather than
- *         	continue running free.
+ * gपंचांग_set_exact_uसमयr16 - (re)set 16 bits समयr
+ * @पंचांगr:	poपूर्णांकer to the gपंचांग_समयr काष्ठाure obtained from gपंचांग_get_समयr
+ * @usec:	समयr पूर्णांकerval in microseconds
+ * @reload:	अगर set, the समयr will reset upon expiry rather than
+ *         	जारी running मुक्त.
  * Context:	any
  *
- * This function (re)sets GTM timer so that it counts up to the requested
- * interval value, and fires the interrupt when the value is reached. If reload
- * flag was set, timer will also reset itself upon reference value, otherwise
- * it continues to increment.
+ * This function (re)sets GTM समयr so that it counts up to the requested
+ * पूर्णांकerval value, and fires the पूर्णांकerrupt when the value is reached. If reload
+ * flag was set, समयr will also reset itself upon reference value, otherwise
+ * it जारीs to increment.
  *
  * The _exact_ bit in the function name states that this function will not
  * crop precision of the "usec" argument, thus usec is limited to 16 bits
- * (single timer width).
+ * (single समयr width).
  */
-int gtm_set_exact_timer16(struct gtm_timer *tmr, u16 usec, bool reload)
-{
-	/* quite obvious, frequency which is enough for µSec precision */
-	const int freq = 1000000;
+पूर्णांक gपंचांग_set_exact_समयr16(काष्ठा gपंचांग_समयr *पंचांगr, u16 usec, bool reload)
+अणु
+	/* quite obvious, frequency which is enough क्रम तगSec precision */
+	स्थिर पूर्णांक freq = 1000000;
 
 	/*
-	 * We can lower the frequency (and probably power consumption) by
-	 * dividing both frequency and usec by 2 until there is no remainder.
+	 * We can lower the frequency (and probably घातer consumption) by
+	 * भागiding both frequency and usec by 2 until there is no reमुख्यder.
 	 * But we won't bother with this unless savings are measured, so just
-	 * run the timer as is.
+	 * run the समयr as is.
 	 */
 
-	return gtm_set_ref_timer16(tmr, freq, usec, reload);
-}
-EXPORT_SYMBOL(gtm_set_exact_timer16);
+	वापस gपंचांग_set_ref_समयr16(पंचांगr, freq, usec, reload);
+पूर्ण
+EXPORT_SYMBOL(gपंचांग_set_exact_समयr16);
 
 /**
- * gtm_stop_timer16 - stop single timer
- * @tmr:	pointer to the gtm_timer structure obtained from gtm_get_timer
+ * gपंचांग_stop_समयr16 - stop single समयr
+ * @पंचांगr:	poपूर्णांकer to the gपंचांग_समयr काष्ठाure obtained from gपंचांग_get_समयr
  * Context:	any
  *
- * This function simply stops the GTM timer.
+ * This function simply stops the GTM समयr.
  */
-void gtm_stop_timer16(struct gtm_timer *tmr)
-{
-	struct gtm *gtm = tmr->gtm;
-	int num = tmr - &gtm->timers[0];
-	unsigned long flags;
+व्योम gपंचांग_stop_समयr16(काष्ठा gपंचांग_समयr *पंचांगr)
+अणु
+	काष्ठा gपंचांग *gपंचांग = पंचांगr->gपंचांग;
+	पूर्णांक num = पंचांगr - &gपंचांग->समयrs[0];
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&gtm->lock, flags);
+	spin_lock_irqsave(&gपंचांग->lock, flags);
 
-	setbits8(tmr->gtcfr, GTCFR_STP(num));
-	out_be16(tmr->gtevr, 0xFFFF);
+	setbits8(पंचांगr->gtcfr, GTCFR_STP(num));
+	out_be16(पंचांगr->gtevr, 0xFFFF);
 
-	spin_unlock_irqrestore(&gtm->lock, flags);
-}
-EXPORT_SYMBOL(gtm_stop_timer16);
+	spin_unlock_irqrestore(&gपंचांग->lock, flags);
+पूर्ण
+EXPORT_SYMBOL(gपंचांग_stop_समयr16);
 
 /**
- * gtm_ack_timer16 - acknowledge timer event (free-run timers only)
- * @tmr:	pointer to the gtm_timer structure obtained from gtm_get_timer
+ * gपंचांग_ack_समयr16 - acknowledge समयr event (मुक्त-run समयrs only)
+ * @पंचांगr:	poपूर्णांकer to the gपंचांग_समयr काष्ठाure obtained from gपंचांग_get_समयr
  * @events:	events mask to ack
  * Context:	any
  *
- * Thus function used to acknowledge timer interrupt event, use it inside the
- * interrupt handler.
+ * Thus function used to acknowledge समयr पूर्णांकerrupt event, use it inside the
+ * पूर्णांकerrupt handler.
  */
-void gtm_ack_timer16(struct gtm_timer *tmr, u16 events)
-{
-	out_be16(tmr->gtevr, events);
-}
-EXPORT_SYMBOL(gtm_ack_timer16);
+व्योम gपंचांग_ack_समयr16(काष्ठा gपंचांग_समयr *पंचांगr, u16 events)
+अणु
+	out_be16(पंचांगr->gtevr, events);
+पूर्ण
+EXPORT_SYMBOL(gपंचांग_ack_समयr16);
 
-static void __init gtm_set_shortcuts(struct device_node *np,
-				     struct gtm_timer *timers,
-				     struct gtm_timers_regs __iomem *regs)
-{
+अटल व्योम __init gपंचांग_set_लघुcuts(काष्ठा device_node *np,
+				     काष्ठा gपंचांग_समयr *समयrs,
+				     काष्ठा gपंचांग_समयrs_regs __iomem *regs)
+अणु
 	/*
-	 * Yeah, I don't like this either, but timers' registers a bit messed,
-	 * so we have to provide shortcuts to write timer independent code.
+	 * Yeah, I करोn't like this either, but timers' रेजिस्टरs a bit messed,
+	 * so we have to provide लघुcuts to ग_लिखो समयr independent code.
 	 * Alternative option is to create gt*() accessors, but that will be
 	 * even uglier and cryptic.
 	 */
-	timers[0].gtcfr = &regs->gtcfr1;
-	timers[0].gtmdr = &regs->gtmdr1;
-	timers[0].gtcnr = &regs->gtcnr1;
-	timers[0].gtrfr = &regs->gtrfr1;
-	timers[0].gtevr = &regs->gtevr1;
+	समयrs[0].gtcfr = &regs->gtcfr1;
+	समयrs[0].gपंचांगdr = &regs->gपंचांगdr1;
+	समयrs[0].gtcnr = &regs->gtcnr1;
+	समयrs[0].gtrfr = &regs->gtrfr1;
+	समयrs[0].gtevr = &regs->gtevr1;
 
-	timers[1].gtcfr = &regs->gtcfr1;
-	timers[1].gtmdr = &regs->gtmdr2;
-	timers[1].gtcnr = &regs->gtcnr2;
-	timers[1].gtrfr = &regs->gtrfr2;
-	timers[1].gtevr = &regs->gtevr2;
+	समयrs[1].gtcfr = &regs->gtcfr1;
+	समयrs[1].gपंचांगdr = &regs->gपंचांगdr2;
+	समयrs[1].gtcnr = &regs->gtcnr2;
+	समयrs[1].gtrfr = &regs->gtrfr2;
+	समयrs[1].gtevr = &regs->gtevr2;
 
-	timers[2].gtcfr = &regs->gtcfr2;
-	timers[2].gtmdr = &regs->gtmdr3;
-	timers[2].gtcnr = &regs->gtcnr3;
-	timers[2].gtrfr = &regs->gtrfr3;
-	timers[2].gtevr = &regs->gtevr3;
+	समयrs[2].gtcfr = &regs->gtcfr2;
+	समयrs[2].gपंचांगdr = &regs->gपंचांगdr3;
+	समयrs[2].gtcnr = &regs->gtcnr3;
+	समयrs[2].gtrfr = &regs->gtrfr3;
+	समयrs[2].gtevr = &regs->gtevr3;
 
-	timers[3].gtcfr = &regs->gtcfr2;
-	timers[3].gtmdr = &regs->gtmdr4;
-	timers[3].gtcnr = &regs->gtcnr4;
-	timers[3].gtrfr = &regs->gtrfr4;
-	timers[3].gtevr = &regs->gtevr4;
+	समयrs[3].gtcfr = &regs->gtcfr2;
+	समयrs[3].gपंचांगdr = &regs->gपंचांगdr4;
+	समयrs[3].gtcnr = &regs->gtcnr4;
+	समयrs[3].gtrfr = &regs->gtrfr4;
+	समयrs[3].gtevr = &regs->gtevr4;
 
-	/* CPM2 doesn't have primary prescaler */
-	if (!of_device_is_compatible(np, "fsl,cpm2-gtm")) {
-		timers[0].gtpsr = &regs->gtpsr1;
-		timers[1].gtpsr = &regs->gtpsr2;
-		timers[2].gtpsr = &regs->gtpsr3;
-		timers[3].gtpsr = &regs->gtpsr4;
-	}
-}
+	/* CPM2 करोesn't have primary prescaler */
+	अगर (!of_device_is_compatible(np, "fsl,cpm2-gtm")) अणु
+		समयrs[0].gtpsr = &regs->gtpsr1;
+		समयrs[1].gtpsr = &regs->gtpsr2;
+		समयrs[2].gtpsr = &regs->gtpsr3;
+		समयrs[3].gtpsr = &regs->gtpsr4;
+	पूर्ण
+पूर्ण
 
-static int __init fsl_gtm_init(void)
-{
-	struct device_node *np;
+अटल पूर्णांक __init fsl_gपंचांग_init(व्योम)
+अणु
+	काष्ठा device_node *np;
 
-	for_each_compatible_node(np, NULL, "fsl,gtm") {
-		int i;
-		struct gtm *gtm;
-		const u32 *clock;
-		int size;
+	क्रम_each_compatible_node(np, शून्य, "fsl,gtm") अणु
+		पूर्णांक i;
+		काष्ठा gपंचांग *gपंचांग;
+		स्थिर u32 *घड़ी;
+		पूर्णांक size;
 
-		gtm = kzalloc(sizeof(*gtm), GFP_KERNEL);
-		if (!gtm) {
+		gपंचांग = kzalloc(माप(*gपंचांग), GFP_KERNEL);
+		अगर (!gपंचांग) अणु
 			pr_err("%pOF: unable to allocate memory\n",
 				np);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		spin_lock_init(&gtm->lock);
+		spin_lock_init(&gपंचांग->lock);
 
-		clock = of_get_property(np, "clock-frequency", &size);
-		if (!clock || size != sizeof(*clock)) {
+		घड़ी = of_get_property(np, "clock-frequency", &size);
+		अगर (!घड़ी || size != माप(*घड़ी)) अणु
 			pr_err("%pOF: no clock-frequency\n", np);
-			goto err;
-		}
-		gtm->clock = *clock;
+			जाओ err;
+		पूर्ण
+		gपंचांग->घड़ी = *घड़ी;
 
-		for (i = 0; i < ARRAY_SIZE(gtm->timers); i++) {
-			unsigned int irq;
+		क्रम (i = 0; i < ARRAY_SIZE(gपंचांग->समयrs); i++) अणु
+			अचिन्हित पूर्णांक irq;
 
 			irq = irq_of_parse_and_map(np, i);
-			if (!irq) {
+			अगर (!irq) अणु
 				pr_err("%pOF: not enough interrupts specified\n",
 				       np);
-				goto err;
-			}
-			gtm->timers[i].irq = irq;
-			gtm->timers[i].gtm = gtm;
-		}
+				जाओ err;
+			पूर्ण
+			gपंचांग->समयrs[i].irq = irq;
+			gपंचांग->समयrs[i].gपंचांग = gपंचांग;
+		पूर्ण
 
-		gtm->regs = of_iomap(np, 0);
-		if (!gtm->regs) {
+		gपंचांग->regs = of_iomap(np, 0);
+		अगर (!gपंचांग->regs) अणु
 			pr_err("%pOF: unable to iomap registers\n",
 			       np);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		gtm_set_shortcuts(np, gtm->timers, gtm->regs);
-		list_add(&gtm->list_node, &gtms);
+		gपंचांग_set_लघुcuts(np, gपंचांग->समयrs, gपंचांग->regs);
+		list_add(&gपंचांग->list_node, &gपंचांगs);
 
-		/* We don't want to lose the node and its ->data */
-		np->data = gtm;
+		/* We करोn't want to lose the node and its ->data */
+		np->data = gपंचांग;
 		of_node_get(np);
 
-		continue;
+		जारी;
 err:
-		kfree(gtm);
-	}
-	return 0;
-}
-arch_initcall(fsl_gtm_init);
+		kमुक्त(gपंचांग);
+	पूर्ण
+	वापस 0;
+पूर्ण
+arch_initcall(fsl_gपंचांग_init);

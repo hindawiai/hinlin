@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Test cases for the drm_rect functions
+ * Test हालs क्रम the drm_rect functions
  */
 
-#define pr_fmt(fmt) "drm_rect: " fmt
+#घोषणा pr_fmt(fmt) "drm_rect: " fmt
 
-#include <linux/limits.h>
+#समावेश <linux/सीमा.स>
 
-#include <drm/drm_rect.h>
+#समावेश <drm/drm_rect.h>
 
-#include "test-drm_modeset_common.h"
+#समावेश "test-drm_modeset_common.h"
 
-int igt_drm_rect_clip_scaled_div_by_zero(void *ignored)
-{
-	struct drm_rect src, dst, clip;
+पूर्णांक igt_drm_rect_clip_scaled_भाग_by_zero(व्योम *ignored)
+अणु
+	काष्ठा drm_rect src, dst, clip;
 	bool visible;
 
 	/*
-	 * Make sure we don't divide by zero when dst
-	 * width/height is zero and dst and clip do not intersect.
+	 * Make sure we करोn't भागide by zero when dst
+	 * width/height is zero and dst and clip करो not पूर्णांकersect.
 	 */
 	drm_rect_init(&src, 0, 0, 0, 0);
 	drm_rect_init(&dst, 0, 0, 0, 0);
@@ -34,12 +35,12 @@ int igt_drm_rect_clip_scaled_div_by_zero(void *ignored)
 	FAIL(visible, "Destination not be visible\n");
 	FAIL(drm_rect_visible(&src), "Source should not be visible\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int igt_drm_rect_clip_scaled_not_clipped(void *ignored)
-{
-	struct drm_rect src, dst, clip;
+पूर्णांक igt_drm_rect_clip_scaled_not_clipped(व्योम *ignored)
+अणु
+	काष्ठा drm_rect src, dst, clip;
 	bool visible;
 
 	/* 1:1 scaling */
@@ -90,12 +91,12 @@ int igt_drm_rect_clip_scaled_not_clipped(void *ignored)
 	FAIL(!visible, "Destination should be visible\n");
 	FAIL(!drm_rect_visible(&src), "Source should be visible\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int igt_drm_rect_clip_scaled_clipped(void *ignored)
-{
-	struct drm_rect src, dst, clip;
+पूर्णांक igt_drm_rect_clip_scaled_clipped(व्योम *ignored)
+अणु
+	काष्ठा drm_rect src, dst, clip;
 	bool visible;
 
 	/* 1:1 scaling top/left clip */
@@ -194,23 +195,23 @@ int igt_drm_rect_clip_scaled_clipped(void *ignored)
 	FAIL(!visible, "Destination should be visible\n");
 	FAIL(!drm_rect_visible(&src), "Source should be visible\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int igt_drm_rect_clip_scaled_signed_vs_unsigned(void *ignored)
-{
-	struct drm_rect src, dst, clip;
+पूर्णांक igt_drm_rect_clip_scaled_चिन्हित_vs_अचिन्हित(व्योम *ignored)
+अणु
+	काष्ठा drm_rect src, dst, clip;
 	bool visible;
 
 	/*
 	 * 'clip.x2 - dst.x1 >= dst width' could result a negative
-	 * src rectangle width which is no longer expected by the
-	 * code as it's using unsigned types. This could lead to
+	 * src rectangle width which is no दीर्घer expected by the
+	 * code as it's using अचिन्हित types. This could lead to
 	 * the clipped source rectangle appering visible when it
 	 * should have been fully clipped. Make sure both rectangles
 	 * end up invisible.
 	 */
-	drm_rect_init(&src, 0, 0, INT_MAX, INT_MAX);
+	drm_rect_init(&src, 0, 0, पूर्णांक_उच्च, पूर्णांक_उच्च);
 	drm_rect_init(&dst, 0, 0, 2, 2);
 	drm_rect_init(&clip, 3, 3, 1, 1);
 
@@ -219,5 +220,5 @@ int igt_drm_rect_clip_scaled_signed_vs_unsigned(void *ignored)
 	FAIL(visible, "Destination should not be visible\n");
 	FAIL(drm_rect_visible(&src), "Source should not be visible\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,259 +1,260 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * dim2.c - MediaLB DIM2 Hardware Dependent Module
  *
  * Copyright (C) 2015-2016, Microchip Technology Germany II GmbH & Co. KG
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/printk.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/clk.h>
-#include <linux/dma-mapping.h>
-#include <linux/sched.h>
-#include <linux/kthread.h>
-#include <linux/most.h>
-#include "hal.h"
-#include "errors.h"
-#include "sysfs.h"
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/most.h>
+#समावेश "hal.h"
+#समावेश "errors.h"
+#समावेश "sysfs.h"
 
-#define DMA_CHANNELS (32 - 1)  /* channel 0 is a system channel */
+#घोषणा DMA_CHANNELS (32 - 1)  /* channel 0 is a प्रणाली channel */
 
-#define MAX_BUFFERS_PACKET      32
-#define MAX_BUFFERS_STREAMING   32
-#define MAX_BUF_SIZE_PACKET     2048
-#define MAX_BUF_SIZE_STREAMING  (8 * 1024)
+#घोषणा MAX_BUFFERS_PACKET      32
+#घोषणा MAX_BUFFERS_STREAMING   32
+#घोषणा MAX_BUF_SIZE_PACKET     2048
+#घोषणा MAX_BUF_SIZE_STREAMING  (8 * 1024)
 
 /*
- * The parameter representing the number of frames per sub-buffer for
+ * The parameter representing the number of frames per sub-buffer क्रम
  * synchronous channels.  Valid values: [0 .. 6].
  *
  * The values 0, 1, 2, 3, 4, 5, 6 represent corresponding number of frames per
  * sub-buffer 1, 2, 4, 8, 16, 32, 64.
  */
-static u8 fcnt = 4;  /* (1 << fcnt) frames per subbuffer */
+अटल u8 fcnt = 4;  /* (1 << fcnt) frames per subbuffer */
 module_param(fcnt, byte, 0000);
 MODULE_PARM_DESC(fcnt, "Num of frames per sub-buffer for sync channels as a power of 2");
 
-static DEFINE_SPINLOCK(dim_lock);
+अटल DEFINE_SPINLOCK(dim_lock);
 
-static void dim2_tasklet_fn(unsigned long data);
-static DECLARE_TASKLET_OLD(dim2_tasklet, dim2_tasklet_fn);
+अटल व्योम dim2_tasklet_fn(अचिन्हित दीर्घ data);
+अटल DECLARE_TASKLET_OLD(dim2_tasklet, dim2_tasklet_fn);
 
 /**
- * struct hdm_channel - private structure to keep channel specific data
- * @is_initialized: identifier to know whether the channel is initialized
- * @ch: HAL specific channel data
- * @pending_list: list to keep MBO's before starting transfer
+ * काष्ठा hdm_channel - निजी काष्ठाure to keep channel specअगरic data
+ * @is_initialized: identअगरier to know whether the channel is initialized
+ * @ch: HAL specअगरic channel data
+ * @pending_list: list to keep MBO's beक्रमe starting transfer
  * @started_list: list to keep MBO's after starting transfer
  * @direction: channel direction (TX or RX)
  * @data_type: channel data type
  */
-struct hdm_channel {
-	char name[sizeof "caNNN"];
+काष्ठा hdm_channel अणु
+	अक्षर name[माप "caNNN"];
 	bool is_initialized;
-	struct dim_channel ch;
+	काष्ठा dim_channel ch;
 	u16 *reset_dbr_size;
-	struct list_head pending_list;	/* before dim_enqueue_buffer() */
-	struct list_head started_list;	/* after dim_enqueue_buffer() */
-	enum most_channel_direction direction;
-	enum most_channel_data_type data_type;
-};
+	काष्ठा list_head pending_list;	/* beक्रमe dim_enqueue_buffer() */
+	काष्ठा list_head started_list;	/* after dim_enqueue_buffer() */
+	क्रमागत most_channel_direction direction;
+	क्रमागत most_channel_data_type data_type;
+पूर्ण;
 
 /**
- * struct dim2_hdm - private structure to keep interface specific data
- * @hch: an array of channel specific data
- * @most_iface: most interface structure
+ * काष्ठा dim2_hdm - निजी काष्ठाure to keep पूर्णांकerface specअगरic data
+ * @hch: an array of channel specअगरic data
+ * @most_अगरace: most पूर्णांकerface काष्ठाure
  * @capabilities: an array of channel capability data
- * @io_base: I/O register base address
- * @netinfo_task: thread to deliver network status
- * @netinfo_waitq: waitq for the thread to sleep
- * @deliver_netinfo: to identify whether network status received
+ * @io_base: I/O रेजिस्टर base address
+ * @netinfo_task: thपढ़ो to deliver network status
+ * @netinfo_रुकोq: रुकोq क्रम the thपढ़ो to sleep
+ * @deliver_netinfo: to identअगरy whether network status received
  * @mac_addrs: INIC mac address
  * @link_state: network link state
  * @atx_idx: index of async tx channel
  */
-struct dim2_hdm {
-	struct device dev;
-	struct hdm_channel hch[DMA_CHANNELS];
-	struct most_channel_capability capabilities[DMA_CHANNELS];
-	struct most_interface most_iface;
-	char name[16 + sizeof "dim2-"];
-	void __iomem *io_base;
+काष्ठा dim2_hdm अणु
+	काष्ठा device dev;
+	काष्ठा hdm_channel hch[DMA_CHANNELS];
+	काष्ठा most_channel_capability capabilities[DMA_CHANNELS];
+	काष्ठा most_पूर्णांकerface most_अगरace;
+	अक्षर name[16 + माप "dim2-"];
+	व्योम __iomem *io_base;
 	u8 clk_speed;
-	struct clk *clk;
-	struct clk *clk_pll;
-	struct task_struct *netinfo_task;
-	wait_queue_head_t netinfo_waitq;
-	int deliver_netinfo;
-	unsigned char mac_addrs[6];
-	unsigned char link_state;
-	int atx_idx;
-	struct medialb_bus bus;
-	void (*on_netinfo)(struct most_interface *most_iface,
-			   unsigned char link_state, unsigned char *addrs);
-	void (*disable_platform)(struct platform_device *pdev);
-};
+	काष्ठा clk *clk;
+	काष्ठा clk *clk_pll;
+	काष्ठा task_काष्ठा *netinfo_task;
+	रुको_queue_head_t netinfo_रुकोq;
+	पूर्णांक deliver_netinfo;
+	अचिन्हित अक्षर mac_addrs[6];
+	अचिन्हित अक्षर link_state;
+	पूर्णांक atx_idx;
+	काष्ठा medialb_bus bus;
+	व्योम (*on_netinfo)(काष्ठा most_पूर्णांकerface *most_अगरace,
+			   अचिन्हित अक्षर link_state, अचिन्हित अक्षर *addrs);
+	व्योम (*disable_platक्रमm)(काष्ठा platक्रमm_device *pdev);
+पूर्ण;
 
-struct dim2_platform_data {
-	int (*enable)(struct platform_device *pdev);
-	void (*disable)(struct platform_device *pdev);
-};
+काष्ठा dim2_platक्रमm_data अणु
+	पूर्णांक (*enable)(काष्ठा platक्रमm_device *pdev);
+	व्योम (*disable)(काष्ठा platक्रमm_device *pdev);
+पूर्ण;
 
-#define iface_to_hdm(iface) container_of(iface, struct dim2_hdm, most_iface)
+#घोषणा अगरace_to_hdm(अगरace) container_of(अगरace, काष्ठा dim2_hdm, most_अगरace)
 
-/* Macro to identify a network status message */
-#define PACKET_IS_NET_INFO(p)  \
+/* Macro to identअगरy a network status message */
+#घोषणा PACKET_IS_NET_INFO(p)  \
 	(((p)[1] == 0x18) && ((p)[2] == 0x05) && ((p)[3] == 0x0C) && \
 	 ((p)[13] == 0x3C) && ((p)[14] == 0x00) && ((p)[15] == 0x0A))
 
-bool dim2_sysfs_get_state_cb(void)
-{
+bool dim2_sysfs_get_state_cb(व्योम)
+अणु
 	bool state;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dim_lock, flags);
 	state = dim_get_lock_state();
 	spin_unlock_irqrestore(&dim_lock, flags);
 
-	return state;
-}
+	वापस state;
+पूर्ण
 
 /**
  * dimcb_on_error - callback from HAL to report miscommunication between
  * HDM and HAL
  * @error_id: Error ID
- * @error_message: Error message. Some text in a free format
+ * @error_message: Error message. Some text in a मुक्त क्रमmat
  */
-void dimcb_on_error(u8 error_id, const char *error_message)
-{
+व्योम dimcb_on_error(u8 error_id, स्थिर अक्षर *error_message)
+अणु
 	pr_err("%s: error_id - %d, error_message - %s\n", __func__, error_id,
 	       error_message);
-}
+पूर्ण
 
 /**
  * try_start_dim_transfer - try to transfer a buffer on a channel
- * @hdm_ch: channel specific data
+ * @hdm_ch: channel specअगरic data
  *
- * Transfer a buffer from pending_list if the channel is ready
+ * Transfer a buffer from pending_list अगर the channel is पढ़ोy
  */
-static int try_start_dim_transfer(struct hdm_channel *hdm_ch)
-{
+अटल पूर्णांक try_start_dim_transfer(काष्ठा hdm_channel *hdm_ch)
+अणु
 	u16 buf_size;
-	struct list_head *head = &hdm_ch->pending_list;
-	struct mbo *mbo;
-	unsigned long flags;
-	struct dim_ch_state_t st;
+	काष्ठा list_head *head = &hdm_ch->pending_list;
+	काष्ठा mbo *mbo;
+	अचिन्हित दीर्घ flags;
+	काष्ठा dim_ch_state_t st;
 
 	BUG_ON(!hdm_ch);
 	BUG_ON(!hdm_ch->is_initialized);
 
 	spin_lock_irqsave(&dim_lock, flags);
-	if (list_empty(head)) {
+	अगर (list_empty(head)) अणु
 		spin_unlock_irqrestore(&dim_lock, flags);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (!dim_get_channel_state(&hdm_ch->ch, &st)->ready) {
+	अगर (!dim_get_channel_state(&hdm_ch->ch, &st)->पढ़ोy) अणु
 		spin_unlock_irqrestore(&dim_lock, flags);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	mbo = list_first_entry(head, struct mbo, list);
+	mbo = list_first_entry(head, काष्ठा mbo, list);
 	buf_size = mbo->buffer_length;
 
-	if (dim_dbr_space(&hdm_ch->ch) < buf_size) {
+	अगर (dim_dbr_space(&hdm_ch->ch) < buf_size) अणु
 		spin_unlock_irqrestore(&dim_lock, flags);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	BUG_ON(mbo->bus_address == 0);
-	if (!dim_enqueue_buffer(&hdm_ch->ch, mbo->bus_address, buf_size)) {
+	अगर (!dim_enqueue_buffer(&hdm_ch->ch, mbo->bus_address, buf_size)) अणु
 		list_del(head->next);
 		spin_unlock_irqrestore(&dim_lock, flags);
 		mbo->processed_length = 0;
 		mbo->status = MBO_E_INVAL;
 		mbo->complete(mbo);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	list_move_tail(head->next, &hdm_ch->started_list);
 	spin_unlock_irqrestore(&dim_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * deliver_netinfo_thread - thread to deliver network status to mostcore
- * @data: private data
+ * deliver_netinfo_thपढ़ो - thपढ़ो to deliver network status to mostcore
+ * @data: निजी data
  *
- * Wait for network status and deliver it to mostcore once it is received
+ * Wait क्रम network status and deliver it to mostcore once it is received
  */
-static int deliver_netinfo_thread(void *data)
-{
-	struct dim2_hdm *dev = data;
+अटल पूर्णांक deliver_netinfo_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा dim2_hdm *dev = data;
 
-	while (!kthread_should_stop()) {
-		wait_event_interruptible(dev->netinfo_waitq,
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		रुको_event_पूर्णांकerruptible(dev->netinfo_रुकोq,
 					 dev->deliver_netinfo ||
-					 kthread_should_stop());
+					 kthपढ़ो_should_stop());
 
-		if (dev->deliver_netinfo) {
+		अगर (dev->deliver_netinfo) अणु
 			dev->deliver_netinfo--;
-			if (dev->on_netinfo) {
-				dev->on_netinfo(&dev->most_iface,
+			अगर (dev->on_netinfo) अणु
+				dev->on_netinfo(&dev->most_अगरace,
 						dev->link_state,
 						dev->mac_addrs);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * retrieve_netinfo - retrieve network status from received buffer
- * @dev: private data
+ * @dev: निजी data
  * @mbo: received MBO
  *
  * Parse the message in buffer and get node address, link state, MAC address.
- * Wake up a thread to deliver this status to mostcore
+ * Wake up a thपढ़ो to deliver this status to mostcore
  */
-static void retrieve_netinfo(struct dim2_hdm *dev, struct mbo *mbo)
-{
+अटल व्योम retrieve_netinfo(काष्ठा dim2_hdm *dev, काष्ठा mbo *mbo)
+अणु
 	u8 *data = mbo->virt_address;
 
 	pr_info("Node Address: 0x%03x\n", (u16)data[16] << 8 | data[17]);
 	dev->link_state = data[18];
 	pr_info("NIState: %d\n", dev->link_state);
-	memcpy(dev->mac_addrs, data + 19, 6);
+	स_नकल(dev->mac_addrs, data + 19, 6);
 	dev->deliver_netinfo++;
-	wake_up_interruptible(&dev->netinfo_waitq);
-}
+	wake_up_पूर्णांकerruptible(&dev->netinfo_रुकोq);
+पूर्ण
 
 /**
- * service_done_flag - handle completed buffers
- * @dev: private data
+ * service_करोne_flag - handle completed buffers
+ * @dev: निजी data
  * @ch_idx: channel index
  *
  * Return back the completed buffers to mostcore, using completion callback
  */
-static void service_done_flag(struct dim2_hdm *dev, int ch_idx)
-{
-	struct hdm_channel *hdm_ch = dev->hch + ch_idx;
-	struct dim_ch_state_t st;
-	struct list_head *head;
-	struct mbo *mbo;
-	int done_buffers;
-	unsigned long flags;
+अटल व्योम service_करोne_flag(काष्ठा dim2_hdm *dev, पूर्णांक ch_idx)
+अणु
+	काष्ठा hdm_channel *hdm_ch = dev->hch + ch_idx;
+	काष्ठा dim_ch_state_t st;
+	काष्ठा list_head *head;
+	काष्ठा mbo *mbo;
+	पूर्णांक करोne_buffers;
+	अचिन्हित दीर्घ flags;
 	u8 *data;
 
 	BUG_ON(!hdm_ch);
@@ -261,279 +262,279 @@ static void service_done_flag(struct dim2_hdm *dev, int ch_idx)
 
 	spin_lock_irqsave(&dim_lock, flags);
 
-	done_buffers = dim_get_channel_state(&hdm_ch->ch, &st)->done_buffers;
-	if (!done_buffers) {
+	करोne_buffers = dim_get_channel_state(&hdm_ch->ch, &st)->करोne_buffers;
+	अगर (!करोne_buffers) अणु
 		spin_unlock_irqrestore(&dim_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!dim_detach_buffers(&hdm_ch->ch, done_buffers)) {
+	अगर (!dim_detach_buffers(&hdm_ch->ch, करोne_buffers)) अणु
 		spin_unlock_irqrestore(&dim_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_unlock_irqrestore(&dim_lock, flags);
 
 	head = &hdm_ch->started_list;
 
-	while (done_buffers) {
+	जबतक (करोne_buffers) अणु
 		spin_lock_irqsave(&dim_lock, flags);
-		if (list_empty(head)) {
+		अगर (list_empty(head)) अणु
 			spin_unlock_irqrestore(&dim_lock, flags);
 			pr_crit("hard error: started_mbo list is empty whereas DIM2 has sent buffers\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		mbo = list_first_entry(head, struct mbo, list);
+		mbo = list_first_entry(head, काष्ठा mbo, list);
 		list_del(head->next);
 		spin_unlock_irqrestore(&dim_lock, flags);
 
 		data = mbo->virt_address;
 
-		if (hdm_ch->data_type == MOST_CH_ASYNC &&
+		अगर (hdm_ch->data_type == MOST_CH_ASYNC &&
 		    hdm_ch->direction == MOST_CH_RX &&
-		    PACKET_IS_NET_INFO(data)) {
+		    PACKET_IS_NET_INFO(data)) अणु
 			retrieve_netinfo(dev, mbo);
 
 			spin_lock_irqsave(&dim_lock, flags);
 			list_add_tail(&mbo->list, &hdm_ch->pending_list);
 			spin_unlock_irqrestore(&dim_lock, flags);
-		} else {
-			if (hdm_ch->data_type == MOST_CH_CONTROL ||
-			    hdm_ch->data_type == MOST_CH_ASYNC) {
-				u32 const data_size =
+		पूर्ण अन्यथा अणु
+			अगर (hdm_ch->data_type == MOST_CH_CONTROL ||
+			    hdm_ch->data_type == MOST_CH_ASYNC) अणु
+				u32 स्थिर data_size =
 					(u32)data[0] * 256 + data[1] + 2;
 
 				mbo->processed_length =
 					min_t(u32, data_size,
 					      mbo->buffer_length);
-			} else {
+			पूर्ण अन्यथा अणु
 				mbo->processed_length = mbo->buffer_length;
-			}
+			पूर्ण
 			mbo->status = MBO_SUCCESS;
 			mbo->complete(mbo);
-		}
+		पूर्ण
 
-		done_buffers--;
-	}
-}
+		करोne_buffers--;
+	पूर्ण
+पूर्ण
 
-static struct dim_channel **get_active_channels(struct dim2_hdm *dev,
-						struct dim_channel **buffer)
-{
-	int idx = 0;
-	int ch_idx;
+अटल काष्ठा dim_channel **get_active_channels(काष्ठा dim2_hdm *dev,
+						काष्ठा dim_channel **buffer)
+अणु
+	पूर्णांक idx = 0;
+	पूर्णांक ch_idx;
 
-	for (ch_idx = 0; ch_idx < DMA_CHANNELS; ch_idx++) {
-		if (dev->hch[ch_idx].is_initialized)
+	क्रम (ch_idx = 0; ch_idx < DMA_CHANNELS; ch_idx++) अणु
+		अगर (dev->hch[ch_idx].is_initialized)
 			buffer[idx++] = &dev->hch[ch_idx].ch;
-	}
-	buffer[idx++] = NULL;
+	पूर्ण
+	buffer[idx++] = शून्य;
 
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
-static irqreturn_t dim2_mlb_isr(int irq, void *_dev)
-{
-	struct dim2_hdm *dev = _dev;
-	unsigned long flags;
+अटल irqवापस_t dim2_mlb_isr(पूर्णांक irq, व्योम *_dev)
+अणु
+	काष्ठा dim2_hdm *dev = _dev;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dim_lock, flags);
-	dim_service_mlb_int_irq();
+	dim_service_mlb_पूर्णांक_irq();
 	spin_unlock_irqrestore(&dim_lock, flags);
 
-	if (dev->atx_idx >= 0 && dev->hch[dev->atx_idx].is_initialized)
-		while (!try_start_dim_transfer(dev->hch + dev->atx_idx))
-			continue;
+	अगर (dev->atx_idx >= 0 && dev->hch[dev->atx_idx].is_initialized)
+		जबतक (!try_start_dim_transfer(dev->hch + dev->atx_idx))
+			जारी;
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * dim2_tasklet_fn - tasklet function
- * @data: private data
+ * @data: निजी data
  *
- * Service each initialized channel, if needed
+ * Service each initialized channel, अगर needed
  */
-static void dim2_tasklet_fn(unsigned long data)
-{
-	struct dim2_hdm *dev = (struct dim2_hdm *)data;
-	unsigned long flags;
-	int ch_idx;
+अटल व्योम dim2_tasklet_fn(अचिन्हित दीर्घ data)
+अणु
+	काष्ठा dim2_hdm *dev = (काष्ठा dim2_hdm *)data;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ch_idx;
 
-	for (ch_idx = 0; ch_idx < DMA_CHANNELS; ch_idx++) {
-		if (!dev->hch[ch_idx].is_initialized)
-			continue;
+	क्रम (ch_idx = 0; ch_idx < DMA_CHANNELS; ch_idx++) अणु
+		अगर (!dev->hch[ch_idx].is_initialized)
+			जारी;
 
 		spin_lock_irqsave(&dim_lock, flags);
 		dim_service_channel(&dev->hch[ch_idx].ch);
 		spin_unlock_irqrestore(&dim_lock, flags);
 
-		service_done_flag(dev, ch_idx);
-		while (!try_start_dim_transfer(dev->hch + ch_idx))
-			continue;
-	}
-}
+		service_करोne_flag(dev, ch_idx);
+		जबतक (!try_start_dim_transfer(dev->hch + ch_idx))
+			जारी;
+	पूर्ण
+पूर्ण
 
 /**
- * dim2_ahb_isr - interrupt service routine
+ * dim2_ahb_isr - पूर्णांकerrupt service routine
  * @irq: irq number
- * @_dev: private data
+ * @_dev: निजी data
  *
- * Acknowledge the interrupt and schedule a tasklet to service channels.
+ * Acknowledge the पूर्णांकerrupt and schedule a tasklet to service channels.
  * Return IRQ_HANDLED.
  */
-static irqreturn_t dim2_ahb_isr(int irq, void *_dev)
-{
-	struct dim2_hdm *dev = _dev;
-	struct dim_channel *buffer[DMA_CHANNELS + 1];
-	unsigned long flags;
+अटल irqवापस_t dim2_ahb_isr(पूर्णांक irq, व्योम *_dev)
+अणु
+	काष्ठा dim2_hdm *dev = _dev;
+	काष्ठा dim_channel *buffer[DMA_CHANNELS + 1];
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dim_lock, flags);
-	dim_service_ahb_int_irq(get_active_channels(dev, buffer));
+	dim_service_ahb_पूर्णांक_irq(get_active_channels(dev, buffer));
 	spin_unlock_irqrestore(&dim_lock, flags);
 
-	dim2_tasklet.data = (unsigned long)dev;
+	dim2_tasklet.data = (अचिन्हित दीर्घ)dev;
 	tasklet_schedule(&dim2_tasklet);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * complete_all_mbos - complete MBO's in a list
  * @head: list head
  *
- * Delete all the entries in list and return back MBO's to mostcore using
+ * Delete all the entries in list and वापस back MBO's to mostcore using
  * completion call back.
  */
-static void complete_all_mbos(struct list_head *head)
-{
-	unsigned long flags;
-	struct mbo *mbo;
+अटल व्योम complete_all_mbos(काष्ठा list_head *head)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा mbo *mbo;
 
-	for (;;) {
+	क्रम (;;) अणु
 		spin_lock_irqsave(&dim_lock, flags);
-		if (list_empty(head)) {
+		अगर (list_empty(head)) अणु
 			spin_unlock_irqrestore(&dim_lock, flags);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		mbo = list_first_entry(head, struct mbo, list);
+		mbo = list_first_entry(head, काष्ठा mbo, list);
 		list_del(head->next);
 		spin_unlock_irqrestore(&dim_lock, flags);
 
 		mbo->processed_length = 0;
 		mbo->status = MBO_E_CLOSE;
 		mbo->complete(mbo);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * configure_channel - initialize a channel
- * @iface: interface the channel belongs to
+ * @अगरace: पूर्णांकerface the channel beदीर्घs to
  * @channel: channel to be configured
- * @channel_config: structure that holds the configuration information
+ * @channel_config: काष्ठाure that holds the configuration inक्रमmation
  *
- * Receives configuration information from mostcore and initialize
+ * Receives configuration inक्रमmation from mostcore and initialize
  * the corresponding channel. Return 0 on success, negative on failure.
  */
-static int configure_channel(struct most_interface *most_iface, int ch_idx,
-			     struct most_channel_config *ccfg)
-{
-	struct dim2_hdm *dev = iface_to_hdm(most_iface);
-	bool const is_tx = ccfg->direction == MOST_CH_TX;
-	u16 const sub_size = ccfg->subbuffer_size;
-	u16 const buf_size = ccfg->buffer_size;
+अटल पूर्णांक configure_channel(काष्ठा most_पूर्णांकerface *most_अगरace, पूर्णांक ch_idx,
+			     काष्ठा most_channel_config *ccfg)
+अणु
+	काष्ठा dim2_hdm *dev = अगरace_to_hdm(most_अगरace);
+	bool स्थिर is_tx = ccfg->direction == MOST_CH_TX;
+	u16 स्थिर sub_size = ccfg->subbuffer_size;
+	u16 स्थिर buf_size = ccfg->buffer_size;
 	u16 new_size;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u8 hal_ret;
-	int const ch_addr = ch_idx * 2 + 2;
-	struct hdm_channel *const hdm_ch = dev->hch + ch_idx;
+	पूर्णांक स्थिर ch_addr = ch_idx * 2 + 2;
+	काष्ठा hdm_channel *स्थिर hdm_ch = dev->hch + ch_idx;
 
 	BUG_ON(ch_idx < 0 || ch_idx >= DMA_CHANNELS);
 
-	if (hdm_ch->is_initialized)
-		return -EPERM;
+	अगर (hdm_ch->is_initialized)
+		वापस -EPERM;
 
-	/* do not reset if the property was set by user, see poison_channel */
-	hdm_ch->reset_dbr_size = ccfg->dbr_size ? NULL : &ccfg->dbr_size;
+	/* करो not reset अगर the property was set by user, see poison_channel */
+	hdm_ch->reset_dbr_size = ccfg->dbr_size ? शून्य : &ccfg->dbr_size;
 
-	/* zero value is default dbr_size, see dim2 hal */
+	/* zero value is शेष dbr_size, see dim2 hal */
 	hdm_ch->ch.dbr_size = ccfg->dbr_size;
 
-	switch (ccfg->data_type) {
-	case MOST_CH_CONTROL:
+	चयन (ccfg->data_type) अणु
+	हाल MOST_CH_CONTROL:
 		new_size = dim_norm_ctrl_async_buffer_size(buf_size);
-		if (new_size == 0) {
+		अगर (new_size == 0) अणु
 			pr_err("%s: too small buffer size\n", hdm_ch->name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		ccfg->buffer_size = new_size;
-		if (new_size != buf_size)
+		अगर (new_size != buf_size)
 			pr_warn("%s: fixed buffer size (%d -> %d)\n",
 				hdm_ch->name, buf_size, new_size);
 		spin_lock_irqsave(&dim_lock, flags);
 		hal_ret = dim_init_control(&hdm_ch->ch, is_tx, ch_addr,
 					   is_tx ? new_size * 2 : new_size);
-		break;
-	case MOST_CH_ASYNC:
+		अवरोध;
+	हाल MOST_CH_ASYNC:
 		new_size = dim_norm_ctrl_async_buffer_size(buf_size);
-		if (new_size == 0) {
+		अगर (new_size == 0) अणु
 			pr_err("%s: too small buffer size\n", hdm_ch->name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		ccfg->buffer_size = new_size;
-		if (new_size != buf_size)
+		अगर (new_size != buf_size)
 			pr_warn("%s: fixed buffer size (%d -> %d)\n",
 				hdm_ch->name, buf_size, new_size);
 		spin_lock_irqsave(&dim_lock, flags);
 		hal_ret = dim_init_async(&hdm_ch->ch, is_tx, ch_addr,
 					 is_tx ? new_size * 2 : new_size);
-		break;
-	case MOST_CH_ISOC:
+		अवरोध;
+	हाल MOST_CH_ISOC:
 		new_size = dim_norm_isoc_buffer_size(buf_size, sub_size);
-		if (new_size == 0) {
+		अगर (new_size == 0) अणु
 			pr_err("%s: invalid sub-buffer size or too small buffer size\n",
 			       hdm_ch->name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		ccfg->buffer_size = new_size;
-		if (new_size != buf_size)
+		अगर (new_size != buf_size)
 			pr_warn("%s: fixed buffer size (%d -> %d)\n",
 				hdm_ch->name, buf_size, new_size);
 		spin_lock_irqsave(&dim_lock, flags);
 		hal_ret = dim_init_isoc(&hdm_ch->ch, is_tx, ch_addr, sub_size);
-		break;
-	case MOST_CH_SYNC:
+		अवरोध;
+	हाल MOST_CH_SYNC:
 		new_size = dim_norm_sync_buffer_size(buf_size, sub_size);
-		if (new_size == 0) {
+		अगर (new_size == 0) अणु
 			pr_err("%s: invalid sub-buffer size or too small buffer size\n",
 			       hdm_ch->name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		ccfg->buffer_size = new_size;
-		if (new_size != buf_size)
+		अगर (new_size != buf_size)
 			pr_warn("%s: fixed buffer size (%d -> %d)\n",
 				hdm_ch->name, buf_size, new_size);
 		spin_lock_irqsave(&dim_lock, flags);
 		hal_ret = dim_init_sync(&hdm_ch->ch, is_tx, ch_addr, sub_size);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("%s: configure failed, bad channel type: %d\n",
 		       hdm_ch->name, ccfg->data_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (hal_ret != DIM_NO_ERROR) {
+	अगर (hal_ret != DIM_NO_ERROR) अणु
 		spin_unlock_irqrestore(&dim_lock, flags);
 		pr_err("%s: configure failed (%d), type: %d, is_tx: %d\n",
-		       hdm_ch->name, hal_ret, ccfg->data_type, (int)is_tx);
-		return -ENODEV;
-	}
+		       hdm_ch->name, hal_ret, ccfg->data_type, (पूर्णांक)is_tx);
+		वापस -ENODEV;
+	पूर्ण
 
 	hdm_ch->data_type = ccfg->data_type;
 	hdm_ch->direction = ccfg->direction;
 	hdm_ch->is_initialized = true;
 
-	if (hdm_ch->data_type == MOST_CH_ASYNC &&
+	अगर (hdm_ch->data_type == MOST_CH_ASYNC &&
 	    hdm_ch->direction == MOST_CH_TX &&
 	    dev->atx_idx < 0)
 		dev->atx_idx = ch_idx;
@@ -541,70 +542,70 @@ static int configure_channel(struct most_interface *most_iface, int ch_idx,
 	spin_unlock_irqrestore(&dim_lock, flags);
 	ccfg->dbr_size = hdm_ch->ch.dbr_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * enqueue - enqueue a buffer for data transfer
- * @iface: intended interface
- * @channel: ID of the channel the buffer is intended for
- * @mbo: pointer to the buffer object
+ * enqueue - enqueue a buffer क्रम data transfer
+ * @अगरace: पूर्णांकended पूर्णांकerface
+ * @channel: ID of the channel the buffer is पूर्णांकended क्रम
+ * @mbo: poपूर्णांकer to the buffer object
  *
- * Push the buffer into pending_list and try to transfer one buffer from
+ * Push the buffer पूर्णांकo pending_list and try to transfer one buffer from
  * pending_list. Return 0 on success, negative on failure.
  */
-static int enqueue(struct most_interface *most_iface, int ch_idx,
-		   struct mbo *mbo)
-{
-	struct dim2_hdm *dev = iface_to_hdm(most_iface);
-	struct hdm_channel *hdm_ch = dev->hch + ch_idx;
-	unsigned long flags;
+अटल पूर्णांक enqueue(काष्ठा most_पूर्णांकerface *most_अगरace, पूर्णांक ch_idx,
+		   काष्ठा mbo *mbo)
+अणु
+	काष्ठा dim2_hdm *dev = अगरace_to_hdm(most_अगरace);
+	काष्ठा hdm_channel *hdm_ch = dev->hch + ch_idx;
+	अचिन्हित दीर्घ flags;
 
 	BUG_ON(ch_idx < 0 || ch_idx >= DMA_CHANNELS);
 
-	if (!hdm_ch->is_initialized)
-		return -EPERM;
+	अगर (!hdm_ch->is_initialized)
+		वापस -EPERM;
 
-	if (mbo->bus_address == 0)
-		return -EFAULT;
+	अगर (mbo->bus_address == 0)
+		वापस -EFAULT;
 
 	spin_lock_irqsave(&dim_lock, flags);
 	list_add_tail(&mbo->list, &hdm_ch->pending_list);
 	spin_unlock_irqrestore(&dim_lock, flags);
 
-	(void)try_start_dim_transfer(hdm_ch);
+	(व्योम)try_start_dim_transfer(hdm_ch);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * request_netinfo - triggers retrieving of network info
- * @iface: pointer to the interface
+ * @अगरace: poपूर्णांकer to the पूर्णांकerface
  * @channel_id: corresponding channel ID
  *
  * Send a command to INIC which triggers retrieving of network info by means of
  * "Message exchange over MDP/MEP". Return 0 on success, negative on failure.
  */
-static void request_netinfo(struct most_interface *most_iface, int ch_idx,
-			    void (*on_netinfo)(struct most_interface *,
-					       unsigned char, unsigned char *))
-{
-	struct dim2_hdm *dev = iface_to_hdm(most_iface);
-	struct mbo *mbo;
+अटल व्योम request_netinfo(काष्ठा most_पूर्णांकerface *most_अगरace, पूर्णांक ch_idx,
+			    व्योम (*on_netinfo)(काष्ठा most_पूर्णांकerface *,
+					       अचिन्हित अक्षर, अचिन्हित अक्षर *))
+अणु
+	काष्ठा dim2_hdm *dev = अगरace_to_hdm(most_अगरace);
+	काष्ठा mbo *mbo;
 	u8 *data;
 
 	dev->on_netinfo = on_netinfo;
-	if (!on_netinfo)
-		return;
+	अगर (!on_netinfo)
+		वापस;
 
-	if (dev->atx_idx < 0) {
+	अगर (dev->atx_idx < 0) अणु
 		pr_err("Async Tx Not initialized\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	mbo = most_get_mbo(&dev->most_iface, dev->atx_idx, NULL);
-	if (!mbo)
-		return;
+	mbo = most_get_mbo(&dev->most_अगरace, dev->atx_idx, शून्य);
+	अगर (!mbo)
+		वापस;
 
 	mbo->buffer_length = 5;
 
@@ -617,207 +618,207 @@ static void request_netinfo(struct most_interface *most_iface, int ch_idx,
 	data[4] = 0x40; /* FMF (FIFO cmd msg - Triggers NAOverMDP) */
 
 	most_submit_mbo(mbo);
-}
+पूर्ण
 
 /**
  * poison_channel - poison buffers of a channel
- * @iface: pointer to the interface the channel to be poisoned belongs to
+ * @अगरace: poपूर्णांकer to the पूर्णांकerface the channel to be poisoned beदीर्घs to
  * @channel_id: corresponding channel ID
  *
  * Destroy a channel and complete all the buffers in both started_list &
  * pending_list. Return 0 on success, negative on failure.
  */
-static int poison_channel(struct most_interface *most_iface, int ch_idx)
-{
-	struct dim2_hdm *dev = iface_to_hdm(most_iface);
-	struct hdm_channel *hdm_ch = dev->hch + ch_idx;
-	unsigned long flags;
+अटल पूर्णांक poison_channel(काष्ठा most_पूर्णांकerface *most_अगरace, पूर्णांक ch_idx)
+अणु
+	काष्ठा dim2_hdm *dev = अगरace_to_hdm(most_अगरace);
+	काष्ठा hdm_channel *hdm_ch = dev->hch + ch_idx;
+	अचिन्हित दीर्घ flags;
 	u8 hal_ret;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	BUG_ON(ch_idx < 0 || ch_idx >= DMA_CHANNELS);
 
-	if (!hdm_ch->is_initialized)
-		return -EPERM;
+	अगर (!hdm_ch->is_initialized)
+		वापस -EPERM;
 
 	tasklet_disable(&dim2_tasklet);
 	spin_lock_irqsave(&dim_lock, flags);
 	hal_ret = dim_destroy_channel(&hdm_ch->ch);
 	hdm_ch->is_initialized = false;
-	if (ch_idx == dev->atx_idx)
+	अगर (ch_idx == dev->atx_idx)
 		dev->atx_idx = -1;
 	spin_unlock_irqrestore(&dim_lock, flags);
 	tasklet_enable(&dim2_tasklet);
-	if (hal_ret != DIM_NO_ERROR) {
+	अगर (hal_ret != DIM_NO_ERROR) अणु
 		pr_err("HAL Failed to close channel %s\n", hdm_ch->name);
 		ret = -EFAULT;
-	}
+	पूर्ण
 
 	complete_all_mbos(&hdm_ch->started_list);
 	complete_all_mbos(&hdm_ch->pending_list);
-	if (hdm_ch->reset_dbr_size)
+	अगर (hdm_ch->reset_dbr_size)
 		*hdm_ch->reset_dbr_size = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void *dma_alloc(struct mbo *mbo, u32 size)
-{
-	struct device *dev = mbo->ifp->driver_dev;
+अटल व्योम *dma_alloc(काष्ठा mbo *mbo, u32 size)
+अणु
+	काष्ठा device *dev = mbo->अगरp->driver_dev;
 
-	return dma_alloc_coherent(dev, size, &mbo->bus_address, GFP_KERNEL);
-}
+	वापस dma_alloc_coherent(dev, size, &mbo->bus_address, GFP_KERNEL);
+पूर्ण
 
-static void dma_free(struct mbo *mbo, u32 size)
-{
-	struct device *dev = mbo->ifp->driver_dev;
+अटल व्योम dma_मुक्त(काष्ठा mbo *mbo, u32 size)
+अणु
+	काष्ठा device *dev = mbo->अगरp->driver_dev;
 
-	dma_free_coherent(dev, size, mbo->virt_address, mbo->bus_address);
-}
+	dma_मुक्त_coherent(dev, size, mbo->virt_address, mbo->bus_address);
+पूर्ण
 
-static const struct of_device_id dim2_of_match[];
+अटल स्थिर काष्ठा of_device_id dim2_of_match[];
 
-static struct {
-	const char *clock_speed;
+अटल काष्ठा अणु
+	स्थिर अक्षर *घड़ी_speed;
 	u8 clk_speed;
-} clk_mt[] = {
-	{ "256fs", CLK_256FS },
-	{ "512fs", CLK_512FS },
-	{ "1024fs", CLK_1024FS },
-	{ "2048fs", CLK_2048FS },
-	{ "3072fs", CLK_3072FS },
-	{ "4096fs", CLK_4096FS },
-	{ "6144fs", CLK_6144FS },
-	{ "8192fs", CLK_8192FS },
-};
+पूर्ण clk_mt[] = अणु
+	अणु "256fs", CLK_256FS पूर्ण,
+	अणु "512fs", CLK_512FS पूर्ण,
+	अणु "1024fs", CLK_1024FS पूर्ण,
+	अणु "2048fs", CLK_2048FS पूर्ण,
+	अणु "3072fs", CLK_3072FS पूर्ण,
+	अणु "4096fs", CLK_4096FS पूर्ण,
+	अणु "6144fs", CLK_6144FS पूर्ण,
+	अणु "8192fs", CLK_8192FS पूर्ण,
+पूर्ण;
 
 /**
- * get_dim2_clk_speed - converts string to DIM2 clock speed value
+ * get_dim2_clk_speed - converts string to DIM2 घड़ी speed value
  *
- * @clock_speed: string in the format "{NUMBER}fs"
- * @val: pointer to get one of the CLK_{NUMBER}FS values
+ * @घड़ी_speed: string in the क्रमmat "{NUMBER}fs"
+ * @val: poपूर्णांकer to get one of the CLK_अणुNUMBERपूर्णFS values
  *
- * By success stores one of the CLK_{NUMBER}FS in the *val and returns 0,
- * otherwise returns -EINVAL.
+ * By success stores one of the CLK_अणुNUMBERपूर्णFS in the *val and वापसs 0,
+ * otherwise वापसs -EINVAL.
  */
-static int get_dim2_clk_speed(const char *clock_speed, u8 *val)
-{
-	int i;
+अटल पूर्णांक get_dim2_clk_speed(स्थिर अक्षर *घड़ी_speed, u8 *val)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(clk_mt); i++) {
-		if (!strcmp(clock_speed, clk_mt[i].clock_speed)) {
+	क्रम (i = 0; i < ARRAY_SIZE(clk_mt); i++) अणु
+		अगर (!म_भेद(घड़ी_speed, clk_mt[i].घड़ी_speed)) अणु
 			*val = clk_mt[i].clk_speed;
-			return 0;
-		}
-	}
-	return -EINVAL;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * dim2_probe - dim2 probe handler
- * @pdev: platform device structure
+ * @pdev: platक्रमm device काष्ठाure
  *
- * Register the dim2 interface with mostcore and initialize it.
+ * Register the dim2 पूर्णांकerface with mostcore and initialize it.
  * Return 0 on success, negative on failure.
  */
-static int dim2_probe(struct platform_device *pdev)
-{
-	const struct dim2_platform_data *pdata;
-	const struct of_device_id *of_id;
-	const char *clock_speed;
-	struct dim2_hdm *dev;
-	struct resource *res;
-	int ret, i;
+अटल पूर्णांक dim2_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा dim2_platक्रमm_data *pdata;
+	स्थिर काष्ठा of_device_id *of_id;
+	स्थिर अक्षर *घड़ी_speed;
+	काष्ठा dim2_hdm *dev;
+	काष्ठा resource *res;
+	पूर्णांक ret, i;
 	u8 hal_ret;
-	int irq;
+	पूर्णांक irq;
 
-	enum { MLB_INT_IDX, AHB0_INT_IDX };
+	क्रमागत अणु MLB_INT_IDX, AHB0_INT_IDX पूर्ण;
 
-	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	dev = devm_kzalloc(&pdev->dev, माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	dev->atx_idx = -1;
 
-	platform_set_drvdata(pdev, dev);
+	platक्रमm_set_drvdata(pdev, dev);
 
-	ret = of_property_read_string(pdev->dev.of_node,
-				      "microchip,clock-speed", &clock_speed);
-	if (ret) {
+	ret = of_property_पढ़ो_string(pdev->dev.of_node,
+				      "microchip,clock-speed", &घड़ी_speed);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "missing dt property clock-speed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = get_dim2_clk_speed(clock_speed, &dev->clk_speed);
-	if (ret) {
+	ret = get_dim2_clk_speed(घड़ी_speed, &dev->clk_speed);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "bad dt property clock-speed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	dev->io_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(dev->io_base))
-		return PTR_ERR(dev->io_base);
+	अगर (IS_ERR(dev->io_base))
+		वापस PTR_ERR(dev->io_base);
 
 	of_id = of_match_node(dim2_of_match, pdev->dev.of_node);
 	pdata = of_id->data;
 	ret = pdata && pdata->enable ? pdata->enable(pdev) : 0;
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	dev->disable_platform = pdata ? pdata->disable : NULL;
+	dev->disable_platक्रमm = pdata ? pdata->disable : शून्य;
 
 	dev_info(&pdev->dev, "sync: num of frames per sub-buffer: %u\n", fcnt);
 	hal_ret = dim_startup(dev->io_base, dev->clk_speed, fcnt);
-	if (hal_ret != DIM_NO_ERROR) {
+	अगर (hal_ret != DIM_NO_ERROR) अणु
 		dev_err(&pdev->dev, "dim_startup failed: %d\n", hal_ret);
 		ret = -ENODEV;
-		goto err_disable_platform;
-	}
+		जाओ err_disable_platक्रमm;
+	पूर्ण
 
-	irq = platform_get_irq(pdev, AHB0_INT_IDX);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, AHB0_INT_IDX);
+	अगर (irq < 0) अणु
 		ret = irq;
-		goto err_shutdown_dim;
-	}
+		जाओ err_shutकरोwn_dim;
+	पूर्ण
 
 	ret = devm_request_irq(&pdev->dev, irq, dim2_ahb_isr, 0,
 			       "dim2_ahb0_int", dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to request ahb0_int irq %d\n", irq);
-		goto err_shutdown_dim;
-	}
+		जाओ err_shutकरोwn_dim;
+	पूर्ण
 
-	irq = platform_get_irq(pdev, MLB_INT_IDX);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, MLB_INT_IDX);
+	अगर (irq < 0) अणु
 		ret = irq;
-		goto err_shutdown_dim;
-	}
+		जाओ err_shutकरोwn_dim;
+	पूर्ण
 
 	ret = devm_request_irq(&pdev->dev, irq, dim2_mlb_isr, 0,
 			       "dim2_mlb_int", dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to request mlb_int irq %d\n", irq);
-		goto err_shutdown_dim;
-	}
+		जाओ err_shutकरोwn_dim;
+	पूर्ण
 
-	init_waitqueue_head(&dev->netinfo_waitq);
+	init_रुकोqueue_head(&dev->netinfo_रुकोq);
 	dev->deliver_netinfo = 0;
-	dev->netinfo_task = kthread_run(&deliver_netinfo_thread, dev,
+	dev->netinfo_task = kthपढ़ो_run(&deliver_netinfo_thपढ़ो, dev,
 					"dim2_netinfo");
-	if (IS_ERR(dev->netinfo_task)) {
+	अगर (IS_ERR(dev->netinfo_task)) अणु
 		ret = PTR_ERR(dev->netinfo_task);
-		goto err_shutdown_dim;
-	}
+		जाओ err_shutकरोwn_dim;
+	पूर्ण
 
-	for (i = 0; i < DMA_CHANNELS; i++) {
-		struct most_channel_capability *cap = dev->capabilities + i;
-		struct hdm_channel *hdm_ch = dev->hch + i;
+	क्रम (i = 0; i < DMA_CHANNELS; i++) अणु
+		काष्ठा most_channel_capability *cap = dev->capabilities + i;
+		काष्ठा hdm_channel *hdm_ch = dev->hch + i;
 
 		INIT_LIST_HEAD(&hdm_ch->pending_list);
 		INIT_LIST_HEAD(&hdm_ch->started_list);
 		hdm_ch->is_initialized = false;
-		snprintf(hdm_ch->name, sizeof(hdm_ch->name), "ca%d", i * 2 + 2);
+		snम_लिखो(hdm_ch->name, माप(hdm_ch->name), "ca%d", i * 2 + 2);
 
 		cap->name_suffix = hdm_ch->name;
 		cap->direction = MOST_CH_RX | MOST_CH_TX;
@@ -827,262 +828,262 @@ static int dim2_probe(struct platform_device *pdev)
 		cap->buffer_size_packet = MAX_BUF_SIZE_PACKET;
 		cap->num_buffers_streaming = MAX_BUFFERS_STREAMING;
 		cap->buffer_size_streaming = MAX_BUF_SIZE_STREAMING;
-	}
+	पूर्ण
 
-	{
-		const char *fmt;
+	अणु
+		स्थिर अक्षर *fmt;
 
-		if (sizeof(res->start) == sizeof(long long))
+		अगर (माप(res->start) == माप(दीर्घ दीर्घ))
 			fmt = "dim2-%016llx";
-		else if (sizeof(res->start) == sizeof(long))
+		अन्यथा अगर (माप(res->start) == माप(दीर्घ))
 			fmt = "dim2-%016lx";
-		else
+		अन्यथा
 			fmt = "dim2-%016x";
 
-		snprintf(dev->name, sizeof(dev->name), fmt, res->start);
-	}
+		snम_लिखो(dev->name, माप(dev->name), fmt, res->start);
+	पूर्ण
 
-	dev->most_iface.interface = ITYPE_MEDIALB_DIM2;
-	dev->most_iface.description = dev->name;
-	dev->most_iface.num_channels = DMA_CHANNELS;
-	dev->most_iface.channel_vector = dev->capabilities;
-	dev->most_iface.configure = configure_channel;
-	dev->most_iface.enqueue = enqueue;
-	dev->most_iface.dma_alloc = dma_alloc;
-	dev->most_iface.dma_free = dma_free;
-	dev->most_iface.poison_channel = poison_channel;
-	dev->most_iface.request_netinfo = request_netinfo;
-	dev->most_iface.driver_dev = &pdev->dev;
-	dev->most_iface.dev = &dev->dev;
+	dev->most_अगरace.पूर्णांकerface = ITYPE_MEDIALB_DIM2;
+	dev->most_अगरace.description = dev->name;
+	dev->most_अगरace.num_channels = DMA_CHANNELS;
+	dev->most_अगरace.channel_vector = dev->capabilities;
+	dev->most_अगरace.configure = configure_channel;
+	dev->most_अगरace.enqueue = enqueue;
+	dev->most_अगरace.dma_alloc = dma_alloc;
+	dev->most_अगरace.dma_मुक्त = dma_मुक्त;
+	dev->most_अगरace.poison_channel = poison_channel;
+	dev->most_अगरace.request_netinfo = request_netinfo;
+	dev->most_अगरace.driver_dev = &pdev->dev;
+	dev->most_अगरace.dev = &dev->dev;
 	dev->dev.init_name = "dim2_state";
 	dev->dev.parent = &pdev->dev;
 
-	ret = most_register_interface(&dev->most_iface);
-	if (ret) {
+	ret = most_रेजिस्टर_पूर्णांकerface(&dev->most_अगरace);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to register MOST interface\n");
-		goto err_stop_thread;
-	}
+		जाओ err_stop_thपढ़ो;
+	पूर्ण
 
 	ret = dim2_sysfs_probe(&dev->dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to create sysfs attribute\n");
-		goto err_unreg_iface;
-	}
+		जाओ err_unreg_अगरace;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_unreg_iface:
-	most_deregister_interface(&dev->most_iface);
-err_stop_thread:
-	kthread_stop(dev->netinfo_task);
-err_shutdown_dim:
-	dim_shutdown();
-err_disable_platform:
-	if (dev->disable_platform)
-		dev->disable_platform(pdev);
+err_unreg_अगरace:
+	most_deरेजिस्टर_पूर्णांकerface(&dev->most_अगरace);
+err_stop_thपढ़ो:
+	kthपढ़ो_stop(dev->netinfo_task);
+err_shutकरोwn_dim:
+	dim_shutकरोwn();
+err_disable_platक्रमm:
+	अगर (dev->disable_platक्रमm)
+		dev->disable_platक्रमm(pdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * dim2_remove - dim2 remove handler
- * @pdev: platform device structure
+ * dim2_हटाओ - dim2 हटाओ handler
+ * @pdev: platक्रमm device काष्ठाure
  *
- * Unregister the interface from mostcore
+ * Unरेजिस्टर the पूर्णांकerface from mostcore
  */
-static int dim2_remove(struct platform_device *pdev)
-{
-	struct dim2_hdm *dev = platform_get_drvdata(pdev);
-	unsigned long flags;
+अटल पूर्णांक dim2_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dim2_hdm *dev = platक्रमm_get_drvdata(pdev);
+	अचिन्हित दीर्घ flags;
 
 	dim2_sysfs_destroy(&dev->dev);
-	most_deregister_interface(&dev->most_iface);
-	kthread_stop(dev->netinfo_task);
+	most_deरेजिस्टर_पूर्णांकerface(&dev->most_अगरace);
+	kthपढ़ो_stop(dev->netinfo_task);
 
 	spin_lock_irqsave(&dim_lock, flags);
-	dim_shutdown();
+	dim_shutकरोwn();
 	spin_unlock_irqrestore(&dim_lock, flags);
 
-	if (dev->disable_platform)
-		dev->disable_platform(pdev);
+	अगर (dev->disable_platक्रमm)
+		dev->disable_platक्रमm(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* platform specific functions [[ */
+/* platक्रमm specअगरic functions [[ */
 
-static int fsl_mx6_enable(struct platform_device *pdev)
-{
-	struct dim2_hdm *dev = platform_get_drvdata(pdev);
-	int ret;
+अटल पूर्णांक fsl_mx6_enable(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dim2_hdm *dev = platक्रमm_get_drvdata(pdev);
+	पूर्णांक ret;
 
 	dev->clk = devm_clk_get(&pdev->dev, "mlb");
-	if (IS_ERR_OR_NULL(dev->clk)) {
+	अगर (IS_ERR_OR_शून्य(dev->clk)) अणु
 		dev_err(&pdev->dev, "unable to get mlb clock\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	ret = clk_prepare_enable(dev->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "%s\n", "clk_prepare_enable failed");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (dev->clk_speed >= CLK_2048FS) {
+	अगर (dev->clk_speed >= CLK_2048FS) अणु
 		/* enable pll */
 		dev->clk_pll = devm_clk_get(&pdev->dev, "pll8_mlb");
-		if (IS_ERR_OR_NULL(dev->clk_pll)) {
+		अगर (IS_ERR_OR_शून्य(dev->clk_pll)) अणु
 			dev_err(&pdev->dev, "unable to get mlb pll clock\n");
 			clk_disable_unprepare(dev->clk);
-			return -EFAULT;
-		}
+			वापस -EFAULT;
+		पूर्ण
 
-		writel(0x888, dev->io_base + 0x38);
+		ग_लिखोl(0x888, dev->io_base + 0x38);
 		clk_prepare_enable(dev->clk_pll);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fsl_mx6_disable(struct platform_device *pdev)
-{
-	struct dim2_hdm *dev = platform_get_drvdata(pdev);
+अटल व्योम fsl_mx6_disable(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dim2_hdm *dev = platक्रमm_get_drvdata(pdev);
 
-	if (dev->clk_speed >= CLK_2048FS)
+	अगर (dev->clk_speed >= CLK_2048FS)
 		clk_disable_unprepare(dev->clk_pll);
 
 	clk_disable_unprepare(dev->clk);
-}
+पूर्ण
 
-static int rcar_h2_enable(struct platform_device *pdev)
-{
-	struct dim2_hdm *dev = platform_get_drvdata(pdev);
-	int ret;
+अटल पूर्णांक rcar_h2_enable(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dim2_hdm *dev = platक्रमm_get_drvdata(pdev);
+	पूर्णांक ret;
 
-	dev->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(dev->clk)) {
+	dev->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(dev->clk)) अणु
 		dev_err(&pdev->dev, "cannot get clock\n");
-		return PTR_ERR(dev->clk);
-	}
+		वापस PTR_ERR(dev->clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(dev->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "%s\n", "clk_prepare_enable failed");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (dev->clk_speed >= CLK_2048FS) {
+	अगर (dev->clk_speed >= CLK_2048FS) अणु
 		/* enable MLP pll and LVDS drivers */
-		writel(0x03, dev->io_base + 0x600);
+		ग_लिखोl(0x03, dev->io_base + 0x600);
 		/* set bias */
-		writel(0x888, dev->io_base + 0x38);
-	} else {
+		ग_लिखोl(0x888, dev->io_base + 0x38);
+	पूर्ण अन्यथा अणु
 		/* PLL */
-		writel(0x04, dev->io_base + 0x600);
-	}
+		ग_लिखोl(0x04, dev->io_base + 0x600);
+	पूर्ण
 
 
 	/* BBCR = 0b11 */
-	writel(0x03, dev->io_base + 0x500);
-	writel(0x0002FF02, dev->io_base + 0x508);
+	ग_लिखोl(0x03, dev->io_base + 0x500);
+	ग_लिखोl(0x0002FF02, dev->io_base + 0x508);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rcar_h2_disable(struct platform_device *pdev)
-{
-	struct dim2_hdm *dev = platform_get_drvdata(pdev);
+अटल व्योम rcar_h2_disable(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dim2_hdm *dev = platक्रमm_get_drvdata(pdev);
 
 	clk_disable_unprepare(dev->clk);
 
 	/* disable PLLs and LVDS drivers */
-	writel(0x0, dev->io_base + 0x600);
-}
+	ग_लिखोl(0x0, dev->io_base + 0x600);
+पूर्ण
 
-static int rcar_m3_enable(struct platform_device *pdev)
-{
-	struct dim2_hdm *dev = platform_get_drvdata(pdev);
+अटल पूर्णांक rcar_m3_enable(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dim2_hdm *dev = platक्रमm_get_drvdata(pdev);
 	u32 enable_512fs = dev->clk_speed == CLK_512FS;
-	int ret;
+	पूर्णांक ret;
 
-	dev->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(dev->clk)) {
+	dev->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(dev->clk)) अणु
 		dev_err(&pdev->dev, "cannot get clock\n");
-		return PTR_ERR(dev->clk);
-	}
+		वापस PTR_ERR(dev->clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(dev->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "%s\n", "clk_prepare_enable failed");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* PLL */
-	writel(0x04, dev->io_base + 0x600);
+	ग_लिखोl(0x04, dev->io_base + 0x600);
 
-	writel(enable_512fs, dev->io_base + 0x604);
+	ग_लिखोl(enable_512fs, dev->io_base + 0x604);
 
 	/* BBCR = 0b11 */
-	writel(0x03, dev->io_base + 0x500);
-	writel(0x0002FF02, dev->io_base + 0x508);
+	ग_लिखोl(0x03, dev->io_base + 0x500);
+	ग_लिखोl(0x0002FF02, dev->io_base + 0x508);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rcar_m3_disable(struct platform_device *pdev)
-{
-	struct dim2_hdm *dev = platform_get_drvdata(pdev);
+अटल व्योम rcar_m3_disable(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dim2_hdm *dev = platक्रमm_get_drvdata(pdev);
 
 	clk_disable_unprepare(dev->clk);
 
 	/* disable PLLs and LVDS drivers */
-	writel(0x0, dev->io_base + 0x600);
-}
+	ग_लिखोl(0x0, dev->io_base + 0x600);
+पूर्ण
 
-/* ]] platform specific functions */
+/* ]] platक्रमm specअगरic functions */
 
-enum dim2_platforms { FSL_MX6, RCAR_H2, RCAR_M3 };
+क्रमागत dim2_platक्रमms अणु FSL_MX6, RCAR_H2, RCAR_M3 पूर्ण;
 
-static struct dim2_platform_data plat_data[] = {
-	[FSL_MX6] = { .enable = fsl_mx6_enable, .disable = fsl_mx6_disable },
-	[RCAR_H2] = { .enable = rcar_h2_enable, .disable = rcar_h2_disable },
-	[RCAR_M3] = { .enable = rcar_m3_enable, .disable = rcar_m3_disable },
-};
+अटल काष्ठा dim2_platक्रमm_data plat_data[] = अणु
+	[FSL_MX6] = अणु .enable = fsl_mx6_enable, .disable = fsl_mx6_disable पूर्ण,
+	[RCAR_H2] = अणु .enable = rcar_h2_enable, .disable = rcar_h2_disable पूर्ण,
+	[RCAR_M3] = अणु .enable = rcar_m3_enable, .disable = rcar_m3_disable पूर्ण,
+पूर्ण;
 
-static const struct of_device_id dim2_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id dim2_of_match[] = अणु
+	अणु
 		.compatible = "fsl,imx6q-mlb150",
 		.data = plat_data + FSL_MX6
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "renesas,mlp",
 		.data = plat_data + RCAR_H2
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "rcar,medialb-dim2",
 		.data = plat_data + RCAR_M3
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "xlnx,axi4-os62420_3pin-1.00.a",
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "xlnx,axi4-os62420_6pin-1.00.a",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, dim2_of_match);
 
-static struct platform_driver dim2_driver = {
+अटल काष्ठा platक्रमm_driver dim2_driver = अणु
 	.probe = dim2_probe,
-	.remove = dim2_remove,
-	.driver = {
+	.हटाओ = dim2_हटाओ,
+	.driver = अणु
 		.name = "hdm_dim2",
 		.of_match_table = dim2_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(dim2_driver);
+module_platक्रमm_driver(dim2_driver);
 
 MODULE_AUTHOR("Andrey Shvetsov <andrey.shvetsov@k2l.de>");
 MODULE_DESCRIPTION("MediaLB DIM2 Hardware Dependent Module");

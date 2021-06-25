@@ -1,226 +1,227 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#ifndef _QED_INT_H
-#define _QED_INT_H
+#अगर_अघोषित _QED_INT_H
+#घोषणा _QED_INT_H
 
-#include <linux/types.h>
-#include <linux/slab.h>
-#include "qed.h"
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश "qed.h"
 
 /* Fields of IGU PF CONFIGURATION REGISTER */
-#define IGU_PF_CONF_FUNC_EN       (0x1 << 0)    /* function enable        */
-#define IGU_PF_CONF_MSI_MSIX_EN   (0x1 << 1)    /* MSI/MSIX enable        */
-#define IGU_PF_CONF_INT_LINE_EN   (0x1 << 2)    /* INT enable             */
-#define IGU_PF_CONF_ATTN_BIT_EN   (0x1 << 3)    /* attention enable       */
-#define IGU_PF_CONF_SINGLE_ISR_EN (0x1 << 4)    /* single ISR mode enable */
-#define IGU_PF_CONF_SIMD_MODE     (0x1 << 5)    /* simd all ones mode     */
+#घोषणा IGU_PF_CONF_FUNC_EN       (0x1 << 0)    /* function enable        */
+#घोषणा IGU_PF_CONF_MSI_MSIX_EN   (0x1 << 1)    /* MSI/MSIX enable        */
+#घोषणा IGU_PF_CONF_INT_LINE_EN   (0x1 << 2)    /* INT enable             */
+#घोषणा IGU_PF_CONF_ATTN_BIT_EN   (0x1 << 3)    /* attention enable       */
+#घोषणा IGU_PF_CONF_SINGLE_ISR_EN (0x1 << 4)    /* single ISR mode enable */
+#घोषणा IGU_PF_CONF_SIMD_MODE     (0x1 << 5)    /* simd all ones mode     */
 /* Fields of IGU VF CONFIGURATION REGISTER */
-#define IGU_VF_CONF_FUNC_EN        (0x1 << 0)	/* function enable        */
-#define IGU_VF_CONF_MSI_MSIX_EN    (0x1 << 1)	/* MSI/MSIX enable        */
-#define IGU_VF_CONF_SINGLE_ISR_EN  (0x1 << 4)	/* single ISR mode enable */
-#define IGU_VF_CONF_PARENT_MASK    (0xF)	/* Parent PF              */
-#define IGU_VF_CONF_PARENT_SHIFT   5		/* Parent PF              */
+#घोषणा IGU_VF_CONF_FUNC_EN        (0x1 << 0)	/* function enable        */
+#घोषणा IGU_VF_CONF_MSI_MSIX_EN    (0x1 << 1)	/* MSI/MSIX enable        */
+#घोषणा IGU_VF_CONF_SINGLE_ISR_EN  (0x1 << 4)	/* single ISR mode enable */
+#घोषणा IGU_VF_CONF_PARENT_MASK    (0xF)	/* Parent PF              */
+#घोषणा IGU_VF_CONF_PARENT_SHIFT   5		/* Parent PF              */
 
 /* Igu control commands
  */
-enum igu_ctrl_cmd {
+क्रमागत igu_ctrl_cmd अणु
 	IGU_CTRL_CMD_TYPE_RD,
 	IGU_CTRL_CMD_TYPE_WR,
 	MAX_IGU_CTRL_CMD
-};
+पूर्ण;
 
-/* Control register for the IGU command register
+/* Control रेजिस्टर क्रम the IGU command रेजिस्टर
  */
-struct igu_ctrl_reg {
+काष्ठा igu_ctrl_reg अणु
 	u32 ctrl_data;
-#define IGU_CTRL_REG_FID_MASK           0xFFFF  /* Opaque_FID	 */
-#define IGU_CTRL_REG_FID_SHIFT          0
-#define IGU_CTRL_REG_PXP_ADDR_MASK      0xFFF   /* Command address */
-#define IGU_CTRL_REG_PXP_ADDR_SHIFT     16
-#define IGU_CTRL_REG_RESERVED_MASK      0x1
-#define IGU_CTRL_REG_RESERVED_SHIFT     28
-#define IGU_CTRL_REG_TYPE_MASK          0x1 /* use enum igu_ctrl_cmd */
-#define IGU_CTRL_REG_TYPE_SHIFT         31
-};
+#घोषणा IGU_CTRL_REG_FID_MASK           0xFFFF  /* Opaque_FID	 */
+#घोषणा IGU_CTRL_REG_FID_SHIFT          0
+#घोषणा IGU_CTRL_REG_PXP_ADDR_MASK      0xFFF   /* Command address */
+#घोषणा IGU_CTRL_REG_PXP_ADDR_SHIFT     16
+#घोषणा IGU_CTRL_REG_RESERVED_MASK      0x1
+#घोषणा IGU_CTRL_REG_RESERVED_SHIFT     28
+#घोषणा IGU_CTRL_REG_TYPE_MASK          0x1 /* use क्रमागत igu_ctrl_cmd */
+#घोषणा IGU_CTRL_REG_TYPE_SHIFT         31
+पूर्ण;
 
-enum qed_coalescing_fsm {
+क्रमागत qed_coalescing_fsm अणु
 	QED_COAL_RX_STATE_MACHINE,
 	QED_COAL_TX_STATE_MACHINE
-};
+पूर्ण;
 
 /**
- * @brief qed_int_igu_enable_int - enable device interrupts
+ * @brief qed_पूर्णांक_igu_enable_पूर्णांक - enable device पूर्णांकerrupts
  *
  * @param p_hwfn
  * @param p_ptt
- * @param int_mode - interrupt mode to use
+ * @param पूर्णांक_mode - पूर्णांकerrupt mode to use
  */
-void qed_int_igu_enable_int(struct qed_hwfn *p_hwfn,
-			    struct qed_ptt *p_ptt,
-			    enum qed_int_mode int_mode);
+व्योम qed_पूर्णांक_igu_enable_पूर्णांक(काष्ठा qed_hwfn *p_hwfn,
+			    काष्ठा qed_ptt *p_ptt,
+			    क्रमागत qed_पूर्णांक_mode पूर्णांक_mode);
 
 /**
- * @brief qed_int_igu_disable_int - disable device interrupts
+ * @brief qed_पूर्णांक_igu_disable_पूर्णांक - disable device पूर्णांकerrupts
  *
  * @param p_hwfn
  * @param p_ptt
  */
-void qed_int_igu_disable_int(struct qed_hwfn *p_hwfn,
-			     struct qed_ptt *p_ptt);
+व्योम qed_पूर्णांक_igu_disable_पूर्णांक(काष्ठा qed_hwfn *p_hwfn,
+			     काष्ठा qed_ptt *p_ptt);
 
 /**
- * @brief qed_int_igu_read_sisr_reg - Reads the single isr multiple dpc
- *        register from igu.
+ * @brief qed_पूर्णांक_igu_पढ़ो_sisr_reg - Reads the single isr multiple dpc
+ *        रेजिस्टर from igu.
  *
  * @param p_hwfn
  *
- * @return u64
+ * @वापस u64
  */
-u64 qed_int_igu_read_sisr_reg(struct qed_hwfn *p_hwfn);
+u64 qed_पूर्णांक_igu_पढ़ो_sisr_reg(काष्ठा qed_hwfn *p_hwfn);
 
-#define QED_SP_SB_ID 0xffff
+#घोषणा QED_SP_SB_ID 0xffff
 /**
- * @brief qed_int_sb_init - Initializes the sb_info structure.
+ * @brief qed_पूर्णांक_sb_init - Initializes the sb_info काष्ठाure.
  *
- * once the structure is initialized it can be passed to sb related functions.
+ * once the काष्ठाure is initialized it can be passed to sb related functions.
  *
  * @param p_hwfn
  * @param p_ptt
- * @param sb_info	points to an uninitialized (but
- *			allocated) sb_info structure
+ * @param sb_info	poपूर्णांकs to an uninitialized (but
+ *			allocated) sb_info काष्ठाure
  * @param sb_virt_addr
  * @param sb_phy_addr
  * @param sb_id	the sb_id to be used (zero based in driver)
- *			should use QED_SP_SB_ID for SP Status block
+ *			should use QED_SP_SB_ID क्रम SP Status block
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_int_sb_init(struct qed_hwfn *p_hwfn,
-		    struct qed_ptt *p_ptt,
-		    struct qed_sb_info *sb_info,
-		    void *sb_virt_addr,
+पूर्णांक qed_पूर्णांक_sb_init(काष्ठा qed_hwfn *p_hwfn,
+		    काष्ठा qed_ptt *p_ptt,
+		    काष्ठा qed_sb_info *sb_info,
+		    व्योम *sb_virt_addr,
 		    dma_addr_t sb_phy_addr,
 		    u16 sb_id);
 /**
- * @brief qed_int_sb_setup - Setup the sb.
+ * @brief qed_पूर्णांक_sb_setup - Setup the sb.
  *
  * @param p_hwfn
  * @param p_ptt
- * @param sb_info	initialized sb_info structure
+ * @param sb_info	initialized sb_info काष्ठाure
  */
-void qed_int_sb_setup(struct qed_hwfn *p_hwfn,
-		      struct qed_ptt *p_ptt,
-		      struct qed_sb_info *sb_info);
+व्योम qed_पूर्णांक_sb_setup(काष्ठा qed_hwfn *p_hwfn,
+		      काष्ठा qed_ptt *p_ptt,
+		      काष्ठा qed_sb_info *sb_info);
 
 /**
- * @brief qed_int_sb_release - releases the sb_info structure.
+ * @brief qed_पूर्णांक_sb_release - releases the sb_info काष्ठाure.
  *
- * once the structure is released, it's memory can be freed
+ * once the काष्ठाure is released, it's memory can be मुक्तd
  *
  * @param p_hwfn
- * @param sb_info	points to an allocated sb_info structure
+ * @param sb_info	poपूर्णांकs to an allocated sb_info काष्ठाure
  * @param sb_id		the sb_id to be used (zero based in driver)
  *			should never be equal to QED_SP_SB_ID
  *			(SP Status block)
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_int_sb_release(struct qed_hwfn *p_hwfn,
-		       struct qed_sb_info *sb_info,
+पूर्णांक qed_पूर्णांक_sb_release(काष्ठा qed_hwfn *p_hwfn,
+		       काष्ठा qed_sb_info *sb_info,
 		       u16 sb_id);
 
 /**
- * @brief qed_int_sp_dpc - To be called when an interrupt is received on the
- *        default status block.
+ * @brief qed_पूर्णांक_sp_dpc - To be called when an पूर्णांकerrupt is received on the
+ *        शेष status block.
  *
- * @param p_hwfn - pointer to hwfn
+ * @param p_hwfn - poपूर्णांकer to hwfn
  *
  */
-void qed_int_sp_dpc(struct tasklet_struct *t);
+व्योम qed_पूर्णांक_sp_dpc(काष्ठा tasklet_काष्ठा *t);
 
 /**
- * @brief qed_int_get_num_sbs - get the number of status
- *        blocks configured for this funciton in the igu.
+ * @brief qed_पूर्णांक_get_num_sbs - get the number of status
+ *        blocks configured क्रम this funciton in the igu.
  *
  * @param p_hwfn
  * @param p_sb_cnt_info
  *
- * @return int - number of status blocks configured
+ * @वापस पूर्णांक - number of status blocks configured
  */
-void qed_int_get_num_sbs(struct qed_hwfn	*p_hwfn,
-			 struct qed_sb_cnt_info *p_sb_cnt_info);
+व्योम qed_पूर्णांक_get_num_sbs(काष्ठा qed_hwfn	*p_hwfn,
+			 काष्ठा qed_sb_cnt_info *p_sb_cnt_info);
 
 /**
- * @brief qed_int_disable_post_isr_release - performs the cleanup post ISR
+ * @brief qed_पूर्णांक_disable_post_isr_release - perक्रमms the cleanup post ISR
  *        release. The API need to be called after releasing all slowpath IRQs
  *        of the device.
  *
  * @param cdev
  *
  */
-void qed_int_disable_post_isr_release(struct qed_dev *cdev);
+व्योम qed_पूर्णांक_disable_post_isr_release(काष्ठा qed_dev *cdev);
 
 /**
- * @brief qed_int_attn_clr_enable - sets whether the general behavior is
- *        preventing attentions from being reasserted, or following the
- *        attributes of the specific attention.
+ * @brief qed_पूर्णांक_attn_clr_enable - sets whether the general behavior is
+ *        preventing attentions from being reनिश्चितed, or following the
+ *        attributes of the specअगरic attention.
  *
  * @param cdev
  * @param clr_enable
  *
  */
-void qed_int_attn_clr_enable(struct qed_dev *cdev, bool clr_enable);
+व्योम qed_पूर्णांक_attn_clr_enable(काष्ठा qed_dev *cdev, bool clr_enable);
 
 /**
  * @brief - Doorbell Recovery handler.
- *          Run doorbell recovery in case of PF overflow (and flush DORQ if
+ *          Run करोorbell recovery in हाल of PF overflow (and flush DORQ अगर
  *          needed).
  *
  * @param p_hwfn
  * @param p_ptt
  */
-int qed_db_rec_handler(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt);
+पूर्णांक qed_db_rec_handler(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt);
 
-#define QED_CAU_DEF_RX_TIMER_RES 0
-#define QED_CAU_DEF_TX_TIMER_RES 0
+#घोषणा QED_CAU_DEF_RX_TIMER_RES 0
+#घोषणा QED_CAU_DEF_TX_TIMER_RES 0
 
-#define QED_SB_ATT_IDX  0x0001
-#define QED_SB_EVENT_MASK       0x0003
+#घोषणा QED_SB_ATT_IDX  0x0001
+#घोषणा QED_SB_EVENT_MASK       0x0003
 
-#define SB_ALIGNED_SIZE(p_hwfn)	\
-	ALIGNED_TYPE_SIZE(struct status_block_e4, p_hwfn)
+#घोषणा SB_ALIGNED_SIZE(p_hwfn)	\
+	ALIGNED_TYPE_SIZE(काष्ठा status_block_e4, p_hwfn)
 
-#define QED_SB_INVALID_IDX      0xffff
+#घोषणा QED_SB_INVALID_IDX      0xffff
 
-struct qed_igu_block {
+काष्ठा qed_igu_block अणु
 	u8 status;
-#define QED_IGU_STATUS_FREE     0x01
-#define QED_IGU_STATUS_VALID    0x02
-#define QED_IGU_STATUS_PF       0x04
-#define QED_IGU_STATUS_DSB      0x08
+#घोषणा QED_IGU_STATUS_FREE     0x01
+#घोषणा QED_IGU_STATUS_VALID    0x02
+#घोषणा QED_IGU_STATUS_PF       0x04
+#घोषणा QED_IGU_STATUS_DSB      0x08
 
 	u8 vector_number;
 	u8 function_id;
 	u8 is_pf;
 
-	/* Index inside IGU [meant for back reference] */
+	/* Index inside IGU [meant क्रम back reference] */
 	u16 igu_sb_id;
 
-	struct qed_sb_info *sb_info;
-};
+	काष्ठा qed_sb_info *sb_info;
+पूर्ण;
 
-struct qed_igu_info {
-	struct qed_igu_block entry[MAX_TOT_SB_PER_PATH];
+काष्ठा qed_igu_info अणु
+	काष्ठा qed_igu_block entry[MAX_TOT_SB_PER_PATH];
 	u16 igu_dsb_id;
 
-	struct qed_sb_cnt_info usage;
+	काष्ठा qed_sb_cnt_info usage;
 
 	bool b_allow_pf_vf_change;
-};
+पूर्ण;
 
 /**
  * @brief - Make sure the IGU CAM reflects the resources provided by MFW
@@ -228,103 +229,103 @@ struct qed_igu_info {
  * @param p_hwfn
  * @param p_ptt
  */
-int qed_int_igu_reset_cam(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt);
+पूर्णांक qed_पूर्णांक_igu_reset_cam(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt);
 
 /**
- * @brief Translate the weakly-defined client sb-id into an IGU sb-id
+ * @brief Translate the weakly-defined client sb-id पूर्णांकo an IGU sb-id
  *
  * @param p_hwfn
  * @param sb_id - user provided sb_id
  *
- * @return an index inside IGU CAM where the SB resides
+ * @वापस an index inside IGU CAM where the SB resides
  */
-u16 qed_get_igu_sb_id(struct qed_hwfn *p_hwfn, u16 sb_id);
+u16 qed_get_igu_sb_id(काष्ठा qed_hwfn *p_hwfn, u16 sb_id);
 
 /**
- * @brief return a pointer to an unused valid SB
+ * @brief वापस a poपूर्णांकer to an unused valid SB
  *
  * @param p_hwfn
- * @param b_is_pf - true iff we want a SB belonging to a PF
+ * @param b_is_pf - true अगरf we want a SB beदीर्घing to a PF
  *
- * @return point to an igu_block, NULL if none is available
+ * @वापस poपूर्णांक to an igu_block, शून्य अगर none is available
  */
-struct qed_igu_block *qed_get_igu_free_sb(struct qed_hwfn *p_hwfn,
+काष्ठा qed_igu_block *qed_get_igu_मुक्त_sb(काष्ठा qed_hwfn *p_hwfn,
 					  bool b_is_pf);
 
-void qed_int_igu_init_pure_rt(struct qed_hwfn *p_hwfn,
-			      struct qed_ptt *p_ptt,
+व्योम qed_पूर्णांक_igu_init_pure_rt(काष्ठा qed_hwfn *p_hwfn,
+			      काष्ठा qed_ptt *p_ptt,
 			      bool b_set,
 			      bool b_slowpath);
 
-void qed_int_igu_init_rt(struct qed_hwfn *p_hwfn);
+व्योम qed_पूर्णांक_igu_init_rt(काष्ठा qed_hwfn *p_hwfn);
 
 /**
- * @brief qed_int_igu_read_cam - Reads the IGU CAM.
+ * @brief qed_पूर्णांक_igu_पढ़ो_cam - Reads the IGU CAM.
  *	This function needs to be called during hardware
- *	prepare. It reads the info from igu cam to know which
- *	status block is the default / base status block etc.
+ *	prepare. It पढ़ोs the info from igu cam to know which
+ *	status block is the शेष / base status block etc.
  *
  * @param p_hwfn
  * @param p_ptt
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_int_igu_read_cam(struct qed_hwfn *p_hwfn,
-			 struct qed_ptt *p_ptt);
+पूर्णांक qed_पूर्णांक_igu_पढ़ो_cam(काष्ठा qed_hwfn *p_hwfn,
+			 काष्ठा qed_ptt *p_ptt);
 
-typedef int (*qed_int_comp_cb_t)(struct qed_hwfn *p_hwfn,
-				 void *cookie);
+प्रकार पूर्णांक (*qed_पूर्णांक_comp_cb_t)(काष्ठा qed_hwfn *p_hwfn,
+				 व्योम *cookie);
 /**
- * @brief qed_int_register_cb - Register callback func for
+ * @brief qed_पूर्णांक_रेजिस्टर_cb - Register callback func क्रम
  *      slowhwfn statusblock.
  *
  *	Every protocol that uses the slowhwfn status block
- *	should register a callback function that will be called
+ *	should रेजिस्टर a callback function that will be called
  *	once there is an update of the sp status block.
  *
  * @param p_hwfn
  * @param comp_cb - function to be called when there is an
- *                  interrupt on the sp sb
+ *                  पूर्णांकerrupt on the sp sb
  *
  * @param cookie  - passed to the callback function
  * @param sb_idx  - OUT parameter which gives the chosen index
- *                  for this protocol.
- * @param p_fw_cons  - pointer to the actual address of the
- *                     consumer for this protocol.
+ *                  क्रम this protocol.
+ * @param p_fw_cons  - poपूर्णांकer to the actual address of the
+ *                     consumer क्रम this protocol.
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_int_register_cb(struct qed_hwfn *p_hwfn,
-			qed_int_comp_cb_t comp_cb,
-			void *cookie,
+पूर्णांक qed_पूर्णांक_रेजिस्टर_cb(काष्ठा qed_hwfn *p_hwfn,
+			qed_पूर्णांक_comp_cb_t comp_cb,
+			व्योम *cookie,
 			u8 *sb_idx,
 			__le16 **p_fw_cons);
 
 /**
- * @brief qed_int_unregister_cb - Unregisters callback
+ * @brief qed_पूर्णांक_unरेजिस्टर_cb - Unरेजिस्टरs callback
  *      function from sp sb.
- *      Partner of qed_int_register_cb -> should be called
- *      when no longer required.
+ *      Partner of qed_पूर्णांक_रेजिस्टर_cb -> should be called
+ *      when no दीर्घer required.
  *
  * @param p_hwfn
  * @param pi
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_int_unregister_cb(struct qed_hwfn *p_hwfn,
+पूर्णांक qed_पूर्णांक_unरेजिस्टर_cb(काष्ठा qed_hwfn *p_hwfn,
 			  u8 pi);
 
 /**
- * @brief qed_int_get_sp_sb_id - Get the slowhwfn sb id.
+ * @brief qed_पूर्णांक_get_sp_sb_id - Get the slowhwfn sb id.
  *
  * @param p_hwfn
  *
- * @return u16
+ * @वापस u16
  */
-u16 qed_int_get_sp_sb_id(struct qed_hwfn *p_hwfn);
+u16 qed_पूर्णांक_get_sp_sb_id(काष्ठा qed_hwfn *p_hwfn);
 
 /**
- * @brief Status block cleanup. Should be called for each status
+ * @brief Status block cleanup. Should be called क्रम each status
  *        block that will be used -> both PF / VF
  *
  * @param p_hwfn
@@ -333,14 +334,14 @@ u16 qed_int_get_sp_sb_id(struct qed_hwfn *p_hwfn);
  * @param opaque	- opaque fid of the sb owner.
  * @param b_set		- set(1) / clear(0)
  */
-void qed_int_igu_init_pure_rt_single(struct qed_hwfn *p_hwfn,
-				     struct qed_ptt *p_ptt,
+व्योम qed_पूर्णांक_igu_init_pure_rt_single(काष्ठा qed_hwfn *p_hwfn,
+				     काष्ठा qed_ptt *p_ptt,
 				     u16 igu_sb_id,
 				     u16 opaque,
 				     bool b_set);
 
 /**
- * @brief qed_int_cau_conf - configure cau for a given status
+ * @brief qed_पूर्णांक_cau_conf - configure cau क्रम a given status
  *        block
  *
  * @param p_hwfn
@@ -350,51 +351,51 @@ void qed_int_igu_init_pure_rt_single(struct qed_hwfn *p_hwfn,
  * @param vf_number
  * @param vf_valid
  */
-void qed_int_cau_conf_sb(struct qed_hwfn *p_hwfn,
-			 struct qed_ptt *p_ptt,
+व्योम qed_पूर्णांक_cau_conf_sb(काष्ठा qed_hwfn *p_hwfn,
+			 काष्ठा qed_ptt *p_ptt,
 			 dma_addr_t sb_phys,
 			 u16 igu_sb_id,
 			 u16 vf_number,
 			 u8 vf_valid);
 
 /**
- * @brief qed_int_alloc
+ * @brief qed_पूर्णांक_alloc
  *
  * @param p_hwfn
  * @param p_ptt
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_int_alloc(struct qed_hwfn *p_hwfn,
-		  struct qed_ptt *p_ptt);
+पूर्णांक qed_पूर्णांक_alloc(काष्ठा qed_hwfn *p_hwfn,
+		  काष्ठा qed_ptt *p_ptt);
 
 /**
- * @brief qed_int_free
+ * @brief qed_पूर्णांक_मुक्त
  *
  * @param p_hwfn
  */
-void qed_int_free(struct qed_hwfn *p_hwfn);
+व्योम qed_पूर्णांक_मुक्त(काष्ठा qed_hwfn *p_hwfn);
 
 /**
- * @brief qed_int_setup
- *
- * @param p_hwfn
- * @param p_ptt
- */
-void qed_int_setup(struct qed_hwfn *p_hwfn,
-		   struct qed_ptt *p_ptt);
-
-/**
- * @brief - Enable Interrupt & Attention for hw function
+ * @brief qed_पूर्णांक_setup
  *
  * @param p_hwfn
  * @param p_ptt
- * @param int_mode
- *
- * @return int
  */
-int qed_int_igu_enable(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
-		       enum qed_int_mode int_mode);
+व्योम qed_पूर्णांक_setup(काष्ठा qed_hwfn *p_hwfn,
+		   काष्ठा qed_ptt *p_ptt);
+
+/**
+ * @brief - Enable Interrupt & Attention क्रम hw function
+ *
+ * @param p_hwfn
+ * @param p_ptt
+ * @param पूर्णांक_mode
+ *
+ * @वापस पूर्णांक
+ */
+पूर्णांक qed_पूर्णांक_igu_enable(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt,
+		       क्रमागत qed_पूर्णांक_mode पूर्णांक_mode);
 
 /**
  * @brief - Initialize CAU status block entry
@@ -405,18 +406,18 @@ int qed_int_igu_enable(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
  * @param vf_number
  * @param vf_valid
  */
-void qed_init_cau_sb_entry(struct qed_hwfn *p_hwfn,
-			   struct cau_sb_entry *p_sb_entry,
+व्योम qed_init_cau_sb_entry(काष्ठा qed_hwfn *p_hwfn,
+			   काष्ठा cau_sb_entry *p_sb_entry,
 			   u8 pf_id,
 			   u16 vf_number,
 			   u8 vf_valid);
 
-int qed_int_set_timer_res(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
-			  u8 timer_res, u16 sb_id, bool tx);
+पूर्णांक qed_पूर्णांक_set_समयr_res(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt,
+			  u8 समयr_res, u16 sb_id, bool tx);
 
-#define QED_MAPPING_MEMORY_SIZE(dev)	(NUM_OF_SBS(dev))
+#घोषणा QED_MAPPING_MEMORY_SIZE(dev)	(NUM_OF_SBS(dev))
 
-int qed_pglueb_rbc_attn_handler(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
+पूर्णांक qed_pglueb_rbc_attn_handler(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt,
 				bool hw_init);
 
-#endif
+#पूर्ण_अगर

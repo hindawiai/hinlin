@@ -1,448 +1,449 @@
+<शैली गुरु>
 /* Broadcom NetXtreme-C/E network driver.
  *
  * Copyright (c) 2016-2017 Broadcom Limited
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
-#include <linux/pci.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/rtnetlink.h>
-#include <linux/jhash.h>
-#include <net/pkt_cls.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/jhash.h>
+#समावेश <net/pkt_cls.h>
 
-#include "bnxt_hsi.h"
-#include "bnxt.h"
-#include "bnxt_vfr.h"
-#include "bnxt_devlink.h"
-#include "bnxt_tc.h"
+#समावेश "bnxt_hsi.h"
+#समावेश "bnxt.h"
+#समावेश "bnxt_vfr.h"
+#समावेश "bnxt_devlink.h"
+#समावेश "bnxt_tc.h"
 
-#ifdef CONFIG_BNXT_SRIOV
+#अगर_घोषित CONFIG_BNXT_SRIOV
 
-#define CFA_HANDLE_INVALID		0xffff
-#define VF_IDX_INVALID			0xffff
+#घोषणा CFA_HANDLE_INVALID		0xffff
+#घोषणा VF_IDX_INVALID			0xffff
 
-static int hwrm_cfa_vfr_alloc(struct bnxt *bp, u16 vf_idx,
+अटल पूर्णांक hwrm_cfa_vfr_alloc(काष्ठा bnxt *bp, u16 vf_idx,
 			      u16 *tx_cfa_action, u16 *rx_cfa_code)
-{
-	struct hwrm_cfa_vfr_alloc_output *resp = bp->hwrm_cmd_resp_addr;
-	struct hwrm_cfa_vfr_alloc_input req = { 0 };
-	int rc;
+अणु
+	काष्ठा hwrm_cfa_vfr_alloc_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_cfa_vfr_alloc_input req = अणु 0 पूर्ण;
+	पूर्णांक rc;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_CFA_VFR_ALLOC, -1, -1);
 	req.vf_id = cpu_to_le16(vf_idx);
-	sprintf(req.vfr_name, "vfr%d", vf_idx);
+	प्र_लिखो(req.vfr_name, "vfr%d", vf_idx);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc) {
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc) अणु
 		*tx_cfa_action = le16_to_cpu(resp->tx_cfa_action);
 		*rx_cfa_code = le16_to_cpu(resp->rx_cfa_code);
 		netdev_dbg(bp->dev, "tx_cfa_action=0x%x, rx_cfa_code=0x%x",
 			   *tx_cfa_action, *rx_cfa_code);
-	} else {
+	पूर्ण अन्यथा अणु
 		netdev_info(bp->dev, "%s error rc=%d\n", __func__, rc);
-	}
+	पूर्ण
 
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int hwrm_cfa_vfr_free(struct bnxt *bp, u16 vf_idx)
-{
-	struct hwrm_cfa_vfr_free_input req = { 0 };
-	int rc;
+अटल पूर्णांक hwrm_cfa_vfr_मुक्त(काष्ठा bnxt *bp, u16 vf_idx)
+अणु
+	काष्ठा hwrm_cfa_vfr_मुक्त_input req = अणु 0 पूर्ण;
+	पूर्णांक rc;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_CFA_VFR_FREE, -1, -1);
-	sprintf(req.vfr_name, "vfr%d", vf_idx);
+	प्र_लिखो(req.vfr_name, "vfr%d", vf_idx);
 
-	rc = hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc)
+	rc = hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc)
 		netdev_info(bp->dev, "%s error rc=%d\n", __func__, rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_vfr_qcfg(struct bnxt *bp, struct bnxt_vf_rep *vf_rep,
+अटल पूर्णांक bnxt_hwrm_vfr_qcfg(काष्ठा bnxt *bp, काष्ठा bnxt_vf_rep *vf_rep,
 			      u16 *max_mtu)
-{
-	struct hwrm_func_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
-	struct hwrm_func_qcfg_input req = {0};
+अणु
+	काष्ठा hwrm_func_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_func_qcfg_input req = अणु0पूर्ण;
 	u16 mtu;
-	int rc;
+	पूर्णांक rc;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_QCFG, -1, -1);
 	req.fid = cpu_to_le16(bp->pf.vf[vf_rep->vf_idx].fw_fid);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
 
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc) {
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc) अणु
 		mtu = le16_to_cpu(resp->max_mtu_configured);
-		if (!mtu)
+		अगर (!mtu)
 			*max_mtu = BNXT_MAX_MTU;
-		else
+		अन्यथा
 			*max_mtu = mtu;
-	}
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_vf_rep_open(struct net_device *dev)
-{
-	struct bnxt_vf_rep *vf_rep = netdev_priv(dev);
-	struct bnxt *bp = vf_rep->bp;
+अटल पूर्णांक bnxt_vf_rep_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा bnxt_vf_rep *vf_rep = netdev_priv(dev);
+	काष्ठा bnxt *bp = vf_rep->bp;
 
-	/* Enable link and TX only if the parent PF is open. */
-	if (netif_running(bp->dev)) {
-		netif_carrier_on(dev);
-		netif_tx_start_all_queues(dev);
-	}
-	return 0;
-}
+	/* Enable link and TX only अगर the parent PF is खोलो. */
+	अगर (netअगर_running(bp->dev)) अणु
+		netअगर_carrier_on(dev);
+		netअगर_tx_start_all_queues(dev);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bnxt_vf_rep_close(struct net_device *dev)
-{
-	netif_carrier_off(dev);
-	netif_tx_disable(dev);
+अटल पूर्णांक bnxt_vf_rep_बंद(काष्ठा net_device *dev)
+अणु
+	netअगर_carrier_off(dev);
+	netअगर_tx_disable(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static netdev_tx_t bnxt_vf_rep_xmit(struct sk_buff *skb,
-				    struct net_device *dev)
-{
-	struct bnxt_vf_rep *vf_rep = netdev_priv(dev);
-	int rc, len = skb->len;
+अटल netdev_tx_t bnxt_vf_rep_xmit(काष्ठा sk_buff *skb,
+				    काष्ठा net_device *dev)
+अणु
+	काष्ठा bnxt_vf_rep *vf_rep = netdev_priv(dev);
+	पूर्णांक rc, len = skb->len;
 
 	skb_dst_drop(skb);
-	dst_hold((struct dst_entry *)vf_rep->dst);
-	skb_dst_set(skb, (struct dst_entry *)vf_rep->dst);
+	dst_hold((काष्ठा dst_entry *)vf_rep->dst);
+	skb_dst_set(skb, (काष्ठा dst_entry *)vf_rep->dst);
 	skb->dev = vf_rep->dst->u.port_info.lower_dev;
 
 	rc = dev_queue_xmit(skb);
-	if (!rc) {
+	अगर (!rc) अणु
 		vf_rep->tx_stats.packets++;
 		vf_rep->tx_stats.bytes += len;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static void
-bnxt_vf_rep_get_stats64(struct net_device *dev,
-			struct rtnl_link_stats64 *stats)
-{
-	struct bnxt_vf_rep *vf_rep = netdev_priv(dev);
+अटल व्योम
+bnxt_vf_rep_get_stats64(काष्ठा net_device *dev,
+			काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा bnxt_vf_rep *vf_rep = netdev_priv(dev);
 
 	stats->rx_packets = vf_rep->rx_stats.packets;
 	stats->rx_bytes = vf_rep->rx_stats.bytes;
 	stats->tx_packets = vf_rep->tx_stats.packets;
 	stats->tx_bytes = vf_rep->tx_stats.bytes;
-}
+पूर्ण
 
-static int bnxt_vf_rep_setup_tc_block_cb(enum tc_setup_type type,
-					 void *type_data,
-					 void *cb_priv)
-{
-	struct bnxt_vf_rep *vf_rep = cb_priv;
-	struct bnxt *bp = vf_rep->bp;
-	int vf_fid = bp->pf.vf[vf_rep->vf_idx].fw_fid;
+अटल पूर्णांक bnxt_vf_rep_setup_tc_block_cb(क्रमागत tc_setup_type type,
+					 व्योम *type_data,
+					 व्योम *cb_priv)
+अणु
+	काष्ठा bnxt_vf_rep *vf_rep = cb_priv;
+	काष्ठा bnxt *bp = vf_rep->bp;
+	पूर्णांक vf_fid = bp->pf.vf[vf_rep->vf_idx].fw_fid;
 
-	if (!bnxt_tc_flower_enabled(vf_rep->bp) ||
+	अगर (!bnxt_tc_flower_enabled(vf_rep->bp) ||
 	    !tc_cls_can_offload_and_chain0(bp->dev, type_data))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	switch (type) {
-	case TC_SETUP_CLSFLOWER:
-		return bnxt_tc_setup_flower(bp, vf_fid, type_data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (type) अणु
+	हाल TC_SETUP_CLSFLOWER:
+		वापस bnxt_tc_setup_flower(bp, vf_fid, type_data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static LIST_HEAD(bnxt_vf_block_cb_list);
+अटल LIST_HEAD(bnxt_vf_block_cb_list);
 
-static int bnxt_vf_rep_setup_tc(struct net_device *dev, enum tc_setup_type type,
-				void *type_data)
-{
-	struct bnxt_vf_rep *vf_rep = netdev_priv(dev);
+अटल पूर्णांक bnxt_vf_rep_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type,
+				व्योम *type_data)
+अणु
+	काष्ठा bnxt_vf_rep *vf_rep = netdev_priv(dev);
 
-	switch (type) {
-	case TC_SETUP_BLOCK:
-		return flow_block_cb_setup_simple(type_data,
+	चयन (type) अणु
+	हाल TC_SETUP_BLOCK:
+		वापस flow_block_cb_setup_simple(type_data,
 						  &bnxt_vf_block_cb_list,
 						  bnxt_vf_rep_setup_tc_block_cb,
 						  vf_rep, vf_rep, true);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-struct net_device *bnxt_get_vf_rep(struct bnxt *bp, u16 cfa_code)
-{
+काष्ठा net_device *bnxt_get_vf_rep(काष्ठा bnxt *bp, u16 cfa_code)
+अणु
 	u16 vf_idx;
 
-	if (cfa_code && bp->cfa_code_map && BNXT_PF(bp)) {
+	अगर (cfa_code && bp->cfa_code_map && BNXT_PF(bp)) अणु
 		vf_idx = bp->cfa_code_map[cfa_code];
-		if (vf_idx != VF_IDX_INVALID)
-			return bp->vf_reps[vf_idx]->dev;
-	}
-	return NULL;
-}
+		अगर (vf_idx != VF_IDX_INVALID)
+			वापस bp->vf_reps[vf_idx]->dev;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-void bnxt_vf_rep_rx(struct bnxt *bp, struct sk_buff *skb)
-{
-	struct bnxt_vf_rep *vf_rep = netdev_priv(skb->dev);
+व्योम bnxt_vf_rep_rx(काष्ठा bnxt *bp, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा bnxt_vf_rep *vf_rep = netdev_priv(skb->dev);
 
 	vf_rep->rx_stats.bytes += skb->len;
 	vf_rep->rx_stats.packets++;
 
-	netif_receive_skb(skb);
-}
+	netअगर_receive_skb(skb);
+पूर्ण
 
-static int bnxt_vf_rep_get_phys_port_name(struct net_device *dev, char *buf,
-					  size_t len)
-{
-	struct bnxt_vf_rep *vf_rep = netdev_priv(dev);
-	struct pci_dev *pf_pdev = vf_rep->bp->pdev;
-	int rc;
+अटल पूर्णांक bnxt_vf_rep_get_phys_port_name(काष्ठा net_device *dev, अक्षर *buf,
+					  माप_प्रकार len)
+अणु
+	काष्ठा bnxt_vf_rep *vf_rep = netdev_priv(dev);
+	काष्ठा pci_dev *pf_pdev = vf_rep->bp->pdev;
+	पूर्णांक rc;
 
-	rc = snprintf(buf, len, "pf%dvf%d", PCI_FUNC(pf_pdev->devfn),
+	rc = snम_लिखो(buf, len, "pf%dvf%d", PCI_FUNC(pf_pdev->devfn),
 		      vf_rep->vf_idx);
-	if (rc >= len)
-		return -EOPNOTSUPP;
-	return 0;
-}
+	अगर (rc >= len)
+		वापस -EOPNOTSUPP;
+	वापस 0;
+पूर्ण
 
-static void bnxt_vf_rep_get_drvinfo(struct net_device *dev,
-				    struct ethtool_drvinfo *info)
-{
-	strlcpy(info->driver, DRV_MODULE_NAME, sizeof(info->driver));
-}
+अटल व्योम bnxt_vf_rep_get_drvinfo(काष्ठा net_device *dev,
+				    काष्ठा ethtool_drvinfo *info)
+अणु
+	strlcpy(info->driver, DRV_MODULE_NAME, माप(info->driver));
+पूर्ण
 
-static int bnxt_vf_rep_get_port_parent_id(struct net_device *dev,
-					  struct netdev_phys_item_id *ppid)
-{
-	struct bnxt_vf_rep *vf_rep = netdev_priv(dev);
+अटल पूर्णांक bnxt_vf_rep_get_port_parent_id(काष्ठा net_device *dev,
+					  काष्ठा netdev_phys_item_id *ppid)
+अणु
+	काष्ठा bnxt_vf_rep *vf_rep = netdev_priv(dev);
 
 	/* as only PORT_PARENT_ID is supported currently use common code
-	 * between PF and VF-rep for now.
+	 * between PF and VF-rep क्रम now.
 	 */
-	return bnxt_get_port_parent_id(vf_rep->bp->dev, ppid);
-}
+	वापस bnxt_get_port_parent_id(vf_rep->bp->dev, ppid);
+पूर्ण
 
-static const struct ethtool_ops bnxt_vf_rep_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops bnxt_vf_rep_ethtool_ops = अणु
 	.get_drvinfo		= bnxt_vf_rep_get_drvinfo
-};
+पूर्ण;
 
-static const struct net_device_ops bnxt_vf_rep_netdev_ops = {
-	.ndo_open		= bnxt_vf_rep_open,
-	.ndo_stop		= bnxt_vf_rep_close,
-	.ndo_start_xmit		= bnxt_vf_rep_xmit,
-	.ndo_get_stats64	= bnxt_vf_rep_get_stats64,
-	.ndo_setup_tc		= bnxt_vf_rep_setup_tc,
-	.ndo_get_port_parent_id	= bnxt_vf_rep_get_port_parent_id,
-	.ndo_get_phys_port_name = bnxt_vf_rep_get_phys_port_name
-};
+अटल स्थिर काष्ठा net_device_ops bnxt_vf_rep_netdev_ops = अणु
+	.nकरो_खोलो		= bnxt_vf_rep_खोलो,
+	.nकरो_stop		= bnxt_vf_rep_बंद,
+	.nकरो_start_xmit		= bnxt_vf_rep_xmit,
+	.nकरो_get_stats64	= bnxt_vf_rep_get_stats64,
+	.nकरो_setup_tc		= bnxt_vf_rep_setup_tc,
+	.nकरो_get_port_parent_id	= bnxt_vf_rep_get_port_parent_id,
+	.nकरो_get_phys_port_name = bnxt_vf_rep_get_phys_port_name
+पूर्ण;
 
-bool bnxt_dev_is_vf_rep(struct net_device *dev)
-{
-	return dev->netdev_ops == &bnxt_vf_rep_netdev_ops;
-}
+bool bnxt_dev_is_vf_rep(काष्ठा net_device *dev)
+अणु
+	वापस dev->netdev_ops == &bnxt_vf_rep_netdev_ops;
+पूर्ण
 
-/* Called when the parent PF interface is closed:
+/* Called when the parent PF पूर्णांकerface is बंदd:
  * As the mode transition from SWITCHDEV to LEGACY
  * happens under the rtnl_lock() this routine is safe
  * under the rtnl_lock()
  */
-void bnxt_vf_reps_close(struct bnxt *bp)
-{
-	struct bnxt_vf_rep *vf_rep;
+व्योम bnxt_vf_reps_बंद(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_vf_rep *vf_rep;
 	u16 num_vfs, i;
 
-	if (bp->eswitch_mode != DEVLINK_ESWITCH_MODE_SWITCHDEV)
-		return;
+	अगर (bp->eचयन_mode != DEVLINK_ESWITCH_MODE_SWITCHDEV)
+		वापस;
 
 	num_vfs = pci_num_vf(bp->pdev);
-	for (i = 0; i < num_vfs; i++) {
+	क्रम (i = 0; i < num_vfs; i++) अणु
 		vf_rep = bp->vf_reps[i];
-		if (netif_running(vf_rep->dev))
-			bnxt_vf_rep_close(vf_rep->dev);
-	}
-}
+		अगर (netअगर_running(vf_rep->dev))
+			bnxt_vf_rep_बंद(vf_rep->dev);
+	पूर्ण
+पूर्ण
 
-/* Called when the parent PF interface is opened (re-opened):
+/* Called when the parent PF पूर्णांकerface is खोलोed (re-खोलोed):
  * As the mode transition from SWITCHDEV to LEGACY
  * happen under the rtnl_lock() this routine is safe
  * under the rtnl_lock()
  */
-void bnxt_vf_reps_open(struct bnxt *bp)
-{
-	int i;
+व्योम bnxt_vf_reps_खोलो(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	if (bp->eswitch_mode != DEVLINK_ESWITCH_MODE_SWITCHDEV)
-		return;
+	अगर (bp->eचयन_mode != DEVLINK_ESWITCH_MODE_SWITCHDEV)
+		वापस;
 
-	for (i = 0; i < pci_num_vf(bp->pdev); i++) {
-		/* Open the VF-Rep only if it is allocated in the FW */
-		if (bp->vf_reps[i]->tx_cfa_action != CFA_HANDLE_INVALID)
-			bnxt_vf_rep_open(bp->vf_reps[i]->dev);
-	}
-}
+	क्रम (i = 0; i < pci_num_vf(bp->pdev); i++) अणु
+		/* Open the VF-Rep only अगर it is allocated in the FW */
+		अगर (bp->vf_reps[i]->tx_cfa_action != CFA_HANDLE_INVALID)
+			bnxt_vf_rep_खोलो(bp->vf_reps[i]->dev);
+	पूर्ण
+पूर्ण
 
-static void __bnxt_free_one_vf_rep(struct bnxt *bp, struct bnxt_vf_rep *vf_rep)
-{
-	if (!vf_rep)
-		return;
+अटल व्योम __bnxt_मुक्त_one_vf_rep(काष्ठा bnxt *bp, काष्ठा bnxt_vf_rep *vf_rep)
+अणु
+	अगर (!vf_rep)
+		वापस;
 
-	if (vf_rep->dst) {
-		dst_release((struct dst_entry *)vf_rep->dst);
-		vf_rep->dst = NULL;
-	}
-	if (vf_rep->tx_cfa_action != CFA_HANDLE_INVALID) {
-		hwrm_cfa_vfr_free(bp, vf_rep->vf_idx);
+	अगर (vf_rep->dst) अणु
+		dst_release((काष्ठा dst_entry *)vf_rep->dst);
+		vf_rep->dst = शून्य;
+	पूर्ण
+	अगर (vf_rep->tx_cfa_action != CFA_HANDLE_INVALID) अणु
+		hwrm_cfa_vfr_मुक्त(bp, vf_rep->vf_idx);
 		vf_rep->tx_cfa_action = CFA_HANDLE_INVALID;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __bnxt_vf_reps_destroy(struct bnxt *bp)
-{
+अटल व्योम __bnxt_vf_reps_destroy(काष्ठा bnxt *bp)
+अणु
 	u16 num_vfs = pci_num_vf(bp->pdev);
-	struct bnxt_vf_rep *vf_rep;
-	int i;
+	काष्ठा bnxt_vf_rep *vf_rep;
+	पूर्णांक i;
 
-	for (i = 0; i < num_vfs; i++) {
+	क्रम (i = 0; i < num_vfs; i++) अणु
 		vf_rep = bp->vf_reps[i];
-		if (vf_rep) {
-			__bnxt_free_one_vf_rep(bp, vf_rep);
-			if (vf_rep->dev) {
-				/* if register_netdev failed, then netdev_ops
-				 * would have been set to NULL
+		अगर (vf_rep) अणु
+			__bnxt_मुक्त_one_vf_rep(bp, vf_rep);
+			अगर (vf_rep->dev) अणु
+				/* अगर रेजिस्टर_netdev failed, then netdev_ops
+				 * would have been set to शून्य
 				 */
-				if (vf_rep->dev->netdev_ops)
-					unregister_netdev(vf_rep->dev);
-				free_netdev(vf_rep->dev);
-			}
-		}
-	}
+				अगर (vf_rep->dev->netdev_ops)
+					unरेजिस्टर_netdev(vf_rep->dev);
+				मुक्त_netdev(vf_rep->dev);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	kfree(bp->vf_reps);
-	bp->vf_reps = NULL;
-}
+	kमुक्त(bp->vf_reps);
+	bp->vf_reps = शून्य;
+पूर्ण
 
-void bnxt_vf_reps_destroy(struct bnxt *bp)
-{
-	bool closed = false;
+व्योम bnxt_vf_reps_destroy(काष्ठा bnxt *bp)
+अणु
+	bool बंदd = false;
 
-	if (bp->eswitch_mode != DEVLINK_ESWITCH_MODE_SWITCHDEV)
-		return;
+	अगर (bp->eचयन_mode != DEVLINK_ESWITCH_MODE_SWITCHDEV)
+		वापस;
 
-	if (!bp->vf_reps)
-		return;
+	अगर (!bp->vf_reps)
+		वापस;
 
 	/* Ensure that parent PF's and VF-reps' RX/TX has been quiesced
-	 * before proceeding with VF-rep cleanup.
+	 * beक्रमe proceeding with VF-rep cleanup.
 	 */
 	rtnl_lock();
-	if (netif_running(bp->dev)) {
-		bnxt_close_nic(bp, false, false);
-		closed = true;
-	}
+	अगर (netअगर_running(bp->dev)) अणु
+		bnxt_बंद_nic(bp, false, false);
+		बंदd = true;
+	पूर्ण
 	/* un-publish cfa_code_map so that RX path can't see it anymore */
-	kfree(bp->cfa_code_map);
-	bp->cfa_code_map = NULL;
-	bp->eswitch_mode = DEVLINK_ESWITCH_MODE_LEGACY;
+	kमुक्त(bp->cfa_code_map);
+	bp->cfa_code_map = शून्य;
+	bp->eचयन_mode = DEVLINK_ESWITCH_MODE_LEGACY;
 
-	if (closed)
-		bnxt_open_nic(bp, false, false);
+	अगर (बंदd)
+		bnxt_खोलो_nic(bp, false, false);
 	rtnl_unlock();
 
 	/* Need to call vf_reps_destroy() outside of rntl_lock
-	 * as unregister_netdev takes rtnl_lock
+	 * as unरेजिस्टर_netdev takes rtnl_lock
 	 */
 	__bnxt_vf_reps_destroy(bp);
-}
+पूर्ण
 
 /* Free the VF-Reps in firmware, during firmware hot-reset processing.
- * Note that the VF-Rep netdevs are still active (not unregistered) during
+ * Note that the VF-Rep netdevs are still active (not unरेजिस्टरed) during
  * this process. As the mode transition from SWITCHDEV to LEGACY happens
  * under the rtnl_lock() this routine is safe under the rtnl_lock().
  */
-void bnxt_vf_reps_free(struct bnxt *bp)
-{
+व्योम bnxt_vf_reps_मुक्त(काष्ठा bnxt *bp)
+अणु
 	u16 num_vfs = pci_num_vf(bp->pdev);
-	int i;
+	पूर्णांक i;
 
-	if (bp->eswitch_mode != DEVLINK_ESWITCH_MODE_SWITCHDEV)
-		return;
+	अगर (bp->eचयन_mode != DEVLINK_ESWITCH_MODE_SWITCHDEV)
+		वापस;
 
-	for (i = 0; i < num_vfs; i++)
-		__bnxt_free_one_vf_rep(bp, bp->vf_reps[i]);
-}
+	क्रम (i = 0; i < num_vfs; i++)
+		__bnxt_मुक्त_one_vf_rep(bp, bp->vf_reps[i]);
+पूर्ण
 
-static int bnxt_alloc_vf_rep(struct bnxt *bp, struct bnxt_vf_rep *vf_rep,
+अटल पूर्णांक bnxt_alloc_vf_rep(काष्ठा bnxt *bp, काष्ठा bnxt_vf_rep *vf_rep,
 			     u16 *cfa_code_map)
-{
+अणु
 	/* get cfa handles from FW */
-	if (hwrm_cfa_vfr_alloc(bp, vf_rep->vf_idx, &vf_rep->tx_cfa_action,
+	अगर (hwrm_cfa_vfr_alloc(bp, vf_rep->vf_idx, &vf_rep->tx_cfa_action,
 			       &vf_rep->rx_cfa_code))
-		return -ENOLINK;
+		वापस -ENOLINK;
 
 	cfa_code_map[vf_rep->rx_cfa_code] = vf_rep->vf_idx;
 	vf_rep->dst = metadata_dst_alloc(0, METADATA_HW_PORT_MUX, GFP_KERNEL);
-	if (!vf_rep->dst)
-		return -ENOMEM;
+	अगर (!vf_rep->dst)
+		वापस -ENOMEM;
 
-	/* only cfa_action is needed to mux a packet while TXing */
+	/* only cfa_action is needed to mux a packet जबतक TXing */
 	vf_rep->dst->u.port_info.port_id = vf_rep->tx_cfa_action;
 	vf_rep->dst->u.port_info.lower_dev = bp->dev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Allocate the VF-Reps in firmware, during firmware hot-reset processing.
- * Note that the VF-Rep netdevs are still active (not unregistered) during
+ * Note that the VF-Rep netdevs are still active (not unरेजिस्टरed) during
  * this process. As the mode transition from SWITCHDEV to LEGACY happens
  * under the rtnl_lock() this routine is safe under the rtnl_lock().
  */
-int bnxt_vf_reps_alloc(struct bnxt *bp)
-{
+पूर्णांक bnxt_vf_reps_alloc(काष्ठा bnxt *bp)
+अणु
 	u16 *cfa_code_map = bp->cfa_code_map, num_vfs = pci_num_vf(bp->pdev);
-	struct bnxt_vf_rep *vf_rep;
-	int rc, i;
+	काष्ठा bnxt_vf_rep *vf_rep;
+	पूर्णांक rc, i;
 
-	if (bp->eswitch_mode != DEVLINK_ESWITCH_MODE_SWITCHDEV)
-		return 0;
+	अगर (bp->eचयन_mode != DEVLINK_ESWITCH_MODE_SWITCHDEV)
+		वापस 0;
 
-	if (!cfa_code_map)
-		return -EINVAL;
+	अगर (!cfa_code_map)
+		वापस -EINVAL;
 
-	for (i = 0; i < MAX_CFA_CODE; i++)
+	क्रम (i = 0; i < MAX_CFA_CODE; i++)
 		cfa_code_map[i] = VF_IDX_INVALID;
 
-	for (i = 0; i < num_vfs; i++) {
+	क्रम (i = 0; i < num_vfs; i++) अणु
 		vf_rep = bp->vf_reps[i];
 		vf_rep->vf_idx = i;
 
 		rc = bnxt_alloc_vf_rep(bp, vf_rep, cfa_code_map);
-		if (rc)
-			goto err;
-	}
+		अगर (rc)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
 	netdev_info(bp->dev, "%s error=%d\n", __func__, rc);
-	bnxt_vf_reps_free(bp);
-	return rc;
-}
+	bnxt_vf_reps_मुक्त(bp);
+	वापस rc;
+पूर्ण
 
 /* Use the OUI of the PF's perm addr and report the same mac addr
- * for the same VF-rep each time
+ * क्रम the same VF-rep each समय
  */
-static void bnxt_vf_rep_eth_addr_gen(u8 *src_mac, u16 vf_idx, u8 *mac)
-{
+अटल व्योम bnxt_vf_rep_eth_addr_gen(u8 *src_mac, u16 vf_idx, u8 *mac)
+अणु
 	u32 addr;
 
 	ether_addr_copy(mac, src_mac);
@@ -451,12 +452,12 @@ static void bnxt_vf_rep_eth_addr_gen(u8 *src_mac, u16 vf_idx, u8 *mac)
 	mac[3] = (u8)(addr & 0xFF);
 	mac[4] = (u8)((addr >> 8) & 0xFF);
 	mac[5] = (u8)((addr >> 16) & 0xFF);
-}
+पूर्ण
 
-static void bnxt_vf_rep_netdev_init(struct bnxt *bp, struct bnxt_vf_rep *vf_rep,
-				    struct net_device *dev)
-{
-	struct net_device *pf_dev = bp->dev;
+अटल व्योम bnxt_vf_rep_netdev_init(काष्ठा bnxt *bp, काष्ठा bnxt_vf_rep *vf_rep,
+				    काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device *pf_dev = bp->dev;
 	u16 max_mtu;
 
 	dev->netdev_ops = &bnxt_vf_rep_netdev_ops;
@@ -473,41 +474,41 @@ static void bnxt_vf_rep_netdev_init(struct bnxt *bp, struct bnxt_vf_rep *vf_rep,
 				 dev->perm_addr);
 	ether_addr_copy(dev->dev_addr, dev->perm_addr);
 	/* Set VF-Rep's max-mtu to the corresponding VF's max-mtu */
-	if (!bnxt_hwrm_vfr_qcfg(bp, vf_rep, &max_mtu))
+	अगर (!bnxt_hwrm_vfr_qcfg(bp, vf_rep, &max_mtu))
 		dev->max_mtu = max_mtu;
 	dev->min_mtu = ETH_ZLEN;
-}
+पूर्ण
 
-static int bnxt_vf_reps_create(struct bnxt *bp)
-{
-	u16 *cfa_code_map = NULL, num_vfs = pci_num_vf(bp->pdev);
-	struct bnxt_vf_rep *vf_rep;
-	struct net_device *dev;
-	int rc, i;
+अटल पूर्णांक bnxt_vf_reps_create(काष्ठा bnxt *bp)
+अणु
+	u16 *cfa_code_map = शून्य, num_vfs = pci_num_vf(bp->pdev);
+	काष्ठा bnxt_vf_rep *vf_rep;
+	काष्ठा net_device *dev;
+	पूर्णांक rc, i;
 
-	if (!(bp->flags & BNXT_FLAG_DSN_VALID))
-		return -ENODEV;
+	अगर (!(bp->flags & BNXT_FLAG_DSN_VALID))
+		वापस -ENODEV;
 
-	bp->vf_reps = kcalloc(num_vfs, sizeof(vf_rep), GFP_KERNEL);
-	if (!bp->vf_reps)
-		return -ENOMEM;
+	bp->vf_reps = kसुस्मृति(num_vfs, माप(vf_rep), GFP_KERNEL);
+	अगर (!bp->vf_reps)
+		वापस -ENOMEM;
 
-	/* storage for cfa_code to vf-idx mapping */
-	cfa_code_map = kmalloc_array(MAX_CFA_CODE, sizeof(*bp->cfa_code_map),
+	/* storage क्रम cfa_code to vf-idx mapping */
+	cfa_code_map = kदो_स्मृति_array(MAX_CFA_CODE, माप(*bp->cfa_code_map),
 				     GFP_KERNEL);
-	if (!cfa_code_map) {
+	अगर (!cfa_code_map) अणु
 		rc = -ENOMEM;
-		goto err;
-	}
-	for (i = 0; i < MAX_CFA_CODE; i++)
+		जाओ err;
+	पूर्ण
+	क्रम (i = 0; i < MAX_CFA_CODE; i++)
 		cfa_code_map[i] = VF_IDX_INVALID;
 
-	for (i = 0; i < num_vfs; i++) {
-		dev = alloc_etherdev(sizeof(*vf_rep));
-		if (!dev) {
+	क्रम (i = 0; i < num_vfs; i++) अणु
+		dev = alloc_etherdev(माप(*vf_rep));
+		अगर (!dev) अणु
 			rc = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		vf_rep = netdev_priv(dev);
 		bp->vf_reps[i] = vf_rep;
@@ -517,82 +518,82 @@ static int bnxt_vf_reps_create(struct bnxt *bp)
 		vf_rep->tx_cfa_action = CFA_HANDLE_INVALID;
 
 		rc = bnxt_alloc_vf_rep(bp, vf_rep, cfa_code_map);
-		if (rc)
-			goto err;
+		अगर (rc)
+			जाओ err;
 
 		bnxt_vf_rep_netdev_init(bp, vf_rep, dev);
-		rc = register_netdev(dev);
-		if (rc) {
-			/* no need for unregister_netdev in cleanup */
-			dev->netdev_ops = NULL;
-			goto err;
-		}
-	}
+		rc = रेजिस्टर_netdev(dev);
+		अगर (rc) अणु
+			/* no need क्रम unरेजिस्टर_netdev in cleanup */
+			dev->netdev_ops = शून्य;
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 	/* publish cfa_code_map only after all VF-reps have been initialized */
 	bp->cfa_code_map = cfa_code_map;
-	bp->eswitch_mode = DEVLINK_ESWITCH_MODE_SWITCHDEV;
-	netif_keep_dst(bp->dev);
-	return 0;
+	bp->eचयन_mode = DEVLINK_ESWITCH_MODE_SWITCHDEV;
+	netअगर_keep_dst(bp->dev);
+	वापस 0;
 
 err:
 	netdev_info(bp->dev, "%s error=%d\n", __func__, rc);
-	kfree(cfa_code_map);
+	kमुक्त(cfa_code_map);
 	__bnxt_vf_reps_destroy(bp);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Devlink related routines */
-int bnxt_dl_eswitch_mode_get(struct devlink *devlink, u16 *mode)
-{
-	struct bnxt *bp = bnxt_get_bp_from_dl(devlink);
+पूर्णांक bnxt_dl_eचयन_mode_get(काष्ठा devlink *devlink, u16 *mode)
+अणु
+	काष्ठा bnxt *bp = bnxt_get_bp_from_dl(devlink);
 
-	*mode = bp->eswitch_mode;
-	return 0;
-}
+	*mode = bp->eचयन_mode;
+	वापस 0;
+पूर्ण
 
-int bnxt_dl_eswitch_mode_set(struct devlink *devlink, u16 mode,
-			     struct netlink_ext_ack *extack)
-{
-	struct bnxt *bp = bnxt_get_bp_from_dl(devlink);
-	int rc = 0;
+पूर्णांक bnxt_dl_eचयन_mode_set(काष्ठा devlink *devlink, u16 mode,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा bnxt *bp = bnxt_get_bp_from_dl(devlink);
+	पूर्णांक rc = 0;
 
 	mutex_lock(&bp->sriov_lock);
-	if (bp->eswitch_mode == mode) {
+	अगर (bp->eचयन_mode == mode) अणु
 		netdev_info(bp->dev, "already in %s eswitch mode\n",
 			    mode == DEVLINK_ESWITCH_MODE_LEGACY ?
 			    "legacy" : "switchdev");
 		rc = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	switch (mode) {
-	case DEVLINK_ESWITCH_MODE_LEGACY:
+	चयन (mode) अणु
+	हाल DEVLINK_ESWITCH_MODE_LEGACY:
 		bnxt_vf_reps_destroy(bp);
-		break;
+		अवरोध;
 
-	case DEVLINK_ESWITCH_MODE_SWITCHDEV:
-		if (bp->hwrm_spec_code < 0x10803) {
+	हाल DEVLINK_ESWITCH_MODE_SWITCHDEV:
+		अगर (bp->hwrm_spec_code < 0x10803) अणु
 			netdev_warn(bp->dev, "FW does not support SRIOV E-Switch SWITCHDEV mode\n");
 			rc = -ENOTSUPP;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		if (pci_num_vf(bp->pdev) == 0) {
+		अगर (pci_num_vf(bp->pdev) == 0) अणु
 			netdev_info(bp->dev, "Enable VFs before setting switchdev mode\n");
 			rc = -EPERM;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		rc = bnxt_vf_reps_create(bp);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		rc = -EINVAL;
-		goto done;
-	}
-done:
+		जाओ करोne;
+	पूर्ण
+करोne:
 	mutex_unlock(&bp->sriov_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

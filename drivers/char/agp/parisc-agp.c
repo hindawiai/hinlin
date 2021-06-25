@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * HP Quicksilver AGP GART routines
  *
  * Copyright (c) 2006, Kyle McMartin <kyle@parisc-linux.org>
  *
- * Based on drivers/char/agpgart/hp-agp.c which is
+ * Based on drivers/अक्षर/agpgart/hp-agp.c which is
  * (c) Copyright 2002, 2003 Hewlett-Packard Development Company, L.P.
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/init.h>
-#include <linux/klist.h>
-#include <linux/agp_backend.h>
-#include <linux/log2.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/klist.h>
+#समावेश <linux/agp_backend.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/slab.h>
 
-#include <asm/parisc-device.h>
-#include <asm/ropes.h>
+#समावेश <यंत्र/parisc-device.h>
+#समावेश <यंत्र/ropes.h>
 
-#include "agp.h"
+#समावेश "agp.h"
 
-#define DRVNAME	"quicksilver"
-#define DRVPFX	DRVNAME ": "
+#घोषणा DRVNAME	"quicksilver"
+#घोषणा DRVPFX	DRVNAME ": "
 
-#define AGP8X_MODE_BIT		3
-#define AGP8X_MODE		(1 << AGP8X_MODE_BIT)
+#घोषणा AGP8X_MODE_BIT		3
+#घोषणा AGP8X_MODE		(1 << AGP8X_MODE_BIT)
 
-static unsigned long
-parisc_agp_mask_memory(struct agp_bridge_data *bridge, dma_addr_t addr,
-		       int type);
+अटल अचिन्हित दीर्घ
+parisc_agp_mask_memory(काष्ठा agp_bridge_data *bridge, dma_addr_t addr,
+		       पूर्णांक type);
 
-static struct _parisc_agp_info {
-	void __iomem *ioc_regs;
-	void __iomem *lba_regs;
+अटल काष्ठा _parisc_agp_info अणु
+	व्योम __iomem *ioc_regs;
+	व्योम __iomem *lba_regs;
 
-	int lba_cap_offset;
+	पूर्णांक lba_cap_offset;
 
 	u64 *gatt;
 	u64 gatt_entries;
@@ -44,175 +45,175 @@ static struct _parisc_agp_info {
 	u64 gart_base;
 	u64 gart_size;
 
-	int io_page_size;
-	int io_pages_per_kpage;
-} parisc_agp_info;
+	पूर्णांक io_page_size;
+	पूर्णांक io_pages_per_kpage;
+पूर्ण parisc_agp_info;
 
-static struct gatt_mask parisc_agp_masks[] =
-{
-        {
-		.mask = SBA_PDIR_VALID_BIT,
+अटल काष्ठा gatt_mask parisc_agp_masks[] =
+अणु
+        अणु
+		.mask = SBA_Pसूची_VALID_BIT,
 		.type = 0
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct aper_size_info_fixed parisc_agp_sizes[] =
-{
-        {0, 0, 0},              /* filled in by parisc_agp_fetch_size() */
-};
+अटल काष्ठा aper_size_info_fixed parisc_agp_sizes[] =
+अणु
+        अणु0, 0, 0पूर्ण,              /* filled in by parisc_agp_fetch_size() */
+पूर्ण;
 
-static int
-parisc_agp_fetch_size(void)
-{
-	int size;
+अटल पूर्णांक
+parisc_agp_fetch_size(व्योम)
+अणु
+	पूर्णांक size;
 
 	size = parisc_agp_info.gart_size / MB(1);
 	parisc_agp_sizes[0].size = size;
-	agp_bridge->current_size = (void *) &parisc_agp_sizes[0];
+	agp_bridge->current_size = (व्योम *) &parisc_agp_sizes[0];
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int
-parisc_agp_configure(void)
-{
-	struct _parisc_agp_info *info = &parisc_agp_info;
+अटल पूर्णांक
+parisc_agp_configure(व्योम)
+अणु
+	काष्ठा _parisc_agp_info *info = &parisc_agp_info;
 
 	agp_bridge->gart_bus_addr = info->gart_base;
 	agp_bridge->capndx = info->lba_cap_offset;
-	agp_bridge->mode = readl(info->lba_regs+info->lba_cap_offset+PCI_AGP_STATUS);
+	agp_bridge->mode = पढ़ोl(info->lba_regs+info->lba_cap_offset+PCI_AGP_STATUS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-parisc_agp_tlbflush(struct agp_memory *mem)
-{
-	struct _parisc_agp_info *info = &parisc_agp_info;
+अटल व्योम
+parisc_agp_tlbflush(काष्ठा agp_memory *mem)
+अणु
+	काष्ठा _parisc_agp_info *info = &parisc_agp_info;
 
-	writeq(info->gart_base | ilog2(info->gart_size), info->ioc_regs+IOC_PCOM);
-	readq(info->ioc_regs+IOC_PCOM);	/* flush */
-}
+	ग_लिखोq(info->gart_base | ilog2(info->gart_size), info->ioc_regs+IOC_PCOM);
+	पढ़ोq(info->ioc_regs+IOC_PCOM);	/* flush */
+पूर्ण
 
-static int
-parisc_agp_create_gatt_table(struct agp_bridge_data *bridge)
-{
-	struct _parisc_agp_info *info = &parisc_agp_info;
-	int i;
+अटल पूर्णांक
+parisc_agp_create_gatt_table(काष्ठा agp_bridge_data *bridge)
+अणु
+	काष्ठा _parisc_agp_info *info = &parisc_agp_info;
+	पूर्णांक i;
 
-	for (i = 0; i < info->gatt_entries; i++) {
-		info->gatt[i] = (unsigned long)agp_bridge->scratch_page;
-	}
+	क्रम (i = 0; i < info->gatt_entries; i++) अणु
+		info->gatt[i] = (अचिन्हित दीर्घ)agp_bridge->scratch_page;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-parisc_agp_free_gatt_table(struct agp_bridge_data *bridge)
-{
-	struct _parisc_agp_info *info = &parisc_agp_info;
+अटल पूर्णांक
+parisc_agp_मुक्त_gatt_table(काष्ठा agp_bridge_data *bridge)
+अणु
+	काष्ठा _parisc_agp_info *info = &parisc_agp_info;
 
 	info->gatt[0] = SBA_AGPGART_COOKIE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-parisc_agp_insert_memory(struct agp_memory *mem, off_t pg_start, int type)
-{
-	struct _parisc_agp_info *info = &parisc_agp_info;
-	int i, k;
+अटल पूर्णांक
+parisc_agp_insert_memory(काष्ठा agp_memory *mem, off_t pg_start, पूर्णांक type)
+अणु
+	काष्ठा _parisc_agp_info *info = &parisc_agp_info;
+	पूर्णांक i, k;
 	off_t j, io_pg_start;
-	int io_pg_count;
+	पूर्णांक io_pg_count;
 
-	if (type != mem->type ||
-		agp_bridge->driver->agp_type_to_mask_type(agp_bridge, type)) {
-		return -EINVAL;
-	}
+	अगर (type != mem->type ||
+		agp_bridge->driver->agp_type_to_mask_type(agp_bridge, type)) अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	io_pg_start = info->io_pages_per_kpage * pg_start;
 	io_pg_count = info->io_pages_per_kpage * mem->page_count;
-	if ((io_pg_start + io_pg_count) > info->gatt_entries) {
-		return -EINVAL;
-	}
+	अगर ((io_pg_start + io_pg_count) > info->gatt_entries) अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	j = io_pg_start;
-	while (j < (io_pg_start + io_pg_count)) {
-		if (info->gatt[j])
-			return -EBUSY;
+	जबतक (j < (io_pg_start + io_pg_count)) अणु
+		अगर (info->gatt[j])
+			वापस -EBUSY;
 		j++;
-	}
+	पूर्ण
 
-	if (!mem->is_flushed) {
+	अगर (!mem->is_flushed) अणु
 		global_cache_flush();
 		mem->is_flushed = true;
-	}
+	पूर्ण
 
-	for (i = 0, j = io_pg_start; i < mem->page_count; i++) {
-		unsigned long paddr;
+	क्रम (i = 0, j = io_pg_start; i < mem->page_count; i++) अणु
+		अचिन्हित दीर्घ paddr;
 
 		paddr = page_to_phys(mem->pages[i]);
-		for (k = 0;
+		क्रम (k = 0;
 		     k < info->io_pages_per_kpage;
-		     k++, j++, paddr += info->io_page_size) {
+		     k++, j++, paddr += info->io_page_size) अणु
 			info->gatt[j] =
 				parisc_agp_mask_memory(agp_bridge,
 					paddr, type);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	agp_bridge->driver->tlb_flush(mem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-parisc_agp_remove_memory(struct agp_memory *mem, off_t pg_start, int type)
-{
-	struct _parisc_agp_info *info = &parisc_agp_info;
-	int i, io_pg_start, io_pg_count;
+अटल पूर्णांक
+parisc_agp_हटाओ_memory(काष्ठा agp_memory *mem, off_t pg_start, पूर्णांक type)
+अणु
+	काष्ठा _parisc_agp_info *info = &parisc_agp_info;
+	पूर्णांक i, io_pg_start, io_pg_count;
 
-	if (type != mem->type ||
-		agp_bridge->driver->agp_type_to_mask_type(agp_bridge, type)) {
-		return -EINVAL;
-	}
+	अगर (type != mem->type ||
+		agp_bridge->driver->agp_type_to_mask_type(agp_bridge, type)) अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	io_pg_start = info->io_pages_per_kpage * pg_start;
 	io_pg_count = info->io_pages_per_kpage * mem->page_count;
-	for (i = io_pg_start; i < io_pg_count + io_pg_start; i++) {
+	क्रम (i = io_pg_start; i < io_pg_count + io_pg_start; i++) अणु
 		info->gatt[i] = agp_bridge->scratch_page;
-	}
+	पूर्ण
 
 	agp_bridge->driver->tlb_flush(mem);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long
-parisc_agp_mask_memory(struct agp_bridge_data *bridge, dma_addr_t addr,
-		       int type)
-{
-	return SBA_PDIR_VALID_BIT | addr;
-}
+अटल अचिन्हित दीर्घ
+parisc_agp_mask_memory(काष्ठा agp_bridge_data *bridge, dma_addr_t addr,
+		       पूर्णांक type)
+अणु
+	वापस SBA_Pसूची_VALID_BIT | addr;
+पूर्ण
 
-static void
-parisc_agp_enable(struct agp_bridge_data *bridge, u32 mode)
-{
-	struct _parisc_agp_info *info = &parisc_agp_info;
+अटल व्योम
+parisc_agp_enable(काष्ठा agp_bridge_data *bridge, u32 mode)
+अणु
+	काष्ठा _parisc_agp_info *info = &parisc_agp_info;
 	u32 command;
 
-	command = readl(info->lba_regs + info->lba_cap_offset + PCI_AGP_STATUS);
+	command = पढ़ोl(info->lba_regs + info->lba_cap_offset + PCI_AGP_STATUS);
 
 	command = agp_collect_device_status(bridge, mode, command);
 	command |= 0x00000100;
 
-	writel(command, info->lba_regs + info->lba_cap_offset + PCI_AGP_COMMAND);
+	ग_लिखोl(command, info->lba_regs + info->lba_cap_offset + PCI_AGP_COMMAND);
 
 	agp_device_command(command, (mode & AGP8X_MODE) != 0);
-}
+पूर्ण
 
-static const struct agp_bridge_driver parisc_agp_driver = {
+अटल स्थिर काष्ठा agp_bridge_driver parisc_agp_driver = अणु
 	.owner			= THIS_MODULE,
-	.size_type		= FIXED_APER_SIZE,
+	.माप_प्रकारype		= FIXED_APER_SIZE,
 	.configure		= parisc_agp_configure,
 	.fetch_size		= parisc_agp_fetch_size,
 	.tlb_flush		= parisc_agp_tlbflush,
@@ -221,200 +222,200 @@ static const struct agp_bridge_driver parisc_agp_driver = {
 	.agp_enable		= parisc_agp_enable,
 	.cache_flush		= global_cache_flush,
 	.create_gatt_table	= parisc_agp_create_gatt_table,
-	.free_gatt_table	= parisc_agp_free_gatt_table,
+	.मुक्त_gatt_table	= parisc_agp_मुक्त_gatt_table,
 	.insert_memory		= parisc_agp_insert_memory,
-	.remove_memory		= parisc_agp_remove_memory,
+	.हटाओ_memory		= parisc_agp_हटाओ_memory,
 	.alloc_by_type		= agp_generic_alloc_by_type,
-	.free_by_type		= agp_generic_free_by_type,
+	.मुक्त_by_type		= agp_generic_मुक्त_by_type,
 	.agp_alloc_page		= agp_generic_alloc_page,
 	.agp_alloc_pages	= agp_generic_alloc_pages,
 	.agp_destroy_page	= agp_generic_destroy_page,
 	.agp_destroy_pages	= agp_generic_destroy_pages,
 	.agp_type_to_mask_type  = agp_generic_type_to_mask_type,
 	.cant_use_aperture	= true,
-};
+पूर्ण;
 
-static int __init
-agp_ioc_init(void __iomem *ioc_regs)
-{
-	struct _parisc_agp_info *info = &parisc_agp_info;
+अटल पूर्णांक __init
+agp_ioc_init(व्योम __iomem *ioc_regs)
+अणु
+	काष्ठा _parisc_agp_info *info = &parisc_agp_info;
         u64 iova_base, *io_pdir, io_tlb_ps;
-        int io_tlb_shift;
+        पूर्णांक io_tlb_shअगरt;
 
-        printk(KERN_INFO DRVPFX "IO PDIR shared with sba_iommu\n");
+        prपूर्णांकk(KERN_INFO DRVPFX "IO PDIR shared with sba_iommu\n");
 
         info->ioc_regs = ioc_regs;
 
-        io_tlb_ps = readq(info->ioc_regs+IOC_TCNFG);
-        switch (io_tlb_ps) {
-        case 0: io_tlb_shift = 12; break;
-        case 1: io_tlb_shift = 13; break;
-        case 2: io_tlb_shift = 14; break;
-        case 3: io_tlb_shift = 16; break;
-        default:
-                printk(KERN_ERR DRVPFX "Invalid IOTLB page size "
+        io_tlb_ps = पढ़ोq(info->ioc_regs+IOC_TCNFG);
+        चयन (io_tlb_ps) अणु
+        हाल 0: io_tlb_shअगरt = 12; अवरोध;
+        हाल 1: io_tlb_shअगरt = 13; अवरोध;
+        हाल 2: io_tlb_shअगरt = 14; अवरोध;
+        हाल 3: io_tlb_shअगरt = 16; अवरोध;
+        शेष:
+                prपूर्णांकk(KERN_ERR DRVPFX "Invalid IOTLB page size "
                        "configuration 0x%llx\n", io_tlb_ps);
-                info->gatt = NULL;
+                info->gatt = शून्य;
                 info->gatt_entries = 0;
-                return -ENODEV;
-        }
-        info->io_page_size = 1 << io_tlb_shift;
+                वापस -ENODEV;
+        पूर्ण
+        info->io_page_size = 1 << io_tlb_shअगरt;
         info->io_pages_per_kpage = PAGE_SIZE / info->io_page_size;
 
-        iova_base = readq(info->ioc_regs+IOC_IBASE) & ~0x1;
+        iova_base = पढ़ोq(info->ioc_regs+IOC_IBASE) & ~0x1;
         info->gart_base = iova_base + PLUTO_IOVA_SIZE - PLUTO_GART_SIZE;
 
         info->gart_size = PLUTO_GART_SIZE;
         info->gatt_entries = info->gart_size / info->io_page_size;
 
-        io_pdir = phys_to_virt(readq(info->ioc_regs+IOC_PDIR_BASE));
+        io_pdir = phys_to_virt(पढ़ोq(info->ioc_regs+IOC_Pसूची_BASE));
         info->gatt = &io_pdir[(PLUTO_IOVA_SIZE/2) >> PAGE_SHIFT];
 
-        if (info->gatt[0] != SBA_AGPGART_COOKIE) {
-                info->gatt = NULL;
+        अगर (info->gatt[0] != SBA_AGPGART_COOKIE) अणु
+                info->gatt = शून्य;
                 info->gatt_entries = 0;
-                printk(KERN_ERR DRVPFX "No reserved IO PDIR entry found; "
+                prपूर्णांकk(KERN_ERR DRVPFX "No reserved IO PDIR entry found; "
                        "GART disabled\n");
-                return -ENODEV;
-        }
+                वापस -ENODEV;
+        पूर्ण
 
-        return 0;
-}
+        वापस 0;
+पूर्ण
 
-static int
-lba_find_capability(int cap)
-{
-	struct _parisc_agp_info *info = &parisc_agp_info;
+अटल पूर्णांक
+lba_find_capability(पूर्णांक cap)
+अणु
+	काष्ठा _parisc_agp_info *info = &parisc_agp_info;
         u16 status;
         u8 pos, id;
-        int ttl = 48;
+        पूर्णांक ttl = 48;
 
-        status = readw(info->lba_regs + PCI_STATUS);
-        if (!(status & PCI_STATUS_CAP_LIST))
-                return 0;
-        pos = readb(info->lba_regs + PCI_CAPABILITY_LIST);
-        while (ttl-- && pos >= 0x40) {
+        status = पढ़ोw(info->lba_regs + PCI_STATUS);
+        अगर (!(status & PCI_STATUS_CAP_LIST))
+                वापस 0;
+        pos = पढ़ोb(info->lba_regs + PCI_CAPABILITY_LIST);
+        जबतक (ttl-- && pos >= 0x40) अणु
                 pos &= ~3;
-                id = readb(info->lba_regs + pos + PCI_CAP_LIST_ID);
-                if (id == 0xff)
-                        break;
-                if (id == cap)
-                        return pos;
-                pos = readb(info->lba_regs + pos + PCI_CAP_LIST_NEXT);
-        }
-        return 0;
-}
+                id = पढ़ोb(info->lba_regs + pos + PCI_CAP_LIST_ID);
+                अगर (id == 0xff)
+                        अवरोध;
+                अगर (id == cap)
+                        वापस pos;
+                pos = पढ़ोb(info->lba_regs + pos + PCI_CAP_LIST_NEXT);
+        पूर्ण
+        वापस 0;
+पूर्ण
 
-static int __init
-agp_lba_init(void __iomem *lba_hpa)
-{
-	struct _parisc_agp_info *info = &parisc_agp_info;
-        int cap;
+अटल पूर्णांक __init
+agp_lba_init(व्योम __iomem *lba_hpa)
+अणु
+	काष्ठा _parisc_agp_info *info = &parisc_agp_info;
+        पूर्णांक cap;
 
 	info->lba_regs = lba_hpa;
         info->lba_cap_offset = lba_find_capability(PCI_CAP_ID_AGP);
 
-        cap = readl(lba_hpa + info->lba_cap_offset) & 0xff;
-        if (cap != PCI_CAP_ID_AGP) {
-                printk(KERN_ERR DRVPFX "Invalid capability ID 0x%02x at 0x%x\n",
+        cap = पढ़ोl(lba_hpa + info->lba_cap_offset) & 0xff;
+        अगर (cap != PCI_CAP_ID_AGP) अणु
+                prपूर्णांकk(KERN_ERR DRVPFX "Invalid capability ID 0x%02x at 0x%x\n",
                        cap, info->lba_cap_offset);
-                return -ENODEV;
-        }
+                वापस -ENODEV;
+        पूर्ण
 
-        return 0;
-}
+        वापस 0;
+पूर्ण
 
-static int __init
-parisc_agp_setup(void __iomem *ioc_hpa, void __iomem *lba_hpa)
-{
-	struct pci_dev *fake_bridge_dev = NULL;
-	struct agp_bridge_data *bridge;
-	int error = 0;
+अटल पूर्णांक __init
+parisc_agp_setup(व्योम __iomem *ioc_hpa, व्योम __iomem *lba_hpa)
+अणु
+	काष्ठा pci_dev *fake_bridge_dev = शून्य;
+	काष्ठा agp_bridge_data *bridge;
+	पूर्णांक error = 0;
 
-	fake_bridge_dev = pci_alloc_dev(NULL);
-	if (!fake_bridge_dev) {
+	fake_bridge_dev = pci_alloc_dev(शून्य);
+	अगर (!fake_bridge_dev) अणु
 		error = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	error = agp_ioc_init(ioc_hpa);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 
 	error = agp_lba_init(lba_hpa);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 
 	bridge = agp_alloc_bridge();
-	if (!bridge) {
+	अगर (!bridge) अणु
 		error = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	bridge->driver = &parisc_agp_driver;
 
-	fake_bridge_dev->vendor = PCI_VENDOR_ID_HP;
+	fake_bridge_dev->venकरोr = PCI_VENDOR_ID_HP;
 	fake_bridge_dev->device = PCI_DEVICE_ID_HP_PCIX_LBA;
 	bridge->dev = fake_bridge_dev;
 
 	error = agp_add_bridge(bridge);
-	if (error)
-		goto fail;
-	return 0;
+	अगर (error)
+		जाओ fail;
+	वापस 0;
 
 fail:
-	kfree(fake_bridge_dev);
-	return error;
-}
+	kमुक्त(fake_bridge_dev);
+	वापस error;
+पूर्ण
 
-static int
-find_quicksilver(struct device *dev, void *data)
-{
-	struct parisc_device **lba = data;
-	struct parisc_device *padev = to_parisc_device(dev);
+अटल पूर्णांक
+find_quicksilver(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा parisc_device **lba = data;
+	काष्ठा parisc_device *padev = to_parisc_device(dev);
 
-	if (IS_QUICKSILVER(padev))
+	अगर (IS_QUICKSILVER(padev))
 		*lba = padev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-parisc_agp_init(void)
-{
-	extern struct sba_device *sba_list;
+अटल पूर्णांक
+parisc_agp_init(व्योम)
+अणु
+	बाह्य काष्ठा sba_device *sba_list;
 
-	int err = -1;
-	struct parisc_device *sba = NULL, *lba = NULL;
-	struct lba_device *lbadev = NULL;
+	पूर्णांक err = -1;
+	काष्ठा parisc_device *sba = शून्य, *lba = शून्य;
+	काष्ठा lba_device *lbadev = शून्य;
 
-	if (!sba_list)
-		goto out;
+	अगर (!sba_list)
+		जाओ out;
 
 	/* Find our parent Pluto */
 	sba = sba_list->dev;
-	if (!IS_PLUTO(sba)) {
-		printk(KERN_INFO DRVPFX "No Pluto found, so no AGPGART for you.\n");
-		goto out;
-	}
+	अगर (!IS_PLUTO(sba)) अणु
+		prपूर्णांकk(KERN_INFO DRVPFX "No Pluto found, so no AGPGART for you.\n");
+		जाओ out;
+	पूर्ण
 
-	/* Now search our Pluto for our precious AGP device... */
-	device_for_each_child(&sba->dev, &lba, find_quicksilver);
+	/* Now search our Pluto क्रम our precious AGP device... */
+	device_क्रम_each_child(&sba->dev, &lba, find_quicksilver);
 
-	if (!lba) {
-		printk(KERN_INFO DRVPFX "No AGP devices found.\n");
-		goto out;
-	}
+	अगर (!lba) अणु
+		prपूर्णांकk(KERN_INFO DRVPFX "No AGP devices found.\n");
+		जाओ out;
+	पूर्ण
 
 	lbadev = parisc_get_drvdata(lba);
 
 	/* w00t, let's go find our cookies... */
 	parisc_agp_setup(sba_list->ioc[0].ioc_hpa, lbadev->hba.base_addr);
 
-	return 0;
+	वापस 0;
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 module_init(parisc_agp_init);
 

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2014 Intel Corporation
+ * Copyright तऊ 2014 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,34 +22,34 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef _I915_COMPONENT_H_
-#define _I915_COMPONENT_H_
+#अगर_अघोषित _I915_COMPONENT_H_
+#घोषणा _I915_COMPONENT_H_
 
-#include "drm_audio_component.h"
+#समावेश "drm_audio_component.h"
 
-enum i915_component_type {
+क्रमागत i915_component_type अणु
 	I915_COMPONENT_AUDIO = 1,
 	I915_COMPONENT_HDCP,
-};
+पूर्ण;
 
 /* MAX_PORT is the number of port
  * It must be sync with I915_MAX_PORTS defined i915_drv.h
  */
-#define MAX_PORTS 9
+#घोषणा MAX_PORTS 9
 
 /**
- * struct i915_audio_component - Used for direct communication between i915 and hda drivers
+ * काष्ठा i915_audio_component - Used क्रम direct communication between i915 and hda drivers
  */
-struct i915_audio_component {
+काष्ठा i915_audio_component अणु
 	/**
 	 * @base: the drm_audio_component base class
 	 */
-	struct drm_audio_component	base;
+	काष्ठा drm_audio_component	base;
 
 	/**
 	 * @aud_sample_rate: the array of audio sample rate per port
 	 */
-	int aud_sample_rate[MAX_PORTS];
-};
+	पूर्णांक aud_sample_rate[MAX_PORTS];
+पूर्ण;
 
-#endif /* _I915_COMPONENT_H_ */
+#पूर्ण_अगर /* _I915_COMPONENT_H_ */

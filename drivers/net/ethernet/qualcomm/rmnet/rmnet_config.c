@@ -1,325 +1,326 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
  *
  * RMNET configuration engine
  */
 
-#include <net/sock.h>
-#include <linux/module.h>
-#include <linux/netlink.h>
-#include <linux/netdevice.h>
-#include "rmnet_config.h"
-#include "rmnet_handlers.h"
-#include "rmnet_vnd.h"
-#include "rmnet_private.h"
+#समावेश <net/sock.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/netdevice.h>
+#समावेश "rmnet_config.h"
+#समावेश "rmnet_handlers.h"
+#समावेश "rmnet_vnd.h"
+#समावेश "rmnet_private.h"
 
 /* Local Definitions and Declarations */
 
-static const struct nla_policy rmnet_policy[IFLA_RMNET_MAX + 1] = {
-	[IFLA_RMNET_MUX_ID]	= { .type = NLA_U16 },
-	[IFLA_RMNET_FLAGS]	= { .len = sizeof(struct ifla_rmnet_flags) },
-};
+अटल स्थिर काष्ठा nla_policy rmnet_policy[IFLA_RMNET_MAX + 1] = अणु
+	[IFLA_RMNET_MUX_ID]	= अणु .type = NLA_U16 पूर्ण,
+	[IFLA_RMNET_FLAGS]	= अणु .len = माप(काष्ठा अगरla_rmnet_flags) पूर्ण,
+पूर्ण;
 
-static int rmnet_is_real_dev_registered(const struct net_device *real_dev)
-{
-	return rcu_access_pointer(real_dev->rx_handler) == rmnet_rx_handler;
-}
+अटल पूर्णांक rmnet_is_real_dev_रेजिस्टरed(स्थिर काष्ठा net_device *real_dev)
+अणु
+	वापस rcu_access_poपूर्णांकer(real_dev->rx_handler) == rmnet_rx_handler;
+पूर्ण
 
 /* Needs rtnl lock */
-struct rmnet_port*
-rmnet_get_port_rtnl(const struct net_device *real_dev)
-{
-	return rtnl_dereference(real_dev->rx_handler_data);
-}
+काष्ठा rmnet_port*
+rmnet_get_port_rtnl(स्थिर काष्ठा net_device *real_dev)
+अणु
+	वापस rtnl_dereference(real_dev->rx_handler_data);
+पूर्ण
 
-static int rmnet_unregister_real_device(struct net_device *real_dev)
-{
-	struct rmnet_port *port = rmnet_get_port_rtnl(real_dev);
+अटल पूर्णांक rmnet_unरेजिस्टर_real_device(काष्ठा net_device *real_dev)
+अणु
+	काष्ठा rmnet_port *port = rmnet_get_port_rtnl(real_dev);
 
-	if (port->nr_rmnet_devs)
-		return -EINVAL;
+	अगर (port->nr_rmnet_devs)
+		वापस -EINVAL;
 
-	netdev_rx_handler_unregister(real_dev);
+	netdev_rx_handler_unरेजिस्टर(real_dev);
 
-	kfree(port);
+	kमुक्त(port);
 
 	netdev_dbg(real_dev, "Removed from rmnet\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rmnet_register_real_device(struct net_device *real_dev,
-				      struct netlink_ext_ack *extack)
-{
-	struct rmnet_port *port;
-	int rc, entry;
+अटल पूर्णांक rmnet_रेजिस्टर_real_device(काष्ठा net_device *real_dev,
+				      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा rmnet_port *port;
+	पूर्णांक rc, entry;
 
 	ASSERT_RTNL();
 
-	if (rmnet_is_real_dev_registered(real_dev)) {
+	अगर (rmnet_is_real_dev_रेजिस्टरed(real_dev)) अणु
 		port = rmnet_get_port_rtnl(real_dev);
-		if (port->rmnet_mode != RMNET_EPMODE_VND) {
+		अगर (port->rmnet_mode != RMNET_EPMODE_VND) अणु
 			NL_SET_ERR_MSG_MOD(extack, "bridge device already exists");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	port = kzalloc(sizeof(*port), GFP_KERNEL);
-	if (!port)
-		return -ENOMEM;
+	port = kzalloc(माप(*port), GFP_KERNEL);
+	अगर (!port)
+		वापस -ENOMEM;
 
 	port->dev = real_dev;
-	rc = netdev_rx_handler_register(real_dev, rmnet_rx_handler, port);
-	if (rc) {
-		kfree(port);
-		return -EBUSY;
-	}
+	rc = netdev_rx_handler_रेजिस्टर(real_dev, rmnet_rx_handler, port);
+	अगर (rc) अणु
+		kमुक्त(port);
+		वापस -EBUSY;
+	पूर्ण
 
-	for (entry = 0; entry < RMNET_MAX_LOGICAL_EP; entry++)
+	क्रम (entry = 0; entry < RMNET_MAX_LOGICAL_EP; entry++)
 		INIT_HLIST_HEAD(&port->muxed_ep[entry]);
 
 	netdev_dbg(real_dev, "registered with rmnet\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rmnet_unregister_bridge(struct rmnet_port *port)
-{
-	struct net_device *bridge_dev, *real_dev, *rmnet_dev;
-	struct rmnet_port *real_port;
+अटल व्योम rmnet_unरेजिस्टर_bridge(काष्ठा rmnet_port *port)
+अणु
+	काष्ठा net_device *bridge_dev, *real_dev, *rmnet_dev;
+	काष्ठा rmnet_port *real_port;
 
-	if (port->rmnet_mode != RMNET_EPMODE_BRIDGE)
-		return;
+	अगर (port->rmnet_mode != RMNET_EPMODE_BRIDGE)
+		वापस;
 
 	rmnet_dev = port->rmnet_dev;
-	if (!port->nr_rmnet_devs) {
+	अगर (!port->nr_rmnet_devs) अणु
 		/* bridge device */
 		real_dev = port->bridge_ep;
 		bridge_dev = port->dev;
 
 		real_port = rmnet_get_port_rtnl(real_dev);
-		real_port->bridge_ep = NULL;
+		real_port->bridge_ep = शून्य;
 		real_port->rmnet_mode = RMNET_EPMODE_VND;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* real device */
 		bridge_dev = port->bridge_ep;
 
-		port->bridge_ep = NULL;
+		port->bridge_ep = शून्य;
 		port->rmnet_mode = RMNET_EPMODE_VND;
-	}
+	पूर्ण
 
 	netdev_upper_dev_unlink(bridge_dev, rmnet_dev);
-	rmnet_unregister_real_device(bridge_dev);
-}
+	rmnet_unरेजिस्टर_real_device(bridge_dev);
+पूर्ण
 
-static int rmnet_newlink(struct net *src_net, struct net_device *dev,
-			 struct nlattr *tb[], struct nlattr *data[],
-			 struct netlink_ext_ack *extack)
-{
-	u32 data_format = RMNET_FLAGS_INGRESS_DEAGGREGATION;
-	struct net_device *real_dev;
-	int mode = RMNET_EPMODE_VND;
-	struct rmnet_endpoint *ep;
-	struct rmnet_port *port;
-	int err = 0;
+अटल पूर्णांक rmnet_newlink(काष्ठा net *src_net, काष्ठा net_device *dev,
+			 काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	u32 data_क्रमmat = RMNET_FLAGS_INGRESS_DEAGGREGATION;
+	काष्ठा net_device *real_dev;
+	पूर्णांक mode = RMNET_EPMODE_VND;
+	काष्ठा rmnet_endpoपूर्णांक *ep;
+	काष्ठा rmnet_port *port;
+	पूर्णांक err = 0;
 	u16 mux_id;
 
-	if (!tb[IFLA_LINK]) {
+	अगर (!tb[IFLA_LINK]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "link not specified");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	real_dev = __dev_get_by_index(src_net, nla_get_u32(tb[IFLA_LINK]));
-	if (!real_dev) {
+	अगर (!real_dev) अणु
 		NL_SET_ERR_MSG_MOD(extack, "link does not exist");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ep = kzalloc(sizeof(*ep), GFP_KERNEL);
-	if (!ep)
-		return -ENOMEM;
+	ep = kzalloc(माप(*ep), GFP_KERNEL);
+	अगर (!ep)
+		वापस -ENOMEM;
 
 	mux_id = nla_get_u16(data[IFLA_RMNET_MUX_ID]);
 
-	err = rmnet_register_real_device(real_dev, extack);
-	if (err)
-		goto err0;
+	err = rmnet_रेजिस्टर_real_device(real_dev, extack);
+	अगर (err)
+		जाओ err0;
 
 	port = rmnet_get_port_rtnl(real_dev);
 	err = rmnet_vnd_newlink(mux_id, dev, port, real_dev, ep, extack);
-	if (err)
-		goto err1;
+	अगर (err)
+		जाओ err1;
 
 	err = netdev_upper_dev_link(real_dev, dev, extack);
-	if (err < 0)
-		goto err2;
+	अगर (err < 0)
+		जाओ err2;
 
 	port->rmnet_mode = mode;
 	port->rmnet_dev = dev;
 
 	hlist_add_head_rcu(&ep->hlnode, &port->muxed_ep[mux_id]);
 
-	if (data[IFLA_RMNET_FLAGS]) {
-		struct ifla_rmnet_flags *flags;
+	अगर (data[IFLA_RMNET_FLAGS]) अणु
+		काष्ठा अगरla_rmnet_flags *flags;
 
 		flags = nla_data(data[IFLA_RMNET_FLAGS]);
-		data_format = flags->flags & flags->mask;
-	}
+		data_क्रमmat = flags->flags & flags->mask;
+	पूर्ण
 
-	netdev_dbg(dev, "data format [0x%08X]\n", data_format);
-	port->data_format = data_format;
+	netdev_dbg(dev, "data format [0x%08X]\n", data_क्रमmat);
+	port->data_क्रमmat = data_क्रमmat;
 
-	return 0;
+	वापस 0;
 
 err2:
-	unregister_netdevice(dev);
+	unरेजिस्टर_netdevice(dev);
 	rmnet_vnd_dellink(mux_id, port, ep);
 err1:
-	rmnet_unregister_real_device(real_dev);
+	rmnet_unरेजिस्टर_real_device(real_dev);
 err0:
-	kfree(ep);
-	return err;
-}
+	kमुक्त(ep);
+	वापस err;
+पूर्ण
 
-static void rmnet_dellink(struct net_device *dev, struct list_head *head)
-{
-	struct rmnet_priv *priv = netdev_priv(dev);
-	struct net_device *real_dev, *bridge_dev;
-	struct rmnet_port *real_port, *bridge_port;
-	struct rmnet_endpoint *ep;
+अटल व्योम rmnet_dellink(काष्ठा net_device *dev, काष्ठा list_head *head)
+अणु
+	काष्ठा rmnet_priv *priv = netdev_priv(dev);
+	काष्ठा net_device *real_dev, *bridge_dev;
+	काष्ठा rmnet_port *real_port, *bridge_port;
+	काष्ठा rmnet_endpoपूर्णांक *ep;
 	u8 mux_id = priv->mux_id;
 
 	real_dev = priv->real_dev;
 
-	if (!rmnet_is_real_dev_registered(real_dev))
-		return;
+	अगर (!rmnet_is_real_dev_रेजिस्टरed(real_dev))
+		वापस;
 
 	real_port = rmnet_get_port_rtnl(real_dev);
 	bridge_dev = real_port->bridge_ep;
-	if (bridge_dev) {
+	अगर (bridge_dev) अणु
 		bridge_port = rmnet_get_port_rtnl(bridge_dev);
-		rmnet_unregister_bridge(bridge_port);
-	}
+		rmnet_unरेजिस्टर_bridge(bridge_port);
+	पूर्ण
 
-	ep = rmnet_get_endpoint(real_port, mux_id);
-	if (ep) {
+	ep = rmnet_get_endpoपूर्णांक(real_port, mux_id);
+	अगर (ep) अणु
 		hlist_del_init_rcu(&ep->hlnode);
 		rmnet_vnd_dellink(mux_id, real_port, ep);
-		kfree(ep);
-	}
+		kमुक्त(ep);
+	पूर्ण
 
 	netdev_upper_dev_unlink(real_dev, dev);
-	rmnet_unregister_real_device(real_dev);
-	unregister_netdevice_queue(dev, head);
-}
+	rmnet_unरेजिस्टर_real_device(real_dev);
+	unरेजिस्टर_netdevice_queue(dev, head);
+पूर्ण
 
-static void rmnet_force_unassociate_device(struct net_device *real_dev)
-{
-	struct hlist_node *tmp_ep;
-	struct rmnet_endpoint *ep;
-	struct rmnet_port *port;
-	unsigned long bkt_ep;
+अटल व्योम rmnet_क्रमce_unassociate_device(काष्ठा net_device *real_dev)
+अणु
+	काष्ठा hlist_node *पंचांगp_ep;
+	काष्ठा rmnet_endpoपूर्णांक *ep;
+	काष्ठा rmnet_port *port;
+	अचिन्हित दीर्घ bkt_ep;
 	LIST_HEAD(list);
 
 	port = rmnet_get_port_rtnl(real_dev);
 
-	if (port->nr_rmnet_devs) {
+	अगर (port->nr_rmnet_devs) अणु
 		/* real device */
-		rmnet_unregister_bridge(port);
-		hash_for_each_safe(port->muxed_ep, bkt_ep, tmp_ep, ep, hlnode) {
-			unregister_netdevice_queue(ep->egress_dev, &list);
+		rmnet_unरेजिस्टर_bridge(port);
+		hash_क्रम_each_safe(port->muxed_ep, bkt_ep, पंचांगp_ep, ep, hlnode) अणु
+			unरेजिस्टर_netdevice_queue(ep->egress_dev, &list);
 			netdev_upper_dev_unlink(real_dev, ep->egress_dev);
 			rmnet_vnd_dellink(ep->mux_id, port, ep);
 			hlist_del_init_rcu(&ep->hlnode);
-			kfree(ep);
-		}
-		rmnet_unregister_real_device(real_dev);
-		unregister_netdevice_many(&list);
-	} else {
-		rmnet_unregister_bridge(port);
-	}
-}
+			kमुक्त(ep);
+		पूर्ण
+		rmnet_unरेजिस्टर_real_device(real_dev);
+		unरेजिस्टर_netdevice_many(&list);
+	पूर्ण अन्यथा अणु
+		rmnet_unरेजिस्टर_bridge(port);
+	पूर्ण
+पूर्ण
 
-static int rmnet_config_notify_cb(struct notifier_block *nb,
-				  unsigned long event, void *data)
-{
-	struct net_device *real_dev = netdev_notifier_info_to_dev(data);
+अटल पूर्णांक rmnet_config_notअगरy_cb(काष्ठा notअगरier_block *nb,
+				  अचिन्हित दीर्घ event, व्योम *data)
+अणु
+	काष्ठा net_device *real_dev = netdev_notअगरier_info_to_dev(data);
 
-	if (!rmnet_is_real_dev_registered(real_dev))
-		return NOTIFY_DONE;
+	अगर (!rmnet_is_real_dev_रेजिस्टरed(real_dev))
+		वापस NOTIFY_DONE;
 
-	switch (event) {
-	case NETDEV_UNREGISTER:
+	चयन (event) अणु
+	हाल NETDEV_UNREGISTER:
 		netdev_dbg(real_dev, "Kernel unregister\n");
-		rmnet_force_unassociate_device(real_dev);
-		break;
-	case NETDEV_CHANGEMTU:
-		if (rmnet_vnd_validate_real_dev_mtu(real_dev))
-			return NOTIFY_BAD;
-		break;
-	default:
-		break;
-	}
+		rmnet_क्रमce_unassociate_device(real_dev);
+		अवरोध;
+	हाल NETDEV_CHANGEMTU:
+		अगर (rmnet_vnd_validate_real_dev_mtu(real_dev))
+			वापस NOTIFY_BAD;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block rmnet_dev_notifier __read_mostly = {
-	.notifier_call = rmnet_config_notify_cb,
-};
+अटल काष्ठा notअगरier_block rmnet_dev_notअगरier __पढ़ो_mostly = अणु
+	.notअगरier_call = rmnet_config_notअगरy_cb,
+पूर्ण;
 
-static int rmnet_rtnl_validate(struct nlattr *tb[], struct nlattr *data[],
-			       struct netlink_ext_ack *extack)
-{
+अटल पूर्णांक rmnet_rtnl_validate(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+			       काष्ठा netlink_ext_ack *extack)
+अणु
 	u16 mux_id;
 
-	if (!data || !data[IFLA_RMNET_MUX_ID]) {
+	अगर (!data || !data[IFLA_RMNET_MUX_ID]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "MUX ID not specified");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mux_id = nla_get_u16(data[IFLA_RMNET_MUX_ID]);
-	if (mux_id > (RMNET_MAX_LOGICAL_EP - 1)) {
+	अगर (mux_id > (RMNET_MAX_LOGICAL_EP - 1)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "invalid MUX ID");
-		return -ERANGE;
-	}
+		वापस -दुस्फल;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rmnet_changelink(struct net_device *dev, struct nlattr *tb[],
-			    struct nlattr *data[],
-			    struct netlink_ext_ack *extack)
-{
-	struct rmnet_priv *priv = netdev_priv(dev);
-	struct net_device *real_dev;
-	struct rmnet_port *port;
+अटल पूर्णांक rmnet_changelink(काष्ठा net_device *dev, काष्ठा nlattr *tb[],
+			    काष्ठा nlattr *data[],
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा rmnet_priv *priv = netdev_priv(dev);
+	काष्ठा net_device *real_dev;
+	काष्ठा rmnet_port *port;
 	u16 mux_id;
 
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	real_dev = priv->real_dev;
-	if (!rmnet_is_real_dev_registered(real_dev))
-		return -ENODEV;
+	अगर (!rmnet_is_real_dev_रेजिस्टरed(real_dev))
+		वापस -ENODEV;
 
 	port = rmnet_get_port_rtnl(real_dev);
 
-	if (data[IFLA_RMNET_MUX_ID]) {
+	अगर (data[IFLA_RMNET_MUX_ID]) अणु
 		mux_id = nla_get_u16(data[IFLA_RMNET_MUX_ID]);
 
-		if (mux_id != priv->mux_id) {
-			struct rmnet_endpoint *ep;
+		अगर (mux_id != priv->mux_id) अणु
+			काष्ठा rmnet_endpoपूर्णांक *ep;
 
-			ep = rmnet_get_endpoint(port, priv->mux_id);
-			if (!ep)
-				return -ENODEV;
+			ep = rmnet_get_endpoपूर्णांक(port, priv->mux_id);
+			अगर (!ep)
+				वापस -ENODEV;
 
-			if (rmnet_get_endpoint(port, mux_id)) {
+			अगर (rmnet_get_endpoपूर्णांक(port, mux_id)) अणु
 				NL_SET_ERR_MSG_MOD(extack,
 						   "MUX ID already exists");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			hlist_del_init_rcu(&ep->hlnode);
 			hlist_add_head_rcu(&ep->hlnode,
@@ -327,70 +328,70 @@ static int rmnet_changelink(struct net_device *dev, struct nlattr *tb[],
 
 			ep->mux_id = mux_id;
 			priv->mux_id = mux_id;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (data[IFLA_RMNET_FLAGS]) {
-		struct ifla_rmnet_flags *flags;
-		u32 old_data_format;
+	अगर (data[IFLA_RMNET_FLAGS]) अणु
+		काष्ठा अगरla_rmnet_flags *flags;
+		u32 old_data_क्रमmat;
 
-		old_data_format = port->data_format;
+		old_data_क्रमmat = port->data_क्रमmat;
 		flags = nla_data(data[IFLA_RMNET_FLAGS]);
-		port->data_format = flags->flags & flags->mask;
+		port->data_क्रमmat = flags->flags & flags->mask;
 
-		if (rmnet_vnd_update_dev_mtu(port, real_dev)) {
-			port->data_format = old_data_format;
+		अगर (rmnet_vnd_update_dev_mtu(port, real_dev)) अणु
+			port->data_क्रमmat = old_data_क्रमmat;
 			NL_SET_ERR_MSG_MOD(extack, "Invalid MTU on real dev");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static size_t rmnet_get_size(const struct net_device *dev)
-{
-	return
+अटल माप_प्रकार rmnet_get_size(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस
 		/* IFLA_RMNET_MUX_ID */
 		nla_total_size(2) +
 		/* IFLA_RMNET_FLAGS */
-		nla_total_size(sizeof(struct ifla_rmnet_flags));
-}
+		nla_total_size(माप(काष्ठा अगरla_rmnet_flags));
+पूर्ण
 
-static int rmnet_fill_info(struct sk_buff *skb, const struct net_device *dev)
-{
-	struct rmnet_priv *priv = netdev_priv(dev);
-	struct net_device *real_dev;
-	struct ifla_rmnet_flags f;
-	struct rmnet_port *port;
+अटल पूर्णांक rmnet_fill_info(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा rmnet_priv *priv = netdev_priv(dev);
+	काष्ठा net_device *real_dev;
+	काष्ठा अगरla_rmnet_flags f;
+	काष्ठा rmnet_port *port;
 
 	real_dev = priv->real_dev;
 
-	if (nla_put_u16(skb, IFLA_RMNET_MUX_ID, priv->mux_id))
-		goto nla_put_failure;
+	अगर (nla_put_u16(skb, IFLA_RMNET_MUX_ID, priv->mux_id))
+		जाओ nla_put_failure;
 
-	if (rmnet_is_real_dev_registered(real_dev)) {
+	अगर (rmnet_is_real_dev_रेजिस्टरed(real_dev)) अणु
 		port = rmnet_get_port_rtnl(real_dev);
-		f.flags = port->data_format;
-	} else {
+		f.flags = port->data_क्रमmat;
+	पूर्ण अन्यथा अणु
 		f.flags = 0;
-	}
+	पूर्ण
 
 	f.mask  = ~0;
 
-	if (nla_put(skb, IFLA_RMNET_FLAGS, sizeof(f), &f))
-		goto nla_put_failure;
+	अगर (nla_put(skb, IFLA_RMNET_FLAGS, माप(f), &f))
+		जाओ nla_put_failure;
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-struct rtnl_link_ops rmnet_link_ops __read_mostly = {
+काष्ठा rtnl_link_ops rmnet_link_ops __पढ़ो_mostly = अणु
 	.kind		= "rmnet",
 	.maxtype	= __IFLA_RMNET_MAX,
-	.priv_size	= sizeof(struct rmnet_priv),
+	.priv_size	= माप(काष्ठा rmnet_priv),
 	.setup		= rmnet_vnd_setup,
 	.validate	= rmnet_rtnl_validate,
 	.newlink	= rmnet_newlink,
@@ -399,69 +400,69 @@ struct rtnl_link_ops rmnet_link_ops __read_mostly = {
 	.changelink     = rmnet_changelink,
 	.policy		= rmnet_policy,
 	.fill_info	= rmnet_fill_info,
-};
+पूर्ण;
 
-struct rmnet_port *rmnet_get_port_rcu(struct net_device *real_dev)
-{
-	if (rmnet_is_real_dev_registered(real_dev))
-		return rcu_dereference_bh(real_dev->rx_handler_data);
-	else
-		return NULL;
-}
+काष्ठा rmnet_port *rmnet_get_port_rcu(काष्ठा net_device *real_dev)
+अणु
+	अगर (rmnet_is_real_dev_रेजिस्टरed(real_dev))
+		वापस rcu_dereference_bh(real_dev->rx_handler_data);
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-struct rmnet_endpoint *rmnet_get_endpoint(struct rmnet_port *port, u8 mux_id)
-{
-	struct rmnet_endpoint *ep;
+काष्ठा rmnet_endpoपूर्णांक *rmnet_get_endpoपूर्णांक(काष्ठा rmnet_port *port, u8 mux_id)
+अणु
+	काष्ठा rmnet_endpoपूर्णांक *ep;
 
-	hlist_for_each_entry_rcu(ep, &port->muxed_ep[mux_id], hlnode) {
-		if (ep->mux_id == mux_id)
-			return ep;
-	}
+	hlist_क्रम_each_entry_rcu(ep, &port->muxed_ep[mux_id], hlnode) अणु
+		अगर (ep->mux_id == mux_id)
+			वापस ep;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int rmnet_add_bridge(struct net_device *rmnet_dev,
-		     struct net_device *slave_dev,
-		     struct netlink_ext_ack *extack)
-{
-	struct rmnet_priv *priv = netdev_priv(rmnet_dev);
-	struct net_device *real_dev = priv->real_dev;
-	struct rmnet_port *port, *slave_port;
-	int err;
+पूर्णांक rmnet_add_bridge(काष्ठा net_device *rmnet_dev,
+		     काष्ठा net_device *slave_dev,
+		     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा rmnet_priv *priv = netdev_priv(rmnet_dev);
+	काष्ठा net_device *real_dev = priv->real_dev;
+	काष्ठा rmnet_port *port, *slave_port;
+	पूर्णांक err;
 
 	port = rmnet_get_port_rtnl(real_dev);
 
 	/* If there is more than one rmnet dev attached, its probably being
-	 * used for muxing. Skip the briding in that case
+	 * used क्रम muxing. Skip the briding in that हाल
 	 */
-	if (port->nr_rmnet_devs > 1) {
+	अगर (port->nr_rmnet_devs > 1) अणु
 		NL_SET_ERR_MSG_MOD(extack, "more than one rmnet dev attached");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (port->rmnet_mode != RMNET_EPMODE_VND) {
+	अगर (port->rmnet_mode != RMNET_EPMODE_VND) अणु
 		NL_SET_ERR_MSG_MOD(extack, "more than one bridge dev attached");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (rmnet_is_real_dev_registered(slave_dev)) {
+	अगर (rmnet_is_real_dev_रेजिस्टरed(slave_dev)) अणु
 		NL_SET_ERR_MSG_MOD(extack,
 				   "slave cannot be another rmnet dev");
 
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	err = rmnet_register_real_device(slave_dev, extack);
-	if (err)
-		return -EBUSY;
+	err = rmnet_रेजिस्टर_real_device(slave_dev, extack);
+	अगर (err)
+		वापस -EBUSY;
 
-	err = netdev_master_upper_dev_link(slave_dev, rmnet_dev, NULL, NULL,
+	err = netdev_master_upper_dev_link(slave_dev, rmnet_dev, शून्य, शून्य,
 					   extack);
-	if (err) {
-		rmnet_unregister_real_device(slave_dev);
-		return err;
-	}
+	अगर (err) अणु
+		rmnet_unरेजिस्टर_real_device(slave_dev);
+		वापस err;
+	पूर्ण
 
 	slave_port = rmnet_get_port_rtnl(slave_dev);
 	slave_port->rmnet_mode = RMNET_EPMODE_BRIDGE;
@@ -472,45 +473,45 @@ int rmnet_add_bridge(struct net_device *rmnet_dev,
 	port->bridge_ep = slave_dev;
 
 	netdev_dbg(slave_dev, "registered with rmnet as slave\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rmnet_del_bridge(struct net_device *rmnet_dev,
-		     struct net_device *slave_dev)
-{
-	struct rmnet_port *port = rmnet_get_port_rtnl(slave_dev);
+पूर्णांक rmnet_del_bridge(काष्ठा net_device *rmnet_dev,
+		     काष्ठा net_device *slave_dev)
+अणु
+	काष्ठा rmnet_port *port = rmnet_get_port_rtnl(slave_dev);
 
-	rmnet_unregister_bridge(port);
+	rmnet_unरेजिस्टर_bridge(port);
 
 	netdev_dbg(slave_dev, "removed from rmnet as slave\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Startup/Shutdown */
+/* Startup/Shutकरोwn */
 
-static int __init rmnet_init(void)
-{
-	int rc;
+अटल पूर्णांक __init rmnet_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = register_netdevice_notifier(&rmnet_dev_notifier);
-	if (rc != 0)
-		return rc;
+	rc = रेजिस्टर_netdevice_notअगरier(&rmnet_dev_notअगरier);
+	अगर (rc != 0)
+		वापस rc;
 
-	rc = rtnl_link_register(&rmnet_link_ops);
-	if (rc != 0) {
-		unregister_netdevice_notifier(&rmnet_dev_notifier);
-		return rc;
-	}
-	return rc;
-}
+	rc = rtnl_link_रेजिस्टर(&rmnet_link_ops);
+	अगर (rc != 0) अणु
+		unरेजिस्टर_netdevice_notअगरier(&rmnet_dev_notअगरier);
+		वापस rc;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static void __exit rmnet_exit(void)
-{
-	rtnl_link_unregister(&rmnet_link_ops);
-	unregister_netdevice_notifier(&rmnet_dev_notifier);
-}
+अटल व्योम __निकास rmnet_निकास(व्योम)
+अणु
+	rtnl_link_unरेजिस्टर(&rmnet_link_ops);
+	unरेजिस्टर_netdevice_notअगरier(&rmnet_dev_notअगरier);
+पूर्ण
 
 module_init(rmnet_init)
-module_exit(rmnet_exit)
+module_निकास(rmnet_निकास)
 MODULE_ALIAS_RTNL_LINK("rmnet");
 MODULE_LICENSE("GPL v2");

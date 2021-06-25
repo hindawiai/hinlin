@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * PCI Hot Plug Controller Driver for RPA-compliant PPC64 platform.
+ * PCI Hot Plug Controller Driver क्रम RPA-compliant PPC64 platक्रमm.
  *
  * Copyright (C) 2003 Linda Xie <lxie@us.ibm.com>
  *
@@ -10,90 +11,90 @@
  *
  */
 
-#ifndef _PPC64PHP_H
-#define _PPC64PHP_H
+#अगर_अघोषित _PPC64PHP_H
+#घोषणा _PPC64PHP_H
 
-#include <linux/pci.h>
-#include <linux/pci_hotplug.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_hotplug.h>
 
-#define DR_INDICATOR 9002
-#define DR_ENTITY_SENSE 9003
+#घोषणा DR_INDICATOR 9002
+#घोषणा DR_ENTITY_SENSE 9003
 
-#define POWER_ON	100
-#define POWER_OFF	0
+#घोषणा POWER_ON	100
+#घोषणा POWER_OFF	0
 
-#define LED_OFF		0
-#define LED_ON		1	/* continuous on */
-#define LED_ID		2	/* slow blinking */
-#define LED_ACTION	3	/* fast blinking */
+#घोषणा LED_OFF		0
+#घोषणा LED_ON		1	/* continuous on */
+#घोषणा LED_ID		2	/* slow blinking */
+#घोषणा LED_ACTION	3	/* fast blinking */
 
 /* Sensor values from rtas_get-sensor */
-#define EMPTY           0	/* No card in slot */
-#define PRESENT         1	/* Card in slot */
+#घोषणा EMPTY           0	/* No card in slot */
+#घोषणा PRESENT         1	/* Card in slot */
 
-#define MY_NAME "rpaphp"
-extern bool rpaphp_debug;
-#define dbg(format, arg...)					\
-	do {							\
-		if (rpaphp_debug)				\
-			printk(KERN_DEBUG "%s: " format,	\
+#घोषणा MY_NAME "rpaphp"
+बाह्य bool rpaphp_debug;
+#घोषणा dbg(क्रमmat, arg...)					\
+	करो अणु							\
+		अगर (rpaphp_debug)				\
+			prपूर्णांकk(KERN_DEBUG "%s: " क्रमmat,	\
 				MY_NAME, ## arg);		\
-	} while (0)
-#define err(format, arg...) printk(KERN_ERR "%s: " format, MY_NAME, ## arg)
-#define info(format, arg...) printk(KERN_INFO "%s: " format, MY_NAME, ## arg)
-#define warn(format, arg...) printk(KERN_WARNING "%s: " format, MY_NAME, ## arg)
+	पूर्ण जबतक (0)
+#घोषणा err(क्रमmat, arg...) prपूर्णांकk(KERN_ERR "%s: " क्रमmat, MY_NAME, ## arg)
+#घोषणा info(क्रमmat, arg...) prपूर्णांकk(KERN_INFO "%s: " क्रमmat, MY_NAME, ## arg)
+#घोषणा warn(क्रमmat, arg...) prपूर्णांकk(KERN_WARNING "%s: " क्रमmat, MY_NAME, ## arg)
 
 /* slot states */
 
-#define	NOT_VALID	3
-#define	NOT_CONFIGURED	2
-#define	CONFIGURED	1
-#define	EMPTY		0
+#घोषणा	NOT_VALID	3
+#घोषणा	NOT_CONFIGURED	2
+#घोषणा	CONFIGURED	1
+#घोषणा	EMPTY		0
 
-/* DRC constants */
+/* DRC स्थिरants */
 
-#define MAX_DRC_NAME_LEN 64
+#घोषणा MAX_DRC_NAME_LEN 64
 
 /*
- * struct slot - slot information for each *physical* slot
+ * काष्ठा slot - slot inक्रमmation क्रम each *physical* slot
  */
-struct slot {
-	struct list_head rpaphp_slot_list;
-	int state;
+काष्ठा slot अणु
+	काष्ठा list_head rpaphp_slot_list;
+	पूर्णांक state;
 	u32 index;
 	u32 type;
-	u32 power_domain;
+	u32 घातer_करोमुख्य;
 	u8 attention_status;
-	char *name;
-	struct device_node *dn;
-	struct pci_bus *bus;
-	struct list_head *pci_devs;
-	struct hotplug_slot hotplug_slot;
-};
+	अक्षर *name;
+	काष्ठा device_node *dn;
+	काष्ठा pci_bus *bus;
+	काष्ठा list_head *pci_devs;
+	काष्ठा hotplug_slot hotplug_slot;
+पूर्ण;
 
-extern const struct hotplug_slot_ops rpaphp_hotplug_slot_ops;
-extern struct list_head rpaphp_slot_head;
+बाह्य स्थिर काष्ठा hotplug_slot_ops rpaphp_hotplug_slot_ops;
+बाह्य काष्ठा list_head rpaphp_slot_head;
 
-static inline struct slot *to_slot(struct hotplug_slot *hotplug_slot)
-{
-	return container_of(hotplug_slot, struct slot, hotplug_slot);
-}
+अटल अंतरभूत काष्ठा slot *to_slot(काष्ठा hotplug_slot *hotplug_slot)
+अणु
+	वापस container_of(hotplug_slot, काष्ठा slot, hotplug_slot);
+पूर्ण
 
 /* function prototypes */
 
 /* rpaphp_pci.c */
-int rpaphp_enable_slot(struct slot *slot);
-int rpaphp_get_sensor_state(struct slot *slot, int *state);
+पूर्णांक rpaphp_enable_slot(काष्ठा slot *slot);
+पूर्णांक rpaphp_get_sensor_state(काष्ठा slot *slot, पूर्णांक *state);
 
 /* rpaphp_core.c */
-int rpaphp_add_slot(struct device_node *dn);
-int rpaphp_check_drc_props(struct device_node *dn, char *drc_name,
-		char *drc_type);
+पूर्णांक rpaphp_add_slot(काष्ठा device_node *dn);
+पूर्णांक rpaphp_check_drc_props(काष्ठा device_node *dn, अक्षर *drc_name,
+		अक्षर *drc_type);
 
 /* rpaphp_slot.c */
-void dealloc_slot_struct(struct slot *slot);
-struct slot *alloc_slot_struct(struct device_node *dn, int drc_index, char *drc_name, int power_domain);
-int rpaphp_register_slot(struct slot *slot);
-int rpaphp_deregister_slot(struct slot *slot);
+व्योम dealloc_slot_काष्ठा(काष्ठा slot *slot);
+काष्ठा slot *alloc_slot_काष्ठा(काष्ठा device_node *dn, पूर्णांक drc_index, अक्षर *drc_name, पूर्णांक घातer_करोमुख्य);
+पूर्णांक rpaphp_रेजिस्टर_slot(काष्ठा slot *slot);
+पूर्णांक rpaphp_deरेजिस्टर_slot(काष्ठा slot *slot);
 
-#endif				/* _PPC64PHP_H */
+#पूर्ण_अगर				/* _PPC64PHP_H */

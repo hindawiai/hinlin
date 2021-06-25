@@ -1,72 +1,73 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_NOHASH_PGALLOC_H
-#define _ASM_POWERPC_NOHASH_PGALLOC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_NOHASH_PGALLOC_H
+#घोषणा _ASM_POWERPC_NOHASH_PGALLOC_H
 
-#include <linux/mm.h>
-#include <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
 
-extern void tlb_remove_table(struct mmu_gather *tlb, void *table);
-#ifdef CONFIG_PPC64
-extern void tlb_flush_pgtable(struct mmu_gather *tlb, unsigned long address);
-#else
+बाह्य व्योम tlb_हटाओ_table(काष्ठा mmu_gather *tlb, व्योम *table);
+#अगर_घोषित CONFIG_PPC64
+बाह्य व्योम tlb_flush_pgtable(काष्ठा mmu_gather *tlb, अचिन्हित दीर्घ address);
+#अन्यथा
 /* 44x etc which is BOOKE not BOOK3E */
-static inline void tlb_flush_pgtable(struct mmu_gather *tlb,
-				     unsigned long address)
-{
+अटल अंतरभूत व्योम tlb_flush_pgtable(काष्ठा mmu_gather *tlb,
+				     अचिन्हित दीर्घ address)
+अणु
 
-}
-#endif /* !CONFIG_PPC_BOOK3E */
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_PPC_BOOK3E */
 
-static inline pgd_t *pgd_alloc(struct mm_struct *mm)
-{
-	return kmem_cache_alloc(PGT_CACHE(PGD_INDEX_SIZE),
+अटल अंतरभूत pgd_t *pgd_alloc(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस kmem_cache_alloc(PGT_CACHE(PGD_INDEX_SIZE),
 			pgtable_gfp_flags(mm, GFP_KERNEL));
-}
+पूर्ण
 
-static inline void pgd_free(struct mm_struct *mm, pgd_t *pgd)
-{
-	kmem_cache_free(PGT_CACHE(PGD_INDEX_SIZE), pgd);
-}
+अटल अंतरभूत व्योम pgd_मुक्त(काष्ठा mm_काष्ठा *mm, pgd_t *pgd)
+अणु
+	kmem_cache_मुक्त(PGT_CACHE(PGD_INDEX_SIZE), pgd);
+पूर्ण
 
-#ifdef CONFIG_PPC64
-#include <asm/nohash/64/pgalloc.h>
-#else
-#include <asm/nohash/32/pgalloc.h>
-#endif
+#अगर_घोषित CONFIG_PPC64
+#समावेश <यंत्र/nohash/64/pgभाग.स>
+#अन्यथा
+#समावेश <यंत्र/nohash/32/pgभाग.स>
+#पूर्ण_अगर
 
-static inline void pgtable_free(void *table, int shift)
-{
-	if (!shift) {
-		pte_fragment_free((unsigned long *)table, 0);
-	} else {
-		BUG_ON(shift > MAX_PGTABLE_INDEX_SIZE);
-		kmem_cache_free(PGT_CACHE(shift), table);
-	}
-}
+अटल अंतरभूत व्योम pgtable_मुक्त(व्योम *table, पूर्णांक shअगरt)
+अणु
+	अगर (!shअगरt) अणु
+		pte_fragment_मुक्त((अचिन्हित दीर्घ *)table, 0);
+	पूर्ण अन्यथा अणु
+		BUG_ON(shअगरt > MAX_PGTABLE_INDEX_SIZE);
+		kmem_cache_मुक्त(PGT_CACHE(shअगरt), table);
+	पूर्ण
+पूर्ण
 
-#define get_hugepd_cache_index(x)	(x)
+#घोषणा get_hugepd_cache_index(x)	(x)
 
-static inline void pgtable_free_tlb(struct mmu_gather *tlb, void *table, int shift)
-{
-	unsigned long pgf = (unsigned long)table;
+अटल अंतरभूत व्योम pgtable_मुक्त_tlb(काष्ठा mmu_gather *tlb, व्योम *table, पूर्णांक shअगरt)
+अणु
+	अचिन्हित दीर्घ pgf = (अचिन्हित दीर्घ)table;
 
-	BUG_ON(shift > MAX_PGTABLE_INDEX_SIZE);
-	pgf |= shift;
-	tlb_remove_table(tlb, (void *)pgf);
-}
+	BUG_ON(shअगरt > MAX_PGTABLE_INDEX_SIZE);
+	pgf |= shअगरt;
+	tlb_हटाओ_table(tlb, (व्योम *)pgf);
+पूर्ण
 
-static inline void __tlb_remove_table(void *_table)
-{
-	void *table = (void *)((unsigned long)_table & ~MAX_PGTABLE_INDEX_SIZE);
-	unsigned shift = (unsigned long)_table & MAX_PGTABLE_INDEX_SIZE;
+अटल अंतरभूत व्योम __tlb_हटाओ_table(व्योम *_table)
+अणु
+	व्योम *table = (व्योम *)((अचिन्हित दीर्घ)_table & ~MAX_PGTABLE_INDEX_SIZE);
+	अचिन्हित shअगरt = (अचिन्हित दीर्घ)_table & MAX_PGTABLE_INDEX_SIZE;
 
-	pgtable_free(table, shift);
-}
+	pgtable_मुक्त(table, shअगरt);
+पूर्ण
 
-static inline void __pte_free_tlb(struct mmu_gather *tlb, pgtable_t table,
-				  unsigned long address)
-{
+अटल अंतरभूत व्योम __pte_मुक्त_tlb(काष्ठा mmu_gather *tlb, pgtable_t table,
+				  अचिन्हित दीर्घ address)
+अणु
 	tlb_flush_pgtable(tlb, address);
-	pgtable_free_tlb(tlb, table, 0);
-}
-#endif /* _ASM_POWERPC_NOHASH_PGALLOC_H */
+	pgtable_मुक्त_tlb(tlb, table, 0);
+पूर्ण
+#पूर्ण_अगर /* _ASM_POWERPC_NOHASH_PGALLOC_H */

@@ -1,91 +1,92 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_SWITCH_TO_H
-#define _ASM_X86_SWITCH_TO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_SWITCH_TO_H
+#घोषणा _ASM_X86_SWITCH_TO_H
 
-#include <linux/sched/task_stack.h>
+#समावेश <linux/sched/task_stack.h>
 
-struct task_struct; /* one of the stranger aspects of C forward declarations */
+काष्ठा task_काष्ठा; /* one of the stranger aspects of C क्रमward declarations */
 
-struct task_struct *__switch_to_asm(struct task_struct *prev,
-				    struct task_struct *next);
+काष्ठा task_काष्ठा *__चयन_to_यंत्र(काष्ठा task_काष्ठा *prev,
+				    काष्ठा task_काष्ठा *next);
 
-__visible struct task_struct *__switch_to(struct task_struct *prev,
-					  struct task_struct *next);
+__visible काष्ठा task_काष्ठा *__चयन_to(काष्ठा task_काष्ठा *prev,
+					  काष्ठा task_काष्ठा *next);
 
-asmlinkage void ret_from_fork(void);
+यंत्रlinkage व्योम ret_from_विभाजन(व्योम);
 
 /*
- * This is the structure pointed to by thread.sp for an inactive task.  The
- * order of the fields must match the code in __switch_to_asm().
+ * This is the काष्ठाure poपूर्णांकed to by thपढ़ो.sp क्रम an inactive task.  The
+ * order of the fields must match the code in __चयन_to_यंत्र().
  */
-struct inactive_task_frame {
-#ifdef CONFIG_X86_64
-	unsigned long r15;
-	unsigned long r14;
-	unsigned long r13;
-	unsigned long r12;
-#else
-	unsigned long flags;
-	unsigned long si;
-	unsigned long di;
-#endif
-	unsigned long bx;
+काष्ठा inactive_task_frame अणु
+#अगर_घोषित CONFIG_X86_64
+	अचिन्हित दीर्घ r15;
+	अचिन्हित दीर्घ r14;
+	अचिन्हित दीर्घ r13;
+	अचिन्हित दीर्घ r12;
+#अन्यथा
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ si;
+	अचिन्हित दीर्घ di;
+#पूर्ण_अगर
+	अचिन्हित दीर्घ bx;
 
 	/*
-	 * These two fields must be together.  They form a stack frame header,
-	 * needed by get_frame_pointer().
+	 * These two fields must be together.  They क्रमm a stack frame header,
+	 * needed by get_frame_poपूर्णांकer().
 	 */
-	unsigned long bp;
-	unsigned long ret_addr;
-};
+	अचिन्हित दीर्घ bp;
+	अचिन्हित दीर्घ ret_addr;
+पूर्ण;
 
-struct fork_frame {
-	struct inactive_task_frame frame;
-	struct pt_regs regs;
-};
+काष्ठा विभाजन_frame अणु
+	काष्ठा inactive_task_frame frame;
+	काष्ठा pt_regs regs;
+पूर्ण;
 
-#define switch_to(prev, next, last)					\
-do {									\
-	((last) = __switch_to_asm((prev), (next)));			\
-} while (0)
+#घोषणा चयन_to(prev, next, last)					\
+करो अणु									\
+	((last) = __चयन_to_यंत्र((prev), (next)));			\
+पूर्ण जबतक (0)
 
-#ifdef CONFIG_X86_32
-static inline void refresh_sysenter_cs(struct thread_struct *thread)
-{
+#अगर_घोषित CONFIG_X86_32
+अटल अंतरभूत व्योम refresh_sysenter_cs(काष्ठा thपढ़ो_काष्ठा *thपढ़ो)
+अणु
 	/* Only happens when SEP is enabled, no need to test "SEP"arately: */
-	if (unlikely(this_cpu_read(cpu_tss_rw.x86_tss.ss1) == thread->sysenter_cs))
-		return;
+	अगर (unlikely(this_cpu_पढ़ो(cpu_tss_rw.x86_tss.ss1) == thपढ़ो->sysenter_cs))
+		वापस;
 
-	this_cpu_write(cpu_tss_rw.x86_tss.ss1, thread->sysenter_cs);
-	wrmsr(MSR_IA32_SYSENTER_CS, thread->sysenter_cs, 0);
-}
-#endif
+	this_cpu_ग_लिखो(cpu_tss_rw.x86_tss.ss1, thपढ़ो->sysenter_cs);
+	wrmsr(MSR_IA32_SYSENTER_CS, thपढ़ो->sysenter_cs, 0);
+पूर्ण
+#पूर्ण_अगर
 
-/* This is used when switching tasks or entering/exiting vm86 mode. */
-static inline void update_task_stack(struct task_struct *task)
-{
-	/* sp0 always points to the entry trampoline stack, which is constant: */
-#ifdef CONFIG_X86_32
-	if (static_cpu_has(X86_FEATURE_XENPV))
-		load_sp0(task->thread.sp0);
-	else
-		this_cpu_write(cpu_tss_rw.x86_tss.sp1, task->thread.sp0);
-#else
-	/* Xen PV enters the kernel on the thread stack. */
-	if (static_cpu_has(X86_FEATURE_XENPV))
+/* This is used when चयनing tasks or entering/निकासing vm86 mode. */
+अटल अंतरभूत व्योम update_task_stack(काष्ठा task_काष्ठा *task)
+अणु
+	/* sp0 always poपूर्णांकs to the entry trampoline stack, which is स्थिरant: */
+#अगर_घोषित CONFIG_X86_32
+	अगर (अटल_cpu_has(X86_FEATURE_XENPV))
+		load_sp0(task->thपढ़ो.sp0);
+	अन्यथा
+		this_cpu_ग_लिखो(cpu_tss_rw.x86_tss.sp1, task->thपढ़ो.sp0);
+#अन्यथा
+	/* Xen PV enters the kernel on the thपढ़ो stack. */
+	अगर (अटल_cpu_has(X86_FEATURE_XENPV))
 		load_sp0(task_top_of_stack(task));
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void kthread_frame_init(struct inactive_task_frame *frame,
-				      unsigned long fun, unsigned long arg)
-{
+अटल अंतरभूत व्योम kthपढ़ो_frame_init(काष्ठा inactive_task_frame *frame,
+				      अचिन्हित दीर्घ fun, अचिन्हित दीर्घ arg)
+अणु
 	frame->bx = fun;
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	frame->di = arg;
-#else
+#अन्यथा
 	frame->r12 = arg;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#endif /* _ASM_X86_SWITCH_TO_H */
+#पूर्ण_अगर /* _ASM_X86_SWITCH_TO_H */

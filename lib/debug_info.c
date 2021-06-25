@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * This file exists solely to ensure debug information for some core
- * data structures is included in the final image even for
- * CONFIG_DEBUG_INFO_REDUCED. Please do not add actual code. However,
- * adding appropriate #includes is fine.
+ * This file exists solely to ensure debug inक्रमmation क्रम some core
+ * data काष्ठाures is included in the final image even क्रम
+ * CONFIG_DEBUG_INFO_REDUCED. Please करो not add actual code. However,
+ * adding appropriate #समावेशs is fine.
  */
-#include <stdarg.h>
+#समावेश <मानकतर्क.स>
 
-#include <linux/cred.h>
-#include <linux/crypto.h>
-#include <linux/dcache.h>
-#include <linux/device.h>
-#include <linux/fs.h>
-#include <linux/fscache-cache.h>
-#include <linux/io.h>
-#include <linux/kallsyms.h>
-#include <linux/kernel.h>
-#include <linux/kobject.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/net.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <net/addrconf.h>
-#include <net/sock.h>
-#include <net/tcp.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/dcache.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/fscache-cache.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/net.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <net/addrconf.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp.h>

@@ -1,211 +1,212 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2020 Intel Corporation
  * Author: Johannes Berg <johannes@sipsolutions.net>
  */
-#include <linux/platform_device.h>
-#include <linux/time-internal.h>
-#include <linux/suspend.h>
-#include <linux/err.h>
-#include <linux/rtc.h>
-#include <kern_util.h>
-#include <irq_kern.h>
-#include <os.h>
-#include "rtc.h"
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/समय-पूर्णांकernal.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/err.h>
+#समावेश <linux/rtc.h>
+#समावेश <kern_util.h>
+#समावेश <irq_kern.h>
+#समावेश <os.h>
+#समावेश "rtc.h"
 
-static time64_t uml_rtc_alarm_time;
-static bool uml_rtc_alarm_enabled;
-static struct rtc_device *uml_rtc;
-static int uml_rtc_irq_fd, uml_rtc_irq;
+अटल समय64_t uml_rtc_alarm_समय;
+अटल bool uml_rtc_alarm_enabled;
+अटल काष्ठा rtc_device *uml_rtc;
+अटल पूर्णांक uml_rtc_irq_fd, uml_rtc_irq;
 
-#ifdef CONFIG_UML_TIME_TRAVEL_SUPPORT
+#अगर_घोषित CONFIG_UML_TIME_TRAVEL_SUPPORT
 
-static void uml_rtc_time_travel_alarm(struct time_travel_event *ev)
-{
-	uml_rtc_send_timetravel_alarm();
-}
+अटल व्योम uml_rtc_समय_प्रकारravel_alarm(काष्ठा समय_प्रकारravel_event *ev)
+अणु
+	uml_rtc_send_समयtravel_alarm();
+पूर्ण
 
-static struct time_travel_event uml_rtc_alarm_event = {
-	.fn = uml_rtc_time_travel_alarm,
-};
-#endif
+अटल काष्ठा समय_प्रकारravel_event uml_rtc_alarm_event = अणु
+	.fn = uml_rtc_समय_प्रकारravel_alarm,
+पूर्ण;
+#पूर्ण_अगर
 
-static int uml_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct timespec64 ts;
+अटल पूर्णांक uml_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा बारpec64 ts;
 
-	/* Use this to get correct time in time-travel mode */
-	read_persistent_clock64(&ts);
-	rtc_time64_to_tm(timespec64_to_ktime(ts) / NSEC_PER_SEC, tm);
+	/* Use this to get correct समय in समय-travel mode */
+	पढ़ो_persistent_घड़ी64(&ts);
+	rtc_समय64_to_पंचांग(बारpec64_to_kसमय(ts) / NSEC_PER_SEC, पंचांग);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uml_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	rtc_time64_to_tm(uml_rtc_alarm_time, &alrm->time);
+अटल पूर्णांक uml_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	rtc_समय64_to_पंचांग(uml_rtc_alarm_समय, &alrm->समय);
 	alrm->enabled = uml_rtc_alarm_enabled;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uml_rtc_alarm_irq_enable(struct device *dev, unsigned int enable)
-{
-	unsigned long long secs;
+अटल पूर्णांक uml_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enable)
+अणु
+	अचिन्हित दीर्घ दीर्घ secs;
 
-	if (!enable && !uml_rtc_alarm_enabled)
-		return 0;
+	अगर (!enable && !uml_rtc_alarm_enabled)
+		वापस 0;
 
 	uml_rtc_alarm_enabled = enable;
 
-	secs = uml_rtc_alarm_time - ktime_get_real_seconds();
+	secs = uml_rtc_alarm_समय - kसमय_get_real_seconds();
 
-	if (time_travel_mode == TT_MODE_OFF) {
-		if (!enable) {
+	अगर (समय_प्रकारravel_mode == TT_MODE_OFF) अणु
+		अगर (!enable) अणु
 			uml_rtc_disable_alarm();
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/* enable or update */
-		return uml_rtc_enable_alarm(secs);
-	} else {
-		time_travel_del_event(&uml_rtc_alarm_event);
+		वापस uml_rtc_enable_alarm(secs);
+	पूर्ण अन्यथा अणु
+		समय_प्रकारravel_del_event(&uml_rtc_alarm_event);
 
-		if (enable)
-			time_travel_add_event_rel(&uml_rtc_alarm_event,
+		अगर (enable)
+			समय_प्रकारravel_add_event_rel(&uml_rtc_alarm_event,
 						  secs * NSEC_PER_SEC);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uml_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
+अटल पूर्णांक uml_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
 	uml_rtc_alarm_irq_enable(dev, 0);
-	uml_rtc_alarm_time = rtc_tm_to_time64(&alrm->time);
+	uml_rtc_alarm_समय = rtc_पंचांग_to_समय64(&alrm->समय);
 	uml_rtc_alarm_irq_enable(dev, alrm->enabled);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct rtc_class_ops uml_rtc_ops = {
-	.read_time = uml_rtc_read_time,
-	.read_alarm = uml_rtc_read_alarm,
+अटल स्थिर काष्ठा rtc_class_ops uml_rtc_ops = अणु
+	.पढ़ो_समय = uml_rtc_पढ़ो_समय,
+	.पढ़ो_alarm = uml_rtc_पढ़ो_alarm,
 	.alarm_irq_enable = uml_rtc_alarm_irq_enable,
 	.set_alarm = uml_rtc_set_alarm,
-};
+पूर्ण;
 
-static irqreturn_t uml_rtc_interrupt(int irq, void *data)
-{
-	unsigned long long c = 0;
+अटल irqवापस_t uml_rtc_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	अचिन्हित दीर्घ दीर्घ c = 0;
 
 	/* alarm triggered, it's now off */
 	uml_rtc_alarm_enabled = false;
 
-	os_read_file(uml_rtc_irq_fd, &c, sizeof(c));
+	os_पढ़ो_file(uml_rtc_irq_fd, &c, माप(c));
 	WARN_ON(c == 0);
 
-	pm_system_wakeup();
+	pm_प्रणाली_wakeup();
 	rtc_update_irq(uml_rtc, 1, RTC_IRQF | RTC_AF);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int uml_rtc_setup(void)
-{
-	int err;
+अटल पूर्णांक uml_rtc_setup(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = uml_rtc_start(time_travel_mode != TT_MODE_OFF);
-	if (WARN(err < 0, "err = %d\n", err))
-		return err;
+	err = uml_rtc_start(समय_प्रकारravel_mode != TT_MODE_OFF);
+	अगर (WARN(err < 0, "err = %d\n", err))
+		वापस err;
 
 	uml_rtc_irq_fd = err;
 
 	err = um_request_irq(UM_IRQ_ALLOC, uml_rtc_irq_fd, IRQ_READ,
-			     uml_rtc_interrupt, 0, "rtc", NULL);
-	if (err < 0) {
-		uml_rtc_stop(time_travel_mode != TT_MODE_OFF);
-		return err;
-	}
+			     uml_rtc_पूर्णांकerrupt, 0, "rtc", शून्य);
+	अगर (err < 0) अणु
+		uml_rtc_stop(समय_प्रकारravel_mode != TT_MODE_OFF);
+		वापस err;
+	पूर्ण
 
 	irq_set_irq_wake(err, 1);
 
 	uml_rtc_irq = err;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void uml_rtc_cleanup(void)
-{
-	um_free_irq(uml_rtc_irq, NULL);
-	uml_rtc_stop(time_travel_mode != TT_MODE_OFF);
-}
+अटल व्योम uml_rtc_cleanup(व्योम)
+अणु
+	um_मुक्त_irq(uml_rtc_irq, शून्य);
+	uml_rtc_stop(समय_प्रकारravel_mode != TT_MODE_OFF);
+पूर्ण
 
-static int uml_rtc_probe(struct platform_device *pdev)
-{
-	int err;
+अटल पूर्णांक uml_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक err;
 
 	err = uml_rtc_setup();
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	uml_rtc = devm_rtc_allocate_device(&pdev->dev);
-	if (IS_ERR(uml_rtc)) {
+	अगर (IS_ERR(uml_rtc)) अणु
 		err = PTR_ERR(uml_rtc);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	uml_rtc->ops = &uml_rtc_ops;
 
 	device_init_wakeup(&pdev->dev, 1);
 
-	err = devm_rtc_register_device(uml_rtc);
-	if (err)
-		goto cleanup;
+	err = devm_rtc_रेजिस्टर_device(uml_rtc);
+	अगर (err)
+		जाओ cleanup;
 
-	return 0;
+	वापस 0;
 cleanup:
 	uml_rtc_cleanup();
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int uml_rtc_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक uml_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	device_init_wakeup(&pdev->dev, 0);
 	uml_rtc_cleanup();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver uml_rtc_driver = {
+अटल काष्ठा platक्रमm_driver uml_rtc_driver = अणु
 	.probe = uml_rtc_probe,
-	.remove = uml_rtc_remove,
-	.driver = {
+	.हटाओ = uml_rtc_हटाओ,
+	.driver = अणु
 		.name = "uml-rtc",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init uml_rtc_init(void)
-{
-	struct platform_device *pdev;
-	int err;
+अटल पूर्णांक __init uml_rtc_init(व्योम)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	पूर्णांक err;
 
-	err = platform_driver_register(&uml_rtc_driver);
-	if (err)
-		return err;
+	err = platक्रमm_driver_रेजिस्टर(&uml_rtc_driver);
+	अगर (err)
+		वापस err;
 
-	pdev = platform_device_alloc("uml-rtc", 0);
-	if (!pdev) {
+	pdev = platक्रमm_device_alloc("uml-rtc", 0);
+	अगर (!pdev) अणु
 		err = -ENOMEM;
-		goto unregister;
-	}
+		जाओ unरेजिस्टर;
+	पूर्ण
 
-	err = platform_device_add(pdev);
-	if (err)
-		goto unregister;
-	return 0;
+	err = platक्रमm_device_add(pdev);
+	अगर (err)
+		जाओ unरेजिस्टर;
+	वापस 0;
 
-unregister:
-	platform_device_put(pdev);
-	platform_driver_unregister(&uml_rtc_driver);
-	return err;
-}
+unरेजिस्टर:
+	platक्रमm_device_put(pdev);
+	platक्रमm_driver_unरेजिस्टर(&uml_rtc_driver);
+	वापस err;
+पूर्ण
 device_initcall(uml_rtc_init);

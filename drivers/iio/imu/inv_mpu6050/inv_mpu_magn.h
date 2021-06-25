@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2019 TDK-InvenSense, Inc.
  */
 
-#ifndef INV_MPU_MAGN_H_
-#define INV_MPU_MAGN_H_
+#अगर_अघोषित INV_MPU_MAGN_H_
+#घोषणा INV_MPU_MAGN_H_
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#include "inv_mpu_iio.h"
+#समावेश "inv_mpu_iio.h"
 
 /* Magnetometer maximum frequency */
-#define INV_MPU_MAGN_FREQ_HZ_MAX	50
+#घोषणा INV_MPU_MAGN_FREQ_HZ_MAX	50
 
-int inv_mpu_magn_probe(struct inv_mpu6050_state *st);
+पूर्णांक inv_mpu_magn_probe(काष्ठा inv_mpu6050_state *st);
 
 /**
  * inv_mpu_magn_get_scale() - get magnetometer scale value
- * @st: driver internal state
+ * @st: driver पूर्णांकernal state
  *
- * Returns IIO data format.
+ * Returns IIO data क्रमmat.
  */
-static inline int inv_mpu_magn_get_scale(const struct inv_mpu6050_state *st,
-					 const struct iio_chan_spec *chan,
-					 int *val, int *val2)
-{
+अटल अंतरभूत पूर्णांक inv_mpu_magn_get_scale(स्थिर काष्ठा inv_mpu6050_state *st,
+					 स्थिर काष्ठा iio_chan_spec *chan,
+					 पूर्णांक *val, पूर्णांक *val2)
+अणु
 	*val = 0;
 	*val2 = st->magn_raw_to_gauss[chan->address];
-	return IIO_VAL_INT_PLUS_MICRO;
-}
+	वापस IIO_VAL_INT_PLUS_MICRO;
+पूर्ण
 
-int inv_mpu_magn_set_rate(const struct inv_mpu6050_state *st, int fifo_rate);
+पूर्णांक inv_mpu_magn_set_rate(स्थिर काष्ठा inv_mpu6050_state *st, पूर्णांक fअगरo_rate);
 
-int inv_mpu_magn_set_orient(struct inv_mpu6050_state *st);
+पूर्णांक inv_mpu_magn_set_orient(काष्ठा inv_mpu6050_state *st);
 
-int inv_mpu_magn_read(struct inv_mpu6050_state *st, int axis, int *val);
+पूर्णांक inv_mpu_magn_पढ़ो(काष्ठा inv_mpu6050_state *st, पूर्णांक axis, पूर्णांक *val);
 
-#endif		/* INV_MPU_MAGN_H_ */
+#पूर्ण_अगर		/* INV_MPU_MAGN_H_ */

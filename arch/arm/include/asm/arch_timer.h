@@ -1,139 +1,140 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASMARM_ARCH_TIMER_H
-#define __ASMARM_ARCH_TIMER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASMARM_ARCH_TIMER_H
+#घोषणा __ASMARM_ARCH_TIMER_H
 
-#include <asm/barrier.h>
-#include <asm/errno.h>
-#include <asm/hwcap.h>
-#include <linux/clocksource.h>
-#include <linux/init.h>
-#include <linux/types.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश <यंत्र/hwcap.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
 
-#include <clocksource/arm_arch_timer.h>
+#समावेश <घड़ीsource/arm_arch_समयr.h>
 
-#ifdef CONFIG_ARM_ARCH_TIMER
-/* 32bit ARM doesn't know anything about timer errata... */
-#define has_erratum_handler(h)		(false)
-#define erratum_handler(h)		(arch_timer_##h)
+#अगर_घोषित CONFIG_ARM_ARCH_TIMER
+/* 32bit ARM करोesn't know anything about समयr errata... */
+#घोषणा has_erratum_handler(h)		(false)
+#घोषणा erratum_handler(h)		(arch_समयr_##h)
 
-int arch_timer_arch_init(void);
+पूर्णांक arch_समयr_arch_init(व्योम);
 
 /*
- * These register accessors are marked inline so the compiler can
- * nicely work out which register we want, and chuck away the rest of
- * the code. At least it does so with a recent GCC (4.6.3).
+ * These रेजिस्टर accessors are marked अंतरभूत so the compiler can
+ * nicely work out which रेजिस्टर we want, and chuck away the rest of
+ * the code. At least it करोes so with a recent GCC (4.6.3).
  */
-static __always_inline
-void arch_timer_reg_write_cp15(int access, enum arch_timer_reg reg, u32 val)
-{
-	if (access == ARCH_TIMER_PHYS_ACCESS) {
-		switch (reg) {
-		case ARCH_TIMER_REG_CTRL:
-			asm volatile("mcr p15, 0, %0, c14, c2, 1" : : "r" (val));
-			break;
-		case ARCH_TIMER_REG_TVAL:
-			asm volatile("mcr p15, 0, %0, c14, c2, 0" : : "r" (val));
-			break;
-		}
-	} else if (access == ARCH_TIMER_VIRT_ACCESS) {
-		switch (reg) {
-		case ARCH_TIMER_REG_CTRL:
-			asm volatile("mcr p15, 0, %0, c14, c3, 1" : : "r" (val));
-			break;
-		case ARCH_TIMER_REG_TVAL:
-			asm volatile("mcr p15, 0, %0, c14, c3, 0" : : "r" (val));
-			break;
-		}
-	}
+अटल __always_अंतरभूत
+व्योम arch_समयr_reg_ग_लिखो_cp15(पूर्णांक access, क्रमागत arch_समयr_reg reg, u32 val)
+अणु
+	अगर (access == ARCH_TIMER_PHYS_ACCESS) अणु
+		चयन (reg) अणु
+		हाल ARCH_TIMER_REG_CTRL:
+			यंत्र अस्थिर("mcr p15, 0, %0, c14, c2, 1" : : "r" (val));
+			अवरोध;
+		हाल ARCH_TIMER_REG_TVAL:
+			यंत्र अस्थिर("mcr p15, 0, %0, c14, c2, 0" : : "r" (val));
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (access == ARCH_TIMER_VIRT_ACCESS) अणु
+		चयन (reg) अणु
+		हाल ARCH_TIMER_REG_CTRL:
+			यंत्र अस्थिर("mcr p15, 0, %0, c14, c3, 1" : : "r" (val));
+			अवरोध;
+		हाल ARCH_TIMER_REG_TVAL:
+			यंत्र अस्थिर("mcr p15, 0, %0, c14, c3, 0" : : "r" (val));
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	isb();
-}
+पूर्ण
 
-static __always_inline
-u32 arch_timer_reg_read_cp15(int access, enum arch_timer_reg reg)
-{
+अटल __always_अंतरभूत
+u32 arch_समयr_reg_पढ़ो_cp15(पूर्णांक access, क्रमागत arch_समयr_reg reg)
+अणु
 	u32 val = 0;
 
-	if (access == ARCH_TIMER_PHYS_ACCESS) {
-		switch (reg) {
-		case ARCH_TIMER_REG_CTRL:
-			asm volatile("mrc p15, 0, %0, c14, c2, 1" : "=r" (val));
-			break;
-		case ARCH_TIMER_REG_TVAL:
-			asm volatile("mrc p15, 0, %0, c14, c2, 0" : "=r" (val));
-			break;
-		}
-	} else if (access == ARCH_TIMER_VIRT_ACCESS) {
-		switch (reg) {
-		case ARCH_TIMER_REG_CTRL:
-			asm volatile("mrc p15, 0, %0, c14, c3, 1" : "=r" (val));
-			break;
-		case ARCH_TIMER_REG_TVAL:
-			asm volatile("mrc p15, 0, %0, c14, c3, 0" : "=r" (val));
-			break;
-		}
-	}
+	अगर (access == ARCH_TIMER_PHYS_ACCESS) अणु
+		चयन (reg) अणु
+		हाल ARCH_TIMER_REG_CTRL:
+			यंत्र अस्थिर("mrc p15, 0, %0, c14, c2, 1" : "=r" (val));
+			अवरोध;
+		हाल ARCH_TIMER_REG_TVAL:
+			यंत्र अस्थिर("mrc p15, 0, %0, c14, c2, 0" : "=r" (val));
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (access == ARCH_TIMER_VIRT_ACCESS) अणु
+		चयन (reg) अणु
+		हाल ARCH_TIMER_REG_CTRL:
+			यंत्र अस्थिर("mrc p15, 0, %0, c14, c3, 1" : "=r" (val));
+			अवरोध;
+		हाल ARCH_TIMER_REG_TVAL:
+			यंत्र अस्थिर("mrc p15, 0, %0, c14, c3, 0" : "=r" (val));
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline u32 arch_timer_get_cntfrq(void)
-{
+अटल अंतरभूत u32 arch_समयr_get_cntfrq(व्योम)
+अणु
 	u32 val;
-	asm volatile("mrc p15, 0, %0, c14, c0, 0" : "=r" (val));
-	return val;
-}
+	यंत्र अस्थिर("mrc p15, 0, %0, c14, c0, 0" : "=r" (val));
+	वापस val;
+पूर्ण
 
-static inline u64 __arch_counter_get_cntpct(void)
-{
+अटल अंतरभूत u64 __arch_counter_get_cntpct(व्योम)
+अणु
 	u64 cval;
 
 	isb();
-	asm volatile("mrrc p15, 0, %Q0, %R0, c14" : "=r" (cval));
-	return cval;
-}
+	यंत्र अस्थिर("mrrc p15, 0, %Q0, %R0, c14" : "=r" (cval));
+	वापस cval;
+पूर्ण
 
-static inline u64 __arch_counter_get_cntpct_stable(void)
-{
-	return __arch_counter_get_cntpct();
-}
+अटल अंतरभूत u64 __arch_counter_get_cntpct_stable(व्योम)
+अणु
+	वापस __arch_counter_get_cntpct();
+पूर्ण
 
-static inline u64 __arch_counter_get_cntvct(void)
-{
+अटल अंतरभूत u64 __arch_counter_get_cntvct(व्योम)
+अणु
 	u64 cval;
 
 	isb();
-	asm volatile("mrrc p15, 1, %Q0, %R0, c14" : "=r" (cval));
-	return cval;
-}
+	यंत्र अस्थिर("mrrc p15, 1, %Q0, %R0, c14" : "=r" (cval));
+	वापस cval;
+पूर्ण
 
-static inline u64 __arch_counter_get_cntvct_stable(void)
-{
-	return __arch_counter_get_cntvct();
-}
+अटल अंतरभूत u64 __arch_counter_get_cntvct_stable(व्योम)
+अणु
+	वापस __arch_counter_get_cntvct();
+पूर्ण
 
-static inline u32 arch_timer_get_cntkctl(void)
-{
+अटल अंतरभूत u32 arch_समयr_get_cntkctl(व्योम)
+अणु
 	u32 cntkctl;
-	asm volatile("mrc p15, 0, %0, c14, c1, 0" : "=r" (cntkctl));
-	return cntkctl;
-}
+	यंत्र अस्थिर("mrc p15, 0, %0, c14, c1, 0" : "=r" (cntkctl));
+	वापस cntkctl;
+पूर्ण
 
-static inline void arch_timer_set_cntkctl(u32 cntkctl)
-{
-	asm volatile("mcr p15, 0, %0, c14, c1, 0" : : "r" (cntkctl));
+अटल अंतरभूत व्योम arch_समयr_set_cntkctl(u32 cntkctl)
+अणु
+	यंत्र अस्थिर("mcr p15, 0, %0, c14, c1, 0" : : "r" (cntkctl));
 	isb();
-}
+पूर्ण
 
-static inline void arch_timer_set_evtstrm_feature(void)
-{
+अटल अंतरभूत व्योम arch_समयr_set_evtstrm_feature(व्योम)
+अणु
 	elf_hwcap |= HWCAP_EVTSTRM;
-}
+पूर्ण
 
-static inline bool arch_timer_have_evtstrm_feature(void)
-{
-	return elf_hwcap & HWCAP_EVTSTRM;
-}
-#endif
+अटल अंतरभूत bool arch_समयr_have_evtstrm_feature(व्योम)
+अणु
+	वापस elf_hwcap & HWCAP_EVTSTRM;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

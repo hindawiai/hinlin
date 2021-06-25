@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ASM_X86_POSIX_TYPES_X32_H
-#define _ASM_X86_POSIX_TYPES_X32_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ASM_X86_POSIX_TYPES_X32_H
+#घोषणा _ASM_X86_POSIX_TYPES_X32_H
 
 /*
  * This file is only used by user-level software, so you need to
@@ -11,10 +12,10 @@
  *
  */
 
-typedef long long __kernel_long_t;
-typedef unsigned long long __kernel_ulong_t;
-#define __kernel_long_t __kernel_long_t
+प्रकार दीर्घ दीर्घ __kernel_दीर्घ_t;
+प्रकार अचिन्हित दीर्घ दीर्घ __kernel_uदीर्घ_t;
+#घोषणा __kernel_दीर्घ_t __kernel_दीर्घ_t
 
-#include <asm/posix_types_64.h>
+#समावेश <यंत्र/posix_types_64.h>
 
-#endif /* _ASM_X86_POSIX_TYPES_X32_H */
+#पूर्ण_अगर /* _ASM_X86_POSIX_TYPES_X32_H */

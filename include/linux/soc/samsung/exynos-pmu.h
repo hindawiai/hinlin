@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
  *
- * Header for Exynos PMU Driver support
+ * Header क्रम Exynos PMU Driver support
  */
 
-#ifndef __LINUX_SOC_EXYNOS_PMU_H
-#define __LINUX_SOC_EXYNOS_PMU_H
+#अगर_अघोषित __LINUX_SOC_EXYNOS_PMU_H
+#घोषणा __LINUX_SOC_EXYNOS_PMU_H
 
-struct regmap;
+काष्ठा regmap;
 
-enum sys_powerdown {
+क्रमागत sys_घातerकरोwn अणु
 	SYS_AFTR,
 	SYS_LPA,
 	SYS_SLEEP,
 	NUM_SYS_POWERDOWN,
-};
+पूर्ण;
 
-extern void exynos_sys_powerdown_conf(enum sys_powerdown mode);
-#ifdef CONFIG_EXYNOS_PMU
-extern struct regmap *exynos_get_pmu_regmap(void);
-#else
-static inline struct regmap *exynos_get_pmu_regmap(void)
-{
-	return ERR_PTR(-ENODEV);
-}
-#endif
+बाह्य व्योम exynos_sys_घातerकरोwn_conf(क्रमागत sys_घातerकरोwn mode);
+#अगर_घोषित CONFIG_EXYNOS_PMU
+बाह्य काष्ठा regmap *exynos_get_pmu_regmap(व्योम);
+#अन्यथा
+अटल अंतरभूत काष्ठा regmap *exynos_get_pmu_regmap(व्योम)
+अणु
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __LINUX_SOC_EXYNOS_PMU_H */
+#पूर्ण_अगर /* __LINUX_SOC_EXYNOS_PMU_H */

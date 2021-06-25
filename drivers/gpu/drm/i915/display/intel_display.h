@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2006-2019 Intel Corporation
+ * Copyright तऊ 2006-2019 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,43 +23,43 @@
  *
  */
 
-#ifndef _INTEL_DISPLAY_H_
-#define _INTEL_DISPLAY_H_
+#अगर_अघोषित _INTEL_DISPLAY_H_
+#घोषणा _INTEL_DISPLAY_H_
 
-#include <drm/drm_util.h>
+#समावेश <drm/drm_util.h>
 
-enum link_m_n_set;
-enum drm_scaling_filter;
-struct dpll;
-struct drm_connector;
-struct drm_device;
-struct drm_display_mode;
-struct drm_encoder;
-struct drm_file;
-struct drm_format_info;
-struct drm_framebuffer;
-struct drm_i915_error_state_buf;
-struct drm_i915_gem_object;
-struct drm_i915_private;
-struct drm_mode_fb_cmd2;
-struct drm_modeset_acquire_ctx;
-struct drm_plane;
-struct drm_plane_state;
-struct i915_ggtt_view;
-struct intel_atomic_state;
-struct intel_crtc;
-struct intel_crtc_state;
-struct intel_digital_port;
-struct intel_dp;
-struct intel_encoder;
-struct intel_initial_plane_config;
-struct intel_load_detect_pipe;
-struct intel_plane;
-struct intel_plane_state;
-struct intel_remapped_info;
-struct intel_rotation_info;
+क्रमागत link_m_n_set;
+क्रमागत drm_scaling_filter;
+काष्ठा dpll;
+काष्ठा drm_connector;
+काष्ठा drm_device;
+काष्ठा drm_display_mode;
+काष्ठा drm_encoder;
+काष्ठा drm_file;
+काष्ठा drm_क्रमmat_info;
+काष्ठा drm_framebuffer;
+काष्ठा drm_i915_error_state_buf;
+काष्ठा drm_i915_gem_object;
+काष्ठा drm_i915_निजी;
+काष्ठा drm_mode_fb_cmd2;
+काष्ठा drm_modeset_acquire_ctx;
+काष्ठा drm_plane;
+काष्ठा drm_plane_state;
+काष्ठा i915_ggtt_view;
+काष्ठा पूर्णांकel_atomic_state;
+काष्ठा पूर्णांकel_crtc;
+काष्ठा पूर्णांकel_crtc_state;
+काष्ठा पूर्णांकel_digital_port;
+काष्ठा पूर्णांकel_dp;
+काष्ठा पूर्णांकel_encoder;
+काष्ठा पूर्णांकel_initial_plane_config;
+काष्ठा पूर्णांकel_load_detect_pipe;
+काष्ठा पूर्णांकel_plane;
+काष्ठा पूर्णांकel_plane_state;
+काष्ठा पूर्णांकel_remapped_info;
+काष्ठा पूर्णांकel_rotation_info;
 
-enum i915_gpio {
+क्रमागत i915_gpio अणु
 	GPIOA,
 	GPIOB,
 	GPIOC,
@@ -74,14 +75,14 @@ enum i915_gpio {
 	GPIOM,
 	GPION,
 	GPIOO,
-};
+पूर्ण;
 
 /*
- * Keep the pipe enum values fixed: the code assumes that PIPE_A=0, the
- * rest have consecutive values and match the enum values of transcoders
+ * Keep the pipe क्रमागत values fixed: the code assumes that PIPE_A=0, the
+ * rest have consecutive values and match the क्रमागत values of transcoders
  * with a 1:1 transcoder -> pipe mapping.
  */
-enum pipe {
+क्रमागत pipe अणु
 	INVALID_PIPE = -1,
 
 	PIPE_A = 0,
@@ -91,16 +92,16 @@ enum pipe {
 	_PIPE_EDP,
 
 	I915_MAX_PIPES = _PIPE_EDP
-};
+पूर्ण;
 
-#define pipe_name(p) ((p) + 'A')
+#घोषणा pipe_name(p) ((p) + 'A')
 
-enum transcoder {
+क्रमागत transcoder अणु
 	INVALID_TRANSCODER = -1,
 	/*
 	 * The following transcoders have a 1:1 transcoder -> pipe mapping,
 	 * keep their values fixed: the code assumes that TRANSCODER_A=0, the
-	 * rest have consecutive values and match the enum values of the pipes
+	 * rest have consecutive values and match the क्रमागत values of the pipes
 	 * they map to.
 	 */
 	TRANSCODER_A = PIPE_A,
@@ -109,8 +110,8 @@ enum transcoder {
 	TRANSCODER_D = PIPE_D,
 
 	/*
-	 * The following transcoders can map to any pipe, their enum value
-	 * doesn't need to stay fixed.
+	 * The following transcoders can map to any pipe, their क्रमागत value
+	 * करोesn't need to stay fixed.
 	 */
 	TRANSCODER_EDP,
 	TRANSCODER_DSI_0,
@@ -119,59 +120,59 @@ enum transcoder {
 	TRANSCODER_DSI_C = TRANSCODER_DSI_1,	/* legacy DSI */
 
 	I915_MAX_TRANSCODERS
-};
+पूर्ण;
 
-static inline const char *transcoder_name(enum transcoder transcoder)
-{
-	switch (transcoder) {
-	case TRANSCODER_A:
-		return "A";
-	case TRANSCODER_B:
-		return "B";
-	case TRANSCODER_C:
-		return "C";
-	case TRANSCODER_D:
-		return "D";
-	case TRANSCODER_EDP:
-		return "EDP";
-	case TRANSCODER_DSI_A:
-		return "DSI A";
-	case TRANSCODER_DSI_C:
-		return "DSI C";
-	default:
-		return "<invalid>";
-	}
-}
+अटल अंतरभूत स्थिर अक्षर *transcoder_name(क्रमागत transcoder transcoder)
+अणु
+	चयन (transcoder) अणु
+	हाल TRANSCODER_A:
+		वापस "A";
+	हाल TRANSCODER_B:
+		वापस "B";
+	हाल TRANSCODER_C:
+		वापस "C";
+	हाल TRANSCODER_D:
+		वापस "D";
+	हाल TRANSCODER_EDP:
+		वापस "EDP";
+	हाल TRANSCODER_DSI_A:
+		वापस "DSI A";
+	हाल TRANSCODER_DSI_C:
+		वापस "DSI C";
+	शेष:
+		वापस "<invalid>";
+	पूर्ण
+पूर्ण
 
-static inline bool transcoder_is_dsi(enum transcoder transcoder)
-{
-	return transcoder == TRANSCODER_DSI_A || transcoder == TRANSCODER_DSI_C;
-}
+अटल अंतरभूत bool transcoder_is_dsi(क्रमागत transcoder transcoder)
+अणु
+	वापस transcoder == TRANSCODER_DSI_A || transcoder == TRANSCODER_DSI_C;
+पूर्ण
 
 /*
- * Global legacy plane identifier. Valid only for primary/sprite
- * planes on pre-g4x, and only for primary planes on g4x-bdw.
+ * Global legacy plane identअगरier. Valid only क्रम primary/sprite
+ * planes on pre-g4x, and only क्रम primary planes on g4x-bdw.
  */
-enum i9xx_plane_id {
+क्रमागत i9xx_plane_id अणु
 	PLANE_A,
 	PLANE_B,
 	PLANE_C,
-};
+पूर्ण;
 
-#define plane_name(p) ((p) + 'A')
-#define sprite_name(p, s) ((p) * RUNTIME_INFO(dev_priv)->num_sprites[(p)] + (s) + 'A')
+#घोषणा plane_name(p) ((p) + 'A')
+#घोषणा sprite_name(p, s) ((p) * RUNTIME_INFO(dev_priv)->num_sprites[(p)] + (s) + 'A')
 
 /*
- * Per-pipe plane identifier.
- * I915_MAX_PLANES in the enum below is the maximum (across all platforms)
- * number of planes per CRTC.  Not all platforms really have this many planes,
+ * Per-pipe plane identअगरier.
+ * I915_MAX_PLANES in the क्रमागत below is the maximum (across all platक्रमms)
+ * number of planes per CRTC.  Not all platक्रमms really have this many planes,
  * which means some arrays of size I915_MAX_PLANES may have unused entries
  * between the topmost sprite plane and the cursor plane.
  *
- * This is expected to be passed to various register macros
+ * This is expected to be passed to various रेजिस्टर macros
  * (eg. PLANE_CTL(), PS_PLANE_SEL(), etc.) so adjust with care.
  */
-enum plane_id {
+क्रमागत plane_id अणु
 	PLANE_PRIMARY,
 	PLANE_SPRITE0,
 	PLANE_SPRITE1,
@@ -182,20 +183,20 @@ enum plane_id {
 	PLANE_CURSOR,
 
 	I915_MAX_PLANES,
-};
+पूर्ण;
 
-#define for_each_plane_id_on_crtc(__crtc, __p) \
-	for ((__p) = PLANE_PRIMARY; (__p) < I915_MAX_PLANES; (__p)++) \
-		for_each_if((__crtc)->plane_ids_mask & BIT(__p))
+#घोषणा क्रम_each_plane_id_on_crtc(__crtc, __p) \
+	क्रम ((__p) = PLANE_PRIMARY; (__p) < I915_MAX_PLANES; (__p)++) \
+		क्रम_each_अगर((__crtc)->plane_ids_mask & BIT(__p))
 
-#define for_each_dbuf_slice_in_mask(__slice, __mask) \
-	for ((__slice) = DBUF_S1; (__slice) < I915_MAX_DBUF_SLICES; (__slice)++) \
-		for_each_if((BIT(__slice)) & (__mask))
+#घोषणा क्रम_each_dbuf_slice_in_mask(__slice, __mask) \
+	क्रम ((__slice) = DBUF_S1; (__slice) < I915_MAX_DBUF_SLICES; (__slice)++) \
+		क्रम_each_अगर((BIT(__slice)) & (__mask))
 
-#define for_each_dbuf_slice(__slice) \
-	for_each_dbuf_slice_in_mask(__slice, BIT(I915_MAX_DBUF_SLICES) - 1)
+#घोषणा क्रम_each_dbuf_slice(__slice) \
+	क्रम_each_dbuf_slice_in_mask(__slice, BIT(I915_MAX_DBUF_SLICES) - 1)
 
-enum port {
+क्रमागत port अणु
 	PORT_NONE = -1,
 
 	PORT_A = 0,
@@ -217,41 +218,41 @@ enum port {
 	PORT_TC6,
 
 	I915_MAX_PORTS
-};
+पूर्ण;
 
-#define port_name(p) ((p) + 'A')
+#घोषणा port_name(p) ((p) + 'A')
 
 /*
- * Ports identifier referenced from other drivers.
- * Expected to remain stable over time
+ * Ports identअगरier referenced from other drivers.
+ * Expected to reमुख्य stable over समय
  */
-static inline const char *port_identifier(enum port port)
-{
-	switch (port) {
-	case PORT_A:
-		return "Port A";
-	case PORT_B:
-		return "Port B";
-	case PORT_C:
-		return "Port C";
-	case PORT_D:
-		return "Port D";
-	case PORT_E:
-		return "Port E";
-	case PORT_F:
-		return "Port F";
-	case PORT_G:
-		return "Port G";
-	case PORT_H:
-		return "Port H";
-	case PORT_I:
-		return "Port I";
-	default:
-		return "<invalid>";
-	}
-}
+अटल अंतरभूत स्थिर अक्षर *port_identअगरier(क्रमागत port port)
+अणु
+	चयन (port) अणु
+	हाल PORT_A:
+		वापस "Port A";
+	हाल PORT_B:
+		वापस "Port B";
+	हाल PORT_C:
+		वापस "Port C";
+	हाल PORT_D:
+		वापस "Port D";
+	हाल PORT_E:
+		वापस "Port E";
+	हाल PORT_F:
+		वापस "Port F";
+	हाल PORT_G:
+		वापस "Port G";
+	हाल PORT_H:
+		वापस "Port H";
+	हाल PORT_I:
+		वापस "Port I";
+	शेष:
+		वापस "<invalid>";
+	पूर्ण
+पूर्ण
 
-enum tc_port {
+क्रमागत tc_port अणु
 	TC_PORT_NONE = -1,
 
 	TC_PORT_1 = 0,
@@ -262,26 +263,26 @@ enum tc_port {
 	TC_PORT_6,
 
 	I915_MAX_TC_PORTS
-};
+पूर्ण;
 
-enum tc_port_mode {
+क्रमागत tc_port_mode अणु
 	TC_PORT_TBT_ALT,
 	TC_PORT_DP_ALT,
 	TC_PORT_LEGACY,
-};
+पूर्ण;
 
-enum dpio_channel {
+क्रमागत dpio_channel अणु
 	DPIO_CH0,
 	DPIO_CH1
-};
+पूर्ण;
 
-enum dpio_phy {
+क्रमागत dpio_phy अणु
 	DPIO_PHY0,
 	DPIO_PHY1,
 	DPIO_PHY2,
-};
+पूर्ण;
 
-enum aux_ch {
+क्रमागत aux_ch अणु
 	AUX_CH_A,
 	AUX_CH_B,
 	AUX_CH_C,
@@ -299,20 +300,20 @@ enum aux_ch {
 	AUX_CH_USBC4,
 	AUX_CH_USBC5,
 	AUX_CH_USBC6,
-};
+पूर्ण;
 
-#define aux_ch_name(a) ((a) + 'A')
+#घोषणा aux_ch_name(a) ((a) + 'A')
 
 /* Used by dp and fdi links */
-struct intel_link_m_n {
+काष्ठा पूर्णांकel_link_m_n अणु
 	u32 tu;
 	u32 gmch_m;
 	u32 gmch_n;
 	u32 link_m;
 	u32 link_n;
-};
+पूर्ण;
 
-enum phy {
+क्रमागत phy अणु
 	PHY_NONE = -1,
 
 	PHY_A = 0,
@@ -326,364 +327,364 @@ enum phy {
 	PHY_I,
 
 	I915_MAX_PHYS
-};
+पूर्ण;
 
-#define phy_name(a) ((a) + 'A')
+#घोषणा phy_name(a) ((a) + 'A')
 
-enum phy_fia {
+क्रमागत phy_fia अणु
 	FIA1,
 	FIA2,
 	FIA3,
-};
+पूर्ण;
 
-#define for_each_pipe(__dev_priv, __p) \
-	for ((__p) = 0; (__p) < I915_MAX_PIPES; (__p)++) \
-		for_each_if(INTEL_INFO(__dev_priv)->pipe_mask & BIT(__p))
+#घोषणा क्रम_each_pipe(__dev_priv, __p) \
+	क्रम ((__p) = 0; (__p) < I915_MAX_PIPES; (__p)++) \
+		क्रम_each_अगर(INTEL_INFO(__dev_priv)->pipe_mask & BIT(__p))
 
-#define for_each_pipe_masked(__dev_priv, __p, __mask) \
-	for_each_pipe(__dev_priv, __p) \
-		for_each_if((__mask) & BIT(__p))
+#घोषणा क्रम_each_pipe_masked(__dev_priv, __p, __mask) \
+	क्रम_each_pipe(__dev_priv, __p) \
+		क्रम_each_अगर((__mask) & BIT(__p))
 
-#define for_each_cpu_transcoder(__dev_priv, __t) \
-	for ((__t) = 0; (__t) < I915_MAX_TRANSCODERS; (__t)++)	\
-		for_each_if (INTEL_INFO(__dev_priv)->cpu_transcoder_mask & BIT(__t))
+#घोषणा क्रम_each_cpu_transcoder(__dev_priv, __t) \
+	क्रम ((__t) = 0; (__t) < I915_MAX_TRANSCODERS; (__t)++)	\
+		क्रम_each_अगर (INTEL_INFO(__dev_priv)->cpu_transcoder_mask & BIT(__t))
 
-#define for_each_cpu_transcoder_masked(__dev_priv, __t, __mask) \
-	for_each_cpu_transcoder(__dev_priv, __t) \
-		for_each_if ((__mask) & BIT(__t))
+#घोषणा क्रम_each_cpu_transcoder_masked(__dev_priv, __t, __mask) \
+	क्रम_each_cpu_transcoder(__dev_priv, __t) \
+		क्रम_each_अगर ((__mask) & BIT(__t))
 
-#define for_each_sprite(__dev_priv, __p, __s)				\
-	for ((__s) = 0;							\
+#घोषणा क्रम_each_sprite(__dev_priv, __p, __s)				\
+	क्रम ((__s) = 0;							\
 	     (__s) < RUNTIME_INFO(__dev_priv)->num_sprites[(__p)];	\
 	     (__s)++)
 
-#define for_each_port(__port) \
-	for ((__port) = PORT_A; (__port) < I915_MAX_PORTS; (__port)++)
+#घोषणा क्रम_each_port(__port) \
+	क्रम ((__port) = PORT_A; (__port) < I915_MAX_PORTS; (__port)++)
 
-#define for_each_port_masked(__port, __ports_mask)			\
-	for_each_port(__port)						\
-		for_each_if((__ports_mask) & BIT(__port))
+#घोषणा क्रम_each_port_masked(__port, __ports_mask)			\
+	क्रम_each_port(__port)						\
+		क्रम_each_अगर((__ports_mask) & BIT(__port))
 
-#define for_each_phy_masked(__phy, __phys_mask) \
-	for ((__phy) = PHY_A; (__phy) < I915_MAX_PHYS; (__phy)++)	\
-		for_each_if((__phys_mask) & BIT(__phy))
+#घोषणा क्रम_each_phy_masked(__phy, __phys_mask) \
+	क्रम ((__phy) = PHY_A; (__phy) < I915_MAX_PHYS; (__phy)++)	\
+		क्रम_each_अगर((__phys_mask) & BIT(__phy))
 
-#define for_each_crtc(dev, crtc) \
-	list_for_each_entry(crtc, &(dev)->mode_config.crtc_list, head)
+#घोषणा क्रम_each_crtc(dev, crtc) \
+	list_क्रम_each_entry(crtc, &(dev)->mode_config.crtc_list, head)
 
-#define for_each_intel_plane(dev, intel_plane) \
-	list_for_each_entry(intel_plane,			\
+#घोषणा क्रम_each_पूर्णांकel_plane(dev, पूर्णांकel_plane) \
+	list_क्रम_each_entry(पूर्णांकel_plane,			\
 			    &(dev)->mode_config.plane_list,	\
 			    base.head)
 
-#define for_each_intel_plane_mask(dev, intel_plane, plane_mask)		\
-	list_for_each_entry(intel_plane,				\
+#घोषणा क्रम_each_पूर्णांकel_plane_mask(dev, पूर्णांकel_plane, plane_mask)		\
+	list_क्रम_each_entry(पूर्णांकel_plane,				\
 			    &(dev)->mode_config.plane_list,		\
 			    base.head)					\
-		for_each_if((plane_mask) &				\
-			    drm_plane_mask(&intel_plane->base))
+		क्रम_each_अगर((plane_mask) &				\
+			    drm_plane_mask(&पूर्णांकel_plane->base))
 
-#define for_each_intel_plane_on_crtc(dev, intel_crtc, intel_plane)	\
-	list_for_each_entry(intel_plane,				\
+#घोषणा क्रम_each_पूर्णांकel_plane_on_crtc(dev, पूर्णांकel_crtc, पूर्णांकel_plane)	\
+	list_क्रम_each_entry(पूर्णांकel_plane,				\
 			    &(dev)->mode_config.plane_list,		\
 			    base.head)					\
-		for_each_if((intel_plane)->pipe == (intel_crtc)->pipe)
+		क्रम_each_अगर((पूर्णांकel_plane)->pipe == (पूर्णांकel_crtc)->pipe)
 
-#define for_each_intel_crtc(dev, intel_crtc)				\
-	list_for_each_entry(intel_crtc,					\
+#घोषणा क्रम_each_पूर्णांकel_crtc(dev, पूर्णांकel_crtc)				\
+	list_क्रम_each_entry(पूर्णांकel_crtc,					\
 			    &(dev)->mode_config.crtc_list,		\
 			    base.head)
 
-#define for_each_intel_crtc_mask(dev, intel_crtc, crtc_mask)		\
-	list_for_each_entry(intel_crtc,					\
+#घोषणा क्रम_each_पूर्णांकel_crtc_mask(dev, पूर्णांकel_crtc, crtc_mask)		\
+	list_क्रम_each_entry(पूर्णांकel_crtc,					\
 			    &(dev)->mode_config.crtc_list,		\
 			    base.head)					\
-		for_each_if((crtc_mask) & drm_crtc_mask(&intel_crtc->base))
+		क्रम_each_अगर((crtc_mask) & drm_crtc_mask(&पूर्णांकel_crtc->base))
 
-#define for_each_intel_encoder(dev, intel_encoder)		\
-	list_for_each_entry(intel_encoder,			\
+#घोषणा क्रम_each_पूर्णांकel_encoder(dev, पूर्णांकel_encoder)		\
+	list_क्रम_each_entry(पूर्णांकel_encoder,			\
 			    &(dev)->mode_config.encoder_list,	\
 			    base.head)
 
-#define for_each_intel_encoder_mask(dev, intel_encoder, encoder_mask)	\
-	list_for_each_entry(intel_encoder,				\
+#घोषणा क्रम_each_पूर्णांकel_encoder_mask(dev, पूर्णांकel_encoder, encoder_mask)	\
+	list_क्रम_each_entry(पूर्णांकel_encoder,				\
 			    &(dev)->mode_config.encoder_list,		\
 			    base.head)					\
-		for_each_if((encoder_mask) &				\
-			    drm_encoder_mask(&intel_encoder->base))
+		क्रम_each_अगर((encoder_mask) &				\
+			    drm_encoder_mask(&पूर्णांकel_encoder->base))
 
-#define for_each_intel_encoder_mask_with_psr(dev, intel_encoder, encoder_mask) \
-	list_for_each_entry((intel_encoder), &(dev)->mode_config.encoder_list, base.head) \
-		for_each_if(((encoder_mask) & drm_encoder_mask(&(intel_encoder)->base)) && \
-			    intel_encoder_can_psr(intel_encoder))
+#घोषणा क्रम_each_पूर्णांकel_encoder_mask_with_psr(dev, पूर्णांकel_encoder, encoder_mask) \
+	list_क्रम_each_entry((पूर्णांकel_encoder), &(dev)->mode_config.encoder_list, base.head) \
+		क्रम_each_अगर(((encoder_mask) & drm_encoder_mask(&(पूर्णांकel_encoder)->base)) && \
+			    पूर्णांकel_encoder_can_psr(पूर्णांकel_encoder))
 
-#define for_each_intel_dp(dev, intel_encoder)			\
-	for_each_intel_encoder(dev, intel_encoder)		\
-		for_each_if(intel_encoder_is_dp(intel_encoder))
+#घोषणा क्रम_each_पूर्णांकel_dp(dev, पूर्णांकel_encoder)			\
+	क्रम_each_पूर्णांकel_encoder(dev, पूर्णांकel_encoder)		\
+		क्रम_each_अगर(पूर्णांकel_encoder_is_dp(पूर्णांकel_encoder))
 
-#define for_each_intel_encoder_with_psr(dev, intel_encoder) \
-	for_each_intel_encoder((dev), (intel_encoder)) \
-		for_each_if(intel_encoder_can_psr(intel_encoder))
+#घोषणा क्रम_each_पूर्णांकel_encoder_with_psr(dev, पूर्णांकel_encoder) \
+	क्रम_each_पूर्णांकel_encoder((dev), (पूर्णांकel_encoder)) \
+		क्रम_each_अगर(पूर्णांकel_encoder_can_psr(पूर्णांकel_encoder))
 
-#define for_each_intel_connector_iter(intel_connector, iter) \
-	while ((intel_connector = to_intel_connector(drm_connector_list_iter_next(iter))))
+#घोषणा क्रम_each_पूर्णांकel_connector_iter(पूर्णांकel_connector, iter) \
+	जबतक ((पूर्णांकel_connector = to_पूर्णांकel_connector(drm_connector_list_iter_next(iter))))
 
-#define for_each_encoder_on_crtc(dev, __crtc, intel_encoder) \
-	list_for_each_entry((intel_encoder), &(dev)->mode_config.encoder_list, base.head) \
-		for_each_if((intel_encoder)->base.crtc == (__crtc))
+#घोषणा क्रम_each_encoder_on_crtc(dev, __crtc, पूर्णांकel_encoder) \
+	list_क्रम_each_entry((पूर्णांकel_encoder), &(dev)->mode_config.encoder_list, base.head) \
+		क्रम_each_अगर((पूर्णांकel_encoder)->base.crtc == (__crtc))
 
-#define for_each_connector_on_encoder(dev, __encoder, intel_connector) \
-	list_for_each_entry((intel_connector), &(dev)->mode_config.connector_list, base.head) \
-		for_each_if((intel_connector)->base.encoder == (__encoder))
+#घोषणा क्रम_each_connector_on_encoder(dev, __encoder, पूर्णांकel_connector) \
+	list_क्रम_each_entry((पूर्णांकel_connector), &(dev)->mode_config.connector_list, base.head) \
+		क्रम_each_अगर((पूर्णांकel_connector)->base.encoder == (__encoder))
 
-#define for_each_old_intel_plane_in_state(__state, plane, old_plane_state, __i) \
-	for ((__i) = 0; \
+#घोषणा क्रम_each_old_पूर्णांकel_plane_in_state(__state, plane, old_plane_state, __i) \
+	क्रम ((__i) = 0; \
 	     (__i) < (__state)->base.dev->mode_config.num_total_plane && \
-		     ((plane) = to_intel_plane((__state)->base.planes[__i].ptr), \
-		      (old_plane_state) = to_intel_plane_state((__state)->base.planes[__i].old_state), 1); \
+		     ((plane) = to_पूर्णांकel_plane((__state)->base.planes[__i].ptr), \
+		      (old_plane_state) = to_पूर्णांकel_plane_state((__state)->base.planes[__i].old_state), 1); \
 	     (__i)++) \
-		for_each_if(plane)
+		क्रम_each_अगर(plane)
 
-#define for_each_new_intel_plane_in_state(__state, plane, new_plane_state, __i) \
-	for ((__i) = 0; \
+#घोषणा क्रम_each_new_पूर्णांकel_plane_in_state(__state, plane, new_plane_state, __i) \
+	क्रम ((__i) = 0; \
 	     (__i) < (__state)->base.dev->mode_config.num_total_plane && \
-		     ((plane) = to_intel_plane((__state)->base.planes[__i].ptr), \
-		      (new_plane_state) = to_intel_plane_state((__state)->base.planes[__i].new_state), 1); \
+		     ((plane) = to_पूर्णांकel_plane((__state)->base.planes[__i].ptr), \
+		      (new_plane_state) = to_पूर्णांकel_plane_state((__state)->base.planes[__i].new_state), 1); \
 	     (__i)++) \
-		for_each_if(plane)
+		क्रम_each_अगर(plane)
 
-#define for_each_new_intel_crtc_in_state(__state, crtc, new_crtc_state, __i) \
-	for ((__i) = 0; \
+#घोषणा क्रम_each_new_पूर्णांकel_crtc_in_state(__state, crtc, new_crtc_state, __i) \
+	क्रम ((__i) = 0; \
 	     (__i) < (__state)->base.dev->mode_config.num_crtc && \
-		     ((crtc) = to_intel_crtc((__state)->base.crtcs[__i].ptr), \
-		      (new_crtc_state) = to_intel_crtc_state((__state)->base.crtcs[__i].new_state), 1); \
+		     ((crtc) = to_पूर्णांकel_crtc((__state)->base.crtcs[__i].ptr), \
+		      (new_crtc_state) = to_पूर्णांकel_crtc_state((__state)->base.crtcs[__i].new_state), 1); \
 	     (__i)++) \
-		for_each_if(crtc)
+		क्रम_each_अगर(crtc)
 
-#define for_each_oldnew_intel_plane_in_state(__state, plane, old_plane_state, new_plane_state, __i) \
-	for ((__i) = 0; \
+#घोषणा क्रम_each_oldnew_पूर्णांकel_plane_in_state(__state, plane, old_plane_state, new_plane_state, __i) \
+	क्रम ((__i) = 0; \
 	     (__i) < (__state)->base.dev->mode_config.num_total_plane && \
-		     ((plane) = to_intel_plane((__state)->base.planes[__i].ptr), \
-		      (old_plane_state) = to_intel_plane_state((__state)->base.planes[__i].old_state), \
-		      (new_plane_state) = to_intel_plane_state((__state)->base.planes[__i].new_state), 1); \
+		     ((plane) = to_पूर्णांकel_plane((__state)->base.planes[__i].ptr), \
+		      (old_plane_state) = to_पूर्णांकel_plane_state((__state)->base.planes[__i].old_state), \
+		      (new_plane_state) = to_पूर्णांकel_plane_state((__state)->base.planes[__i].new_state), 1); \
 	     (__i)++) \
-		for_each_if(plane)
+		क्रम_each_अगर(plane)
 
-#define for_each_oldnew_intel_crtc_in_state(__state, crtc, old_crtc_state, new_crtc_state, __i) \
-	for ((__i) = 0; \
+#घोषणा क्रम_each_oldnew_पूर्णांकel_crtc_in_state(__state, crtc, old_crtc_state, new_crtc_state, __i) \
+	क्रम ((__i) = 0; \
 	     (__i) < (__state)->base.dev->mode_config.num_crtc && \
-		     ((crtc) = to_intel_crtc((__state)->base.crtcs[__i].ptr), \
-		      (old_crtc_state) = to_intel_crtc_state((__state)->base.crtcs[__i].old_state), \
-		      (new_crtc_state) = to_intel_crtc_state((__state)->base.crtcs[__i].new_state), 1); \
+		     ((crtc) = to_पूर्णांकel_crtc((__state)->base.crtcs[__i].ptr), \
+		      (old_crtc_state) = to_पूर्णांकel_crtc_state((__state)->base.crtcs[__i].old_state), \
+		      (new_crtc_state) = to_पूर्णांकel_crtc_state((__state)->base.crtcs[__i].new_state), 1); \
 	     (__i)++) \
-		for_each_if(crtc)
+		क्रम_each_अगर(crtc)
 
-#define for_each_oldnew_intel_crtc_in_state_reverse(__state, crtc, old_crtc_state, new_crtc_state, __i) \
-	for ((__i) = (__state)->base.dev->mode_config.num_crtc - 1; \
+#घोषणा क्रम_each_oldnew_पूर्णांकel_crtc_in_state_reverse(__state, crtc, old_crtc_state, new_crtc_state, __i) \
+	क्रम ((__i) = (__state)->base.dev->mode_config.num_crtc - 1; \
 	     (__i) >= 0  && \
-	     ((crtc) = to_intel_crtc((__state)->base.crtcs[__i].ptr), \
-	      (old_crtc_state) = to_intel_crtc_state((__state)->base.crtcs[__i].old_state), \
-	      (new_crtc_state) = to_intel_crtc_state((__state)->base.crtcs[__i].new_state), 1); \
+	     ((crtc) = to_पूर्णांकel_crtc((__state)->base.crtcs[__i].ptr), \
+	      (old_crtc_state) = to_पूर्णांकel_crtc_state((__state)->base.crtcs[__i].old_state), \
+	      (new_crtc_state) = to_पूर्णांकel_crtc_state((__state)->base.crtcs[__i].new_state), 1); \
 	     (__i)--) \
-		for_each_if(crtc)
+		क्रम_each_अगर(crtc)
 
-#define intel_atomic_crtc_state_for_each_plane_state( \
+#घोषणा पूर्णांकel_atomic_crtc_state_क्रम_each_plane_state( \
 		  plane, plane_state, \
 		  crtc_state) \
-	for_each_intel_plane_mask(((crtc_state)->uapi.state->dev), (plane), \
+	क्रम_each_पूर्णांकel_plane_mask(((crtc_state)->uapi.state->dev), (plane), \
 				((crtc_state)->uapi.plane_mask)) \
-		for_each_if ((plane_state = \
-			      to_intel_plane_state(__drm_atomic_get_current_plane_state((crtc_state)->uapi.state, &plane->base))))
+		क्रम_each_अगर ((plane_state = \
+			      to_पूर्णांकel_plane_state(__drm_atomic_get_current_plane_state((crtc_state)->uapi.state, &plane->base))))
 
-#define for_each_new_intel_connector_in_state(__state, connector, new_connector_state, __i) \
-	for ((__i) = 0; \
+#घोषणा क्रम_each_new_पूर्णांकel_connector_in_state(__state, connector, new_connector_state, __i) \
+	क्रम ((__i) = 0; \
 	     (__i) < (__state)->base.num_connector; \
 	     (__i)++) \
-		for_each_if ((__state)->base.connectors[__i].ptr && \
-			     ((connector) = to_intel_connector((__state)->base.connectors[__i].ptr), \
-			     (new_connector_state) = to_intel_digital_connector_state((__state)->base.connectors[__i].new_state), 1))
+		क्रम_each_अगर ((__state)->base.connectors[__i].ptr && \
+			     ((connector) = to_पूर्णांकel_connector((__state)->base.connectors[__i].ptr), \
+			     (new_connector_state) = to_पूर्णांकel_digital_connector_state((__state)->base.connectors[__i].new_state), 1))
 
-int intel_atomic_add_affected_planes(struct intel_atomic_state *state,
-				     struct intel_crtc *crtc);
-u8 intel_calc_active_pipes(struct intel_atomic_state *state,
+पूर्णांक पूर्णांकel_atomic_add_affected_planes(काष्ठा पूर्णांकel_atomic_state *state,
+				     काष्ठा पूर्णांकel_crtc *crtc);
+u8 पूर्णांकel_calc_active_pipes(काष्ठा पूर्णांकel_atomic_state *state,
 			   u8 active_pipes);
-void intel_link_compute_m_n(u16 bpp, int nlanes,
-			    int pixel_clock, int link_clock,
-			    struct intel_link_m_n *m_n,
-			    bool constant_n, bool fec_enable);
-void lpt_disable_clkout_dp(struct drm_i915_private *dev_priv);
-u32 intel_plane_fb_max_stride(struct drm_i915_private *dev_priv,
-			      u32 pixel_format, u64 modifier);
-enum drm_mode_status
-intel_mode_valid_max_plane_size(struct drm_i915_private *dev_priv,
-				const struct drm_display_mode *mode,
+व्योम पूर्णांकel_link_compute_m_n(u16 bpp, पूर्णांक nlanes,
+			    पूर्णांक pixel_घड़ी, पूर्णांक link_घड़ी,
+			    काष्ठा पूर्णांकel_link_m_n *m_n,
+			    bool स्थिरant_n, bool fec_enable);
+व्योम lpt_disable_clkout_dp(काष्ठा drm_i915_निजी *dev_priv);
+u32 पूर्णांकel_plane_fb_max_stride(काष्ठा drm_i915_निजी *dev_priv,
+			      u32 pixel_क्रमmat, u64 modअगरier);
+क्रमागत drm_mode_status
+पूर्णांकel_mode_valid_max_plane_size(काष्ठा drm_i915_निजी *dev_priv,
+				स्थिर काष्ठा drm_display_mode *mode,
 				bool bigjoiner);
-enum phy intel_port_to_phy(struct drm_i915_private *i915, enum port port);
-bool is_trans_port_sync_mode(const struct intel_crtc_state *state);
+क्रमागत phy पूर्णांकel_port_to_phy(काष्ठा drm_i915_निजी *i915, क्रमागत port port);
+bool is_trans_port_sync_mode(स्थिर काष्ठा पूर्णांकel_crtc_state *state);
 
-void intel_plane_destroy(struct drm_plane *plane);
-void intel_enable_pipe(const struct intel_crtc_state *new_crtc_state);
-void intel_disable_pipe(const struct intel_crtc_state *old_crtc_state);
-void i830_enable_pipe(struct drm_i915_private *dev_priv, enum pipe pipe);
-void i830_disable_pipe(struct drm_i915_private *dev_priv, enum pipe pipe);
-enum pipe intel_crtc_pch_transcoder(struct intel_crtc *crtc);
-int vlv_get_hpll_vco(struct drm_i915_private *dev_priv);
-int vlv_get_cck_clock(struct drm_i915_private *dev_priv,
-		      const char *name, u32 reg, int ref_freq);
-int vlv_get_cck_clock_hpll(struct drm_i915_private *dev_priv,
-			   const char *name, u32 reg);
-void lpt_pch_enable(const struct intel_crtc_state *crtc_state);
-void lpt_disable_pch_transcoder(struct drm_i915_private *dev_priv);
-void lpt_disable_iclkip(struct drm_i915_private *dev_priv);
-void intel_init_display_hooks(struct drm_i915_private *dev_priv);
-unsigned int intel_fb_xy_to_linear(int x, int y,
-				   const struct intel_plane_state *state,
-				   int plane);
-unsigned int intel_fb_align_height(const struct drm_framebuffer *fb,
-				   int color_plane, unsigned int height);
-void intel_add_fb_offsets(int *x, int *y,
-			  const struct intel_plane_state *state, int plane);
-unsigned int intel_rotation_info_size(const struct intel_rotation_info *rot_info);
-unsigned int intel_remapped_info_size(const struct intel_remapped_info *rem_info);
-bool intel_has_pending_fb_unpin(struct drm_i915_private *dev_priv);
-int intel_display_suspend(struct drm_device *dev);
-void intel_encoder_destroy(struct drm_encoder *encoder);
-struct drm_display_mode *
-intel_encoder_current_mode(struct intel_encoder *encoder);
-bool intel_phy_is_combo(struct drm_i915_private *dev_priv, enum phy phy);
-bool intel_phy_is_tc(struct drm_i915_private *dev_priv, enum phy phy);
-enum tc_port intel_port_to_tc(struct drm_i915_private *dev_priv,
-			      enum port port);
-int intel_get_pipe_from_crtc_id_ioctl(struct drm_device *dev, void *data,
-				      struct drm_file *file_priv);
-u32 intel_crtc_get_vblank_counter(struct intel_crtc *crtc);
-void intel_crtc_vblank_on(const struct intel_crtc_state *crtc_state);
-void intel_crtc_vblank_off(const struct intel_crtc_state *crtc_state);
+व्योम पूर्णांकel_plane_destroy(काष्ठा drm_plane *plane);
+व्योम पूर्णांकel_enable_pipe(स्थिर काष्ठा पूर्णांकel_crtc_state *new_crtc_state);
+व्योम पूर्णांकel_disable_pipe(स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state);
+व्योम i830_enable_pipe(काष्ठा drm_i915_निजी *dev_priv, क्रमागत pipe pipe);
+व्योम i830_disable_pipe(काष्ठा drm_i915_निजी *dev_priv, क्रमागत pipe pipe);
+क्रमागत pipe पूर्णांकel_crtc_pch_transcoder(काष्ठा पूर्णांकel_crtc *crtc);
+पूर्णांक vlv_get_hpll_vco(काष्ठा drm_i915_निजी *dev_priv);
+पूर्णांक vlv_get_cck_घड़ी(काष्ठा drm_i915_निजी *dev_priv,
+		      स्थिर अक्षर *name, u32 reg, पूर्णांक ref_freq);
+पूर्णांक vlv_get_cck_घड़ी_hpll(काष्ठा drm_i915_निजी *dev_priv,
+			   स्थिर अक्षर *name, u32 reg);
+व्योम lpt_pch_enable(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम lpt_disable_pch_transcoder(काष्ठा drm_i915_निजी *dev_priv);
+व्योम lpt_disable_iclkip(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_init_display_hooks(काष्ठा drm_i915_निजी *dev_priv);
+अचिन्हित पूर्णांक पूर्णांकel_fb_xy_to_linear(पूर्णांक x, पूर्णांक y,
+				   स्थिर काष्ठा पूर्णांकel_plane_state *state,
+				   पूर्णांक plane);
+अचिन्हित पूर्णांक पूर्णांकel_fb_align_height(स्थिर काष्ठा drm_framebuffer *fb,
+				   पूर्णांक color_plane, अचिन्हित पूर्णांक height);
+व्योम पूर्णांकel_add_fb_offsets(पूर्णांक *x, पूर्णांक *y,
+			  स्थिर काष्ठा पूर्णांकel_plane_state *state, पूर्णांक plane);
+अचिन्हित पूर्णांक पूर्णांकel_rotation_info_size(स्थिर काष्ठा पूर्णांकel_rotation_info *rot_info);
+अचिन्हित पूर्णांक पूर्णांकel_remapped_info_size(स्थिर काष्ठा पूर्णांकel_remapped_info *rem_info);
+bool पूर्णांकel_has_pending_fb_unpin(काष्ठा drm_i915_निजी *dev_priv);
+पूर्णांक पूर्णांकel_display_suspend(काष्ठा drm_device *dev);
+व्योम पूर्णांकel_encoder_destroy(काष्ठा drm_encoder *encoder);
+काष्ठा drm_display_mode *
+पूर्णांकel_encoder_current_mode(काष्ठा पूर्णांकel_encoder *encoder);
+bool पूर्णांकel_phy_is_combo(काष्ठा drm_i915_निजी *dev_priv, क्रमागत phy phy);
+bool पूर्णांकel_phy_is_tc(काष्ठा drm_i915_निजी *dev_priv, क्रमागत phy phy);
+क्रमागत tc_port पूर्णांकel_port_to_tc(काष्ठा drm_i915_निजी *dev_priv,
+			      क्रमागत port port);
+पूर्णांक पूर्णांकel_get_pipe_from_crtc_id_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				      काष्ठा drm_file *file_priv);
+u32 पूर्णांकel_crtc_get_vblank_counter(काष्ठा पूर्णांकel_crtc *crtc);
+व्योम पूर्णांकel_crtc_vblank_on(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम पूर्णांकel_crtc_vblank_off(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
 
-int ilk_get_lanes_required(int target_clock, int link_bw, int bpp);
-void vlv_wait_port_ready(struct drm_i915_private *dev_priv,
-			 struct intel_digital_port *dig_port,
-			 unsigned int expected_mask);
-int intel_get_load_detect_pipe(struct drm_connector *connector,
-			       struct intel_load_detect_pipe *old,
-			       struct drm_modeset_acquire_ctx *ctx);
-void intel_release_load_detect_pipe(struct drm_connector *connector,
-				    struct intel_load_detect_pipe *old,
-				    struct drm_modeset_acquire_ctx *ctx);
-struct i915_vma *
-intel_pin_and_fence_fb_obj(struct drm_framebuffer *fb, bool phys_cursor,
-			   const struct i915_ggtt_view *view,
+पूर्णांक ilk_get_lanes_required(पूर्णांक target_घड़ी, पूर्णांक link_bw, पूर्णांक bpp);
+व्योम vlv_रुको_port_पढ़ोy(काष्ठा drm_i915_निजी *dev_priv,
+			 काष्ठा पूर्णांकel_digital_port *dig_port,
+			 अचिन्हित पूर्णांक expected_mask);
+पूर्णांक पूर्णांकel_get_load_detect_pipe(काष्ठा drm_connector *connector,
+			       काष्ठा पूर्णांकel_load_detect_pipe *old,
+			       काष्ठा drm_modeset_acquire_ctx *ctx);
+व्योम पूर्णांकel_release_load_detect_pipe(काष्ठा drm_connector *connector,
+				    काष्ठा पूर्णांकel_load_detect_pipe *old,
+				    काष्ठा drm_modeset_acquire_ctx *ctx);
+काष्ठा i915_vma *
+पूर्णांकel_pin_and_fence_fb_obj(काष्ठा drm_framebuffer *fb, bool phys_cursor,
+			   स्थिर काष्ठा i915_ggtt_view *view,
 			   bool uses_fence,
-			   unsigned long *out_flags);
-void intel_unpin_fb_vma(struct i915_vma *vma, unsigned long flags);
-struct drm_framebuffer *
-intel_framebuffer_create(struct drm_i915_gem_object *obj,
-			 struct drm_mode_fb_cmd2 *mode_cmd);
-int intel_prepare_plane_fb(struct drm_plane *plane,
-			   struct drm_plane_state *new_state);
-void intel_cleanup_plane_fb(struct drm_plane *plane,
-			    struct drm_plane_state *old_state);
+			   अचिन्हित दीर्घ *out_flags);
+व्योम पूर्णांकel_unpin_fb_vma(काष्ठा i915_vma *vma, अचिन्हित दीर्घ flags);
+काष्ठा drm_framebuffer *
+पूर्णांकel_framebuffer_create(काष्ठा drm_i915_gem_object *obj,
+			 काष्ठा drm_mode_fb_cmd2 *mode_cmd);
+पूर्णांक पूर्णांकel_prepare_plane_fb(काष्ठा drm_plane *plane,
+			   काष्ठा drm_plane_state *new_state);
+व्योम पूर्णांकel_cleanup_plane_fb(काष्ठा drm_plane *plane,
+			    काष्ठा drm_plane_state *old_state);
 
-void assert_pch_transcoder_disabled(struct drm_i915_private *dev_priv,
-				    enum pipe pipe);
+व्योम निश्चित_pch_transcoder_disabled(काष्ठा drm_i915_निजी *dev_priv,
+				    क्रमागत pipe pipe);
 
-int lpt_get_iclkip(struct drm_i915_private *dev_priv);
-bool intel_fuzzy_clock_check(int clock1, int clock2);
+पूर्णांक lpt_get_iclkip(काष्ठा drm_i915_निजी *dev_priv);
+bool पूर्णांकel_fuzzy_घड़ी_check(पूर्णांक घड़ी1, पूर्णांक घड़ी2);
 
-void intel_display_prepare_reset(struct drm_i915_private *dev_priv);
-void intel_display_finish_reset(struct drm_i915_private *dev_priv);
-void intel_dp_get_m_n(struct intel_crtc *crtc,
-		      struct intel_crtc_state *pipe_config);
-void intel_dp_set_m_n(const struct intel_crtc_state *crtc_state,
-		      enum link_m_n_set m_n);
-int intel_dotclock_calculate(int link_freq, const struct intel_link_m_n *m_n);
-bool bxt_find_best_dpll(struct intel_crtc_state *crtc_state,
-			struct dpll *best_clock);
-int chv_calc_dpll_params(int refclk, struct dpll *pll_clock);
+व्योम पूर्णांकel_display_prepare_reset(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_display_finish_reset(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_dp_get_m_n(काष्ठा पूर्णांकel_crtc *crtc,
+		      काष्ठा पूर्णांकel_crtc_state *pipe_config);
+व्योम पूर्णांकel_dp_set_m_n(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+		      क्रमागत link_m_n_set m_n);
+पूर्णांक पूर्णांकel_करोtघड़ी_calculate(पूर्णांक link_freq, स्थिर काष्ठा पूर्णांकel_link_m_n *m_n);
+bool bxt_find_best_dpll(काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			काष्ठा dpll *best_घड़ी);
+पूर्णांक chv_calc_dpll_params(पूर्णांक refclk, काष्ठा dpll *pll_घड़ी);
 
-bool hsw_crtc_state_ips_capable(const struct intel_crtc_state *crtc_state);
-void hsw_enable_ips(const struct intel_crtc_state *crtc_state);
-void hsw_disable_ips(const struct intel_crtc_state *crtc_state);
-enum intel_display_power_domain intel_port_to_power_domain(enum port port);
-enum intel_display_power_domain
-intel_aux_power_domain(struct intel_digital_port *dig_port);
-enum intel_display_power_domain
-intel_legacy_aux_to_power_domain(enum aux_ch aux_ch);
-void intel_crtc_arm_fifo_underrun(struct intel_crtc *crtc,
-				  struct intel_crtc_state *crtc_state);
-void ilk_pfit_disable(const struct intel_crtc_state *old_crtc_state);
+bool hsw_crtc_state_ips_capable(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम hsw_enable_ips(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम hsw_disable_ips(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+क्रमागत पूर्णांकel_display_घातer_करोमुख्य पूर्णांकel_port_to_घातer_करोमुख्य(क्रमागत port port);
+क्रमागत पूर्णांकel_display_घातer_करोमुख्य
+पूर्णांकel_aux_घातer_करोमुख्य(काष्ठा पूर्णांकel_digital_port *dig_port);
+क्रमागत पूर्णांकel_display_घातer_करोमुख्य
+पूर्णांकel_legacy_aux_to_घातer_करोमुख्य(क्रमागत aux_ch aux_ch);
+व्योम पूर्णांकel_crtc_arm_fअगरo_underrun(काष्ठा पूर्णांकel_crtc *crtc,
+				  काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम ilk_pfit_disable(स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state);
 
-int bdw_get_pipemisc_bpp(struct intel_crtc *crtc);
-unsigned int intel_plane_fence_y_offset(const struct intel_plane_state *plane_state);
+पूर्णांक bdw_get_pipemisc_bpp(काष्ठा पूर्णांकel_crtc *crtc);
+अचिन्हित पूर्णांक पूर्णांकel_plane_fence_y_offset(स्थिर काष्ठा पूर्णांकel_plane_state *plane_state);
 
-struct intel_display_error_state *
-intel_display_capture_error_state(struct drm_i915_private *dev_priv);
-void intel_display_print_error_state(struct drm_i915_error_state_buf *e,
-				     struct intel_display_error_state *error);
+काष्ठा पूर्णांकel_display_error_state *
+पूर्णांकel_display_capture_error_state(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_display_prपूर्णांक_error_state(काष्ठा drm_i915_error_state_buf *e,
+				     काष्ठा पूर्णांकel_display_error_state *error);
 
 bool
-intel_format_info_is_yuv_semiplanar(const struct drm_format_info *info,
-				    u64 modifier);
+पूर्णांकel_क्रमmat_info_is_yuv_semiplanar(स्थिर काष्ठा drm_क्रमmat_info *info,
+				    u64 modअगरier);
 
-int intel_plane_pin_fb(struct intel_plane_state *plane_state);
-void intel_plane_unpin_fb(struct intel_plane_state *old_plane_state);
-struct intel_encoder *
-intel_get_crtc_new_encoder(const struct intel_atomic_state *state,
-			   const struct intel_crtc_state *crtc_state);
+पूर्णांक पूर्णांकel_plane_pin_fb(काष्ठा पूर्णांकel_plane_state *plane_state);
+व्योम पूर्णांकel_plane_unpin_fb(काष्ठा पूर्णांकel_plane_state *old_plane_state);
+काष्ठा पूर्णांकel_encoder *
+पूर्णांकel_get_crtc_new_encoder(स्थिर काष्ठा पूर्णांकel_atomic_state *state,
+			   स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
 
-unsigned int intel_surf_alignment(const struct drm_framebuffer *fb,
-				  int color_plane);
-unsigned int intel_tile_width_bytes(const struct drm_framebuffer *fb, int color_plane);
+अचिन्हित पूर्णांक पूर्णांकel_surf_alignment(स्थिर काष्ठा drm_framebuffer *fb,
+				  पूर्णांक color_plane);
+अचिन्हित पूर्णांक पूर्णांकel_tile_width_bytes(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक color_plane);
 
-void intel_display_driver_register(struct drm_i915_private *i915);
-void intel_display_driver_unregister(struct drm_i915_private *i915);
+व्योम पूर्णांकel_display_driver_रेजिस्टर(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_display_driver_unरेजिस्टर(काष्ठा drm_i915_निजी *i915);
 
 /* modesetting */
-void intel_modeset_init_hw(struct drm_i915_private *i915);
-int intel_modeset_init_noirq(struct drm_i915_private *i915);
-int intel_modeset_init_nogem(struct drm_i915_private *i915);
-int intel_modeset_init(struct drm_i915_private *i915);
-void intel_modeset_driver_remove(struct drm_i915_private *i915);
-void intel_modeset_driver_remove_noirq(struct drm_i915_private *i915);
-void intel_modeset_driver_remove_nogem(struct drm_i915_private *i915);
-void intel_display_resume(struct drm_device *dev);
-void intel_init_pch_refclk(struct drm_i915_private *dev_priv);
+व्योम पूर्णांकel_modeset_init_hw(काष्ठा drm_i915_निजी *i915);
+पूर्णांक पूर्णांकel_modeset_init_noirq(काष्ठा drm_i915_निजी *i915);
+पूर्णांक पूर्णांकel_modeset_init_nogem(काष्ठा drm_i915_निजी *i915);
+पूर्णांक पूर्णांकel_modeset_init(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_modeset_driver_हटाओ(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_modeset_driver_हटाओ_noirq(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_modeset_driver_हटाओ_nogem(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_display_resume(काष्ठा drm_device *dev);
+व्योम पूर्णांकel_init_pch_refclk(काष्ठा drm_i915_निजी *dev_priv);
 
-/* modesetting asserts */
-void assert_panel_unlocked(struct drm_i915_private *dev_priv,
-			   enum pipe pipe);
-void assert_pll(struct drm_i915_private *dev_priv,
-		enum pipe pipe, bool state);
-#define assert_pll_enabled(d, p) assert_pll(d, p, true)
-#define assert_pll_disabled(d, p) assert_pll(d, p, false)
-void assert_dsi_pll(struct drm_i915_private *dev_priv, bool state);
-#define assert_dsi_pll_enabled(d) assert_dsi_pll(d, true)
-#define assert_dsi_pll_disabled(d) assert_dsi_pll(d, false)
-void assert_fdi_rx_pll(struct drm_i915_private *dev_priv,
-		       enum pipe pipe, bool state);
-#define assert_fdi_rx_pll_enabled(d, p) assert_fdi_rx_pll(d, p, true)
-#define assert_fdi_rx_pll_disabled(d, p) assert_fdi_rx_pll(d, p, false)
-void assert_pipe(struct drm_i915_private *dev_priv,
-		 enum transcoder cpu_transcoder, bool state);
-#define assert_pipe_enabled(d, t) assert_pipe(d, t, true)
-#define assert_pipe_disabled(d, t) assert_pipe(d, t, false)
+/* modesetting निश्चितs */
+व्योम निश्चित_panel_unlocked(काष्ठा drm_i915_निजी *dev_priv,
+			   क्रमागत pipe pipe);
+व्योम निश्चित_pll(काष्ठा drm_i915_निजी *dev_priv,
+		क्रमागत pipe pipe, bool state);
+#घोषणा निश्चित_pll_enabled(d, p) निश्चित_pll(d, p, true)
+#घोषणा निश्चित_pll_disabled(d, p) निश्चित_pll(d, p, false)
+व्योम निश्चित_dsi_pll(काष्ठा drm_i915_निजी *dev_priv, bool state);
+#घोषणा निश्चित_dsi_pll_enabled(d) निश्चित_dsi_pll(d, true)
+#घोषणा निश्चित_dsi_pll_disabled(d) निश्चित_dsi_pll(d, false)
+व्योम निश्चित_fdi_rx_pll(काष्ठा drm_i915_निजी *dev_priv,
+		       क्रमागत pipe pipe, bool state);
+#घोषणा निश्चित_fdi_rx_pll_enabled(d, p) निश्चित_fdi_rx_pll(d, p, true)
+#घोषणा निश्चित_fdi_rx_pll_disabled(d, p) निश्चित_fdi_rx_pll(d, p, false)
+व्योम निश्चित_pipe(काष्ठा drm_i915_निजी *dev_priv,
+		 क्रमागत transcoder cpu_transcoder, bool state);
+#घोषणा निश्चित_pipe_enabled(d, t) निश्चित_pipe(d, t, true)
+#घोषणा निश्चित_pipe_disabled(d, t) निश्चित_pipe(d, t, false)
 
 /* Use I915_STATE_WARN(x) and I915_STATE_WARN_ON() (rather than WARN() and
- * WARN_ON()) for hw state sanity checks to check for unexpected conditions
+ * WARN_ON()) क्रम hw state sanity checks to check क्रम unexpected conditions
  * which may not necessarily be a user visible problem.  This will either
  * WARN() or DRM_ERROR() depending on the verbose_checks moduleparam, to
  * enable distros and users to tailor their preferred amount of i915 abrt
  * spam.
  */
-#define I915_STATE_WARN(condition, format...) ({			\
-	int __ret_warn_on = !!(condition);				\
-	if (unlikely(__ret_warn_on))					\
-		if (!WARN(i915_modparams.verbose_state_checks, format))	\
-			DRM_ERROR(format);				\
+#घोषणा I915_STATE_WARN(condition, क्रमmat...) (अणु			\
+	पूर्णांक __ret_warn_on = !!(condition);				\
+	अगर (unlikely(__ret_warn_on))					\
+		अगर (!WARN(i915_modparams.verbose_state_checks, क्रमmat))	\
+			DRM_ERROR(क्रमmat);				\
 	unlikely(__ret_warn_on);					\
-})
+पूर्ण)
 
-#define I915_STATE_WARN_ON(x)						\
-	I915_STATE_WARN((x), "%s", "WARN_ON(" __stringify(x) ")")
+#घोषणा I915_STATE_WARN_ON(x)						\
+	I915_STATE_WARN((x), "%s", "WARN_ON(" __stringअगरy(x) ")")
 
-#endif
+#पूर्ण_अगर

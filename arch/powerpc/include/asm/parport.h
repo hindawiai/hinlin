@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * parport.h: platform-specific PC-style parport initialisation
+ * parport.h: platक्रमm-specअगरic PC-style parport initialisation
  *
  * Copyright (C) 1999, 2000  Tim Waugh <tim@cyberelk.demon.co.uk>
  *
  * This file should only be included by drivers/parport/parport_pc.c.
  */
 
-#ifndef _ASM_POWERPC_PARPORT_H
-#define _ASM_POWERPC_PARPORT_H
-#ifdef __KERNEL__
+#अगर_अघोषित _ASM_POWERPC_PARPORT_H
+#घोषणा _ASM_POWERPC_PARPORT_H
+#अगर_घोषित __KERNEL__
 
-#include <asm/prom.h>
+#समावेश <यंत्र/prom.h>
 
-static int parport_pc_find_nonpci_ports (int autoirq, int autodma)
-{
-	struct device_node *np;
-	const u32 *prop;
+अटल पूर्णांक parport_pc_find_nonpci_ports (पूर्णांक स्वतःirq, पूर्णांक स्वतःdma)
+अणु
+	काष्ठा device_node *np;
+	स्थिर u32 *prop;
 	u32 io1, io2;
-	int propsize;
-	int count = 0;
-	int virq;
+	पूर्णांक propsize;
+	पूर्णांक count = 0;
+	पूर्णांक virq;
 
-	for_each_compatible_node(np, "parallel", "pnpPNP,400") {
+	क्रम_each_compatible_node(np, "parallel", "pnpPNP,400") अणु
 		prop = of_get_property(np, "reg", &propsize);
-		if (!prop || propsize > 6*sizeof(u32))
-			continue;
+		अगर (!prop || propsize > 6*माप(u32))
+			जारी;
 		io1 = prop[1]; io2 = prop[2];
 
 		virq = irq_of_parse_and_map(np, 0);
-		if (!virq)
-			continue;
+		अगर (!virq)
+			जारी;
 
-		if (parport_pc_probe_port(io1, io2, virq, autodma, NULL, 0)
-				!= NULL)
+		अगर (parport_pc_probe_port(io1, io2, virq, स्वतःdma, शून्य, 0)
+				!= शून्य)
 			count++;
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
-#endif /* __KERNEL__ */
-#endif /* !(_ASM_POWERPC_PARPORT_H) */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* !(_ASM_POWERPC_PARPORT_H) */

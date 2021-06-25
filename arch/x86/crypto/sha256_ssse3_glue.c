@@ -1,17 +1,18 @@
+<शैली गुरु>
 /*
  * Cryptographic API.
  *
- * Glue code for the SHA256 Secure Hash Algorithm assembler
- * implementation using supplemental SSE3 / AVX / AVX2 instructions.
+ * Glue code क्रम the SHA256 Secure Hash Algorithm assembler
+ * implementation using supplemental SSE3 / AVX / AVX2 inकाष्ठाions.
  *
  * This file is based on sha256_generic.c
  *
  * Copyright (C) 2013 Intel Corporation.
  *
  * Author:
- *     Tim Chen <tim.c.chen@linux.intel.com>
+ *     Tim Chen <tim.c.chen@linux.पूर्णांकel.com>
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
@@ -27,381 +28,381 @@
  */
 
 
-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#include <crypto/internal/hash.h>
-#include <crypto/internal/simd.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/types.h>
-#include <crypto/sha2.h>
-#include <crypto/sha256_base.h>
-#include <linux/string.h>
-#include <asm/simd.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <crypto/पूर्णांकernal/simd.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/types.h>
+#समावेश <crypto/sha2.h>
+#समावेश <crypto/sha256_base.h>
+#समावेश <linux/माला.स>
+#समावेश <यंत्र/simd.h>
 
-asmlinkage void sha256_transform_ssse3(struct sha256_state *state,
-				       const u8 *data, int blocks);
+यंत्रlinkage व्योम sha256_transक्रमm_ssse3(काष्ठा sha256_state *state,
+				       स्थिर u8 *data, पूर्णांक blocks);
 
-static int _sha256_update(struct shash_desc *desc, const u8 *data,
-			  unsigned int len, sha256_block_fn *sha256_xform)
-{
-	struct sha256_state *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक _sha256_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			  अचिन्हित पूर्णांक len, sha256_block_fn *sha256_xक्रमm)
+अणु
+	काष्ठा sha256_state *sctx = shash_desc_ctx(desc);
 
-	if (!crypto_simd_usable() ||
+	अगर (!crypto_simd_usable() ||
 	    (sctx->count % SHA256_BLOCK_SIZE) + len < SHA256_BLOCK_SIZE)
-		return crypto_sha256_update(desc, data, len);
+		वापस crypto_sha256_update(desc, data, len);
 
 	/*
-	 * Make sure struct sha256_state begins directly with the SHA256
-	 * 256-bit internal state, as this is what the asm functions expect.
+	 * Make sure काष्ठा sha256_state begins directly with the SHA256
+	 * 256-bit पूर्णांकernal state, as this is what the यंत्र functions expect.
 	 */
-	BUILD_BUG_ON(offsetof(struct sha256_state, state) != 0);
+	BUILD_BUG_ON(दुरत्व(काष्ठा sha256_state, state) != 0);
 
 	kernel_fpu_begin();
-	sha256_base_do_update(desc, data, len, sha256_xform);
+	sha256_base_करो_update(desc, data, len, sha256_xक्रमm);
 	kernel_fpu_end();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sha256_finup(struct shash_desc *desc, const u8 *data,
-	      unsigned int len, u8 *out, sha256_block_fn *sha256_xform)
-{
-	if (!crypto_simd_usable())
-		return crypto_sha256_finup(desc, data, len, out);
+अटल पूर्णांक sha256_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
+	      अचिन्हित पूर्णांक len, u8 *out, sha256_block_fn *sha256_xक्रमm)
+अणु
+	अगर (!crypto_simd_usable())
+		वापस crypto_sha256_finup(desc, data, len, out);
 
 	kernel_fpu_begin();
-	if (len)
-		sha256_base_do_update(desc, data, len, sha256_xform);
-	sha256_base_do_finalize(desc, sha256_xform);
+	अगर (len)
+		sha256_base_करो_update(desc, data, len, sha256_xक्रमm);
+	sha256_base_करो_finalize(desc, sha256_xक्रमm);
 	kernel_fpu_end();
 
-	return sha256_base_finish(desc, out);
-}
+	वापस sha256_base_finish(desc, out);
+पूर्ण
 
-static int sha256_ssse3_update(struct shash_desc *desc, const u8 *data,
-			 unsigned int len)
-{
-	return _sha256_update(desc, data, len, sha256_transform_ssse3);
-}
+अटल पूर्णांक sha256_ssse3_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			 अचिन्हित पूर्णांक len)
+अणु
+	वापस _sha256_update(desc, data, len, sha256_transक्रमm_ssse3);
+पूर्ण
 
-static int sha256_ssse3_finup(struct shash_desc *desc, const u8 *data,
-	      unsigned int len, u8 *out)
-{
-	return sha256_finup(desc, data, len, out, sha256_transform_ssse3);
-}
+अटल पूर्णांक sha256_ssse3_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
+	      अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	वापस sha256_finup(desc, data, len, out, sha256_transक्रमm_ssse3);
+पूर्ण
 
-/* Add padding and return the message digest. */
-static int sha256_ssse3_final(struct shash_desc *desc, u8 *out)
-{
-	return sha256_ssse3_finup(desc, NULL, 0, out);
-}
+/* Add padding and वापस the message digest. */
+अटल पूर्णांक sha256_ssse3_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	वापस sha256_ssse3_finup(desc, शून्य, 0, out);
+पूर्ण
 
-static struct shash_alg sha256_ssse3_algs[] = { {
+अटल काष्ठा shash_alg sha256_ssse3_algs[] = अणु अणु
 	.digestsize	=	SHA256_DIGEST_SIZE,
 	.init		=	sha256_base_init,
 	.update		=	sha256_ssse3_update,
 	.final		=	sha256_ssse3_final,
 	.finup		=	sha256_ssse3_finup,
-	.descsize	=	sizeof(struct sha256_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha256_state),
+	.base		=	अणु
 		.cra_name	=	"sha256",
 		.cra_driver_name =	"sha256-ssse3",
 		.cra_priority	=	150,
 		.cra_blocksize	=	SHA256_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-}, {
+	पूर्ण
+पूर्ण, अणु
 	.digestsize	=	SHA224_DIGEST_SIZE,
 	.init		=	sha224_base_init,
 	.update		=	sha256_ssse3_update,
 	.final		=	sha256_ssse3_final,
 	.finup		=	sha256_ssse3_finup,
-	.descsize	=	sizeof(struct sha256_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha256_state),
+	.base		=	अणु
 		.cra_name	=	"sha224",
 		.cra_driver_name =	"sha224-ssse3",
 		.cra_priority	=	150,
 		.cra_blocksize	=	SHA224_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-} };
+	पूर्ण
+पूर्ण पूर्ण;
 
-static int register_sha256_ssse3(void)
-{
-	if (boot_cpu_has(X86_FEATURE_SSSE3))
-		return crypto_register_shashes(sha256_ssse3_algs,
+अटल पूर्णांक रेजिस्टर_sha256_ssse3(व्योम)
+अणु
+	अगर (boot_cpu_has(X86_FEATURE_SSSE3))
+		वापस crypto_रेजिस्टर_shashes(sha256_ssse3_algs,
 				ARRAY_SIZE(sha256_ssse3_algs));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void unregister_sha256_ssse3(void)
-{
-	if (boot_cpu_has(X86_FEATURE_SSSE3))
-		crypto_unregister_shashes(sha256_ssse3_algs,
+अटल व्योम unरेजिस्टर_sha256_ssse3(व्योम)
+अणु
+	अगर (boot_cpu_has(X86_FEATURE_SSSE3))
+		crypto_unरेजिस्टर_shashes(sha256_ssse3_algs,
 				ARRAY_SIZE(sha256_ssse3_algs));
-}
+पूर्ण
 
-asmlinkage void sha256_transform_avx(struct sha256_state *state,
-				     const u8 *data, int blocks);
+यंत्रlinkage व्योम sha256_transक्रमm_avx(काष्ठा sha256_state *state,
+				     स्थिर u8 *data, पूर्णांक blocks);
 
-static int sha256_avx_update(struct shash_desc *desc, const u8 *data,
-			 unsigned int len)
-{
-	return _sha256_update(desc, data, len, sha256_transform_avx);
-}
+अटल पूर्णांक sha256_avx_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			 अचिन्हित पूर्णांक len)
+अणु
+	वापस _sha256_update(desc, data, len, sha256_transक्रमm_avx);
+पूर्ण
 
-static int sha256_avx_finup(struct shash_desc *desc, const u8 *data,
-		      unsigned int len, u8 *out)
-{
-	return sha256_finup(desc, data, len, out, sha256_transform_avx);
-}
+अटल पूर्णांक sha256_avx_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
+		      अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	वापस sha256_finup(desc, data, len, out, sha256_transक्रमm_avx);
+पूर्ण
 
-static int sha256_avx_final(struct shash_desc *desc, u8 *out)
-{
-	return sha256_avx_finup(desc, NULL, 0, out);
-}
+अटल पूर्णांक sha256_avx_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	वापस sha256_avx_finup(desc, शून्य, 0, out);
+पूर्ण
 
-static struct shash_alg sha256_avx_algs[] = { {
+अटल काष्ठा shash_alg sha256_avx_algs[] = अणु अणु
 	.digestsize	=	SHA256_DIGEST_SIZE,
 	.init		=	sha256_base_init,
 	.update		=	sha256_avx_update,
 	.final		=	sha256_avx_final,
 	.finup		=	sha256_avx_finup,
-	.descsize	=	sizeof(struct sha256_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha256_state),
+	.base		=	अणु
 		.cra_name	=	"sha256",
 		.cra_driver_name =	"sha256-avx",
 		.cra_priority	=	160,
 		.cra_blocksize	=	SHA256_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-}, {
+	पूर्ण
+पूर्ण, अणु
 	.digestsize	=	SHA224_DIGEST_SIZE,
 	.init		=	sha224_base_init,
 	.update		=	sha256_avx_update,
 	.final		=	sha256_avx_final,
 	.finup		=	sha256_avx_finup,
-	.descsize	=	sizeof(struct sha256_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha256_state),
+	.base		=	अणु
 		.cra_name	=	"sha224",
 		.cra_driver_name =	"sha224-avx",
 		.cra_priority	=	160,
 		.cra_blocksize	=	SHA224_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-} };
+	पूर्ण
+पूर्ण पूर्ण;
 
-static bool avx_usable(void)
-{
-	if (!cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM, NULL)) {
-		if (boot_cpu_has(X86_FEATURE_AVX))
+अटल bool avx_usable(व्योम)
+अणु
+	अगर (!cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM, शून्य)) अणु
+		अगर (boot_cpu_has(X86_FEATURE_AVX))
 			pr_info("AVX detected but unusable.\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int register_sha256_avx(void)
-{
-	if (avx_usable())
-		return crypto_register_shashes(sha256_avx_algs,
+अटल पूर्णांक रेजिस्टर_sha256_avx(व्योम)
+अणु
+	अगर (avx_usable())
+		वापस crypto_रेजिस्टर_shashes(sha256_avx_algs,
 				ARRAY_SIZE(sha256_avx_algs));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void unregister_sha256_avx(void)
-{
-	if (avx_usable())
-		crypto_unregister_shashes(sha256_avx_algs,
+अटल व्योम unरेजिस्टर_sha256_avx(व्योम)
+अणु
+	अगर (avx_usable())
+		crypto_unरेजिस्टर_shashes(sha256_avx_algs,
 				ARRAY_SIZE(sha256_avx_algs));
-}
+पूर्ण
 
-asmlinkage void sha256_transform_rorx(struct sha256_state *state,
-				      const u8 *data, int blocks);
+यंत्रlinkage व्योम sha256_transक्रमm_rorx(काष्ठा sha256_state *state,
+				      स्थिर u8 *data, पूर्णांक blocks);
 
-static int sha256_avx2_update(struct shash_desc *desc, const u8 *data,
-			 unsigned int len)
-{
-	return _sha256_update(desc, data, len, sha256_transform_rorx);
-}
+अटल पूर्णांक sha256_avx2_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			 अचिन्हित पूर्णांक len)
+अणु
+	वापस _sha256_update(desc, data, len, sha256_transक्रमm_rorx);
+पूर्ण
 
-static int sha256_avx2_finup(struct shash_desc *desc, const u8 *data,
-		      unsigned int len, u8 *out)
-{
-	return sha256_finup(desc, data, len, out, sha256_transform_rorx);
-}
+अटल पूर्णांक sha256_avx2_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
+		      अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	वापस sha256_finup(desc, data, len, out, sha256_transक्रमm_rorx);
+पूर्ण
 
-static int sha256_avx2_final(struct shash_desc *desc, u8 *out)
-{
-	return sha256_avx2_finup(desc, NULL, 0, out);
-}
+अटल पूर्णांक sha256_avx2_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	वापस sha256_avx2_finup(desc, शून्य, 0, out);
+पूर्ण
 
-static struct shash_alg sha256_avx2_algs[] = { {
+अटल काष्ठा shash_alg sha256_avx2_algs[] = अणु अणु
 	.digestsize	=	SHA256_DIGEST_SIZE,
 	.init		=	sha256_base_init,
 	.update		=	sha256_avx2_update,
 	.final		=	sha256_avx2_final,
 	.finup		=	sha256_avx2_finup,
-	.descsize	=	sizeof(struct sha256_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha256_state),
+	.base		=	अणु
 		.cra_name	=	"sha256",
 		.cra_driver_name =	"sha256-avx2",
 		.cra_priority	=	170,
 		.cra_blocksize	=	SHA256_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-}, {
+	पूर्ण
+पूर्ण, अणु
 	.digestsize	=	SHA224_DIGEST_SIZE,
 	.init		=	sha224_base_init,
 	.update		=	sha256_avx2_update,
 	.final		=	sha256_avx2_final,
 	.finup		=	sha256_avx2_finup,
-	.descsize	=	sizeof(struct sha256_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha256_state),
+	.base		=	अणु
 		.cra_name	=	"sha224",
 		.cra_driver_name =	"sha224-avx2",
 		.cra_priority	=	170,
 		.cra_blocksize	=	SHA224_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-} };
+	पूर्ण
+पूर्ण पूर्ण;
 
-static bool avx2_usable(void)
-{
-	if (avx_usable() && boot_cpu_has(X86_FEATURE_AVX2) &&
+अटल bool avx2_usable(व्योम)
+अणु
+	अगर (avx_usable() && boot_cpu_has(X86_FEATURE_AVX2) &&
 		    boot_cpu_has(X86_FEATURE_BMI2))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int register_sha256_avx2(void)
-{
-	if (avx2_usable())
-		return crypto_register_shashes(sha256_avx2_algs,
+अटल पूर्णांक रेजिस्टर_sha256_avx2(व्योम)
+अणु
+	अगर (avx2_usable())
+		वापस crypto_रेजिस्टर_shashes(sha256_avx2_algs,
 				ARRAY_SIZE(sha256_avx2_algs));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void unregister_sha256_avx2(void)
-{
-	if (avx2_usable())
-		crypto_unregister_shashes(sha256_avx2_algs,
+अटल व्योम unरेजिस्टर_sha256_avx2(व्योम)
+अणु
+	अगर (avx2_usable())
+		crypto_unरेजिस्टर_shashes(sha256_avx2_algs,
 				ARRAY_SIZE(sha256_avx2_algs));
-}
+पूर्ण
 
-#ifdef CONFIG_AS_SHA256_NI
-asmlinkage void sha256_ni_transform(struct sha256_state *digest,
-				    const u8 *data, int rounds);
+#अगर_घोषित CONFIG_AS_SHA256_NI
+यंत्रlinkage व्योम sha256_ni_transक्रमm(काष्ठा sha256_state *digest,
+				    स्थिर u8 *data, पूर्णांक rounds);
 
-static int sha256_ni_update(struct shash_desc *desc, const u8 *data,
-			 unsigned int len)
-{
-	return _sha256_update(desc, data, len, sha256_ni_transform);
-}
+अटल पूर्णांक sha256_ni_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			 अचिन्हित पूर्णांक len)
+अणु
+	वापस _sha256_update(desc, data, len, sha256_ni_transक्रमm);
+पूर्ण
 
-static int sha256_ni_finup(struct shash_desc *desc, const u8 *data,
-		      unsigned int len, u8 *out)
-{
-	return sha256_finup(desc, data, len, out, sha256_ni_transform);
-}
+अटल पूर्णांक sha256_ni_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
+		      अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	वापस sha256_finup(desc, data, len, out, sha256_ni_transक्रमm);
+पूर्ण
 
-static int sha256_ni_final(struct shash_desc *desc, u8 *out)
-{
-	return sha256_ni_finup(desc, NULL, 0, out);
-}
+अटल पूर्णांक sha256_ni_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	वापस sha256_ni_finup(desc, शून्य, 0, out);
+पूर्ण
 
-static struct shash_alg sha256_ni_algs[] = { {
+अटल काष्ठा shash_alg sha256_ni_algs[] = अणु अणु
 	.digestsize	=	SHA256_DIGEST_SIZE,
 	.init		=	sha256_base_init,
 	.update		=	sha256_ni_update,
 	.final		=	sha256_ni_final,
 	.finup		=	sha256_ni_finup,
-	.descsize	=	sizeof(struct sha256_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha256_state),
+	.base		=	अणु
 		.cra_name	=	"sha256",
 		.cra_driver_name =	"sha256-ni",
 		.cra_priority	=	250,
 		.cra_blocksize	=	SHA256_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-}, {
+	पूर्ण
+पूर्ण, अणु
 	.digestsize	=	SHA224_DIGEST_SIZE,
 	.init		=	sha224_base_init,
 	.update		=	sha256_ni_update,
 	.final		=	sha256_ni_final,
 	.finup		=	sha256_ni_finup,
-	.descsize	=	sizeof(struct sha256_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha256_state),
+	.base		=	अणु
 		.cra_name	=	"sha224",
 		.cra_driver_name =	"sha224-ni",
 		.cra_priority	=	250,
 		.cra_blocksize	=	SHA224_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-} };
+	पूर्ण
+पूर्ण पूर्ण;
 
-static int register_sha256_ni(void)
-{
-	if (boot_cpu_has(X86_FEATURE_SHA_NI))
-		return crypto_register_shashes(sha256_ni_algs,
+अटल पूर्णांक रेजिस्टर_sha256_ni(व्योम)
+अणु
+	अगर (boot_cpu_has(X86_FEATURE_SHA_NI))
+		वापस crypto_रेजिस्टर_shashes(sha256_ni_algs,
 				ARRAY_SIZE(sha256_ni_algs));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void unregister_sha256_ni(void)
-{
-	if (boot_cpu_has(X86_FEATURE_SHA_NI))
-		crypto_unregister_shashes(sha256_ni_algs,
+अटल व्योम unरेजिस्टर_sha256_ni(व्योम)
+अणु
+	अगर (boot_cpu_has(X86_FEATURE_SHA_NI))
+		crypto_unरेजिस्टर_shashes(sha256_ni_algs,
 				ARRAY_SIZE(sha256_ni_algs));
-}
+पूर्ण
 
-#else
-static inline int register_sha256_ni(void) { return 0; }
-static inline void unregister_sha256_ni(void) { }
-#endif
+#अन्यथा
+अटल अंतरभूत पूर्णांक रेजिस्टर_sha256_ni(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम unरेजिस्टर_sha256_ni(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-static int __init sha256_ssse3_mod_init(void)
-{
-	if (register_sha256_ssse3())
-		goto fail;
+अटल पूर्णांक __init sha256_ssse3_mod_init(व्योम)
+अणु
+	अगर (रेजिस्टर_sha256_ssse3())
+		जाओ fail;
 
-	if (register_sha256_avx()) {
-		unregister_sha256_ssse3();
-		goto fail;
-	}
+	अगर (रेजिस्टर_sha256_avx()) अणु
+		unरेजिस्टर_sha256_ssse3();
+		जाओ fail;
+	पूर्ण
 
-	if (register_sha256_avx2()) {
-		unregister_sha256_avx();
-		unregister_sha256_ssse3();
-		goto fail;
-	}
+	अगर (रेजिस्टर_sha256_avx2()) अणु
+		unरेजिस्टर_sha256_avx();
+		unरेजिस्टर_sha256_ssse3();
+		जाओ fail;
+	पूर्ण
 
-	if (register_sha256_ni()) {
-		unregister_sha256_avx2();
-		unregister_sha256_avx();
-		unregister_sha256_ssse3();
-		goto fail;
-	}
+	अगर (रेजिस्टर_sha256_ni()) अणु
+		unरेजिस्टर_sha256_avx2();
+		unरेजिस्टर_sha256_avx();
+		unरेजिस्टर_sha256_ssse3();
+		जाओ fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 fail:
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void __exit sha256_ssse3_mod_fini(void)
-{
-	unregister_sha256_ni();
-	unregister_sha256_avx2();
-	unregister_sha256_avx();
-	unregister_sha256_ssse3();
-}
+अटल व्योम __निकास sha256_ssse3_mod_fini(व्योम)
+अणु
+	unरेजिस्टर_sha256_ni();
+	unरेजिस्टर_sha256_avx2();
+	unरेजिस्टर_sha256_avx();
+	unरेजिस्टर_sha256_ssse3();
+पूर्ण
 
 module_init(sha256_ssse3_mod_init);
-module_exit(sha256_ssse3_mod_fini);
+module_निकास(sha256_ssse3_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SHA256 Secure Hash Algorithm, Supplemental SSE3 accelerated");
@@ -414,7 +415,7 @@ MODULE_ALIAS_CRYPTO("sha224");
 MODULE_ALIAS_CRYPTO("sha224-ssse3");
 MODULE_ALIAS_CRYPTO("sha224-avx");
 MODULE_ALIAS_CRYPTO("sha224-avx2");
-#ifdef CONFIG_AS_SHA256_NI
+#अगर_घोषित CONFIG_AS_SHA256_NI
 MODULE_ALIAS_CRYPTO("sha256-ni");
 MODULE_ALIAS_CRYPTO("sha224-ni");
-#endif
+#पूर्ण_अगर

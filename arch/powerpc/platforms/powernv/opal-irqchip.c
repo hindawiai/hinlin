@@ -1,313 +1,314 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * This file implements an irqchip for OPAL events. Whenever there is
- * an interrupt that is handled by OPAL we get passed a list of events
- * that Linux needs to do something about. These basically look like
- * interrupts to Linux so we implement an irqchip to handle them.
+ * This file implements an irqchip क्रम OPAL events. Whenever there is
+ * an पूर्णांकerrupt that is handled by OPAL we get passed a list of events
+ * that Linux needs to करो something about. These basically look like
+ * पूर्णांकerrupts to Linux so we implement an irqchip to handle them.
  *
  * Copyright Alistair Popple, IBM Corporation 2014.
  */
-#include <linux/bitops.h>
-#include <linux/irq.h>
-#include <linux/irqchip.h>
-#include <linux/irqdomain.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/kthread.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/of_irq.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of_irq.h>
 
-#include <asm/machdep.h>
-#include <asm/opal.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/opal.h>
 
-#include "powernv.h"
+#समावेश "powernv.h"
 
 /* Maximum number of events supported by OPAL firmware */
-#define MAX_NUM_EVENTS 64
+#घोषणा MAX_NUM_EVENTS 64
 
-struct opal_event_irqchip {
-	struct irq_chip irqchip;
-	struct irq_domain *domain;
-	unsigned long mask;
-};
-static struct opal_event_irqchip opal_event_irqchip;
-static u64 last_outstanding_events;
-static int opal_irq_count;
-static struct resource *opal_irqs;
+काष्ठा opal_event_irqchip अणु
+	काष्ठा irq_chip irqchip;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
+	अचिन्हित दीर्घ mask;
+पूर्ण;
+अटल काष्ठा opal_event_irqchip opal_event_irqchip;
+अटल u64 last_outstanding_events;
+अटल पूर्णांक opal_irq_count;
+अटल काष्ठा resource *opal_irqs;
 
-void opal_handle_events(void)
-{
+व्योम opal_handle_events(व्योम)
+अणु
 	__be64 events = 0;
 	u64 e;
 
 	e = READ_ONCE(last_outstanding_events) & opal_event_irqchip.mask;
 again:
-	while (e) {
-		int virq, hwirq;
+	जबतक (e) अणु
+		पूर्णांक virq, hwirq;
 
 		hwirq = fls64(e) - 1;
 		e &= ~BIT_ULL(hwirq);
 
 		local_irq_disable();
-		virq = irq_find_mapping(opal_event_irqchip.domain, hwirq);
-		if (virq) {
+		virq = irq_find_mapping(opal_event_irqchip.करोमुख्य, hwirq);
+		अगर (virq) अणु
 			irq_enter();
 			generic_handle_irq(virq);
-			irq_exit();
-		}
+			irq_निकास();
+		पूर्ण
 		local_irq_enable();
 
 		cond_resched();
-	}
+	पूर्ण
 	last_outstanding_events = 0;
-	if (opal_poll_events(&events) != OPAL_SUCCESS)
-		return;
+	अगर (opal_poll_events(&events) != OPAL_SUCCESS)
+		वापस;
 	e = be64_to_cpu(events) & opal_event_irqchip.mask;
-	if (e)
-		goto again;
-}
+	अगर (e)
+		जाओ again;
+पूर्ण
 
-bool opal_have_pending_events(void)
-{
-	if (last_outstanding_events & opal_event_irqchip.mask)
-		return true;
-	return false;
-}
+bool opal_have_pending_events(व्योम)
+अणु
+	अगर (last_outstanding_events & opal_event_irqchip.mask)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static void opal_event_mask(struct irq_data *d)
-{
+अटल व्योम opal_event_mask(काष्ठा irq_data *d)
+अणु
 	clear_bit(d->hwirq, &opal_event_irqchip.mask);
-}
+पूर्ण
 
-static void opal_event_unmask(struct irq_data *d)
-{
+अटल व्योम opal_event_unmask(काष्ठा irq_data *d)
+अणु
 	set_bit(d->hwirq, &opal_event_irqchip.mask);
-	if (opal_have_pending_events())
+	अगर (opal_have_pending_events())
 		opal_wake_poller();
-}
+पूर्ण
 
-static int opal_event_set_type(struct irq_data *d, unsigned int flow_type)
-{
+अटल पूर्णांक opal_event_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक flow_type)
+अणु
 	/*
 	 * For now we only support level triggered events. The irq
 	 * handler will be called continuously until the event has
 	 * been cleared in OPAL.
 	 */
-	if (flow_type != IRQ_TYPE_LEVEL_HIGH)
-		return -EINVAL;
+	अगर (flow_type != IRQ_TYPE_LEVEL_HIGH)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct opal_event_irqchip opal_event_irqchip = {
-	.irqchip = {
+अटल काष्ठा opal_event_irqchip opal_event_irqchip = अणु
+	.irqchip = अणु
 		.name = "OPAL EVT",
 		.irq_mask = opal_event_mask,
 		.irq_unmask = opal_event_unmask,
 		.irq_set_type = opal_event_set_type,
-	},
+	पूर्ण,
 	.mask = 0,
-};
+पूर्ण;
 
-static int opal_event_map(struct irq_domain *d, unsigned int irq,
+अटल पूर्णांक opal_event_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
 			irq_hw_number_t hwirq)
-{
+अणु
 	irq_set_chip_data(irq, &opal_event_irqchip);
 	irq_set_chip_and_handler(irq, &opal_event_irqchip.irqchip,
 				handle_level_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t opal_interrupt(int irq, void *data)
-{
+अटल irqवापस_t opal_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
 	__be64 events;
 
-	opal_handle_interrupt(virq_to_hw(irq), &events);
+	opal_handle_पूर्णांकerrupt(virq_to_hw(irq), &events);
 	last_outstanding_events = be64_to_cpu(events);
-	if (opal_have_pending_events())
+	अगर (opal_have_pending_events())
 		opal_wake_poller();
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int opal_event_match(struct irq_domain *h, struct device_node *node,
-			    enum irq_domain_bus_token bus_token)
-{
-	return irq_domain_get_of_node(h) == node;
-}
+अटल पूर्णांक opal_event_match(काष्ठा irq_करोमुख्य *h, काष्ठा device_node *node,
+			    क्रमागत irq_करोमुख्य_bus_token bus_token)
+अणु
+	वापस irq_करोमुख्य_get_of_node(h) == node;
+पूर्ण
 
-static int opal_event_xlate(struct irq_domain *h, struct device_node *np,
-			   const u32 *intspec, unsigned int intsize,
-			   irq_hw_number_t *out_hwirq, unsigned int *out_flags)
-{
-	*out_hwirq = intspec[0];
+अटल पूर्णांक opal_event_xlate(काष्ठा irq_करोमुख्य *h, काष्ठा device_node *np,
+			   स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
+			   irq_hw_number_t *out_hwirq, अचिन्हित पूर्णांक *out_flags)
+अणु
+	*out_hwirq = पूर्णांकspec[0];
 	*out_flags = IRQ_TYPE_LEVEL_HIGH;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops opal_event_domain_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops opal_event_करोमुख्य_ops = अणु
 	.match	= opal_event_match,
 	.map	= opal_event_map,
 	.xlate	= opal_event_xlate,
-};
+पूर्ण;
 
-void opal_event_shutdown(void)
-{
-	unsigned int i;
+व्योम opal_event_shutकरोwn(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	/* First free interrupts, which will also mask them */
-	for (i = 0; i < opal_irq_count; i++) {
-		if (!opal_irqs || !opal_irqs[i].start)
-			continue;
+	/* First मुक्त पूर्णांकerrupts, which will also mask them */
+	क्रम (i = 0; i < opal_irq_count; i++) अणु
+		अगर (!opal_irqs || !opal_irqs[i].start)
+			जारी;
 
-		if (in_interrupt() || irqs_disabled())
+		अगर (in_पूर्णांकerrupt() || irqs_disabled())
 			disable_irq_nosync(opal_irqs[i].start);
-		else
-			free_irq(opal_irqs[i].start, NULL);
+		अन्यथा
+			मुक्त_irq(opal_irqs[i].start, शून्य);
 
 		opal_irqs[i].start = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int __init opal_event_init(void)
-{
-	struct device_node *dn, *opal_node;
+पूर्णांक __init opal_event_init(व्योम)
+अणु
+	काष्ठा device_node *dn, *opal_node;
 	bool old_style = false;
-	int i, rc = 0;
+	पूर्णांक i, rc = 0;
 
 	opal_node = of_find_node_by_path("/ibm,opal");
-	if (!opal_node) {
+	अगर (!opal_node) अणु
 		pr_warn("opal: Node not found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* If dn is NULL it means the domain won't be linked to a DT
-	 * node so therefore irq_of_parse_and_map(...) wont work. But
+	/* If dn is शून्य it means the करोमुख्य won't be linked to a DT
+	 * node so thereक्रमe irq_of_parse_and_map(...) wont work. But
 	 * that shouldn't be problem because if we're running a
-	 * version of skiboot that doesn't have the dn then the
+	 * version of skiboot that करोesn't have the dn then the
 	 * devices won't have the correct properties and will have to
 	 * fall back to the legacy method (opal_event_request(...))
 	 * anyway. */
-	dn = of_find_compatible_node(NULL, NULL, "ibm,opal-event");
-	opal_event_irqchip.domain = irq_domain_add_linear(dn, MAX_NUM_EVENTS,
-				&opal_event_domain_ops, &opal_event_irqchip);
+	dn = of_find_compatible_node(शून्य, शून्य, "ibm,opal-event");
+	opal_event_irqchip.करोमुख्य = irq_करोमुख्य_add_linear(dn, MAX_NUM_EVENTS,
+				&opal_event_करोमुख्य_ops, &opal_event_irqchip);
 	of_node_put(dn);
-	if (!opal_event_irqchip.domain) {
+	अगर (!opal_event_irqchip.करोमुख्य) अणु
 		pr_warn("opal: Unable to create irq domain\n");
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Look for new-style (standard) "interrupts" property */
+	/* Look क्रम new-style (standard) "interrupts" property */
 	opal_irq_count = of_irq_count(opal_node);
 
-	/* Absent ? Look for the old one */
-	if (opal_irq_count < 1) {
-		/* Get opal-interrupts property and names if present */
+	/* Absent ? Look क्रम the old one */
+	अगर (opal_irq_count < 1) अणु
+		/* Get opal-पूर्णांकerrupts property and names अगर present */
 		rc = of_property_count_u32_elems(opal_node, "opal-interrupts");
-		if (rc > 0)
+		अगर (rc > 0)
 			opal_irq_count = rc;
 		old_style = true;
-	}
+	पूर्ण
 
-	/* No interrupts ? Bail out */
-	if (!opal_irq_count)
-		goto out;
+	/* No पूर्णांकerrupts ? Bail out */
+	अगर (!opal_irq_count)
+		जाओ out;
 
 	pr_debug("OPAL: Found %d interrupts reserved for OPAL using %s scheme\n",
 		 opal_irq_count, old_style ? "old" : "new");
 
 	/* Allocate an IRQ resources array */
-	opal_irqs = kcalloc(opal_irq_count, sizeof(struct resource), GFP_KERNEL);
-	if (WARN_ON(!opal_irqs)) {
+	opal_irqs = kसुस्मृति(opal_irq_count, माप(काष्ठा resource), GFP_KERNEL);
+	अगर (WARN_ON(!opal_irqs)) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Build the resources array */
-	if (old_style) {
+	अगर (old_style) अणु
 		/* Old style "opal-interrupts" property */
-		for (i = 0; i < opal_irq_count; i++) {
-			struct resource *r = &opal_irqs[i];
-			const char *name = NULL;
+		क्रम (i = 0; i < opal_irq_count; i++) अणु
+			काष्ठा resource *r = &opal_irqs[i];
+			स्थिर अक्षर *name = शून्य;
 			u32 hw_irq;
-			int virq;
+			पूर्णांक virq;
 
-			rc = of_property_read_u32_index(opal_node, "opal-interrupts",
+			rc = of_property_पढ़ो_u32_index(opal_node, "opal-interrupts",
 							i, &hw_irq);
-			if (WARN_ON(rc < 0)) {
+			अगर (WARN_ON(rc < 0)) अणु
 				opal_irq_count = i;
-				break;
-			}
-			of_property_read_string_index(opal_node, "opal-interrupts-names",
+				अवरोध;
+			पूर्ण
+			of_property_पढ़ो_string_index(opal_node, "opal-interrupts-names",
 						      i, &name);
-			virq = irq_create_mapping(NULL, hw_irq);
-			if (!virq) {
+			virq = irq_create_mapping(शून्य, hw_irq);
+			अगर (!virq) अणु
 				pr_warn("Failed to map OPAL irq 0x%x\n", hw_irq);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			r->start = r->end = virq;
 			r->flags = IORESOURCE_IRQ | IRQ_TYPE_LEVEL_LOW;
 			r->name = name;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* new style standard "interrupts" property */
 		rc = of_irq_to_resource_table(opal_node, opal_irqs, opal_irq_count);
-		if (WARN_ON(rc < 0)) {
+		अगर (WARN_ON(rc < 0)) अणु
 			opal_irq_count = 0;
-			kfree(opal_irqs);
-			goto out;
-		}
-		if (WARN_ON(rc < opal_irq_count))
+			kमुक्त(opal_irqs);
+			जाओ out;
+		पूर्ण
+		अगर (WARN_ON(rc < opal_irq_count))
 			opal_irq_count = rc;
-	}
+	पूर्ण
 
-	/* Install interrupt handlers */
-	for (i = 0; i < opal_irq_count; i++) {
-		struct resource *r = &opal_irqs[i];
-		const char *name;
+	/* Install पूर्णांकerrupt handlers */
+	क्रम (i = 0; i < opal_irq_count; i++) अणु
+		काष्ठा resource *r = &opal_irqs[i];
+		स्थिर अक्षर *name;
 
 		/* Prefix name */
-		if (r->name && strlen(r->name))
-			name = kasprintf(GFP_KERNEL, "opal-%s", r->name);
-		else
-			name = kasprintf(GFP_KERNEL, "opal");
+		अगर (r->name && म_माप(r->name))
+			name = kaप्र_लिखो(GFP_KERNEL, "opal-%s", r->name);
+		अन्यथा
+			name = kaप्र_लिखो(GFP_KERNEL, "opal");
 
-		/* Install interrupt handler */
-		rc = request_irq(r->start, opal_interrupt, r->flags & IRQD_TRIGGER_MASK,
-				 name, NULL);
-		if (rc) {
-			pr_warn("Error %d requesting OPAL irq %d\n", rc, (int)r->start);
-			continue;
-		}
-	}
+		/* Install पूर्णांकerrupt handler */
+		rc = request_irq(r->start, opal_पूर्णांकerrupt, r->flags & IRQD_TRIGGER_MASK,
+				 name, शून्य);
+		अगर (rc) अणु
+			pr_warn("Error %d requesting OPAL irq %d\n", rc, (पूर्णांक)r->start);
+			जारी;
+		पूर्ण
+	पूर्ण
 	rc = 0;
  out:
 	of_node_put(opal_node);
-	return rc;
-}
-machine_arch_initcall(powernv, opal_event_init);
+	वापस rc;
+पूर्ण
+machine_arch_initcall(घातernv, opal_event_init);
 
 /**
- * opal_event_request(unsigned int opal_event_nr) - Request an event
+ * opal_event_request(अचिन्हित पूर्णांक opal_event_nr) - Request an event
  * @opal_event_nr: the opal event number to request
  *
  * This routine can be used to find the linux virq number which can
- * then be passed to request_irq to assign a handler for a particular
- * opal event. This should only be used by legacy devices which don't
+ * then be passed to request_irq to assign a handler क्रम a particular
+ * opal event. This should only be used by legacy devices which करोn't
  * have proper device tree bindings. Most devices should use
  * irq_of_parse_and_map() instead.
  */
-int opal_event_request(unsigned int opal_event_nr)
-{
-	if (WARN_ON_ONCE(!opal_event_irqchip.domain))
-		return 0;
+पूर्णांक opal_event_request(अचिन्हित पूर्णांक opal_event_nr)
+अणु
+	अगर (WARN_ON_ONCE(!opal_event_irqchip.करोमुख्य))
+		वापस 0;
 
-	return irq_create_mapping(opal_event_irqchip.domain, opal_event_nr);
-}
+	वापस irq_create_mapping(opal_event_irqchip.करोमुख्य, opal_event_nr);
+पूर्ण
 EXPORT_SYMBOL(opal_event_request);

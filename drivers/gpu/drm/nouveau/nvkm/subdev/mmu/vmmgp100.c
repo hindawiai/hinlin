@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,152 +20,152 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "vmm.h"
+#समावेश "vmm.h"
 
-#include <core/client.h>
-#include <subdev/fb.h>
-#include <subdev/ltc.h>
-#include <subdev/timer.h>
-#include <engine/gr.h>
+#समावेश <core/client.h>
+#समावेश <subdev/fb.h>
+#समावेश <subdev/ltc.h>
+#समावेश <subdev/समयr.h>
+#समावेश <engine/gr.h>
 
-#include <nvif/ifc00d.h>
-#include <nvif/unpack.h>
+#समावेश <nvअगर/अगरc00d.h>
+#समावेश <nvअगर/unpack.h>
 
-static void
-gp100_vmm_pfn_unmap(struct nvkm_vmm *vmm,
-		    struct nvkm_mmu_pt *pt, u32 ptei, u32 ptes)
-{
-	struct device *dev = vmm->mmu->subdev.device->dev;
+अटल व्योम
+gp100_vmm_pfn_unmap(काष्ठा nvkm_vmm *vmm,
+		    काष्ठा nvkm_mmu_pt *pt, u32 ptei, u32 ptes)
+अणु
+	काष्ठा device *dev = vmm->mmu->subdev.device->dev;
 	dma_addr_t addr;
 
 	nvkm_kmap(pt->memory);
-	while (ptes--) {
+	जबतक (ptes--) अणु
 		u32 datalo = nvkm_ro32(pt->memory, pt->base + ptei * 8 + 0);
 		u32 datahi = nvkm_ro32(pt->memory, pt->base + ptei * 8 + 4);
 		u64 data   = (u64)datahi << 32 | datalo;
-		if ((data & (3ULL << 1)) != 0) {
+		अगर ((data & (3ULL << 1)) != 0) अणु
 			addr = (data >> 8) << 12;
-			dma_unmap_page(dev, addr, PAGE_SIZE, DMA_BIDIRECTIONAL);
-		}
+			dma_unmap_page(dev, addr, PAGE_SIZE, DMA_BIसूचीECTIONAL);
+		पूर्ण
 		ptei++;
-	}
-	nvkm_done(pt->memory);
-}
+	पूर्ण
+	nvkm_करोne(pt->memory);
+पूर्ण
 
-static bool
-gp100_vmm_pfn_clear(struct nvkm_vmm *vmm,
-		    struct nvkm_mmu_pt *pt, u32 ptei, u32 ptes)
-{
+अटल bool
+gp100_vmm_pfn_clear(काष्ठा nvkm_vmm *vmm,
+		    काष्ठा nvkm_mmu_pt *pt, u32 ptei, u32 ptes)
+अणु
 	bool dma = false;
 	nvkm_kmap(pt->memory);
-	while (ptes--) {
+	जबतक (ptes--) अणु
 		u32 datalo = nvkm_ro32(pt->memory, pt->base + ptei * 8 + 0);
 		u32 datahi = nvkm_ro32(pt->memory, pt->base + ptei * 8 + 4);
 		u64 data   = (u64)datahi << 32 | datalo;
-		if ((data & BIT_ULL(0)) && (data & (3ULL << 1)) != 0) {
+		अगर ((data & BIT_ULL(0)) && (data & (3ULL << 1)) != 0) अणु
 			VMM_WO064(pt, vmm, ptei * 8, data & ~BIT_ULL(0));
 			dma = true;
-		}
+		पूर्ण
 		ptei++;
-	}
-	nvkm_done(pt->memory);
-	return dma;
-}
+	पूर्ण
+	nvkm_करोne(pt->memory);
+	वापस dma;
+पूर्ण
 
-static void
-gp100_vmm_pgt_pfn(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
-		  u32 ptei, u32 ptes, struct nvkm_vmm_map *map)
-{
-	struct device *dev = vmm->mmu->subdev.device->dev;
+अटल व्योम
+gp100_vmm_pgt_pfn(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_mmu_pt *pt,
+		  u32 ptei, u32 ptes, काष्ठा nvkm_vmm_map *map)
+अणु
+	काष्ठा device *dev = vmm->mmu->subdev.device->dev;
 	dma_addr_t addr;
 
 	nvkm_kmap(pt->memory);
-	for (; ptes; ptes--, map->pfn++) {
+	क्रम (; ptes; ptes--, map->pfn++) अणु
 		u64 data = 0;
 
-		if (!(*map->pfn & NVKM_VMM_PFN_V))
-			continue;
+		अगर (!(*map->pfn & NVKM_VMM_PFN_V))
+			जारी;
 
-		if (!(*map->pfn & NVKM_VMM_PFN_W))
+		अगर (!(*map->pfn & NVKM_VMM_PFN_W))
 			data |= BIT_ULL(6); /* RO. */
 
-		if (!(*map->pfn & NVKM_VMM_PFN_VRAM)) {
+		अगर (!(*map->pfn & NVKM_VMM_PFN_VRAM)) अणु
 			addr = *map->pfn >> NVKM_VMM_PFN_ADDR_SHIFT;
 			addr = dma_map_page(dev, pfn_to_page(addr), 0,
-					    PAGE_SIZE, DMA_BIDIRECTIONAL);
-			if (!WARN_ON(dma_mapping_error(dev, addr))) {
+					    PAGE_SIZE, DMA_BIसूचीECTIONAL);
+			अगर (!WARN_ON(dma_mapping_error(dev, addr))) अणु
 				data |= addr >> 4;
 				data |= 2ULL << 1; /* SYSTEM_COHERENT_MEMORY. */
 				data |= BIT_ULL(3); /* VOL. */
 				data |= BIT_ULL(0); /* VALID. */
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			data |= (*map->pfn & NVKM_VMM_PFN_ADDR) >> 4;
 			data |= BIT_ULL(0); /* VALID. */
-		}
+		पूर्ण
 
 		VMM_WO064(pt, vmm, ptei++ * 8, data);
-	}
-	nvkm_done(pt->memory);
-}
+	पूर्ण
+	nvkm_करोne(pt->memory);
+पूर्ण
 
-static inline void
-gp100_vmm_pgt_pte(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
-		  u32 ptei, u32 ptes, struct nvkm_vmm_map *map, u64 addr)
-{
+अटल अंतरभूत व्योम
+gp100_vmm_pgt_pte(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_mmu_pt *pt,
+		  u32 ptei, u32 ptes, काष्ठा nvkm_vmm_map *map, u64 addr)
+अणु
 	u64 data = (addr >> 4) | map->type;
 
 	map->type += ptes * map->ctag;
 
-	while (ptes--) {
+	जबतक (ptes--) अणु
 		VMM_WO064(pt, vmm, ptei++ * 8, data);
 		data += map->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-gp100_vmm_pgt_sgl(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
-		  u32 ptei, u32 ptes, struct nvkm_vmm_map *map)
-{
+अटल व्योम
+gp100_vmm_pgt_sgl(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_mmu_pt *pt,
+		  u32 ptei, u32 ptes, काष्ठा nvkm_vmm_map *map)
+अणु
 	VMM_MAP_ITER_SGL(vmm, pt, ptei, ptes, map, gp100_vmm_pgt_pte);
-}
+पूर्ण
 
-static void
-gp100_vmm_pgt_dma(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
-		  u32 ptei, u32 ptes, struct nvkm_vmm_map *map)
-{
-	if (map->page->shift == PAGE_SHIFT) {
+अटल व्योम
+gp100_vmm_pgt_dma(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_mmu_pt *pt,
+		  u32 ptei, u32 ptes, काष्ठा nvkm_vmm_map *map)
+अणु
+	अगर (map->page->shअगरt == PAGE_SHIFT) अणु
 		VMM_SPAM(vmm, "DMAA %08x %08x PTE(s)", ptei, ptes);
 		nvkm_kmap(pt->memory);
-		while (ptes--) {
-			const u64 data = (*map->dma++ >> 4) | map->type;
+		जबतक (ptes--) अणु
+			स्थिर u64 data = (*map->dma++ >> 4) | map->type;
 			VMM_WO064(pt, vmm, ptei++ * 8, data);
 			map->type += map->ctag;
-		}
-		nvkm_done(pt->memory);
-		return;
-	}
+		पूर्ण
+		nvkm_करोne(pt->memory);
+		वापस;
+	पूर्ण
 
 	VMM_MAP_ITER_DMA(vmm, pt, ptei, ptes, map, gp100_vmm_pgt_pte);
-}
+पूर्ण
 
-static void
-gp100_vmm_pgt_mem(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
-		  u32 ptei, u32 ptes, struct nvkm_vmm_map *map)
-{
+अटल व्योम
+gp100_vmm_pgt_mem(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_mmu_pt *pt,
+		  u32 ptei, u32 ptes, काष्ठा nvkm_vmm_map *map)
+अणु
 	VMM_MAP_ITER_MEM(vmm, pt, ptei, ptes, map, gp100_vmm_pgt_pte);
-}
+पूर्ण
 
-static void
-gp100_vmm_pgt_sparse(struct nvkm_vmm *vmm,
-		     struct nvkm_mmu_pt *pt, u32 ptei, u32 ptes)
-{
+अटल व्योम
+gp100_vmm_pgt_sparse(काष्ठा nvkm_vmm *vmm,
+		     काष्ठा nvkm_mmu_pt *pt, u32 ptei, u32 ptes)
+अणु
 	/* VALID_FALSE + VOL tells the MMU to treat the PTE as sparse. */
 	VMM_FO064(pt, vmm, ptei * 8, BIT_ULL(3) /* VOL. */, ptes);
-}
+पूर्ण
 
-static const struct nvkm_vmm_desc_func
-gp100_vmm_desc_spt = {
+अटल स्थिर काष्ठा nvkm_vmm_desc_func
+gp100_vmm_desc_spt = अणु
 	.unmap = gf100_vmm_pgt_unmap,
 	.sparse = gp100_vmm_pgt_sparse,
 	.mem = gp100_vmm_pgt_mem,
@@ -173,177 +174,177 @@ gp100_vmm_desc_spt = {
 	.pfn = gp100_vmm_pgt_pfn,
 	.pfn_clear = gp100_vmm_pfn_clear,
 	.pfn_unmap = gp100_vmm_pfn_unmap,
-};
+पूर्ण;
 
-static void
-gp100_vmm_lpt_invalid(struct nvkm_vmm *vmm,
-		      struct nvkm_mmu_pt *pt, u32 ptei, u32 ptes)
-{
+अटल व्योम
+gp100_vmm_lpt_invalid(काष्ठा nvkm_vmm *vmm,
+		      काष्ठा nvkm_mmu_pt *pt, u32 ptei, u32 ptes)
+अणु
 	/* VALID_FALSE + PRIV tells the MMU to ignore corresponding SPTEs. */
 	VMM_FO064(pt, vmm, ptei * 8, BIT_ULL(5) /* PRIV. */, ptes);
-}
+पूर्ण
 
-static const struct nvkm_vmm_desc_func
-gp100_vmm_desc_lpt = {
+अटल स्थिर काष्ठा nvkm_vmm_desc_func
+gp100_vmm_desc_lpt = अणु
 	.invalid = gp100_vmm_lpt_invalid,
 	.unmap = gf100_vmm_pgt_unmap,
 	.sparse = gp100_vmm_pgt_sparse,
 	.mem = gp100_vmm_pgt_mem,
-};
+पूर्ण;
 
-static inline void
-gp100_vmm_pd0_pte(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
-		  u32 ptei, u32 ptes, struct nvkm_vmm_map *map, u64 addr)
-{
+अटल अंतरभूत व्योम
+gp100_vmm_pd0_pte(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_mmu_pt *pt,
+		  u32 ptei, u32 ptes, काष्ठा nvkm_vmm_map *map, u64 addr)
+अणु
 	u64 data = (addr >> 4) | map->type;
 
 	map->type += ptes * map->ctag;
 
-	while (ptes--) {
+	जबतक (ptes--) अणु
 		VMM_WO128(pt, vmm, ptei++ * 0x10, data, 0ULL);
 		data += map->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-gp100_vmm_pd0_mem(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
-		  u32 ptei, u32 ptes, struct nvkm_vmm_map *map)
-{
+अटल व्योम
+gp100_vmm_pd0_mem(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_mmu_pt *pt,
+		  u32 ptei, u32 ptes, काष्ठा nvkm_vmm_map *map)
+अणु
 	VMM_MAP_ITER_MEM(vmm, pt, ptei, ptes, map, gp100_vmm_pd0_pte);
-}
+पूर्ण
 
-static inline bool
-gp100_vmm_pde(struct nvkm_mmu_pt *pt, u64 *data)
-{
-	switch (nvkm_memory_target(pt->memory)) {
-	case NVKM_MEM_TARGET_VRAM: *data |= 1ULL << 1; break;
-	case NVKM_MEM_TARGET_HOST: *data |= 2ULL << 1;
+अटल अंतरभूत bool
+gp100_vmm_pde(काष्ठा nvkm_mmu_pt *pt, u64 *data)
+अणु
+	चयन (nvkm_memory_target(pt->memory)) अणु
+	हाल NVKM_MEM_TARGET_VRAM: *data |= 1ULL << 1; अवरोध;
+	हाल NVKM_MEM_TARGET_HOST: *data |= 2ULL << 1;
 		*data |= BIT_ULL(3); /* VOL. */
-		break;
-	case NVKM_MEM_TARGET_NCOH: *data |= 3ULL << 1; break;
-	default:
+		अवरोध;
+	हाल NVKM_MEM_TARGET_NCOH: *data |= 3ULL << 1; अवरोध;
+	शेष:
 		WARN_ON(1);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	*data |= pt->addr >> 4;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void
-gp100_vmm_pd0_pde(struct nvkm_vmm *vmm, struct nvkm_vmm_pt *pgd, u32 pdei)
-{
-	struct nvkm_vmm_pt *pgt = pgd->pde[pdei];
-	struct nvkm_mmu_pt *pd = pgd->pt[0];
-	u64 data[2] = {};
+अटल व्योम
+gp100_vmm_pd0_pde(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vmm_pt *pgd, u32 pdei)
+अणु
+	काष्ठा nvkm_vmm_pt *pgt = pgd->pde[pdei];
+	काष्ठा nvkm_mmu_pt *pd = pgd->pt[0];
+	u64 data[2] = अणुपूर्ण;
 
-	if (pgt->pt[0] && !gp100_vmm_pde(pgt->pt[0], &data[0]))
-		return;
-	if (pgt->pt[1] && !gp100_vmm_pde(pgt->pt[1], &data[1]))
-		return;
+	अगर (pgt->pt[0] && !gp100_vmm_pde(pgt->pt[0], &data[0]))
+		वापस;
+	अगर (pgt->pt[1] && !gp100_vmm_pde(pgt->pt[1], &data[1]))
+		वापस;
 
 	nvkm_kmap(pd->memory);
 	VMM_WO128(pd, vmm, pdei * 0x10, data[0], data[1]);
-	nvkm_done(pd->memory);
-}
+	nvkm_करोne(pd->memory);
+पूर्ण
 
-static void
-gp100_vmm_pd0_sparse(struct nvkm_vmm *vmm,
-		     struct nvkm_mmu_pt *pt, u32 pdei, u32 pdes)
-{
+अटल व्योम
+gp100_vmm_pd0_sparse(काष्ठा nvkm_vmm *vmm,
+		     काष्ठा nvkm_mmu_pt *pt, u32 pdei, u32 pdes)
+अणु
 	/* VALID_FALSE + VOL_BIG tells the MMU to treat the PDE as sparse. */
 	VMM_FO128(pt, vmm, pdei * 0x10, BIT_ULL(3) /* VOL_BIG. */, 0ULL, pdes);
-}
+पूर्ण
 
-static void
-gp100_vmm_pd0_unmap(struct nvkm_vmm *vmm,
-		    struct nvkm_mmu_pt *pt, u32 pdei, u32 pdes)
-{
+अटल व्योम
+gp100_vmm_pd0_unmap(काष्ठा nvkm_vmm *vmm,
+		    काष्ठा nvkm_mmu_pt *pt, u32 pdei, u32 pdes)
+अणु
 	VMM_FO128(pt, vmm, pdei * 0x10, 0ULL, 0ULL, pdes);
-}
+पूर्ण
 
-static void
-gp100_vmm_pd0_pfn_unmap(struct nvkm_vmm *vmm,
-			struct nvkm_mmu_pt *pt, u32 ptei, u32 ptes)
-{
-	struct device *dev = vmm->mmu->subdev.device->dev;
+अटल व्योम
+gp100_vmm_pd0_pfn_unmap(काष्ठा nvkm_vmm *vmm,
+			काष्ठा nvkm_mmu_pt *pt, u32 ptei, u32 ptes)
+अणु
+	काष्ठा device *dev = vmm->mmu->subdev.device->dev;
 	dma_addr_t addr;
 
 	nvkm_kmap(pt->memory);
-	while (ptes--) {
+	जबतक (ptes--) अणु
 		u32 datalo = nvkm_ro32(pt->memory, pt->base + ptei * 16 + 0);
 		u32 datahi = nvkm_ro32(pt->memory, pt->base + ptei * 16 + 4);
 		u64 data   = (u64)datahi << 32 | datalo;
 
-		if ((data & (3ULL << 1)) != 0) {
+		अगर ((data & (3ULL << 1)) != 0) अणु
 			addr = (data >> 8) << 12;
-			dma_unmap_page(dev, addr, 1UL << 21, DMA_BIDIRECTIONAL);
-		}
+			dma_unmap_page(dev, addr, 1UL << 21, DMA_BIसूचीECTIONAL);
+		पूर्ण
 		ptei++;
-	}
-	nvkm_done(pt->memory);
-}
+	पूर्ण
+	nvkm_करोne(pt->memory);
+पूर्ण
 
-static bool
-gp100_vmm_pd0_pfn_clear(struct nvkm_vmm *vmm,
-			struct nvkm_mmu_pt *pt, u32 ptei, u32 ptes)
-{
+अटल bool
+gp100_vmm_pd0_pfn_clear(काष्ठा nvkm_vmm *vmm,
+			काष्ठा nvkm_mmu_pt *pt, u32 ptei, u32 ptes)
+अणु
 	bool dma = false;
 
 	nvkm_kmap(pt->memory);
-	while (ptes--) {
+	जबतक (ptes--) अणु
 		u32 datalo = nvkm_ro32(pt->memory, pt->base + ptei * 16 + 0);
 		u32 datahi = nvkm_ro32(pt->memory, pt->base + ptei * 16 + 4);
 		u64 data   = (u64)datahi << 32 | datalo;
 
-		if ((data & BIT_ULL(0)) && (data & (3ULL << 1)) != 0) {
+		अगर ((data & BIT_ULL(0)) && (data & (3ULL << 1)) != 0) अणु
 			VMM_WO064(pt, vmm, ptei * 16, data & ~BIT_ULL(0));
 			dma = true;
-		}
+		पूर्ण
 		ptei++;
-	}
-	nvkm_done(pt->memory);
-	return dma;
-}
+	पूर्ण
+	nvkm_करोne(pt->memory);
+	वापस dma;
+पूर्ण
 
-static void
-gp100_vmm_pd0_pfn(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
-		  u32 ptei, u32 ptes, struct nvkm_vmm_map *map)
-{
-	struct device *dev = vmm->mmu->subdev.device->dev;
+अटल व्योम
+gp100_vmm_pd0_pfn(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_mmu_pt *pt,
+		  u32 ptei, u32 ptes, काष्ठा nvkm_vmm_map *map)
+अणु
+	काष्ठा device *dev = vmm->mmu->subdev.device->dev;
 	dma_addr_t addr;
 
 	nvkm_kmap(pt->memory);
-	for (; ptes; ptes--, map->pfn++) {
+	क्रम (; ptes; ptes--, map->pfn++) अणु
 		u64 data = 0;
 
-		if (!(*map->pfn & NVKM_VMM_PFN_V))
-			continue;
+		अगर (!(*map->pfn & NVKM_VMM_PFN_V))
+			जारी;
 
-		if (!(*map->pfn & NVKM_VMM_PFN_W))
+		अगर (!(*map->pfn & NVKM_VMM_PFN_W))
 			data |= BIT_ULL(6); /* RO. */
 
-		if (!(*map->pfn & NVKM_VMM_PFN_VRAM)) {
+		अगर (!(*map->pfn & NVKM_VMM_PFN_VRAM)) अणु
 			addr = *map->pfn >> NVKM_VMM_PFN_ADDR_SHIFT;
 			addr = dma_map_page(dev, pfn_to_page(addr), 0,
-					    1UL << 21, DMA_BIDIRECTIONAL);
-			if (!WARN_ON(dma_mapping_error(dev, addr))) {
+					    1UL << 21, DMA_BIसूचीECTIONAL);
+			अगर (!WARN_ON(dma_mapping_error(dev, addr))) अणु
 				data |= addr >> 4;
 				data |= 2ULL << 1; /* SYSTEM_COHERENT_MEMORY. */
 				data |= BIT_ULL(3); /* VOL. */
 				data |= BIT_ULL(0); /* VALID. */
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			data |= (*map->pfn & NVKM_VMM_PFN_ADDR) >> 4;
 			data |= BIT_ULL(0); /* VALID. */
-		}
+		पूर्ण
 
 		VMM_WO064(pt, vmm, ptei++ * 16, data);
-	}
-	nvkm_done(pt->memory);
-}
+	पूर्ण
+	nvkm_करोne(pt->memory);
+पूर्ण
 
-static const struct nvkm_vmm_desc_func
-gp100_vmm_desc_pd0 = {
+अटल स्थिर काष्ठा nvkm_vmm_desc_func
+gp100_vmm_desc_pd0 = अणु
 	.unmap = gp100_vmm_pd0_unmap,
 	.sparse = gp100_vmm_pd0_sparse,
 	.pde = gp100_vmm_pd0_pde,
@@ -351,119 +352,119 @@ gp100_vmm_desc_pd0 = {
 	.pfn = gp100_vmm_pd0_pfn,
 	.pfn_clear = gp100_vmm_pd0_pfn_clear,
 	.pfn_unmap = gp100_vmm_pd0_pfn_unmap,
-};
+पूर्ण;
 
-static void
-gp100_vmm_pd1_pde(struct nvkm_vmm *vmm, struct nvkm_vmm_pt *pgd, u32 pdei)
-{
-	struct nvkm_vmm_pt *pgt = pgd->pde[pdei];
-	struct nvkm_mmu_pt *pd = pgd->pt[0];
+अटल व्योम
+gp100_vmm_pd1_pde(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vmm_pt *pgd, u32 pdei)
+अणु
+	काष्ठा nvkm_vmm_pt *pgt = pgd->pde[pdei];
+	काष्ठा nvkm_mmu_pt *pd = pgd->pt[0];
 	u64 data = 0;
 
-	if (!gp100_vmm_pde(pgt->pt[0], &data))
-		return;
+	अगर (!gp100_vmm_pde(pgt->pt[0], &data))
+		वापस;
 
 	nvkm_kmap(pd->memory);
 	VMM_WO064(pd, vmm, pdei * 8, data);
-	nvkm_done(pd->memory);
-}
+	nvkm_करोne(pd->memory);
+पूर्ण
 
-static const struct nvkm_vmm_desc_func
-gp100_vmm_desc_pd1 = {
+अटल स्थिर काष्ठा nvkm_vmm_desc_func
+gp100_vmm_desc_pd1 = अणु
 	.unmap = gf100_vmm_pgt_unmap,
 	.sparse = gp100_vmm_pgt_sparse,
 	.pde = gp100_vmm_pd1_pde,
-};
+पूर्ण;
 
-const struct nvkm_vmm_desc
-gp100_vmm_desc_16[] = {
-	{ LPT, 5,  8, 0x0100, &gp100_vmm_desc_lpt },
-	{ PGD, 8, 16, 0x1000, &gp100_vmm_desc_pd0 },
-	{ PGD, 9,  8, 0x1000, &gp100_vmm_desc_pd1 },
-	{ PGD, 9,  8, 0x1000, &gp100_vmm_desc_pd1 },
-	{ PGD, 2,  8, 0x1000, &gp100_vmm_desc_pd1 },
-	{}
-};
+स्थिर काष्ठा nvkm_vmm_desc
+gp100_vmm_desc_16[] = अणु
+	अणु LPT, 5,  8, 0x0100, &gp100_vmm_desc_lpt पूर्ण,
+	अणु PGD, 8, 16, 0x1000, &gp100_vmm_desc_pd0 पूर्ण,
+	अणु PGD, 9,  8, 0x1000, &gp100_vmm_desc_pd1 पूर्ण,
+	अणु PGD, 9,  8, 0x1000, &gp100_vmm_desc_pd1 पूर्ण,
+	अणु PGD, 2,  8, 0x1000, &gp100_vmm_desc_pd1 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-const struct nvkm_vmm_desc
-gp100_vmm_desc_12[] = {
-	{ SPT, 9,  8, 0x1000, &gp100_vmm_desc_spt },
-	{ PGD, 8, 16, 0x1000, &gp100_vmm_desc_pd0 },
-	{ PGD, 9,  8, 0x1000, &gp100_vmm_desc_pd1 },
-	{ PGD, 9,  8, 0x1000, &gp100_vmm_desc_pd1 },
-	{ PGD, 2,  8, 0x1000, &gp100_vmm_desc_pd1 },
-	{}
-};
+स्थिर काष्ठा nvkm_vmm_desc
+gp100_vmm_desc_12[] = अणु
+	अणु SPT, 9,  8, 0x1000, &gp100_vmm_desc_spt पूर्ण,
+	अणु PGD, 8, 16, 0x1000, &gp100_vmm_desc_pd0 पूर्ण,
+	अणु PGD, 9,  8, 0x1000, &gp100_vmm_desc_pd1 पूर्ण,
+	अणु PGD, 9,  8, 0x1000, &gp100_vmm_desc_pd1 पूर्ण,
+	अणु PGD, 2,  8, 0x1000, &gp100_vmm_desc_pd1 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-int
-gp100_vmm_valid(struct nvkm_vmm *vmm, void *argv, u32 argc,
-		struct nvkm_vmm_map *map)
-{
-	const enum nvkm_memory_target target = nvkm_memory_target(map->memory);
-	const struct nvkm_vmm_page *page = map->page;
-	union {
-		struct gp100_vmm_map_vn vn;
-		struct gp100_vmm_map_v0 v0;
-	} *args = argv;
-	struct nvkm_device *device = vmm->mmu->subdev.device;
-	struct nvkm_memory *memory = map->memory;
+पूर्णांक
+gp100_vmm_valid(काष्ठा nvkm_vmm *vmm, व्योम *argv, u32 argc,
+		काष्ठा nvkm_vmm_map *map)
+अणु
+	स्थिर क्रमागत nvkm_memory_target target = nvkm_memory_target(map->memory);
+	स्थिर काष्ठा nvkm_vmm_page *page = map->page;
+	जोड़ अणु
+		काष्ठा gp100_vmm_map_vn vn;
+		काष्ठा gp100_vmm_map_v0 v0;
+	पूर्ण *args = argv;
+	काष्ठा nvkm_device *device = vmm->mmu->subdev.device;
+	काष्ठा nvkm_memory *memory = map->memory;
 	u8  kind, kind_inv, priv, ro, vol;
-	int kindn, aper, ret = -ENOSYS;
-	const u8 *kindm;
+	पूर्णांक kindn, aper, ret = -ENOSYS;
+	स्थिर u8 *kindm;
 
-	map->next = (1ULL << page->shift) >> 4;
+	map->next = (1ULL << page->shअगरt) >> 4;
 	map->type = 0;
 
-	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) {
+	अगर (!(ret = nvअगर_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) अणु
 		vol  = !!args->v0.vol;
 		ro   = !!args->v0.ro;
 		priv = !!args->v0.priv;
 		kind =   args->v0.kind;
-	} else
-	if (!(ret = nvif_unvers(ret, &argv, &argc, args->vn))) {
+	पूर्ण अन्यथा
+	अगर (!(ret = nvअगर_unvers(ret, &argv, &argc, args->vn))) अणु
 		vol  = target == NVKM_MEM_TARGET_HOST;
 		ro   = 0;
 		priv = 0;
 		kind = 0x00;
-	} else {
+	पूर्ण अन्यथा अणु
 		VMM_DEBUG(vmm, "args");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	aper = vmm->func->aper(target);
-	if (WARN_ON(aper < 0))
-		return aper;
+	अगर (WARN_ON(aper < 0))
+		वापस aper;
 
 	kindm = vmm->mmu->func->kind(vmm->mmu, &kindn, &kind_inv);
-	if (kind >= kindn || kindm[kind] == kind_inv) {
+	अगर (kind >= kindn || kindm[kind] == kind_inv) अणु
 		VMM_DEBUG(vmm, "kind %02x", kind);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (kindm[kind] != kind) {
+	अगर (kindm[kind] != kind) अणु
 		u64 tags = nvkm_memory_size(memory) >> 16;
-		if (aper != 0 || !(page->type & NVKM_VMM_PAGE_COMP)) {
+		अगर (aper != 0 || !(page->type & NVKM_VMM_PAGE_COMP)) अणु
 			VMM_DEBUG(vmm, "comp %d %02x", aper, page->type);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		ret = nvkm_memory_tags_get(memory, device, tags,
 					   nvkm_ltc_tags_clear,
 					   &map->tags);
-		if (ret) {
+		अगर (ret) अणु
 			VMM_DEBUG(vmm, "comp %d", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (map->tags->mn) {
+		अगर (map->tags->mn) अणु
 			tags = map->tags->mn->offset + (map->offset >> 16);
-			map->ctag |= ((1ULL << page->shift) >> 16) << 36;
+			map->ctag |= ((1ULL << page->shअगरt) >> 16) << 36;
 			map->type |= tags << 36;
 			map->next |= map->ctag;
-		} else {
+		पूर्ण अन्यथा अणु
 			kind = kindm[kind];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	map->type |= BIT(0);
 	map->type |= (u64)aper << 1;
@@ -471,107 +472,107 @@ gp100_vmm_valid(struct nvkm_vmm *vmm, void *argv, u32 argc,
 	map->type |= (u64)priv << 5;
 	map->type |= (u64)  ro << 6;
 	map->type |= (u64)kind << 56;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-gp100_vmm_fault_cancel(struct nvkm_vmm *vmm, void *argv, u32 argc)
-{
-	struct nvkm_device *device = vmm->mmu->subdev.device;
-	union {
-		struct gp100_vmm_fault_cancel_v0 v0;
-	} *args = argv;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+gp100_vmm_fault_cancel(काष्ठा nvkm_vmm *vmm, व्योम *argv, u32 argc)
+अणु
+	काष्ठा nvkm_device *device = vmm->mmu->subdev.device;
+	जोड़ अणु
+		काष्ठा gp100_vmm_fault_cancel_v0 v0;
+	पूर्ण *args = argv;
+	पूर्णांक ret = -ENOSYS;
 	u32 inst, aper;
 
-	if ((ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false)))
-		return ret;
+	अगर ((ret = nvअगर_unpack(ret, &argv, &argc, args->v0, 0, 0, false)))
+		वापस ret;
 
-	/* Translate MaxwellFaultBufferA instance pointer to the same
-	 * format as the NV_GR_FECS_CURRENT_CTX register.
+	/* Translate MaxwellFaultBufferA instance poपूर्णांकer to the same
+	 * क्रमmat as the NV_GR_FECS_CURRENT_CTX रेजिस्टर.
 	 */
 	aper = (args->v0.inst >> 8) & 3;
 	args->v0.inst >>= 12;
 	args->v0.inst |= aper << 28;
 	args->v0.inst |= 0x80000000;
 
-	if (!WARN_ON(nvkm_gr_ctxsw_pause(device))) {
-		if ((inst = nvkm_gr_ctxsw_inst(device)) == args->v0.inst) {
+	अगर (!WARN_ON(nvkm_gr_ctxsw_छोड़ो(device))) अणु
+		अगर ((inst = nvkm_gr_ctxsw_inst(device)) == args->v0.inst) अणु
 			gf100_vmm_invalidate(vmm, 0x0000001b
 					     /* CANCEL_TARGETED. */ |
 					     (args->v0.hub    << 20) |
 					     (args->v0.gpc    << 15) |
 					     (args->v0.client << 9));
-		}
+		पूर्ण
 		WARN_ON(nvkm_gr_ctxsw_resume(device));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-gp100_vmm_fault_replay(struct nvkm_vmm *vmm, void *argv, u32 argc)
-{
-	union {
-		struct gp100_vmm_fault_replay_vn vn;
-	} *args = argv;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+gp100_vmm_fault_replay(काष्ठा nvkm_vmm *vmm, व्योम *argv, u32 argc)
+अणु
+	जोड़ अणु
+		काष्ठा gp100_vmm_fault_replay_vn vn;
+	पूर्ण *args = argv;
+	पूर्णांक ret = -ENOSYS;
 
-	if (!(ret = nvif_unvers(ret, &argv, &argc, args->vn))) {
+	अगर (!(ret = nvअगर_unvers(ret, &argv, &argc, args->vn))) अणु
 		gf100_vmm_invalidate(vmm, 0x0000000b); /* REPLAY_GLOBAL. */
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-gp100_vmm_mthd(struct nvkm_vmm *vmm,
-	       struct nvkm_client *client, u32 mthd, void *argv, u32 argc)
-{
-	if (client->super) {
-		switch (mthd) {
-		case GP100_VMM_VN_FAULT_REPLAY:
-			return gp100_vmm_fault_replay(vmm, argv, argc);
-		case GP100_VMM_VN_FAULT_CANCEL:
-			return gp100_vmm_fault_cancel(vmm, argv, argc);
-		default:
-			break;
-		}
-	}
-	return -EINVAL;
-}
+पूर्णांक
+gp100_vmm_mthd(काष्ठा nvkm_vmm *vmm,
+	       काष्ठा nvkm_client *client, u32 mthd, व्योम *argv, u32 argc)
+अणु
+	अगर (client->super) अणु
+		चयन (mthd) अणु
+		हाल GP100_VMM_VN_FAULT_REPLAY:
+			वापस gp100_vmm_fault_replay(vmm, argv, argc);
+		हाल GP100_VMM_VN_FAULT_CANCEL:
+			वापस gp100_vmm_fault_cancel(vmm, argv, argc);
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-void
-gp100_vmm_invalidate_pdb(struct nvkm_vmm *vmm, u64 addr)
-{
-	struct nvkm_device *device = vmm->mmu->subdev.device;
+व्योम
+gp100_vmm_invalidate_pdb(काष्ठा nvkm_vmm *vmm, u64 addr)
+अणु
+	काष्ठा nvkm_device *device = vmm->mmu->subdev.device;
 	nvkm_wr32(device, 0x100cb8, lower_32_bits(addr));
 	nvkm_wr32(device, 0x100cec, upper_32_bits(addr));
-}
+पूर्ण
 
-void
-gp100_vmm_flush(struct nvkm_vmm *vmm, int depth)
-{
+व्योम
+gp100_vmm_flush(काष्ठा nvkm_vmm *vmm, पूर्णांक depth)
+अणु
 	u32 type = (5 /* CACHE_LEVEL_UP_TO_PDE3 */ - depth) << 24;
-	if (atomic_read(&vmm->engref[NVKM_SUBDEV_BAR]))
+	अगर (atomic_पढ़ो(&vmm->engref[NVKM_SUBDEV_BAR]))
 		type |= 0x00000004; /* HUB_ONLY */
 	type |= 0x00000001; /* PAGE_ALL */
 	gf100_vmm_invalidate(vmm, type);
-}
+पूर्ण
 
-int
-gp100_vmm_join(struct nvkm_vmm *vmm, struct nvkm_memory *inst)
-{
+पूर्णांक
+gp100_vmm_join(काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_memory *inst)
+अणु
 	u64 base = BIT_ULL(10) /* VER2 */ | BIT_ULL(11) /* 64KiB */;
-	if (vmm->replay) {
+	अगर (vmm->replay) अणु
 		base |= BIT_ULL(4); /* FAULT_REPLAY_TEX */
 		base |= BIT_ULL(5); /* FAULT_REPLAY_GCC */
-	}
-	return gf100_vmm_join_(vmm, inst, base);
-}
+	पूर्ण
+	वापस gf100_vmm_join_(vmm, inst, base);
+पूर्ण
 
-static const struct nvkm_vmm_func
-gp100_vmm = {
+अटल स्थिर काष्ठा nvkm_vmm_func
+gp100_vmm = अणु
 	.join = gp100_vmm_join,
 	.part = gf100_vmm_part,
 	.aper = gf100_vmm_aper,
@@ -579,51 +580,51 @@ gp100_vmm = {
 	.flush = gp100_vmm_flush,
 	.mthd = gp100_vmm_mthd,
 	.invalidate_pdb = gp100_vmm_invalidate_pdb,
-	.page = {
-		{ 47, &gp100_vmm_desc_16[4], NVKM_VMM_PAGE_Sxxx },
-		{ 38, &gp100_vmm_desc_16[3], NVKM_VMM_PAGE_Sxxx },
-		{ 29, &gp100_vmm_desc_16[2], NVKM_VMM_PAGE_Sxxx },
-		{ 21, &gp100_vmm_desc_16[1], NVKM_VMM_PAGE_SVxC },
-		{ 16, &gp100_vmm_desc_16[0], NVKM_VMM_PAGE_SVxC },
-		{ 12, &gp100_vmm_desc_12[0], NVKM_VMM_PAGE_SVHx },
-		{}
-	}
-};
+	.page = अणु
+		अणु 47, &gp100_vmm_desc_16[4], NVKM_VMM_PAGE_Sxxx पूर्ण,
+		अणु 38, &gp100_vmm_desc_16[3], NVKM_VMM_PAGE_Sxxx पूर्ण,
+		अणु 29, &gp100_vmm_desc_16[2], NVKM_VMM_PAGE_Sxxx पूर्ण,
+		अणु 21, &gp100_vmm_desc_16[1], NVKM_VMM_PAGE_SVxC पूर्ण,
+		अणु 16, &gp100_vmm_desc_16[0], NVKM_VMM_PAGE_SVxC पूर्ण,
+		अणु 12, &gp100_vmm_desc_12[0], NVKM_VMM_PAGE_SVHx पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-int
-gp100_vmm_new_(const struct nvkm_vmm_func *func,
-	       struct nvkm_mmu *mmu, bool managed, u64 addr, u64 size,
-	       void *argv, u32 argc, struct lock_class_key *key,
-	       const char *name, struct nvkm_vmm **pvmm)
-{
-	union {
-		struct gp100_vmm_vn vn;
-		struct gp100_vmm_v0 v0;
-	} *args = argv;
-	int ret = -ENOSYS;
+पूर्णांक
+gp100_vmm_new_(स्थिर काष्ठा nvkm_vmm_func *func,
+	       काष्ठा nvkm_mmu *mmu, bool managed, u64 addr, u64 size,
+	       व्योम *argv, u32 argc, काष्ठा lock_class_key *key,
+	       स्थिर अक्षर *name, काष्ठा nvkm_vmm **pvmm)
+अणु
+	जोड़ अणु
+		काष्ठा gp100_vmm_vn vn;
+		काष्ठा gp100_vmm_v0 v0;
+	पूर्ण *args = argv;
+	पूर्णांक ret = -ENOSYS;
 	bool replay;
 
-	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) {
+	अगर (!(ret = nvअगर_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) अणु
 		replay = args->v0.fault_replay != 0;
-	} else
-	if (!(ret = nvif_unvers(ret, &argv, &argc, args->vn))) {
+	पूर्ण अन्यथा
+	अगर (!(ret = nvअगर_unvers(ret, &argv, &argc, args->vn))) अणु
 		replay = false;
-	} else
-		return ret;
+	पूर्ण अन्यथा
+		वापस ret;
 
 	ret = nvkm_vmm_new_(func, mmu, 0, managed, addr, size, key, name, pvmm);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	(*pvmm)->replay = replay;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-gp100_vmm_new(struct nvkm_mmu *mmu, bool managed, u64 addr, u64 size,
-	      void *argv, u32 argc, struct lock_class_key *key,
-	      const char *name, struct nvkm_vmm **pvmm)
-{
-	return gp100_vmm_new_(&gp100_vmm, mmu, managed, addr, size,
+पूर्णांक
+gp100_vmm_new(काष्ठा nvkm_mmu *mmu, bool managed, u64 addr, u64 size,
+	      व्योम *argv, u32 argc, काष्ठा lock_class_key *key,
+	      स्थिर अक्षर *name, काष्ठा nvkm_vmm **pvmm)
+अणु
+	वापस gp100_vmm_new_(&gp100_vmm, mmu, managed, addr, size,
 			      argv, argc, key, name, pvmm);
-}
+पूर्ण

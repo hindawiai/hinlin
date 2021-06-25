@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_CRC_T10DIF_H
-#define _LINUX_CRC_T10DIF_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_CRC_T10DIF_H
+#घोषणा _LINUX_CRC_T10DIF_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define CRC_T10DIF_DIGEST_SIZE 2
-#define CRC_T10DIF_BLOCK_SIZE 1
-#define CRC_T10DIF_STRING "crct10dif"
+#घोषणा CRC_T10DIF_DIGEST_SIZE 2
+#घोषणा CRC_T10DIF_BLOCK_SIZE 1
+#घोषणा CRC_T10DIF_STRING "crct10dif"
 
-extern __u16 crc_t10dif_generic(__u16 crc, const unsigned char *buffer,
-				size_t len);
-extern __u16 crc_t10dif(unsigned char const *, size_t);
-extern __u16 crc_t10dif_update(__u16 crc, unsigned char const *, size_t);
+बाह्य __u16 crc_t10dअगर_generic(__u16 crc, स्थिर अचिन्हित अक्षर *buffer,
+				माप_प्रकार len);
+बाह्य __u16 crc_t10dअगर(अचिन्हित अक्षर स्थिर *, माप_प्रकार);
+बाह्य __u16 crc_t10dअगर_update(__u16 crc, अचिन्हित अक्षर स्थिर *, माप_प्रकार);
 
-#endif
+#पूर्ण_अगर

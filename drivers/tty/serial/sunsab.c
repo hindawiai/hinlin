@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0
-/* sunsab.c: ASYNC Driver for the SIEMENS SAB82532 DUSCC.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* sunsab.c: ASYNC Driver क्रम the SIEMENS SAB82532 DUSCC.
  *
  * Copyright (C) 1997  Eddie C. Dost  (ecd@skynet.be)
  * Copyright (C) 2002, 2006  David S. Miller (davem@davemloft.net)
@@ -7,718 +8,718 @@
  * Rewrote buffer handling to use CIRC(Circular Buffer) macros.
  *   Maxim Krasnyanskiy <maxk@qualcomm.com>
  *
- * Fixed to use tty_get_baud_rate, and to allow for arbitrary baud
- * rates to be programmed into the UART.  Also eliminated a lot of
+ * Fixed to use tty_get_baud_rate, and to allow क्रम arbitrary baud
+ * rates to be programmed पूर्णांकo the UART.  Also eliminated a lot of
  * duplicated code in the console setup.
- *   Theodore Ts'o <tytso@mit.edu>, 2001-Oct-12
+ *   Theoकरोre Ts'o <tytso@mit.edu>, 2001-Oct-12
  *
  * Ported to new 2.5.x UART layer.
  *   David S. Miller <davem@davemloft.net>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/major.h>
-#include <linux/string.h>
-#include <linux/ptrace.h>
-#include <linux/ioport.h>
-#include <linux/circ_buf.h>
-#include <linux/serial.h>
-#include <linux/sysrq.h>
-#include <linux/console.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/of_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/major.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/circ_buf.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/console.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of_device.h>
 
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/prom.h>
-#include <asm/setup.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/setup.h>
 
-#include <linux/serial_core.h>
-#include <linux/sunserialcore.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/sunserialcore.h>
 
-#include "sunsab.h"
+#समावेश "sunsab.h"
 
-struct uart_sunsab_port {
-	struct uart_port		port;		/* Generic UART port	*/
-	union sab82532_async_regs	__iomem *regs;	/* Chip registers	*/
-	unsigned long			irqflags;	/* IRQ state flags	*/
-	int				dsr;		/* Current DSR state	*/
-	unsigned int			cec_timeout;	/* Chip poll timeout... */
-	unsigned int			tec_timeout;	/* likewise		*/
-	unsigned char			interrupt_mask0;/* ISR0 masking		*/
-	unsigned char			interrupt_mask1;/* ISR1 masking		*/
-	unsigned char			pvr_dtr_bit;	/* Which PVR bit is DTR */
-	unsigned char			pvr_dsr_bit;	/* Which PVR bit is DSR */
-	unsigned int			gis_shift;
-	int				type;		/* SAB82532 version	*/
+काष्ठा uart_sunsab_port अणु
+	काष्ठा uart_port		port;		/* Generic UART port	*/
+	जोड़ sab82532_async_regs	__iomem *regs;	/* Chip रेजिस्टरs	*/
+	अचिन्हित दीर्घ			irqflags;	/* IRQ state flags	*/
+	पूर्णांक				dsr;		/* Current DSR state	*/
+	अचिन्हित पूर्णांक			cec_समयout;	/* Chip poll समयout... */
+	अचिन्हित पूर्णांक			tec_समयout;	/* likewise		*/
+	अचिन्हित अक्षर			पूर्णांकerrupt_mask0;/* ISR0 masking		*/
+	अचिन्हित अक्षर			पूर्णांकerrupt_mask1;/* ISR1 masking		*/
+	अचिन्हित अक्षर			pvr_dtr_bit;	/* Which PVR bit is DTR */
+	अचिन्हित अक्षर			pvr_dsr_bit;	/* Which PVR bit is DSR */
+	अचिन्हित पूर्णांक			gis_shअगरt;
+	पूर्णांक				type;		/* SAB82532 version	*/
 
-	/* Setting configuration bits while the transmitter is active
-	 * can cause garbage characters to get emitted by the chip.
-	 * Therefore, we cache such writes here and do the real register
-	 * write the next time the transmitter becomes idle.
+	/* Setting configuration bits जबतक the transmitter is active
+	 * can cause garbage अक्षरacters to get emitted by the chip.
+	 * Thereक्रमe, we cache such ग_लिखोs here and करो the real रेजिस्टर
+	 * ग_लिखो the next समय the transmitter becomes idle.
 	 */
-	unsigned int			cached_ebrg;
-	unsigned char			cached_mode;
-	unsigned char			cached_pvr;
-	unsigned char			cached_dafo;
-};
+	अचिन्हित पूर्णांक			cached_ebrg;
+	अचिन्हित अक्षर			cached_mode;
+	अचिन्हित अक्षर			cached_pvr;
+	अचिन्हित अक्षर			cached_dafo;
+पूर्ण;
 
 /*
- * This assumes you have a 29.4912 MHz clock for your UART.
+ * This assumes you have a 29.4912 MHz घड़ी क्रम your UART.
  */
-#define SAB_BASE_BAUD ( 29491200 / 16 )
+#घोषणा SAB_BASE_BAUD ( 29491200 / 16 )
 
-static char *sab82532_version[16] = {
+अटल अक्षर *sab82532_version[16] = अणु
 	"V1.0", "V2.0", "V3.2", "V(0x03)",
 	"V(0x04)", "V(0x05)", "V(0x06)", "V(0x07)",
 	"V(0x08)", "V(0x09)", "V(0x0a)", "V(0x0b)",
 	"V(0x0c)", "V(0x0d)", "V(0x0e)", "V(0x0f)"
-};
+पूर्ण;
 
-#define SAB82532_MAX_TEC_TIMEOUT 200000	/* 1 character time (at 50 baud) */
-#define SAB82532_MAX_CEC_TIMEOUT  50000	/* 2.5 TX CLKs (at 50 baud) */
+#घोषणा SAB82532_MAX_TEC_TIMEOUT 200000	/* 1 अक्षरacter समय (at 50 baud) */
+#घोषणा SAB82532_MAX_CEC_TIMEOUT  50000	/* 2.5 TX CLKs (at 50 baud) */
 
-#define SAB82532_RECV_FIFO_SIZE	32      /* Standard async fifo sizes */
-#define SAB82532_XMIT_FIFO_SIZE	32
+#घोषणा SAB82532_RECV_FIFO_SIZE	32      /* Standard async fअगरo sizes */
+#घोषणा SAB82532_XMIT_FIFO_SIZE	32
 
-static __inline__ void sunsab_tec_wait(struct uart_sunsab_port *up)
-{
-	int timeout = up->tec_timeout;
+अटल __अंतरभूत__ व्योम sunsab_tec_रुको(काष्ठा uart_sunsab_port *up)
+अणु
+	पूर्णांक समयout = up->tec_समयout;
 
-	while ((readb(&up->regs->r.star) & SAB82532_STAR_TEC) && --timeout)
+	जबतक ((पढ़ोb(&up->regs->r.star) & SAB82532_STAR_TEC) && --समयout)
 		udelay(1);
-}
+पूर्ण
 
-static __inline__ void sunsab_cec_wait(struct uart_sunsab_port *up)
-{
-	int timeout = up->cec_timeout;
+अटल __अंतरभूत__ व्योम sunsab_cec_रुको(काष्ठा uart_sunsab_port *up)
+अणु
+	पूर्णांक समयout = up->cec_समयout;
 
-	while ((readb(&up->regs->r.star) & SAB82532_STAR_CEC) && --timeout)
+	जबतक ((पढ़ोb(&up->regs->r.star) & SAB82532_STAR_CEC) && --समयout)
 		udelay(1);
-}
+पूर्ण
 
-static struct tty_port *
-receive_chars(struct uart_sunsab_port *up,
-	      union sab82532_irq_status *stat)
-{
-	struct tty_port *port = NULL;
-	unsigned char buf[32];
-	int saw_console_brk = 0;
-	int free_fifo = 0;
-	int count = 0;
-	int i;
+अटल काष्ठा tty_port *
+receive_अक्षरs(काष्ठा uart_sunsab_port *up,
+	      जोड़ sab82532_irq_status *stat)
+अणु
+	काष्ठा tty_port *port = शून्य;
+	अचिन्हित अक्षर buf[32];
+	पूर्णांक saw_console_brk = 0;
+	पूर्णांक मुक्त_fअगरo = 0;
+	पूर्णांक count = 0;
+	पूर्णांक i;
 
-	if (up->port.state != NULL)		/* Unopened serial console */
+	अगर (up->port.state != शून्य)		/* Unखोलोed serial console */
 		port = &up->port.state->port;
 
 	/* Read number of BYTES (Character + Status) available. */
-	if (stat->sreg.isr0 & SAB82532_ISR0_RPF) {
+	अगर (stat->sreg.isr0 & SAB82532_ISR0_RPF) अणु
 		count = SAB82532_RECV_FIFO_SIZE;
-		free_fifo++;
-	}
+		मुक्त_fअगरo++;
+	पूर्ण
 
-	if (stat->sreg.isr0 & SAB82532_ISR0_TCD) {
-		count = readb(&up->regs->r.rbcl) & (SAB82532_RECV_FIFO_SIZE - 1);
-		free_fifo++;
-	}
+	अगर (stat->sreg.isr0 & SAB82532_ISR0_TCD) अणु
+		count = पढ़ोb(&up->regs->r.rbcl) & (SAB82532_RECV_FIFO_SIZE - 1);
+		मुक्त_fअगरo++;
+	पूर्ण
 
-	/* Issue a FIFO read command in case we where idle. */
-	if (stat->sreg.isr0 & SAB82532_ISR0_TIME) {
-		sunsab_cec_wait(up);
-		writeb(SAB82532_CMDR_RFRD, &up->regs->w.cmdr);
-		return port;
-	}
+	/* Issue a FIFO पढ़ो command in हाल we where idle. */
+	अगर (stat->sreg.isr0 & SAB82532_ISR0_TIME) अणु
+		sunsab_cec_रुको(up);
+		ग_लिखोb(SAB82532_CMDR_RFRD, &up->regs->w.cmdr);
+		वापस port;
+	पूर्ण
 
-	if (stat->sreg.isr0 & SAB82532_ISR0_RFO)
-		free_fifo++;
+	अगर (stat->sreg.isr0 & SAB82532_ISR0_RFO)
+		मुक्त_fअगरo++;
 
 	/* Read the FIFO. */
-	for (i = 0; i < count; i++)
-		buf[i] = readb(&up->regs->r.rfifo[i]);
+	क्रम (i = 0; i < count; i++)
+		buf[i] = पढ़ोb(&up->regs->r.rfअगरo[i]);
 
 	/* Issue Receive Message Complete command. */
-	if (free_fifo) {
-		sunsab_cec_wait(up);
-		writeb(SAB82532_CMDR_RMC, &up->regs->w.cmdr);
-	}
+	अगर (मुक्त_fअगरo) अणु
+		sunsab_cec_रुको(up);
+		ग_लिखोb(SAB82532_CMDR_RMC, &up->regs->w.cmdr);
+	पूर्ण
 
-	/* Count may be zero for BRK, so we check for it here */
-	if ((stat->sreg.isr1 & SAB82532_ISR1_BRK) &&
+	/* Count may be zero क्रम BRK, so we check क्रम it here */
+	अगर ((stat->sreg.isr1 & SAB82532_ISR1_BRK) &&
 	    (up->port.line == up->port.cons->index))
 		saw_console_brk = 1;
 
-	if (count == 0) {
-		if (unlikely(stat->sreg.isr1 & SAB82532_ISR1_BRK)) {
+	अगर (count == 0) अणु
+		अगर (unlikely(stat->sreg.isr1 & SAB82532_ISR1_BRK)) अणु
 			stat->sreg.isr0 &= ~(SAB82532_ISR0_PERR |
 					     SAB82532_ISR0_FERR);
 			up->port.icount.brk++;
-			uart_handle_break(&up->port);
-		}
-	}
+			uart_handle_अवरोध(&up->port);
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < count; i++) {
-		unsigned char ch = buf[i], flag;
+	क्रम (i = 0; i < count; i++) अणु
+		अचिन्हित अक्षर ch = buf[i], flag;
 
 		flag = TTY_NORMAL;
 		up->port.icount.rx++;
 
-		if (unlikely(stat->sreg.isr0 & (SAB82532_ISR0_PERR |
+		अगर (unlikely(stat->sreg.isr0 & (SAB82532_ISR0_PERR |
 						SAB82532_ISR0_FERR |
 						SAB82532_ISR0_RFO)) ||
-		    unlikely(stat->sreg.isr1 & SAB82532_ISR1_BRK)) {
+		    unlikely(stat->sreg.isr1 & SAB82532_ISR1_BRK)) अणु
 			/*
 			 * For statistics only
 			 */
-			if (stat->sreg.isr1 & SAB82532_ISR1_BRK) {
+			अगर (stat->sreg.isr1 & SAB82532_ISR1_BRK) अणु
 				stat->sreg.isr0 &= ~(SAB82532_ISR0_PERR |
 						     SAB82532_ISR0_FERR);
 				up->port.icount.brk++;
 				/*
-				 * We do the SysRQ and SAK checking
-				 * here because otherwise the break
+				 * We करो the SysRQ and SAK checking
+				 * here because otherwise the अवरोध
 				 * may get masked by ignore_status_mask
-				 * or read_status_mask.
+				 * or पढ़ो_status_mask.
 				 */
-				if (uart_handle_break(&up->port))
-					continue;
-			} else if (stat->sreg.isr0 & SAB82532_ISR0_PERR)
+				अगर (uart_handle_अवरोध(&up->port))
+					जारी;
+			पूर्ण अन्यथा अगर (stat->sreg.isr0 & SAB82532_ISR0_PERR)
 				up->port.icount.parity++;
-			else if (stat->sreg.isr0 & SAB82532_ISR0_FERR)
+			अन्यथा अगर (stat->sreg.isr0 & SAB82532_ISR0_FERR)
 				up->port.icount.frame++;
-			if (stat->sreg.isr0 & SAB82532_ISR0_RFO)
+			अगर (stat->sreg.isr0 & SAB82532_ISR0_RFO)
 				up->port.icount.overrun++;
 
 			/*
 			 * Mask off conditions which should be ingored.
 			 */
-			stat->sreg.isr0 &= (up->port.read_status_mask & 0xff);
-			stat->sreg.isr1 &= ((up->port.read_status_mask >> 8) & 0xff);
+			stat->sreg.isr0 &= (up->port.पढ़ो_status_mask & 0xff);
+			stat->sreg.isr1 &= ((up->port.पढ़ो_status_mask >> 8) & 0xff);
 
-			if (stat->sreg.isr1 & SAB82532_ISR1_BRK) {
+			अगर (stat->sreg.isr1 & SAB82532_ISR1_BRK) अणु
 				flag = TTY_BREAK;
-			} else if (stat->sreg.isr0 & SAB82532_ISR0_PERR)
+			पूर्ण अन्यथा अगर (stat->sreg.isr0 & SAB82532_ISR0_PERR)
 				flag = TTY_PARITY;
-			else if (stat->sreg.isr0 & SAB82532_ISR0_FERR)
+			अन्यथा अगर (stat->sreg.isr0 & SAB82532_ISR0_FERR)
 				flag = TTY_FRAME;
-		}
+		पूर्ण
 
-		if (uart_handle_sysrq_char(&up->port, ch) || !port)
-			continue;
+		अगर (uart_handle_sysrq_अक्षर(&up->port, ch) || !port)
+			जारी;
 
-		if ((stat->sreg.isr0 & (up->port.ignore_status_mask & 0xff)) == 0 &&
+		अगर ((stat->sreg.isr0 & (up->port.ignore_status_mask & 0xff)) == 0 &&
 		    (stat->sreg.isr1 & ((up->port.ignore_status_mask >> 8) & 0xff)) == 0)
-			tty_insert_flip_char(port, ch, flag);
-		if (stat->sreg.isr0 & SAB82532_ISR0_RFO)
-			tty_insert_flip_char(port, 0, TTY_OVERRUN);
-	}
+			tty_insert_flip_अक्षर(port, ch, flag);
+		अगर (stat->sreg.isr0 & SAB82532_ISR0_RFO)
+			tty_insert_flip_अक्षर(port, 0, TTY_OVERRUN);
+	पूर्ण
 
-	if (saw_console_brk)
-		sun_do_break();
+	अगर (saw_console_brk)
+		sun_करो_अवरोध();
 
-	return port;
-}
+	वापस port;
+पूर्ण
 
-static void sunsab_stop_tx(struct uart_port *);
-static void sunsab_tx_idle(struct uart_sunsab_port *);
+अटल व्योम sunsab_stop_tx(काष्ठा uart_port *);
+अटल व्योम sunsab_tx_idle(काष्ठा uart_sunsab_port *);
 
-static void transmit_chars(struct uart_sunsab_port *up,
-			   union sab82532_irq_status *stat)
-{
-	struct circ_buf *xmit = &up->port.state->xmit;
-	int i;
+अटल व्योम transmit_अक्षरs(काष्ठा uart_sunsab_port *up,
+			   जोड़ sab82532_irq_status *stat)
+अणु
+	काष्ठा circ_buf *xmit = &up->port.state->xmit;
+	पूर्णांक i;
 
-	if (stat->sreg.isr1 & SAB82532_ISR1_ALLS) {
-		up->interrupt_mask1 |= SAB82532_IMR1_ALLS;
-		writeb(up->interrupt_mask1, &up->regs->w.imr1);
+	अगर (stat->sreg.isr1 & SAB82532_ISR1_ALLS) अणु
+		up->पूर्णांकerrupt_mask1 |= SAB82532_IMR1_ALLS;
+		ग_लिखोb(up->पूर्णांकerrupt_mask1, &up->regs->w.imr1);
 		set_bit(SAB82532_ALLS, &up->irqflags);
-	}
+	पूर्ण
 
-#if 0 /* bde@nwlink.com says this check causes problems */
-	if (!(stat->sreg.isr1 & SAB82532_ISR1_XPR))
-		return;
-#endif
+#अगर 0 /* bde@nwlink.com says this check causes problems */
+	अगर (!(stat->sreg.isr1 & SAB82532_ISR1_XPR))
+		वापस;
+#पूर्ण_अगर
 
-	if (!(readb(&up->regs->r.star) & SAB82532_STAR_XFW))
-		return;
+	अगर (!(पढ़ोb(&up->regs->r.star) & SAB82532_STAR_XFW))
+		वापस;
 
 	set_bit(SAB82532_XPR, &up->irqflags);
 	sunsab_tx_idle(up);
 
-	if (uart_circ_empty(xmit) || uart_tx_stopped(&up->port)) {
-		up->interrupt_mask1 |= SAB82532_IMR1_XPR;
-		writeb(up->interrupt_mask1, &up->regs->w.imr1);
-		return;
-	}
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(&up->port)) अणु
+		up->पूर्णांकerrupt_mask1 |= SAB82532_IMR1_XPR;
+		ग_लिखोb(up->पूर्णांकerrupt_mask1, &up->regs->w.imr1);
+		वापस;
+	पूर्ण
 
-	up->interrupt_mask1 &= ~(SAB82532_IMR1_ALLS|SAB82532_IMR1_XPR);
-	writeb(up->interrupt_mask1, &up->regs->w.imr1);
+	up->पूर्णांकerrupt_mask1 &= ~(SAB82532_IMR1_ALLS|SAB82532_IMR1_XPR);
+	ग_लिखोb(up->पूर्णांकerrupt_mask1, &up->regs->w.imr1);
 	clear_bit(SAB82532_ALLS, &up->irqflags);
 
-	/* Stuff 32 bytes into Transmit FIFO. */
+	/* Stuff 32 bytes पूर्णांकo Transmit FIFO. */
 	clear_bit(SAB82532_XPR, &up->irqflags);
-	for (i = 0; i < up->port.fifosize; i++) {
-		writeb(xmit->buf[xmit->tail],
-		       &up->regs->w.xfifo[i]);
+	क्रम (i = 0; i < up->port.fअगरosize; i++) अणु
+		ग_लिखोb(xmit->buf[xmit->tail],
+		       &up->regs->w.xfअगरo[i]);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		up->port.icount.tx++;
-		if (uart_circ_empty(xmit))
-			break;
-	}
+		अगर (uart_circ_empty(xmit))
+			अवरोध;
+	पूर्ण
 
 	/* Issue a Transmit Frame command. */
-	sunsab_cec_wait(up);
-	writeb(SAB82532_CMDR_XF, &up->regs->w.cmdr);
+	sunsab_cec_रुको(up);
+	ग_लिखोb(SAB82532_CMDR_XF, &up->regs->w.cmdr);
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(&up->port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(&up->port);
 
-	if (uart_circ_empty(xmit))
+	अगर (uart_circ_empty(xmit))
 		sunsab_stop_tx(&up->port);
-}
+पूर्ण
 
-static void check_status(struct uart_sunsab_port *up,
-			 union sab82532_irq_status *stat)
-{
-	if (stat->sreg.isr0 & SAB82532_ISR0_CDSC)
+अटल व्योम check_status(काष्ठा uart_sunsab_port *up,
+			 जोड़ sab82532_irq_status *stat)
+अणु
+	अगर (stat->sreg.isr0 & SAB82532_ISR0_CDSC)
 		uart_handle_dcd_change(&up->port,
-				       !(readb(&up->regs->r.vstr) & SAB82532_VSTR_CD));
+				       !(पढ़ोb(&up->regs->r.vstr) & SAB82532_VSTR_CD));
 
-	if (stat->sreg.isr1 & SAB82532_ISR1_CSC)
+	अगर (stat->sreg.isr1 & SAB82532_ISR1_CSC)
 		uart_handle_cts_change(&up->port,
-				       (readb(&up->regs->r.star) & SAB82532_STAR_CTS));
+				       (पढ़ोb(&up->regs->r.star) & SAB82532_STAR_CTS));
 
-	if ((readb(&up->regs->r.pvr) & up->pvr_dsr_bit) ^ up->dsr) {
-		up->dsr = (readb(&up->regs->r.pvr) & up->pvr_dsr_bit) ? 0 : 1;
+	अगर ((पढ़ोb(&up->regs->r.pvr) & up->pvr_dsr_bit) ^ up->dsr) अणु
+		up->dsr = (पढ़ोb(&up->regs->r.pvr) & up->pvr_dsr_bit) ? 0 : 1;
 		up->port.icount.dsr++;
-	}
+	पूर्ण
 
-	wake_up_interruptible(&up->port.state->port.delta_msr_wait);
-}
+	wake_up_पूर्णांकerruptible(&up->port.state->port.delta_msr_रुको);
+पूर्ण
 
-static irqreturn_t sunsab_interrupt(int irq, void *dev_id)
-{
-	struct uart_sunsab_port *up = dev_id;
-	struct tty_port *port = NULL;
-	union sab82532_irq_status status;
-	unsigned long flags;
-	unsigned char gis;
+अटल irqवापस_t sunsab_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा uart_sunsab_port *up = dev_id;
+	काष्ठा tty_port *port = शून्य;
+	जोड़ sab82532_irq_status status;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर gis;
 
 	spin_lock_irqsave(&up->port.lock, flags);
 
 	status.stat = 0;
-	gis = readb(&up->regs->r.gis) >> up->gis_shift;
-	if (gis & 1)
-		status.sreg.isr0 = readb(&up->regs->r.isr0);
-	if (gis & 2)
-		status.sreg.isr1 = readb(&up->regs->r.isr1);
+	gis = पढ़ोb(&up->regs->r.gis) >> up->gis_shअगरt;
+	अगर (gis & 1)
+		status.sreg.isr0 = पढ़ोb(&up->regs->r.isr0);
+	अगर (gis & 2)
+		status.sreg.isr1 = पढ़ोb(&up->regs->r.isr1);
 
-	if (status.stat) {
-		if ((status.sreg.isr0 & (SAB82532_ISR0_TCD | SAB82532_ISR0_TIME |
+	अगर (status.stat) अणु
+		अगर ((status.sreg.isr0 & (SAB82532_ISR0_TCD | SAB82532_ISR0_TIME |
 					 SAB82532_ISR0_RFO | SAB82532_ISR0_RPF)) ||
 		    (status.sreg.isr1 & SAB82532_ISR1_BRK))
-			port = receive_chars(up, &status);
-		if ((status.sreg.isr0 & SAB82532_ISR0_CDSC) ||
+			port = receive_अक्षरs(up, &status);
+		अगर ((status.sreg.isr0 & SAB82532_ISR0_CDSC) ||
 		    (status.sreg.isr1 & SAB82532_ISR1_CSC))
 			check_status(up, &status);
-		if (status.sreg.isr1 & (SAB82532_ISR1_ALLS | SAB82532_ISR1_XPR))
-			transmit_chars(up, &status);
-	}
+		अगर (status.sreg.isr1 & (SAB82532_ISR1_ALLS | SAB82532_ISR1_XPR))
+			transmit_अक्षरs(up, &status);
+	पूर्ण
 
 	spin_unlock_irqrestore(&up->port.lock, flags);
 
-	if (port)
+	अगर (port)
 		tty_flip_buffer_push(port);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /* port->lock is not held.  */
-static unsigned int sunsab_tx_empty(struct uart_port *port)
-{
-	struct uart_sunsab_port *up =
-		container_of(port, struct uart_sunsab_port, port);
-	int ret;
+अटल अचिन्हित पूर्णांक sunsab_tx_empty(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_sunsab_port *up =
+		container_of(port, काष्ठा uart_sunsab_port, port);
+	पूर्णांक ret;
 
-	/* Do not need a lock for a state test like this.  */
-	if (test_bit(SAB82532_ALLS, &up->irqflags))
+	/* Do not need a lock क्रम a state test like this.  */
+	अगर (test_bit(SAB82532_ALLS, &up->irqflags))
 		ret = TIOCSER_TEMT;
-	else
+	अन्यथा
 		ret = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* port->lock held by caller.  */
-static void sunsab_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-	struct uart_sunsab_port *up =
-		container_of(port, struct uart_sunsab_port, port);
+अटल व्योम sunsab_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
+	काष्ठा uart_sunsab_port *up =
+		container_of(port, काष्ठा uart_sunsab_port, port);
 
-	if (mctrl & TIOCM_RTS) {
+	अगर (mctrl & TIOCM_RTS) अणु
 		up->cached_mode &= ~SAB82532_MODE_FRTS;
 		up->cached_mode |= SAB82532_MODE_RTS;
-	} else {
+	पूर्ण अन्यथा अणु
 		up->cached_mode |= (SAB82532_MODE_FRTS |
 				    SAB82532_MODE_RTS);
-	}
-	if (mctrl & TIOCM_DTR) {
+	पूर्ण
+	अगर (mctrl & TIOCM_DTR) अणु
 		up->cached_pvr &= ~(up->pvr_dtr_bit);
-	} else {
+	पूर्ण अन्यथा अणु
 		up->cached_pvr |= up->pvr_dtr_bit;
-	}
+	पूर्ण
 
 	set_bit(SAB82532_REGS_PENDING, &up->irqflags);
-	if (test_bit(SAB82532_XPR, &up->irqflags))
+	अगर (test_bit(SAB82532_XPR, &up->irqflags))
 		sunsab_tx_idle(up);
-}
+पूर्ण
 
-/* port->lock is held by caller and interrupts are disabled.  */
-static unsigned int sunsab_get_mctrl(struct uart_port *port)
-{
-	struct uart_sunsab_port *up =
-		container_of(port, struct uart_sunsab_port, port);
-	unsigned char val;
-	unsigned int result;
+/* port->lock is held by caller and पूर्णांकerrupts are disabled.  */
+अटल अचिन्हित पूर्णांक sunsab_get_mctrl(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_sunsab_port *up =
+		container_of(port, काष्ठा uart_sunsab_port, port);
+	अचिन्हित अक्षर val;
+	अचिन्हित पूर्णांक result;
 
 	result = 0;
 
-	val = readb(&up->regs->r.pvr);
+	val = पढ़ोb(&up->regs->r.pvr);
 	result |= (val & up->pvr_dsr_bit) ? 0 : TIOCM_DSR;
 
-	val = readb(&up->regs->r.vstr);
+	val = पढ़ोb(&up->regs->r.vstr);
 	result |= (val & SAB82532_VSTR_CD) ? 0 : TIOCM_CAR;
 
-	val = readb(&up->regs->r.star);
+	val = पढ़ोb(&up->regs->r.star);
 	result |= (val & SAB82532_STAR_CTS) ? TIOCM_CTS : 0;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /* port->lock held by caller.  */
-static void sunsab_stop_tx(struct uart_port *port)
-{
-	struct uart_sunsab_port *up =
-		container_of(port, struct uart_sunsab_port, port);
+अटल व्योम sunsab_stop_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_sunsab_port *up =
+		container_of(port, काष्ठा uart_sunsab_port, port);
 
-	up->interrupt_mask1 |= SAB82532_IMR1_XPR;
-	writeb(up->interrupt_mask1, &up->regs->w.imr1);
-}
+	up->पूर्णांकerrupt_mask1 |= SAB82532_IMR1_XPR;
+	ग_लिखोb(up->पूर्णांकerrupt_mask1, &up->regs->w.imr1);
+पूर्ण
 
 /* port->lock held by caller.  */
-static void sunsab_tx_idle(struct uart_sunsab_port *up)
-{
-	if (test_bit(SAB82532_REGS_PENDING, &up->irqflags)) {
-		u8 tmp;
+अटल व्योम sunsab_tx_idle(काष्ठा uart_sunsab_port *up)
+अणु
+	अगर (test_bit(SAB82532_REGS_PENDING, &up->irqflags)) अणु
+		u8 पंचांगp;
 
 		clear_bit(SAB82532_REGS_PENDING, &up->irqflags);
-		writeb(up->cached_mode, &up->regs->rw.mode);
-		writeb(up->cached_pvr, &up->regs->rw.pvr);
-		writeb(up->cached_dafo, &up->regs->w.dafo);
+		ग_लिखोb(up->cached_mode, &up->regs->rw.mode);
+		ग_लिखोb(up->cached_pvr, &up->regs->rw.pvr);
+		ग_लिखोb(up->cached_dafo, &up->regs->w.dafo);
 
-		writeb(up->cached_ebrg & 0xff, &up->regs->w.bgr);
-		tmp = readb(&up->regs->rw.ccr2);
-		tmp &= ~0xc0;
-		tmp |= (up->cached_ebrg >> 2) & 0xc0;
-		writeb(tmp, &up->regs->rw.ccr2);
-	}
-}
+		ग_लिखोb(up->cached_ebrg & 0xff, &up->regs->w.bgr);
+		पंचांगp = पढ़ोb(&up->regs->rw.ccr2);
+		पंचांगp &= ~0xc0;
+		पंचांगp |= (up->cached_ebrg >> 2) & 0xc0;
+		ग_लिखोb(पंचांगp, &up->regs->rw.ccr2);
+	पूर्ण
+पूर्ण
 
 /* port->lock held by caller.  */
-static void sunsab_start_tx(struct uart_port *port)
-{
-	struct uart_sunsab_port *up =
-		container_of(port, struct uart_sunsab_port, port);
-	struct circ_buf *xmit = &up->port.state->xmit;
-	int i;
+अटल व्योम sunsab_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_sunsab_port *up =
+		container_of(port, काष्ठा uart_sunsab_port, port);
+	काष्ठा circ_buf *xmit = &up->port.state->xmit;
+	पूर्णांक i;
 
-	if (uart_circ_empty(xmit) || uart_tx_stopped(port))
-		return;
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(port))
+		वापस;
 
-	up->interrupt_mask1 &= ~(SAB82532_IMR1_ALLS|SAB82532_IMR1_XPR);
-	writeb(up->interrupt_mask1, &up->regs->w.imr1);
+	up->पूर्णांकerrupt_mask1 &= ~(SAB82532_IMR1_ALLS|SAB82532_IMR1_XPR);
+	ग_लिखोb(up->पूर्णांकerrupt_mask1, &up->regs->w.imr1);
 	
-	if (!test_bit(SAB82532_XPR, &up->irqflags))
-		return;
+	अगर (!test_bit(SAB82532_XPR, &up->irqflags))
+		वापस;
 
 	clear_bit(SAB82532_ALLS, &up->irqflags);
 	clear_bit(SAB82532_XPR, &up->irqflags);
 
-	for (i = 0; i < up->port.fifosize; i++) {
-		writeb(xmit->buf[xmit->tail],
-		       &up->regs->w.xfifo[i]);
+	क्रम (i = 0; i < up->port.fअगरosize; i++) अणु
+		ग_लिखोb(xmit->buf[xmit->tail],
+		       &up->regs->w.xfअगरo[i]);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		up->port.icount.tx++;
-		if (uart_circ_empty(xmit))
-			break;
-	}
+		अगर (uart_circ_empty(xmit))
+			अवरोध;
+	पूर्ण
 
 	/* Issue a Transmit Frame command.  */
-	sunsab_cec_wait(up);
-	writeb(SAB82532_CMDR_XF, &up->regs->w.cmdr);
-}
+	sunsab_cec_रुको(up);
+	ग_लिखोb(SAB82532_CMDR_XF, &up->regs->w.cmdr);
+पूर्ण
 
 /* port->lock is not held.  */
-static void sunsab_send_xchar(struct uart_port *port, char ch)
-{
-	struct uart_sunsab_port *up =
-		container_of(port, struct uart_sunsab_port, port);
-	unsigned long flags;
+अटल व्योम sunsab_send_xअक्षर(काष्ठा uart_port *port, अक्षर ch)
+अणु
+	काष्ठा uart_sunsab_port *up =
+		container_of(port, काष्ठा uart_sunsab_port, port);
+	अचिन्हित दीर्घ flags;
 
-	if (ch == __DISABLED_CHAR)
-		return;
+	अगर (ch == __DISABLED_CHAR)
+		वापस;
 
 	spin_lock_irqsave(&up->port.lock, flags);
 
-	sunsab_tec_wait(up);
-	writeb(ch, &up->regs->w.tic);
+	sunsab_tec_रुको(up);
+	ग_लिखोb(ch, &up->regs->w.tic);
 
 	spin_unlock_irqrestore(&up->port.lock, flags);
-}
+पूर्ण
 
 /* port->lock held by caller.  */
-static void sunsab_stop_rx(struct uart_port *port)
-{
-	struct uart_sunsab_port *up =
-		container_of(port, struct uart_sunsab_port, port);
+अटल व्योम sunsab_stop_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_sunsab_port *up =
+		container_of(port, काष्ठा uart_sunsab_port, port);
 
-	up->interrupt_mask0 |= SAB82532_IMR0_TCD;
-	writeb(up->interrupt_mask1, &up->regs->w.imr0);
-}
+	up->पूर्णांकerrupt_mask0 |= SAB82532_IMR0_TCD;
+	ग_लिखोb(up->पूर्णांकerrupt_mask1, &up->regs->w.imr0);
+पूर्ण
 
 /* port->lock is not held.  */
-static void sunsab_break_ctl(struct uart_port *port, int break_state)
-{
-	struct uart_sunsab_port *up =
-		container_of(port, struct uart_sunsab_port, port);
-	unsigned long flags;
-	unsigned char val;
+अटल व्योम sunsab_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	काष्ठा uart_sunsab_port *up =
+		container_of(port, काष्ठा uart_sunsab_port, port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर val;
 
 	spin_lock_irqsave(&up->port.lock, flags);
 
 	val = up->cached_dafo;
-	if (break_state)
+	अगर (अवरोध_state)
 		val |= SAB82532_DAFO_XBRK;
-	else
+	अन्यथा
 		val &= ~SAB82532_DAFO_XBRK;
 	up->cached_dafo = val;
 
 	set_bit(SAB82532_REGS_PENDING, &up->irqflags);
-	if (test_bit(SAB82532_XPR, &up->irqflags))
+	अगर (test_bit(SAB82532_XPR, &up->irqflags))
 		sunsab_tx_idle(up);
 
 	spin_unlock_irqrestore(&up->port.lock, flags);
-}
+पूर्ण
 
 /* port->lock is not held.  */
-static int sunsab_startup(struct uart_port *port)
-{
-	struct uart_sunsab_port *up =
-		container_of(port, struct uart_sunsab_port, port);
-	unsigned long flags;
-	unsigned char tmp;
-	int err = request_irq(up->port.irq, sunsab_interrupt,
+अटल पूर्णांक sunsab_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_sunsab_port *up =
+		container_of(port, काष्ठा uart_sunsab_port, port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर पंचांगp;
+	पूर्णांक err = request_irq(up->port.irq, sunsab_पूर्णांकerrupt,
 			      IRQF_SHARED, "sab", up);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	spin_lock_irqsave(&up->port.lock, flags);
 
 	/*
-	 * Wait for any commands or immediate characters
+	 * Wait क्रम any commands or immediate अक्षरacters
 	 */
-	sunsab_cec_wait(up);
-	sunsab_tec_wait(up);
+	sunsab_cec_रुको(up);
+	sunsab_tec_रुको(up);
 
 	/*
 	 * Clear the FIFO buffers.
 	 */
-	writeb(SAB82532_CMDR_RRES, &up->regs->w.cmdr);
-	sunsab_cec_wait(up);
-	writeb(SAB82532_CMDR_XRES, &up->regs->w.cmdr);
+	ग_लिखोb(SAB82532_CMDR_RRES, &up->regs->w.cmdr);
+	sunsab_cec_रुको(up);
+	ग_लिखोb(SAB82532_CMDR_XRES, &up->regs->w.cmdr);
 
 	/*
-	 * Clear the interrupt registers.
+	 * Clear the पूर्णांकerrupt रेजिस्टरs.
 	 */
-	(void) readb(&up->regs->r.isr0);
-	(void) readb(&up->regs->r.isr1);
+	(व्योम) पढ़ोb(&up->regs->r.isr0);
+	(व्योम) पढ़ोb(&up->regs->r.isr1);
 
 	/*
 	 * Now, initialize the UART 
 	 */
-	writeb(0, &up->regs->w.ccr0);				/* power-down */
-	writeb(SAB82532_CCR0_MCE | SAB82532_CCR0_SC_NRZ |
+	ग_लिखोb(0, &up->regs->w.ccr0);				/* घातer-करोwn */
+	ग_लिखोb(SAB82532_CCR0_MCE | SAB82532_CCR0_SC_NRZ |
 	       SAB82532_CCR0_SM_ASYNC, &up->regs->w.ccr0);
-	writeb(SAB82532_CCR1_ODS | SAB82532_CCR1_BCR | 7, &up->regs->w.ccr1);
-	writeb(SAB82532_CCR2_BDF | SAB82532_CCR2_SSEL |
+	ग_लिखोb(SAB82532_CCR1_ODS | SAB82532_CCR1_BCR | 7, &up->regs->w.ccr1);
+	ग_लिखोb(SAB82532_CCR2_BDF | SAB82532_CCR2_SSEL |
 	       SAB82532_CCR2_TOE, &up->regs->w.ccr2);
-	writeb(0, &up->regs->w.ccr3);
-	writeb(SAB82532_CCR4_MCK4 | SAB82532_CCR4_EBRG, &up->regs->w.ccr4);
+	ग_लिखोb(0, &up->regs->w.ccr3);
+	ग_लिखोb(SAB82532_CCR4_MCK4 | SAB82532_CCR4_EBRG, &up->regs->w.ccr4);
 	up->cached_mode = (SAB82532_MODE_RTS | SAB82532_MODE_FCTS |
 			   SAB82532_MODE_RAC);
-	writeb(up->cached_mode, &up->regs->w.mode);
-	writeb(SAB82532_RFC_DPS|SAB82532_RFC_RFTH_32, &up->regs->w.rfc);
+	ग_लिखोb(up->cached_mode, &up->regs->w.mode);
+	ग_लिखोb(SAB82532_RFC_DPS|SAB82532_RFC_RFTH_32, &up->regs->w.rfc);
 	
-	tmp = readb(&up->regs->rw.ccr0);
-	tmp |= SAB82532_CCR0_PU;	/* power-up */
-	writeb(tmp, &up->regs->rw.ccr0);
+	पंचांगp = पढ़ोb(&up->regs->rw.ccr0);
+	पंचांगp |= SAB82532_CCR0_PU;	/* घातer-up */
+	ग_लिखोb(पंचांगp, &up->regs->rw.ccr0);
 
 	/*
-	 * Finally, enable interrupts
+	 * Finally, enable पूर्णांकerrupts
 	 */
-	up->interrupt_mask0 = (SAB82532_IMR0_PERR | SAB82532_IMR0_FERR |
+	up->पूर्णांकerrupt_mask0 = (SAB82532_IMR0_PERR | SAB82532_IMR0_FERR |
 			       SAB82532_IMR0_PLLA);
-	writeb(up->interrupt_mask0, &up->regs->w.imr0);
-	up->interrupt_mask1 = (SAB82532_IMR1_BRKT | SAB82532_IMR1_ALLS |
+	ग_लिखोb(up->पूर्णांकerrupt_mask0, &up->regs->w.imr0);
+	up->पूर्णांकerrupt_mask1 = (SAB82532_IMR1_BRKT | SAB82532_IMR1_ALLS |
 			       SAB82532_IMR1_XOFF | SAB82532_IMR1_TIN |
 			       SAB82532_IMR1_CSC | SAB82532_IMR1_XON |
 			       SAB82532_IMR1_XPR);
-	writeb(up->interrupt_mask1, &up->regs->w.imr1);
+	ग_लिखोb(up->पूर्णांकerrupt_mask1, &up->regs->w.imr1);
 	set_bit(SAB82532_ALLS, &up->irqflags);
 	set_bit(SAB82532_XPR, &up->irqflags);
 
 	spin_unlock_irqrestore(&up->port.lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* port->lock is not held.  */
-static void sunsab_shutdown(struct uart_port *port)
-{
-	struct uart_sunsab_port *up =
-		container_of(port, struct uart_sunsab_port, port);
-	unsigned long flags;
+अटल व्योम sunsab_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_sunsab_port *up =
+		container_of(port, काष्ठा uart_sunsab_port, port);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&up->port.lock, flags);
 
 	/* Disable Interrupts */
-	up->interrupt_mask0 = 0xff;
-	writeb(up->interrupt_mask0, &up->regs->w.imr0);
-	up->interrupt_mask1 = 0xff;
-	writeb(up->interrupt_mask1, &up->regs->w.imr1);
+	up->पूर्णांकerrupt_mask0 = 0xff;
+	ग_लिखोb(up->पूर्णांकerrupt_mask0, &up->regs->w.imr0);
+	up->पूर्णांकerrupt_mask1 = 0xff;
+	ग_लिखोb(up->पूर्णांकerrupt_mask1, &up->regs->w.imr1);
 
-	/* Disable break condition */
-	up->cached_dafo = readb(&up->regs->rw.dafo);
+	/* Disable अवरोध condition */
+	up->cached_dafo = पढ़ोb(&up->regs->rw.dafo);
 	up->cached_dafo &= ~SAB82532_DAFO_XBRK;
-	writeb(up->cached_dafo, &up->regs->rw.dafo);
+	ग_लिखोb(up->cached_dafo, &up->regs->rw.dafo);
 
 	/* Disable Receiver */	
 	up->cached_mode &= ~SAB82532_MODE_RAC;
-	writeb(up->cached_mode, &up->regs->rw.mode);
+	ग_लिखोb(up->cached_mode, &up->regs->rw.mode);
 
 	/*
 	 * XXX FIXME
 	 *
-	 * If the chip is powered down here the system hangs/crashes during
-	 * reboot or shutdown.  This needs to be investigated further,
+	 * If the chip is घातered करोwn here the प्रणाली hangs/crashes during
+	 * reboot or shutकरोwn.  This needs to be investigated further,
 	 * similar behaviour occurs in 2.4 when the driver is configured
-	 * as a module only.  One hint may be that data is sometimes
-	 * transmitted at 9600 baud during shutdown (regardless of the
-	 * speed the chip was configured for when the port was open).
+	 * as a module only.  One hपूर्णांक may be that data is someबार
+	 * transmitted at 9600 baud during shutकरोwn (regardless of the
+	 * speed the chip was configured क्रम when the port was खोलो).
 	 */
-#if 0
+#अगर 0
 	/* Power Down */	
-	tmp = readb(&up->regs->rw.ccr0);
-	tmp &= ~SAB82532_CCR0_PU;
-	writeb(tmp, &up->regs->rw.ccr0);
-#endif
+	पंचांगp = पढ़ोb(&up->regs->rw.ccr0);
+	पंचांगp &= ~SAB82532_CCR0_PU;
+	ग_लिखोb(पंचांगp, &up->regs->rw.ccr0);
+#पूर्ण_अगर
 
 	spin_unlock_irqrestore(&up->port.lock, flags);
-	free_irq(up->port.irq, up);
-}
+	मुक्त_irq(up->port.irq, up);
+पूर्ण
 
 /*
- * This is used to figure out the divisor speeds.
+ * This is used to figure out the भागisor speeds.
  *
- * The formula is:    Baud = SAB_BASE_BAUD / ((N + 1) * (1 << M)),
+ * The क्रमmula is:    Baud = SAB_BASE_BAUD / ((N + 1) * (1 << M)),
  *
  * with               0 <= N < 64 and 0 <= M < 16
  */
 
-static void calc_ebrg(int baud, int *n_ret, int *m_ret)
-{
-	int	n, m;
+अटल व्योम calc_ebrg(पूर्णांक baud, पूर्णांक *n_ret, पूर्णांक *m_ret)
+अणु
+	पूर्णांक	n, m;
 
-	if (baud == 0) {
+	अगर (baud == 0) अणु
 		*n_ret = 0;
 		*m_ret = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
      
 	/*
 	 * We scale numbers by 10 so that we get better accuracy
-	 * without having to use floating point.  Here we increment m
+	 * without having to use भग्नing poपूर्णांक.  Here we increment m
 	 * until n is within the valid range.
 	 */
 	n = (SAB_BASE_BAUD * 10) / baud;
 	m = 0;
-	while (n >= 640) {
+	जबतक (n >= 640) अणु
 		n = n / 2;
 		m++;
-	}
+	पूर्ण
 	n = (n+5) / 10;
 	/*
-	 * We try very hard to avoid speeds with M == 0 since they may
-	 * not work correctly for XTAL frequences above 10 MHz.
+	 * We try very hard to aव्योम speeds with M == 0 since they may
+	 * not work correctly क्रम XTAL frequences above 10 MHz.
 	 */
-	if ((m == 0) && ((n & 1) == 0)) {
+	अगर ((m == 0) && ((n & 1) == 0)) अणु
 		n = n / 2;
 		m++;
-	}
+	पूर्ण
 	*n_ret = n - 1;
 	*m_ret = m;
-}
+पूर्ण
 
-/* Internal routine, port->lock is held and local interrupts are disabled.  */
-static void sunsab_convert_to_sab(struct uart_sunsab_port *up, unsigned int cflag,
-				  unsigned int iflag, unsigned int baud,
-				  unsigned int quot)
-{
-	unsigned char dafo;
-	int bits, n, m;
+/* Internal routine, port->lock is held and local पूर्णांकerrupts are disabled.  */
+अटल व्योम sunsab_convert_to_sab(काष्ठा uart_sunsab_port *up, अचिन्हित पूर्णांक cflag,
+				  अचिन्हित पूर्णांक अगरlag, अचिन्हित पूर्णांक baud,
+				  अचिन्हित पूर्णांक quot)
+अणु
+	अचिन्हित अक्षर dafo;
+	पूर्णांक bits, n, m;
 
 	/* Byte size and parity */
-	switch (cflag & CSIZE) {
-	      case CS5: dafo = SAB82532_DAFO_CHL5; bits = 7; break;
-	      case CS6: dafo = SAB82532_DAFO_CHL6; bits = 8; break;
-	      case CS7: dafo = SAB82532_DAFO_CHL7; bits = 9; break;
-	      case CS8: dafo = SAB82532_DAFO_CHL8; bits = 10; break;
+	चयन (cflag & CSIZE) अणु
+	      हाल CS5: dafo = SAB82532_DAFO_CHL5; bits = 7; अवरोध;
+	      हाल CS6: dafo = SAB82532_DAFO_CHL6; bits = 8; अवरोध;
+	      हाल CS7: dafo = SAB82532_DAFO_CHL7; bits = 9; अवरोध;
+	      हाल CS8: dafo = SAB82532_DAFO_CHL8; bits = 10; अवरोध;
 	      /* Never happens, but GCC is too dumb to figure it out */
-	      default:  dafo = SAB82532_DAFO_CHL5; bits = 7; break;
-	}
+	      शेष:  dafo = SAB82532_DAFO_CHL5; bits = 7; अवरोध;
+	पूर्ण
 
-	if (cflag & CSTOPB) {
+	अगर (cflag & CSTOPB) अणु
 		dafo |= SAB82532_DAFO_STOP;
 		bits++;
-	}
+	पूर्ण
 
-	if (cflag & PARENB) {
+	अगर (cflag & PARENB) अणु
 		dafo |= SAB82532_DAFO_PARE;
 		bits++;
-	}
+	पूर्ण
 
-	if (cflag & PARODD) {
+	अगर (cflag & PARODD) अणु
 		dafo |= SAB82532_DAFO_PAR_ODD;
-	} else {
+	पूर्ण अन्यथा अणु
 		dafo |= SAB82532_DAFO_PAR_EVEN;
-	}
+	पूर्ण
 	up->cached_dafo = dafo;
 
 	calc_ebrg(baud, &n, &m);
 
 	up->cached_ebrg = n | (m << 6);
 
-	up->tec_timeout = (10 * 1000000) / baud;
-	up->cec_timeout = up->tec_timeout >> 2;
+	up->tec_समयout = (10 * 1000000) / baud;
+	up->cec_समयout = up->tec_समयout >> 2;
 
 	/* CTS flow control flags */
-	/* We encode read_status_mask and ignore_status_mask like so:
+	/* We encode पढ़ो_status_mask and ignore_status_mask like so:
 	 *
 	 * ---------------------
 	 * | ... | ISR1 | ISR0 |
@@ -726,188 +727,188 @@ static void sunsab_convert_to_sab(struct uart_sunsab_port *up, unsigned int cfla
 	 *  ..    15   8 7    0
 	 */
 
-	up->port.read_status_mask = (SAB82532_ISR0_TCD | SAB82532_ISR0_TIME |
+	up->port.पढ़ो_status_mask = (SAB82532_ISR0_TCD | SAB82532_ISR0_TIME |
 				     SAB82532_ISR0_RFO | SAB82532_ISR0_RPF |
 				     SAB82532_ISR0_CDSC);
-	up->port.read_status_mask |= (SAB82532_ISR1_CSC |
+	up->port.पढ़ो_status_mask |= (SAB82532_ISR1_CSC |
 				      SAB82532_ISR1_ALLS |
 				      SAB82532_ISR1_XPR) << 8;
-	if (iflag & INPCK)
-		up->port.read_status_mask |= (SAB82532_ISR0_PERR |
+	अगर (अगरlag & INPCK)
+		up->port.पढ़ो_status_mask |= (SAB82532_ISR0_PERR |
 					      SAB82532_ISR0_FERR);
-	if (iflag & (IGNBRK | BRKINT | PARMRK))
-		up->port.read_status_mask |= (SAB82532_ISR1_BRK << 8);
+	अगर (अगरlag & (IGNBRK | BRKINT | PARMRK))
+		up->port.पढ़ो_status_mask |= (SAB82532_ISR1_BRK << 8);
 
 	/*
 	 * Characteres to ignore
 	 */
 	up->port.ignore_status_mask = 0;
-	if (iflag & IGNPAR)
+	अगर (अगरlag & IGNPAR)
 		up->port.ignore_status_mask |= (SAB82532_ISR0_PERR |
 						SAB82532_ISR0_FERR);
-	if (iflag & IGNBRK) {
+	अगर (अगरlag & IGNBRK) अणु
 		up->port.ignore_status_mask |= (SAB82532_ISR1_BRK << 8);
 		/*
-		 * If we're ignoring parity and break indicators,
-		 * ignore overruns too (for real raw support).
+		 * If we're ignoring parity and अवरोध indicators,
+		 * ignore overruns too (क्रम real raw support).
 		 */
-		if (iflag & IGNPAR)
+		अगर (अगरlag & IGNPAR)
 			up->port.ignore_status_mask |= SAB82532_ISR0_RFO;
-	}
+	पूर्ण
 
 	/*
-	 * ignore all characters if CREAD is not set
+	 * ignore all अक्षरacters अगर CREAD is not set
 	 */
-	if ((cflag & CREAD) == 0)
+	अगर ((cflag & CREAD) == 0)
 		up->port.ignore_status_mask |= (SAB82532_ISR0_RPF |
 						SAB82532_ISR0_TCD);
 
-	uart_update_timeout(&up->port, cflag,
+	uart_update_समयout(&up->port, cflag,
 			    (up->port.uartclk / (16 * quot)));
 
-	/* Now schedule a register update when the chip's
+	/* Now schedule a रेजिस्टर update when the chip's
 	 * transmitter is idle.
 	 */
 	up->cached_mode |= SAB82532_MODE_RAC;
 	set_bit(SAB82532_REGS_PENDING, &up->irqflags);
-	if (test_bit(SAB82532_XPR, &up->irqflags))
+	अगर (test_bit(SAB82532_XPR, &up->irqflags))
 		sunsab_tx_idle(up);
-}
+पूर्ण
 
 /* port->lock is not held.  */
-static void sunsab_set_termios(struct uart_port *port, struct ktermios *termios,
-			       struct ktermios *old)
-{
-	struct uart_sunsab_port *up =
-		container_of(port, struct uart_sunsab_port, port);
-	unsigned long flags;
-	unsigned int baud = uart_get_baud_rate(port, termios, old, 0, 4000000);
-	unsigned int quot = uart_get_divisor(port, baud);
+अटल व्योम sunsab_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
+			       काष्ठा ktermios *old)
+अणु
+	काष्ठा uart_sunsab_port *up =
+		container_of(port, काष्ठा uart_sunsab_port, port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक baud = uart_get_baud_rate(port, termios, old, 0, 4000000);
+	अचिन्हित पूर्णांक quot = uart_get_भागisor(port, baud);
 
 	spin_lock_irqsave(&up->port.lock, flags);
-	sunsab_convert_to_sab(up, termios->c_cflag, termios->c_iflag, baud, quot);
+	sunsab_convert_to_sab(up, termios->c_cflag, termios->c_अगरlag, baud, quot);
 	spin_unlock_irqrestore(&up->port.lock, flags);
-}
+पूर्ण
 
-static const char *sunsab_type(struct uart_port *port)
-{
-	struct uart_sunsab_port *up = (void *)port;
-	static char buf[36];
+अटल स्थिर अक्षर *sunsab_type(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_sunsab_port *up = (व्योम *)port;
+	अटल अक्षर buf[36];
 	
-	sprintf(buf, "SAB82532 %s", sab82532_version[up->type]);
-	return buf;
-}
+	प्र_लिखो(buf, "SAB82532 %s", sab82532_version[up->type]);
+	वापस buf;
+पूर्ण
 
-static void sunsab_release_port(struct uart_port *port)
-{
-}
+अटल व्योम sunsab_release_port(काष्ठा uart_port *port)
+अणु
+पूर्ण
 
-static int sunsab_request_port(struct uart_port *port)
-{
-	return 0;
-}
+अटल पूर्णांक sunsab_request_port(काष्ठा uart_port *port)
+अणु
+	वापस 0;
+पूर्ण
 
-static void sunsab_config_port(struct uart_port *port, int flags)
-{
-}
+अटल व्योम sunsab_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+पूर्ण
 
-static int sunsab_verify_port(struct uart_port *port, struct serial_struct *ser)
-{
-	return -EINVAL;
-}
+अटल पूर्णांक sunsab_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static const struct uart_ops sunsab_pops = {
+अटल स्थिर काष्ठा uart_ops sunsab_pops = अणु
 	.tx_empty	= sunsab_tx_empty,
 	.set_mctrl	= sunsab_set_mctrl,
 	.get_mctrl	= sunsab_get_mctrl,
 	.stop_tx	= sunsab_stop_tx,
 	.start_tx	= sunsab_start_tx,
-	.send_xchar	= sunsab_send_xchar,
+	.send_xअक्षर	= sunsab_send_xअक्षर,
 	.stop_rx	= sunsab_stop_rx,
-	.break_ctl	= sunsab_break_ctl,
+	.अवरोध_ctl	= sunsab_अवरोध_ctl,
 	.startup	= sunsab_startup,
-	.shutdown	= sunsab_shutdown,
+	.shutकरोwn	= sunsab_shutकरोwn,
 	.set_termios	= sunsab_set_termios,
 	.type		= sunsab_type,
 	.release_port	= sunsab_release_port,
 	.request_port	= sunsab_request_port,
 	.config_port	= sunsab_config_port,
-	.verify_port	= sunsab_verify_port,
-};
+	.verअगरy_port	= sunsab_verअगरy_port,
+पूर्ण;
 
-static struct uart_driver sunsab_reg = {
+अटल काष्ठा uart_driver sunsab_reg = अणु
 	.owner			= THIS_MODULE,
 	.driver_name		= "sunsab",
 	.dev_name		= "ttyS",
 	.major			= TTY_MAJOR,
-};
+पूर्ण;
 
-static struct uart_sunsab_port *sunsab_ports;
+अटल काष्ठा uart_sunsab_port *sunsab_ports;
 
-#ifdef CONFIG_SERIAL_SUNSAB_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_SUNSAB_CONSOLE
 
-static void sunsab_console_putchar(struct uart_port *port, int c)
-{
-	struct uart_sunsab_port *up =
-		container_of(port, struct uart_sunsab_port, port);
+अटल व्योम sunsab_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक c)
+अणु
+	काष्ठा uart_sunsab_port *up =
+		container_of(port, काष्ठा uart_sunsab_port, port);
 
-	sunsab_tec_wait(up);
-	writeb(c, &up->regs->w.tic);
-}
+	sunsab_tec_रुको(up);
+	ग_लिखोb(c, &up->regs->w.tic);
+पूर्ण
 
-static void sunsab_console_write(struct console *con, const char *s, unsigned n)
-{
-	struct uart_sunsab_port *up = &sunsab_ports[con->index];
-	unsigned long flags;
-	int locked = 1;
+अटल व्योम sunsab_console_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित n)
+अणु
+	काष्ठा uart_sunsab_port *up = &sunsab_ports[con->index];
+	अचिन्हित दीर्घ flags;
+	पूर्णांक locked = 1;
 
-	if (up->port.sysrq || oops_in_progress)
+	अगर (up->port.sysrq || oops_in_progress)
 		locked = spin_trylock_irqsave(&up->port.lock, flags);
-	else
+	अन्यथा
 		spin_lock_irqsave(&up->port.lock, flags);
 
-	uart_console_write(&up->port, s, n, sunsab_console_putchar);
-	sunsab_tec_wait(up);
+	uart_console_ग_लिखो(&up->port, s, n, sunsab_console_अक्षर_दो);
+	sunsab_tec_रुको(up);
 
-	if (locked)
+	अगर (locked)
 		spin_unlock_irqrestore(&up->port.lock, flags);
-}
+पूर्ण
 
-static int sunsab_console_setup(struct console *con, char *options)
-{
-	struct uart_sunsab_port *up = &sunsab_ports[con->index];
-	unsigned long flags;
-	unsigned int baud, quot;
+अटल पूर्णांक sunsab_console_setup(काष्ठा console *con, अक्षर *options)
+अणु
+	काष्ठा uart_sunsab_port *up = &sunsab_ports[con->index];
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक baud, quot;
 
 	/*
-	 * The console framework calls us for each and every port
-	 * registered. Defer the console setup until the requested
+	 * The console framework calls us क्रम each and every port
+	 * रेजिस्टरed. Defer the console setup until the requested
 	 * port has been properly discovered. A bit of a hack,
 	 * though...
 	 */
-	if (up->port.type != PORT_SUNSAB)
-		return -EINVAL;
+	अगर (up->port.type != PORT_SUNSAB)
+		वापस -EINVAL;
 
-	printk("Console: ttyS%d (SAB82532)\n",
+	prपूर्णांकk("Console: ttyS%d (SAB82532)\n",
 	       (sunsab_reg.minor - 64) + con->index);
 
 	sunserial_console_termios(con, up->port.dev->of_node);
 
-	switch (con->cflag & CBAUD) {
-	case B150: baud = 150; break;
-	case B300: baud = 300; break;
-	case B600: baud = 600; break;
-	case B1200: baud = 1200; break;
-	case B2400: baud = 2400; break;
-	case B4800: baud = 4800; break;
-	default: case B9600: baud = 9600; break;
-	case B19200: baud = 19200; break;
-	case B38400: baud = 38400; break;
-	case B57600: baud = 57600; break;
-	case B115200: baud = 115200; break;
-	case B230400: baud = 230400; break;
-	case B460800: baud = 460800; break;
-	}
+	चयन (con->cflag & CBAUD) अणु
+	हाल B150: baud = 150; अवरोध;
+	हाल B300: baud = 300; अवरोध;
+	हाल B600: baud = 600; अवरोध;
+	हाल B1200: baud = 1200; अवरोध;
+	हाल B2400: baud = 2400; अवरोध;
+	हाल B4800: baud = 4800; अवरोध;
+	शेष: हाल B9600: baud = 9600; अवरोध;
+	हाल B19200: baud = 19200; अवरोध;
+	हाल B38400: baud = 38400; अवरोध;
+	हाल B57600: baud = 57600; अवरोध;
+	हाल B115200: baud = 115200; अवरोध;
+	हाल B230400: baud = 230400; अवरोध;
+	हाल B460800: baud = 460800; अवरोध;
+	पूर्ण
 
 	/*
 	 * Temporary fix.
@@ -922,118 +923,118 @@ static int sunsab_console_setup(struct console *con, char *options)
 	spin_lock_irqsave(&up->port.lock, flags);
 
 	/*
-	 * Finally, enable interrupts
+	 * Finally, enable पूर्णांकerrupts
 	 */
-	up->interrupt_mask0 = SAB82532_IMR0_PERR | SAB82532_IMR0_FERR |
+	up->पूर्णांकerrupt_mask0 = SAB82532_IMR0_PERR | SAB82532_IMR0_FERR |
 				SAB82532_IMR0_PLLA | SAB82532_IMR0_CDSC;
-	writeb(up->interrupt_mask0, &up->regs->w.imr0);
-	up->interrupt_mask1 = SAB82532_IMR1_BRKT | SAB82532_IMR1_ALLS |
+	ग_लिखोb(up->पूर्णांकerrupt_mask0, &up->regs->w.imr0);
+	up->पूर्णांकerrupt_mask1 = SAB82532_IMR1_BRKT | SAB82532_IMR1_ALLS |
 				SAB82532_IMR1_XOFF | SAB82532_IMR1_TIN |
 				SAB82532_IMR1_CSC | SAB82532_IMR1_XON |
 				SAB82532_IMR1_XPR;
-	writeb(up->interrupt_mask1, &up->regs->w.imr1);
+	ग_लिखोb(up->पूर्णांकerrupt_mask1, &up->regs->w.imr1);
 
-	quot = uart_get_divisor(&up->port, baud);
+	quot = uart_get_भागisor(&up->port, baud);
 	sunsab_convert_to_sab(up, con->cflag, 0, baud, quot);
 	sunsab_set_mctrl(&up->port, TIOCM_DTR | TIOCM_RTS);
 
 	spin_unlock_irqrestore(&up->port.lock, flags);
 	
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct console sunsab_console = {
+अटल काष्ठा console sunsab_console = अणु
 	.name	=	"ttyS",
-	.write	=	sunsab_console_write,
+	.ग_लिखो	=	sunsab_console_ग_लिखो,
 	.device	=	uart_console_device,
 	.setup	=	sunsab_console_setup,
 	.flags	=	CON_PRINTBUFFER,
 	.index	=	-1,
 	.data	=	&sunsab_reg,
-};
+पूर्ण;
 
-static inline struct console *SUNSAB_CONSOLE(void)
-{
-	return &sunsab_console;
-}
-#else
-#define SUNSAB_CONSOLE()	(NULL)
-#define sunsab_console_init()	do { } while (0)
-#endif
+अटल अंतरभूत काष्ठा console *SUNSAB_CONSOLE(व्योम)
+अणु
+	वापस &sunsab_console;
+पूर्ण
+#अन्यथा
+#घोषणा SUNSAB_CONSOLE()	(शून्य)
+#घोषणा sunsab_console_init()	करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-static int sunsab_init_one(struct uart_sunsab_port *up,
-				     struct platform_device *op,
-				     unsigned long offset,
-				     int line)
-{
+अटल पूर्णांक sunsab_init_one(काष्ठा uart_sunsab_port *up,
+				     काष्ठा platक्रमm_device *op,
+				     अचिन्हित दीर्घ offset,
+				     पूर्णांक line)
+अणु
 	up->port.line = line;
 	up->port.dev = &op->dev;
 
 	up->port.mapbase = op->resource[0].start + offset;
 	up->port.membase = of_ioremap(&op->resource[0], offset,
-				      sizeof(union sab82532_async_regs),
+				      माप(जोड़ sab82532_async_regs),
 				      "sab");
-	if (!up->port.membase)
-		return -ENOMEM;
-	up->regs = (union sab82532_async_regs __iomem *) up->port.membase;
+	अगर (!up->port.membase)
+		वापस -ENOMEM;
+	up->regs = (जोड़ sab82532_async_regs __iomem *) up->port.membase;
 
 	up->port.irq = op->archdata.irqs[0];
 
-	up->port.fifosize = SAB82532_XMIT_FIFO_SIZE;
+	up->port.fअगरosize = SAB82532_XMIT_FIFO_SIZE;
 	up->port.iotype = UPIO_MEM;
 	up->port.has_sysrq = IS_ENABLED(CONFIG_SERIAL_SUNSAB_CONSOLE);
 
-	writeb(SAB82532_IPC_IC_ACT_LOW, &up->regs->w.ipc);
+	ग_लिखोb(SAB82532_IPC_IC_ACT_LOW, &up->regs->w.ipc);
 
 	up->port.ops = &sunsab_pops;
 	up->port.type = PORT_SUNSAB;
 	up->port.uartclk = SAB_BASE_BAUD;
 
-	up->type = readb(&up->regs->r.vstr) & 0x0f;
-	writeb(~((1 << 1) | (1 << 2) | (1 << 4)), &up->regs->w.pcr);
-	writeb(0xff, &up->regs->w.pim);
-	if ((up->port.line & 0x1) == 0) {
+	up->type = पढ़ोb(&up->regs->r.vstr) & 0x0f;
+	ग_लिखोb(~((1 << 1) | (1 << 2) | (1 << 4)), &up->regs->w.pcr);
+	ग_लिखोb(0xff, &up->regs->w.pim);
+	अगर ((up->port.line & 0x1) == 0) अणु
 		up->pvr_dsr_bit = (1 << 0);
 		up->pvr_dtr_bit = (1 << 1);
-		up->gis_shift = 2;
-	} else {
+		up->gis_shअगरt = 2;
+	पूर्ण अन्यथा अणु
 		up->pvr_dsr_bit = (1 << 3);
 		up->pvr_dtr_bit = (1 << 2);
-		up->gis_shift = 0;
-	}
+		up->gis_shअगरt = 0;
+	पूर्ण
 	up->cached_pvr = (1 << 1) | (1 << 2) | (1 << 4);
-	writeb(up->cached_pvr, &up->regs->w.pvr);
-	up->cached_mode = readb(&up->regs->rw.mode);
+	ग_लिखोb(up->cached_pvr, &up->regs->w.pvr);
+	up->cached_mode = पढ़ोb(&up->regs->rw.mode);
 	up->cached_mode |= SAB82532_MODE_FRTS;
-	writeb(up->cached_mode, &up->regs->rw.mode);
+	ग_लिखोb(up->cached_mode, &up->regs->rw.mode);
 	up->cached_mode |= SAB82532_MODE_RTS;
-	writeb(up->cached_mode, &up->regs->rw.mode);
+	ग_लिखोb(up->cached_mode, &up->regs->rw.mode);
 
-	up->tec_timeout = SAB82532_MAX_TEC_TIMEOUT;
-	up->cec_timeout = SAB82532_MAX_CEC_TIMEOUT;
+	up->tec_समयout = SAB82532_MAX_TEC_TIMEOUT;
+	up->cec_समयout = SAB82532_MAX_CEC_TIMEOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sab_probe(struct platform_device *op)
-{
-	static int inst;
-	struct uart_sunsab_port *up;
-	int err;
+अटल पूर्णांक sab_probe(काष्ठा platक्रमm_device *op)
+अणु
+	अटल पूर्णांक inst;
+	काष्ठा uart_sunsab_port *up;
+	पूर्णांक err;
 
 	up = &sunsab_ports[inst * 2];
 
 	err = sunsab_init_one(&up[0], op,
 			      0,
 			      (inst * 2) + 0);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = sunsab_init_one(&up[1], op,
-			      sizeof(union sab82532_async_regs),
+			      माप(जोड़ sab82532_async_regs),
 			      (inst * 2) + 1);
-	if (err)
-		goto out1;
+	अगर (err)
+		जाओ out1;
 
 	sunserial_console_match(SUNSAB_CONSOLE(), op->dev.of_node,
 				&sunsab_reg, up[0].port.line,
@@ -1044,115 +1045,115 @@ static int sab_probe(struct platform_device *op)
 				false);
 
 	err = uart_add_one_port(&sunsab_reg, &up[0].port);
-	if (err)
-		goto out2;
+	अगर (err)
+		जाओ out2;
 
 	err = uart_add_one_port(&sunsab_reg, &up[1].port);
-	if (err)
-		goto out3;
+	अगर (err)
+		जाओ out3;
 
-	platform_set_drvdata(op, &up[0]);
+	platक्रमm_set_drvdata(op, &up[0]);
 
 	inst++;
 
-	return 0;
+	वापस 0;
 
 out3:
-	uart_remove_one_port(&sunsab_reg, &up[0].port);
+	uart_हटाओ_one_port(&sunsab_reg, &up[0].port);
 out2:
 	of_iounmap(&op->resource[0],
 		   up[1].port.membase,
-		   sizeof(union sab82532_async_regs));
+		   माप(जोड़ sab82532_async_regs));
 out1:
 	of_iounmap(&op->resource[0],
 		   up[0].port.membase,
-		   sizeof(union sab82532_async_regs));
+		   माप(जोड़ sab82532_async_regs));
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int sab_remove(struct platform_device *op)
-{
-	struct uart_sunsab_port *up = platform_get_drvdata(op);
+अटल पूर्णांक sab_हटाओ(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा uart_sunsab_port *up = platक्रमm_get_drvdata(op);
 
-	uart_remove_one_port(&sunsab_reg, &up[1].port);
-	uart_remove_one_port(&sunsab_reg, &up[0].port);
+	uart_हटाओ_one_port(&sunsab_reg, &up[1].port);
+	uart_हटाओ_one_port(&sunsab_reg, &up[0].port);
 	of_iounmap(&op->resource[0],
 		   up[1].port.membase,
-		   sizeof(union sab82532_async_regs));
+		   माप(जोड़ sab82532_async_regs));
 	of_iounmap(&op->resource[0],
 		   up[0].port.membase,
-		   sizeof(union sab82532_async_regs));
+		   माप(जोड़ sab82532_async_regs));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id sab_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sab_match[] = अणु
+	अणु
 		.name = "se",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "serial",
 		.compatible = "sab82532",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sab_match);
 
-static struct platform_driver sab_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sab_driver = अणु
+	.driver = अणु
 		.name = "sab",
 		.of_match_table = sab_match,
-	},
+	पूर्ण,
 	.probe		= sab_probe,
-	.remove		= sab_remove,
-};
+	.हटाओ		= sab_हटाओ,
+पूर्ण;
 
-static int __init sunsab_init(void)
-{
-	struct device_node *dp;
-	int err;
-	int num_channels = 0;
+अटल पूर्णांक __init sunsab_init(व्योम)
+अणु
+	काष्ठा device_node *dp;
+	पूर्णांक err;
+	पूर्णांक num_channels = 0;
 
-	for_each_node_by_name(dp, "se")
+	क्रम_each_node_by_name(dp, "se")
 		num_channels += 2;
-	for_each_node_by_name(dp, "serial") {
-		if (of_device_is_compatible(dp, "sab82532"))
+	क्रम_each_node_by_name(dp, "serial") अणु
+		अगर (of_device_is_compatible(dp, "sab82532"))
 			num_channels += 2;
-	}
+	पूर्ण
 
-	if (num_channels) {
-		sunsab_ports = kcalloc(num_channels,
-				       sizeof(struct uart_sunsab_port),
+	अगर (num_channels) अणु
+		sunsab_ports = kसुस्मृति(num_channels,
+				       माप(काष्ठा uart_sunsab_port),
 				       GFP_KERNEL);
-		if (!sunsab_ports)
-			return -ENOMEM;
+		अगर (!sunsab_ports)
+			वापस -ENOMEM;
 
-		err = sunserial_register_minors(&sunsab_reg, num_channels);
-		if (err) {
-			kfree(sunsab_ports);
-			sunsab_ports = NULL;
+		err = sunserial_रेजिस्टर_minors(&sunsab_reg, num_channels);
+		अगर (err) अणु
+			kमुक्त(sunsab_ports);
+			sunsab_ports = शून्य;
 
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return platform_driver_register(&sab_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&sab_driver);
+पूर्ण
 
-static void __exit sunsab_exit(void)
-{
-	platform_driver_unregister(&sab_driver);
-	if (sunsab_reg.nr) {
-		sunserial_unregister_minors(&sunsab_reg, sunsab_reg.nr);
-	}
+अटल व्योम __निकास sunsab_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&sab_driver);
+	अगर (sunsab_reg.nr) अणु
+		sunserial_unरेजिस्टर_minors(&sunsab_reg, sunsab_reg.nr);
+	पूर्ण
 
-	kfree(sunsab_ports);
-	sunsab_ports = NULL;
-}
+	kमुक्त(sunsab_ports);
+	sunsab_ports = शून्य;
+पूर्ण
 
 module_init(sunsab_init);
-module_exit(sunsab_exit);
+module_निकास(sunsab_निकास);
 
 MODULE_AUTHOR("Eddie C. Dost and David S. Miller");
 MODULE_DESCRIPTION("Sun SAB82532 serial port driver");

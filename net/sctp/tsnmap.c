@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* SCTP kernel implementation
  * (C) Copyright IBM Corp. 2001, 2004
  * Copyright (c) 1999-2000 Cisco, Inc.
@@ -13,240 +14,240 @@
  * email address(es):
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modified by:
+ * Written or modअगरied by:
  *    La Monte H.P. Yarroll <piggy@acm.org>
  *    Jon Grimm             <jgrimm@us.ibm.com>
  *    Karl Knutson          <karl@athena.chicago.il.us>
  *    Sridhar Samudrala     <sri@us.ibm.com>
  */
 
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/bitmap.h>
-#include <net/sctp/sctp.h>
-#include <net/sctp/sm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <net/sctp/sctp.h>
+#समावेश <net/sctp/sm.h>
 
-static void sctp_tsnmap_update(struct sctp_tsnmap *map);
-static void sctp_tsnmap_find_gap_ack(unsigned long *map, __u16 off,
+अटल व्योम sctp_tsnmap_update(काष्ठा sctp_tsnmap *map);
+अटल व्योम sctp_tsnmap_find_gap_ack(अचिन्हित दीर्घ *map, __u16 off,
 				     __u16 len, __u16 *start, __u16 *end);
-static int sctp_tsnmap_grow(struct sctp_tsnmap *map, u16 size);
+अटल पूर्णांक sctp_tsnmap_grow(काष्ठा sctp_tsnmap *map, u16 size);
 
 /* Initialize a block of memory as a tsnmap.  */
-struct sctp_tsnmap *sctp_tsnmap_init(struct sctp_tsnmap *map, __u16 len,
+काष्ठा sctp_tsnmap *sctp_tsnmap_init(काष्ठा sctp_tsnmap *map, __u16 len,
 				     __u32 initial_tsn, gfp_t gfp)
-{
-	if (!map->tsn_map) {
+अणु
+	अगर (!map->tsn_map) अणु
 		map->tsn_map = kzalloc(len>>3, gfp);
-		if (map->tsn_map == NULL)
-			return NULL;
+		अगर (map->tsn_map == शून्य)
+			वापस शून्य;
 
 		map->len = len;
-	} else {
-		bitmap_zero(map->tsn_map, map->len);
-	}
+	पूर्ण अन्यथा अणु
+		biपंचांगap_zero(map->tsn_map, map->len);
+	पूर्ण
 
 	/* Keep track of TSNs represented by tsn_map.  */
 	map->base_tsn = initial_tsn;
-	map->cumulative_tsn_ack_point = initial_tsn - 1;
-	map->max_tsn_seen = map->cumulative_tsn_ack_point;
+	map->cumulative_tsn_ack_poपूर्णांक = initial_tsn - 1;
+	map->max_tsn_seen = map->cumulative_tsn_ack_poपूर्णांक;
 	map->num_dup_tsns = 0;
 
-	return map;
-}
+	वापस map;
+पूर्ण
 
-void sctp_tsnmap_free(struct sctp_tsnmap *map)
-{
+व्योम sctp_tsnmap_मुक्त(काष्ठा sctp_tsnmap *map)
+अणु
 	map->len = 0;
-	kfree(map->tsn_map);
-}
+	kमुक्त(map->tsn_map);
+पूर्ण
 
 /* Test the tracking state of this TSN.
  * Returns:
- *   0 if the TSN has not yet been seen
- *  >0 if the TSN has been seen (duplicate)
- *  <0 if the TSN is invalid (too large to track)
+ *   0 अगर the TSN has not yet been seen
+ *  >0 अगर the TSN has been seen (duplicate)
+ *  <0 अगर the TSN is invalid (too large to track)
  */
-int sctp_tsnmap_check(const struct sctp_tsnmap *map, __u32 tsn)
-{
+पूर्णांक sctp_tsnmap_check(स्थिर काष्ठा sctp_tsnmap *map, __u32 tsn)
+अणु
 	u32 gap;
 
-	/* Check to see if this is an old TSN */
-	if (TSN_lte(tsn, map->cumulative_tsn_ack_point))
-		return 1;
+	/* Check to see अगर this is an old TSN */
+	अगर (TSN_lte(tsn, map->cumulative_tsn_ack_poपूर्णांक))
+		वापस 1;
 
-	/* Verify that we can hold this TSN and that it will not
+	/* Verअगरy that we can hold this TSN and that it will not
 	 * overflow our map
 	 */
-	if (!TSN_lt(tsn, map->base_tsn + SCTP_TSN_MAP_SIZE))
-		return -1;
+	अगर (!TSN_lt(tsn, map->base_tsn + SCTP_TSN_MAP_SIZE))
+		वापस -1;
 
-	/* Calculate the index into the mapping arrays.  */
+	/* Calculate the index पूर्णांकo the mapping arrays.  */
 	gap = tsn - map->base_tsn;
 
-	/* Check to see if TSN has already been recorded.  */
-	if (gap < map->len && test_bit(gap, map->tsn_map))
-		return 1;
-	else
-		return 0;
-}
+	/* Check to see अगर TSN has alपढ़ोy been recorded.  */
+	अगर (gap < map->len && test_bit(gap, map->tsn_map))
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 
 /* Mark this TSN as seen.  */
-int sctp_tsnmap_mark(struct sctp_tsnmap *map, __u32 tsn,
-		     struct sctp_transport *trans)
-{
+पूर्णांक sctp_tsnmap_mark(काष्ठा sctp_tsnmap *map, __u32 tsn,
+		     काष्ठा sctp_transport *trans)
+अणु
 	u16 gap;
 
-	if (TSN_lt(tsn, map->base_tsn))
-		return 0;
+	अगर (TSN_lt(tsn, map->base_tsn))
+		वापस 0;
 
 	gap = tsn - map->base_tsn;
 
-	if (gap >= map->len && !sctp_tsnmap_grow(map, gap + 1))
-		return -ENOMEM;
+	अगर (gap >= map->len && !sctp_tsnmap_grow(map, gap + 1))
+		वापस -ENOMEM;
 
-	if (!sctp_tsnmap_has_gap(map) && gap == 0) {
-		/* In this case the map has no gaps and the tsn we are
-		 * recording is the next expected tsn.  We don't touch
+	अगर (!sctp_tsnmap_has_gap(map) && gap == 0) अणु
+		/* In this हाल the map has no gaps and the tsn we are
+		 * recording is the next expected tsn.  We करोn't touch
 		 * the map but simply bump the values.
 		 */
 		map->max_tsn_seen++;
-		map->cumulative_tsn_ack_point++;
-		if (trans)
+		map->cumulative_tsn_ack_poपूर्णांक++;
+		अगर (trans)
 			trans->sack_generation =
 				trans->asoc->peer.sack_generation;
 		map->base_tsn++;
-	} else {
-		/* Either we already have a gap, or about to record a gap, so
-		 * have work to do.
+	पूर्ण अन्यथा अणु
+		/* Either we alपढ़ोy have a gap, or about to record a gap, so
+		 * have work to करो.
 		 *
 		 * Bump the max.
 		 */
-		if (TSN_lt(map->max_tsn_seen, tsn))
+		अगर (TSN_lt(map->max_tsn_seen, tsn))
 			map->max_tsn_seen = tsn;
 
 		/* Mark the TSN as received.  */
 		set_bit(gap, map->tsn_map);
 
-		/* Go fixup any internal TSN mapping variables including
-		 * cumulative_tsn_ack_point.
+		/* Go fixup any पूर्णांकernal TSN mapping variables including
+		 * cumulative_tsn_ack_poपूर्णांक.
 		 */
 		sctp_tsnmap_update(map);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /* Initialize a Gap Ack Block iterator from memory being provided.  */
-static void sctp_tsnmap_iter_init(const struct sctp_tsnmap *map,
-				  struct sctp_tsnmap_iter *iter)
-{
-	/* Only start looking one past the Cumulative TSN Ack Point.  */
-	iter->start = map->cumulative_tsn_ack_point + 1;
-}
+अटल व्योम sctp_tsnmap_iter_init(स्थिर काष्ठा sctp_tsnmap *map,
+				  काष्ठा sctp_tsnmap_iter *iter)
+अणु
+	/* Only start looking one past the Cumulative TSN Ack Poपूर्णांक.  */
+	iter->start = map->cumulative_tsn_ack_poपूर्णांक + 1;
+पूर्ण
 
-/* Get the next Gap Ack Blocks. Returns 0 if there was not another block
+/* Get the next Gap Ack Blocks. Returns 0 अगर there was not another block
  * to get.
  */
-static int sctp_tsnmap_next_gap_ack(const struct sctp_tsnmap *map,
-				    struct sctp_tsnmap_iter *iter,
+अटल पूर्णांक sctp_tsnmap_next_gap_ack(स्थिर काष्ठा sctp_tsnmap *map,
+				    काष्ठा sctp_tsnmap_iter *iter,
 				    __u16 *start, __u16 *end)
-{
-	int ended = 0;
+अणु
+	पूर्णांक ended = 0;
 	__u16 start_ = 0, end_ = 0, offset;
 
 	/* If there are no more gap acks possible, get out fast.  */
-	if (TSN_lte(map->max_tsn_seen, iter->start))
-		return 0;
+	अगर (TSN_lte(map->max_tsn_seen, iter->start))
+		वापस 0;
 
 	offset = iter->start - map->base_tsn;
 	sctp_tsnmap_find_gap_ack(map->tsn_map, offset, map->len,
 				 &start_, &end_);
 
 	/* The Gap Ack Block happens to end at the end of the map. */
-	if (start_ && !end_)
+	अगर (start_ && !end_)
 		end_ = map->len - 1;
 
-	/* If we found a Gap Ack Block, return the start and end and
-	 * bump the iterator forward.
+	/* If we found a Gap Ack Block, वापस the start and end and
+	 * bump the iterator क्रमward.
 	 */
-	if (end_) {
+	अगर (end_) अणु
 		/* Fix up the start and end based on the
 		 * Cumulative TSN Ack which is always 1 behind base.
 		 */
 		*start = start_ + 1;
 		*end = end_ + 1;
 
-		/* Move the iterator forward.  */
-		iter->start = map->cumulative_tsn_ack_point + *end + 1;
+		/* Move the iterator क्रमward.  */
+		iter->start = map->cumulative_tsn_ack_poपूर्णांक + *end + 1;
 		ended = 1;
-	}
+	पूर्ण
 
-	return ended;
-}
+	वापस ended;
+पूर्ण
 
 /* Mark this and any lower TSN as seen.  */
-void sctp_tsnmap_skip(struct sctp_tsnmap *map, __u32 tsn)
-{
+व्योम sctp_tsnmap_skip(काष्ठा sctp_tsnmap *map, __u32 tsn)
+अणु
 	u32 gap;
 
-	if (TSN_lt(tsn, map->base_tsn))
-		return;
-	if (!TSN_lt(tsn, map->base_tsn + SCTP_TSN_MAP_SIZE))
-		return;
+	अगर (TSN_lt(tsn, map->base_tsn))
+		वापस;
+	अगर (!TSN_lt(tsn, map->base_tsn + SCTP_TSN_MAP_SIZE))
+		वापस;
 
 	/* Bump the max.  */
-	if (TSN_lt(map->max_tsn_seen, tsn))
+	अगर (TSN_lt(map->max_tsn_seen, tsn))
 		map->max_tsn_seen = tsn;
 
 	gap = tsn - map->base_tsn + 1;
 
 	map->base_tsn += gap;
-	map->cumulative_tsn_ack_point += gap;
-	if (gap >= map->len) {
+	map->cumulative_tsn_ack_poपूर्णांक += gap;
+	अगर (gap >= map->len) अणु
 		/* If our gap is larger then the map size, just
 		 * zero out the map.
 		 */
-		bitmap_zero(map->tsn_map, map->len);
-	} else {
+		biपंचांगap_zero(map->tsn_map, map->len);
+	पूर्ण अन्यथा अणु
 		/* If the gap is smaller than the map size,
-		 * shift the map by 'gap' bits and update further.
+		 * shअगरt the map by 'gap' bits and update further.
 		 */
-		bitmap_shift_right(map->tsn_map, map->tsn_map, gap, map->len);
+		biपंचांगap_shअगरt_right(map->tsn_map, map->tsn_map, gap, map->len);
 		sctp_tsnmap_update(map);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /********************************************************************
  * 2nd Level Abstractions
  ********************************************************************/
 
-/* This private helper function updates the tsnmap buffers and
- * the Cumulative TSN Ack Point.
+/* This निजी helper function updates the tsnmap buffers and
+ * the Cumulative TSN Ack Poपूर्णांक.
  */
-static void sctp_tsnmap_update(struct sctp_tsnmap *map)
-{
+अटल व्योम sctp_tsnmap_update(काष्ठा sctp_tsnmap *map)
+अणु
 	u16 len;
-	unsigned long zero_bit;
+	अचिन्हित दीर्घ zero_bit;
 
 
-	len = map->max_tsn_seen - map->cumulative_tsn_ack_point;
+	len = map->max_tsn_seen - map->cumulative_tsn_ack_poपूर्णांक;
 	zero_bit = find_first_zero_bit(map->tsn_map, len);
-	if (!zero_bit)
-		return;		/* The first 0-bit is bit 0.  nothing to do */
+	अगर (!zero_bit)
+		वापस;		/* The first 0-bit is bit 0.  nothing to करो */
 
 	map->base_tsn += zero_bit;
-	map->cumulative_tsn_ack_point += zero_bit;
+	map->cumulative_tsn_ack_poपूर्णांक += zero_bit;
 
-	bitmap_shift_right(map->tsn_map, map->tsn_map, zero_bit, map->len);
-}
+	biपंचांगap_shअगरt_right(map->tsn_map, map->tsn_map, zero_bit, map->len);
+पूर्ण
 
 /* How many data chunks  are we missing from our peer?
  */
-__u16 sctp_tsnmap_pending(struct sctp_tsnmap *map)
-{
-	__u32 cum_tsn = map->cumulative_tsn_ack_point;
+__u16 sctp_tsnmap_pending(काष्ठा sctp_tsnmap *map)
+अणु
+	__u32 cum_tsn = map->cumulative_tsn_ack_poपूर्णांक;
 	__u32 max_tsn = map->max_tsn_seen;
 	__u32 base_tsn = map->base_tsn;
 	__u16 pending_data;
@@ -255,110 +256,110 @@ __u16 sctp_tsnmap_pending(struct sctp_tsnmap *map)
 	pending_data = max_tsn - cum_tsn;
 	gap = max_tsn - base_tsn;
 
-	if (gap == 0 || gap >= map->len)
-		goto out;
+	अगर (gap == 0 || gap >= map->len)
+		जाओ out;
 
-	pending_data -= bitmap_weight(map->tsn_map, gap + 1);
+	pending_data -= biपंचांगap_weight(map->tsn_map, gap + 1);
 out:
-	return pending_data;
-}
+	वापस pending_data;
+पूर्ण
 
-/* This is a private helper for finding Gap Ack Blocks.  It searches a
- * single array for the start and end of a Gap Ack Block.
+/* This is a निजी helper क्रम finding Gap Ack Blocks.  It searches a
+ * single array क्रम the start and end of a Gap Ack Block.
  *
- * The flags "started" and "ended" tell is if we found the beginning
+ * The flags "started" and "ended" tell is अगर we found the beginning
  * or (respectively) the end of a Gap Ack Block.
  */
-static void sctp_tsnmap_find_gap_ack(unsigned long *map, __u16 off,
+अटल व्योम sctp_tsnmap_find_gap_ack(अचिन्हित दीर्घ *map, __u16 off,
 				     __u16 len, __u16 *start, __u16 *end)
-{
-	int i = off;
+अणु
+	पूर्णांक i = off;
 
-	/* Look through the entire array, but break out
-	 * early if we have found the end of the Gap Ack Block.
+	/* Look through the entire array, but अवरोध out
+	 * early अगर we have found the end of the Gap Ack Block.
 	 */
 
 	/* Also, stop looking past the maximum TSN seen. */
 
-	/* Look for the start. */
+	/* Look क्रम the start. */
 	i = find_next_bit(map, len, off);
-	if (i < len)
+	अगर (i < len)
 		*start = i;
 
-	/* Look for the end.  */
-	if (*start) {
+	/* Look क्रम the end.  */
+	अगर (*start) अणु
 		/* We have found the start, let's find the
-		 * end.  If we find the end, break out.
+		 * end.  If we find the end, अवरोध out.
 		 */
 		i = find_next_zero_bit(map, len, i);
-		if (i < len)
+		अगर (i < len)
 			*end = i - 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Renege that we have seen a TSN.  */
-void sctp_tsnmap_renege(struct sctp_tsnmap *map, __u32 tsn)
-{
+व्योम sctp_tsnmap_renege(काष्ठा sctp_tsnmap *map, __u32 tsn)
+अणु
 	u32 gap;
 
-	if (TSN_lt(tsn, map->base_tsn))
-		return;
+	अगर (TSN_lt(tsn, map->base_tsn))
+		वापस;
 	/* Assert: TSN is in range.  */
-	if (!TSN_lt(tsn, map->base_tsn + map->len))
-		return;
+	अगर (!TSN_lt(tsn, map->base_tsn + map->len))
+		वापस;
 
 	gap = tsn - map->base_tsn;
 
 	/* Pretend we never saw the TSN.  */
 	clear_bit(gap, map->tsn_map);
-}
+पूर्ण
 
-/* How many gap ack blocks do we have recorded? */
-__u16 sctp_tsnmap_num_gabs(struct sctp_tsnmap *map,
-			   struct sctp_gap_ack_block *gabs)
-{
-	struct sctp_tsnmap_iter iter;
-	int ngaps = 0;
+/* How many gap ack blocks करो we have recorded? */
+__u16 sctp_tsnmap_num_gअसल(काष्ठा sctp_tsnmap *map,
+			   काष्ठा sctp_gap_ack_block *gअसल)
+अणु
+	काष्ठा sctp_tsnmap_iter iter;
+	पूर्णांक ngaps = 0;
 
-	/* Refresh the gap ack information. */
-	if (sctp_tsnmap_has_gap(map)) {
+	/* Refresh the gap ack inक्रमmation. */
+	अगर (sctp_tsnmap_has_gap(map)) अणु
 		__u16 start = 0, end = 0;
 		sctp_tsnmap_iter_init(map, &iter);
-		while (sctp_tsnmap_next_gap_ack(map, &iter,
+		जबतक (sctp_tsnmap_next_gap_ack(map, &iter,
 						&start,
-						&end)) {
+						&end)) अणु
 
-			gabs[ngaps].start = htons(start);
-			gabs[ngaps].end = htons(end);
+			gअसल[ngaps].start = htons(start);
+			gअसल[ngaps].end = htons(end);
 			ngaps++;
-			if (ngaps >= SCTP_MAX_GABS)
-				break;
-		}
-	}
-	return ngaps;
-}
+			अगर (ngaps >= SCTP_MAX_GABS)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ngaps;
+पूर्ण
 
-static int sctp_tsnmap_grow(struct sctp_tsnmap *map, u16 size)
-{
-	unsigned long *new;
-	unsigned long inc;
+अटल पूर्णांक sctp_tsnmap_grow(काष्ठा sctp_tsnmap *map, u16 size)
+अणु
+	अचिन्हित दीर्घ *new;
+	अचिन्हित दीर्घ inc;
 	u16  len;
 
-	if (size > SCTP_TSN_MAP_SIZE)
-		return 0;
+	अगर (size > SCTP_TSN_MAP_SIZE)
+		वापस 0;
 
 	inc = ALIGN((size - map->len), BITS_PER_LONG) + SCTP_TSN_MAP_INCREMENT;
 	len = min_t(u16, map->len + inc, SCTP_TSN_MAP_SIZE);
 
 	new = kzalloc(len>>3, GFP_ATOMIC);
-	if (!new)
-		return 0;
+	अगर (!new)
+		वापस 0;
 
-	bitmap_copy(new, map->tsn_map,
-		map->max_tsn_seen - map->cumulative_tsn_ack_point);
-	kfree(map->tsn_map);
+	biपंचांगap_copy(new, map->tsn_map,
+		map->max_tsn_seen - map->cumulative_tsn_ack_poपूर्णांक);
+	kमुक्त(map->tsn_map);
 	map->tsn_map = new;
 	map->len = len;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण

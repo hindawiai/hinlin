@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LIBLOCKDEP_LINUX_KALLSYMS_H_
-#define _LIBLOCKDEP_LINUX_KALLSYMS_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LIBLOCKDEP_LINUX_KALLSYMS_H_
+#घोषणा _LIBLOCKDEP_LINUX_KALLSYMS_H_
 
-#include <linux/kernel.h>
-#include <stdio.h>
-#include <unistd.h>
+#समावेश <linux/kernel.h>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
 
-#define KSYM_NAME_LEN 128
+#घोषणा KSYM_NAME_LEN 128
 
-struct module;
+काष्ठा module;
 
-static inline const char *kallsyms_lookup(unsigned long addr,
-					  unsigned long *symbolsize,
-					  unsigned long *offset,
-					  char **modname, char *namebuf)
-{
-	return NULL;
-}
+अटल अंतरभूत स्थिर अक्षर *kallsyms_lookup(अचिन्हित दीर्घ addr,
+					  अचिन्हित दीर्घ *symbolsize,
+					  अचिन्हित दीर्घ *offset,
+					  अक्षर **modname, अक्षर *namebuf)
+अणु
+	वापस शून्य;
+पूर्ण
 
-#include <execinfo.h>
-#include <stdlib.h>
-static inline void print_ip_sym(const char *loglvl, unsigned long ip)
-{
-	char **name;
+#समावेश <execinfo.h>
+#समावेश <मानककोष.स>
+अटल अंतरभूत व्योम prपूर्णांक_ip_sym(स्थिर अक्षर *loglvl, अचिन्हित दीर्घ ip)
+अणु
+	अक्षर **name;
 
-	name = backtrace_symbols((void **)&ip, 1);
+	name = backtrace_symbols((व्योम **)&ip, 1);
 
-	dprintf(STDOUT_FILENO, "%s\n", *name);
+	dम_लिखो(STDOUT_खाताNO, "%s\n", *name);
 
-	free(name);
-}
+	मुक्त(name);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

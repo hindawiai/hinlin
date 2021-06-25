@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,81 +24,81 @@
  *
  */
 
-#include "dm_services.h"
+#समावेश "dm_services.h"
 
-#include "core_types.h"
+#समावेश "core_types.h"
 
-#include "reg_helper.h"
-#include "dcn20_dpp.h"
-#include "basics/conversion.h"
+#समावेश "reg_helper.h"
+#समावेश "dcn20_dpp.h"
+#समावेश "basics/conversion.h"
 
-#include "dcn10/dcn10_cm_common.h"
+#समावेश "dcn10/dcn10_cm_common.h"
 
-#define REG(reg)\
+#घोषणा REG(reg)\
 	dpp->tf_regs->reg
 
-#define IND_REG(index) \
+#घोषणा IND_REG(index) \
 	(index)
 
-#define CTX \
+#घोषणा CTX \
 	dpp->base.ctx
 
-#undef FN
-#define FN(reg_name, field_name) \
-	dpp->tf_shift->field_name, dpp->tf_mask->field_name
+#अघोषित FN
+#घोषणा FN(reg_name, field_name) \
+	dpp->tf_shअगरt->field_name, dpp->tf_mask->field_name
 
 
-static void dpp2_enable_cm_block(
-		struct dpp *dpp_base)
-{
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अटल व्योम dpp2_enable_cm_block(
+		काष्ठा dpp *dpp_base)
+अणु
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
-	unsigned int cm_bypass_mode = 0;
+	अचिन्हित पूर्णांक cm_bypass_mode = 0;
 	//Temp, put CM in bypass mode
-	if (dpp_base->ctx->dc->debug.cm_in_bypass)
+	अगर (dpp_base->ctx->dc->debug.cm_in_bypass)
 		cm_bypass_mode = 1;
 
 	REG_UPDATE(CM_CONTROL, CM_BYPASS, cm_bypass_mode);
-}
+पूर्ण
 
 
-static bool dpp2_degamma_ram_inuse(
-		struct dpp *dpp_base,
+अटल bool dpp2_degamma_ram_inuse(
+		काष्ठा dpp *dpp_base,
 		bool *ram_a_inuse)
-{
+अणु
 	bool ret = false;
-	uint32_t status_reg = 0;
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+	uपूर्णांक32_t status_reg = 0;
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
 	REG_GET(CM_DGAM_LUT_WRITE_EN_MASK, CM_DGAM_CONFIG_STATUS,
 			&status_reg);
 
-	if (status_reg == 3) {
+	अगर (status_reg == 3) अणु
 		*ram_a_inuse = true;
 		ret = true;
-	} else if (status_reg == 4) {
+	पूर्ण अन्यथा अगर (status_reg == 4) अणु
 		*ram_a_inuse = false;
 		ret = true;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void dpp2_program_degamma_lut(
-		struct dpp *dpp_base,
-		const struct pwl_result_data *rgb,
-		uint32_t num,
+अटल व्योम dpp2_program_degamma_lut(
+		काष्ठा dpp *dpp_base,
+		स्थिर काष्ठा pwl_result_data *rgb,
+		uपूर्णांक32_t num,
 		bool is_ram_a)
-{
-	uint32_t i;
+अणु
+	uपूर्णांक32_t i;
 
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 	REG_UPDATE(CM_DGAM_LUT_WRITE_EN_MASK,
 				CM_DGAM_LUT_WRITE_EN_MASK, 7);
 	REG_UPDATE(CM_DGAM_LUT_WRITE_EN_MASK, CM_DGAM_LUT_WRITE_SEL,
 					is_ram_a == true ? 0:1);
 
 	REG_SET(CM_DGAM_LUT_INDEX, 0, CM_DGAM_LUT_INDEX, 0);
-	for (i = 0 ; i < num; i++) {
+	क्रम (i = 0 ; i < num; i++) अणु
 		REG_SET(CM_DGAM_LUT_DATA, 0, CM_DGAM_LUT_DATA, rgb[i].red_reg);
 		REG_SET(CM_DGAM_LUT_DATA, 0, CM_DGAM_LUT_DATA, rgb[i].green_reg);
 		REG_SET(CM_DGAM_LUT_DATA, 0, CM_DGAM_LUT_DATA, rgb[i].blue_reg);
@@ -109,71 +110,71 @@ static void dpp2_program_degamma_lut(
 		REG_SET(CM_DGAM_LUT_DATA, 0,
 				CM_DGAM_LUT_DATA, rgb[i].delta_blue_reg);
 
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-void dpp2_set_degamma_pwl(
-		struct dpp *dpp_base,
-		const struct pwl_params *params)
-{
+व्योम dpp2_set_degamma_pwl(
+		काष्ठा dpp *dpp_base,
+		स्थिर काष्ठा pwl_params *params)
+अणु
 	bool is_ram_a = true;
 
-	dpp1_power_on_degamma_lut(dpp_base, true);
+	dpp1_घातer_on_degamma_lut(dpp_base, true);
 	dpp2_enable_cm_block(dpp_base);
 	dpp2_degamma_ram_inuse(dpp_base, &is_ram_a);
-	if (is_ram_a == true)
+	अगर (is_ram_a == true)
 		dpp1_program_degamma_lutb_settings(dpp_base, params);
-	else
+	अन्यथा
 		dpp1_program_degamma_luta_settings(dpp_base, params);
 
-	dpp2_program_degamma_lut(dpp_base, params->rgb_resulted, params->hw_points_num, !is_ram_a);
+	dpp2_program_degamma_lut(dpp_base, params->rgb_resulted, params->hw_poपूर्णांकs_num, !is_ram_a);
 	dpp1_degamma_ram_select(dpp_base, !is_ram_a);
-}
+पूर्ण
 
-void dpp2_set_degamma(
-		struct dpp *dpp_base,
-		enum ipp_degamma_mode mode)
-{
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+व्योम dpp2_set_degamma(
+		काष्ठा dpp *dpp_base,
+		क्रमागत ipp_degamma_mode mode)
+अणु
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 	dpp2_enable_cm_block(dpp_base);
 
-	switch (mode) {
-	case IPP_DEGAMMA_MODE_BYPASS:
-		/* Setting de gamma bypass for now */
+	चयन (mode) अणु
+	हाल IPP_DEGAMMA_MODE_BYPASS:
+		/* Setting de gamma bypass क्रम now */
 		REG_UPDATE(CM_DGAM_CONTROL, CM_DGAM_LUT_MODE, 0);
-		break;
-	case IPP_DEGAMMA_MODE_HW_sRGB:
+		अवरोध;
+	हाल IPP_DEGAMMA_MODE_HW_sRGB:
 		REG_UPDATE(CM_DGAM_CONTROL, CM_DGAM_LUT_MODE, 1);
-		break;
-	case IPP_DEGAMMA_MODE_HW_xvYCC:
+		अवरोध;
+	हाल IPP_DEGAMMA_MODE_HW_xvYCC:
 		REG_UPDATE(CM_DGAM_CONTROL, CM_DGAM_LUT_MODE, 2);
-			break;
-	case IPP_DEGAMMA_MODE_USER_PWL:
+			अवरोध;
+	हाल IPP_DEGAMMA_MODE_USER_PWL:
 		REG_UPDATE(CM_DGAM_CONTROL, CM_DGAM_LUT_MODE, 3);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BREAK_TO_DEBUGGER();
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void program_gamut_remap(
-		struct dcn20_dpp *dpp,
-		const uint16_t *regval,
-		enum dcn20_gamut_remap_select select)
-{
-	uint32_t cur_select = 0;
-	struct color_matrices_reg gam_regs;
+अटल व्योम program_gamut_remap(
+		काष्ठा dcn20_dpp *dpp,
+		स्थिर uपूर्णांक16_t *regval,
+		क्रमागत dcn20_gamut_remap_select select)
+अणु
+	uपूर्णांक32_t cur_select = 0;
+	काष्ठा color_matrices_reg gam_regs;
 
-	if (regval == NULL || select == DCN2_GAMUT_REMAP_BYPASS) {
+	अगर (regval == शून्य || select == DCN2_GAMUT_REMAP_BYPASS) अणु
 		REG_SET(CM_GAMUT_REMAP_CONTROL, 0,
 				CM_GAMUT_REMAP_MODE, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* determine which gamut_remap coefficients (A or B) we are using
-	 * currently. select the alternate set to double buffer
+	 * currently. select the alternate set to द्विगुन buffer
 	 * the update so gamut_remap is updated on frame boundary
 	 */
 	IX_REG_GET(CM_TEST_DEBUG_INDEX, CM_TEST_DEBUG_DATA,
@@ -181,23 +182,23 @@ static void program_gamut_remap(
 					CM_TEST_DEBUG_DATA_GAMUT_REMAP_MODE, &cur_select);
 
 	/* value stored in dbg reg will be 1 greater than mode we want */
-	if (cur_select != DCN2_GAMUT_REMAP_COEF_A)
+	अगर (cur_select != DCN2_GAMUT_REMAP_COEF_A)
 		select = DCN2_GAMUT_REMAP_COEF_A;
-	else
+	अन्यथा
 		select = DCN2_GAMUT_REMAP_COEF_B;
 
-	gam_regs.shifts.csc_c11 = dpp->tf_shift->CM_GAMUT_REMAP_C11;
+	gam_regs.shअगरts.csc_c11 = dpp->tf_shअगरt->CM_GAMUT_REMAP_C11;
 	gam_regs.masks.csc_c11  = dpp->tf_mask->CM_GAMUT_REMAP_C11;
-	gam_regs.shifts.csc_c12 = dpp->tf_shift->CM_GAMUT_REMAP_C12;
+	gam_regs.shअगरts.csc_c12 = dpp->tf_shअगरt->CM_GAMUT_REMAP_C12;
 	gam_regs.masks.csc_c12 = dpp->tf_mask->CM_GAMUT_REMAP_C12;
 
-	if (select == DCN2_GAMUT_REMAP_COEF_A) {
+	अगर (select == DCN2_GAMUT_REMAP_COEF_A) अणु
 		gam_regs.csc_c11_c12 = REG(CM_GAMUT_REMAP_C11_C12);
 		gam_regs.csc_c33_c34 = REG(CM_GAMUT_REMAP_C33_C34);
-	} else {
+	पूर्ण अन्यथा अणु
 		gam_regs.csc_c11_c12 = REG(CM_GAMUT_REMAP_B_C11_C12);
 		gam_regs.csc_c33_c34 = REG(CM_GAMUT_REMAP_B_C33_C34);
-	}
+	पूर्ण
 
 	cm_helper_program_color_matrices(
 				dpp->base.ctx,
@@ -208,95 +209,95 @@ static void program_gamut_remap(
 			CM_GAMUT_REMAP_CONTROL, 0,
 			CM_GAMUT_REMAP_MODE, select);
 
-}
+पूर्ण
 
-void dpp2_cm_set_gamut_remap(
-	struct dpp *dpp_base,
-	const struct dpp_grph_csc_adjustment *adjust)
-{
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
-	int i = 0;
+व्योम dpp2_cm_set_gamut_remap(
+	काष्ठा dpp *dpp_base,
+	स्थिर काष्ठा dpp_grph_csc_adjusपंचांगent *adjust)
+अणु
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+	पूर्णांक i = 0;
 
-	if (adjust->gamut_adjust_type != GRAPHICS_GAMUT_ADJUST_TYPE_SW)
-		/* Bypass if type is bypass or hw */
-		program_gamut_remap(dpp, NULL, DCN2_GAMUT_REMAP_BYPASS);
-	else {
-		struct fixed31_32 arr_matrix[12];
-		uint16_t arr_reg_val[12];
+	अगर (adjust->gamut_adjust_type != GRAPHICS_GAMUT_ADJUST_TYPE_SW)
+		/* Bypass अगर type is bypass or hw */
+		program_gamut_remap(dpp, शून्य, DCN2_GAMUT_REMAP_BYPASS);
+	अन्यथा अणु
+		काष्ठा fixed31_32 arr_matrix[12];
+		uपूर्णांक16_t arr_reg_val[12];
 
-		for (i = 0; i < 12; i++)
+		क्रम (i = 0; i < 12; i++)
 			arr_matrix[i] = adjust->temperature_matrix[i];
 
-		convert_float_matrix(
+		convert_भग्न_matrix(
 			arr_reg_val, arr_matrix, 12);
 
 		program_gamut_remap(dpp, arr_reg_val, DCN2_GAMUT_REMAP_COEF_A);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void dpp2_program_input_csc(
-		struct dpp *dpp_base,
-		enum dc_color_space color_space,
-		enum dcn20_input_csc_select input_select,
-		const struct out_csc_color_matrix *tbl_entry)
-{
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
-	int i;
-	int arr_size = sizeof(dpp_input_csc_matrix)/sizeof(struct dpp_input_csc_matrix);
-	const uint16_t *regval = NULL;
-	uint32_t cur_select = 0;
-	enum dcn20_input_csc_select select;
-	struct color_matrices_reg icsc_regs;
+व्योम dpp2_program_input_csc(
+		काष्ठा dpp *dpp_base,
+		क्रमागत dc_color_space color_space,
+		क्रमागत dcn20_input_csc_select input_select,
+		स्थिर काष्ठा out_csc_color_matrix *tbl_entry)
+अणु
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+	पूर्णांक i;
+	पूर्णांक arr_size = माप(dpp_input_csc_matrix)/माप(काष्ठा dpp_input_csc_matrix);
+	स्थिर uपूर्णांक16_t *regval = शून्य;
+	uपूर्णांक32_t cur_select = 0;
+	क्रमागत dcn20_input_csc_select select;
+	काष्ठा color_matrices_reg icsc_regs;
 
-	if (input_select == DCN2_ICSC_SELECT_BYPASS) {
+	अगर (input_select == DCN2_ICSC_SELECT_BYPASS) अणु
 		REG_SET(CM_ICSC_CONTROL, 0, CM_ICSC_MODE, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (tbl_entry == NULL) {
-		for (i = 0; i < arr_size; i++)
-			if (dpp_input_csc_matrix[i].color_space == color_space) {
+	अगर (tbl_entry == शून्य) अणु
+		क्रम (i = 0; i < arr_size; i++)
+			अगर (dpp_input_csc_matrix[i].color_space == color_space) अणु
 				regval = dpp_input_csc_matrix[i].regval;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-		if (regval == NULL) {
+		अगर (regval == शून्य) अणु
 			BREAK_TO_DEBUGGER();
-			return;
-		}
-	} else {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		regval = tbl_entry->regval;
-	}
+	पूर्ण
 
 	/* determine which CSC coefficients (A or B) we are using
-	 * currently.  select the alternate set to double buffer
+	 * currently.  select the alternate set to द्विगुन buffer
 	 * the CSC update so CSC is updated on frame boundary
 	 */
 	IX_REG_GET(CM_TEST_DEBUG_INDEX, CM_TEST_DEBUG_DATA,
 					CM_TEST_DEBUG_DATA_STATUS_IDX,
 					CM_TEST_DEBUG_DATA_ICSC_MODE, &cur_select);
 
-	if (cur_select != DCN2_ICSC_SELECT_ICSC_A)
+	अगर (cur_select != DCN2_ICSC_SELECT_ICSC_A)
 		select = DCN2_ICSC_SELECT_ICSC_A;
-	else
+	अन्यथा
 		select = DCN2_ICSC_SELECT_ICSC_B;
 
-	icsc_regs.shifts.csc_c11 = dpp->tf_shift->CM_ICSC_C11;
+	icsc_regs.shअगरts.csc_c11 = dpp->tf_shअगरt->CM_ICSC_C11;
 	icsc_regs.masks.csc_c11  = dpp->tf_mask->CM_ICSC_C11;
-	icsc_regs.shifts.csc_c12 = dpp->tf_shift->CM_ICSC_C12;
+	icsc_regs.shअगरts.csc_c12 = dpp->tf_shअगरt->CM_ICSC_C12;
 	icsc_regs.masks.csc_c12 = dpp->tf_mask->CM_ICSC_C12;
 
-	if (select == DCN2_ICSC_SELECT_ICSC_A) {
+	अगर (select == DCN2_ICSC_SELECT_ICSC_A) अणु
 
 		icsc_regs.csc_c11_c12 = REG(CM_ICSC_C11_C12);
 		icsc_regs.csc_c33_c34 = REG(CM_ICSC_C33_C34);
 
-	} else {
+	पूर्ण अन्यथा अणु
 
 		icsc_regs.csc_c11_c12 = REG(CM_ICSC_B_C11_C12);
 		icsc_regs.csc_c33_c34 = REG(CM_ICSC_B_C33_C34);
 
-	}
+	पूर्ण
 
 	cm_helper_program_color_matrices(
 			dpp->base.ctx,
@@ -305,41 +306,41 @@ void dpp2_program_input_csc(
 
 	REG_SET(CM_ICSC_CONTROL, 0,
 				CM_ICSC_MODE, select);
-}
+पूर्ण
 
-static void dpp20_power_on_blnd_lut(
-	struct dpp *dpp_base,
-	bool power_on)
-{
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अटल व्योम dpp20_घातer_on_blnd_lut(
+	काष्ठा dpp *dpp_base,
+	bool घातer_on)
+अणु
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
 	REG_SET(CM_MEM_PWR_CTRL, 0,
-			BLNDGAM_MEM_PWR_FORCE, power_on == true ? 0:1);
+			BLNDGAM_MEM_PWR_FORCE, घातer_on == true ? 0:1);
 
-}
+पूर्ण
 
-static void dpp20_configure_blnd_lut(
-		struct dpp *dpp_base,
+अटल व्योम dpp20_configure_blnd_lut(
+		काष्ठा dpp *dpp_base,
 		bool is_ram_a)
-{
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अणु
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
 	REG_UPDATE(CM_BLNDGAM_LUT_WRITE_EN_MASK,
 			CM_BLNDGAM_LUT_WRITE_EN_MASK, 7);
 	REG_UPDATE(CM_BLNDGAM_LUT_WRITE_EN_MASK,
 			CM_BLNDGAM_LUT_WRITE_SEL, is_ram_a == true ? 0:1);
 	REG_SET(CM_BLNDGAM_LUT_INDEX, 0, CM_BLNDGAM_LUT_INDEX, 0);
-}
+पूर्ण
 
-static void dpp20_program_blnd_pwl(
-		struct dpp *dpp_base,
-		const struct pwl_result_data *rgb,
-		uint32_t num)
-{
-	uint32_t i;
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अटल व्योम dpp20_program_blnd_pwl(
+		काष्ठा dpp *dpp_base,
+		स्थिर काष्ठा pwl_result_data *rgb,
+		uपूर्णांक32_t num)
+अणु
+	uपूर्णांक32_t i;
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
-	for (i = 0 ; i < num; i++) {
+	क्रम (i = 0 ; i < num; i++) अणु
 		REG_SET(CM_BLNDGAM_LUT_DATA, 0, CM_BLNDGAM_LUT_DATA, rgb[i].red_reg);
 		REG_SET(CM_BLNDGAM_LUT_DATA, 0, CM_BLNDGAM_LUT_DATA, rgb[i].green_reg);
 		REG_SET(CM_BLNDGAM_LUT_DATA, 0, CM_BLNDGAM_LUT_DATA, rgb[i].blue_reg);
@@ -351,44 +352,44 @@ static void dpp20_program_blnd_pwl(
 		REG_SET(CM_BLNDGAM_LUT_DATA, 0,
 				CM_BLNDGAM_LUT_DATA, rgb[i].delta_blue_reg);
 
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-static void dcn20_dpp_cm_get_reg_field(
-		struct dcn20_dpp *dpp,
-		struct xfer_func_reg *reg)
-{
-	reg->shifts.exp_region0_lut_offset = dpp->tf_shift->CM_BLNDGAM_RAMA_EXP_REGION0_LUT_OFFSET;
+अटल व्योम dcn20_dpp_cm_get_reg_field(
+		काष्ठा dcn20_dpp *dpp,
+		काष्ठा xfer_func_reg *reg)
+अणु
+	reg->shअगरts.exp_region0_lut_offset = dpp->tf_shअगरt->CM_BLNDGAM_RAMA_EXP_REGION0_LUT_OFFSET;
 	reg->masks.exp_region0_lut_offset = dpp->tf_mask->CM_BLNDGAM_RAMA_EXP_REGION0_LUT_OFFSET;
-	reg->shifts.exp_region0_num_segments = dpp->tf_shift->CM_BLNDGAM_RAMA_EXP_REGION0_NUM_SEGMENTS;
+	reg->shअगरts.exp_region0_num_segments = dpp->tf_shअगरt->CM_BLNDGAM_RAMA_EXP_REGION0_NUM_SEGMENTS;
 	reg->masks.exp_region0_num_segments = dpp->tf_mask->CM_BLNDGAM_RAMA_EXP_REGION0_NUM_SEGMENTS;
-	reg->shifts.exp_region1_lut_offset = dpp->tf_shift->CM_BLNDGAM_RAMA_EXP_REGION1_LUT_OFFSET;
+	reg->shअगरts.exp_region1_lut_offset = dpp->tf_shअगरt->CM_BLNDGAM_RAMA_EXP_REGION1_LUT_OFFSET;
 	reg->masks.exp_region1_lut_offset = dpp->tf_mask->CM_BLNDGAM_RAMA_EXP_REGION1_LUT_OFFSET;
-	reg->shifts.exp_region1_num_segments = dpp->tf_shift->CM_BLNDGAM_RAMA_EXP_REGION1_NUM_SEGMENTS;
+	reg->shअगरts.exp_region1_num_segments = dpp->tf_shअगरt->CM_BLNDGAM_RAMA_EXP_REGION1_NUM_SEGMENTS;
 	reg->masks.exp_region1_num_segments = dpp->tf_mask->CM_BLNDGAM_RAMA_EXP_REGION1_NUM_SEGMENTS;
 
-	reg->shifts.field_region_end = dpp->tf_shift->CM_BLNDGAM_RAMA_EXP_REGION_END_B;
+	reg->shअगरts.field_region_end = dpp->tf_shअगरt->CM_BLNDGAM_RAMA_EXP_REGION_END_B;
 	reg->masks.field_region_end = dpp->tf_mask->CM_BLNDGAM_RAMA_EXP_REGION_END_B;
-	reg->shifts.field_region_end_slope = dpp->tf_shift->CM_BLNDGAM_RAMA_EXP_REGION_END_SLOPE_B;
+	reg->shअगरts.field_region_end_slope = dpp->tf_shअगरt->CM_BLNDGAM_RAMA_EXP_REGION_END_SLOPE_B;
 	reg->masks.field_region_end_slope = dpp->tf_mask->CM_BLNDGAM_RAMA_EXP_REGION_END_SLOPE_B;
-	reg->shifts.field_region_end_base = dpp->tf_shift->CM_BLNDGAM_RAMA_EXP_REGION_END_BASE_B;
+	reg->shअगरts.field_region_end_base = dpp->tf_shअगरt->CM_BLNDGAM_RAMA_EXP_REGION_END_BASE_B;
 	reg->masks.field_region_end_base = dpp->tf_mask->CM_BLNDGAM_RAMA_EXP_REGION_END_BASE_B;
-	reg->shifts.field_region_linear_slope = dpp->tf_shift->CM_BLNDGAM_RAMA_EXP_REGION_LINEAR_SLOPE_B;
+	reg->shअगरts.field_region_linear_slope = dpp->tf_shअगरt->CM_BLNDGAM_RAMA_EXP_REGION_LINEAR_SLOPE_B;
 	reg->masks.field_region_linear_slope = dpp->tf_mask->CM_BLNDGAM_RAMA_EXP_REGION_LINEAR_SLOPE_B;
-	reg->shifts.exp_region_start = dpp->tf_shift->CM_BLNDGAM_RAMA_EXP_REGION_START_B;
+	reg->shअगरts.exp_region_start = dpp->tf_shअगरt->CM_BLNDGAM_RAMA_EXP_REGION_START_B;
 	reg->masks.exp_region_start = dpp->tf_mask->CM_BLNDGAM_RAMA_EXP_REGION_START_B;
-	reg->shifts.exp_resion_start_segment = dpp->tf_shift->CM_BLNDGAM_RAMA_EXP_REGION_START_SEGMENT_B;
+	reg->shअगरts.exp_resion_start_segment = dpp->tf_shअगरt->CM_BLNDGAM_RAMA_EXP_REGION_START_SEGMENT_B;
 	reg->masks.exp_resion_start_segment = dpp->tf_mask->CM_BLNDGAM_RAMA_EXP_REGION_START_SEGMENT_B;
-}
+पूर्ण
 
 /*program blnd lut RAM A*/
-static void dpp20_program_blnd_luta_settings(
-		struct dpp *dpp_base,
-		const struct pwl_params *params)
-{
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
-	struct xfer_func_reg gam_regs;
+अटल व्योम dpp20_program_blnd_luta_settings(
+		काष्ठा dpp *dpp_base,
+		स्थिर काष्ठा pwl_params *params)
+अणु
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+	काष्ठा xfer_func_reg gam_regs;
 
 	dcn20_dpp_cm_get_reg_field(dpp, &gam_regs);
 
@@ -408,15 +409,15 @@ static void dpp20_program_blnd_luta_settings(
 	gam_regs.region_end = REG(CM_BLNDGAM_RAMA_REGION_32_33);
 
 	cm_helper_program_xfer_func(dpp->base.ctx, params, &gam_regs);
-}
+पूर्ण
 
 /*program blnd lut RAM B*/
-static void dpp20_program_blnd_lutb_settings(
-		struct dpp *dpp_base,
-		const struct pwl_params *params)
-{
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
-	struct xfer_func_reg gam_regs;
+अटल व्योम dpp20_program_blnd_lutb_settings(
+		काष्ठा dpp *dpp_base,
+		स्थिर काष्ठा pwl_params *params)
+अणु
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+	काष्ठा xfer_func_reg gam_regs;
 
 	dcn20_dpp_cm_get_reg_field(dpp, &gam_regs);
 
@@ -436,81 +437,81 @@ static void dpp20_program_blnd_lutb_settings(
 	gam_regs.region_end = REG(CM_BLNDGAM_RAMB_REGION_32_33);
 
 	cm_helper_program_xfer_func(dpp->base.ctx, params, &gam_regs);
-}
+पूर्ण
 
-static enum dc_lut_mode dpp20_get_blndgam_current(struct dpp *dpp_base)
-{
-	enum dc_lut_mode mode;
-	uint32_t state_mode;
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अटल क्रमागत dc_lut_mode dpp20_get_blndgam_current(काष्ठा dpp *dpp_base)
+अणु
+	क्रमागत dc_lut_mode mode;
+	uपूर्णांक32_t state_mode;
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
 	REG_GET(CM_BLNDGAM_LUT_WRITE_EN_MASK,
 					CM_BLNDGAM_CONFIG_STATUS, &state_mode);
 
-		switch (state_mode) {
-		case 0:
+		चयन (state_mode) अणु
+		हाल 0:
 			mode = LUT_BYPASS;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			mode = LUT_RAM_A;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			mode = LUT_RAM_B;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			mode = LUT_BYPASS;
-			break;
-		}
-		return mode;
-}
+			अवरोध;
+		पूर्ण
+		वापस mode;
+पूर्ण
 
 bool dpp20_program_blnd_lut(
-	struct dpp *dpp_base, const struct pwl_params *params)
-{
-	enum dc_lut_mode current_mode;
-	enum dc_lut_mode next_mode;
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+	काष्ठा dpp *dpp_base, स्थिर काष्ठा pwl_params *params)
+अणु
+	क्रमागत dc_lut_mode current_mode;
+	क्रमागत dc_lut_mode next_mode;
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
-	if (params == NULL) {
+	अगर (params == शून्य) अणु
 		REG_SET(CM_BLNDGAM_CONTROL, 0, CM_BLNDGAM_LUT_MODE, 0);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	current_mode = dpp20_get_blndgam_current(dpp_base);
-	if (current_mode == LUT_BYPASS || current_mode == LUT_RAM_A)
+	अगर (current_mode == LUT_BYPASS || current_mode == LUT_RAM_A)
 		next_mode = LUT_RAM_B;
-	else
+	अन्यथा
 		next_mode = LUT_RAM_A;
 
-	dpp20_power_on_blnd_lut(dpp_base, true);
+	dpp20_घातer_on_blnd_lut(dpp_base, true);
 	dpp20_configure_blnd_lut(dpp_base, next_mode == LUT_RAM_A ? true:false);
 
-	if (next_mode == LUT_RAM_A)
+	अगर (next_mode == LUT_RAM_A)
 		dpp20_program_blnd_luta_settings(dpp_base, params);
-	else
+	अन्यथा
 		dpp20_program_blnd_lutb_settings(dpp_base, params);
 
 	dpp20_program_blnd_pwl(
-			dpp_base, params->rgb_resulted, params->hw_points_num);
+			dpp_base, params->rgb_resulted, params->hw_poपूर्णांकs_num);
 
 	REG_SET(CM_BLNDGAM_CONTROL, 0, CM_BLNDGAM_LUT_MODE,
 			next_mode == LUT_RAM_A ? 1:2);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 
-static void dpp20_program_shaper_lut(
-		struct dpp *dpp_base,
-		const struct pwl_result_data *rgb,
-		uint32_t num)
-{
-	uint32_t i, red, green, blue;
-	uint32_t  red_delta, green_delta, blue_delta;
-	uint32_t  red_value, green_value, blue_value;
+अटल व्योम dpp20_program_shaper_lut(
+		काष्ठा dpp *dpp_base,
+		स्थिर काष्ठा pwl_result_data *rgb,
+		uपूर्णांक32_t num)
+अणु
+	uपूर्णांक32_t i, red, green, blue;
+	uपूर्णांक32_t  red_delta, green_delta, blue_delta;
+	uपूर्णांक32_t  red_value, green_value, blue_value;
 
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
-	for (i = 0 ; i < num; i++) {
+	क्रम (i = 0 ; i < num; i++) अणु
 
 		red   = rgb[i].red_reg;
 		green = rgb[i].green_reg;
@@ -527,81 +528,81 @@ static void dpp20_program_shaper_lut(
 		REG_SET(CM_SHAPER_LUT_DATA, 0, CM_SHAPER_LUT_DATA, red_value);
 		REG_SET(CM_SHAPER_LUT_DATA, 0, CM_SHAPER_LUT_DATA, green_value);
 		REG_SET(CM_SHAPER_LUT_DATA, 0, CM_SHAPER_LUT_DATA, blue_value);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-static enum dc_lut_mode dpp20_get_shaper_current(struct dpp *dpp_base)
-{
-	enum dc_lut_mode mode;
-	uint32_t state_mode;
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अटल क्रमागत dc_lut_mode dpp20_get_shaper_current(काष्ठा dpp *dpp_base)
+अणु
+	क्रमागत dc_lut_mode mode;
+	uपूर्णांक32_t state_mode;
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
 	REG_GET(CM_SHAPER_LUT_WRITE_EN_MASK,
 			CM_SHAPER_CONFIG_STATUS, &state_mode);
 
-		switch (state_mode) {
-		case 0:
+		चयन (state_mode) अणु
+		हाल 0:
 			mode = LUT_BYPASS;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			mode = LUT_RAM_A;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			mode = LUT_RAM_B;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			mode = LUT_BYPASS;
-			break;
-		}
-		return mode;
-}
+			अवरोध;
+		पूर्ण
+		वापस mode;
+पूर्ण
 
-static void dpp20_configure_shaper_lut(
-		struct dpp *dpp_base,
+अटल व्योम dpp20_configure_shaper_lut(
+		काष्ठा dpp *dpp_base,
 		bool is_ram_a)
-{
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अणु
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
 	REG_UPDATE(CM_SHAPER_LUT_WRITE_EN_MASK,
 			CM_SHAPER_LUT_WRITE_EN_MASK, 7);
 	REG_UPDATE(CM_SHAPER_LUT_WRITE_EN_MASK,
 			CM_SHAPER_LUT_WRITE_SEL, is_ram_a == true ? 0:1);
 	REG_SET(CM_SHAPER_LUT_INDEX, 0, CM_SHAPER_LUT_INDEX, 0);
-}
+पूर्ण
 
 /*program shaper RAM A*/
 
-static void dpp20_program_shaper_luta_settings(
-		struct dpp *dpp_base,
-		const struct pwl_params *params)
-{
-	const struct gamma_curve *curve;
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अटल व्योम dpp20_program_shaper_luta_settings(
+		काष्ठा dpp *dpp_base,
+		स्थिर काष्ठा pwl_params *params)
+अणु
+	स्थिर काष्ठा gamma_curve *curve;
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
 	REG_SET_2(CM_SHAPER_RAMA_START_CNTL_B, 0,
-		CM_SHAPER_RAMA_EXP_REGION_START_B, params->corner_points[0].blue.custom_float_x,
+		CM_SHAPER_RAMA_EXP_REGION_START_B, params->corner_poपूर्णांकs[0].blue.custom_भग्न_x,
 		CM_SHAPER_RAMA_EXP_REGION_START_SEGMENT_B, 0);
 	REG_SET_2(CM_SHAPER_RAMA_START_CNTL_G, 0,
-		CM_SHAPER_RAMA_EXP_REGION_START_G, params->corner_points[0].green.custom_float_x,
+		CM_SHAPER_RAMA_EXP_REGION_START_G, params->corner_poपूर्णांकs[0].green.custom_भग्न_x,
 		CM_SHAPER_RAMA_EXP_REGION_START_SEGMENT_G, 0);
 	REG_SET_2(CM_SHAPER_RAMA_START_CNTL_R, 0,
-		CM_SHAPER_RAMA_EXP_REGION_START_R, params->corner_points[0].red.custom_float_x,
+		CM_SHAPER_RAMA_EXP_REGION_START_R, params->corner_poपूर्णांकs[0].red.custom_भग्न_x,
 		CM_SHAPER_RAMA_EXP_REGION_START_SEGMENT_R, 0);
 
 	REG_SET_2(CM_SHAPER_RAMA_END_CNTL_B, 0,
-		CM_SHAPER_RAMA_EXP_REGION_END_B, params->corner_points[1].blue.custom_float_x,
-		CM_SHAPER_RAMA_EXP_REGION_END_BASE_B, params->corner_points[1].blue.custom_float_y);
+		CM_SHAPER_RAMA_EXP_REGION_END_B, params->corner_poपूर्णांकs[1].blue.custom_भग्न_x,
+		CM_SHAPER_RAMA_EXP_REGION_END_BASE_B, params->corner_poपूर्णांकs[1].blue.custom_भग्न_y);
 
 	REG_SET_2(CM_SHAPER_RAMA_END_CNTL_G, 0,
-		CM_SHAPER_RAMA_EXP_REGION_END_G, params->corner_points[1].green.custom_float_x,
-		CM_SHAPER_RAMA_EXP_REGION_END_BASE_G, params->corner_points[1].green.custom_float_y);
+		CM_SHAPER_RAMA_EXP_REGION_END_G, params->corner_poपूर्णांकs[1].green.custom_भग्न_x,
+		CM_SHAPER_RAMA_EXP_REGION_END_BASE_G, params->corner_poपूर्णांकs[1].green.custom_भग्न_y);
 
 	REG_SET_2(CM_SHAPER_RAMA_END_CNTL_R, 0,
-		CM_SHAPER_RAMA_EXP_REGION_END_R, params->corner_points[1].red.custom_float_x,
-		CM_SHAPER_RAMA_EXP_REGION_END_BASE_R, params->corner_points[1].red.custom_float_y);
+		CM_SHAPER_RAMA_EXP_REGION_END_R, params->corner_poपूर्णांकs[1].red.custom_भग्न_x,
+		CM_SHAPER_RAMA_EXP_REGION_END_BASE_R, params->corner_poपूर्णांकs[1].red.custom_भग्न_y);
 
-	curve = params->arr_curve_points;
+	curve = params->arr_curve_poपूर्णांकs;
 	REG_SET_4(CM_SHAPER_RAMA_REGION_0_1, 0,
 		CM_SHAPER_RAMA_EXP_REGION0_LUT_OFFSET, curve[0].offset,
 		CM_SHAPER_RAMA_EXP_REGION0_NUM_SEGMENTS, curve[0].segments_num,
@@ -719,39 +720,39 @@ static void dpp20_program_shaper_luta_settings(
 		CM_SHAPER_RAMA_EXP_REGION32_NUM_SEGMENTS, curve[0].segments_num,
 		CM_SHAPER_RAMA_EXP_REGION33_LUT_OFFSET, curve[1].offset,
 		CM_SHAPER_RAMA_EXP_REGION33_NUM_SEGMENTS, curve[1].segments_num);
-}
+पूर्ण
 
 /*program shaper RAM B*/
-static void dpp20_program_shaper_lutb_settings(
-		struct dpp *dpp_base,
-		const struct pwl_params *params)
-{
-	const struct gamma_curve *curve;
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अटल व्योम dpp20_program_shaper_lutb_settings(
+		काष्ठा dpp *dpp_base,
+		स्थिर काष्ठा pwl_params *params)
+अणु
+	स्थिर काष्ठा gamma_curve *curve;
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
 	REG_SET_2(CM_SHAPER_RAMB_START_CNTL_B, 0,
-		CM_SHAPER_RAMB_EXP_REGION_START_B, params->corner_points[0].blue.custom_float_x,
+		CM_SHAPER_RAMB_EXP_REGION_START_B, params->corner_poपूर्णांकs[0].blue.custom_भग्न_x,
 		CM_SHAPER_RAMB_EXP_REGION_START_SEGMENT_B, 0);
 	REG_SET_2(CM_SHAPER_RAMB_START_CNTL_G, 0,
-		CM_SHAPER_RAMB_EXP_REGION_START_G, params->corner_points[0].green.custom_float_x,
+		CM_SHAPER_RAMB_EXP_REGION_START_G, params->corner_poपूर्णांकs[0].green.custom_भग्न_x,
 		CM_SHAPER_RAMB_EXP_REGION_START_SEGMENT_G, 0);
 	REG_SET_2(CM_SHAPER_RAMB_START_CNTL_R, 0,
-		CM_SHAPER_RAMB_EXP_REGION_START_R, params->corner_points[0].red.custom_float_x,
+		CM_SHAPER_RAMB_EXP_REGION_START_R, params->corner_poपूर्णांकs[0].red.custom_भग्न_x,
 		CM_SHAPER_RAMB_EXP_REGION_START_SEGMENT_R, 0);
 
 	REG_SET_2(CM_SHAPER_RAMB_END_CNTL_B, 0,
-		CM_SHAPER_RAMB_EXP_REGION_END_B, params->corner_points[1].blue.custom_float_x,
-		CM_SHAPER_RAMB_EXP_REGION_END_BASE_B, params->corner_points[1].blue.custom_float_y);
+		CM_SHAPER_RAMB_EXP_REGION_END_B, params->corner_poपूर्णांकs[1].blue.custom_भग्न_x,
+		CM_SHAPER_RAMB_EXP_REGION_END_BASE_B, params->corner_poपूर्णांकs[1].blue.custom_भग्न_y);
 
 	REG_SET_2(CM_SHAPER_RAMB_END_CNTL_G, 0,
-		CM_SHAPER_RAMB_EXP_REGION_END_G, params->corner_points[1].green.custom_float_x,
-		CM_SHAPER_RAMB_EXP_REGION_END_BASE_G, params->corner_points[1].green.custom_float_y);
+		CM_SHAPER_RAMB_EXP_REGION_END_G, params->corner_poपूर्णांकs[1].green.custom_भग्न_x,
+		CM_SHAPER_RAMB_EXP_REGION_END_BASE_G, params->corner_poपूर्णांकs[1].green.custom_भग्न_y);
 
 	REG_SET_2(CM_SHAPER_RAMB_END_CNTL_R, 0,
-		CM_SHAPER_RAMB_EXP_REGION_END_R, params->corner_points[1].red.custom_float_x,
-		CM_SHAPER_RAMB_EXP_REGION_END_BASE_R, params->corner_points[1].red.custom_float_y);
+		CM_SHAPER_RAMB_EXP_REGION_END_R, params->corner_poपूर्णांकs[1].red.custom_भग्न_x,
+		CM_SHAPER_RAMB_EXP_REGION_END_BASE_R, params->corner_poपूर्णांकs[1].red.custom_भग्न_y);
 
-	curve = params->arr_curve_points;
+	curve = params->arr_curve_poपूर्णांकs;
 	REG_SET_4(CM_SHAPER_RAMB_REGION_0_1, 0,
 		CM_SHAPER_RAMB_EXP_REGION0_LUT_OFFSET, curve[0].offset,
 		CM_SHAPER_RAMB_EXP_REGION0_NUM_SEGMENTS, curve[0].segments_num,
@@ -870,136 +871,136 @@ static void dpp20_program_shaper_lutb_settings(
 		CM_SHAPER_RAMB_EXP_REGION33_LUT_OFFSET, curve[1].offset,
 		CM_SHAPER_RAMB_EXP_REGION33_NUM_SEGMENTS, curve[1].segments_num);
 
-}
+पूर्ण
 
 
 bool dpp20_program_shaper(
-		struct dpp *dpp_base,
-		const struct pwl_params *params)
-{
-	enum dc_lut_mode current_mode;
-	enum dc_lut_mode next_mode;
+		काष्ठा dpp *dpp_base,
+		स्थिर काष्ठा pwl_params *params)
+अणु
+	क्रमागत dc_lut_mode current_mode;
+	क्रमागत dc_lut_mode next_mode;
 
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
-	if (params == NULL) {
+	अगर (params == शून्य) अणु
 		REG_SET(CM_SHAPER_CONTROL, 0, CM_SHAPER_LUT_MODE, 0);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	current_mode = dpp20_get_shaper_current(dpp_base);
 
-	if (current_mode == LUT_BYPASS || current_mode == LUT_RAM_A)
+	अगर (current_mode == LUT_BYPASS || current_mode == LUT_RAM_A)
 		next_mode = LUT_RAM_B;
-	else
+	अन्यथा
 		next_mode = LUT_RAM_A;
 
 	dpp20_configure_shaper_lut(dpp_base, next_mode == LUT_RAM_A ? true:false);
 
-	if (next_mode == LUT_RAM_A)
+	अगर (next_mode == LUT_RAM_A)
 		dpp20_program_shaper_luta_settings(dpp_base, params);
-	else
+	अन्यथा
 		dpp20_program_shaper_lutb_settings(dpp_base, params);
 
 	dpp20_program_shaper_lut(
-			dpp_base, params->rgb_resulted, params->hw_points_num);
+			dpp_base, params->rgb_resulted, params->hw_poपूर्णांकs_num);
 
 	REG_SET(CM_SHAPER_CONTROL, 0, CM_SHAPER_LUT_MODE, next_mode == LUT_RAM_A ? 1:2);
 
-	return true;
+	वापस true;
 
-}
+पूर्ण
 
-static enum dc_lut_mode get3dlut_config(
-			struct dpp *dpp_base,
+अटल क्रमागत dc_lut_mode get3dlut_config(
+			काष्ठा dpp *dpp_base,
 			bool *is_17x17x17,
 			bool *is_12bits_color_channel)
-{
-	uint32_t i_mode, i_enable_10bits, lut_size;
-	enum dc_lut_mode mode;
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अणु
+	uपूर्णांक32_t i_mode, i_enable_10bits, lut_size;
+	क्रमागत dc_lut_mode mode;
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
 	REG_GET_2(CM_3DLUT_READ_WRITE_CONTROL,
 			CM_3DLUT_CONFIG_STATUS, &i_mode,
 			CM_3DLUT_30BIT_EN, &i_enable_10bits);
 
-	switch (i_mode) {
-	case 0:
+	चयन (i_mode) अणु
+	हाल 0:
 		mode = LUT_BYPASS;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		mode = LUT_RAM_A;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		mode = LUT_RAM_B;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		mode = LUT_BYPASS;
-		break;
-	}
-	if (i_enable_10bits > 0)
+		अवरोध;
+	पूर्ण
+	अगर (i_enable_10bits > 0)
 		*is_12bits_color_channel = false;
-	else
+	अन्यथा
 		*is_12bits_color_channel = true;
 
 	REG_GET(CM_3DLUT_MODE, CM_3DLUT_SIZE, &lut_size);
 
-	if (lut_size == 0)
+	अगर (lut_size == 0)
 		*is_17x17x17 = true;
-	else
+	अन्यथा
 		*is_17x17x17 = false;
 
-	return mode;
-}
+	वापस mode;
+पूर्ण
 /*
  * select ramA or ramB, or bypass
  * select color channel size 10 or 12 bits
  * select 3dlut size 17x17x17 or 9x9x9
  */
-static void dpp20_set_3dlut_mode(
-		struct dpp *dpp_base,
-		enum dc_lut_mode mode,
+अटल व्योम dpp20_set_3dlut_mode(
+		काष्ठा dpp *dpp_base,
+		क्रमागत dc_lut_mode mode,
 		bool is_color_channel_12bits,
 		bool is_lut_size17x17x17)
-{
-	uint32_t lut_mode;
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अणु
+	uपूर्णांक32_t lut_mode;
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
-	if (mode == LUT_BYPASS)
+	अगर (mode == LUT_BYPASS)
 		lut_mode = 0;
-	else if (mode == LUT_RAM_A)
+	अन्यथा अगर (mode == LUT_RAM_A)
 		lut_mode = 1;
-	else
+	अन्यथा
 		lut_mode = 2;
 
 	REG_UPDATE_2(CM_3DLUT_MODE,
 			CM_3DLUT_MODE, lut_mode,
 			CM_3DLUT_SIZE, is_lut_size17x17x17 == true ? 0 : 1);
-}
+पूर्ण
 
-static void dpp20_select_3dlut_ram(
-		struct dpp *dpp_base,
-		enum dc_lut_mode mode,
+अटल व्योम dpp20_select_3dlut_ram(
+		काष्ठा dpp *dpp_base,
+		क्रमागत dc_lut_mode mode,
 		bool is_color_channel_12bits)
-{
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अणु
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
 	REG_UPDATE_2(CM_3DLUT_READ_WRITE_CONTROL,
 			CM_3DLUT_RAM_SEL, mode == LUT_RAM_A ? 0 : 1,
 			CM_3DLUT_30BIT_EN,
 			is_color_channel_12bits == true ? 0:1);
-}
+पूर्ण
 
 
 
-static void dpp20_set3dlut_ram12(
-		struct dpp *dpp_base,
-		const struct dc_rgb *lut,
-		uint32_t entries)
-{
-	uint32_t i, red, green, blue, red1, green1, blue1;
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अटल व्योम dpp20_set3dlut_ram12(
+		काष्ठा dpp *dpp_base,
+		स्थिर काष्ठा dc_rgb *lut,
+		uपूर्णांक32_t entries)
+अणु
+	uपूर्णांक32_t i, red, green, blue, red1, green1, blue1;
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
-	for (i = 0 ; i < entries; i += 2) {
+	क्रम (i = 0 ; i < entries; i += 2) अणु
 		red   = lut[i].red<<4;
 		green = lut[i].green<<4;
 		blue  = lut[i].blue<<4;
@@ -1019,21 +1020,21 @@ static void dpp20_set3dlut_ram12(
 				CM_3DLUT_DATA0, blue,
 				CM_3DLUT_DATA1, blue1);
 
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * load selected lut with 10 bits color channels
  */
-static void dpp20_set3dlut_ram10(
-		struct dpp *dpp_base,
-		const struct dc_rgb *lut,
-		uint32_t entries)
-{
-	uint32_t i, red, green, blue, value;
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अटल व्योम dpp20_set3dlut_ram10(
+		काष्ठा dpp *dpp_base,
+		स्थिर काष्ठा dc_rgb *lut,
+		uपूर्णांक32_t entries)
+अणु
+	uपूर्णांक32_t i, red, green, blue, value;
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
-	for (i = 0; i < entries; i++) {
+	क्रम (i = 0; i < entries; i++) अणु
 		red   = lut[i].red;
 		green = lut[i].green;
 		blue  = lut[i].blue;
@@ -1041,107 +1042,107 @@ static void dpp20_set3dlut_ram10(
 		value = (red<<20) | (green<<10) | blue;
 
 		REG_SET(CM_3DLUT_DATA_30BIT, 0, CM_3DLUT_DATA_30BIT, value);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
 
-static void dpp20_select_3dlut_ram_mask(
-		struct dpp *dpp_base,
-		uint32_t ram_selection_mask)
-{
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+अटल व्योम dpp20_select_3dlut_ram_mask(
+		काष्ठा dpp *dpp_base,
+		uपूर्णांक32_t ram_selection_mask)
+अणु
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
 	REG_UPDATE(CM_3DLUT_READ_WRITE_CONTROL, CM_3DLUT_WRITE_EN_MASK,
 			ram_selection_mask);
 	REG_SET(CM_3DLUT_INDEX, 0, CM_3DLUT_INDEX, 0);
-}
+पूर्ण
 
 bool dpp20_program_3dlut(
-		struct dpp *dpp_base,
-		struct tetrahedral_params *params)
-{
-	enum dc_lut_mode mode;
+		काष्ठा dpp *dpp_base,
+		काष्ठा tetrahedral_params *params)
+अणु
+	क्रमागत dc_lut_mode mode;
 	bool is_17x17x17;
 	bool is_12bits_color_channel;
-	struct dc_rgb *lut0;
-	struct dc_rgb *lut1;
-	struct dc_rgb *lut2;
-	struct dc_rgb *lut3;
-	int lut_size0;
-	int lut_size;
+	काष्ठा dc_rgb *lut0;
+	काष्ठा dc_rgb *lut1;
+	काष्ठा dc_rgb *lut2;
+	काष्ठा dc_rgb *lut3;
+	पूर्णांक lut_size0;
+	पूर्णांक lut_size;
 
-	if (params == NULL) {
+	अगर (params == शून्य) अणु
 		dpp20_set_3dlut_mode(dpp_base, LUT_BYPASS, false, false);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	mode = get3dlut_config(dpp_base, &is_17x17x17, &is_12bits_color_channel);
 
-	if (mode == LUT_BYPASS || mode == LUT_RAM_B)
+	अगर (mode == LUT_BYPASS || mode == LUT_RAM_B)
 		mode = LUT_RAM_A;
-	else
+	अन्यथा
 		mode = LUT_RAM_B;
 
 	is_17x17x17 = !params->use_tetrahedral_9;
 	is_12bits_color_channel = params->use_12bits;
-	if (is_17x17x17) {
+	अगर (is_17x17x17) अणु
 		lut0 = params->tetrahedral_17.lut0;
 		lut1 = params->tetrahedral_17.lut1;
 		lut2 = params->tetrahedral_17.lut2;
 		lut3 = params->tetrahedral_17.lut3;
-		lut_size0 = sizeof(params->tetrahedral_17.lut0)/
-					sizeof(params->tetrahedral_17.lut0[0]);
-		lut_size  = sizeof(params->tetrahedral_17.lut1)/
-					sizeof(params->tetrahedral_17.lut1[0]);
-	} else {
+		lut_size0 = माप(params->tetrahedral_17.lut0)/
+					माप(params->tetrahedral_17.lut0[0]);
+		lut_size  = माप(params->tetrahedral_17.lut1)/
+					माप(params->tetrahedral_17.lut1[0]);
+	पूर्ण अन्यथा अणु
 		lut0 = params->tetrahedral_9.lut0;
 		lut1 = params->tetrahedral_9.lut1;
 		lut2 = params->tetrahedral_9.lut2;
 		lut3 = params->tetrahedral_9.lut3;
-		lut_size0 = sizeof(params->tetrahedral_9.lut0)/
-				sizeof(params->tetrahedral_9.lut0[0]);
-		lut_size  = sizeof(params->tetrahedral_9.lut1)/
-				sizeof(params->tetrahedral_9.lut1[0]);
-		}
+		lut_size0 = माप(params->tetrahedral_9.lut0)/
+				माप(params->tetrahedral_9.lut0[0]);
+		lut_size  = माप(params->tetrahedral_9.lut1)/
+				माप(params->tetrahedral_9.lut1[0]);
+		पूर्ण
 
 	dpp20_select_3dlut_ram(dpp_base, mode,
 				is_12bits_color_channel);
 	dpp20_select_3dlut_ram_mask(dpp_base, 0x1);
-	if (is_12bits_color_channel)
+	अगर (is_12bits_color_channel)
 		dpp20_set3dlut_ram12(dpp_base, lut0, lut_size0);
-	else
+	अन्यथा
 		dpp20_set3dlut_ram10(dpp_base, lut0, lut_size0);
 
 	dpp20_select_3dlut_ram_mask(dpp_base, 0x2);
-	if (is_12bits_color_channel)
+	अगर (is_12bits_color_channel)
 		dpp20_set3dlut_ram12(dpp_base, lut1, lut_size);
-	else
+	अन्यथा
 		dpp20_set3dlut_ram10(dpp_base, lut1, lut_size);
 
 	dpp20_select_3dlut_ram_mask(dpp_base, 0x4);
-	if (is_12bits_color_channel)
+	अगर (is_12bits_color_channel)
 		dpp20_set3dlut_ram12(dpp_base, lut2, lut_size);
-	else
+	अन्यथा
 		dpp20_set3dlut_ram10(dpp_base, lut2, lut_size);
 
 	dpp20_select_3dlut_ram_mask(dpp_base, 0x8);
-	if (is_12bits_color_channel)
+	अगर (is_12bits_color_channel)
 		dpp20_set3dlut_ram12(dpp_base, lut3, lut_size);
-	else
+	अन्यथा
 		dpp20_set3dlut_ram10(dpp_base, lut3, lut_size);
 
 
 	dpp20_set_3dlut_mode(dpp_base, mode, is_12bits_color_channel,
 					is_17x17x17);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void dpp2_set_hdr_multiplier(
-		struct dpp *dpp_base,
-		uint32_t multiplier)
-{
-	struct dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
+व्योम dpp2_set_hdr_multiplier(
+		काष्ठा dpp *dpp_base,
+		uपूर्णांक32_t multiplier)
+अणु
+	काष्ठा dcn20_dpp *dpp = TO_DCN20_DPP(dpp_base);
 
 	REG_UPDATE(CM_HDR_MULT_COEF, CM_HDR_MULT_COEF, multiplier);
-}
+पूर्ण

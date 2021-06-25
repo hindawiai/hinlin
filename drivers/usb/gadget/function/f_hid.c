@@ -1,383 +1,384 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * f_hid.c -- USB HID function driver
  *
  * Copyright (C) 2010 Fabien Chouteau <fabien.chouteau@barco.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/hid.h>
-#include <linux/idr.h>
-#include <linux/cdev.h>
-#include <linux/mutex.h>
-#include <linux/poll.h>
-#include <linux/uaccess.h>
-#include <linux/wait.h>
-#include <linux/sched.h>
-#include <linux/usb/g_hid.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/usb/g_hid.h>
 
-#include "u_f.h"
-#include "u_hid.h"
+#समावेश "u_f.h"
+#समावेश "u_hid.h"
 
-#define HIDG_MINORS	4
+#घोषणा HIDG_MINORS	4
 
-static int major, minors;
-static struct class *hidg_class;
-static DEFINE_IDA(hidg_ida);
-static DEFINE_MUTEX(hidg_ida_lock); /* protects access to hidg_ida */
+अटल पूर्णांक major, minors;
+अटल काष्ठा class *hidg_class;
+अटल DEFINE_IDA(hidg_ida);
+अटल DEFINE_MUTEX(hidg_ida_lock); /* protects access to hidg_ida */
 
 /*-------------------------------------------------------------------------*/
-/*                            HID gadget struct                            */
+/*                            HID gadget काष्ठा                            */
 
-struct f_hidg_req_list {
-	struct usb_request	*req;
-	unsigned int		pos;
-	struct list_head 	list;
-};
+काष्ठा f_hidg_req_list अणु
+	काष्ठा usb_request	*req;
+	अचिन्हित पूर्णांक		pos;
+	काष्ठा list_head 	list;
+पूर्ण;
 
-struct f_hidg {
+काष्ठा f_hidg अणु
 	/* configuration */
-	unsigned char			bInterfaceSubClass;
-	unsigned char			bInterfaceProtocol;
-	unsigned char			protocol;
-	unsigned short			report_desc_length;
-	char				*report_desc;
-	unsigned short			report_length;
+	अचिन्हित अक्षर			bInterfaceSubClass;
+	अचिन्हित अक्षर			bInterfaceProtocol;
+	अचिन्हित अक्षर			protocol;
+	अचिन्हित लघु			report_desc_length;
+	अक्षर				*report_desc;
+	अचिन्हित लघु			report_length;
 
 	/* recv report */
-	struct list_head		completed_out_req;
-	spinlock_t			read_spinlock;
-	wait_queue_head_t		read_queue;
-	unsigned int			qlen;
+	काष्ठा list_head		completed_out_req;
+	spinlock_t			पढ़ो_spinlock;
+	रुको_queue_head_t		पढ़ो_queue;
+	अचिन्हित पूर्णांक			qlen;
 
 	/* send report */
-	spinlock_t			write_spinlock;
-	bool				write_pending;
-	wait_queue_head_t		write_queue;
-	struct usb_request		*req;
+	spinlock_t			ग_लिखो_spinlock;
+	bool				ग_लिखो_pending;
+	रुको_queue_head_t		ग_लिखो_queue;
+	काष्ठा usb_request		*req;
 
-	int				minor;
-	struct cdev			cdev;
-	struct usb_function		func;
+	पूर्णांक				minor;
+	काष्ठा cdev			cdev;
+	काष्ठा usb_function		func;
 
-	struct usb_ep			*in_ep;
-	struct usb_ep			*out_ep;
-};
+	काष्ठा usb_ep			*in_ep;
+	काष्ठा usb_ep			*out_ep;
+पूर्ण;
 
-static inline struct f_hidg *func_to_hidg(struct usb_function *f)
-{
-	return container_of(f, struct f_hidg, func);
-}
+अटल अंतरभूत काष्ठा f_hidg *func_to_hidg(काष्ठा usb_function *f)
+अणु
+	वापस container_of(f, काष्ठा f_hidg, func);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 /*                           Static descriptors                            */
 
-static struct usb_interface_descriptor hidg_interface_desc = {
-	.bLength		= sizeof hidg_interface_desc,
+अटल काष्ठा usb_पूर्णांकerface_descriptor hidg_पूर्णांकerface_desc = अणु
+	.bLength		= माप hidg_पूर्णांकerface_desc,
 	.bDescriptorType	= USB_DT_INTERFACE,
 	/* .bInterfaceNumber	= DYNAMIC */
 	.bAlternateSetting	= 0,
-	.bNumEndpoints		= 2,
+	.bNumEndpoपूर्णांकs		= 2,
 	.bInterfaceClass	= USB_CLASS_HID,
 	/* .bInterfaceSubClass	= DYNAMIC */
 	/* .bInterfaceProtocol	= DYNAMIC */
 	/* .iInterface		= DYNAMIC */
-};
+पूर्ण;
 
-static struct hid_descriptor hidg_desc = {
-	.bLength			= sizeof hidg_desc,
+अटल काष्ठा hid_descriptor hidg_desc = अणु
+	.bLength			= माप hidg_desc,
 	.bDescriptorType		= HID_DT_HID,
 	.bcdHID				= 0x0101,
 	.bCountryCode			= 0x00,
 	.bNumDescriptors		= 0x1,
 	/*.desc[0].bDescriptorType	= DYNAMIC */
 	/*.desc[0].wDescriptorLenght	= DYNAMIC */
-};
+पूर्ण;
 
 /* Super-Speed Support */
 
-static struct usb_endpoint_descriptor hidg_ss_in_ep_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor hidg_ss_in_ep_desc = अणु
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
-	.bEndpointAddress	= USB_DIR_IN,
+	.bEndpoपूर्णांकAddress	= USB_सूची_IN,
 	.bmAttributes		= USB_ENDPOINT_XFER_INT,
 	/*.wMaxPacketSize	= DYNAMIC */
 	.bInterval		= 4, /* FIXME: Add this field in the
 				      * HID gadget configuration?
-				      * (struct hidg_func_descriptor)
+				      * (काष्ठा hidg_func_descriptor)
 				      */
-};
+पूर्ण;
 
-static struct usb_ss_ep_comp_descriptor hidg_ss_in_comp_desc = {
-	.bLength                = sizeof(hidg_ss_in_comp_desc),
+अटल काष्ठा usb_ss_ep_comp_descriptor hidg_ss_in_comp_desc = अणु
+	.bLength                = माप(hidg_ss_in_comp_desc),
 	.bDescriptorType        = USB_DT_SS_ENDPOINT_COMP,
 
 	/* .bMaxBurst           = 0, */
 	/* .bmAttributes        = 0, */
 	/* .wBytesPerInterval   = DYNAMIC */
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor hidg_ss_out_ep_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor hidg_ss_out_ep_desc = अणु
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
-	.bEndpointAddress	= USB_DIR_OUT,
+	.bEndpoपूर्णांकAddress	= USB_सूची_OUT,
 	.bmAttributes		= USB_ENDPOINT_XFER_INT,
 	/*.wMaxPacketSize	= DYNAMIC */
 	.bInterval		= 4, /* FIXME: Add this field in the
 				      * HID gadget configuration?
-				      * (struct hidg_func_descriptor)
+				      * (काष्ठा hidg_func_descriptor)
 				      */
-};
+पूर्ण;
 
-static struct usb_ss_ep_comp_descriptor hidg_ss_out_comp_desc = {
-	.bLength                = sizeof(hidg_ss_out_comp_desc),
+अटल काष्ठा usb_ss_ep_comp_descriptor hidg_ss_out_comp_desc = अणु
+	.bLength                = माप(hidg_ss_out_comp_desc),
 	.bDescriptorType        = USB_DT_SS_ENDPOINT_COMP,
 
 	/* .bMaxBurst           = 0, */
 	/* .bmAttributes        = 0, */
 	/* .wBytesPerInterval   = DYNAMIC */
-};
+पूर्ण;
 
-static struct usb_descriptor_header *hidg_ss_descriptors[] = {
-	(struct usb_descriptor_header *)&hidg_interface_desc,
-	(struct usb_descriptor_header *)&hidg_desc,
-	(struct usb_descriptor_header *)&hidg_ss_in_ep_desc,
-	(struct usb_descriptor_header *)&hidg_ss_in_comp_desc,
-	(struct usb_descriptor_header *)&hidg_ss_out_ep_desc,
-	(struct usb_descriptor_header *)&hidg_ss_out_comp_desc,
-	NULL,
-};
+अटल काष्ठा usb_descriptor_header *hidg_ss_descriptors[] = अणु
+	(काष्ठा usb_descriptor_header *)&hidg_पूर्णांकerface_desc,
+	(काष्ठा usb_descriptor_header *)&hidg_desc,
+	(काष्ठा usb_descriptor_header *)&hidg_ss_in_ep_desc,
+	(काष्ठा usb_descriptor_header *)&hidg_ss_in_comp_desc,
+	(काष्ठा usb_descriptor_header *)&hidg_ss_out_ep_desc,
+	(काष्ठा usb_descriptor_header *)&hidg_ss_out_comp_desc,
+	शून्य,
+पूर्ण;
 
 /* High-Speed Support */
 
-static struct usb_endpoint_descriptor hidg_hs_in_ep_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor hidg_hs_in_ep_desc = अणु
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
-	.bEndpointAddress	= USB_DIR_IN,
+	.bEndpoपूर्णांकAddress	= USB_सूची_IN,
 	.bmAttributes		= USB_ENDPOINT_XFER_INT,
 	/*.wMaxPacketSize	= DYNAMIC */
 	.bInterval		= 4, /* FIXME: Add this field in the
 				      * HID gadget configuration?
-				      * (struct hidg_func_descriptor)
+				      * (काष्ठा hidg_func_descriptor)
 				      */
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor hidg_hs_out_ep_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor hidg_hs_out_ep_desc = अणु
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
-	.bEndpointAddress	= USB_DIR_OUT,
+	.bEndpoपूर्णांकAddress	= USB_सूची_OUT,
 	.bmAttributes		= USB_ENDPOINT_XFER_INT,
 	/*.wMaxPacketSize	= DYNAMIC */
 	.bInterval		= 4, /* FIXME: Add this field in the
 				      * HID gadget configuration?
-				      * (struct hidg_func_descriptor)
+				      * (काष्ठा hidg_func_descriptor)
 				      */
-};
+पूर्ण;
 
-static struct usb_descriptor_header *hidg_hs_descriptors[] = {
-	(struct usb_descriptor_header *)&hidg_interface_desc,
-	(struct usb_descriptor_header *)&hidg_desc,
-	(struct usb_descriptor_header *)&hidg_hs_in_ep_desc,
-	(struct usb_descriptor_header *)&hidg_hs_out_ep_desc,
-	NULL,
-};
+अटल काष्ठा usb_descriptor_header *hidg_hs_descriptors[] = अणु
+	(काष्ठा usb_descriptor_header *)&hidg_पूर्णांकerface_desc,
+	(काष्ठा usb_descriptor_header *)&hidg_desc,
+	(काष्ठा usb_descriptor_header *)&hidg_hs_in_ep_desc,
+	(काष्ठा usb_descriptor_header *)&hidg_hs_out_ep_desc,
+	शून्य,
+पूर्ण;
 
 /* Full-Speed Support */
 
-static struct usb_endpoint_descriptor hidg_fs_in_ep_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor hidg_fs_in_ep_desc = अणु
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
-	.bEndpointAddress	= USB_DIR_IN,
+	.bEndpoपूर्णांकAddress	= USB_सूची_IN,
 	.bmAttributes		= USB_ENDPOINT_XFER_INT,
 	/*.wMaxPacketSize	= DYNAMIC */
 	.bInterval		= 10, /* FIXME: Add this field in the
 				       * HID gadget configuration?
-				       * (struct hidg_func_descriptor)
+				       * (काष्ठा hidg_func_descriptor)
 				       */
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor hidg_fs_out_ep_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor hidg_fs_out_ep_desc = अणु
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
-	.bEndpointAddress	= USB_DIR_OUT,
+	.bEndpoपूर्णांकAddress	= USB_सूची_OUT,
 	.bmAttributes		= USB_ENDPOINT_XFER_INT,
 	/*.wMaxPacketSize	= DYNAMIC */
 	.bInterval		= 10, /* FIXME: Add this field in the
 				       * HID gadget configuration?
-				       * (struct hidg_func_descriptor)
+				       * (काष्ठा hidg_func_descriptor)
 				       */
-};
+पूर्ण;
 
-static struct usb_descriptor_header *hidg_fs_descriptors[] = {
-	(struct usb_descriptor_header *)&hidg_interface_desc,
-	(struct usb_descriptor_header *)&hidg_desc,
-	(struct usb_descriptor_header *)&hidg_fs_in_ep_desc,
-	(struct usb_descriptor_header *)&hidg_fs_out_ep_desc,
-	NULL,
-};
+अटल काष्ठा usb_descriptor_header *hidg_fs_descriptors[] = अणु
+	(काष्ठा usb_descriptor_header *)&hidg_पूर्णांकerface_desc,
+	(काष्ठा usb_descriptor_header *)&hidg_desc,
+	(काष्ठा usb_descriptor_header *)&hidg_fs_in_ep_desc,
+	(काष्ठा usb_descriptor_header *)&hidg_fs_out_ep_desc,
+	शून्य,
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 /*                                 Strings                                 */
 
-#define CT_FUNC_HID_IDX	0
+#घोषणा CT_FUNC_HID_IDX	0
 
-static struct usb_string ct_func_string_defs[] = {
+अटल काष्ठा usb_string ct_func_string_defs[] = अणु
 	[CT_FUNC_HID_IDX].s	= "HID Interface",
-	{},			/* end of list */
-};
+	अणुपूर्ण,			/* end of list */
+पूर्ण;
 
-static struct usb_gadget_strings ct_func_string_table = {
+अटल काष्ठा usb_gadget_strings ct_func_string_table = अणु
 	.language	= 0x0409,	/* en-US */
 	.strings	= ct_func_string_defs,
-};
+पूर्ण;
 
-static struct usb_gadget_strings *ct_func_strings[] = {
+अटल काष्ठा usb_gadget_strings *ct_func_strings[] = अणु
 	&ct_func_string_table,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 /*                              Char Device                                */
 
-static ssize_t f_hidg_read(struct file *file, char __user *buffer,
-			size_t count, loff_t *ptr)
-{
-	struct f_hidg *hidg = file->private_data;
-	struct f_hidg_req_list *list;
-	struct usb_request *req;
-	unsigned long flags;
-	int ret;
+अटल sमाप_प्रकार f_hidg_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
+			माप_प्रकार count, loff_t *ptr)
+अणु
+	काष्ठा f_hidg *hidg = file->निजी_data;
+	काष्ठा f_hidg_req_list *list;
+	काष्ठा usb_request *req;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	if (!count)
-		return 0;
+	अगर (!count)
+		वापस 0;
 
-	spin_lock_irqsave(&hidg->read_spinlock, flags);
+	spin_lock_irqsave(&hidg->पढ़ो_spinlock, flags);
 
-#define READ_COND (!list_empty(&hidg->completed_out_req))
+#घोषणा READ_COND (!list_empty(&hidg->completed_out_req))
 
-	/* wait for at least one buffer to complete */
-	while (!READ_COND) {
-		spin_unlock_irqrestore(&hidg->read_spinlock, flags);
-		if (file->f_flags & O_NONBLOCK)
-			return -EAGAIN;
+	/* रुको क्रम at least one buffer to complete */
+	जबतक (!READ_COND) अणु
+		spin_unlock_irqrestore(&hidg->पढ़ो_spinlock, flags);
+		अगर (file->f_flags & O_NONBLOCK)
+			वापस -EAGAIN;
 
-		if (wait_event_interruptible(hidg->read_queue, READ_COND))
-			return -ERESTARTSYS;
+		अगर (रुको_event_पूर्णांकerruptible(hidg->पढ़ो_queue, READ_COND))
+			वापस -ERESTARTSYS;
 
-		spin_lock_irqsave(&hidg->read_spinlock, flags);
-	}
+		spin_lock_irqsave(&hidg->पढ़ो_spinlock, flags);
+	पूर्ण
 
 	/* pick the first one */
 	list = list_first_entry(&hidg->completed_out_req,
-				struct f_hidg_req_list, list);
+				काष्ठा f_hidg_req_list, list);
 
 	/*
-	 * Remove this from list to protect it from beign free()
-	 * while host disables our function
+	 * Remove this from list to protect it from beign मुक्त()
+	 * जबतक host disables our function
 	 */
 	list_del(&list->list);
 
 	req = list->req;
-	count = min_t(unsigned int, count, req->actual - list->pos);
-	spin_unlock_irqrestore(&hidg->read_spinlock, flags);
+	count = min_t(अचिन्हित पूर्णांक, count, req->actual - list->pos);
+	spin_unlock_irqrestore(&hidg->पढ़ो_spinlock, flags);
 
 	/* copy to user outside spinlock */
 	count -= copy_to_user(buffer, req->buf + list->pos, count);
 	list->pos += count;
 
 	/*
-	 * if this request is completely handled and transfered to
-	 * userspace, remove its entry from the list and requeue it
+	 * अगर this request is completely handled and transfered to
+	 * userspace, हटाओ its entry from the list and requeue it
 	 * again. Otherwise, we will revisit it again upon the next
-	 * call, taking into account its current read position.
+	 * call, taking पूर्णांकo account its current पढ़ो position.
 	 */
-	if (list->pos == req->actual) {
-		kfree(list);
+	अगर (list->pos == req->actual) अणु
+		kमुक्त(list);
 
 		req->length = hidg->report_length;
 		ret = usb_ep_queue(hidg->out_ep, req, GFP_KERNEL);
-		if (ret < 0) {
-			free_ep_req(hidg->out_ep, req);
-			return ret;
-		}
-	} else {
-		spin_lock_irqsave(&hidg->read_spinlock, flags);
+		अगर (ret < 0) अणु
+			मुक्त_ep_req(hidg->out_ep, req);
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		spin_lock_irqsave(&hidg->पढ़ो_spinlock, flags);
 		list_add(&list->list, &hidg->completed_out_req);
-		spin_unlock_irqrestore(&hidg->read_spinlock, flags);
+		spin_unlock_irqrestore(&hidg->पढ़ो_spinlock, flags);
 
-		wake_up(&hidg->read_queue);
-	}
+		wake_up(&hidg->पढ़ो_queue);
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void f_hidg_req_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct f_hidg *hidg = (struct f_hidg *)ep->driver_data;
-	unsigned long flags;
+अटल व्योम f_hidg_req_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा f_hidg *hidg = (काष्ठा f_hidg *)ep->driver_data;
+	अचिन्हित दीर्घ flags;
 
-	if (req->status != 0) {
+	अगर (req->status != 0) अणु
 		ERROR(hidg->func.config->cdev,
 			"End Point Request ERROR: %d\n", req->status);
-	}
+	पूर्ण
 
-	spin_lock_irqsave(&hidg->write_spinlock, flags);
-	hidg->write_pending = 0;
-	spin_unlock_irqrestore(&hidg->write_spinlock, flags);
-	wake_up(&hidg->write_queue);
-}
+	spin_lock_irqsave(&hidg->ग_लिखो_spinlock, flags);
+	hidg->ग_लिखो_pending = 0;
+	spin_unlock_irqrestore(&hidg->ग_लिखो_spinlock, flags);
+	wake_up(&hidg->ग_लिखो_queue);
+पूर्ण
 
-static ssize_t f_hidg_write(struct file *file, const char __user *buffer,
-			    size_t count, loff_t *offp)
-{
-	struct f_hidg *hidg  = file->private_data;
-	struct usb_request *req;
-	unsigned long flags;
-	ssize_t status = -ENOMEM;
+अटल sमाप_प्रकार f_hidg_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
+			    माप_प्रकार count, loff_t *offp)
+अणु
+	काष्ठा f_hidg *hidg  = file->निजी_data;
+	काष्ठा usb_request *req;
+	अचिन्हित दीर्घ flags;
+	sमाप_प्रकार status = -ENOMEM;
 
-	spin_lock_irqsave(&hidg->write_spinlock, flags);
+	spin_lock_irqsave(&hidg->ग_लिखो_spinlock, flags);
 
-#define WRITE_COND (!hidg->write_pending)
+#घोषणा WRITE_COND (!hidg->ग_लिखो_pending)
 try_again:
-	/* write queue */
-	while (!WRITE_COND) {
-		spin_unlock_irqrestore(&hidg->write_spinlock, flags);
-		if (file->f_flags & O_NONBLOCK)
-			return -EAGAIN;
+	/* ग_लिखो queue */
+	जबतक (!WRITE_COND) अणु
+		spin_unlock_irqrestore(&hidg->ग_लिखो_spinlock, flags);
+		अगर (file->f_flags & O_NONBLOCK)
+			वापस -EAGAIN;
 
-		if (wait_event_interruptible_exclusive(
-				hidg->write_queue, WRITE_COND))
-			return -ERESTARTSYS;
+		अगर (रुको_event_पूर्णांकerruptible_exclusive(
+				hidg->ग_लिखो_queue, WRITE_COND))
+			वापस -ERESTARTSYS;
 
-		spin_lock_irqsave(&hidg->write_spinlock, flags);
-	}
+		spin_lock_irqsave(&hidg->ग_लिखो_spinlock, flags);
+	पूर्ण
 
-	hidg->write_pending = 1;
+	hidg->ग_लिखो_pending = 1;
 	req = hidg->req;
-	count  = min_t(unsigned, count, hidg->report_length);
+	count  = min_t(अचिन्हित, count, hidg->report_length);
 
-	spin_unlock_irqrestore(&hidg->write_spinlock, flags);
+	spin_unlock_irqrestore(&hidg->ग_लिखो_spinlock, flags);
 	status = copy_from_user(req->buf, buffer, count);
 
-	if (status != 0) {
+	अगर (status != 0) अणु
 		ERROR(hidg->func.config->cdev,
 			"copy_from_user error\n");
 		status = -EINVAL;
-		goto release_write_pending;
-	}
+		जाओ release_ग_लिखो_pending;
+	पूर्ण
 
-	spin_lock_irqsave(&hidg->write_spinlock, flags);
+	spin_lock_irqsave(&hidg->ग_लिखो_spinlock, flags);
 
 	/* when our function has been disabled by host */
-	if (!hidg->req) {
-		free_ep_req(hidg->in_ep, req);
+	अगर (!hidg->req) अणु
+		मुक्त_ep_req(hidg->in_ep, req);
 		/*
 		 * TODO
 		 * Should we fail with error here?
 		 */
-		goto try_again;
-	}
+		जाओ try_again;
+	पूर्ण
 
 	req->status   = 0;
 	req->zero     = 0;
@@ -385,115 +386,115 @@ try_again:
 	req->complete = f_hidg_req_complete;
 	req->context  = hidg;
 
-	spin_unlock_irqrestore(&hidg->write_spinlock, flags);
+	spin_unlock_irqrestore(&hidg->ग_लिखो_spinlock, flags);
 
 	status = usb_ep_queue(hidg->in_ep, req, GFP_ATOMIC);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		ERROR(hidg->func.config->cdev,
 			"usb_ep_queue error on int endpoint %zd\n", status);
-		goto release_write_pending;
-	} else {
+		जाओ release_ग_लिखो_pending;
+	पूर्ण अन्यथा अणु
 		status = count;
-	}
+	पूर्ण
 
-	return status;
-release_write_pending:
-	spin_lock_irqsave(&hidg->write_spinlock, flags);
-	hidg->write_pending = 0;
-	spin_unlock_irqrestore(&hidg->write_spinlock, flags);
+	वापस status;
+release_ग_लिखो_pending:
+	spin_lock_irqsave(&hidg->ग_लिखो_spinlock, flags);
+	hidg->ग_लिखो_pending = 0;
+	spin_unlock_irqrestore(&hidg->ग_लिखो_spinlock, flags);
 
-	wake_up(&hidg->write_queue);
+	wake_up(&hidg->ग_लिखो_queue);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static __poll_t f_hidg_poll(struct file *file, poll_table *wait)
-{
-	struct f_hidg	*hidg  = file->private_data;
+अटल __poll_t f_hidg_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा f_hidg	*hidg  = file->निजी_data;
 	__poll_t	ret = 0;
 
-	poll_wait(file, &hidg->read_queue, wait);
-	poll_wait(file, &hidg->write_queue, wait);
+	poll_रुको(file, &hidg->पढ़ो_queue, रुको);
+	poll_रुको(file, &hidg->ग_लिखो_queue, रुको);
 
-	if (WRITE_COND)
+	अगर (WRITE_COND)
 		ret |= EPOLLOUT | EPOLLWRNORM;
 
-	if (READ_COND)
+	अगर (READ_COND)
 		ret |= EPOLLIN | EPOLLRDNORM;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#undef WRITE_COND
-#undef READ_COND
+#अघोषित WRITE_COND
+#अघोषित READ_COND
 
-static int f_hidg_release(struct inode *inode, struct file *fd)
-{
-	fd->private_data = NULL;
-	return 0;
-}
+अटल पूर्णांक f_hidg_release(काष्ठा inode *inode, काष्ठा file *fd)
+अणु
+	fd->निजी_data = शून्य;
+	वापस 0;
+पूर्ण
 
-static int f_hidg_open(struct inode *inode, struct file *fd)
-{
-	struct f_hidg *hidg =
-		container_of(inode->i_cdev, struct f_hidg, cdev);
+अटल पूर्णांक f_hidg_खोलो(काष्ठा inode *inode, काष्ठा file *fd)
+अणु
+	काष्ठा f_hidg *hidg =
+		container_of(inode->i_cdev, काष्ठा f_hidg, cdev);
 
-	fd->private_data = hidg;
+	fd->निजी_data = hidg;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 /*                                usb_function                             */
 
-static inline struct usb_request *hidg_alloc_ep_req(struct usb_ep *ep,
-						    unsigned length)
-{
-	return alloc_ep_req(ep, length);
-}
+अटल अंतरभूत काष्ठा usb_request *hidg_alloc_ep_req(काष्ठा usb_ep *ep,
+						    अचिन्हित length)
+अणु
+	वापस alloc_ep_req(ep, length);
+पूर्ण
 
-static void hidg_set_report_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct f_hidg *hidg = (struct f_hidg *) req->context;
-	struct usb_composite_dev *cdev = hidg->func.config->cdev;
-	struct f_hidg_req_list *req_list;
-	unsigned long flags;
+अटल व्योम hidg_set_report_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा f_hidg *hidg = (काष्ठा f_hidg *) req->context;
+	काष्ठा usb_composite_dev *cdev = hidg->func.config->cdev;
+	काष्ठा f_hidg_req_list *req_list;
+	अचिन्हित दीर्घ flags;
 
-	switch (req->status) {
-	case 0:
-		req_list = kzalloc(sizeof(*req_list), GFP_ATOMIC);
-		if (!req_list) {
+	चयन (req->status) अणु
+	हाल 0:
+		req_list = kzalloc(माप(*req_list), GFP_ATOMIC);
+		अगर (!req_list) अणु
 			ERROR(cdev, "Unable to allocate mem for req_list\n");
-			goto free_req;
-		}
+			जाओ मुक्त_req;
+		पूर्ण
 
 		req_list->req = req;
 
-		spin_lock_irqsave(&hidg->read_spinlock, flags);
+		spin_lock_irqsave(&hidg->पढ़ो_spinlock, flags);
 		list_add_tail(&req_list->list, &hidg->completed_out_req);
-		spin_unlock_irqrestore(&hidg->read_spinlock, flags);
+		spin_unlock_irqrestore(&hidg->पढ़ो_spinlock, flags);
 
-		wake_up(&hidg->read_queue);
-		break;
-	default:
+		wake_up(&hidg->पढ़ो_queue);
+		अवरोध;
+	शेष:
 		ERROR(cdev, "Set report failed %d\n", req->status);
 		fallthrough;
-	case -ECONNABORTED:		/* hardware forced ep reset */
-	case -ECONNRESET:		/* request dequeued */
-	case -ESHUTDOWN:		/* disconnect from host */
-free_req:
-		free_ep_req(ep, req);
-		return;
-	}
-}
+	हाल -ECONNABORTED:		/* hardware क्रमced ep reset */
+	हाल -ECONNRESET:		/* request dequeued */
+	हाल -ESHUTDOWN:		/* disconnect from host */
+मुक्त_req:
+		मुक्त_ep_req(ep, req);
+		वापस;
+	पूर्ण
+पूर्ण
 
-static int hidg_setup(struct usb_function *f,
-		const struct usb_ctrlrequest *ctrl)
-{
-	struct f_hidg			*hidg = func_to_hidg(f);
-	struct usb_composite_dev	*cdev = f->config->cdev;
-	struct usb_request		*req  = cdev->req;
-	int status = 0;
+अटल पूर्णांक hidg_setup(काष्ठा usb_function *f,
+		स्थिर काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा f_hidg			*hidg = func_to_hidg(f);
+	काष्ठा usb_composite_dev	*cdev = f->config->cdev;
+	काष्ठा usb_request		*req  = cdev->req;
+	पूर्णांक status = 0;
 	__u16 value, length;
 
 	value	= __le16_to_cpu(ctrl->wValue);
@@ -503,275 +504,275 @@ static int hidg_setup(struct usb_function *f,
 	     "%s crtl_request : bRequestType:0x%x bRequest:0x%x Value:0x%x\n",
 	     __func__, ctrl->bRequestType, ctrl->bRequest, value);
 
-	switch ((ctrl->bRequestType << 8) | ctrl->bRequest) {
-	case ((USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+	चयन ((ctrl->bRequestType << 8) | ctrl->bRequest) अणु
+	हाल ((USB_सूची_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
 		  | HID_REQ_GET_REPORT):
 		VDBG(cdev, "get_report\n");
 
 		/* send an empty report */
-		length = min_t(unsigned, length, hidg->report_length);
-		memset(req->buf, 0x0, length);
+		length = min_t(अचिन्हित, length, hidg->report_length);
+		स_रखो(req->buf, 0x0, length);
 
-		goto respond;
-		break;
+		जाओ respond;
+		अवरोध;
 
-	case ((USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+	हाल ((USB_सूची_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
 		  | HID_REQ_GET_PROTOCOL):
 		VDBG(cdev, "get_protocol\n");
-		length = min_t(unsigned int, length, 1);
+		length = min_t(अचिन्हित पूर्णांक, length, 1);
 		((u8 *) req->buf)[0] = hidg->protocol;
-		goto respond;
-		break;
+		जाओ respond;
+		अवरोध;
 
-	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+	हाल ((USB_सूची_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
 		  | HID_REQ_SET_REPORT):
 		VDBG(cdev, "set_report | wLength=%d\n", ctrl->wLength);
-		goto stall;
-		break;
+		जाओ stall;
+		अवरोध;
 
-	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+	हाल ((USB_सूची_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
 		  | HID_REQ_SET_PROTOCOL):
 		VDBG(cdev, "set_protocol\n");
-		if (value > HID_REPORT_PROTOCOL)
-			goto stall;
+		अगर (value > HID_REPORT_PROTOCOL)
+			जाओ stall;
 		length = 0;
 		/*
 		 * We assume that programs implementing the Boot protocol
 		 * are also compatible with the Report Protocol
 		 */
-		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT) {
+		अगर (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT) अणु
 			hidg->protocol = value;
-			goto respond;
-		}
-		goto stall;
-		break;
+			जाओ respond;
+		पूर्ण
+		जाओ stall;
+		अवरोध;
 
-	case ((USB_DIR_IN | USB_TYPE_STANDARD | USB_RECIP_INTERFACE) << 8
+	हाल ((USB_सूची_IN | USB_TYPE_STANDARD | USB_RECIP_INTERFACE) << 8
 		  | USB_REQ_GET_DESCRIPTOR):
-		switch (value >> 8) {
-		case HID_DT_HID:
-		{
-			struct hid_descriptor hidg_desc_copy = hidg_desc;
+		चयन (value >> 8) अणु
+		हाल HID_DT_HID:
+		अणु
+			काष्ठा hid_descriptor hidg_desc_copy = hidg_desc;
 
 			VDBG(cdev, "USB_REQ_GET_DESCRIPTOR: HID\n");
 			hidg_desc_copy.desc[0].bDescriptorType = HID_DT_REPORT;
 			hidg_desc_copy.desc[0].wDescriptorLength =
 				cpu_to_le16(hidg->report_desc_length);
 
-			length = min_t(unsigned short, length,
+			length = min_t(अचिन्हित लघु, length,
 						   hidg_desc_copy.bLength);
-			memcpy(req->buf, &hidg_desc_copy, length);
-			goto respond;
-			break;
-		}
-		case HID_DT_REPORT:
+			स_नकल(req->buf, &hidg_desc_copy, length);
+			जाओ respond;
+			अवरोध;
+		पूर्ण
+		हाल HID_DT_REPORT:
 			VDBG(cdev, "USB_REQ_GET_DESCRIPTOR: REPORT\n");
-			length = min_t(unsigned short, length,
+			length = min_t(अचिन्हित लघु, length,
 						   hidg->report_desc_length);
-			memcpy(req->buf, hidg->report_desc, length);
-			goto respond;
-			break;
+			स_नकल(req->buf, hidg->report_desc, length);
+			जाओ respond;
+			अवरोध;
 
-		default:
+		शेष:
 			VDBG(cdev, "Unknown descriptor request 0x%x\n",
 				 value >> 8);
-			goto stall;
-			break;
-		}
-		break;
+			जाओ stall;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		VDBG(cdev, "Unknown request 0x%x\n",
 			 ctrl->bRequest);
-		goto stall;
-		break;
-	}
+		जाओ stall;
+		अवरोध;
+	पूर्ण
 
 stall:
-	return -EOPNOTSUPP;
+	वापस -EOPNOTSUPP;
 
 respond:
 	req->zero = 0;
 	req->length = length;
 	status = usb_ep_queue(cdev->gadget->ep0, req, GFP_ATOMIC);
-	if (status < 0)
+	अगर (status < 0)
 		ERROR(cdev, "usb_ep_queue error on ep0 %d\n", value);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void hidg_disable(struct usb_function *f)
-{
-	struct f_hidg *hidg = func_to_hidg(f);
-	struct f_hidg_req_list *list, *next;
-	unsigned long flags;
+अटल व्योम hidg_disable(काष्ठा usb_function *f)
+अणु
+	काष्ठा f_hidg *hidg = func_to_hidg(f);
+	काष्ठा f_hidg_req_list *list, *next;
+	अचिन्हित दीर्घ flags;
 
 	usb_ep_disable(hidg->in_ep);
 	usb_ep_disable(hidg->out_ep);
 
-	spin_lock_irqsave(&hidg->read_spinlock, flags);
-	list_for_each_entry_safe(list, next, &hidg->completed_out_req, list) {
-		free_ep_req(hidg->out_ep, list->req);
+	spin_lock_irqsave(&hidg->पढ़ो_spinlock, flags);
+	list_क्रम_each_entry_safe(list, next, &hidg->completed_out_req, list) अणु
+		मुक्त_ep_req(hidg->out_ep, list->req);
 		list_del(&list->list);
-		kfree(list);
-	}
-	spin_unlock_irqrestore(&hidg->read_spinlock, flags);
+		kमुक्त(list);
+	पूर्ण
+	spin_unlock_irqrestore(&hidg->पढ़ो_spinlock, flags);
 
-	spin_lock_irqsave(&hidg->write_spinlock, flags);
-	if (!hidg->write_pending) {
-		free_ep_req(hidg->in_ep, hidg->req);
-		hidg->write_pending = 1;
-	}
+	spin_lock_irqsave(&hidg->ग_लिखो_spinlock, flags);
+	अगर (!hidg->ग_लिखो_pending) अणु
+		मुक्त_ep_req(hidg->in_ep, hidg->req);
+		hidg->ग_लिखो_pending = 1;
+	पूर्ण
 
-	hidg->req = NULL;
-	spin_unlock_irqrestore(&hidg->write_spinlock, flags);
-}
+	hidg->req = शून्य;
+	spin_unlock_irqrestore(&hidg->ग_लिखो_spinlock, flags);
+पूर्ण
 
-static int hidg_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
-{
-	struct usb_composite_dev		*cdev = f->config->cdev;
-	struct f_hidg				*hidg = func_to_hidg(f);
-	struct usb_request			*req_in = NULL;
-	unsigned long				flags;
-	int i, status = 0;
+अटल पूर्णांक hidg_set_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकf, अचिन्हित alt)
+अणु
+	काष्ठा usb_composite_dev		*cdev = f->config->cdev;
+	काष्ठा f_hidg				*hidg = func_to_hidg(f);
+	काष्ठा usb_request			*req_in = शून्य;
+	अचिन्हित दीर्घ				flags;
+	पूर्णांक i, status = 0;
 
-	VDBG(cdev, "hidg_set_alt intf:%d alt:%d\n", intf, alt);
+	VDBG(cdev, "hidg_set_alt intf:%d alt:%d\n", पूर्णांकf, alt);
 
-	if (hidg->in_ep != NULL) {
-		/* restart endpoint */
+	अगर (hidg->in_ep != शून्य) अणु
+		/* restart endpoपूर्णांक */
 		usb_ep_disable(hidg->in_ep);
 
 		status = config_ep_by_speed(f->config->cdev->gadget, f,
 					    hidg->in_ep);
-		if (status) {
+		अगर (status) अणु
 			ERROR(cdev, "config_ep_by_speed FAILED!\n");
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 		status = usb_ep_enable(hidg->in_ep);
-		if (status < 0) {
+		अगर (status < 0) अणु
 			ERROR(cdev, "Enable IN endpoint FAILED!\n");
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 		hidg->in_ep->driver_data = hidg;
 
 		req_in = hidg_alloc_ep_req(hidg->in_ep, hidg->report_length);
-		if (!req_in) {
+		अगर (!req_in) अणु
 			status = -ENOMEM;
-			goto disable_ep_in;
-		}
-	}
+			जाओ disable_ep_in;
+		पूर्ण
+	पूर्ण
 
 
-	if (hidg->out_ep != NULL) {
-		/* restart endpoint */
+	अगर (hidg->out_ep != शून्य) अणु
+		/* restart endpoपूर्णांक */
 		usb_ep_disable(hidg->out_ep);
 
 		status = config_ep_by_speed(f->config->cdev->gadget, f,
 					    hidg->out_ep);
-		if (status) {
+		अगर (status) अणु
 			ERROR(cdev, "config_ep_by_speed FAILED!\n");
-			goto free_req_in;
-		}
+			जाओ मुक्त_req_in;
+		पूर्ण
 		status = usb_ep_enable(hidg->out_ep);
-		if (status < 0) {
+		अगर (status < 0) अणु
 			ERROR(cdev, "Enable OUT endpoint FAILED!\n");
-			goto free_req_in;
-		}
+			जाओ मुक्त_req_in;
+		पूर्ण
 		hidg->out_ep->driver_data = hidg;
 
 		/*
-		 * allocate a bunch of read buffers and queue them all at once.
+		 * allocate a bunch of पढ़ो buffers and queue them all at once.
 		 */
-		for (i = 0; i < hidg->qlen && status == 0; i++) {
-			struct usb_request *req =
+		क्रम (i = 0; i < hidg->qlen && status == 0; i++) अणु
+			काष्ठा usb_request *req =
 					hidg_alloc_ep_req(hidg->out_ep,
 							  hidg->report_length);
-			if (req) {
+			अगर (req) अणु
 				req->complete = hidg_set_report_complete;
 				req->context  = hidg;
 				status = usb_ep_queue(hidg->out_ep, req,
 						      GFP_ATOMIC);
-				if (status) {
+				अगर (status) अणु
 					ERROR(cdev, "%s queue req --> %d\n",
 						hidg->out_ep->name, status);
-					free_ep_req(hidg->out_ep, req);
-				}
-			} else {
+					मुक्त_ep_req(hidg->out_ep, req);
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				status = -ENOMEM;
-				goto disable_out_ep;
-			}
-		}
-	}
+				जाओ disable_out_ep;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (hidg->in_ep != NULL) {
-		spin_lock_irqsave(&hidg->write_spinlock, flags);
+	अगर (hidg->in_ep != शून्य) अणु
+		spin_lock_irqsave(&hidg->ग_लिखो_spinlock, flags);
 		hidg->req = req_in;
-		hidg->write_pending = 0;
-		spin_unlock_irqrestore(&hidg->write_spinlock, flags);
+		hidg->ग_लिखो_pending = 0;
+		spin_unlock_irqrestore(&hidg->ग_लिखो_spinlock, flags);
 
-		wake_up(&hidg->write_queue);
-	}
-	return 0;
+		wake_up(&hidg->ग_लिखो_queue);
+	पूर्ण
+	वापस 0;
 disable_out_ep:
 	usb_ep_disable(hidg->out_ep);
-free_req_in:
-	if (req_in)
-		free_ep_req(hidg->in_ep, req_in);
+मुक्त_req_in:
+	अगर (req_in)
+		मुक्त_ep_req(hidg->in_ep, req_in);
 
 disable_ep_in:
-	if (hidg->in_ep)
+	अगर (hidg->in_ep)
 		usb_ep_disable(hidg->in_ep);
 
 fail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static const struct file_operations f_hidg_fops = {
+अटल स्थिर काष्ठा file_operations f_hidg_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= f_hidg_open,
+	.खोलो		= f_hidg_खोलो,
 	.release	= f_hidg_release,
-	.write		= f_hidg_write,
-	.read		= f_hidg_read,
+	.ग_लिखो		= f_hidg_ग_लिखो,
+	.पढ़ो		= f_hidg_पढ़ो,
 	.poll		= f_hidg_poll,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-static int hidg_bind(struct usb_configuration *c, struct usb_function *f)
-{
-	struct usb_ep		*ep;
-	struct f_hidg		*hidg = func_to_hidg(f);
-	struct usb_string	*us;
-	struct device		*device;
-	int			status;
+अटल पूर्णांक hidg_bind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
+अणु
+	काष्ठा usb_ep		*ep;
+	काष्ठा f_hidg		*hidg = func_to_hidg(f);
+	काष्ठा usb_string	*us;
+	काष्ठा device		*device;
+	पूर्णांक			status;
 	dev_t			dev;
 
 	/* maybe allocate device-global string IDs, and patch descriptors */
 	us = usb_gstrings_attach(c->cdev, ct_func_strings,
 				 ARRAY_SIZE(ct_func_string_defs));
-	if (IS_ERR(us))
-		return PTR_ERR(us);
-	hidg_interface_desc.iInterface = us[CT_FUNC_HID_IDX].id;
+	अगर (IS_ERR(us))
+		वापस PTR_ERR(us);
+	hidg_पूर्णांकerface_desc.iInterface = us[CT_FUNC_HID_IDX].id;
 
-	/* allocate instance-specific interface IDs, and patch descriptors */
-	status = usb_interface_id(c, f);
-	if (status < 0)
-		goto fail;
-	hidg_interface_desc.bInterfaceNumber = status;
+	/* allocate instance-specअगरic पूर्णांकerface IDs, and patch descriptors */
+	status = usb_पूर्णांकerface_id(c, f);
+	अगर (status < 0)
+		जाओ fail;
+	hidg_पूर्णांकerface_desc.bInterfaceNumber = status;
 
-	/* allocate instance-specific endpoints */
+	/* allocate instance-specअगरic endpoपूर्णांकs */
 	status = -ENODEV;
-	ep = usb_ep_autoconfig(c->cdev->gadget, &hidg_fs_in_ep_desc);
-	if (!ep)
-		goto fail;
+	ep = usb_ep_स्वतःconfig(c->cdev->gadget, &hidg_fs_in_ep_desc);
+	अगर (!ep)
+		जाओ fail;
 	hidg->in_ep = ep;
 
-	ep = usb_ep_autoconfig(c->cdev->gadget, &hidg_fs_out_ep_desc);
-	if (!ep)
-		goto fail;
+	ep = usb_ep_स्वतःconfig(c->cdev->gadget, &hidg_fs_out_ep_desc);
+	अगर (!ep)
+		जाओ fail;
 	hidg->out_ep = ep;
 
 	/* set descriptor dynamic values */
-	hidg_interface_desc.bInterfaceSubClass = hidg->bInterfaceSubClass;
-	hidg_interface_desc.bInterfaceProtocol = hidg->bInterfaceProtocol;
+	hidg_पूर्णांकerface_desc.bInterfaceSubClass = hidg->bInterfaceSubClass;
+	hidg_पूर्णांकerface_desc.bInterfaceProtocol = hidg->bInterfaceProtocol;
 	hidg->protocol = HID_REPORT_PROTOCOL;
 	hidg_ss_in_ep_desc.wMaxPacketSize = cpu_to_le16(hidg->report_length);
 	hidg_ss_in_comp_desc.wBytesPerInterval =
@@ -784,135 +785,135 @@ static int hidg_bind(struct usb_configuration *c, struct usb_function *f)
 	hidg_hs_out_ep_desc.wMaxPacketSize = cpu_to_le16(hidg->report_length);
 	hidg_fs_out_ep_desc.wMaxPacketSize = cpu_to_le16(hidg->report_length);
 	/*
-	 * We can use hidg_desc struct here but we should not relay
-	 * that its content won't change after returning from this function.
+	 * We can use hidg_desc काष्ठा here but we should not relay
+	 * that its content won't change after वापसing from this function.
 	 */
 	hidg_desc.desc[0].bDescriptorType = HID_DT_REPORT;
 	hidg_desc.desc[0].wDescriptorLength =
 		cpu_to_le16(hidg->report_desc_length);
 
-	hidg_hs_in_ep_desc.bEndpointAddress =
-		hidg_fs_in_ep_desc.bEndpointAddress;
-	hidg_hs_out_ep_desc.bEndpointAddress =
-		hidg_fs_out_ep_desc.bEndpointAddress;
+	hidg_hs_in_ep_desc.bEndpoपूर्णांकAddress =
+		hidg_fs_in_ep_desc.bEndpoपूर्णांकAddress;
+	hidg_hs_out_ep_desc.bEndpoपूर्णांकAddress =
+		hidg_fs_out_ep_desc.bEndpoपूर्णांकAddress;
 
-	hidg_ss_in_ep_desc.bEndpointAddress =
-		hidg_fs_in_ep_desc.bEndpointAddress;
-	hidg_ss_out_ep_desc.bEndpointAddress =
-		hidg_fs_out_ep_desc.bEndpointAddress;
+	hidg_ss_in_ep_desc.bEndpoपूर्णांकAddress =
+		hidg_fs_in_ep_desc.bEndpoपूर्णांकAddress;
+	hidg_ss_out_ep_desc.bEndpoपूर्णांकAddress =
+		hidg_fs_out_ep_desc.bEndpoपूर्णांकAddress;
 
 	status = usb_assign_descriptors(f, hidg_fs_descriptors,
 			hidg_hs_descriptors, hidg_ss_descriptors,
 			hidg_ss_descriptors);
-	if (status)
-		goto fail;
+	अगर (status)
+		जाओ fail;
 
-	spin_lock_init(&hidg->write_spinlock);
-	hidg->write_pending = 1;
-	hidg->req = NULL;
-	spin_lock_init(&hidg->read_spinlock);
-	init_waitqueue_head(&hidg->write_queue);
-	init_waitqueue_head(&hidg->read_queue);
+	spin_lock_init(&hidg->ग_लिखो_spinlock);
+	hidg->ग_लिखो_pending = 1;
+	hidg->req = शून्य;
+	spin_lock_init(&hidg->पढ़ो_spinlock);
+	init_रुकोqueue_head(&hidg->ग_लिखो_queue);
+	init_रुकोqueue_head(&hidg->पढ़ो_queue);
 	INIT_LIST_HEAD(&hidg->completed_out_req);
 
-	/* create char device */
+	/* create अक्षर device */
 	cdev_init(&hidg->cdev, &f_hidg_fops);
 	dev = MKDEV(major, hidg->minor);
 	status = cdev_add(&hidg->cdev, dev, 1);
-	if (status)
-		goto fail_free_descs;
+	अगर (status)
+		जाओ fail_मुक्त_descs;
 
-	device = device_create(hidg_class, NULL, dev, NULL,
+	device = device_create(hidg_class, शून्य, dev, शून्य,
 			       "%s%d", "hidg", hidg->minor);
-	if (IS_ERR(device)) {
+	अगर (IS_ERR(device)) अणु
 		status = PTR_ERR(device);
-		goto del;
-	}
+		जाओ del;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 del:
 	cdev_del(&hidg->cdev);
-fail_free_descs:
-	usb_free_all_descriptors(f);
+fail_मुक्त_descs:
+	usb_मुक्त_all_descriptors(f);
 fail:
 	ERROR(f->config->cdev, "hidg_bind FAILED\n");
-	if (hidg->req != NULL)
-		free_ep_req(hidg->in_ep, hidg->req);
+	अगर (hidg->req != शून्य)
+		मुक्त_ep_req(hidg->in_ep, hidg->req);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static inline int hidg_get_minor(void)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक hidg_get_minor(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = ida_simple_get(&hidg_ida, 0, 0, GFP_KERNEL);
-	if (ret >= HIDG_MINORS) {
-		ida_simple_remove(&hidg_ida, ret);
+	अगर (ret >= HIDG_MINORS) अणु
+		ida_simple_हटाओ(&hidg_ida, ret);
 		ret = -ENODEV;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline struct f_hid_opts *to_f_hid_opts(struct config_item *item)
-{
-	return container_of(to_config_group(item), struct f_hid_opts,
+अटल अंतरभूत काष्ठा f_hid_opts *to_f_hid_opts(काष्ठा config_item *item)
+अणु
+	वापस container_of(to_config_group(item), काष्ठा f_hid_opts,
 			    func_inst.group);
-}
+पूर्ण
 
-static void hid_attr_release(struct config_item *item)
-{
-	struct f_hid_opts *opts = to_f_hid_opts(item);
+अटल व्योम hid_attr_release(काष्ठा config_item *item)
+अणु
+	काष्ठा f_hid_opts *opts = to_f_hid_opts(item);
 
 	usb_put_function_instance(&opts->func_inst);
-}
+पूर्ण
 
-static struct configfs_item_operations hidg_item_ops = {
+अटल काष्ठा configfs_item_operations hidg_item_ops = अणु
 	.release	= hid_attr_release,
-};
+पूर्ण;
 
-#define F_HID_OPT(name, prec, limit)					\
-static ssize_t f_hid_opts_##name##_show(struct config_item *item, char *page)\
-{									\
-	struct f_hid_opts *opts = to_f_hid_opts(item);			\
-	int result;							\
+#घोषणा F_HID_OPT(name, prec, limit)					\
+अटल sमाप_प्रकार f_hid_opts_##name##_show(काष्ठा config_item *item, अक्षर *page)\
+अणु									\
+	काष्ठा f_hid_opts *opts = to_f_hid_opts(item);			\
+	पूर्णांक result;							\
 									\
 	mutex_lock(&opts->lock);					\
-	result = sprintf(page, "%d\n", opts->name);			\
+	result = प्र_लिखो(page, "%d\n", opts->name);			\
 	mutex_unlock(&opts->lock);					\
 									\
-	return result;							\
-}									\
+	वापस result;							\
+पूर्ण									\
 									\
-static ssize_t f_hid_opts_##name##_store(struct config_item *item,	\
-					 const char *page, size_t len)	\
-{									\
-	struct f_hid_opts *opts = to_f_hid_opts(item);			\
-	int ret;							\
+अटल sमाप_प्रकार f_hid_opts_##name##_store(काष्ठा config_item *item,	\
+					 स्थिर अक्षर *page, माप_प्रकार len)	\
+अणु									\
+	काष्ठा f_hid_opts *opts = to_f_hid_opts(item);			\
+	पूर्णांक ret;							\
 	u##prec num;							\
 									\
 	mutex_lock(&opts->lock);					\
-	if (opts->refcnt) {						\
+	अगर (opts->refcnt) अणु						\
 		ret = -EBUSY;						\
-		goto end;						\
-	}								\
+		जाओ end;						\
+	पूर्ण								\
 									\
 	ret = kstrtou##prec(page, 0, &num);				\
-	if (ret)							\
-		goto end;						\
+	अगर (ret)							\
+		जाओ end;						\
 									\
-	if (num > limit) {						\
+	अगर (num > limit) अणु						\
 		ret = -EINVAL;						\
-		goto end;						\
-	}								\
+		जाओ end;						\
+	पूर्ण								\
 	opts->name = num;						\
 	ret = len;							\
 									\
 end:									\
 	mutex_unlock(&opts->lock);					\
-	return ret;							\
-}									\
+	वापस ret;							\
+पूर्ण									\
 									\
 CONFIGFS_ATTR(f_hid_opts_, name)
 
@@ -920,174 +921,174 @@ F_HID_OPT(subclass, 8, 255);
 F_HID_OPT(protocol, 8, 255);
 F_HID_OPT(report_length, 16, 65535);
 
-static ssize_t f_hid_opts_report_desc_show(struct config_item *item, char *page)
-{
-	struct f_hid_opts *opts = to_f_hid_opts(item);
-	int result;
+अटल sमाप_प्रकार f_hid_opts_report_desc_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	काष्ठा f_hid_opts *opts = to_f_hid_opts(item);
+	पूर्णांक result;
 
 	mutex_lock(&opts->lock);
 	result = opts->report_desc_length;
-	memcpy(page, opts->report_desc, opts->report_desc_length);
+	स_नकल(page, opts->report_desc, opts->report_desc_length);
 	mutex_unlock(&opts->lock);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static ssize_t f_hid_opts_report_desc_store(struct config_item *item,
-					    const char *page, size_t len)
-{
-	struct f_hid_opts *opts = to_f_hid_opts(item);
-	int ret = -EBUSY;
-	char *d;
+अटल sमाप_प्रकार f_hid_opts_report_desc_store(काष्ठा config_item *item,
+					    स्थिर अक्षर *page, माप_प्रकार len)
+अणु
+	काष्ठा f_hid_opts *opts = to_f_hid_opts(item);
+	पूर्णांक ret = -EBUSY;
+	अक्षर *d;
 
 	mutex_lock(&opts->lock);
 
-	if (opts->refcnt)
-		goto end;
-	if (len > PAGE_SIZE) {
+	अगर (opts->refcnt)
+		जाओ end;
+	अगर (len > PAGE_SIZE) अणु
 		ret = -ENOSPC;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 	d = kmemdup(page, len, GFP_KERNEL);
-	if (!d) {
+	अगर (!d) अणु
 		ret = -ENOMEM;
-		goto end;
-	}
-	kfree(opts->report_desc);
+		जाओ end;
+	पूर्ण
+	kमुक्त(opts->report_desc);
 	opts->report_desc = d;
 	opts->report_desc_length = len;
 	opts->report_desc_alloc = true;
 	ret = len;
 end:
 	mutex_unlock(&opts->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 CONFIGFS_ATTR(f_hid_opts_, report_desc);
 
-static ssize_t f_hid_opts_dev_show(struct config_item *item, char *page)
-{
-	struct f_hid_opts *opts = to_f_hid_opts(item);
+अटल sमाप_प्रकार f_hid_opts_dev_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	काष्ठा f_hid_opts *opts = to_f_hid_opts(item);
 
-	return sprintf(page, "%d:%d\n", major, opts->minor);
-}
+	वापस प्र_लिखो(page, "%d:%d\n", major, opts->minor);
+पूर्ण
 
 CONFIGFS_ATTR_RO(f_hid_opts_, dev);
 
-static struct configfs_attribute *hid_attrs[] = {
+अटल काष्ठा configfs_attribute *hid_attrs[] = अणु
 	&f_hid_opts_attr_subclass,
 	&f_hid_opts_attr_protocol,
 	&f_hid_opts_attr_report_length,
 	&f_hid_opts_attr_report_desc,
 	&f_hid_opts_attr_dev,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct config_item_type hid_func_type = {
+अटल स्थिर काष्ठा config_item_type hid_func_type = अणु
 	.ct_item_ops	= &hidg_item_ops,
 	.ct_attrs	= hid_attrs,
 	.ct_owner	= THIS_MODULE,
-};
+पूर्ण;
 
-static inline void hidg_put_minor(int minor)
-{
-	ida_simple_remove(&hidg_ida, minor);
-}
+अटल अंतरभूत व्योम hidg_put_minor(पूर्णांक minor)
+अणु
+	ida_simple_हटाओ(&hidg_ida, minor);
+पूर्ण
 
-static void hidg_free_inst(struct usb_function_instance *f)
-{
-	struct f_hid_opts *opts;
+अटल व्योम hidg_मुक्त_inst(काष्ठा usb_function_instance *f)
+अणु
+	काष्ठा f_hid_opts *opts;
 
-	opts = container_of(f, struct f_hid_opts, func_inst);
+	opts = container_of(f, काष्ठा f_hid_opts, func_inst);
 
 	mutex_lock(&hidg_ida_lock);
 
 	hidg_put_minor(opts->minor);
-	if (ida_is_empty(&hidg_ida))
+	अगर (ida_is_empty(&hidg_ida))
 		ghid_cleanup();
 
 	mutex_unlock(&hidg_ida_lock);
 
-	if (opts->report_desc_alloc)
-		kfree(opts->report_desc);
+	अगर (opts->report_desc_alloc)
+		kमुक्त(opts->report_desc);
 
-	kfree(opts);
-}
+	kमुक्त(opts);
+पूर्ण
 
-static struct usb_function_instance *hidg_alloc_inst(void)
-{
-	struct f_hid_opts *opts;
-	struct usb_function_instance *ret;
-	int status = 0;
+अटल काष्ठा usb_function_instance *hidg_alloc_inst(व्योम)
+अणु
+	काष्ठा f_hid_opts *opts;
+	काष्ठा usb_function_instance *ret;
+	पूर्णांक status = 0;
 
-	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
-	if (!opts)
-		return ERR_PTR(-ENOMEM);
+	opts = kzalloc(माप(*opts), GFP_KERNEL);
+	अगर (!opts)
+		वापस ERR_PTR(-ENOMEM);
 	mutex_init(&opts->lock);
-	opts->func_inst.free_func_inst = hidg_free_inst;
+	opts->func_inst.मुक्त_func_inst = hidg_मुक्त_inst;
 	ret = &opts->func_inst;
 
 	mutex_lock(&hidg_ida_lock);
 
-	if (ida_is_empty(&hidg_ida)) {
-		status = ghid_setup(NULL, HIDG_MINORS);
-		if (status)  {
+	अगर (ida_is_empty(&hidg_ida)) अणु
+		status = ghid_setup(शून्य, HIDG_MINORS);
+		अगर (status)  अणु
 			ret = ERR_PTR(status);
-			kfree(opts);
-			goto unlock;
-		}
-	}
+			kमुक्त(opts);
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
 	opts->minor = hidg_get_minor();
-	if (opts->minor < 0) {
+	अगर (opts->minor < 0) अणु
 		ret = ERR_PTR(opts->minor);
-		kfree(opts);
-		if (ida_is_empty(&hidg_ida))
+		kमुक्त(opts);
+		अगर (ida_is_empty(&hidg_ida))
 			ghid_cleanup();
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 	config_group_init_type_name(&opts->func_inst.group, "", &hid_func_type);
 
 unlock:
 	mutex_unlock(&hidg_ida_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void hidg_free(struct usb_function *f)
-{
-	struct f_hidg *hidg;
-	struct f_hid_opts *opts;
+अटल व्योम hidg_मुक्त(काष्ठा usb_function *f)
+अणु
+	काष्ठा f_hidg *hidg;
+	काष्ठा f_hid_opts *opts;
 
 	hidg = func_to_hidg(f);
-	opts = container_of(f->fi, struct f_hid_opts, func_inst);
-	kfree(hidg->report_desc);
-	kfree(hidg);
+	opts = container_of(f->fi, काष्ठा f_hid_opts, func_inst);
+	kमुक्त(hidg->report_desc);
+	kमुक्त(hidg);
 	mutex_lock(&opts->lock);
 	--opts->refcnt;
 	mutex_unlock(&opts->lock);
-}
+पूर्ण
 
-static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
-{
-	struct f_hidg *hidg = func_to_hidg(f);
+अटल व्योम hidg_unbind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
+अणु
+	काष्ठा f_hidg *hidg = func_to_hidg(f);
 
 	device_destroy(hidg_class, MKDEV(major, hidg->minor));
 	cdev_del(&hidg->cdev);
 
-	usb_free_all_descriptors(f);
-}
+	usb_मुक्त_all_descriptors(f);
+पूर्ण
 
-static struct usb_function *hidg_alloc(struct usb_function_instance *fi)
-{
-	struct f_hidg *hidg;
-	struct f_hid_opts *opts;
+अटल काष्ठा usb_function *hidg_alloc(काष्ठा usb_function_instance *fi)
+अणु
+	काष्ठा f_hidg *hidg;
+	काष्ठा f_hid_opts *opts;
 
 	/* allocate and initialize one new instance */
-	hidg = kzalloc(sizeof(*hidg), GFP_KERNEL);
-	if (!hidg)
-		return ERR_PTR(-ENOMEM);
+	hidg = kzalloc(माप(*hidg), GFP_KERNEL);
+	अगर (!hidg)
+		वापस ERR_PTR(-ENOMEM);
 
-	opts = container_of(fi, struct f_hid_opts, func_inst);
+	opts = container_of(fi, काष्ठा f_hid_opts, func_inst);
 
 	mutex_lock(&opts->lock);
 	++opts->refcnt;
@@ -1097,16 +1098,16 @@ static struct usb_function *hidg_alloc(struct usb_function_instance *fi)
 	hidg->bInterfaceProtocol = opts->protocol;
 	hidg->report_length = opts->report_length;
 	hidg->report_desc_length = opts->report_desc_length;
-	if (opts->report_desc) {
+	अगर (opts->report_desc) अणु
 		hidg->report_desc = kmemdup(opts->report_desc,
 					    opts->report_desc_length,
 					    GFP_KERNEL);
-		if (!hidg->report_desc) {
-			kfree(hidg);
+		अगर (!hidg->report_desc) अणु
+			kमुक्त(hidg);
 			mutex_unlock(&opts->lock);
-			return ERR_PTR(-ENOMEM);
-		}
-	}
+			वापस ERR_PTR(-ENOMEM);
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&opts->lock);
 
@@ -1116,50 +1117,50 @@ static struct usb_function *hidg_alloc(struct usb_function_instance *fi)
 	hidg->func.set_alt = hidg_set_alt;
 	hidg->func.disable = hidg_disable;
 	hidg->func.setup   = hidg_setup;
-	hidg->func.free_func = hidg_free;
+	hidg->func.मुक्त_func = hidg_मुक्त;
 
-	/* this could me made configurable at some point */
+	/* this could me made configurable at some poपूर्णांक */
 	hidg->qlen	   = 4;
 
-	return &hidg->func;
-}
+	वापस &hidg->func;
+पूर्ण
 
 DECLARE_USB_FUNCTION_INIT(hid, hidg_alloc_inst, hidg_alloc);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Fabien Chouteau");
 
-int ghid_setup(struct usb_gadget *g, int count)
-{
-	int status;
+पूर्णांक ghid_setup(काष्ठा usb_gadget *g, पूर्णांक count)
+अणु
+	पूर्णांक status;
 	dev_t dev;
 
 	hidg_class = class_create(THIS_MODULE, "hidg");
-	if (IS_ERR(hidg_class)) {
+	अगर (IS_ERR(hidg_class)) अणु
 		status = PTR_ERR(hidg_class);
-		hidg_class = NULL;
-		return status;
-	}
+		hidg_class = शून्य;
+		वापस status;
+	पूर्ण
 
 	status = alloc_chrdev_region(&dev, 0, count, "hidg");
-	if (status) {
+	अगर (status) अणु
 		class_destroy(hidg_class);
-		hidg_class = NULL;
-		return status;
-	}
+		hidg_class = शून्य;
+		वापस status;
+	पूर्ण
 
 	major = MAJOR(dev);
 	minors = count;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ghid_cleanup(void)
-{
-	if (major) {
-		unregister_chrdev_region(MKDEV(major, 0), minors);
+व्योम ghid_cleanup(व्योम)
+अणु
+	अगर (major) अणु
+		unरेजिस्टर_chrdev_region(MKDEV(major, 0), minors);
 		major = minors = 0;
-	}
+	पूर्ण
 
 	class_destroy(hidg_class);
-	hidg_class = NULL;
-}
+	hidg_class = शून्य;
+पूर्ण

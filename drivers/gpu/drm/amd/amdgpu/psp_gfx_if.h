@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,71 +22,71 @@
  *
  */
 
-#ifndef _PSP_TEE_GFX_IF_H_
-#define _PSP_TEE_GFX_IF_H_
+#अगर_अघोषित _PSP_TEE_GFX_IF_H_
+#घोषणा _PSP_TEE_GFX_IF_H_
 
-#define PSP_GFX_CMD_BUF_VERSION     0x00000001
+#घोषणा PSP_GFX_CMD_BUF_VERSION     0x00000001
 
-#define GFX_CMD_STATUS_MASK         0x0000FFFF
-#define GFX_CMD_ID_MASK             0x000F0000
-#define GFX_CMD_RESERVED_MASK       0x7FF00000
-#define GFX_CMD_RESPONSE_MASK       0x80000000
+#घोषणा GFX_CMD_STATUS_MASK         0x0000FFFF
+#घोषणा GFX_CMD_ID_MASK             0x000F0000
+#घोषणा GFX_CMD_RESERVED_MASK       0x7FF00000
+#घोषणा GFX_CMD_RESPONSE_MASK       0x80000000
 
 /* USBC PD FW version retrieval command */
-#define C2PMSG_CMD_GFX_USB_PD_FW_VER 0x2000000
+#घोषणा C2PMSG_CMD_GFX_USB_PD_FW_VER 0x2000000
 
-/* TEE Gfx Command IDs for the register interface.
+/* TEE Gfx Command IDs क्रम the रेजिस्टर पूर्णांकerface.
 *  Command ID must be between 0x00010000 and 0x000F0000.
 */
-enum psp_gfx_crtl_cmd_id
-{
+क्रमागत psp_gfx_crtl_cmd_id
+अणु
     GFX_CTRL_CMD_ID_INIT_RBI_RING   = 0x00010000,   /* initialize RBI ring */
     GFX_CTRL_CMD_ID_INIT_GPCOM_RING = 0x00020000,   /* initialize GPCOM ring */
     GFX_CTRL_CMD_ID_DESTROY_RINGS   = 0x00030000,   /* destroy rings */
     GFX_CTRL_CMD_ID_CAN_INIT_RINGS  = 0x00040000,   /* is it allowed to initialized the rings */
-    GFX_CTRL_CMD_ID_ENABLE_INT      = 0x00050000,   /* enable PSP-to-Gfx interrupt */
-    GFX_CTRL_CMD_ID_DISABLE_INT     = 0x00060000,   /* disable PSP-to-Gfx interrupt */
+    GFX_CTRL_CMD_ID_ENABLE_INT      = 0x00050000,   /* enable PSP-to-Gfx पूर्णांकerrupt */
+    GFX_CTRL_CMD_ID_DISABLE_INT     = 0x00060000,   /* disable PSP-to-Gfx पूर्णांकerrupt */
     GFX_CTRL_CMD_ID_MODE1_RST       = 0x00070000,   /* trigger the Mode 1 reset */
-    GFX_CTRL_CMD_ID_GBR_IH_SET      = 0x00080000,   /* set Gbr IH_RB_CNTL registers */
-    GFX_CTRL_CMD_ID_CONSUME_CMD     = 0x00090000,   /* send interrupt to psp for updating write pointer of vf */
+    GFX_CTRL_CMD_ID_GBR_IH_SET      = 0x00080000,   /* set Gbr IH_RB_CNTL रेजिस्टरs */
+    GFX_CTRL_CMD_ID_CONSUME_CMD     = 0x00090000,   /* send पूर्णांकerrupt to psp क्रम updating ग_लिखो poपूर्णांकer of vf */
     GFX_CTRL_CMD_ID_DESTROY_GPCOM_RING = 0x000C0000, /* destroy GPCOM ring */
 
     GFX_CTRL_CMD_ID_MAX             = 0x000F0000,   /* max command ID */
-};
+पूर्ण;
 
 
 /*-----------------------------------------------------------------------------
-    NOTE:   All physical addresses used in this interface are actually
+    NOTE:   All physical addresses used in this पूर्णांकerface are actually
             GPU Virtual Addresses.
 */
 
 
-/* Control registers of the TEE Gfx interface. These are located in
-*  SRBM-to-PSP mailbox registers (total 8 registers).
+/* Control रेजिस्टरs of the TEE Gfx पूर्णांकerface. These are located in
+*  SRBM-to-PSP mailbox रेजिस्टरs (total 8 रेजिस्टरs).
 */
-struct psp_gfx_ctrl
-{
-    volatile uint32_t   cmd_resp;         /* +0   Command/Response register for Gfx commands */
-    volatile uint32_t   rbi_wptr;         /* +4   Write pointer (index) of RBI ring */
-    volatile uint32_t   rbi_rptr;         /* +8   Read pointer (index) of RBI ring */
-    volatile uint32_t   gpcom_wptr;       /* +12  Write pointer (index) of GPCOM ring */
-    volatile uint32_t   gpcom_rptr;       /* +16  Read pointer (index) of GPCOM ring */
-    volatile uint32_t   ring_addr_lo;     /* +20  bits [31:0] of GPU Virtual of ring buffer (VMID=0)*/
-    volatile uint32_t   ring_addr_hi;     /* +24  bits [63:32] of GPU Virtual of ring buffer (VMID=0) */
-    volatile uint32_t   ring_buf_size;    /* +28  Ring buffer size (in bytes) */
+काष्ठा psp_gfx_ctrl
+अणु
+    अस्थिर uपूर्णांक32_t   cmd_resp;         /* +0   Command/Response रेजिस्टर क्रम Gfx commands */
+    अस्थिर uपूर्णांक32_t   rbi_wptr;         /* +4   Write poपूर्णांकer (index) of RBI ring */
+    अस्थिर uपूर्णांक32_t   rbi_rptr;         /* +8   Read poपूर्णांकer (index) of RBI ring */
+    अस्थिर uपूर्णांक32_t   gpcom_wptr;       /* +12  Write poपूर्णांकer (index) of GPCOM ring */
+    अस्थिर uपूर्णांक32_t   gpcom_rptr;       /* +16  Read poपूर्णांकer (index) of GPCOM ring */
+    अस्थिर uपूर्णांक32_t   ring_addr_lo;     /* +20  bits [31:0] of GPU Virtual of ring buffer (VMID=0)*/
+    अस्थिर uपूर्णांक32_t   ring_addr_hi;     /* +24  bits [63:32] of GPU Virtual of ring buffer (VMID=0) */
+    अस्थिर uपूर्णांक32_t   ring_buf_size;    /* +28  Ring buffer size (in bytes) */
 
-};
+पूर्ण;
 
 
 /* Response flag is set in the command when command is completed by PSP.
 *  Used in the GFX_CTRL.CmdResp.
 *  When PSP GFX I/F is initialized, the flag is set.
 */
-#define GFX_FLAG_RESPONSE               0x80000000
+#घोषणा GFX_FLAG_RESPONSE               0x80000000
 
-/* TEE Gfx Command IDs for the ring buffer interface. */
-enum psp_gfx_cmd_id
-{
+/* TEE Gfx Command IDs क्रम the ring buffer पूर्णांकerface. */
+क्रमागत psp_gfx_cmd_id
+अणु
     GFX_CMD_ID_LOAD_TA            = 0x00000001,   /* load TA */
     GFX_CMD_ID_UNLOAD_TA          = 0x00000002,   /* unload TA */
     GFX_CMD_ID_INVOKE_CMD         = 0x00000003,   /* send command to TA */
@@ -97,109 +98,109 @@ enum psp_gfx_cmd_id
     GFX_CMD_ID_SETUP_VMR          = 0x00000009,   /* setup VMR region */
     GFX_CMD_ID_DESTROY_VMR        = 0x0000000A,   /* destroy VMR region */
     GFX_CMD_ID_PROG_REG           = 0x0000000B,   /* program regs */
-    GFX_CMD_ID_CLEAR_VF_FW        = 0x0000000D,   /* Clear VF FW, to be used on VF shutdown. */
+    GFX_CMD_ID_CLEAR_VF_FW        = 0x0000000D,   /* Clear VF FW, to be used on VF shutकरोwn. */
     GFX_CMD_ID_GET_FW_ATTESTATION = 0x0000000F,   /* Query GPUVA of the Fw Attestation DB */
-    /* IDs upto 0x1F are reserved for older programs (Raven, Vega 10/12/20) */
+    /* IDs upto 0x1F are reserved क्रम older programs (Raven, Vega 10/12/20) */
     GFX_CMD_ID_LOAD_TOC           = 0x00000020,   /* Load TOC and obtain TMR size */
-    GFX_CMD_ID_AUTOLOAD_RLC       = 0x00000021,   /* Indicates all graphics fw loaded, start RLC autoload */
+    GFX_CMD_ID_AUTOLOAD_RLC       = 0x00000021,   /* Indicates all graphics fw loaded, start RLC स्वतःload */
     GFX_CMD_ID_BOOT_CFG           = 0x00000022,   /* Boot Config */
-};
+पूर्ण;
 
 /* PSP boot config sub-commands */
-enum psp_gfx_boot_config_cmd
-{
+क्रमागत psp_gfx_boot_config_cmd
+अणु
     BOOTCFG_CMD_SET         = 1, /* Set boot configuration settings */
     BOOTCFG_CMD_GET         = 2, /* Get boot configuration settings */
-    BOOTCFG_CMD_INVALIDATE  = 3  /* Reset current boot configuration settings to VBIOS defaults */
-};
+    BOOTCFG_CMD_INVALIDATE  = 3  /* Reset current boot configuration settings to VBIOS शेषs */
+पूर्ण;
 
-/* PSP boot config bitmask values */
-enum psp_gfx_boot_config
-{
+/* PSP boot config biपंचांगask values */
+क्रमागत psp_gfx_boot_config
+अणु
     BOOT_CONFIG_GECC = 0x1,
-};
+पूर्ण;
 
-/* Command to load Trusted Application binary into PSP OS. */
-struct psp_gfx_cmd_load_ta
-{
-    uint32_t        app_phy_addr_lo;        /* bits [31:0] of the GPU Virtual address of the TA binary (must be 4 KB aligned) */
-    uint32_t        app_phy_addr_hi;        /* bits [63:32] of the GPU Virtual address of the TA binary */
-    uint32_t        app_len;                /* length of the TA binary in bytes */
-    uint32_t        cmd_buf_phy_addr_lo;    /* bits [31:0] of the GPU Virtual address of CMD buffer (must be 4 KB aligned) */
-    uint32_t        cmd_buf_phy_addr_hi;    /* bits [63:32] of the GPU Virtual address of CMD buffer */
-    uint32_t        cmd_buf_len;            /* length of the CMD buffer in bytes; must be multiple of 4 KB */
+/* Command to load Trusted Application binary पूर्णांकo PSP OS. */
+काष्ठा psp_gfx_cmd_load_ta
+अणु
+    uपूर्णांक32_t        app_phy_addr_lo;        /* bits [31:0] of the GPU Virtual address of the TA binary (must be 4 KB aligned) */
+    uपूर्णांक32_t        app_phy_addr_hi;        /* bits [63:32] of the GPU Virtual address of the TA binary */
+    uपूर्णांक32_t        app_len;                /* length of the TA binary in bytes */
+    uपूर्णांक32_t        cmd_buf_phy_addr_lo;    /* bits [31:0] of the GPU Virtual address of CMD buffer (must be 4 KB aligned) */
+    uपूर्णांक32_t        cmd_buf_phy_addr_hi;    /* bits [63:32] of the GPU Virtual address of CMD buffer */
+    uपूर्णांक32_t        cmd_buf_len;            /* length of the CMD buffer in bytes; must be multiple of 4 KB */
 
-    /* Note: CmdBufLen can be set to 0. In this case no persistent CMD buffer is provided
-    *       for the TA. Each InvokeCommand can have dinamically mapped CMD buffer instead
+    /* Note: CmdBufLen can be set to 0. In this हाल no persistent CMD buffer is provided
+    *       क्रम the TA. Each InvokeCommand can have dinamically mapped CMD buffer instead
     *       of using global persistent buffer.
     */
-};
+पूर्ण;
 
 
 /* Command to Unload Trusted Application binary from PSP OS. */
-struct psp_gfx_cmd_unload_ta
-{
-    uint32_t        session_id;          /* Session ID of the loaded TA to be unloaded */
+काष्ठा psp_gfx_cmd_unload_ta
+अणु
+    uपूर्णांक32_t        session_id;          /* Session ID of the loaded TA to be unloaded */
 
-};
+पूर्ण;
 
 
-/* Shared buffers for InvokeCommand.
+/* Shared buffers क्रम InvokeCommand.
 */
-struct psp_gfx_buf_desc
-{
-    uint32_t        buf_phy_addr_lo;       /* bits [31:0] of GPU Virtual address of the buffer (must be 4 KB aligned) */
-    uint32_t        buf_phy_addr_hi;       /* bits [63:32] of GPU Virtual address of the buffer */
-    uint32_t        buf_size;              /* buffer size in bytes (must be multiple of 4 KB and no bigger than 64 MB) */
+काष्ठा psp_gfx_buf_desc
+अणु
+    uपूर्णांक32_t        buf_phy_addr_lo;       /* bits [31:0] of GPU Virtual address of the buffer (must be 4 KB aligned) */
+    uपूर्णांक32_t        buf_phy_addr_hi;       /* bits [63:32] of GPU Virtual address of the buffer */
+    uपूर्णांक32_t        buf_size;              /* buffer size in bytes (must be multiple of 4 KB and no bigger than 64 MB) */
 
-};
+पूर्ण;
 
-/* Max number of descriptors for one shared buffer (in how many different
+/* Max number of descriptors क्रम one shared buffer (in how many dअगरferent
 *  physical locations one shared buffer can be stored). If buffer is too much
-*  fragmented, error will be returned.
+*  fragmented, error will be वापसed.
 */
-#define GFX_BUF_MAX_DESC        64
+#घोषणा GFX_BUF_MAX_DESC        64
 
-struct psp_gfx_buf_list
-{
-    uint32_t                num_desc;                    /* number of buffer descriptors in the list */
-    uint32_t                total_size;                  /* total size of all buffers in the list in bytes (must be multiple of 4 KB) */
-    struct psp_gfx_buf_desc buf_desc[GFX_BUF_MAX_DESC];  /* list of buffer descriptors */
+काष्ठा psp_gfx_buf_list
+अणु
+    uपूर्णांक32_t                num_desc;                    /* number of buffer descriptors in the list */
+    uपूर्णांक32_t                total_size;                  /* total size of all buffers in the list in bytes (must be multiple of 4 KB) */
+    काष्ठा psp_gfx_buf_desc buf_desc[GFX_BUF_MAX_DESC];  /* list of buffer descriptors */
 
     /* total 776 bytes */
-};
+पूर्ण;
 
-/* Command to execute InvokeCommand entry point of the TA. */
-struct psp_gfx_cmd_invoke_cmd
-{
-    uint32_t                session_id;           /* Session ID of the TA to be executed */
-    uint32_t                ta_cmd_id;            /* Command ID to be sent to TA */
-    struct psp_gfx_buf_list buf;                  /* one indirect buffer (scatter/gather list) */
+/* Command to execute InvokeCommand entry poपूर्णांक of the TA. */
+काष्ठा psp_gfx_cmd_invoke_cmd
+अणु
+    uपूर्णांक32_t                session_id;           /* Session ID of the TA to be executed */
+    uपूर्णांक32_t                ta_cmd_id;            /* Command ID to be sent to TA */
+    काष्ठा psp_gfx_buf_list buf;                  /* one indirect buffer (scatter/gather list) */
 
-};
+पूर्ण;
 
 
 /* Command to setup TMR region. */
-struct psp_gfx_cmd_setup_tmr
-{
-    uint32_t        buf_phy_addr_lo;       /* bits [31:0] of GPU Virtual address of TMR buffer (must be 4 KB aligned) */
-    uint32_t        buf_phy_addr_hi;       /* bits [63:32] of GPU Virtual address of TMR buffer */
-    uint32_t        buf_size;              /* buffer size in bytes (must be multiple of 4 KB) */
-    union {
-	struct {
-		uint32_t	sriov_enabled:1; /* whether the device runs under SR-IOV*/
-		uint32_t	virt_phy_addr:1; /* driver passes both virtual and physical address to PSP*/
-		uint32_t	reserved:30;
-	} bitfield;
-	uint32_t        tmr_flags;
-    };
-    uint32_t        system_phy_addr_lo;        /* bits [31:0] of system physical address of TMR buffer (must be 4 KB aligned) */
-    uint32_t        system_phy_addr_hi;        /* bits [63:32] of system physical address of TMR buffer */
+काष्ठा psp_gfx_cmd_setup_पंचांगr
+अणु
+    uपूर्णांक32_t        buf_phy_addr_lo;       /* bits [31:0] of GPU Virtual address of TMR buffer (must be 4 KB aligned) */
+    uपूर्णांक32_t        buf_phy_addr_hi;       /* bits [63:32] of GPU Virtual address of TMR buffer */
+    uपूर्णांक32_t        buf_size;              /* buffer size in bytes (must be multiple of 4 KB) */
+    जोड़ अणु
+	काष्ठा अणु
+		uपूर्णांक32_t	sriov_enabled:1; /* whether the device runs under SR-IOV*/
+		uपूर्णांक32_t	virt_phy_addr:1; /* driver passes both भव and physical address to PSP*/
+		uपूर्णांक32_t	reserved:30;
+	पूर्ण bitfield;
+	uपूर्णांक32_t        पंचांगr_flags;
+    पूर्ण;
+    uपूर्णांक32_t        प्रणाली_phy_addr_lo;        /* bits [31:0] of प्रणाली physical address of TMR buffer (must be 4 KB aligned) */
+    uपूर्णांक32_t        प्रणाली_phy_addr_hi;        /* bits [63:32] of प्रणाली physical address of TMR buffer */
 
-};
+पूर्ण;
 
-/* FW types for GFX_CMD_ID_LOAD_IP_FW command. Limit 31. */
-enum psp_gfx_fw_type {
+/* FW types क्रम GFX_CMD_ID_LOAD_IP_FW command. Limit 31. */
+क्रमागत psp_gfx_fw_type अणु
 	GFX_FW_TYPE_NONE        = 0,    /* */
 	GFX_FW_TYPE_CP_ME       = 1,    /* CP-ME                    VG + RV */
 	GFX_FW_TYPE_CP_PFP      = 2,    /* CP-PFP                   VG + RV */
@@ -261,160 +262,160 @@ enum psp_gfx_fw_type {
 	GFX_FW_TYPE_VCN1                            = 58,   /* VCN1                     MI      */
 	GFX_FW_TYPE_REG_LIST                        = 67,   /* REG_LIST                 MI      */
 	GFX_FW_TYPE_MAX
-};
+पूर्ण;
 
 /* Command to load HW IP FW. */
-struct psp_gfx_cmd_load_ip_fw
-{
-    uint32_t                fw_phy_addr_lo;    /* bits [31:0] of GPU Virtual address of FW location (must be 4 KB aligned) */
-    uint32_t                fw_phy_addr_hi;    /* bits [63:32] of GPU Virtual address of FW location */
-    uint32_t                fw_size;           /* FW buffer size in bytes */
-    enum psp_gfx_fw_type    fw_type;           /* FW type */
+काष्ठा psp_gfx_cmd_load_ip_fw
+अणु
+    uपूर्णांक32_t                fw_phy_addr_lo;    /* bits [31:0] of GPU Virtual address of FW location (must be 4 KB aligned) */
+    uपूर्णांक32_t                fw_phy_addr_hi;    /* bits [63:32] of GPU Virtual address of FW location */
+    uपूर्णांक32_t                fw_size;           /* FW buffer size in bytes */
+    क्रमागत psp_gfx_fw_type    fw_type;           /* FW type */
 
-};
+पूर्ण;
 
 /* Command to save/restore HW IP FW. */
-struct psp_gfx_cmd_save_restore_ip_fw
-{
-    uint32_t                save_fw;              /* if set, command is used for saving fw otherwise for resetoring*/
-    uint32_t                save_restore_addr_lo; /* bits [31:0] of FB address of GART memory used as save/restore buffer (must be 4 KB aligned) */
-    uint32_t                save_restore_addr_hi; /* bits [63:32] of FB address of GART memory used as save/restore buffer */
-    uint32_t                buf_size;             /* Size of the save/restore buffer in bytes */
-    enum psp_gfx_fw_type    fw_type;              /* FW type */
-};
+काष्ठा psp_gfx_cmd_save_restore_ip_fw
+अणु
+    uपूर्णांक32_t                save_fw;              /* अगर set, command is used क्रम saving fw otherwise क्रम resetoring*/
+    uपूर्णांक32_t                save_restore_addr_lo; /* bits [31:0] of FB address of GART memory used as save/restore buffer (must be 4 KB aligned) */
+    uपूर्णांक32_t                save_restore_addr_hi; /* bits [63:32] of FB address of GART memory used as save/restore buffer */
+    uपूर्णांक32_t                buf_size;             /* Size of the save/restore buffer in bytes */
+    क्रमागत psp_gfx_fw_type    fw_type;              /* FW type */
+पूर्ण;
 
-/* Command to setup register program */
-struct psp_gfx_cmd_reg_prog {
-	uint32_t	reg_value;
-	uint32_t	reg_id;
-};
+/* Command to setup रेजिस्टर program */
+काष्ठा psp_gfx_cmd_reg_prog अणु
+	uपूर्णांक32_t	reg_value;
+	uपूर्णांक32_t	reg_id;
+पूर्ण;
 
 /* Command to load TOC */
-struct psp_gfx_cmd_load_toc
-{
-    uint32_t        toc_phy_addr_lo;        /* bits [31:0] of GPU Virtual address of FW location (must be 4 KB aligned) */
-    uint32_t        toc_phy_addr_hi;        /* bits [63:32] of GPU Virtual address of FW location */
-    uint32_t        toc_size;               /* FW buffer size in bytes */
-};
+काष्ठा psp_gfx_cmd_load_toc
+अणु
+    uपूर्णांक32_t        toc_phy_addr_lo;        /* bits [31:0] of GPU Virtual address of FW location (must be 4 KB aligned) */
+    uपूर्णांक32_t        toc_phy_addr_hi;        /* bits [63:32] of GPU Virtual address of FW location */
+    uपूर्णांक32_t        toc_size;               /* FW buffer size in bytes */
+पूर्ण;
 
 /* Dynamic boot configuration */
-struct psp_gfx_cmd_boot_cfg
-{
-    uint32_t                        timestamp;            /* calendar time as number of seconds */
-    enum psp_gfx_boot_config_cmd    sub_cmd;              /* sub-command indicating how to process command data */
-    uint32_t                        boot_config;          /* dynamic boot configuration bitmask */
-    uint32_t                        boot_config_valid;    /* dynamic boot configuration valid bits bitmask */
-};
+काष्ठा psp_gfx_cmd_boot_cfg
+अणु
+    uपूर्णांक32_t                        बारtamp;            /* calendar समय as number of seconds */
+    क्रमागत psp_gfx_boot_config_cmd    sub_cmd;              /* sub-command indicating how to process command data */
+    uपूर्णांक32_t                        boot_config;          /* dynamic boot configuration biपंचांगask */
+    uपूर्णांक32_t                        boot_config_valid;    /* dynamic boot configuration valid bits biपंचांगask */
+पूर्ण;
 
 /* All GFX ring buffer commands. */
-union psp_gfx_commands
-{
-    struct psp_gfx_cmd_load_ta          cmd_load_ta;
-    struct psp_gfx_cmd_unload_ta        cmd_unload_ta;
-    struct psp_gfx_cmd_invoke_cmd       cmd_invoke_cmd;
-    struct psp_gfx_cmd_setup_tmr        cmd_setup_tmr;
-    struct psp_gfx_cmd_load_ip_fw       cmd_load_ip_fw;
-    struct psp_gfx_cmd_save_restore_ip_fw cmd_save_restore_ip_fw;
-    struct psp_gfx_cmd_reg_prog       cmd_setup_reg_prog;
-    struct psp_gfx_cmd_setup_tmr        cmd_setup_vmr;
-    struct psp_gfx_cmd_load_toc         cmd_load_toc;
-    struct psp_gfx_cmd_boot_cfg         boot_cfg;
-};
+जोड़ psp_gfx_commands
+अणु
+    काष्ठा psp_gfx_cmd_load_ta          cmd_load_ta;
+    काष्ठा psp_gfx_cmd_unload_ta        cmd_unload_ta;
+    काष्ठा psp_gfx_cmd_invoke_cmd       cmd_invoke_cmd;
+    काष्ठा psp_gfx_cmd_setup_पंचांगr        cmd_setup_पंचांगr;
+    काष्ठा psp_gfx_cmd_load_ip_fw       cmd_load_ip_fw;
+    काष्ठा psp_gfx_cmd_save_restore_ip_fw cmd_save_restore_ip_fw;
+    काष्ठा psp_gfx_cmd_reg_prog       cmd_setup_reg_prog;
+    काष्ठा psp_gfx_cmd_setup_पंचांगr        cmd_setup_vmr;
+    काष्ठा psp_gfx_cmd_load_toc         cmd_load_toc;
+    काष्ठा psp_gfx_cmd_boot_cfg         boot_cfg;
+पूर्ण;
 
-struct psp_gfx_uresp_reserved
-{
-    uint32_t reserved[8];
-};
+काष्ठा psp_gfx_uresp_reserved
+अणु
+    uपूर्णांक32_t reserved[8];
+पूर्ण;
 
-/* Command-specific response for Fw Attestation Db */
-struct psp_gfx_uresp_fwar_db_info
-{
-    uint32_t fwar_db_addr_lo;
-    uint32_t fwar_db_addr_hi;
-};
+/* Command-specअगरic response क्रम Fw Attestation Db */
+काष्ठा psp_gfx_uresp_fwar_db_info
+अणु
+    uपूर्णांक32_t fwar_db_addr_lo;
+    uपूर्णांक32_t fwar_db_addr_hi;
+पूर्ण;
 
-/* Union of command-specific responses for GPCOM ring. */
-union psp_gfx_uresp
-{
-    struct psp_gfx_uresp_reserved reserved;
-    struct psp_gfx_uresp_fwar_db_info fwar_db_info;
-};
+/* Union of command-specअगरic responses क्रम GPCOM ring. */
+जोड़ psp_gfx_uresp
+अणु
+    काष्ठा psp_gfx_uresp_reserved reserved;
+    काष्ठा psp_gfx_uresp_fwar_db_info fwar_db_info;
+पूर्ण;
 
 /* Structure of GFX Response buffer.
-* For GPCOM I/F it is part of GFX_CMD_RESP buffer, for RBI
+* For GPCOM I/F it is part of GFX_CMD_RESP buffer, क्रम RBI
 * it is separate buffer.
 */
-struct psp_gfx_resp
-{
-    uint32_t	status;		/* +0  status of command execution */
-    uint32_t	session_id;	/* +4  session ID in response to LoadTa command */
-    uint32_t	fw_addr_lo;	/* +8  bits [31:0] of FW address within TMR (in response to cmd_load_ip_fw command) */
-    uint32_t	fw_addr_hi;	/* +12 bits [63:32] of FW address within TMR (in response to cmd_load_ip_fw command) */
-    uint32_t	tmr_size;	/* +16 size of the TMR to be reserved including MM fw and Gfx fw in response to cmd_load_toc command */
+काष्ठा psp_gfx_resp
+अणु
+    uपूर्णांक32_t	status;		/* +0  status of command execution */
+    uपूर्णांक32_t	session_id;	/* +4  session ID in response to LoadTa command */
+    uपूर्णांक32_t	fw_addr_lo;	/* +8  bits [31:0] of FW address within TMR (in response to cmd_load_ip_fw command) */
+    uपूर्णांक32_t	fw_addr_hi;	/* +12 bits [63:32] of FW address within TMR (in response to cmd_load_ip_fw command) */
+    uपूर्णांक32_t	पंचांगr_size;	/* +16 size of the TMR to be reserved including MM fw and Gfx fw in response to cmd_load_toc command */
 
-    uint32_t	reserved[11];
+    uपूर्णांक32_t	reserved[11];
 
-    union psp_gfx_uresp uresp;      /* +64 response union containing command-specific responses */
+    जोड़ psp_gfx_uresp uresp;      /* +64 response जोड़ containing command-specअगरic responses */
 
     /* total 96 bytes */
-};
+पूर्ण;
 
-/* Structure of Command buffer pointed by psp_gfx_rb_frame.cmd_buf_addr_hi
+/* Structure of Command buffer poपूर्णांकed by psp_gfx_rb_frame.cmd_buf_addr_hi
 *  and psp_gfx_rb_frame.cmd_buf_addr_lo.
 */
-struct psp_gfx_cmd_resp
-{
-    uint32_t        buf_size;           /* +0  total size of the buffer in bytes */
-    uint32_t        buf_version;        /* +4  version of the buffer strusture; must be PSP_GFX_CMD_BUF_VERSION */
-    uint32_t        cmd_id;             /* +8  command ID */
+काष्ठा psp_gfx_cmd_resp
+अणु
+    uपूर्णांक32_t        buf_size;           /* +0  total size of the buffer in bytes */
+    uपूर्णांक32_t        buf_version;        /* +4  version of the buffer strusture; must be PSP_GFX_CMD_BUF_VERSION */
+    uपूर्णांक32_t        cmd_id;             /* +8  command ID */
 
-    /* These fields are used for RBI only. They are all 0 in GPCOM commands
+    /* These fields are used क्रम RBI only. They are all 0 in GPCOM commands
     */
-    uint32_t        resp_buf_addr_lo;   /* +12 bits [31:0] of GPU Virtual address of response buffer (must be 4 KB aligned) */
-    uint32_t        resp_buf_addr_hi;   /* +16 bits [63:32] of GPU Virtual address of response buffer */
-    uint32_t        resp_offset;        /* +20 offset within response buffer */
-    uint32_t        resp_buf_size;      /* +24 total size of the response buffer in bytes */
+    uपूर्णांक32_t        resp_buf_addr_lo;   /* +12 bits [31:0] of GPU Virtual address of response buffer (must be 4 KB aligned) */
+    uपूर्णांक32_t        resp_buf_addr_hi;   /* +16 bits [63:32] of GPU Virtual address of response buffer */
+    uपूर्णांक32_t        resp_offset;        /* +20 offset within response buffer */
+    uपूर्णांक32_t        resp_buf_size;      /* +24 total size of the response buffer in bytes */
 
-    union psp_gfx_commands  cmd;        /* +28 command specific structures */
+    जोड़ psp_gfx_commands  cmd;        /* +28 command specअगरic काष्ठाures */
 
-    uint8_t         reserved_1[864 - sizeof(union psp_gfx_commands) - 28];
+    uपूर्णांक8_t         reserved_1[864 - माप(जोड़ psp_gfx_commands) - 28];
 
-    /* Note: Resp is part of this buffer for GPCOM ring. For RBI ring the response
-    *        is separate buffer pointed by resp_buf_addr_hi and resp_buf_addr_lo.
+    /* Note: Resp is part of this buffer क्रम GPCOM ring. For RBI ring the response
+    *        is separate buffer poपूर्णांकed by resp_buf_addr_hi and resp_buf_addr_lo.
     */
-    struct psp_gfx_resp     resp;       /* +864 response */
+    काष्ठा psp_gfx_resp     resp;       /* +864 response */
 
-    uint8_t         reserved_2[1024 - 864 - sizeof(struct psp_gfx_resp)];
+    uपूर्णांक8_t         reserved_2[1024 - 864 - माप(काष्ठा psp_gfx_resp)];
 
     /* total size 1024 bytes */
-};
+पूर्ण;
 
 
-#define FRAME_TYPE_DESTROY          1   /* frame sent by KMD driver when UMD Scheduler context is destroyed*/
+#घोषणा FRAME_TYPE_DESTROY          1   /* frame sent by KMD driver when UMD Scheduler context is destroyed*/
 
 /* Structure of the Ring Buffer Frame */
-struct psp_gfx_rb_frame
-{
-    uint32_t    cmd_buf_addr_lo;    /* +0  bits [31:0] of GPU Virtual address of command buffer (must be 4 KB aligned) */
-    uint32_t    cmd_buf_addr_hi;    /* +4  bits [63:32] of GPU Virtual address of command buffer */
-    uint32_t    cmd_buf_size;       /* +8  command buffer size in bytes */
-    uint32_t    fence_addr_lo;      /* +12 bits [31:0] of GPU Virtual address of Fence for this frame */
-    uint32_t    fence_addr_hi;      /* +16 bits [63:32] of GPU Virtual address of Fence for this frame */
-    uint32_t    fence_value;        /* +20 Fence value */
-    uint32_t    sid_lo;             /* +24 bits [31:0] of SID value (used only for RBI frames) */
-    uint32_t    sid_hi;             /* +28 bits [63:32] of SID value (used only for RBI frames) */
-    uint8_t     vmid;               /* +32 VMID value used for mapping of all addresses for this frame */
-    uint8_t     frame_type;         /* +33 1: destory context frame, 0: all other frames; used only for RBI frames */
-    uint8_t     reserved1[2];       /* +34 reserved, must be 0 */
-    uint32_t    reserved2[7];       /* +36 reserved, must be 0 */
+काष्ठा psp_gfx_rb_frame
+अणु
+    uपूर्णांक32_t    cmd_buf_addr_lo;    /* +0  bits [31:0] of GPU Virtual address of command buffer (must be 4 KB aligned) */
+    uपूर्णांक32_t    cmd_buf_addr_hi;    /* +4  bits [63:32] of GPU Virtual address of command buffer */
+    uपूर्णांक32_t    cmd_buf_size;       /* +8  command buffer size in bytes */
+    uपूर्णांक32_t    fence_addr_lo;      /* +12 bits [31:0] of GPU Virtual address of Fence क्रम this frame */
+    uपूर्णांक32_t    fence_addr_hi;      /* +16 bits [63:32] of GPU Virtual address of Fence क्रम this frame */
+    uपूर्णांक32_t    fence_value;        /* +20 Fence value */
+    uपूर्णांक32_t    sid_lo;             /* +24 bits [31:0] of SID value (used only क्रम RBI frames) */
+    uपूर्णांक32_t    sid_hi;             /* +28 bits [63:32] of SID value (used only क्रम RBI frames) */
+    uपूर्णांक8_t     vmid;               /* +32 VMID value used क्रम mapping of all addresses क्रम this frame */
+    uपूर्णांक8_t     frame_type;         /* +33 1: destory context frame, 0: all other frames; used only क्रम RBI frames */
+    uपूर्णांक8_t     reserved1[2];       /* +34 reserved, must be 0 */
+    uपूर्णांक32_t    reserved2[7];       /* +36 reserved, must be 0 */
                 /* total 64 bytes */
-};
+पूर्ण;
 
-#define PSP_ERR_UNKNOWN_COMMAND 0x00000100
+#घोषणा PSP_ERR_UNKNOWN_COMMAND 0x00000100
 
-enum tee_error_code {
+क्रमागत tee_error_code अणु
     TEE_SUCCESS                         = 0x00000000,
     TEE_ERROR_NOT_SUPPORTED             = 0xFFFF000A,
-};
+पूर्ण;
 
-#endif /* _PSP_TEE_GFX_IF_H_ */
+#पूर्ण_अगर /* _PSP_TEE_GFX_IF_H_ */

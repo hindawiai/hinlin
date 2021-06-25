@@ -1,93 +1,94 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NF_CONNTRACK_SIP_H__
-#define __NF_CONNTRACK_SIP_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NF_CONNTRACK_SIP_H__
+#घोषणा __NF_CONNTRACK_SIP_H__
 
-#include <linux/skbuff.h>
-#include <linux/types.h>
-#include <net/netfilter/nf_conntrack_expect.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/types.h>
+#समावेश <net/netfilter/nf_conntrack_expect.h>
 
-#define SIP_PORT	5060
-#define SIP_TIMEOUT	3600
+#घोषणा SIP_PORT	5060
+#घोषणा SIP_TIMEOUT	3600
 
-struct nf_ct_sip_master {
-	unsigned int	register_cseq;
-	unsigned int	invite_cseq;
-	__be16		forced_dport;
-};
+काष्ठा nf_ct_sip_master अणु
+	अचिन्हित पूर्णांक	रेजिस्टर_cseq;
+	अचिन्हित पूर्णांक	invite_cseq;
+	__be16		क्रमced_dport;
+पूर्ण;
 
-enum sip_expectation_classes {
+क्रमागत sip_expectation_classes अणु
 	SIP_EXPECT_SIGNALLING,
 	SIP_EXPECT_AUDIO,
 	SIP_EXPECT_VIDEO,
 	SIP_EXPECT_IMAGE,
 	__SIP_EXPECT_MAX
-};
-#define SIP_EXPECT_MAX	(__SIP_EXPECT_MAX - 1)
+पूर्ण;
+#घोषणा SIP_EXPECT_MAX	(__SIP_EXPECT_MAX - 1)
 
-struct sdp_media_type {
-	const char			*name;
-	unsigned int			len;
-	enum sip_expectation_classes	class;
-};
+काष्ठा sdp_media_type अणु
+	स्थिर अक्षर			*name;
+	अचिन्हित पूर्णांक			len;
+	क्रमागत sip_expectation_classes	class;
+पूर्ण;
 
-#define SDP_MEDIA_TYPE(__name, __class)					\
-{									\
+#घोषणा SDP_MEDIA_TYPE(__name, __class)					\
+अणु									\
 	.name	= (__name),						\
-	.len	= sizeof(__name) - 1,					\
+	.len	= माप(__name) - 1,					\
 	.class	= (__class),						\
-}
+पूर्ण
 
-struct sip_handler {
-	const char	*method;
-	unsigned int	len;
-	int		(*request)(struct sk_buff *skb, unsigned int protoff,
-				   unsigned int dataoff,
-				   const char **dptr, unsigned int *datalen,
-				   unsigned int cseq);
-	int		(*response)(struct sk_buff *skb, unsigned int protoff,
-				    unsigned int dataoff,
-				    const char **dptr, unsigned int *datalen,
-				    unsigned int cseq, unsigned int code);
-};
+काष्ठा sip_handler अणु
+	स्थिर अक्षर	*method;
+	अचिन्हित पूर्णांक	len;
+	पूर्णांक		(*request)(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
+				   अचिन्हित पूर्णांक dataoff,
+				   स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen,
+				   अचिन्हित पूर्णांक cseq);
+	पूर्णांक		(*response)(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
+				    अचिन्हित पूर्णांक dataoff,
+				    स्थिर अक्षर **dptr, अचिन्हित पूर्णांक *datalen,
+				    अचिन्हित पूर्णांक cseq, अचिन्हित पूर्णांक code);
+पूर्ण;
 
-#define SIP_HANDLER(__method, __request, __response)			\
-{									\
+#घोषणा SIP_HANDLER(__method, __request, __response)			\
+अणु									\
 	.method		= (__method),					\
-	.len		= sizeof(__method) - 1,				\
+	.len		= माप(__method) - 1,				\
 	.request	= (__request),					\
 	.response	= (__response),					\
-}
+पूर्ण
 
-struct sip_header {
-	const char	*name;
-	const char	*cname;
-	const char	*search;
-	unsigned int	len;
-	unsigned int	clen;
-	unsigned int	slen;
-	int		(*match_len)(const struct nf_conn *ct,
-				     const char *dptr, const char *limit,
-				     int *shift);
-};
+काष्ठा sip_header अणु
+	स्थिर अक्षर	*name;
+	स्थिर अक्षर	*cname;
+	स्थिर अक्षर	*search;
+	अचिन्हित पूर्णांक	len;
+	अचिन्हित पूर्णांक	clen;
+	अचिन्हित पूर्णांक	slen;
+	पूर्णांक		(*match_len)(स्थिर काष्ठा nf_conn *ct,
+				     स्थिर अक्षर *dptr, स्थिर अक्षर *limit,
+				     पूर्णांक *shअगरt);
+पूर्ण;
 
-#define __SIP_HDR(__name, __cname, __search, __match)			\
-{									\
+#घोषणा __SIP_HDR(__name, __cname, __search, __match)			\
+अणु									\
 	.name		= (__name),					\
-	.len		= sizeof(__name) - 1,				\
+	.len		= माप(__name) - 1,				\
 	.cname		= (__cname),					\
-	.clen		= (__cname) ? sizeof(__cname) - 1 : 0,		\
+	.clen		= (__cname) ? माप(__cname) - 1 : 0,		\
 	.search		= (__search),					\
-	.slen		= (__search) ? sizeof(__search) - 1 : 0,	\
+	.slen		= (__search) ? माप(__search) - 1 : 0,	\
 	.match_len	= (__match),					\
-}
+पूर्ण
 
-#define SIP_HDR(__name, __cname, __search, __match) \
+#घोषणा SIP_HDR(__name, __cname, __search, __match) \
 	__SIP_HDR(__name, __cname, __search, __match)
 
-#define SDP_HDR(__name, __search, __match) \
-	__SIP_HDR(__name, NULL, __search, __match)
+#घोषणा SDP_HDR(__name, __search, __match) \
+	__SIP_HDR(__name, शून्य, __search, __match)
 
-enum sip_header_types {
+क्रमागत sip_header_types अणु
 	SIP_HDR_CSEQ,
 	SIP_HDR_FROM,
 	SIP_HDR_TO,
@@ -97,102 +98,102 @@ enum sip_header_types {
 	SIP_HDR_EXPIRES,
 	SIP_HDR_CONTENT_LENGTH,
 	SIP_HDR_CALL_ID,
-};
+पूर्ण;
 
-enum sdp_header_types {
+क्रमागत sdp_header_types अणु
 	SDP_HDR_UNSPEC,
 	SDP_HDR_VERSION,
 	SDP_HDR_OWNER,
 	SDP_HDR_CONNECTION,
 	SDP_HDR_MEDIA,
-};
+पूर्ण;
 
-struct nf_nat_sip_hooks {
-	unsigned int (*msg)(struct sk_buff *skb,
-			    unsigned int protoff,
-			    unsigned int dataoff,
-			    const char **dptr,
-			    unsigned int *datalen);
+काष्ठा nf_nat_sip_hooks अणु
+	अचिन्हित पूर्णांक (*msg)(काष्ठा sk_buff *skb,
+			    अचिन्हित पूर्णांक protoff,
+			    अचिन्हित पूर्णांक dataoff,
+			    स्थिर अक्षर **dptr,
+			    अचिन्हित पूर्णांक *datalen);
 
-	void (*seq_adjust)(struct sk_buff *skb,
-			   unsigned int protoff, s16 off);
+	व्योम (*seq_adjust)(काष्ठा sk_buff *skb,
+			   अचिन्हित पूर्णांक protoff, s16 off);
 
-	unsigned int (*expect)(struct sk_buff *skb,
-			       unsigned int protoff,
-			       unsigned int dataoff,
-			       const char **dptr,
-			       unsigned int *datalen,
-			       struct nf_conntrack_expect *exp,
-			       unsigned int matchoff,
-			       unsigned int matchlen);
+	अचिन्हित पूर्णांक (*expect)(काष्ठा sk_buff *skb,
+			       अचिन्हित पूर्णांक protoff,
+			       अचिन्हित पूर्णांक dataoff,
+			       स्थिर अक्षर **dptr,
+			       अचिन्हित पूर्णांक *datalen,
+			       काष्ठा nf_conntrack_expect *exp,
+			       अचिन्हित पूर्णांक matchoff,
+			       अचिन्हित पूर्णांक matchlen);
 
-	unsigned int (*sdp_addr)(struct sk_buff *skb,
-				 unsigned int protoff,
-				 unsigned int dataoff,
-				 const char **dptr,
-				 unsigned int *datalen,
-				 unsigned int sdpoff,
-				 enum sdp_header_types type,
-				 enum sdp_header_types term,
-				 const union nf_inet_addr *addr);
+	अचिन्हित पूर्णांक (*sdp_addr)(काष्ठा sk_buff *skb,
+				 अचिन्हित पूर्णांक protoff,
+				 अचिन्हित पूर्णांक dataoff,
+				 स्थिर अक्षर **dptr,
+				 अचिन्हित पूर्णांक *datalen,
+				 अचिन्हित पूर्णांक sdpoff,
+				 क्रमागत sdp_header_types type,
+				 क्रमागत sdp_header_types term,
+				 स्थिर जोड़ nf_inet_addr *addr);
 
-	unsigned int (*sdp_port)(struct sk_buff *skb,
-				 unsigned int protoff,
-				 unsigned int dataoff,
-				 const char **dptr,
-				 unsigned int *datalen,
-				 unsigned int matchoff,
-				 unsigned int matchlen,
-				 u_int16_t port);
+	अचिन्हित पूर्णांक (*sdp_port)(काष्ठा sk_buff *skb,
+				 अचिन्हित पूर्णांक protoff,
+				 अचिन्हित पूर्णांक dataoff,
+				 स्थिर अक्षर **dptr,
+				 अचिन्हित पूर्णांक *datalen,
+				 अचिन्हित पूर्णांक matchoff,
+				 अचिन्हित पूर्णांक matchlen,
+				 u_पूर्णांक16_t port);
 
-	unsigned int (*sdp_session)(struct sk_buff *skb,
-				    unsigned int protoff,
-				    unsigned int dataoff,
-				    const char **dptr,
-				    unsigned int *datalen,
-				    unsigned int sdpoff,
-				    const union nf_inet_addr *addr);
+	अचिन्हित पूर्णांक (*sdp_session)(काष्ठा sk_buff *skb,
+				    अचिन्हित पूर्णांक protoff,
+				    अचिन्हित पूर्णांक dataoff,
+				    स्थिर अक्षर **dptr,
+				    अचिन्हित पूर्णांक *datalen,
+				    अचिन्हित पूर्णांक sdpoff,
+				    स्थिर जोड़ nf_inet_addr *addr);
 
-	unsigned int (*sdp_media)(struct sk_buff *skb,
-				  unsigned int protoff,
-				  unsigned int dataoff,
-				  const char **dptr,
-				  unsigned int *datalen,
-				  struct nf_conntrack_expect *rtp_exp,
-				  struct nf_conntrack_expect *rtcp_exp,
-				  unsigned int mediaoff,
-				  unsigned int medialen,
-				  union nf_inet_addr *rtp_addr);
-};
-extern const struct nf_nat_sip_hooks *nf_nat_sip_hooks;
+	अचिन्हित पूर्णांक (*sdp_media)(काष्ठा sk_buff *skb,
+				  अचिन्हित पूर्णांक protoff,
+				  अचिन्हित पूर्णांक dataoff,
+				  स्थिर अक्षर **dptr,
+				  अचिन्हित पूर्णांक *datalen,
+				  काष्ठा nf_conntrack_expect *rtp_exp,
+				  काष्ठा nf_conntrack_expect *rtcp_exp,
+				  अचिन्हित पूर्णांक mediaoff,
+				  अचिन्हित पूर्णांक medialen,
+				  जोड़ nf_inet_addr *rtp_addr);
+पूर्ण;
+बाह्य स्थिर काष्ठा nf_nat_sip_hooks *nf_nat_sip_hooks;
 
-int ct_sip_parse_request(const struct nf_conn *ct, const char *dptr,
-			 unsigned int datalen, unsigned int *matchoff,
-			 unsigned int *matchlen, union nf_inet_addr *addr,
+पूर्णांक ct_sip_parse_request(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
+			 अचिन्हित पूर्णांक datalen, अचिन्हित पूर्णांक *matchoff,
+			 अचिन्हित पूर्णांक *matchlen, जोड़ nf_inet_addr *addr,
 			 __be16 *port);
-int ct_sip_get_header(const struct nf_conn *ct, const char *dptr,
-		      unsigned int dataoff, unsigned int datalen,
-		      enum sip_header_types type, unsigned int *matchoff,
-		      unsigned int *matchlen);
-int ct_sip_parse_header_uri(const struct nf_conn *ct, const char *dptr,
-			    unsigned int *dataoff, unsigned int datalen,
-			    enum sip_header_types type, int *in_header,
-			    unsigned int *matchoff, unsigned int *matchlen,
-			    union nf_inet_addr *addr, __be16 *port);
-int ct_sip_parse_address_param(const struct nf_conn *ct, const char *dptr,
-			       unsigned int dataoff, unsigned int datalen,
-			       const char *name, unsigned int *matchoff,
-			       unsigned int *matchlen, union nf_inet_addr *addr,
+पूर्णांक ct_sip_get_header(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
+		      अचिन्हित पूर्णांक dataoff, अचिन्हित पूर्णांक datalen,
+		      क्रमागत sip_header_types type, अचिन्हित पूर्णांक *matchoff,
+		      अचिन्हित पूर्णांक *matchlen);
+पूर्णांक ct_sip_parse_header_uri(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
+			    अचिन्हित पूर्णांक *dataoff, अचिन्हित पूर्णांक datalen,
+			    क्रमागत sip_header_types type, पूर्णांक *in_header,
+			    अचिन्हित पूर्णांक *matchoff, अचिन्हित पूर्णांक *matchlen,
+			    जोड़ nf_inet_addr *addr, __be16 *port);
+पूर्णांक ct_sip_parse_address_param(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
+			       अचिन्हित पूर्णांक dataoff, अचिन्हित पूर्णांक datalen,
+			       स्थिर अक्षर *name, अचिन्हित पूर्णांक *matchoff,
+			       अचिन्हित पूर्णांक *matchlen, जोड़ nf_inet_addr *addr,
 			       bool delim);
-int ct_sip_parse_numerical_param(const struct nf_conn *ct, const char *dptr,
-				 unsigned int off, unsigned int datalen,
-				 const char *name, unsigned int *matchoff,
-				 unsigned int *matchen, unsigned int *val);
+पूर्णांक ct_sip_parse_numerical_param(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
+				 अचिन्हित पूर्णांक off, अचिन्हित पूर्णांक datalen,
+				 स्थिर अक्षर *name, अचिन्हित पूर्णांक *matchoff,
+				 अचिन्हित पूर्णांक *matchen, अचिन्हित पूर्णांक *val);
 
-int ct_sip_get_sdp_header(const struct nf_conn *ct, const char *dptr,
-			  unsigned int dataoff, unsigned int datalen,
-			  enum sdp_header_types type,
-			  enum sdp_header_types term,
-			  unsigned int *matchoff, unsigned int *matchlen);
+पूर्णांक ct_sip_get_sdp_header(स्थिर काष्ठा nf_conn *ct, स्थिर अक्षर *dptr,
+			  अचिन्हित पूर्णांक dataoff, अचिन्हित पूर्णांक datalen,
+			  क्रमागत sdp_header_types type,
+			  क्रमागत sdp_header_types term,
+			  अचिन्हित पूर्णांक *matchoff, अचिन्हित पूर्णांक *matchlen);
 
-#endif /* __NF_CONNTRACK_SIP_H__ */
+#पूर्ण_अगर /* __NF_CONNTRACK_SIP_H__ */

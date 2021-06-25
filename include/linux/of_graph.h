@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * OF graph binding parsing helpers
  *
@@ -8,120 +9,120 @@
  * Copyright (C) 2012 Renesas Electronics Corp.
  * Author: Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  */
-#ifndef __LINUX_OF_GRAPH_H
-#define __LINUX_OF_GRAPH_H
+#अगर_अघोषित __LINUX_OF_GRAPH_H
+#घोषणा __LINUX_OF_GRAPH_H
 
-#include <linux/types.h>
-#include <linux/errno.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
 
 /**
- * struct of_endpoint - the OF graph endpoint data structure
- * @port: identifier (value of reg property) of a port this endpoint belongs to
- * @id: identifier (value of reg property) of this endpoint
- * @local_node: pointer to device_node of this endpoint
+ * काष्ठा of_endpoपूर्णांक - the OF graph endpoपूर्णांक data काष्ठाure
+ * @port: identअगरier (value of reg property) of a port this endpoपूर्णांक beदीर्घs to
+ * @id: identअगरier (value of reg property) of this endpoपूर्णांक
+ * @local_node: poपूर्णांकer to device_node of this endpoपूर्णांक
  */
-struct of_endpoint {
-	unsigned int port;
-	unsigned int id;
-	const struct device_node *local_node;
-};
+काष्ठा of_endpoपूर्णांक अणु
+	अचिन्हित पूर्णांक port;
+	अचिन्हित पूर्णांक id;
+	स्थिर काष्ठा device_node *local_node;
+पूर्ण;
 
 /**
- * for_each_endpoint_of_node - iterate over every endpoint in a device node
- * @parent: parent device node containing ports and endpoints
- * @child: loop variable pointing to the current endpoint node
+ * क्रम_each_endpoपूर्णांक_of_node - iterate over every endpoपूर्णांक in a device node
+ * @parent: parent device node containing ports and endpoपूर्णांकs
+ * @child: loop variable poपूर्णांकing to the current endpoपूर्णांक node
  *
- * When breaking out of the loop, of_node_put(child) has to be called manually.
+ * When अवरोधing out of the loop, of_node_put(child) has to be called manually.
  */
-#define for_each_endpoint_of_node(parent, child) \
-	for (child = of_graph_get_next_endpoint(parent, NULL); child != NULL; \
-	     child = of_graph_get_next_endpoint(parent, child))
+#घोषणा क्रम_each_endpoपूर्णांक_of_node(parent, child) \
+	क्रम (child = of_graph_get_next_endpoपूर्णांक(parent, शून्य); child != शून्य; \
+	     child = of_graph_get_next_endpoपूर्णांक(parent, child))
 
-#ifdef CONFIG_OF
-bool of_graph_is_present(const struct device_node *node);
-int of_graph_parse_endpoint(const struct device_node *node,
-				struct of_endpoint *endpoint);
-int of_graph_get_endpoint_count(const struct device_node *np);
-struct device_node *of_graph_get_port_by_id(struct device_node *node, u32 id);
-struct device_node *of_graph_get_next_endpoint(const struct device_node *parent,
-					struct device_node *previous);
-struct device_node *of_graph_get_endpoint_by_regs(
-		const struct device_node *parent, int port_reg, int reg);
-struct device_node *of_graph_get_remote_endpoint(
-					const struct device_node *node);
-struct device_node *of_graph_get_port_parent(struct device_node *node);
-struct device_node *of_graph_get_remote_port_parent(
-					const struct device_node *node);
-struct device_node *of_graph_get_remote_port(const struct device_node *node);
-struct device_node *of_graph_get_remote_node(const struct device_node *node,
-					     u32 port, u32 endpoint);
-#else
+#अगर_घोषित CONFIG_OF
+bool of_graph_is_present(स्थिर काष्ठा device_node *node);
+पूर्णांक of_graph_parse_endpoपूर्णांक(स्थिर काष्ठा device_node *node,
+				काष्ठा of_endpoपूर्णांक *endpoपूर्णांक);
+पूर्णांक of_graph_get_endpoपूर्णांक_count(स्थिर काष्ठा device_node *np);
+काष्ठा device_node *of_graph_get_port_by_id(काष्ठा device_node *node, u32 id);
+काष्ठा device_node *of_graph_get_next_endpoपूर्णांक(स्थिर काष्ठा device_node *parent,
+					काष्ठा device_node *previous);
+काष्ठा device_node *of_graph_get_endpoपूर्णांक_by_regs(
+		स्थिर काष्ठा device_node *parent, पूर्णांक port_reg, पूर्णांक reg);
+काष्ठा device_node *of_graph_get_remote_endpoपूर्णांक(
+					स्थिर काष्ठा device_node *node);
+काष्ठा device_node *of_graph_get_port_parent(काष्ठा device_node *node);
+काष्ठा device_node *of_graph_get_remote_port_parent(
+					स्थिर काष्ठा device_node *node);
+काष्ठा device_node *of_graph_get_remote_port(स्थिर काष्ठा device_node *node);
+काष्ठा device_node *of_graph_get_remote_node(स्थिर काष्ठा device_node *node,
+					     u32 port, u32 endpoपूर्णांक);
+#अन्यथा
 
-static inline bool of_graph_is_present(const struct device_node *node)
-{
-	return false;
-}
+अटल अंतरभूत bool of_graph_is_present(स्थिर काष्ठा device_node *node)
+अणु
+	वापस false;
+पूर्ण
 
-static inline int of_graph_parse_endpoint(const struct device_node *node,
-					struct of_endpoint *endpoint)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक of_graph_parse_endpoपूर्णांक(स्थिर काष्ठा device_node *node,
+					काष्ठा of_endpoपूर्णांक *endpoपूर्णांक)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int of_graph_get_endpoint_count(const struct device_node *np)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक of_graph_get_endpoपूर्णांक_count(स्थिर काष्ठा device_node *np)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct device_node *of_graph_get_port_by_id(
-					struct device_node *node, u32 id)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा device_node *of_graph_get_port_by_id(
+					काष्ठा device_node *node, u32 id)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct device_node *of_graph_get_next_endpoint(
-					const struct device_node *parent,
-					struct device_node *previous)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा device_node *of_graph_get_next_endpoपूर्णांक(
+					स्थिर काष्ठा device_node *parent,
+					काष्ठा device_node *previous)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct device_node *of_graph_get_endpoint_by_regs(
-		const struct device_node *parent, int port_reg, int reg)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा device_node *of_graph_get_endpoपूर्णांक_by_regs(
+		स्थिर काष्ठा device_node *parent, पूर्णांक port_reg, पूर्णांक reg)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct device_node *of_graph_get_remote_endpoint(
-					const struct device_node *node)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा device_node *of_graph_get_remote_endpoपूर्णांक(
+					स्थिर काष्ठा device_node *node)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct device_node *of_graph_get_port_parent(
-	struct device_node *node)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा device_node *of_graph_get_port_parent(
+	काष्ठा device_node *node)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct device_node *of_graph_get_remote_port_parent(
-					const struct device_node *node)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा device_node *of_graph_get_remote_port_parent(
+					स्थिर काष्ठा device_node *node)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct device_node *of_graph_get_remote_port(
-					const struct device_node *node)
-{
-	return NULL;
-}
-static inline struct device_node *of_graph_get_remote_node(
-					const struct device_node *node,
-					u32 port, u32 endpoint)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा device_node *of_graph_get_remote_port(
+					स्थिर काष्ठा device_node *node)
+अणु
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत काष्ठा device_node *of_graph_get_remote_node(
+					स्थिर काष्ठा device_node *node,
+					u32 port, u32 endpoपूर्णांक)
+अणु
+	वापस शून्य;
+पूर्ण
 
-#endif /* CONFIG_OF */
+#पूर्ण_अगर /* CONFIG_OF */
 
-#endif /* __LINUX_OF_GRAPH_H */
+#पूर्ण_अगर /* __LINUX_OF_GRAPH_H */

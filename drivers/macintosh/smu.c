@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * PowerMac G5 SMU driver
  *
@@ -8,115 +9,115 @@
 
 /*
  * TODO:
- *  - maybe add timeout to commands ?
- *  - blocking version of time functions
- *  - polling version of i2c commands (including timer that works with
- *    interrupts off)
- *  - maybe avoid some data copies with i2c by directly using the smu cmd
- *    buffer and a lower level internal interface
+ *  - maybe add समयout to commands ?
+ *  - blocking version of समय functions
+ *  - polling version of i2c commands (including समयr that works with
+ *    पूर्णांकerrupts off)
+ *  - maybe aव्योम some data copies with i2c by directly using the smu cmd
+ *    buffer and a lower level पूर्णांकernal पूर्णांकerface
  *  - understand SMU -> CPU events and implement reception of them via
- *    the userland interface
+ *    the userland पूर्णांकerface
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/dmapool.h>
-#include <linux/memblock.h>
-#include <linux/vmalloc.h>
-#include <linux/highmem.h>
-#include <linux/jiffies.h>
-#include <linux/interrupt.h>
-#include <linux/rtc.h>
-#include <linux/completion.h>
-#include <linux/miscdevice.h>
-#include <linux/delay.h>
-#include <linux/poll.h>
-#include <linux/mutex.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/slab.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <asm/byteorder.h>
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#include <asm/pmac_feature.h>
-#include <asm/smu.h>
-#include <asm/sections.h>
-#include <linux/uaccess.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/pmac_feature.h>
+#समावेश <यंत्र/smu.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <linux/uaccess.h>
 
-#define VERSION "0.7"
-#define AUTHOR  "(c) 2005 Benjamin Herrenschmidt, IBM Corp."
+#घोषणा VERSION "0.7"
+#घोषणा AUTHOR  "(c) 2005 Benjamin Herrenschmidt, IBM Corp."
 
-#undef DEBUG_SMU
+#अघोषित DEBUG_SMU
 
-#ifdef DEBUG_SMU
-#define DPRINTK(fmt, args...) do { printk(KERN_DEBUG fmt , ##args); } while (0)
-#else
-#define DPRINTK(fmt, args...) do { } while (0)
-#endif
+#अगर_घोषित DEBUG_SMU
+#घोषणा DPRINTK(fmt, args...) करो अणु prपूर्णांकk(KERN_DEBUG fmt , ##args); पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा DPRINTK(fmt, args...) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /*
  * This is the command buffer passed to the SMU hardware
  */
-#define SMU_MAX_DATA	254
+#घोषणा SMU_MAX_DATA	254
 
-struct smu_cmd_buf {
+काष्ठा smu_cmd_buf अणु
 	u8 cmd;
 	u8 length;
 	u8 data[SMU_MAX_DATA];
-};
+पूर्ण;
 
-struct smu_device {
+काष्ठा smu_device अणु
 	spinlock_t		lock;
-	struct device_node	*of_node;
-	struct platform_device	*of_dev;
-	int			doorbell;	/* doorbell gpio */
-	u32 __iomem		*db_buf;	/* doorbell buffer */
-	struct device_node	*db_node;
-	unsigned int		db_irq;
-	int			msg;
-	struct device_node	*msg_node;
-	unsigned int		msg_irq;
-	struct smu_cmd_buf	*cmd_buf;	/* command buffer virtual */
-	u32			cmd_buf_abs;	/* command buffer absolute */
-	struct list_head	cmd_list;
-	struct smu_cmd		*cmd_cur;	/* pending command */
-	int			broken_nap;
-	struct list_head	cmd_i2c_list;
-	struct smu_i2c_cmd	*cmd_i2c_cur;	/* pending i2c command */
-	struct timer_list	i2c_timer;
-};
+	काष्ठा device_node	*of_node;
+	काष्ठा platक्रमm_device	*of_dev;
+	पूर्णांक			करोorbell;	/* करोorbell gpio */
+	u32 __iomem		*db_buf;	/* करोorbell buffer */
+	काष्ठा device_node	*db_node;
+	अचिन्हित पूर्णांक		db_irq;
+	पूर्णांक			msg;
+	काष्ठा device_node	*msg_node;
+	अचिन्हित पूर्णांक		msg_irq;
+	काष्ठा smu_cmd_buf	*cmd_buf;	/* command buffer भव */
+	u32			cmd_buf_असल;	/* command buffer असलolute */
+	काष्ठा list_head	cmd_list;
+	काष्ठा smu_cmd		*cmd_cur;	/* pending command */
+	पूर्णांक			broken_nap;
+	काष्ठा list_head	cmd_i2c_list;
+	काष्ठा smu_i2c_cmd	*cmd_i2c_cur;	/* pending i2c command */
+	काष्ठा समयr_list	i2c_समयr;
+पूर्ण;
 
 /*
- * I don't think there will ever be more than one SMU, so
- * for now, just hard code that
+ * I करोn't think there will ever be more than one SMU, so
+ * क्रम now, just hard code that
  */
-static DEFINE_MUTEX(smu_mutex);
-static struct smu_device	*smu;
-static DEFINE_MUTEX(smu_part_access);
-static int smu_irq_inited;
-static unsigned long smu_cmdbuf_abs;
+अटल DEFINE_MUTEX(smu_mutex);
+अटल काष्ठा smu_device	*smu;
+अटल DEFINE_MUTEX(smu_part_access);
+अटल पूर्णांक smu_irq_inited;
+अटल अचिन्हित दीर्घ smu_cmdbuf_असल;
 
-static void smu_i2c_retry(struct timer_list *t);
+अटल व्योम smu_i2c_retry(काष्ठा समयr_list *t);
 
 /*
  * SMU driver low level stuff
  */
 
-static void smu_start_cmd(void)
-{
-	unsigned long faddr, fend;
-	struct smu_cmd *cmd;
+अटल व्योम smu_start_cmd(व्योम)
+अणु
+	अचिन्हित दीर्घ faddr, fend;
+	काष्ठा smu_cmd *cmd;
 
-	if (list_empty(&smu->cmd_list))
-		return;
+	अगर (list_empty(&smu->cmd_list))
+		वापस;
 
 	/* Fetch first command in queue */
-	cmd = list_entry(smu->cmd_list.next, struct smu_cmd, link);
+	cmd = list_entry(smu->cmd_list.next, काष्ठा smu_cmd, link);
 	smu->cmd_cur = cmd;
 	list_del(&cmd->link);
 
@@ -127,132 +128,132 @@ static void smu_start_cmd(void)
 	/* Fill the SMU command buffer */
 	smu->cmd_buf->cmd = cmd->cmd;
 	smu->cmd_buf->length = cmd->data_len;
-	memcpy(smu->cmd_buf->data, cmd->data_buf, cmd->data_len);
+	स_नकल(smu->cmd_buf->data, cmd->data_buf, cmd->data_len);
 
 	/* Flush command and data to RAM */
-	faddr = (unsigned long)smu->cmd_buf;
+	faddr = (अचिन्हित दीर्घ)smu->cmd_buf;
 	fend = faddr + smu->cmd_buf->length + 2;
 	flush_dcache_range(faddr, fend);
 
 
-	/* We also disable NAP mode for the duration of the command
+	/* We also disable NAP mode क्रम the duration of the command
 	 * on U3 based machines.
 	 * This is slightly racy as it can be written back to 1 by a sysctl
 	 * but that never happens in practice. There seem to be an issue with
-	 * U3 based machines such as the iMac G5 where napping for the
+	 * U3 based machines such as the iMac G5 where napping क्रम the
 	 * whole duration of the command prevents the SMU from fetching it
 	 * from memory. This might be related to the strange i2c based
 	 * mechanism the SMU uses to access memory.
 	 */
-	if (smu->broken_nap)
-		powersave_nap = 0;
+	अगर (smu->broken_nap)
+		घातersave_nap = 0;
 
 	/* This isn't exactly a DMA mapping here, I suspect
 	 * the SMU is actually communicating with us via i2c to the
 	 * northbridge or the CPU to access RAM.
 	 */
-	writel(smu->cmd_buf_abs, smu->db_buf);
+	ग_लिखोl(smu->cmd_buf_असल, smu->db_buf);
 
-	/* Ring the SMU doorbell */
-	pmac_do_feature_call(PMAC_FTR_WRITE_GPIO, NULL, smu->doorbell, 4);
-}
+	/* Ring the SMU करोorbell */
+	pmac_करो_feature_call(PMAC_FTR_WRITE_GPIO, शून्य, smu->करोorbell, 4);
+पूर्ण
 
 
-static irqreturn_t smu_db_intr(int irq, void *arg)
-{
-	unsigned long flags;
-	struct smu_cmd *cmd;
-	void (*done)(struct smu_cmd *cmd, void *misc) = NULL;
-	void *misc = NULL;
+अटल irqवापस_t smu_db_पूर्णांकr(पूर्णांक irq, व्योम *arg)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा smu_cmd *cmd;
+	व्योम (*करोne)(काष्ठा smu_cmd *cmd, व्योम *misc) = शून्य;
+	व्योम *misc = शून्य;
 	u8 gpio;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	/* SMU completed the command, well, we hope, let's make sure
 	 * of it
 	 */
 	spin_lock_irqsave(&smu->lock, flags);
 
-	gpio = pmac_do_feature_call(PMAC_FTR_READ_GPIO, NULL, smu->doorbell);
-	if ((gpio & 7) != 7) {
+	gpio = pmac_करो_feature_call(PMAC_FTR_READ_GPIO, शून्य, smu->करोorbell);
+	अगर ((gpio & 7) != 7) अणु
 		spin_unlock_irqrestore(&smu->lock, flags);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	cmd = smu->cmd_cur;
-	smu->cmd_cur = NULL;
-	if (cmd == NULL)
-		goto bail;
+	smu->cmd_cur = शून्य;
+	अगर (cmd == शून्य)
+		जाओ bail;
 
-	if (rc == 0) {
-		unsigned long faddr;
-		int reply_len;
+	अगर (rc == 0) अणु
+		अचिन्हित दीर्घ faddr;
+		पूर्णांक reply_len;
 		u8 ack;
 
 		/* CPU might have brought back the cache line, so we need
-		 * to flush again before peeking at the SMU response. We
-		 * flush the entire buffer for now as we haven't read the
+		 * to flush again beक्रमe peeking at the SMU response. We
+		 * flush the entire buffer क्रम now as we haven't पढ़ो the
 		 * reply length (it's only 2 cache lines anyway)
 		 */
-		faddr = (unsigned long)smu->cmd_buf;
+		faddr = (अचिन्हित दीर्घ)smu->cmd_buf;
 		flush_dcache_range(faddr, faddr + 256);
 
 		/* Now check ack */
 		ack = (~cmd->cmd) & 0xff;
-		if (ack != smu->cmd_buf->cmd) {
+		अगर (ack != smu->cmd_buf->cmd) अणु
 			DPRINTK("SMU: incorrect ack, want %x got %x\n",
 				ack, smu->cmd_buf->cmd);
 			rc = -EIO;
-		}
+		पूर्ण
 		reply_len = rc == 0 ? smu->cmd_buf->length : 0;
 		DPRINTK("SMU: reply len: %d\n", reply_len);
-		if (reply_len > cmd->reply_len) {
-			printk(KERN_WARNING "SMU: reply buffer too small,"
+		अगर (reply_len > cmd->reply_len) अणु
+			prपूर्णांकk(KERN_WARNING "SMU: reply buffer too small,"
 			       "got %d bytes for a %d bytes buffer\n",
 			       reply_len, cmd->reply_len);
 			reply_len = cmd->reply_len;
-		}
+		पूर्ण
 		cmd->reply_len = reply_len;
-		if (cmd->reply_buf && reply_len)
-			memcpy(cmd->reply_buf, smu->cmd_buf->data, reply_len);
-	}
+		अगर (cmd->reply_buf && reply_len)
+			स_नकल(cmd->reply_buf, smu->cmd_buf->data, reply_len);
+	पूर्ण
 
 	/* Now complete the command. Write status last in order as we lost
-	 * ownership of the command structure as soon as it's no longer -1
+	 * ownership of the command काष्ठाure as soon as it's no दीर्घer -1
 	 */
-	done = cmd->done;
+	करोne = cmd->करोne;
 	misc = cmd->misc;
 	mb();
 	cmd->status = rc;
 
 	/* Re-enable NAP mode */
-	if (smu->broken_nap)
-		powersave_nap = 1;
+	अगर (smu->broken_nap)
+		घातersave_nap = 1;
  bail:
-	/* Start next command if any */
+	/* Start next command अगर any */
 	smu_start_cmd();
 	spin_unlock_irqrestore(&smu->lock, flags);
 
-	/* Call command completion handler if any */
-	if (done)
-		done(cmd, misc);
+	/* Call command completion handler अगर any */
+	अगर (करोne)
+		करोne(cmd, misc);
 
-	/* It's an edge interrupt, nothing to do */
-	return IRQ_HANDLED;
-}
+	/* It's an edge पूर्णांकerrupt, nothing to करो */
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
-static irqreturn_t smu_msg_intr(int irq, void *arg)
-{
-	/* I don't quite know what to do with this one, we seem to never
+अटल irqवापस_t smu_msg_पूर्णांकr(पूर्णांक irq, व्योम *arg)
+अणु
+	/* I करोn't quite know what to करो with this one, we seem to never
 	 * receive it, so I suspect we have to arm it someway in the SMU
 	 * to start getting events that way.
 	 */
 
-	printk(KERN_INFO "SMU: message interrupt !\n");
+	prपूर्णांकk(KERN_INFO "SMU: message interrupt !\n");
 
-	/* It's an edge interrupt, nothing to do */
-	return IRQ_HANDLED;
-}
+	/* It's an edge पूर्णांकerrupt, nothing to करो */
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
 /*
@@ -260,241 +261,241 @@ static irqreturn_t smu_msg_intr(int irq, void *arg)
  *
  */
 
-int smu_queue_cmd(struct smu_cmd *cmd)
-{
-	unsigned long flags;
+पूर्णांक smu_queue_cmd(काष्ठा smu_cmd *cmd)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (smu == NULL)
-		return -ENODEV;
-	if (cmd->data_len > SMU_MAX_DATA ||
+	अगर (smu == शून्य)
+		वापस -ENODEV;
+	अगर (cmd->data_len > SMU_MAX_DATA ||
 	    cmd->reply_len > SMU_MAX_DATA)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	cmd->status = 1;
 	spin_lock_irqsave(&smu->lock, flags);
 	list_add_tail(&cmd->link, &smu->cmd_list);
-	if (smu->cmd_cur == NULL)
+	अगर (smu->cmd_cur == शून्य)
 		smu_start_cmd();
 	spin_unlock_irqrestore(&smu->lock, flags);
 
-	/* Workaround for early calls when irq isn't available */
-	if (!smu_irq_inited || !smu->db_irq)
-		smu_spinwait_cmd(cmd);
+	/* Workaround क्रम early calls when irq isn't available */
+	अगर (!smu_irq_inited || !smu->db_irq)
+		smu_spinरुको_cmd(cmd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(smu_queue_cmd);
 
 
-int smu_queue_simple(struct smu_simple_cmd *scmd, u8 command,
-		     unsigned int data_len,
-		     void (*done)(struct smu_cmd *cmd, void *misc),
-		     void *misc, ...)
-{
-	struct smu_cmd *cmd = &scmd->cmd;
-	va_list list;
-	int i;
+पूर्णांक smu_queue_simple(काष्ठा smu_simple_cmd *scmd, u8 command,
+		     अचिन्हित पूर्णांक data_len,
+		     व्योम (*करोne)(काष्ठा smu_cmd *cmd, व्योम *misc),
+		     व्योम *misc, ...)
+अणु
+	काष्ठा smu_cmd *cmd = &scmd->cmd;
+	बहु_सूची list;
+	पूर्णांक i;
 
-	if (data_len > sizeof(scmd->buffer))
-		return -EINVAL;
+	अगर (data_len > माप(scmd->buffer))
+		वापस -EINVAL;
 
-	memset(scmd, 0, sizeof(*scmd));
+	स_रखो(scmd, 0, माप(*scmd));
 	cmd->cmd = command;
 	cmd->data_len = data_len;
 	cmd->data_buf = scmd->buffer;
-	cmd->reply_len = sizeof(scmd->buffer);
+	cmd->reply_len = माप(scmd->buffer);
 	cmd->reply_buf = scmd->buffer;
-	cmd->done = done;
+	cmd->करोne = करोne;
 	cmd->misc = misc;
 
-	va_start(list, misc);
-	for (i = 0; i < data_len; ++i)
-		scmd->buffer[i] = (u8)va_arg(list, int);
-	va_end(list);
+	बहु_शुरू(list, misc);
+	क्रम (i = 0; i < data_len; ++i)
+		scmd->buffer[i] = (u8)बहु_तर्क(list, पूर्णांक);
+	बहु_पूर्ण(list);
 
-	return smu_queue_cmd(cmd);
-}
+	वापस smu_queue_cmd(cmd);
+पूर्ण
 EXPORT_SYMBOL(smu_queue_simple);
 
 
-void smu_poll(void)
-{
+व्योम smu_poll(व्योम)
+अणु
 	u8 gpio;
 
-	if (smu == NULL)
-		return;
+	अगर (smu == शून्य)
+		वापस;
 
-	gpio = pmac_do_feature_call(PMAC_FTR_READ_GPIO, NULL, smu->doorbell);
-	if ((gpio & 7) == 7)
-		smu_db_intr(smu->db_irq, smu);
-}
+	gpio = pmac_करो_feature_call(PMAC_FTR_READ_GPIO, शून्य, smu->करोorbell);
+	अगर ((gpio & 7) == 7)
+		smu_db_पूर्णांकr(smu->db_irq, smu);
+पूर्ण
 EXPORT_SYMBOL(smu_poll);
 
 
-void smu_done_complete(struct smu_cmd *cmd, void *misc)
-{
-	struct completion *comp = misc;
+व्योम smu_करोne_complete(काष्ठा smu_cmd *cmd, व्योम *misc)
+अणु
+	काष्ठा completion *comp = misc;
 
 	complete(comp);
-}
-EXPORT_SYMBOL(smu_done_complete);
+पूर्ण
+EXPORT_SYMBOL(smu_करोne_complete);
 
 
-void smu_spinwait_cmd(struct smu_cmd *cmd)
-{
-	while(cmd->status == 1)
+व्योम smu_spinरुको_cmd(काष्ठा smu_cmd *cmd)
+अणु
+	जबतक(cmd->status == 1)
 		smu_poll();
-}
-EXPORT_SYMBOL(smu_spinwait_cmd);
+पूर्ण
+EXPORT_SYMBOL(smu_spinरुको_cmd);
 
 
 /* RTC low level commands */
-static inline int bcd2hex (int n)
-{
-	return (((n & 0xf0) >> 4) * 10) + (n & 0xf);
-}
+अटल अंतरभूत पूर्णांक bcd2hex (पूर्णांक n)
+अणु
+	वापस (((n & 0xf0) >> 4) * 10) + (n & 0xf);
+पूर्ण
 
 
-static inline int hex2bcd (int n)
-{
-	return ((n / 10) << 4) + (n % 10);
-}
+अटल अंतरभूत पूर्णांक hex2bcd (पूर्णांक n)
+अणु
+	वापस ((n / 10) << 4) + (n % 10);
+पूर्ण
 
 
-static inline void smu_fill_set_rtc_cmd(struct smu_cmd_buf *cmd_buf,
-					struct rtc_time *time)
-{
+अटल अंतरभूत व्योम smu_fill_set_rtc_cmd(काष्ठा smu_cmd_buf *cmd_buf,
+					काष्ठा rtc_समय *समय)
+अणु
 	cmd_buf->cmd = 0x8e;
 	cmd_buf->length = 8;
 	cmd_buf->data[0] = 0x80;
-	cmd_buf->data[1] = hex2bcd(time->tm_sec);
-	cmd_buf->data[2] = hex2bcd(time->tm_min);
-	cmd_buf->data[3] = hex2bcd(time->tm_hour);
-	cmd_buf->data[4] = time->tm_wday;
-	cmd_buf->data[5] = hex2bcd(time->tm_mday);
-	cmd_buf->data[6] = hex2bcd(time->tm_mon) + 1;
-	cmd_buf->data[7] = hex2bcd(time->tm_year - 100);
-}
+	cmd_buf->data[1] = hex2bcd(समय->पंचांग_sec);
+	cmd_buf->data[2] = hex2bcd(समय->पंचांग_min);
+	cmd_buf->data[3] = hex2bcd(समय->पंचांग_hour);
+	cmd_buf->data[4] = समय->पंचांग_wday;
+	cmd_buf->data[5] = hex2bcd(समय->पंचांग_mday);
+	cmd_buf->data[6] = hex2bcd(समय->पंचांग_mon) + 1;
+	cmd_buf->data[7] = hex2bcd(समय->पंचांग_year - 100);
+पूर्ण
 
 
-int smu_get_rtc_time(struct rtc_time *time, int spinwait)
-{
-	struct smu_simple_cmd cmd;
-	int rc;
+पूर्णांक smu_get_rtc_समय(काष्ठा rtc_समय *समय, पूर्णांक spinरुको)
+अणु
+	काष्ठा smu_simple_cmd cmd;
+	पूर्णांक rc;
 
-	if (smu == NULL)
-		return -ENODEV;
+	अगर (smu == शून्य)
+		वापस -ENODEV;
 
-	memset(time, 0, sizeof(struct rtc_time));
-	rc = smu_queue_simple(&cmd, SMU_CMD_RTC_COMMAND, 1, NULL, NULL,
+	स_रखो(समय, 0, माप(काष्ठा rtc_समय));
+	rc = smu_queue_simple(&cmd, SMU_CMD_RTC_COMMAND, 1, शून्य, शून्य,
 			      SMU_CMD_RTC_GET_DATETIME);
-	if (rc)
-		return rc;
-	smu_spinwait_simple(&cmd);
+	अगर (rc)
+		वापस rc;
+	smu_spinरुको_simple(&cmd);
 
-	time->tm_sec = bcd2hex(cmd.buffer[0]);
-	time->tm_min = bcd2hex(cmd.buffer[1]);
-	time->tm_hour = bcd2hex(cmd.buffer[2]);
-	time->tm_wday = bcd2hex(cmd.buffer[3]);
-	time->tm_mday = bcd2hex(cmd.buffer[4]);
-	time->tm_mon = bcd2hex(cmd.buffer[5]) - 1;
-	time->tm_year = bcd2hex(cmd.buffer[6]) + 100;
+	समय->पंचांग_sec = bcd2hex(cmd.buffer[0]);
+	समय->पंचांग_min = bcd2hex(cmd.buffer[1]);
+	समय->पंचांग_hour = bcd2hex(cmd.buffer[2]);
+	समय->पंचांग_wday = bcd2hex(cmd.buffer[3]);
+	समय->पंचांग_mday = bcd2hex(cmd.buffer[4]);
+	समय->पंचांग_mon = bcd2hex(cmd.buffer[5]) - 1;
+	समय->पंचांग_year = bcd2hex(cmd.buffer[6]) + 100;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-int smu_set_rtc_time(struct rtc_time *time, int spinwait)
-{
-	struct smu_simple_cmd cmd;
-	int rc;
+पूर्णांक smu_set_rtc_समय(काष्ठा rtc_समय *समय, पूर्णांक spinरुको)
+अणु
+	काष्ठा smu_simple_cmd cmd;
+	पूर्णांक rc;
 
-	if (smu == NULL)
-		return -ENODEV;
+	अगर (smu == शून्य)
+		वापस -ENODEV;
 
-	rc = smu_queue_simple(&cmd, SMU_CMD_RTC_COMMAND, 8, NULL, NULL,
+	rc = smu_queue_simple(&cmd, SMU_CMD_RTC_COMMAND, 8, शून्य, शून्य,
 			      SMU_CMD_RTC_SET_DATETIME,
-			      hex2bcd(time->tm_sec),
-			      hex2bcd(time->tm_min),
-			      hex2bcd(time->tm_hour),
-			      time->tm_wday,
-			      hex2bcd(time->tm_mday),
-			      hex2bcd(time->tm_mon) + 1,
-			      hex2bcd(time->tm_year - 100));
-	if (rc)
-		return rc;
-	smu_spinwait_simple(&cmd);
+			      hex2bcd(समय->पंचांग_sec),
+			      hex2bcd(समय->पंचांग_min),
+			      hex2bcd(समय->पंचांग_hour),
+			      समय->पंचांग_wday,
+			      hex2bcd(समय->पंचांग_mday),
+			      hex2bcd(समय->पंचांग_mon) + 1,
+			      hex2bcd(समय->पंचांग_year - 100));
+	अगर (rc)
+		वापस rc;
+	smu_spinरुको_simple(&cmd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-void smu_shutdown(void)
-{
-	struct smu_simple_cmd cmd;
+व्योम smu_shutकरोwn(व्योम)
+अणु
+	काष्ठा smu_simple_cmd cmd;
 
-	if (smu == NULL)
-		return;
+	अगर (smu == शून्य)
+		वापस;
 
-	if (smu_queue_simple(&cmd, SMU_CMD_POWER_COMMAND, 9, NULL, NULL,
+	अगर (smu_queue_simple(&cmd, SMU_CMD_POWER_COMMAND, 9, शून्य, शून्य,
 			     'S', 'H', 'U', 'T', 'D', 'O', 'W', 'N', 0))
-		return;
-	smu_spinwait_simple(&cmd);
-	for (;;)
+		वापस;
+	smu_spinरुको_simple(&cmd);
+	क्रम (;;)
 		;
-}
+पूर्ण
 
 
-void smu_restart(void)
-{
-	struct smu_simple_cmd cmd;
+व्योम smu_restart(व्योम)
+अणु
+	काष्ठा smu_simple_cmd cmd;
 
-	if (smu == NULL)
-		return;
+	अगर (smu == शून्य)
+		वापस;
 
-	if (smu_queue_simple(&cmd, SMU_CMD_POWER_COMMAND, 8, NULL, NULL,
+	अगर (smu_queue_simple(&cmd, SMU_CMD_POWER_COMMAND, 8, शून्य, शून्य,
 			     'R', 'E', 'S', 'T', 'A', 'R', 'T', 0))
-		return;
-	smu_spinwait_simple(&cmd);
-	for (;;)
+		वापस;
+	smu_spinरुको_simple(&cmd);
+	क्रम (;;)
 		;
-}
+पूर्ण
 
 
-int smu_present(void)
-{
-	return smu != NULL;
-}
+पूर्णांक smu_present(व्योम)
+अणु
+	वापस smu != शून्य;
+पूर्ण
 EXPORT_SYMBOL(smu_present);
 
 
-int __init smu_init (void)
-{
-	struct device_node *np;
-	const u32 *data;
-	int ret = 0;
+पूर्णांक __init smu_init (व्योम)
+अणु
+	काष्ठा device_node *np;
+	स्थिर u32 *data;
+	पूर्णांक ret = 0;
 
-        np = of_find_node_by_type(NULL, "smu");
-        if (np == NULL)
-		return -ENODEV;
+        np = of_find_node_by_type(शून्य, "smu");
+        अगर (np == शून्य)
+		वापस -ENODEV;
 
-	printk(KERN_INFO "SMU: Driver %s %s\n", VERSION, AUTHOR);
+	prपूर्णांकk(KERN_INFO "SMU: Driver %s %s\n", VERSION, AUTHOR);
 
 	/*
 	 * SMU based G5s need some memory below 2Gb. Thankfully this is
-	 * called at a time where memblock is still available.
+	 * called at a समय where memblock is still available.
 	 */
-	smu_cmdbuf_abs = memblock_phys_alloc_range(4096, 4096, 0, 0x80000000UL);
-	if (smu_cmdbuf_abs == 0) {
-		printk(KERN_ERR "SMU: Command buffer allocation failed !\n");
+	smu_cmdbuf_असल = memblock_phys_alloc_range(4096, 4096, 0, 0x80000000UL);
+	अगर (smu_cmdbuf_असल == 0) अणु
+		prपूर्णांकk(KERN_ERR "SMU: Command buffer allocation failed !\n");
 		ret = -EINVAL;
-		goto fail_np;
-	}
+		जाओ fail_np;
+	पूर्ण
 
-	smu = memblock_alloc(sizeof(struct smu_device), SMP_CACHE_BYTES);
-	if (!smu)
+	smu = memblock_alloc(माप(काष्ठा smu_device), SMP_CACHE_BYTES);
+	अगर (!smu)
 		panic("%s: Failed to allocate %zu bytes\n", __func__,
-		      sizeof(struct smu_device));
+		      माप(काष्ठा smu_device));
 
 	spin_lock_init(&smu->lock);
 	INIT_LIST_HEAD(&smu->cmd_list);
@@ -503,130 +504,130 @@ int __init smu_init (void)
 	smu->db_irq = 0;
 	smu->msg_irq = 0;
 
-	/* smu_cmdbuf_abs is in the low 2G of RAM, can be converted to a
+	/* smu_cmdbuf_असल is in the low 2G of RAM, can be converted to a
 	 * 32 bits value safely
 	 */
-	smu->cmd_buf_abs = (u32)smu_cmdbuf_abs;
-	smu->cmd_buf = __va(smu_cmdbuf_abs);
+	smu->cmd_buf_असल = (u32)smu_cmdbuf_असल;
+	smu->cmd_buf = __va(smu_cmdbuf_असल);
 
-	smu->db_node = of_find_node_by_name(NULL, "smu-doorbell");
-	if (smu->db_node == NULL) {
-		printk(KERN_ERR "SMU: Can't find doorbell GPIO !\n");
+	smu->db_node = of_find_node_by_name(शून्य, "smu-doorbell");
+	अगर (smu->db_node == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "SMU: Can't find doorbell GPIO !\n");
 		ret = -ENXIO;
-		goto fail_bootmem;
-	}
-	data = of_get_property(smu->db_node, "reg", NULL);
-	if (data == NULL) {
-		printk(KERN_ERR "SMU: Can't find doorbell GPIO address !\n");
+		जाओ fail_booपंचांगem;
+	पूर्ण
+	data = of_get_property(smu->db_node, "reg", शून्य);
+	अगर (data == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "SMU: Can't find doorbell GPIO address !\n");
 		ret = -ENXIO;
-		goto fail_db_node;
-	}
+		जाओ fail_db_node;
+	पूर्ण
 
-	/* Current setup has one doorbell GPIO that does both doorbell
+	/* Current setup has one करोorbell GPIO that करोes both करोorbell
 	 * and ack. GPIOs are at 0x50, best would be to find that out
 	 * in the device-tree though.
 	 */
-	smu->doorbell = *data;
-	if (smu->doorbell < 0x50)
-		smu->doorbell += 0x50;
+	smu->करोorbell = *data;
+	अगर (smu->करोorbell < 0x50)
+		smu->करोorbell += 0x50;
 
-	/* Now look for the smu-interrupt GPIO */
-	do {
-		smu->msg_node = of_find_node_by_name(NULL, "smu-interrupt");
-		if (smu->msg_node == NULL)
-			break;
-		data = of_get_property(smu->msg_node, "reg", NULL);
-		if (data == NULL) {
+	/* Now look क्रम the smu-पूर्णांकerrupt GPIO */
+	करो अणु
+		smu->msg_node = of_find_node_by_name(शून्य, "smu-interrupt");
+		अगर (smu->msg_node == शून्य)
+			अवरोध;
+		data = of_get_property(smu->msg_node, "reg", शून्य);
+		अगर (data == शून्य) अणु
 			of_node_put(smu->msg_node);
-			smu->msg_node = NULL;
-			break;
-		}
+			smu->msg_node = शून्य;
+			अवरोध;
+		पूर्ण
 		smu->msg = *data;
-		if (smu->msg < 0x50)
+		अगर (smu->msg < 0x50)
 			smu->msg += 0x50;
-	} while(0);
+	पूर्ण जबतक(0);
 
 	/* Doorbell buffer is currently hard-coded, I didn't find a proper
 	 * device-tree entry giving the address. Best would probably to use
-	 * an offset for K2 base though, but let's do it that way for now.
+	 * an offset क्रम K2 base though, but let's करो it that way क्रम now.
 	 */
 	smu->db_buf = ioremap(0x8000860c, 0x1000);
-	if (smu->db_buf == NULL) {
-		printk(KERN_ERR "SMU: Can't map doorbell buffer pointer !\n");
+	अगर (smu->db_buf == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "SMU: Can't map doorbell buffer pointer !\n");
 		ret = -ENXIO;
-		goto fail_msg_node;
-	}
+		जाओ fail_msg_node;
+	पूर्ण
 
 	/* U3 has an issue with NAP mode when issuing SMU commands */
 	smu->broken_nap = pmac_get_uninorth_variant() < 4;
-	if (smu->broken_nap)
-		printk(KERN_INFO "SMU: using NAP mode workaround\n");
+	अगर (smu->broken_nap)
+		prपूर्णांकk(KERN_INFO "SMU: using NAP mode workaround\n");
 
 	sys_ctrler = SYS_CTRLER_SMU;
-	return 0;
+	वापस 0;
 
 fail_msg_node:
 	of_node_put(smu->msg_node);
 fail_db_node:
 	of_node_put(smu->db_node);
-fail_bootmem:
-	memblock_free(__pa(smu), sizeof(struct smu_device));
-	smu = NULL;
+fail_booपंचांगem:
+	memblock_मुक्त(__pa(smu), माप(काष्ठा smu_device));
+	smu = शून्य;
 fail_np:
 	of_node_put(np);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int smu_late_init(void)
-{
-	if (!smu)
-		return 0;
+अटल पूर्णांक smu_late_init(व्योम)
+अणु
+	अगर (!smu)
+		वापस 0;
 
-	timer_setup(&smu->i2c_timer, smu_i2c_retry, 0);
+	समयr_setup(&smu->i2c_समयr, smu_i2c_retry, 0);
 
-	if (smu->db_node) {
+	अगर (smu->db_node) अणु
 		smu->db_irq = irq_of_parse_and_map(smu->db_node, 0);
-		if (!smu->db_irq)
-			printk(KERN_ERR "smu: failed to map irq for node %pOF\n",
+		अगर (!smu->db_irq)
+			prपूर्णांकk(KERN_ERR "smu: failed to map irq for node %pOF\n",
 			       smu->db_node);
-	}
-	if (smu->msg_node) {
+	पूर्ण
+	अगर (smu->msg_node) अणु
 		smu->msg_irq = irq_of_parse_and_map(smu->msg_node, 0);
-		if (!smu->msg_irq)
-			printk(KERN_ERR "smu: failed to map irq for node %pOF\n",
+		अगर (!smu->msg_irq)
+			prपूर्णांकk(KERN_ERR "smu: failed to map irq for node %pOF\n",
 			       smu->msg_node);
-	}
+	पूर्ण
 
 	/*
-	 * Try to request the interrupts
+	 * Try to request the पूर्णांकerrupts
 	 */
 
-	if (smu->db_irq) {
-		if (request_irq(smu->db_irq, smu_db_intr,
-				IRQF_SHARED, "SMU doorbell", smu) < 0) {
-			printk(KERN_WARNING "SMU: can't "
+	अगर (smu->db_irq) अणु
+		अगर (request_irq(smu->db_irq, smu_db_पूर्णांकr,
+				IRQF_SHARED, "SMU doorbell", smu) < 0) अणु
+			prपूर्णांकk(KERN_WARNING "SMU: can't "
 			       "request interrupt %d\n",
 			       smu->db_irq);
 			smu->db_irq = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (smu->msg_irq) {
-		if (request_irq(smu->msg_irq, smu_msg_intr,
-				IRQF_SHARED, "SMU message", smu) < 0) {
-			printk(KERN_WARNING "SMU: can't "
+	अगर (smu->msg_irq) अणु
+		अगर (request_irq(smu->msg_irq, smu_msg_पूर्णांकr,
+				IRQF_SHARED, "SMU message", smu) < 0) अणु
+			prपूर्णांकk(KERN_WARNING "SMU: can't "
 			       "request interrupt %d\n",
 			       smu->msg_irq);
 			smu->msg_irq = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	smu_irq_inited = 1;
-	return 0;
-}
-/* This has to be before arch_initcall as the low i2c stuff relies on the
- * above having been done before we reach arch_initcalls
+	वापस 0;
+पूर्ण
+/* This has to be beक्रमe arch_initcall as the low i2c stuff relies on the
+ * above having been करोne beक्रमe we reach arch_initcalls
  */
 core_initcall(smu_late_init);
 
@@ -634,207 +635,207 @@ core_initcall(smu_late_init);
  * sysfs visibility
  */
 
-static void smu_expose_childs(struct work_struct *unused)
-{
-	struct device_node *np;
+अटल व्योम smu_expose_childs(काष्ठा work_काष्ठा *unused)
+अणु
+	काष्ठा device_node *np;
 
-	for_each_child_of_node(smu->of_node, np)
-		if (of_device_is_compatible(np, "smu-sensors"))
-			of_platform_device_create(np, "smu-sensors",
+	क्रम_each_child_of_node(smu->of_node, np)
+		अगर (of_device_is_compatible(np, "smu-sensors"))
+			of_platक्रमm_device_create(np, "smu-sensors",
 						  &smu->of_dev->dev);
-}
+पूर्ण
 
-static DECLARE_WORK(smu_expose_childs_work, smu_expose_childs);
+अटल DECLARE_WORK(smu_expose_childs_work, smu_expose_childs);
 
-static int smu_platform_probe(struct platform_device* dev)
-{
-	if (!smu)
-		return -ENODEV;
+अटल पूर्णांक smu_platक्रमm_probe(काष्ठा platक्रमm_device* dev)
+अणु
+	अगर (!smu)
+		वापस -ENODEV;
 	smu->of_dev = dev;
 
 	/*
 	 * Ok, we are matched, now expose all i2c busses. We have to defer
-	 * that unfortunately or it would deadlock inside the device model
+	 * that unक्रमtunately or it would deadlock inside the device model
 	 */
 	schedule_work(&smu_expose_childs_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id smu_platform_match[] =
-{
-	{
+अटल स्थिर काष्ठा of_device_id smu_platक्रमm_match[] =
+अणु
+	अणु
 		.type		= "smu",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver smu_of_platform_driver =
-{
-	.driver = {
+अटल काष्ठा platक्रमm_driver smu_of_platक्रमm_driver =
+अणु
+	.driver = अणु
 		.name = "smu",
-		.of_match_table = smu_platform_match,
-	},
-	.probe		= smu_platform_probe,
-};
+		.of_match_table = smu_platक्रमm_match,
+	पूर्ण,
+	.probe		= smu_platक्रमm_probe,
+पूर्ण;
 
-static int __init smu_init_sysfs(void)
-{
+अटल पूर्णांक __init smu_init_sysfs(व्योम)
+अणु
 	/*
-	 * For now, we don't power manage machines with an SMU chip,
+	 * For now, we करोn't घातer manage machines with an SMU chip,
 	 * I'm a bit too far from figuring out how that works with those
 	 * new chipsets, but that will come back and bite us
 	 */
-	platform_driver_register(&smu_of_platform_driver);
-	return 0;
-}
+	platक्रमm_driver_रेजिस्टर(&smu_of_platक्रमm_driver);
+	वापस 0;
+पूर्ण
 
 device_initcall(smu_init_sysfs);
 
-struct platform_device *smu_get_ofdev(void)
-{
-	if (!smu)
-		return NULL;
-	return smu->of_dev;
-}
+काष्ठा platक्रमm_device *smu_get_ofdev(व्योम)
+अणु
+	अगर (!smu)
+		वापस शून्य;
+	वापस smu->of_dev;
+पूर्ण
 
 EXPORT_SYMBOL_GPL(smu_get_ofdev);
 
 /*
- * i2c interface
+ * i2c पूर्णांकerface
  */
 
-static void smu_i2c_complete_command(struct smu_i2c_cmd *cmd, int fail)
-{
-	void (*done)(struct smu_i2c_cmd *cmd, void *misc) = cmd->done;
-	void *misc = cmd->misc;
-	unsigned long flags;
+अटल व्योम smu_i2c_complete_command(काष्ठा smu_i2c_cmd *cmd, पूर्णांक fail)
+अणु
+	व्योम (*करोne)(काष्ठा smu_i2c_cmd *cmd, व्योम *misc) = cmd->करोne;
+	व्योम *misc = cmd->misc;
+	अचिन्हित दीर्घ flags;
 
-	/* Check for read case */
-	if (!fail && cmd->read) {
-		if (cmd->pdata[0] < 1)
+	/* Check क्रम पढ़ो हाल */
+	अगर (!fail && cmd->पढ़ो) अणु
+		अगर (cmd->pdata[0] < 1)
 			fail = 1;
-		else
-			memcpy(cmd->info.data, &cmd->pdata[1],
+		अन्यथा
+			स_नकल(cmd->info.data, &cmd->pdata[1],
 			       cmd->info.datalen);
-	}
+	पूर्ण
 
 	DPRINTK("SMU: completing, success: %d\n", !fail);
 
 	/* Update status and mark no pending i2c command with lock
-	 * held so nobody comes in while we dequeue an eventual
+	 * held so nobody comes in जबतक we dequeue an eventual
 	 * pending next i2c command
 	 */
 	spin_lock_irqsave(&smu->lock, flags);
-	smu->cmd_i2c_cur = NULL;
+	smu->cmd_i2c_cur = शून्य;
 	wmb();
 	cmd->status = fail ? -EIO : 0;
 
-	/* Is there another i2c command waiting ? */
-	if (!list_empty(&smu->cmd_i2c_list)) {
-		struct smu_i2c_cmd *newcmd;
+	/* Is there another i2c command रुकोing ? */
+	अगर (!list_empty(&smu->cmd_i2c_list)) अणु
+		काष्ठा smu_i2c_cmd *newcmd;
 
-		/* Fetch it, new current, remove from list */
+		/* Fetch it, new current, हटाओ from list */
 		newcmd = list_entry(smu->cmd_i2c_list.next,
-				    struct smu_i2c_cmd, link);
+				    काष्ठा smu_i2c_cmd, link);
 		smu->cmd_i2c_cur = newcmd;
 		list_del(&cmd->link);
 
 		/* Queue with low level smu */
 		list_add_tail(&cmd->scmd.link, &smu->cmd_list);
-		if (smu->cmd_cur == NULL)
+		अगर (smu->cmd_cur == शून्य)
 			smu_start_cmd();
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&smu->lock, flags);
 
-	/* Call command completion handler if any */
-	if (done)
-		done(cmd, misc);
+	/* Call command completion handler अगर any */
+	अगर (करोne)
+		करोne(cmd, misc);
 
-}
+पूर्ण
 
 
-static void smu_i2c_retry(struct timer_list *unused)
-{
-	struct smu_i2c_cmd	*cmd = smu->cmd_i2c_cur;
+अटल व्योम smu_i2c_retry(काष्ठा समयr_list *unused)
+अणु
+	काष्ठा smu_i2c_cmd	*cmd = smu->cmd_i2c_cur;
 
 	DPRINTK("SMU: i2c failure, requeuing...\n");
 
 	/* requeue command simply by resetting reply_len */
 	cmd->pdata[0] = 0xff;
-	cmd->scmd.reply_len = sizeof(cmd->pdata);
+	cmd->scmd.reply_len = माप(cmd->pdata);
 	smu_queue_cmd(&cmd->scmd);
-}
+पूर्ण
 
 
-static void smu_i2c_low_completion(struct smu_cmd *scmd, void *misc)
-{
-	struct smu_i2c_cmd	*cmd = misc;
-	int			fail = 0;
+अटल व्योम smu_i2c_low_completion(काष्ठा smu_cmd *scmd, व्योम *misc)
+अणु
+	काष्ठा smu_i2c_cmd	*cmd = misc;
+	पूर्णांक			fail = 0;
 
 	DPRINTK("SMU: i2c compl. stage=%d status=%x pdata[0]=%x rlen: %x\n",
 		cmd->stage, scmd->status, cmd->pdata[0], scmd->reply_len);
 
-	/* Check for possible status */
-	if (scmd->status < 0)
+	/* Check क्रम possible status */
+	अगर (scmd->status < 0)
 		fail = 1;
-	else if (cmd->read) {
-		if (cmd->stage == 0)
+	अन्यथा अगर (cmd->पढ़ो) अणु
+		अगर (cmd->stage == 0)
 			fail = cmd->pdata[0] != 0;
-		else
+		अन्यथा
 			fail = cmd->pdata[0] >= 0x80;
-	} else {
+	पूर्ण अन्यथा अणु
 		fail = cmd->pdata[0] != 0;
-	}
+	पूर्ण
 
-	/* Handle failures by requeuing command, after 5ms interval
+	/* Handle failures by requeuing command, after 5ms पूर्णांकerval
 	 */
-	if (fail && --cmd->retries > 0) {
+	अगर (fail && --cmd->retries > 0) अणु
 		DPRINTK("SMU: i2c failure, starting timer...\n");
 		BUG_ON(cmd != smu->cmd_i2c_cur);
-		if (!smu_irq_inited) {
+		अगर (!smu_irq_inited) अणु
 			mdelay(5);
-			smu_i2c_retry(NULL);
-			return;
-		}
-		mod_timer(&smu->i2c_timer, jiffies + msecs_to_jiffies(5));
-		return;
-	}
+			smu_i2c_retry(शून्य);
+			वापस;
+		पूर्ण
+		mod_समयr(&smu->i2c_समयr, jअगरfies + msecs_to_jअगरfies(5));
+		वापस;
+	पूर्ण
 
 	/* If failure or stage 1, command is complete */
-	if (fail || cmd->stage != 0) {
+	अगर (fail || cmd->stage != 0) अणु
 		smu_i2c_complete_command(cmd, fail);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	DPRINTK("SMU: going to stage 1\n");
 
 	/* Ok, initial command complete, now poll status */
 	scmd->reply_buf = cmd->pdata;
-	scmd->reply_len = sizeof(cmd->pdata);
+	scmd->reply_len = माप(cmd->pdata);
 	scmd->data_buf = cmd->pdata;
 	scmd->data_len = 1;
 	cmd->pdata[0] = 0;
 	cmd->stage = 1;
 	cmd->retries = 20;
 	smu_queue_cmd(scmd);
-}
+पूर्ण
 
 
-int smu_queue_i2c(struct smu_i2c_cmd *cmd)
-{
-	unsigned long flags;
+पूर्णांक smu_queue_i2c(काष्ठा smu_i2c_cmd *cmd)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (smu == NULL)
-		return -ENODEV;
+	अगर (smu == शून्य)
+		वापस -ENODEV;
 
 	/* Fill most fields of scmd */
 	cmd->scmd.cmd = SMU_CMD_I2C_COMMAND;
-	cmd->scmd.done = smu_i2c_low_completion;
+	cmd->scmd.करोne = smu_i2c_low_completion;
 	cmd->scmd.misc = cmd;
 	cmd->scmd.reply_buf = cmd->pdata;
-	cmd->scmd.reply_len = sizeof(cmd->pdata);
-	cmd->scmd.data_buf = (u8 *)(char *)&cmd->info;
+	cmd->scmd.reply_len = माप(cmd->pdata);
+	cmd->scmd.data_buf = (u8 *)(अक्षर *)&cmd->info;
 	cmd->scmd.status = 1;
 	cmd->stage = 0;
 	cmd->pdata[0] = 0xff;
@@ -842,71 +843,71 @@ int smu_queue_i2c(struct smu_i2c_cmd *cmd)
 	cmd->status = 1;
 
 	/* Check transfer type, sanitize some "info" fields
-	 * based on transfer type and do more checking
+	 * based on transfer type and करो more checking
 	 */
 	cmd->info.caddr = cmd->info.devaddr;
-	cmd->read = cmd->info.devaddr & 0x01;
-	switch(cmd->info.type) {
-	case SMU_I2C_TRANSFER_SIMPLE:
-		memset(&cmd->info.sublen, 0, 4);
-		break;
-	case SMU_I2C_TRANSFER_COMBINED:
+	cmd->पढ़ो = cmd->info.devaddr & 0x01;
+	चयन(cmd->info.type) अणु
+	हाल SMU_I2C_TRANSFER_SIMPLE:
+		स_रखो(&cmd->info.sublen, 0, 4);
+		अवरोध;
+	हाल SMU_I2C_TRANSFER_COMBINED:
 		cmd->info.devaddr &= 0xfe;
 		fallthrough;
-	case SMU_I2C_TRANSFER_STDSUB:
-		if (cmd->info.sublen > 3)
-			return -EINVAL;
-		break;
-	default:
-		return -EINVAL;
-	}
+	हाल SMU_I2C_TRANSFER_STDSUB:
+		अगर (cmd->info.sublen > 3)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Finish setting up command based on transfer direction
 	 */
-	if (cmd->read) {
-		if (cmd->info.datalen > SMU_I2C_READ_MAX)
-			return -EINVAL;
-		memset(cmd->info.data, 0xff, cmd->info.datalen);
+	अगर (cmd->पढ़ो) अणु
+		अगर (cmd->info.datalen > SMU_I2C_READ_MAX)
+			वापस -EINVAL;
+		स_रखो(cmd->info.data, 0xff, cmd->info.datalen);
 		cmd->scmd.data_len = 9;
-	} else {
-		if (cmd->info.datalen > SMU_I2C_WRITE_MAX)
-			return -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (cmd->info.datalen > SMU_I2C_WRITE_MAX)
+			वापस -EINVAL;
 		cmd->scmd.data_len = 9 + cmd->info.datalen;
-	}
+	पूर्ण
 
 	DPRINTK("SMU: i2c enqueuing command\n");
 	DPRINTK("SMU:   %s, len=%d bus=%x addr=%x sub0=%x type=%x\n",
-		cmd->read ? "read" : "write", cmd->info.datalen,
+		cmd->पढ़ो ? "read" : "write", cmd->info.datalen,
 		cmd->info.bus, cmd->info.caddr,
 		cmd->info.subaddr[0], cmd->info.type);
 
 
-	/* Enqueue command in i2c list, and if empty, enqueue also in
-	 * main command list
+	/* Enqueue command in i2c list, and अगर empty, enqueue also in
+	 * मुख्य command list
 	 */
 	spin_lock_irqsave(&smu->lock, flags);
-	if (smu->cmd_i2c_cur == NULL) {
+	अगर (smu->cmd_i2c_cur == शून्य) अणु
 		smu->cmd_i2c_cur = cmd;
 		list_add_tail(&cmd->scmd.link, &smu->cmd_list);
-		if (smu->cmd_cur == NULL)
+		अगर (smu->cmd_cur == शून्य)
 			smu_start_cmd();
-	} else
+	पूर्ण अन्यथा
 		list_add_tail(&cmd->link, &smu->cmd_i2c_list);
 	spin_unlock_irqrestore(&smu->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Handling of "partitions"
  */
 
-static int smu_read_datablock(u8 *dest, unsigned int addr, unsigned int len)
-{
+अटल पूर्णांक smu_पढ़ो_datablock(u8 *dest, अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक len)
+अणु
 	DECLARE_COMPLETION_ONSTACK(comp);
-	unsigned int chunk;
-	struct smu_cmd cmd;
-	int rc;
+	अचिन्हित पूर्णांक chunk;
+	काष्ठा smu_cmd cmd;
+	पूर्णांक rc;
 	u8 params[8];
 
 	/* We currently use a chunk size of 0xe. We could check the
@@ -914,15 +915,15 @@ static int smu_read_datablock(u8 *dest, unsigned int addr, unsigned int len)
 	 */
 	chunk = 0xe;
 
-	while (len) {
-		unsigned int clen = min(len, chunk);
+	जबतक (len) अणु
+		अचिन्हित पूर्णांक clen = min(len, chunk);
 
 		cmd.cmd = SMU_CMD_MISC_ee_COMMAND;
 		cmd.data_len = 7;
 		cmd.data_buf = params;
 		cmd.reply_len = chunk;
 		cmd.reply_buf = dest;
-		cmd.done = smu_done_complete;
+		cmd.करोne = smu_करोne_complete;
 		cmd.misc = &comp;
 		params[0] = SMU_CMD_MISC_ee_GET_DATABLOCK_REC;
 		params[1] = 0x4;
@@ -930,408 +931,408 @@ static int smu_read_datablock(u8 *dest, unsigned int addr, unsigned int len)
 		params[6] = clen;
 
 		rc = smu_queue_cmd(&cmd);
-		if (rc)
-			return rc;
-		wait_for_completion(&comp);
-		if (cmd.status != 0)
-			return rc;
-		if (cmd.reply_len != clen) {
-			printk(KERN_DEBUG "SMU: short read in "
+		अगर (rc)
+			वापस rc;
+		रुको_क्रम_completion(&comp);
+		अगर (cmd.status != 0)
+			वापस rc;
+		अगर (cmd.reply_len != clen) अणु
+			prपूर्णांकk(KERN_DEBUG "SMU: short read in "
 			       "smu_read_datablock, got: %d, want: %d\n",
 			       cmd.reply_len, clen);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		len -= clen;
 		addr += clen;
 		dest += clen;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct smu_sdbp_header *smu_create_sdb_partition(int id)
-{
+अटल काष्ठा smu_sdbp_header *smu_create_sdb_partition(पूर्णांक id)
+अणु
 	DECLARE_COMPLETION_ONSTACK(comp);
-	struct smu_simple_cmd cmd;
-	unsigned int addr, len, tlen;
-	struct smu_sdbp_header *hdr;
-	struct property *prop;
+	काष्ठा smu_simple_cmd cmd;
+	अचिन्हित पूर्णांक addr, len, tlen;
+	काष्ठा smu_sdbp_header *hdr;
+	काष्ठा property *prop;
 
 	/* First query the partition info */
 	DPRINTK("SMU: Query partition infos ... (irq=%d)\n", smu->db_irq);
 	smu_queue_simple(&cmd, SMU_CMD_PARTITION_COMMAND, 2,
-			 smu_done_complete, &comp,
+			 smu_करोne_complete, &comp,
 			 SMU_CMD_PARTITION_LATEST, id);
-	wait_for_completion(&comp);
+	रुको_क्रम_completion(&comp);
 	DPRINTK("SMU: done, status: %d, reply_len: %d\n",
 		cmd.cmd.status, cmd.cmd.reply_len);
 
-	/* Partition doesn't exist (or other error) */
-	if (cmd.cmd.status != 0 || cmd.cmd.reply_len != 6)
-		return NULL;
+	/* Partition करोesn't exist (or other error) */
+	अगर (cmd.cmd.status != 0 || cmd.cmd.reply_len != 6)
+		वापस शून्य;
 
 	/* Fetch address and length from reply */
 	addr = *((u16 *)cmd.buffer);
 	len = cmd.buffer[3] << 2;
 	/* Calucluate total length to allocate, including the 17 bytes
-	 * for "sdb-partition-XX" that we append at the end of the buffer
+	 * क्रम "sdb-partition-XX" that we append at the end of the buffer
 	 */
-	tlen = sizeof(struct property) + len + 18;
+	tlen = माप(काष्ठा property) + len + 18;
 
 	prop = kzalloc(tlen, GFP_KERNEL);
-	if (prop == NULL)
-		return NULL;
-	hdr = (struct smu_sdbp_header *)(prop + 1);
-	prop->name = ((char *)prop) + tlen - 18;
-	sprintf(prop->name, "sdb-partition-%02x", id);
+	अगर (prop == शून्य)
+		वापस शून्य;
+	hdr = (काष्ठा smu_sdbp_header *)(prop + 1);
+	prop->name = ((अक्षर *)prop) + tlen - 18;
+	प्र_लिखो(prop->name, "sdb-partition-%02x", id);
 	prop->length = len;
 	prop->value = hdr;
-	prop->next = NULL;
+	prop->next = शून्य;
 
 	/* Read the datablock */
-	if (smu_read_datablock((u8 *)hdr, addr, len)) {
-		printk(KERN_DEBUG "SMU: datablock read failed while reading "
+	अगर (smu_पढ़ो_datablock((u8 *)hdr, addr, len)) अणु
+		prपूर्णांकk(KERN_DEBUG "SMU: datablock read failed while reading "
 		       "partition %02x !\n", id);
-		goto failure;
-	}
+		जाओ failure;
+	पूर्ण
 
 	/* Got it, check a few things and create the property */
-	if (hdr->id != id) {
-		printk(KERN_DEBUG "SMU: Reading partition %02x and got "
+	अगर (hdr->id != id) अणु
+		prपूर्णांकk(KERN_DEBUG "SMU: Reading partition %02x and got "
 		       "%02x !\n", id, hdr->id);
-		goto failure;
-	}
-	if (of_add_property(smu->of_node, prop)) {
-		printk(KERN_DEBUG "SMU: Failed creating sdb-partition-%02x "
+		जाओ failure;
+	पूर्ण
+	अगर (of_add_property(smu->of_node, prop)) अणु
+		prपूर्णांकk(KERN_DEBUG "SMU: Failed creating sdb-partition-%02x "
 		       "property !\n", id);
-		goto failure;
-	}
+		जाओ failure;
+	पूर्ण
 
-	return hdr;
+	वापस hdr;
  failure:
-	kfree(prop);
-	return NULL;
-}
+	kमुक्त(prop);
+	वापस शून्य;
+पूर्ण
 
-/* Note: Only allowed to return error code in pointers (using ERR_PTR)
- * when interruptible is 1
+/* Note: Only allowed to वापस error code in poपूर्णांकers (using ERR_PTR)
+ * when पूर्णांकerruptible is 1
  */
-static const struct smu_sdbp_header *__smu_get_sdb_partition(int id,
-		unsigned int *size, int interruptible)
-{
-	char pname[32];
-	const struct smu_sdbp_header *part;
+अटल स्थिर काष्ठा smu_sdbp_header *__smu_get_sdb_partition(पूर्णांक id,
+		अचिन्हित पूर्णांक *size, पूर्णांक पूर्णांकerruptible)
+अणु
+	अक्षर pname[32];
+	स्थिर काष्ठा smu_sdbp_header *part;
 
-	if (!smu)
-		return NULL;
+	अगर (!smu)
+		वापस शून्य;
 
-	sprintf(pname, "sdb-partition-%02x", id);
+	प्र_लिखो(pname, "sdb-partition-%02x", id);
 
 	DPRINTK("smu_get_sdb_partition(%02x)\n", id);
 
-	if (interruptible) {
-		int rc;
-		rc = mutex_lock_interruptible(&smu_part_access);
-		if (rc)
-			return ERR_PTR(rc);
-	} else
+	अगर (पूर्णांकerruptible) अणु
+		पूर्णांक rc;
+		rc = mutex_lock_पूर्णांकerruptible(&smu_part_access);
+		अगर (rc)
+			वापस ERR_PTR(rc);
+	पूर्ण अन्यथा
 		mutex_lock(&smu_part_access);
 
 	part = of_get_property(smu->of_node, pname, size);
-	if (part == NULL) {
+	अगर (part == शून्य) अणु
 		DPRINTK("trying to extract from SMU ...\n");
 		part = smu_create_sdb_partition(id);
-		if (part != NULL && size)
+		अगर (part != शून्य && size)
 			*size = part->len << 2;
-	}
+	पूर्ण
 	mutex_unlock(&smu_part_access);
-	return part;
-}
+	वापस part;
+पूर्ण
 
-const struct smu_sdbp_header *smu_get_sdb_partition(int id, unsigned int *size)
-{
-	return __smu_get_sdb_partition(id, size, 0);
-}
+स्थिर काष्ठा smu_sdbp_header *smu_get_sdb_partition(पूर्णांक id, अचिन्हित पूर्णांक *size)
+अणु
+	वापस __smu_get_sdb_partition(id, size, 0);
+पूर्ण
 EXPORT_SYMBOL(smu_get_sdb_partition);
 
 
 /*
- * Userland driver interface
+ * Userland driver पूर्णांकerface
  */
 
 
-static LIST_HEAD(smu_clist);
-static DEFINE_SPINLOCK(smu_clist_lock);
+अटल LIST_HEAD(smu_clist);
+अटल DEFINE_SPINLOCK(smu_clist_lock);
 
-enum smu_file_mode {
+क्रमागत smu_file_mode अणु
 	smu_file_commands,
 	smu_file_events,
 	smu_file_closing
-};
+पूर्ण;
 
-struct smu_private
-{
-	struct list_head	list;
-	enum smu_file_mode	mode;
-	int			busy;
-	struct smu_cmd		cmd;
+काष्ठा smu_निजी
+अणु
+	काष्ठा list_head	list;
+	क्रमागत smu_file_mode	mode;
+	पूर्णांक			busy;
+	काष्ठा smu_cmd		cmd;
 	spinlock_t		lock;
-	wait_queue_head_t	wait;
+	रुको_queue_head_t	रुको;
 	u8			buffer[SMU_MAX_DATA];
-};
+पूर्ण;
 
 
-static int smu_open(struct inode *inode, struct file *file)
-{
-	struct smu_private *pp;
-	unsigned long flags;
+अटल पूर्णांक smu_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा smu_निजी *pp;
+	अचिन्हित दीर्घ flags;
 
-	pp = kzalloc(sizeof(struct smu_private), GFP_KERNEL);
-	if (pp == 0)
-		return -ENOMEM;
+	pp = kzalloc(माप(काष्ठा smu_निजी), GFP_KERNEL);
+	अगर (pp == 0)
+		वापस -ENOMEM;
 	spin_lock_init(&pp->lock);
 	pp->mode = smu_file_commands;
-	init_waitqueue_head(&pp->wait);
+	init_रुकोqueue_head(&pp->रुको);
 
 	mutex_lock(&smu_mutex);
 	spin_lock_irqsave(&smu_clist_lock, flags);
 	list_add(&pp->list, &smu_clist);
 	spin_unlock_irqrestore(&smu_clist_lock, flags);
-	file->private_data = pp;
+	file->निजी_data = pp;
 	mutex_unlock(&smu_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void smu_user_cmd_done(struct smu_cmd *cmd, void *misc)
-{
-	struct smu_private *pp = misc;
+अटल व्योम smu_user_cmd_करोne(काष्ठा smu_cmd *cmd, व्योम *misc)
+अणु
+	काष्ठा smu_निजी *pp = misc;
 
-	wake_up_all(&pp->wait);
-}
+	wake_up_all(&pp->रुको);
+पूर्ण
 
 
-static ssize_t smu_write(struct file *file, const char __user *buf,
-			 size_t count, loff_t *ppos)
-{
-	struct smu_private *pp = file->private_data;
-	unsigned long flags;
-	struct smu_user_cmd_hdr hdr;
-	int rc = 0;
+अटल sमाप_प्रकार smu_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा smu_निजी *pp = file->निजी_data;
+	अचिन्हित दीर्घ flags;
+	काष्ठा smu_user_cmd_hdr hdr;
+	पूर्णांक rc = 0;
 
-	if (pp->busy)
-		return -EBUSY;
-	else if (copy_from_user(&hdr, buf, sizeof(hdr)))
-		return -EFAULT;
-	else if (hdr.cmdtype == SMU_CMDTYPE_WANTS_EVENTS) {
+	अगर (pp->busy)
+		वापस -EBUSY;
+	अन्यथा अगर (copy_from_user(&hdr, buf, माप(hdr)))
+		वापस -EFAULT;
+	अन्यथा अगर (hdr.cmdtype == SMU_CMDTYPE_WANTS_EVENTS) अणु
 		pp->mode = smu_file_events;
-		return 0;
-	} else if (hdr.cmdtype == SMU_CMDTYPE_GET_PARTITION) {
-		const struct smu_sdbp_header *part;
-		part = __smu_get_sdb_partition(hdr.cmd, NULL, 1);
-		if (part == NULL)
-			return -EINVAL;
-		else if (IS_ERR(part))
-			return PTR_ERR(part);
-		return 0;
-	} else if (hdr.cmdtype != SMU_CMDTYPE_SMU)
-		return -EINVAL;
-	else if (pp->mode != smu_file_commands)
-		return -EBADFD;
-	else if (hdr.data_len > SMU_MAX_DATA)
-		return -EINVAL;
+		वापस 0;
+	पूर्ण अन्यथा अगर (hdr.cmdtype == SMU_CMDTYPE_GET_PARTITION) अणु
+		स्थिर काष्ठा smu_sdbp_header *part;
+		part = __smu_get_sdb_partition(hdr.cmd, शून्य, 1);
+		अगर (part == शून्य)
+			वापस -EINVAL;
+		अन्यथा अगर (IS_ERR(part))
+			वापस PTR_ERR(part);
+		वापस 0;
+	पूर्ण अन्यथा अगर (hdr.cmdtype != SMU_CMDTYPE_SMU)
+		वापस -EINVAL;
+	अन्यथा अगर (pp->mode != smu_file_commands)
+		वापस -EBADFD;
+	अन्यथा अगर (hdr.data_len > SMU_MAX_DATA)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&pp->lock, flags);
-	if (pp->busy) {
+	अगर (pp->busy) अणु
 		spin_unlock_irqrestore(&pp->lock, flags);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	pp->busy = 1;
 	pp->cmd.status = 1;
 	spin_unlock_irqrestore(&pp->lock, flags);
 
-	if (copy_from_user(pp->buffer, buf + sizeof(hdr), hdr.data_len)) {
+	अगर (copy_from_user(pp->buffer, buf + माप(hdr), hdr.data_len)) अणु
 		pp->busy = 0;
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	pp->cmd.cmd = hdr.cmd;
 	pp->cmd.data_len = hdr.data_len;
 	pp->cmd.reply_len = SMU_MAX_DATA;
 	pp->cmd.data_buf = pp->buffer;
 	pp->cmd.reply_buf = pp->buffer;
-	pp->cmd.done = smu_user_cmd_done;
+	pp->cmd.करोne = smu_user_cmd_करोne;
 	pp->cmd.misc = pp;
 	rc = smu_queue_cmd(&pp->cmd);
-	if (rc < 0)
-		return rc;
-	return count;
-}
+	अगर (rc < 0)
+		वापस rc;
+	वापस count;
+पूर्ण
 
 
-static ssize_t smu_read_command(struct file *file, struct smu_private *pp,
-				char __user *buf, size_t count)
-{
-	DECLARE_WAITQUEUE(wait, current);
-	struct smu_user_reply_hdr hdr;
-	unsigned long flags;
-	int size, rc = 0;
+अटल sमाप_प्रकार smu_पढ़ो_command(काष्ठा file *file, काष्ठा smu_निजी *pp,
+				अक्षर __user *buf, माप_प्रकार count)
+अणु
+	DECLARE_WAITQUEUE(रुको, current);
+	काष्ठा smu_user_reply_hdr hdr;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक size, rc = 0;
 
-	if (!pp->busy)
-		return 0;
-	if (count < sizeof(struct smu_user_reply_hdr))
-		return -EOVERFLOW;
+	अगर (!pp->busy)
+		वापस 0;
+	अगर (count < माप(काष्ठा smu_user_reply_hdr))
+		वापस -EOVERFLOW;
 	spin_lock_irqsave(&pp->lock, flags);
-	if (pp->cmd.status == 1) {
-		if (file->f_flags & O_NONBLOCK) {
+	अगर (pp->cmd.status == 1) अणु
+		अगर (file->f_flags & O_NONBLOCK) अणु
 			spin_unlock_irqrestore(&pp->lock, flags);
-			return -EAGAIN;
-		}
-		add_wait_queue(&pp->wait, &wait);
-		for (;;) {
+			वापस -EAGAIN;
+		पूर्ण
+		add_रुको_queue(&pp->रुको, &रुको);
+		क्रम (;;) अणु
 			set_current_state(TASK_INTERRUPTIBLE);
 			rc = 0;
-			if (pp->cmd.status != 1)
-				break;
+			अगर (pp->cmd.status != 1)
+				अवरोध;
 			rc = -ERESTARTSYS;
-			if (signal_pending(current))
-				break;
+			अगर (संकेत_pending(current))
+				अवरोध;
 			spin_unlock_irqrestore(&pp->lock, flags);
 			schedule();
 			spin_lock_irqsave(&pp->lock, flags);
-		}
+		पूर्ण
 		set_current_state(TASK_RUNNING);
-		remove_wait_queue(&pp->wait, &wait);
-	}
+		हटाओ_रुको_queue(&pp->रुको, &रुको);
+	पूर्ण
 	spin_unlock_irqrestore(&pp->lock, flags);
-	if (rc)
-		return rc;
-	if (pp->cmd.status != 0)
+	अगर (rc)
+		वापस rc;
+	अगर (pp->cmd.status != 0)
 		pp->cmd.reply_len = 0;
-	size = sizeof(hdr) + pp->cmd.reply_len;
-	if (count < size)
+	size = माप(hdr) + pp->cmd.reply_len;
+	अगर (count < size)
 		size = count;
 	rc = size;
 	hdr.status = pp->cmd.status;
 	hdr.reply_len = pp->cmd.reply_len;
-	if (copy_to_user(buf, &hdr, sizeof(hdr)))
-		return -EFAULT;
-	size -= sizeof(hdr);
-	if (size && copy_to_user(buf + sizeof(hdr), pp->buffer, size))
-		return -EFAULT;
+	अगर (copy_to_user(buf, &hdr, माप(hdr)))
+		वापस -EFAULT;
+	size -= माप(hdr);
+	अगर (size && copy_to_user(buf + माप(hdr), pp->buffer, size))
+		वापस -EFAULT;
 	pp->busy = 0;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
-static ssize_t smu_read_events(struct file *file, struct smu_private *pp,
-			       char __user *buf, size_t count)
-{
+अटल sमाप_प्रकार smu_पढ़ो_events(काष्ठा file *file, काष्ठा smu_निजी *pp,
+			       अक्षर __user *buf, माप_प्रकार count)
+अणु
 	/* Not implemented */
-	msleep_interruptible(1000);
-	return 0;
-}
+	msleep_पूर्णांकerruptible(1000);
+	वापस 0;
+पूर्ण
 
 
-static ssize_t smu_read(struct file *file, char __user *buf,
-			size_t count, loff_t *ppos)
-{
-	struct smu_private *pp = file->private_data;
+अटल sमाप_प्रकार smu_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा smu_निजी *pp = file->निजी_data;
 
-	if (pp->mode == smu_file_commands)
-		return smu_read_command(file, pp, buf, count);
-	if (pp->mode == smu_file_events)
-		return smu_read_events(file, pp, buf, count);
+	अगर (pp->mode == smu_file_commands)
+		वापस smu_पढ़ो_command(file, pp, buf, count);
+	अगर (pp->mode == smu_file_events)
+		वापस smu_पढ़ो_events(file, pp, buf, count);
 
-	return -EBADFD;
-}
+	वापस -EBADFD;
+पूर्ण
 
-static __poll_t smu_fpoll(struct file *file, poll_table *wait)
-{
-	struct smu_private *pp = file->private_data;
+अटल __poll_t smu_fpoll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा smu_निजी *pp = file->निजी_data;
 	__poll_t mask = 0;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (pp == 0)
-		return 0;
+	अगर (pp == 0)
+		वापस 0;
 
-	if (pp->mode == smu_file_commands) {
-		poll_wait(file, &pp->wait, wait);
+	अगर (pp->mode == smu_file_commands) अणु
+		poll_रुको(file, &pp->रुको, रुको);
 
 		spin_lock_irqsave(&pp->lock, flags);
-		if (pp->busy && pp->cmd.status != 1)
+		अगर (pp->busy && pp->cmd.status != 1)
 			mask |= EPOLLIN;
 		spin_unlock_irqrestore(&pp->lock, flags);
-	}
-	if (pp->mode == smu_file_events) {
+	पूर्ण
+	अगर (pp->mode == smu_file_events) अणु
 		/* Not yet implemented */
-	}
-	return mask;
-}
+	पूर्ण
+	वापस mask;
+पूर्ण
 
-static int smu_release(struct inode *inode, struct file *file)
-{
-	struct smu_private *pp = file->private_data;
-	unsigned long flags;
-	unsigned int busy;
+अटल पूर्णांक smu_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा smu_निजी *pp = file->निजी_data;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक busy;
 
-	if (pp == 0)
-		return 0;
+	अगर (pp == 0)
+		वापस 0;
 
-	file->private_data = NULL;
+	file->निजी_data = शून्य;
 
-	/* Mark file as closing to avoid races with new request */
+	/* Mark file as closing to aव्योम races with new request */
 	spin_lock_irqsave(&pp->lock, flags);
 	pp->mode = smu_file_closing;
 	busy = pp->busy;
 
-	/* Wait for any pending request to complete */
-	if (busy && pp->cmd.status == 1) {
-		DECLARE_WAITQUEUE(wait, current);
+	/* Wait क्रम any pending request to complete */
+	अगर (busy && pp->cmd.status == 1) अणु
+		DECLARE_WAITQUEUE(रुको, current);
 
-		add_wait_queue(&pp->wait, &wait);
-		for (;;) {
+		add_रुको_queue(&pp->रुको, &रुको);
+		क्रम (;;) अणु
 			set_current_state(TASK_UNINTERRUPTIBLE);
-			if (pp->cmd.status != 1)
-				break;
+			अगर (pp->cmd.status != 1)
+				अवरोध;
 			spin_unlock_irqrestore(&pp->lock, flags);
 			schedule();
 			spin_lock_irqsave(&pp->lock, flags);
-		}
+		पूर्ण
 		set_current_state(TASK_RUNNING);
-		remove_wait_queue(&pp->wait, &wait);
-	}
+		हटाओ_रुको_queue(&pp->रुको, &रुको);
+	पूर्ण
 	spin_unlock_irqrestore(&pp->lock, flags);
 
 	spin_lock_irqsave(&smu_clist_lock, flags);
 	list_del(&pp->list);
 	spin_unlock_irqrestore(&smu_clist_lock, flags);
-	kfree(pp);
+	kमुक्त(pp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct file_operations smu_device_fops = {
+अटल स्थिर काष्ठा file_operations smu_device_fops = अणु
 	.llseek		= no_llseek,
-	.read		= smu_read,
-	.write		= smu_write,
+	.पढ़ो		= smu_पढ़ो,
+	.ग_लिखो		= smu_ग_लिखो,
 	.poll		= smu_fpoll,
-	.open		= smu_open,
+	.खोलो		= smu_खोलो,
 	.release	= smu_release,
-};
+पूर्ण;
 
-static struct miscdevice pmu_device = {
+अटल काष्ठा miscdevice pmu_device = अणु
 	MISC_DYNAMIC_MINOR, "smu", &smu_device_fops
-};
+पूर्ण;
 
-static int smu_device_init(void)
-{
-	if (!smu)
-		return -ENODEV;
-	if (misc_register(&pmu_device) < 0)
-		printk(KERN_ERR "via-pmu: cannot register misc device.\n");
-	return 0;
-}
+अटल पूर्णांक smu_device_init(व्योम)
+अणु
+	अगर (!smu)
+		वापस -ENODEV;
+	अगर (misc_रेजिस्टर(&pmu_device) < 0)
+		prपूर्णांकk(KERN_ERR "via-pmu: cannot register misc device.\n");
+	वापस 0;
+पूर्ण
 device_initcall(smu_device_init);

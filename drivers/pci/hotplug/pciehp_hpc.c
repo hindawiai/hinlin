@@ -1,174 +1,175 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * PCI Express PCI Hot Plug Driver
  *
  * Copyright (C) 1995,2001 Compaq Computer Corporation
- * Copyright (C) 2001 Greg Kroah-Hartman (greg@kroah.com)
+ * Copyright (C) 2001 Greg Kroah-Harपंचांगan (greg@kroah.com)
  * Copyright (C) 2001 IBM Corp.
  * Copyright (C) 2003-2004 Intel Corporation
  *
  * All rights reserved.
  *
- * Send feedback to <greg@kroah.com>,<kristen.c.accardi@intel.com>
+ * Send feedback to <greg@kroah.com>,<kristen.c.accardi@पूर्णांकel.com>
  */
 
-#define dev_fmt(fmt) "pciehp: " fmt
+#घोषणा dev_fmt(fmt) "pciehp: " fmt
 
-#include <linux/dmi.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/jiffies.h>
-#include <linux/kthread.h>
-#include <linux/pci.h>
-#include <linux/pm_runtime.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
 
-#include "../pci.h"
-#include "pciehp.h"
+#समावेश "../pci.h"
+#समावेश "pciehp.h"
 
-static const struct dmi_system_id inband_presence_disabled_dmi_table[] = {
+अटल स्थिर काष्ठा dmi_प्रणाली_id inband_presence_disabled_dmi_table[] = अणु
 	/*
-	 * Match all Dell systems, as some Dell systems have inband
-	 * presence disabled on NVMe slots (but don't support the bit to
+	 * Match all Dell प्रणालीs, as some Dell प्रणालीs have inband
+	 * presence disabled on NVMe slots (but करोn't support the bit to
 	 * report it). Setting inband presence disabled should have no
 	 * negative effect, except on broken hotplug slots that never
-	 * assert presence detect--and those will still work, they will
-	 * just have a bit of extra delay before being probed.
+	 * निश्चित presence detect--and those will still work, they will
+	 * just have a bit of extra delay beक्रमe being probed.
 	 */
-	{
+	अणु
 		.ident = "Dell System",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_OEM_STRING, "Dell System"),
-		},
-	},
-	{}
-};
+		पूर्ण,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static inline struct pci_dev *ctrl_dev(struct controller *ctrl)
-{
-	return ctrl->pcie->port;
-}
+अटल अंतरभूत काष्ठा pci_dev *ctrl_dev(काष्ठा controller *ctrl)
+अणु
+	वापस ctrl->pcie->port;
+पूर्ण
 
-static irqreturn_t pciehp_isr(int irq, void *dev_id);
-static irqreturn_t pciehp_ist(int irq, void *dev_id);
-static int pciehp_poll(void *data);
+अटल irqवापस_t pciehp_isr(पूर्णांक irq, व्योम *dev_id);
+अटल irqवापस_t pciehp_ist(पूर्णांक irq, व्योम *dev_id);
+अटल पूर्णांक pciehp_poll(व्योम *data);
 
-static inline int pciehp_request_irq(struct controller *ctrl)
-{
-	int retval, irq = ctrl->pcie->irq;
+अटल अंतरभूत पूर्णांक pciehp_request_irq(काष्ठा controller *ctrl)
+अणु
+	पूर्णांक retval, irq = ctrl->pcie->irq;
 
-	if (pciehp_poll_mode) {
-		ctrl->poll_thread = kthread_run(&pciehp_poll, ctrl,
+	अगर (pciehp_poll_mode) अणु
+		ctrl->poll_thपढ़ो = kthपढ़ो_run(&pciehp_poll, ctrl,
 						"pciehp_poll-%s",
 						slot_name(ctrl));
-		return PTR_ERR_OR_ZERO(ctrl->poll_thread);
-	}
+		वापस PTR_ERR_OR_ZERO(ctrl->poll_thपढ़ो);
+	पूर्ण
 
-	/* Installs the interrupt handler */
-	retval = request_threaded_irq(irq, pciehp_isr, pciehp_ist,
+	/* Installs the पूर्णांकerrupt handler */
+	retval = request_thपढ़ोed_irq(irq, pciehp_isr, pciehp_ist,
 				      IRQF_SHARED, "pciehp", ctrl);
-	if (retval)
+	अगर (retval)
 		ctrl_err(ctrl, "Cannot get irq %d for the hotplug controller\n",
 			 irq);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static inline void pciehp_free_irq(struct controller *ctrl)
-{
-	if (pciehp_poll_mode)
-		kthread_stop(ctrl->poll_thread);
-	else
-		free_irq(ctrl->pcie->irq, ctrl);
-}
+अटल अंतरभूत व्योम pciehp_मुक्त_irq(काष्ठा controller *ctrl)
+अणु
+	अगर (pciehp_poll_mode)
+		kthपढ़ो_stop(ctrl->poll_thपढ़ो);
+	अन्यथा
+		मुक्त_irq(ctrl->pcie->irq, ctrl);
+पूर्ण
 
-static int pcie_poll_cmd(struct controller *ctrl, int timeout)
-{
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+अटल पूर्णांक pcie_poll_cmd(काष्ठा controller *ctrl, पूर्णांक समयout)
+अणु
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 	u16 slot_status;
 
-	do {
-		pcie_capability_read_word(pdev, PCI_EXP_SLTSTA, &slot_status);
-		if (slot_status == (u16) ~0) {
+	करो अणु
+		pcie_capability_पढ़ो_word(pdev, PCI_EXP_SLTSTA, &slot_status);
+		अगर (slot_status == (u16) ~0) अणु
 			ctrl_info(ctrl, "%s: no response from device\n",
 				  __func__);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		if (slot_status & PCI_EXP_SLTSTA_CC) {
-			pcie_capability_write_word(pdev, PCI_EXP_SLTSTA,
+		अगर (slot_status & PCI_EXP_SLTSTA_CC) अणु
+			pcie_capability_ग_लिखो_word(pdev, PCI_EXP_SLTSTA,
 						   PCI_EXP_SLTSTA_CC);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 		msleep(10);
-		timeout -= 10;
-	} while (timeout >= 0);
-	return 0;	/* timeout */
-}
+		समयout -= 10;
+	पूर्ण जबतक (समयout >= 0);
+	वापस 0;	/* समयout */
+पूर्ण
 
-static void pcie_wait_cmd(struct controller *ctrl)
-{
-	unsigned int msecs = pciehp_poll_mode ? 2500 : 1000;
-	unsigned long duration = msecs_to_jiffies(msecs);
-	unsigned long cmd_timeout = ctrl->cmd_started + duration;
-	unsigned long now, timeout;
-	int rc;
+अटल व्योम pcie_रुको_cmd(काष्ठा controller *ctrl)
+अणु
+	अचिन्हित पूर्णांक msecs = pciehp_poll_mode ? 2500 : 1000;
+	अचिन्हित दीर्घ duration = msecs_to_jअगरfies(msecs);
+	अचिन्हित दीर्घ cmd_समयout = ctrl->cmd_started + duration;
+	अचिन्हित दीर्घ now, समयout;
+	पूर्णांक rc;
 
 	/*
-	 * If the controller does not generate notifications for command
-	 * completions, we never need to wait between writes.
+	 * If the controller करोes not generate notअगरications क्रम command
+	 * completions, we never need to रुको between ग_लिखोs.
 	 */
-	if (NO_CMD_CMPL(ctrl))
-		return;
+	अगर (NO_CMD_CMPL(ctrl))
+		वापस;
 
-	if (!ctrl->cmd_busy)
-		return;
+	अगर (!ctrl->cmd_busy)
+		वापस;
 
 	/*
-	 * Even if the command has already timed out, we want to call
+	 * Even अगर the command has alपढ़ोy समयd out, we want to call
 	 * pcie_poll_cmd() so it can clear PCI_EXP_SLTSTA_CC.
 	 */
-	now = jiffies;
-	if (time_before_eq(cmd_timeout, now))
-		timeout = 1;
-	else
-		timeout = cmd_timeout - now;
+	now = jअगरfies;
+	अगर (समय_beक्रमe_eq(cmd_समयout, now))
+		समयout = 1;
+	अन्यथा
+		समयout = cmd_समयout - now;
 
-	if (ctrl->slot_ctrl & PCI_EXP_SLTCTL_HPIE &&
+	अगर (ctrl->slot_ctrl & PCI_EXP_SLTCTL_HPIE &&
 	    ctrl->slot_ctrl & PCI_EXP_SLTCTL_CCIE)
-		rc = wait_event_timeout(ctrl->queue, !ctrl->cmd_busy, timeout);
-	else
-		rc = pcie_poll_cmd(ctrl, jiffies_to_msecs(timeout));
+		rc = रुको_event_समयout(ctrl->queue, !ctrl->cmd_busy, समयout);
+	अन्यथा
+		rc = pcie_poll_cmd(ctrl, jअगरfies_to_msecs(समयout));
 
-	if (!rc)
+	अगर (!rc)
 		ctrl_info(ctrl, "Timeout on hotplug command %#06x (issued %u msec ago)\n",
 			  ctrl->slot_ctrl,
-			  jiffies_to_msecs(jiffies - ctrl->cmd_started));
-}
+			  jअगरfies_to_msecs(jअगरfies - ctrl->cmd_started));
+पूर्ण
 
-#define CC_ERRATUM_MASK		(PCI_EXP_SLTCTL_PCC |	\
+#घोषणा CC_ERRATUM_MASK		(PCI_EXP_SLTCTL_PCC |	\
 				 PCI_EXP_SLTCTL_PIC |	\
 				 PCI_EXP_SLTCTL_AIC |	\
 				 PCI_EXP_SLTCTL_EIC)
 
-static void pcie_do_write_cmd(struct controller *ctrl, u16 cmd,
-			      u16 mask, bool wait)
-{
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+अटल व्योम pcie_करो_ग_लिखो_cmd(काष्ठा controller *ctrl, u16 cmd,
+			      u16 mask, bool रुको)
+अणु
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 	u16 slot_ctrl_orig, slot_ctrl;
 
 	mutex_lock(&ctrl->ctrl_lock);
 
 	/*
-	 * Always wait for any previous command that might still be in progress
+	 * Always रुको क्रम any previous command that might still be in progress
 	 */
-	pcie_wait_cmd(ctrl);
+	pcie_रुको_cmd(ctrl);
 
-	pcie_capability_read_word(pdev, PCI_EXP_SLTCTL, &slot_ctrl);
-	if (slot_ctrl == (u16) ~0) {
+	pcie_capability_पढ़ो_word(pdev, PCI_EXP_SLTCTL, &slot_ctrl);
+	अगर (slot_ctrl == (u16) ~0) अणु
 		ctrl_info(ctrl, "%s: no response from device\n", __func__);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	slot_ctrl_orig = slot_ctrl;
 	slot_ctrl &= ~mask;
@@ -176,326 +177,326 @@ static void pcie_do_write_cmd(struct controller *ctrl, u16 cmd,
 	ctrl->cmd_busy = 1;
 	smp_mb();
 	ctrl->slot_ctrl = slot_ctrl;
-	pcie_capability_write_word(pdev, PCI_EXP_SLTCTL, slot_ctrl);
-	ctrl->cmd_started = jiffies;
+	pcie_capability_ग_लिखो_word(pdev, PCI_EXP_SLTCTL, slot_ctrl);
+	ctrl->cmd_started = jअगरfies;
 
 	/*
 	 * Controllers with the Intel CF118 and similar errata advertise
 	 * Command Completed support, but they only set Command Completed
-	 * if we change the "Control" bits for power, power indicator,
-	 * attention indicator, or interlock.  If we only change the
+	 * अगर we change the "Control" bits क्रम घातer, घातer indicator,
+	 * attention indicator, or पूर्णांकerlock.  If we only change the
 	 * "Enable" bits, they never set the Command Completed bit.
 	 */
-	if (pdev->broken_cmd_compl &&
+	अगर (pdev->broken_cmd_compl &&
 	    (slot_ctrl_orig & CC_ERRATUM_MASK) == (slot_ctrl & CC_ERRATUM_MASK))
 		ctrl->cmd_busy = 0;
 
 	/*
-	 * Optionally wait for the hardware to be ready for a new command,
+	 * Optionally रुको क्रम the hardware to be पढ़ोy क्रम a new command,
 	 * indicating completion of the above issued command.
 	 */
-	if (wait)
-		pcie_wait_cmd(ctrl);
+	अगर (रुको)
+		pcie_रुको_cmd(ctrl);
 
 out:
 	mutex_unlock(&ctrl->ctrl_lock);
-}
+पूर्ण
 
 /**
- * pcie_write_cmd - Issue controller command
+ * pcie_ग_लिखो_cmd - Issue controller command
  * @ctrl: controller to which the command is issued
- * @cmd:  command value written to slot control register
- * @mask: bitmask of slot control register to be modified
+ * @cmd:  command value written to slot control रेजिस्टर
+ * @mask: biपंचांगask of slot control रेजिस्टर to be modअगरied
  */
-static void pcie_write_cmd(struct controller *ctrl, u16 cmd, u16 mask)
-{
-	pcie_do_write_cmd(ctrl, cmd, mask, true);
-}
+अटल व्योम pcie_ग_लिखो_cmd(काष्ठा controller *ctrl, u16 cmd, u16 mask)
+अणु
+	pcie_करो_ग_लिखो_cmd(ctrl, cmd, mask, true);
+पूर्ण
 
-/* Same as above without waiting for the hardware to latch */
-static void pcie_write_cmd_nowait(struct controller *ctrl, u16 cmd, u16 mask)
-{
-	pcie_do_write_cmd(ctrl, cmd, mask, false);
-}
+/* Same as above without रुकोing क्रम the hardware to latch */
+अटल व्योम pcie_ग_लिखो_cmd_noरुको(काष्ठा controller *ctrl, u16 cmd, u16 mask)
+अणु
+	pcie_करो_ग_लिखो_cmd(ctrl, cmd, mask, false);
+पूर्ण
 
 /**
  * pciehp_check_link_active() - Is the link active
  * @ctrl: PCIe hotplug controller
  *
- * Check whether the downstream link is currently active. Note it is
- * possible that the card is removed immediately after this so the
- * caller may need to take it into account.
+ * Check whether the करोwnstream link is currently active. Note it is
+ * possible that the card is हटाओd immediately after this so the
+ * caller may need to take it पूर्णांकo account.
  *
- * If the hotplug controller itself is not available anymore returns
+ * If the hotplug controller itself is not available anymore वापसs
  * %-ENODEV.
  */
-int pciehp_check_link_active(struct controller *ctrl)
-{
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+पूर्णांक pciehp_check_link_active(काष्ठा controller *ctrl)
+अणु
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 	u16 lnk_status;
-	int ret;
+	पूर्णांक ret;
 
-	ret = pcie_capability_read_word(pdev, PCI_EXP_LNKSTA, &lnk_status);
-	if (ret == PCIBIOS_DEVICE_NOT_FOUND || lnk_status == (u16)~0)
-		return -ENODEV;
+	ret = pcie_capability_पढ़ो_word(pdev, PCI_EXP_LNKSTA, &lnk_status);
+	अगर (ret == PCIBIOS_DEVICE_NOT_FOUND || lnk_status == (u16)~0)
+		वापस -ENODEV;
 
 	ret = !!(lnk_status & PCI_EXP_LNKSTA_DLLLA);
 	ctrl_dbg(ctrl, "%s: lnk_status = %x\n", __func__, lnk_status);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool pci_bus_check_dev(struct pci_bus *bus, int devfn)
-{
+अटल bool pci_bus_check_dev(काष्ठा pci_bus *bus, पूर्णांक devfn)
+अणु
 	u32 l;
-	int count = 0;
-	int delay = 1000, step = 20;
+	पूर्णांक count = 0;
+	पूर्णांक delay = 1000, step = 20;
 	bool found = false;
 
-	do {
-		found = pci_bus_read_dev_vendor_id(bus, devfn, &l, 0);
+	करो अणु
+		found = pci_bus_पढ़ो_dev_venकरोr_id(bus, devfn, &l, 0);
 		count++;
 
-		if (found)
-			break;
+		अगर (found)
+			अवरोध;
 
 		msleep(step);
 		delay -= step;
-	} while (delay > 0);
+	पूर्ण जबतक (delay > 0);
 
-	if (count > 1)
+	अगर (count > 1)
 		pr_debug("pci %04x:%02x:%02x.%d id reading try %d times with interval %d ms to get %08x\n",
-			pci_domain_nr(bus), bus->number, PCI_SLOT(devfn),
+			pci_करोमुख्य_nr(bus), bus->number, PCI_SLOT(devfn),
 			PCI_FUNC(devfn), count, step, l);
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static void pcie_wait_for_presence(struct pci_dev *pdev)
-{
-	int timeout = 1250;
+अटल व्योम pcie_रुको_क्रम_presence(काष्ठा pci_dev *pdev)
+अणु
+	पूर्णांक समयout = 1250;
 	u16 slot_status;
 
-	do {
-		pcie_capability_read_word(pdev, PCI_EXP_SLTSTA, &slot_status);
-		if (slot_status & PCI_EXP_SLTSTA_PDS)
-			return;
+	करो अणु
+		pcie_capability_पढ़ो_word(pdev, PCI_EXP_SLTSTA, &slot_status);
+		अगर (slot_status & PCI_EXP_SLTSTA_PDS)
+			वापस;
 		msleep(10);
-		timeout -= 10;
-	} while (timeout > 0);
-}
+		समयout -= 10;
+	पूर्ण जबतक (समयout > 0);
+पूर्ण
 
-int pciehp_check_link_status(struct controller *ctrl)
-{
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+पूर्णांक pciehp_check_link_status(काष्ठा controller *ctrl)
+अणु
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 	bool found;
 	u16 lnk_status;
 
-	if (!pcie_wait_for_link(pdev, true)) {
+	अगर (!pcie_रुको_क्रम_link(pdev, true)) अणु
 		ctrl_info(ctrl, "Slot(%s): No link\n", slot_name(ctrl));
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (ctrl->inband_presence_disabled)
-		pcie_wait_for_presence(pdev);
+	अगर (ctrl->inband_presence_disabled)
+		pcie_रुको_क्रम_presence(pdev);
 
 	found = pci_bus_check_dev(ctrl->pcie->port->subordinate,
 					PCI_DEVFN(0, 0));
 
-	/* ignore link or presence changes up to this point */
-	if (found)
+	/* ignore link or presence changes up to this poपूर्णांक */
+	अगर (found)
 		atomic_and(~(PCI_EXP_SLTSTA_DLLSC | PCI_EXP_SLTSTA_PDC),
 			   &ctrl->pending_events);
 
-	pcie_capability_read_word(pdev, PCI_EXP_LNKSTA, &lnk_status);
+	pcie_capability_पढ़ो_word(pdev, PCI_EXP_LNKSTA, &lnk_status);
 	ctrl_dbg(ctrl, "%s: lnk_status = %x\n", __func__, lnk_status);
-	if ((lnk_status & PCI_EXP_LNKSTA_LT) ||
-	    !(lnk_status & PCI_EXP_LNKSTA_NLW)) {
+	अगर ((lnk_status & PCI_EXP_LNKSTA_LT) ||
+	    !(lnk_status & PCI_EXP_LNKSTA_NLW)) अणु
 		ctrl_info(ctrl, "Slot(%s): Cannot train link: status %#06x\n",
 			  slot_name(ctrl), lnk_status);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	pcie_update_link_speed(ctrl->pcie->port->subordinate, lnk_status);
 
-	if (!found) {
+	अगर (!found) अणु
 		ctrl_info(ctrl, "Slot(%s): No device found\n",
 			  slot_name(ctrl));
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __pciehp_link_set(struct controller *ctrl, bool enable)
-{
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+अटल पूर्णांक __pciehp_link_set(काष्ठा controller *ctrl, bool enable)
+अणु
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 	u16 lnk_ctrl;
 
-	pcie_capability_read_word(pdev, PCI_EXP_LNKCTL, &lnk_ctrl);
+	pcie_capability_पढ़ो_word(pdev, PCI_EXP_LNKCTL, &lnk_ctrl);
 
-	if (enable)
+	अगर (enable)
 		lnk_ctrl &= ~PCI_EXP_LNKCTL_LD;
-	else
+	अन्यथा
 		lnk_ctrl |= PCI_EXP_LNKCTL_LD;
 
-	pcie_capability_write_word(pdev, PCI_EXP_LNKCTL, lnk_ctrl);
+	pcie_capability_ग_लिखो_word(pdev, PCI_EXP_LNKCTL, lnk_ctrl);
 	ctrl_dbg(ctrl, "%s: lnk_ctrl = %x\n", __func__, lnk_ctrl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pciehp_link_enable(struct controller *ctrl)
-{
-	return __pciehp_link_set(ctrl, true);
-}
+अटल पूर्णांक pciehp_link_enable(काष्ठा controller *ctrl)
+अणु
+	वापस __pciehp_link_set(ctrl, true);
+पूर्ण
 
-int pciehp_get_raw_indicator_status(struct hotplug_slot *hotplug_slot,
+पूर्णांक pciehp_get_raw_indicator_status(काष्ठा hotplug_slot *hotplug_slot,
 				    u8 *status)
-{
-	struct controller *ctrl = to_ctrl(hotplug_slot);
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+अणु
+	काष्ठा controller *ctrl = to_ctrl(hotplug_slot);
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 	u16 slot_ctrl;
 
-	pci_config_pm_runtime_get(pdev);
-	pcie_capability_read_word(pdev, PCI_EXP_SLTCTL, &slot_ctrl);
-	pci_config_pm_runtime_put(pdev);
+	pci_config_pm_runसमय_get(pdev);
+	pcie_capability_पढ़ो_word(pdev, PCI_EXP_SLTCTL, &slot_ctrl);
+	pci_config_pm_runसमय_put(pdev);
 	*status = (slot_ctrl & (PCI_EXP_SLTCTL_AIC | PCI_EXP_SLTCTL_PIC)) >> 6;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int pciehp_get_attention_status(struct hotplug_slot *hotplug_slot, u8 *status)
-{
-	struct controller *ctrl = to_ctrl(hotplug_slot);
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+पूर्णांक pciehp_get_attention_status(काष्ठा hotplug_slot *hotplug_slot, u8 *status)
+अणु
+	काष्ठा controller *ctrl = to_ctrl(hotplug_slot);
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 	u16 slot_ctrl;
 
-	pci_config_pm_runtime_get(pdev);
-	pcie_capability_read_word(pdev, PCI_EXP_SLTCTL, &slot_ctrl);
-	pci_config_pm_runtime_put(pdev);
+	pci_config_pm_runसमय_get(pdev);
+	pcie_capability_पढ़ो_word(pdev, PCI_EXP_SLTCTL, &slot_ctrl);
+	pci_config_pm_runसमय_put(pdev);
 	ctrl_dbg(ctrl, "%s: SLOTCTRL %x, value read %x\n", __func__,
 		 pci_pcie_cap(ctrl->pcie->port) + PCI_EXP_SLTCTL, slot_ctrl);
 
-	switch (slot_ctrl & PCI_EXP_SLTCTL_AIC) {
-	case PCI_EXP_SLTCTL_ATTN_IND_ON:
+	चयन (slot_ctrl & PCI_EXP_SLTCTL_AIC) अणु
+	हाल PCI_EXP_SLTCTL_ATTN_IND_ON:
 		*status = 1;	/* On */
-		break;
-	case PCI_EXP_SLTCTL_ATTN_IND_BLINK:
+		अवरोध;
+	हाल PCI_EXP_SLTCTL_ATTN_IND_BLINK:
 		*status = 2;	/* Blink */
-		break;
-	case PCI_EXP_SLTCTL_ATTN_IND_OFF:
+		अवरोध;
+	हाल PCI_EXP_SLTCTL_ATTN_IND_OFF:
 		*status = 0;	/* Off */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*status = 0xFF;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void pciehp_get_power_status(struct controller *ctrl, u8 *status)
-{
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+व्योम pciehp_get_घातer_status(काष्ठा controller *ctrl, u8 *status)
+अणु
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 	u16 slot_ctrl;
 
-	pcie_capability_read_word(pdev, PCI_EXP_SLTCTL, &slot_ctrl);
+	pcie_capability_पढ़ो_word(pdev, PCI_EXP_SLTCTL, &slot_ctrl);
 	ctrl_dbg(ctrl, "%s: SLOTCTRL %x value read %x\n", __func__,
 		 pci_pcie_cap(ctrl->pcie->port) + PCI_EXP_SLTCTL, slot_ctrl);
 
-	switch (slot_ctrl & PCI_EXP_SLTCTL_PCC) {
-	case PCI_EXP_SLTCTL_PWR_ON:
+	चयन (slot_ctrl & PCI_EXP_SLTCTL_PCC) अणु
+	हाल PCI_EXP_SLTCTL_PWR_ON:
 		*status = 1;	/* On */
-		break;
-	case PCI_EXP_SLTCTL_PWR_OFF:
+		अवरोध;
+	हाल PCI_EXP_SLTCTL_PWR_OFF:
 		*status = 0;	/* Off */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*status = 0xFF;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void pciehp_get_latch_status(struct controller *ctrl, u8 *status)
-{
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+व्योम pciehp_get_latch_status(काष्ठा controller *ctrl, u8 *status)
+अणु
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 	u16 slot_status;
 
-	pcie_capability_read_word(pdev, PCI_EXP_SLTSTA, &slot_status);
+	pcie_capability_पढ़ो_word(pdev, PCI_EXP_SLTSTA, &slot_status);
 	*status = !!(slot_status & PCI_EXP_SLTSTA_MRLSS);
-}
+पूर्ण
 
 /**
  * pciehp_card_present() - Is the card present
  * @ctrl: PCIe hotplug controller
  *
  * Function checks whether the card is currently present in the slot and
- * in that case returns true. Note it is possible that the card is
- * removed immediately after the check so the caller may need to take
- * this into account.
+ * in that हाल वापसs true. Note it is possible that the card is
+ * हटाओd immediately after the check so the caller may need to take
+ * this पूर्णांकo account.
  *
- * It the hotplug controller itself is not available anymore returns
+ * It the hotplug controller itself is not available anymore वापसs
  * %-ENODEV.
  */
-int pciehp_card_present(struct controller *ctrl)
-{
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+पूर्णांक pciehp_card_present(काष्ठा controller *ctrl)
+अणु
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 	u16 slot_status;
-	int ret;
+	पूर्णांक ret;
 
-	ret = pcie_capability_read_word(pdev, PCI_EXP_SLTSTA, &slot_status);
-	if (ret == PCIBIOS_DEVICE_NOT_FOUND || slot_status == (u16)~0)
-		return -ENODEV;
+	ret = pcie_capability_पढ़ो_word(pdev, PCI_EXP_SLTSTA, &slot_status);
+	अगर (ret == PCIBIOS_DEVICE_NOT_FOUND || slot_status == (u16)~0)
+		वापस -ENODEV;
 
-	return !!(slot_status & PCI_EXP_SLTSTA_PDS);
-}
+	वापस !!(slot_status & PCI_EXP_SLTSTA_PDS);
+पूर्ण
 
 /**
  * pciehp_card_present_or_link_active() - whether given slot is occupied
  * @ctrl: PCIe hotplug controller
  *
  * Unlike pciehp_card_present(), which determines presence solely from the
- * Presence Detect State bit, this helper also returns true if the Link Active
+ * Presence Detect State bit, this helper also वापसs true अगर the Link Active
  * bit is set.  This is a concession to broken hotplug ports which hardwire
  * Presence Detect State to zero, such as Wilocity's [1ae9:0200].
  *
- * Returns: %1 if the slot is occupied and %0 if it is not. If the hotplug
- *	    port is not present anymore returns %-ENODEV.
+ * Returns: %1 अगर the slot is occupied and %0 अगर it is not. If the hotplug
+ *	    port is not present anymore वापसs %-ENODEV.
  */
-int pciehp_card_present_or_link_active(struct controller *ctrl)
-{
-	int ret;
+पूर्णांक pciehp_card_present_or_link_active(काष्ठा controller *ctrl)
+अणु
+	पूर्णांक ret;
 
 	ret = pciehp_card_present(ctrl);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return pciehp_check_link_active(ctrl);
-}
+	वापस pciehp_check_link_active(ctrl);
+पूर्ण
 
-int pciehp_query_power_fault(struct controller *ctrl)
-{
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+पूर्णांक pciehp_query_घातer_fault(काष्ठा controller *ctrl)
+अणु
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 	u16 slot_status;
 
-	pcie_capability_read_word(pdev, PCI_EXP_SLTSTA, &slot_status);
-	return !!(slot_status & PCI_EXP_SLTSTA_PFD);
-}
+	pcie_capability_पढ़ो_word(pdev, PCI_EXP_SLTSTA, &slot_status);
+	वापस !!(slot_status & PCI_EXP_SLTSTA_PFD);
+पूर्ण
 
-int pciehp_set_raw_indicator_status(struct hotplug_slot *hotplug_slot,
+पूर्णांक pciehp_set_raw_indicator_status(काष्ठा hotplug_slot *hotplug_slot,
 				    u8 status)
-{
-	struct controller *ctrl = to_ctrl(hotplug_slot);
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+अणु
+	काष्ठा controller *ctrl = to_ctrl(hotplug_slot);
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 
-	pci_config_pm_runtime_get(pdev);
-	pcie_write_cmd_nowait(ctrl, status << 6,
+	pci_config_pm_runसमय_get(pdev);
+	pcie_ग_लिखो_cmd_noरुको(ctrl, status << 6,
 			      PCI_EXP_SLTCTL_AIC | PCI_EXP_SLTCTL_PIC);
-	pci_config_pm_runtime_put(pdev);
-	return 0;
-}
+	pci_config_pm_runसमय_put(pdev);
+	वापस 0;
+पूर्ण
 
 /**
- * pciehp_set_indicators() - set attention indicator, power indicator, or both
+ * pciehp_set_indicators() - set attention indicator, घातer indicator, or both
  * @ctrl: PCIe hotplug controller
  * @pwr: one of:
  *	PCI_EXP_SLTCTL_PWR_IND_ON
@@ -509,102 +510,102 @@ int pciehp_set_raw_indicator_status(struct hotplug_slot *hotplug_slot,
  * Either @pwr or @attn can also be INDICATOR_NOOP to leave that indicator
  * unchanged.
  */
-void pciehp_set_indicators(struct controller *ctrl, int pwr, int attn)
-{
+व्योम pciehp_set_indicators(काष्ठा controller *ctrl, पूर्णांक pwr, पूर्णांक attn)
+अणु
 	u16 cmd = 0, mask = 0;
 
-	if (PWR_LED(ctrl) && pwr != INDICATOR_NOOP) {
+	अगर (PWR_LED(ctrl) && pwr != INDICATOR_NOOP) अणु
 		cmd |= (pwr & PCI_EXP_SLTCTL_PIC);
 		mask |= PCI_EXP_SLTCTL_PIC;
-	}
+	पूर्ण
 
-	if (ATTN_LED(ctrl) && attn != INDICATOR_NOOP) {
+	अगर (ATTN_LED(ctrl) && attn != INDICATOR_NOOP) अणु
 		cmd |= (attn & PCI_EXP_SLTCTL_AIC);
 		mask |= PCI_EXP_SLTCTL_AIC;
-	}
+	पूर्ण
 
-	if (cmd) {
-		pcie_write_cmd_nowait(ctrl, cmd, mask);
+	अगर (cmd) अणु
+		pcie_ग_लिखो_cmd_noरुको(ctrl, cmd, mask);
 		ctrl_dbg(ctrl, "%s: SLOTCTRL %x write cmd %x\n", __func__,
 			 pci_pcie_cap(ctrl->pcie->port) + PCI_EXP_SLTCTL, cmd);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int pciehp_power_on_slot(struct controller *ctrl)
-{
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+पूर्णांक pciehp_घातer_on_slot(काष्ठा controller *ctrl)
+अणु
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 	u16 slot_status;
-	int retval;
+	पूर्णांक retval;
 
-	/* Clear power-fault bit from previous power failures */
-	pcie_capability_read_word(pdev, PCI_EXP_SLTSTA, &slot_status);
-	if (slot_status & PCI_EXP_SLTSTA_PFD)
-		pcie_capability_write_word(pdev, PCI_EXP_SLTSTA,
+	/* Clear घातer-fault bit from previous घातer failures */
+	pcie_capability_पढ़ो_word(pdev, PCI_EXP_SLTSTA, &slot_status);
+	अगर (slot_status & PCI_EXP_SLTSTA_PFD)
+		pcie_capability_ग_लिखो_word(pdev, PCI_EXP_SLTSTA,
 					   PCI_EXP_SLTSTA_PFD);
-	ctrl->power_fault_detected = 0;
+	ctrl->घातer_fault_detected = 0;
 
-	pcie_write_cmd(ctrl, PCI_EXP_SLTCTL_PWR_ON, PCI_EXP_SLTCTL_PCC);
+	pcie_ग_लिखो_cmd(ctrl, PCI_EXP_SLTCTL_PWR_ON, PCI_EXP_SLTCTL_PCC);
 	ctrl_dbg(ctrl, "%s: SLOTCTRL %x write cmd %x\n", __func__,
 		 pci_pcie_cap(ctrl->pcie->port) + PCI_EXP_SLTCTL,
 		 PCI_EXP_SLTCTL_PWR_ON);
 
 	retval = pciehp_link_enable(ctrl);
-	if (retval)
+	अगर (retval)
 		ctrl_err(ctrl, "%s: Can not enable the link!\n", __func__);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-void pciehp_power_off_slot(struct controller *ctrl)
-{
-	pcie_write_cmd(ctrl, PCI_EXP_SLTCTL_PWR_OFF, PCI_EXP_SLTCTL_PCC);
+व्योम pciehp_घातer_off_slot(काष्ठा controller *ctrl)
+अणु
+	pcie_ग_लिखो_cmd(ctrl, PCI_EXP_SLTCTL_PWR_OFF, PCI_EXP_SLTCTL_PCC);
 	ctrl_dbg(ctrl, "%s: SLOTCTRL %x write cmd %x\n", __func__,
 		 pci_pcie_cap(ctrl->pcie->port) + PCI_EXP_SLTCTL,
 		 PCI_EXP_SLTCTL_PWR_OFF);
-}
+पूर्ण
 
-static irqreturn_t pciehp_isr(int irq, void *dev_id)
-{
-	struct controller *ctrl = (struct controller *)dev_id;
-	struct pci_dev *pdev = ctrl_dev(ctrl);
-	struct device *parent = pdev->dev.parent;
+अटल irqवापस_t pciehp_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा controller *ctrl = (काष्ठा controller *)dev_id;
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
+	काष्ठा device *parent = pdev->dev.parent;
 	u16 status, events = 0;
 
 	/*
-	 * Interrupts only occur in D3hot or shallower and only if enabled
-	 * in the Slot Control register (PCIe r4.0, sec 6.7.3.4).
+	 * Interrupts only occur in D3hot or shallower and only अगर enabled
+	 * in the Slot Control रेजिस्टर (PCIe r4.0, sec 6.7.3.4).
 	 */
-	if (pdev->current_state == PCI_D3cold ||
+	अगर (pdev->current_state == PCI_D3cold ||
 	    (!(ctrl->slot_ctrl & PCI_EXP_SLTCTL_HPIE) && !pciehp_poll_mode))
-		return IRQ_NONE;
+		वापस IRQ_NONE;
 
 	/*
-	 * Keep the port accessible by holding a runtime PM ref on its parent.
-	 * Defer resume of the parent to the IRQ thread if it's suspended.
-	 * Mask the interrupt until then.
+	 * Keep the port accessible by holding a runसमय PM ref on its parent.
+	 * Defer resume of the parent to the IRQ thपढ़ो अगर it's suspended.
+	 * Mask the पूर्णांकerrupt until then.
 	 */
-	if (parent) {
-		pm_runtime_get_noresume(parent);
-		if (!pm_runtime_active(parent)) {
-			pm_runtime_put(parent);
+	अगर (parent) अणु
+		pm_runसमय_get_noresume(parent);
+		अगर (!pm_runसमय_active(parent)) अणु
+			pm_runसमय_put(parent);
 			disable_irq_nosync(irq);
 			atomic_or(RERUN_ISR, &ctrl->pending_events);
-			return IRQ_WAKE_THREAD;
-		}
-	}
+			वापस IRQ_WAKE_THREAD;
+		पूर्ण
+	पूर्ण
 
-read_status:
-	pcie_capability_read_word(pdev, PCI_EXP_SLTSTA, &status);
-	if (status == (u16) ~0) {
+पढ़ो_status:
+	pcie_capability_पढ़ो_word(pdev, PCI_EXP_SLTSTA, &status);
+	अगर (status == (u16) ~0) अणु
 		ctrl_info(ctrl, "%s: no response from device\n", __func__);
-		if (parent)
-			pm_runtime_put(parent);
-		return IRQ_NONE;
-	}
+		अगर (parent)
+			pm_runसमय_put(parent);
+		वापस IRQ_NONE;
+	पूर्ण
 
 	/*
 	 * Slot Status contains plain status bits as well as event
-	 * notification bits; right now we only want the event bits.
+	 * notअगरication bits; right now we only want the event bits.
 	 */
 	status &= PCI_EXP_SLTSTA_ABP | PCI_EXP_SLTSTA_PFD |
 		  PCI_EXP_SLTSTA_PDC | PCI_EXP_SLTSTA_CC |
@@ -612,166 +613,166 @@ read_status:
 
 	/*
 	 * If we've already reported a power fault, don't report it again
-	 * until we've done something to handle it.
+	 * until we've करोne something to handle it.
 	 */
-	if (ctrl->power_fault_detected)
+	अगर (ctrl->घातer_fault_detected)
 		status &= ~PCI_EXP_SLTSTA_PFD;
 
 	events |= status;
-	if (!events) {
-		if (parent)
-			pm_runtime_put(parent);
-		return IRQ_NONE;
-	}
+	अगर (!events) अणु
+		अगर (parent)
+			pm_runसमय_put(parent);
+		वापस IRQ_NONE;
+	पूर्ण
 
-	if (status) {
-		pcie_capability_write_word(pdev, PCI_EXP_SLTSTA, events);
+	अगर (status) अणु
+		pcie_capability_ग_लिखो_word(pdev, PCI_EXP_SLTSTA, events);
 
 		/*
-		 * In MSI mode, all event bits must be zero before the port
-		 * will send a new interrupt (PCIe Base Spec r5.0 sec 6.7.3.4).
-		 * So re-read the Slot Status register in case a bit was set
-		 * between read and write.
+		 * In MSI mode, all event bits must be zero beक्रमe the port
+		 * will send a new पूर्णांकerrupt (PCIe Base Spec r5.0 sec 6.7.3.4).
+		 * So re-पढ़ो the Slot Status रेजिस्टर in हाल a bit was set
+		 * between पढ़ो and ग_लिखो.
 		 */
-		if (pci_dev_msi_enabled(pdev) && !pciehp_poll_mode)
-			goto read_status;
-	}
+		अगर (pci_dev_msi_enabled(pdev) && !pciehp_poll_mode)
+			जाओ पढ़ो_status;
+	पूर्ण
 
 	ctrl_dbg(ctrl, "pending interrupts %#06x from Slot Status\n", events);
-	if (parent)
-		pm_runtime_put(parent);
+	अगर (parent)
+		pm_runसमय_put(parent);
 
 	/*
-	 * Command Completed notifications are not deferred to the
-	 * IRQ thread because it may be waiting for their arrival.
+	 * Command Completed notअगरications are not deferred to the
+	 * IRQ thपढ़ो because it may be रुकोing क्रम their arrival.
 	 */
-	if (events & PCI_EXP_SLTSTA_CC) {
+	अगर (events & PCI_EXP_SLTSTA_CC) अणु
 		ctrl->cmd_busy = 0;
 		smp_mb();
 		wake_up(&ctrl->queue);
 
-		if (events == PCI_EXP_SLTSTA_CC)
-			return IRQ_HANDLED;
+		अगर (events == PCI_EXP_SLTSTA_CC)
+			वापस IRQ_HANDLED;
 
 		events &= ~PCI_EXP_SLTSTA_CC;
-	}
+	पूर्ण
 
-	if (pdev->ignore_hotplug) {
+	अगर (pdev->ignore_hotplug) अणु
 		ctrl_dbg(ctrl, "ignoring hotplug event %#06x\n", events);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	/* Save pending events for consumption by IRQ thread. */
+	/* Save pending events क्रम consumption by IRQ thपढ़ो. */
 	atomic_or(events, &ctrl->pending_events);
-	return IRQ_WAKE_THREAD;
-}
+	वापस IRQ_WAKE_THREAD;
+पूर्ण
 
-static irqreturn_t pciehp_ist(int irq, void *dev_id)
-{
-	struct controller *ctrl = (struct controller *)dev_id;
-	struct pci_dev *pdev = ctrl_dev(ctrl);
-	irqreturn_t ret;
+अटल irqवापस_t pciehp_ist(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा controller *ctrl = (काष्ठा controller *)dev_id;
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
+	irqवापस_t ret;
 	u32 events;
 
 	ctrl->ist_running = true;
-	pci_config_pm_runtime_get(pdev);
+	pci_config_pm_runसमय_get(pdev);
 
-	/* rerun pciehp_isr() if the port was inaccessible on interrupt */
-	if (atomic_fetch_and(~RERUN_ISR, &ctrl->pending_events) & RERUN_ISR) {
+	/* rerun pciehp_isr() अगर the port was inaccessible on पूर्णांकerrupt */
+	अगर (atomic_fetch_and(~RERUN_ISR, &ctrl->pending_events) & RERUN_ISR) अणु
 		ret = pciehp_isr(irq, dev_id);
 		enable_irq(irq);
-		if (ret != IRQ_WAKE_THREAD)
-			goto out;
-	}
+		अगर (ret != IRQ_WAKE_THREAD)
+			जाओ out;
+	पूर्ण
 
 	synchronize_hardirq(irq);
 	events = atomic_xchg(&ctrl->pending_events, 0);
-	if (!events) {
+	अगर (!events) अणु
 		ret = IRQ_NONE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Check Attention Button Pressed */
-	if (events & PCI_EXP_SLTSTA_ABP) {
+	अगर (events & PCI_EXP_SLTSTA_ABP) अणु
 		ctrl_info(ctrl, "Slot(%s): Attention button pressed\n",
 			  slot_name(ctrl));
 		pciehp_handle_button_press(ctrl);
-	}
+	पूर्ण
 
 	/* Check Power Fault Detected */
-	if ((events & PCI_EXP_SLTSTA_PFD) && !ctrl->power_fault_detected) {
-		ctrl->power_fault_detected = 1;
+	अगर ((events & PCI_EXP_SLTSTA_PFD) && !ctrl->घातer_fault_detected) अणु
+		ctrl->घातer_fault_detected = 1;
 		ctrl_err(ctrl, "Slot(%s): Power fault\n", slot_name(ctrl));
 		pciehp_set_indicators(ctrl, PCI_EXP_SLTCTL_PWR_IND_OFF,
 				      PCI_EXP_SLTCTL_ATTN_IND_ON);
-	}
+	पूर्ण
 
 	/*
 	 * Disable requests have higher priority than Presence Detect Changed
 	 * or Data Link Layer State Changed events.
 	 */
-	down_read(&ctrl->reset_lock);
-	if (events & DISABLE_SLOT)
+	करोwn_पढ़ो(&ctrl->reset_lock);
+	अगर (events & DISABLE_SLOT)
 		pciehp_handle_disable_request(ctrl);
-	else if (events & (PCI_EXP_SLTSTA_PDC | PCI_EXP_SLTSTA_DLLSC))
+	अन्यथा अगर (events & (PCI_EXP_SLTSTA_PDC | PCI_EXP_SLTSTA_DLLSC))
 		pciehp_handle_presence_or_link_change(ctrl, events);
-	up_read(&ctrl->reset_lock);
+	up_पढ़ो(&ctrl->reset_lock);
 
 	ret = IRQ_HANDLED;
 out:
-	pci_config_pm_runtime_put(pdev);
+	pci_config_pm_runसमय_put(pdev);
 	ctrl->ist_running = false;
 	wake_up(&ctrl->requester);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pciehp_poll(void *data)
-{
-	struct controller *ctrl = data;
+अटल पूर्णांक pciehp_poll(व्योम *data)
+अणु
+	काष्ठा controller *ctrl = data;
 
-	schedule_timeout_idle(10 * HZ); /* start with 10 sec delay */
+	schedule_समयout_idle(10 * HZ); /* start with 10 sec delay */
 
-	while (!kthread_should_stop()) {
-		/* poll for interrupt events or user requests */
-		while (pciehp_isr(IRQ_NOTCONNECTED, ctrl) == IRQ_WAKE_THREAD ||
-		       atomic_read(&ctrl->pending_events))
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		/* poll क्रम पूर्णांकerrupt events or user requests */
+		जबतक (pciehp_isr(IRQ_NOTCONNECTED, ctrl) == IRQ_WAKE_THREAD ||
+		       atomic_पढ़ो(&ctrl->pending_events))
 			pciehp_ist(IRQ_NOTCONNECTED, ctrl);
 
-		if (pciehp_poll_time <= 0 || pciehp_poll_time > 60)
-			pciehp_poll_time = 2; /* clamp to sane value */
+		अगर (pciehp_poll_समय <= 0 || pciehp_poll_समय > 60)
+			pciehp_poll_समय = 2; /* clamp to sane value */
 
-		schedule_timeout_idle(pciehp_poll_time * HZ);
-	}
+		schedule_समयout_idle(pciehp_poll_समय * HZ);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pcie_enable_notification(struct controller *ctrl)
-{
+अटल व्योम pcie_enable_notअगरication(काष्ठा controller *ctrl)
+अणु
 	u16 cmd, mask;
 
 	/*
-	 * TBD: Power fault detected software notification support.
+	 * TBD: Power fault detected software notअगरication support.
 	 *
-	 * Power fault detected software notification is not enabled
-	 * now, because it caused power fault detected interrupt storm
-	 * on some machines. On those machines, power fault detected
-	 * bit in the slot status register was set again immediately
-	 * when it is cleared in the interrupt service routine, and
-	 * next power fault detected interrupt was notified again.
+	 * Power fault detected software notअगरication is not enabled
+	 * now, because it caused घातer fault detected पूर्णांकerrupt storm
+	 * on some machines. On those machines, घातer fault detected
+	 * bit in the slot status रेजिस्टर was set again immediately
+	 * when it is cleared in the पूर्णांकerrupt service routine, and
+	 * next घातer fault detected पूर्णांकerrupt was notअगरied again.
 	 */
 
 	/*
-	 * Always enable link events: thus link-up and link-down shall
+	 * Always enable link events: thus link-up and link-करोwn shall
 	 * always be treated as hotplug and unplug respectively. Enable
-	 * presence detect only if Attention Button is not present.
+	 * presence detect only अगर Attention Button is not present.
 	 */
 	cmd = PCI_EXP_SLTCTL_DLLSCE;
-	if (ATTN_BUTTN(ctrl))
+	अगर (ATTN_BUTTN(ctrl))
 		cmd |= PCI_EXP_SLTCTL_ABPE;
-	else
+	अन्यथा
 		cmd |= PCI_EXP_SLTCTL_PDCE;
-	if (!pciehp_poll_mode)
+	अगर (!pciehp_poll_mode)
 		cmd |= PCI_EXP_SLTCTL_HPIE | PCI_EXP_SLTCTL_CCIE;
 
 	mask = (PCI_EXP_SLTCTL_PDCE | PCI_EXP_SLTCTL_ABPE |
@@ -779,180 +780,180 @@ static void pcie_enable_notification(struct controller *ctrl)
 		PCI_EXP_SLTCTL_HPIE | PCI_EXP_SLTCTL_CCIE |
 		PCI_EXP_SLTCTL_DLLSCE);
 
-	pcie_write_cmd_nowait(ctrl, cmd, mask);
+	pcie_ग_लिखो_cmd_noरुको(ctrl, cmd, mask);
 	ctrl_dbg(ctrl, "%s: SLOTCTRL %x write cmd %x\n", __func__,
 		 pci_pcie_cap(ctrl->pcie->port) + PCI_EXP_SLTCTL, cmd);
-}
+पूर्ण
 
-static void pcie_disable_notification(struct controller *ctrl)
-{
+अटल व्योम pcie_disable_notअगरication(काष्ठा controller *ctrl)
+अणु
 	u16 mask;
 
 	mask = (PCI_EXP_SLTCTL_PDCE | PCI_EXP_SLTCTL_ABPE |
 		PCI_EXP_SLTCTL_MRLSCE | PCI_EXP_SLTCTL_PFDE |
 		PCI_EXP_SLTCTL_HPIE | PCI_EXP_SLTCTL_CCIE |
 		PCI_EXP_SLTCTL_DLLSCE);
-	pcie_write_cmd(ctrl, 0, mask);
+	pcie_ग_लिखो_cmd(ctrl, 0, mask);
 	ctrl_dbg(ctrl, "%s: SLOTCTRL %x write cmd %x\n", __func__,
 		 pci_pcie_cap(ctrl->pcie->port) + PCI_EXP_SLTCTL, 0);
-}
+पूर्ण
 
-void pcie_clear_hotplug_events(struct controller *ctrl)
-{
-	pcie_capability_write_word(ctrl_dev(ctrl), PCI_EXP_SLTSTA,
+व्योम pcie_clear_hotplug_events(काष्ठा controller *ctrl)
+अणु
+	pcie_capability_ग_लिखो_word(ctrl_dev(ctrl), PCI_EXP_SLTSTA,
 				   PCI_EXP_SLTSTA_PDC | PCI_EXP_SLTSTA_DLLSC);
-}
+पूर्ण
 
-void pcie_enable_interrupt(struct controller *ctrl)
-{
+व्योम pcie_enable_पूर्णांकerrupt(काष्ठा controller *ctrl)
+अणु
 	u16 mask;
 
 	mask = PCI_EXP_SLTCTL_HPIE | PCI_EXP_SLTCTL_DLLSCE;
-	pcie_write_cmd(ctrl, mask, mask);
-}
+	pcie_ग_लिखो_cmd(ctrl, mask, mask);
+पूर्ण
 
-void pcie_disable_interrupt(struct controller *ctrl)
-{
+व्योम pcie_disable_पूर्णांकerrupt(काष्ठा controller *ctrl)
+अणु
 	u16 mask;
 
 	/*
-	 * Mask hot-plug interrupt to prevent it triggering immediately
+	 * Mask hot-plug पूर्णांकerrupt to prevent it triggering immediately
 	 * when the link goes inactive (we still get PME when any of the
 	 * enabled events is detected). Same goes with Link Layer State
 	 * changed event which generates PME immediately when the link goes
 	 * inactive so mask it as well.
 	 */
 	mask = PCI_EXP_SLTCTL_HPIE | PCI_EXP_SLTCTL_DLLSCE;
-	pcie_write_cmd(ctrl, 0, mask);
-}
+	pcie_ग_लिखो_cmd(ctrl, 0, mask);
+पूर्ण
 
 /*
  * pciehp has a 1:1 bus:slot relationship so we ultimately want a secondary
- * bus reset of the bridge, but at the same time we want to ensure that it is
+ * bus reset of the bridge, but at the same समय we want to ensure that it is
  * not seen as a hot-unplug, followed by the hot-plug of the device. Thus,
- * disable link state notification and presence detection change notification
- * momentarily, if we see that they could interfere. Also, clear any spurious
+ * disable link state notअगरication and presence detection change notअगरication
+ * momentarily, अगर we see that they could पूर्णांकerfere. Also, clear any spurious
  * events after.
  */
-int pciehp_reset_slot(struct hotplug_slot *hotplug_slot, int probe)
-{
-	struct controller *ctrl = to_ctrl(hotplug_slot);
-	struct pci_dev *pdev = ctrl_dev(ctrl);
+पूर्णांक pciehp_reset_slot(काष्ठा hotplug_slot *hotplug_slot, पूर्णांक probe)
+अणु
+	काष्ठा controller *ctrl = to_ctrl(hotplug_slot);
+	काष्ठा pci_dev *pdev = ctrl_dev(ctrl);
 	u16 stat_mask = 0, ctrl_mask = 0;
-	int rc;
+	पूर्णांक rc;
 
-	if (probe)
-		return 0;
+	अगर (probe)
+		वापस 0;
 
-	down_write(&ctrl->reset_lock);
+	करोwn_ग_लिखो(&ctrl->reset_lock);
 
-	if (!ATTN_BUTTN(ctrl)) {
+	अगर (!ATTN_BUTTN(ctrl)) अणु
 		ctrl_mask |= PCI_EXP_SLTCTL_PDCE;
 		stat_mask |= PCI_EXP_SLTSTA_PDC;
-	}
+	पूर्ण
 	ctrl_mask |= PCI_EXP_SLTCTL_DLLSCE;
 	stat_mask |= PCI_EXP_SLTSTA_DLLSC;
 
-	pcie_write_cmd(ctrl, 0, ctrl_mask);
+	pcie_ग_लिखो_cmd(ctrl, 0, ctrl_mask);
 	ctrl_dbg(ctrl, "%s: SLOTCTRL %x write cmd %x\n", __func__,
 		 pci_pcie_cap(ctrl->pcie->port) + PCI_EXP_SLTCTL, 0);
 
 	rc = pci_bridge_secondary_bus_reset(ctrl->pcie->port);
 
-	pcie_capability_write_word(pdev, PCI_EXP_SLTSTA, stat_mask);
-	pcie_write_cmd_nowait(ctrl, ctrl_mask, ctrl_mask);
+	pcie_capability_ग_लिखो_word(pdev, PCI_EXP_SLTSTA, stat_mask);
+	pcie_ग_लिखो_cmd_noरुको(ctrl, ctrl_mask, ctrl_mask);
 	ctrl_dbg(ctrl, "%s: SLOTCTRL %x write cmd %x\n", __func__,
 		 pci_pcie_cap(ctrl->pcie->port) + PCI_EXP_SLTCTL, ctrl_mask);
 
-	up_write(&ctrl->reset_lock);
-	return rc;
-}
+	up_ग_लिखो(&ctrl->reset_lock);
+	वापस rc;
+पूर्ण
 
-int pcie_init_notification(struct controller *ctrl)
-{
-	if (pciehp_request_irq(ctrl))
-		return -1;
-	pcie_enable_notification(ctrl);
-	ctrl->notification_enabled = 1;
-	return 0;
-}
+पूर्णांक pcie_init_notअगरication(काष्ठा controller *ctrl)
+अणु
+	अगर (pciehp_request_irq(ctrl))
+		वापस -1;
+	pcie_enable_notअगरication(ctrl);
+	ctrl->notअगरication_enabled = 1;
+	वापस 0;
+पूर्ण
 
-void pcie_shutdown_notification(struct controller *ctrl)
-{
-	if (ctrl->notification_enabled) {
-		pcie_disable_notification(ctrl);
-		pciehp_free_irq(ctrl);
-		ctrl->notification_enabled = 0;
-	}
-}
+व्योम pcie_shutकरोwn_notअगरication(काष्ठा controller *ctrl)
+अणु
+	अगर (ctrl->notअगरication_enabled) अणु
+		pcie_disable_notअगरication(ctrl);
+		pciehp_मुक्त_irq(ctrl);
+		ctrl->notअगरication_enabled = 0;
+	पूर्ण
+पूर्ण
 
-static inline void dbg_ctrl(struct controller *ctrl)
-{
-	struct pci_dev *pdev = ctrl->pcie->port;
+अटल अंतरभूत व्योम dbg_ctrl(काष्ठा controller *ctrl)
+अणु
+	काष्ठा pci_dev *pdev = ctrl->pcie->port;
 	u16 reg16;
 
 	ctrl_dbg(ctrl, "Slot Capabilities      : 0x%08x\n", ctrl->slot_cap);
-	pcie_capability_read_word(pdev, PCI_EXP_SLTSTA, &reg16);
+	pcie_capability_पढ़ो_word(pdev, PCI_EXP_SLTSTA, &reg16);
 	ctrl_dbg(ctrl, "Slot Status            : 0x%04x\n", reg16);
-	pcie_capability_read_word(pdev, PCI_EXP_SLTCTL, &reg16);
+	pcie_capability_पढ़ो_word(pdev, PCI_EXP_SLTCTL, &reg16);
 	ctrl_dbg(ctrl, "Slot Control           : 0x%04x\n", reg16);
-}
+पूर्ण
 
-#define FLAG(x, y)	(((x) & (y)) ? '+' : '-')
+#घोषणा FLAG(x, y)	(((x) & (y)) ? '+' : '-')
 
-struct controller *pcie_init(struct pcie_device *dev)
-{
-	struct controller *ctrl;
+काष्ठा controller *pcie_init(काष्ठा pcie_device *dev)
+अणु
+	काष्ठा controller *ctrl;
 	u32 slot_cap, slot_cap2, link_cap;
-	u8 poweron;
-	struct pci_dev *pdev = dev->port;
-	struct pci_bus *subordinate = pdev->subordinate;
+	u8 घातeron;
+	काष्ठा pci_dev *pdev = dev->port;
+	काष्ठा pci_bus *subordinate = pdev->subordinate;
 
-	ctrl = kzalloc(sizeof(*ctrl), GFP_KERNEL);
-	if (!ctrl)
-		return NULL;
+	ctrl = kzalloc(माप(*ctrl), GFP_KERNEL);
+	अगर (!ctrl)
+		वापस शून्य;
 
 	ctrl->pcie = dev;
-	pcie_capability_read_dword(pdev, PCI_EXP_SLTCAP, &slot_cap);
+	pcie_capability_पढ़ो_dword(pdev, PCI_EXP_SLTCAP, &slot_cap);
 
-	if (pdev->hotplug_user_indicators)
+	अगर (pdev->hotplug_user_indicators)
 		slot_cap &= ~(PCI_EXP_SLTCAP_AIP | PCI_EXP_SLTCAP_PIP);
 
 	/*
 	 * We assume no Thunderbolt controllers support Command Complete events,
-	 * but some controllers falsely claim they do.
+	 * but some controllers falsely claim they करो.
 	 */
-	if (pdev->is_thunderbolt)
+	अगर (pdev->is_thunderbolt)
 		slot_cap |= PCI_EXP_SLTCAP_NCCS;
 
 	ctrl->slot_cap = slot_cap;
 	mutex_init(&ctrl->ctrl_lock);
 	mutex_init(&ctrl->state_lock);
 	init_rwsem(&ctrl->reset_lock);
-	init_waitqueue_head(&ctrl->requester);
-	init_waitqueue_head(&ctrl->queue);
+	init_रुकोqueue_head(&ctrl->requester);
+	init_रुकोqueue_head(&ctrl->queue);
 	INIT_DELAYED_WORK(&ctrl->button_work, pciehp_queue_pushbutton_work);
 	dbg_ctrl(ctrl);
 
-	down_read(&pci_bus_sem);
+	करोwn_पढ़ो(&pci_bus_sem);
 	ctrl->state = list_empty(&subordinate->devices) ? OFF_STATE : ON_STATE;
-	up_read(&pci_bus_sem);
+	up_पढ़ो(&pci_bus_sem);
 
-	pcie_capability_read_dword(pdev, PCI_EXP_SLTCAP2, &slot_cap2);
-	if (slot_cap2 & PCI_EXP_SLTCAP2_IBPD) {
-		pcie_write_cmd_nowait(ctrl, PCI_EXP_SLTCTL_IBPD_DISABLE,
+	pcie_capability_पढ़ो_dword(pdev, PCI_EXP_SLTCAP2, &slot_cap2);
+	अगर (slot_cap2 & PCI_EXP_SLTCAP2_IBPD) अणु
+		pcie_ग_लिखो_cmd_noरुको(ctrl, PCI_EXP_SLTCTL_IBPD_DISABLE,
 				      PCI_EXP_SLTCTL_IBPD_DISABLE);
 		ctrl->inband_presence_disabled = 1;
-	}
+	पूर्ण
 
-	if (dmi_first_match(inband_presence_disabled_dmi_table))
+	अगर (dmi_first_match(inband_presence_disabled_dmi_table))
 		ctrl->inband_presence_disabled = 1;
 
-	/* Check if Data Link Layer Link Active Reporting is implemented */
-	pcie_capability_read_dword(pdev, PCI_EXP_LNKCAP, &link_cap);
+	/* Check अगर Data Link Layer Link Active Reporting is implemented */
+	pcie_capability_पढ़ो_dword(pdev, PCI_EXP_LNKCAP, &link_cap);
 
-	/* Clear all remaining event bits in Slot Status register. */
-	pcie_capability_write_word(pdev, PCI_EXP_SLTSTA,
+	/* Clear all reमुख्यing event bits in Slot Status रेजिस्टर. */
+	pcie_capability_ग_लिखो_word(pdev, PCI_EXP_SLTSTA,
 		PCI_EXP_SLTSTA_ABP | PCI_EXP_SLTSTA_PFD |
 		PCI_EXP_SLTSTA_MRLSC | PCI_EXP_SLTSTA_CC |
 		PCI_EXP_SLTSTA_DLLSC | PCI_EXP_SLTSTA_PDC);
@@ -974,36 +975,36 @@ struct controller *pcie_init(struct pcie_device *dev)
 
 	/*
 	 * If empty slot's power status is on, turn power off.  The IRQ isn't
-	 * requested yet, so avoid triggering a notification with this command.
+	 * requested yet, so aव्योम triggering a notअगरication with this command.
 	 */
-	if (POWER_CTRL(ctrl)) {
-		pciehp_get_power_status(ctrl, &poweron);
-		if (!pciehp_card_present_or_link_active(ctrl) && poweron) {
-			pcie_disable_notification(ctrl);
-			pciehp_power_off_slot(ctrl);
-		}
-	}
+	अगर (POWER_CTRL(ctrl)) अणु
+		pciehp_get_घातer_status(ctrl, &घातeron);
+		अगर (!pciehp_card_present_or_link_active(ctrl) && घातeron) अणु
+			pcie_disable_notअगरication(ctrl);
+			pciehp_घातer_off_slot(ctrl);
+		पूर्ण
+	पूर्ण
 
-	return ctrl;
-}
+	वापस ctrl;
+पूर्ण
 
-void pciehp_release_ctrl(struct controller *ctrl)
-{
+व्योम pciehp_release_ctrl(काष्ठा controller *ctrl)
+अणु
 	cancel_delayed_work_sync(&ctrl->button_work);
-	kfree(ctrl);
-}
+	kमुक्त(ctrl);
+पूर्ण
 
-static void quirk_cmd_compl(struct pci_dev *pdev)
-{
+अटल व्योम quirk_cmd_compl(काष्ठा pci_dev *pdev)
+अणु
 	u32 slot_cap;
 
-	if (pci_is_pcie(pdev)) {
-		pcie_capability_read_dword(pdev, PCI_EXP_SLTCAP, &slot_cap);
-		if (slot_cap & PCI_EXP_SLTCAP_HPC &&
+	अगर (pci_is_pcie(pdev)) अणु
+		pcie_capability_पढ़ो_dword(pdev, PCI_EXP_SLTCAP, &slot_cap);
+		अगर (slot_cap & PCI_EXP_SLTCAP_HPC &&
 		    !(slot_cap & PCI_EXP_SLTCAP_NCCS))
 			pdev->broken_cmd_compl = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 DECLARE_PCI_FIXUP_CLASS_EARLY(PCI_VENDOR_ID_INTEL, PCI_ANY_ID,
 			      PCI_CLASS_BRIDGE_PCI, 8, quirk_cmd_compl);
 DECLARE_PCI_FIXUP_CLASS_EARLY(PCI_VENDOR_ID_QCOM, 0x0400,

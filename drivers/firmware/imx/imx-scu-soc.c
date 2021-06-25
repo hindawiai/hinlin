@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright 2019 NXP.
  */
 
-#include <dt-bindings/firmware/imx/rsrc.h>
-#include <linux/firmware/imx/sci.h>
-#include <linux/slab.h>
-#include <linux/sys_soc.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
+#समावेश <dt-bindings/firmware/imx/rsrc.h>
+#समावेश <linux/firmware/imx/sci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sys_soc.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
 
-static struct imx_sc_ipc *imx_sc_soc_ipc_handle;
+अटल काष्ठा imx_sc_ipc *imx_sc_soc_ipc_handle;
 
-struct imx_sc_msg_misc_get_soc_id {
-	struct imx_sc_rpc_msg hdr;
-	union {
-		struct {
+काष्ठा imx_sc_msg_misc_get_soc_id अणु
+	काष्ठा imx_sc_rpc_msg hdr;
+	जोड़ अणु
+		काष्ठा अणु
 			u32 control;
 			u16 resource;
-		} __packed req;
-		struct {
+		पूर्ण __packed req;
+		काष्ठा अणु
 			u32 id;
-		} resp;
-	} data;
-} __packed __aligned(4);
+		पूर्ण resp;
+	पूर्ण data;
+पूर्ण __packed __aligned(4);
 
-struct imx_sc_msg_misc_get_soc_uid {
-	struct imx_sc_rpc_msg hdr;
+काष्ठा imx_sc_msg_misc_get_soc_uid अणु
+	काष्ठा imx_sc_rpc_msg hdr;
 	u32 uid_low;
 	u32 uid_high;
-} __packed;
+पूर्ण __packed;
 
-static int imx_scu_soc_uid(u64 *soc_uid)
-{
-	struct imx_sc_msg_misc_get_soc_uid msg;
-	struct imx_sc_rpc_msg *hdr = &msg.hdr;
-	int ret;
+अटल पूर्णांक imx_scu_soc_uid(u64 *soc_uid)
+अणु
+	काष्ठा imx_sc_msg_misc_get_soc_uid msg;
+	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
+	पूर्णांक ret;
 
 	hdr->ver = IMX_SC_RPC_VERSION;
 	hdr->svc = IMX_SC_RPC_SVC_MISC;
@@ -43,23 +44,23 @@ static int imx_scu_soc_uid(u64 *soc_uid)
 	hdr->size = 1;
 
 	ret = imx_scu_call_rpc(imx_sc_soc_ipc_handle, &msg, true);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%s: get soc uid failed, ret %d\n", __func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	*soc_uid = msg.uid_high;
 	*soc_uid <<= 32;
 	*soc_uid |= msg.uid_low;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int imx_scu_soc_id(void)
-{
-	struct imx_sc_msg_misc_get_soc_id msg;
-	struct imx_sc_rpc_msg *hdr = &msg.hdr;
-	int ret;
+अटल पूर्णांक imx_scu_soc_id(व्योम)
+अणु
+	काष्ठा imx_sc_msg_misc_get_soc_id msg;
+	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
+	पूर्णांक ret;
 
 	hdr->ver = IMX_SC_RPC_VERSION;
 	hdr->svc = IMX_SC_RPC_SVC_MISC;
@@ -70,69 +71,69 @@ static int imx_scu_soc_id(void)
 	msg.data.req.resource = IMX_SC_R_SYSTEM;
 
 	ret = imx_scu_call_rpc(imx_sc_soc_ipc_handle, &msg, true);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%s: get soc info failed, ret %d\n", __func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return msg.data.resp.id;
-}
+	वापस msg.data.resp.id;
+पूर्ण
 
-int imx_scu_soc_init(struct device *dev)
-{
-	struct soc_device_attribute *soc_dev_attr;
-	struct soc_device *soc_dev;
-	int id, ret;
+पूर्णांक imx_scu_soc_init(काष्ठा device *dev)
+अणु
+	काष्ठा soc_device_attribute *soc_dev_attr;
+	काष्ठा soc_device *soc_dev;
+	पूर्णांक id, ret;
 	u64 uid = 0;
 	u32 val;
 
 	ret = imx_scu_get_handle(&imx_sc_soc_ipc_handle);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	soc_dev_attr = devm_kzalloc(dev, sizeof(*soc_dev_attr),
+	soc_dev_attr = devm_kzalloc(dev, माप(*soc_dev_attr),
 				    GFP_KERNEL);
-	if (!soc_dev_attr)
-		return -ENOMEM;
+	अगर (!soc_dev_attr)
+		वापस -ENOMEM;
 
 	soc_dev_attr->family = "Freescale i.MX";
 
-	ret = of_property_read_string(of_root,
+	ret = of_property_पढ़ो_string(of_root,
 				      "model",
 				      &soc_dev_attr->machine);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	id = imx_scu_soc_id();
-	if (id < 0)
-		return -EINVAL;
+	अगर (id < 0)
+		वापस -EINVAL;
 
 	ret = imx_scu_soc_uid(&uid);
-	if (ret < 0)
-		return -EINVAL;
+	अगर (ret < 0)
+		वापस -EINVAL;
 
-	/* format soc_id value passed from SCU firmware */
+	/* क्रमmat soc_id value passed from SCU firmware */
 	val = id & 0x1f;
-	soc_dev_attr->soc_id = devm_kasprintf(dev, GFP_KERNEL, "0x%x", val);
-	if (!soc_dev_attr->soc_id)
-		return -ENOMEM;
+	soc_dev_attr->soc_id = devm_kaप्र_लिखो(dev, GFP_KERNEL, "0x%x", val);
+	अगर (!soc_dev_attr->soc_id)
+		वापस -ENOMEM;
 
-	/* format revision value passed from SCU firmware */
+	/* क्रमmat revision value passed from SCU firmware */
 	val = (id >> 5) & 0xf;
 	val = (((val >> 2) + 1) << 4) | (val & 0x3);
-	soc_dev_attr->revision = devm_kasprintf(dev, GFP_KERNEL, "%d.%d",
+	soc_dev_attr->revision = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%d.%d",
 						(val >> 4) & 0xf, val & 0xf);
-	if (!soc_dev_attr->revision)
-		return -ENOMEM;
+	अगर (!soc_dev_attr->revision)
+		वापस -ENOMEM;
 
-	soc_dev_attr->serial_number = devm_kasprintf(dev, GFP_KERNEL,
+	soc_dev_attr->serial_number = devm_kaप्र_लिखो(dev, GFP_KERNEL,
 						     "%016llX", uid);
-	if (!soc_dev_attr->serial_number)
-		return -ENOMEM;
+	अगर (!soc_dev_attr->serial_number)
+		वापस -ENOMEM;
 
-	soc_dev = soc_device_register(soc_dev_attr);
-	if (IS_ERR(soc_dev))
-		return PTR_ERR(soc_dev);
+	soc_dev = soc_device_रेजिस्टर(soc_dev_attr);
+	अगर (IS_ERR(soc_dev))
+		वापस PTR_ERR(soc_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

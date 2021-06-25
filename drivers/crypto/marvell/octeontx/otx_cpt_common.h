@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  * Marvell OcteonTX CPT driver
  *
  * Copyright (C) 2019 Marvell International Ltd.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 
-#ifndef __OTX_CPT_COMMON_H
-#define __OTX_CPT_COMMON_H
+#अगर_अघोषित __OTX_CPT_COMMON_H
+#घोषणा __OTX_CPT_COMMON_H
 
-#include <linux/types.h>
-#include <linux/delay.h>
-#include <linux/device.h>
+#समावेश <linux/types.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
 
-#define OTX_CPT_MAX_MBOX_DATA_STR_SIZE 64
+#घोषणा OTX_CPT_MAX_MBOX_DATA_STR_SIZE 64
 
-enum otx_cptpf_type {
+क्रमागत otx_cptpf_type अणु
 	OTX_CPT_AE = 2,
 	OTX_CPT_SE = 3,
 	BAD_OTX_CPTPF_TYPE,
-};
+पूर्ण;
 
-enum otx_cptvf_type {
+क्रमागत otx_cptvf_type अणु
 	OTX_CPT_AE_TYPES = 1,
 	OTX_CPT_SE_TYPES = 2,
 	BAD_OTX_CPTVF_TYPE,
-};
+पूर्ण;
 
 /* VF-PF message opcodes */
-enum otx_cpt_mbox_opcode {
+क्रमागत otx_cpt_mbox_opcode अणु
 	OTX_CPT_MSG_VF_UP = 1,
 	OTX_CPT_MSG_VF_DOWN,
 	OTX_CPT_MSG_READY,
@@ -40,12 +41,12 @@ enum otx_cpt_mbox_opcode {
 	OTX_CPT_MSG_PF_TYPE,
 	OTX_CPT_MSG_ACK,
 	OTX_CPT_MSG_NACK
-};
+पूर्ण;
 
-/* OcteonTX CPT mailbox structure */
-struct otx_cpt_mbox {
+/* OcteonTX CPT mailbox काष्ठाure */
+काष्ठा otx_cpt_mbox अणु
 	u64 msg; /* Message type MBOX[0] */
 	u64 data;/* Data         MBOX[1] */
-};
+पूर्ण;
 
-#endif /* __OTX_CPT_COMMON_H */
+#पूर्ण_अगर /* __OTX_CPT_COMMON_H */

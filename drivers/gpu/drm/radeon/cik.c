@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,28 +23,28 @@
  * Authors: Alex Deucher
  */
 
-#include <linux/firmware.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
 
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "atom.h"
-#include "evergreen.h"
-#include "cik_blit_shaders.h"
-#include "cik.h"
-#include "cikd.h"
-#include "clearstate_ci.h"
-#include "r600.h"
-#include "radeon.h"
-#include "radeon_asic.h"
-#include "radeon_audio.h"
-#include "radeon_ucode.h"
-#include "si.h"
-#include "vce.h"
+#समावेश "atom.h"
+#समावेश "evergreen.h"
+#समावेश "cik_blit_shaders.h"
+#समावेश "cik.h"
+#समावेश "cikd.h"
+#समावेश "clearstate_ci.h"
+#समावेश "r600.h"
+#समावेश "radeon.h"
+#समावेश "radeon_asic.h"
+#समावेश "radeon_audio.h"
+#समावेश "radeon_ucode.h"
+#समावेश "si.h"
+#समावेश "vce.h"
 
-#define SH_MEM_CONFIG_GFX_DEFAULT \
+#घोषणा SH_MEM_CONFIG_GFX_DEFAULT \
 	ALIGNMENT_MODE(SH_MEM_ALIGNMENT_MODE_UNALIGNED)
 
 MODULE_FIRMWARE("radeon/BONAIRE_pfp.bin");
@@ -129,138 +130,138 @@ MODULE_FIRMWARE("radeon/mullins_mec.bin");
 MODULE_FIRMWARE("radeon/mullins_rlc.bin");
 MODULE_FIRMWARE("radeon/mullins_sdma.bin");
 
-static u32 cik_get_cu_active_bitmap(struct radeon_device *rdev, u32 se, u32 sh);
-static void cik_rlc_stop(struct radeon_device *rdev);
-static void cik_pcie_gen3_enable(struct radeon_device *rdev);
-static void cik_program_aspm(struct radeon_device *rdev);
-static void cik_init_pg(struct radeon_device *rdev);
-static void cik_init_cg(struct radeon_device *rdev);
-static void cik_fini_pg(struct radeon_device *rdev);
-static void cik_fini_cg(struct radeon_device *rdev);
-static void cik_enable_gui_idle_interrupt(struct radeon_device *rdev,
+अटल u32 cik_get_cu_active_biपंचांगap(काष्ठा radeon_device *rdev, u32 se, u32 sh);
+अटल व्योम cik_rlc_stop(काष्ठा radeon_device *rdev);
+अटल व्योम cik_pcie_gen3_enable(काष्ठा radeon_device *rdev);
+अटल व्योम cik_program_aspm(काष्ठा radeon_device *rdev);
+अटल व्योम cik_init_pg(काष्ठा radeon_device *rdev);
+अटल व्योम cik_init_cg(काष्ठा radeon_device *rdev);
+अटल व्योम cik_fini_pg(काष्ठा radeon_device *rdev);
+अटल व्योम cik_fini_cg(काष्ठा radeon_device *rdev);
+अटल व्योम cik_enable_gui_idle_पूर्णांकerrupt(काष्ठा radeon_device *rdev,
 					  bool enable);
 
 /**
- * cik_get_allowed_info_register - fetch the register for the info ioctl
+ * cik_get_allowed_info_रेजिस्टर - fetch the रेजिस्टर क्रम the info ioctl
  *
- * @rdev: radeon_device pointer
- * @reg: register offset in bytes
- * @val: register value
+ * @rdev: radeon_device poपूर्णांकer
+ * @reg: रेजिस्टर offset in bytes
+ * @val: रेजिस्टर value
  *
- * Returns 0 for success or -EINVAL for an invalid register
+ * Returns 0 क्रम success or -EINVAL क्रम an invalid रेजिस्टर
  *
  */
-int cik_get_allowed_info_register(struct radeon_device *rdev,
+पूर्णांक cik_get_allowed_info_रेजिस्टर(काष्ठा radeon_device *rdev,
 				  u32 reg, u32 *val)
-{
-	switch (reg) {
-	case GRBM_STATUS:
-	case GRBM_STATUS2:
-	case GRBM_STATUS_SE0:
-	case GRBM_STATUS_SE1:
-	case GRBM_STATUS_SE2:
-	case GRBM_STATUS_SE3:
-	case SRBM_STATUS:
-	case SRBM_STATUS2:
-	case (SDMA0_STATUS_REG + SDMA0_REGISTER_OFFSET):
-	case (SDMA0_STATUS_REG + SDMA1_REGISTER_OFFSET):
-	case UVD_STATUS:
+अणु
+	चयन (reg) अणु
+	हाल GRBM_STATUS:
+	हाल GRBM_STATUS2:
+	हाल GRBM_STATUS_SE0:
+	हाल GRBM_STATUS_SE1:
+	हाल GRBM_STATUS_SE2:
+	हाल GRBM_STATUS_SE3:
+	हाल SRBM_STATUS:
+	हाल SRBM_STATUS2:
+	हाल (SDMA0_STATUS_REG + SDMA0_REGISTER_OFFSET):
+	हाल (SDMA0_STATUS_REG + SDMA1_REGISTER_OFFSET):
+	हाल UVD_STATUS:
 	/* TODO VCE */
 		*val = RREG32(reg);
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /*
- * Indirect registers accessor
+ * Indirect रेजिस्टरs accessor
  */
-u32 cik_didt_rreg(struct radeon_device *rdev, u32 reg)
-{
-	unsigned long flags;
+u32 cik_didt_rreg(काष्ठा radeon_device *rdev, u32 reg)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 r;
 
 	spin_lock_irqsave(&rdev->didt_idx_lock, flags);
 	WREG32(CIK_DIDT_IND_INDEX, (reg));
 	r = RREG32(CIK_DIDT_IND_DATA);
 	spin_unlock_irqrestore(&rdev->didt_idx_lock, flags);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-void cik_didt_wreg(struct radeon_device *rdev, u32 reg, u32 v)
-{
-	unsigned long flags;
+व्योम cik_didt_wreg(काष्ठा radeon_device *rdev, u32 reg, u32 v)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&rdev->didt_idx_lock, flags);
 	WREG32(CIK_DIDT_IND_INDEX, (reg));
 	WREG32(CIK_DIDT_IND_DATA, (v));
 	spin_unlock_irqrestore(&rdev->didt_idx_lock, flags);
-}
+पूर्ण
 
 /* get temperature in millidegrees */
-int ci_get_temp(struct radeon_device *rdev)
-{
+पूर्णांक ci_get_temp(काष्ठा radeon_device *rdev)
+अणु
 	u32 temp;
-	int actual_temp = 0;
+	पूर्णांक actual_temp = 0;
 
 	temp = (RREG32_SMC(CG_MULT_THERMAL_STATUS) & CTF_TEMP_MASK) >>
 		CTF_TEMP_SHIFT;
 
-	if (temp & 0x200)
+	अगर (temp & 0x200)
 		actual_temp = 255;
-	else
+	अन्यथा
 		actual_temp = temp & 0x1ff;
 
-	return actual_temp * 1000;
-}
+	वापस actual_temp * 1000;
+पूर्ण
 
 /* get temperature in millidegrees */
-int kv_get_temp(struct radeon_device *rdev)
-{
+पूर्णांक kv_get_temp(काष्ठा radeon_device *rdev)
+अणु
 	u32 temp;
-	int actual_temp = 0;
+	पूर्णांक actual_temp = 0;
 
 	temp = RREG32_SMC(0xC0300E0C);
 
-	if (temp)
+	अगर (temp)
 		actual_temp = (temp / 8) - 49;
-	else
+	अन्यथा
 		actual_temp = 0;
 
-	return actual_temp * 1000;
-}
+	वापस actual_temp * 1000;
+पूर्ण
 
 /*
- * Indirect registers accessor
+ * Indirect रेजिस्टरs accessor
  */
-u32 cik_pciep_rreg(struct radeon_device *rdev, u32 reg)
-{
-	unsigned long flags;
+u32 cik_pciep_rreg(काष्ठा radeon_device *rdev, u32 reg)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 r;
 
 	spin_lock_irqsave(&rdev->pciep_idx_lock, flags);
 	WREG32(PCIE_INDEX, reg);
-	(void)RREG32(PCIE_INDEX);
+	(व्योम)RREG32(PCIE_INDEX);
 	r = RREG32(PCIE_DATA);
 	spin_unlock_irqrestore(&rdev->pciep_idx_lock, flags);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-void cik_pciep_wreg(struct radeon_device *rdev, u32 reg, u32 v)
-{
-	unsigned long flags;
+व्योम cik_pciep_wreg(काष्ठा radeon_device *rdev, u32 reg, u32 v)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&rdev->pciep_idx_lock, flags);
 	WREG32(PCIE_INDEX, reg);
-	(void)RREG32(PCIE_INDEX);
+	(व्योम)RREG32(PCIE_INDEX);
 	WREG32(PCIE_DATA, v);
-	(void)RREG32(PCIE_DATA);
+	(व्योम)RREG32(PCIE_DATA);
 	spin_unlock_irqrestore(&rdev->pciep_idx_lock, flags);
-}
+पूर्ण
 
-static const u32 spectre_rlc_save_restore_register_list[] =
-{
+अटल स्थिर u32 spectre_rlc_save_restore_रेजिस्टर_list[] =
+अणु
 	(0x0e00 << 16) | (0xc12c >> 2),
 	0x00000000,
 	(0x0e00 << 16) | (0xc140 >> 2),
@@ -704,10 +705,10 @@ static const u32 spectre_rlc_save_restore_register_list[] =
 	(0x0e00 << 16) | (0x8c30 >> 2),
 	(0x0e00 << 16) | (0x8c34 >> 2),
 	(0x0e00 << 16) | (0x9600 >> 2),
-};
+पूर्ण;
 
-static const u32 kalindi_rlc_save_restore_register_list[] =
-{
+अटल स्थिर u32 kalindi_rlc_save_restore_रेजिस्टर_list[] =
+अणु
 	(0x0e00 << 16) | (0xc12c >> 2),
 	0x00000000,
 	(0x0e00 << 16) | (0xc140 >> 2),
@@ -1029,23 +1030,23 @@ static const u32 kalindi_rlc_save_restore_register_list[] =
 	(0x0e00 << 16) | (0x8c30 >> 2),
 	(0x0e00 << 16) | (0x8c34 >> 2),
 	(0x0e00 << 16) | (0x9600 >> 2),
-};
+पूर्ण;
 
-static const u32 bonaire_golden_spm_registers[] =
-{
+अटल स्थिर u32 bonaire_golden_spm_रेजिस्टरs[] =
+अणु
 	0x30800, 0xe0ffffff, 0xe0000000
-};
+पूर्ण;
 
-static const u32 bonaire_golden_common_registers[] =
-{
+अटल स्थिर u32 bonaire_golden_common_रेजिस्टरs[] =
+अणु
 	0xc770, 0xffffffff, 0x00000800,
 	0xc774, 0xffffffff, 0x00000800,
 	0xc798, 0xffffffff, 0x00007fbf,
 	0xc79c, 0xffffffff, 0x00007faf
-};
+पूर्ण;
 
-static const u32 bonaire_golden_registers[] =
-{
+अटल स्थिर u32 bonaire_golden_रेजिस्टरs[] =
+अणु
 	0x3354, 0x00000333, 0x00000333,
 	0x3350, 0x000c0fc0, 0x00040200,
 	0x9a10, 0x00010000, 0x00058208,
@@ -1087,10 +1088,10 @@ static const u32 bonaire_golden_registers[] =
 	0x9508, 0x00010000, 0x00010000,
 	0xac14, 0x000003ff, 0x000000f3,
 	0xac0c, 0xffffffff, 0x00001032
-};
+पूर्ण;
 
-static const u32 bonaire_mgcg_cgcg_init[] =
-{
+अटल स्थिर u32 bonaire_mgcg_cgcg_init[] =
+अणु
 	0xc420, 0xffffffff, 0xfffffffc,
 	0x30800, 0xffffffff, 0xe0000000,
 	0x3c2a0, 0xffffffff, 0x00000100,
@@ -1173,23 +1174,23 @@ static const u32 bonaire_mgcg_cgcg_init[] =
 	0xc1e4, 0x00000001, 0x00000001,
 	0xd00c, 0xff000ff0, 0x00000100,
 	0xd80c, 0xff000ff0, 0x00000100
-};
+पूर्ण;
 
-static const u32 spectre_golden_spm_registers[] =
-{
+अटल स्थिर u32 spectre_golden_spm_रेजिस्टरs[] =
+अणु
 	0x30800, 0xe0ffffff, 0xe0000000
-};
+पूर्ण;
 
-static const u32 spectre_golden_common_registers[] =
-{
+अटल स्थिर u32 spectre_golden_common_रेजिस्टरs[] =
+अणु
 	0xc770, 0xffffffff, 0x00000800,
 	0xc774, 0xffffffff, 0x00000800,
 	0xc798, 0xffffffff, 0x00007fbf,
 	0xc79c, 0xffffffff, 0x00007faf
-};
+पूर्ण;
 
-static const u32 spectre_golden_registers[] =
-{
+अटल स्थिर u32 spectre_golden_रेजिस्टरs[] =
+अणु
 	0x3c000, 0xffff1fff, 0x96940200,
 	0x3c00c, 0xffff0001, 0xff000000,
 	0x3c200, 0xfffc0fff, 0x00000100,
@@ -1215,10 +1216,10 @@ static const u32 spectre_golden_registers[] =
 	0x21498, 0x007ff800, 0x00200000,
 	0x2015c, 0xffffffff, 0x00000f40,
 	0x30934, 0xffffffff, 0x00000001
-};
+पूर्ण;
 
-static const u32 spectre_mgcg_cgcg_init[] =
-{
+अटल स्थिर u32 spectre_mgcg_cgcg_init[] =
+अणु
 	0xc420, 0xffffffff, 0xfffffffc,
 	0x30800, 0xffffffff, 0xe0000000,
 	0x3c2a0, 0xffffffff, 0x00000100,
@@ -1306,23 +1307,23 @@ static const u32 spectre_mgcg_cgcg_init[] =
 	0xc1e4, 0x00000001, 0x00000001,
 	0xd00c, 0xff000ff0, 0x00000100,
 	0xd80c, 0xff000ff0, 0x00000100
-};
+पूर्ण;
 
-static const u32 kalindi_golden_spm_registers[] =
-{
+अटल स्थिर u32 kalindi_golden_spm_रेजिस्टरs[] =
+अणु
 	0x30800, 0xe0ffffff, 0xe0000000
-};
+पूर्ण;
 
-static const u32 kalindi_golden_common_registers[] =
-{
+अटल स्थिर u32 kalindi_golden_common_रेजिस्टरs[] =
+अणु
 	0xc770, 0xffffffff, 0x00000800,
 	0xc774, 0xffffffff, 0x00000800,
 	0xc798, 0xffffffff, 0x00007fbf,
 	0xc79c, 0xffffffff, 0x00007faf
-};
+पूर्ण;
 
-static const u32 kalindi_golden_registers[] =
-{
+अटल स्थिर u32 kalindi_golden_रेजिस्टरs[] =
+अणु
 	0x3c000, 0xffffdfff, 0x6e944040,
 	0x55e4, 0xff607fff, 0xfc000100,
 	0x3c220, 0xff000fff, 0x00000100,
@@ -1353,10 +1354,10 @@ static const u32 kalindi_golden_registers[] =
 	0x88c4, 0x001f3ae3, 0x00000082,
 	0x88d4, 0x0000001f, 0x00000010,
 	0x30934, 0xffffffff, 0x00000000
-};
+पूर्ण;
 
-static const u32 kalindi_mgcg_cgcg_init[] =
-{
+अटल स्थिर u32 kalindi_mgcg_cgcg_init[] =
+अणु
 	0xc420, 0xffffffff, 0xfffffffc,
 	0x30800, 0xffffffff, 0xe0000000,
 	0x3c2a0, 0xffffffff, 0x00000100,
@@ -1412,24 +1413,24 @@ static const u32 kalindi_mgcg_cgcg_init[] =
 	0xc1e4, 0x00000001, 0x00000001,
 	0xd00c, 0xff000ff0, 0x00000100,
 	0xd80c, 0xff000ff0, 0x00000100
-};
+पूर्ण;
 
-static const u32 hawaii_golden_spm_registers[] =
-{
+अटल स्थिर u32 hawaii_golden_spm_रेजिस्टरs[] =
+अणु
 	0x30800, 0xe0ffffff, 0xe0000000
-};
+पूर्ण;
 
-static const u32 hawaii_golden_common_registers[] =
-{
+अटल स्थिर u32 hawaii_golden_common_रेजिस्टरs[] =
+अणु
 	0x30800, 0xffffffff, 0xe0000000,
 	0x28350, 0xffffffff, 0x3a00161a,
 	0x28354, 0xffffffff, 0x0000002e,
 	0x9a10, 0xffffffff, 0x00018208,
 	0x98f8, 0xffffffff, 0x12011003
-};
+पूर्ण;
 
-static const u32 hawaii_golden_registers[] =
-{
+अटल स्थिर u32 hawaii_golden_रेजिस्टरs[] =
+अणु
 	0x3354, 0x00000333, 0x00000333,
 	0x9a10, 0x00010000, 0x00058208,
 	0x9830, 0xffffffff, 0x00000000,
@@ -1466,10 +1467,10 @@ static const u32 hawaii_golden_registers[] =
 	0xac10, 0xffffffff, 0x7564fdec,
 	0xac0c, 0xffffffff, 0x3120b9a8,
 	0xac08, 0x20000000, 0x0f9c0000
-};
+पूर्ण;
 
-static const u32 hawaii_mgcg_cgcg_init[] =
-{
+अटल स्थिर u32 hawaii_mgcg_cgcg_init[] =
+अणु
 	0xc420, 0xffffffff, 0xfffffffd,
 	0x30800, 0xffffffff, 0xe0000000,
 	0x3c2a0, 0xffffffff, 0x00000100,
@@ -1577,10 +1578,10 @@ static const u32 hawaii_mgcg_cgcg_init[] =
 	0xc1e4, 0x00000001, 0x00000001,
 	0xd00c, 0xff000ff0, 0x00000100,
 	0xd80c, 0xff000ff0, 0x00000100
-};
+पूर्ण;
 
-static const u32 godavari_golden_registers[] =
-{
+अटल स्थिर u32 godavari_golden_रेजिस्टरs[] =
+अणु
 	0x55e4, 0xff607fff, 0xfc000100,
 	0x6ed8, 0x00010101, 0x00010000,
 	0x9830, 0xffffffff, 0x00000000,
@@ -1613,375 +1614,375 @@ static const u32 godavari_golden_registers[] =
 	0x88c4, 0x001f3ae3, 0x00000082,
 	0x88d4, 0x0000001f, 0x00000010,
 	0x30934, 0xffffffff, 0x00000000
-};
+पूर्ण;
 
 
-static void cik_init_golden_registers(struct radeon_device *rdev)
-{
-	switch (rdev->family) {
-	case CHIP_BONAIRE:
-		radeon_program_register_sequence(rdev,
+अटल व्योम cik_init_golden_रेजिस्टरs(काष्ठा radeon_device *rdev)
+अणु
+	चयन (rdev->family) अणु
+	हाल CHIP_BONAIRE:
+		radeon_program_रेजिस्टर_sequence(rdev,
 						 bonaire_mgcg_cgcg_init,
-						 (const u32)ARRAY_SIZE(bonaire_mgcg_cgcg_init));
-		radeon_program_register_sequence(rdev,
-						 bonaire_golden_registers,
-						 (const u32)ARRAY_SIZE(bonaire_golden_registers));
-		radeon_program_register_sequence(rdev,
-						 bonaire_golden_common_registers,
-						 (const u32)ARRAY_SIZE(bonaire_golden_common_registers));
-		radeon_program_register_sequence(rdev,
-						 bonaire_golden_spm_registers,
-						 (const u32)ARRAY_SIZE(bonaire_golden_spm_registers));
-		break;
-	case CHIP_KABINI:
-		radeon_program_register_sequence(rdev,
+						 (स्थिर u32)ARRAY_SIZE(bonaire_mgcg_cgcg_init));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 bonaire_golden_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(bonaire_golden_रेजिस्टरs));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 bonaire_golden_common_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(bonaire_golden_common_रेजिस्टरs));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 bonaire_golden_spm_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(bonaire_golden_spm_रेजिस्टरs));
+		अवरोध;
+	हाल CHIP_KABINI:
+		radeon_program_रेजिस्टर_sequence(rdev,
 						 kalindi_mgcg_cgcg_init,
-						 (const u32)ARRAY_SIZE(kalindi_mgcg_cgcg_init));
-		radeon_program_register_sequence(rdev,
-						 kalindi_golden_registers,
-						 (const u32)ARRAY_SIZE(kalindi_golden_registers));
-		radeon_program_register_sequence(rdev,
-						 kalindi_golden_common_registers,
-						 (const u32)ARRAY_SIZE(kalindi_golden_common_registers));
-		radeon_program_register_sequence(rdev,
-						 kalindi_golden_spm_registers,
-						 (const u32)ARRAY_SIZE(kalindi_golden_spm_registers));
-		break;
-	case CHIP_MULLINS:
-		radeon_program_register_sequence(rdev,
+						 (स्थिर u32)ARRAY_SIZE(kalindi_mgcg_cgcg_init));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 kalindi_golden_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(kalindi_golden_रेजिस्टरs));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 kalindi_golden_common_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(kalindi_golden_common_रेजिस्टरs));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 kalindi_golden_spm_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(kalindi_golden_spm_रेजिस्टरs));
+		अवरोध;
+	हाल CHIP_MULLINS:
+		radeon_program_रेजिस्टर_sequence(rdev,
 						 kalindi_mgcg_cgcg_init,
-						 (const u32)ARRAY_SIZE(kalindi_mgcg_cgcg_init));
-		radeon_program_register_sequence(rdev,
-						 godavari_golden_registers,
-						 (const u32)ARRAY_SIZE(godavari_golden_registers));
-		radeon_program_register_sequence(rdev,
-						 kalindi_golden_common_registers,
-						 (const u32)ARRAY_SIZE(kalindi_golden_common_registers));
-		radeon_program_register_sequence(rdev,
-						 kalindi_golden_spm_registers,
-						 (const u32)ARRAY_SIZE(kalindi_golden_spm_registers));
-		break;
-	case CHIP_KAVERI:
-		radeon_program_register_sequence(rdev,
+						 (स्थिर u32)ARRAY_SIZE(kalindi_mgcg_cgcg_init));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 godavari_golden_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(godavari_golden_रेजिस्टरs));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 kalindi_golden_common_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(kalindi_golden_common_रेजिस्टरs));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 kalindi_golden_spm_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(kalindi_golden_spm_रेजिस्टरs));
+		अवरोध;
+	हाल CHIP_KAVERI:
+		radeon_program_रेजिस्टर_sequence(rdev,
 						 spectre_mgcg_cgcg_init,
-						 (const u32)ARRAY_SIZE(spectre_mgcg_cgcg_init));
-		radeon_program_register_sequence(rdev,
-						 spectre_golden_registers,
-						 (const u32)ARRAY_SIZE(spectre_golden_registers));
-		radeon_program_register_sequence(rdev,
-						 spectre_golden_common_registers,
-						 (const u32)ARRAY_SIZE(spectre_golden_common_registers));
-		radeon_program_register_sequence(rdev,
-						 spectre_golden_spm_registers,
-						 (const u32)ARRAY_SIZE(spectre_golden_spm_registers));
-		break;
-	case CHIP_HAWAII:
-		radeon_program_register_sequence(rdev,
+						 (स्थिर u32)ARRAY_SIZE(spectre_mgcg_cgcg_init));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 spectre_golden_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(spectre_golden_रेजिस्टरs));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 spectre_golden_common_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(spectre_golden_common_रेजिस्टरs));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 spectre_golden_spm_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(spectre_golden_spm_रेजिस्टरs));
+		अवरोध;
+	हाल CHIP_HAWAII:
+		radeon_program_रेजिस्टर_sequence(rdev,
 						 hawaii_mgcg_cgcg_init,
-						 (const u32)ARRAY_SIZE(hawaii_mgcg_cgcg_init));
-		radeon_program_register_sequence(rdev,
-						 hawaii_golden_registers,
-						 (const u32)ARRAY_SIZE(hawaii_golden_registers));
-		radeon_program_register_sequence(rdev,
-						 hawaii_golden_common_registers,
-						 (const u32)ARRAY_SIZE(hawaii_golden_common_registers));
-		radeon_program_register_sequence(rdev,
-						 hawaii_golden_spm_registers,
-						 (const u32)ARRAY_SIZE(hawaii_golden_spm_registers));
-		break;
-	default:
-		break;
-	}
-}
+						 (स्थिर u32)ARRAY_SIZE(hawaii_mgcg_cgcg_init));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 hawaii_golden_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(hawaii_golden_रेजिस्टरs));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 hawaii_golden_common_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(hawaii_golden_common_रेजिस्टरs));
+		radeon_program_रेजिस्टर_sequence(rdev,
+						 hawaii_golden_spm_रेजिस्टरs,
+						 (स्थिर u32)ARRAY_SIZE(hawaii_golden_spm_रेजिस्टरs));
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * cik_get_xclk - get the xclk
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Returns the reference clock used by the gfx engine
+ * Returns the reference घड़ी used by the gfx engine
  * (CIK).
  */
-u32 cik_get_xclk(struct radeon_device *rdev)
-{
-	u32 reference_clock = rdev->clock.spll.reference_freq;
+u32 cik_get_xclk(काष्ठा radeon_device *rdev)
+अणु
+	u32 reference_घड़ी = rdev->घड़ी.spll.reference_freq;
 
-	if (rdev->flags & RADEON_IS_IGP) {
-		if (RREG32_SMC(GENERAL_PWRMGT) & GPU_COUNTER_CLK)
-			return reference_clock / 2;
-	} else {
-		if (RREG32_SMC(CG_CLKPIN_CNTL) & XTALIN_DIVIDE)
-			return reference_clock / 4;
-	}
-	return reference_clock;
-}
+	अगर (rdev->flags & RADEON_IS_IGP) अणु
+		अगर (RREG32_SMC(GENERAL_PWRMGT) & GPU_COUNTER_CLK)
+			वापस reference_घड़ी / 2;
+	पूर्ण अन्यथा अणु
+		अगर (RREG32_SMC(CG_CLKPIN_CNTL) & XTALIN_DIVIDE)
+			वापस reference_घड़ी / 4;
+	पूर्ण
+	वापस reference_घड़ी;
+पूर्ण
 
 /**
- * cik_mm_rdoorbell - read a doorbell dword
+ * cik_mm_rकरोorbell - पढ़ो a करोorbell dword
  *
- * @rdev: radeon_device pointer
- * @index: doorbell index
+ * @rdev: radeon_device poपूर्णांकer
+ * @index: करोorbell index
  *
- * Returns the value in the doorbell aperture at the
- * requested doorbell index (CIK).
+ * Returns the value in the करोorbell aperture at the
+ * requested करोorbell index (CIK).
  */
-u32 cik_mm_rdoorbell(struct radeon_device *rdev, u32 index)
-{
-	if (index < rdev->doorbell.num_doorbells) {
-		return readl(rdev->doorbell.ptr + index);
-	} else {
+u32 cik_mm_rकरोorbell(काष्ठा radeon_device *rdev, u32 index)
+अणु
+	अगर (index < rdev->करोorbell.num_करोorbells) अणु
+		वापस पढ़ोl(rdev->करोorbell.ptr + index);
+	पूर्ण अन्यथा अणु
 		DRM_ERROR("reading beyond doorbell aperture: 0x%08x!\n", index);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /**
- * cik_mm_wdoorbell - write a doorbell dword
+ * cik_mm_wकरोorbell - ग_लिखो a करोorbell dword
  *
- * @rdev: radeon_device pointer
- * @index: doorbell index
- * @v: value to write
+ * @rdev: radeon_device poपूर्णांकer
+ * @index: करोorbell index
+ * @v: value to ग_लिखो
  *
- * Writes @v to the doorbell aperture at the
- * requested doorbell index (CIK).
+ * Writes @v to the करोorbell aperture at the
+ * requested करोorbell index (CIK).
  */
-void cik_mm_wdoorbell(struct radeon_device *rdev, u32 index, u32 v)
-{
-	if (index < rdev->doorbell.num_doorbells) {
-		writel(v, rdev->doorbell.ptr + index);
-	} else {
+व्योम cik_mm_wकरोorbell(काष्ठा radeon_device *rdev, u32 index, u32 v)
+अणु
+	अगर (index < rdev->करोorbell.num_करोorbells) अणु
+		ग_लिखोl(v, rdev->करोorbell.ptr + index);
+	पूर्ण अन्यथा अणु
 		DRM_ERROR("writing beyond doorbell aperture: 0x%08x!\n", index);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define BONAIRE_IO_MC_REGS_SIZE 36
+#घोषणा BONAIRE_IO_MC_REGS_SIZE 36
 
-static const u32 bonaire_io_mc_regs[BONAIRE_IO_MC_REGS_SIZE][2] =
-{
-	{0x00000070, 0x04400000},
-	{0x00000071, 0x80c01803},
-	{0x00000072, 0x00004004},
-	{0x00000073, 0x00000100},
-	{0x00000074, 0x00ff0000},
-	{0x00000075, 0x34000000},
-	{0x00000076, 0x08000014},
-	{0x00000077, 0x00cc08ec},
-	{0x00000078, 0x00000400},
-	{0x00000079, 0x00000000},
-	{0x0000007a, 0x04090000},
-	{0x0000007c, 0x00000000},
-	{0x0000007e, 0x4408a8e8},
-	{0x0000007f, 0x00000304},
-	{0x00000080, 0x00000000},
-	{0x00000082, 0x00000001},
-	{0x00000083, 0x00000002},
-	{0x00000084, 0xf3e4f400},
-	{0x00000085, 0x052024e3},
-	{0x00000087, 0x00000000},
-	{0x00000088, 0x01000000},
-	{0x0000008a, 0x1c0a0000},
-	{0x0000008b, 0xff010000},
-	{0x0000008d, 0xffffefff},
-	{0x0000008e, 0xfff3efff},
-	{0x0000008f, 0xfff3efbf},
-	{0x00000092, 0xf7ffffff},
-	{0x00000093, 0xffffff7f},
-	{0x00000095, 0x00101101},
-	{0x00000096, 0x00000fff},
-	{0x00000097, 0x00116fff},
-	{0x00000098, 0x60010000},
-	{0x00000099, 0x10010000},
-	{0x0000009a, 0x00006000},
-	{0x0000009b, 0x00001000},
-	{0x0000009f, 0x00b48000}
-};
+अटल स्थिर u32 bonaire_io_mc_regs[BONAIRE_IO_MC_REGS_SIZE][2] =
+अणु
+	अणु0x00000070, 0x04400000पूर्ण,
+	अणु0x00000071, 0x80c01803पूर्ण,
+	अणु0x00000072, 0x00004004पूर्ण,
+	अणु0x00000073, 0x00000100पूर्ण,
+	अणु0x00000074, 0x00ff0000पूर्ण,
+	अणु0x00000075, 0x34000000पूर्ण,
+	अणु0x00000076, 0x08000014पूर्ण,
+	अणु0x00000077, 0x00cc08ecपूर्ण,
+	अणु0x00000078, 0x00000400पूर्ण,
+	अणु0x00000079, 0x00000000पूर्ण,
+	अणु0x0000007a, 0x04090000पूर्ण,
+	अणु0x0000007c, 0x00000000पूर्ण,
+	अणु0x0000007e, 0x4408a8e8पूर्ण,
+	अणु0x0000007f, 0x00000304पूर्ण,
+	अणु0x00000080, 0x00000000पूर्ण,
+	अणु0x00000082, 0x00000001पूर्ण,
+	अणु0x00000083, 0x00000002पूर्ण,
+	अणु0x00000084, 0xf3e4f400पूर्ण,
+	अणु0x00000085, 0x052024e3पूर्ण,
+	अणु0x00000087, 0x00000000पूर्ण,
+	अणु0x00000088, 0x01000000पूर्ण,
+	अणु0x0000008a, 0x1c0a0000पूर्ण,
+	अणु0x0000008b, 0xff010000पूर्ण,
+	अणु0x0000008d, 0xffffefffपूर्ण,
+	अणु0x0000008e, 0xfff3efffपूर्ण,
+	अणु0x0000008f, 0xfff3efbfपूर्ण,
+	अणु0x00000092, 0xf7ffffffपूर्ण,
+	अणु0x00000093, 0xffffff7fपूर्ण,
+	अणु0x00000095, 0x00101101पूर्ण,
+	अणु0x00000096, 0x00000fffपूर्ण,
+	अणु0x00000097, 0x00116fffपूर्ण,
+	अणु0x00000098, 0x60010000पूर्ण,
+	अणु0x00000099, 0x10010000पूर्ण,
+	अणु0x0000009a, 0x00006000पूर्ण,
+	अणु0x0000009b, 0x00001000पूर्ण,
+	अणु0x0000009f, 0x00b48000पूर्ण
+पूर्ण;
 
-#define HAWAII_IO_MC_REGS_SIZE 22
+#घोषणा HAWAII_IO_MC_REGS_SIZE 22
 
-static const u32 hawaii_io_mc_regs[HAWAII_IO_MC_REGS_SIZE][2] =
-{
-	{0x0000007d, 0x40000000},
-	{0x0000007e, 0x40180304},
-	{0x0000007f, 0x0000ff00},
-	{0x00000081, 0x00000000},
-	{0x00000083, 0x00000800},
-	{0x00000086, 0x00000000},
-	{0x00000087, 0x00000100},
-	{0x00000088, 0x00020100},
-	{0x00000089, 0x00000000},
-	{0x0000008b, 0x00040000},
-	{0x0000008c, 0x00000100},
-	{0x0000008e, 0xff010000},
-	{0x00000090, 0xffffefff},
-	{0x00000091, 0xfff3efff},
-	{0x00000092, 0xfff3efbf},
-	{0x00000093, 0xf7ffffff},
-	{0x00000094, 0xffffff7f},
-	{0x00000095, 0x00000fff},
-	{0x00000096, 0x00116fff},
-	{0x00000097, 0x60010000},
-	{0x00000098, 0x10010000},
-	{0x0000009f, 0x00c79000}
-};
+अटल स्थिर u32 hawaii_io_mc_regs[HAWAII_IO_MC_REGS_SIZE][2] =
+अणु
+	अणु0x0000007d, 0x40000000पूर्ण,
+	अणु0x0000007e, 0x40180304पूर्ण,
+	अणु0x0000007f, 0x0000ff00पूर्ण,
+	अणु0x00000081, 0x00000000पूर्ण,
+	अणु0x00000083, 0x00000800पूर्ण,
+	अणु0x00000086, 0x00000000पूर्ण,
+	अणु0x00000087, 0x00000100पूर्ण,
+	अणु0x00000088, 0x00020100पूर्ण,
+	अणु0x00000089, 0x00000000पूर्ण,
+	अणु0x0000008b, 0x00040000पूर्ण,
+	अणु0x0000008c, 0x00000100पूर्ण,
+	अणु0x0000008e, 0xff010000पूर्ण,
+	अणु0x00000090, 0xffffefffपूर्ण,
+	अणु0x00000091, 0xfff3efffपूर्ण,
+	अणु0x00000092, 0xfff3efbfपूर्ण,
+	अणु0x00000093, 0xf7ffffffपूर्ण,
+	अणु0x00000094, 0xffffff7fपूर्ण,
+	अणु0x00000095, 0x00000fffपूर्ण,
+	अणु0x00000096, 0x00116fffपूर्ण,
+	अणु0x00000097, 0x60010000पूर्ण,
+	अणु0x00000098, 0x10010000पूर्ण,
+	अणु0x0000009f, 0x00c79000पूर्ण
+पूर्ण;
 
 
 /**
- * cik_srbm_select - select specific register instances
+ * cik_srbm_select - select specअगरic रेजिस्टर instances
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @me: selected ME (micro engine)
  * @pipe: pipe
  * @queue: queue
  * @vmid: VMID
  *
- * Switches the currently active registers instances.  Some
- * registers are instanced per VMID, others are instanced per
+ * Switches the currently active रेजिस्टरs instances.  Some
+ * रेजिस्टरs are instanced per VMID, others are instanced per
  * me/pipe/queue combination.
  */
-static void cik_srbm_select(struct radeon_device *rdev,
+अटल व्योम cik_srbm_select(काष्ठा radeon_device *rdev,
 			    u32 me, u32 pipe, u32 queue, u32 vmid)
-{
+अणु
 	u32 srbm_gfx_cntl = (PIPEID(pipe & 0x3) |
 			     MEID(me & 0x3) |
 			     VMID(vmid & 0xf) |
 			     QUEUEID(queue & 0x7));
 	WREG32(SRBM_GFX_CNTL, srbm_gfx_cntl);
-}
+पूर्ण
 
 /* ucode loading */
 /**
- * ci_mc_load_microcode - load MC ucode into the hw
+ * ci_mc_load_microcode - load MC ucode पूर्णांकo the hw
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Load the GDDR MC ucode into the hw (CIK).
+ * Load the GDDR MC ucode पूर्णांकo the hw (CIK).
  * Returns 0 on success, error on failure.
  */
-int ci_mc_load_microcode(struct radeon_device *rdev)
-{
-	const __be32 *fw_data = NULL;
-	const __le32 *new_fw_data = NULL;
-	u32 running, tmp;
-	u32 *io_mc_regs = NULL;
-	const __le32 *new_io_mc_regs = NULL;
-	int i, regs_size, ucode_size;
+पूर्णांक ci_mc_load_microcode(काष्ठा radeon_device *rdev)
+अणु
+	स्थिर __be32 *fw_data = शून्य;
+	स्थिर __le32 *new_fw_data = शून्य;
+	u32 running, पंचांगp;
+	u32 *io_mc_regs = शून्य;
+	स्थिर __le32 *new_io_mc_regs = शून्य;
+	पूर्णांक i, regs_size, ucode_size;
 
-	if (!rdev->mc_fw)
-		return -EINVAL;
+	अगर (!rdev->mc_fw)
+		वापस -EINVAL;
 
-	if (rdev->new_fw) {
-		const struct mc_firmware_header_v1_0 *hdr =
-			(const struct mc_firmware_header_v1_0 *)rdev->mc_fw->data;
+	अगर (rdev->new_fw) अणु
+		स्थिर काष्ठा mc_firmware_header_v1_0 *hdr =
+			(स्थिर काष्ठा mc_firmware_header_v1_0 *)rdev->mc_fw->data;
 
-		radeon_ucode_print_mc_hdr(&hdr->header);
+		radeon_ucode_prपूर्णांक_mc_hdr(&hdr->header);
 
 		regs_size = le32_to_cpu(hdr->io_debug_size_bytes) / (4 * 2);
-		new_io_mc_regs = (const __le32 *)
+		new_io_mc_regs = (स्थिर __le32 *)
 			(rdev->mc_fw->data + le32_to_cpu(hdr->io_debug_array_offset_bytes));
 		ucode_size = le32_to_cpu(hdr->header.ucode_size_bytes) / 4;
-		new_fw_data = (const __le32 *)
+		new_fw_data = (स्थिर __le32 *)
 			(rdev->mc_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
-	} else {
+	पूर्ण अन्यथा अणु
 		ucode_size = rdev->mc_fw->size / 4;
 
-		switch (rdev->family) {
-		case CHIP_BONAIRE:
+		चयन (rdev->family) अणु
+		हाल CHIP_BONAIRE:
 			io_mc_regs = (u32 *)&bonaire_io_mc_regs;
 			regs_size = BONAIRE_IO_MC_REGS_SIZE;
-			break;
-		case CHIP_HAWAII:
+			अवरोध;
+		हाल CHIP_HAWAII:
 			io_mc_regs = (u32 *)&hawaii_io_mc_regs;
 			regs_size = HAWAII_IO_MC_REGS_SIZE;
-			break;
-		default:
-			return -EINVAL;
-		}
-		fw_data = (const __be32 *)rdev->mc_fw->data;
-	}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		fw_data = (स्थिर __be32 *)rdev->mc_fw->data;
+	पूर्ण
 
 	running = RREG32(MC_SEQ_SUP_CNTL) & RUN_MASK;
 
-	if (running == 0) {
+	अगर (running == 0) अणु
 		/* reset the engine and set to writable */
 		WREG32(MC_SEQ_SUP_CNTL, 0x00000008);
 		WREG32(MC_SEQ_SUP_CNTL, 0x00000010);
 
 		/* load mc io regs */
-		for (i = 0; i < regs_size; i++) {
-			if (rdev->new_fw) {
+		क्रम (i = 0; i < regs_size; i++) अणु
+			अगर (rdev->new_fw) अणु
 				WREG32(MC_SEQ_IO_DEBUG_INDEX, le32_to_cpup(new_io_mc_regs++));
 				WREG32(MC_SEQ_IO_DEBUG_DATA, le32_to_cpup(new_io_mc_regs++));
-			} else {
+			पूर्ण अन्यथा अणु
 				WREG32(MC_SEQ_IO_DEBUG_INDEX, io_mc_regs[(i << 1)]);
 				WREG32(MC_SEQ_IO_DEBUG_DATA, io_mc_regs[(i << 1) + 1]);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		tmp = RREG32(MC_SEQ_MISC0);
-		if ((rdev->pdev->device == 0x6649) && ((tmp & 0xff00) == 0x5600)) {
+		पंचांगp = RREG32(MC_SEQ_MISC0);
+		अगर ((rdev->pdev->device == 0x6649) && ((पंचांगp & 0xff00) == 0x5600)) अणु
 			WREG32(MC_SEQ_IO_DEBUG_INDEX, 5);
 			WREG32(MC_SEQ_IO_DEBUG_DATA, 0x00000023);
 			WREG32(MC_SEQ_IO_DEBUG_INDEX, 9);
 			WREG32(MC_SEQ_IO_DEBUG_DATA, 0x000001f0);
-		}
+		पूर्ण
 
 		/* load the MC ucode */
-		for (i = 0; i < ucode_size; i++) {
-			if (rdev->new_fw)
+		क्रम (i = 0; i < ucode_size; i++) अणु
+			अगर (rdev->new_fw)
 				WREG32(MC_SEQ_SUP_PGM, le32_to_cpup(new_fw_data++));
-			else
+			अन्यथा
 				WREG32(MC_SEQ_SUP_PGM, be32_to_cpup(fw_data++));
-		}
+		पूर्ण
 
-		/* put the engine back into the active state */
+		/* put the engine back पूर्णांकo the active state */
 		WREG32(MC_SEQ_SUP_CNTL, 0x00000008);
 		WREG32(MC_SEQ_SUP_CNTL, 0x00000004);
 		WREG32(MC_SEQ_SUP_CNTL, 0x00000001);
 
-		/* wait for training to complete */
-		for (i = 0; i < rdev->usec_timeout; i++) {
-			if (RREG32(MC_SEQ_TRAIN_WAKEUP_CNTL) & TRAIN_DONE_D0)
-				break;
+		/* रुको क्रम training to complete */
+		क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+			अगर (RREG32(MC_SEQ_TRAIN_WAKEUP_CNTL) & TRAIN_DONE_D0)
+				अवरोध;
 			udelay(1);
-		}
-		for (i = 0; i < rdev->usec_timeout; i++) {
-			if (RREG32(MC_SEQ_TRAIN_WAKEUP_CNTL) & TRAIN_DONE_D1)
-				break;
+		पूर्ण
+		क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+			अगर (RREG32(MC_SEQ_TRAIN_WAKEUP_CNTL) & TRAIN_DONE_D1)
+				अवरोध;
 			udelay(1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cik_init_microcode - load ucode images from disk
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Use the firmware interface to load the ucode images into
- * the driver (not loaded into hw).
+ * Use the firmware पूर्णांकerface to load the ucode images पूर्णांकo
+ * the driver (not loaded पूर्णांकo hw).
  * Returns 0 on success, error on failure.
  */
-static int cik_init_microcode(struct radeon_device *rdev)
-{
-	const char *chip_name;
-	const char *new_chip_name;
-	size_t pfp_req_size, me_req_size, ce_req_size,
+अटल पूर्णांक cik_init_microcode(काष्ठा radeon_device *rdev)
+अणु
+	स्थिर अक्षर *chip_name;
+	स्थिर अक्षर *new_chip_name;
+	माप_प्रकार pfp_req_size, me_req_size, ce_req_size,
 		mec_req_size, rlc_req_size, mc_req_size = 0,
 		sdma_req_size, smc_req_size = 0, mc2_req_size = 0;
-	char fw_name[30];
-	int new_fw = 0;
-	int err;
-	int num_fw;
+	अक्षर fw_name[30];
+	पूर्णांक new_fw = 0;
+	पूर्णांक err;
+	पूर्णांक num_fw;
 	bool new_smc = false;
 
 	DRM_DEBUG("\n");
 
-	switch (rdev->family) {
-	case CHIP_BONAIRE:
+	चयन (rdev->family) अणु
+	हाल CHIP_BONAIRE:
 		chip_name = "BONAIRE";
-		if ((rdev->pdev->revision == 0x80) ||
+		अगर ((rdev->pdev->revision == 0x80) ||
 		    (rdev->pdev->revision == 0x81) ||
 		    (rdev->pdev->device == 0x665f))
 			new_smc = true;
@@ -1996,10 +1997,10 @@ static int cik_init_microcode(struct radeon_device *rdev)
 		sdma_req_size = CIK_SDMA_UCODE_SIZE * 4;
 		smc_req_size = ALIGN(BONAIRE_SMC_UCODE_SIZE, 4);
 		num_fw = 8;
-		break;
-	case CHIP_HAWAII:
+		अवरोध;
+	हाल CHIP_HAWAII:
 		chip_name = "HAWAII";
-		if (rdev->pdev->revision == 0x80)
+		अगर (rdev->pdev->revision == 0x80)
 			new_smc = true;
 		new_chip_name = "hawaii";
 		pfp_req_size = CIK_PFP_UCODE_SIZE * 4;
@@ -2012,8 +2013,8 @@ static int cik_init_microcode(struct radeon_device *rdev)
 		sdma_req_size = CIK_SDMA_UCODE_SIZE * 4;
 		smc_req_size = ALIGN(HAWAII_SMC_UCODE_SIZE, 4);
 		num_fw = 8;
-		break;
-	case CHIP_KAVERI:
+		अवरोध;
+	हाल CHIP_KAVERI:
 		chip_name = "KAVERI";
 		new_chip_name = "kaveri";
 		pfp_req_size = CIK_PFP_UCODE_SIZE * 4;
@@ -2023,8 +2024,8 @@ static int cik_init_microcode(struct radeon_device *rdev)
 		rlc_req_size = KV_RLC_UCODE_SIZE * 4;
 		sdma_req_size = CIK_SDMA_UCODE_SIZE * 4;
 		num_fw = 7;
-		break;
-	case CHIP_KABINI:
+		अवरोध;
+	हाल CHIP_KABINI:
 		chip_name = "KABINI";
 		new_chip_name = "kabini";
 		pfp_req_size = CIK_PFP_UCODE_SIZE * 4;
@@ -2034,8 +2035,8 @@ static int cik_init_microcode(struct radeon_device *rdev)
 		rlc_req_size = KB_RLC_UCODE_SIZE * 4;
 		sdma_req_size = CIK_SDMA_UCODE_SIZE * 4;
 		num_fw = 6;
-		break;
-	case CHIP_MULLINS:
+		अवरोध;
+	हाल CHIP_MULLINS:
 		chip_name = "MULLINS";
 		new_chip_name = "mullins";
 		pfp_req_size = CIK_PFP_UCODE_SIZE * 4;
@@ -2045,263 +2046,263 @@ static int cik_init_microcode(struct radeon_device *rdev)
 		rlc_req_size = ML_RLC_UCODE_SIZE * 4;
 		sdma_req_size = CIK_SDMA_UCODE_SIZE * 4;
 		num_fw = 6;
-		break;
-	default: BUG();
-	}
+		अवरोध;
+	शेष: BUG();
+	पूर्ण
 
 	DRM_INFO("Loading %s Microcode\n", new_chip_name);
 
-	snprintf(fw_name, sizeof(fw_name), "radeon/%s_pfp.bin", new_chip_name);
+	snम_लिखो(fw_name, माप(fw_name), "radeon/%s_pfp.bin", new_chip_name);
 	err = request_firmware(&rdev->pfp_fw, fw_name, rdev->dev);
-	if (err) {
-		snprintf(fw_name, sizeof(fw_name), "radeon/%s_pfp.bin", chip_name);
+	अगर (err) अणु
+		snम_लिखो(fw_name, माप(fw_name), "radeon/%s_pfp.bin", chip_name);
 		err = request_firmware(&rdev->pfp_fw, fw_name, rdev->dev);
-		if (err)
-			goto out;
-		if (rdev->pfp_fw->size != pfp_req_size) {
+		अगर (err)
+			जाओ out;
+		अगर (rdev->pfp_fw->size != pfp_req_size) अणु
 			pr_err("cik_cp: Bogus length %zu in firmware \"%s\"\n",
 			       rdev->pfp_fw->size, fw_name);
 			err = -EINVAL;
-			goto out;
-		}
-	} else {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		err = radeon_ucode_validate(rdev->pfp_fw);
-		if (err) {
+		अगर (err) अणु
 			pr_err("cik_fw: validation failed for firmware \"%s\"\n",
 			       fw_name);
-			goto out;
-		} else {
+			जाओ out;
+		पूर्ण अन्यथा अणु
 			new_fw++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	snprintf(fw_name, sizeof(fw_name), "radeon/%s_me.bin", new_chip_name);
+	snम_लिखो(fw_name, माप(fw_name), "radeon/%s_me.bin", new_chip_name);
 	err = request_firmware(&rdev->me_fw, fw_name, rdev->dev);
-	if (err) {
-		snprintf(fw_name, sizeof(fw_name), "radeon/%s_me.bin", chip_name);
+	अगर (err) अणु
+		snम_लिखो(fw_name, माप(fw_name), "radeon/%s_me.bin", chip_name);
 		err = request_firmware(&rdev->me_fw, fw_name, rdev->dev);
-		if (err)
-			goto out;
-		if (rdev->me_fw->size != me_req_size) {
+		अगर (err)
+			जाओ out;
+		अगर (rdev->me_fw->size != me_req_size) अणु
 			pr_err("cik_cp: Bogus length %zu in firmware \"%s\"\n",
 			       rdev->me_fw->size, fw_name);
 			err = -EINVAL;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		err = radeon_ucode_validate(rdev->me_fw);
-		if (err) {
+		अगर (err) अणु
 			pr_err("cik_fw: validation failed for firmware \"%s\"\n",
 			       fw_name);
-			goto out;
-		} else {
+			जाओ out;
+		पूर्ण अन्यथा अणु
 			new_fw++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	snprintf(fw_name, sizeof(fw_name), "radeon/%s_ce.bin", new_chip_name);
+	snम_लिखो(fw_name, माप(fw_name), "radeon/%s_ce.bin", new_chip_name);
 	err = request_firmware(&rdev->ce_fw, fw_name, rdev->dev);
-	if (err) {
-		snprintf(fw_name, sizeof(fw_name), "radeon/%s_ce.bin", chip_name);
+	अगर (err) अणु
+		snम_लिखो(fw_name, माप(fw_name), "radeon/%s_ce.bin", chip_name);
 		err = request_firmware(&rdev->ce_fw, fw_name, rdev->dev);
-		if (err)
-			goto out;
-		if (rdev->ce_fw->size != ce_req_size) {
+		अगर (err)
+			जाओ out;
+		अगर (rdev->ce_fw->size != ce_req_size) अणु
 			pr_err("cik_cp: Bogus length %zu in firmware \"%s\"\n",
 			       rdev->ce_fw->size, fw_name);
 			err = -EINVAL;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		err = radeon_ucode_validate(rdev->ce_fw);
-		if (err) {
+		अगर (err) अणु
 			pr_err("cik_fw: validation failed for firmware \"%s\"\n",
 			       fw_name);
-			goto out;
-		} else {
+			जाओ out;
+		पूर्ण अन्यथा अणु
 			new_fw++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	snprintf(fw_name, sizeof(fw_name), "radeon/%s_mec.bin", new_chip_name);
+	snम_लिखो(fw_name, माप(fw_name), "radeon/%s_mec.bin", new_chip_name);
 	err = request_firmware(&rdev->mec_fw, fw_name, rdev->dev);
-	if (err) {
-		snprintf(fw_name, sizeof(fw_name), "radeon/%s_mec.bin", chip_name);
+	अगर (err) अणु
+		snम_लिखो(fw_name, माप(fw_name), "radeon/%s_mec.bin", chip_name);
 		err = request_firmware(&rdev->mec_fw, fw_name, rdev->dev);
-		if (err)
-			goto out;
-		if (rdev->mec_fw->size != mec_req_size) {
+		अगर (err)
+			जाओ out;
+		अगर (rdev->mec_fw->size != mec_req_size) अणु
 			pr_err("cik_cp: Bogus length %zu in firmware \"%s\"\n",
 			       rdev->mec_fw->size, fw_name);
 			err = -EINVAL;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		err = radeon_ucode_validate(rdev->mec_fw);
-		if (err) {
+		अगर (err) अणु
 			pr_err("cik_fw: validation failed for firmware \"%s\"\n",
 			       fw_name);
-			goto out;
-		} else {
+			जाओ out;
+		पूर्ण अन्यथा अणु
 			new_fw++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (rdev->family == CHIP_KAVERI) {
-		snprintf(fw_name, sizeof(fw_name), "radeon/%s_mec2.bin", new_chip_name);
+	अगर (rdev->family == CHIP_KAVERI) अणु
+		snम_लिखो(fw_name, माप(fw_name), "radeon/%s_mec2.bin", new_chip_name);
 		err = request_firmware(&rdev->mec2_fw, fw_name, rdev->dev);
-		if (err) {
-			goto out;
-		} else {
+		अगर (err) अणु
+			जाओ out;
+		पूर्ण अन्यथा अणु
 			err = radeon_ucode_validate(rdev->mec2_fw);
-			if (err) {
-				goto out;
-			} else {
+			अगर (err) अणु
+				जाओ out;
+			पूर्ण अन्यथा अणु
 				new_fw++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	snprintf(fw_name, sizeof(fw_name), "radeon/%s_rlc.bin", new_chip_name);
+	snम_लिखो(fw_name, माप(fw_name), "radeon/%s_rlc.bin", new_chip_name);
 	err = request_firmware(&rdev->rlc_fw, fw_name, rdev->dev);
-	if (err) {
-		snprintf(fw_name, sizeof(fw_name), "radeon/%s_rlc.bin", chip_name);
+	अगर (err) अणु
+		snम_लिखो(fw_name, माप(fw_name), "radeon/%s_rlc.bin", chip_name);
 		err = request_firmware(&rdev->rlc_fw, fw_name, rdev->dev);
-		if (err)
-			goto out;
-		if (rdev->rlc_fw->size != rlc_req_size) {
+		अगर (err)
+			जाओ out;
+		अगर (rdev->rlc_fw->size != rlc_req_size) अणु
 			pr_err("cik_rlc: Bogus length %zu in firmware \"%s\"\n",
 			       rdev->rlc_fw->size, fw_name);
 			err = -EINVAL;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		err = radeon_ucode_validate(rdev->rlc_fw);
-		if (err) {
+		अगर (err) अणु
 			pr_err("cik_fw: validation failed for firmware \"%s\"\n",
 			       fw_name);
-			goto out;
-		} else {
+			जाओ out;
+		पूर्ण अन्यथा अणु
 			new_fw++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	snprintf(fw_name, sizeof(fw_name), "radeon/%s_sdma.bin", new_chip_name);
+	snम_लिखो(fw_name, माप(fw_name), "radeon/%s_sdma.bin", new_chip_name);
 	err = request_firmware(&rdev->sdma_fw, fw_name, rdev->dev);
-	if (err) {
-		snprintf(fw_name, sizeof(fw_name), "radeon/%s_sdma.bin", chip_name);
+	अगर (err) अणु
+		snम_लिखो(fw_name, माप(fw_name), "radeon/%s_sdma.bin", chip_name);
 		err = request_firmware(&rdev->sdma_fw, fw_name, rdev->dev);
-		if (err)
-			goto out;
-		if (rdev->sdma_fw->size != sdma_req_size) {
+		अगर (err)
+			जाओ out;
+		अगर (rdev->sdma_fw->size != sdma_req_size) अणु
 			pr_err("cik_sdma: Bogus length %zu in firmware \"%s\"\n",
 			       rdev->sdma_fw->size, fw_name);
 			err = -EINVAL;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		err = radeon_ucode_validate(rdev->sdma_fw);
-		if (err) {
+		अगर (err) अणु
 			pr_err("cik_fw: validation failed for firmware \"%s\"\n",
 			       fw_name);
-			goto out;
-		} else {
+			जाओ out;
+		पूर्ण अन्यथा अणु
 			new_fw++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* No SMC, MC ucode on APUs */
-	if (!(rdev->flags & RADEON_IS_IGP)) {
-		snprintf(fw_name, sizeof(fw_name), "radeon/%s_mc.bin", new_chip_name);
+	अगर (!(rdev->flags & RADEON_IS_IGP)) अणु
+		snम_लिखो(fw_name, माप(fw_name), "radeon/%s_mc.bin", new_chip_name);
 		err = request_firmware(&rdev->mc_fw, fw_name, rdev->dev);
-		if (err) {
-			snprintf(fw_name, sizeof(fw_name), "radeon/%s_mc2.bin", chip_name);
+		अगर (err) अणु
+			snम_लिखो(fw_name, माप(fw_name), "radeon/%s_mc2.bin", chip_name);
 			err = request_firmware(&rdev->mc_fw, fw_name, rdev->dev);
-			if (err) {
-				snprintf(fw_name, sizeof(fw_name), "radeon/%s_mc.bin", chip_name);
+			अगर (err) अणु
+				snम_लिखो(fw_name, माप(fw_name), "radeon/%s_mc.bin", chip_name);
 				err = request_firmware(&rdev->mc_fw, fw_name, rdev->dev);
-				if (err)
-					goto out;
-			}
-			if ((rdev->mc_fw->size != mc_req_size) &&
-			    (rdev->mc_fw->size != mc2_req_size)){
+				अगर (err)
+					जाओ out;
+			पूर्ण
+			अगर ((rdev->mc_fw->size != mc_req_size) &&
+			    (rdev->mc_fw->size != mc2_req_size))अणु
 				pr_err("cik_mc: Bogus length %zu in firmware \"%s\"\n",
 				       rdev->mc_fw->size, fw_name);
 				err = -EINVAL;
-			}
+			पूर्ण
 			DRM_INFO("%s: %zu bytes\n", fw_name, rdev->mc_fw->size);
-		} else {
+		पूर्ण अन्यथा अणु
 			err = radeon_ucode_validate(rdev->mc_fw);
-			if (err) {
+			अगर (err) अणु
 				pr_err("cik_fw: validation failed for firmware \"%s\"\n",
 				       fw_name);
-				goto out;
-			} else {
+				जाओ out;
+			पूर्ण अन्यथा अणु
 				new_fw++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (new_smc)
-			snprintf(fw_name, sizeof(fw_name), "radeon/%s_k_smc.bin", new_chip_name);
-		else
-			snprintf(fw_name, sizeof(fw_name), "radeon/%s_smc.bin", new_chip_name);
+		अगर (new_smc)
+			snम_लिखो(fw_name, माप(fw_name), "radeon/%s_k_smc.bin", new_chip_name);
+		अन्यथा
+			snम_लिखो(fw_name, माप(fw_name), "radeon/%s_smc.bin", new_chip_name);
 		err = request_firmware(&rdev->smc_fw, fw_name, rdev->dev);
-		if (err) {
-			snprintf(fw_name, sizeof(fw_name), "radeon/%s_smc.bin", chip_name);
+		अगर (err) अणु
+			snम_लिखो(fw_name, माप(fw_name), "radeon/%s_smc.bin", chip_name);
 			err = request_firmware(&rdev->smc_fw, fw_name, rdev->dev);
-			if (err) {
+			अगर (err) अणु
 				pr_err("smc: error loading firmware \"%s\"\n",
 				       fw_name);
 				release_firmware(rdev->smc_fw);
-				rdev->smc_fw = NULL;
+				rdev->smc_fw = शून्य;
 				err = 0;
-			} else if (rdev->smc_fw->size != smc_req_size) {
+			पूर्ण अन्यथा अगर (rdev->smc_fw->size != smc_req_size) अणु
 				pr_err("cik_smc: Bogus length %zu in firmware \"%s\"\n",
 				       rdev->smc_fw->size, fw_name);
 				err = -EINVAL;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			err = radeon_ucode_validate(rdev->smc_fw);
-			if (err) {
+			अगर (err) अणु
 				pr_err("cik_fw: validation failed for firmware \"%s\"\n",
 				       fw_name);
-				goto out;
-			} else {
+				जाओ out;
+			पूर्ण अन्यथा अणु
 				new_fw++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (new_fw == 0) {
+	अगर (new_fw == 0) अणु
 		rdev->new_fw = false;
-	} else if (new_fw < num_fw) {
+	पूर्ण अन्यथा अगर (new_fw < num_fw) अणु
 		pr_err("ci_fw: mixing new and old firmware!\n");
 		err = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		rdev->new_fw = true;
-	}
+	पूर्ण
 
 out:
-	if (err) {
-		if (err != -EINVAL)
+	अगर (err) अणु
+		अगर (err != -EINVAL)
 			pr_err("cik_cp: Failed to load firmware \"%s\"\n",
 			       fw_name);
 		release_firmware(rdev->pfp_fw);
-		rdev->pfp_fw = NULL;
+		rdev->pfp_fw = शून्य;
 		release_firmware(rdev->me_fw);
-		rdev->me_fw = NULL;
+		rdev->me_fw = शून्य;
 		release_firmware(rdev->ce_fw);
-		rdev->ce_fw = NULL;
+		rdev->ce_fw = शून्य;
 		release_firmware(rdev->mec_fw);
-		rdev->mec_fw = NULL;
+		rdev->mec_fw = शून्य;
 		release_firmware(rdev->mec2_fw);
-		rdev->mec2_fw = NULL;
+		rdev->mec2_fw = शून्य;
 		release_firmware(rdev->rlc_fw);
-		rdev->rlc_fw = NULL;
+		rdev->rlc_fw = शून्य;
 		release_firmware(rdev->sdma_fw);
-		rdev->sdma_fw = NULL;
+		rdev->sdma_fw = शून्य;
 		release_firmware(rdev->mc_fw);
-		rdev->mc_fw = NULL;
+		rdev->mc_fw = शून्य;
 		release_firmware(rdev->smc_fw);
-		rdev->smc_fw = NULL;
-	}
-	return err;
-}
+		rdev->smc_fw = शून्य;
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /*
  * Core functions
@@ -2309,51 +2310,51 @@ out:
 /**
  * cik_tiling_mode_table_init - init the hw tiling table
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Starting with SI, the tiling setup is done globally in a
+ * Starting with SI, the tiling setup is करोne globally in a
  * set of 32 tiling modes.  Rather than selecting each set of
  * parameters per surface as on older asics, we just select
  * which index in the tiling table we want to use, and the
  * surface uses those parameters (CIK).
  */
-static void cik_tiling_mode_table_init(struct radeon_device *rdev)
-{
+अटल व्योम cik_tiling_mode_table_init(काष्ठा radeon_device *rdev)
+अणु
 	u32 *tile = rdev->config.cik.tile_mode_array;
 	u32 *macrotile = rdev->config.cik.macrotile_mode_array;
-	const u32 num_tile_mode_states =
+	स्थिर u32 num_tile_mode_states =
 			ARRAY_SIZE(rdev->config.cik.tile_mode_array);
-	const u32 num_secondary_tile_mode_states =
+	स्थिर u32 num_secondary_tile_mode_states =
 			ARRAY_SIZE(rdev->config.cik.macrotile_mode_array);
 	u32 reg_offset, split_equal_to_row_size;
 	u32 num_pipe_configs;
 	u32 num_rbs = rdev->config.cik.max_backends_per_se *
 		rdev->config.cik.max_shader_engines;
 
-	switch (rdev->config.cik.mem_row_size_in_kb) {
-	case 1:
+	चयन (rdev->config.cik.mem_row_size_in_kb) अणु
+	हाल 1:
 		split_equal_to_row_size = ADDR_SURF_TILE_SPLIT_1KB;
-		break;
-	case 2:
-	default:
+		अवरोध;
+	हाल 2:
+	शेष:
 		split_equal_to_row_size = ADDR_SURF_TILE_SPLIT_2KB;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		split_equal_to_row_size = ADDR_SURF_TILE_SPLIT_4KB;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	num_pipe_configs = rdev->config.cik.max_tile_pipes;
-	if (num_pipe_configs > 8)
+	अगर (num_pipe_configs > 8)
 		num_pipe_configs = 16;
 
-	for (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
+	क्रम (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
 		tile[reg_offset] = 0;
-	for (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
+	क्रम (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
 		macrotile[reg_offset] = 0;
 
-	switch(num_pipe_configs) {
-	case 16:
+	चयन(num_pipe_configs) अणु
+	हाल 16:
 		tile[0] = (ARRAY_MODE(ARRAY_2D_TILED_THIN1) |
 			   MICRO_TILE_MODE_NEW(ADDR_SURF_DEPTH_MICRO_TILING) |
 			   PIPE_CONFIG(ADDR_SURF_P16_32x32_16x16) |
@@ -2490,13 +2491,13 @@ static void cik_tiling_mode_table_init(struct radeon_device *rdev)
 			    MACRO_TILE_ASPECT(ADDR_SURF_MACRO_ASPECT_1) |
 			    NUM_BANKS(ADDR_SURF_2_BANK));
 
-		for (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
+		क्रम (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
 			WREG32(GB_TILE_MODE0 + (reg_offset * 4), tile[reg_offset]);
-		for (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
+		क्रम (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
 			WREG32(GB_MACROTILE_MODE0 + (reg_offset * 4), macrotile[reg_offset]);
-		break;
+		अवरोध;
 
-	case 8:
+	हाल 8:
 		tile[0] = (ARRAY_MODE(ARRAY_2D_TILED_THIN1) |
 			   MICRO_TILE_MODE_NEW(ADDR_SURF_DEPTH_MICRO_TILING) |
 			   PIPE_CONFIG(ADDR_SURF_P8_32x32_16x16) |
@@ -2633,14 +2634,14 @@ static void cik_tiling_mode_table_init(struct radeon_device *rdev)
 				MACRO_TILE_ASPECT(ADDR_SURF_MACRO_ASPECT_1) |
 				NUM_BANKS(ADDR_SURF_2_BANK));
 
-		for (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
+		क्रम (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
 			WREG32(GB_TILE_MODE0 + (reg_offset * 4), tile[reg_offset]);
-		for (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
+		क्रम (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
 			WREG32(GB_MACROTILE_MODE0 + (reg_offset * 4), macrotile[reg_offset]);
-		break;
+		अवरोध;
 
-	case 4:
-		if (num_rbs == 4) {
+	हाल 4:
+		अगर (num_rbs == 4) अणु
 		tile[0] = (ARRAY_MODE(ARRAY_2D_TILED_THIN1) |
 			   MICRO_TILE_MODE_NEW(ADDR_SURF_DEPTH_MICRO_TILING) |
 			   PIPE_CONFIG(ADDR_SURF_P4_16x16) |
@@ -2720,7 +2721,7 @@ static void cik_tiling_mode_table_init(struct radeon_device *rdev)
 			    PIPE_CONFIG(ADDR_SURF_P4_16x16) |
 			    SAMPLE_SPLIT(ADDR_SURF_SAMPLE_SPLIT_2));
 
-		} else if (num_rbs < 4) {
+		पूर्ण अन्यथा अगर (num_rbs < 4) अणु
 		tile[0] = (ARRAY_MODE(ARRAY_2D_TILED_THIN1) |
 			   MICRO_TILE_MODE_NEW(ADDR_SURF_DEPTH_MICRO_TILING) |
 			   PIPE_CONFIG(ADDR_SURF_P4_8x16) |
@@ -2799,7 +2800,7 @@ static void cik_tiling_mode_table_init(struct radeon_device *rdev)
 			    MICRO_TILE_MODE_NEW(ADDR_SURF_ROTATED_MICRO_TILING) |
 			    PIPE_CONFIG(ADDR_SURF_P4_8x16) |
 			    SAMPLE_SPLIT(ADDR_SURF_SAMPLE_SPLIT_2));
-		}
+		पूर्ण
 
 		macrotile[0] = (BANK_WIDTH(ADDR_SURF_BANK_WIDTH_1) |
 				BANK_HEIGHT(ADDR_SURF_BANK_HEIGHT_4) |
@@ -2858,13 +2859,13 @@ static void cik_tiling_mode_table_init(struct radeon_device *rdev)
 				MACRO_TILE_ASPECT(ADDR_SURF_MACRO_ASPECT_1) |
 				NUM_BANKS(ADDR_SURF_4_BANK));
 
-		for (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
+		क्रम (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
 			WREG32(GB_TILE_MODE0 + (reg_offset * 4), tile[reg_offset]);
-		for (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
+		क्रम (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
 			WREG32(GB_MACROTILE_MODE0 + (reg_offset * 4), macrotile[reg_offset]);
-		break;
+		अवरोध;
 
-	case 2:
+	हाल 2:
 		tile[0] = (ARRAY_MODE(ARRAY_2D_TILED_THIN1) |
 			   MICRO_TILE_MODE_NEW(ADDR_SURF_DEPTH_MICRO_TILING) |
 			   PIPE_CONFIG(ADDR_SURF_P2) |
@@ -3001,180 +3002,180 @@ static void cik_tiling_mode_table_init(struct radeon_device *rdev)
 				MACRO_TILE_ASPECT(ADDR_SURF_MACRO_ASPECT_2) |
 				NUM_BANKS(ADDR_SURF_8_BANK));
 
-		for (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
+		क्रम (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
 			WREG32(GB_TILE_MODE0 + (reg_offset * 4), tile[reg_offset]);
-		for (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
+		क्रम (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
 			WREG32(GB_MACROTILE_MODE0 + (reg_offset * 4), macrotile[reg_offset]);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		DRM_ERROR("unknown num pipe config: 0x%x\n", num_pipe_configs);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * cik_select_se_sh - select which SE, SH to address
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @se_num: shader engine to address
  * @sh_num: sh block to address
  *
  * Select which SE, SH combinations to address. Certain
- * registers are instanced per SE or SH.  0xffffffff means
+ * रेजिस्टरs are instanced per SE or SH.  0xffffffff means
  * broadcast to all SEs or SHs (CIK).
  */
-static void cik_select_se_sh(struct radeon_device *rdev,
+अटल व्योम cik_select_se_sh(काष्ठा radeon_device *rdev,
 			     u32 se_num, u32 sh_num)
-{
+अणु
 	u32 data = INSTANCE_BROADCAST_WRITES;
 
-	if ((se_num == 0xffffffff) && (sh_num == 0xffffffff))
+	अगर ((se_num == 0xffffffff) && (sh_num == 0xffffffff))
 		data |= SH_BROADCAST_WRITES | SE_BROADCAST_WRITES;
-	else if (se_num == 0xffffffff)
+	अन्यथा अगर (se_num == 0xffffffff)
 		data |= SE_BROADCAST_WRITES | SH_INDEX(sh_num);
-	else if (sh_num == 0xffffffff)
+	अन्यथा अगर (sh_num == 0xffffffff)
 		data |= SH_BROADCAST_WRITES | SE_INDEX(se_num);
-	else
+	अन्यथा
 		data |= SH_INDEX(sh_num) | SE_INDEX(se_num);
 	WREG32(GRBM_GFX_INDEX, data);
-}
+पूर्ण
 
 /**
- * cik_create_bitmask - create a bitmask
+ * cik_create_biपंचांगask - create a biपंचांगask
  *
  * @bit_width: length of the mask
  *
  * create a variable length bit mask (CIK).
- * Returns the bitmask.
+ * Returns the biपंचांगask.
  */
-static u32 cik_create_bitmask(u32 bit_width)
-{
+अटल u32 cik_create_biपंचांगask(u32 bit_width)
+अणु
 	u32 i, mask = 0;
 
-	for (i = 0; i < bit_width; i++) {
+	क्रम (i = 0; i < bit_width; i++) अणु
 		mask <<= 1;
 		mask |= 1;
-	}
-	return mask;
-}
+	पूर्ण
+	वापस mask;
+पूर्ण
 
 /**
  * cik_get_rb_disabled - computes the mask of disabled RBs
  *
- * @rdev: radeon_device pointer
- * @max_rb_num_per_se: max RBs (render backends) per SE (shader engine) for the asic
- * @sh_per_se: number of SH blocks per SE for the asic
+ * @rdev: radeon_device poपूर्णांकer
+ * @max_rb_num_per_se: max RBs (render backends) per SE (shader engine) क्रम the asic
+ * @sh_per_se: number of SH blocks per SE क्रम the asic
  *
- * Calculates the bitmask of disabled RBs (CIK).
- * Returns the disabled RB bitmask.
+ * Calculates the biपंचांगask of disabled RBs (CIK).
+ * Returns the disabled RB biपंचांगask.
  */
-static u32 cik_get_rb_disabled(struct radeon_device *rdev,
+अटल u32 cik_get_rb_disabled(काष्ठा radeon_device *rdev,
 			      u32 max_rb_num_per_se,
 			      u32 sh_per_se)
-{
+अणु
 	u32 data, mask;
 
 	data = RREG32(CC_RB_BACKEND_DISABLE);
-	if (data & 1)
+	अगर (data & 1)
 		data &= BACKEND_DISABLE_MASK;
-	else
+	अन्यथा
 		data = 0;
 	data |= RREG32(GC_USER_RB_BACKEND_DISABLE);
 
 	data >>= BACKEND_DISABLE_SHIFT;
 
-	mask = cik_create_bitmask(max_rb_num_per_se / sh_per_se);
+	mask = cik_create_biपंचांगask(max_rb_num_per_se / sh_per_se);
 
-	return data & mask;
-}
+	वापस data & mask;
+पूर्ण
 
 /**
  * cik_setup_rb - setup the RBs on the asic
  *
- * @rdev: radeon_device pointer
- * @se_num: number of SEs (shader engines) for the asic
- * @sh_per_se: number of SH blocks per SE for the asic
- * @max_rb_num_per_se: max RBs (render backends) per SE for the asic
+ * @rdev: radeon_device poपूर्णांकer
+ * @se_num: number of SEs (shader engines) क्रम the asic
+ * @sh_per_se: number of SH blocks per SE क्रम the asic
+ * @max_rb_num_per_se: max RBs (render backends) per SE क्रम the asic
  *
- * Configures per-SE/SH RB registers (CIK).
+ * Configures per-SE/SH RB रेजिस्टरs (CIK).
  */
-static void cik_setup_rb(struct radeon_device *rdev,
+अटल व्योम cik_setup_rb(काष्ठा radeon_device *rdev,
 			 u32 se_num, u32 sh_per_se,
 			 u32 max_rb_num_per_se)
-{
-	int i, j;
+अणु
+	पूर्णांक i, j;
 	u32 data, mask;
 	u32 disabled_rbs = 0;
 	u32 enabled_rbs = 0;
 
-	for (i = 0; i < se_num; i++) {
-		for (j = 0; j < sh_per_se; j++) {
+	क्रम (i = 0; i < se_num; i++) अणु
+		क्रम (j = 0; j < sh_per_se; j++) अणु
 			cik_select_se_sh(rdev, i, j);
 			data = cik_get_rb_disabled(rdev, max_rb_num_per_se, sh_per_se);
-			if (rdev->family == CHIP_HAWAII)
+			अगर (rdev->family == CHIP_HAWAII)
 				disabled_rbs |= data << ((i * sh_per_se + j) * HAWAII_RB_BITMAP_WIDTH_PER_SH);
-			else
+			अन्यथा
 				disabled_rbs |= data << ((i * sh_per_se + j) * CIK_RB_BITMAP_WIDTH_PER_SH);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	cik_select_se_sh(rdev, 0xffffffff, 0xffffffff);
 
 	mask = 1;
-	for (i = 0; i < max_rb_num_per_se * se_num; i++) {
-		if (!(disabled_rbs & mask))
+	क्रम (i = 0; i < max_rb_num_per_se * se_num; i++) अणु
+		अगर (!(disabled_rbs & mask))
 			enabled_rbs |= mask;
 		mask <<= 1;
-	}
+	पूर्ण
 
 	rdev->config.cik.backend_enable_mask = enabled_rbs;
 
-	for (i = 0; i < se_num; i++) {
+	क्रम (i = 0; i < se_num; i++) अणु
 		cik_select_se_sh(rdev, i, 0xffffffff);
 		data = 0;
-		for (j = 0; j < sh_per_se; j++) {
-			switch (enabled_rbs & 3) {
-			case 0:
-				if (j == 0)
+		क्रम (j = 0; j < sh_per_se; j++) अणु
+			चयन (enabled_rbs & 3) अणु
+			हाल 0:
+				अगर (j == 0)
 					data |= PKR_MAP(RASTER_CONFIG_RB_MAP_3);
-				else
+				अन्यथा
 					data |= PKR_MAP(RASTER_CONFIG_RB_MAP_0);
-				break;
-			case 1:
+				अवरोध;
+			हाल 1:
 				data |= (RASTER_CONFIG_RB_MAP_0 << (i * sh_per_se + j) * 2);
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				data |= (RASTER_CONFIG_RB_MAP_3 << (i * sh_per_se + j) * 2);
-				break;
-			case 3:
-			default:
+				अवरोध;
+			हाल 3:
+			शेष:
 				data |= (RASTER_CONFIG_RB_MAP_2 << (i * sh_per_se + j) * 2);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			enabled_rbs >>= 2;
-		}
+		पूर्ण
 		WREG32(PA_SC_RASTER_CONFIG, data);
-	}
+	पूर्ण
 	cik_select_se_sh(rdev, 0xffffffff, 0xffffffff);
-}
+पूर्ण
 
 /**
  * cik_gpu_init - setup the 3D engine
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Configures the 3D engine and tiling configuration
- * registers so that the 3D engine is usable.
+ * रेजिस्टरs so that the 3D engine is usable.
  */
-static void cik_gpu_init(struct radeon_device *rdev)
-{
+अटल व्योम cik_gpu_init(काष्ठा radeon_device *rdev)
+अणु
 	u32 gb_addr_config = RREG32(GB_ADDR_CONFIG);
 	u32 mc_arb_ramcfg;
 	u32 hdp_host_path_cntl;
-	u32 tmp;
-	int i, j;
+	u32 पंचांगp;
+	पूर्णांक i, j;
 
-	switch (rdev->family) {
-	case CHIP_BONAIRE:
+	चयन (rdev->family) अणु
+	हाल CHIP_BONAIRE:
 		rdev->config.cik.max_shader_engines = 2;
 		rdev->config.cik.max_tile_pipes = 4;
 		rdev->config.cik.max_cu_per_sh = 7;
@@ -3182,16 +3183,16 @@ static void cik_gpu_init(struct radeon_device *rdev)
 		rdev->config.cik.max_backends_per_se = 2;
 		rdev->config.cik.max_texture_channel_caches = 4;
 		rdev->config.cik.max_gprs = 256;
-		rdev->config.cik.max_gs_threads = 32;
+		rdev->config.cik.max_gs_thपढ़ोs = 32;
 		rdev->config.cik.max_hw_contexts = 8;
 
-		rdev->config.cik.sc_prim_fifo_size_frontend = 0x20;
-		rdev->config.cik.sc_prim_fifo_size_backend = 0x100;
-		rdev->config.cik.sc_hiz_tile_fifo_size = 0x30;
-		rdev->config.cik.sc_earlyz_tile_fifo_size = 0x130;
+		rdev->config.cik.sc_prim_fअगरo_size_frontend = 0x20;
+		rdev->config.cik.sc_prim_fअगरo_size_backend = 0x100;
+		rdev->config.cik.sc_hiz_tile_fअगरo_size = 0x30;
+		rdev->config.cik.sc_earlyz_tile_fअगरo_size = 0x130;
 		gb_addr_config = BONAIRE_GB_ADDR_CONFIG_GOLDEN;
-		break;
-	case CHIP_HAWAII:
+		अवरोध;
+	हाल CHIP_HAWAII:
 		rdev->config.cik.max_shader_engines = 4;
 		rdev->config.cik.max_tile_pipes = 16;
 		rdev->config.cik.max_cu_per_sh = 11;
@@ -3199,16 +3200,16 @@ static void cik_gpu_init(struct radeon_device *rdev)
 		rdev->config.cik.max_backends_per_se = 4;
 		rdev->config.cik.max_texture_channel_caches = 16;
 		rdev->config.cik.max_gprs = 256;
-		rdev->config.cik.max_gs_threads = 32;
+		rdev->config.cik.max_gs_thपढ़ोs = 32;
 		rdev->config.cik.max_hw_contexts = 8;
 
-		rdev->config.cik.sc_prim_fifo_size_frontend = 0x20;
-		rdev->config.cik.sc_prim_fifo_size_backend = 0x100;
-		rdev->config.cik.sc_hiz_tile_fifo_size = 0x30;
-		rdev->config.cik.sc_earlyz_tile_fifo_size = 0x130;
+		rdev->config.cik.sc_prim_fअगरo_size_frontend = 0x20;
+		rdev->config.cik.sc_prim_fअगरo_size_backend = 0x100;
+		rdev->config.cik.sc_hiz_tile_fअगरo_size = 0x30;
+		rdev->config.cik.sc_earlyz_tile_fअगरo_size = 0x130;
 		gb_addr_config = HAWAII_GB_ADDR_CONFIG_GOLDEN;
-		break;
-	case CHIP_KAVERI:
+		अवरोध;
+	हाल CHIP_KAVERI:
 		rdev->config.cik.max_shader_engines = 1;
 		rdev->config.cik.max_tile_pipes = 4;
 		rdev->config.cik.max_cu_per_sh = 8;
@@ -3216,18 +3217,18 @@ static void cik_gpu_init(struct radeon_device *rdev)
 		rdev->config.cik.max_sh_per_se = 1;
 		rdev->config.cik.max_texture_channel_caches = 4;
 		rdev->config.cik.max_gprs = 256;
-		rdev->config.cik.max_gs_threads = 16;
+		rdev->config.cik.max_gs_thपढ़ोs = 16;
 		rdev->config.cik.max_hw_contexts = 8;
 
-		rdev->config.cik.sc_prim_fifo_size_frontend = 0x20;
-		rdev->config.cik.sc_prim_fifo_size_backend = 0x100;
-		rdev->config.cik.sc_hiz_tile_fifo_size = 0x30;
-		rdev->config.cik.sc_earlyz_tile_fifo_size = 0x130;
+		rdev->config.cik.sc_prim_fअगरo_size_frontend = 0x20;
+		rdev->config.cik.sc_prim_fअगरo_size_backend = 0x100;
+		rdev->config.cik.sc_hiz_tile_fअगरo_size = 0x30;
+		rdev->config.cik.sc_earlyz_tile_fअगरo_size = 0x130;
 		gb_addr_config = BONAIRE_GB_ADDR_CONFIG_GOLDEN;
-		break;
-	case CHIP_KABINI:
-	case CHIP_MULLINS:
-	default:
+		अवरोध;
+	हाल CHIP_KABINI:
+	हाल CHIP_MULLINS:
+	शेष:
 		rdev->config.cik.max_shader_engines = 1;
 		rdev->config.cik.max_tile_pipes = 2;
 		rdev->config.cik.max_cu_per_sh = 2;
@@ -3235,25 +3236,25 @@ static void cik_gpu_init(struct radeon_device *rdev)
 		rdev->config.cik.max_backends_per_se = 1;
 		rdev->config.cik.max_texture_channel_caches = 2;
 		rdev->config.cik.max_gprs = 256;
-		rdev->config.cik.max_gs_threads = 16;
+		rdev->config.cik.max_gs_thपढ़ोs = 16;
 		rdev->config.cik.max_hw_contexts = 8;
 
-		rdev->config.cik.sc_prim_fifo_size_frontend = 0x20;
-		rdev->config.cik.sc_prim_fifo_size_backend = 0x100;
-		rdev->config.cik.sc_hiz_tile_fifo_size = 0x30;
-		rdev->config.cik.sc_earlyz_tile_fifo_size = 0x130;
+		rdev->config.cik.sc_prim_fअगरo_size_frontend = 0x20;
+		rdev->config.cik.sc_prim_fअगरo_size_backend = 0x100;
+		rdev->config.cik.sc_hiz_tile_fअगरo_size = 0x30;
+		rdev->config.cik.sc_earlyz_tile_fअगरo_size = 0x130;
 		gb_addr_config = BONAIRE_GB_ADDR_CONFIG_GOLDEN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Initialize HDP */
-	for (i = 0, j = 0; i < 32; i++, j += 0x18) {
+	क्रम (i = 0, j = 0; i < 32; i++, j += 0x18) अणु
 		WREG32((0x2c14 + j), 0x00000000);
 		WREG32((0x2c18 + j), 0x00000000);
 		WREG32((0x2c1c + j), 0x00000000);
 		WREG32((0x2c20 + j), 0x00000000);
 		WREG32((0x2c24 + j), 0x00000000);
-	}
+	पूर्ण
 
 	WREG32(GRBM_CNTL, GRBM_READ_TIMEOUT(0xff));
 	WREG32(SRBM_INT_CNTL, 0x1);
@@ -3266,9 +3267,9 @@ static void cik_gpu_init(struct radeon_device *rdev)
 
 	rdev->config.cik.num_tile_pipes = rdev->config.cik.max_tile_pipes;
 	rdev->config.cik.mem_max_burst_length_bytes = 256;
-	tmp = (mc_arb_ramcfg & NOOFCOLS_MASK) >> NOOFCOLS_SHIFT;
-	rdev->config.cik.mem_row_size_in_kb = (4 * (1 << (8 + tmp))) / 1024;
-	if (rdev->config.cik.mem_row_size_in_kb > 4)
+	पंचांगp = (mc_arb_ramcfg & NOOFCOLS_MASK) >> NOOFCOLS_SHIFT;
+	rdev->config.cik.mem_row_size_in_kb = (4 * (1 << (8 + पंचांगp))) / 1024;
+	अगर (rdev->config.cik.mem_row_size_in_kb > 4)
 		rdev->config.cik.mem_row_size_in_kb = 4;
 	/* XXX use MC settings? */
 	rdev->config.cik.shader_engine_tile_size = 32;
@@ -3277,20 +3278,20 @@ static void cik_gpu_init(struct radeon_device *rdev)
 
 	/* fix up row size */
 	gb_addr_config &= ~ROW_SIZE_MASK;
-	switch (rdev->config.cik.mem_row_size_in_kb) {
-	case 1:
-	default:
+	चयन (rdev->config.cik.mem_row_size_in_kb) अणु
+	हाल 1:
+	शेष:
 		gb_addr_config |= ROW_SIZE(0);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		gb_addr_config |= ROW_SIZE(1);
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		gb_addr_config |= ROW_SIZE(2);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* setup tiling info dword.  gb_addr_config is not adequate since it does
+	/* setup tiling info dword.  gb_addr_config is not adequate since it करोes
 	 * not have bank info, so create a custom tiling dword.
 	 * bits 3:0   num_pipes
 	 * bits 7:4   num_banks
@@ -3298,22 +3299,22 @@ static void cik_gpu_init(struct radeon_device *rdev)
 	 * bits 15:12 row_size
 	 */
 	rdev->config.cik.tile_config = 0;
-	switch (rdev->config.cik.num_tile_pipes) {
-	case 1:
+	चयन (rdev->config.cik.num_tile_pipes) अणु
+	हाल 1:
 		rdev->config.cik.tile_config |= (0 << 0);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		rdev->config.cik.tile_config |= (1 << 0);
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		rdev->config.cik.tile_config |= (2 << 0);
-		break;
-	case 8:
-	default:
+		अवरोध;
+	हाल 8:
+	शेष:
 		/* XXX what about 12? */
 		rdev->config.cik.tile_config |= (3 << 0);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	rdev->config.cik.tile_config |=
 		((mc_arb_ramcfg & NOOFBANK_MASK) >> NOOFBANK_SHIFT) << 4;
 	rdev->config.cik.tile_config |=
@@ -3337,46 +3338,46 @@ static void cik_gpu_init(struct radeon_device *rdev)
 		     rdev->config.cik.max_backends_per_se);
 
 	rdev->config.cik.active_cus = 0;
-	for (i = 0; i < rdev->config.cik.max_shader_engines; i++) {
-		for (j = 0; j < rdev->config.cik.max_sh_per_se; j++) {
+	क्रम (i = 0; i < rdev->config.cik.max_shader_engines; i++) अणु
+		क्रम (j = 0; j < rdev->config.cik.max_sh_per_se; j++) अणु
 			rdev->config.cik.active_cus +=
-				hweight32(cik_get_cu_active_bitmap(rdev, i, j));
-		}
-	}
+				hweight32(cik_get_cu_active_biपंचांगap(rdev, i, j));
+		पूर्ण
+	पूर्ण
 
-	/* set HW defaults for 3D engine */
+	/* set HW शेषs क्रम 3D engine */
 	WREG32(CP_MEQ_THRESHOLDS, MEQ1_START(0x30) | MEQ2_START(0x60));
 
 	WREG32(SX_DEBUG_1, 0x20);
 
 	WREG32(TA_CNTL_AUX, 0x00010000);
 
-	tmp = RREG32(SPI_CONFIG_CNTL);
-	tmp |= 0x03000000;
-	WREG32(SPI_CONFIG_CNTL, tmp);
+	पंचांगp = RREG32(SPI_CONFIG_CNTL);
+	पंचांगp |= 0x03000000;
+	WREG32(SPI_CONFIG_CNTL, पंचांगp);
 
 	WREG32(SQ_CONFIG, 1);
 
 	WREG32(DB_DEBUG, 0);
 
-	tmp = RREG32(DB_DEBUG2) & ~0xf00fffff;
-	tmp |= 0x00000400;
-	WREG32(DB_DEBUG2, tmp);
+	पंचांगp = RREG32(DB_DEBUG2) & ~0xf00fffff;
+	पंचांगp |= 0x00000400;
+	WREG32(DB_DEBUG2, पंचांगp);
 
-	tmp = RREG32(DB_DEBUG3) & ~0x0002021c;
-	tmp |= 0x00020200;
-	WREG32(DB_DEBUG3, tmp);
+	पंचांगp = RREG32(DB_DEBUG3) & ~0x0002021c;
+	पंचांगp |= 0x00020200;
+	WREG32(DB_DEBUG3, पंचांगp);
 
-	tmp = RREG32(CB_HW_CONTROL) & ~0x00010000;
-	tmp |= 0x00018208;
-	WREG32(CB_HW_CONTROL, tmp);
+	पंचांगp = RREG32(CB_HW_CONTROL) & ~0x00010000;
+	पंचांगp |= 0x00018208;
+	WREG32(CB_HW_CONTROL, पंचांगp);
 
 	WREG32(SPI_CONFIG_CNTL_1, VTX_DONE_DELAY(4));
 
-	WREG32(PA_SC_FIFO_SIZE, (SC_FRONTEND_PRIM_FIFO_SIZE(rdev->config.cik.sc_prim_fifo_size_frontend) |
-				 SC_BACKEND_PRIM_FIFO_SIZE(rdev->config.cik.sc_prim_fifo_size_backend) |
-				 SC_HIZ_TILE_FIFO_SIZE(rdev->config.cik.sc_hiz_tile_fifo_size) |
-				 SC_EARLYZ_TILE_FIFO_SIZE(rdev->config.cik.sc_earlyz_tile_fifo_size)));
+	WREG32(PA_SC_FIFO_SIZE, (SC_FRONTEND_PRIM_FIFO_SIZE(rdev->config.cik.sc_prim_fअगरo_size_frontend) |
+				 SC_BACKEND_PRIM_FIFO_SIZE(rdev->config.cik.sc_prim_fअगरo_size_backend) |
+				 SC_HIZ_TILE_FIFO_SIZE(rdev->config.cik.sc_hiz_tile_fअगरo_size) |
+				 SC_EARLYZ_TILE_FIFO_SIZE(rdev->config.cik.sc_earlyz_tile_fअगरo_size)));
 
 	WREG32(VGT_NUM_INSTANCES, 1);
 
@@ -3393,9 +3394,9 @@ static void cik_gpu_init(struct radeon_device *rdev)
 	WREG32(VGT_GS_VERTEX_REUSE, 16);
 	WREG32(PA_SC_LINE_STIPPLE_STATE, 0);
 
-	tmp = RREG32(HDP_MISC_CNTL);
-	tmp |= HDP_FLUSH_INVALIDATE_CACHE;
-	WREG32(HDP_MISC_CNTL, tmp);
+	पंचांगp = RREG32(HDP_MISC_CNTL);
+	पंचांगp |= HDP_FLUSH_INVALIDATE_CACHE;
+	WREG32(HDP_MISC_CNTL, पंचांगp);
 
 	hdp_host_path_cntl = RREG32(HDP_HOST_PATH_CNTL);
 	WREG32(HDP_HOST_PATH_CNTL, hdp_host_path_cntl);
@@ -3404,302 +3405,302 @@ static void cik_gpu_init(struct radeon_device *rdev)
 	WREG32(PA_SC_ENHANCE, ENABLE_PA_SC_OUT_OF_ORDER);
 
 	udelay(50);
-}
+पूर्ण
 
 /*
- * GPU scratch registers helpers function.
+ * GPU scratch रेजिस्टरs helpers function.
  */
 /**
- * cik_scratch_init - setup driver info for CP scratch regs
+ * cik_scratch_init - setup driver info क्रम CP scratch regs
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Set up the number and offset of the CP scratch registers.
- * NOTE: use of CP scratch registers is a legacy inferface and
- * is not used by default on newer asics (r6xx+).  On newer asics,
- * memory buffers are used for fences rather than scratch regs.
+ * Set up the number and offset of the CP scratch रेजिस्टरs.
+ * NOTE: use of CP scratch रेजिस्टरs is a legacy inferface and
+ * is not used by शेष on newer asics (r6xx+).  On newer asics,
+ * memory buffers are used क्रम fences rather than scratch regs.
  */
-static void cik_scratch_init(struct radeon_device *rdev)
-{
-	int i;
+अटल व्योम cik_scratch_init(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक i;
 
 	rdev->scratch.num_reg = 7;
 	rdev->scratch.reg_base = SCRATCH_REG0;
-	for (i = 0; i < rdev->scratch.num_reg; i++) {
-		rdev->scratch.free[i] = true;
+	क्रम (i = 0; i < rdev->scratch.num_reg; i++) अणु
+		rdev->scratch.मुक्त[i] = true;
 		rdev->scratch.reg[i] = rdev->scratch.reg_base + (i * 4);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * cik_ring_test - basic gfx ring test
  *
- * @rdev: radeon_device pointer
- * @ring: radeon_ring structure holding ring information
+ * @rdev: radeon_device poपूर्णांकer
+ * @ring: radeon_ring काष्ठाure holding ring inक्रमmation
  *
- * Allocate a scratch register and write to it using the gfx ring (CIK).
- * Provides a basic gfx ring test to verify that the ring is working.
+ * Allocate a scratch रेजिस्टर and ग_लिखो to it using the gfx ring (CIK).
+ * Provides a basic gfx ring test to verअगरy that the ring is working.
  * Used by cik_cp_gfx_resume();
  * Returns 0 on success, error on failure.
  */
-int cik_ring_test(struct radeon_device *rdev, struct radeon_ring *ring)
-{
-	uint32_t scratch;
-	uint32_t tmp = 0;
-	unsigned i;
-	int r;
+पूर्णांक cik_ring_test(काष्ठा radeon_device *rdev, काष्ठा radeon_ring *ring)
+अणु
+	uपूर्णांक32_t scratch;
+	uपूर्णांक32_t पंचांगp = 0;
+	अचिन्हित i;
+	पूर्णांक r;
 
 	r = radeon_scratch_get(rdev, &scratch);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("radeon: cp failed to get scratch reg (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 	WREG32(scratch, 0xCAFEDEAD);
 	r = radeon_ring_lock(rdev, ring, 3);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("radeon: cp failed to lock ring %d (%d).\n", ring->idx, r);
-		radeon_scratch_free(rdev, scratch);
-		return r;
-	}
-	radeon_ring_write(ring, PACKET3(PACKET3_SET_UCONFIG_REG, 1));
-	radeon_ring_write(ring, ((scratch - PACKET3_SET_UCONFIG_REG_START) >> 2));
-	radeon_ring_write(ring, 0xDEADBEEF);
+		radeon_scratch_मुक्त(rdev, scratch);
+		वापस r;
+	पूर्ण
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_SET_UCONFIG_REG, 1));
+	radeon_ring_ग_लिखो(ring, ((scratch - PACKET3_SET_UCONFIG_REG_START) >> 2));
+	radeon_ring_ग_लिखो(ring, 0xDEADBEEF);
 	radeon_ring_unlock_commit(rdev, ring, false);
 
-	for (i = 0; i < rdev->usec_timeout; i++) {
-		tmp = RREG32(scratch);
-		if (tmp == 0xDEADBEEF)
-			break;
+	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+		पंचांगp = RREG32(scratch);
+		अगर (पंचांगp == 0xDEADBEEF)
+			अवरोध;
 		udelay(1);
-	}
-	if (i < rdev->usec_timeout) {
+	पूर्ण
+	अगर (i < rdev->usec_समयout) अणु
 		DRM_INFO("ring test on %d succeeded in %d usecs\n", ring->idx, i);
-	} else {
+	पूर्ण अन्यथा अणु
 		DRM_ERROR("radeon: ring %d test failed (scratch(0x%04X)=0x%08X)\n",
-			  ring->idx, scratch, tmp);
+			  ring->idx, scratch, पंचांगp);
 		r = -EINVAL;
-	}
-	radeon_scratch_free(rdev, scratch);
-	return r;
-}
+	पूर्ण
+	radeon_scratch_मुक्त(rdev, scratch);
+	वापस r;
+पूर्ण
 
 /**
  * cik_hdp_flush_cp_ring_emit - emit an hdp flush on the cp
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @ridx: radeon ring index
  *
  * Emits an hdp flush on the cp.
  */
-static void cik_hdp_flush_cp_ring_emit(struct radeon_device *rdev,
-				       int ridx)
-{
-	struct radeon_ring *ring = &rdev->ring[ridx];
+अटल व्योम cik_hdp_flush_cp_ring_emit(काष्ठा radeon_device *rdev,
+				       पूर्णांक ridx)
+अणु
+	काष्ठा radeon_ring *ring = &rdev->ring[ridx];
 	u32 ref_and_mask;
 
-	switch (ring->idx) {
-	case CAYMAN_RING_TYPE_CP1_INDEX:
-	case CAYMAN_RING_TYPE_CP2_INDEX:
-	default:
-		switch (ring->me) {
-		case 0:
+	चयन (ring->idx) अणु
+	हाल CAYMAN_RING_TYPE_CP1_INDEX:
+	हाल CAYMAN_RING_TYPE_CP2_INDEX:
+	शेष:
+		चयन (ring->me) अणु
+		हाल 0:
 			ref_and_mask = CP2 << ring->pipe;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			ref_and_mask = CP6 << ring->pipe;
-			break;
-		default:
-			return;
-		}
-		break;
-	case RADEON_RING_TYPE_GFX_INDEX:
+			अवरोध;
+		शेष:
+			वापस;
+		पूर्ण
+		अवरोध;
+	हाल RADEON_RING_TYPE_GFX_INDEX:
 		ref_and_mask = CP0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	radeon_ring_write(ring, PACKET3(PACKET3_WAIT_REG_MEM, 5));
-	radeon_ring_write(ring, (WAIT_REG_MEM_OPERATION(1) | /* write, wait, write */
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_WAIT_REG_MEM, 5));
+	radeon_ring_ग_लिखो(ring, (WAIT_REG_MEM_OPERATION(1) | /* ग_लिखो, रुको, ग_लिखो */
 				 WAIT_REG_MEM_FUNCTION(3) |  /* == */
 				 WAIT_REG_MEM_ENGINE(1)));   /* pfp */
-	radeon_ring_write(ring, GPU_HDP_FLUSH_REQ >> 2);
-	radeon_ring_write(ring, GPU_HDP_FLUSH_DONE >> 2);
-	radeon_ring_write(ring, ref_and_mask);
-	radeon_ring_write(ring, ref_and_mask);
-	radeon_ring_write(ring, 0x20); /* poll interval */
-}
+	radeon_ring_ग_लिखो(ring, GPU_HDP_FLUSH_REQ >> 2);
+	radeon_ring_ग_लिखो(ring, GPU_HDP_FLUSH_DONE >> 2);
+	radeon_ring_ग_लिखो(ring, ref_and_mask);
+	radeon_ring_ग_लिखो(ring, ref_and_mask);
+	radeon_ring_ग_लिखो(ring, 0x20); /* poll पूर्णांकerval */
+पूर्ण
 
 /**
  * cik_fence_gfx_ring_emit - emit a fence on the gfx ring
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @fence: radeon fence object
  *
  * Emits a fence sequnce number on the gfx ring and flushes
  * GPU caches.
  */
-void cik_fence_gfx_ring_emit(struct radeon_device *rdev,
-			     struct radeon_fence *fence)
-{
-	struct radeon_ring *ring = &rdev->ring[fence->ring];
+व्योम cik_fence_gfx_ring_emit(काष्ठा radeon_device *rdev,
+			     काष्ठा radeon_fence *fence)
+अणु
+	काष्ठा radeon_ring *ring = &rdev->ring[fence->ring];
 	u64 addr = rdev->fence_drv[fence->ring].gpu_addr;
 
-	/* Workaround for cache flush problems. First send a dummy EOP
-	 * event down the pipe with seq one below.
+	/* Workaround क्रम cache flush problems. First send a dummy EOP
+	 * event करोwn the pipe with seq one below.
 	 */
-	radeon_ring_write(ring, PACKET3(PACKET3_EVENT_WRITE_EOP, 4));
-	radeon_ring_write(ring, (EOP_TCL1_ACTION_EN |
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_EVENT_WRITE_EOP, 4));
+	radeon_ring_ग_लिखो(ring, (EOP_TCL1_ACTION_EN |
 				 EOP_TC_ACTION_EN |
 				 EVENT_TYPE(CACHE_FLUSH_AND_INV_TS_EVENT) |
 				 EVENT_INDEX(5)));
-	radeon_ring_write(ring, addr & 0xfffffffc);
-	radeon_ring_write(ring, (upper_32_bits(addr) & 0xffff) |
+	radeon_ring_ग_लिखो(ring, addr & 0xfffffffc);
+	radeon_ring_ग_लिखो(ring, (upper_32_bits(addr) & 0xffff) |
 				DATA_SEL(1) | INT_SEL(0));
-	radeon_ring_write(ring, fence->seq - 1);
-	radeon_ring_write(ring, 0);
+	radeon_ring_ग_लिखो(ring, fence->seq - 1);
+	radeon_ring_ग_लिखो(ring, 0);
 
-	/* Then send the real EOP event down the pipe. */
-	radeon_ring_write(ring, PACKET3(PACKET3_EVENT_WRITE_EOP, 4));
-	radeon_ring_write(ring, (EOP_TCL1_ACTION_EN |
+	/* Then send the real EOP event करोwn the pipe. */
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_EVENT_WRITE_EOP, 4));
+	radeon_ring_ग_लिखो(ring, (EOP_TCL1_ACTION_EN |
 				 EOP_TC_ACTION_EN |
 				 EVENT_TYPE(CACHE_FLUSH_AND_INV_TS_EVENT) |
 				 EVENT_INDEX(5)));
-	radeon_ring_write(ring, addr & 0xfffffffc);
-	radeon_ring_write(ring, (upper_32_bits(addr) & 0xffff) | DATA_SEL(1) | INT_SEL(2));
-	radeon_ring_write(ring, fence->seq);
-	radeon_ring_write(ring, 0);
-}
+	radeon_ring_ग_लिखो(ring, addr & 0xfffffffc);
+	radeon_ring_ग_लिखो(ring, (upper_32_bits(addr) & 0xffff) | DATA_SEL(1) | INT_SEL(2));
+	radeon_ring_ग_लिखो(ring, fence->seq);
+	radeon_ring_ग_लिखो(ring, 0);
+पूर्ण
 
 /**
  * cik_fence_compute_ring_emit - emit a fence on the compute ring
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @fence: radeon fence object
  *
  * Emits a fence sequnce number on the compute ring and flushes
  * GPU caches.
  */
-void cik_fence_compute_ring_emit(struct radeon_device *rdev,
-				 struct radeon_fence *fence)
-{
-	struct radeon_ring *ring = &rdev->ring[fence->ring];
+व्योम cik_fence_compute_ring_emit(काष्ठा radeon_device *rdev,
+				 काष्ठा radeon_fence *fence)
+अणु
+	काष्ठा radeon_ring *ring = &rdev->ring[fence->ring];
 	u64 addr = rdev->fence_drv[fence->ring].gpu_addr;
 
-	/* RELEASE_MEM - flush caches, send int */
-	radeon_ring_write(ring, PACKET3(PACKET3_RELEASE_MEM, 5));
-	radeon_ring_write(ring, (EOP_TCL1_ACTION_EN |
+	/* RELEASE_MEM - flush caches, send पूर्णांक */
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_RELEASE_MEM, 5));
+	radeon_ring_ग_लिखो(ring, (EOP_TCL1_ACTION_EN |
 				 EOP_TC_ACTION_EN |
 				 EVENT_TYPE(CACHE_FLUSH_AND_INV_TS_EVENT) |
 				 EVENT_INDEX(5)));
-	radeon_ring_write(ring, DATA_SEL(1) | INT_SEL(2));
-	radeon_ring_write(ring, addr & 0xfffffffc);
-	radeon_ring_write(ring, upper_32_bits(addr));
-	radeon_ring_write(ring, fence->seq);
-	radeon_ring_write(ring, 0);
-}
+	radeon_ring_ग_लिखो(ring, DATA_SEL(1) | INT_SEL(2));
+	radeon_ring_ग_लिखो(ring, addr & 0xfffffffc);
+	radeon_ring_ग_लिखो(ring, upper_32_bits(addr));
+	radeon_ring_ग_लिखो(ring, fence->seq);
+	radeon_ring_ग_लिखो(ring, 0);
+पूर्ण
 
 /**
  * cik_semaphore_ring_emit - emit a semaphore on the CP ring
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @ring: radeon ring buffer object
  * @semaphore: radeon semaphore object
- * @emit_wait: Is this a sempahore wait?
+ * @emit_रुको: Is this a sempahore रुको?
  *
- * Emits a semaphore signal/wait packet to the CP ring and prevents the PFP
- * from running ahead of semaphore waits.
+ * Emits a semaphore संकेत/रुको packet to the CP ring and prevents the PFP
+ * from running ahead of semaphore रुकोs.
  */
-bool cik_semaphore_ring_emit(struct radeon_device *rdev,
-			     struct radeon_ring *ring,
-			     struct radeon_semaphore *semaphore,
-			     bool emit_wait)
-{
-	uint64_t addr = semaphore->gpu_addr;
-	unsigned sel = emit_wait ? PACKET3_SEM_SEL_WAIT : PACKET3_SEM_SEL_SIGNAL;
+bool cik_semaphore_ring_emit(काष्ठा radeon_device *rdev,
+			     काष्ठा radeon_ring *ring,
+			     काष्ठा radeon_semaphore *semaphore,
+			     bool emit_रुको)
+अणु
+	uपूर्णांक64_t addr = semaphore->gpu_addr;
+	अचिन्हित sel = emit_रुको ? PACKET3_SEM_SEL_WAIT : PACKET3_SEM_SEL_SIGNAL;
 
-	radeon_ring_write(ring, PACKET3(PACKET3_MEM_SEMAPHORE, 1));
-	radeon_ring_write(ring, lower_32_bits(addr));
-	radeon_ring_write(ring, (upper_32_bits(addr) & 0xffff) | sel);
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_MEM_SEMAPHORE, 1));
+	radeon_ring_ग_लिखो(ring, lower_32_bits(addr));
+	radeon_ring_ग_लिखो(ring, (upper_32_bits(addr) & 0xffff) | sel);
 
-	if (emit_wait && ring->idx == RADEON_RING_TYPE_GFX_INDEX) {
-		/* Prevent the PFP from running ahead of the semaphore wait */
-		radeon_ring_write(ring, PACKET3(PACKET3_PFP_SYNC_ME, 0));
-		radeon_ring_write(ring, 0x0);
-	}
+	अगर (emit_रुको && ring->idx == RADEON_RING_TYPE_GFX_INDEX) अणु
+		/* Prevent the PFP from running ahead of the semaphore रुको */
+		radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_PFP_SYNC_ME, 0));
+		radeon_ring_ग_लिखो(ring, 0x0);
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * cik_copy_cpdma - copy pages using the CP DMA engine
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @src_offset: src GPU address
  * @dst_offset: dst GPU address
  * @num_gpu_pages: number of GPU pages to xfer
  * @resv: reservation object to sync to
  *
  * Copy GPU paging using the CP DMA engine (CIK+).
- * Used by the radeon ttm implementation to move pages if
- * registered as the asic copy callback.
+ * Used by the radeon tपंचांग implementation to move pages अगर
+ * रेजिस्टरed as the asic copy callback.
  */
-struct radeon_fence *cik_copy_cpdma(struct radeon_device *rdev,
-				    uint64_t src_offset, uint64_t dst_offset,
-				    unsigned num_gpu_pages,
-				    struct dma_resv *resv)
-{
-	struct radeon_fence *fence;
-	struct radeon_sync sync;
-	int ring_index = rdev->asic->copy.blit_ring_index;
-	struct radeon_ring *ring = &rdev->ring[ring_index];
+काष्ठा radeon_fence *cik_copy_cpdma(काष्ठा radeon_device *rdev,
+				    uपूर्णांक64_t src_offset, uपूर्णांक64_t dst_offset,
+				    अचिन्हित num_gpu_pages,
+				    काष्ठा dma_resv *resv)
+अणु
+	काष्ठा radeon_fence *fence;
+	काष्ठा radeon_sync sync;
+	पूर्णांक ring_index = rdev->asic->copy.blit_ring_index;
+	काष्ठा radeon_ring *ring = &rdev->ring[ring_index];
 	u32 size_in_bytes, cur_size_in_bytes, control;
-	int i, num_loops;
-	int r = 0;
+	पूर्णांक i, num_loops;
+	पूर्णांक r = 0;
 
 	radeon_sync_create(&sync);
 
 	size_in_bytes = (num_gpu_pages << RADEON_GPU_PAGE_SHIFT);
 	num_loops = DIV_ROUND_UP(size_in_bytes, 0x1fffff);
 	r = radeon_ring_lock(rdev, ring, num_loops * 7 + 18);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("radeon: moving bo (%d).\n", r);
-		radeon_sync_free(rdev, &sync, NULL);
-		return ERR_PTR(r);
-	}
+		radeon_sync_मुक्त(rdev, &sync, शून्य);
+		वापस ERR_PTR(r);
+	पूर्ण
 
 	radeon_sync_resv(rdev, &sync, resv, false);
 	radeon_sync_rings(rdev, &sync, ring->idx);
 
-	for (i = 0; i < num_loops; i++) {
+	क्रम (i = 0; i < num_loops; i++) अणु
 		cur_size_in_bytes = size_in_bytes;
-		if (cur_size_in_bytes > 0x1fffff)
+		अगर (cur_size_in_bytes > 0x1fffff)
 			cur_size_in_bytes = 0x1fffff;
 		size_in_bytes -= cur_size_in_bytes;
 		control = 0;
-		if (size_in_bytes == 0)
+		अगर (size_in_bytes == 0)
 			control |= PACKET3_DMA_DATA_CP_SYNC;
-		radeon_ring_write(ring, PACKET3(PACKET3_DMA_DATA, 5));
-		radeon_ring_write(ring, control);
-		radeon_ring_write(ring, lower_32_bits(src_offset));
-		radeon_ring_write(ring, upper_32_bits(src_offset));
-		radeon_ring_write(ring, lower_32_bits(dst_offset));
-		radeon_ring_write(ring, upper_32_bits(dst_offset));
-		radeon_ring_write(ring, cur_size_in_bytes);
+		radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_DMA_DATA, 5));
+		radeon_ring_ग_लिखो(ring, control);
+		radeon_ring_ग_लिखो(ring, lower_32_bits(src_offset));
+		radeon_ring_ग_लिखो(ring, upper_32_bits(src_offset));
+		radeon_ring_ग_लिखो(ring, lower_32_bits(dst_offset));
+		radeon_ring_ग_लिखो(ring, upper_32_bits(dst_offset));
+		radeon_ring_ग_लिखो(ring, cur_size_in_bytes);
 		src_offset += cur_size_in_bytes;
 		dst_offset += cur_size_in_bytes;
-	}
+	पूर्ण
 
 	r = radeon_fence_emit(rdev, &fence, ring->idx);
-	if (r) {
-		radeon_ring_unlock_undo(rdev, ring);
-		radeon_sync_free(rdev, &sync, NULL);
-		return ERR_PTR(r);
-	}
+	अगर (r) अणु
+		radeon_ring_unlock_unकरो(rdev, ring);
+		radeon_sync_मुक्त(rdev, &sync, शून्य);
+		वापस ERR_PTR(r);
+	पूर्ण
 
 	radeon_ring_unlock_commit(rdev, ring, false);
-	radeon_sync_free(rdev, &sync, fence);
+	radeon_sync_मुक्त(rdev, &sync, fence);
 
-	return fence;
-}
+	वापस fence;
+पूर्ण
 
 /*
  * IB stuff
@@ -3707,127 +3708,127 @@ struct radeon_fence *cik_copy_cpdma(struct radeon_device *rdev,
 /**
  * cik_ring_ib_execute - emit an IB (Indirect Buffer) on the gfx ring
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @ib: radeon indirect buffer object
  *
- * Emits a DE (drawing engine) or CE (constant engine) IB
+ * Emits a DE (drawing engine) or CE (स्थिरant engine) IB
  * on the gfx ring.  IBs are usually generated by userspace
- * acceleration drivers and submitted to the kernel for
+ * acceleration drivers and submitted to the kernel क्रम
  * scheduling on the ring.  This function schedules the IB
- * on the gfx ring for execution by the GPU.
+ * on the gfx ring क्रम execution by the GPU.
  */
-void cik_ring_ib_execute(struct radeon_device *rdev, struct radeon_ib *ib)
-{
-	struct radeon_ring *ring = &rdev->ring[ib->ring];
-	unsigned vm_id = ib->vm ? ib->vm->ids[ib->ring].id : 0;
-	u32 header, control = INDIRECT_BUFFER_VALID;
+व्योम cik_ring_ib_execute(काष्ठा radeon_device *rdev, काष्ठा radeon_ib *ib)
+अणु
+	काष्ठा radeon_ring *ring = &rdev->ring[ib->ring];
+	अचिन्हित vm_id = ib->vm ? ib->vm->ids[ib->ring].id : 0;
+	u32 header, control = INसूचीECT_BUFFER_VALID;
 
-	if (ib->is_const_ib) {
-		/* set switch buffer packet before const IB */
-		radeon_ring_write(ring, PACKET3(PACKET3_SWITCH_BUFFER, 0));
-		radeon_ring_write(ring, 0);
+	अगर (ib->is_स्थिर_ib) अणु
+		/* set चयन buffer packet beक्रमe स्थिर IB */
+		radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_SWITCH_BUFFER, 0));
+		radeon_ring_ग_लिखो(ring, 0);
 
-		header = PACKET3(PACKET3_INDIRECT_BUFFER_CONST, 2);
-	} else {
+		header = PACKET3(PACKET3_INसूचीECT_BUFFER_CONST, 2);
+	पूर्ण अन्यथा अणु
 		u32 next_rptr;
-		if (ring->rptr_save_reg) {
+		अगर (ring->rptr_save_reg) अणु
 			next_rptr = ring->wptr + 3 + 4;
-			radeon_ring_write(ring, PACKET3(PACKET3_SET_UCONFIG_REG, 1));
-			radeon_ring_write(ring, ((ring->rptr_save_reg -
+			radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_SET_UCONFIG_REG, 1));
+			radeon_ring_ग_लिखो(ring, ((ring->rptr_save_reg -
 						  PACKET3_SET_UCONFIG_REG_START) >> 2));
-			radeon_ring_write(ring, next_rptr);
-		} else if (rdev->wb.enabled) {
+			radeon_ring_ग_लिखो(ring, next_rptr);
+		पूर्ण अन्यथा अगर (rdev->wb.enabled) अणु
 			next_rptr = ring->wptr + 5 + 4;
-			radeon_ring_write(ring, PACKET3(PACKET3_WRITE_DATA, 3));
-			radeon_ring_write(ring, WRITE_DATA_DST_SEL(1));
-			radeon_ring_write(ring, ring->next_rptr_gpu_addr & 0xfffffffc);
-			radeon_ring_write(ring, upper_32_bits(ring->next_rptr_gpu_addr));
-			radeon_ring_write(ring, next_rptr);
-		}
+			radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_WRITE_DATA, 3));
+			radeon_ring_ग_लिखो(ring, WRITE_DATA_DST_SEL(1));
+			radeon_ring_ग_लिखो(ring, ring->next_rptr_gpu_addr & 0xfffffffc);
+			radeon_ring_ग_लिखो(ring, upper_32_bits(ring->next_rptr_gpu_addr));
+			radeon_ring_ग_लिखो(ring, next_rptr);
+		पूर्ण
 
-		header = PACKET3(PACKET3_INDIRECT_BUFFER, 2);
-	}
+		header = PACKET3(PACKET3_INसूचीECT_BUFFER, 2);
+	पूर्ण
 
 	control |= ib->length_dw | (vm_id << 24);
 
-	radeon_ring_write(ring, header);
-	radeon_ring_write(ring, (ib->gpu_addr & 0xFFFFFFFC));
-	radeon_ring_write(ring, upper_32_bits(ib->gpu_addr) & 0xFFFF);
-	radeon_ring_write(ring, control);
-}
+	radeon_ring_ग_लिखो(ring, header);
+	radeon_ring_ग_लिखो(ring, (ib->gpu_addr & 0xFFFFFFFC));
+	radeon_ring_ग_लिखो(ring, upper_32_bits(ib->gpu_addr) & 0xFFFF);
+	radeon_ring_ग_लिखो(ring, control);
+पूर्ण
 
 /**
  * cik_ib_test - basic gfx ring IB test
  *
- * @rdev: radeon_device pointer
- * @ring: radeon_ring structure holding ring information
+ * @rdev: radeon_device poपूर्णांकer
+ * @ring: radeon_ring काष्ठाure holding ring inक्रमmation
  *
  * Allocate an IB and execute it on the gfx ring (CIK).
- * Provides a basic gfx ring test to verify that IBs are working.
+ * Provides a basic gfx ring test to verअगरy that IBs are working.
  * Returns 0 on success, error on failure.
  */
-int cik_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
-{
-	struct radeon_ib ib;
-	uint32_t scratch;
-	uint32_t tmp = 0;
-	unsigned i;
-	int r;
+पूर्णांक cik_ib_test(काष्ठा radeon_device *rdev, काष्ठा radeon_ring *ring)
+अणु
+	काष्ठा radeon_ib ib;
+	uपूर्णांक32_t scratch;
+	uपूर्णांक32_t पंचांगp = 0;
+	अचिन्हित i;
+	पूर्णांक r;
 
 	r = radeon_scratch_get(rdev, &scratch);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("radeon: failed to get scratch reg (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 	WREG32(scratch, 0xCAFEDEAD);
-	r = radeon_ib_get(rdev, ring->idx, &ib, NULL, 256);
-	if (r) {
+	r = radeon_ib_get(rdev, ring->idx, &ib, शून्य, 256);
+	अगर (r) अणु
 		DRM_ERROR("radeon: failed to get ib (%d).\n", r);
-		radeon_scratch_free(rdev, scratch);
-		return r;
-	}
+		radeon_scratch_मुक्त(rdev, scratch);
+		वापस r;
+	पूर्ण
 	ib.ptr[0] = PACKET3(PACKET3_SET_UCONFIG_REG, 1);
 	ib.ptr[1] = ((scratch - PACKET3_SET_UCONFIG_REG_START) >> 2);
 	ib.ptr[2] = 0xDEADBEEF;
 	ib.length_dw = 3;
-	r = radeon_ib_schedule(rdev, &ib, NULL, false);
-	if (r) {
-		radeon_scratch_free(rdev, scratch);
-		radeon_ib_free(rdev, &ib);
+	r = radeon_ib_schedule(rdev, &ib, शून्य, false);
+	अगर (r) अणु
+		radeon_scratch_मुक्त(rdev, scratch);
+		radeon_ib_मुक्त(rdev, &ib);
 		DRM_ERROR("radeon: failed to schedule ib (%d).\n", r);
-		return r;
-	}
-	r = radeon_fence_wait_timeout(ib.fence, false, usecs_to_jiffies(
+		वापस r;
+	पूर्ण
+	r = radeon_fence_रुको_समयout(ib.fence, false, usecs_to_jअगरfies(
 		RADEON_USEC_IB_TEST_TIMEOUT));
-	if (r < 0) {
+	अगर (r < 0) अणु
 		DRM_ERROR("radeon: fence wait failed (%d).\n", r);
-		radeon_scratch_free(rdev, scratch);
-		radeon_ib_free(rdev, &ib);
-		return r;
-	} else if (r == 0) {
+		radeon_scratch_मुक्त(rdev, scratch);
+		radeon_ib_मुक्त(rdev, &ib);
+		वापस r;
+	पूर्ण अन्यथा अगर (r == 0) अणु
 		DRM_ERROR("radeon: fence wait timed out.\n");
-		radeon_scratch_free(rdev, scratch);
-		radeon_ib_free(rdev, &ib);
-		return -ETIMEDOUT;
-	}
+		radeon_scratch_मुक्त(rdev, scratch);
+		radeon_ib_मुक्त(rdev, &ib);
+		वापस -ETIMEDOUT;
+	पूर्ण
 	r = 0;
-	for (i = 0; i < rdev->usec_timeout; i++) {
-		tmp = RREG32(scratch);
-		if (tmp == 0xDEADBEEF)
-			break;
+	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+		पंचांगp = RREG32(scratch);
+		अगर (पंचांगp == 0xDEADBEEF)
+			अवरोध;
 		udelay(1);
-	}
-	if (i < rdev->usec_timeout) {
+	पूर्ण
+	अगर (i < rdev->usec_समयout) अणु
 		DRM_INFO("ib test on ring %d succeeded in %u usecs\n", ib.fence->ring, i);
-	} else {
+	पूर्ण अन्यथा अणु
 		DRM_ERROR("radeon: ib test failed (scratch(0x%04X)=0x%08X)\n",
-			  scratch, tmp);
+			  scratch, पंचांगp);
 		r = -EINVAL;
-	}
-	radeon_scratch_free(rdev, scratch);
-	radeon_ib_free(rdev, &ib);
-	return r;
-}
+	पूर्ण
+	radeon_scratch_मुक्त(rdev, scratch);
+	radeon_ib_मुक्त(rdev, &ib);
+	वापस r;
+पूर्ण
 
 /*
  * CP.
@@ -3840,9 +3841,9 @@ int cik_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
  * ME - Micro Engine
  * CE - Constant Engine
  * The PFP and ME make up what is considered the Drawing Engine (DE).
- * The CE is an asynchronous engine used for updating buffer desciptors
- * used by the DE so that they can be loaded into cache in parallel
- * while the DE is processing state update packets.
+ * The CE is an asynchronous engine used क्रम updating buffer desciptors
+ * used by the DE so that they can be loaded पूर्णांकo cache in parallel
+ * जबतक the DE is processing state update packets.
  *
  * Compute
  * The compute CP consists of two microengines (ME):
@@ -3850,128 +3851,128 @@ int cik_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
  * MEC2 - Compute MicroEngine 2
  * Each MEC supports 4 compute pipes and each pipe supports 8 queues.
  * The queues are exposed to userspace and are programmed directly
- * by the compute runtime.
+ * by the compute runसमय.
  */
 /**
  * cik_cp_gfx_enable - enable/disable the gfx CP MEs
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @enable: enable or disable the MEs
  *
  * Halts or unhalts the gfx MEs.
  */
-static void cik_cp_gfx_enable(struct radeon_device *rdev, bool enable)
-{
-	if (enable)
+अटल व्योम cik_cp_gfx_enable(काष्ठा radeon_device *rdev, bool enable)
+अणु
+	अगर (enable)
 		WREG32(CP_ME_CNTL, 0);
-	else {
-		if (rdev->asic->copy.copy_ring_index == RADEON_RING_TYPE_GFX_INDEX)
-			radeon_ttm_set_active_vram_size(rdev, rdev->mc.visible_vram_size);
+	अन्यथा अणु
+		अगर (rdev->asic->copy.copy_ring_index == RADEON_RING_TYPE_GFX_INDEX)
+			radeon_tपंचांग_set_active_vram_size(rdev, rdev->mc.visible_vram_size);
 		WREG32(CP_ME_CNTL, (CP_ME_HALT | CP_PFP_HALT | CP_CE_HALT));
-		rdev->ring[RADEON_RING_TYPE_GFX_INDEX].ready = false;
-	}
+		rdev->ring[RADEON_RING_TYPE_GFX_INDEX].पढ़ोy = false;
+	पूर्ण
 	udelay(50);
-}
+पूर्ण
 
 /**
  * cik_cp_gfx_load_microcode - load the gfx CP ME ucode
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Loads the gfx PFP, ME, and CE ucode.
- * Returns 0 for success, -EINVAL if the ucode is not available.
+ * Returns 0 क्रम success, -EINVAL अगर the ucode is not available.
  */
-static int cik_cp_gfx_load_microcode(struct radeon_device *rdev)
-{
-	int i;
+अटल पूर्णांक cik_cp_gfx_load_microcode(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक i;
 
-	if (!rdev->me_fw || !rdev->pfp_fw || !rdev->ce_fw)
-		return -EINVAL;
+	अगर (!rdev->me_fw || !rdev->pfp_fw || !rdev->ce_fw)
+		वापस -EINVAL;
 
 	cik_cp_gfx_enable(rdev, false);
 
-	if (rdev->new_fw) {
-		const struct gfx_firmware_header_v1_0 *pfp_hdr =
-			(const struct gfx_firmware_header_v1_0 *)rdev->pfp_fw->data;
-		const struct gfx_firmware_header_v1_0 *ce_hdr =
-			(const struct gfx_firmware_header_v1_0 *)rdev->ce_fw->data;
-		const struct gfx_firmware_header_v1_0 *me_hdr =
-			(const struct gfx_firmware_header_v1_0 *)rdev->me_fw->data;
-		const __le32 *fw_data;
+	अगर (rdev->new_fw) अणु
+		स्थिर काष्ठा gfx_firmware_header_v1_0 *pfp_hdr =
+			(स्थिर काष्ठा gfx_firmware_header_v1_0 *)rdev->pfp_fw->data;
+		स्थिर काष्ठा gfx_firmware_header_v1_0 *ce_hdr =
+			(स्थिर काष्ठा gfx_firmware_header_v1_0 *)rdev->ce_fw->data;
+		स्थिर काष्ठा gfx_firmware_header_v1_0 *me_hdr =
+			(स्थिर काष्ठा gfx_firmware_header_v1_0 *)rdev->me_fw->data;
+		स्थिर __le32 *fw_data;
 		u32 fw_size;
 
-		radeon_ucode_print_gfx_hdr(&pfp_hdr->header);
-		radeon_ucode_print_gfx_hdr(&ce_hdr->header);
-		radeon_ucode_print_gfx_hdr(&me_hdr->header);
+		radeon_ucode_prपूर्णांक_gfx_hdr(&pfp_hdr->header);
+		radeon_ucode_prपूर्णांक_gfx_hdr(&ce_hdr->header);
+		radeon_ucode_prपूर्णांक_gfx_hdr(&me_hdr->header);
 
 		/* PFP */
-		fw_data = (const __le32 *)
+		fw_data = (स्थिर __le32 *)
 			(rdev->pfp_fw->data + le32_to_cpu(pfp_hdr->header.ucode_array_offset_bytes));
 		fw_size = le32_to_cpu(pfp_hdr->header.ucode_size_bytes) / 4;
 		WREG32(CP_PFP_UCODE_ADDR, 0);
-		for (i = 0; i < fw_size; i++)
+		क्रम (i = 0; i < fw_size; i++)
 			WREG32(CP_PFP_UCODE_DATA, le32_to_cpup(fw_data++));
 		WREG32(CP_PFP_UCODE_ADDR, le32_to_cpu(pfp_hdr->header.ucode_version));
 
 		/* CE */
-		fw_data = (const __le32 *)
+		fw_data = (स्थिर __le32 *)
 			(rdev->ce_fw->data + le32_to_cpu(ce_hdr->header.ucode_array_offset_bytes));
 		fw_size = le32_to_cpu(ce_hdr->header.ucode_size_bytes) / 4;
 		WREG32(CP_CE_UCODE_ADDR, 0);
-		for (i = 0; i < fw_size; i++)
+		क्रम (i = 0; i < fw_size; i++)
 			WREG32(CP_CE_UCODE_DATA, le32_to_cpup(fw_data++));
 		WREG32(CP_CE_UCODE_ADDR, le32_to_cpu(ce_hdr->header.ucode_version));
 
 		/* ME */
-		fw_data = (const __be32 *)
+		fw_data = (स्थिर __be32 *)
 			(rdev->me_fw->data + le32_to_cpu(me_hdr->header.ucode_array_offset_bytes));
 		fw_size = le32_to_cpu(me_hdr->header.ucode_size_bytes) / 4;
 		WREG32(CP_ME_RAM_WADDR, 0);
-		for (i = 0; i < fw_size; i++)
+		क्रम (i = 0; i < fw_size; i++)
 			WREG32(CP_ME_RAM_DATA, le32_to_cpup(fw_data++));
 		WREG32(CP_ME_RAM_WADDR, le32_to_cpu(me_hdr->header.ucode_version));
 		WREG32(CP_ME_RAM_RADDR, le32_to_cpu(me_hdr->header.ucode_version));
-	} else {
-		const __be32 *fw_data;
+	पूर्ण अन्यथा अणु
+		स्थिर __be32 *fw_data;
 
 		/* PFP */
-		fw_data = (const __be32 *)rdev->pfp_fw->data;
+		fw_data = (स्थिर __be32 *)rdev->pfp_fw->data;
 		WREG32(CP_PFP_UCODE_ADDR, 0);
-		for (i = 0; i < CIK_PFP_UCODE_SIZE; i++)
+		क्रम (i = 0; i < CIK_PFP_UCODE_SIZE; i++)
 			WREG32(CP_PFP_UCODE_DATA, be32_to_cpup(fw_data++));
 		WREG32(CP_PFP_UCODE_ADDR, 0);
 
 		/* CE */
-		fw_data = (const __be32 *)rdev->ce_fw->data;
+		fw_data = (स्थिर __be32 *)rdev->ce_fw->data;
 		WREG32(CP_CE_UCODE_ADDR, 0);
-		for (i = 0; i < CIK_CE_UCODE_SIZE; i++)
+		क्रम (i = 0; i < CIK_CE_UCODE_SIZE; i++)
 			WREG32(CP_CE_UCODE_DATA, be32_to_cpup(fw_data++));
 		WREG32(CP_CE_UCODE_ADDR, 0);
 
 		/* ME */
-		fw_data = (const __be32 *)rdev->me_fw->data;
+		fw_data = (स्थिर __be32 *)rdev->me_fw->data;
 		WREG32(CP_ME_RAM_WADDR, 0);
-		for (i = 0; i < CIK_ME_UCODE_SIZE; i++)
+		क्रम (i = 0; i < CIK_ME_UCODE_SIZE; i++)
 			WREG32(CP_ME_RAM_DATA, be32_to_cpup(fw_data++));
 		WREG32(CP_ME_RAM_WADDR, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cik_cp_gfx_start - start the gfx ring
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Enables the ring and loads the clear state context and other
  * packets required to init the ring.
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-static int cik_cp_gfx_start(struct radeon_device *rdev)
-{
-	struct radeon_ring *ring = &rdev->ring[RADEON_RING_TYPE_GFX_INDEX];
-	int r, i;
+अटल पूर्णांक cik_cp_gfx_start(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा radeon_ring *ring = &rdev->ring[RADEON_RING_TYPE_GFX_INDEX];
+	पूर्णांक r, i;
 
 	/* init the CP */
 	WREG32(CP_MAX_CONTEXT, rdev->config.cik.max_hw_contexts - 1);
@@ -3980,82 +3981,82 @@ static int cik_cp_gfx_start(struct radeon_device *rdev)
 
 	cik_cp_gfx_enable(rdev, true);
 
-	r = radeon_ring_lock(rdev, ring, cik_default_size + 17);
-	if (r) {
+	r = radeon_ring_lock(rdev, ring, cik_शेष_size + 17);
+	अगर (r) अणु
 		DRM_ERROR("radeon: cp failed to lock ring (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	/* init the CE partitions.  CE only used for gfx on CIK */
-	radeon_ring_write(ring, PACKET3(PACKET3_SET_BASE, 2));
-	radeon_ring_write(ring, PACKET3_BASE_INDEX(CE_PARTITION_BASE));
-	radeon_ring_write(ring, 0x8000);
-	radeon_ring_write(ring, 0x8000);
+	/* init the CE partitions.  CE only used क्रम gfx on CIK */
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_SET_BASE, 2));
+	radeon_ring_ग_लिखो(ring, PACKET3_BASE_INDEX(CE_PARTITION_BASE));
+	radeon_ring_ग_लिखो(ring, 0x8000);
+	radeon_ring_ग_लिखो(ring, 0x8000);
 
 	/* setup clear context state */
-	radeon_ring_write(ring, PACKET3(PACKET3_PREAMBLE_CNTL, 0));
-	radeon_ring_write(ring, PACKET3_PREAMBLE_BEGIN_CLEAR_STATE);
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_PREAMBLE_CNTL, 0));
+	radeon_ring_ग_लिखो(ring, PACKET3_PREAMBLE_BEGIN_CLEAR_STATE);
 
-	radeon_ring_write(ring, PACKET3(PACKET3_CONTEXT_CONTROL, 1));
-	radeon_ring_write(ring, 0x80000000);
-	radeon_ring_write(ring, 0x80000000);
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_CONTEXT_CONTROL, 1));
+	radeon_ring_ग_लिखो(ring, 0x80000000);
+	radeon_ring_ग_लिखो(ring, 0x80000000);
 
-	for (i = 0; i < cik_default_size; i++)
-		radeon_ring_write(ring, cik_default_state[i]);
+	क्रम (i = 0; i < cik_शेष_size; i++)
+		radeon_ring_ग_लिखो(ring, cik_शेष_state[i]);
 
-	radeon_ring_write(ring, PACKET3(PACKET3_PREAMBLE_CNTL, 0));
-	radeon_ring_write(ring, PACKET3_PREAMBLE_END_CLEAR_STATE);
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_PREAMBLE_CNTL, 0));
+	radeon_ring_ग_लिखो(ring, PACKET3_PREAMBLE_END_CLEAR_STATE);
 
 	/* set clear context state */
-	radeon_ring_write(ring, PACKET3(PACKET3_CLEAR_STATE, 0));
-	radeon_ring_write(ring, 0);
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_CLEAR_STATE, 0));
+	radeon_ring_ग_लिखो(ring, 0);
 
-	radeon_ring_write(ring, PACKET3(PACKET3_SET_CONTEXT_REG, 2));
-	radeon_ring_write(ring, 0x00000316);
-	radeon_ring_write(ring, 0x0000000e); /* VGT_VERTEX_REUSE_BLOCK_CNTL */
-	radeon_ring_write(ring, 0x00000010); /* VGT_OUT_DEALLOC_CNTL */
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_SET_CONTEXT_REG, 2));
+	radeon_ring_ग_लिखो(ring, 0x00000316);
+	radeon_ring_ग_लिखो(ring, 0x0000000e); /* VGT_VERTEX_REUSE_BLOCK_CNTL */
+	radeon_ring_ग_लिखो(ring, 0x00000010); /* VGT_OUT_DEALLOC_CNTL */
 
 	radeon_ring_unlock_commit(rdev, ring, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cik_cp_gfx_fini - stop the gfx ring
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Stop the gfx ring and tear down the driver ring
+ * Stop the gfx ring and tear करोwn the driver ring
  * info.
  */
-static void cik_cp_gfx_fini(struct radeon_device *rdev)
-{
+अटल व्योम cik_cp_gfx_fini(काष्ठा radeon_device *rdev)
+अणु
 	cik_cp_gfx_enable(rdev, false);
 	radeon_ring_fini(rdev, &rdev->ring[RADEON_RING_TYPE_GFX_INDEX]);
-}
+पूर्ण
 
 /**
- * cik_cp_gfx_resume - setup the gfx ring buffer registers
+ * cik_cp_gfx_resume - setup the gfx ring buffer रेजिस्टरs
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Program the location and size of the gfx ring buffer
  * and test it to make sure it's working.
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-static int cik_cp_gfx_resume(struct radeon_device *rdev)
-{
-	struct radeon_ring *ring;
-	u32 tmp;
+अटल पूर्णांक cik_cp_gfx_resume(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा radeon_ring *ring;
+	u32 पंचांगp;
 	u32 rb_bufsz;
 	u64 rb_addr;
-	int r;
+	पूर्णांक r;
 
 	WREG32(CP_SEM_WAIT_TIMER, 0x0);
-	if (rdev->family != CHIP_HAWAII)
+	अगर (rdev->family != CHIP_HAWAII)
 		WREG32(CP_SEM_INCOMPLETE_TIMER_CNTL, 0x0);
 
-	/* Set the write pointer delay */
+	/* Set the ग_लिखो poपूर्णांकer delay */
 	WREG32(CP_RB_WPTR_DELAY, 0);
 
 	/* set the RB to use vmid 0 */
@@ -4067,14 +4068,14 @@ static int cik_cp_gfx_resume(struct radeon_device *rdev)
 	/* Set ring buffer size */
 	ring = &rdev->ring[RADEON_RING_TYPE_GFX_INDEX];
 	rb_bufsz = order_base_2(ring->ring_size / 8);
-	tmp = (order_base_2(RADEON_GPU_PAGE_SIZE/8) << 8) | rb_bufsz;
-#ifdef __BIG_ENDIAN
-	tmp |= BUF_SWAP_32BIT;
-#endif
-	WREG32(CP_RB0_CNTL, tmp);
+	पंचांगp = (order_base_2(RADEON_GPU_PAGE_SIZE/8) << 8) | rb_bufsz;
+#अगर_घोषित __BIG_ENDIAN
+	पंचांगp |= BUF_SWAP_32BIT;
+#पूर्ण_अगर
+	WREG32(CP_RB0_CNTL, पंचांगp);
 
-	/* Initialize the ring buffer's read and write pointers */
-	WREG32(CP_RB0_CNTL, tmp | RB_RPTR_WR_ENA);
+	/* Initialize the ring buffer's पढ़ो and ग_लिखो poपूर्णांकers */
+	WREG32(CP_RB0_CNTL, पंचांगp | RB_RPTR_WR_ENA);
 	ring->wptr = 0;
 	WREG32(CP_RB0_WPTR, ring->wptr);
 
@@ -4082,14 +4083,14 @@ static int cik_cp_gfx_resume(struct radeon_device *rdev)
 	WREG32(CP_RB0_RPTR_ADDR, (rdev->wb.gpu_addr + RADEON_WB_CP_RPTR_OFFSET) & 0xFFFFFFFC);
 	WREG32(CP_RB0_RPTR_ADDR_HI, upper_32_bits(rdev->wb.gpu_addr + RADEON_WB_CP_RPTR_OFFSET) & 0xFF);
 
-	/* scratch register shadowing is no longer supported */
+	/* scratch रेजिस्टर shaकरोwing is no दीर्घer supported */
 	WREG32(SCRATCH_UMSK, 0);
 
-	if (!rdev->wb.enabled)
-		tmp |= RB_NO_UPDATE;
+	अगर (!rdev->wb.enabled)
+		पंचांगp |= RB_NO_UPDATE;
 
 	mdelay(1);
-	WREG32(CP_RB0_CNTL, tmp);
+	WREG32(CP_RB0_CNTL, पंचांगp);
 
 	rb_addr = ring->gpu_addr >> 8;
 	WREG32(CP_RB0_BASE, rb_addr);
@@ -4097,131 +4098,131 @@ static int cik_cp_gfx_resume(struct radeon_device *rdev)
 
 	/* start the ring */
 	cik_cp_gfx_start(rdev);
-	rdev->ring[RADEON_RING_TYPE_GFX_INDEX].ready = true;
+	rdev->ring[RADEON_RING_TYPE_GFX_INDEX].पढ़ोy = true;
 	r = radeon_ring_test(rdev, RADEON_RING_TYPE_GFX_INDEX, &rdev->ring[RADEON_RING_TYPE_GFX_INDEX]);
-	if (r) {
-		rdev->ring[RADEON_RING_TYPE_GFX_INDEX].ready = false;
-		return r;
-	}
+	अगर (r) अणु
+		rdev->ring[RADEON_RING_TYPE_GFX_INDEX].पढ़ोy = false;
+		वापस r;
+	पूर्ण
 
-	if (rdev->asic->copy.copy_ring_index == RADEON_RING_TYPE_GFX_INDEX)
-		radeon_ttm_set_active_vram_size(rdev, rdev->mc.real_vram_size);
+	अगर (rdev->asic->copy.copy_ring_index == RADEON_RING_TYPE_GFX_INDEX)
+		radeon_tपंचांग_set_active_vram_size(rdev, rdev->mc.real_vram_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u32 cik_gfx_get_rptr(struct radeon_device *rdev,
-		     struct radeon_ring *ring)
-{
+u32 cik_gfx_get_rptr(काष्ठा radeon_device *rdev,
+		     काष्ठा radeon_ring *ring)
+अणु
 	u32 rptr;
 
-	if (rdev->wb.enabled)
+	अगर (rdev->wb.enabled)
 		rptr = rdev->wb.wb[ring->rptr_offs/4];
-	else
+	अन्यथा
 		rptr = RREG32(CP_RB0_RPTR);
 
-	return rptr;
-}
+	वापस rptr;
+पूर्ण
 
-u32 cik_gfx_get_wptr(struct radeon_device *rdev,
-		     struct radeon_ring *ring)
-{
-	return RREG32(CP_RB0_WPTR);
-}
+u32 cik_gfx_get_wptr(काष्ठा radeon_device *rdev,
+		     काष्ठा radeon_ring *ring)
+अणु
+	वापस RREG32(CP_RB0_WPTR);
+पूर्ण
 
-void cik_gfx_set_wptr(struct radeon_device *rdev,
-		      struct radeon_ring *ring)
-{
+व्योम cik_gfx_set_wptr(काष्ठा radeon_device *rdev,
+		      काष्ठा radeon_ring *ring)
+अणु
 	WREG32(CP_RB0_WPTR, ring->wptr);
-	(void)RREG32(CP_RB0_WPTR);
-}
+	(व्योम)RREG32(CP_RB0_WPTR);
+पूर्ण
 
-u32 cik_compute_get_rptr(struct radeon_device *rdev,
-			 struct radeon_ring *ring)
-{
+u32 cik_compute_get_rptr(काष्ठा radeon_device *rdev,
+			 काष्ठा radeon_ring *ring)
+अणु
 	u32 rptr;
 
-	if (rdev->wb.enabled) {
+	अगर (rdev->wb.enabled) अणु
 		rptr = rdev->wb.wb[ring->rptr_offs/4];
-	} else {
+	पूर्ण अन्यथा अणु
 		mutex_lock(&rdev->srbm_mutex);
 		cik_srbm_select(rdev, ring->me, ring->pipe, ring->queue, 0);
 		rptr = RREG32(CP_HQD_PQ_RPTR);
 		cik_srbm_select(rdev, 0, 0, 0, 0);
 		mutex_unlock(&rdev->srbm_mutex);
-	}
+	पूर्ण
 
-	return rptr;
-}
+	वापस rptr;
+पूर्ण
 
-u32 cik_compute_get_wptr(struct radeon_device *rdev,
-			 struct radeon_ring *ring)
-{
+u32 cik_compute_get_wptr(काष्ठा radeon_device *rdev,
+			 काष्ठा radeon_ring *ring)
+अणु
 	u32 wptr;
 
-	if (rdev->wb.enabled) {
-		/* XXX check if swapping is necessary on BE */
+	अगर (rdev->wb.enabled) अणु
+		/* XXX check अगर swapping is necessary on BE */
 		wptr = rdev->wb.wb[ring->wptr_offs/4];
-	} else {
+	पूर्ण अन्यथा अणु
 		mutex_lock(&rdev->srbm_mutex);
 		cik_srbm_select(rdev, ring->me, ring->pipe, ring->queue, 0);
 		wptr = RREG32(CP_HQD_PQ_WPTR);
 		cik_srbm_select(rdev, 0, 0, 0, 0);
 		mutex_unlock(&rdev->srbm_mutex);
-	}
+	पूर्ण
 
-	return wptr;
-}
+	वापस wptr;
+पूर्ण
 
-void cik_compute_set_wptr(struct radeon_device *rdev,
-			  struct radeon_ring *ring)
-{
-	/* XXX check if swapping is necessary on BE */
+व्योम cik_compute_set_wptr(काष्ठा radeon_device *rdev,
+			  काष्ठा radeon_ring *ring)
+अणु
+	/* XXX check अगर swapping is necessary on BE */
 	rdev->wb.wb[ring->wptr_offs/4] = ring->wptr;
-	WDOORBELL32(ring->doorbell_index, ring->wptr);
-}
+	WDOORBELL32(ring->करोorbell_index, ring->wptr);
+पूर्ण
 
-static void cik_compute_stop(struct radeon_device *rdev,
-			     struct radeon_ring *ring)
-{
-	u32 j, tmp;
+अटल व्योम cik_compute_stop(काष्ठा radeon_device *rdev,
+			     काष्ठा radeon_ring *ring)
+अणु
+	u32 j, पंचांगp;
 
 	cik_srbm_select(rdev, ring->me, ring->pipe, ring->queue, 0);
 	/* Disable wptr polling. */
-	tmp = RREG32(CP_PQ_WPTR_POLL_CNTL);
-	tmp &= ~WPTR_POLL_EN;
-	WREG32(CP_PQ_WPTR_POLL_CNTL, tmp);
+	पंचांगp = RREG32(CP_PQ_WPTR_POLL_CNTL);
+	पंचांगp &= ~WPTR_POLL_EN;
+	WREG32(CP_PQ_WPTR_POLL_CNTL, पंचांगp);
 	/* Disable HQD. */
-	if (RREG32(CP_HQD_ACTIVE) & 1) {
+	अगर (RREG32(CP_HQD_ACTIVE) & 1) अणु
 		WREG32(CP_HQD_DEQUEUE_REQUEST, 1);
-		for (j = 0; j < rdev->usec_timeout; j++) {
-			if (!(RREG32(CP_HQD_ACTIVE) & 1))
-				break;
+		क्रम (j = 0; j < rdev->usec_समयout; j++) अणु
+			अगर (!(RREG32(CP_HQD_ACTIVE) & 1))
+				अवरोध;
 			udelay(1);
-		}
+		पूर्ण
 		WREG32(CP_HQD_DEQUEUE_REQUEST, 0);
 		WREG32(CP_HQD_PQ_RPTR, 0);
 		WREG32(CP_HQD_PQ_WPTR, 0);
-	}
+	पूर्ण
 	cik_srbm_select(rdev, 0, 0, 0, 0);
-}
+पूर्ण
 
 /**
  * cik_cp_compute_enable - enable/disable the compute CP MEs
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @enable: enable or disable the MEs
  *
  * Halts or unhalts the compute MEs.
  */
-static void cik_cp_compute_enable(struct radeon_device *rdev, bool enable)
-{
-	if (enable)
+अटल व्योम cik_cp_compute_enable(काष्ठा radeon_device *rdev, bool enable)
+अणु
+	अगर (enable)
 		WREG32(CP_MEC_CNTL, 0);
-	else {
+	अन्यथा अणु
 		/*
 		 * To make hibernation reliable we need to clear compute ring
-		 * configuration before halting the compute ring.
+		 * configuration beक्रमe halting the compute ring.
 		 */
 		mutex_lock(&rdev->srbm_mutex);
 		cik_compute_stop(rdev,&rdev->ring[CAYMAN_RING_TYPE_CP1_INDEX]);
@@ -4229,208 +4230,208 @@ static void cik_cp_compute_enable(struct radeon_device *rdev, bool enable)
 		mutex_unlock(&rdev->srbm_mutex);
 
 		WREG32(CP_MEC_CNTL, (MEC_ME1_HALT | MEC_ME2_HALT));
-		rdev->ring[CAYMAN_RING_TYPE_CP1_INDEX].ready = false;
-		rdev->ring[CAYMAN_RING_TYPE_CP2_INDEX].ready = false;
-	}
+		rdev->ring[CAYMAN_RING_TYPE_CP1_INDEX].पढ़ोy = false;
+		rdev->ring[CAYMAN_RING_TYPE_CP2_INDEX].पढ़ोy = false;
+	पूर्ण
 	udelay(50);
-}
+पूर्ण
 
 /**
  * cik_cp_compute_load_microcode - load the compute CP ME ucode
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Loads the compute MEC1&2 ucode.
- * Returns 0 for success, -EINVAL if the ucode is not available.
+ * Returns 0 क्रम success, -EINVAL अगर the ucode is not available.
  */
-static int cik_cp_compute_load_microcode(struct radeon_device *rdev)
-{
-	int i;
+अटल पूर्णांक cik_cp_compute_load_microcode(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक i;
 
-	if (!rdev->mec_fw)
-		return -EINVAL;
+	अगर (!rdev->mec_fw)
+		वापस -EINVAL;
 
 	cik_cp_compute_enable(rdev, false);
 
-	if (rdev->new_fw) {
-		const struct gfx_firmware_header_v1_0 *mec_hdr =
-			(const struct gfx_firmware_header_v1_0 *)rdev->mec_fw->data;
-		const __le32 *fw_data;
+	अगर (rdev->new_fw) अणु
+		स्थिर काष्ठा gfx_firmware_header_v1_0 *mec_hdr =
+			(स्थिर काष्ठा gfx_firmware_header_v1_0 *)rdev->mec_fw->data;
+		स्थिर __le32 *fw_data;
 		u32 fw_size;
 
-		radeon_ucode_print_gfx_hdr(&mec_hdr->header);
+		radeon_ucode_prपूर्णांक_gfx_hdr(&mec_hdr->header);
 
 		/* MEC1 */
-		fw_data = (const __le32 *)
+		fw_data = (स्थिर __le32 *)
 			(rdev->mec_fw->data + le32_to_cpu(mec_hdr->header.ucode_array_offset_bytes));
 		fw_size = le32_to_cpu(mec_hdr->header.ucode_size_bytes) / 4;
 		WREG32(CP_MEC_ME1_UCODE_ADDR, 0);
-		for (i = 0; i < fw_size; i++)
+		क्रम (i = 0; i < fw_size; i++)
 			WREG32(CP_MEC_ME1_UCODE_DATA, le32_to_cpup(fw_data++));
 		WREG32(CP_MEC_ME1_UCODE_ADDR, le32_to_cpu(mec_hdr->header.ucode_version));
 
 		/* MEC2 */
-		if (rdev->family == CHIP_KAVERI) {
-			const struct gfx_firmware_header_v1_0 *mec2_hdr =
-				(const struct gfx_firmware_header_v1_0 *)rdev->mec2_fw->data;
+		अगर (rdev->family == CHIP_KAVERI) अणु
+			स्थिर काष्ठा gfx_firmware_header_v1_0 *mec2_hdr =
+				(स्थिर काष्ठा gfx_firmware_header_v1_0 *)rdev->mec2_fw->data;
 
-			fw_data = (const __le32 *)
+			fw_data = (स्थिर __le32 *)
 				(rdev->mec2_fw->data +
 				 le32_to_cpu(mec2_hdr->header.ucode_array_offset_bytes));
 			fw_size = le32_to_cpu(mec2_hdr->header.ucode_size_bytes) / 4;
 			WREG32(CP_MEC_ME2_UCODE_ADDR, 0);
-			for (i = 0; i < fw_size; i++)
+			क्रम (i = 0; i < fw_size; i++)
 				WREG32(CP_MEC_ME2_UCODE_DATA, le32_to_cpup(fw_data++));
 			WREG32(CP_MEC_ME2_UCODE_ADDR, le32_to_cpu(mec2_hdr->header.ucode_version));
-		}
-	} else {
-		const __be32 *fw_data;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		स्थिर __be32 *fw_data;
 
 		/* MEC1 */
-		fw_data = (const __be32 *)rdev->mec_fw->data;
+		fw_data = (स्थिर __be32 *)rdev->mec_fw->data;
 		WREG32(CP_MEC_ME1_UCODE_ADDR, 0);
-		for (i = 0; i < CIK_MEC_UCODE_SIZE; i++)
+		क्रम (i = 0; i < CIK_MEC_UCODE_SIZE; i++)
 			WREG32(CP_MEC_ME1_UCODE_DATA, be32_to_cpup(fw_data++));
 		WREG32(CP_MEC_ME1_UCODE_ADDR, 0);
 
-		if (rdev->family == CHIP_KAVERI) {
+		अगर (rdev->family == CHIP_KAVERI) अणु
 			/* MEC2 */
-			fw_data = (const __be32 *)rdev->mec_fw->data;
+			fw_data = (स्थिर __be32 *)rdev->mec_fw->data;
 			WREG32(CP_MEC_ME2_UCODE_ADDR, 0);
-			for (i = 0; i < CIK_MEC_UCODE_SIZE; i++)
+			क्रम (i = 0; i < CIK_MEC_UCODE_SIZE; i++)
 				WREG32(CP_MEC_ME2_UCODE_DATA, be32_to_cpup(fw_data++));
 			WREG32(CP_MEC_ME2_UCODE_ADDR, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cik_cp_compute_start - start the compute queues
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Enable the compute queues.
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-static int cik_cp_compute_start(struct radeon_device *rdev)
-{
+अटल पूर्णांक cik_cp_compute_start(काष्ठा radeon_device *rdev)
+अणु
 	cik_cp_compute_enable(rdev, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cik_cp_compute_fini - stop the compute queues
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Stop the compute queues and tear down the driver queue
+ * Stop the compute queues and tear करोwn the driver queue
  * info.
  */
-static void cik_cp_compute_fini(struct radeon_device *rdev)
-{
-	int i, idx, r;
+अटल व्योम cik_cp_compute_fini(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक i, idx, r;
 
 	cik_cp_compute_enable(rdev, false);
 
-	for (i = 0; i < 2; i++) {
-		if (i == 0)
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (i == 0)
 			idx = CAYMAN_RING_TYPE_CP1_INDEX;
-		else
+		अन्यथा
 			idx = CAYMAN_RING_TYPE_CP2_INDEX;
 
-		if (rdev->ring[idx].mqd_obj) {
+		अगर (rdev->ring[idx].mqd_obj) अणु
 			r = radeon_bo_reserve(rdev->ring[idx].mqd_obj, false);
-			if (unlikely(r != 0))
+			अगर (unlikely(r != 0))
 				dev_warn(rdev->dev, "(%d) reserve MQD bo failed\n", r);
 
 			radeon_bo_unpin(rdev->ring[idx].mqd_obj);
 			radeon_bo_unreserve(rdev->ring[idx].mqd_obj);
 
 			radeon_bo_unref(&rdev->ring[idx].mqd_obj);
-			rdev->ring[idx].mqd_obj = NULL;
-		}
-	}
-}
+			rdev->ring[idx].mqd_obj = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void cik_mec_fini(struct radeon_device *rdev)
-{
-	int r;
+अटल व्योम cik_mec_fini(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r;
 
-	if (rdev->mec.hpd_eop_obj) {
+	अगर (rdev->mec.hpd_eop_obj) अणु
 		r = radeon_bo_reserve(rdev->mec.hpd_eop_obj, false);
-		if (unlikely(r != 0))
+		अगर (unlikely(r != 0))
 			dev_warn(rdev->dev, "(%d) reserve HPD EOP bo failed\n", r);
 		radeon_bo_unpin(rdev->mec.hpd_eop_obj);
 		radeon_bo_unreserve(rdev->mec.hpd_eop_obj);
 
 		radeon_bo_unref(&rdev->mec.hpd_eop_obj);
-		rdev->mec.hpd_eop_obj = NULL;
-	}
-}
+		rdev->mec.hpd_eop_obj = शून्य;
+	पूर्ण
+पूर्ण
 
-#define MEC_HPD_SIZE 2048
+#घोषणा MEC_HPD_SIZE 2048
 
-static int cik_mec_init(struct radeon_device *rdev)
-{
-	int r;
+अटल पूर्णांक cik_mec_init(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r;
 	u32 *hpd;
 
 	/*
 	 * KV:    2 MEC, 4 Pipes/MEC, 8 Queues/Pipe - 64 Queues total
 	 * CI/KB: 1 MEC, 4 Pipes/MEC, 8 Queues/Pipe - 32 Queues total
 	 */
-	if (rdev->family == CHIP_KAVERI)
+	अगर (rdev->family == CHIP_KAVERI)
 		rdev->mec.num_mec = 2;
-	else
+	अन्यथा
 		rdev->mec.num_mec = 1;
 	rdev->mec.num_pipe = 4;
 	rdev->mec.num_queue = rdev->mec.num_mec * rdev->mec.num_pipe * 8;
 
-	if (rdev->mec.hpd_eop_obj == NULL) {
+	अगर (rdev->mec.hpd_eop_obj == शून्य) अणु
 		r = radeon_bo_create(rdev,
 				     rdev->mec.num_mec *rdev->mec.num_pipe * MEC_HPD_SIZE * 2,
 				     PAGE_SIZE, true,
-				     RADEON_GEM_DOMAIN_GTT, 0, NULL, NULL,
+				     RADEON_GEM_DOMAIN_GTT, 0, शून्य, शून्य,
 				     &rdev->mec.hpd_eop_obj);
-		if (r) {
+		अगर (r) अणु
 			dev_warn(rdev->dev, "(%d) create HDP EOP bo failed\n", r);
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
 	r = radeon_bo_reserve(rdev->mec.hpd_eop_obj, false);
-	if (unlikely(r != 0)) {
+	अगर (unlikely(r != 0)) अणु
 		cik_mec_fini(rdev);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 	r = radeon_bo_pin(rdev->mec.hpd_eop_obj, RADEON_GEM_DOMAIN_GTT,
 			  &rdev->mec.hpd_eop_gpu_addr);
-	if (r) {
+	अगर (r) अणु
 		dev_warn(rdev->dev, "(%d) pin HDP EOP bo failed\n", r);
 		cik_mec_fini(rdev);
-		return r;
-	}
-	r = radeon_bo_kmap(rdev->mec.hpd_eop_obj, (void **)&hpd);
-	if (r) {
+		वापस r;
+	पूर्ण
+	r = radeon_bo_kmap(rdev->mec.hpd_eop_obj, (व्योम **)&hpd);
+	अगर (r) अणु
 		dev_warn(rdev->dev, "(%d) map HDP EOP bo failed\n", r);
 		cik_mec_fini(rdev);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	/* clear memory.  Not sure if this is required or not */
-	memset(hpd, 0, rdev->mec.num_mec *rdev->mec.num_pipe * MEC_HPD_SIZE * 2);
+	/* clear memory.  Not sure अगर this is required or not */
+	स_रखो(hpd, 0, rdev->mec.num_mec *rdev->mec.num_pipe * MEC_HPD_SIZE * 2);
 
 	radeon_bo_kunmap(rdev->mec.hpd_eop_obj);
 	radeon_bo_unreserve(rdev->mec.hpd_eop_obj);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct hqd_registers
-{
+काष्ठा hqd_रेजिस्टरs
+अणु
 	u32 cp_mqd_base_addr;
 	u32 cp_mqd_base_addr_hi;
 	u32 cp_hqd_active;
@@ -4446,14 +4447,14 @@ struct hqd_registers
 	u32 cp_hqd_pq_rptr_report_addr_hi;
 	u32 cp_hqd_pq_wptr_poll_addr;
 	u32 cp_hqd_pq_wptr_poll_addr_hi;
-	u32 cp_hqd_pq_doorbell_control;
+	u32 cp_hqd_pq_करोorbell_control;
 	u32 cp_hqd_pq_wptr;
 	u32 cp_hqd_pq_control;
 	u32 cp_hqd_ib_base_addr;
 	u32 cp_hqd_ib_base_addr_hi;
 	u32 cp_hqd_ib_rptr;
 	u32 cp_hqd_ib_control;
-	u32 cp_hqd_iq_timer;
+	u32 cp_hqd_iq_समयr;
 	u32 cp_hqd_iq_rptr;
 	u32 cp_hqd_dequeue_request;
 	u32 cp_hqd_dma_offload;
@@ -4466,140 +4467,140 @@ struct hqd_registers
 	u32 cp_hqd_hq_scheduler0;
 	u32 cp_hqd_hq_scheduler1;
 	u32 cp_mqd_control;
-};
+पूर्ण;
 
-struct bonaire_mqd
-{
+काष्ठा bonaire_mqd
+अणु
 	u32 header;
 	u32 dispatch_initiator;
 	u32 dimensions[3];
 	u32 start_idx[3];
-	u32 num_threads[3];
+	u32 num_thपढ़ोs[3];
 	u32 pipeline_stat_enable;
 	u32 perf_counter_enable;
 	u32 pgm[2];
 	u32 tba[2];
-	u32 tma[2];
+	u32 पंचांगa[2];
 	u32 pgm_rsrc[2];
 	u32 vmid;
 	u32 resource_limits;
-	u32 static_thread_mgmt01[2];
-	u32 tmp_ring_size;
-	u32 static_thread_mgmt23[2];
+	u32 अटल_thपढ़ो_mgmt01[2];
+	u32 पंचांगp_ring_size;
+	u32 अटल_thपढ़ो_mgmt23[2];
 	u32 restart[3];
-	u32 thread_trace_enable;
+	u32 thपढ़ो_trace_enable;
 	u32 reserved1;
 	u32 user_data[16];
 	u32 vgtcs_invoke_count[2];
-	struct hqd_registers queue_state;
+	काष्ठा hqd_रेजिस्टरs queue_state;
 	u32 dequeue_cntr;
-	u32 interrupt_queue[64];
-};
+	u32 पूर्णांकerrupt_queue[64];
+पूर्ण;
 
 /**
- * cik_cp_compute_resume - setup the compute queue registers
+ * cik_cp_compute_resume - setup the compute queue रेजिस्टरs
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Program the compute queues and test them to make sure they
  * are working.
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-static int cik_cp_compute_resume(struct radeon_device *rdev)
-{
-	int r, i, j, idx;
-	u32 tmp;
-	bool use_doorbell = true;
+अटल पूर्णांक cik_cp_compute_resume(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r, i, j, idx;
+	u32 पंचांगp;
+	bool use_करोorbell = true;
 	u64 hqd_gpu_addr;
 	u64 mqd_gpu_addr;
 	u64 eop_gpu_addr;
 	u64 wb_gpu_addr;
 	u32 *buf;
-	struct bonaire_mqd *mqd;
+	काष्ठा bonaire_mqd *mqd;
 
 	r = cik_cp_compute_start(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* fix up chicken bits */
-	tmp = RREG32(CP_CPF_DEBUG);
-	tmp |= (1 << 23);
-	WREG32(CP_CPF_DEBUG, tmp);
+	पंचांगp = RREG32(CP_CPF_DEBUG);
+	पंचांगp |= (1 << 23);
+	WREG32(CP_CPF_DEBUG, पंचांगp);
 
 	/* init the pipes */
 	mutex_lock(&rdev->srbm_mutex);
 
-	for (i = 0; i < (rdev->mec.num_pipe * rdev->mec.num_mec); ++i) {
-		int me = (i < 4) ? 1 : 2;
-		int pipe = (i < 4) ? i : (i - 4);
+	क्रम (i = 0; i < (rdev->mec.num_pipe * rdev->mec.num_mec); ++i) अणु
+		पूर्णांक me = (i < 4) ? 1 : 2;
+		पूर्णांक pipe = (i < 4) ? i : (i - 4);
 
 		cik_srbm_select(rdev, me, pipe, 0, 0);
 
 		eop_gpu_addr = rdev->mec.hpd_eop_gpu_addr + (i * MEC_HPD_SIZE * 2) ;
-		/* write the EOP addr */
+		/* ग_लिखो the EOP addr */
 		WREG32(CP_HPD_EOP_BASE_ADDR, eop_gpu_addr >> 8);
 		WREG32(CP_HPD_EOP_BASE_ADDR_HI, upper_32_bits(eop_gpu_addr) >> 8);
 
-		/* set the VMID assigned */
+		/* set the VMID asचिन्हित */
 		WREG32(CP_HPD_EOP_VMID, 0);
 
-		/* set the EOP size, register value is 2^(EOP_SIZE+1) dwords */
-		tmp = RREG32(CP_HPD_EOP_CONTROL);
-		tmp &= ~EOP_SIZE_MASK;
-		tmp |= order_base_2(MEC_HPD_SIZE / 8);
-		WREG32(CP_HPD_EOP_CONTROL, tmp);
+		/* set the EOP size, रेजिस्टर value is 2^(EOP_SIZE+1) dwords */
+		पंचांगp = RREG32(CP_HPD_EOP_CONTROL);
+		पंचांगp &= ~EOP_SIZE_MASK;
+		पंचांगp |= order_base_2(MEC_HPD_SIZE / 8);
+		WREG32(CP_HPD_EOP_CONTROL, पंचांगp);
 
-	}
+	पूर्ण
 	cik_srbm_select(rdev, 0, 0, 0, 0);
 	mutex_unlock(&rdev->srbm_mutex);
 
-	/* init the queues.  Just two for now. */
-	for (i = 0; i < 2; i++) {
-		if (i == 0)
+	/* init the queues.  Just two क्रम now. */
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (i == 0)
 			idx = CAYMAN_RING_TYPE_CP1_INDEX;
-		else
+		अन्यथा
 			idx = CAYMAN_RING_TYPE_CP2_INDEX;
 
-		if (rdev->ring[idx].mqd_obj == NULL) {
+		अगर (rdev->ring[idx].mqd_obj == शून्य) अणु
 			r = radeon_bo_create(rdev,
-					     sizeof(struct bonaire_mqd),
+					     माप(काष्ठा bonaire_mqd),
 					     PAGE_SIZE, true,
-					     RADEON_GEM_DOMAIN_GTT, 0, NULL,
-					     NULL, &rdev->ring[idx].mqd_obj);
-			if (r) {
+					     RADEON_GEM_DOMAIN_GTT, 0, शून्य,
+					     शून्य, &rdev->ring[idx].mqd_obj);
+			अगर (r) अणु
 				dev_warn(rdev->dev, "(%d) create MQD bo failed\n", r);
-				return r;
-			}
-		}
+				वापस r;
+			पूर्ण
+		पूर्ण
 
 		r = radeon_bo_reserve(rdev->ring[idx].mqd_obj, false);
-		if (unlikely(r != 0)) {
+		अगर (unlikely(r != 0)) अणु
 			cik_cp_compute_fini(rdev);
-			return r;
-		}
+			वापस r;
+		पूर्ण
 		r = radeon_bo_pin(rdev->ring[idx].mqd_obj, RADEON_GEM_DOMAIN_GTT,
 				  &mqd_gpu_addr);
-		if (r) {
+		अगर (r) अणु
 			dev_warn(rdev->dev, "(%d) pin MQD bo failed\n", r);
 			cik_cp_compute_fini(rdev);
-			return r;
-		}
-		r = radeon_bo_kmap(rdev->ring[idx].mqd_obj, (void **)&buf);
-		if (r) {
+			वापस r;
+		पूर्ण
+		r = radeon_bo_kmap(rdev->ring[idx].mqd_obj, (व्योम **)&buf);
+		अगर (r) अणु
 			dev_warn(rdev->dev, "(%d) map MQD bo failed\n", r);
 			cik_cp_compute_fini(rdev);
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
-		/* init the mqd struct */
-		memset(buf, 0, sizeof(struct bonaire_mqd));
+		/* init the mqd काष्ठा */
+		स_रखो(buf, 0, माप(काष्ठा bonaire_mqd));
 
-		mqd = (struct bonaire_mqd *)buf;
+		mqd = (काष्ठा bonaire_mqd *)buf;
 		mqd->header = 0xC0310800;
-		mqd->static_thread_mgmt01[0] = 0xffffffff;
-		mqd->static_thread_mgmt01[1] = 0xffffffff;
-		mqd->static_thread_mgmt23[0] = 0xffffffff;
-		mqd->static_thread_mgmt23[1] = 0xffffffff;
+		mqd->अटल_thपढ़ो_mgmt01[0] = 0xffffffff;
+		mqd->अटल_thपढ़ो_mgmt01[1] = 0xffffffff;
+		mqd->अटल_thपढ़ो_mgmt23[0] = 0xffffffff;
+		mqd->अटल_thपढ़ो_mgmt23[1] = 0xffffffff;
 
 		mutex_lock(&rdev->srbm_mutex);
 		cik_srbm_select(rdev, rdev->ring[idx].me,
@@ -4607,37 +4608,37 @@ static int cik_cp_compute_resume(struct radeon_device *rdev)
 				rdev->ring[idx].queue, 0);
 
 		/* disable wptr polling */
-		tmp = RREG32(CP_PQ_WPTR_POLL_CNTL);
-		tmp &= ~WPTR_POLL_EN;
-		WREG32(CP_PQ_WPTR_POLL_CNTL, tmp);
+		पंचांगp = RREG32(CP_PQ_WPTR_POLL_CNTL);
+		पंचांगp &= ~WPTR_POLL_EN;
+		WREG32(CP_PQ_WPTR_POLL_CNTL, पंचांगp);
 
-		/* enable doorbell? */
-		mqd->queue_state.cp_hqd_pq_doorbell_control =
+		/* enable करोorbell? */
+		mqd->queue_state.cp_hqd_pq_करोorbell_control =
 			RREG32(CP_HQD_PQ_DOORBELL_CONTROL);
-		if (use_doorbell)
-			mqd->queue_state.cp_hqd_pq_doorbell_control |= DOORBELL_EN;
-		else
-			mqd->queue_state.cp_hqd_pq_doorbell_control &= ~DOORBELL_EN;
+		अगर (use_करोorbell)
+			mqd->queue_state.cp_hqd_pq_करोorbell_control |= DOORBELL_EN;
+		अन्यथा
+			mqd->queue_state.cp_hqd_pq_करोorbell_control &= ~DOORBELL_EN;
 		WREG32(CP_HQD_PQ_DOORBELL_CONTROL,
-		       mqd->queue_state.cp_hqd_pq_doorbell_control);
+		       mqd->queue_state.cp_hqd_pq_करोorbell_control);
 
-		/* disable the queue if it's active */
+		/* disable the queue अगर it's active */
 		mqd->queue_state.cp_hqd_dequeue_request = 0;
 		mqd->queue_state.cp_hqd_pq_rptr = 0;
 		mqd->queue_state.cp_hqd_pq_wptr= 0;
-		if (RREG32(CP_HQD_ACTIVE) & 1) {
+		अगर (RREG32(CP_HQD_ACTIVE) & 1) अणु
 			WREG32(CP_HQD_DEQUEUE_REQUEST, 1);
-			for (j = 0; j < rdev->usec_timeout; j++) {
-				if (!(RREG32(CP_HQD_ACTIVE) & 1))
-					break;
+			क्रम (j = 0; j < rdev->usec_समयout; j++) अणु
+				अगर (!(RREG32(CP_HQD_ACTIVE) & 1))
+					अवरोध;
 				udelay(1);
-			}
+			पूर्ण
 			WREG32(CP_HQD_DEQUEUE_REQUEST, mqd->queue_state.cp_hqd_dequeue_request);
 			WREG32(CP_HQD_PQ_RPTR, mqd->queue_state.cp_hqd_pq_rptr);
 			WREG32(CP_HQD_PQ_WPTR, mqd->queue_state.cp_hqd_pq_wptr);
-		}
+		पूर्ण
 
-		/* set the pointer to the MQD */
+		/* set the poपूर्णांकer to the MQD */
 		mqd->queue_state.cp_mqd_base_addr = mqd_gpu_addr & 0xfffffffc;
 		mqd->queue_state.cp_mqd_base_addr_hi = upper_32_bits(mqd_gpu_addr);
 		WREG32(CP_MQD_BASE_ADDR, mqd->queue_state.cp_mqd_base_addr);
@@ -4647,7 +4648,7 @@ static int cik_cp_compute_resume(struct radeon_device *rdev)
 		mqd->queue_state.cp_mqd_control &= ~MQD_VMID_MASK;
 		WREG32(CP_MQD_CONTROL, mqd->queue_state.cp_mqd_control);
 
-		/* set the pointer to the HQD, this is similar CP_RB0_BASE/_HI */
+		/* set the poपूर्णांकer to the HQD, this is similar CP_RB0_BASE/_HI */
 		hqd_gpu_addr = rdev->ring[idx].gpu_addr >> 8;
 		mqd->queue_state.cp_hqd_pq_base = hqd_gpu_addr;
 		mqd->queue_state.cp_hqd_pq_base_hi = upper_32_bits(hqd_gpu_addr);
@@ -4663,19 +4664,19 @@ static int cik_cp_compute_resume(struct radeon_device *rdev)
 			order_base_2(rdev->ring[idx].ring_size / 8);
 		mqd->queue_state.cp_hqd_pq_control |=
 			(order_base_2(RADEON_GPU_PAGE_SIZE/8) << 8);
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 		mqd->queue_state.cp_hqd_pq_control |= BUF_SWAP_32BIT;
-#endif
+#पूर्ण_अगर
 		mqd->queue_state.cp_hqd_pq_control &=
 			~(UNORD_DISPATCH | ROQ_PQ_IB_FLIP | PQ_VOLATILE);
 		mqd->queue_state.cp_hqd_pq_control |=
 			PRIV_STATE | KMD_QUEUE; /* assuming kernel queue control */
 		WREG32(CP_HQD_PQ_CONTROL, mqd->queue_state.cp_hqd_pq_control);
 
-		/* only used if CP_PQ_WPTR_POLL_CNTL.WPTR_POLL_EN=1 */
-		if (i == 0)
+		/* only used अगर CP_PQ_WPTR_POLL_CNTL.WPTR_POLL_EN=1 */
+		अगर (i == 0)
 			wb_gpu_addr = rdev->wb.gpu_addr + CIK_WB_CP1_WPTR_OFFSET;
-		else
+		अन्यथा
 			wb_gpu_addr = rdev->wb.gpu_addr + CIK_WB_CP2_WPTR_OFFSET;
 		mqd->queue_state.cp_hqd_pq_wptr_poll_addr = wb_gpu_addr & 0xfffffffc;
 		mqd->queue_state.cp_hqd_pq_wptr_poll_addr_hi = upper_32_bits(wb_gpu_addr) & 0xffff;
@@ -4684,9 +4685,9 @@ static int cik_cp_compute_resume(struct radeon_device *rdev)
 		       mqd->queue_state.cp_hqd_pq_wptr_poll_addr_hi);
 
 		/* set the wb address wether it's enabled or not */
-		if (i == 0)
+		अगर (i == 0)
 			wb_gpu_addr = rdev->wb.gpu_addr + RADEON_WB_CP1_RPTR_OFFSET;
-		else
+		अन्यथा
 			wb_gpu_addr = rdev->wb.gpu_addr + RADEON_WB_CP2_RPTR_OFFSET;
 		mqd->queue_state.cp_hqd_pq_rptr_report_addr = wb_gpu_addr & 0xfffffffc;
 		mqd->queue_state.cp_hqd_pq_rptr_report_addr_hi =
@@ -4696,30 +4697,30 @@ static int cik_cp_compute_resume(struct radeon_device *rdev)
 		WREG32(CP_HQD_PQ_RPTR_REPORT_ADDR_HI,
 		       mqd->queue_state.cp_hqd_pq_rptr_report_addr_hi);
 
-		/* enable the doorbell if requested */
-		if (use_doorbell) {
-			mqd->queue_state.cp_hqd_pq_doorbell_control =
+		/* enable the करोorbell अगर requested */
+		अगर (use_करोorbell) अणु
+			mqd->queue_state.cp_hqd_pq_करोorbell_control =
 				RREG32(CP_HQD_PQ_DOORBELL_CONTROL);
-			mqd->queue_state.cp_hqd_pq_doorbell_control &= ~DOORBELL_OFFSET_MASK;
-			mqd->queue_state.cp_hqd_pq_doorbell_control |=
-				DOORBELL_OFFSET(rdev->ring[idx].doorbell_index);
-			mqd->queue_state.cp_hqd_pq_doorbell_control |= DOORBELL_EN;
-			mqd->queue_state.cp_hqd_pq_doorbell_control &=
+			mqd->queue_state.cp_hqd_pq_करोorbell_control &= ~DOORBELL_OFFSET_MASK;
+			mqd->queue_state.cp_hqd_pq_करोorbell_control |=
+				DOORBELL_OFFSET(rdev->ring[idx].करोorbell_index);
+			mqd->queue_state.cp_hqd_pq_करोorbell_control |= DOORBELL_EN;
+			mqd->queue_state.cp_hqd_pq_करोorbell_control &=
 				~(DOORBELL_SOURCE | DOORBELL_HIT);
 
-		} else {
-			mqd->queue_state.cp_hqd_pq_doorbell_control = 0;
-		}
+		पूर्ण अन्यथा अणु
+			mqd->queue_state.cp_hqd_pq_करोorbell_control = 0;
+		पूर्ण
 		WREG32(CP_HQD_PQ_DOORBELL_CONTROL,
-		       mqd->queue_state.cp_hqd_pq_doorbell_control);
+		       mqd->queue_state.cp_hqd_pq_करोorbell_control);
 
-		/* read and write pointers, similar to CP_RB0_WPTR/_RPTR */
+		/* पढ़ो and ग_लिखो poपूर्णांकers, similar to CP_RB0_WPTR/_RPTR */
 		rdev->ring[idx].wptr = 0;
 		mqd->queue_state.cp_hqd_pq_wptr = rdev->ring[idx].wptr;
 		WREG32(CP_HQD_PQ_WPTR, mqd->queue_state.cp_hqd_pq_wptr);
 		mqd->queue_state.cp_hqd_pq_rptr = RREG32(CP_HQD_PQ_RPTR);
 
-		/* set the vmid for the queue */
+		/* set the vmid क्रम the queue */
 		mqd->queue_state.cp_hqd_vmid = 0;
 		WREG32(CP_HQD_VMID, mqd->queue_state.cp_hqd_vmid);
 
@@ -4733,65 +4734,65 @@ static int cik_cp_compute_resume(struct radeon_device *rdev)
 		radeon_bo_kunmap(rdev->ring[idx].mqd_obj);
 		radeon_bo_unreserve(rdev->ring[idx].mqd_obj);
 
-		rdev->ring[idx].ready = true;
+		rdev->ring[idx].पढ़ोy = true;
 		r = radeon_ring_test(rdev, idx, &rdev->ring[idx]);
-		if (r)
-			rdev->ring[idx].ready = false;
-	}
+		अगर (r)
+			rdev->ring[idx].पढ़ोy = false;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cik_cp_enable(struct radeon_device *rdev, bool enable)
-{
+अटल व्योम cik_cp_enable(काष्ठा radeon_device *rdev, bool enable)
+अणु
 	cik_cp_gfx_enable(rdev, enable);
 	cik_cp_compute_enable(rdev, enable);
-}
+पूर्ण
 
-static int cik_cp_load_microcode(struct radeon_device *rdev)
-{
-	int r;
+अटल पूर्णांक cik_cp_load_microcode(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r;
 
 	r = cik_cp_gfx_load_microcode(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	r = cik_cp_compute_load_microcode(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cik_cp_fini(struct radeon_device *rdev)
-{
+अटल व्योम cik_cp_fini(काष्ठा radeon_device *rdev)
+अणु
 	cik_cp_gfx_fini(rdev);
 	cik_cp_compute_fini(rdev);
-}
+पूर्ण
 
-static int cik_cp_resume(struct radeon_device *rdev)
-{
-	int r;
+अटल पूर्णांक cik_cp_resume(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r;
 
-	cik_enable_gui_idle_interrupt(rdev, false);
+	cik_enable_gui_idle_पूर्णांकerrupt(rdev, false);
 
 	r = cik_cp_load_microcode(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = cik_cp_gfx_resume(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	r = cik_cp_compute_resume(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	cik_enable_gui_idle_interrupt(rdev, true);
+	cik_enable_gui_idle_पूर्णांकerrupt(rdev, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cik_print_gpu_status_regs(struct radeon_device *rdev)
-{
+अटल व्योम cik_prपूर्णांक_gpu_status_regs(काष्ठा radeon_device *rdev)
+अणु
 	dev_info(rdev->dev, "  GRBM_STATUS=0x%08X\n",
 		RREG32(GRBM_STATUS));
 	dev_info(rdev->dev, "  GRBM_STATUS2=0x%08X\n",
@@ -4828,25 +4829,25 @@ static void cik_print_gpu_status_regs(struct radeon_device *rdev)
 	dev_info(rdev->dev, "  CP_CPC_STALLED_STAT1 = 0x%08x\n",
 		 RREG32(CP_CPC_STALLED_STAT1));
 	dev_info(rdev->dev, "  CP_CPC_STATUS = 0x%08x\n", RREG32(CP_CPC_STATUS));
-}
+पूर्ण
 
 /**
  * cik_gpu_check_soft_reset - check which blocks are busy
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Check which blocks are busy and return the relevant reset
+ * Check which blocks are busy and वापस the relevant reset
  * mask to be used by cik_gpu_soft_reset().
  * Returns a mask of the blocks to be reset.
  */
-u32 cik_gpu_check_soft_reset(struct radeon_device *rdev)
-{
+u32 cik_gpu_check_soft_reset(काष्ठा radeon_device *rdev)
+अणु
 	u32 reset_mask = 0;
-	u32 tmp;
+	u32 पंचांगp;
 
 	/* GRBM_STATUS */
-	tmp = RREG32(GRBM_STATUS);
-	if (tmp & (PA_BUSY | SC_BUSY |
+	पंचांगp = RREG32(GRBM_STATUS);
+	अगर (पंचांगp & (PA_BUSY | SC_BUSY |
 		   BCI_BUSY | SX_BUSY |
 		   TA_BUSY | VGT_BUSY |
 		   DB_BUSY | CB_BUSY |
@@ -4854,83 +4855,83 @@ u32 cik_gpu_check_soft_reset(struct radeon_device *rdev)
 		   IA_BUSY | IA_BUSY_NO_DMA))
 		reset_mask |= RADEON_RESET_GFX;
 
-	if (tmp & (CP_BUSY | CP_COHERENCY_BUSY))
+	अगर (पंचांगp & (CP_BUSY | CP_COHERENCY_BUSY))
 		reset_mask |= RADEON_RESET_CP;
 
 	/* GRBM_STATUS2 */
-	tmp = RREG32(GRBM_STATUS2);
-	if (tmp & RLC_BUSY)
+	पंचांगp = RREG32(GRBM_STATUS2);
+	अगर (पंचांगp & RLC_BUSY)
 		reset_mask |= RADEON_RESET_RLC;
 
 	/* SDMA0_STATUS_REG */
-	tmp = RREG32(SDMA0_STATUS_REG + SDMA0_REGISTER_OFFSET);
-	if (!(tmp & SDMA_IDLE))
+	पंचांगp = RREG32(SDMA0_STATUS_REG + SDMA0_REGISTER_OFFSET);
+	अगर (!(पंचांगp & SDMA_IDLE))
 		reset_mask |= RADEON_RESET_DMA;
 
 	/* SDMA1_STATUS_REG */
-	tmp = RREG32(SDMA0_STATUS_REG + SDMA1_REGISTER_OFFSET);
-	if (!(tmp & SDMA_IDLE))
+	पंचांगp = RREG32(SDMA0_STATUS_REG + SDMA1_REGISTER_OFFSET);
+	अगर (!(पंचांगp & SDMA_IDLE))
 		reset_mask |= RADEON_RESET_DMA1;
 
 	/* SRBM_STATUS2 */
-	tmp = RREG32(SRBM_STATUS2);
-	if (tmp & SDMA_BUSY)
+	पंचांगp = RREG32(SRBM_STATUS2);
+	अगर (पंचांगp & SDMA_BUSY)
 		reset_mask |= RADEON_RESET_DMA;
 
-	if (tmp & SDMA1_BUSY)
+	अगर (पंचांगp & SDMA1_BUSY)
 		reset_mask |= RADEON_RESET_DMA1;
 
 	/* SRBM_STATUS */
-	tmp = RREG32(SRBM_STATUS);
+	पंचांगp = RREG32(SRBM_STATUS);
 
-	if (tmp & IH_BUSY)
+	अगर (पंचांगp & IH_BUSY)
 		reset_mask |= RADEON_RESET_IH;
 
-	if (tmp & SEM_BUSY)
+	अगर (पंचांगp & SEM_BUSY)
 		reset_mask |= RADEON_RESET_SEM;
 
-	if (tmp & GRBM_RQ_PENDING)
+	अगर (पंचांगp & GRBM_RQ_PENDING)
 		reset_mask |= RADEON_RESET_GRBM;
 
-	if (tmp & VMC_BUSY)
+	अगर (पंचांगp & VMC_BUSY)
 		reset_mask |= RADEON_RESET_VMC;
 
-	if (tmp & (MCB_BUSY | MCB_NON_DISPLAY_BUSY |
+	अगर (पंचांगp & (MCB_BUSY | MCB_NON_DISPLAY_BUSY |
 		   MCC_BUSY | MCD_BUSY))
 		reset_mask |= RADEON_RESET_MC;
 
-	if (evergreen_is_display_hung(rdev))
+	अगर (evergreen_is_display_hung(rdev))
 		reset_mask |= RADEON_RESET_DISPLAY;
 
 	/* Skip MC reset as it's mostly likely not hung, just busy */
-	if (reset_mask & RADEON_RESET_MC) {
+	अगर (reset_mask & RADEON_RESET_MC) अणु
 		DRM_DEBUG("MC busy: 0x%08X, clearing.\n", reset_mask);
 		reset_mask &= ~RADEON_RESET_MC;
-	}
+	पूर्ण
 
-	return reset_mask;
-}
+	वापस reset_mask;
+पूर्ण
 
 /**
  * cik_gpu_soft_reset - soft reset GPU
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @reset_mask: mask of which blocks to reset
  *
- * Soft reset the blocks specified in @reset_mask.
+ * Soft reset the blocks specअगरied in @reset_mask.
  */
-static void cik_gpu_soft_reset(struct radeon_device *rdev, u32 reset_mask)
-{
-	struct evergreen_mc_save save;
+अटल व्योम cik_gpu_soft_reset(काष्ठा radeon_device *rdev, u32 reset_mask)
+अणु
+	काष्ठा evergreen_mc_save save;
 	u32 grbm_soft_reset = 0, srbm_soft_reset = 0;
-	u32 tmp;
+	u32 पंचांगp;
 
-	if (reset_mask == 0)
-		return;
+	अगर (reset_mask == 0)
+		वापस;
 
 	dev_info(rdev->dev, "GPU softreset: 0x%08X\n", reset_mask);
 
-	cik_print_gpu_status_regs(rdev);
+	cik_prपूर्णांक_gpu_status_regs(rdev);
 	dev_info(rdev->dev, "  VM_CONTEXT1_PROTECTION_FAULT_ADDR   0x%08X\n",
 		 RREG32(VM_CONTEXT1_PROTECTION_FAULT_ADDR));
 	dev_info(rdev->dev, "  VM_CONTEXT1_PROTECTION_FAULT_STATUS 0x%08X\n",
@@ -4949,108 +4950,108 @@ static void cik_gpu_soft_reset(struct radeon_device *rdev, u32 reset_mask)
 	/* Disable MEC parsing/prefetching */
 	WREG32(CP_MEC_CNTL, MEC_ME1_HALT | MEC_ME2_HALT);
 
-	if (reset_mask & RADEON_RESET_DMA) {
+	अगर (reset_mask & RADEON_RESET_DMA) अणु
 		/* sdma0 */
-		tmp = RREG32(SDMA0_ME_CNTL + SDMA0_REGISTER_OFFSET);
-		tmp |= SDMA_HALT;
-		WREG32(SDMA0_ME_CNTL + SDMA0_REGISTER_OFFSET, tmp);
-	}
-	if (reset_mask & RADEON_RESET_DMA1) {
+		पंचांगp = RREG32(SDMA0_ME_CNTL + SDMA0_REGISTER_OFFSET);
+		पंचांगp |= SDMA_HALT;
+		WREG32(SDMA0_ME_CNTL + SDMA0_REGISTER_OFFSET, पंचांगp);
+	पूर्ण
+	अगर (reset_mask & RADEON_RESET_DMA1) अणु
 		/* sdma1 */
-		tmp = RREG32(SDMA0_ME_CNTL + SDMA1_REGISTER_OFFSET);
-		tmp |= SDMA_HALT;
-		WREG32(SDMA0_ME_CNTL + SDMA1_REGISTER_OFFSET, tmp);
-	}
+		पंचांगp = RREG32(SDMA0_ME_CNTL + SDMA1_REGISTER_OFFSET);
+		पंचांगp |= SDMA_HALT;
+		WREG32(SDMA0_ME_CNTL + SDMA1_REGISTER_OFFSET, पंचांगp);
+	पूर्ण
 
 	evergreen_mc_stop(rdev, &save);
-	if (evergreen_mc_wait_for_idle(rdev)) {
+	अगर (evergreen_mc_रुको_क्रम_idle(rdev)) अणु
 		dev_warn(rdev->dev, "Wait for MC idle timedout !\n");
-	}
+	पूर्ण
 
-	if (reset_mask & (RADEON_RESET_GFX | RADEON_RESET_COMPUTE | RADEON_RESET_CP))
+	अगर (reset_mask & (RADEON_RESET_GFX | RADEON_RESET_COMPUTE | RADEON_RESET_CP))
 		grbm_soft_reset = SOFT_RESET_CP | SOFT_RESET_GFX;
 
-	if (reset_mask & RADEON_RESET_CP) {
+	अगर (reset_mask & RADEON_RESET_CP) अणु
 		grbm_soft_reset |= SOFT_RESET_CP;
 
 		srbm_soft_reset |= SOFT_RESET_GRBM;
-	}
+	पूर्ण
 
-	if (reset_mask & RADEON_RESET_DMA)
+	अगर (reset_mask & RADEON_RESET_DMA)
 		srbm_soft_reset |= SOFT_RESET_SDMA;
 
-	if (reset_mask & RADEON_RESET_DMA1)
+	अगर (reset_mask & RADEON_RESET_DMA1)
 		srbm_soft_reset |= SOFT_RESET_SDMA1;
 
-	if (reset_mask & RADEON_RESET_DISPLAY)
+	अगर (reset_mask & RADEON_RESET_DISPLAY)
 		srbm_soft_reset |= SOFT_RESET_DC;
 
-	if (reset_mask & RADEON_RESET_RLC)
+	अगर (reset_mask & RADEON_RESET_RLC)
 		grbm_soft_reset |= SOFT_RESET_RLC;
 
-	if (reset_mask & RADEON_RESET_SEM)
+	अगर (reset_mask & RADEON_RESET_SEM)
 		srbm_soft_reset |= SOFT_RESET_SEM;
 
-	if (reset_mask & RADEON_RESET_IH)
+	अगर (reset_mask & RADEON_RESET_IH)
 		srbm_soft_reset |= SOFT_RESET_IH;
 
-	if (reset_mask & RADEON_RESET_GRBM)
+	अगर (reset_mask & RADEON_RESET_GRBM)
 		srbm_soft_reset |= SOFT_RESET_GRBM;
 
-	if (reset_mask & RADEON_RESET_VMC)
+	अगर (reset_mask & RADEON_RESET_VMC)
 		srbm_soft_reset |= SOFT_RESET_VMC;
 
-	if (!(rdev->flags & RADEON_IS_IGP)) {
-		if (reset_mask & RADEON_RESET_MC)
+	अगर (!(rdev->flags & RADEON_IS_IGP)) अणु
+		अगर (reset_mask & RADEON_RESET_MC)
 			srbm_soft_reset |= SOFT_RESET_MC;
-	}
+	पूर्ण
 
-	if (grbm_soft_reset) {
-		tmp = RREG32(GRBM_SOFT_RESET);
-		tmp |= grbm_soft_reset;
-		dev_info(rdev->dev, "GRBM_SOFT_RESET=0x%08X\n", tmp);
-		WREG32(GRBM_SOFT_RESET, tmp);
-		tmp = RREG32(GRBM_SOFT_RESET);
-
-		udelay(50);
-
-		tmp &= ~grbm_soft_reset;
-		WREG32(GRBM_SOFT_RESET, tmp);
-		tmp = RREG32(GRBM_SOFT_RESET);
-	}
-
-	if (srbm_soft_reset) {
-		tmp = RREG32(SRBM_SOFT_RESET);
-		tmp |= srbm_soft_reset;
-		dev_info(rdev->dev, "SRBM_SOFT_RESET=0x%08X\n", tmp);
-		WREG32(SRBM_SOFT_RESET, tmp);
-		tmp = RREG32(SRBM_SOFT_RESET);
+	अगर (grbm_soft_reset) अणु
+		पंचांगp = RREG32(GRBM_SOFT_RESET);
+		पंचांगp |= grbm_soft_reset;
+		dev_info(rdev->dev, "GRBM_SOFT_RESET=0x%08X\n", पंचांगp);
+		WREG32(GRBM_SOFT_RESET, पंचांगp);
+		पंचांगp = RREG32(GRBM_SOFT_RESET);
 
 		udelay(50);
 
-		tmp &= ~srbm_soft_reset;
-		WREG32(SRBM_SOFT_RESET, tmp);
-		tmp = RREG32(SRBM_SOFT_RESET);
-	}
+		पंचांगp &= ~grbm_soft_reset;
+		WREG32(GRBM_SOFT_RESET, पंचांगp);
+		पंचांगp = RREG32(GRBM_SOFT_RESET);
+	पूर्ण
 
-	/* Wait a little for things to settle down */
+	अगर (srbm_soft_reset) अणु
+		पंचांगp = RREG32(SRBM_SOFT_RESET);
+		पंचांगp |= srbm_soft_reset;
+		dev_info(rdev->dev, "SRBM_SOFT_RESET=0x%08X\n", पंचांगp);
+		WREG32(SRBM_SOFT_RESET, पंचांगp);
+		पंचांगp = RREG32(SRBM_SOFT_RESET);
+
+		udelay(50);
+
+		पंचांगp &= ~srbm_soft_reset;
+		WREG32(SRBM_SOFT_RESET, पंचांगp);
+		पंचांगp = RREG32(SRBM_SOFT_RESET);
+	पूर्ण
+
+	/* Wait a little क्रम things to settle करोwn */
 	udelay(50);
 
 	evergreen_mc_resume(rdev, &save);
 	udelay(50);
 
-	cik_print_gpu_status_regs(rdev);
-}
+	cik_prपूर्णांक_gpu_status_regs(rdev);
+पूर्ण
 
-struct kv_reset_save_regs {
+काष्ठा kv_reset_save_regs अणु
 	u32 gmcon_reng_execute;
 	u32 gmcon_misc;
 	u32 gmcon_misc3;
-};
+पूर्ण;
 
-static void kv_save_regs_for_reset(struct radeon_device *rdev,
-				   struct kv_reset_save_regs *save)
-{
+अटल व्योम kv_save_regs_क्रम_reset(काष्ठा radeon_device *rdev,
+				   काष्ठा kv_reset_save_regs *save)
+अणु
 	save->gmcon_reng_execute = RREG32(GMCON_RENG_EXECUTE);
 	save->gmcon_misc = RREG32(GMCON_MISC);
 	save->gmcon_misc3 = RREG32(GMCON_MISC3);
@@ -5058,71 +5059,71 @@ static void kv_save_regs_for_reset(struct radeon_device *rdev,
 	WREG32(GMCON_RENG_EXECUTE, save->gmcon_reng_execute & ~RENG_EXECUTE_ON_PWR_UP);
 	WREG32(GMCON_MISC, save->gmcon_misc & ~(RENG_EXECUTE_ON_REG_UPDATE |
 						STCTRL_STUTTER_EN));
-}
+पूर्ण
 
-static void kv_restore_regs_for_reset(struct radeon_device *rdev,
-				      struct kv_reset_save_regs *save)
-{
-	int i;
+अटल व्योम kv_restore_regs_क्रम_reset(काष्ठा radeon_device *rdev,
+				      काष्ठा kv_reset_save_regs *save)
+अणु
+	पूर्णांक i;
 
 	WREG32(GMCON_PGFSM_WRITE, 0);
 	WREG32(GMCON_PGFSM_CONFIG, 0x200010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(GMCON_PGFSM_WRITE, 0);
 
 	WREG32(GMCON_PGFSM_WRITE, 0);
 	WREG32(GMCON_PGFSM_CONFIG, 0x300010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(GMCON_PGFSM_WRITE, 0);
 
 	WREG32(GMCON_PGFSM_WRITE, 0x210000);
 	WREG32(GMCON_PGFSM_CONFIG, 0xa00010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(GMCON_PGFSM_WRITE, 0);
 
 	WREG32(GMCON_PGFSM_WRITE, 0x21003);
 	WREG32(GMCON_PGFSM_CONFIG, 0xb00010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(GMCON_PGFSM_WRITE, 0);
 
 	WREG32(GMCON_PGFSM_WRITE, 0x2b00);
 	WREG32(GMCON_PGFSM_CONFIG, 0xc00010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(GMCON_PGFSM_WRITE, 0);
 
 	WREG32(GMCON_PGFSM_WRITE, 0);
 	WREG32(GMCON_PGFSM_CONFIG, 0xd00010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(GMCON_PGFSM_WRITE, 0);
 
 	WREG32(GMCON_PGFSM_WRITE, 0x420000);
 	WREG32(GMCON_PGFSM_CONFIG, 0x100010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(GMCON_PGFSM_WRITE, 0);
 
 	WREG32(GMCON_PGFSM_WRITE, 0x120202);
 	WREG32(GMCON_PGFSM_CONFIG, 0x500010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(GMCON_PGFSM_WRITE, 0);
 
 	WREG32(GMCON_PGFSM_WRITE, 0x3e3e36);
 	WREG32(GMCON_PGFSM_CONFIG, 0x600010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(GMCON_PGFSM_WRITE, 0);
 
 	WREG32(GMCON_PGFSM_WRITE, 0x373f3e);
 	WREG32(GMCON_PGFSM_CONFIG, 0x700010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(GMCON_PGFSM_WRITE, 0);
 
 	WREG32(GMCON_PGFSM_WRITE, 0x3e1332);
@@ -5131,13 +5132,13 @@ static void kv_restore_regs_for_reset(struct radeon_device *rdev,
 	WREG32(GMCON_MISC3, save->gmcon_misc3);
 	WREG32(GMCON_MISC, save->gmcon_misc);
 	WREG32(GMCON_RENG_EXECUTE, save->gmcon_reng_execute);
-}
+पूर्ण
 
-static void cik_gpu_pci_config_reset(struct radeon_device *rdev)
-{
-	struct evergreen_mc_save save;
-	struct kv_reset_save_regs kv_save = { 0 };
-	u32 tmp, i;
+अटल व्योम cik_gpu_pci_config_reset(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा evergreen_mc_save save;
+	काष्ठा kv_reset_save_regs kv_save = अणु 0 पूर्ण;
+	u32 पंचांगp, i;
 
 	dev_info(rdev->dev, "GPU pci config reset\n");
 
@@ -5154,28 +5155,28 @@ static void cik_gpu_pci_config_reset(struct radeon_device *rdev)
 	WREG32(CP_MEC_CNTL, MEC_ME1_HALT | MEC_ME2_HALT);
 
 	/* sdma0 */
-	tmp = RREG32(SDMA0_ME_CNTL + SDMA0_REGISTER_OFFSET);
-	tmp |= SDMA_HALT;
-	WREG32(SDMA0_ME_CNTL + SDMA0_REGISTER_OFFSET, tmp);
+	पंचांगp = RREG32(SDMA0_ME_CNTL + SDMA0_REGISTER_OFFSET);
+	पंचांगp |= SDMA_HALT;
+	WREG32(SDMA0_ME_CNTL + SDMA0_REGISTER_OFFSET, पंचांगp);
 	/* sdma1 */
-	tmp = RREG32(SDMA0_ME_CNTL + SDMA1_REGISTER_OFFSET);
-	tmp |= SDMA_HALT;
-	WREG32(SDMA0_ME_CNTL + SDMA1_REGISTER_OFFSET, tmp);
+	पंचांगp = RREG32(SDMA0_ME_CNTL + SDMA1_REGISTER_OFFSET);
+	पंचांगp |= SDMA_HALT;
+	WREG32(SDMA0_ME_CNTL + SDMA1_REGISTER_OFFSET, पंचांगp);
 	/* XXX other engines? */
 
-	/* halt the rlc, disable cp internal ints */
+	/* halt the rlc, disable cp पूर्णांकernal पूर्णांकs */
 	cik_rlc_stop(rdev);
 
 	udelay(50);
 
 	/* disable mem access */
 	evergreen_mc_stop(rdev, &save);
-	if (evergreen_mc_wait_for_idle(rdev)) {
+	अगर (evergreen_mc_रुको_क्रम_idle(rdev)) अणु
 		dev_warn(rdev->dev, "Wait for MC idle timed out !\n");
-	}
+	पूर्ण
 
-	if (rdev->flags & RADEON_IS_IGP)
-		kv_save_regs_for_reset(rdev, &kv_save);
+	अगर (rdev->flags & RADEON_IS_IGP)
+		kv_save_regs_क्रम_reset(rdev, &kv_save);
 
 	/* disable BM */
 	pci_clear_master(rdev->pdev);
@@ -5184,40 +5185,40 @@ static void cik_gpu_pci_config_reset(struct radeon_device *rdev)
 
 	udelay(100);
 
-	/* wait for asic to come out of reset */
-	for (i = 0; i < rdev->usec_timeout; i++) {
-		if (RREG32(CONFIG_MEMSIZE) != 0xffffffff)
-			break;
+	/* रुको क्रम asic to come out of reset */
+	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+		अगर (RREG32(CONFIG_MEMSIZE) != 0xffffffff)
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 
-	/* does asic init need to be run first??? */
-	if (rdev->flags & RADEON_IS_IGP)
-		kv_restore_regs_for_reset(rdev, &kv_save);
-}
+	/* करोes asic init need to be run first??? */
+	अगर (rdev->flags & RADEON_IS_IGP)
+		kv_restore_regs_क्रम_reset(rdev, &kv_save);
+पूर्ण
 
 /**
  * cik_asic_reset - soft reset GPU
  *
- * @rdev: radeon_device pointer
- * @hard: force hard reset
+ * @rdev: radeon_device poपूर्णांकer
+ * @hard: क्रमce hard reset
  *
  * Look up which blocks are hung and attempt
  * to reset them.
- * Returns 0 for success.
+ * Returns 0 क्रम success.
  */
-int cik_asic_reset(struct radeon_device *rdev, bool hard)
-{
+पूर्णांक cik_asic_reset(काष्ठा radeon_device *rdev, bool hard)
+अणु
 	u32 reset_mask;
 
-	if (hard) {
+	अगर (hard) अणु
 		cik_gpu_pci_config_reset(rdev);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	reset_mask = cik_gpu_check_soft_reset(rdev);
 
-	if (reset_mask)
+	अगर (reset_mask)
 		r600_set_bios_scratch_engine_hung(rdev, true);
 
 	/* try soft reset */
@@ -5226,68 +5227,68 @@ int cik_asic_reset(struct radeon_device *rdev, bool hard)
 	reset_mask = cik_gpu_check_soft_reset(rdev);
 
 	/* try pci config reset */
-	if (reset_mask && radeon_hard_reset)
+	अगर (reset_mask && radeon_hard_reset)
 		cik_gpu_pci_config_reset(rdev);
 
 	reset_mask = cik_gpu_check_soft_reset(rdev);
 
-	if (!reset_mask)
+	अगर (!reset_mask)
 		r600_set_bios_scratch_engine_hung(rdev, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cik_gfx_is_lockup - check if the 3D engine is locked up
+ * cik_gfx_is_lockup - check अगर the 3D engine is locked up
  *
- * @rdev: radeon_device pointer
- * @ring: radeon_ring structure holding ring information
+ * @rdev: radeon_device poपूर्णांकer
+ * @ring: radeon_ring काष्ठाure holding ring inक्रमmation
  *
- * Check if the 3D engine is locked up (CIK).
- * Returns true if the engine is locked, false if not.
+ * Check अगर the 3D engine is locked up (CIK).
+ * Returns true अगर the engine is locked, false अगर not.
  */
-bool cik_gfx_is_lockup(struct radeon_device *rdev, struct radeon_ring *ring)
-{
+bool cik_gfx_is_lockup(काष्ठा radeon_device *rdev, काष्ठा radeon_ring *ring)
+अणु
 	u32 reset_mask = cik_gpu_check_soft_reset(rdev);
 
-	if (!(reset_mask & (RADEON_RESET_GFX |
+	अगर (!(reset_mask & (RADEON_RESET_GFX |
 			    RADEON_RESET_COMPUTE |
-			    RADEON_RESET_CP))) {
+			    RADEON_RESET_CP))) अणु
 		radeon_ring_lockup_update(rdev, ring);
-		return false;
-	}
-	return radeon_ring_test_lockup(rdev, ring);
-}
+		वापस false;
+	पूर्ण
+	वापस radeon_ring_test_lockup(rdev, ring);
+पूर्ण
 
 /* MC */
 /**
  * cik_mc_program - program the GPU memory controller
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Set the location of vram, gart, and AGP in the GPU's
  * physical address space (CIK).
  */
-static void cik_mc_program(struct radeon_device *rdev)
-{
-	struct evergreen_mc_save save;
-	u32 tmp;
-	int i, j;
+अटल व्योम cik_mc_program(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा evergreen_mc_save save;
+	u32 पंचांगp;
+	पूर्णांक i, j;
 
 	/* Initialize HDP */
-	for (i = 0, j = 0; i < 32; i++, j += 0x18) {
+	क्रम (i = 0, j = 0; i < 32; i++, j += 0x18) अणु
 		WREG32((0x2c14 + j), 0x00000000);
 		WREG32((0x2c18 + j), 0x00000000);
 		WREG32((0x2c1c + j), 0x00000000);
 		WREG32((0x2c20 + j), 0x00000000);
 		WREG32((0x2c24 + j), 0x00000000);
-	}
+	पूर्ण
 	WREG32(HDP_REG_COHERENCY_FLUSH_CNTL, 0);
 
 	evergreen_mc_stop(rdev, &save);
-	if (radeon_mc_wait_for_idle(rdev)) {
+	अगर (radeon_mc_रुको_क्रम_idle(rdev)) अणु
 		dev_warn(rdev->dev, "Wait for MC idle timedout !\n");
-	}
+	पूर्ण
 	/* Lockout access through VGA aperture*/
 	WREG32(VGA_HDP_CONTROL, VGA_MEMORY_DISABLE);
 	/* Update configuration */
@@ -5297,78 +5298,78 @@ static void cik_mc_program(struct radeon_device *rdev)
 	       rdev->mc.vram_end >> 12);
 	WREG32(MC_VM_SYSTEM_APERTURE_DEFAULT_ADDR,
 	       rdev->vram_scratch.gpu_addr >> 12);
-	tmp = ((rdev->mc.vram_end >> 24) & 0xFFFF) << 16;
-	tmp |= ((rdev->mc.vram_start >> 24) & 0xFFFF);
-	WREG32(MC_VM_FB_LOCATION, tmp);
-	/* XXX double check these! */
+	पंचांगp = ((rdev->mc.vram_end >> 24) & 0xFFFF) << 16;
+	पंचांगp |= ((rdev->mc.vram_start >> 24) & 0xFFFF);
+	WREG32(MC_VM_FB_LOCATION, पंचांगp);
+	/* XXX द्विगुन check these! */
 	WREG32(HDP_NONSURFACE_BASE, (rdev->mc.vram_start >> 8));
 	WREG32(HDP_NONSURFACE_INFO, (2 << 7) | (1 << 30));
 	WREG32(HDP_NONSURFACE_SIZE, 0x3FFFFFFF);
 	WREG32(MC_VM_AGP_BASE, 0);
 	WREG32(MC_VM_AGP_TOP, 0x0FFFFFFF);
 	WREG32(MC_VM_AGP_BOT, 0x0FFFFFFF);
-	if (radeon_mc_wait_for_idle(rdev)) {
+	अगर (radeon_mc_रुको_क्रम_idle(rdev)) अणु
 		dev_warn(rdev->dev, "Wait for MC idle timedout !\n");
-	}
+	पूर्ण
 	evergreen_mc_resume(rdev, &save);
 	/* we need to own VRAM, so turn off the VGA renderer here
 	 * to stop it overwriting our objects */
 	rv515_vga_render_disable(rdev);
-}
+पूर्ण
 
 /**
  * cik_mc_init - initialize the memory controller driver params
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Look up the amount of vram, vram width, and decide how to place
  * vram and gart within the GPU's physical address space (CIK).
- * Returns 0 for success.
+ * Returns 0 क्रम success.
  */
-static int cik_mc_init(struct radeon_device *rdev)
-{
-	u32 tmp;
-	int chansize, numchan;
+अटल पूर्णांक cik_mc_init(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp;
+	पूर्णांक chansize, numchan;
 
-	/* Get VRAM informations */
+	/* Get VRAM inक्रमmations */
 	rdev->mc.vram_is_ddr = true;
-	tmp = RREG32(MC_ARB_RAMCFG);
-	if (tmp & CHANSIZE_MASK) {
+	पंचांगp = RREG32(MC_ARB_RAMCFG);
+	अगर (पंचांगp & CHANSIZE_MASK) अणु
 		chansize = 64;
-	} else {
+	पूर्ण अन्यथा अणु
 		chansize = 32;
-	}
-	tmp = RREG32(MC_SHARED_CHMAP);
-	switch ((tmp & NOOFCHAN_MASK) >> NOOFCHAN_SHIFT) {
-	case 0:
-	default:
+	पूर्ण
+	पंचांगp = RREG32(MC_SHARED_CHMAP);
+	चयन ((पंचांगp & NOOFCHAN_MASK) >> NOOFCHAN_SHIFT) अणु
+	हाल 0:
+	शेष:
 		numchan = 1;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		numchan = 2;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		numchan = 4;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		numchan = 8;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		numchan = 3;
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		numchan = 6;
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		numchan = 10;
-		break;
-	case 7:
+		अवरोध;
+	हाल 7:
 		numchan = 12;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		numchan = 16;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	rdev->mc.vram_width = numchan * chansize;
 	/* Could aper size report 0 ? */
 	rdev->mc.aper_base = pci_resource_start(rdev->pdev, 0);
@@ -5380,53 +5381,53 @@ static int cik_mc_init(struct radeon_device *rdev)
 	si_vram_gtt_location(rdev, &rdev->mc);
 	radeon_update_bandwidth_info(rdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * GART
  * VMID 0 is the physical GPU addresses as used by the kernel.
- * VMIDs 1-15 are used for userspace clients and are handled
+ * VMIDs 1-15 are used क्रम userspace clients and are handled
  * by the radeon vm/hsa code.
  */
 /**
  * cik_pcie_gart_tlb_flush - gart tlb flush callback
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Flush the TLB for the VMID 0 page table (CIK).
+ * Flush the TLB क्रम the VMID 0 page table (CIK).
  */
-void cik_pcie_gart_tlb_flush(struct radeon_device *rdev)
-{
+व्योम cik_pcie_gart_tlb_flush(काष्ठा radeon_device *rdev)
+अणु
 	/* flush hdp cache */
 	WREG32(HDP_MEM_COHERENCY_FLUSH_CNTL, 0);
 
 	/* bits 0-15 are the VM contexts0-15 */
 	WREG32(VM_INVALIDATE_REQUEST, 0x1);
-}
+पूर्ण
 
 /**
  * cik_pcie_gart_enable - gart enable
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * This sets up the TLBs, programs the page tables for VMID0,
- * sets up the hw for VMIDs 1-15 which are allocated on
- * demand, and sets up the global locations for the LDS, GDS,
- * and GPUVM for FSA64 clients (CIK).
- * Returns 0 for success, errors for failure.
+ * This sets up the TLBs, programs the page tables क्रम VMID0,
+ * sets up the hw क्रम VMIDs 1-15 which are allocated on
+ * demand, and sets up the global locations क्रम the LDS, GDS,
+ * and GPUVM क्रम FSA64 clients (CIK).
+ * Returns 0 क्रम success, errors क्रम failure.
  */
-static int cik_pcie_gart_enable(struct radeon_device *rdev)
-{
-	int r, i;
+अटल पूर्णांक cik_pcie_gart_enable(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r, i;
 
-	if (rdev->gart.robj == NULL) {
+	अगर (rdev->gart.robj == शून्य) अणु
 		dev_err(rdev->dev, "No VRAM object for PCIE GART.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	r = radeon_gart_table_vram_pin(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	/* Setup TLB control */
 	WREG32(MC_VM_MX_L1_TLB_CNTL,
 	       (0xA << 7) |
@@ -5464,14 +5465,14 @@ static int cik_pcie_gart_enable(struct radeon_device *rdev)
 	/* set vm size, must be a multiple of 4 */
 	WREG32(VM_CONTEXT1_PAGE_TABLE_START_ADDR, 0);
 	WREG32(VM_CONTEXT1_PAGE_TABLE_END_ADDR, rdev->vm_manager.max_pfn - 1);
-	for (i = 1; i < 16; i++) {
-		if (i < 8)
+	क्रम (i = 1; i < 16; i++) अणु
+		अगर (i < 8)
 			WREG32(VM_CONTEXT0_PAGE_TABLE_BASE_ADDR + (i << 2),
 			       rdev->vm_manager.saved_table_addr[i]);
-		else
+		अन्यथा
 			WREG32(VM_CONTEXT8_PAGE_TABLE_BASE_ADDR + ((i - 8) << 2),
 			       rdev->vm_manager.saved_table_addr[i]);
-	}
+	पूर्ण
 
 	/* enable context1-15 */
 	WREG32(VM_CONTEXT1_PROTECTION_FAULT_DEFAULT_ADDR,
@@ -5492,16 +5493,16 @@ static int cik_pcie_gart_enable(struct radeon_device *rdev)
 				WRITE_PROTECTION_FAULT_ENABLE_INTERRUPT |
 				WRITE_PROTECTION_FAULT_ENABLE_DEFAULT);
 
-	if (rdev->family == CHIP_KAVERI) {
-		u32 tmp = RREG32(CHUB_CONTROL);
-		tmp &= ~BYPASS_VM;
-		WREG32(CHUB_CONTROL, tmp);
-	}
+	अगर (rdev->family == CHIP_KAVERI) अणु
+		u32 पंचांगp = RREG32(CHUB_CONTROL);
+		पंचांगp &= ~BYPASS_VM;
+		WREG32(CHUB_CONTROL, पंचांगp);
+	पूर्ण
 
 	/* XXX SH_MEM regs */
 	/* where to put LDS, scratch, GPUVM in FSA64 space */
 	mutex_lock(&rdev->srbm_mutex);
-	for (i = 0; i < 16; i++) {
+	क्रम (i = 0; i < 16; i++) अणु
 		cik_srbm_select(rdev, 0, 0, 0, i);
 		/* CP and shaders */
 		WREG32(SH_MEM_CONFIG, SH_MEM_CONFIG_GFX_DEFAULT);
@@ -5513,38 +5514,38 @@ static int cik_pcie_gart_enable(struct radeon_device *rdev)
 		WREG32(SDMA0_GFX_APE1_CNTL + SDMA0_REGISTER_OFFSET, 0);
 		WREG32(SDMA0_GFX_VIRTUAL_ADDR + SDMA1_REGISTER_OFFSET, 0);
 		WREG32(SDMA0_GFX_APE1_CNTL + SDMA1_REGISTER_OFFSET, 0);
-		/* XXX SDMA RLC - todo */
-	}
+		/* XXX SDMA RLC - toकरो */
+	पूर्ण
 	cik_srbm_select(rdev, 0, 0, 0, 0);
 	mutex_unlock(&rdev->srbm_mutex);
 
 	cik_pcie_gart_tlb_flush(rdev);
 	DRM_INFO("PCIE GART of %uM enabled (table at 0x%016llX).\n",
-		 (unsigned)(rdev->mc.gtt_size >> 20),
-		 (unsigned long long)rdev->gart.table_addr);
-	rdev->gart.ready = true;
-	return 0;
-}
+		 (अचिन्हित)(rdev->mc.gtt_size >> 20),
+		 (अचिन्हित दीर्घ दीर्घ)rdev->gart.table_addr);
+	rdev->gart.पढ़ोy = true;
+	वापस 0;
+पूर्ण
 
 /**
  * cik_pcie_gart_disable - gart disable
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * This disables all VM page table (CIK).
  */
-static void cik_pcie_gart_disable(struct radeon_device *rdev)
-{
-	unsigned i;
+अटल व्योम cik_pcie_gart_disable(काष्ठा radeon_device *rdev)
+अणु
+	अचिन्हित i;
 
-	for (i = 1; i < 16; ++i) {
-		uint32_t reg;
-		if (i < 8)
+	क्रम (i = 1; i < 16; ++i) अणु
+		uपूर्णांक32_t reg;
+		अगर (i < 8)
 			reg = VM_CONTEXT0_PAGE_TABLE_BASE_ADDR + (i << 2);
-		else
+		अन्यथा
 			reg = VM_CONTEXT8_PAGE_TABLE_BASE_ADDR + ((i - 8) << 2);
 		rdev->vm_manager.saved_table_addr[i] = RREG32(reg);
-	}
+	पूर्ण
 
 	/* Disable all tables */
 	WREG32(VM_CONTEXT0_CNTL, 0);
@@ -5563,110 +5564,110 @@ static void cik_pcie_gart_disable(struct radeon_device *rdev)
 	WREG32(VM_L2_CNTL3, L2_CACHE_BIGK_ASSOCIATIVITY |
 	       L2_CACHE_BIGK_FRAGMENT_SIZE(6));
 	radeon_gart_table_vram_unpin(rdev);
-}
+पूर्ण
 
 /**
  * cik_pcie_gart_fini - vm fini callback
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Tears down the driver GART/VM setup (CIK).
+ * Tears करोwn the driver GART/VM setup (CIK).
  */
-static void cik_pcie_gart_fini(struct radeon_device *rdev)
-{
+अटल व्योम cik_pcie_gart_fini(काष्ठा radeon_device *rdev)
+अणु
 	cik_pcie_gart_disable(rdev);
-	radeon_gart_table_vram_free(rdev);
+	radeon_gart_table_vram_मुक्त(rdev);
 	radeon_gart_fini(rdev);
-}
+पूर्ण
 
 /* vm parser */
 /**
  * cik_ib_parse - vm ib_parse callback
  *
- * @rdev: radeon_device pointer
- * @ib: indirect buffer pointer
+ * @rdev: radeon_device poपूर्णांकer
+ * @ib: indirect buffer poपूर्णांकer
  *
  * CIK uses hw IB checking so this is a nop (CIK).
  */
-int cik_ib_parse(struct radeon_device *rdev, struct radeon_ib *ib)
-{
-	return 0;
-}
+पूर्णांक cik_ib_parse(काष्ठा radeon_device *rdev, काष्ठा radeon_ib *ib)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
  * vm
  * VMID 0 is the physical GPU addresses as used by the kernel.
- * VMIDs 1-15 are used for userspace clients and are handled
+ * VMIDs 1-15 are used क्रम userspace clients and are handled
  * by the radeon vm/hsa code.
  */
 /**
  * cik_vm_init - cik vm init callback
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Inits cik specific vm parameters (number of VMs, base of vram for
+ * Inits cik specअगरic vm parameters (number of VMs, base of vram क्रम
  * VMIDs 1-15) (CIK).
- * Returns 0 for success.
+ * Returns 0 क्रम success.
  */
-int cik_vm_init(struct radeon_device *rdev)
-{
+पूर्णांक cik_vm_init(काष्ठा radeon_device *rdev)
+अणु
 	/*
 	 * number of VMs
-	 * VMID 0 is reserved for System
+	 * VMID 0 is reserved क्रम System
 	 * radeon graphics/compute will use VMIDs 1-15
 	 */
 	rdev->vm_manager.nvm = 16;
 	/* base offset of vram pages */
-	if (rdev->flags & RADEON_IS_IGP) {
-		u64 tmp = RREG32(MC_VM_FB_OFFSET);
-		tmp <<= 22;
-		rdev->vm_manager.vram_base_offset = tmp;
-	} else
+	अगर (rdev->flags & RADEON_IS_IGP) अणु
+		u64 पंचांगp = RREG32(MC_VM_FB_OFFSET);
+		पंचांगp <<= 22;
+		rdev->vm_manager.vram_base_offset = पंचांगp;
+	पूर्ण अन्यथा
 		rdev->vm_manager.vram_base_offset = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cik_vm_fini - cik vm fini callback
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Tear down any asic specific VM setup (CIK).
+ * Tear करोwn any asic specअगरic VM setup (CIK).
  */
-void cik_vm_fini(struct radeon_device *rdev)
-{
-}
+व्योम cik_vm_fini(काष्ठा radeon_device *rdev)
+अणु
+पूर्ण
 
 /**
- * cik_vm_decode_fault - print human readable fault info
+ * cik_vm_decode_fault - prपूर्णांक human पढ़ोable fault info
  *
- * @rdev: radeon_device pointer
- * @status: VM_CONTEXT1_PROTECTION_FAULT_STATUS register value
- * @addr: VM_CONTEXT1_PROTECTION_FAULT_ADDR register value
- * @mc_client: VM_CONTEXT1_PROTECTION_FAULT_MCCLIENT register value
+ * @rdev: radeon_device poपूर्णांकer
+ * @status: VM_CONTEXT1_PROTECTION_FAULT_STATUS रेजिस्टर value
+ * @addr: VM_CONTEXT1_PROTECTION_FAULT_ADDR रेजिस्टर value
+ * @mc_client: VM_CONTEXT1_PROTECTION_FAULT_MCCLIENT रेजिस्टर value
  *
- * Print human readable fault information (CIK).
+ * Prपूर्णांक human पढ़ोable fault inक्रमmation (CIK).
  */
-static void cik_vm_decode_fault(struct radeon_device *rdev,
+अटल व्योम cik_vm_decode_fault(काष्ठा radeon_device *rdev,
 				u32 status, u32 addr, u32 mc_client)
-{
+अणु
 	u32 mc_id;
 	u32 vmid = (status & FAULT_VMID_MASK) >> FAULT_VMID_SHIFT;
 	u32 protections = (status & PROTECTIONS_MASK) >> PROTECTIONS_SHIFT;
-	char block[5] = { mc_client >> 24, (mc_client >> 16) & 0xff,
-		(mc_client >> 8) & 0xff, mc_client & 0xff, 0 };
+	अक्षर block[5] = अणु mc_client >> 24, (mc_client >> 16) & 0xff,
+		(mc_client >> 8) & 0xff, mc_client & 0xff, 0 पूर्ण;
 
-	if (rdev->family == CHIP_HAWAII)
+	अगर (rdev->family == CHIP_HAWAII)
 		mc_id = (status & HAWAII_MEMORY_CLIENT_ID_MASK) >> MEMORY_CLIENT_ID_SHIFT;
-	else
+	अन्यथा
 		mc_id = (status & MEMORY_CLIENT_ID_MASK) >> MEMORY_CLIENT_ID_SHIFT;
 
-	printk("VM fault (0x%02x, vmid %d) at page %u, %s from '%s' (0x%08x) (%d)\n",
+	prपूर्णांकk("VM fault (0x%02x, vmid %d) at page %u, %s from '%s' (0x%08x) (%d)\n",
 	       protections, vmid, addr,
 	       (status & MEMORY_CLIENT_RW_MASK) ? "write" : "read",
 	       block, mc_client, mc_id);
-}
+पूर्ण
 
 /*
  * cik_vm_flush - cik vm flush using the CP
@@ -5674,250 +5675,250 @@ static void cik_vm_decode_fault(struct radeon_device *rdev,
  * Update the page table base and flush the VM TLB
  * using the CP (CIK).
  */
-void cik_vm_flush(struct radeon_device *rdev, struct radeon_ring *ring,
-		  unsigned vm_id, uint64_t pd_addr)
-{
-	int usepfp = (ring->idx == RADEON_RING_TYPE_GFX_INDEX);
+व्योम cik_vm_flush(काष्ठा radeon_device *rdev, काष्ठा radeon_ring *ring,
+		  अचिन्हित vm_id, uपूर्णांक64_t pd_addr)
+अणु
+	पूर्णांक usepfp = (ring->idx == RADEON_RING_TYPE_GFX_INDEX);
 
-	radeon_ring_write(ring, PACKET3(PACKET3_WRITE_DATA, 3));
-	radeon_ring_write(ring, (WRITE_DATA_ENGINE_SEL(usepfp) |
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_WRITE_DATA, 3));
+	radeon_ring_ग_लिखो(ring, (WRITE_DATA_ENGINE_SEL(usepfp) |
 				 WRITE_DATA_DST_SEL(0)));
-	if (vm_id < 8) {
-		radeon_ring_write(ring,
+	अगर (vm_id < 8) अणु
+		radeon_ring_ग_लिखो(ring,
 				  (VM_CONTEXT0_PAGE_TABLE_BASE_ADDR + (vm_id << 2)) >> 2);
-	} else {
-		radeon_ring_write(ring,
+	पूर्ण अन्यथा अणु
+		radeon_ring_ग_लिखो(ring,
 				  (VM_CONTEXT8_PAGE_TABLE_BASE_ADDR + ((vm_id - 8) << 2)) >> 2);
-	}
-	radeon_ring_write(ring, 0);
-	radeon_ring_write(ring, pd_addr >> 12);
+	पूर्ण
+	radeon_ring_ग_लिखो(ring, 0);
+	radeon_ring_ग_लिखो(ring, pd_addr >> 12);
 
 	/* update SH_MEM_* regs */
-	radeon_ring_write(ring, PACKET3(PACKET3_WRITE_DATA, 3));
-	radeon_ring_write(ring, (WRITE_DATA_ENGINE_SEL(usepfp) |
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_WRITE_DATA, 3));
+	radeon_ring_ग_लिखो(ring, (WRITE_DATA_ENGINE_SEL(usepfp) |
 				 WRITE_DATA_DST_SEL(0)));
-	radeon_ring_write(ring, SRBM_GFX_CNTL >> 2);
-	radeon_ring_write(ring, 0);
-	radeon_ring_write(ring, VMID(vm_id));
+	radeon_ring_ग_लिखो(ring, SRBM_GFX_CNTL >> 2);
+	radeon_ring_ग_लिखो(ring, 0);
+	radeon_ring_ग_लिखो(ring, VMID(vm_id));
 
-	radeon_ring_write(ring, PACKET3(PACKET3_WRITE_DATA, 6));
-	radeon_ring_write(ring, (WRITE_DATA_ENGINE_SEL(usepfp) |
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_WRITE_DATA, 6));
+	radeon_ring_ग_लिखो(ring, (WRITE_DATA_ENGINE_SEL(usepfp) |
 				 WRITE_DATA_DST_SEL(0)));
-	radeon_ring_write(ring, SH_MEM_BASES >> 2);
-	radeon_ring_write(ring, 0);
+	radeon_ring_ग_लिखो(ring, SH_MEM_BASES >> 2);
+	radeon_ring_ग_लिखो(ring, 0);
 
-	radeon_ring_write(ring, 0); /* SH_MEM_BASES */
-	radeon_ring_write(ring, SH_MEM_CONFIG_GFX_DEFAULT); /* SH_MEM_CONFIG */
-	radeon_ring_write(ring, 1); /* SH_MEM_APE1_BASE */
-	radeon_ring_write(ring, 0); /* SH_MEM_APE1_LIMIT */
+	radeon_ring_ग_लिखो(ring, 0); /* SH_MEM_BASES */
+	radeon_ring_ग_लिखो(ring, SH_MEM_CONFIG_GFX_DEFAULT); /* SH_MEM_CONFIG */
+	radeon_ring_ग_लिखो(ring, 1); /* SH_MEM_APE1_BASE */
+	radeon_ring_ग_लिखो(ring, 0); /* SH_MEM_APE1_LIMIT */
 
-	radeon_ring_write(ring, PACKET3(PACKET3_WRITE_DATA, 3));
-	radeon_ring_write(ring, (WRITE_DATA_ENGINE_SEL(usepfp) |
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_WRITE_DATA, 3));
+	radeon_ring_ग_लिखो(ring, (WRITE_DATA_ENGINE_SEL(usepfp) |
 				 WRITE_DATA_DST_SEL(0)));
-	radeon_ring_write(ring, SRBM_GFX_CNTL >> 2);
-	radeon_ring_write(ring, 0);
-	radeon_ring_write(ring, VMID(0));
+	radeon_ring_ग_लिखो(ring, SRBM_GFX_CNTL >> 2);
+	radeon_ring_ग_लिखो(ring, 0);
+	radeon_ring_ग_लिखो(ring, VMID(0));
 
 	/* HDP flush */
 	cik_hdp_flush_cp_ring_emit(rdev, ring->idx);
 
 	/* bits 0-15 are the VM contexts0-15 */
-	radeon_ring_write(ring, PACKET3(PACKET3_WRITE_DATA, 3));
-	radeon_ring_write(ring, (WRITE_DATA_ENGINE_SEL(usepfp) |
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_WRITE_DATA, 3));
+	radeon_ring_ग_लिखो(ring, (WRITE_DATA_ENGINE_SEL(usepfp) |
 				 WRITE_DATA_DST_SEL(0)));
-	radeon_ring_write(ring, VM_INVALIDATE_REQUEST >> 2);
-	radeon_ring_write(ring, 0);
-	radeon_ring_write(ring, 1 << vm_id);
+	radeon_ring_ग_लिखो(ring, VM_INVALIDATE_REQUEST >> 2);
+	radeon_ring_ग_लिखो(ring, 0);
+	radeon_ring_ग_लिखो(ring, 1 << vm_id);
 
-	/* wait for the invalidate to complete */
-	radeon_ring_write(ring, PACKET3(PACKET3_WAIT_REG_MEM, 5));
-	radeon_ring_write(ring, (WAIT_REG_MEM_OPERATION(0) | /* wait */
+	/* रुको क्रम the invalidate to complete */
+	radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_WAIT_REG_MEM, 5));
+	radeon_ring_ग_लिखो(ring, (WAIT_REG_MEM_OPERATION(0) | /* रुको */
 				 WAIT_REG_MEM_FUNCTION(0) |  /* always */
 				 WAIT_REG_MEM_ENGINE(0))); /* me */
-	radeon_ring_write(ring, VM_INVALIDATE_REQUEST >> 2);
-	radeon_ring_write(ring, 0);
-	radeon_ring_write(ring, 0); /* ref */
-	radeon_ring_write(ring, 0); /* mask */
-	radeon_ring_write(ring, 0x20); /* poll interval */
+	radeon_ring_ग_लिखो(ring, VM_INVALIDATE_REQUEST >> 2);
+	radeon_ring_ग_लिखो(ring, 0);
+	radeon_ring_ग_लिखो(ring, 0); /* ref */
+	radeon_ring_ग_लिखो(ring, 0); /* mask */
+	radeon_ring_ग_लिखो(ring, 0x20); /* poll पूर्णांकerval */
 
-	/* compute doesn't have PFP */
-	if (usepfp) {
-		/* sync PFP to ME, otherwise we might get invalid PFP reads */
-		radeon_ring_write(ring, PACKET3(PACKET3_PFP_SYNC_ME, 0));
-		radeon_ring_write(ring, 0x0);
-	}
-}
+	/* compute करोesn't have PFP */
+	अगर (usepfp) अणु
+		/* sync PFP to ME, otherwise we might get invalid PFP पढ़ोs */
+		radeon_ring_ग_लिखो(ring, PACKET3(PACKET3_PFP_SYNC_ME, 0));
+		radeon_ring_ग_लिखो(ring, 0x0);
+	पूर्ण
+पूर्ण
 
 /*
  * RLC
  * The RLC is a multi-purpose microengine that handles a
  * variety of functions, the most important of which is
- * the interrupt controller.
+ * the पूर्णांकerrupt controller.
  */
-static void cik_enable_gui_idle_interrupt(struct radeon_device *rdev,
+अटल व्योम cik_enable_gui_idle_पूर्णांकerrupt(काष्ठा radeon_device *rdev,
 					  bool enable)
-{
-	u32 tmp = RREG32(CP_INT_CNTL_RING0);
+अणु
+	u32 पंचांगp = RREG32(CP_INT_CNTL_RING0);
 
-	if (enable)
-		tmp |= (CNTX_BUSY_INT_ENABLE | CNTX_EMPTY_INT_ENABLE);
-	else
-		tmp &= ~(CNTX_BUSY_INT_ENABLE | CNTX_EMPTY_INT_ENABLE);
-	WREG32(CP_INT_CNTL_RING0, tmp);
-}
+	अगर (enable)
+		पंचांगp |= (CNTX_BUSY_INT_ENABLE | CNTX_EMPTY_INT_ENABLE);
+	अन्यथा
+		पंचांगp &= ~(CNTX_BUSY_INT_ENABLE | CNTX_EMPTY_INT_ENABLE);
+	WREG32(CP_INT_CNTL_RING0, पंचांगp);
+पूर्ण
 
-static void cik_enable_lbpw(struct radeon_device *rdev, bool enable)
-{
-	u32 tmp;
+अटल व्योम cik_enable_lbpw(काष्ठा radeon_device *rdev, bool enable)
+अणु
+	u32 पंचांगp;
 
-	tmp = RREG32(RLC_LB_CNTL);
-	if (enable)
-		tmp |= LOAD_BALANCE_ENABLE;
-	else
-		tmp &= ~LOAD_BALANCE_ENABLE;
-	WREG32(RLC_LB_CNTL, tmp);
-}
+	पंचांगp = RREG32(RLC_LB_CNTL);
+	अगर (enable)
+		पंचांगp |= LOAD_BALANCE_ENABLE;
+	अन्यथा
+		पंचांगp &= ~LOAD_BALANCE_ENABLE;
+	WREG32(RLC_LB_CNTL, पंचांगp);
+पूर्ण
 
-static void cik_wait_for_rlc_serdes(struct radeon_device *rdev)
-{
+अटल व्योम cik_रुको_क्रम_rlc_serdes(काष्ठा radeon_device *rdev)
+अणु
 	u32 i, j, k;
 	u32 mask;
 
-	for (i = 0; i < rdev->config.cik.max_shader_engines; i++) {
-		for (j = 0; j < rdev->config.cik.max_sh_per_se; j++) {
+	क्रम (i = 0; i < rdev->config.cik.max_shader_engines; i++) अणु
+		क्रम (j = 0; j < rdev->config.cik.max_sh_per_se; j++) अणु
 			cik_select_se_sh(rdev, i, j);
-			for (k = 0; k < rdev->usec_timeout; k++) {
-				if (RREG32(RLC_SERDES_CU_MASTER_BUSY) == 0)
-					break;
+			क्रम (k = 0; k < rdev->usec_समयout; k++) अणु
+				अगर (RREG32(RLC_SERDES_CU_MASTER_BUSY) == 0)
+					अवरोध;
 				udelay(1);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	cik_select_se_sh(rdev, 0xffffffff, 0xffffffff);
 
 	mask = SE_MASTER_BUSY_MASK | GC_MASTER_BUSY | TC0_MASTER_BUSY | TC1_MASTER_BUSY;
-	for (k = 0; k < rdev->usec_timeout; k++) {
-		if ((RREG32(RLC_SERDES_NONCU_MASTER_BUSY) & mask) == 0)
-			break;
+	क्रम (k = 0; k < rdev->usec_समयout; k++) अणु
+		अगर ((RREG32(RLC_SERDES_NONCU_MASTER_BUSY) & mask) == 0)
+			अवरोध;
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cik_update_rlc(struct radeon_device *rdev, u32 rlc)
-{
-	u32 tmp;
+अटल व्योम cik_update_rlc(काष्ठा radeon_device *rdev, u32 rlc)
+अणु
+	u32 पंचांगp;
 
-	tmp = RREG32(RLC_CNTL);
-	if (tmp != rlc)
+	पंचांगp = RREG32(RLC_CNTL);
+	अगर (पंचांगp != rlc)
 		WREG32(RLC_CNTL, rlc);
-}
+पूर्ण
 
-static u32 cik_halt_rlc(struct radeon_device *rdev)
-{
+अटल u32 cik_halt_rlc(काष्ठा radeon_device *rdev)
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(RLC_CNTL);
 
-	if (data & RLC_ENABLE) {
+	अगर (data & RLC_ENABLE) अणु
 		u32 i;
 
 		data &= ~RLC_ENABLE;
 		WREG32(RLC_CNTL, data);
 
-		for (i = 0; i < rdev->usec_timeout; i++) {
-			if ((RREG32(RLC_GPM_STAT) & RLC_GPM_BUSY) == 0)
-				break;
+		क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+			अगर ((RREG32(RLC_GPM_STAT) & RLC_GPM_BUSY) == 0)
+				अवरोध;
 			udelay(1);
-		}
+		पूर्ण
 
-		cik_wait_for_rlc_serdes(rdev);
-	}
+		cik_रुको_क्रम_rlc_serdes(rdev);
+	पूर्ण
 
-	return orig;
-}
+	वापस orig;
+पूर्ण
 
-void cik_enter_rlc_safe_mode(struct radeon_device *rdev)
-{
-	u32 tmp, i, mask;
+व्योम cik_enter_rlc_safe_mode(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp, i, mask;
 
-	tmp = REQ | MESSAGE(MSG_ENTER_RLC_SAFE_MODE);
-	WREG32(RLC_GPR_REG2, tmp);
+	पंचांगp = REQ | MESSAGE(MSG_ENTER_RLC_SAFE_MODE);
+	WREG32(RLC_GPR_REG2, पंचांगp);
 
 	mask = GFX_POWER_STATUS | GFX_CLOCK_STATUS;
-	for (i = 0; i < rdev->usec_timeout; i++) {
-		if ((RREG32(RLC_GPM_STAT) & mask) == mask)
-			break;
+	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+		अगर ((RREG32(RLC_GPM_STAT) & mask) == mask)
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 
-	for (i = 0; i < rdev->usec_timeout; i++) {
-		if ((RREG32(RLC_GPR_REG2) & REQ) == 0)
-			break;
+	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+		अगर ((RREG32(RLC_GPR_REG2) & REQ) == 0)
+			अवरोध;
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void cik_exit_rlc_safe_mode(struct radeon_device *rdev)
-{
-	u32 tmp;
+व्योम cik_निकास_rlc_safe_mode(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp;
 
-	tmp = REQ | MESSAGE(MSG_EXIT_RLC_SAFE_MODE);
-	WREG32(RLC_GPR_REG2, tmp);
-}
+	पंचांगp = REQ | MESSAGE(MSG_EXIT_RLC_SAFE_MODE);
+	WREG32(RLC_GPR_REG2, पंचांगp);
+पूर्ण
 
 /**
  * cik_rlc_stop - stop the RLC ME
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Halt the RLC ME (MicroEngine) (CIK).
  */
-static void cik_rlc_stop(struct radeon_device *rdev)
-{
+अटल व्योम cik_rlc_stop(काष्ठा radeon_device *rdev)
+अणु
 	WREG32(RLC_CNTL, 0);
 
-	cik_enable_gui_idle_interrupt(rdev, false);
+	cik_enable_gui_idle_पूर्णांकerrupt(rdev, false);
 
-	cik_wait_for_rlc_serdes(rdev);
-}
+	cik_रुको_क्रम_rlc_serdes(rdev);
+पूर्ण
 
 /**
  * cik_rlc_start - start the RLC ME
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Unhalt the RLC ME (MicroEngine) (CIK).
  */
-static void cik_rlc_start(struct radeon_device *rdev)
-{
+अटल व्योम cik_rlc_start(काष्ठा radeon_device *rdev)
+अणु
 	WREG32(RLC_CNTL, RLC_ENABLE);
 
-	cik_enable_gui_idle_interrupt(rdev, true);
+	cik_enable_gui_idle_पूर्णांकerrupt(rdev, true);
 
 	udelay(50);
-}
+पूर्ण
 
 /**
  * cik_rlc_resume - setup the RLC hw
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Initialize the RLC registers, load the ucode,
+ * Initialize the RLC रेजिस्टरs, load the ucode,
  * and start the RLC (CIK).
- * Returns 0 for success, -EINVAL if the ucode is not available.
+ * Returns 0 क्रम success, -EINVAL अगर the ucode is not available.
  */
-static int cik_rlc_resume(struct radeon_device *rdev)
-{
-	u32 i, size, tmp;
+अटल पूर्णांक cik_rlc_resume(काष्ठा radeon_device *rdev)
+अणु
+	u32 i, size, पंचांगp;
 
-	if (!rdev->rlc_fw)
-		return -EINVAL;
+	अगर (!rdev->rlc_fw)
+		वापस -EINVAL;
 
 	cik_rlc_stop(rdev);
 
 	/* disable CG */
-	tmp = RREG32(RLC_CGCG_CGLS_CTRL) & 0xfffffffc;
-	WREG32(RLC_CGCG_CGLS_CTRL, tmp);
+	पंचांगp = RREG32(RLC_CGCG_CGLS_CTRL) & 0xfffffffc;
+	WREG32(RLC_CGCG_CGLS_CTRL, पंचांगp);
 
 	si_rlc_reset(rdev);
 
@@ -5936,79 +5937,79 @@ static int cik_rlc_resume(struct radeon_device *rdev)
 	WREG32(RLC_MC_CNTL, 0);
 	WREG32(RLC_UCODE_CNTL, 0);
 
-	if (rdev->new_fw) {
-		const struct rlc_firmware_header_v1_0 *hdr =
-			(const struct rlc_firmware_header_v1_0 *)rdev->rlc_fw->data;
-		const __le32 *fw_data = (const __le32 *)
+	अगर (rdev->new_fw) अणु
+		स्थिर काष्ठा rlc_firmware_header_v1_0 *hdr =
+			(स्थिर काष्ठा rlc_firmware_header_v1_0 *)rdev->rlc_fw->data;
+		स्थिर __le32 *fw_data = (स्थिर __le32 *)
 			(rdev->rlc_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 
-		radeon_ucode_print_rlc_hdr(&hdr->header);
+		radeon_ucode_prपूर्णांक_rlc_hdr(&hdr->header);
 
 		size = le32_to_cpu(hdr->header.ucode_size_bytes) / 4;
 		WREG32(RLC_GPM_UCODE_ADDR, 0);
-		for (i = 0; i < size; i++)
+		क्रम (i = 0; i < size; i++)
 			WREG32(RLC_GPM_UCODE_DATA, le32_to_cpup(fw_data++));
 		WREG32(RLC_GPM_UCODE_ADDR, le32_to_cpu(hdr->header.ucode_version));
-	} else {
-		const __be32 *fw_data;
+	पूर्ण अन्यथा अणु
+		स्थिर __be32 *fw_data;
 
-		switch (rdev->family) {
-		case CHIP_BONAIRE:
-		case CHIP_HAWAII:
-		default:
+		चयन (rdev->family) अणु
+		हाल CHIP_BONAIRE:
+		हाल CHIP_HAWAII:
+		शेष:
 			size = BONAIRE_RLC_UCODE_SIZE;
-			break;
-		case CHIP_KAVERI:
+			अवरोध;
+		हाल CHIP_KAVERI:
 			size = KV_RLC_UCODE_SIZE;
-			break;
-		case CHIP_KABINI:
+			अवरोध;
+		हाल CHIP_KABINI:
 			size = KB_RLC_UCODE_SIZE;
-			break;
-		case CHIP_MULLINS:
+			अवरोध;
+		हाल CHIP_MULLINS:
 			size = ML_RLC_UCODE_SIZE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		fw_data = (const __be32 *)rdev->rlc_fw->data;
+		fw_data = (स्थिर __be32 *)rdev->rlc_fw->data;
 		WREG32(RLC_GPM_UCODE_ADDR, 0);
-		for (i = 0; i < size; i++)
+		क्रम (i = 0; i < size; i++)
 			WREG32(RLC_GPM_UCODE_DATA, be32_to_cpup(fw_data++));
 		WREG32(RLC_GPM_UCODE_ADDR, 0);
-	}
+	पूर्ण
 
 	/* XXX - find out what chips support lbpw */
 	cik_enable_lbpw(rdev, false);
 
-	if (rdev->family == CHIP_BONAIRE)
+	अगर (rdev->family == CHIP_BONAIRE)
 		WREG32(RLC_DRIVER_DMA_STATUS, 0);
 
 	cik_rlc_start(rdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cik_enable_cgcg(struct radeon_device *rdev, bool enable)
-{
-	u32 data, orig, tmp, tmp2;
+अटल व्योम cik_enable_cgcg(काष्ठा radeon_device *rdev, bool enable)
+अणु
+	u32 data, orig, पंचांगp, पंचांगp2;
 
 	orig = data = RREG32(RLC_CGCG_CGLS_CTRL);
 
-	if (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_GFX_CGCG)) {
-		cik_enable_gui_idle_interrupt(rdev, true);
+	अगर (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_GFX_CGCG)) अणु
+		cik_enable_gui_idle_पूर्णांकerrupt(rdev, true);
 
-		tmp = cik_halt_rlc(rdev);
+		पंचांगp = cik_halt_rlc(rdev);
 
 		cik_select_se_sh(rdev, 0xffffffff, 0xffffffff);
 		WREG32(RLC_SERDES_WR_CU_MASTER_MASK, 0xffffffff);
 		WREG32(RLC_SERDES_WR_NONCU_MASTER_MASK, 0xffffffff);
-		tmp2 = BPM_ADDR_MASK | CGCG_OVERRIDE_0 | CGLS_ENABLE;
-		WREG32(RLC_SERDES_WR_CTRL, tmp2);
+		पंचांगp2 = BPM_ADDR_MASK | CGCG_OVERRIDE_0 | CGLS_ENABLE;
+		WREG32(RLC_SERDES_WR_CTRL, पंचांगp2);
 
-		cik_update_rlc(rdev, tmp);
+		cik_update_rlc(rdev, पंचांगp);
 
 		data |= CGCG_EN | CGLS_EN;
-	} else {
-		cik_enable_gui_idle_interrupt(rdev, false);
+	पूर्ण अन्यथा अणु
+		cik_enable_gui_idle_पूर्णांकerrupt(rdev, false);
 
 		RREG32(CB_CGTT_SCLK_CTRL);
 		RREG32(CB_CGTT_SCLK_CTRL);
@@ -6016,34 +6017,34 @@ static void cik_enable_cgcg(struct radeon_device *rdev, bool enable)
 		RREG32(CB_CGTT_SCLK_CTRL);
 
 		data &= ~(CGCG_EN | CGLS_EN);
-	}
+	पूर्ण
 
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(RLC_CGCG_CGLS_CTRL, data);
 
-}
+पूर्ण
 
-static void cik_enable_mgcg(struct radeon_device *rdev, bool enable)
-{
-	u32 data, orig, tmp = 0;
+अटल व्योम cik_enable_mgcg(काष्ठा radeon_device *rdev, bool enable)
+अणु
+	u32 data, orig, पंचांगp = 0;
 
-	if (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_GFX_MGCG)) {
-		if (rdev->cg_flags & RADEON_CG_SUPPORT_GFX_MGLS) {
-			if (rdev->cg_flags & RADEON_CG_SUPPORT_GFX_CP_LS) {
+	अगर (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_GFX_MGCG)) अणु
+		अगर (rdev->cg_flags & RADEON_CG_SUPPORT_GFX_MGLS) अणु
+			अगर (rdev->cg_flags & RADEON_CG_SUPPORT_GFX_CP_LS) अणु
 				orig = data = RREG32(CP_MEM_SLP_CNTL);
 				data |= CP_MEM_LS_EN;
-				if (orig != data)
+				अगर (orig != data)
 					WREG32(CP_MEM_SLP_CNTL, data);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		orig = data = RREG32(RLC_CGTT_MGCG_OVERRIDE);
 		data |= 0x00000001;
 		data &= 0xfffffffd;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(RLC_CGTT_MGCG_OVERRIDE, data);
 
-		tmp = cik_halt_rlc(rdev);
+		पंचांगp = cik_halt_rlc(rdev);
 
 		cik_select_se_sh(rdev, 0xffffffff, 0xffffffff);
 		WREG32(RLC_SERDES_WR_CU_MASTER_MASK, 0xffffffff);
@@ -6051,47 +6052,47 @@ static void cik_enable_mgcg(struct radeon_device *rdev, bool enable)
 		data = BPM_ADDR_MASK | MGCG_OVERRIDE_0;
 		WREG32(RLC_SERDES_WR_CTRL, data);
 
-		cik_update_rlc(rdev, tmp);
+		cik_update_rlc(rdev, पंचांगp);
 
-		if (rdev->cg_flags & RADEON_CG_SUPPORT_GFX_CGTS) {
+		अगर (rdev->cg_flags & RADEON_CG_SUPPORT_GFX_CGTS) अणु
 			orig = data = RREG32(CGTS_SM_CTRL_REG);
 			data &= ~SM_MODE_MASK;
 			data |= SM_MODE(0x2);
 			data |= SM_MODE_ENABLE;
 			data &= ~CGTS_OVERRIDE;
-			if ((rdev->cg_flags & RADEON_CG_SUPPORT_GFX_MGLS) &&
+			अगर ((rdev->cg_flags & RADEON_CG_SUPPORT_GFX_MGLS) &&
 			    (rdev->cg_flags & RADEON_CG_SUPPORT_GFX_CGTS_LS))
 				data &= ~CGTS_LS_OVERRIDE;
 			data &= ~ON_MONITOR_ADD_MASK;
 			data |= ON_MONITOR_ADD_EN;
 			data |= ON_MONITOR_ADD(0x96);
-			if (orig != data)
+			अगर (orig != data)
 				WREG32(CGTS_SM_CTRL_REG, data);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		orig = data = RREG32(RLC_CGTT_MGCG_OVERRIDE);
 		data |= 0x00000003;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(RLC_CGTT_MGCG_OVERRIDE, data);
 
 		data = RREG32(RLC_MEM_SLP_CNTL);
-		if (data & RLC_MEM_LS_EN) {
+		अगर (data & RLC_MEM_LS_EN) अणु
 			data &= ~RLC_MEM_LS_EN;
 			WREG32(RLC_MEM_SLP_CNTL, data);
-		}
+		पूर्ण
 
 		data = RREG32(CP_MEM_SLP_CNTL);
-		if (data & CP_MEM_LS_EN) {
+		अगर (data & CP_MEM_LS_EN) अणु
 			data &= ~CP_MEM_LS_EN;
 			WREG32(CP_MEM_SLP_CNTL, data);
-		}
+		पूर्ण
 
 		orig = data = RREG32(CGTS_SM_CTRL_REG);
 		data |= CGTS_OVERRIDE | CGTS_LS_OVERRIDE;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(CGTS_SM_CTRL_REG, data);
 
-		tmp = cik_halt_rlc(rdev);
+		पंचांगp = cik_halt_rlc(rdev);
 
 		cik_select_se_sh(rdev, 0xffffffff, 0xffffffff);
 		WREG32(RLC_SERDES_WR_CU_MASTER_MASK, 0xffffffff);
@@ -6099,12 +6100,12 @@ static void cik_enable_mgcg(struct radeon_device *rdev, bool enable)
 		data = BPM_ADDR_MASK | MGCG_OVERRIDE_1;
 		WREG32(RLC_SERDES_WR_CTRL, data);
 
-		cik_update_rlc(rdev, tmp);
-	}
-}
+		cik_update_rlc(rdev, पंचांगp);
+	पूर्ण
+पूर्ण
 
-static const u32 mc_cg_registers[] =
-{
+अटल स्थिर u32 mc_cg_रेजिस्टरs[] =
+अणु
 	MC_HUB_MISC_HUB_CG,
 	MC_HUB_MISC_SIP_CG,
 	MC_HUB_MISC_VM_CG,
@@ -6114,232 +6115,232 @@ static const u32 mc_cg_registers[] =
 	MC_CITF_MISC_RD_CG,
 	MC_CITF_MISC_VM_CG,
 	VM_L2_CG,
-};
+पूर्ण;
 
-static void cik_enable_mc_ls(struct radeon_device *rdev,
+अटल व्योम cik_enable_mc_ls(काष्ठा radeon_device *rdev,
 			     bool enable)
-{
-	int i;
+अणु
+	पूर्णांक i;
 	u32 orig, data;
 
-	for (i = 0; i < ARRAY_SIZE(mc_cg_registers); i++) {
-		orig = data = RREG32(mc_cg_registers[i]);
-		if (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_MC_LS))
+	क्रम (i = 0; i < ARRAY_SIZE(mc_cg_रेजिस्टरs); i++) अणु
+		orig = data = RREG32(mc_cg_रेजिस्टरs[i]);
+		अगर (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_MC_LS))
 			data |= MC_LS_ENABLE;
-		else
+		अन्यथा
 			data &= ~MC_LS_ENABLE;
-		if (data != orig)
-			WREG32(mc_cg_registers[i], data);
-	}
-}
+		अगर (data != orig)
+			WREG32(mc_cg_रेजिस्टरs[i], data);
+	पूर्ण
+पूर्ण
 
-static void cik_enable_mc_mgcg(struct radeon_device *rdev,
+अटल व्योम cik_enable_mc_mgcg(काष्ठा radeon_device *rdev,
 			       bool enable)
-{
-	int i;
+अणु
+	पूर्णांक i;
 	u32 orig, data;
 
-	for (i = 0; i < ARRAY_SIZE(mc_cg_registers); i++) {
-		orig = data = RREG32(mc_cg_registers[i]);
-		if (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_MC_MGCG))
+	क्रम (i = 0; i < ARRAY_SIZE(mc_cg_रेजिस्टरs); i++) अणु
+		orig = data = RREG32(mc_cg_रेजिस्टरs[i]);
+		अगर (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_MC_MGCG))
 			data |= MC_CG_ENABLE;
-		else
+		अन्यथा
 			data &= ~MC_CG_ENABLE;
-		if (data != orig)
-			WREG32(mc_cg_registers[i], data);
-	}
-}
+		अगर (data != orig)
+			WREG32(mc_cg_रेजिस्टरs[i], data);
+	पूर्ण
+पूर्ण
 
-static void cik_enable_sdma_mgcg(struct radeon_device *rdev,
+अटल व्योम cik_enable_sdma_mgcg(काष्ठा radeon_device *rdev,
 				 bool enable)
-{
+अणु
 	u32 orig, data;
 
-	if (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_SDMA_MGCG)) {
+	अगर (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_SDMA_MGCG)) अणु
 		WREG32(SDMA0_CLK_CTRL + SDMA0_REGISTER_OFFSET, 0x00000100);
 		WREG32(SDMA0_CLK_CTRL + SDMA1_REGISTER_OFFSET, 0x00000100);
-	} else {
+	पूर्ण अन्यथा अणु
 		orig = data = RREG32(SDMA0_CLK_CTRL + SDMA0_REGISTER_OFFSET);
 		data |= 0xff000000;
-		if (data != orig)
+		अगर (data != orig)
 			WREG32(SDMA0_CLK_CTRL + SDMA0_REGISTER_OFFSET, data);
 
 		orig = data = RREG32(SDMA0_CLK_CTRL + SDMA1_REGISTER_OFFSET);
 		data |= 0xff000000;
-		if (data != orig)
+		अगर (data != orig)
 			WREG32(SDMA0_CLK_CTRL + SDMA1_REGISTER_OFFSET, data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cik_enable_sdma_mgls(struct radeon_device *rdev,
+अटल व्योम cik_enable_sdma_mgls(काष्ठा radeon_device *rdev,
 				 bool enable)
-{
+अणु
 	u32 orig, data;
 
-	if (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_SDMA_LS)) {
+	अगर (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_SDMA_LS)) अणु
 		orig = data = RREG32(SDMA0_POWER_CNTL + SDMA0_REGISTER_OFFSET);
 		data |= 0x100;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(SDMA0_POWER_CNTL + SDMA0_REGISTER_OFFSET, data);
 
 		orig = data = RREG32(SDMA0_POWER_CNTL + SDMA1_REGISTER_OFFSET);
 		data |= 0x100;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(SDMA0_POWER_CNTL + SDMA1_REGISTER_OFFSET, data);
-	} else {
+	पूर्ण अन्यथा अणु
 		orig = data = RREG32(SDMA0_POWER_CNTL + SDMA0_REGISTER_OFFSET);
 		data &= ~0x100;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(SDMA0_POWER_CNTL + SDMA0_REGISTER_OFFSET, data);
 
 		orig = data = RREG32(SDMA0_POWER_CNTL + SDMA1_REGISTER_OFFSET);
 		data &= ~0x100;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(SDMA0_POWER_CNTL + SDMA1_REGISTER_OFFSET, data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cik_enable_uvd_mgcg(struct radeon_device *rdev,
+अटल व्योम cik_enable_uvd_mgcg(काष्ठा radeon_device *rdev,
 				bool enable)
-{
+अणु
 	u32 orig, data;
 
-	if (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_UVD_MGCG)) {
+	अगर (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_UVD_MGCG)) अणु
 		data = RREG32_UVD_CTX(UVD_CGC_MEM_CTRL);
 		data = 0xfff;
 		WREG32_UVD_CTX(UVD_CGC_MEM_CTRL, data);
 
 		orig = data = RREG32(UVD_CGC_CTRL);
 		data |= DCM;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(UVD_CGC_CTRL, data);
-	} else {
+	पूर्ण अन्यथा अणु
 		data = RREG32_UVD_CTX(UVD_CGC_MEM_CTRL);
 		data &= ~0xfff;
 		WREG32_UVD_CTX(UVD_CGC_MEM_CTRL, data);
 
 		orig = data = RREG32(UVD_CGC_CTRL);
 		data &= ~DCM;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(UVD_CGC_CTRL, data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cik_enable_bif_mgls(struct radeon_device *rdev,
+अटल व्योम cik_enable_bअगर_mgls(काष्ठा radeon_device *rdev,
 			       bool enable)
-{
+अणु
 	u32 orig, data;
 
 	orig = data = RREG32_PCIE_PORT(PCIE_CNTL2);
 
-	if (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_BIF_LS))
+	अगर (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_BIF_LS))
 		data |= SLV_MEM_LS_EN | MST_MEM_LS_EN |
 			REPLAY_MEM_LS_EN | SLV_MEM_AGGRESSIVE_LS_EN;
-	else
+	अन्यथा
 		data &= ~(SLV_MEM_LS_EN | MST_MEM_LS_EN |
 			  REPLAY_MEM_LS_EN | SLV_MEM_AGGRESSIVE_LS_EN);
 
-	if (orig != data)
+	अगर (orig != data)
 		WREG32_PCIE_PORT(PCIE_CNTL2, data);
-}
+पूर्ण
 
-static void cik_enable_hdp_mgcg(struct radeon_device *rdev,
+अटल व्योम cik_enable_hdp_mgcg(काष्ठा radeon_device *rdev,
 				bool enable)
-{
+अणु
 	u32 orig, data;
 
 	orig = data = RREG32(HDP_HOST_PATH_CNTL);
 
-	if (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_HDP_MGCG))
+	अगर (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_HDP_MGCG))
 		data &= ~CLOCK_GATING_DIS;
-	else
+	अन्यथा
 		data |= CLOCK_GATING_DIS;
 
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(HDP_HOST_PATH_CNTL, data);
-}
+पूर्ण
 
-static void cik_enable_hdp_ls(struct radeon_device *rdev,
+अटल व्योम cik_enable_hdp_ls(काष्ठा radeon_device *rdev,
 			      bool enable)
-{
+अणु
 	u32 orig, data;
 
 	orig = data = RREG32(HDP_MEM_POWER_LS);
 
-	if (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_HDP_LS))
+	अगर (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_HDP_LS))
 		data |= HDP_LS_ENABLE;
-	else
+	अन्यथा
 		data &= ~HDP_LS_ENABLE;
 
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(HDP_MEM_POWER_LS, data);
-}
+पूर्ण
 
-void cik_update_cg(struct radeon_device *rdev,
+व्योम cik_update_cg(काष्ठा radeon_device *rdev,
 		   u32 block, bool enable)
-{
+अणु
 
-	if (block & RADEON_CG_BLOCK_GFX) {
-		cik_enable_gui_idle_interrupt(rdev, false);
+	अगर (block & RADEON_CG_BLOCK_GFX) अणु
+		cik_enable_gui_idle_पूर्णांकerrupt(rdev, false);
 		/* order matters! */
-		if (enable) {
+		अगर (enable) अणु
 			cik_enable_mgcg(rdev, true);
 			cik_enable_cgcg(rdev, true);
-		} else {
+		पूर्ण अन्यथा अणु
 			cik_enable_cgcg(rdev, false);
 			cik_enable_mgcg(rdev, false);
-		}
-		cik_enable_gui_idle_interrupt(rdev, true);
-	}
+		पूर्ण
+		cik_enable_gui_idle_पूर्णांकerrupt(rdev, true);
+	पूर्ण
 
-	if (block & RADEON_CG_BLOCK_MC) {
-		if (!(rdev->flags & RADEON_IS_IGP)) {
+	अगर (block & RADEON_CG_BLOCK_MC) अणु
+		अगर (!(rdev->flags & RADEON_IS_IGP)) अणु
 			cik_enable_mc_mgcg(rdev, enable);
 			cik_enable_mc_ls(rdev, enable);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (block & RADEON_CG_BLOCK_SDMA) {
+	अगर (block & RADEON_CG_BLOCK_SDMA) अणु
 		cik_enable_sdma_mgcg(rdev, enable);
 		cik_enable_sdma_mgls(rdev, enable);
-	}
+	पूर्ण
 
-	if (block & RADEON_CG_BLOCK_BIF) {
-		cik_enable_bif_mgls(rdev, enable);
-	}
+	अगर (block & RADEON_CG_BLOCK_BIF) अणु
+		cik_enable_bअगर_mgls(rdev, enable);
+	पूर्ण
 
-	if (block & RADEON_CG_BLOCK_UVD) {
-		if (rdev->has_uvd)
+	अगर (block & RADEON_CG_BLOCK_UVD) अणु
+		अगर (rdev->has_uvd)
 			cik_enable_uvd_mgcg(rdev, enable);
-	}
+	पूर्ण
 
-	if (block & RADEON_CG_BLOCK_HDP) {
+	अगर (block & RADEON_CG_BLOCK_HDP) अणु
 		cik_enable_hdp_mgcg(rdev, enable);
 		cik_enable_hdp_ls(rdev, enable);
-	}
+	पूर्ण
 
-	if (block & RADEON_CG_BLOCK_VCE) {
+	अगर (block & RADEON_CG_BLOCK_VCE) अणु
 		vce_v2_0_enable_mgcg(rdev, enable);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cik_init_cg(struct radeon_device *rdev)
-{
+अटल व्योम cik_init_cg(काष्ठा radeon_device *rdev)
+अणु
 
 	cik_update_cg(rdev, RADEON_CG_BLOCK_GFX, true);
 
-	if (rdev->has_uvd)
-		si_init_uvd_internal_cg(rdev);
+	अगर (rdev->has_uvd)
+		si_init_uvd_पूर्णांकernal_cg(rdev);
 
 	cik_update_cg(rdev, (RADEON_CG_BLOCK_MC |
 			     RADEON_CG_BLOCK_SDMA |
 			     RADEON_CG_BLOCK_BIF |
 			     RADEON_CG_BLOCK_UVD |
 			     RADEON_CG_BLOCK_HDP), true);
-}
+पूर्ण
 
-static void cik_fini_cg(struct radeon_device *rdev)
-{
+अटल व्योम cik_fini_cg(काष्ठा radeon_device *rdev)
+अणु
 	cik_update_cg(rdev, (RADEON_CG_BLOCK_MC |
 			     RADEON_CG_BLOCK_SDMA |
 			     RADEON_CG_BLOCK_BIF |
@@ -6347,291 +6348,291 @@ static void cik_fini_cg(struct radeon_device *rdev)
 			     RADEON_CG_BLOCK_HDP), false);
 
 	cik_update_cg(rdev, RADEON_CG_BLOCK_GFX, false);
-}
+पूर्ण
 
-static void cik_enable_sck_slowdown_on_pu(struct radeon_device *rdev,
+अटल व्योम cik_enable_sck_slowकरोwn_on_pu(काष्ठा radeon_device *rdev,
 					  bool enable)
-{
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(RLC_PG_CNTL);
-	if (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_RLC_SMU_HS))
+	अगर (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_RLC_SMU_HS))
 		data |= SMU_CLK_SLOWDOWN_ON_PU_ENABLE;
-	else
+	अन्यथा
 		data &= ~SMU_CLK_SLOWDOWN_ON_PU_ENABLE;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(RLC_PG_CNTL, data);
-}
+पूर्ण
 
-static void cik_enable_sck_slowdown_on_pd(struct radeon_device *rdev,
+अटल व्योम cik_enable_sck_slowकरोwn_on_pd(काष्ठा radeon_device *rdev,
 					  bool enable)
-{
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(RLC_PG_CNTL);
-	if (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_RLC_SMU_HS))
+	अगर (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_RLC_SMU_HS))
 		data |= SMU_CLK_SLOWDOWN_ON_PD_ENABLE;
-	else
+	अन्यथा
 		data &= ~SMU_CLK_SLOWDOWN_ON_PD_ENABLE;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(RLC_PG_CNTL, data);
-}
+पूर्ण
 
-static void cik_enable_cp_pg(struct radeon_device *rdev, bool enable)
-{
+अटल व्योम cik_enable_cp_pg(काष्ठा radeon_device *rdev, bool enable)
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(RLC_PG_CNTL);
-	if (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_CP))
+	अगर (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_CP))
 		data &= ~DISABLE_CP_PG;
-	else
+	अन्यथा
 		data |= DISABLE_CP_PG;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(RLC_PG_CNTL, data);
-}
+पूर्ण
 
-static void cik_enable_gds_pg(struct radeon_device *rdev, bool enable)
-{
+अटल व्योम cik_enable_gds_pg(काष्ठा radeon_device *rdev, bool enable)
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(RLC_PG_CNTL);
-	if (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_GDS))
+	अगर (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_GDS))
 		data &= ~DISABLE_GDS_PG;
-	else
+	अन्यथा
 		data |= DISABLE_GDS_PG;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(RLC_PG_CNTL, data);
-}
+पूर्ण
 
-#define CP_ME_TABLE_SIZE    96
-#define CP_ME_TABLE_OFFSET  2048
-#define CP_MEC_TABLE_OFFSET 4096
+#घोषणा CP_ME_TABLE_SIZE    96
+#घोषणा CP_ME_TABLE_OFFSET  2048
+#घोषणा CP_MEC_TABLE_OFFSET 4096
 
-void cik_init_cp_pg_table(struct radeon_device *rdev)
-{
-	volatile u32 *dst_ptr;
-	int me, i, max_me = 4;
+व्योम cik_init_cp_pg_table(काष्ठा radeon_device *rdev)
+अणु
+	अस्थिर u32 *dst_ptr;
+	पूर्णांक me, i, max_me = 4;
 	u32 bo_offset = 0;
 	u32 table_offset, table_size;
 
-	if (rdev->family == CHIP_KAVERI)
+	अगर (rdev->family == CHIP_KAVERI)
 		max_me = 5;
 
-	if (rdev->rlc.cp_table_ptr == NULL)
-		return;
+	अगर (rdev->rlc.cp_table_ptr == शून्य)
+		वापस;
 
-	/* write the cp table buffer */
+	/* ग_लिखो the cp table buffer */
 	dst_ptr = rdev->rlc.cp_table_ptr;
-	for (me = 0; me < max_me; me++) {
-		if (rdev->new_fw) {
-			const __le32 *fw_data;
-			const struct gfx_firmware_header_v1_0 *hdr;
+	क्रम (me = 0; me < max_me; me++) अणु
+		अगर (rdev->new_fw) अणु
+			स्थिर __le32 *fw_data;
+			स्थिर काष्ठा gfx_firmware_header_v1_0 *hdr;
 
-			if (me == 0) {
-				hdr = (const struct gfx_firmware_header_v1_0 *)rdev->ce_fw->data;
-				fw_data = (const __le32 *)
+			अगर (me == 0) अणु
+				hdr = (स्थिर काष्ठा gfx_firmware_header_v1_0 *)rdev->ce_fw->data;
+				fw_data = (स्थिर __le32 *)
 					(rdev->ce_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 				table_offset = le32_to_cpu(hdr->jt_offset);
 				table_size = le32_to_cpu(hdr->jt_size);
-			} else if (me == 1) {
-				hdr = (const struct gfx_firmware_header_v1_0 *)rdev->pfp_fw->data;
-				fw_data = (const __le32 *)
+			पूर्ण अन्यथा अगर (me == 1) अणु
+				hdr = (स्थिर काष्ठा gfx_firmware_header_v1_0 *)rdev->pfp_fw->data;
+				fw_data = (स्थिर __le32 *)
 					(rdev->pfp_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 				table_offset = le32_to_cpu(hdr->jt_offset);
 				table_size = le32_to_cpu(hdr->jt_size);
-			} else if (me == 2) {
-				hdr = (const struct gfx_firmware_header_v1_0 *)rdev->me_fw->data;
-				fw_data = (const __le32 *)
+			पूर्ण अन्यथा अगर (me == 2) अणु
+				hdr = (स्थिर काष्ठा gfx_firmware_header_v1_0 *)rdev->me_fw->data;
+				fw_data = (स्थिर __le32 *)
 					(rdev->me_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 				table_offset = le32_to_cpu(hdr->jt_offset);
 				table_size = le32_to_cpu(hdr->jt_size);
-			} else if (me == 3) {
-				hdr = (const struct gfx_firmware_header_v1_0 *)rdev->mec_fw->data;
-				fw_data = (const __le32 *)
+			पूर्ण अन्यथा अगर (me == 3) अणु
+				hdr = (स्थिर काष्ठा gfx_firmware_header_v1_0 *)rdev->mec_fw->data;
+				fw_data = (स्थिर __le32 *)
 					(rdev->mec_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 				table_offset = le32_to_cpu(hdr->jt_offset);
 				table_size = le32_to_cpu(hdr->jt_size);
-			} else {
-				hdr = (const struct gfx_firmware_header_v1_0 *)rdev->mec2_fw->data;
-				fw_data = (const __le32 *)
+			पूर्ण अन्यथा अणु
+				hdr = (स्थिर काष्ठा gfx_firmware_header_v1_0 *)rdev->mec2_fw->data;
+				fw_data = (स्थिर __le32 *)
 					(rdev->mec2_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 				table_offset = le32_to_cpu(hdr->jt_offset);
 				table_size = le32_to_cpu(hdr->jt_size);
-			}
+			पूर्ण
 
-			for (i = 0; i < table_size; i ++) {
+			क्रम (i = 0; i < table_size; i ++) अणु
 				dst_ptr[bo_offset + i] =
 					cpu_to_le32(le32_to_cpu(fw_data[table_offset + i]));
-			}
+			पूर्ण
 			bo_offset += table_size;
-		} else {
-			const __be32 *fw_data;
+		पूर्ण अन्यथा अणु
+			स्थिर __be32 *fw_data;
 			table_size = CP_ME_TABLE_SIZE;
 
-			if (me == 0) {
-				fw_data = (const __be32 *)rdev->ce_fw->data;
+			अगर (me == 0) अणु
+				fw_data = (स्थिर __be32 *)rdev->ce_fw->data;
 				table_offset = CP_ME_TABLE_OFFSET;
-			} else if (me == 1) {
-				fw_data = (const __be32 *)rdev->pfp_fw->data;
+			पूर्ण अन्यथा अगर (me == 1) अणु
+				fw_data = (स्थिर __be32 *)rdev->pfp_fw->data;
 				table_offset = CP_ME_TABLE_OFFSET;
-			} else if (me == 2) {
-				fw_data = (const __be32 *)rdev->me_fw->data;
+			पूर्ण अन्यथा अगर (me == 2) अणु
+				fw_data = (स्थिर __be32 *)rdev->me_fw->data;
 				table_offset = CP_ME_TABLE_OFFSET;
-			} else {
-				fw_data = (const __be32 *)rdev->mec_fw->data;
+			पूर्ण अन्यथा अणु
+				fw_data = (स्थिर __be32 *)rdev->mec_fw->data;
 				table_offset = CP_MEC_TABLE_OFFSET;
-			}
+			पूर्ण
 
-			for (i = 0; i < table_size; i ++) {
+			क्रम (i = 0; i < table_size; i ++) अणु
 				dst_ptr[bo_offset + i] =
 					cpu_to_le32(be32_to_cpu(fw_data[table_offset + i]));
-			}
+			पूर्ण
 			bo_offset += table_size;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void cik_enable_gfx_cgpg(struct radeon_device *rdev,
+अटल व्योम cik_enable_gfx_cgpg(काष्ठा radeon_device *rdev,
 				bool enable)
-{
+अणु
 	u32 data, orig;
 
-	if (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_GFX_PG)) {
+	अगर (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_GFX_PG)) अणु
 		orig = data = RREG32(RLC_PG_CNTL);
 		data |= GFX_PG_ENABLE;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(RLC_PG_CNTL, data);
 
 		orig = data = RREG32(RLC_AUTO_PG_CTRL);
 		data |= AUTO_PG_EN;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(RLC_AUTO_PG_CTRL, data);
-	} else {
+	पूर्ण अन्यथा अणु
 		orig = data = RREG32(RLC_PG_CNTL);
 		data &= ~GFX_PG_ENABLE;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(RLC_PG_CNTL, data);
 
 		orig = data = RREG32(RLC_AUTO_PG_CTRL);
 		data &= ~AUTO_PG_EN;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(RLC_AUTO_PG_CTRL, data);
 
 		data = RREG32(DB_RENDER_CONTROL);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u32 cik_get_cu_active_bitmap(struct radeon_device *rdev, u32 se, u32 sh)
-{
-	u32 mask = 0, tmp, tmp1;
-	int i;
+अटल u32 cik_get_cu_active_biपंचांगap(काष्ठा radeon_device *rdev, u32 se, u32 sh)
+अणु
+	u32 mask = 0, पंचांगp, पंचांगp1;
+	पूर्णांक i;
 
 	cik_select_se_sh(rdev, se, sh);
-	tmp = RREG32(CC_GC_SHADER_ARRAY_CONFIG);
-	tmp1 = RREG32(GC_USER_SHADER_ARRAY_CONFIG);
+	पंचांगp = RREG32(CC_GC_SHADER_ARRAY_CONFIG);
+	पंचांगp1 = RREG32(GC_USER_SHADER_ARRAY_CONFIG);
 	cik_select_se_sh(rdev, 0xffffffff, 0xffffffff);
 
-	tmp &= 0xffff0000;
+	पंचांगp &= 0xffff0000;
 
-	tmp |= tmp1;
-	tmp >>= 16;
+	पंचांगp |= पंचांगp1;
+	पंचांगp >>= 16;
 
-	for (i = 0; i < rdev->config.cik.max_cu_per_sh; i ++) {
+	क्रम (i = 0; i < rdev->config.cik.max_cu_per_sh; i ++) अणु
 		mask <<= 1;
 		mask |= 1;
-	}
+	पूर्ण
 
-	return (~tmp) & mask;
-}
+	वापस (~पंचांगp) & mask;
+पूर्ण
 
-static void cik_init_ao_cu_mask(struct radeon_device *rdev)
-{
+अटल व्योम cik_init_ao_cu_mask(काष्ठा radeon_device *rdev)
+अणु
 	u32 i, j, k, active_cu_number = 0;
-	u32 mask, counter, cu_bitmap;
-	u32 tmp = 0;
+	u32 mask, counter, cu_biपंचांगap;
+	u32 पंचांगp = 0;
 
-	for (i = 0; i < rdev->config.cik.max_shader_engines; i++) {
-		for (j = 0; j < rdev->config.cik.max_sh_per_se; j++) {
+	क्रम (i = 0; i < rdev->config.cik.max_shader_engines; i++) अणु
+		क्रम (j = 0; j < rdev->config.cik.max_sh_per_se; j++) अणु
 			mask = 1;
-			cu_bitmap = 0;
+			cu_biपंचांगap = 0;
 			counter = 0;
-			for (k = 0; k < rdev->config.cik.max_cu_per_sh; k ++) {
-				if (cik_get_cu_active_bitmap(rdev, i, j) & mask) {
-					if (counter < 2)
-						cu_bitmap |= mask;
+			क्रम (k = 0; k < rdev->config.cik.max_cu_per_sh; k ++) अणु
+				अगर (cik_get_cu_active_biपंचांगap(rdev, i, j) & mask) अणु
+					अगर (counter < 2)
+						cu_biपंचांगap |= mask;
 					counter ++;
-				}
+				पूर्ण
 				mask <<= 1;
-			}
+			पूर्ण
 
 			active_cu_number += counter;
-			tmp |= (cu_bitmap << (i * 16 + j * 8));
-		}
-	}
+			पंचांगp |= (cu_biपंचांगap << (i * 16 + j * 8));
+		पूर्ण
+	पूर्ण
 
-	WREG32(RLC_PG_AO_CU_MASK, tmp);
+	WREG32(RLC_PG_AO_CU_MASK, पंचांगp);
 
-	tmp = RREG32(RLC_MAX_PG_CU);
-	tmp &= ~MAX_PU_CU_MASK;
-	tmp |= MAX_PU_CU(active_cu_number);
-	WREG32(RLC_MAX_PG_CU, tmp);
-}
+	पंचांगp = RREG32(RLC_MAX_PG_CU);
+	पंचांगp &= ~MAX_PU_CU_MASK;
+	पंचांगp |= MAX_PU_CU(active_cu_number);
+	WREG32(RLC_MAX_PG_CU, पंचांगp);
+पूर्ण
 
-static void cik_enable_gfx_static_mgpg(struct radeon_device *rdev,
+अटल व्योम cik_enable_gfx_अटल_mgpg(काष्ठा radeon_device *rdev,
 				       bool enable)
-{
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(RLC_PG_CNTL);
-	if (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_GFX_SMG))
+	अगर (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_GFX_SMG))
 		data |= STATIC_PER_CU_PG_ENABLE;
-	else
+	अन्यथा
 		data &= ~STATIC_PER_CU_PG_ENABLE;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(RLC_PG_CNTL, data);
-}
+पूर्ण
 
-static void cik_enable_gfx_dynamic_mgpg(struct radeon_device *rdev,
+अटल व्योम cik_enable_gfx_dynamic_mgpg(काष्ठा radeon_device *rdev,
 					bool enable)
-{
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(RLC_PG_CNTL);
-	if (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_GFX_DMG))
+	अगर (enable && (rdev->pg_flags & RADEON_PG_SUPPORT_GFX_DMG))
 		data |= DYN_PER_CU_PG_ENABLE;
-	else
+	अन्यथा
 		data &= ~DYN_PER_CU_PG_ENABLE;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(RLC_PG_CNTL, data);
-}
+पूर्ण
 
-#define RLC_SAVE_AND_RESTORE_STARTING_OFFSET 0x90
-#define RLC_CLEAR_STATE_DESCRIPTOR_OFFSET    0x3D
+#घोषणा RLC_SAVE_AND_RESTORE_STARTING_OFFSET 0x90
+#घोषणा RLC_CLEAR_STATE_DESCRIPTOR_OFFSET    0x3D
 
-static void cik_init_gfx_cgpg(struct radeon_device *rdev)
-{
+अटल व्योम cik_init_gfx_cgpg(काष्ठा radeon_device *rdev)
+अणु
 	u32 data, orig;
 	u32 i;
 
-	if (rdev->rlc.cs_data) {
+	अगर (rdev->rlc.cs_data) अणु
 		WREG32(RLC_GPM_SCRATCH_ADDR, RLC_CLEAR_STATE_DESCRIPTOR_OFFSET);
 		WREG32(RLC_GPM_SCRATCH_DATA, upper_32_bits(rdev->rlc.clear_state_gpu_addr));
 		WREG32(RLC_GPM_SCRATCH_DATA, lower_32_bits(rdev->rlc.clear_state_gpu_addr));
 		WREG32(RLC_GPM_SCRATCH_DATA, rdev->rlc.clear_state_size);
-	} else {
+	पूर्ण अन्यथा अणु
 		WREG32(RLC_GPM_SCRATCH_ADDR, RLC_CLEAR_STATE_DESCRIPTOR_OFFSET);
-		for (i = 0; i < 3; i++)
+		क्रम (i = 0; i < 3; i++)
 			WREG32(RLC_GPM_SCRATCH_DATA, 0);
-	}
-	if (rdev->rlc.reg_list) {
+	पूर्ण
+	अगर (rdev->rlc.reg_list) अणु
 		WREG32(RLC_GPM_SCRATCH_ADDR, RLC_SAVE_AND_RESTORE_STARTING_OFFSET);
-		for (i = 0; i < rdev->rlc.reg_list_size; i++)
+		क्रम (i = 0; i < rdev->rlc.reg_list_size; i++)
 			WREG32(RLC_GPM_SCRATCH_DATA, rdev->rlc.reg_list[i]);
-	}
+	पूर्ण
 
 	orig = data = RREG32(RLC_PG_CNTL);
 	data |= GFX_PG_SRC;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(RLC_PG_CNTL, data);
 
 	WREG32(RLC_SAVE_AND_RESTORE_BASE, rdev->rlc.save_restore_gpu_addr >> 8);
@@ -6655,37 +6656,37 @@ static void cik_init_gfx_cgpg(struct radeon_device *rdev)
 	data |= GRBM_REG_SGIT(0x700);
 	WREG32(RLC_AUTO_PG_CTRL, data);
 
-}
+पूर्ण
 
-static void cik_update_gfx_pg(struct radeon_device *rdev, bool enable)
-{
+अटल व्योम cik_update_gfx_pg(काष्ठा radeon_device *rdev, bool enable)
+अणु
 	cik_enable_gfx_cgpg(rdev, enable);
-	cik_enable_gfx_static_mgpg(rdev, enable);
+	cik_enable_gfx_अटल_mgpg(rdev, enable);
 	cik_enable_gfx_dynamic_mgpg(rdev, enable);
-}
+पूर्ण
 
-u32 cik_get_csb_size(struct radeon_device *rdev)
-{
+u32 cik_get_csb_size(काष्ठा radeon_device *rdev)
+अणु
 	u32 count = 0;
-	const struct cs_section_def *sect = NULL;
-	const struct cs_extent_def *ext = NULL;
+	स्थिर काष्ठा cs_section_def *sect = शून्य;
+	स्थिर काष्ठा cs_extent_def *ext = शून्य;
 
-	if (rdev->rlc.cs_data == NULL)
-		return 0;
+	अगर (rdev->rlc.cs_data == शून्य)
+		वापस 0;
 
 	/* begin clear state */
 	count += 2;
 	/* context control state */
 	count += 3;
 
-	for (sect = rdev->rlc.cs_data; sect->section != NULL; ++sect) {
-		for (ext = sect->section; ext->extent != NULL; ++ext) {
-			if (sect->id == SECT_CONTEXT)
+	क्रम (sect = rdev->rlc.cs_data; sect->section != शून्य; ++sect) अणु
+		क्रम (ext = sect->section; ext->extent != शून्य; ++ext) अणु
+			अगर (sect->id == SECT_CONTEXT)
 				count += 2 + ext->reg_count;
-			else
-				return 0;
-		}
-	}
+			अन्यथा
+				वापस 0;
+		पूर्ण
+	पूर्ण
 	/* pa_sc_raster_config/pa_sc_raster_config1 */
 	count += 4;
 	/* end clear state */
@@ -6693,19 +6694,19 @@ u32 cik_get_csb_size(struct radeon_device *rdev)
 	/* clear state */
 	count += 2;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-void cik_get_csb_buffer(struct radeon_device *rdev, volatile u32 *buffer)
-{
+व्योम cik_get_csb_buffer(काष्ठा radeon_device *rdev, अस्थिर u32 *buffer)
+अणु
 	u32 count = 0, i;
-	const struct cs_section_def *sect = NULL;
-	const struct cs_extent_def *ext = NULL;
+	स्थिर काष्ठा cs_section_def *sect = शून्य;
+	स्थिर काष्ठा cs_extent_def *ext = शून्य;
 
-	if (rdev->rlc.cs_data == NULL)
-		return;
-	if (buffer == NULL)
-		return;
+	अगर (rdev->rlc.cs_data == शून्य)
+		वापस;
+	अगर (buffer == शून्य)
+		वापस;
 
 	buffer[count++] = cpu_to_le32(PACKET3(PACKET3_PREAMBLE_CNTL, 0));
 	buffer[count++] = cpu_to_le32(PACKET3_PREAMBLE_BEGIN_CLEAR_STATE);
@@ -6714,103 +6715,103 @@ void cik_get_csb_buffer(struct radeon_device *rdev, volatile u32 *buffer)
 	buffer[count++] = cpu_to_le32(0x80000000);
 	buffer[count++] = cpu_to_le32(0x80000000);
 
-	for (sect = rdev->rlc.cs_data; sect->section != NULL; ++sect) {
-		for (ext = sect->section; ext->extent != NULL; ++ext) {
-			if (sect->id == SECT_CONTEXT) {
+	क्रम (sect = rdev->rlc.cs_data; sect->section != शून्य; ++sect) अणु
+		क्रम (ext = sect->section; ext->extent != शून्य; ++ext) अणु
+			अगर (sect->id == SECT_CONTEXT) अणु
 				buffer[count++] =
 					cpu_to_le32(PACKET3(PACKET3_SET_CONTEXT_REG, ext->reg_count));
 				buffer[count++] = cpu_to_le32(ext->reg_index - 0xa000);
-				for (i = 0; i < ext->reg_count; i++)
+				क्रम (i = 0; i < ext->reg_count; i++)
 					buffer[count++] = cpu_to_le32(ext->extent[i]);
-			} else {
-				return;
-			}
-		}
-	}
+			पूर्ण अन्यथा अणु
+				वापस;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	buffer[count++] = cpu_to_le32(PACKET3(PACKET3_SET_CONTEXT_REG, 2));
 	buffer[count++] = cpu_to_le32(PA_SC_RASTER_CONFIG - PACKET3_SET_CONTEXT_REG_START);
-	switch (rdev->family) {
-	case CHIP_BONAIRE:
+	चयन (rdev->family) अणु
+	हाल CHIP_BONAIRE:
 		buffer[count++] = cpu_to_le32(0x16000012);
 		buffer[count++] = cpu_to_le32(0x00000000);
-		break;
-	case CHIP_KAVERI:
+		अवरोध;
+	हाल CHIP_KAVERI:
 		buffer[count++] = cpu_to_le32(0x00000000); /* XXX */
 		buffer[count++] = cpu_to_le32(0x00000000);
-		break;
-	case CHIP_KABINI:
-	case CHIP_MULLINS:
+		अवरोध;
+	हाल CHIP_KABINI:
+	हाल CHIP_MULLINS:
 		buffer[count++] = cpu_to_le32(0x00000000); /* XXX */
 		buffer[count++] = cpu_to_le32(0x00000000);
-		break;
-	case CHIP_HAWAII:
+		अवरोध;
+	हाल CHIP_HAWAII:
 		buffer[count++] = cpu_to_le32(0x3a00161a);
 		buffer[count++] = cpu_to_le32(0x0000002e);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		buffer[count++] = cpu_to_le32(0x00000000);
 		buffer[count++] = cpu_to_le32(0x00000000);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	buffer[count++] = cpu_to_le32(PACKET3(PACKET3_PREAMBLE_CNTL, 0));
 	buffer[count++] = cpu_to_le32(PACKET3_PREAMBLE_END_CLEAR_STATE);
 
 	buffer[count++] = cpu_to_le32(PACKET3(PACKET3_CLEAR_STATE, 0));
 	buffer[count++] = cpu_to_le32(0);
-}
+पूर्ण
 
-static void cik_init_pg(struct radeon_device *rdev)
-{
-	if (rdev->pg_flags) {
-		cik_enable_sck_slowdown_on_pu(rdev, true);
-		cik_enable_sck_slowdown_on_pd(rdev, true);
-		if (rdev->pg_flags & RADEON_PG_SUPPORT_GFX_PG) {
+अटल व्योम cik_init_pg(काष्ठा radeon_device *rdev)
+अणु
+	अगर (rdev->pg_flags) अणु
+		cik_enable_sck_slowकरोwn_on_pu(rdev, true);
+		cik_enable_sck_slowकरोwn_on_pd(rdev, true);
+		अगर (rdev->pg_flags & RADEON_PG_SUPPORT_GFX_PG) अणु
 			cik_init_gfx_cgpg(rdev);
 			cik_enable_cp_pg(rdev, true);
 			cik_enable_gds_pg(rdev, true);
-		}
+		पूर्ण
 		cik_init_ao_cu_mask(rdev);
 		cik_update_gfx_pg(rdev, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cik_fini_pg(struct radeon_device *rdev)
-{
-	if (rdev->pg_flags) {
+अटल व्योम cik_fini_pg(काष्ठा radeon_device *rdev)
+अणु
+	अगर (rdev->pg_flags) अणु
 		cik_update_gfx_pg(rdev, false);
-		if (rdev->pg_flags & RADEON_PG_SUPPORT_GFX_PG) {
+		अगर (rdev->pg_flags & RADEON_PG_SUPPORT_GFX_PG) अणु
 			cik_enable_cp_pg(rdev, false);
 			cik_enable_gds_pg(rdev, false);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Interrupts
- * Starting with r6xx, interrupts are handled via a ring buffer.
+ * Starting with r6xx, पूर्णांकerrupts are handled via a ring buffer.
  * Ring buffers are areas of GPU accessible memory that the GPU
- * writes interrupt vectors into and the host reads vectors out of.
- * There is a rptr (read pointer) that determines where the
- * host is currently reading, and a wptr (write pointer)
+ * ग_लिखोs पूर्णांकerrupt vectors पूर्णांकo and the host पढ़ोs vectors out of.
+ * There is a rptr (पढ़ो poपूर्णांकer) that determines where the
+ * host is currently पढ़ोing, and a wptr (ग_लिखो poपूर्णांकer)
  * which determines where the GPU has written.  When the
- * pointers are equal, the ring is idle.  When the GPU
- * writes vectors to the ring buffer, it increments the
- * wptr.  When there is an interrupt, the host then starts
- * fetching commands and processing them until the pointers are
- * equal again at which point it updates the rptr.
+ * poपूर्णांकers are equal, the ring is idle.  When the GPU
+ * ग_लिखोs vectors to the ring buffer, it increments the
+ * wptr.  When there is an पूर्णांकerrupt, the host then starts
+ * fetching commands and processing them until the poपूर्णांकers are
+ * equal again at which poपूर्णांक it updates the rptr.
  */
 
 /**
- * cik_enable_interrupts - Enable the interrupt ring buffer
+ * cik_enable_पूर्णांकerrupts - Enable the पूर्णांकerrupt ring buffer
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Enable the interrupt ring buffer (CIK).
+ * Enable the पूर्णांकerrupt ring buffer (CIK).
  */
-static void cik_enable_interrupts(struct radeon_device *rdev)
-{
+अटल व्योम cik_enable_पूर्णांकerrupts(काष्ठा radeon_device *rdev)
+अणु
 	u32 ih_cntl = RREG32(IH_CNTL);
 	u32 ih_rb_cntl = RREG32(IH_RB_CNTL);
 
@@ -6819,17 +6820,17 @@ static void cik_enable_interrupts(struct radeon_device *rdev)
 	WREG32(IH_CNTL, ih_cntl);
 	WREG32(IH_RB_CNTL, ih_rb_cntl);
 	rdev->ih.enabled = true;
-}
+पूर्ण
 
 /**
- * cik_disable_interrupts - Disable the interrupt ring buffer
+ * cik_disable_पूर्णांकerrupts - Disable the पूर्णांकerrupt ring buffer
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Disable the interrupt ring buffer (CIK).
+ * Disable the पूर्णांकerrupt ring buffer (CIK).
  */
-static void cik_disable_interrupts(struct radeon_device *rdev)
-{
+अटल व्योम cik_disable_पूर्णांकerrupts(काष्ठा radeon_device *rdev)
+अणु
 	u32 ih_rb_cntl = RREG32(IH_RB_CNTL);
 	u32 ih_cntl = RREG32(IH_CNTL);
 
@@ -6842,28 +6843,28 @@ static void cik_disable_interrupts(struct radeon_device *rdev)
 	WREG32(IH_RB_WPTR, 0);
 	rdev->ih.enabled = false;
 	rdev->ih.rptr = 0;
-}
+पूर्ण
 
 /**
- * cik_disable_interrupt_state - Disable all interrupt sources
+ * cik_disable_पूर्णांकerrupt_state - Disable all पूर्णांकerrupt sources
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Clear all interrupt enable bits used by the driver (CIK).
+ * Clear all पूर्णांकerrupt enable bits used by the driver (CIK).
  */
-static void cik_disable_interrupt_state(struct radeon_device *rdev)
-{
-	u32 tmp;
+अटल व्योम cik_disable_पूर्णांकerrupt_state(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp;
 
 	/* gfx ring */
-	tmp = RREG32(CP_INT_CNTL_RING0) &
+	पंचांगp = RREG32(CP_INT_CNTL_RING0) &
 		(CNTX_BUSY_INT_ENABLE | CNTX_EMPTY_INT_ENABLE);
-	WREG32(CP_INT_CNTL_RING0, tmp);
+	WREG32(CP_INT_CNTL_RING0, पंचांगp);
 	/* sdma */
-	tmp = RREG32(SDMA0_CNTL + SDMA0_REGISTER_OFFSET) & ~TRAP_ENABLE;
-	WREG32(SDMA0_CNTL + SDMA0_REGISTER_OFFSET, tmp);
-	tmp = RREG32(SDMA0_CNTL + SDMA1_REGISTER_OFFSET) & ~TRAP_ENABLE;
-	WREG32(SDMA0_CNTL + SDMA1_REGISTER_OFFSET, tmp);
+	पंचांगp = RREG32(SDMA0_CNTL + SDMA0_REGISTER_OFFSET) & ~TRAP_ENABLE;
+	WREG32(SDMA0_CNTL + SDMA0_REGISTER_OFFSET, पंचांगp);
+	पंचांगp = RREG32(SDMA0_CNTL + SDMA1_REGISTER_OFFSET) & ~TRAP_ENABLE;
+	WREG32(SDMA0_CNTL + SDMA1_REGISTER_OFFSET, पंचांगp);
 	/* compute queues */
 	WREG32(CP_ME1_PIPE0_INT_CNTL, 0);
 	WREG32(CP_ME1_PIPE1_INT_CNTL, 0);
@@ -6880,90 +6881,90 @@ static void cik_disable_interrupt_state(struct radeon_device *rdev)
 	/* vline/vblank, etc. */
 	WREG32(LB_INTERRUPT_MASK + EVERGREEN_CRTC0_REGISTER_OFFSET, 0);
 	WREG32(LB_INTERRUPT_MASK + EVERGREEN_CRTC1_REGISTER_OFFSET, 0);
-	if (rdev->num_crtc >= 4) {
+	अगर (rdev->num_crtc >= 4) अणु
 		WREG32(LB_INTERRUPT_MASK + EVERGREEN_CRTC2_REGISTER_OFFSET, 0);
 		WREG32(LB_INTERRUPT_MASK + EVERGREEN_CRTC3_REGISTER_OFFSET, 0);
-	}
-	if (rdev->num_crtc >= 6) {
+	पूर्ण
+	अगर (rdev->num_crtc >= 6) अणु
 		WREG32(LB_INTERRUPT_MASK + EVERGREEN_CRTC4_REGISTER_OFFSET, 0);
 		WREG32(LB_INTERRUPT_MASK + EVERGREEN_CRTC5_REGISTER_OFFSET, 0);
-	}
+	पूर्ण
 	/* pflip */
-	if (rdev->num_crtc >= 2) {
+	अगर (rdev->num_crtc >= 2) अणु
 		WREG32(GRPH_INT_CONTROL + EVERGREEN_CRTC0_REGISTER_OFFSET, 0);
 		WREG32(GRPH_INT_CONTROL + EVERGREEN_CRTC1_REGISTER_OFFSET, 0);
-	}
-	if (rdev->num_crtc >= 4) {
+	पूर्ण
+	अगर (rdev->num_crtc >= 4) अणु
 		WREG32(GRPH_INT_CONTROL + EVERGREEN_CRTC2_REGISTER_OFFSET, 0);
 		WREG32(GRPH_INT_CONTROL + EVERGREEN_CRTC3_REGISTER_OFFSET, 0);
-	}
-	if (rdev->num_crtc >= 6) {
+	पूर्ण
+	अगर (rdev->num_crtc >= 6) अणु
 		WREG32(GRPH_INT_CONTROL + EVERGREEN_CRTC4_REGISTER_OFFSET, 0);
 		WREG32(GRPH_INT_CONTROL + EVERGREEN_CRTC5_REGISTER_OFFSET, 0);
-	}
+	पूर्ण
 
 	/* dac hotplug */
 	WREG32(DAC_AUTODETECT_INT_CONTROL, 0);
 
 	/* digital hotplug */
-	tmp = RREG32(DC_HPD1_INT_CONTROL) & DC_HPDx_INT_POLARITY;
-	WREG32(DC_HPD1_INT_CONTROL, tmp);
-	tmp = RREG32(DC_HPD2_INT_CONTROL) & DC_HPDx_INT_POLARITY;
-	WREG32(DC_HPD2_INT_CONTROL, tmp);
-	tmp = RREG32(DC_HPD3_INT_CONTROL) & DC_HPDx_INT_POLARITY;
-	WREG32(DC_HPD3_INT_CONTROL, tmp);
-	tmp = RREG32(DC_HPD4_INT_CONTROL) & DC_HPDx_INT_POLARITY;
-	WREG32(DC_HPD4_INT_CONTROL, tmp);
-	tmp = RREG32(DC_HPD5_INT_CONTROL) & DC_HPDx_INT_POLARITY;
-	WREG32(DC_HPD5_INT_CONTROL, tmp);
-	tmp = RREG32(DC_HPD6_INT_CONTROL) & DC_HPDx_INT_POLARITY;
-	WREG32(DC_HPD6_INT_CONTROL, tmp);
+	पंचांगp = RREG32(DC_HPD1_INT_CONTROL) & DC_HPDx_INT_POLARITY;
+	WREG32(DC_HPD1_INT_CONTROL, पंचांगp);
+	पंचांगp = RREG32(DC_HPD2_INT_CONTROL) & DC_HPDx_INT_POLARITY;
+	WREG32(DC_HPD2_INT_CONTROL, पंचांगp);
+	पंचांगp = RREG32(DC_HPD3_INT_CONTROL) & DC_HPDx_INT_POLARITY;
+	WREG32(DC_HPD3_INT_CONTROL, पंचांगp);
+	पंचांगp = RREG32(DC_HPD4_INT_CONTROL) & DC_HPDx_INT_POLARITY;
+	WREG32(DC_HPD4_INT_CONTROL, पंचांगp);
+	पंचांगp = RREG32(DC_HPD5_INT_CONTROL) & DC_HPDx_INT_POLARITY;
+	WREG32(DC_HPD5_INT_CONTROL, पंचांगp);
+	पंचांगp = RREG32(DC_HPD6_INT_CONTROL) & DC_HPDx_INT_POLARITY;
+	WREG32(DC_HPD6_INT_CONTROL, पंचांगp);
 
-}
+पूर्ण
 
 /**
- * cik_irq_init - init and enable the interrupt ring
+ * cik_irq_init - init and enable the पूर्णांकerrupt ring
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Allocate a ring buffer for the interrupt controller,
- * enable the RLC, disable interrupts, enable the IH
+ * Allocate a ring buffer क्रम the पूर्णांकerrupt controller,
+ * enable the RLC, disable पूर्णांकerrupts, enable the IH
  * ring buffer and enable it (CIK).
  * Called at device load and reume.
- * Returns 0 for success, errors for failure.
+ * Returns 0 क्रम success, errors क्रम failure.
  */
-static int cik_irq_init(struct radeon_device *rdev)
-{
-	int ret = 0;
-	int rb_bufsz;
-	u32 interrupt_cntl, ih_cntl, ih_rb_cntl;
+अटल पूर्णांक cik_irq_init(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक rb_bufsz;
+	u32 पूर्णांकerrupt_cntl, ih_cntl, ih_rb_cntl;
 
 	/* allocate ring */
 	ret = r600_ih_ring_alloc(rdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* disable irqs */
-	cik_disable_interrupts(rdev);
+	cik_disable_पूर्णांकerrupts(rdev);
 
 	/* init rlc */
 	ret = cik_rlc_resume(rdev);
-	if (ret) {
+	अगर (ret) अणु
 		r600_ih_ring_fini(rdev);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* setup interrupt control */
-	/* set dummy read address to dummy page address */
+	/* setup पूर्णांकerrupt control */
+	/* set dummy पढ़ो address to dummy page address */
 	WREG32(INTERRUPT_CNTL2, rdev->dummy_page.addr >> 8);
-	interrupt_cntl = RREG32(INTERRUPT_CNTL);
-	/* IH_DUMMY_RD_OVERRIDE=0 - dummy read disabled with msi, enabled without msi
-	 * IH_DUMMY_RD_OVERRIDE=1 - dummy read controlled by IH_DUMMY_RD_EN
+	पूर्णांकerrupt_cntl = RREG32(INTERRUPT_CNTL);
+	/* IH_DUMMY_RD_OVERRIDE=0 - dummy पढ़ो disabled with msi, enabled without msi
+	 * IH_DUMMY_RD_OVERRIDE=1 - dummy पढ़ो controlled by IH_DUMMY_RD_EN
 	 */
-	interrupt_cntl &= ~IH_DUMMY_RD_OVERRIDE;
-	/* IH_REQ_NONSNOOP_EN=1 if ring is in non-cacheable memory, e.g., vram */
-	interrupt_cntl &= ~IH_REQ_NONSNOOP_EN;
-	WREG32(INTERRUPT_CNTL, interrupt_cntl);
+	पूर्णांकerrupt_cntl &= ~IH_DUMMY_RD_OVERRIDE;
+	/* IH_REQ_NONSNOOP_EN=1 अगर ring is in non-cacheable memory, e.g., vram */
+	पूर्णांकerrupt_cntl &= ~IH_REQ_NONSNOOP_EN;
+	WREG32(INTERRUPT_CNTL, पूर्णांकerrupt_cntl);
 
 	WREG32(IH_RB_BASE, rdev->ih.gpu_addr >> 8);
 	rb_bufsz = order_base_2(rdev->ih.ring_size / 4);
@@ -6972,10 +6973,10 @@ static int cik_irq_init(struct radeon_device *rdev)
 		      IH_WPTR_OVERFLOW_CLEAR |
 		      (rb_bufsz << 1));
 
-	if (rdev->wb.enabled)
+	अगर (rdev->wb.enabled)
 		ih_rb_cntl |= IH_WPTR_WRITEBACK_ENABLE;
 
-	/* set the writeback address whether it's enabled or not */
+	/* set the ग_लिखोback address whether it's enabled or not */
 	WREG32(IH_RB_WPTR_ADDR_LO, (rdev->wb.gpu_addr + R600_WB_IH_WPTR_OFFSET) & 0xFFFFFFFC);
 	WREG32(IH_RB_WPTR_ADDR_HI, upper_32_bits(rdev->wb.gpu_addr + R600_WB_IH_WPTR_OFFSET) & 0xFF);
 
@@ -6985,58 +6986,58 @@ static int cik_irq_init(struct radeon_device *rdev)
 	WREG32(IH_RB_RPTR, 0);
 	WREG32(IH_RB_WPTR, 0);
 
-	/* Default settings for IH_CNTL (disabled at first) */
+	/* Default settings क्रम IH_CNTL (disabled at first) */
 	ih_cntl = MC_WRREQ_CREDIT(0x10) | MC_WR_CLEAN_CNT(0x10) | MC_VMID(0);
-	/* RPTR_REARM only works if msi's are enabled */
-	if (rdev->msi_enabled)
+	/* RPTR_REARM only works अगर msi's are enabled */
+	अगर (rdev->msi_enabled)
 		ih_cntl |= RPTR_REARM;
 	WREG32(IH_CNTL, ih_cntl);
 
-	/* force the active interrupt state to all disabled */
-	cik_disable_interrupt_state(rdev);
+	/* क्रमce the active पूर्णांकerrupt state to all disabled */
+	cik_disable_पूर्णांकerrupt_state(rdev);
 
 	pci_set_master(rdev->pdev);
 
 	/* enable irqs */
-	cik_enable_interrupts(rdev);
+	cik_enable_पूर्णांकerrupts(rdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * cik_irq_set - enable/disable interrupt sources
+ * cik_irq_set - enable/disable पूर्णांकerrupt sources
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Enable interrupt sources on the GPU (vblanks, hpd,
+ * Enable पूर्णांकerrupt sources on the GPU (vblanks, hpd,
  * etc.) (CIK).
- * Returns 0 for success, errors for failure.
+ * Returns 0 क्रम success, errors क्रम failure.
  */
-int cik_irq_set(struct radeon_device *rdev)
-{
-	u32 cp_int_cntl;
+पूर्णांक cik_irq_set(काष्ठा radeon_device *rdev)
+अणु
+	u32 cp_पूर्णांक_cntl;
 	u32 cp_m1p0, cp_m1p1, cp_m1p2, cp_m1p3;
 	u32 cp_m2p0, cp_m2p1, cp_m2p2, cp_m2p3;
 	u32 crtc1 = 0, crtc2 = 0, crtc3 = 0, crtc4 = 0, crtc5 = 0, crtc6 = 0;
 	u32 hpd1, hpd2, hpd3, hpd4, hpd5, hpd6;
-	u32 grbm_int_cntl = 0;
+	u32 grbm_पूर्णांक_cntl = 0;
 	u32 dma_cntl, dma_cntl1;
 
-	if (!rdev->irq.installed) {
+	अगर (!rdev->irq.installed) अणु
 		WARN(1, "Can't enable IRQ/MSI because no handler is installed\n");
-		return -EINVAL;
-	}
-	/* don't enable anything if the ih is disabled */
-	if (!rdev->ih.enabled) {
-		cik_disable_interrupts(rdev);
-		/* force the active interrupt state to all disabled */
-		cik_disable_interrupt_state(rdev);
-		return 0;
-	}
+		वापस -EINVAL;
+	पूर्ण
+	/* करोn't enable anything अगर the ih is disabled */
+	अगर (!rdev->ih.enabled) अणु
+		cik_disable_पूर्णांकerrupts(rdev);
+		/* क्रमce the active पूर्णांकerrupt state to all disabled */
+		cik_disable_पूर्णांकerrupt_state(rdev);
+		वापस 0;
+	पूर्ण
 
-	cp_int_cntl = RREG32(CP_INT_CNTL_RING0) &
+	cp_पूर्णांक_cntl = RREG32(CP_INT_CNTL_RING0) &
 		(CNTX_BUSY_INT_ENABLE | CNTX_EMPTY_INT_ENABLE);
-	cp_int_cntl |= PRIV_INSTR_INT_ENABLE | PRIV_REG_INT_ENABLE;
+	cp_पूर्णांक_cntl |= PRIV_INSTR_INT_ENABLE | PRIV_REG_INT_ENABLE;
 
 	hpd1 = RREG32(DC_HPD1_INT_CONTROL) & ~(DC_HPDx_INT_EN | DC_HPDx_RX_INT_EN);
 	hpd2 = RREG32(DC_HPD2_INT_CONTROL) & ~(DC_HPDx_INT_EN | DC_HPDx_RX_INT_EN);
@@ -7057,164 +7058,164 @@ int cik_irq_set(struct radeon_device *rdev)
 	cp_m2p2 = RREG32(CP_ME2_PIPE2_INT_CNTL) & ~TIME_STAMP_INT_ENABLE;
 	cp_m2p3 = RREG32(CP_ME2_PIPE3_INT_CNTL) & ~TIME_STAMP_INT_ENABLE;
 
-	/* enable CP interrupts on all rings */
-	if (atomic_read(&rdev->irq.ring_int[RADEON_RING_TYPE_GFX_INDEX])) {
+	/* enable CP पूर्णांकerrupts on all rings */
+	अगर (atomic_पढ़ो(&rdev->irq.ring_पूर्णांक[RADEON_RING_TYPE_GFX_INDEX])) अणु
 		DRM_DEBUG("cik_irq_set: sw int gfx\n");
-		cp_int_cntl |= TIME_STAMP_INT_ENABLE;
-	}
-	if (atomic_read(&rdev->irq.ring_int[CAYMAN_RING_TYPE_CP1_INDEX])) {
-		struct radeon_ring *ring = &rdev->ring[CAYMAN_RING_TYPE_CP1_INDEX];
+		cp_पूर्णांक_cntl |= TIME_STAMP_INT_ENABLE;
+	पूर्ण
+	अगर (atomic_पढ़ो(&rdev->irq.ring_पूर्णांक[CAYMAN_RING_TYPE_CP1_INDEX])) अणु
+		काष्ठा radeon_ring *ring = &rdev->ring[CAYMAN_RING_TYPE_CP1_INDEX];
 		DRM_DEBUG("si_irq_set: sw int cp1\n");
-		if (ring->me == 1) {
-			switch (ring->pipe) {
-			case 0:
+		अगर (ring->me == 1) अणु
+			चयन (ring->pipe) अणु
+			हाल 0:
 				cp_m1p0 |= TIME_STAMP_INT_ENABLE;
-				break;
-			case 1:
+				अवरोध;
+			हाल 1:
 				cp_m1p1 |= TIME_STAMP_INT_ENABLE;
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				cp_m1p2 |= TIME_STAMP_INT_ENABLE;
-				break;
-			case 3:
+				अवरोध;
+			हाल 3:
 				cp_m1p2 |= TIME_STAMP_INT_ENABLE;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				DRM_DEBUG("si_irq_set: sw int cp1 invalid pipe %d\n", ring->pipe);
-				break;
-			}
-		} else if (ring->me == 2) {
-			switch (ring->pipe) {
-			case 0:
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अगर (ring->me == 2) अणु
+			चयन (ring->pipe) अणु
+			हाल 0:
 				cp_m2p0 |= TIME_STAMP_INT_ENABLE;
-				break;
-			case 1:
+				अवरोध;
+			हाल 1:
 				cp_m2p1 |= TIME_STAMP_INT_ENABLE;
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				cp_m2p2 |= TIME_STAMP_INT_ENABLE;
-				break;
-			case 3:
+				अवरोध;
+			हाल 3:
 				cp_m2p2 |= TIME_STAMP_INT_ENABLE;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				DRM_DEBUG("si_irq_set: sw int cp1 invalid pipe %d\n", ring->pipe);
-				break;
-			}
-		} else {
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			DRM_DEBUG("si_irq_set: sw int cp1 invalid me %d\n", ring->me);
-		}
-	}
-	if (atomic_read(&rdev->irq.ring_int[CAYMAN_RING_TYPE_CP2_INDEX])) {
-		struct radeon_ring *ring = &rdev->ring[CAYMAN_RING_TYPE_CP2_INDEX];
+		पूर्ण
+	पूर्ण
+	अगर (atomic_पढ़ो(&rdev->irq.ring_पूर्णांक[CAYMAN_RING_TYPE_CP2_INDEX])) अणु
+		काष्ठा radeon_ring *ring = &rdev->ring[CAYMAN_RING_TYPE_CP2_INDEX];
 		DRM_DEBUG("si_irq_set: sw int cp2\n");
-		if (ring->me == 1) {
-			switch (ring->pipe) {
-			case 0:
+		अगर (ring->me == 1) अणु
+			चयन (ring->pipe) अणु
+			हाल 0:
 				cp_m1p0 |= TIME_STAMP_INT_ENABLE;
-				break;
-			case 1:
+				अवरोध;
+			हाल 1:
 				cp_m1p1 |= TIME_STAMP_INT_ENABLE;
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				cp_m1p2 |= TIME_STAMP_INT_ENABLE;
-				break;
-			case 3:
+				अवरोध;
+			हाल 3:
 				cp_m1p2 |= TIME_STAMP_INT_ENABLE;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				DRM_DEBUG("si_irq_set: sw int cp2 invalid pipe %d\n", ring->pipe);
-				break;
-			}
-		} else if (ring->me == 2) {
-			switch (ring->pipe) {
-			case 0:
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अगर (ring->me == 2) अणु
+			चयन (ring->pipe) अणु
+			हाल 0:
 				cp_m2p0 |= TIME_STAMP_INT_ENABLE;
-				break;
-			case 1:
+				अवरोध;
+			हाल 1:
 				cp_m2p1 |= TIME_STAMP_INT_ENABLE;
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				cp_m2p2 |= TIME_STAMP_INT_ENABLE;
-				break;
-			case 3:
+				अवरोध;
+			हाल 3:
 				cp_m2p2 |= TIME_STAMP_INT_ENABLE;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				DRM_DEBUG("si_irq_set: sw int cp2 invalid pipe %d\n", ring->pipe);
-				break;
-			}
-		} else {
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			DRM_DEBUG("si_irq_set: sw int cp2 invalid me %d\n", ring->me);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (atomic_read(&rdev->irq.ring_int[R600_RING_TYPE_DMA_INDEX])) {
+	अगर (atomic_पढ़ो(&rdev->irq.ring_पूर्णांक[R600_RING_TYPE_DMA_INDEX])) अणु
 		DRM_DEBUG("cik_irq_set: sw int dma\n");
 		dma_cntl |= TRAP_ENABLE;
-	}
+	पूर्ण
 
-	if (atomic_read(&rdev->irq.ring_int[CAYMAN_RING_TYPE_DMA1_INDEX])) {
+	अगर (atomic_पढ़ो(&rdev->irq.ring_पूर्णांक[CAYMAN_RING_TYPE_DMA1_INDEX])) अणु
 		DRM_DEBUG("cik_irq_set: sw int dma1\n");
 		dma_cntl1 |= TRAP_ENABLE;
-	}
+	पूर्ण
 
-	if (rdev->irq.crtc_vblank_int[0] ||
-	    atomic_read(&rdev->irq.pflip[0])) {
+	अगर (rdev->irq.crtc_vblank_पूर्णांक[0] ||
+	    atomic_पढ़ो(&rdev->irq.pflip[0])) अणु
 		DRM_DEBUG("cik_irq_set: vblank 0\n");
 		crtc1 |= VBLANK_INTERRUPT_MASK;
-	}
-	if (rdev->irq.crtc_vblank_int[1] ||
-	    atomic_read(&rdev->irq.pflip[1])) {
+	पूर्ण
+	अगर (rdev->irq.crtc_vblank_पूर्णांक[1] ||
+	    atomic_पढ़ो(&rdev->irq.pflip[1])) अणु
 		DRM_DEBUG("cik_irq_set: vblank 1\n");
 		crtc2 |= VBLANK_INTERRUPT_MASK;
-	}
-	if (rdev->irq.crtc_vblank_int[2] ||
-	    atomic_read(&rdev->irq.pflip[2])) {
+	पूर्ण
+	अगर (rdev->irq.crtc_vblank_पूर्णांक[2] ||
+	    atomic_पढ़ो(&rdev->irq.pflip[2])) अणु
 		DRM_DEBUG("cik_irq_set: vblank 2\n");
 		crtc3 |= VBLANK_INTERRUPT_MASK;
-	}
-	if (rdev->irq.crtc_vblank_int[3] ||
-	    atomic_read(&rdev->irq.pflip[3])) {
+	पूर्ण
+	अगर (rdev->irq.crtc_vblank_पूर्णांक[3] ||
+	    atomic_पढ़ो(&rdev->irq.pflip[3])) अणु
 		DRM_DEBUG("cik_irq_set: vblank 3\n");
 		crtc4 |= VBLANK_INTERRUPT_MASK;
-	}
-	if (rdev->irq.crtc_vblank_int[4] ||
-	    atomic_read(&rdev->irq.pflip[4])) {
+	पूर्ण
+	अगर (rdev->irq.crtc_vblank_पूर्णांक[4] ||
+	    atomic_पढ़ो(&rdev->irq.pflip[4])) अणु
 		DRM_DEBUG("cik_irq_set: vblank 4\n");
 		crtc5 |= VBLANK_INTERRUPT_MASK;
-	}
-	if (rdev->irq.crtc_vblank_int[5] ||
-	    atomic_read(&rdev->irq.pflip[5])) {
+	पूर्ण
+	अगर (rdev->irq.crtc_vblank_पूर्णांक[5] ||
+	    atomic_पढ़ो(&rdev->irq.pflip[5])) अणु
 		DRM_DEBUG("cik_irq_set: vblank 5\n");
 		crtc6 |= VBLANK_INTERRUPT_MASK;
-	}
-	if (rdev->irq.hpd[0]) {
+	पूर्ण
+	अगर (rdev->irq.hpd[0]) अणु
 		DRM_DEBUG("cik_irq_set: hpd 1\n");
 		hpd1 |= DC_HPDx_INT_EN | DC_HPDx_RX_INT_EN;
-	}
-	if (rdev->irq.hpd[1]) {
+	पूर्ण
+	अगर (rdev->irq.hpd[1]) अणु
 		DRM_DEBUG("cik_irq_set: hpd 2\n");
 		hpd2 |= DC_HPDx_INT_EN | DC_HPDx_RX_INT_EN;
-	}
-	if (rdev->irq.hpd[2]) {
+	पूर्ण
+	अगर (rdev->irq.hpd[2]) अणु
 		DRM_DEBUG("cik_irq_set: hpd 3\n");
 		hpd3 |= DC_HPDx_INT_EN | DC_HPDx_RX_INT_EN;
-	}
-	if (rdev->irq.hpd[3]) {
+	पूर्ण
+	अगर (rdev->irq.hpd[3]) अणु
 		DRM_DEBUG("cik_irq_set: hpd 4\n");
 		hpd4 |= DC_HPDx_INT_EN | DC_HPDx_RX_INT_EN;
-	}
-	if (rdev->irq.hpd[4]) {
+	पूर्ण
+	अगर (rdev->irq.hpd[4]) अणु
 		DRM_DEBUG("cik_irq_set: hpd 5\n");
 		hpd5 |= DC_HPDx_INT_EN | DC_HPDx_RX_INT_EN;
-	}
-	if (rdev->irq.hpd[5]) {
+	पूर्ण
+	अगर (rdev->irq.hpd[5]) अणु
 		DRM_DEBUG("cik_irq_set: hpd 6\n");
 		hpd6 |= DC_HPDx_INT_EN | DC_HPDx_RX_INT_EN;
-	}
+	पूर्ण
 
-	WREG32(CP_INT_CNTL_RING0, cp_int_cntl);
+	WREG32(CP_INT_CNTL_RING0, cp_पूर्णांक_cntl);
 
 	WREG32(SDMA0_CNTL + SDMA0_REGISTER_OFFSET, dma_cntl);
 	WREG32(SDMA0_CNTL + SDMA1_REGISTER_OFFSET, dma_cntl1);
@@ -7228,37 +7229,37 @@ int cik_irq_set(struct radeon_device *rdev)
 	WREG32(CP_ME2_PIPE2_INT_CNTL, cp_m2p2);
 	WREG32(CP_ME2_PIPE3_INT_CNTL, cp_m2p3);
 
-	WREG32(GRBM_INT_CNTL, grbm_int_cntl);
+	WREG32(GRBM_INT_CNTL, grbm_पूर्णांक_cntl);
 
 	WREG32(LB_INTERRUPT_MASK + EVERGREEN_CRTC0_REGISTER_OFFSET, crtc1);
 	WREG32(LB_INTERRUPT_MASK + EVERGREEN_CRTC1_REGISTER_OFFSET, crtc2);
-	if (rdev->num_crtc >= 4) {
+	अगर (rdev->num_crtc >= 4) अणु
 		WREG32(LB_INTERRUPT_MASK + EVERGREEN_CRTC2_REGISTER_OFFSET, crtc3);
 		WREG32(LB_INTERRUPT_MASK + EVERGREEN_CRTC3_REGISTER_OFFSET, crtc4);
-	}
-	if (rdev->num_crtc >= 6) {
+	पूर्ण
+	अगर (rdev->num_crtc >= 6) अणु
 		WREG32(LB_INTERRUPT_MASK + EVERGREEN_CRTC4_REGISTER_OFFSET, crtc5);
 		WREG32(LB_INTERRUPT_MASK + EVERGREEN_CRTC5_REGISTER_OFFSET, crtc6);
-	}
+	पूर्ण
 
-	if (rdev->num_crtc >= 2) {
+	अगर (rdev->num_crtc >= 2) अणु
 		WREG32(GRPH_INT_CONTROL + EVERGREEN_CRTC0_REGISTER_OFFSET,
 		       GRPH_PFLIP_INT_MASK);
 		WREG32(GRPH_INT_CONTROL + EVERGREEN_CRTC1_REGISTER_OFFSET,
 		       GRPH_PFLIP_INT_MASK);
-	}
-	if (rdev->num_crtc >= 4) {
+	पूर्ण
+	अगर (rdev->num_crtc >= 4) अणु
 		WREG32(GRPH_INT_CONTROL + EVERGREEN_CRTC2_REGISTER_OFFSET,
 		       GRPH_PFLIP_INT_MASK);
 		WREG32(GRPH_INT_CONTROL + EVERGREEN_CRTC3_REGISTER_OFFSET,
 		       GRPH_PFLIP_INT_MASK);
-	}
-	if (rdev->num_crtc >= 6) {
+	पूर्ण
+	अगर (rdev->num_crtc >= 6) अणु
 		WREG32(GRPH_INT_CONTROL + EVERGREEN_CRTC4_REGISTER_OFFSET,
 		       GRPH_PFLIP_INT_MASK);
 		WREG32(GRPH_INT_CONTROL + EVERGREEN_CRTC5_REGISTER_OFFSET,
 		       GRPH_PFLIP_INT_MASK);
-	}
+	पूर्ण
 
 	WREG32(DC_HPD1_INT_CONTROL, hpd1);
 	WREG32(DC_HPD2_INT_CONTROL, hpd2);
@@ -7267,253 +7268,253 @@ int cik_irq_set(struct radeon_device *rdev)
 	WREG32(DC_HPD5_INT_CONTROL, hpd5);
 	WREG32(DC_HPD6_INT_CONTROL, hpd6);
 
-	/* posting read */
+	/* posting पढ़ो */
 	RREG32(SRBM_STATUS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cik_irq_ack - ack interrupt sources
+ * cik_irq_ack - ack पूर्णांकerrupt sources
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Ack interrupt sources on the GPU (vblanks, hpd,
- * etc.) (CIK).  Certain interrupts sources are sw
- * generated and do not require an explicit ack.
+ * Ack पूर्णांकerrupt sources on the GPU (vblanks, hpd,
+ * etc.) (CIK).  Certain पूर्णांकerrupts sources are sw
+ * generated and करो not require an explicit ack.
  */
-static inline void cik_irq_ack(struct radeon_device *rdev)
-{
-	u32 tmp;
+अटल अंतरभूत व्योम cik_irq_ack(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp;
 
-	rdev->irq.stat_regs.cik.disp_int = RREG32(DISP_INTERRUPT_STATUS);
-	rdev->irq.stat_regs.cik.disp_int_cont = RREG32(DISP_INTERRUPT_STATUS_CONTINUE);
-	rdev->irq.stat_regs.cik.disp_int_cont2 = RREG32(DISP_INTERRUPT_STATUS_CONTINUE2);
-	rdev->irq.stat_regs.cik.disp_int_cont3 = RREG32(DISP_INTERRUPT_STATUS_CONTINUE3);
-	rdev->irq.stat_regs.cik.disp_int_cont4 = RREG32(DISP_INTERRUPT_STATUS_CONTINUE4);
-	rdev->irq.stat_regs.cik.disp_int_cont5 = RREG32(DISP_INTERRUPT_STATUS_CONTINUE5);
-	rdev->irq.stat_regs.cik.disp_int_cont6 = RREG32(DISP_INTERRUPT_STATUS_CONTINUE6);
+	rdev->irq.stat_regs.cik.disp_पूर्णांक = RREG32(DISP_INTERRUPT_STATUS);
+	rdev->irq.stat_regs.cik.disp_पूर्णांक_cont = RREG32(DISP_INTERRUPT_STATUS_CONTINUE);
+	rdev->irq.stat_regs.cik.disp_पूर्णांक_cont2 = RREG32(DISP_INTERRUPT_STATUS_CONTINUE2);
+	rdev->irq.stat_regs.cik.disp_पूर्णांक_cont3 = RREG32(DISP_INTERRUPT_STATUS_CONTINUE3);
+	rdev->irq.stat_regs.cik.disp_पूर्णांक_cont4 = RREG32(DISP_INTERRUPT_STATUS_CONTINUE4);
+	rdev->irq.stat_regs.cik.disp_पूर्णांक_cont5 = RREG32(DISP_INTERRUPT_STATUS_CONTINUE5);
+	rdev->irq.stat_regs.cik.disp_पूर्णांक_cont6 = RREG32(DISP_INTERRUPT_STATUS_CONTINUE6);
 
-	rdev->irq.stat_regs.cik.d1grph_int = RREG32(GRPH_INT_STATUS +
+	rdev->irq.stat_regs.cik.d1grph_पूर्णांक = RREG32(GRPH_INT_STATUS +
 		EVERGREEN_CRTC0_REGISTER_OFFSET);
-	rdev->irq.stat_regs.cik.d2grph_int = RREG32(GRPH_INT_STATUS +
+	rdev->irq.stat_regs.cik.d2grph_पूर्णांक = RREG32(GRPH_INT_STATUS +
 		EVERGREEN_CRTC1_REGISTER_OFFSET);
-	if (rdev->num_crtc >= 4) {
-		rdev->irq.stat_regs.cik.d3grph_int = RREG32(GRPH_INT_STATUS +
+	अगर (rdev->num_crtc >= 4) अणु
+		rdev->irq.stat_regs.cik.d3grph_पूर्णांक = RREG32(GRPH_INT_STATUS +
 			EVERGREEN_CRTC2_REGISTER_OFFSET);
-		rdev->irq.stat_regs.cik.d4grph_int = RREG32(GRPH_INT_STATUS +
+		rdev->irq.stat_regs.cik.d4grph_पूर्णांक = RREG32(GRPH_INT_STATUS +
 			EVERGREEN_CRTC3_REGISTER_OFFSET);
-	}
-	if (rdev->num_crtc >= 6) {
-		rdev->irq.stat_regs.cik.d5grph_int = RREG32(GRPH_INT_STATUS +
+	पूर्ण
+	अगर (rdev->num_crtc >= 6) अणु
+		rdev->irq.stat_regs.cik.d5grph_पूर्णांक = RREG32(GRPH_INT_STATUS +
 			EVERGREEN_CRTC4_REGISTER_OFFSET);
-		rdev->irq.stat_regs.cik.d6grph_int = RREG32(GRPH_INT_STATUS +
+		rdev->irq.stat_regs.cik.d6grph_पूर्णांक = RREG32(GRPH_INT_STATUS +
 			EVERGREEN_CRTC5_REGISTER_OFFSET);
-	}
+	पूर्ण
 
-	if (rdev->irq.stat_regs.cik.d1grph_int & GRPH_PFLIP_INT_OCCURRED)
+	अगर (rdev->irq.stat_regs.cik.d1grph_पूर्णांक & GRPH_PFLIP_INT_OCCURRED)
 		WREG32(GRPH_INT_STATUS + EVERGREEN_CRTC0_REGISTER_OFFSET,
 		       GRPH_PFLIP_INT_CLEAR);
-	if (rdev->irq.stat_regs.cik.d2grph_int & GRPH_PFLIP_INT_OCCURRED)
+	अगर (rdev->irq.stat_regs.cik.d2grph_पूर्णांक & GRPH_PFLIP_INT_OCCURRED)
 		WREG32(GRPH_INT_STATUS + EVERGREEN_CRTC1_REGISTER_OFFSET,
 		       GRPH_PFLIP_INT_CLEAR);
-	if (rdev->irq.stat_regs.cik.disp_int & LB_D1_VBLANK_INTERRUPT)
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक & LB_D1_VBLANK_INTERRUPT)
 		WREG32(LB_VBLANK_STATUS + EVERGREEN_CRTC0_REGISTER_OFFSET, VBLANK_ACK);
-	if (rdev->irq.stat_regs.cik.disp_int & LB_D1_VLINE_INTERRUPT)
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक & LB_D1_VLINE_INTERRUPT)
 		WREG32(LB_VLINE_STATUS + EVERGREEN_CRTC0_REGISTER_OFFSET, VLINE_ACK);
-	if (rdev->irq.stat_regs.cik.disp_int_cont & LB_D2_VBLANK_INTERRUPT)
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont & LB_D2_VBLANK_INTERRUPT)
 		WREG32(LB_VBLANK_STATUS + EVERGREEN_CRTC1_REGISTER_OFFSET, VBLANK_ACK);
-	if (rdev->irq.stat_regs.cik.disp_int_cont & LB_D2_VLINE_INTERRUPT)
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont & LB_D2_VLINE_INTERRUPT)
 		WREG32(LB_VLINE_STATUS + EVERGREEN_CRTC1_REGISTER_OFFSET, VLINE_ACK);
 
-	if (rdev->num_crtc >= 4) {
-		if (rdev->irq.stat_regs.cik.d3grph_int & GRPH_PFLIP_INT_OCCURRED)
+	अगर (rdev->num_crtc >= 4) अणु
+		अगर (rdev->irq.stat_regs.cik.d3grph_पूर्णांक & GRPH_PFLIP_INT_OCCURRED)
 			WREG32(GRPH_INT_STATUS + EVERGREEN_CRTC2_REGISTER_OFFSET,
 			       GRPH_PFLIP_INT_CLEAR);
-		if (rdev->irq.stat_regs.cik.d4grph_int & GRPH_PFLIP_INT_OCCURRED)
+		अगर (rdev->irq.stat_regs.cik.d4grph_पूर्णांक & GRPH_PFLIP_INT_OCCURRED)
 			WREG32(GRPH_INT_STATUS + EVERGREEN_CRTC3_REGISTER_OFFSET,
 			       GRPH_PFLIP_INT_CLEAR);
-		if (rdev->irq.stat_regs.cik.disp_int_cont2 & LB_D3_VBLANK_INTERRUPT)
+		अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont2 & LB_D3_VBLANK_INTERRUPT)
 			WREG32(LB_VBLANK_STATUS + EVERGREEN_CRTC2_REGISTER_OFFSET, VBLANK_ACK);
-		if (rdev->irq.stat_regs.cik.disp_int_cont2 & LB_D3_VLINE_INTERRUPT)
+		अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont2 & LB_D3_VLINE_INTERRUPT)
 			WREG32(LB_VLINE_STATUS + EVERGREEN_CRTC2_REGISTER_OFFSET, VLINE_ACK);
-		if (rdev->irq.stat_regs.cik.disp_int_cont3 & LB_D4_VBLANK_INTERRUPT)
+		अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont3 & LB_D4_VBLANK_INTERRUPT)
 			WREG32(LB_VBLANK_STATUS + EVERGREEN_CRTC3_REGISTER_OFFSET, VBLANK_ACK);
-		if (rdev->irq.stat_regs.cik.disp_int_cont3 & LB_D4_VLINE_INTERRUPT)
+		अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont3 & LB_D4_VLINE_INTERRUPT)
 			WREG32(LB_VLINE_STATUS + EVERGREEN_CRTC3_REGISTER_OFFSET, VLINE_ACK);
-	}
+	पूर्ण
 
-	if (rdev->num_crtc >= 6) {
-		if (rdev->irq.stat_regs.cik.d5grph_int & GRPH_PFLIP_INT_OCCURRED)
+	अगर (rdev->num_crtc >= 6) अणु
+		अगर (rdev->irq.stat_regs.cik.d5grph_पूर्णांक & GRPH_PFLIP_INT_OCCURRED)
 			WREG32(GRPH_INT_STATUS + EVERGREEN_CRTC4_REGISTER_OFFSET,
 			       GRPH_PFLIP_INT_CLEAR);
-		if (rdev->irq.stat_regs.cik.d6grph_int & GRPH_PFLIP_INT_OCCURRED)
+		अगर (rdev->irq.stat_regs.cik.d6grph_पूर्णांक & GRPH_PFLIP_INT_OCCURRED)
 			WREG32(GRPH_INT_STATUS + EVERGREEN_CRTC5_REGISTER_OFFSET,
 			       GRPH_PFLIP_INT_CLEAR);
-		if (rdev->irq.stat_regs.cik.disp_int_cont4 & LB_D5_VBLANK_INTERRUPT)
+		अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont4 & LB_D5_VBLANK_INTERRUPT)
 			WREG32(LB_VBLANK_STATUS + EVERGREEN_CRTC4_REGISTER_OFFSET, VBLANK_ACK);
-		if (rdev->irq.stat_regs.cik.disp_int_cont4 & LB_D5_VLINE_INTERRUPT)
+		अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont4 & LB_D5_VLINE_INTERRUPT)
 			WREG32(LB_VLINE_STATUS + EVERGREEN_CRTC4_REGISTER_OFFSET, VLINE_ACK);
-		if (rdev->irq.stat_regs.cik.disp_int_cont5 & LB_D6_VBLANK_INTERRUPT)
+		अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont5 & LB_D6_VBLANK_INTERRUPT)
 			WREG32(LB_VBLANK_STATUS + EVERGREEN_CRTC5_REGISTER_OFFSET, VBLANK_ACK);
-		if (rdev->irq.stat_regs.cik.disp_int_cont5 & LB_D6_VLINE_INTERRUPT)
+		अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont5 & LB_D6_VLINE_INTERRUPT)
 			WREG32(LB_VLINE_STATUS + EVERGREEN_CRTC5_REGISTER_OFFSET, VLINE_ACK);
-	}
+	पूर्ण
 
-	if (rdev->irq.stat_regs.cik.disp_int & DC_HPD1_INTERRUPT) {
-		tmp = RREG32(DC_HPD1_INT_CONTROL);
-		tmp |= DC_HPDx_INT_ACK;
-		WREG32(DC_HPD1_INT_CONTROL, tmp);
-	}
-	if (rdev->irq.stat_regs.cik.disp_int_cont & DC_HPD2_INTERRUPT) {
-		tmp = RREG32(DC_HPD2_INT_CONTROL);
-		tmp |= DC_HPDx_INT_ACK;
-		WREG32(DC_HPD2_INT_CONTROL, tmp);
-	}
-	if (rdev->irq.stat_regs.cik.disp_int_cont2 & DC_HPD3_INTERRUPT) {
-		tmp = RREG32(DC_HPD3_INT_CONTROL);
-		tmp |= DC_HPDx_INT_ACK;
-		WREG32(DC_HPD3_INT_CONTROL, tmp);
-	}
-	if (rdev->irq.stat_regs.cik.disp_int_cont3 & DC_HPD4_INTERRUPT) {
-		tmp = RREG32(DC_HPD4_INT_CONTROL);
-		tmp |= DC_HPDx_INT_ACK;
-		WREG32(DC_HPD4_INT_CONTROL, tmp);
-	}
-	if (rdev->irq.stat_regs.cik.disp_int_cont4 & DC_HPD5_INTERRUPT) {
-		tmp = RREG32(DC_HPD5_INT_CONTROL);
-		tmp |= DC_HPDx_INT_ACK;
-		WREG32(DC_HPD5_INT_CONTROL, tmp);
-	}
-	if (rdev->irq.stat_regs.cik.disp_int_cont5 & DC_HPD6_INTERRUPT) {
-		tmp = RREG32(DC_HPD6_INT_CONTROL);
-		tmp |= DC_HPDx_INT_ACK;
-		WREG32(DC_HPD6_INT_CONTROL, tmp);
-	}
-	if (rdev->irq.stat_regs.cik.disp_int & DC_HPD1_RX_INTERRUPT) {
-		tmp = RREG32(DC_HPD1_INT_CONTROL);
-		tmp |= DC_HPDx_RX_INT_ACK;
-		WREG32(DC_HPD1_INT_CONTROL, tmp);
-	}
-	if (rdev->irq.stat_regs.cik.disp_int_cont & DC_HPD2_RX_INTERRUPT) {
-		tmp = RREG32(DC_HPD2_INT_CONTROL);
-		tmp |= DC_HPDx_RX_INT_ACK;
-		WREG32(DC_HPD2_INT_CONTROL, tmp);
-	}
-	if (rdev->irq.stat_regs.cik.disp_int_cont2 & DC_HPD3_RX_INTERRUPT) {
-		tmp = RREG32(DC_HPD3_INT_CONTROL);
-		tmp |= DC_HPDx_RX_INT_ACK;
-		WREG32(DC_HPD3_INT_CONTROL, tmp);
-	}
-	if (rdev->irq.stat_regs.cik.disp_int_cont3 & DC_HPD4_RX_INTERRUPT) {
-		tmp = RREG32(DC_HPD4_INT_CONTROL);
-		tmp |= DC_HPDx_RX_INT_ACK;
-		WREG32(DC_HPD4_INT_CONTROL, tmp);
-	}
-	if (rdev->irq.stat_regs.cik.disp_int_cont4 & DC_HPD5_RX_INTERRUPT) {
-		tmp = RREG32(DC_HPD5_INT_CONTROL);
-		tmp |= DC_HPDx_RX_INT_ACK;
-		WREG32(DC_HPD5_INT_CONTROL, tmp);
-	}
-	if (rdev->irq.stat_regs.cik.disp_int_cont5 & DC_HPD6_RX_INTERRUPT) {
-		tmp = RREG32(DC_HPD6_INT_CONTROL);
-		tmp |= DC_HPDx_RX_INT_ACK;
-		WREG32(DC_HPD6_INT_CONTROL, tmp);
-	}
-}
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक & DC_HPD1_INTERRUPT) अणु
+		पंचांगp = RREG32(DC_HPD1_INT_CONTROL);
+		पंचांगp |= DC_HPDx_INT_ACK;
+		WREG32(DC_HPD1_INT_CONTROL, पंचांगp);
+	पूर्ण
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont & DC_HPD2_INTERRUPT) अणु
+		पंचांगp = RREG32(DC_HPD2_INT_CONTROL);
+		पंचांगp |= DC_HPDx_INT_ACK;
+		WREG32(DC_HPD2_INT_CONTROL, पंचांगp);
+	पूर्ण
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont2 & DC_HPD3_INTERRUPT) अणु
+		पंचांगp = RREG32(DC_HPD3_INT_CONTROL);
+		पंचांगp |= DC_HPDx_INT_ACK;
+		WREG32(DC_HPD3_INT_CONTROL, पंचांगp);
+	पूर्ण
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont3 & DC_HPD4_INTERRUPT) अणु
+		पंचांगp = RREG32(DC_HPD4_INT_CONTROL);
+		पंचांगp |= DC_HPDx_INT_ACK;
+		WREG32(DC_HPD4_INT_CONTROL, पंचांगp);
+	पूर्ण
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont4 & DC_HPD5_INTERRUPT) अणु
+		पंचांगp = RREG32(DC_HPD5_INT_CONTROL);
+		पंचांगp |= DC_HPDx_INT_ACK;
+		WREG32(DC_HPD5_INT_CONTROL, पंचांगp);
+	पूर्ण
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont5 & DC_HPD6_INTERRUPT) अणु
+		पंचांगp = RREG32(DC_HPD6_INT_CONTROL);
+		पंचांगp |= DC_HPDx_INT_ACK;
+		WREG32(DC_HPD6_INT_CONTROL, पंचांगp);
+	पूर्ण
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक & DC_HPD1_RX_INTERRUPT) अणु
+		पंचांगp = RREG32(DC_HPD1_INT_CONTROL);
+		पंचांगp |= DC_HPDx_RX_INT_ACK;
+		WREG32(DC_HPD1_INT_CONTROL, पंचांगp);
+	पूर्ण
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont & DC_HPD2_RX_INTERRUPT) अणु
+		पंचांगp = RREG32(DC_HPD2_INT_CONTROL);
+		पंचांगp |= DC_HPDx_RX_INT_ACK;
+		WREG32(DC_HPD2_INT_CONTROL, पंचांगp);
+	पूर्ण
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont2 & DC_HPD3_RX_INTERRUPT) अणु
+		पंचांगp = RREG32(DC_HPD3_INT_CONTROL);
+		पंचांगp |= DC_HPDx_RX_INT_ACK;
+		WREG32(DC_HPD3_INT_CONTROL, पंचांगp);
+	पूर्ण
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont3 & DC_HPD4_RX_INTERRUPT) अणु
+		पंचांगp = RREG32(DC_HPD4_INT_CONTROL);
+		पंचांगp |= DC_HPDx_RX_INT_ACK;
+		WREG32(DC_HPD4_INT_CONTROL, पंचांगp);
+	पूर्ण
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont4 & DC_HPD5_RX_INTERRUPT) अणु
+		पंचांगp = RREG32(DC_HPD5_INT_CONTROL);
+		पंचांगp |= DC_HPDx_RX_INT_ACK;
+		WREG32(DC_HPD5_INT_CONTROL, पंचांगp);
+	पूर्ण
+	अगर (rdev->irq.stat_regs.cik.disp_पूर्णांक_cont5 & DC_HPD6_RX_INTERRUPT) अणु
+		पंचांगp = RREG32(DC_HPD6_INT_CONTROL);
+		पंचांगp |= DC_HPDx_RX_INT_ACK;
+		WREG32(DC_HPD6_INT_CONTROL, पंचांगp);
+	पूर्ण
+पूर्ण
 
 /**
- * cik_irq_disable - disable interrupts
+ * cik_irq_disable - disable पूर्णांकerrupts
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Disable interrupts on the hw (CIK).
+ * Disable पूर्णांकerrupts on the hw (CIK).
  */
-static void cik_irq_disable(struct radeon_device *rdev)
-{
-	cik_disable_interrupts(rdev);
+अटल व्योम cik_irq_disable(काष्ठा radeon_device *rdev)
+अणु
+	cik_disable_पूर्णांकerrupts(rdev);
 	/* Wait and acknowledge irq */
 	mdelay(1);
 	cik_irq_ack(rdev);
-	cik_disable_interrupt_state(rdev);
-}
+	cik_disable_पूर्णांकerrupt_state(rdev);
+पूर्ण
 
 /**
- * cik_irq_disable - disable interrupts for suspend
+ * cik_irq_disable - disable पूर्णांकerrupts क्रम suspend
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Disable interrupts and stop the RLC (CIK).
- * Used for suspend.
+ * Disable पूर्णांकerrupts and stop the RLC (CIK).
+ * Used क्रम suspend.
  */
-static void cik_irq_suspend(struct radeon_device *rdev)
-{
+अटल व्योम cik_irq_suspend(काष्ठा radeon_device *rdev)
+अणु
 	cik_irq_disable(rdev);
 	cik_rlc_stop(rdev);
-}
+पूर्ण
 
 /**
- * cik_irq_fini - tear down interrupt support
+ * cik_irq_fini - tear करोwn पूर्णांकerrupt support
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Disable interrupts on the hw and free the IH ring
+ * Disable पूर्णांकerrupts on the hw and मुक्त the IH ring
  * buffer (CIK).
- * Used for driver unload.
+ * Used क्रम driver unload.
  */
-static void cik_irq_fini(struct radeon_device *rdev)
-{
+अटल व्योम cik_irq_fini(काष्ठा radeon_device *rdev)
+अणु
 	cik_irq_suspend(rdev);
 	r600_ih_ring_fini(rdev);
-}
+पूर्ण
 
 /**
  * cik_get_ih_wptr - get the IH ring buffer wptr
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Get the IH ring buffer wptr from either the register
- * or the writeback memory buffer (CIK).  Also check for
+ * Get the IH ring buffer wptr from either the रेजिस्टर
+ * or the ग_लिखोback memory buffer (CIK).  Also check क्रम
  * ring buffer overflow and deal with it.
  * Used by cik_irq_process().
  * Returns the value of the wptr.
  */
-static inline u32 cik_get_ih_wptr(struct radeon_device *rdev)
-{
-	u32 wptr, tmp;
+अटल अंतरभूत u32 cik_get_ih_wptr(काष्ठा radeon_device *rdev)
+अणु
+	u32 wptr, पंचांगp;
 
-	if (rdev->wb.enabled)
+	अगर (rdev->wb.enabled)
 		wptr = le32_to_cpu(rdev->wb.wb[R600_WB_IH_WPTR_OFFSET/4]);
-	else
+	अन्यथा
 		wptr = RREG32(IH_RB_WPTR);
 
-	if (wptr & RB_OVERFLOW) {
+	अगर (wptr & RB_OVERFLOW) अणु
 		wptr &= ~RB_OVERFLOW;
-		/* When a ring buffer overflow happen start parsing interrupt
+		/* When a ring buffer overflow happen start parsing पूर्णांकerrupt
 		 * from the last not overwritten vector (wptr + 16). Hopefully
 		 * this should allow us to catchup.
 		 */
 		dev_warn(rdev->dev, "IH ring buffer overflow (0x%08X, 0x%08X, 0x%08X)\n",
 			 wptr, rdev->ih.rptr, (wptr + 16) & rdev->ih.ptr_mask);
 		rdev->ih.rptr = (wptr + 16) & rdev->ih.ptr_mask;
-		tmp = RREG32(IH_RB_CNTL);
-		tmp |= IH_WPTR_OVERFLOW_CLEAR;
-		WREG32(IH_RB_CNTL, tmp);
-	}
-	return (wptr & rdev->ih.ptr_mask);
-}
+		पंचांगp = RREG32(IH_RB_CNTL);
+		पंचांगp |= IH_WPTR_OVERFLOW_CLEAR;
+		WREG32(IH_RB_CNTL, पंचांगp);
+	पूर्ण
+	वापस (wptr & rdev->ih.ptr_mask);
+पूर्ण
 
 /*        CIK IV Ring
  * Each IV ring entry is 128 bits:
- * [7:0]    - interrupt source id
+ * [7:0]    - पूर्णांकerrupt source id
  * [31:8]   - reserved
- * [59:32]  - interrupt source data
+ * [59:32]  - पूर्णांकerrupt source data
  * [63:60]  - reserved
  * [71:64]  - RINGID
  *            CP:
  *            ME_ID [1:0], PIPE_ID[1:0], QUEUE_ID[2:0]
- *            QUEUE_ID - for compute, which of the 8 queues owned by the dispatcher
- *                     - for gfx, hw shader state (0=PS...5=LS, 6=CS)
+ *            QUEUE_ID - क्रम compute, which of the 8 queues owned by the dispatcher
+ *                     - क्रम gfx, hw shader state (0=PS...5=LS, 6=CS)
  *            ME_ID - 0 = gfx, 1 = first 4 CS pipes, 2 = second 4 CS pipes
  *            PIPE_ID - ME0 0=3D
  *                    - ME1&2 compute dispatcher (4 pipes each)
@@ -7526,19 +7527,19 @@ static inline u32 cik_get_ih_wptr(struct radeon_device *rdev)
  * [127:96] - reserved
  */
 /**
- * cik_irq_process - interrupt handler
+ * cik_irq_process - पूर्णांकerrupt handler
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Interrupt hander (CIK).  Walk the IH ring,
- * ack interrupts and schedule work to handle
- * interrupt events.
- * Returns irq process return code.
+ * ack पूर्णांकerrupts and schedule work to handle
+ * पूर्णांकerrupt events.
+ * Returns irq process वापस code.
  */
-int cik_irq_process(struct radeon_device *rdev)
-{
-	struct radeon_ring *cp1_ring = &rdev->ring[CAYMAN_RING_TYPE_CP1_INDEX];
-	struct radeon_ring *cp2_ring = &rdev->ring[CAYMAN_RING_TYPE_CP2_INDEX];
+पूर्णांक cik_irq_process(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा radeon_ring *cp1_ring = &rdev->ring[CAYMAN_RING_TYPE_CP1_INDEX];
+	काष्ठा radeon_ring *cp2_ring = &rdev->ring[CAYMAN_RING_TYPE_CP2_INDEX];
 	u32 wptr;
 	u32 rptr;
 	u32 src_id, src_data, ring_id;
@@ -7550,26 +7551,26 @@ int cik_irq_process(struct radeon_device *rdev)
 	u32 addr, status, mc_client;
 	bool queue_thermal = false;
 
-	if (!rdev->ih.enabled || rdev->shutdown)
-		return IRQ_NONE;
+	अगर (!rdev->ih.enabled || rdev->shutकरोwn)
+		वापस IRQ_NONE;
 
 	wptr = cik_get_ih_wptr(rdev);
 
 restart_ih:
-	/* is somebody else already processing irqs? */
-	if (atomic_xchg(&rdev->ih.lock, 1))
-		return IRQ_NONE;
+	/* is somebody अन्यथा alपढ़ोy processing irqs? */
+	अगर (atomic_xchg(&rdev->ih.lock, 1))
+		वापस IRQ_NONE;
 
 	rptr = rdev->ih.rptr;
 	DRM_DEBUG("cik_irq_process start: rptr %d, wptr %d\n", rptr, wptr);
 
-	/* Order reading of wptr vs. reading of IH ring data */
+	/* Order पढ़ोing of wptr vs. पढ़ोing of IH ring data */
 	rmb();
 
-	/* display interrupts */
+	/* display पूर्णांकerrupts */
 	cik_irq_ack(rdev);
 
-	while (rptr != wptr) {
+	जबतक (rptr != wptr) अणु
 		/* wptr/rptr are in bytes! */
 		ring_index = rptr / 4;
 
@@ -7577,836 +7578,836 @@ restart_ih:
 		src_data = le32_to_cpu(rdev->ih.ring[ring_index + 1]) & 0xfffffff;
 		ring_id = le32_to_cpu(rdev->ih.ring[ring_index + 2]) & 0xff;
 
-		switch (src_id) {
-		case 1: /* D1 vblank/vline */
-			switch (src_data) {
-			case 0: /* D1 vblank */
-				if (!(rdev->irq.stat_regs.cik.disp_int & LB_D1_VBLANK_INTERRUPT))
+		चयन (src_id) अणु
+		हाल 1: /* D1 vblank/vline */
+			चयन (src_data) अणु
+			हाल 0: /* D1 vblank */
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक & LB_D1_VBLANK_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				if (rdev->irq.crtc_vblank_int[0]) {
+				अगर (rdev->irq.crtc_vblank_पूर्णांक[0]) अणु
 					drm_handle_vblank(rdev->ddev, 0);
 					rdev->pm.vblank_sync = true;
 					wake_up(&rdev->irq.vblank_queue);
-				}
-				if (atomic_read(&rdev->irq.pflip[0]))
+				पूर्ण
+				अगर (atomic_पढ़ो(&rdev->irq.pflip[0]))
 					radeon_crtc_handle_vblank(rdev, 0);
-				rdev->irq.stat_regs.cik.disp_int &= ~LB_D1_VBLANK_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक &= ~LB_D1_VBLANK_INTERRUPT;
 				DRM_DEBUG("IH: D1 vblank\n");
 
-				break;
-			case 1: /* D1 vline */
-				if (!(rdev->irq.stat_regs.cik.disp_int & LB_D1_VLINE_INTERRUPT))
+				अवरोध;
+			हाल 1: /* D1 vline */
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक & LB_D1_VLINE_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int &= ~LB_D1_VLINE_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक &= ~LB_D1_VLINE_INTERRUPT;
 				DRM_DEBUG("IH: D1 vline\n");
 
-				break;
-			default:
+				अवरोध;
+			शेष:
 				DRM_DEBUG("Unhandled interrupt: %d %d\n", src_id, src_data);
-				break;
-			}
-			break;
-		case 2: /* D2 vblank/vline */
-			switch (src_data) {
-			case 0: /* D2 vblank */
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont & LB_D2_VBLANK_INTERRUPT))
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 2: /* D2 vblank/vline */
+			चयन (src_data) अणु
+			हाल 0: /* D2 vblank */
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont & LB_D2_VBLANK_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				if (rdev->irq.crtc_vblank_int[1]) {
+				अगर (rdev->irq.crtc_vblank_पूर्णांक[1]) अणु
 					drm_handle_vblank(rdev->ddev, 1);
 					rdev->pm.vblank_sync = true;
 					wake_up(&rdev->irq.vblank_queue);
-				}
-				if (atomic_read(&rdev->irq.pflip[1]))
+				पूर्ण
+				अगर (atomic_पढ़ो(&rdev->irq.pflip[1]))
 					radeon_crtc_handle_vblank(rdev, 1);
-				rdev->irq.stat_regs.cik.disp_int_cont &= ~LB_D2_VBLANK_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont &= ~LB_D2_VBLANK_INTERRUPT;
 				DRM_DEBUG("IH: D2 vblank\n");
 
-				break;
-			case 1: /* D2 vline */
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont & LB_D2_VLINE_INTERRUPT))
+				अवरोध;
+			हाल 1: /* D2 vline */
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont & LB_D2_VLINE_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont &= ~LB_D2_VLINE_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont &= ~LB_D2_VLINE_INTERRUPT;
 				DRM_DEBUG("IH: D2 vline\n");
 
-				break;
-			default:
+				अवरोध;
+			शेष:
 				DRM_DEBUG("Unhandled interrupt: %d %d\n", src_id, src_data);
-				break;
-			}
-			break;
-		case 3: /* D3 vblank/vline */
-			switch (src_data) {
-			case 0: /* D3 vblank */
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont2 & LB_D3_VBLANK_INTERRUPT))
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 3: /* D3 vblank/vline */
+			चयन (src_data) अणु
+			हाल 0: /* D3 vblank */
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont2 & LB_D3_VBLANK_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				if (rdev->irq.crtc_vblank_int[2]) {
+				अगर (rdev->irq.crtc_vblank_पूर्णांक[2]) अणु
 					drm_handle_vblank(rdev->ddev, 2);
 					rdev->pm.vblank_sync = true;
 					wake_up(&rdev->irq.vblank_queue);
-				}
-				if (atomic_read(&rdev->irq.pflip[2]))
+				पूर्ण
+				अगर (atomic_पढ़ो(&rdev->irq.pflip[2]))
 					radeon_crtc_handle_vblank(rdev, 2);
-				rdev->irq.stat_regs.cik.disp_int_cont2 &= ~LB_D3_VBLANK_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont2 &= ~LB_D3_VBLANK_INTERRUPT;
 				DRM_DEBUG("IH: D3 vblank\n");
 
-				break;
-			case 1: /* D3 vline */
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont2 & LB_D3_VLINE_INTERRUPT))
+				अवरोध;
+			हाल 1: /* D3 vline */
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont2 & LB_D3_VLINE_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont2 &= ~LB_D3_VLINE_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont2 &= ~LB_D3_VLINE_INTERRUPT;
 				DRM_DEBUG("IH: D3 vline\n");
 
-				break;
-			default:
+				अवरोध;
+			शेष:
 				DRM_DEBUG("Unhandled interrupt: %d %d\n", src_id, src_data);
-				break;
-			}
-			break;
-		case 4: /* D4 vblank/vline */
-			switch (src_data) {
-			case 0: /* D4 vblank */
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont3 & LB_D4_VBLANK_INTERRUPT))
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 4: /* D4 vblank/vline */
+			चयन (src_data) अणु
+			हाल 0: /* D4 vblank */
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont3 & LB_D4_VBLANK_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				if (rdev->irq.crtc_vblank_int[3]) {
+				अगर (rdev->irq.crtc_vblank_पूर्णांक[3]) अणु
 					drm_handle_vblank(rdev->ddev, 3);
 					rdev->pm.vblank_sync = true;
 					wake_up(&rdev->irq.vblank_queue);
-				}
-				if (atomic_read(&rdev->irq.pflip[3]))
+				पूर्ण
+				अगर (atomic_पढ़ो(&rdev->irq.pflip[3]))
 					radeon_crtc_handle_vblank(rdev, 3);
-				rdev->irq.stat_regs.cik.disp_int_cont3 &= ~LB_D4_VBLANK_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont3 &= ~LB_D4_VBLANK_INTERRUPT;
 				DRM_DEBUG("IH: D4 vblank\n");
 
-				break;
-			case 1: /* D4 vline */
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont3 & LB_D4_VLINE_INTERRUPT))
+				अवरोध;
+			हाल 1: /* D4 vline */
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont3 & LB_D4_VLINE_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont3 &= ~LB_D4_VLINE_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont3 &= ~LB_D4_VLINE_INTERRUPT;
 				DRM_DEBUG("IH: D4 vline\n");
 
-				break;
-			default:
+				अवरोध;
+			शेष:
 				DRM_DEBUG("Unhandled interrupt: %d %d\n", src_id, src_data);
-				break;
-			}
-			break;
-		case 5: /* D5 vblank/vline */
-			switch (src_data) {
-			case 0: /* D5 vblank */
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont4 & LB_D5_VBLANK_INTERRUPT))
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 5: /* D5 vblank/vline */
+			चयन (src_data) अणु
+			हाल 0: /* D5 vblank */
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont4 & LB_D5_VBLANK_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				if (rdev->irq.crtc_vblank_int[4]) {
+				अगर (rdev->irq.crtc_vblank_पूर्णांक[4]) अणु
 					drm_handle_vblank(rdev->ddev, 4);
 					rdev->pm.vblank_sync = true;
 					wake_up(&rdev->irq.vblank_queue);
-				}
-				if (atomic_read(&rdev->irq.pflip[4]))
+				पूर्ण
+				अगर (atomic_पढ़ो(&rdev->irq.pflip[4]))
 					radeon_crtc_handle_vblank(rdev, 4);
-				rdev->irq.stat_regs.cik.disp_int_cont4 &= ~LB_D5_VBLANK_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont4 &= ~LB_D5_VBLANK_INTERRUPT;
 				DRM_DEBUG("IH: D5 vblank\n");
 
-				break;
-			case 1: /* D5 vline */
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont4 & LB_D5_VLINE_INTERRUPT))
+				अवरोध;
+			हाल 1: /* D5 vline */
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont4 & LB_D5_VLINE_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont4 &= ~LB_D5_VLINE_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont4 &= ~LB_D5_VLINE_INTERRUPT;
 				DRM_DEBUG("IH: D5 vline\n");
 
-				break;
-			default:
+				अवरोध;
+			शेष:
 				DRM_DEBUG("Unhandled interrupt: %d %d\n", src_id, src_data);
-				break;
-			}
-			break;
-		case 6: /* D6 vblank/vline */
-			switch (src_data) {
-			case 0: /* D6 vblank */
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont5 & LB_D6_VBLANK_INTERRUPT))
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 6: /* D6 vblank/vline */
+			चयन (src_data) अणु
+			हाल 0: /* D6 vblank */
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont5 & LB_D6_VBLANK_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				if (rdev->irq.crtc_vblank_int[5]) {
+				अगर (rdev->irq.crtc_vblank_पूर्णांक[5]) अणु
 					drm_handle_vblank(rdev->ddev, 5);
 					rdev->pm.vblank_sync = true;
 					wake_up(&rdev->irq.vblank_queue);
-				}
-				if (atomic_read(&rdev->irq.pflip[5]))
+				पूर्ण
+				अगर (atomic_पढ़ो(&rdev->irq.pflip[5]))
 					radeon_crtc_handle_vblank(rdev, 5);
-				rdev->irq.stat_regs.cik.disp_int_cont5 &= ~LB_D6_VBLANK_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont5 &= ~LB_D6_VBLANK_INTERRUPT;
 				DRM_DEBUG("IH: D6 vblank\n");
 
-				break;
-			case 1: /* D6 vline */
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont5 & LB_D6_VLINE_INTERRUPT))
+				अवरोध;
+			हाल 1: /* D6 vline */
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont5 & LB_D6_VLINE_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont5 &= ~LB_D6_VLINE_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont5 &= ~LB_D6_VLINE_INTERRUPT;
 				DRM_DEBUG("IH: D6 vline\n");
 
-				break;
-			default:
+				अवरोध;
+			शेष:
 				DRM_DEBUG("Unhandled interrupt: %d %d\n", src_id, src_data);
-				break;
-			}
-			break;
-		case 8: /* D1 page flip */
-		case 10: /* D2 page flip */
-		case 12: /* D3 page flip */
-		case 14: /* D4 page flip */
-		case 16: /* D5 page flip */
-		case 18: /* D6 page flip */
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 8: /* D1 page flip */
+		हाल 10: /* D2 page flip */
+		हाल 12: /* D3 page flip */
+		हाल 14: /* D4 page flip */
+		हाल 16: /* D5 page flip */
+		हाल 18: /* D6 page flip */
 			DRM_DEBUG("IH: D%d flip\n", ((src_id - 8) >> 1) + 1);
-			if (radeon_use_pflipirq > 0)
+			अगर (radeon_use_pflipirq > 0)
 				radeon_crtc_handle_flip(rdev, (src_id - 8) >> 1);
-			break;
-		case 42: /* HPD hotplug */
-			switch (src_data) {
-			case 0:
-				if (!(rdev->irq.stat_regs.cik.disp_int & DC_HPD1_INTERRUPT))
+			अवरोध;
+		हाल 42: /* HPD hotplug */
+			चयन (src_data) अणु
+			हाल 0:
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक & DC_HPD1_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int &= ~DC_HPD1_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक &= ~DC_HPD1_INTERRUPT;
 				queue_hotplug = true;
 				DRM_DEBUG("IH: HPD1\n");
 
-				break;
-			case 1:
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont & DC_HPD2_INTERRUPT))
+				अवरोध;
+			हाल 1:
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont & DC_HPD2_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont &= ~DC_HPD2_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont &= ~DC_HPD2_INTERRUPT;
 				queue_hotplug = true;
 				DRM_DEBUG("IH: HPD2\n");
 
-				break;
-			case 2:
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont2 & DC_HPD3_INTERRUPT))
+				अवरोध;
+			हाल 2:
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont2 & DC_HPD3_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont2 &= ~DC_HPD3_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont2 &= ~DC_HPD3_INTERRUPT;
 				queue_hotplug = true;
 				DRM_DEBUG("IH: HPD3\n");
 
-				break;
-			case 3:
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont3 & DC_HPD4_INTERRUPT))
+				अवरोध;
+			हाल 3:
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont3 & DC_HPD4_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont3 &= ~DC_HPD4_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont3 &= ~DC_HPD4_INTERRUPT;
 				queue_hotplug = true;
 				DRM_DEBUG("IH: HPD4\n");
 
-				break;
-			case 4:
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont4 & DC_HPD5_INTERRUPT))
+				अवरोध;
+			हाल 4:
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont4 & DC_HPD5_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont4 &= ~DC_HPD5_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont4 &= ~DC_HPD5_INTERRUPT;
 				queue_hotplug = true;
 				DRM_DEBUG("IH: HPD5\n");
 
-				break;
-			case 5:
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont5 & DC_HPD6_INTERRUPT))
+				अवरोध;
+			हाल 5:
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont5 & DC_HPD6_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont5 &= ~DC_HPD6_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont5 &= ~DC_HPD6_INTERRUPT;
 				queue_hotplug = true;
 				DRM_DEBUG("IH: HPD6\n");
 
-				break;
-			case 6:
-				if (!(rdev->irq.stat_regs.cik.disp_int & DC_HPD1_RX_INTERRUPT))
+				अवरोध;
+			हाल 6:
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक & DC_HPD1_RX_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int &= ~DC_HPD1_RX_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक &= ~DC_HPD1_RX_INTERRUPT;
 				queue_dp = true;
 				DRM_DEBUG("IH: HPD_RX 1\n");
 
-				break;
-			case 7:
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont & DC_HPD2_RX_INTERRUPT))
+				अवरोध;
+			हाल 7:
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont & DC_HPD2_RX_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont &= ~DC_HPD2_RX_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont &= ~DC_HPD2_RX_INTERRUPT;
 				queue_dp = true;
 				DRM_DEBUG("IH: HPD_RX 2\n");
 
-				break;
-			case 8:
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont2 & DC_HPD3_RX_INTERRUPT))
+				अवरोध;
+			हाल 8:
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont2 & DC_HPD3_RX_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont2 &= ~DC_HPD3_RX_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont2 &= ~DC_HPD3_RX_INTERRUPT;
 				queue_dp = true;
 				DRM_DEBUG("IH: HPD_RX 3\n");
 
-				break;
-			case 9:
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont3 & DC_HPD4_RX_INTERRUPT))
+				अवरोध;
+			हाल 9:
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont3 & DC_HPD4_RX_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont3 &= ~DC_HPD4_RX_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont3 &= ~DC_HPD4_RX_INTERRUPT;
 				queue_dp = true;
 				DRM_DEBUG("IH: HPD_RX 4\n");
 
-				break;
-			case 10:
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont4 & DC_HPD5_RX_INTERRUPT))
+				अवरोध;
+			हाल 10:
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont4 & DC_HPD5_RX_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont4 &= ~DC_HPD5_RX_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont4 &= ~DC_HPD5_RX_INTERRUPT;
 				queue_dp = true;
 				DRM_DEBUG("IH: HPD_RX 5\n");
 
-				break;
-			case 11:
-				if (!(rdev->irq.stat_regs.cik.disp_int_cont5 & DC_HPD6_RX_INTERRUPT))
+				अवरोध;
+			हाल 11:
+				अगर (!(rdev->irq.stat_regs.cik.disp_पूर्णांक_cont5 & DC_HPD6_RX_INTERRUPT))
 					DRM_DEBUG("IH: IH event w/o asserted irq bit?\n");
 
-				rdev->irq.stat_regs.cik.disp_int_cont5 &= ~DC_HPD6_RX_INTERRUPT;
+				rdev->irq.stat_regs.cik.disp_पूर्णांक_cont5 &= ~DC_HPD6_RX_INTERRUPT;
 				queue_dp = true;
 				DRM_DEBUG("IH: HPD_RX 6\n");
 
-				break;
-			default:
+				अवरोध;
+			शेष:
 				DRM_DEBUG("Unhandled interrupt: %d %d\n", src_id, src_data);
-				break;
-			}
-			break;
-		case 96:
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 96:
 			DRM_ERROR("SRBM_READ_ERROR: 0x%x\n", RREG32(SRBM_READ_ERROR));
 			WREG32(SRBM_INT_ACK, 0x1);
-			break;
-		case 124: /* UVD */
+			अवरोध;
+		हाल 124: /* UVD */
 			DRM_DEBUG("IH: UVD int: 0x%08x\n", src_data);
 			radeon_fence_process(rdev, R600_RING_TYPE_UVD_INDEX);
-			break;
-		case 146:
-		case 147:
+			अवरोध;
+		हाल 146:
+		हाल 147:
 			addr = RREG32(VM_CONTEXT1_PROTECTION_FAULT_ADDR);
 			status = RREG32(VM_CONTEXT1_PROTECTION_FAULT_STATUS);
 			mc_client = RREG32(VM_CONTEXT1_PROTECTION_FAULT_MCCLIENT);
 			/* reset addr and status */
 			WREG32_P(VM_CONTEXT1_CNTL2, 1, ~1);
-			if (addr == 0x0 && status == 0x0)
-				break;
+			अगर (addr == 0x0 && status == 0x0)
+				अवरोध;
 			dev_err(rdev->dev, "GPU fault detected: %d 0x%08x\n", src_id, src_data);
 			dev_err(rdev->dev, "  VM_CONTEXT1_PROTECTION_FAULT_ADDR   0x%08X\n",
 				addr);
 			dev_err(rdev->dev, "  VM_CONTEXT1_PROTECTION_FAULT_STATUS 0x%08X\n",
 				status);
 			cik_vm_decode_fault(rdev, status, addr, mc_client);
-			break;
-		case 167: /* VCE */
+			अवरोध;
+		हाल 167: /* VCE */
 			DRM_DEBUG("IH: VCE int: 0x%08x\n", src_data);
-			switch (src_data) {
-			case 0:
+			चयन (src_data) अणु
+			हाल 0:
 				radeon_fence_process(rdev, TN_RING_TYPE_VCE1_INDEX);
-				break;
-			case 1:
+				अवरोध;
+			हाल 1:
 				radeon_fence_process(rdev, TN_RING_TYPE_VCE2_INDEX);
-				break;
-			default:
+				अवरोध;
+			शेष:
 				DRM_ERROR("Unhandled interrupt: %d %d\n", src_id, src_data);
-				break;
-			}
-			break;
-		case 176: /* GFX RB CP_INT */
-		case 177: /* GFX IB CP_INT */
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 176: /* GFX RB CP_INT */
+		हाल 177: /* GFX IB CP_INT */
 			radeon_fence_process(rdev, RADEON_RING_TYPE_GFX_INDEX);
-			break;
-		case 181: /* CP EOP event */
+			अवरोध;
+		हाल 181: /* CP EOP event */
 			DRM_DEBUG("IH: CP EOP\n");
 			/* XXX check the bitfield order! */
 			me_id = (ring_id & 0x60) >> 5;
 			pipe_id = (ring_id & 0x18) >> 3;
 			queue_id = (ring_id & 0x7) >> 0;
-			switch (me_id) {
-			case 0:
+			चयन (me_id) अणु
+			हाल 0:
 				radeon_fence_process(rdev, RADEON_RING_TYPE_GFX_INDEX);
-				break;
-			case 1:
-			case 2:
-				if ((cp1_ring->me == me_id) & (cp1_ring->pipe == pipe_id))
+				अवरोध;
+			हाल 1:
+			हाल 2:
+				अगर ((cp1_ring->me == me_id) & (cp1_ring->pipe == pipe_id))
 					radeon_fence_process(rdev, CAYMAN_RING_TYPE_CP1_INDEX);
-				if ((cp2_ring->me == me_id) & (cp2_ring->pipe == pipe_id))
+				अगर ((cp2_ring->me == me_id) & (cp2_ring->pipe == pipe_id))
 					radeon_fence_process(rdev, CAYMAN_RING_TYPE_CP2_INDEX);
-				break;
-			}
-			break;
-		case 184: /* CP Privileged reg access */
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 184: /* CP Privileged reg access */
 			DRM_ERROR("Illegal register access in command stream\n");
 			/* XXX check the bitfield order! */
 			me_id = (ring_id & 0x60) >> 5;
-			switch (me_id) {
-			case 0:
-				/* This results in a full GPU reset, but all we need to do is soft
-				 * reset the CP for gfx
+			चयन (me_id) अणु
+			हाल 0:
+				/* This results in a full GPU reset, but all we need to करो is soft
+				 * reset the CP क्रम gfx
 				 */
 				queue_reset = true;
-				break;
-			case 1:
+				अवरोध;
+			हाल 1:
 				/* XXX compute */
 				queue_reset = true;
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				/* XXX compute */
 				queue_reset = true;
-				break;
-			}
-			break;
-		case 185: /* CP Privileged inst */
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 185: /* CP Privileged inst */
 			DRM_ERROR("Illegal instruction in command stream\n");
 			/* XXX check the bitfield order! */
 			me_id = (ring_id & 0x60) >> 5;
-			switch (me_id) {
-			case 0:
-				/* This results in a full GPU reset, but all we need to do is soft
-				 * reset the CP for gfx
+			चयन (me_id) अणु
+			हाल 0:
+				/* This results in a full GPU reset, but all we need to करो is soft
+				 * reset the CP क्रम gfx
 				 */
 				queue_reset = true;
-				break;
-			case 1:
+				अवरोध;
+			हाल 1:
 				/* XXX compute */
 				queue_reset = true;
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				/* XXX compute */
 				queue_reset = true;
-				break;
-			}
-			break;
-		case 224: /* SDMA trap event */
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 224: /* SDMA trap event */
 			/* XXX check the bitfield order! */
 			me_id = (ring_id & 0x3) >> 0;
 			queue_id = (ring_id & 0xc) >> 2;
 			DRM_DEBUG("IH: SDMA trap\n");
-			switch (me_id) {
-			case 0:
-				switch (queue_id) {
-				case 0:
+			चयन (me_id) अणु
+			हाल 0:
+				चयन (queue_id) अणु
+				हाल 0:
 					radeon_fence_process(rdev, R600_RING_TYPE_DMA_INDEX);
-					break;
-				case 1:
+					अवरोध;
+				हाल 1:
 					/* XXX compute */
-					break;
-				case 2:
+					अवरोध;
+				हाल 2:
 					/* XXX compute */
-					break;
-				}
-				break;
-			case 1:
-				switch (queue_id) {
-				case 0:
+					अवरोध;
+				पूर्ण
+				अवरोध;
+			हाल 1:
+				चयन (queue_id) अणु
+				हाल 0:
 					radeon_fence_process(rdev, CAYMAN_RING_TYPE_DMA1_INDEX);
-					break;
-				case 1:
+					अवरोध;
+				हाल 1:
 					/* XXX compute */
-					break;
-				case 2:
+					अवरोध;
+				हाल 2:
 					/* XXX compute */
-					break;
-				}
-				break;
-			}
-			break;
-		case 230: /* thermal low to high */
+					अवरोध;
+				पूर्ण
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 230: /* thermal low to high */
 			DRM_DEBUG("IH: thermal low to high\n");
 			rdev->pm.dpm.thermal.high_to_low = false;
 			queue_thermal = true;
-			break;
-		case 231: /* thermal high to low */
+			अवरोध;
+		हाल 231: /* thermal high to low */
 			DRM_DEBUG("IH: thermal high to low\n");
 			rdev->pm.dpm.thermal.high_to_low = true;
 			queue_thermal = true;
-			break;
-		case 233: /* GUI IDLE */
+			अवरोध;
+		हाल 233: /* GUI IDLE */
 			DRM_DEBUG("IH: GUI idle\n");
-			break;
-		case 241: /* SDMA Privileged inst */
-		case 247: /* SDMA Privileged inst */
+			अवरोध;
+		हाल 241: /* SDMA Privileged inst */
+		हाल 247: /* SDMA Privileged inst */
 			DRM_ERROR("Illegal instruction in SDMA command stream\n");
 			/* XXX check the bitfield order! */
 			me_id = (ring_id & 0x3) >> 0;
 			queue_id = (ring_id & 0xc) >> 2;
-			switch (me_id) {
-			case 0:
-				switch (queue_id) {
-				case 0:
+			चयन (me_id) अणु
+			हाल 0:
+				चयन (queue_id) अणु
+				हाल 0:
 					queue_reset = true;
-					break;
-				case 1:
+					अवरोध;
+				हाल 1:
 					/* XXX compute */
 					queue_reset = true;
-					break;
-				case 2:
+					अवरोध;
+				हाल 2:
 					/* XXX compute */
 					queue_reset = true;
-					break;
-				}
-				break;
-			case 1:
-				switch (queue_id) {
-				case 0:
+					अवरोध;
+				पूर्ण
+				अवरोध;
+			हाल 1:
+				चयन (queue_id) अणु
+				हाल 0:
 					queue_reset = true;
-					break;
-				case 1:
+					अवरोध;
+				हाल 1:
 					/* XXX compute */
 					queue_reset = true;
-					break;
-				case 2:
+					अवरोध;
+				हाल 2:
 					/* XXX compute */
 					queue_reset = true;
-					break;
-				}
-				break;
-			}
-			break;
-		default:
+					अवरोध;
+				पूर्ण
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		शेष:
 			DRM_DEBUG("Unhandled interrupt: %d %d\n", src_id, src_data);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* wptr/rptr are in bytes! */
 		rptr += 16;
 		rptr &= rdev->ih.ptr_mask;
 		WREG32(IH_RB_RPTR, rptr);
-	}
-	if (queue_dp)
+	पूर्ण
+	अगर (queue_dp)
 		schedule_work(&rdev->dp_work);
-	if (queue_hotplug)
+	अगर (queue_hotplug)
 		schedule_delayed_work(&rdev->hotplug_work, 0);
-	if (queue_reset) {
+	अगर (queue_reset) अणु
 		rdev->needs_reset = true;
 		wake_up_all(&rdev->fence_queue);
-	}
-	if (queue_thermal)
+	पूर्ण
+	अगर (queue_thermal)
 		schedule_work(&rdev->pm.dpm.thermal.work);
 	rdev->ih.rptr = rptr;
 	atomic_set(&rdev->ih.lock, 0);
 
-	/* make sure wptr hasn't changed while processing */
+	/* make sure wptr hasn't changed जबतक processing */
 	wptr = cik_get_ih_wptr(rdev);
-	if (wptr != rptr)
-		goto restart_ih;
+	अगर (wptr != rptr)
+		जाओ restart_ih;
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * startup/shutdown callbacks
+ * startup/shutकरोwn callbacks
  */
-static void cik_uvd_init(struct radeon_device *rdev)
-{
-	int r;
+अटल व्योम cik_uvd_init(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r;
 
-	if (!rdev->has_uvd)
-		return;
+	अगर (!rdev->has_uvd)
+		वापस;
 
 	r = radeon_uvd_init(rdev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed UVD (%d) init.\n", r);
 		/*
-		 * At this point rdev->uvd.vcpu_bo is NULL which trickles down
+		 * At this poपूर्णांक rdev->uvd.vcpu_bo is शून्य which trickles करोwn
 		 * to early fails cik_uvd_start() and thus nothing happens
-		 * there. So it is pointless to try to go through that code
+		 * there. So it is poपूर्णांकless to try to go through that code
 		 * hence why we disable uvd here.
 		 */
 		rdev->has_uvd = false;
-		return;
-	}
-	rdev->ring[R600_RING_TYPE_UVD_INDEX].ring_obj = NULL;
+		वापस;
+	पूर्ण
+	rdev->ring[R600_RING_TYPE_UVD_INDEX].ring_obj = शून्य;
 	r600_ring_init(rdev, &rdev->ring[R600_RING_TYPE_UVD_INDEX], 4096);
-}
+पूर्ण
 
-static void cik_uvd_start(struct radeon_device *rdev)
-{
-	int r;
+अटल व्योम cik_uvd_start(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r;
 
-	if (!rdev->has_uvd)
-		return;
+	अगर (!rdev->has_uvd)
+		वापस;
 
 	r = radeon_uvd_resume(rdev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed UVD resume (%d).\n", r);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	r = uvd_v4_2_resume(rdev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed UVD 4.2 resume (%d).\n", r);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	r = radeon_fence_driver_start_ring(rdev, R600_RING_TYPE_UVD_INDEX);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing UVD fences (%d).\n", r);
-		goto error;
-	}
-	return;
+		जाओ error;
+	पूर्ण
+	वापस;
 
 error:
 	rdev->ring[R600_RING_TYPE_UVD_INDEX].ring_size = 0;
-}
+पूर्ण
 
-static void cik_uvd_resume(struct radeon_device *rdev)
-{
-	struct radeon_ring *ring;
-	int r;
+अटल व्योम cik_uvd_resume(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा radeon_ring *ring;
+	पूर्णांक r;
 
-	if (!rdev->has_uvd || !rdev->ring[R600_RING_TYPE_UVD_INDEX].ring_size)
-		return;
+	अगर (!rdev->has_uvd || !rdev->ring[R600_RING_TYPE_UVD_INDEX].ring_size)
+		वापस;
 
 	ring = &rdev->ring[R600_RING_TYPE_UVD_INDEX];
 	r = radeon_ring_init(rdev, ring, ring->ring_size, 0, PACKET0(UVD_NO_OP, 0));
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing UVD ring (%d).\n", r);
-		return;
-	}
+		वापस;
+	पूर्ण
 	r = uvd_v1_0_init(rdev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing UVD (%d).\n", r);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void cik_vce_init(struct radeon_device *rdev)
-{
-	int r;
+अटल व्योम cik_vce_init(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r;
 
-	if (!rdev->has_vce)
-		return;
+	अगर (!rdev->has_vce)
+		वापस;
 
 	r = radeon_vce_init(rdev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed VCE (%d) init.\n", r);
 		/*
-		 * At this point rdev->vce.vcpu_bo is NULL which trickles down
+		 * At this poपूर्णांक rdev->vce.vcpu_bo is शून्य which trickles करोwn
 		 * to early fails cik_vce_start() and thus nothing happens
-		 * there. So it is pointless to try to go through that code
+		 * there. So it is poपूर्णांकless to try to go through that code
 		 * hence why we disable vce here.
 		 */
 		rdev->has_vce = false;
-		return;
-	}
-	rdev->ring[TN_RING_TYPE_VCE1_INDEX].ring_obj = NULL;
+		वापस;
+	पूर्ण
+	rdev->ring[TN_RING_TYPE_VCE1_INDEX].ring_obj = शून्य;
 	r600_ring_init(rdev, &rdev->ring[TN_RING_TYPE_VCE1_INDEX], 4096);
-	rdev->ring[TN_RING_TYPE_VCE2_INDEX].ring_obj = NULL;
+	rdev->ring[TN_RING_TYPE_VCE2_INDEX].ring_obj = शून्य;
 	r600_ring_init(rdev, &rdev->ring[TN_RING_TYPE_VCE2_INDEX], 4096);
-}
+पूर्ण
 
-static void cik_vce_start(struct radeon_device *rdev)
-{
-	int r;
+अटल व्योम cik_vce_start(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r;
 
-	if (!rdev->has_vce)
-		return;
+	अगर (!rdev->has_vce)
+		वापस;
 
 	r = radeon_vce_resume(rdev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed VCE resume (%d).\n", r);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	r = vce_v2_0_resume(rdev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed VCE resume (%d).\n", r);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	r = radeon_fence_driver_start_ring(rdev, TN_RING_TYPE_VCE1_INDEX);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing VCE1 fences (%d).\n", r);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	r = radeon_fence_driver_start_ring(rdev, TN_RING_TYPE_VCE2_INDEX);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing VCE2 fences (%d).\n", r);
-		goto error;
-	}
-	return;
+		जाओ error;
+	पूर्ण
+	वापस;
 
 error:
 	rdev->ring[TN_RING_TYPE_VCE1_INDEX].ring_size = 0;
 	rdev->ring[TN_RING_TYPE_VCE2_INDEX].ring_size = 0;
-}
+पूर्ण
 
-static void cik_vce_resume(struct radeon_device *rdev)
-{
-	struct radeon_ring *ring;
-	int r;
+अटल व्योम cik_vce_resume(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा radeon_ring *ring;
+	पूर्णांक r;
 
-	if (!rdev->has_vce || !rdev->ring[TN_RING_TYPE_VCE1_INDEX].ring_size)
-		return;
+	अगर (!rdev->has_vce || !rdev->ring[TN_RING_TYPE_VCE1_INDEX].ring_size)
+		वापस;
 
 	ring = &rdev->ring[TN_RING_TYPE_VCE1_INDEX];
 	r = radeon_ring_init(rdev, ring, ring->ring_size, 0, VCE_CMD_NO_OP);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing VCE1 ring (%d).\n", r);
-		return;
-	}
+		वापस;
+	पूर्ण
 	ring = &rdev->ring[TN_RING_TYPE_VCE2_INDEX];
 	r = radeon_ring_init(rdev, ring, ring->ring_size, 0, VCE_CMD_NO_OP);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing VCE1 ring (%d).\n", r);
-		return;
-	}
+		वापस;
+	पूर्ण
 	r = vce_v1_0_init(rdev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing VCE (%d).\n", r);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
 /**
  * cik_startup - program the asic to a functional state
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Programs the asic to a functional state (CIK).
  * Called by cik_init() and cik_resume().
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-static int cik_startup(struct radeon_device *rdev)
-{
-	struct radeon_ring *ring;
+अटल पूर्णांक cik_startup(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा radeon_ring *ring;
 	u32 nop;
-	int r;
+	पूर्णांक r;
 
 	/* enable pcie gen2/3 link */
 	cik_pcie_gen3_enable(rdev);
 	/* enable aspm */
 	cik_program_aspm(rdev);
 
-	/* scratch needs to be initialized before MC */
+	/* scratch needs to be initialized beक्रमe MC */
 	r = r600_vram_scratch_init(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	cik_mc_program(rdev);
 
-	if (!(rdev->flags & RADEON_IS_IGP) && !rdev->pm.dpm_enabled) {
+	अगर (!(rdev->flags & RADEON_IS_IGP) && !rdev->pm.dpm_enabled) अणु
 		r = ci_mc_load_microcode(rdev);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to load MC firmware!\n");
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
 	r = cik_pcie_gart_enable(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	cik_gpu_init(rdev);
 
 	/* allocate rlc buffers */
-	if (rdev->flags & RADEON_IS_IGP) {
-		if (rdev->family == CHIP_KAVERI) {
-			rdev->rlc.reg_list = spectre_rlc_save_restore_register_list;
+	अगर (rdev->flags & RADEON_IS_IGP) अणु
+		अगर (rdev->family == CHIP_KAVERI) अणु
+			rdev->rlc.reg_list = spectre_rlc_save_restore_रेजिस्टर_list;
 			rdev->rlc.reg_list_size =
-				(u32)ARRAY_SIZE(spectre_rlc_save_restore_register_list);
-		} else {
-			rdev->rlc.reg_list = kalindi_rlc_save_restore_register_list;
+				(u32)ARRAY_SIZE(spectre_rlc_save_restore_रेजिस्टर_list);
+		पूर्ण अन्यथा अणु
+			rdev->rlc.reg_list = kalindi_rlc_save_restore_रेजिस्टर_list;
 			rdev->rlc.reg_list_size =
-				(u32)ARRAY_SIZE(kalindi_rlc_save_restore_register_list);
-		}
-	}
+				(u32)ARRAY_SIZE(kalindi_rlc_save_restore_रेजिस्टर_list);
+		पूर्ण
+	पूर्ण
 	rdev->rlc.cs_data = ci_cs_data;
 	rdev->rlc.cp_table_size = ALIGN(CP_ME_TABLE_SIZE * 5 * 4, 2048); /* CP JT */
 	rdev->rlc.cp_table_size += 64 * 1024; /* GDS */
 	r = sumo_rlc_init(rdev);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to init rlc BOs!\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	/* allocate wb buffer */
 	r = radeon_wb_init(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* allocate mec buffers */
 	r = cik_mec_init(rdev);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to init MEC BOs!\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = radeon_fence_driver_start_ring(rdev, RADEON_RING_TYPE_GFX_INDEX);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing CP fences (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = radeon_fence_driver_start_ring(rdev, CAYMAN_RING_TYPE_CP1_INDEX);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing CP fences (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = radeon_fence_driver_start_ring(rdev, CAYMAN_RING_TYPE_CP2_INDEX);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing CP fences (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = radeon_fence_driver_start_ring(rdev, R600_RING_TYPE_DMA_INDEX);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing DMA fences (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = radeon_fence_driver_start_ring(rdev, CAYMAN_RING_TYPE_DMA1_INDEX);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing DMA fences (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	cik_uvd_start(rdev);
 	cik_vce_start(rdev);
 
 	/* Enable IRQ */
-	if (!rdev->irq.installed) {
+	अगर (!rdev->irq.installed) अणु
 		r = radeon_irq_kms_init(rdev);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
 	r = cik_irq_init(rdev);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("radeon: IH init failed (%d).\n", r);
 		radeon_irq_kms_fini(rdev);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 	cik_irq_set(rdev);
 
-	if (rdev->family == CHIP_HAWAII) {
-		if (rdev->new_fw)
+	अगर (rdev->family == CHIP_HAWAII) अणु
+		अगर (rdev->new_fw)
 			nop = PACKET3(PACKET3_NOP, 0x3FFF);
-		else
+		अन्यथा
 			nop = RADEON_CP_PACKET2;
-	} else {
+	पूर्ण अन्यथा अणु
 		nop = PACKET3(PACKET3_NOP, 0x3FFF);
-	}
+	पूर्ण
 
 	ring = &rdev->ring[RADEON_RING_TYPE_GFX_INDEX];
 	r = radeon_ring_init(rdev, ring, ring->ring_size, RADEON_WB_CP_RPTR_OFFSET,
 			     nop);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* set up the compute queues */
 	/* type-2 packets are deprecated on MEC, use type-3 instead */
 	ring = &rdev->ring[CAYMAN_RING_TYPE_CP1_INDEX];
 	r = radeon_ring_init(rdev, ring, ring->ring_size, RADEON_WB_CP1_RPTR_OFFSET,
 			     nop);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	ring->me = 1; /* first MEC */
 	ring->pipe = 0; /* first pipe */
 	ring->queue = 0; /* first queue */
@@ -8416,8 +8417,8 @@ static int cik_startup(struct radeon_device *rdev)
 	ring = &rdev->ring[CAYMAN_RING_TYPE_CP2_INDEX];
 	r = radeon_ring_init(rdev, ring, ring->ring_size, RADEON_WB_CP2_RPTR_OFFSET,
 			     nop);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	/* dGPU only have 1 MEC */
 	ring->me = 1; /* first MEC */
 	ring->pipe = 0; /* first pipe */
@@ -8427,239 +8428,239 @@ static int cik_startup(struct radeon_device *rdev)
 	ring = &rdev->ring[R600_RING_TYPE_DMA_INDEX];
 	r = radeon_ring_init(rdev, ring, ring->ring_size, R600_WB_DMA_RPTR_OFFSET,
 			     SDMA_PACKET(SDMA_OPCODE_NOP, 0, 0));
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	ring = &rdev->ring[CAYMAN_RING_TYPE_DMA1_INDEX];
 	r = radeon_ring_init(rdev, ring, ring->ring_size, CAYMAN_WB_DMA1_RPTR_OFFSET,
 			     SDMA_PACKET(SDMA_OPCODE_NOP, 0, 0));
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = cik_cp_resume(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = cik_sdma_resume(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	cik_uvd_resume(rdev);
 	cik_vce_resume(rdev);
 
 	r = radeon_ib_pool_init(rdev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "IB initialization failed (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = radeon_vm_manager_init(rdev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "vm manager initialization failed (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = radeon_audio_init(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cik_resume - resume the asic to a functional state
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Programs the asic to a functional state (CIK).
  * Called at resume.
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-int cik_resume(struct radeon_device *rdev)
-{
-	int r;
+पूर्णांक cik_resume(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r;
 
 	/* post card */
 	atom_asic_init(rdev->mode_info.atom_context);
 
-	/* init golden registers */
-	cik_init_golden_registers(rdev);
+	/* init golden रेजिस्टरs */
+	cik_init_golden_रेजिस्टरs(rdev);
 
-	if (rdev->pm.pm_method == PM_METHOD_DPM)
+	अगर (rdev->pm.pm_method == PM_METHOD_DPM)
 		radeon_pm_resume(rdev);
 
 	rdev->accel_working = true;
 	r = cik_startup(rdev);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("cik startup failed on resume\n");
 		rdev->accel_working = false;
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return r;
+	वापस r;
 
-}
+पूर्ण
 
 /**
  * cik_suspend - suspend the asic
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Bring the chip into a state suitable for suspend (CIK).
+ * Bring the chip पूर्णांकo a state suitable क्रम suspend (CIK).
  * Called at suspend.
- * Returns 0 for success.
+ * Returns 0 क्रम success.
  */
-int cik_suspend(struct radeon_device *rdev)
-{
+पूर्णांक cik_suspend(काष्ठा radeon_device *rdev)
+अणु
 	radeon_pm_suspend(rdev);
 	radeon_audio_fini(rdev);
 	radeon_vm_manager_fini(rdev);
 	cik_cp_enable(rdev, false);
 	cik_sdma_enable(rdev, false);
-	if (rdev->has_uvd) {
+	अगर (rdev->has_uvd) अणु
 		uvd_v1_0_fini(rdev);
 		radeon_uvd_suspend(rdev);
-	}
-	if (rdev->has_vce)
+	पूर्ण
+	अगर (rdev->has_vce)
 		radeon_vce_suspend(rdev);
 	cik_fini_pg(rdev);
 	cik_fini_cg(rdev);
 	cik_irq_suspend(rdev);
 	radeon_wb_disable(rdev);
 	cik_pcie_gart_disable(rdev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Plan is to move initialization in that function and use
  * helper function so that radeon_device_init pretty much
- * do nothing more than calling asic specific function. This
- * should also allow to remove a bunch of callback function
+ * करो nothing more than calling asic specअगरic function. This
+ * should also allow to हटाओ a bunch of callback function
  * like vram_info.
  */
 /**
- * cik_init - asic specific driver and hw init
+ * cik_init - asic specअगरic driver and hw init
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Setup asic specific driver variables and program the hw
+ * Setup asic specअगरic driver variables and program the hw
  * to a functional state (CIK).
  * Called at driver startup.
- * Returns 0 for success, errors for failure.
+ * Returns 0 क्रम success, errors क्रम failure.
  */
-int cik_init(struct radeon_device *rdev)
-{
-	struct radeon_ring *ring;
-	int r;
+पूर्णांक cik_init(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा radeon_ring *ring;
+	पूर्णांक r;
 
 	/* Read BIOS */
-	if (!radeon_get_bios(rdev)) {
-		if (ASIC_IS_AVIVO(rdev))
-			return -EINVAL;
-	}
+	अगर (!radeon_get_bios(rdev)) अणु
+		अगर (ASIC_IS_AVIVO(rdev))
+			वापस -EINVAL;
+	पूर्ण
 	/* Must be an ATOMBIOS */
-	if (!rdev->is_atom_bios) {
+	अगर (!rdev->is_atom_bios) अणु
 		dev_err(rdev->dev, "Expecting atombios for cayman GPU\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	r = radeon_atombios_init(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	/* Post card if necessary */
-	if (!radeon_card_posted(rdev)) {
-		if (!rdev->bios) {
+	/* Post card अगर necessary */
+	अगर (!radeon_card_posted(rdev)) अणु
+		अगर (!rdev->bios) अणु
 			dev_err(rdev->dev, "Card not posted and no BIOS - ignoring\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		DRM_INFO("GPU not posted. posting now...\n");
 		atom_asic_init(rdev->mode_info.atom_context);
-	}
-	/* init golden registers */
-	cik_init_golden_registers(rdev);
-	/* Initialize scratch registers */
+	पूर्ण
+	/* init golden रेजिस्टरs */
+	cik_init_golden_रेजिस्टरs(rdev);
+	/* Initialize scratch रेजिस्टरs */
 	cik_scratch_init(rdev);
-	/* Initialize surface registers */
+	/* Initialize surface रेजिस्टरs */
 	radeon_surface_init(rdev);
-	/* Initialize clocks */
-	radeon_get_clock_info(rdev->ddev);
+	/* Initialize घड़ीs */
+	radeon_get_घड़ी_info(rdev->ddev);
 
 	/* Fence driver */
 	r = radeon_fence_driver_init(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* initialize memory controller */
 	r = cik_mc_init(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	/* Memory manager */
 	r = radeon_bo_init(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	if (rdev->flags & RADEON_IS_IGP) {
-		if (!rdev->me_fw || !rdev->pfp_fw || !rdev->ce_fw ||
-		    !rdev->mec_fw || !rdev->sdma_fw || !rdev->rlc_fw) {
+	अगर (rdev->flags & RADEON_IS_IGP) अणु
+		अगर (!rdev->me_fw || !rdev->pfp_fw || !rdev->ce_fw ||
+		    !rdev->mec_fw || !rdev->sdma_fw || !rdev->rlc_fw) अणु
 			r = cik_init_microcode(rdev);
-			if (r) {
+			अगर (r) अणु
 				DRM_ERROR("Failed to load firmware!\n");
-				return r;
-			}
-		}
-	} else {
-		if (!rdev->me_fw || !rdev->pfp_fw || !rdev->ce_fw ||
+				वापस r;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!rdev->me_fw || !rdev->pfp_fw || !rdev->ce_fw ||
 		    !rdev->mec_fw || !rdev->sdma_fw || !rdev->rlc_fw ||
-		    !rdev->mc_fw) {
+		    !rdev->mc_fw) अणु
 			r = cik_init_microcode(rdev);
-			if (r) {
+			अगर (r) अणु
 				DRM_ERROR("Failed to load firmware!\n");
-				return r;
-			}
-		}
-	}
+				वापस r;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Initialize power management */
+	/* Initialize घातer management */
 	radeon_pm_init(rdev);
 
 	ring = &rdev->ring[RADEON_RING_TYPE_GFX_INDEX];
-	ring->ring_obj = NULL;
+	ring->ring_obj = शून्य;
 	r600_ring_init(rdev, ring, 1024 * 1024);
 
 	ring = &rdev->ring[CAYMAN_RING_TYPE_CP1_INDEX];
-	ring->ring_obj = NULL;
+	ring->ring_obj = शून्य;
 	r600_ring_init(rdev, ring, 1024 * 1024);
-	r = radeon_doorbell_get(rdev, &ring->doorbell_index);
-	if (r)
-		return r;
+	r = radeon_करोorbell_get(rdev, &ring->करोorbell_index);
+	अगर (r)
+		वापस r;
 
 	ring = &rdev->ring[CAYMAN_RING_TYPE_CP2_INDEX];
-	ring->ring_obj = NULL;
+	ring->ring_obj = शून्य;
 	r600_ring_init(rdev, ring, 1024 * 1024);
-	r = radeon_doorbell_get(rdev, &ring->doorbell_index);
-	if (r)
-		return r;
+	r = radeon_करोorbell_get(rdev, &ring->करोorbell_index);
+	अगर (r)
+		वापस r;
 
 	ring = &rdev->ring[R600_RING_TYPE_DMA_INDEX];
-	ring->ring_obj = NULL;
+	ring->ring_obj = शून्य;
 	r600_ring_init(rdev, ring, 256 * 1024);
 
 	ring = &rdev->ring[CAYMAN_RING_TYPE_DMA1_INDEX];
-	ring->ring_obj = NULL;
+	ring->ring_obj = शून्य;
 	r600_ring_init(rdev, ring, 256 * 1024);
 
 	cik_uvd_init(rdev);
 	cik_vce_init(rdev);
 
-	rdev->ih.ring_obj = NULL;
+	rdev->ih.ring_obj = शून्य;
 	r600_ih_ring_init(rdev, 64 * 1024);
 
 	r = r600_pcie_gart_init(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	rdev->accel_working = true;
 	r = cik_startup(rdev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "disabling GPU acceleration\n");
 		cik_cp_fini(rdev);
 		cik_sdma_fini(rdev);
@@ -8672,31 +8673,31 @@ int cik_init(struct radeon_device *rdev)
 		radeon_irq_kms_fini(rdev);
 		cik_pcie_gart_fini(rdev);
 		rdev->accel_working = false;
-	}
+	पूर्ण
 
-	/* Don't start up if the MC ucode is missing.
-	 * The default clocks and voltages before the MC ucode
-	 * is loaded are not suffient for advanced operations.
+	/* Don't start up अगर the MC ucode is missing.
+	 * The शेष घड़ीs and voltages beक्रमe the MC ucode
+	 * is loaded are not suffient क्रम advanced operations.
 	 */
-	if (!rdev->mc_fw && !(rdev->flags & RADEON_IS_IGP)) {
+	अगर (!rdev->mc_fw && !(rdev->flags & RADEON_IS_IGP)) अणु
 		DRM_ERROR("radeon: MC ucode required for NI+.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cik_fini - asic specific driver and hw fini
+ * cik_fini - asic specअगरic driver and hw fini
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Tear down the asic specific driver variables and program the hw
+ * Tear करोwn the asic specअगरic driver variables and program the hw
  * to an idle state (CIK).
  * Called at driver unload.
  */
-void cik_fini(struct radeon_device *rdev)
-{
+व्योम cik_fini(काष्ठा radeon_device *rdev)
+अणु
 	radeon_pm_fini(rdev);
 	cik_cp_fini(rdev);
 	cik_sdma_fini(rdev);
@@ -8718,200 +8719,200 @@ void cik_fini(struct radeon_device *rdev)
 	radeon_fence_driver_fini(rdev);
 	radeon_bo_fini(rdev);
 	radeon_atombios_fini(rdev);
-	kfree(rdev->bios);
-	rdev->bios = NULL;
-}
+	kमुक्त(rdev->bios);
+	rdev->bios = शून्य;
+पूर्ण
 
-void dce8_program_fmt(struct drm_encoder *encoder)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	struct radeon_crtc *radeon_crtc = to_radeon_crtc(encoder->crtc);
-	struct drm_connector *connector = radeon_get_connector_for_encoder(encoder);
-	int bpc = 0;
-	u32 tmp = 0;
-	enum radeon_connector_dither dither = RADEON_FMT_DITHER_DISABLE;
+व्योम dce8_program_fmt(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	काष्ठा radeon_crtc *radeon_crtc = to_radeon_crtc(encoder->crtc);
+	काष्ठा drm_connector *connector = radeon_get_connector_क्रम_encoder(encoder);
+	पूर्णांक bpc = 0;
+	u32 पंचांगp = 0;
+	क्रमागत radeon_connector_dither dither = RADEON_FMT_DITHER_DISABLE;
 
-	if (connector) {
-		struct radeon_connector *radeon_connector = to_radeon_connector(connector);
+	अगर (connector) अणु
+		काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
 		bpc = radeon_get_monitor_bpc(connector);
 		dither = radeon_connector->dither;
-	}
+	पूर्ण
 
 	/* LVDS/eDP FMT is set up by atom */
-	if (radeon_encoder->devices & ATOM_DEVICE_LCD_SUPPORT)
-		return;
+	अगर (radeon_encoder->devices & ATOM_DEVICE_LCD_SUPPORT)
+		वापस;
 
-	/* not needed for analog */
-	if ((radeon_encoder->encoder_id == ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DAC1) ||
+	/* not needed क्रम analog */
+	अगर ((radeon_encoder->encoder_id == ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DAC1) ||
 	    (radeon_encoder->encoder_id == ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DAC2))
-		return;
+		वापस;
 
-	if (bpc == 0)
-		return;
+	अगर (bpc == 0)
+		वापस;
 
-	switch (bpc) {
-	case 6:
-		if (dither == RADEON_FMT_DITHER_ENABLE)
+	चयन (bpc) अणु
+	हाल 6:
+		अगर (dither == RADEON_FMT_DITHER_ENABLE)
 			/* XXX sort out optimal dither settings */
-			tmp |= (FMT_FRAME_RANDOM_ENABLE | FMT_HIGHPASS_RANDOM_ENABLE |
+			पंचांगp |= (FMT_FRAME_RANDOM_ENABLE | FMT_HIGHPASS_RANDOM_ENABLE |
 				FMT_SPATIAL_DITHER_EN | FMT_SPATIAL_DITHER_DEPTH(0));
-		else
-			tmp |= (FMT_TRUNCATE_EN | FMT_TRUNCATE_DEPTH(0));
-		break;
-	case 8:
-		if (dither == RADEON_FMT_DITHER_ENABLE)
+		अन्यथा
+			पंचांगp |= (FMT_TRUNCATE_EN | FMT_TRUNCATE_DEPTH(0));
+		अवरोध;
+	हाल 8:
+		अगर (dither == RADEON_FMT_DITHER_ENABLE)
 			/* XXX sort out optimal dither settings */
-			tmp |= (FMT_FRAME_RANDOM_ENABLE | FMT_HIGHPASS_RANDOM_ENABLE |
+			पंचांगp |= (FMT_FRAME_RANDOM_ENABLE | FMT_HIGHPASS_RANDOM_ENABLE |
 				FMT_RGB_RANDOM_ENABLE |
 				FMT_SPATIAL_DITHER_EN | FMT_SPATIAL_DITHER_DEPTH(1));
-		else
-			tmp |= (FMT_TRUNCATE_EN | FMT_TRUNCATE_DEPTH(1));
-		break;
-	case 10:
-		if (dither == RADEON_FMT_DITHER_ENABLE)
+		अन्यथा
+			पंचांगp |= (FMT_TRUNCATE_EN | FMT_TRUNCATE_DEPTH(1));
+		अवरोध;
+	हाल 10:
+		अगर (dither == RADEON_FMT_DITHER_ENABLE)
 			/* XXX sort out optimal dither settings */
-			tmp |= (FMT_FRAME_RANDOM_ENABLE | FMT_HIGHPASS_RANDOM_ENABLE |
+			पंचांगp |= (FMT_FRAME_RANDOM_ENABLE | FMT_HIGHPASS_RANDOM_ENABLE |
 				FMT_RGB_RANDOM_ENABLE |
 				FMT_SPATIAL_DITHER_EN | FMT_SPATIAL_DITHER_DEPTH(2));
-		else
-			tmp |= (FMT_TRUNCATE_EN | FMT_TRUNCATE_DEPTH(2));
-		break;
-	default:
+		अन्यथा
+			पंचांगp |= (FMT_TRUNCATE_EN | FMT_TRUNCATE_DEPTH(2));
+		अवरोध;
+	शेष:
 		/* not needed */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	WREG32(FMT_BIT_DEPTH_CONTROL + radeon_crtc->crtc_offset, tmp);
-}
+	WREG32(FMT_BIT_DEPTH_CONTROL + radeon_crtc->crtc_offset, पंचांगp);
+पूर्ण
 
 /* display watermark setup */
 /**
  * dce8_line_buffer_adjust - Set up the line buffer
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @radeon_crtc: the selected display controller
  * @mode: the current display mode on the selected display
  * controller
  *
- * Setup up the line buffer allocation for
+ * Setup up the line buffer allocation क्रम
  * the selected display controller (CIK).
  * Returns the line buffer size in pixels.
  */
-static u32 dce8_line_buffer_adjust(struct radeon_device *rdev,
-				   struct radeon_crtc *radeon_crtc,
-				   struct drm_display_mode *mode)
-{
-	u32 tmp, buffer_alloc, i;
+अटल u32 dce8_line_buffer_adjust(काष्ठा radeon_device *rdev,
+				   काष्ठा radeon_crtc *radeon_crtc,
+				   काष्ठा drm_display_mode *mode)
+अणु
+	u32 पंचांगp, buffer_alloc, i;
 	u32 pipe_offset = radeon_crtc->crtc_id * 0x20;
 	/*
 	 * Line Buffer Setup
-	 * There are 6 line buffers, one for each display controllers.
+	 * There are 6 line buffers, one क्रम each display controllers.
 	 * There are 3 partitions per LB. Select the number of partitions
 	 * to enable based on the display width.  For display widths larger
 	 * than 4096, you need use to use 2 display controllers and combine
 	 * them using the stereo blender.
 	 */
-	if (radeon_crtc->base.enabled && mode) {
-		if (mode->crtc_hdisplay < 1920) {
-			tmp = 1;
+	अगर (radeon_crtc->base.enabled && mode) अणु
+		अगर (mode->crtc_hdisplay < 1920) अणु
+			पंचांगp = 1;
 			buffer_alloc = 2;
-		} else if (mode->crtc_hdisplay < 2560) {
-			tmp = 2;
+		पूर्ण अन्यथा अगर (mode->crtc_hdisplay < 2560) अणु
+			पंचांगp = 2;
 			buffer_alloc = 2;
-		} else if (mode->crtc_hdisplay < 4096) {
-			tmp = 0;
+		पूर्ण अन्यथा अगर (mode->crtc_hdisplay < 4096) अणु
+			पंचांगp = 0;
 			buffer_alloc = (rdev->flags & RADEON_IS_IGP) ? 2 : 4;
-		} else {
+		पूर्ण अन्यथा अणु
 			DRM_DEBUG_KMS("Mode too big for LB!\n");
-			tmp = 0;
+			पंचांगp = 0;
 			buffer_alloc = (rdev->flags & RADEON_IS_IGP) ? 2 : 4;
-		}
-	} else {
-		tmp = 1;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		पंचांगp = 1;
 		buffer_alloc = 0;
-	}
+	पूर्ण
 
 	WREG32(LB_MEMORY_CTRL + radeon_crtc->crtc_offset,
-	       LB_MEMORY_CONFIG(tmp) | LB_MEMORY_SIZE(0x6B0));
+	       LB_MEMORY_CONFIG(पंचांगp) | LB_MEMORY_SIZE(0x6B0));
 
 	WREG32(PIPE0_DMIF_BUFFER_CONTROL + pipe_offset,
 	       DMIF_BUFFERS_ALLOCATED(buffer_alloc));
-	for (i = 0; i < rdev->usec_timeout; i++) {
-		if (RREG32(PIPE0_DMIF_BUFFER_CONTROL + pipe_offset) &
+	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+		अगर (RREG32(PIPE0_DMIF_BUFFER_CONTROL + pipe_offset) &
 		    DMIF_BUFFERS_ALLOCATED_COMPLETED)
-			break;
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 
-	if (radeon_crtc->base.enabled && mode) {
-		switch (tmp) {
-		case 0:
-		default:
-			return 4096 * 2;
-		case 1:
-			return 1920 * 2;
-		case 2:
-			return 2560 * 2;
-		}
-	}
+	अगर (radeon_crtc->base.enabled && mode) अणु
+		चयन (पंचांगp) अणु
+		हाल 0:
+		शेष:
+			वापस 4096 * 2;
+		हाल 1:
+			वापस 1920 * 2;
+		हाल 2:
+			वापस 2560 * 2;
+		पूर्ण
+	पूर्ण
 
 	/* controller not enabled, so no lb used */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cik_get_number_of_dram_channels - get the number of dram channels
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Look up the number of video ram channels (CIK).
- * Used for display watermark bandwidth calculations
+ * Used क्रम display watermark bandwidth calculations
  * Returns the number of dram channels
  */
-static u32 cik_get_number_of_dram_channels(struct radeon_device *rdev)
-{
-	u32 tmp = RREG32(MC_SHARED_CHMAP);
+अटल u32 cik_get_number_of_dram_channels(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp = RREG32(MC_SHARED_CHMAP);
 
-	switch ((tmp & NOOFCHAN_MASK) >> NOOFCHAN_SHIFT) {
-	case 0:
-	default:
-		return 1;
-	case 1:
-		return 2;
-	case 2:
-		return 4;
-	case 3:
-		return 8;
-	case 4:
-		return 3;
-	case 5:
-		return 6;
-	case 6:
-		return 10;
-	case 7:
-		return 12;
-	case 8:
-		return 16;
-	}
-}
+	चयन ((पंचांगp & NOOFCHAN_MASK) >> NOOFCHAN_SHIFT) अणु
+	हाल 0:
+	शेष:
+		वापस 1;
+	हाल 1:
+		वापस 2;
+	हाल 2:
+		वापस 4;
+	हाल 3:
+		वापस 8;
+	हाल 4:
+		वापस 3;
+	हाल 5:
+		वापस 6;
+	हाल 6:
+		वापस 10;
+	हाल 7:
+		वापस 12;
+	हाल 8:
+		वापस 16;
+	पूर्ण
+पूर्ण
 
-struct dce8_wm_params {
+काष्ठा dce8_wm_params अणु
 	u32 dram_channels; /* number of dram channels */
 	u32 yclk;          /* bandwidth per dram data pin in kHz */
-	u32 sclk;          /* engine clock in kHz */
-	u32 disp_clk;      /* display clock in kHz */
+	u32 sclk;          /* engine घड़ी in kHz */
+	u32 disp_clk;      /* display घड़ी in kHz */
 	u32 src_width;     /* viewport width */
-	u32 active_time;   /* active display time in ns */
-	u32 blank_time;    /* blank time in ns */
-	bool interlaced;    /* mode is interlaced */
+	u32 active_समय;   /* active display समय in ns */
+	u32 blank_समय;    /* blank समय in ns */
+	bool पूर्णांकerlaced;    /* mode is पूर्णांकerlaced */
 	fixed20_12 vsc;    /* vertical scale ratio */
 	u32 num_heads;     /* number of active crtcs */
 	u32 bytes_per_pixel; /* bytes per pixel display + overlay */
 	u32 lb_size;       /* line buffer allocated to pipe */
 	u32 vtaps;         /* vertical scaler taps */
-};
+पूर्ण;
 
 /**
  * dce8_dram_bandwidth - get the dram bandwidth
@@ -8919,169 +8920,169 @@ struct dce8_wm_params {
  * @wm: watermark calculation data
  *
  * Calculate the raw dram bandwidth (CIK).
- * Used for display watermark bandwidth calculations
+ * Used क्रम display watermark bandwidth calculations
  * Returns the dram bandwidth in MBytes/s
  */
-static u32 dce8_dram_bandwidth(struct dce8_wm_params *wm)
-{
+अटल u32 dce8_dram_bandwidth(काष्ठा dce8_wm_params *wm)
+अणु
 	/* Calculate raw DRAM Bandwidth */
 	fixed20_12 dram_efficiency; /* 0.7 */
 	fixed20_12 yclk, dram_channels, bandwidth;
 	fixed20_12 a;
 
-	a.full = dfixed_const(1000);
-	yclk.full = dfixed_const(wm->yclk);
-	yclk.full = dfixed_div(yclk, a);
-	dram_channels.full = dfixed_const(wm->dram_channels * 4);
-	a.full = dfixed_const(10);
-	dram_efficiency.full = dfixed_const(7);
-	dram_efficiency.full = dfixed_div(dram_efficiency, a);
+	a.full = dfixed_स्थिर(1000);
+	yclk.full = dfixed_स्थिर(wm->yclk);
+	yclk.full = dfixed_भाग(yclk, a);
+	dram_channels.full = dfixed_स्थिर(wm->dram_channels * 4);
+	a.full = dfixed_स्थिर(10);
+	dram_efficiency.full = dfixed_स्थिर(7);
+	dram_efficiency.full = dfixed_भाग(dram_efficiency, a);
 	bandwidth.full = dfixed_mul(dram_channels, yclk);
 	bandwidth.full = dfixed_mul(bandwidth, dram_efficiency);
 
-	return dfixed_trunc(bandwidth);
-}
+	वापस dfixed_trunc(bandwidth);
+पूर्ण
 
 /**
- * dce8_dram_bandwidth_for_display - get the dram bandwidth for display
+ * dce8_dram_bandwidth_क्रम_display - get the dram bandwidth क्रम display
  *
  * @wm: watermark calculation data
  *
- * Calculate the dram bandwidth used for display (CIK).
- * Used for display watermark bandwidth calculations
- * Returns the dram bandwidth for display in MBytes/s
+ * Calculate the dram bandwidth used क्रम display (CIK).
+ * Used क्रम display watermark bandwidth calculations
+ * Returns the dram bandwidth क्रम display in MBytes/s
  */
-static u32 dce8_dram_bandwidth_for_display(struct dce8_wm_params *wm)
-{
+अटल u32 dce8_dram_bandwidth_क्रम_display(काष्ठा dce8_wm_params *wm)
+अणु
 	/* Calculate DRAM Bandwidth and the part allocated to display. */
 	fixed20_12 disp_dram_allocation; /* 0.3 to 0.7 */
 	fixed20_12 yclk, dram_channels, bandwidth;
 	fixed20_12 a;
 
-	a.full = dfixed_const(1000);
-	yclk.full = dfixed_const(wm->yclk);
-	yclk.full = dfixed_div(yclk, a);
-	dram_channels.full = dfixed_const(wm->dram_channels * 4);
-	a.full = dfixed_const(10);
-	disp_dram_allocation.full = dfixed_const(3); /* XXX worse case value 0.3 */
-	disp_dram_allocation.full = dfixed_div(disp_dram_allocation, a);
+	a.full = dfixed_स्थिर(1000);
+	yclk.full = dfixed_स्थिर(wm->yclk);
+	yclk.full = dfixed_भाग(yclk, a);
+	dram_channels.full = dfixed_स्थिर(wm->dram_channels * 4);
+	a.full = dfixed_स्थिर(10);
+	disp_dram_allocation.full = dfixed_स्थिर(3); /* XXX worse हाल value 0.3 */
+	disp_dram_allocation.full = dfixed_भाग(disp_dram_allocation, a);
 	bandwidth.full = dfixed_mul(dram_channels, yclk);
 	bandwidth.full = dfixed_mul(bandwidth, disp_dram_allocation);
 
-	return dfixed_trunc(bandwidth);
-}
+	वापस dfixed_trunc(bandwidth);
+पूर्ण
 
 /**
- * dce8_data_return_bandwidth - get the data return bandwidth
+ * dce8_data_वापस_bandwidth - get the data वापस bandwidth
  *
  * @wm: watermark calculation data
  *
- * Calculate the data return bandwidth used for display (CIK).
- * Used for display watermark bandwidth calculations
- * Returns the data return bandwidth in MBytes/s
+ * Calculate the data वापस bandwidth used क्रम display (CIK).
+ * Used क्रम display watermark bandwidth calculations
+ * Returns the data वापस bandwidth in MBytes/s
  */
-static u32 dce8_data_return_bandwidth(struct dce8_wm_params *wm)
-{
-	/* Calculate the display Data return Bandwidth */
-	fixed20_12 return_efficiency; /* 0.8 */
+अटल u32 dce8_data_वापस_bandwidth(काष्ठा dce8_wm_params *wm)
+अणु
+	/* Calculate the display Data वापस Bandwidth */
+	fixed20_12 वापस_efficiency; /* 0.8 */
 	fixed20_12 sclk, bandwidth;
 	fixed20_12 a;
 
-	a.full = dfixed_const(1000);
-	sclk.full = dfixed_const(wm->sclk);
-	sclk.full = dfixed_div(sclk, a);
-	a.full = dfixed_const(10);
-	return_efficiency.full = dfixed_const(8);
-	return_efficiency.full = dfixed_div(return_efficiency, a);
-	a.full = dfixed_const(32);
+	a.full = dfixed_स्थिर(1000);
+	sclk.full = dfixed_स्थिर(wm->sclk);
+	sclk.full = dfixed_भाग(sclk, a);
+	a.full = dfixed_स्थिर(10);
+	वापस_efficiency.full = dfixed_स्थिर(8);
+	वापस_efficiency.full = dfixed_भाग(वापस_efficiency, a);
+	a.full = dfixed_स्थिर(32);
 	bandwidth.full = dfixed_mul(a, sclk);
-	bandwidth.full = dfixed_mul(bandwidth, return_efficiency);
+	bandwidth.full = dfixed_mul(bandwidth, वापस_efficiency);
 
-	return dfixed_trunc(bandwidth);
-}
+	वापस dfixed_trunc(bandwidth);
+पूर्ण
 
 /**
- * dce8_dmif_request_bandwidth - get the dmif bandwidth
+ * dce8_dmअगर_request_bandwidth - get the dmअगर bandwidth
  *
  * @wm: watermark calculation data
  *
- * Calculate the dmif bandwidth used for display (CIK).
- * Used for display watermark bandwidth calculations
- * Returns the dmif bandwidth in MBytes/s
+ * Calculate the dmअगर bandwidth used क्रम display (CIK).
+ * Used क्रम display watermark bandwidth calculations
+ * Returns the dmअगर bandwidth in MBytes/s
  */
-static u32 dce8_dmif_request_bandwidth(struct dce8_wm_params *wm)
-{
+अटल u32 dce8_dmअगर_request_bandwidth(काष्ठा dce8_wm_params *wm)
+अणु
 	/* Calculate the DMIF Request Bandwidth */
 	fixed20_12 disp_clk_request_efficiency; /* 0.8 */
 	fixed20_12 disp_clk, bandwidth;
 	fixed20_12 a, b;
 
-	a.full = dfixed_const(1000);
-	disp_clk.full = dfixed_const(wm->disp_clk);
-	disp_clk.full = dfixed_div(disp_clk, a);
-	a.full = dfixed_const(32);
+	a.full = dfixed_स्थिर(1000);
+	disp_clk.full = dfixed_स्थिर(wm->disp_clk);
+	disp_clk.full = dfixed_भाग(disp_clk, a);
+	a.full = dfixed_स्थिर(32);
 	b.full = dfixed_mul(a, disp_clk);
 
-	a.full = dfixed_const(10);
-	disp_clk_request_efficiency.full = dfixed_const(8);
-	disp_clk_request_efficiency.full = dfixed_div(disp_clk_request_efficiency, a);
+	a.full = dfixed_स्थिर(10);
+	disp_clk_request_efficiency.full = dfixed_स्थिर(8);
+	disp_clk_request_efficiency.full = dfixed_भाग(disp_clk_request_efficiency, a);
 
 	bandwidth.full = dfixed_mul(b, disp_clk_request_efficiency);
 
-	return dfixed_trunc(bandwidth);
-}
+	वापस dfixed_trunc(bandwidth);
+पूर्ण
 
 /**
  * dce8_available_bandwidth - get the min available bandwidth
  *
  * @wm: watermark calculation data
  *
- * Calculate the min available bandwidth used for display (CIK).
- * Used for display watermark bandwidth calculations
+ * Calculate the min available bandwidth used क्रम display (CIK).
+ * Used क्रम display watermark bandwidth calculations
  * Returns the min available bandwidth in MBytes/s
  */
-static u32 dce8_available_bandwidth(struct dce8_wm_params *wm)
-{
+अटल u32 dce8_available_bandwidth(काष्ठा dce8_wm_params *wm)
+अणु
 	/* Calculate the Available bandwidth. Display can use this temporarily but not in average. */
 	u32 dram_bandwidth = dce8_dram_bandwidth(wm);
-	u32 data_return_bandwidth = dce8_data_return_bandwidth(wm);
-	u32 dmif_req_bandwidth = dce8_dmif_request_bandwidth(wm);
+	u32 data_वापस_bandwidth = dce8_data_वापस_bandwidth(wm);
+	u32 dmअगर_req_bandwidth = dce8_dmअगर_request_bandwidth(wm);
 
-	return min(dram_bandwidth, min(data_return_bandwidth, dmif_req_bandwidth));
-}
+	वापस min(dram_bandwidth, min(data_वापस_bandwidth, dmअगर_req_bandwidth));
+पूर्ण
 
 /**
  * dce8_average_bandwidth - get the average available bandwidth
  *
  * @wm: watermark calculation data
  *
- * Calculate the average available bandwidth used for display (CIK).
- * Used for display watermark bandwidth calculations
+ * Calculate the average available bandwidth used क्रम display (CIK).
+ * Used क्रम display watermark bandwidth calculations
  * Returns the average available bandwidth in MBytes/s
  */
-static u32 dce8_average_bandwidth(struct dce8_wm_params *wm)
-{
+अटल u32 dce8_average_bandwidth(काष्ठा dce8_wm_params *wm)
+अणु
 	/* Calculate the display mode Average Bandwidth
 	 * DisplayMode should contain the source and destination dimensions,
 	 * timing, etc.
 	 */
 	fixed20_12 bpp;
-	fixed20_12 line_time;
+	fixed20_12 line_समय;
 	fixed20_12 src_width;
 	fixed20_12 bandwidth;
 	fixed20_12 a;
 
-	a.full = dfixed_const(1000);
-	line_time.full = dfixed_const(wm->active_time + wm->blank_time);
-	line_time.full = dfixed_div(line_time, a);
-	bpp.full = dfixed_const(wm->bytes_per_pixel);
-	src_width.full = dfixed_const(wm->src_width);
+	a.full = dfixed_स्थिर(1000);
+	line_समय.full = dfixed_स्थिर(wm->active_समय + wm->blank_समय);
+	line_समय.full = dfixed_भाग(line_समय, a);
+	bpp.full = dfixed_स्थिर(wm->bytes_per_pixel);
+	src_width.full = dfixed_स्थिर(wm->src_width);
 	bandwidth.full = dfixed_mul(src_width, bpp);
 	bandwidth.full = dfixed_mul(bandwidth, wm->vsc);
-	bandwidth.full = dfixed_div(bandwidth, line_time);
+	bandwidth.full = dfixed_भाग(bandwidth, line_समय);
 
-	return dfixed_trunc(bandwidth);
-}
+	वापस dfixed_trunc(bandwidth);
+पूर्ण
 
 /**
  * dce8_latency_watermark - get the latency watermark
@@ -9089,78 +9090,78 @@ static u32 dce8_average_bandwidth(struct dce8_wm_params *wm)
  * @wm: watermark calculation data
  *
  * Calculate the latency watermark (CIK).
- * Used for display watermark bandwidth calculations
+ * Used क्रम display watermark bandwidth calculations
  * Returns the latency watermark in ns
  */
-static u32 dce8_latency_watermark(struct dce8_wm_params *wm)
-{
+अटल u32 dce8_latency_watermark(काष्ठा dce8_wm_params *wm)
+अणु
 	/* First calculate the latency in ns */
 	u32 mc_latency = 2000; /* 2000 ns. */
 	u32 available_bandwidth = dce8_available_bandwidth(wm);
-	u32 worst_chunk_return_time = (512 * 8 * 1000) / available_bandwidth;
-	u32 cursor_line_pair_return_time = (128 * 4 * 1000) / available_bandwidth;
+	u32 worst_chunk_वापस_समय = (512 * 8 * 1000) / available_bandwidth;
+	u32 cursor_line_pair_वापस_समय = (128 * 4 * 1000) / available_bandwidth;
 	u32 dc_latency = 40000000 / wm->disp_clk; /* dc pipe latency */
-	u32 other_heads_data_return_time = ((wm->num_heads + 1) * worst_chunk_return_time) +
-		(wm->num_heads * cursor_line_pair_return_time);
-	u32 latency = mc_latency + other_heads_data_return_time + dc_latency;
-	u32 max_src_lines_per_dst_line, lb_fill_bw, line_fill_time;
-	u32 tmp, dmif_size = 12288;
+	u32 other_heads_data_वापस_समय = ((wm->num_heads + 1) * worst_chunk_वापस_समय) +
+		(wm->num_heads * cursor_line_pair_वापस_समय);
+	u32 latency = mc_latency + other_heads_data_वापस_समय + dc_latency;
+	u32 max_src_lines_per_dst_line, lb_fill_bw, line_fill_समय;
+	u32 पंचांगp, dmअगर_size = 12288;
 	fixed20_12 a, b, c;
 
-	if (wm->num_heads == 0)
-		return 0;
+	अगर (wm->num_heads == 0)
+		वापस 0;
 
-	a.full = dfixed_const(2);
-	b.full = dfixed_const(1);
-	if ((wm->vsc.full > a.full) ||
+	a.full = dfixed_स्थिर(2);
+	b.full = dfixed_स्थिर(1);
+	अगर ((wm->vsc.full > a.full) ||
 	    ((wm->vsc.full > b.full) && (wm->vtaps >= 3)) ||
 	    (wm->vtaps >= 5) ||
-	    ((wm->vsc.full >= a.full) && wm->interlaced))
+	    ((wm->vsc.full >= a.full) && wm->पूर्णांकerlaced))
 		max_src_lines_per_dst_line = 4;
-	else
+	अन्यथा
 		max_src_lines_per_dst_line = 2;
 
-	a.full = dfixed_const(available_bandwidth);
-	b.full = dfixed_const(wm->num_heads);
-	a.full = dfixed_div(a, b);
-	tmp = div_u64((u64) dmif_size * (u64) wm->disp_clk, mc_latency + 512);
-	tmp = min(dfixed_trunc(a), tmp);
+	a.full = dfixed_स्थिर(available_bandwidth);
+	b.full = dfixed_स्थिर(wm->num_heads);
+	a.full = dfixed_भाग(a, b);
+	पंचांगp = भाग_u64((u64) dmअगर_size * (u64) wm->disp_clk, mc_latency + 512);
+	पंचांगp = min(dfixed_trunc(a), पंचांगp);
 
-	lb_fill_bw = min(tmp, wm->disp_clk * wm->bytes_per_pixel / 1000);
+	lb_fill_bw = min(पंचांगp, wm->disp_clk * wm->bytes_per_pixel / 1000);
 
-	a.full = dfixed_const(max_src_lines_per_dst_line * wm->src_width * wm->bytes_per_pixel);
-	b.full = dfixed_const(1000);
-	c.full = dfixed_const(lb_fill_bw);
-	b.full = dfixed_div(c, b);
-	a.full = dfixed_div(a, b);
-	line_fill_time = dfixed_trunc(a);
+	a.full = dfixed_स्थिर(max_src_lines_per_dst_line * wm->src_width * wm->bytes_per_pixel);
+	b.full = dfixed_स्थिर(1000);
+	c.full = dfixed_स्थिर(lb_fill_bw);
+	b.full = dfixed_भाग(c, b);
+	a.full = dfixed_भाग(a, b);
+	line_fill_समय = dfixed_trunc(a);
 
-	if (line_fill_time < wm->active_time)
-		return latency;
-	else
-		return latency + (line_fill_time - wm->active_time);
+	अगर (line_fill_समय < wm->active_समय)
+		वापस latency;
+	अन्यथा
+		वापस latency + (line_fill_समय - wm->active_समय);
 
-}
+पूर्ण
 
 /**
- * dce8_average_bandwidth_vs_dram_bandwidth_for_display - check
+ * dce8_average_bandwidth_vs_dram_bandwidth_क्रम_display - check
  * average and available dram bandwidth
  *
  * @wm: watermark calculation data
  *
- * Check if the display average bandwidth fits in the display
+ * Check अगर the display average bandwidth fits in the display
  * dram bandwidth (CIK).
- * Used for display watermark bandwidth calculations
- * Returns true if the display fits, false if not.
+ * Used क्रम display watermark bandwidth calculations
+ * Returns true अगर the display fits, false अगर not.
  */
-static bool dce8_average_bandwidth_vs_dram_bandwidth_for_display(struct dce8_wm_params *wm)
-{
-	if (dce8_average_bandwidth(wm) <=
-	    (dce8_dram_bandwidth_for_display(wm) / wm->num_heads))
-		return true;
-	else
-		return false;
-}
+अटल bool dce8_average_bandwidth_vs_dram_bandwidth_क्रम_display(काष्ठा dce8_wm_params *wm)
+अणु
+	अगर (dce8_average_bandwidth(wm) <=
+	    (dce8_dram_bandwidth_क्रम_display(wm) / wm->num_heads))
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
 /**
  * dce8_average_bandwidth_vs_available_bandwidth - check
@@ -9168,19 +9169,19 @@ static bool dce8_average_bandwidth_vs_dram_bandwidth_for_display(struct dce8_wm_
  *
  * @wm: watermark calculation data
  *
- * Check if the display average bandwidth fits in the display
+ * Check अगर the display average bandwidth fits in the display
  * available bandwidth (CIK).
- * Used for display watermark bandwidth calculations
- * Returns true if the display fits, false if not.
+ * Used क्रम display watermark bandwidth calculations
+ * Returns true अगर the display fits, false अगर not.
  */
-static bool dce8_average_bandwidth_vs_available_bandwidth(struct dce8_wm_params *wm)
-{
-	if (dce8_average_bandwidth(wm) <=
+अटल bool dce8_average_bandwidth_vs_available_bandwidth(काष्ठा dce8_wm_params *wm)
+अणु
+	अगर (dce8_average_bandwidth(wm) <=
 	    (dce8_available_bandwidth(wm) / wm->num_heads))
-		return true;
-	else
-		return false;
-}
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
 /**
  * dce8_check_latency_hiding - check latency hiding
@@ -9188,630 +9189,630 @@ static bool dce8_average_bandwidth_vs_available_bandwidth(struct dce8_wm_params 
  * @wm: watermark calculation data
  *
  * Check latency hiding (CIK).
- * Used for display watermark bandwidth calculations
- * Returns true if the display fits, false if not.
+ * Used क्रम display watermark bandwidth calculations
+ * Returns true अगर the display fits, false अगर not.
  */
-static bool dce8_check_latency_hiding(struct dce8_wm_params *wm)
-{
+अटल bool dce8_check_latency_hiding(काष्ठा dce8_wm_params *wm)
+अणु
 	u32 lb_partitions = wm->lb_size / wm->src_width;
-	u32 line_time = wm->active_time + wm->blank_time;
+	u32 line_समय = wm->active_समय + wm->blank_समय;
 	u32 latency_tolerant_lines;
 	u32 latency_hiding;
 	fixed20_12 a;
 
-	a.full = dfixed_const(1);
-	if (wm->vsc.full > a.full)
+	a.full = dfixed_स्थिर(1);
+	अगर (wm->vsc.full > a.full)
 		latency_tolerant_lines = 1;
-	else {
-		if (lb_partitions <= (wm->vtaps + 1))
+	अन्यथा अणु
+		अगर (lb_partitions <= (wm->vtaps + 1))
 			latency_tolerant_lines = 1;
-		else
+		अन्यथा
 			latency_tolerant_lines = 2;
-	}
+	पूर्ण
 
-	latency_hiding = (latency_tolerant_lines * line_time + wm->blank_time);
+	latency_hiding = (latency_tolerant_lines * line_समय + wm->blank_समय);
 
-	if (dce8_latency_watermark(wm) <= latency_hiding)
-		return true;
-	else
-		return false;
-}
+	अगर (dce8_latency_watermark(wm) <= latency_hiding)
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
 /**
  * dce8_program_watermarks - program display watermarks
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @radeon_crtc: the selected display controller
  * @lb_size: line buffer size
  * @num_heads: number of display controllers in use
  *
- * Calculate and program the display watermarks for the
+ * Calculate and program the display watermarks क्रम the
  * selected display controller (CIK).
  */
-static void dce8_program_watermarks(struct radeon_device *rdev,
-				    struct radeon_crtc *radeon_crtc,
+अटल व्योम dce8_program_watermarks(काष्ठा radeon_device *rdev,
+				    काष्ठा radeon_crtc *radeon_crtc,
 				    u32 lb_size, u32 num_heads)
-{
-	struct drm_display_mode *mode = &radeon_crtc->base.mode;
-	struct dce8_wm_params wm_low, wm_high;
-	u32 active_time;
-	u32 line_time = 0;
+अणु
+	काष्ठा drm_display_mode *mode = &radeon_crtc->base.mode;
+	काष्ठा dce8_wm_params wm_low, wm_high;
+	u32 active_समय;
+	u32 line_समय = 0;
 	u32 latency_watermark_a = 0, latency_watermark_b = 0;
-	u32 tmp, wm_mask;
+	u32 पंचांगp, wm_mask;
 
-	if (radeon_crtc->base.enabled && num_heads && mode) {
-		active_time = (u32) div_u64((u64)mode->crtc_hdisplay * 1000000,
-					    (u32)mode->clock);
-		line_time = (u32) div_u64((u64)mode->crtc_htotal * 1000000,
-					  (u32)mode->clock);
-		line_time = min(line_time, (u32)65535);
+	अगर (radeon_crtc->base.enabled && num_heads && mode) अणु
+		active_समय = (u32) भाग_u64((u64)mode->crtc_hdisplay * 1000000,
+					    (u32)mode->घड़ी);
+		line_समय = (u32) भाग_u64((u64)mode->crtc_htotal * 1000000,
+					  (u32)mode->घड़ी);
+		line_समय = min(line_समय, (u32)65535);
 
-		/* watermark for high clocks */
-		if ((rdev->pm.pm_method == PM_METHOD_DPM) &&
-		    rdev->pm.dpm_enabled) {
+		/* watermark क्रम high घड़ीs */
+		अगर ((rdev->pm.pm_method == PM_METHOD_DPM) &&
+		    rdev->pm.dpm_enabled) अणु
 			wm_high.yclk =
 				radeon_dpm_get_mclk(rdev, false) * 10;
 			wm_high.sclk =
 				radeon_dpm_get_sclk(rdev, false) * 10;
-		} else {
+		पूर्ण अन्यथा अणु
 			wm_high.yclk = rdev->pm.current_mclk * 10;
 			wm_high.sclk = rdev->pm.current_sclk * 10;
-		}
+		पूर्ण
 
-		wm_high.disp_clk = mode->clock;
+		wm_high.disp_clk = mode->घड़ी;
 		wm_high.src_width = mode->crtc_hdisplay;
-		wm_high.active_time = active_time;
-		wm_high.blank_time = line_time - wm_high.active_time;
-		wm_high.interlaced = false;
-		if (mode->flags & DRM_MODE_FLAG_INTERLACE)
-			wm_high.interlaced = true;
+		wm_high.active_समय = active_समय;
+		wm_high.blank_समय = line_समय - wm_high.active_समय;
+		wm_high.पूर्णांकerlaced = false;
+		अगर (mode->flags & DRM_MODE_FLAG_INTERLACE)
+			wm_high.पूर्णांकerlaced = true;
 		wm_high.vsc = radeon_crtc->vsc;
 		wm_high.vtaps = 1;
-		if (radeon_crtc->rmx_type != RMX_OFF)
+		अगर (radeon_crtc->rmx_type != RMX_OFF)
 			wm_high.vtaps = 2;
 		wm_high.bytes_per_pixel = 4; /* XXX: get this from fb config */
 		wm_high.lb_size = lb_size;
 		wm_high.dram_channels = cik_get_number_of_dram_channels(rdev);
 		wm_high.num_heads = num_heads;
 
-		/* set for high clocks */
+		/* set क्रम high घड़ीs */
 		latency_watermark_a = min(dce8_latency_watermark(&wm_high), (u32)65535);
 
-		/* possibly force display priority to high */
-		/* should really do this at mode validation time... */
-		if (!dce8_average_bandwidth_vs_dram_bandwidth_for_display(&wm_high) ||
+		/* possibly क्रमce display priority to high */
+		/* should really करो this at mode validation समय... */
+		अगर (!dce8_average_bandwidth_vs_dram_bandwidth_क्रम_display(&wm_high) ||
 		    !dce8_average_bandwidth_vs_available_bandwidth(&wm_high) ||
 		    !dce8_check_latency_hiding(&wm_high) ||
-		    (rdev->disp_priority == 2)) {
+		    (rdev->disp_priority == 2)) अणु
 			DRM_DEBUG_KMS("force priority to high\n");
-		}
+		पूर्ण
 
-		/* watermark for low clocks */
-		if ((rdev->pm.pm_method == PM_METHOD_DPM) &&
-		    rdev->pm.dpm_enabled) {
+		/* watermark क्रम low घड़ीs */
+		अगर ((rdev->pm.pm_method == PM_METHOD_DPM) &&
+		    rdev->pm.dpm_enabled) अणु
 			wm_low.yclk =
 				radeon_dpm_get_mclk(rdev, true) * 10;
 			wm_low.sclk =
 				radeon_dpm_get_sclk(rdev, true) * 10;
-		} else {
+		पूर्ण अन्यथा अणु
 			wm_low.yclk = rdev->pm.current_mclk * 10;
 			wm_low.sclk = rdev->pm.current_sclk * 10;
-		}
+		पूर्ण
 
-		wm_low.disp_clk = mode->clock;
+		wm_low.disp_clk = mode->घड़ी;
 		wm_low.src_width = mode->crtc_hdisplay;
-		wm_low.active_time = active_time;
-		wm_low.blank_time = line_time - wm_low.active_time;
-		wm_low.interlaced = false;
-		if (mode->flags & DRM_MODE_FLAG_INTERLACE)
-			wm_low.interlaced = true;
+		wm_low.active_समय = active_समय;
+		wm_low.blank_समय = line_समय - wm_low.active_समय;
+		wm_low.पूर्णांकerlaced = false;
+		अगर (mode->flags & DRM_MODE_FLAG_INTERLACE)
+			wm_low.पूर्णांकerlaced = true;
 		wm_low.vsc = radeon_crtc->vsc;
 		wm_low.vtaps = 1;
-		if (radeon_crtc->rmx_type != RMX_OFF)
+		अगर (radeon_crtc->rmx_type != RMX_OFF)
 			wm_low.vtaps = 2;
 		wm_low.bytes_per_pixel = 4; /* XXX: get this from fb config */
 		wm_low.lb_size = lb_size;
 		wm_low.dram_channels = cik_get_number_of_dram_channels(rdev);
 		wm_low.num_heads = num_heads;
 
-		/* set for low clocks */
+		/* set क्रम low घड़ीs */
 		latency_watermark_b = min(dce8_latency_watermark(&wm_low), (u32)65535);
 
-		/* possibly force display priority to high */
-		/* should really do this at mode validation time... */
-		if (!dce8_average_bandwidth_vs_dram_bandwidth_for_display(&wm_low) ||
+		/* possibly क्रमce display priority to high */
+		/* should really करो this at mode validation समय... */
+		अगर (!dce8_average_bandwidth_vs_dram_bandwidth_क्रम_display(&wm_low) ||
 		    !dce8_average_bandwidth_vs_available_bandwidth(&wm_low) ||
 		    !dce8_check_latency_hiding(&wm_low) ||
-		    (rdev->disp_priority == 2)) {
+		    (rdev->disp_priority == 2)) अणु
 			DRM_DEBUG_KMS("force priority to high\n");
-		}
+		पूर्ण
 
-		/* Save number of lines the linebuffer leads before the scanout */
+		/* Save number of lines the linebuffer leads beक्रमe the scanout */
 		radeon_crtc->lb_vblank_lead_lines = DIV_ROUND_UP(lb_size, mode->crtc_hdisplay);
-	}
+	पूर्ण
 
 	/* select wm A */
 	wm_mask = RREG32(DPG_WATERMARK_MASK_CONTROL + radeon_crtc->crtc_offset);
-	tmp = wm_mask;
-	tmp &= ~LATENCY_WATERMARK_MASK(3);
-	tmp |= LATENCY_WATERMARK_MASK(1);
-	WREG32(DPG_WATERMARK_MASK_CONTROL + radeon_crtc->crtc_offset, tmp);
+	पंचांगp = wm_mask;
+	पंचांगp &= ~LATENCY_WATERMARK_MASK(3);
+	पंचांगp |= LATENCY_WATERMARK_MASK(1);
+	WREG32(DPG_WATERMARK_MASK_CONTROL + radeon_crtc->crtc_offset, पंचांगp);
 	WREG32(DPG_PIPE_LATENCY_CONTROL + radeon_crtc->crtc_offset,
 	       (LATENCY_LOW_WATERMARK(latency_watermark_a) |
-		LATENCY_HIGH_WATERMARK(line_time)));
+		LATENCY_HIGH_WATERMARK(line_समय)));
 	/* select wm B */
-	tmp = RREG32(DPG_WATERMARK_MASK_CONTROL + radeon_crtc->crtc_offset);
-	tmp &= ~LATENCY_WATERMARK_MASK(3);
-	tmp |= LATENCY_WATERMARK_MASK(2);
-	WREG32(DPG_WATERMARK_MASK_CONTROL + radeon_crtc->crtc_offset, tmp);
+	पंचांगp = RREG32(DPG_WATERMARK_MASK_CONTROL + radeon_crtc->crtc_offset);
+	पंचांगp &= ~LATENCY_WATERMARK_MASK(3);
+	पंचांगp |= LATENCY_WATERMARK_MASK(2);
+	WREG32(DPG_WATERMARK_MASK_CONTROL + radeon_crtc->crtc_offset, पंचांगp);
 	WREG32(DPG_PIPE_LATENCY_CONTROL + radeon_crtc->crtc_offset,
 	       (LATENCY_LOW_WATERMARK(latency_watermark_b) |
-		LATENCY_HIGH_WATERMARK(line_time)));
+		LATENCY_HIGH_WATERMARK(line_समय)));
 	/* restore original selection */
 	WREG32(DPG_WATERMARK_MASK_CONTROL + radeon_crtc->crtc_offset, wm_mask);
 
-	/* save values for DPM */
-	radeon_crtc->line_time = line_time;
+	/* save values क्रम DPM */
+	radeon_crtc->line_समय = line_समय;
 	radeon_crtc->wm_high = latency_watermark_a;
 	radeon_crtc->wm_low = latency_watermark_b;
-}
+पूर्ण
 
 /**
  * dce8_bandwidth_update - program display watermarks
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Calculate and program the display watermarks and line
  * buffer allocation (CIK).
  */
-void dce8_bandwidth_update(struct radeon_device *rdev)
-{
-	struct drm_display_mode *mode = NULL;
+व्योम dce8_bandwidth_update(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा drm_display_mode *mode = शून्य;
 	u32 num_heads = 0, lb_size;
-	int i;
+	पूर्णांक i;
 
-	if (!rdev->mode_info.mode_config_initialized)
-		return;
+	अगर (!rdev->mode_info.mode_config_initialized)
+		वापस;
 
 	radeon_update_display_priority(rdev);
 
-	for (i = 0; i < rdev->num_crtc; i++) {
-		if (rdev->mode_info.crtcs[i]->base.enabled)
+	क्रम (i = 0; i < rdev->num_crtc; i++) अणु
+		अगर (rdev->mode_info.crtcs[i]->base.enabled)
 			num_heads++;
-	}
-	for (i = 0; i < rdev->num_crtc; i++) {
+	पूर्ण
+	क्रम (i = 0; i < rdev->num_crtc; i++) अणु
 		mode = &rdev->mode_info.crtcs[i]->base.mode;
 		lb_size = dce8_line_buffer_adjust(rdev, rdev->mode_info.crtcs[i], mode);
 		dce8_program_watermarks(rdev, rdev->mode_info.crtcs[i], lb_size, num_heads);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * cik_get_gpu_clock_counter - return GPU clock counter snapshot
+ * cik_get_gpu_घड़ी_counter - वापस GPU घड़ी counter snapshot
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
- * Fetches a GPU clock counter snapshot (SI).
- * Returns the 64 bit clock counter snapshot.
+ * Fetches a GPU घड़ी counter snapshot (SI).
+ * Returns the 64 bit घड़ी counter snapshot.
  */
-uint64_t cik_get_gpu_clock_counter(struct radeon_device *rdev)
-{
-	uint64_t clock;
+uपूर्णांक64_t cik_get_gpu_घड़ी_counter(काष्ठा radeon_device *rdev)
+अणु
+	uपूर्णांक64_t घड़ी;
 
-	mutex_lock(&rdev->gpu_clock_mutex);
+	mutex_lock(&rdev->gpu_घड़ी_mutex);
 	WREG32(RLC_CAPTURE_GPU_CLOCK_COUNT, 1);
-	clock = (uint64_t)RREG32(RLC_GPU_CLOCK_COUNT_LSB) |
-		((uint64_t)RREG32(RLC_GPU_CLOCK_COUNT_MSB) << 32ULL);
-	mutex_unlock(&rdev->gpu_clock_mutex);
-	return clock;
-}
+	घड़ी = (uपूर्णांक64_t)RREG32(RLC_GPU_CLOCK_COUNT_LSB) |
+		((uपूर्णांक64_t)RREG32(RLC_GPU_CLOCK_COUNT_MSB) << 32ULL);
+	mutex_unlock(&rdev->gpu_घड़ी_mutex);
+	वापस घड़ी;
+पूर्ण
 
-static int cik_set_uvd_clock(struct radeon_device *rdev, u32 clock,
+अटल पूर्णांक cik_set_uvd_घड़ी(काष्ठा radeon_device *rdev, u32 घड़ी,
 			     u32 cntl_reg, u32 status_reg)
-{
-	int r, i;
-	struct atom_clock_dividers dividers;
-	uint32_t tmp;
+अणु
+	पूर्णांक r, i;
+	काष्ठा atom_घड़ी_भागiders भागiders;
+	uपूर्णांक32_t पंचांगp;
 
-	r = radeon_atom_get_clock_dividers(rdev, COMPUTE_GPUCLK_INPUT_FLAG_DEFAULT_GPUCLK,
-					   clock, false, &dividers);
-	if (r)
-		return r;
+	r = radeon_atom_get_घड़ी_भागiders(rdev, COMPUTE_GPUCLK_INPUT_FLAG_DEFAULT_GPUCLK,
+					   घड़ी, false, &भागiders);
+	अगर (r)
+		वापस r;
 
-	tmp = RREG32_SMC(cntl_reg);
-	tmp &= ~(DCLK_DIR_CNTL_EN|DCLK_DIVIDER_MASK);
-	tmp |= dividers.post_divider;
-	WREG32_SMC(cntl_reg, tmp);
+	पंचांगp = RREG32_SMC(cntl_reg);
+	पंचांगp &= ~(DCLK_सूची_CNTL_EN|DCLK_DIVIDER_MASK);
+	पंचांगp |= भागiders.post_भागider;
+	WREG32_SMC(cntl_reg, पंचांगp);
 
-	for (i = 0; i < 100; i++) {
-		if (RREG32_SMC(status_reg) & DCLK_STATUS)
-			break;
+	क्रम (i = 0; i < 100; i++) अणु
+		अगर (RREG32_SMC(status_reg) & DCLK_STATUS)
+			अवरोध;
 		mdelay(10);
-	}
-	if (i == 100)
-		return -ETIMEDOUT;
+	पूर्ण
+	अगर (i == 100)
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cik_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk)
-{
-	int r = 0;
+पूर्णांक cik_set_uvd_घड़ीs(काष्ठा radeon_device *rdev, u32 vclk, u32 dclk)
+अणु
+	पूर्णांक r = 0;
 
-	r = cik_set_uvd_clock(rdev, vclk, CG_VCLK_CNTL, CG_VCLK_STATUS);
-	if (r)
-		return r;
+	r = cik_set_uvd_घड़ी(rdev, vclk, CG_VCLK_CNTL, CG_VCLK_STATUS);
+	अगर (r)
+		वापस r;
 
-	r = cik_set_uvd_clock(rdev, dclk, CG_DCLK_CNTL, CG_DCLK_STATUS);
-	return r;
-}
+	r = cik_set_uvd_घड़ी(rdev, dclk, CG_DCLK_CNTL, CG_DCLK_STATUS);
+	वापस r;
+पूर्ण
 
-int cik_set_vce_clocks(struct radeon_device *rdev, u32 evclk, u32 ecclk)
-{
-	int r, i;
-	struct atom_clock_dividers dividers;
-	u32 tmp;
+पूर्णांक cik_set_vce_घड़ीs(काष्ठा radeon_device *rdev, u32 evclk, u32 ecclk)
+अणु
+	पूर्णांक r, i;
+	काष्ठा atom_घड़ी_भागiders भागiders;
+	u32 पंचांगp;
 
-	r = radeon_atom_get_clock_dividers(rdev, COMPUTE_GPUCLK_INPUT_FLAG_DEFAULT_GPUCLK,
-					   ecclk, false, &dividers);
-	if (r)
-		return r;
+	r = radeon_atom_get_घड़ी_भागiders(rdev, COMPUTE_GPUCLK_INPUT_FLAG_DEFAULT_GPUCLK,
+					   ecclk, false, &भागiders);
+	अगर (r)
+		वापस r;
 
-	for (i = 0; i < 100; i++) {
-		if (RREG32_SMC(CG_ECLK_STATUS) & ECLK_STATUS)
-			break;
+	क्रम (i = 0; i < 100; i++) अणु
+		अगर (RREG32_SMC(CG_ECLK_STATUS) & ECLK_STATUS)
+			अवरोध;
 		mdelay(10);
-	}
-	if (i == 100)
-		return -ETIMEDOUT;
+	पूर्ण
+	अगर (i == 100)
+		वापस -ETIMEDOUT;
 
-	tmp = RREG32_SMC(CG_ECLK_CNTL);
-	tmp &= ~(ECLK_DIR_CNTL_EN|ECLK_DIVIDER_MASK);
-	tmp |= dividers.post_divider;
-	WREG32_SMC(CG_ECLK_CNTL, tmp);
+	पंचांगp = RREG32_SMC(CG_ECLK_CNTL);
+	पंचांगp &= ~(ECLK_सूची_CNTL_EN|ECLK_DIVIDER_MASK);
+	पंचांगp |= भागiders.post_भागider;
+	WREG32_SMC(CG_ECLK_CNTL, पंचांगp);
 
-	for (i = 0; i < 100; i++) {
-		if (RREG32_SMC(CG_ECLK_STATUS) & ECLK_STATUS)
-			break;
+	क्रम (i = 0; i < 100; i++) अणु
+		अगर (RREG32_SMC(CG_ECLK_STATUS) & ECLK_STATUS)
+			अवरोध;
 		mdelay(10);
-	}
-	if (i == 100)
-		return -ETIMEDOUT;
+	पूर्ण
+	अगर (i == 100)
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cik_pcie_gen3_enable(struct radeon_device *rdev)
-{
-	struct pci_dev *root = rdev->pdev->bus->self;
-	enum pci_bus_speed speed_cap;
+अटल व्योम cik_pcie_gen3_enable(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा pci_dev *root = rdev->pdev->bus->self;
+	क्रमागत pci_bus_speed speed_cap;
 	u32 speed_cntl, current_data_rate;
-	int i;
-	u16 tmp16;
+	पूर्णांक i;
+	u16 पंचांगp16;
 
-	if (pci_is_root_bus(rdev->pdev->bus))
-		return;
+	अगर (pci_is_root_bus(rdev->pdev->bus))
+		वापस;
 
-	if (radeon_pcie_gen2 == 0)
-		return;
+	अगर (radeon_pcie_gen2 == 0)
+		वापस;
 
-	if (rdev->flags & RADEON_IS_IGP)
-		return;
+	अगर (rdev->flags & RADEON_IS_IGP)
+		वापस;
 
-	if (!(rdev->flags & RADEON_IS_PCIE))
-		return;
+	अगर (!(rdev->flags & RADEON_IS_PCIE))
+		वापस;
 
 	speed_cap = pcie_get_speed_cap(root);
-	if (speed_cap == PCI_SPEED_UNKNOWN)
-		return;
+	अगर (speed_cap == PCI_SPEED_UNKNOWN)
+		वापस;
 
-	if ((speed_cap != PCIE_SPEED_8_0GT) &&
+	अगर ((speed_cap != PCIE_SPEED_8_0GT) &&
 	    (speed_cap != PCIE_SPEED_5_0GT))
-		return;
+		वापस;
 
 	speed_cntl = RREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL);
 	current_data_rate = (speed_cntl & LC_CURRENT_DATA_RATE_MASK) >>
 		LC_CURRENT_DATA_RATE_SHIFT;
-	if (speed_cap == PCIE_SPEED_8_0GT) {
-		if (current_data_rate == 2) {
+	अगर (speed_cap == PCIE_SPEED_8_0GT) अणु
+		अगर (current_data_rate == 2) अणु
 			DRM_INFO("PCIE gen 3 link speeds already enabled\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		DRM_INFO("enabling PCIE gen 3 link speeds, disable with radeon.pcie_gen2=0\n");
-	} else if (speed_cap == PCIE_SPEED_5_0GT) {
-		if (current_data_rate == 1) {
+	पूर्ण अन्यथा अगर (speed_cap == PCIE_SPEED_5_0GT) अणु
+		अगर (current_data_rate == 1) अणु
 			DRM_INFO("PCIE gen 2 link speeds already enabled\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		DRM_INFO("enabling PCIE gen 2 link speeds, disable with radeon.pcie_gen2=0\n");
-	}
+	पूर्ण
 
-	if (!pci_is_pcie(root) || !pci_is_pcie(rdev->pdev))
-		return;
+	अगर (!pci_is_pcie(root) || !pci_is_pcie(rdev->pdev))
+		वापस;
 
-	if (speed_cap == PCIE_SPEED_8_0GT) {
-		/* re-try equalization if gen3 is not already enabled */
-		if (current_data_rate != 2) {
+	अगर (speed_cap == PCIE_SPEED_8_0GT) अणु
+		/* re-try equalization अगर gen3 is not alपढ़ोy enabled */
+		अगर (current_data_rate != 2) अणु
 			u16 bridge_cfg, gpu_cfg;
 			u16 bridge_cfg2, gpu_cfg2;
-			u32 max_lw, current_lw, tmp;
+			u32 max_lw, current_lw, पंचांगp;
 
-			pcie_capability_read_word(root, PCI_EXP_LNKCTL,
+			pcie_capability_पढ़ो_word(root, PCI_EXP_LNKCTL,
 						  &bridge_cfg);
-			pcie_capability_read_word(rdev->pdev, PCI_EXP_LNKCTL,
+			pcie_capability_पढ़ो_word(rdev->pdev, PCI_EXP_LNKCTL,
 						  &gpu_cfg);
 
-			tmp16 = bridge_cfg | PCI_EXP_LNKCTL_HAWD;
-			pcie_capability_write_word(root, PCI_EXP_LNKCTL, tmp16);
+			पंचांगp16 = bridge_cfg | PCI_EXP_LNKCTL_HAWD;
+			pcie_capability_ग_लिखो_word(root, PCI_EXP_LNKCTL, पंचांगp16);
 
-			tmp16 = gpu_cfg | PCI_EXP_LNKCTL_HAWD;
-			pcie_capability_write_word(rdev->pdev, PCI_EXP_LNKCTL,
-						   tmp16);
+			पंचांगp16 = gpu_cfg | PCI_EXP_LNKCTL_HAWD;
+			pcie_capability_ग_लिखो_word(rdev->pdev, PCI_EXP_LNKCTL,
+						   पंचांगp16);
 
-			tmp = RREG32_PCIE_PORT(PCIE_LC_STATUS1);
-			max_lw = (tmp & LC_DETECTED_LINK_WIDTH_MASK) >> LC_DETECTED_LINK_WIDTH_SHIFT;
-			current_lw = (tmp & LC_OPERATING_LINK_WIDTH_MASK) >> LC_OPERATING_LINK_WIDTH_SHIFT;
+			पंचांगp = RREG32_PCIE_PORT(PCIE_LC_STATUS1);
+			max_lw = (पंचांगp & LC_DETECTED_LINK_WIDTH_MASK) >> LC_DETECTED_LINK_WIDTH_SHIFT;
+			current_lw = (पंचांगp & LC_OPERATING_LINK_WIDTH_MASK) >> LC_OPERATING_LINK_WIDTH_SHIFT;
 
-			if (current_lw < max_lw) {
-				tmp = RREG32_PCIE_PORT(PCIE_LC_LINK_WIDTH_CNTL);
-				if (tmp & LC_RENEGOTIATION_SUPPORT) {
-					tmp &= ~(LC_LINK_WIDTH_MASK | LC_UPCONFIGURE_DIS);
-					tmp |= (max_lw << LC_LINK_WIDTH_SHIFT);
-					tmp |= LC_UPCONFIGURE_SUPPORT | LC_RENEGOTIATE_EN | LC_RECONFIG_NOW;
-					WREG32_PCIE_PORT(PCIE_LC_LINK_WIDTH_CNTL, tmp);
-				}
-			}
+			अगर (current_lw < max_lw) अणु
+				पंचांगp = RREG32_PCIE_PORT(PCIE_LC_LINK_WIDTH_CNTL);
+				अगर (पंचांगp & LC_RENEGOTIATION_SUPPORT) अणु
+					पंचांगp &= ~(LC_LINK_WIDTH_MASK | LC_UPCONFIGURE_DIS);
+					पंचांगp |= (max_lw << LC_LINK_WIDTH_SHIFT);
+					पंचांगp |= LC_UPCONFIGURE_SUPPORT | LC_RENEGOTIATE_EN | LC_RECONFIG_NOW;
+					WREG32_PCIE_PORT(PCIE_LC_LINK_WIDTH_CNTL, पंचांगp);
+				पूर्ण
+			पूर्ण
 
-			for (i = 0; i < 10; i++) {
+			क्रम (i = 0; i < 10; i++) अणु
 				/* check status */
-				pcie_capability_read_word(rdev->pdev,
+				pcie_capability_पढ़ो_word(rdev->pdev,
 							  PCI_EXP_DEVSTA,
-							  &tmp16);
-				if (tmp16 & PCI_EXP_DEVSTA_TRPND)
-					break;
+							  &पंचांगp16);
+				अगर (पंचांगp16 & PCI_EXP_DEVSTA_TRPND)
+					अवरोध;
 
-				pcie_capability_read_word(root, PCI_EXP_LNKCTL,
+				pcie_capability_पढ़ो_word(root, PCI_EXP_LNKCTL,
 							  &bridge_cfg);
-				pcie_capability_read_word(rdev->pdev,
+				pcie_capability_पढ़ो_word(rdev->pdev,
 							  PCI_EXP_LNKCTL,
 							  &gpu_cfg);
 
-				pcie_capability_read_word(root, PCI_EXP_LNKCTL2,
+				pcie_capability_पढ़ो_word(root, PCI_EXP_LNKCTL2,
 							  &bridge_cfg2);
-				pcie_capability_read_word(rdev->pdev,
+				pcie_capability_पढ़ो_word(rdev->pdev,
 							  PCI_EXP_LNKCTL2,
 							  &gpu_cfg2);
 
-				tmp = RREG32_PCIE_PORT(PCIE_LC_CNTL4);
-				tmp |= LC_SET_QUIESCE;
-				WREG32_PCIE_PORT(PCIE_LC_CNTL4, tmp);
+				पंचांगp = RREG32_PCIE_PORT(PCIE_LC_CNTL4);
+				पंचांगp |= LC_SET_QUIESCE;
+				WREG32_PCIE_PORT(PCIE_LC_CNTL4, पंचांगp);
 
-				tmp = RREG32_PCIE_PORT(PCIE_LC_CNTL4);
-				tmp |= LC_REDO_EQ;
-				WREG32_PCIE_PORT(PCIE_LC_CNTL4, tmp);
+				पंचांगp = RREG32_PCIE_PORT(PCIE_LC_CNTL4);
+				पंचांगp |= LC_REDO_EQ;
+				WREG32_PCIE_PORT(PCIE_LC_CNTL4, पंचांगp);
 
 				msleep(100);
 
 				/* linkctl */
-				pcie_capability_read_word(root, PCI_EXP_LNKCTL,
-							  &tmp16);
-				tmp16 &= ~PCI_EXP_LNKCTL_HAWD;
-				tmp16 |= (bridge_cfg & PCI_EXP_LNKCTL_HAWD);
-				pcie_capability_write_word(root, PCI_EXP_LNKCTL,
-							   tmp16);
+				pcie_capability_पढ़ो_word(root, PCI_EXP_LNKCTL,
+							  &पंचांगp16);
+				पंचांगp16 &= ~PCI_EXP_LNKCTL_HAWD;
+				पंचांगp16 |= (bridge_cfg & PCI_EXP_LNKCTL_HAWD);
+				pcie_capability_ग_लिखो_word(root, PCI_EXP_LNKCTL,
+							   पंचांगp16);
 
-				pcie_capability_read_word(rdev->pdev,
+				pcie_capability_पढ़ो_word(rdev->pdev,
 							  PCI_EXP_LNKCTL,
-							  &tmp16);
-				tmp16 &= ~PCI_EXP_LNKCTL_HAWD;
-				tmp16 |= (gpu_cfg & PCI_EXP_LNKCTL_HAWD);
-				pcie_capability_write_word(rdev->pdev,
+							  &पंचांगp16);
+				पंचांगp16 &= ~PCI_EXP_LNKCTL_HAWD;
+				पंचांगp16 |= (gpu_cfg & PCI_EXP_LNKCTL_HAWD);
+				pcie_capability_ग_लिखो_word(rdev->pdev,
 							   PCI_EXP_LNKCTL,
-							   tmp16);
+							   पंचांगp16);
 
 				/* linkctl2 */
-				pcie_capability_read_word(root, PCI_EXP_LNKCTL2,
-							  &tmp16);
-				tmp16 &= ~(PCI_EXP_LNKCTL2_ENTER_COMP |
+				pcie_capability_पढ़ो_word(root, PCI_EXP_LNKCTL2,
+							  &पंचांगp16);
+				पंचांगp16 &= ~(PCI_EXP_LNKCTL2_ENTER_COMP |
 					   PCI_EXP_LNKCTL2_TX_MARGIN);
-				tmp16 |= (bridge_cfg2 &
+				पंचांगp16 |= (bridge_cfg2 &
 					  (PCI_EXP_LNKCTL2_ENTER_COMP |
 					   PCI_EXP_LNKCTL2_TX_MARGIN));
-				pcie_capability_write_word(root,
+				pcie_capability_ग_लिखो_word(root,
 							   PCI_EXP_LNKCTL2,
-							   tmp16);
+							   पंचांगp16);
 
-				pcie_capability_read_word(rdev->pdev,
+				pcie_capability_पढ़ो_word(rdev->pdev,
 							  PCI_EXP_LNKCTL2,
-							  &tmp16);
-				tmp16 &= ~(PCI_EXP_LNKCTL2_ENTER_COMP |
+							  &पंचांगp16);
+				पंचांगp16 &= ~(PCI_EXP_LNKCTL2_ENTER_COMP |
 					   PCI_EXP_LNKCTL2_TX_MARGIN);
-				tmp16 |= (gpu_cfg2 &
+				पंचांगp16 |= (gpu_cfg2 &
 					  (PCI_EXP_LNKCTL2_ENTER_COMP |
 					   PCI_EXP_LNKCTL2_TX_MARGIN));
-				pcie_capability_write_word(rdev->pdev,
+				pcie_capability_ग_लिखो_word(rdev->pdev,
 							   PCI_EXP_LNKCTL2,
-							   tmp16);
+							   पंचांगp16);
 
-				tmp = RREG32_PCIE_PORT(PCIE_LC_CNTL4);
-				tmp &= ~LC_SET_QUIESCE;
-				WREG32_PCIE_PORT(PCIE_LC_CNTL4, tmp);
-			}
-		}
-	}
+				पंचांगp = RREG32_PCIE_PORT(PCIE_LC_CNTL4);
+				पंचांगp &= ~LC_SET_QUIESCE;
+				WREG32_PCIE_PORT(PCIE_LC_CNTL4, पंचांगp);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* set the link speed */
 	speed_cntl |= LC_FORCE_EN_SW_SPEED_CHANGE | LC_FORCE_DIS_HW_SPEED_CHANGE;
 	speed_cntl &= ~LC_FORCE_DIS_SW_SPEED_CHANGE;
 	WREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL, speed_cntl);
 
-	pcie_capability_read_word(rdev->pdev, PCI_EXP_LNKCTL2, &tmp16);
-	tmp16 &= ~PCI_EXP_LNKCTL2_TLS;
-	if (speed_cap == PCIE_SPEED_8_0GT)
-		tmp16 |= PCI_EXP_LNKCTL2_TLS_8_0GT; /* gen3 */
-	else if (speed_cap == PCIE_SPEED_5_0GT)
-		tmp16 |= PCI_EXP_LNKCTL2_TLS_5_0GT; /* gen2 */
-	else
-		tmp16 |= PCI_EXP_LNKCTL2_TLS_2_5GT; /* gen1 */
-	pcie_capability_write_word(rdev->pdev, PCI_EXP_LNKCTL2, tmp16);
+	pcie_capability_पढ़ो_word(rdev->pdev, PCI_EXP_LNKCTL2, &पंचांगp16);
+	पंचांगp16 &= ~PCI_EXP_LNKCTL2_TLS;
+	अगर (speed_cap == PCIE_SPEED_8_0GT)
+		पंचांगp16 |= PCI_EXP_LNKCTL2_TLS_8_0GT; /* gen3 */
+	अन्यथा अगर (speed_cap == PCIE_SPEED_5_0GT)
+		पंचांगp16 |= PCI_EXP_LNKCTL2_TLS_5_0GT; /* gen2 */
+	अन्यथा
+		पंचांगp16 |= PCI_EXP_LNKCTL2_TLS_2_5GT; /* gen1 */
+	pcie_capability_ग_लिखो_word(rdev->pdev, PCI_EXP_LNKCTL2, पंचांगp16);
 
 	speed_cntl = RREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL);
 	speed_cntl |= LC_INITIATE_LINK_SPEED_CHANGE;
 	WREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL, speed_cntl);
 
-	for (i = 0; i < rdev->usec_timeout; i++) {
+	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
 		speed_cntl = RREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL);
-		if ((speed_cntl & LC_INITIATE_LINK_SPEED_CHANGE) == 0)
-			break;
+		अगर ((speed_cntl & LC_INITIATE_LINK_SPEED_CHANGE) == 0)
+			अवरोध;
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cik_program_aspm(struct radeon_device *rdev)
-{
+अटल व्योम cik_program_aspm(काष्ठा radeon_device *rdev)
+अणु
 	u32 data, orig;
 	bool disable_l0s = false, disable_l1 = false, disable_plloff_in_l1 = false;
 	bool disable_clkreq = false;
 
-	if (radeon_aspm == 0)
-		return;
+	अगर (radeon_aspm == 0)
+		वापस;
 
-	/* XXX double check IGPs */
-	if (rdev->flags & RADEON_IS_IGP)
-		return;
+	/* XXX द्विगुन check IGPs */
+	अगर (rdev->flags & RADEON_IS_IGP)
+		वापस;
 
-	if (!(rdev->flags & RADEON_IS_PCIE))
-		return;
+	अगर (!(rdev->flags & RADEON_IS_PCIE))
+		वापस;
 
 	orig = data = RREG32_PCIE_PORT(PCIE_LC_N_FTS_CNTL);
 	data &= ~LC_XMIT_N_FTS_MASK;
 	data |= LC_XMIT_N_FTS(0x24) | LC_XMIT_N_FTS_OVERRIDE_EN;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32_PCIE_PORT(PCIE_LC_N_FTS_CNTL, data);
 
 	orig = data = RREG32_PCIE_PORT(PCIE_LC_CNTL3);
 	data |= LC_GO_TO_RECOVERY;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32_PCIE_PORT(PCIE_LC_CNTL3, data);
 
 	orig = data = RREG32_PCIE_PORT(PCIE_P_CNTL);
 	data |= P_IGNORE_EDB_ERR;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32_PCIE_PORT(PCIE_P_CNTL, data);
 
 	orig = data = RREG32_PCIE_PORT(PCIE_LC_CNTL);
 	data &= ~(LC_L0S_INACTIVITY_MASK | LC_L1_INACTIVITY_MASK);
 	data |= LC_PMI_TO_L1_DIS;
-	if (!disable_l0s)
+	अगर (!disable_l0s)
 		data |= LC_L0S_INACTIVITY(7);
 
-	if (!disable_l1) {
+	अगर (!disable_l1) अणु
 		data |= LC_L1_INACTIVITY(7);
 		data &= ~LC_PMI_TO_L1_DIS;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32_PCIE_PORT(PCIE_LC_CNTL, data);
 
-		if (!disable_plloff_in_l1) {
+		अगर (!disable_plloff_in_l1) अणु
 			bool clk_req_support;
 
 			orig = data = RREG32_PCIE_PORT(PB0_PIF_PWRDOWN_0);
 			data &= ~(PLL_POWER_STATE_IN_OFF_0_MASK | PLL_POWER_STATE_IN_TXS2_0_MASK);
 			data |= PLL_POWER_STATE_IN_OFF_0(7) | PLL_POWER_STATE_IN_TXS2_0(7);
-			if (orig != data)
+			अगर (orig != data)
 				WREG32_PCIE_PORT(PB0_PIF_PWRDOWN_0, data);
 
 			orig = data = RREG32_PCIE_PORT(PB0_PIF_PWRDOWN_1);
 			data &= ~(PLL_POWER_STATE_IN_OFF_1_MASK | PLL_POWER_STATE_IN_TXS2_1_MASK);
 			data |= PLL_POWER_STATE_IN_OFF_1(7) | PLL_POWER_STATE_IN_TXS2_1(7);
-			if (orig != data)
+			अगर (orig != data)
 				WREG32_PCIE_PORT(PB0_PIF_PWRDOWN_1, data);
 
 			orig = data = RREG32_PCIE_PORT(PB1_PIF_PWRDOWN_0);
 			data &= ~(PLL_POWER_STATE_IN_OFF_0_MASK | PLL_POWER_STATE_IN_TXS2_0_MASK);
 			data |= PLL_POWER_STATE_IN_OFF_0(7) | PLL_POWER_STATE_IN_TXS2_0(7);
-			if (orig != data)
+			अगर (orig != data)
 				WREG32_PCIE_PORT(PB1_PIF_PWRDOWN_0, data);
 
 			orig = data = RREG32_PCIE_PORT(PB1_PIF_PWRDOWN_1);
 			data &= ~(PLL_POWER_STATE_IN_OFF_1_MASK | PLL_POWER_STATE_IN_TXS2_1_MASK);
 			data |= PLL_POWER_STATE_IN_OFF_1(7) | PLL_POWER_STATE_IN_TXS2_1(7);
-			if (orig != data)
+			अगर (orig != data)
 				WREG32_PCIE_PORT(PB1_PIF_PWRDOWN_1, data);
 
 			orig = data = RREG32_PCIE_PORT(PCIE_LC_LINK_WIDTH_CNTL);
 			data &= ~LC_DYN_LANES_PWR_STATE_MASK;
 			data |= LC_DYN_LANES_PWR_STATE(3);
-			if (orig != data)
+			अगर (orig != data)
 				WREG32_PCIE_PORT(PCIE_LC_LINK_WIDTH_CNTL, data);
 
-			if (!disable_clkreq &&
-			    !pci_is_root_bus(rdev->pdev->bus)) {
-				struct pci_dev *root = rdev->pdev->bus->self;
+			अगर (!disable_clkreq &&
+			    !pci_is_root_bus(rdev->pdev->bus)) अणु
+				काष्ठा pci_dev *root = rdev->pdev->bus->self;
 				u32 lnkcap;
 
 				clk_req_support = false;
-				pcie_capability_read_dword(root, PCI_EXP_LNKCAP, &lnkcap);
-				if (lnkcap & PCI_EXP_LNKCAP_CLKPM)
+				pcie_capability_पढ़ो_dword(root, PCI_EXP_LNKCAP, &lnkcap);
+				अगर (lnkcap & PCI_EXP_LNKCAP_CLKPM)
 					clk_req_support = true;
-			} else {
+			पूर्ण अन्यथा अणु
 				clk_req_support = false;
-			}
+			पूर्ण
 
-			if (clk_req_support) {
+			अगर (clk_req_support) अणु
 				orig = data = RREG32_PCIE_PORT(PCIE_LC_CNTL2);
 				data |= LC_ALLOW_PDWN_IN_L1 | LC_ALLOW_PDWN_IN_L23;
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_PCIE_PORT(PCIE_LC_CNTL2, data);
 
 				orig = data = RREG32_SMC(THM_CLK_CNTL);
 				data &= ~(CMON_CLK_SEL_MASK | TMON_CLK_SEL_MASK);
 				data |= CMON_CLK_SEL(1) | TMON_CLK_SEL(1);
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_SMC(THM_CLK_CNTL, data);
 
 				orig = data = RREG32_SMC(MISC_CLK_CTRL);
 				data &= ~(DEEP_SLEEP_CLK_SEL_MASK | ZCLK_SEL_MASK);
 				data |= DEEP_SLEEP_CLK_SEL(1) | ZCLK_SEL(1);
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_SMC(MISC_CLK_CTRL, data);
 
 				orig = data = RREG32_SMC(CG_CLKPIN_CNTL);
 				data &= ~BCLK_AS_XCLK;
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_SMC(CG_CLKPIN_CNTL, data);
 
 				orig = data = RREG32_SMC(CG_CLKPIN_CNTL_2);
 				data &= ~FORCE_BIF_REFCLK_EN;
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_SMC(CG_CLKPIN_CNTL_2, data);
 
 				orig = data = RREG32_SMC(MPLL_BYPASSCLK_SEL);
 				data &= ~MPLL_CLKOUT_SEL_MASK;
 				data |= MPLL_CLKOUT_SEL(4);
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_SMC(MPLL_BYPASSCLK_SEL, data);
-			}
-		}
-	} else {
-		if (orig != data)
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (orig != data)
 			WREG32_PCIE_PORT(PCIE_LC_CNTL, data);
-	}
+	पूर्ण
 
 	orig = data = RREG32_PCIE_PORT(PCIE_CNTL2);
 	data |= SLV_MEM_LS_EN | MST_MEM_LS_EN | REPLAY_MEM_LS_EN;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32_PCIE_PORT(PCIE_CNTL2, data);
 
-	if (!disable_l0s) {
+	अगर (!disable_l0s) अणु
 		data = RREG32_PCIE_PORT(PCIE_LC_N_FTS_CNTL);
-		if((data & LC_N_FTS_MASK) == LC_N_FTS_MASK) {
+		अगर((data & LC_N_FTS_MASK) == LC_N_FTS_MASK) अणु
 			data = RREG32_PCIE_PORT(PCIE_LC_STATUS1);
-			if ((data & LC_REVERSE_XMIT) && (data & LC_REVERSE_RCVR)) {
+			अगर ((data & LC_REVERSE_XMIT) && (data & LC_REVERSE_RCVR)) अणु
 				orig = data = RREG32_PCIE_PORT(PCIE_LC_CNTL);
 				data &= ~LC_L0S_INACTIVITY_MASK;
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_PCIE_PORT(PCIE_LC_CNTL, data);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण

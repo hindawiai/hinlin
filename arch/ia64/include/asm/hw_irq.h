@@ -1,167 +1,168 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_HW_IRQ_H
-#define _ASM_IA64_HW_IRQ_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_HW_IRQ_H
+#घोषणा _ASM_IA64_HW_IRQ_H
 
 /*
  * Copyright (C) 2001-2003 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  */
 
-#include <linux/interrupt.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <linux/profile.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/profile.h>
 
-#include <asm/ptrace.h>
-#include <asm/smp.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/smp.h>
 
-typedef u8 ia64_vector;
+प्रकार u8 ia64_vector;
 
 /*
  * 0 special
  *
  * 1,3-14 are reserved from firmware
  *
- * 16-255 (vectored external interrupts) are available
+ * 16-255 (vectored बाह्यal पूर्णांकerrupts) are available
  *
- * 15 spurious interrupt (see IVR)
+ * 15 spurious पूर्णांकerrupt (see IVR)
  *
  * 16 lowest priority, 255 highest priority
  *
- * 15 classes of 16 interrupts each.
+ * 15 classes of 16 पूर्णांकerrupts each.
  */
-#define IA64_MIN_VECTORED_IRQ		 16
-#define IA64_MAX_VECTORED_IRQ		255
-#define IA64_NUM_VECTORS		256
+#घोषणा IA64_MIN_VECTORED_IRQ		 16
+#घोषणा IA64_MAX_VECTORED_IRQ		255
+#घोषणा IA64_NUM_VECTORS		256
 
-#define AUTO_ASSIGN			-1
+#घोषणा AUTO_ASSIGN			-1
 
-#define IA64_SPURIOUS_INT_VECTOR	0x0f
+#घोषणा IA64_SPURIOUS_INT_VECTOR	0x0f
 
 /*
- * Vectors 0x10-0x1f are used for low priority interrupts, e.g. CMCI.
+ * Vectors 0x10-0x1f are used क्रम low priority पूर्णांकerrupts, e.g. CMCI.
  */
-#define IA64_CPEP_VECTOR		0x1c	/* corrected platform error polling vector */
-#define IA64_CMCP_VECTOR		0x1d	/* corrected machine-check polling vector */
-#define IA64_CPE_VECTOR			0x1e	/* corrected platform error interrupt vector */
-#define IA64_CMC_VECTOR			0x1f	/* corrected machine-check interrupt vector */
+#घोषणा IA64_CPEP_VECTOR		0x1c	/* corrected platक्रमm error polling vector */
+#घोषणा IA64_CMCP_VECTOR		0x1d	/* corrected machine-check polling vector */
+#घोषणा IA64_CPE_VECTOR			0x1e	/* corrected platक्रमm error पूर्णांकerrupt vector */
+#घोषणा IA64_CMC_VECTOR			0x1f	/* corrected machine-check पूर्णांकerrupt vector */
 /*
- * Vectors 0x20-0x2f are reserved for legacy ISA IRQs.
- * Use vectors 0x30-0xe7 as the default device vector range for ia64.
- * Platforms may choose to reduce this range in platform_irq_setup, but the
- * platform range must fall within
+ * Vectors 0x20-0x2f are reserved क्रम legacy ISA IRQs.
+ * Use vectors 0x30-0xe7 as the शेष device vector range क्रम ia64.
+ * Platक्रमms may choose to reduce this range in platक्रमm_irq_setup, but the
+ * platक्रमm range must fall within
  *	[IA64_DEF_FIRST_DEVICE_VECTOR..IA64_DEF_LAST_DEVICE_VECTOR]
  */
-extern int ia64_first_device_vector;
-extern int ia64_last_device_vector;
+बाह्य पूर्णांक ia64_first_device_vector;
+बाह्य पूर्णांक ia64_last_device_vector;
 
-#ifdef CONFIG_SMP
-/* Reserve the lower priority vector than device vectors for "move IRQ" IPI */
-#define IA64_IRQ_MOVE_VECTOR		0x30	/* "move IRQ" IPI */
-#define IA64_DEF_FIRST_DEVICE_VECTOR	0x31
-#else
-#define IA64_DEF_FIRST_DEVICE_VECTOR	0x30
-#endif
-#define IA64_DEF_LAST_DEVICE_VECTOR	0xe7
-#define IA64_FIRST_DEVICE_VECTOR	ia64_first_device_vector
-#define IA64_LAST_DEVICE_VECTOR		ia64_last_device_vector
-#define IA64_MAX_DEVICE_VECTORS		(IA64_DEF_LAST_DEVICE_VECTOR - IA64_DEF_FIRST_DEVICE_VECTOR + 1)
-#define IA64_NUM_DEVICE_VECTORS		(IA64_LAST_DEVICE_VECTOR - IA64_FIRST_DEVICE_VECTOR + 1)
+#अगर_घोषित CONFIG_SMP
+/* Reserve the lower priority vector than device vectors क्रम "move IRQ" IPI */
+#घोषणा IA64_IRQ_MOVE_VECTOR		0x30	/* "move IRQ" IPI */
+#घोषणा IA64_DEF_FIRST_DEVICE_VECTOR	0x31
+#अन्यथा
+#घोषणा IA64_DEF_FIRST_DEVICE_VECTOR	0x30
+#पूर्ण_अगर
+#घोषणा IA64_DEF_LAST_DEVICE_VECTOR	0xe7
+#घोषणा IA64_FIRST_DEVICE_VECTOR	ia64_first_device_vector
+#घोषणा IA64_LAST_DEVICE_VECTOR		ia64_last_device_vector
+#घोषणा IA64_MAX_DEVICE_VECTORS		(IA64_DEF_LAST_DEVICE_VECTOR - IA64_DEF_FIRST_DEVICE_VECTOR + 1)
+#घोषणा IA64_NUM_DEVICE_VECTORS		(IA64_LAST_DEVICE_VECTOR - IA64_FIRST_DEVICE_VECTOR + 1)
 
-#define IA64_MCA_RENDEZ_VECTOR		0xe8	/* MCA rendez interrupt */
-#define IA64_TIMER_VECTOR		0xef	/* use highest-prio group 15 interrupt for timer */
-#define	IA64_MCA_WAKEUP_VECTOR		0xf0	/* MCA wakeup (must be >MCA_RENDEZ_VECTOR) */
-#define IA64_IPI_LOCAL_TLB_FLUSH	0xfc	/* SMP flush local TLB */
-#define IA64_IPI_RESCHEDULE		0xfd	/* SMP reschedule */
-#define IA64_IPI_VECTOR			0xfe	/* inter-processor interrupt vector */
+#घोषणा IA64_MCA_RENDEZ_VECTOR		0xe8	/* MCA rendez पूर्णांकerrupt */
+#घोषणा IA64_TIMER_VECTOR		0xef	/* use highest-prio group 15 पूर्णांकerrupt क्रम समयr */
+#घोषणा	IA64_MCA_WAKEUP_VECTOR		0xf0	/* MCA wakeup (must be >MCA_RENDEZ_VECTOR) */
+#घोषणा IA64_IPI_LOCAL_TLB_FLUSH	0xfc	/* SMP flush local TLB */
+#घोषणा IA64_IPI_RESCHEDULE		0xfd	/* SMP reschedule */
+#घोषणा IA64_IPI_VECTOR			0xfe	/* पूर्णांकer-processor पूर्णांकerrupt vector */
 
-/* Used for encoding redirected irqs */
+/* Used क्रम encoding redirected irqs */
 
-#define IA64_IRQ_REDIRECTED		(1 << 31)
+#घोषणा IA64_IRQ_REसूचीECTED		(1 << 31)
 
-/* IA64 inter-cpu interrupt related definitions */
+/* IA64 पूर्णांकer-cpu पूर्णांकerrupt related definitions */
 
-#define IA64_IPI_DEFAULT_BASE_ADDR	0xfee00000
+#घोषणा IA64_IPI_DEFAULT_BASE_ADDR	0xfee00000
 
-/* Delivery modes for inter-cpu interrupts */
-enum {
-        IA64_IPI_DM_INT =       0x0,    /* pend an external interrupt */
+/* Delivery modes क्रम पूर्णांकer-cpu पूर्णांकerrupts */
+क्रमागत अणु
+        IA64_IPI_DM_INT =       0x0,    /* pend an बाह्यal पूर्णांकerrupt */
         IA64_IPI_DM_PMI =       0x2,    /* pend a PMI */
         IA64_IPI_DM_NMI =       0x4,    /* pend an NMI (vector 2) */
-        IA64_IPI_DM_INIT =      0x5,    /* pend an INIT interrupt */
-        IA64_IPI_DM_EXTINT =    0x7,    /* pend an 8259-compatible interrupt. */
-};
+        IA64_IPI_DM_INIT =      0x5,    /* pend an INIT पूर्णांकerrupt */
+        IA64_IPI_DM_EXTINT =    0x7,    /* pend an 8259-compatible पूर्णांकerrupt. */
+पूर्ण;
 
-extern __u8 isa_irq_to_vector_map[16];
-#define isa_irq_to_vector(x)	isa_irq_to_vector_map[(x)]
+बाह्य __u8 isa_irq_to_vector_map[16];
+#घोषणा isa_irq_to_vector(x)	isa_irq_to_vector_map[(x)]
 
-struct irq_cfg {
+काष्ठा irq_cfg अणु
 	ia64_vector vector;
-	cpumask_t domain;
-	cpumask_t old_domain;
-	unsigned move_cleanup_count;
+	cpumask_t करोमुख्य;
+	cpumask_t old_करोमुख्य;
+	अचिन्हित move_cleanup_count;
 	u8 move_in_progress : 1;
-};
-extern spinlock_t vector_lock;
-extern struct irq_cfg irq_cfg[NR_IRQS];
-#define irq_to_domain(x)	irq_cfg[(x)].domain
-DECLARE_PER_CPU(int[IA64_NUM_VECTORS], vector_irq);
+पूर्ण;
+बाह्य spinlock_t vector_lock;
+बाह्य काष्ठा irq_cfg irq_cfg[NR_IRQS];
+#घोषणा irq_to_करोमुख्य(x)	irq_cfg[(x)].करोमुख्य
+DECLARE_PER_CPU(पूर्णांक[IA64_NUM_VECTORS], vector_irq);
 
-extern struct irq_chip irq_type_ia64_lsapic;	/* CPU-internal interrupt controller */
+बाह्य काष्ठा irq_chip irq_type_ia64_lsapic;	/* CPU-पूर्णांकernal पूर्णांकerrupt controller */
 
-#define ia64_register_ipi	ia64_native_register_ipi
-#define assign_irq_vector	ia64_native_assign_irq_vector
-#define free_irq_vector		ia64_native_free_irq_vector
-#define ia64_resend_irq		ia64_native_resend_irq
+#घोषणा ia64_रेजिस्टर_ipi	ia64_native_रेजिस्टर_ipi
+#घोषणा assign_irq_vector	ia64_native_assign_irq_vector
+#घोषणा मुक्त_irq_vector		ia64_native_मुक्त_irq_vector
+#घोषणा ia64_resend_irq		ia64_native_resend_irq
 
-extern void ia64_native_register_ipi(void);
-extern int bind_irq_vector(int irq, int vector, cpumask_t domain);
-extern int ia64_native_assign_irq_vector (int irq);	/* allocate a free vector */
-extern void ia64_native_free_irq_vector (int vector);
-extern int reserve_irq_vector (int vector);
-extern void __setup_vector_irq(int cpu);
-extern void ia64_send_ipi (int cpu, int vector, int delivery_mode, int redirect);
-extern void destroy_and_reserve_irq (unsigned int irq);
+बाह्य व्योम ia64_native_रेजिस्टर_ipi(व्योम);
+बाह्य पूर्णांक bind_irq_vector(पूर्णांक irq, पूर्णांक vector, cpumask_t करोमुख्य);
+बाह्य पूर्णांक ia64_native_assign_irq_vector (पूर्णांक irq);	/* allocate a मुक्त vector */
+बाह्य व्योम ia64_native_मुक्त_irq_vector (पूर्णांक vector);
+बाह्य पूर्णांक reserve_irq_vector (पूर्णांक vector);
+बाह्य व्योम __setup_vector_irq(पूर्णांक cpu);
+बाह्य व्योम ia64_send_ipi (पूर्णांक cpu, पूर्णांक vector, पूर्णांक delivery_mode, पूर्णांक redirect);
+बाह्य व्योम destroy_and_reserve_irq (अचिन्हित पूर्णांक irq);
 
-#ifdef CONFIG_SMP
-extern int irq_prepare_move(int irq, int cpu);
-extern void irq_complete_move(unsigned int irq);
-#else
-static inline int irq_prepare_move(int irq, int cpu) { return 0; }
-static inline void irq_complete_move(unsigned int irq) {}
-#endif
+#अगर_घोषित CONFIG_SMP
+बाह्य पूर्णांक irq_prepare_move(पूर्णांक irq, पूर्णांक cpu);
+बाह्य व्योम irq_complete_move(अचिन्हित पूर्णांक irq);
+#अन्यथा
+अटल अंतरभूत पूर्णांक irq_prepare_move(पूर्णांक irq, पूर्णांक cpu) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम irq_complete_move(अचिन्हित पूर्णांक irq) अणुपूर्ण
+#पूर्ण_अगर
 
-static inline void ia64_native_resend_irq(unsigned int vector)
-{
+अटल अंतरभूत व्योम ia64_native_resend_irq(अचिन्हित पूर्णांक vector)
+अणु
 	ia64_send_ipi(smp_processor_id(), vector, IA64_IPI_DM_INT, 0);
-}
+पूर्ण
 
 /*
- * Next follows the irq descriptor interface.  On IA-64, each CPU supports 256 interrupt
- * vectors.  On smaller systems, there is a one-to-one correspondence between interrupt
- * vectors and the Linux irq numbers.  However, larger systems may have multiple interrupt
- * domains meaning that the translation from vector number to irq number depends on the
- * interrupt domain that a CPU belongs to.  This API abstracts such platform-dependent
- * differences and provides a uniform means to translate between vector and irq numbers
- * and to obtain the irq descriptor for a given irq number.
+ * Next follows the irq descriptor पूर्णांकerface.  On IA-64, each CPU supports 256 पूर्णांकerrupt
+ * vectors.  On smaller प्रणालीs, there is a one-to-one correspondence between पूर्णांकerrupt
+ * vectors and the Linux irq numbers.  However, larger प्रणालीs may have multiple पूर्णांकerrupt
+ * करोमुख्यs meaning that the translation from vector number to irq number depends on the
+ * पूर्णांकerrupt करोमुख्य that a CPU beदीर्घs to.  This API असलtracts such platक्रमm-dependent
+ * dअगरferences and provides a unअगरorm means to translate between vector and irq numbers
+ * and to obtain the irq descriptor क्रम a given irq number.
  */
 
 /* Extract the IA-64 vector that corresponds to IRQ.  */
-static inline ia64_vector
-irq_to_vector (int irq)
-{
-	return irq_cfg[irq].vector;
-}
+अटल अंतरभूत ia64_vector
+irq_to_vector (पूर्णांक irq)
+अणु
+	वापस irq_cfg[irq].vector;
+पूर्ण
 
 /*
  * Convert the local IA-64 vector to the corresponding irq number.  This translation is
- * done in the context of the interrupt domain that the currently executing CPU belongs
+ * करोne in the context of the पूर्णांकerrupt करोमुख्य that the currently executing CPU beदीर्घs
  * to.
  */
-static inline unsigned int
+अटल अंतरभूत अचिन्हित पूर्णांक
 local_vector_to_irq (ia64_vector vec)
-{
-	return __this_cpu_read(vector_irq[vec]);
-}
+अणु
+	वापस __this_cpu_पढ़ो(vector_irq[vec]);
+पूर्ण
 
-#endif /* _ASM_IA64_HW_IRQ_H */
+#पूर्ण_अगर /* _ASM_IA64_HW_IRQ_H */

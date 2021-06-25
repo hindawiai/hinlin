@@ -1,169 +1,170 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* Linux header file for the ATP pocket ethernet adapter. */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* Linux header file क्रम the ATP pocket ethernet adapter. */
 /* v1.09 8/9/2000 becker@scyld.com. */
 
-#include <linux/if_ether.h>
-#include <linux/types.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/types.h>
 
 /* The header prepended to received packets. */
-struct rx_header {
-	ushort pad;		/* Pad. */
-	ushort rx_count;
-	ushort rx_status;	/* Unknown bit assignments :-<.  */
-	ushort cur_addr;	/* Apparently the current buffer address(?) */
-};
+काष्ठा rx_header अणु
+	uलघु pad;		/* Pad. */
+	uलघु rx_count;
+	uलघु rx_status;	/* Unknown bit assignments :-<.  */
+	uलघु cur_addr;	/* Apparently the current buffer address(?) */
+पूर्ण;
 
-#define PAR_DATA	0
-#define PAR_STATUS	1
-#define PAR_CONTROL 2
+#घोषणा PAR_DATA	0
+#घोषणा PAR_STATUS	1
+#घोषणा PAR_CONTROL 2
 
-#define Ctrl_LNibRead	0x08	/* LP_PSELECP */
-#define Ctrl_HNibRead	0
-#define Ctrl_LNibWrite	0x08	/* LP_PSELECP */
-#define Ctrl_HNibWrite	0
-#define Ctrl_SelData	0x04	/* LP_PINITP */
-#define Ctrl_IRQEN	0x10	/* LP_PINTEN */
+#घोषणा Ctrl_LNibRead	0x08	/* LP_PSELECP */
+#घोषणा Ctrl_HNibRead	0
+#घोषणा Ctrl_LNibWrite	0x08	/* LP_PSELECP */
+#घोषणा Ctrl_HNibWrite	0
+#घोषणा Ctrl_SelData	0x04	/* LP_PINITP */
+#घोषणा Ctrl_IRQEN	0x10	/* LP_PINTEN */
 
-#define EOW	0xE0
-#define EOC	0xE0
-#define WrAddr	0x40	/* Set address of EPLC read, write register. */
-#define RdAddr	0xC0
-#define HNib	0x10
+#घोषणा EOW	0xE0
+#घोषणा EOC	0xE0
+#घोषणा WrAddr	0x40	/* Set address of EPLC पढ़ो, ग_लिखो रेजिस्टर. */
+#घोषणा RdAddr	0xC0
+#घोषणा HNib	0x10
 
-enum page0_regs {
-	/* The first six registers hold
+क्रमागत page0_regs अणु
+	/* The first six रेजिस्टरs hold
 	 * the ethernet physical station address.
 	 */
 	PAR0 = 0, PAR1 = 1, PAR2 = 2, PAR3 = 3, PAR4 = 4, PAR5 = 5,
 	TxCNT0 = 6, TxCNT1 = 7,		/* The transmit byte count. */
 	TxSTAT = 8, RxSTAT = 9,		/* Tx and Rx status. */
 	ISR = 10, IMR = 11,		/* Interrupt status and mask. */
-	CMR1 = 12,			/* Command register 1. */
-	CMR2 = 13,			/* Command register 2. */
-	MODSEL = 14,		/* Mode select register. */
-	MAR = 14,			/* Memory address register (?). */
+	CMR1 = 12,			/* Command रेजिस्टर 1. */
+	CMR2 = 13,			/* Command रेजिस्टर 2. */
+	MODSEL = 14,		/* Mode select रेजिस्टर. */
+	MAR = 14,			/* Memory address रेजिस्टर (?). */
 	CMR2_h = 0x1d,
-};
+पूर्ण;
 
-enum eepage_regs {
+क्रमागत eepage_regs अणु
 	PROM_CMD = 6,
 	PROM_DATA = 7	/* Note that PROM_CMD is in the "high" bits. */
-};
+पूर्ण;
 
-#define ISR_TxOK	0x01
-#define ISR_RxOK	0x04
-#define ISR_TxErr	0x02
-#define ISRh_RxErr	0x11	/* ISR, high nibble */
+#घोषणा ISR_TxOK	0x01
+#घोषणा ISR_RxOK	0x04
+#घोषणा ISR_TxErr	0x02
+#घोषणा ISRh_RxErr	0x11	/* ISR, high nibble */
 
-#define CMR1h_MUX	0x08	/* Select printer multiplexor on 8012. */
-#define CMR1h_RESET	0x04	/* Reset. */
-#define CMR1h_RxENABLE	0x02	/* Rx unit enable.  */
-#define CMR1h_TxENABLE	0x01	/* Tx unit enable.  */
-#define CMR1h_TxRxOFF	0x00
-#define CMR1_ReXmit	0x08	/* Trigger a retransmit. */
-#define CMR1_Xmit	0x04	/* Trigger a transmit. */
-#define	CMR1_IRQ	0x02	/* Interrupt active. */
-#define	CMR1_BufEnb	0x01	/* Enable the buffer(?). */
-#define	CMR1_NextPkt	0x01	/* Enable the buffer(?). */
+#घोषणा CMR1h_MUX	0x08	/* Select prपूर्णांकer multiplexor on 8012. */
+#घोषणा CMR1h_RESET	0x04	/* Reset. */
+#घोषणा CMR1h_RxENABLE	0x02	/* Rx unit enable.  */
+#घोषणा CMR1h_TxENABLE	0x01	/* Tx unit enable.  */
+#घोषणा CMR1h_TxRxOFF	0x00
+#घोषणा CMR1_ReXmit	0x08	/* Trigger a retransmit. */
+#घोषणा CMR1_Xmit	0x04	/* Trigger a transmit. */
+#घोषणा	CMR1_IRQ	0x02	/* Interrupt active. */
+#घोषणा	CMR1_BufEnb	0x01	/* Enable the buffer(?). */
+#घोषणा	CMR1_NextPkt	0x01	/* Enable the buffer(?). */
 
-#define CMR2_NULL	8
-#define CMR2_IRQOUT	9
-#define CMR2_RAMTEST	10
-#define CMR2_EEPROM	12	/* Set to page 1, for reading the EEPROM. */
+#घोषणा CMR2_शून्य	8
+#घोषणा CMR2_IRQOUT	9
+#घोषणा CMR2_RAMTEST	10
+#घोषणा CMR2_EEPROM	12	/* Set to page 1, क्रम पढ़ोing the EEPROM. */
 
-#define CMR2h_OFF	0	/* No accept mode. */
-#define CMR2h_Physical	1	/* Accept a physical address match only. */
-#define CMR2h_Normal	2	/* Accept physical and broadcast address. */
-#define CMR2h_PROMISC	3	/* Promiscuous mode. */
+#घोषणा CMR2h_OFF	0	/* No accept mode. */
+#घोषणा CMR2h_Physical	1	/* Accept a physical address match only. */
+#घोषणा CMR2h_Normal	2	/* Accept physical and broadcast address. */
+#घोषणा CMR2h_PROMISC	3	/* Promiscuous mode. */
 
-/* An inline function used below: it differs from inb() by explicitly
- * return an unsigned char, saving a truncation.
+/* An अंतरभूत function used below: it dअगरfers from inb() by explicitly
+ * वापस an अचिन्हित अक्षर, saving a truncation.
  */
-static inline unsigned char inbyte(unsigned short port)
-{
-	unsigned char _v;
+अटल अंतरभूत अचिन्हित अक्षर inbyte(अचिन्हित लघु port)
+अणु
+	अचिन्हित अक्षर _v;
 
-	__asm__ __volatile__ ("inb %w1,%b0" : "=a" (_v) : "d" (port));
-	return _v;
-}
+	__यंत्र__ __अस्थिर__ ("inb %w1,%b0" : "=a" (_v) : "d" (port));
+	वापस _v;
+पूर्ण
 
-/* Read register OFFSET.
- * This command should always be terminated with read_end().
+/* Read रेजिस्टर OFFSET.
+ * This command should always be terminated with पढ़ो_end().
  */
-static inline unsigned char read_nibble(short port, unsigned char offset)
-{
-	unsigned char retval;
+अटल अंतरभूत अचिन्हित अक्षर पढ़ो_nibble(लघु port, अचिन्हित अक्षर offset)
+अणु
+	अचिन्हित अक्षर retval;
 
 	outb(EOC+offset, port + PAR_DATA);
 	outb(RdAddr+offset, port + PAR_DATA);
-	inbyte(port + PAR_STATUS);	/* Settling time delay */
+	inbyte(port + PAR_STATUS);	/* Settling समय delay */
 	retval = inbyte(port + PAR_STATUS);
 	outb(EOC+offset, port + PAR_DATA);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-/* Functions for bulk data read.  The interrupt line is always disabled. */
-/* Get a byte using read mode 0, reading data from the control lines. */
-static inline unsigned char read_byte_mode0(short ioaddr)
-{
-	unsigned char low_nib;
-
-	outb(Ctrl_LNibRead, ioaddr + PAR_CONTROL);
-	inbyte(ioaddr + PAR_STATUS);
-	low_nib = (inbyte(ioaddr + PAR_STATUS) >> 3) & 0x0f;
-	outb(Ctrl_HNibRead, ioaddr + PAR_CONTROL);
-	inbyte(ioaddr + PAR_STATUS);	/* Settling time delay -- needed!  */
-	inbyte(ioaddr + PAR_STATUS);	/* Settling time delay -- needed!  */
-	return low_nib | ((inbyte(ioaddr + PAR_STATUS) << 1) & 0xf0);
-}
-
-/* The same as read_byte_mode0(), but does multiple inb()s for stability. */
-static inline unsigned char read_byte_mode2(short ioaddr)
-{
-	unsigned char low_nib;
+/* Functions क्रम bulk data पढ़ो.  The पूर्णांकerrupt line is always disabled. */
+/* Get a byte using पढ़ो mode 0, पढ़ोing data from the control lines. */
+अटल अंतरभूत अचिन्हित अक्षर पढ़ो_byte_mode0(लघु ioaddr)
+अणु
+	अचिन्हित अक्षर low_nib;
 
 	outb(Ctrl_LNibRead, ioaddr + PAR_CONTROL);
 	inbyte(ioaddr + PAR_STATUS);
 	low_nib = (inbyte(ioaddr + PAR_STATUS) >> 3) & 0x0f;
 	outb(Ctrl_HNibRead, ioaddr + PAR_CONTROL);
-	inbyte(ioaddr + PAR_STATUS);	/* Settling time delay -- needed!  */
-	return low_nib | ((inbyte(ioaddr + PAR_STATUS) << 1) & 0xf0);
-}
+	inbyte(ioaddr + PAR_STATUS);	/* Settling समय delay -- needed!  */
+	inbyte(ioaddr + PAR_STATUS);	/* Settling समय delay -- needed!  */
+	वापस low_nib | ((inbyte(ioaddr + PAR_STATUS) << 1) & 0xf0);
+पूर्ण
 
-/* Read a byte through the data register. */
-static inline unsigned char read_byte_mode4(short ioaddr)
-{
-	unsigned char low_nib;
+/* The same as पढ़ो_byte_mode0(), but करोes multiple inb()s क्रम stability. */
+अटल अंतरभूत अचिन्हित अक्षर पढ़ो_byte_mode2(लघु ioaddr)
+अणु
+	अचिन्हित अक्षर low_nib;
+
+	outb(Ctrl_LNibRead, ioaddr + PAR_CONTROL);
+	inbyte(ioaddr + PAR_STATUS);
+	low_nib = (inbyte(ioaddr + PAR_STATUS) >> 3) & 0x0f;
+	outb(Ctrl_HNibRead, ioaddr + PAR_CONTROL);
+	inbyte(ioaddr + PAR_STATUS);	/* Settling समय delay -- needed!  */
+	वापस low_nib | ((inbyte(ioaddr + PAR_STATUS) << 1) & 0xf0);
+पूर्ण
+
+/* Read a byte through the data रेजिस्टर. */
+अटल अंतरभूत अचिन्हित अक्षर पढ़ो_byte_mode4(लघु ioaddr)
+अणु
+	अचिन्हित अक्षर low_nib;
 
 	outb(RdAddr | MAR, ioaddr + PAR_DATA);
 	low_nib = (inbyte(ioaddr + PAR_STATUS) >> 3) & 0x0f;
 	outb(RdAddr | HNib | MAR, ioaddr + PAR_DATA);
-	return low_nib | ((inbyte(ioaddr + PAR_STATUS) << 1) & 0xf0);
-}
+	वापस low_nib | ((inbyte(ioaddr + PAR_STATUS) << 1) & 0xf0);
+पूर्ण
 
-/* Read a byte through the data register, double reading to allow settling. */
-static inline unsigned char read_byte_mode6(short ioaddr)
-{
-	unsigned char low_nib;
+/* Read a byte through the data रेजिस्टर, द्विगुन पढ़ोing to allow settling. */
+अटल अंतरभूत अचिन्हित अक्षर पढ़ो_byte_mode6(लघु ioaddr)
+अणु
+	अचिन्हित अक्षर low_nib;
 
 	outb(RdAddr | MAR, ioaddr + PAR_DATA);
 	inbyte(ioaddr + PAR_STATUS);
 	low_nib = (inbyte(ioaddr + PAR_STATUS) >> 3) & 0x0f;
 	outb(RdAddr | HNib | MAR, ioaddr + PAR_DATA);
 	inbyte(ioaddr + PAR_STATUS);
-	return low_nib | ((inbyte(ioaddr + PAR_STATUS) << 1) & 0xf0);
-}
+	वापस low_nib | ((inbyte(ioaddr + PAR_STATUS) << 1) & 0xf0);
+पूर्ण
 
-static inline void
-write_reg(short port, unsigned char reg, unsigned char value)
-{
-	unsigned char outval;
+अटल अंतरभूत व्योम
+ग_लिखो_reg(लघु port, अचिन्हित अक्षर reg, अचिन्हित अक्षर value)
+अणु
+	अचिन्हित अक्षर outval;
 
 	outb(EOC | reg, port + PAR_DATA);
 	outval = WrAddr | reg;
 	outb(outval, port + PAR_DATA);
-	outb(outval, port + PAR_DATA);	/* Double write for PS/2. */
+	outb(outval, port + PAR_DATA);	/* Double ग_लिखो क्रम PS/2. */
 
 	outval &= 0xf0;
 	outval |= value;
@@ -173,17 +174,17 @@ write_reg(short port, unsigned char reg, unsigned char value)
 	outb(outval, port + PAR_DATA);
 
 	outb(EOC | outval, port + PAR_DATA);
-}
+पूर्ण
 
-static inline void
-write_reg_high(short port, unsigned char reg, unsigned char value)
-{
-	unsigned char outval = EOC | HNib | reg;
+अटल अंतरभूत व्योम
+ग_लिखो_reg_high(लघु port, अचिन्हित अक्षर reg, अचिन्हित अक्षर value)
+अणु
+	अचिन्हित अक्षर outval = EOC | HNib | reg;
 
 	outb(outval, port + PAR_DATA);
 	outval &= WrAddr | HNib | 0x0f;
 	outb(outval, port + PAR_DATA);
-	outb(outval, port + PAR_DATA);	/* Double write for PS/2. */
+	outb(outval, port + PAR_DATA);	/* Double ग_लिखो क्रम PS/2. */
 
 	outval = WrAddr | HNib | value;
 	outb(outval, port + PAR_DATA);
@@ -192,18 +193,18 @@ write_reg_high(short port, unsigned char reg, unsigned char value)
 	outb(outval, port + PAR_DATA);
 
 	outb(EOC | HNib | outval, port + PAR_DATA);
-}
+पूर्ण
 
 /* Write a byte out using nibble mode.  The low nibble is written first. */
-static inline void
-write_reg_byte(short port, unsigned char reg, unsigned char value)
-{
-	unsigned char outval;
+अटल अंतरभूत व्योम
+ग_लिखो_reg_byte(लघु port, अचिन्हित अक्षर reg, अचिन्हित अक्षर value)
+अणु
+	अचिन्हित अक्षर outval;
 
-	outb(EOC | reg, port + PAR_DATA); /* Reset the address register. */
+	outb(EOC | reg, port + PAR_DATA); /* Reset the address रेजिस्टर. */
 	outval = WrAddr | reg;
 	outb(outval, port + PAR_DATA);
-	outb(outval, port + PAR_DATA);	/* Double write for PS/2. */
+	outb(outval, port + PAR_DATA);	/* Double ग_लिखो क्रम PS/2. */
 
 	outb((outval & 0xf0) | (value & 0x0f), port + PAR_DATA);
 	outb(value & 0x0f, port + PAR_DATA);
@@ -212,32 +213,32 @@ write_reg_byte(short port, unsigned char reg, unsigned char value)
 	outb(0x10 | value, port + PAR_DATA);
 	outb(0x10 | value, port + PAR_DATA);
 
-	outb(EOC  | value, port + PAR_DATA); /* Reset the address register. */
-}
+	outb(EOC  | value, port + PAR_DATA); /* Reset the address रेजिस्टर. */
+पूर्ण
 
-/* Bulk data writes to the packet buffer.  The interrupt line remains enabled.
+/* Bulk data ग_लिखोs to the packet buffer.  The पूर्णांकerrupt line reमुख्यs enabled.
  * The first, faster method uses only the dataport (data modes 0, 2 & 4).
  * The second (backup) method uses data and control regs (modes 1, 3 & 5).
- * It should only be needed when there is skew between the individual data
+ * It should only be needed when there is skew between the inभागidual data
  * lines.
  */
-static inline void write_byte_mode0(short ioaddr, unsigned char value)
-{
+अटल अंतरभूत व्योम ग_लिखो_byte_mode0(लघु ioaddr, अचिन्हित अक्षर value)
+अणु
 	outb(value & 0x0f, ioaddr + PAR_DATA);
 	outb((value>>4) | 0x10, ioaddr + PAR_DATA);
-}
+पूर्ण
 
-static inline void write_byte_mode1(short ioaddr, unsigned char value)
-{
+अटल अंतरभूत व्योम ग_लिखो_byte_mode1(लघु ioaddr, अचिन्हित अक्षर value)
+अणु
 	outb(value & 0x0f, ioaddr + PAR_DATA);
 	outb(Ctrl_IRQEN | Ctrl_LNibWrite, ioaddr + PAR_CONTROL);
 	outb((value>>4) | 0x10, ioaddr + PAR_DATA);
 	outb(Ctrl_IRQEN | Ctrl_HNibWrite, ioaddr + PAR_CONTROL);
-}
+पूर्ण
 
-/* Write 16bit VALUE to the packet buffer: the same as above just doubled. */
-static inline void write_word_mode0(short ioaddr, unsigned short value)
-{
+/* Write 16bit VALUE to the packet buffer: the same as above just द्विगुनd. */
+अटल अंतरभूत व्योम ग_लिखो_word_mode0(लघु ioaddr, अचिन्हित लघु value)
+अणु
 	outb(value & 0x0f, ioaddr + PAR_DATA);
 	value >>= 4;
 	outb((value & 0x0f) | 0x10, ioaddr + PAR_DATA);
@@ -245,22 +246,22 @@ static inline void write_word_mode0(short ioaddr, unsigned short value)
 	outb(value & 0x0f, ioaddr + PAR_DATA);
 	value >>= 4;
 	outb((value & 0x0f) | 0x10, ioaddr + PAR_DATA);
-}
+पूर्ण
 
 /*  EEPROM_Ctrl bits. */
-#define EE_SHIFT_CLK	0x04	/* EEPROM shift clock. */
-#define EE_CS		0x02	/* EEPROM chip select. */
-#define EE_CLK_HIGH	0x12
-#define EE_CLK_LOW	0x16
-#define EE_DATA_WRITE	0x01	/* EEPROM chip data in. */
-#define EE_DATA_READ	0x08	/* EEPROM chip data out. */
+#घोषणा EE_SHIFT_CLK	0x04	/* EEPROM shअगरt घड़ी. */
+#घोषणा EE_CS		0x02	/* EEPROM chip select. */
+#घोषणा EE_CLK_HIGH	0x12
+#घोषणा EE_CLK_LOW	0x16
+#घोषणा EE_DATA_WRITE	0x01	/* EEPROM chip data in. */
+#घोषणा EE_DATA_READ	0x08	/* EEPROM chip data out. */
 
-/* Delay between EEPROM clock transitions. */
-#define eeprom_delay(ticks) \
-do { int _i = 40; while (--_i > 0) { __SLOW_DOWN_IO; } } while (0)
+/* Delay between EEPROM घड़ी transitions. */
+#घोषणा eeprom_delay(ticks) \
+करो अणु पूर्णांक _i = 40; जबतक (--_i > 0) अणु __SLOW_DOWN_IO; पूर्ण पूर्ण जबतक (0)
 
 /* The EEPROM commands include the alway-set leading bit. */
-#define EE_WRITE_CMD(offset)	(((5 << 6) + (offset)) << 17)
-#define EE_READ(offset)		(((6 << 6) + (offset)) << 17)
-#define EE_ERASE(offset)	(((7 << 6) + (offset)) << 17)
-#define EE_CMD_SIZE	27	/* The command+address+data size. */
+#घोषणा EE_WRITE_CMD(offset)	(((5 << 6) + (offset)) << 17)
+#घोषणा EE_READ(offset)		(((6 << 6) + (offset)) << 17)
+#घोषणा EE_ERASE(offset)	(((7 << 6) + (offset)) << 17)
+#घोषणा EE_CMD_SIZE	27	/* The command+address+data size. */

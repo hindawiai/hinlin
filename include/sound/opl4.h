@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __SOUND_OPL4_H
-#define __SOUND_OPL4_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __SOUND_OPL4_H
+#घोषणा __SOUND_OPL4_H
 
 /*
- * Global definitions for the OPL4 driver
+ * Global definitions क्रम the OPL4 driver
  * Copyright (c) 2003 by Clemens Ladisch <clemens@ladisch.de>
  */
 
-#include <sound/opl3.h>
+#समावेश <sound/opl3.h>
 
-struct snd_opl4;
+काष्ठा snd_opl4;
 
-extern int snd_opl4_create(struct snd_card *card,
-			   unsigned long fm_port, unsigned long pcm_port,
-			   int seq_device,
-			   struct snd_opl3 **opl3, struct snd_opl4 **opl4);
+बाह्य पूर्णांक snd_opl4_create(काष्ठा snd_card *card,
+			   अचिन्हित दीर्घ fm_port, अचिन्हित दीर्घ pcm_port,
+			   पूर्णांक seq_device,
+			   काष्ठा snd_opl3 **opl3, काष्ठा snd_opl4 **opl4);
 
-#endif /* __SOUND_OPL4_H */
+#पूर्ण_अगर /* __SOUND_OPL4_H */

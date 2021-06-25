@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/compiler.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/compiler.h>
 
-static struct ins_ops *powerpc__associate_instruction_ops(struct arch *arch, const char *name)
-{
-	int i;
-	struct ins_ops *ops;
+अटल काष्ठा ins_ops *घातerpc__associate_inकाष्ठाion_ops(काष्ठा arch *arch, स्थिर अक्षर *name)
+अणु
+	पूर्णांक i;
+	काष्ठा ins_ops *ops;
 
 	/*
-	 * - Interested only if instruction starts with 'b'.
-	 * - Few start with 'b', but aren't branch instructions.
+	 * - Interested only अगर inकाष्ठाion starts with 'b'.
+	 * - Few start with 'b', but aren't branch inकाष्ठाions.
 	 */
-	if (name[0] != 'b'             ||
-	    !strncmp(name, "bcd", 3)   ||
-	    !strncmp(name, "brinc", 5) ||
-	    !strncmp(name, "bper", 4))
-		return NULL;
+	अगर (name[0] != 'b'             ||
+	    !म_भेदन(name, "bcd", 3)   ||
+	    !म_भेदन(name, "brinc", 5) ||
+	    !म_भेदन(name, "bper", 4))
+		वापस शून्य;
 
 	ops = &jump_ops;
 
-	i = strlen(name) - 1;
-	if (i < 0)
-		return NULL;
+	i = म_माप(name) - 1;
+	अगर (i < 0)
+		वापस शून्य;
 
-	/* ignore optional hints at the end of the instructions */
-	if (name[i] == '+' || name[i] == '-')
+	/* ignore optional hपूर्णांकs at the end of the inकाष्ठाions */
+	अगर (name[i] == '+' || name[i] == '-')
 		i--;
 
-	if (name[i] == 'l' || (name[i] == 'a' && name[i-1] == 'l')) {
+	अगर (name[i] == 'l' || (name[i] == 'a' && name[i-1] == 'l')) अणु
 		/*
-		 * if the instruction ends up with 'l' or 'la', then
+		 * अगर the inकाष्ठाion ends up with 'l' or 'la', then
 		 * those are considered 'calls' since they update LR.
-		 * ... except for 'bnl' which is branch if not less than
-		 * and the absolute form of the same.
+		 * ... except क्रम 'bnl' which is branch अगर not less than
+		 * and the असलolute क्रमm of the same.
 		 */
-		if (strcmp(name, "bnl") && strcmp(name, "bnl+") &&
-		    strcmp(name, "bnl-") && strcmp(name, "bnla") &&
-		    strcmp(name, "bnla+") && strcmp(name, "bnla-"))
+		अगर (म_भेद(name, "bnl") && म_भेद(name, "bnl+") &&
+		    म_भेद(name, "bnl-") && म_भेद(name, "bnla") &&
+		    म_भेद(name, "bnla+") && म_भेद(name, "bnla-"))
 			ops = &call_ops;
-	}
-	if (name[i] == 'r' && name[i-1] == 'l')
+	पूर्ण
+	अगर (name[i] == 'r' && name[i-1] == 'l')
 		/*
-		 * instructions ending with 'lr' are considered to be
-		 * return instructions
+		 * inकाष्ठाions ending with 'lr' are considered to be
+		 * वापस inकाष्ठाions
 		 */
 		ops = &ret_ops;
 
 	arch__associate_ins_ops(arch, name, ops);
-	return ops;
-}
+	वापस ops;
+पूर्ण
 
-static int powerpc__annotate_init(struct arch *arch, char *cpuid __maybe_unused)
-{
-	if (!arch->initialized) {
+अटल पूर्णांक घातerpc__annotate_init(काष्ठा arch *arch, अक्षर *cpuid __maybe_unused)
+अणु
+	अगर (!arch->initialized) अणु
 		arch->initialized = true;
-		arch->associate_instruction_ops = powerpc__associate_instruction_ops;
-		arch->objdump.comment_char      = '#';
-	}
+		arch->associate_inकाष्ठाion_ops = घातerpc__associate_inकाष्ठाion_ops;
+		arch->objdump.comment_अक्षर      = '#';
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

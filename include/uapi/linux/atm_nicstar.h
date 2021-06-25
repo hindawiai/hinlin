@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /******************************************************************************
  *
- * atm_nicstar.h
+ * aपंचांग_nicstar.h
  *
- * Driver-specific declarations for use by NICSTAR driver specific utils.
+ * Driver-specअगरic declarations क्रम use by NICSTAR driver specअगरic utils.
  *
  * Author: Rui Prior
  *
@@ -12,43 +13,43 @@
  ******************************************************************************/
 
 
-#ifndef LINUX_ATM_NICSTAR_H
-#define LINUX_ATM_NICSTAR_H
+#अगर_अघोषित LINUX_ATM_NICSTAR_H
+#घोषणा LINUX_ATM_NICSTAR_H
 
 /* Note: non-kernel programs including this file must also include
- * sys/types.h for struct timeval
+ * sys/types.h क्रम काष्ठा समयval
  */
 
-#include <linux/atmapi.h>
-#include <linux/atmioc.h>
+#समावेश <linux/aपंचांगapi.h>
+#समावेश <linux/aपंचांगioc.h>
 
-#define NS_GETPSTAT	_IOWR('a',ATMIOC_SARPRV+1,struct atmif_sioc)
+#घोषणा NS_GETPSTAT	_IOWR('a',ATMIOC_SARPRV+1,काष्ठा aपंचांगअगर_sioc)
 						/* get pool statistics */
-#define NS_SETBUFLEV	_IOW('a',ATMIOC_SARPRV+2,struct atmif_sioc)
+#घोषणा NS_SETBUFLEV	_IOW('a',ATMIOC_SARPRV+2,काष्ठा aपंचांगअगर_sioc)
 						/* set buffer level markers */
-#define NS_ADJBUFLEV	_IO('a',ATMIOC_SARPRV+3)
+#घोषणा NS_ADJBUFLEV	_IO('a',ATMIOC_SARPRV+3)
 						/* adjust buffer level */
 
-typedef struct buf_nr
-{
-   unsigned min;
-   unsigned init;
-   unsigned max;
-}buf_nr;
+प्रकार काष्ठा buf_nr
+अणु
+   अचिन्हित min;
+   अचिन्हित init;
+   अचिन्हित max;
+पूर्णbuf_nr;
 
 
-typedef struct pool_levels
-{
-   int buftype;
-   int count;		/* (At least for now) only used in NS_GETPSTAT */
+प्रकार काष्ठा pool_levels
+अणु
+   पूर्णांक buftype;
+   पूर्णांक count;		/* (At least क्रम now) only used in NS_GETPSTAT */
    buf_nr level;
-} pool_levels;
+पूर्ण pool_levels;
 
 /* type must be one of the following: */
-#define NS_BUFTYPE_SMALL 1
-#define NS_BUFTYPE_LARGE 2
-#define NS_BUFTYPE_HUGE 3
-#define NS_BUFTYPE_IOVEC 4
+#घोषणा NS_BUFTYPE_SMALL 1
+#घोषणा NS_BUFTYPE_LARGE 2
+#घोषणा NS_BUFTYPE_HUGE 3
+#घोषणा NS_BUFTYPE_IOVEC 4
 
 
-#endif /* LINUX_ATM_NICSTAR_H */
+#पूर्ण_अगर /* LINUX_ATM_NICSTAR_H */

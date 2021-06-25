@@ -1,153 +1,154 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCIe controller EP driver for Freescale Layerscape SoCs
+ * PCIe controller EP driver क्रम Freescale Layerscape SoCs
  *
  * Copyright (C) 2018 NXP Semiconductor.
  *
  * Author: Xiaowei Bao <xiaowei.bao@nxp.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/of_pci.h>
-#include <linux/of_platform.h>
-#include <linux/of_address.h>
-#include <linux/pci.h>
-#include <linux/platform_device.h>
-#include <linux/resource.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of_pci.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/resource.h>
 
-#include "pcie-designware.h"
+#समावेश "pcie-designware.h"
 
-#define to_ls_pcie_ep(x)	dev_get_drvdata((x)->dev)
+#घोषणा to_ls_pcie_ep(x)	dev_get_drvdata((x)->dev)
 
-struct ls_pcie_ep_drvdata {
+काष्ठा ls_pcie_ep_drvdata अणु
 	u32				func_offset;
-	const struct dw_pcie_ep_ops	*ops;
-	const struct dw_pcie_ops	*dw_pcie_ops;
-};
+	स्थिर काष्ठा dw_pcie_ep_ops	*ops;
+	स्थिर काष्ठा dw_pcie_ops	*dw_pcie_ops;
+पूर्ण;
 
-struct ls_pcie_ep {
-	struct dw_pcie			*pci;
-	struct pci_epc_features		*ls_epc;
-	const struct ls_pcie_ep_drvdata *drvdata;
-};
+काष्ठा ls_pcie_ep अणु
+	काष्ठा dw_pcie			*pci;
+	काष्ठा pci_epc_features		*ls_epc;
+	स्थिर काष्ठा ls_pcie_ep_drvdata *drvdata;
+पूर्ण;
 
-static int ls_pcie_establish_link(struct dw_pcie *pci)
-{
-	return 0;
-}
+अटल पूर्णांक ls_pcie_establish_link(काष्ठा dw_pcie *pci)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct dw_pcie_ops dw_ls_pcie_ep_ops = {
+अटल स्थिर काष्ठा dw_pcie_ops dw_ls_pcie_ep_ops = अणु
 	.start_link = ls_pcie_establish_link,
-};
+पूर्ण;
 
-static const struct pci_epc_features*
-ls_pcie_ep_get_features(struct dw_pcie_ep *ep)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	struct ls_pcie_ep *pcie = to_ls_pcie_ep(pci);
+अटल स्थिर काष्ठा pci_epc_features*
+ls_pcie_ep_get_features(काष्ठा dw_pcie_ep *ep)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	काष्ठा ls_pcie_ep *pcie = to_ls_pcie_ep(pci);
 
-	return pcie->ls_epc;
-}
+	वापस pcie->ls_epc;
+पूर्ण
 
-static void ls_pcie_ep_init(struct dw_pcie_ep *ep)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	struct ls_pcie_ep *pcie = to_ls_pcie_ep(pci);
-	struct dw_pcie_ep_func *ep_func;
-	enum pci_barno bar;
+अटल व्योम ls_pcie_ep_init(काष्ठा dw_pcie_ep *ep)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	काष्ठा ls_pcie_ep *pcie = to_ls_pcie_ep(pci);
+	काष्ठा dw_pcie_ep_func *ep_func;
+	क्रमागत pci_barno bar;
 
 	ep_func = dw_pcie_ep_get_func_from_ep(ep, 0);
-	if (!ep_func)
-		return;
+	अगर (!ep_func)
+		वापस;
 
-	for (bar = 0; bar < PCI_STD_NUM_BARS; bar++)
+	क्रम (bar = 0; bar < PCI_STD_NUM_BARS; bar++)
 		dw_pcie_ep_reset_bar(pci, bar);
 
 	pcie->ls_epc->msi_capable = ep_func->msi_cap ? true : false;
 	pcie->ls_epc->msix_capable = ep_func->msix_cap ? true : false;
-}
+पूर्ण
 
-static int ls_pcie_ep_raise_irq(struct dw_pcie_ep *ep, u8 func_no,
-				enum pci_epc_irq_type type, u16 interrupt_num)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+अटल पूर्णांक ls_pcie_ep_उठाओ_irq(काष्ठा dw_pcie_ep *ep, u8 func_no,
+				क्रमागत pci_epc_irq_type type, u16 पूर्णांकerrupt_num)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
 
-	switch (type) {
-	case PCI_EPC_IRQ_LEGACY:
-		return dw_pcie_ep_raise_legacy_irq(ep, func_no);
-	case PCI_EPC_IRQ_MSI:
-		return dw_pcie_ep_raise_msi_irq(ep, func_no, interrupt_num);
-	case PCI_EPC_IRQ_MSIX:
-		return dw_pcie_ep_raise_msix_irq_doorbell(ep, func_no,
-							  interrupt_num);
-	default:
+	चयन (type) अणु
+	हाल PCI_EPC_IRQ_LEGACY:
+		वापस dw_pcie_ep_उठाओ_legacy_irq(ep, func_no);
+	हाल PCI_EPC_IRQ_MSI:
+		वापस dw_pcie_ep_उठाओ_msi_irq(ep, func_no, पूर्णांकerrupt_num);
+	हाल PCI_EPC_IRQ_MSIX:
+		वापस dw_pcie_ep_उठाओ_msix_irq_करोorbell(ep, func_no,
+							  पूर्णांकerrupt_num);
+	शेष:
 		dev_err(pci->dev, "UNKNOWN IRQ type\n");
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static unsigned int ls_pcie_ep_func_conf_select(struct dw_pcie_ep *ep,
+अटल अचिन्हित पूर्णांक ls_pcie_ep_func_conf_select(काष्ठा dw_pcie_ep *ep,
 						u8 func_no)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	struct ls_pcie_ep *pcie = to_ls_pcie_ep(pci);
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	काष्ठा ls_pcie_ep *pcie = to_ls_pcie_ep(pci);
 
 	WARN_ON(func_no && !pcie->drvdata->func_offset);
-	return pcie->drvdata->func_offset * func_no;
-}
+	वापस pcie->drvdata->func_offset * func_no;
+पूर्ण
 
-static const struct dw_pcie_ep_ops ls_pcie_ep_ops = {
+अटल स्थिर काष्ठा dw_pcie_ep_ops ls_pcie_ep_ops = अणु
 	.ep_init = ls_pcie_ep_init,
-	.raise_irq = ls_pcie_ep_raise_irq,
+	.उठाओ_irq = ls_pcie_ep_उठाओ_irq,
 	.get_features = ls_pcie_ep_get_features,
 	.func_conf_select = ls_pcie_ep_func_conf_select,
-};
+पूर्ण;
 
-static const struct ls_pcie_ep_drvdata ls1_ep_drvdata = {
+अटल स्थिर काष्ठा ls_pcie_ep_drvdata ls1_ep_drvdata = अणु
 	.ops = &ls_pcie_ep_ops,
 	.dw_pcie_ops = &dw_ls_pcie_ep_ops,
-};
+पूर्ण;
 
-static const struct ls_pcie_ep_drvdata ls2_ep_drvdata = {
+अटल स्थिर काष्ठा ls_pcie_ep_drvdata ls2_ep_drvdata = अणु
 	.func_offset = 0x20000,
 	.ops = &ls_pcie_ep_ops,
 	.dw_pcie_ops = &dw_ls_pcie_ep_ops,
-};
+पूर्ण;
 
-static const struct ls_pcie_ep_drvdata lx2_ep_drvdata = {
+अटल स्थिर काष्ठा ls_pcie_ep_drvdata lx2_ep_drvdata = अणु
 	.func_offset = 0x8000,
 	.ops = &ls_pcie_ep_ops,
 	.dw_pcie_ops = &dw_ls_pcie_ep_ops,
-};
+पूर्ण;
 
-static const struct of_device_id ls_pcie_ep_of_match[] = {
-	{ .compatible = "fsl,ls1046a-pcie-ep", .data = &ls1_ep_drvdata },
-	{ .compatible = "fsl,ls1088a-pcie-ep", .data = &ls2_ep_drvdata },
-	{ .compatible = "fsl,ls2088a-pcie-ep", .data = &ls2_ep_drvdata },
-	{ .compatible = "fsl,lx2160ar2-pcie-ep", .data = &lx2_ep_drvdata },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id ls_pcie_ep_of_match[] = अणु
+	अणु .compatible = "fsl,ls1046a-pcie-ep", .data = &ls1_ep_drvdata पूर्ण,
+	अणु .compatible = "fsl,ls1088a-pcie-ep", .data = &ls2_ep_drvdata पूर्ण,
+	अणु .compatible = "fsl,ls2088a-pcie-ep", .data = &ls2_ep_drvdata पूर्ण,
+	अणु .compatible = "fsl,lx2160ar2-pcie-ep", .data = &lx2_ep_drvdata पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int __init ls_pcie_ep_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct dw_pcie *pci;
-	struct ls_pcie_ep *pcie;
-	struct pci_epc_features *ls_epc;
-	struct resource *dbi_base;
+अटल पूर्णांक __init ls_pcie_ep_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा dw_pcie *pci;
+	काष्ठा ls_pcie_ep *pcie;
+	काष्ठा pci_epc_features *ls_epc;
+	काष्ठा resource *dbi_base;
 
-	pcie = devm_kzalloc(dev, sizeof(*pcie), GFP_KERNEL);
-	if (!pcie)
-		return -ENOMEM;
+	pcie = devm_kzalloc(dev, माप(*pcie), GFP_KERNEL);
+	अगर (!pcie)
+		वापस -ENOMEM;
 
-	pci = devm_kzalloc(dev, sizeof(*pci), GFP_KERNEL);
-	if (!pci)
-		return -ENOMEM;
+	pci = devm_kzalloc(dev, माप(*pci), GFP_KERNEL);
+	अगर (!pci)
+		वापस -ENOMEM;
 
-	ls_epc = devm_kzalloc(dev, sizeof(*ls_epc), GFP_KERNEL);
-	if (!ls_epc)
-		return -ENOMEM;
+	ls_epc = devm_kzalloc(dev, माप(*ls_epc), GFP_KERNEL);
+	अगर (!ls_epc)
+		वापस -ENOMEM;
 
 	pcie->drvdata = of_device_get_match_data(dev);
 
@@ -159,23 +160,23 @@ static int __init ls_pcie_ep_probe(struct platform_device *pdev)
 	pcie->pci = pci;
 	pcie->ls_epc = ls_epc;
 
-	dbi_base = platform_get_resource_byname(pdev, IORESOURCE_MEM, "regs");
+	dbi_base = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "regs");
 	pci->dbi_base = devm_pci_remap_cfg_resource(dev, dbi_base);
-	if (IS_ERR(pci->dbi_base))
-		return PTR_ERR(pci->dbi_base);
+	अगर (IS_ERR(pci->dbi_base))
+		वापस PTR_ERR(pci->dbi_base);
 
 	pci->ep.ops = &ls_pcie_ep_ops;
 
-	platform_set_drvdata(pdev, pcie);
+	platक्रमm_set_drvdata(pdev, pcie);
 
-	return dw_pcie_ep_init(&pci->ep);
-}
+	वापस dw_pcie_ep_init(&pci->ep);
+पूर्ण
 
-static struct platform_driver ls_pcie_ep_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver ls_pcie_ep_driver = अणु
+	.driver = अणु
 		.name = "layerscape-pcie-ep",
 		.of_match_table = ls_pcie_ep_of_match,
 		.suppress_bind_attrs = true,
-	},
-};
-builtin_platform_driver_probe(ls_pcie_ep_driver, ls_pcie_ep_probe);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver_probe(ls_pcie_ep_driver, ls_pcie_ep_probe);

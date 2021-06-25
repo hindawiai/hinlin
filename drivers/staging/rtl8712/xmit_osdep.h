@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
  *
- * Modifications for inclusion into the Linux staging tree are
+ * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact information:
+ * Contact inक्रमmation:
  * WLAN FAE <wlanfae@realtek.com>
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
-#ifndef __XMIT_OSDEP_H_
-#define __XMIT_OSDEP_H_
+#अगर_अघोषित __XMIT_OSDEP_H_
+#घोषणा __XMIT_OSDEP_H_
 
-#include "osdep_service.h"
-#include "drv_types.h"
+#समावेश "osdep_service.h"
+#समावेश "drv_types.h"
 
-struct pkt_file {
+काष्ठा pkt_file अणु
 	_pkt	*pkt;
-	u32	pkt_len;	 /*the remainder length of the open_file*/
+	u32	pkt_len;	 /*the reमुख्यder length of the खोलो_file*/
 	_buffer	*cur_buffer;
 	u8	*buf_start;
 	u8	*cur_addr;
 	u32	buf_len;
-};
+पूर्ण;
 
-#define NR_XMITFRAME	256
+#घोषणा NR_XMITFRAME	256
 
-struct xmit_priv;
-struct pkt_attrib;
-struct sta_xmit_priv;
-struct xmit_frame;
-struct xmit_buf;
+काष्ठा xmit_priv;
+काष्ठा pkt_attrib;
+काष्ठा sta_xmit_priv;
+काष्ठा xmit_frame;
+काष्ठा xmit_buf;
 
-int r8712_xmit_entry(_pkt *pkt, struct  net_device *pnetdev);
-void r8712_SetFilter(struct work_struct *work);
-int r8712_xmit_resource_alloc(struct _adapter *padapter,
-			      struct xmit_buf *pxmitbuf);
-void r8712_xmit_resource_free(struct _adapter *padapter,
-			      struct xmit_buf *pxmitbuf);
+पूर्णांक r8712_xmit_entry(_pkt *pkt, काष्ठा  net_device *pnetdev);
+व्योम r8712_SetFilter(काष्ठा work_काष्ठा *work);
+पूर्णांक r8712_xmit_resource_alloc(काष्ठा _adapter *padapter,
+			      काष्ठा xmit_buf *pxmitbuf);
+व्योम r8712_xmit_resource_मुक्त(काष्ठा _adapter *padapter,
+			      काष्ठा xmit_buf *pxmitbuf);
 
-void r8712_set_qos(struct pkt_file *ppktfile,
-		   struct pkt_attrib *pattrib);
-void _r8712_open_pktfile(_pkt *pktptr, struct pkt_file *pfile);
-uint _r8712_pktfile_read(struct pkt_file *pfile, u8 *rmem, uint rlen);
-sint r8712_endofpktfile(struct pkt_file *pfile);
-void r8712_xmit_complete(struct _adapter *padapter,
-			 struct xmit_frame *pxframe);
+व्योम r8712_set_qos(काष्ठा pkt_file *ppktfile,
+		   काष्ठा pkt_attrib *pattrib);
+व्योम _r8712_खोलो_pktfile(_pkt *pktptr, काष्ठा pkt_file *pfile);
+uपूर्णांक _r8712_pktfile_पढ़ो(काष्ठा pkt_file *pfile, u8 *rmem, uपूर्णांक rlen);
+sपूर्णांक r8712_enकरोfpktfile(काष्ठा pkt_file *pfile);
+व्योम r8712_xmit_complete(काष्ठा _adapter *padapter,
+			 काष्ठा xmit_frame *pxframe);
 
-#endif
+#पूर्ण_अगर

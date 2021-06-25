@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * HID driver for Elo Accutouch touchscreens
+ * HID driver क्रम Elo Accutouch touchscreens
  *
  * Copyright (c) 2016, Collabora Ltd.
  * Copyright (c) 2016, General Electric Company
@@ -12,35 +13,35 @@
 /*
  */
 
-#include <linux/hid.h>
-#include <linux/module.h>
-#include "hid-ids.h"
+#समावेश <linux/hid.h>
+#समावेश <linux/module.h>
+#समावेश "hid-ids.h"
 
-static int accutouch_input_mapping(struct hid_device *hdev,
-				   struct hid_input *hi,
-				   struct hid_field *field,
-				   struct hid_usage *usage,
-				   unsigned long **bit, int *max)
-{
-	if ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) {
+अटल पूर्णांक accutouch_input_mapping(काष्ठा hid_device *hdev,
+				   काष्ठा hid_input *hi,
+				   काष्ठा hid_field *field,
+				   काष्ठा hid_usage *usage,
+				   अचिन्हित दीर्घ **bit, पूर्णांक *max)
+अणु
+	अगर ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) अणु
 		hid_map_usage(hi, usage, bit, max, EV_KEY, BTN_TOUCH);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hid_device_id accutouch_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_ELO, USB_DEVICE_ID_ELO_ACCUTOUCH_2216) },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id accutouch_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_ELO, USB_DEVICE_ID_ELO_ACCUTOUCH_2216) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, accutouch_devices);
 
-static struct hid_driver accutouch_driver = {
+अटल काष्ठा hid_driver accutouch_driver = अणु
 	.name = "hid-accutouch",
 	.id_table = accutouch_devices,
 	.input_mapping = accutouch_input_mapping,
-};
+पूर्ण;
 
 module_hid_driver(accutouch_driver);
 

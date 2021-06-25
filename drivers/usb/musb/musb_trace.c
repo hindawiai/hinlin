@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * musb_trace.c - MUSB Controller Trace Support
  *
@@ -7,19 +8,19 @@
  * Author: Bin Liu <b-liu@ti.com>
  */
 
-#define CREATE_TRACE_POINTS
-#include "musb_trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "musb_trace.h"
 
-void musb_dbg(struct musb *musb, const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम musb_dbg(काष्ठा musb *musb, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
 	trace_musb_log(musb, &vaf);
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण

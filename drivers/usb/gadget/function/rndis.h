@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * RNDIS	Definitions for Remote NDIS
+ * RNDIS	Definitions क्रम Remote NDIS
  *
  * Authors:	Benedikt Spranger, Pengutronix
  *		Robert Schwebel, Pengutronix
  *
- *		This software was originally developed in conformance with
- *		Microsoft's Remote NDIS Specification License Agreement.
+ *		This software was originally developed in conक्रमmance with
+ *		Microsoft's Remote NDIS Specअगरication License Agreement.
  */
 
-#ifndef _LINUX_RNDIS_H
-#define _LINUX_RNDIS_H
+#अगर_अघोषित _LINUX_RNDIS_H
+#घोषणा _LINUX_RNDIS_H
 
-#include <linux/rndis.h>
-#include "u_ether.h"
-#include "ndis.h"
+#समावेश <linux/rndis.h>
+#समावेश "u_ether.h"
+#समावेश "ndis.h"
 
-#define RNDIS_MAXIMUM_FRAME_SIZE	1518
-#define RNDIS_MAX_TOTAL_SIZE		1558
+#घोषणा RNDIS_MAXIMUM_FRAME_SIZE	1518
+#घोषणा RNDIS_MAX_TOTAL_SIZE		1558
 
-typedef struct rndis_init_msg_type {
+प्रकार काष्ठा rndis_init_msg_type अणु
 	__le32	MessageType;
 	__le32	MessageLength;
 	__le32	RequestID;
 	__le32	MajorVersion;
 	__le32	MinorVersion;
 	__le32	MaxTransferSize;
-} rndis_init_msg_type;
+पूर्ण rndis_init_msg_type;
 
-typedef struct rndis_init_cmplt_type {
+प्रकार काष्ठा rndis_init_cmplt_type अणु
 	__le32	MessageType;
 	__le32	MessageLength;
 	__le32	RequestID;
@@ -42,85 +43,85 @@ typedef struct rndis_init_cmplt_type {
 	__le32	PacketAlignmentFactor;
 	__le32	AFListOffset;
 	__le32	AFListSize;
-} rndis_init_cmplt_type;
+पूर्ण rndis_init_cmplt_type;
 
-typedef struct rndis_halt_msg_type {
+प्रकार काष्ठा rndis_halt_msg_type अणु
 	__le32	MessageType;
 	__le32	MessageLength;
 	__le32	RequestID;
-} rndis_halt_msg_type;
+पूर्ण rndis_halt_msg_type;
 
-typedef struct rndis_query_msg_type {
-	__le32	MessageType;
-	__le32	MessageLength;
-	__le32	RequestID;
-	__le32	OID;
-	__le32	InformationBufferLength;
-	__le32	InformationBufferOffset;
-	__le32	DeviceVcHandle;
-} rndis_query_msg_type;
-
-typedef struct rndis_query_cmplt_type {
-	__le32	MessageType;
-	__le32	MessageLength;
-	__le32	RequestID;
-	__le32	Status;
-	__le32	InformationBufferLength;
-	__le32	InformationBufferOffset;
-} rndis_query_cmplt_type;
-
-typedef struct rndis_set_msg_type {
+प्रकार काष्ठा rndis_query_msg_type अणु
 	__le32	MessageType;
 	__le32	MessageLength;
 	__le32	RequestID;
 	__le32	OID;
-	__le32	InformationBufferLength;
-	__le32	InformationBufferOffset;
+	__le32	Inक्रमmationBufferLength;
+	__le32	Inक्रमmationBufferOffset;
 	__le32	DeviceVcHandle;
-} rndis_set_msg_type;
+पूर्ण rndis_query_msg_type;
 
-typedef struct rndis_set_cmplt_type {
+प्रकार काष्ठा rndis_query_cmplt_type अणु
 	__le32	MessageType;
 	__le32	MessageLength;
 	__le32	RequestID;
 	__le32	Status;
-} rndis_set_cmplt_type;
+	__le32	Inक्रमmationBufferLength;
+	__le32	Inक्रमmationBufferOffset;
+पूर्ण rndis_query_cmplt_type;
 
-typedef struct rndis_reset_msg_type {
+प्रकार काष्ठा rndis_set_msg_type अणु
+	__le32	MessageType;
+	__le32	MessageLength;
+	__le32	RequestID;
+	__le32	OID;
+	__le32	Inक्रमmationBufferLength;
+	__le32	Inक्रमmationBufferOffset;
+	__le32	DeviceVcHandle;
+पूर्ण rndis_set_msg_type;
+
+प्रकार काष्ठा rndis_set_cmplt_type अणु
+	__le32	MessageType;
+	__le32	MessageLength;
+	__le32	RequestID;
+	__le32	Status;
+पूर्ण rndis_set_cmplt_type;
+
+प्रकार काष्ठा rndis_reset_msg_type अणु
 	__le32	MessageType;
 	__le32	MessageLength;
 	__le32	Reserved;
-} rndis_reset_msg_type;
+पूर्ण rndis_reset_msg_type;
 
-typedef struct rndis_reset_cmplt_type {
+प्रकार काष्ठा rndis_reset_cmplt_type अणु
 	__le32	MessageType;
 	__le32	MessageLength;
 	__le32	Status;
 	__le32	AddressingReset;
-} rndis_reset_cmplt_type;
+पूर्ण rndis_reset_cmplt_type;
 
-typedef struct rndis_indicate_status_msg_type {
+प्रकार काष्ठा rndis_indicate_status_msg_type अणु
 	__le32	MessageType;
 	__le32	MessageLength;
 	__le32	Status;
 	__le32	StatusBufferLength;
 	__le32	StatusBufferOffset;
-} rndis_indicate_status_msg_type;
+पूर्ण rndis_indicate_status_msg_type;
 
-typedef struct rndis_keepalive_msg_type {
+प्रकार काष्ठा rndis_keepalive_msg_type अणु
 	__le32	MessageType;
 	__le32	MessageLength;
 	__le32	RequestID;
-} rndis_keepalive_msg_type;
+पूर्ण rndis_keepalive_msg_type;
 
-typedef struct rndis_keepalive_cmplt_type {
+प्रकार काष्ठा rndis_keepalive_cmplt_type अणु
 	__le32	MessageType;
 	__le32	MessageLength;
 	__le32	RequestID;
 	__le32	Status;
-} rndis_keepalive_cmplt_type;
+पूर्ण rndis_keepalive_cmplt_type;
 
-struct rndis_packet_msg_type {
+काष्ठा rndis_packet_msg_type अणु
 	__le32	MessageType;
 	__le32	MessageLength;
 	__le32	DataOffset;
@@ -132,70 +133,70 @@ struct rndis_packet_msg_type {
 	__le32	PerPacketInfoLength;
 	__le32	VcHandle;
 	__le32	Reserved;
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
-struct rndis_config_parameter {
+काष्ठा rndis_config_parameter अणु
 	__le32	ParameterNameOffset;
 	__le32	ParameterNameLength;
 	__le32	ParameterType;
 	__le32	ParameterValueOffset;
 	__le32	ParameterValueLength;
-};
+पूर्ण;
 
-/* implementation specific */
-enum rndis_state {
+/* implementation specअगरic */
+क्रमागत rndis_state अणु
 	RNDIS_UNINITIALIZED,
 	RNDIS_INITIALIZED,
 	RNDIS_DATA_INITIALIZED,
-};
+पूर्ण;
 
-typedef struct rndis_resp_t {
-	struct list_head	list;
+प्रकार काष्ठा rndis_resp_t अणु
+	काष्ठा list_head	list;
 	u8			*buf;
 	u32			length;
-	int			send;
-} rndis_resp_t;
+	पूर्णांक			send;
+पूर्ण rndis_resp_t;
 
-typedef struct rndis_params {
-	int			confignr;
+प्रकार काष्ठा rndis_params अणु
+	पूर्णांक			confignr;
 	u8			used;
 	u16			saved_filter;
-	enum rndis_state	state;
+	क्रमागत rndis_state	state;
 	u32			medium;
 	u32			speed;
 	u32			media_state;
 
-	const u8		*host_mac;
+	स्थिर u8		*host_mac;
 	u16			*filter;
-	struct net_device	*dev;
+	काष्ठा net_device	*dev;
 
-	u32			vendorID;
-	const char		*vendorDescr;
-	void			(*resp_avail)(void *v);
-	void			*v;
-	struct list_head	resp_queue;
-} rndis_params;
+	u32			venकरोrID;
+	स्थिर अक्षर		*venकरोrDescr;
+	व्योम			(*resp_avail)(व्योम *v);
+	व्योम			*v;
+	काष्ठा list_head	resp_queue;
+पूर्ण rndis_params;
 
 /* RNDIS Message parser and other useless functions */
-int  rndis_msg_parser(struct rndis_params *params, u8 *buf);
-struct rndis_params *rndis_register(void (*resp_avail)(void *v), void *v);
-void rndis_deregister(struct rndis_params *params);
-int  rndis_set_param_dev(struct rndis_params *params, struct net_device *dev,
+पूर्णांक  rndis_msg_parser(काष्ठा rndis_params *params, u8 *buf);
+काष्ठा rndis_params *rndis_रेजिस्टर(व्योम (*resp_avail)(व्योम *v), व्योम *v);
+व्योम rndis_deरेजिस्टर(काष्ठा rndis_params *params);
+पूर्णांक  rndis_set_param_dev(काष्ठा rndis_params *params, काष्ठा net_device *dev,
 			 u16 *cdc_filter);
-int  rndis_set_param_vendor(struct rndis_params *params, u32 vendorID,
-			    const char *vendorDescr);
-int  rndis_set_param_medium(struct rndis_params *params, u32 medium,
+पूर्णांक  rndis_set_param_venकरोr(काष्ठा rndis_params *params, u32 venकरोrID,
+			    स्थिर अक्षर *venकरोrDescr);
+पूर्णांक  rndis_set_param_medium(काष्ठा rndis_params *params, u32 medium,
 			     u32 speed);
-void rndis_add_hdr(struct sk_buff *skb);
-int rndis_rm_hdr(struct gether *port, struct sk_buff *skb,
-			struct sk_buff_head *list);
-u8   *rndis_get_next_response(struct rndis_params *params, u32 *length);
-void rndis_free_response(struct rndis_params *params, u8 *buf);
+व्योम rndis_add_hdr(काष्ठा sk_buff *skb);
+पूर्णांक rndis_rm_hdr(काष्ठा gether *port, काष्ठा sk_buff *skb,
+			काष्ठा sk_buff_head *list);
+u8   *rndis_get_next_response(काष्ठा rndis_params *params, u32 *length);
+व्योम rndis_मुक्त_response(काष्ठा rndis_params *params, u8 *buf);
 
-void rndis_uninit(struct rndis_params *params);
-int  rndis_signal_connect(struct rndis_params *params);
-int  rndis_signal_disconnect(struct rndis_params *params);
-int  rndis_state(struct rndis_params *params);
-extern void rndis_set_host_mac(struct rndis_params *params, const u8 *addr);
+व्योम rndis_uninit(काष्ठा rndis_params *params);
+पूर्णांक  rndis_संकेत_connect(काष्ठा rndis_params *params);
+पूर्णांक  rndis_संकेत_disconnect(काष्ठा rndis_params *params);
+पूर्णांक  rndis_state(काष्ठा rndis_params *params);
+बाह्य व्योम rndis_set_host_mac(काष्ठा rndis_params *params, स्थिर u8 *addr);
 
-#endif  /* _LINUX_RNDIS_H */
+#पूर्ण_अगर  /* _LINUX_RNDIS_H */

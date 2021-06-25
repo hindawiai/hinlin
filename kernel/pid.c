@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Generic pidhash and scalable, time-bounded PID allocator
+ * Generic pidhash and scalable, समय-bounded PID allocator
  *
  * (C) 2002-2003 Nadia Yvette Chambers, IBM
  * (C) 2004 Nadia Yvette Chambers, Oracle
  * (C) 2002-2004 Ingo Molnar, Red Hat
  *
- * pid-structures are backing objects for tasks sharing a given ID to chain
+ * pid-काष्ठाures are backing objects क्रम tasks sharing a given ID to chain
  * against. There is very little to them aside from hashing them and
  * parking tasks using given ID's on a list.
  *
- * The hash is always changed with the tasklist_lock write-acquired,
+ * The hash is always changed with the tasklist_lock ग_लिखो-acquired,
  * and the hash is only accessed with the tasklist_lock at least
- * read-acquired, so there's no additional SMP locking needed here.
+ * पढ़ो-acquired, so there's no additional SMP locking needed here.
  *
- * We have a list of bitmap pages, which bitmaps represent the PID space.
- * Allocating and freeing PIDs is completely lockless. The worst-case
+ * We have a list of biपंचांगap pages, which biपंचांगaps represent the PID space.
+ * Allocating and मुक्तing PIDs is completely lockless. The worst-हाल
  * allocation scenario when all but one out of 1 million PIDs possible are
- * allocated already: the scanning of 32 list entries and at most PAGE_SIZE
+ * allocated alपढ़ोy: the scanning of 32 list entries and at most PAGE_SIZE
  * bytes. The typical fastpath is a single successful setbit. Freeing is O(1).
  *
  * Pid namespaces:
- *    (C) 2007 Pavel Emelyanov <xemul@openvz.org>, OpenVZ, SWsoft Inc.
+ *    (C) 2007 Pavel Emelyanov <xemul@खोलोvz.org>, OpenVZ, SWsoft Inc.
  *    (C) 2007 Sukadev Bhattiprolu <sukadev@us.ibm.com>, IBM
- *     Many thanks to Oleg Nesterov for comments and help
+ *     Many thanks to Oleg Nesterov क्रम comments and help
  *
  */
 
-#include <linux/mm.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/rculist.h>
-#include <linux/memblock.h>
-#include <linux/pid_namespace.h>
-#include <linux/init_task.h>
-#include <linux/syscalls.h>
-#include <linux/proc_ns.h>
-#include <linux/refcount.h>
-#include <linux/anon_inodes.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/task.h>
-#include <linux/idr.h>
-#include <net/sock.h>
-#include <uapi/linux/pidfd.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/pid_namespace.h>
+#समावेश <linux/init_task.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/proc_ns.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/anon_inodes.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/idr.h>
+#समावेश <net/sock.h>
+#समावेश <uapi/linux/pidfd.h>
 
-struct pid init_struct_pid = {
+काष्ठा pid init_काष्ठा_pid = अणु
 	.count		= REFCOUNT_INIT(1),
-	.tasks		= {
-		{ .first = NULL },
-		{ .first = NULL },
-		{ .first = NULL },
-	},
+	.tasks		= अणु
+		अणु .first = शून्य पूर्ण,
+		अणु .first = शून्य पूर्ण,
+		अणु .first = शून्य पूर्ण,
+	पूर्ण,
 	.level		= 0,
-	.numbers	= { {
+	.numbers	= अणु अणु
 		.nr		= 0,
 		.ns		= &init_pid_ns,
-	}, }
-};
+	पूर्ण, पूर्ण
+पूर्ण;
 
-int pid_max = PID_MAX_DEFAULT;
+पूर्णांक pid_max = PID_MAX_DEFAULT;
 
-#define RESERVED_PIDS		300
+#घोषणा RESERVED_PIDS		300
 
-int pid_max_min = RESERVED_PIDS + 1;
-int pid_max_max = PID_MAX_LIMIT;
+पूर्णांक pid_max_min = RESERVED_PIDS + 1;
+पूर्णांक pid_max_max = PID_MAX_LIMIT;
 
 /*
- * PID-map pages start out as NULL, they get allocated upon
+ * PID-map pages start out as शून्य, they get allocated upon
  * first use and are never deallocated. This way a low pid_max
- * value does not cause lots of bitmaps to be allocated, but
- * the scheme scales to up to 4 million PIDs, runtime.
+ * value करोes not cause lots of biपंचांगaps to be allocated, but
+ * the scheme scales to up to 4 million PIDs, runसमय.
  */
-struct pid_namespace init_pid_ns = {
+काष्ठा pid_namespace init_pid_ns = अणु
 	.ns.count = REFCOUNT_INIT(2),
 	.idr = IDR_INIT(init_pid_ns.idr),
 	.pid_allocated = PIDNS_ADDING,
@@ -80,434 +81,434 @@ struct pid_namespace init_pid_ns = {
 	.child_reaper = &init_task,
 	.user_ns = &init_user_ns,
 	.ns.inum = PROC_PID_INIT_INO,
-#ifdef CONFIG_PID_NS
+#अगर_घोषित CONFIG_PID_NS
 	.ns.ops = &pidns_operations,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 EXPORT_SYMBOL_GPL(init_pid_ns);
 
 /*
- * Note: disable interrupts while the pidmap_lock is held as an
- * interrupt might come in and do read_lock(&tasklist_lock).
+ * Note: disable पूर्णांकerrupts जबतक the pidmap_lock is held as an
+ * पूर्णांकerrupt might come in and करो पढ़ो_lock(&tasklist_lock).
  *
- * If we don't disable interrupts there is a nasty deadlock between
- * detach_pid()->free_pid() and another cpu that does
- * spin_lock(&pidmap_lock) followed by an interrupt routine that does
- * read_lock(&tasklist_lock);
+ * If we करोn't disable पूर्णांकerrupts there is a nasty deadlock between
+ * detach_pid()->मुक्त_pid() and another cpu that करोes
+ * spin_lock(&pidmap_lock) followed by an पूर्णांकerrupt routine that करोes
+ * पढ़ो_lock(&tasklist_lock);
  *
  * After we clean up the tasklist_lock and know there are no
- * irq handlers that take it we can leave the interrupts enabled.
+ * irq handlers that take it we can leave the पूर्णांकerrupts enabled.
  * For now it is easier to be safe than to prove it can't happen.
  */
 
-static  __cacheline_aligned_in_smp DEFINE_SPINLOCK(pidmap_lock);
+अटल  __cacheline_aligned_in_smp DEFINE_SPINLOCK(pidmap_lock);
 
-void put_pid(struct pid *pid)
-{
-	struct pid_namespace *ns;
+व्योम put_pid(काष्ठा pid *pid)
+अणु
+	काष्ठा pid_namespace *ns;
 
-	if (!pid)
-		return;
+	अगर (!pid)
+		वापस;
 
 	ns = pid->numbers[pid->level].ns;
-	if (refcount_dec_and_test(&pid->count)) {
-		kmem_cache_free(ns->pid_cachep, pid);
+	अगर (refcount_dec_and_test(&pid->count)) अणु
+		kmem_cache_मुक्त(ns->pid_cachep, pid);
 		put_pid_ns(ns);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(put_pid);
 
-static void delayed_put_pid(struct rcu_head *rhp)
-{
-	struct pid *pid = container_of(rhp, struct pid, rcu);
+अटल व्योम delayed_put_pid(काष्ठा rcu_head *rhp)
+अणु
+	काष्ठा pid *pid = container_of(rhp, काष्ठा pid, rcu);
 	put_pid(pid);
-}
+पूर्ण
 
-void free_pid(struct pid *pid)
-{
-	/* We can be called with write_lock_irq(&tasklist_lock) held */
-	int i;
-	unsigned long flags;
+व्योम मुक्त_pid(काष्ठा pid *pid)
+अणु
+	/* We can be called with ग_लिखो_lock_irq(&tasklist_lock) held */
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&pidmap_lock, flags);
-	for (i = 0; i <= pid->level; i++) {
-		struct upid *upid = pid->numbers + i;
-		struct pid_namespace *ns = upid->ns;
-		switch (--ns->pid_allocated) {
-		case 2:
-		case 1:
+	क्रम (i = 0; i <= pid->level; i++) अणु
+		काष्ठा upid *upid = pid->numbers + i;
+		काष्ठा pid_namespace *ns = upid->ns;
+		चयन (--ns->pid_allocated) अणु
+		हाल 2:
+		हाल 1:
 			/* When all that is left in the pid namespace
 			 * is the reaper wake up the reaper.  The reaper
 			 * may be sleeping in zap_pid_ns_processes().
 			 */
 			wake_up_process(ns->child_reaper);
-			break;
-		case PIDNS_ADDING:
-			/* Handle a fork failure of the first process */
+			अवरोध;
+		हाल PIDNS_ADDING:
+			/* Handle a विभाजन failure of the first process */
 			WARN_ON(ns->child_reaper);
 			ns->pid_allocated = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		idr_remove(&ns->idr, upid->nr);
-	}
+		idr_हटाओ(&ns->idr, upid->nr);
+	पूर्ण
 	spin_unlock_irqrestore(&pidmap_lock, flags);
 
 	call_rcu(&pid->rcu, delayed_put_pid);
-}
+पूर्ण
 
-struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
-		      size_t set_tid_size)
-{
-	struct pid *pid;
-	enum pid_type type;
-	int i, nr;
-	struct pid_namespace *tmp;
-	struct upid *upid;
-	int retval = -ENOMEM;
+काष्ठा pid *alloc_pid(काष्ठा pid_namespace *ns, pid_t *set_tid,
+		      माप_प्रकार set_tid_size)
+अणु
+	काष्ठा pid *pid;
+	क्रमागत pid_type type;
+	पूर्णांक i, nr;
+	काष्ठा pid_namespace *पंचांगp;
+	काष्ठा upid *upid;
+	पूर्णांक retval = -ENOMEM;
 
 	/*
 	 * set_tid_size contains the size of the set_tid array. Starting at
 	 * the most nested currently active PID namespace it tells alloc_pid()
-	 * which PID to set for a process in that most nested PID namespace
-	 * up to set_tid_size PID namespaces. It does not have to set the PID
-	 * for a process in all nested PID namespaces but set_tid_size must
+	 * which PID to set क्रम a process in that most nested PID namespace
+	 * up to set_tid_size PID namespaces. It करोes not have to set the PID
+	 * क्रम a process in all nested PID namespaces but set_tid_size must
 	 * never be greater than the current ns->level + 1.
 	 */
-	if (set_tid_size > ns->level + 1)
-		return ERR_PTR(-EINVAL);
+	अगर (set_tid_size > ns->level + 1)
+		वापस ERR_PTR(-EINVAL);
 
 	pid = kmem_cache_alloc(ns->pid_cachep, GFP_KERNEL);
-	if (!pid)
-		return ERR_PTR(retval);
+	अगर (!pid)
+		वापस ERR_PTR(retval);
 
-	tmp = ns;
+	पंचांगp = ns;
 	pid->level = ns->level;
 
-	for (i = ns->level; i >= 0; i--) {
-		int tid = 0;
+	क्रम (i = ns->level; i >= 0; i--) अणु
+		पूर्णांक tid = 0;
 
-		if (set_tid_size) {
+		अगर (set_tid_size) अणु
 			tid = set_tid[ns->level - i];
 
 			retval = -EINVAL;
-			if (tid < 1 || tid >= pid_max)
-				goto out_free;
+			अगर (tid < 1 || tid >= pid_max)
+				जाओ out_मुक्त;
 			/*
-			 * Also fail if a PID != 1 is requested and
+			 * Also fail अगर a PID != 1 is requested and
 			 * no PID 1 exists.
 			 */
-			if (tid != 1 && !tmp->child_reaper)
-				goto out_free;
+			अगर (tid != 1 && !पंचांगp->child_reaper)
+				जाओ out_मुक्त;
 			retval = -EPERM;
-			if (!checkpoint_restore_ns_capable(tmp->user_ns))
-				goto out_free;
+			अगर (!checkpoपूर्णांक_restore_ns_capable(पंचांगp->user_ns))
+				जाओ out_मुक्त;
 			set_tid_size--;
-		}
+		पूर्ण
 
 		idr_preload(GFP_KERNEL);
 		spin_lock_irq(&pidmap_lock);
 
-		if (tid) {
-			nr = idr_alloc(&tmp->idr, NULL, tid,
+		अगर (tid) अणु
+			nr = idr_alloc(&पंचांगp->idr, शून्य, tid,
 				       tid + 1, GFP_ATOMIC);
 			/*
-			 * If ENOSPC is returned it means that the PID is
-			 * alreay in use. Return EEXIST in that case.
+			 * If ENOSPC is वापसed it means that the PID is
+			 * alreay in use. Return EEXIST in that हाल.
 			 */
-			if (nr == -ENOSPC)
+			अगर (nr == -ENOSPC)
 				nr = -EEXIST;
-		} else {
-			int pid_min = 1;
+		पूर्ण अन्यथा अणु
+			पूर्णांक pid_min = 1;
 			/*
 			 * init really needs pid 1, but after reaching the
 			 * maximum wrap back to RESERVED_PIDS
 			 */
-			if (idr_get_cursor(&tmp->idr) > RESERVED_PIDS)
+			अगर (idr_get_cursor(&पंचांगp->idr) > RESERVED_PIDS)
 				pid_min = RESERVED_PIDS;
 
 			/*
-			 * Store a null pointer so find_pid_ns does not find
+			 * Store a null poपूर्णांकer so find_pid_ns करोes not find
 			 * a partially initialized PID (see below).
 			 */
-			nr = idr_alloc_cyclic(&tmp->idr, NULL, pid_min,
+			nr = idr_alloc_cyclic(&पंचांगp->idr, शून्य, pid_min,
 					      pid_max, GFP_ATOMIC);
-		}
+		पूर्ण
 		spin_unlock_irq(&pidmap_lock);
 		idr_preload_end();
 
-		if (nr < 0) {
+		अगर (nr < 0) अणु
 			retval = (nr == -ENOSPC) ? -EAGAIN : nr;
-			goto out_free;
-		}
+			जाओ out_मुक्त;
+		पूर्ण
 
 		pid->numbers[i].nr = nr;
-		pid->numbers[i].ns = tmp;
-		tmp = tmp->parent;
-	}
+		pid->numbers[i].ns = पंचांगp;
+		पंचांगp = पंचांगp->parent;
+	पूर्ण
 
 	/*
-	 * ENOMEM is not the most obvious choice especially for the case
-	 * where the child subreaper has already exited and the pid
+	 * ENOMEM is not the most obvious choice especially क्रम the हाल
+	 * where the child subreaper has alपढ़ोy निकासed and the pid
 	 * namespace denies the creation of any new processes. But ENOMEM
-	 * is what we have exposed to userspace for a long time and it is
-	 * documented behavior for pid namespaces. So we can't easily
-	 * change it even if there were an error code better suited.
+	 * is what we have exposed to userspace क्रम a दीर्घ समय and it is
+	 * करोcumented behavior क्रम pid namespaces. So we can't easily
+	 * change it even अगर there were an error code better suited.
 	 */
 	retval = -ENOMEM;
 
 	get_pid_ns(ns);
 	refcount_set(&pid->count, 1);
 	spin_lock_init(&pid->lock);
-	for (type = 0; type < PIDTYPE_MAX; ++type)
+	क्रम (type = 0; type < PIDTYPE_MAX; ++type)
 		INIT_HLIST_HEAD(&pid->tasks[type]);
 
-	init_waitqueue_head(&pid->wait_pidfd);
+	init_रुकोqueue_head(&pid->रुको_pidfd);
 	INIT_HLIST_HEAD(&pid->inodes);
 
 	upid = pid->numbers + ns->level;
 	spin_lock_irq(&pidmap_lock);
-	if (!(ns->pid_allocated & PIDNS_ADDING))
-		goto out_unlock;
-	for ( ; upid >= pid->numbers; --upid) {
+	अगर (!(ns->pid_allocated & PIDNS_ADDING))
+		जाओ out_unlock;
+	क्रम ( ; upid >= pid->numbers; --upid) अणु
 		/* Make the PID visible to find_pid_ns. */
 		idr_replace(&upid->ns->idr, pid, upid->nr);
 		upid->ns->pid_allocated++;
-	}
+	पूर्ण
 	spin_unlock_irq(&pidmap_lock);
 
-	return pid;
+	वापस pid;
 
 out_unlock:
 	spin_unlock_irq(&pidmap_lock);
 	put_pid_ns(ns);
 
-out_free:
+out_मुक्त:
 	spin_lock_irq(&pidmap_lock);
-	while (++i <= ns->level) {
+	जबतक (++i <= ns->level) अणु
 		upid = pid->numbers + i;
-		idr_remove(&upid->ns->idr, upid->nr);
-	}
+		idr_हटाओ(&upid->ns->idr, upid->nr);
+	पूर्ण
 
 	/* On failure to allocate the first pid, reset the state */
-	if (ns->pid_allocated == PIDNS_ADDING)
+	अगर (ns->pid_allocated == PIDNS_ADDING)
 		idr_set_cursor(&ns->idr, 0);
 
 	spin_unlock_irq(&pidmap_lock);
 
-	kmem_cache_free(ns->pid_cachep, pid);
-	return ERR_PTR(retval);
-}
+	kmem_cache_मुक्त(ns->pid_cachep, pid);
+	वापस ERR_PTR(retval);
+पूर्ण
 
-void disable_pid_allocation(struct pid_namespace *ns)
-{
+व्योम disable_pid_allocation(काष्ठा pid_namespace *ns)
+अणु
 	spin_lock_irq(&pidmap_lock);
 	ns->pid_allocated &= ~PIDNS_ADDING;
 	spin_unlock_irq(&pidmap_lock);
-}
+पूर्ण
 
-struct pid *find_pid_ns(int nr, struct pid_namespace *ns)
-{
-	return idr_find(&ns->idr, nr);
-}
+काष्ठा pid *find_pid_ns(पूर्णांक nr, काष्ठा pid_namespace *ns)
+अणु
+	वापस idr_find(&ns->idr, nr);
+पूर्ण
 EXPORT_SYMBOL_GPL(find_pid_ns);
 
-struct pid *find_vpid(int nr)
-{
-	return find_pid_ns(nr, task_active_pid_ns(current));
-}
+काष्ठा pid *find_vpid(पूर्णांक nr)
+अणु
+	वापस find_pid_ns(nr, task_active_pid_ns(current));
+पूर्ण
 EXPORT_SYMBOL_GPL(find_vpid);
 
-static struct pid **task_pid_ptr(struct task_struct *task, enum pid_type type)
-{
-	return (type == PIDTYPE_PID) ?
-		&task->thread_pid :
-		&task->signal->pids[type];
-}
+अटल काष्ठा pid **task_pid_ptr(काष्ठा task_काष्ठा *task, क्रमागत pid_type type)
+अणु
+	वापस (type == PIDTYPE_PID) ?
+		&task->thपढ़ो_pid :
+		&task->संकेत->pids[type];
+पूर्ण
 
 /*
- * attach_pid() must be called with the tasklist_lock write-held.
+ * attach_pid() must be called with the tasklist_lock ग_लिखो-held.
  */
-void attach_pid(struct task_struct *task, enum pid_type type)
-{
-	struct pid *pid = *task_pid_ptr(task, type);
+व्योम attach_pid(काष्ठा task_काष्ठा *task, क्रमागत pid_type type)
+अणु
+	काष्ठा pid *pid = *task_pid_ptr(task, type);
 	hlist_add_head_rcu(&task->pid_links[type], &pid->tasks[type]);
-}
+पूर्ण
 
-static void __change_pid(struct task_struct *task, enum pid_type type,
-			struct pid *new)
-{
-	struct pid **pid_ptr = task_pid_ptr(task, type);
-	struct pid *pid;
-	int tmp;
+अटल व्योम __change_pid(काष्ठा task_काष्ठा *task, क्रमागत pid_type type,
+			काष्ठा pid *new)
+अणु
+	काष्ठा pid **pid_ptr = task_pid_ptr(task, type);
+	काष्ठा pid *pid;
+	पूर्णांक पंचांगp;
 
 	pid = *pid_ptr;
 
 	hlist_del_rcu(&task->pid_links[type]);
 	*pid_ptr = new;
 
-	for (tmp = PIDTYPE_MAX; --tmp >= 0; )
-		if (pid_has_task(pid, tmp))
-			return;
+	क्रम (पंचांगp = PIDTYPE_MAX; --पंचांगp >= 0; )
+		अगर (pid_has_task(pid, पंचांगp))
+			वापस;
 
-	free_pid(pid);
-}
+	मुक्त_pid(pid);
+पूर्ण
 
-void detach_pid(struct task_struct *task, enum pid_type type)
-{
-	__change_pid(task, type, NULL);
-}
+व्योम detach_pid(काष्ठा task_काष्ठा *task, क्रमागत pid_type type)
+अणु
+	__change_pid(task, type, शून्य);
+पूर्ण
 
-void change_pid(struct task_struct *task, enum pid_type type,
-		struct pid *pid)
-{
+व्योम change_pid(काष्ठा task_काष्ठा *task, क्रमागत pid_type type,
+		काष्ठा pid *pid)
+अणु
 	__change_pid(task, type, pid);
 	attach_pid(task, type);
-}
+पूर्ण
 
-void exchange_tids(struct task_struct *left, struct task_struct *right)
-{
-	struct pid *pid1 = left->thread_pid;
-	struct pid *pid2 = right->thread_pid;
-	struct hlist_head *head1 = &pid1->tasks[PIDTYPE_PID];
-	struct hlist_head *head2 = &pid2->tasks[PIDTYPE_PID];
+व्योम exchange_tids(काष्ठा task_काष्ठा *left, काष्ठा task_काष्ठा *right)
+अणु
+	काष्ठा pid *pid1 = left->thपढ़ो_pid;
+	काष्ठा pid *pid2 = right->thपढ़ो_pid;
+	काष्ठा hlist_head *head1 = &pid1->tasks[PIDTYPE_PID];
+	काष्ठा hlist_head *head2 = &pid2->tasks[PIDTYPE_PID];
 
 	/* Swap the single entry tid lists */
 	hlists_swap_heads_rcu(head1, head2);
 
-	/* Swap the per task_struct pid */
-	rcu_assign_pointer(left->thread_pid, pid2);
-	rcu_assign_pointer(right->thread_pid, pid1);
+	/* Swap the per task_काष्ठा pid */
+	rcu_assign_poपूर्णांकer(left->thपढ़ो_pid, pid2);
+	rcu_assign_poपूर्णांकer(right->thपढ़ो_pid, pid1);
 
 	/* Swap the cached value */
 	WRITE_ONCE(left->pid, pid_nr(pid2));
 	WRITE_ONCE(right->pid, pid_nr(pid1));
-}
+पूर्ण
 
 /* transfer_pid is an optimization of attach_pid(new), detach_pid(old) */
-void transfer_pid(struct task_struct *old, struct task_struct *new,
-			   enum pid_type type)
-{
-	if (type == PIDTYPE_PID)
-		new->thread_pid = old->thread_pid;
+व्योम transfer_pid(काष्ठा task_काष्ठा *old, काष्ठा task_काष्ठा *new,
+			   क्रमागत pid_type type)
+अणु
+	अगर (type == PIDTYPE_PID)
+		new->thपढ़ो_pid = old->thपढ़ो_pid;
 	hlist_replace_rcu(&old->pid_links[type], &new->pid_links[type]);
-}
+पूर्ण
 
-struct task_struct *pid_task(struct pid *pid, enum pid_type type)
-{
-	struct task_struct *result = NULL;
-	if (pid) {
-		struct hlist_node *first;
+काष्ठा task_काष्ठा *pid_task(काष्ठा pid *pid, क्रमागत pid_type type)
+अणु
+	काष्ठा task_काष्ठा *result = शून्य;
+	अगर (pid) अणु
+		काष्ठा hlist_node *first;
 		first = rcu_dereference_check(hlist_first_rcu(&pid->tasks[type]),
 					      lockdep_tasklist_lock_is_held());
-		if (first)
-			result = hlist_entry(first, struct task_struct, pid_links[(type)]);
-	}
-	return result;
-}
+		अगर (first)
+			result = hlist_entry(first, काष्ठा task_काष्ठा, pid_links[(type)]);
+	पूर्ण
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(pid_task);
 
 /*
- * Must be called under rcu_read_lock().
+ * Must be called under rcu_पढ़ो_lock().
  */
-struct task_struct *find_task_by_pid_ns(pid_t nr, struct pid_namespace *ns)
-{
-	RCU_LOCKDEP_WARN(!rcu_read_lock_held(),
+काष्ठा task_काष्ठा *find_task_by_pid_ns(pid_t nr, काष्ठा pid_namespace *ns)
+अणु
+	RCU_LOCKDEP_WARN(!rcu_पढ़ो_lock_held(),
 			 "find_task_by_pid_ns() needs rcu_read_lock() protection");
-	return pid_task(find_pid_ns(nr, ns), PIDTYPE_PID);
-}
+	वापस pid_task(find_pid_ns(nr, ns), PIDTYPE_PID);
+पूर्ण
 
-struct task_struct *find_task_by_vpid(pid_t vnr)
-{
-	return find_task_by_pid_ns(vnr, task_active_pid_ns(current));
-}
+काष्ठा task_काष्ठा *find_task_by_vpid(pid_t vnr)
+अणु
+	वापस find_task_by_pid_ns(vnr, task_active_pid_ns(current));
+पूर्ण
 
-struct task_struct *find_get_task_by_vpid(pid_t nr)
-{
-	struct task_struct *task;
+काष्ठा task_काष्ठा *find_get_task_by_vpid(pid_t nr)
+अणु
+	काष्ठा task_काष्ठा *task;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	task = find_task_by_vpid(nr);
-	if (task)
-		get_task_struct(task);
-	rcu_read_unlock();
+	अगर (task)
+		get_task_काष्ठा(task);
+	rcu_पढ़ो_unlock();
 
-	return task;
-}
+	वापस task;
+पूर्ण
 
-struct pid *get_task_pid(struct task_struct *task, enum pid_type type)
-{
-	struct pid *pid;
-	rcu_read_lock();
+काष्ठा pid *get_task_pid(काष्ठा task_काष्ठा *task, क्रमागत pid_type type)
+अणु
+	काष्ठा pid *pid;
+	rcu_पढ़ो_lock();
 	pid = get_pid(rcu_dereference(*task_pid_ptr(task, type)));
-	rcu_read_unlock();
-	return pid;
-}
+	rcu_पढ़ो_unlock();
+	वापस pid;
+पूर्ण
 EXPORT_SYMBOL_GPL(get_task_pid);
 
-struct task_struct *get_pid_task(struct pid *pid, enum pid_type type)
-{
-	struct task_struct *result;
-	rcu_read_lock();
+काष्ठा task_काष्ठा *get_pid_task(काष्ठा pid *pid, क्रमागत pid_type type)
+अणु
+	काष्ठा task_काष्ठा *result;
+	rcu_पढ़ो_lock();
 	result = pid_task(pid, type);
-	if (result)
-		get_task_struct(result);
-	rcu_read_unlock();
-	return result;
-}
+	अगर (result)
+		get_task_काष्ठा(result);
+	rcu_पढ़ो_unlock();
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL_GPL(get_pid_task);
 
-struct pid *find_get_pid(pid_t nr)
-{
-	struct pid *pid;
+काष्ठा pid *find_get_pid(pid_t nr)
+अणु
+	काष्ठा pid *pid;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	pid = get_pid(find_vpid(nr));
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return pid;
-}
+	वापस pid;
+पूर्ण
 EXPORT_SYMBOL_GPL(find_get_pid);
 
-pid_t pid_nr_ns(struct pid *pid, struct pid_namespace *ns)
-{
-	struct upid *upid;
+pid_t pid_nr_ns(काष्ठा pid *pid, काष्ठा pid_namespace *ns)
+अणु
+	काष्ठा upid *upid;
 	pid_t nr = 0;
 
-	if (pid && ns->level <= pid->level) {
+	अगर (pid && ns->level <= pid->level) अणु
 		upid = &pid->numbers[ns->level];
-		if (upid->ns == ns)
+		अगर (upid->ns == ns)
 			nr = upid->nr;
-	}
-	return nr;
-}
+	पूर्ण
+	वापस nr;
+पूर्ण
 EXPORT_SYMBOL_GPL(pid_nr_ns);
 
-pid_t pid_vnr(struct pid *pid)
-{
-	return pid_nr_ns(pid, task_active_pid_ns(current));
-}
+pid_t pid_vnr(काष्ठा pid *pid)
+अणु
+	वापस pid_nr_ns(pid, task_active_pid_ns(current));
+पूर्ण
 EXPORT_SYMBOL_GPL(pid_vnr);
 
-pid_t __task_pid_nr_ns(struct task_struct *task, enum pid_type type,
-			struct pid_namespace *ns)
-{
+pid_t __task_pid_nr_ns(काष्ठा task_काष्ठा *task, क्रमागत pid_type type,
+			काष्ठा pid_namespace *ns)
+अणु
 	pid_t nr = 0;
 
-	rcu_read_lock();
-	if (!ns)
+	rcu_पढ़ो_lock();
+	अगर (!ns)
 		ns = task_active_pid_ns(current);
 	nr = pid_nr_ns(rcu_dereference(*task_pid_ptr(task, type)), ns);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return nr;
-}
+	वापस nr;
+पूर्ण
 EXPORT_SYMBOL(__task_pid_nr_ns);
 
-struct pid_namespace *task_active_pid_ns(struct task_struct *tsk)
-{
-	return ns_of_pid(task_pid(tsk));
-}
+काष्ठा pid_namespace *task_active_pid_ns(काष्ठा task_काष्ठा *tsk)
+अणु
+	वापस ns_of_pid(task_pid(tsk));
+पूर्ण
 EXPORT_SYMBOL_GPL(task_active_pid_ns);
 
 /*
@@ -515,105 +516,105 @@ EXPORT_SYMBOL_GPL(task_active_pid_ns);
  *
  * If there is a pid at nr this function is exactly the same as find_pid_ns.
  */
-struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
-{
-	return idr_get_next(&ns->idr, &nr);
-}
+काष्ठा pid *find_ge_pid(पूर्णांक nr, काष्ठा pid_namespace *ns)
+अणु
+	वापस idr_get_next(&ns->idr, &nr);
+पूर्ण
 
-struct pid *pidfd_get_pid(unsigned int fd, unsigned int *flags)
-{
-	struct fd f;
-	struct pid *pid;
+काष्ठा pid *pidfd_get_pid(अचिन्हित पूर्णांक fd, अचिन्हित पूर्णांक *flags)
+अणु
+	काष्ठा fd f;
+	काष्ठा pid *pid;
 
 	f = fdget(fd);
-	if (!f.file)
-		return ERR_PTR(-EBADF);
+	अगर (!f.file)
+		वापस ERR_PTR(-EBADF);
 
 	pid = pidfd_pid(f.file);
-	if (!IS_ERR(pid)) {
+	अगर (!IS_ERR(pid)) अणु
 		get_pid(pid);
 		*flags = f.file->f_flags;
-	}
+	पूर्ण
 
 	fdput(f);
-	return pid;
-}
+	वापस pid;
+पूर्ण
 
 /**
  * pidfd_create() - Create a new pid file descriptor.
  *
- * @pid:   struct pid that the pidfd will reference
+ * @pid:   काष्ठा pid that the pidfd will reference
  * @flags: flags to pass
  *
  * This creates a new pid file descriptor with the O_CLOEXEC flag set.
  *
  * Note, that this function can only be called after the fd table has
- * been unshared to avoid leaking the pidfd to the new process.
+ * been unshared to aव्योम leaking the pidfd to the new process.
  *
- * Return: On success, a cloexec pidfd is returned.
- *         On error, a negative errno number will be returned.
+ * Return: On success, a cloexec pidfd is वापसed.
+ *         On error, a negative त्रुटि_सं number will be वापसed.
  */
-static int pidfd_create(struct pid *pid, unsigned int flags)
-{
-	int fd;
+अटल पूर्णांक pidfd_create(काष्ठा pid *pid, अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक fd;
 
 	fd = anon_inode_getfd("[pidfd]", &pidfd_fops, get_pid(pid),
 			      flags | O_RDWR | O_CLOEXEC);
-	if (fd < 0)
+	अगर (fd < 0)
 		put_pid(pid);
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
 /**
- * pidfd_open() - Open new pid file descriptor.
+ * pidfd_खोलो() - Open new pid file descriptor.
  *
- * @pid:   pid for which to retrieve a pidfd
+ * @pid:   pid क्रम which to retrieve a pidfd
  * @flags: flags to pass
  *
- * This creates a new pid file descriptor with the O_CLOEXEC flag set for
- * the process identified by @pid. Currently, the process identified by
- * @pid must be a thread-group leader. This restriction currently exists
- * for all aspects of pidfds including pidfd creation (CLONE_PIDFD cannot
- * be used with CLONE_THREAD) and pidfd polling (only supports thread group
+ * This creates a new pid file descriptor with the O_CLOEXEC flag set क्रम
+ * the process identअगरied by @pid. Currently, the process identअगरied by
+ * @pid must be a thपढ़ो-group leader. This restriction currently exists
+ * क्रम all aspects of pidfds including pidfd creation (CLONE_PIDFD cannot
+ * be used with CLONE_THREAD) and pidfd polling (only supports thपढ़ो group
  * leaders).
  *
- * Return: On success, a cloexec pidfd is returned.
- *         On error, a negative errno number will be returned.
+ * Return: On success, a cloexec pidfd is वापसed.
+ *         On error, a negative त्रुटि_सं number will be वापसed.
  */
-SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
-{
-	int fd;
-	struct pid *p;
+SYSCALL_DEFINE2(pidfd_खोलो, pid_t, pid, अचिन्हित पूर्णांक, flags)
+अणु
+	पूर्णांक fd;
+	काष्ठा pid *p;
 
-	if (flags & ~PIDFD_NONBLOCK)
-		return -EINVAL;
+	अगर (flags & ~PIDFD_NONBLOCK)
+		वापस -EINVAL;
 
-	if (pid <= 0)
-		return -EINVAL;
+	अगर (pid <= 0)
+		वापस -EINVAL;
 
 	p = find_get_pid(pid);
-	if (!p)
-		return -ESRCH;
+	अगर (!p)
+		वापस -ESRCH;
 
-	if (pid_has_task(p, PIDTYPE_TGID))
+	अगर (pid_has_task(p, PIDTYPE_TGID))
 		fd = pidfd_create(p, flags);
-	else
+	अन्यथा
 		fd = -EINVAL;
 
 	put_pid(p);
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-void __init pid_idr_init(void)
-{
-	/* Verify no one has done anything silly: */
+व्योम __init pid_idr_init(व्योम)
+अणु
+	/* Verअगरy no one has करोne anything silly: */
 	BUILD_BUG_ON(PID_MAX_LIMIT >= PIDNS_ADDING);
 
-	/* bump default and minimum pid_max based on number of cpus */
-	pid_max = min(pid_max_max, max_t(int, pid_max,
+	/* bump शेष and minimum pid_max based on number of cpus */
+	pid_max = min(pid_max_max, max_t(पूर्णांक, pid_max,
 				PIDS_PER_CPU_DEFAULT * num_possible_cpus()));
-	pid_max_min = max_t(int, pid_max_min,
+	pid_max_min = max_t(पूर्णांक, pid_max_min,
 				PIDS_PER_CPU_MIN * num_possible_cpus());
 	pr_info("pid_max: default: %u minimum: %u\n", pid_max, pid_max_min);
 
@@ -621,47 +622,47 @@ void __init pid_idr_init(void)
 
 	init_pid_ns.pid_cachep = KMEM_CACHE(pid,
 			SLAB_HWCACHE_ALIGN | SLAB_PANIC | SLAB_ACCOUNT);
-}
+पूर्ण
 
-static struct file *__pidfd_fget(struct task_struct *task, int fd)
-{
-	struct file *file;
-	int ret;
+अटल काष्ठा file *__pidfd_fget(काष्ठा task_काष्ठा *task, पूर्णांक fd)
+अणु
+	काष्ठा file *file;
+	पूर्णांक ret;
 
-	ret = down_read_killable(&task->signal->exec_update_lock);
-	if (ret)
-		return ERR_PTR(ret);
+	ret = करोwn_पढ़ो_समाप्तable(&task->संकेत->exec_update_lock);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	if (ptrace_may_access(task, PTRACE_MODE_ATTACH_REALCREDS))
+	अगर (ptrace_may_access(task, PTRACE_MODE_ATTACH_REALCREDS))
 		file = fget_task(task, fd);
-	else
+	अन्यथा
 		file = ERR_PTR(-EPERM);
 
-	up_read(&task->signal->exec_update_lock);
+	up_पढ़ो(&task->संकेत->exec_update_lock);
 
-	return file ?: ERR_PTR(-EBADF);
-}
+	वापस file ?: ERR_PTR(-EBADF);
+पूर्ण
 
-static int pidfd_getfd(struct pid *pid, int fd)
-{
-	struct task_struct *task;
-	struct file *file;
-	int ret;
+अटल पूर्णांक pidfd_getfd(काष्ठा pid *pid, पूर्णांक fd)
+अणु
+	काष्ठा task_काष्ठा *task;
+	काष्ठा file *file;
+	पूर्णांक ret;
 
 	task = get_pid_task(pid, PIDTYPE_PID);
-	if (!task)
-		return -ESRCH;
+	अगर (!task)
+		वापस -ESRCH;
 
 	file = __pidfd_fget(task, fd);
-	put_task_struct(task);
-	if (IS_ERR(file))
-		return PTR_ERR(file);
+	put_task_काष्ठा(task);
+	अगर (IS_ERR(file))
+		वापस PTR_ERR(file);
 
 	ret = receive_fd(file, O_CLOEXEC);
 	fput(file);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * sys_pidfd_getfd() - Get a file descriptor from another process
@@ -670,36 +671,36 @@ static int pidfd_getfd(struct pid *pid, int fd)
  * @fd:		the file descriptor number to get
  * @flags:	flags on how to get the fd (reserved)
  *
- * This syscall gets a copy of a file descriptor from another process
+ * This syscall माला_लो a copy of a file descriptor from another process
  * based on the pidfd, and file descriptor number. It requires that
  * the calling process has the ability to ptrace the process represented
  * by the pidfd. The process which is having its file descriptor copied
  * is otherwise unaffected.
  *
- * Return: On success, a cloexec file descriptor is returned.
- *         On error, a negative errno number will be returned.
+ * Return: On success, a cloexec file descriptor is वापसed.
+ *         On error, a negative त्रुटि_सं number will be वापसed.
  */
-SYSCALL_DEFINE3(pidfd_getfd, int, pidfd, int, fd,
-		unsigned int, flags)
-{
-	struct pid *pid;
-	struct fd f;
-	int ret;
+SYSCALL_DEFINE3(pidfd_getfd, पूर्णांक, pidfd, पूर्णांक, fd,
+		अचिन्हित पूर्णांक, flags)
+अणु
+	काष्ठा pid *pid;
+	काष्ठा fd f;
+	पूर्णांक ret;
 
 	/* flags is currently unused - make sure it's unset */
-	if (flags)
-		return -EINVAL;
+	अगर (flags)
+		वापस -EINVAL;
 
 	f = fdget(pidfd);
-	if (!f.file)
-		return -EBADF;
+	अगर (!f.file)
+		वापस -EBADF;
 
 	pid = pidfd_pid(f.file);
-	if (IS_ERR(pid))
+	अगर (IS_ERR(pid))
 		ret = PTR_ERR(pid);
-	else
+	अन्यथा
 		ret = pidfd_getfd(pid, fd);
 
 	fdput(f);
-	return ret;
-}
+	वापस ret;
+पूर्ण

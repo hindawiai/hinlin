@@ -1,3 +1,4 @@
+<शैली गुरु>
 /***********************license start***************
  * Author: Cavium Networks
  *
@@ -6,23 +7,23 @@
  *
  * Copyright (c) 2003-2008 Cavium Networks
  *
- * This file is free software; you can redistribute it and/or modify
+ * This file is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License for more
+ * NONINFRINGEMENT.  See the GNU General Public License क्रम more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this file; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * aदीर्घ with this file; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fअगरth Floor, Boston, MA 02110-1301 USA
  * or visit http://www.gnu.org/licenses/.
  *
- * This file may also be available under a different license from Cavium.
- * Contact Cavium Networks for more information
+ * This file may also be available under a dअगरferent license from Cavium.
+ * Contact Cavium Networks क्रम more inक्रमmation
  ***********************license end**************************************/
 
 /**
@@ -33,69 +34,69 @@
  *
  */
 
-#ifndef __CVMX_FPA_H__
-#define __CVMX_FPA_H__
+#अगर_अघोषित __CVMX_FPA_H__
+#घोषणा __CVMX_FPA_H__
 
-#include <linux/delay.h>
+#समावेश <linux/delay.h>
 
-#include <asm/octeon/cvmx-address.h>
-#include <asm/octeon/cvmx-fpa-defs.h>
+#समावेश <यंत्र/octeon/cvmx-address.h>
+#समावेश <यंत्र/octeon/cvmx-fpa-defs.h>
 
-#define CVMX_FPA_NUM_POOLS	8
-#define CVMX_FPA_MIN_BLOCK_SIZE 128
-#define CVMX_FPA_ALIGNMENT	128
+#घोषणा CVMX_FPA_NUM_POOLS	8
+#घोषणा CVMX_FPA_MIN_BLOCK_SIZE 128
+#घोषणा CVMX_FPA_ALIGNMENT	128
 
 /**
- * Structure describing the data format used for stores to the FPA.
+ * Structure describing the data क्रमmat used क्रम stores to the FPA.
  */
-typedef union {
-	uint64_t u64;
-	struct {
-#ifdef __BIG_ENDIAN_BITFIELD
+प्रकार जोड़ अणु
+	uपूर्णांक64_t u64;
+	काष्ठा अणु
+#अगर_घोषित __BIG_ENDIAN_BITFIELD
 		/*
-		 * the (64-bit word) location in scratchpad to write
-		 * to (if len != 0)
+		 * the (64-bit word) location in scratchpad to ग_लिखो
+		 * to (अगर len != 0)
 		 */
-		uint64_t scraddr:8;
+		uपूर्णांक64_t scraddr:8;
 		/* the number of words in the response (0 => no response) */
-		uint64_t len:8;
+		uपूर्णांक64_t len:8;
 		/* the ID of the device on the non-coherent bus */
-		uint64_t did:8;
+		uपूर्णांक64_t did:8;
 		/*
 		 * the address that will appear in the first tick on
 		 * the NCB bus.
 		 */
-		uint64_t addr:40;
-#else
-		uint64_t addr:40;
-		uint64_t did:8;
-		uint64_t len:8;
-		uint64_t scraddr:8;
-#endif
-	} s;
-} cvmx_fpa_iobdma_data_t;
+		uपूर्णांक64_t addr:40;
+#अन्यथा
+		uपूर्णांक64_t addr:40;
+		uपूर्णांक64_t did:8;
+		uपूर्णांक64_t len:8;
+		uपूर्णांक64_t scraddr:8;
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण cvmx_fpa_iobdma_data_t;
 
 /**
  * Structure describing the current state of a FPA pool.
  */
-typedef struct {
+प्रकार काष्ठा अणु
 	/* Name it was created under */
-	const char *name;
+	स्थिर अक्षर *name;
 	/* Size of each block */
-	uint64_t size;
+	uपूर्णांक64_t size;
 	/* The base memory address of whole block */
-	void *base;
+	व्योम *base;
 	/* The number of elements in the pool at creation */
-	uint64_t starting_element_count;
-} cvmx_fpa_pool_info_t;
+	uपूर्णांक64_t starting_element_count;
+पूर्ण cvmx_fpa_pool_info_t;
 
 /**
  * Current state of all the pools. Use access functions
  * instead of using it directly.
  */
-extern cvmx_fpa_pool_info_t cvmx_fpa_pool_info[CVMX_FPA_NUM_POOLS];
+बाह्य cvmx_fpa_pool_info_t cvmx_fpa_pool_info[CVMX_FPA_NUM_POOLS];
 
-/* CSR typedefs have been moved to cvmx-csr-*.h */
+/* CSR प्रकारs have been moved to cvmx-csr-*.h */
 
 /**
  * Return the name of the pool
@@ -103,10 +104,10 @@ extern cvmx_fpa_pool_info_t cvmx_fpa_pool_info[CVMX_FPA_NUM_POOLS];
  * @pool:   Pool to get the name of
  * Returns The name
  */
-static inline const char *cvmx_fpa_get_name(uint64_t pool)
-{
-	return cvmx_fpa_pool_info[pool].name;
-}
+अटल अंतरभूत स्थिर अक्षर *cvmx_fpa_get_name(uपूर्णांक64_t pool)
+अणु
+	वापस cvmx_fpa_pool_info[pool].name;
+पूर्ण
 
 /**
  * Return the base of the pool
@@ -114,83 +115,83 @@ static inline const char *cvmx_fpa_get_name(uint64_t pool)
  * @pool:   Pool to get the base of
  * Returns The base
  */
-static inline void *cvmx_fpa_get_base(uint64_t pool)
-{
-	return cvmx_fpa_pool_info[pool].base;
-}
+अटल अंतरभूत व्योम *cvmx_fpa_get_base(uपूर्णांक64_t pool)
+अणु
+	वापस cvmx_fpa_pool_info[pool].base;
+पूर्ण
 
 /**
- * Check if a pointer belongs to an FPA pool. Return non-zero
- * if the supplied pointer is inside the memory controlled by
+ * Check अगर a poपूर्णांकer beदीर्घs to an FPA pool. Return non-zero
+ * अगर the supplied poपूर्णांकer is inside the memory controlled by
  * an FPA pool.
  *
  * @pool:   Pool to check
- * @ptr:    Pointer to check
- * Returns Non-zero if pointer is in the pool. Zero if not
+ * @ptr:    Poपूर्णांकer to check
+ * Returns Non-zero अगर poपूर्णांकer is in the pool. Zero अगर not
  */
-static inline int cvmx_fpa_is_member(uint64_t pool, void *ptr)
-{
-	return ((ptr >= cvmx_fpa_pool_info[pool].base) &&
-		((char *)ptr <
-		 ((char *)(cvmx_fpa_pool_info[pool].base)) +
+अटल अंतरभूत पूर्णांक cvmx_fpa_is_member(uपूर्णांक64_t pool, व्योम *ptr)
+अणु
+	वापस ((ptr >= cvmx_fpa_pool_info[pool].base) &&
+		((अक्षर *)ptr <
+		 ((अक्षर *)(cvmx_fpa_pool_info[pool].base)) +
 		 cvmx_fpa_pool_info[pool].size *
 		 cvmx_fpa_pool_info[pool].starting_element_count));
-}
+पूर्ण
 
 /**
- * Enable the FPA for use. Must be performed after any CSR
- * configuration but before any other FPA functions.
+ * Enable the FPA क्रम use. Must be perक्रमmed after any CSR
+ * configuration but beक्रमe any other FPA functions.
  */
-static inline void cvmx_fpa_enable(void)
-{
-	union cvmx_fpa_ctl_status status;
+अटल अंतरभूत व्योम cvmx_fpa_enable(व्योम)
+अणु
+	जोड़ cvmx_fpa_ctl_status status;
 
-	status.u64 = cvmx_read_csr(CVMX_FPA_CTL_STATUS);
-	if (status.s.enb) {
-		cvmx_dprintf
+	status.u64 = cvmx_पढ़ो_csr(CVMX_FPA_CTL_STATUS);
+	अगर (status.s.enb) अणु
+		cvmx_dम_लिखो
 		    ("Warning: Enabling FPA when FPA already enabled.\n");
-	}
+	पूर्ण
 
 	/*
-	 * Do runtime check as we allow pass1 compiled code to run on
+	 * Do runसमय check as we allow pass1 compiled code to run on
 	 * pass2 chips.
 	 */
-	if (cvmx_octeon_is_pass1()) {
-		union cvmx_fpa_fpfx_marks marks;
-		int i;
-		for (i = 1; i < 8; i++) {
+	अगर (cvmx_octeon_is_pass1()) अणु
+		जोड़ cvmx_fpa_fpfx_marks marks;
+		पूर्णांक i;
+		क्रम (i = 1; i < 8; i++) अणु
 			marks.u64 =
-			    cvmx_read_csr(CVMX_FPA_FPF1_MARKS + (i - 1) * 8ull);
+			    cvmx_पढ़ो_csr(CVMX_FPA_FPF1_MARKS + (i - 1) * 8ull);
 			marks.s.fpf_wr = 0xe0;
-			cvmx_write_csr(CVMX_FPA_FPF1_MARKS + (i - 1) * 8ull,
+			cvmx_ग_लिखो_csr(CVMX_FPA_FPF1_MARKS + (i - 1) * 8ull,
 				       marks.u64);
-		}
+		पूर्ण
 
-		/* Enforce a 10 cycle delay between config and enable */
+		/* Enक्रमce a 10 cycle delay between config and enable */
 		__delay(10);
-	}
+	पूर्ण
 
-	/* FIXME: CVMX_FPA_CTL_STATUS read is unmodelled */
+	/* FIXME: CVMX_FPA_CTL_STATUS पढ़ो is unmodelled */
 	status.u64 = 0;
 	status.s.enb = 1;
-	cvmx_write_csr(CVMX_FPA_CTL_STATUS, status.u64);
-}
+	cvmx_ग_लिखो_csr(CVMX_FPA_CTL_STATUS, status.u64);
+पूर्ण
 
 /**
  * Get a new block from the FPA
  *
  * @pool:   Pool to get the block from
- * Returns Pointer to the block or NULL on failure
+ * Returns Poपूर्णांकer to the block or शून्य on failure
  */
-static inline void *cvmx_fpa_alloc(uint64_t pool)
-{
-	uint64_t address =
-	    cvmx_read_csr(CVMX_ADDR_DID(CVMX_FULL_DID(CVMX_OCT_DID_FPA, pool)));
-	if (address)
-		return cvmx_phys_to_ptr(address);
-	else
-		return NULL;
-}
+अटल अंतरभूत व्योम *cvmx_fpa_alloc(uपूर्णांक64_t pool)
+अणु
+	uपूर्णांक64_t address =
+	    cvmx_पढ़ो_csr(CVMX_ADDR_DID(CVMX_FULL_DID(CVMX_OCT_DID_FPA, pool)));
+	अगर (address)
+		वापस cvmx_phys_to_ptr(address);
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
 /**
  * Asynchronously get a new block from the FPA
@@ -199,8 +200,8 @@ static inline void *cvmx_fpa_alloc(uint64_t pool)
  *		    but must be 8 byte aligned.
  * @pool:      Pool to get the block from
  */
-static inline void cvmx_fpa_async_alloc(uint64_t scr_addr, uint64_t pool)
-{
+अटल अंतरभूत व्योम cvmx_fpa_async_alloc(uपूर्णांक64_t scr_addr, uपूर्णांक64_t pool)
+अणु
 	cvmx_fpa_iobdma_data_t data;
 
 	/*
@@ -212,97 +213,97 @@ static inline void cvmx_fpa_async_alloc(uint64_t scr_addr, uint64_t pool)
 	data.s.did = CVMX_FULL_DID(CVMX_OCT_DID_FPA, pool);
 	data.s.addr = 0;
 	cvmx_send_single(data.u64);
-}
+पूर्ण
 
 /**
  * Free a block allocated with a FPA pool.  Does NOT provide memory
- * ordering in cases where the memory block was modified by the core.
+ * ordering in हालs where the memory block was modअगरied by the core.
  *
- * @ptr:    Block to free
+ * @ptr:    Block to मुक्त
  * @pool:   Pool to put it in
  * @num_cache_lines:
  *		 Cache lines to invalidate
  */
-static inline void cvmx_fpa_free_nosync(void *ptr, uint64_t pool,
-					uint64_t num_cache_lines)
-{
+अटल अंतरभूत व्योम cvmx_fpa_मुक्त_nosync(व्योम *ptr, uपूर्णांक64_t pool,
+					uपूर्णांक64_t num_cache_lines)
+अणु
 	cvmx_addr_t newptr;
 	newptr.u64 = cvmx_ptr_to_phys(ptr);
 	newptr.sfilldidspace.didspace =
 	    CVMX_ADDR_DIDSPACE(CVMX_FULL_DID(CVMX_OCT_DID_FPA, pool));
-	/* Prevent GCC from reordering around free */
+	/* Prevent GCC from reordering around मुक्त */
 	barrier();
 	/* value written is number of cache lines not written back */
-	cvmx_write_io(newptr.u64, num_cache_lines);
-}
+	cvmx_ग_लिखो_io(newptr.u64, num_cache_lines);
+पूर्ण
 
 /**
  * Free a block allocated with a FPA pool.  Provides required memory
- * ordering in cases where memory block was modified by core.
+ * ordering in हालs where memory block was modअगरied by core.
  *
- * @ptr:    Block to free
+ * @ptr:    Block to मुक्त
  * @pool:   Pool to put it in
  * @num_cache_lines:
  *		 Cache lines to invalidate
  */
-static inline void cvmx_fpa_free(void *ptr, uint64_t pool,
-				 uint64_t num_cache_lines)
-{
+अटल अंतरभूत व्योम cvmx_fpa_मुक्त(व्योम *ptr, uपूर्णांक64_t pool,
+				 uपूर्णांक64_t num_cache_lines)
+अणु
 	cvmx_addr_t newptr;
 	newptr.u64 = cvmx_ptr_to_phys(ptr);
 	newptr.sfilldidspace.didspace =
 	    CVMX_ADDR_DIDSPACE(CVMX_FULL_DID(CVMX_OCT_DID_FPA, pool));
 	/*
-	 * Make sure that any previous writes to memory go out before
-	 * we free this buffer.	 This also serves as a barrier to
+	 * Make sure that any previous ग_लिखोs to memory go out beक्रमe
+	 * we मुक्त this buffer.	 This also serves as a barrier to
 	 * prevent GCC from reordering operations to after the
-	 * free.
+	 * मुक्त.
 	 */
 	CVMX_SYNCWS;
 	/* value written is number of cache lines not written back */
-	cvmx_write_io(newptr.u64, num_cache_lines);
-}
+	cvmx_ग_लिखो_io(newptr.u64, num_cache_lines);
+पूर्ण
 
 /**
  * Setup a FPA pool to control a new block of memory.
  * This can only be called once per pool. Make sure proper
- * locking enforces this.
+ * locking enक्रमces this.
  *
  * @pool:	Pool to initialize
  *		     0 <= pool < 8
- * @name:	Constant character string to name this pool.
+ * @name:	Constant अक्षरacter string to name this pool.
  *		     String is not copied.
- * @buffer:	Pointer to the block of memory to use. This must be
- *		     accessible by all processors and external hardware.
- * @block_size: Size for each block controlled by the FPA
+ * @buffer:	Poपूर्णांकer to the block of memory to use. This must be
+ *		     accessible by all processors and बाह्यal hardware.
+ * @block_size: Size क्रम each block controlled by the FPA
  * @num_blocks: Number of blocks
  *
  * Returns 0 on Success,
  *	   -1 on failure
  */
-extern int cvmx_fpa_setup_pool(uint64_t pool, const char *name, void *buffer,
-			       uint64_t block_size, uint64_t num_blocks);
+बाह्य पूर्णांक cvmx_fpa_setup_pool(uपूर्णांक64_t pool, स्थिर अक्षर *name, व्योम *buffer,
+			       uपूर्णांक64_t block_size, uपूर्णांक64_t num_blocks);
 
 /**
- * Shutdown a Memory pool and validate that it had all of
+ * Shutकरोwn a Memory pool and validate that it had all of
  * the buffers originally placed in it. This should only be
  * called by one processor after all hardware has finished
  * using the pool.
  *
- * @pool:   Pool to shutdown
+ * @pool:   Pool to shutकरोwn
  * Returns Zero on success
  *	   - Positive is count of missing buffers
- *	   - Negative is too many buffers or corrupted pointers
+ *	   - Negative is too many buffers or corrupted poपूर्णांकers
  */
-extern uint64_t cvmx_fpa_shutdown_pool(uint64_t pool);
+बाह्य uपूर्णांक64_t cvmx_fpa_shutकरोwn_pool(uपूर्णांक64_t pool);
 
 /**
  * Get the size of blocks controlled by the pool
- * This is resolved to a constant at compile time.
+ * This is resolved to a स्थिरant at compile समय.
  *
  * @pool:   Pool to access
  * Returns Size of the block in bytes
  */
-uint64_t cvmx_fpa_get_block_size(uint64_t pool);
+uपूर्णांक64_t cvmx_fpa_get_block_size(uपूर्णांक64_t pool);
 
-#endif /*  __CVM_FPA_H__ */
+#पूर्ण_अगर /*  __CVM_FPA_H__ */

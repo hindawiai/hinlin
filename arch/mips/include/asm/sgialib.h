@@ -1,61 +1,62 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * SGI ARCS firmware interface library for the Linux kernel.
+ * SGI ARCS firmware पूर्णांकerface library क्रम the Linux kernel.
  *
  * Copyright (C) 1996 David S. Miller (davem@davemloft.net)
  * Copyright (C) 2001, 2002 Ralf Baechle (ralf@gnu.org)
  */
-#ifndef _ASM_SGIALIB_H
-#define _ASM_SGIALIB_H
+#अगर_अघोषित _ASM_SGIALIB_H
+#घोषणा _ASM_SGIALIB_H
 
-#include <linux/compiler.h>
-#include <asm/sgiarcs.h>
+#समावेश <linux/compiler.h>
+#समावेश <यंत्र/sgiarcs.h>
 
-extern struct linux_romvec *romvec;
+बाह्य काष्ठा linux_romvec *romvec;
 
-extern int prom_flags;
+बाह्य पूर्णांक prom_flags;
 
-#define PROM_FLAG_ARCS			1
-#define PROM_FLAG_USE_AS_CONSOLE	2
-#define PROM_FLAG_DONT_FREE_TEMP	4
+#घोषणा PROM_FLAG_ARCS			1
+#घोषणा PROM_FLAG_USE_AS_CONSOLE	2
+#घोषणा PROM_FLAG_DONT_FREE_TEMP	4
 
-/* Simple char-by-char console I/O. */
-extern char prom_getchar(void);
+/* Simple अक्षर-by-अक्षर console I/O. */
+बाह्य अक्षर prom_अक्षर_लो(व्योम);
 
-/* Get next memory descriptor after CURR, returns first descriptor
- * in chain is CURR is NULL.
+/* Get next memory descriptor after CURR, वापसs first descriptor
+ * in chain is CURR is शून्य.
  */
-extern struct linux_mdesc *prom_getmdesc(struct linux_mdesc *curr);
-#define PROM_NULL_MDESC	  ((struct linux_mdesc *) 0)
+बाह्य काष्ठा linux_mdesc *prom_geपंचांगdesc(काष्ठा linux_mdesc *curr);
+#घोषणा PROM_शून्य_MDESC	  ((काष्ठा linux_mdesc *) 0)
 
 /* Called by prom_init to setup the physical memory pmemblock
  * array.
  */
-extern void prom_meminit(void);
+बाह्य व्योम prom_meminit(व्योम);
 
 /* PROM device tree library routines. */
-#define PROM_NULL_COMPONENT ((pcomponent *) 0)
+#घोषणा PROM_शून्य_COMPONENT ((pcomponent *) 0)
 
-/* This is called at prom_init time to identify the
+/* This is called at prom_init समय to identअगरy the
  * ARC architecture we are running on
  */
-extern void prom_identify_arch(void);
+बाह्य व्योम prom_identअगरy_arch(व्योम);
 
 /* Environment variable routines. */
-extern PCHAR ArcGetEnvironmentVariable(PCHAR name);
+बाह्य PCHAR ArcGetEnvironmentVariable(PCHAR name);
 
 /* ARCS command line parsing. */
-extern void prom_init_cmdline(int argc, LONG *argv);
+बाह्य व्योम prom_init_cmdline(पूर्णांक argc, LONG *argv);
 
 /* File operations. */
-extern LONG ArcRead(ULONG fd, PVOID buf, ULONG num, PULONG cnt);
-extern LONG ArcWrite(ULONG fd, PVOID buf, ULONG num, PULONG cnt);
+बाह्य LONG ArcRead(ULONG fd, PVOID buf, ULONG num, PULONG cnt);
+बाह्य LONG ArcWrite(ULONG fd, PVOID buf, ULONG num, PULONG cnt);
 
 /* Misc. routines. */
-extern VOID ArcEnterInteractiveMode(VOID) __noreturn;
-extern DISPLAY_STATUS *ArcGetDisplayStatus(ULONG FileID);
+बाह्य VOID ArcEnterInteractiveMode(VOID) __noवापस;
+बाह्य DISPLAY_STATUS *ArcGetDisplayStatus(ULONG FileID);
 
-#endif /* _ASM_SGIALIB_H */
+#पूर्ण_अगर /* _ASM_SGIALIB_H */

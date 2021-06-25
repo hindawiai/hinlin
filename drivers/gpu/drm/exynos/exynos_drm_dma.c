@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (c) 2012 Samsung Electronics Co., Ltd.
 // Author: Inki Dae <inki.dae@samsung.com>
 // Author: Andrzej Hajda <a.hajda@samsung.com>
 
-#include <linux/dma-iommu.h>
-#include <linux/dma-map-ops.h>
-#include <linux/iommu.h>
-#include <linux/platform_device.h>
+#समावेश <linux/dma-iommu.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <drm/drm_print.h>
-#include <drm/exynos_drm.h>
+#समावेश <drm/drm_prपूर्णांक.h>
+#समावेश <drm/exynos_drm.h>
 
-#include "exynos_drm_drv.h"
+#समावेश "exynos_drm_drv.h"
 
-#if defined(CONFIG_ARM_DMA_USE_IOMMU)
-#include <asm/dma-iommu.h>
-#else
-#define arm_iommu_create_mapping(...)	({ NULL; })
-#define arm_iommu_attach_device(...)	({ -ENODEV; })
-#define arm_iommu_release_mapping(...)	({ })
-#define arm_iommu_detach_device(...)	({ })
-#define to_dma_iommu_mapping(dev) NULL
-#endif
+#अगर defined(CONFIG_ARM_DMA_USE_IOMMU)
+#समावेश <यंत्र/dma-iommu.h>
+#अन्यथा
+#घोषणा arm_iommu_create_mapping(...)	(अणु शून्य; पूर्ण)
+#घोषणा arm_iommu_attach_device(...)	(अणु -ENODEV; पूर्ण)
+#घोषणा arm_iommu_release_mapping(...)	(अणु पूर्ण)
+#घोषणा arm_iommu_detach_device(...)	(अणु पूर्ण)
+#घोषणा to_dma_iommu_mapping(dev) शून्य
+#पूर्ण_अगर
 
-#if !defined(CONFIG_IOMMU_DMA)
-#define iommu_dma_init_domain(...) ({ -EINVAL; })
-#endif
+#अगर !defined(CONFIG_IOMMU_DMA)
+#घोषणा iommu_dma_init_करोमुख्य(...) (अणु -EINVAL; पूर्ण)
+#पूर्ण_अगर
 
-#define EXYNOS_DEV_ADDR_START	0x20000000
-#define EXYNOS_DEV_ADDR_SIZE	0x40000000
+#घोषणा EXYNOS_DEV_ADDR_START	0x20000000
+#घोषणा EXYNOS_DEV_ADDR_SIZE	0x40000000
 
 /*
  * drm_iommu_attach_device- attach device to iommu mapping
@@ -40,37 +41,37 @@
  * This function should be called by sub drivers to attach it to iommu
  * mapping.
  */
-static int drm_iommu_attach_device(struct drm_device *drm_dev,
-				struct device *subdrv_dev, void **dma_priv)
-{
-	struct exynos_drm_private *priv = drm_dev->dev_private;
-	int ret = 0;
+अटल पूर्णांक drm_iommu_attach_device(काष्ठा drm_device *drm_dev,
+				काष्ठा device *subdrv_dev, व्योम **dma_priv)
+अणु
+	काष्ठा exynos_drm_निजी *priv = drm_dev->dev_निजी;
+	पूर्णांक ret = 0;
 
-	if (get_dma_ops(priv->dma_dev) != get_dma_ops(subdrv_dev)) {
+	अगर (get_dma_ops(priv->dma_dev) != get_dma_ops(subdrv_dev)) अणु
 		DRM_DEV_ERROR(subdrv_dev, "Device %s lacks support for IOMMU\n",
 			  dev_name(subdrv_dev));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dma_set_max_seg_size(subdrv_dev, DMA_BIT_MASK(32));
-	if (IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)) {
+	अगर (IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)) अणु
 		/*
 		 * Keep the original DMA mapping of the sub-device and
 		 * restore it on Exynos DRM detach, otherwise the DMA
 		 * framework considers it as IOMMU-less during the next
-		 * probe (in case of deferred probe or modular build)
+		 * probe (in हाल of deferred probe or modular build)
 		 */
 		*dma_priv = to_dma_iommu_mapping(subdrv_dev);
-		if (*dma_priv)
+		अगर (*dma_priv)
 			arm_iommu_detach_device(subdrv_dev);
 
 		ret = arm_iommu_attach_device(subdrv_dev, priv->mapping);
-	} else if (IS_ENABLED(CONFIG_IOMMU_DMA)) {
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_IOMMU_DMA)) अणु
 		ret = iommu_attach_device(priv->mapping, subdrv_dev);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * drm_iommu_detach_device -detach device address space mapping from device
@@ -81,64 +82,64 @@ static int drm_iommu_attach_device(struct drm_device *drm_dev,
  * This function should be called by sub drivers to detach it from iommu
  * mapping
  */
-static void drm_iommu_detach_device(struct drm_device *drm_dev,
-				    struct device *subdrv_dev, void **dma_priv)
-{
-	struct exynos_drm_private *priv = drm_dev->dev_private;
+अटल व्योम drm_iommu_detach_device(काष्ठा drm_device *drm_dev,
+				    काष्ठा device *subdrv_dev, व्योम **dma_priv)
+अणु
+	काष्ठा exynos_drm_निजी *priv = drm_dev->dev_निजी;
 
-	if (IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)) {
+	अगर (IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)) अणु
 		arm_iommu_detach_device(subdrv_dev);
 		arm_iommu_attach_device(subdrv_dev, *dma_priv);
-	} else if (IS_ENABLED(CONFIG_IOMMU_DMA))
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_IOMMU_DMA))
 		iommu_detach_device(priv->mapping, subdrv_dev);
-}
+पूर्ण
 
-int exynos_drm_register_dma(struct drm_device *drm, struct device *dev,
-			    void **dma_priv)
-{
-	struct exynos_drm_private *priv = drm->dev_private;
+पूर्णांक exynos_drm_रेजिस्टर_dma(काष्ठा drm_device *drm, काष्ठा device *dev,
+			    व्योम **dma_priv)
+अणु
+	काष्ठा exynos_drm_निजी *priv = drm->dev_निजी;
 
-	if (!priv->dma_dev) {
+	अगर (!priv->dma_dev) अणु
 		priv->dma_dev = dev;
 		DRM_INFO("Exynos DRM: using %s device for DMA mapping operations\n",
 			 dev_name(dev));
-	}
+	पूर्ण
 
-	if (!IS_ENABLED(CONFIG_EXYNOS_IOMMU))
-		return 0;
+	अगर (!IS_ENABLED(CONFIG_EXYNOS_IOMMU))
+		वापस 0;
 
-	if (!priv->mapping) {
-		void *mapping;
+	अगर (!priv->mapping) अणु
+		व्योम *mapping;
 
-		if (IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU))
-			mapping = arm_iommu_create_mapping(&platform_bus_type,
+		अगर (IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU))
+			mapping = arm_iommu_create_mapping(&platक्रमm_bus_type,
 				EXYNOS_DEV_ADDR_START, EXYNOS_DEV_ADDR_SIZE);
-		else if (IS_ENABLED(CONFIG_IOMMU_DMA))
-			mapping = iommu_get_domain_for_dev(priv->dma_dev);
+		अन्यथा अगर (IS_ENABLED(CONFIG_IOMMU_DMA))
+			mapping = iommu_get_करोमुख्य_क्रम_dev(priv->dma_dev);
 
-		if (IS_ERR(mapping))
-			return PTR_ERR(mapping);
+		अगर (IS_ERR(mapping))
+			वापस PTR_ERR(mapping);
 		priv->mapping = mapping;
-	}
+	पूर्ण
 
-	return drm_iommu_attach_device(drm, dev, dma_priv);
-}
+	वापस drm_iommu_attach_device(drm, dev, dma_priv);
+पूर्ण
 
-void exynos_drm_unregister_dma(struct drm_device *drm, struct device *dev,
-			       void **dma_priv)
-{
-	if (IS_ENABLED(CONFIG_EXYNOS_IOMMU))
+व्योम exynos_drm_unरेजिस्टर_dma(काष्ठा drm_device *drm, काष्ठा device *dev,
+			       व्योम **dma_priv)
+अणु
+	अगर (IS_ENABLED(CONFIG_EXYNOS_IOMMU))
 		drm_iommu_detach_device(drm, dev, dma_priv);
-}
+पूर्ण
 
-void exynos_drm_cleanup_dma(struct drm_device *drm)
-{
-	struct exynos_drm_private *priv = drm->dev_private;
+व्योम exynos_drm_cleanup_dma(काष्ठा drm_device *drm)
+अणु
+	काष्ठा exynos_drm_निजी *priv = drm->dev_निजी;
 
-	if (!IS_ENABLED(CONFIG_EXYNOS_IOMMU))
-		return;
+	अगर (!IS_ENABLED(CONFIG_EXYNOS_IOMMU))
+		वापस;
 
 	arm_iommu_release_mapping(priv->mapping);
-	priv->mapping = NULL;
-	priv->dma_dev = NULL;
-}
+	priv->mapping = शून्य;
+	priv->dma_dev = शून्य;
+पूर्ण

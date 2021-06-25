@@ -1,152 +1,153 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * tools/testing/selftests/kvm/include/x86_64/vmx.h
  *
  * Copyright (C) 2018, Google LLC.
  */
 
-#ifndef SELFTEST_KVM_VMX_H
-#define SELFTEST_KVM_VMX_H
+#अगर_अघोषित SELFTEST_KVM_VMX_H
+#घोषणा SELFTEST_KVM_VMX_H
 
-#include <stdint.h>
-#include "processor.h"
+#समावेश <मानक_निवेशt.h>
+#समावेश "processor.h"
 
 /*
  * Definitions of Primary Processor-Based VM-Execution Controls.
  */
-#define CPU_BASED_INTR_WINDOW_EXITING		0x00000004
-#define CPU_BASED_USE_TSC_OFFSETTING		0x00000008
-#define CPU_BASED_HLT_EXITING			0x00000080
-#define CPU_BASED_INVLPG_EXITING		0x00000200
-#define CPU_BASED_MWAIT_EXITING			0x00000400
-#define CPU_BASED_RDPMC_EXITING			0x00000800
-#define CPU_BASED_RDTSC_EXITING			0x00001000
-#define CPU_BASED_CR3_LOAD_EXITING		0x00008000
-#define CPU_BASED_CR3_STORE_EXITING		0x00010000
-#define CPU_BASED_CR8_LOAD_EXITING		0x00080000
-#define CPU_BASED_CR8_STORE_EXITING		0x00100000
-#define CPU_BASED_TPR_SHADOW			0x00200000
-#define CPU_BASED_NMI_WINDOW_EXITING		0x00400000
-#define CPU_BASED_MOV_DR_EXITING		0x00800000
-#define CPU_BASED_UNCOND_IO_EXITING		0x01000000
-#define CPU_BASED_USE_IO_BITMAPS		0x02000000
-#define CPU_BASED_MONITOR_TRAP			0x08000000
-#define CPU_BASED_USE_MSR_BITMAPS		0x10000000
-#define CPU_BASED_MONITOR_EXITING		0x20000000
-#define CPU_BASED_PAUSE_EXITING			0x40000000
-#define CPU_BASED_ACTIVATE_SECONDARY_CONTROLS	0x80000000
+#घोषणा CPU_BASED_INTR_WINDOW_EXITING		0x00000004
+#घोषणा CPU_BASED_USE_TSC_OFFSETTING		0x00000008
+#घोषणा CPU_BASED_HLT_EXITING			0x00000080
+#घोषणा CPU_BASED_INVLPG_EXITING		0x00000200
+#घोषणा CPU_BASED_MWAIT_EXITING			0x00000400
+#घोषणा CPU_BASED_RDPMC_EXITING			0x00000800
+#घोषणा CPU_BASED_RDTSC_EXITING			0x00001000
+#घोषणा CPU_BASED_CR3_LOAD_EXITING		0x00008000
+#घोषणा CPU_BASED_CR3_STORE_EXITING		0x00010000
+#घोषणा CPU_BASED_CR8_LOAD_EXITING		0x00080000
+#घोषणा CPU_BASED_CR8_STORE_EXITING		0x00100000
+#घोषणा CPU_BASED_TPR_SHADOW			0x00200000
+#घोषणा CPU_BASED_NMI_WINDOW_EXITING		0x00400000
+#घोषणा CPU_BASED_MOV_DR_EXITING		0x00800000
+#घोषणा CPU_BASED_UNCOND_IO_EXITING		0x01000000
+#घोषणा CPU_BASED_USE_IO_BITMAPS		0x02000000
+#घोषणा CPU_BASED_MONITOR_TRAP			0x08000000
+#घोषणा CPU_BASED_USE_MSR_BITMAPS		0x10000000
+#घोषणा CPU_BASED_MONITOR_EXITING		0x20000000
+#घोषणा CPU_BASED_PAUSE_EXITING			0x40000000
+#घोषणा CPU_BASED_ACTIVATE_SECONDARY_CONTROLS	0x80000000
 
-#define CPU_BASED_ALWAYSON_WITHOUT_TRUE_MSR	0x0401e172
+#घोषणा CPU_BASED_ALWAYSON_WITHOUT_TRUE_MSR	0x0401e172
 
 /*
  * Definitions of Secondary Processor-Based VM-Execution Controls.
  */
-#define SECONDARY_EXEC_VIRTUALIZE_APIC_ACCESSES 0x00000001
-#define SECONDARY_EXEC_ENABLE_EPT		0x00000002
-#define SECONDARY_EXEC_DESC			0x00000004
-#define SECONDARY_EXEC_ENABLE_RDTSCP		0x00000008
-#define SECONDARY_EXEC_VIRTUALIZE_X2APIC_MODE	0x00000010
-#define SECONDARY_EXEC_ENABLE_VPID		0x00000020
-#define SECONDARY_EXEC_WBINVD_EXITING		0x00000040
-#define SECONDARY_EXEC_UNRESTRICTED_GUEST	0x00000080
-#define SECONDARY_EXEC_APIC_REGISTER_VIRT	0x00000100
-#define SECONDARY_EXEC_VIRTUAL_INTR_DELIVERY	0x00000200
-#define SECONDARY_EXEC_PAUSE_LOOP_EXITING	0x00000400
-#define SECONDARY_EXEC_RDRAND_EXITING		0x00000800
-#define SECONDARY_EXEC_ENABLE_INVPCID		0x00001000
-#define SECONDARY_EXEC_ENABLE_VMFUNC		0x00002000
-#define SECONDARY_EXEC_SHADOW_VMCS		0x00004000
-#define SECONDARY_EXEC_RDSEED_EXITING		0x00010000
-#define SECONDARY_EXEC_ENABLE_PML		0x00020000
-#define SECONDARY_EPT_VE			0x00040000
-#define SECONDARY_ENABLE_XSAV_RESTORE		0x00100000
-#define SECONDARY_EXEC_TSC_SCALING		0x02000000
+#घोषणा SECONDARY_EXEC_VIRTUALIZE_APIC_ACCESSES 0x00000001
+#घोषणा SECONDARY_EXEC_ENABLE_EPT		0x00000002
+#घोषणा SECONDARY_EXEC_DESC			0x00000004
+#घोषणा SECONDARY_EXEC_ENABLE_RDTSCP		0x00000008
+#घोषणा SECONDARY_EXEC_VIRTUALIZE_X2APIC_MODE	0x00000010
+#घोषणा SECONDARY_EXEC_ENABLE_VPID		0x00000020
+#घोषणा SECONDARY_EXEC_WBINVD_EXITING		0x00000040
+#घोषणा SECONDARY_EXEC_UNRESTRICTED_GUEST	0x00000080
+#घोषणा SECONDARY_EXEC_APIC_REGISTER_VIRT	0x00000100
+#घोषणा SECONDARY_EXEC_VIRTUAL_INTR_DELIVERY	0x00000200
+#घोषणा SECONDARY_EXEC_PAUSE_LOOP_EXITING	0x00000400
+#घोषणा SECONDARY_EXEC_RDRAND_EXITING		0x00000800
+#घोषणा SECONDARY_EXEC_ENABLE_INVPCID		0x00001000
+#घोषणा SECONDARY_EXEC_ENABLE_VMFUNC		0x00002000
+#घोषणा SECONDARY_EXEC_SHADOW_VMCS		0x00004000
+#घोषणा SECONDARY_EXEC_RDSEED_EXITING		0x00010000
+#घोषणा SECONDARY_EXEC_ENABLE_PML		0x00020000
+#घोषणा SECONDARY_EPT_VE			0x00040000
+#घोषणा SECONDARY_ENABLE_XSAV_RESTORE		0x00100000
+#घोषणा SECONDARY_EXEC_TSC_SCALING		0x02000000
 
-#define PIN_BASED_EXT_INTR_MASK			0x00000001
-#define PIN_BASED_NMI_EXITING			0x00000008
-#define PIN_BASED_VIRTUAL_NMIS			0x00000020
-#define PIN_BASED_VMX_PREEMPTION_TIMER		0x00000040
-#define PIN_BASED_POSTED_INTR			0x00000080
+#घोषणा PIN_BASED_EXT_INTR_MASK			0x00000001
+#घोषणा PIN_BASED_NMI_EXITING			0x00000008
+#घोषणा PIN_BASED_VIRTUAL_NMIS			0x00000020
+#घोषणा PIN_BASED_VMX_PREEMPTION_TIMER		0x00000040
+#घोषणा PIN_BASED_POSTED_INTR			0x00000080
 
-#define PIN_BASED_ALWAYSON_WITHOUT_TRUE_MSR	0x00000016
+#घोषणा PIN_BASED_ALWAYSON_WITHOUT_TRUE_MSR	0x00000016
 
-#define VM_EXIT_SAVE_DEBUG_CONTROLS		0x00000004
-#define VM_EXIT_HOST_ADDR_SPACE_SIZE		0x00000200
-#define VM_EXIT_LOAD_IA32_PERF_GLOBAL_CTRL	0x00001000
-#define VM_EXIT_ACK_INTR_ON_EXIT		0x00008000
-#define VM_EXIT_SAVE_IA32_PAT			0x00040000
-#define VM_EXIT_LOAD_IA32_PAT			0x00080000
-#define VM_EXIT_SAVE_IA32_EFER			0x00100000
-#define VM_EXIT_LOAD_IA32_EFER			0x00200000
-#define VM_EXIT_SAVE_VMX_PREEMPTION_TIMER	0x00400000
+#घोषणा VM_EXIT_SAVE_DEBUG_CONTROLS		0x00000004
+#घोषणा VM_EXIT_HOST_ADDR_SPACE_SIZE		0x00000200
+#घोषणा VM_EXIT_LOAD_IA32_PERF_GLOBAL_CTRL	0x00001000
+#घोषणा VM_EXIT_ACK_INTR_ON_EXIT		0x00008000
+#घोषणा VM_EXIT_SAVE_IA32_PAT			0x00040000
+#घोषणा VM_EXIT_LOAD_IA32_PAT			0x00080000
+#घोषणा VM_EXIT_SAVE_IA32_EFER			0x00100000
+#घोषणा VM_EXIT_LOAD_IA32_EFER			0x00200000
+#घोषणा VM_EXIT_SAVE_VMX_PREEMPTION_TIMER	0x00400000
 
-#define VM_EXIT_ALWAYSON_WITHOUT_TRUE_MSR	0x00036dff
+#घोषणा VM_EXIT_ALWAYSON_WITHOUT_TRUE_MSR	0x00036dff
 
-#define VM_ENTRY_LOAD_DEBUG_CONTROLS		0x00000004
-#define VM_ENTRY_IA32E_MODE			0x00000200
-#define VM_ENTRY_SMM				0x00000400
-#define VM_ENTRY_DEACT_DUAL_MONITOR		0x00000800
-#define VM_ENTRY_LOAD_IA32_PERF_GLOBAL_CTRL	0x00002000
-#define VM_ENTRY_LOAD_IA32_PAT			0x00004000
-#define VM_ENTRY_LOAD_IA32_EFER			0x00008000
+#घोषणा VM_ENTRY_LOAD_DEBUG_CONTROLS		0x00000004
+#घोषणा VM_ENTRY_IA32E_MODE			0x00000200
+#घोषणा VM_ENTRY_SMM				0x00000400
+#घोषणा VM_ENTRY_DEACT_DUAL_MONITOR		0x00000800
+#घोषणा VM_ENTRY_LOAD_IA32_PERF_GLOBAL_CTRL	0x00002000
+#घोषणा VM_ENTRY_LOAD_IA32_PAT			0x00004000
+#घोषणा VM_ENTRY_LOAD_IA32_EFER			0x00008000
 
-#define VM_ENTRY_ALWAYSON_WITHOUT_TRUE_MSR	0x000011ff
+#घोषणा VM_ENTRY_ALWAYSON_WITHOUT_TRUE_MSR	0x000011ff
 
-#define VMX_MISC_PREEMPTION_TIMER_RATE_MASK	0x0000001f
-#define VMX_MISC_SAVE_EFER_LMA			0x00000020
+#घोषणा VMX_MISC_PREEMPTION_TIMER_RATE_MASK	0x0000001f
+#घोषणा VMX_MISC_SAVE_EFER_LMA			0x00000020
 
-#define EXIT_REASON_FAILED_VMENTRY	0x80000000
-#define EXIT_REASON_EXCEPTION_NMI	0
-#define EXIT_REASON_EXTERNAL_INTERRUPT	1
-#define EXIT_REASON_TRIPLE_FAULT	2
-#define EXIT_REASON_INTERRUPT_WINDOW	7
-#define EXIT_REASON_NMI_WINDOW		8
-#define EXIT_REASON_TASK_SWITCH		9
-#define EXIT_REASON_CPUID		10
-#define EXIT_REASON_HLT			12
-#define EXIT_REASON_INVD		13
-#define EXIT_REASON_INVLPG		14
-#define EXIT_REASON_RDPMC		15
-#define EXIT_REASON_RDTSC		16
-#define EXIT_REASON_VMCALL		18
-#define EXIT_REASON_VMCLEAR		19
-#define EXIT_REASON_VMLAUNCH		20
-#define EXIT_REASON_VMPTRLD		21
-#define EXIT_REASON_VMPTRST		22
-#define EXIT_REASON_VMREAD		23
-#define EXIT_REASON_VMRESUME		24
-#define EXIT_REASON_VMWRITE		25
-#define EXIT_REASON_VMOFF		26
-#define EXIT_REASON_VMON		27
-#define EXIT_REASON_CR_ACCESS		28
-#define EXIT_REASON_DR_ACCESS		29
-#define EXIT_REASON_IO_INSTRUCTION	30
-#define EXIT_REASON_MSR_READ		31
-#define EXIT_REASON_MSR_WRITE		32
-#define EXIT_REASON_INVALID_STATE	33
-#define EXIT_REASON_MWAIT_INSTRUCTION	36
-#define EXIT_REASON_MONITOR_INSTRUCTION 39
-#define EXIT_REASON_PAUSE_INSTRUCTION	40
-#define EXIT_REASON_MCE_DURING_VMENTRY	41
-#define EXIT_REASON_TPR_BELOW_THRESHOLD 43
-#define EXIT_REASON_APIC_ACCESS		44
-#define EXIT_REASON_EOI_INDUCED		45
-#define EXIT_REASON_EPT_VIOLATION	48
-#define EXIT_REASON_EPT_MISCONFIG	49
-#define EXIT_REASON_INVEPT		50
-#define EXIT_REASON_RDTSCP		51
-#define EXIT_REASON_PREEMPTION_TIMER	52
-#define EXIT_REASON_INVVPID		53
-#define EXIT_REASON_WBINVD		54
-#define EXIT_REASON_XSETBV		55
-#define EXIT_REASON_APIC_WRITE		56
-#define EXIT_REASON_INVPCID		58
-#define EXIT_REASON_PML_FULL		62
-#define EXIT_REASON_XSAVES		63
-#define EXIT_REASON_XRSTORS		64
-#define LAST_EXIT_REASON		64
+#घोषणा EXIT_REASON_FAILED_VMENTRY	0x80000000
+#घोषणा EXIT_REASON_EXCEPTION_NMI	0
+#घोषणा EXIT_REASON_EXTERNAL_INTERRUPT	1
+#घोषणा EXIT_REASON_TRIPLE_FAULT	2
+#घोषणा EXIT_REASON_INTERRUPT_WINDOW	7
+#घोषणा EXIT_REASON_NMI_WINDOW		8
+#घोषणा EXIT_REASON_TASK_SWITCH		9
+#घोषणा EXIT_REASON_CPUID		10
+#घोषणा EXIT_REASON_HLT			12
+#घोषणा EXIT_REASON_INVD		13
+#घोषणा EXIT_REASON_INVLPG		14
+#घोषणा EXIT_REASON_RDPMC		15
+#घोषणा EXIT_REASON_RDTSC		16
+#घोषणा EXIT_REASON_VMCALL		18
+#घोषणा EXIT_REASON_VMCLEAR		19
+#घोषणा EXIT_REASON_VMLAUNCH		20
+#घोषणा EXIT_REASON_VMPTRLD		21
+#घोषणा EXIT_REASON_VMPTRST		22
+#घोषणा EXIT_REASON_VMREAD		23
+#घोषणा EXIT_REASON_VMRESUME		24
+#घोषणा EXIT_REASON_VMWRITE		25
+#घोषणा EXIT_REASON_VMOFF		26
+#घोषणा EXIT_REASON_VMON		27
+#घोषणा EXIT_REASON_CR_ACCESS		28
+#घोषणा EXIT_REASON_DR_ACCESS		29
+#घोषणा EXIT_REASON_IO_INSTRUCTION	30
+#घोषणा EXIT_REASON_MSR_READ		31
+#घोषणा EXIT_REASON_MSR_WRITE		32
+#घोषणा EXIT_REASON_INVALID_STATE	33
+#घोषणा EXIT_REASON_MWAIT_INSTRUCTION	36
+#घोषणा EXIT_REASON_MONITOR_INSTRUCTION 39
+#घोषणा EXIT_REASON_PAUSE_INSTRUCTION	40
+#घोषणा EXIT_REASON_MCE_DURING_VMENTRY	41
+#घोषणा EXIT_REASON_TPR_BELOW_THRESHOLD 43
+#घोषणा EXIT_REASON_APIC_ACCESS		44
+#घोषणा EXIT_REASON_EOI_INDUCED		45
+#घोषणा EXIT_REASON_EPT_VIOLATION	48
+#घोषणा EXIT_REASON_EPT_MISCONFIG	49
+#घोषणा EXIT_REASON_INVEPT		50
+#घोषणा EXIT_REASON_RDTSCP		51
+#घोषणा EXIT_REASON_PREEMPTION_TIMER	52
+#घोषणा EXIT_REASON_INVVPID		53
+#घोषणा EXIT_REASON_WBINVD		54
+#घोषणा EXIT_REASON_XSETBV		55
+#घोषणा EXIT_REASON_APIC_WRITE		56
+#घोषणा EXIT_REASON_INVPCID		58
+#घोषणा EXIT_REASON_PML_FULL		62
+#घोषणा EXIT_REASON_XSAVES		63
+#घोषणा EXIT_REASON_XRSTORS		64
+#घोषणा LAST_EXIT_REASON		64
 
-enum vmcs_field {
+क्रमागत vmcs_field अणु
 	VIRTUAL_PROCESSOR_ID		= 0x00000000,
 	POSTED_INTR_NV			= 0x00000002,
 	GUEST_ES_SELECTOR		= 0x00000800,
@@ -325,98 +326,98 @@ enum vmcs_field {
 	HOST_IA32_SYSENTER_EIP		= 0x00006c12,
 	HOST_RSP			= 0x00006c14,
 	HOST_RIP			= 0x00006c16,
-};
+पूर्ण;
 
-struct vmx_msr_entry {
-	uint32_t index;
-	uint32_t reserved;
-	uint64_t value;
-} __attribute__ ((aligned(16)));
+काष्ठा vmx_msr_entry अणु
+	uपूर्णांक32_t index;
+	uपूर्णांक32_t reserved;
+	uपूर्णांक64_t value;
+पूर्ण __attribute__ ((aligned(16)));
 
-#include "evmcs.h"
+#समावेश "evmcs.h"
 
-static inline int vmxon(uint64_t phys)
-{
-	uint8_t ret;
+अटल अंतरभूत पूर्णांक vmxon(uपूर्णांक64_t phys)
+अणु
+	uपूर्णांक8_t ret;
 
-	__asm__ __volatile__ ("vmxon %[pa]; setna %[ret]"
+	__यंत्र__ __अस्थिर__ ("vmxon %[pa]; setna %[ret]"
 		: [ret]"=rm"(ret)
 		: [pa]"m"(phys)
 		: "cc", "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void vmxoff(void)
-{
-	__asm__ __volatile__("vmxoff");
-}
+अटल अंतरभूत व्योम vmxoff(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__("vmxoff");
+पूर्ण
 
-static inline int vmclear(uint64_t vmcs_pa)
-{
-	uint8_t ret;
+अटल अंतरभूत पूर्णांक vmclear(uपूर्णांक64_t vmcs_pa)
+अणु
+	uपूर्णांक8_t ret;
 
-	__asm__ __volatile__ ("vmclear %[pa]; setna %[ret]"
+	__यंत्र__ __अस्थिर__ ("vmclear %[pa]; setna %[ret]"
 		: [ret]"=rm"(ret)
 		: [pa]"m"(vmcs_pa)
 		: "cc", "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int vmptrld(uint64_t vmcs_pa)
-{
-	uint8_t ret;
+अटल अंतरभूत पूर्णांक vmptrld(uपूर्णांक64_t vmcs_pa)
+अणु
+	uपूर्णांक8_t ret;
 
-	if (enable_evmcs)
-		return -1;
+	अगर (enable_evmcs)
+		वापस -1;
 
-	__asm__ __volatile__ ("vmptrld %[pa]; setna %[ret]"
+	__यंत्र__ __अस्थिर__ ("vmptrld %[pa]; setna %[ret]"
 		: [ret]"=rm"(ret)
 		: [pa]"m"(vmcs_pa)
 		: "cc", "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int vmptrst(uint64_t *value)
-{
-	uint64_t tmp;
-	uint8_t ret;
+अटल अंतरभूत पूर्णांक vmptrst(uपूर्णांक64_t *value)
+अणु
+	uपूर्णांक64_t पंचांगp;
+	uपूर्णांक8_t ret;
 
-	if (enable_evmcs)
-		return evmcs_vmptrst(value);
+	अगर (enable_evmcs)
+		वापस evmcs_vmptrst(value);
 
-	__asm__ __volatile__("vmptrst %[value]; setna %[ret]"
-		: [value]"=m"(tmp), [ret]"=rm"(ret)
+	__यंत्र__ __अस्थिर__("vmptrst %[value]; setna %[ret]"
+		: [value]"=m"(पंचांगp), [ret]"=rm"(ret)
 		: : "cc", "memory");
 
-	*value = tmp;
-	return ret;
-}
+	*value = पंचांगp;
+	वापस ret;
+पूर्ण
 
 /*
- * A wrapper around vmptrst that ignores errors and returns zero if the
- * vmptrst instruction fails.
+ * A wrapper around vmptrst that ignores errors and वापसs zero अगर the
+ * vmptrst inकाष्ठाion fails.
  */
-static inline uint64_t vmptrstz(void)
-{
-	uint64_t value = 0;
+अटल अंतरभूत uपूर्णांक64_t vmptrstz(व्योम)
+अणु
+	uपूर्णांक64_t value = 0;
 	vmptrst(&value);
-	return value;
-}
+	वापस value;
+पूर्ण
 
 /*
  * No guest state (e.g. GPRs) is established by this vmlaunch.
  */
-static inline int vmlaunch(void)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक vmlaunch(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (enable_evmcs)
-		return evmcs_vmlaunch();
+	अगर (enable_evmcs)
+		वापस evmcs_vmlaunch();
 
-	__asm__ __volatile__("push %%rbp;"
+	__यंत्र__ __अस्थिर__("push %%rbp;"
 			     "push %%rcx;"
 			     "push %%rdx;"
 			     "push %%rsi;"
@@ -434,24 +435,24 @@ static inline int vmlaunch(void)
 			     "pop %%rcx;"
 			     "pop %%rbp;"
 			     : [ret]"=&a"(ret)
-			     : [host_rsp]"r"((uint64_t)HOST_RSP),
-			       [host_rip]"r"((uint64_t)HOST_RIP)
+			     : [host_rsp]"r"((uपूर्णांक64_t)HOST_RSP),
+			       [host_rip]"r"((uपूर्णांक64_t)HOST_RIP)
 			     : "memory", "cc", "rbx", "r8", "r9", "r10",
 			       "r11", "r12", "r13", "r14", "r15");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * No guest state (e.g. GPRs) is established by this vmresume.
  */
-static inline int vmresume(void)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक vmresume(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (enable_evmcs)
-		return evmcs_vmresume();
+	अगर (enable_evmcs)
+		वापस evmcs_vmresume();
 
-	__asm__ __volatile__("push %%rbp;"
+	__यंत्र__ __अस्थिर__("push %%rbp;"
 			     "push %%rcx;"
 			     "push %%rdx;"
 			     "push %%rsi;"
@@ -469,115 +470,115 @@ static inline int vmresume(void)
 			     "pop %%rcx;"
 			     "pop %%rbp;"
 			     : [ret]"=&a"(ret)
-			     : [host_rsp]"r"((uint64_t)HOST_RSP),
-			       [host_rip]"r"((uint64_t)HOST_RIP)
+			     : [host_rsp]"r"((uपूर्णांक64_t)HOST_RSP),
+			       [host_rip]"r"((uपूर्णांक64_t)HOST_RIP)
 			     : "memory", "cc", "rbx", "r8", "r9", "r10",
 			       "r11", "r12", "r13", "r14", "r15");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void vmcall(void)
-{
-	/* Currently, L1 destroys our GPRs during vmexits.  */
-	__asm__ __volatile__("push %%rbp; vmcall; pop %%rbp" : : :
+अटल अंतरभूत व्योम vmcall(व्योम)
+अणु
+	/* Currently, L1 destroys our GPRs during vmनिकासs.  */
+	__यंत्र__ __अस्थिर__("push %%rbp; vmcall; pop %%rbp" : : :
 			     "rax", "rbx", "rcx", "rdx",
 			     "rsi", "rdi", "r8", "r9", "r10", "r11", "r12",
 			     "r13", "r14", "r15");
-}
+पूर्ण
 
-static inline int vmread(uint64_t encoding, uint64_t *value)
-{
-	uint64_t tmp;
-	uint8_t ret;
+अटल अंतरभूत पूर्णांक vmपढ़ो(uपूर्णांक64_t encoding, uपूर्णांक64_t *value)
+अणु
+	uपूर्णांक64_t पंचांगp;
+	uपूर्णांक8_t ret;
 
-	if (enable_evmcs)
-		return evmcs_vmread(encoding, value);
+	अगर (enable_evmcs)
+		वापस evmcs_vmपढ़ो(encoding, value);
 
-	__asm__ __volatile__("vmread %[encoding], %[value]; setna %[ret]"
-		: [value]"=rm"(tmp), [ret]"=rm"(ret)
+	__यंत्र__ __अस्थिर__("vmread %[encoding], %[value]; setna %[ret]"
+		: [value]"=rm"(पंचांगp), [ret]"=rm"(ret)
 		: [encoding]"r"(encoding)
 		: "cc", "memory");
 
-	*value = tmp;
-	return ret;
-}
+	*value = पंचांगp;
+	वापस ret;
+पूर्ण
 
 /*
- * A wrapper around vmread that ignores errors and returns zero if the
- * vmread instruction fails.
+ * A wrapper around vmपढ़ो that ignores errors and वापसs zero अगर the
+ * vmपढ़ो inकाष्ठाion fails.
  */
-static inline uint64_t vmreadz(uint64_t encoding)
-{
-	uint64_t value = 0;
-	vmread(encoding, &value);
-	return value;
-}
+अटल अंतरभूत uपूर्णांक64_t vmपढ़ोz(uपूर्णांक64_t encoding)
+अणु
+	uपूर्णांक64_t value = 0;
+	vmपढ़ो(encoding, &value);
+	वापस value;
+पूर्ण
 
-static inline int vmwrite(uint64_t encoding, uint64_t value)
-{
-	uint8_t ret;
+अटल अंतरभूत पूर्णांक vmग_लिखो(uपूर्णांक64_t encoding, uपूर्णांक64_t value)
+अणु
+	uपूर्णांक8_t ret;
 
-	if (enable_evmcs)
-		return evmcs_vmwrite(encoding, value);
+	अगर (enable_evmcs)
+		वापस evmcs_vmग_लिखो(encoding, value);
 
-	__asm__ __volatile__ ("vmwrite %[value], %[encoding]; setna %[ret]"
+	__यंत्र__ __अस्थिर__ ("vmwrite %[value], %[encoding]; setna %[ret]"
 		: [ret]"=rm"(ret)
 		: [value]"rm"(value), [encoding]"r"(encoding)
 		: "cc", "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline uint32_t vmcs_revision(void)
-{
-	return rdmsr(MSR_IA32_VMX_BASIC);
-}
+अटल अंतरभूत uपूर्णांक32_t vmcs_revision(व्योम)
+अणु
+	वापस rdmsr(MSR_IA32_VMX_BASIC);
+पूर्ण
 
-struct vmx_pages {
-	void *vmxon_hva;
-	uint64_t vmxon_gpa;
-	void *vmxon;
+काष्ठा vmx_pages अणु
+	व्योम *vmxon_hva;
+	uपूर्णांक64_t vmxon_gpa;
+	व्योम *vmxon;
 
-	void *vmcs_hva;
-	uint64_t vmcs_gpa;
-	void *vmcs;
+	व्योम *vmcs_hva;
+	uपूर्णांक64_t vmcs_gpa;
+	व्योम *vmcs;
 
-	void *msr_hva;
-	uint64_t msr_gpa;
-	void *msr;
+	व्योम *msr_hva;
+	uपूर्णांक64_t msr_gpa;
+	व्योम *msr;
 
-	void *shadow_vmcs_hva;
-	uint64_t shadow_vmcs_gpa;
-	void *shadow_vmcs;
+	व्योम *shaकरोw_vmcs_hva;
+	uपूर्णांक64_t shaकरोw_vmcs_gpa;
+	व्योम *shaकरोw_vmcs;
 
-	void *vmread_hva;
-	uint64_t vmread_gpa;
-	void *vmread;
+	व्योम *vmपढ़ो_hva;
+	uपूर्णांक64_t vmपढ़ो_gpa;
+	व्योम *vmपढ़ो;
 
-	void *vmwrite_hva;
-	uint64_t vmwrite_gpa;
-	void *vmwrite;
+	व्योम *vmग_लिखो_hva;
+	uपूर्णांक64_t vmग_लिखो_gpa;
+	व्योम *vmग_लिखो;
 
-	void *vp_assist_hva;
-	uint64_t vp_assist_gpa;
-	void *vp_assist;
+	व्योम *vp_assist_hva;
+	uपूर्णांक64_t vp_assist_gpa;
+	व्योम *vp_assist;
 
-	void *enlightened_vmcs_hva;
-	uint64_t enlightened_vmcs_gpa;
-	void *enlightened_vmcs;
+	व्योम *enlightened_vmcs_hva;
+	uपूर्णांक64_t enlightened_vmcs_gpa;
+	व्योम *enlightened_vmcs;
 
-	void *eptp_hva;
-	uint64_t eptp_gpa;
-	void *eptp;
+	व्योम *eptp_hva;
+	uपूर्णांक64_t eptp_gpa;
+	व्योम *eptp;
 
-	void *apic_access_hva;
-	uint64_t apic_access_gpa;
-	void *apic_access;
-};
+	व्योम *apic_access_hva;
+	uपूर्णांक64_t apic_access_gpa;
+	व्योम *apic_access;
+पूर्ण;
 
-union vmx_basic {
+जोड़ vmx_basic अणु
 	u64 val;
-	struct {
+	काष्ठा अणु
 		u32 revision;
 		u32	size:13,
 			reserved1:3,
@@ -588,34 +589,34 @@ union vmx_basic {
 			ctrl:1,
 			vm_entry_exception_ctrl:1,
 			reserved2:7;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-union vmx_ctrl_msr {
+जोड़ vmx_ctrl_msr अणु
 	u64 val;
-	struct {
+	काष्ठा अणु
 		u32 set, clr;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-struct vmx_pages *vcpu_alloc_vmx(struct kvm_vm *vm, vm_vaddr_t *p_vmx_gva);
-bool prepare_for_vmx_operation(struct vmx_pages *vmx);
-void prepare_vmcs(struct vmx_pages *vmx, void *guest_rip, void *guest_rsp);
-bool load_vmcs(struct vmx_pages *vmx);
+काष्ठा vmx_pages *vcpu_alloc_vmx(काष्ठा kvm_vm *vm, vm_vaddr_t *p_vmx_gva);
+bool prepare_क्रम_vmx_operation(काष्ठा vmx_pages *vmx);
+व्योम prepare_vmcs(काष्ठा vmx_pages *vmx, व्योम *guest_rip, व्योम *guest_rsp);
+bool load_vmcs(काष्ठा vmx_pages *vmx);
 
-bool nested_vmx_supported(void);
-void nested_vmx_check_supported(void);
+bool nested_vmx_supported(व्योम);
+व्योम nested_vmx_check_supported(व्योम);
 
-void nested_pg_map(struct vmx_pages *vmx, struct kvm_vm *vm,
-		   uint64_t nested_paddr, uint64_t paddr, uint32_t eptp_memslot);
-void nested_map(struct vmx_pages *vmx, struct kvm_vm *vm,
-		 uint64_t nested_paddr, uint64_t paddr, uint64_t size,
-		 uint32_t eptp_memslot);
-void nested_map_memslot(struct vmx_pages *vmx, struct kvm_vm *vm,
-			uint32_t memslot, uint32_t eptp_memslot);
-void prepare_eptp(struct vmx_pages *vmx, struct kvm_vm *vm,
-		  uint32_t eptp_memslot);
-void prepare_virtualize_apic_accesses(struct vmx_pages *vmx, struct kvm_vm *vm,
-				      uint32_t eptp_memslot);
+व्योम nested_pg_map(काष्ठा vmx_pages *vmx, काष्ठा kvm_vm *vm,
+		   uपूर्णांक64_t nested_paddr, uपूर्णांक64_t paddr, uपूर्णांक32_t eptp_memslot);
+व्योम nested_map(काष्ठा vmx_pages *vmx, काष्ठा kvm_vm *vm,
+		 uपूर्णांक64_t nested_paddr, uपूर्णांक64_t paddr, uपूर्णांक64_t size,
+		 uपूर्णांक32_t eptp_memslot);
+व्योम nested_map_memslot(काष्ठा vmx_pages *vmx, काष्ठा kvm_vm *vm,
+			uपूर्णांक32_t memslot, uपूर्णांक32_t eptp_memslot);
+व्योम prepare_eptp(काष्ठा vmx_pages *vmx, काष्ठा kvm_vm *vm,
+		  uपूर्णांक32_t eptp_memslot);
+व्योम prepare_भवize_apic_accesses(काष्ठा vmx_pages *vmx, काष्ठा kvm_vm *vm,
+				      uपूर्णांक32_t eptp_memslot);
 
-#endif /* SELFTEST_KVM_VMX_H */
+#पूर्ण_अगर /* SELFTEST_KVM_VMX_H */

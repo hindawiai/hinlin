@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <linux/reboot.h>
+#समावेश <linux/reboot.h>
 
-void (*pm_power_off)(void);
-EXPORT_SYMBOL(pm_power_off);
+व्योम (*pm_घातer_off)(व्योम);
+EXPORT_SYMBOL(pm_घातer_off);
 
-void machine_power_off(void)
-{
+व्योम machine_घातer_off(व्योम)
+अणु
 	local_irq_disable();
-	if (pm_power_off)
-		pm_power_off();
-	asm volatile ("bkpt");
-}
+	अगर (pm_घातer_off)
+		pm_घातer_off();
+	यंत्र अस्थिर ("bkpt");
+पूर्ण
 
-void machine_halt(void)
-{
+व्योम machine_halt(व्योम)
+अणु
 	local_irq_disable();
-	if (pm_power_off)
-		pm_power_off();
-	asm volatile ("bkpt");
-}
+	अगर (pm_घातer_off)
+		pm_घातer_off();
+	यंत्र अस्थिर ("bkpt");
+पूर्ण
 
-void machine_restart(char *cmd)
-{
+व्योम machine_restart(अक्षर *cmd)
+अणु
 	local_irq_disable();
-	do_kernel_restart(cmd);
-	asm volatile ("bkpt");
-}
+	करो_kernel_restart(cmd);
+	यंत्र अस्थिर ("bkpt");
+पूर्ण

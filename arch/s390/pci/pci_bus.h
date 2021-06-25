@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright IBM Corp. 2020
  *
@@ -7,31 +8,31 @@
  *
  */
 
-int zpci_bus_device_register(struct zpci_dev *zdev, struct pci_ops *ops);
-void zpci_bus_device_unregister(struct zpci_dev *zdev);
+पूर्णांक zpci_bus_device_रेजिस्टर(काष्ठा zpci_dev *zdev, काष्ठा pci_ops *ops);
+व्योम zpci_bus_device_unरेजिस्टर(काष्ठा zpci_dev *zdev);
 
-int zpci_bus_scan_bus(struct zpci_bus *zbus);
-void zpci_bus_scan_busses(void);
+पूर्णांक zpci_bus_scan_bus(काष्ठा zpci_bus *zbus);
+व्योम zpci_bus_scan_busses(व्योम);
 
-int zpci_bus_scan_device(struct zpci_dev *zdev);
-void zpci_bus_remove_device(struct zpci_dev *zdev, bool set_error);
+पूर्णांक zpci_bus_scan_device(काष्ठा zpci_dev *zdev);
+व्योम zpci_bus_हटाओ_device(काष्ठा zpci_dev *zdev, bool set_error);
 
-void zpci_release_device(struct kref *kref);
-static inline void zpci_zdev_put(struct zpci_dev *zdev)
-{
+व्योम zpci_release_device(काष्ठा kref *kref);
+अटल अंतरभूत व्योम zpci_zdev_put(काष्ठा zpci_dev *zdev)
+अणु
 	kref_put(&zdev->kref, zpci_release_device);
-}
+पूर्ण
 
-int zpci_alloc_domain(int domain);
-void zpci_free_domain(int domain);
-int zpci_setup_bus_resources(struct zpci_dev *zdev,
-			     struct list_head *resources);
+पूर्णांक zpci_alloc_करोमुख्य(पूर्णांक करोमुख्य);
+व्योम zpci_मुक्त_करोमुख्य(पूर्णांक करोमुख्य);
+पूर्णांक zpci_setup_bus_resources(काष्ठा zpci_dev *zdev,
+			     काष्ठा list_head *resources);
 
-static inline struct zpci_dev *get_zdev_by_bus(struct pci_bus *bus,
-					       unsigned int devfn)
-{
-	struct zpci_bus *zbus = bus->sysdata;
+अटल अंतरभूत काष्ठा zpci_dev *get_zdev_by_bus(काष्ठा pci_bus *bus,
+					       अचिन्हित पूर्णांक devfn)
+अणु
+	काष्ठा zpci_bus *zbus = bus->sysdata;
 
-	return (devfn >= ZPCI_FUNCTIONS_PER_BUS) ? NULL : zbus->function[devfn];
-}
+	वापस (devfn >= ZPCI_FUNCTIONS_PER_BUS) ? शून्य : zbus->function[devfn];
+पूर्ण
 

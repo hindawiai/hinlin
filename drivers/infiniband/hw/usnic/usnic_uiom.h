@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013, Cisco Systems, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,65 +32,65 @@
  *
  */
 
-#ifndef USNIC_UIOM_H_
-#define USNIC_UIOM_H_
+#अगर_अघोषित USNIC_UIOM_H_
+#घोषणा USNIC_UIOM_H_
 
-#include <linux/list.h>
-#include <linux/scatterlist.h>
+#समावेश <linux/list.h>
+#समावेश <linux/scatterlist.h>
 
-#include "usnic_uiom_interval_tree.h"
+#समावेश "usnic_uiom_interval_tree.h"
 
-struct ib_ucontext;
+काष्ठा ib_ucontext;
 
-#define USNIC_UIOM_READ			(1)
-#define USNIC_UIOM_WRITE		(2)
+#घोषणा USNIC_UIOM_READ			(1)
+#घोषणा USNIC_UIOM_WRITE		(2)
 
-#define USNIC_UIOM_MAX_PD_CNT		(1000)
-#define USNIC_UIOM_MAX_MR_CNT		(1000000)
-#define USNIC_UIOM_MAX_MR_SIZE		(~0UL)
-#define USNIC_UIOM_PAGE_SIZE		(PAGE_SIZE)
+#घोषणा USNIC_UIOM_MAX_PD_CNT		(1000)
+#घोषणा USNIC_UIOM_MAX_MR_CNT		(1000000)
+#घोषणा USNIC_UIOM_MAX_MR_SIZE		(~0UL)
+#घोषणा USNIC_UIOM_PAGE_SIZE		(PAGE_SIZE)
 
-struct usnic_uiom_dev {
-	struct device			*dev;
-	struct list_head		link;
-};
+काष्ठा usnic_uiom_dev अणु
+	काष्ठा device			*dev;
+	काष्ठा list_head		link;
+पूर्ण;
 
-struct usnic_uiom_pd {
-	struct iommu_domain		*domain;
+काष्ठा usnic_uiom_pd अणु
+	काष्ठा iommu_करोमुख्य		*करोमुख्य;
 	spinlock_t			lock;
-	struct rb_root_cached		root;
-	struct list_head		devs;
-	int				dev_cnt;
-};
+	काष्ठा rb_root_cached		root;
+	काष्ठा list_head		devs;
+	पूर्णांक				dev_cnt;
+पूर्ण;
 
-struct usnic_uiom_reg {
-	struct usnic_uiom_pd		*pd;
-	unsigned long			va;
-	size_t				length;
-	int				offset;
-	int				page_size;
-	int				writable;
-	struct list_head		chunk_list;
-	struct work_struct		work;
-	struct mm_struct		*owning_mm;
-};
+काष्ठा usnic_uiom_reg अणु
+	काष्ठा usnic_uiom_pd		*pd;
+	अचिन्हित दीर्घ			va;
+	माप_प्रकार				length;
+	पूर्णांक				offset;
+	पूर्णांक				page_size;
+	पूर्णांक				writable;
+	काष्ठा list_head		chunk_list;
+	काष्ठा work_काष्ठा		work;
+	काष्ठा mm_काष्ठा		*owning_mm;
+पूर्ण;
 
-struct usnic_uiom_chunk {
-	struct list_head		list;
-	int				nents;
-	struct scatterlist		page_list[];
-};
+काष्ठा usnic_uiom_chunk अणु
+	काष्ठा list_head		list;
+	पूर्णांक				nents;
+	काष्ठा scatterlist		page_list[];
+पूर्ण;
 
-struct usnic_uiom_pd *usnic_uiom_alloc_pd(void);
-void usnic_uiom_dealloc_pd(struct usnic_uiom_pd *pd);
-int usnic_uiom_attach_dev_to_pd(struct usnic_uiom_pd *pd, struct device *dev);
-void usnic_uiom_detach_dev_from_pd(struct usnic_uiom_pd *pd,
-					struct device *dev);
-struct device **usnic_uiom_get_dev_list(struct usnic_uiom_pd *pd);
-void usnic_uiom_free_dev_list(struct device **devs);
-struct usnic_uiom_reg *usnic_uiom_reg_get(struct usnic_uiom_pd *pd,
-						unsigned long addr, size_t size,
-						int access, int dmasync);
-void usnic_uiom_reg_release(struct usnic_uiom_reg *uiomr);
-int usnic_uiom_init(char *drv_name);
-#endif /* USNIC_UIOM_H_ */
+काष्ठा usnic_uiom_pd *usnic_uiom_alloc_pd(व्योम);
+व्योम usnic_uiom_dealloc_pd(काष्ठा usnic_uiom_pd *pd);
+पूर्णांक usnic_uiom_attach_dev_to_pd(काष्ठा usnic_uiom_pd *pd, काष्ठा device *dev);
+व्योम usnic_uiom_detach_dev_from_pd(काष्ठा usnic_uiom_pd *pd,
+					काष्ठा device *dev);
+काष्ठा device **usnic_uiom_get_dev_list(काष्ठा usnic_uiom_pd *pd);
+व्योम usnic_uiom_मुक्त_dev_list(काष्ठा device **devs);
+काष्ठा usnic_uiom_reg *usnic_uiom_reg_get(काष्ठा usnic_uiom_pd *pd,
+						अचिन्हित दीर्घ addr, माप_प्रकार size,
+						पूर्णांक access, पूर्णांक dmasync);
+व्योम usnic_uiom_reg_release(काष्ठा usnic_uiom_reg *uiomr);
+पूर्णांक usnic_uiom_init(अक्षर *drv_name);
+#पूर्ण_अगर /* USNIC_UIOM_H_ */

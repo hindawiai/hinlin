@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* cpudata.h: Per-cpu parameters.
  *
  * Copyright (C) 2003, 2005, 2006 David S. Miller (davem@davemloft.net)
  */
 
-#ifndef _SPARC64_CPUDATA_H
-#define _SPARC64_CPUDATA_H
+#अगर_अघोषित _SPARC64_CPUDATA_H
+#घोषणा _SPARC64_CPUDATA_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-typedef struct {
+प्रकार काष्ठा अणु
 	/* Dcache line 1 */
-	unsigned int	__softirq_pending; /* must be 1st, see rtrap.S */
-	unsigned int	__nmi_count;
-	unsigned long	clock_tick;	/* %tick's per second */
-	unsigned long	__pad;
-	unsigned int	irq0_irqs;
-	unsigned int	__pad2;
+	अचिन्हित पूर्णांक	__softirq_pending; /* must be 1st, see rtrap.S */
+	अचिन्हित पूर्णांक	__nmi_count;
+	अचिन्हित दीर्घ	घड़ी_प्रकारick;	/* %tick's per second */
+	अचिन्हित दीर्घ	__pad;
+	अचिन्हित पूर्णांक	irq0_irqs;
+	अचिन्हित पूर्णांक	__pad2;
 
 	/* Dcache line 2, rarely used */
-	unsigned int	dcache_size;
-	unsigned int	dcache_line_size;
-	unsigned int	icache_size;
-	unsigned int	icache_line_size;
-	unsigned int	ecache_size;
-	unsigned int	ecache_line_size;
-	unsigned short	sock_id;	/* physical package */
-	unsigned short	core_id;
-	unsigned short  max_cache_id;	/* groupings of highest shared cache */
-	signed short	proc_id;	/* strand (aka HW thread) id */
-} cpuinfo_sparc;
+	अचिन्हित पूर्णांक	dcache_size;
+	अचिन्हित पूर्णांक	dcache_line_size;
+	अचिन्हित पूर्णांक	icache_size;
+	अचिन्हित पूर्णांक	icache_line_size;
+	अचिन्हित पूर्णांक	ecache_size;
+	अचिन्हित पूर्णांक	ecache_line_size;
+	अचिन्हित लघु	sock_id;	/* physical package */
+	अचिन्हित लघु	core_id;
+	अचिन्हित लघु  max_cache_id;	/* groupings of highest shared cache */
+	चिन्हित लघु	proc_id;	/* stअक्रम (aka HW thपढ़ो) id */
+पूर्ण cpuinfo_sparc;
 
 DECLARE_PER_CPU(cpuinfo_sparc, __cpu_data);
-#define cpu_data(__cpu)		per_cpu(__cpu_data, (__cpu))
-#define local_cpu_data()	(*this_cpu_ptr(&__cpu_data))
+#घोषणा cpu_data(__cpu)		per_cpu(__cpu_data, (__cpu))
+#घोषणा local_cpu_data()	(*this_cpu_ptr(&__cpu_data))
 
-#endif /* !(__ASSEMBLY__) */
+#पूर्ण_अगर /* !(__ASSEMBLY__) */
 
-#include <asm/trap_block.h>
+#समावेश <यंत्र/trap_block.h>
 
-#endif /* _SPARC64_CPUDATA_H */
+#पूर्ण_अगर /* _SPARC64_CPUDATA_H */

@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /*
  * Copyright (C) 2005-2014 Intel Corporation
  */
-#ifndef __iwl_eeprom_h__
-#define __iwl_eeprom_h__
+#अगर_अघोषित __iwl_eeprom_h__
+#घोषणा __iwl_eeprom_h__
 
-#include "iwl-trans.h"
+#समावेश "iwl-trans.h"
 
-int iwl_read_eeprom(struct iwl_trans *trans, u8 **eeprom, size_t *eeprom_size);
+पूर्णांक iwl_पढ़ो_eeprom(काष्ठा iwl_trans *trans, u8 **eeprom, माप_प्रकार *eeprom_size);
 
-#endif  /* __iwl_eeprom_h__ */
+#पूर्ण_अगर  /* __iwl_eeprom_h__ */

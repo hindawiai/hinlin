@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_FUNCTIONFS_H__
-#define __LINUX_FUNCTIONFS_H__ 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_FUNCTIONFS_H__
+#घोषणा __LINUX_FUNCTIONFS_H__ 1
 
-#include <uapi/linux/usb/functionfs.h>
+#समावेश <uapi/linux/usb/functionfs.h>
 
-#endif
+#पूर्ण_अगर

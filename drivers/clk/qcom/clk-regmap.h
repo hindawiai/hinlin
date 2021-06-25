@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (c) 2014, The Linux Foundation. All rights reserved. */
 
-#ifndef __QCOM_CLK_REGMAP_H__
-#define __QCOM_CLK_REGMAP_H__
+#अगर_अघोषित __QCOM_CLK_REGMAP_H__
+#घोषणा __QCOM_CLK_REGMAP_H__
 
-#include <linux/clk-provider.h>
+#समावेश <linux/clk-provider.h>
 
-struct regmap;
+काष्ठा regmap;
 
 /**
- * struct clk_regmap - regmap supporting clock
- * @hw:		handle between common and hardware-specific interfaces
- * @regmap:	regmap to use for regmap helpers and/or by providers
- * @enable_reg: register when using regmap enable/disable ops
+ * काष्ठा clk_regmap - regmap supporting घड़ी
+ * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @regmap:	regmap to use क्रम regmap helpers and/or by providers
+ * @enable_reg: रेजिस्टर when using regmap enable/disable ops
  * @enable_mask: mask when using regmap enable/disable ops
  * @enable_is_inverted: flag to indicate set enable_mask bits to disable
- *                      when using clock_enable_regmap and friends APIs.
+ *                      when using घड़ी_enable_regmap and मित्रs APIs.
  */
-struct clk_regmap {
-	struct clk_hw hw;
-	struct regmap *regmap;
-	unsigned int enable_reg;
-	unsigned int enable_mask;
+काष्ठा clk_regmap अणु
+	काष्ठा clk_hw hw;
+	काष्ठा regmap *regmap;
+	अचिन्हित पूर्णांक enable_reg;
+	अचिन्हित पूर्णांक enable_mask;
 	bool enable_is_inverted;
-};
+पूर्ण;
 
-static inline struct clk_regmap *to_clk_regmap(struct clk_hw *hw)
-{
-	return container_of(hw, struct clk_regmap, hw);
-}
+अटल अंतरभूत काष्ठा clk_regmap *to_clk_regmap(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(hw, काष्ठा clk_regmap, hw);
+पूर्ण
 
-int clk_is_enabled_regmap(struct clk_hw *hw);
-int clk_enable_regmap(struct clk_hw *hw);
-void clk_disable_regmap(struct clk_hw *hw);
-int devm_clk_register_regmap(struct device *dev, struct clk_regmap *rclk);
+पूर्णांक clk_is_enabled_regmap(काष्ठा clk_hw *hw);
+पूर्णांक clk_enable_regmap(काष्ठा clk_hw *hw);
+व्योम clk_disable_regmap(काष्ठा clk_hw *hw);
+पूर्णांक devm_clk_रेजिस्टर_regmap(काष्ठा device *dev, काष्ठा clk_regmap *rclk);
 
-#endif
+#पूर्ण_अगर

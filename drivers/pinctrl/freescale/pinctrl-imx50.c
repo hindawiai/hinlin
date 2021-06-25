@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // imx50 pinctrl driver based on imx pinmux core
 //
@@ -6,16 +7,16 @@
 // Copyright (C) 2012 Freescale Semiconductor, Inc.
 // Copyright (C) 2012 Linaro, Inc.
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-imx.h"
+#समावेश "pinctrl-imx.h"
 
-enum imx50_pads {
+क्रमागत imx50_pads अणु
 	MX50_PAD_RESERVE0 = 0,
 	MX50_PAD_RESERVE1 = 1,
 	MX50_PAD_RESERVE2 = 2,
@@ -195,10 +196,10 @@ enum imx50_pads {
 	MX50_PAD_EIM_RW = 176,
 	MX50_PAD_EIM_LBA = 177,
 	MX50_PAD_EIM_CRE = 178,
-};
+पूर्ण;
 
-/* Pad names for the pinmux subsystem */
-static const struct pinctrl_pin_desc imx50_pinctrl_pads[] = {
+/* Pad names क्रम the pinmux subप्रणाली */
+अटल स्थिर काष्ठा pinctrl_pin_desc imx50_pinctrl_pads[] = अणु
 	IMX_PINCTRL_PIN(MX50_PAD_RESERVE0),
 	IMX_PINCTRL_PIN(MX50_PAD_RESERVE1),
 	IMX_PINCTRL_PIN(MX50_PAD_RESERVE2),
@@ -378,35 +379,35 @@ static const struct pinctrl_pin_desc imx50_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX50_PAD_EIM_RW),
 	IMX_PINCTRL_PIN(MX50_PAD_EIM_LBA),
 	IMX_PINCTRL_PIN(MX50_PAD_EIM_CRE),
-};
+पूर्ण;
 
-static const struct imx_pinctrl_soc_info imx50_pinctrl_info = {
+अटल स्थिर काष्ठा imx_pinctrl_soc_info imx50_pinctrl_info = अणु
 	.pins = imx50_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx50_pinctrl_pads),
 	.gpr_compatible = "fsl,imx50-iomuxc-gpr",
-};
+पूर्ण;
 
-static const struct of_device_id imx50_pinctrl_of_match[] = {
-	{ .compatible = "fsl,imx50-iomuxc", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx50_pinctrl_of_match[] = अणु
+	अणु .compatible = "fsl,imx50-iomuxc", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int imx50_pinctrl_probe(struct platform_device *pdev)
-{
-	return imx_pinctrl_probe(pdev, &imx50_pinctrl_info);
-}
+अटल पूर्णांक imx50_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस imx_pinctrl_probe(pdev, &imx50_pinctrl_info);
+पूर्ण
 
-static struct platform_driver imx50_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx50_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "imx50-pinctrl",
 		.of_match_table = imx50_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = imx50_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init imx50_pinctrl_init(void)
-{
-	return platform_driver_register(&imx50_pinctrl_driver);
-}
+अटल पूर्णांक __init imx50_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&imx50_pinctrl_driver);
+पूर्ण
 arch_initcall(imx50_pinctrl_init);

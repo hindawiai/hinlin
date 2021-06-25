@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* iptables module for the IPv4 and TCP ECN bits, Version 1.5
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* iptables module क्रम the IPv4 and TCP ECN bits, Version 1.5
  *
- * (C) 2002 by Harald Welte <laforge@netfilter.org>
+ * (C) 2002 by Harald Welte <laक्रमge@netfilter.org>
 */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/in.h>
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/ip.h>
-#include <net/ip.h>
-#include <linux/tcp.h>
-#include <net/checksum.h>
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/in.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/ip.h>
+#समावेश <net/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <net/checksum.h>
 
-#include <linux/netfilter/x_tables.h>
-#include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netfilter_ipv4/ipt_ECN.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter_ipv4/ip_tables.h>
+#समावेश <linux/netfilter_ipv4/ipt_ECN.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Harald Welte <laforge@netfilter.org>");
 MODULE_DESCRIPTION("Xtables: Explicit Congestion Notification (ECN) flag modification");
 
-/* set ECT codepoint from IP header.
- * 	return false if there was an error. */
-static inline bool
-set_ect_ip(struct sk_buff *skb, const struct ipt_ECN_info *einfo)
-{
-	struct iphdr *iph = ip_hdr(skb);
+/* set ECT codepoपूर्णांक from IP header.
+ * 	वापस false अगर there was an error. */
+अटल अंतरभूत bool
+set_ect_ip(काष्ठा sk_buff *skb, स्थिर काष्ठा ipt_ECN_info *einfo)
+अणु
+	काष्ठा iphdr *iph = ip_hdr(skb);
 
-	if ((iph->tos & IPT_ECN_IP_MASK) != (einfo->ip_ect & IPT_ECN_IP_MASK)) {
+	अगर ((iph->tos & IPT_ECN_IP_MASK) != (einfo->ip_ect & IPT_ECN_IP_MASK)) अणु
 		__u8 oldtos;
-		if (skb_ensure_writable(skb, sizeof(struct iphdr)))
-			return false;
+		अगर (skb_ensure_writable(skb, माप(काष्ठा iphdr)))
+			वापस false;
 		iph = ip_hdr(skb);
 		oldtos = iph->tos;
 		iph->tos &= ~IPT_ECN_IP_MASK;
 		iph->tos |= (einfo->ip_ect & IPT_ECN_IP_MASK);
 		csum_replace2(&iph->check, htons(oldtos), htons(iph->tos));
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
-/* Return false if there was an error. */
-static inline bool
-set_ect_tcp(struct sk_buff *skb, const struct ipt_ECN_info *einfo)
-{
-	struct tcphdr _tcph, *tcph;
+/* Return false अगर there was an error. */
+अटल अंतरभूत bool
+set_ect_tcp(काष्ठा sk_buff *skb, स्थिर काष्ठा ipt_ECN_info *einfo)
+अणु
+	काष्ठा tcphdr _tcph, *tcph;
 	__be16 oldval;
 
 	/* Not enough header? */
-	tcph = skb_header_pointer(skb, ip_hdrlen(skb), sizeof(_tcph), &_tcph);
-	if (!tcph)
-		return false;
+	tcph = skb_header_poपूर्णांकer(skb, ip_hdrlen(skb), माप(_tcph), &_tcph);
+	अगर (!tcph)
+		वापस false;
 
-	if ((!(einfo->operation & IPT_ECN_OP_SET_ECE) ||
+	अगर ((!(einfo->operation & IPT_ECN_OP_SET_ECE) ||
 	     tcph->ece == einfo->proto.tcp.ece) &&
 	    (!(einfo->operation & IPT_ECN_OP_SET_CWR) ||
 	     tcph->cwr == einfo->proto.tcp.cwr))
-		return true;
+		वापस true;
 
-	if (skb_ensure_writable(skb, ip_hdrlen(skb) + sizeof(*tcph)))
-		return false;
-	tcph = (void *)ip_hdr(skb) + ip_hdrlen(skb);
+	अगर (skb_ensure_writable(skb, ip_hdrlen(skb) + माप(*tcph)))
+		वापस false;
+	tcph = (व्योम *)ip_hdr(skb) + ip_hdrlen(skb);
 
 	oldval = ((__be16 *)tcph)[6];
-	if (einfo->operation & IPT_ECN_OP_SET_ECE)
+	अगर (einfo->operation & IPT_ECN_OP_SET_ECE)
 		tcph->ece = einfo->proto.tcp.ece;
-	if (einfo->operation & IPT_ECN_OP_SET_CWR)
+	अगर (einfo->operation & IPT_ECN_OP_SET_CWR)
 		tcph->cwr = einfo->proto.tcp.cwr;
 
 	inet_proto_csum_replace2(&tcph->check, skb,
 				 oldval, ((__be16 *)tcph)[6], false);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static unsigned int
-ecn_tg(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct ipt_ECN_info *einfo = par->targinfo;
+अटल अचिन्हित पूर्णांक
+ecn_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा ipt_ECN_info *einfo = par->targinfo;
 
-	if (einfo->operation & IPT_ECN_OP_SET_IP)
-		if (!set_ect_ip(skb, einfo))
-			return NF_DROP;
+	अगर (einfo->operation & IPT_ECN_OP_SET_IP)
+		अगर (!set_ect_ip(skb, einfo))
+			वापस NF_DROP;
 
-	if (einfo->operation & (IPT_ECN_OP_SET_ECE | IPT_ECN_OP_SET_CWR) &&
+	अगर (einfo->operation & (IPT_ECN_OP_SET_ECE | IPT_ECN_OP_SET_CWR) &&
 	    ip_hdr(skb)->protocol == IPPROTO_TCP)
-		if (!set_ect_tcp(skb, einfo))
-			return NF_DROP;
+		अगर (!set_ect_tcp(skb, einfo))
+			वापस NF_DROP;
 
-	return XT_CONTINUE;
-}
+	वापस XT_CONTINUE;
+पूर्ण
 
-static int ecn_tg_check(const struct xt_tgchk_param *par)
-{
-	const struct ipt_ECN_info *einfo = par->targinfo;
-	const struct ipt_entry *e = par->entryinfo;
+अटल पूर्णांक ecn_tg_check(स्थिर काष्ठा xt_tgchk_param *par)
+अणु
+	स्थिर काष्ठा ipt_ECN_info *einfo = par->targinfo;
+	स्थिर काष्ठा ipt_entry *e = par->entryinfo;
 
-	if (einfo->operation & IPT_ECN_OP_MASK)
-		return -EINVAL;
+	अगर (einfo->operation & IPT_ECN_OP_MASK)
+		वापस -EINVAL;
 
-	if (einfo->ip_ect & ~IPT_ECN_IP_MASK)
-		return -EINVAL;
+	अगर (einfo->ip_ect & ~IPT_ECN_IP_MASK)
+		वापस -EINVAL;
 
-	if ((einfo->operation & (IPT_ECN_OP_SET_ECE|IPT_ECN_OP_SET_CWR)) &&
-	    (e->ip.proto != IPPROTO_TCP || (e->ip.invflags & XT_INV_PROTO))) {
+	अगर ((einfo->operation & (IPT_ECN_OP_SET_ECE|IPT_ECN_OP_SET_CWR)) &&
+	    (e->ip.proto != IPPROTO_TCP || (e->ip.invflags & XT_INV_PROTO))) अणु
 		pr_info_ratelimited("cannot use operation on non-tcp rule\n");
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct xt_target ecn_tg_reg __read_mostly = {
+अटल काष्ठा xt_target ecn_tg_reg __पढ़ो_mostly = अणु
 	.name		= "ECN",
 	.family		= NFPROTO_IPV4,
 	.target		= ecn_tg,
-	.targetsize	= sizeof(struct ipt_ECN_info),
+	.tarमाला_लोize	= माप(काष्ठा ipt_ECN_info),
 	.table		= "mangle",
 	.checkentry	= ecn_tg_check,
 	.me		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init ecn_tg_init(void)
-{
-	return xt_register_target(&ecn_tg_reg);
-}
+अटल पूर्णांक __init ecn_tg_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_target(&ecn_tg_reg);
+पूर्ण
 
-static void __exit ecn_tg_exit(void)
-{
-	xt_unregister_target(&ecn_tg_reg);
-}
+अटल व्योम __निकास ecn_tg_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_target(&ecn_tg_reg);
+पूर्ण
 
 module_init(ecn_tg_init);
-module_exit(ecn_tg_exit);
+module_निकास(ecn_tg_निकास);

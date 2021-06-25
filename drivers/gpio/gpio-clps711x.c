@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  CLPS711X GPIO driver
  *
  *  Copyright (C) 2012,2013 Alexander Shiyan <shc_work@mail.ru>
  */
 
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/gpio/driver.h>
-#include <linux/platform_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/platक्रमm_device.h>
 
-static int clps711x_gpio_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	void __iomem *dat, *dir;
-	struct gpio_chip *gc;
-	int err, id;
+अटल पूर्णांक clps711x_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	व्योम __iomem *dat, *dir;
+	काष्ठा gpio_chip *gc;
+	पूर्णांक err, id;
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
 	id = of_alias_get_id(np, "gpio");
-	if ((id < 0) || (id > 4))
-		return -ENODEV;
+	अगर ((id < 0) || (id > 4))
+		वापस -ENODEV;
 
-	gc = devm_kzalloc(&pdev->dev, sizeof(*gc), GFP_KERNEL);
-	if (!gc)
-		return -ENOMEM;
+	gc = devm_kzalloc(&pdev->dev, माप(*gc), GFP_KERNEL);
+	अगर (!gc)
+		वापस -ENOMEM;
 
-	dat = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(dat))
-		return PTR_ERR(dat);
+	dat = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(dat))
+		वापस PTR_ERR(dat);
 
-	dir = devm_platform_ioremap_resource(pdev, 1);
-	if (IS_ERR(dir))
-		return PTR_ERR(dir);
+	dir = devm_platक्रमm_ioremap_resource(pdev, 1);
+	अगर (IS_ERR(dir))
+		वापस PTR_ERR(dir);
 
-	switch (id) {
-	case 3:
-		/* PORTD is inverted logic for direction register */
-		err = bgpio_init(gc, &pdev->dev, 1, dat, NULL, NULL,
-				 NULL, dir, 0);
-		break;
-	default:
-		err = bgpio_init(gc, &pdev->dev, 1, dat, NULL, NULL,
-				 dir, NULL, 0);
-		break;
-	}
+	चयन (id) अणु
+	हाल 3:
+		/* PORTD is inverted logic क्रम direction रेजिस्टर */
+		err = bgpio_init(gc, &pdev->dev, 1, dat, शून्य, शून्य,
+				 शून्य, dir, 0);
+		अवरोध;
+	शेष:
+		err = bgpio_init(gc, &pdev->dev, 1, dat, शून्य, शून्य,
+				 dir, शून्य, 0);
+		अवरोध;
+	पूर्ण
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	switch (id) {
-	case 4:
+	चयन (id) अणु
+	हाल 4:
 		/* PORTE is 3 lines only */
 		gc->ngpio = 3;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	gc->base = -1;
 	gc->owner = THIS_MODULE;
-	platform_set_drvdata(pdev, gc);
+	platक्रमm_set_drvdata(pdev, gc);
 
-	return devm_gpiochip_add_data(&pdev->dev, gc, NULL);
-}
+	वापस devm_gpiochip_add_data(&pdev->dev, gc, शून्य);
+पूर्ण
 
-static const struct of_device_id __maybe_unused clps711x_gpio_ids[] = {
-	{ .compatible = "cirrus,ep7209-gpio" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id __maybe_unused clps711x_gpio_ids[] = अणु
+	अणु .compatible = "cirrus,ep7209-gpio" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, clps711x_gpio_ids);
 
-static struct platform_driver clps711x_gpio_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver clps711x_gpio_driver = अणु
+	.driver	= अणु
 		.name		= "clps711x-gpio",
 		.of_match_table	= of_match_ptr(clps711x_gpio_ids),
-	},
+	पूर्ण,
 	.probe	= clps711x_gpio_probe,
-};
-module_platform_driver(clps711x_gpio_driver);
+पूर्ण;
+module_platक्रमm_driver(clps711x_gpio_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Alexander Shiyan <shc_work@mail.ru>");

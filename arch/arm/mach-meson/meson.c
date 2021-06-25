@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2014 Carlo Caione <carlo@caione.org>
  */
 
-#include <linux/of_platform.h>
-#include <asm/mach/arch.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <यंत्र/mach/arch.h>
 
-static const char * const meson_common_board_compat[] = {
+अटल स्थिर अक्षर * स्थिर meson_common_board_compat[] = अणु
 	"amlogic,meson6",
 	"amlogic,meson8",
 	"amlogic,meson8b",
 	"amlogic,meson8m2",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(MESON, "Amlogic Meson platform")
 	.dt_compat	= meson_common_board_compat,

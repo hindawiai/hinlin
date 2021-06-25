@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_TPROXY_H
-#define _XT_TPROXY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_TPROXY_H
+#घोषणा _XT_TPROXY_H
 
-#include <linux/types.h>
-#include <linux/netfilter.h>
+#समावेश <linux/types.h>
+#समावेश <linux/netfilter.h>
 
-/* TPROXY target is capable of marking the packet to perform
- * redirection. We can get rid of that whenever we get support for
- * mutliple targets in the same rule. */
-struct xt_tproxy_target_info {
+/* TPROXY target is capable of marking the packet to perक्रमm
+ * redirection. We can get rid of that whenever we get support क्रम
+ * mutliple tarमाला_लो in the same rule. */
+काष्ठा xt_tproxy_target_info अणु
 	__u32 mark_mask;
 	__u32 mark_value;
 	__be32 laddr;
 	__be16 lport;
-};
+पूर्ण;
 
-struct xt_tproxy_target_info_v1 {
+काष्ठा xt_tproxy_target_info_v1 अणु
 	__u32 mark_mask;
 	__u32 mark_value;
-	union nf_inet_addr laddr;
+	जोड़ nf_inet_addr laddr;
 	__be16 lport;
-};
+पूर्ण;
 
-#endif /* _XT_TPROXY_H */
+#पूर्ण_अगर /* _XT_TPROXY_H */

@@ -1,222 +1,223 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2012  Intel Corporation. All rights reserved.
  */
 
-#define pr_fmt(fmt) "hci: %s: " fmt, __func__
+#घोषणा pr_fmt(fmt) "hci: %s: " fmt, __func__
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/module.h>
 
-#include <net/nfc/hci.h>
+#समावेश <net/nfc/hci.h>
 
-#include "hci.h"
+#समावेश "hci.h"
 
-#define MAX_FWI 4949
+#घोषणा MAX_FWI 4949
 
-static int nfc_hci_execute_cmd_async(struct nfc_hci_dev *hdev, u8 pipe, u8 cmd,
-			       const u8 *param, size_t param_len,
-			       data_exchange_cb_t cb, void *cb_context)
-{
+अटल पूर्णांक nfc_hci_execute_cmd_async(काष्ठा nfc_hci_dev *hdev, u8 pipe, u8 cmd,
+			       स्थिर u8 *param, माप_प्रकार param_len,
+			       data_exchange_cb_t cb, व्योम *cb_context)
+अणु
 	pr_debug("exec cmd async through pipe=%d, cmd=%d, plen=%zd\n", pipe,
 		 cmd, param_len);
 
 	/* TODO: Define hci cmd execution delay. Should it be the same
-	 * for all commands?
+	 * क्रम all commands?
 	 */
-	return nfc_hci_hcp_message_tx(hdev, pipe, NFC_HCI_HCP_COMMAND, cmd,
+	वापस nfc_hci_hcp_message_tx(hdev, pipe, NFC_HCI_HCP_COMMAND, cmd,
 				      param, param_len, cb, cb_context, MAX_FWI);
-}
+पूर्ण
 
 /*
  * HCI command execution completion callback.
  * err will be a standard linux error (may be converted from HCI response)
- * skb contains the response data and must be disposed, or may be NULL if
+ * skb contains the response data and must be disposed, or may be शून्य अगर
  * an error occured
  */
-static void nfc_hci_execute_cb(void *context, struct sk_buff *skb, int err)
-{
-	struct hcp_exec_waiter *hcp_ew = (struct hcp_exec_waiter *)context;
+अटल व्योम nfc_hci_execute_cb(व्योम *context, काष्ठा sk_buff *skb, पूर्णांक err)
+अणु
+	काष्ठा hcp_exec_रुकोer *hcp_ew = (काष्ठा hcp_exec_रुकोer *)context;
 
 	pr_debug("HCI Cmd completed with result=%d\n", err);
 
 	hcp_ew->exec_result = err;
-	if (hcp_ew->exec_result == 0)
+	अगर (hcp_ew->exec_result == 0)
 		hcp_ew->result_skb = skb;
-	else
-		kfree_skb(skb);
+	अन्यथा
+		kमुक्त_skb(skb);
 	hcp_ew->exec_complete = true;
 
 	wake_up(hcp_ew->wq);
-}
+पूर्ण
 
-static int nfc_hci_execute_cmd(struct nfc_hci_dev *hdev, u8 pipe, u8 cmd,
-			       const u8 *param, size_t param_len,
-			       struct sk_buff **skb)
-{
+अटल पूर्णांक nfc_hci_execute_cmd(काष्ठा nfc_hci_dev *hdev, u8 pipe, u8 cmd,
+			       स्थिर u8 *param, माप_प्रकार param_len,
+			       काष्ठा sk_buff **skb)
+अणु
 	DECLARE_WAIT_QUEUE_HEAD_ONSTACK(ew_wq);
-	struct hcp_exec_waiter hcp_ew;
+	काष्ठा hcp_exec_रुकोer hcp_ew;
 	hcp_ew.wq = &ew_wq;
 	hcp_ew.exec_complete = false;
-	hcp_ew.result_skb = NULL;
+	hcp_ew.result_skb = शून्य;
 
 	pr_debug("exec cmd sync through pipe=%d, cmd=%d, plen=%zd\n", pipe,
 		 cmd, param_len);
 
 	/* TODO: Define hci cmd execution delay. Should it be the same
-	 * for all commands?
+	 * क्रम all commands?
 	 */
 	hcp_ew.exec_result = nfc_hci_hcp_message_tx(hdev, pipe,
 						    NFC_HCI_HCP_COMMAND, cmd,
 						    param, param_len,
 						    nfc_hci_execute_cb, &hcp_ew,
 						    MAX_FWI);
-	if (hcp_ew.exec_result < 0)
-		return hcp_ew.exec_result;
+	अगर (hcp_ew.exec_result < 0)
+		वापस hcp_ew.exec_result;
 
-	wait_event(ew_wq, hcp_ew.exec_complete == true);
+	रुको_event(ew_wq, hcp_ew.exec_complete == true);
 
-	if (hcp_ew.exec_result == 0) {
-		if (skb)
+	अगर (hcp_ew.exec_result == 0) अणु
+		अगर (skb)
 			*skb = hcp_ew.result_skb;
-		else
-			kfree_skb(hcp_ew.result_skb);
-	}
+		अन्यथा
+			kमुक्त_skb(hcp_ew.result_skb);
+	पूर्ण
 
-	return hcp_ew.exec_result;
-}
+	वापस hcp_ew.exec_result;
+पूर्ण
 
-int nfc_hci_send_event(struct nfc_hci_dev *hdev, u8 gate, u8 event,
-		       const u8 *param, size_t param_len)
-{
+पूर्णांक nfc_hci_send_event(काष्ठा nfc_hci_dev *hdev, u8 gate, u8 event,
+		       स्थिर u8 *param, माप_प्रकार param_len)
+अणु
 	u8 pipe;
 
 	pr_debug("%d to gate %d\n", event, gate);
 
 	pipe = hdev->gate2pipe[gate];
-	if (pipe == NFC_HCI_INVALID_PIPE)
-		return -EADDRNOTAVAIL;
+	अगर (pipe == NFC_HCI_INVALID_PIPE)
+		वापस -EADDRNOTAVAIL;
 
-	return nfc_hci_hcp_message_tx(hdev, pipe, NFC_HCI_HCP_EVENT, event,
-				      param, param_len, NULL, NULL, 0);
-}
+	वापस nfc_hci_hcp_message_tx(hdev, pipe, NFC_HCI_HCP_EVENT, event,
+				      param, param_len, शून्य, शून्य, 0);
+पूर्ण
 EXPORT_SYMBOL(nfc_hci_send_event);
 
 /*
  * Execute an hci command sent to gate.
- * skb will contain response data if success. skb can be NULL if you are not
- * interested by the response.
+ * skb will contain response data अगर success. skb can be शून्य अगर you are not
+ * पूर्णांकerested by the response.
  */
-int nfc_hci_send_cmd(struct nfc_hci_dev *hdev, u8 gate, u8 cmd,
-		     const u8 *param, size_t param_len, struct sk_buff **skb)
-{
+पूर्णांक nfc_hci_send_cmd(काष्ठा nfc_hci_dev *hdev, u8 gate, u8 cmd,
+		     स्थिर u8 *param, माप_प्रकार param_len, काष्ठा sk_buff **skb)
+अणु
 	u8 pipe;
 
 	pr_debug("\n");
 
 	pipe = hdev->gate2pipe[gate];
-	if (pipe == NFC_HCI_INVALID_PIPE)
-		return -EADDRNOTAVAIL;
+	अगर (pipe == NFC_HCI_INVALID_PIPE)
+		वापस -EADDRNOTAVAIL;
 
-	return nfc_hci_execute_cmd(hdev, pipe, cmd, param, param_len, skb);
-}
+	वापस nfc_hci_execute_cmd(hdev, pipe, cmd, param, param_len, skb);
+पूर्ण
 EXPORT_SYMBOL(nfc_hci_send_cmd);
 
-int nfc_hci_send_cmd_async(struct nfc_hci_dev *hdev, u8 gate, u8 cmd,
-			   const u8 *param, size_t param_len,
-			   data_exchange_cb_t cb, void *cb_context)
-{
+पूर्णांक nfc_hci_send_cmd_async(काष्ठा nfc_hci_dev *hdev, u8 gate, u8 cmd,
+			   स्थिर u8 *param, माप_प्रकार param_len,
+			   data_exchange_cb_t cb, व्योम *cb_context)
+अणु
 	u8 pipe;
 
 	pr_debug("\n");
 
 	pipe = hdev->gate2pipe[gate];
-	if (pipe == NFC_HCI_INVALID_PIPE)
-		return -EADDRNOTAVAIL;
+	अगर (pipe == NFC_HCI_INVALID_PIPE)
+		वापस -EADDRNOTAVAIL;
 
-	return nfc_hci_execute_cmd_async(hdev, pipe, cmd, param, param_len,
+	वापस nfc_hci_execute_cmd_async(hdev, pipe, cmd, param, param_len,
 					 cb, cb_context);
-}
+पूर्ण
 EXPORT_SYMBOL(nfc_hci_send_cmd_async);
 
-int nfc_hci_set_param(struct nfc_hci_dev *hdev, u8 gate, u8 idx,
-		      const u8 *param, size_t param_len)
-{
-	int r;
-	u8 *tmp;
+पूर्णांक nfc_hci_set_param(काष्ठा nfc_hci_dev *hdev, u8 gate, u8 idx,
+		      स्थिर u8 *param, माप_प्रकार param_len)
+अणु
+	पूर्णांक r;
+	u8 *पंचांगp;
 
-	/* TODO ELa: reg idx must be inserted before param, but we don't want
-	 * to ask the caller to do it to keep a simpler API.
+	/* TODO ELa: reg idx must be inserted beक्रमe param, but we करोn't want
+	 * to ask the caller to करो it to keep a simpler API.
 	 * For now, just create a new temporary param buffer. This is far from
-	 * optimal though, and the plan is to modify APIs to pass idx down to
+	 * optimal though, and the plan is to modअगरy APIs to pass idx करोwn to
 	 * nfc_hci_hcp_message_tx where the frame is actually built, thereby
-	 * eliminating the need for the temp allocation-copy here.
+	 * eliminating the need क्रम the temp allocation-copy here.
 	 */
 
 	pr_debug("idx=%d to gate %d\n", idx, gate);
 
-	tmp = kmalloc(1 + param_len, GFP_KERNEL);
-	if (tmp == NULL)
-		return -ENOMEM;
+	पंचांगp = kदो_स्मृति(1 + param_len, GFP_KERNEL);
+	अगर (पंचांगp == शून्य)
+		वापस -ENOMEM;
 
-	*tmp = idx;
-	memcpy(tmp + 1, param, param_len);
+	*पंचांगp = idx;
+	स_नकल(पंचांगp + 1, param, param_len);
 
 	r = nfc_hci_send_cmd(hdev, gate, NFC_HCI_ANY_SET_PARAMETER,
-			     tmp, param_len + 1, NULL);
+			     पंचांगp, param_len + 1, शून्य);
 
-	kfree(tmp);
+	kमुक्त(पंचांगp);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL(nfc_hci_set_param);
 
-int nfc_hci_get_param(struct nfc_hci_dev *hdev, u8 gate, u8 idx,
-		      struct sk_buff **skb)
-{
+पूर्णांक nfc_hci_get_param(काष्ठा nfc_hci_dev *hdev, u8 gate, u8 idx,
+		      काष्ठा sk_buff **skb)
+अणु
 	pr_debug("gate=%d regidx=%d\n", gate, idx);
 
-	return nfc_hci_send_cmd(hdev, gate, NFC_HCI_ANY_GET_PARAMETER,
+	वापस nfc_hci_send_cmd(hdev, gate, NFC_HCI_ANY_GET_PARAMETER,
 				&idx, 1, skb);
-}
+पूर्ण
 EXPORT_SYMBOL(nfc_hci_get_param);
 
-static int nfc_hci_open_pipe(struct nfc_hci_dev *hdev, u8 pipe)
-{
-	struct sk_buff *skb;
-	int r;
+अटल पूर्णांक nfc_hci_खोलो_pipe(काष्ठा nfc_hci_dev *hdev, u8 pipe)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक r;
 
 	pr_debug("pipe=%d\n", pipe);
 
 	r = nfc_hci_execute_cmd(hdev, pipe, NFC_HCI_ANY_OPEN_PIPE,
-				NULL, 0, &skb);
-	if (r == 0) {
+				शून्य, 0, &skb);
+	अगर (r == 0) अणु
 		/* dest host other than host controller will send
-		 * number of pipes already open on this gate before
+		 * number of pipes alपढ़ोy खोलो on this gate beक्रमe
 		 * execution. The number can be found in skb->data[0]
 		 */
-		kfree_skb(skb);
-	}
+		kमुक्त_skb(skb);
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int nfc_hci_close_pipe(struct nfc_hci_dev *hdev, u8 pipe)
-{
+अटल पूर्णांक nfc_hci_बंद_pipe(काष्ठा nfc_hci_dev *hdev, u8 pipe)
+अणु
 	pr_debug("\n");
 
-	return nfc_hci_execute_cmd(hdev, pipe, NFC_HCI_ANY_CLOSE_PIPE,
-				   NULL, 0, NULL);
-}
+	वापस nfc_hci_execute_cmd(hdev, pipe, NFC_HCI_ANY_CLOSE_PIPE,
+				   शून्य, 0, शून्य);
+पूर्ण
 
-static u8 nfc_hci_create_pipe(struct nfc_hci_dev *hdev, u8 dest_host,
-			      u8 dest_gate, int *result)
-{
-	struct sk_buff *skb;
-	struct hci_create_pipe_params params;
-	struct hci_create_pipe_resp *resp;
+अटल u8 nfc_hci_create_pipe(काष्ठा nfc_hci_dev *hdev, u8 dest_host,
+			      u8 dest_gate, पूर्णांक *result)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा hci_create_pipe_params params;
+	काष्ठा hci_create_pipe_resp *resp;
 	u8 pipe;
 
 	pr_debug("gate=%d\n", dest_gate);
@@ -227,134 +228,134 @@ static u8 nfc_hci_create_pipe(struct nfc_hci_dev *hdev, u8 dest_host,
 
 	*result = nfc_hci_execute_cmd(hdev, NFC_HCI_ADMIN_PIPE,
 				      NFC_HCI_ADM_CREATE_PIPE,
-				      (u8 *) &params, sizeof(params), &skb);
-	if (*result < 0)
-		return NFC_HCI_INVALID_PIPE;
+				      (u8 *) &params, माप(params), &skb);
+	अगर (*result < 0)
+		वापस NFC_HCI_INVALID_PIPE;
 
-	resp = (struct hci_create_pipe_resp *)skb->data;
+	resp = (काष्ठा hci_create_pipe_resp *)skb->data;
 	pipe = resp->pipe;
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
 	pr_debug("pipe created=%d\n", pipe);
 
-	return pipe;
-}
+	वापस pipe;
+पूर्ण
 
-static int nfc_hci_delete_pipe(struct nfc_hci_dev *hdev, u8 pipe)
-{
+अटल पूर्णांक nfc_hci_delete_pipe(काष्ठा nfc_hci_dev *hdev, u8 pipe)
+अणु
 	pr_debug("\n");
 
-	return nfc_hci_execute_cmd(hdev, NFC_HCI_ADMIN_PIPE,
-				   NFC_HCI_ADM_DELETE_PIPE, &pipe, 1, NULL);
-}
+	वापस nfc_hci_execute_cmd(hdev, NFC_HCI_ADMIN_PIPE,
+				   NFC_HCI_ADM_DELETE_PIPE, &pipe, 1, शून्य);
+पूर्ण
 
-static int nfc_hci_clear_all_pipes(struct nfc_hci_dev *hdev)
-{
+अटल पूर्णांक nfc_hci_clear_all_pipes(काष्ठा nfc_hci_dev *hdev)
+अणु
 	u8 param[2];
-	size_t param_len = 2;
+	माप_प्रकार param_len = 2;
 
 	/* TODO: Find out what the identity reference data is
 	 * and fill param with it. HCI spec 6.1.3.5 */
 
 	pr_debug("\n");
 
-	if (test_bit(NFC_HCI_QUIRK_SHORT_CLEAR, &hdev->quirks))
+	अगर (test_bit(NFC_HCI_QUIRK_SHORT_CLEAR, &hdev->quirks))
 		param_len = 0;
 
-	return nfc_hci_execute_cmd(hdev, NFC_HCI_ADMIN_PIPE,
+	वापस nfc_hci_execute_cmd(hdev, NFC_HCI_ADMIN_PIPE,
 				   NFC_HCI_ADM_CLEAR_ALL_PIPE, param, param_len,
-				   NULL);
-}
+				   शून्य);
+पूर्ण
 
-int nfc_hci_disconnect_gate(struct nfc_hci_dev *hdev, u8 gate)
-{
-	int r;
+पूर्णांक nfc_hci_disconnect_gate(काष्ठा nfc_hci_dev *hdev, u8 gate)
+अणु
+	पूर्णांक r;
 	u8 pipe = hdev->gate2pipe[gate];
 
 	pr_debug("\n");
 
-	if (pipe == NFC_HCI_INVALID_PIPE)
-		return -EADDRNOTAVAIL;
+	अगर (pipe == NFC_HCI_INVALID_PIPE)
+		वापस -EADDRNOTAVAIL;
 
-	r = nfc_hci_close_pipe(hdev, pipe);
-	if (r < 0)
-		return r;
+	r = nfc_hci_बंद_pipe(hdev, pipe);
+	अगर (r < 0)
+		वापस r;
 
-	if (pipe != NFC_HCI_LINK_MGMT_PIPE && pipe != NFC_HCI_ADMIN_PIPE) {
+	अगर (pipe != NFC_HCI_LINK_MGMT_PIPE && pipe != NFC_HCI_ADMIN_PIPE) अणु
 		r = nfc_hci_delete_pipe(hdev, pipe);
-		if (r < 0)
-			return r;
-	}
+		अगर (r < 0)
+			वापस r;
+	पूर्ण
 
 	hdev->gate2pipe[gate] = NFC_HCI_INVALID_PIPE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(nfc_hci_disconnect_gate);
 
-int nfc_hci_disconnect_all_gates(struct nfc_hci_dev *hdev)
-{
-	int r;
+पूर्णांक nfc_hci_disconnect_all_gates(काष्ठा nfc_hci_dev *hdev)
+अणु
+	पूर्णांक r;
 
 	pr_debug("\n");
 
 	r = nfc_hci_clear_all_pipes(hdev);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	nfc_hci_reset_pipes(hdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(nfc_hci_disconnect_all_gates);
 
-int nfc_hci_connect_gate(struct nfc_hci_dev *hdev, u8 dest_host, u8 dest_gate,
+पूर्णांक nfc_hci_connect_gate(काष्ठा nfc_hci_dev *hdev, u8 dest_host, u8 dest_gate,
 			 u8 pipe)
-{
+अणु
 	bool pipe_created = false;
-	int r;
+	पूर्णांक r;
 
 	pr_debug("\n");
 
-	if (pipe == NFC_HCI_DO_NOT_CREATE_PIPE)
-		return 0;
+	अगर (pipe == NFC_HCI_DO_NOT_CREATE_PIPE)
+		वापस 0;
 
-	if (hdev->gate2pipe[dest_gate] != NFC_HCI_INVALID_PIPE)
-		return -EADDRINUSE;
+	अगर (hdev->gate2pipe[dest_gate] != NFC_HCI_INVALID_PIPE)
+		वापस -EADDRINUSE;
 
-	if (pipe != NFC_HCI_INVALID_PIPE)
-		goto open_pipe;
+	अगर (pipe != NFC_HCI_INVALID_PIPE)
+		जाओ खोलो_pipe;
 
-	switch (dest_gate) {
-	case NFC_HCI_LINK_MGMT_GATE:
+	चयन (dest_gate) अणु
+	हाल NFC_HCI_LINK_MGMT_GATE:
 		pipe = NFC_HCI_LINK_MGMT_PIPE;
-		break;
-	case NFC_HCI_ADMIN_GATE:
+		अवरोध;
+	हाल NFC_HCI_ADMIN_GATE:
 		pipe = NFC_HCI_ADMIN_PIPE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pipe = nfc_hci_create_pipe(hdev, dest_host, dest_gate, &r);
-		if (pipe == NFC_HCI_INVALID_PIPE)
-			return r;
+		अगर (pipe == NFC_HCI_INVALID_PIPE)
+			वापस r;
 		pipe_created = true;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-open_pipe:
-	r = nfc_hci_open_pipe(hdev, pipe);
-	if (r < 0) {
-		if (pipe_created)
-			if (nfc_hci_delete_pipe(hdev, pipe) < 0) {
+खोलो_pipe:
+	r = nfc_hci_खोलो_pipe(hdev, pipe);
+	अगर (r < 0) अणु
+		अगर (pipe_created)
+			अगर (nfc_hci_delete_pipe(hdev, pipe) < 0) अणु
 				/* TODO: Cannot clean by deleting pipe...
 				 * -> inconsistent state */
-			}
-		return r;
-	}
+			पूर्ण
+		वापस r;
+	पूर्ण
 
 	hdev->pipes[pipe].gate = dest_gate;
 	hdev->pipes[pipe].dest_host = dest_host;
 	hdev->gate2pipe[dest_gate] = pipe;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(nfc_hci_connect_gate);

@@ -1,109 +1,110 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
-#include "main.h"
-#include "regd.h"
-#include "fw.h"
-#include "ps.h"
-#include "sec.h"
-#include "mac.h"
-#include "coex.h"
-#include "phy.h"
-#include "reg.h"
-#include "efuse.h"
-#include "tx.h"
-#include "debug.h"
-#include "bf.h"
+#समावेश "main.h"
+#समावेश "regd.h"
+#समावेश "fw.h"
+#समावेश "ps.h"
+#समावेश "sec.h"
+#समावेश "mac.h"
+#समावेश "coex.h"
+#समावेश "phy.h"
+#समावेश "reg.h"
+#समावेश "efuse.h"
+#समावेश "tx.h"
+#समावेश "debug.h"
+#समावेश "bf.h"
 
 bool rtw_disable_lps_deep_mode;
 EXPORT_SYMBOL(rtw_disable_lps_deep_mode);
 bool rtw_bf_support = true;
-unsigned int rtw_debug_mask;
+अचिन्हित पूर्णांक rtw_debug_mask;
 EXPORT_SYMBOL(rtw_debug_mask);
 
 module_param_named(disable_lps_deep, rtw_disable_lps_deep_mode, bool, 0644);
 module_param_named(support_bf, rtw_bf_support, bool, 0644);
-module_param_named(debug_mask, rtw_debug_mask, uint, 0644);
+module_param_named(debug_mask, rtw_debug_mask, uपूर्णांक, 0644);
 
 MODULE_PARM_DESC(disable_lps_deep, "Set Y to disable Deep PS");
 MODULE_PARM_DESC(support_bf, "Set Y to enable beamformee support");
 MODULE_PARM_DESC(debug_mask, "Debugging mask");
 
-static struct ieee80211_channel rtw_channeltable_2g[] = {
-	{.center_freq = 2412, .hw_value = 1,},
-	{.center_freq = 2417, .hw_value = 2,},
-	{.center_freq = 2422, .hw_value = 3,},
-	{.center_freq = 2427, .hw_value = 4,},
-	{.center_freq = 2432, .hw_value = 5,},
-	{.center_freq = 2437, .hw_value = 6,},
-	{.center_freq = 2442, .hw_value = 7,},
-	{.center_freq = 2447, .hw_value = 8,},
-	{.center_freq = 2452, .hw_value = 9,},
-	{.center_freq = 2457, .hw_value = 10,},
-	{.center_freq = 2462, .hw_value = 11,},
-	{.center_freq = 2467, .hw_value = 12,},
-	{.center_freq = 2472, .hw_value = 13,},
-	{.center_freq = 2484, .hw_value = 14,},
-};
+अटल काष्ठा ieee80211_channel rtw_channeltable_2g[] = अणु
+	अणु.center_freq = 2412, .hw_value = 1,पूर्ण,
+	अणु.center_freq = 2417, .hw_value = 2,पूर्ण,
+	अणु.center_freq = 2422, .hw_value = 3,पूर्ण,
+	अणु.center_freq = 2427, .hw_value = 4,पूर्ण,
+	अणु.center_freq = 2432, .hw_value = 5,पूर्ण,
+	अणु.center_freq = 2437, .hw_value = 6,पूर्ण,
+	अणु.center_freq = 2442, .hw_value = 7,पूर्ण,
+	अणु.center_freq = 2447, .hw_value = 8,पूर्ण,
+	अणु.center_freq = 2452, .hw_value = 9,पूर्ण,
+	अणु.center_freq = 2457, .hw_value = 10,पूर्ण,
+	अणु.center_freq = 2462, .hw_value = 11,पूर्ण,
+	अणु.center_freq = 2467, .hw_value = 12,पूर्ण,
+	अणु.center_freq = 2472, .hw_value = 13,पूर्ण,
+	अणु.center_freq = 2484, .hw_value = 14,पूर्ण,
+पूर्ण;
 
-static struct ieee80211_channel rtw_channeltable_5g[] = {
-	{.center_freq = 5180, .hw_value = 36,},
-	{.center_freq = 5200, .hw_value = 40,},
-	{.center_freq = 5220, .hw_value = 44,},
-	{.center_freq = 5240, .hw_value = 48,},
-	{.center_freq = 5260, .hw_value = 52,},
-	{.center_freq = 5280, .hw_value = 56,},
-	{.center_freq = 5300, .hw_value = 60,},
-	{.center_freq = 5320, .hw_value = 64,},
-	{.center_freq = 5500, .hw_value = 100,},
-	{.center_freq = 5520, .hw_value = 104,},
-	{.center_freq = 5540, .hw_value = 108,},
-	{.center_freq = 5560, .hw_value = 112,},
-	{.center_freq = 5580, .hw_value = 116,},
-	{.center_freq = 5600, .hw_value = 120,},
-	{.center_freq = 5620, .hw_value = 124,},
-	{.center_freq = 5640, .hw_value = 128,},
-	{.center_freq = 5660, .hw_value = 132,},
-	{.center_freq = 5680, .hw_value = 136,},
-	{.center_freq = 5700, .hw_value = 140,},
-	{.center_freq = 5720, .hw_value = 144,},
-	{.center_freq = 5745, .hw_value = 149,},
-	{.center_freq = 5765, .hw_value = 153,},
-	{.center_freq = 5785, .hw_value = 157,},
-	{.center_freq = 5805, .hw_value = 161,},
-	{.center_freq = 5825, .hw_value = 165,
-	 .flags = IEEE80211_CHAN_NO_HT40MINUS},
-};
+अटल काष्ठा ieee80211_channel rtw_channeltable_5g[] = अणु
+	अणु.center_freq = 5180, .hw_value = 36,पूर्ण,
+	अणु.center_freq = 5200, .hw_value = 40,पूर्ण,
+	अणु.center_freq = 5220, .hw_value = 44,पूर्ण,
+	अणु.center_freq = 5240, .hw_value = 48,पूर्ण,
+	अणु.center_freq = 5260, .hw_value = 52,पूर्ण,
+	अणु.center_freq = 5280, .hw_value = 56,पूर्ण,
+	अणु.center_freq = 5300, .hw_value = 60,पूर्ण,
+	अणु.center_freq = 5320, .hw_value = 64,पूर्ण,
+	अणु.center_freq = 5500, .hw_value = 100,पूर्ण,
+	अणु.center_freq = 5520, .hw_value = 104,पूर्ण,
+	अणु.center_freq = 5540, .hw_value = 108,पूर्ण,
+	अणु.center_freq = 5560, .hw_value = 112,पूर्ण,
+	अणु.center_freq = 5580, .hw_value = 116,पूर्ण,
+	अणु.center_freq = 5600, .hw_value = 120,पूर्ण,
+	अणु.center_freq = 5620, .hw_value = 124,पूर्ण,
+	अणु.center_freq = 5640, .hw_value = 128,पूर्ण,
+	अणु.center_freq = 5660, .hw_value = 132,पूर्ण,
+	अणु.center_freq = 5680, .hw_value = 136,पूर्ण,
+	अणु.center_freq = 5700, .hw_value = 140,पूर्ण,
+	अणु.center_freq = 5720, .hw_value = 144,पूर्ण,
+	अणु.center_freq = 5745, .hw_value = 149,पूर्ण,
+	अणु.center_freq = 5765, .hw_value = 153,पूर्ण,
+	अणु.center_freq = 5785, .hw_value = 157,पूर्ण,
+	अणु.center_freq = 5805, .hw_value = 161,पूर्ण,
+	अणु.center_freq = 5825, .hw_value = 165,
+	 .flags = IEEE80211_CHAN_NO_HT40MINUSपूर्ण,
+पूर्ण;
 
-static struct ieee80211_rate rtw_ratetable[] = {
-	{.bitrate = 10, .hw_value = 0x00,},
-	{.bitrate = 20, .hw_value = 0x01,},
-	{.bitrate = 55, .hw_value = 0x02,},
-	{.bitrate = 110, .hw_value = 0x03,},
-	{.bitrate = 60, .hw_value = 0x04,},
-	{.bitrate = 90, .hw_value = 0x05,},
-	{.bitrate = 120, .hw_value = 0x06,},
-	{.bitrate = 180, .hw_value = 0x07,},
-	{.bitrate = 240, .hw_value = 0x08,},
-	{.bitrate = 360, .hw_value = 0x09,},
-	{.bitrate = 480, .hw_value = 0x0a,},
-	{.bitrate = 540, .hw_value = 0x0b,},
-};
+अटल काष्ठा ieee80211_rate rtw_ratetable[] = अणु
+	अणु.bitrate = 10, .hw_value = 0x00,पूर्ण,
+	अणु.bitrate = 20, .hw_value = 0x01,पूर्ण,
+	अणु.bitrate = 55, .hw_value = 0x02,पूर्ण,
+	अणु.bitrate = 110, .hw_value = 0x03,पूर्ण,
+	अणु.bitrate = 60, .hw_value = 0x04,पूर्ण,
+	अणु.bitrate = 90, .hw_value = 0x05,पूर्ण,
+	अणु.bitrate = 120, .hw_value = 0x06,पूर्ण,
+	अणु.bitrate = 180, .hw_value = 0x07,पूर्ण,
+	अणु.bitrate = 240, .hw_value = 0x08,पूर्ण,
+	अणु.bitrate = 360, .hw_value = 0x09,पूर्ण,
+	अणु.bitrate = 480, .hw_value = 0x0a,पूर्ण,
+	अणु.bitrate = 540, .hw_value = 0x0b,पूर्ण,
+पूर्ण;
 
 u16 rtw_desc_to_bitrate(u8 desc_rate)
-{
-	struct ieee80211_rate rate;
+अणु
+	काष्ठा ieee80211_rate rate;
 
-	if (WARN(desc_rate >= ARRAY_SIZE(rtw_ratetable), "invalid desc rate\n"))
-		return 0;
+	अगर (WARN(desc_rate >= ARRAY_SIZE(rtw_ratetable), "invalid desc rate\n"))
+		वापस 0;
 
 	rate = rtw_ratetable[desc_rate];
 
-	return rate.bitrate;
-}
+	वापस rate.bitrate;
+पूर्ण
 
-static struct ieee80211_supported_band rtw_band_2ghz = {
+अटल काष्ठा ieee80211_supported_band rtw_band_2ghz = अणु
 	.band = NL80211_BAND_2GHZ,
 
 	.channels = rtw_channeltable_2g,
@@ -112,11 +113,11 @@ static struct ieee80211_supported_band rtw_band_2ghz = {
 	.bitrates = rtw_ratetable,
 	.n_bitrates = ARRAY_SIZE(rtw_ratetable),
 
-	.ht_cap = {0},
-	.vht_cap = {0},
-};
+	.ht_cap = अणु0पूर्ण,
+	.vht_cap = अणु0पूर्ण,
+पूर्ण;
 
-static struct ieee80211_supported_band rtw_band_5ghz = {
+अटल काष्ठा ieee80211_supported_band rtw_band_5ghz = अणु
 	.band = NL80211_BAND_5GHZ,
 
 	.channels = rtw_channeltable_5g,
@@ -126,166 +127,166 @@ static struct ieee80211_supported_band rtw_band_5ghz = {
 	.bitrates = rtw_ratetable + 4,
 	.n_bitrates = ARRAY_SIZE(rtw_ratetable) - 4,
 
-	.ht_cap = {0},
-	.vht_cap = {0},
-};
+	.ht_cap = अणु0पूर्ण,
+	.vht_cap = अणु0पूर्ण,
+पूर्ण;
 
-struct rtw_watch_dog_iter_data {
-	struct rtw_dev *rtwdev;
-	struct rtw_vif *rtwvif;
-};
+काष्ठा rtw_watch_करोg_iter_data अणु
+	काष्ठा rtw_dev *rtwdev;
+	काष्ठा rtw_vअगर *rtwvअगर;
+पूर्ण;
 
-static void rtw_dynamic_csi_rate(struct rtw_dev *rtwdev, struct rtw_vif *rtwvif)
-{
-	struct rtw_bf_info *bf_info = &rtwdev->bf_info;
+अटल व्योम rtw_dynamic_csi_rate(काष्ठा rtw_dev *rtwdev, काष्ठा rtw_vअगर *rtwvअगर)
+अणु
+	काष्ठा rtw_bf_info *bf_info = &rtwdev->bf_info;
 	u8 fix_rate_enable = 0;
 	u8 new_csi_rate_idx;
 
-	if (rtwvif->bfee.role != RTW_BFEE_SU &&
-	    rtwvif->bfee.role != RTW_BFEE_MU)
-		return;
+	अगर (rtwvअगर->bfee.role != RTW_BFEE_SU &&
+	    rtwvअगर->bfee.role != RTW_BFEE_MU)
+		वापस;
 
 	rtw_chip_cfg_csi_rate(rtwdev, rtwdev->dm_info.min_rssi,
 			      bf_info->cur_csi_rpt_rate,
 			      fix_rate_enable, &new_csi_rate_idx);
 
-	if (new_csi_rate_idx != bf_info->cur_csi_rpt_rate)
+	अगर (new_csi_rate_idx != bf_info->cur_csi_rpt_rate)
 		bf_info->cur_csi_rpt_rate = new_csi_rate_idx;
-}
+पूर्ण
 
-static void rtw_vif_watch_dog_iter(void *data, u8 *mac,
-				   struct ieee80211_vif *vif)
-{
-	struct rtw_watch_dog_iter_data *iter_data = data;
-	struct rtw_vif *rtwvif = (struct rtw_vif *)vif->drv_priv;
+अटल व्योम rtw_vअगर_watch_करोg_iter(व्योम *data, u8 *mac,
+				   काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rtw_watch_करोg_iter_data *iter_data = data;
+	काष्ठा rtw_vअगर *rtwvअगर = (काष्ठा rtw_vअगर *)vअगर->drv_priv;
 
-	if (vif->type == NL80211_IFTYPE_STATION)
-		if (vif->bss_conf.assoc)
-			iter_data->rtwvif = rtwvif;
+	अगर (vअगर->type == NL80211_IFTYPE_STATION)
+		अगर (vअगर->bss_conf.assoc)
+			iter_data->rtwvअगर = rtwvअगर;
 
-	rtw_dynamic_csi_rate(iter_data->rtwdev, rtwvif);
+	rtw_dynamic_csi_rate(iter_data->rtwdev, rtwvअगर);
 
-	rtwvif->stats.tx_unicast = 0;
-	rtwvif->stats.rx_unicast = 0;
-	rtwvif->stats.tx_cnt = 0;
-	rtwvif->stats.rx_cnt = 0;
-}
+	rtwvअगर->stats.tx_unicast = 0;
+	rtwvअगर->stats.rx_unicast = 0;
+	rtwvअगर->stats.tx_cnt = 0;
+	rtwvअगर->stats.rx_cnt = 0;
+पूर्ण
 
-/* process TX/RX statistics periodically for hardware,
- * the information helps hardware to enhance performance
+/* process TX/RX statistics periodically क्रम hardware,
+ * the inक्रमmation helps hardware to enhance perक्रमmance
  */
-static void rtw_watch_dog_work(struct work_struct *work)
-{
-	struct rtw_dev *rtwdev = container_of(work, struct rtw_dev,
-					      watch_dog_work.work);
-	struct rtw_traffic_stats *stats = &rtwdev->stats;
-	struct rtw_watch_dog_iter_data data = {};
+अटल व्योम rtw_watch_करोg_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rtw_dev *rtwdev = container_of(work, काष्ठा rtw_dev,
+					      watch_करोg_work.work);
+	काष्ठा rtw_traffic_stats *stats = &rtwdev->stats;
+	काष्ठा rtw_watch_करोg_iter_data data = अणुपूर्ण;
 	bool busy_traffic = test_bit(RTW_FLAG_BUSY_TRAFFIC, rtwdev->flags);
 	bool ps_active;
 
 	mutex_lock(&rtwdev->mutex);
 
-	if (!test_bit(RTW_FLAG_RUNNING, rtwdev->flags))
-		goto unlock;
+	अगर (!test_bit(RTW_FLAG_RUNNING, rtwdev->flags))
+		जाओ unlock;
 
-	ieee80211_queue_delayed_work(rtwdev->hw, &rtwdev->watch_dog_work,
+	ieee80211_queue_delayed_work(rtwdev->hw, &rtwdev->watch_करोg_work,
 				     RTW_WATCH_DOG_DELAY_TIME);
 
-	if (rtwdev->stats.tx_cnt > 100 || rtwdev->stats.rx_cnt > 100)
+	अगर (rtwdev->stats.tx_cnt > 100 || rtwdev->stats.rx_cnt > 100)
 		set_bit(RTW_FLAG_BUSY_TRAFFIC, rtwdev->flags);
-	else
+	अन्यथा
 		clear_bit(RTW_FLAG_BUSY_TRAFFIC, rtwdev->flags);
 
-	if (busy_traffic != test_bit(RTW_FLAG_BUSY_TRAFFIC, rtwdev->flags))
-		rtw_coex_wl_status_change_notify(rtwdev, 0);
+	अगर (busy_traffic != test_bit(RTW_FLAG_BUSY_TRAFFIC, rtwdev->flags))
+		rtw_coex_wl_status_change_notअगरy(rtwdev, 0);
 
-	if (stats->tx_cnt > RTW_LPS_THRESHOLD ||
+	अगर (stats->tx_cnt > RTW_LPS_THRESHOLD ||
 	    stats->rx_cnt > RTW_LPS_THRESHOLD)
 		ps_active = true;
-	else
+	अन्यथा
 		ps_active = false;
 
 	ewma_tp_add(&stats->tx_ewma_tp,
 		    (u32)(stats->tx_unicast >> RTW_TP_SHIFT));
 	ewma_tp_add(&stats->rx_ewma_tp,
 		    (u32)(stats->rx_unicast >> RTW_TP_SHIFT));
-	stats->tx_throughput = ewma_tp_read(&stats->tx_ewma_tp);
-	stats->rx_throughput = ewma_tp_read(&stats->rx_ewma_tp);
+	stats->tx_throughput = ewma_tp_पढ़ो(&stats->tx_ewma_tp);
+	stats->rx_throughput = ewma_tp_पढ़ो(&stats->rx_ewma_tp);
 
-	/* reset tx/rx statictics */
+	/* reset tx/rx अटलtics */
 	stats->tx_unicast = 0;
 	stats->rx_unicast = 0;
 	stats->tx_cnt = 0;
 	stats->rx_cnt = 0;
 
-	if (test_bit(RTW_FLAG_SCANNING, rtwdev->flags))
-		goto unlock;
+	अगर (test_bit(RTW_FLAG_SCANNING, rtwdev->flags))
+		जाओ unlock;
 
-	/* make sure BB/RF is working for dynamic mech */
+	/* make sure BB/RF is working क्रम dynamic mech */
 	rtw_leave_lps(rtwdev);
 
 	rtw_phy_dynamic_mechanism(rtwdev);
 
 	data.rtwdev = rtwdev;
-	/* use atomic version to avoid taking local->iflist_mtx mutex */
-	rtw_iterate_vifs_atomic(rtwdev, rtw_vif_watch_dog_iter, &data);
+	/* use atomic version to aव्योम taking local->अगरlist_mtx mutex */
+	rtw_iterate_vअगरs_atomic(rtwdev, rtw_vअगर_watch_करोg_iter, &data);
 
-	/* fw supports only one station associated to enter lps, if there are
+	/* fw supports only one station associated to enter lps, अगर there are
 	 * more than two stations associated to the AP, then we can not enter
-	 * lps, because fw does not handle the overlapped beacon interval
+	 * lps, because fw करोes not handle the overlapped beacon पूर्णांकerval
 	 *
-	 * mac80211 should iterate vifs and determine if driver can enter
-	 * ps by passing IEEE80211_CONF_PS to us, all we need to do is to
-	 * get that vif and check if device is having traffic more than the
+	 * mac80211 should iterate vअगरs and determine अगर driver can enter
+	 * ps by passing IEEE80211_CONF_PS to us, all we need to करो is to
+	 * get that vअगर and check अगर device is having traffic more than the
 	 * threshold.
 	 */
-	if (rtwdev->ps_enabled && data.rtwvif && !ps_active)
-		rtw_enter_lps(rtwdev, data.rtwvif->port);
+	अगर (rtwdev->ps_enabled && data.rtwvअगर && !ps_active)
+		rtw_enter_lps(rtwdev, data.rtwvअगर->port);
 
-	rtwdev->watch_dog_cnt++;
+	rtwdev->watch_करोg_cnt++;
 
 unlock:
 	mutex_unlock(&rtwdev->mutex);
-}
+पूर्ण
 
-static void rtw_c2h_work(struct work_struct *work)
-{
-	struct rtw_dev *rtwdev = container_of(work, struct rtw_dev, c2h_work);
-	struct sk_buff *skb, *tmp;
+अटल व्योम rtw_c2h_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rtw_dev *rtwdev = container_of(work, काष्ठा rtw_dev, c2h_work);
+	काष्ठा sk_buff *skb, *पंचांगp;
 
-	skb_queue_walk_safe(&rtwdev->c2h_queue, skb, tmp) {
+	skb_queue_walk_safe(&rtwdev->c2h_queue, skb, पंचांगp) अणु
 		skb_unlink(skb, &rtwdev->c2h_queue);
 		rtw_fw_c2h_cmd_handle(rtwdev, skb);
-		dev_kfree_skb_any(skb);
-	}
-}
+		dev_kमुक्त_skb_any(skb);
+	पूर्ण
+पूर्ण
 
-static u8 rtw_acquire_macid(struct rtw_dev *rtwdev)
-{
-	unsigned long mac_id;
+अटल u8 rtw_acquire_macid(काष्ठा rtw_dev *rtwdev)
+अणु
+	अचिन्हित दीर्घ mac_id;
 
 	mac_id = find_first_zero_bit(rtwdev->mac_id_map, RTW_MAX_MAC_ID_NUM);
-	if (mac_id < RTW_MAX_MAC_ID_NUM)
+	अगर (mac_id < RTW_MAX_MAC_ID_NUM)
 		set_bit(mac_id, rtwdev->mac_id_map);
 
-	return mac_id;
-}
+	वापस mac_id;
+पूर्ण
 
-int rtw_sta_add(struct rtw_dev *rtwdev, struct ieee80211_sta *sta,
-		struct ieee80211_vif *vif)
-{
-	struct rtw_sta_info *si = (struct rtw_sta_info *)sta->drv_priv;
-	int i;
+पूर्णांक rtw_sta_add(काष्ठा rtw_dev *rtwdev, काष्ठा ieee80211_sta *sta,
+		काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rtw_sta_info *si = (काष्ठा rtw_sta_info *)sta->drv_priv;
+	पूर्णांक i;
 
 	si->mac_id = rtw_acquire_macid(rtwdev);
-	if (si->mac_id >= RTW_MAX_MAC_ID_NUM)
-		return -ENOSPC;
+	अगर (si->mac_id >= RTW_MAX_MAC_ID_NUM)
+		वापस -ENOSPC;
 
 	si->sta = sta;
-	si->vif = vif;
+	si->vअगर = vअगर;
 	si->init_ra_lv = 1;
 	ewma_rssi_init(&si->avg_rssi);
-	for (i = 0; i < ARRAY_SIZE(sta->txq); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(sta->txq); i++)
 		rtw_txq_init(rtwdev, sta->txq[i]);
 
 	rtw_update_sta_info(rtwdev, si);
@@ -295,208 +296,208 @@ int rtw_sta_add(struct rtw_dev *rtwdev, struct ieee80211_sta *sta,
 	rtw_info(rtwdev, "sta %pM joined with macid %d\n",
 		 sta->addr, si->mac_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void rtw_sta_remove(struct rtw_dev *rtwdev, struct ieee80211_sta *sta,
+व्योम rtw_sta_हटाओ(काष्ठा rtw_dev *rtwdev, काष्ठा ieee80211_sta *sta,
 		    bool fw_exist)
-{
-	struct rtw_sta_info *si = (struct rtw_sta_info *)sta->drv_priv;
-	int i;
+अणु
+	काष्ठा rtw_sta_info *si = (काष्ठा rtw_sta_info *)sta->drv_priv;
+	पूर्णांक i;
 
 	rtw_release_macid(rtwdev, si->mac_id);
-	if (fw_exist)
+	अगर (fw_exist)
 		rtw_fw_media_status_report(rtwdev, si->mac_id, false);
 
-	for (i = 0; i < ARRAY_SIZE(sta->txq); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(sta->txq); i++)
 		rtw_txq_cleanup(rtwdev, sta->txq[i]);
 
-	kfree(si->mask);
+	kमुक्त(si->mask);
 
 	rtwdev->sta_cnt--;
 	rtw_info(rtwdev, "sta %pM with macid %d left\n",
 		 sta->addr, si->mac_id);
-}
+पूर्ण
 
-static bool rtw_fw_dump_crash_log(struct rtw_dev *rtwdev)
-{
+अटल bool rtw_fw_dump_crash_log(काष्ठा rtw_dev *rtwdev)
+अणु
 	u32 size = rtwdev->chip->fw_rxff_size;
 	u32 *buf;
 	u8 seq;
 	bool ret = true;
 
-	buf = vmalloc(size);
-	if (!buf)
-		goto exit;
+	buf = vदो_स्मृति(size);
+	अगर (!buf)
+		जाओ निकास;
 
-	if (rtw_fw_dump_fifo(rtwdev, RTW_FW_FIFO_SEL_RXBUF_FW, 0, size, buf)) {
+	अगर (rtw_fw_dump_fअगरo(rtwdev, RTW_FW_FIFO_SEL_RXBUF_FW, 0, size, buf)) अणु
 		rtw_dbg(rtwdev, RTW_DBG_FW, "dump fw fifo fail\n");
-		goto free_buf;
-	}
+		जाओ मुक्त_buf;
+	पूर्ण
 
-	if (GET_FW_DUMP_LEN(buf) == 0) {
+	अगर (GET_FW_DUMP_LEN(buf) == 0) अणु
 		rtw_dbg(rtwdev, RTW_DBG_FW, "fw crash dump's length is 0\n");
-		goto free_buf;
-	}
+		जाओ मुक्त_buf;
+	पूर्ण
 
 	seq = GET_FW_DUMP_SEQ(buf);
-	if (seq > 0 && seq != (rtwdev->fw.prev_dump_seq + 1)) {
+	अगर (seq > 0 && seq != (rtwdev->fw.prev_dump_seq + 1)) अणु
 		rtw_dbg(rtwdev, RTW_DBG_FW,
 			"fw crash dump's seq is wrong: %d\n", seq);
-		goto free_buf;
-	}
+		जाओ मुक्त_buf;
+	पूर्ण
 
-	print_hex_dump(KERN_ERR, "rtw88 fw dump: ", DUMP_PREFIX_OFFSET, 16, 1,
+	prपूर्णांक_hex_dump(KERN_ERR, "rtw88 fw dump: ", DUMP_PREFIX_OFFSET, 16, 1,
 		       buf, size, true);
 
-	if (GET_FW_DUMP_MORE(buf) == 1) {
+	अगर (GET_FW_DUMP_MORE(buf) == 1) अणु
 		rtwdev->fw.prev_dump_seq = seq;
 		ret = false;
-	}
+	पूर्ण
 
-free_buf:
-	vfree(buf);
-exit:
-	rtw_write8(rtwdev, REG_MCU_TST_CFG, 0);
+मुक्त_buf:
+	vमुक्त(buf);
+निकास:
+	rtw_ग_लिखो8(rtwdev, REG_MCU_TST_CFG, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int rtw_dump_fw(struct rtw_dev *rtwdev, const u32 ocp_src, u32 size,
-		const char *prefix_str)
-{
+पूर्णांक rtw_dump_fw(काष्ठा rtw_dev *rtwdev, स्थिर u32 ocp_src, u32 size,
+		स्थिर अक्षर *prefix_str)
+अणु
 	u32 rxff = rtwdev->chip->fw_rxff_size;
-	u32 dump_size, done_size = 0;
+	u32 dump_size, करोne_size = 0;
 	u8 *buf;
-	int ret;
+	पूर्णांक ret;
 
 	buf = vzalloc(size);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	while (size) {
+	जबतक (size) अणु
 		dump_size = size > rxff ? rxff : size;
 
-		ret = rtw_ddma_to_fw_fifo(rtwdev, ocp_src + done_size,
+		ret = rtw_ddma_to_fw_fअगरo(rtwdev, ocp_src + करोne_size,
 					  dump_size);
-		if (ret) {
+		अगर (ret) अणु
 			rtw_err(rtwdev,
 				"ddma fw 0x%x [+0x%x] to fw fifo fail\n",
-				ocp_src, done_size);
-			goto exit;
-		}
+				ocp_src, करोne_size);
+			जाओ निकास;
+		पूर्ण
 
-		ret = rtw_fw_dump_fifo(rtwdev, RTW_FW_FIFO_SEL_RXBUF_FW, 0,
-				       dump_size, (u32 *)(buf + done_size));
-		if (ret) {
+		ret = rtw_fw_dump_fअगरo(rtwdev, RTW_FW_FIFO_SEL_RXBUF_FW, 0,
+				       dump_size, (u32 *)(buf + करोne_size));
+		अगर (ret) अणु
 			rtw_err(rtwdev,
 				"dump fw 0x%x [+0x%x] from fw fifo fail\n",
-				ocp_src, done_size);
-			goto exit;
-		}
+				ocp_src, करोne_size);
+			जाओ निकास;
+		पूर्ण
 
 		size -= dump_size;
-		done_size += dump_size;
-	}
+		करोne_size += dump_size;
+	पूर्ण
 
-	print_hex_dump(KERN_ERR, prefix_str, DUMP_PREFIX_OFFSET, 16, 1,
-		       buf, done_size, true);
+	prपूर्णांक_hex_dump(KERN_ERR, prefix_str, DUMP_PREFIX_OFFSET, 16, 1,
+		       buf, करोne_size, true);
 
-exit:
-	vfree(buf);
-	return ret;
-}
+निकास:
+	vमुक्त(buf);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(rtw_dump_fw);
 
-int rtw_dump_reg(struct rtw_dev *rtwdev, const u32 addr, const u32 size,
-		 const char *prefix_str)
-{
+पूर्णांक rtw_dump_reg(काष्ठा rtw_dev *rtwdev, स्थिर u32 addr, स्थिर u32 size,
+		 स्थिर अक्षर *prefix_str)
+अणु
 	u8 *buf;
 	u32 i;
 
-	if (addr & 0x3) {
+	अगर (addr & 0x3) अणु
 		WARN(1, "should be 4-byte aligned, addr = 0x%08x\n", addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	buf = vzalloc(size);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	for (i = 0; i < size; i += 4)
-		*(u32 *)(buf + i) = rtw_read32(rtwdev, addr + i);
+	क्रम (i = 0; i < size; i += 4)
+		*(u32 *)(buf + i) = rtw_पढ़ो32(rtwdev, addr + i);
 
-	print_hex_dump(KERN_ERR, prefix_str, DUMP_PREFIX_OFFSET, 16, 4, buf,
+	prपूर्णांक_hex_dump(KERN_ERR, prefix_str, DUMP_PREFIX_OFFSET, 16, 4, buf,
 		       size, true);
 
-	vfree(buf);
-	return 0;
-}
+	vमुक्त(buf);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(rtw_dump_reg);
 
-void rtw_vif_assoc_changed(struct rtw_vif *rtwvif,
-			   struct ieee80211_bss_conf *conf)
-{
-	if (conf && conf->assoc) {
-		rtwvif->aid = conf->aid;
-		rtwvif->net_type = RTW_NET_MGD_LINKED;
-	} else {
-		rtwvif->aid = 0;
-		rtwvif->net_type = RTW_NET_NO_LINK;
-	}
-}
+व्योम rtw_vअगर_assoc_changed(काष्ठा rtw_vअगर *rtwvअगर,
+			   काष्ठा ieee80211_bss_conf *conf)
+अणु
+	अगर (conf && conf->assoc) अणु
+		rtwvअगर->aid = conf->aid;
+		rtwvअगर->net_type = RTW_NET_MGD_LINKED;
+	पूर्ण अन्यथा अणु
+		rtwvअगर->aid = 0;
+		rtwvअगर->net_type = RTW_NET_NO_LINK;
+	पूर्ण
+पूर्ण
 
-static void rtw_reset_key_iter(struct ieee80211_hw *hw,
-			       struct ieee80211_vif *vif,
-			       struct ieee80211_sta *sta,
-			       struct ieee80211_key_conf *key,
-			       void *data)
-{
-	struct rtw_dev *rtwdev = (struct rtw_dev *)data;
-	struct rtw_sec_desc *sec = &rtwdev->sec;
+अटल व्योम rtw_reset_key_iter(काष्ठा ieee80211_hw *hw,
+			       काष्ठा ieee80211_vअगर *vअगर,
+			       काष्ठा ieee80211_sta *sta,
+			       काष्ठा ieee80211_key_conf *key,
+			       व्योम *data)
+अणु
+	काष्ठा rtw_dev *rtwdev = (काष्ठा rtw_dev *)data;
+	काष्ठा rtw_sec_desc *sec = &rtwdev->sec;
 
 	rtw_sec_clear_cam(rtwdev, sec, key->hw_key_idx);
-}
+पूर्ण
 
-static void rtw_reset_sta_iter(void *data, struct ieee80211_sta *sta)
-{
-	struct rtw_dev *rtwdev = (struct rtw_dev *)data;
+अटल व्योम rtw_reset_sta_iter(व्योम *data, काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा rtw_dev *rtwdev = (काष्ठा rtw_dev *)data;
 
-	if (rtwdev->sta_cnt == 0) {
+	अगर (rtwdev->sta_cnt == 0) अणु
 		rtw_warn(rtwdev, "sta count before reset should not be 0\n");
-		return;
-	}
-	rtw_sta_remove(rtwdev, sta, false);
-}
+		वापस;
+	पूर्ण
+	rtw_sta_हटाओ(rtwdev, sta, false);
+पूर्ण
 
-static void rtw_reset_vif_iter(void *data, u8 *mac, struct ieee80211_vif *vif)
-{
-	struct rtw_dev *rtwdev = (struct rtw_dev *)data;
-	struct rtw_vif *rtwvif = (struct rtw_vif *)vif->drv_priv;
+अटल व्योम rtw_reset_vअगर_iter(व्योम *data, u8 *mac, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rtw_dev *rtwdev = (काष्ठा rtw_dev *)data;
+	काष्ठा rtw_vअगर *rtwvअगर = (काष्ठा rtw_vअगर *)vअगर->drv_priv;
 
-	rtw_bf_disassoc(rtwdev, vif, NULL);
-	rtw_vif_assoc_changed(rtwvif, NULL);
-	rtw_txq_cleanup(rtwdev, vif->txq);
-}
+	rtw_bf_disassoc(rtwdev, vअगर, शून्य);
+	rtw_vअगर_assoc_changed(rtwvअगर, शून्य);
+	rtw_txq_cleanup(rtwdev, vअगर->txq);
+पूर्ण
 
-void rtw_fw_recovery(struct rtw_dev *rtwdev)
-{
-	if (!test_bit(RTW_FLAG_RESTARTING, rtwdev->flags))
+व्योम rtw_fw_recovery(काष्ठा rtw_dev *rtwdev)
+अणु
+	अगर (!test_bit(RTW_FLAG_RESTARTING, rtwdev->flags))
 		ieee80211_queue_work(rtwdev->hw, &rtwdev->fw_recovery_work);
-}
+पूर्ण
 
-static void __fw_recovery_work(struct rtw_dev *rtwdev)
-{
+अटल व्योम __fw_recovery_work(काष्ठा rtw_dev *rtwdev)
+अणु
 
-	/* rtw_fw_dump_crash_log() returns false indicates that there are
+	/* rtw_fw_dump_crash_log() वापसs false indicates that there are
 	 * still more log to dump. Driver set 0x1cf[7:0] = 0x1 to tell firmware
-	 * to dump the remaining part of the log, and firmware will trigger an
-	 * IMR_C2HCMD interrupt to inform driver the log is ready.
+	 * to dump the reमुख्यing part of the log, and firmware will trigger an
+	 * IMR_C2HCMD पूर्णांकerrupt to inक्रमm driver the log is पढ़ोy.
 	 */
-	if (!rtw_fw_dump_crash_log(rtwdev)) {
-		rtw_write8(rtwdev, REG_HRCV_MSG, 1);
-		return;
-	}
+	अगर (!rtw_fw_dump_crash_log(rtwdev)) अणु
+		rtw_ग_लिखो8(rtwdev, REG_HRCV_MSG, 1);
+		वापस;
+	पूर्ण
 	rtwdev->fw.prev_dump_seq = 0;
 
 	set_bit(RTW_FLAG_RESTARTING, rtwdev->flags);
@@ -504,17 +505,17 @@ static void __fw_recovery_work(struct rtw_dev *rtwdev)
 
 	WARN(1, "firmware crash, start reset and recover\n");
 
-	rcu_read_lock();
-	rtw_iterate_keys_rcu(rtwdev, NULL, rtw_reset_key_iter, rtwdev);
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	rtw_iterate_keys_rcu(rtwdev, शून्य, rtw_reset_key_iter, rtwdev);
+	rcu_पढ़ो_unlock();
 	rtw_iterate_stas_atomic(rtwdev, rtw_reset_sta_iter, rtwdev);
-	rtw_iterate_vifs_atomic(rtwdev, rtw_reset_vif_iter, rtwdev);
+	rtw_iterate_vअगरs_atomic(rtwdev, rtw_reset_vअगर_iter, rtwdev);
 	rtw_enter_ips(rtwdev);
-}
+पूर्ण
 
-static void rtw_fw_recovery_work(struct work_struct *work)
-{
-	struct rtw_dev *rtwdev = container_of(work, struct rtw_dev,
+अटल व्योम rtw_fw_recovery_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rtw_dev *rtwdev = container_of(work, काष्ठा rtw_dev,
 					      fw_recovery_work);
 
 	mutex_lock(&rtwdev->mutex);
@@ -522,47 +523,47 @@ static void rtw_fw_recovery_work(struct work_struct *work)
 	mutex_unlock(&rtwdev->mutex);
 
 	ieee80211_restart_hw(rtwdev->hw);
-}
+पूर्ण
 
-struct rtw_txq_ba_iter_data {
-};
+काष्ठा rtw_txq_ba_iter_data अणु
+पूर्ण;
 
-static void rtw_txq_ba_iter(void *data, struct ieee80211_sta *sta)
-{
-	struct rtw_sta_info *si = (struct rtw_sta_info *)sta->drv_priv;
-	int ret;
+अटल व्योम rtw_txq_ba_iter(व्योम *data, काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा rtw_sta_info *si = (काष्ठा rtw_sta_info *)sta->drv_priv;
+	पूर्णांक ret;
 	u8 tid;
 
 	tid = find_first_bit(si->tid_ba, IEEE80211_NUM_TIDS);
-	while (tid != IEEE80211_NUM_TIDS) {
+	जबतक (tid != IEEE80211_NUM_TIDS) अणु
 		clear_bit(tid, si->tid_ba);
 		ret = ieee80211_start_tx_ba_session(sta, tid, 0);
-		if (ret == -EINVAL) {
-			struct ieee80211_txq *txq;
-			struct rtw_txq *rtwtxq;
+		अगर (ret == -EINVAL) अणु
+			काष्ठा ieee80211_txq *txq;
+			काष्ठा rtw_txq *rtwtxq;
 
 			txq = sta->txq[tid];
-			rtwtxq = (struct rtw_txq *)txq->drv_priv;
+			rtwtxq = (काष्ठा rtw_txq *)txq->drv_priv;
 			set_bit(RTW_TXQ_BLOCK_BA, &rtwtxq->flags);
-		}
+		पूर्ण
 
 		tid = find_first_bit(si->tid_ba, IEEE80211_NUM_TIDS);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rtw_txq_ba_work(struct work_struct *work)
-{
-	struct rtw_dev *rtwdev = container_of(work, struct rtw_dev, ba_work);
-	struct rtw_txq_ba_iter_data data;
+अटल व्योम rtw_txq_ba_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rtw_dev *rtwdev = container_of(work, काष्ठा rtw_dev, ba_work);
+	काष्ठा rtw_txq_ba_iter_data data;
 
 	rtw_iterate_stas_atomic(rtwdev, rtw_txq_ba_iter, &data);
-}
+पूर्ण
 
-void rtw_get_channel_params(struct cfg80211_chan_def *chandef,
-			    struct rtw_channel_params *chan_params)
-{
-	struct ieee80211_channel *channel = chandef->chan;
-	enum nl80211_chan_width width = chandef->width;
+व्योम rtw_get_channel_params(काष्ठा cfg80211_chan_def *chandef,
+			    काष्ठा rtw_channel_params *chan_params)
+अणु
+	काष्ठा ieee80211_channel *channel = chandef->chan;
+	क्रमागत nl80211_chan_width width = chandef->width;
 	u8 *cch_by_bw = chan_params->cch_by_bw;
 	u32 primary_freq, center_freq;
 	u8 center_chan;
@@ -574,81 +575,81 @@ void rtw_get_channel_params(struct cfg80211_chan_def *chandef,
 	primary_freq = channel->center_freq;
 	center_freq = chandef->center_freq1;
 
-	/* assign the center channel used while 20M bw is selected */
+	/* assign the center channel used जबतक 20M bw is selected */
 	cch_by_bw[RTW_CHANNEL_WIDTH_20] = channel->hw_value;
 
-	switch (width) {
-	case NL80211_CHAN_WIDTH_20_NOHT:
-	case NL80211_CHAN_WIDTH_20:
+	चयन (width) अणु
+	हाल NL80211_CHAN_WIDTH_20_NOHT:
+	हाल NL80211_CHAN_WIDTH_20:
 		bandwidth = RTW_CHANNEL_WIDTH_20;
 		primary_chan_idx = RTW_SC_DONT_CARE;
-		break;
-	case NL80211_CHAN_WIDTH_40:
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_40:
 		bandwidth = RTW_CHANNEL_WIDTH_40;
-		if (primary_freq > center_freq) {
+		अगर (primary_freq > center_freq) अणु
 			primary_chan_idx = RTW_SC_20_UPPER;
 			center_chan -= 2;
-		} else {
+		पूर्ण अन्यथा अणु
 			primary_chan_idx = RTW_SC_20_LOWER;
 			center_chan += 2;
-		}
-		break;
-	case NL80211_CHAN_WIDTH_80:
+		पूर्ण
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_80:
 		bandwidth = RTW_CHANNEL_WIDTH_80;
-		if (primary_freq > center_freq) {
-			if (primary_freq - center_freq == 10) {
+		अगर (primary_freq > center_freq) अणु
+			अगर (primary_freq - center_freq == 10) अणु
 				primary_chan_idx = RTW_SC_20_UPPER;
 				center_chan -= 2;
-			} else {
+			पूर्ण अन्यथा अणु
 				primary_chan_idx = RTW_SC_20_UPMOST;
 				center_chan -= 6;
-			}
+			पूर्ण
 			/* assign the center channel used
-			 * while 40M bw is selected
+			 * जबतक 40M bw is selected
 			 */
 			cch_by_bw[RTW_CHANNEL_WIDTH_40] = center_chan + 4;
-		} else {
-			if (center_freq - primary_freq == 10) {
+		पूर्ण अन्यथा अणु
+			अगर (center_freq - primary_freq == 10) अणु
 				primary_chan_idx = RTW_SC_20_LOWER;
 				center_chan += 2;
-			} else {
+			पूर्ण अन्यथा अणु
 				primary_chan_idx = RTW_SC_20_LOWEST;
 				center_chan += 6;
-			}
+			पूर्ण
 			/* assign the center channel used
-			 * while 40M bw is selected
+			 * जबतक 40M bw is selected
 			 */
 			cch_by_bw[RTW_CHANNEL_WIDTH_40] = center_chan - 4;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		center_chan = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	chan_params->center_chan = center_chan;
 	chan_params->bandwidth = bandwidth;
 	chan_params->primary_chan_idx = primary_chan_idx;
 
-	/* assign the center channel used while current bw is selected */
+	/* assign the center channel used जबतक current bw is selected */
 	cch_by_bw[bandwidth] = center_chan;
 
-	for (i = bandwidth + 1; i <= RTW_MAX_CHANNEL_WIDTH; i++)
+	क्रम (i = bandwidth + 1; i <= RTW_MAX_CHANNEL_WIDTH; i++)
 		cch_by_bw[i] = 0;
-}
+पूर्ण
 
-void rtw_set_channel(struct rtw_dev *rtwdev)
-{
-	struct ieee80211_hw *hw = rtwdev->hw;
-	struct rtw_hal *hal = &rtwdev->hal;
-	struct rtw_chip_info *chip = rtwdev->chip;
-	struct rtw_channel_params ch_param;
+व्योम rtw_set_channel(काष्ठा rtw_dev *rtwdev)
+अणु
+	काष्ठा ieee80211_hw *hw = rtwdev->hw;
+	काष्ठा rtw_hal *hal = &rtwdev->hal;
+	काष्ठा rtw_chip_info *chip = rtwdev->chip;
+	काष्ठा rtw_channel_params ch_param;
 	u8 center_chan, bandwidth, primary_chan_idx;
 	u8 i;
 
 	rtw_get_channel_params(&hw->conf.chandef, &ch_param);
-	if (WARN(ch_param.center_chan == 0, "Invalid channel\n"))
-		return;
+	अगर (WARN(ch_param.center_chan == 0, "Invalid channel\n"))
+		वापस;
 
 	center_chan = ch_param.center_chan;
 	bandwidth = ch_param.bandwidth;
@@ -658,318 +659,318 @@ void rtw_set_channel(struct rtw_dev *rtwdev)
 	hal->current_channel = center_chan;
 	hal->current_band_type = center_chan > 14 ? RTW_BAND_5G : RTW_BAND_2G;
 
-	for (i = RTW_CHANNEL_WIDTH_20; i <= RTW_MAX_CHANNEL_WIDTH; i++)
+	क्रम (i = RTW_CHANNEL_WIDTH_20; i <= RTW_MAX_CHANNEL_WIDTH; i++)
 		hal->cch_by_bw[i] = ch_param.cch_by_bw[i];
 
 	chip->ops->set_channel(rtwdev, center_chan, bandwidth, primary_chan_idx);
 
-	if (hal->current_band_type == RTW_BAND_5G) {
-		rtw_coex_switchband_notify(rtwdev, COEX_SWITCH_TO_5G);
-	} else {
-		if (test_bit(RTW_FLAG_SCANNING, rtwdev->flags))
-			rtw_coex_switchband_notify(rtwdev, COEX_SWITCH_TO_24G);
-		else
-			rtw_coex_switchband_notify(rtwdev, COEX_SWITCH_TO_24G_NOFORSCAN);
-	}
+	अगर (hal->current_band_type == RTW_BAND_5G) अणु
+		rtw_coex_चयनband_notअगरy(rtwdev, COEX_SWITCH_TO_5G);
+	पूर्ण अन्यथा अणु
+		अगर (test_bit(RTW_FLAG_SCANNING, rtwdev->flags))
+			rtw_coex_चयनband_notअगरy(rtwdev, COEX_SWITCH_TO_24G);
+		अन्यथा
+			rtw_coex_चयनband_notअगरy(rtwdev, COEX_SWITCH_TO_24G_NOFORSCAN);
+	पूर्ण
 
-	rtw_phy_set_tx_power_level(rtwdev, center_chan);
+	rtw_phy_set_tx_घातer_level(rtwdev, center_chan);
 
-	/* if the channel isn't set for scanning, we will do RF calibration
-	 * in ieee80211_ops::mgd_prepare_tx(). Performing the calibration
-	 * during scanning on each channel takes too long.
+	/* अगर the channel isn't set क्रम scanning, we will करो RF calibration
+	 * in ieee80211_ops::mgd_prepare_tx(). Perक्रमming the calibration
+	 * during scanning on each channel takes too दीर्घ.
 	 */
-	if (!test_bit(RTW_FLAG_SCANNING, rtwdev->flags))
+	अगर (!test_bit(RTW_FLAG_SCANNING, rtwdev->flags))
 		rtwdev->need_rfk = true;
-}
+पूर्ण
 
-void rtw_chip_prepare_tx(struct rtw_dev *rtwdev)
-{
-	struct rtw_chip_info *chip = rtwdev->chip;
+व्योम rtw_chip_prepare_tx(काष्ठा rtw_dev *rtwdev)
+अणु
+	काष्ठा rtw_chip_info *chip = rtwdev->chip;
 
-	if (rtwdev->need_rfk) {
+	अगर (rtwdev->need_rfk) अणु
 		rtwdev->need_rfk = false;
 		chip->ops->phy_calibration(rtwdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rtw_vif_write_addr(struct rtw_dev *rtwdev, u32 start, u8 *addr)
-{
-	int i;
+अटल व्योम rtw_vअगर_ग_लिखो_addr(काष्ठा rtw_dev *rtwdev, u32 start, u8 *addr)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ETH_ALEN; i++)
-		rtw_write8(rtwdev, start + i, addr[i]);
-}
+	क्रम (i = 0; i < ETH_ALEN; i++)
+		rtw_ग_लिखो8(rtwdev, start + i, addr[i]);
+पूर्ण
 
-void rtw_vif_port_config(struct rtw_dev *rtwdev,
-			 struct rtw_vif *rtwvif,
+व्योम rtw_vअगर_port_config(काष्ठा rtw_dev *rtwdev,
+			 काष्ठा rtw_vअगर *rtwvअगर,
 			 u32 config)
-{
+अणु
 	u32 addr, mask;
 
-	if (config & PORT_SET_MAC_ADDR) {
-		addr = rtwvif->conf->mac_addr.addr;
-		rtw_vif_write_addr(rtwdev, addr, rtwvif->mac_addr);
-	}
-	if (config & PORT_SET_BSSID) {
-		addr = rtwvif->conf->bssid.addr;
-		rtw_vif_write_addr(rtwdev, addr, rtwvif->bssid);
-	}
-	if (config & PORT_SET_NET_TYPE) {
-		addr = rtwvif->conf->net_type.addr;
-		mask = rtwvif->conf->net_type.mask;
-		rtw_write32_mask(rtwdev, addr, mask, rtwvif->net_type);
-	}
-	if (config & PORT_SET_AID) {
-		addr = rtwvif->conf->aid.addr;
-		mask = rtwvif->conf->aid.mask;
-		rtw_write32_mask(rtwdev, addr, mask, rtwvif->aid);
-	}
-	if (config & PORT_SET_BCN_CTRL) {
-		addr = rtwvif->conf->bcn_ctrl.addr;
-		mask = rtwvif->conf->bcn_ctrl.mask;
-		rtw_write8_mask(rtwdev, addr, mask, rtwvif->bcn_ctrl);
-	}
-}
+	अगर (config & PORT_SET_MAC_ADDR) अणु
+		addr = rtwvअगर->conf->mac_addr.addr;
+		rtw_vअगर_ग_लिखो_addr(rtwdev, addr, rtwvअगर->mac_addr);
+	पूर्ण
+	अगर (config & PORT_SET_BSSID) अणु
+		addr = rtwvअगर->conf->bssid.addr;
+		rtw_vअगर_ग_लिखो_addr(rtwdev, addr, rtwvअगर->bssid);
+	पूर्ण
+	अगर (config & PORT_SET_NET_TYPE) अणु
+		addr = rtwvअगर->conf->net_type.addr;
+		mask = rtwvअगर->conf->net_type.mask;
+		rtw_ग_लिखो32_mask(rtwdev, addr, mask, rtwvअगर->net_type);
+	पूर्ण
+	अगर (config & PORT_SET_AID) अणु
+		addr = rtwvअगर->conf->aid.addr;
+		mask = rtwvअगर->conf->aid.mask;
+		rtw_ग_लिखो32_mask(rtwdev, addr, mask, rtwvअगर->aid);
+	पूर्ण
+	अगर (config & PORT_SET_BCN_CTRL) अणु
+		addr = rtwvअगर->conf->bcn_ctrl.addr;
+		mask = rtwvअगर->conf->bcn_ctrl.mask;
+		rtw_ग_लिखो8_mask(rtwdev, addr, mask, rtwvअगर->bcn_ctrl);
+	पूर्ण
+पूर्ण
 
-static u8 hw_bw_cap_to_bitamp(u8 bw_cap)
-{
+अटल u8 hw_bw_cap_to_bitamp(u8 bw_cap)
+अणु
 	u8 bw = 0;
 
-	switch (bw_cap) {
-	case EFUSE_HW_CAP_IGNORE:
-	case EFUSE_HW_CAP_SUPP_BW80:
+	चयन (bw_cap) अणु
+	हाल EFUSE_HW_CAP_IGNORE:
+	हाल EFUSE_HW_CAP_SUPP_BW80:
 		bw |= BIT(RTW_CHANNEL_WIDTH_80);
 		fallthrough;
-	case EFUSE_HW_CAP_SUPP_BW40:
+	हाल EFUSE_HW_CAP_SUPP_BW40:
 		bw |= BIT(RTW_CHANNEL_WIDTH_40);
 		fallthrough;
-	default:
+	शेष:
 		bw |= BIT(RTW_CHANNEL_WIDTH_20);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return bw;
-}
+	वापस bw;
+पूर्ण
 
-static void rtw_hw_config_rf_ant_num(struct rtw_dev *rtwdev, u8 hw_ant_num)
-{
-	struct rtw_hal *hal = &rtwdev->hal;
-	struct rtw_chip_info *chip = rtwdev->chip;
+अटल व्योम rtw_hw_config_rf_ant_num(काष्ठा rtw_dev *rtwdev, u8 hw_ant_num)
+अणु
+	काष्ठा rtw_hal *hal = &rtwdev->hal;
+	काष्ठा rtw_chip_info *chip = rtwdev->chip;
 
-	if (hw_ant_num == EFUSE_HW_CAP_IGNORE ||
+	अगर (hw_ant_num == EFUSE_HW_CAP_IGNORE ||
 	    hw_ant_num >= hal->rf_path_num)
-		return;
+		वापस;
 
-	switch (hw_ant_num) {
-	case 1:
+	चयन (hw_ant_num) अणु
+	हाल 1:
 		hal->rf_type = RF_1T1R;
 		hal->rf_path_num = 1;
-		if (!chip->fix_rf_phy_num)
+		अगर (!chip->fix_rf_phy_num)
 			hal->rf_phy_num = hal->rf_path_num;
 		hal->antenna_tx = BB_PATH_A;
 		hal->antenna_rx = BB_PATH_A;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN(1, "invalid hw configuration from efuse\n");
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static u64 get_vht_ra_mask(struct ieee80211_sta *sta)
-{
+अटल u64 get_vht_ra_mask(काष्ठा ieee80211_sta *sta)
+अणु
 	u64 ra_mask = 0;
 	u16 mcs_map = le16_to_cpu(sta->vht_cap.vht_mcs.rx_mcs_map);
 	u8 vht_mcs_cap;
-	int i, nss;
+	पूर्णांक i, nss;
 
-	/* 4SS, every two bits for MCS7/8/9 */
-	for (i = 0, nss = 12; i < 4; i++, mcs_map >>= 2, nss += 10) {
+	/* 4SS, every two bits क्रम MCS7/8/9 */
+	क्रम (i = 0, nss = 12; i < 4; i++, mcs_map >>= 2, nss += 10) अणु
 		vht_mcs_cap = mcs_map & 0x3;
-		switch (vht_mcs_cap) {
-		case 2: /* MCS9 */
+		चयन (vht_mcs_cap) अणु
+		हाल 2: /* MCS9 */
 			ra_mask |= 0x3ffULL << nss;
-			break;
-		case 1: /* MCS8 */
+			अवरोध;
+		हाल 1: /* MCS8 */
 			ra_mask |= 0x1ffULL << nss;
-			break;
-		case 0: /* MCS7 */
+			अवरोध;
+		हाल 0: /* MCS7 */
 			ra_mask |= 0x0ffULL << nss;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ra_mask;
-}
+	वापस ra_mask;
+पूर्ण
 
-static u8 get_rate_id(u8 wireless_set, enum rtw_bandwidth bw_mode, u8 tx_num)
-{
+अटल u8 get_rate_id(u8 wireless_set, क्रमागत rtw_bandwidth bw_mode, u8 tx_num)
+अणु
 	u8 rate_id = 0;
 
-	switch (wireless_set) {
-	case WIRELESS_CCK:
+	चयन (wireless_set) अणु
+	हाल WIRELESS_CCK:
 		rate_id = RTW_RATEID_B_20M;
-		break;
-	case WIRELESS_OFDM:
+		अवरोध;
+	हाल WIRELESS_OFDM:
 		rate_id = RTW_RATEID_G;
-		break;
-	case WIRELESS_CCK | WIRELESS_OFDM:
+		अवरोध;
+	हाल WIRELESS_CCK | WIRELESS_OFDM:
 		rate_id = RTW_RATEID_BG;
-		break;
-	case WIRELESS_OFDM | WIRELESS_HT:
-		if (tx_num == 1)
+		अवरोध;
+	हाल WIRELESS_OFDM | WIRELESS_HT:
+		अगर (tx_num == 1)
 			rate_id = RTW_RATEID_GN_N1SS;
-		else if (tx_num == 2)
+		अन्यथा अगर (tx_num == 2)
 			rate_id = RTW_RATEID_GN_N2SS;
-		else if (tx_num == 3)
+		अन्यथा अगर (tx_num == 3)
 			rate_id = RTW_RATEID_ARFR5_N_3SS;
-		break;
-	case WIRELESS_CCK | WIRELESS_OFDM | WIRELESS_HT:
-		if (bw_mode == RTW_CHANNEL_WIDTH_40) {
-			if (tx_num == 1)
+		अवरोध;
+	हाल WIRELESS_CCK | WIRELESS_OFDM | WIRELESS_HT:
+		अगर (bw_mode == RTW_CHANNEL_WIDTH_40) अणु
+			अगर (tx_num == 1)
 				rate_id = RTW_RATEID_BGN_40M_1SS;
-			else if (tx_num == 2)
+			अन्यथा अगर (tx_num == 2)
 				rate_id = RTW_RATEID_BGN_40M_2SS;
-			else if (tx_num == 3)
+			अन्यथा अगर (tx_num == 3)
 				rate_id = RTW_RATEID_ARFR5_N_3SS;
-			else if (tx_num == 4)
+			अन्यथा अगर (tx_num == 4)
 				rate_id = RTW_RATEID_ARFR7_N_4SS;
-		} else {
-			if (tx_num == 1)
+		पूर्ण अन्यथा अणु
+			अगर (tx_num == 1)
 				rate_id = RTW_RATEID_BGN_20M_1SS;
-			else if (tx_num == 2)
+			अन्यथा अगर (tx_num == 2)
 				rate_id = RTW_RATEID_BGN_20M_2SS;
-			else if (tx_num == 3)
+			अन्यथा अगर (tx_num == 3)
 				rate_id = RTW_RATEID_ARFR5_N_3SS;
-			else if (tx_num == 4)
+			अन्यथा अगर (tx_num == 4)
 				rate_id = RTW_RATEID_ARFR7_N_4SS;
-		}
-		break;
-	case WIRELESS_OFDM | WIRELESS_VHT:
-		if (tx_num == 1)
+		पूर्ण
+		अवरोध;
+	हाल WIRELESS_OFDM | WIRELESS_VHT:
+		अगर (tx_num == 1)
 			rate_id = RTW_RATEID_ARFR1_AC_1SS;
-		else if (tx_num == 2)
+		अन्यथा अगर (tx_num == 2)
 			rate_id = RTW_RATEID_ARFR0_AC_2SS;
-		else if (tx_num == 3)
+		अन्यथा अगर (tx_num == 3)
 			rate_id = RTW_RATEID_ARFR4_AC_3SS;
-		else if (tx_num == 4)
+		अन्यथा अगर (tx_num == 4)
 			rate_id = RTW_RATEID_ARFR6_AC_4SS;
-		break;
-	case WIRELESS_CCK | WIRELESS_OFDM | WIRELESS_VHT:
-		if (bw_mode >= RTW_CHANNEL_WIDTH_80) {
-			if (tx_num == 1)
+		अवरोध;
+	हाल WIRELESS_CCK | WIRELESS_OFDM | WIRELESS_VHT:
+		अगर (bw_mode >= RTW_CHANNEL_WIDTH_80) अणु
+			अगर (tx_num == 1)
 				rate_id = RTW_RATEID_ARFR1_AC_1SS;
-			else if (tx_num == 2)
+			अन्यथा अगर (tx_num == 2)
 				rate_id = RTW_RATEID_ARFR0_AC_2SS;
-			else if (tx_num == 3)
+			अन्यथा अगर (tx_num == 3)
 				rate_id = RTW_RATEID_ARFR4_AC_3SS;
-			else if (tx_num == 4)
+			अन्यथा अगर (tx_num == 4)
 				rate_id = RTW_RATEID_ARFR6_AC_4SS;
-		} else {
-			if (tx_num == 1)
+		पूर्ण अन्यथा अणु
+			अगर (tx_num == 1)
 				rate_id = RTW_RATEID_ARFR2_AC_2G_1SS;
-			else if (tx_num == 2)
+			अन्यथा अगर (tx_num == 2)
 				rate_id = RTW_RATEID_ARFR3_AC_2G_2SS;
-			else if (tx_num == 3)
+			अन्यथा अगर (tx_num == 3)
 				rate_id = RTW_RATEID_ARFR4_AC_3SS;
-			else if (tx_num == 4)
+			अन्यथा अगर (tx_num == 4)
 				rate_id = RTW_RATEID_ARFR6_AC_4SS;
-		}
-		break;
-	default:
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return rate_id;
-}
+	वापस rate_id;
+पूर्ण
 
-#define RA_MASK_CCK_RATES	0x0000f
-#define RA_MASK_OFDM_RATES	0x00ff0
-#define RA_MASK_HT_RATES_1SS	(0xff000ULL << 0)
-#define RA_MASK_HT_RATES_2SS	(0xff000ULL << 8)
-#define RA_MASK_HT_RATES_3SS	(0xff000ULL << 16)
-#define RA_MASK_HT_RATES	(RA_MASK_HT_RATES_1SS | \
+#घोषणा RA_MASK_CCK_RATES	0x0000f
+#घोषणा RA_MASK_OFDM_RATES	0x00ff0
+#घोषणा RA_MASK_HT_RATES_1SS	(0xff000ULL << 0)
+#घोषणा RA_MASK_HT_RATES_2SS	(0xff000ULL << 8)
+#घोषणा RA_MASK_HT_RATES_3SS	(0xff000ULL << 16)
+#घोषणा RA_MASK_HT_RATES	(RA_MASK_HT_RATES_1SS | \
 				 RA_MASK_HT_RATES_2SS | \
 				 RA_MASK_HT_RATES_3SS)
-#define RA_MASK_VHT_RATES_1SS	(0x3ff000ULL << 0)
-#define RA_MASK_VHT_RATES_2SS	(0x3ff000ULL << 10)
-#define RA_MASK_VHT_RATES_3SS	(0x3ff000ULL << 20)
-#define RA_MASK_VHT_RATES	(RA_MASK_VHT_RATES_1SS | \
+#घोषणा RA_MASK_VHT_RATES_1SS	(0x3ff000ULL << 0)
+#घोषणा RA_MASK_VHT_RATES_2SS	(0x3ff000ULL << 10)
+#घोषणा RA_MASK_VHT_RATES_3SS	(0x3ff000ULL << 20)
+#घोषणा RA_MASK_VHT_RATES	(RA_MASK_VHT_RATES_1SS | \
 				 RA_MASK_VHT_RATES_2SS | \
 				 RA_MASK_VHT_RATES_3SS)
-#define RA_MASK_CCK_IN_HT	0x00005
-#define RA_MASK_CCK_IN_VHT	0x00005
-#define RA_MASK_OFDM_IN_VHT	0x00010
-#define RA_MASK_OFDM_IN_HT_2G	0x00010
-#define RA_MASK_OFDM_IN_HT_5G	0x00030
+#घोषणा RA_MASK_CCK_IN_HT	0x00005
+#घोषणा RA_MASK_CCK_IN_VHT	0x00005
+#घोषणा RA_MASK_OFDM_IN_VHT	0x00010
+#घोषणा RA_MASK_OFDM_IN_HT_2G	0x00010
+#घोषणा RA_MASK_OFDM_IN_HT_5G	0x00030
 
-static u64 rtw_update_rate_mask(struct rtw_dev *rtwdev,
-				struct rtw_sta_info *si,
+अटल u64 rtw_update_rate_mask(काष्ठा rtw_dev *rtwdev,
+				काष्ठा rtw_sta_info *si,
 				u64 ra_mask, bool is_vht_enable,
 				u8 wireless_set)
-{
-	struct rtw_hal *hal = &rtwdev->hal;
-	const struct cfg80211_bitrate_mask *mask = si->mask;
+अणु
+	काष्ठा rtw_hal *hal = &rtwdev->hal;
+	स्थिर काष्ठा cfg80211_bitrate_mask *mask = si->mask;
 	u64 cfg_mask = GENMASK_ULL(63, 0);
 	u8 rssi_level, band;
 
-	if (wireless_set != WIRELESS_CCK) {
+	अगर (wireless_set != WIRELESS_CCK) अणु
 		rssi_level = si->rssi_level;
-		if (rssi_level == 0)
+		अगर (rssi_level == 0)
 			ra_mask &= 0xffffffffffffffffULL;
-		else if (rssi_level == 1)
+		अन्यथा अगर (rssi_level == 1)
 			ra_mask &= 0xfffffffffffffff0ULL;
-		else if (rssi_level == 2)
+		अन्यथा अगर (rssi_level == 2)
 			ra_mask &= 0xffffffffffffefe0ULL;
-		else if (rssi_level == 3)
+		अन्यथा अगर (rssi_level == 3)
 			ra_mask &= 0xffffffffffffcfc0ULL;
-		else if (rssi_level == 4)
+		अन्यथा अगर (rssi_level == 4)
 			ra_mask &= 0xffffffffffff8f80ULL;
-		else if (rssi_level >= 5)
+		अन्यथा अगर (rssi_level >= 5)
 			ra_mask &= 0xffffffffffff0f00ULL;
-	}
+	पूर्ण
 
-	if (!si->use_cfg_mask)
-		return ra_mask;
+	अगर (!si->use_cfg_mask)
+		वापस ra_mask;
 
 	band = hal->current_band_type;
-	if (band == RTW_BAND_2G) {
+	अगर (band == RTW_BAND_2G) अणु
 		band = NL80211_BAND_2GHZ;
 		cfg_mask = mask->control[band].legacy;
-	} else if (band == RTW_BAND_5G) {
+	पूर्ण अन्यथा अगर (band == RTW_BAND_5G) अणु
 		band = NL80211_BAND_5GHZ;
 		cfg_mask = u64_encode_bits(mask->control[band].legacy,
 					   RA_MASK_OFDM_RATES);
-	}
+	पूर्ण
 
-	if (!is_vht_enable) {
-		if (ra_mask & RA_MASK_HT_RATES_1SS)
+	अगर (!is_vht_enable) अणु
+		अगर (ra_mask & RA_MASK_HT_RATES_1SS)
 			cfg_mask |= u64_encode_bits(mask->control[band].ht_mcs[0],
 						    RA_MASK_HT_RATES_1SS);
-		if (ra_mask & RA_MASK_HT_RATES_2SS)
+		अगर (ra_mask & RA_MASK_HT_RATES_2SS)
 			cfg_mask |= u64_encode_bits(mask->control[band].ht_mcs[1],
 						    RA_MASK_HT_RATES_2SS);
-	} else {
-		if (ra_mask & RA_MASK_VHT_RATES_1SS)
+	पूर्ण अन्यथा अणु
+		अगर (ra_mask & RA_MASK_VHT_RATES_1SS)
 			cfg_mask |= u64_encode_bits(mask->control[band].vht_mcs[0],
 						    RA_MASK_VHT_RATES_1SS);
-		if (ra_mask & RA_MASK_VHT_RATES_2SS)
+		अगर (ra_mask & RA_MASK_VHT_RATES_2SS)
 			cfg_mask |= u64_encode_bits(mask->control[band].vht_mcs[1],
 						    RA_MASK_VHT_RATES_2SS);
-	}
+	पूर्ण
 
 	ra_mask &= cfg_mask;
 
-	return ra_mask;
-}
+	वापस ra_mask;
+पूर्ण
 
-void rtw_update_sta_info(struct rtw_dev *rtwdev, struct rtw_sta_info *si)
-{
-	struct rtw_dm_info *dm_info = &rtwdev->dm_info;
-	struct ieee80211_sta *sta = si->sta;
-	struct rtw_efuse *efuse = &rtwdev->efuse;
-	struct rtw_hal *hal = &rtwdev->hal;
+व्योम rtw_update_sta_info(काष्ठा rtw_dev *rtwdev, काष्ठा rtw_sta_info *si)
+अणु
+	काष्ठा rtw_dm_info *dm_info = &rtwdev->dm_info;
+	काष्ठा ieee80211_sta *sta = si->sta;
+	काष्ठा rtw_efuse *efuse = &rtwdev->efuse;
+	काष्ठा rtw_hal *hal = &rtwdev->hal;
 	u8 wireless_set;
 	u8 bw_mode;
 	u8 rate_id;
@@ -981,85 +982,85 @@ void rtw_update_sta_info(struct rtw_dev *rtwdev, struct rtw_sta_info *si)
 	bool is_vht_enable = false;
 	bool is_support_sgi = false;
 
-	if (sta->vht_cap.vht_supported) {
+	अगर (sta->vht_cap.vht_supported) अणु
 		is_vht_enable = true;
 		ra_mask |= get_vht_ra_mask(sta);
-		if (sta->vht_cap.cap & IEEE80211_VHT_CAP_RXSTBC_MASK)
+		अगर (sta->vht_cap.cap & IEEE80211_VHT_CAP_RXSTBC_MASK)
 			stbc_en = VHT_STBC_EN;
-		if (sta->vht_cap.cap & IEEE80211_VHT_CAP_RXLDPC)
+		अगर (sta->vht_cap.cap & IEEE80211_VHT_CAP_RXLDPC)
 			ldpc_en = VHT_LDPC_EN;
-	} else if (sta->ht_cap.ht_supported) {
+	पूर्ण अन्यथा अगर (sta->ht_cap.ht_supported) अणु
 		ra_mask |= (sta->ht_cap.mcs.rx_mask[1] << 20) |
 			   (sta->ht_cap.mcs.rx_mask[0] << 12);
-		if (sta->ht_cap.cap & IEEE80211_HT_CAP_RX_STBC)
+		अगर (sta->ht_cap.cap & IEEE80211_HT_CAP_RX_STBC)
 			stbc_en = HT_STBC_EN;
-		if (sta->ht_cap.cap & IEEE80211_HT_CAP_LDPC_CODING)
+		अगर (sta->ht_cap.cap & IEEE80211_HT_CAP_LDPC_CODING)
 			ldpc_en = HT_LDPC_EN;
-	}
+	पूर्ण
 
-	if (efuse->hw_cap.nss == 1)
+	अगर (efuse->hw_cap.nss == 1)
 		ra_mask &= RA_MASK_VHT_RATES_1SS | RA_MASK_HT_RATES_1SS;
 
-	if (hal->current_band_type == RTW_BAND_5G) {
+	अगर (hal->current_band_type == RTW_BAND_5G) अणु
 		ra_mask |= (u64)sta->supp_rates[NL80211_BAND_5GHZ] << 4;
-		if (sta->vht_cap.vht_supported) {
+		अगर (sta->vht_cap.vht_supported) अणु
 			ra_mask &= RA_MASK_VHT_RATES | RA_MASK_OFDM_IN_VHT;
 			wireless_set = WIRELESS_OFDM | WIRELESS_VHT;
-		} else if (sta->ht_cap.ht_supported) {
+		पूर्ण अन्यथा अगर (sta->ht_cap.ht_supported) अणु
 			ra_mask &= RA_MASK_HT_RATES | RA_MASK_OFDM_IN_HT_5G;
 			wireless_set = WIRELESS_OFDM | WIRELESS_HT;
-		} else {
+		पूर्ण अन्यथा अणु
 			wireless_set = WIRELESS_OFDM;
-		}
+		पूर्ण
 		dm_info->rrsr_val_init = RRSR_INIT_5G;
-	} else if (hal->current_band_type == RTW_BAND_2G) {
+	पूर्ण अन्यथा अगर (hal->current_band_type == RTW_BAND_2G) अणु
 		ra_mask |= sta->supp_rates[NL80211_BAND_2GHZ];
-		if (sta->vht_cap.vht_supported) {
+		अगर (sta->vht_cap.vht_supported) अणु
 			ra_mask &= RA_MASK_VHT_RATES | RA_MASK_CCK_IN_VHT |
 				   RA_MASK_OFDM_IN_VHT;
 			wireless_set = WIRELESS_CCK | WIRELESS_OFDM |
 				       WIRELESS_HT | WIRELESS_VHT;
-		} else if (sta->ht_cap.ht_supported) {
+		पूर्ण अन्यथा अगर (sta->ht_cap.ht_supported) अणु
 			ra_mask &= RA_MASK_HT_RATES | RA_MASK_CCK_IN_HT |
 				   RA_MASK_OFDM_IN_HT_2G;
 			wireless_set = WIRELESS_CCK | WIRELESS_OFDM |
 				       WIRELESS_HT;
-		} else if (sta->supp_rates[0] <= 0xf) {
+		पूर्ण अन्यथा अगर (sta->supp_rates[0] <= 0xf) अणु
 			wireless_set = WIRELESS_CCK;
-		} else {
+		पूर्ण अन्यथा अणु
 			wireless_set = WIRELESS_CCK | WIRELESS_OFDM;
-		}
+		पूर्ण
 		dm_info->rrsr_val_init = RRSR_INIT_2G;
-	} else {
+	पूर्ण अन्यथा अणु
 		rtw_err(rtwdev, "Unknown band type\n");
 		wireless_set = 0;
-	}
+	पूर्ण
 
-	switch (sta->bandwidth) {
-	case IEEE80211_STA_RX_BW_80:
+	चयन (sta->bandwidth) अणु
+	हाल IEEE80211_STA_RX_BW_80:
 		bw_mode = RTW_CHANNEL_WIDTH_80;
 		is_support_sgi = sta->vht_cap.vht_supported &&
 				 (sta->vht_cap.cap & IEEE80211_VHT_CAP_SHORT_GI_80);
-		break;
-	case IEEE80211_STA_RX_BW_40:
+		अवरोध;
+	हाल IEEE80211_STA_RX_BW_40:
 		bw_mode = RTW_CHANNEL_WIDTH_40;
 		is_support_sgi = sta->ht_cap.ht_supported &&
 				 (sta->ht_cap.cap & IEEE80211_HT_CAP_SGI_40);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		bw_mode = RTW_CHANNEL_WIDTH_20;
 		is_support_sgi = sta->ht_cap.ht_supported &&
 				 (sta->ht_cap.cap & IEEE80211_HT_CAP_SGI_20);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (sta->vht_cap.vht_supported && ra_mask & 0xffc00000) {
+	अगर (sta->vht_cap.vht_supported && ra_mask & 0xffc00000) अणु
 		tx_num = 2;
 		rf_type = RF_2T2R;
-	} else if (sta->ht_cap.ht_supported && ra_mask & 0xfff00000) {
+	पूर्ण अन्यथा अगर (sta->ht_cap.ht_supported && ra_mask & 0xfff00000) अणु
 		tx_num = 2;
 		rf_type = RF_2T2R;
-	}
+	पूर्ण
 
 	rate_id = get_rate_id(wireless_set, bw_mode, tx_num);
 
@@ -1077,146 +1078,146 @@ void rtw_update_sta_info(struct rtw_dev *rtwdev, struct rtw_sta_info *si)
 	si->rate_id = rate_id;
 
 	rtw_fw_send_ra_info(rtwdev, si);
-}
+पूर्ण
 
-static int rtw_wait_firmware_completion(struct rtw_dev *rtwdev)
-{
-	struct rtw_chip_info *chip = rtwdev->chip;
-	struct rtw_fw_state *fw;
+अटल पूर्णांक rtw_रुको_firmware_completion(काष्ठा rtw_dev *rtwdev)
+अणु
+	काष्ठा rtw_chip_info *chip = rtwdev->chip;
+	काष्ठा rtw_fw_state *fw;
 
 	fw = &rtwdev->fw;
-	wait_for_completion(&fw->completion);
-	if (!fw->firmware)
-		return -EINVAL;
+	रुको_क्रम_completion(&fw->completion);
+	अगर (!fw->firmware)
+		वापस -EINVAL;
 
-	if (chip->wow_fw_name) {
+	अगर (chip->wow_fw_name) अणु
 		fw = &rtwdev->wow_fw;
-		wait_for_completion(&fw->completion);
-		if (!fw->firmware)
-			return -EINVAL;
-	}
+		रुको_क्रम_completion(&fw->completion);
+		अगर (!fw->firmware)
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum rtw_lps_deep_mode rtw_update_lps_deep_mode(struct rtw_dev *rtwdev,
-						       struct rtw_fw_state *fw)
-{
-	struct rtw_chip_info *chip = rtwdev->chip;
+अटल क्रमागत rtw_lps_deep_mode rtw_update_lps_deep_mode(काष्ठा rtw_dev *rtwdev,
+						       काष्ठा rtw_fw_state *fw)
+अणु
+	काष्ठा rtw_chip_info *chip = rtwdev->chip;
 
-	if (rtw_disable_lps_deep_mode || !chip->lps_deep_mode_supported ||
+	अगर (rtw_disable_lps_deep_mode || !chip->lps_deep_mode_supported ||
 	    !fw->feature)
-		return LPS_DEEP_MODE_NONE;
+		वापस LPS_DEEP_MODE_NONE;
 
-	if ((chip->lps_deep_mode_supported & BIT(LPS_DEEP_MODE_PG)) &&
+	अगर ((chip->lps_deep_mode_supported & BIT(LPS_DEEP_MODE_PG)) &&
 	    (fw->feature & FW_FEATURE_PG))
-		return LPS_DEEP_MODE_PG;
+		वापस LPS_DEEP_MODE_PG;
 
-	if ((chip->lps_deep_mode_supported & BIT(LPS_DEEP_MODE_LCLK)) &&
+	अगर ((chip->lps_deep_mode_supported & BIT(LPS_DEEP_MODE_LCLK)) &&
 	    (fw->feature & FW_FEATURE_LCLK))
-		return LPS_DEEP_MODE_LCLK;
+		वापस LPS_DEEP_MODE_LCLK;
 
-	return LPS_DEEP_MODE_NONE;
-}
+	वापस LPS_DEEP_MODE_NONE;
+पूर्ण
 
-static int rtw_power_on(struct rtw_dev *rtwdev)
-{
-	struct rtw_chip_info *chip = rtwdev->chip;
-	struct rtw_fw_state *fw = &rtwdev->fw;
-	bool wifi_only;
-	int ret;
+अटल पूर्णांक rtw_घातer_on(काष्ठा rtw_dev *rtwdev)
+अणु
+	काष्ठा rtw_chip_info *chip = rtwdev->chip;
+	काष्ठा rtw_fw_state *fw = &rtwdev->fw;
+	bool wअगरi_only;
+	पूर्णांक ret;
 
 	ret = rtw_hci_setup(rtwdev);
-	if (ret) {
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to setup hci\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* power on MAC before firmware downloaded */
-	ret = rtw_mac_power_on(rtwdev);
-	if (ret) {
+	/* घातer on MAC beक्रमe firmware करोwnloaded */
+	ret = rtw_mac_घातer_on(rtwdev);
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to power on mac\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = rtw_wait_firmware_completion(rtwdev);
-	if (ret) {
+	ret = rtw_रुको_firmware_completion(rtwdev);
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to wait firmware completion\n");
-		goto err_off;
-	}
+		जाओ err_off;
+	पूर्ण
 
-	ret = rtw_download_firmware(rtwdev, fw);
-	if (ret) {
+	ret = rtw_करोwnload_firmware(rtwdev, fw);
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to download firmware\n");
-		goto err_off;
-	}
+		जाओ err_off;
+	पूर्ण
 
-	/* config mac after firmware downloaded */
+	/* config mac after firmware करोwnloaded */
 	ret = rtw_mac_init(rtwdev);
-	if (ret) {
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to configure mac\n");
-		goto err_off;
-	}
+		जाओ err_off;
+	पूर्ण
 
 	chip->ops->phy_set_param(rtwdev);
 
 	ret = rtw_hci_start(rtwdev);
-	if (ret) {
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to start hci\n");
-		goto err_off;
-	}
+		जाओ err_off;
+	पूर्ण
 
 	/* send H2C after HCI has started */
 	rtw_fw_send_general_info(rtwdev);
 	rtw_fw_send_phydm_info(rtwdev);
 
-	wifi_only = !rtwdev->efuse.btcoex;
-	rtw_coex_power_on_setting(rtwdev);
-	rtw_coex_init_hw_config(rtwdev, wifi_only);
+	wअगरi_only = !rtwdev->efuse.btcoex;
+	rtw_coex_घातer_on_setting(rtwdev);
+	rtw_coex_init_hw_config(rtwdev, wअगरi_only);
 
-	return 0;
+	वापस 0;
 
 err_off:
-	rtw_mac_power_off(rtwdev);
+	rtw_mac_घातer_off(rtwdev);
 
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int rtw_core_start(struct rtw_dev *rtwdev)
-{
-	int ret;
+पूर्णांक rtw_core_start(काष्ठा rtw_dev *rtwdev)
+अणु
+	पूर्णांक ret;
 
-	ret = rtw_power_on(rtwdev);
-	if (ret)
-		return ret;
+	ret = rtw_घातer_on(rtwdev);
+	अगर (ret)
+		वापस ret;
 
 	rtw_sec_enable_sec_engine(rtwdev);
 
 	rtwdev->lps_conf.deep_mode = rtw_update_lps_deep_mode(rtwdev, &rtwdev->fw);
 	rtwdev->lps_conf.wow_deep_mode = rtw_update_lps_deep_mode(rtwdev, &rtwdev->wow_fw);
 
-	/* rcr reset after powered on */
-	rtw_write32(rtwdev, REG_RCR, rtwdev->hal.rcr);
+	/* rcr reset after घातered on */
+	rtw_ग_लिखो32(rtwdev, REG_RCR, rtwdev->hal.rcr);
 
-	ieee80211_queue_delayed_work(rtwdev->hw, &rtwdev->watch_dog_work,
+	ieee80211_queue_delayed_work(rtwdev->hw, &rtwdev->watch_करोg_work,
 				     RTW_WATCH_DOG_DELAY_TIME);
 
 	set_bit(RTW_FLAG_RUNNING, rtwdev->flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rtw_power_off(struct rtw_dev *rtwdev)
-{
+अटल व्योम rtw_घातer_off(काष्ठा rtw_dev *rtwdev)
+अणु
 	rtw_hci_stop(rtwdev);
-	rtw_coex_power_off_setting(rtwdev);
-	rtw_mac_power_off(rtwdev);
-}
+	rtw_coex_घातer_off_setting(rtwdev);
+	rtw_mac_घातer_off(rtwdev);
+पूर्ण
 
-void rtw_core_stop(struct rtw_dev *rtwdev)
-{
-	struct rtw_coex *coex = &rtwdev->coex;
+व्योम rtw_core_stop(काष्ठा rtw_dev *rtwdev)
+अणु
+	काष्ठा rtw_coex *coex = &rtwdev->coex;
 
 	clear_bit(RTW_FLAG_RUNNING, rtwdev->flags);
 	clear_bit(RTW_FLAG_FW_RUNNING, rtwdev->flags);
@@ -1224,25 +1225,25 @@ void rtw_core_stop(struct rtw_dev *rtwdev)
 	mutex_unlock(&rtwdev->mutex);
 
 	cancel_work_sync(&rtwdev->c2h_work);
-	cancel_delayed_work_sync(&rtwdev->watch_dog_work);
+	cancel_delayed_work_sync(&rtwdev->watch_करोg_work);
 	cancel_delayed_work_sync(&coex->bt_relink_work);
 	cancel_delayed_work_sync(&coex->bt_reenable_work);
-	cancel_delayed_work_sync(&coex->defreeze_work);
-	cancel_delayed_work_sync(&coex->wl_remain_work);
-	cancel_delayed_work_sync(&coex->bt_remain_work);
+	cancel_delayed_work_sync(&coex->deमुक्तze_work);
+	cancel_delayed_work_sync(&coex->wl_reमुख्य_work);
+	cancel_delayed_work_sync(&coex->bt_reमुख्य_work);
 	cancel_delayed_work_sync(&coex->wl_connecting_work);
-	cancel_delayed_work_sync(&coex->bt_multi_link_remain_work);
+	cancel_delayed_work_sync(&coex->bt_multi_link_reमुख्य_work);
 	cancel_delayed_work_sync(&coex->wl_ccklock_work);
 
 	mutex_lock(&rtwdev->mutex);
 
-	rtw_power_off(rtwdev);
-}
+	rtw_घातer_off(rtwdev);
+पूर्ण
 
-static void rtw_init_ht_cap(struct rtw_dev *rtwdev,
-			    struct ieee80211_sta_ht_cap *ht_cap)
-{
-	struct rtw_efuse *efuse = &rtwdev->efuse;
+अटल व्योम rtw_init_ht_cap(काष्ठा rtw_dev *rtwdev,
+			    काष्ठा ieee80211_sta_ht_cap *ht_cap)
+अणु
+	काष्ठा rtw_efuse *efuse = &rtwdev->efuse;
 
 	ht_cap->ht_supported = true;
 	ht_cap->cap = 0;
@@ -1250,39 +1251,39 @@ static void rtw_init_ht_cap(struct rtw_dev *rtwdev,
 			IEEE80211_HT_CAP_MAX_AMSDU |
 			(1 << IEEE80211_HT_CAP_RX_STBC_SHIFT);
 
-	if (rtw_chip_has_rx_ldpc(rtwdev))
+	अगर (rtw_chip_has_rx_ldpc(rtwdev))
 		ht_cap->cap |= IEEE80211_HT_CAP_LDPC_CODING;
 
-	if (efuse->hw_cap.bw & BIT(RTW_CHANNEL_WIDTH_40))
+	अगर (efuse->hw_cap.bw & BIT(RTW_CHANNEL_WIDTH_40))
 		ht_cap->cap |= IEEE80211_HT_CAP_SUP_WIDTH_20_40 |
 				IEEE80211_HT_CAP_DSSSCCK40 |
 				IEEE80211_HT_CAP_SGI_40;
 	ht_cap->ampdu_factor = IEEE80211_HT_MAX_AMPDU_64K;
 	ht_cap->ampdu_density = IEEE80211_HT_MPDU_DENSITY_16;
 	ht_cap->mcs.tx_params = IEEE80211_HT_MCS_TX_DEFINED;
-	if (efuse->hw_cap.nss > 1) {
+	अगर (efuse->hw_cap.nss > 1) अणु
 		ht_cap->mcs.rx_mask[0] = 0xFF;
 		ht_cap->mcs.rx_mask[1] = 0xFF;
 		ht_cap->mcs.rx_mask[4] = 0x01;
 		ht_cap->mcs.rx_highest = cpu_to_le16(300);
-	} else {
+	पूर्ण अन्यथा अणु
 		ht_cap->mcs.rx_mask[0] = 0xFF;
 		ht_cap->mcs.rx_mask[1] = 0x00;
 		ht_cap->mcs.rx_mask[4] = 0x01;
 		ht_cap->mcs.rx_highest = cpu_to_le16(150);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rtw_init_vht_cap(struct rtw_dev *rtwdev,
-			     struct ieee80211_sta_vht_cap *vht_cap)
-{
-	struct rtw_efuse *efuse = &rtwdev->efuse;
+अटल व्योम rtw_init_vht_cap(काष्ठा rtw_dev *rtwdev,
+			     काष्ठा ieee80211_sta_vht_cap *vht_cap)
+अणु
+	काष्ठा rtw_efuse *efuse = &rtwdev->efuse;
 	u16 mcs_map;
 	__le16 highest;
 
-	if (efuse->hw_cap.ptcl != EFUSE_HW_CAP_IGNORE &&
+	अगर (efuse->hw_cap.ptcl != EFUSE_HW_CAP_IGNORE &&
 	    efuse->hw_cap.ptcl != EFUSE_HW_CAP_PTCL_VHT)
-		return;
+		वापस;
 
 	vht_cap->vht_supported = true;
 	vht_cap->cap = IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_11454 |
@@ -1291,14 +1292,14 @@ static void rtw_init_vht_cap(struct rtw_dev *rtwdev,
 		       IEEE80211_VHT_CAP_HTC_VHT |
 		       IEEE80211_VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_MASK |
 		       0;
-	if (rtwdev->hal.rf_path_num > 1)
+	अगर (rtwdev->hal.rf_path_num > 1)
 		vht_cap->cap |= IEEE80211_VHT_CAP_TXSTBC;
 	vht_cap->cap |= IEEE80211_VHT_CAP_MU_BEAMFORMEE_CAPABLE |
 			IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE;
 	vht_cap->cap |= (rtwdev->hal.bfee_sts_cap <<
 			IEEE80211_VHT_CAP_BEAMFORMEE_STS_SHIFT);
 
-	if (rtw_chip_has_rx_ldpc(rtwdev))
+	अगर (rtw_chip_has_rx_ldpc(rtwdev))
 		vht_cap->cap |= IEEE80211_VHT_CAP_RXLDPC;
 
 	mcs_map = IEEE80211_VHT_MCS_SUPPORT_0_9 << 0 |
@@ -1308,75 +1309,75 @@ static void rtw_init_vht_cap(struct rtw_dev *rtwdev,
 		  IEEE80211_VHT_MCS_NOT_SUPPORTED << 10 |
 		  IEEE80211_VHT_MCS_NOT_SUPPORTED << 12 |
 		  IEEE80211_VHT_MCS_NOT_SUPPORTED << 14;
-	if (efuse->hw_cap.nss > 1) {
+	अगर (efuse->hw_cap.nss > 1) अणु
 		highest = cpu_to_le16(780);
 		mcs_map |= IEEE80211_VHT_MCS_SUPPORT_0_9 << 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		highest = cpu_to_le16(390);
 		mcs_map |= IEEE80211_VHT_MCS_NOT_SUPPORTED << 2;
-	}
+	पूर्ण
 
 	vht_cap->vht_mcs.rx_mcs_map = cpu_to_le16(mcs_map);
 	vht_cap->vht_mcs.tx_mcs_map = cpu_to_le16(mcs_map);
 	vht_cap->vht_mcs.rx_highest = highest;
 	vht_cap->vht_mcs.tx_highest = highest;
-}
+पूर्ण
 
-static void rtw_set_supported_band(struct ieee80211_hw *hw,
-				   struct rtw_chip_info *chip)
-{
-	struct rtw_dev *rtwdev = hw->priv;
-	struct ieee80211_supported_band *sband;
+अटल व्योम rtw_set_supported_band(काष्ठा ieee80211_hw *hw,
+				   काष्ठा rtw_chip_info *chip)
+अणु
+	काष्ठा rtw_dev *rtwdev = hw->priv;
+	काष्ठा ieee80211_supported_band *sband;
 
-	if (chip->band & RTW_BAND_2G) {
-		sband = kmemdup(&rtw_band_2ghz, sizeof(*sband), GFP_KERNEL);
-		if (!sband)
-			goto err_out;
-		if (chip->ht_supported)
+	अगर (chip->band & RTW_BAND_2G) अणु
+		sband = kmemdup(&rtw_band_2ghz, माप(*sband), GFP_KERNEL);
+		अगर (!sband)
+			जाओ err_out;
+		अगर (chip->ht_supported)
 			rtw_init_ht_cap(rtwdev, &sband->ht_cap);
 		hw->wiphy->bands[NL80211_BAND_2GHZ] = sband;
-	}
+	पूर्ण
 
-	if (chip->band & RTW_BAND_5G) {
-		sband = kmemdup(&rtw_band_5ghz, sizeof(*sband), GFP_KERNEL);
-		if (!sband)
-			goto err_out;
-		if (chip->ht_supported)
+	अगर (chip->band & RTW_BAND_5G) अणु
+		sband = kmemdup(&rtw_band_5ghz, माप(*sband), GFP_KERNEL);
+		अगर (!sband)
+			जाओ err_out;
+		अगर (chip->ht_supported)
 			rtw_init_ht_cap(rtwdev, &sband->ht_cap);
-		if (chip->vht_supported)
+		अगर (chip->vht_supported)
 			rtw_init_vht_cap(rtwdev, &sband->vht_cap);
 		hw->wiphy->bands[NL80211_BAND_5GHZ] = sband;
-	}
+	पूर्ण
 
-	return;
+	वापस;
 
 err_out:
 	rtw_err(rtwdev, "failed to set supported band\n");
-}
+पूर्ण
 
-static void rtw_unset_supported_band(struct ieee80211_hw *hw,
-				     struct rtw_chip_info *chip)
-{
-	kfree(hw->wiphy->bands[NL80211_BAND_2GHZ]);
-	kfree(hw->wiphy->bands[NL80211_BAND_5GHZ]);
-}
+अटल व्योम rtw_unset_supported_band(काष्ठा ieee80211_hw *hw,
+				     काष्ठा rtw_chip_info *chip)
+अणु
+	kमुक्त(hw->wiphy->bands[NL80211_BAND_2GHZ]);
+	kमुक्त(hw->wiphy->bands[NL80211_BAND_5GHZ]);
+पूर्ण
 
-static void __update_firmware_feature(struct rtw_dev *rtwdev,
-				      struct rtw_fw_state *fw)
-{
+अटल व्योम __update_firmware_feature(काष्ठा rtw_dev *rtwdev,
+				      काष्ठा rtw_fw_state *fw)
+अणु
 	u32 feature;
-	const struct rtw_fw_hdr *fw_hdr =
-				(const struct rtw_fw_hdr *)fw->firmware->data;
+	स्थिर काष्ठा rtw_fw_hdr *fw_hdr =
+				(स्थिर काष्ठा rtw_fw_hdr *)fw->firmware->data;
 
 	feature = le32_to_cpu(fw_hdr->feature);
 	fw->feature = feature & FW_FEATURE_SIG ? feature : 0;
-}
+पूर्ण
 
-static void __update_firmware_info(struct rtw_dev *rtwdev,
-				   struct rtw_fw_state *fw)
-{
-	const struct rtw_fw_hdr *fw_hdr =
-				(const struct rtw_fw_hdr *)fw->firmware->data;
+अटल व्योम __update_firmware_info(काष्ठा rtw_dev *rtwdev,
+				   काष्ठा rtw_fw_state *fw)
+अणु
+	स्थिर काष्ठा rtw_fw_hdr *fw_hdr =
+				(स्थिर काष्ठा rtw_fw_hdr *)fw->firmware->data;
 
 	fw->h2c_version = le16_to_cpu(fw_hdr->h2c_fmt_ver);
 	fw->version = le16_to_cpu(fw_hdr->version);
@@ -1384,39 +1385,39 @@ static void __update_firmware_info(struct rtw_dev *rtwdev,
 	fw->sub_index = fw_hdr->subindex;
 
 	__update_firmware_feature(rtwdev, fw);
-}
+पूर्ण
 
-static void __update_firmware_info_legacy(struct rtw_dev *rtwdev,
-					  struct rtw_fw_state *fw)
-{
-	struct rtw_fw_hdr_legacy *legacy =
-				(struct rtw_fw_hdr_legacy *)fw->firmware->data;
+अटल व्योम __update_firmware_info_legacy(काष्ठा rtw_dev *rtwdev,
+					  काष्ठा rtw_fw_state *fw)
+अणु
+	काष्ठा rtw_fw_hdr_legacy *legacy =
+				(काष्ठा rtw_fw_hdr_legacy *)fw->firmware->data;
 
 	fw->h2c_version = 0;
 	fw->version = le16_to_cpu(legacy->version);
 	fw->sub_version = legacy->subversion1;
 	fw->sub_index = legacy->subversion2;
-}
+पूर्ण
 
-static void update_firmware_info(struct rtw_dev *rtwdev,
-				 struct rtw_fw_state *fw)
-{
-	if (rtw_chip_wcpu_11n(rtwdev))
+अटल व्योम update_firmware_info(काष्ठा rtw_dev *rtwdev,
+				 काष्ठा rtw_fw_state *fw)
+अणु
+	अगर (rtw_chip_wcpu_11n(rtwdev))
 		__update_firmware_info_legacy(rtwdev, fw);
-	else
+	अन्यथा
 		__update_firmware_info(rtwdev, fw);
-}
+पूर्ण
 
-static void rtw_load_firmware_cb(const struct firmware *firmware, void *context)
-{
-	struct rtw_fw_state *fw = context;
-	struct rtw_dev *rtwdev = fw->rtwdev;
+अटल व्योम rtw_load_firmware_cb(स्थिर काष्ठा firmware *firmware, व्योम *context)
+अणु
+	काष्ठा rtw_fw_state *fw = context;
+	काष्ठा rtw_dev *rtwdev = fw->rtwdev;
 
-	if (!firmware || !firmware->data) {
+	अगर (!firmware || !firmware->data) अणु
 		rtw_err(rtwdev, "failed to request firmware\n");
 		complete_all(&fw->completion);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	fw->firmware = firmware;
 	update_firmware_info(rtwdev, fw);
@@ -1424,73 +1425,73 @@ static void rtw_load_firmware_cb(const struct firmware *firmware, void *context)
 
 	rtw_info(rtwdev, "Firmware version %u.%u.%u, H2C version %u\n",
 		 fw->version, fw->sub_version, fw->sub_index, fw->h2c_version);
-}
+पूर्ण
 
-static int rtw_load_firmware(struct rtw_dev *rtwdev, enum rtw_fw_type type)
-{
-	const char *fw_name;
-	struct rtw_fw_state *fw;
-	int ret;
+अटल पूर्णांक rtw_load_firmware(काष्ठा rtw_dev *rtwdev, क्रमागत rtw_fw_type type)
+अणु
+	स्थिर अक्षर *fw_name;
+	काष्ठा rtw_fw_state *fw;
+	पूर्णांक ret;
 
-	switch (type) {
-	case RTW_WOWLAN_FW:
+	चयन (type) अणु
+	हाल RTW_WOWLAN_FW:
 		fw = &rtwdev->wow_fw;
 		fw_name = rtwdev->chip->wow_fw_name;
-		break;
+		अवरोध;
 
-	case RTW_NORMAL_FW:
+	हाल RTW_NORMAL_FW:
 		fw = &rtwdev->fw;
 		fw_name = rtwdev->chip->fw_name;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		rtw_warn(rtwdev, "unsupported firmware type\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	fw->rtwdev = rtwdev;
 	init_completion(&fw->completion);
 
-	ret = request_firmware_nowait(THIS_MODULE, true, fw_name, rtwdev->dev,
+	ret = request_firmware_noरुको(THIS_MODULE, true, fw_name, rtwdev->dev,
 				      GFP_KERNEL, fw, rtw_load_firmware_cb);
-	if (ret) {
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to async firmware request\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtw_chip_parameter_setup(struct rtw_dev *rtwdev)
-{
-	struct rtw_chip_info *chip = rtwdev->chip;
-	struct rtw_hal *hal = &rtwdev->hal;
-	struct rtw_efuse *efuse = &rtwdev->efuse;
+अटल पूर्णांक rtw_chip_parameter_setup(काष्ठा rtw_dev *rtwdev)
+अणु
+	काष्ठा rtw_chip_info *chip = rtwdev->chip;
+	काष्ठा rtw_hal *hal = &rtwdev->hal;
+	काष्ठा rtw_efuse *efuse = &rtwdev->efuse;
 
-	switch (rtw_hci_type(rtwdev)) {
-	case RTW_HCI_TYPE_PCIE:
+	चयन (rtw_hci_type(rtwdev)) अणु
+	हाल RTW_HCI_TYPE_PCIE:
 		rtwdev->hci.rpwm_addr = 0x03d9;
 		rtwdev->hci.cpwm_addr = 0x03da;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rtw_err(rtwdev, "unsupported hci type\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	hal->chip_version = rtw_read32(rtwdev, REG_SYS_CFG1);
+	hal->chip_version = rtw_पढ़ो32(rtwdev, REG_SYS_CFG1);
 	hal->cut_version = BIT_GET_CHIP_VER(hal->chip_version);
 	hal->mp_chip = (hal->chip_version & BIT_RTL_ID) ? 0 : 1;
-	if (hal->chip_version & BIT_RF_TYPE_ID) {
+	अगर (hal->chip_version & BIT_RF_TYPE_ID) अणु
 		hal->rf_type = RF_2T2R;
 		hal->rf_path_num = 2;
 		hal->antenna_tx = BB_PATH_AB;
 		hal->antenna_rx = BB_PATH_AB;
-	} else {
+	पूर्ण अन्यथा अणु
 		hal->rf_type = RF_1T1R;
 		hal->rf_path_num = 1;
 		hal->antenna_tx = BB_PATH_A;
 		hal->antenna_rx = BB_PATH_A;
-	}
+	पूर्ण
 	hal->rf_phy_num = chip->fix_rf_phy_num ? chip->fix_rf_phy_num :
 			  hal->rf_path_num;
 
@@ -1498,73 +1499,73 @@ static int rtw_chip_parameter_setup(struct rtw_dev *rtwdev)
 	efuse->logical_size = chip->log_efuse_size;
 	efuse->protect_size = chip->ptct_efuse_size;
 
-	/* default use ack */
+	/* शेष use ack */
 	rtwdev->hal.rcr |= BIT_VHT_DACK;
 
 	hal->bfee_sts_cap = 3;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtw_chip_efuse_enable(struct rtw_dev *rtwdev)
-{
-	struct rtw_fw_state *fw = &rtwdev->fw;
-	int ret;
+अटल पूर्णांक rtw_chip_efuse_enable(काष्ठा rtw_dev *rtwdev)
+अणु
+	काष्ठा rtw_fw_state *fw = &rtwdev->fw;
+	पूर्णांक ret;
 
 	ret = rtw_hci_setup(rtwdev);
-	if (ret) {
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to setup hci\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = rtw_mac_power_on(rtwdev);
-	if (ret) {
+	ret = rtw_mac_घातer_on(rtwdev);
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to power on mac\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	rtw_write8(rtwdev, REG_C2HEVT, C2H_HW_FEATURE_DUMP);
+	rtw_ग_लिखो8(rtwdev, REG_C2HEVT, C2H_HW_FEATURE_DUMP);
 
-	wait_for_completion(&fw->completion);
-	if (!fw->firmware) {
+	रुको_क्रम_completion(&fw->completion);
+	अगर (!fw->firmware) अणु
 		ret = -EINVAL;
 		rtw_err(rtwdev, "failed to load firmware\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = rtw_download_firmware(rtwdev, fw);
-	if (ret) {
+	ret = rtw_करोwnload_firmware(rtwdev, fw);
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to download firmware\n");
-		goto err_off;
-	}
+		जाओ err_off;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_off:
-	rtw_mac_power_off(rtwdev);
+	rtw_mac_घातer_off(rtwdev);
 
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rtw_dump_hw_feature(struct rtw_dev *rtwdev)
-{
-	struct rtw_efuse *efuse = &rtwdev->efuse;
+अटल पूर्णांक rtw_dump_hw_feature(काष्ठा rtw_dev *rtwdev)
+अणु
+	काष्ठा rtw_efuse *efuse = &rtwdev->efuse;
 	u8 hw_feature[HW_FEATURE_LEN];
 	u8 id;
 	u8 bw;
-	int i;
+	पूर्णांक i;
 
-	id = rtw_read8(rtwdev, REG_C2HEVT);
-	if (id != C2H_HW_FEATURE_REPORT) {
+	id = rtw_पढ़ो8(rtwdev, REG_C2HEVT);
+	अगर (id != C2H_HW_FEATURE_REPORT) अणु
 		rtw_err(rtwdev, "failed to read hw feature report\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	for (i = 0; i < HW_FEATURE_LEN; i++)
-		hw_feature[i] = rtw_read8(rtwdev, REG_C2HEVT + 2 + i);
+	क्रम (i = 0; i < HW_FEATURE_LEN; i++)
+		hw_feature[i] = rtw_पढ़ो8(rtwdev, REG_C2HEVT + 2 + i);
 
-	rtw_write8(rtwdev, REG_C2HEVT, 0);
+	rtw_ग_लिखो8(rtwdev, REG_C2HEVT, 0);
 
 	bw = GET_EFUSE_HW_CAP_BW(hw_feature);
 	efuse->hw_cap.bw = hw_bw_cap_to_bitamp(bw);
@@ -1575,7 +1576,7 @@ static int rtw_dump_hw_feature(struct rtw_dev *rtwdev)
 
 	rtw_hw_config_rf_ant_num(rtwdev, efuse->hw_cap.ant_num);
 
-	if (efuse->hw_cap.nss == EFUSE_HW_CAP_IGNORE ||
+	अगर (efuse->hw_cap.nss == EFUSE_HW_CAP_IGNORE ||
 	    efuse->hw_cap.nss > rtwdev->hal.rf_path_num)
 		efuse->hw_cap.nss = rtwdev->hal.rf_path_num;
 
@@ -1584,60 +1585,60 @@ static int rtw_dump_hw_feature(struct rtw_dev *rtwdev)
 		efuse->hw_cap.hci, efuse->hw_cap.bw, efuse->hw_cap.ptcl,
 		efuse->hw_cap.ant_num, efuse->hw_cap.nss);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rtw_chip_efuse_disable(struct rtw_dev *rtwdev)
-{
+अटल व्योम rtw_chip_efuse_disable(काष्ठा rtw_dev *rtwdev)
+अणु
 	rtw_hci_stop(rtwdev);
-	rtw_mac_power_off(rtwdev);
-}
+	rtw_mac_घातer_off(rtwdev);
+पूर्ण
 
-static int rtw_chip_efuse_info_setup(struct rtw_dev *rtwdev)
-{
-	struct rtw_efuse *efuse = &rtwdev->efuse;
-	int ret;
+अटल पूर्णांक rtw_chip_efuse_info_setup(काष्ठा rtw_dev *rtwdev)
+अणु
+	काष्ठा rtw_efuse *efuse = &rtwdev->efuse;
+	पूर्णांक ret;
 
 	mutex_lock(&rtwdev->mutex);
 
-	/* power on mac to read efuse */
+	/* घातer on mac to पढ़ो efuse */
 	ret = rtw_chip_efuse_enable(rtwdev);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 
 	ret = rtw_parse_efuse_map(rtwdev);
-	if (ret)
-		goto out_disable;
+	अगर (ret)
+		जाओ out_disable;
 
 	ret = rtw_dump_hw_feature(rtwdev);
-	if (ret)
-		goto out_disable;
+	अगर (ret)
+		जाओ out_disable;
 
 	ret = rtw_check_supported_rfe(rtwdev);
-	if (ret)
-		goto out_disable;
+	अगर (ret)
+		जाओ out_disable;
 
-	if (efuse->crystal_cap == 0xff)
+	अगर (efuse->crystal_cap == 0xff)
 		efuse->crystal_cap = 0;
-	if (efuse->pa_type_2g == 0xff)
+	अगर (efuse->pa_type_2g == 0xff)
 		efuse->pa_type_2g = 0;
-	if (efuse->pa_type_5g == 0xff)
+	अगर (efuse->pa_type_5g == 0xff)
 		efuse->pa_type_5g = 0;
-	if (efuse->lna_type_2g == 0xff)
+	अगर (efuse->lna_type_2g == 0xff)
 		efuse->lna_type_2g = 0;
-	if (efuse->lna_type_5g == 0xff)
+	अगर (efuse->lna_type_5g == 0xff)
 		efuse->lna_type_5g = 0;
-	if (efuse->channel_plan == 0xff)
+	अगर (efuse->channel_plan == 0xff)
 		efuse->channel_plan = 0x7f;
-	if (efuse->rf_board_option == 0xff)
+	अगर (efuse->rf_board_option == 0xff)
 		efuse->rf_board_option = 0;
-	if (efuse->bt_setting & BIT(0))
+	अगर (efuse->bt_setting & BIT(0))
 		efuse->share_ant = true;
-	if (efuse->regd == 0xff)
+	अगर (efuse->regd == 0xff)
 		efuse->regd = 0;
-	if (efuse->tx_bb_swing_setting_2g == 0xff)
+	अगर (efuse->tx_bb_swing_setting_2g == 0xff)
 		efuse->tx_bb_swing_setting_2g = 0;
-	if (efuse->tx_bb_swing_setting_5g == 0xff)
+	अगर (efuse->tx_bb_swing_setting_5g == 0xff)
 		efuse->tx_bb_swing_setting_5g = 0;
 
 	efuse->btcoex = (efuse->rf_board_option & 0xe0) == 0x20;
@@ -1651,96 +1652,96 @@ out_disable:
 
 out_unlock:
 	mutex_unlock(&rtwdev->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rtw_chip_board_info_setup(struct rtw_dev *rtwdev)
-{
-	struct rtw_hal *hal = &rtwdev->hal;
-	const struct rtw_rfe_def *rfe_def = rtw_get_rfe_def(rtwdev);
+अटल पूर्णांक rtw_chip_board_info_setup(काष्ठा rtw_dev *rtwdev)
+अणु
+	काष्ठा rtw_hal *hal = &rtwdev->hal;
+	स्थिर काष्ठा rtw_rfe_def *rfe_def = rtw_get_rfe_def(rtwdev);
 
-	if (!rfe_def)
-		return -ENODEV;
+	अगर (!rfe_def)
+		वापस -ENODEV;
 
 	rtw_phy_setup_phy_cond(rtwdev, 0);
 
-	rtw_phy_init_tx_power(rtwdev);
-	if (rfe_def->agc_btg_tbl)
+	rtw_phy_init_tx_घातer(rtwdev);
+	अगर (rfe_def->agc_btg_tbl)
 		rtw_load_table(rtwdev, rfe_def->agc_btg_tbl);
 	rtw_load_table(rtwdev, rfe_def->phy_pg_tbl);
 	rtw_load_table(rtwdev, rfe_def->txpwr_lmt_tbl);
-	rtw_phy_tx_power_by_rate_config(hal);
-	rtw_phy_tx_power_limit_config(hal);
+	rtw_phy_tx_घातer_by_rate_config(hal);
+	rtw_phy_tx_घातer_limit_config(hal);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rtw_chip_info_setup(struct rtw_dev *rtwdev)
-{
-	int ret;
+पूर्णांक rtw_chip_info_setup(काष्ठा rtw_dev *rtwdev)
+अणु
+	पूर्णांक ret;
 
 	ret = rtw_chip_parameter_setup(rtwdev);
-	if (ret) {
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to setup chip parameters\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	ret = rtw_chip_efuse_info_setup(rtwdev);
-	if (ret) {
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to setup chip efuse info\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	ret = rtw_chip_board_info_setup(rtwdev);
-	if (ret) {
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to setup chip board info\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(rtw_chip_info_setup);
 
-static void rtw_stats_init(struct rtw_dev *rtwdev)
-{
-	struct rtw_traffic_stats *stats = &rtwdev->stats;
-	struct rtw_dm_info *dm_info = &rtwdev->dm_info;
-	int i;
+अटल व्योम rtw_stats_init(काष्ठा rtw_dev *rtwdev)
+अणु
+	काष्ठा rtw_traffic_stats *stats = &rtwdev->stats;
+	काष्ठा rtw_dm_info *dm_info = &rtwdev->dm_info;
+	पूर्णांक i;
 
 	ewma_tp_init(&stats->tx_ewma_tp);
 	ewma_tp_init(&stats->rx_ewma_tp);
 
-	for (i = 0; i < RTW_EVM_NUM; i++)
+	क्रम (i = 0; i < RTW_EVM_NUM; i++)
 		ewma_evm_init(&dm_info->ewma_evm[i]);
-	for (i = 0; i < RTW_SNR_NUM; i++)
+	क्रम (i = 0; i < RTW_SNR_NUM; i++)
 		ewma_snr_init(&dm_info->ewma_snr[i]);
-}
+पूर्ण
 
-int rtw_core_init(struct rtw_dev *rtwdev)
-{
-	struct rtw_chip_info *chip = rtwdev->chip;
-	struct rtw_coex *coex = &rtwdev->coex;
-	int ret;
+पूर्णांक rtw_core_init(काष्ठा rtw_dev *rtwdev)
+अणु
+	काष्ठा rtw_chip_info *chip = rtwdev->chip;
+	काष्ठा rtw_coex *coex = &rtwdev->coex;
+	पूर्णांक ret;
 
 	INIT_LIST_HEAD(&rtwdev->rsvd_page_list);
 	INIT_LIST_HEAD(&rtwdev->txqs);
 
-	timer_setup(&rtwdev->tx_report.purge_timer,
-		    rtw_tx_report_purge_timer, 0);
+	समयr_setup(&rtwdev->tx_report.purge_समयr,
+		    rtw_tx_report_purge_समयr, 0);
 	rtwdev->tx_wq = alloc_workqueue("rtw_tx_wq", WQ_UNBOUND | WQ_HIGHPRI, 0);
 
-	INIT_DELAYED_WORK(&rtwdev->watch_dog_work, rtw_watch_dog_work);
+	INIT_DELAYED_WORK(&rtwdev->watch_करोg_work, rtw_watch_करोg_work);
 	INIT_DELAYED_WORK(&coex->bt_relink_work, rtw_coex_bt_relink_work);
 	INIT_DELAYED_WORK(&coex->bt_reenable_work, rtw_coex_bt_reenable_work);
-	INIT_DELAYED_WORK(&coex->defreeze_work, rtw_coex_defreeze_work);
-	INIT_DELAYED_WORK(&coex->wl_remain_work, rtw_coex_wl_remain_work);
-	INIT_DELAYED_WORK(&coex->bt_remain_work, rtw_coex_bt_remain_work);
+	INIT_DELAYED_WORK(&coex->deमुक्तze_work, rtw_coex_deमुक्तze_work);
+	INIT_DELAYED_WORK(&coex->wl_reमुख्य_work, rtw_coex_wl_reमुख्य_work);
+	INIT_DELAYED_WORK(&coex->bt_reमुख्य_work, rtw_coex_bt_reमुख्य_work);
 	INIT_DELAYED_WORK(&coex->wl_connecting_work, rtw_coex_wl_connecting_work);
-	INIT_DELAYED_WORK(&coex->bt_multi_link_remain_work,
-			  rtw_coex_bt_multi_link_remain_work);
+	INIT_DELAYED_WORK(&coex->bt_multi_link_reमुख्य_work,
+			  rtw_coex_bt_multi_link_reमुख्य_work);
 	INIT_DELAYED_WORK(&coex->wl_ccklock_work, rtw_coex_wl_ccklock_work);
 	INIT_WORK(&rtwdev->tx_work, rtw_tx_work);
 	INIT_WORK(&rtwdev->c2h_work, rtw_c2h_work);
@@ -1757,9 +1758,9 @@ int rtw_core_init(struct rtw_dev *rtwdev)
 
 	mutex_init(&rtwdev->mutex);
 	mutex_init(&rtwdev->coex.mutex);
-	mutex_init(&rtwdev->hal.tx_power_mutex);
+	mutex_init(&rtwdev->hal.tx_घातer_mutex);
 
-	init_waitqueue_head(&rtwdev->coex.wait);
+	init_रुकोqueue_head(&rtwdev->coex.रुको);
 	init_completion(&rtwdev->lps_leave_check);
 
 	rtwdev->sec.total_cam_num = 32;
@@ -1768,45 +1769,45 @@ int rtw_core_init(struct rtw_dev *rtwdev)
 
 	rtw_stats_init(rtwdev);
 
-	/* default rx filter setting */
+	/* शेष rx filter setting */
 	rtwdev->hal.rcr = BIT_APP_FCS | BIT_APP_MIC | BIT_APP_ICV |
 			  BIT_HTC_LOC_CTRL | BIT_APP_PHYSTS |
 			  BIT_AB | BIT_AM | BIT_APM;
 
 	ret = rtw_load_firmware(rtwdev, RTW_NORMAL_FW);
-	if (ret) {
+	अगर (ret) अणु
 		rtw_warn(rtwdev, "no firmware loaded\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (chip->wow_fw_name) {
+	अगर (chip->wow_fw_name) अणु
 		ret = rtw_load_firmware(rtwdev, RTW_WOWLAN_FW);
-		if (ret) {
+		अगर (ret) अणु
 			rtw_warn(rtwdev, "no wow firmware loaded\n");
-			wait_for_completion(&rtwdev->fw.completion);
-			if (rtwdev->fw.firmware)
+			रुको_क्रम_completion(&rtwdev->fw.completion);
+			अगर (rtwdev->fw.firmware)
 				release_firmware(rtwdev->fw.firmware);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(rtw_core_init);
 
-void rtw_core_deinit(struct rtw_dev *rtwdev)
-{
-	struct rtw_fw_state *fw = &rtwdev->fw;
-	struct rtw_fw_state *wow_fw = &rtwdev->wow_fw;
-	struct rtw_rsvd_page *rsvd_pkt, *tmp;
-	unsigned long flags;
+व्योम rtw_core_deinit(काष्ठा rtw_dev *rtwdev)
+अणु
+	काष्ठा rtw_fw_state *fw = &rtwdev->fw;
+	काष्ठा rtw_fw_state *wow_fw = &rtwdev->wow_fw;
+	काष्ठा rtw_rsvd_page *rsvd_pkt, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
-	rtw_wait_firmware_completion(rtwdev);
+	rtw_रुको_firmware_completion(rtwdev);
 
-	if (fw->firmware)
+	अगर (fw->firmware)
 		release_firmware(fw->firmware);
 
-	if (wow_fw->firmware)
+	अगर (wow_fw->firmware)
 		release_firmware(wow_fw->firmware);
 
 	destroy_workqueue(rtwdev->tx_wq);
@@ -1814,32 +1815,32 @@ void rtw_core_deinit(struct rtw_dev *rtwdev)
 	skb_queue_purge(&rtwdev->tx_report.queue);
 	spin_unlock_irqrestore(&rtwdev->tx_report.q_lock, flags);
 
-	list_for_each_entry_safe(rsvd_pkt, tmp, &rtwdev->rsvd_page_list,
-				 build_list) {
+	list_क्रम_each_entry_safe(rsvd_pkt, पंचांगp, &rtwdev->rsvd_page_list,
+				 build_list) अणु
 		list_del(&rsvd_pkt->build_list);
-		kfree(rsvd_pkt);
-	}
+		kमुक्त(rsvd_pkt);
+	पूर्ण
 
 	mutex_destroy(&rtwdev->mutex);
 	mutex_destroy(&rtwdev->coex.mutex);
-	mutex_destroy(&rtwdev->hal.tx_power_mutex);
-}
+	mutex_destroy(&rtwdev->hal.tx_घातer_mutex);
+पूर्ण
 EXPORT_SYMBOL(rtw_core_deinit);
 
-int rtw_register_hw(struct rtw_dev *rtwdev, struct ieee80211_hw *hw)
-{
-	struct rtw_hal *hal = &rtwdev->hal;
-	int max_tx_headroom = 0;
-	int ret;
+पूर्णांक rtw_रेजिस्टर_hw(काष्ठा rtw_dev *rtwdev, काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtw_hal *hal = &rtwdev->hal;
+	पूर्णांक max_tx_headroom = 0;
+	पूर्णांक ret;
 
 	/* TODO: USB & SDIO may need extra room? */
 	max_tx_headroom = rtwdev->chip->tx_pkt_desc_sz;
 
 	hw->extra_tx_headroom = max_tx_headroom;
 	hw->queues = IEEE80211_NUM_ACS;
-	hw->txq_data_size = sizeof(struct rtw_txq);
-	hw->sta_data_size = sizeof(struct rtw_sta_info);
-	hw->vif_data_size = sizeof(struct rtw_vif);
+	hw->txq_data_size = माप(काष्ठा rtw_txq);
+	hw->sta_data_size = माप(काष्ठा rtw_sta_info);
+	hw->vअगर_data_size = माप(काष्ठा rtw_vअगर);
 
 	ieee80211_hw_set(hw, SIGNAL_DBM);
 	ieee80211_hw_set(hw, RX_INCLUDES_FCS);
@@ -1853,7 +1854,7 @@ int rtw_register_hw(struct rtw_dev *rtwdev, struct ieee80211_hw *hw)
 	ieee80211_hw_set(hw, HAS_RATE_CONTROL);
 	ieee80211_hw_set(hw, TX_AMSDU);
 
-	hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
+	hw->wiphy->पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION) |
 				     BIT(NL80211_IFTYPE_AP) |
 				     BIT(NL80211_IFTYPE_ADHOC) |
 				     BIT(NL80211_IFTYPE_MESH_POINT);
@@ -1867,22 +1868,22 @@ int rtw_register_hw(struct rtw_dev *rtwdev, struct ieee80211_hw *hw)
 
 	wiphy_ext_feature_set(hw->wiphy, NL80211_EXT_FEATURE_CAN_REPLACE_PTK0);
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	hw->wiphy->wowlan = rtwdev->chip->wowlan_stub;
 	hw->wiphy->max_sched_scan_ssids = rtwdev->chip->max_sched_scan_ssids;
-#endif
+#पूर्ण_अगर
 	rtw_set_supported_band(hw, rtwdev->chip);
 	SET_IEEE80211_PERM_ADDR(hw, rtwdev->efuse.addr);
 
-	rtw_regd_init(rtwdev, rtw_regd_notifier);
+	rtw_regd_init(rtwdev, rtw_regd_notअगरier);
 
-	ret = ieee80211_register_hw(hw);
-	if (ret) {
+	ret = ieee80211_रेजिस्टर_hw(hw);
+	अगर (ret) अणु
 		rtw_err(rtwdev, "failed to register hw\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (regulatory_hint(hw->wiphy, rtwdev->regd.alpha2))
+	अगर (regulatory_hपूर्णांक(hw->wiphy, rtwdev->regd.alpha2))
 		rtw_err(rtwdev, "regulatory_hint fail\n");
 
 	rtw_debugfs_init(rtwdev);
@@ -1890,18 +1891,18 @@ int rtw_register_hw(struct rtw_dev *rtwdev, struct ieee80211_hw *hw)
 	rtwdev->bf_info.bfer_mu_cnt = 0;
 	rtwdev->bf_info.bfer_su_cnt = 0;
 
-	return 0;
-}
-EXPORT_SYMBOL(rtw_register_hw);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(rtw_रेजिस्टर_hw);
 
-void rtw_unregister_hw(struct rtw_dev *rtwdev, struct ieee80211_hw *hw)
-{
-	struct rtw_chip_info *chip = rtwdev->chip;
+व्योम rtw_unरेजिस्टर_hw(काष्ठा rtw_dev *rtwdev, काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtw_chip_info *chip = rtwdev->chip;
 
-	ieee80211_unregister_hw(hw);
+	ieee80211_unरेजिस्टर_hw(hw);
 	rtw_unset_supported_band(hw, chip);
-}
-EXPORT_SYMBOL(rtw_unregister_hw);
+पूर्ण
+EXPORT_SYMBOL(rtw_unरेजिस्टर_hw);
 
 MODULE_AUTHOR("Realtek Corporation");
 MODULE_DESCRIPTION("Realtek 802.11ac wireless core module");

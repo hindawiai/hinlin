@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (c) 2019, Intel Corporation. */
 
-#ifndef _ICE_DCB_NL_H_
-#define _ICE_DCB_NL_H_
+#अगर_अघोषित _ICE_DCB_NL_H_
+#घोषणा _ICE_DCB_NL_H_
 
-#ifdef CONFIG_DCB
-void ice_dcbnl_setup(struct ice_vsi *vsi);
-void ice_dcbnl_set_all(struct ice_vsi *vsi);
-void
-ice_dcbnl_flush_apps(struct ice_pf *pf, struct ice_dcbx_cfg *old_cfg,
-		     struct ice_dcbx_cfg *new_cfg);
-#else
-#define ice_dcbnl_setup(vsi) do {} while (0)
-#define ice_dcbnl_set_all(vsi) do {} while (0)
-#define ice_dcbnl_flush_apps(pf, old_cfg, new_cfg) do {} while (0)
-#endif /* CONFIG_DCB */
+#अगर_घोषित CONFIG_DCB
+व्योम ice_dcbnl_setup(काष्ठा ice_vsi *vsi);
+व्योम ice_dcbnl_set_all(काष्ठा ice_vsi *vsi);
+व्योम
+ice_dcbnl_flush_apps(काष्ठा ice_pf *pf, काष्ठा ice_dcbx_cfg *old_cfg,
+		     काष्ठा ice_dcbx_cfg *new_cfg);
+#अन्यथा
+#घोषणा ice_dcbnl_setup(vsi) करो अणुपूर्ण जबतक (0)
+#घोषणा ice_dcbnl_set_all(vsi) करो अणुपूर्ण जबतक (0)
+#घोषणा ice_dcbnl_flush_apps(pf, old_cfg, new_cfg) करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर /* CONFIG_DCB */
 
-#endif /* _ICE_DCB_NL_H_ */
+#पूर्ण_अगर /* _ICE_DCB_NL_H_ */

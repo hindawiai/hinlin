@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Red Hat
  * based in parts on udlfb.c:
@@ -7,124 +8,124 @@
  * Copyright (C) 2009 Bernie Thompson <bernie@plugable.com>
  */
 
-#include <drm/drm_atomic_state_helper.h>
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_probe_helper.h>
+#समावेश <drm/drm_atomic_state_helper.h>
+#समावेश <drm/drm_crtc_helper.h>
+#समावेश <drm/drm_probe_helper.h>
 
-#include "udl_connector.h"
-#include "udl_drv.h"
+#समावेश "udl_connector.h"
+#समावेश "udl_drv.h"
 
-static int udl_get_edid_block(void *data, u8 *buf, unsigned int block,
-			       size_t len)
-{
-	int ret, i;
-	u8 *read_buff;
-	struct udl_device *udl = data;
-	struct usb_device *udev = udl_to_usb_device(udl);
+अटल पूर्णांक udl_get_edid_block(व्योम *data, u8 *buf, अचिन्हित पूर्णांक block,
+			       माप_प्रकार len)
+अणु
+	पूर्णांक ret, i;
+	u8 *पढ़ो_buff;
+	काष्ठा udl_device *udl = data;
+	काष्ठा usb_device *udev = udl_to_usb_device(udl);
 
-	read_buff = kmalloc(2, GFP_KERNEL);
-	if (!read_buff)
-		return -1;
+	पढ़ो_buff = kदो_स्मृति(2, GFP_KERNEL);
+	अगर (!पढ़ो_buff)
+		वापस -1;
 
-	for (i = 0; i < len; i++) {
-		int bval = (i + block * EDID_LENGTH) << 8;
+	क्रम (i = 0; i < len; i++) अणु
+		पूर्णांक bval = (i + block * EDID_LENGTH) << 8;
 		ret = usb_control_msg(udev, usb_rcvctrlpipe(udev, 0),
 				      0x02, (0x80 | (0x02 << 5)), bval,
-				      0xA1, read_buff, 2, HZ);
-		if (ret < 1) {
+				      0xA1, पढ़ो_buff, 2, HZ);
+		अगर (ret < 1) अणु
 			DRM_ERROR("Read EDID byte %d failed err %x\n", i, ret);
-			kfree(read_buff);
-			return -1;
-		}
-		buf[i] = read_buff[1];
-	}
+			kमुक्त(पढ़ो_buff);
+			वापस -1;
+		पूर्ण
+		buf[i] = पढ़ो_buff[1];
+	पूर्ण
 
-	kfree(read_buff);
-	return 0;
-}
+	kमुक्त(पढ़ो_buff);
+	वापस 0;
+पूर्ण
 
-static int udl_get_modes(struct drm_connector *connector)
-{
-	struct udl_drm_connector *udl_connector =
+अटल पूर्णांक udl_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा udl_drm_connector *udl_connector =
 					container_of(connector,
-					struct udl_drm_connector,
+					काष्ठा udl_drm_connector,
 					connector);
 
 	drm_connector_update_edid_property(connector, udl_connector->edid);
-	if (udl_connector->edid)
-		return drm_add_edid_modes(connector, udl_connector->edid);
-	return 0;
-}
+	अगर (udl_connector->edid)
+		वापस drm_add_edid_modes(connector, udl_connector->edid);
+	वापस 0;
+पूर्ण
 
-static enum drm_mode_status udl_mode_valid(struct drm_connector *connector,
-			  struct drm_display_mode *mode)
-{
-	struct udl_device *udl = to_udl(connector->dev);
-	if (!udl->sku_pixel_limit)
-		return 0;
+अटल क्रमागत drm_mode_status udl_mode_valid(काष्ठा drm_connector *connector,
+			  काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा udl_device *udl = to_udl(connector->dev);
+	अगर (!udl->sku_pixel_limit)
+		वापस 0;
 
-	if (mode->vdisplay * mode->hdisplay > udl->sku_pixel_limit)
-		return MODE_VIRTUAL_Y;
+	अगर (mode->vdisplay * mode->hdisplay > udl->sku_pixel_limit)
+		वापस MODE_VIRTUAL_Y;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum drm_connector_status
-udl_detect(struct drm_connector *connector, bool force)
-{
-	struct udl_device *udl = to_udl(connector->dev);
-	struct udl_drm_connector *udl_connector =
+अटल क्रमागत drm_connector_status
+udl_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा udl_device *udl = to_udl(connector->dev);
+	काष्ठा udl_drm_connector *udl_connector =
 					container_of(connector,
-					struct udl_drm_connector,
+					काष्ठा udl_drm_connector,
 					connector);
 
 	/* cleanup previous edid */
-	if (udl_connector->edid != NULL) {
-		kfree(udl_connector->edid);
-		udl_connector->edid = NULL;
-	}
+	अगर (udl_connector->edid != शून्य) अणु
+		kमुक्त(udl_connector->edid);
+		udl_connector->edid = शून्य;
+	पूर्ण
 
-	udl_connector->edid = drm_do_get_edid(connector, udl_get_edid_block, udl);
-	if (!udl_connector->edid)
-		return connector_status_disconnected;
+	udl_connector->edid = drm_करो_get_edid(connector, udl_get_edid_block, udl);
+	अगर (!udl_connector->edid)
+		वापस connector_status_disconnected;
 
-	return connector_status_connected;
-}
+	वापस connector_status_connected;
+पूर्ण
 
-static void udl_connector_destroy(struct drm_connector *connector)
-{
-	struct udl_drm_connector *udl_connector =
+अटल व्योम udl_connector_destroy(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा udl_drm_connector *udl_connector =
 					container_of(connector,
-					struct udl_drm_connector,
+					काष्ठा udl_drm_connector,
 					connector);
 
 	drm_connector_cleanup(connector);
-	kfree(udl_connector->edid);
-	kfree(connector);
-}
+	kमुक्त(udl_connector->edid);
+	kमुक्त(connector);
+पूर्ण
 
-static const struct drm_connector_helper_funcs udl_connector_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs udl_connector_helper_funcs = अणु
 	.get_modes = udl_get_modes,
 	.mode_valid = udl_mode_valid,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs udl_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs udl_connector_funcs = अणु
 	.reset = drm_atomic_helper_connector_reset,
 	.detect = udl_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = udl_connector_destroy,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state   = drm_atomic_helper_connector_destroy_state,
-};
+पूर्ण;
 
-struct drm_connector *udl_connector_init(struct drm_device *dev)
-{
-	struct udl_drm_connector *udl_connector;
-	struct drm_connector *connector;
+काष्ठा drm_connector *udl_connector_init(काष्ठा drm_device *dev)
+अणु
+	काष्ठा udl_drm_connector *udl_connector;
+	काष्ठा drm_connector *connector;
 
-	udl_connector = kzalloc(sizeof(struct udl_drm_connector), GFP_KERNEL);
-	if (!udl_connector)
-		return ERR_PTR(-ENOMEM);
+	udl_connector = kzalloc(माप(काष्ठा udl_drm_connector), GFP_KERNEL);
+	अगर (!udl_connector)
+		वापस ERR_PTR(-ENOMEM);
 
 	connector = &udl_connector->connector;
 	drm_connector_init(dev, connector, &udl_connector_funcs,
@@ -134,5 +135,5 @@ struct drm_connector *udl_connector_init(struct drm_device *dev)
 	connector->polled = DRM_CONNECTOR_POLL_HPD |
 		DRM_CONNECTOR_POLL_CONNECT | DRM_CONNECTOR_POLL_DISCONNECT;
 
-	return connector;
-}
+	वापस connector;
+पूर्ण

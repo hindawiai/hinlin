@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) STMicroelectronics SA 2014
- * Author: Benjamin Gaignard <benjamin.gaignard@st.com> for STMicroelectronics.
+ * Author: Benjamin Gaignard <benjamin.gaignard@st.com> क्रम STMicroelectronics.
  */
 
-#ifndef _STI_VTG_H_
-#define _STI_VTG_H_
+#अगर_अघोषित _STI_VTG_H_
+#घोषणा _STI_VTG_H_
 
-#define VTG_TOP_FIELD_EVENT     1
-#define VTG_BOTTOM_FIELD_EVENT  2
+#घोषणा VTG_TOP_FIELD_EVENT     1
+#घोषणा VTG_BOTTOM_FIELD_EVENT  2
 
-#define VTG_SYNC_ID_HDMI        1
-#define VTG_SYNC_ID_HDDCS       2
-#define VTG_SYNC_ID_HDF         3
-#define VTG_SYNC_ID_DVO         4
+#घोषणा VTG_SYNC_ID_HDMI        1
+#घोषणा VTG_SYNC_ID_HDDCS       2
+#घोषणा VTG_SYNC_ID_HDF         3
+#घोषणा VTG_SYNC_ID_DVO         4
 
-struct sti_vtg;
-struct drm_crtc;
-struct drm_display_mode;
-struct notifier_block;
+काष्ठा sti_vtg;
+काष्ठा drm_crtc;
+काष्ठा drm_display_mode;
+काष्ठा notअगरier_block;
 
-struct sti_vtg *of_vtg_find(struct device_node *np);
-void sti_vtg_set_config(struct sti_vtg *vtg,
-		const struct drm_display_mode *mode);
-int sti_vtg_register_client(struct sti_vtg *vtg, struct notifier_block *nb,
-			    struct drm_crtc *crtc);
-int sti_vtg_unregister_client(struct sti_vtg *vtg,
-		struct notifier_block *nb);
+काष्ठा sti_vtg *of_vtg_find(काष्ठा device_node *np);
+व्योम sti_vtg_set_config(काष्ठा sti_vtg *vtg,
+		स्थिर काष्ठा drm_display_mode *mode);
+पूर्णांक sti_vtg_रेजिस्टर_client(काष्ठा sti_vtg *vtg, काष्ठा notअगरier_block *nb,
+			    काष्ठा drm_crtc *crtc);
+पूर्णांक sti_vtg_unरेजिस्टर_client(काष्ठा sti_vtg *vtg,
+		काष्ठा notअगरier_block *nb);
 
-u32 sti_vtg_get_line_number(struct drm_display_mode mode, int y);
-u32 sti_vtg_get_pixel_number(struct drm_display_mode mode, int x);
+u32 sti_vtg_get_line_number(काष्ठा drm_display_mode mode, पूर्णांक y);
+u32 sti_vtg_get_pixel_number(काष्ठा drm_display_mode mode, पूर्णांक x);
 
-#endif
+#पूर्ण_अगर

@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Trace point definitions for the RDMA Connect Manager.
+ * Trace poपूर्णांक definitions क्रम the RDMA Connect Manager.
  *
  * Author: Chuck Lever <chuck.lever@oracle.com>
  *
  * Copyright (c) 2020 Oracle and/or its affiliates.
  */
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM ib_cma
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM ib_cma
 
-#if !defined(_TRACE_IB_CMA_H) || defined(TRACE_HEADER_MULTI_READ)
+#अगर !defined(_TRACE_IB_CMA_H) || defined(TRACE_HEADER_MULTI_READ)
 
-#define _TRACE_IB_CMA_H
+#घोषणा _TRACE_IB_CMA_H
 
-#include <linux/tracepoint.h>
-#include <rdma/ib_cm.h>
-#include <trace/events/rdma.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <rdma/ib_cm.h>
+#समावेश <trace/events/rdma.h>
 
 /*
- * enum ib_cm_state, from include/rdma/ib_cm.h
+ * क्रमागत ib_cm_state, from include/rdma/ib_cm.h
  */
-#define IB_CM_STATE_LIST					\
+#घोषणा IB_CM_STATE_LIST					\
 	ib_cm_state(IDLE)					\
 	ib_cm_state(LISTEN)					\
 	ib_cm_state(REQ_SENT)					\
@@ -39,25 +40,25 @@
 	ib_cm_state(SIDR_REQ_SENT)				\
 	ib_cm_state_end(SIDR_REQ_RCVD)
 
-#undef  ib_cm_state
-#undef  ib_cm_state_end
-#define ib_cm_state(x)		TRACE_DEFINE_ENUM(IB_CM_##x);
-#define ib_cm_state_end(x)	TRACE_DEFINE_ENUM(IB_CM_##x);
+#अघोषित  ib_cm_state
+#अघोषित  ib_cm_state_end
+#घोषणा ib_cm_state(x)		TRACE_DEFINE_ENUM(IB_CM_##x);
+#घोषणा ib_cm_state_end(x)	TRACE_DEFINE_ENUM(IB_CM_##x);
 
 IB_CM_STATE_LIST
 
-#undef  ib_cm_state
-#undef  ib_cm_state_end
-#define ib_cm_state(x)		{ IB_CM_##x, #x },
-#define ib_cm_state_end(x)	{ IB_CM_##x, #x }
+#अघोषित  ib_cm_state
+#अघोषित  ib_cm_state_end
+#घोषणा ib_cm_state(x)		अणु IB_CM_##x, #x पूर्ण,
+#घोषणा ib_cm_state_end(x)	अणु IB_CM_##x, #x पूर्ण
 
-#define show_ib_cm_state(x) \
-		__print_symbolic(x, IB_CM_STATE_LIST)
+#घोषणा show_ib_cm_state(x) \
+		__prपूर्णांक_symbolic(x, IB_CM_STATE_LIST)
 
 /*
- * enum ib_cm_lap_state, from include/rdma/ib_cm.h
+ * क्रमागत ib_cm_lap_state, from include/rdma/ib_cm.h
  */
-#define IB_CM_LAP_STATE_LIST					\
+#घोषणा IB_CM_LAP_STATE_LIST					\
 	ib_cm_lap_state(LAP_UNINIT)				\
 	ib_cm_lap_state(LAP_IDLE)				\
 	ib_cm_lap_state(LAP_SENT)				\
@@ -65,25 +66,25 @@ IB_CM_STATE_LIST
 	ib_cm_lap_state(MRA_LAP_SENT)				\
 	ib_cm_lap_state_end(MRA_LAP_RCVD)
 
-#undef  ib_cm_lap_state
-#undef  ib_cm_lap_state_end
-#define ib_cm_lap_state(x)	TRACE_DEFINE_ENUM(IB_CM_##x);
-#define ib_cm_lap_state_end(x)	TRACE_DEFINE_ENUM(IB_CM_##x);
+#अघोषित  ib_cm_lap_state
+#अघोषित  ib_cm_lap_state_end
+#घोषणा ib_cm_lap_state(x)	TRACE_DEFINE_ENUM(IB_CM_##x);
+#घोषणा ib_cm_lap_state_end(x)	TRACE_DEFINE_ENUM(IB_CM_##x);
 
 IB_CM_LAP_STATE_LIST
 
-#undef  ib_cm_lap_state
-#undef  ib_cm_lap_state_end
-#define ib_cm_lap_state(x)	{ IB_CM_##x, #x },
-#define ib_cm_lap_state_end(x)	{ IB_CM_##x, #x }
+#अघोषित  ib_cm_lap_state
+#अघोषित  ib_cm_lap_state_end
+#घोषणा ib_cm_lap_state(x)	अणु IB_CM_##x, #x पूर्ण,
+#घोषणा ib_cm_lap_state_end(x)	अणु IB_CM_##x, #x पूर्ण
 
-#define show_ib_cm_lap_state(x) \
-		__print_symbolic(x, IB_CM_LAP_STATE_LIST)
+#घोषणा show_ib_cm_lap_state(x) \
+		__prपूर्णांक_symbolic(x, IB_CM_LAP_STATE_LIST)
 
 /*
- * enum ib_cm_rej_reason, from include/rdma/ib_cm.h
+ * क्रमागत ib_cm_rej_reason, from include/rdma/ib_cm.h
  */
-#define IB_CM_REJ_REASON_LIST					\
+#घोषणा IB_CM_REJ_REASON_LIST					\
 	ib_cm_rej_reason(REJ_NO_QP)				\
 	ib_cm_rej_reason(REJ_NO_EEC)				\
 	ib_cm_rej_reason(REJ_NO_RESOURCES)			\
@@ -107,8 +108,8 @@ IB_CM_LAP_STATE_LIST
 	ib_cm_rej_reason(REJ_INVALID_ALT_TRAFFIC_CLASS)		\
 	ib_cm_rej_reason(REJ_INVALID_ALT_HOP_LIMIT)		\
 	ib_cm_rej_reason(REJ_INVALID_ALT_PACKET_RATE)		\
-	ib_cm_rej_reason(REJ_PORT_CM_REDIRECT)			\
-	ib_cm_rej_reason(REJ_PORT_REDIRECT)			\
+	ib_cm_rej_reason(REJ_PORT_CM_REसूचीECT)			\
+	ib_cm_rej_reason(REJ_PORT_REसूचीECT)			\
 	ib_cm_rej_reason(REJ_INVALID_MTU)			\
 	ib_cm_rej_reason(REJ_INSUFFICIENT_RESP_RESOURCES)	\
 	ib_cm_rej_reason(REJ_CONSUMER_DEFINED)			\
@@ -119,34 +120,34 @@ IB_CM_LAP_STATE_LIST
 	ib_cm_rej_reason(REJ_INVALID_ALT_FLOW_LABEL)		\
 	ib_cm_rej_reason_end(REJ_VENDOR_OPTION_NOT_SUPPORTED)
 
-#undef  ib_cm_rej_reason
-#undef  ib_cm_rej_reason_end
-#define ib_cm_rej_reason(x)	TRACE_DEFINE_ENUM(IB_CM_##x);
-#define ib_cm_rej_reason_end(x)	TRACE_DEFINE_ENUM(IB_CM_##x);
+#अघोषित  ib_cm_rej_reason
+#अघोषित  ib_cm_rej_reason_end
+#घोषणा ib_cm_rej_reason(x)	TRACE_DEFINE_ENUM(IB_CM_##x);
+#घोषणा ib_cm_rej_reason_end(x)	TRACE_DEFINE_ENUM(IB_CM_##x);
 
 IB_CM_REJ_REASON_LIST
 
-#undef  ib_cm_rej_reason
-#undef  ib_cm_rej_reason_end
-#define ib_cm_rej_reason(x)	{ IB_CM_##x, #x },
-#define ib_cm_rej_reason_end(x)	{ IB_CM_##x, #x }
+#अघोषित  ib_cm_rej_reason
+#अघोषित  ib_cm_rej_reason_end
+#घोषणा ib_cm_rej_reason(x)	अणु IB_CM_##x, #x पूर्ण,
+#घोषणा ib_cm_rej_reason_end(x)	अणु IB_CM_##x, #x पूर्ण
 
-#define show_ib_cm_rej_reason(x) \
-		__print_symbolic(x, IB_CM_REJ_REASON_LIST)
+#घोषणा show_ib_cm_rej_reason(x) \
+		__prपूर्णांक_symbolic(x, IB_CM_REJ_REASON_LIST)
 
 DECLARE_EVENT_CLASS(icm_id_class,
 	TP_PROTO(
-		const struct ib_cm_id *cm_id
+		स्थिर काष्ठा ib_cm_id *cm_id
 	),
 
 	TP_ARGS(cm_id),
 
 	TP_STRUCT__entry(
-		__field(const void *, cm_id)	/* for eBPF scripts */
-		__field(unsigned int, local_id)
-		__field(unsigned int, remote_id)
-		__field(unsigned long, state)
-		__field(unsigned long, lap_state)
+		__field(स्थिर व्योम *, cm_id)	/* क्रम eBPF scripts */
+		__field(अचिन्हित पूर्णांक, local_id)
+		__field(अचिन्हित पूर्णांक, remote_id)
+		__field(अचिन्हित दीर्घ, state)
+		__field(अचिन्हित दीर्घ, lap_state)
 	),
 
 	TP_fast_assign(
@@ -157,18 +158,18 @@ DECLARE_EVENT_CLASS(icm_id_class,
 		__entry->lap_state = cm_id->lap_state;
 	),
 
-	TP_printk("local_id=%u remote_id=%u state=%s lap_state=%s",
+	TP_prपूर्णांकk("local_id=%u remote_id=%u state=%s lap_state=%s",
 		__entry->local_id, __entry->remote_id,
 		show_ib_cm_state(__entry->state),
 		show_ib_cm_lap_state(__entry->lap_state)
 	)
 );
 
-#define DEFINE_CM_SEND_EVENT(name)					\
+#घोषणा DEFINE_CM_SEND_EVENT(name)					\
 		DEFINE_EVENT(icm_id_class,				\
 				icm_send_##name,				\
 				TP_PROTO(				\
-					const struct ib_cm_id *cm_id	\
+					स्थिर काष्ठा ib_cm_id *cm_id	\
 				),					\
 				TP_ARGS(cm_id))
 
@@ -185,18 +186,18 @@ DEFINE_CM_SEND_EVENT(drep);
 
 TRACE_EVENT(icm_send_rej,
 	TP_PROTO(
-		const struct ib_cm_id *cm_id,
-		enum ib_cm_rej_reason reason
+		स्थिर काष्ठा ib_cm_id *cm_id,
+		क्रमागत ib_cm_rej_reason reason
 	),
 
 	TP_ARGS(cm_id, reason),
 
 	TP_STRUCT__entry(
-		__field(const void *, cm_id)
+		__field(स्थिर व्योम *, cm_id)
 		__field(u32, local_id)
 		__field(u32, remote_id)
-		__field(unsigned long, state)
-		__field(unsigned long, reason)
+		__field(अचिन्हित दीर्घ, state)
+		__field(अचिन्हित दीर्घ, reason)
 	),
 
 	TP_fast_assign(
@@ -207,18 +208,18 @@ TRACE_EVENT(icm_send_rej,
 		__entry->reason = reason;
 	),
 
-	TP_printk("local_id=%u remote_id=%u state=%s reason=%s",
+	TP_prपूर्णांकk("local_id=%u remote_id=%u state=%s reason=%s",
 		__entry->local_id, __entry->remote_id,
 		show_ib_cm_state(__entry->state),
 		show_ib_cm_rej_reason(__entry->reason)
 	)
 );
 
-#define DEFINE_CM_ERR_EVENT(name)					\
+#घोषणा DEFINE_CM_ERR_EVENT(name)					\
 		DEFINE_EVENT(icm_id_class,				\
 				icm_##name##_err,			\
 				TP_PROTO(				\
-					const struct ib_cm_id *cm_id	\
+					स्थिर काष्ठा ib_cm_id *cm_id	\
 				),					\
 				TP_ARGS(cm_id))
 
@@ -238,22 +239,22 @@ DEFINE_CM_ERR_EVENT(qp_rts);
 DEFINE_EVENT(icm_id_class,						\
 	icm_dreq_skipped,						\
 	TP_PROTO(							\
-		const struct ib_cm_id *cm_id				\
+		स्थिर काष्ठा ib_cm_id *cm_id				\
 	),								\
 	TP_ARGS(cm_id)							\
 );
 
 DECLARE_EVENT_CLASS(icm_local_class,
 	TP_PROTO(
-		unsigned int local_id,
-		unsigned int remote_id
+		अचिन्हित पूर्णांक local_id,
+		अचिन्हित पूर्णांक remote_id
 	),
 
 	TP_ARGS(local_id, remote_id),
 
 	TP_STRUCT__entry(
-		__field(unsigned int, local_id)
-		__field(unsigned int, remote_id)
+		__field(अचिन्हित पूर्णांक, local_id)
+		__field(अचिन्हित पूर्णांक, remote_id)
 	),
 
 	TP_fast_assign(
@@ -261,17 +262,17 @@ DECLARE_EVENT_CLASS(icm_local_class,
 		__entry->remote_id = remote_id;
 	),
 
-	TP_printk("local_id=%u remote_id=%u",
+	TP_prपूर्णांकk("local_id=%u remote_id=%u",
 		__entry->local_id, __entry->remote_id
 	)
 );
 
-#define DEFINE_CM_LOCAL_EVENT(name)					\
+#घोषणा DEFINE_CM_LOCAL_EVENT(name)					\
 		DEFINE_EVENT(icm_local_class,				\
 				icm_##name,				\
 				TP_PROTO(				\
-					unsigned int local_id,			\
-					unsigned int remote_id			\
+					अचिन्हित पूर्णांक local_id,			\
+					अचिन्हित पूर्णांक remote_id			\
 				),					\
 				TP_ARGS(local_id, remote_id))
 
@@ -295,12 +296,12 @@ DECLARE_EVENT_CLASS(icm_remote_class,
 		__entry->remote_id = remote_id;
 	),
 
-	TP_printk("remote_id=%u",
+	TP_prपूर्णांकk("remote_id=%u",
 		__entry->remote_id
 	)
 );
 
-#define DEFINE_CM_REMOTE_EVENT(name)					\
+#घोषणा DEFINE_CM_REMOTE_EVENT(name)					\
 		DEFINE_EVENT(icm_remote_class,				\
 				icm_##name,				\
 				TP_PROTO(				\
@@ -314,14 +315,14 @@ DEFINE_CM_REMOTE_EVENT(insert_failed_err);
 TRACE_EVENT(icm_send_rep_err,
 	TP_PROTO(
 		__be32 local_id,
-		enum ib_cm_state state
+		क्रमागत ib_cm_state state
 	),
 
 	TP_ARGS(local_id, state),
 
 	TP_STRUCT__entry(
-		__field(unsigned int, local_id)
-		__field(unsigned long, state)
+		__field(अचिन्हित पूर्णांक, local_id)
+		__field(अचिन्हित दीर्घ, state)
 	),
 
 	TP_fast_assign(
@@ -329,24 +330,24 @@ TRACE_EVENT(icm_send_rep_err,
 		__entry->state = state;
 	),
 
-	TP_printk("local_id=%u state=%s",
+	TP_prपूर्णांकk("local_id=%u state=%s",
 		__entry->local_id, show_ib_cm_state(__entry->state)
 	)
 );
 
 TRACE_EVENT(icm_rep_unknown_err,
 	TP_PROTO(
-		unsigned int local_id,
-		unsigned int remote_id,
-		enum ib_cm_state state
+		अचिन्हित पूर्णांक local_id,
+		अचिन्हित पूर्णांक remote_id,
+		क्रमागत ib_cm_state state
 	),
 
 	TP_ARGS(local_id, remote_id, state),
 
 	TP_STRUCT__entry(
-		__field(unsigned int, local_id)
-		__field(unsigned int, remote_id)
-		__field(unsigned long, state)
+		__field(अचिन्हित पूर्णांक, local_id)
+		__field(अचिन्हित पूर्णांक, remote_id)
+		__field(अचिन्हित दीर्घ, state)
 	),
 
 	TP_fast_assign(
@@ -355,7 +356,7 @@ TRACE_EVENT(icm_rep_unknown_err,
 		__entry->state = state;
 	),
 
-	TP_printk("local_id=%u remote_id=%u state=%s",
+	TP_prपूर्णांकk("local_id=%u remote_id=%u state=%s",
 		__entry->local_id, __entry->remote_id,
 		show_ib_cm_state(__entry->state)
 	)
@@ -363,35 +364,35 @@ TRACE_EVENT(icm_rep_unknown_err,
 
 TRACE_EVENT(icm_handler_err,
 	TP_PROTO(
-		enum ib_cm_event_type event
+		क्रमागत ib_cm_event_type event
 	),
 
 	TP_ARGS(event),
 
 	TP_STRUCT__entry(
-		__field(unsigned long, event)
+		__field(अचिन्हित दीर्घ, event)
 	),
 
 	TP_fast_assign(
 		__entry->event = event;
 	),
 
-	TP_printk("unhandled event=%s",
+	TP_prपूर्णांकk("unhandled event=%s",
 		rdma_show_ib_cm_event(__entry->event)
 	)
 );
 
 TRACE_EVENT(icm_mad_send_err,
 	TP_PROTO(
-		enum ib_cm_state state,
-		enum ib_wc_status wc_status
+		क्रमागत ib_cm_state state,
+		क्रमागत ib_wc_status wc_status
 	),
 
 	TP_ARGS(state, wc_status),
 
 	TP_STRUCT__entry(
-		__field(unsigned long, state)
-		__field(unsigned long, wc_status)
+		__field(अचिन्हित दीर्घ, state)
+		__field(अचिन्हित दीर्घ, wc_status)
 	),
 
 	TP_fast_assign(
@@ -399,16 +400,16 @@ TRACE_EVENT(icm_mad_send_err,
 		__entry->wc_status = wc_status;
 	),
 
-	TP_printk("state=%s completion status=%s",
+	TP_prपूर्णांकk("state=%s completion status=%s",
 		show_ib_cm_state(__entry->state),
 		rdma_show_wc_status(__entry->wc_status)
 	)
 );
 
-#endif /* _TRACE_IB_CMA_H */
+#पूर्ण_अगर /* _TRACE_IB_CMA_H */
 
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH ../../drivers/infiniband/core
-#define TRACE_INCLUDE_FILE cm_trace
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH ../../drivers/infiniband/core
+#घोषणा TRACE_INCLUDE_खाता cm_trace
 
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

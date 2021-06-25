@@ -1,103 +1,104 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _IO_H
-#define _IO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _IO_H
+#घोषणा _IO_H
 
-#include "types.h"
+#समावेश "types.h"
 
 /*
  * Low-level I/O routines.
  *
- * Copied from <file:arch/powerpc/include/asm/io.h> (which has no copyright)
+ * Copied from <file:arch/घातerpc/include/यंत्र/पन.स> (which has no copyright)
  */
-static inline int in_8(const volatile unsigned char *addr)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक in_8(स्थिर अस्थिर अचिन्हित अक्षर *addr)
+अणु
+	पूर्णांक ret;
 
-	__asm__ __volatile__("lbz%U1%X1 %0,%1; twi 0,%0,0; isync"
+	__यंत्र__ __अस्थिर__("lbz%U1%X1 %0,%1; twi 0,%0,0; isync"
 			     : "=r" (ret) : "m" (*addr));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void out_8(volatile unsigned char *addr, int val)
-{
-	__asm__ __volatile__("stb%U0%X0 %1,%0; sync"
+अटल अंतरभूत व्योम out_8(अस्थिर अचिन्हित अक्षर *addr, पूर्णांक val)
+अणु
+	__यंत्र__ __अस्थिर__("stb%U0%X0 %1,%0; sync"
 			     : "=m" (*addr) : "r" (val));
-}
+पूर्ण
 
-static inline unsigned in_le16(const volatile u16 *addr)
-{
-	unsigned ret;
+अटल अंतरभूत अचिन्हित in_le16(स्थिर अस्थिर u16 *addr)
+अणु
+	अचिन्हित ret;
 
-	__asm__ __volatile__("lhbrx %0,0,%1; twi 0,%0,0; isync"
+	__यंत्र__ __अस्थिर__("lhbrx %0,0,%1; twi 0,%0,0; isync"
 			     : "=r" (ret) : "r" (addr), "m" (*addr));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline unsigned in_be16(const volatile u16 *addr)
-{
-	unsigned ret;
+अटल अंतरभूत अचिन्हित in_be16(स्थिर अस्थिर u16 *addr)
+अणु
+	अचिन्हित ret;
 
-	__asm__ __volatile__("lhz%U1%X1 %0,%1; twi 0,%0,0; isync"
+	__यंत्र__ __अस्थिर__("lhz%U1%X1 %0,%1; twi 0,%0,0; isync"
 			     : "=r" (ret) : "m" (*addr));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void out_le16(volatile u16 *addr, int val)
-{
-	__asm__ __volatile__("sthbrx %1,0,%2; sync" : "=m" (*addr)
+अटल अंतरभूत व्योम out_le16(अस्थिर u16 *addr, पूर्णांक val)
+अणु
+	__यंत्र__ __अस्थिर__("sthbrx %1,0,%2; sync" : "=m" (*addr)
 			     : "r" (val), "r" (addr));
-}
+पूर्ण
 
-static inline void out_be16(volatile u16 *addr, int val)
-{
-	__asm__ __volatile__("sth%U0%X0 %1,%0; sync"
+अटल अंतरभूत व्योम out_be16(अस्थिर u16 *addr, पूर्णांक val)
+अणु
+	__यंत्र__ __अस्थिर__("sth%U0%X0 %1,%0; sync"
 			     : "=m" (*addr) : "r" (val));
-}
+पूर्ण
 
-static inline unsigned in_le32(const volatile unsigned *addr)
-{
-	unsigned ret;
+अटल अंतरभूत अचिन्हित in_le32(स्थिर अस्थिर अचिन्हित *addr)
+अणु
+	अचिन्हित ret;
 
-	__asm__ __volatile__("lwbrx %0,0,%1; twi 0,%0,0; isync"
+	__यंत्र__ __अस्थिर__("lwbrx %0,0,%1; twi 0,%0,0; isync"
 			     : "=r" (ret) : "r" (addr), "m" (*addr));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline unsigned in_be32(const volatile unsigned *addr)
-{
-	unsigned ret;
+अटल अंतरभूत अचिन्हित in_be32(स्थिर अस्थिर अचिन्हित *addr)
+अणु
+	अचिन्हित ret;
 
-	__asm__ __volatile__("lwz%U1%X1 %0,%1; twi 0,%0,0; isync"
+	__यंत्र__ __अस्थिर__("lwz%U1%X1 %0,%1; twi 0,%0,0; isync"
 			     : "=r" (ret) : "m" (*addr));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void out_le32(volatile unsigned *addr, int val)
-{
-	__asm__ __volatile__("stwbrx %1,0,%2; sync" : "=m" (*addr)
+अटल अंतरभूत व्योम out_le32(अस्थिर अचिन्हित *addr, पूर्णांक val)
+अणु
+	__यंत्र__ __अस्थिर__("stwbrx %1,0,%2; sync" : "=m" (*addr)
 			     : "r" (val), "r" (addr));
-}
+पूर्ण
 
-static inline void out_be32(volatile unsigned *addr, int val)
-{
-	__asm__ __volatile__("stw%U0%X0 %1,%0; sync"
+अटल अंतरभूत व्योम out_be32(अस्थिर अचिन्हित *addr, पूर्णांक val)
+अणु
+	__यंत्र__ __अस्थिर__("stw%U0%X0 %1,%0; sync"
 			     : "=m" (*addr) : "r" (val));
-}
+पूर्ण
 
-static inline void sync(void)
-{
-	asm volatile("sync" : : : "memory");
-}
+अटल अंतरभूत व्योम sync(व्योम)
+अणु
+	यंत्र अस्थिर("sync" : : : "memory");
+पूर्ण
 
-static inline void eieio(void)
-{
-	asm volatile("eieio" : : : "memory");
-}
+अटल अंतरभूत व्योम eieio(व्योम)
+अणु
+	यंत्र अस्थिर("eieio" : : : "memory");
+पूर्ण
 
-static inline void barrier(void)
-{
-	asm volatile("" : : : "memory");
-}
+अटल अंतरभूत व्योम barrier(व्योम)
+अणु
+	यंत्र अस्थिर("" : : : "memory");
+पूर्ण
 
-#endif /* _IO_H */
+#पूर्ण_अगर /* _IO_H */

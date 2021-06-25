@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * resize.h
  *
@@ -7,10 +8,10 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
-#ifndef OCFS2_RESIZE_H
-#define OCFS2_RESIZE_H
+#अगर_अघोषित OCFS2_RESIZE_H
+#घोषणा OCFS2_RESIZE_H
 
-int ocfs2_group_extend(struct inode * inode, int new_clusters);
-int ocfs2_group_add(struct inode *inode, struct ocfs2_new_group_input *input);
+पूर्णांक ocfs2_group_extend(काष्ठा inode * inode, पूर्णांक new_clusters);
+पूर्णांक ocfs2_group_add(काष्ठा inode *inode, काष्ठा ocfs2_new_group_input *input);
 
-#endif /* OCFS2_RESIZE_H */
+#पूर्ण_अगर /* OCFS2_RESIZE_H */

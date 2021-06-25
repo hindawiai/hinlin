@@ -1,167 +1,168 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * misc.c
  * 
  * This is a collection of several routines from gzip-1.0.3 
- * adapted for Linux.
+ * adapted क्रम Linux.
  *
- * malloc by Hannu Savolainen 1993 and Matthias Urlichs 1994
+ * दो_स्मृति by Hannu Savolainen 1993 and Matthias Urlichs 1994
  *
- * Modified for ARM Linux by Russell King
+ * Modअगरied क्रम ARM Linux by Russell King
  *
  * Nicolas Pitre <nico@visuaide.com>  1999/04/14 :
- *  For this code to run directly from Flash, all constant variables must
- *  be marked with 'const' and all other variables initialized at run-time 
- *  only.  This way all non constant variables will end up in the bss segment,
- *  which should point to addresses in RAM and cleared to 0 on start.
- *  This allows for a much quicker boot time.
+ *  For this code to run directly from Flash, all स्थिरant variables must
+ *  be marked with 'const' and all other variables initialized at run-समय 
+ *  only.  This way all non स्थिरant variables will end up in the bss segment,
+ *  which should poपूर्णांक to addresses in RAM and cleared to 0 on start.
+ *  This allows क्रम a much quicker boot समय.
  */
 
-unsigned int __machine_arch_type;
+अचिन्हित पूर्णांक __machine_arch_type;
 
-#include <linux/compiler.h>	/* for inline */
-#include <linux/types.h>
-#include <linux/linkage.h>
-#include "misc.h"
+#समावेश <linux/compiler.h>	/* क्रम अंतरभूत */
+#समावेश <linux/types.h>
+#समावेश <linux/linkage.h>
+#समावेश "misc.h"
 
-static void putstr(const char *ptr);
+अटल व्योम माला_दोtr(स्थिर अक्षर *ptr);
 
-#include CONFIG_UNCOMPRESS_INCLUDE
+#समावेश CONFIG_UNCOMPRESS_INCLUDE
 
-#ifdef CONFIG_DEBUG_ICEDCC
+#अगर_घोषित CONFIG_DEBUG_ICEDCC
 
-#if defined(CONFIG_CPU_V6) || defined(CONFIG_CPU_V6K) || defined(CONFIG_CPU_V7)
+#अगर defined(CONFIG_CPU_V6) || defined(CONFIG_CPU_V6K) || defined(CONFIG_CPU_V7)
 
-static void icedcc_putc(int ch)
-{
-	int status, i = 0x4000000;
+अटल व्योम icedcc_अ_दो(पूर्णांक ch)
+अणु
+	पूर्णांक status, i = 0x4000000;
 
-	do {
-		if (--i < 0)
-			return;
+	करो अणु
+		अगर (--i < 0)
+			वापस;
 
-		asm volatile ("mrc p14, 0, %0, c0, c1, 0" : "=r" (status));
-	} while (status & (1 << 29));
+		यंत्र अस्थिर ("mrc p14, 0, %0, c0, c1, 0" : "=r" (status));
+	पूर्ण जबतक (status & (1 << 29));
 
-	asm("mcr p14, 0, %0, c0, c5, 0" : : "r" (ch));
-}
+	यंत्र("mcr p14, 0, %0, c0, c5, 0" : : "r" (ch));
+पूर्ण
 
 
-#elif defined(CONFIG_CPU_XSCALE)
+#या_अगर defined(CONFIG_CPU_XSCALE)
 
-static void icedcc_putc(int ch)
-{
-	int status, i = 0x4000000;
+अटल व्योम icedcc_अ_दो(पूर्णांक ch)
+अणु
+	पूर्णांक status, i = 0x4000000;
 
-	do {
-		if (--i < 0)
-			return;
+	करो अणु
+		अगर (--i < 0)
+			वापस;
 
-		asm volatile ("mrc p14, 0, %0, c14, c0, 0" : "=r" (status));
-	} while (status & (1 << 28));
+		यंत्र अस्थिर ("mrc p14, 0, %0, c14, c0, 0" : "=r" (status));
+	पूर्ण जबतक (status & (1 << 28));
 
-	asm("mcr p14, 0, %0, c8, c0, 0" : : "r" (ch));
-}
+	यंत्र("mcr p14, 0, %0, c8, c0, 0" : : "r" (ch));
+पूर्ण
 
-#else
+#अन्यथा
 
-static void icedcc_putc(int ch)
-{
-	int status, i = 0x4000000;
+अटल व्योम icedcc_अ_दो(पूर्णांक ch)
+अणु
+	पूर्णांक status, i = 0x4000000;
 
-	do {
-		if (--i < 0)
-			return;
+	करो अणु
+		अगर (--i < 0)
+			वापस;
 
-		asm volatile ("mrc p14, 0, %0, c0, c0, 0" : "=r" (status));
-	} while (status & 2);
+		यंत्र अस्थिर ("mrc p14, 0, %0, c0, c0, 0" : "=r" (status));
+	पूर्ण जबतक (status & 2);
 
-	asm("mcr p14, 0, %0, c1, c0, 0" : : "r" (ch));
-}
+	यंत्र("mcr p14, 0, %0, c1, c0, 0" : : "r" (ch));
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#define putc(ch)	icedcc_putc(ch)
-#endif
+#घोषणा अ_दो(ch)	icedcc_अ_दो(ch)
+#पूर्ण_अगर
 
-static void putstr(const char *ptr)
-{
-	char c;
+अटल व्योम माला_दोtr(स्थिर अक्षर *ptr)
+अणु
+	अक्षर c;
 
-	while ((c = *ptr++) != '\0') {
-		if (c == '\n')
-			putc('\r');
-		putc(c);
-	}
+	जबतक ((c = *ptr++) != '\0') अणु
+		अगर (c == '\n')
+			अ_दो('\r');
+		अ_दो(c);
+	पूर्ण
 
 	flush();
-}
+पूर्ण
 
 /*
  * gzip declarations
  */
-extern char input_data[];
-extern char input_data_end[];
+बाह्य अक्षर input_data[];
+बाह्य अक्षर input_data_end[];
 
-unsigned char *output_data;
+अचिन्हित अक्षर *output_data;
 
-unsigned long free_mem_ptr;
-unsigned long free_mem_end_ptr;
+अचिन्हित दीर्घ मुक्त_mem_ptr;
+अचिन्हित दीर्घ मुक्त_mem_end_ptr;
 
-#ifndef arch_error
-#define arch_error(x)
-#endif
+#अगर_अघोषित arch_error
+#घोषणा arch_error(x)
+#पूर्ण_अगर
 
-void error(char *x)
-{
+व्योम error(अक्षर *x)
+अणु
 	arch_error(x);
 
-	putstr("\n\n");
-	putstr(x);
-	putstr("\n\n -- System halted");
+	माला_दोtr("\n\n");
+	माला_दोtr(x);
+	माला_दोtr("\n\n -- System halted");
 
-	while(1);	/* Halt */
-}
+	जबतक(1);	/* Halt */
+पूर्ण
 
-asmlinkage void __div0(void)
-{
+यंत्रlinkage व्योम __भाग0(व्योम)
+अणु
 	error("Attempting division by 0!");
-}
+पूर्ण
 
-const unsigned long __stack_chk_guard = 0x000a0dff;
+स्थिर अचिन्हित दीर्घ __stack_chk_guard = 0x000a0dff;
 
-void __stack_chk_fail(void)
-{
+व्योम __stack_chk_fail(व्योम)
+अणु
 	error("stack-protector: Kernel stack is corrupted\n");
-}
+पूर्ण
 
-extern int do_decompress(u8 *input, int len, u8 *output, void (*error)(char *x));
+बाह्य पूर्णांक करो_decompress(u8 *input, पूर्णांक len, u8 *output, व्योम (*error)(अक्षर *x));
 
 
-void
-decompress_kernel(unsigned long output_start, unsigned long free_mem_ptr_p,
-		unsigned long free_mem_ptr_end_p,
-		int arch_id)
-{
-	int ret;
+व्योम
+decompress_kernel(अचिन्हित दीर्घ output_start, अचिन्हित दीर्घ मुक्त_mem_ptr_p,
+		अचिन्हित दीर्घ मुक्त_mem_ptr_end_p,
+		पूर्णांक arch_id)
+अणु
+	पूर्णांक ret;
 
-	output_data		= (unsigned char *)output_start;
-	free_mem_ptr		= free_mem_ptr_p;
-	free_mem_end_ptr	= free_mem_ptr_end_p;
+	output_data		= (अचिन्हित अक्षर *)output_start;
+	मुक्त_mem_ptr		= मुक्त_mem_ptr_p;
+	मुक्त_mem_end_ptr	= मुक्त_mem_ptr_end_p;
 	__machine_arch_type	= arch_id;
 
 	arch_decomp_setup();
 
-	putstr("Uncompressing Linux...");
-	ret = do_decompress(input_data, input_data_end - input_data,
+	माला_दोtr("Uncompressing Linux...");
+	ret = करो_decompress(input_data, input_data_end - input_data,
 			    output_data, error);
-	if (ret)
+	अगर (ret)
 		error("decompressor returned an error");
-	else
-		putstr(" done, booting the kernel.\n");
-}
+	अन्यथा
+		माला_दोtr(" done, booting the kernel.\n");
+पूर्ण
 
-void fortify_panic(const char *name)
-{
+व्योम क्रमtअगरy_panic(स्थिर अक्षर *name)
+अणु
 	error("detected buffer overflow");
-}
+पूर्ण

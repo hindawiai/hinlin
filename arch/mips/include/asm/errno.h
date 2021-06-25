@@ -1,17 +1,18 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1995, 1999, 2001, 2002 by Ralf Baechle
  */
-#ifndef _ASM_ERRNO_H
-#define _ASM_ERRNO_H
+#अगर_अघोषित _ASM_ERRNO_H
+#घोषणा _ASM_ERRNO_H
 
-#include <uapi/asm/errno.h>
+#समावेश <uapi/यंत्र/त्रुटिसं.स>
 
 
-/* The biggest error number defined here or in <linux/errno.h>. */
-#define EMAXERRNO	1133
+/* The biggest error number defined here or in <linux/त्रुटिसं.स>. */
+#घोषणा EMAXERRNO	1133
 
-#endif /* _ASM_ERRNO_H */
+#पूर्ण_अगर /* _ASM_ERRNO_H */

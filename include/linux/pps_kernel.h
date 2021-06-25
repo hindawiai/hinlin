@@ -1,72 +1,73 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * PPS API kernel header
  *
- * Copyright (C) 2009   Rodolfo Giometti <giometti@linux.it>
+ * Copyright (C) 2009   Roकरोlfo Giometti <giometti@linux.it>
  */
 
-#ifndef LINUX_PPS_KERNEL_H
-#define LINUX_PPS_KERNEL_H
+#अगर_अघोषित LINUX_PPS_KERNEL_H
+#घोषणा LINUX_PPS_KERNEL_H
 
-#include <linux/pps.h>
-#include <linux/cdev.h>
-#include <linux/device.h>
-#include <linux/time.h>
+#समावेश <linux/pps.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/device.h>
+#समावेश <linux/समय.स>
 
 /*
  * Global defines
  */
 
-struct pps_device;
+काष्ठा pps_device;
 
-/* The specific PPS source info */
-struct pps_source_info {
-	char name[PPS_MAX_NAME_LEN];		/* symbolic name */
-	char path[PPS_MAX_NAME_LEN];		/* path of connected device */
-	int mode;				/* PPS allowed mode */
+/* The specअगरic PPS source info */
+काष्ठा pps_source_info अणु
+	अक्षर name[PPS_MAX_NAME_LEN];		/* symbolic name */
+	अक्षर path[PPS_MAX_NAME_LEN];		/* path of connected device */
+	पूर्णांक mode;				/* PPS allowed mode */
 
-	void (*echo)(struct pps_device *pps,
-			int event, void *data);	/* PPS echo function */
+	व्योम (*echo)(काष्ठा pps_device *pps,
+			पूर्णांक event, व्योम *data);	/* PPS echo function */
 
-	struct module *owner;
-	struct device *dev;		/* Parent device for device_create */
-};
+	काष्ठा module *owner;
+	काष्ठा device *dev;		/* Parent device क्रम device_create */
+पूर्ण;
 
-struct pps_event_time {
-#ifdef CONFIG_NTP_PPS
-	struct timespec64 ts_raw;
-#endif /* CONFIG_NTP_PPS */
-	struct timespec64 ts_real;
-};
+काष्ठा pps_event_समय अणु
+#अगर_घोषित CONFIG_NTP_PPS
+	काष्ठा बारpec64 ts_raw;
+#पूर्ण_अगर /* CONFIG_NTP_PPS */
+	काष्ठा बारpec64 ts_real;
+पूर्ण;
 
-/* The main struct */
-struct pps_device {
-	struct pps_source_info info;		/* PSS source info */
+/* The मुख्य काष्ठा */
+काष्ठा pps_device अणु
+	काष्ठा pps_source_info info;		/* PSS source info */
 
-	struct pps_kparams params;		/* PPS current params */
+	काष्ठा pps_kparams params;		/* PPS current params */
 
-	__u32 assert_sequence;			/* PPS assert event seq # */
+	__u32 निश्चित_sequence;			/* PPS निश्चित event seq # */
 	__u32 clear_sequence;			/* PPS clear event seq # */
-	struct pps_ktime assert_tu;
-	struct pps_ktime clear_tu;
-	int current_mode;			/* PPS mode at event time */
+	काष्ठा pps_kसमय निश्चित_tu;
+	काष्ठा pps_kसमय clear_tu;
+	पूर्णांक current_mode;			/* PPS mode at event समय */
 
-	unsigned int last_ev;			/* last PPS event id */
-	wait_queue_head_t queue;		/* PPS event queue */
+	अचिन्हित पूर्णांक last_ev;			/* last PPS event id */
+	रुको_queue_head_t queue;		/* PPS event queue */
 
-	unsigned int id;			/* PPS source unique ID */
-	void const *lookup_cookie;		/* For pps_lookup_dev() only */
-	struct cdev cdev;
-	struct device *dev;
-	struct fasync_struct *async_queue;	/* fasync method */
+	अचिन्हित पूर्णांक id;			/* PPS source unique ID */
+	व्योम स्थिर *lookup_cookie;		/* For pps_lookup_dev() only */
+	काष्ठा cdev cdev;
+	काष्ठा device *dev;
+	काष्ठा fasync_काष्ठा *async_queue;	/* fasync method */
 	spinlock_t lock;
-};
+पूर्ण;
 
 /*
  * Global variables
  */
 
-extern const struct attribute_group *pps_groups[];
+बाह्य स्थिर काष्ठा attribute_group *pps_groups[];
 
 /*
  * Internal functions.
@@ -75,46 +76,46 @@ extern const struct attribute_group *pps_groups[];
  * convenient header file to put them in.
  */
 
-extern int pps_register_cdev(struct pps_device *pps);
-extern void pps_unregister_cdev(struct pps_device *pps);
+बाह्य पूर्णांक pps_रेजिस्टर_cdev(काष्ठा pps_device *pps);
+बाह्य व्योम pps_unरेजिस्टर_cdev(काष्ठा pps_device *pps);
 
 /*
  * Exported functions
  */
 
-extern struct pps_device *pps_register_source(
-		struct pps_source_info *info, int default_params);
-extern void pps_unregister_source(struct pps_device *pps);
-extern void pps_event(struct pps_device *pps,
-		struct pps_event_time *ts, int event, void *data);
+बाह्य काष्ठा pps_device *pps_रेजिस्टर_source(
+		काष्ठा pps_source_info *info, पूर्णांक शेष_params);
+बाह्य व्योम pps_unरेजिस्टर_source(काष्ठा pps_device *pps);
+बाह्य व्योम pps_event(काष्ठा pps_device *pps,
+		काष्ठा pps_event_समय *ts, पूर्णांक event, व्योम *data);
 /* Look up a pps_device by magic cookie */
-struct pps_device *pps_lookup_dev(void const *cookie);
+काष्ठा pps_device *pps_lookup_dev(व्योम स्थिर *cookie);
 
-static inline void timespec_to_pps_ktime(struct pps_ktime *kt,
-		struct timespec64 ts)
-{
+अटल अंतरभूत व्योम बारpec_to_pps_kसमय(काष्ठा pps_kसमय *kt,
+		काष्ठा बारpec64 ts)
+अणु
 	kt->sec = ts.tv_sec;
 	kt->nsec = ts.tv_nsec;
-}
+पूर्ण
 
-static inline void pps_get_ts(struct pps_event_time *ts)
-{
-	struct system_time_snapshot snap;
+अटल अंतरभूत व्योम pps_get_ts(काष्ठा pps_event_समय *ts)
+अणु
+	काष्ठा प्रणाली_समय_snapshot snap;
 
-	ktime_get_snapshot(&snap);
-	ts->ts_real = ktime_to_timespec64(snap.real);
-#ifdef CONFIG_NTP_PPS
-	ts->ts_raw = ktime_to_timespec64(snap.raw);
-#endif
-}
+	kसमय_get_snapshot(&snap);
+	ts->ts_real = kसमय_प्रकारo_बारpec64(snap.real);
+#अगर_घोषित CONFIG_NTP_PPS
+	ts->ts_raw = kसमय_प्रकारo_बारpec64(snap.raw);
+#पूर्ण_अगर
+पूर्ण
 
-/* Subtract known time delay from PPS event time(s) */
-static inline void pps_sub_ts(struct pps_event_time *ts, struct timespec64 delta)
-{
-	ts->ts_real = timespec64_sub(ts->ts_real, delta);
-#ifdef CONFIG_NTP_PPS
-	ts->ts_raw = timespec64_sub(ts->ts_raw, delta);
-#endif
-}
+/* Subtract known समय delay from PPS event समय(s) */
+अटल अंतरभूत व्योम pps_sub_ts(काष्ठा pps_event_समय *ts, काष्ठा बारpec64 delta)
+अणु
+	ts->ts_real = बारpec64_sub(ts->ts_real, delta);
+#अगर_घोषित CONFIG_NTP_PPS
+	ts->ts_raw = बारpec64_sub(ts->ts_raw, delta);
+#पूर्ण_अगर
+पूर्ण
 
-#endif /* LINUX_PPS_KERNEL_H */
+#पूर्ण_अगर /* LINUX_PPS_KERNEL_H */

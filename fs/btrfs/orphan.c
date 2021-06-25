@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2008 Red Hat.  All rights reserved.
  */
 
-#include "ctree.h"
-#include "disk-io.h"
+#समावेश "ctree.h"
+#समावेश "disk-io.h"
 
-int btrfs_insert_orphan_item(struct btrfs_trans_handle *trans,
-			     struct btrfs_root *root, u64 offset)
-{
-	struct btrfs_path *path;
-	struct btrfs_key key;
-	int ret = 0;
+पूर्णांक btrfs_insert_orphan_item(काष्ठा btrfs_trans_handle *trans,
+			     काष्ठा btrfs_root *root, u64 offset)
+अणु
+	काष्ठा btrfs_path *path;
+	काष्ठा btrfs_key key;
+	पूर्णांक ret = 0;
 
 	key.objectid = BTRFS_ORPHAN_OBJECTID;
 	key.type = BTRFS_ORPHAN_ITEM_KEY;
 	key.offset = offset;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
 	ret = btrfs_insert_empty_item(trans, root, path, &key, 0);
 
-	btrfs_free_path(path);
-	return ret;
-}
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
-int btrfs_del_orphan_item(struct btrfs_trans_handle *trans,
-			  struct btrfs_root *root, u64 offset)
-{
-	struct btrfs_path *path;
-	struct btrfs_key key;
-	int ret = 0;
+पूर्णांक btrfs_del_orphan_item(काष्ठा btrfs_trans_handle *trans,
+			  काष्ठा btrfs_root *root, u64 offset)
+अणु
+	काष्ठा btrfs_path *path;
+	काष्ठा btrfs_key key;
+	पूर्णांक ret = 0;
 
 	key.objectid = BTRFS_ORPHAN_OBJECTID;
 	key.type = BTRFS_ORPHAN_ITEM_KEY;
 	key.offset = offset;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
 	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
-	if (ret < 0)
-		goto out;
-	if (ret) { /* JDM: Really? */
+	अगर (ret < 0)
+		जाओ out;
+	अगर (ret) अणु /* JDM: Really? */
 		ret = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = btrfs_del_item(trans, root, path);
 
 out:
-	btrfs_free_path(path);
-	return ret;
-}
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण

@@ -1,130 +1,131 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <test_progs.h>
-#include "cgroup_helpers.h"
-#include "network_helpers.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <test_progs.h>
+#समावेश "cgroup_helpers.h"
+#समावेश "network_helpers.h"
 
-struct tcp_rtt_storage {
+काष्ठा tcp_rtt_storage अणु
 	__u32 invoked;
 	__u32 dsack_dups;
 	__u32 delivered;
 	__u32 delivered_ce;
 	__u32 icsk_retransmits;
-};
+पूर्ण;
 
-static void send_byte(int fd)
-{
-	char b = 0x55;
+अटल व्योम send_byte(पूर्णांक fd)
+अणु
+	अक्षर b = 0x55;
 
-	if (CHECK_FAIL(write(fd, &b, sizeof(b)) != 1))
-		perror("Failed to send single byte");
-}
+	अगर (CHECK_FAIL(ग_लिखो(fd, &b, माप(b)) != 1))
+		लिखो_त्रुटि("Failed to send single byte");
+पूर्ण
 
-static int wait_for_ack(int fd, int retries)
-{
-	struct tcp_info info;
+अटल पूर्णांक रुको_क्रम_ack(पूर्णांक fd, पूर्णांक retries)
+अणु
+	काष्ठा tcp_info info;
 	socklen_t optlen;
-	int i, err;
+	पूर्णांक i, err;
 
-	for (i = 0; i < retries; i++) {
-		optlen = sizeof(info);
-		err = getsockopt(fd, SOL_TCP, TCP_INFO, &info, &optlen);
-		if (err < 0) {
+	क्रम (i = 0; i < retries; i++) अणु
+		optlen = माप(info);
+		err = माला_लोockopt(fd, SOL_TCP, TCP_INFO, &info, &optlen);
+		अगर (err < 0) अणु
 			log_err("Failed to lookup TCP stats");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		if (info.tcpi_unacked == 0)
-			return 0;
+		अगर (info.tcpi_unacked == 0)
+			वापस 0;
 
 		usleep(10);
-	}
+	पूर्ण
 
 	log_err("Did not receive ACK");
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int verify_sk(int map_fd, int client_fd, const char *msg, __u32 invoked,
+अटल पूर्णांक verअगरy_sk(पूर्णांक map_fd, पूर्णांक client_fd, स्थिर अक्षर *msg, __u32 invoked,
 		     __u32 dsack_dups, __u32 delivered, __u32 delivered_ce,
 		     __u32 icsk_retransmits)
-{
-	int err = 0;
-	struct tcp_rtt_storage val;
+अणु
+	पूर्णांक err = 0;
+	काष्ठा tcp_rtt_storage val;
 
-	if (CHECK_FAIL(bpf_map_lookup_elem(map_fd, &client_fd, &val) < 0)) {
-		perror("Failed to read socket storage");
-		return -1;
-	}
+	अगर (CHECK_FAIL(bpf_map_lookup_elem(map_fd, &client_fd, &val) < 0)) अणु
+		लिखो_त्रुटि("Failed to read socket storage");
+		वापस -1;
+	पूर्ण
 
-	if (val.invoked != invoked) {
+	अगर (val.invoked != invoked) अणु
 		log_err("%s: unexpected bpf_tcp_sock.invoked %d != %d",
 			msg, val.invoked, invoked);
 		err++;
-	}
+	पूर्ण
 
-	if (val.dsack_dups != dsack_dups) {
+	अगर (val.dsack_dups != dsack_dups) अणु
 		log_err("%s: unexpected bpf_tcp_sock.dsack_dups %d != %d",
 			msg, val.dsack_dups, dsack_dups);
 		err++;
-	}
+	पूर्ण
 
-	if (val.delivered != delivered) {
+	अगर (val.delivered != delivered) अणु
 		log_err("%s: unexpected bpf_tcp_sock.delivered %d != %d",
 			msg, val.delivered, delivered);
 		err++;
-	}
+	पूर्ण
 
-	if (val.delivered_ce != delivered_ce) {
+	अगर (val.delivered_ce != delivered_ce) अणु
 		log_err("%s: unexpected bpf_tcp_sock.delivered_ce %d != %d",
 			msg, val.delivered_ce, delivered_ce);
 		err++;
-	}
+	पूर्ण
 
-	if (val.icsk_retransmits != icsk_retransmits) {
+	अगर (val.icsk_retransmits != icsk_retransmits) अणु
 		log_err("%s: unexpected bpf_tcp_sock.icsk_retransmits %d != %d",
 			msg, val.icsk_retransmits, icsk_retransmits);
 		err++;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
-static int run_test(int cgroup_fd, int server_fd)
-{
-	struct bpf_prog_load_attr attr = {
+अटल पूर्णांक run_test(पूर्णांक cgroup_fd, पूर्णांक server_fd)
+अणु
+	काष्ठा bpf_prog_load_attr attr = अणु
 		.prog_type = BPF_PROG_TYPE_SOCK_OPS,
 		.file = "./tcp_rtt.o",
 		.expected_attach_type = BPF_CGROUP_SOCK_OPS,
-	};
-	struct bpf_object *obj;
-	struct bpf_map *map;
-	int client_fd;
-	int prog_fd;
-	int map_fd;
-	int err;
+	पूर्ण;
+	काष्ठा bpf_object *obj;
+	काष्ठा bpf_map *map;
+	पूर्णांक client_fd;
+	पूर्णांक prog_fd;
+	पूर्णांक map_fd;
+	पूर्णांक err;
 
 	err = bpf_prog_load_xattr(&attr, &obj, &prog_fd);
-	if (err) {
+	अगर (err) अणु
 		log_err("Failed to load BPF object");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	map = bpf_map__next(NULL, obj);
+	map = bpf_map__next(शून्य, obj);
 	map_fd = bpf_map__fd(map);
 
 	err = bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_SOCK_OPS, 0);
-	if (err) {
+	अगर (err) अणु
 		log_err("Failed to attach BPF program");
-		goto close_bpf_object;
-	}
+		जाओ बंद_bpf_object;
+	पूर्ण
 
 	client_fd = connect_to_fd(server_fd, 0);
-	if (client_fd < 0) {
+	अगर (client_fd < 0) अणु
 		err = -1;
-		goto close_bpf_object;
-	}
+		जाओ बंद_bpf_object;
+	पूर्ण
 
-	err += verify_sk(map_fd, client_fd, "syn-ack",
+	err += verअगरy_sk(map_fd, client_fd, "syn-ack",
 			 /*invoked=*/1,
 			 /*dsack_dups=*/0,
 			 /*delivered=*/1,
@@ -132,43 +133,43 @@ static int run_test(int cgroup_fd, int server_fd)
 			 /*icsk_retransmits=*/0);
 
 	send_byte(client_fd);
-	if (wait_for_ack(client_fd, 100) < 0) {
+	अगर (रुको_क्रम_ack(client_fd, 100) < 0) अणु
 		err = -1;
-		goto close_client_fd;
-	}
+		जाओ बंद_client_fd;
+	पूर्ण
 
 
-	err += verify_sk(map_fd, client_fd, "first payload byte",
+	err += verअगरy_sk(map_fd, client_fd, "first payload byte",
 			 /*invoked=*/2,
 			 /*dsack_dups=*/0,
 			 /*delivered=*/2,
 			 /*delivered_ce=*/0,
 			 /*icsk_retransmits=*/0);
 
-close_client_fd:
-	close(client_fd);
+बंद_client_fd:
+	बंद(client_fd);
 
-close_bpf_object:
-	bpf_object__close(obj);
-	return err;
-}
+बंद_bpf_object:
+	bpf_object__बंद(obj);
+	वापस err;
+पूर्ण
 
-void test_tcp_rtt(void)
-{
-	int server_fd, cgroup_fd;
+व्योम test_tcp_rtt(व्योम)
+अणु
+	पूर्णांक server_fd, cgroup_fd;
 
 	cgroup_fd = test__join_cgroup("/tcp_rtt");
-	if (CHECK_FAIL(cgroup_fd < 0))
-		return;
+	अगर (CHECK_FAIL(cgroup_fd < 0))
+		वापस;
 
-	server_fd = start_server(AF_INET, SOCK_STREAM, NULL, 0, 0);
-	if (CHECK_FAIL(server_fd < 0))
-		goto close_cgroup_fd;
+	server_fd = start_server(AF_INET, SOCK_STREAM, शून्य, 0, 0);
+	अगर (CHECK_FAIL(server_fd < 0))
+		जाओ बंद_cgroup_fd;
 
 	CHECK_FAIL(run_test(cgroup_fd, server_fd));
 
-	close(server_fd);
+	बंद(server_fd);
 
-close_cgroup_fd:
-	close(cgroup_fd);
-}
+बंद_cgroup_fd:
+	बंद(cgroup_fd);
+पूर्ण

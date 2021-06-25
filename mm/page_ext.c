@@ -1,160 +1,161 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/mm.h>
-#include <linux/mmzone.h>
-#include <linux/memblock.h>
-#include <linux/page_ext.h>
-#include <linux/memory.h>
-#include <linux/vmalloc.h>
-#include <linux/kmemleak.h>
-#include <linux/page_owner.h>
-#include <linux/page_idle.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/mm.h>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/page_ext.h>
+#समावेश <linux/memory.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/kmemleak.h>
+#समावेश <linux/page_owner.h>
+#समावेश <linux/page_idle.h>
 
 /*
- * struct page extension
+ * काष्ठा page extension
  *
- * This is the feature to manage memory for extended data per page.
+ * This is the feature to manage memory क्रम extended data per page.
  *
- * Until now, we must modify struct page itself to store extra data per page.
- * This requires rebuilding the kernel and it is really time consuming process.
- * And, sometimes, rebuild is impossible due to third party module dependency.
- * At last, enlarging struct page could cause un-wanted system behaviour change.
+ * Until now, we must modअगरy काष्ठा page itself to store extra data per page.
+ * This requires rebuilding the kernel and it is really समय consuming process.
+ * And, someबार, rebuild is impossible due to third party module dependency.
+ * At last, enlarging काष्ठा page could cause un-wanted प्रणाली behaviour change.
  *
- * This feature is intended to overcome above mentioned problems. This feature
- * allocates memory for extended data per page in certain place rather than
- * the struct page itself. This memory can be accessed by the accessor
+ * This feature is पूर्णांकended to overcome above mentioned problems. This feature
+ * allocates memory क्रम extended data per page in certain place rather than
+ * the काष्ठा page itself. This memory can be accessed by the accessor
  * functions provided by this code. During the boot process, it checks whether
- * allocation of huge chunk of memory is needed or not. If not, it avoids
+ * allocation of huge chunk of memory is needed or not. If not, it aव्योमs
  * allocating memory at all. With this advantage, we can include this feature
- * into the kernel in default and can avoid rebuild and solve related problems.
+ * पूर्णांकo the kernel in शेष and can aव्योम rebuild and solve related problems.
  *
- * To help these things to work well, there are two callbacks for clients. One
- * is the need callback which is mandatory if user wants to avoid useless
- * memory allocation at boot-time. The other is optional, init callback, which
- * is used to do proper initialization after memory is allocated.
+ * To help these things to work well, there are two callbacks क्रम clients. One
+ * is the need callback which is mandatory अगर user wants to aव्योम useless
+ * memory allocation at boot-समय. The other is optional, init callback, which
+ * is used to करो proper initialization after memory is allocated.
  *
  * The need callback is used to decide whether extended memory allocation is
- * needed or not. Sometimes users want to deactivate some features in this
- * boot and extra memory would be unnecessary. In this case, to avoid
+ * needed or not. Someबार users want to deactivate some features in this
+ * boot and extra memory would be unnecessary. In this हाल, to aव्योम
  * allocating huge chunk of memory, each clients represent their need of
  * extra memory through the need callback. If one of the need callbacks
- * returns true, it means that someone needs extra memory so that
- * page extension core should allocates memory for page extension. If
- * none of need callbacks return true, memory isn't needed at all in this boot
+ * वापसs true, it means that someone needs extra memory so that
+ * page extension core should allocates memory क्रम page extension. If
+ * none of need callbacks वापस true, memory isn't needed at all in this boot
  * and page extension core can skip to allocate memory. As result,
  * none of memory is wasted.
  *
- * When need callback returns true, page_ext checks if there is a request for
- * extra memory through size in struct page_ext_operations. If it is non-zero,
- * extra space is allocated for each page_ext entry and offset is returned to
- * user through offset in struct page_ext_operations.
+ * When need callback वापसs true, page_ext checks अगर there is a request क्रम
+ * extra memory through size in काष्ठा page_ext_operations. If it is non-zero,
+ * extra space is allocated क्रम each page_ext entry and offset is वापसed to
+ * user through offset in काष्ठा page_ext_operations.
  *
- * The init callback is used to do proper initialization after page extension
- * is completely initialized. In sparse memory system, extra memory is
- * allocated some time later than memmap is allocated. In other words, lifetime
- * of memory for page extension isn't same with memmap for struct page.
- * Therefore, clients can't store extra data until page extension is
- * initialized, even if pages are allocated and used freely. This could
+ * The init callback is used to करो proper initialization after page extension
+ * is completely initialized. In sparse memory प्रणाली, extra memory is
+ * allocated some समय later than memmap is allocated. In other words, lअगरeसमय
+ * of memory क्रम page extension isn't same with memmap क्रम काष्ठा page.
+ * Thereक्रमe, clients can't store extra data until page extension is
+ * initialized, even अगर pages are allocated and used मुक्तly. This could
  * cause inadequate state of extra data per page, so, to prevent it, client
  * can utilize this callback to initialize the state of it correctly.
  */
 
-static struct page_ext_operations *page_ext_ops[] = {
-#ifdef CONFIG_PAGE_OWNER
+अटल काष्ठा page_ext_operations *page_ext_ops[] = अणु
+#अगर_घोषित CONFIG_PAGE_OWNER
 	&page_owner_ops,
-#endif
-#if defined(CONFIG_IDLE_PAGE_TRACKING) && !defined(CONFIG_64BIT)
+#पूर्ण_अगर
+#अगर defined(CONFIG_IDLE_PAGE_TRACKING) && !defined(CONFIG_64BIT)
 	&page_idle_ops,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-unsigned long page_ext_size = sizeof(struct page_ext);
+अचिन्हित दीर्घ page_ext_size = माप(काष्ठा page_ext);
 
-static unsigned long total_usage;
+अटल अचिन्हित दीर्घ total_usage;
 
-static bool __init invoke_need_callbacks(void)
-{
-	int i;
-	int entries = ARRAY_SIZE(page_ext_ops);
+अटल bool __init invoke_need_callbacks(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक entries = ARRAY_SIZE(page_ext_ops);
 	bool need = false;
 
-	for (i = 0; i < entries; i++) {
-		if (page_ext_ops[i]->need && page_ext_ops[i]->need()) {
+	क्रम (i = 0; i < entries; i++) अणु
+		अगर (page_ext_ops[i]->need && page_ext_ops[i]->need()) अणु
 			page_ext_ops[i]->offset = page_ext_size;
 			page_ext_size += page_ext_ops[i]->size;
 			need = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return need;
-}
+	वापस need;
+पूर्ण
 
-static void __init invoke_init_callbacks(void)
-{
-	int i;
-	int entries = ARRAY_SIZE(page_ext_ops);
+अटल व्योम __init invoke_init_callbacks(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक entries = ARRAY_SIZE(page_ext_ops);
 
-	for (i = 0; i < entries; i++) {
-		if (page_ext_ops[i]->init)
+	क्रम (i = 0; i < entries; i++) अणु
+		अगर (page_ext_ops[i]->init)
 			page_ext_ops[i]->init();
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifndef CONFIG_SPARSEMEM
-void __init page_ext_init_flatmem_late(void)
-{
+#अगर_अघोषित CONFIG_SPARSEMEM
+व्योम __init page_ext_init_flaपंचांगem_late(व्योम)
+अणु
 	invoke_init_callbacks();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static inline struct page_ext *get_entry(void *base, unsigned long index)
-{
-	return base + page_ext_size * index;
-}
+अटल अंतरभूत काष्ठा page_ext *get_entry(व्योम *base, अचिन्हित दीर्घ index)
+अणु
+	वापस base + page_ext_size * index;
+पूर्ण
 
-#ifndef CONFIG_SPARSEMEM
+#अगर_अघोषित CONFIG_SPARSEMEM
 
 
-void __meminit pgdat_page_ext_init(struct pglist_data *pgdat)
-{
-	pgdat->node_page_ext = NULL;
-}
+व्योम __meminit pgdat_page_ext_init(काष्ठा pglist_data *pgdat)
+अणु
+	pgdat->node_page_ext = शून्य;
+पूर्ण
 
-struct page_ext *lookup_page_ext(const struct page *page)
-{
-	unsigned long pfn = page_to_pfn(page);
-	unsigned long index;
-	struct page_ext *base;
+काष्ठा page_ext *lookup_page_ext(स्थिर काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ pfn = page_to_pfn(page);
+	अचिन्हित दीर्घ index;
+	काष्ठा page_ext *base;
 
 	base = NODE_DATA(page_to_nid(page))->node_page_ext;
 	/*
-	 * The sanity checks the page allocator does upon freeing a
-	 * page can reach here before the page_ext arrays are
+	 * The sanity checks the page allocator करोes upon मुक्तing a
+	 * page can reach here beक्रमe the page_ext arrays are
 	 * allocated when feeding a range of pages to the allocator
-	 * for the first time during bootup or memory hotplug.
+	 * क्रम the first समय during bootup or memory hotplug.
 	 */
-	if (unlikely(!base))
-		return NULL;
-	index = pfn - round_down(node_start_pfn(page_to_nid(page)),
+	अगर (unlikely(!base))
+		वापस शून्य;
+	index = pfn - round_करोwn(node_start_pfn(page_to_nid(page)),
 					MAX_ORDER_NR_PAGES);
-	return get_entry(base, index);
-}
+	वापस get_entry(base, index);
+पूर्ण
 
-static int __init alloc_node_page_ext(int nid)
-{
-	struct page_ext *base;
-	unsigned long table_size;
-	unsigned long nr_pages;
+अटल पूर्णांक __init alloc_node_page_ext(पूर्णांक nid)
+अणु
+	काष्ठा page_ext *base;
+	अचिन्हित दीर्घ table_size;
+	अचिन्हित दीर्घ nr_pages;
 
 	nr_pages = NODE_DATA(nid)->node_spanned_pages;
-	if (!nr_pages)
-		return 0;
+	अगर (!nr_pages)
+		वापस 0;
 
 	/*
-	 * Need extra space if node range is not aligned with
+	 * Need extra space अगर node range is not aligned with
 	 * MAX_ORDER_NR_PAGES. When page allocator's buddy algorithm
 	 * checks buddy's status, range could be out of exact node range.
 	 */
-	if (!IS_ALIGNED(node_start_pfn(nid), MAX_ORDER_NR_PAGES) ||
+	अगर (!IS_ALIGNED(node_start_pfn(nid), MAX_ORDER_NR_PAGES) ||
 		!IS_ALIGNED(node_end_pfn(nid), MAX_ORDER_NR_PAGES))
 		nr_pages += MAX_ORDER_NR_PAGES;
 
@@ -163,219 +164,219 @@ static int __init alloc_node_page_ext(int nid)
 	base = memblock_alloc_try_nid(
 			table_size, PAGE_SIZE, __pa(MAX_DMA_ADDRESS),
 			MEMBLOCK_ALLOC_ACCESSIBLE, nid);
-	if (!base)
-		return -ENOMEM;
+	अगर (!base)
+		वापस -ENOMEM;
 	NODE_DATA(nid)->node_page_ext = base;
 	total_usage += table_size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init page_ext_init_flatmem(void)
-{
+व्योम __init page_ext_init_flaपंचांगem(व्योम)
+अणु
 
-	int nid, fail;
+	पूर्णांक nid, fail;
 
-	if (!invoke_need_callbacks())
-		return;
+	अगर (!invoke_need_callbacks())
+		वापस;
 
-	for_each_online_node(nid)  {
+	क्रम_each_online_node(nid)  अणु
 		fail = alloc_node_page_ext(nid);
-		if (fail)
-			goto fail;
-	}
+		अगर (fail)
+			जाओ fail;
+	पूर्ण
 	pr_info("allocated %ld bytes of page_ext\n", total_usage);
-	return;
+	वापस;
 
 fail:
 	pr_crit("allocation of page_ext failed.\n");
 	panic("Out of memory");
-}
+पूर्ण
 
-#else /* CONFIG_FLAT_NODE_MEM_MAP */
+#अन्यथा /* CONFIG_FLAT_NODE_MEM_MAP */
 
-struct page_ext *lookup_page_ext(const struct page *page)
-{
-	unsigned long pfn = page_to_pfn(page);
-	struct mem_section *section = __pfn_to_section(pfn);
+काष्ठा page_ext *lookup_page_ext(स्थिर काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ pfn = page_to_pfn(page);
+	काष्ठा mem_section *section = __pfn_to_section(pfn);
 	/*
-	 * The sanity checks the page allocator does upon freeing a
-	 * page can reach here before the page_ext arrays are
+	 * The sanity checks the page allocator करोes upon मुक्तing a
+	 * page can reach here beक्रमe the page_ext arrays are
 	 * allocated when feeding a range of pages to the allocator
-	 * for the first time during bootup or memory hotplug.
+	 * क्रम the first समय during bootup or memory hotplug.
 	 */
-	if (!section->page_ext)
-		return NULL;
-	return get_entry(section->page_ext, pfn);
-}
+	अगर (!section->page_ext)
+		वापस शून्य;
+	वापस get_entry(section->page_ext, pfn);
+पूर्ण
 
-static void *__meminit alloc_page_ext(size_t size, int nid)
-{
+अटल व्योम *__meminit alloc_page_ext(माप_प्रकार size, पूर्णांक nid)
+अणु
 	gfp_t flags = GFP_KERNEL | __GFP_ZERO | __GFP_NOWARN;
-	void *addr = NULL;
+	व्योम *addr = शून्य;
 
 	addr = alloc_pages_exact_nid(nid, size, flags);
-	if (addr) {
+	अगर (addr) अणु
 		kmemleak_alloc(addr, size, 1, flags);
-		return addr;
-	}
+		वापस addr;
+	पूर्ण
 
 	addr = vzalloc_node(size, nid);
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-static int __meminit init_section_page_ext(unsigned long pfn, int nid)
-{
-	struct mem_section *section;
-	struct page_ext *base;
-	unsigned long table_size;
+अटल पूर्णांक __meminit init_section_page_ext(अचिन्हित दीर्घ pfn, पूर्णांक nid)
+अणु
+	काष्ठा mem_section *section;
+	काष्ठा page_ext *base;
+	अचिन्हित दीर्घ table_size;
 
 	section = __pfn_to_section(pfn);
 
-	if (section->page_ext)
-		return 0;
+	अगर (section->page_ext)
+		वापस 0;
 
 	table_size = page_ext_size * PAGES_PER_SECTION;
 	base = alloc_page_ext(table_size, nid);
 
 	/*
 	 * The value stored in section->page_ext is (base - pfn)
-	 * and it does not point to the memory block allocated above,
+	 * and it करोes not poपूर्णांक to the memory block allocated above,
 	 * causing kmemleak false positives.
 	 */
 	kmemleak_not_leak(base);
 
-	if (!base) {
+	अगर (!base) अणु
 		pr_err("page ext allocation failure\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
 	 * The passed "pfn" may not be aligned to SECTION.  For the calculation
 	 * we need to apply a mask.
 	 */
 	pfn &= PAGE_SECTION_MASK;
-	section->page_ext = (void *)base - page_ext_size * pfn;
+	section->page_ext = (व्योम *)base - page_ext_size * pfn;
 	total_usage += table_size;
-	return 0;
-}
-#ifdef CONFIG_MEMORY_HOTPLUG
-static void free_page_ext(void *addr)
-{
-	if (is_vmalloc_addr(addr)) {
-		vfree(addr);
-	} else {
-		struct page *page = virt_to_page(addr);
-		size_t table_size;
+	वापस 0;
+पूर्ण
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
+अटल व्योम मुक्त_page_ext(व्योम *addr)
+अणु
+	अगर (is_vदो_स्मृति_addr(addr)) अणु
+		vमुक्त(addr);
+	पूर्ण अन्यथा अणु
+		काष्ठा page *page = virt_to_page(addr);
+		माप_प्रकार table_size;
 
 		table_size = page_ext_size * PAGES_PER_SECTION;
 
 		BUG_ON(PageReserved(page));
-		kmemleak_free(addr);
-		free_pages_exact(addr, table_size);
-	}
-}
+		kmemleak_मुक्त(addr);
+		मुक्त_pages_exact(addr, table_size);
+	पूर्ण
+पूर्ण
 
-static void __free_page_ext(unsigned long pfn)
-{
-	struct mem_section *ms;
-	struct page_ext *base;
+अटल व्योम __मुक्त_page_ext(अचिन्हित दीर्घ pfn)
+अणु
+	काष्ठा mem_section *ms;
+	काष्ठा page_ext *base;
 
 	ms = __pfn_to_section(pfn);
-	if (!ms || !ms->page_ext)
-		return;
+	अगर (!ms || !ms->page_ext)
+		वापस;
 	base = get_entry(ms->page_ext, pfn);
-	free_page_ext(base);
-	ms->page_ext = NULL;
-}
+	मुक्त_page_ext(base);
+	ms->page_ext = शून्य;
+पूर्ण
 
-static int __meminit online_page_ext(unsigned long start_pfn,
-				unsigned long nr_pages,
-				int nid)
-{
-	unsigned long start, end, pfn;
-	int fail = 0;
+अटल पूर्णांक __meminit online_page_ext(अचिन्हित दीर्घ start_pfn,
+				अचिन्हित दीर्घ nr_pages,
+				पूर्णांक nid)
+अणु
+	अचिन्हित दीर्घ start, end, pfn;
+	पूर्णांक fail = 0;
 
 	start = SECTION_ALIGN_DOWN(start_pfn);
 	end = SECTION_ALIGN_UP(start_pfn + nr_pages);
 
-	if (nid == NUMA_NO_NODE) {
+	अगर (nid == NUMA_NO_NODE) अणु
 		/*
-		 * In this case, "nid" already exists and contains valid memory.
-		 * "start_pfn" passed to us is a pfn which is an arg for
+		 * In this हाल, "nid" alपढ़ोy exists and contains valid memory.
+		 * "start_pfn" passed to us is a pfn which is an arg क्रम
 		 * online__pages(), and start_pfn should exist.
 		 */
 		nid = pfn_to_nid(start_pfn);
 		VM_BUG_ON(!node_state(nid, N_ONLINE));
-	}
+	पूर्ण
 
-	for (pfn = start; !fail && pfn < end; pfn += PAGES_PER_SECTION)
+	क्रम (pfn = start; !fail && pfn < end; pfn += PAGES_PER_SECTION)
 		fail = init_section_page_ext(pfn, nid);
-	if (!fail)
-		return 0;
+	अगर (!fail)
+		वापस 0;
 
 	/* rollback */
-	for (pfn = start; pfn < end; pfn += PAGES_PER_SECTION)
-		__free_page_ext(pfn);
+	क्रम (pfn = start; pfn < end; pfn += PAGES_PER_SECTION)
+		__मुक्त_page_ext(pfn);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int __meminit offline_page_ext(unsigned long start_pfn,
-				unsigned long nr_pages, int nid)
-{
-	unsigned long start, end, pfn;
+अटल पूर्णांक __meminit offline_page_ext(अचिन्हित दीर्घ start_pfn,
+				अचिन्हित दीर्घ nr_pages, पूर्णांक nid)
+अणु
+	अचिन्हित दीर्घ start, end, pfn;
 
 	start = SECTION_ALIGN_DOWN(start_pfn);
 	end = SECTION_ALIGN_UP(start_pfn + nr_pages);
 
-	for (pfn = start; pfn < end; pfn += PAGES_PER_SECTION)
-		__free_page_ext(pfn);
-	return 0;
+	क्रम (pfn = start; pfn < end; pfn += PAGES_PER_SECTION)
+		__मुक्त_page_ext(pfn);
+	वापस 0;
 
-}
+पूर्ण
 
-static int __meminit page_ext_callback(struct notifier_block *self,
-			       unsigned long action, void *arg)
-{
-	struct memory_notify *mn = arg;
-	int ret = 0;
+अटल पूर्णांक __meminit page_ext_callback(काष्ठा notअगरier_block *self,
+			       अचिन्हित दीर्घ action, व्योम *arg)
+अणु
+	काष्ठा memory_notअगरy *mn = arg;
+	पूर्णांक ret = 0;
 
-	switch (action) {
-	case MEM_GOING_ONLINE:
+	चयन (action) अणु
+	हाल MEM_GOING_ONLINE:
 		ret = online_page_ext(mn->start_pfn,
 				   mn->nr_pages, mn->status_change_nid);
-		break;
-	case MEM_OFFLINE:
+		अवरोध;
+	हाल MEM_OFFLINE:
 		offline_page_ext(mn->start_pfn,
 				mn->nr_pages, mn->status_change_nid);
-		break;
-	case MEM_CANCEL_ONLINE:
+		अवरोध;
+	हाल MEM_CANCEL_ONLINE:
 		offline_page_ext(mn->start_pfn,
 				mn->nr_pages, mn->status_change_nid);
-		break;
-	case MEM_GOING_OFFLINE:
-		break;
-	case MEM_ONLINE:
-	case MEM_CANCEL_OFFLINE:
-		break;
-	}
+		अवरोध;
+	हाल MEM_GOING_OFFLINE:
+		अवरोध;
+	हाल MEM_ONLINE:
+	हाल MEM_CANCEL_OFFLINE:
+		अवरोध;
+	पूर्ण
 
-	return notifier_from_errno(ret);
-}
+	वापस notअगरier_from_त्रुटि_सं(ret);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-void __init page_ext_init(void)
-{
-	unsigned long pfn;
-	int nid;
+व्योम __init page_ext_init(व्योम)
+अणु
+	अचिन्हित दीर्घ pfn;
+	पूर्णांक nid;
 
-	if (!invoke_need_callbacks())
-		return;
+	अगर (!invoke_need_callbacks())
+		वापस;
 
-	for_each_node_state(nid, N_MEMORY) {
-		unsigned long start_pfn, end_pfn;
+	क्रम_each_node_state(nid, N_MEMORY) अणु
+		अचिन्हित दीर्घ start_pfn, end_pfn;
 
 		start_pfn = node_start_pfn(nid);
 		end_pfn = node_end_pfn(nid);
@@ -384,35 +385,35 @@ void __init page_ext_init(void)
 		 * page->flags of out of node pages are not initialized.  So we
 		 * scan [start_pfn, the biggest section's pfn < end_pfn) here.
 		 */
-		for (pfn = start_pfn; pfn < end_pfn;
-			pfn = ALIGN(pfn + 1, PAGES_PER_SECTION)) {
+		क्रम (pfn = start_pfn; pfn < end_pfn;
+			pfn = ALIGN(pfn + 1, PAGES_PER_SECTION)) अणु
 
-			if (!pfn_valid(pfn))
-				continue;
+			अगर (!pfn_valid(pfn))
+				जारी;
 			/*
 			 * Nodes's pfns can be overlapping.
 			 * We know some arch can have a nodes layout such as
 			 * -------------pfn-------------->
 			 * N0 | N1 | N2 | N0 | N1 | N2|....
 			 */
-			if (pfn_to_nid(pfn) != nid)
-				continue;
-			if (init_section_page_ext(pfn, nid))
-				goto oom;
+			अगर (pfn_to_nid(pfn) != nid)
+				जारी;
+			अगर (init_section_page_ext(pfn, nid))
+				जाओ oom;
 			cond_resched();
-		}
-	}
-	hotplug_memory_notifier(page_ext_callback, 0);
+		पूर्ण
+	पूर्ण
+	hotplug_memory_notअगरier(page_ext_callback, 0);
 	pr_info("allocated %ld bytes of page_ext\n", total_usage);
 	invoke_init_callbacks();
-	return;
+	वापस;
 
 oom:
 	panic("Out of memory");
-}
+पूर्ण
 
-void __meminit pgdat_page_ext_init(struct pglist_data *pgdat)
-{
-}
+व्योम __meminit pgdat_page_ext_init(काष्ठा pglist_data *pgdat)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर

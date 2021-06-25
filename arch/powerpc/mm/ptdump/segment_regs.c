@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright 2018, Christophe Leroy CS S.I.
  * <christophe.leroy@c-s.fr>
@@ -6,57 +7,57 @@
  * This dumps the content of Segment Registers
  */
 
-#include <asm/debugfs.h>
+#समावेश <यंत्र/debugfs.h>
 
-static void seg_show(struct seq_file *m, int i)
-{
+अटल व्योम seg_show(काष्ठा seq_file *m, पूर्णांक i)
+अणु
 	u32 val = mfsr(i << 28);
 
-	seq_printf(m, "0x%01x0000000-0x%01xfffffff ", i, i);
-	seq_printf(m, "Kern key %d ", (val >> 30) & 1);
-	seq_printf(m, "User key %d ", (val >> 29) & 1);
-	if (val & 0x80000000) {
-		seq_printf(m, "Device 0x%03x", (val >> 20) & 0x1ff);
-		seq_printf(m, "-0x%05x", val & 0xfffff);
-	} else {
-		if (val & 0x10000000)
-			seq_puts(m, "No Exec ");
-		seq_printf(m, "VSID 0x%06x", val & 0xffffff);
-	}
-	seq_puts(m, "\n");
-}
+	seq_म_लिखो(m, "0x%01x0000000-0x%01xfffffff ", i, i);
+	seq_म_लिखो(m, "Kern key %d ", (val >> 30) & 1);
+	seq_म_लिखो(m, "User key %d ", (val >> 29) & 1);
+	अगर (val & 0x80000000) अणु
+		seq_म_लिखो(m, "Device 0x%03x", (val >> 20) & 0x1ff);
+		seq_म_लिखो(m, "-0x%05x", val & 0xfffff);
+	पूर्ण अन्यथा अणु
+		अगर (val & 0x10000000)
+			seq_माला_दो(m, "No Exec ");
+		seq_म_लिखो(m, "VSID 0x%06x", val & 0xffffff);
+	पूर्ण
+	seq_माला_दो(m, "\n");
+पूर्ण
 
-static int sr_show(struct seq_file *m, void *v)
-{
-	int i;
+अटल पूर्णांक sr_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	पूर्णांक i;
 
-	seq_puts(m, "---[ User Segments ]---\n");
-	for (i = 0; i < TASK_SIZE >> 28; i++)
+	seq_माला_दो(m, "---[ User Segments ]---\n");
+	क्रम (i = 0; i < TASK_SIZE >> 28; i++)
 		seg_show(m, i);
 
-	seq_puts(m, "\n---[ Kernel Segments ]---\n");
-	for (; i < 16; i++)
+	seq_माला_दो(m, "\n---[ Kernel Segments ]---\n");
+	क्रम (; i < 16; i++)
 		seg_show(m, i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sr_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, sr_show, NULL);
-}
+अटल पूर्णांक sr_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, sr_show, शून्य);
+पूर्ण
 
-static const struct file_operations sr_fops = {
-	.open		= sr_open,
-	.read		= seq_read,
+अटल स्थिर काष्ठा file_operations sr_fops = अणु
+	.खोलो		= sr_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-};
+पूर्ण;
 
-static int __init sr_init(void)
-{
-	debugfs_create_file("segment_registers", 0400, powerpc_debugfs_root,
-			    NULL, &sr_fops);
-	return 0;
-}
+अटल पूर्णांक __init sr_init(व्योम)
+अणु
+	debugfs_create_file("segment_registers", 0400, घातerpc_debugfs_root,
+			    शून्य, &sr_fops);
+	वापस 0;
+पूर्ण
 device_initcall(sr_init);

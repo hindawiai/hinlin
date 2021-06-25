@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2011-2015 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,22 +22,22 @@
  * SOFTWARE.
  */
 
-#ifndef _I915_VGPU_H_
-#define _I915_VGPU_H_
+#अगर_अघोषित _I915_VGPU_H_
+#घोषणा _I915_VGPU_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct drm_i915_private;
-struct i915_ggtt;
+काष्ठा drm_i915_निजी;
+काष्ठा i915_ggtt;
 
-void intel_vgpu_detect(struct drm_i915_private *i915);
-bool intel_vgpu_active(struct drm_i915_private *i915);
-void intel_vgpu_register(struct drm_i915_private *i915);
-bool intel_vgpu_has_full_ppgtt(struct drm_i915_private *i915);
-bool intel_vgpu_has_hwsp_emulation(struct drm_i915_private *i915);
-bool intel_vgpu_has_huge_gtt(struct drm_i915_private *i915);
+व्योम पूर्णांकel_vgpu_detect(काष्ठा drm_i915_निजी *i915);
+bool पूर्णांकel_vgpu_active(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_vgpu_रेजिस्टर(काष्ठा drm_i915_निजी *i915);
+bool पूर्णांकel_vgpu_has_full_ppgtt(काष्ठा drm_i915_निजी *i915);
+bool पूर्णांकel_vgpu_has_hwsp_emulation(काष्ठा drm_i915_निजी *i915);
+bool पूर्णांकel_vgpu_has_huge_gtt(काष्ठा drm_i915_निजी *i915);
 
-int intel_vgt_balloon(struct i915_ggtt *ggtt);
-void intel_vgt_deballoon(struct i915_ggtt *ggtt);
+पूर्णांक पूर्णांकel_vgt_balloon(काष्ठा i915_ggtt *ggtt);
+व्योम पूर्णांकel_vgt_deballoon(काष्ठा i915_ggtt *ggtt);
 
-#endif /* _I915_VGPU_H_ */
+#पूर्ण_अगर /* _I915_VGPU_H_ */

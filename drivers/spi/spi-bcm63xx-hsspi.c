@@ -1,275 +1,276 @@
+<शैली गुरु>
 /*
  * Broadcom BCM63XX High Speed SPI Controller driver
  *
  * Copyright 2000-2010 Broadcom Corporation
- * Copyright 2012-2013 Jonas Gorski <jogo@openwrt.org>
+ * Copyright 2012-2013 Jonas Gorski <jogo@खोलोwrt.org>
  *
- * Licensed under the GNU/GPL. See COPYING for details.
+ * Licensed under the GNU/GPL. See COPYING क्रम details.
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/clk.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/spi/spi.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/reset.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/pm_runसमय.स>
 
-#define HSSPI_GLOBAL_CTRL_REG			0x0
-#define GLOBAL_CTRL_CS_POLARITY_SHIFT		0
-#define GLOBAL_CTRL_CS_POLARITY_MASK		0x000000ff
-#define GLOBAL_CTRL_PLL_CLK_CTRL_SHIFT		8
-#define GLOBAL_CTRL_PLL_CLK_CTRL_MASK		0x0000ff00
-#define GLOBAL_CTRL_CLK_GATE_SSOFF		BIT(16)
-#define GLOBAL_CTRL_CLK_POLARITY		BIT(17)
-#define GLOBAL_CTRL_MOSI_IDLE			BIT(18)
+#घोषणा HSSPI_GLOBAL_CTRL_REG			0x0
+#घोषणा GLOBAL_CTRL_CS_POLARITY_SHIFT		0
+#घोषणा GLOBAL_CTRL_CS_POLARITY_MASK		0x000000ff
+#घोषणा GLOBAL_CTRL_PLL_CLK_CTRL_SHIFT		8
+#घोषणा GLOBAL_CTRL_PLL_CLK_CTRL_MASK		0x0000ff00
+#घोषणा GLOBAL_CTRL_CLK_GATE_SSOFF		BIT(16)
+#घोषणा GLOBAL_CTRL_CLK_POLARITY		BIT(17)
+#घोषणा GLOBAL_CTRL_MOSI_IDLE			BIT(18)
 
-#define HSSPI_GLOBAL_EXT_TRIGGER_REG		0x4
+#घोषणा HSSPI_GLOBAL_EXT_TRIGGER_REG		0x4
 
-#define HSSPI_INT_STATUS_REG			0x8
-#define HSSPI_INT_STATUS_MASKED_REG		0xc
-#define HSSPI_INT_MASK_REG			0x10
+#घोषणा HSSPI_INT_STATUS_REG			0x8
+#घोषणा HSSPI_INT_STATUS_MASKED_REG		0xc
+#घोषणा HSSPI_INT_MASK_REG			0x10
 
-#define HSSPI_PINGx_CMD_DONE(i)			BIT((i * 8) + 0)
-#define HSSPI_PINGx_RX_OVER(i)			BIT((i * 8) + 1)
-#define HSSPI_PINGx_TX_UNDER(i)			BIT((i * 8) + 2)
-#define HSSPI_PINGx_POLL_TIMEOUT(i)		BIT((i * 8) + 3)
-#define HSSPI_PINGx_CTRL_INVAL(i)		BIT((i * 8) + 4)
+#घोषणा HSSPI_PINGx_CMD_DONE(i)			BIT((i * 8) + 0)
+#घोषणा HSSPI_PINGx_RX_OVER(i)			BIT((i * 8) + 1)
+#घोषणा HSSPI_PINGx_TX_UNDER(i)			BIT((i * 8) + 2)
+#घोषणा HSSPI_PINGx_POLL_TIMEOUT(i)		BIT((i * 8) + 3)
+#घोषणा HSSPI_PINGx_CTRL_INVAL(i)		BIT((i * 8) + 4)
 
-#define HSSPI_INT_CLEAR_ALL			0xff001f1f
+#घोषणा HSSPI_INT_CLEAR_ALL			0xff001f1f
 
-#define HSSPI_PINGPONG_COMMAND_REG(x)		(0x80 + (x) * 0x40)
-#define PINGPONG_CMD_COMMAND_MASK		0xf
-#define PINGPONG_COMMAND_NOOP			0
-#define PINGPONG_COMMAND_START_NOW		1
-#define PINGPONG_COMMAND_START_TRIGGER		2
-#define PINGPONG_COMMAND_HALT			3
-#define PINGPONG_COMMAND_FLUSH			4
-#define PINGPONG_CMD_PROFILE_SHIFT		8
-#define PINGPONG_CMD_SS_SHIFT			12
+#घोषणा HSSPI_PINGPONG_COMMAND_REG(x)		(0x80 + (x) * 0x40)
+#घोषणा PINGPONG_CMD_COMMAND_MASK		0xf
+#घोषणा PINGPONG_COMMAND_NOOP			0
+#घोषणा PINGPONG_COMMAND_START_NOW		1
+#घोषणा PINGPONG_COMMAND_START_TRIGGER		2
+#घोषणा PINGPONG_COMMAND_HALT			3
+#घोषणा PINGPONG_COMMAND_FLUSH			4
+#घोषणा PINGPONG_CMD_PROखाता_SHIFT		8
+#घोषणा PINGPONG_CMD_SS_SHIFT			12
 
-#define HSSPI_PINGPONG_STATUS_REG(x)		(0x84 + (x) * 0x40)
+#घोषणा HSSPI_PINGPONG_STATUS_REG(x)		(0x84 + (x) * 0x40)
 
-#define HSSPI_PROFILE_CLK_CTRL_REG(x)		(0x100 + (x) * 0x20)
-#define CLK_CTRL_FREQ_CTRL_MASK			0x0000ffff
-#define CLK_CTRL_SPI_CLK_2X_SEL			BIT(14)
-#define CLK_CTRL_ACCUM_RST_ON_LOOP		BIT(15)
+#घोषणा HSSPI_PROखाता_CLK_CTRL_REG(x)		(0x100 + (x) * 0x20)
+#घोषणा CLK_CTRL_FREQ_CTRL_MASK			0x0000ffff
+#घोषणा CLK_CTRL_SPI_CLK_2X_SEL			BIT(14)
+#घोषणा CLK_CTRL_ACCUM_RST_ON_LOOP		BIT(15)
 
-#define HSSPI_PROFILE_SIGNAL_CTRL_REG(x)	(0x104 + (x) * 0x20)
-#define SIGNAL_CTRL_LATCH_RISING		BIT(12)
-#define SIGNAL_CTRL_LAUNCH_RISING		BIT(13)
-#define SIGNAL_CTRL_ASYNC_INPUT_PATH		BIT(16)
+#घोषणा HSSPI_PROखाता_SIGNAL_CTRL_REG(x)	(0x104 + (x) * 0x20)
+#घोषणा SIGNAL_CTRL_LATCH_RISING		BIT(12)
+#घोषणा SIGNAL_CTRL_LAUNCH_RISING		BIT(13)
+#घोषणा SIGNAL_CTRL_ASYNC_INPUT_PATH		BIT(16)
 
-#define HSSPI_PROFILE_MODE_CTRL_REG(x)		(0x108 + (x) * 0x20)
-#define MODE_CTRL_MULTIDATA_RD_STRT_SHIFT	8
-#define MODE_CTRL_MULTIDATA_WR_STRT_SHIFT	12
-#define MODE_CTRL_MULTIDATA_RD_SIZE_SHIFT	16
-#define MODE_CTRL_MULTIDATA_WR_SIZE_SHIFT	18
-#define MODE_CTRL_MODE_3WIRE			BIT(20)
-#define MODE_CTRL_PREPENDBYTE_CNT_SHIFT		24
+#घोषणा HSSPI_PROखाता_MODE_CTRL_REG(x)		(0x108 + (x) * 0x20)
+#घोषणा MODE_CTRL_MULTIDATA_RD_STRT_SHIFT	8
+#घोषणा MODE_CTRL_MULTIDATA_WR_STRT_SHIFT	12
+#घोषणा MODE_CTRL_MULTIDATA_RD_SIZE_SHIFT	16
+#घोषणा MODE_CTRL_MULTIDATA_WR_SIZE_SHIFT	18
+#घोषणा MODE_CTRL_MODE_3WIRE			BIT(20)
+#घोषणा MODE_CTRL_PREPENDBYTE_CNT_SHIFT		24
 
-#define HSSPI_FIFO_REG(x)			(0x200 + (x) * 0x200)
+#घोषणा HSSPI_FIFO_REG(x)			(0x200 + (x) * 0x200)
 
 
-#define HSSPI_OP_MULTIBIT			BIT(11)
-#define HSSPI_OP_CODE_SHIFT			13
-#define HSSPI_OP_SLEEP				(0 << HSSPI_OP_CODE_SHIFT)
-#define HSSPI_OP_READ_WRITE			(1 << HSSPI_OP_CODE_SHIFT)
-#define HSSPI_OP_WRITE				(2 << HSSPI_OP_CODE_SHIFT)
-#define HSSPI_OP_READ				(3 << HSSPI_OP_CODE_SHIFT)
-#define HSSPI_OP_SETIRQ				(4 << HSSPI_OP_CODE_SHIFT)
+#घोषणा HSSPI_OP_MULTIBIT			BIT(11)
+#घोषणा HSSPI_OP_CODE_SHIFT			13
+#घोषणा HSSPI_OP_SLEEP				(0 << HSSPI_OP_CODE_SHIFT)
+#घोषणा HSSPI_OP_READ_WRITE			(1 << HSSPI_OP_CODE_SHIFT)
+#घोषणा HSSPI_OP_WRITE				(2 << HSSPI_OP_CODE_SHIFT)
+#घोषणा HSSPI_OP_READ				(3 << HSSPI_OP_CODE_SHIFT)
+#घोषणा HSSPI_OP_SETIRQ				(4 << HSSPI_OP_CODE_SHIFT)
 
-#define HSSPI_BUFFER_LEN			512
-#define HSSPI_OPCODE_LEN			2
+#घोषणा HSSPI_BUFFER_LEN			512
+#घोषणा HSSPI_OPCODE_LEN			2
 
-#define HSSPI_MAX_PREPEND_LEN			15
+#घोषणा HSSPI_MAX_PREPEND_LEN			15
 
-#define HSSPI_MAX_SYNC_CLOCK			30000000
+#घोषणा HSSPI_MAX_SYNC_CLOCK			30000000
 
-#define HSSPI_SPI_MAX_CS			8
-#define HSSPI_BUS_NUM				1 /* 0 is legacy SPI */
+#घोषणा HSSPI_SPI_MAX_CS			8
+#घोषणा HSSPI_BUS_NUM				1 /* 0 is legacy SPI */
 
-struct bcm63xx_hsspi {
-	struct completion done;
-	struct mutex bus_mutex;
+काष्ठा bcm63xx_hsspi अणु
+	काष्ठा completion करोne;
+	काष्ठा mutex bus_mutex;
 
-	struct platform_device *pdev;
-	struct clk *clk;
-	struct clk *pll_clk;
-	void __iomem *regs;
-	u8 __iomem *fifo;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा clk *clk;
+	काष्ठा clk *pll_clk;
+	व्योम __iomem *regs;
+	u8 __iomem *fअगरo;
 
 	u32 speed_hz;
 	u8 cs_polarity;
-};
+पूर्ण;
 
-static void bcm63xx_hsspi_set_cs(struct bcm63xx_hsspi *bs, unsigned int cs,
+अटल व्योम bcm63xx_hsspi_set_cs(काष्ठा bcm63xx_hsspi *bs, अचिन्हित पूर्णांक cs,
 				 bool active)
-{
+अणु
 	u32 reg;
 
 	mutex_lock(&bs->bus_mutex);
-	reg = __raw_readl(bs->regs + HSSPI_GLOBAL_CTRL_REG);
+	reg = __raw_पढ़ोl(bs->regs + HSSPI_GLOBAL_CTRL_REG);
 
 	reg &= ~BIT(cs);
-	if (active == !(bs->cs_polarity & BIT(cs)))
+	अगर (active == !(bs->cs_polarity & BIT(cs)))
 		reg |= BIT(cs);
 
-	__raw_writel(reg, bs->regs + HSSPI_GLOBAL_CTRL_REG);
+	__raw_ग_लिखोl(reg, bs->regs + HSSPI_GLOBAL_CTRL_REG);
 	mutex_unlock(&bs->bus_mutex);
-}
+पूर्ण
 
-static void bcm63xx_hsspi_set_clk(struct bcm63xx_hsspi *bs,
-				  struct spi_device *spi, int hz)
-{
-	unsigned int profile = spi->chip_select;
+अटल व्योम bcm63xx_hsspi_set_clk(काष्ठा bcm63xx_hsspi *bs,
+				  काष्ठा spi_device *spi, पूर्णांक hz)
+अणु
+	अचिन्हित पूर्णांक profile = spi->chip_select;
 	u32 reg;
 
 	reg = DIV_ROUND_UP(2048, DIV_ROUND_UP(bs->speed_hz, hz));
-	__raw_writel(CLK_CTRL_ACCUM_RST_ON_LOOP | reg,
-		     bs->regs + HSSPI_PROFILE_CLK_CTRL_REG(profile));
+	__raw_ग_लिखोl(CLK_CTRL_ACCUM_RST_ON_LOOP | reg,
+		     bs->regs + HSSPI_PROखाता_CLK_CTRL_REG(profile));
 
-	reg = __raw_readl(bs->regs + HSSPI_PROFILE_SIGNAL_CTRL_REG(profile));
-	if (hz > HSSPI_MAX_SYNC_CLOCK)
+	reg = __raw_पढ़ोl(bs->regs + HSSPI_PROखाता_SIGNAL_CTRL_REG(profile));
+	अगर (hz > HSSPI_MAX_SYNC_CLOCK)
 		reg |= SIGNAL_CTRL_ASYNC_INPUT_PATH;
-	else
+	अन्यथा
 		reg &= ~SIGNAL_CTRL_ASYNC_INPUT_PATH;
-	__raw_writel(reg, bs->regs + HSSPI_PROFILE_SIGNAL_CTRL_REG(profile));
+	__raw_ग_लिखोl(reg, bs->regs + HSSPI_PROखाता_SIGNAL_CTRL_REG(profile));
 
 	mutex_lock(&bs->bus_mutex);
-	/* setup clock polarity */
-	reg = __raw_readl(bs->regs + HSSPI_GLOBAL_CTRL_REG);
+	/* setup घड़ी polarity */
+	reg = __raw_पढ़ोl(bs->regs + HSSPI_GLOBAL_CTRL_REG);
 	reg &= ~GLOBAL_CTRL_CLK_POLARITY;
-	if (spi->mode & SPI_CPOL)
+	अगर (spi->mode & SPI_CPOL)
 		reg |= GLOBAL_CTRL_CLK_POLARITY;
-	__raw_writel(reg, bs->regs + HSSPI_GLOBAL_CTRL_REG);
+	__raw_ग_लिखोl(reg, bs->regs + HSSPI_GLOBAL_CTRL_REG);
 	mutex_unlock(&bs->bus_mutex);
-}
+पूर्ण
 
-static int bcm63xx_hsspi_do_txrx(struct spi_device *spi, struct spi_transfer *t)
-{
-	struct bcm63xx_hsspi *bs = spi_master_get_devdata(spi->master);
-	unsigned int chip_select = spi->chip_select;
+अटल पूर्णांक bcm63xx_hsspi_करो_txrx(काष्ठा spi_device *spi, काष्ठा spi_transfer *t)
+अणु
+	काष्ठा bcm63xx_hsspi *bs = spi_master_get_devdata(spi->master);
+	अचिन्हित पूर्णांक chip_select = spi->chip_select;
 	u16 opcode = 0;
-	int pending = t->len;
-	int step_size = HSSPI_BUFFER_LEN;
-	const u8 *tx = t->tx_buf;
+	पूर्णांक pending = t->len;
+	पूर्णांक step_size = HSSPI_BUFFER_LEN;
+	स्थिर u8 *tx = t->tx_buf;
 	u8 *rx = t->rx_buf;
 
 	bcm63xx_hsspi_set_clk(bs, spi, t->speed_hz);
 	bcm63xx_hsspi_set_cs(bs, spi->chip_select, true);
 
-	if (tx && rx)
+	अगर (tx && rx)
 		opcode = HSSPI_OP_READ_WRITE;
-	else if (tx)
+	अन्यथा अगर (tx)
 		opcode = HSSPI_OP_WRITE;
-	else if (rx)
+	अन्यथा अगर (rx)
 		opcode = HSSPI_OP_READ;
 
-	if (opcode != HSSPI_OP_READ)
+	अगर (opcode != HSSPI_OP_READ)
 		step_size -= HSSPI_OPCODE_LEN;
 
-	if ((opcode == HSSPI_OP_READ && t->rx_nbits == SPI_NBITS_DUAL) ||
+	अगर ((opcode == HSSPI_OP_READ && t->rx_nbits == SPI_NBITS_DUAL) ||
 	    (opcode == HSSPI_OP_WRITE && t->tx_nbits == SPI_NBITS_DUAL))
 		opcode |= HSSPI_OP_MULTIBIT;
 
-	__raw_writel(1 << MODE_CTRL_MULTIDATA_WR_SIZE_SHIFT |
+	__raw_ग_लिखोl(1 << MODE_CTRL_MULTIDATA_WR_SIZE_SHIFT |
 		     1 << MODE_CTRL_MULTIDATA_RD_SIZE_SHIFT | 0xff,
-		     bs->regs + HSSPI_PROFILE_MODE_CTRL_REG(chip_select));
+		     bs->regs + HSSPI_PROखाता_MODE_CTRL_REG(chip_select));
 
-	while (pending > 0) {
-		int curr_step = min_t(int, step_size, pending);
+	जबतक (pending > 0) अणु
+		पूर्णांक curr_step = min_t(पूर्णांक, step_size, pending);
 
-		reinit_completion(&bs->done);
-		if (tx) {
-			memcpy_toio(bs->fifo + HSSPI_OPCODE_LEN, tx, curr_step);
+		reinit_completion(&bs->करोne);
+		अगर (tx) अणु
+			स_नकल_toio(bs->fअगरo + HSSPI_OPCODE_LEN, tx, curr_step);
 			tx += curr_step;
-		}
+		पूर्ण
 
-		__raw_writew(opcode | curr_step, bs->fifo);
+		__raw_ग_लिखोw(opcode | curr_step, bs->fअगरo);
 
-		/* enable interrupt */
-		__raw_writel(HSSPI_PINGx_CMD_DONE(0),
+		/* enable पूर्णांकerrupt */
+		__raw_ग_लिखोl(HSSPI_PINGx_CMD_DONE(0),
 			     bs->regs + HSSPI_INT_MASK_REG);
 
 		/* start the transfer */
-		__raw_writel(!chip_select << PINGPONG_CMD_SS_SHIFT |
-			     chip_select << PINGPONG_CMD_PROFILE_SHIFT |
+		__raw_ग_लिखोl(!chip_select << PINGPONG_CMD_SS_SHIFT |
+			     chip_select << PINGPONG_CMD_PROखाता_SHIFT |
 			     PINGPONG_COMMAND_START_NOW,
 			     bs->regs + HSSPI_PINGPONG_COMMAND_REG(0));
 
-		if (wait_for_completion_timeout(&bs->done, HZ) == 0) {
+		अगर (रुको_क्रम_completion_समयout(&bs->करोne, HZ) == 0) अणु
 			dev_err(&bs->pdev->dev, "transfer timed out!\n");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 
-		if (rx) {
-			memcpy_fromio(rx, bs->fifo, curr_step);
+		अगर (rx) अणु
+			स_नकल_fromio(rx, bs->fअगरo, curr_step);
 			rx += curr_step;
-		}
+		पूर्ण
 
 		pending -= curr_step;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm63xx_hsspi_setup(struct spi_device *spi)
-{
-	struct bcm63xx_hsspi *bs = spi_master_get_devdata(spi->master);
+अटल पूर्णांक bcm63xx_hsspi_setup(काष्ठा spi_device *spi)
+अणु
+	काष्ठा bcm63xx_hsspi *bs = spi_master_get_devdata(spi->master);
 	u32 reg;
 
-	reg = __raw_readl(bs->regs +
-			  HSSPI_PROFILE_SIGNAL_CTRL_REG(spi->chip_select));
+	reg = __raw_पढ़ोl(bs->regs +
+			  HSSPI_PROखाता_SIGNAL_CTRL_REG(spi->chip_select));
 	reg &= ~(SIGNAL_CTRL_LAUNCH_RISING | SIGNAL_CTRL_LATCH_RISING);
-	if (spi->mode & SPI_CPHA)
+	अगर (spi->mode & SPI_CPHA)
 		reg |= SIGNAL_CTRL_LAUNCH_RISING;
-	else
+	अन्यथा
 		reg |= SIGNAL_CTRL_LATCH_RISING;
-	__raw_writel(reg, bs->regs +
-		     HSSPI_PROFILE_SIGNAL_CTRL_REG(spi->chip_select));
+	__raw_ग_लिखोl(reg, bs->regs +
+		     HSSPI_PROखाता_SIGNAL_CTRL_REG(spi->chip_select));
 
 	mutex_lock(&bs->bus_mutex);
-	reg = __raw_readl(bs->regs + HSSPI_GLOBAL_CTRL_REG);
+	reg = __raw_पढ़ोl(bs->regs + HSSPI_GLOBAL_CTRL_REG);
 
-	/* only change actual polarities if there is no transfer */
-	if ((reg & GLOBAL_CTRL_CS_POLARITY_MASK) == bs->cs_polarity) {
-		if (spi->mode & SPI_CS_HIGH)
+	/* only change actual polarities अगर there is no transfer */
+	अगर ((reg & GLOBAL_CTRL_CS_POLARITY_MASK) == bs->cs_polarity) अणु
+		अगर (spi->mode & SPI_CS_HIGH)
 			reg |= BIT(spi->chip_select);
-		else
+		अन्यथा
 			reg &= ~BIT(spi->chip_select);
-		__raw_writel(reg, bs->regs + HSSPI_GLOBAL_CTRL_REG);
-	}
+		__raw_ग_लिखोl(reg, bs->regs + HSSPI_GLOBAL_CTRL_REG);
+	पूर्ण
 
-	if (spi->mode & SPI_CS_HIGH)
+	अगर (spi->mode & SPI_CS_HIGH)
 		bs->cs_polarity |= BIT(spi->chip_select);
-	else
+	अन्यथा
 		bs->cs_polarity &= ~BIT(spi->chip_select);
 
 	mutex_unlock(&bs->bus_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm63xx_hsspi_transfer_one(struct spi_master *master,
-				      struct spi_message *msg)
-{
-	struct bcm63xx_hsspi *bs = spi_master_get_devdata(master);
-	struct spi_transfer *t;
-	struct spi_device *spi = msg->spi;
-	int status = -EINVAL;
-	int dummy_cs;
+अटल पूर्णांक bcm63xx_hsspi_transfer_one(काष्ठा spi_master *master,
+				      काष्ठा spi_message *msg)
+अणु
+	काष्ठा bcm63xx_hsspi *bs = spi_master_get_devdata(master);
+	काष्ठा spi_transfer *t;
+	काष्ठा spi_device *spi = msg->spi;
+	पूर्णांक status = -EINVAL;
+	पूर्णांक dummy_cs;
 	u32 reg;
 
-	/* This controller does not support keeping CS active during idle.
+	/* This controller करोes not support keeping CS active during idle.
 	 * To work around this, we use the following ugly hack:
 	 *
 	 * a. Invert the target chip select's polarity so it will be active.
@@ -280,116 +281,116 @@ static int bcm63xx_hsspi_transfer_one(struct spi_master *master,
 	 *    the multiplexed nature of SPI the actual target will receive
 	 *    the transfer and we see its response.
 	 *
-	 * e. At the end restore the polarities again to their default values.
+	 * e. At the end restore the polarities again to their शेष values.
 	 */
 
 	dummy_cs = !spi->chip_select;
 	bcm63xx_hsspi_set_cs(bs, dummy_cs, true);
 
-	list_for_each_entry(t, &msg->transfers, transfer_list) {
-		status = bcm63xx_hsspi_do_txrx(spi, t);
-		if (status)
-			break;
+	list_क्रम_each_entry(t, &msg->transfers, transfer_list) अणु
+		status = bcm63xx_hsspi_करो_txrx(spi, t);
+		अगर (status)
+			अवरोध;
 
 		msg->actual_length += t->len;
 
 		spi_transfer_delay_exec(t);
 
-		if (t->cs_change)
+		अगर (t->cs_change)
 			bcm63xx_hsspi_set_cs(bs, spi->chip_select, false);
-	}
+	पूर्ण
 
 	mutex_lock(&bs->bus_mutex);
-	reg = __raw_readl(bs->regs + HSSPI_GLOBAL_CTRL_REG);
+	reg = __raw_पढ़ोl(bs->regs + HSSPI_GLOBAL_CTRL_REG);
 	reg &= ~GLOBAL_CTRL_CS_POLARITY_MASK;
 	reg |= bs->cs_polarity;
-	__raw_writel(reg, bs->regs + HSSPI_GLOBAL_CTRL_REG);
+	__raw_ग_लिखोl(reg, bs->regs + HSSPI_GLOBAL_CTRL_REG);
 	mutex_unlock(&bs->bus_mutex);
 
 	msg->status = status;
 	spi_finalize_current_message(master);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t bcm63xx_hsspi_interrupt(int irq, void *dev_id)
-{
-	struct bcm63xx_hsspi *bs = (struct bcm63xx_hsspi *)dev_id;
+अटल irqवापस_t bcm63xx_hsspi_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा bcm63xx_hsspi *bs = (काष्ठा bcm63xx_hsspi *)dev_id;
 
-	if (__raw_readl(bs->regs + HSSPI_INT_STATUS_MASKED_REG) == 0)
-		return IRQ_NONE;
+	अगर (__raw_पढ़ोl(bs->regs + HSSPI_INT_STATUS_MASKED_REG) == 0)
+		वापस IRQ_NONE;
 
-	__raw_writel(HSSPI_INT_CLEAR_ALL, bs->regs + HSSPI_INT_STATUS_REG);
-	__raw_writel(0, bs->regs + HSSPI_INT_MASK_REG);
+	__raw_ग_लिखोl(HSSPI_INT_CLEAR_ALL, bs->regs + HSSPI_INT_STATUS_REG);
+	__raw_ग_लिखोl(0, bs->regs + HSSPI_INT_MASK_REG);
 
-	complete(&bs->done);
+	complete(&bs->करोne);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int bcm63xx_hsspi_probe(struct platform_device *pdev)
-{
-	struct spi_master *master;
-	struct bcm63xx_hsspi *bs;
-	void __iomem *regs;
-	struct device *dev = &pdev->dev;
-	struct clk *clk, *pll_clk = NULL;
-	int irq, ret;
+अटल पूर्णांक bcm63xx_hsspi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_master *master;
+	काष्ठा bcm63xx_hsspi *bs;
+	व्योम __iomem *regs;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा clk *clk, *pll_clk = शून्य;
+	पूर्णांक irq, ret;
 	u32 reg, rate, num_cs = HSSPI_SPI_MAX_CS;
-	struct reset_control *reset;
+	काष्ठा reset_control *reset;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(regs))
-		return PTR_ERR(regs);
+	regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(regs))
+		वापस PTR_ERR(regs);
 
 	clk = devm_clk_get(dev, "hsspi");
 
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
-	reset = devm_reset_control_get_optional_exclusive(dev, NULL);
-	if (IS_ERR(reset))
-		return PTR_ERR(reset);
+	reset = devm_reset_control_get_optional_exclusive(dev, शून्य);
+	अगर (IS_ERR(reset))
+		वापस PTR_ERR(reset);
 
 	ret = clk_prepare_enable(clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = reset_control_reset(reset);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "unable to reset device: %d\n", ret);
-		goto out_disable_clk;
-	}
+		जाओ out_disable_clk;
+	पूर्ण
 
 	rate = clk_get_rate(clk);
-	if (!rate) {
+	अगर (!rate) अणु
 		pll_clk = devm_clk_get(dev, "pll");
 
-		if (IS_ERR(pll_clk)) {
+		अगर (IS_ERR(pll_clk)) अणु
 			ret = PTR_ERR(pll_clk);
-			goto out_disable_clk;
-		}
+			जाओ out_disable_clk;
+		पूर्ण
 
 		ret = clk_prepare_enable(pll_clk);
-		if (ret)
-			goto out_disable_clk;
+		अगर (ret)
+			जाओ out_disable_clk;
 
 		rate = clk_get_rate(pll_clk);
-		if (!rate) {
+		अगर (!rate) अणु
 			ret = -EINVAL;
-			goto out_disable_pll_clk;
-		}
-	}
+			जाओ out_disable_pll_clk;
+		पूर्ण
+	पूर्ण
 
-	master = spi_alloc_master(&pdev->dev, sizeof(*bs));
-	if (!master) {
+	master = spi_alloc_master(&pdev->dev, माप(*bs));
+	अगर (!master) अणु
 		ret = -ENOMEM;
-		goto out_disable_pll_clk;
-	}
+		जाओ out_disable_pll_clk;
+	पूर्ण
 
 	bs = spi_master_get_devdata(master);
 	bs->pdev = pdev;
@@ -397,140 +398,140 @@ static int bcm63xx_hsspi_probe(struct platform_device *pdev)
 	bs->pll_clk = pll_clk;
 	bs->regs = regs;
 	bs->speed_hz = rate;
-	bs->fifo = (u8 __iomem *)(bs->regs + HSSPI_FIFO_REG(0));
+	bs->fअगरo = (u8 __iomem *)(bs->regs + HSSPI_FIFO_REG(0));
 
 	mutex_init(&bs->bus_mutex);
-	init_completion(&bs->done);
+	init_completion(&bs->करोne);
 
 	master->dev.of_node = dev->of_node;
-	if (!dev->of_node)
+	अगर (!dev->of_node)
 		master->bus_num = HSSPI_BUS_NUM;
 
-	of_property_read_u32(dev->of_node, "num-cs", &num_cs);
-	if (num_cs > 8) {
+	of_property_पढ़ो_u32(dev->of_node, "num-cs", &num_cs);
+	अगर (num_cs > 8) अणु
 		dev_warn(dev, "unsupported number of cs (%i), reducing to 8\n",
 			 num_cs);
 		num_cs = HSSPI_SPI_MAX_CS;
-	}
+	पूर्ण
 	master->num_chipselect = num_cs;
 	master->setup = bcm63xx_hsspi_setup;
 	master->transfer_one_message = bcm63xx_hsspi_transfer_one;
 	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_CS_HIGH |
 			    SPI_RX_DUAL | SPI_TX_DUAL;
 	master->bits_per_word_mask = SPI_BPW_MASK(8);
-	master->auto_runtime_pm = true;
+	master->स्वतः_runसमय_pm = true;
 
-	platform_set_drvdata(pdev, master);
+	platक्रमm_set_drvdata(pdev, master);
 
 	/* Initialize the hardware */
-	__raw_writel(0, bs->regs + HSSPI_INT_MASK_REG);
+	__raw_ग_लिखोl(0, bs->regs + HSSPI_INT_MASK_REG);
 
-	/* clean up any pending interrupts */
-	__raw_writel(HSSPI_INT_CLEAR_ALL, bs->regs + HSSPI_INT_STATUS_REG);
+	/* clean up any pending पूर्णांकerrupts */
+	__raw_ग_लिखोl(HSSPI_INT_CLEAR_ALL, bs->regs + HSSPI_INT_STATUS_REG);
 
-	/* read out default CS polarities */
-	reg = __raw_readl(bs->regs + HSSPI_GLOBAL_CTRL_REG);
+	/* पढ़ो out शेष CS polarities */
+	reg = __raw_पढ़ोl(bs->regs + HSSPI_GLOBAL_CTRL_REG);
 	bs->cs_polarity = reg & GLOBAL_CTRL_CS_POLARITY_MASK;
-	__raw_writel(reg | GLOBAL_CTRL_CLK_GATE_SSOFF,
+	__raw_ग_लिखोl(reg | GLOBAL_CTRL_CLK_GATE_SSOFF,
 		     bs->regs + HSSPI_GLOBAL_CTRL_REG);
 
-	ret = devm_request_irq(dev, irq, bcm63xx_hsspi_interrupt, IRQF_SHARED,
+	ret = devm_request_irq(dev, irq, bcm63xx_hsspi_पूर्णांकerrupt, IRQF_SHARED,
 			       pdev->name, bs);
 
-	if (ret)
-		goto out_put_master;
+	अगर (ret)
+		जाओ out_put_master;
 
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
-	/* register and we are done */
-	ret = devm_spi_register_master(dev, master);
-	if (ret)
-		goto out_pm_disable;
+	/* रेजिस्टर and we are करोne */
+	ret = devm_spi_रेजिस्टर_master(dev, master);
+	अगर (ret)
+		जाओ out_pm_disable;
 
-	return 0;
+	वापस 0;
 
 out_pm_disable:
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 out_put_master:
 	spi_master_put(master);
 out_disable_pll_clk:
 	clk_disable_unprepare(pll_clk);
 out_disable_clk:
 	clk_disable_unprepare(clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int bcm63xx_hsspi_remove(struct platform_device *pdev)
-{
-	struct spi_master *master = platform_get_drvdata(pdev);
-	struct bcm63xx_hsspi *bs = spi_master_get_devdata(master);
+अटल पूर्णांक bcm63xx_hsspi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_master *master = platक्रमm_get_drvdata(pdev);
+	काष्ठा bcm63xx_hsspi *bs = spi_master_get_devdata(master);
 
 	/* reset the hardware and block queue progress */
-	__raw_writel(0, bs->regs + HSSPI_INT_MASK_REG);
+	__raw_ग_लिखोl(0, bs->regs + HSSPI_INT_MASK_REG);
 	clk_disable_unprepare(bs->pll_clk);
 	clk_disable_unprepare(bs->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int bcm63xx_hsspi_suspend(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct bcm63xx_hsspi *bs = spi_master_get_devdata(master);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक bcm63xx_hsspi_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा bcm63xx_hsspi *bs = spi_master_get_devdata(master);
 
 	spi_master_suspend(master);
 	clk_disable_unprepare(bs->pll_clk);
 	clk_disable_unprepare(bs->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm63xx_hsspi_resume(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct bcm63xx_hsspi *bs = spi_master_get_devdata(master);
-	int ret;
+अटल पूर्णांक bcm63xx_hsspi_resume(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा bcm63xx_hsspi *bs = spi_master_get_devdata(master);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(bs->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (bs->pll_clk) {
+	अगर (bs->pll_clk) अणु
 		ret = clk_prepare_enable(bs->pll_clk);
-		if (ret) {
+		अगर (ret) अणु
 			clk_disable_unprepare(bs->clk);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	spi_master_resume(master);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(bcm63xx_hsspi_pm_ops, bcm63xx_hsspi_suspend,
+अटल SIMPLE_DEV_PM_OPS(bcm63xx_hsspi_pm_ops, bcm63xx_hsspi_suspend,
 			 bcm63xx_hsspi_resume);
 
-static const struct of_device_id bcm63xx_hsspi_of_match[] = {
-	{ .compatible = "brcm,bcm6328-hsspi", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id bcm63xx_hsspi_of_match[] = अणु
+	अणु .compatible = "brcm,bcm6328-hsspi", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bcm63xx_hsspi_of_match);
 
-static struct platform_driver bcm63xx_hsspi_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver bcm63xx_hsspi_driver = अणु
+	.driver = अणु
 		.name	= "bcm63xx-hsspi",
 		.pm	= &bcm63xx_hsspi_pm_ops,
 		.of_match_table = bcm63xx_hsspi_of_match,
-	},
+	पूर्ण,
 	.probe		= bcm63xx_hsspi_probe,
-	.remove		= bcm63xx_hsspi_remove,
-};
+	.हटाओ		= bcm63xx_hsspi_हटाओ,
+पूर्ण;
 
-module_platform_driver(bcm63xx_hsspi_driver);
+module_platक्रमm_driver(bcm63xx_hsspi_driver);
 
 MODULE_ALIAS("platform:bcm63xx_hsspi");
 MODULE_DESCRIPTION("Broadcom BCM63xx High Speed SPI Controller driver");
